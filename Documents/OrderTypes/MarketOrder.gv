@@ -1,0 +1,24 @@
+digraph MarketOrder {
+  rankdir = LR;
+
+  node [shape = circle];
+
+  S0 [shape = circle
+      color = green
+      fontcolor = green];
+  S1 [shape = doublecircle
+      color = red
+      fontcolor = red];
+  S3 [shape = doublecircle
+      color = blue
+      fontcolor = blue];
+  S4 [shape = circle
+      color = green
+      fontcolor = green];
+
+  S0 -> S1 [label = "E0"];
+  S0 -> S2 [label = "E1"];
+  S2 -> S3 [label = "E2"];
+  S4 -> S3 [label = "E2"];
+  S4 -> S4 [label = "E1"];
+}

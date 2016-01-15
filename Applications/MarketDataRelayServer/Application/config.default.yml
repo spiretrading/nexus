@@ -1,0 +1,10 @@
+---
+service_locator:
+  address: local_interface:20000
+  username: market_data_relay_service
+  password: admin_password
+
+server:
+  interface: local_interface:22300
+  addresses: [global_address:22300, local_interface:22300]
+...

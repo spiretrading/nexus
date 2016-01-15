@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>BlotterWindow</class>
+ <widget class="QWidget" name="BlotterWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>808</width>
+    <height>536</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Blotter</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="../../Resources/Resources.qrc">
+    <normaloff>:/icons/window_earth.png</normaloff>:/icons/window_earth.png</iconset>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QSplitter" name="m_splitter">
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Plain</enum>
+     </property>
+     <property name="midLineWidth">
+      <number>0</number>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="handleWidth">
+      <number>4</number>
+     </property>
+     <widget class="QWidget" name="m_tasks" native="true">
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <property name="spacing">
+        <number>6</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>6</number>
+       </property>
+       <item>
+        <widget class="QTableView" name="m_taskTable">
+         <property name="contextMenuPolicy">
+          <enum>Qt::CustomContextMenu</enum>
+         </property>
+         <property name="alternatingRowColors">
+          <bool>true</bool>
+         </property>
+         <property name="selectionBehavior">
+          <enum>QAbstractItemView::SelectRows</enum>
+         </property>
+         <property name="showGrid">
+          <bool>false</bool>
+         </property>
+         <property name="sortingEnabled">
+          <bool>true</bool>
+         </property>
+         <attribute name="horizontalHeaderHighlightSections">
+          <bool>false</bool>
+         </attribute>
+         <attribute name="horizontalHeaderStretchLastSection">
+          <bool>false</bool>
+         </attribute>
+         <attribute name="verticalHeaderVisible">
+          <bool>false</bool>
+         </attribute>
+         <attribute name="verticalHeaderHighlightSections">
+          <bool>false</bool>
+         </attribute>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QTabWidget" name="m_summary">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="tabPosition">
+       <enum>QTabWidget::North</enum>
+      </property>
+      <property name="tabShape">
+       <enum>QTabWidget::Rounded</enum>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="Spire::OpenPositionsWidget" name="m_openPositionsTab">
+       <attribute name="title">
+        <string>Open Positions</string>
+       </attribute>
+      </widget>
+      <widget class="Spire::ProfitAndLossWidget" name="m_profitAndLossTab">
+       <attribute name="title">
+        <string>Profit &amp;&amp; Loss</string>
+       </attribute>
+      </widget>
+      <widget class="Spire::OrderLogWidget" name="m_orderLogTab">
+       <attribute name="title">
+        <string>Order Log</string>
+       </attribute>
+      </widget>
+      <widget class="Spire::ActivityLogWidget" name="m_activityLogTab">
+       <attribute name="title">
+        <string>Activity Log</string>
+       </attribute>
+      </widget>
+      <widget class="Spire::TaskWidget" name="m_taskTab">
+       <attribute name="title">
+        <string>Task</string>
+       </attribute>
+      </widget>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>Spire::OpenPositionsWidget</class>
+   <extends>QWidget</extends>
+   <header>Spire/Blotter/OpenPositionsWidget.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Spire::ActivityLogWidget</class>
+   <extends>QWidget</extends>
+   <header>Spire/Blotter/ActivityLogWidget.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Spire::TaskWidget</class>
+   <extends>QWidget</extends>
+   <header>Spire/Blotter/TaskWidget.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Spire::ProfitAndLossWidget</class>
+   <extends>QWidget</extends>
+   <header>Spire/Blotter/ProfitAndLossWidget.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Spire::OrderLogWidget</class>
+   <extends>QWidget</extends>
+   <header>Spire/Blotter/OrderLogWidget.hpp</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="../../Resources/Resources.qrc"/>
+ </resources>
+ <connections/>
+</ui>

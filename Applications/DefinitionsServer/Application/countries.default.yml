@@ -1,0 +1,23 @@
+---
+countries:
+  - name: Australia
+    two_letter_code: AU
+    three_letter_code: AUS
+    code: 36
+  - name: Brazil
+    two_letter_code: BR
+    three_letter_code: BRA
+    code: 76
+  - name: Canada
+    two_letter_code: CA
+    three_letter_code: CAN
+    code: 124
+  - name: China
+    two_letter_code: CN
+    three_letter_code: CHN
+    code: 156
+  - name: United States
+    two_letter_code: US
+    three_letter_code: USA
+    code: 840
+...

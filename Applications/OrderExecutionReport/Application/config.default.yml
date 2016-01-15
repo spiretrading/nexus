@@ -1,0 +1,6 @@
+---
+service_locator:
+  address: global_address:20000
+  username: user
+  password: user_password
+...

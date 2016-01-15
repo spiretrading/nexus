@@ -1,0 +1,15 @@
+---
+service_locator:
+  address: local_interface:20000
+  username: market_data_feed
+  password: admin_password
+
+enable_logging: false
+market: CXA
+mpid: CXA
+time_zone: Australian_Eastern_Standard_Time 
+is_time_and_sale: true
+sampling: 100ms
+host: 233.218.133.51:16001
+interface: 192.168.0.120:16001
+...

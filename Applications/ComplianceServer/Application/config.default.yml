@@ -1,0 +1,16 @@
+---
+service_locator:
+  address: local_interface:20000
+  username: compliance_service
+  password: admin_password
+
+data_store:
+  address: 127.0.0.1:3306
+  username: spireadmin
+  password: admin_password
+  schema: spire
+
+server:
+  interface: local_interface:21900
+  addresses: [global_address:21900, local_interface:21900]
+...

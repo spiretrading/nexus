@@ -1,0 +1,47 @@
+file(GLOB header_files
+  ./../../../Include/Nexus/Python/*.hpp)
+file(GLOB source_files
+  ./../../../Source/Python/*.cpp)
+
+include_directories($ENV{PYTHON_INCLUDE_PATH})
+
+add_library(Python SHARED ${header_files} ${source_files})
+set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
+set_target_properties(Python PROPERTIES OUTPUT_NAME nexus)
+add_definitions("-DBEAM_USE_DLL")
+if(MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj /WX")
+  set_target_properties(Python PROPERTIES SUFFIX ".pyd"
+    LINK_FLAGS /SAFESEH:NO)
+endif()
+if(UNIX)
+  set_target_properties(Python PROPERTIES PREFIX "")
+endif()
+target_link_libraries(Python
+  debug $ENV{CRYPTOPP_LIBRARY_DEBUG_PATH}
+  optimized $ENV{CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{BEAM_PYTHON_LIBRARY_DEBUG_PATH}
+  optimized $ENV{BEAM_PYTHON_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{PYTHON_LIBRARY_DEBUG_PATH}
+  optimized $ENV{PYTHON_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{ZLIB_LIBRARY_DEBUG_PATH}
+  optimized $ENV{ZLIB_LIBRARY_OPTIMIZED_PATH})
+
+if(UNIX)
+  target_link_libraries(Python
+    debug $ENV{BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
+    optimized $ENV{BOOST_CONTEXT_LIBRARY_OPTIMIZED_PATH}
+    debug $ENV{BOOST_DATE_TIME_LIBRARY_DEBUG_PATH}
+    optimized $ENV{BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
+    debug $ENV{BOOST_PYTHON_LIBRARY_DEBUG_PATH}
+    optimized $ENV{BOOST_PYTHON_LIBRARY_OPTIMIZED_PATH}
+    debug $ENV{BOOST_THREAD_LIBRARY_DEBUG_PATH}
+    optimized $ENV{BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
+    debug $ENV{BOOST_SYSTEM_LIBRARY_DEBUG_PATH}
+    optimized $ENV{BOOST_SYSTEM_LIBRARY_OPTIMIZED_PATH})
+endif()
+
+install(TARGETS Python CONFIGURATIONS Debug
+  DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)
+install(TARGETS Python CONFIGURATIONS Release RelWithDebInfo
+  DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Release)

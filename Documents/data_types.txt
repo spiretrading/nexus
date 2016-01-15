@@ -1,0 +1,65 @@
+Data Types
+----------
+
+Primitive Types
+---------------
+
+A primitive type represents a single built in value in the system.
+
+Boolean       - Either true or false.
+Currency      - A currency as defined by ISO 4217.
+Date/Time     - A specific point in time.
+Decimal       - A decimal number with up to 15 significant digits.
+Destination   - The destination of an order submission.
+Duration      - A period of time.
+Integer       - A whole number.
+Market        - A financial market as defined by ISO 10383
+Money         - Used to price securities.
+Order Status  - Specifies the state of a submitted order.
+Order Type    - Specifies whether an order is a limit order, or a market order.
+Security      - Identifies a financial instrument.
+Side          - Either a bid, an ask, or neither/undefined.
+Task State    - Specifies the state of a task.
+Task          - An object representing a task.
+Text          - A string of human readable characters.
+Time in Force - An instruction specifying when an order should be cancelled.
+
+
+Composite Types
+---------------
+
+A composite type composes one or more values together to form a record.  Each
+value in a record is given a unique name and can be accessed by querying the
+record.
+
+Examples of records that come by default in Spire are as follows:
+
+Account - Represents an account.
+  - name : Text    - The current name of the account.
+  - id   : Integer - The account's unique id.
+
+Order Fields - Represents the parameters used to submit an order.
+  - account       : Account      - The account to assign the order to.
+  - security      : Security     - The security the order was submitted for.
+  - currency      : Currency     - The currency used to perform the transaction.
+  - type          : Order Type   - Whether the order is a limit or market order.
+  - side          : Side         - Whether to submit a buy or a sell.
+  - destination   : Destination  - Where the order is to be submitted.
+  - quantity      : Integer      - The maximum quantity for this order.
+  - price         : Money        - The limit price of a transaction.
+  - time_in_force : Time in Force - When the order should be cancelled.
+
+Position - Stores the details of an open position held in a single financial
+           instrument.
+  - security      : Security - The position's security.
+  - currency      : Currency - The currency used to value the position.
+  - side          : Side     - Whether the position is long or short.
+  - quantity      : Integer  - The size of the open position.
+  - cost_basis    : Money    - The cost required to open the position.
+  - profit_loss   : Money    - The difference between the cost_basis and the
+                               current market value of the position.
+
+Quote - Stores a quote used to price a financial instrument.
+  - price         : Money   - The price of the instrument.
+  - side          : Side    - Whether the quote is for the bid or the ask.
+  - quantity      : Integer - The available quantity at the specified price.

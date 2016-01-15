@@ -1,0 +1,20 @@
+---
+service_locator:
+  address: local_interface:20000
+  username: order_execution_service
+  password: admin_password
+
+data_store:
+  address: local_interface:3306
+  username: spireadmin
+  password: admin_password
+  schema: spire
+
+compliance_server:
+  interface: local_interface:20701
+  addresses: [global_address:20701, local_interface:20701]
+
+order_server:
+  interface: local_interface:20700
+  addresses: [global_address:20700, local_interface:20700]
+...

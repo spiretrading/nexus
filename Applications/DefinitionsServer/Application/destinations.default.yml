@@ -1,0 +1,77 @@
+---
+destinations:
+  - id: ASXT
+    description: ASX TradeMatch
+    markets:
+      - XASX
+  - id: CXA
+    description: CHI-X Australia
+    markets:
+      - XASX
+  - id: ALPHA
+    description: Alpha ATS
+    markets:
+      - XTSE
+        XTSX
+  - id: CHIX
+    description: Chi-X
+    markets:
+      - XTSE
+        XTSX
+  - id: CX2
+    description: Chi-X 2
+    markets:
+      - XTSE
+        XTSX
+  - id: LYNX
+    description: LYNX ATS
+    markets:
+      - XTSE
+        XTSX
+  - id: MATNLP
+    description: MATCH Now Liquidity Provider
+    markets:
+      - XTSE
+        XTSX
+  - id: MATNMF
+    description: MATCH Now Market Flow
+    markets:
+      - XTSE
+        XTSX
+  - id: NEOE
+    description: Aequitas NEO Exchange
+    markets:
+      - XTSE
+        XTSX
+  - id: OMEGA
+    description: Omega ATS
+    markets:
+      - XTSE
+        XTSX
+  - id: PURE
+    description: Pure ATS
+    markets:
+      - XTSE
+        XTSX
+  - id: TSX
+    description: Toronto Stock Exchange
+    markets:
+      - XTSE
+        XTSX
+
+preferred_destinations:
+  - market: XASX
+    destination: ASXT
+  - market: XTSE
+    destination: TSX
+  - market: XTSX
+    destination: TSX
+
+manual_order_entry:
+  id: MOE
+  description: Manual Order Entry
+  markets:
+    - XASX
+      XTSE
+      XTSX
+...

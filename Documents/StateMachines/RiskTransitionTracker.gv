@@ -1,0 +1,33 @@
+digraph RiskTransitionTracker {
+  rankdir = LR;
+
+  node [shape = circle];
+
+  S0 [color = green, fontcolor = green];
+
+  S0 -> S0 [label = "E0"];
+  S0 -> S1 [label = "C0"];
+  S1 -> S2 [label = "epsilon"];
+  S2 -> S2 [label = "E0"];
+  S2 -> S0 [label = "C1"];
+  S2 -> S3 [label = "C2"];
+  S3 -> S4 [label = "epsilon"];
+  S4 -> S4 [label = "E0, E1"];
+  S4 -> S0 [label = "C1"];
+  S4 -> S5 [label = "C3"];
+  S5 -> S6 [label = "epsilon"];
+  S6 -> S6 [label = "E0"];
+  S6 -> S0 [label = "C1"];
+}
+
+S1 - Cancel open orders.
+S3 - Cancel live orders.
+S5 - Close positions.
+
+E0 - RiskState updated.
+E1 - ExecutionReport update.
+
+C0 - RiskState is CLOSED_ORDERS
+C1 - RiskState is ACTIVE
+C2 - RiskState is DISABLED
+C3 - All orders are in TERMINAL state.

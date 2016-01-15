@@ -1,0 +1,20 @@
+---
+service_locator:
+  address: local_interface:20000
+  username: market_data_service
+  password: admin_password
+
+data_store:
+  address: local_interface:3306
+  username: spireadmin
+  password: admin_password
+  schema: market_data
+
+registry_server:
+  interface: local_interface:20300
+  addresses: [global_address:20300, local_interface:20300]
+
+feed_server:
+  interface: local_interface:20400
+  addresses: [global_address:20400, local_interface:20400]
+...
