@@ -136,7 +136,7 @@ int main(int argc, char* argv[]) {
     filesystem::ofstream configFile(configPath);
     configFile <<
       "---\n"
-      "address: 127.0.0.1:20000\n"
+      "address: 69.90.18.212:20000\n"
       "username: \"\"\n"
       "save_login: true\n"
       "...";
