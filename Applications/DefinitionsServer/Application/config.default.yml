@@ -20,9 +20,9 @@ markets: markets.yml
 time_zones: ./date_time_zonespec.csv
 exchange_rates:
   - symbol: USD/CAD
-    rate: 1.20
+    rate: 1.44
   - symbol: USD/AUD
-    rate: 1.25
+    rate: 1.44
   - symbol: AUD/CAD
-    rate: 0.96
+    rate: 1.00
 ...
