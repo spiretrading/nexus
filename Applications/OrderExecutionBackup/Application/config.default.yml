@@ -1,6 +1,6 @@
 ---
 service_locator:
   address: local_interface:20000
-  username: admin_username
+  username: order_execution_service
   password: admin_password
 ...

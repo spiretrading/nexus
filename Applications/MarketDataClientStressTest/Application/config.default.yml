@@ -1,6 +1,6 @@
 ---
 service_locator:
-  address: server_address:server_port
+  address: local_interface:20000
   username: username
   password: password
 

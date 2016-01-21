@@ -4,7 +4,7 @@ server:
   addresses: [global_address:20100, local_interface:20100]
 
 data_store:
-  address: local_interface:3306
+  address: 127.0.0.1:3306
   username: spireadmin
   password: admin_password
   schema: spire
