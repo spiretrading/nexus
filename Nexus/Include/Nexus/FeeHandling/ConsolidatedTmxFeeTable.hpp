@@ -188,7 +188,7 @@ namespace Nexus {
     if(pureConfig == nullptr) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for PURE missing."});
     } else {
-      feeTable.m_pureFeeTable = ParsePureFeeTable(*pureConfig);
+      feeTable.m_pureFeeTable = ParsePureFeeTable(*pureConfig, marketDatabase);
     }
     auto tsxConfig = config.FindValue("tsx");
     if(tsxConfig == nullptr) {

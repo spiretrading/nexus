@@ -8,17 +8,8 @@ using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Tests;
 
 namespace {
-  PureFeeTable BuildFeeTable() {
-    PureFeeTable feeTable;
-    PopulateFeeTable(Store(feeTable.m_tsxListedFeeTable));
-    PopulateFeeTable(Store(feeTable.m_tsxVentureListedFeeTable));
-    for(auto i = 0; i < PureFeeTable::TSX_VENTURE_PRICE_CLASS_COUNT; ++i) {
-      feeTable.m_tsxVentureListedFeeTable[i][
-        static_cast<int>(LiquidityFlag::PASSIVE)] *= -1;
-    }
-    feeTable.m_tsxVentureListedSubDimeCap = 1000 * Money::CENT;
-    feeTable.m_oddLot = 12 * Money::ONE;
-    return feeTable;
+  Security GetDesignatedSecurity() {
+    return Security{"DSG", DefaultMarkets::TSX(), DefaultCountries::CA()};
   }
 
   Security GetTsxSecurity() {
@@ -32,15 +23,29 @@ namespace {
   Security GetUnlistedSecurity() {
     return Security{"???", DefaultMarkets::ASX(), DefaultCountries::CA()};
   }
+
+  PureFeeTable BuildFeeTable() {
+    PureFeeTable feeTable;
+    PopulateFeeTable(Store(feeTable.m_tsxListedFeeTable));
+    PopulateFeeTable(Store(feeTable.m_tsxVentureListedFeeTable));
+    for(auto i = 0; i < PureFeeTable::PRICE_CLASS_COUNT; ++i) {
+      feeTable.m_tsxVentureListedFeeTable[i][
+        static_cast<int>(LiquidityFlag::PASSIVE)] *= -1;
+    }
+    feeTable.m_tsxVentureListedSubDimeCap = 1000 * Money::CENT;
+    feeTable.m_oddLot = 12 * Money::ONE;
+    feeTable.m_designatedSecurities.insert(GetDesignatedSecurity());
+    return feeTable;
+  }
 }
 
 void PureFeeHandlingTester::TestFeeTableCalculations() {
   auto feeTable = BuildFeeTable();
   TestFeeTableIndex(feeTable, feeTable.m_tsxListedFeeTable, LookupTsxListedFee,
-    LIQUIDITY_FLAG_COUNT, PureFeeTable::TSX_PRICE_CLASS_COUNT);
+    LIQUIDITY_FLAG_COUNT, PureFeeTable::PRICE_CLASS_COUNT);
   TestFeeTableIndex(feeTable, feeTable.m_tsxVentureListedFeeTable,
     LookupTsxVentureListedFee, LIQUIDITY_FLAG_COUNT,
-    PureFeeTable::TSX_VENTURE_PRICE_CLASS_COUNT);
+    PureFeeTable::PRICE_CLASS_COUNT);
 }
 
 void PureFeeHandlingTester::TestZeroQuantity() {
@@ -72,6 +77,42 @@ void PureFeeHandlingTester::TestTsxDefaultPassive() {
   TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::PASSIVE,
     std::bind(&CalculateFee, std::placeholders::_1, GetTsxSecurity(),
     std::placeholders::_2), expectedFee);
+}
+
+void PureFeeHandlingTester::TestTsxDesignatedActive() {
+  auto feeTable = BuildFeeTable();
+  auto expectedFee = LookupTsxListedFee(feeTable, LiquidityFlag::ACTIVE,
+    PureFeeTable::PriceClass::DESIGNATED);
+  TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::ACTIVE,
+    std::bind(&CalculateFee, std::placeholders::_1,
+    GetDesignatedSecurity(), std::placeholders::_2), expectedFee);
+}
+
+void PureFeeHandlingTester::TestTsxDesignatedPassive() {
+  auto feeTable = BuildFeeTable();
+  auto expectedFee = LookupTsxListedFee(feeTable, LiquidityFlag::PASSIVE,
+    PureFeeTable::PriceClass::DESIGNATED);
+  TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::PASSIVE,
+    std::bind(&CalculateFee, std::placeholders::_1,
+    GetDesignatedSecurity(), std::placeholders::_2), expectedFee);
+}
+
+void PureFeeHandlingTester::TestTsxSubDollarDesignatedActive() {
+  auto feeTable = BuildFeeTable();
+  auto expectedFee = LookupTsxListedFee(feeTable, LiquidityFlag::ACTIVE,
+    PureFeeTable::PriceClass::SUB_DOLLAR);
+  TestPerShareFeeCalculation(feeTable, 99 * Money::CENT, 100,
+    LiquidityFlag::ACTIVE, std::bind(&CalculateFee, std::placeholders::_1,
+    GetDesignatedSecurity(), std::placeholders::_2), expectedFee);
+}
+
+void PureFeeHandlingTester::TestTsxSubDollarDesignatedPassive() {
+  auto feeTable = BuildFeeTable();
+  auto expectedFee = LookupTsxListedFee(feeTable, LiquidityFlag::PASSIVE,
+    PureFeeTable::PriceClass::SUB_DOLLAR);
+  TestPerShareFeeCalculation(feeTable, 99 * Money::CENT, 100,
+    LiquidityFlag::PASSIVE, std::bind(&CalculateFee, std::placeholders::_1,
+    GetDesignatedSecurity(), std::placeholders::_2), expectedFee);
 }
 
 void PureFeeHandlingTester::TestTsxSubDollarActive() {

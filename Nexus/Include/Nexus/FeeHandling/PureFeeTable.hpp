@@ -1,8 +1,10 @@
 #ifndef NEXUS_PUREFEETABLE_HPP
 #define NEXUS_PUREFEETABLE_HPP
 #include <array>
+#include <unordered_set>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/FeeHandling/FeeHandling.hpp"
@@ -24,6 +26,9 @@ namespace Nexus {
       //! Unknown.
       NONE = -1,
 
+      //! Price >= $1.00 and designated.
+      DESIGNATED,
+
       //! Price >= $1.00.
       DEFAULT,
 
@@ -35,17 +40,14 @@ namespace Nexus {
     };
 
     //! The number of price classes enumerated.
-    static const std::size_t TSX_PRICE_CLASS_COUNT = 2;
-
-    //! The number of price classes enumerated.
-    static const std::size_t TSX_VENTURE_PRICE_CLASS_COUNT = 3;
+    static const std::size_t PRICE_CLASS_COUNT = 4;
 
     //! The TSX Venture listed fee table.
-    std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>,
-      TSX_VENTURE_PRICE_CLASS_COUNT> m_tsxVentureListedFeeTable;
+    std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
+      m_tsxVentureListedFeeTable;
 
     //! The TSX listed fee table.
-    std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, TSX_PRICE_CLASS_COUNT>
+    std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
       m_tsxListedFeeTable;
 
     //! The fee used for odd-lots.
@@ -53,6 +55,9 @@ namespace Nexus {
 
     //! The cap on TSX Venture listed sub-dime trades.
     Money m_tsxVentureListedSubDimeCap;
+
+    //! The set of Securities part of Pure's designated program.
+    std::unordered_set<Security> m_designatedSecurities;
   };
 
   //! Parses a PureFeeTable from a YAML configuration.
@@ -60,7 +65,8 @@ namespace Nexus {
     \param config The configuration to parse the PureFeeTable from.
     \return The PureFeeTable represented by the <i>config</i>.
   */
-  inline PureFeeTable ParsePureFeeTable(const YAML::Node& config) {
+  inline PureFeeTable ParsePureFeeTable(const YAML::Node& config,
+      const MarketDatabase& marketDatabase) {
     PureFeeTable feeTable;
     ParseFeeTable(config, "tsx_venture_listed_fee_table",
       Beam::Store(feeTable.m_tsxVentureListedFeeTable));
@@ -69,6 +75,21 @@ namespace Nexus {
     feeTable.m_oddLot = Beam::Extract<Money>(config, "odd_lot");
     feeTable.m_tsxVentureListedSubDimeCap = Beam::Extract<Money>(config,
       "tsx_venture_sub_dime_cap");
+    auto designatedSecuritiesPath = Beam::Extract<std::string>(config,
+      "designated_securities_path");
+    YAML::Node designatedSecuritiesConfig;
+    Beam::LoadFile(designatedSecuritiesPath,
+      Beam::Store(designatedSecuritiesConfig));
+    auto symbols = designatedSecuritiesConfig.FindValue("symbols");
+    if(symbols == nullptr) {
+      BOOST_THROW_EXCEPTION(std::runtime_error{
+        "PURE designated symbols not found."});
+    }
+    for(auto& symbol : *symbols) {
+      auto security = ParseSecurity(Beam::Extract<std::string>(symbol),
+        marketDatabase);
+      feeTable.m_designatedSecurities.insert(security);
+    }
     return feeTable;
   }
 
@@ -82,9 +103,6 @@ namespace Nexus {
   */
   inline Money LookupTsxListedFee(const PureFeeTable& feeTable,
       LiquidityFlag liquidityFlag, PureFeeTable::PriceClass priceClass) {
-    if(priceClass == PureFeeTable::PriceClass::SUB_DIME) {
-      priceClass = PureFeeTable::PriceClass::SUB_DOLLAR;
-    }
     return feeTable.m_tsxListedFeeTable[static_cast<int>(priceClass)][
       static_cast<int>(liquidityFlag)];
   }
@@ -123,6 +141,9 @@ namespace Nexus {
         return PureFeeTable::PriceClass::SUB_DIME;
       } else if(executionReport.m_lastPrice < Money::ONE) {
         return PureFeeTable::PriceClass::SUB_DOLLAR;
+      } else if(feeTable.m_designatedSecurities.find(security) !=
+          feeTable.m_designatedSecurities.end()) {
+        return PureFeeTable::PriceClass::DESIGNATED;
       } else {
         return PureFeeTable::PriceClass::DEFAULT;
       }

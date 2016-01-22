@@ -25,6 +25,18 @@ namespace Tests {
       //! Tests a TSX default passive fee calculation.
       void TestTsxDefaultPassive();
 
+      //! Tests a TSX designated security active fee calculation.
+      void TestTsxDesignatedActive();
+
+      //! Tests a TSX designated security active fee calculation.
+      void TestTsxDesignatedPassive();
+
+      //! Tests a TSX sub-dollar designated security active fee calculation.
+      void TestTsxSubDollarDesignatedActive();
+
+      //! Tests a TSX sub-dollar designated security active fee calculation.
+      void TestTsxSubDollarDesignatedPassive();
+
       //! Tests a TSX sub-dollar active fee calculation.
       void TestTsxSubDollarActive();
 
@@ -64,6 +76,10 @@ namespace Tests {
         CPPUNIT_TEST(TestZeroQuantity);
         CPPUNIT_TEST(TestTsxDefaultActive);
         CPPUNIT_TEST(TestTsxDefaultPassive);
+        CPPUNIT_TEST(TestTsxDesignatedActive);
+        CPPUNIT_TEST(TestTsxDesignatedPassive);
+        CPPUNIT_TEST(TestTsxSubDollarDesignatedActive);
+        CPPUNIT_TEST(TestTsxSubDollarDesignatedPassive);
         CPPUNIT_TEST(TestTsxSubDollarActive);
         CPPUNIT_TEST(TestTsxSubDollarPassive);
         CPPUNIT_TEST(TestTsxVentureDefaultActive);
