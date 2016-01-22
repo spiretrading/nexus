@@ -98,18 +98,29 @@ omga:
 
 # Pure ATS fees based on http://www.cnsx.ca/CNSX/Trading/Fees--Hours/Fee-Schedule.aspx
 # Fees for notes and debentures are not supported.
+# Table is structured as:
+#                      Active, Passive
+# Designated              X       X
+# >= $1.00                X       X
+# >= $0.10 & < $1.00      X       X
+# < $0.10                 X       X
+
 pure:
   tsx_venture_listed_fee_table:
     [[0.00020, 0.00020],
+     [0.00020, 0.00020],
      [0.00008, 0.00008],
      [0.00004, 0.00004]]
 
   tsx_listed_fee_table:
-    [[0.0025, -0.0020],
-     [0.0004, -0.0001]]
+    [[ 0.00250, -0.00210],
+     [-0.00140,  0.00180],
+     [ 0.00008,  0.00008],
+     [ 0.00004,  0.00004]]
 
   odd_lot: 0.0002
   tsx_venture_sub_dime_cap: 15.00
+  designated_securities_path: "./pure_designated_securities.yml"
 
 # TMX Select fees based on http://www.tsx.com/trading/tmx-select/fee-schedule
 # Fees for notes and debentures are not supported.
