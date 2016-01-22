@@ -28,7 +28,7 @@ namespace Nexus {
     \param config The configuration to parse the AsxtFeeTable from.
     \return The AsxtFeeTable represented by the <i>config</i>.
   */
-  inline AsxtFeeTable ParseTsxFeeTable(const YAML::Node& config) {
+  inline AsxtFeeTable ParseAsxFeeTable(const YAML::Node& config) {
     AsxtFeeTable feeTable;
     feeTable.m_tradeRate = Beam::Extract<boost::rational<int>>(config,
       "trade_rate");
