@@ -26,11 +26,11 @@ namespace Nexus {
       //! Unknown.
       NONE = -1,
 
-      //! Price >= $1.00 and designated.
-      DESIGNATED,
-
       //! Price >= $1.00.
       DEFAULT,
+
+      //! Price >= $1.00 and designated.
+      DESIGNATED,
 
       //! Price >= $0.10 & < $1.00.
       SUB_DOLLAR,
