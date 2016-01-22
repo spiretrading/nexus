@@ -142,12 +142,46 @@ void Nexus::Python::ExportCurrencyPair() {
 void Nexus::Python::ExportDefaultCurrencies() {
   struct Dummy {};
   class_<Dummy, noncopyable>("default_currencies", no_init)
-    .add_static_property("CAD", make_function(&DefaultCurrencies::CAD));
+    .add_static_property("AUD", make_function(&DefaultCurrencies::AUD))
+    .add_static_property("CAD", make_function(&DefaultCurrencies::CAD))
+    .add_static_property("USD", make_function(&DefaultCurrencies::USD));
 }
 
 void Nexus::Python::ExportDefaultDestinations() {
   struct Dummy {};
   class_<Dummy, noncopyable>("default_destinations", no_init)
+    .add_static_property("MOE", make_function(&DefaultDestinations::MOE,
+      return_value_policy<copy_const_reference>()))
+    .add_static_property("ASXT", make_function(&DefaultDestinations::ASXT,
+      return_value_policy<copy_const_reference>()))
+    .add_static_property("CXA", make_function(&DefaultDestinations::CXA,
+      return_value_policy<copy_const_reference>()))
+    .add_static_property("ARCA", make_function(&DefaultDestinations::ARCA,
+      return_value_policy<copy_const_reference>()))
+    .add_static_property("BATS", make_function(&DefaultDestinations::BATS,
+      return_value_policy<copy_const_reference>()))
+    .add_static_property("NYSE", make_function(&DefaultDestinations::NYSE,
+      return_value_policy<copy_const_reference>()))
+    .add_static_property("NASDAQ", make_function(&DefaultDestinations::NASDAQ,
+      return_value_policy<copy_const_reference>()))
+    .add_static_property("ALPHA", make_function(&DefaultDestinations::ALPHA,
+      return_value_policy<copy_const_reference>()))
+    .add_static_property("CHIX", make_function(&DefaultDestinations::CHIX,
+      return_value_policy<copy_const_reference>()))
+    .add_static_property("CX2", make_function(&DefaultDestinations::CX2,
+      return_value_policy<copy_const_reference>()))
+    .add_static_property("LYNX", make_function(&DefaultDestinations::LYNX,
+      return_value_policy<copy_const_reference>()))
+    .add_static_property("MATNLP", make_function(&DefaultDestinations::MATNLP,
+      return_value_policy<copy_const_reference>()))
+    .add_static_property("MATNMF", make_function(&DefaultDestinations::MATNMF,
+      return_value_policy<copy_const_reference>()))
+    .add_static_property("NEOE", make_function(&DefaultDestinations::NEOE,
+      return_value_policy<copy_const_reference>()))
+    .add_static_property("OMEGA", make_function(&DefaultDestinations::OMEGA,
+      return_value_policy<copy_const_reference>()))
+    .add_static_property("PURE", make_function(&DefaultDestinations::PURE,
+      return_value_policy<copy_const_reference>()))
     .add_static_property("TSX", make_function(&DefaultDestinations::TSX,
       return_value_policy<copy_const_reference>()));
 }
@@ -155,8 +189,32 @@ void Nexus::Python::ExportDefaultDestinations() {
 void Nexus::Python::ExportDefaultMarkets() {
   struct Dummy {};
   class_<Dummy, noncopyable>("default_markets", no_init)
+    .add_static_property("ASX", make_function(&DefaultMarkets::ASX))
+    .add_static_property("CXA", make_function(&DefaultMarkets::CXA))
+    .add_static_property("ASEX", make_function(&DefaultMarkets::ASEX))
+    .add_static_property("ARCX", make_function(&DefaultMarkets::ARCX))
+    .add_static_property("BATS", make_function(&DefaultMarkets::BATS))
+    .add_static_property("BATY", make_function(&DefaultMarkets::BATY))
+    .add_static_property("BOSX", make_function(&DefaultMarkets::BOSX))
+    .add_static_property("CBOE", make_function(&DefaultMarkets::CBOE))
+    .add_static_property("NSEX", make_function(&DefaultMarkets::NSEX))
+    .add_static_property("ADFX", make_function(&DefaultMarkets::ADFX))
+    .add_static_property("ISE", make_function(&DefaultMarkets::ISE))
+    .add_static_property("EDGA", make_function(&DefaultMarkets::EDGA))
+    .add_static_property("EDGX", make_function(&DefaultMarkets::EDGX))
+    .add_static_property("PHLX", make_function(&DefaultMarkets::PHLX))
+    .add_static_property("CHIC", make_function(&DefaultMarkets::CHIC))
+    .add_static_property("LYNX", make_function(&DefaultMarkets::LYNX))
+    .add_static_property("NASDAQ", make_function(&DefaultMarkets::NASDAQ))
+    .add_static_property("NYSE", make_function(&DefaultMarkets::NYSE))
+    .add_static_property("MATN", make_function(&DefaultMarkets::MATN))
+    .add_static_property("NEOE", make_function(&DefaultMarkets::NEOE))
+    .add_static_property("OMGA", make_function(&DefaultMarkets::OMGA))
+    .add_static_property("PURE", make_function(&DefaultMarkets::PURE))
     .add_static_property("TSX", make_function(&DefaultMarkets::TSX))
-    .add_static_property("TSXV", make_function(&DefaultMarkets::TSXV));
+    .add_static_property("TSXV", make_function(&DefaultMarkets::TSXV))
+    .add_static_property("XATS", make_function(&DefaultMarkets::XATS))
+    .add_static_property("XCX2", make_function(&DefaultMarkets::XCX2));
 }
 
 void Nexus::Python::ExportDestination() {
