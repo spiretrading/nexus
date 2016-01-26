@@ -369,7 +369,8 @@ void Nexus::Python::ExportMoney() {
     .def(int() * self)
     .def(double() * self)
     .def(self / int())
-    .def(self / double());
+    .def(self / double())
+    .add_property("representation", &Money::GetRepresentation);
   def("floor", &Floor);
   def("ceil", &Ceil);
   def("truncate", &Truncate);
