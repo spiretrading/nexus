@@ -31,6 +31,9 @@ namespace Python {
 
   //! Exports the PrimitiveOrder class.
   void ExportPrimitiveOrder();
+
+  //! Exports standard queries.
+  void ExportStandardQueries();
 }
 }
 

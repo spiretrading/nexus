@@ -5,10 +5,12 @@
 #include <Beam/Queries/ParameterExpression.hpp>
 #include <Beam/Queries/StandardFunctionExpressions.hpp>
 #include <Beam/Queries/StandardValues.hpp>
+#include <Beam/Routines/Routine.hpp>
 #include <boost/date_time/local_time/tz_database.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Nexus/Queries/StandardDataTypes.hpp"
 
@@ -73,6 +75,53 @@ namespace OrderExecutionService {
     dailyOrderSubmissionQuery.SetSnapshotLimit(
       Beam::Queries::SnapshotLimit::Unlimited());
     return dailyOrderSubmissionQuery;
+  }
+
+  //! Builds a query to retrieve Orders submitted to a specified market on
+  //! on a daily basis.
+  /*!
+    \param account The account to query.
+    \param startTime The first day to retrieve order submissions for.
+    \param endTime The last day to retrieve order submissions for.
+    \param marketDatabase The database containing Market info.
+    \param timeZoneDatabase The database of timezones.
+    \param orderExecutionClient The OrderExecutionClient to query.
+    \param queue The Queue to write to.
+  */
+  template<typename OrderExecutionClient>
+  void QueryDailyOrderSubmissions(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const boost::posix_time::ptime& startTime,
+      const boost::posix_time::ptime& endTime,
+      const MarketDatabase& marketDatabase,
+      const boost::local_time::tz_database& timeZoneDatabase,
+      OrderExecutionClient& orderExecutionClient,
+      const std::shared_ptr<Beam::QueueWriter<const Order*>>& queue) {
+    Beam::Routines::Spawn(
+      [=, &orderExecutionClient] {
+        for(auto& market : marketDatabase.GetEntries()) {
+          auto marketStartDate = MarketDateToUtc(market.m_code, startTime,
+            marketDatabase, timeZoneDatabase);
+          auto marketEndDate = MarketDateToUtc(market.m_code, endTime,
+            marketDatabase, timeZoneDatabase) + boost::gregorian::days(1);
+          auto snapshotQuery = BuildDailyOrderSubmissionQuery(market.m_code,
+            account, marketStartDate, marketEndDate, marketDatabase,
+            timeZoneDatabase);
+          auto snapshotQueue = std::make_shared<Beam::Queue<SequencedOrder>>();
+          orderExecutionClient.QueryOrderSubmissions(snapshotQuery,
+            snapshotQueue);
+          try {
+            while(true) {
+              auto value = snapshotQueue->Top();
+              snapshotQueue->Pop();
+              if(value.GetValue()->GetInfo().m_timestamp < marketEndDate) {
+                queue->Push(std::move(value.GetValue()));
+              }
+            }
+          } catch(const std::exception&) {}
+          queue->Break();
+        }
+      });
   }
 }
 }

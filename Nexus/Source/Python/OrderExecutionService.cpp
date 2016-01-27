@@ -106,6 +106,18 @@ namespace {
     auto baseClient = std::make_unique<Client>(sessionBuilder);
     return new PythonOrderExecutionClient(std::move(baseClient));
   }
+
+  void PythonQueryDailyOrderSubmissions(const DirectoryEntry& account,
+      const ptime& startTime, const ptime& endTime,
+      const MarketDatabase& marketDatabase,
+      const boost::local_time::tz_database& timeZoneDatabase,
+      PythonOrderExecutionClient* orderExecutionClient,
+      const std::shared_ptr<PythonQueueWriter>& queue) {
+    QueryDailyOrderSubmissions(account, startTime, endTime, marketDatabase,
+      timeZoneDatabase, static_cast<
+      WrapperOrderExecutionClient<unique_ptr<Client>>&>(*orderExecutionClient),
+      queue->GetSlot<const Order*>());
+  }
 }
 
 void Nexus::Python::ExportAccountQuery() {
@@ -113,7 +125,6 @@ void Nexus::Python::ExportAccountQuery() {
   class_<AccountQuery, bases<IndexedQuery<DirectoryEntry>, RangedQuery,
     SnapshotLimitedQuery, InterruptableQuery, FilteredQuery>>(
     "AccountQuery", init<>());
-  def("build_daily_order_submission_query", &BuildDailyOrderSubmissionQuery);
 }
 
 void Nexus::Python::ExportExecutionReport() {
@@ -201,6 +212,7 @@ void Nexus::Python::ExportOrderExecutionService() {
   ExportOrderInfo();
   ExportOrderRecord();
   ExportPrimitiveOrder();
+  ExportStandardQueries();
 }
 
 void Nexus::Python::ExportOrderFields() {
@@ -262,4 +274,9 @@ void Nexus::Python::ExportPrimitiveOrder() {
     .def("update", &PrimitiveOrder::Update);
   def("build_rejected_order", &BuildRejectedOrder);
   def("reject_cancel_request", &RejectCancelRequest);
+}
+
+void Nexus::Python::ExportStandardQueries() {
+  def("build_daily_order_submission_query", &BuildDailyOrderSubmissionQuery);
+  def("query_daily_order_submissions", &PythonQueryDailyOrderSubmissions);
 }
