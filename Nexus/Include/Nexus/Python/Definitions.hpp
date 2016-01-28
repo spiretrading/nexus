@@ -20,6 +20,9 @@ namespace Python {
   //! Exports the CurrencyPair class.
   void ExportCurrencyPair();
 
+  //! Exports the DefaultCountries namespace.
+  void ExportDefaultCountries();
+
   //! Exports the DefaultCurrencies namespace.
   void ExportDefaultCurrencies();
 
