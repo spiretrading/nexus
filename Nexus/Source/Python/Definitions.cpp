@@ -126,6 +126,16 @@ void Nexus::Python::ExportCurrency() {
     .def(vector_indexing_suite<vector<CurrencyDatabase::Entry>>());
 }
 
+void Nexus::Python::ExportDefaultCountries() {
+  struct Dummy {};
+  class_<Dummy, noncopyable>("default_countries", no_init)
+    .add_static_property("AU", make_function(&DefaultCountries::AU))
+    .add_static_property("BR", make_function(&DefaultCountries::BR))
+    .add_static_property("CA", make_function(&DefaultCountries::CA))
+    .add_static_property("CN", make_function(&DefaultCountries::CN))
+    .add_static_property("US", make_function(&DefaultCountries::US));
+}
+
 void Nexus::Python::ExportCurrencyPair() {
   class_<CurrencyPair>("CurrencyPair", init<>())
     .def(init<CurrencyId, CurrencyId>())
@@ -276,6 +286,7 @@ void Nexus::Python::ExportDefinitions() {
   ExportTag();
   ExportTimeAndSale();
   ExportTimeInForce();
+  ExportDefaultCountries();
   ExportDefaultCurrencies();
   ExportDefaultDestinations();
   ExportDefaultMarkets();

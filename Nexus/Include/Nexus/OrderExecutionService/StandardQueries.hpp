@@ -119,8 +119,8 @@ namespace OrderExecutionService {
               }
             }
           } catch(const std::exception&) {}
-          queue->Break();
         }
+        queue->Break();
       });
   }
 }
