@@ -100,7 +100,7 @@ void PureFeeHandlingTester::TestTsxDesignatedPassive() {
 void PureFeeHandlingTester::TestTsxSubDollarDesignatedActive() {
   auto feeTable = BuildFeeTable();
   auto expectedFee = LookupTsxListedFee(feeTable, LiquidityFlag::ACTIVE,
-    PureFeeTable::PriceClass::SUB_DOLLAR);
+    PureFeeTable::PriceClass::DESIGNATED);
   TestPerShareFeeCalculation(feeTable, 99 * Money::CENT, 100,
     LiquidityFlag::ACTIVE, std::bind(&CalculateFee, std::placeholders::_1,
     GetDesignatedSecurity(), std::placeholders::_2), expectedFee);
@@ -109,7 +109,7 @@ void PureFeeHandlingTester::TestTsxSubDollarDesignatedActive() {
 void PureFeeHandlingTester::TestTsxSubDollarDesignatedPassive() {
   auto feeTable = BuildFeeTable();
   auto expectedFee = LookupTsxListedFee(feeTable, LiquidityFlag::PASSIVE,
-    PureFeeTable::PriceClass::SUB_DOLLAR);
+    PureFeeTable::PriceClass::DESIGNATED);
   TestPerShareFeeCalculation(feeTable, 99 * Money::CENT, 100,
     LiquidityFlag::PASSIVE, std::bind(&CalculateFee, std::placeholders::_1,
     GetDesignatedSecurity(), std::placeholders::_2), expectedFee);

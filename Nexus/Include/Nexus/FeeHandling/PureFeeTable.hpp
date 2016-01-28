@@ -137,13 +137,13 @@ namespace Nexus {
       return executionReport.m_lastQuantity * feeTable.m_oddLot;
     }
     auto priceClass = [&] {
-      if(executionReport.m_lastPrice < 10 * Money::CENT) {
+      if(feeTable.m_designatedSecurities.find(security) !=
+          feeTable.m_designatedSecurities.end()) {
+        return PureFeeTable::PriceClass::DESIGNATED;
+      } else if(executionReport.m_lastPrice < 10 * Money::CENT) {
         return PureFeeTable::PriceClass::SUB_DIME;
       } else if(executionReport.m_lastPrice < Money::ONE) {
         return PureFeeTable::PriceClass::SUB_DOLLAR;
-      } else if(feeTable.m_designatedSecurities.find(security) !=
-          feeTable.m_designatedSecurities.end()) {
-        return PureFeeTable::PriceClass::DESIGNATED;
       } else {
         return PureFeeTable::PriceClass::DEFAULT;
       }
