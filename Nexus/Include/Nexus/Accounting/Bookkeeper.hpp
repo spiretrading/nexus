@@ -15,13 +15,13 @@ namespace Accounting {
     public:
 
       //! The type of Inventory to manage.
-      typedef InventoryType Inventory;
+      using Inventory = InventoryType;
 
       //! The index used to look up inventories.
-      typedef typename Inventory::Position::Index Index;
+      using Index = typename Inventory::Position::Index;
 
       //! The key used to lookup Inventories.
-      typedef typename Inventory::Position::Key Key;
+      using Key = typename Inventory::Position::Key;
   };
 }
 }

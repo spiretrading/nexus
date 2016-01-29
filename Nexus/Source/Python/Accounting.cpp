@@ -2,7 +2,9 @@
 #include <Beam/Python/BoostPython.hpp>
 #include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/PythonBindings.hpp>
+#include "Nexus/Accounting/Position.hpp"
 #include "Nexus/Accounting/PositionOrderBook.hpp"
+#include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -13,6 +15,17 @@ using namespace Nexus::Accounting;
 using namespace Nexus::Python;
 using namespace std;
 
+namespace {
+  template<typename IndexType>
+  void ExportKey(const char* name) {
+    class_<Accounting::Details::Key<IndexType>>(name, init<>())
+      .def(init<const IndexType&, CurrencyId>())
+      .def_readwrite("index", &Accounting::Details::Key<IndexType>::m_index)
+      .def_readwrite("currency",
+        &Accounting::Details::Key<IndexType>::m_currency);
+  }
+}
+
 void Nexus::Python::ExportAccounting() {
   string nestedName = extract<string>(scope().attr("__name__") + ".accounting");
   object nestedModule{handle<>(
@@ -20,6 +33,8 @@ void Nexus::Python::ExportAccounting() {
   scope().attr("accounting") = nestedModule;
   scope parent = nestedModule;
   ExportPositionOrderBook();
+  ExportPosition();
+  ExportTrueAverageBookkeeper();
 }
 
 void Nexus::Python::ExportPositionOrderBook() {
@@ -48,4 +63,31 @@ void Nexus::Python::ExportPositionOrderBook() {
       class_<vector<PositionOrderBook::PositionEntry>>("VectorPositionEntry")
         .def(vector_indexing_suite<vector<PositionOrderBook::PositionEntry>>());
   }
+}
+
+void Nexus::Python::ExportPosition() {
+  {
+    scope outer =
+      class_<Position<Security>>("Position", init<>())
+        .def(init<const Position<Security>::Key&>())
+        .def_readwrite("key", &Position<Security>::m_key)
+        .def_readwrite("quantity", &Position<Security>::m_quantity)
+        .def_readwrite("cost_basis", &Position<Security>::m_costBasis);
+      ExportKey<Security>("Key");
+  }
+  def("average_price", &GetAveragePrice<Security>);
+  def("side", &Accounting::GetSide<Security>);
+}
+
+void Nexus::Python::ExportTrueAverageBookkeeper() {
+  class_<TrueAverageBookkeeper<Inventory<Position<Security>>>>(
+      "TrueAverageBookkeeper", init<>())
+    .def("record_transaction", &TrueAverageBookkeeper<
+      Inventory<Position<Security>>>::RecordTransaction)
+    .def("get_inventory", &TrueAverageBookkeeper<
+      Inventory<Position<Security>>>::GetInventory,
+      return_value_policy<reference_existing_object>())
+    .def("get_total", &TrueAverageBookkeeper<
+      Inventory<Position<Security>>>::GetTotal,
+      return_value_policy<reference_existing_object>());
 }

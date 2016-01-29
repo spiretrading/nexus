@@ -10,6 +10,12 @@ namespace Python {
 
   //! Exports the PositionOrderBook class.
   void ExportPositionOrderBook();
+
+  //! Exports the Position<Security> class.
+  void ExportPosition();
+
+  //! Exports the TrueAverageBookkeeper class.
+  void ExportTrueAverageBookkeeper();
 }
 }
 
