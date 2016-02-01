@@ -29,6 +29,12 @@ namespace {
       .def_readwrite("currency",
         &Accounting::Details::Key<IndexType>::m_currency);
   }
+
+  Money PythonGetTotalProfitAndLoss(
+      const Portfolio<TrueAverageBookkeeper<Inventory<Position<Security>>>>&
+      portfolio, CurrencyId currency) {
+    return GetTotalProfitAndLoss(portfolio, currency);
+  }
 }
 
 void Nexus::Python::ExportAccounting() {
@@ -149,6 +155,5 @@ void Nexus::Python::ExportTrueAveragePortfolio() {
   def("get_total_profit_and_loss", static_cast<
     boost::optional<Money> (*)(const Inventory&, const SecurityValuation&)>(
     &GetTotalProfitAndLoss<Inventory::Position>));
-  def("get_total_profit_and_loss", static_cast<Money (*)(
-    const Portfolio&, CurrencyId)>(&GetTotalProfitAndLoss<Portfolio>));
+  def("get_total_profit_and_loss", &PythonGetTotalProfitAndLoss);
 }
