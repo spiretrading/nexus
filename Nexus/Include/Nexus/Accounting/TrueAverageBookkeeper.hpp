@@ -14,12 +14,12 @@ namespace Accounting {
   template<typename InventoryType>
   class TrueAverageBookkeeper {
     public:
-      typedef typename Bookkeeper<InventoryType>::Inventory Inventory;
-      typedef typename Bookkeeper<InventoryType>::Index Index;
-      typedef typename Bookkeeper<InventoryType>::Key Key;
+      using Inventory = typename Bookkeeper<InventoryType>::Inventory;
+      using Index = typename Bookkeeper<InventoryType>::Index;
+      using Key = typename Bookkeeper<InventoryType>::Key;
 
       //! Constructs a TrueAverageBookkeeper.
-      TrueAverageBookkeeper();
+      TrueAverageBookkeeper() = default;
 
       //! Copies a TrueAverageBookkeeper.
       /*!
@@ -47,13 +47,10 @@ namespace Accounting {
   };
 
   template<typename InventoryType>
-  TrueAverageBookkeeper<InventoryType>::TrueAverageBookkeeper() {}
-
-  template<typename InventoryType>
   TrueAverageBookkeeper<InventoryType>::TrueAverageBookkeeper(
       const TrueAverageBookkeeper& bookkeeper)
-      : m_inventories(bookkeeper.m_inventories),
-        m_totals(bookkeeper.m_totals) {}
+      : m_inventories{bookkeeper.m_inventories},
+        m_totals{bookkeeper.m_totals} {}
 
   template<typename InventoryType>
   void TrueAverageBookkeeper<InventoryType>::RecordTransaction(

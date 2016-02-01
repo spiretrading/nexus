@@ -15,7 +15,7 @@ namespace Accounting {
   struct Inventory {
 
     //! The type used to manage inventory Positions.
-    typedef PositionType Position;
+    using Position = PositionType;
 
     //! The currently held Position.
     Position m_position;
