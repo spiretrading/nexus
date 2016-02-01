@@ -14,6 +14,9 @@ namespace Python {
   //! Exports the Position<Security> class.
   void ExportPosition();
 
+  //! Exports the Inventory<Position<Security>> class.
+  void ExportSecurityInventory();
+
   //! Exports the TrueAverageBookkeeper class.
   void ExportTrueAverageBookkeeper();
 

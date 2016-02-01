@@ -39,6 +39,7 @@ void Nexus::Python::ExportAccounting() {
   scope parent = nestedModule;
   ExportPositionOrderBook();
   ExportPosition();
+  ExportSecurityInventory();
   ExportTrueAverageBookkeeper();
   ExportTrueAveragePortfolio();
 }
@@ -85,6 +86,17 @@ void Nexus::Python::ExportPosition() {
   def("side", &Accounting::GetSide<Security>);
 }
 
+void Nexus::Python::ExportSecurityInventory() {
+  using Inventory = Accounting::Inventory<Position<Security>>;
+  class_<Inventory>("SecurityInventory", init<>())
+    .def(init<const Position<Security>::Key&>())
+    .def_readwrite("position", &Inventory::m_position)
+    .def_readwrite("gross_profit_and_loss", &Inventory::m_grossProfitAndLoss)
+    .def_readwrite("fees", &Inventory::m_fees)
+    .def_readwrite("volume", &Inventory::m_volume)
+    .def_readwrite("transaction_count", &Inventory::m_transactionCount);
+}
+
 void Nexus::Python::ExportTrueAverageBookkeeper() {
   ExportPair<const TrueAverageBookkeeper<Inventory<Position<Security>>>::Key,
     TrueAverageBookkeeper<Inventory<Position<Security>>>::Inventory>();
@@ -110,12 +122,11 @@ void Nexus::Python::ExportTrueAverageBookkeeper() {
 }
 
 void Nexus::Python::ExportTrueAveragePortfolio() {
-  using Portfolio = Accounting::Portfolio<
-    TrueAverageBookkeeper<Inventory<Position<Security>>>>;
+  using Inventory = Accounting::Inventory<Position<Security>>;
+  using Portfolio = Accounting::Portfolio<TrueAverageBookkeeper<Inventory>>;
   {
     scope outer =
-      class_<Portfolio>(
-        "TrueAveragePortfolio", init<const MarketDatabase&>())
+      class_<Portfolio>("TrueAveragePortfolio", init<const MarketDatabase&>())
         .add_property("bookkeeper", make_function(&Portfolio::GetBookkeeper,
         return_value_policy<copy_const_reference>()))
         .add_property("security_entries", make_function(
@@ -131,4 +142,13 @@ void Nexus::Python::ExportTrueAveragePortfolio() {
         .def("update", static_cast<void (Portfolio::*)(const Security&, Money,
           Money)>(&Portfolio::Update));
   }
+  def("get_realized_profit_and_loss", &GetRealizedProfitAndLoss<
+    Inventory::Position>);
+  def("get_unrealized_profit_and_loss", &GetUnrealizedProfitAndLoss<
+    Inventory::Position>);
+  def("get_total_profit_and_loss", static_cast<
+    boost::optional<Money> (*)(const Inventory&, const SecurityValuation&)>(
+    &GetTotalProfitAndLoss<Inventory::Position>));
+  def("get_total_profit_and_loss", static_cast<Money (*)(
+    const Portfolio&, CurrencyId)>(&GetTotalProfitAndLoss<Portfolio>));
 }
