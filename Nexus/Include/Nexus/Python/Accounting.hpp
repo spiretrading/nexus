@@ -16,6 +16,9 @@ namespace Python {
 
   //! Exports the TrueAverageBookkeeper class.
   void ExportTrueAverageBookkeeper();
+
+  //! Exports the TrueAveragePortfolio class.
+  void ExportTrueAveragePortfolio();
 }
 }
 

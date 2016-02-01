@@ -4,6 +4,7 @@
 #include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/Pair.hpp>
 #include <Beam/Python/PythonBindings.hpp>
+#include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Accounting/Position.hpp"
 #include "Nexus/Accounting/PositionOrderBook.hpp"
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
@@ -15,6 +16,7 @@ using namespace boost::posix_time;
 using namespace boost::python;
 using namespace Nexus;
 using namespace Nexus::Accounting;
+using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Python;
 using namespace std;
 
@@ -38,6 +40,7 @@ void Nexus::Python::ExportAccounting() {
   ExportPositionOrderBook();
   ExportPosition();
   ExportTrueAverageBookkeeper();
+  ExportTrueAveragePortfolio();
 }
 
 void Nexus::Python::ExportPositionOrderBook() {
@@ -104,4 +107,28 @@ void Nexus::Python::ExportTrueAverageBookkeeper() {
     .def("get_total", &TrueAverageBookkeeper<
       Inventory<Position<Security>>>::GetTotal,
       return_value_policy<copy_const_reference>());
+}
+
+void Nexus::Python::ExportTrueAveragePortfolio() {
+  using Portfolio = Accounting::Portfolio<
+    TrueAverageBookkeeper<Inventory<Position<Security>>>>;
+  {
+    scope outer =
+      class_<Portfolio>(
+        "TrueAveragePortfolio", init<const MarketDatabase&>())
+        .add_property("bookkeeper", make_function(&Portfolio::GetBookkeeper,
+        return_value_policy<copy_const_reference>()))
+        .add_property("security_entries", make_function(
+          &Portfolio::GetSecurityEntries,
+          return_value_policy<copy_const_reference>()))
+        .add_property("unrealized_profit_and_losses", make_function(
+          &Portfolio::GetUnrealizedProfitAndLosses,
+          return_value_policy<copy_const_reference>()))
+        .def("update", static_cast<void (Portfolio::*)(const OrderFields&,
+          const ExecutionReport& executionReport)>(&Portfolio::Update))
+        .def("update_ask", &Portfolio::UpdateAsk)
+        .def("update_bid", &Portfolio::UpdateBid)
+        .def("update", static_cast<void (Portfolio::*)(const Security&, Money,
+          Money)>(&Portfolio::Update));
+  }
 }
