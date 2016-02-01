@@ -1,12 +1,15 @@
 #include "Nexus/Python/Accounting.hpp"
 #include <Beam/Python/BoostPython.hpp>
+#include <Beam/Python/Collections.hpp>
 #include <Beam/Python/GilRelease.hpp>
+#include <Beam/Python/Pair.hpp>
 #include <Beam/Python/PythonBindings.hpp>
 #include "Nexus/Accounting/Position.hpp"
 #include "Nexus/Accounting/PositionOrderBook.hpp"
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
 
 using namespace Beam;
+using namespace Beam::Python;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::python;
@@ -80,14 +83,25 @@ void Nexus::Python::ExportPosition() {
 }
 
 void Nexus::Python::ExportTrueAverageBookkeeper() {
+  ExportPair<const TrueAverageBookkeeper<Inventory<Position<Security>>>::Key,
+    TrueAverageBookkeeper<Inventory<Position<Security>>>::Inventory>();
+  ExportPair<const CurrencyId,
+    TrueAverageBookkeeper<Inventory<Position<Security>>>::Inventory>();
+  ExportView<std::pair<
+    const TrueAverageBookkeeper<Inventory<Position<Security>>>::Key,
+    TrueAverageBookkeeper<Inventory<Position<Security>>>::Inventory>>(
+    "KeyInventoryView");
+  ExportView<std::pair<const CurrencyId,
+    TrueAverageBookkeeper<Inventory<Position<Security>>>::Inventory>>(
+    "CurrencyInventoryView");
   class_<TrueAverageBookkeeper<Inventory<Position<Security>>>>(
       "TrueAverageBookkeeper", init<>())
     .def("record_transaction", &TrueAverageBookkeeper<
       Inventory<Position<Security>>>::RecordTransaction)
     .def("get_inventory", &TrueAverageBookkeeper<
       Inventory<Position<Security>>>::GetInventory,
-      return_value_policy<reference_existing_object>())
+      return_value_policy<copy_const_reference>())
     .def("get_total", &TrueAverageBookkeeper<
       Inventory<Position<Security>>>::GetTotal,
-      return_value_policy<reference_existing_object>());
+      return_value_policy<copy_const_reference>());
 }
