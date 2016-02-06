@@ -3,6 +3,7 @@ CALL %~dp0../../Applications/AdministrationServer/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/AsxItchMarketDataFeedClient/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/ChartingServer/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/ChiaMarketDataFeedClient/Build/Windows/run_cmake.bat
+CALL %~dp0../../Applications/ClientWebPortal/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/ComplianceServer/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/DefinitionsServer/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/EndOfSessionClient/Build/Windows/run_cmake.bat

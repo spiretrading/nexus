@@ -1,0 +1,10 @@
+---
+server:
+  interface: local_interface:80
+  addresses: [global_address:80, local_interface:80]
+
+service_locator:
+  address: local_interface:20000
+  username: web_portal_service
+  password: admin_password
+...
