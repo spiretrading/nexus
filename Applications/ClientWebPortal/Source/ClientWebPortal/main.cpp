@@ -5,10 +5,11 @@
 #include <Beam/Threading/TimerThreadPool.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
-#include <Beam/WebServices/HttpServer.hpp>
+#include <Beam/WebServices/HttpServletContainer.hpp>
 #include <tclap/CmdLine.h>
-#include "ClientWebPortal/Version.hpp"
 #include "ClientWebPortal/ClientWebPortal/ServiceClients.hpp"
+#include "ClientWebPortal/ClientWebPortal/ClientWebPortalServlet.hpp"
+#include "ClientWebPortal/Version.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;
@@ -24,7 +25,8 @@ using namespace std;
 using namespace TCLAP;
 
 namespace {
-  using ApplicationHttpServer = HttpServer<TcpServerSocket>;
+  using ClientWebPortalServletContainer = HttpServletContainer<
+    ClientWebPortalServlet, TcpServerSocket>;
 
   struct ServerConnectionInitializer {
     IpAddress m_interface;
@@ -99,8 +101,8 @@ int main(int argc, const char** argv) {
     cerr << "Error parsing section 'server': " << e.what() << endl;
     return -1;
   }
-  ApplicationHttpServer server{Initialize(
-    serverConnectionInitializer.m_interface, Ref(socketThreadPool))};
+  ClientWebPortalServletContainer server{Initialize(Ref(serviceClients)),
+    Initialize(serverConnectionInitializer.m_interface, Ref(socketThreadPool))};
   try {
     server.Open();
   } catch(const std::exception& e) {
