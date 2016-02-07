@@ -1,7 +1,7 @@
 file(GLOB header_files
-  ./../../../Include/ClientWebPortal/*.hpp)
+  ./../../../Include/ClientWebPortal/ClientWebPortal/*.hpp)
 file(GLOB source_files
-  ./../../../Source/*.cpp)
+  ./../../../Source/ClientWebPortal/*.cpp)
 
 add_executable(ClientWebPortal ${header_files} ${source_files})
 

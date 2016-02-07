@@ -1,20 +1,25 @@
 #include <fstream>
 #include <iostream>
 #include <Beam/Network/TcpServerSocket.hpp>
+#include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/Threading/TimerThreadPool.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <Beam/WebServices/HttpServer.hpp>
 #include <tclap/CmdLine.h>
 #include "ClientWebPortal/Version.hpp"
+#include "ClientWebPortal/ClientWebPortal/ServiceClients.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;
 using namespace Beam::Network;
+using namespace Beam::ServiceLocator;
 using namespace Beam::Threading;
 using namespace Beam::WebServices;
 using namespace boost;
 using namespace boost::posix_time;
+using namespace Nexus;
+using namespace Nexus::ClientWebPortal;
 using namespace std;
 using namespace TCLAP;
 
@@ -64,6 +69,29 @@ int main(int argc, const char** argv) {
       (e.mark.column + 1) << ": " << e.msg << endl;
     return -1;
   }
+  SocketThreadPool socketThreadPool;
+  TimerThreadPool timerThreadPool;
+  ServiceLocatorClientConfig serviceLocatorClientConfig;
+  try {
+    serviceLocatorClientConfig = ServiceLocatorClientConfig::Parse(
+      GetNode(config, "service_locator"));
+  } catch(const std::exception& e) {
+    cerr << "Error parsing section 'service_locator': " << e.what() << endl;
+    return -1;
+  }
+  ApplicationServiceLocatorClient serviceLocatorClient;
+  try {
+    serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_address,
+      Ref(socketThreadPool), Ref(timerThreadPool));
+    serviceLocatorClient->SetCredentials(serviceLocatorClientConfig.m_username,
+      serviceLocatorClientConfig.m_password);
+    serviceLocatorClient->Open();
+  } catch(const std::exception& e) {
+    cerr << "Error logging in: " << e.what() << endl;
+    return -1;
+  }
+  ServiceClients serviceClients{Ref(serviceLocatorClient),
+    Ref(socketThreadPool), Ref(timerThreadPool)};
   ServerConnectionInitializer serverConnectionInitializer;
   try {
     serverConnectionInitializer.Initialize(GetNode(config, "server"));
@@ -71,8 +99,6 @@ int main(int argc, const char** argv) {
     cerr << "Error parsing section 'server': " << e.what() << endl;
     return -1;
   }
-  SocketThreadPool socketThreadPool;
-  TimerThreadPool timerThreadPool;
   ApplicationHttpServer server{Initialize(
     serverConnectionInitializer.m_interface, Ref(socketThreadPool))};
   try {
