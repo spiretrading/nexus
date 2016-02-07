@@ -75,6 +75,14 @@ HttpServerResponse ClientWebPortalServlet::OnServeFile(
 
 HttpServerResponse ClientWebPortalServlet::OnLogin(
     const HttpServerRequest& request) {
+  HttpServerResponse response;
+/*
+  auto session = m_sessions.Find(request);
+  if(session.is_initialized()) {
+    response.SetStatusCode(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
+*/
   auto parameters = boost::get<JsonObject>(
     Parse<JsonParser>(request.GetBody()));
   auto& username = boost::get<string>(parameters["username"]);
@@ -82,7 +90,7 @@ HttpServerResponse ClientWebPortalServlet::OnLogin(
   auto account =
     m_serviceClients->GetServiceLocatorClient().AuthenticateAccount(username,
     password);
-  HttpServerResponse response{HttpStatusCode::OK};
   response.SetBody(Encode<SharedBuffer>(m_sender, account));
+//  m_sessions.Create(request, Store(response));
   return response;
 }
