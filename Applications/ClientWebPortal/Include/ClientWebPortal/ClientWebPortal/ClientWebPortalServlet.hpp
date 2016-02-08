@@ -5,8 +5,10 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
 #include <Beam/Pointers/Ref.hpp>
+#include <Beam/WebServices/AuthenticatedSession.hpp>
 #include <Beam/WebServices/FileStore.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
+#include <Beam/WebServices/SessionStore.hpp>
 #include <boost/noncopyable.hpp>
 #include "ClientWebPortal/ClientWebPortal/ClientWebPortal.hpp"
 
@@ -37,11 +39,15 @@ namespace ClientWebPortal {
     private:
       Beam::Serialization::JsonSender<Beam::IO::SharedBuffer> m_sender;
       Beam::WebServices::FileStore m_fileStore;
+      Beam::WebServices::SessionStore<Beam::WebServices::AuthenticatedSession>
+        m_sessions;
       ServiceClients* m_serviceClients;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
       Beam::WebServices::HttpServerResponse OnIndex(
+        const Beam::WebServices::HttpServerRequest& request);
+      Beam::WebServices::HttpServerResponse OnDashboard(
         const Beam::WebServices::HttpServerRequest& request);
       Beam::WebServices::HttpServerResponse OnServeFile(
         const Beam::WebServices::HttpServerRequest& request);
