@@ -74,6 +74,11 @@ HttpServerResponse ClientWebPortalServlet::OnIndex(
     const HttpServerRequest& request) {
   HttpServerResponse response;
   auto session = m_sessions.Get(request, Store(response));
+  if(session->IsLoggedIn()) {
+    response.SetHeader({"Location", "/dashboard"});
+    response.SetStatusCode(HttpStatusCode::FOUND);
+    return response;
+  }
   m_fileStore.Serve("index.html", Store(response));
   return response;
 }
