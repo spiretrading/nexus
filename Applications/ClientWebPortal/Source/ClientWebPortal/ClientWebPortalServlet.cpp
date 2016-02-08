@@ -38,6 +38,8 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
     bind(&ClientWebPortalServlet::OnIndex, this, std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, ""),
     bind(&ClientWebPortalServlet::OnIndex, this, std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::GET, "/index.html"),
+    bind(&ClientWebPortalServlet::OnIndex, this, std::placeholders::_1));
   slots.emplace_back(MatchAny(HttpMethod::GET),
     bind(&ClientWebPortalServlet::OnServeFile, this, std::placeholders::_1));
   return slots;
