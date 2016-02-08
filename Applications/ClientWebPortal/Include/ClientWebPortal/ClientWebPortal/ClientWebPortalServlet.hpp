@@ -53,6 +53,8 @@ namespace ClientWebPortal {
         const Beam::WebServices::HttpServerRequest& request);
       Beam::WebServices::HttpServerResponse OnLogin(
         const Beam::WebServices::HttpServerRequest& request);
+      Beam::WebServices::HttpServerResponse OnLogout(
+        const Beam::WebServices::HttpServerRequest& request);
   };
 }
 }

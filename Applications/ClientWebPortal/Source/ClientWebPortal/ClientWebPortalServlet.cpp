@@ -32,6 +32,9 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
   slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/login"),
     bind(&ClientWebPortalServlet::OnLogin, this, std::placeholders::_1));
+  slots.emplace_back(
+    MatchesPath(HttpMethod::POST, "/api/service_locator/logout"),
+    bind(&ClientWebPortalServlet::OnLogout, this, std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, "/dashboard"),
     bind(&ClientWebPortalServlet::OnDashboard, this, std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, "/"),
@@ -129,5 +132,17 @@ HttpServerResponse ClientWebPortalServlet::OnLogin(
   }
   response.SetBody(Encode<SharedBuffer>(m_sender, account));
   session->SetAccount(account);
+  return response;
+}
+
+HttpServerResponse ClientWebPortalServlet::OnLogout(
+    const HttpServerRequest& request) {
+  HttpServerResponse response;
+  auto session = m_sessions.Find(request);
+  if(session == nullptr || !session->IsLoggedIn()) {
+    response.SetStatusCode(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
+  m_sessions.End(*session);
   return response;
 }
