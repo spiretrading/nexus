@@ -72,7 +72,7 @@ void CondensedCanvasWidget::Focus() {
   if(m_topLeaf == nullptr) {
     return;
   }
-  auto coordinate = GetCoordinate(*m_topLeaf);
+  auto coordinate = m_nodeToViewCoordinates.at(m_topLeaf);
   auto cell = static_cast<CondensedCanvasCell*>(static_cast<QWidgetItem*>(
     m_layout->itemAtPosition(coordinate.m_row, coordinate.m_column))->widget());
   cell->setFocus();
@@ -138,43 +138,20 @@ vector<const CanvasNode*> CondensedCanvasWidget::GetRoots() const {
 
 optional<const CanvasNode&> CondensedCanvasWidget::GetNode(
     const Coordinate& coordinate) const {
-  auto item = m_layout->itemAtPosition(coordinate.m_row, coordinate.m_column);
-  if(dynamic_cast<QWidgetItem*>(item) == nullptr) {
+  auto node = m_modelCoordinatesToNode.find(coordinate);
+  if(node == m_modelCoordinatesToNode.end()) {
     return none;
   }
-  auto widget = static_cast<QWidgetItem*>(item)->widget();
-  if(dynamic_cast<CondensedCanvasCell*>(widget) == nullptr) {
-    return none;
-  }
-  auto cell = static_cast<CondensedCanvasCell*>(widget);
-  return cell->GetNode();
+  return *node->second;
 }
 
 CanvasNodeModel::Coordinate CondensedCanvasWidget::GetCoordinate(
     const CanvasNode& node) const {
-  if(&node == m_node.get()) {
-    return CanvasNodeModel::Coordinate(0, 0);
+  auto coordinate = m_nodeToModelCoordinates.find(&node);
+  if(coordinate == m_nodeToModelCoordinates.end()) {
+    BEAM_ASSERT_MESSAGE(false, "Node not found.");
   }
-  for(auto i = 0; i < m_layout->count(); ++i) {
-    auto item = m_layout->itemAt(i);
-    if(dynamic_cast<QWidgetItem*>(item) == nullptr) {
-      continue;
-    }
-    auto widget = static_cast<QWidgetItem*>(item)->widget();
-    if(dynamic_cast<CondensedCanvasCell*>(widget) == nullptr) {
-      continue;
-    }
-    auto cell = static_cast<CondensedCanvasCell*>(widget);
-    if(&node == &cell->GetNode()) {
-      int row;
-      int column;
-      int rowSpan;
-      int columnSpan;
-      m_layout->getItemPosition(i, &row, &column, &rowSpan, &columnSpan);
-      return Coordinate(row, column);
-    }
-  }
-  BEAM_ASSERT_MESSAGE(false, "Node not found.");
+  return coordinate->second;
 }
 
 optional<const CanvasNode&> CondensedCanvasWidget::GetCurrentNode() const {
@@ -185,21 +162,35 @@ optional<const CanvasNode&> CondensedCanvasWidget::GetCurrentNode() const {
 }
 
 void CondensedCanvasWidget::SetCurrent(const Coordinate& coordinate) {
+  auto node = m_modelCoordinatesToNode.find(coordinate);
+  if(node == m_modelCoordinatesToNode.end()) {
+    return;
+  }
+  auto viewCoordinate = m_nodeToViewCoordinates.find(node->second);
+  if(viewCoordinate == m_nodeToViewCoordinates.end()) {
+    return;
+  }
   auto cell = static_cast<CondensedCanvasCell*>(static_cast<QWidgetItem*>(
-    m_layout->itemAtPosition(coordinate.m_row, coordinate.m_column))->widget());
+    m_layout->itemAtPosition(
+    viewCoordinate->second.m_row, viewCoordinate->second.m_column))->widget());
   cell->setFocus();
   m_currentNode = &cell->GetNode();
 }
 
 const CanvasNode& CondensedCanvasWidget::Add(const Coordinate& coordinate,
     const CanvasNode& node) {
+  assert(m_node == nullptr);
   assert(coordinate.m_row == 0);
   assert(coordinate.m_column == 0);
+  Coordinate viewCoordinates{0, 0};
+  Coordinate modelCoordinates{0, 0};
   m_node = CanvasNode::Clone(node);
   vector<const CanvasNode*> leaves = GetLeaves(*m_node);
   if(leaves.empty()) {
     BOOST_THROW_EXCEPTION(CanvasNodeNotVisibleException());
   }
+  m_modelCoordinatesToNode[modelCoordinates] = m_node.get();
+  m_nodeToModelCoordinates[m_node.get()] = modelCoordinates;
   m_topLeaf = leaves.front();
   m_group->setTitle(QString::fromStdString(m_name));
   optional<const CanvasNode&> parent;
@@ -220,6 +211,8 @@ const CanvasNode& CondensedCanvasWidget::Add(const Coordinate& coordinate,
       }
       columnCount = 0;
       rowCount += 3;
+      modelCoordinates.m_column = 0;
+      ++modelCoordinates.m_row;
       parent = (*i)->GetParent();
       childIterator = parent->GetChildren().begin();
       if(hasLabel) {
@@ -242,6 +235,11 @@ const CanvasNode& CondensedCanvasWidget::Add(const Coordinate& coordinate,
     sizePolicy.setHeightForWidth(cellWidget->sizePolicy().hasHeightForWidth());
     cellWidget->setSizePolicy(sizePolicy);
     m_layout->addWidget(cellWidget, rowCount + 2, columnCount);
+    m_nodeToViewCoordinates[*i] = Coordinate{rowCount + 2, columnCount};
+    m_viewCoordinatesToNode[Coordinate{rowCount + 2, columnCount}] = *i;
+    m_nodeToModelCoordinates[*i] = modelCoordinates;
+    m_modelCoordinatesToNode[modelCoordinates] = *i;
+    ++modelCoordinates.m_column;
     ++columnCount;
   }
   if(columnCount > maxColumns) {
@@ -262,14 +260,21 @@ void CondensedCanvasWidget::Remove(const Coordinate& coordinate) {
   m_currentNode = nullptr;
   QLayoutItem* child;
   while((child = m_layout->takeAt(0)) != nullptr) {
-    if(child->widget() != nullptr) {
-      child->widget()->hide();
+    auto widget = child->widget();
+    if(widget != nullptr) {
+      widget->hide();
+      widget->setParent(nullptr);
+      widget->deleteLater();
     }
     delete child;
   }
   m_group->setTitle("");
   m_node.reset();
   m_topLeaf = nullptr;
+  m_viewCoordinatesToNode.clear();
+  m_nodeToViewCoordinates.clear();
+  m_nodeToModelCoordinates.clear();
+  m_modelCoordinatesToNode.clear();
 }
 
 void CondensedCanvasWidget::focusInEvent(QFocusEvent* event) {

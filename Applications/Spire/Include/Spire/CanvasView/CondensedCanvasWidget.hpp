@@ -1,5 +1,6 @@
 #ifndef SPIRE_CONDENSEDCANVASWIDGET_HPP
 #define SPIRE_CONDENSEDCANVASWIDGET_HPP
+#include <map>
 #include <Beam/Pointers/Ref.hpp>
 #include <QWidget>
 #include "Spire/CanvasView/CanvasNodeModel.hpp"
@@ -66,6 +67,10 @@ namespace Spire {
       std::unique_ptr<CanvasNode> m_node;
       const CanvasNode* m_topLeaf;
       const CanvasNode* m_currentNode;
+      std::map<const CanvasNode*, Coordinate> m_nodeToModelCoordinates;
+      std::map<Coordinate, const CanvasNode*> m_modelCoordinatesToNode;
+      std::map<const CanvasNode*, Coordinate> m_nodeToViewCoordinates;
+      std::map<Coordinate, const CanvasNode*> m_viewCoordinatesToNode;
   };
 }
 
