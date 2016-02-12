@@ -58,6 +58,4 @@ wget http://requirejs.org/docs/release/2.1.22/minified/require.js
 cd ..
 :end_requirejs_setup
 
-npm install babel-cli babel-preset-es2015 babel-preset-react
-
 ENDLOCAL

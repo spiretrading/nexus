@@ -1,0 +1,7 @@
+{
+  "name": "ClientWebPortal",
+  "version": "1.0.0",
+  "babel": {
+    "presets": ["react", "es2015"]
+  }
+}
