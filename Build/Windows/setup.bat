@@ -58,4 +58,6 @@ wget http://requirejs.org/docs/release/2.1.22/minified/require.js
 cd ..
 :end_requirejs_setup
 
+CALL %~dp0../../Applications/ClientWebPortal/Build/Windows/setup.bat
+
 ENDLOCAL
