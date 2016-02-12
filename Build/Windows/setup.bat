@@ -43,4 +43,21 @@ cd ..
 rm sqlite-amalgamation-3080803.zip
 :end_sqlite_setup
 
+if exist react-0.14.7 goto end_react_setup
+mkdir react-0.14.7
+cd react-0.14.7
+wget https://fb.me/react-0.14.7.js --no-check-certificate -O react-0.14.7.js
+wget https://fb.me/react-dom-0.14.7.js --no-check-certificate -O react-dom-0.14.7.js
+cd ..
+:end_react_setup
+  
+if exist requirejs-2.1.22 goto end_requirejs_setup
+mkdir requirejs-2.1.22
+cd requirejs-2.1.22
+wget http://requirejs.org/docs/release/2.1.22/minified/require.js
+cd ..
+:end_requirejs_setup
+
+npm install babel-cli babel-preset-es2015 babel-preset-react
+
 ENDLOCAL

@@ -20,7 +20,7 @@ using namespace std;
 
 ClientWebPortalServlet::ClientWebPortalServlet(
     RefType<ServiceClients> serviceClients)
-    : m_fileStore{"files"},
+    : m_fileStore{"webapp"},
       m_serviceClients{serviceClients.Get()} {}
 
 ClientWebPortalServlet::~ClientWebPortalServlet() {
