@@ -1,32 +1,14 @@
+<!DOCTYPE html>
 <html>
-<meta http-equiv="Cache-Control" content="no-store" />
-<head>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
-  <script>
-    function formToJson(selector) {
-      var ary = $(selector).serializeArray();
-      var obj = {};
-      for(var a = 0; a < ary.length; a++) {
-        obj[ary[a].name] = ary[a].value;
-      }
-      return obj;
-    }
-
-    function submitLogin() {
-      var data = JSON.stringify(formToJson(document.getElementById("login")));
-      var request = new XMLHttpRequest();
-      request.open("POST", "/api/service_locator/login", false);
-      request.withCredentials = true;
-      request.send(data);
-      window.location.href = '/dashboard';
-    }
-  </script>
-</head>
-<form id="login">
-  Username:<br>
-  <input name="username" type="text"><br>
-  Password:<br>
-  <input name="password" type="password"><br>
-  <button type="button" onclick="submitLogin()">Submit</button>
-</form>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Spire</title>
+    <script src="third-party/react.js"></script>
+    <script src="third-party/react-dom.js"></script>
+    <script src="third-party/require.js"></script>
+  </head>
+  <body>
+    <div id="example"></div>
+    <script src="login.js"></script>
+  </body>
 </html>
