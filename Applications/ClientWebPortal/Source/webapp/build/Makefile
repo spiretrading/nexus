@@ -1,4 +1,4 @@
-BABEL:=node ../node_modules/babel-cli/bin/babel.js
+BABEL:=nodejs ../node_modules/babel-cli/bin/babel.js
 BABEL_FLAGS:=
 INTERMEDIATE_DIR:=output
 DEPLOYMENT_DIR:=../../../Application/webapp
