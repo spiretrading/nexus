@@ -1,4 +1,10 @@
-BABEL:=nodejs ../node_modules/babel-cli/bin/babel.js
+UNAME:=$(shell uname)
+ifeq ($(UNAME), windows32)
+  NODEJS:=node
+else
+  NODEJS:=nodejs
+endif
+BABEL:=$(NODEJS) ../node_modules/babel-cli/bin/babel.js
 BABEL_FLAGS:=
 INTERMEDIATE_DIR:=output
 DEPLOYMENT_DIR:=../../../Application/webapp
