@@ -1,25 +1,37 @@
 UNAME:=$(shell uname)
+MKDIR:=mkdir
+RM:=rm -rf
+CP:=cp
 ifeq ($(UNAME), windows32)
-  NODEJS:=node
+	NODEJS:=node
 else
-  NODEJS:=nodejs
+	NODEJS:=nodejs
 endif
 BABEL:=$(NODEJS) ../node_modules/babel-cli/bin/babel.js
 BABEL_FLAGS:=
+DIRS:=.
 INTERMEDIATE_DIR:=output
 DEPLOYMENT_DIR:=../../../Application/webapp
-JSX_FILES:=$(wildcard ../*.jsx)
-JS_FILES:=$(addprefix $(INTERMEDIATE_DIR)/, $(notdir $(JSX_FILES:.jsx=.js)))
+JSX_FILES:=$(foreach dir, $(DIRS), $(wildcard ../$(dir)/*.jsx))
+_JS_FILES:=$(JSX_FILES:.jsx=.js)
+JS_FILES:=$(addprefix $(INTERMEDIATE_DIR)/, $(_JS_FILES:../%=%))
 
-all: $(INTERMEDIATE_DIR) $(JS_FILES)
-	cp $(INTERMEDIATE_DIR)/*.js $(DEPLOYMENT_DIR)
+ifeq ($(UNAME), windows32)
+	canon_path=$(subst /,\,$1)
+else
+	canon_path=$1
+endif
 
-$(INTERMEDIATE_DIR):
-	mkdir $(INTERMEDIATE_DIR)
+target_name=$(1:output/%=%)
+
+all: $(JS_FILES)
+	$(foreach file,$(JS_FILES),$(shell $(MKDIR) $(call dir,$(call canon_path,$(DEPLOYMENT_DIR)/$(call target_name,$(file))))))
+	$(foreach file,$(JS_FILES),$(shell $(CP) $(file) $(call canon_path,$(DEPLOYMENT_DIR)/$(call target_name,$(file)))))
 
 $(INTERMEDIATE_DIR)/%.js: ../%.jsx
+	$(MKDIR) $(call canon_path,$(@D))
 	$(BABEL) $< $(BABEL_FLAGS) --out-file $@
 
 clean:
-	rm -rf $(INTERMEDIATE_DIR)
-	rm $(DEPLOYMENT_DIR)/*.js
+	$(RM) $(INTERMEDIATE_DIR)
+	$(foreach file,$(JS_FILES),$(shell $(RM) $(call canon_path,$(DEPLOYMENT_DIR)/$(call target_name,$(file)))))
