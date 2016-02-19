@@ -1,11 +1,12 @@
 UNAME:=$(shell uname)
-MKDIR:=mkdir
 RM:=rm -rf
 CP:=cp
 ifeq ($(UNAME), windows32)
 	NODEJS:=node
+	MKDIR:=mkdir
 else
 	NODEJS:=nodejs
+	MKDIR:=mkdir -p
 endif
 BABEL:=$(NODEJS) ../node_modules/babel-cli/bin/babel.js
 BABEL_FLAGS:=
