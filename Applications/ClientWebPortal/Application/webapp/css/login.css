@@ -1,6 +1,128 @@
 body {
   background-color: #2CA1DB;
-  float: left;
-  margin: 3px;
+  font-family: Roboto, sans-serif;
+  text-align: center;
   color: #FFFFFF;
+  opacity: 1;
+  font-weight: 300;
+  margin: 0;
+  padding: 0;
 }
+/* Cross Browser Configurations */
+body ::-webkit-input-placeholder {
+  /* WebKit browsers */
+  font-family: Roboto, sans-serif;
+  color: white;
+  font-weight: 300;
+  margin: 0;
+  padding: 0;
+}
+
+body :-moz-placeholder {
+  /* Mozilla Firefox 4 to 18 */
+  font-family: Roboto, sans-serif;
+  color: white;
+  opacity: 1;
+  font-weight: 300;
+  margin: 0;
+  padding: 0;
+}
+
+body ::-moz-placeholder {
+  /* Mozilla Firefox 19+ */
+  font-family: Roboto, sans-serif;
+  color: white;
+  opacity: 1;
+  font-weight: 300;
+  margin: 0;
+  padding: 0;
+}
+
+body :-ms-input-placeholder {
+  /* Internet Explorer 10+ */
+  font-family: Roboto, sans-serif;
+  color: white;
+  font-weight: 300;
+  margin: 0;
+  padding: 0;
+}
+
+#container {
+  position: relative;
+  width: 100%;
+}
+
+.loginPage {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 130px;
+  max-width: 300px;
+  width: 100%;
+  height: 330px;
+  overflow: hidden;
+}
+
+#logo {
+  height: 45px;
+  margin-bottom: 65px;
+}
+
+.login-input {
+  background-color: #2CA1DB;
+  color: #FFFFFF;
+  font-family: Roboto, sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  height: 30px;
+  width: 100%;
+  outline: none;
+  border: none;
+  text-align: center;
+  bottom: 8px;
+  border-bottom: 1px solid #FFFFFF;
+}
+
+#login-form {
+  margin-left: 0px;
+  padding-left: 0px; 
+}
+
+#username {
+  margin-bottom: 15px;
+  padding: 0px;
+}
+
+#password {
+  margin-bottom: 30px;
+  padding: 0px;
+}
+
+#login-submit {
+  color: #2CA1DB;
+  background-color: #FFFFFF;
+  height: 55px;
+  width: 100%;
+  margin-bottom: 39px;
+  border: none;
+  padding: 0px;
+  font-family: Roboto, sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.errorMessages {
+  border: none;
+  padding: 0px;
+  color: #FFFFFF;
+  font-family: Roboto, sans-serif;
+  font-size: 12px;
+  font-weight: 300;
+  width: 100%;
+  display: block;
+  text-align: center;
+  margin: auto;
+  height: 20px;
+  padding: 0px;
+}
+
