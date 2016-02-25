@@ -64,15 +64,12 @@ namespace Nexus {
       //! Trade on an ETF.
       ETF = 0,
 
-      //! Trade on an interlisted symbol.
-      INTERLISTED,
-
       //! Odd lot.
       ODD_LOT
     };
 
     //! The number of Categories enumerated.
-    static const std::size_t CATEGORY_COUNT = 3;
+    static const std::size_t CATEGORY_COUNT = 2;
 
     /*! \enum Classification
         \brief Enumerates various classifications for a Security.
@@ -86,14 +83,11 @@ namespace Nexus {
       DEFAULT = 0,
 
       //! An ETF.
-      ETF,
-
-      //! An interlisted symbol.
-      INTERLISTED
+      ETF
     };
 
     //! The number of Classifications enumerated.
-    static const std::size_t CLASSIFICATION_COUNT = 3;
+    static const std::size_t CLASSIFICATION_COUNT = 2;
 
     //! The general fee table.
     std::array<std::array<Money, GENERAL_INDEX_COUNT>, PRICE_CLASS_COUNT>
@@ -199,11 +193,9 @@ namespace Nexus {
           return MatnFeeTable::Category::ODD_LOT;
         } else if(classification == MatnFeeTable::Classification::ETF) {
           return MatnFeeTable::Category::ETF;
-        } else if(classification == MatnFeeTable::Classification::INTERLISTED) {
-          return MatnFeeTable::Category::INTERLISTED;
         } else {
           std::cout << "Unknown trade category [MATN].\n";
-          return MatnFeeTable::Category::INTERLISTED;
+          return MatnFeeTable::Category::ETF;
         }
       }();
       auto fee = LookupFee(feeTable, liquidityFlag, category);
