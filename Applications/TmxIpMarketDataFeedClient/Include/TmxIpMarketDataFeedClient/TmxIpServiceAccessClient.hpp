@@ -383,6 +383,8 @@ namespace MarketDataService {
           packet.m_header.m_sequenceNumber > endSequenceNumber) {
         continue;
       }
+      std::cout << "Recovered: " << packet.m_header.m_sequenceNumber <<
+        std::endl;
       AddPendingBuffer(retransmissionBuffer, packet.m_header.m_sequenceNumber);
     }
   }
