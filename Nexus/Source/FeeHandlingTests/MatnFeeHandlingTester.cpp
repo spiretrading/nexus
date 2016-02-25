@@ -159,26 +159,6 @@ void MatnFeeHandlingTester::TestPassiveEtfTrade() {
     MatnFeeTable::Classification::ETF, std::placeholders::_2), expectedFee);
 }
 
-void MatnFeeHandlingTester::TestActiveInterlistedTrade() {
-  auto feeTable = BuildFeeTable();
-  auto expectedFee = LookupFee(feeTable, LiquidityFlag::ACTIVE,
-    MatnFeeTable::Category::INTERLISTED);
-  TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::ACTIVE,
-    std::bind(&CalculateFee, std::placeholders::_1,
-    MatnFeeTable::Classification::INTERLISTED, std::placeholders::_2),
-    expectedFee);
-}
-
-void MatnFeeHandlingTester::TestPassiveInterlistedTrade() {
-  auto feeTable = BuildFeeTable();
-  auto expectedFee = LookupFee(feeTable, LiquidityFlag::PASSIVE,
-    MatnFeeTable::Category::INTERLISTED);
-  TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::PASSIVE,
-    std::bind(&CalculateFee, std::placeholders::_1,
-    MatnFeeTable::Classification::INTERLISTED, std::placeholders::_2),
-    expectedFee);
-}
-
 void MatnFeeHandlingTester::TestActiveOddLotTrade() {
   auto feeTable = BuildFeeTable();
   auto expectedFee = LookupFee(feeTable, LiquidityFlag::ACTIVE,
@@ -215,26 +195,6 @@ void MatnFeeHandlingTester::TestPassiveOddLotEtf() {
     MatnFeeTable::Classification::ETF, std::placeholders::_2), expectedFee);
 }
 
-void MatnFeeHandlingTester::TestActiveInterlistedOddLot() {
-  auto feeTable = BuildFeeTable();
-  auto expectedFee = LookupFee(feeTable, LiquidityFlag::ACTIVE,
-    MatnFeeTable::Category::ODD_LOT);
-  TestPerShareFeeCalculation(feeTable, Money::ONE, 50, LiquidityFlag::ACTIVE,
-    std::bind(&CalculateFee, std::placeholders::_1,
-    MatnFeeTable::Classification::INTERLISTED, std::placeholders::_2),
-    expectedFee);
-}
-
-void MatnFeeHandlingTester::TestPassiveInterlistedOddLot() {
-  auto feeTable = BuildFeeTable();
-  auto expectedFee = LookupFee(feeTable, LiquidityFlag::PASSIVE,
-    MatnFeeTable::Category::ODD_LOT);
-  TestPerShareFeeCalculation(feeTable, Money::ONE, 50, LiquidityFlag::PASSIVE,
-    std::bind(&CalculateFee, std::placeholders::_1,
-    MatnFeeTable::Classification::INTERLISTED, std::placeholders::_2),
-    expectedFee);
-}
-
 void MatnFeeHandlingTester::TestUnknownLiquidityFlag() {
   auto feeTable = BuildFeeTable();
   {
@@ -269,9 +229,9 @@ void MatnFeeHandlingTester::TestUnknownLiquidityFlag() {
     executionReport.m_lastQuantity = 100;
     executionReport.m_liquidityFlag = "PA";
     auto calculatedFee = CalculateFee(feeTable,
-      MatnFeeTable::Classification::INTERLISTED, executionReport);
+      MatnFeeTable::Classification::ETF, executionReport);
     auto expectedFee = executionReport.m_lastQuantity * LookupFee(feeTable,
-      LiquidityFlag::ACTIVE, MatnFeeTable::Category::INTERLISTED);
+      LiquidityFlag::ACTIVE, MatnFeeTable::Category::ETF);
     CPPUNIT_ASSERT(calculatedFee == expectedFee);
   }
 }

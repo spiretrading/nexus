@@ -43,12 +43,6 @@ namespace Tests {
       //! Tests a passive ETF trade.
       void TestPassiveEtfTrade();
 
-      //! Tests an active interlisted trade.
-      void TestActiveInterlistedTrade();
-
-      //! Tests a passive interlisted trade.
-      void TestPassiveInterlistedTrade();
-
       //! Tests an active odd-lot trade.
       void TestActiveOddLotTrade();
 
@@ -60,12 +54,6 @@ namespace Tests {
 
       //! Tests a passive odd-lot ETF.
       void TestPassiveOddLotEtf();
-
-      //! Tests an active interlisted odd-lot.
-      void TestActiveInterlistedOddLot();
-
-      //! Tests a passive interlisted odd-lot.
-      void TestPassiveInterlistedOddLot();
 
       //! Tests calculating fees with an unknown liquidity flag.
       void TestUnknownLiquidityFlag();
@@ -85,14 +73,10 @@ namespace Tests {
         CPPUNIT_TEST(TestPassiveSubDollarTrade);
         CPPUNIT_TEST(TestActiveEtfTrade);
         CPPUNIT_TEST(TestPassiveEtfTrade);
-        CPPUNIT_TEST(TestActiveInterlistedTrade);
-        CPPUNIT_TEST(TestPassiveInterlistedTrade);
         CPPUNIT_TEST(TestActiveOddLotTrade);
         CPPUNIT_TEST(TestPassiveOddLotTrade);
         CPPUNIT_TEST(TestActiveOddLotEtf);
         CPPUNIT_TEST(TestPassiveOddLotEtf);
-        CPPUNIT_TEST(TestActiveInterlistedOddLot);
-        CPPUNIT_TEST(TestPassiveInterlistedOddLot);
         CPPUNIT_TEST(TestUnknownLiquidityFlag);
         CPPUNIT_TEST(TestEmptyLiquidityFlag);
       BEAM_CPPUNIT_TEST_SUITE_END();
