@@ -1,7 +1,7 @@
     var LoginPage = React.createClass({
             render: function() {
                 return (<div className="loginPage">
-                        <img id="logo" src="img/Spire_White.png" alt="Spire Trading Logo"/>
+                        <img id="logo" src="img/spire_white.png" alt="Spire Trading Logo"/>
                         <form id="login-form">
                           <input className="login-input" id="username" type="text" name="Username" placeholder="Username"/><br/>
                           <input className="login-input" id="password" type="password" name="Password" placeholder="Password"/><br/>
