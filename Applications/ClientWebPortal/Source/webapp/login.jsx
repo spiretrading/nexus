@@ -2,22 +2,60 @@
             render: function() {
                 return (<div className="login_page">
                         <img id="logo" src="img/spire_white.png" alt="Spire Trading Logo"/>
-                        <form id="login_form">
-                          <input autoFocus className="login_input" id="login_username" type="text" name="login_username" placeholder="Username" ref="login_username" onClick={this.disappear}/><br/>
-                          <input className="login_input" id="login_password" type="password" name="login_password" placeholder="Password" ref="login_password" onClick={this.disappear} /><br/>
-                          <input id="login_submit" type="submit" value="Login" ref="login_submit" onClick={this.sendLoginRequest} onMouseEnter={this.decOpacity} onMouseLeave={this.incOpacity} />
+                        <form id="login_form" onSubmit={this.handleSubmit}>
+                          <input 
+                            autoFocus 
+                            className="login_input" 
+                            id="login_username" 
+                            type="text" 
+                            name="login_username" 
+                            placeholder="Username" 
+                            ref="login_username"
+                            value={this.state.username}
+                            onChange={this.handleUsernameChange}
+                            onClick={this.disappear}/><br/>
+                          <input 
+                            className="login_input" 
+                            id="login_password" 
+                            type="password" 
+                            name="login_password" 
+                            placeholder="Password"
+                            ref="login_password" 
+                            onClick={this.disappear} /><br/>
+                          <input 
+                            id="login_submit" 
+                            type="submit" 
+                            value="Login" 
+                            ref="login_submit"
+                            onMouseEnter={this.decOpacity} 
+                            onMouseLeave={this.incOpacity} />
                           <ul className="error_messages"></ul>
                         </form>
                       </div>);
             },
+            getInitialState: function() {
+              return {username: ''};
+            },
             componentDidMount: function(){
               
             },
-            onMouseEnter: function (event) {
+            handleSubmit: function(e) {
+              e.preventDefault();
+              var author = this.state.username.trim();
+              if (!username) {
+                return;
+              }
+              // TODO: send request to the server
+              this.setState({username: ''});
+            },
+            onMouseEnter: function (e) {
 
             },
-            onMouseLeave: function (event) {
+            onMouseLeave: function (e) {
 
+            },
+            handleUsernameChange: function (e) {
+              this.setState({username: e.target.value});
             },
             disappear: function () {
 
@@ -57,4 +95,3 @@
             } 
         });
         ReactDOM.render(<LoginPage />, document.getElementById("container"));
-        console.log(); 
