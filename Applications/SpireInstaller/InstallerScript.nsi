@@ -77,7 +77,7 @@ Section "Spire"
 	SectionIn RO
     SetOutPath $INSTDIR
 	File "${WORKINGDIR}\Spire.exe"
-	File "${WORKINGDIR}\vcredist_x86.exe"
+	File "${WORKINGDIR}\VC_redist.x86.exe"
     WriteUninstaller "$INSTDIR\uninstall.exe"
 	# Registry information for add/remove programs
 	WriteRegStr  HKLM "${ARP}" "DisplayName" ${APPNAME}
@@ -92,14 +92,14 @@ Section "Spire"
 	IntFmt $0 "0x%08X" $0
 	WriteRegDWORD HKLM "${ARP}" "EstimatedSize" "$0"
 	# Redistributable
-	ReadRegStr $1 HKLM "SOFTWARE\Wow6432Node\Microsoft\VisualStudio\12.0\VC\Runtimes\x86" "Installed"
+	ReadRegStr $1 HKLM "SOFTWARE\Wow6432Node\Microsoft\DevDiv\vc\Servicing\14.0\RuntimeMinimum" "Install"
 	StrCmp $1 1 installed
-	ReadRegStr $1 HKLM "SOFTWARE\Microsoft\VisualStudio\12.0\VC\VCRedist\x86" "Installed"
+	ReadRegStr $1 HKLM "SOFTWARE\Microsoft\DevDiv\vc\Servicing\14.0\RuntimeMinimum" "Install"
 	StrCmp $1 1 installed
 	SetOutPath "$INSTDIR"
-	File "vcredist_x86.exe"
-	ExecWait '"$INSTDIR\vcredist_x86.exe"  /passive /norestart /s'
-	Delete "$INSTDIR\vcredist_x86.exe"
+	File "VC_redist.x86.exe"
+	ExecWait '"$INSTDIR\VC_redist.x86.exe"  /passive /norestart /s'
+	Delete "$INSTDIR\VC_redist.x86.exe"
 	installed:
 SectionEnd
 
