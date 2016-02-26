@@ -64,7 +64,7 @@ body :-ms-input-placeholder {
   width: 100%;
 }
 
-.loginPage {
+.login_page {
   display: block;
   margin-left: auto;
   margin-right: auto;
@@ -80,7 +80,7 @@ body :-ms-input-placeholder {
   margin-bottom: 65px;
 }
 
-.login-input {
+.login_input {
   background-color: #2CA1DB;
   color: #FFFFFF;
   font-family: Roboto, sans-serif;
@@ -95,22 +95,22 @@ body :-ms-input-placeholder {
   border-bottom: 1px solid #FFFFFF;
 }
 
-#login-form {
+#login_form {
   margin-left: 0px;
   padding-left: 0px; 
 }
 
-#username {
+#login_username {
   margin-bottom: 15px;
   padding: 0px;
 }
 
-#password {
+#login_password {
   margin-bottom: 30px;
   padding: 0px;
 }
 
-#login-submit {
+#login_submit {
   color: #2CA1DB;
   background-color: #FFFFFF;
   height: 55px;
@@ -123,7 +123,7 @@ body :-ms-input-placeholder {
   font-weight: 400;
 }
 
-.errorMessages {
+.error_messages {
   border: none;
   padding: 0px;
   color: #FFFFFF;
