@@ -10,6 +10,9 @@
                         </form>
                       </div>);
             },
+            componentDidMount: function(){
+              this.refs.login_username.getDOMNode().focus();
+            },
             onMouseEnter: function (event) {
 
             },
