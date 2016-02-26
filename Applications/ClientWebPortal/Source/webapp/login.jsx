@@ -5,21 +5,30 @@
                         <form id="login-form">
                           <input className="login-input" id="username" type="text" name="Username" placeholder="Username"/><br/>
                           <input className="login-input" id="password" type="password" name="Password" placeholder="Password"/><br/>
-                          <input id="login-submit" type="submit" value="Login" />
+                          <input id="login-submit" type="submit" value="Login" onClick={this.sendLoginRequest} onMouseEnter={this.decOpacity} onMouseLeave={this.incOpacity} />
                           <ul className="errorMessages"></ul>
                         </form>
                       </div>);
-            }
-            /*,
-            formToJson : function(selector) {
-              var arr = $(selector).serializeArray();
-              var obj = {};
-              for(var a = 0; a < arr.length; a++) {
-                obj[arr[a].name] = arr[a].value;
-              }
-              return obj;
+            },
+            onMouseEnter: function (event) {
+
+            },
+            onMouseLeave: function (event) {
+
             },
             sendLoginRequest: function () {
+              console.log(event); // => nullified object.
+              console.log(event.type); // => "click"
+              var eventType = event.type; // => "click"
+
+              setTimeout(function() {
+                console.log(event.type); // => null
+                console.log(eventType); // => "click"
+              }, 0);
+
+              this.setState({clickEvent: event}); // Won't work. this.state.clickEvent will only contain null values.
+              this.setState({eventType: event.type});
+
               var xhttp;
               var data = JSON.stringify(formToJson(document.getElementById("login-form")));
               if (window.XMLHttpRequest) {
@@ -39,6 +48,7 @@
               xhttp.withCredentials = true;
               xhttp.send(data);
               window.location.href = '/dashboard';
-            } */
+            } 
         });
         ReactDOM.render(<LoginPage />, document.getElementById("container"));
+        console.log(); 
