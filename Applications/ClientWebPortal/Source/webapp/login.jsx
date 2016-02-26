@@ -3,8 +3,8 @@
                 return (<div className="loginPage">
                         <img id="logo" src="img/spire_white.png" alt="Spire Trading Logo"/>
                         <form id="login-form">
-                          <input className="login-input" id="username" type="text" name="Username" placeholder="Username"/><br/>
-                          <input className="login-input" id="password" type="password" name="Password" placeholder="Password"/><br/>
+                          <input className="login-input" id="username" type="text" name="Username" placeholder="Username" onClick={this.disappear}/><br/>
+                          <input className="login-input" id="password" type="password" name="Password" placeholder="Password" onClick={this.disappear} /><br/>
                           <input id="login-submit" type="submit" value="Login" onClick={this.sendLoginRequest} onMouseEnter={this.decOpacity} onMouseLeave={this.incOpacity} />
                           <ul className="errorMessages"></ul>
                         </form>
@@ -14,6 +14,9 @@
 
             },
             onMouseLeave: function (event) {
+
+            },
+            disappear: function () {
 
             },
             sendLoginRequest: function () {
