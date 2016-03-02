@@ -1,3 +1,6 @@
+    //var React = require('react');
+    //var Router = require('react-router');
+    //var Link = Router.Link;
     var LoginPage = React.createClass({
             render: function() {
                 return (<div className="login_page">
@@ -18,7 +21,7 @@
                           <input 
                             className="login_input" 
                             id="login_password" 
-                            type="password" 
+                            type="password"
                             name="login_password" 
                             placeholder="Password"
                             ref="login_password" 
@@ -30,8 +33,7 @@
                             value="Login" 
                             ref="login_submit"
                             onMouseEnter={this.decOpacity} 
-                            onMouseLeave={this.incOpacity}
-                            onClick={this.handleSubmit} />
+                            onMouseLeave={this.incOpacity} />
                           <ul className="error_messages"></ul>
                         </form>
                       </div>);
@@ -59,19 +61,24 @@
               $.ajax({
                 url: this.props.url,
                 dataType: 'json',
-                type: 'POST',
-                data: {username: submitted_username, password: submitted_password},
-                success: function(data) {
-                  console.log("Request was successful");
-                  ReactDOM.render(<Dashboard />,
-                  document.getElementById('container'));
-                  this.setState({data: data});
+                method: 'POST',
+                data: JSON.stringify({ username: submitted_username, password: submitted_password }),
+                done: function() {
+                  console.log("done!");
                 }.bind(this),
-                error: function(xhr, status, err) {
-                  console.log("Request failed!");
+                always: function(data, status, xhr) {
+                  console.log("Request was successful");
+                  console.log("Response data: " + JSON.stringify(data) + " Status: " + status + " xhr: "+ xhr);
+                  ReactDOM.render(<Dashboard source="http://192.168.1.118:8080/dashboard" />,
+                  document.getElementById('container'));
+                  //this.setState({data: data});
+                }.bind(this),
+                fail: function(xhr, status, err) {
+                  console.log("Request failed! ERROR Section");
+                  //console.log("Response " + JSON.stringify(data));
                   //this.setState({data: {username, password}});
-                  console.log(status);
-                }.bind(this)
+                  console.log("Status: " + status + " err: " + err);
+                }.bind(this),
               });    
             },
             onMouseEnter: function (e) {
@@ -103,6 +110,18 @@
             );
           </div>
         );
+      },
+
+      componentDidMount: function() {
+        this.serverRequest = $.get(this.props.source, function (result) {
+          var lastGist = result[0];
+          console.log("result: " + result);
+          console.log("result[0]: " + lastGist);
+        }.bind(this));
+      },
+
+      componentWillUnmount: function() {
+        this.serverRequest.abort();
       }
     });
     //Timer

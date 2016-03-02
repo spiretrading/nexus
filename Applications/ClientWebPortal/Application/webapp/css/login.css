@@ -95,6 +95,10 @@ body :-ms-input-placeholder {
   border-bottom: 1px solid #FFFFFF;
 }
 
+input:focus::before{
+   content: attr(placeholder);
+}
+
 #login_form {
   margin-left: 0px;
   padding-left: 0px; 
