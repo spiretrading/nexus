@@ -74,8 +74,11 @@ var LoginPage = React.createClass({
           ReactDOM.render(<Dashboard />,
             document.getElementById('container'));
         }.bind(this)).fail(
-        function(xhr, status, err) {
+        function(data, xhr, status, err) {
           console.log("Request failed! ERROR Section");
+          console.log("fail data:  " + data);
+          console.log("Response data: " + JSON.stringify(data) +
+            " Status: " + status + " xhr: "+ xhr);
         }.bind(this));
   },
   onMouseEnter: function (e) {},
