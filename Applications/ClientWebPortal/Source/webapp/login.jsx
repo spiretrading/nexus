@@ -71,8 +71,7 @@ var LoginPage = React.createClass({
           console.log("Request was successful");
           console.log("Response data: " + JSON.stringify(data) +
             " Status: " + status + " xhr: "+ xhr);
-          ReactDOM.render(<Dashboard />,
-            document.getElementById('container'));
+          window.location.href = "/dashboard";
         }.bind(this)).fail(
         function(data, xhr, status, err) {
           console.log("Request failed! ERROR Section");
