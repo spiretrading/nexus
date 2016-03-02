@@ -66,10 +66,8 @@ var LoginPage = React.createClass({
             password: submitted_password
           })
       }).done(
-        function() {
-          console.log("done!");
-        }.bind(this)).always(
         function(data, status, xhr) {
+          console.log("done:  " + data);
           console.log("Request was successful");
           console.log("Response data: " + JSON.stringify(data) +
             " Status: " + status + " xhr: "+ xhr);
@@ -78,7 +76,6 @@ var LoginPage = React.createClass({
         }.bind(this)).fail(
         function(xhr, status, err) {
           console.log("Request failed! ERROR Section");
-          console.log("Status: " + status + " err: " + err);
         }.bind(this));
   },
   onMouseEnter: function (e) {},
@@ -121,7 +118,7 @@ var Timer = React.createClass({
     return { elapsed: 0 };
   },
   componentDidMount: function(){
-    this.timer = setInterval(this.tick, 50);
+    this.timer = setInterval(this.tick, 1);
   },
   componentWillUnmount: function(){
     clearInterval(this.timer);
