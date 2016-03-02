@@ -269,9 +269,6 @@ namespace Nexus {
         if(Beam::Contains(feeTable.m_etfs,
             order.GetInfo().m_fields.m_security)) {
           return MatnFeeTable::Classification::ETF;
-        } else if(Beam::Contains(feeTable.m_interlisted,
-            order.GetInfo().m_fields.m_security)) {
-          return MatnFeeTable::Classification::INTERLISTED;
         } else {
           return MatnFeeTable::Classification::DEFAULT;
         }
