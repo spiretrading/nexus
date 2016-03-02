@@ -1,17 +1,8 @@
-requirejs.config({
-  baseUrl: 'third-party',
-});
-
-// Start loading the main app file. Put all of
-// your application logic in there.
-// requirejs(['app/main']);
-
 require(['react', 'react-dom', 'ReactRouter.min'],
   function(React, ReactDOM, ReactRouter) {
     var Router = ReactRouter.Router;
     var Route = ReactRouter.Route;
     var Link = ReactRouter.Link;
-    console.log(Router);
     var MyInput = React.createClass({
       getInitialState: function() {
         return {
