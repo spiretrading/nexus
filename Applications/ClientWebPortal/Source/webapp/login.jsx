@@ -3,7 +3,7 @@ var LoginPage = React.createClass({
   render: function() {
     return (
       <div className="login_page">
-        <img id="logo" src="img/spire_white.png"
+        <img ref="logo" id="logo" src="img/spire_white.png"
         alt="Spire Trading Logo"/>
         <form id="login_form" onSubmit={this.handleSubmit}>
           <input 
@@ -56,7 +56,7 @@ var LoginPage = React.createClass({
   },
   handleSubmit: function(e) {
     console.log("Handle submit is working!");
-    this.state.submitted = true;
+    this.setState.submitted = true;
     e.preventDefault();
     var submitted_username = this.state.username.trim();
     var submitted_password = this.state.password.trim();
@@ -84,8 +84,14 @@ var LoginPage = React.createClass({
           console.log("Request was successful");
           console.log("Response data: " + JSON.stringify(data) +
             " Status: " + status + " xhr: "+ xhr);
-          window.location.href = "/dashboard";
-          submitted = false;
+          $.ajax(
+          {
+            url: "/api/service_locator/logout",
+            method: 'POST'
+          }).done(
+            function () {
+              window.location.href = "/index.html"
+            }.bind(this));
         }.bind(this)).fail(
         function(data, xhr, status, err) {
           console.log("Request failed! ERROR Section");
@@ -94,8 +100,12 @@ var LoginPage = React.createClass({
             " Status: " + status + " xhr: "+ xhr);
         }.bind(this)).always(
         function() {
-          this.state.submitted = false;
-        });
+          this.setState.submitted = false;
+          //animation
+          var animatedLogo = this.refs.logo;
+          console.log("animatedLogo: " + animatedLogo);
+          console.log("animatedLogo value: " + animatedLogo.value);
+        }.bind(this));
   },
   handleUsernameChange: function (e) {
     this.setState({username: e.target.value});
