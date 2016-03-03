@@ -2,6 +2,7 @@
 #include <sstream>
 #include <Beam/Json/JsonParser.hpp>
 #include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
+#include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/WebServices/HttpServerPredicates.hpp>
 #include <Beam/WebServices/HttpServerRequest.hpp>
 #include <Beam/WebServices/HttpServerResponse.hpp>
@@ -13,6 +14,7 @@ using namespace Beam::IO;
 using namespace Beam::Parsers;
 using namespace Beam::Serialization;
 using namespace Beam::ServiceLocator;
+using namespace Beam::Threading;
 using namespace Beam::WebServices;
 using namespace Nexus;
 using namespace Nexus::ClientWebPortal;
@@ -127,6 +129,10 @@ HttpServerResponse ClientWebPortalServlet::OnLogin(
     m_serviceClients->GetServiceLocatorClient().AuthenticateAccount(username,
     password);
   if(account.m_type != DirectoryEntry::Type::ACCOUNT) {
+    TimerThreadPool timerThreadPool;
+    LiveTimer timer{boost::posix_time::seconds(10), Ref(timerThreadPool)};
+    timer.Start();
+    timer.Wait();
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
