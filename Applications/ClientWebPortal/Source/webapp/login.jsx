@@ -1,3 +1,4 @@
+var submitStyle = {};
 var LoginPage = React.createClass({
   render: function() {
     return (
@@ -14,8 +15,7 @@ var LoginPage = React.createClass({
             placeholder="Username" 
             ref="login_username"
             value={this.state.username}
-            onChange={this.handleUsernameChange}
-            onClick={this.disappear}/><br/>
+            onChange={this.handleUsernameChange} /><br/>
           <input 
             className="login_input" 
             id="login_password" 
@@ -23,27 +23,40 @@ var LoginPage = React.createClass({
             name="login_password" 
             placeholder="Password"
             ref="login_password" 
-            onChange={this.handlePasswordChange}
-            onClick={this.disappear} /><br/>
+            onChange={this.handlePasswordChange} /><br/>
           <input 
             id="login_submit" 
             type="submit" 
             value="Login" 
             ref="login_submit"
-            onMouseEnter={this.decOpacity} 
-            onMouseLeave={this.incOpacity} />
+            style={submitStyle} />
           <ul className="error_messages"></ul>
         </form>
       </div>);
   },
   getInitialState: function() {
-    return {username: '', password: ''};
+    return {username: '', password: '', submitted: false};
   },
-  componentDidMount: function(){
-    
+  componentDidMount: function () {
+
+  },
+  componentWillUpdate: function () {
+    if (this.state.submitted) {
+      submitStyle = {
+      opacity: 0.9
+      };
+    } else {
+      submitStyle = {
+      opacity: 1
+      };
+    }
+  },
+  componentWillUnmount: function() {
+    this.serverRequest.abort();
   },
   handleSubmit: function(e) {
     console.log("Handle submit is working!");
+    this.state.submitted = true;
     e.preventDefault();
     var submitted_username = this.state.username.trim();
     var submitted_password = this.state.password.trim();
@@ -72,67 +85,24 @@ var LoginPage = React.createClass({
           console.log("Response data: " + JSON.stringify(data) +
             " Status: " + status + " xhr: "+ xhr);
           window.location.href = "/dashboard";
+          submitted = false;
         }.bind(this)).fail(
         function(data, xhr, status, err) {
           console.log("Request failed! ERROR Section");
           console.log("fail data:  " + data);
           console.log("Response data: " + JSON.stringify(data) +
             " Status: " + status + " xhr: "+ xhr);
-        }.bind(this));
+        }.bind(this)).always(
+        function() {
+          this.state.submitted = false;
+        });
   },
-  onMouseEnter: function (e) {},
-  onMouseLeave: function (e) {},
   handleUsernameChange: function (e) {
     this.setState({username: e.target.value});
   },
   handlePasswordChange: function (e) {
     this.setState({password: e.target.value});
   },
-  disappear: function () {}, 
-});
-
-var Dashboard = React.createClass({
-  render: function() {
-    return (
-      <div>
-        <h3> Welcome to Spire</h3>
-        <div id="dashboard_container" />
-        <Timer start={Date.now()} />
-      </div>
-    );
-  },
-
-  componentDidMount: function() {
-    this.serverRequest = $.get(this.props.source, function (result) {
-      var lastGist = result[0];
-      console.log("result: " + result);
-      console.log("result[0]: " + lastGist);
-    }.bind(this));
-  },
-
-  componentWillUnmount: function() {
-    this.serverRequest.abort();
-  }
-});
-
-var Timer = React.createClass({
-  getInitialState: function(){
-    return { elapsed: 0 };
-  },
-  componentDidMount: function(){
-    this.timer = setInterval(this.tick, 1);
-  },
-  componentWillUnmount: function(){
-    clearInterval(this.timer);
-  },
-  tick: function(){
-    this.setState({elapsed: new Date() - this.props.start});
-  },
-  render: function() {
-    var elapsed = Math.round(this.state.elapsed / 100);
-    var seconds = (elapsed / 10).toFixed(1);    
-    return <p>Timer was started <b>{seconds} seconds</b> ago.</p>;
-  }
 });
 
 ReactDOM.render(<LoginPage url="/api/service_locator/login" />,

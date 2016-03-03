@@ -127,6 +127,10 @@ input:focus::before{
   font-weight: 400;
 }
 
+#login_submit:hover {
+  opacity: 0.9;
+}
+
 .error_messages {
   border: none;
   padding: 0px;
