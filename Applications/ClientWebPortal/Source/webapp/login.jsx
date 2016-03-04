@@ -1,13 +1,15 @@
 //var React = require('react');
 //var TimerMixin = require('react-timer-mixin');
 var submitStyle = {};
+var logoStyle = {};
+var submitted;
 var LoginPage = React.createClass({
 //  mixins: [TimerMixin],
   render: function() {
     return (
       <div className="login_page">
         <img ref="logo" id="logo" src={this.state.logo_src}
-        alt="Spire Trading Logo"/>
+        alt="Spire Trading Logo" style={logoStyle} />
         <form ref="login_form" id="login_form" onSubmit={this.handleSubmit}>
           <input 
             autoFocus 
@@ -25,31 +27,37 @@ var LoginPage = React.createClass({
             type="password"
             name="login_password" 
             placeholder="Password"
-            ref="login_password" 
+            ref="login_password"
+            value={this.state.password}
             onChange={this.handlePasswordChange} /><br/>
           <input 
             id="login_submit" 
-            type="submit" 
-            value="Login" 
+            type="submit"
             ref="login_submit"
+            value="Login" 
             style={submitStyle} />
-          <ul className="error_messages"></ul>
+          <ul className="error_messages">
+            {this.errorMessages}
+          </ul>
         </form>
       </div>);
   },
   getInitialState: function() {
+    submitted = false;
     return {
-      username: '', password: '', submitted: false, logo_src: 'img/spire_white.png'
+      username: ''
+      , password: ''
+      , logo_src: 'img/spire_white.png'
+      , errorMessages: ''
     };
   },
   componentDidMount: function () {
-
+    console.log("submitted: " + submitted);
   },
   componentWillUpdate: function () {
-    if (this.state.submitted) {
-      submitStyle = {
-      opacity: 0.9
-      };
+    console.log("component is getting updated!");
+    if (submitted) {
+      
     } else {
       submitStyle = {
       opacity: 1
@@ -60,16 +68,26 @@ var LoginPage = React.createClass({
     this.serverRequest.abort();
   },
   handleSubmit: function(e) {
-    console.log("Handle submit is working!");
-    this.setState({submitted : true});
     e.preventDefault();
+    submitStyle = {
+      opacity: 0.9
+      };
+    logoStyle = {
+      opacity: 1
+    }
+    console.log("Handle submit is working!");
+    submitted = true;
+    console.log("submitted after handleSubmit func: " + submitted);
+    var logoSource = this.state.logo_src;
+    console.log("logoSource state: " + logoSource);
+    var newLogoSource = 'img/spire_animation_white_gradient.gif';
+    var logoImage = this.refs['logo'];
+    console.log("logoImage: " + logoImage);
     var timeoutID = window.setTimeout( function () {
       //animation
       console.log("image src before: " + this.state.logo_src);
-      var logoImage = this.refs['logo'];
-      console.log("logoImage: " + logoImage);
       this.setState({logo_src : 'img/spire_animation_white_gradient.gif'});
-      console.log("image src after: " + this.state.logo_src);},2000);
+      console.log("image src after: " + this.state.logo_src);}.bind(this),2000);
     var submitted_username = this.state.username.trim();
     var submitted_password = this.state.password.trim();
     if (!submitted_username) {
@@ -103,18 +121,25 @@ var LoginPage = React.createClass({
           }).done(
             function () {
               console.log("Logged out and back to login page!");
-              this.setState({submitted : false});
+              submitted = false;
+              submitStyle = {
+                opacity: initial
+              };
               window.clearTimeout(timeoutID);
               window.location.href = "/index.html"
             }.bind(this));
         }.bind(this)).fail(
         function(data, xhr, status, err) {
-          this.setState({submitted : false});
-          console.log("this.state.submitted: " + this.state.submitted);
+          submitted = false;
+          submitStyle = {
+            opacity: initial
+          };
+          console.log("this.state.submitted: " + submitted);
           console.log("Request failed! ERROR Section");
           console.log("fail data:  " + data);
           console.log("Response data: " + JSON.stringify(data) +
             " Status: " + status + " xhr: "+ xhr);
+          this.setState({errorMessages: '<li>' + 'the username and password you entered don\’t match' + '</li>'});
           window.clearTimeout(timeoutID);
         }.bind(this));
   },
