@@ -3,9 +3,9 @@ var LoginPage = React.createClass({
   render: function() {
     return (
       <div className="login_page">
-        <img ref="logo" id="logo" src="img/spire_white.png"
+        <img ref="logo" id="logo" src={this.state.logo_src}
         alt="Spire Trading Logo"/>
-        <form id="login_form" onSubmit={this.handleSubmit}>
+        <form ref="login_form" id="login_form" onSubmit={this.handleSubmit}>
           <input 
             autoFocus 
             className="login_input" 
@@ -35,7 +35,8 @@ var LoginPage = React.createClass({
       </div>);
   },
   getInitialState: function() {
-    return {username: '', password: '', submitted: false};
+    return {username: '', password: '', submitted: false,
+      logo_src: 'img/spire_white.png'};
   },
   componentDidMount: function () {
 
@@ -58,6 +59,11 @@ var LoginPage = React.createClass({
     console.log("Handle submit is working!");
     this.setState.submitted = true;
     e.preventDefault();
+    this.refs.login_form.setTimeout( function () {
+      //animation
+      console.log("image src before: " + this.state.logo_src);
+      this.setState.logo_src = 'img/spire_animation_white_gradient.gif';
+      console.log("image src after: " + this.state.logo_src);},2000);
     var submitted_username = this.state.username.trim();
     var submitted_password = this.state.password.trim();
     if (!submitted_username) {
@@ -90,21 +96,18 @@ var LoginPage = React.createClass({
             method: 'POST'
           }).done(
             function () {
+              console.log("Logged out and back to login page!");
+              this.setState.submitted = false;
               window.location.href = "/index.html"
             }.bind(this));
         }.bind(this)).fail(
         function(data, xhr, status, err) {
+          this.setState.submitted = false;
+          console.log("this.state.submitted: " + this.state.submitted);
           console.log("Request failed! ERROR Section");
           console.log("fail data:  " + data);
           console.log("Response data: " + JSON.stringify(data) +
             " Status: " + status + " xhr: "+ xhr);
-        }.bind(this)).always(
-        function() {
-          this.setState.submitted = false;
-          //animation
-          var animatedLogo = this.refs.logo;
-          console.log("animatedLogo: " + animatedLogo);
-          console.log("animatedLogo value: " + animatedLogo.value);
         }.bind(this));
   },
   handleUsernameChange: function (e) {
