@@ -38,9 +38,9 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery'],
                 type="submit"
                 ref="login_submit"
                 value="Login" />
-              <ul className="error_messages">
-                {this.errorMessages}
-              </ul>
+              <div className="error_messages">
+                <p> {this.state.errorMessages} </p>
+              </div>
             </form>
           </div>);
       },
@@ -65,19 +65,8 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery'],
         e.preventDefault();
         this.setState({ submitted: true });
         console.log("submitted after handleSubmit func: " + this.state.submitted);
-        logoStyle = {
-          opacity: 1
-        }
         console.log("Handle submit is working!");
         console.log("image src before: " + this.state.logo_src);
-        window.setInterval(function () {
-          this.setState({logo_src : 'img/spire_loading_animation.gif'});
-          console.log("image src after: " + this.state.logo_src);
-        }.bind(this), 1000);
-        var timeoutID = window.setTimeout( function () {
-          this.setState({ errorMessages: 'unable to connect, check your connection' });
-          console.log("errorMessages: "+ this.state.errorMessages);
-          }.bind(this),6000);
         var submitted_username = this.state.username.trim();
         var submitted_password = this.state.password.trim();
         if (!submitted_username) {
@@ -88,7 +77,7 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery'],
         this.setState({password: ''});
         console.log("Entered Username is: "+ submitted_username);
         console.log("Entered Password is: "+ submitted_password);
-        $.ajax(
+        var jqxhr = $.ajax(
           {
             url: this.props.url,
             dataType: 'json',
@@ -113,6 +102,7 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery'],
                   console.log("Logged out and back to login page!");
                   this.setState({ submitted : false });
                   console.log("submitted: " + this.state.submitted);
+                  window.clearInterval(intervalID);
                   window.clearTimeout(timeoutID);
                   window.location.href = "/index.html"
                 }.bind(this));
@@ -126,9 +116,18 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery'],
               console.log("fail data:  " + data);
               console.log("Response data: " + JSON.stringify(data) +
                 " Status: " + status + " xhr: "+ xhr);
-              //this.setState({errorMessages: '<li>' + 'the username and password you entered don\’t match' + '</li>'});
+              window.clearInterval(intervalID);
               window.clearTimeout(timeoutID);
             }.bind(this));
+        var timeoutID = window.setTimeout( function () {
+          this.setState({ errorMessages: 'unable to connect, check your connection' });
+          jqxhr.abort();
+          console.log("errorMessages: "+ this.state.errorMessages);
+          }.bind(this),6000);
+        var intervalID = window.setInterval(function () {
+          this.setState({logo_src : 'img/spire_loading_animation.gif'});
+          console.log("image src after: " + this.state.logo_src);
+        }.bind(this), 1000);
       },
       handleUsernameChange: function (e) {
         this.setState({username: e.target.value});
@@ -137,7 +136,6 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery'],
         this.setState({password: e.target.value});
       },
     });
-
     ReactDOM.render(<LoginPage url="/api/service_locator/login" />,
       document.getElementById("container"));
 });
