@@ -3,11 +3,15 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery', 'TimerMixin'],
     var Router = ReactRouter.Router;
     var Route = ReactRouter.Route;
     var Link = ReactRouter.Link;
+<<<<<<< HEAD
+=======
+    //var TimerMixin = require('react-timer-mixin');
+>>>>>>> 46b2f66d72cc440aaa99eade980ffb7ae99158e1
     var submitStyle = {};
     var logoStyle = {};
     var submitted;
     var LoginPage = React.createClass({
-      mixins: [TimerMixin],
+      //mixins: [TimerMixin],
       render: function() {
         return (
           <div className="login_page">
