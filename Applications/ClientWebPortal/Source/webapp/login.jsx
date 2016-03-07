@@ -4,15 +4,13 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery'],
     var Route = ReactRouter.Route;
     var Link = ReactRouter.Link;
     //var TimerMixin = require('react-timer-mixin');
-    var submitStyle = {};
     var logoStyle = {};
-    var submitted;
     var LoginPage = React.createClass({
       //mixins: [TimerMixin],
       render: function() {
         return (
           <div className="login_page">
-            <img ref="logo" id="logo" src={this.state.logo_src}
+            <img ref="logo" id="logo" src={this.state.logo_src} loop="infinite"
             alt="Spire Trading Logo" style={logoStyle} />
             <form ref="login_form" id="login_form" onSubmit={this.handleSubmit}>
               <input 
@@ -35,11 +33,11 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery'],
                 value={this.state.password}
                 onChange={this.handlePasswordChange} /><br/>
               <input 
-                id="login_submit" 
+                id="login_submit"
+                className={this.state.submitted ? "inactive" : ""}
                 type="submit"
                 ref="login_submit"
-                value="Login" 
-                style={submitStyle} />
+                value="Login" />
               <ul className="error_messages">
                 {this.errorMessages}
               </ul>
@@ -47,51 +45,39 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery'],
           </div>);
       },
       getInitialState: function() {
-        submitted = false;
         return {
           username: ''
           , password: ''
+          , submitted : false
           , logo_src: 'img/spire_white.png'
           , errorMessages: ''
         };
       },
       componentDidMount: function () {
-        console.log("submitted: " + submitted);
+        console.log("submitted: " + this.state.submitted);
       },
       componentWillUpdate: function () {
-        console.log("component is getting updated!");
-        if (submitted) {
-          
-        } else {
-          submitStyle = {
-          opacity: 1
-          };
-        }
       },
       componentWillUnmount: function() {
         this.serverRequest.abort();
       },
       handleSubmit: function(e) {
         e.preventDefault();
-        submitStyle = {
-          opacity: 0.9
-          };
+        this.setState({ submitted: true });
+        console.log("submitted after handleSubmit func: " + this.state.submitted);
         logoStyle = {
           opacity: 1
         }
         console.log("Handle submit is working!");
-        submitted = true;
-        console.log("submitted after handleSubmit func: " + submitted);
-        var logoSource = this.state.logo_src;
-        console.log("logoSource state: " + logoSource);
-        var newLogoSource = 'img/spire_animation_white_gradient.gif';
-        var logoImage = this.refs['logo'];
-        console.log("logoImage: " + logoImage);
+        console.log("image src before: " + this.state.logo_src);
+        window.setInterval(function () {
+          this.setState({logo_src : 'img/spire_loading_animation.gif'});
+          console.log("image src after: " + this.state.logo_src);
+        }.bind(this), 1000);
         var timeoutID = window.setTimeout( function () {
-          //animation
-          console.log("image src before: " + this.state.logo_src);
-          this.setState({logo_src : 'img/spire_animation_white_gradient.gif'});
-          console.log("image src after: " + this.state.logo_src);}.bind(this),2000);
+          this.setState({ errorMessages: 'unable to connect, check your connection' });
+          console.log("errorMessages: "+ this.state.errorMessages);
+          }.bind(this),6000);
         var submitted_username = this.state.username.trim();
         var submitted_password = this.state.password.trim();
         if (!submitted_username) {
@@ -125,27 +111,22 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery'],
               }).done(
                 function () {
                   console.log("Logged out and back to login page!");
-                  submitted = false;
-                  console.log("submitted: " + submitted);
-                  submitStyle = {
-                    opacity: initial
-                  };
+                  this.setState({ submitted : false });
+                  console.log("submitted: " + this.state.submitted);
                   window.clearTimeout(timeoutID);
                   window.location.href = "/index.html"
                 }.bind(this));
             }.bind(this)).fail(
             function(data, xhr, status, err) {
-              submitted = false;
-              console.log("submitted: " + submitted);
-              submitStyle = {
-                opacity: inherit
-              };
-              console.log("style of submitted: " + this.refs.login_submit.style);
+              this.setState({ submitted : false });
+              this.setState({ errorMessages: 'the username and password you entered don\’t match'});
+              console.log("submitted: " + this.state.submitted);
               console.log("Request failed! ERROR Section");
+              console.log("errorMsg: "+ this.state.errorMessages);
               console.log("fail data:  " + data);
               console.log("Response data: " + JSON.stringify(data) +
                 " Status: " + status + " xhr: "+ xhr);
-              this.setState({errorMessages: '<li>' + 'the username and password you entered don\’t match' + '</li>'});
+              //this.setState({errorMessages: '<li>' + 'the username and password you entered don\’t match' + '</li>'});
               window.clearTimeout(timeoutID);
             }.bind(this));
       },

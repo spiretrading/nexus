@@ -132,6 +132,10 @@ input:focus::before{
   opacity: 0.9;
 }
 
+.inactive {
+  opacity: 0.9 !important;
+}
+
 .error_messages {
   border: none;
   padding: 0px;
