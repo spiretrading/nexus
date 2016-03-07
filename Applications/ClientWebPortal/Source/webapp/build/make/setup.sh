@@ -10,6 +10,7 @@ cp /home/developers/requirejs-2.1.22/* ../../Application/webapp/third-party
 npm install --save react-router
 cp node_modules/react-router/umd/ReactRouter.min.js ../../Application/webapp/third-party
 npm install --save react-timer-mixin
-cp node_modules/react-timer-mixin/TimerMixin.js ../../Application/webapp/third-party
-npm install babel-cli babel-preset-es2015 babel-preset-react
+npm install babel-cli babel-preset-es2015 babel-preset-react requirejs
+nodejs node_modules/requirejs/bin/r.js -convert node_modules/react-timer-mixin/ node_modules/react-timer-mixin/
+cp node_modules/react-timer-mixin/TimerMixin.js ../../Application/webapp/third-party/
 popd
