@@ -8,7 +8,7 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery'],
     var logoStyle = {};
     var submitted;
     var LoginPage = React.createClass({
-      mixins: [TimerMixin],
+      //mixins: [TimerMixin],
       render: function() {
         return (
           <div className="login_page">
