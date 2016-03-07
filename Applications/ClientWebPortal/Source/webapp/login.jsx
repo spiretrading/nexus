@@ -1,9 +1,8 @@
-require(['react', 'react-dom', 'ReactRouter.min', 'jquery'],
-  function(React, ReactDOM, ReactRouter, $) {
+require(['react', 'react-dom', 'ReactRouter.min', 'jquery', 'TimerMixin'],
+  function(React, ReactDOM, ReactRouter, $, TimerMixin) {
     var Router = ReactRouter.Router;
     var Route = ReactRouter.Route;
     var Link = ReactRouter.Link;
-    var TimerMixin = require('react-timer-mixin');
     var submitStyle = {};
     var logoStyle = {};
     var submitted;
