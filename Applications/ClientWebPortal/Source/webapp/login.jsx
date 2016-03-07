@@ -3,7 +3,7 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery'],
     var Router = ReactRouter.Router;
     var Route = ReactRouter.Route;
     var Link = ReactRouter.Link;
-    var TimerMixin = require('react-timer-mixin');
+    //var TimerMixin = require('react-timer-mixin');
     var submitStyle = {};
     var logoStyle = {};
     var submitted;
