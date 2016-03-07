@@ -37,6 +37,13 @@ if [ ! -d "qt-5.5.0" ]; then
   make install
 fi
 
+if [ ! -d "jquery-1.12.1" ]; then
+  mkdir jquery-1.12.1
+  cd jquery-1.12.1
+  wget https://code.jquery.com/jquery-1.12.1.min.js
+  cd ..
+fi
+
 if [ ! -d "react-0.14.7" ]; then
   mkdir react-0.14.7
   cd react-0.14.7
