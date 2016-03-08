@@ -3,6 +3,21 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery'],
     var Router = ReactRouter.Router;
     var Route = ReactRouter.Route;
     var Link = ReactRouter.Link;
+    //Set Cursor Position Func
+    $.fn.setCursorPosition = function(pos) {
+        this.each(function(index, elem) {
+          if (elem.setSelectionRange) {
+            elem.setSelectionRange(pos, pos);
+          } else if (elem.createTextRange) {
+            var range = elem.createTextRange();
+            range.collapse(true);
+            range.moveEnd('character', pos);
+            range.moveStart('character', pos);
+            range.select();
+          }
+        });
+        return this;
+    };
 
     var SpireLogo = React.createClass({
       getInitialState: function () {
@@ -36,7 +51,7 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery'],
       render: function() {
         return (
           <div className="login_page">
-            <SpireLogo ref = "logo" initial_image = {'img/spire_white.svg'} 
+            <SpireLogo ref = "logo" initial_image = {'img/spire_white.png'} 
               animated_image = {'img/spire_loading_animation.gif'} />
             <form ref="login_form" id="login_form" onSubmit={this.handleSubmit}>
               <input 
@@ -78,11 +93,16 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery'],
       },
       componentDidMount: function () {
         console.log("submitted: " + this.state.submitted);
-        $(".login_input").focus(function(){
-          console.log("I have focuson");
-        });
+        //get start position of placeholder in textfield
+        var CursorPos;
+        //set curser position
+        $("input:focus").setCursorPosition(0);
       },
       componentWillUpdate: function () {
+        //get start position of placeholder in textfield
+
+        //set curser position
+        //$("input:focus").setCursorPosition(0);
       },
       componentWillUnmount: function() {
       },
