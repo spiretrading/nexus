@@ -37,9 +37,7 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery', 'TimerMixin'],
                 type="submit"
                 ref="login_submit"
                 value="Login" />
-              <div className="error_messages">
-                <p> {this.state.errorMessages} </p>
-              </div>
+              <p className="error_messages"> {this.state.errorMessages} </p>
             </form>
           </div>);
       },
@@ -58,7 +56,6 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery', 'TimerMixin'],
       componentWillUpdate: function () {
       },
       componentWillUnmount: function() {
-        this.serverRequest.abort();
       },
       handleSubmit: function(e) {
         e.preventDefault();
@@ -74,8 +71,8 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery', 'TimerMixin'],
         }
         this.setState({username: ''});
         this.setState({password: ''});
-        console.log("Entered Username is: "+ submitted_username);
-        console.log("Entered Password is: "+ submitted_password);
+        console.log("Entered Username is: " + submitted_username);
+        console.log("Entered Password is: " + submitted_password);
         var jqxhr = $.ajax(
           {
             url: this.props.url,
@@ -108,21 +105,21 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery', 'TimerMixin'],
             }.bind(this)).fail(
             function(data, xhr, status, err) {
               this.setState({ submitted : false });
-              this.setState({ errorMessages: 'the username and password you entered don\’t match'});
+              this.setState({ errorMessages : 'the username and password you entered don\’t match'});
               console.log("submitted: " + this.state.submitted);
               console.log("Request failed! ERROR Section");
-              console.log("errorMsg: "+ this.state.errorMessages);
+              console.log("errorMsg: " + this.state.errorMessages);
               console.log("fail data:  " + data);
               console.log("Response data: " + JSON.stringify(data) +
-                " Status: " + status + " xhr: "+ xhr);
+                " Status: " + status + " xhr: " + xhr);
               window.clearInterval(intervalID);
               window.clearTimeout(timeoutID);
             }.bind(this));
         var timeoutID = window.setTimeout( function () {
-          this.setState({ errorMessages: 'unable to connect, check your connection' });
+          this.setState({ errorMessages : 'unable to connect, check your connection' });
           jqxhr.abort();
-          console.log("errorMessages: "+ this.state.errorMessages);
-          }.bind(this),6000);
+          console.log("errorMessages: " + this.state.errorMessages);
+          }.bind(this),1000);
         var intervalID = window.setInterval(function () {
           this.setState({logo_src : 'img/spire_loading_animation.gif'});
           console.log("image src after: " + this.state.logo_src);
