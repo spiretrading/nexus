@@ -1,16 +1,43 @@
-require(['react', 'react-dom', 'ReactRouter.min', 'jquery', 'TimerMixin'],
-  function(React, ReactDOM, ReactRouter, $, TimerMixin) {
+require(['react', 'react-dom', 'ReactRouter.min', 'jquery'],
+  function(React, ReactDOM, ReactRouter, $) {
     var Router = ReactRouter.Router;
     var Route = ReactRouter.Route;
     var Link = ReactRouter.Link;
-    var logoStyle = {};
+
+    var SpireLogo = React.createClass({
+      getInitialState: function () {
+        return {
+          is_playing : false,
+        };
+      },
+      play: function() {
+        this.setState({is_playing : true});
+      },
+      stop: function () {
+        this.setState({is_playing : false});
+      },
+      render: function () {
+        return (
+          <img id="logo"
+              src={
+                function() {
+                  if(this.state.is_playing) {
+                    return this.props.animated_image;
+                  } else {
+                    return this.props.initial_image;
+                  }
+                }.bind(this)()
+              }
+            alt="Spire Trading Logo" />
+          );
+      }
+    });
     var LoginPage = React.createClass({
-      mixins: [TimerMixin],
       render: function() {
         return (
           <div className="login_page">
-            <img ref="logo" id="logo" src={this.state.logo_src} loop="infinite"
-            alt="Spire Trading Logo" style={logoStyle} />
+            <SpireLogo ref = "logo" initial_image = {'img/spire_white.svg'} 
+              animated_image = {'img/spire_loading_animation.gif'} />
             <form ref="login_form" id="login_form" onSubmit={this.handleSubmit}>
               <input 
                 autoFocus 
@@ -46,12 +73,14 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery', 'TimerMixin'],
           username: ''
           , password: ''
           , submitted : false
-          , logo_src: 'img/spire_white.png'
           , errorMessages: ''
         };
       },
       componentDidMount: function () {
         console.log("submitted: " + this.state.submitted);
+        $(".login_input").focus(function(){
+          console.log("I have focuson");
+        });
       },
       componentWillUpdate: function () {
       },
@@ -62,7 +91,6 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery', 'TimerMixin'],
         this.setState({ submitted: true });
         console.log("submitted after handleSubmit func: " + this.state.submitted);
         console.log("Handle submit is working!");
-        console.log("image src before: " + this.state.logo_src);
         var submitted_username = this.state.username.trim();
         var submitted_password = this.state.password.trim();
         if (!submitted_username) {
@@ -98,32 +126,33 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery', 'TimerMixin'],
                   console.log("Logged out and back to login page!");
                   this.setState({ submitted : false });
                   console.log("submitted: " + this.state.submitted);
-                  window.clearInterval(intervalID);
-                  window.clearTimeout(timeoutID);
                   window.location.href = "/index.html"
                 }.bind(this));
             }.bind(this)).fail(
             function(data, xhr, status, err) {
-              this.setState({ submitted : false });
-              this.setState({ errorMessages : 'the username and password you entered don\’t match'});
-              console.log("submitted: " + this.state.submitted);
               console.log("Request failed! ERROR Section");
-              console.log("errorMsg: " + this.state.errorMessages);
+              this.setState({ submitted : false });
+              console.log("submitted: " + this.state.submitted);
+              if ( status == "abort") {
+                this.setState({ errorMessages : 'unable to connect, check your connection' });
+                console.log("errorMsg: " + this.state.errorMessages);
+              } else {
+                this.setState({ errorMessages : 'the username and password you entered don\’t match'});
+                console.log("errorMsg: " + this.state.errorMessages);
+              }
               console.log("fail data:  " + data);
               console.log("Response data: " + JSON.stringify(data) +
                 " Status: " + status + " xhr: " + xhr);
-              window.clearInterval(intervalID);
-              window.clearTimeout(timeoutID);
-            }.bind(this));
+            }.bind(this)).always(
+              function () {
+                this.refs.logo.stop();
+                window.clearTimeout(timeoutID);
+              }.bind(this)
+            );
+        this.refs.logo.play();
         var timeoutID = window.setTimeout( function () {
-          this.setState({ errorMessages : 'unable to connect, check your connection' });
           jqxhr.abort();
-          console.log("errorMessages: " + this.state.errorMessages);
-          }.bind(this),1000);
-        var intervalID = window.setInterval(function () {
-          this.setState({logo_src : 'img/spire_loading_animation.gif'});
-          console.log("image src after: " + this.state.logo_src);
-        }.bind(this), 1000);
+          }.bind(this),5000);
       },
       handleUsernameChange: function (e) {
         this.setState({username: e.target.value});
