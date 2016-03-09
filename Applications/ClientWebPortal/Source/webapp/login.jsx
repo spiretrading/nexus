@@ -18,6 +18,15 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery'],
         });
         return this;
     };
+    //Find Placeholder Length in Pixels
+    //Pass Id as '#yourId'
+    function findPlaceholderLength (placeholderId) {
+      var _$tmpSpan = $('<span/>').html($(placeholderId).attr('placeholder')).addClass("login_input").appendTo('body'),
+        textWidth = _$tmpSpan.width();
+        _$tmpSpan.remove();
+        console.log( "Text width: "+ textWidth);
+        return -textWidth; 
+    }
 
     var SpireLogo = React.createClass({
       getInitialState: function () {
@@ -93,16 +102,13 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery'],
       },
       componentDidMount: function () {
         console.log("submitted: " + this.state.submitted);
-        //get start position of placeholder in textfield
-        var CursorPos;
-        //set curser position
-        $("input:focus").setCursorPosition(0);
+        var usernameIndent = findPlaceholderLength('#login_username');
+        $('#login_username').css("text-indent", usernameIndent + "px");
+        var passwordIndent = findPlaceholderLength('#login_password');
+        $('#login_password').css("text-indent", "-60" + "px");
       },
       componentWillUpdate: function () {
-        //get start position of placeholder in textfield
-
-        //set curser position
-        //$("input:focus").setCursorPosition(0);
+        
       },
       componentWillUnmount: function() {
       },
@@ -114,7 +120,8 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery'],
         var submitted_username = this.state.username.trim();
         var submitted_password = this.state.password.trim();
         if (!submitted_username) {
-          console.log("No username or password");
+          console.log("No username");
+          this.setState({ errorMessages : 'No username'});
           return;
         }
         this.setState({username: ''});
@@ -176,9 +183,25 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery'],
       },
       handleUsernameChange: function (e) {
         this.setState({username: e.target.value});
+        console.log("Handling username changes: " + this.state.username);
+        if (e.target.value != '') {
+          $("#login_username").addClass("typing");
+          console.log("CSS class is added");
+        } else {
+          $("#login_username").removeClass("typing");
+          console.log("CSS class is removed");
+        }
       },
       handlePasswordChange: function (e) {
         this.setState({password: e.target.value});
+        console.log("Handling password changes: " + this.state.password);
+        if (e.target.value != '') {
+          $("#login_password").addClass("typing");
+          console.log("CSS class is added");
+        } else {
+          $("#login_password").removeClass("typing");
+          console.log("CSS class is removed");
+        }
       },
     });
     ReactDOM.render(<LoginPage url="/api/service_locator/login" />,
