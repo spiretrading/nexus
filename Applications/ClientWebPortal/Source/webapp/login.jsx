@@ -105,7 +105,7 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery'],
         var usernameIndent = findPlaceholderLength('#login_username');
         $('#login_username').css("text-indent", usernameIndent + "px");
         var passwordIndent = findPlaceholderLength('#login_password');
-        $('#login_password').css("text-indent", "-60" + "px");
+        $('#login_password').css("text-indent", passwordIndent + "px");
       },
       componentWillUpdate: function () {
         
