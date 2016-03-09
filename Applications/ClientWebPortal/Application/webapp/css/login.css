@@ -35,6 +35,10 @@ body ::-webkit-input-placeholder {
     text-indent: 0px;
 }
 
+input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0px 1000px white inset;
+}
+
 body :-moz-placeholder {
   /* Mozilla Firefox 4 to 18 */
   font-family: Roboto, sans-serif;
