@@ -137,11 +137,11 @@ body :-ms-input-placeholder {
 }
 
 #login_submit:hover {
-  opacity: 0.9;
+  opacity: .9;
 }
 
 .inactive {
-  opacity: 0.9 !important;
+  opacity: .9 !important;
 }
 
 .error_messages {
