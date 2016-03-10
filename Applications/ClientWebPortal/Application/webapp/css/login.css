@@ -162,7 +162,3 @@ input:focus::before{
   height: 20px;
   padding: 0px;
 }
-
-.typing {
-  text-indent: 0px !important;
-}
