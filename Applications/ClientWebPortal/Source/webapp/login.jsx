@@ -8,10 +8,11 @@ define(function(require) {
 
   /** A React Component displaying Spire's login page. */
   class LoginPage extends React.Component {
+
     /**
      * Constructs a LoginPage.
      */
-     constructor() {
+    constructor() {
       super();
       this.state =
       {
@@ -20,6 +21,7 @@ define(function(require) {
       };
       this.handleSubmit = this.handleSubmit.bind(this);
     }
+
     /** @private */
     handleSubmit(event) {
       event.preventDefault();
@@ -67,73 +69,72 @@ define(function(require) {
     }
     render() {
       return (
-        <div className = 'login-page'>
+        <div className = "login-page">
         <AnimatedImage
-        alt = 'Spire Trading Logo'
-        id = 'logo'
-        ref = 'logo'
-        initialImage = 'img/spire_white.png'
-        animatedImage = 'img/spire_loading_animation.gif'
+        alt = "Spire Trading Logo"
+        id = "logo"
+        ref = "logo"
+        initialImage = "img/spire_white.png"
+        animatedImage = "img/spire_loading_animation.gif"
         isPlaying = {this.state.submitted}
         />
         <form
-        ref = 'loginForm'
-        id = 'login-form'
+        ref = "loginForm"
+        id = "login-form"
         onSubmit = {this.handleSubmit}>
         <PlaceholderAlignedInput
         autoFocus
-        className = 'login-input'
-        id = 'login-username'
-        ref = 'loginUsername'
-        type = 'text'
-        name = 'login_username'
-        placeholder = 'Username'
+        className = "login-input"
+        id = "login-username"
+        ref = "loginUsername"
+        type = "text"
+        name = "login_username"
+        placeholder = "Username"
         />
         <br />
         <PlaceholderAlignedInput
-        className = 'login-input'
-        id = 'login-password'
-        ref = 'loginPassword'
-        type = 'password'
-        name = 'login_password'
-        placeholder = 'Password'
+        className = "login-input"
+        id = "login-password"
+        ref = "loginPassword"
+        type = "password"
+        name = "login_password"
+        placeholder = "Password"
         />
         <br />
         <input
         className = {
           function() {
             if(this.state.submitted) {
-              return 'inactive';
+              return "inactive";
             } else {
               return '';
             }
           }.bind(this)()
         }
-        id = 'login-submit'
-        ref = 'loginSubmit'
-        type = 'submit'
-        value = 'Login'
+        id = "login-submit"
+        ref = "loginSubmit"
+        type = "submit"
+        value = "Login"
         />
-        <p className = 'error-messages'>{this.state.errorMessages}</p>
+        <p className = "error-messages">{this.state.errorMessages}</p>
         </form>
         </div>);
     }
   }
   LoginPage.propTypes =
   {
+    /** The amount of time (in milliseconds) before the login attempt should
+     *  abort.
+     */
+     timeout: React.PropTypes.number,
 
-      /** The amount of time (in milliseconds) before the login attempt should
-       *  abort.
-       */
-       timeout: React.PropTypes.number,
-
-       /** The URL used to authenticate the login. */
-       url: React.PropTypes.string
-     };
+     /** The URL used to authenticate the login. */
+     url: React.PropTypes.string
+   };
      LoginPage.defaultProps =
      {
       timeout: 5000,
-      url: '/api/service_locator/login'
+      url: "/api/service_locator/login"
     };
 
     ReactDOM.render(<LoginPage />, document.getElementById('container'));
