@@ -25,6 +25,7 @@ body ::-webkit-input-placeholder {
   /* WebKit browsers */
   font-family: Roboto, sans-serif;
   color: white;
+  text-align: center;
   font-weight: 300;
   margin: 0;
   padding: 0;
@@ -34,14 +35,23 @@ body ::-webkit-input-placeholder {
     text-indent: 0px;
 }
 
+input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0px 1000px white inset;
+}
+
 body :-moz-placeholder {
   /* Mozilla Firefox 4 to 18 */
   font-family: Roboto, sans-serif;
   color: white;
+  text-align: center;
   opacity: 1;
   font-weight: 300;
   margin: 0;
   padding: 0;
+}
+
+.login_input:-moz-placeholder {
+    text-indent: 0px;
 }
 
 body ::-moz-placeholder {
@@ -49,18 +59,28 @@ body ::-moz-placeholder {
   font-family: Roboto, sans-serif;
   color: white;
   opacity: 1;
+  text-align: center;
   font-weight: 300;
   margin: 0;
   padding: 0;
+}
+
+.login_input::-moz-placeholder {
+    text-indent: 0px;
 }
 
 body :-ms-input-placeholder {
   /* Internet Explorer 10+ */
   font-family: Roboto, sans-serif;
   color: white;
+  text-align: center;
   font-weight: 300;
   margin: 0;
   padding: 0;
+}
+
+.login_input:-ms-input-placeholder {
+    text-indent: 0px;
 }
 
 #container {
