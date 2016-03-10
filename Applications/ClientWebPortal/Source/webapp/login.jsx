@@ -100,15 +100,16 @@ require(['react', 'react-dom', 'ReactRouter.min', 'jquery'],
           , errorMessages: ''
         };
       },
-      componentDidMount: function () {
-        console.log("submitted: " + this.state.submitted);
+      //componentDidUpdate: function () {
+      //  console.log("submitted: " + this.state.submitted);
+        
+      //},
+      componentWillUpdate: function () {
         var usernameIndent = findPlaceholderLength('#login_username');
         $('#login_username').css("text-indent", usernameIndent + "px");
         var passwordIndent = findPlaceholderLength('#login_password');
         $('#login_password').css("text-indent", passwordIndent + "px");
-      },
-      componentWillUpdate: function () {
-        
+        console.log("will update");
       },
       componentWillUnmount: function() {
       },

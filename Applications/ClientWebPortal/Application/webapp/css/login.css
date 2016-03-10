@@ -29,10 +29,7 @@ body ::-webkit-input-placeholder {
   font-weight: 300;
   margin: 0;
   padding: 0;
-}
-
-.login_input::-webkit-input-placeholder {
-    text-indent: 0px;
+  text-indent: 0px;
 }
 
 input:-webkit-autofill {
@@ -48,10 +45,7 @@ body :-moz-placeholder {
   font-weight: 300;
   margin: 0;
   padding: 0;
-}
-
-.login_input:-moz-placeholder {
-    text-indent: 0px;
+  text-indent: 0px !important;
 }
 
 body ::-moz-placeholder {
@@ -63,10 +57,7 @@ body ::-moz-placeholder {
   font-weight: 300;
   margin: 0;
   padding: 0;
-}
-
-.login_input::-moz-placeholder {
-    text-indent: 0px;
+  text-indent: 0px !important;
 }
 
 body :-ms-input-placeholder {
@@ -77,10 +68,7 @@ body :-ms-input-placeholder {
   font-weight: 300;
   margin: 0;
   padding: 0;
-}
-
-.login_input:-ms-input-placeholder {
-    text-indent: 0px;
+  text-indent: 0px !important;
 }
 
 #container {
