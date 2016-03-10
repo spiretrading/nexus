@@ -8,7 +8,6 @@ define(function(require) {
 
   /** A React Component displaying Spire's login page. */
   class LoginPage extends React.Component {
-
     /**
      * Constructs a LoginPage.
      */
@@ -21,66 +20,11 @@ define(function(require) {
       };
       this.handleSubmit = this.handleSubmit.bind(this);
     }
-
-    render() {
-      return (
-        <div className = 'login-page'>
-        <AnimatedImage
-        alt = 'Spire Trading Logo'
-        id = 'logo'
-        ref = 'logo'
-        initialImage = 'img/spire_white.png'
-        animatedImage = 'img/spire_loading_animation.gif'
-        isPlaying = {this.state.submitted}
-        />
-        <form
-        ref = 'login-form'
-        id = 'login-form'
-        onSubmit = {this.handleSubmit}>
-        <PlaceholderAlignedInput
-        autoFocus
-        className = 'login-input'
-        id = 'login-username'
-        ref = 'login_username'
-        type = 'text'
-        name = 'login_username'
-        placeholder = 'Username'
-        />
-        <br />
-        <PlaceholderAlignedInput
-        className = 'login-input'
-        id = 'login-password'
-        ref = 'login_password'
-        type = 'password'
-        name = 'login_password'
-        placeholder = 'Password'
-        />
-        <br />
-        <input
-        className = {
-          function() {
-            if(this.state.submitted) {
-              return 'inactive';
-            } else {
-              return '';
-            }
-          }.bind(this)()
-        }
-        id = 'login-submit'
-        ref = 'login_submit'
-        type = 'submit'
-        value = 'Login'
-        />
-        <p className = 'error-messages'>{this.state.errorMessages}</p>
-        </form>
-        </div>);
-    }
-
     /** @private */
     handleSubmit(event) {
       event.preventDefault();
-      var submitted_username = this.refs.login_username.state.value.trim();
-      var submitted_password = this.refs.login_password.state.value.trim();
+      var submitted_username = this.refs.loginUsername.state.value.trim();
+      var submitted_password = this.refs.loginPassword.state.value.trim();
       if(submitted_username == '') {
         return;
       }
@@ -120,6 +64,59 @@ define(function(require) {
       }.bind(this)
       );
       window.setTimeout(jqxhr.abort, this.props.timeout);
+    }
+    render() {
+      return (
+        <div className = 'login-page'>
+        <AnimatedImage
+        alt = 'Spire Trading Logo'
+        id = 'logo'
+        ref = 'logo'
+        initialImage = 'img/spire_white.png'
+        animatedImage = 'img/spire_loading_animation.gif'
+        isPlaying = {this.state.submitted}
+        />
+        <form
+        ref = 'loginForm'
+        id = 'login-form'
+        onSubmit = {this.handleSubmit}>
+        <PlaceholderAlignedInput
+        autoFocus
+        className = 'login-input'
+        id = 'login-username'
+        ref = 'loginUsername'
+        type = 'text'
+        name = 'login_username'
+        placeholder = 'Username'
+        />
+        <br />
+        <PlaceholderAlignedInput
+        className = 'login-input'
+        id = 'login-password'
+        ref = 'loginPassword'
+        type = 'password'
+        name = 'login_password'
+        placeholder = 'Password'
+        />
+        <br />
+        <input
+        className = {
+          function() {
+            if(this.state.submitted) {
+              return 'inactive';
+            } else {
+              return '';
+            }
+          }.bind(this)()
+        }
+        id = 'login-submit'
+        ref = 'loginSubmit'
+        type = 'submit'
+        value = 'Login'
+        />
+        <p className = 'error-messages'>{this.state.errorMessages}</p>
+        </form>
+        </div>);
     }
   }
   LoginPage.propTypes =
