@@ -24,7 +24,7 @@ define(function(require) {
 
     render() {
       return (
-        <div className = 'login_page'>
+        <div className = 'login-page'>
           <AnimatedImage
             alt = 'Spire Trading Logo'
             id = 'logo'
@@ -34,13 +34,13 @@ define(function(require) {
             isPlaying = {this.state.submitted}
           />
           <form
-            ref = 'login_form'
-            id = 'login_form'
+            ref = 'login-form'
+            id = 'login-form'
             onSubmit = {this.handleSubmit}>
               <PlaceholderAlignedInput
                 autoFocus
-                className = 'login_input'
-                id = 'login_username'
+                className = 'login-input'
+                id = 'login-username'
                 ref = 'login_username'
                 type = 'text'
                 name = 'login_username'
@@ -48,8 +48,8 @@ define(function(require) {
               />
               <br />
               <PlaceholderAlignedInput
-                className = 'login_input'
-                id = 'login_password'
+                className = 'login-input'
+                id = 'login-password'
                 ref = 'login_password'
                 type = 'password'
                 name = 'login_password'
@@ -66,12 +66,12 @@ define(function(require) {
                     }
                   }.bind(this)()
                 }
-                id = 'login_submit'
+                id = 'login-submit'
                 ref = 'login_submit'
                 type = 'submit'
                 value = 'Login'
               />
-              <p className = 'error_messages'>{this.state.errorMessages}</p>
+              <p className = 'error-messages'>{this.state.errorMessages}</p>
           </form>
         </div>);
     }
