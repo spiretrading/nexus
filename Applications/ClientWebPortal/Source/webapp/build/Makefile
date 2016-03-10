@@ -10,7 +10,7 @@ else
 endif
 BABEL:=$(NODEJS) ../node_modules/babel-cli/bin/babel.js
 BABEL_FLAGS:=
-DIRS:=.
+DIRS:=. ./components
 INTERMEDIATE_DIR:=output
 DEPLOYMENT_DIR:=../../../Application/webapp
 JSX_FILES:=$(foreach dir, $(DIRS), $(wildcard ../$(dir)/*.jsx))
