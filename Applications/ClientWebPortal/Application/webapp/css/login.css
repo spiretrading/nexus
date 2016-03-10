@@ -29,11 +29,11 @@ body ::-webkit-input-placeholder {
   font-weight: 300;
   margin: 0;
   padding: 0;
-  text-indent: 0px;
+  text-indent: 0;
 }
 
 input:-webkit-autofill {
-    -webkit-box-shadow: 0 0 0px 1000px white inset;
+    -webkit-box-shadow: 0 0 0 1000px white inset;
 }
 
 body :-moz-placeholder {
@@ -45,7 +45,7 @@ body :-moz-placeholder {
   font-weight: 300;
   margin: 0;
   padding: 0;
-  text-indent: 0px !important;
+  text-indent: 0;
 }
 
 body ::-moz-placeholder {
@@ -57,7 +57,7 @@ body ::-moz-placeholder {
   font-weight: 300;
   margin: 0;
   padding: 0;
-  text-indent: 0px !important;
+  text-indent: 0;
 }
 
 body :-ms-input-placeholder {
@@ -68,7 +68,7 @@ body :-ms-input-placeholder {
   font-weight: 300;
   margin: 0;
   padding: 0;
-  text-indent: 0px !important;
+  text-indent: 0;
 }
 
 #container {
@@ -108,18 +108,18 @@ body :-ms-input-placeholder {
 }
 
 #login_form {
-  margin-left: 0px;
-  padding-left: 0px; 
+  margin-left: 0;
+  padding-left: 0; 
 }
 
 #login_username {
   margin-bottom: 15px;
-  padding: 0px;
+  padding: 0;
 }
 
 #login_password {
   margin-bottom: 30px;
-  padding: 0px;
+  padding: 0;
 }
 
 #login_submit {
@@ -129,7 +129,7 @@ body :-ms-input-placeholder {
   width: 100%;
   margin-bottom: 39px;
   border: none;
-  padding: 0px;
+  padding: 0;
   font-family: Roboto, sans-serif;
   font-size: 20px;
   font-weight: 400;
@@ -146,7 +146,7 @@ body :-ms-input-placeholder {
 
 .error_messages {
   border: none;
-  padding: 0px;
+  padding: 0;
   color: #FFFFFF;
   font-family: Roboto, sans-serif;
   font-size: 12px;
@@ -156,5 +156,5 @@ body :-ms-input-placeholder {
   text-align: center;
   margin: auto;
   height: 20px;
-  padding: 0px;
+  padding: 0;
 }
