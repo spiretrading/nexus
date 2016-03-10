@@ -1,14 +1,14 @@
 @font-face {
-    font-family: "Roboto";
-    src: url("/fonts/Roboto/Roboto-Regular.ttf");
-    font-style: normal;
-    font-weight: 400;
+  font-family: "Roboto";
+  src: url("/fonts/Roboto/Roboto-Regular.ttf");
+  font-style: normal;
+  font-weight: 400;
 }
 @font-face {
-    font-family: "Roboto";
-    src: url("/fonts/Roboto/Roboto-Light.ttf");
-    font-style: normal;
-    font-weight: 300;
+  font-family: "Roboto";
+  src: url("/fonts/Roboto/Roboto-Light.ttf");
+  font-style: normal;
+  font-weight: 300;
 }
 body {
   background-color: #2CA1DB;
@@ -31,11 +31,6 @@ body ::-webkit-input-placeholder {
   padding: 0;
   text-indent: 0;
 }
-
-input:-webkit-autofill {
-    -webkit-box-shadow: 0 0 0 1000px white inset;
-}
-
 body :-moz-placeholder {
   /* Mozilla Firefox 4 to 18 */
   font-family: Roboto, sans-serif;
@@ -47,7 +42,6 @@ body :-moz-placeholder {
   padding: 0;
   text-indent: 0;
 }
-
 body ::-moz-placeholder {
   /* Mozilla Firefox 19+ */
   font-family: Roboto, sans-serif;
@@ -59,7 +53,6 @@ body ::-moz-placeholder {
   padding: 0;
   text-indent: 0;
 }
-
 body :-ms-input-placeholder {
   /* Internet Explorer 10+ */
   font-family: Roboto, sans-serif;
@@ -70,12 +63,10 @@ body :-ms-input-placeholder {
   padding: 0;
   text-indent: 0;
 }
-
 #container {
   position: relative;
   width: 100%;
 }
-
 .login-page {
   display: block;
   margin-left: auto;
@@ -86,12 +77,17 @@ body :-ms-input-placeholder {
   height: 330px;
   overflow: hidden;
 }
-
 #logo {
   height: 45px;
   margin-bottom: 65px;
 }
-
+#login-form {
+  margin-left: 0;
+  padding-left: 0; 
+}
+input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px white inset;
+}
 .login-input {
   background-color: #2CA1DB;
   color: #FFFFFF;
@@ -106,22 +102,17 @@ body :-ms-input-placeholder {
   bottom: 8px;
   border-bottom: 1px solid #FFFFFF;
 }
-
-#login-form {
-  margin-left: 0;
-  padding-left: 0; 
-}
-
 #login-username {
   margin-bottom: 15px;
   padding: 0;
 }
-
 #login-password {
   margin-bottom: 30px;
   padding: 0;
 }
-
+.inactive {
+  opacity: .9 !important;
+}
 #login-submit {
   color: #2CA1DB;
   background-color: #FFFFFF;
@@ -135,15 +126,9 @@ body :-ms-input-placeholder {
   font-weight: 400;
   opacity: 1;
 }
-
 #login-submit:hover {
   opacity: .9;
 }
-
-.inactive {
-  opacity: .9 !important;
-}
-
 .error-messages {
   border: none;
   padding: 0;
