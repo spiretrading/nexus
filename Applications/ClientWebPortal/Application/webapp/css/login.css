@@ -103,6 +103,10 @@ input:-webkit-autofill {
   -webkit-box-shadow: 0 0 0 1000px white inset;
 }
 
+input::-ms-clear {
+  display: none;
+}
+
 .login-input {
   background-color: #2CA1DB;
   color: #FFFFFF;
