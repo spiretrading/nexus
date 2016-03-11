@@ -5,6 +5,7 @@ define(function(require) {
   var AnimatedImage = require('app/components/AnimatedImage');
   var PlaceholderAlignedInput = require(
     'app/components/PlaceholderAlignedInput');
+  var SpireWebClient = require('app/services/SpireWebClient');
 
   /** A React Component displaying Spire's login page. */
   class LoginPage extends React.Component {
@@ -25,46 +26,27 @@ define(function(require) {
     /** @private */
     handleSubmit(event) {
       event.preventDefault();
-      var submitted_username = this.refs.loginUsername.state.value.trim();
-      var submitted_password = this.refs.loginPassword.state.value.trim();
-      if(submitted_username == '') {
+      var username = this.refs.loginUsername.state.value.trim();
+      var password = this.refs.loginPassword.state.value.trim();
+      if(username == '') {
         return;
       }
       this.setState({submitted: true});
-      var jqxhr = $.ajax(
-        {
-          url: this.props.url,
-          dataType: 'json',
-          method: 'POST',
-          data: JSON.stringify(
-            {
-              username: submitted_username,
-              password: submitted_password
-            })
-        }
-      ).done(
-        function(data, status, xhr) {
-          $.ajax(
-            {
-              url: '/api/service_locator/logout',
-              method: 'POST'
-            }
-          ).done(
+      this.props.client.login(username, password).then(
+        function() {
+          this.props.client.logout().then(
             function () {
               this.setState({ submitted : false });
               window.location.href = '/index.html'
             }.bind(this));
-        }.bind(this)
-      ).fail(
-        function(data, xhr, status, err) {
-          this.setState({ submitted : false });
-          if(status == 'abort') {
-            this.setState({ errorMessages : 'unable to connect, check your connection' });
-          } else {
-            this.setState({ errorMessages : 'the username and password you entered don\’t match'});
-          }
+        }.bind(this),
+        function(reason) {
+          this.setState(
+            {
+              submitted: false,
+              errorMessages: reason
+            });
         }.bind(this));
-      window.setTimeout(jqxhr.abort, this.props.timeout);
     }
 
     render() {
@@ -123,19 +105,13 @@ define(function(require) {
   }
   LoginPage.propTypes =
     {
-      /** The amount of time (in milliseconds) before the login attempt should
-       *  abort.
-       */
-       timeout: React.PropTypes.number,
 
-       /** The URL used to authenticate the login. */
-       url: React.PropTypes.string
-   };
-   LoginPage.defaultProps =
-    {
-      timeout: 5000,
-      url: "/api/service_locator/login"
+      /** The SpireWebClient to use. */
+      client: React.PropTypes.object.isRequired,
     };
-    ReactDOM.render(<LoginPage />, document.getElementById('container'));
+
+  var client = new SpireWebClient();
+  ReactDOM.render(<LoginPage client = {client} />,
+    document.getElementById('container'));
   }
 );

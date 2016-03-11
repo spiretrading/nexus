@@ -35,9 +35,8 @@ $(OUTPUT_FILES): $(INTERMEDIATE_DIR)/%.js: ../%.jsx
 	$(BABEL) $< $(BABEL_FLAGS) --out-file $@
 
 $(OUTPUT_JS_FILES): $(INTERMEDIATE_DIR)/%.js: ../%.js
-	echo $< $@
 	- $(MKDIR) $(call canon_path,$(@D))
-	- $(CP) $< $@
+	$(BABEL) $< $(BABEL_FLAGS) --out-file $@
 
 clean:
 	- $(RM) $(INTERMEDIATE_DIR)
