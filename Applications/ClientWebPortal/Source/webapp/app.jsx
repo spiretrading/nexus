@@ -10,4 +10,4 @@ requirejs.config({
   }
 });
 
-requirejs(['app/login']);
+requirejs(['app/main']);
