@@ -111,7 +111,7 @@ input::-ms-clear {
   background-color: #2CA1DB;
   color: #FFFFFF;
   font-family: Roboto, sans-serif;
-  font-size: 14px;
+  font-size: 0.42cm;
   font-weight: 300;
   height: 30px;
   width: 100%;
@@ -145,7 +145,7 @@ input::-ms-clear {
   border: none;
   padding: 0;
   font-family: Roboto, sans-serif;
-  font-size: 20px;
+  font-size: 0.53cm;
   font-weight: 400;
   opacity: 1;
 }
@@ -159,7 +159,7 @@ input::-ms-clear {
   padding: 0;
   color: #FFFFFF;
   font-family: Roboto, sans-serif;
-  font-size: 12px;
+  font-size: 0.42cm;;
   font-weight: 300;
   width: 100%;
   display: block;
