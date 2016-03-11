@@ -59,6 +59,13 @@ if [ ! -d "requirejs-2.1.22" ]; then
   cd ..
 fi
 
+if [ ! -d "require-css" ]; then
+  wget https://github.com/guybedford/require-css/archive/master.zip
+  unzip master.zip
+  mv require-css-master require-css
+  rm master.zip
+fi
+
 pushd $directory/../../Applications/ClientWebPortal/Build/Make
 ./setup.sh
 popd

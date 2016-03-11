@@ -1,4 +1,5 @@
 define(function(require) {
+  var CSS = require('css!app/css/login');
   var React = require('react');
   var ReactDOM = require('react-dom');
   var $ = require('jquery');

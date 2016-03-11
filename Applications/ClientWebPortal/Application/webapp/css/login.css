@@ -25,54 +25,6 @@ body {
   padding: 0;
 }
 
-/* Cross Browser Configurations */
-
-body ::-webkit-input-placeholder {
-  /* WebKit browsers */
-  font-family: Roboto, sans-serif;
-  color: white;
-  text-align: center;
-  font-weight: 300;
-  margin: 0;
-  padding: 0;
-  text-indent: 0;
-}
-
-body :-moz-placeholder {
-  /* Mozilla Firefox 4 to 18 */
-  font-family: Roboto, sans-serif;
-  color: white;
-  text-align: center;
-  opacity: 1;
-  font-weight: 300;
-  margin: 0;
-  padding: 0;
-  text-indent: 0;
-}
-
-body ::-moz-placeholder {
-  /* Mozilla Firefox 19+ */
-  font-family: Roboto, sans-serif;
-  color: white;
-  opacity: 1;
-  text-align: center;
-  font-weight: 300;
-  margin: 0;
-  padding: 0;
-  text-indent: 0;
-}
-
-body :-ms-input-placeholder {
-  /* Internet Explorer 10+ */
-  font-family: Roboto, sans-serif;
-  color: white;
-  text-align: center;
-  font-weight: 300;
-  margin: 0;
-  padding: 0;
-  text-indent: 0;
-}
-
 #container {
   position: relative;
   width: 100%;
