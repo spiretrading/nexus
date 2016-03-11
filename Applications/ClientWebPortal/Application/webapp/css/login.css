@@ -83,15 +83,14 @@ body :-ms-input-placeholder {
   margin-left: auto;
   margin-right: auto;
   margin-top: 130px;
-  max-width: 300px;
+  max-width: 7.9375cm;
   width: 100%;
-  height: 330px;
   overflow: hidden;
 }
 
 #logo {
-  height: 45px;
-  margin-bottom: 65px;
+  height: 1.190625cm;
+  margin-bottom: 1.719791667cm;
 }
 
 #login-form {
@@ -100,7 +99,7 @@ body :-ms-input-placeholder {
 }
 
 input:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0 1000px white inset;
+  -webkit-box-shadow: 0 0 0 26.458333333cm white inset;
 }
 
 input::-ms-clear {
@@ -113,22 +112,22 @@ input::-ms-clear {
   font-family: Roboto, sans-serif;
   font-size: 0.42cm;
   font-weight: 300;
-  height: 30px;
+  height: 0.79375cm;
   width: 100%;
   outline: none;
   border: none;
   text-align: center;
-  bottom: 8px;
-  border-bottom: 1px solid #FFFFFF;
+  bottom: 0.211666667cm;
+  border-bottom: 0.026458333cm solid #FFFFFF;
 }
 
 #login-username {
-  margin-bottom: 15px;
+  margin-bottom: 0.396875cm;
   padding: 0;
 }
 
 #login-password {
-  margin-bottom: 30px;
+  margin-bottom: 0.79375cm;
   padding: 0;
 }
 
@@ -139,9 +138,9 @@ input::-ms-clear {
 #login-submit {
   color: #2CA1DB;
   background-color: #FFFFFF;
-  height: 55px;
+  height: 1.455208333cm;
   width: 100%;
-  margin-bottom: 39px;
+  margin-bottom: 1.031875cm;
   border: none;
   padding: 0;
   font-family: Roboto, sans-serif;
@@ -159,13 +158,12 @@ input::-ms-clear {
   padding: 0;
   color: #FFFFFF;
   font-family: Roboto, sans-serif;
-  font-size: 0.42cm;;
+  font-size: 0.42cm;
   font-weight: 300;
   width: 100%;
   display: block;
   text-align: center;
   margin: auto;
-  height: 20px;
+  height: 0.6cm;
   padding: 0;
 }
-
