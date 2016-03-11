@@ -14,6 +14,11 @@ define(['jquery'],
         return this.account_;
       }
 
+      /** Checks if the user is logged in. */
+      checkLoggedIn() {
+        return false;
+      }
+
       /** Logs onto the Spire web server. */
       login(username, password) {
         if(this.account != null) {

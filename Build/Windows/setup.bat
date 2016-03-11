@@ -58,6 +58,13 @@ wget http://requirejs.org/docs/release/2.1.22/minified/require.js
 cd ..
 :end_requirejs_setup
 
+if exist require-css goto end_require_css_setup
+wget https://github.com/guybedford/require-css/archive/master.zip
+unzip master.zip
+mv require-css-master require-css
+rm master.zip
+:end_require_css_setup
+
 CALL %~dp0../../Applications/ClientWebPortal/Build/Windows/setup.bat
 
 ENDLOCAL

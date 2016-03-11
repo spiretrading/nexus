@@ -1,11 +1,11 @@
 define(function(require) {
+  var CSS = require('css!app/css/login');
   var React = require('react');
   var ReactDOM = require('react-dom');
   var $ = require('jquery');
   var AnimatedImage = require('app/components/AnimatedImage');
   var PlaceholderAlignedInput = require(
     'app/components/PlaceholderAlignedInput');
-  var SpireWebClient = require('app/services/SpireWebClient');
 
   /** A React Component displaying Spire's login page. */
   class LoginPage extends React.Component {
@@ -109,9 +109,5 @@ define(function(require) {
       /** The SpireWebClient to use. */
       client: React.PropTypes.object.isRequired,
     };
-
-  var client = new SpireWebClient();
-  ReactDOM.render(<LoginPage client = {client} />,
-    document.getElementById('container'));
-  }
-);
+  return LoginPage;
+});
