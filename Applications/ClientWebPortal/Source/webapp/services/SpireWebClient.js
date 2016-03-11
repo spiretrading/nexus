@@ -4,8 +4,24 @@ define(['jquery'],
     /** Exposes Spire web services */
     class SpireWebClient {
 
+      /** Constructs a SpireWebClient. */
+      constructor() {
+        this.account_ = null;
+      }
+
+      /** Returns the account. */
+      get account() {
+        return this.account_;
+      }
+
       /** Logs onto the Spire web server. */
       login(username, password) {
+        if(this.account != null) {
+          return new Promise(
+            function(resolve, reject) {
+              resolve(this.account);
+            }.bind(this));
+        }
         return new Promise(
           function(resolve, reject) {
             var request = $.ajax(
@@ -21,17 +37,24 @@ define(['jquery'],
               }
             ).done(
               function(data, status, xhr) {
-                resolve();
-              }
+                this.account_ = data;
+                resolve(data);
+              }.bind(this)
             ).fail(
               function(data, xhr, status, err) {
                 reject('Invalid username or password.');
               });
-          });
+          }.bind(this));
       }
 
       /** Logs out of the Spire web server. */
       logout() {
+        if(this.account == null) {
+          return new Promise(
+            function(resolve, reject) {
+              resolve();
+            });
+        }
         return new Promise(
           function(resolve, reject) {
             var request = $.ajax(
@@ -41,6 +64,7 @@ define(['jquery'],
               }
             ).done(
               function(data, status, xhr) {
+                this.account_ = null;
                 resolve();
               }
             ).fail(

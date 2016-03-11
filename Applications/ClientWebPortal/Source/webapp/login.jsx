@@ -28,7 +28,7 @@ define(function(require) {
       event.preventDefault();
       var username = this.refs.loginUsername.state.value.trim();
       var password = this.refs.loginPassword.state.value.trim();
-      if(username == '') {
+      if(username.length == 0) {
         return;
       }
       this.setState({submitted: true});

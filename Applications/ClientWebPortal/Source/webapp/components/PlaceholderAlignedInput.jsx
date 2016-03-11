@@ -27,20 +27,20 @@ define(['react', 'react-dom', 'jquery'],
        * Returns true if this component has a non-empty value.
        */
       hasUserInput() {
-        return this.state.value != '';
+        return this.state.value.length != 0;
       }
 
       render() {
         return (
           <input
             {...this.props}
-            placeholder = ''
+            placeholder = ""
             ref = {
               function(ref) {
                 this.target = ref;
               }.bind(this)
             }
-            type = 'text'
+            type = "text"
             onChange = {this.handleChange}
             onMouseDown = {this.preventCursorAdjustment}
             onKeyDown = {this.handleKeyDown}
@@ -82,7 +82,7 @@ define(['react', 'react-dom', 'jquery'],
       /** @private */
       handleChange(event) {
         var updatedValue = null;
-        if(event.target.value != '') {
+        if(event.target.value.length != 0) {
           if(!this.hasUserInput()) {
             updatedValue = event.target.value.substr(
               event.target.selectionStart - 1, 1);
