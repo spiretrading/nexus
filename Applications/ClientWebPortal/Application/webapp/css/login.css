@@ -156,10 +156,10 @@ input::-ms-clear {
 .error-messages {
   border: none;
   padding: 0;
-  color: #FFFFFF;
+  color: rgb(219,213,44);
   font-family: Roboto, sans-serif;
   font-size: 0.42cm;
-  font-weight: 300;
+  font-weight: 400;
   width: 100%;
   display: block;
   text-align: center;
