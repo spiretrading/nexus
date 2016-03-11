@@ -137,5 +137,6 @@ define(['react', 'react-dom', 'jquery'],
         }
       }
     }
-  return PlaceholderAlignedInput;
-});
+    return PlaceholderAlignedInput;
+  }
+);
