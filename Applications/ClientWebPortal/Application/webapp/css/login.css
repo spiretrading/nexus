@@ -1,3 +1,5 @@
+/* Login Page */
+
 @font-face {
   font-family: 'Roboto';
   src: url(/fonts/Roboto/Roboto-Regular.ttf);
@@ -24,6 +26,7 @@ body {
 }
 
 /* Cross Browser Configurations */
+
 body ::-webkit-input-placeholder {
   /* WebKit browsers */
   font-family: Roboto, sans-serif;
