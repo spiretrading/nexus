@@ -10,12 +10,14 @@ else
 endif
 BABEL:=$(NODEJS) ../node_modules/babel-cli/bin/babel.js
 BABEL_FLAGS:=
-DIRS:=. ./components
+DIRS:=. ./components ./services
 INTERMEDIATE_DIR:=output
 DEPLOYMENT_DIR:=../../../Application/webapp
 JSX_FILES:=$(foreach dir, $(DIRS), $(wildcard ../$(dir)/*.jsx))
-_JS_FILES:=$(JSX_FILES:.jsx=.js)
-JS_FILES:=$(addprefix $(INTERMEDIATE_DIR)/, $(_JS_FILES:../%=%))
+_OUTPUT_FILES:=$(JSX_FILES:.jsx=.js)
+OUTPUT_FILES:=$(addprefix $(INTERMEDIATE_DIR)/, $(_OUTPUT_FILES:../%=%))
+JS_FILES:=$(foreach dir, $(DIRS), $(wildcard ../$(dir)/*.js))
+OUTPUT_JS_FILES:=$(addprefix $(INTERMEDIATE_DIR)/, $(JS_FILES:../%=%))
 
 ifeq ($(UNAME), windows32)
 	canon_path=$(subst /,\,$1)
@@ -25,14 +27,18 @@ endif
 
 target_name=$(1:output/%=%)
 
-all: $(JS_FILES)
-	$(foreach file,$(JS_FILES),$(shell $(MKDIR) $(call dir,$(call canon_path,$(DEPLOYMENT_DIR)/$(call target_name,$(file))))))
-	$(foreach file,$(JS_FILES),$(shell $(CP) $(file) $(call canon_path,$(DEPLOYMENT_DIR)/$(call target_name,$(file)))))
+all: $(OUTPUT_FILES) $(OUTPUT_JS_FILES)
+	$(CP) -r $(INTERMEDIATE_DIR)/* $(DEPLOYMENT_DIR)
 
-$(INTERMEDIATE_DIR)/%.js: ../%.jsx
-	$(MKDIR) $(call canon_path,$(@D))
+$(OUTPUT_FILES): $(INTERMEDIATE_DIR)/%.js: ../%.jsx
+	- $(MKDIR) $(call canon_path,$(@D))
 	$(BABEL) $< $(BABEL_FLAGS) --out-file $@
 
+$(OUTPUT_JS_FILES): $(INTERMEDIATE_DIR)/%.js: ../%.js
+	echo $< $@
+	- $(MKDIR) $(call canon_path,$(@D))
+	- $(CP) $< $@
+
 clean:
-	$(RM) $(INTERMEDIATE_DIR)
-	$(foreach file,$(JS_FILES),$(shell $(RM) $(call canon_path,$(DEPLOYMENT_DIR)/$(call target_name,$(file)))))
+	- $(RM) $(INTERMEDIATE_DIR)
+	- $(foreach file,$(OUTPUT_FILES),$(shell $(RM) $(call canon_path,$(DEPLOYMENT_DIR)/$(call target_name,$(file)))))
