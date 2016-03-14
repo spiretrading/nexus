@@ -108,7 +108,7 @@ input::-ms-clear {
 .error-messages {
   border: none;
   padding: 0;
-  color: rgb(219,213,44);
+  color: #DBD52C;
   font-family: Roboto, sans-serif;
   font-size: 0.42cm;
   font-weight: 400;
