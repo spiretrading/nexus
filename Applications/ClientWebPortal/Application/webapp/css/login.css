@@ -18,7 +18,7 @@ body {
   background-color: #2CA1DB;
   font-family: Roboto, sans-serif;
   text-align: center;
-  color: #FFFFFF;
+  color: #FFF;
   opacity: 1;
   font-weight: 300;
   margin: 0;
@@ -35,14 +35,14 @@ body {
   margin-left: auto;
   margin-right: auto;
   margin-top: 130px;
-  max-width: 7.9375cm;
+  max-width: 7.94cm;
   width: 100%;
   overflow: hidden;
 }
 
 #logo {
-  height: 1.190625cm;
-  margin-bottom: 1.719791667cm;
+  height: 1.19cm;
+  margin-bottom: 1.72cm;
 }
 
 #login-form {
@@ -51,7 +51,7 @@ body {
 }
 
 input:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0 26.458333333cm white inset;
+  -webkit-box-shadow: 0 0 0 26.46cm white inset;
 }
 
 input::-ms-clear {
@@ -60,17 +60,17 @@ input::-ms-clear {
 
 .login-input {
   background-color: #2CA1DB;
-  color: #FFFFFF;
+  color: #FFF;
   font-family: Roboto, sans-serif;
   font-size: 0.42cm;
   font-weight: 300;
-  height: 0.79375cm;
+  height: 0.79cm;
   width: 100%;
   outline: none;
   border: none;
   text-align: center;
-  bottom: 0.211666667cm;
-  border-bottom: 0.026458333cm solid #FFFFFF;
+  bottom: 0.21cm;
+  border-bottom: 0.026cm solid #FFF;
 }
 
 #login-username {
@@ -79,7 +79,7 @@ input::-ms-clear {
 }
 
 #login-password {
-  margin-bottom: 0.79375cm;
+  margin-bottom: 0.79cm;
   padding: 0;
 }
 
@@ -89,10 +89,10 @@ input::-ms-clear {
 
 #login-submit {
   color: #2CA1DB;
-  background-color: #FFFFFF;
-  height: 1.455208333cm;
+  background-color: #FFF;
+  height: 1.46cm;
   width: 100%;
-  margin-bottom: 1.031875cm;
+  margin-bottom: 1.03cm;
   border: none;
   padding: 0;
   font-family: Roboto, sans-serif;
