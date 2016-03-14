@@ -18,7 +18,7 @@ body {
   background-color: #2CA1DB;
   font-family: Roboto, sans-serif;
   text-align: center;
-  color: #FFFFFF;
+  color: #FFF;
   opacity: 1;
   font-weight: 300;
   margin: 0;
@@ -35,15 +35,14 @@ body {
   margin-left: auto;
   margin-right: auto;
   margin-top: 130px;
-  max-width: 300px;
+  max-width: 7.94cm;
   width: 100%;
-  height: 330px;
   overflow: hidden;
 }
 
 #logo {
-  height: 45px;
-  margin-bottom: 65px;
+  height: 1.19cm;
+  margin-bottom: 1.72cm;
 }
 
 #login-form {
@@ -52,31 +51,35 @@ body {
 }
 
 input:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0 1000px white inset;
+  -webkit-box-shadow: 0 0 0 26.46cm white inset;
+}
+
+input::-ms-clear {
+  display: none;
 }
 
 .login-input {
   background-color: #2CA1DB;
-  color: #FFFFFF;
+  color: #FFF;
   font-family: Roboto, sans-serif;
-  font-size: 14px;
+  font-size: 0.42cm;
   font-weight: 300;
-  height: 30px;
+  height: 0.79cm;
   width: 100%;
   outline: none;
   border: none;
   text-align: center;
-  bottom: 8px;
-  border-bottom: 1px solid #FFFFFF;
+  bottom: 0.21cm;
+  border-bottom: 0.026cm solid #FFF;
 }
 
 #login-username {
-  margin-bottom: 15px;
+  margin-bottom: 0.396875cm;
   padding: 0;
 }
 
 #login-password {
-  margin-bottom: 30px;
+  margin-bottom: 0.79cm;
   padding: 0;
 }
 
@@ -86,14 +89,14 @@ input:-webkit-autofill {
 
 #login-submit {
   color: #2CA1DB;
-  background-color: #FFFFFF;
-  height: 55px;
+  background-color: #FFF;
+  height: 1.46cm;
   width: 100%;
-  margin-bottom: 39px;
+  margin-bottom: 1.03cm;
   border: none;
   padding: 0;
   font-family: Roboto, sans-serif;
-  font-size: 20px;
+  font-size: 0.53cm;
   font-weight: 400;
   opacity: 1;
 }
@@ -105,15 +108,14 @@ input:-webkit-autofill {
 .error-messages {
   border: none;
   padding: 0;
-  color: #FFFFFF;
+  color: #DBD52C;
   font-family: Roboto, sans-serif;
-  font-size: 12px;
-  font-weight: 300;
+  font-size: 0.42cm;
+  font-weight: 400;
   width: 100%;
   display: block;
   text-align: center;
   margin: auto;
-  height: 20px;
+  height: 0.6cm;
   padding: 0;
 }
-
