@@ -15,10 +15,10 @@
 }
 
 body {
-  background-color: #2CA1DB;
+  background-color: #2ca1db;
   font-family: Roboto, sans-serif;
   text-align: center;
-  color: #FFF;
+  color: #fff;
   opacity: 1;
   font-weight: 300;
   margin: 0;
@@ -59,8 +59,8 @@ input::-ms-clear {
 }
 
 .login-input {
-  background-color: #2CA1DB;
-  color: #FFF;
+  background-color: #2ca1db;
+  color: #fff;
   font-family: Roboto, sans-serif;
   font-size: 0.42cm;
   font-weight: 300;
@@ -70,11 +70,11 @@ input::-ms-clear {
   border: none;
   text-align: center;
   bottom: 0.21cm;
-  border-bottom: 0.026cm solid #FFF;
+  border-bottom: 0.026cm solid #fff;
 }
 
 #login-username {
-  margin-bottom: 0.396875cm;
+  margin-bottom: 0.40cm;
   padding: 0;
 }
 
@@ -88,8 +88,8 @@ input::-ms-clear {
 }
 
 #login-submit {
-  color: #2CA1DB;
-  background-color: #FFF;
+  color: #2ca1db;
+  background-color: #fff;
   height: 1.46cm;
   width: 100%;
   margin-bottom: 1.03cm;
@@ -108,7 +108,7 @@ input::-ms-clear {
 .error-messages {
   border: none;
   padding: 0;
-  color: #DBD52C;
+  color: #dbd52c;
   font-family: Roboto, sans-serif;
   font-size: 0.42cm;
   font-weight: 400;
