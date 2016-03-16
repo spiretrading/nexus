@@ -34,11 +34,8 @@ define(function(require) {
       this.setState({submitted: true});
       this.props.client.login(username, password).then(
         function() {
-          this.props.client.logout().then(
-            function () {
-              this.setState({ submitted : false });
-              window.location.href = '/index.html'
-            }.bind(this));
+          this.setState({ submitted : false });
+          this.props.success();
         }.bind(this),
         function(reason) {
           this.setState(
@@ -108,6 +105,9 @@ define(function(require) {
 
       /** The SpireWebClient to use. */
       client: React.PropTypes.object.isRequired,
+
+      /** The function to call on success. */
+      success: React.PropTypes.func.isRequired,
     };
   return LoginPage;
 });

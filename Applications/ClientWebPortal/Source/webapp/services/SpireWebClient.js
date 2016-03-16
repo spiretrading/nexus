@@ -27,6 +27,7 @@ define(['jquery'],
                   };
               }
           });
+        console.log(result);
         return result;
       }
 
@@ -47,6 +48,9 @@ define(['jquery'],
               }
             ).done(
               function(data, status, xhr) {
+                console.log(document.cookie);
+                var headers = xhr.getAllResponseHeaders();
+                console.log(headers);
                 resolve(data);
               }.bind(this)
             ).fail(

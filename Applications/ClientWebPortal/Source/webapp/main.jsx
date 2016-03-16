@@ -4,9 +4,16 @@ define(function(require) {
   var ReactDOM = require('react-dom');
   var SpireWebClient = require('app/services/SpireWebClient');
   var client = new SpireWebClient();
-  if(client.loadCurrentAccount().id == -1) {
-    ReactDOM.render(<LoginPage client = {client} />,
-      document.getElementById('container'));
+  if(client.loadCurrentAccount().type == -1) {
+    ReactDOM.render(
+      <LoginPage
+        client = {client}
+        success = {
+          function() {
+            window.location.href = '/dashboard';
+          }
+        }
+      />, document.getElementById('container'));
   } else {
     window.location.href = '/dashboard';
   }

@@ -90,6 +90,7 @@ HttpServerResponse ClientWebPortalServlet::OnDashboard(
   auto session = m_sessions.Find(request);
   if(session == nullptr || !session->IsLoggedIn()) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    std::cout << "Boooo " << (session == nullptr) << std::endl;
     return response;
   }
   auto lastLoginTime =
@@ -100,6 +101,7 @@ HttpServerResponse ClientWebPortalServlet::OnDashboard(
     "<html>\n" <<
     "Last login: " << lastLoginTime << "\n" <<
     "</html>\n";
+  std::cout << "Yao: " << view.str() << std::endl;
   response.SetBody(BufferFromString<SharedBuffer>(view.str()));
   return response;
 }
