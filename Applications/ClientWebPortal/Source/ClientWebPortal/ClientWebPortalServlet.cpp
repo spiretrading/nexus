@@ -35,6 +35,10 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
   slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/logout"),
     bind(&ClientWebPortalServlet::OnLogout, this, std::placeholders::_1));
+  slots.emplace_back(
+    MatchesPath(HttpMethod::POST, "/api/service_locator/load_current_account"),
+    bind(&ClientWebPortalServlet::OnLoadCurrentAccount, this,
+    std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, "/dashboard"),
     bind(&ClientWebPortalServlet::OnDashboard, this, std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, "/"),
@@ -103,6 +107,20 @@ HttpServerResponse ClientWebPortalServlet::OnDashboard(
 HttpServerResponse ClientWebPortalServlet::OnServeFile(
     const HttpServerRequest& request) {
   return m_fileStore.Serve(request);
+}
+
+HttpServerResponse ClientWebPortalServlet::OnLoadCurrentAccount(
+    const HttpServerRequest& request) {
+  HttpServerResponse response;
+  auto session = m_sessions.Find(request);
+  auto account = [&] {
+    if(session == nullptr || !session->IsLoggedIn()) {
+      return DirectoryEntry{};
+    }
+    return session->GetAccount();
+  }();
+  response.SetBody(Encode<SharedBuffer>(m_sender, account));
+  return response;
 }
 
 HttpServerResponse ClientWebPortalServlet::OnLogin(

@@ -4,7 +4,7 @@ define(function(require) {
   var ReactDOM = require('react-dom');
   var SpireWebClient = require('app/services/SpireWebClient');
   var client = new SpireWebClient();
-  if(!client.checkLoggedIn()) {
+  if(client.loadCurrentAccount().id == -1) {
     ReactDOM.render(<LoginPage client = {client} />,
       document.getElementById('container'));
   } else {

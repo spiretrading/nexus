@@ -4,29 +4,34 @@ define(['jquery'],
     /** Exposes Spire web services */
     class SpireWebClient {
 
-      /** Constructs a SpireWebClient. */
-      constructor() {
-        this.account_ = null;
-      }
-
-      /** Returns the account. */
-      get account() {
-        return this.account_;
-      }
-
-      /** Checks if the user is logged in. */
-      checkLoggedIn() {
-        return false;
+      /** Loads the DirectoryEntry of the account currently logged in. */
+      loadCurrentAccount() {
+        var result = null;
+        $.ajax(
+          {
+            async: false,
+            url: '/api/service_locator/load_current_account',
+            dataType: 'json',
+            method: 'POST',
+            success:
+              function(data, status, xhr) {
+                result = data;
+              },
+            error:
+              function(data, xhr, status, err) {
+                result =
+                  {
+                    id: -1,
+                    type: -1,
+                    name: ''
+                  };
+              }
+          });
+        return result;
       }
 
       /** Logs onto the Spire web server. */
       login(username, password) {
-        if(this.account != null) {
-          return new Promise(
-            function(resolve, reject) {
-              resolve(this.account);
-            }.bind(this));
-        }
         return new Promise(
           function(resolve, reject) {
             var request = $.ajax(
@@ -42,7 +47,6 @@ define(['jquery'],
               }
             ).done(
               function(data, status, xhr) {
-                this.account_ = data;
                 resolve(data);
               }.bind(this)
             ).fail(
@@ -54,12 +58,6 @@ define(['jquery'],
 
       /** Logs out of the Spire web server. */
       logout() {
-        if(this.account == null) {
-          return new Promise(
-            function(resolve, reject) {
-              resolve();
-            });
-        }
         return new Promise(
           function(resolve, reject) {
             var request = $.ajax(
@@ -69,7 +67,6 @@ define(['jquery'],
               }
             ).done(
               function(data, status, xhr) {
-                this.account_ = null;
                 resolve();
               }
             ).fail(
