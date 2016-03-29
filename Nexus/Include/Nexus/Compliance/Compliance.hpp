@@ -31,6 +31,7 @@ namespace Compliance {
   class MySqlComplianceRuleDataStore;
   template<typename TimeClientType>
     class OpposingOrderCancellationComplianceRule;
+  template<typename TimeClientType> class OpposingOrderSubmissionComplianceRule;
   class OrderCountPerSideComplianceRule;
   class PerAccountComplianceRule;
   class RejectCancelsComplianceRule;

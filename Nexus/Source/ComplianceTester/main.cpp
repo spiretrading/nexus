@@ -9,6 +9,7 @@
 #include "Nexus/ComplianceTests/ComplianceTests.hpp"
 #include "Nexus/ComplianceTests/LocalComplianceRuleDataStoreTester.hpp"
 #include "Nexus/ComplianceTests/OpposingOrderCancellationComplianceRuleTester.hpp"
+#include "Nexus/ComplianceTests/OpposingOrderSubmissionComplianceRuleTester.hpp"
 #include "Nexus/ComplianceTests/RejectCancelsComplianceRuleTester.hpp"
 #include "Nexus/ComplianceTests/RejectSubmissionsComplianceRuleTester.hpp"
 #include "Nexus/ComplianceTests/SecurityFilterComplianceRuleTester.hpp"
@@ -24,6 +25,7 @@ int main() {
   runner.addTest(ComplianceRuleSetTester::suite());
   runner.addTest(CancelRestrictionPeriodComplianceRuleTester::suite());
   runner.addTest(OpposingOrderCancellationComplianceRuleTester::suite());
+  runner.addTest(OpposingOrderSubmissionComplianceRuleTester::suite());
   runner.addTest(RejectCancelsComplianceRuleTester::suite());
   runner.addTest(RejectSubmissionsComplianceRuleTester::suite());
   runner.addTest(SecurityFilterComplianceRuleTester::suite());

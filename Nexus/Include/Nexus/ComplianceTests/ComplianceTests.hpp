@@ -8,6 +8,7 @@ namespace Tests {
   class ComplianceRuleSetTester;
   class LocalComplianceRuleDataStoreTester;
   class OpposingOrderCancellationComplianceRuleTester;
+  class OpposingOrderSubmissionComplianceRuleTester;
   class RejectCancelsComplianceRuleTester;
   class RejectSubmissionsComplianceRuleTester;
   class SecurityFilterComplianceRuleTester;
