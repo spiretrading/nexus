@@ -14,7 +14,7 @@ namespace Tests {
   class OpposingOrderCancellationComplianceRuleTester :
       public CPPUNIT_NS::TestFixture {
     public:
-}
+  };
 }
 }
 }

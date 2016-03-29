@@ -135,13 +135,13 @@ namespace Compliance {
         m_timeClient{std::forward<TimeClientForward>(timeClient)} {}
 
   template<typename TimeClientType>
-  void OrderCountPerSideComplianceRule<TimeClientType>::Add(
+  void OpposingOrderSubmissionComplianceRule<TimeClientType>::Add(
       const OrderExecutionService::Order& order) {
     order.GetPublisher().Monitor(m_executionReportQueue.GetSlot(&order));
   }
 
   template<typename TimeClientType>
-  void OrderCountPerSideComplianceRule<TimeClientType>::Submit(
+  void OpposingOrderSubmissionComplianceRule<TimeClientType>::Submit(
       const OrderExecutionService::Order& order) {
     if(order.GetInfo().m_fields.m_type != OrderType::LIMIT &&
         order.GetInfo().m_fields.m_type != OrderType::MARKET) {
@@ -178,8 +178,8 @@ namespace Compliance {
   }
 
   template<typename TimeClientType>
-  Money OrderCountPerSideComplianceRule<TimeClientType>::GetSubmissionPrice(
-      const OrderExecutionService::Order& order) {
+  Money OpposingOrderSubmissionComplianceRule<TimeClientType>::
+      GetSubmissionPrice(const OrderExecutionService::Order& order) {
     if(order.GetInfo().m_fields.m_type == OrderType::LIMIT) {
       return order.GetInfo().m_fields.m_price;
     } else if(order.GetInfo().m_fields.m_side == Side::ASK) {
@@ -191,7 +191,7 @@ namespace Compliance {
   }
 
   template<typename TimeClientType>
-  bool OrderCountPerSideComplianceRule<TimeClientType>::
+  bool OpposingOrderSubmissionComplianceRule<TimeClientType>::
       TestSubmissionPriceInRange(const OrderExecutionService::Order& order) {
     auto price = GetSubmissionPrice(order);
     if(order.GetInfo().m_fields.m_side == Side::ASK) {
