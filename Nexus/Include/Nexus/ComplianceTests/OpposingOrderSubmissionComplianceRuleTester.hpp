@@ -11,9 +11,13 @@ namespace Tests {
   /*! \class OpposingOrderSubmissionComplianceRuleTester
       \brief Tests the OpposingOrderSubmissionComplianceRule class.
    */
-  class OpposingOrderCancellationComplianceRuleTester :
+  class OpposingOrderSubmissionComplianceRuleTester :
       public CPPUNIT_NS::TestFixture {
     public:
+
+    private:
+      CPPUNIT_TEST_SUITE(OpposingOrderSubmissionComplianceRuleTester);
+      BEAM_CPPUNIT_TEST_SUITE_END();
   };
 }
 }
