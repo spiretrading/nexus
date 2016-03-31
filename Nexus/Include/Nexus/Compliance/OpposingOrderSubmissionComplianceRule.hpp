@@ -154,12 +154,12 @@ namespace Compliance {
         auto side = executionReport.m_key->GetInfo().m_fields.m_side;
         auto submissionPrice = GetSubmissionPrice(order);
         if(side == Side::ASK) {
-          if(price >= submissionPrice) {
+          if(submissionPrice >= submissionPrice) {
             m_askPrice = submissionPrice;
             m_lastAskCancelTime = executionReport.m_value.m_timestamp;
           }
         } else {
-          if(price <= submissionPrice) {
+          if(submissionPrice <= submissionPrice) {
             m_bidPrice = submissionPrice;
             m_lastBidCancelTime = executionReport.m_value.m_timestamp;
           }
@@ -195,9 +195,9 @@ namespace Compliance {
       TestSubmissionPriceInRange(const OrderExecutionService::Order& order) {
     auto price = GetSubmissionPrice(order);
     if(order.GetInfo().m_fields.m_side == Side::ASK) {
-      return price - m_range;
+      return price + m_offset <= m_askPrice;
     } else {
-      return price + m_range;
+      return price - m_offset >= m_bidPrice;
     }
   }
 }

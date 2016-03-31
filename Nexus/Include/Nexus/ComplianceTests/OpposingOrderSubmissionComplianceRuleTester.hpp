@@ -15,8 +15,14 @@ namespace Tests {
       public CPPUNIT_NS::TestFixture {
     public:
 
+      //! Submit a limit ask.
+      //! Cancel the ask.
+      //! Submit a bid.
+      void TestLimitCancel();
+
     private:
       CPPUNIT_TEST_SUITE(OpposingOrderSubmissionComplianceRuleTester);
+        CPPUNIT_TEST(TestLimitCancel);
       BEAM_CPPUNIT_TEST_SUITE_END();
   };
 }
