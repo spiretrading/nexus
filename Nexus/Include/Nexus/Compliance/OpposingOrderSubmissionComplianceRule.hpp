@@ -208,7 +208,6 @@ namespace Compliance {
   bool OpposingOrderSubmissionComplianceRule<TimeClientType>::
       TestSubmissionPriceInRange(const OrderExecutionService::Order& order) {
     auto price = GetSubmissionPrice(order);
-    std::cout << price << " " << m_askPrice << " " << m_offset << std::endl;
     if(order.GetInfo().m_fields.m_side == Side::ASK) {
       return price <= m_bidPrice + m_offset;
     } else {
