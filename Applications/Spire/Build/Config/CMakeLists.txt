@@ -13,6 +13,7 @@ include_directories($ENV{QT_INCLUDE_PATH})
 include_directories($ENV{QT_CORE_INCLUDE_PATH})
 include_directories($ENV{QT_GUI_INCLUDE_PATH})
 include_directories($ENV{QT_WIDGETS_INCLUDE_PATH})
+include_directories($ENV{OPEN_SSL_INCLUDE_PATH})
 include_directories($ENV{TCLAP_INCLUDE_PATH})
 include_directories($ENV{YAML_INCLUDE_PATH})
 

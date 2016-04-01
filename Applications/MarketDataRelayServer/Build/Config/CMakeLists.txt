@@ -7,6 +7,7 @@ include_directories($ENV{NEXUS_INCLUDE_PATH})
 include_directories($ENV{BOOST_INCLUDE_PATH})
 include_directories($ENV{ZLIB_INCLUDE_PATH})
 include_directories($ENV{CRYPTOPP_INCLUDE_PATH})
+include_directories($ENV{OPEN_SSL_INCLUDE_PATH})
 include_directories($ENV{TCLAP_INCLUDE_PATH})
 include_directories($ENV{YAML_INCLUDE_PATH})
 
