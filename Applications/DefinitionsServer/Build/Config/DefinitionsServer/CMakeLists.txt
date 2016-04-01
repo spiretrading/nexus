@@ -35,7 +35,7 @@ if(UNIX)
     optimized $ENV{BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
     debug $ENV{BOOST_SYSTEM_LIBRARY_DEBUG_PATH}
     optimized $ENV{BOOST_SYSTEM_LIBRARY_OPTIMIZED_PATH}
-    pthread rt)
+    dl pthread rt)
 endif(UNIX)
 
 install(TARGETS DefinitionsServer DESTINATION $ENV{INSTALL_DIRECTORY})

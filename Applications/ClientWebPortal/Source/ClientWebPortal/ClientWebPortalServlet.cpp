@@ -2,9 +2,9 @@
 #include <sstream>
 #include <Beam/Json/JsonParser.hpp>
 #include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
+#include <Beam/WebServices/HttpRequest.hpp>
+#include <Beam/WebServices/HttpResponse.hpp>
 #include <Beam/WebServices/HttpServerPredicates.hpp>
-#include <Beam/WebServices/HttpServerRequest.hpp>
-#include <Beam/WebServices/HttpServerResponse.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "ClientWebPortal/ClientWebPortal/ServiceClients.hpp"
 
@@ -77,16 +77,14 @@ void ClientWebPortalServlet::Shutdown() {
   m_openState.SetClosed();
 }
 
-HttpServerResponse ClientWebPortalServlet::OnIndex(
-    const HttpServerRequest& request) {
-  HttpServerResponse response;
+HttpResponse ClientWebPortalServlet::OnIndex(const HttpRequest& request) {
+  HttpResponse response;
   m_fileStore.Serve("index.html", Store(response));
   return response;
 }
 
-HttpServerResponse ClientWebPortalServlet::OnDashboard(
-    const HttpServerRequest& request) {
-  HttpServerResponse response;
+HttpResponse ClientWebPortalServlet::OnDashboard(const HttpRequest& request) {
+  HttpResponse response;
   auto session = m_sessions.Find(request);
   if(session == nullptr || !session->IsLoggedIn()) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
@@ -106,14 +104,13 @@ HttpServerResponse ClientWebPortalServlet::OnDashboard(
   return response;
 }
 
-HttpServerResponse ClientWebPortalServlet::OnServeFile(
-    const HttpServerRequest& request) {
+HttpResponse ClientWebPortalServlet::OnServeFile(const HttpRequest& request) {
   return m_fileStore.Serve(request);
 }
 
-HttpServerResponse ClientWebPortalServlet::OnLoadCurrentAccount(
-    const HttpServerRequest& request) {
-  HttpServerResponse response;
+HttpResponse ClientWebPortalServlet::OnLoadCurrentAccount(
+    const HttpRequest& request) {
+  HttpResponse response;
   auto session = m_sessions.Find(request);
   auto account = [&] {
     if(session == nullptr || !session->IsLoggedIn()) {
@@ -125,9 +122,8 @@ HttpServerResponse ClientWebPortalServlet::OnLoadCurrentAccount(
   return response;
 }
 
-HttpServerResponse ClientWebPortalServlet::OnLogin(
-    const HttpServerRequest& request) {
-  HttpServerResponse response;
+HttpResponse ClientWebPortalServlet::OnLogin(const HttpRequest& request) {
+  HttpResponse response;
   auto session = m_sessions.Get(request, Store(response));
   if(session->IsLoggedIn()) {
     response.SetStatusCode(HttpStatusCode::BAD_REQUEST);
@@ -149,9 +145,8 @@ HttpServerResponse ClientWebPortalServlet::OnLogin(
   return response;
 }
 
-HttpServerResponse ClientWebPortalServlet::OnLogout(
-    const HttpServerRequest& request) {
-  HttpServerResponse response;
+HttpResponse ClientWebPortalServlet::OnLogout(const HttpRequest& request) {
+  HttpResponse response;
   auto session = m_sessions.Find(request);
   if(session == nullptr || !session->IsLoggedIn()) {
     response.SetStatusCode(HttpStatusCode::BAD_REQUEST);

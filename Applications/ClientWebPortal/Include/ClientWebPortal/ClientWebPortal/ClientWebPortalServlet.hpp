@@ -45,18 +45,18 @@ namespace ClientWebPortal {
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
-      Beam::WebServices::HttpServerResponse OnIndex(
-        const Beam::WebServices::HttpServerRequest& request);
-      Beam::WebServices::HttpServerResponse OnDashboard(
-        const Beam::WebServices::HttpServerRequest& request);
-      Beam::WebServices::HttpServerResponse OnServeFile(
-        const Beam::WebServices::HttpServerRequest& request);
-      Beam::WebServices::HttpServerResponse OnLoadCurrentAccount(
-        const Beam::WebServices::HttpServerRequest& request);
-      Beam::WebServices::HttpServerResponse OnLogin(
-        const Beam::WebServices::HttpServerRequest& request);
-      Beam::WebServices::HttpServerResponse OnLogout(
-        const Beam::WebServices::HttpServerRequest& request);
+      Beam::WebServices::HttpResponse OnIndex(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnDashboard(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnServeFile(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadCurrentAccount(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLogin(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLogout(
+        const Beam::WebServices::HttpRequest& request);
   };
 }
 }
