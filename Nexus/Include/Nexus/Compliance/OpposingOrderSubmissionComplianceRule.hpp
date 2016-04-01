@@ -132,11 +132,20 @@ namespace Compliance {
       TimeClientForward&& timeClient)
       : m_timeout{timeout},
         m_offset{offset},
-        m_timeClient{std::forward<TimeClientForward>(timeClient)} {}
+        m_timeClient{std::forward<TimeClientForward>(timeClient)},
+        m_lastAskCancelTime{boost::posix_time::min_date_time},
+        m_askPrice{Money::ZERO},
+        m_lastBidCancelTime{boost::posix_time::min_date_time},
+        m_bidPrice{Money::FromRepresentation(
+          std::numeric_limits<std::int64_t>::max())} {}
 
   template<typename TimeClientType>
   void OpposingOrderSubmissionComplianceRule<TimeClientType>::Add(
       const OrderExecutionService::Order& order) {
+    if(order.GetInfo().m_fields.m_type != OrderType::LIMIT &&
+        order.GetInfo().m_fields.m_type != OrderType::MARKET) {
+      return;
+    }
     order.GetPublisher().Monitor(m_executionReportQueue.GetSlot(&order));
   }
 
@@ -147,6 +156,7 @@ namespace Compliance {
         order.GetInfo().m_fields.m_type != OrderType::MARKET) {
       return;
     }
+    auto time = m_timeClient->GetTime();
     while(!m_executionReportQueue.IsEmpty()) {
       auto executionReport = m_executionReportQueue.Top();
       m_executionReportQueue.Pop();
@@ -154,23 +164,26 @@ namespace Compliance {
         auto side = executionReport.m_key->GetInfo().m_fields.m_side;
         auto submissionPrice = GetSubmissionPrice(order);
         if(side == Side::ASK) {
-          if(submissionPrice >= submissionPrice) {
-            m_askPrice = submissionPrice;
-            m_lastAskCancelTime = executionReport.m_value.m_timestamp;
+          if((time - m_lastAskCancelTime) > m_timeout) {
+            m_askPrice = Money::ZERO;
           }
+          m_lastAskCancelTime = std::max(executionReport.m_value.m_timestamp,
+            m_lastAskCancelTime);
+          m_askPrice = std::max(m_askPrice, submissionPrice);
         } else {
-          if(submissionPrice <= submissionPrice) {
-            m_bidPrice = submissionPrice;
-            m_lastBidCancelTime = executionReport.m_value.m_timestamp;
+          if((time - m_lastBidCancelTime) > m_timeout) {
+            m_bidPrice = Money::FromRepresentation(
+              std::numeric_limits<std::int64_t>::max());
           }
+          m_lastBidCancelTime = std::max(executionReport.m_value.m_timestamp,
+            m_lastBidCancelTime);
+          m_bidPrice = std::min(m_bidPrice, submissionPrice);
         }
       }
     }
-    auto time = m_timeClient->GetTime();
     auto& lastCancelTime = Pick(order.GetInfo().m_fields.m_side,
       m_lastBidCancelTime, m_lastAskCancelTime);
     if(TestSubmissionPriceInRange(order) &&
-        lastCancelTime != boost::posix_time::not_a_date_time &&
         lastCancelTime >= (time - m_timeout)) {
       BOOST_THROW_EXCEPTION(ComplianceCheckException{
         "Opposing order can not be submitted yet."});
@@ -195,6 +208,7 @@ namespace Compliance {
   bool OpposingOrderSubmissionComplianceRule<TimeClientType>::
       TestSubmissionPriceInRange(const OrderExecutionService::Order& order) {
     auto price = GetSubmissionPrice(order);
+    std::cout << price << " " << m_askPrice << " " << m_offset << std::endl;
     if(order.GetInfo().m_fields.m_side == Side::ASK) {
       return price <= m_bidPrice + m_offset;
     } else {
