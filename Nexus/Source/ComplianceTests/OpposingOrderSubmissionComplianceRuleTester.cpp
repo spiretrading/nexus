@@ -41,7 +41,7 @@ namespace {
   }
 }
 
-void OpposingOrderSubmissionComplianceRuleTester::TestLimitCancel() {
+void OpposingOrderSubmissionComplianceRuleTester::TestLimitAskCancel() {
   FixedTimeClient timeClient{TIMESTAMP};
   OpposingOrderSubmissionComplianceRule<FixedTimeClient*> rule{DURATION, RANGE,
     &timeClient};
@@ -55,23 +55,68 @@ void OpposingOrderSubmissionComplianceRuleTester::TestLimitCancel() {
     CancelOrder(order, timeClient.GetTime());
   }
   {
-    PrimitiveOrder order{{BuildLimitOrderFields(Side::BID, Money::ONE), 1,
+    PrimitiveOrder order{{BuildLimitOrderFields(Side::BID, Money::ONE), 2,
       timeClient.GetTime()}};
     CPPUNIT_ASSERT_THROW(rule.Submit(order), ComplianceCheckException);
   }
   {
-    PrimitiveOrder order{{BuildLimitOrderFields(Side::BID, 99 * Money::CENT), 1,
+    PrimitiveOrder order{{BuildLimitOrderFields(Side::BID, 99 * Money::CENT), 3,
       timeClient.GetTime()}};
     CPPUNIT_ASSERT_THROW(rule.Submit(order), ComplianceCheckException);
   }
   {
-    PrimitiveOrder order{{BuildLimitOrderFields(Side::BID, 98 * Money::CENT), 1,
+    PrimitiveOrder order{{BuildLimitOrderFields(Side::BID, 98 * Money::CENT), 4,
       timeClient.GetTime()}};
     CPPUNIT_ASSERT_THROW(rule.Submit(order), ComplianceCheckException);
   }
   {
-    PrimitiveOrder order{{BuildLimitOrderFields(Side::BID, 97 * Money::CENT), 1,
+    PrimitiveOrder order{{BuildLimitOrderFields(Side::BID, 97 * Money::CENT), 5,
       timeClient.GetTime()}};
     CPPUNIT_ASSERT_NO_THROW(rule.Submit(order));
+  }
+  {
+    PrimitiveOrder order{{BuildMarketOrderFields(Side::BID), 6,
+      timeClient.GetTime()}};
+    CPPUNIT_ASSERT_THROW(rule.Submit(order), ComplianceCheckException);
+  }
+}
+
+void OpposingOrderSubmissionComplianceRuleTester::TestLimitBidCancel() {
+  FixedTimeClient timeClient{TIMESTAMP};
+  OpposingOrderSubmissionComplianceRule<FixedTimeClient*> rule{DURATION, RANGE,
+    &timeClient};
+  {
+    PrimitiveOrder order{{BuildLimitOrderFields(Side::BID, Money::ONE), 1,
+      timeClient.GetTime()}};
+    CPPUNIT_ASSERT_NO_THROW(rule.Submit(order));
+    SetOrderStatus(order, OrderStatus::NEW, timeClient.GetTime());
+    CPPUNIT_ASSERT_NO_THROW(rule.Cancel(order));
+    SetOrderStatus(order, OrderStatus::PENDING_CANCEL, timeClient.GetTime());
+    CancelOrder(order, timeClient.GetTime());
+  }
+  {
+    PrimitiveOrder order{{BuildLimitOrderFields(Side::ASK, Money::ONE), 2,
+      timeClient.GetTime()}};
+    CPPUNIT_ASSERT_THROW(rule.Submit(order), ComplianceCheckException);
+  }
+  {
+    PrimitiveOrder order{{BuildLimitOrderFields(Side::ASK,
+      Money::ONE + Money::CENT), 3, timeClient.GetTime()}};
+    CPPUNIT_ASSERT_THROW(rule.Submit(order), ComplianceCheckException);
+  }
+  {
+    PrimitiveOrder order{{BuildLimitOrderFields(Side::ASK,
+      Money::ONE + 2 * Money::CENT), 4, timeClient.GetTime()}};
+    CPPUNIT_ASSERT_THROW(rule.Submit(order), ComplianceCheckException);
+  }
+  {
+    PrimitiveOrder order{{BuildLimitOrderFields(Side::ASK,
+      Money::ONE + 3 * Money::CENT), 5, timeClient.GetTime()}};
+    CPPUNIT_ASSERT_NO_THROW(rule.Submit(order));
+  }
+  {
+    PrimitiveOrder order{{BuildMarketOrderFields(Side::ASK), 6,
+      timeClient.GetTime()}};
+    CPPUNIT_ASSERT_THROW(rule.Submit(order), ComplianceCheckException);
   }
 }

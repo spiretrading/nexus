@@ -175,6 +175,7 @@ namespace Compliance {
       BOOST_THROW_EXCEPTION(ComplianceCheckException{
         "Opposing order can not be submitted yet."});
     }
+    order.GetPublisher().Monitor(m_executionReportQueue.GetSlot(&order));
   }
 
   template<typename TimeClientType>
@@ -195,9 +196,9 @@ namespace Compliance {
       TestSubmissionPriceInRange(const OrderExecutionService::Order& order) {
     auto price = GetSubmissionPrice(order);
     if(order.GetInfo().m_fields.m_side == Side::ASK) {
-      return price + m_offset <= m_askPrice;
+      return price <= m_bidPrice + m_offset;
     } else {
-      return price - m_offset >= m_bidPrice;
+      return price >= m_askPrice - m_offset;
     }
   }
 }
