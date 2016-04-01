@@ -5,6 +5,7 @@
 #include "Nexus/Compliance/CancelRestrictionPeriodComplianceRule.hpp"
 #include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/OpposingOrderCancellationComplianceRule.hpp"
+#include "Nexus/Compliance/OpposingOrderSubmissionComplianceRule.hpp"
 #include "Nexus/Compliance/OrderCountPerSideComplianceRule.hpp"
 #include "Nexus/Compliance/PerAccountComplianceRule.hpp"
 #include "Nexus/Compliance/SymbolRestrictionComplianceRule.hpp"
@@ -38,6 +39,9 @@ namespace Compliance {
         schema.GetParameters());
     } else if(schema.GetName() == "opposing_order_cancellation") {
       return MakeOpposingOrderCancellationComplianceRule(schema.GetParameters(),
+        &timeClient);
+    } else if(schema.GetName() == "opposing_order_submission") {
+      return MakeOpposingOrderSubmissionComplianceRule(schema.GetParameters(),
         &timeClient);
     } else if(schema.GetName() == PerAccountComplianceRule::GetName()) {
       std::string name;

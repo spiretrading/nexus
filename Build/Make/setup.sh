@@ -1,5 +1,6 @@
 #!/bin/bash
 let cores="`grep -c "processor" < /proc/cpuinfo`"
+directory=$(dirname $(readlink -f $0))
 
 if [ ! -d "quickfix" ]; then
   wget http://prdownloads.sourceforge.net/quickfix/quickfix-1.14.3.tar.gz
@@ -35,3 +36,36 @@ if [ ! -d "qt-5.5.0" ]; then
   make -j $cores
   make install
 fi
+
+if [ ! -d "jquery-1.12.1" ]; then
+  mkdir jquery-1.12.1
+  cd jquery-1.12.1
+  wget https://code.jquery.com/jquery-1.12.1.min.js
+  cd ..
+fi
+
+if [ ! -d "react-0.14.7" ]; then
+  mkdir react-0.14.7
+  cd react-0.14.7
+  wget https://fb.me/react-0.14.7.js --no-check-certificate -O react-0.14.7.js
+  wget https://fb.me/react-dom-0.14.7.js --no-check-certificate -O react-dom-0.14.7.js
+  cd ..
+fi
+
+if [ ! -d "requirejs-2.1.22" ]; then
+  mkdir requirejs-2.1.22
+  cd requirejs-2.1.22
+  wget http://requirejs.org/docs/release/2.1.22/minified/require.js
+  cd ..
+fi
+
+if [ ! -d "require-css" ]; then
+  wget https://github.com/guybedford/require-css/archive/master.zip
+  unzip master.zip
+  mv require-css-master require-css
+  rm master.zip
+fi
+
+pushd $directory/../../Applications/ClientWebPortal/Build/Make
+./setup.sh
+popd
