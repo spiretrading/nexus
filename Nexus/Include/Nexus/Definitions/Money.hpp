@@ -328,7 +328,7 @@ namespace Details {
   }
 
   inline Money Money::FromRepresentation(std::int64_t value) {
-    return Money(value);
+    return Money{value};
   }
 
   inline Money Money::FromValue(double value) {
@@ -533,6 +533,22 @@ namespace Serialization {
     }
   };
 }
+}
+
+namespace std {
+  template<>
+  class numeric_limits<Nexus::Money> {
+    public:
+      static Nexus::Money min() {
+        return Nexus::Money::FromRepresentation(
+          std::numeric_limits<std::int64_t>::min());
+      }
+
+      static Nexus::Money max() {
+        return Nexus::Money::FromRepresentation(
+          std::numeric_limits<std::int64_t>::max());
+      }
+  };
 }
 
 #endif

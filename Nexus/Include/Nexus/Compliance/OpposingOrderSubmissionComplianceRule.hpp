@@ -134,10 +134,9 @@ namespace Compliance {
         m_offset{offset},
         m_timeClient{std::forward<TimeClientForward>(timeClient)},
         m_lastAskCancelTime{boost::posix_time::min_date_time},
-        m_askPrice{Money::ZERO},
+        m_askPrice{std::numeric_limits<Money>::max()},
         m_lastBidCancelTime{boost::posix_time::min_date_time},
-        m_bidPrice{Money::FromRepresentation(
-          std::numeric_limits<std::int64_t>::max())} {}
+        m_bidPrice{Money::ZERO} {}
 
   template<typename TimeClientType>
   void OpposingOrderSubmissionComplianceRule<TimeClientType>::Add(
@@ -162,22 +161,27 @@ namespace Compliance {
       m_executionReportQueue.Pop();
       if(executionReport.m_value.m_status == OrderStatus::CANCELED) {
         auto side = executionReport.m_key->GetInfo().m_fields.m_side;
-        auto submissionPrice = GetSubmissionPrice(order);
+        auto submissionPrice = GetSubmissionPrice(*executionReport.m_key);
         if(side == Side::ASK) {
           if((time - m_lastAskCancelTime) > m_timeout) {
-            m_askPrice = Money::ZERO;
+            m_askPrice = std::numeric_limits<Money>::max();
           }
-          m_lastAskCancelTime = std::max(executionReport.m_value.m_timestamp,
-            m_lastAskCancelTime);
-          m_askPrice = std::max(m_askPrice, submissionPrice);
+          if(executionReport.m_value.m_timestamp >= m_lastAskCancelTime) {
+            if(submissionPrice <= m_askPrice) {
+              m_lastAskCancelTime = executionReport.m_value.m_timestamp;
+              m_askPrice = submissionPrice;
+            }
+          }
         } else {
           if((time - m_lastBidCancelTime) > m_timeout) {
-            m_bidPrice = Money::FromRepresentation(
-              std::numeric_limits<std::int64_t>::max());
+            m_bidPrice = Money::ZERO;
           }
-          m_lastBidCancelTime = std::max(executionReport.m_value.m_timestamp,
-            m_lastBidCancelTime);
-          m_bidPrice = std::min(m_bidPrice, submissionPrice);
+          if(executionReport.m_value.m_timestamp >= m_lastBidCancelTime) {
+            if(submissionPrice >= m_bidPrice) {
+              m_lastBidCancelTime = executionReport.m_value.m_timestamp;
+              m_bidPrice = submissionPrice;
+            }
+          }
         }
       }
     }
@@ -199,8 +203,7 @@ namespace Compliance {
     } else if(order.GetInfo().m_fields.m_side == Side::ASK) {
       return Money::ZERO;
     } else {
-      return Money::FromRepresentation(
-        std::numeric_limits<std::int64_t>::max());
+      return std::numeric_limits<Money>::max();
     }
   }
 

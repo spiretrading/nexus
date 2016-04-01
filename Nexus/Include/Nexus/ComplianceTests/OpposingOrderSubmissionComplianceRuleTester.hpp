@@ -25,10 +25,18 @@ namespace Tests {
       //! Submit an ask.
       void TestLimitBidCancel();
 
+      //! Submit a limit bid.
+      //! Cancel the bid.
+      //! Submit a limit ask within the valid price.
+      //! Submit a limit bid with a better price.
+      //! Submit a limit ask, expect a rejection.
+      void TestBetterPrice();
+
     private:
       CPPUNIT_TEST_SUITE(OpposingOrderSubmissionComplianceRuleTester);
         CPPUNIT_TEST(TestLimitAskCancel);
         CPPUNIT_TEST(TestLimitBidCancel);
+        CPPUNIT_TEST(TestBetterPrice);
       BEAM_CPPUNIT_TEST_SUITE_END();
   };
 }

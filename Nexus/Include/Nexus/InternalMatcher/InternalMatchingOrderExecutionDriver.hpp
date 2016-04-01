@@ -33,7 +33,7 @@ namespace Details {
     if(orderFields.m_side == Side::ASK) {
       return Money::ZERO;
     }
-    return Money::FromRepresentation(std::numeric_limits<std::int64_t>::max());
+    return std::numeric_limits<Money>::max();
   }
 }
 
