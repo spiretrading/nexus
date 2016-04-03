@@ -43,11 +43,18 @@ cd ..
 rm sqlite-amalgamation-3080803.zip
 :end_sqlite_setup
 
+if exist jquery-1.12.1 then goto end_jquery_setup
+mkdir jquery-1.12.1
+cd jquery-1.12.1
+wget http://code.jquery.com/jquery-1.12.1.min.js
+cd ..
+:end_jquery_setup
+
 if exist react-0.14.7 goto end_react_setup
 mkdir react-0.14.7
 cd react-0.14.7
-wget https://fb.me/react-0.14.7.js --no-check-certificate -O react-0.14.7.js
-wget https://fb.me/react-dom-0.14.7.js --no-check-certificate -O react-dom-0.14.7.js
+wget http://fb.me/react-0.14.7.js --no-check-certificate -O react-0.14.7.js
+wget http://fb.me/react-dom-0.14.7.js --no-check-certificate -O react-dom-0.14.7.js
 cd ..
 :end_react_setup
   
@@ -59,7 +66,7 @@ cd ..
 :end_requirejs_setup
 
 if exist require-css goto end_require_css_setup
-wget https://github.com/guybedford/require-css/archive/master.zip
+wget --no-check-certificate http://github.com/guybedford/require-css/archive/master.zip -O master.zip
 unzip master.zip
 mv require-css-master require-css
 rm master.zip

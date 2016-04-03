@@ -1,5 +1,6 @@
 define(function(require) {
   var LoginPage = require('app/pages/LoginPage');
+  var LandingPage = require('app/pages/LandingPage');
   var React = require('react');
   var ReactDOM = require('react-dom');
   var SpireWebClient = require('app/services/SpireWebClient');
@@ -10,11 +11,17 @@ define(function(require) {
         client = {client}
         success = {
           function() {
-            window.location.href = '/dashboard';
+            ReactDOM.render(
+              <LandingPage
+                client = {client}
+              />, document.getElementById('container'));
           }
         }
       />, document.getElementById('container'));
   } else {
-    window.location.href = '/dashboard';
+    ReactDOM.render(
+      <LandingPage
+        client = {client}
+      />, document.getElementById('container'));
   }
 });

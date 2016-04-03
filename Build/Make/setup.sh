@@ -14,7 +14,7 @@ if [ ! -d "quickfix" ]; then
 fi
 
 if [ ! -d "sqlite" ]; then
-  wget https://www.sqlite.org/2015/sqlite-autoconf-3080803.tar.gz
+  wget http://www.sqlite.org/2015/sqlite-autoconf-3080803.tar.gz
   gzip -d -c sqlite-autoconf-3080803.tar.gz | tar -x
   mv sqlite-autoconf-3080803 sqlite
   cd sqlite
@@ -40,15 +40,15 @@ fi
 if [ ! -d "jquery-1.12.1" ]; then
   mkdir jquery-1.12.1
   cd jquery-1.12.1
-  wget https://code.jquery.com/jquery-1.12.1.min.js
+  wget http://code.jquery.com/jquery-1.12.1.min.js
   cd ..
 fi
 
 if [ ! -d "react-0.14.7" ]; then
   mkdir react-0.14.7
   cd react-0.14.7
-  wget https://fb.me/react-0.14.7.js --no-check-certificate -O react-0.14.7.js
-  wget https://fb.me/react-dom-0.14.7.js --no-check-certificate -O react-dom-0.14.7.js
+  wget http://fb.me/react-0.14.7.js -O react-0.14.7.js
+  wget http://fb.me/react-dom-0.14.7.js -O react-dom-0.14.7.js
   cd ..
 fi
 
@@ -60,7 +60,7 @@ if [ ! -d "requirejs-2.1.22" ]; then
 fi
 
 if [ ! -d "require-css" ]; then
-  wget https://github.com/guybedford/require-css/archive/master.zip
+  wget http://github.com/guybedford/require-css/archive/master.zip
   unzip master.zip
   mv require-css-master require-css
   rm master.zip
