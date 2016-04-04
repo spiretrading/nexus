@@ -2,7 +2,7 @@ define(function(require) {
   var React = require('react');
   var ReactDOM = require('react-dom');
   var $ = require('jquery');
-  var BurgerButton = require('app/components/BurgerButton');
+  var Header = require('app/components/Header');
 
   class LandingPage extends React.Component {
     constructor() {
@@ -10,14 +10,14 @@ define(function(require) {
     }
 
     render() {
+      var style = {
+        color: 'white',
+        background: 'white',
+        opacity: 1
+      };
       return (
-        <div className = "landing-page">
-          <BurgerButton
-            width = {70}
-            height = {64}
-            background_color = {'transparent'}
-            stroke_color = {'white'}
-          />
+        <div style = {style}>
+          <Header />
         </div>);
     }
   }
