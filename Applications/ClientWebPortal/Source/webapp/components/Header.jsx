@@ -10,21 +10,18 @@ define(function(require) {
     }
 
     render() {
-      var leftStyle = {
-        position: 'absolute',
-        left: 0,
-        top: 0
+      var burgerStyle = {
+        float: 'left',
       };
       return (
-        <div>
-          <div style = {leftStyle}>
-            <BurgerButton
-              width = {70}
-              height = {64}
-              background_color = {'transparent'}
-              stroke_color = {'white'}
-            />
-          </div>
+        <div style = {burgerStyle}>
+          <BurgerButton
+            width = {30}
+            height = {30}
+            background_color = {'transparent'}
+            stroke_color = {'white'}
+            onClick = {this.props.onMenuClick}
+          />
         </div>);
     }
   }

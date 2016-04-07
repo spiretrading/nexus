@@ -30,15 +30,18 @@ define(['react', 'react-dom', 'jquery'],
 
       render() {
         return (
-          <canvas
-            width = {this.props.width}
-            height = {this.props.height}
-            ref = {
-              function(ref) {
-                this.target = ref;
-              }.bind(this)
-            }
-          />
+          <div tabIndex = "0">
+            <canvas
+              ref = {
+                function(ref) {
+                  this.target = ref;
+                }.bind(this)
+              }
+              onClick = {this.props.onClick}
+              width = {this.props.width}
+              height = {this.props.height}
+            />
+          </div>
         );
       }
 
