@@ -1,17 +1,88 @@
 define(function(require) {
   var React = require('react');
-  var ReactDOM = require('react-dom');
-  var $ = require('jquery');
-  var Header = require('app/components/Header');
+  var BurgerButton = require('app/components/BurgerButton');
+  var ProfilesPage = require('app/pages/ProfilesPage');
+  var ReportsPage = require('app/pages/ReportsPage');
+
+  class Header extends React.Component {
+    render() {
+      var burgerStyle = {
+        float: 'left',
+      };
+      return (
+        <div style = {burgerStyle}>
+          <BurgerButton
+            width = {30}
+            height = {30}
+            background_color = {'transparent'}
+            stroke_color = {'white'}
+            onClick = {this.props.onMenuClick}
+          />
+        </div>);
+    }
+  }
+
+  class SideMenu extends React.Component {
+    render() {
+      var menuStyle = {
+        backgroundColor: 'red',
+        display: 'flex',
+        flexDirection: 'column',
+      };
+      return (
+        <div style = {menuStyle}>
+          <button
+              type = "button"
+              onClick = {this.props.onProfiles}>
+            Profiles
+          </button>
+          <button
+              type = "button"
+              onClick = {this.props.onReports}>
+            Reports
+          </button>
+          <button
+              type = "button"
+              onClick = {this.props.onPortfolio}>
+            Portfolio
+          </button>
+          <button
+              type = "button"
+              onClick = {this.props.onSignOut}>
+            Sign Out
+          </button>
+        </div>);
+    }
+  }
 
   class LandingPage extends React.Component {
+    static get PROFILES_PAGE() {
+      return 1;
+    }
+
+    static get REPORTS_PAGE() {
+      return 2;
+    }
+
+    static get PORTFOLIO_PAGE() {
+      return 3;
+    }
+
+    static get SIGNOUT() {
+      return 4;
+    }
+
     constructor() {
       super();
       this.state =
         {
-          isMenuDisplayed: false
+          isMenuDisplayed: false,
+          bodyPage: LandingPage.PROFILES_PAGE
         };
       this.toggleMenu = this.toggleMenu.bind(this);
+      this.handleProfiles = this.handleProfiles.bind(this);
+      this.handleReports = this.handleReports.bind(this);
+      this.handleSignOut = this.handleSignOut.bind(this);
     }
 
     toggleMenu() {
@@ -36,21 +107,25 @@ define(function(require) {
       this.setState({isMenuDisplayed: false});
     }
 
+    handleProfiles() {
+      this.setState({bodyPage: LandingPage.PROFILES_PAGE});
+    }
+
+    handleReports() {
+      this.setState({bodyPage: LandingPage.REPORTS_PAGE});
+    }
+
+    handleSignOut() {
+      this.props.client.logout()
+      window.location.href = '/';
+    }
+
     render() {
       var containerStyle = {
         width: '100%',
         height: '100%',
         margin: 0,
         padding: 0,
-        display: 'flex',
-        flexDirection: 'row',
-        flexWrap: 'nowrap',
-      };
-      var menuStyle = {
-        backgroundColor: 'red',
-      };
-      var bodyStyle = {
-        flex: 1,
         display: 'flex',
         flexDirection: 'column',
         flexWrap: 'nowrap'
@@ -61,26 +136,42 @@ define(function(require) {
         flexShrink: 0,
         flexBasis: 'content'
       };
+      var bodyStyle = {
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'row',
+        flexWrap: 'nowrap'
+      };
       return (
         <div style = {containerStyle}>
-          {function() {
-            if(this.state.isMenuDisplayed) {
-              return (
-                <div style = {menuStyle}>
-                  <ul>
-                    <li><a href="#">Reports</a></li>
-                    <li><a href="#">Compliance</a></li>
-                    <li><a href="#">Sign Out</a></li>
-                  </ul>
-                </div>);
-            } else {
-              return null;
-            }
-          }.bind(this)()}
+          <div style = {headerStyle}>
+            <Header onMenuClick = {this.toggleMenu} />
+          </div>
           <div style = {bodyStyle}>
-            <div style = {headerStyle}>
-              <Header onMenuClick = {this.toggleMenu} />
-            </div>
+            {
+              function() {
+                if(this.state.isMenuDisplayed) {
+                  return (
+                    <SideMenu
+                      onProfiles = {this.handleProfiles}
+                      onReports = {this.handleReports}
+                      onSignOut = {this.handleSignOut}
+                    />);
+                } else {
+                  return null;
+                }
+              }.bind(this)()
+            }
+            {
+              function() {
+                if(this.state.bodyPage == LandingPage.PROFILES_PAGE) {
+                  return <ProfilesPage />;
+                } else if(this.state.bodyPage == LandingPage.REPORTS_PAGE) {
+                  return <ReportsPage />;
+                }
+                return null;
+              }.bind(this)()
+            }
           </div>
         </div>);
     }
