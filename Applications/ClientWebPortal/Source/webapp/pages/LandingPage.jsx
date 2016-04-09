@@ -26,8 +26,11 @@ define(function(require) {
     render() {
       var menuStyle = {
         backgroundColor: 'red',
+        flexGrow: 0,
+        flexShrink: 0,
+        flexBasis: 'content',
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'column'
       };
       return (
         <div style = {menuStyle}>
@@ -108,15 +111,21 @@ define(function(require) {
     }
 
     handleProfiles() {
-      this.setState({bodyPage: LandingPage.PROFILES_PAGE});
+      this.setState({bodyPage: LandingPage.PROFILES_PAGE},
+        function() {
+          this.props.application.advanceHistory(this, '#profiles');
+        });
     }
 
     handleReports() {
-      this.setState({bodyPage: LandingPage.REPORTS_PAGE});
+      this.setState({bodyPage: LandingPage.REPORTS_PAGE},
+        function() {
+          this.props.application.advanceHistory(this, '#reports');
+        });
     }
 
     handleSignOut() {
-      this.props.client.logout()
+      this.props.application.client.logout();
       window.location.href = '/';
     }
 
@@ -137,10 +146,15 @@ define(function(require) {
         flexBasis: 'content'
       };
       var bodyStyle = {
-        flex: 1,
+        flexGrow: 1,
         display: 'flex',
         flexDirection: 'row',
         flexWrap: 'nowrap'
+      };
+      var contentStyle = {
+        backgroundColor: 'green',
+        flexGrow: 1,
+        flexShink: 0
       };
       return (
         <div style = {containerStyle}>
@@ -162,16 +176,18 @@ define(function(require) {
                 }
               }.bind(this)()
             }
-            {
-              function() {
-                if(this.state.bodyPage == LandingPage.PROFILES_PAGE) {
-                  return <ProfilesPage />;
-                } else if(this.state.bodyPage == LandingPage.REPORTS_PAGE) {
-                  return <ReportsPage />;
-                }
-                return null;
-              }.bind(this)()
-            }
+            <div style = {contentStyle}>
+              {
+                function() {
+                  if(this.state.bodyPage == LandingPage.PROFILES_PAGE) {
+                    return <ProfilesPage />;
+                  } else if(this.state.bodyPage == LandingPage.REPORTS_PAGE) {
+                    return <ReportsPage />;
+                  }
+                  return null;
+                }.bind(this)()
+              }
+            </div>
           </div>
         </div>);
     }

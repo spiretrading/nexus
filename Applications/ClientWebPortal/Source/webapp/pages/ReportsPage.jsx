@@ -9,7 +9,7 @@ define(function(require) {
     render() {
       return (
         <div>
-          This is for reporting.
+          Reporting.
         </div>);
     }
   }
