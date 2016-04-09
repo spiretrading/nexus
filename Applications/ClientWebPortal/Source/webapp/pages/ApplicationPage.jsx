@@ -41,20 +41,13 @@ define(function(require) {
       ++this.state_id_;
       this.states_.set(state_id, [component, component.state]);
       history.pushState(state_id, '', url);
-      console.log('Advance');
-      console.log(state_id);
-      console.log(component.state);
     }
 
     restoreHistory(event) {
       var state = this.states_.get(event.state);
-      console.log('Restore');
-      console.log(event.state);
       if(state == undefined) {
-        console.log('None');
         return false;
       }
-      console.log(state[1]);
       state[0].setState(state[1]);
       return true;
     }
