@@ -39,8 +39,6 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
     MatchesPath(HttpMethod::POST, "/api/service_locator/load_current_account"),
     bind(&ClientWebPortalServlet::OnLoadCurrentAccount, this,
     std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::GET, "/dashboard"),
-    bind(&ClientWebPortalServlet::OnDashboard, this, std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, "/"),
     bind(&ClientWebPortalServlet::OnIndex, this, std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, ""),
@@ -83,27 +81,6 @@ HttpResponse ClientWebPortalServlet::OnIndex(const HttpRequest& request) {
   return response;
 }
 
-HttpResponse ClientWebPortalServlet::OnDashboard(const HttpRequest& request) {
-  HttpResponse response;
-  auto session = m_sessions.Find(request);
-  if(session == nullptr || !session->IsLoggedIn()) {
-    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
-    std::cout << "Boooo " << (session == nullptr) << std::endl;
-    return response;
-  }
-  auto lastLoginTime =
-    m_serviceClients->GetServiceLocatorClient().LoadLastLoginTime(
-    session->GetAccount());
-  stringstream view;
-  view <<
-    "<html>\n" <<
-    "Last login: " << lastLoginTime << "\n" <<
-    "</html>\n";
-  std::cout << "Yao: " << view.str() << std::endl;
-  response.SetBody(BufferFromString<SharedBuffer>(view.str()));
-  return response;
-}
-
 HttpResponse ClientWebPortalServlet::OnServeFile(const HttpRequest& request) {
   return m_fileStore.Serve(request);
 }
@@ -118,6 +95,7 @@ HttpResponse ClientWebPortalServlet::OnLoadCurrentAccount(
     }
     return session->GetAccount();
   }();
+  response.SetHeader({"Content-Type", "application/json"});
   response.SetBody(Encode<SharedBuffer>(m_sender, account));
   return response;
 }
@@ -140,6 +118,7 @@ HttpResponse ClientWebPortalServlet::OnLogin(const HttpRequest& request) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
+  response.SetHeader({"Content-Type", "application/json"});
   response.SetBody(Encode<SharedBuffer>(m_sender, account));
   session->SetAccount(account);
   return response;

@@ -1,0 +1,5 @@
+---
+service_locator: local_interface:20000
+username: risk_service
+password: admin_password
+...
