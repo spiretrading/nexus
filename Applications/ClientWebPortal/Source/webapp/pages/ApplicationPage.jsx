@@ -12,7 +12,7 @@ define(function(require) {
       this.client_ = new SpireWebClient();
       this.states_ = new Map();
       this.state_id_ = 0;
-      var isLoggedIn = this.client_.loadCurrentAccount().type != -1
+      var isLoggedIn = this.client_.loadCurrentAccount().type != -1;
       var subComponent;
       if(isLoggedIn) {
         subComponent = <LandingPage application = {this} />;
@@ -20,8 +20,7 @@ define(function(require) {
         subComponent = (
           <LoginPage
             application = {this}
-            success = {this.handleLoggedIn}
-          />);
+            success = {this.handleLoggedIn} />);
       }
       this.state = {
         isLoggedIn : isLoggedIn,
@@ -58,11 +57,21 @@ define(function(require) {
 
     handleLoggedIn() {
       var subComponent = <LandingPage application = {this} />;
-      this.setState(
-        {
-          isLoggedIn: true,
-          subComponent: subComponent
-        });
+      this.setState({
+        isLoggedIn: true,
+        subComponent: subComponent
+      });
+    }
+
+    handleLoggedOut() {
+      var subComponent = (
+        <LoginPage
+          application = {this}
+          success = {this.handleLoggedIn} />);
+      this.setState({
+        isLoggedIn : false,
+        subComponent : subComponent
+      });
     }
   }
   return ApplicationPage;

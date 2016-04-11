@@ -77,11 +77,10 @@ define(function(require) {
 
     constructor() {
       super();
-      this.state =
-        {
-          isMenuDisplayed: false,
-          bodyPage: LandingPage.PROFILES_PAGE
-        };
+      this.state = {
+        isMenuDisplayed: false,
+        bodyPage: LandingPage.PROFILES_PAGE
+      };
       this.toggleMenu = this.toggleMenu.bind(this);
       this.handleProfiles = this.handleProfiles.bind(this);
       this.handleReports = this.handleReports.bind(this);
@@ -126,7 +125,7 @@ define(function(require) {
 
     handleSignOut() {
       this.props.application.client.logout();
-      window.location.href = '/';
+      this.props.application.handleLoggedOut();
     }
 
     render() {
@@ -180,7 +179,8 @@ define(function(require) {
               {
                 function() {
                   if(this.state.bodyPage == LandingPage.PROFILES_PAGE) {
-                    return <ProfilesPage />;
+                    return (<ProfilesPage
+                              application = {this.props.application} />);
                   } else if(this.state.bodyPage == LandingPage.REPORTS_PAGE) {
                     return <ReportsPage />;
                   }
@@ -190,6 +190,10 @@ define(function(require) {
             </div>
           </div>
         </div>);
+    }
+
+    componentDidMount() {
+      this.props.application.advanceHistory(this, '#app');
     }
   }
   return LandingPage;

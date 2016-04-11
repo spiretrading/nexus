@@ -29,19 +29,25 @@ define(['react', 'react-dom', 'jquery'],
       }
 
       render() {
+        var style = {
+          border: 0,
+          backgroundColor: 'transparent'
+        };
         return (
-          <div tabIndex = "0">
+          <button
+              type = "button"
+              style = {style}
+              onClick = {this.props.onClick}>
             <canvas
               ref = {
                 function(ref) {
                   this.target = ref;
                 }.bind(this)
               }
-              onClick = {this.props.onClick}
               width = {this.props.width}
               height = {this.props.height}
             />
-          </div>
+          </button>
         );
       }
 
