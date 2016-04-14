@@ -333,6 +333,7 @@ void Nexus::Python::ExportMarket() {
         .def_readwrite("description", &MarketDatabase::Entry::m_description)
         .def_readwrite("display_name", &MarketDatabase::Entry::m_displayName);
   }
+  def("parse_market_code", &ParseMarketCode);
   class_<vector<MarketDatabase::Entry>>("VectorMarketDatabaseEntry")
     .def(vector_indexing_suite<vector<MarketDatabase::Entry>>());
 }

@@ -5,8 +5,9 @@ import nexus
 import sys
 import yaml
 
-def execute_report(start_date, end_date, security, account, market_database,
-    time_zone_database, service_locator_client, order_execution_client):
+def execute_report(start_date, end_date, security, market, account,
+    market_database, time_zone_database, service_locator_client,
+    order_execution_client):
   orders = []
   activity_log = []
   if account is not None:
@@ -18,6 +19,8 @@ def execute_report(start_date, end_date, security, account, market_database,
     beam.flush(order_queue, account_orders)
     for order in account_orders:
       if security is not None and security != order.info.fields.security:
+        continue
+      if market is not None and market != order.info.fields.security.market:
         continue
       orders.append(order)
       execution_reports = order.get_publisher().get_snapshot()
@@ -81,6 +84,7 @@ def main():
     required=True)
   parser.add_argument('-e', '--end', type=parse_date, help='End range',
     required=True)
+  parser.add_argument('-m', '--market', type=str, help='Market')
   parser.add_argument('-t', '--symbol', type=str, help='Ticker symbol')
   parser.add_argument('-a', '--account', type=str, help='Account')
   args = parser.parse_args()
@@ -109,8 +113,12 @@ def main():
   order_execution_client.open()
   market_database = definitions_client.load_market_database()
   time_zone_database = definitions_client.load_time_zone_database()
+  if args.market is not None:
+    market = nexus.parse_market_code(args.market, market_database)
+  else:
+    market = None
   if args.symbol is not None:
-    security = nexus.ParseSecurity(args.symbol, market_database)
+    security = nexus.parse_security(args.symbol, market_database)
   else:
     security = None
   if args.account is not None:
@@ -118,8 +126,8 @@ def main():
   else:
     account = None
   (orders, activity_log) = execute_report(start_date, end_date, security,
-    account, market_database, time_zone_database, service_locator_client,
-    order_execution_client)
+    market, account, market_database, time_zone_database,
+    service_locator_client, order_execution_client)
   output_order_log(orders)
   output_activity_log(activity_log)
   order_execution_client.close()
