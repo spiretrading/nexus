@@ -31,8 +31,8 @@ def execute_report(start_date, end_date, security, account, market_database,
         service_locator_client, order_execution_client)
       orders += account_orders
       activity_log += account_log
-    orders.sort(key = lambda value: return value.info.timestamp)
-    activity_log.sort(key = lambda value: return value[1].timestamp)
+    orders.sort(key = lambda value: value.info.timestamp)
+    activity_log.sort(key = lambda value: value[1].timestamp)
   return (orders, activity_log)
 
 def output_order_log(orders):
@@ -114,7 +114,7 @@ def main():
   else:
     security = None
   if args.account is not None:
-    account = service_locator_client.FindAccount(args.account)
+    account = service_locator_client.find_account(args.account)
   else:
     account = None
   (orders, activity_log) = execute_report(start_date, end_date, security,
