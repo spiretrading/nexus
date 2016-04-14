@@ -47,8 +47,6 @@ namespace ClientWebPortal {
       void Shutdown();
       Beam::WebServices::HttpResponse OnIndex(
         const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnDashboard(
-        const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnServeFile(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadCurrentAccount(
@@ -56,6 +54,8 @@ namespace ClientWebPortal {
       Beam::WebServices::HttpResponse OnLogin(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLogout(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadManagedTradingGroups(
         const Beam::WebServices::HttpRequest& request);
   };
 }
