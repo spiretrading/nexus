@@ -4,6 +4,7 @@
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
+#include <boost/optional/optional.hpp>
 #include <tclap/CmdLine.h>
 #include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
@@ -158,8 +159,12 @@ int main(int argc, const char** argv) {
         });
     }
   } else {
-    auto security = ParseSecurity(Extract<string>(config, "security"),
-      definitionsClient->LoadMarketDatabase());
+    optional<Security> security;
+    auto symbol = Extract<string>(config, "security", "");
+    if(symbol.empty()) {
+      security = ParseSecurity(Extract<string>(config, "security"),
+        definitionsClient->LoadMarketDatabase());
+    }
     auto accounts = serviceLocatorClient->LoadAllAccounts();
     for(const auto& account : accounts) {
       AccountQuery query;
@@ -171,12 +176,14 @@ int main(int argc, const char** argv) {
       vector<const Order*> accountOrders;
       vector<ActivityLogEntry> accountActivityLog;
       FlushQueue(orderQueue, back_inserter(accountOrders));
-      auto removeIterator = std::remove_if(accountOrders.begin(),
-        accountOrders.end(),
-        [&] (const Order* order) {
-          return order->GetInfo().m_fields.m_security != security;
-        });
-      accountOrders.erase(removeIterator, accountOrders.end());
+      if(security.is_initialized()) {
+        auto removeIterator = std::remove_if(accountOrders.begin(),
+          accountOrders.end(),
+          [&] (const Order* order) {
+            return order->GetInfo().m_fields.m_security != security;
+          });
+        accountOrders.erase(removeIterator, accountOrders.end());
+      }
       for(auto& order : accountOrders) {
         order->GetPublisher().WithSnapshot(
           [&] (optional<const vector<ExecutionReport>&> orderReports) {
