@@ -12,7 +12,6 @@ CALL %~dp0../../Applications/MarketDataClientTemplate/Build/Windows/run_cmake.ba
 CALL %~dp0../../Applications/MarketDataRelayServer/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/MarketDataServer/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/OrderExecutionBackup/Build/Windows/run_cmake.bat
-CALL %~dp0../../Applications/OrderExecutionReport/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/OrderExecutionRestore/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/RiskServer/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/SimulationMarketDataFeedClient/Build/Windows/run_cmake.bat
