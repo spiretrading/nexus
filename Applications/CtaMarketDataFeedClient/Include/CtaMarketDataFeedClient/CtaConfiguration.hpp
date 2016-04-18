@@ -1,5 +1,5 @@
-#ifndef NEXUS_UTPCONFIGURATION_HPP
-#define NEXUS_UTPCONFIGURATION_HPP
+#ifndef NEXUS_CTACONFIGURATION_HPP
+#define NEXUS_CTACONFIGURATION_HPP
 #include <string>
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
@@ -10,10 +10,10 @@
 namespace Nexus {
 namespace MarketDataService {
 
-  /*! \struct UtpConfiguration
-      \brief Stores the configuration of a UTP parser.
+  /*! \struct CtaConfiguration
+      \brief Stores the configuration of a CTA parser.
    */
-  struct UtpConfiguration {
+  struct CtaConfiguration {
 
     //! Whether to log messages.
     bool m_isLoggingMessages;
@@ -31,31 +31,31 @@ namespace MarketDataService {
     //! Maps single character codes to MarketCodes.
     std::array<MarketCode, 128> m_marketCodes;
 
-    //! Parses a UtpConfiguration from a YAML Node.
+    //! Parses a CtaConfiguration from a YAML Node.
     /*!
       \param config The YAML Node to parse.
       \param marketDatabase The set of valid markets.
       \param currentTime The current time used to establish the time origin.
       \param timeZones The list of time zones.
-      \return The UtpConfiguration represented by the <i>config</i>.
+      \return The CtaConfiguration represented by the <i>config</i>.
     */
-    static UtpConfiguration Parse(const YAML::Node& config,
+    static CtaConfiguration Parse(const YAML::Node& config,
       const MarketDatabase& marketDatabase,
       const boost::posix_time::ptime& currentTime,
       const boost::local_time::tz_database& timeZones);
   };
 
-  inline UtpConfiguration UtpConfiguration::Parse(const YAML::Node& config,
+  inline CtaConfiguration CtaConfiguration::Parse(const YAML::Node& config,
       const MarketDatabase& marketDatabase,
       const boost::posix_time::ptime& currentTime,
       const boost::local_time::tz_database& timeZones) {
-    UtpConfiguration utpConfig;
-    utpConfig.m_isLoggingMessages = Beam::Extract<bool>(config,
+    CtaConfiguration ctaConfig;
+    ctaConfig.m_isLoggingMessages = Beam::Extract<bool>(config,
       "enable_logging", false);
     auto market = Beam::Extract<std::string>(config, "market");
     auto marketEntry = ParseMarketEntry(market, marketDatabase);
-    utpConfig.m_country = marketEntry.m_countryCode;
-    utpConfig.m_market = marketEntry.m_code;
+    ctaConfig.m_country = marketEntry.m_countryCode;
+    ctaConfig.m_market = marketEntry.m_code;
     auto& marketCodes = Beam::GetNode(config, "market_codes");
     for(auto& marketCode : marketCodes) {
       auto code = Beam::Extract<std::string>(marketCode, "code");
@@ -65,7 +65,7 @@ namespace MarketDataService {
       }
       auto marketIdentifier = Beam::Extract<std::string>(marketCode, "market");
       auto entry = ParseMarketCode(marketIdentifier, marketDatabase);
-      utpConfig.m_marketCodes[code.front()] = entry;
+      ctaConfig.m_marketCodes[code.front()] = entry;
     }
     auto configTimezone = Beam::Extract<std::string>(config, "time_zone",
       "Eastern_Time");
@@ -77,9 +77,9 @@ namespace MarketDataService {
     boost::posix_time::ptime serverDate{
       Beam::TimeService::AdjustDateTime(currentTime, "UTC", configTimezone,
       timeZones).date(), boost::posix_time::seconds(0)};
-    utpConfig.m_timeOrigin = Beam::TimeService::AdjustDateTime(serverDate,
+    ctaConfig.m_timeOrigin = Beam::TimeService::AdjustDateTime(serverDate,
       configTimezone, "UTC", timeZones);
-    return utpConfig;
+    return ctaConfig;
   }
 }
 }

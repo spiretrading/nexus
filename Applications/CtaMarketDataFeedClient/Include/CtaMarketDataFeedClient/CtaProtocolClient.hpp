@@ -1,41 +1,41 @@
-#ifndef NEXUS_UTPPROTOCOLCLIENT_HPP
-#define NEXUS_UTPPROTOCOLCLIENT_HPP
+#ifndef NEXUS_CTAPROTOCOLCLIENT_HPP
+#define NEXUS_CTAPROTOCOLCLIENT_HPP
 #include <cstdint>
 #include <Beam/IO/NotConnectedException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <boost/noncopyable.hpp>
-#include "UtpMarketDataFeedClient/UtpMessage.hpp"
+#include "CtaMarketDataFeedClient/CtaMessage.hpp"
 
 namespace Nexus {
 namespace MarketDataService {
 
-  /*! \class UtpProtocolClient
-      \brief Implements a client using the UTP protocol.
+  /*! \class CtaProtocolClient
+      \brief Implements a client using the CTA protocol.
       \tparam ChannelType The type of Channel connected to the server.
    */
   template<typename ChannelType>
-  class UtpProtocolClient : private boost::noncopyable {
+  class CtaProtocolClient : private boost::noncopyable {
     public:
 
       //! The type of Channel connected to the server.
       using Channel = Beam::GetTryDereferenceType<ChannelType>;
 
-      //! Constructs a UtpProtocolClient.
+      //! Constructs a CtaProtocolClient.
       /*!
         \param channel The Channel to connect to the server
       */
       template<typename ChannelForward>
-      UtpProtocolClient(ChannelForward&& channel);
+      CtaProtocolClient(ChannelForward&& channel);
 
-      ~UtpProtocolClient();
+      ~CtaProtocolClient();
 
       //! Reads the next message from the feed.
       /*!
-        \return The next UtpMessage in the data feed.
+        \return The next CtaMessage in the data feed.
       */
-      UtpMessage Read();
+      CtaMessage Read();
 
       void Open();
 
@@ -54,16 +54,16 @@ namespace MarketDataService {
 
   template<typename ChannelType>
   template<typename ChannelForward>
-  UtpProtocolClient<ChannelType>::UtpProtocolClient(ChannelForward&& channel)
+  CtaProtocolClient<ChannelType>::CtaProtocolClient(ChannelForward&& channel)
       : m_channel{std::forward<ChannelType>(channel)} {}
 
   template<typename ChannelType>
-  UtpProtocolClient<ChannelType>::~UtpProtocolClient() {
+  CtaProtocolClient<ChannelType>::~CtaProtocolClient() {
     Close();
   }
 
   template<typename ChannelType>
-  UtpMessage UtpProtocolClient<ChannelType>::Read() {
+  CtaMessage CtaProtocolClient<ChannelType>::Read() {
     if(!m_openState.IsOpen()) {
       BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException{});
     }
@@ -75,7 +75,7 @@ namespace MarketDataService {
       }
       auto remainingSize = static_cast<std::uint16_t>(
         (m_buffer.GetData() + m_buffer.GetSize()) - m_token);
-      auto message = UtpMessage::Parse(Beam::Store(m_token), remainingSize);
+      auto message = CtaMessage::Parse(Beam::Store(m_token), remainingSize);
       if(m_sequenceNumber == -1 || message.m_sequenceNumber ==
           m_sequenceNumber + 1) {
         m_sequenceNumber = message.m_sequenceNumber;
@@ -90,7 +90,7 @@ namespace MarketDataService {
   }
 
   template<typename ChannelType>
-  void UtpProtocolClient<ChannelType>::Open() {
+  void CtaProtocolClient<ChannelType>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
@@ -106,7 +106,7 @@ namespace MarketDataService {
   }
 
   template<typename ChannelType>
-  void UtpProtocolClient<ChannelType>::Close() {
+  void CtaProtocolClient<ChannelType>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
@@ -114,7 +114,7 @@ namespace MarketDataService {
   }
 
   template<typename ChannelType>
-  void UtpProtocolClient<ChannelType>::Shutdown() {
+  void CtaProtocolClient<ChannelType>::Shutdown() {
     m_channel->GetConnection().Close();
     m_openState.SetClosed();
   }

@@ -1,5 +1,5 @@
-#ifndef NEXUS_UTPMESSAGE_HPP
-#define NEXUS_UTPMESSAGE_HPP
+#ifndef NEXUS_CTAMESSAGE_HPP
+#define NEXUS_CTAMESSAGE_HPP
 #include <array>
 #include <cstdint>
 #include <cstring>
@@ -10,10 +10,10 @@
 namespace Nexus {
 namespace MarketDataService {
 
-  /*! \struct UtpMessage
-      \brief Stores a single message from a UTP service.
+  /*! \struct CtaMessage
+      \brief Stores a single message from a CTA service.
    */
-  struct UtpMessage {
+  struct CtaMessage {
 
     //! The message category.
     std::uint8_t m_category;
@@ -51,17 +51,17 @@ namespace MarketDataService {
     //! The payload data.
     const char* m_data;
 
-    //! Parses a UtpMessage from a Buffer.
+    //! Parses a CtaMessage from a Buffer.
     /*!
       \param data A pointer to the first byte in the packet to parse, this
                   pointer will be modified to point to the end of the message.
       \param size The number of bytes remaining in the packet.
-      \return The UtpMessage represented by the <i>buffer</i>.
+      \return The CtaMessage represented by the <i>buffer</i>.
     */
-    static UtpMessage Parse(Beam::Out<const char*> data, std::uint16_t size);
+    static CtaMessage Parse(Beam::Out<const char*> data, std::uint16_t size);
   };
 
-  inline UtpMessage UtpMessage::Parse(Beam::Out<const char*> data,
+  inline CtaMessage CtaMessage::Parse(Beam::Out<const char*> data,
       std::uint16_t size) {
     static const auto HEADER_LENGTH = 43;
     static const auto SEQUENCE_NUMBER_LENGTH = 8;
@@ -72,7 +72,7 @@ namespace MarketDataService {
     if(size < HEADER_LENGTH) {
       BOOST_THROW_EXCEPTION(std::runtime_error("Buffer too short."));
     }
-    UtpMessage message;
+    CtaMessage message;
     const char* token = *data;
     message.m_category = *token;
     ++token;

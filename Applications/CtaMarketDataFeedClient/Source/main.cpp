@@ -28,10 +28,10 @@
 #include <tclap/CmdLine.h>
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
-#include "UtpMarketDataFeedClient/UtpConfiguration.hpp"
-#include "UtpMarketDataFeedClient/UtpMarketDataFeedClient.hpp"
-#include "UtpMarketDataFeedClient/UtpProtocolClient.hpp"
-#include "UtpMarketDataFeedClient/Version.hpp"
+#include "CtaMarketDataFeedClient/CtaConfiguration.hpp"
+#include "CtaMarketDataFeedClient/CtaMarketDataFeedClient.hpp"
+#include "CtaMarketDataFeedClient/CtaProtocolClient.hpp"
+#include "CtaMarketDataFeedClient/Version.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;
@@ -57,8 +57,8 @@ namespace {
     SizeDeclarativeEncoder<ZLibEncoder>>, LiveTimer>;
   using ApplicationFeedChannel = WrapperChannel<MulticastSocketChannel*,
     QueuedReader<SharedBuffer, MulticastSocketChannel::Reader*>>;
-  using ApplicationProtocolClient = UtpProtocolClient<ApplicationFeedChannel*>;
-  using ApplicationMarketDataFeedClient = UtpMarketDataFeedClient<
+  using ApplicationProtocolClient = CtaProtocolClient<ApplicationFeedChannel*>;
+  using ApplicationMarketDataFeedClient = CtaMarketDataFeedClient<
     BaseMarketDataFeedClient*, ApplicationProtocolClient*>;
 
   static const std::size_t DEFAULT_RECEIVE_BUFFER_SIZE = 16777216;
@@ -67,7 +67,7 @@ namespace {
 int main(int argc, const char** argv) {
   string configFile;
   try {
-    CmdLine cmd{"", ' ', "1.0-r" UTP_MARKET_DATA_FEED_CLIENT_VERSION
+    CmdLine cmd{"", ' ', "1.0-r" CTA_MARKET_DATA_FEED_CLIENT_VERSION
       "\nCopyright (C) 2016 Eidolon Systems Ltd."};
     ValueArg<string> configArg{"c", "config", "Configuration file", false,
       "config.yml", "path"};
@@ -185,17 +185,17 @@ int main(int argc, const char** argv) {
   ApplicationFeedChannel feedChannel{multicastSocketChannel.get_ptr(),
     &multicastSocketChannel->GetReader()};
   ApplicationProtocolClient protocolClient{&feedChannel};
-  UtpConfiguration utpConfig;
+  CtaConfiguration ctaConfig;
   try {
     auto marketDatabase = definitionsClient->LoadMarketDatabase();
     auto timeZones = definitionsClient->LoadTimeZoneDatabase();
-    utpConfig = UtpConfiguration::Parse(config, marketDatabase,
+    ctaConfig = CtaConfiguration::Parse(config, marketDatabase,
       timeClient->GetTime(), timeZones);
   } catch(const std::exception& e) {
-    cerr << "Error initializing UTP configuration: " << e.what() << endl;
+    cerr << "Error initializing CTA configuration: " << e.what() << endl;
     return -1;
   }
-  ApplicationMarketDataFeedClient marketDataFeedClient{utpConfig,
+  ApplicationMarketDataFeedClient marketDataFeedClient{ctaConfig,
     baseMarketDataFeedClient.get_ptr(), &protocolClient};
   try {
     marketDataFeedClient.Open();
