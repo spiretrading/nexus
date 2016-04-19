@@ -67,7 +67,7 @@ def main():
     directory = 'cta_%s%s%s' % (tokens[0].lower(), tokens[2].lower(), partition)
     if not os.path.exists(directory):
       os.mkdir(directory)
-    destination = open('%s/config.default.yml' % directory, 'w')
+    destination = open('%s/config.yml' % directory, 'w')
     output(tokens, destination, args.address, args.local, args.password)
 
 if __name__ == '__main__':
