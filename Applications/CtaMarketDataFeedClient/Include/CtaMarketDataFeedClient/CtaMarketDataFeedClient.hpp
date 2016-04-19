@@ -58,6 +58,18 @@ namespace MarketDataService {
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
+      char ParseChar(Beam::Out<const char*> cursor);
+      std::string ParseAlphanumeric(std::size_t size,
+        Beam::Out<const char*> cursor);
+      Quantity ParseNumeric(std::size_t length, Beam::Out<const char*> cursor);
+      Money ParseMoney(std::size_t length, char denominatorType,
+        Beam::Out<const char*> cursor);
+      MarketCode ParseMarket(std::uint8_t identifier);
+      boost::posix_time::ptime ParseTimestamp(const std::array<char, 6>& code);
+      void HandleShortFormMarketQuoteMessage(const CtaMessage& message);
+      void HandleLongFormMarketQuoteMessage(const CtaMessage& message);
+      void HandleShortFormTradeMessage(const CtaMessage& message);
+      void HandleLongFormTradeMessage(const CtaMessage& message);
       void Dispatch(const CtaMessage& message);
       void ReadLoop();
   };
@@ -116,8 +128,171 @@ namespace MarketDataService {
   }
 
   template<typename MarketDataFeedClientType, typename ProtocolClientType>
+  char CtaMarketDataFeedClient<MarketDataFeedClientType,
+      ProtocolClientType>::ParseChar(Beam::Out<const char*> cursor) {
+    auto value = **cursor;
+    ++*cursor;
+    return value;
+  }
+
+  template<typename MarketDataFeedClientType, typename ProtocolClientType>
+  std::string CtaMarketDataFeedClient<MarketDataFeedClientType,
+      ProtocolClientType>::ParseAlphanumeric(std::size_t size,
+      Beam::Out<const char*> cursor) {
+    std::string value;
+    auto token = *cursor;
+    while(size > 0) {
+      if(*token != ' ') {
+        value += *token;
+        ++token;
+        --size;
+      } else {
+        token += size;
+        size = 0;
+      }
+    }
+    *cursor = token;
+    return value;
+  }
+
+  template<typename MarketDataFeedClientType, typename ProtocolClientType>
+  Quantity CtaMarketDataFeedClient<MarketDataFeedClientType,
+      ProtocolClientType>::ParseNumeric(std::size_t length,
+      Beam::Out<const char*> cursor) {
+    Quantity value = 0;
+    auto token = *cursor;
+    for(std::size_t i = 0; i < length; ++i) {
+      value = 10 * value + (*token - '0');
+      ++token;
+    }
+    *cursor = token;
+    return value;
+  }
+
+  template<typename MarketDataFeedClientType, typename ProtocolClientType>
+  Money CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
+      ParseMoney(std::size_t length, char denominatorType,
+      Beam::Out<const char*> cursor) {
+    if(denominatorType < 'A' || denominatorType > 'I') {
+      BOOST_THROW_EXCEPTION(std::runtime_error{"Invalid price."});
+    }
+    auto decimalDigits = static_cast<std::uint8_t>(
+      (denominatorType - 'A') + 1);
+    auto dollarValue = 0;
+    auto dollarDigits = length - decimalDigits;
+    auto token = *cursor;
+    for(std::uint8_t i = 0; i < dollarDigits; ++i) {
+      dollarValue = 10 * dollarValue + (*token - '0');
+      ++token;
+    }
+    auto decimalValue = 0;
+    for(std::uint8_t i = 0; i < decimalDigits; ++i) {
+      decimalValue = 10 * decimalValue + (*token - '0');
+      ++token;
+    }
+    *cursor = token;
+    return dollarValue * Money::ONE +
+      Beam::PowerOfTen(Money::DECIMAL_PLACES - decimalDigits) *
+      decimalValue * Money::EPSILON;
+  }
+
+  template<typename MarketDataFeedClientType, typename ProtocolClientType>
+  MarketCode CtaMarketDataFeedClient<MarketDataFeedClientType,
+      ProtocolClientType>::ParseMarket(std::uint8_t identifier) {
+    return m_config.m_marketCodes[identifier];
+  }
+
+  template<typename MarketDataFeedClientType, typename ProtocolClientType>
+  boost::posix_time::ptime CtaMarketDataFeedClient<MarketDataFeedClientType,
+      ProtocolClientType>::ParseTimestamp(const std::array<char, 6>& code) {
+    const auto BASE = 95;
+    std::uint64_t microseconds = 0;
+    for(auto digit : code) {
+      microseconds = BASE * microseconds + (digit - ' ');
+    }
+    return m_config.m_timeOrigin +
+      boost::posix_time::microseconds(microseconds);
+  }
+
+  template<typename MarketDataFeedClientType, typename ProtocolClientType>
   void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      Dispatch(const CtaMessage& message) {}
+      HandleShortFormMarketQuoteMessage(const CtaMessage& message) {
+    const auto SYMBOL_LENGTH = 3;
+    const auto PRICE_DIGITS = 8;
+    const auto LOT_SIZE = 100;
+    const auto LOT_DIGITS = 3;
+    auto cursor = message.m_data;
+    auto symbol = ParseAlphanumeric(SYMBOL_LENGTH, Beam::Store(cursor));
+    std::cout << symbol << std::endl;
+    ++cursor;
+    ++cursor;
+    ++cursor;
+    auto timestamp = ParseTimestamp(message.m_cqsTimestamp);
+    auto bidDenominatorIndicator = ParseChar(Beam::Store(cursor));
+    auto bidPrice = ParseMoney(PRICE_DIGITS, bidDenominatorIndicator,
+      Beam::Store(cursor));
+    auto bidSize = LOT_SIZE * ParseNumeric(LOT_DIGITS, Beam::Store(cursor));
+    ++cursor;
+    auto askDenominatorIndicator = ParseChar(Beam::Store(cursor));
+    auto askPrice = ParseMoney(PRICE_DIGITS, askDenominatorIndicator,
+      Beam::Store(cursor));
+    auto askSize = LOT_SIZE * ParseNumeric(LOT_DIGITS, Beam::Store(cursor));
+    ++cursor;
+    auto nationalBboIndicator = ParseChar(Beam::Store(cursor));
+    auto finraBboIndicator = ParseChar(Beam::Store(cursor));
+    auto market = ParseMarket(message.m_participantId);
+    Security security{symbol, m_config.m_market, m_config.m_country};
+    Quote bid{bidPrice, bidSize, Side::BID};
+    Quote ask{askPrice, askSize, Side::ASK};
+    BboQuote bboQuote{bid, ask, timestamp};
+    m_marketDataFeedClient->PublishBboQuote(
+      SecurityBboQuote{bboQuote, security});
+    MarketQuote marketQuote{market, bid, ask, timestamp};
+    m_marketDataFeedClient->PublishMarketQuote(
+      SecurityMarketQuote{marketQuote, security});
+  }
+
+  template<typename MarketDataFeedClientType, typename ProtocolClientType>
+  void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
+      HandleLongFormMarketQuoteMessage(const CtaMessage& message) {
+  }
+
+  template<typename MarketDataFeedClientType, typename ProtocolClientType>
+  void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
+      HandleShortFormTradeMessage(const CtaMessage& message) {}
+
+  template<typename MarketDataFeedClientType, typename ProtocolClientType>
+  void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
+      HandleLongFormTradeMessage(const CtaMessage& message) {
+  }
+
+  template<typename MarketDataFeedClientType, typename ProtocolClientType>
+  void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
+      Dispatch(const CtaMessage& message) {
+    const auto LONG_QUOTE_LENGTH = 123;
+    const auto LONG_TRADE_LENGTH = 103;
+    const auto SHORT_QUOTE_LENGTH = 79;
+    const auto SHORT_TRADE_LENGTH = 65;
+    std::cout << message.m_category << " " << message.m_type << " " <<
+      message.m_dataLength << std::endl;
+    if(message.m_category == 'E') {
+      if(message.m_type == 'B') {
+        if(message.m_dataLength >= LONG_QUOTE_LENGTH) {
+          HandleLongFormMarketQuoteMessage(message);
+        } else if(message.m_dataLength == LONG_TRADE_LENGTH) {
+          HandleLongFormTradeMessage(message);
+        }
+      } else if(message.m_type == 'D') {
+        if(message.m_dataLength >= SHORT_QUOTE_LENGTH) {
+          HandleShortFormMarketQuoteMessage(message);
+        }
+      } else if(message.m_type == 'P') {
+        if(message.m_dataLength == SHORT_TRADE_LENGTH) {
+          HandleShortFormTradeMessage(message);
+        }
+      }
+    }
+  }
 
   template<typename MarketDataFeedClientType, typename ProtocolClientType>
   void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
