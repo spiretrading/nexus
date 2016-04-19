@@ -223,7 +223,6 @@ namespace MarketDataService {
     const auto LOT_DIGITS = 3;
     auto cursor = message.m_data;
     auto symbol = ParseAlphanumeric(SYMBOL_LENGTH, Beam::Store(cursor));
-    std::cout << symbol << std::endl;
     ++cursor;
     ++cursor;
     ++cursor;
@@ -273,8 +272,6 @@ namespace MarketDataService {
     const auto LONG_TRADE_LENGTH = 103;
     const auto SHORT_QUOTE_LENGTH = 79;
     const auto SHORT_TRADE_LENGTH = 65;
-    std::cout << message.m_category << " " << message.m_type << " " <<
-      message.m_dataLength << std::endl;
     if(message.m_category == 'E') {
       if(message.m_type == 'B') {
         if(message.m_dataLength >= LONG_QUOTE_LENGTH) {
