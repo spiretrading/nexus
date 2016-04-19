@@ -243,9 +243,50 @@ namespace MarketDataService {
     Security security{symbol, m_config.m_market, m_config.m_country};
     Quote bid{bidPrice, bidSize, Side::BID};
     Quote ask{askPrice, askSize, Side::ASK};
-    BboQuote bboQuote{bid, ask, timestamp};
-    m_marketDataFeedClient->PublishBboQuote(
-      SecurityBboQuote{bboQuote, security});
+    if(nationalBboIndicator == '1') {
+      BboQuote bboQuote{bid, ask, timestamp};
+      m_marketDataFeedClient->PublishBboQuote(
+        SecurityBboQuote{bboQuote, security});
+    } else if(nationalBboIndicator == '4') {
+      const auto LONG_FORM_PRICE_DIGITS = 12;
+      const auto LONG_FORM_LOT_DIGITS = 7;
+      cursor += 2;
+      ++cursor;
+      auto bboBidDenominatorIndicator = ParseChar(Beam::Store(cursor));
+      auto bboBidPrice = ParseMoney(LONG_FORM_PRICE_DIGITS,
+        bboBidDenominatorIndicator, Beam::Store(cursor));
+      auto bboBidSize = LOT_SIZE * ParseNumeric(LONG_FORM_LOT_DIGITS,
+        Beam::Store(cursor));
+      ++cursor;
+      ++cursor;
+      auto bboAskDenominatorIndicator = ParseChar(Beam::Store(cursor));
+      auto bboAskPrice = ParseMoney(LONG_FORM_PRICE_DIGITS,
+        bboAskDenominatorIndicator, Beam::Store(cursor));
+      auto bboAskSize = LOT_SIZE * ParseNumeric(LONG_FORM_LOT_DIGITS,
+        Beam::Store(cursor));
+      BboQuote bboQuote{Quote{bboBidPrice, bboBidSize, Side::BID},
+        Quote{bboAskPrice, bboAskSize, Side::ASK}, timestamp};
+      m_marketDataFeedClient->PublishBboQuote(
+        SecurityBboQuote{bboQuote, security});
+    } else if(nationalBboIndicator == '6') {
+      ++cursor;
+      auto bboBidDenominatorIndicator = ParseChar(Beam::Store(cursor));
+      auto bboBidPrice = ParseMoney(PRICE_DIGITS, bboBidDenominatorIndicator,
+        Beam::Store(cursor));
+      auto bboBidSize = LOT_SIZE * ParseNumeric(LOT_DIGITS,
+        Beam::Store(cursor));
+      ++cursor;
+      ++cursor;
+      auto bboAskDenominatorIndicator = ParseChar(Beam::Store(cursor));
+      auto bboAskPrice = ParseMoney(PRICE_DIGITS, bboAskDenominatorIndicator,
+        Beam::Store(cursor));
+      auto bboAskSize = LOT_SIZE * ParseNumeric(LOT_DIGITS,
+        Beam::Store(cursor));
+      BboQuote bboQuote{Quote{bboBidPrice, bboBidSize, Side::BID},
+        Quote{bboAskPrice, bboAskSize, Side::ASK}, timestamp};
+      m_marketDataFeedClient->PublishBboQuote(
+        SecurityBboQuote{bboQuote, security});
+    }
     MarketQuote marketQuote{market, bid, ask, timestamp};
     m_marketDataFeedClient->PublishMarketQuote(
       SecurityMarketQuote{marketQuote, security});
@@ -254,6 +295,97 @@ namespace MarketDataService {
   template<typename MarketDataFeedClientType, typename ProtocolClientType>
   void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
       HandleLongFormMarketQuoteMessage(const CtaMessage& message) {
+    const auto SYMBOL_LENGTH = 11;
+    const auto PRICE_DIGITS = 12;
+    const auto LOT_DIGITS = 7;
+    const auto LOT_SIZE = 100;
+    auto cursor = message.m_data;
+    auto timestamp = ParseTimestamp(message.m_cqsTimestamp);
+    auto market = ParseMarket(message.m_participantId);
+    auto symbol = ParseAlphanumeric(SYMBOL_LENGTH, Beam::Store(cursor));
+    ++cursor;
+    auto testMessageIndicator = ParseChar(Beam::Store(cursor));
+    if(testMessageIndicator == 'T') {
+      return;
+    }
+    ++cursor;
+    ++cursor;
+    ++cursor;
+    ++cursor;
+    cursor += 3;
+    ++cursor;
+    ++cursor;
+    ++cursor;
+    ++cursor;
+    ++cursor;
+    ++cursor;
+    ++cursor;
+    auto bidDenominatorIndicator = ParseChar(Beam::Store(cursor));
+    auto bidPrice = ParseMoney(PRICE_DIGITS, bidDenominatorIndicator,
+      Beam::Store(cursor));
+    auto bidSize = LOT_SIZE * ParseNumeric(LOT_DIGITS, Beam::Store(cursor));
+    auto askDenominatorIndicator = ParseChar(Beam::Store(cursor));
+    auto askPrice = ParseMoney(PRICE_DIGITS, askDenominatorIndicator,
+      Beam::Store(cursor));
+    auto askSize = LOT_SIZE * ParseNumeric(LOT_DIGITS, Beam::Store(cursor));
+    cursor += 4;
+    ++cursor;
+    ++cursor;
+    ++cursor;
+    ++cursor;
+    ++cursor;
+    auto nationalBboIndicator = ParseChar(Beam::Store(cursor));
+    auto finraBboIndicator = ParseChar(Beam::Store(cursor));
+    Security security{symbol, m_config.m_market, m_config.m_country};
+    Quote bid{bidPrice, bidSize, Side::BID};
+    Quote ask{askPrice, askSize, Side::ASK};
+    if(nationalBboIndicator == '1') {
+      BboQuote bboQuote{bid, ask, timestamp};
+      m_marketDataFeedClient->PublishBboQuote(
+        SecurityBboQuote{bboQuote, security});
+    } else if(nationalBboIndicator == '4') {
+      const auto LONG_FORM_PRICE_DIGITS = 12;
+      const auto LONG_FORM_LOT_DIGITS = 7;
+      cursor += 2;
+      ++cursor;
+      auto bboBidDenominatorIndicator = ParseChar(Beam::Store(cursor));
+      auto bboBidPrice = ParseMoney(LONG_FORM_PRICE_DIGITS,
+        bboBidDenominatorIndicator, Beam::Store(cursor));
+      auto bboBidSize = LOT_SIZE * ParseNumeric(LONG_FORM_LOT_DIGITS,
+        Beam::Store(cursor));
+      ++cursor;
+      ++cursor;
+      auto bboAskDenominatorIndicator = ParseChar(Beam::Store(cursor));
+      auto bboAskPrice = ParseMoney(LONG_FORM_PRICE_DIGITS,
+        bboAskDenominatorIndicator, Beam::Store(cursor));
+      auto bboAskSize = LOT_SIZE * ParseNumeric(LONG_FORM_LOT_DIGITS,
+        Beam::Store(cursor));
+      BboQuote bboQuote{Quote{bboBidPrice, bboBidSize, Side::BID},
+        Quote{bboAskPrice, bboAskSize, Side::ASK}, timestamp};
+      m_marketDataFeedClient->PublishBboQuote(
+        SecurityBboQuote{bboQuote, security});
+    } else if(nationalBboIndicator == '6') {
+      ++cursor;
+      auto bboBidDenominatorIndicator = ParseChar(Beam::Store(cursor));
+      auto bboBidPrice = ParseMoney(PRICE_DIGITS, bboBidDenominatorIndicator,
+        Beam::Store(cursor));
+      auto bboBidSize = LOT_SIZE * ParseNumeric(LOT_DIGITS,
+        Beam::Store(cursor));
+      ++cursor;
+      ++cursor;
+      auto bboAskDenominatorIndicator = ParseChar(Beam::Store(cursor));
+      auto bboAskPrice = ParseMoney(PRICE_DIGITS, bboAskDenominatorIndicator,
+        Beam::Store(cursor));
+      auto bboAskSize = LOT_SIZE * ParseNumeric(LOT_DIGITS,
+        Beam::Store(cursor));
+      BboQuote bboQuote{Quote{bboBidPrice, bboBidSize, Side::BID},
+        Quote{bboAskPrice, bboAskSize, Side::ASK}, timestamp};
+      m_marketDataFeedClient->PublishBboQuote(
+        SecurityBboQuote{bboQuote, security});
+    }
+    MarketQuote marketQuote{market, bid, ask, timestamp};
+    m_marketDataFeedClient->PublishMarketQuote(
+      SecurityMarketQuote{marketQuote, security});
   }
 
   template<typename MarketDataFeedClientType, typename ProtocolClientType>
