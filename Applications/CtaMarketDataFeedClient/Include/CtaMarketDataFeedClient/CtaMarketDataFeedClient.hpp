@@ -66,6 +66,12 @@ namespace MarketDataService {
         Beam::Out<const char*> cursor);
       MarketCode ParseMarket(std::uint8_t identifier);
       boost::posix_time::ptime ParseTimestamp(const std::array<char, 6>& code);
+      void HandleShortNationalBboAppendage(const Security& security,
+        const boost::posix_time::ptime& timestamp,
+        Beam::Out<const char*> cursor);
+      void HandleLongNationalBboAppendage(const Security& security,
+        const boost::posix_time::ptime& timestamp,
+        Beam::Out<const char*> cursor);
       void HandleShortFormMarketQuoteMessage(const CtaMessage& message);
       void HandleLongFormMarketQuoteMessage(const CtaMessage& message);
       void HandleShortFormTradeMessage(const CtaMessage& message);
@@ -80,7 +86,7 @@ namespace MarketDataService {
       CtaMarketDataFeedClient(const CtaConfiguration& config,
       MarketDataFeedClientForward&& marketDataFeedClient,
       ProtocolClientForward&& protocolClient)
-      : m_config(config),
+      : m_config{config},
         m_marketDataFeedClient{std::forward<MarketDataFeedClientForward>(
           marketDataFeedClient)},
         m_protocolClient{std::forward<ProtocolClientForward>(protocolClient)} {}
@@ -173,11 +179,21 @@ namespace MarketDataService {
   Money CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
       ParseMoney(std::size_t length, char denominatorType,
       Beam::Out<const char*> cursor) {
-    if(denominatorType < 'A' || denominatorType > 'I') {
+    if(denominatorType == '0') {
+      *cursor += length;
+      return Money::ZERO;
+    } else if(denominatorType < 'A' || denominatorType > 'I') {
+      std::cout << *cursor << std::endl;
       BOOST_THROW_EXCEPTION(std::runtime_error{"Invalid price."});
     }
-    auto decimalDigits = static_cast<std::uint8_t>(
-      (denominatorType - 'A') + 1);
+    auto decimalDigits = [&] {
+      if(denominatorType == 'I') {
+        return std::uint8_t{0};
+      } else {
+        return static_cast<std::uint8_t>(
+          (denominatorType - 'A') + 1);
+      }
+    }();
     auto dollarValue = 0;
     auto dollarDigits = length - decimalDigits;
     auto token = *cursor;
@@ -216,6 +232,64 @@ namespace MarketDataService {
 
   template<typename MarketDataFeedClientType, typename ProtocolClientType>
   void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
+      HandleShortNationalBboAppendage(const Security& security,
+      const boost::posix_time::ptime& timestamp,
+      Beam::Out<const char*> cursor) {
+    const auto PRICE_DIGITS = 8;
+    const auto LOT_DIGITS = 3;
+    const auto LOT_SIZE = 100;
+    const auto TOTAL_LENGTH = 28;
+    auto token = *cursor;
+    ++token;
+    auto bidDenominatorIndicator = ParseChar(Beam::Store(token));
+    auto bidPrice = ParseMoney(PRICE_DIGITS, bidDenominatorIndicator,
+      Beam::Store(token));
+    auto bidSize = LOT_SIZE * ParseNumeric(LOT_DIGITS, Beam::Store(token));
+    ++token;
+    ++token;
+    auto askDenominatorIndicator = ParseChar(Beam::Store(token));
+    auto askPrice = ParseMoney(PRICE_DIGITS, askDenominatorIndicator,
+      Beam::Store(token));
+    auto askSize = LOT_SIZE * ParseNumeric(LOT_DIGITS, Beam::Store(token));
+    BboQuote bboQuote{Quote{bidPrice, bidSize, Side::BID},
+      Quote{askPrice, askSize, Side::ASK}, timestamp};
+    m_marketDataFeedClient->PublishBboQuote(
+      SecurityBboQuote{bboQuote, security});
+    *cursor += TOTAL_LENGTH;
+  }
+
+  template<typename MarketDataFeedClientType, typename ProtocolClientType>
+  void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
+      HandleLongNationalBboAppendage(const Security& security,
+      const boost::posix_time::ptime& timestamp,
+      Beam::Out<const char*> cursor) {
+    const auto PRICE_DIGITS = 12;
+    const auto LOT_DIGITS = 7;
+    const auto LOT_SIZE = 100;
+    const auto TOTAL_LENGTH = 58;
+    auto token = *cursor;
+    token += 2;
+    ++token;
+    auto bidDenominatorIndicator = ParseChar(Beam::Store(token));
+    auto bidPrice = ParseMoney(PRICE_DIGITS, bidDenominatorIndicator,
+      Beam::Store(token));
+    auto bidSize = LOT_SIZE * ParseNumeric(LOT_DIGITS, Beam::Store(token));
+    token += 4;
+    token += 3;
+    ++token;
+    auto askDenominatorIndicator = ParseChar(Beam::Store(token));
+    auto askPrice = ParseMoney(PRICE_DIGITS, askDenominatorIndicator,
+      Beam::Store(token));
+    auto askSize = LOT_SIZE * ParseNumeric(LOT_DIGITS, Beam::Store(token));
+    BboQuote bboQuote{Quote{bidPrice, bidSize, Side::BID},
+      Quote{askPrice, askSize, Side::ASK}, timestamp};
+    m_marketDataFeedClient->PublishBboQuote(
+      SecurityBboQuote{bboQuote, security});
+    *cursor += TOTAL_LENGTH;
+  }
+
+  template<typename MarketDataFeedClientType, typename ProtocolClientType>
+  void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
       HandleShortFormMarketQuoteMessage(const CtaMessage& message) {
     const auto SYMBOL_LENGTH = 3;
     const auto PRICE_DIGITS = 8;
@@ -248,44 +322,9 @@ namespace MarketDataService {
       m_marketDataFeedClient->PublishBboQuote(
         SecurityBboQuote{bboQuote, security});
     } else if(nationalBboIndicator == '4') {
-      const auto LONG_FORM_PRICE_DIGITS = 12;
-      const auto LONG_FORM_LOT_DIGITS = 7;
-      cursor += 2;
-      ++cursor;
-      auto bboBidDenominatorIndicator = ParseChar(Beam::Store(cursor));
-      auto bboBidPrice = ParseMoney(LONG_FORM_PRICE_DIGITS,
-        bboBidDenominatorIndicator, Beam::Store(cursor));
-      auto bboBidSize = LOT_SIZE * ParseNumeric(LONG_FORM_LOT_DIGITS,
-        Beam::Store(cursor));
-      ++cursor;
-      ++cursor;
-      auto bboAskDenominatorIndicator = ParseChar(Beam::Store(cursor));
-      auto bboAskPrice = ParseMoney(LONG_FORM_PRICE_DIGITS,
-        bboAskDenominatorIndicator, Beam::Store(cursor));
-      auto bboAskSize = LOT_SIZE * ParseNumeric(LONG_FORM_LOT_DIGITS,
-        Beam::Store(cursor));
-      BboQuote bboQuote{Quote{bboBidPrice, bboBidSize, Side::BID},
-        Quote{bboAskPrice, bboAskSize, Side::ASK}, timestamp};
-      m_marketDataFeedClient->PublishBboQuote(
-        SecurityBboQuote{bboQuote, security});
+      HandleLongNationalBboAppendage(security, timestamp, Beam::Store(cursor));
     } else if(nationalBboIndicator == '6') {
-      ++cursor;
-      auto bboBidDenominatorIndicator = ParseChar(Beam::Store(cursor));
-      auto bboBidPrice = ParseMoney(PRICE_DIGITS, bboBidDenominatorIndicator,
-        Beam::Store(cursor));
-      auto bboBidSize = LOT_SIZE * ParseNumeric(LOT_DIGITS,
-        Beam::Store(cursor));
-      ++cursor;
-      ++cursor;
-      auto bboAskDenominatorIndicator = ParseChar(Beam::Store(cursor));
-      auto bboAskPrice = ParseMoney(PRICE_DIGITS, bboAskDenominatorIndicator,
-        Beam::Store(cursor));
-      auto bboAskSize = LOT_SIZE * ParseNumeric(LOT_DIGITS,
-        Beam::Store(cursor));
-      BboQuote bboQuote{Quote{bboBidPrice, bboBidSize, Side::BID},
-        Quote{bboAskPrice, bboAskSize, Side::ASK}, timestamp};
-      m_marketDataFeedClient->PublishBboQuote(
-        SecurityBboQuote{bboQuote, security});
+      HandleShortNationalBboAppendage(security, timestamp, Beam::Store(cursor));
     }
     MarketQuote marketQuote{market, bid, ask, timestamp};
     m_marketDataFeedClient->PublishMarketQuote(
@@ -344,44 +383,9 @@ namespace MarketDataService {
       m_marketDataFeedClient->PublishBboQuote(
         SecurityBboQuote{bboQuote, security});
     } else if(nationalBboIndicator == '4') {
-      const auto LONG_FORM_PRICE_DIGITS = 12;
-      const auto LONG_FORM_LOT_DIGITS = 7;
-      cursor += 2;
-      ++cursor;
-      auto bboBidDenominatorIndicator = ParseChar(Beam::Store(cursor));
-      auto bboBidPrice = ParseMoney(LONG_FORM_PRICE_DIGITS,
-        bboBidDenominatorIndicator, Beam::Store(cursor));
-      auto bboBidSize = LOT_SIZE * ParseNumeric(LONG_FORM_LOT_DIGITS,
-        Beam::Store(cursor));
-      ++cursor;
-      ++cursor;
-      auto bboAskDenominatorIndicator = ParseChar(Beam::Store(cursor));
-      auto bboAskPrice = ParseMoney(LONG_FORM_PRICE_DIGITS,
-        bboAskDenominatorIndicator, Beam::Store(cursor));
-      auto bboAskSize = LOT_SIZE * ParseNumeric(LONG_FORM_LOT_DIGITS,
-        Beam::Store(cursor));
-      BboQuote bboQuote{Quote{bboBidPrice, bboBidSize, Side::BID},
-        Quote{bboAskPrice, bboAskSize, Side::ASK}, timestamp};
-      m_marketDataFeedClient->PublishBboQuote(
-        SecurityBboQuote{bboQuote, security});
+      HandleLongNationalBboAppendage(security, timestamp, Beam::Store(cursor));
     } else if(nationalBboIndicator == '6') {
-      ++cursor;
-      auto bboBidDenominatorIndicator = ParseChar(Beam::Store(cursor));
-      auto bboBidPrice = ParseMoney(PRICE_DIGITS, bboBidDenominatorIndicator,
-        Beam::Store(cursor));
-      auto bboBidSize = LOT_SIZE * ParseNumeric(LOT_DIGITS,
-        Beam::Store(cursor));
-      ++cursor;
-      ++cursor;
-      auto bboAskDenominatorIndicator = ParseChar(Beam::Store(cursor));
-      auto bboAskPrice = ParseMoney(PRICE_DIGITS, bboAskDenominatorIndicator,
-        Beam::Store(cursor));
-      auto bboAskSize = LOT_SIZE * ParseNumeric(LOT_DIGITS,
-        Beam::Store(cursor));
-      BboQuote bboQuote{Quote{bboBidPrice, bboBidSize, Side::BID},
-        Quote{bboAskPrice, bboAskSize, Side::ASK}, timestamp};
-      m_marketDataFeedClient->PublishBboQuote(
-        SecurityBboQuote{bboQuote, security});
+      HandleShortNationalBboAppendage(security, timestamp, Beam::Store(cursor));
     }
     MarketQuote marketQuote{market, bid, ask, timestamp};
     m_marketDataFeedClient->PublishMarketQuote(
@@ -390,20 +394,40 @@ namespace MarketDataService {
 
   template<typename MarketDataFeedClientType, typename ProtocolClientType>
   void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      HandleShortFormTradeMessage(const CtaMessage& message) {}
-
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      HandleLongFormTradeMessage(const CtaMessage& message) {
+      HandleShortFormTradeMessage(const CtaMessage& message) {
+    const auto SYMBOL_LENGTH = 3;
+    const auto PRICE_DIGITS = 8;
+    const auto VOLUME_DIGITS = 4;
+    auto timestamp = ParseTimestamp(message.m_cqsTimestamp);
+    auto market = ParseMarket(message.m_participantId);
+    auto cursor = message.m_data;
+    auto symbol = ParseAlphanumeric(SYMBOL_LENGTH, Beam::Store(cursor));
+    auto saleCondition = ParseChar(Beam::Store(cursor));
+    auto quantity = ParseNumeric(VOLUME_DIGITS, Beam::Store(cursor));
+    auto denominatorIndicator = ParseChar(Beam::Store(cursor));
+    auto price = ParseMoney(PRICE_DIGITS, denominatorIndicator,
+      Beam::Store(cursor));
+    TimeAndSale::Condition condition{
+      TimeAndSale::Condition::Type::REGULAR, std::string{saleCondition}};
+    TimeAndSale timeAndSale{timestamp, price, quantity, condition,
+      market.GetData()};
+    Security security{symbol, m_config.m_market, m_config.m_country};
+    m_marketDataFeedClient->PublishTimeAndSale(
+      SecurityTimeAndSale{timeAndSale, security});
+    std::cout << symbol << std::endl;
   }
 
   template<typename MarketDataFeedClientType, typename ProtocolClientType>
   void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
+      HandleLongFormTradeMessage(const CtaMessage& message) {}
+
+  template<typename MarketDataFeedClientType, typename ProtocolClientType>
+  void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
       Dispatch(const CtaMessage& message) {
-    const auto LONG_QUOTE_LENGTH = 123;
-    const auto LONG_TRADE_LENGTH = 103;
-    const auto SHORT_QUOTE_LENGTH = 79;
-    const auto SHORT_TRADE_LENGTH = 65;
+    const auto LONG_QUOTE_LENGTH = 78;
+    const auto LONG_TRADE_LENGTH = 58;
+    const auto SHORT_QUOTE_LENGTH = 34;
+    const auto SHORT_TRADE_LENGTH = 20;
     if(message.m_category == 'E') {
       if(message.m_type == 'B') {
         if(message.m_dataLength >= LONG_QUOTE_LENGTH) {
@@ -415,7 +439,7 @@ namespace MarketDataService {
         if(message.m_dataLength >= SHORT_QUOTE_LENGTH) {
           HandleShortFormMarketQuoteMessage(message);
         }
-      } else if(message.m_type == 'P') {
+      } else if(message.m_type == 'I') {
         if(message.m_dataLength == SHORT_TRADE_LENGTH) {
           HandleShortFormTradeMessage(message);
         }
@@ -430,8 +454,8 @@ namespace MarketDataService {
       try {
         auto message = m_protocolClient->Read();
         if(m_config.m_isLoggingMessages) {
-          std::cout << std::string{message.m_data, message.m_dataLength} <<
-            std::endl;
+          std::cout << message.m_category << " " << message.m_type << ": " <<
+            std::string{message.m_data, message.m_dataLength} << std::endl;
         }
         Dispatch(message);
       } catch(const Beam::IO::EndOfFileException&) {
