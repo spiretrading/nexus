@@ -12,14 +12,15 @@ using namespace Spire::UI;
 using namespace std;
 
 ProfitAndLossEntryModel::Entry::Entry(const Security& security)
-    : m_security(security),
-      m_volume(0),
-      m_previousQuantity(0) {}
+    : m_security{security},
+      m_volume{0},
+      m_previousQuantity{0} {}
 
 ProfitAndLossEntryModel::ProfitAndLossEntryModel(
-    const CurrencyDatabase::Entry& currency)
+    const CurrencyDatabase::Entry& currency, bool showUnrealized)
     : m_currency(currency),
-      m_volume(0) {}
+      m_showUnrealized{showUnrealized},
+      m_volume{0} {}
 
 ProfitAndLossEntryModel::~ProfitAndLossEntryModel() {}
 
@@ -30,9 +31,12 @@ const CurrencyDatabase::Entry& ProfitAndLossEntryModel::GetCurrency() const {
 void ProfitAndLossEntryModel::OnPortfolioUpdate(
     const SpirePortfolioMonitor::UpdateEntry& update) {
   const SpirePosition::Key& key = update.m_securityInventory.m_position.m_key;
-  Money currencyProfitAndLoss = update.m_unrealizedCurrency +
+  Money currencyProfitAndLoss =
     update.m_currencyInventory.m_grossProfitAndLoss -
     update.m_currencyInventory.m_fees;
+  if(m_showUnrealized) {
+    currencyProfitAndLoss += update.m_unrealizedCurrency;
+  }
   m_profitAndLossSignal(currencyProfitAndLoss);
   Security security = key.m_index;
   auto entryIterator = m_securityToEntry.find(security);

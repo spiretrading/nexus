@@ -39,7 +39,7 @@ BlotterModel::BlotterModel(const string& name,
         taskProperties),
       m_orderLogModel(orderLogProperties),
       m_profitAndLossModel(Ref(m_userProfile->GetCurrencyDatabase()),
-        Ref(userProfile->GetExchangeRates())) {
+        Ref(userProfile->GetExchangeRates()), true) {
   m_userProfile->GetServiceClients().GetAdministrationClient().
     GetRiskParametersPublisher(m_executingAccount).Monitor(
     m_slotHandler.GetSlot<RiskParameters>(
