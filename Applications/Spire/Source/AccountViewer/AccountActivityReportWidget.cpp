@@ -4,6 +4,7 @@
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <Beam/TimeService/VirtualTimeClient.hpp>
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
+#include "Nexus/OrderExecutionService/StandardQueries.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 #include "Spire/Spire/ServiceClients.hpp"
 #include "Spire/Spire/UserProfile.hpp"
@@ -27,7 +28,7 @@ AccountActivityReportWidget::ReportModel::ReportModel(
     const std::shared_ptr<OrderExecutionPublisher>& orderPublisher)
     : m_orderPublisher(orderPublisher),
       m_profitAndLossModel(Ref(userProfile->GetCurrencyDatabase()),
-        Ref(userProfile->GetExchangeRates())),
+        Ref(userProfile->GetExchangeRates()), false),
       m_portfolioMonitor(Beam::Initialize(userProfile->GetMarketDatabase()),
         &userProfile->GetServiceClients().GetMarketDataClient(),
         *m_orderPublisher) {
@@ -52,22 +53,17 @@ void AccountActivityReportWidget::Initialize(RefType<UserProfile> userProfile,
   m_account = account;
   m_ui->m_fromPeriodDateEdit->setDate(ToQDateTime(ToLocalTime(
     m_userProfile->GetServiceClients().GetTimeClient().GetTime())).date());
-  m_ui->m_fromPeriodDateEdit->setTime(QTime(0, 0, 0, 0));
   m_ui->m_toPeriodDateEdit->setDate(ToQDateTime(ToLocalTime(
     m_userProfile->GetServiceClients().GetTimeClient().GetTime())).date());
-  m_ui->m_toPeriodDateEdit->setTime(QTime(23, 59, 59, 0));
 }
 
 void AccountActivityReportWidget::OnUpdate(bool checked) {
-  auto startTime = ToPosixTime(m_ui->m_fromPeriodDateEdit->dateTime().toUTC());
-  auto endTime = ToPosixTime(m_ui->m_toPeriodDateEdit->dateTime().toUTC());
-  AccountQuery query;
-  query.SetIndex(m_account);
-  query.SetRange(startTime, endTime);
-  query.SetSnapshotLimit(SnapshotLimit::Unlimited());
+  auto startTime = ToPosixTime(m_ui->m_fromPeriodDateEdit->dateTime());
+  auto endTime = ToPosixTime(m_ui->m_toPeriodDateEdit->dateTime());
   auto orderQueue = std::make_shared<Queue<const Order*>>();
-  m_userProfile->GetServiceClients().GetOrderExecutionClient().
-    QueryOrderSubmissions(query, orderQueue);
+  QueryDailyOrderSubmissions(m_account, startTime, endTime,
+    m_userProfile->GetMarketDatabase(), m_userProfile->GetTimeZoneDatabase(),
+    m_userProfile->GetServiceClients().GetOrderExecutionClient(), orderQueue);
   auto orderPublisher = std::make_shared<QueuePublisher<
     SequencePublisher<const Order*>>>(orderQueue);
   m_model.Reset();

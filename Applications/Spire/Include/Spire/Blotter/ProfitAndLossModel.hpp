@@ -23,27 +23,26 @@ namespace Spire {
         \param update Stores the update to the total profit and loss.  Only
                the currency entries are populated.
       */
-      typedef boost::signals2::signal<
-        void (const SpirePortfolioMonitor::UpdateEntry& update)>
-        ProfitAndLossUpdateSignal;
+      using ProfitAndLossUpdateSignal = boost::signals2::signal<
+        void (const SpirePortfolioMonitor::UpdateEntry& update)>;
 
       //! Signals that a ProfitAndLossEntryModel was added.
       /*!
         \param model The ProfitAndLossEntryModel that was added.
       */
-      typedef boost::signals2::signal<void (ProfitAndLossEntryModel& model)>
-        ProfitAndLossEntryModelAddedSignal;
+      using ProfitAndLossEntryModelAddedSignal = boost::signals2::signal<
+        void (ProfitAndLossEntryModel& model)>;
 
       //! Signals that a ProfitAndLossEntryModel was removed.
       /*!
         \param model The ProfitAndLossEntryModel that was removed.
       */
-      typedef boost::signals2::signal<void (ProfitAndLossEntryModel& model)>
-        ProfitAndLossEntryModelRemovedSignal;
+      using ProfitAndLossEntryModelRemovedSignal = boost::signals2::signal<
+        void (ProfitAndLossEntryModel& model)>;
 
       //! Defines the factory used to build a PortfolioMonitor.
-      typedef std::function<std::unique_ptr<SpirePortfolioMonitor> ()>
-        PortfolioMonitorFactory;
+      using PortfolioMonitorFactory = std::function<
+        std::unique_ptr<SpirePortfolioMonitor> ()>;
 
       //! Constructs a ProfitAndLossModel.
       /*!
@@ -52,7 +51,8 @@ namespace Spire {
       */
       ProfitAndLossModel(
         Beam::RefType<const Nexus::CurrencyDatabase> currencyDatabase,
-        Beam::RefType<const Nexus::ExchangeRateTable> exchangeRates);
+        Beam::RefType<const Nexus::ExchangeRateTable> exchangeRates,
+        bool showUnrealized);
 
       virtual ~ProfitAndLossModel();
 
@@ -90,6 +90,7 @@ namespace Spire {
     private:
       const Nexus::CurrencyDatabase* m_currencyDatabase;
       const Nexus::ExchangeRateTable* m_exchangeRates;
+      bool m_showUnrealized;
       SpirePortfolioMonitor* m_portfolioMonitor;
       Nexus::CurrencyId m_currency;
       QTimer m_updateTimer;
