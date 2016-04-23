@@ -306,8 +306,8 @@ namespace FixUtilities {
     } catch(const std::exception& e) {
       return *RejectOrder(orderInfo, e.what());
     }
-    FIX::Session::sendToTarget(newOrderSingle, senderCompId, targetCompId);
     auto order = AddOrder(orderInfo, *side);
+    FIX::Session::sendToTarget(newOrderSingle, senderCompId, targetCompId);
     return *order;
   }
 

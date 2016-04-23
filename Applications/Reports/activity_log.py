@@ -30,7 +30,7 @@ def execute_report(start_date, end_date, security, market, account,
     accounts = service_locator_client.load_all_accounts()
     for account in accounts:
       (account_orders, account_log) = execute_report(start_date, end_date,
-        security, account, market_database, time_zone_database,
+        security, market, account, market_database, time_zone_database,
         service_locator_client, order_execution_client)
       orders += account_orders
       activity_log += account_log
