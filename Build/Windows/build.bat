@@ -18,7 +18,6 @@ CALL %~dp0../../Applications/MarketDataClientTemplate/Build/Windows/build.bat %c
 CALL %~dp0../../Applications/MarketDataRelayServer/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/MarketDataServer/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/OrderExecutionBackup/Build/Windows/build.bat %config%
-CALL %~dp0../../Applications/OrderExecutionReport/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/OrderExecutionRestore/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/RiskServer/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/SimulationMarketDataFeedClient/Build/Windows/build.bat %config%

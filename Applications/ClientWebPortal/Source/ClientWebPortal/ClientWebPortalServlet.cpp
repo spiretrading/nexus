@@ -39,6 +39,10 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
     MatchesPath(HttpMethod::POST, "/api/service_locator/load_current_account"),
     bind(&ClientWebPortalServlet::OnLoadCurrentAccount, this,
     std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/load_managed_trading_groups"),
+    bind(&ClientWebPortalServlet::OnLoadManagedTradingGroups, this,
+    std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, "/"),
     bind(&ClientWebPortalServlet::OnIndex, this, std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, ""),
@@ -132,5 +136,30 @@ HttpResponse ClientWebPortalServlet::OnLogout(const HttpRequest& request) {
     return response;
   }
   m_sessions.End(*session);
+  return response;
+}
+
+HttpResponse ClientWebPortalServlet::OnLoadManagedTradingGroups(
+    const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions.Get(request, Store(response));
+  if(session->IsLoggedIn()) {
+    response.SetStatusCode(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
+  auto parameters = boost::get<JsonObject>(
+    Parse<JsonParser>(request.GetBody()));
+  auto& username = boost::get<string>(parameters["account"]);
+
+  auto account =
+    m_serviceClients->GetServiceLocatorClient().AuthenticateAccount(username,
+    password);
+  if(account.m_type != DirectoryEntry::Type::ACCOUNT) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  response.SetHeader({"Content-Type", "application/json"});
+  response.SetBody(Encode<SharedBuffer>(m_sender, account));
+  session->SetAccount(account);
   return response;
 }
