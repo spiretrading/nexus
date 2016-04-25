@@ -5,6 +5,7 @@
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <Beam/TimeService/VirtualTimeClient.hpp>
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
+#include "Nexus/OrderExecutionService/StandardQueries.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 #include "Spire/Blotter/ProfitAndLossWidget.hpp"
 #include "Spire/Spire/ServiceClients.hpp"
@@ -30,7 +31,7 @@ GroupProfitAndLossReportWidget::ReportModel::ReportModel(
     const std::shared_ptr<OrderExecutionPublisher>& orderPublisher)
     : m_orderPublisher(orderPublisher),
       m_profitAndLossModel(Ref(userProfile->GetCurrencyDatabase()),
-        Ref(userProfile->GetExchangeRates())),
+        Ref(userProfile->GetExchangeRates()), false),
       m_portfolioMonitor(Beam::Initialize(userProfile->GetMarketDatabase()),
         &userProfile->GetServiceClients().GetMarketDataClient(),
         *m_orderPublisher) {
@@ -55,10 +56,8 @@ void GroupProfitAndLossReportWidget::Initialize(
   m_group = group;
   m_ui->m_fromPeriodDateEdit->setDate(ToQDateTime(ToLocalTime(
     m_userProfile->GetServiceClients().GetTimeClient().GetTime())).date());
-  m_ui->m_fromPeriodDateEdit->setTime(QTime(0, 0, 0, 0));
   m_ui->m_toPeriodDateEdit->setDate(ToQDateTime(ToLocalTime(
     m_userProfile->GetServiceClients().GetTimeClient().GetTime())).date());
-  m_ui->m_toPeriodDateEdit->setTime(QTime(23, 59, 59, 0));
 }
 
 void GroupProfitAndLossReportWidget::OnUpdate(bool checked) {
@@ -69,8 +68,8 @@ void GroupProfitAndLossReportWidget::OnUpdate(bool checked) {
   }
   repaint();
   m_groupModels.clear();
-  auto startTime = ToPosixTime(m_ui->m_fromPeriodDateEdit->dateTime().toUTC());
-  auto endTime = ToPosixTime(m_ui->m_toPeriodDateEdit->dateTime().toUTC());
+  auto startTime = ToPosixTime(m_ui->m_fromPeriodDateEdit->dateTime());
+  auto endTime = ToPosixTime(m_ui->m_toPeriodDateEdit->dateTime());
   auto traderDirectory = m_userProfile->GetServiceClients().
     GetServiceLocatorClient().LoadDirectoryEntry(m_group, "traders");
   auto traders = m_userProfile->GetServiceClients().GetServiceLocatorClient().
@@ -82,13 +81,10 @@ void GroupProfitAndLossReportWidget::OnUpdate(bool checked) {
       return lhs.m_name < rhs.m_name;
     });
   for(auto& trader : traders) {
-    AccountQuery query;
-    query.SetIndex(trader);
-    query.SetRange(startTime, endTime);
-    query.SetSnapshotLimit(SnapshotLimit::Unlimited());
     auto orderQueue = std::make_shared<Queue<const Order*>>();
-    m_userProfile->GetServiceClients().GetOrderExecutionClient().
-      QueryOrderSubmissions(query,orderQueue);
+    QueryDailyOrderSubmissions(trader, startTime, endTime,
+      m_userProfile->GetMarketDatabase(), m_userProfile->GetTimeZoneDatabase(),
+      m_userProfile->GetServiceClients().GetOrderExecutionClient(), orderQueue);
     auto orderPublisher = std::make_shared<
       QueuePublisher<SequencePublisher<const Order*>>>(orderQueue);
     auto reportModel = std::make_unique<ReportModel>(Ref(*m_userProfile),

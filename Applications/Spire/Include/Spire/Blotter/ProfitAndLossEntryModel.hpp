@@ -20,15 +20,15 @@ namespace Spire {
       /*!
         \param profitAndLoss The new profit and loss.
       */
-      typedef boost::signals2::signal<void (Nexus::Money profitAndLoss)>
-        ProfitAndLossSignal;
+      using ProfitAndLossSignal = boost::signals2::signal<
+        void (Nexus::Money profitAndLoss)>;
 
       //! Signals a change in the volume.
       /*!
         \param volume The total volume transacted.
       */
-      typedef boost::signals2::signal<void (Nexus::Quantity volume)>
-        VolumeSignal;
+      using VolumeSignal = boost::signals2::signal<
+        void (Nexus::Quantity volume)>;
 
       /*! \enum Columns
           \brief Enumerates the model's columns.
@@ -54,8 +54,10 @@ namespace Spire {
       //! Constructs a ProfitAndLossEntryModel.
       /*!
         \param currency The Currency being represented.
+        \param showUnrealized Whether to factor unrealized profits.
       */
-      ProfitAndLossEntryModel(const Nexus::CurrencyDatabase::Entry& currency);
+      ProfitAndLossEntryModel(const Nexus::CurrencyDatabase::Entry& currency,
+        bool showUnrealized);
 
       virtual ~ProfitAndLossEntryModel();
 
@@ -104,6 +106,7 @@ namespace Spire {
         Entry(const Nexus::Security& security);
       };
       Nexus::CurrencyDatabase::Entry m_currency;
+      bool m_showUnrealized;
       std::vector<std::shared_ptr<Entry>> m_entries;
       std::unordered_map<Nexus::Security, std::shared_ptr<Entry>>
         m_securityToEntry;
