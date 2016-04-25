@@ -183,7 +183,6 @@ namespace MarketDataService {
       *cursor += length;
       return Money::ZERO;
     } else if(denominatorType < 'A' || denominatorType > 'I') {
-      std::cout << *cursor << std::endl;
       BOOST_THROW_EXCEPTION(std::runtime_error{"Invalid price."});
     }
     auto decimalDigits = [&] {
@@ -414,12 +413,49 @@ namespace MarketDataService {
     Security security{symbol, m_config.m_market, m_config.m_country};
     m_marketDataFeedClient->PublishTimeAndSale(
       SecurityTimeAndSale{timeAndSale, security});
-    std::cout << symbol << std::endl;
   }
 
   template<typename MarketDataFeedClientType, typename ProtocolClientType>
   void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      HandleLongFormTradeMessage(const CtaMessage& message) {}
+      HandleLongFormTradeMessage(const CtaMessage& message) {
+    const auto SYMBOL_LENGTH = 11;
+    const auto SALE_CONDITION_LENGTH = 4;
+    const auto PRICE_DIGITS = 12;
+    const auto VOLUME_DIGITS = 9;
+    auto timestamp = ParseTimestamp(message.m_cqsTimestamp);
+    auto market = ParseMarket(message.m_participantId);
+    auto cursor = message.m_data;
+    auto symbol = ParseAlphanumeric(SYMBOL_LENGTH, Beam::Store(cursor));
+    ++cursor;
+    auto testMessageIndicator = ParseChar(Beam::Store(cursor));
+    if(testMessageIndicator == 'T') {
+      return;
+    }
+    ++cursor;
+    ++cursor;
+    ++cursor;
+    ++cursor;
+    cursor += 3;
+    ++cursor;
+    ++cursor;
+    cursor += 3;
+    auto saleCondition = ParseAlphanumeric(SALE_CONDITION_LENGTH,
+      Beam::Store(cursor));
+    ++cursor;
+    ++cursor;
+    ++cursor;
+    auto denominatorIndicator = ParseChar(Beam::Store(cursor));
+    auto price = ParseMoney(PRICE_DIGITS, denominatorIndicator,
+      Beam::Store(cursor));
+    auto quantity = ParseNumeric(VOLUME_DIGITS, Beam::Store(cursor));
+    TimeAndSale::Condition condition{
+      TimeAndSale::Condition::Type::REGULAR, std::string{saleCondition}};
+    TimeAndSale timeAndSale{timestamp, price, quantity, condition,
+      market.GetData()};
+    Security security{symbol, m_config.m_market, m_config.m_country};
+    m_marketDataFeedClient->PublishTimeAndSale(
+      SecurityTimeAndSale{timeAndSale, security});
+  }
 
   template<typename MarketDataFeedClientType, typename ProtocolClientType>
   void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::

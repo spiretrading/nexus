@@ -111,12 +111,13 @@ namespace MarketDataService {
     std::memcpy(message.m_transactionIdB.data(), token,
       TRANSACTION_ID_B_LENGTH);
     token += TRANSACTION_ID_B_LENGTH;
-    message.m_dataLength = static_cast<std::uint16_t>(size - HEADER_LENGTH);
     message.m_data = token;
     const char* endToken = std::strpbrk(token, "\x03\x1F");
     if(endToken == nullptr) {
       BOOST_THROW_EXCEPTION(std::runtime_error("End of message not found."));
     }
+    message.m_dataLength = static_cast<std::uint16_t>(
+      (endToken - *data) - HEADER_LENGTH);
     *data = endToken + 1;
     return message;
   }
