@@ -58,8 +58,9 @@ void AccountActivityReportWidget::Initialize(RefType<UserProfile> userProfile,
 }
 
 void AccountActivityReportWidget::OnUpdate(bool checked) {
-  auto startTime = ToPosixTime(m_ui->m_fromPeriodDateEdit->dateTime());
-  auto endTime = ToPosixTime(m_ui->m_toPeriodDateEdit->dateTime());
+  auto startTime = ToUtcTime(
+    ToPosixTime(m_ui->m_fromPeriodDateEdit->dateTime()));
+  auto endTime = ToUtcTime(ToPosixTime(m_ui->m_toPeriodDateEdit->dateTime()));
   auto orderQueue = std::make_shared<Queue<const Order*>>();
   QueryDailyOrderSubmissions(m_account, startTime, endTime,
     m_userProfile->GetMarketDatabase(), m_userProfile->GetTimeZoneDatabase(),
