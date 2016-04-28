@@ -15,6 +15,27 @@ service_locator:
   password: admin_password
 
 entitlements:
+  - name: CTA Network A
+    price: 27.00
+    currency: USD
+    group: cta_network_a
+    applicability:
+      - source: XNYS
+        messages: [BBO, MQT, TAS]
+  - name: CTA Network B
+    price: 23.00
+    currency: USD
+    group: cta_network_b
+    applicability:
+      - source: XASE
+        messages: [BBO, MQT, TAS]
+  - name: UTP Level 1
+    price: 22.00
+    currency: USD
+    group: utp_level_one
+    applicability:
+      - source: XNAS
+        messages: [BBO, MQT, TAS]
   - name: ASX Total
     price: 65.00
     currency: AUD
@@ -143,18 +164,4 @@ entitlements:
     applicability:
       - source: OMGA
         messages: [TAS, BOOK]
-  - name: TMX Select
-    price: 0.00
-    currency: CAD
-    group: tmxs
-    applicability:
-      - source: TMXS
-        messages: [TAS, BOOK]
-  - name: UTP Level 1
-    price: 22.00
-    currency: USD
-    group: utp_level_one
-    applicability:
-      - source: XNAS
-        messages: [BBO, MQT, TAS]
 ...
