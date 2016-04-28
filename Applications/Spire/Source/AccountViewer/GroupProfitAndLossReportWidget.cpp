@@ -68,8 +68,9 @@ void GroupProfitAndLossReportWidget::OnUpdate(bool checked) {
   }
   repaint();
   m_groupModels.clear();
-  auto startTime = ToPosixTime(m_ui->m_fromPeriodDateEdit->dateTime());
-  auto endTime = ToPosixTime(m_ui->m_toPeriodDateEdit->dateTime());
+  auto startTime = ToUtcTime(
+    ToPosixTime(m_ui->m_fromPeriodDateEdit->dateTime()));
+  auto endTime = ToUtcTime(ToPosixTime(m_ui->m_toPeriodDateEdit->dateTime()));
   auto traderDirectory = m_userProfile->GetServiceClients().
     GetServiceLocatorClient().LoadDirectoryEntry(m_group, "traders");
   auto traders = m_userProfile->GetServiceClients().GetServiceLocatorClient().
