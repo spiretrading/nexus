@@ -12,52 +12,52 @@ destinations:
     description: Alpha ATS
     markets:
       - XTSE
-        XTSX
+      - XTSX
   - id: CHIX
     description: Chi-X
     markets:
       - XTSE
-        XTSX
+      - XTSX
   - id: CX2
     description: Chi-X 2
     markets:
       - XTSE
-        XTSX
+      - XTSX
   - id: LYNX
     description: LYNX ATS
     markets:
       - XTSE
-        XTSX
+      - XTSX
   - id: MATNLP
     description: MATCH Now Liquidity Provider
     markets:
       - XTSE
-        XTSX
+      - XTSX
   - id: MATNMF
     description: MATCH Now Market Flow
     markets:
       - XTSE
-        XTSX
+      - XTSX
   - id: NEOE
     description: Aequitas NEO Exchange
     markets:
       - XTSE
-        XTSX
+      - XTSX
   - id: OMEGA
     description: Omega ATS
     markets:
       - XTSE
-        XTSX
+      - XTSX
   - id: PURE
     description: Pure ATS
     markets:
       - XTSE
-        XTSX
+      - XTSX
   - id: TSX
     description: Toronto Stock Exchange
     markets:
       - XTSE
-        XTSX
+      - XTSX
 
 preferred_destinations:
   - market: XASX
@@ -72,6 +72,6 @@ manual_order_entry:
   description: Manual Order Entry
   markets:
     - XASX
-      XTSE
-      XTSX
+    - XTSE
+    - XTSX
 ...
