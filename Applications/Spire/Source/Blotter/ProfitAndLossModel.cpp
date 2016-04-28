@@ -17,9 +17,10 @@ namespace {
 
 ProfitAndLossModel::ProfitAndLossModel(
     RefType<const CurrencyDatabase> currencyDatabase,
-    RefType<const ExchangeRateTable> exchangeRates)
+    RefType<const ExchangeRateTable> exchangeRates, bool showUnrealized)
     : m_currencyDatabase(currencyDatabase.Get()),
       m_exchangeRates(exchangeRates.Get()),
+      m_showUnrealized{showUnrealized},
       m_portfolioMonitor(nullptr) {
   m_slotHandler.Initialize();
   connect(&m_updateTimer, &QTimer::timeout, this,
@@ -85,7 +86,7 @@ void ProfitAndLossModel::OnPortfolioUpdate(
   auto& model = m_currencyToModel[key.m_currency];
   if(model == nullptr) {
     model = std::make_unique<ProfitAndLossEntryModel>(
-      m_currencyDatabase->FromId(key.m_currency));
+      m_currencyDatabase->FromId(key.m_currency), m_showUnrealized);
     m_profitAndLossEntryModelAddedSignal(*model);
     m_currencyToPortfolio.insert(std::make_pair(key.m_currency, update));
   } else {

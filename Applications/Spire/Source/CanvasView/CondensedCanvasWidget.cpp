@@ -263,7 +263,6 @@ void CondensedCanvasWidget::Remove(const Coordinate& coordinate) {
     auto widget = child->widget();
     if(widget != nullptr) {
       widget->hide();
-      widget->setParent(nullptr);
       widget->deleteLater();
     }
     delete child;
