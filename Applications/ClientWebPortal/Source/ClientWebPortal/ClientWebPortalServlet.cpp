@@ -142,24 +142,6 @@ HttpResponse ClientWebPortalServlet::OnLogout(const HttpRequest& request) {
 HttpResponse ClientWebPortalServlet::OnLoadManagedTradingGroups(
     const HttpRequest& request) {
   HttpResponse response;
-  auto session = m_sessions.Get(request, Store(response));
-  if(session->IsLoggedIn()) {
-    response.SetStatusCode(HttpStatusCode::BAD_REQUEST);
-    return response;
-  }
-  auto parameters = boost::get<JsonObject>(
-    Parse<JsonParser>(request.GetBody()));
-  auto& username = boost::get<string>(parameters["account"]);
-
-  auto account =
-    m_serviceClients->GetServiceLocatorClient().AuthenticateAccount(username,
-    password);
-  if(account.m_type != DirectoryEntry::Type::ACCOUNT) {
-    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
-  response.SetHeader({"Content-Type", "application/json"});
-  response.SetBody(Encode<SharedBuffer>(m_sender, account));
-  session->SetAccount(account);
+  response.SetStatusCode(HttpStatusCode::BAD_REQUEST);
   return response;
 }
