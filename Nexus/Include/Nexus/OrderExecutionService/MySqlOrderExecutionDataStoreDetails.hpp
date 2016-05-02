@@ -106,7 +106,8 @@ namespace Details {
       "shorting_flag BOOLEAN NOT NULL,"
       "query_sequence BIGINT UNSIGNED NOT NULL,"
       "INDEX(order_id),"
-      "INDEX sequence_index(account, query_sequence))";
+      "INDEX sequence_index(account, query_sequence),"
+      "INDEX timestamp_index(account, timestamp, query_sequence))";
     return query.execute();
   }
 
@@ -158,7 +159,8 @@ namespace Details {
       "text VARCHAR(256) BINARY NOT NULL,"
       "query_sequence BIGINT UNSIGNED NOT NULL,"
       "INDEX(order_id),"
-      "INDEX sequence_index(account, query_sequence))";
+      "INDEX sequence_index(account, query_sequence),"
+      "INDEX timestamp_index(account, timestamp, query_sequence))";
     return query.execute();
   }
 

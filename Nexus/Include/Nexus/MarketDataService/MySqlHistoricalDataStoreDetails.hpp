@@ -87,7 +87,8 @@ namespace Details {
       "price BIGINT NOT NULL,"
       "timestamp BIGINT NOT NULL,"
       "query_sequence BIGINT UNSIGNED NOT NULL,"
-      "INDEX sequence_index(market, query_sequence))";
+      "INDEX sequence_index(market, query_sequence),"
+      "INDEX timestamp_index(market, timestamp, query_sequence))";
     return query.execute();
   }
 
@@ -109,7 +110,8 @@ namespace Details {
       "ask_size BIGINT NOT NULL,"
       "timestamp BIGINT NOT NULL,"
       "query_sequence BIGINT UNSIGNED NOT NULL,"
-      "INDEX sequence_index(symbol, country, query_sequence))";
+      "INDEX sequence_index(symbol, country, query_sequence),"
+      "INDEX timestamp_index(symbol, country, timestamp, query_sequence))";
     return query.execute();
   }
 
@@ -132,7 +134,8 @@ namespace Details {
       "ask_size BIGINT NOT NULL,"
       "timestamp BIGINT NOT NULL,"
       "query_sequence BIGINT UNSIGNED NOT NULL,"
-      "INDEX sequence_index(symbol, country, query_sequence))";
+      "INDEX sequence_index(symbol, country, query_sequence),"
+      "INDEX timestamp_index(symbol, country, timestamp, query_sequence))";
     return query.execute();
   }
 
@@ -156,7 +159,8 @@ namespace Details {
       "side INTEGER UNSIGNED NOT NULL,"
       "timestamp BIGINT NOT NULL,"
       "query_sequence BIGINT UNSIGNED NOT NULL,"
-      "INDEX sequence_index(symbol, country, query_sequence))";
+      "INDEX sequence_index(symbol, country, query_sequence),"
+      "INDEX timestamp_index(symbol, country, timestamp, query_sequence))";
     return query.execute();
   }
 
@@ -179,7 +183,8 @@ namespace Details {
       "market VARCHAR(16) BINARY NOT NULL,"
       "timestamp BIGINT NOT NULL,"
       "query_sequence BIGINT UNSIGNED NOT NULL,"
-      "INDEX sequence_index(symbol, country, query_sequence))";
+      "INDEX sequence_index(symbol, country, query_sequence),"
+      "INDEX timestamp_index(symbol, country, timestamp, query_sequence))";
     return query.execute();
   }
 
