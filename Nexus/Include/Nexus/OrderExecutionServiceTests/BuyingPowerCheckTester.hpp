@@ -27,8 +27,8 @@ namespace Tests {
         Beam::ServiceLocator::VirtualServiceLocatorClient;
 
       //! The type of AdministrationClient.
-      using AdministrationClient = AdministrationService::Tests::
-        AdministrationServiceTestInstance::AdministrationClient;
+      using AdministrationClient =
+        AdministrationService::VirtualAdministrationClient;
 
       //! The type of MarketDataClient.
       using MarketDataClient = MarketDataService::Tests::

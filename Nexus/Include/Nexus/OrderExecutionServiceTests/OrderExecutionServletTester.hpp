@@ -38,8 +38,7 @@ namespace Tests {
 
       //! The type of AdministrationClient used.
       using AdministrationClient =
-        AdministrationService::Tests::AdministrationServiceTestInstance::
-        AdministrationClient;
+        AdministrationService::VirtualAdministrationClient;
 
       //! The type of ServerConnection.
       using ServerConnection =

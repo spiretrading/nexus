@@ -35,8 +35,7 @@ namespace Tests {
 
       //! The type of AdministrationClient.
       using AdministrationClient =
-        AdministrationService::Tests::AdministrationServiceTestInstance::
-        AdministrationClient;
+        AdministrationService::VirtualAdministrationClient;
 
       //! The type of ComplianceRuleSet to test.
       using TestComplianceRuleSet = ComplianceRuleSet<
