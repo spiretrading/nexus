@@ -51,8 +51,7 @@ void InternalMatchingOrderExecutionDriverTester::setUp() {
   DirectoryEntry servicesDirectory =
     m_serviceLocatorInstance->GetRoot().MakeDirectory("services",
     DirectoryEntry::GetStarDirectory());
-  std::unique_ptr<MarketDataServiceTestInstance::ServiceLocatorClient>
-    marketDataServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
+  auto marketDataServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
   marketDataServiceLocatorClient->SetCredentials("root", "");
   marketDataServiceLocatorClient->Open();
   m_marketDataServiceInstance.Initialize(

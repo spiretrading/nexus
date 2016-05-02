@@ -27,8 +27,7 @@ void ChartingServletTester::setUp() {
   m_serviceLocatorClient = m_serviceLocatorInstance->BuildClient();
   m_serviceLocatorClient->SetCredentials("root", "");
   m_serviceLocatorClient->Open();
-  std::unique_ptr<ServiceLocatorTestInstance::ServiceLocatorClient>
-    marketDataServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
+  auto marketDataServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
   marketDataServiceLocatorClient->SetCredentials("root", "");
   marketDataServiceLocatorClient->Open();
   m_marketDataServiceInstance.Initialize(

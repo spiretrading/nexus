@@ -18,12 +18,12 @@ namespace Tests {
     public:
 
       //! The type of ServiceLocatorClient.
-      typedef Beam::ServiceLocator::Tests::ServiceLocatorTestInstance::
-        ServiceLocatorClient ServiceLocatorClient;
+      using ServiceLocatorClient =
+        Beam::ServiceLocator::VirtualServiceLocatorClient;
 
       //! The type of MarketDataClient.
-      typedef MarketDataService::Tests::MarketDataServiceTestInstance::
-        MarketDataClient MarketDataClient;
+      using MarketDataClient = MarketDataService::Tests::
+        MarketDataServiceTestInstance::MarketDataClient;
 
       //! The type of PortfolioMonitor to test.
       typedef Accounting::PortfolioMonitor<Portfolio<TrueAverageBookkeeper<
