@@ -47,8 +47,7 @@ namespace Tests {
 
       //! The type of ServiceLocatorClient.
       using TestServiceLocatorClient =
-        Beam::ServiceLocator::Tests::ServiceLocatorTestInstance::
-        ServiceLocatorClient;
+        Beam::ServiceLocator::VirtualServiceLocatorClient;
 
       //! The type of ServiceProtocolServer.
       using ServletContainer = Beam::Services::ServiceProtocolServletContainer<

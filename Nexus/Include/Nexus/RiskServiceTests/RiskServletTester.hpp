@@ -27,8 +27,7 @@ namespace Tests {
 
       //! The type of ServiceLocatorClient.
       using ServiceLocatorClient =
-        Beam::ServiceLocator::Tests::ServiceLocatorTestInstance::
-        ServiceLocatorClient;
+        Beam::ServiceLocator::VirtualServiceLocatorClient;
 
       //! The type of AdministrationClient.
       using AdministrationClient =

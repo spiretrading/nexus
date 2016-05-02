@@ -38,8 +38,7 @@ void RiskServletTester::setUp() {
     "", servicesDirectory);
   m_serviceLocatorInstance->GetRoot().StorePermissions(administrationAccount,
     DirectoryEntry::GetStarDirectory(), Permissions(~0));
-  std::unique_ptr<AdministrationServiceTestInstance::ServiceLocatorClient>
-    administrationServiceLocatorClient =
+  auto administrationServiceLocatorClient =
     m_serviceLocatorInstance->BuildClient();
   administrationServiceLocatorClient->SetCredentials("administration_service",
     "");
@@ -47,8 +46,7 @@ void RiskServletTester::setUp() {
   m_administrationServiceInstance.Initialize(
     std::move(administrationServiceLocatorClient));
   m_administrationServiceInstance->Open();
-  std::unique_ptr<AdministrationServiceTestInstance::ServiceLocatorClient>
-    marketDataServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
+  auto marketDataServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
   marketDataServiceLocatorClient->SetCredentials("root", "");
   marketDataServiceLocatorClient->Open();
   m_marketDataServiceInstance.Initialize(
@@ -56,8 +54,7 @@ void RiskServletTester::setUp() {
   m_marketDataServiceInstance->Open();
   m_serviceLocatorInstance->GetRoot().MakeAccount("order_execution_service", "",
     servicesDirectory);
-  std::unique_ptr<OrderExecutionServiceTestInstance::ServiceLocatorClient>
-    orderExecutionServiceLocatorClient =
+  auto orderExecutionServiceLocatorClient =
     m_serviceLocatorInstance->BuildClient();
   std::unique_ptr<OrderExecutionServiceTestInstance::UidClient>
     orderExecutionUidClient = m_uidServiceInstance->BuildClient();
@@ -77,8 +74,7 @@ void RiskServletTester::setUp() {
     servicesDirectory);
   m_serviceLocatorInstance->GetRoot().MakeAccount("risk_service", "",
     servicesDirectory);
-  std::unique_ptr<ServiceLocatorClient> riskServiceLocatorClient =
-    m_serviceLocatorInstance->BuildClient();
+  auto riskServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
   riskServiceLocatorClient->SetCredentials("risk_service", "");
   riskServiceLocatorClient->Open();
   std::unique_ptr<AdministrationClient> riskAdministrationClient =

@@ -26,23 +26,23 @@ namespace Tests {
     public:
 
       //! The type of ServiceLocatorClient.
-      typedef Beam::ServiceLocator::Tests::ServiceLocatorTestInstance::
-        ServiceLocatorClient ServiceLocatorClient;
+      using ServiceLocatorClient =
+        Beam::ServiceLocator::VirtualServiceLocatorClient;
 
       //! The type of MarketDataClient.
-      typedef MarketDataService::Tests::MarketDataServiceTestInstance::
-        MarketDataClient MarketDataClient;
+      using MarketDataClient = MarketDataService::Tests::
+        MarketDataServiceTestInstance::MarketDataClient;
 
       //! The type of UidClient.
-      typedef Beam::UidService::Tests::UidServiceTestInstance::UidClient
+      using UidClient = Beam::UidService::Tests::UidServiceTestInstance::
         UidClient;
 
       //! The type of driver to test.
-      typedef InternalMatchingOrderExecutionDriver<NullMatchReportBuilder,
+      using TestInternalMatchingOrderExecutionDriver =
+        InternalMatchingOrderExecutionDriver<NullMatchReportBuilder,
         std::unique_ptr<MarketDataClient>,
         Beam::TimeService::IncrementalTimeClient, std::unique_ptr<UidClient>,
-        OrderExecutionService::Tests::MockOrderExecutionDriver*>
-        TestInternalMatchingOrderExecutionDriver;
+        OrderExecutionService::Tests::MockOrderExecutionDriver*>;
 
       virtual void setUp();
 
@@ -173,8 +173,8 @@ namespace Tests {
         Beam::UidService::Tests::UidServiceTestInstance::UidClient> m_uidClient;
       Beam::DelayPtr<TestInternalMatchingOrderExecutionDriver>
         m_orderExecutionDriver;
-      std::unique_ptr<MarketDataService::Tests::MarketDataServiceTestInstance::
-        ServiceLocatorClient> m_marketDataFeedServiceLocatorClient;
+      std::unique_ptr<ServiceLocatorClient>
+        m_marketDataFeedServiceLocatorClient;
 
       void SetBbo(Money bid, Money ask);
       OrderEntry Submit(Side side, Money price, Quantity quantity);

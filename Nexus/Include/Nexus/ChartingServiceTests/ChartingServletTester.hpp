@@ -63,8 +63,8 @@ namespace Tests {
       Beam::DelayPtr<
         AdministrationService::Tests::AdministrationServiceTestInstance>
         m_administrationInstance;
-      std::unique_ptr<Beam::ServiceLocator::Tests::ServiceLocatorTestInstance::
-        ServiceLocatorClient> m_serviceLocatorClient;
+      std::unique_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
+        m_serviceLocatorClient;
       Beam::DelayPtr<MarketDataService::Tests::MarketDataServiceTestInstance>
         m_marketDataServiceInstance;
       std::shared_ptr<ServerConnection> m_serverConnection;

@@ -35,8 +35,8 @@ namespace Tests {
 
       //! The type of ServiceProtocolServer.
       using ServletContainer = Beam::Services::ServiceProtocolServletContainer<
-        MetaAdministrationServlet<Beam::ServiceLocator::Tests::
-        ServiceLocatorTestInstance::ServiceLocatorClient*,
+        MetaAdministrationServlet<
+        Beam::ServiceLocator::VirtualServiceLocatorClient*,
         std::shared_ptr<LocalAdministrationDataStore>>,
         std::shared_ptr<ServerConnection>,
         Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,

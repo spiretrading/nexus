@@ -23,21 +23,21 @@ namespace Tests {
     public:
 
       //! The type of ServiceLocatorClient.
-      typedef Beam::ServiceLocator::Tests::ServiceLocatorTestInstance::
-        ServiceLocatorClient ServiceLocatorClient;
+      using ServiceLocatorClient =
+        Beam::ServiceLocator::VirtualServiceLocatorClient;
 
       //! The type of AdministrationClient.
-      typedef AdministrationService::Tests::AdministrationServiceTestInstance::
-        AdministrationClient AdministrationClient;
+      using AdministrationClient = AdministrationService::Tests::
+        AdministrationServiceTestInstance::AdministrationClient;
 
       //! The type of MarketDataClient.
-      typedef MarketDataService::Tests::MarketDataServiceTestInstance::
-        MarketDataClient MarketDataClient;
+      using MarketDataClient = MarketDataService::Tests::
+        MarketDataServiceTestInstance::MarketDataClient;
 
       //! The type of BuyingPowerCheck to test.
-      typedef OrderExecutionService::BuyingPowerCheck<
+      using BuyingPowerCheck = OrderExecutionService::BuyingPowerCheck<
         std::unique_ptr<AdministrationClient>,
-        std::unique_ptr<MarketDataClient>> BuyingPowerCheck;
+        std::unique_ptr<MarketDataClient>>;
 
       virtual void setUp();
 

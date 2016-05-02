@@ -26,11 +26,9 @@ void PortfolioMonitorTester::setUp() {
   m_serviceLocatorClient = m_serviceLocatorInstance->BuildClient();
   m_serviceLocatorClient->SetCredentials("root", "");
   m_serviceLocatorClient->Open();
-  DirectoryEntry servicesDirectory =
-    m_serviceLocatorInstance->GetRoot().MakeDirectory("services",
-    DirectoryEntry::GetStarDirectory());
-  std::unique_ptr<MarketDataServiceTestInstance::ServiceLocatorClient>
-    marketDataServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
+  auto servicesDirectory = m_serviceLocatorInstance->GetRoot().MakeDirectory(
+    "services", DirectoryEntry::GetStarDirectory());
+  auto marketDataServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
   marketDataServiceLocatorClient->SetCredentials("root", "");
   marketDataServiceLocatorClient->Open();
   m_marketDataServiceInstance.Initialize(
