@@ -48,8 +48,7 @@ namespace Tests {
         Beam::ServiceLocator::VirtualServiceLocatorClient;
 
       //! The type of UidClient used.
-      using UidClient =
-        Beam::UidService::Tests::UidServiceTestInstance::UidClient;
+      using UidClient = Beam::UidService::VirtualUidClient;
 
       //! The type of AdministrationClient used.
       using AdministrationClient =
