@@ -67,6 +67,7 @@ namespace Spire {
       std::unique_ptr<CanvasNode> m_node;
       const CanvasNode* m_topLeaf;
       const CanvasNode* m_currentNode;
+      int m_tabFocus;
       std::map<const CanvasNode*, Coordinate> m_nodeToModelCoordinates;
       std::map<Coordinate, const CanvasNode*> m_modelCoordinatesToNode;
       std::map<const CanvasNode*, Coordinate> m_nodeToViewCoordinates;

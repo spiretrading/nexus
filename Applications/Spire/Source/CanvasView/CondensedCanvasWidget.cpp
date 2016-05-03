@@ -49,12 +49,13 @@ namespace {
 
 CondensedCanvasWidget::CondensedCanvasWidget(const string& name,
     RefType<UserProfile> userProfile, QWidget* parent)
-    : QWidget(parent),
-      m_name(name),
-      m_userProfile(userProfile.Get()),
-      m_node(nullptr),
-      m_topLeaf(nullptr),
-      m_currentNode(nullptr) {
+    : QWidget{parent},
+      m_name{name},
+      m_userProfile{userProfile.Get()},
+      m_node{nullptr},
+      m_topLeaf{nullptr},
+      m_currentNode{nullptr},
+      m_tabFocus{-1} {
   m_group = new QGroupBox(this);
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
@@ -251,12 +252,29 @@ const CanvasNode& CondensedCanvasWidget::Add(const Coordinate& coordinate,
       QSizePolicy::Fixed), rowWithMaxColumns, maxColumns);
     ++maxColumns;
   }
+  if(m_tabFocus != -1) {
+    BreadthFirstCanvasNodeIterator i{*m_node};
+    for(int i = 0; i < m_tabFocus; ++i) {
+      ++i;
+    }
+    SetCurrent(GetCoordinate(*i));
+    m_tabFocus = -1;
+  }
   return *m_node;
 }
 
 void CondensedCanvasWidget::Remove(const Coordinate& coordinate) {
   assert(coordinate.m_row == 0);
   assert(coordinate.m_column == 0);
+  if(m_currentNode == nullptr) {
+    m_tabFocus = -1;
+  } else {
+    BreadthFirstCanvasNodeIterator i{*m_node};
+    while(&*i != m_currentNode) {
+      ++i;
+      ++m_tabFocus;
+    }
+  }
   m_currentNode = nullptr;
   QLayoutItem* child;
   while((child = m_layout->takeAt(0)) != nullptr) {

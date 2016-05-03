@@ -17,11 +17,11 @@ using namespace std;
 
 CondensedCanvasCell::CondensedCanvasCell(RefType<UserProfile> userProfile,
     RefType<CondensedCanvasWidget> parent, RefType<const CanvasNode> node)
-    : QWidget(parent.Get()),
-      m_userProfile(userProfile.Get()),
-      m_parent(parent.Get()),
-      m_node(node.Get()),
-      m_editor(nullptr) {
+    : QWidget{parent.Get()},
+      m_userProfile{userProfile.Get()},
+      m_parent{parent.Get()},
+      m_node{node.Get()},
+      m_editor{nullptr} {
   auto layout = new QVBoxLayout(this);
   m_valueWidget = new QLineEdit(this);
   layout->setMargin(0);
