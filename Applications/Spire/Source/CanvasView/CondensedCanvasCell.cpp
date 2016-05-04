@@ -150,7 +150,7 @@ void CondensedCanvasCell::focusOutEvent(QFocusEvent* event) {
       } else if(event->reason() == Qt::BacktabFocusReason) {
         parent->NavigateBackward();
       }
-      return;
+//      return;
     }
   }
   return QWidget::focusOutEvent(event);
