@@ -58,6 +58,7 @@ namespace Spire {
 
     protected:
       virtual void focusInEvent(QFocusEvent* event);
+      virtual bool eventFilter(QObject* object, QEvent* event);
 
     private:
       std::string m_name;
@@ -67,7 +68,7 @@ namespace Spire {
       std::unique_ptr<CanvasNode> m_node;
       const CanvasNode* m_topLeaf;
       const CanvasNode* m_currentNode;
-      int m_tabFocus;
+      Coordinate m_focusCoordinate;
       std::map<const CanvasNode*, Coordinate> m_nodeToModelCoordinates;
       std::map<Coordinate, const CanvasNode*> m_modelCoordinatesToNode;
       std::map<const CanvasNode*, Coordinate> m_nodeToViewCoordinates;

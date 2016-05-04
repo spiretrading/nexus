@@ -55,7 +55,7 @@ CondensedCanvasWidget::CondensedCanvasWidget(const string& name,
       m_node{nullptr},
       m_topLeaf{nullptr},
       m_currentNode{nullptr},
-      m_tabFocus{-1} {
+      m_focusCoordinate{-1, -1} {
   m_group = new QGroupBox(this);
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
@@ -233,6 +233,7 @@ const CanvasNode& CondensedCanvasWidget::Add(const Coordinate& coordinate,
     m_layout->addWidget(label, rowCount + 1, columnCount);
     auto cellWidget = new CondensedCanvasCell(Ref(*m_userProfile), Ref(*this),
       Ref(**i));
+    cellWidget->installEventFilter(this);
     sizePolicy.setHeightForWidth(cellWidget->sizePolicy().hasHeightForWidth());
     cellWidget->setSizePolicy(sizePolicy);
     m_layout->addWidget(cellWidget, rowCount + 2, columnCount);
@@ -252,13 +253,8 @@ const CanvasNode& CondensedCanvasWidget::Add(const Coordinate& coordinate,
       QSizePolicy::Fixed), rowWithMaxColumns, maxColumns);
     ++maxColumns;
   }
-  if(m_tabFocus != -1) {
-    BreadthFirstCanvasNodeIterator i{*m_node};
-    for(int i = 0; i < m_tabFocus; ++i) {
-      ++i;
-    }
-    SetCurrent(GetCoordinate(*i));
-    m_tabFocus = -1;
+  if(m_focusCoordinate.m_row != -1) {
+    SetCurrent(m_focusCoordinate);
   }
   return *m_node;
 }
@@ -266,15 +262,6 @@ const CanvasNode& CondensedCanvasWidget::Add(const Coordinate& coordinate,
 void CondensedCanvasWidget::Remove(const Coordinate& coordinate) {
   assert(coordinate.m_row == 0);
   assert(coordinate.m_column == 0);
-  if(m_currentNode == nullptr) {
-    m_tabFocus = -1;
-  } else {
-    BreadthFirstCanvasNodeIterator i{*m_node};
-    while(&*i != m_currentNode) {
-      ++i;
-      ++m_tabFocus;
-    }
-  }
   m_currentNode = nullptr;
   QLayoutItem* child;
   while((child = m_layout->takeAt(0)) != nullptr) {
@@ -296,4 +283,15 @@ void CondensedCanvasWidget::Remove(const Coordinate& coordinate) {
 
 void CondensedCanvasWidget::focusInEvent(QFocusEvent* event) {
   Focus();
+}
+
+bool CondensedCanvasWidget::eventFilter(QObject* object, QEvent* event) {
+  auto cell = dynamic_cast<CondensedCanvasCell*>(object);
+  if(cell == nullptr) {
+    return QWidget::eventFilter(object, event);
+  }
+  if(event->type() == QEvent::FocusIn) {
+    m_focusCoordinate = GetCoordinate(cell->GetNode());
+  }
+  return QWidget::eventFilter(object, event);
 }
