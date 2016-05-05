@@ -14,6 +14,9 @@ namespace Python {
   //! Exports the AdministrationService namespace.
   void ExportAdministrationService();
 
+  //! Exports the AdministrationServiceTestInstance class.
+  void ExportAdministrationServiceTestInstance();
+
   //! Exports the TradingGroup class.
   void ExportTradingGroup();
 }
