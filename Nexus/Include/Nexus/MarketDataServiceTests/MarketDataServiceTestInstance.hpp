@@ -25,6 +25,7 @@
 #include "Nexus/MarketDataService/MarketDataFeedServlet.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistry.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServlet.hpp"
+#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 
 namespace Nexus {
 namespace MarketDataService {
@@ -90,8 +91,7 @@ namespace Tests {
         Beam::Codecs::NullEncoder>, Beam::Threading::TriggerTimer>;
 
       //! The type of MarketDataClient used.
-      using MarketDataClient =
-        MarketDataService::MarketDataClient<ServiceProtocolClientBuilder>;
+      using MarketDataClient = MarketDataService::VirtualMarketDataClient;
 
       //! The type of MarketDataFeedClient used.
       using MarketDataFeedClient =
@@ -137,7 +137,7 @@ namespace Tests {
         \param serviceLocatorClient The ServiceLocatorClient used to
                authenticate the MarketDataClient.
       */
-      std::unique_ptr<MarketDataClient> BuildClient(
+      std::unique_ptr<VirtualMarketDataClient> BuildClient(
         Beam::RefType<ServiceLocatorClient> serviceLocatorClient);
 
       //! Builds a new MarketDataFeedClient.
@@ -225,7 +225,7 @@ namespace Tests {
     m_registryServlet->PublishBboQuote(SecurityBboQuote(bbo, security), 0);
   }
 
-  inline std::unique_ptr<MarketDataServiceTestInstance::MarketDataClient>
+  inline std::unique_ptr<VirtualMarketDataClient>
       MarketDataServiceTestInstance::BuildClient(
       Beam::RefType<ServiceLocatorClient> serviceLocatorClient) {
     ServiceProtocolClientBuilder builder(Beam::Ref(serviceLocatorClient),
@@ -236,10 +236,11 @@ namespace Tests {
       [&] {
         return std::make_unique<ServiceProtocolClientBuilder::Timer>();
       });
-    auto client = std::make_unique<MarketDataClient>(builder);
+    auto client = std::make_unique<MarketDataService::MarketDataClient<
+      ServiceProtocolClientBuilder>>(builder);
     m_serviceLocatorClient->Associate(serviceLocatorClient->GetAccount(),
       m_globalEntitlementGroup);
-    return client;
+    return MakeVirtualMarketDataClient(std::move(client));
   }
 
   inline std::unique_ptr<MarketDataServiceTestInstance::MarketDataFeedClient>

@@ -20,6 +20,7 @@
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/AdministrationService/AdministrationServlet.hpp"
 #include "Nexus/AdministrationService/LocalAdministrationDataStore.hpp"
+#include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTests.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 
@@ -34,46 +35,13 @@ namespace Tests {
   class AdministrationServiceTestInstance : private boost::noncopyable {
     public:
 
-      //! The type of ServerConnection.
-      using ServerConnection =
-        Beam::IO::LocalServerConnection<Beam::IO::SharedBuffer>;
-
-      //! The type of Channel from the client to the server.
-      using ClientChannel =
-        Beam::IO::LocalClientChannel<Beam::IO::SharedBuffer>;
-
-      //! The type of ServiceLocatorClient used.
-      using ServiceLocatorClient =
-        Beam::ServiceLocator::VirtualServiceLocatorClient;
-
-      //! The type of ServiceProtocolServer.
-      using ServiceProtocolServletContainer =
-        Beam::Services::ServiceProtocolServletContainer<
-        Beam::ServiceLocator::MetaAuthenticationServletAdapter<
-        MetaAdministrationServlet<std::shared_ptr<ServiceLocatorClient>,
-        LocalAdministrationDataStore*>, std::shared_ptr<ServiceLocatorClient>>,
-        ServerConnection*, Beam::Serialization::BinarySender<
-        Beam::IO::SharedBuffer>, Beam::Codecs::NullEncoder,
-        std::shared_ptr<Beam::Threading::TriggerTimer>>;
-
-      //! The type used to build AdministrationClient sessions.
-      using ServiceProtocolClientBuilder =
-        Beam::Services::AuthenticatedServiceProtocolClientBuilder<
-        ServiceLocatorClient, Beam::Services::MessageProtocol<
-        std::unique_ptr<ClientChannel>,
-        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-        Beam::Codecs::NullEncoder>, Beam::Threading::TriggerTimer>;
-
-      //! The type of AdministrationClient used.
-      using AdministrationClient = AdministrationService::AdministrationClient<
-        ServiceProtocolClientBuilder>;
-
       //! Constructs an AdministrationServiceTestInstance.
       /*!
         \param serviceLocatorClient The ServiceLocatorClient to use.
       */
-      AdministrationServiceTestInstance(
-        const std::shared_ptr<ServiceLocatorClient>& serviceLocatorClient);
+      AdministrationServiceTestInstance(const std::shared_ptr<
+        Beam::ServiceLocator::VirtualServiceLocatorClient>&
+        serviceLocatorClient);
 
       ~AdministrationServiceTestInstance();
 
@@ -88,17 +56,39 @@ namespace Tests {
         \param serviceLocatorClient The ServiceLocatorClient used to
                authenticate the AdministrationClient.
       */
-      std::unique_ptr<AdministrationClient> BuildClient(
-        Beam::RefType<ServiceLocatorClient> serviceLocatorClient);
+      std::unique_ptr<VirtualAdministrationClient> BuildClient(
+        Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
+        serviceLocatorClient);
 
     private:
+      using ServerConnection =
+        Beam::IO::LocalServerConnection<Beam::IO::SharedBuffer>;
+      using ClientChannel =
+        Beam::IO::LocalClientChannel<Beam::IO::SharedBuffer>;
+      using ServiceLocatorClient =
+        Beam::ServiceLocator::VirtualServiceLocatorClient;
+      using ServiceProtocolServletContainer =
+        Beam::Services::ServiceProtocolServletContainer<
+        Beam::ServiceLocator::MetaAuthenticationServletAdapter<
+        MetaAdministrationServlet<std::shared_ptr<ServiceLocatorClient>,
+        LocalAdministrationDataStore*>, std::shared_ptr<ServiceLocatorClient>>,
+        ServerConnection*, Beam::Serialization::BinarySender<
+        Beam::IO::SharedBuffer>, Beam::Codecs::NullEncoder,
+        std::shared_ptr<Beam::Threading::TriggerTimer>>;
+      using ServiceProtocolClientBuilder =
+        Beam::Services::AuthenticatedServiceProtocolClientBuilder<
+        ServiceLocatorClient, Beam::Services::MessageProtocol<
+        std::unique_ptr<ClientChannel>,
+        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+        Beam::Codecs::NullEncoder>, Beam::Threading::TriggerTimer>;
       LocalAdministrationDataStore m_dataStore;
       ServerConnection m_serverConnection;
       ServiceProtocolServletContainer m_container;
   };
 
   inline AdministrationServiceTestInstance::AdministrationServiceTestInstance(
-      const std::shared_ptr<ServiceLocatorClient>& serviceLocatorClient)
+      const std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>&
+      serviceLocatorClient)
       : m_container(Beam::Initialize(serviceLocatorClient,
           Beam::Initialize(serviceLocatorClient,
           MarketDataService::EntitlementDatabase(), &m_dataStore)),
@@ -118,9 +108,10 @@ namespace Tests {
     m_container.Close();
   }
 
-  inline std::unique_ptr<AdministrationServiceTestInstance::
-      AdministrationClient> AdministrationServiceTestInstance::BuildClient(
-      Beam::RefType<ServiceLocatorClient> serviceLocatorClient) {
+  inline std::unique_ptr<VirtualAdministrationClient>
+      AdministrationServiceTestInstance::BuildClient(
+      Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
+      serviceLocatorClient) {
     ServiceProtocolClientBuilder builder(Beam::Ref(serviceLocatorClient),
       [&] {
         return std::make_unique<ServiceProtocolClientBuilder::Channel>(
@@ -129,8 +120,9 @@ namespace Tests {
       [&] {
         return std::make_unique<ServiceProtocolClientBuilder::Timer>();
       });
-    auto client = std::make_unique<AdministrationClient>(builder);
-    return client;
+    auto client = std::make_unique<AdministrationService::AdministrationClient<
+        ServiceProtocolClientBuilder>>(builder);
+    return MakeVirtualAdministrationClient(std::move(client));
   }
 }
 }

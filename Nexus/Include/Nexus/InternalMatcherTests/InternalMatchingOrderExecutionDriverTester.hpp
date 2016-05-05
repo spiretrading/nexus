@@ -34,8 +34,7 @@ namespace Tests {
         MarketDataServiceTestInstance::MarketDataClient;
 
       //! The type of UidClient.
-      using UidClient = Beam::UidService::Tests::UidServiceTestInstance::
-        UidClient;
+      using UidClient = Beam::UidService::VirtualUidClient;
 
       //! The type of driver to test.
       using TestInternalMatchingOrderExecutionDriver =
@@ -169,8 +168,7 @@ namespace Tests {
         m_mockOrderExecutionDriver;
       std::shared_ptr<Beam::Queue<OrderExecutionService::PrimitiveOrder*>>
         m_mockDriverMonitor;
-      std::unique_ptr<
-        Beam::UidService::Tests::UidServiceTestInstance::UidClient> m_uidClient;
+      std::unique_ptr<UidClient> m_uidClient;
       Beam::DelayPtr<TestInternalMatchingOrderExecutionDriver>
         m_orderExecutionDriver;
       std::unique_ptr<ServiceLocatorClient>
