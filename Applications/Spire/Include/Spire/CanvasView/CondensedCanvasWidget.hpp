@@ -1,6 +1,7 @@
 #ifndef SPIRE_CONDENSEDCANVASWIDGET_HPP
 #define SPIRE_CONDENSEDCANVASWIDGET_HPP
 #include <map>
+#include <set>
 #include <Beam/Pointers/Ref.hpp>
 #include <QWidget>
 #include "Spire/CanvasView/CanvasNodeModel.hpp"
@@ -58,7 +59,6 @@ namespace Spire {
 
     protected:
       virtual void focusInEvent(QFocusEvent* event);
-      virtual bool eventFilter(QObject* object, QEvent* event);
 
     private:
       std::string m_name;
@@ -66,9 +66,9 @@ namespace Spire {
       QGroupBox* m_group;
       QGridLayout* m_layout;
       std::unique_ptr<CanvasNode> m_node;
+      std::set<std::unique_ptr<QWidget>> m_deletedCells;
       const CanvasNode* m_topLeaf;
       const CanvasNode* m_currentNode;
-      Coordinate m_focusCoordinate;
       std::map<const CanvasNode*, Coordinate> m_nodeToModelCoordinates;
       std::map<Coordinate, const CanvasNode*> m_modelCoordinatesToNode;
       std::map<const CanvasNode*, Coordinate> m_nodeToViewCoordinates;

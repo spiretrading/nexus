@@ -54,14 +54,13 @@ CondensedCanvasWidget::CondensedCanvasWidget(const string& name,
       m_userProfile{userProfile.Get()},
       m_node{nullptr},
       m_topLeaf{nullptr},
-      m_currentNode{nullptr},
-      m_focusCoordinate{-1, -1} {
-  m_group = new QGroupBox(this);
-  auto layout = new QVBoxLayout(this);
+      m_currentNode{nullptr} {
+  m_group = new QGroupBox{this};
+  auto layout = new QVBoxLayout{this};
   layout->setContentsMargins(0, 0, 0, 0);
   setLayout(layout);
   layout->addWidget(m_group);
-  m_layout = new QGridLayout();
+  m_layout = new QGridLayout{};
   m_layout->setContentsMargins(2, 0, 0, 2);
   m_layout->setVerticalSpacing(2);
   m_group->setLayout(m_layout);
@@ -85,14 +84,14 @@ void CondensedCanvasWidget::NavigateForward() {
     return;
   }
   auto& currentNode = *currentNodeCheck;
-  BreadthFirstCanvasNodeIterator i(*m_node, currentNode);
+  BreadthFirstCanvasNodeIterator i{*m_node, currentNode};
   do {
     ++i;
-    if(i == BreadthFirstCanvasNodeIterator()) {
-      i = BreadthFirstCanvasNodeIterator(GetRoot(*m_node));
+    if(i == BreadthFirstCanvasNodeIterator{}) {
+      i = BreadthFirstCanvasNodeIterator{GetRoot(*m_node)};
     }
   } while(!IsDisplayed(*i));
-  if(i == BreadthFirstCanvasNodeIterator()) {
+  if(i == BreadthFirstCanvasNodeIterator{}) {
     return;
   }
   auto& nextNode = *i;
@@ -108,18 +107,18 @@ void CondensedCanvasWidget::NavigateBackward() {
     return;
   }
   auto& currentNode = *currentNodeCheck;
-  BreadthFirstCanvasNodeIterator i(*m_node, currentNode);
+  BreadthFirstCanvasNodeIterator i{*m_node, currentNode};
   do {
     auto& iNode = *i;
     --i;
     if(&iNode == &*i) {
-      while(i != BreadthFirstCanvasNodeIterator()) {
+      while(i != BreadthFirstCanvasNodeIterator{}) {
         ++i;
       }
       --i;
     }
   } while(!IsDisplayed(*i));
-  if(i == BreadthFirstCanvasNodeIterator()) {
+  if(i == BreadthFirstCanvasNodeIterator{}) {
     return;
   }
   auto& nextNode = *i;
@@ -186,7 +185,7 @@ const CanvasNode& CondensedCanvasWidget::Add(const Coordinate& coordinate,
   Coordinate viewCoordinates{0, 0};
   Coordinate modelCoordinates{0, 0};
   m_node = CanvasNode::Clone(node);
-  vector<const CanvasNode*> leaves = GetLeaves(*m_node);
+  auto leaves = GetLeaves(*m_node);
   if(leaves.empty()) {
     BOOST_THROW_EXCEPTION(CanvasNodeNotVisibleException());
   }
@@ -198,7 +197,7 @@ const CanvasNode& CondensedCanvasWidget::Add(const Coordinate& coordinate,
   View<const CanvasNode>::const_iterator childIterator;
   auto columnCount = 0;
   auto rowCount = -3;
-  QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  QSizePolicy sizePolicy{QSizePolicy::Expanding, QSizePolicy::Fixed};
   sizePolicy.setHorizontalStretch(0);
   sizePolicy.setVerticalStretch(0);
   auto maxColumns = -1;
@@ -217,8 +216,8 @@ const CanvasNode& CondensedCanvasWidget::Add(const Coordinate& coordinate,
       parent = (*i)->GetParent();
       childIterator = parent->GetChildren().begin();
       if(hasLabel) {
-        auto label = new QLabel(QString::fromStdString(parent->GetText()),
-          this);
+        auto label = new QLabel{QString::fromStdString(parent->GetText()),
+          this};
         m_layout->addWidget(label, rowCount + 2, 0);
         ++columnCount;
       }
@@ -227,13 +226,12 @@ const CanvasNode& CondensedCanvasWidget::Add(const Coordinate& coordinate,
       ++childIterator;
     }
     assert(childIterator != parent->GetChildren().end());
-    auto label = new QLabel(QString::fromStdString(childIterator->GetName()),
-      this);
+    auto label = new QLabel{QString::fromStdString(childIterator->GetName()),
+      this};
     label->setIndent(2);
     m_layout->addWidget(label, rowCount + 1, columnCount);
-    auto cellWidget = new CondensedCanvasCell(Ref(*m_userProfile), Ref(*this),
-      Ref(**i));
-    cellWidget->installEventFilter(this);
+    auto cellWidget = new CondensedCanvasCell{Ref(*m_userProfile), Ref(*this),
+      Ref(**i)};
     sizePolicy.setHeightForWidth(cellWidget->sizePolicy().hasHeightForWidth());
     cellWidget->setSizePolicy(sizePolicy);
     m_layout->addWidget(cellWidget, rowCount + 2, columnCount);
@@ -249,12 +247,9 @@ const CanvasNode& CondensedCanvasWidget::Add(const Coordinate& coordinate,
     rowWithMaxColumns = rowCount;
   }
   while(maxColumns < 5) {
-    m_layout->addItem(new QSpacerItem(1, 1, QSizePolicy::Expanding,
-      QSizePolicy::Fixed), rowWithMaxColumns, maxColumns);
+    m_layout->addItem(new QSpacerItem{1, 1, QSizePolicy::Expanding,
+      QSizePolicy::Fixed}, rowWithMaxColumns, maxColumns);
     ++maxColumns;
-  }
-  if(m_focusCoordinate.m_row != -1) {
-    SetCurrent(m_focusCoordinate);
   }
   return *m_node;
 }
@@ -263,12 +258,11 @@ void CondensedCanvasWidget::Remove(const Coordinate& coordinate) {
   assert(coordinate.m_row == 0);
   assert(coordinate.m_column == 0);
   m_currentNode = nullptr;
-  QLayoutItem* child;
-  while((child = m_layout->takeAt(0)) != nullptr) {
+  while(auto child = m_layout->takeAt(0)) {
     auto widget = child->widget();
     if(widget != nullptr) {
       widget->hide();
-      widget->deleteLater();
+      m_deletedCells.insert(std::unique_ptr<QWidget>{widget});
     }
     delete child;
   }
@@ -283,15 +277,4 @@ void CondensedCanvasWidget::Remove(const Coordinate& coordinate) {
 
 void CondensedCanvasWidget::focusInEvent(QFocusEvent* event) {
   Focus();
-}
-
-bool CondensedCanvasWidget::eventFilter(QObject* object, QEvent* event) {
-  auto cell = dynamic_cast<CondensedCanvasCell*>(object);
-  if(cell == nullptr) {
-    return QWidget::eventFilter(object, event);
-  }
-  if(event->type() == QEvent::FocusIn) {
-    m_focusCoordinate = GetCoordinate(cell->GetNode());
-  }
-  return QWidget::eventFilter(object, event);
 }
