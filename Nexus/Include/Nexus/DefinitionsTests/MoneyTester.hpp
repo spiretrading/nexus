@@ -21,11 +21,15 @@ namespace Tests {
       //! Tests the floor function.
       void TestFloor();
 
+      //! Tests the round function.
+      void TestRound();
+
     private:
       CPPUNIT_TEST_SUITE(MoneyTester);
         CPPUNIT_TEST(TestToString);
         CPPUNIT_TEST(TestFromString);
         CPPUNIT_TEST(TestFloor);
+        CPPUNIT_TEST(TestRound);
       CPPUNIT_TEST_SUITE_END();
   };
 }
