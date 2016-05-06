@@ -38,8 +38,7 @@ namespace Tests {
 
       //! The type of OrderExecutionClient.
       using OrderExecutionClient =
-        OrderExecutionService::Tests::OrderExecutionServiceTestInstance::
-        OrderExecutionClient;
+        OrderExecutionService::VirtualOrderExecutionClient;
 
       //! The type of Portfolio used.
       using Portfolio =

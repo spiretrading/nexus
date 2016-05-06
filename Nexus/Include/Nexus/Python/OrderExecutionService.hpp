@@ -20,6 +20,9 @@ namespace Python {
   //! Exports the OrderExecutionService namespace.
   void ExportOrderExecutionService();
 
+  //! Exports the OrderExecutionService::Tests namespace.
+  void ExportOrderExecutionServiceTestInstance();
+
   //! Exports the OrderFields struct.
   void ExportOrderFields();
 

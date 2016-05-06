@@ -25,6 +25,7 @@
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
+#include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceInstance.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;
@@ -36,11 +37,14 @@ using namespace Beam::Serialization;
 using namespace Beam::ServiceLocator;
 using namespace Beam::Services;
 using namespace Beam::Threading;
+using namespace Beam::UidService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::python;
 using namespace Nexus;
+using namespace Nexus::AdministrationService;
 using namespace Nexus::OrderExecutionService;
+using namespace Nexus::OrderExecutionService::Tests;
 using namespace Nexus::Python;
 using namespace std;
 
@@ -117,6 +121,25 @@ namespace {
       timeZoneDatabase, static_cast<
       WrapperOrderExecutionClient<unique_ptr<Client>>&>(*orderExecutionClient),
       queue->GetSlot<const Order*>());
+  }
+
+  OrderExecutionServiceTestInstance* BuildOrderExecutionServiceTestInstance(
+      std::auto_ptr<VirtualServiceLocatorClient> serviceLocatorClient,
+      std::auto_ptr<VirtualUidClient> uidClient,
+      std::auto_ptr<VirtualAdministrationClient> administrationClient) {
+    std::shared_ptr<VirtualServiceLocatorClient> serviceLocatorClientWrapper{
+      serviceLocatorClient.release(), [] (VirtualServiceLocatorClient*) {}};
+    std::unique_ptr<VirtualUidClient> uidClientWrapper{uidClient.release()};
+    std::unique_ptr<VirtualAdministrationClient> administrationClientWrapper{
+      administrationClient.release()};
+    return new OrderExecutionServiceTestInstance{serviceLocatorClientWrapper,
+      std::move(uidClientWrapper), std::move(administrationClient)};
+  }
+
+  VirtualOrderExecutionClient* OrderExecutionServiceTestInstanceBuildClient(
+      OrderExecutionServiceTestInstance& instance,
+      VirtualServiceLocatorClient& serviceLocatorClient) {
+    return instance.BuildClient(Ref(serviceLocatorClient)).release();
   }
 }
 
@@ -213,6 +236,24 @@ void Nexus::Python::ExportOrderExecutionService() {
   ExportOrderRecord();
   ExportPrimitiveOrder();
   ExportStandardQueries();
+  {
+    string nestedName = extract<string>(parent.attr("__name__") + ".tests");
+    object nestedModule{handle<>(
+      borrowed(PyImport_AddModule(nestedName.c_str())))};
+    parent.attr("tests") = nestedModule;
+    scope child = nestedModule;
+    ExportOrderExecutionServiceTestInstance();
+  }
+}
+
+void Nexus::Python::ExportOrderExecutionServiceTestInstance() {
+  class_<OrderExecutionServiceTestInstance, boost::noncopyable>(
+      "OrderExecutionServiceTestInstance", no_init)
+    .def("__init__", make_constructor(BuildOrderExecutionServiceTestInstance))
+    .def("open", BlockingFunction(&OrderExecutionServiceTestInstance::Open))
+    .def("close", BlockingFunction(&OrderExecutionServiceTestInstance::Close))
+    .def("build_client", &OrderExecutionServiceTestInstanceBuildClient,
+      return_value_policy<manage_new_object>());
 }
 
 void Nexus::Python::ExportOrderFields() {
