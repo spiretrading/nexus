@@ -2,7 +2,6 @@
 #define NEXUS_PRIMITIVEORDERUTILITIES_HPP
 #include <Beam/Queues/Queue.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <cppunit/extensions/HelperMacros.h>
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTests.hpp"
 
@@ -67,7 +66,7 @@ namespace Tests {
           cumulativeQuantity += report.m_lastQuantity;
         }
         auto& lastReport = reports.back();
-        CPPUNIT_ASSERT(cumulativeQuantity + quantity <=
+        assert(cumulativeQuantity + quantity <=
           order.GetInfo().m_fields.m_quantity);
         auto newStatus =
           [&] {

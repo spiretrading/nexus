@@ -25,7 +25,9 @@
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
+#include "Nexus/OrderExecutionServiceTests/MockOrderExecutionDriver.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceInstance.hpp"
+#include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;
@@ -183,6 +185,26 @@ void Nexus::Python::ExportExecutionReport() {
   ExportVector<vector<ExecutionReport>>();
 }
 
+void Nexus::Python::ExportMockOrderExecutionDriver() {
+  class_<MockOrderExecutionDriver, boost::noncopyable>(
+      "MockOrderExecutionDriver", init<>())
+    .def("set_order_status_new_on_submission",
+      &MockOrderExecutionDriver::SetOrderStatusNewOnSubmission)
+    .def("find_order", &MockOrderExecutionDriver::FindOrder,
+      return_value_policy<reference_existing_object>())
+    .def("add_recovery", &MockOrderExecutionDriver::AddRecovery)
+    .def("get_publisher", &MockOrderExecutionDriver::GetPublisher,
+      return_value_policy<reference_existing_object>())
+    .def("recover", &MockOrderExecutionDriver::Recover,
+      return_value_policy<reference_existing_object>())
+    .def("submit", &MockOrderExecutionDriver::Submit,
+      return_value_policy<reference_existing_object>())
+    .def("cancel", &MockOrderExecutionDriver::Cancel)
+    .def("update", &MockOrderExecutionDriver::Update)
+    .def("open", BlockingFunction(&MockOrderExecutionDriver::Open))
+    .def("close", BlockingFunction(&MockOrderExecutionDriver::Close));
+}
+
 void Nexus::Python::ExportOrder() {
   ExportPublisher<const Order*>("OrderPublisher");
   ExportSnapshotPublisher<const Order*, vector<const Order*>>(
@@ -243,6 +265,13 @@ void Nexus::Python::ExportOrderExecutionService() {
     parent.attr("tests") = nestedModule;
     scope child = nestedModule;
     ExportOrderExecutionServiceTestInstance();
+    ExportMockOrderExecutionDriver();
+    def("cancel_order", &CancelOrder);
+    def("set_order_status", &SetOrderStatus);
+    def("fill_order", static_cast<void (*)(PrimitiveOrder& order, Money price,
+      Quantity quantity, const ptime& timestamp)>(&FillOrder));
+    def("fill_order", static_cast<void (*)(PrimitiveOrder& order,
+      Quantity quantity, const ptime& timestamp)>(&FillOrder));
   }
 }
 

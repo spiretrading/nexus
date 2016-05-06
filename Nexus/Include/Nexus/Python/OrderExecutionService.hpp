@@ -11,6 +11,9 @@ namespace Python {
   //! Exports the ExecutionReport struct.
   void ExportExecutionReport();
 
+  //! Exports the MockOrderExecutionDriver.
+  void ExportMockOrderExecutionDriver();
+
   //! Exports the Order class.
   void ExportOrder();
 
