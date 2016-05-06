@@ -22,6 +22,7 @@
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
+#include "Nexus/MarketDataServiceTests/MarketDataServiceTestInstance.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;
@@ -38,6 +39,7 @@ using namespace boost::posix_time;
 using namespace boost::python;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
+using namespace Nexus::MarketDataService::Tests;
 using namespace Nexus::Python;
 using namespace std;
 
@@ -140,6 +142,19 @@ namespace {
     auto baseClient = std::make_unique<Client>(sessionBuilder);
     return new PythonMarketDataClient(std::move(baseClient));
   }
+
+  MarketDataServiceTestInstance* BuildMarketDataServiceTestInstance(
+      std::auto_ptr<VirtualServiceLocatorClient> serviceLocatorClient) {
+    std::unique_ptr<VirtualServiceLocatorClient> clientWrapper{
+      serviceLocatorClient.release()};
+    return new MarketDataServiceTestInstance{std::move(clientWrapper)};
+  }
+
+  VirtualMarketDataClient* MarketDataServiceTestInstanceBuildClient(
+      MarketDataServiceTestInstance& instance,
+      VirtualServiceLocatorClient& serviceLocatorClient) {
+    return instance.BuildClient(Ref(serviceLocatorClient)).release();
+  }
 }
 
 void Nexus::Python::ExportMarketDataClient() {
@@ -185,6 +200,25 @@ void Nexus::Python::ExportMarketDataService() {
   ExportMarketDataClient();
   ExportMarketWideDataQuery();
   ExportSecurityMarketDataQuery();
+  {
+    string nestedName = extract<string>(parent.attr("__name__") + ".tests");
+    object nestedModule{handle<>(
+      borrowed(PyImport_AddModule(nestedName.c_str())))};
+    parent.attr("tests") = nestedModule;
+    scope child = nestedModule;
+    ExportMarketDataServiceTestInstance();
+  }
+}
+
+void Nexus::Python::ExportMarketDataServiceTestInstance() {
+  class_<MarketDataServiceTestInstance, boost::noncopyable>(
+      "MarketDataServiceTestInstance", no_init)
+    .def("__init__", make_constructor(BuildMarketDataServiceTestInstance))
+    .def("open", BlockingFunction(&MarketDataServiceTestInstance::Open))
+    .def("close", BlockingFunction(&MarketDataServiceTestInstance::Close))
+    .def("set_bbo", &MarketDataServiceTestInstance::SetBbo)
+    .def("build_client", &MarketDataServiceTestInstanceBuildClient,
+      return_value_policy<manage_new_object>());
 }
 
 void Nexus::Python::ExportMarketWideDataQuery() {

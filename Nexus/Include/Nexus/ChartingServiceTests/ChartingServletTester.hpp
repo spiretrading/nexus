@@ -36,8 +36,8 @@ namespace Tests {
 
       //! The type of ServiceProtocolServer.
       using ServletContainer = Beam::Services::ServiceProtocolServletContainer<
-        MetaChartingServlet<std::unique_ptr<MarketDataService::Tests::
-        MarketDataServiceTestInstance::MarketDataClient>>,
+        MetaChartingServlet<
+        std::unique_ptr<MarketDataService::VirtualMarketDataClient>>,
         std::shared_ptr<ServerConnection>,
         Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
         Beam::Codecs::NullEncoder,

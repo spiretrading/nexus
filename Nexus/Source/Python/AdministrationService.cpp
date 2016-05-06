@@ -70,6 +70,19 @@ namespace {
     return new WrapperAdministrationClient<std::unique_ptr<Client>>{
       std::move(baseClient)};
   }
+
+  AdministrationServiceTestInstance* BuildAdministrationServiceTestInstance(
+      std::auto_ptr<VirtualServiceLocatorClient> serviceLocatorClient) {
+    std::shared_ptr<VirtualServiceLocatorClient> clientWrapper{
+      serviceLocatorClient.release(), [] (VirtualServiceLocatorClient*) {}};
+    return new AdministrationServiceTestInstance{clientWrapper};
+  }
+
+  VirtualAdministrationClient* AdministrationServiceTestInstanceBuildClient(
+      AdministrationServiceTestInstance& instance,
+      VirtualServiceLocatorClient& serviceLocatorClient) {
+    return instance.BuildClient(Ref(serviceLocatorClient)).release();
+  }
 }
 
 void Nexus::Python::ExportAccountIdentity() {
@@ -163,12 +176,12 @@ void Nexus::Python::ExportAdministrationService() {
 
 void Nexus::Python::ExportAdministrationServiceTestInstance() {
   class_<AdministrationServiceTestInstance, boost::noncopyable>(
-      "AdministrationServiceTestInstance",
-      init<const std::shared_ptr<VirtualServiceLocatorClient>&>())
+      "AdministrationServiceTestInstance", no_init)
+    .def("__init__", make_constructor(BuildAdministrationServiceTestInstance))
     .def("open", BlockingFunction(&AdministrationServiceTestInstance::Open))
     .def("close", BlockingFunction(&AdministrationServiceTestInstance::Close))
-    .def("build_client",
-      ReleaseUniquePtr(&AdministrationServiceTestInstance::BuildClient));
+    .def("build_client", &AdministrationServiceTestInstanceBuildClient,
+      return_value_policy<manage_new_object>());
 }
 
 void Nexus::Python::ExportTradingGroup() {

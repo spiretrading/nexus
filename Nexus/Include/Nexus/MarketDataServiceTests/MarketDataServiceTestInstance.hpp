@@ -26,6 +26,7 @@
 #include "Nexus/MarketDataService/MarketDataRegistry.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServlet.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
+#include "Nexus/MarketDataService/VirtualMarketDataFeedClient.hpp"
 
 namespace Nexus {
 namespace MarketDataService {
@@ -38,75 +39,13 @@ namespace Tests {
   class MarketDataServiceTestInstance : private boost::noncopyable {
     public:
 
-      //! The type of ServerConnection.
-      using ServerConnection =
-        Beam::IO::LocalServerConnection<Beam::IO::SharedBuffer>;
-
-      //! The type of Channel from the client to the server.
-      using ClientChannel =
-        Beam::IO::LocalClientChannel<Beam::IO::SharedBuffer>;
-
-      //! The type of ServiceLocatorClient used.
-      using ServiceLocatorClient =
-        Beam::ServiceLocator::VirtualServiceLocatorClient;
-
-      //! The type of ServiceProtocolServer used for the
-      //! MarketDataRegistryServlet.
-      using ServiceProtocolServletContainer =
-        Beam::Services::ServiceProtocolServletContainer<
-        Beam::ServiceLocator::MetaAuthenticationServletAdapter<
-        MetaMarketDataRegistryServlet<MarketDataRegistry*,
-        LocalHistoricalDataStore*, ServiceLocatorClient>,
-        ServiceLocatorClient*, Beam::NativePointerPolicy>, ServerConnection*,
-        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-        Beam::Codecs::NullEncoder,
-        std::shared_ptr<Beam::Threading::TriggerTimer>>;
-
-      //! Used to connect the feed servlet to the registry servlet.
-      using BaseRegistryServlet = MarketDataRegistryServlet<
-        ServiceProtocolServletContainer, MarketDataRegistry*,
-        LocalHistoricalDataStore*, ServiceLocatorClient>;
-      using RegistryServlet =
-        Beam::ServiceLocator::AuthenticationServletAdapter<
-        ServiceProtocolServletContainer, BaseRegistryServlet*,
-        ServiceLocatorClient*>;
-
-      //! The type of ServiceProtocolServer used for the
-      //! MarketDataFeedServlet.
-      using FeedServiceProtocolServletContainer =
-        Beam::Services::ServiceProtocolServletContainer<
-        Beam::ServiceLocator::MetaAuthenticationServletAdapter<
-        MetaMarketDataFeedServlet<BaseRegistryServlet*>, ServiceLocatorClient*>,
-        ServerConnection*,
-        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-        Beam::Codecs::NullEncoder,
-        std::shared_ptr<Beam::Threading::TriggerTimer>>;
-
-      //! The type used to build MarketDataClient sessions.
-      using ServiceProtocolClientBuilder =
-        Beam::Services::AuthenticatedServiceProtocolClientBuilder<
-        ServiceLocatorClient, Beam::Services::MessageProtocol<
-        std::unique_ptr<ClientChannel>,
-        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-        Beam::Codecs::NullEncoder>, Beam::Threading::TriggerTimer>;
-
-      //! The type of MarketDataClient used.
-      using MarketDataClient = MarketDataService::VirtualMarketDataClient;
-
-      //! The type of MarketDataFeedClient used.
-      using MarketDataFeedClient =
-        MarketDataService::MarketDataFeedClient<std::string,
-        Beam::Threading::TriggerTimer*,
-        Beam::Services::MessageProtocol<ClientChannel,
-        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-        Beam::Codecs::NullEncoder>, Beam::Threading::TriggerTimer>;
-
       //! Constructs an MarketDataServiceTestInstance.
       /*!
         \param serviceLocatorClient The ServiceLocatorClient to use.
       */
       MarketDataServiceTestInstance(
-        std::unique_ptr<ServiceLocatorClient> serviceLocatorClient);
+        std::unique_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
+        serviceLocatorClient);
 
       ~MarketDataServiceTestInstance();
 
@@ -138,17 +77,58 @@ namespace Tests {
                authenticate the MarketDataClient.
       */
       std::unique_ptr<VirtualMarketDataClient> BuildClient(
-        Beam::RefType<ServiceLocatorClient> serviceLocatorClient);
+        Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
+        serviceLocatorClient);
 
       //! Builds a new MarketDataFeedClient.
       /*!
         \param serviceLocatorClient The ServiceLocatorClient used to
                authenticate the MarketDataFeedClient.
       */
-      std::unique_ptr<MarketDataFeedClient> BuildFeedClient(
-        Beam::RefType<ServiceLocatorClient> serviceLocatorClient);
+      std::unique_ptr<VirtualMarketDataFeedClient> BuildFeedClient(
+        Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
+        serviceLocatorClient);
 
     private:
+      using ServerConnection =
+        Beam::IO::LocalServerConnection<Beam::IO::SharedBuffer>;
+      using ClientChannel =
+        Beam::IO::LocalClientChannel<Beam::IO::SharedBuffer>;
+      using ServiceLocatorClient =
+        Beam::ServiceLocator::VirtualServiceLocatorClient;
+      using ServiceProtocolServletContainer =
+        Beam::Services::ServiceProtocolServletContainer<
+        Beam::ServiceLocator::MetaAuthenticationServletAdapter<
+        MetaMarketDataRegistryServlet<MarketDataRegistry*,
+        LocalHistoricalDataStore*, ServiceLocatorClient>,
+        ServiceLocatorClient*, Beam::NativePointerPolicy>, ServerConnection*,
+        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+        Beam::Codecs::NullEncoder,
+        std::shared_ptr<Beam::Threading::TriggerTimer>>;
+      using BaseRegistryServlet = MarketDataRegistryServlet<
+        ServiceProtocolServletContainer, MarketDataRegistry*,
+        LocalHistoricalDataStore*, ServiceLocatorClient>;
+      using RegistryServlet =
+        Beam::ServiceLocator::AuthenticationServletAdapter<
+        ServiceProtocolServletContainer, BaseRegistryServlet*,
+        ServiceLocatorClient*>;
+      using FeedServiceProtocolServletContainer =
+        Beam::Services::ServiceProtocolServletContainer<
+        Beam::ServiceLocator::MetaAuthenticationServletAdapter<
+        MetaMarketDataFeedServlet<BaseRegistryServlet*>, ServiceLocatorClient*>,
+        ServerConnection*,
+        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+        Beam::Codecs::NullEncoder,
+        std::shared_ptr<Beam::Threading::TriggerTimer>>;
+      using ServiceProtocolClientBuilder =
+        Beam::Services::AuthenticatedServiceProtocolClientBuilder<
+        ServiceLocatorClient, Beam::Services::MessageProtocol<
+        std::unique_ptr<ClientChannel>,
+        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+        Beam::Codecs::NullEncoder>, Beam::Threading::TriggerTimer>;
+      using MarketDataClient = MarketDataService::VirtualMarketDataClient;
+      using MarketDataFeedClient =
+        MarketDataService::VirtualMarketDataFeedClient;
       std::unique_ptr<ServiceLocatorClient> m_serviceLocatorClient;
       MarketDataRegistry m_registry;
       EntitlementDatabase m_entitlements;
@@ -164,8 +144,9 @@ namespace Tests {
   };
 
   inline MarketDataServiceTestInstance::MarketDataServiceTestInstance(
-      std::unique_ptr<ServiceLocatorClient> serviceLocatorClient)
-      : m_serviceLocatorClient(std::move(serviceLocatorClient)) {}
+      std::unique_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
+      serviceLocatorClient)
+      : m_serviceLocatorClient{std::move(serviceLocatorClient)} {}
 
   inline MarketDataServiceTestInstance::~MarketDataServiceTestInstance() {
     Close();
@@ -227,7 +208,8 @@ namespace Tests {
 
   inline std::unique_ptr<VirtualMarketDataClient>
       MarketDataServiceTestInstance::BuildClient(
-      Beam::RefType<ServiceLocatorClient> serviceLocatorClient) {
+      Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
+      serviceLocatorClient) {
     ServiceProtocolClientBuilder builder(Beam::Ref(serviceLocatorClient),
       [&] {
         return std::make_unique<ServiceProtocolClientBuilder::Channel>(
@@ -243,15 +225,19 @@ namespace Tests {
     return MakeVirtualMarketDataClient(std::move(client));
   }
 
-  inline std::unique_ptr<MarketDataServiceTestInstance::MarketDataFeedClient>
+  inline std::unique_ptr<VirtualMarketDataFeedClient>
       MarketDataServiceTestInstance::BuildFeedClient(
       Beam::RefType<ServiceLocatorClient> serviceLocatorClient) {
-    auto client = std::make_unique<MarketDataFeedClient>(Beam::Initialize(
+    using Client = MarketDataService::MarketDataFeedClient<std::string,
+      Beam::Threading::TriggerTimer*, Beam::Services::MessageProtocol<
+      ClientChannel, Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+      Beam::Codecs::NullEncoder>, Beam::Threading::TriggerTimer>;
+    auto client = std::make_unique<Client>(Beam::Initialize(
       std::string("test_market_data_feed_client"),
       Beam::Ref(m_feedServerConnection)),
       Beam::ServiceLocator::SessionAuthenticator<ServiceLocatorClient>(
       Beam::Ref(serviceLocatorClient)), &m_samplingTimer, Beam::Initialize());
-    return client;
+    return MakeVirtualMarketDataFeedClient(std::move(client));
   }
 }
 }

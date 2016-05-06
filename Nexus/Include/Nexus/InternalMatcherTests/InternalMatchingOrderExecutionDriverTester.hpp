@@ -30,8 +30,7 @@ namespace Tests {
         Beam::ServiceLocator::VirtualServiceLocatorClient;
 
       //! The type of MarketDataClient.
-      using MarketDataClient = MarketDataService::Tests::
-        MarketDataServiceTestInstance::MarketDataClient;
+      using MarketDataClient = MarketDataService::VirtualMarketDataClient;
 
       //! The type of UidClient.
       using UidClient = Beam::UidService::VirtualUidClient;
