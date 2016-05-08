@@ -71,8 +71,6 @@ namespace Details {
 
   inline bool LoadOrderImbalancesTable(mysqlpp::Connection& connection,
       const std::string& schema) {
-    Beam::Queries::LoadSequencesTable(schema, "order_imbalances",
-      "market VARCHAR(16) BINARY NOT NULL", connection);
     if(Beam::MySql::TestTable(schema, "order_imbalances", connection)) {
       return true;
     }
@@ -94,9 +92,6 @@ namespace Details {
 
   inline bool LoadBboQuotesTable(mysqlpp::Connection& connection,
       const std::string& schema) {
-    Beam::Queries::LoadSequencesTable(schema, "bbo_quotes",
-      "symbol VARCHAR(16) BINARY NOT NULL,"
-      "country INTEGER UNSIGNED NOT NULL", connection);
     if(Beam::MySql::TestTable(schema, "bbo_quotes", connection)) {
       return true;
     }
@@ -117,9 +112,6 @@ namespace Details {
 
   inline bool LoadMarketQuotesTable(mysqlpp::Connection& connection,
       const std::string& schema) {
-    Beam::Queries::LoadSequencesTable(schema, "market_quotes",
-      "symbol VARCHAR(16) BINARY NOT NULL,"
-      "country INTEGER UNSIGNED NOT NULL", connection);
     if(Beam::MySql::TestTable(schema, "market_quotes", connection)) {
       return true;
     }
@@ -141,9 +133,6 @@ namespace Details {
 
   inline bool LoadBookQuotesTable(mysqlpp::Connection& connection,
       const std::string& schema) {
-    Beam::Queries::LoadSequencesTable(schema, "book_quotes",
-      "symbol VARCHAR(16) BINARY NOT NULL,"
-      "country INTEGER UNSIGNED NOT NULL", connection);
     if(Beam::MySql::TestTable(schema, "book_quotes", connection)) {
       return true;
     }
@@ -166,9 +155,6 @@ namespace Details {
 
   inline bool LoadTimeAndSalesTable(mysqlpp::Connection& connection,
       const std::string& schema) {
-    Beam::Queries::LoadSequencesTable(schema, "time_and_sales",
-      "symbol VARCHAR(16) BINARY NOT NULL,"
-      "country INTEGER UNSIGNED NOT NULL", connection);
     if(Beam::MySql::TestTable(schema, "time_and_sales", connection)) {
       return true;
     }
