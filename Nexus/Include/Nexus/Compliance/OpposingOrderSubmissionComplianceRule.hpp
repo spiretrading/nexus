@@ -9,6 +9,7 @@
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
 #include "Nexus/Compliance/ComplianceRuleSchema.hpp"
+#include "Nexus/Compliance/MapComplianceRule.hpp"
 #include "Nexus/Compliance/SecurityFilterComplianceRule.hpp"
 #include "Nexus/Compliance/TimeFilterComplianceRule.hpp"
 #include "Nexus/Definitions/Money.hpp"
@@ -89,7 +90,7 @@ namespace Compliance {
   template<typename TimeClient>
   std::unique_ptr<ComplianceRule> MakeOpposingOrderSubmissionComplianceRule(
       const std::vector<ComplianceParameter>& parameters,
-      TimeClient&& timeClient) {
+      const TimeClient& timeClient) {
     SecuritySet symbols;
     boost::posix_time::time_duration startPeriod;
     boost::posix_time::time_duration endPeriod;
@@ -114,11 +115,13 @@ namespace Compliance {
         offset = boost::get<Money>(parameter.m_value);
       }
     }
-    auto rule = std::make_unique<OpposingOrderSubmissionComplianceRule<
-      std::decay_t<TimeClient>>>(timeout, offset, timeClient);
-    auto timeFilter = std::make_unique<TimeFilterComplianceRule<
-      std::decay_t<TimeClient>>>(startPeriod, endPeriod, timeClient,
-      std::move(rule));
+    auto mapRule = MakeMapSecurityComplianceRule({},
+      [=] (const ComplianceRuleSchema&) {
+        return std::make_unique<OpposingOrderSubmissionComplianceRule<
+          TimeClient>>(timeout, offset, timeClient);
+      });
+    auto timeFilter = std::make_unique<TimeFilterComplianceRule<TimeClient>>(
+      startPeriod, endPeriod, timeClient, std::move(mapRule));
     auto symbolFilter = std::make_unique<SecurityFilterComplianceRule>(
       std::move(symbols), std::move(timeFilter));
     return std::move(symbolFilter);
