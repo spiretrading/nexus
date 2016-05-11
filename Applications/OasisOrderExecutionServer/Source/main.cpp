@@ -33,6 +33,7 @@
 #include "Nexus/OrderExecutionService/OrderSubmissionCheckDriver.hpp"
 #include "Nexus/OrderExecutionService/ReplicatedOrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionService/RiskStateCheck.hpp"
+#include "OasisOrderExecutionServer/AequitasFixApplication.hpp"
 #include "OasisOrderExecutionServer/AsxFixApplication.hpp"
 #include "OasisOrderExecutionServer/ChixFixApplication.hpp"
 #include "OasisOrderExecutionServer/CnsxFixApplication.hpp"
@@ -275,6 +276,12 @@ int main(int argc, const char** argv) {
       Ref(*timeClient));
     pureEntry.m_destinations.push_back(DefaultDestinations::PURE());
     fixApplicationEntries.push_back(pureEntry);
+    FixApplicationEntry neoeEntry;
+    neoeEntry.m_configPath = "neoe.cfg";
+    neoeEntry.m_application = std::make_shared<AequitasFixApplication>(
+      Ref(*timeClient));
+    neoeEntry.m_destinations.push_back(DefaultDestinations::NEOE());
+    fixApplicationEntries.push_back(neoeEntry);
   } catch(const std::exception& e) {
     cerr << "Unable to initialize FIX entry: " << e.what() << endl;
     return -1;
