@@ -73,7 +73,6 @@ namespace OasisOrderExecutionService {
       FixUtilities::FixOrderLog m_orderLog;
 
       std::string GetAccount() const;
-      std::string GetSenderSubID() const;
       std::string GetUmirUserID() const;
   };
 }

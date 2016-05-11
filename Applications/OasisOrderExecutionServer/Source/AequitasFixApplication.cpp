@@ -21,6 +21,7 @@ using namespace Nexus::OrderExecutionService;
 using namespace std;
 
 namespace {
+  const auto AGGRESSOR_INDICATOR_TAG = 1057;
   const auto UMIR_ACCOUNT_TYPE_TAG = 6750;
   const auto UMIR_USER_ID_TAG = 6751;
 }
@@ -38,12 +39,12 @@ const Order& AequitasFixApplication::Submit(const OrderInfo& info) {
   return m_orderLog.Submit(info, GetSessionId().getSenderCompID(),
     GetSessionId().getTargetCompID(),
     [&] (Out<FIX42::NewOrderSingle> newOrderSingle) {
-      newOrderSingle->getHeader().set(FIX::SenderSubID(GetSenderSubID()));
       newOrderSingle->getHeader().set(
         FIX::OnBehalfOfCompID(info.m_submissionAccount.m_name));
       newOrderSingle->set(FIX::Account(GetAccount()));
       newOrderSingle->setField(UMIR_ACCOUNT_TYPE_TAG, "CL");
       newOrderSingle->setField(UMIR_USER_ID_TAG, GetUmirUserID());
+      newOrderSingle->set(FIX::HandlInst('5'));
     });
 }
 
@@ -52,7 +53,6 @@ void AequitasFixApplication::Cancel(const OrderExecutionSession& session,
   m_orderLog.Cancel(session, orderId, m_timeClient->GetTime(),
     GetSessionId().getSenderCompID(), GetSessionId().getTargetCompID(),
     [&] (Out<FIX42::OrderCancelRequest> orderCancelRequest) {
-      orderCancelRequest->getHeader().set(FIX::SenderSubID(GetSenderSubID()));
       orderCancelRequest->getHeader().set(
         FIX::OnBehalfOfCompID(session.GetAccount().m_name));
       orderCancelRequest->setField(UMIR_ACCOUNT_TYPE_TAG, "CL");
@@ -91,7 +91,20 @@ void AequitasFixApplication::fromApp(const FIX::Message& message,
 void AequitasFixApplication::onMessage(const FIX42::ExecutionReport& message,
     const FIX::SessionID& sessionId) {
   m_orderLog.Update(message, sessionId, m_timeClient->GetTime(),
-    [=] (Out<ExecutionReport> update) {});
+    [=] (Out<ExecutionReport> update) {
+      string liquidityFlag;
+      if(message.isSetField(AGGRESSOR_INDICATOR_TAG)) {
+        liquidityFlag = message.getField(AGGRESSOR_INDICATOR_TAG);
+      }
+      if(liquidityFlag == "Y") {
+        update->m_liquidityFlag = "A";
+      } else if(liquidityFlag == "N") {
+        update->m_liquidityFlag = "P";
+      }
+      if(!liquidityFlag.empty()) {
+        update->m_lastMarket = DefaultMarkets::NEOE().GetData();
+      }
+    });
 }
 
 void AequitasFixApplication::onMessage(
@@ -105,13 +118,8 @@ string AequitasFixApplication::GetAccount() const {
   return GetSessionSettings().get(GetSessionId()).getString("Account");
 }
 
-string AequitasFixApplication::GetSenderSubID() const {
-  return GetSessionSettings().get(GetSessionId()).getString("SenderSubID");
-}
-
 string AequitasFixApplication::GetUmirUserID() const {
   if(GetSessionSettings().get(GetSessionId()).has("UMIRUserID")) {
     return GetSessionSettings().get(GetSessionId()).getString("UMIRUserID");
   }
-  return GetSenderSubID();
 }
