@@ -294,11 +294,13 @@ namespace Details {
     \param decimalPlaces The decimal place to round to.
   */
   inline Money Round(Money value, int decimalPlaces) {
-    Money increment = Money::ONE / 2;
-    if(value < Money::ZERO) {
-      increment = -increment;
+    auto absValue = Abs(value);
+    auto floorValue = Floor(value, decimalPlaces);
+    auto decimalPoint = Beam::PowerOfTen(decimalPlaces);
+    if(absValue - floorValue >= ((Money::ONE / 2) / decimalPoint)) {
+      floorValue += Money::ONE / Beam::PowerOfTen(decimalPlaces);
     }
-    return Truncate(value + increment, decimalPlaces);
+    return floorValue;
   }
 
   //! Returns the floating point representation of the value.

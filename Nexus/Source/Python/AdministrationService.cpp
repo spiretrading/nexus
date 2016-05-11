@@ -17,6 +17,7 @@
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
+#include "Nexus/AdministrationServiceTests/AdministrationServiceTestInstance.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;
@@ -32,6 +33,7 @@ using namespace boost::posix_time;
 using namespace boost::python;
 using namespace Nexus;
 using namespace Nexus::AdministrationService;
+using namespace Nexus::AdministrationService::Tests;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::Python;
 using namespace Nexus::RiskService;
@@ -67,6 +69,19 @@ namespace {
     auto baseClient = std::make_unique<Client>(sessionBuilder);
     return new WrapperAdministrationClient<std::unique_ptr<Client>>{
       std::move(baseClient)};
+  }
+
+  AdministrationServiceTestInstance* BuildAdministrationServiceTestInstance(
+      std::auto_ptr<VirtualServiceLocatorClient> serviceLocatorClient) {
+    std::shared_ptr<VirtualServiceLocatorClient> clientWrapper{
+      serviceLocatorClient.release(), [] (VirtualServiceLocatorClient*) {}};
+    return new AdministrationServiceTestInstance{clientWrapper};
+  }
+
+  VirtualAdministrationClient* AdministrationServiceTestInstanceBuildClient(
+      AdministrationServiceTestInstance& instance,
+      VirtualServiceLocatorClient& serviceLocatorClient) {
+    return instance.BuildClient(Ref(serviceLocatorClient)).release();
   }
 }
 
@@ -149,6 +164,24 @@ void Nexus::Python::ExportAdministrationService() {
   ExportAccountIdentity();
   ExportAdministrationClient();
   ExportTradingGroup();
+  {
+    string nestedName = extract<string>(parent.attr("__name__") + ".tests");
+    object nestedModule{handle<>(
+      borrowed(PyImport_AddModule(nestedName.c_str())))};
+    parent.attr("tests") = nestedModule;
+    scope child = nestedModule;
+    ExportAdministrationServiceTestInstance();
+  }
+}
+
+void Nexus::Python::ExportAdministrationServiceTestInstance() {
+  class_<AdministrationServiceTestInstance, boost::noncopyable>(
+      "AdministrationServiceTestInstance", no_init)
+    .def("__init__", make_constructor(BuildAdministrationServiceTestInstance))
+    .def("open", BlockingFunction(&AdministrationServiceTestInstance::Open))
+    .def("close", BlockingFunction(&AdministrationServiceTestInstance::Close))
+    .def("build_client", &AdministrationServiceTestInstanceBuildClient,
+      return_value_policy<manage_new_object>());
 }
 
 void Nexus::Python::ExportTradingGroup() {

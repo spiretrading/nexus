@@ -58,6 +58,22 @@ namespace Compliance {
         m_rules;
   };
 
+  //! Builds a MapComplianceRule that applies per Security.
+  /*!
+    \param schema The ComplianceRuleSchema to apply.
+    \param complianceRuleBuilder Builds the compliance rule.
+  */
+  inline std::unique_ptr<MapComplianceRule<Security>>
+      MakeMapSecurityComplianceRule(ComplianceRuleSchema schema,
+      MapComplianceRule<Security>::ComplianceRuleBuilder
+      complianceRuleBuilder) {
+    return std::make_unique<MapComplianceRule<Security>>(
+      std::move(schema), std::move(complianceRuleBuilder),
+      [] (const OrderExecutionService::Order& order) {
+        return order.GetInfo().m_fields.m_security;
+      });
+  }
+
   template<typename KeyType>
   MapComplianceRule<KeyType>::MapComplianceRule(ComplianceRuleSchema schema,
       ComplianceRuleBuilder complianceRuleBuilder, KeyBuilder keyBuilder)

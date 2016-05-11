@@ -80,8 +80,6 @@ namespace Details {
 
   inline bool LoadSubmissionsTable(mysqlpp::Connection& connection,
       const std::string& schema) {
-    Beam::Queries::LoadSequencesTable(schema, "submissions",
-      "account INTEGER UNSIGNED NOT NULL", connection);
     if(Beam::MySql::TestTable(schema, "submissions", connection)) {
       return true;
     }
@@ -137,8 +135,6 @@ namespace Details {
 
   inline bool LoadExecutionReportsTable(mysqlpp::Connection& connection,
       const std::string& schema) {
-    Beam::Queries::LoadSequencesTable(schema, "execution_reports",
-      "account INTEGER UNSIGNED NOT NULL", connection);
     if(Beam::MySql::TestTable(schema, "execution_reports", connection)) {
       return true;
     }

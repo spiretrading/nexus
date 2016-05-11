@@ -22,8 +22,7 @@ namespace Tests {
         Beam::ServiceLocator::VirtualServiceLocatorClient;
 
       //! The type of MarketDataClient.
-      using MarketDataClient = MarketDataService::Tests::
-        MarketDataServiceTestInstance::MarketDataClient;
+      using MarketDataClient = MarketDataService::VirtualMarketDataClient;
 
       //! The type of PortfolioMonitor to test.
       typedef Accounting::PortfolioMonitor<Portfolio<TrueAverageBookkeeper<

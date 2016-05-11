@@ -82,3 +82,21 @@ void MoneyTester::TestFloor() {
   Money flooredValue = Floor(value, 2);
   CPPUNIT_ASSERT(flooredValue == 2 * Money::CENT);
 }
+
+void MoneyTester::TestRound() {
+  {
+    auto value = Money::FromValue("75.504");
+    auto roundValue = Round(*value, 2);
+    CPPUNIT_ASSERT(roundValue == Money::FromValue("75.50"));
+  }
+  {
+    auto value = Money::FromValue("75.505");
+    auto roundValue = Round(*value, 2);
+    CPPUNIT_ASSERT(roundValue == Money::FromValue("75.51"));
+  }
+  {
+    auto value = Money::FromValue("75.506");
+    auto roundValue = Round(*value, 2);
+    CPPUNIT_ASSERT(roundValue == Money::FromValue("75.51"));
+  }
+}

@@ -56,13 +56,11 @@ void RiskServletTester::setUp() {
     servicesDirectory);
   auto orderExecutionServiceLocatorClient =
     m_serviceLocatorInstance->BuildClient();
-  std::unique_ptr<OrderExecutionServiceTestInstance::UidClient>
-    orderExecutionUidClient = m_uidServiceInstance->BuildClient();
+  auto orderExecutionUidClient = m_uidServiceInstance->BuildClient();
   orderExecutionServiceLocatorClient->SetCredentials("order_execution_service",
     "");
   orderExecutionServiceLocatorClient->Open();
-  std::unique_ptr<OrderExecutionServiceTestInstance::AdministrationClient>
-    orderExecutionAdministrationClient =
+  auto orderExecutionAdministrationClient =
     m_administrationServiceInstance->BuildClient(
     Ref(*orderExecutionServiceLocatorClient));
   m_orderExecutionServiceInstance.Initialize(

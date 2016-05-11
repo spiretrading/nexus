@@ -34,14 +34,11 @@ namespace Tests {
         AdministrationService::VirtualAdministrationClient;
 
       //! The type of MarketDataClient.
-      using MarketDataClient =
-        MarketDataService::Tests::MarketDataServiceTestInstance::
-        MarketDataClient;
+      using MarketDataClient = MarketDataService::VirtualMarketDataClient;
 
       //! The type of OrderExecutionClient.
       using OrderExecutionClient =
-        OrderExecutionService::Tests::OrderExecutionServiceTestInstance::
-        OrderExecutionClient;
+        OrderExecutionService::VirtualOrderExecutionClient;
 
       //! The type of Portfolio used.
       using Portfolio =

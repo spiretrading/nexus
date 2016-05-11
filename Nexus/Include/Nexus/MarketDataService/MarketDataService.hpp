@@ -36,7 +36,9 @@ namespace MarketDataService {
   class SecurityEntry;
   struct SecuritySnapshot;
   class VirtualMarketDataClient;
+  class VirtualMarketDataFeedClient;
   template<typename ClientType> class WrapperMarketDataClient;
+  template<typename ClientType> class WrapperMarketDataFeedClient;
 
   // Standard name for the market data feed service.
   static const std::string FEED_SERVICE_NAME = "market_data_feed_service";
