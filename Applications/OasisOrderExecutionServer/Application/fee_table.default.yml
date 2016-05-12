@@ -91,12 +91,12 @@ matn:
 # < $1.0                 X    X
 neoe:
   general_table:
-    [[0.0020, -0.0003],
-     [0.0016, -0.0002]]
+    [[0.0020, -0.0016],
+     [0.0003, -0.0002]]
 
   interlisted_table:
-    [[0.0028, -0.0003],
-     [0.0024, -0.0002]]
+    [[0.0028, -0.0024],
+     [0.0003, -0.0002]]
 
 # Omega ATS fees based on http://omegaats.com/fees/
 # Fees for notes and debentures are not supported.
