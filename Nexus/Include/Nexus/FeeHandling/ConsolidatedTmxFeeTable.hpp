@@ -12,6 +12,7 @@
 #include "Nexus/FeeHandling/FeeHandling.hpp"
 #include "Nexus/FeeHandling/LynxFeeTable.hpp"
 #include "Nexus/FeeHandling/MatnFeeTable.hpp"
+#include "Nexus/FeeHandling/NeoeFeeTable.hpp"
 #include "Nexus/FeeHandling/OmgaFeeTable.hpp"
 #include "Nexus/FeeHandling/PureFeeTable.hpp"
 #include "Nexus/FeeHandling/TsxFeeTable.hpp"
@@ -35,6 +36,9 @@ namespace Nexus {
 
     //! Fee table used by MATN.
     MatnFeeTable m_matnFeeTable;
+
+    //! Fee table used by NEOE.
+    NeoeFeeTable m_neoeFeeTable;
 
     //! Fee table used by OMGA.
     OmgaFeeTable m_omgaFeeTable;
@@ -178,6 +182,12 @@ namespace Nexus {
     } else {
       feeTable.m_matnFeeTable = ParseMatnFeeTable(*matnConfig);
     }
+    auto neoeConfig = config.FindValue("neoe");
+    if(neoeConfig == nullptr) {
+      BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for NEOE missing."});
+    } else {
+      feeTable.m_neoeFeeTable = ParseNeoeFeeTable(*neoeConfig);
+    }
     auto omgaConfig = config.FindValue("omga");
     if(omgaConfig == nullptr) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for OMGA missing."});
@@ -238,6 +248,8 @@ namespace Nexus {
           return ToString(DefaultMarkets::MATN());
         } else if(destination == DefaultDestinations::MATNMF()) {
           return ToString(DefaultMarkets::MATN());
+        } else if(destination == DefaultDestinations::NEOE()) {
+          return ToString(DefaultMarkets::NEOE());
         } else if(destination == DefaultDestinations::OMEGA()) {
           return ToString(DefaultMarkets::OMGA());
         } else if(destination == DefaultDestinations::PURE()) {
@@ -274,6 +286,11 @@ namespace Nexus {
         }
       }();
       return CalculateFee(feeTable.m_matnFeeTable, classification,
+        executionReport);
+    } else if(lastMarket == DefaultMarkets::NEOE()) {
+      auto isInterlisted = Beam::Contains(feeTable.m_interlisted,
+        order.GetInfo().m_fields.m_security);
+      return CalculateFee(feeTable.m_neoeFeeTable, isInterlisted,
         executionReport);
     } else if(lastMarket == DefaultMarkets::OMGA()) {
       auto isEtf = Beam::Contains(feeTable.m_etfs,
