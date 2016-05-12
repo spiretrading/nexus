@@ -62,8 +62,6 @@ lynx:
 
 # Match NOW fees based on http://www.triactcanada.com/fee-schedule.htm
 # Fees for notes and debentures are not supported.
-
-
 matn:
 
 # The general_table is structured as follows:
@@ -84,6 +82,21 @@ matn:
     [[0.0005, 0.0000],
      [0.0002, 0.0002],
      [0.0000, 0.0000]]
+
+# NEOE fees based on https://aequitasneoexchange.com/media/75476/neo-membership-and-trading-fee-schedule-2016-02-01.pdf
+# Fees for notes and debentures are not supported.
+# The fee table is structured as follows:
+#                     Active, Passive
+# >= $1.0                X    X
+# < $1.0                 X    X
+neoe:
+  general_table:
+    [[0.0020, -0.0003],
+     [0.0016, -0.0002]]
+
+  interlisted_table:
+    [[0.0028, -0.0003],
+     [0.0024, -0.0002]]
 
 # Omega ATS fees based on http://omegaats.com/fees/
 # Fees for notes and debentures are not supported.
