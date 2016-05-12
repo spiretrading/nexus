@@ -8,6 +8,7 @@
 #include "Nexus/FeeHandlingTests/ConsolidatedTmxFeeTableTester.hpp"
 #include "Nexus/FeeHandlingTests/LynxFeeHandlingTester.hpp"
 #include "Nexus/FeeHandlingTests/MatnFeeHandlingTester.hpp"
+#include "Nexus/FeeHandlingTests/NeoeFeeHandlingTester.hpp"
 #include "Nexus/FeeHandlingTests/OmgaFeeHandlingTester.hpp"
 #include "Nexus/FeeHandlingTests/PureFeeHandlingTester.hpp"
 #include "Nexus/FeeHandlingTests/TsxFeeHandlingTester.hpp"
@@ -23,6 +24,7 @@ int main() {
   runner.addTest(ChicFeeHandlingTester::suite());
   runner.addTest(LynxFeeHandlingTester::suite());
   runner.addTest(MatnFeeHandlingTester::suite());
+  runner.addTest(NeoeFeeHandlingTester::suite());
   runner.addTest(OmgaFeeHandlingTester::suite());
   runner.addTest(PureFeeHandlingTester::suite());
   runner.addTest(TsxFeeHandlingTester::suite());

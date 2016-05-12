@@ -8,6 +8,7 @@ namespace Tests {
   class ConsolidatedTmxFeeTableTester;
   class LynxFeeHandlingTester;
   class MatnFeeHandlingTester;
+  class NeoeFeeHandlingTester;
   class OmgaFeeHandlingTester;
   class PureFeeHandlingTester;
   class TsxFeeHandlingTester;
