@@ -24,6 +24,7 @@ namespace {
   const auto AGGRESSOR_INDICATOR_TAG = 1057;
   const auto UMIR_ACCOUNT_TYPE_TAG = 6750;
   const auto UMIR_USER_ID_TAG = 6751;
+  const auto VISIBILITY_TYPE_TAG = 20000;
 }
 
 AequitasFixApplication::AequitasFixApplication(
@@ -44,7 +45,32 @@ const Order& AequitasFixApplication::Submit(const OrderInfo& info) {
       newOrderSingle->set(FIX::Account(GetAccount()));
       newOrderSingle->setField(UMIR_ACCOUNT_TYPE_TAG, "CL");
       newOrderSingle->setField(UMIR_USER_ID_TAG, GetUmirUserID());
-      newOrderSingle->set(FIX::HandlInst('5'));
+      auto isProtected = true;
+      for(auto& tag : info.m_fields.m_additionalFields) {
+        if(tag.GetKey() == FIX::FIELD::ExecInst) {
+          if(auto value = boost::get<string>(&tag.GetValue())) {
+            if(*value == "M") {
+              isProtected = false;
+              newOrderSingle->setField(VISIBILITY_TYPE_TAG, "2");
+            }
+          } else {
+            BOOST_THROW_EXCEPTION(FixOrderRejectedException(
+              "Invalid value for tag 18 (ExecInst)."));
+          }
+        } else if(tag.GetKey() == FIX::FIELD::ExDestination) {
+          if(auto value = boost::get<string>(&tag.GetValue())) {
+            FIX::ExDestination destination(*value);
+            newOrderSingle->getHeader().setField(destination);
+            break;
+          } else {
+            BOOST_THROW_EXCEPTION(FixOrderRejectedException(
+              "Invalid value for tag 100 (ExDestination)."));
+          }
+        }
+      }
+      if(isProtected) {
+        newOrderSingle->set(FIX::HandlInst('5'));
+      }
     });
 }
 
