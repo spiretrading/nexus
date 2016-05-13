@@ -1117,6 +1117,38 @@ namespace {
     neoeSell.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
     neoeSell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
     orderTypes.emplace_back(neoeSell.Build());
+    CanvasNodeBuilder midPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
+      "NEOE Mid Peg Bid")->AddField("exec_inst", 18,
+      make_unique<TextNode>("M")));
+    midPegBid.SetReadOnly("exec_inst", true);
+    midPegBid.SetVisible("exec_inst", false);
+    midPegBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::NEOE()));
+    midPegBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    midPegBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    midPegBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    midPegBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    midPegBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    midPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(midPegBid.Build());
+    CanvasNodeBuilder midPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
+      "NEOE Mid Peg Ask")->AddField("exec_inst", 18,
+      make_unique<TextNode>("M")));
+    midPegAsk.SetReadOnly("exec_inst", true);
+    midPegAsk.SetVisible("exec_inst", false);
+    midPegAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::NEOE()));
+    midPegAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    midPegAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    midPegAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    midPegAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      false);
+    midPegAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      true);
+    midPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(midPegAsk.Build());
   }
 
   void PopulateOmegaOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
