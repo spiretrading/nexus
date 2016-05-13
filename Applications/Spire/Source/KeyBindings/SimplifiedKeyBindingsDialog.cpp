@@ -1042,113 +1042,244 @@ namespace {
   }
 
   void PopulateNeoeOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
-    CanvasNodeBuilder neoeLimitBid(*GetLimitBidOrderTaskNode()->Rename(
-      "NEO Limit Bid")->AddField("max_floor", 111,
+    CanvasNodeBuilder litLimitBid(*GetLimitBidOrderTaskNode()->Rename(
+      "NEO Lit Limit Bid")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
-    neoeLimitBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+    litLimitBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
       make_unique<DestinationNode>(DefaultDestinations::NEOE()));
-    neoeLimitBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
-    neoeLimitBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
-    neoeLimitBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+    litLimitBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    litLimitBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    litLimitBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
       make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
-    neoeLimitBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
-    neoeLimitBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
-    neoeLimitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(neoeLimitBid.Build());
-    CanvasNodeBuilder neoeLimitAsk(*GetLimitAskOrderTaskNode()->Rename(
-      "NEO Limit Ask")->AddField("max_floor", 111,
+    litLimitBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    litLimitBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    litLimitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(litLimitBid.Build());
+    CanvasNodeBuilder litLimitAsk(*GetLimitAskOrderTaskNode()->Rename(
+      "NEO Lit Limit Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security")));
-    neoeLimitAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+    litLimitAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
       make_unique<DestinationNode>(DefaultDestinations::NEOE()));
-    neoeLimitAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
-    neoeLimitAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
-    neoeLimitAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+    litLimitAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    litLimitAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    litLimitAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
       make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
-    neoeLimitAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
-    neoeLimitAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
-    neoeLimitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(neoeLimitAsk.Build());
-    CanvasNodeBuilder neoeMarketBid(*GetMarketBidOrderTaskNode()->Rename(
-      "NEO Market Bid"));
-    neoeMarketBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+    litLimitAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    litLimitAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    litLimitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(litLimitAsk.Build());
+    CanvasNodeBuilder litMarketBid(*GetMarketBidOrderTaskNode()->Rename(
+      "NEO Lit Market Bid"));
+    litMarketBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
       make_unique<DestinationNode>(DefaultDestinations::NEOE()));
-    neoeMarketBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
-    neoeMarketBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
-    neoeMarketBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+    litMarketBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    litMarketBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    litMarketBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
       make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
-    neoeMarketBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
-    neoeMarketBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
-    neoeMarketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(neoeMarketBid.Build());
-    CanvasNodeBuilder neoeMarketAsk(*GetMarketAskOrderTaskNode()->Rename(
-      "NEO Market Ask"));
-    neoeMarketAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+    litMarketBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    litMarketBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    litMarketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(litMarketBid.Build());
+    CanvasNodeBuilder litMarketAsk(*GetMarketAskOrderTaskNode()->Rename(
+      "NEO Lit Market Ask"));
+    litMarketAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
       make_unique<DestinationNode>(DefaultDestinations::NEOE()));
-    neoeMarketAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
-    neoeMarketAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
-    neoeMarketAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+    litMarketAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    litMarketAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    litMarketAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
       make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
-    neoeMarketAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
-    neoeMarketAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
-    neoeMarketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(neoeMarketAsk.Build());
-    CanvasNodeBuilder neoeBuy(*GetMarketBidOrderTaskNode()->Rename("NEO Buy"));
-    neoeBuy.SetVisible(BaseSingleOrderTaskFactory::QUANTITY, false);
-    neoeBuy.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+    litMarketAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    litMarketAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    litMarketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(litMarketAsk.Build());
+    CanvasNodeBuilder litBuy(*GetMarketBidOrderTaskNode()->Rename(
+      "NEO Lit Buy"));
+    litBuy.SetVisible(BaseSingleOrderTaskFactory::QUANTITY, false);
+    litBuy.Replace(BaseSingleOrderTaskFactory::DESTINATION,
       make_unique<DestinationNode>(DefaultDestinations::NEOE()));
-    neoeBuy.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
-    neoeBuy.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
-    neoeBuy.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+    litBuy.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    litBuy.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    litBuy.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
       make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
-    neoeBuy.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
-    neoeBuy.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
-    neoeBuy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(neoeBuy.Build());
-    CanvasNodeBuilder neoeSell(*GetMarketAskOrderTaskNode()->Rename(
-      "NEO Sell"));
-    neoeSell.SetVisible(BaseSingleOrderTaskFactory::QUANTITY, false);
-    neoeSell.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+    litBuy.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    litBuy.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    litBuy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(litBuy.Build());
+    CanvasNodeBuilder litSell(*GetMarketAskOrderTaskNode()->Rename(
+      "NEO Lit Sell"));
+    litSell.SetVisible(BaseSingleOrderTaskFactory::QUANTITY, false);
+    litSell.Replace(BaseSingleOrderTaskFactory::DESTINATION,
       make_unique<DestinationNode>(DefaultDestinations::NEOE()));
-    neoeSell.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
-    neoeSell.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
-    neoeSell.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+    litSell.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    litSell.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    litSell.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
       make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
-    neoeSell.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
-    neoeSell.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
-    neoeSell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(neoeSell.Build());
-    CanvasNodeBuilder midPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
-      "NEOE Mid Peg Bid")->AddField("exec_inst", 18,
+    litSell.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    litSell.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    litSell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(litSell.Build());
+    CanvasNodeBuilder litMidPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
+      "NEOE Lit Mid Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
-    midPegBid.SetReadOnly("exec_inst", true);
-    midPegBid.SetVisible("exec_inst", false);
-    midPegBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+    litMidPegBid.SetReadOnly("exec_inst", true);
+    litMidPegBid.SetVisible("exec_inst", false);
+    litMidPegBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
       make_unique<DestinationNode>(DefaultDestinations::NEOE()));
-    midPegBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
-    midPegBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
-    midPegBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+    litMidPegBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    litMidPegBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    litMidPegBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
       make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
-    midPegBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
-    midPegBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
-    midPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegBid.Build());
-    CanvasNodeBuilder midPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
-      "NEOE Mid Peg Ask")->AddField("exec_inst", 18,
+    litMidPegBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    litMidPegBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    litMidPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(litMidPegBid.Build());
+    CanvasNodeBuilder litMidPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
+      "NEOE Lit Mid Peg Ask")->AddField("exec_inst", 18,
       make_unique<TextNode>("M")));
-    midPegAsk.SetReadOnly("exec_inst", true);
-    midPegAsk.SetVisible("exec_inst", false);
-    midPegAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+    litMidPegAsk.SetReadOnly("exec_inst", true);
+    litMidPegAsk.SetVisible("exec_inst", false);
+    litMidPegAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
       make_unique<DestinationNode>(DefaultDestinations::NEOE()));
-    midPegAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
-    midPegAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
-    midPegAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+    litMidPegAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    litMidPegAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    litMidPegAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
       make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
-    midPegAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+    litMidPegAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
       false);
-    midPegAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+    litMidPegAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
       true);
-    midPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
-    orderTypes.emplace_back(midPegAsk.Build());
+    litMidPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(litMidPegAsk.Build());
+    CanvasNodeBuilder neoLimitBid(*GetLimitBidOrderTaskNode()->Rename(
+      "NEO Book Limit Bid")->AddField("max_floor", 111,
+      LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+      "ex_destination", 100, make_unique<TextNode>("N")));
+    neoLimitBid.SetReadOnly("ex_destination", true);
+    neoLimitBid.SetVisible("ex_destination", false);
+    neoLimitBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::NEOE()));
+    neoLimitBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    neoLimitBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    neoLimitBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    neoLimitBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    neoLimitBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    neoLimitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(neoLimitBid.Build());
+    CanvasNodeBuilder neoLimitAsk(*GetLimitAskOrderTaskNode()->Rename(
+      "NEO Book Limit Ask")->AddField("max_floor", 111,
+      LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+      "ex_destination", 100, make_unique<TextNode>("N")));
+    neoLimitAsk.SetReadOnly("ex_destination", true);
+    neoLimitAsk.SetVisible("ex_destination", false);
+    neoLimitAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::NEOE()));
+    neoLimitAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    neoLimitAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    neoLimitAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    neoLimitAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    neoLimitAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    neoLimitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(neoLimitAsk.Build());
+    CanvasNodeBuilder neoMarketBid(*GetMarketBidOrderTaskNode()->Rename(
+      "NEO Book Market Bid")->AddField("ex_destination", 100,
+      make_unique<TextNode>("N")));
+    neoMarketBid.SetReadOnly("ex_destination", true);
+    neoMarketBid.SetVisible("ex_destination", false);
+    neoMarketBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::NEOE()));
+    neoMarketBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    neoMarketBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    neoMarketBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    neoMarketBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    neoMarketBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    neoMarketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(neoMarketBid.Build());
+    CanvasNodeBuilder neoMarketAsk(*GetMarketAskOrderTaskNode()->Rename(
+      "NEO Book Market Ask")->AddField("ex_destination", 100,
+      make_unique<TextNode>("N")));
+    neoMarketAsk.SetReadOnly("ex_destination", true);
+    neoMarketAsk.SetVisible("ex_destination", false);
+    neoMarketAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::NEOE()));
+    neoMarketAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    neoMarketAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    neoMarketAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    neoMarketAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    neoMarketAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    neoMarketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(neoMarketAsk.Build());
+    CanvasNodeBuilder neoBuy(*GetMarketBidOrderTaskNode()->Rename(
+      "NEO Book Buy")->AddField("ex_destination", 100,
+      make_unique<TextNode>("N")));
+    neoBuy.SetReadOnly("ex_destination", true);
+    neoBuy.SetVisible("ex_destination", false);
+    neoBuy.SetVisible(BaseSingleOrderTaskFactory::QUANTITY, false);
+    neoBuy.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::NEOE()));
+    neoBuy.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    neoBuy.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    neoBuy.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    neoBuy.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    neoBuy.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    neoBuy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(neoBuy.Build());
+    CanvasNodeBuilder neoSell(*GetMarketAskOrderTaskNode()->Rename(
+      "NEO Book Sell")->AddField("ex_destination", 100,
+      make_unique<TextNode>("N")));
+    neoSell.SetReadOnly("ex_destination", true);
+    neoSell.SetVisible("ex_destination", false);
+    neoSell.SetVisible(BaseSingleOrderTaskFactory::QUANTITY, false);
+    neoSell.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::NEOE()));
+    neoSell.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    neoSell.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    neoSell.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    neoSell.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    neoSell.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    neoSell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(neoSell.Build());
+    CanvasNodeBuilder neoMidPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
+      "NEOE Book Mid Peg Bid")->AddField("exec_inst", 18,
+      make_unique<TextNode>("M"))->AddField("ex_destination", 100,
+      make_unique<TextNode>("N")));
+    neoMidPegBid.SetReadOnly("ex_destination", true);
+    neoMidPegBid.SetVisible("ex_destination", false);
+    neoMidPegBid.SetReadOnly("exec_inst", true);
+    neoMidPegBid.SetVisible("exec_inst", false);
+    neoMidPegBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::NEOE()));
+    neoMidPegBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    neoMidPegBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    neoMidPegBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    neoMidPegBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    neoMidPegBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    neoMidPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(neoMidPegBid.Build());
+    CanvasNodeBuilder neoMidPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
+      "NEOE Book Mid Peg Ask")->AddField("exec_inst", 18,
+      make_unique<TextNode>("M"))->AddField("ex_destination", 100,
+      make_unique<TextNode>("N")));
+    neoMidPegAsk.SetReadOnly("ex_destination", true);
+    neoMidPegAsk.SetVisible("ex_destination", false);
+    neoMidPegAsk.SetReadOnly("exec_inst", true);
+    neoMidPegAsk.SetVisible("exec_inst", false);
+    neoMidPegAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::NEOE()));
+    neoMidPegAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    neoMidPegAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    neoMidPegAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    neoMidPegAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    neoMidPegAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    neoMidPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(neoMidPegAsk.Build());
   }
 
   void PopulateOmegaOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {

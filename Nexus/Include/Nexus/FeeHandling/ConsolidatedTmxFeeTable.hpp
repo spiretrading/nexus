@@ -291,7 +291,7 @@ namespace Nexus {
       auto isInterlisted = Beam::Contains(feeTable.m_interlisted,
         order.GetInfo().m_fields.m_security);
       return CalculateFee(feeTable.m_neoeFeeTable, isInterlisted,
-        executionReport);
+        order.GetInfo().m_fields, executionReport);
     } else if(lastMarket == DefaultMarkets::OMGA()) {
       auto isEtf = Beam::Contains(feeTable.m_etfs,
         order.GetInfo().m_fields.m_security);
