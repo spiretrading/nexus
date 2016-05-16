@@ -98,6 +98,9 @@ neoe:
     [[0.0003, -0.0002],
      [0.0028, -0.0024]]
 
+  neo_book_table:
+    [-0.0015, 0.0018]
+
 # Omega ATS fees based on http://omegaats.com/fees/
 # Fees for notes and debentures are not supported.
 # Table is structured as:
