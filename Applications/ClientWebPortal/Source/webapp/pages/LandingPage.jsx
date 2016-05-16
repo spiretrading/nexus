@@ -7,7 +7,13 @@ define(function(require) {
   class Header extends React.Component {
     render() {
       var burgerStyle = {
-        float: 'left',
+        flexGrow: 0,
+        flexShrink: 0,
+        flexBasis: 'content',
+        display: 'flex',
+        flexDirection: 'row',
+        padding: '15px',
+        borderBottom: '1px solid #f5f5f5'
       };
       return (
         <div style = {burgerStyle}>
@@ -15,8 +21,19 @@ define(function(require) {
             width = {30}
             height = {30}
             background_color = {'transparent'}
-            stroke_color = {'white'}
+            stroke_color = {'#9ac7ea'}
             onClick = {this.props.onMenuClick}
+          />
+          <div
+            style = {{
+              width: '15px',
+              height: '15px'
+            }}
+          />
+          <img
+            src = "/img/spire_header_logo.png"
+            width = "84px"
+            height = "30px"
           />
         </div>);
     }
@@ -25,7 +42,8 @@ define(function(require) {
   class SideMenu extends React.Component {
     render() {
       var menuStyle = {
-        backgroundColor: 'red',
+        backgroundColor: '#2ca1db',
+        width: '200px',
         flexGrow: 0,
         flexShrink: 0,
         flexBasis: 'content',
@@ -139,7 +157,7 @@ define(function(require) {
         flexWrap: 'nowrap'
       };
       var headerStyle = {
-        backgroundColor: 'black',
+        backgroundColor: 'white',
         flexGrow: 0,
         flexShrink: 0,
         flexBasis: 'content'
@@ -151,7 +169,7 @@ define(function(require) {
         flexWrap: 'nowrap'
       };
       var contentStyle = {
-        backgroundColor: 'green',
+        backgroundColor: 'white',
         flexGrow: 1,
         flexShink: 0
       };
