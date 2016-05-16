@@ -46,12 +46,14 @@ const Order& AequitasFixApplication::Submit(const OrderInfo& info) {
       newOrderSingle->setField(UMIR_ACCOUNT_TYPE_TAG, "CL");
       newOrderSingle->setField(UMIR_USER_ID_TAG, GetUmirUserID());
       auto isProtected = true;
+      auto isMidPoint = false;
+      auto isNeoBook = false;
       for(auto& tag : info.m_fields.m_additionalFields) {
         if(tag.GetKey() == FIX::FIELD::ExecInst) {
           if(auto value = boost::get<string>(&tag.GetValue())) {
             if(*value == "M") {
               isProtected = false;
-              newOrderSingle->setField(VISIBILITY_TYPE_TAG, "2");
+              isMidPoint = true;
             }
           } else {
             BOOST_THROW_EXCEPTION(FixOrderRejectedException(
@@ -61,6 +63,9 @@ const Order& AequitasFixApplication::Submit(const OrderInfo& info) {
           if(auto value = boost::get<string>(&tag.GetValue())) {
             FIX::ExDestination destination(*value);
             newOrderSingle->getHeader().setField(destination);
+            if(*value == "N") {
+              isNeoBook = true;
+            }
             break;
           } else {
             BOOST_THROW_EXCEPTION(FixOrderRejectedException(
@@ -70,6 +75,11 @@ const Order& AequitasFixApplication::Submit(const OrderInfo& info) {
       }
       if(isProtected) {
         newOrderSingle->set(FIX::HandlInst('5'));
+      }
+      if(isMidPoint) {
+        if(!isNeoBook) {
+          newOrderSingle->setField(VISIBILITY_TYPE_TAG, "2");
+        }
       }
     });
 }
