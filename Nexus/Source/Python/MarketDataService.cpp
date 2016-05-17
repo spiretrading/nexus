@@ -152,7 +152,7 @@ namespace {
     return new MarketDataServiceTestInstance{std::move(clientWrapper)};
   }
 
-  VirtualMarketDataClient* MarketDataServiceTestInstanceBuildClient(
+  PythonMarketDataClient* MarketDataServiceTestInstanceBuildClient(
       MarketDataServiceTestInstance& instance,
       VirtualServiceLocatorClient& serviceLocatorClient) {
     return instance.BuildClient(Ref(serviceLocatorClient)).release();
