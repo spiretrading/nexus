@@ -1,5 +1,6 @@
 define(function(require) {
   var React = require('react');
+  var Radium = require('radium');
   var BurgerButton = require('app/components/BurgerButton');
   var ProfilesPage = require('app/pages/ProfilesPage');
   var ReportsPage = require('app/pages/ReportsPage');
@@ -20,14 +21,14 @@ define(function(require) {
           <BurgerButton
             width = {30}
             height = {30}
-            background_color = {'transparent'}
-            stroke_color = {'#9ac7ea'}
+            background_color = {"transparent"}
+            stroke_color = {"#9ac7ea"}
             onClick = {this.props.onMenuClick}
           />
           <div
             style = {{
-              width: '15px',
-              height: '15px'
+              width: "15px",
+              height: "15px"
             }}
           />
           <img
@@ -38,6 +39,50 @@ define(function(require) {
         </div>);
     }
   }
+
+  class MenuButton extends React.Component {
+    render() {
+      var buttonStyle = {
+        backgroundColor: '#2ca1db',
+        border: 'none',
+        color: 'white',
+        height: '35px',
+        paddingLeft: '20px',
+        ':hover': {
+          backgroundColor: '#aadaf0'
+        }
+      };
+      var layoutStyle = {
+        flexGrow: 0,
+        flexShrink: 0,
+        flexBasis: 'content',
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+      };
+      return (
+        <button
+            type = "button"
+            style = {buttonStyle}
+            onClick = {this.props.onClick}>
+          <div style = {layoutStyle}>
+            <img
+              src = {this.props.icon}
+              width = "20px"
+              height = "20px"
+            />
+            <div
+              style = {{
+                width: "15px"
+              }}
+            />
+            {this.props.itemName}
+          </div>
+        </button>);
+    }
+  }
+
+  MenuButton = Radium(MenuButton);
 
   class SideMenu extends React.Component {
     render() {
@@ -52,26 +97,26 @@ define(function(require) {
       };
       return (
         <div style = {menuStyle}>
-          <button
-              type = "button"
-              onClick = {this.props.onProfiles}>
-            Profiles
-          </button>
-          <button
-              type = "button"
-              onClick = {this.props.onReports}>
-            Reports
-          </button>
-          <button
-              type = "button"
-              onClick = {this.props.onPortfolio}>
-            Portfolio
-          </button>
-          <button
-              type = "button"
-              onClick = {this.props.onSignOut}>
-            Sign Out
-          </button>
+          <MenuButton
+            icon = "/img/main_menu/profile.svg"
+            itemName = "Profiles"
+            onClick = {this.props.onProfiles}
+          />
+          <MenuButton
+            icon = "/img/main_menu/reports.svg"
+            itemName = "Reports"
+            onClick = {this.props.onReports}
+          />
+          <MenuButton
+            icon = "/img/main_menu/portfolio.svg"
+            itemName = "Portfolio"
+            onClick = {this.props.onPortfolio}
+          />
+          <MenuButton
+            icon = "/img/main_menu/sign_out.svg"
+            itemName = "Sign Out"
+            onClick = {this.props.onSignOut}
+          />
         </div>);
     }
   }

@@ -10,6 +10,8 @@ cp C:/Development/Libraries/requirejs-2.1.22/* ../../Application/webapp/third-pa
 cp C:/Development/Libraries/require-css/css.min.js ../../Application/webapp/third-party/css.js
 START /W CMD /C npm install --save react-router
 cp node_modules/react-router/umd/ReactRouter.min.js ../../Application/webapp/third-party/ReactRouter.js
+START /W CMD /C npm install --save radium
+cp node_modules/radium/dist/radium.min.js ../../Application/webapp/third-party/radium.js
 START /W CMD /C npm install babel-cli babel-preset-es2015 babel-preset-react requirejs
 popd
 
