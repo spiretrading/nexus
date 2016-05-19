@@ -155,7 +155,8 @@ namespace {
   PythonMarketDataClient* MarketDataServiceTestInstanceBuildClient(
       MarketDataServiceTestInstance& instance,
       VirtualServiceLocatorClient& serviceLocatorClient) {
-    return instance.BuildClient(Ref(serviceLocatorClient)).release();
+    return new PythonMarketDataClient{
+      instance.BuildClient(Ref(serviceLocatorClient))};
   }
 }
 
