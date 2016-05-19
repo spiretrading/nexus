@@ -74,6 +74,8 @@ namespace OasisOrderExecutionService {
 
       std::string GetAccount() const;
       std::string GetUmirUserID() const;
+      std::string GetNoTradeFeat() const;
+      std::string GetNoTradeKey() const;
   };
 }
 }

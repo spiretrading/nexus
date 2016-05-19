@@ -24,6 +24,8 @@ namespace {
   const auto AGGRESSOR_INDICATOR_TAG = 1057;
   const auto UMIR_ACCOUNT_TYPE_TAG = 6750;
   const auto UMIR_USER_ID_TAG = 6751;
+  const auto NO_TRADE_FEAT_TAG = 7713;
+  const auto NO_TRADE_KEY_TAG = 7714;
   const auto VISIBILITY_TYPE_TAG = 20000;
 }
 
@@ -80,6 +82,12 @@ const Order& AequitasFixApplication::Submit(const OrderInfo& info) {
         if(!isNeoBook) {
           newOrderSingle->setField(VISIBILITY_TYPE_TAG, "2");
         }
+      }
+      auto noTradeFeat = GetNoTradeFeat();
+      auto noTradeKey = GetNoTradeKey();
+      if(!noTradeFeat.empty() && !noTradeKey.empty()) {
+        newOrderSingle->setField(NO_TRADE_FEAT_TAG, noTradeFeat);
+        newOrderSingle->setField(NO_TRADE_KEY_TAG, noTradeKey);
       }
     });
 }
@@ -158,4 +166,18 @@ string AequitasFixApplication::GetUmirUserID() const {
   if(GetSessionSettings().get(GetSessionId()).has("UMIRUserID")) {
     return GetSessionSettings().get(GetSessionId()).getString("UMIRUserID");
   }
+}
+
+string AequitasFixApplication::GetNoTradeFeat() const {
+  if(GetSessionSettings().get(GetSessionId()).has("NoTradeFeat")) {
+    return GetSessionSettings().get(GetSessionId()).getString("NoTradeFeat");
+  }
+  return {};
+}
+
+string AequitasFixApplication::GetNoTradeKey() const {
+  if(GetSessionSettings().get(GetSessionId()).has("NoTradeKey")) {
+    return GetSessionSettings().get(GetSessionId()).getString("NoTradeKey");
+  }
+  return {};
 }
