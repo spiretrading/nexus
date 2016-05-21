@@ -267,6 +267,12 @@ namespace Compliance {
           searchQueue.pop_front();
           auto parents = m_serviceLocatorClient->LoadParents(frontEntry);
           for(auto& parent : parents) {
+            if(frontEntry.m_type ==
+                Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT) {
+              if(parent.m_name != "traders" && parent.m_name != "managers") {
+                continue;
+              }
+            }
             if(previousParents.insert(parent).second) {
               entry->m_parents.push_back(parent);
               searchQueue.push_back(parent);
