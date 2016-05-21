@@ -77,7 +77,7 @@ namespace Compliance {
   template<typename TimeClient>
   std::unique_ptr<ComplianceRule> MakeOpposingOrderCancellationComplianceRule(
       const std::vector<ComplianceParameter>& parameters,
-      TimeClient&& timeClient) {
+      const TimeClient& timeClient) {
     SecuritySet symbols;
     boost::posix_time::time_duration startPeriod;
     boost::posix_time::time_duration endPeriod;
@@ -99,11 +99,14 @@ namespace Compliance {
           static_cast<int>(boost::get<Quantity>(parameter.m_value)));
       }
     }
-    auto rule = std::make_unique<OpposingOrderCancellationComplianceRule<
-      std::decay_t<TimeClient>>>(timeout, timeClient);
+    auto mapRule = MakeMapSecurityComplianceRule({},
+      [=] (const ComplianceRuleSchema&) {
+        return std::make_unique<OpposingOrderCancellationComplianceRule<
+          std::decay_t<TimeClient>>>(timeout, timeClient);
+      });
     auto timeFilter = std::make_unique<TimeFilterComplianceRule<
       std::decay_t<TimeClient>>>(startPeriod, endPeriod, timeClient,
-      std::move(rule));
+      std::move(mapRule));
     auto symbolFilter = std::make_unique<SecurityFilterComplianceRule>(
       std::move(symbols), std::move(timeFilter));
     return std::move(symbolFilter);
