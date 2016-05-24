@@ -93,7 +93,7 @@ define(function(require) {
       });
   }
 
-  class ProfilesPage extends React.Component {
+  class ProfileTable extends React.Component {
     constructor() {
       super();
       this.state = {
@@ -106,6 +106,64 @@ define(function(require) {
     updateEntries(entries) {
       var profileEntries = entries.map(makeProfileEntry);
       this.setState({entries: profileEntries});
+    }
+
+    render() {
+      var profileTableStyle = {
+        color: 'black',
+        fontSize: '20'
+      };
+      return (
+        <table style = {profileTableStyle}>
+          <tbody>
+          {
+            this.state.entries.map(
+              function(entry) {
+                var components = [];
+                components.push(
+                  <tr key = {entry.entry.id}>
+                    <td>
+                      <ArrowButton
+                        isExpanded = {entry.isExpanded}
+                        onClick = {
+                          function(isExpanded) {
+                            return this.handleTradingGroupToggled(
+                              isExpanded, entry);
+                          }.bind(this)
+                        }
+                      />
+                    </td>
+                    <td>
+                      {entry.entry.name}
+                    </td>
+                  </tr>);
+                if(entry.isExpanded) {
+                  components.push(
+                    <tr>
+                      <td colSpan = "2">
+                        Details
+                      </td>
+                    </tr>);
+                }
+                return components;
+              }.bind(this))
+          }
+          </tbody>
+        </table>);
+    }
+
+    handleTradingGroupToggled(isExpanded, tradingGroup) {
+      tradingGroup.isExpanded = isExpanded;
+      this.forceUpdate();
+    }
+  }
+
+  class ProfilesPage extends React.Component {
+    constructor() {
+      super();
+      this.state = {
+        entries: []
+      };
     }
 
     render() {
@@ -128,10 +186,6 @@ define(function(require) {
         display: 'flex',
         flexDirection: 'row'
       };
-      var filterBarStyle = {
-        width: '625px',
-        height: '28px',
-      };
       var filterBarInputStyle = {
         border: '1px solid #bdc0c2',
         width: '100%',
@@ -139,26 +193,6 @@ define(function(require) {
         background: 'url("/img/magnifying_glass.svg") no-repeat 8px 6px',
         backgroundSize: '22px 22px',
         backgroundPosition: 'right 4px center'
-      };
-      var filterButtonStyle = {
-        backgroundColor: 'white',
-        border: '1px solid #bdc0c2',
-        borderLeft: 'none',
-        color: 'white',
-        width: '28px',
-        height: '28px'
-      };
-      var addUserButtonStyle = {
-        flexGrow: 0,
-        flexBasis: 'content'
-      };
-      var createGroupButtonStyle = {
-        flexGrow: 0,
-        flexBasis: 'content'
-      };
-      var profileTableStyle = {
-        color: 'black',
-        fontSize: '20'
       };
       return (
         <div style = {bodyStyle}>
@@ -177,32 +211,7 @@ define(function(require) {
                 width = "120px" />
             </div>
             <div style = {{height: "15px"}} />
-            <table style = {profileTableStyle}>
-              <tbody>
-              {
-                this.state.entries.map(
-                  function(entry) {
-                    return (
-                      <tr key = {entry.entry.id}>
-                        <td>
-                          <ArrowButton
-                            isExpanded = {entry.isExpanded}
-                            onClick = {
-                              function(isExpanded) {
-                                return this.handleTradingGroupToggled(
-                                  isExpanded, entry);
-                              }.bind(this)
-                            }
-                          />
-                        </td>
-                        <td>
-                          {entry.entry.name}
-                        </td>
-                      </tr>);
-                  }.bind(this))
-              }
-              </tbody>
-            </table>
+            <ProfileTable ref = "profileTable" />
           </div>
         </div>);
     }
@@ -214,12 +223,8 @@ define(function(require) {
         client.loadCurrentAccount());
       tradingGroupsPromise.then(
         function(tradingGroups) {
-          this.updateEntries(tradingGroups);
+          this.refs.profileTable.updateEntries(tradingGroups);
         }.bind(this));
-    }
-
-    handleTradingGroupToggled(isExpanded, tradingGroup) {
-      tradingGroup.isExpanded = isExpanded;
     }
   }
   return ProfilesPage;
