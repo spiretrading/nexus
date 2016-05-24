@@ -1,5 +1,4 @@
 #include "ClientWebPortal/ClientWebPortal/ClientWebPortalServlet.hpp"
-#include <sstream>
 #include <Beam/Json/JsonParser.hpp>
 #include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
 #include <Beam/WebServices/HttpRequest.hpp>
@@ -7,6 +6,7 @@
 #include <Beam/WebServices/HttpServerPredicates.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "ClientWebPortal/ClientWebPortal/ServiceClients.hpp"
+#include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;
@@ -142,6 +142,23 @@ HttpResponse ClientWebPortalServlet::OnLogout(const HttpRequest& request) {
 HttpResponse ClientWebPortalServlet::OnLoadManagedTradingGroups(
     const HttpRequest& request) {
   HttpResponse response;
-  response.SetStatusCode(HttpStatusCode::BAD_REQUEST);
+  auto session = m_sessions.Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = boost::get<JsonObject>(
+    Parse<JsonParser>(request.GetBody()));
+  auto& accountParameter = boost::get<JsonObject>(parameters["account"]);
+  DirectoryEntry account;
+  account.m_name = boost::get<string>(accountParameter["name"]);
+  account.m_id = static_cast<int>(boost::get<int64_t>(accountParameter["id"]));
+  account.m_type = static_cast<DirectoryEntry::Type>(
+    static_cast<int>(boost::get<int64_t>(accountParameter["type"])));
+  response.SetHeader({"Content-Type", "application/json"});
+  auto tradingGroups =
+    m_serviceClients->GetAdministrationClient().LoadManagedTradingGroups(
+    account);
+  response.SetBody(Encode<SharedBuffer>(m_sender, tradingGroups));
   return response;
 }

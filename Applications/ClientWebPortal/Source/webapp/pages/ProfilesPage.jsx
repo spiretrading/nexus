@@ -29,12 +29,83 @@ define(function(require) {
 
   ProfileButton = Radium(ProfileButton);
 
+  class ArrowButton extends React.Component {
+    constructor(props) {
+      super(props);
+      this.state = {
+        isExpanded: this.props.isExpanded
+      };
+      this.handleClick = this.handleClick.bind(this);
+    }
+
+    render() {
+      var direction = function() {
+        if(this.state.isExpanded) {
+          return 'down';
+        } else {
+          return 'side';
+        }
+      }.bind(this)();
+      var buttonStyle = {
+        backgroundColor: 'transparent',
+        border: 'none',
+        width: '20px',
+        height: '20px',
+        backgroundImage: 'url("/img/arrow_' + direction + '_dark.svg")',
+        backgroundSize: '20px 20px',
+        ':hover': {
+          backgroundImage: 'url("/img/arrow_' + direction + '_light.svg")'
+        }
+      };
+      return (
+        <button
+          type = "button"
+          style = {buttonStyle}
+          onClick = {this.handleClick} />);
+    }
+
+    handleClick() {
+      this.setState({isExpanded: !this.state.isExpanded},
+        function() {
+          this.props.onClick(this.state.isExpanded);
+        });
+    }
+  }
+
+  ArrowButton.propTypes =
+    {
+      isExpanded: React.PropTypes.bool,
+      onClick: React.PropTypes.func
+    };
+  ArrowButton.defaultProps =
+    {
+      isExpanded: false,
+      onClick: function(isExpanded) {}
+    };
+
+  ArrowButton = Radium(ArrowButton);
+
+  function makeProfileEntry(entry) {
+    return (
+      {
+        entry: entry,
+        isExpanded: false
+      });
+  }
+
   class ProfilesPage extends React.Component {
     constructor() {
       super();
       this.state = {
         entries: []
       };
+      this.handleTradingGroupToggled = this.handleTradingGroupToggled.bind(
+        this);
+    }
+
+    updateEntries(entries) {
+      var profileEntries = entries.map(makeProfileEntry);
+      this.setState({entries: profileEntries});
     }
 
     render() {
@@ -59,7 +130,7 @@ define(function(require) {
       };
       var filterBarStyle = {
         width: '625px',
-        height: '28px'
+        height: '28px',
       };
       var filterBarInputStyle = {
         border: '1px solid #bdc0c2',
@@ -85,6 +156,10 @@ define(function(require) {
         flexGrow: 0,
         flexBasis: 'content'
       };
+      var profileTableStyle = {
+        color: 'black',
+        fontSize: '20'
+      };
       return (
         <div style = {bodyStyle}>
           <div style = {containerStyle}>
@@ -101,6 +176,33 @@ define(function(require) {
                 itemName = "New Group"
                 width = "120px" />
             </div>
+            <div style = {{height: "15px"}} />
+            <table style = {profileTableStyle}>
+              <tbody>
+              {
+                this.state.entries.map(
+                  function(entry) {
+                    return (
+                      <tr key = {entry.entry.id}>
+                        <td>
+                          <ArrowButton
+                            isExpanded = {entry.isExpanded}
+                            onClick = {
+                              function(isExpanded) {
+                                return this.handleTradingGroupToggled(
+                                  isExpanded, entry);
+                              }.bind(this)
+                            }
+                          />
+                        </td>
+                        <td>
+                          {entry.entry.name}
+                        </td>
+                      </tr>);
+                  }.bind(this))
+              }
+              </tbody>
+            </table>
           </div>
         </div>);
     }
@@ -112,8 +214,12 @@ define(function(require) {
         client.loadCurrentAccount());
       tradingGroupsPromise.then(
         function(tradingGroups) {
-          this.setState({entries : tradingGroups});
+          this.updateEntries(tradingGroups);
         }.bind(this));
+    }
+
+    handleTradingGroupToggled(isExpanded, tradingGroup) {
+      tradingGroup.isExpanded = isExpanded;
     }
   }
   return ProfilesPage;

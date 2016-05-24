@@ -20,7 +20,7 @@ define(['jquery'],
               }
             ).done(
               function(data, status, xhr) {
-                resolve();
+                resolve(data);
               }
             ).fail(
               function(data, xhr, status, err) {
