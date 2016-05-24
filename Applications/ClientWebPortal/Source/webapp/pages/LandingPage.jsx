@@ -1,6 +1,7 @@
 define(function(require) {
-  var React = require('react');
+  var CSS = require('css!app/css/landing_page');
   var Radium = require('radium');
+  var React = require('react');
   var BurgerButton = require('app/components/BurgerButton');
   var ProfilesPage = require('app/pages/ProfilesPage');
   var ReportsPage = require('app/pages/ReportsPage');
@@ -48,6 +49,9 @@ define(function(require) {
         color: 'white',
         height: '35px',
         paddingLeft: '20px',
+        fontFamily: 'Roboto',
+        fontStyle: 'light',
+        fontSize: '16pt',
         ':hover': {
           backgroundColor: '#aadaf0'
         }

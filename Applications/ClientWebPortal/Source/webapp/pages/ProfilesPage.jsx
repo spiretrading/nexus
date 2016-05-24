@@ -1,63 +1,33 @@
 define(function(require) {
+  var CSS = require('css!app/css/landing_page');
+  var Radium = require('radium');
   var React = require('react');
 
-  class AccountStatsTable extends React.Component {
+  class ProfileButton extends React.Component {
     render() {
-      var style = {
-        height: '150px'
+      var buttonStyle = {
+        backgroundColor: '#2ca1db',
+        border: 'none',
+        color: 'white',
+        width: this.props.width,
+        height: '28px',
+        fontFamily: 'Roboto',
+        fontStyle: 'light',
+        ':hover': {
+          backgroundColor: '#aadaf0'
+        }
       };
       return (
-        <div style = {style}>
-          Account Stats<br />
-          Accounts: 100<br />
-          Groups: 123<br />
-          Administrators: 5<br />
-          Managers: 10<br />
-        </div>);
-    }
-  };
-
-  class DirectoryEntryTableEntry extends React.Component {
-    render() {
-      return (
-        <tr key = {this.props.key}>
-          <td>
-            <button type = "button">+</button>{this.props.entry}
-          </td>
-          <td>Group</td>
-        </tr>);
+        <button
+            type = "button"
+            style = {buttonStyle}
+            onClick = {this.props.onClick}>
+          {this.props.itemName}
+        </button>);
     }
   }
 
-  class DirectoryEntryTable extends React.Component {
-    render() {
-      var style = {
-        width: '100%'
-      };
-      var idStyle = {};
-      return (
-        <table style = {style}>
-          <thead>
-            <tr>
-              <th style = {idStyle}>ID</th>
-              <th>Roles</th>
-            </tr>
-          </thead>
-          <tbody>
-            {this.props.entries.map(
-              function(entry, key) {
-                return (
-                  <DirectoryEntryTableEntry
-                    entry = {entry}
-                    key = {key} />
-                );
-              })
-            }
-          </tbody>
-        </table>
-      );
-    }
-  };
+  ProfileButton = Radium(ProfileButton);
 
   class ProfilesPage extends React.Component {
     constructor() {
@@ -68,35 +38,44 @@ define(function(require) {
     }
 
     render() {
-      var containerStyle = {
+      var bodyStyle = {
         width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        flexWrap: 'nowrap',
+        alignItems: 'center'
+      };
+      var containerStyle = {
+        width: '960px',
         display: 'flex',
         flexDirection: 'column',
         flexWrap: 'nowrap'
       };
-      var accountStatsTableStyle = {
-        flexGrow: 0,
-        flexBasis: 'content'
-      };
       var toolbarStyle = {
-        width: '100%',
         flexGrow: 0,
-        flexBasis: 'content',
+        height: '28px',
         display: 'flex',
         flexDirection: 'row'
       };
       var filterBarStyle = {
-        flexGrow: 1
+        width: '625px',
+        height: '28px'
       };
       var filterBarInputStyle = {
-        width: '100%'
+        border: '1px solid #bdc0c2',
+        width: '100%',
+        height: '28px',
+        background: 'url("/img/magnifying_glass.svg") no-repeat 8px 6px',
+        backgroundSize: '22px 22px',
+        backgroundPosition: 'right 4px center'
       };
       var filterButtonStyle = {
-        flexGrow: 0,
-        flexBasis: 'content'
-      };
-      var toolbarSpacerStyle = {
-        flexGrow: 1
+        backgroundColor: 'white',
+        border: '1px solid #bdc0c2',
+        borderLeft: 'none',
+        color: 'white',
+        width: '28px',
+        height: '28px'
       };
       var addUserButtonStyle = {
         flexGrow: 0,
@@ -106,41 +85,22 @@ define(function(require) {
         flexGrow: 0,
         flexBasis: 'content'
       };
-      var tableStyle = {
-        flexGrow: 1
-      };
       return (
-        <div style = {containerStyle}>
-          <div style = {accountStatsTableStyle}>
-            <AccountStatsTable />
-          </div>
-          <div style = {toolbarStyle}>
-            <div style = {filterBarStyle}>
+        <div style = {bodyStyle}>
+          <div style = {containerStyle}>
+            <div style = {toolbarStyle}>
               <input
                 style = {filterBarInputStyle}
-                type = "text"
-                value = "Filter" />
+                type = "text" />
+              <div style = {{width: "15px"}} />
+              <ProfileButton
+                itemName = "New Account"
+                width = "120px" />
+              <div style = {{width: "8px"}} />
+              <ProfileButton
+                itemName = "New Group"
+                width = "120px" />
             </div>
-            <div style = {filterButtonStyle}>
-              <input
-                type = "button"
-                value = "OK" />
-            </div>
-            <div style = {toolbarSpacerStyle} />
-            <div style = {addUserButtonStyle}>
-              <input
-                type = "button"
-                value = "Add User" />
-            </div>
-            <div style = {createGroupButtonStyle}>
-              <input
-                type = "button"
-                value = "Create Group" />
-            </div>
-          </div>
-          <div style = {tableStyle}>
-            <DirectoryEntryTable
-              entries = {this.state.entries} />
           </div>
         </div>);
     }
