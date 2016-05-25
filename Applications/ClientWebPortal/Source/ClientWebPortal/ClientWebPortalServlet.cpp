@@ -40,6 +40,10 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
     bind(&ClientWebPortalServlet::OnLoadCurrentAccount, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/load_trading_group"),
+    bind(&ClientWebPortalServlet::OnLoadTradingGroup, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_managed_trading_groups"),
     bind(&ClientWebPortalServlet::OnLoadManagedTradingGroups, this,
     std::placeholders::_1));
@@ -136,6 +140,32 @@ HttpResponse ClientWebPortalServlet::OnLogout(const HttpRequest& request) {
     return response;
   }
   m_sessions.End(*session);
+  return response;
+}
+
+HttpResponse ClientWebPortalServlet::OnLoadTradingGroup(
+    const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions.Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = boost::get<JsonObject>(
+    Parse<JsonParser>(request.GetBody()));
+  auto& directoryEntryParameter = boost::get<JsonObject>(
+    parameters["directory_entry"]);
+  DirectoryEntry directoryEntry;
+  directoryEntry.m_name = boost::get<string>(directoryEntryParameter["name"]);
+  directoryEntry.m_id = static_cast<int>(boost::get<int64_t>(
+    directoryEntryParameter["id"]));
+  directoryEntry.m_type = static_cast<DirectoryEntry::Type>(
+    static_cast<int>(boost::get<int64_t>(directoryEntryParameter["type"])));
+  response.SetHeader({"Content-Type", "application/json"});
+  auto tradingGroup =
+    m_serviceClients->GetAdministrationClient().LoadTradingGroup(
+    directoryEntry);
+  response.SetBody(Encode<SharedBuffer>(m_sender, tradingGroup));
   return response;
 }
 

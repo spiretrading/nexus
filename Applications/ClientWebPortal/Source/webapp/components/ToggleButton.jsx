@@ -82,10 +82,10 @@ define(['radium', 'react'],
         toggledHighlightedImage: React.PropTypes.string,
 
         /** The width of the image. */
-        width: React.PropTypes.object,
+        width: React.PropTypes.string,
 
         /** The height of the image. */
-        height: React.PropTypes.object,
+        height: React.PropTypes.string,
 
         /** Whether the initial state of the button is toggled. */
         isToggled: React.PropTypes.bool,

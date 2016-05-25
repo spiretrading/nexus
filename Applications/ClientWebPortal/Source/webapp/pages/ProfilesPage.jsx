@@ -11,7 +11,7 @@ define(function(require) {
         border: 'none',
         color: 'white',
         width: this.props.width,
-        height: '28px',
+        height: '32px',
         fontFamily: 'Roboto',
         fontStyle: 'light',
         ':hover': {
@@ -27,8 +27,69 @@ define(function(require) {
         </button>);
     }
   }
-
   ProfileButton = Radium(ProfileButton);
+
+  const TRADER = 1;
+  const MANAGER = 2;
+  const ADMINISTRATOR = 4;
+  const SERVICE_PROVIDER = 8;
+
+  function makeGroupEntry(directoryEntry, roles) {
+    return (
+      {
+        directoryEntry: directoryEntry,
+        roles: roles,
+      });
+  }
+
+  class GroupTable extends React.Component {
+    constructor(props) {
+      super(props);
+      this.state = {
+        entries: []
+      };
+    }
+
+    render() {
+      var groupTableStyle = {
+        color: 'black',
+        fontSize: '20'
+      };
+      return (
+        <table style = {groupTableStyle}>
+          <tbody>
+          {
+            this.state.entries.map(
+              function(entry) {
+                return (
+                  <tr key = {entry.directoryEntry.id}>
+                    <td>
+                      {entry.directoryEntry.name}
+                    </td>
+                  </tr>);
+              }.bind(this))
+          }
+          </tbody>
+        </table>);
+    }
+
+    componentDidMount() {
+      var client = this.props.client;
+      var tradingGroupPromise = client.administrationClient.loadTradingGroup(
+        this.props.group);
+      tradingGroupPromise.then(
+        function(tradingGroup) {
+          var managers = tradingGroup.managers.map(makeGroupEntry, MANAGER);
+          var traders = tradingGroup.traders.map(makeGroupEntry, TRADER);
+          var entries = managers.concat(traders);
+          entries.sort(
+            function(left, right) {
+              return left.directoryEntry.name < right.directoryEntry.name;
+            });
+          this.setState({entries: entries});
+        }.bind(this));
+    }
+  }
 
   function makeProfileEntry(entry) {
     return (
@@ -92,7 +153,9 @@ define(function(require) {
                   components.push(
                     <tr>
                       <td colSpan = "2">
-                        Details
+                        <GroupTable
+                          client = {this.props.client}
+                          group = {entry.entry} />
                       </td>
                     </tr>);
                 }
@@ -162,7 +225,9 @@ define(function(require) {
                 width = "120px" />
             </div>
             <div style = {{height: "15px"}} />
-            <ProfileTable ref = "profileTable" />
+            <ProfileTable
+              ref = "profileTable"
+              client = {this.props.application.client} />
           </div>
         </div>);
     }

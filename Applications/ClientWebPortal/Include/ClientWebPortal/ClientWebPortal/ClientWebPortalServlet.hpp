@@ -55,6 +55,8 @@ namespace ClientWebPortal {
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLogout(
         const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadTradingGroup(
+        const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadManagedTradingGroups(
         const Beam::WebServices::HttpRequest& request);
   };
