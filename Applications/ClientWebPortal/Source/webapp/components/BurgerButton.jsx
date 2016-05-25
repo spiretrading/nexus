@@ -29,16 +29,25 @@ define(['react', 'react-dom', 'jquery'],
       }
 
       render() {
+        var style = {
+          border: 0,
+          backgroundColor: 'transparent'
+        };
         return (
-          <canvas
-            width = {this.props.width}
-            height = {this.props.height}
-            ref = {
-              function(ref) {
-                this.target = ref;
-              }.bind(this)
-            }
-          />
+          <button
+              type = "button"
+              style = {style}
+              onClick = {this.props.onClick}>
+            <canvas
+              ref = {
+                function(ref) {
+                  this.target = ref;
+                }.bind(this)
+              }
+              width = {this.props.width}
+              height = {this.props.height}
+            />
+          </button>
         );
       }
 
