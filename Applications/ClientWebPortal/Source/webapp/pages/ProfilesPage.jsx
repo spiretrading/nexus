@@ -53,18 +53,48 @@ define(function(require) {
     render() {
       var groupTableStyle = {
         color: 'black',
-        fontSize: '20'
+        fontSize: '20',
+        padding: '0px 0px 0px 35px',
+        tableLayout: 'fixed',
+        width: '870px'
+      };
+      var iconStyle = {
+        display: 'flex',
+        flexDirection: 'row'
       };
       return (
         <table style = {groupTableStyle}>
+          <colgroup>
+            <col width = "790px" />
+            <col width = "80px" />
+          </colgroup>
           <tbody>
           {
             this.state.entries.map(
               function(entry) {
                 return (
                   <tr key = {entry.directoryEntry.id}>
-                    <td>
+                    <td style = {{ textAlign: "left" }}>
                       {entry.directoryEntry.name}
+                    </td>
+                    <td style = {{ float: "right" }}>
+                      <div style = {iconStyle}>
+                        <img
+                          src = "/img/roles/trader_black.png"
+                          height = "18px" />
+                        <div style = {{width: "8px"}} />
+                        <img
+                          src = "/img/roles/manager_black.png"
+                          height = "18px" />
+                        <div style = {{width: "8px"}} />
+                        <img
+                          src = "/img/roles/admin_black.png"
+                          height = "18px" />
+                        <div style = {{width: "8px"}} />
+                        <img
+                          src = "/img/roles/server_black.png"
+                          height = "18px" />
+                      </div>
                     </td>
                   </tr>);
               }.bind(this))
@@ -86,6 +116,16 @@ define(function(require) {
             function(left, right) {
               return left.directoryEntry.name < right.directoryEntry.name;
             });
+          var i = 1;
+          while(i < entries.length) {
+            if(entries[i].directoryEntry.id ==
+                entries[i - 1].directoryEntry.id) {
+              entries[i - 1].roles = entries[i - 1].roles | entries[i].roles;
+              entries.splice(i, 1);
+            } else {
+              ++i;
+            }
+          }
           this.setState({entries: entries});
         }.bind(this));
     }
@@ -117,10 +157,16 @@ define(function(require) {
     render() {
       var profileTableStyle = {
         color: 'black',
-        fontSize: '20'
+        fontSize: '20',
+        tableLayout: 'fixed',
+        width: '905px'
       };
       return (
         <table style = {profileTableStyle}>
+          <colgroup>
+            <col width = "20px" />
+            <col width = "885px" />
+          </colgroup>
           <tbody>
           {
             this.state.entries.map(
@@ -128,7 +174,7 @@ define(function(require) {
                 var components = [];
                 components.push(
                   <tr key = {entry.entry.id}>
-                    <td>
+                    <td style = {{ padding: "0 15px 0 0" }}>
                       <ToggleButton
                         baseImage = "/img/arrow_side_dark.svg"
                         baseHighlightedImage = "/img/arrow_side_light.svg"
@@ -145,7 +191,7 @@ define(function(require) {
                         }
                       />
                     </td>
-                    <td>
+                    <td style = {{ textAlign: "left" }}>
                       {entry.entry.name}
                     </td>
                   </tr>);
