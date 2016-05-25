@@ -2,6 +2,7 @@ define(function(require) {
   var CSS = require('css!app/css/landing_page');
   var Radium = require('radium');
   var React = require('react');
+  var ToggleButton = require('app/components/ToggleButton');
 
   class ProfileButton extends React.Component {
     render() {
@@ -28,62 +29,6 @@ define(function(require) {
   }
 
   ProfileButton = Radium(ProfileButton);
-
-  class ArrowButton extends React.Component {
-    constructor(props) {
-      super(props);
-      this.state = {
-        isExpanded: this.props.isExpanded
-      };
-      this.handleClick = this.handleClick.bind(this);
-    }
-
-    render() {
-      var direction = function() {
-        if(this.state.isExpanded) {
-          return 'down';
-        } else {
-          return 'side';
-        }
-      }.bind(this)();
-      var buttonStyle = {
-        backgroundColor: 'transparent',
-        border: 'none',
-        width: '20px',
-        height: '20px',
-        backgroundImage: 'url("/img/arrow_' + direction + '_dark.svg")',
-        backgroundSize: '20px 20px',
-        ':hover': {
-          backgroundImage: 'url("/img/arrow_' + direction + '_light.svg")'
-        }
-      };
-      return (
-        <button
-          type = "button"
-          style = {buttonStyle}
-          onClick = {this.handleClick} />);
-    }
-
-    handleClick() {
-      this.setState({isExpanded: !this.state.isExpanded},
-        function() {
-          this.props.onClick(this.state.isExpanded);
-        });
-    }
-  }
-
-  ArrowButton.propTypes =
-    {
-      isExpanded: React.PropTypes.bool,
-      onClick: React.PropTypes.func
-    };
-  ArrowButton.defaultProps =
-    {
-      isExpanded: false,
-      onClick: function(isExpanded) {}
-    };
-
-  ArrowButton = Radium(ArrowButton);
 
   function makeProfileEntry(entry) {
     return (
@@ -123,7 +68,13 @@ define(function(require) {
                 components.push(
                   <tr key = {entry.entry.id}>
                     <td>
-                      <ArrowButton
+                      <ToggleButton
+                        baseImage = "/img/arrow_side_dark.svg"
+                        baseHighlightedImage = "/img/arrow_side_light.svg"
+                        toggledImage = "/img/arrow_down_dark.svg"
+                        toggledHighlightedImage = "/img/arrow_down_light.svg"
+                        width = "20px"
+                        height = "20px"
                         isExpanded = {entry.isExpanded}
                         onClick = {
                           function(isExpanded) {
