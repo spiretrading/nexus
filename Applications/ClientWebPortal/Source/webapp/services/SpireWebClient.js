@@ -1,8 +1,11 @@
-define(['jquery'],
-  function($) {
+define(['jquery', 'app/services/AdministrationClient'],
+  function($, AdministrationClient) {
 
-    /** Exposes Spire web services */
+    /** Exposes Spire web services. */
     class SpireWebClient {
+      constructor() {
+        this.administrationClient_ = new AdministrationClient();
+      }
 
       /** Loads the DirectoryEntry of the account currently logged in. */
       loadCurrentAccount() {
@@ -19,15 +22,13 @@ define(['jquery'],
               },
             error:
               function(data, xhr, status, err) {
-                result =
-                  {
-                    id: -1,
-                    type: -1,
-                    name: ''
-                  };
+                result = {
+                  id: -1,
+                  type: -1,
+                  name: ''
+                };
               }
           });
-        console.log(result);
         return result;
       }
 
@@ -48,9 +49,6 @@ define(['jquery'],
               }
             ).done(
               function(data, status, xhr) {
-                console.log(document.cookie);
-                var headers = xhr.getAllResponseHeaders();
-                console.log(headers);
                 resolve(data);
               }.bind(this)
             ).fail(
@@ -78,6 +76,11 @@ define(['jquery'],
                 reject();
               });
           });
+      }
+
+      /** Returns the AdministrationClient. */
+      get administrationClient() {
+        return this.administrationClient_
       }
     }
     return SpireWebClient;

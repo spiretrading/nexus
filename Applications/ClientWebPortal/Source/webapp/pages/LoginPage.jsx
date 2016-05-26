@@ -32,7 +32,7 @@ define(function(require) {
         return;
       }
       this.setState({submitted: true});
-      this.props.client.login(username, password).then(
+      this.props.application.client.login(username, password).then(
         function() {
           this.setState({ submitted : false });
           this.props.success();
@@ -103,8 +103,8 @@ define(function(require) {
   LoginPage.propTypes =
     {
 
-      /** The SpireWebClient to use. */
-      client: React.PropTypes.object.isRequired,
+      /** The top-level ApplicationPage. */
+      application: React.PropTypes.object.isRequired,
 
       /** The function to call on success. */
       success: React.PropTypes.func.isRequired,
