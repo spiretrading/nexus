@@ -125,6 +125,10 @@ namespace Accounting {
       return;
     }
     const auto& securityEntry = securityEntryIterator->second;
+    if(!securityEntry.m_valuation.m_askValue.is_initialized() ||
+        !securityEntry.m_valuation.m_bidValue.is_initialized()) {
+      return;
+    }
     UpdateEntry update;
     update.m_securityInventory = m_portfolio->GetBookkeeper().GetInventory(
       security, securityEntry.m_valuation.m_currency);
