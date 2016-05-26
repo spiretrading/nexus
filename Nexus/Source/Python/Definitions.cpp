@@ -26,6 +26,7 @@
 #include "Nexus/Definitions/OrderType.hpp"
 #include "Nexus/Definitions/Quote.hpp"
 #include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/SecurityTechnicals.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/Tag.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
@@ -290,6 +291,7 @@ void Nexus::Python::ExportDefinitions() {
   ExportDefaultCurrencies();
   ExportDefaultDestinations();
   ExportDefaultMarkets();
+  ExportSecurityTechnicals();
 }
 
 void Nexus::Python::ExportExchangeRate() {
@@ -467,6 +469,13 @@ void Nexus::Python::ExportSecurity() {
   def("parse_security",
     static_cast<Security (*)(const string&)>(&ParseSecurity));
   ExportFixedString<4>();
+}
+
+void Nexus::Python::ExportSecurityTechnicals() {
+  class_<SecurityTechnicals>("SecurityTechnicals", init<>())
+    .def_readwrite("volume", &SecurityTechnicals::m_volume)
+    .def_readwrite("high", &SecurityTechnicals::m_high)
+    .def_readwrite("low", &SecurityTechnicals::m_low);
 }
 
 void Nexus::Python::ExportSide() {
