@@ -35,6 +35,8 @@ namespace MarketDataService {
   template<typename MarketDataClientType> class RealTimeMarketDataPublisher;
   class SecurityEntry;
   struct SecuritySnapshot;
+  template<typename HistoricalDataStoreType>
+    class SessionCachedHistoricalDataStore;
   class VirtualMarketDataClient;
   class VirtualMarketDataFeedClient;
   template<typename ClientType> class WrapperMarketDataClient;
