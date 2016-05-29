@@ -84,8 +84,7 @@ namespace MarketDataService {
       using DataStore = Beam::Queries::SessionCachedDataStore<
         HistoricalDataStoreQueryWrapper<T, HistoricalDataStore*>,
         Queries::EvaluatorTranslator>;
-      typename Beam::OptionalLocalPtr<HistoricalDataStoreType>::type
-        m_dataStore;
+      Beam::GetOptionalLocalPtr<HistoricalDataStoreType> m_dataStore;
       DataStore<OrderImbalance> m_orderImbalanceDataStore;
       DataStore<BboQuote> m_bboQuoteDataStore;
       DataStore<BookQuote> m_bookQuoteDataStore;
