@@ -85,7 +85,6 @@ namespace MarketDataService {
         HistoricalDataStoreQueryWrapper<T, HistoricalDataStore*>,
         Queries::EvaluatorTranslator>;
       Beam::GetOptionalLocalPtr<HistoricalDataStoreType> m_dataStore;
-      DataStore<OrderImbalance> m_orderImbalanceDataStore;
       DataStore<BboQuote> m_bboQuoteDataStore;
       DataStore<BookQuote> m_bookQuoteDataStore;
       DataStore<MarketQuote> m_marketQuoteDataStore;
@@ -101,10 +100,9 @@ namespace MarketDataService {
       SessionCachedHistoricalDataStore(HistoricalDataStoreForward&& dataStore,
       int blockSize)
       : m_dataStore{std::forward<HistoricalDataStoreForward>(dataStore)},
-        m_orderImbalanceDataStore{&*m_dataStore, blockSize},
-        m_bboQuoteDataStore{&*m_dataStore, blockSize},
-        m_bookQuoteDataStore{&*m_dataStore, blockSize},
-        m_marketQuoteDataStore{&*m_dataStore, blockSize},
+        m_bboQuoteDataStore{&*m_dataStore, blockSize / 10},
+        m_bookQuoteDataStore{&*m_dataStore, blockSize / 10},
+        m_marketQuoteDataStore{&*m_dataStore, blockSize / 10},
         m_timeAndSaleDataStore{&*m_dataStore, blockSize} {}
 
   template<typename HistoricalDataStoreType>
@@ -118,7 +116,7 @@ namespace MarketDataService {
       HistoricalDataStoreType>::LoadInitialSequences(MarketCode market) {
     MarketEntry::InitialSequences initialSequences;
     initialSequences.m_nextOrderImbalanceSequence =
-      m_orderImbalanceDataStore.LoadInitialSequence(market);
+      m_dataStore->LoadInitialSequences(market).m_nextOrderImbalanceSequence;
     return initialSequences;
   }
 
@@ -141,7 +139,7 @@ namespace MarketDataService {
   std::vector<SequencedOrderImbalance> SessionCachedHistoricalDataStore<
       HistoricalDataStoreType>::LoadOrderImbalances(
       const MarketWideDataQuery& query) {
-    return m_orderImbalanceDataStore.Load(query);
+    return m_dataStore->LoadOrderImbalances(query);
   }
 
   template<typename HistoricalDataStoreType>
@@ -175,13 +173,13 @@ namespace MarketDataService {
   template<typename HistoricalDataStoreType>
   void SessionCachedHistoricalDataStore<HistoricalDataStoreType>::Store(
       const SequencedMarketOrderImbalance& orderImbalance) {
-    m_orderImbalanceDataStore.Store(orderImbalance);
+    m_dataStore->Store(orderImbalance);
   }
 
   template<typename HistoricalDataStoreType>
   void SessionCachedHistoricalDataStore<HistoricalDataStoreType>::Store(
       const std::vector<SequencedMarketOrderImbalance>& orderImbalances) {
-    m_orderImbalanceDataStore.Store(orderImbalances);
+    m_dataStore->Store(orderImbalances);
   }
 
   template<typename HistoricalDataStoreType>
@@ -239,7 +237,6 @@ namespace MarketDataService {
     }
     try {
       m_dataStore->Open();
-      m_orderImbalanceDataStore.Open();
       m_bboQuoteDataStore.Open();
       m_bookQuoteDataStore.Open();
       m_marketQuoteDataStore.Open();
@@ -265,7 +262,6 @@ namespace MarketDataService {
     m_marketQuoteDataStore.Close();
     m_bookQuoteDataStore.Close();
     m_bboQuoteDataStore.Close();
-    m_orderImbalanceDataStore.Close();
     m_dataStore->Close();
     m_openState.SetClosed();
   }
