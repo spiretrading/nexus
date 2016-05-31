@@ -1,10 +1,8 @@
 #ifndef SPIRE_SECURITYTECHNICALSMODEL_HPP
 #define SPIRE_SECURITYTECHNICALSMODEL_HPP
-#include <tuple>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/TaskQueue.hpp>
 #include <Beam/Threading/Sync.hpp>
-#include <boost/optional/optional.hpp>
 #include <boost/signals2/signal.hpp>
 #include <QObject>
 #include <QTimer>
@@ -110,8 +108,8 @@ namespace Spire {
     private:
       UserProfile* m_userProfile;
       std::shared_ptr<Beam::Threading::Sync<bool>> m_loadTechnicalsFlag;
-      std::tuple<Nexus::Money, int> m_lastOpen;
-      std::tuple<Nexus::Money, int> m_lastClose;
+      Nexus::Money m_open;
+      Nexus::Money m_close;
       Nexus::Money m_high;
       Nexus::Money m_low;
       Nexus::Quantity m_volume;
@@ -124,7 +122,9 @@ namespace Spire {
       mutable Beam::TaskQueue m_slotHandler;
 
       void OnOpenUpdate(const Nexus::TimeAndSale& open);
-      void OnTimeAndSale(const Nexus::TimeAndSale& timeAndSale);
+      void OnHighUpdate(const Nexus::Queries::QueryVariant& volume);
+      void OnLowUpdate(const Nexus::Queries::QueryVariant& volume);
+      void OnVolumeUpdate(const Nexus::Queries::QueryVariant& volume);
       void OnUpdateTimer();
   };
 }

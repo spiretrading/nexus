@@ -103,7 +103,6 @@ namespace TechnicalAnalysis {
     \param timeZoneDatabase The database of timezones.
     \param marketCenter The market center used to determine the closing trade.
     \param queue The Queue to store the opening trade in.
-    \return The opening trade for the specified <i>security</i>.
   */
   template<typename MarketDataClient>
   void QueryOpen(MarketDataClient& client, const Security& security,
@@ -217,7 +216,7 @@ namespace TechnicalAnalysis {
   /*!
     \param security The Security to query.
     \param startDay The day to begin the high query.
-    \param startDay The day to end the high query.
+    \param endDay The day to end the high query.
     \param marketDatabase The database containing Market info.
     \param timeZoneDatabase The database of timezones.
     \return A SecurityChartingQuery that can be used to retrieve the
@@ -256,6 +255,28 @@ namespace TechnicalAnalysis {
       Beam::Queries::ExpressionQuery::UpdatePolicy::CHANGE);
     highQuery.SetExpression(highExpression);
     return highQuery;
+  }
+
+  //! Submits a query for a Security's high price.
+  /*!
+    \param client The ChartingClient to submit the query to.
+    \param security The Security to query.
+    \param startDay The day to begin the high query.
+    \param endDay The day to end the high query.
+    \param marketDatabase The database containing Market info.
+    \param timeZoneDatabase The database of timezones.
+    \param queue The Queue to store the high price in.
+  */
+  template<typename ChartingClient>
+  void QueryDailyHigh(ChartingClient& client, const Security& security,
+      const boost::posix_time::ptime& startDay,
+      const boost::posix_time::ptime& endDay,
+      const MarketDatabase& marketDatabase,
+      const boost::local_time::tz_database& timeZoneDatabase,
+      const std::shared_ptr<Beam::QueueWriter<Queries::QueryVariant>>& queue) {
+    auto query = BuildDailyHighQuery(security, startDay, endDay, marketDatabase,
+      timeZoneDatabase);
+    client.QuerySecurity(query, queue);
   }
 
   //! Builds a query for a Security's low price.
@@ -303,6 +324,28 @@ namespace TechnicalAnalysis {
     return lowQuery;
   }
 
+  //! Submits a query for a Security's low price.
+  /*!
+    \param client The ChartingClient to submit the query to.
+    \param security The Security to query.
+    \param startDay The day to begin the low query.
+    \param endDay The day to end the low query.
+    \param marketDatabase The database containing Market info.
+    \param timeZoneDatabase The database of timezones.
+    \param queue The Queue to store the low price in.
+  */
+  template<typename ChartingClient>
+  void QueryDailyLow(ChartingClient& client, const Security& security,
+      const boost::posix_time::ptime& startDay,
+      const boost::posix_time::ptime& endDay,
+      const MarketDatabase& marketDatabase,
+      const boost::local_time::tz_database& timeZoneDatabase,
+      const std::shared_ptr<Beam::QueueWriter<Queries::QueryVariant>>& queue) {
+    auto query = BuildDailyLowQuery(security, startDay, endDay, marketDatabase,
+      timeZoneDatabase);
+    client.QuerySecurity(query, queue);
+  }
+
   //! Builds a query over a Security's volume.
   /*!
     \param security The Security to query.
@@ -345,6 +388,28 @@ namespace TechnicalAnalysis {
       Beam::Queries::ExpressionQuery::UpdatePolicy::CHANGE);
     volumeQuery.SetExpression(volumeExpression);
     return volumeQuery;
+  }
+
+  //! Submits a query for a Security's daily volume.
+  /*!
+    \param client The ChartingClient to submit the query to.
+    \param security The Security to query.
+    \param startDay The day to begin the volume query.
+    \param endDay The day to end the volume query.
+    \param marketDatabase The database containing Market info.
+    \param timeZoneDatabase The database of timezones.
+    \param queue The Queue to store the volume in.
+  */
+  template<typename ChartingClient>
+  void QueryDailyVolume(ChartingClient& client, const Security& security,
+      const boost::posix_time::ptime& startDay,
+      const boost::posix_time::ptime& endDay,
+      const MarketDatabase& marketDatabase,
+      const boost::local_time::tz_database& timeZoneDatabase,
+      const std::shared_ptr<Beam::QueueWriter<Queries::QueryVariant>>& queue) {
+    auto query = BuildDailyVolumeQuery(security, startDay, endDay,
+      marketDatabase, timeZoneDatabase);
+    client.QuerySecurity(query, queue);
   }
 }
 }
