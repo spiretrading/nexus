@@ -232,6 +232,9 @@ namespace MarketDataService {
 
   inline boost::optional<SequencedSecurityTimeAndSale> SecurityEntry::
       PublishTimeAndSale(const TimeAndSale& timeAndSale, int sourceId) {
+    if(m_technicals.m_open == Money::ZERO) {
+      m_technicals.m_open = timeAndSale.m_price;
+    }
     if(m_technicals.m_high == Money::ZERO ||
         timeAndSale.m_price > m_technicals.m_high) {
       m_technicals.m_high = timeAndSale.m_price;
