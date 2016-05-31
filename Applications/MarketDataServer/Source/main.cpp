@@ -26,6 +26,7 @@
 #include "Nexus/MarketDataService/MarketDataRegistry.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServlet.hpp"
 #include "Nexus/MarketDataService/MySqlHistoricalDataStore.hpp"
+#include "Nexus/MarketDataService/SessionCachedHistoricalDataStore.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;
@@ -50,14 +51,16 @@ namespace {
   using RegistryServletContainer =
     ServiceProtocolServletContainer<MetaAuthenticationServletAdapter<
     MetaMarketDataRegistryServlet<MarketDataRegistry*,
-    BufferedHistoricalDataStore<MySqlHistoricalDataStore*>,
+    SessionCachedHistoricalDataStore<
+    BufferedHistoricalDataStore<MySqlHistoricalDataStore*>*>,
     ApplicationServiceLocatorClient::Client>,
     ApplicationServiceLocatorClient::Client*, NativePointerPolicy>,
     TcpServerSocket, BinarySender<SharedBuffer>, NullEncoder,
     std::shared_ptr<LiveTimer>>;
   using BaseRegistryServlet =
     MarketDataRegistryServlet<RegistryServletContainer, MarketDataRegistry*,
-    BufferedHistoricalDataStore<MySqlHistoricalDataStore*>,
+    SessionCachedHistoricalDataStore<
+    BufferedHistoricalDataStore<MySqlHistoricalDataStore*>*>,
     ApplicationServiceLocatorClient::Client>;
   using FeedServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<
@@ -224,20 +227,23 @@ int main(int argc, const char** argv) {
   }
   MySqlHistoricalDataStore historicalDataStore{mySqlConfig.m_address,
     mySqlConfig.m_schema, mySqlConfig.m_username, mySqlConfig.m_password};
+  optional<BufferedHistoricalDataStore<MySqlHistoricalDataStore*>>
+    bufferedDataStore;
   MarketDataRegistry marketDataRegistry;
   optional<BaseRegistryServlet> baseRegistryServlet;
   try {
     auto entitlements = administrationClient->LoadEntitlements();
     PopulateRegistrySecurityInfo(Store(marketDataRegistry),
       definitionsClient->LoadMarketDatabase());
-    auto cacheBlockSize = Extract<int>(config, "cache_block_size", 10000);
+    auto cacheBlockSize = Extract<int>(config, "cache_block_size", 1000);
     auto historicalBufferSize = static_cast<size_t>(Extract<int>(config,
       "historical_buffer_size", 100000));
     auto threadCount = static_cast<size_t>(Extract<int>(config,
       "database_threads", boost::thread::hardware_concurrency()));
+    bufferedDataStore.emplace(&historicalDataStore, historicalBufferSize,
+      Ref(threadPool));
     baseRegistryServlet.emplace(entitlements, Ref(*serviceLocatorClient),
-      &marketDataRegistry, Initialize(&historicalDataStore,
-      historicalBufferSize, Ref(threadPool)));
+      &marketDataRegistry, Initialize(&*bufferedDataStore, cacheBlockSize));
   } catch(const std::exception& e) {
     cerr << "Error initializing server: " << e.what() << endl;
     return -1;

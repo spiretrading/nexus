@@ -19,14 +19,18 @@ namespace Nexus {
     //! The day's lowest TimeAndSale price.
     Money m_low;
 
+    //! The day's opening price.
+    Money m_open;
+
+    //! The previous day's closing price.
+    Money m_close;
+
     //! Constructs a default initialized instance.
     SecurityTechnicals();
   };
 
   inline SecurityTechnicals::SecurityTechnicals()
-      : m_volume(0),
-        m_high(Money::ZERO),
-        m_low(Money::ZERO) {}
+      : m_volume(0) {}
 }
 
 namespace Beam {
@@ -39,6 +43,8 @@ namespace Serialization {
       shuttle.Shuttle("volume", value.m_volume);
       shuttle.Shuttle("high", value.m_high);
       shuttle.Shuttle("low", value.m_low);
+      shuttle.Shuttle("open", value.m_open);
+      shuttle.Shuttle("close", value.m_close);
     }
   };
 }

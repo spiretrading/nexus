@@ -95,32 +95,16 @@ SecurityTechnicalsModel::~SecurityTechnicalsModel() {
 
 connection SecurityTechnicalsModel::ConnectOpenSignal(
     const OpenSignal::slot_type& slot) const {
-  auto sequence = std::get<1>(m_lastOpen);
-  if(sequence != 0) {
-    m_slotHandler.Push(
-      [=] {
-        if(sequence != std::get<1>(m_lastOpen)) {
-          return;
-        }
-        // TODO: Race condition, slot might be unavailable.
-        slot(std::get<0>(m_lastOpen));
-      });
+  if(m_open != Money::ZERO) {
+    slot(m_open);
   }
   return m_openSignal.connect(slot);
 }
 
 connection SecurityTechnicalsModel::ConnectCloseSignal(
     const CloseSignal::slot_type& slot) const {
-  auto sequence = std::get<1>(m_lastClose);
-  if(sequence != 0) {
-    m_slotHandler.Push(
-      [=] {
-        if(sequence != std::get<1>(m_lastClose)) {
-          return;
-        }
-        // TODO: Race condition, slot might be unavailable.
-        slot(std::get<0>(m_lastClose));
-      });
+  if(m_close != Money::ZERO) {
+    slot(m_close);
   }
   return m_closeSignal.connect(slot);
 }
@@ -128,12 +112,7 @@ connection SecurityTechnicalsModel::ConnectCloseSignal(
 connection SecurityTechnicalsModel::ConnectHighSignal(
     const HighSignal::slot_type& slot) const {
   if(m_high != Money::ZERO) {
-    m_slotHandler.Push(
-      [=] {
-
-        // TODO: Race condition, slot might be unavailable.
-        slot(m_high);
-      });
+    slot(m_high);
   }
   return m_highSignal.connect(slot);
 }
@@ -141,24 +120,14 @@ connection SecurityTechnicalsModel::ConnectHighSignal(
 connection SecurityTechnicalsModel::ConnectLowSignal(
     const LowSignal::slot_type& slot) const {
   if(m_low != Money::ZERO) {
-    m_slotHandler.Push(
-      [=] {
-
-        // TODO: Race condition, slot might be unavailable.
-        slot(m_low);
-      });
+    slot(m_low);
   }
   return m_lowSignal.connect(slot);
 }
 
 connection SecurityTechnicalsModel::ConnectVolumeSignal(
     const VolumeSignal::slot_type& slot) const {
-  m_slotHandler.Push(
-    [=] {
-
-      // TODO: Race condition, slot might be unavailable.
-      slot(m_volume);
-    });
+  slot(m_volume);
   return m_volumeSignal.connect(slot);
 }
 
@@ -170,13 +139,6 @@ SecurityTechnicalsModel::SecurityTechnicalsModel(
   if(security == Security()) {
     return;
   }
-  auto loadTechnicalsFlag = m_loadTechnicalsFlag;
-  auto selfUserProfile = m_userProfile;
-  QueryOpen(m_userProfile->GetServiceClients().GetMarketDataClient(), security,
-    m_userProfile->GetServiceClients().GetTimeClient().GetTime(),
-    m_userProfile->GetMarketDatabase(), m_userProfile->GetTimeZoneDatabase(),
-    "", m_slotHandler.GetSlot<TimeAndSale>(std::bind(
-    &SecurityTechnicalsModel::OnOpenUpdate, this, std::placeholders::_1)));
   SecurityMarketDataQuery timeAndSaleQuery;
   timeAndSaleQuery.SetIndex(security);
   timeAndSaleQuery.SetRange(Beam::Queries::Range::RealTime());
@@ -185,13 +147,9 @@ SecurityTechnicalsModel::SecurityTechnicalsModel(
     timeAndSaleQuery, m_slotHandler.GetSlot<TimeAndSale>(std::bind(
     &SecurityTechnicalsModel::OnTimeAndSale, this, std::placeholders::_1)));
   Spawn(
-    [=] {
-      auto close = LoadPreviousClose(
-        selfUserProfile->GetServiceClients().GetMarketDataClient(), security,
-        selfUserProfile->GetServiceClients().GetTimeClient().GetTime(),
-        selfUserProfile->GetMarketDatabase(),
-        selfUserProfile->GetTimeZoneDatabase(), "");
-      auto securityTechnicals = selfUserProfile->GetServiceClients().
+    [=, userProfile = m_userProfile,
+        loadTechnicalsFlag = m_loadTechnicalsFlag] {
+      auto securityTechnicals = userProfile->GetServiceClients().
         GetMarketDataClient().LoadSecurityTechnicals(security);
       With(*loadTechnicalsFlag,
         [=] (bool loadTechnicalsFlag) {
@@ -200,29 +158,22 @@ SecurityTechnicalsModel::SecurityTechnicalsModel(
           }
           m_slotHandler.Push(
             [=] {
+              m_open = securityTechnicals.m_open;
+              m_openSignal(m_open);
+              m_close = securityTechnicals.m_close;
+              m_closeSignal(m_close);
               m_high = securityTechnicals.m_high;
               m_highSignal(m_high);
               m_low = securityTechnicals.m_low;
               m_lowSignal(m_low);
               m_volume = securityTechnicals.m_volume;
               m_volumeSignal(m_volume);
-              if(close.is_initialized()) {
-                std::get<0>(m_lastClose) = close->m_price;
-                ++std::get<1>(m_lastClose);
-                m_closeSignal(std::get<0>(m_lastClose));
-              }
             });
         });
     });
   connect(&m_updateTimer, &QTimer::timeout, this,
     &SecurityTechnicalsModel::OnUpdateTimer);
   m_updateTimer.start(UPDATE_INTERVAL);
-}
-
-void SecurityTechnicalsModel::OnOpenUpdate(const TimeAndSale& timeAndSale) {
-  std::get<0>(m_lastOpen) = timeAndSale.m_price;
-  ++std::get<1>(m_lastOpen);
-  m_openSignal(std::get<0>(m_lastOpen));
 }
 
 void SecurityTechnicalsModel::OnTimeAndSale(const TimeAndSale& timeAndSale) {

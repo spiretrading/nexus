@@ -68,6 +68,9 @@ namespace Python {
   //! Exports the Security class.
   void ExportSecurity();
 
+  //! Exports the SecurityTechnicals class.
+  void ExportSecurityTechnicals();
+
   //! Exports the Side enum.
   void ExportSide();
 
