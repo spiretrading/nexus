@@ -27,17 +27,30 @@ xats:
   intraspread_dark_to_dark_sub_dollar_max: 5.00
   intraspread_dark_to_dark_max: 10.00
 
-# CHI-X fees are based on http://ca.chi-x.com/TRADINGONCHI-X/PRICINGSCHEDULE.aspx
+# CHI-X fees are based on http://business.nasdaq.com/trade/Canadian-Equities/Trading/Pricing
 # Fees for notes and debentures are not supported.
 chic:
-  fee_table:
-    [[0.0029, -0.0025, -0.0020],
-     [0.0003,  0.0001,  0.0000],
-     [0.0017, -0.0013, -0.0013]]
 
-# CX2 fees are based on http://ca.chi-x.com/CX2/PRICINGSCHEDULE.aspx
+# The fee_table is structured as follows:
+#                     Active, Passive, Hidden
+# >= $1.00               X       X       X
+#  < $1.00               X       X       X
+#  Interlisted           X       X       X
+#  ETF                   X       X       X
+  fee_table:
+    [[0.0022, -0.0018, -0.0015],
+     [0.0003, -0.0001,  0.0000],
+     [0.0026, -0.0022, -0.0015],
+     [0.0022, -0.0018, -0.0015]]
+
+# CX2 fees are based on http://business.nasdaq.com/trade/Canadian-Equities/Trading/Pricing
 # Fees for notes and debentures are not supported.
 xcx2:
+
+# The fee_table is structured as follows:
+#                     Active, Passive, Large Passive, Hidden Active, Hidden Passive, Odd Lot
+# >= $1.00               X       X          X               X             X             X
+#  < $1.00               X       X          X               X             X             X
   fee_table:
     [[-0.0010, 0.0014, 0.0012, 0.0000, 0.0004, 0.0009],
      [-0.0006, 0.0010, 0.0008, 0.0000, 0.0004, 0.0005]]
