@@ -29,12 +29,15 @@ namespace Nexus {
       //! Price < $1.00.
       SUB_DOLLAR,
 
+      //! Interlisted symbols.
+      INTERLISTED,
+
       //! ETF
       ETF
     };
 
     //! The number of categories enumerated.
-    static const std::size_t CATEGORY_COUNT = 3;
+    static const std::size_t CATEGORY_COUNT = 4;
 
     /*! \enum Type
         \brief Enumerates the types of trades.
@@ -102,12 +105,13 @@ namespace Nexus {
   /*!
     \param feeTable The ChicFeeTable used to calculate the fee.
     \param isEtf Whether the calculation is for an ETF.
+    \param isInterlisted Whether the calculation is for an interlisted company.
     \param fields The OrderFields used to place the Order.
     \param executionReport The ExecutionReport to calculate the fee for.
     \return The fee calculated for the specified trade.
   */
   inline Money CalculateFee(const ChicFeeTable& feeTable, bool isEtf,
-      const OrderExecutionService::OrderFields& fields,
+      bool isInterlisted, const OrderExecutionService::OrderFields& fields,
       const OrderExecutionService::ExecutionReport& executionReport) {
     if(executionReport.m_lastQuantity == 0) {
       return Money::ZERO;
@@ -115,6 +119,8 @@ namespace Nexus {
     auto category = [&] {
       if(executionReport.m_lastPrice < Money::ONE) {
         return ChicFeeTable::Category::SUB_DOLLAR;
+      } else if(isInterlisted) {
+        return ChicFeeTable::Category::INTERLISTED;
       } else if(isEtf) {
         return ChicFeeTable::Category::ETF;
       } else {

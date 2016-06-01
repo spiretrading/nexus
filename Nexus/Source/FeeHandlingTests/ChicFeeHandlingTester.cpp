@@ -45,8 +45,8 @@ void ChicFeeHandlingTester::TestZeroQuantity() {
   fields.m_quantity = 0;
   auto expectedFee = Money::ZERO;
   TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::NONE,
-    std::bind(CalculateFee, std::placeholders::_1, false, std::placeholders::_2,
-    std::placeholders::_3), expectedFee);
+    std::bind(CalculateFee, std::placeholders::_1, false, false,
+    std::placeholders::_2, std::placeholders::_3), expectedFee);
 }
 
 void ChicFeeHandlingTester::TestDefaultActive() {
@@ -56,8 +56,8 @@ void ChicFeeHandlingTester::TestDefaultActive() {
   auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
     ChicFeeTable::Category::DEFAULT);
   TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    std::bind(CalculateFee, std::placeholders::_1, false, std::placeholders::_2,
-    std::placeholders::_3), expectedFee);
+    std::bind(CalculateFee, std::placeholders::_1, false, false,
+    std::placeholders::_2, std::placeholders::_3), expectedFee);
 }
 
 void ChicFeeHandlingTester::TestDefaultPassive() {
@@ -67,8 +67,8 @@ void ChicFeeHandlingTester::TestDefaultPassive() {
   auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::PASSIVE,
     ChicFeeTable::Category::DEFAULT);
   TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
-    std::bind(CalculateFee, std::placeholders::_1, false, std::placeholders::_2,
-    std::placeholders::_3), expectedFee);
+    std::bind(CalculateFee, std::placeholders::_1, false, false,
+    std::placeholders::_2, std::placeholders::_3), expectedFee);
 }
 
 void ChicFeeHandlingTester::TestDefaultHiddenPassive() {
@@ -78,8 +78,8 @@ void ChicFeeHandlingTester::TestDefaultHiddenPassive() {
   auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::HIDDEN,
     ChicFeeTable::Category::DEFAULT);
   TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
-    std::bind(CalculateFee, std::placeholders::_1, false, std::placeholders::_2,
-    std::placeholders::_3), expectedFee);
+    std::bind(CalculateFee, std::placeholders::_1, false, false,
+    std::placeholders::_2, std::placeholders::_3), expectedFee);
 }
 
 void ChicFeeHandlingTester::TestDefaultHiddenActive() {
@@ -89,8 +89,8 @@ void ChicFeeHandlingTester::TestDefaultHiddenActive() {
   auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
     ChicFeeTable::Category::DEFAULT);
   TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    std::bind(CalculateFee, std::placeholders::_1, false, std::placeholders::_2,
-    std::placeholders::_3), expectedFee);
+    std::bind(CalculateFee, std::placeholders::_1, false, false,
+    std::placeholders::_2, std::placeholders::_3), expectedFee);
 }
 
 void ChicFeeHandlingTester::TestSubDollarActive() {
@@ -100,8 +100,8 @@ void ChicFeeHandlingTester::TestSubDollarActive() {
   auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
     ChicFeeTable::Category::SUB_DOLLAR);
   TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    std::bind(CalculateFee, std::placeholders::_1, false, std::placeholders::_2,
-    std::placeholders::_3), expectedFee);
+    std::bind(CalculateFee, std::placeholders::_1, false, false,
+    std::placeholders::_2, std::placeholders::_3), expectedFee);
 }
 
 void ChicFeeHandlingTester::TestSubDollarPassive() {
@@ -111,8 +111,8 @@ void ChicFeeHandlingTester::TestSubDollarPassive() {
   auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::PASSIVE,
     ChicFeeTable::Category::SUB_DOLLAR);
   TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
-    std::bind(CalculateFee, std::placeholders::_1, false, std::placeholders::_2,
-    std::placeholders::_3), expectedFee);
+    std::bind(CalculateFee, std::placeholders::_1, false, false,
+    std::placeholders::_2, std::placeholders::_3), expectedFee);
 }
 
 void ChicFeeHandlingTester::TestSubDollarHiddenActive() {
@@ -122,8 +122,63 @@ void ChicFeeHandlingTester::TestSubDollarHiddenActive() {
   auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
     ChicFeeTable::Category::SUB_DOLLAR);
   TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    std::bind(CalculateFee, std::placeholders::_1, false, std::placeholders::_2,
-    std::placeholders::_3), expectedFee);
+    std::bind(CalculateFee, std::placeholders::_1, false, false,
+    std::placeholders::_2, std::placeholders::_3), expectedFee);
+}
+
+void ChicFeeHandlingTester::TestInterlistedActive() {
+  ChicFeeTable feeTable;
+  PopulateFeeTable(Store(feeTable.m_feeTable));
+  auto fields = BuildOrderFields(Money::ONE);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
+    ChicFeeTable::Category::INTERLISTED);
+  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
+    std::bind(CalculateFee, std::placeholders::_1, false, true,
+    std::placeholders::_2, std::placeholders::_3), expectedFee);
+}
+
+void ChicFeeHandlingTester::TestInterlistedPassive() {
+  ChicFeeTable feeTable;
+  PopulateFeeTable(Store(feeTable.m_feeTable));
+  auto fields = BuildOrderFields(Money::ONE);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::PASSIVE,
+    ChicFeeTable::Category::INTERLISTED);
+  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
+    std::bind(CalculateFee, std::placeholders::_1, false, true,
+    std::placeholders::_2, std::placeholders::_3), expectedFee);
+}
+
+void ChicFeeHandlingTester::TestInterlistedHiddenPassive() {
+  ChicFeeTable feeTable;
+  PopulateFeeTable(Store(feeTable.m_feeTable));
+  auto fields = BuildHiddenOrderFields(Money::ONE);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::HIDDEN,
+    ChicFeeTable::Category::INTERLISTED);
+  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
+    std::bind(CalculateFee, std::placeholders::_1, false, true,
+    std::placeholders::_2, std::placeholders::_3), expectedFee);
+}
+
+void ChicFeeHandlingTester::TestInterlistedHiddenActive() {
+  ChicFeeTable feeTable;
+  PopulateFeeTable(Store(feeTable.m_feeTable));
+  auto fields = BuildHiddenOrderFields(Money::ONE);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
+    ChicFeeTable::Category::INTERLISTED);
+  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
+    std::bind(CalculateFee, std::placeholders::_1, false, true,
+    std::placeholders::_2, std::placeholders::_3), expectedFee);
+}
+
+void ChicFeeHandlingTester::TestSubDollarInterlistedActive() {
+  ChicFeeTable feeTable;
+  PopulateFeeTable(Store(feeTable.m_feeTable));
+  auto fields = BuildOrderFields(Money::CENT);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
+    ChicFeeTable::Category::SUB_DOLLAR);
+  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
+    std::bind(CalculateFee, std::placeholders::_1, false, true,
+    std::placeholders::_2, std::placeholders::_3), expectedFee);
 }
 
 void ChicFeeHandlingTester::TestEtfActive() {
@@ -133,8 +188,8 @@ void ChicFeeHandlingTester::TestEtfActive() {
   auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
     ChicFeeTable::Category::ETF);
   TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    std::bind(CalculateFee, std::placeholders::_1, true, std::placeholders::_2,
-    std::placeholders::_3), expectedFee);
+    std::bind(CalculateFee, std::placeholders::_1, true, false,
+    std::placeholders::_2, std::placeholders::_3), expectedFee);
 }
 
 void ChicFeeHandlingTester::TestEtfPassive() {
@@ -144,8 +199,8 @@ void ChicFeeHandlingTester::TestEtfPassive() {
   auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::PASSIVE,
     ChicFeeTable::Category::ETF);
   TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
-    std::bind(CalculateFee, std::placeholders::_1, true, std::placeholders::_2,
-    std::placeholders::_3), expectedFee);
+    std::bind(CalculateFee, std::placeholders::_1, true, false,
+    std::placeholders::_2, std::placeholders::_3), expectedFee);
 }
 
 void ChicFeeHandlingTester::TestEtfHiddenPassive() {
@@ -155,8 +210,8 @@ void ChicFeeHandlingTester::TestEtfHiddenPassive() {
   auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::HIDDEN,
     ChicFeeTable::Category::ETF);
   TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
-    std::bind(CalculateFee, std::placeholders::_1, true, std::placeholders::_2,
-    std::placeholders::_3), expectedFee);
+    std::bind(CalculateFee, std::placeholders::_1, true, false,
+    std::placeholders::_2, std::placeholders::_3), expectedFee);
 }
 
 void ChicFeeHandlingTester::TestEtfHiddenActive() {
@@ -166,8 +221,8 @@ void ChicFeeHandlingTester::TestEtfHiddenActive() {
   auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
     ChicFeeTable::Category::ETF);
   TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    std::bind(CalculateFee, std::placeholders::_1, true, std::placeholders::_2,
-    std::placeholders::_3), expectedFee);
+    std::bind(CalculateFee, std::placeholders::_1, true, false,
+    std::placeholders::_2, std::placeholders::_3), expectedFee);
 }
 
 void ChicFeeHandlingTester::TestSubDollarEtfActive() {
@@ -177,8 +232,8 @@ void ChicFeeHandlingTester::TestSubDollarEtfActive() {
   auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
     ChicFeeTable::Category::SUB_DOLLAR);
   TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    std::bind(CalculateFee, std::placeholders::_1, true, std::placeholders::_2,
-    std::placeholders::_3), expectedFee);
+    std::bind(CalculateFee, std::placeholders::_1, true, false,
+    std::placeholders::_2, std::placeholders::_3), expectedFee);
 }
 
 void ChicFeeHandlingTester::TestUnknownLiquidityFlag() {
@@ -191,7 +246,8 @@ void ChicFeeHandlingTester::TestUnknownLiquidityFlag() {
     executionReport.m_lastPrice = Money::ONE;
     executionReport.m_lastQuantity = 100;
     executionReport.m_liquidityFlag = "AP";
-    auto calculatedFee = CalculateFee(feeTable, false, fields, executionReport);
+    auto calculatedFee = CalculateFee(feeTable, false, false, fields,
+      executionReport);
     auto expectedFee = executionReport.m_lastQuantity * LookupFee(feeTable,
       ChicFeeTable::Type::ACTIVE, ChicFeeTable::Category::DEFAULT);
     CPPUNIT_ASSERT(calculatedFee == expectedFee);
@@ -202,7 +258,8 @@ void ChicFeeHandlingTester::TestUnknownLiquidityFlag() {
     executionReport.m_lastPrice = Money::CENT;
     executionReport.m_lastQuantity = 100;
     executionReport.m_liquidityFlag = "PA";
-    auto calculatedFee = CalculateFee(feeTable, false, fields, executionReport);
+    auto calculatedFee = CalculateFee(feeTable, false, false, fields,
+      executionReport);
     auto expectedFee = executionReport.m_lastQuantity * LookupFee(feeTable,
       ChicFeeTable::Type::ACTIVE, ChicFeeTable::Category::SUB_DOLLAR);
     CPPUNIT_ASSERT(calculatedFee == expectedFee);
@@ -213,7 +270,8 @@ void ChicFeeHandlingTester::TestUnknownLiquidityFlag() {
     executionReport.m_lastPrice = Money::ONE;
     executionReport.m_lastQuantity = 100;
     executionReport.m_liquidityFlag = "?";
-    auto calculatedFee = CalculateFee(feeTable, false, fields, executionReport);
+    auto calculatedFee = CalculateFee(feeTable, false, false, fields,
+      executionReport);
     auto expectedFee = executionReport.m_lastQuantity * LookupFee(feeTable,
       ChicFeeTable::Type::ACTIVE, ChicFeeTable::Category::DEFAULT);
     CPPUNIT_ASSERT(calculatedFee == expectedFee);
@@ -227,6 +285,6 @@ void ChicFeeHandlingTester::TestEmptyLiquidityFlag() {
   auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
     ChicFeeTable::Category::DEFAULT);
   TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::NONE,
-    std::bind(CalculateFee, std::placeholders::_1, false, std::placeholders::_2,
-    std::placeholders::_3), expectedFee);
+    std::bind(CalculateFee, std::placeholders::_1, false, false,
+    std::placeholders::_2, std::placeholders::_3), expectedFee);
 }
