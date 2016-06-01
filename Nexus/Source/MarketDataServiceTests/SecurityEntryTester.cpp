@@ -27,7 +27,7 @@ void SecurityEntryTester::tearDown() {
 void SecurityEntryTester::TestPublishBboQuote() {
   SecurityEntry::InitialSequences initialSequences;
   initialSequences.m_nextBboQuoteSequence = Beam::Queries::Sequence(5);
-  SecurityEntry entry(TEST_SECURITY, initialSequences);
+  SecurityEntry entry(TEST_SECURITY, Money::ZERO, initialSequences);
   SequencedSecurityBboQuote bboQuoteA = PublishBboQuote(entry, Money::ONE, 100,
     Money::ONE + Money::CENT, 100,
     Decrement(initialSequences.m_nextBboQuoteSequence));
@@ -40,7 +40,7 @@ void SecurityEntryTester::TestPublishBboQuote() {
 void SecurityEntryTester::TestPublishMarketQuote() {
   SecurityEntry::InitialSequences initialSequences;
   initialSequences.m_nextMarketQuoteSequence = Beam::Queries::Sequence(5);
-  SecurityEntry entry(TEST_SECURITY, initialSequences);
+  SecurityEntry entry(TEST_SECURITY, Money::ZERO, initialSequences);
   SequencedSecurityMarketQuote nyseQuoteA = PublishMarketQuote(entry,
     DefaultMarkets::NYSE(), Money::ONE, 100, Money::ONE + Money::CENT, 100,
     Decrement(initialSequences.m_nextMarketQuoteSequence));
@@ -62,7 +62,7 @@ void SecurityEntryTester::TestPublishMarketQuote() {
 void SecurityEntryTester::TestAddAndRemoveBookQuote() {
   SecurityEntry::InitialSequences initialSequences;
   initialSequences.m_nextBookQuoteSequence = Beam::Queries::Sequence(5);
-  SecurityEntry entry(TEST_SECURITY, initialSequences);
+  SecurityEntry entry(TEST_SECURITY, Money::ZERO, initialSequences);
   SequencedSecurityBookQuote abcBidA = PublishBookQuote(entry, "ABC", false,
     DefaultMarkets::NYSE(), Money::ONE, 100, Side::BID,
     Decrement(initialSequences.m_nextBookQuoteSequence), 100);

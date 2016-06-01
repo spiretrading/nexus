@@ -180,13 +180,7 @@ namespace MarketDataService {
   void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
       HistoricalDataStoreType, ServiceLocatorClientType>::PublishOrderImbalance(
       const MarketOrderImbalance& orderImbalance, int sourceId) {
-    m_registry->PublishOrderImbalance(orderImbalance, sourceId,
-      [&] {
-        return m_dataStore->LoadInitialSequences(orderImbalance->m_security);
-      },
-      [&] {
-        return m_dataStore->LoadInitialSequences(orderImbalance.GetIndex());
-      },
+    m_registry->PublishOrderImbalance(orderImbalance, sourceId, *m_dataStore,
       [&] (const SequencedMarketOrderImbalance& orderImbalance) {
         m_dataStore->Store(orderImbalance);
         m_orderImbalanceSubscriptions.Publish(orderImbalance,
@@ -202,10 +196,7 @@ namespace MarketDataService {
   void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
       HistoricalDataStoreType, ServiceLocatorClientType>::PublishBboQuote(
       const SecurityBboQuote& bboQuote, int sourceId) {
-    m_registry->PublishBboQuote(bboQuote, sourceId,
-      [&] {
-        return m_dataStore->LoadInitialSequences(bboQuote.GetIndex());
-      },
+    m_registry->PublishBboQuote(bboQuote, sourceId, *m_dataStore,
       [&] (const SequencedSecurityBboQuote& bboQuote) {
         m_dataStore->Store(bboQuote);
         m_bboQuoteSubscriptions.Publish(bboQuote,
@@ -221,10 +212,7 @@ namespace MarketDataService {
   void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
       HistoricalDataStoreType, ServiceLocatorClientType>::PublishMarketQuote(
       const SecurityMarketQuote& marketQuote, int sourceId) {
-    m_registry->PublishMarketQuote(marketQuote, sourceId,
-      [&] {
-        return m_dataStore->LoadInitialSequences(marketQuote.GetIndex());
-      },
+    m_registry->PublishMarketQuote(marketQuote, sourceId, *m_dataStore,
       [&] (const SequencedSecurityMarketQuote& marketQuote) {
         m_dataStore->Store(marketQuote);
         m_marketQuoteSubscriptions.Publish(marketQuote,
@@ -242,10 +230,7 @@ namespace MarketDataService {
       const SecurityBookQuote& delta, int sourceId) {
     auto security = m_registry->GetPrimaryListing(delta.GetIndex());
     auto key = EntitlementKey{security.GetMarket(), delta.GetValue().m_market};
-    m_registry->UpdateBookQuote(delta, sourceId,
-      [&] {
-        return m_dataStore->LoadInitialSequences(delta.GetIndex());
-      },
+    m_registry->UpdateBookQuote(delta, sourceId, *m_dataStore,
       [&] (const SequencedSecurityBookQuote& bookQuote) {
         m_dataStore->Store(bookQuote);
         if(security.GetMarket() == MarketCode{}) {
@@ -268,10 +253,7 @@ namespace MarketDataService {
   void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
       HistoricalDataStoreType, ServiceLocatorClientType>::PublishTimeAndSale(
       const SecurityTimeAndSale& timeAndSale, int sourceId) {
-    m_registry->PublishTimeAndSale(timeAndSale, sourceId,
-      [&] {
-        return m_dataStore->LoadInitialSequences(timeAndSale.GetIndex());
-      },
+    m_registry->PublishTimeAndSale(timeAndSale, sourceId, *m_dataStore,
       [&] (const SequencedSecurityTimeAndSale& timeAndSale) {
         m_dataStore->Store(timeAndSale);
         m_timeAndSaleSubscriptions.Publish(timeAndSale,
