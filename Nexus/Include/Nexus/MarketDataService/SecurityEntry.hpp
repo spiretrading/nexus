@@ -41,9 +41,10 @@ namespace MarketDataService {
       //! Constructs a SecurityEntry.
       /*!
         \param security The Security represented.
+        \param closePrice The closing price.
         \param initialSequences The initial Sequences to use.
       */
-      SecurityEntry(const Security& security,
+      SecurityEntry(const Security& security, Money closePrice,
         const InitialSequences& initialSequences);
 
       //! Returns the Security.
@@ -133,7 +134,7 @@ namespace MarketDataService {
         m_sourceId(sourceId) {}
 
   inline SecurityEntry::SecurityEntry(const Security& security,
-      const InitialSequences& initialSequences)
+      Money closePrice, const InitialSequences& initialSequences)
       : m_security(security),
         m_bboQuoteSequence(
           initialSequences.m_nextBboQuoteSequence.GetOrdinal()),
@@ -142,7 +143,9 @@ namespace MarketDataService {
         m_marketQuoteSequence(
           initialSequences.m_nextMarketQuoteSequence.GetOrdinal()),
         m_timeAndSalesSequence(
-          initialSequences.m_nextTimeAndSaleSequence.GetOrdinal()) {}
+          initialSequences.m_nextTimeAndSaleSequence.GetOrdinal()) {
+    m_technicals.m_close = closePrice;
+  }
 
   inline const Security& SecurityEntry::GetSecurity() const {
     return m_security;
