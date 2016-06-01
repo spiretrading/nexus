@@ -442,7 +442,7 @@ namespace Details {
             auto initialSequences = dataStore.LoadInitialSequences(
               sanitizedSecurity);
             auto closePrice = Details::LoadClosePrice(sanitizedSecurity,
-                dataStore);
+              dataStore);
             entry.Initialize(sanitizedSecurity, closePrice, initialSequences);
           });
       });
