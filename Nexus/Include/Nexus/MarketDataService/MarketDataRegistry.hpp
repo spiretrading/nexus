@@ -438,7 +438,7 @@ namespace Details {
         Security sanitizedSecurity{security.GetSymbol(), security.GetCountry()};
         return std::make_shared<
             Beam::Remote<SyncSecurityEntry, Beam::Threading::Mutex>>(
-          [&, =sanitizedSecurity] (Beam::DelayPtr<SyncSecurityEntry>& entry) {
+          [&, sanitizedSecurity] (Beam::DelayPtr<SyncSecurityEntry>& entry) {
             auto initialSequences = dataStore.LoadInitialSequences(
               sanitizedSecurity);
             auto closePrice = Details::LoadClosePrice(sanitizedSecurity,
