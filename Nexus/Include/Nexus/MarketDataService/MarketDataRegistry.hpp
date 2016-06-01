@@ -439,9 +439,11 @@ namespace Details {
         return std::make_shared<
             Beam::Remote<SyncSecurityEntry, Beam::Threading::Mutex>>(
           [&] (Beam::DelayPtr<SyncSecurityEntry>& entry) {
-            auto initialSequences = dataStore.LoadInitialSequences(security);
-            auto closePrice = Details::LoadClosePrice(security, dataStore);
-            entry.Initialize(security, closePrice, initialSequences);
+            auto initialSequences = dataStore.LoadInitialSequences(
+              sanitizedSecurity);
+            auto closePrice = Details::LoadClosePrice(sanitizedSecurity,
+                dataStore);
+            entry.Initialize(sanitizedSecurity, closePrice, initialSequences);
           });
       });
     return **entry;
