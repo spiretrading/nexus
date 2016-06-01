@@ -11,6 +11,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/range/adaptor/map.hpp>
+#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
@@ -23,37 +24,37 @@ namespace MarketDataService {
 namespace Details {
   template<typename DataStore>
   Money LoadClosePrice(const Security& security, DataStore& dataStore) {
-    auto marketCenter =
-      [&] () -> std::string {
-        if(security.GetMarket() == DefaultMarkets::TSX()) {
-          return "TSE";
-        } else if(security.GetMarket() == DefaultMarkets::TSXV()) {
-          return "CDX";
-        } else if(security.GetMarket() == DefaultMarkets::ASX()) {
-          return "ASX";
+    auto marketCenters =
+      [&] () -> std::vector<std::string> {
+        if(security.GetCountry() == DefaultCountries::CA()) {
+          return {"TSE", "CDX"};
+        } else if(security.GetCountry() == DefaultCountries::AU()) {
+          return {"ASX"};
         } else {
-          return "";
+          return {};
         }
       }();
-    Beam::Queries::StringValue queryMarketCode(marketCenter);
-    Beam::Queries::ConstantExpression marketCodeExpression(queryMarketCode);
-    Beam::Queries::ParameterExpression parameterExpression(
-      0, Nexus::Queries::TimeAndSaleType());
-    Beam::Queries::MemberAccessExpression accessExpression("market_center",
-      Beam::Queries::StringType(), parameterExpression);
-    auto equalExpression = Beam::Queries::MakeEqualsExpression(
-      marketCodeExpression, accessExpression);
-    MarketDataService::SecurityMarketDataQuery previousCloseQuery;
-    previousCloseQuery.SetIndex(security);
-    previousCloseQuery.SetRange(Beam::Queries::Range::Total());
-    previousCloseQuery.SetSnapshotLimit(
-      Beam::Queries::SnapshotLimit::Type::TAIL, 1);
-    previousCloseQuery.SetFilter(equalExpression);
-    auto result = dataStore.LoadTimeAndSales(previousCloseQuery);
-    if(result.empty()) {
-      return Money::ZERO;
+    for(auto& marketCenter : marketCenters) {
+      Beam::Queries::StringValue queryMarketCode(marketCenter);
+      Beam::Queries::ConstantExpression marketCodeExpression(queryMarketCode);
+      Beam::Queries::ParameterExpression parameterExpression(
+        0, Nexus::Queries::TimeAndSaleType());
+      Beam::Queries::MemberAccessExpression accessExpression("market_center",
+        Beam::Queries::StringType(), parameterExpression);
+      auto equalExpression = Beam::Queries::MakeEqualsExpression(
+        marketCodeExpression, accessExpression);
+      MarketDataService::SecurityMarketDataQuery previousCloseQuery;
+      previousCloseQuery.SetIndex(security);
+      previousCloseQuery.SetRange(Beam::Queries::Range::Total());
+      previousCloseQuery.SetSnapshotLimit(
+        Beam::Queries::SnapshotLimit::Type::TAIL, 1);
+      previousCloseQuery.SetFilter(equalExpression);
+      auto result = dataStore.LoadTimeAndSales(previousCloseQuery);
+      if(!result.empty()) {
+        return result.back()->m_price;
+      }
     }
-    return result.back()->m_price;
+    return Money::ZERO;
   }
 }
 
