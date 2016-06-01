@@ -11,18 +11,25 @@ asxt:
 
 # Alpha fees based on http://www.tsx.com/trading/alpha/fee-schedule
 # Fees for notes and debentures are not supported.
+#
+#                     Active, Passive, Opening, SDL Active, SDL Passive, Dark Active, Dark Passive
+#  < $0.50               X       X        X          X           X            X            X
+# >= $0.50 & < $1.0      X       X        X          X           X            X            X
+# >= $1.00 & < $5.0      X       X        X          X           X            X            X
+# >= $5.00               X       X        X          X           X            X            X
+
 xats:
   general_table:
-    [[0.0003, -0.0002, 0.0003, 0.0001, 0.0000, 0.0001, 0.0001],
-     [0.0003, -0.0002, 0.0003, 0.0001, 0.0000, 0.0001, 0.0001],
-     [0.0018, -0.0014, 0.0003, 0.0004, 0.0000, 0.0003, 0.0003],
-     [0.0018, -0.0014, 0.0005, 0.0004, 0.0000, 0.0005, 0.0005]]
+    [[-0.0006, 0.0010, 0.0003, 0.0001, 0.0000, 0.0001, 0.0001],
+     [-0.0006, 0.0010, 0.0003, 0.0001, 0.0000, 0.0001, 0.0001],
+     [-0.0010, 0.0014, 0.0003, 0.0004, 0.0000, 0.0003, 0.0003],
+     [-0.0010, 0.0014, 0.0005, 0.0004, 0.0000, 0.0005, 0.0005]]
 
   etf_table:
-    [[0.0003, -0.0002, 0.0003, 0.0001, 0.0000, 0.0001, 0.0001],
-     [0.0003, -0.0002, 0.0003, 0.0001, 0.0000, 0.0001, 0.0001],
-     [0.0018, -0.0014, 0.0003, 0.0004, 0.0000, 0.0003, 0.0003],
-     [0.0018, -0.0014, 0.0005, 0.0004, 0.0000, 0.0005, 0.0005]]
+    [[-0.0006, 0.0010, 0.0003, 0.0001, 0.0000, 0.0001, 0.0001],
+     [-0.0006, 0.0010, 0.0003, 0.0001, 0.0000, 0.0001, 0.0001],
+     [-0.0010, 0.0014, 0.0003, 0.0004, 0.0000, 0.0003, 0.0003],
+     [-0.0010, 0.0014, 0.0005, 0.0004, 0.0000, 0.0005, 0.0005]]
 
   intraspread_dark_to_dark_sub_dollar_max: 5.00
   intraspread_dark_to_dark_max: 10.00
@@ -60,12 +67,23 @@ xcx2:
 
 # LYNX ATS fees based on http://omegaats.com/lynx-ats-pricing/
 # Fees for notes and debentures are not supported.
+#
+#            Active, Passive
+#  Level A      X       X
+#  Level B      X       X
+#  Level C      X       X
+#  Level D      X       X
+
 lynx:
   liquidity_table:
-    [[0.0010, -0.0006],
-     [0.0015, -0.0011],
-     [0.0025, -0.0021],
-     [0.0029, -0.0025]]
+    [[0.00115, -0.0006],
+     [0.00173, -0.0011],
+     [0.00173, -0.0011],
+     [0.00173, -0.0011]]
+
+#                Active, Passive
+# Sub Dollar        X       X
+# Odd Lot           X       X
 
   alternative_table:
     [[0.0002, -0.0001],
@@ -75,6 +93,7 @@ lynx:
 
 # Match NOW fees based on http://www.triactcanada.com/fee-schedule.htm
 # Fees for notes and debentures are not supported.
+
 matn:
 
 # The general_table is structured as follows:
@@ -82,6 +101,7 @@ matn:
 # >= $5.00             X    X
 # >= $1.0 & < $5.0     X    X
 # < $1.0               X    X
+
   general_table: [[0.0010, 10.00],
                   [0.0005, 10.00],
                   [0.0001,  5.00]]
@@ -89,19 +109,18 @@ matn:
 # The alternative_table is structured as follows:
 #                Active, Passive
 # ETF              X       X
-# Interlisted      X       X
 # Odd-lot          X       X
+
   alternative_table:
     [[0.0005, 0.0000],
-     [0.0002, 0.0002],
      [0.0000, 0.0000]]
 
 # NEOE fees based on https://aequitasneoexchange.com/media/75476/neo-membership-and-trading-fee-schedule-2016-02-01.pdf
 # Fees for notes and debentures are not supported.
 # The fee table is structured as follows:
 #                     Active, Passive
-# >= $1.0                X    X
 # < $1.0                 X    X
+# >= $1.0                X    X
 neoe:
   general_table:
     [[0.0003, -0.0002],
@@ -109,7 +128,7 @@ neoe:
 
   interlisted_table:
     [[0.0003, -0.0002],
-     [0.0028, -0.0024]]
+     [0.0026, -0.0022]]
 
   neo_book_table:
     [-0.0015, 0.0018]
@@ -122,8 +141,8 @@ neoe:
 # Price < $1.00       X       X           X               X             X           X          X
 omga:
   fee_table:
-    [[0.0019, -0.0014,  0.0006, 0.0000, 0.0013, -0.0011, 0.001],
-     [0.0010, -0.00085, 0.0002, 0.0000, 0.0000,  0.0000, 0.001]]
+    [[0.0023, -0.0016, 0.00069, 0.0000, 0.0015, -0.0011, 0.001],
+     [0.0015, -0.0010, 0.00023, 0.0000, 0.0000,  0.0000, 0.001]]
 
 # Pure ATS fees based on http://www.cnsx.ca/CNSX/Trading/Fees--Hours/Fee-Schedule.aspx
 # Fees for notes and debentures are not supported.
@@ -165,8 +184,8 @@ tsx:
 # Table structure mirrors the table on the website, except the columns are as follows:
 #    <$0.10  $0.10-$0.99  >=$1.00  >=$1.00 Interlisted   >=$1.00 ETFs
   continuous_fee_table:
-    [[0.000025, 0.000075,  0.0023,  0.0030,  0.0023],
-     [0.000025, 0.000075, -0.0019, -0.0026, -0.0019],
+    [[0.000025, 0.000075,  0.0023,  0.0027,  0.0023],
+     [0.000025, 0.000075, -0.0019, -0.0023, -0.0019],
      [0.000025, 0.000075,  0.0010,  0.0010,  0.0010],
      [0.000025, 0.000075,  0.0000,  0.0000,  0.0000]]
 
