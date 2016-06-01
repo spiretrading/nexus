@@ -268,7 +268,9 @@ namespace Nexus {
     } else if(lastMarket == DefaultMarkets::CHIC()) {
       auto isEtf = Beam::Contains(feeTable.m_etfs,
         order.GetInfo().m_fields.m_security);
-      return CalculateFee(feeTable.m_chicFeeTable, isEtf,
+      auto isInterlisted = Beam::Contains(feeTable.m_interlisted,
+        order.GetInfo().m_fields.m_security);
+      return CalculateFee(feeTable.m_chicFeeTable, isEtf, isInterlisted,
         order.GetInfo().m_fields, executionReport);
     } else if(lastMarket == DefaultMarkets::XCX2()) {
       return CalculateFee(feeTable.m_xcx2FeeTable, order.GetInfo().m_fields,
