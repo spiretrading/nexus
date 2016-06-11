@@ -40,6 +40,21 @@ namespace Tests {
       //! Tests a sub dollar active execution.
       void TestSubDollarHiddenActive();
 
+      //! Tests an interlisted active execution.
+      void TestInterlistedActive();
+
+      //! Tests an interlisted passive execution.
+      void TestInterlistedPassive();
+
+      //! Tests an interlisted hidden passive execution.
+      void TestInterlistedHiddenPassive();
+
+      //! Tests an interlisted hidden active execution.
+      void TestInterlistedHiddenActive();
+
+      //! Tests a sub-dollar interlisted active execution.
+      void TestSubDollarInterlistedActive();
+
       //! Tests an ETF active execution.
       void TestEtfActive();
 
@@ -72,6 +87,11 @@ namespace Tests {
         CPPUNIT_TEST(TestSubDollarActive);
         CPPUNIT_TEST(TestSubDollarPassive);
         CPPUNIT_TEST(TestSubDollarHiddenActive);
+        CPPUNIT_TEST(TestInterlistedActive);
+        CPPUNIT_TEST(TestInterlistedPassive);
+        CPPUNIT_TEST(TestInterlistedHiddenPassive);
+        CPPUNIT_TEST(TestInterlistedHiddenActive);
+        CPPUNIT_TEST(TestSubDollarInterlistedActive);
         CPPUNIT_TEST(TestEtfActive);
         CPPUNIT_TEST(TestEtfPassive);
         CPPUNIT_TEST(TestEtfHiddenPassive);
