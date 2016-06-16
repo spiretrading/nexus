@@ -1,4 +1,5 @@
 import argparse
+import copy
 import os
 
 DATE_LENGTH = 21
@@ -12,23 +13,28 @@ class MonthlyReport:
     self.removed_entitlements = {}
 
   def incorporate(self, previous_report):
-    self.added_entitlements = dict(previous_report.added_entitlements)
+    self.added_entitlements = copy.deepcopy(previous_report.added_entitlements)
     for entitlement in previous_report.removed_entitlements:
       for account in previous_report.removed_entitlements[entitlement]:
         if account in self.added_entitlements[entitlement]:
           self.added_entitlements[entitlement].remove(account)
 
-  def print_report(self):
+  def print_report(self, list_accounts):
     print self.date
     for entitlement in self.added_entitlements:
-      print '\t%s %s' % (entitlement, len(self.added_entitlements[entitlement]))
+      accounts = self.added_entitlements[entitlement]
+      print '\t%s %s' % (entitlement, len(accounts))
+      if list_accounts:
+        for account in accounts:
+          print '\t\t%s' % account
 
   def grant(self, account, entitlement):
     if entitlement not in self.added_entitlements:
       self.added_entitlements[entitlement] = []
     if entitlement not in self.removed_entitlements:
       self.removed_entitlements[entitlement] = []
-    self.added_entitlements[entitlement].append(account)
+    if account not in self.added_entitlements[entitlement]:
+      self.added_entitlements[entitlement].append(account)
     if account in self.removed_entitlements[entitlement]:
       self.removed_entitlements[entitlement].remove(account)
 
@@ -42,6 +48,8 @@ def main():
     description='v1.0 Copyright (C) 2009 Eidolon Systems Ltd.')
   parser.add_argument('-d', '--directory', type=str, help='Log directory',
     default='.')
+  parser.add_argument('-a', '--accounts', help='List all accounts',
+    action = 'store_true')
   args = parser.parse_args()
   current_report = None
   for filename in os.listdir(args.directory):
@@ -57,7 +65,7 @@ def main():
       elif current_report.date != date:
         next_report = MonthlyReport(date)
         next_report.incorporate(current_report)
-        current_report.print_report()
+        current_report.print_report(args.accounts)
         current_report = next_report
       remainder = line[DATE_LENGTH + 1:]
       first_quote = remainder.find('"') + 1
@@ -71,6 +79,7 @@ def main():
         current_report.grant(account, entitlement)
       elif remainder.find('revokes') != -1:
         current_report.revoke(account, entitlement)
+  current_report.print_report(args.accounts)
 
 if __name__ == '__main__':
   main()
