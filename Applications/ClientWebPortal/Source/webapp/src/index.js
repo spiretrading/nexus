@@ -11,7 +11,7 @@ import eventBus from './utils/event-bus';
 import event from './utils/event-bus/events';
 
 window.clone = (originalObj) => {
-    return JSON.parse(JSON.stringify(originalObj));
+  return JSON.parse(JSON.stringify(originalObj));
 };
 window.EventBus = eventBus;
 window.Event = event;

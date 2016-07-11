@@ -1,21 +1,17 @@
 import React from 'react';
-import deviceDetector from 'utils/device-detector';
+import UpdatableView from 'components/common/UpdatableView';
 
-function View(react, controller, componentModel){
-    // PRIVATE
+class View extends UpdatableView {
+  constructor(react, controller, componentModel) {
+    super(react, controller, componentModel);
+  }
 
-    // PUBLIC
-    this.update = (newComponentModel) => {
-        componentModel = newComponentModel;
-        react.forceUpdate();
-    }
-
-    this.render = () => {
-        return (
-            <div id="top-nav-container">
-            </div>
-        );
-    }
+  render() {
+    return (
+        <div id="top-nav-container">
+        </div>
+    );
+  }
 }
 
 export default View;

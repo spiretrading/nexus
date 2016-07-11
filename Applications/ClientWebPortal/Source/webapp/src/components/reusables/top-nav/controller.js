@@ -1,18 +1,14 @@
 import View from './view';
-import {browserHistory} from 'react-router/es6';
-import userService from 'services/user';
 
-function Controller(react){
-    // PRIVATE
-    var componentModel = {
-    };
+class Controller {
+  constructor(react) {
+    this.componentModel = {};
+    this.view = new View(react, this, clone(this.componentModel));
+  }
 
-    var view = new View(react, this, clone(componentModel));
-    
-    // PUBLIC
-    this.getView = () => {
-        return view;
-    }
+  getView() {
+    return this.view;
+  }
 }
 
 export default Controller;

@@ -4,13 +4,13 @@ import './style.scss';
 
 const App = (props) => (
     <main className="viewport">
-        <TopNav />
-        {props.children}
+      <TopNav />
+      {props.children}
     </main>
 );
 
 App.propTypes = {
-    children: PropTypes.node
+  children: PropTypes.node
 };
 
 export default App;

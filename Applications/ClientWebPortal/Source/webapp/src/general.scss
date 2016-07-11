@@ -21,7 +21,7 @@ input {
     padding: 0.5rem;
     outline: none;
 
-    &:focus{
+    &:focus {
         &::-webkit-input-placeholder {
             opacity: 0;
         }
@@ -42,7 +42,7 @@ button {
     outline: none;
 }
 
-@mixin button-style{
+@mixin button-style {
     padding: 0.7em 0;
     cursor: pointer;
     -webkit-touch-callout: none;
@@ -53,7 +53,7 @@ button {
     user-select: none;
 }
 
-.primary-btn{
+.primary-btn {
     @include button-style;
     background: $primaryBtn;
 
@@ -63,7 +63,7 @@ button {
 
 }
 
-.white-btn{
+.white-btn {
     @include button-style;
     background: $white;
     color: $blueBackground;

@@ -3,39 +3,38 @@ import {browserHistory} from 'react-router/es6';
 import userService from 'services/user';
 import ResultCode from 'utils/spire-client/result-codes';
 
-function Controller(react){
-    // PRIVATE
-    var componentModel = {
-        isWaiting: false,
-        isLoginSuccess: false
+class Controller {
+  constructor(react) {
+    this.componentModel = {
+      isWaiting: false,
+      isLoginSuccess: false
     };
 
-    var view = new View(react, this, clone(componentModel));
-    
-    // PUBLIC
-    this.getView = () => {
-        return view;
+    this.view = new View(react, this, clone(this.componentModel));
+  }
+
+  getView() {
+    return this.view;
+  }
+
+  login(userId, password) {
+    this.componentModel.isWaiting = true;
+    this.view.update(clone(this.componentModel));
+
+    userService.login(userId, password)
+        .then(onResult.bind(this));
+
+    function onResult(resultCode) {
+      if (resultCode === ResultCode.SUCCESS) {
+        browserHistory.push('/searchProfiles')
+      }
+      else {
+        this.componentModel.isWaiting = false;
+        this.componentModel.isLoginSuccess = false;
+        this.view.update(clone(this.componentModel));
+      }
     }
-
-    this.login = (userId, password) => {
-        let _this = this;
-        componentModel.isWaiting = true;
-        view.update(clone(componentModel));
-
-        userService.login(userId, password)
-            .then(onResult);
-
-        function onResult(resultCode){
-            if (resultCode === ResultCode.Success){
-                browserHistory.push('/searchProfiles')
-            }
-            else{
-                componentModel.isWaiting = false;
-                componentModel.isLoginSuccess = false;
-                view.update(clone(componentModel));
-            }
-        }
-    }
+  }
 }
 
 export default Controller;

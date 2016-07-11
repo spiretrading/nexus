@@ -1,4 +1,4 @@
 export default {
-    Success: 1000,
-    Fail: 1001
+  SUCCESS: 1000,
+  FAIL: 1001
 };

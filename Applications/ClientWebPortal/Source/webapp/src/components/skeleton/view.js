@@ -1,24 +1,17 @@
 import React from 'react';
+import UpdatableView from 'components/common/UpdatableView';
 
-function View(react, controller, componentModel){
-    // PRIVATE
+class View extends UpdatableView {
+  constructor(react, controller, componentModel) {
+    super(react, controller, componentModel);
+  }
 
-    // PUBLIC
-    this.update = (newComponentModel) => {
-        componentModel = newComponentModel;
-        react.forceUpdate();
-    }
-
-    this.componentDidUpdate = () => {
-        
-    }
-
-    this.render = () => {
-        return (
-            <div id="skeleton-container">
-            </div>
-        );
-    }
+  render() {
+    return (
+        <div id="skeleton-container">
+        </div>
+    );
+  }
 }
 
 export default View;

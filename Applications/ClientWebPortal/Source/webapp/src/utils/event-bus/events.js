@@ -1,9 +1,9 @@
 export default {
-    All: 'all',
+  All: 'all',
 
-    // application wide events
-    All_Application: 'all.application',
-    Application: {
-        LoggedIn: 'all.application.loggedIn'
-    }
+  // application wide events
+  ALL_APPLICATION: 'all.application',
+  Application: {
+    LOGGED_IN: 'all.application.loggedIn'
+  }
 };
