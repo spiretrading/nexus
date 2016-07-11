@@ -10,7 +10,7 @@ import configs from './configs';
 import eventBus from './utils/event-bus';
 import event from './utils/event-bus/events';
 
-window.clone = (originalObj) => {
+window.cloneObject = (originalObj) => {
   return JSON.parse(JSON.stringify(originalObj));
 };
 window.EventBus = eventBus;

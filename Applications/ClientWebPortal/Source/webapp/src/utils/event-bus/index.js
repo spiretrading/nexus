@@ -5,7 +5,7 @@ class EventBus {
     return pubsub.subscribe(eventName, cloneAndPassToEventListener);
 
     function cloneAndPassToEventListener(eventName, eventPayload) {
-      let clonedEventPayload = clone(eventPayload);
+      let clonedEventPayload = cloneObject(eventPayload);
       eventListener(eventName, clonedEventPayload);
     }
   }

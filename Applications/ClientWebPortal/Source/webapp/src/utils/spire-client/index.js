@@ -3,7 +3,7 @@ import ResultCode from './result-codes.js';
 class SpireClient {
   /** @private */
   send(apiPath, payload) {
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       let jsonPayload;
       if (payload != null) {
         jsonPayload = JSON.stringify(payload);
@@ -14,25 +14,43 @@ class SpireClient {
 
       console.log(jsonPayload);
 
-      $.ajax({
+      /*
+      var request = $.ajax({
         url: apiPath,
-        contentType: "application/json; charset=utf-8",
         dataType: 'json',
         method: 'POST',
-        data: jsonPayload,
-        success: (data, status, xhr) => {
-          console.log('succeded');
-          resolve(data);
-        },
-        error: (xhr, status, error) => {
-          console.log('failed');
-          console.log(xhr.status);
-          console.log(status);
-          console.log(error);
-          reject(xhr, status, error);
-        }
+        data: jsonPayload
+      }).done(function (data, status, xhr) {
+        console.log('succeded');
+        resolve(data);
+      }.bind(this)).fail(function (xhr, status, error) {
+        console.log('failed');
+        reject(xhr, status, error);
       });
-    });
+      */
+
+      return new Promise(
+          function(resolve, reject) {
+            var request = $.ajax(
+                {
+                  url: apiPath,
+                  dataType: 'json',
+                  method: 'POST',
+                  data: jsonPayload
+                }
+            ).done(
+                function(data, status, xhr) {
+                  console.log('succeded');
+                  resolve(data);
+                }.bind(this)
+            ).fail(
+                function(data, xhr, status, err) {
+                  console.log('failed');
+                  reject('Invalid username or password.');
+                });
+          }.bind(this));
+
+    }.bind(this));
   }
 
   login(userId, password) {
@@ -42,29 +60,24 @@ class SpireClient {
       password: password
     };
 
-    /*
-     return send(apiPath, payload)
-     .then(onSuccess, onHttpError);
+    return this.send(apiPath, payload)
+      .then(onSuccess, onHttpError);
 
-     function onSuccess(){
-     return ResultCode.Success;
-     }
+    function onSuccess(){
+      return ResultCode.Success;
+    }
 
-     function onHttpError(xhr, status, error){
-     if (isLegitimateLoginFail){
-     return ResultCode.Fail;
-     }
-     // server error
-     else{
-     console.log('Unexpected error happened.');
-     throw new Error();
-     }
-     }
-     */
+    function onHttpError(xhr, status, error){
+      if (true){
+        return ResultCode.Fail;
+      }
 
-    return new Promise((resolve, reject) => {
-      resolve(ResultCode.SUCCESS);
-    });
+      // server error
+      else{
+        console.log('Unexpected error happened.');
+        throw new Error();
+      }
+    }
   }
 
   getUserRole(userId) {

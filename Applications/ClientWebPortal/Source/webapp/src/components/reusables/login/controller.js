@@ -10,7 +10,7 @@ class Controller {
       isLoginSuccess: false
     };
 
-    this.view = new View(react, this, clone(this.componentModel));
+    this.view = new View(react, this, cloneObject(this.componentModel));
   }
 
   getView() {
@@ -19,7 +19,7 @@ class Controller {
 
   login(userId, password) {
     this.componentModel.isWaiting = true;
-    this.view.update(clone(this.componentModel));
+    this.view.update(cloneObject(this.componentModel));
 
     userService.login(userId, password)
         .then(onResult.bind(this));
@@ -31,7 +31,7 @@ class Controller {
       else {
         this.componentModel.isWaiting = false;
         this.componentModel.isLoginSuccess = false;
-        this.view.update(clone(this.componentModel));
+        this.view.update(cloneObject(this.componentModel));
       }
     }
   }

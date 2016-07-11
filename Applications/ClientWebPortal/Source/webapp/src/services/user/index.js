@@ -10,12 +10,12 @@ class UserService {
     let resultCode = null;
 
     return spireClient.login(userId, password)
-        .then(onLoginResponse)
+        .then(getUserRole)
         .then(onUserRoleResponse.bind(this))
         .catch(onException);
 
 
-    function onLoginResponse(aResultCode) {
+    function getUserRole(aResultCode) {
       resultCode = aResultCode;
       if (resultCode === ResultCode.Fail) {
         throw new Error();
