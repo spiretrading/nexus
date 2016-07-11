@@ -1,27 +1,42 @@
 {
-  "name": "client_web_portal",
-  "version": "1.0.0",
-  "babel": {
-    "presets": [
-      "react",
-      "es2015"
-    ]
-  },
-  "description": "Client web app for Spire.",
-  "main": "index.js",
-  "dependencies": {
-    "babel-cli": "^6.5.1",
-    "babel-preset-es2015": "^6.5.0",
-    "babel-preset-react": "^6.5.0",
-    "radium": "^0.17.1",
-    "react": "^15.1.0",
-    "react-router": "^2.4.1",
-    "react-timer-mixin": "~0.13.3"
-  },
-  "devDependencies": {},
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "Eidolon Systems Ltd.",
-  "license": "GPL-3.0"
+    "name": "react-router-dynamic-routes-webpack2",
+    "version": "1.0.0",
+    "private": true,
+    "description": "React Router Dynamic Chunk Loading",
+    "author": "Grgur Grisogono",
+    "main": "index.js",
+    "scripts": {
+        "start": "./node_modules/.bin/webpack-dev-server --history-api-fallback --hot --progress --port 3000",
+        "build": "node build.js production"
+    },
+    "license": "MIT",
+    "devDependencies": {
+        "babel-core": "^6.6.5",
+        "babel-loader": "^6.2.4",
+        "babel-plugin-transform-runtime": "^6.6.0",
+        "babel-preset-es2015-native-modules": "^6.6.0",
+        "babel-preset-react": "^6.5.0",
+        "bootstrap": "^3.3.6",
+        "clean-webpack-plugin": "^0.1.9",
+        "copy-webpack-plugin": "^3.0.1",
+        "css-loader": "^0.23.1",
+        "es6-promise": "^3.2.1",
+        "express": "^4.14.0",
+        "extract-text-webpack-plugin": "^1.0.1",
+        "file-loader": "^0.8.5",
+        "http-proxy": "^1.14.0",
+        "node-sass": "^3.5.0-beta.1",
+        "sass-loader": "^3.1.2",
+        "style-loader": "^0.13.0",
+        "webpack": "^2.1.0-beta.4"
+    },
+    "dependencies": {
+        "babel-polyfill": "^6.6.1",
+        "babel-runtime": "^6.6.1",
+        "jquery": "^2.2.4",
+        "pubsub-js": "^1.5.3",
+        "react": "^15.0.0-rc.1",
+        "react-dom": "^15.0.0-rc.1",
+        "react-router": "^2.0.0"
+    }
 }
