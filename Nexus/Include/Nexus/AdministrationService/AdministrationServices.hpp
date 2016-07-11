@@ -5,6 +5,7 @@
 #include <Beam/Services/RecordMessage.hpp>
 #include <Beam/Services/Service.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
+#include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/AdministrationService/AdministrationService.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
@@ -24,6 +25,19 @@ namespace AdministrationService {
     //! \cond
     (CheckAdministratorService,
       "Nexus.AdministrationServices.CheckAdministratorService", bool,
+      Beam::ServiceLocator::DirectoryEntry, account),
+    //! \endcond
+
+    /*! \interface Nexus::AdministrationServices::LoadAccountRolesService
+        \brief Returns an accounts roles.
+        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
+               account to lookup.
+        \return <code>AccountRoles</code>The roles associated with the
+                <i>account</i>.
+    */
+    //! \cond
+    (LoadAccountRolesService,
+      "Nexus.AdministrationServices.LoadAccountRolesService", AccountRoles,
       Beam::ServiceLocator::DirectoryEntry, account),
     //! \endcond
 

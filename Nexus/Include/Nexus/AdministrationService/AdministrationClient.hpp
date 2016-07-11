@@ -10,6 +10,7 @@
 #include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
+#include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/AdministrationService/AdministrationService.hpp"
 #include "Nexus/AdministrationService/AdministrationServices.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
@@ -52,6 +53,14 @@ namespace AdministrationService {
         \return <code>true</code> iff the <i>account</i> is an administrator.
       */
       bool CheckAdministrator(
+        const Beam::ServiceLocator::DirectoryEntry& account);
+
+      //! Returns an accounts roles.
+      /*!
+        \param account The account to lookup.
+        \return The roles associated with the <i>account</i>.
+      */
+      AccountRoles LoadAccountRoles(
         const Beam::ServiceLocator::DirectoryEntry& account);
 
       //! Loads an account's trading group Directory.
@@ -226,6 +235,13 @@ namespace AdministrationService {
       CheckAdministrator(const Beam::ServiceLocator::DirectoryEntry& account) {
     auto client = m_clientHandler.GetClient();
     return client->template SendRequest<CheckAdministratorService>(account);
+  }
+
+  template<typename ServiceProtocolClientBuilderType>
+  AccountRoles AdministrationClient<ServiceProtocolClientBuilderType>::
+      LoadAccountRoles(const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<LoadAccountRolesService>(account);
   }
 
   template<typename ServiceProtocolClientBuilderType>
