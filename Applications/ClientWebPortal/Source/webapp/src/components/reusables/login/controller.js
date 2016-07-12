@@ -3,11 +3,12 @@ import {browserHistory} from 'react-router/es6';
 import userService from 'services/user';
 import ResultCode from 'utils/spire-client/result-codes';
 
+/** Login form controller */
 class Controller {
   constructor(react) {
     this.componentModel = {
       isWaiting: false,
-      isLoginSuccess: false
+      loginResultCode: 0
     };
 
     this.view = new View(react, this, cloneObject(this.componentModel));
@@ -30,7 +31,7 @@ class Controller {
       }
       else {
         this.componentModel.isWaiting = false;
-        this.componentModel.isLoginSuccess = false;
+        this.componentModel.loginResultCode = resultCode;
         this.view.update(cloneObject(this.componentModel));
       }
     }

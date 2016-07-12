@@ -1,7 +1,9 @@
 import React from 'react';
 import deviceDetector from 'utils/device-detector';
-import UpdatableView from 'components/common/UpdatableView';
+import UpdatableView from 'commons/updatable-view';
+import ResultCode from 'utils/spire-client/result-codes';
 
+/** Login form view */
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
@@ -10,7 +12,19 @@ class View extends UpdatableView {
   }
 
   /** @private */
+  onKeyPress(e) {
+    if (e.key === 'Enter') {
+      this.getDetailsAndLogin();
+    }
+  }
+
+  /** @private */
   onLoginBtnClick() {
+    this.getDetailsAndLogin();
+  }
+
+  /** @private */
+  getDetailsAndLogin() {
     this.isLoginAttempted = true;
     let userId = $('#login-container .username-input').val().trim();
     let password = $('#login-container .password-input').val().trim();
@@ -45,15 +59,17 @@ class View extends UpdatableView {
     }
 
     let message;
-    if (this.isLoginAttempted && !this.componentModel.isWaiting && !this.componentModel.isLoginSuccess) {
-      message = "Invalid username or password.";
+    if (this.isLoginAttempted && !this.componentModel.isWaiting) {
+      if (this.componentModel.loginResultCode == ResultCode.FAIL) {
+        message = "Invalid username or password.";
+      }
     }
 
     return (
         <div id="login-container">
           {logos}
-          <input type="text" className="username-input" defaultValue="" placeholder="Username"/>
-          <input type="password" className="password-input" defaultValue="" placeholder="Password"/>
+          <input type="text" className="username-input" defaultValue="" placeholder="Username" onKeyPress={this.onKeyPress.bind(this)} />
+          <input type="password" className="password-input" defaultValue="" placeholder="Password" onKeyPress={this.onKeyPress.bind(this)} />
           <div className="white-btn login-btn" onClick={this.onLoginBtnClick}>Login</div>
           <div className="message">{message}</div>
         </div>

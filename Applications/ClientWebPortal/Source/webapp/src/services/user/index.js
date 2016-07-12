@@ -1,6 +1,8 @@
 import spireClient from 'utils/spire-client';
-import ResultCode from 'utils/spire-client/result-codes.js';
+import ResultCodes from 'utils/spire-client/result-codes.js';
+const ResultCode = ResultCodes;
 
+/** Centralized user related states and service actions */
 class UserService {
   constructor() {
     this.userRole;
@@ -10,15 +12,15 @@ class UserService {
     let resultCode = null;
 
     return spireClient.login(userId, password)
-        .then(getUserRole)
+        .then(onLoginResponse)
         .then(onUserRoleResponse.bind(this))
         .catch(onException);
 
 
-    function getUserRole(aResultCode) {
+    function onLoginResponse(aResultCode) {
       resultCode = aResultCode;
       if (resultCode === ResultCode.Fail) {
-        throw new Error();
+        throw resultCode;
       }
 
       return new Promise((resolve, reject) => {
@@ -38,12 +40,12 @@ class UserService {
       return resultCode;
     }
 
-    function onException() {
+    function onException(resultCode) {
       if (resultCode === ResultCode.Fail) {
         return resultCode;
       }
       else {
-        throw new Error();
+        throw ResultCode.ERROR;
       }
     }
   }

@@ -1,3 +1,4 @@
+/** Web application internal hierarchical event name constants */
 export default {
   All: 'all',
 

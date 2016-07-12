@@ -1,5 +1,6 @@
 import pubsub from 'pubsub-js';
 
+/** Web app internal event bus */
 class EventBus {
   subscribe(eventName, eventListener) {
     return pubsub.subscribe(eventName, cloneAndPassToEventListener);

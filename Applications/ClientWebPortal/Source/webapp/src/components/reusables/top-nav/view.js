@@ -1,6 +1,7 @@
 import React from 'react';
-import UpdatableView from 'components/common/UpdatableView';
+import UpdatableView from 'commons/updatable-view';
 
+/** Top nav view */
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);

@@ -1,5 +1,6 @@
 import View from './view';
 
+/** Top nav controller */
 class Controller {
   constructor(react) {
     this.componentModel = {};

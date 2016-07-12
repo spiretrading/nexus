@@ -6,3 +6,5 @@ coverage
 __nogit
 .idea
 webapp
+dist
+build/output

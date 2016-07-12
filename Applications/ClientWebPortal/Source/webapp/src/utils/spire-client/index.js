@@ -1,5 +1,7 @@
-import ResultCode from './result-codes.js';
+import ResultCodes from './result-codes.js';
+const ResultCode = ResultCodes;
 
+/** Spire client class */
 class SpireClient {
   /** @private */
   send(apiPath, payload) {
@@ -12,45 +14,24 @@ class SpireClient {
         jsonPayload = null;
       }
 
-      console.log(jsonPayload);
+      $.ajax({
+          url: apiPath,
+          dataType: 'json',
+          method: 'POST',
+          contentType: "application/json; charset=utf-8",
+          data: jsonPayload
+      })
+      .done(onDone)
+      .fail(onFail);
 
-      /*
-      var request = $.ajax({
-        url: apiPath,
-        dataType: 'json',
-        method: 'POST',
-        data: jsonPayload
-      }).done(function (data, status, xhr) {
-        console.log('succeded');
+      function onDone(data, status, xhr){
         resolve(data);
-      }.bind(this)).fail(function (xhr, status, error) {
-        console.log('failed');
-        reject(xhr, status, error);
-      });
-      */
+      }
 
-      return new Promise(
-          function(resolve, reject) {
-            var request = $.ajax(
-                {
-                  url: apiPath,
-                  dataType: 'json',
-                  method: 'POST',
-                  data: jsonPayload
-                }
-            ).done(
-                function(data, status, xhr) {
-                  console.log('succeded');
-                  resolve(data);
-                }.bind(this)
-            ).fail(
-                function(data, xhr, status, err) {
-                  console.log('failed');
-                  reject('Invalid username or password.');
-                });
-          }.bind(this));
-
-    }.bind(this));
+      function onFail(xhr){
+        reject(xhr);
+      }
+    });
   }
 
   login(userId, password) {
@@ -63,19 +44,23 @@ class SpireClient {
     return this.send(apiPath, payload)
       .then(onSuccess, onHttpError);
 
-    function onSuccess(){
-      return ResultCode.Success;
+    function onSuccess(param){
+      return ResultCode.SUCCESS;
     }
 
-    function onHttpError(xhr, status, error){
-      if (true){
-        return ResultCode.Fail;
+    function onHttpError(xhr){
+      if (xhr.status === 401){
+        return ResultCode.FAIL;
+      }
+      // TODO: temporary while back-end message is recognized as 200 for some reason
+      if (xhr.status === 200){
+        return ResultCode.FAIL;
       }
 
       // server error
       else{
         console.log('Unexpected error happened.');
-        throw new Error();
+        throw ResultCode.ERROR;
       }
     }
   }

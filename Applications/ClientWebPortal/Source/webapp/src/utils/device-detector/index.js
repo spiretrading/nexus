@@ -1,3 +1,4 @@
+/** Class detects various features of the device being used */
 class DeviceDetector {
   isMobile() {
     // This solution was obtained from detectmobilebrowsers.com and it was the best at the time to detect mobile browsers.
