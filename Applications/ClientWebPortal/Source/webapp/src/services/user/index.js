@@ -1,5 +1,5 @@
-import spireClient from 'utils/spire-client';
-import ResultCodes from 'utils/spire-client/result-codes.js';
+import spireClient from 'utils/spire-clients';
+import ResultCodes from 'utils/spire-clients/result-codes.js';
 const ResultCode = ResultCodes;
 
 /** Centralized user related states and service actions */
@@ -12,9 +12,9 @@ class UserService {
     let resultCode = null;
 
     return spireClient.login(userId, password)
-        .then(onLoginResponse)
-        .then(onUserRoleResponse.bind(this))
-        .catch(onException);
+      .then(onLoginResponse)
+      .then(onUserRoleResponse.bind(this))
+      .catch(onException);
 
 
     function onLoginResponse(aResultCode) {
@@ -25,12 +25,12 @@ class UserService {
 
       return new Promise((resolve, reject) => {
         spireClient.getUserRole(userId)
-            .then((role) => {
-              resolve(role);
-            })
-            .catch(() => {
-              reject();
-            });
+          .then((role) => {
+            resolve(role);
+          })
+          .catch(() => {
+            reject();
+          });
       });
     }
 

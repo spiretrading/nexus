@@ -1,5 +1,4 @@
 import React, {Component} from 'react';
-import Login from 'components/reusables/login';
 import './style.scss';
 
 class Home extends Component {
@@ -9,11 +8,8 @@ class Home extends Component {
 
   render() {
     return (
-        <div id="home-container">
-          <div id="login-wrapper">
-            <Login />
-          </div>
-        </div>
+      <div id="search-profiles-container">
+      </div>
     );
   }
 }

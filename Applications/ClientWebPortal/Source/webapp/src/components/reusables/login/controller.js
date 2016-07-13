@@ -1,7 +1,7 @@
 import View from './view';
 import {browserHistory} from 'react-router/es6';
 import userService from 'services/user';
-import ResultCode from 'utils/spire-client/result-codes';
+import ResultCode from 'utils/spire-clients/result-codes';
 
 /** Login form controller */
 class Controller {
@@ -10,7 +10,6 @@ class Controller {
       isWaiting: false,
       loginResultCode: 0
     };
-
     this.view = new View(react, this, cloneObject(this.componentModel));
   }
 
@@ -23,7 +22,7 @@ class Controller {
     this.view.update(cloneObject(this.componentModel));
 
     userService.login(userId, password)
-        .then(onResult.bind(this));
+      .then(onResult.bind(this));
 
     function onResult(resultCode) {
       if (resultCode === ResultCode.SUCCESS) {

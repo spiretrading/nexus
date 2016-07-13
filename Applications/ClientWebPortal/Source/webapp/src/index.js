@@ -19,6 +19,6 @@ window.Config = configs;
 ES6Promise.polyfill();
 
 render(
-    <Router history={browserHistory} routes={rootRoute}/>,
-    document.getElementById('root')
+  <Router history={browserHistory} routes={rootRoute}/>,
+  document.getElementById('root')
 );

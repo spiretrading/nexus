@@ -9,8 +9,8 @@ class View extends UpdatableView {
 
   render() {
     return (
-        <div id="top-nav-container">
-        </div>
+      <div id="top-nav-container">
+      </div>
     );
   }
 }

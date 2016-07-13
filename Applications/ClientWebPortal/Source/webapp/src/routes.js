@@ -20,16 +20,16 @@ if (!isMobile) {
       getComponent(location, cb) {
         // System.import('pages/desktop/home')
         System.import('components/structures/common/home')
-            .then(loadRoute(cb))
-            .catch(errorLoading);
+          .then(loadRoute(cb))
+          .catch(errorLoading);
       }
     },
     {
       path: 'searchProfiles',
       getComponent(location, cb) {
         System.import('components/structures/common/search-profiles')
-            .then(loadRoute(cb))
-            .catch(errorLoading);
+          .then(loadRoute(cb))
+          .catch(errorLoading);
       }
     }
   ];

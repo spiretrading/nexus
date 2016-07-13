@@ -2,73 +2,73 @@
 @import "./variables";
 
 html, body {
-    margin: 0;
-    padding: 0;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-    font-family: 'Roboto', sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-font-smoothing: antialiased;
-    -ms-font-smoothing: antialiased;
-    font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
+  font-family: 'Roboto', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-font-smoothing: antialiased;
+  -ms-font-smoothing: antialiased;
+  font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 input {
-    background: transparent;
-    border: 1px solid;
-    padding: 0.5rem;
-    outline: none;
+  background: transparent;
+  border: 1px solid;
+  padding: 0.5rem;
+  outline: none;
 
-    &:focus {
-        &::-webkit-input-placeholder {
-            opacity: 0;
-        }
-        &:-moz-placeholder {
-            opacity: 0;
-        }
-        &::-moz-placeholder {
-            opacity: 0;
-        }
-        &:-ms-input-placeholder {
-            opacity: 0;
-        }
+  &:focus {
+    &::-webkit-input-placeholder {
+      opacity: 0;
     }
+    &:-moz-placeholder {
+      opacity: 0;
+    }
+    &::-moz-placeholder {
+      opacity: 0;
+    }
+    &:-ms-input-placeholder {
+      opacity: 0;
+    }
+  }
 }
 
 button {
-    border: 0;
-    outline: none;
+  border: 0;
+  outline: none;
 }
 
 @mixin button-style {
-    padding: 0.7em 0;
-    cursor: pointer;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
+  padding: 0.7em 0;
+  cursor: pointer;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 .primary-btn {
-    @include button-style;
-    background: $primaryBtn;
+  @include button-style;
+  background: $primaryBtn;
 
-    &:hover {
-        background: $primaryBtnHover
-    }
+  &:hover {
+    background: $primaryBtnHover
+  }
 
 }
 
 .white-btn {
-    @include button-style;
-    background: $white;
-    color: $blueBackground;
+  @include button-style;
+  background: $white;
+  color: $blueBackground;
 
-    &:hover {
-        background: $whiteBtnHover
-    }
+  &:hover {
+    background: $whiteBtnHover
+  }
 }

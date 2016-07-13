@@ -3,10 +3,10 @@ import TopNav from 'components/reusables/top-nav';
 import './style.scss';
 
 const App = (props) => (
-    <main className="viewport">
-      <TopNav />
-      {props.children}
-    </main>
+  <main className="viewport">
+    <TopNav />
+    {props.children}
+  </main>
 );
 
 App.propTypes = {

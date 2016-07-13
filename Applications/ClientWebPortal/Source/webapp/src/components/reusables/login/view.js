@@ -1,7 +1,7 @@
 import React from 'react';
 import deviceDetector from 'utils/device-detector';
 import UpdatableView from 'commons/updatable-view';
-import ResultCode from 'utils/spire-client/result-codes';
+import ResultCode from 'utils/spire-clients/result-codes';
 
 /** Login form view */
 class View extends UpdatableView {
@@ -66,13 +66,15 @@ class View extends UpdatableView {
     }
 
     return (
-        <div id="login-container">
-          {logos}
-          <input type="text" className="username-input" defaultValue="" placeholder="Username" onKeyPress={this.onKeyPress.bind(this)} />
-          <input type="password" className="password-input" defaultValue="" placeholder="Password" onKeyPress={this.onKeyPress.bind(this)} />
-          <div className="white-btn login-btn" onClick={this.onLoginBtnClick}>Login</div>
-          <div className="message">{message}</div>
-        </div>
+      <div id="login-container">
+        {logos}
+        <input type="text" className="username-input" defaultValue="" placeholder="Username"
+               onKeyPress={this.onKeyPress.bind(this)}/>
+        <input type="password" className="password-input" defaultValue="" placeholder="Password"
+               onKeyPress={this.onKeyPress.bind(this)}/>
+        <div className="white-btn login-btn" onClick={this.onLoginBtnClick}>Login</div>
+        <div className="message">{message}</div>
+      </div>
     );
   }
 }
