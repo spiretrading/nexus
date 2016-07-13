@@ -1,6 +1,11 @@
 @charset "UTF-8";
 @import "./variables";
 
+@font-face {
+  font-family: 'Roboto';
+  src: url('../resources/fonts/Roboto-Regular.ttf');
+}
+
 html, body {
   margin: 0;
   padding: 0;

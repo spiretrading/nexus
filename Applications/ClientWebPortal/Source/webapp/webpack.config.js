@@ -83,7 +83,8 @@ module.exports = {
   plugins: [
     new CopyWebpackPlugin([
       {from: '../resources/favicons'},
-      {from: '../resources/images', to: 'images'}
+      {from: '../resources/images', to: 'images'},
+      {from: '../resources/js/jquery/jquery-2.2.4.min.js', to: 'js' }
     ]),
     new webpack.ProvidePlugin({
       $: "jquery",

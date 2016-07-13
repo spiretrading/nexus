@@ -33,7 +33,7 @@
   "dependencies": {
     "babel-polyfill": "^6.6.1",
     "babel-runtime": "^6.6.1",
-    "jquery": "^2.2.4",
+    "jquery": "2.2.4",
     "pubsub-js": "^1.5.3",
     "react": "^15.0.0-rc.1",
     "react-dom": "^15.0.0-rc.1",
