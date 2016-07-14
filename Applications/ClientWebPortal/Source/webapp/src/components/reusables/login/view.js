@@ -50,8 +50,7 @@ class View extends UpdatableView {
         <img className="preloader" src="images/white-logo-loading@2x.gif"/>
         <img className="static" src="images/white-logo@2x.png" style={staticLogoStyle}/>
       </div>
-    }
-    else {
+    } else {
       logos = <div className="logo-container">
         <object className="preloader" data="images/spireloading.svg" type="image/svg+xml"/>
         <object className="static" data="images/spire_logo.svg" type="image/svg+xml" style={staticLogoStyle}/>

@@ -27,8 +27,7 @@ class Controller {
     function onResult(resultCode) {
       if (resultCode === ResultCode.SUCCESS) {
         browserHistory.push('/searchProfiles')
-      }
-      else {
+      } else {
         this.componentModel.isWaiting = false;
         this.componentModel.loginResultCode = resultCode;
         this.view.update(cloneObject(this.componentModel));

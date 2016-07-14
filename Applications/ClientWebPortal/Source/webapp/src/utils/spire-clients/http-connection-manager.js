@@ -5,8 +5,7 @@ class HTTPConnectionManager {
       let jsonPayload;
       if (payload != null) {
         jsonPayload = JSON.stringify(payload);
-      }
-      else {
+      } else {
         jsonPayload = null;
       }
 

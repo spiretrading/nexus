@@ -112,8 +112,10 @@ module.exports = {
       'process.env': {NODE_ENV: JSON.stringify(nodeEnv)}
     }),
     new ExtractTextPlugin('style.css'),
+    /*
     new CleanWebpackPlugin(['dist'], {
       verbose: true
     })
+    */
   ]
 };

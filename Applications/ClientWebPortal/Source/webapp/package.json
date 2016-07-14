@@ -28,7 +28,7 @@
     "node-sass": "^3.5.0-beta.1",
     "sass-loader": "^3.1.2",
     "style-loader": "^0.13.0",
-    "webpack": "^2.1.0-beta.4"
+    "webpack": "2.1.0-beta.15"
   },
   "dependencies": {
     "babel-polyfill": "^6.6.1",

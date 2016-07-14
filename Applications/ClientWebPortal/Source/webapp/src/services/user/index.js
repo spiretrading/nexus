@@ -43,8 +43,7 @@ class UserService {
     function onException(resultCode) {
       if (resultCode === ResultCode.Fail) {
         return resultCode;
-      }
-      else {
+      } else {
         throw ResultCode.ERROR;
       }
     }

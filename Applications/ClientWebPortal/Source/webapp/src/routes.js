@@ -12,8 +12,9 @@ function loadRoute(cb) {
 }
 
 let childRoutes;
-// desktop routes
+
 if (!isMobile) {
+  // desktop routes
   childRoutes = [
     {
       path: '/',
@@ -33,10 +34,8 @@ if (!isMobile) {
       }
     }
   ];
-}
-
-// mobile routes
-else {
+} else {
+  // mobile routes
   childRoutes = [];
 }
 

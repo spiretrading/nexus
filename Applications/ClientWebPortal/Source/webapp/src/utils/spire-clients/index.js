@@ -22,13 +22,12 @@ class SpireClient {
       if (xhr.status === 401) {
         return ResultCode.FAIL;
       }
-      // TODO: temporary while back-end message is recognized as 200 for some reason
-      if (xhr.status === 200) {
-        return ResultCode.FAIL;
-      }
 
-      // server error
-      else {
+      if (xhr.status === 200) {
+        // TODO: temporary while back-end message is recognized as 200 for some reason
+        return ResultCode.FAIL;
+      } else {
+        // server error
         console.log('Unexpected error happened.');
         throw ResultCode.ERROR;
       }
