@@ -1,6 +1,8 @@
 #!/bin/bash
 directory=$(dirname $(readlink -f $0))
 pushd $directory/
-cd $directory/..
-make $1
+cd $directory/../..
+webpack
+rm -rf ../../Application/webapp
+cp -a dist/. ../../Application/webapp/
 popd
