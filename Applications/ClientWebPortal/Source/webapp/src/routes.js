@@ -17,8 +17,8 @@ if (!isMobile) {
   childRoutes = [
     {
       path: '/',
+      //path: 'searchProfiles',
       getComponent(location, cb) {
-        // System.import('pages/desktop/home')
         System.import('components/structures/common/home')
           .then(loadRoute(cb))
           .catch(errorLoading);
@@ -26,6 +26,7 @@ if (!isMobile) {
     },
     {
       path: 'searchProfiles',
+      //path: '/',
       getComponent(location, cb) {
         System.import('components/structures/common/search-profiles')
           .then(loadRoute(cb))

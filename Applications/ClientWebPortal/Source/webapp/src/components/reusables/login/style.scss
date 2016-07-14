@@ -15,7 +15,9 @@
       left: 50%;
       transform: translate(-50%, -50%);
       width: 150px;
+      height: 52px;
       z-index: 100;
+      opacity: 0;
     }
 
     .static {
@@ -24,6 +26,7 @@
       left: 50%;
       transform: translate(-50%, -50%);
       width: 150px;
+      height: 52px;
       z-index: 101;
     }
   }

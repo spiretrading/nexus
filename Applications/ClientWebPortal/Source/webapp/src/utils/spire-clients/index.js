@@ -37,7 +37,12 @@ class SpireClient {
 
   getUserRole(userId) {
     return new Promise((resolve, reject) => {
-      resolve(0);
+
+      setTimeout(function(){
+        resolve(0);
+      }, 5000);
+
+      // resolve(0);
     });
   }
 }

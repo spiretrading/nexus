@@ -18,7 +18,7 @@ class Controller {
   }
 
   login(userId, password) {
-    this.componentModel.isWaiting = true;
+    this.componentModel.isLoading = true;
     this.view.update(cloneObject(this.componentModel));
 
     userService.login(userId, password)
@@ -29,7 +29,7 @@ class Controller {
         browserHistory.push('/searchProfiles')
       }
       else {
-        this.componentModel.isWaiting = false;
+        this.componentModel.isLoading = false;
         this.componentModel.loginResultCode = resultCode;
         this.view.update(cloneObject(this.componentModel));
       }

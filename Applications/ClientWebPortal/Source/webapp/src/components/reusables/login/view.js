@@ -36,25 +36,36 @@ class View extends UpdatableView {
       $('#login-container .username-input').val('');
       $('#login-container .password-input').val('');
     }
+
+    setTimeout(() => {
+      if (!this.componentModel.isLoading){
+        $('#login-container .preloader').css('opacity', 0);
+      }
+    }, 200);
   }
 
   render() {
     let staticLogoStyle = {};
+    let preloaderStyle = {};
     if (this.componentModel.isLoading) {
-      staticLogoStyle.display = "none";
+      staticLogoStyle.opacity = "0";
+      preloaderStyle.opacity = "1";
+    }
+    else{
+      staticLogoStyle.opacity = "1";
     }
 
     let logos;
     if (deviceDetector.isInternetExplorer()) {
       logos = <div className="logo-container">
-        <img className="preloader" src="images/white-logo-loading@2x.gif"/>
+        <img className="preloader" src="images/white-logo-loading@2x.gif" style={preloaderStyle}/>
         <img className="static" src="images/white-logo@2x.png" style={staticLogoStyle}/>
       </div>
     }
     else {
       logos = <div className="logo-container">
-        <object className="preloader" data="images/spireloading.svg" type="image/svg+xml"/>
-        <object className="static" data="images/spire_logo.svg" type="image/svg+xml" style={staticLogoStyle}/>
+        <object className="preloader" data="images/spire_loading_inverted.svg" type="image/svg+xml" style={preloaderStyle}/>
+        <object className="static" data="images/spire_logo_inverted.svg" type="image/svg+xml" style={staticLogoStyle}/>
       </div>
     }
 
