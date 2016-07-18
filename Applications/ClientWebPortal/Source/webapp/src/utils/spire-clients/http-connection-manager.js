@@ -2,21 +2,18 @@
 class HTTPConnectionManager {
   send(apiPath, payload) {
     return new Promise(function (resolve, reject) {
-      let jsonPayload;
+      let options = {
+        url: apiPath,
+        method: 'POST',
+        contentType: "application/json; charset=utf-8"
+      };
+
       if (payload != null) {
-        jsonPayload = JSON.stringify(payload);
-      }
-      else {
-        jsonPayload = null;
+        options.dataType = 'json';
+        options.data = JSON.stringify(payload);
       }
 
-      $.ajax({
-        url: apiPath,
-        dataType: 'json',
-        method: 'POST',
-        contentType: "application/json; charset=utf-8",
-        data: jsonPayload
-      })
+      $.ajax(options)
         .done(onDone)
         .fail(onFail);
 

@@ -11,6 +11,14 @@ class Login extends Component {
     this.controller = new Controller(this);
   }
 
+  componentDidMount() {
+    this.controller.componentDidMount();
+  }
+
+  componentWillUnmount() {
+    this.controller.componentWillUnmount();
+  }
+
   componentDidUpdate() {
     this.controller.getView().componentDidUpdate();
   }

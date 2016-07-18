@@ -12,12 +12,12 @@ function loadRoute(cb) {
 }
 
 let childRoutes;
-// desktop routes
+
 if (!isMobile) {
+  // desktop routes
   childRoutes = [
     {
       path: '/',
-      //path: 'searchProfiles',
       getComponent(location, cb) {
         System.import('components/structures/common/home')
           .then(loadRoute(cb))
@@ -26,7 +26,6 @@ if (!isMobile) {
     },
     {
       path: 'searchProfiles',
-      //path: '/',
       getComponent(location, cb) {
         System.import('components/structures/common/search-profiles')
           .then(loadRoute(cb))
@@ -34,10 +33,8 @@ if (!isMobile) {
       }
     }
   ];
-}
-
-// mobile routes
-else {
+} else {
+  // mobile routes
   childRoutes = [];
 }
 

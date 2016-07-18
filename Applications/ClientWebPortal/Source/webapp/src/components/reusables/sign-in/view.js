@@ -3,43 +3,64 @@ import deviceDetector from 'utils/device-detector';
 import UpdatableView from 'commons/updatable-view';
 import ResultCode from 'utils/spire-clients/result-codes';
 
-/** Login form view */
+/** Signin form view */
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
-    this.isLoginAttempted = false;
-    this.onLoginBtnClick = this.onLoginBtnClick.bind(this);
+    this.isSignInAttempted = false;
+    this.onSignInBtnClick = this.onSignInBtnClick.bind(this);
   }
 
   /** @private */
   onKeyPress(e) {
     if (e.key === 'Enter') {
-      this.getDetailsAndLogin();
+      this.getDetailsAndSignIn();
     }
   }
 
   /** @private */
-  onLoginBtnClick() {
-    this.getDetailsAndLogin();
+  onSignInBtnClick() {
+    this.getDetailsAndSignIn();
   }
 
   /** @private */
-  getDetailsAndLogin() {
-    this.isLoginAttempted = true;
-    let userId = $('#login-container .username-input').val().trim();
-    let password = $('#login-container .password-input').val().trim();
-    this.controller.login(userId, password);
+  getDetailsAndSignIn() {
+    this.isSignInAttempted = true;
+    let userId = $('#signin-container .username-input').val().trim();
+    let password = $('#signin-container .password-input').val().trim();
+    this.controller.signIn(userId, password);
+  }
+
+  initialize() {
+    $(document).on('keypress', (e) => {
+      let $usernameInput = $('#signin-container .username-input');
+      if (!$usernameInput.is(':focus') &&
+          $usernameInput.val().trim().length === 0 &&
+          !$('#signin-container .password-input').is(':focus')) {
+        $usernameInput.focus();
+        setTimeout(() => {
+          // only firefox requires this extra check
+          if ($usernameInput.val().length == 0){
+            $usernameInput.val(String.fromCharCode(e.which));
+          }
+        }, 0);
+      }
+    });
+  }
+
+  dispose() {
+    $(document).off('keypress');
   }
 
   componentDidUpdate() {
-    if (this.componentModel.isLoginSuccess) {
-      $('#login-container .username-input').val('');
-      $('#login-container .password-input').val('');
+    if (this.componentModel.isSignInSuccess) {
+      $('#signin-container .username-input').val('');
+      $('#signin-container .password-input').val('');
     }
 
     setTimeout(() => {
       if (!this.componentModel.isLoading){
-        $('#login-container .preloader').css('opacity', 0);
+        $('#signin-container .preloader').css('opacity', 0);
       }
     }, 200);
   }
@@ -58,11 +79,10 @@ class View extends UpdatableView {
     let logos;
     if (deviceDetector.isInternetExplorer()) {
       logos = <div className="logo-container">
-        <img className="preloader" src="images/white-logo-loading@2x.gif" style={preloaderStyle}/>
-        <img className="static" src="images/white-logo@2x.png" style={staticLogoStyle}/>
+        <img className="preloader" src="images/inverted_logo_animation.gif" style={preloaderStyle}/>
+        <img className="static" src="images/inverted_logo.png" style={staticLogoStyle}/>
       </div>
-    }
-    else {
+    } else {
       logos = <div className="logo-container">
         <object className="preloader" data="images/spire_loading_inverted.svg" type="image/svg+xml" style={preloaderStyle}/>
         <object className="static" data="images/spire_logo_inverted.svg" type="image/svg+xml" style={staticLogoStyle}/>
@@ -70,20 +90,20 @@ class View extends UpdatableView {
     }
 
     let message;
-    if (this.isLoginAttempted && !this.componentModel.isWaiting) {
-      if (this.componentModel.loginResultCode == ResultCode.FAIL) {
+    if (this.isSignInAttempted && !this.componentModel.isWaiting) {
+      if (this.componentModel.signInResultCode == ResultCode.FAIL) {
         message = "Invalid username or password.";
       }
     }
 
     return (
-      <div id="login-container">
+      <div id="signin-container">
         {logos}
         <input type="text" className="username-input" defaultValue="" placeholder="Username"
                onKeyPress={this.onKeyPress.bind(this)}/>
         <input type="password" className="password-input" defaultValue="" placeholder="Password"
                onKeyPress={this.onKeyPress.bind(this)}/>
-        <div className="white-btn login-btn" onClick={this.onLoginBtnClick}>Login</div>
+        <div className="white-btn signin-btn" onClick={this.onSignInBtnClick}>Sign In</div>
         <div className="message">{message}</div>
       </div>
     );

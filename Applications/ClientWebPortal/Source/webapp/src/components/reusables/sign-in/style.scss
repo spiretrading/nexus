@@ -1,6 +1,6 @@
 @import "src/variables";
 
-#login-container {
+#signin-container {
   width: 100%;
   text-align: center;
   font-size: 16px;
@@ -67,11 +67,18 @@
     }
   }
 
-  .login-btn {
+  .signin-btn {
     width: 100%;
     font-size: 17px;
     font-weight: 600;
-    margin-top: 2em;
+    margin-top: 3em;
+    background: $whiteBtn;
+    color: $primaryGradient1;
+
+    &:hover {
+      background: $whiteBtnHover;
+      color: $primaryGradient1;
+    }
   }
 
   .message {

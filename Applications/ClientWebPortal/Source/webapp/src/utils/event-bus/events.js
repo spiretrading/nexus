@@ -5,6 +5,9 @@ export default {
   // application wide events
   ALL_APPLICATION: 'all.application',
   Application: {
-    LOGGED_IN: 'all.application.loggedIn'
+    SIGNED_IN: 'all.application.signedIn'
+  },
+  TopNav: {
+    MENU_OPENED: 'all.application.topNave.menuOpened'
   }
 };

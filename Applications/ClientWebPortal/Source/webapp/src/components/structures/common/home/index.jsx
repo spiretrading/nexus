@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import Login from 'components/reusables/login';
+import Login from 'components/reusables/sign-in';
 import './style.scss';
 
 class Home extends Component {

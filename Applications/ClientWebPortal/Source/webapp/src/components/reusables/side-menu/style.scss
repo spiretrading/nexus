@@ -6,5 +6,50 @@
   left: 0;
   width: 200px;
   height: 100vh;
-  background: $primaryGradient1
+  background: $primaryGradient1;
+  display: none;
+
+  .logo {
+    width: 200px;
+    height: 60px;
+    margin-bottom: 15px;
+
+    img {
+      margin-left: 60px;
+      margin-top: 15px;
+      height: 30px;
+    }
+  }
+
+  .close-btn-container {
+    position: absolute;
+    top: 23px;
+    left: 23px;
+  }
+
+  .close-btn {
+    height: 14px;
+    width: 14px;
+  }
+
+  .menu-item {
+    width: 200px;
+    height: 35px;
+    color: White;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding-left: 20px;
+
+    img {
+      margin-right: 15px;
+      width: 20px;
+      height: 20px;
+    }
+
+    &:hover {
+      background: $primaryGradient2;
+    }
+  }
 }
