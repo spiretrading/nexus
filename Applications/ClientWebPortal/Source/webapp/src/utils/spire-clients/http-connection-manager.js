@@ -5,7 +5,7 @@ class HTTPConnectionManager {
       let options = {
         url: apiPath,
         method: 'POST',
-        contentType: "application/json; charset=utf-8"
+        contentType: 'application/json; charset=utf-8'
       };
 
       if (payload != null) {

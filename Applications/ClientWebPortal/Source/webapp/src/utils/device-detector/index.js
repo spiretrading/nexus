@@ -12,11 +12,11 @@ class DeviceDetector {
 
   isInternetExplorer() {
     var sAgent = window.navigator.userAgent;
-    var Idx = sAgent.indexOf("MSIE");
+    var Idx = sAgent.indexOf('MSIE');
 
     // If IE, return version number.
     if (Idx > 0)
-      return parseInt(sAgent.substring(Idx + 5, sAgent.indexOf(".", Idx)));
+      return parseInt(sAgent.substring(Idx + 5, sAgent.indexOf('.', Idx)));
 
     // If IE 11 then look for Updated user agent string.
     else if (!!navigator.userAgent.match(/Trident\/7\./))
@@ -28,7 +28,7 @@ class DeviceDetector {
 
   isHighDefinitionDisplay() {
     if (window.matchMedia) {
-      var mq = window.matchMedia("only screen and (-moz-min-device-pixel-ratio: 1.3), only screen and (-o-min-device-pixel-ratio: 2.6/2), only screen and (-webkit-min-device-pixel-ratio: 1.3), only screen  and (min-device-pixel-ratio: 1.3), only screen and (min-resolution: 1.3dppx)");
+      var mq = window.matchMedia('only screen and (-moz-min-device-pixel-ratio: 1.3), only screen and (-o-min-device-pixel-ratio: 2.6/2), only screen and (-webkit-min-device-pixel-ratio: 1.3), only screen  and (min-device-pixel-ratio: 1.3), only screen and (min-resolution: 1.3dppx)');
       if(mq && mq.matches) {
         return true;
       }

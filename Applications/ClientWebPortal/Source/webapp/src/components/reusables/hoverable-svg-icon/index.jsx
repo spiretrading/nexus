@@ -9,12 +9,12 @@ class HoverableIcon extends Component {
   }
 
   render() {
-    let continerClassName = "hoverable-icon-container " + this.props.className;
+    let continerClassName = 'hoverable-icon-container ' + this.props.className;
     let style = {};
     if (this.props.padding) {
       style.padding = this.props.padding;
     }
-    if (this.props.isButton === "true"){
+    if (this.props.isButton === 'true') {
       style.cursor = 'pointer';
     }
     let notHoverImagePath = imageResLoader.getResPath(this.props.srcNotHover);

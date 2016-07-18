@@ -69,11 +69,11 @@ class View extends UpdatableView {
     let staticLogoStyle = {};
     let preloaderStyle = {};
     if (this.componentModel.isLoading) {
-      staticLogoStyle.opacity = "0";
-      preloaderStyle.opacity = "1";
+      staticLogoStyle.opacity = '0';
+      preloaderStyle.opacity = '1';
     }
     else{
-      staticLogoStyle.opacity = "1";
+      staticLogoStyle.opacity = '1';
     }
 
     let logos;
@@ -92,7 +92,7 @@ class View extends UpdatableView {
     let message;
     if (this.isSignInAttempted && !this.componentModel.isWaiting) {
       if (this.componentModel.signInResultCode == ResultCode.FAIL) {
-        message = "Invalid username or password.";
+        message = 'Invalid username or password.';
       }
     }
 
