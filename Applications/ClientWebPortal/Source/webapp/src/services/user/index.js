@@ -1,6 +1,5 @@
 import spireClient from 'utils/spire-clients';
-import ResultCodes from 'utils/spire-clients/result-codes.js';
-const ResultCode = ResultCodes;
+import ResultCode from 'utils/spire-clients/result-codes.js';
 
 /** Centralized user related states and service actions */
 class UserService {
@@ -8,18 +7,17 @@ class UserService {
     this.userRole;
   }
 
-  login(userId, password) {
+  signIn(userId, password) {
     let resultCode = null;
 
-    return spireClient.login(userId, password)
-      .then(onLoginResponse)
+    return spireClient.signIn(userId, password)
+      .then(onSignInResponse)
       .then(onUserRoleResponse.bind(this))
       .catch(onException);
 
-
-    function onLoginResponse(aResultCode) {
+    function onSignInResponse(aResultCode) {
       resultCode = aResultCode;
-      if (resultCode === ResultCode.Fail) {
+      if (resultCode === ResultCode.FAIL) {
         throw resultCode;
       }
 
@@ -36,17 +34,21 @@ class UserService {
 
     function onUserRoleResponse(role) {
       this.userRole = role;
-      EventBus.publish(Event.Application.LoggedIn, {});
+      EventBus.publish(Event.Application.SIGNED_IN, {});
       return resultCode;
     }
 
     function onException(resultCode) {
-      if (resultCode === ResultCode.Fail) {
+      if (resultCode === ResultCode.FAIL) {
         return resultCode;
       } else {
-        throw ResultCode.ERROR;
+        return ResultCode.ERROR;
       }
     }
+  }
+
+  signOut() {
+    spireClient.signOut();
   }
 }
 

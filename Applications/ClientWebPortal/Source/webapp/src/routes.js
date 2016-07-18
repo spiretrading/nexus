@@ -19,7 +19,6 @@ if (!isMobile) {
     {
       path: '/',
       getComponent(location, cb) {
-        // System.import('pages/desktop/home')
         System.import('components/structures/common/home')
           .then(loadRoute(cb))
           .catch(errorLoading);

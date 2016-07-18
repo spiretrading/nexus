@@ -71,7 +71,7 @@ button {
 .white-btn {
   @include button-style;
   background: $white;
-  color: $blueBackground;
+  color: $primaryGradient1;
 
   &:hover {
     background: $whiteBtnHover
