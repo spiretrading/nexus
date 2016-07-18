@@ -4,7 +4,13 @@ const ResultCode = ResultCodes;
 
 /** Spire client class */
 class SpireClient {
-  login(userId, password) {
+  /** @private */
+  logErrorAndThrow(xhr) {
+    console.log('Unexpected error happened.');
+    throw ResultCode.ERROR;
+  }
+
+  signIn(userId, password) {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'service_locator/login';
     let payload = {
       username: userId,
@@ -12,7 +18,7 @@ class SpireClient {
     };
 
     return httpConnectionManager.send(apiPath, payload)
-      .then(onSuccess, onHttpError);
+      .then(onSuccess, onHttpError.bind(this));
 
     function onSuccess(param) {
       return ResultCode.SUCCESS;
@@ -21,17 +27,16 @@ class SpireClient {
     function onHttpError(xhr) {
       if (xhr.status === 401) {
         return ResultCode.FAIL;
-      }
-
-      if (xhr.status === 200) {
-        // TODO: temporary while back-end message is recognized as 200 for some reason
-        return ResultCode.FAIL;
       } else {
-        // server error
-        console.log('Unexpected error happened.');
-        throw ResultCode.ERROR;
+        this.logErrorAndThrow(xhr);
       }
     }
+  }
+
+  signOut() {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'service_locator/logout';
+    return httpConnectionManager.send(apiPath, null)
+      .catch(this.logErrorAndThrow);
   }
 
   getUserRole(userId) {

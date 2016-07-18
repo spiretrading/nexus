@@ -3,11 +3,11 @@ import {browserHistory} from 'react-router/es6';
 import userService from 'services/user';
 import ResultCode from 'utils/spire-clients/result-codes';
 
-/** Login form controller */
+/** Signin form controller */
 class Controller {
   constructor(react) {
     this.componentModel = {
-      isWaiting: false,
+      isLoading: false,
       loginResultCode: 0
     };
     this.view = new View(react, this, cloneObject(this.componentModel));
@@ -17,19 +17,27 @@ class Controller {
     return this.view;
   }
 
-  login(userId, password) {
-    this.componentModel.isWaiting = true;
+  componentDidMount() {
+    this.view.initialize();
+  }
+
+  componentWillUnmount() {
+    this.view.dispose();
+  }
+
+  signIn(userId, password) {
+    this.componentModel.isLoading = true;
     this.view.update(cloneObject(this.componentModel));
 
-    userService.login(userId, password)
+    userService.signIn(userId, password)
       .then(onResult.bind(this));
 
     function onResult(resultCode) {
       if (resultCode === ResultCode.SUCCESS) {
         browserHistory.push('/searchProfiles')
       } else {
-        this.componentModel.isWaiting = false;
-        this.componentModel.loginResultCode = resultCode;
+        this.componentModel.isLoading = false;
+        this.componentModel.signInResultCode = resultCode;
         this.view.update(cloneObject(this.componentModel));
       }
     }
