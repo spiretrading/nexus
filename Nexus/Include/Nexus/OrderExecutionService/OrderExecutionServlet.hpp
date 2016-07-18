@@ -313,17 +313,6 @@ namespace OrderExecutionService {
       recoveryQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
       const auto& orders = m_dataStore->LoadOrderSubmissions(recoveryQuery);
       for(const auto& orderRecord : orders) {
-        auto& syncShortingTracker = m_shortingTrackers.GetOrInsert(
-          orderRecord->m_info.m_fields.m_account,
-          boost::factory<std::shared_ptr<SyncShortingTracker>>());
-        syncShortingTracker->With(
-          [&] (auto& shortingTracker) {
-            shortingTracker.Submit(orderRecord->m_info.m_orderId,
-              orderRecord->m_info.m_fields);
-            for(auto& executionReport : orderRecord->m_executionReports) {
-              shortingTracker.Update(executionReport);
-            }
-          });
         if(!orderRecord->m_executionReports.empty() &&
             IsTerminal(orderRecord->m_executionReports.back().m_status)) {
           continue;
@@ -336,6 +325,9 @@ namespace OrderExecutionService {
         } catch(const std::exception&) {
           continue;
         }
+        const auto& syncShortingTracker = m_shortingTrackers.GetOrInsert(
+          order->GetInfo().m_fields.m_account,
+          boost::factory<std::shared_ptr<SyncShortingTracker>>());
         order->GetPublisher().With(
           [&] {
             boost::optional<std::vector<ExecutionReport>>

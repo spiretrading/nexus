@@ -10,6 +10,10 @@ class Controller {
   getView() {
     return this.view;
   }
+
+  openMenu() {
+    EventBus.publish(Event.TopNav.MENU_OPENED, {});
+  }
 }
 
 export default Controller;

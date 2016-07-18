@@ -4,7 +4,6 @@
 #include <Beam/Python/FixedString.hpp>
 #include <Beam/Python/Optional.hpp>
 #include <Beam/Python/PythonBindings.hpp>
-#include <Beam/Python/Queries.hpp>
 #include <Beam/Python/Variant.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
@@ -52,7 +51,6 @@ void Nexus::Python::ExportBboQuote() {
       &BboQuote::m_timestamp, return_value_policy<return_by_value>()))
     .def(self == self)
     .def(self != self);
-  ExportSequencedValue<BboQuote>("SequencedBboQuote");
 }
 
 void Nexus::Python::ExportBookQuote() {
@@ -66,7 +64,6 @@ void Nexus::Python::ExportBookQuote() {
       &BookQuote::m_timestamp, return_value_policy<return_by_value>()))
     .def(self == self)
     .def(self != self);
-  ExportSequencedValue<BookQuote>("SequencedBookQuote");
 }
 
 void Nexus::Python::ExportCountry() {
@@ -409,7 +406,6 @@ void Nexus::Python::ExportOrderImbalance() {
       &OrderImbalance::m_timestamp, return_value_policy<return_by_value>()))
     .def(self == self)
     .def(self != self);
-  ExportSequencedValue<OrderImbalance>("SequencedOrderImbalance");
 }
 
 void Nexus::Python::ExportOrderStatus() {
@@ -540,7 +536,6 @@ void Nexus::Python::ExportTimeAndSale() {
     }
   }
   ExportEnum<TimeAndSale::Condition::Type>();
-  ExportSequencedValue<TimeAndSale>("SequencedTimeAndSale");
 }
 
 void Nexus::Python::ExportTimeInForce() {
