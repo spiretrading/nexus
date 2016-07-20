@@ -48,6 +48,10 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
     "/api/administration_service/load_managed_trading_groups"),
     bind(&ClientWebPortalServlet::OnLoadManagedTradingGroups, this,
     std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/load_account_roles"),
+    bind(&ClientWebPortalServlet::OnLoadAccountRoles, this,
+    std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, "/"),
     bind(&ClientWebPortalServlet::OnIndex, this, std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, ""),
