@@ -61,6 +61,7 @@ void Nexus::Python::ExportBookQuote() {
     .def_readwrite("mpid", &BookQuote::m_mpid)
     .def_readwrite("is_primary_mpid", &BookQuote::m_isPrimaryMpid)
     .def_readwrite("market", &BookQuote::m_market)
+    .def_readwrite("quote", &BookQuote::m_quote)
     .add_property("timestamp", make_getter(&BookQuote::m_timestamp,
       return_value_policy<return_by_value>()), make_setter(
       &BookQuote::m_timestamp, return_value_policy<return_by_value>()))
