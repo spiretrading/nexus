@@ -50,7 +50,7 @@ void IndirectTask::OnTaskUpdate(const StateEntry& update) {
 }
 
 IndirectTaskFactory::IndirectTaskFactory(RefType<ReactorMonitor> reactorMonitor)
-    : m_taskFactory(make_shared<optional<TaskFactory>>()),
+    : m_taskFactory(std::make_shared<optional<TaskFactory>>()),
       m_task(std::make_shared<IndirectTask>(Ref(reactorMonitor))) {}
 
 const std::shared_ptr<IndirectTask>& IndirectTaskFactory::GetTask() const {
