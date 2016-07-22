@@ -52,6 +52,10 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
     "/api/administration_service/load_account_roles"),
     bind(&ClientWebPortalServlet::OnLoadAccountRoles, this,
     std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/load_account_identity"),
+    bind(&ClientWebPortalServlet::OnLoadAccountIdentity, this,
+    std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, "/"),
     bind(&ClientWebPortalServlet::OnIndex, this, std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, ""),
@@ -218,5 +222,28 @@ HttpResponse ClientWebPortalServlet::OnLoadAccountRoles(
   auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
     account);
   response.SetBody(Encode<SharedBuffer>(m_sender, roles));
+  return response;
+}
+
+HttpResponse ClientWebPortalServlet::OnLoadAccountIdentity(
+    const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions.Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = boost::get<JsonObject>(
+    Parse<JsonParser>(request.GetBody()));
+  auto& accountParameter = boost::get<JsonObject>(parameters["account"]);
+  DirectoryEntry account;
+  account.m_name = boost::get<string>(accountParameter["name"]);
+  account.m_id = static_cast<int>(boost::get<int64_t>(accountParameter["id"]));
+  account.m_type = static_cast<DirectoryEntry::Type>(
+    static_cast<int>(boost::get<int64_t>(accountParameter["type"])));
+  response.SetHeader({"Content-Type", "application/json"});
+  auto identity = m_serviceClients->GetAdministrationClient().LoadIdentity(
+    account);
+  response.SetBody(Encode<SharedBuffer>(m_sender, identity));
   return response;
 }
