@@ -61,12 +61,16 @@ void Nexus::Python::ExportBookQuote() {
     .def_readwrite("mpid", &BookQuote::m_mpid)
     .def_readwrite("is_primary_mpid", &BookQuote::m_isPrimaryMpid)
     .def_readwrite("market", &BookQuote::m_market)
+    .add_property("market",
+      make_getter(&BookQuote::m_market, return_value_policy<return_by_value>()),
+      make_setter(&BookQuote::m_market, return_value_policy<return_by_value>()))
     .def_readwrite("quote", &BookQuote::m_quote)
     .add_property("timestamp", make_getter(&BookQuote::m_timestamp,
       return_value_policy<return_by_value>()), make_setter(
       &BookQuote::m_timestamp, return_value_policy<return_by_value>()))
     .def(self == self)
     .def(self != self);
+  ExportFixedString<4>();
   ExportSequencedValue<BookQuote>("SequencedBookQuote");
 }
 
