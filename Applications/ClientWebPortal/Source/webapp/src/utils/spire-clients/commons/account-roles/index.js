@@ -4,10 +4,10 @@ import AccountRole from './account-role';
 class AccountRoles {
   parse(accountRoleNumber) {
     let roles = {
-      isTrader: ((accountRoleNumber & Math.pow(2, AccountRole.TRADER)) === Math.pow(2, AccountRole.TRADER)),
-      isManager: ((accountRoleNumber & Math.pow(2, AccountRole.MANAGER)) === Math.pow(2, AccountRole.MANAGER)),
-      isService: ((accountRoleNumber & Math.pow(2, AccountRole.SERVICE)) === Math.pow(2, AccountRole.SERVICE)),
-      isAdmin: ((accountRoleNumber & Math.pow(2, AccountRole.ADMINISTRATOR)) === Math.pow(2, AccountRole.ADMINISTRATOR))
+      isTrader: ((accountRoleNumber & (1 << AccountRole.TRADER)) != 0),
+      isManager: ((accountRoleNumber & (1 << AccountRole.MANAGER)) != 0),
+      isService: ((accountRoleNumber & (1 << AccountRole.SERVICE)) != 0),
+      isAdmin: ((accountRoleNumber & (1 << AccountRole.ADMINISTRATOR)) != 0)
     };
 
     return roles;
