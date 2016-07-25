@@ -1,7 +1,7 @@
 import React from 'react';
 import deviceDetector from 'utils/device-detector';
 import UpdatableView from 'commons/updatable-view';
-import ResultCode from 'utils/spire-clients/result-codes';
+import ResultCode from 'services/user/result-codes';
 
 /** Signin form view */
 class View extends UpdatableView {
@@ -26,21 +26,20 @@ class View extends UpdatableView {
   /** @private */
   getDetailsAndSignIn() {
     this.isSignInAttempted = true;
-    let userId = $('#signin-container .username-input').val().trim();
+    let userName = $('#signin-container .username-input').val().trim();
     let password = $('#signin-container .password-input').val().trim();
-    this.controller.signIn(userId, password);
+    this.controller.signIn(userName, password);
   }
 
   initialize() {
     $(document).on('keypress', (e) => {
       let $usernameInput = $('#signin-container .username-input');
       if (!$usernameInput.is(':focus') &&
-          $usernameInput.val().trim().length === 0 &&
-          !$('#signin-container .password-input').is(':focus')) {
+        $usernameInput.val().trim().length === 0 && !$('#signin-container .password-input').is(':focus')) {
         $usernameInput.focus();
         setTimeout(() => {
           // only firefox requires this extra check
-          if ($usernameInput.val().length == 0){
+          if ($usernameInput.val().length == 0) {
             $usernameInput.val(String.fromCharCode(e.which));
           }
         }, 0);
@@ -59,7 +58,7 @@ class View extends UpdatableView {
     }
 
     setTimeout(() => {
-      if (!this.componentModel.isLoading){
+      if (!this.componentModel.isLoading) {
         $('#signin-container .preloader').css('opacity', 0);
       }
     }, 200);
@@ -71,8 +70,7 @@ class View extends UpdatableView {
     if (this.componentModel.isLoading) {
       staticLogoStyle.opacity = '0';
       preloaderStyle.opacity = '1';
-    }
-    else{
+    } else {
       staticLogoStyle.opacity = '1';
     }
 
@@ -84,7 +82,8 @@ class View extends UpdatableView {
       </div>
     } else {
       logos = <div className="logo-container">
-        <object className="preloader" data="images/spire_loading_inverted.svg" type="image/svg+xml" style={preloaderStyle}/>
+        <object className="preloader" data="images/spire_loading_inverted.svg" type="image/svg+xml"
+                style={preloaderStyle}/>
         <object className="static" data="images/spire_logo_inverted.svg" type="image/svg+xml" style={staticLogoStyle}/>
       </div>
     }

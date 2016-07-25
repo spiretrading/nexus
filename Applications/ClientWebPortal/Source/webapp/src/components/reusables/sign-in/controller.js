@@ -1,9 +1,10 @@
 import View from './view';
-import {browserHistory} from 'react-router/es6';
 import userService from 'services/user';
-import ResultCode from 'utils/spire-clients/result-codes';
+import ResultCode from 'services/user/result-codes';
+import store from 'store';
+import LocalstorageKey from 'commons/localstorage-keys';
+import {browserHistory} from 'react-router/es6';
 
-/** Signin form controller */
 class Controller {
   constructor(react) {
     this.componentModel = {
@@ -25,16 +26,22 @@ class Controller {
     this.view.dispose();
   }
 
-  signIn(userId, password) {
+  signIn(userName, password) {
     this.componentModel.isLoading = true;
     this.view.update(cloneObject(this.componentModel));
 
-    userService.signIn(userId, password)
+    userService.signIn(userName, password)
       .then(onResult.bind(this));
 
     function onResult(resultCode) {
+      store.remove(LocalstorageKey.LAST_VISITED_PATH);
       if (resultCode === ResultCode.SUCCESS) {
-        browserHistory.push('/searchProfiles')
+        let lastVisitedPath = store.get(LocalstorageKey.LAST_VISITED_PATH);
+        if (lastVisitedPath != null && lastVisitedPath != '/' && userService.isAuthorizedPath(lastVisitedPath)){
+          browserHistory.push(lastVisitedPath);
+        } else {
+          browserHistory.push('profile-account', userService.getDirectoryEntry());
+        }
       } else {
         this.componentModel.isLoading = false;
         this.componentModel.signInResultCode = resultCode;

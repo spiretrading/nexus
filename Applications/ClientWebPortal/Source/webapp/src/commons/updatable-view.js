@@ -14,6 +14,10 @@ class UpdatableView {
     this.react.forceUpdate();
   }
 
+  setComponentModel(newComponentModel) {
+    this.componentModel = newComponentModel;
+  }
+
   componentDidUpdate() {
   }
 }

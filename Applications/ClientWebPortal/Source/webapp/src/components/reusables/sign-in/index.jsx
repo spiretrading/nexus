@@ -2,8 +2,8 @@ import {Component} from 'react';
 import Controller from './controller';
 import './style.scss';
 
-/** Login form react interface */
-class Login extends Component {
+/** Signin form */
+class SignIn extends Component {
   constructor(props) {
     super(props);
   }
@@ -29,4 +29,4 @@ class Login extends Component {
   }
 }
 
-export default Login;
+export default SignIn;

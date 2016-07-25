@@ -7,6 +7,15 @@ class Home extends Component {
     super(props);
   }
 
+  componentDidMount() {
+    $('body').css('overflow', 'hidden');
+    EventBus.publish(Event.Application.PAGE_LOADED);
+  }
+
+  componentWillUnmount() {
+    $('body').css('overflow', '');
+  }
+
   render() {
     return (
       <div id="home-container">

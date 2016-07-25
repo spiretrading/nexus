@@ -21,20 +21,22 @@
     }
   }
 
-  .close-btn-container {
+  .close-btn {
     position: absolute;
-    top: 23px;
+    top: 20px;
     left: 20px;
+    font-size: 20px;
+    color: $primaryGradient3;
+    cursor: pointer;
   }
 
-  .close-btn {
-    height: 14px;
-    width: 20px;
+  .close-btn-hover {
+    color: $primaryGradient5;
   }
 
   .menu-item {
     width: 200px;
-    height: 35px;
+    height: 40px;
     color: White;
     font-size: 16px;
     display: flex;
@@ -46,6 +48,13 @@
       margin-right: 15px;
       width: 20px;
       height: 20px;
+    }
+
+    span {
+      margin-right: 15px;
+      width: 20px;
+      height: 20px;
+      font-size: 20px;
     }
 
     &:hover {

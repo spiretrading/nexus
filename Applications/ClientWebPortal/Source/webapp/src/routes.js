@@ -25,6 +25,15 @@ if (!isMobile) {
       }
     },
     {
+      path: 'profile-account',
+      getComponent(location, cb) {
+        System.import('components/structures/desktop-profile')
+          .then((module) => { return { default: module.account } })
+          .then(loadRoute(cb))
+          .catch(errorLoading);
+      }
+    },
+    {
       path: 'searchProfiles',
       getComponent(location, cb) {
         System.import('components/structures/common/search-profiles')
@@ -35,7 +44,35 @@ if (!isMobile) {
   ];
 } else {
   // mobile routes
-  childRoutes = [];
+  childRoutes = [
+    {
+      path: '/',
+      getComponent(location, cb) {
+        System.import('components/structures/common/home')
+          .then(loadRoute(cb))
+          .catch(errorLoading);
+      }
+    },
+    {
+      path: 'profile-account',
+      getComponent(location, cb) {
+        /*
+        System.import('components/structures/common/profile')
+          .then((module) => { return { default: module.Account } })
+          .then(loadRoute(cb))
+          .catch(errorLoading);
+          */
+      }
+    },
+    {
+      path: 'searchProfiles',
+      getComponent(location, cb) {
+        System.import('components/structures/common/search-profiles')
+          .then(loadRoute(cb))
+          .catch(errorLoading);
+      }
+    }
+  ];
 }
 
 export default {

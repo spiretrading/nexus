@@ -1,7 +1,7 @@
 import React from 'react';
 import UpdatableView from 'commons/updatable-view';
-import HoverableIcon from 'components/reusables/hoverable-svg-icon';
 import imageResLoader from 'utils/image-res-loader';
+import SubPages from 'components/reusables/top-nav/sub-pages';
 
 /** Top nav view */
 class View extends UpdatableView {
@@ -16,12 +16,11 @@ class View extends UpdatableView {
   render() {
     return (
       <div id="top-nav-container">
-        <HoverableIcon className="menu-btn" srcNotHover="images/icons/burger.png"
-                       srcHover="images/icons/burger_hover.png"
-                       padding="8px 5px 8px 5px"
-                       isButton="true"
-                       onClick={this.onMenuClick.bind(this)}/>
+        <span className="icon-burger" onClick={this.onMenuClick.bind(this)}></span>
         <img className="logo" src={imageResLoader.getResPath("images/top_logo.png")}/>
+        <div className="sub-pages-wrapper">
+          <SubPages model={this.componentModel.subPages}/>
+        </div>
       </div>
     );
   }
