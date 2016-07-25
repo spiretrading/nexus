@@ -1,0 +1,34 @@
+@import "src/variables";
+
+.account-picture-container {
+  display: flex;
+  position: relative;
+
+  .labels-container {
+    flex: 1;
+  }
+
+  .picture-container {
+    img {
+      width: 300px;
+      height: 172px;
+      margin-right: 35px;
+    }
+  }
+
+  .picture-change-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+
+    .icon-change_image {
+      font-size: 20px;
+      color: $primaryGradient3;
+      cursor: pointer;
+
+      &:hover {
+        color: $primaryGradient1;
+      }
+    }
+  }
+}

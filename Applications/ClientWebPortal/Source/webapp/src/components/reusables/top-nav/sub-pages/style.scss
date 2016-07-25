@@ -1,0 +1,42 @@
+@import "src/variables";
+
+#sub-pages-container {
+  display: flex;
+
+  .menu-item {
+    display: flex;
+    align-items: center;
+    height: 60px;
+    size: 20px;
+    margin-right: 50px;
+    font-size: 18px;
+    color: $primaryGradient3;
+    border-bottom: 3px solid $white;
+    border-top: 3px solid $white;
+    cursor: pointer;
+
+    span {
+      margin-right: 10px;
+      font-size: 20px;
+    }
+
+    &.active {
+      color: $primaryGradient1;
+      border-bottom: 3px solid $primaryGradient1;
+    }
+  }
+
+  &.mobile {
+    .menu-item {
+      margin-right: 20px;
+
+      span {
+        margin: 0;
+      }
+
+      div {
+        display: none;
+      }
+    }
+  }
+}
