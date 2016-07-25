@@ -4,11 +4,11 @@ class HTTPConnectionManager {
     return new Promise(function (resolve, reject) {
       let options = {
         url: apiPath,
-        method: 'POST',
-        contentType: 'application/json; charset=utf-8'
+        method: 'POST'
       };
 
       if (payload != null) {
+        options.contentType = 'application/json; charset=utf-8';
         options.dataType = 'json';
         options.data = JSON.stringify(payload);
       }
