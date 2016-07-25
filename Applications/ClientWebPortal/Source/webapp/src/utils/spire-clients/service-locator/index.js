@@ -1,32 +1,37 @@
-import httpConnectionManager from './http-connection-manager';
+import httpConnectionManager from '../commons/http-connection-manager';
 import ResultCodes from './result-codes.js';
 const ResultCode = ResultCodes;
 
-/** Spire client class */
-class SpireClient {
+/** Spire service locator client class */
+class ServiceLocatorClient {
   /** @private */
   logErrorAndThrow(xhr) {
-    console.log('Unexpected error happened.');
+    console.error('Unexpected error happened.');
     throw ResultCode.ERROR;
   }
 
-  signIn(userId, password) {
+  signIn(userName, password) {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'service_locator/login';
     let payload = {
-      username: userId,
+      username: userName,
       password: password
     };
 
     return httpConnectionManager.send(apiPath, payload)
       .then(onSuccess, onHttpError.bind(this));
 
-    function onSuccess(param) {
-      return ResultCode.SUCCESS;
+    function onSuccess(directoryEntry) {
+      return {
+        resultCode: ResultCode.SUCCESS,
+        directoryEntry: directoryEntry
+      };
     }
 
     function onHttpError(xhr) {
       if (xhr.status === 401) {
-        return ResultCode.FAIL;
+        return {
+          resultCode: ResultCode.FAIL
+        };
       } else {
         this.logErrorAndThrow(xhr);
       }
@@ -38,12 +43,6 @@ class SpireClient {
     return httpConnectionManager.send(apiPath, null)
       .catch(this.logErrorAndThrow);
   }
-
-  getUserRole(userId) {
-    return new Promise((resolve, reject) => {
-      resolve(0);
-    });
-  }
 }
 
-export default new SpireClient();
+export default new ServiceLocatorClient();
