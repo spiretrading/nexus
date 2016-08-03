@@ -27,7 +27,7 @@ if (!isMobile) {
     {
       path: 'profile-account',
       getComponent(location, cb) {
-        System.import('components/structures/desktop-profile')
+        System.import('components/structures/desktop/profile')
           .then((module) => { return { default: module.account } })
           .then(loadRoute(cb))
           .catch(errorLoading);
@@ -56,12 +56,10 @@ if (!isMobile) {
     {
       path: 'profile-account',
       getComponent(location, cb) {
-        /*
-        System.import('components/structures/common/profile')
-          .then((module) => { return { default: module.Account } })
+        System.import('components/structures/mobile/profile')
+          .then((module) => { return { default: module.account } })
           .then(loadRoute(cb))
           .catch(errorLoading);
-          */
       }
     },
     {

@@ -5,12 +5,11 @@ class UpdatableView {
   constructor(react, controller, componentModel) {
     this.react = react;
     this.controller = controller;
-    this.componentModel = componentModel;
-    this.render = this.render.bind(this);
+    this.componentModel = cloneObject(componentModel);
   }
 
   update(newComponentModel) {
-    this.componentModel = newComponentModel;
+    this.componentModel = cloneObject(newComponentModel);
     this.react.forceUpdate();
   }
 

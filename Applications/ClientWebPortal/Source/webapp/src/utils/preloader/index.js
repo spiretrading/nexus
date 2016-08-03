@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Preloader from 'components/reusables/preloader';
+import Preloader from 'components/reusables/common/preloader';
 
 class PreloaderUtils {
   show(parentElement, id, width, height) {

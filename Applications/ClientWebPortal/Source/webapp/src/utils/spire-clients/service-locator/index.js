@@ -7,6 +7,7 @@ class ServiceLocatorClient {
   /** @private */
   logErrorAndThrow(xhr) {
     console.error('Unexpected error happened.');
+    console.error(xhr);
     throw ResultCode.ERROR;
   }
 

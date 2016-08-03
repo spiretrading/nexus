@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import Login from 'components/reusables/sign-in';
+import Login from 'components/reusables/common/sign-in';
 import './style.scss';
 
 class Home extends Component {
@@ -10,10 +10,12 @@ class Home extends Component {
   componentDidMount() {
     $('body').css('overflow', 'hidden');
     EventBus.publish(Event.Application.PAGE_LOADED);
+    $('main').css('padding', '0');
   }
 
   componentWillUnmount() {
     $('body').css('overflow', '');
+    $('main').css('padding', '');
   }
 
   render() {

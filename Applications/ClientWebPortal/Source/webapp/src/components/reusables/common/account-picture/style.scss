@@ -1,0 +1,98 @@
+@import "src/styles/variables";
+
+.account-picture-container {
+  display: flex;
+
+  .labels-container {
+    flex: 1;
+  }
+
+  .picture-container {
+    position: relative;
+
+    img {
+      width: 359px;
+      height: 226px;
+      cursor: pointer;
+    }
+
+    .default-img {
+      position: relative;
+      width: 359px;
+      height: 226px;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      background: $lightGrey;
+      color: $darkGrey;
+      font-size: 40px;
+      cursor: pointer;
+
+      .icon-photo {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        -webkit-transform: translate(-50%, -50%);
+        -moz-transform: translate(-50%, -50%);
+        -ms-transform: translate(-50%, -50%);
+      }
+    }
+
+    .picture-change-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: none;
+      height: 20px;
+      cursor: pointer;
+
+      .icon-change_image {
+        font-size: 20px;
+        color: $primaryGradient3;
+        cursor: pointer;
+
+        &:hover {
+          color: $primaryGradient1;
+        }
+      }
+    }
+
+    &:hover {
+      .picture-change-btn {
+        display: initial;
+      }
+    }
+  }
+
+  #change-picture-modal {
+    .modal-dialog {
+      width: 510px;
+    }
+  }
+}
+
+main.mobile .account-picture-container {
+  width: 100%;
+  height: 100%;
+
+  .picture-container {
+    width: 100%;
+    height: 100%;
+
+    img {
+      width: calc(100vw - 30px);
+      height: calc((100vw - 30px) / 1.59);
+    }
+
+    .default-img {
+      width: 100%;
+      height: 100%;
+    }
+
+    .picture-change-btn {
+      display: initial;
+    }
+  }
+}

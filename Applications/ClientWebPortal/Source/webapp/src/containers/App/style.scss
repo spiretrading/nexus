@@ -1,4 +1,4 @@
-@import "src/variables";
+@import "src/styles/variables";
 
 .viewport {
   min-width: $minSiteWidth;
@@ -14,7 +14,7 @@
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 99998;
+  z-index: 1030;
   border-bottom: 1px solid #ebebeb;
   min-width: $minSiteWidth;
   background: $white;

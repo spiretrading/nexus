@@ -1,4 +1,4 @@
-@import "src/variables";
+@import "src/styles/variables";
 
 #account-container {
   font-size: 16px;
@@ -27,27 +27,39 @@
     flex: 1;
   }
 
-  .password-user-notes-wrapper {
+  .save-button-wrapper {
     display: flex;
-    padding-bottom: 15px;
+    flex-direction: row-reverse;
 
-    .password-wrapper {
-      width: 345px;
-      padding-left: 15px;
-      padding-right: 60px;
+    .save-button {
+      width: 171px;
+    }
+  }
 
-      .header {
-        padding: 30px 0 30px 0;
+  .change-password-wrapper {
+    .input-row {
+      display: flex;
+      margin-bottom: 20px;
+
+      input {
+        border: 1px solid $greyTextboxBorder;
+        width: 270px;
+        margin-right: 40px;
+      }
+
+      .change-button {
+        margin-left: 29px;
+        width: 171px;
       }
     }
 
-    .user-notes-wrapper {
-      flex: 1;
-      padding-right: 15px;
-
-      .header {
-        padding: 30px 0 30px 0;
-      }
+    .message {
+      color: $red;
+      display: none;
     }
+  }
+
+  .change-picture-wrapper {
+    width: 480px;
   }
 }

@@ -31,8 +31,10 @@
     "webpack": "2.1.0-beta.15"
   },
   "dependencies": {
+    "autosize": "^3.0.17",
     "babel-polyfill": "^6.6.1",
     "babel-runtime": "^6.6.1",
+    "croppie": "^2.2.0",
     "jquery": "2.2.4",
     "moment": "^2.14.1",
     "pubsub-js": "^1.5.3",

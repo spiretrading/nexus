@@ -1,6 +1,6 @@
 import React, {PropTypes, Component} from 'react';
-import TopNav from 'components/reusables/top-nav';
-import SideMenu from 'components/reusables/side-menu';
+import TopNav from 'components/reusables/common/top-nav';
+import SideMenu from 'components/reusables/common/side-menu';
 import store from 'store';
 import LocalstorageKey from 'commons/localstorage-keys';
 import deviceDetector from 'utils/device-detector';
@@ -25,9 +25,28 @@ class App extends Component {
     EventBus.publish(Event.Application.PAGE_TRANSITIONED, pathName);
   }
 
+  /** @private */
+  hideIfHome() {
+    let pathName = window.location.pathname;
+    if (pathName === '/'){
+      $('#top-nav-wrapper').css('display', 'none');
+      $('#top-nav-filler').css('display', 'none');
+      $('#side-menu-wrapper').css('display', 'none');
+    } else {
+      $('#top-nav-wrapper').css('display', 'initial');
+      $('#top-nav-filler').css('display', 'inherit');
+      $('#side-menu-wrapper').css('display', 'initial');
+    }
+  }
+
+  componentDidMount() {
+    this.hideIfHome();
+  }
+
   componentDidUpdate() {
     this.saveLastVisitedPath();
     this.publishPageTransitioned();
+    this.hideIfHome();
   }
 
   render() {

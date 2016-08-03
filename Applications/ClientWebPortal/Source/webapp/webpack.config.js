@@ -77,7 +77,8 @@ module.exports = {
       'node_modules'
     ],
     alias: {
-      'bootstrap-css': '../node_modules/bootstrap/dist/css/bootstrap.min.css'
+      'bootstrap-css': '../node_modules/bootstrap/dist/css/bootstrap.min.css',
+      'croppie-css': '../node_modules/croppie/croppie.css'
     }
   },
   plugins: [
