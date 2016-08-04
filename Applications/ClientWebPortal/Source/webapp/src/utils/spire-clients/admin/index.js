@@ -38,19 +38,18 @@ class AdminClient {
 
     function parseResponse(response) {
       return {
-        addressOne: response.address_line_one,
-        addressTwo: response.address_line_two,
-        addressThree: response.address_line_three,
+        addressLineOne: response.address_line_one,
+        addressLineTwo: response.address_line_two,
+        addressLineThree: response.address_line_three,
         city: response.city,
         country: response.country,
         email: response.e_mail,
         firstName: response.first_name,
-        lastSigninDateTime: response.last_login_time,
+        lastLoginTime: response.last_login_time,
         lastName: response.last_name,
-        picture: response.photo_id,
+        photoId: response.photo_id,
         province: response.province,
-        registrationDateTime: response.registration_time,
-        userName: directoryEntry.name,
+        registrationTime: response.registration_time,
         userNotes: response.user_notes
       };
     }
