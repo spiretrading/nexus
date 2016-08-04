@@ -1,7 +1,7 @@
 import React from 'react';
 import deviceDetector from 'utils/device-detector';
 import UpdatableView from 'commons/updatable-view';
-import ResultCode from 'utils/spire-clients/result-codes';
+import ResultCode from 'utils/spire-clients/service-locator/result-codes';
 
 /** Signin form view */
 class View extends UpdatableView {
