@@ -1,7 +1,7 @@
 import View from './view';
 import {browserHistory} from 'react-router/es6';
 import userService from 'services/user';
-import ResultCode from 'utils/spire-clients/result-codes';
+import ResultCode from 'utils/spire-clients/service-locator/result-codes';
 
 /** Signin form controller */
 class Controller {

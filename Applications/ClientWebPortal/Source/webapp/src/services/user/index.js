@@ -1,5 +1,5 @@
-import spireClient from 'utils/spire-clients';
-import ResultCode from 'utils/spire-clients/result-codes.js';
+import spireClient from 'utils/spire-clients/service-locator';
+import ResultCode from 'utils/spire-clients/service-locator/result-codes';
 
 /** Centralized user related states and service actions */
 class UserService {
