@@ -56,7 +56,7 @@ class View extends UpdatableView {
       delete personalDetailsModel.directoryEntry;
       personalDetailsModel.isReadOnly = !userService.isAdmin();
 
-      lastSignin = moment(this.componentModel.lastSigninDateTime, moment.ISO_8601).toDate().toLocaleString();
+      lastSignin = moment(this.componentModel.lastLoginTime, moment.ISO_8601).toDate().toLocaleString();
 
       accountPictureModel = {
         picture: this.componentModel.picture,

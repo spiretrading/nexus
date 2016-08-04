@@ -12,7 +12,7 @@ class View extends UpdatableView {
   /** @private */
   ignoreNewLineIfNecessary(event) {
     var numLineBreaks = (event.currentTarget.value.match(/\n/g) || []).length;
-    if (event.key === 'Enter' && (numLineBreaks === 2 || this.isLastInputLineBreak || this.componentModel.addressOne.length === 0)) {
+    if (event.key === 'Enter' && (numLineBreaks === 2 || this.isLastInputLineBreak || this.componentModel.addressLineOne.length === 0)) {
       event.preventDefault();
     }
 
@@ -48,19 +48,19 @@ class View extends UpdatableView {
     for (let i=0; i<3; i++) {
       if (addressLines[i] != null) {
         if (i === 0) {
-          this.componentModel.addressOne = addressLines[i];
+          this.componentModel.addressLineOne = addressLines[i];
         } else if (i === 1) {
-          this.componentModel.addressTwo = addressLines[i];
+          this.componentModel.addressLineTwo = addressLines[i];
         } else if (i === 2) {
-          this.componentModel.addressThree = addressLines[i];
+          this.componentModel.addressLineThree = addressLines[i];
         }
       } else {
         if (i === 0) {
-          this.componentModel.addressOne = '';
+          this.componentModel.addressLineOne = '';
         } else if (i === 1) {
-          this.componentModel.addressTwo = '';
+          this.componentModel.addressLineTwo = '';
         } else if (i === 2) {
-          this.componentModel.addressThree = '';
+          this.componentModel.addressLineThree = '';
         }
       }
     }
@@ -71,14 +71,14 @@ class View extends UpdatableView {
   /** @private */
   initializeAddressInput() {
     let address = '';
-    if (this.componentModel.addressOne.length > 0) {
-      address += this.componentModel.addressOne;
+    if (this.componentModel.addressLineOne.length > 0) {
+      address += this.componentModel.addressLineOne;
     }
-    if (this.componentModel.addressTwo.length > 0) {
-      address += '\n' + this.componentModel.addressTwo;
+    if (this.componentModel.addressLineTwo.length > 0) {
+      address += '\n' + this.componentModel.addressLineTwo;
     }
-    if (this.componentModel.addressThree.length > 0) {
-      address += '\n' + this.componentModel.addressThree;
+    if (this.componentModel.addressLineThree.length > 0) {
+      address += '\n' + this.componentModel.addressLineThree;
     }
     let $addressInput = $('#' + this.componentModel.componentId + ' .address-input');
     $addressInput
@@ -132,7 +132,7 @@ class View extends UpdatableView {
       serviceClass += ' active';
     }
 
-    let registrationDate = moment(this.componentModel.registrationDateTime, moment.ISO_8601).toDate().toLocaleDateString();
+    let registrationDate = moment(this.componentModel.registrationTime, moment.ISO_8601).toDate().toLocaleDateString();
 
     let details;
     if (this.componentModel.isReadOnly) {
