@@ -63,6 +63,12 @@ namespace ClientWebPortal {
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadAccountIdentity(
         const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnStoreAccountIdentity(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadRiskParameters(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnStoreRiskParameters(
+        const Beam::WebServices::HttpRequest& request);
   };
 }
 }
