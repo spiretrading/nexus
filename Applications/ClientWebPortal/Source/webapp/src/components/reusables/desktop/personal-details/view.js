@@ -148,18 +148,18 @@ class View extends UpdatableView {
                    readOnly/>
           </div>
 
-          <div className="personal-detail-row single-line-not-editable">{this.componentModel.userName}</div>
+          <div className="personal-detail-row">{this.componentModel.userName}</div>
 
-          <div className="personal-detail-row single-line-not-editable">
+          <div className="personal-detail-row">
             <span title="Trader" className={traderClass}/>
             <span title="Manager" className={managerClass}/>
             <span title="Admin" className={adminClass}/>
             <span title="Service" className={serviceClass}/>
           </div>
 
-          <div className="personal-detail-row single-line-not-editable">{registrationDate}</div>
+          <div className="personal-detail-row">{registrationDate}</div>
 
-          <div className="personal-detail-row single-line-not-editable">{this.componentModel.id}</div>
+          <div className="personal-detail-row">{this.componentModel.id}</div>
 
           <div className="personal-detail-row">
             <input className="email-input" type="text" defaultValue={this.componentModel.email}
@@ -205,18 +205,18 @@ class View extends UpdatableView {
             </div>
           </div>
 
-          <div className="personal-detail-row single-line-not-editable">{this.componentModel.userName}</div>
+          <div className="personal-detail-row">{this.componentModel.userName}</div>
 
-          <div className="personal-detail-row single-line-not-editable">
+          <div className="personal-detail-row">
             <span title="Trader" className={traderClass}/>
             <span title="Manager" className={managerClass}/>
             <span title="Admin" className={adminClass}/>
             <span title="Service" className={serviceClass}/>
           </div>
 
-          <div className="personal-detail-row single-line-not-editable">{registrationDate}</div>
+          <div className="personal-detail-row">{registrationDate}</div>
 
-          <div className="personal-detail-row single-line-not-editable">{this.componentModel.id}</div>
+          <div className="personal-detail-row">{this.componentModel.id}</div>
 
           <div className="personal-detail-row editable">
             <input className="email-input" type="text" defaultValue={this.componentModel.email}
