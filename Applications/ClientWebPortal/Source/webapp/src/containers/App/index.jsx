@@ -33,9 +33,9 @@ class App extends Component {
       $('#top-nav-filler').css('display', 'none');
       $('#side-menu-wrapper').css('display', 'none');
     } else {
-      $('#top-nav-wrapper').css('display', 'initial');
+      $('#top-nav-wrapper').css('display', 'inherit');
       $('#top-nav-filler').css('display', 'inherit');
-      $('#side-menu-wrapper').css('display', 'initial');
+      $('#side-menu-wrapper').css('display', 'inherit');
     }
   }
 
