@@ -41,6 +41,9 @@ input {
   border: 1px solid;
   padding: 0.5rem;
   outline: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  border-radius: 0;
 
   &:focus {
     &::-webkit-input-placeholder {
@@ -56,6 +59,12 @@ input {
       opacity: 0;
     }
   }
+}
+
+textarea {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  border-radius: 0;
 }
 
 button {
