@@ -70,7 +70,7 @@ class View extends UpdatableView {
       };
 
       saveButtonModel = {
-        label: 'Save All Changes'
+        label: 'Save Changes'
       };
 
       changePasswordButtonModel = {
@@ -87,6 +87,9 @@ class View extends UpdatableView {
         saveButton =
           <div className="row save-button-wrapper">
             <PrimaryButton className="save-button" model={saveButtonModel} onClick={save}/>
+            <div className="save-message">
+              Changes saved
+            </div>
           </div>
       }
 

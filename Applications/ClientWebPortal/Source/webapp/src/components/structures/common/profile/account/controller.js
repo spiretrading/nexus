@@ -63,7 +63,12 @@ class Controller {
   }
 
   save() {
-
+    let accountIdentity = cloneObject(this.componentModel);
+    let directoryEntry = accountIdentity.directoryEntry;
+    delete accountIdentity.roles;
+    delete accountIdentity.directoryEntry;
+    console.debug(accountIdentity);
+    adminClient.storeAccountIdentity(directoryEntry, accountIdentity);
   }
 }
 

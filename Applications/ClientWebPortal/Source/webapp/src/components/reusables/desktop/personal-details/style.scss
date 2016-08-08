@@ -5,7 +5,6 @@
 
   .personal-label-row {
     display: flex;
-    align-items: center;
     margin-bottom: 12px;
     height: 30px;
     border: 1px solid $white;
@@ -24,7 +23,7 @@
     border: 1px solid $white;
     padding-left: 5px;
     padding-right: 5px;
-    height: 30px;
+    min-height: 30px;
 
     textarea {
       width: 100%;

@@ -7,7 +7,6 @@ class ServiceLocatorClient {
   /** @private */
   logErrorAndThrow(xhr) {
     console.error('Unexpected error happened.');
-    console.error(xhr);
     throw ResultCode.ERROR;
   }
 
@@ -18,7 +17,7 @@ class ServiceLocatorClient {
       password: password
     };
 
-    return httpConnectionManager.send(apiPath, payload)
+    return httpConnectionManager.send(apiPath, payload, true)
       .then(onSuccess, onHttpError.bind(this));
 
     function onSuccess(directoryEntry) {
@@ -41,7 +40,7 @@ class ServiceLocatorClient {
 
   signOut() {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'service_locator/logout';
-    return httpConnectionManager.send(apiPath, null)
+    return httpConnectionManager.send(apiPath, null, false)
       .catch(this.logErrorAndThrow);
   }
 }

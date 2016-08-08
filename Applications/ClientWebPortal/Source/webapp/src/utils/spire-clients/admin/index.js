@@ -8,7 +8,7 @@ class AdminClient {
   /** @private */
   logErrorAndThrow(xhr) {
     console.error('Unexpected error happened.');
-    console.error(xhr);
+    console.debug(xhr);
     throw ResultCode.ERROR;
   }
 
@@ -18,7 +18,7 @@ class AdminClient {
       account: directoryEntry
     };
 
-    return httpConnectionManager.send(apiPath, payload)
+    return httpConnectionManager.send(apiPath, payload, true)
       .then(onResponse)
       .catch(this.logErrorAndThrow);
 
@@ -33,7 +33,7 @@ class AdminClient {
       account: directoryEntry
     };
 
-    return httpConnectionManager.send(apiPath, payload)
+    return httpConnectionManager.send(apiPath, payload, true)
       .then(parseResponse)
       .catch(this.logErrorAndThrow);
 
@@ -54,6 +54,31 @@ class AdminClient {
         userNotes: response.user_notes
       };
     }
+  }
+
+  storeAccountIdentity(directoryEntry, accountIdentity) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/store_account_identity';
+    let payload = {
+      account: directoryEntry,
+      identity: {
+        address_line_one: accountIdentity.addressLineOne,
+        address_line_two: accountIdentity.addressLineTwo,
+        address_line_three: accountIdentity.addressLineThree,
+        city: accountIdentity.city,
+        country: accountIdentity.country,
+        e_mail: accountIdentity.email,
+        first_name: accountIdentity.firstName,
+        last_login_time: accountIdentity.lastLoginTime,
+        last_name: accountIdentity.lastName,
+        photo_id: accountIdentity.photoId,
+        province: accountIdentity.province,
+        registration_time: accountIdentity.registrationTime,
+        user_notes: accountIdentity.userNotes
+      }
+    };
+
+    return httpConnectionManager.send(apiPath, payload, false)
+      .catch(this.logErrorAndThrow);
   }
 }
 
