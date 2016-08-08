@@ -12,11 +12,11 @@ class View extends UpdatableView {
   /** @private */
   ignoreNewLineIfNecessary(event) {
     var numLineBreaks = (event.currentTarget.value.match(/\n/g) || []).length;
-    if (event.key === 'Enter' && (numLineBreaks === 2 || this.isLastInputLineBreak || this.componentModel.addressLineOne.length === 0)) {
+    if (event.keyCode === 13 && (numLineBreaks === 2 || this.isLastInputLineBreak || this.componentModel.addressLineOne.length === 0)) {
       event.preventDefault();
     }
 
-    if (event.key === 'Backspace' || event.key === 'Enter' || event.key === 'Delete') {
+    if (event.keyCode === 8 || event.keyCode === 13 || event.key === 46) {
       setTimeout(() => {
         this.resizeAddressLabel();
       }, 0);
@@ -41,7 +41,7 @@ class View extends UpdatableView {
     this.componentModel.email = $('#' + this.componentModel.componentId + ' .email-input').val().trim();
     this.componentModel.city = $('#' + this.componentModel.componentId + ' .city-input').val().trim();
     this.componentModel.province = $('#' + this.componentModel.componentId + ' .province-input').val().trim();
-    this.componentModel.country = $('#' + this.componentModel.componentId + ' .country-input').val().trim();
+    this.componentModel.country = parseInt($('#' + this.componentModel.componentId + ' .country-input').val().trim());
 
     // address
     let addressLines = $('#' + this.componentModel.componentId + ' .address-input').val().trim().split('\n');

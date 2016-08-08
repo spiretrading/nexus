@@ -47,19 +47,20 @@ class View extends UpdatableView {
       saveButton;
     if (!this.controller.isModelEmpty.apply(this.controller)) {
       userInfoNavModel = {
-        userName: this.componentModel.userName,
+        userName: this.componentModel.directoryEntry.name,
         roles: this.componentModel.roles
       };
 
       personalDetailsModel = JSON.parse(JSON.stringify(this.componentModel));
       personalDetailsModel.id = personalDetailsModel.directoryEntry.id;
+      personalDetailsModel.userName = personalDetailsModel.directoryEntry.name;
       delete personalDetailsModel.directoryEntry;
       personalDetailsModel.isReadOnly = !userService.isAdmin();
 
       lastSignin = moment(this.componentModel.lastLoginTime, moment.ISO_8601).toDate().toLocaleString();
 
       accountPictureModel = {
-        picture: this.componentModel.picture,
+        picture: this.componentModel.photoId,
         showLabel: true,
         isReadOnly: !userService.isAdmin()
       };

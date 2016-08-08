@@ -16,9 +16,6 @@ class HTTPConnectionManager {
         options.dataType = 'json';
       }
 
-      console.debug('sending request with');
-      console.debug(options);
-
       $.ajax(options)
         .done(onDone)
         .fail(onFail);

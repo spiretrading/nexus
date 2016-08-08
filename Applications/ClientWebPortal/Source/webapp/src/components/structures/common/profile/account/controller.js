@@ -47,7 +47,7 @@ class Controller {
   }
 
   onAccountPictureChange(newPictureData) {
-    this.componentModel.picture = newPictureData;
+    this.componentModel.photoId = newPictureData;
     this.view.update(this.componentModel);
   }
 
