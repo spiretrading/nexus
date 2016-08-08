@@ -51,6 +51,8 @@ namespace ClientWebPortal {
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadCurrentAccount(
         const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnStorePassword(
+        const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLogin(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLogout(

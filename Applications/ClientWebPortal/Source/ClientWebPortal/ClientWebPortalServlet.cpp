@@ -45,6 +45,10 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
     MatchesPath(HttpMethod::POST, "/api/service_locator/load_current_account"),
     bind(&ClientWebPortalServlet::OnLoadCurrentAccount, this,
     std::placeholders::_1));
+  slots.emplace_back(
+    MatchesPath(HttpMethod::POST, "/api/service_locator/store_password"),
+    bind(&ClientWebPortalServlet::OnStorePassword, this,
+    std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_trading_group"),
     bind(&ClientWebPortalServlet::OnLoadTradingGroup, this,
@@ -131,6 +135,35 @@ HttpResponse ClientWebPortalServlet::OnLoadCurrentAccount(
   }();
   response.SetHeader({"Content-Type", "application/json"});
   response.SetBody(Encode<SharedBuffer>(m_sender, account));
+  return response;
+}
+
+HttpResponse ClientWebPortalServlet::OnStorePassword(
+    const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions.Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = boost::get<JsonObject>(
+    Parse<JsonParser>(request.GetBody()));
+  auto& accountParameter = boost::get<JsonObject>(parameters["account"]);
+  DirectoryEntry account;
+  account.m_name = boost::get<string>(accountParameter["name"]);
+  account.m_id = static_cast<int>(boost::get<int64_t>(accountParameter["id"]));
+  account.m_type = static_cast<DirectoryEntry::Type>(
+    static_cast<int>(boost::get<int64_t>(accountParameter["type"])));
+  if(account != session->GetAccount()) {
+    auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
+      session->GetAccount());
+    if(!roles.Test(AccountRole::ADMINISTRATOR)) {
+      response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+      return response;
+    }
+  }
+  auto password = boost::get<string>(parameters["password"]);
+  m_serviceClients->GetServiceLocatorClient().StorePassword(account, password);
   return response;
 }
 
