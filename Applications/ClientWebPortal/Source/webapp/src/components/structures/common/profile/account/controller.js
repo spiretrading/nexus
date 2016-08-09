@@ -1,6 +1,7 @@
 import routeParameters from 'utils/route-parameters';
 import adminClient from 'utils/spire-clients/admin';
 import preloaderTimer from 'utils/preloader-timer';
+import serviceLocatorClient from 'utils/spire-clients/service-locator';
 
 class Controller {
   constructor(componentModel) {
@@ -55,7 +56,11 @@ class Controller {
     this.componentModel.userNotes = newNotes;
   }
 
-  onPasswordUpdate(currentPassword, newPassword) {
+  onPasswordUpdate(newPassword) {
+    console.debug(serviceLocatorClient);
+    serviceLocatorClient.storePassword(this.componentModel.directoryEntry, newPassword)
+      .then(this.view.showSavePasswordSuccess)
+      .catch(this.view.showSavePasswordFailMessage);
   }
 
   onPersonalDetailsChange(newPersonalDetails) {
@@ -67,8 +72,9 @@ class Controller {
     let directoryEntry = accountIdentity.directoryEntry;
     delete accountIdentity.roles;
     delete accountIdentity.directoryEntry;
-    console.debug(accountIdentity);
-    adminClient.storeAccountIdentity(directoryEntry, accountIdentity);
+    adminClient.storeAccountIdentity(directoryEntry, accountIdentity)
+      .then(this.view.showSavePersonalDetailsSuccessMessage)
+      .catch(this.view.showSavePersonalDetailsFailMessage);
   }
 }
 

@@ -6,7 +6,7 @@ const ResultCode = ResultCodes;
 class ServiceLocatorClient {
   /** @private */
   logErrorAndThrow(xhr) {
-    console.error('Unexpected error happened.');
+    console.error('Spire Service Locator Client: Unexpected error happened.');
     throw ResultCode.ERROR;
   }
 
@@ -41,6 +41,16 @@ class ServiceLocatorClient {
   signOut() {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'service_locator/logout';
     return httpConnectionManager.send(apiPath, null, false)
+      .catch(this.logErrorAndThrow);
+  }
+
+  storePassword(directoryEntry, newPassword) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'service_locator/store_password';
+    let payload = {
+      account: directoryEntry,
+      password: newPassword
+    };
+    return httpConnectionManager.send(apiPath, payload, false)
       .catch(this.logErrorAndThrow);
   }
 }

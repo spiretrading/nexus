@@ -1,6 +1,5 @@
 import {Component} from 'react';
 import Controller from './controller';
-import './style.scss';
 
 class AccountPicture extends Component {
   constructor(props) {

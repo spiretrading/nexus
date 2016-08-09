@@ -1,6 +1,5 @@
 import {Component} from 'react';
 import Controller from './controller';
-import './style.scss';
 
 /** Sub pages that show up top right of the web site */
 class SubPages extends Component {

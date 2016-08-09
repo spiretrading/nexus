@@ -37,7 +37,7 @@
 
     .save-message {
       align-self: center;
-      margin-right: 20px;
+      margin-right: 30px;
       color: $primaryGradient3;
       display: none;
     }
@@ -50,18 +50,30 @@
 
       input {
         border: 1px solid $greyTextboxBorder;
-        width: 270px;
+        width: 255px;
         margin-right: 40px;
       }
 
-      .change-button {
-        margin-left: 29px;
-        width: 171px;
+      .save-password-button-wrapper {
+        display: flex;
+        flex: 1;
+        flex-direction: row-reverse;
+
+        .save-password-button {
+          width: 171px;
+        }
+
+        .save-password-message {
+          align-self: center;
+          margin-right: 30px;
+          color: $primaryGradient3;
+          display: none;
+        }
       }
     }
 
     .message {
-      color: $red;
+      color: $primaryGradient3;
       display: none;
     }
   }

@@ -1,6 +1,5 @@
 import {Component} from 'react';
 import Controller from './controller';
-import './style.scss';
 
 /** Navigation bar with basic user info displayed */
 class UserInfoNav extends Component {

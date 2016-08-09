@@ -1,7 +1,6 @@
 import {Component} from 'react';
 import Controller from 'components/structures/common/profile/account/controller';
 import View from './view';
-import './style.scss';
 import uuid from 'uuid';
 
 class ProfileAccount extends Component {

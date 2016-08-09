@@ -2,7 +2,6 @@ import {Component} from 'react';
 import Controller from 'components/reusables/common/personal-details/controller';
 import View from './view';
 import uuid from 'uuid';
-import './style.scss';
 
 class PersonalDetails extends Component {
   constructor(props) {

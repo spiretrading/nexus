@@ -1,7 +1,6 @@
 import {Component} from 'react';
 import Controller from './controller';
 import View from './view';
-import './style.scss';
 import uuid from 'uuid';
 
 class ChangePicture extends Component {

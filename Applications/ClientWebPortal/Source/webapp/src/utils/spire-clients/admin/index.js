@@ -7,7 +7,7 @@ const ResultCode = ResultCodes;
 class AdminClient {
   /** @private */
   logErrorAndThrow(xhr) {
-    console.error('Unexpected error happened.');
+    console.error('Spire Admin Client: Unexpected error happened.');
     console.debug(xhr);
     throw ResultCode.ERROR;
   }

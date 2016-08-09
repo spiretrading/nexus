@@ -1,6 +1,5 @@
 import {Component} from 'react';
 import Controller from './controller';
-import './style.scss';
 
 /** Top navigational menu */
 class TopNav extends Component {

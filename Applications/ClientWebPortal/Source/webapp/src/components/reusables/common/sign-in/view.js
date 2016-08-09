@@ -1,3 +1,4 @@
+import './style.scss';
 import React from 'react';
 import deviceDetector from 'utils/device-detector';
 import UpdatableView from 'commons/updatable-view';

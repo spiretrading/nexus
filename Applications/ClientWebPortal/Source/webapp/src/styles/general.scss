@@ -71,6 +71,7 @@ textarea {
   -webkit-appearance: none;
   -moz-appearance: none;
   border-radius: 0;
+  overflow-y: auto !important;
 }
 
 button {
@@ -113,4 +114,8 @@ button {
   width: 1170px;
   margin: 0 auto;
   padding: 0 20px;
+}
+
+input:-ms-input-placeholder {
+  color: $darkGrey;
 }

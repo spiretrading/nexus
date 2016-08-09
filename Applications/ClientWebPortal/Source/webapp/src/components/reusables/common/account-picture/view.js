@@ -1,3 +1,4 @@
+import './style.scss';
 import React from 'react';
 import UpdatableView from 'commons/updatable-view';
 import ChangePicture from 'components/reusables/common/change-picture';

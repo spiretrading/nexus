@@ -1,3 +1,4 @@
+import './style.scss';
 import React from 'react';
 import UpdatableView from 'commons/updatable-view';
 

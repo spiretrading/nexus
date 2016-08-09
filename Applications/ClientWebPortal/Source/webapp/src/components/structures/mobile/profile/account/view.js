@@ -1,38 +1,17 @@
+import './style.scss';
 import React from 'react';
-import UpdatableView from 'commons/updatable-view';
 import PersonalDetails from 'components/reusables/mobile/personal-details';
 import AccountPicture from 'components/reusables/common/account-picture';
 import UserInfoNav from 'components/reusables/common/user-info-nav';
 import moment from 'moment';
 import PrimaryButton from 'components/reusables/common/primary-button';
 import UserNotes from 'components/reusables/common/user-notes';
-import passwordValidaotr from 'components/structures/common/profile/account/password-validator';
 import userService from 'services/user';
+import CommonView from 'components/structures/common/profile/account/common-view';
 
-class View extends UpdatableView {
+class MobileView extends CommonView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
-  }
-
-  componentDidUpdate() {
-    $('#account-container').fadeIn({
-      duration: Config.FADE_DURATION
-    });
-  }
-
-  /** @private */
-  onPasswordChangeClick() {
-    let currentPassword = $('#account-container .current-password-input').val();
-    let newPassword = $('#account-container .new-password-input').val();
-    let confirmPassword = $('#account-container .confirm-password-input').val();
-
-    let errorMessage = passwordValidaotr.validate(currentPassword, newPassword, confirmPassword);
-    if (errorMessage != null) {
-      $('#account-container .change-password-wrapper .message').text(errorMessage).css('display', 'inherit');
-    } else {
-      $('#account-container .change-password-wrapper .message').text("").css('display', 'none');
-      this.controller.onPasswordUpdate(currentPassword, newPassword);
-    }
   }
 
   render() {
@@ -70,11 +49,11 @@ class View extends UpdatableView {
       };
 
       saveButtonModel = {
-        label: 'Save All Changes'
+        label: 'Save Changes'
       };
 
       changePasswordButtonModel = {
-        label: 'Change Password'
+        label: 'Save Password'
       };
 
       let onAccountPictureChange = this.controller.onAccountPictureChange.bind(this.controller);
@@ -86,6 +65,9 @@ class View extends UpdatableView {
         saveButton =
           <div className="row save-button-wrapper">
             <PrimaryButton className="save-button" model={saveButtonModel} onClick={save}/>
+            <div className="save-message">
+              Changes saved
+            </div>
           </div>
       }
 
@@ -118,7 +100,6 @@ class View extends UpdatableView {
             Change Password
           </div>
           <div className="change-password-wrapper row">
-            <input className="current-password-input" type="password" placeholder="Current Password"/>
             <input className="new-password-input" type="password" placeholder="New Password"/>
             <input className="confirm-password-input" type="password" placeholder="Confirm New Password"/>
             <PrimaryButton className="change-button" model={changePasswordButtonModel} onClick={this.onPasswordChangeClick.bind(this)}/>
@@ -135,4 +116,4 @@ class View extends UpdatableView {
   }
 }
 
-export default View;
+export default MobileView;

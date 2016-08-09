@@ -1,78 +1,80 @@
 @import "src/styles/variables";
 
-.personal-details-container {
-  display: flex;
-
-  .personal-label-row {
+main.mobile {
+  .personal-details-container {
     display: flex;
-    margin-bottom: 12px;
-    height: 30px;
-    border: 1px solid $white;
-  }
 
-  .personal-detail-row {
-    position: relative;
-    align-items: center;
-    outline: none;
-    border: 1px solid $white;
-    padding-left: 5px;
-    padding-right: 5px;
-
-    .personal-detail-label {
-      margin-top: 20px;
-      margin-bottom: 5px;
-      font-size: 12px;
+    .personal-label-row {
+      display: flex;
+      margin-bottom: 12px;
+      height: 30px;
+      border: 1px solid $white;
     }
 
-    textarea {
-      width: 100%;
+    .personal-detail-row {
+      position: relative;
+      align-items: center;
       outline: none;
-      resize: none;
       border: 1px solid $white;
       padding-left: 5px;
       padding-right: 5px;
-      margin-left: -5px;
-    }
 
-    input {
-      border: 1px solid $white;
-      height: 28px;
-      width: 100%;
-      margin-left: -5px;
-    }
-
-    .edit-icon-wrapper {
-      position: absolute;
-      top: 48px;
-      right: 16px;
-      color: $primaryGradient4;
-      opacity: 0;
-    }
-
-    &.editable:hover {
-      input {
-        border: 1px solid $primaryGradient4;
+      .personal-detail-label {
+        margin-top: 20px;
+        margin-bottom: 5px;
+        font-size: 12px;
       }
 
       textarea {
-        border: 1px solid $primaryGradient4;
+        width: 100%;
+        outline: none;
+        resize: none;
+        border: 1px solid $white;
+        padding-left: 5px;
+        padding-right: 5px;
+        margin-left: -5px;
+      }
+
+      input {
+        border: 1px solid $white;
+        height: 28px;
+        width: 100%;
+        margin-left: -5px;
       }
 
       .edit-icon-wrapper {
-        opacity: 1;
+        position: absolute;
+        top: 48px;
+        right: 16px;
+        color: $primaryGradient4;
+        opacity: 0;
+      }
+
+      &.editable:hover {
+        input {
+          border: 1px solid $primaryGradient4;
+        }
+
+        textarea {
+          border: 1px solid $primaryGradient4;
+        }
+
+        .edit-icon-wrapper {
+          opacity: 1;
+        }
       }
     }
-  }
 
-  .details-container {
-    width: 335px;
+    .details-container {
+      width: 335px;
 
-    .icon {
-      margin-right: 10px;
-      color: $greyedIcon;
+      .icon {
+        margin-right: 10px;
+        color: $greyedIcon;
 
-      &.active {
-        color: $primaryGradient1;
+        &.active {
+          color: $primaryGradient1;
+        }
       }
     }
   }
