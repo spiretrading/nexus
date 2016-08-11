@@ -1,0 +1,44 @@
+@import "src/styles/variables";
+
+#top-nav-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+
+  .menu-btn {
+    position: absolute;
+    left: 15px;
+    top: 15px;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+  }
+
+  .icon-burger {
+    position: absolute;
+    left: 20px;
+    top: 20px;
+    cursor: pointer;
+    font-size: 20px;
+    color: $primaryGradient3;
+    cursor: pointer;
+
+    &:hover {
+      color: $primaryGradient1;
+    }
+  }
+
+  .logo {
+    position: absolute;
+    left: 60px;
+    top: 15px;
+    width: 84px;
+    height: 30px;
+  }
+
+  .sub-pages-wrapper {
+    position: absolute;
+    right: 0px;
+    top: 0px;
+  }
+}

@@ -1,0 +1,26 @@
+@import "src/styles/variables";
+
+#account-container {
+  .change-password-wrapper {
+    .message {
+      color: $primaryGradient3;
+      align-items: center;
+      margin-right: 30px;
+
+      &.fail {
+        color: $red;
+      }
+    }
+  }
+}
+
+main.mobile {
+  #account-container {
+    .change-password-wrapper {
+      .message {
+        text-align: center;
+        margin: 0;
+      }
+    }
+  }
+}
