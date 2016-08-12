@@ -10,6 +10,8 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "ClientWebPortal/ClientWebPortal/ServiceClients.hpp"
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
+#include "Nexus/Definitions/Country.hpp"
+#include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
 
 using namespace Beam;
@@ -77,6 +79,12 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
     "/api/administration_service/store_risk_parameters"),
     bind(&ClientWebPortalServlet::OnStoreRiskParameters, this,
     std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/definitions_service/load_country_database"),
+    bind(&ClientWebPortalServlet::OnLoadCountryDatabase, this,
+    std::placeholders::_1));
+
+
   slots.emplace_back(MatchesPath(HttpMethod::GET, "/"),
     bind(&ClientWebPortalServlet::OnIndex, this, std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, ""),
@@ -394,3 +402,19 @@ HttpResponse ClientWebPortalServlet::OnStoreRiskParameters(
     riskParameters);
   return response;
 }
+
+HttpResponse ClientWebPortalServlet::OnLoadCountryDatabase(
+    const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions.Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  response.SetHeader({"Content-Type", "application/json"});
+  auto database =
+    m_serviceClients->GetDefinitionsClient().LoadCountryDatabase();
+  response.SetBody(Encode<SharedBuffer>(m_sender, database));
+  return response;
+}
+

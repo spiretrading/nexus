@@ -71,6 +71,8 @@ namespace ClientWebPortal {
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnStoreRiskParameters(
         const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadCountryDatabase(
+        const Beam::WebServices::HttpRequest& request);
   };
 }
 }
