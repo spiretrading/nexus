@@ -1,13 +1,9 @@
-@import "src/variables";
+@import "src/styles/variables";
 
 #home-container {
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100vw;
   height: 100vh;
   background: $primaryGradient1;
-  z-index: 99999;
 }
 
 #login-wrapper {

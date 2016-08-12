@@ -1,6 +1,6 @@
 /** Spire HTTP connection manager */
 class HTTPConnectionManager {
-  send(apiPath, payload) {
+  send(apiPath, payload, isJsonResponse) {
     return new Promise(function (resolve, reject) {
       let options = {
         url: apiPath,
@@ -9,8 +9,11 @@ class HTTPConnectionManager {
 
       if (payload != null) {
         options.contentType = 'application/json; charset=utf-8';
-        options.dataType = 'json';
         options.data = JSON.stringify(payload);
+      }
+
+      if (isJsonResponse) {
+        options.dataType = 'json';
       }
 
       $.ajax(options)

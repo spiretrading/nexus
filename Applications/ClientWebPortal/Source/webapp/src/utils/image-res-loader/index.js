@@ -3,7 +3,7 @@ import deviceDetector from 'utils/device-detector';
 /** Helper class for resolution dependent images */
 class ImageResLoader {
   getResPath(imagePath) {
-    if (deviceDetector.isHighDefinitionDisplay()){
+    if (deviceDetector.isHighDefinitionDisplay()) {
       let lastBackslashIndex = imagePath.lastIndexOf('/');
       let folderPath = imagePath.substring(0, lastBackslashIndex + 1);
       let imageName = imagePath.substring(lastBackslashIndex + 1);

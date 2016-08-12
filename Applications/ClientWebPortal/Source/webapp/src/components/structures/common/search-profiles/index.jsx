@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import './style.scss';
 
-class Home extends Component {
+class SearchProfiles extends Component {
   constructor(props) {
     super(props);
   }
@@ -9,9 +9,10 @@ class Home extends Component {
   render() {
     return (
       <div id="search-profiles-container">
+        <h1>HELLO THIS IS SEARCH PROFILES PAGE!!</h1>
       </div>
     );
   }
 }
 
-export default Home;
+export default SearchProfiles;
