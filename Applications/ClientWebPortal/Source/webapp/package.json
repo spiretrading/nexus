@@ -35,6 +35,7 @@
     "babel-polyfill": "^6.6.1",
     "babel-runtime": "^6.6.1",
     "croppie": "^2.2.0",
+    "hashmap": "^2.0.6",
     "jquery": "2.2.4",
     "moment": "^2.14.1",
     "pubsub-js": "^1.5.3",

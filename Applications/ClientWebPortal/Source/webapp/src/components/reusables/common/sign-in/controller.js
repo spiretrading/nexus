@@ -1,5 +1,6 @@
 import View from './view';
 import userService from 'services/user';
+import definitionsService from 'services/definitions';
 import ResultCode from 'services/user/result-codes';
 import store from 'store';
 import LocalstorageKey from 'commons/localstorage-keys';
@@ -12,6 +13,13 @@ class Controller {
       loginResultCode: 0
     };
     this.view = new View(react, this, this.componentModel);
+  }
+
+  /** @private */
+  initializeApp() {
+    return Promise.all([
+      definitionsService.initialize.apply(definitionsService)
+    ]);
   }
 
   getView() {
@@ -36,12 +44,14 @@ class Controller {
     function onResult(resultCode) {
       store.remove(LocalstorageKey.LAST_VISITED_PATH);
       if (resultCode === ResultCode.SUCCESS) {
-        let lastVisitedPath = store.get(LocalstorageKey.LAST_VISITED_PATH);
-        if (lastVisitedPath != null && lastVisitedPath != '/' && userService.isAuthorizedPath(lastVisitedPath)){
-          browserHistory.push(lastVisitedPath);
-        } else {
-          browserHistory.push('profile-account', userService.getDirectoryEntry());
-        }
+        this.initializeApp().then(() => {
+          let lastVisitedPath = store.get(LocalstorageKey.LAST_VISITED_PATH);
+          if (lastVisitedPath != null && lastVisitedPath != '/' && userService.isAuthorizedPath(lastVisitedPath)){
+            browserHistory.push(lastVisitedPath);
+          } else {
+            browserHistory.push('profile-account', userService.getDirectoryEntry());
+          }
+        });
       } else {
         this.componentModel.isLoading = false;
         this.componentModel.signInResultCode = resultCode;

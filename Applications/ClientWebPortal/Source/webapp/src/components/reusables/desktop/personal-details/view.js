@@ -2,6 +2,7 @@ import './style.scss';
 import React from 'react';
 import moment from 'moment';
 import CommonView from 'components/reusables/common/personal-details/common-view';
+import definitionsService from 'services/definitions';
 
 class DesktopView extends CommonView {
   constructor(react, controller, componentModel) {
@@ -77,8 +78,7 @@ class DesktopView extends CommonView {
           </div>
 
           <div className="personal-detail-row">
-            <input className="country-input" type="text" defaultValue={this.componentModel.country}
-                   readOnly/>
+            <input className="country-input" type="text" defaultValue={this.componentModel.country} readOnly/>
           </div>
 
         </div>

@@ -85,8 +85,6 @@ class UserService {
       return true;
     }
   }
-
-
 }
 
 export default new UserService();
