@@ -8,6 +8,7 @@
     margin-bottom: 12px;
     height: 30px;
     border: 1px solid $white;
+    padding-top: 3px;
   }
 
   .labels-container {
@@ -75,14 +76,6 @@
       &.active {
         color: $primaryGradient1;
       }
-    }
-  }
-}
-
-main.mobile {
-  .personal-details-container {
-    .labels-container {
-      padding-right: 10px;
     }
   }
 }
