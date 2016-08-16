@@ -83,8 +83,6 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
     "/api/definitions_service/load_country_database"),
     bind(&ClientWebPortalServlet::OnLoadCountryDatabase, this,
     std::placeholders::_1));
-
-
   slots.emplace_back(MatchesPath(HttpMethod::GET, "/"),
     bind(&ClientWebPortalServlet::OnIndex, this, std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, ""),
