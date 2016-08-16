@@ -33,6 +33,8 @@ class DesktopView extends CommonView {
 
     let details;
     if (this.componentModel.isReadOnly) {
+      let countryName = definitionsService.getCountryName.apply(definitionsService, [this.componentModel.country]);
+
       details =
         <div className="details-container">
           <div className="personal-detail-row">
@@ -78,11 +80,20 @@ class DesktopView extends CommonView {
           </div>
 
           <div className="personal-detail-row">
-            <input className="country-input" type="text" defaultValue={this.componentModel.country} readOnly/>
+            <input className="country-input" type="text" defaultValue={countryName} readOnly/>
           </div>
 
         </div>
     } else {
+      let countryOptions = [];
+      let countries = definitionsService.getCountries();
+      for (let i=0; i<countries.length; i++) {
+        let country = countries[i];
+        countryOptions.push(
+          <option key={i} value={country.code}>{country.name}</option>
+        );
+      }
+
       details =
         <div className="details-container">
           <div className="personal-detail-row editable">
@@ -146,11 +157,9 @@ class DesktopView extends CommonView {
           </div>
 
           <div className="personal-detail-row editable">
-            <input className="country-input" type="text" defaultValue={this.componentModel.country}
-                   onChange={this.onChange.bind(this)}/>
-            <div className="edit-icon-wrapper">
-              <span className="icon-edit"/>
-            </div>
+            <select className="country-input" defaultValue={this.componentModel.country} onChange={this.onChange.bind(this)}>
+              {countryOptions}
+            </select>
           </div>
         </div>
     }

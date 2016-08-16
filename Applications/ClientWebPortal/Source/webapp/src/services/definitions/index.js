@@ -8,6 +8,7 @@ class DefinitionsService {
     return definitionsServiceClient.loadCountryData().then(onResponse.bind(this));
 
     function onResponse(countries) {
+      this.countries = countries;
       this.countriesByNumber = new HashMap();
       this.countriesByThreeLetterCode = new HashMap();
       for (let i=0; i<countries.length; i++) {
@@ -24,12 +25,20 @@ class DefinitionsService {
     ]);
   }
 
+  getCountries() {
+    return this.countries;
+  }
+
   getCountryThreeLetterCode(number) {
     return this.countriesByNumber.get(number).threeLetterCode;
   }
 
   getCountryNumber(threeLetterCode) {
     return this.countriesByThreeLetterCode.get(threeLetterCode).code;
+  }
+
+  getCountryName(number) {
+    return this.countriesByNumber.get(number).name;
   }
 }
 

@@ -2,7 +2,6 @@ import routeParameters from 'utils/route-parameters';
 import adminClient from 'utils/spire-clients/admin';
 import preloaderTimer from 'utils/preloader-timer';
 import serviceLocatorClient from 'utils/spire-clients/service-locator';
-import definitionsService from 'services/definitions';
 
 class Controller {
   constructor(componentModel) {
@@ -44,7 +43,6 @@ class Controller {
     preloaderTimer.start(requiredDataFetchPromise, null, 49, 60).then((responses) => {
       this.componentModel.roles = responses[0];
       $.extend(true, this.componentModel, responses[1]);
-      this.componentModel.country = definitionsService.getCountryThreeLetterCode.apply(definitionsService, [this.componentModel.country]);
       this.view.update(this.componentModel);
     });
   }
@@ -73,7 +71,6 @@ class Controller {
     let directoryEntry = accountIdentity.directoryEntry;
     delete accountIdentity.roles;
     delete accountIdentity.directoryEntry;
-    accountIdentity.country = definitionsService.getCountryNumber.apply(definitionsService, [accountIdentity.country]);
     adminClient.storeAccountIdentity(directoryEntry, accountIdentity)
       .then(this.view.showSavePersonalDetailsSuccessMessage)
       .catch(this.view.showSavePersonalDetailsFailMessage);

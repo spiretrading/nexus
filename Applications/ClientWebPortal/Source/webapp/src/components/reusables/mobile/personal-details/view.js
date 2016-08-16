@@ -2,6 +2,7 @@ import './style.scss';
 import React from 'react';
 import moment from 'moment';
 import CommonView from 'components/reusables/common/personal-details/common-view';
+import definitionsService from 'services/definitions';
 
 class MobileView extends CommonView {
   constructor(react, controller, componentModel) {
@@ -32,6 +33,8 @@ class MobileView extends CommonView {
 
     let details;
     if (this.componentModel.isReadOnly) {
+      let countryName = definitionsService.getCountryName.apply(definitionsService, [this.componentModel.country]);
+
       details =
         <div className="details-container">
           <div className="personal-detail-row">
@@ -94,12 +97,21 @@ class MobileView extends CommonView {
 
           <div className="personal-detail-row">
             <div className="personal-detail-label">Country</div>
-            <input className="country-input" type="text" defaultValue={this.componentModel.country}
+            <input className="country-input" type="text" defaultValue={countryName}
                    readOnly/>
           </div>
 
         </div>
     } else {
+      let countryOptions = [];
+      let countries = definitionsService.getCountries();
+      for (let i=0; i<countries.length; i++) {
+        let country = countries[i];
+        countryOptions.push(
+          <option key={i} value={country.code}>{country.name}</option>
+        );
+      }
+
       details =
         <div className="details-container">
           <div className="personal-detail-row editable">
@@ -180,11 +192,9 @@ class MobileView extends CommonView {
 
           <div className="personal-detail-row editable">
             <div className="personal-detail-label">Country</div>
-            <input className="country-input" type="text" defaultValue={this.componentModel.country}
-                   onChange={this.onChange.bind(this)}/>
-            <div className="edit-icon-wrapper">
-              <span className="icon-edit"/>
-            </div>
+            <select className="country-input" defaultValue={this.componentModel.country} onChange={this.onChange.bind(this)}>
+              {countryOptions}
+            </select>
           </div>
         </div>
     }
