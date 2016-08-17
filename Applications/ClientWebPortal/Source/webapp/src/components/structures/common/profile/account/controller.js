@@ -57,7 +57,6 @@ class Controller {
   }
 
   onPasswordUpdate(newPassword) {
-    console.debug(serviceLocatorClient);
     serviceLocatorClient.storePassword(this.componentModel.directoryEntry, newPassword)
       .then(this.view.showSavePasswordSuccess)
       .catch(this.view.showSavePasswordFailMessage);
