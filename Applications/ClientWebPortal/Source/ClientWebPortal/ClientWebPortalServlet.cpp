@@ -83,6 +83,10 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
     "/api/definitions_service/load_country_database"),
     bind(&ClientWebPortalServlet::OnLoadCountryDatabase, this,
     std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/definitions_service/load_currency_database"),
+    bind(&ClientWebPortalServlet::OnLoadCurrencyDatabase, this,
+    std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, "/"),
     bind(&ClientWebPortalServlet::OnIndex, this, std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, ""),
@@ -416,3 +420,17 @@ HttpResponse ClientWebPortalServlet::OnLoadCountryDatabase(
   return response;
 }
 
+HttpResponse ClientWebPortalServlet::OnLoadCurrencyDatabase(
+    const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions.Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  response.SetHeader({"Content-Type", "application/json"});
+  auto database =
+    m_serviceClients->GetDefinitionsClient().LoadCurrencyDatabase();
+  response.SetBody(Encode<SharedBuffer>(m_sender, database));
+  return response;
+}

@@ -73,6 +73,8 @@ namespace ClientWebPortal {
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadCountryDatabase(
         const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadCurrencyDatabase(
+        const Beam::WebServices::HttpRequest& request);
   };
 }
 }
