@@ -8,6 +8,7 @@
 #include <Beam/Queues/Queues.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
+#include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/AdministrationService/AdministrationService.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
@@ -22,9 +23,12 @@ namespace AdministrationService {
    */
   class VirtualAdministrationClient : private boost::noncopyable {
     public:
-      virtual ~VirtualAdministrationClient();
+      virtual ~VirtualAdministrationClient() = default;
 
       virtual bool CheckAdministrator(
+        const Beam::ServiceLocator::DirectoryEntry& account) = 0;
+
+      virtual AccountRoles LoadAccountRoles(
         const Beam::ServiceLocator::DirectoryEntry& account) = 0;
 
       virtual Beam::ServiceLocator::DirectoryEntry LoadTradingGroupEntry(
@@ -84,7 +88,7 @@ namespace AdministrationService {
     protected:
 
       //! Constructs a VirtualAdministrationClient.
-      VirtualAdministrationClient();
+      VirtualAdministrationClient() = default;
   };
 
   /*! \class WrapperAdministrationClient
@@ -97,7 +101,7 @@ namespace AdministrationService {
     public:
 
       //! The AdministrationClient to wrap.
-      typedef typename Beam::TryDereferenceType<ClientType>::type Client;
+      using Client = Beam::GetTryDereferenceType<ClientType>;
 
       //! Constructs a WrapperAdministrationClient.
       /*!
@@ -109,6 +113,9 @@ namespace AdministrationService {
       virtual ~WrapperAdministrationClient();
 
       virtual bool CheckAdministrator(
+        const Beam::ServiceLocator::DirectoryEntry& account);
+
+      virtual AccountRoles LoadAccountRoles(
         const Beam::ServiceLocator::DirectoryEntry& account);
 
       virtual Beam::ServiceLocator::DirectoryEntry LoadTradingGroupEntry(
@@ -164,7 +171,7 @@ namespace AdministrationService {
       virtual void Close();
 
     private:
-      typename Beam::OptionalLocalPtr<ClientType>::type m_client;
+      Beam::GetOptionalLocalPtr<ClientType> m_client;
   };
 
   //! Wraps an AdministrationClient into a VirtualAdministrationClient.
@@ -178,23 +185,27 @@ namespace AdministrationService {
       AdministrationClient>>(std::forward<AdministrationClient>(client));
   }
 
-  inline VirtualAdministrationClient::~VirtualAdministrationClient() {}
-
-  inline VirtualAdministrationClient::VirtualAdministrationClient() {}
-
   template<typename ClientType>
   template<typename AdministrationClientForward>
   WrapperAdministrationClient<ClientType>::WrapperAdministrationClient(
       AdministrationClientForward&& client)
-      : m_client(std::forward<AdministrationClientForward>(client)) {}
+      : m_client{std::forward<AdministrationClientForward>(client)} {}
 
   template<typename ClientType>
-  WrapperAdministrationClient<ClientType>::~WrapperAdministrationClient() {}
+  WrapperAdministrationClient<ClientType>::~WrapperAdministrationClient() {
+    Close();
+  }
 
   template<typename ClientType>
   bool WrapperAdministrationClient<ClientType>::CheckAdministrator(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_client->CheckAdministrator(account);
+  }
+
+  template<typename ClientType>
+  AccountRoles WrapperAdministrationClient<ClientType>::LoadAccountRoles(
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    return m_client->LoadAccountRoles(account);
   }
 
   template<typename ClientType>

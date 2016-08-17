@@ -82,6 +82,7 @@ namespace AdministrationService {
       MarketDataService::EntitlementDatabase m_entitlements;
       Beam::GetOptionalLocalPtr<AdministrationDataStoreType> m_dataStore;
       Beam::ServiceLocator::DirectoryEntry m_administratorsRoot;
+      Beam::ServiceLocator::DirectoryEntry m_servicesRoot;
       Beam::ServiceLocator::DirectoryEntry m_tradingGroupsRoot;
       SyncAccountToSubscribers m_riskParametersSubscribers;
       SyncRiskStateEntries m_riskStateEntries;
@@ -93,6 +94,8 @@ namespace AdministrationService {
       std::vector<Beam::ServiceLocator::DirectoryEntry> LoadEntitlements(
         const Beam::ServiceLocator::DirectoryEntry& account);
       bool OnCheckAdministratorRequest(ServiceProtocolClient& client,
+        const Beam::ServiceLocator::DirectoryEntry& account);
+      AccountRoles OnLoadAccountRolesRequest(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account);
       Beam::ServiceLocator::DirectoryEntry
         OnLoadAccountTradingGroupEntryRequest(ServiceProtocolClient& client,
@@ -174,6 +177,9 @@ namespace AdministrationService {
     CheckAdministratorService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnCheckAdministratorRequest, this,
       std::placeholders::_1, std::placeholders::_2));
+    LoadAccountRolesService::AddSlot(Store(slots), std::bind(
+      &AdministrationServlet::OnLoadAccountRolesRequest, this,
+      std::placeholders::_1, std::placeholders::_2));
     LoadAccountTradingGroupEntryService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnLoadAccountTradingGroupEntryRequest, this,
       std::placeholders::_1, std::placeholders::_2));
@@ -253,8 +259,9 @@ namespace AdministrationService {
       m_administratorsRoot = Beam::ServiceLocator::LoadOrCreateDirectory(
         *m_serviceLocatorClient, "administrators",
         Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
-      Beam::ServiceLocator::LoadOrCreateDirectory(*m_serviceLocatorClient,
-        "services", Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
+      m_servicesRoot = Beam::ServiceLocator::LoadOrCreateDirectory(
+        *m_serviceLocatorClient, "services",
+        Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
       m_tradingGroupsRoot = Beam::ServiceLocator::LoadOrCreateDirectory(
         *m_serviceLocatorClient, "trading_groups",
         Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
@@ -319,6 +326,46 @@ namespace AdministrationService {
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return CheckAdministrator(account);
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
+  AccountRoles AdministrationServlet<ContainerType, ServiceLocatorClientType,
+      AdministrationDataStoreType>::OnLoadAccountRolesRequest(
+      ServiceProtocolClient& client,
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    AccountRoles roles;
+    auto parents = m_serviceLocatorClient->LoadParents(account);
+    auto tradingGroups = m_serviceLocatorClient->LoadChildren(
+      m_tradingGroupsRoot);
+    for(auto& parent : parents) {
+      if(parent == m_administratorsRoot) {
+        roles.Set(AccountRole::ADMINISTRATOR);
+      } else if(parent == m_servicesRoot) {
+        roles.Set(AccountRole::SERVICE);
+      } else if(!roles.Test(AccountRole::TRADER) &&
+          parent.m_name == "traders") {
+        auto entryParents = m_serviceLocatorClient->LoadParents(parent);
+        for(auto& entryParent : entryParents) {
+          if(std::find(tradingGroups.begin(), tradingGroups.end(),
+              entryParent) != tradingGroups.end()) {
+            roles.Set(AccountRole::TRADER);
+            break;
+          }
+        }
+      } else if(!roles.Test(AccountRole::MANAGER) &&
+          parent.m_name == "managers") {
+        auto entryParents = m_serviceLocatorClient->LoadParents(parent);
+        for(auto& entryParent : entryParents) {
+          if(std::find(tradingGroups.begin(), tradingGroups.end(),
+              entryParent) != tradingGroups.end()) {
+            roles.Set(AccountRole::MANAGER);
+            break;
+          }
+        }
+      }
+    }
+    return roles;
   }
 
   template<typename ContainerType, typename ServiceLocatorClientType,

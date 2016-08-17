@@ -1,0 +1,64 @@
+@import "src/styles/variables";
+
+#side-menu-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200px;
+  height: 100vh;
+  background: $primaryGradient1;
+  display: none;
+
+  .logo {
+    width: 200px;
+    height: 60px;
+    margin-bottom: 15px;
+
+    img {
+      margin-left: 60px;
+      margin-top: 15px;
+      height: 30px;
+    }
+  }
+
+  .close-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-size: 20px;
+    color: $primaryGradient3;
+    cursor: pointer;
+  }
+
+  .close-btn-hover {
+    color: $primaryGradient5;
+  }
+
+  .menu-item {
+    width: 200px;
+    height: 40px;
+    color: White;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding-left: 20px;
+
+    img {
+      margin-right: 15px;
+      width: 20px;
+      height: 20px;
+    }
+
+    span {
+      margin-right: 15px;
+      width: 20px;
+      height: 20px;
+      font-size: 20px;
+    }
+
+    &:hover {
+      background: $primaryGradient2;
+    }
+  }
+}

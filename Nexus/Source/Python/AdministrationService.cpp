@@ -116,6 +116,8 @@ void Nexus::Python::ExportAdministrationClient() {
     .def("__init__", make_constructor(&BuildClient))
     .def("check_administrator",
       BlockingFunction(&VirtualAdministrationClient::CheckAdministrator))
+    .def("load_account_roles",
+      BlockingFunction(&VirtualAdministrationClient::LoadAccountRoles))
     .def("load_trading_group_entry",
       BlockingFunction(&VirtualAdministrationClient::LoadTradingGroupEntry))
     .def("load_identity", BlockingFunction(

@@ -51,6 +51,8 @@ namespace ClientWebPortal {
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadCurrentAccount(
         const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnStorePassword(
+        const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLogin(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLogout(
@@ -58,6 +60,20 @@ namespace ClientWebPortal {
       Beam::WebServices::HttpResponse OnLoadTradingGroup(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadManagedTradingGroups(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadAccountRoles(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadAccountIdentity(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnStoreAccountIdentity(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadRiskParameters(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnStoreRiskParameters(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadCountryDatabase(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadCurrencyDatabase(
         const Beam::WebServices::HttpRequest& request);
   };
 }
