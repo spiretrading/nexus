@@ -38,6 +38,7 @@
 #include "OasisOrderExecutionServer/ChixFixApplication.hpp"
 #include "OasisOrderExecutionServer/CnsxFixApplication.hpp"
 #include "OasisOrderExecutionServer/FeeCalculatorOrderExecutionDriver.hpp"
+#include "OasisOrderExecutionServer/LekFixApplication.hpp"
 #include "OasisOrderExecutionServer/MatchNowFixApplication.hpp"
 #include "OasisOrderExecutionServer/OmegaFixApplication.hpp"
 #include "OasisOrderExecutionServer/TsxSorFixApplication.hpp"
@@ -282,6 +283,12 @@ int main(int argc, const char** argv) {
       Ref(*timeClient));
     neoeEntry.m_destinations.push_back(DefaultDestinations::NEOE());
     fixApplicationEntries.push_back(neoeEntry);
+    FixApplicationEntry lekEntry;
+    lekEntry.m_configPath = "lek.cfg";
+    lekEntry.m_application = std::make_shared<LekFixApplication>(
+      Ref(*timeClient));
+    lekEntry.m_destinations.push_back(DefaultDestinations::BATS());
+    fixApplicationEntries.push_back(lekEntry);
   } catch(const std::exception& e) {
     cerr << "Unable to initialize FIX entry: " << e.what() << endl;
     return -1;

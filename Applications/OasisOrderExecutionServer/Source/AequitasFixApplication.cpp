@@ -166,6 +166,7 @@ string AequitasFixApplication::GetUmirUserID() const {
   if(GetSessionSettings().get(GetSessionId()).has("UMIRUserID")) {
     return GetSessionSettings().get(GetSessionId()).getString("UMIRUserID");
   }
+  return {};
 }
 
 string AequitasFixApplication::GetNoTradeFeat() const {
