@@ -58,10 +58,40 @@ destinations:
     markets:
       - XTSE
       - XTSX
+  - id: ARCA
+    description: NYSE ARCA
+    markets:
+      - XASE
+      - XNAS
+      - XNYS
+  - id: BATS
+    description: BATS Exchange
+    markets:
+      - XASE
+      - XNAS
+      - XNYS
+  - id: NYSE
+    description: New York Stock Exchange
+    markets:
+      - XASE
+      - XNAS
+      - XNYS
+  - id: NASDAQ
+    description: NASDAQ
+    markets:
+      - XASE
+      - XNAS
+      - XNYS
 
 preferred_destinations:
+  - market: XASE
+    destination: NYSE
   - market: XASX
     destination: ASXT
+  - market: XNAS
+    destination: NASDAQ
+  - market: XNYSE
+    destination: NYSE
   - market: XTSE
     destination: TSX
   - market: XTSX
@@ -71,7 +101,10 @@ manual_order_entry:
   id: MOE
   description: Manual Order Entry
   markets:
+    - XASE
     - XASX
+    - XNAS
+    - XNYS
     - XTSE
     - XTSX
 ...
