@@ -24,13 +24,13 @@ class View extends UpdatableView {
   /** @private */
   onMyProfileClick() {
     this.onMenuCloseClick();
-    this.controller.navigateToMyProfileAccount();
+    this.controller.navigateToMyProfileAccount.apply(this.controller);
   }
 
   /** @private */
   onSearchProfilesClick() {
     this.onMenuCloseClick();
-    this.controller.navigateToSearchProfiles();
+    this.controller.navigateToSearchProfiles.apply(this.controller);
   }
 
   initialize() {

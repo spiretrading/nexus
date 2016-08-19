@@ -1,5 +1,5 @@
 import httpConnectionManager from '../commons/http-connection-manager';
-import ResultCodes from './result-codes.js';
+import ResultCodes from './result-codes';
 const ResultCode = ResultCodes;
 
 /** Spire service locator client class */
@@ -7,6 +7,7 @@ class ServiceLocatorClient {
   /** @private */
   logErrorAndThrow(xhr) {
     console.error('Spire Service Locator Client: Unexpected error happened.');
+    console.error(xhr);
     throw ResultCode.ERROR;
   }
 
@@ -51,7 +52,12 @@ class ServiceLocatorClient {
       password: newPassword
     };
     return httpConnectionManager.send(apiPath, payload, false)
+      .then(onResponse)
       .catch(this.logErrorAndThrow);
+
+    function onResponse(response) {
+      return { resultCode: ResultCode.SUCCESS }
+    }
   }
 }
 
