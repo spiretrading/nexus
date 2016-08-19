@@ -5,7 +5,7 @@ import HashMap from 'hashmap';
 class DefinitionsService {
   /** @private */
   loadCountries() {
-    return definitionsServiceClient.loadCountryData().then(onResponse.bind(this));
+    return definitionsServiceClient.loadCountryData.apply(definitionsServiceClient).then(onResponse.bind(this));
 
     function onResponse(countries) {
       this.countries = countries;
@@ -19,9 +19,26 @@ class DefinitionsService {
     }
   }
 
+  /** @private */
+  loadCurrencies() {
+    return definitionsServiceClient.loadCurrencyData.apply(definitionsServiceClient).then(onResponse.bind(this));
+
+    function onResponse(currencies) {
+      this.currencies = currencies;
+      this.currenciesById = new HashMap();
+      this.currenciesByCode = new HashMap();
+      for (let i=0; i<currencies.length; i++) {
+        let currency = currencies[i];
+        this.currenciesById.set(currency.id, currency);
+        this.currenciesByCode.set(currency.code, currency);
+      }
+    }
+  }
+
   initialize() {
     return Promise.all([
-      this.loadCountries.apply(this)
+      this.loadCountries.apply(this),
+      this.loadCurrencies.apply(this)
     ]);
   }
 
@@ -39,6 +56,26 @@ class DefinitionsService {
 
   getCountryName(number) {
     return this.countriesByNumber.get(number).name;
+  }
+
+  getAllCurrencyCodes() {
+    let codes = [];
+    for (let i=0; i<this.currencies.length; i++) {
+      codes.push(this.currencies[i].code);
+    }
+    return codes;
+  }
+
+  getCurrencyCode(id) {
+    return this.currenciesById.get(id).code;
+  }
+
+  getCurrencySign(id) {
+    return this.currenciesById.get(id).sign;
+  }
+
+  getCurrencyNumber(code) {
+    return this.currenciesByCode.get(code).id;
   }
 }
 

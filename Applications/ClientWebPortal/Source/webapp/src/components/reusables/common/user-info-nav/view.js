@@ -31,7 +31,6 @@ class View extends UpdatableView {
 
     return (
         <div className="user-info-nav-container">
-          {'<'} Back
           <div className="info-container">
             <span className="user-name">{this.componentModel.userName}</span>
             <span title="Trader" className={traderClass}></span>

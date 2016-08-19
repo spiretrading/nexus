@@ -26,22 +26,26 @@ class Controller {
       {
         name: 'Account',
         iconClass: 'icon-my_profile',
-        isActive: 'account' === subPath
+        isActive: 'account' === subPath,
+        path: 'profile-account'
       },
       {
         name: 'Risk Controls',
         iconClass: 'icon-risk_manager',
-        isActive: 'riskControls' === subPath
+        isActive: 'riskControls' === subPath,
+        path: 'profile-riskControls'
       },
       {
         name: 'Entitlements',
         iconClass: 'icon-entitlements',
-        isActive: 'entitlements' === subPath
+        isActive: 'entitlements' === subPath,
+        path: 'profile-entitlement'
       },
       {
         name: 'Compliance',
         iconClass: 'icon-compliance',
-        isActive: 'compliance' === subPath
+        isActive: 'compliance' === subPath,
+        path: 'profile-compliance'
       }
     ];
     return subPages;
