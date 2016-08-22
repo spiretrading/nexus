@@ -72,6 +72,10 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
     bind(&ClientWebPortalServlet::OnStoreAccountIdentity, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/load_entitlements_database"),
+    bind(&ClientWebPortalServlet::OnLoadEntitlementsDatabase, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_risk_parameters"),
     bind(&ClientWebPortalServlet::OnLoadRiskParameters, this,
     std::placeholders::_1));
@@ -347,6 +351,21 @@ HttpResponse ClientWebPortalServlet::OnStoreAccountIdentity(
     boost::get<int64_t>(identityParameter["country"]));
   identity.m_userNotes = boost::get<string>(identityParameter["user_notes"]);
   m_serviceClients->GetAdministrationClient().StoreIdentity(account, identity);
+  return response;
+}
+
+HttpResponse ClientWebPortalServlet::OnLoadEntitlementsDatabase(
+    const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions.Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  response.SetHeader({"Content-Type", "application/json"});
+  auto database =
+    m_serviceClients->GetAdministrationClient().LoadEntitlements();
+  response.SetBody(Encode<SharedBuffer>(m_sender, database));
   return response;
 }
 
