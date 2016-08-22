@@ -76,6 +76,14 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
     bind(&ClientWebPortalServlet::OnLoadEntitlementsDatabase, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/load_account_entitlements"),
+    bind(&ClientWebPortalServlet::OnLoadAccountEntitlements, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/store_account_entitlements"),
+    bind(&ClientWebPortalServlet::OnStoreAccountEntitlements, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_risk_parameters"),
     bind(&ClientWebPortalServlet::OnLoadRiskParameters, this,
     std::placeholders::_1));
@@ -366,6 +374,69 @@ HttpResponse ClientWebPortalServlet::OnLoadEntitlementsDatabase(
   auto database =
     m_serviceClients->GetAdministrationClient().LoadEntitlements();
   response.SetBody(Encode<SharedBuffer>(m_sender, database));
+  return response;
+}
+
+HttpResponse ClientWebPortalServlet::OnLoadAccountEntitlements(
+    const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions.Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = boost::get<JsonObject>(
+    Parse<JsonParser>(request.GetBody()));
+  auto& accountParameter = boost::get<JsonObject>(parameters["account"]);
+  DirectoryEntry account;
+  account.m_name = boost::get<string>(accountParameter["name"]);
+  account.m_id = static_cast<int>(boost::get<int64_t>(accountParameter["id"]));
+  account.m_type = static_cast<DirectoryEntry::Type>(
+    static_cast<int>(boost::get<int64_t>(accountParameter["type"])));
+  response.SetHeader({"Content-Type", "application/json"});
+  auto entitlements =
+    m_serviceClients->GetAdministrationClient().LoadEntitlements(account);
+  response.SetBody(Encode<SharedBuffer>(m_sender, entitlements));
+  return response;
+}
+
+HttpResponse ClientWebPortalServlet::OnStoreAccountEntitlements(
+    const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions.Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
+    session->GetAccount());
+  if(!roles.Test(AccountRole::ADMINISTRATOR)) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = boost::get<JsonObject>(
+    Parse<JsonParser>(request.GetBody()));
+  auto& accountParameter = boost::get<JsonObject>(parameters["account"]);
+  DirectoryEntry account;
+  account.m_name = boost::get<string>(accountParameter["name"]);
+  account.m_id = static_cast<int>(boost::get<int64_t>(accountParameter["id"]));
+  account.m_type = static_cast<DirectoryEntry::Type>(
+    static_cast<int>(boost::get<int64_t>(accountParameter["type"])));
+  auto& entitlementsParameter = boost::get<std::vector<JsonValue>>(
+    parameters["entitlements"]);
+  vector<DirectoryEntry> entitlements;
+  for(auto& entitlementValue : entitlementsParameter) {
+    auto& entitlementParameter = boost::get<JsonObject>(entitlementValue);
+    DirectoryEntry entitlement;
+    entitlement.m_name = boost::get<string>(entitlementParameter["name"]);
+    entitlement.m_id = static_cast<int>(boost::get<int64_t>(
+      entitlementParameter["id"]));
+    account.m_type = static_cast<DirectoryEntry::Type>(
+      static_cast<int>(boost::get<int64_t>(entitlementParameter["type"])));
+    entitlements.push_back(entitlement);
+  }
+  m_serviceClients->GetAdministrationClient().StoreEntitlements(account,
+    entitlements);
   return response;
 }
 
