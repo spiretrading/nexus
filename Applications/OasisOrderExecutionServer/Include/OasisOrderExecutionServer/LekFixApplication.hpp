@@ -2,6 +2,7 @@
 #define OASIS_LEKFIXAPPLICATION_HPP
 #include <Beam/Network/Network.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
+#include <boost/optional/optional.hpp>
 #include <quickfix/MessageCracker.h>
 #include "Nexus/FixUtilities/FixApplication.hpp"
 #include "Nexus/FixUtilities/FixOrderLog.hpp"
@@ -71,6 +72,9 @@ namespace OasisOrderExecutionService {
     private:
       Beam::TimeService::LiveNtpTimeClient* m_timeClient;
       FixUtilities::FixOrderLog m_orderLog;
+      mutable boost::optional<boost::optional<std::string>> m_accountTag;
+
+      const boost::optional<std::string>& GetAccount() const;
   };
 }
 }

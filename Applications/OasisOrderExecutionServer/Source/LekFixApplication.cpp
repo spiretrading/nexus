@@ -31,6 +31,10 @@ const Order& LekFixApplication::Submit(const OrderInfo& info) {
   return m_orderLog.Submit(info, GetSessionId().getSenderCompID(),
     GetSessionId().getTargetCompID(),
     [&] (Out<FIX42::NewOrderSingle> newOrderSingle) {
+      auto& accountTag = GetAccount();
+      if(accountTag.is_initialized()) {
+        newOrderSingle->set(FIX::Account{*accountTag});
+      }
     });
 }
 
@@ -82,3 +86,16 @@ void LekFixApplication::onMessage(const FIX42::TradingSessionStatus& message,
 
 void LekFixApplication::onMessage(const FIX42::OrderCancelReject& message,
     const FIX::SessionID& sessionId) {}
+
+const optional<string>& LekFixApplication::GetAccount() const {
+  if(m_accountTag.is_initialized()) {
+    return *m_accountTag;
+  }
+  if(GetSessionSettings().get(GetSessionId()).has("Account")) {
+    m_accountTag.emplace(
+      GetSessionSettings().get(GetSessionId()).getString("Account"));
+  } else {
+    m_accountTag.emplace(none);
+  }
+  return *m_accountTag;
+}
