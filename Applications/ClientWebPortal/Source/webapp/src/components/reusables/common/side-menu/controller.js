@@ -1,6 +1,8 @@
 import View from './view';
 import userService from 'services/user';
 import {browserHistory} from 'react-router/es6';
+import store from 'store';
+import LocalstorageKey from 'commons/localstorage-keys';
 
 class Controller {
   constructor(react) {
@@ -25,6 +27,11 @@ class Controller {
     this.view.update(this.componentModel);
   }
 
+  /** @private */
+  saveLastVisitedPath(path) {
+    store.set(LocalstorageKey.LAST_VISITED_PATH, path);
+  }
+
   getView() {
     return this.view;
   }
@@ -47,11 +54,15 @@ class Controller {
   }
 
   navigateToMyProfileAccount() {
-    browserHistory.push('profile-account');
+    let path = 'profile-account';
+    browserHistory.push(path, userService.getDirectoryEntry());
+    this.saveLastVisitedPath(path);
   }
 
   navigateToSearchProfiles() {
-    browserHistory.push('searchProfiles');
+    let path = 'searchProfiles';
+    browserHistory.push(path);
+    this.saveLastVisitedPath(path);
   }
 }
 

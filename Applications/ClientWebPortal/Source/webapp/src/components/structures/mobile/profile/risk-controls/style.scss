@@ -1,0 +1,47 @@
+@import "src/styles/variables";
+
+main.mobile {
+  #risk-control-container {
+    font-size: 16px;
+    position: relative;
+    display: none;
+
+    .row {
+      margin: 0 0 30px 0;
+    }
+
+    .save-button {
+      margin-top:10px;
+      width: 200px;
+      position: relative;
+      left: 50%;
+      transform: translate(-50%, 0);
+    }
+
+    .cards-wrapper {
+      display: flex;
+      flex-direction: column;
+
+      .card-wrapper {
+        width: 100%;
+        height: 100px;
+        margin-bottom: 20px;
+
+        &.last-card {
+          margin: 0;
+        }
+      }
+    }
+
+    .save-message {
+      color: $primaryGradient3;
+      margin-top:10px;
+      display: none;
+      text-align: center;
+
+      &.failed {
+        color: $red;
+      }
+    }
+  }
+}

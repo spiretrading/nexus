@@ -1,5 +1,5 @@
-export default {
-  SUCCESS: 1000,
-  FAIL: 1001,
-  ERROR: 1002
-};
+import commonResultCodes from '../commons/common-result-codes';
+
+let resultCodes = commonResultCodes;
+
+export default resultCodes;

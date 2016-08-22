@@ -46,7 +46,9 @@ class Controller {
       if (resultCode === ResultCode.SUCCESS) {
         this.initializeApp().then(() => {
           let lastVisitedPath = store.get(LocalstorageKey.LAST_VISITED_PATH);
-          if (lastVisitedPath != null && lastVisitedPath != '/' && userService.isAuthorizedPath(lastVisitedPath)){
+          if (lastVisitedPath != null &&
+            (lastVisitedPath != '/' || lastVisitedPath != 'profile-account') &&
+            userService.isAuthorizedPath(lastVisitedPath)){
             browserHistory.push(lastVisitedPath);
           } else {
             browserHistory.push('profile-account', userService.getDirectoryEntry());
