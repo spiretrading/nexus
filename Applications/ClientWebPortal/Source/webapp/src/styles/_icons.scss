@@ -24,6 +24,9 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-check:before {
+  content: "\32";
+}
 .icon-photo:before {
   content: "\31";
 }

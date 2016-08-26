@@ -1,0 +1,26 @@
+@import "src/styles/variables";
+
+#entitlements-container {
+  font-size: 16px;
+  position: relative;
+  display: none;
+
+  .user-info-nav-wrapper {
+    margin-bottom: 15px;
+  }
+
+  .save-button {
+    margin:10px 0;
+    width: 200px;
+    position: relative;
+    left: 50%;
+    transform: translate(-50%, 0);
+  }
+
+  .save-message {
+    color: $primaryGradient3;
+    margin-top:10px;
+    display: none;
+    text-align: center;
+  }
+}

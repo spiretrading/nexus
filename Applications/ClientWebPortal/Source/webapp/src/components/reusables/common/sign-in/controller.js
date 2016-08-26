@@ -5,6 +5,7 @@ import ResultCode from 'services/user/result-codes';
 import store from 'store';
 import LocalstorageKey from 'commons/localstorage-keys';
 import {browserHistory} from 'react-router/es6';
+import adminClient from 'utils/spire-clients/admin';
 
 class Controller {
   constructor(react) {
