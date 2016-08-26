@@ -31,7 +31,7 @@ class UserService {
         this.directoryEntry = response.directoryEntry;
       }
 
-      return adminClient.loadAccountRoles(this.directoryEntry);
+      return adminClient.loadAccountRoles.apply(this, [this.directoryEntry]);
     }
 
     function onUserRolesResponse(response) {

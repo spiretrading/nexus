@@ -1,22 +1,12 @@
 import React, {PropTypes, Component} from 'react';
 import TopNav from 'components/reusables/common/top-nav';
 import SideMenu from 'components/reusables/common/side-menu';
-import store from 'store';
-import LocalstorageKey from 'commons/localstorage-keys';
 import deviceDetector from 'utils/device-detector';
 import './style.scss';
 
 class App extends Component {
   constructor(props) {
     super(props);
-  }
-
-  /** @private */
-  saveLastVisitedPath() {
-    let currentLocation = this.props.location.pathname;
-    if (currentLocation != '/') {
-      store.set(LocalstorageKey.LAST_VISITED_PATH, currentLocation);
-    }
   }
 
   /** @private */
@@ -44,7 +34,6 @@ class App extends Component {
   }
 
   componentDidUpdate() {
-    this.saveLastVisitedPath();
     this.publishPageTransitioned();
     this.hideIfHome();
   }
