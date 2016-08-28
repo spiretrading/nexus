@@ -119,9 +119,9 @@ namespace Details {
   template<typename MarketDataClientForward>
   ChartingServlet<ContainerType, MarketDataClientType>::ChartingServlet(
       MarketDataClientForward&& marketDataClient)
-      : m_marketDataClient(std::forward<MarketDataClientForward>(
-          marketDataClient)),
-        m_dataStore(Beam::Initialize(&*m_marketDataClient), 10000) {}
+      : m_marketDataClient{std::forward<MarketDataClientForward>(
+          marketDataClient)},
+        m_dataStore{Beam::Initialize(&*m_marketDataClient), 10000} {}
 
   template<typename ContainerType, typename MarketDataClientType>
   void ChartingServlet<ContainerType, MarketDataClientType>::RegisterServices(
@@ -208,7 +208,7 @@ namespace Details {
     if(endTime < startTime + interval ||
         startTime == boost::posix_time::neg_infin  ||
         endTime == boost::posix_time::pos_infin) {
-      throw Beam::Services::ServiceRequestException("Invalid time range.");
+      throw Beam::Services::ServiceRequestException{"Invalid time range."};
     }
     auto queue = std::make_shared<Beam::Queue<SequencedTimeAndSale>>();
     MarketDataService::SecurityMarketDataQuery timeAndSaleQuery;
@@ -230,9 +230,9 @@ namespace Details {
     auto timeAndSalesIterator = timeAndSales.begin();
     while(timeAndSalesIterator != timeAndSales.end() &&
         currentStart <= endTime) {
-      TechnicalAnalysis::TimePriceCandlestick candlestick(currentStart,
-        currentEnd);
-      bool hasPoint = false;
+      TechnicalAnalysis::TimePriceCandlestick candlestick{currentStart,
+        currentEnd};
+      auto hasPoint = false;
       while(timeAndSalesIterator != timeAndSales.end() &&
           (*timeAndSalesIterator)->m_timestamp >= currentStart &&
           (*timeAndSalesIterator)->m_timestamp < currentEnd) {

@@ -91,7 +91,7 @@ namespace MarketDataService {
   template<typename MarketDataClientForward>
   ClientHistoricalDataStore<MarketDataClientType>::ClientHistoricalDataStore(
       MarketDataClientForward&& client)
-      : m_client(std::forward<MarketDataClientForward>(client)) {}
+      : m_client{std::forward<MarketDataClientForward>(client)} {}
 
   template<typename MarketDataClientType>
   ClientHistoricalDataStore<MarketDataClientType>::
@@ -241,7 +241,7 @@ namespace MarketDataService {
     if(query.GetRange().GetEnd() == Beam::Queries::Sequence::Last()) {
       auto revisedQuery = query;
       revisedQuery.SetRange(query.GetRange().GetStart(),
-        Beam::Queries::Decrement(Beam::Queries::Sequence::Last()));
+        Beam::Queries::Sequence::Present());
       ((*m_client).*f)(revisedQuery, queue);
     } else {
       ((*m_client).*f)(query, queue);
