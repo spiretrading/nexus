@@ -80,7 +80,7 @@ class Controller {
   save() {
     let directoryEntry = this.componentModel.directoryEntry;
     adminClient.storeAccountEntitlements(directoryEntry, this.componentModel.accountEntitlements)
-      .then(this.view.showSavedMessage)
+      .then(this.view.showSaveSuccessMessage)
       .catch(this.view.showSaveFailMessage);
   }
 }

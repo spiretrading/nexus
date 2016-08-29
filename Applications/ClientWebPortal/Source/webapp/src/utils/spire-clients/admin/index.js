@@ -152,7 +152,7 @@ class AdminClient {
       entitlements: entitlements
     };
 
-    return httpConnectionManager.send(apiPath, payload, true)
+    return httpConnectionManager.send(apiPath, payload, false)
       .catch(this.logErrorAndThrow);
   }
 }
