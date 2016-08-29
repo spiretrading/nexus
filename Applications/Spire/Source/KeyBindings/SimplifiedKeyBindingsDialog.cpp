@@ -891,6 +891,66 @@ namespace {
     matnlpLimitAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
     matnlpLimitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
     orderTypes.emplace_back(matnlpLimitAsk.Build());
+    CanvasNodeBuilder matnlpAttBid(*GetLimitBidOrderTaskNode()->Rename(
+      "MATCH Now LP At-The-Touch Bid")->AddField(
+      "constraints", 6005, make_unique<TextNode>("PAG")));
+    matnlpAttBid.SetVisible("constraints", false);
+    matnlpAttBid.SetReadOnly("constraints", true);
+    matnlpAttBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::MATNLP()));
+    matnlpAttBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    matnlpAttBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    matnlpAttBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    matnlpAttBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    matnlpAttBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    matnlpAttBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(matnlpAttBid.Build());
+    CanvasNodeBuilder matnlpAttAsk(*GetLimitAskOrderTaskNode()->Rename(
+      "MATCH Now LP At-The-Touch Ask")->AddField(
+      "constraints", 6005, make_unique<TextNode>("PAG")));
+    matnlpAttAsk.SetVisible("constraints", false);
+    matnlpAttAsk.SetReadOnly("constraints", true);
+    matnlpAttAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::MATNLP()));
+    matnlpAttAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    matnlpAttAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    matnlpAttAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    matnlpAttAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    matnlpAttAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    matnlpAttAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(matnlpAttAsk.Build());
+    CanvasNodeBuilder matnlpMpiBid(*GetLimitBidOrderTaskNode()->Rename(
+      "MATCH Now LP MPI Bid")->AddField(
+      "constraints", 6005, make_unique<TextNode>("PMI")));
+    matnlpMpiBid.SetVisible("constraints", false);
+    matnlpMpiBid.SetReadOnly("constraints", true);
+    matnlpMpiBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::MATNLP()));
+    matnlpMpiBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    matnlpMpiBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    matnlpMpiBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    matnlpMpiBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    matnlpMpiBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    matnlpMpiBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(matnlpMpiBid.Build());
+    CanvasNodeBuilder matnlpMpiAsk(*GetLimitAskOrderTaskNode()->Rename(
+      "MATCH Now LP MPI Ask")->AddField(
+      "constraints", 6005, make_unique<TextNode>("PMI")));
+    matnlpMpiAsk.SetVisible("constraints", false);
+    matnlpMpiAsk.SetReadOnly("constraints", true);
+    matnlpMpiAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::MATNLP()));
+    matnlpMpiAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    matnlpMpiAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    matnlpMpiAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    matnlpMpiAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    matnlpMpiAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    matnlpMpiAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(matnlpMpiAsk.Build());
     CanvasNodeBuilder matnlpMarketBid(
       *GetMarketBidOrderTaskNode()->Rename("MATCH Now LP Market Bid"));
     matnlpMarketBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
