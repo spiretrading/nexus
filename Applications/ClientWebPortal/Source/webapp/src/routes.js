@@ -90,6 +90,15 @@ if (!isMobile) {
       }
     },
     {
+      path: 'profile-entitlements',
+      getComponent(location, cb) {
+        System.import('components/structures/mobile/profile')
+          .then((module) => { return { default: module.entitlements } })
+          .then(loadRoute(cb))
+          .catch(errorLoading);
+      }
+    },
+    {
       path: 'searchProfiles',
       getComponent(location, cb) {
         System.import('components/structures/common/search-profiles')

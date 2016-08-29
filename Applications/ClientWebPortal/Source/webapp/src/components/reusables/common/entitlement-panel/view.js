@@ -136,6 +136,9 @@ class View extends UpdatableView {
             <div className="content-wrapper">
               <div className="content-header">
                 Applicability
+                <div className="price">
+                  {priceLabel}
+                </div>
               </div>
               <table>
                 {tableHeader}

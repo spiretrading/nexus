@@ -31,7 +31,7 @@
 
     .icon-expand {
       height: 23px;
-      font-size: 22px;
+      font-size: 25px;
       color: $primaryGradient3;
       cursor: pointer;
       margin-right: 15px;
@@ -61,6 +61,10 @@
       color: $primaryGradient1;
       font-weight: bold;
       margin-bottom: 5px;
+
+      .price {
+        display: none;
+      }
     }
 
     table {
@@ -123,8 +127,29 @@
 
 main.mobile {
   .entitlement-panel-container {
-    .content {
+    .header {
+      .price {
+        display: none;
+      }
+    }
+
+    .content-slide-wrapper {
       width: 100%;
+      padding-left: 15px;
+      padding-right: 20px;
+
+      .content-header {
+        position: relative;
+
+        .price {
+          display: inherit;
+          position: absolute;
+          right: 0px;
+          top: 0px;
+          font-weight: normal;
+          color: $black;
+        }
+      }
     }
   }
 }
