@@ -27,7 +27,7 @@ class Controller {
     this.view.dispose.apply(this.view);
   }
 
-  onChange(newValue) {
+  onSelectionChange(newValue) {
     this.onChange(newValue);
   }
 }

@@ -82,7 +82,11 @@ class DefinitionsService {
   }
 
   getCurrencySign(id) {
-    return this.currenciesById.get(id).sign;
+    if (this.doesCurrencyExist(id)){
+      return this.currenciesById.get(id).sign;
+    } else {
+      return '';
+    }
   }
 
   getCurrencyNumber(code) {

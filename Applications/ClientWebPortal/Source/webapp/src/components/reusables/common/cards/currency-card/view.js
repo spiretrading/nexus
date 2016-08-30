@@ -49,12 +49,10 @@ class View extends UpdatableView {
     $cardContainer.find('.body').removeAttr('contenteditable').blur();
 
     let currentInput = $cardContainer.find('.body').text().trim();
-    let currencySign;
-    if (definitionsService.doesCurrencyExist.apply(definitionsService, [this.componentModel.countryIso])) {
-      currencySign = definitionsService.getCurrencySign(this.componentModel.countryIso);
-    } else {
-      currencySign = '';
-    }
+    let currencySign = definitionsService.getCurrencySign.apply(
+      definitionsService,
+      [this.componentModel.countryIso]
+    );
     let regexToReplace = new RegExp('[ ,' + currencySign + ']', 'gi');
     currentInput = currentInput.replace(regexToReplace, '');
     currentInput = parseFloat(currentInput);

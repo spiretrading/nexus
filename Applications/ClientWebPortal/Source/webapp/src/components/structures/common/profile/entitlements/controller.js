@@ -20,7 +20,10 @@ class Controller {
   /** @private */
   getRequiredData() {
     let directoryEntry = this.componentModel.directoryEntry;
-    let loadAccountEntitlements = adminClient.loadAccountEntitlements.apply(adminClient, [directoryEntry]);
+    let loadAccountEntitlements = adminClient.loadAccountEntitlements.apply(
+      adminClient,
+      [directoryEntry]
+    );
 
     return Promise.all([
       loadAccountEntitlements
@@ -45,7 +48,12 @@ class Controller {
     };
     let requiredDataFetchPromise = this.getRequiredData();
 
-    preloaderTimer.start(requiredDataFetchPromise, null, Config.WHOLE_PAGE_PRELOADER_WIDTH, Config.WHOLE_PAGE_PRELOADER_HEIGHT).then((responses) => {
+    preloaderTimer.start(
+      requiredDataFetchPromise,
+      null,
+      Config.WHOLE_PAGE_PRELOADER_WIDTH,
+      Config.WHOLE_PAGE_PRELOADER_HEIGHT
+    ).then((responses) => {
       this.componentModel.accountEntitlements = responses[0];
       this.componentModel.entitlements = definitionsService.getEntitlements.apply(definitionsService);
       this.componentModel.directoryEntry = directoryEntry;

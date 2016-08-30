@@ -70,7 +70,7 @@ class View extends UpdatableView {
 
   onChange(event) {
     let currency = $('#' + this.componentModel.componentId).find('.select-container').val();
-    this.controller.onChange(currency);
+    this.controller.onSelectionChange.apply(this, [currency]);
     this.selected = false;
     this.onDeselected();
   }
