@@ -88,24 +88,15 @@ class AdminClient {
       account: directoryEntry
     };
 
-    return httpConnectionManager.send(apiPath, payload)
+    return httpConnectionManager.send(apiPath, payload, true)
       .then(parseResponse)
       .catch(this.logErrorAndThrow);
 
-    // function parseResponse(response) {
-    //   return {
-    //     currency: response.currency,
-    //     netLoss: response.net_loss,
-    //     buyingPower: response.buying_power,
-    //     transitionTime: response.transition_time
-    //   };
-    // }
-
     function parseResponse(response) {
       return {
-        currency: 124,
-        netLoss: 50000,
-        buyingPower: 5000000,
+        currency: response.currency,
+        netLoss: response.net_loss,
+        buyingPower: response.buying_power,
         transitionTime: response.transition_time
       };
     }
@@ -123,7 +114,45 @@ class AdminClient {
       }
     };
 
-    return httpConnectionManager.send(apiPath, payload)
+    return httpConnectionManager.send(apiPath, payload, false)
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadEntitlementsData() {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_entitlements_database';
+    return httpConnectionManager.send(apiPath, null, true)
+      .then(onResponse)
+      .catch(this.logErrorAndThrow);
+
+    function onResponse(response) {
+      return response.entries;
+    }
+  }
+
+  loadAccountEntitlements(directoryEntry) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_account_entitlements';
+    let payload = {
+      account: directoryEntry
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .then(parseResponse)
+      .catch(this.logErrorAndThrow);
+
+    function parseResponse(response) {
+      let entitlements = response;
+      return entitlements;
+    }
+  }
+
+  storeAccountEntitlements(directoryEntry, entitlements) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/store_account_entitlements';
+    let payload = {
+      account: directoryEntry,
+      entitlements: entitlements
+    };
+
+    return httpConnectionManager.send(apiPath, payload, false)
       .catch(this.logErrorAndThrow);
   }
 }

@@ -24,6 +24,15 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-expand:before {
+  content: "\72";
+}
+.icon-hide:before {
+  content: "\73";
+}
+.icon-check:before {
+  content: "\32";
+}
 .icon-photo:before {
   content: "\31";
 }
@@ -56,12 +65,6 @@
 }
 .icon-change_image:before {
   content: "\71";
-}
-.icon-expand:before {
-  content: "\72";
-}
-.icon-hide:before {
-  content: "\73";
 }
 .icon-magnifying_glass:before {
   content: "\74";

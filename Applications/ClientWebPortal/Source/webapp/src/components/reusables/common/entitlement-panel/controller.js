@@ -1,7 +1,8 @@
 class Controller {
   constructor(react, componentModel) {
     this.componentModel = cloneObject(componentModel);
-    this.onChange = react.props.onChange;
+    this.onSelected = react.props.onSelected;
+    this.onDeselected = react.props.onDeselected;
   }
 
   getView() {
@@ -12,10 +13,6 @@ class Controller {
     this.view = view;
   }
 
-  componentDidMount() {
-    this.view.initialize.apply(this.view);
-  }
-
   componentWillUpdate(model) {
     if (model != null) {
       $.extend(true, this.componentModel, model);
@@ -23,12 +20,14 @@ class Controller {
     }
   }
 
-  componentWillUnmount() {
-    this.view.dispose.apply(this.view);
+  onEntitlementSelected() {
+    let id = this.componentModel.entitlement.group_entry.id;
+    this.onSelected(id);
   }
 
-  onSelectionChange(newValue) {
-    this.onChange(newValue);
+  onEntitlementDeselected() {
+    let id = this.componentModel.entitlement.group_entry.id;
+    this.onDeselected(id);
   }
 }
 

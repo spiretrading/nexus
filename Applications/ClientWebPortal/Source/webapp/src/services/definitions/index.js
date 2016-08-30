@@ -1,4 +1,5 @@
 import definitionsServiceClient from 'utils/spire-clients/definitions-service';
+import adminClient from 'utils/spire-clients/admin';
 import HashMap from 'hashmap';
 
 /** Various definitions queried from back-end */
@@ -35,10 +36,20 @@ class DefinitionsService {
     }
   }
 
+  /** @private */
+  loadEntitlements() {
+    return adminClient.loadEntitlementsData.apply(adminClient).then(onResponse.bind(this));
+
+    function onResponse(entitlements) {
+      this.entitlements = entitlements;
+    }
+  }
+
   initialize() {
     return Promise.all([
       this.loadCountries.apply(this),
-      this.loadCurrencies.apply(this)
+      this.loadCurrencies.apply(this),
+      this.loadEntitlements.apply(this)
     ]);
   }
 
@@ -71,11 +82,27 @@ class DefinitionsService {
   }
 
   getCurrencySign(id) {
-    return this.currenciesById.get(id).sign;
+    if (this.doesCurrencyExist(id)){
+      return this.currenciesById.get(id).sign;
+    } else {
+      return '';
+    }
   }
 
   getCurrencyNumber(code) {
     return this.currenciesByCode.get(code).id;
+  }
+
+  doesCurrencyExist(id) {
+    if (this.currenciesById.get(id) == null) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  getEntitlements() {
+    return this.entitlements;
   }
 }
 

@@ -43,6 +43,15 @@ if (!isMobile) {
       }
     },
     {
+      path: 'profile-entitlements',
+      getComponent(location, cb) {
+        System.import('components/structures/desktop/profile')
+          .then((module) => { return { default: module.entitlements } })
+          .then(loadRoute(cb))
+          .catch(errorLoading);
+      }
+    },
+    {
       path: 'searchProfiles',
       getComponent(location, cb) {
         System.import('components/structures/common/search-profiles')
@@ -76,6 +85,15 @@ if (!isMobile) {
       getComponent(location, cb) {
         System.import('components/structures/mobile/profile')
           .then((module) => { return { default: module.riskControls } })
+          .then(loadRoute(cb))
+          .catch(errorLoading);
+      }
+    },
+    {
+      path: 'profile-entitlements',
+      getComponent(location, cb) {
+        System.import('components/structures/mobile/profile')
+          .then((module) => { return { default: module.entitlements } })
           .then(loadRoute(cb))
           .catch(errorLoading);
       }

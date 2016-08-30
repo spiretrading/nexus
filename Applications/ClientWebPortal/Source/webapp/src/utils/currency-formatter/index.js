@@ -3,8 +3,16 @@ import definitionsService from 'services/definitions';
 
 class CurrencyFormatter {
   format(countryIsoNumber, amount) {
-    let sign = definitionsService.getCurrencySign(countryIsoNumber);
+    let sign;
     let number = numberFormatter.formatWithComma(amount);
+
+    if (definitionsService.doesCurrencyExist.apply(definitionsService, [countryIsoNumber])) {
+      sign = definitionsService.getCurrencySign(countryIsoNumber);
+
+    } else {
+      sign = '';
+    }
+
     return sign + ' ' + number;
   }
 }
