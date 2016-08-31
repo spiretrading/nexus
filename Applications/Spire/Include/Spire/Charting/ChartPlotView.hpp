@@ -210,7 +210,11 @@ namespace Spire {
 
       void PaintGrids();
       void PaintChartPlots();
+      void PaintCrossHairs();
       void PaintCandlestickChartPlot(const CandlestickChartPlot& plot);
+      void PaintHorizontalCursor(const QPoint& position,
+        const ChartValue& value);
+      void PaintVerticalCursor(const QPoint& position, const ChartValue& value);
       void Zoom(ChartValue x, ChartValue y, int percentage);
       void Drag(ChartValue xIncrement, ChartValue yIncrement);
       std::tuple<ChartValue, ChartValue> ComputeChartPoint(const QPoint& point);

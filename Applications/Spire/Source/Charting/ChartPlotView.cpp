@@ -31,6 +31,8 @@ namespace {
     }
     return ChartValue();
   }
+
+  const QColor CROSSHAIR_COLOR = QColor{255, 255, 255};
 }
 
 ChartPlotView::Properties ChartPlotView::Properties::GetDefault() {
@@ -59,6 +61,7 @@ ChartPlotView::ChartPlotView(QWidget* parent)
       m_interactionMode(ChartInteractionMode::NONE),
       m_isDragging(false) {
   setAutoFillBackground(true);
+  setMouseTracking(true);
 }
 
 void ChartPlotView::Initialize(RefType<UserProfile> userProfile,
@@ -161,6 +164,8 @@ void ChartPlotView::mouseMoveEvent(QMouseEvent* event) {
     m_previousMousePosition = event->pos();
     Drag(std::get<0>(initial) - std::get<0>(current),
       std::get<1>(initial) - std::get<1>(current));
+  } else {
+    update();
   }
 }
 
@@ -195,6 +200,7 @@ void ChartPlotView::mouseReleaseEvent(QMouseEvent* event) {
 void ChartPlotView::paintEvent(QPaintEvent* event) {
   PaintGrids();
   PaintChartPlots();
+  PaintCrossHairs();
 }
 
 void ChartPlotView::PaintGrids() {
@@ -297,6 +303,27 @@ void ChartPlotView::PaintChartPlots() {
   }
 }
 
+void ChartPlotView::PaintCrossHairs() {
+  auto mousePosition = mapFromGlobal(QCursor::pos());
+  if(mousePosition.x() < 0 || mousePosition.x() > GetChartWidth() ||
+      mousePosition.y() < 0 || mousePosition.y() > GetChartHeight()) {
+    return;
+  }
+  QPainter painter{this};
+  QPen gridPen{CROSSHAIR_COLOR, 1, Qt::DashLine};
+  painter.setPen(gridPen);
+  auto chartWidth = m_xAxisParameters.m_max - m_xAxisParameters.m_min;
+  painter.drawLine(QPoint{mousePosition.x(), 0},
+    QPoint{mousePosition.x(), GetChartHeight()});
+  painter.drawLine(QPoint{0, mousePosition.y()},
+    QPoint{GetChartWidth(), mousePosition.y()});
+  auto chartPoint = ComputeChartPoint(mousePosition);
+  PaintHorizontalCursor(QPoint{mousePosition.x(), GetChartHeight()},
+    std::get<0>(chartPoint));
+  PaintVerticalCursor(QPoint{GetChartWidth(), mousePosition.y()},
+    std::get<1>(chartPoint));
+}
+
 void ChartPlotView::PaintCandlestickChartPlot(
     const CandlestickChartPlot& plot) {
   auto bodyTop = std::max(plot.GetValue().GetOpen(),
@@ -373,6 +400,42 @@ void ChartPlotView::PaintCandlestickChartPlot(
   if(lowShadow.top() < GetChartHeight() && lowShadow.left() < GetChartWidth()) {
     painter.drawRect(lowShadow);
   }
+}
+
+void ChartPlotView::PaintHorizontalCursor(const QPoint& position,
+    const ChartValue& value) {
+  const auto WIDTH = 55;
+  const auto HEIGHT = height() - position.y();
+  QPainter painter{this};
+  QPoint bodyTopLeft{position.x() - WIDTH / 2, position.y()};
+  QPoint bodyBottomRight{position.x() + WIDTH / 2, position.y() + HEIGHT};
+  QRect body{bodyTopLeft, bodyBottomRight};
+  QBrush bodyBrush{Qt::SolidPattern};
+  bodyBrush.setColor(QColor{155, 155, 155});
+  painter.setBrush(bodyBrush);
+  painter.drawRect(body);
+  QRectF textBox{static_cast<qreal>(body.x() + 4), static_cast<qreal>(body.y()),
+    static_cast<qreal>(body.width()), static_cast<qreal>(body.height())};
+  painter.drawText(textBox, Qt::AlignLeft | Qt::AlignVCenter,
+    LoadLabel(value, *GetXAxisParameters().m_type));
+}
+
+void ChartPlotView::PaintVerticalCursor(const QPoint& position,
+    const ChartValue& value) {
+  const auto WIDTH = width() - position.x();
+  const auto HEIGHT = 16;
+  QPainter painter{this};
+  QPoint bodyTopLeft{position.x(), position.y() - HEIGHT / 2};
+  QPoint bodyBottomRight{position.x() + WIDTH, position.y() + HEIGHT / 2};
+  QRect body{bodyTopLeft, bodyBottomRight};
+  QBrush bodyBrush{Qt::SolidPattern};
+  bodyBrush.setColor(QColor{155, 155, 155});
+  painter.setBrush(bodyBrush);
+  painter.drawRect(body);
+  QRectF textBox{static_cast<qreal>(body.x() + 4), static_cast<qreal>(body.y()),
+    static_cast<qreal>(body.width()), static_cast<qreal>(body.height())};
+  painter.drawText(textBox, Qt::AlignLeft | Qt::AlignVCenter,
+    LoadLabel(value, *GetYAxisParameters().m_type));
 }
 
 void ChartPlotView::Zoom(ChartValue x, ChartValue y, int percentage) {
