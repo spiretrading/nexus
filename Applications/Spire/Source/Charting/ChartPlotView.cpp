@@ -414,9 +414,9 @@ void ChartPlotView::PaintHorizontalCursor(const QPoint& position,
   bodyBrush.setColor(QColor{155, 155, 155});
   painter.setBrush(bodyBrush);
   painter.drawRect(body);
-  QRectF textBox{static_cast<qreal>(body.x() + 4), static_cast<qreal>(body.y()),
+  QRectF textBox{static_cast<qreal>(body.x()), static_cast<qreal>(body.y()),
     static_cast<qreal>(body.width()), static_cast<qreal>(body.height())};
-  painter.drawText(textBox, Qt::AlignLeft | Qt::AlignVCenter,
+  painter.drawText(textBox, Qt::AlignHCenter | Qt::AlignVCenter,
     LoadLabel(value, *GetXAxisParameters().m_type));
 }
 
@@ -489,6 +489,11 @@ QString ChartPlotView::LoadLabel(ChartValue value,
   if(type.GetCompatibility(MoneyType::GetInstance()) ==
       CanvasType::Compatibility::EQUAL) {
     auto v = value.ToMoney();
+    if(v >= Money::ONE) {
+      v = Floor(v, 3);
+    } else {
+      v = Floor(v, 4);
+    }
     return QString::fromStdString(v.ToString());
   } else if(type.GetCompatibility(DateTimeType::GetInstance()) ==
       CanvasType::Compatibility::EQUAL) {
