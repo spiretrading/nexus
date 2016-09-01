@@ -32,7 +32,7 @@ namespace {
     return ChartValue();
   }
 
-  const QColor CROSSHAIR_COLOR = QColor{255, 255, 255};
+  const auto CROSSHAIR_COLOR = QColor{255, 255, 255};
 }
 
 ChartPlotView::Properties ChartPlotView::Properties::GetDefault() {
