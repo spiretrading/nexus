@@ -44,6 +44,10 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
     MatchesPath(HttpMethod::POST, "/api/service_locator/logout"),
     bind(&ClientWebPortalServlet::OnLogout, this, std::placeholders::_1));
   slots.emplace_back(
+    MatchesPath(HttpMethod::POST, "/api/service_locator/create_account"),
+    bind(&ClientWebPortalServlet::OnCreateAccount, this,
+    std::placeholders::_1));
+  slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/load_current_account"),
     bind(&ClientWebPortalServlet::OnLoadCurrentAccount, this,
     std::placeholders::_1));
@@ -225,6 +229,92 @@ HttpResponse ClientWebPortalServlet::OnLogout(const HttpRequest& request) {
     return response;
   }
   m_sessions.End(*session);
+  return response;
+}
+
+HttpResponse ClientWebPortalServlet::OnCreateAccount(
+    const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions.Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
+    session->GetAccount());
+  if(!roles.Test(AccountRole::ADMINISTRATOR)) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = boost::get<JsonObject>(
+    Parse<JsonParser>(request.GetBody()));
+  auto& name = boost::get<string>(parameters["name"]);
+  auto& groupParameter = boost::get<JsonObject>(parameters["group"]);
+  DirectoryEntry group;
+  group.m_name = boost::get<string>(groupParameter["name"]);
+  group.m_id = static_cast<int>(boost::get<int64_t>(groupParameter["id"]));
+  group.m_type = static_cast<DirectoryEntry::Type>(
+    static_cast<int>(boost::get<int64_t>(groupParameter["type"])));
+  auto& identityParameter = boost::get<JsonObject>(parameters["identity"]);
+  AccountIdentity identity;
+  identity.m_firstName = boost::get<string>(identityParameter["first_name"]);
+  identity.m_lastName = boost::get<string>(identityParameter["last_name"]);
+  identity.m_emailAddress = boost::get<string>(identityParameter["e_mail"]);
+  identity.m_addressLineOne = boost::get<string>(
+    identityParameter["address_line_one"]);
+  identity.m_addressLineTwo = boost::get<string>(
+    identityParameter["address_line_two"]);
+  identity.m_addressLineThree = boost::get<string>(
+    identityParameter["address_line_three"]);
+  identity.m_city = boost::get<string>(identityParameter["city"]);
+  identity.m_province = boost::get<string>(identityParameter["province"]);
+  identity.m_country = static_cast<uint16_t>(
+    boost::get<int64_t>(identityParameter["country"]));
+  identity.m_userNotes = boost::get<string>(identityParameter["user_notes"]);
+  auto accountRoles = AccountRoles{boost::get<int64_t>(parameters["roles"])};
+  auto validatedGroup =
+    m_serviceClients->GetServiceLocatorClient().LoadDirectoryEntry(group.m_id);
+  if(validatedGroup != group) {
+    response.SetStatusCode(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
+  DirectoryEntry newAccount;
+  auto groupChildren = m_serviceClients->GetServiceLocatorClient().LoadChildren(
+    validatedGroup);
+  if(accountRoles.Test(AccountRole::MANAGER)) {
+    auto managerGroup = std::find_if(groupChildren.begin(), groupChildren.end(),
+      [] (const auto& child) {
+        return child.m_name == "managers";
+      });
+    if(managerGroup == groupChildren.end()) {
+      response.SetStatusCode(HttpStatusCode::BAD_REQUEST);
+      return response;
+    }
+    newAccount = m_serviceClients->GetServiceLocatorClient().MakeAccount(name,
+      "1234", *managerGroup);
+    m_serviceClients->GetServiceLocatorClient().StorePermissions(newAccount,
+      validatedGroup, Permission::READ);
+  }
+  if(accountRoles.Test(AccountRole::TRADER)) {
+    auto traderGroup = std::find_if(groupChildren.begin(), groupChildren.end(),
+      [] (const auto& child) {
+        return child.m_name == "traders";
+      });
+    if(traderGroup == groupChildren.end()) {
+      response.SetStatusCode(HttpStatusCode::BAD_REQUEST);
+      return response;
+    }
+    if(newAccount.m_id == -1) {
+      newAccount = m_serviceClients->GetServiceLocatorClient().MakeAccount(name,
+        "1234", *traderGroup);
+    } else {
+      m_serviceClients->GetServiceLocatorClient().Associate(newAccount,
+        *traderGroup);
+    }
+  }
+  m_serviceClients->GetAdministrationClient().StoreIdentity(newAccount,
+    identity);
+  response.SetBody(Encode<SharedBuffer>(m_sender, newAccount));
   return response;
 }
 
