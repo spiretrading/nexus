@@ -69,7 +69,7 @@ class View extends UpdatableView {
 
     function onOptionClicked(event) {
       let clickedValue = $(event.currentTarget).attr('data-value');
-      this.controller.onChange(clickedValue);
+      this.controller.onSelectionChange.apply(this, [clickedValue]);
     }
   }
 

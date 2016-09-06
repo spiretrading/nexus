@@ -33,8 +33,6 @@ class View extends UpdatableView {
   }
 
   onCardClick() {
-    console.debug('card is clicked');
-    console.debug(this.selected);
     if (!this.componentModel.isReadOnly) {
       if (this.selected) {
         this.selected = false;
@@ -59,6 +57,9 @@ class View extends UpdatableView {
 
   getOptions() {
     let options = [];
+    options.push(
+      <option value={'None'}>None</option>
+    );
     for (let i=0; i<this.componentModel.options.length; i++) {
       options.push(
         <option key={i} value={this.componentModel.options[i]}>{this.componentModel.options[i]}</option>
@@ -69,7 +70,7 @@ class View extends UpdatableView {
 
   onChange(event) {
     let currency = $('#' + this.componentModel.componentId).find('.select-container').val();
-    this.controller.onChange(currency);
+    this.controller.onSelectionChange.apply(this, [currency]);
     this.selected = false;
     this.onDeselected();
   }

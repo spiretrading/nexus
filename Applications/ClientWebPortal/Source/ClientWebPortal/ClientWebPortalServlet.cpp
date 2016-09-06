@@ -525,7 +525,7 @@ HttpResponse ClientWebPortalServlet::OnStoreAccountEntitlements(
     entitlement.m_name = boost::get<string>(entitlementParameter["name"]);
     entitlement.m_id = static_cast<int>(boost::get<int64_t>(
       entitlementParameter["id"]));
-    account.m_type = static_cast<DirectoryEntry::Type>(
+    entitlement.m_type = static_cast<DirectoryEntry::Type>(
       static_cast<int>(boost::get<int64_t>(entitlementParameter["type"])));
     entitlements.push_back(entitlement);
   }

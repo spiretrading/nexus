@@ -39,7 +39,7 @@ class Controller {
         name: 'Entitlements',
         iconClass: 'icon-entitlements',
         isActive: 'entitlements' === subPath,
-        path: 'profile-entitlement'
+        path: 'profile-entitlements'
       },
       {
         name: 'Compliance',

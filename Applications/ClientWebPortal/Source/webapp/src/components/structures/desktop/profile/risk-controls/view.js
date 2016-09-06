@@ -29,32 +29,62 @@ class DesktopView extends CommonView {
         roles: this.componentModel.roles
       };
 
-      let currencyModel = {
-        title: 'Currency',
-        value: definitionsService.getCurrencyCode.apply(definitionsService, [this.componentModel.riskParameters.currency]),
-        options: definitionsService.getAllCurrencyCodes.apply(definitionsService),
-        isReadOnly: !this.componentModel.isAdmin
-      };
+      let currencyModel, netLossModel, buyingPowerModel, transitionTimeModel;
+      if (definitionsService.doesCurrencyExist.apply(definitionsService, [this.componentModel.riskParameters.currency])) {
+        currencyModel = {
+          title: 'Currency',
+          value: definitionsService.getCurrencyCode.apply(definitionsService, [this.componentModel.riskParameters.currency]),
+          options: definitionsService.getAllCurrencyCodes.apply(definitionsService),
+          isReadOnly: !this.componentModel.isAdmin
+        };
 
-      let netLossModel = {
-        title: 'Net Loss',
-        value: this.componentModel.riskParameters.netLoss,
-        countryIso: this.componentModel.riskParameters.currency,
-        isReadOnly: !this.componentModel.isAdmin
-      };
+        netLossModel = {
+          title: 'Net Loss',
+          value: this.componentModel.riskParameters.netLoss,
+          countryIso: this.componentModel.riskParameters.currency,
+          isReadOnly: !this.componentModel.isAdmin
+        };
 
-      let buyingPowerModel = {
-        title: 'Buying Power',
-        value: this.componentModel.riskParameters.buyingPower,
-        countryIso: this.componentModel.riskParameters.currency,
-        isReadOnly: !this.componentModel.isAdmin
-      };
+        buyingPowerModel = {
+          title: 'Buying Power',
+          value: this.componentModel.riskParameters.buyingPower,
+          countryIso: this.componentModel.riskParameters.currency,
+          isReadOnly: !this.componentModel.isAdmin
+        };
 
-      let transitionTimeModel = {
-        title: 'Transition Time',
-        value: this.componentModel.riskParameters.transitionTime,
-        isReadOnly: !this.componentModel.isAdmin
-      };
+        transitionTimeModel = {
+          title: 'Transition Time',
+          value: this.componentModel.riskParameters.transitionTime,
+          isReadOnly: !this.componentModel.isAdmin
+        };
+      } else {
+        currencyModel = {
+          title: 'Currency',
+          value: 'None',
+          options: definitionsService.getAllCurrencyCodes.apply(definitionsService),
+          isReadOnly: !this.componentModel.isAdmin
+        };
+
+        netLossModel = {
+          title: 'Net Loss',
+          value: this.componentModel.riskParameters.netLoss,
+          countryIso: this.componentModel.riskParameters.currency,
+          isReadOnly: !this.componentModel.isAdmin
+        };
+
+        buyingPowerModel = {
+          title: 'Buying Power',
+          value: this.componentModel.riskParameters.buyingPower,
+          countryIso: this.componentModel.riskParameters.currency,
+          isReadOnly: !this.componentModel.isAdmin
+        };
+
+        transitionTimeModel = {
+          title: 'Transition Time',
+          value: this.componentModel.riskParameters.transitionTime,
+          isReadOnly: !this.componentModel.isAdmin
+        };
+      }
 
       let onCurrencyChange = this.onCurrencyChange.bind(this);
       let onNetLossChange = this.controller.onNetLossChange.bind(this.controller);

@@ -69,12 +69,14 @@ class Controller {
   }
 
   save() {
-    let riskParameters = this.componentModel.riskParameters;
-    let context = profileContext.get();
-    let directoryEntry = context.directoryEntry;
-    adminClient.storeRiskParameters.apply(adminClient, [directoryEntry, riskParameters])
-      .then(onSaved.bind(this))
-      .catch(onFailed.bind(this));
+    if (this.componentModel.riskParameters.currency != 0) {
+      let riskParameters = this.componentModel.riskParameters;
+      let context = profileContext.get();
+      let directoryEntry = context.directoryEntry;
+      adminClient.storeRiskParameters.apply(adminClient, [directoryEntry, riskParameters])
+        .then(onSaved.bind(this))
+        .catch(onFailed.bind(this));
+    }
 
     function onSaved() {
       this.view.showSavedMessage('Saved');
