@@ -48,6 +48,9 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
     bind(&ClientWebPortalServlet::OnCreateAccount, this,
     std::placeholders::_1));
   slots.emplace_back(
+    MatchesPath(HttpMethod::POST, "/api/service_locator/create_group"),
+    bind(&ClientWebPortalServlet::OnCreateGroup, this, std::placeholders::_1));
+  slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/load_current_account"),
     bind(&ClientWebPortalServlet::OnLoadCurrentAccount, this,
     std::placeholders::_1));
@@ -315,6 +318,31 @@ HttpResponse ClientWebPortalServlet::OnCreateAccount(
   m_serviceClients->GetAdministrationClient().StoreIdentity(newAccount,
     identity);
   response.SetBody(Encode<SharedBuffer>(m_sender, newAccount));
+  return response;
+}
+
+HttpResponse ClientWebPortalServlet::OnCreateGroup(const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions.Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
+    session->GetAccount());
+  if(!roles.Test(AccountRole::ADMINISTRATOR)) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto tradingGroupsDirectory =
+    m_serviceClients->GetServiceLocatorClient().LoadDirectoryEntry(
+    DirectoryEntry::GetStarDirectory(), "trading_groups");
+  auto parameters = boost::get<JsonObject>(
+    Parse<JsonParser>(request.GetBody()));
+  auto& name = boost::get<string>(parameters["name"]);
+  auto newGroup = m_serviceClients->GetServiceLocatorClient().MakeDirectory(
+    name, tradingGroupsDirectory);
+  response.SetBody(Encode<SharedBuffer>(m_sender, newGroup));
   return response;
 }
 
