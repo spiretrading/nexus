@@ -342,6 +342,12 @@ HttpResponse ClientWebPortalServlet::OnCreateGroup(const HttpRequest& request) {
   auto& name = boost::get<string>(parameters["name"]);
   auto newGroup = m_serviceClients->GetServiceLocatorClient().MakeDirectory(
     name, tradingGroupsDirectory);
+  auto managersGroup =
+    m_serviceClients->GetServiceLocatorClient().MakeDirectory("managers",
+    newGroup);
+  auto tradersGroup =
+    m_serviceClients->GetServiceLocatorClient().MakeDirectory("traders",
+    newGroup);
   response.SetBody(Encode<SharedBuffer>(m_sender, newGroup));
   return response;
 }
