@@ -17,7 +17,6 @@ main.mobile {
       outline: none;
       border: 1px solid $white;
       padding-left: 5px;
-      padding-right: 5px;
 
       .personal-detail-label {
         margin-top: 20px;
@@ -66,7 +65,7 @@ main.mobile {
     }
 
     .details-container {
-      width: 335px;
+      width: 100%;
 
       .icon {
         margin-right: 10px;

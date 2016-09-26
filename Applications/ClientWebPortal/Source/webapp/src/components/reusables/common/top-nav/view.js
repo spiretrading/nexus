@@ -18,7 +18,7 @@ class View extends UpdatableView {
     return (
       <div id="top-nav-container">
         <span className="icon-burger" onClick={this.onMenuClick.bind(this)}></span>
-        <img className="logo" src={imageResLoader.getResPath("images/top_logo.png")}/>
+        <img className="logo" src={imageResLoader.getResPath("/images/top_logo.png")}/>
         <div className="sub-pages-wrapper">
           <SubPages model={this.componentModel.subPages}/>
         </div>

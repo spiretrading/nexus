@@ -1,7 +1,18 @@
 @import "src/styles/variables";
 
 .personal-details-container {
-  display: flex;
+  table tbody tr {
+    td{
+      padding-bottom: 12px;
+    }
+
+    td:first-of-type {
+      width: 160px;
+      padding-right: 30px;
+      padding-top: 3px;
+      vertical-align: top;
+    }
+  }
 
   .personal-label-row {
     display: flex;
@@ -19,7 +30,6 @@
     position: relative;
     display: flex;
     align-items: center;
-    margin-bottom: 12px;
     outline: none;
     border: 1px solid $white;
     padding-left: 5px;
@@ -66,8 +76,26 @@
     }
   }
 
+  .group-tags {
+    margin: 0;
+    width: 100%;
+    padding: 2px 5px 0 5px;
+    border-radius: 0;
+
+    .tagit-choice {
+      margin: 0 5px 2px 0;
+      border-radius: 0;
+      padding: 2px 16px 2px 5px;
+    }
+
+    .tagit-new {
+      margin: 0;
+      padding: 0;
+    }
+  }
+
   .details-container {
-    width: 335px;
+    width: 100%;
 
     .icon {
       margin-right: 10px;

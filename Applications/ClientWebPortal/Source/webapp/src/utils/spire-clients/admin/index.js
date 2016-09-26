@@ -23,11 +23,13 @@ class AdminClient {
       .catch(this.logErrorAndThrow);
 
     function onResponse(roles) {
-      return accountRoles.parse(roles);
+      let accRoles = accountRoles.parse(roles)
+      accRoles.id = directoryEntry.id;
+      return accRoles;
     }
   }
 
-  loadAccountProfile(directoryEntry) {
+  loadAccountIdentity(directoryEntry) {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_account_identity';
     let payload = {
       account: directoryEntry
@@ -153,6 +155,26 @@ class AdminClient {
     };
 
     return httpConnectionManager.send(apiPath, payload, false)
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadManagedTradingGroups(directoryEntry) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_managed_trading_groups';
+    let payload = {
+      account: directoryEntry
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadTradingGroup(directoryEntry) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_trading_group';
+    let payload = {
+      directory_entry: directoryEntry
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
       .catch(this.logErrorAndThrow);
   }
 }

@@ -1,10 +1,9 @@
-import routeParameters from 'utils/route-parameters';
 import adminClient from 'utils/spire-clients/admin';
 import preloaderTimer from 'utils/preloader-timer';
 import serviceLocatorClient from 'utils/spire-clients/service-locator';
-import context from 'components/structures/common/profile/context';
 import ResultCode from 'utils/spire-clients/service-locator/result-codes';
 import userService from 'services/user';
+import {browserHistory} from 'react-router/es6';
 
 class Controller {
   constructor(componentModel) {
@@ -19,43 +18,48 @@ class Controller {
     this.view = view;
   }
 
+  getDirectoryEntry() {
+    return this.componentModel.directoryEntry;
+  }
+
   /** @private */
   getRequiredData() {
     let directoryEntry = this.componentModel.directoryEntry;
     let loadAccountRoles = adminClient.loadAccountRoles.apply(adminClient, [directoryEntry]);
-    let loadAccountProfile = adminClient.loadAccountProfile.apply(adminClient, [directoryEntry]);
+    let loadAccountIdentity = adminClient.loadAccountIdentity.apply(adminClient, [directoryEntry]);
 
     return Promise.all([
       loadAccountRoles,
-      loadAccountProfile
+      loadAccountIdentity
     ]);
   }
 
-  isModelEmpty() {
-    let model = cloneObject(this.componentModel);
-    delete model.componentId;
-    return $.isEmptyObject(model);
-  }
-
-  componentDidMount() {
-    let directoryEntry = routeParameters.get();
-    this.componentModel = {
-      directoryEntry: directoryEntry
-    };
-
+  /** @private */
+  loadRequiredDataAndRender() {
     let requiredDataFetchPromise = this.getRequiredData();
 
-    preloaderTimer.start(requiredDataFetchPromise, null, Config.WHOLE_PAGE_PRELOADER_WIDTH, Config.WHOLE_PAGE_PRELOADER_HEIGHT).then((responses) => {
+    preloaderTimer.start(
+      requiredDataFetchPromise,
+      null,
+      Config.WHOLE_PAGE_PRELOADER_WIDTH,
+      Config.WHOLE_PAGE_PRELOADER_HEIGHT
+    ).then((responses) => {
       this.componentModel.roles = responses[0];
       $.extend(true, this.componentModel, responses[1]);
-      context.set({
-        directoryEntry: directoryEntry,
-        roles: responses[0],
-        userName: responses[1].userName
-      });
       this.componentModel.isAdmin = userService.isAdmin();
       this.view.update(this.componentModel);
     });
+  }
+
+  isModelInitialized() {
+    let model = cloneObject(this.componentModel);
+    delete model.componentId;
+    delete model.directoryEntry;
+    return !$.isEmptyObject(model);
+  }
+
+  componentDidMount() {
+    this.loadRequiredDataAndRender();
   }
 
   onAccountPictureChange(newPictureData) {
@@ -93,6 +97,19 @@ class Controller {
     adminClient.storeAccountIdentity.apply(adminClient, [directoryEntry, accountIdentity])
       .then(this.view.showSavePersonalDetailsSuccessMessage)
       .catch(this.view.showSavePersonalDetailsFailMessage);
+  }
+
+  reloadAcountProfile(type, id, name) {
+    this.view.hideAccountProfile();
+    this.loadRequiredDataAndRender();
+  }
+
+  setDirectoryEntry(type, id, name) {
+    this.componentModel.directoryEntry = {
+      id: id,
+      name: name,
+      type: type
+    };
   }
 }
 

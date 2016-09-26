@@ -16,6 +16,10 @@ class Controller {
     this.view.setComponentModel(this.componentModel);
   }
 
+  componentWillUnmount() {
+    this.view.dispose();
+  }
+
   onAccountPictureChange(newPictureData) {
     this.onPictureChange(newPictureData);
   }

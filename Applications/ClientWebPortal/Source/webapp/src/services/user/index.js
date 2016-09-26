@@ -15,6 +15,15 @@ class UserService {
     this.directoryEntry;
   }
 
+  initialize(userDirectoryEntry) {
+    this.directoryEntry = userDirectoryEntry;
+    this.userName = userDirectoryEntry.name;
+    return adminClient.loadAccountRoles.apply(adminClient, [this.directoryEntry])
+      .then((response) => {
+        this.roles = response;
+      });
+  }
+
   signIn(userName, password) {
     let resultCode = null;
 
@@ -31,7 +40,7 @@ class UserService {
         this.directoryEntry = response.directoryEntry;
       }
 
-      return adminClient.loadAccountRoles.apply(this, [this.directoryEntry]);
+      return adminClient.loadAccountRoles.apply(adminClient, [this.directoryEntry]);
     }
 
     function onUserRolesResponse(response) {
@@ -52,6 +61,12 @@ class UserService {
 
   signOut() {
     serviceLocatorClient.signOut();
+    this.userName = null;
+    this.directoryEntry = null;
+  }
+
+  isSignedIn() {
+    return this.directoryEntry != null;
   }
 
   getUserName() {
