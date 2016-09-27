@@ -28,6 +28,10 @@
   margin: 0;
 }
 
+.modal-dialog {
+  width: inherit;
+}
+
 main.mobile {
   .modal {
     width: 100vw;

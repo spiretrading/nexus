@@ -153,7 +153,11 @@ HttpResponse ClientWebPortalServlet::OnIndex(const HttpRequest& request) {
 }
 
 HttpResponse ClientWebPortalServlet::OnServeFile(const HttpRequest& request) {
-  return m_fileStore.Serve(request);
+  auto response = m_fileStore.Serve(request);
+  if(response.GetStatusCode() == HttpStatusCode::NOT_FOUND) {
+    return OnIndex(request);
+  }
+  return response;
 }
 
 HttpResponse ClientWebPortalServlet::OnLoadCurrentAccount(

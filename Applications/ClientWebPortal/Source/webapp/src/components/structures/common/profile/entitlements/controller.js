@@ -1,4 +1,3 @@
-import profileContext from 'components/structures/common/profile/context';
 import adminClient from 'utils/spire-clients/admin';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
@@ -24,9 +23,11 @@ class Controller {
       adminClient,
       [directoryEntry]
     );
+    let loadAccountRoles = adminClient.loadAccountRoles.apply(adminClient, [directoryEntry]);
 
     return Promise.all([
-      loadAccountEntitlements
+      loadAccountEntitlements,
+      loadAccountRoles
     ]);
   }
 
@@ -41,11 +42,7 @@ class Controller {
   }
 
   componentDidMount() {
-    let context = profileContext.get();
-    let directoryEntry = context.directoryEntry;
-    this.componentModel = {
-      directoryEntry: directoryEntry
-    };
+    let directoryEntry = this.componentModel.directoryEntry;
     let requiredDataFetchPromise = this.getRequiredData();
 
     preloaderTimer.start(
@@ -57,17 +54,18 @@ class Controller {
       this.componentModel.accountEntitlements = responses[0];
       this.componentModel.entitlements = definitionsService.getEntitlements.apply(definitionsService);
       this.componentModel.directoryEntry = directoryEntry;
-      this.componentModel.roles = context.roles;
-      this.componentModel.userName = context.userName;
+      this.componentModel.roles = responses[1];
+      this.componentModel.userName = directoryEntry.name;
       this.componentModel.isAdmin = userService.isAdmin();
       this.view.update(this.componentModel);
     });
   }
 
-  isModelEmpty() {
+  isModelInitialized() {
     let model = cloneObject(this.componentModel);
     delete model.componentId;
-    return $.isEmptyObject(model);
+    delete model.directoryEntry;
+    return !$.isEmptyObject(model);
   }
 
   onEntitlementSelected(id) {

@@ -11,14 +11,20 @@ class View extends UpdatableView {
 
   initialize() {
     if (!this.componentModel.isReadOnly) {
-      $(document).on('click.' + this.componentModel.componentId, this.onDocumentClick.bind(this));
+      $(document).on('click' + this.componentModel.componentId, this.onDocumentClick.bind(this));
     }
+
+    $('#' + this.componentModel.componentId + ' .select-container').click((event) => {
+      event.preventDefault();
+    });
   }
 
   dispose() {
     if (!this.componentModel.isReadOnly) {
-      $(document).off('click.' + this.componentModel.componentId);
+      $(document).off('click' + this.componentModel.componentId);
     }
+
+    $('#' + this.componentModel.componentId + ' .select-container').off('click');
   }
 
   onDocumentClick(event) {
@@ -47,7 +53,13 @@ class View extends UpdatableView {
   onSelected() {
     let $cardContainer = $('#' + this.componentModel.componentId);
     $cardContainer.addClass('selected');
-    $cardContainer.find('.select-container').simulate('mousedown');
+
+    let clickEvent = new MouseEvent('mousedown', {
+      view: window,
+      bubbles: false,
+      cancelable: false
+    });
+    $cardContainer.find('.select-container')[0].dispatchEvent(clickEvent);
   }
 
   onDeselected() {
@@ -58,32 +70,41 @@ class View extends UpdatableView {
   getOptions() {
     let options = [];
     options.push(
-      <option value={'None'}>None</option>
+      <option key="0" value={'None'} disabled>None</option>
     );
+
     for (let i=0; i<this.componentModel.options.length; i++) {
       options.push(
-        <option key={i} value={this.componentModel.options[i]}>{this.componentModel.options[i]}</option>
+        <option key={i+1} value={this.componentModel.options[i]}>{this.componentModel.options[i]}</option>
       );
     }
+
     return options;
   }
 
   onChange(event) {
     let currency = $('#' + this.componentModel.componentId).find('.select-container').val();
-    this.controller.onSelectionChange.apply(this, [currency]);
+    this.controller.onSelectionChange.apply(this.controller, [currency]);
     this.selected = false;
     this.onDeselected();
   }
 
   render() {
-    let options = this.getOptions.apply(this);
+    let currency;
+    if (this.componentModel.isReadOnly) {
+      currency = <div className="select-container">{this.componentModel.value}</div>
+    } else {
+      let options = this.getOptions.apply(this);
+      currency =
+        <select className="select-container" defaultValue={this.componentModel.value} onChange={this.onChange.bind(this)}>
+          {options}
+        </select>;
+    }
     return (
       <div id={this.componentModel.componentId} className="card-container drop-down-card-container" onClick={this.onCardClick.bind(this)}>
         <div className="title">{this.componentModel.title}</div>
         <div className="body not-selectable">
-          <select className="select-container" defaultValue={this.componentModel.value} onChange={this.onChange.bind(this)}>
-            {options}
-          </select>
+          {currency}
         </div>
       </div>
     );
