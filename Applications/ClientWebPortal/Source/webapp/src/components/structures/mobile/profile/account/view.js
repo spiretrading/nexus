@@ -24,7 +24,7 @@ class MobileView extends CommonView {
       userNotesModel,
       changePasswordButtonModel,
       saveButton;
-    if (!this.controller.isModelEmpty.apply(this.controller)) {
+    if (this.controller.isModelInitialized.apply(this.controller)) {
       userInfoNavModel = {
         userName: this.componentModel.userName,
         roles: this.componentModel.roles
@@ -38,7 +38,7 @@ class MobileView extends CommonView {
       lastSignin = moment(this.componentModel.lastLoginTime, moment.ISO_8601).toDate().toLocaleString();
 
       accountPictureModel = {
-        picture: this.componentModel.picture,
+        picture: this.componentModel.photoId,
         showLabel: false,
         isReadOnly: !userService.isAdmin()
       };

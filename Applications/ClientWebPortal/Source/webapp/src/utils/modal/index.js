@@ -4,7 +4,7 @@ class Modal {
     this.onModalClosed = null;
   }
 
-  show($element) {
+  show($element, onModalOpened) {
     $element.modal({
       backdrop: 'static',
       keyboard: false
@@ -20,6 +20,10 @@ class Modal {
       $('.modal').on('touchmove', (e) => {
         e.preventDefault();
       });
+
+      if (onModalOpened != null) {
+        onModalOpened();
+      }
     }
 
     function onHidden(event) {

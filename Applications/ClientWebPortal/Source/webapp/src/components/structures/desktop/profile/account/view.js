@@ -23,7 +23,7 @@ class DesktopView extends CommonView {
       userNotesModel,
       changePasswordButtonModel,
       saveButton;
-    if (!this.controller.isModelEmpty.apply(this.controller)) {
+    if (this.controller.isModelInitialized.apply(this.controller)) {
       userInfoNavModel = {
         userName: this.componentModel.directoryEntry.name,
         roles: this.componentModel.roles
@@ -36,6 +36,9 @@ class DesktopView extends CommonView {
       personalDetailsModel.isReadOnly = !this.componentModel.isAdmin;
 
       lastSignin = moment(this.componentModel.lastLoginTime, moment.ISO_8601).toDate().toLocaleString();
+      if (lastSignin === 'Invalid Date') {
+        lastSignin = 'Never';
+      }
 
       accountPictureModel = {
         picture: this.componentModel.photoId,

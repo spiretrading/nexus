@@ -11,6 +11,11 @@ class ProfileAccount extends Component {
   componentWillMount() {
     let componentModel = this.props.model || {};
     componentModel.componentId = uuid.v4();
+    componentModel.directoryEntry = {
+      id: parseInt(this.props.routeParams.id),
+      name: this.props.routeParams.name,
+      type: parseInt(this.props.routeParams.type)
+    };
     this.controller = new Controller(componentModel);
     this.view = new View(this, this.controller, componentModel);
     this.controller.setView(this.view);
@@ -21,7 +26,20 @@ class ProfileAccount extends Component {
   }
 
   componentDidUpdate() {
-    this.controller.getView().componentDidUpdate();
+    let existingDirectoryEntry = this.controller.getDirectoryEntry.apply(this.controller);
+
+    let id = parseInt(this.props.routeParams.id);
+    let name = this.props.routeParams.name;
+    let type = parseInt(this.props.routeParams.type);
+
+    if (id != existingDirectoryEntry.id ||
+      name != existingDirectoryEntry.name ||
+      type != existingDirectoryEntry.type) {
+      this.controller.setDirectoryEntry.apply(this.controller, [type, id, name]);
+      this.controller.reloadAcountProfile.apply(this.controller);
+    } else {
+      this.controller.getView().componentDidUpdate();
+    }
   }
 
   render() {

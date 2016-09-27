@@ -8,28 +8,28 @@ class View extends UpdatableView {
     super(react, controller, componentModel);
   }
 
-  /** @private */
-  onMenuCloseClick() {
+  closeMenu() {
     $('#side-menu-container').stop().fadeOut({
       duration: 60
     });
+    this.controller.publishSideMenuClosed();
   }
 
   /** @private */
   onSignOutClick() {
+    this.closeMenu();
     this.controller.signOut();
-    this.onMenuCloseClick();
   }
 
   /** @private */
   onMyProfileClick() {
-    this.onMenuCloseClick();
-    this.controller.navigateToMyProfileAccount.apply(this.controller);
+    this.closeMenu();
+    this.controller.navigateToProfileAccount.apply(this.controller);
   }
 
   /** @private */
   onSearchProfilesClick() {
-    this.onMenuCloseClick();
+    this.closeMenu();
     this.controller.navigateToSearchProfiles.apply(this.controller);
   }
 
@@ -39,6 +39,14 @@ class View extends UpdatableView {
     }).on('mouseleave', () => {
       $('#side-menu-container .close-btn').removeClass('close-btn-hover');
     });
+
+    let sideMenu = document.getElementById('side-menu-container');
+    sideMenu.addEventListener('touchcancel', function(e) {
+      e.preventDefault();
+    }, false);
+    sideMenu.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+    }, false);
   }
 
   dispose() {
@@ -66,9 +74,9 @@ class View extends UpdatableView {
     return (
       <div id="side-menu-container">
         <div className="logo">
-          <img src={imageResLoader.getResPath("images/top_logo_inverted.png")}/>
+          <img src={imageResLoader.getResPath("/images/top_logo_inverted.png")}/>
         </div>
-        <span className="icon-burger close-btn" onClick={this.onMenuCloseClick.bind(this)}></span>
+        <span className="icon-burger close-btn" onClick={this.closeMenu.bind(this)}></span>
         <div className="menu-item" onClick={this.onMyProfileClick.bind(this)}>
           <span className="icon-my_profile"></span>
           My Profile

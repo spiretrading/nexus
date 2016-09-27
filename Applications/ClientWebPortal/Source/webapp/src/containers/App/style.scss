@@ -34,6 +34,18 @@
   top: 0;
   left: 0;
   z-index: 99999;
+
+  #menu-grey-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: $black;
+    opacity: 0.5;
+    display: none;
+    z-index: -1;
+  }
 }
 
 #content-wrapper {

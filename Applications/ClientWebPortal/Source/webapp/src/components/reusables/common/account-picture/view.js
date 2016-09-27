@@ -23,6 +23,10 @@ class View extends UpdatableView {
     }
   }
 
+  dispose() {
+    modal.hide($('#change-picture-modal'));
+  }
+
   render() {
     let label;
     if (this.componentModel.showLabel) {

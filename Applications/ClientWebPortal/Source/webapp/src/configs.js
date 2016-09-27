@@ -1,4 +1,5 @@
 export default {
+  HOME_URL: window.location.protocol + '//' + window.location.host + '/',
   BACKEND_API_ROOT_URL: '/api/',
   FADE_DURATION: 200,
   MIN_PRELOADER_DURATION: 1200,

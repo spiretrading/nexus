@@ -18,6 +18,10 @@ class AccountPicture extends Component {
     this.controller.getView().componentDidUpdate();
   }
 
+  componentWillUnmount() {
+    this.controller.componentWillUnmount();
+  }
+
   render() {
     return this.controller.getView().render();
   }

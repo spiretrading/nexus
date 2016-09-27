@@ -72,6 +72,10 @@ class CommonView extends UpdatableView {
       .text('Failed')
       .css('display', 'inherit');
   }
+
+  hideAccountProfile() {
+    $('#account-container').css('display', 'none');
+  }
 }
 
 export default CommonView;

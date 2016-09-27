@@ -7,7 +7,7 @@ class DefinitionsServiceClient {
   /** @private */
   logErrorAndThrow(xhr) {
     console.error('Spire Admin Client: Unexpected error happened.');
-    console.debug(xhr);
+    console.error(xhr);
     throw ResultCode.ERROR;
   }
 

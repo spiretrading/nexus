@@ -29,8 +29,38 @@ class App extends Component {
     }
   }
 
+  /** @private */
+  onSideMenuOpened() {
+    if (deviceDetector.isMobile()) {
+      $('#menu-grey-screen').fadeIn(Config.FADE_DURATION);
+    }
+  }
+
+  /** @private */
+  onSideMenuClosed() {
+    if (deviceDetector.isMobile()) {
+      $('#menu-grey-screen').fadeOut(Config.FADE_DURATION);
+    }
+  }
+
   componentDidMount() {
     this.hideIfHome();
+    EventBus.subscribe(Event.TopNav.SIDE_MENU_OPENED, this.onSideMenuOpened.bind(this));
+    EventBus.subscribe(Event.TopNav.SIDE_MENU_CLOSED, this.onSideMenuClosed.bind(this));
+
+    let greyScreen = document.getElementById('menu-grey-screen');
+    greyScreen.addEventListener('touchcancel', function(e) {
+      e.preventDefault();
+    }, false);
+    greyScreen.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+    }, false);
+
+    greyScreen.addEventListener('click', function(e) {
+      EventBus.publish(Event.TopNav.CLOSE_SIDE_MENU);
+    }, false);
+
+    EventBus.publish(Event.Application.RENDERED);
   }
 
   componentDidUpdate() {
@@ -52,6 +82,7 @@ class App extends Component {
         <div id="top-nav-filler"></div>
         <div id="side-menu-wrapper">
           <SideMenu />
+          <div id="menu-grey-screen"></div>
         </div>
         <div id="site-content-container">
           {this.props.children}

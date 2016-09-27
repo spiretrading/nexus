@@ -7,14 +7,15 @@ export default {
   Application: {
     SIGNED_IN: 'all.application.signedIn',
     PAGE_TRANSITIONED: 'all.application.pageTransitioned',
-    PAGE_LOADING: 'all.application.pageLoading',
-    PAGE_LOADED: 'all.application.pageLoaded',
-    TRANSITION_PAGE: 'all.application.transitionPage',
     SHOW_PRELOADER: 'all.application.showPreloader',
     HIDE_PRELOADER: 'all.application.hidePreloader',
-    PRELOADER_HIDDEN: 'all.application.preloaderHidden'
+    PRELOADER_HIDDEN: 'all.application.preloaderHidden',
+    BLANK_PAGE_LOADED: 'all.application.blankPageLoaded',
+    RENDERED: 'all.application.rendered'
   },
   TopNav: {
-    MENU_OPENED: 'all.application.topNave.menuOpened'
+    CLOSE_SIDE_MENU: 'all.application.topNav.closeSideMenu',
+    SIDE_MENU_OPENED: 'all.application.topNav.menuOpened',
+    SIDE_MENU_CLOSED: 'all.application.topNav.menuClosed'
   }
 };

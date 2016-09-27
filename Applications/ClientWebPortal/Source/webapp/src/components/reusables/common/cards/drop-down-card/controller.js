@@ -27,9 +27,7 @@ class Controller {
     this.view.dispose.apply(this.view);
   }
 
-  onChange(newValue) {
-    // this.componentModel.value = newValue;
-    // this.view.update(this.componentModel);
+  onSelectionChange(newValue) {
     this.onChange(newValue);
   }
 }
