@@ -12,6 +12,23 @@ class AccountRoles {
 
     return roles;
   }
+
+  encode(roles) {
+    let rolesNumber = 0;
+    if (roles.isTrader) {
+      rolesNumber += (1 << AccountRole.TRADER);
+    }
+    if (roles.isManager) {
+      rolesNumber += (1 << AccountRole.MANAGER);
+    }
+    if (roles.isService) {
+      rolesNumber += (1 << AccountRole.SERVICE);
+    }
+    if (roles.isAdmin) {
+      rolesNumber += (1 << AccountRole.ADMINISTRATOR);
+    }
+    return rolesNumber;
+  }
 }
 
 export default new AccountRoles();

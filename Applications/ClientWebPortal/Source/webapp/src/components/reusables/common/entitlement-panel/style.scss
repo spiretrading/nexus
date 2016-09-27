@@ -156,7 +156,7 @@ main.mobile {
 
 .expanded {
   color: $primaryGradient1;
-  transform: rotate(90deg);
+  transform: rotate(90deg) !important;
   animation: entitlementsArrowExpand .5s;
   -webkit-animation-fill-mode: forwards;
 }

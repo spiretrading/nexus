@@ -1,26 +1,18 @@
 import View from './view';
 import userService from 'services/user';
-import definitionsService from 'services/definitions';
 import ResultCode from 'services/user/result-codes';
 import store from 'store';
 import LocalstorageKey from 'commons/localstorage-keys';
 import {browserHistory} from 'react-router/es6';
-import adminClient from 'utils/spire-clients/admin';
+import sessionInitializer from 'commons/session-initializer';
 
 class Controller {
   constructor(react) {
     this.componentModel = {
       isLoading: false,
-      loginResultCode: 0
+      signInResultCode: 0
     };
     this.view = new View(react, this, this.componentModel);
-  }
-
-  /** @private */
-  initializeApp() {
-    return Promise.all([
-      definitionsService.initialize.apply(definitionsService)
-    ]);
   }
 
   getView() {
@@ -45,14 +37,18 @@ class Controller {
     function onResult(resultCode) {
       store.remove(LocalstorageKey.LAST_VISITED_PATH);
       if (resultCode === ResultCode.SUCCESS) {
-        this.initializeApp().then(() => {
+        sessionInitializer.initialize().then(() => {
           let lastVisitedPath = store.get(LocalstorageKey.LAST_VISITED_PATH);
           if (lastVisitedPath != null &&
             (lastVisitedPath != '/' || lastVisitedPath != 'profile-account') &&
             userService.isAuthorizedPath(lastVisitedPath)){
             browserHistory.push(lastVisitedPath);
           } else {
-            browserHistory.push('profile-account', userService.getDirectoryEntry());
+            let userDirectoryEntry = userService.getDirectoryEntry();
+            browserHistory.push('profile-account/' +
+              userDirectoryEntry.type + '/' +
+              userDirectoryEntry.id + '/' +
+              userDirectoryEntry.name);
           }
         });
       } else {

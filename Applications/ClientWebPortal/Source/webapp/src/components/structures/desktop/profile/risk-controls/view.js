@@ -23,7 +23,7 @@ class DesktopView extends CommonView {
       containerClassName = '';
     }
 
-    if (!this.controller.isModelEmpty.apply(this.controller)) {
+    if (this.controller.isModelInitialized.apply(this.controller)) {
       let userInfoNavModel = {
         userName: this.componentModel.userName,
         roles: this.componentModel.roles

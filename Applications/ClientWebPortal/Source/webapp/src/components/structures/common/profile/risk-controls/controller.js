@@ -1,4 +1,3 @@
-import profileContext from 'components/structures/common/profile/context';
 import adminClient from 'utils/spire-clients/admin';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
@@ -19,36 +18,35 @@ class Controller {
   /** @private */
   getRequiredData() {
     let directoryEntry = this.componentModel.directoryEntry;
-    let loadAccountRoles = adminClient.loadRiskParameters.apply(adminClient, [directoryEntry]);
+    let loadAccountRiskParameters = adminClient.loadRiskParameters.apply(adminClient, [directoryEntry]);
+    let loadAccountRoles = adminClient.loadAccountRoles.apply(adminClient, [directoryEntry]);
 
     return Promise.all([
+      loadAccountRiskParameters,
       loadAccountRoles
     ]);
   }
 
   componentDidMount() {
-    let context = profileContext.get();
-    let directoryEntry = context.directoryEntry;
-    this.componentModel = {
-      directoryEntry: directoryEntry
-    };
+    let directoryEntry = this.componentModel.directoryEntry;
     let requiredDataFetchPromise = this.getRequiredData();
 
     preloaderTimer.start(requiredDataFetchPromise, null, Config.WHOLE_PAGE_PRELOADER_WIDTH, Config.WHOLE_PAGE_PRELOADER_HEIGHT).then((responses) => {
       let riskParameters = responses[0];
       this.componentModel.riskParameters = riskParameters;
       this.componentModel.directoryEntry = directoryEntry;
-      this.componentModel.roles = context.roles;
-      this.componentModel.userName = context.userName;
+      this.componentModel.roles = responses[1];
+      this.componentModel.userName = directoryEntry.name;
       this.componentModel.isAdmin = userService.isAdmin();
       this.view.update(this.componentModel);
     });
   }
 
-  isModelEmpty() {
+  isModelInitialized() {
     let model = cloneObject(this.componentModel);
     delete model.componentId;
-    return $.isEmptyObject(model);
+    delete model.directoryEntry;
+    return !$.isEmptyObject(model);
   }
 
   onCurrencyChange(newCurrencyNumber) {
@@ -71,8 +69,7 @@ class Controller {
   save() {
     if (this.componentModel.riskParameters.currency != 0) {
       let riskParameters = this.componentModel.riskParameters;
-      let context = profileContext.get();
-      let directoryEntry = context.directoryEntry;
+      let directoryEntry = this.componentModel.directoryEntry;
       adminClient.storeRiskParameters.apply(adminClient, [directoryEntry, riskParameters])
         .then(onSaved.bind(this))
         .catch(onFailed.bind(this));

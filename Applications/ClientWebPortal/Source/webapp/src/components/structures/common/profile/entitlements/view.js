@@ -35,7 +35,7 @@ class View extends UpdatableView {
     let onEntitlementSelected = this.controller.onEntitlementSelected.bind(this.controller);
     let onEntitlementDeselected = this.controller.onEntitlementDeselected.bind(this.controller);
 
-    if (!this.controller.isModelEmpty.apply(this.controller)) {
+    if (this.controller.isModelInitialized.apply(this.controller)) {
       userInfoNavModel = {
         userName: this.componentModel.directoryEntry.name,
         roles: this.componentModel.roles
@@ -54,7 +54,8 @@ class View extends UpdatableView {
         }
         let model = {
           entitlement: entitlement,
-          isSelected: isSelected
+          isSelected: isSelected,
+          isAdmin: this.componentModel.isAdmin
         };
         entitlements.push(
           <EntitlementPanel key={i}
@@ -71,14 +72,20 @@ class View extends UpdatableView {
 
     let onSave = this.controller.save.bind(this.controller);
 
+    let hr, saveButton;
+    if (this.componentModel.isAdmin) {
+      hr = <hr />;
+      saveButton = <PrimaryButton className="save-button" model={saveBtnModel} onClick={onSave}/>;
+    }
+
     return (
       <div id="entitlements-container" className={className}>
         <div className="user-info-nav-wrapper">
           <UserInfoNav model={userInfoNavModel}/>
         </div>
         {entitlements}
-        <hr />
-        <PrimaryButton className="save-button" model={saveBtnModel} onClick={onSave}/>
+        {hr}
+        {saveButton}
         <div className="save-message"></div>
       </div>
     );

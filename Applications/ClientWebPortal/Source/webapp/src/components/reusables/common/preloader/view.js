@@ -48,9 +48,9 @@ class View extends UpdatableView {
       height: this.componentModel.height
     };
     if (deviceDetector.isInternetExplorer()){
-      preloader = <img src="images/preloader.gif" style={style}/>
+      preloader = <img src="/images/preloader.gif" style={style}/>
     } else {
-      preloader = <object data="images/preloader.svg" type="image/svg+xml" style={style}></object>
+      preloader = <object data="/images/preloader.svg" type="image/svg+xml" style={style}></object>
     }
 
     return (

@@ -1,5 +1,7 @@
 import {Component} from 'react';
 import Controller from './controller';
+import View from './view';
+import uuid from 'uuid';
 
 class SideMenu extends Component {
   constructor(props) {
@@ -7,7 +9,11 @@ class SideMenu extends Component {
   }
 
   componentWillMount() {
-    this.controller = new Controller(this);
+    let componentModel = this.props.model || {};
+    componentModel.componentId = uuid.v4();
+    this.controller = new Controller(this, componentModel);
+    this.view = new View(this, this.controller, componentModel);
+    this.controller.setView(this.view);
   }
 
   componentDidMount() {
