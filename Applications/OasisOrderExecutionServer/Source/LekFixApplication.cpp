@@ -3,6 +3,7 @@
 #include <Beam/Threading/LiveTimer.hpp>
 #include <boost/throw_exception.hpp>
 #include <quickfix/Session.h>
+#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/FixUtilities/FixConversions.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionSession.hpp"
@@ -31,6 +32,25 @@ const Order& LekFixApplication::Submit(const OrderInfo& info) {
   return m_orderLog.Submit(info, GetSessionId().getSenderCompID(),
     GetSessionId().getTargetCompID(),
     [&] (Out<FIX42::NewOrderSingle> newOrderSingle) {
+      if(info.m_fields.m_destination == DefaultDestinations::AMEX()) {
+        newOrderSingle->set(FIX::ExDestination{"AMEX"});
+      } else if(info.m_fields.m_destination == DefaultDestinations::ARCA()) {
+        newOrderSingle->set(FIX::ExDestination{"ARCA"});
+      } else if(info.m_fields.m_destination == DefaultDestinations::BATS()) {
+        newOrderSingle->set(FIX::ExDestination{"BATS"});
+      } else if(info.m_fields.m_destination == DefaultDestinations::BATY()) {
+        newOrderSingle->set(FIX::ExDestination{"BYX"});
+      } else if(info.m_fields.m_destination == DefaultDestinations::CBSX()) {
+        newOrderSingle->set(FIX::ExDestination{"CBSX"});
+      } else if(info.m_fields.m_destination == DefaultDestinations::EDGA()) {
+        newOrderSingle->set(FIX::ExDestination{"EDGA"});
+      } else if(info.m_fields.m_destination == DefaultDestinations::EDGX()) {
+        newOrderSingle->set(FIX::ExDestination{"EDGX"});
+      } else if(info.m_fields.m_destination == DefaultDestinations::NASDAQ()) {
+        newOrderSingle->set(FIX::ExDestination{"NSDQ"});
+      } else if(info.m_fields.m_destination == DefaultDestinations::NYSE()) {
+        newOrderSingle->set(FIX::ExDestination{"NYSE"});
+      }
       auto& accountTag = GetAccount();
       if(accountTag.is_initialized()) {
         newOrderSingle->set(FIX::Account{*accountTag});

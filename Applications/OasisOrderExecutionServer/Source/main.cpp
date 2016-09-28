@@ -287,7 +287,15 @@ int main(int argc, const char** argv) {
     lekEntry.m_configPath = "lek.cfg";
     lekEntry.m_application = std::make_shared<LekFixApplication>(
       Ref(*timeClient));
+    lekEntry.m_destinations.push_back(DefaultDestinations::AMEX());
+    lekEntry.m_destinations.push_back(DefaultDestinations::ARCA());
     lekEntry.m_destinations.push_back(DefaultDestinations::BATS());
+    lekEntry.m_destinations.push_back(DefaultDestinations::BATY());
+    lekEntry.m_destinations.push_back(DefaultDestinations::CBSX());
+    lekEntry.m_destinations.push_back(DefaultDestinations::EDGA());
+    lekEntry.m_destinations.push_back(DefaultDestinations::EDGX());
+    lekEntry.m_destinations.push_back(DefaultDestinations::NYSE());
+    lekEntry.m_destinations.push_back(DefaultDestinations::NASDAQ());
     fixApplicationEntries.push_back(lekEntry);
   } catch(const std::exception& e) {
     cerr << "Unable to initialize FIX entry: " << e.what() << endl;
