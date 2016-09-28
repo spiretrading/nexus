@@ -10,6 +10,7 @@ namespace Details {
       DestinationDatabase::Entry entry;
       entry.m_id = "MOE";
       entry.m_description = "Manual Order Entry";
+      entry.m_markets.push_back("XASE");
       entry.m_markets.push_back("XASX");
       entry.m_markets.push_back("XNAS");
       entry.m_markets.push_back("XNYS");
@@ -26,15 +27,16 @@ namespace Details {
     }
     {
       DestinationDatabase::Entry entry;
-      entry.m_id = "CXA";
-      entry.m_description = "CHI-X Australia";
-      entry.m_markets.push_back("XASX");
+      entry.m_id = "AMEX";
+      entry.m_description = "NYSE MKT LLC";
+      entry.m_markets.push_back("XASE");
       database.Add(entry);
     }
     {
       DestinationDatabase::Entry entry;
       entry.m_id = "ARCA";
       entry.m_description = "NYSE ARCA";
+      entry.m_markets.push_back("XASE");
       entry.m_markets.push_back("XNYS");
       entry.m_markets.push_back("XNAS");
       database.Add(entry);
@@ -43,6 +45,50 @@ namespace Details {
       DestinationDatabase::Entry entry;
       entry.m_id = "BATS";
       entry.m_description = "BATS Exchange";
+      entry.m_markets.push_back("XASE");
+      entry.m_markets.push_back("XNYS");
+      entry.m_markets.push_back("XNAS");
+      database.Add(entry);
+    }
+    {
+      DestinationDatabase::Entry entry;
+      entry.m_id = "BATY";
+      entry.m_description = "BATS Y-Exchange";
+      entry.m_markets.push_back("XASE");
+      entry.m_markets.push_back("XNYS");
+      entry.m_markets.push_back("XNAS");
+      database.Add(entry);
+    }
+    {
+      DestinationDatabase::Entry entry;
+      entry.m_id = "CBSX";
+      entry.m_description = "CBOF Stock Exchange";
+      entry.m_markets.push_back("XASE");
+      entry.m_markets.push_back("XNYS");
+      entry.m_markets.push_back("XNAS");
+      database.Add(entry);
+    }
+    {
+      DestinationDatabase::Entry entry;
+      entry.m_id = "CXA";
+      entry.m_description = "CHI-X Australia";
+      entry.m_markets.push_back("XASX");
+      database.Add(entry);
+    }
+    {
+      DestinationDatabase::Entry entry;
+      entry.m_id = "EDGA";
+      entry.m_description = "EDGA Exchange";
+      entry.m_markets.push_back("XASE");
+      entry.m_markets.push_back("XNYS");
+      entry.m_markets.push_back("XNAS");
+      database.Add(entry);
+    }
+    {
+      DestinationDatabase::Entry entry;
+      entry.m_id = "EDGX";
+      entry.m_description = "EDGX Exchange";
+      entry.m_markets.push_back("XASE");
       entry.m_markets.push_back("XNYS");
       entry.m_markets.push_back("XNAS");
       database.Add(entry);
@@ -51,6 +97,7 @@ namespace Details {
       DestinationDatabase::Entry entry;
       entry.m_id = "NYSE";
       entry.m_description = "NYSE";
+      entry.m_markets.push_back("XASE");
       entry.m_markets.push_back("XNYS");
       entry.m_markets.push_back("XNAS");
       database.Add(entry);
@@ -59,6 +106,7 @@ namespace Details {
       DestinationDatabase::Entry entry;
       entry.m_id = "NASDAQ";
       entry.m_description = "NASDAQ";
+      entry.m_markets.push_back("XASE");
       entry.m_markets.push_back("XNYS");
       entry.m_markets.push_back("XNAS");
       database.Add(entry);
@@ -143,8 +191,8 @@ namespace Details {
       entry.m_markets.push_back("XTSX");
       database.Add(entry);
     }
-    database.SetPreferredDesintation("XASX", "ASXT");
     database.SetPreferredDesintation("XASE", "ARCA");
+    database.SetPreferredDesintation("XASX", "ASXT");
     database.SetPreferredDesintation("XNYS", "ARCA");
     database.SetPreferredDesintation("XNAS", "NASDAQ");
     database.SetPreferredDesintation("XTSE", "TSX");
@@ -172,6 +220,16 @@ namespace Details {
       return value;
     }
 
+    inline const std::string& AMEX() {
+      static auto value = std::string{"AMEX"};
+      return value;
+    }
+
+    inline const std::string& CBSX() {
+      static auto value = std::string{"CBSX"};
+      return value;
+    }
+
     inline const std::string& CXA() {
       static auto value = std::string{"CXA"};
       return value;
@@ -184,6 +242,21 @@ namespace Details {
 
     inline const std::string& BATS() {
       static auto value = std::string{"BATS"};
+      return value;
+    }
+
+    inline const std::string& BATY() {
+      static auto value = std::string{"BATY"};
+      return value;
+    }
+
+    inline const std::string& EDGA() {
+      static auto value = std::string{"EDGA"};
+      return value;
+    }
+
+    inline const std::string& EDGX() {
+      static auto value = std::string{"EDGX"};
       return value;
     }
 
