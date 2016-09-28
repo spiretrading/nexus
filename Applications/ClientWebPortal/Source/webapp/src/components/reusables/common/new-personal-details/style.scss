@@ -1,0 +1,20 @@
+.personal-details-container {
+  .group-tags {
+    margin: 0;
+    width: 100%;
+    padding: 2px 5px 0 5px;
+    border-radius: 0;
+    min-height: 34px;
+
+    .tagit-choice {
+      margin: 0 5px 2px 0;
+      border-radius: 0;
+      padding: 2px 16px 2px 5px;
+    }
+
+    .tagit-new {
+      margin: 0;
+      padding: 0;
+    }
+  }
+}

@@ -1,5 +1,5 @@
 import httpConnectionManager from '../commons/http-connection-manager';
-import ResultCodes from './result-codes.js';
+import ResultCodes from './result-codes';
 import accountRoles from '../commons/account-roles';
 const ResultCode = ResultCodes;
 
@@ -8,7 +8,7 @@ class AdminClient {
   /** @private */
   logErrorAndThrow(xhr) {
     console.error('Spire Admin Client: Unexpected error happened.');
-    console.debug(xhr);
+    console.error(xhr);
     throw ResultCode.ERROR;
   }
 
@@ -23,11 +23,13 @@ class AdminClient {
       .catch(this.logErrorAndThrow);
 
     function onResponse(roles) {
-      return accountRoles.parse(roles);
+      let accRoles = accountRoles.parse(roles)
+      accRoles.id = directoryEntry.id;
+      return accRoles;
     }
   }
 
-  loadAccountProfile(directoryEntry) {
+  loadAccountIdentity(directoryEntry) {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_account_identity';
     let payload = {
       account: directoryEntry
@@ -48,9 +50,10 @@ class AdminClient {
         firstName: response.first_name,
         lastLoginTime: response.last_login_time,
         lastName: response.last_name,
-        photoId: response.photo_id,
+        picture: response.photo_id,
         province: response.province,
         registrationTime: response.registration_time,
+        userName: directoryEntry.name,
         userNotes: response.user_notes
       };
     }
@@ -78,6 +81,100 @@ class AdminClient {
     };
 
     return httpConnectionManager.send(apiPath, payload, false)
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadRiskParameters(directoryEntry) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_risk_parameters';
+    let payload = {
+      account: directoryEntry
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .then(parseResponse)
+      .catch(this.logErrorAndThrow);
+
+    function parseResponse(response) {
+      return {
+        currency: response.currency,
+        netLoss: response.net_loss,
+        buyingPower: response.buying_power,
+        transitionTime: response.transition_time
+      };
+    }
+  }
+
+  storeRiskParameters(directoryEntry, riskParameters) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/store_risk_parameters';
+    let payload = {
+      account: directoryEntry,
+      risk_parameters: {
+        buying_power: riskParameters.buyingPower,
+        currency: riskParameters.currency,
+        net_loss: riskParameters.netLoss,
+        transition_time: riskParameters.transitionTime
+      }
+    };
+
+    return httpConnectionManager.send(apiPath, payload, false)
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadEntitlementsData() {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_entitlements_database';
+    return httpConnectionManager.send(apiPath, null, true)
+      .then(onResponse)
+      .catch(this.logErrorAndThrow);
+
+    function onResponse(response) {
+      return response.entries;
+    }
+  }
+
+  loadAccountEntitlements(directoryEntry) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_account_entitlements';
+    let payload = {
+      account: directoryEntry
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .then(parseResponse)
+      .catch(this.logErrorAndThrow);
+
+    function parseResponse(response) {
+      let entitlements = response;
+      return entitlements;
+    }
+  }
+
+  storeAccountEntitlements(directoryEntry, entitlements) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/store_account_entitlements';
+    let payload = {
+      account: directoryEntry,
+      entitlements: entitlements
+    };
+
+    return httpConnectionManager.send(apiPath, payload, false)
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadManagedTradingGroups(directoryEntry) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_managed_trading_groups';
+    let payload = {
+      account: directoryEntry
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadTradingGroup(directoryEntry) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_trading_group';
+    let payload = {
+      directory_entry: directoryEntry
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
       .catch(this.logErrorAndThrow);
   }
 }

@@ -1,4 +1,5 @@
 import View from './view';
+import {browserHistory} from 'react-router/es6';
 
 class Controller {
   constructor(react) {
@@ -13,6 +14,10 @@ class Controller {
 
   getView() {
     return this.view;
+  }
+
+  navigateTo(path) {
+    browserHistory.push(path);
   }
 }
 

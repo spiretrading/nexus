@@ -14,12 +14,6 @@ class CommonView extends UpdatableView {
       event.preventDefault();
     }
 
-    if (event.keyCode === 8 || event.keyCode === 13 || event.key === 46) {
-      setTimeout(() => {
-        this.resizeAddressLabel();
-      }, 0);
-    }
-
     if (event.keyCode == 13) {
       this.isLastInputLineBreak = true;
     } else {
@@ -90,16 +84,6 @@ class CommonView extends UpdatableView {
       event.initEvent('autosize:update', true, false);
       $addressInput[0].dispatchEvent(event);
     }, 0);
-
-    setTimeout(() => {
-      this.resizeAddressLabel();
-    }, 0);
-  }
-
-  /** @private */
-  resizeAddressLabel() {
-    let height = $('#' + this.componentModel.componentId + ' .address-input').outerHeight();
-    $('#' + this.componentModel.componentId + ' .labels-container .address').outerHeight(height);
   }
 
   initialize() {

@@ -1,5 +1,6 @@
 import httpConnectionManager from '../commons/http-connection-manager';
-import ResultCodes from './result-codes.js';
+import ResultCodes from './result-codes';
+import accountRoles from 'utils/spire-clients/commons/account-roles';
 const ResultCode = ResultCodes;
 
 /** Spire service locator client class */
@@ -7,6 +8,7 @@ class ServiceLocatorClient {
   /** @private */
   logErrorAndThrow(xhr) {
     console.error('Spire Service Locator Client: Unexpected error happened.');
+    console.error(xhr);
     throw ResultCode.ERROR;
   }
 
@@ -51,6 +53,41 @@ class ServiceLocatorClient {
       password: newPassword
     };
     return httpConnectionManager.send(apiPath, payload, false)
+      .then(onResponse)
+      .catch(this.logErrorAndThrow);
+
+    function onResponse(response) {
+      return { resultCode: ResultCode.SUCCESS }
+    }
+  }
+
+  createAccount(userName, group, accountIdentity, roles) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'service_locator/create_account';
+    let payload = {
+      name: userName,
+      group: group,
+      identity: accountIdentity,
+      roles: accountRoles.encode(roles)
+    };
+
+    return httpConnectionManager.send(apiPath, payload, false)
+      .then(JSON.parse)
+      .catch(this.logErrorAndThrow);
+  }
+
+  createGroup(groupName) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'service_locator/create_group';
+    let payload = {
+      name: groupName
+    };
+
+    return httpConnectionManager.send(apiPath, payload, false)
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadCurrentAccount() {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'service_locator/load_current_account';
+    return httpConnectionManager.send(apiPath, null, false)
       .catch(this.logErrorAndThrow);
   }
 }

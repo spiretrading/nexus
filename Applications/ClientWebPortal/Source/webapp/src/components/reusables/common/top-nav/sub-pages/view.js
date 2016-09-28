@@ -8,6 +8,12 @@ class View extends UpdatableView {
     super(react, controller, componentModel);
   }
 
+  /** @private */
+  onMenuClick(event) {
+    let path = $(event.currentTarget).attr('data-path');
+    this.controller.navigateTo.apply(this.controller, [path]);
+  }
+
   render() {
     let className;
     if (deviceDetector.isMobile()){
@@ -21,7 +27,7 @@ class View extends UpdatableView {
         className += ' active';
       }
       menuItems.push(
-        <div className={className} key={i}>
+        <div className={className} key={i} data-path={this.componentModel[i].path} onClick={this.onMenuClick.bind(this)}>
           <span className={this.componentModel[i].iconClass}></span>
           <div>{this.componentModel[i].name}</div>
         </div>

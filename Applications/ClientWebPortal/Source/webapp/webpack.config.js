@@ -59,6 +59,7 @@ module.exports = {
   },
   output: {
     path: path.join(__dirname, './dist'),
+    publicPath: '/',
     filename: 'bundle.js'
   },
   module: {
@@ -78,14 +79,16 @@ module.exports = {
     ],
     alias: {
       'bootstrap-css': '../node_modules/bootstrap/dist/css/bootstrap.min.css',
-      'croppie-css': '../node_modules/croppie/croppie.css'
+      'jquery-tagit': '../resources/js/jquery-tagit',
+      'jquery-tagit-css': '../resources/js/jquery-tagit/jquery.tagit.css',
+      'jquery-ui': '../node_modules/jquery-ui-dist/jquery-ui.min.js',
+      'jquery-ui-css': '../node_modules/jquery-ui-dist/jquery-ui.min.css'
     }
   },
   plugins: [
     new CopyWebpackPlugin([
       {from: '../resources/favicons'},
-      {from: '../resources/images', to: 'images'},
-      {from: '../resources/js/jquery/jquery-2.2.4.min.js', to: 'js' }
+      {from: '../resources/images', to: 'images'}
     ]),
     new webpack.ProvidePlugin({
       $: "jquery",

@@ -6,7 +6,6 @@ import UserInfoNav from 'components/reusables/common/user-info-nav';
 import moment from 'moment';
 import PrimaryButton from 'components/reusables/common/primary-button';
 import UserNotes from 'components/reusables/common/user-notes';
-import userService from 'services/user';
 import CommonView from 'components/structures/common/profile/account/common-view';
 
 class DesktopView extends CommonView {
@@ -24,7 +23,7 @@ class DesktopView extends CommonView {
       userNotesModel,
       changePasswordButtonModel,
       saveButton;
-    if (!this.controller.isModelEmpty.apply(this.controller)) {
+    if (this.controller.isModelInitialized.apply(this.controller)) {
       userInfoNavModel = {
         userName: this.componentModel.directoryEntry.name,
         roles: this.componentModel.roles
@@ -34,19 +33,22 @@ class DesktopView extends CommonView {
       personalDetailsModel.id = personalDetailsModel.directoryEntry.id;
       personalDetailsModel.userName = personalDetailsModel.directoryEntry.name;
       delete personalDetailsModel.directoryEntry;
-      personalDetailsModel.isReadOnly = !userService.isAdmin();
+      personalDetailsModel.isReadOnly = !this.componentModel.isAdmin;
 
       lastSignin = moment(this.componentModel.lastLoginTime, moment.ISO_8601).toDate().toLocaleString();
+      if (lastSignin === 'Invalid Date') {
+        lastSignin = 'Never';
+      }
 
       accountPictureModel = {
         picture: this.componentModel.photoId,
         showLabel: true,
-        isReadOnly: !userService.isAdmin()
+        isReadOnly: !this.componentModel.isAdmin
       };
 
       userNotesModel = {
         userNotes: this.componentModel.userNotes,
-        isReadOnly: !userService.isAdmin()
+        isReadOnly: !this.componentModel.isAdmin
       };
 
       saveButtonModel = {
@@ -63,7 +65,7 @@ class DesktopView extends CommonView {
       let onPasswordChangeClick = this.onPasswordChangeClick.bind(this);
       let save = this.controller.save.bind(this.controller);
 
-      if (userService.isAdmin()) {
+      if (this.componentModel.isAdmin) {
         saveButton =
           <div className="row save-button-wrapper">
             <PrimaryButton className="save-button" model={saveButtonModel} onClick={save}/>

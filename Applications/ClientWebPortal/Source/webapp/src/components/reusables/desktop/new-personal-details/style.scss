@@ -1,0 +1,87 @@
+@import "src/styles/variables";
+
+.personal-details-container {
+  table tbody tr {
+    td{
+      padding-bottom: 12px;
+    }
+
+    td:first-of-type {
+      width: 160px;
+      padding-right: 30px;
+      padding-top: 3px;
+      vertical-align: top;
+    }
+  }
+
+  .labels-container {
+    margin-right: 30px;
+  }
+
+  .personal-detail-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    outline: none;
+    border: 1px solid $white;
+    padding-left: 5px;
+    padding-right: 5px;
+    min-height: 30px;
+
+    textarea {
+      width: 100%;
+      outline: none;
+      resize: none;
+      border: 1px solid $white;
+      padding-left: 5px;
+      padding-right: 5px;
+      margin-left: -5px;
+    }
+
+    input {
+      border: 1px solid $white;
+      height: 28px;
+      width: 100%;
+      margin-left: -5px;
+    }
+
+    .edit-icon-wrapper {
+      position: absolute;
+      top: 5px;
+      right: 16px;
+      color: $primaryGradient4;
+      opacity: 0;
+    }
+
+    &.editable:hover {
+      input {
+        border: 1px solid $primaryGradient4;
+      }
+
+      textarea {
+        border: 1px solid $primaryGradient4;
+      }
+
+      .edit-icon-wrapper {
+        opacity: 1;
+      }
+    }
+
+    .role.icon {
+      cursor: pointer;
+    }
+  }
+
+  .details-container {
+    width: 100%;
+
+    .icon {
+      margin-right: 10px;
+      color: $greyedIcon;
+
+      &.active {
+        color: $primaryGradient1;
+      }
+    }
+  }
+}

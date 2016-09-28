@@ -22,6 +22,7 @@ using namespace std;
 namespace {
   const auto UMIR_ACCOUNT_TYPE_TAG = 47;
   const auto ANONYMOUS_TAG = 7012;
+  const auto CONSTRAINTS_TAG = 6005;
 }
 
 MatchNowFixApplication::MatchNowFixApplication(RefType<LiveNtpTimeClient>
@@ -43,6 +44,21 @@ const Order& MatchNowFixApplication::Submit(const OrderInfo& info) {
       auto& anonymousTag = GetAnonymousTag();
       if(anonymousTag.is_initialized()) {
         newOrderSingle->setField(ANONYMOUS_TAG, *anonymousTag);
+      }
+      auto constraintsTagIterator = std::find_if(
+        info.m_fields.m_additionalFields.begin(),
+        info.m_fields.m_additionalFields.end(),
+        [] (const Tag& tag) {
+          return tag.GetKey() == CONSTRAINTS_TAG;
+        });
+      if(constraintsTagIterator != info.m_fields.m_additionalFields.end()) {
+        auto& constraintsTag = *constraintsTagIterator;
+        auto value = boost::get<std::string>(constraintsTag.GetValue());
+        if(value == "PAG") {
+          newOrderSingle->setField(CONSTRAINTS_TAG, "PAG=-1");
+        } else if(value == "PMI") {
+          newOrderSingle->setField(CONSTRAINTS_TAG, "PMI=1");
+        }
       }
     });
 }
