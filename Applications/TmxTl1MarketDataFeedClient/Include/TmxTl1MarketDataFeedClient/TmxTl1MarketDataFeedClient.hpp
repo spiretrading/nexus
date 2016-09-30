@@ -141,7 +141,7 @@ namespace MarketDataService {
       boost::posix_time::hours(hr) + boost::posix_time::minutes(mn) +
       boost::posix_time::seconds(sec) +
       boost::posix_time::milliseconds(10 * mill));
-    return timestamp;
+    return timestamp + m_config.m_timeOffset;
   }
 
   template<typename MarketDataFeedClientType, typename ServiceAccessClientType>
