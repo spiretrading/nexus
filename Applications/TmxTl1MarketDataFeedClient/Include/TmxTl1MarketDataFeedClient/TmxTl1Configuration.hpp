@@ -19,6 +19,9 @@ namespace MarketDataService {
 
     //! The Country of origin.
     Nexus::CountryCode m_country;
+
+    //! The difference in time between the data provider's time and UTC.
+    boost::posix_time::time_duration m_timeOffset;
   };
 }
 }
