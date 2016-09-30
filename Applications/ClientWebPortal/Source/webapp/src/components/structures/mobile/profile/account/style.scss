@@ -52,6 +52,21 @@ main.mobile {
         margin-bottom: 20px;
         width: 100%;
       }
+
+      .message-wrapper {
+        width: 100%;
+        height: 30px;
+
+        .message {
+          &.red {
+            color: $red;
+          }
+
+          &.purple {
+            color: $primaryGradient3;
+          }
+        }
+      }
     }
   }
 }

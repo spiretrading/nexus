@@ -18,11 +18,27 @@ class View extends UpdatableView {
   }
 
   showSaveSuccessMessage() {
-    $('#entitlements-container .save-message').text('Saved').css('display', 'inherit');
+    let $saveMessage = $('#entitlements-container .save-message');
+    $saveMessage
+      .fadeOut(() => {
+        $saveMessage
+          .text('Saved')
+          .removeClass('red')
+          .addClass('purple')
+          .fadeIn();
+      });
   }
 
   showSaveFailMessage() {
-    $('#entitlements-container .save-message').text('Failed').css('display', 'inherit');
+    let $saveMessage = $('#entitlements-container .save-message');
+    $saveMessage
+      .fadeOut(() => {
+        $saveMessage
+          .text('Failed')
+          .removeClass('purple')
+          .addClass('red')
+          .fadeIn();
+      });
   }
 
   render() {
@@ -86,7 +102,9 @@ class View extends UpdatableView {
         {entitlements}
         {hr}
         {saveButton}
-        <div className="save-message"></div>
+        <div className="save-message-wrapper">
+          <div className="save-message"></div>
+        </div>
       </div>
     );
   }

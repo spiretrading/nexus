@@ -35,42 +35,74 @@ class CommonView extends UpdatableView {
     let confirmPassword = $('#account-container .confirm-password-input').val();
     let errorMessage = this.validate(newPassword, confirmPassword);
     if (errorMessage != null) {
-      $('#account-container .change-password-wrapper .message')
-        .addClass('fail')
-        .text(errorMessage)
-        .css('display', 'inherit');
+      let $saveMessage = $('#account-container .change-password-wrapper .message');
+      $saveMessage
+        .fadeOut(() => {
+          $saveMessage
+            .text(errorMessage)
+            .removeClass('purple')
+            .addClass('red')
+            .fadeIn();
+        });
     } else {
       $('#account-container .change-password-wrapper .message')
-        .removeClass('fail')
-        .text("")
-        .css('display', 'none');
-      this.controller.onPasswordUpdate.apply(this.controller, [newPassword]);
+        .fadeOut(() => {
+          this.controller.onPasswordUpdate.apply(this.controller, [newPassword]);
+        });
     }
   }
 
   showSavePersonalDetailsSuccessMessage() {
-    $('#account-container .save-button-wrapper .save-message').text('Saved').css('display', 'inherit');
+    let $saveMessage = $('#account-container .save-button-wrapper .save-message');
+    $saveMessage
+      .fadeOut(() => {
+        $saveMessage
+          .text('Saved')
+          .removeClass('red')
+          .addClass('purple')
+          .fadeIn();
+      });
   }
 
   showSavePersonalDetailsFailMessage() {
-    $('#account-container .save-button-wrapper .save-message').text('Failed').css('display', 'inherit');
+    let $saveMessage = $('#account-container .save-button-wrapper .save-message');
+    $saveMessage
+      .fadeOut(() => {
+        $saveMessage
+          .text('Failed')
+          .removeClass('purple')
+          .addClass('red')
+          .fadeIn();
+      });
   }
 
   showSavePasswordSuccess() {
-    $('#account-container .change-password-wrapper .message')
-      .removeClass('fail')
-      .text('Saved')
-      .css('display', 'inherit');
+    let $saveMessage = $('#account-container .change-password-wrapper .message');
+    $saveMessage
+      .fadeOut(() => {
+        $saveMessage
+          .text('Saved')
+          .removeClass('red')
+          .addClass('purple')
+          .fadeIn();
+      });
+  }
 
+  resetInputs() {
     $('#account-container .new-password-input').val('');
     $('#account-container .confirm-password-input').val('');
   }
 
   showSavePasswordFailMessage() {
-    $('#account-container .change-password-wrapper .message')
-      .addClass('fail')
-      .text('Failed')
-      .css('display', 'inherit');
+    let $saveMessage = $('#account-container .change-password-wrapper .message');
+    $saveMessage
+      .fadeOut(() => {
+        $saveMessage
+          .text('Failed')
+          .removeClass('purple')
+          .addClass('red')
+          .fadeIn();
+      });
   }
 
   hideAccountProfile() {

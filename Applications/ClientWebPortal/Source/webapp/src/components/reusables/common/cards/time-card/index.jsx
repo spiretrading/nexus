@@ -18,7 +18,7 @@ class TimeCard extends Component {
   }
 
   componentDidMount() {
-    this.controller.componentDidMount();
+    this.controller.componentDidMount.apply(this.controller);
   }
 
   componentWillUpdate(nextProps) {
@@ -30,7 +30,7 @@ class TimeCard extends Component {
   }
 
   componentWillUnmount() {
-    this.controller.componentWillUnmount();
+    this.controller.componentWillUnmount.apply(this.controller);
   }
 
   render() {

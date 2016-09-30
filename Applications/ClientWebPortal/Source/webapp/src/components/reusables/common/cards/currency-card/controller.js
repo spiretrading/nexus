@@ -21,10 +21,14 @@ class Controller {
 
   componentDidMount() {
     this.view.initialize.apply(this.view);
+    this.currencySelectedListenerId = EventBus.subscribe(Event.Profile.RiskControls.CURRENCY_SELECTED, () => {
+      this.view.enable.apply(this.view);
+    });
   }
 
   componentWillUnmount() {
     this.view.dispose.apply(this.view);
+    EventBus.unsubscribe(this.currencySelectedListenerId);
   }
 
   onAmountChange(newAmount) {

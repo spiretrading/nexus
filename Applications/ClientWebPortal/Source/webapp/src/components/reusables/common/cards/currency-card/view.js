@@ -16,6 +16,11 @@ class View extends UpdatableView {
     if (!this.componentModel.isReadOnly) {
       $(document).on('click.' + this.componentModel.componentId, this.onDocumentClick.bind(this));
     }
+
+    this.isEnabled = this.componentModel.isEnabled;
+    if (this.isEnabled) {
+      $('#' + this.componentModel.componentId).click(this.onCardClick.bind(this));
+    }
   }
 
   dispose() {
@@ -24,6 +29,14 @@ class View extends UpdatableView {
     }
   }
 
+  enable() {
+    if (!this.isEnabled) {
+      this.componentModel.isEnabled = true;
+      $('#' + this.componentModel.componentId).click(this.onCardClick.bind(this));
+    }
+  }
+
+  /** @private */
   onDocumentClick(event) {
     let cardContainerElement = $('#' + this.componentModel.componentId)[0];
     let clickedElement = event.target;
@@ -35,6 +48,7 @@ class View extends UpdatableView {
     }
   }
 
+  /** @private */
   onSelected() {
     let $cardContainer = $('#' + this.componentModel.componentId);
     $cardContainer.addClass('selected');
@@ -42,6 +56,7 @@ class View extends UpdatableView {
     contentEditableCaret.moveCaretToEnd($cardContainer.find('.body')[0]);
   }
 
+  /** @private */
   onDeselected() {
     this.isTouched = false;
     let $cardContainer = $('#' + this.componentModel.componentId);
@@ -49,6 +64,9 @@ class View extends UpdatableView {
     $cardContainer.find('.body').removeAttr('contenteditable').blur();
 
     let currentInput = $cardContainer.find('.body').text().trim();
+    if (currentInput.length == 0) {
+      currentInput = '0';
+    }
     let currencySign = definitionsService.getCurrencySign.apply(
       definitionsService,
       [this.componentModel.countryIso]
@@ -62,6 +80,7 @@ class View extends UpdatableView {
     this.controller.onAmountChange(currentInput);
   }
 
+  /** @private */
   onCardClick(event) {
     if (!this.componentModel.isReadOnly) {
       if (this.selected) {
@@ -74,6 +93,7 @@ class View extends UpdatableView {
     }
   }
 
+  /** @private */
   onChange(e) {
     let event = e.nativeEvent;
     if (isEnter()) {
@@ -151,7 +171,7 @@ class View extends UpdatableView {
     let amount = currencyFormatter.format(this.componentModel.countryIso, this.componentModel.value);
 
     return (
-      <div id={this.componentModel.componentId} className="card-container" onClick={this.onCardClick.bind(this)}>
+      <div id={this.componentModel.componentId} className="card-container">
         <div className="title">{this.componentModel.title}</div>
         <div className="body" onKeyDown={this.onChange.bind(this)}>{amount}</div>
       </div>
