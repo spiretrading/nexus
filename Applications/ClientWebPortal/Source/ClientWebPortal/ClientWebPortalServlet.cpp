@@ -11,7 +11,9 @@
 #include "ClientWebPortal/ClientWebPortal/ServiceClients.hpp"
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
 #include "Nexus/Definitions/Country.hpp"
+#include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
+#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
 
 using namespace Beam;
@@ -109,6 +111,10 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/definitions_service/load_market_database"),
     bind(&ClientWebPortalServlet::OnLoadMarketDatabase, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/market_data_service/load_security_info_from_prefix"),
+    bind(&ClientWebPortalServlet::OnLoadSecurityInfoFromPrefix, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, "/"),
     bind(&ClientWebPortalServlet::OnIndex, this, std::placeholders::_1));
@@ -669,5 +675,23 @@ HttpResponse ClientWebPortalServlet::OnLoadMarketDatabase(
   auto database =
     m_serviceClients->GetDefinitionsClient().LoadMarketDatabase();
   response.SetBody(Encode<SharedBuffer>(m_sender, database));
+  return response;
+}
+
+HttpResponse ClientWebPortalServlet::OnLoadSecurityInfoFromPrefix(
+    const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions.Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  response.SetHeader({"Content-Type", "application/json"});
+  auto parameters = boost::get<JsonObject>(
+    Parse<JsonParser>(request.GetBody()));
+  auto& prefix = boost::get<string>(parameters["prefix"]);
+  auto securityInfos =
+    m_serviceClients->GetMarketDataClient().LoadSecurityInfoFromPrefix(prefix);
+  response.SetBody(Encode<SharedBuffer>(m_sender, securityInfos));
   return response;
 }
