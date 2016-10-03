@@ -101,6 +101,10 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
     bind(&ClientWebPortalServlet::OnStoreRiskParameters, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/definitions_service/load_compliance_rule_schemas"),
+    bind(&ClientWebPortalServlet::OnLoadComplianceRuleSchemas, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/definitions_service/load_country_database"),
     bind(&ClientWebPortalServlet::OnLoadCountryDatabase, this,
     std::placeholders::_1));
@@ -630,6 +634,21 @@ HttpResponse ClientWebPortalServlet::OnStoreRiskParameters(
   RiskParameters riskParameters;
   m_serviceClients->GetAdministrationClient().StoreRiskParameters(account,
     riskParameters);
+  return response;
+}
+
+HttpResponse ClientWebPortalServlet::OnLoadComplianceRuleSchemas(
+    const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions.Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  response.SetHeader({"Content-Type", "application/json"});
+  auto schemas =
+    m_serviceClients->GetDefinitionsClient().LoadComplianceRuleSchemas();
+  response.SetBody(Encode<SharedBuffer>(m_sender, schemas));
   return response;
 }
 
