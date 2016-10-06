@@ -10,6 +10,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "ClientWebPortal/ClientWebPortal/ServiceClients.hpp"
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
+#include "Nexus/Compliance/VirtualComplianceClient.hpp"
 #include "Nexus/Definitions/Country.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
@@ -99,6 +100,10 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/store_risk_parameters"),
     bind(&ClientWebPortalServlet::OnStoreRiskParameters, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/compliance_service/load_directory_entry_compliance_rule_entry"),
+    bind(&ClientWebPortalServlet::OnLoadDirectoryEntryComplianceRuleEntry, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/definitions_service/load_compliance_rule_schemas"),
@@ -634,6 +639,30 @@ HttpResponse ClientWebPortalServlet::OnStoreRiskParameters(
   RiskParameters riskParameters;
   m_serviceClients->GetAdministrationClient().StoreRiskParameters(account,
     riskParameters);
+  return response;
+}
+
+HttpResponse ClientWebPortalServlet::OnLoadDirectoryEntryComplianceRuleEntry(
+    const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions.Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = boost::get<JsonObject>(
+    Parse<JsonParser>(request.GetBody()));
+  auto& directoryEntryParameter = boost::get<JsonObject>(
+    parameters["directory_entry"]);
+  DirectoryEntry directoryEntry;
+  directoryEntry.m_name = boost::get<string>(directoryEntryParameter["name"]);
+  directoryEntry.m_id = static_cast<int>(boost::get<int64_t>(
+    directoryEntryParameter["id"]));
+  directoryEntry.m_type = static_cast<DirectoryEntry::Type>(
+    static_cast<int>(boost::get<int64_t>(directoryEntryParameter["type"])));
+  response.SetHeader({"Content-Type", "application/json"});
+  auto rules = m_serviceClients->GetComplianceClient().Load(directoryEntry);
+  response.SetBody(Encode<SharedBuffer>(m_sender, rules));
   return response;
 }
 
