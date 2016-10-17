@@ -10,8 +10,11 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "ClientWebPortal/ClientWebPortal/ServiceClients.hpp"
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
+#include "Nexus/Compliance/VirtualComplianceClient.hpp"
 #include "Nexus/Definitions/Country.hpp"
+#include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
+#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
 
 using namespace Beam;
@@ -99,6 +102,14 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
     bind(&ClientWebPortalServlet::OnStoreRiskParameters, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/compliance_service/load_directory_entry_compliance_rule_entry"),
+    bind(&ClientWebPortalServlet::OnLoadDirectoryEntryComplianceRuleEntry, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/definitions_service/load_compliance_rule_schemas"),
+    bind(&ClientWebPortalServlet::OnLoadComplianceRuleSchemas, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/definitions_service/load_country_database"),
     bind(&ClientWebPortalServlet::OnLoadCountryDatabase, this,
     std::placeholders::_1));
@@ -109,6 +120,10 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/definitions_service/load_market_database"),
     bind(&ClientWebPortalServlet::OnLoadMarketDatabase, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/market_data_service/load_security_info_from_prefix"),
+    bind(&ClientWebPortalServlet::OnLoadSecurityInfoFromPrefix, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, "/"),
     bind(&ClientWebPortalServlet::OnIndex, this, std::placeholders::_1));
@@ -627,6 +642,45 @@ HttpResponse ClientWebPortalServlet::OnStoreRiskParameters(
   return response;
 }
 
+HttpResponse ClientWebPortalServlet::OnLoadDirectoryEntryComplianceRuleEntry(
+    const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions.Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = boost::get<JsonObject>(
+    Parse<JsonParser>(request.GetBody()));
+  auto& directoryEntryParameter = boost::get<JsonObject>(
+    parameters["directory_entry"]);
+  DirectoryEntry directoryEntry;
+  directoryEntry.m_name = boost::get<string>(directoryEntryParameter["name"]);
+  directoryEntry.m_id = static_cast<int>(boost::get<int64_t>(
+    directoryEntryParameter["id"]));
+  directoryEntry.m_type = static_cast<DirectoryEntry::Type>(
+    static_cast<int>(boost::get<int64_t>(directoryEntryParameter["type"])));
+  response.SetHeader({"Content-Type", "application/json"});
+  auto rules = m_serviceClients->GetComplianceClient().Load(directoryEntry);
+  response.SetBody(Encode<SharedBuffer>(m_sender, rules));
+  return response;
+}
+
+HttpResponse ClientWebPortalServlet::OnLoadComplianceRuleSchemas(
+    const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions.Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  response.SetHeader({"Content-Type", "application/json"});
+  auto schemas =
+    m_serviceClients->GetDefinitionsClient().LoadComplianceRuleSchemas();
+  response.SetBody(Encode<SharedBuffer>(m_sender, schemas));
+  return response;
+}
+
 HttpResponse ClientWebPortalServlet::OnLoadCountryDatabase(
     const HttpRequest& request) {
   HttpResponse response;
@@ -669,5 +723,23 @@ HttpResponse ClientWebPortalServlet::OnLoadMarketDatabase(
   auto database =
     m_serviceClients->GetDefinitionsClient().LoadMarketDatabase();
   response.SetBody(Encode<SharedBuffer>(m_sender, database));
+  return response;
+}
+
+HttpResponse ClientWebPortalServlet::OnLoadSecurityInfoFromPrefix(
+    const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions.Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  response.SetHeader({"Content-Type", "application/json"});
+  auto parameters = boost::get<JsonObject>(
+    Parse<JsonParser>(request.GetBody()));
+  auto& prefix = boost::get<string>(parameters["prefix"]);
+  auto securityInfos =
+    m_serviceClients->GetMarketDataClient().LoadSecurityInfoFromPrefix(prefix);
+  response.SetBody(Encode<SharedBuffer>(m_sender, securityInfos));
   return response;
 }

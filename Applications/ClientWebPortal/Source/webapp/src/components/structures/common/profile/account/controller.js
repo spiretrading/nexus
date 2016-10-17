@@ -79,6 +79,7 @@ class Controller {
     function onResponse(response) {
       if (response.resultCode === ResultCode.SUCCESS) {
         this.view.showSavePasswordSuccess();
+        this.view.resetInputs();
       } else {
         this.view.showSavePasswordFailMessage();
       }

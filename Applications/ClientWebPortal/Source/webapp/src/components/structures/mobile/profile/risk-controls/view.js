@@ -122,7 +122,9 @@ class DesktopView extends CommonView {
           </div>
           {horizontalDivider}
           {saveButton}
-          <div className="save-message"></div>
+          <div className="save-message-wrapper">
+            <div className="save-message"></div>
+          </div>
         </div>
     }
 

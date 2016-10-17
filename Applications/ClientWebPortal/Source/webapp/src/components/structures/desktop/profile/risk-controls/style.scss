@@ -37,5 +37,13 @@
     margin-top:10px;
     display: none;
     text-align: center;
+
+    &.red {
+      color: $red;
+    }
+
+    &.purple {
+      color: $primaryGradient3;
+    }
   }
 }

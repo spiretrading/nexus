@@ -17,10 +17,23 @@
     transform: translate(-50%, 0);
   }
 
-  .save-message {
-    color: $primaryGradient3;
+  .save-message-wrapper {
     margin-top:10px;
-    display: none;
     text-align: center;
+    margin-bottom: 20px;
+    width: 100%;
+    height: 30px;
+
+    .save-message {
+      display: none;
+
+      &.red {
+        color: $red;
+      }
+
+      &.purple {
+        color: $primaryGradient3;
+      }
+    }
   }
 }
