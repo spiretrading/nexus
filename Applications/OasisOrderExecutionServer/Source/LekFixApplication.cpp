@@ -20,6 +20,11 @@ using namespace Nexus::OasisOrderExecutionService;
 using namespace Nexus::OrderExecutionService;
 using namespace std;
 
+namespace {
+  const auto PRIMARY_TRADE_LIQUIDITY_INDICATOR_TAG = 9730;
+  const auto ALTERNATE_TRADE_LIQUIDITY_INDICATOR_TAG = 9882;
+}
+
 LekFixApplication::LekFixApplication(RefType<LiveNtpTimeClient> timeClient)
     : m_timeClient(timeClient.Get()) {}
 
@@ -109,6 +114,10 @@ void LekFixApplication::onMessage(const FIX42::ExecutionReport& message,
     const FIX::SessionID& sessionId) {
   m_orderLog.Update(message, sessionId, m_timeClient->GetTime(),
     [=] (Out<ExecutionReport> update) {
+      if(message.isSetField(ALTERNATE_TRADE_LIQUIDITY_INDICATOR_TAG)) {
+        update->m_liquidityFlag = message.getField(
+          ALTERNATE_TRADE_LIQUIDITY_INDICATOR_TAG);
+      }
     });
 }
 
