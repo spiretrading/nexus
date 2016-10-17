@@ -267,12 +267,13 @@ namespace OasisOrderExecutionService {
     const auto CLEARING_FEE = Money::BIP;
     auto feesReport = executionReport;
     if(feesReport.m_lastQuantity != 0) {
-      feesReport.m_processingFee += feesReport.m_lastQuantity *
+      auto processingFee = feesReport.m_lastQuantity *
         (CLEARING_FEE + TAF_FEE);
       if(order.GetInfo().m_fields.m_side == Side::BID) {
-        feesReport.m_processingFee += SEC_RATE *
+        processingFee += SEC_RATE *
           (feesReport.m_lastQuantity * feesReport.m_lastPrice);
       }
+      feesReport.m_processingFee += Ceil(processingFee, 3);
     }
     feesReport.m_commission += feesReport.m_lastQuantity * SPIRE_FEE;
     feesReport.m_executionFee += CalculateFee(m_usFeeTable, order,
