@@ -9,6 +9,7 @@ namespace Tests {
   class LynxFeeHandlingTester;
   class MatnFeeHandlingTester;
   class NeoeFeeHandlingTester;
+  class NsdqFeeHandlingTester;
   class OmgaFeeHandlingTester;
   class PureFeeHandlingTester;
   class TsxFeeHandlingTester;
