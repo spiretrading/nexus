@@ -65,7 +65,7 @@ namespace Nexus {
     static const std::size_t CATEGORY_COUNT = 6;
 
     //! The fee table.
-    std::array<std::array<Money, CATEGORY_COUNT>, TYPE_COUNT> m_feeTable;
+    std::array<std::array<Money, TYPE_COUNT>, CATEGORY_COUNT> m_feeTable;
 
     //! The sub-dollar rate.
     boost::rational<int> m_subDollarRate;
