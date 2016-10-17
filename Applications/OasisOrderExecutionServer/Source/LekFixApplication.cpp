@@ -55,6 +55,17 @@ const Order& LekFixApplication::Submit(const OrderInfo& info) {
       if(accountTag.is_initialized()) {
         newOrderSingle->set(FIX::Account{*accountTag});
       }
+      if(info.m_fields.m_timeInForce.GetType() == TimeInForce::Type::MOC) {
+        auto timeInForce = GetTimeInForceType(TimeInForce::Type::DAY);
+        if(timeInForce.is_initialized()) {
+          newOrderSingle->set(*timeInForce);
+          if(info.m_fields.m_type == OrderType::MARKET) {
+            newOrderSingle->set(FIX::OrdType(FIX::OrdType_MARKET_ON_CLOSE));
+          } else if(info.m_fields.m_type == OrderType::LIMIT) {
+            newOrderSingle->set(FIX::OrdType(FIX::OrdType_LIMIT_ON_CLOSE));
+          }
+        }
+      }
     });
 }
 
