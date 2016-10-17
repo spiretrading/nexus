@@ -318,8 +318,16 @@ int main(int argc, const char** argv) {
     cerr << "Unable to initialize TMX fee table: " << e.what() << endl;
     return -1;
   }
+  ConsolidatedUsFeeTable usFeeTable;
+  try {
+    auto marketDatabase = definitionsClient->LoadMarketDatabase();
+    usFeeTable = ParseConsolidatedUsFeeTable(feeTableConfig, marketDatabase);
+  } catch(const std::exception& e) {
+    cerr << "Unable to initialize US fee table: " << e.what() << endl;
+    return -1;
+  }
   ApplicationFeesCalculatorOrderExecutionDriver feesCalculator{
-    &fixOrderExecutionDriver, asxtFeeTable, tmxFeeTable};
+    &fixOrderExecutionDriver, asxtFeeTable, tmxFeeTable, usFeeTable};
   vector<unique_ptr<OrderSubmissionCheck>> checks;
   try {
     checks.emplace_back(MakeBoardLotCheck(marketDataClient.Get(),

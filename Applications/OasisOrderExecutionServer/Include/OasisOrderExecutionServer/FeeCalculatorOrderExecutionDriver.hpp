@@ -12,6 +12,7 @@
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/FeeHandling/AsxtFeeTable.hpp"
 #include "Nexus/FeeHandling/ConsolidatedTmxFeeTable.hpp"
+#include "Nexus/FeeHandling/ConsolidatedUsFeeTable.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
@@ -41,7 +42,8 @@ namespace OasisOrderExecutionService {
       template<typename OrderExecutionDriverForward>
       FeesCalculatorOrderExecutionDriver(
         OrderExecutionDriverForward&& orderExecutionDriver,
-        AsxtFeeTable asxFeeTable, ConsolidatedTmxFeeTable tmxFeeTable);
+        AsxtFeeTable asxFeeTable, ConsolidatedTmxFeeTable tmxFeeTable,
+        ConsolidatedUsFeeTable usFeeTable);
 
       ~FeesCalculatorOrderExecutionDriver();
 
@@ -67,6 +69,7 @@ namespace OasisOrderExecutionService {
         m_orderExecutionDriver;
       AsxtFeeTable m_asxtFeeTable;
       ConsolidatedTmxFeeTable m_tmxFeeTable;
+      ConsolidatedUsFeeTable m_usFeeTable;
       Beam::SynchronizedUnorderedSet<
         std::shared_ptr<OrderExecutionService::Order>> m_orders;
       Beam::SynchronizedUnorderedMap<OrderExecutionService::OrderId, Money>
@@ -83,6 +86,8 @@ namespace OasisOrderExecutionService {
       void HandleCanadianMarketFees(
         OrderExecutionService::PrimitiveOrder& order,
         const OrderExecutionService::ExecutionReport& executionReport);
+      void HandleUsMarketFees(OrderExecutionService::PrimitiveOrder& order,
+        const OrderExecutionService::ExecutionReport& executionReport);
       void OnExecutionReport(
         const std::shared_ptr<OrderExecutionService::PrimitiveOrder>& order,
         const OrderExecutionService::ExecutionReport& executionReport);
@@ -93,11 +98,12 @@ namespace OasisOrderExecutionService {
   FeesCalculatorOrderExecutionDriver<OrderExecutionDriverType>::
       FeesCalculatorOrderExecutionDriver(OrderExecutionDriverForward&&
       orderExecutionDriver, AsxtFeeTable asxtFeeTable,
-      ConsolidatedTmxFeeTable tmxFeeTable)
-      : m_orderExecutionDriver(std::forward<OrderExecutionDriverForward>(
-          orderExecutionDriver)),
-        m_asxtFeeTable(std::move(asxtFeeTable)),
-        m_tmxFeeTable(std::move(tmxFeeTable)) {}
+      ConsolidatedTmxFeeTable tmxFeeTable, ConsolidatedUsFeeTable usFeeTable)
+      : m_orderExecutionDriver{std::forward<OrderExecutionDriverForward>(
+          orderExecutionDriver)},
+        m_asxtFeeTable{std::move(asxtFeeTable)},
+        m_tmxFeeTable{std::move(tmxFeeTable)},
+        m_usFeeTable{std::move(usFeeTable)} {}
 
   template<typename OrderExecutionDriverType>
   FeesCalculatorOrderExecutionDriver<OrderExecutionDriverType>::
@@ -253,6 +259,33 @@ namespace OasisOrderExecutionService {
 
   template<typename OrderExecutionDriverType>
   void FeesCalculatorOrderExecutionDriver<OrderExecutionDriverType>::
+      HandleUsMarketFees(OrderExecutionService::PrimitiveOrder& order,
+      const OrderExecutionService::ExecutionReport& executionReport) {
+    const auto SPIRE_FEE = Money::BIP;
+    const auto SEC_RATE = boost::rational<int>{218, 10000000};
+    const auto TAF_FEE = (119 * Money::BIP) / 100;
+    const auto CLEARING_FEE = Money::BIP;
+    auto feesReport = executionReport;
+    if(feesReport.m_lastQuantity != 0) {
+      feesReport.m_processingFee += feesReport.m_lastQuantity *
+        (CLEARING_FEE + TAF_FEE);
+      if(order.GetInfo().m_fields.m_side == Side::BID) {
+        feesReport.m_processingFee += SEC_RATE *
+          (feesReport.m_lastQuantity * feesReport.m_lastPrice);
+      }
+    }
+    feesReport.m_commission += feesReport.m_lastQuantity * SPIRE_FEE;
+    feesReport.m_executionFee += CalculateFee(m_usFeeTable, order,
+      executionReport);
+    order.With(
+      [&] (OrderStatus status,
+          const std::vector<OrderExecutionService::ExecutionReport>& reports) {
+        order.Update(feesReport);
+      });
+  }
+
+  template<typename OrderExecutionDriverType>
+  void FeesCalculatorOrderExecutionDriver<OrderExecutionDriverType>::
       OnExecutionReport(
       const std::shared_ptr<OrderExecutionService::PrimitiveOrder>& order,
       const OrderExecutionService::ExecutionReport& executionReport) {
@@ -262,8 +295,11 @@ namespace OasisOrderExecutionService {
     if(order->GetInfo().m_fields.m_security.GetCountry() ==
         DefaultCountries::AU()) {
       HandleAustralianMarketFees(*order, executionReport);
-    } else {
+    } else if(order->GetInfo().m_fields.m_security.GetCountry() ==
+        DefaultCountries::CA()) {
       HandleCanadianMarketFees(*order, executionReport);
+    }  else {
+      HandleUsMarketFees(*order, executionReport);
     }
   }
 }

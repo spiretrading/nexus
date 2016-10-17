@@ -223,4 +223,13 @@ tsxv:
 
 # List is sub-dime, sub-dollar, dollar.
   odd_lot_list: [0.000025, 0.000075, 0.0010]
+
+# NASDAQ fees based on http://nasdaqtrader.com/Trader.aspx?id=PriceListTrading2
+nasdaq:
+
+  # Active, Passive, Hidden
+  fee_table:
+    [0.0030, -0.0021, 0.0000]
+
+  sub_dollar_rate: 0.0030
 ...
