@@ -6,6 +6,7 @@ namespace Tests {
   class AsxtFeeHandlingTester;
   class ChicFeeHandlingTester;
   class ConsolidatedTmxFeeTableTester;
+  class ConsolidatedUsFeeTableTester;
   class LynxFeeHandlingTester;
   class MatnFeeHandlingTester;
   class NeoeFeeHandlingTester;
