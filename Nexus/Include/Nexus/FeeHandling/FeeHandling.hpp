@@ -11,6 +11,7 @@ namespace Nexus {
   struct MatnFeeTable;
   struct NeoeFeeTable;
   struct NsdqFeeTable;
+  struct NyseFeeTable;
   struct OmgaFeeTable;
   struct PureFeeTable;
   struct TsxFeeTable;
