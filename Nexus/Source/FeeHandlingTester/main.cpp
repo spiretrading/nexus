@@ -6,9 +6,11 @@
 #include "Nexus/FeeHandlingTests/AsxtFeeHandlingTester.hpp"
 #include "Nexus/FeeHandlingTests/ChicFeeHandlingTester.hpp"
 #include "Nexus/FeeHandlingTests/ConsolidatedTmxFeeTableTester.hpp"
+#include "Nexus/FeeHandlingTests/ConsolidatedUsFeeTableTester.hpp"
 #include "Nexus/FeeHandlingTests/LynxFeeHandlingTester.hpp"
 #include "Nexus/FeeHandlingTests/MatnFeeHandlingTester.hpp"
 #include "Nexus/FeeHandlingTests/NeoeFeeHandlingTester.hpp"
+#include "Nexus/FeeHandlingTests/NsdqFeeHandlingTester.hpp"
 #include "Nexus/FeeHandlingTests/OmgaFeeHandlingTester.hpp"
 #include "Nexus/FeeHandlingTests/PureFeeHandlingTester.hpp"
 #include "Nexus/FeeHandlingTests/TsxFeeHandlingTester.hpp"
@@ -31,6 +33,8 @@ int main() {
   runner.addTest(XatsFeeHandlingTester::suite());
   runner.addTest(Xcx2FeeHandlingTester::suite());
   runner.addTest(ConsolidatedTmxFeeTableTester::suite());
+  runner.addTest(NsdqFeeHandlingTester::suite());
+  runner.addTest(ConsolidatedUsFeeTableTester::suite());
   runner.eventManager().addListener(&listener);
   runner.setOutputter(new CPPUNIT_NS::CompilerOutputter(&runner.result(),
     CPPUNIT_NS::stdCOut()));

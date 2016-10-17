@@ -50,6 +50,7 @@ class Controller {
   }
 
   onCurrencyChange(newCurrencyNumber) {
+    EventBus.publish(Event.Profile.RiskControls.CURRENCY_SELECTED);
     this.componentModel.riskParameters.currency = newCurrencyNumber;
     this.view.update(this.componentModel);
   }
@@ -73,6 +74,8 @@ class Controller {
       adminClient.storeRiskParameters.apply(adminClient, [directoryEntry, riskParameters])
         .then(onSaved.bind(this))
         .catch(onFailed.bind(this));
+    } else {
+      this.view.showSaveFailedMessage('Currency not selected');
     }
 
     function onSaved() {

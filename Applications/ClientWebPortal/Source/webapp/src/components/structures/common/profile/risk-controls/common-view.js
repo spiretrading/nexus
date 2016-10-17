@@ -14,18 +14,27 @@ class CommonView extends UpdatableView {
   }
 
   showSavedMessage() {
-    $('#risk-control-container .save-message')
-      .text('Saved')
-      .removeClass('failed')
-      .css('display', 'inherit');
+    let $saveMessage = $('#risk-control-container .save-message');
+    $saveMessage
+      .fadeOut(() => {
+        $saveMessage
+          .text('Saved')
+          .removeClass('red')
+          .addClass('purple')
+          .fadeIn();
+      });
   }
 
-  showSaveFailedMessage() {
-    $('#risk-control-container .save-message')
-      .text('Failed')
-      .removeClass('failed')
-      .addClass('failed')
-      .css('display', 'inherit');
+  showSaveFailedMessage(message) {
+    let $saveMessage = $('#risk-control-container .save-message');
+    $saveMessage
+      .fadeOut(() => {
+        $saveMessage
+          .text(message)
+          .removeClass('purple')
+          .addClass('red')
+          .fadeIn();
+      });
   }
 
   onCurrencyChange(newCode) {

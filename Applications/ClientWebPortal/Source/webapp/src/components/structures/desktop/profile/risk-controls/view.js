@@ -42,20 +42,23 @@ class DesktopView extends CommonView {
           title: 'Net Loss',
           value: this.componentModel.riskParameters.netLoss,
           countryIso: this.componentModel.riskParameters.currency,
-          isReadOnly: !this.componentModel.isAdmin
+          isReadOnly: !this.componentModel.isAdmin,
+          isEnabled: true
         };
 
         buyingPowerModel = {
           title: 'Buying Power',
           value: this.componentModel.riskParameters.buyingPower,
           countryIso: this.componentModel.riskParameters.currency,
-          isReadOnly: !this.componentModel.isAdmin
+          isReadOnly: !this.componentModel.isAdmin,
+          isEnabled: true
         };
 
         transitionTimeModel = {
           title: 'Transition Time',
           value: this.componentModel.riskParameters.transitionTime,
-          isReadOnly: !this.componentModel.isAdmin
+          isReadOnly: !this.componentModel.isAdmin,
+          isEnabled: true
         };
       } else {
         currencyModel = {
@@ -69,20 +72,23 @@ class DesktopView extends CommonView {
           title: 'Net Loss',
           value: this.componentModel.riskParameters.netLoss,
           countryIso: this.componentModel.riskParameters.currency,
-          isReadOnly: !this.componentModel.isAdmin
+          isReadOnly: !this.componentModel.isAdmin,
+          isEnabled: false
         };
 
         buyingPowerModel = {
           title: 'Buying Power',
           value: this.componentModel.riskParameters.buyingPower,
           countryIso: this.componentModel.riskParameters.currency,
-          isReadOnly: !this.componentModel.isAdmin
+          isReadOnly: !this.componentModel.isAdmin,
+          isEnabled: false
         };
 
         transitionTimeModel = {
           title: 'Transition Time',
           value: this.componentModel.riskParameters.transitionTime,
-          isReadOnly: !this.componentModel.isAdmin
+          isReadOnly: !this.componentModel.isAdmin,
+          isEnabled: false
         };
       }
 

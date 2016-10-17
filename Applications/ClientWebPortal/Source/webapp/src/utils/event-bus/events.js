@@ -17,5 +17,10 @@ export default {
     CLOSE_SIDE_MENU: 'all.application.topNav.closeSideMenu',
     SIDE_MENU_OPENED: 'all.application.topNav.menuOpened',
     SIDE_MENU_CLOSED: 'all.application.topNav.menuClosed'
+  },
+  Profile: {
+    RiskControls: {
+      CURRENCY_SELECTED: 'all.profile.riskControls.currencySelected'
+    }
   }
 };

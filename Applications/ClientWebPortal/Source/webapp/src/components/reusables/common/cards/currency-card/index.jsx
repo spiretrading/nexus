@@ -13,12 +13,12 @@ class CurrencyCard extends Component {
     componentModel.componentId = uuid.v4();
     componentModel.className = this.props.className;
     this.controller = new Controller(this, componentModel);
-    this.view = new View(this, this.controller, componentModel);
+    this.view = new View(this, this.controller, cloneObject(componentModel));
     this.controller.setView(this.view);
   }
 
   componentDidMount() {
-    this.controller.componentDidMount();
+    this.controller.componentDidMount.apply(this.controller);
   }
 
   componentWillUpdate(nextProps) {
@@ -30,7 +30,7 @@ class CurrencyCard extends Component {
   }
 
   componentWillUnmount() {
-    this.controller.componentWillUnmount();
+    this.controller.componentWillUnmount.apply(this.controller);
   }
 
   render() {

@@ -81,11 +81,17 @@ namespace ClientWebPortal {
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnStoreRiskParameters(
         const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadDirectoryEntryComplianceRuleEntry(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadComplianceRuleSchemas(
+        const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadCountryDatabase(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadCurrencyDatabase(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadMarketDatabase(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadSecurityInfoFromPrefix(
         const Beam::WebServices::HttpRequest& request);
   };
 }
