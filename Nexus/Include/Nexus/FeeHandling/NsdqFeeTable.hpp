@@ -61,9 +61,7 @@ namespace Nexus {
   /*!
     \param feeTable The NsdqFeeTable used to lookup the fee.
     \param type The trade's type.
-    \param category The trade's Category.
-    \return The fee corresponding to the specified <i>type</i> and
-            <i>category</i>.
+    \return The fee corresponding to the specified <i>type</i>.
   */
   inline Money LookupFee(const NsdqFeeTable& feeTable,
       NsdqFeeTable::Type type) {

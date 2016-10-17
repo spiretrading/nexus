@@ -99,7 +99,6 @@ namespace Details {
       entry.m_description = "NYSE";
       entry.m_markets.push_back("XASE");
       entry.m_markets.push_back("XNYS");
-      entry.m_markets.push_back("XNAS");
       database.Add(entry);
     }
     {
@@ -191,9 +190,9 @@ namespace Details {
       entry.m_markets.push_back("XTSX");
       database.Add(entry);
     }
-    database.SetPreferredDesintation("XASE", "ARCA");
+    database.SetPreferredDesintation("XASE", "NASDAQ");
     database.SetPreferredDesintation("XASX", "ASXT");
-    database.SetPreferredDesintation("XNYS", "ARCA");
+    database.SetPreferredDesintation("XNYS", "NASDAQ");
     database.SetPreferredDesintation("XNAS", "NASDAQ");
     database.SetPreferredDesintation("XTSE", "TSX");
     database.SetPreferredDesintation("XTSX", "TSX");

@@ -10,6 +10,7 @@
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/FeeHandling/FeeHandling.hpp"
 #include "Nexus/FeeHandling/NsdqFeeTable.hpp"
+#include "Nexus/FeeHandling/NyseFeeTable.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 
@@ -22,6 +23,9 @@ namespace Nexus {
 
     //! Fee table used by NSDQ.
     NsdqFeeTable m_nsdqFeeTable;
+
+    //! Fee table used by NYSE.
+    NyseFeeTable m_nyseFeeTable;
   };
 
   //! Parses a ConsolidatedUsFeeTable from a YAML configuration.
@@ -39,6 +43,12 @@ namespace Nexus {
         std::runtime_error{"Fee table for NASDAQ missing."});
     } else {
       feeTable.m_nsdqFeeTable = ParseNsdqFeeTable(*nasdaqConfig);
+    }
+    auto nyseConfig = config.FindValue("nyse");
+    if(nyseConfig == nullptr) {
+      BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for NYSE missing."});
+    } else {
+      feeTable.m_nyseFeeTable = ParseNyseFeeTable(*nyseConfig);
     }
     return feeTable;
   }
@@ -63,6 +73,9 @@ namespace Nexus {
     }();
     if(lastMarket == DefaultMarkets::NASDAQ()) {
       return CalculateFee(feeTable.m_nsdqFeeTable, executionReport);
+    } else if(lastMarket == DefaultMarkets::NYSE()) {
+      return CalculateFee(feeTable.m_nyseFeeTable, order.GetInfo().m_fields,
+        executionReport);
     } else {
       std::cout << "Unknown last market [US]: \"" <<
         order.GetInfo().m_fields.m_destination << "\"";
