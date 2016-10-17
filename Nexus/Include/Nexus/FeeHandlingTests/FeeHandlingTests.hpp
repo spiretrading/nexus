@@ -11,6 +11,7 @@ namespace Tests {
   class MatnFeeHandlingTester;
   class NeoeFeeHandlingTester;
   class NsdqFeeHandlingTester;
+  class NyseFeeHandlingTester;
   class OmgaFeeHandlingTester;
   class PureFeeHandlingTester;
   class TsxFeeHandlingTester;
