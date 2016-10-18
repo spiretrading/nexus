@@ -102,7 +102,6 @@ destinations:
     description: New York Stock Exchange
     markets:
       - XASE
-      - XNAS
       - XNYS
   - id: NASDAQ
     description: NASDAQ
@@ -113,7 +112,7 @@ destinations:
 
 preferred_destinations:
   - market: XASE
-    destination: NYSE
+    destination: NASDAQ
   - market: XASX
     destination: ASXT
   - market: XNAS
