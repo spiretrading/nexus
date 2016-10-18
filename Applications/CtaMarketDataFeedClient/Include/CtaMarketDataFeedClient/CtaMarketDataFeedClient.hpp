@@ -320,7 +320,7 @@ namespace MarketDataService {
     const auto LOT_SIZE = 100;
     const auto LOT_DIGITS = 3;
     auto cursor = message.m_data;
-    auto symbol = ParseAlphanumeric(SYMBOL_LENGTH, Beam::Store(cursor));
+    auto symbol = ParseSymbol(SYMBOL_LENGTH, Beam::Store(cursor));
     ++cursor;
     ++cursor;
     ++cursor;
@@ -365,7 +365,7 @@ namespace MarketDataService {
     auto cursor = message.m_data;
     auto timestamp = ParseTimestamp(message.m_cqsTimestamp);
     auto market = ParseMarket(message.m_participantId);
-    auto symbol = ParseAlphanumeric(SYMBOL_LENGTH, Beam::Store(cursor));
+    auto symbol = ParseSymbol(SYMBOL_LENGTH, Beam::Store(cursor));
     ++cursor;
     auto testMessageIndicator = ParseChar(Beam::Store(cursor));
     if(testMessageIndicator == 'T') {
@@ -425,7 +425,7 @@ namespace MarketDataService {
     auto timestamp = ParseTimestamp(message.m_cqsTimestamp);
     auto market = ParseMarket(message.m_participantId);
     auto cursor = message.m_data;
-    auto symbol = ParseAlphanumeric(SYMBOL_LENGTH, Beam::Store(cursor));
+    auto symbol = ParseSymbol(SYMBOL_LENGTH, Beam::Store(cursor));
     auto saleCondition = ParseChar(Beam::Store(cursor));
     auto quantity = ParseNumeric(VOLUME_DIGITS, Beam::Store(cursor));
     auto denominatorIndicator = ParseChar(Beam::Store(cursor));
@@ -450,7 +450,7 @@ namespace MarketDataService {
     auto timestamp = ParseTimestamp(message.m_cqsTimestamp);
     auto market = ParseMarket(message.m_participantId);
     auto cursor = message.m_data;
-    auto symbol = ParseAlphanumeric(SYMBOL_LENGTH, Beam::Store(cursor));
+    auto symbol = ParseSymbol(SYMBOL_LENGTH, Beam::Store(cursor));
     ++cursor;
     auto testMessageIndicator = ParseChar(Beam::Store(cursor));
     if(testMessageIndicator == 'T') {
