@@ -61,6 +61,7 @@ namespace MarketDataService {
       char ParseChar(Beam::Out<const char*> cursor);
       std::string ParseAlphanumeric(std::size_t size,
         Beam::Out<const char*> cursor);
+      std::string ParseSymbol(std::size_t size, Beam::Out<const char*> cursor);
       Quantity ParseNumeric(std::size_t length, Beam::Out<const char*> cursor);
       Money ParseMoney(std::size_t length, char denominatorType,
         Beam::Out<const char*> cursor);
@@ -149,6 +150,30 @@ namespace MarketDataService {
     auto token = *cursor;
     while(size > 0) {
       if(*token != ' ') {
+        value += *token;
+        ++token;
+        --size;
+      } else {
+        token += size;
+        size = 0;
+      }
+    }
+    *cursor = token;
+    return value;
+  }
+
+  template<typename MarketDataFeedClientType, typename ProtocolClientType>
+  std::string CtaMarketDataFeedClient<MarketDataFeedClientType,
+      ProtocolClientType>::ParseSymbol(std::size_t size,
+      Beam::Out<const char*> cursor) {
+    std::string value;
+    auto token = *cursor;
+    while(size > 0) {
+      if(*token == '/') {
+        value += '.';
+        ++token;
+        --size;
+      } else if(*token != ' ') {
         value += *token;
         ++token;
         --size;
