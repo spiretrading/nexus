@@ -227,11 +227,22 @@ tsxv:
 # NASDAQ fees based on http://nasdaqtrader.com/Trader.aspx?id=PriceListTrading2
 nasdaq:
 
-  # Active, Passive, Hidden
+  #            Active Passive
+  # Default       X      X
+  # Hidden        X      X
+  # Cross         X      X
+  # On Open       X      X
+  # On Close      X      X
+  # Retail        X      X
   fee_table:
-    [0.0030, -0.0021, 0.0000]
+    [[0.00300, -0.00210],
+     [0.00300,  0.00000],
+     [0.00100,  0.00100],
+     [0.00150,  0.00150],
+     [0.00145,  0.00145],
+     [0.00000, -0.00340]]
 
-  sub_dollar_rate: 0.0030
+  sub_dollar_table: [0.0030, 0.0000]
 
 # NYSE fees based on https://www.nyse.com/publicdocs/nyse/markets/nyse/NYSE_Price_List.pdf
 nyse:
@@ -252,5 +263,5 @@ nyse:
      [0.00110,  0.0011],
      [0.00000,  0.0003]]
 
-  sub_dollar_rate: 0.0030
+  sub_dollar_table: [0.0030, 0.0000]
 ...
