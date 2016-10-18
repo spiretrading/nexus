@@ -22,9 +22,6 @@ namespace MarketDataService {
     //! market data server.
     boost::posix_time::ptime m_timeOrigin;
 
-    //! The Market disseminating the data.
-    Nexus::MarketCode m_market;
-
     //! The Country of origin.
     Nexus::CountryCode m_country;
 
@@ -52,10 +49,6 @@ namespace MarketDataService {
     CtaConfiguration ctaConfig;
     ctaConfig.m_isLoggingMessages = Beam::Extract<bool>(config,
       "enable_logging", false);
-    auto market = Beam::Extract<std::string>(config, "market");
-    auto marketEntry = ParseMarketEntry(market, marketDatabase);
-    ctaConfig.m_country = marketEntry.m_countryCode;
-    ctaConfig.m_market = marketEntry.m_code;
     auto& marketCodes = Beam::GetNode(config, "market_codes");
     for(auto& marketCode : marketCodes) {
       auto code = Beam::Extract<std::string>(marketCode, "code");
