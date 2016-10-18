@@ -121,6 +121,9 @@ namespace Nexus {
           executionReport.m_liquidityFlag[0] == '0') {
         type = NsdqFeeTable::Type::PASSIVE;
         category = NsdqFeeTable::Category::DEFAULT;
+      } else if(executionReport.m_liquidityFlag[0] == 'X') {
+        type = NsdqFeeTable::Type::ACTIVE;
+        category = NsdqFeeTable::Category::DEFAULT;
       } else if(executionReport.m_liquidityFlag[0] == 'e') {
         type = NsdqFeeTable::Type::PASSIVE;
         category = NsdqFeeTable::Category::RETAIL;

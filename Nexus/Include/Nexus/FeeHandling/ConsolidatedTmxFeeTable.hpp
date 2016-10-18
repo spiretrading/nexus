@@ -325,12 +325,12 @@ namespace Nexus {
           order.GetInfo().m_fields, executionReport);
       } else {
         std::cout << "Unknown market [TMX]: \"" <<
-          order.GetInfo().m_fields.m_security.GetMarket() << "\"";
+          order.GetInfo().m_fields.m_security.GetMarket() << "\"\n";
         return CalculateFee(feeTable.m_tsxFeeTable, classification,
           order.GetInfo().m_fields, executionReport);
       }
     } else {
-      std::cout << "Unknown last market [TMX]: \"" << lastMarket << "\"";
+      std::cout << "Unknown last market [TMX]: \"" << lastMarket << "\"\n";
       return Money::ZERO;
     }
   }
