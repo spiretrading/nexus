@@ -346,7 +346,7 @@ namespace MarketDataService {
     auto nationalBboIndicator = ParseChar(Beam::Store(cursor));
     auto finraBboIndicator = ParseChar(Beam::Store(cursor));
     auto market = ParseMarket(message.m_participantId);
-    Security security{symbol, m_config.m_market, m_config.m_country};
+    Security security{symbol, m_config.m_country};
     Quote bid{bidPrice, bidSize, Side::BID};
     Quote ask{askPrice, askSize, Side::ASK};
     if(nationalBboIndicator == '1') {
@@ -407,7 +407,7 @@ namespace MarketDataService {
     ++cursor;
     auto nationalBboIndicator = ParseChar(Beam::Store(cursor));
     auto finraBboIndicator = ParseChar(Beam::Store(cursor));
-    Security security{symbol, m_config.m_market, m_config.m_country};
+    Security security{symbol, m_config.m_country};
     Quote bid{bidPrice, bidSize, Side::BID};
     Quote ask{askPrice, askSize, Side::ASK};
     if(nationalBboIndicator == '1') {
@@ -443,7 +443,7 @@ namespace MarketDataService {
       TimeAndSale::Condition::Type::REGULAR, std::string{saleCondition}};
     TimeAndSale timeAndSale{timestamp, price, quantity, condition,
       market.GetData()};
-    Security security{symbol, m_config.m_market, m_config.m_country};
+    Security security{symbol, m_config.m_country};
     m_marketDataFeedClient->PublishTimeAndSale(
       SecurityTimeAndSale{timeAndSale, security});
   }
@@ -485,7 +485,7 @@ namespace MarketDataService {
       TimeAndSale::Condition::Type::REGULAR, std::string{saleCondition}};
     TimeAndSale timeAndSale{timestamp, price, quantity, condition,
       market.GetData()};
-    Security security{symbol, m_config.m_market, m_config.m_country};
+    Security security{symbol, m_config.m_country};
     m_marketDataFeedClient->PublishTimeAndSale(
       SecurityTimeAndSale{timeAndSale, security});
   }

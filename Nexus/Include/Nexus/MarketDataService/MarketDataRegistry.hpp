@@ -306,7 +306,6 @@ namespace Details {
     Beam::Threading::With(*entry,
       [&] (SecurityEntry& entry) {
         if(entry.GetSecurity().GetMarket().IsEmpty()) {
-          BEAM_ASSERT(!bboQuote.GetIndex().GetMarket().IsEmpty());
           auto verifiedSecurity = m_verifiedSecurities.Find(
             bboQuote.GetIndex());
           if(verifiedSecurity.is_initialized()) {
