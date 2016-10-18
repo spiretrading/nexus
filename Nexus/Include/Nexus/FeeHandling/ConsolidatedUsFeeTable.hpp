@@ -67,6 +67,8 @@ namespace Nexus {
       auto& destination = order.GetInfo().m_fields.m_destination;
       if(destination == DefaultDestinations::NASDAQ()) {
         return ToString(DefaultMarkets::NASDAQ());
+      } else if(destination == DefaultDestinations::NYSE()) {
+        return ToString(DefaultMarkets::NYSE());
       } else {
         return std::string{};
       }
@@ -78,7 +80,7 @@ namespace Nexus {
         executionReport);
     } else {
       std::cout << "Unknown last market [US]: \"" <<
-        order.GetInfo().m_fields.m_destination << "\"";
+        order.GetInfo().m_fields.m_destination << "\"\n";
       return Money::ZERO;
     }
   }
