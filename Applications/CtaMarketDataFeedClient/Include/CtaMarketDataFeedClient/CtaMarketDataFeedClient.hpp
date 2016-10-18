@@ -173,6 +173,14 @@ namespace MarketDataService {
         value += '.';
         ++token;
         --size;
+      } else if(*token == 'p') {
+        value += ".P";
+        ++token;
+        --size;
+      } else if(*token == 'w') {
+        value += ".V";
+        ++token;
+        --size;
       } else if(*token != ' ') {
         value += *token;
         ++token;

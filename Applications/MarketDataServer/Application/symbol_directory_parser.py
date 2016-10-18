@@ -23,7 +23,7 @@ def parse_nasdaq(out_file):
       out_file.write('  - symbol: %s.NSDQ\n' % tokens[0].strip())
       description = tokens[1].strip()
       if description.find('-') != -1:
-        description = description[0 : description.find('-')]
+        description = description[0 : description.rfind('-')]
       description = description.strip()
       out_file.write('    name: %s\n' % description)
 
