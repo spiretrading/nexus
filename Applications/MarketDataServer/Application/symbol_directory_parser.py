@@ -4,10 +4,10 @@ def parse_tsx(out_file):
   book = xlrd.open_workbook('tsx_symbols.xls')
   sheet = book.sheets()[0]
   for row in xrange(10, sheet.nrows):
-    out_file.write('  - symbol: ' +
-      sheet.cell(row, 4).value.encode('ascii', 'ignore') + '.TSX\n')
-    out_file.write('    name: ' +
-      sheet.cell(row, 3).value.encode('ascii', 'ignore') + '\n')
+    symbol = '%s.TSX' % sheet.cell(row, 4).value.encode('ascii', 'ignore')
+    name = sheet.cell(row, 3).value.encode('ascii', 'ignore')
+    out_file.write('  - symbol: %s\n' % symbol)
+    out_file.write('    name: "%s"\n' % name)
 
 def parse_nasdaq(out_file):
   in_file = open('nasdaqlisted.txt', 'r')
@@ -20,12 +20,13 @@ def parse_nasdaq(out_file):
       tokens = line.split('|')
       if tokens[0].find('File Creation Time') != -1:
         continue
-      out_file.write('  - symbol: %s.NSDQ\n' % tokens[0].strip())
+      symbol = '%s.NSDQ' % tokens[0].strip()
       description = tokens[1].strip()
       if description.find('-') != -1:
         description = description[0 : description.rfind('-')]
       description = description.strip()
-      out_file.write('    name: %s\n' % description)
+      out_file.write('  - symbol: "%s"\n' % symbol)
+      out_file.write('    name: "%s"\n' % description)
 
 def parse_nyse(out_file):
   in_file = open('otherlisted.txt', 'r')
@@ -49,12 +50,12 @@ def parse_nyse(out_file):
         exchange = 'ARCA'
       elif exchange == 'Z':
         exchange = 'BATS'
-      out_file.write('  - symbol: %s.%s\n' % (symbol, exchange))
+      out_file.write('  - symbol: "%s.%s"\n' % (symbol, exchange))
       description = tokens[1].strip()
       if description.find('-') != -1:
         description = description[0 : description.find('-')]
       description = description.strip()
-      out_file.write('    name: %s\n' % description)
+      out_file.write('    name: "%s"\n' % description)
 
 def main():
   out_file = open('symbols', 'w')
