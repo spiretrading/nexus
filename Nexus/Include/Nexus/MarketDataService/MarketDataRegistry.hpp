@@ -168,6 +168,7 @@ namespace Details {
       using SyncMarketEntry = Beam::Threading::Sync<MarketEntry>;
       using SyncSecurityEntry = Beam::Threading::Sync<SecurityEntry>;
       Beam::Threading::Sync<rtv::Trie<char, SecurityInfo>> m_securityDatabase;
+      Beam::SynchronizedUnorderedMap<Security, Security> m_verifiedSecurities;
       Beam::SynchronizedUnorderedMap<MarketCode, std::shared_ptr<Beam::Remote<
         SyncMarketEntry, Beam::Threading::Mutex>>> m_marketEntries;
       Beam::SynchronizedUnorderedMap<Security, std::shared_ptr<Beam::Remote<
@@ -192,6 +193,8 @@ namespace Details {
         securityDatabase[key.c_str()] = securityInfo;
         securityDatabase[name.c_str()] = securityInfo;
       });
+    m_verifiedSecurities.Update(securityInfo.m_security,
+      securityInfo.m_security);
   }
 
   inline std::vector<SecurityInfo> MarketDataRegistry::SearchSecurityInfo(
@@ -234,6 +237,10 @@ namespace Details {
     if(security.GetSymbol().empty() ||
         security.GetCountry() == CountryDatabase::NONE) {
       return Security{security.GetSymbol(), CountryDatabase::NONE};
+    }
+    auto verifiedSecurity = m_verifiedSecurities.Find(security);
+    if(verifiedSecurity.is_initialized()) {
+      return *verifiedSecurity;
     }
     auto entry = m_securityEntries.Find(security);
     if(!entry.is_initialized() || !(*entry)->IsAvailable()) {
@@ -300,9 +307,15 @@ namespace Details {
       [&] (SecurityEntry& entry) {
         if(entry.GetSecurity().GetMarket().IsEmpty()) {
           BEAM_ASSERT(!bboQuote.GetIndex().GetMarket().IsEmpty());
-          entry.SetSecurity(bboQuote.GetIndex());
-          auto key = ToString(bboQuote.GetIndex(), GetDefaultMarketDatabase());
-          SecurityInfo securityInfo{bboQuote.GetIndex(), key, ""};
+          auto verifiedSecurity = m_verifiedSecurities.Find(
+            bboQuote.GetIndex());
+          if(verifiedSecurity.is_initialized()) {
+            entry.SetSecurity(*verifiedSecurity);
+          } else {
+            entry.SetSecurity(bboQuote.GetIndex());
+          }
+          auto key = ToString(entry.GetSecurity(), GetDefaultMarketDatabase());
+          SecurityInfo securityInfo{entry.GetSecurity(), key, ""};
           Beam::Threading::With(m_securityDatabase,
             [&] (rtv::Trie<char, SecurityInfo>& securityDatabase) {
               securityDatabase.insert(key.c_str(), securityInfo);
