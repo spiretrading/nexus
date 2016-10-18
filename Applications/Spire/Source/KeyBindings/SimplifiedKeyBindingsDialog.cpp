@@ -2283,7 +2283,6 @@ namespace {
     PopulateNyseOpenCloseOrders(asexOrderTypes);
     PopulateNasdaqOrders(asexOrderTypes);
     auto& nasdaqOrderTypes = orderTypes[DefaultMarkets::NASDAQ()];
-    PopulateNyseOrders(nasdaqOrderTypes);
     PopulateNasdaqOrders(nasdaqOrderTypes);
     auto& nyseOrderTypes = orderTypes[DefaultMarkets::NYSE()];
     PopulateNyseOrders(nyseOrderTypes);
