@@ -67,8 +67,8 @@ namespace Nexus {
     //! The fee table.
     std::array<std::array<Money, TYPE_COUNT>, CATEGORY_COUNT> m_feeTable;
 
-    //! The sub-dollar rate.
-    boost::rational<int> m_subDollarRate;
+    //! The sub-dollar rates.
+    std::array<boost::rational<int>, TYPE_COUNT> m_subDollarTable;
   };
 
   //! Parses a NyseFeeTable from a YAML configuration.
@@ -79,8 +79,8 @@ namespace Nexus {
   inline NyseFeeTable ParseNyseFeeTable(const YAML::Node& config) {
     NyseFeeTable feeTable;
     ParseFeeTable(config, "fee_table", Beam::Store(feeTable.m_feeTable));
-    feeTable.m_subDollarRate = Beam::Extract<boost::rational<int>>(config,
-      "sub_dollar_rate");
+    ParseFeeTable(config, "sub_dollar_table",
+      Beam::Store(feeTable.m_subDollarTable));
     return feeTable;
   }
 
@@ -94,8 +94,8 @@ namespace Nexus {
   */
   inline Money LookupFee(const NyseFeeTable& feeTable, NyseFeeTable::Type type,
       NyseFeeTable::Category category) {
-    return feeTable.m_feeTable[static_cast<int>(type)][
-      static_cast<int>(category)];
+    return feeTable.m_feeTable[static_cast<int>(category)][
+      static_cast<int>(type)];
   }
 
   //! Tests if an OrderFields represents a hidden liquidity provider.
@@ -122,10 +122,6 @@ namespace Nexus {
       const OrderExecutionService::ExecutionReport& executionReport) {
     if(executionReport.m_lastQuantity == 0) {
       return Money::ZERO;
-    }
-    if(executionReport.m_lastPrice < Money::ONE) {
-      return feeTable.m_subDollarRate *
-        (executionReport.m_lastQuantity * executionReport.m_lastPrice);
     }
     auto isHidden = IsNyseHiddenLiquidityProvider(fields);
     NyseFeeTable::Type type = NyseFeeTable::Type::ACTIVE;
@@ -165,6 +161,11 @@ namespace Nexus {
     } else {
       std::cout << "Unknown liquidity flag [NYSE]: \"" <<
         executionReport.m_liquidityFlag << "\"\n";
+    }
+    if(executionReport.m_lastPrice < Money::ONE) {
+      auto rate = feeTable.m_subDollarTable[static_cast<int>(type)];
+      return rate *
+        (executionReport.m_lastQuantity * executionReport.m_lastPrice);
     }
     auto fee = LookupFee(feeTable, type, category);
     return executionReport.m_lastQuantity * fee;

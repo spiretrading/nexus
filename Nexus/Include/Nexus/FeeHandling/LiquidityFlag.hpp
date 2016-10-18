@@ -55,15 +55,15 @@ namespace Nexus {
     \param config The YAML Node to parse the fees from.
     \param table The table to store the fees in.
   */
-  template<std::size_t COLUMNS>
+  template<typename T, std::size_t COLUMNS>
   void ParseFeeTable(const YAML::Node& config,
-      Beam::Out<std::array<Money, COLUMNS>> table) {
+      Beam::Out<std::array<T, COLUMNS>> table) {
     if(config.size() != COLUMNS) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Column size is invalid."});
     }
     for(auto columnIndex = 0; columnIndex != COLUMNS; ++columnIndex) {
       auto& column = config[columnIndex];
-      auto fee = Beam::Extract<Money>(column);
+      auto fee = Beam::Extract<T>(column);
       (*table)[columnIndex] = fee;
     }
   }
@@ -74,9 +74,9 @@ namespace Nexus {
     \param name The name of the fee table to parse.
     \param table The table to store the fees in.
   */
-  template<std::size_t COLUMNS>
+  template<typename T, std::size_t COLUMNS>
   void ParseFeeTable(const YAML::Node& config, const std::string& name,
-      Beam::Out<std::array<Money, COLUMNS>> table) {
+      Beam::Out<std::array<T, COLUMNS>> table) {
     auto node = config.FindValue(name);
     if(node == nullptr) {
       BOOST_THROW_EXCEPTION(
@@ -90,9 +90,9 @@ namespace Nexus {
     \param config The YAML Node to parse the fees from.
     \param table The table to store the fees in.
   */
-  template<std::size_t ROWS, std::size_t COLUMNS>
+  template<typename T, std::size_t ROWS, std::size_t COLUMNS>
   void ParseFeeTable(const YAML::Node& config,
-      Beam::Out<std::array<std::array<Money, COLUMNS>, ROWS>> table) {
+      Beam::Out<std::array<std::array<T, COLUMNS>, ROWS>> table) {
     if(config.size() != ROWS) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Row size is invalid."});
     }
@@ -103,7 +103,7 @@ namespace Nexus {
       }
       for(auto columnIndex = 0; columnIndex != COLUMNS; ++columnIndex) {
         auto& column = row[columnIndex];
-        auto fee = Beam::Extract<Money>(column);
+        auto fee = Beam::Extract<T>(column);
         (*table)[rowIndex][columnIndex] = fee;
       }
     }
@@ -115,9 +115,9 @@ namespace Nexus {
     \param name The name of the fee table to parse.
     \param table The table to store the fees in.
   */
-  template<std::size_t ROWS, std::size_t COLUMNS>
+  template<typename T, std::size_t ROWS, std::size_t COLUMNS>
   void ParseFeeTable(const YAML::Node& config, const std::string& name,
-      Beam::Out<std::array<std::array<Money, COLUMNS>, ROWS>> table) {
+      Beam::Out<std::array<std::array<T, COLUMNS>, ROWS>> table) {
     auto node = config.FindValue(name);
     if(node == nullptr) {
       BOOST_THROW_EXCEPTION(

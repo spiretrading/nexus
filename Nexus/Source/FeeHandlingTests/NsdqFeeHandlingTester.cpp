@@ -22,7 +22,6 @@ namespace {
   NsdqFeeTable BuildFeeTable() {
     NsdqFeeTable feeTable;
     PopulateFeeTable(Store(feeTable.m_feeTable));
-    feeTable.m_subDollarRate = {30, 10000};
     return feeTable;
   }
 }

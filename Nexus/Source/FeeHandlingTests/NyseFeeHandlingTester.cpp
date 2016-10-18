@@ -21,7 +21,6 @@ namespace {
 
   NyseFeeTable BuildFeeTable() {
     NyseFeeTable feeTable;
-    feeTable.m_subDollarRate = {30, 10000};
     PopulateFeeTable(Store(feeTable.m_feeTable));
     return feeTable;
   }
