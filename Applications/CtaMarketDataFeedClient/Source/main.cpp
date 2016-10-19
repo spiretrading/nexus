@@ -187,9 +187,10 @@ int main(int argc, const char** argv) {
   ApplicationProtocolClient protocolClient{&feedChannel};
   CtaConfiguration ctaConfig;
   try {
+    auto countryDatabase = definitionsClient->LoadCountryDatabase();
     auto marketDatabase = definitionsClient->LoadMarketDatabase();
     auto timeZones = definitionsClient->LoadTimeZoneDatabase();
-    ctaConfig = CtaConfiguration::Parse(config, marketDatabase,
+    ctaConfig = CtaConfiguration::Parse(config, countryDatabase, marketDatabase,
       timeClient->GetTime(), timeZones);
   } catch(const std::exception& e) {
     cerr << "Error initializing CTA configuration: " << e.what() << endl;

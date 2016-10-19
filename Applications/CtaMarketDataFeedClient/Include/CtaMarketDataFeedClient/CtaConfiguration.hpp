@@ -31,24 +31,33 @@ namespace MarketDataService {
     //! Parses a CtaConfiguration from a YAML Node.
     /*!
       \param config The YAML Node to parse.
+      \param countryDatabase The set of valid countries.
       \param marketDatabase The set of valid markets.
       \param currentTime The current time used to establish the time origin.
       \param timeZones The list of time zones.
       \return The CtaConfiguration represented by the <i>config</i>.
     */
     static CtaConfiguration Parse(const YAML::Node& config,
+      const CountryDatabase& countryDatabase,
       const MarketDatabase& marketDatabase,
       const boost::posix_time::ptime& currentTime,
       const boost::local_time::tz_database& timeZones);
   };
 
   inline CtaConfiguration CtaConfiguration::Parse(const YAML::Node& config,
+      const CountryDatabase& countryDatabase,
       const MarketDatabase& marketDatabase,
       const boost::posix_time::ptime& currentTime,
       const boost::local_time::tz_database& timeZones) {
     CtaConfiguration ctaConfig;
     ctaConfig.m_isLoggingMessages = Beam::Extract<bool>(config,
       "enable_logging", false);
+    auto country = Beam::Extract<std::string>(config, "country", "US");
+    auto countryCode = ParseCountryCode(country, countryDatabase);
+    if(countryCode == CountryDatabase::NONE) {
+      BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException(
+        "Country not found.", config.FindValue("country")->GetMark()));
+    }
     auto& marketCodes = Beam::GetNode(config, "market_codes");
     for(auto& marketCode : marketCodes) {
       auto code = Beam::Extract<std::string>(marketCode, "code");
