@@ -168,29 +168,60 @@ namespace MarketDataService {
       Beam::Out<const char*> cursor) {
     std::string value;
     auto token = *cursor;
+    auto state = 0;
+    std::string suffix;
     while(size > 0) {
-      if(*token == '/') {
-        value += '.';
-        ++token;
-        --size;
-      } else if(*token == 'p') {
-        value += ".P";
-        ++token;
-        --size;
-      } else if(*token == 'w') {
-        value += ".V";
-        ++token;
-        --size;
-      } else if(*token != ' ') {
-        value += *token;
-        ++token;
-        --size;
-      } else {
-        token += size;
-        size = 0;
+      if(state == 0) {
+        if(*token == '/' || *token == 'p' || *token == 'r' || *token == 'w') {
+          state = 1;
+        } else if(*token != ' ') {
+          value += *token;
+          ++token;
+          --size;
+        } else {
+          token += size;
+          size = 0;
+        }
+      }
+      if(state == 1) {
+        if(*token != ' ') {
+          suffix += *token;
+          ++token;
+          --size;
+        } else {
+          token += size;
+          size = 0;
+        }
       }
     }
     *cursor = token;
+    if(!suffix.empty()) {
+      value += '.';
+      auto suffixToken = suffix.c_str();
+      auto suffixSize = suffix.size();
+      while(suffixSize > 0) {
+        if(*suffixToken == 'p') {
+          value += "PR";
+          ++suffixToken;
+          --suffixSize;
+        } else if(*suffixToken == 'r') {
+          value += "RT";
+          ++suffixToken;
+          --suffixSize;
+        } else if(*suffixToken == 'w') {
+          value += "WI";
+          ++suffixToken;
+          --suffixSize;
+        } else if(*suffixToken == '/') {
+          ++suffixToken;
+          --suffixSize;
+        } else {
+          value += *suffixToken;
+          ++suffixToken;
+          --suffixSize;
+        }
+      }
+    }
     return value;
   }
 
