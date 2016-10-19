@@ -72,6 +72,8 @@ namespace OasisOrderExecutionService {
     private:
       Beam::TimeService::LiveNtpTimeClient* m_timeClient;
       FixUtilities::FixOrderLog m_orderLog;
+      Beam::SynchronizedUnorderedMap<OrderExecutionService::OrderId,
+        Security> m_securities;
       mutable boost::optional<boost::optional<std::string>> m_accountTag;
 
       const boost::optional<std::string>& GetAccount() const;

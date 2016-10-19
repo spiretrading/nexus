@@ -23,6 +23,21 @@ using namespace std;
 namespace {
   const auto PRIMARY_TRADE_LIQUIDITY_INDICATOR_TAG = 9730;
   const auto ALTERNATE_TRADE_LIQUIDITY_INDICATOR_TAG = 9882;
+
+  template<typename Message>
+  void UpdateSymbology(const Security& security, Out<Message> message) {
+    if(security.GetMarket() != DefaultMarkets::NASDAQ()) {
+      auto separator = security.GetSymbol().find('.');
+      if(separator != std::string::npos) {
+        auto symbol = security.GetSymbol().substr(0, separator);
+        auto suffix = security.GetSymbol().substr(separator + 1);
+        if(!suffix.empty()) {
+          message->set(FIX::Symbol{symbol});
+          message->set(FIX::SymbolSfx{suffix});
+        }
+      }
+    }
+  }
 }
 
 LekFixApplication::LekFixApplication(RefType<LiveNtpTimeClient> timeClient)
@@ -30,10 +45,13 @@ LekFixApplication::LekFixApplication(RefType<LiveNtpTimeClient> timeClient)
 
 const Order& LekFixApplication::Recover(
     const SequencedAccountOrderRecord& orderRecord) {
+  m_securities.Insert((*orderRecord)->m_info.m_orderId,
+    (*orderRecord)->m_info.m_fields.m_security);
   return m_orderLog.Recover(orderRecord);
 }
 
 const Order& LekFixApplication::Submit(const OrderInfo& info) {
+  m_securities.Insert(info.m_orderId, info.m_fields.m_security);
   return m_orderLog.Submit(info, GetSessionId().getSenderCompID(),
     GetSessionId().getTargetCompID(),
     [&] (Out<FIX42::NewOrderSingle> newOrderSingle) {
@@ -56,6 +74,7 @@ const Order& LekFixApplication::Submit(const OrderInfo& info) {
       } else if(info.m_fields.m_destination == DefaultDestinations::NYSE()) {
         newOrderSingle->set(FIX::ExDestination{"NYSE"});
       }
+      UpdateSymbology(info.m_fields.m_security, Store(newOrderSingle));
       auto& accountTag = GetAccount();
       if(accountTag.is_initialized()) {
         newOrderSingle->set(FIX::Account{*accountTag});
@@ -76,9 +95,14 @@ const Order& LekFixApplication::Submit(const OrderInfo& info) {
 
 void LekFixApplication::Cancel(const OrderExecutionSession& session,
     OrderId orderId) {
+  auto security = m_securities.Find(orderId);
+  if(!security.is_initialized()) {
+    return;
+  }
   m_orderLog.Cancel(session, orderId, m_timeClient->GetTime(),
     GetSessionId().getSenderCompID(), GetSessionId().getTargetCompID(),
     [&] (Out<FIX42::OrderCancelRequest> orderCancelRequest) {
+      UpdateSymbology(*security, Store(orderCancelRequest));
     });
 }
 
