@@ -39,8 +39,56 @@ def parse_nyse(out_file):
       tokens = line.split('|')
       if tokens[0].find('File Creation Time') != -1:
         continue
-      symbol = tokens[3].strip()
-      symbol = symbol.replace('p', '.P').replace('w', '.V').replace('/', '.')
+      entry = tokens[3].strip()
+      symbol = ''
+      suffix = ''
+      token = 0
+      size = len(entry)
+      state = 0
+      while size > 0:
+        if state == 0:
+          if entry[token] == '/' or entry[token] == 'p' or entry[token] == 'r' \
+              or entry[token] == 'w':
+            state = 1
+          elif entry[token] != ' ':
+            symbol += entry[token]
+            token += 1
+            size -= 1
+          else:
+            token += size
+            size = 0
+        if state == 1:
+          if entry[token] != ' ':
+            suffix += entry[token]
+            token += 1
+            size -= 1
+          else:
+            token += size
+            size = 0
+      if len(suffix) != 0:
+        symbol += '.'
+        token = 0
+        size = len(suffix)
+        while size != 0:
+          if suffix[token] == 'p':
+            symbol += 'PR'
+            token += 1
+            size -= 1
+          elif suffix[token] == 'r':
+            symbol += 'RT'
+            token += 1
+            size -= 1
+          elif suffix[token] == 'w':
+            symbol += 'WI'
+            token += 1
+            size -= 1
+          elif suffix[token] == '/':
+            token += 1
+            size -= 1
+          else:
+            symbol += suffix[token]
+            token += 1
+            size -= 1
       exchange = tokens[2].strip()
       if exchange == 'A':
         exchange = 'AMEX'
