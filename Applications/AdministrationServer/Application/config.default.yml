@@ -29,6 +29,10 @@ entitlements:
     applicability:
       - source: XASE
         messages: [BBO, MQT, TAS]
+      - source: ARCX
+        messages: [BBO, MQT, TAS]
+      - source: BATS
+        messages: [BBO, MQT, TAS]
   - name: UTP Level 1
     price: 22.00
     currency: USD
