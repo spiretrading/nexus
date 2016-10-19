@@ -293,7 +293,8 @@ HttpResponse ClientWebPortalServlet::OnCreateAccount(
   identity.m_country = static_cast<uint16_t>(
     boost::get<int64_t>(identityParameter["country"]));
   identity.m_userNotes = boost::get<string>(identityParameter["user_notes"]);
-  auto accountRoles = AccountRoles{boost::get<int64_t>(parameters["roles"])};
+  auto accountRoles = AccountRoles{static_cast<uint64_t>(
+    boost::get<int64_t>(parameters["roles"]))};
   auto validatedGroup =
     m_serviceClients->GetServiceLocatorClient().LoadDirectoryEntry(group.m_id);
   if(validatedGroup != group) {
