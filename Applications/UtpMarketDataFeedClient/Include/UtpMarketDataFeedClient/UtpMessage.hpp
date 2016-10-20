@@ -75,10 +75,10 @@ namespace MarketDataService {
     message.m_subMarketCenterId = Beam::FromBigEndian(*token);
     ++token;
     message.m_sipTimestamp = Beam::FromBigEndian(
-      static_cast<std::uint64_t>(*token));
+      *reinterpret_cast<const std::uint64_t*>(token));
     token += sizeof(std::uint64_t);
     message.m_participantTimestamp = Beam::FromBigEndian(
-      static_cast<std::uint64_t>(*token));
+      *reinterpret_cast<const std::uint64_t*>(token));
     token += sizeof(std::uint64_t);
     message.m_data = token;
     const char* endToken = std::strpbrk(token, "\x03\x1F");
