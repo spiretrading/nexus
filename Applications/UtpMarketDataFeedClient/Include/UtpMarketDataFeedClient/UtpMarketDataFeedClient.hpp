@@ -65,8 +65,7 @@ namespace MarketDataService {
       std::string ParseAlphanumeric(std::size_t size,
         Beam::Out<const char*> cursor);
       MarketCode ParseMarket(std::uint8_t identifier);
-      boost::posix_time::ptime ParseTimestamp(
-        const std::array<char, 6>& code);
+      boost::posix_time::ptime ParseTimestamp(std::uint64_t timestamp);
       void HandleShortFormMarketQuoteMessage(const UtpMessage& message);
       void HandleLongFormMarketQuoteMessage(const UtpMessage& message);
       void HandleShortFormTradeReportMessage(const UtpMessage& message);
@@ -81,7 +80,7 @@ namespace MarketDataService {
       UtpMarketDataFeedClient(const UtpConfiguration& config,
       MarketDataFeedClientForward&& marketDataFeedClient,
       ProtocolClientForward&& protocolClient)
-      : m_config(config),
+      : m_config{config},
         m_marketDataFeedClient{std::forward<MarketDataFeedClientForward>(
           marketDataFeedClient)},
         m_protocolClient{std::forward<ProtocolClientForward>(protocolClient)} {}
@@ -204,7 +203,8 @@ namespace MarketDataService {
   template<typename MarketDataFeedClientType, typename ProtocolClientType>
   boost::posix_time::ptime UtpMarketDataFeedClient<
       MarketDataFeedClientType, ProtocolClientType>::ParseTimestamp(
-      const std::array<char, 6>& code) {
+      std::uint64_t timestamp) {
+/*
     const auto BASE = 95;
     std::uint64_t microseconds = 0;
     for(auto digit : code) {
@@ -212,11 +212,14 @@ namespace MarketDataService {
     }
     return m_config.m_timeOrigin +
       boost::posix_time::microseconds(microseconds);
+*/
+    return {}
   }
 
   template<typename MarketDataFeedClientType, typename ProtocolClientType>
   void UtpMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
       HandleShortFormMarketQuoteMessage(const UtpMessage& message) {
+/*
     const auto SYMBOL_SIZE = 5;
     const auto LOT_DIGITS = 2;
     const auto LOT_SIZE = 100;
@@ -295,11 +298,13 @@ namespace MarketDataService {
     MarketQuote marketQuote{market, bid, ask, timestamp};
     m_marketDataFeedClient->PublishMarketQuote(
       SecurityMarketQuote{marketQuote, security});
+*/
   }
 
   template<typename MarketDataFeedClientType, typename ProtocolClientType>
   void UtpMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
       HandleLongFormMarketQuoteMessage(const UtpMessage& message) {
+/*
     const auto SYMBOL_SIZE = 11;
     const auto LOT_DIGITS = 7;
     const auto LOT_SIZE = 100;
@@ -380,11 +385,13 @@ namespace MarketDataService {
     MarketQuote marketQuote{market, bid, ask, timestamp};
     m_marketDataFeedClient->PublishMarketQuote(
       SecurityMarketQuote{marketQuote, security});
+*/
   }
 
   template<typename MarketDataFeedClientType, typename ProtocolClientType>
   void UtpMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
       HandleShortFormTradeReportMessage(const UtpMessage& message) {
+/*
     const auto SYMBOL_SIZE = 5;
     const auto PRICE_DIGITS = 6;
     const auto VOLUME_DIGITS = 6;
@@ -404,11 +411,13 @@ namespace MarketDataService {
       market.GetData()};
     m_marketDataFeedClient->PublishTimeAndSale(
       SecurityTimeAndSale{timeAndSale, security});
+*/
   }
 
   template<typename MarketDataFeedClientType, typename ProtocolClientType>
   void UtpMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
       HandleLongFormTradeReportMessage(const UtpMessage& message) {
+/*
     const auto SYMBOL_SIZE = 11;
     const auto CONDITION_SIZE = 4;
     const auto PRICE_DIGITS = 10;
@@ -432,6 +441,7 @@ namespace MarketDataService {
       market.GetData()};
     m_marketDataFeedClient->PublishTimeAndSale(
       SecurityTimeAndSale{timeAndSale, security});
+*/
   }
 
   template<typename MarketDataFeedClientType, typename ProtocolClientType>

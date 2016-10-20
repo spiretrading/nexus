@@ -4,8 +4,8 @@
 #include <Beam/IO/NotConnectedException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
-#include <Beam/Pointers/LocalPtr.hpp>
 #include <boost/noncopyable.hpp>
+#include "Nexus/MoldUdp64/MoldUdp64Client.hpp"
 #include "UtpMarketDataFeedClient/UtpMessage.hpp"
 
 namespace Nexus {
@@ -42,11 +42,7 @@ namespace MarketDataService {
       void Close();
 
     private:
-      using Buffer = typename Channel::Reader::Buffer;
-      Beam::GetOptionalLocalPtr<ChannelType> m_channel;
-      Buffer m_buffer;
-      const char* m_token;
-      std::uint32_t m_sequenceNumber;
+      MoldUdp64::MoldUdp64Client<ChannelType> m_moldClient;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
@@ -55,7 +51,7 @@ namespace MarketDataService {
   template<typename ChannelType>
   template<typename ChannelForward>
   UtpProtocolClient<ChannelType>::UtpProtocolClient(ChannelForward&& channel)
-      : m_channel{std::forward<ChannelType>(channel)} {}
+      : m_moldClient{std::forward<ChannelForward>(channel)} {}
 
   template<typename ChannelType>
   UtpProtocolClient<ChannelType>::~UtpProtocolClient() {
@@ -67,26 +63,10 @@ namespace MarketDataService {
     if(!m_openState.IsOpen()) {
       BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException{});
     }
-    while(true) {
-      if(m_token == m_buffer.GetData() + m_buffer.GetSize()) {
-        m_buffer.Reset();
-        m_channel->GetReader().Read(Beam::Store(m_buffer));
-        m_token = m_buffer.GetData() + 1;
-      }
-      auto remainingSize = static_cast<std::uint16_t>(
-        (m_buffer.GetData() + m_buffer.GetSize()) - m_token);
-      auto message = UtpMessage::Parse(Beam::Store(m_token), remainingSize);
-      if(m_sequenceNumber == -1 || message.m_sequenceNumber ==
-          m_sequenceNumber + 1) {
-        m_sequenceNumber = message.m_sequenceNumber;
-        return message;
-      } else if(message.m_sequenceNumber > m_sequenceNumber + 1) {
-        std::cout << "Packets dropped: " << (m_sequenceNumber + 1) << " - " <<
-          (message.m_sequenceNumber - 1) << std::endl;
-        m_sequenceNumber = message.m_sequenceNumber;
-        return message;
-      }
-    }
+    auto moldMessage = m_moldClient.Read();
+    auto token = moldMessage.m_data;
+    auto message = UtpMessage::Parse(Beam::Store(token), moldMessage.m_length);
+    return message;
   }
 
   template<typename ChannelType>
@@ -95,9 +75,7 @@ namespace MarketDataService {
       return;
     }
     try {
-      m_channel->GetConnection().Open();
-      m_sequenceNumber = -1;
-      m_token = m_buffer.GetData();
+      m_moldClient.Open();
     } catch(std::exception&) {
       m_openState.SetOpenFailure();
       Shutdown();
@@ -115,7 +93,7 @@ namespace MarketDataService {
 
   template<typename ChannelType>
   void UtpProtocolClient<ChannelType>::Shutdown() {
-    m_channel->GetConnection().Close();
+    m_moldClient.Close();
     m_openState.SetClosed();
   }
 }

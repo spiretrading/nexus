@@ -5,6 +5,7 @@
 #include <cstring>
 #include <stdexcept>
 #include <Beam/Pointers/Out.hpp>
+#include <Beam/Utilities/Endian.hpp>
 #include <boost/throw_exception.hpp>
 
 namespace Nexus {
@@ -15,38 +16,32 @@ namespace MarketDataService {
    */
   struct UtpMessage {
 
+    //! Protocol Version.
+    std::uint8_t m_version;
+
     //! The message category.
     std::uint8_t m_category;
 
     //! The message type.
     std::uint8_t m_type;
 
-    //! The session identifier.
-    std::uint8_t m_identifier;
-
-    //! The retransmission requestor.
-    std::array<char, 2> m_retransmissionRequestor;
-
-    //! The message sequence number.
-    std::uint32_t m_sequenceNumber;
-
     //! The market center originator ID.
     std::uint8_t m_marketCenterOriginatorId;
-
-    //! The SIP timestamp.
-    std::array<char, 6> m_sipTimestamp;
 
     //! The sub market center ID.
     std::uint8_t m_subMarketCenterId;
 
-    //! The timestamp from the market participant.
-    std::array<char, 6> m_marketTimestamp;
+    //! The SIP timestamp.
+    std::uint64_t m_sipTimestamp;
 
-    //! The timestamp from the FINRA ADF.
-    std::array<char, 6> m_finraTimestamp;
+    //! The participant timestamp.
+    std::uint64_t m_participantTimestamp;
 
-    //! The length of data in the payload.
-    std::uint16_t m_dataLength;
+    //! The participant token.
+    std::uint64_t m_participantToken;
+
+    //! The size of the payload;
+    int m_dataLength;
 
     //! The payload data.
     const char* m_data;
@@ -63,52 +58,35 @@ namespace MarketDataService {
 
   inline UtpMessage UtpMessage::Parse(Beam::Out<const char*> data,
       std::uint16_t size) {
-    static const auto HEADER_LENGTH = 43;
-    static const auto SEQUENCE_NUMBER_LENGTH = 8;
-    static const auto RETRANSMISSION_REQUESTOR_LENGTH = 2;
-    static const auto TIMESTAMP_LENGTH = 6;
-    static const auto RESERVED_GAP_LENGTH = 3;
-    static const auto TRANSACTION_ID_LENGTH = 7;
+    static const auto HEADER_LENGTH = 29;
     if(size < HEADER_LENGTH) {
       BOOST_THROW_EXCEPTION(std::runtime_error("Buffer too short."));
     }
     UtpMessage message;
     const char* token = *data;
-    message.m_category = *token;
+    message.m_version = Beam::FromBigEndian(*token);
     ++token;
-    message.m_type = *token;
+    message.m_category = Beam::FromBigEndian(*token);
     ++token;
-    message.m_identifier = *token;
+    message.m_type = Beam::FromBigEndian(*token);
     ++token;
-    std::memcpy(message.m_retransmissionRequestor.data(), token,
-      RETRANSMISSION_REQUESTOR_LENGTH);
-    token += RETRANSMISSION_REQUESTOR_LENGTH;
-    message.m_sequenceNumber = 0;
-    for(auto i = 0; i < SEQUENCE_NUMBER_LENGTH; ++i) {
-      message.m_sequenceNumber = message.m_sequenceNumber * 10 +
-        (*token - '0');
-      ++token;
-    }
-    message.m_marketCenterOriginatorId = *token;
+    message.m_marketCenterOriginatorId = Beam::FromBigEndian(*token);
     ++token;
-    std::memcpy(message.m_sipTimestamp.data(), token, TIMESTAMP_LENGTH);
-    token += TIMESTAMP_LENGTH;
-    token += RESERVED_GAP_LENGTH;
-    message.m_subMarketCenterId = *token;
+    message.m_subMarketCenterId = Beam::FromBigEndian(*token);
     ++token;
-    std::memcpy(message.m_marketTimestamp.data(), token, TIMESTAMP_LENGTH);
-    token += TIMESTAMP_LENGTH;
-    std::memcpy(message.m_finraTimestamp.data(), token, TIMESTAMP_LENGTH);
-    token += TIMESTAMP_LENGTH;
-    token += TRANSACTION_ID_LENGTH;
+    message.m_sipTimestamp = Beam::FromBigEndian(
+      static_cast<std::uint64_t>(*token));
+    token += sizeof(std::uint64_t);
+    message.m_participantTimestamp = Beam::FromBigEndian(
+      static_cast<std::uint64_t>(*token));
+    token += sizeof(std::uint64_t);
     message.m_data = token;
     const char* endToken = std::strpbrk(token, "\x03\x1F");
     if(endToken == nullptr) {
       BOOST_THROW_EXCEPTION(std::runtime_error("End of message not found."));
     }
-    message.m_dataLength = static_cast<std::uint16_t>(
-      (endToken - *data) - HEADER_LENGTH);
-    *data = endToken + 1;
+    message.m_dataLength = static_cast<int>(size - HEADER_LENGTH);
+    *data += size;
     return message;
   }
 }
