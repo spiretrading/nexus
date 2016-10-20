@@ -213,7 +213,7 @@ namespace MarketDataService {
     return m_config.m_timeOrigin +
       boost::posix_time::microseconds(microseconds);
 */
-    return {}
+    return {};
   }
 
   template<typename MarketDataFeedClientType, typename ProtocolClientType>
