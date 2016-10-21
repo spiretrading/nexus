@@ -181,8 +181,9 @@ namespace MarketDataService {
   boost::posix_time::ptime UtpMarketDataFeedClient<
       MarketDataFeedClientType, ProtocolClientType>::ParseTimestamp(
       std::uint64_t timestamp) {
-    return m_config.m_timeOrigin +
-      boost::posix_time::microseconds(timestamp);
+    static const boost::posix_time::ptime EPOCH_TIME{
+      boost::gregorian::date{1970, 1, 1}};
+    return EPOCH_TIME + boost::posix_time::microseconds(timestamp / 1000);
   }
 
   template<typename MarketDataFeedClientType, typename ProtocolClientType>
@@ -250,29 +251,23 @@ namespace MarketDataService {
   template<typename MarketDataFeedClientType, typename ProtocolClientType>
   void UtpMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
       HandleLongFormMarketQuoteMessage(const UtpMessage& message) {
-/*
     const auto SYMBOL_SIZE = 11;
-    const auto LOT_DIGITS = 7;
     const auto LOT_SIZE = 100;
-    const auto PRICE_DIGITS = 10;
     auto cursor = message.m_data;
     auto timestamp = ParseTimestamp(message.m_sipTimestamp);
+    cursor += 8;
     auto symbol = ParseAlphanumeric(SYMBOL_SIZE, Beam::Store(cursor));
+    auto bidPrice = ParseMoneyLong(Beam::Store(cursor));
+    auto bidSize = ParseNumeric<std::uint32_t>(Beam::Store(cursor));
+    auto askPrice = ParseMoneyLong(Beam::Store(cursor));
+    auto askSize = ParseNumeric<std::uint32_t>(Beam::Store(cursor));
     ++cursor;
     ++cursor;
     ++cursor;
     ++cursor;
+    auto bboIndicator = ParseNumeric<std::uint8_t>(Beam::Store(cursor));
     ++cursor;
-    auto bidDenominatorType = ParseChar(Beam::Store(cursor));
-    auto bidPrice = ParseMoney(PRICE_DIGITS, bidDenominatorType,
-      Beam::Store(cursor));
-    auto bidSize = LOT_SIZE * ParseNumeric(LOT_DIGITS, Beam::Store(cursor));
-    auto askDenominatorType = ParseChar(Beam::Store(cursor));
-    auto askPrice = ParseMoney(PRICE_DIGITS, askDenominatorType,
-      Beam::Store(cursor));
-    auto askSize = LOT_SIZE * ParseNumeric(LOT_DIGITS, Beam::Store(cursor));
-    cursor += 3;
-    auto bboIndicator = ParseChar(Beam::Store(cursor));
+    ++cursor;
     auto market = ParseMarket(message.m_marketCenterOriginatorId);
     Security security{symbol, m_config.m_market, m_config.m_country};
     Quote bid{bidPrice, bidSize, Side::BID};
@@ -280,19 +275,12 @@ namespace MarketDataService {
     if(bboIndicator == '2') {
       ++cursor;
       ++cursor;
-      ++cursor;
-      ++cursor;
-      auto bboBidDenominatorType = ParseChar(Beam::Store(cursor));
-      auto bboBidPrice = ParseMoney(PRICE_DIGITS, bboBidDenominatorType,
-        Beam::Store(cursor));
-      auto bboBidSize = LOT_SIZE * ParseNumeric(LOT_DIGITS,
+      auto bboBidPrice = ParseMoneyShort(Beam::Store(cursor));
+      auto bboBidSize = LOT_SIZE * ParseNumeric<std::uint16_t>(
         Beam::Store(cursor));
       ++cursor;
-      ++cursor;
-      auto bboAskDenominatorType = ParseChar(Beam::Store(cursor));
-      auto bboAskPrice = ParseMoney(PRICE_DIGITS, bboAskDenominatorType,
-        Beam::Store(cursor));
-      auto bboAskSize = LOT_SIZE * ParseNumeric(LOT_DIGITS,
+      auto bboAskPrice = ParseMoneyShort(Beam::Store(cursor));
+      auto bboAskSize = LOT_SIZE * ParseNumeric<std::uint16_t>(
         Beam::Store(cursor));
       Quote bboBid{bboBidPrice, bboBidSize, Side::BID};
       Quote bboAsk{bboAskPrice, bboAskSize, Side::ASK};
@@ -300,23 +288,14 @@ namespace MarketDataService {
       m_marketDataFeedClient->PublishBboQuote(
         SecurityBboQuote{bboQuote, security});
     } else if(bboIndicator == '3') {
-      const auto LONG_FORM_PRICE_DIGITS = 10;
-      const auto LONG_FORM_LOT_DIGITS = 7;
       ++cursor;
       ++cursor;
-      ++cursor;
-      ++cursor;
-      auto bboBidDenominatorType = ParseChar(Beam::Store(cursor));
-      auto bboBidPrice = ParseMoney(LONG_FORM_PRICE_DIGITS,
-        bboBidDenominatorType, Beam::Store(cursor));
-      auto bboBidSize = LOT_SIZE * ParseNumeric(LONG_FORM_LOT_DIGITS,
+      auto bboBidPrice = ParseMoneyLong(Beam::Store(cursor));
+      auto bboBidSize = LOT_SIZE * ParseNumeric<std::uint32_t>(
         Beam::Store(cursor));
       ++cursor;
-      ++cursor;
-      auto bboAskDenominatorType = ParseChar(Beam::Store(cursor));
-      auto bboAskPrice = ParseMoney(LONG_FORM_PRICE_DIGITS,
-        bboAskDenominatorType, Beam::Store(cursor));
-      auto bboAskSize = LOT_SIZE * ParseNumeric(LONG_FORM_LOT_DIGITS,
+      auto bboAskPrice = ParseMoneyLong(Beam::Store(cursor));
+      auto bboAskSize = LOT_SIZE * ParseNumeric<std::uint32_t>(
         Beam::Store(cursor));
       Quote bboBid{bboBidPrice, bboBidSize, Side::BID};
       Quote bboAsk{bboAskPrice, bboAskSize, Side::ASK};
@@ -331,7 +310,6 @@ namespace MarketDataService {
     MarketQuote marketQuote{market, bid, ask, timestamp};
     m_marketDataFeedClient->PublishMarketQuote(
       SecurityMarketQuote{marketQuote, security});
-*/
   }
 
   template<typename MarketDataFeedClientType, typename ProtocolClientType>
@@ -341,6 +319,7 @@ namespace MarketDataService {
     const auto SYMBOL_SIZE = 5;
     auto cursor = message.m_data;
     auto timestamp = ParseTimestamp(message.m_sipTimestamp);
+    cursor += 8;
     auto symbol = ParseAlphanumeric(SYMBOL_SIZE, Beam::Store(cursor));
     cursor += 8;
     auto price = ParseMoneyShort(Beam::Store(cursor));

@@ -16,9 +16,6 @@ namespace MarketDataService {
    */
   struct UtpMessage {
 
-    //! Protocol Version.
-    std::uint8_t m_version;
-
     //! The message category.
     std::uint8_t m_category;
 
@@ -58,14 +55,12 @@ namespace MarketDataService {
 
   inline UtpMessage UtpMessage::Parse(Beam::Out<const char*> data,
       std::uint16_t size) {
-    static const auto HEADER_LENGTH = 29;
+    static const auto HEADER_LENGTH = 28;
     if(size < HEADER_LENGTH) {
       BOOST_THROW_EXCEPTION(std::runtime_error("Buffer too short."));
     }
     UtpMessage message;
     const char* token = *data;
-    message.m_version = Beam::FromBigEndian(*token);
-    ++token;
     message.m_category = Beam::FromBigEndian(*token);
     ++token;
     message.m_type = Beam::FromBigEndian(*token);
@@ -80,11 +75,10 @@ namespace MarketDataService {
     message.m_participantTimestamp = Beam::FromBigEndian(
       *reinterpret_cast<const std::uint64_t*>(token));
     token += sizeof(std::uint64_t);
+    message.m_participantToken = Beam::FromBigEndian(
+      *reinterpret_cast<const std::uint64_t*>(token));
+    token += sizeof(std::uint64_t);
     message.m_data = token;
-    const char* endToken = std::strpbrk(token, "\x03\x1F");
-    if(endToken == nullptr) {
-      BOOST_THROW_EXCEPTION(std::runtime_error("End of message not found."));
-    }
     message.m_dataLength = static_cast<int>(size - HEADER_LENGTH);
     *data += size;
     return message;
