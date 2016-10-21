@@ -195,9 +195,9 @@ namespace MarketDataService {
     auto timestamp = ParseTimestamp(message.m_sipTimestamp);
     auto symbol = ParseAlphanumeric(SYMBOL_SIZE, Beam::Store(cursor));
     auto bidPrice = ParseMoneyShort(Beam::Store(cursor));
-    auto bidSize = ParseNumeric<std::uint16_t>(Beam::Store(cursor));
+    auto bidSize = LOT_SIZE * ParseNumeric<std::uint16_t>(Beam::Store(cursor));
     auto askPrice = ParseMoneyShort(Beam::Store(cursor));
-    auto askSize = ParseNumeric<std::uint16_t>(Beam::Store(cursor));
+    auto askSize = LOT_SIZE * ParseNumeric<std::uint16_t>(Beam::Store(cursor));
     ++cursor;
     ++cursor;
     ++cursor;
@@ -258,9 +258,9 @@ namespace MarketDataService {
     cursor += 8;
     auto symbol = ParseAlphanumeric(SYMBOL_SIZE, Beam::Store(cursor));
     auto bidPrice = ParseMoneyLong(Beam::Store(cursor));
-    auto bidSize = ParseNumeric<std::uint32_t>(Beam::Store(cursor));
+    auto bidSize = LOT_SIZE * ParseNumeric<std::uint32_t>(Beam::Store(cursor));
     auto askPrice = ParseMoneyLong(Beam::Store(cursor));
-    auto askSize = ParseNumeric<std::uint32_t>(Beam::Store(cursor));
+    auto askSize = LOT_SIZE * ParseNumeric<std::uint32_t>(Beam::Store(cursor));
     ++cursor;
     ++cursor;
     ++cursor;
