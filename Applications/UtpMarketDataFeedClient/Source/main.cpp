@@ -18,7 +18,6 @@
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/TimeService/ToLocalTime.hpp>
-#include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
@@ -42,7 +41,6 @@ using namespace Beam::Serialization;
 using namespace Beam::ServiceLocator;
 using namespace Beam::Services;
 using namespace Beam::Threading;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -122,28 +120,6 @@ int main(int argc, const char** argv) {
     cerr << "Unable to connect to the definitions service." << endl;
     return -1;
   }
-  unique_ptr<LiveNtpTimeClient> timeClient;
-  try {
-    auto timeServices = serviceLocatorClient->Locate(TimeService::SERVICE_NAME);
-    if(timeServices.empty()) {
-      cerr << "No time services available." << endl;
-      return -1;
-    }
-    auto& timeService = timeServices.front();
-    auto ntpPool = FromString<vector<IpAddress>>(get<string>(
-      timeService.GetProperties().At("addresses")));
-    timeClient = MakeLiveNtpTimeClient(ntpPool, Ref(socketThreadPool),
-      Ref(timerThreadPool));
-  } catch(const  std::exception& e) {
-    cerr << "Unable to initialize NTP client: " << e.what() << endl;
-    return -1;
-  }
-  try {
-    timeClient->Open();
-  } catch(const std::exception&) {
-    cerr << "NTP service unavailable." << endl;
-    return -1;
-  }
   optional<BaseMarketDataFeedClient> baseMarketDataFeedClient;
   try {
     auto marketDataServices = serviceLocatorClient->Locate(
@@ -188,9 +164,7 @@ int main(int argc, const char** argv) {
   UtpConfiguration utpConfig;
   try {
     auto marketDatabase = definitionsClient->LoadMarketDatabase();
-    auto timeZones = definitionsClient->LoadTimeZoneDatabase();
-    utpConfig = UtpConfiguration::Parse(config, marketDatabase,
-      timeClient->GetTime(), timeZones);
+    utpConfig = UtpConfiguration::Parse(config, marketDatabase);
   } catch(const std::exception& e) {
     cerr << "Error initializing UTP configuration: " << e.what() << endl;
     return -1;

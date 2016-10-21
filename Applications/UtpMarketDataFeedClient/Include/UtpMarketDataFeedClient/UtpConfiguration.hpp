@@ -18,10 +18,6 @@ namespace MarketDataService {
     //! Whether to log messages.
     bool m_isLoggingMessages;
 
-    //! The time used as the origin of market data messages disseminated by
-    //! market data server.
-    boost::posix_time::ptime m_timeOrigin;
-
     //! The Market disseminating the data.
     Nexus::MarketCode m_market;
 
@@ -35,20 +31,14 @@ namespace MarketDataService {
     /*!
       \param config The YAML Node to parse.
       \param marketDatabase The set of valid markets.
-      \param currentTime The current time used to establish the time origin.
-      \param timeZones The list of time zones.
       \return The UtpConfiguration represented by the <i>config</i>.
     */
     static UtpConfiguration Parse(const YAML::Node& config,
-      const MarketDatabase& marketDatabase,
-      const boost::posix_time::ptime& currentTime,
-      const boost::local_time::tz_database& timeZones);
+      const MarketDatabase& marketDatabase);
   };
 
   inline UtpConfiguration UtpConfiguration::Parse(const YAML::Node& config,
-      const MarketDatabase& marketDatabase,
-      const boost::posix_time::ptime& currentTime,
-      const boost::local_time::tz_database& timeZones) {
+      const MarketDatabase& marketDatabase) {
     UtpConfiguration utpConfig;
     utpConfig.m_isLoggingMessages = Beam::Extract<bool>(config,
       "enable_logging", false);
@@ -67,18 +57,6 @@ namespace MarketDataService {
       auto entry = ParseMarketCode(marketIdentifier, marketDatabase);
       utpConfig.m_marketCodes[code.front()] = entry;
     }
-    auto configTimezone = Beam::Extract<std::string>(config, "time_zone",
-      "Eastern_Time");
-    auto timeZone = timeZones.time_zone_from_region(configTimezone);
-    if(timeZone == nullptr) {
-      BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException(
-        "Time zone not found.", config.FindValue("time_zone")->GetMark()));
-    }
-    boost::posix_time::ptime serverDate{
-      Beam::TimeService::AdjustDateTime(currentTime, "UTC", configTimezone,
-      timeZones).date(), boost::posix_time::seconds(0)};
-    utpConfig.m_timeOrigin = Beam::TimeService::AdjustDateTime(serverDate,
-      configTimezone, "UTC", timeZones);
     return utpConfig;
   }
 }
