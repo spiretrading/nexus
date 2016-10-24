@@ -1,15 +1,14 @@
 import httpConnectionManager from '../commons/http-connection-manager';
-import ResultCodes from './result-codes';
 import accountRoles from '../commons/account-roles';
-const ResultCode = ResultCodes;
 
 /** Spire admin client class */
 class AdminClient {
   /** @private */
   logErrorAndThrow(xhr) {
-    console.error('Spire Admin Client: Unexpected error happened.');
+    let errorMessage = 'Spire Admin Client: Unexpected error happened.';
+    console.error(errorMessage);
     console.error(xhr);
-    throw ResultCode.ERROR;
+    throw errorMessage;
   }
 
   loadAccountRoles(directoryEntry) {

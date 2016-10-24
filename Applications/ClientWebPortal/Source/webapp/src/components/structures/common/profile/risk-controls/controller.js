@@ -31,7 +31,12 @@ class Controller {
     let directoryEntry = this.componentModel.directoryEntry;
     let requiredDataFetchPromise = this.getRequiredData();
 
-    preloaderTimer.start(requiredDataFetchPromise, null, Config.WHOLE_PAGE_PRELOADER_WIDTH, Config.WHOLE_PAGE_PRELOADER_HEIGHT).then((responses) => {
+    preloaderTimer.start(
+      requiredDataFetchPromise,
+      null,
+      Config.WHOLE_PAGE_PRELOADER_WIDTH,
+      Config.WHOLE_PAGE_PRELOADER_HEIGHT
+    ).then((responses) => {
       let riskParameters = responses[0];
       this.componentModel.riskParameters = riskParameters;
       this.componentModel.directoryEntry = directoryEntry;

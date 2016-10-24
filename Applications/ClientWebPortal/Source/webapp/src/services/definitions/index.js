@@ -45,11 +45,44 @@ class DefinitionsService {
     }
   }
 
+  /** @private */
+  loadComplianceRuleSchemas() {
+    return definitionsServiceClient.loadComplianceRuleSchemas.apply(definitionsServiceClient)
+      .then(onResponse.bind(this));
+
+    function onResponse(ruleSchemas) {
+      this.complianceRuleSchemas = ruleSchemas;
+    }
+  }
+
+  /** @private */
+  loadMarkets() {
+    return definitionsServiceClient.loadMarketDatabase.apply(definitionsServiceClient)
+      .then(onResponse.bind(this));
+
+    function onResponse(response) {
+      this.markets = new HashMap();
+      for (let i=0; i<response.entries.length; i++) {
+        let marketCode = response.entries[i].code;
+        this.markets.set(marketCode, response.entries[i]);
+      }
+      this.markets.set('*', {
+        code: '*',
+        country_code: 65535,
+        currency: 65535,
+        description: '*',
+        display_name: '*'
+      });
+    }
+  }
+
   initialize() {
     return Promise.all([
       this.loadCountries.apply(this),
       this.loadCurrencies.apply(this),
-      this.loadEntitlements.apply(this)
+      this.loadEntitlements.apply(this),
+      this.loadComplianceRuleSchemas.apply(this),
+      this.loadMarkets(this)
     ]);
   }
 
@@ -103,6 +136,14 @@ class DefinitionsService {
 
   getEntitlements() {
     return this.entitlements;
+  }
+
+  getComplianceRuleSchemas() {
+    return this.complianceRuleSchemas;
+  }
+
+  getMarket(marketCode) {
+    return this.markets.get(marketCode);
   }
 }
 

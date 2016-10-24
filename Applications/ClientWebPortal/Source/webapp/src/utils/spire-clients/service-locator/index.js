@@ -7,9 +7,10 @@ const ResultCode = ResultCodes;
 class ServiceLocatorClient {
   /** @private */
   logErrorAndThrow(xhr) {
-    console.error('Spire Service Locator Client: Unexpected error happened.');
+    let errorMessage = 'Spire Service Locator Client: Unexpected error happened.';
+    console.error(errorMessage);
     console.error(xhr);
-    throw ResultCode.ERROR;
+    throw errorMessage;
   }
 
   signIn(userName, password) {

@@ -49,6 +49,15 @@ class MobileRoutes extends Routes {
         }
       },
       {
+        path: 'profile-compliance/:type/:id/:name',
+        getComponent(location, cb) {
+          System.import('../components/structures/mobile/profile/routes')
+            .then((module) => { return { default: module.compliance } })
+            .then(loadRoute(cb))
+            .catch(errorLoading);
+        }
+      },
+      {
         path: 'searchProfiles-search',
         getComponent(location, cb) {
           System.import('../components/structures/mobile/search-profiles/routes')
