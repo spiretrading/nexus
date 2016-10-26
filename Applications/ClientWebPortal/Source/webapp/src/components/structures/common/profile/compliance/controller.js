@@ -47,8 +47,7 @@ class Controller {
             name: ruleEntryName,
             parameters: getRuleEntryParameters(ruleEntry.schema.parameters)
           },
-          state: ruleEntry.state,
-          wasPerAccount: true
+          state: ruleEntry.state
         };
 
         ruleEntries[i] = transformedRuleEntry;
@@ -79,7 +78,7 @@ class Controller {
   transformToPerAccountRuleEntries(ruleEntries) {
     for (let i=0; i<ruleEntries.length; i++) {
       let ruleEntry = ruleEntries[i];
-      if (ruleEntry.wasPerAccount) {
+      if (this.componentModel.isGroup && (ruleEntry.state == 2 || ruleEntry.state == 3)) {
         let ruleEntryName = ruleEntry.schema.name;
         let parameters = shallowCopy(ruleEntry.schema.parameters);
         parameters.push({
@@ -131,6 +130,7 @@ class Controller {
       this.componentModel.roles = responses[1];
       this.componentModel.userName = directoryEntry.name;
       this.componentModel.isAdmin = userService.isAdmin();
+      this.componentModel.isGroup = directoryEntry.type === 1;
 
       let rules = this.componentModel.complianceRuleEntries;
       rules[0].schema.parameters.push({

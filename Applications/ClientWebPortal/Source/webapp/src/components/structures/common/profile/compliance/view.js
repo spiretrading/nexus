@@ -1,10 +1,14 @@
 import './style.scss';
 import React from 'react';
+import ReactDOM from 'react-dom';
 import UpdatableView from 'commons/updatable-view';
 import deviceDetector from 'utils/device-detector';
 import UserInfoNav from 'components/reusables/common/user-info-nav';
 import PrimaryButton from 'components/reusables/common/primary-button';
 import CompliancePanel from 'components/reusables/common/compliance-panel';
+import definitionsService from 'services/definitions';
+import labelFormatter from 'utils/label-formatter';
+import modal from 'utils/modal';
 
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
@@ -15,6 +19,68 @@ class View extends UpdatableView {
     $('#compliance-container').fadeIn({
       duration: Config.FADE_DURATION
     });
+  }
+
+  /** @private */
+  getRuleEntryPanels() {
+    let entryPanels = [];
+    let entries = this.componentModel.complianceRuleEntries;
+    let onRuleUpdate = this.controller.onRuleUpdate.bind(this.controller);
+    for (let i=0; i<entries.length; i++) {
+      let entry = entries[i];
+      let model= {
+        ruleEntryId: entry.id,
+        schema: entry.schema,
+        state: entry.state,
+        isGroup: this.componentModel.isGroup
+      };
+      entryPanels.push(
+        <CompliancePanel key={i} model={model} onUpdate={onRuleUpdate}/>
+      );
+    }
+
+    return entryPanels;
+  }
+
+  /** @private */
+  onAddClick() {
+    modal.show($('#add-rule-modal'));
+  }
+
+  /** @private */
+  onNewRuleSelectBtnClick() {
+    let ruleTypeName = $('#compliance-container .rule-types li.selected').text();
+    if (ruleTypeName != '') {
+      ruleTypeName = labelFormatter.toLowerCaseWithUnderscore(ruleTypeName);
+      let schema = definitionsService.getComplianceRuleScehma(ruleTypeName);
+      let $newEntryWrapper = $('<div class="new-entry-wrapper"></div>');
+      let onRuleUpdate = this.controller.onRuleUpdate.bind(this.controller);
+      $('#compliance-container .add-rule-wrapper').before($newEntryWrapper);
+      let model = {
+        ruleEntryId: 0,
+        schema: schema,
+        state: 0,
+        isGroup: this.componentModel.isGroup
+      };
+      ReactDOM.render(
+        <CompliancePanel model={model} onUpdate={onRuleUpdate}/>,
+        $newEntryWrapper[0]
+      );
+      $('#compliance-container .rule-types li').removeClass('selected');
+      modal.hide($('#add-rule-modal'));
+    }
+  }
+
+  /** @private */
+  onNewRuleCancelBtnClick() {
+    $('#compliance-container .rule-types li').removeClass('selected');
+    modal.hide($('#add-rule-modal'));
+  }
+
+  /** @private */
+  onNewRuleTypeClick(event) {
+    $('#compliance-container .rule-types li').removeClass('selected');
+    $(event.currentTarget).addClass('selected');
   }
 
   showSavedMessage() {
@@ -41,26 +107,6 @@ class View extends UpdatableView {
       });
   }
 
-  /** @private */
-  getRuleEntryPanels() {
-    let entryPanels = [];
-    let entries = this.componentModel.complianceRuleEntries;
-    let onRuleUpdate = this.controller.onRuleUpdate.bind(this.controller);
-    for (let i=0; i<entries.length; i++) {
-      let entry = entries[i];
-      let model= {
-        ruleEntryId: entry.id,
-        schema: entry.schema,
-        state: entry.state
-      };
-      entryPanels.push(
-        <CompliancePanel key={i} model={model} onUpdate={onRuleUpdate}/>
-      );
-    }
-
-    return entryPanels;
-  }
-
   render() {
     let content;
 
@@ -77,8 +123,14 @@ class View extends UpdatableView {
       let saveBtnModel = {
         label: 'Save Changes'
       };
-      let saveButton, horizontalDivider;
+      let addNewRule, saveButton, horizontalDivider;
+
       if (this.componentModel.isAdmin) {
+        addNewRule =
+          <div className="add-rule-wrapper">
+            <span className="icon-add" onClick={this.onAddClick.bind(this)}></span>
+            <span className="title">Add new rule</span>
+          </div>
         saveButton = <PrimaryButton className="save-button" model={saveBtnModel} onClick={onSave}/>
         horizontalDivider = <hr/>
       }
@@ -89,6 +141,7 @@ class View extends UpdatableView {
             <UserInfoNav model={userInfoNavModel}/>
           </div>
           {complianceRuleEntries}
+          {addNewRule}
           {horizontalDivider}
           {saveButton}
           <div className="save-message"></div>
@@ -100,9 +153,48 @@ class View extends UpdatableView {
       className = 'container-fixed-width';
     }
 
+    let newRuleSelectBtnModel = {
+      label: 'Select'
+    };
+    let onNewRuleSelectBtnClick = this.onNewRuleSelectBtnClick.bind(this);
+
+    let newRuleCancelBtnModel = {
+      label: 'Cancel'
+    };
+    let onNewRuleCancelBtnClick = this.onNewRuleCancelBtnClick.bind(this);
+
+    let ruleTypes = [];
+    let schemas = definitionsService.getComplianceRuleSchemas();
+    let onNewRuleTypeClick = this.onNewRuleTypeClick.bind(this);
+    for (let i=0; i<schemas.length; i++) {
+      let schemaName = labelFormatter.toCapitalWithSpace(schemas[i].name);
+      ruleTypes.push(<li key={i} onClick={onNewRuleTypeClick}>{schemaName}</li>);
+    }
+
     return (
       <div id="compliance-container" className={className}>
         {content}
+
+        <div id="add-rule-modal" className="modal fade" tabIndex="-1" role="dialog">
+          <div className="modal-dialog" role="document">
+            <div className="modal-content">
+              <div className="modal-header">
+                Add new rule
+              </div>
+              <div className="modal-body change-picture-wrapper">
+                <div className="rule-types">
+                  <ul>
+                    {ruleTypes}
+                  </ul>
+                </div>
+                <div className="buttons">
+                  <PrimaryButton className="new-rule-select-button button" model={newRuleSelectBtnModel} onClick={onNewRuleSelectBtnClick}/>
+                  <PrimaryButton className="new-rule-cancel-button button" model={newRuleCancelBtnModel} onClick={onNewRuleCancelBtnClick}/>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

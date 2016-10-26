@@ -357,27 +357,60 @@ class View extends UpdatableView {
   render() {
     let name = this.componentModel.schema.name;
 
-    let stateDropdownModel = {
-      selectedValue: this.componentModel.state,
-      options: [
-        {
-          label: 'Active',
-          value: 0
-        },
-        {
-          label: 'Passive',
-          value: 1
-        },
-        {
-          label: 'Disabled',
-          value: 2
-        },
-        {
-          label: 'Deleted',
-          value: 3
-        },
-      ]
-    };
+    let stateDropdownModel;
+    if (this.componentModel.isGroup) {
+      stateDropdownModel = {
+        selectedValue: this.componentModel.state,
+        options: [
+          {
+            label: 'Consolidated Active',
+            value: 0
+          },
+          {
+            label: 'Consolidated Passive',
+            value: 1
+          },
+          {
+            label: 'Per Account Active',
+            value: 2
+          },
+          {
+            label: 'Per Account Passive',
+            value: 3
+          },
+          {
+            label: 'Disabled',
+            value: 4
+          },
+          {
+            label: 'Delete',
+            value: 5
+          },
+        ]
+      };
+    } else {
+      stateDropdownModel = {
+        selectedValue: this.componentModel.state,
+        options: [
+          {
+            label: 'Active',
+            value: 0
+          },
+          {
+            label: 'Passive',
+            value: 1
+          },
+          {
+            label: 'Disabled',
+            value: 2
+          },
+          {
+            label: 'Delete',
+            value: 3
+          },
+        ]
+      };
+    }
 
     let onStatusChange = this.controller.onStatusChange.bind(this.controller);
 

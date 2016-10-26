@@ -142,6 +142,15 @@ class DefinitionsService {
     return this.complianceRuleSchemas;
   }
 
+  getComplianceRuleScehma(schemaName) {
+    for (let i=0; i<this.complianceRuleSchemas.length; i++) {
+      if (this.complianceRuleSchemas[i].name === schemaName) {
+        return this.complianceRuleSchemas[i];
+      }
+    }
+    return null;
+  }
+
   getMarket(marketCode) {
     return this.markets.get(marketCode);
   }

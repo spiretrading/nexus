@@ -46,4 +46,79 @@
       color: $primaryGradient3;
     }
   }
+
+  .add-rule-wrapper {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    height: 40px;
+
+    .icon-add {
+      height: 23px;
+      font-size: 19px;
+      color: $primaryGradient3;
+      cursor: pointer;
+      margin-right: 20px;
+      margin-left: 4px;
+      transform: rotate(0deg);
+    }
+
+    .title {
+      flex: 1;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      margin-top: 2px;
+    }
+  }
+
+  #add-rule-modal {
+    .modal-dialog {
+      width: 300px;
+
+      .modal-content {
+        padding: 0;
+
+        .modal-header {
+          padding:15px 15px 0 15px;
+        }
+      }
+    }
+
+    .buttons {
+      padding: 15px;
+
+      .button {
+        width: 127px;
+      }
+    }
+
+    .new-rule-select-button {
+      margin-right: 15px;
+    }
+
+    .rule-types {
+      ul {
+        list-style-type: none;
+        padding-left: 0;
+        height: 324px;
+        overflow-y: auto;
+
+        li {
+          padding: 7px 15px;
+          cursor: pointer;
+
+          &:hover {
+            background-color: $primaryGradient3;
+            color: $white;
+          }
+
+          &.selected {
+            background-color: $primaryGradient3;
+            color: $white;
+          }
+        }
+      }
+    }
+  }
 }
