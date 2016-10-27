@@ -163,8 +163,8 @@ class View extends UpdatableView {
     };
     let onNewRuleCancelBtnClick = this.onNewRuleCancelBtnClick.bind(this);
 
-    let ruleTypes = [];
     let schemas = definitionsService.getComplianceRuleSchemas();
+    let ruleTypes = [];
     let onNewRuleTypeClick = this.onNewRuleTypeClick.bind(this);
     for (let i=0; i<schemas.length; i++) {
       let schemaName = labelFormatter.toCapitalWithSpace(schemas[i].name);
@@ -181,7 +181,7 @@ class View extends UpdatableView {
               <div className="modal-header">
                 Add new rule
               </div>
-              <div className="modal-body change-picture-wrapper">
+              <div className="modal-body">
                 <div className="rule-types">
                   <ul>
                     {ruleTypes}

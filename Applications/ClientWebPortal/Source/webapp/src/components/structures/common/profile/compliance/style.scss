@@ -122,3 +122,52 @@
     }
   }
 }
+
+main.mobile {
+  #compliance-container{
+    #add-rule-modal {
+      .modal-dialog {
+        width: 100vw;
+
+        .modal-content {
+          display: flex;
+          flex-direction: column;
+
+          .modal-body {
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+
+            .rule-types {
+              flex: 1;
+              overflow-y: auto;
+
+              ul {
+                height: auto;
+                overflow-y: auto;
+
+                li:hover {
+                  background-color: $white;
+                  color: $black;
+                }
+
+                li.selected {
+                  background-color: $primaryGradient3;
+                  color: $white;
+                }
+              }
+            }
+
+            .buttons {
+              display: flex;
+
+              .button {
+                flex: 1;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
