@@ -1,9 +1,10 @@
-import marketDataServiceClient from 'utils/spire-clients/market-data-service';
+import {MarketDataService} from 'spire-client';
 
 class Controller {
   constructor(react, componentModel) {
     this.componentModel = cloneObject(componentModel);
     this.onUpdated = react.props.onUpdate;
+    this.marketDataServiceClient = new MarketDataService();
   }
 
   getView() {
@@ -49,7 +50,7 @@ class Controller {
   }
 
   searchSymbols(input) {
-    return marketDataServiceClient.loadSecurityInfoFromPrefix(input);
+    return this.marketDataServiceClient.loadSecurityInfoFromPrefix(input);
   }
 }
 

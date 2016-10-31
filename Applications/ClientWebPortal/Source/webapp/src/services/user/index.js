@@ -1,5 +1,4 @@
-import serviceLocatorClient from 'utils/spire-clients/service-locator';
-import adminClient from 'utils/spire-clients/admin';
+import {Admin, ServiceLocator} from 'spire-client';
 import ResultCode from './result-codes';
 
 /** Centralized user related states and service actions */
@@ -13,12 +12,14 @@ class UserService {
     };
     this.userName;
     this.directoryEntry;
+    this.adminClient = new Admin();
+    this.serviceLocatorClient = new ServiceLocator();
   }
 
   initialize(userDirectoryEntry) {
     this.directoryEntry = userDirectoryEntry;
     this.userName = userDirectoryEntry.name;
-    return adminClient.loadAccountRoles.apply(adminClient, [this.directoryEntry])
+    return this.adminClient.loadAccountRoles.apply(this.adminClient, [this.directoryEntry])
       .then((response) => {
         this.roles = response;
       });
@@ -27,7 +28,7 @@ class UserService {
   signIn(userName, password) {
     let resultCode = null;
 
-    return serviceLocatorClient.signIn(userName, password)
+    return this.serviceLocatorClient.signIn(userName, password)
       .then(onSignInResponse.bind(this))
       .then(onUserRolesResponse.bind(this))
       .catch(onException);
@@ -40,7 +41,7 @@ class UserService {
         this.directoryEntry = response.directoryEntry;
       }
 
-      return adminClient.loadAccountRoles.apply(adminClient, [this.directoryEntry]);
+      return this.adminClient.loadAccountRoles.apply(this.adminClient, [this.directoryEntry]);
     }
 
     function onUserRolesResponse(response) {
@@ -60,7 +61,7 @@ class UserService {
   }
 
   signOut() {
-    serviceLocatorClient.signOut();
+    this.serviceLocatorClient.signOut();
     this.userName = null;
     this.directoryEntry = null;
   }

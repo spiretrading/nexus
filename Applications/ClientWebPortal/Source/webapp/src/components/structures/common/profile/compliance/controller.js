@@ -1,11 +1,12 @@
-import adminClient from 'utils/spire-clients/admin';
+import {Admin, ComplianceService} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
-import complianceServiceClient from 'utils/spire-clients/compliance-service';
 
 class Controller {
   constructor(componentModel) {
     this.componentModel = cloneObject(componentModel);
+    this.adminClient = new Admin();
+    this.complianceServiceClient = new ComplianceService();
   }
 
   getView() {
@@ -19,10 +20,9 @@ class Controller {
   /** @private */
   getRequiredData() {
     let directoryEntry = this.componentModel.directoryEntry;
-    let loadAccountRoles = adminClient.loadAccountRoles.apply(adminClient, [directoryEntry]);
-    let loadComplianceSettings = complianceServiceClient
-      .loadComplianceRuleEntries
-      .apply(complianceServiceClient, [directoryEntry]);
+    let loadAccountRoles = this.adminClient.loadAccountRoles.apply(this.adminClient, [directoryEntry]);
+    let loadComplianceSettings = this.complianceServiceClient.loadComplianceRuleEntries
+      .apply(this.complianceServiceClient, [directoryEntry]);
 
     return Promise.all([
       loadComplianceSettings,
@@ -165,7 +165,6 @@ class Controller {
 
   save() {
     this.componentModel.complianceRuleEntries = this.transformToPerAccountRuleEntries(this.componentModel.complianceRuleEntries);
-    console.debug(this.componentModel);
   }
 }
 

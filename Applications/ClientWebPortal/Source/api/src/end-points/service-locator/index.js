@@ -1,10 +1,10 @@
 import httpConnectionManager from '../commons/http-connection-manager';
 import ResultCodes from './result-codes';
-import accountRoles from 'utils/spire-clients/commons/account-roles';
+import accountRoles from '../commons/account-roles';
 const ResultCode = ResultCodes;
 
 /** Spire service locator client class */
-class ServiceLocatorClient {
+class ServiceLocator {
   /** @private */
   logErrorAndThrow(xhr) {
     let errorMessage = 'Spire Service Locator Client: Unexpected error happened.';
@@ -88,9 +88,9 @@ class ServiceLocatorClient {
 
   loadCurrentAccount() {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'service_locator/load_current_account';
-    return httpConnectionManager.send(apiPath, null, false)
+    return httpConnectionManager.send(apiPath, null, true)
       .catch(this.logErrorAndThrow);
   }
 }
 
-export default new ServiceLocatorClient();
+export default ServiceLocator;

@@ -1,7 +1,7 @@
 import httpConnectionManager from '../commons/http-connection-manager';
 
 /** Spire definitions service client class */
-class DefinitionsServiceClient {
+class DefinitionsService {
   /** @private */
   logErrorAndThrow(xhr) {
     let errorMessage = 'Spire Definitions Service Client: Unexpected error happened.';
@@ -68,4 +68,4 @@ class DefinitionsServiceClient {
   }
 }
 
-export default new DefinitionsServiceClient();
+export default DefinitionsService;

@@ -1,12 +1,17 @@
-import definitionsServiceClient from 'utils/spire-clients/definitions-service';
-import adminClient from 'utils/spire-clients/admin';
+import {Admin, DefinitionsService} from 'spire-client';
 import HashMap from 'hashmap';
+import {Money} from 'spire-client';
 
 /** Various definitions queried from back-end */
-class DefinitionsService {
+class DefService {
+  constructor() {
+    this.adminClient = new Admin();
+    this.definitionsServiceClient = new DefinitionsService();
+  }
+
   /** @private */
   loadCountries() {
-    return definitionsServiceClient.loadCountryData.apply(definitionsServiceClient).then(onResponse.bind(this));
+    return this.definitionsServiceClient.loadCountryData.apply(this.definitionsServiceClient).then(onResponse.bind(this));
 
     function onResponse(countries) {
       this.countries = countries;
@@ -22,7 +27,7 @@ class DefinitionsService {
 
   /** @private */
   loadCurrencies() {
-    return definitionsServiceClient.loadCurrencyData.apply(definitionsServiceClient).then(onResponse.bind(this));
+    return this.definitionsServiceClient.loadCurrencyData.apply(this.definitionsServiceClient).then(onResponse.bind(this));
 
     function onResponse(currencies) {
       this.currencies = currencies;
@@ -38,7 +43,7 @@ class DefinitionsService {
 
   /** @private */
   loadEntitlements() {
-    return adminClient.loadEntitlementsData.apply(adminClient).then(onResponse.bind(this));
+    return this.adminClient.loadEntitlementsData.apply(this.adminClient).then(onResponse.bind(this));
 
     function onResponse(entitlements) {
       this.entitlements = entitlements;
@@ -47,7 +52,7 @@ class DefinitionsService {
 
   /** @private */
   loadComplianceRuleSchemas() {
-    return definitionsServiceClient.loadComplianceRuleSchemas.apply(definitionsServiceClient)
+    return this.definitionsServiceClient.loadComplianceRuleSchemas.apply(this.definitionsServiceClient)
       .then(onResponse.bind(this));
 
     function onResponse(ruleSchemas) {
@@ -57,7 +62,7 @@ class DefinitionsService {
 
   /** @private */
   loadMarkets() {
-    return definitionsServiceClient.loadMarketDatabase.apply(definitionsServiceClient)
+    return this.definitionsServiceClient.loadMarketDatabase.apply(this.definitionsServiceClient)
       .then(onResponse.bind(this));
 
     function onResponse(response) {
@@ -156,4 +161,4 @@ class DefinitionsService {
   }
 }
 
-export default new DefinitionsService();
+export default new DefService();

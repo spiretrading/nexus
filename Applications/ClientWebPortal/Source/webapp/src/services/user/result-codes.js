@@ -1,7 +1,7 @@
-import serviceLocatorCodes from 'utils/spire-clients/service-locator/result-codes';
+import {ServiceLocatorResultCode} from 'spire-client';
 
 let clientCodes = [
-  serviceLocatorCodes
+  ServiceLocatorResultCode
 ];
 
 let codes = {

@@ -1,19 +1,19 @@
 import httpConnectionManager from '../commons/http-connection-manager';
 
 /** Spire compliance service client class */
-class ComplianceServiceClient {
+class MarketDataService {
   /** @private */
   logErrorAndThrow(xhr) {
-    let errorMessage = 'Spire Compliance Service Client: Unexpected error happened.';
+    let errorMessage = 'Spire Market Data Service Client: Unexpected error happened.';
     console.error(errorMessage);
     console.error(xhr);
     throw errorMessage;
   }
 
-  loadComplianceRuleEntries(directoryEntry) {
-    let apiPath = Config.BACKEND_API_ROOT_URL + 'compliance_service/load_directory_entry_compliance_rule_entry';
+  loadSecurityInfoFromPrefix(prefix) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'market_data_service/load_security_info_from_prefix';
     let payload = {
-      directory_entry: directoryEntry
+      prefix: prefix
     };
 
     return httpConnectionManager.send(apiPath, payload, true)
@@ -21,4 +21,4 @@ class ComplianceServiceClient {
   }
 }
 
-export default new ComplianceServiceClient();
+export default MarketDataService;

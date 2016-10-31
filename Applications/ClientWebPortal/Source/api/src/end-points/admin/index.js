@@ -2,7 +2,7 @@ import httpConnectionManager from '../commons/http-connection-manager';
 import accountRoles from '../commons/account-roles';
 
 /** Spire admin client class */
-class AdminClient {
+class Admin {
   /** @private */
   logErrorAndThrow(xhr) {
     let errorMessage = 'Spire Admin Client: Unexpected error happened.';
@@ -178,4 +178,4 @@ class AdminClient {
   }
 }
 
-export default new AdminClient();
+export default Admin;

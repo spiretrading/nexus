@@ -1,13 +1,13 @@
-import adminClient from 'utils/spire-clients/admin';
+import {Admin, ServiceLocator} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
-import serviceLocatorClient from 'utils/spire-clients/service-locator';
-import ResultCode from 'utils/spire-clients/service-locator/result-codes';
+import {ServiceLocatorResultCode} from 'spire-client';
 import userService from 'services/user';
-import {browserHistory} from 'react-router/es6';
 
 class Controller {
   constructor(componentModel) {
     this.componentModel = cloneObject(componentModel);
+    this.adminClient = new Admin();
+    this.serviceLocatorClient = new ServiceLocator();
   }
 
   getView() {
@@ -25,8 +25,8 @@ class Controller {
   /** @private */
   getRequiredData() {
     let directoryEntry = this.componentModel.directoryEntry;
-    let loadAccountRoles = adminClient.loadAccountRoles.apply(adminClient, [directoryEntry]);
-    let loadAccountIdentity = adminClient.loadAccountIdentity.apply(adminClient, [directoryEntry]);
+    let loadAccountRoles = this.adminClient.loadAccountRoles.apply(this.adminClient, [directoryEntry]);
+    let loadAccountIdentity = this.adminClient.loadAccountIdentity.apply(this.adminClient, [directoryEntry]);
 
     return Promise.all([
       loadAccountRoles,
@@ -72,12 +72,12 @@ class Controller {
   }
 
   onPasswordUpdate(newPassword) {
-    serviceLocatorClient.storePassword(this.componentModel.directoryEntry, newPassword)
+    this.serviceLocatorClient.storePassword(this.componentModel.directoryEntry, newPassword)
       .then(onResponse.bind(this))
       .catch(this.view.showSavePasswordFailMessage);
 
     function onResponse(response) {
-      if (response.resultCode === ResultCode.SUCCESS) {
+      if (response.resultCode === ServiceLocatorResultCode.SUCCESS) {
         this.view.showSavePasswordSuccess();
         this.view.resetInputs();
       } else {
@@ -95,7 +95,7 @@ class Controller {
     let directoryEntry = accountIdentity.directoryEntry;
     delete accountIdentity.roles;
     delete accountIdentity.directoryEntry;
-    adminClient.storeAccountIdentity.apply(adminClient, [directoryEntry, accountIdentity])
+    this.adminClient.storeAccountIdentity.apply(this.adminClient, [directoryEntry, accountIdentity])
       .then(this.view.showSavePersonalDetailsSuccessMessage)
       .catch(this.view.showSavePersonalDetailsFailMessage);
   }
