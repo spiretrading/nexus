@@ -32,13 +32,13 @@ class Money {
 
   multiply(operand) {
     let result = this.value * operand;
-    result = Math.floor(result);
+    result = Math.trunc(result);
     return new Money(result);
   }
 
   divide(operand) {
     let result = this.value / operand;
-    result = Math.floor(result);
+    result = Math.trunc(result);
     return new Money(result);
   }
 }
