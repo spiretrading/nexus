@@ -1,87 +1,68 @@
-const SHIFT_DIGITS = 1000000;
-
 class Money {
   constructor(number) {
     this.value = Number(number);
     if (isNaN(this.value)) {
       throw new 'Input must be a number.';
     }
-    this.value *= SHIFT_DIGITS;
   }
 
-  getAmount() {
-    return this.value / SHIFT_DIGITS;
+  toNumber() {
+    return this.value / MULTIPLIER;
   }
 
   toString() {
-    return this.value.toString();
+    return (this.value / MULTIPLIER).toString();
   }
 
   equals(operand) {
-    if (this.getAmount() === operand.getAmount()) {
-      return true;
-    } else {
-      return false;
-    }
+    return this.value === operand.value;
   }
 
   compare(operand) {
-    if (operand instanceof Money) {
-      if (this.getAmount() > operand.getAmount()) {
-        return 1;
-      } else if (this.getAmount() < operand.getAmount()) {
-        return -1;
-      } else {
-        return 0;
-      }
-    } else {
-      if (this.getAmount() > operand) {
-        return 1;
-      } else if (this.getAmount() < operand) {
-        return -1;
-      } else {
-        return 0;
-      }
-    }
+    return this.value - operand.value;
   }
 
   add(operand) {
-    if (operand instanceof Money) {
-      return new Money(this.getAmount() + operand.getAmount());
-    } else {
-      return new Money(this.getAmount() + operand);
-    }
+    return new Money(this.value + operand.value);
   }
 
   subtract(operand) {
-    if (operand instanceof Money) {
-      return new Money(this.getAmount() - operand.getAmount());
-    } else {
-      return new Money(this.getAmount() - operand);
-    }
+    return new Money(this.value - operand.value);
   }
 
   multiply(operand) {
-    if (operand instanceof Money) {
-      return new Money(this.getAmount() * operand.getAmount());
-    } else {
-      return new Money(this.getAmount() * operand);
-    }
+    let result = this.value * operand;
+    result = Math.floor(result);
+    return new Money(result);
   }
 
   divide(operand) {
-    if (operand instanceof Money) {
-      return new Money(this.getAmount() / operand.getAmount());
-    } else {
-      return new Money(this.getAmount() / operand);
-    }
+    let result = this.value / operand;
+    result = Math.floor(result);
+    return new Money(result);
   }
 }
 
-Money.ZERO = new Money(0);
-Money.ONE = new Money(1);
-Money.CENT = new Money(0.01);
-Money.BIP = new Money(0.0001);
-Money.EPSILON = new Money(0.000001);
+Money.fromRepresentation = (value) => {
+  return new Money(value);
+}
+
+Money.fromValue = (value) => {
+  return new Money(value * MULTIPLIER);
+}
+
+const MULTIPLIER = 1000000;
+const ZERO = Money.fromRepresentation(0);
+const ONE = Money.fromRepresentation(MULTIPLIER);
+const CENT = Money.fromRepresentation(MULTIPLIER / 100);
+const BIP = Money.fromRepresentation(MULTIPLIER / 10000);
+const EPSILON = Money.fromRepresentation(1);
+
+Money.ZERO = ZERO;
+Money.ONE = ONE;
+Money.CENT = CENT;
+Money.BIP = BIP;
+Money.EPSILON = EPSILON;
 
 export default Money;
+
