@@ -2,7 +2,7 @@ class Money {
   constructor(number) {
     this.value = Number(number);
     if (isNaN(this.value)) {
-      throw new 'Input must be a number.';
+      throw new Error('Input must be a number.');
     }
   }
 
