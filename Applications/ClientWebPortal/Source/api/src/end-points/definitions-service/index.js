@@ -1,14 +1,13 @@
 import httpConnectionManager from '../commons/http-connection-manager';
-import ResultCodes from './result-codes.js';
-const ResultCode = ResultCodes;
 
-/** Spire admin client class */
-class DefinitionsServiceClient {
+/** Spire definitions service client class */
+class DefinitionsService {
   /** @private */
   logErrorAndThrow(xhr) {
-    console.error('Spire Admin Client: Unexpected error happened.');
+    let errorMessage = 'Spire Definitions Service Client: Unexpected error happened.';
+    console.error(errorMessage);
     console.error(xhr);
-    throw ResultCode.ERROR;
+    throw errorMessage;
   }
 
   loadCountryData() {
@@ -53,6 +52,20 @@ class DefinitionsServiceClient {
       return currencies;
     }
   }
+
+  loadComplianceRuleSchemas() {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'definitions_service/load_compliance_rule_schemas';
+
+    return httpConnectionManager.send(apiPath, null, true)
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadMarketDatabase() {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'definitions_service/load_market_database';
+
+    return httpConnectionManager.send(apiPath, null, true)
+      .catch(this.logErrorAndThrow);
+  }
 }
 
-export default new DefinitionsServiceClient();
+export default DefinitionsService;

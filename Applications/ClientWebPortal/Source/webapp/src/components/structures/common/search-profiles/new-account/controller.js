@@ -1,13 +1,13 @@
-import adminClient from 'utils/spire-clients/admin';
+import {Admin, ServiceLocator} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
-import serviceLocatorClient from 'utils/spire-clients/service-locator';
-import ResultCode from 'utils/spire-clients/service-locator/result-codes';
 import userService from 'services/user';
 import {browserHistory} from 'react-router/es6';
 
 class Controller {
   constructor(componentModel) {
     this.componentModel = cloneObject(componentModel);
+    this.adminClient = new Admin();
+    this.serviceLocatorClient = new ServiceLocator();
   }
 
   getView() {
@@ -27,7 +27,7 @@ class Controller {
   /** @private */
   getRequiredData() {
     let directoryEntry = this.componentModel.directoryEntry;
-    let loadManagedTradingGroups = adminClient.loadManagedTradingGroups.apply(adminClient, [directoryEntry]);
+    let loadManagedTradingGroups = this.adminClient.loadManagedTradingGroups.apply(this.adminClient, [directoryEntry]);
 
     return Promise.all([
       loadManagedTradingGroups
@@ -103,7 +103,7 @@ class Controller {
       province: this.componentModel.province,
       user_notes: this.componentModel.userNotes
     };
-    serviceLocatorClient.createAccount(
+    this.serviceLocatorClient.createAccount(
       this.componentModel.userName,
       this.componentModel.groups[0] || null,
       accountIdentity,

@@ -132,3 +132,54 @@ select {
 select::-ms-expand {
   display: none;
 }
+
+ul.tagit {
+  border-radius: 0px;
+  padding-left: 15px;
+  padding-bottom: 3px;
+  margin-bottom: 0px;
+
+  li.tagit-new {
+    margin-top: 2px;
+    margin-bottom: 0px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+  }
+
+  li.tagit-choice {
+    border: 0px;
+    border-radius: 0px;
+    background: $lighterGrey;
+    margin-top: 2px;
+    margin-bottom: 0px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    padding-right: 20px;
+
+    .tagit-close {
+      font-size: 8px;
+      padding-right: 4px;
+
+      &:hover {
+        text-decoration: none;
+        color: $primaryGradient2;
+      }
+    }
+  }
+}
+
+.ui-state-active,
+.ui-widget-content .ui-state-active,
+.ui-widget-header .ui-state-active,
+a.ui-button:active,
+.ui-button:active,
+.ui-button.ui-state-active:hover {
+  border: 1px solid $primaryGradient3;
+  background: $primaryGradient3;
+  font-weight: normal;
+  color: #ffffff;
+}
+
+input[type=checkbox] {
+  -webkit-appearance: checkbox;
+}

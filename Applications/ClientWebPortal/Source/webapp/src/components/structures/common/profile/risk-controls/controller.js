@@ -1,10 +1,11 @@
-import adminClient from 'utils/spire-clients/admin';
+import {Admin} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
 
 class Controller {
   constructor(componentModel) {
     this.componentModel = cloneObject(componentModel);
+    this.adminClient = new Admin();
   }
 
   getView() {
@@ -18,8 +19,8 @@ class Controller {
   /** @private */
   getRequiredData() {
     let directoryEntry = this.componentModel.directoryEntry;
-    let loadAccountRiskParameters = adminClient.loadRiskParameters.apply(adminClient, [directoryEntry]);
-    let loadAccountRoles = adminClient.loadAccountRoles.apply(adminClient, [directoryEntry]);
+    let loadAccountRiskParameters = this.adminClient.loadRiskParameters.apply(this.adminClient, [directoryEntry]);
+    let loadAccountRoles = this.adminClient.loadAccountRoles.apply(this.adminClient, [directoryEntry]);
 
     return Promise.all([
       loadAccountRiskParameters,
@@ -31,7 +32,12 @@ class Controller {
     let directoryEntry = this.componentModel.directoryEntry;
     let requiredDataFetchPromise = this.getRequiredData();
 
-    preloaderTimer.start(requiredDataFetchPromise, null, Config.WHOLE_PAGE_PRELOADER_WIDTH, Config.WHOLE_PAGE_PRELOADER_HEIGHT).then((responses) => {
+    preloaderTimer.start(
+      requiredDataFetchPromise,
+      null,
+      Config.WHOLE_PAGE_PRELOADER_WIDTH,
+      Config.WHOLE_PAGE_PRELOADER_HEIGHT
+    ).then((responses) => {
       let riskParameters = responses[0];
       this.componentModel.riskParameters = riskParameters;
       this.componentModel.directoryEntry = directoryEntry;
@@ -71,7 +77,7 @@ class Controller {
     if (this.componentModel.riskParameters.currency != 0) {
       let riskParameters = this.componentModel.riskParameters;
       let directoryEntry = this.componentModel.directoryEntry;
-      adminClient.storeRiskParameters.apply(adminClient, [directoryEntry, riskParameters])
+      this.adminClient.storeRiskParameters.apply(this.adminClient, [directoryEntry, riskParameters])
         .then(onSaved.bind(this))
         .catch(onFailed.bind(this));
     } else {

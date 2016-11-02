@@ -45,12 +45,14 @@
           width: 100%;
           height: 30px;
           border: 1px solid $darkGrey;
+          margin-top: 1px;
+          margin-bottom: 1px;
         }
 
         .icon-magnifying_glass {
           position: absolute;
           right: 8px;
-          top: 8px;
+          top: 9px;
           color: $darkGrey;
           cursor: pointer;
         }

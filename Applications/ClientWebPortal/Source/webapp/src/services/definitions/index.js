@@ -1,12 +1,17 @@
-import definitionsServiceClient from 'utils/spire-clients/definitions-service';
-import adminClient from 'utils/spire-clients/admin';
+import {Admin, DefinitionsService} from 'spire-client';
 import HashMap from 'hashmap';
+import {Money} from 'spire-client';
 
 /** Various definitions queried from back-end */
-class DefinitionsService {
+class DefService {
+  constructor() {
+    this.adminClient = new Admin();
+    this.definitionsServiceClient = new DefinitionsService();
+  }
+
   /** @private */
   loadCountries() {
-    return definitionsServiceClient.loadCountryData.apply(definitionsServiceClient).then(onResponse.bind(this));
+    return this.definitionsServiceClient.loadCountryData.apply(this.definitionsServiceClient).then(onResponse.bind(this));
 
     function onResponse(countries) {
       this.countries = countries;
@@ -22,7 +27,7 @@ class DefinitionsService {
 
   /** @private */
   loadCurrencies() {
-    return definitionsServiceClient.loadCurrencyData.apply(definitionsServiceClient).then(onResponse.bind(this));
+    return this.definitionsServiceClient.loadCurrencyData.apply(this.definitionsServiceClient).then(onResponse.bind(this));
 
     function onResponse(currencies) {
       this.currencies = currencies;
@@ -38,10 +43,41 @@ class DefinitionsService {
 
   /** @private */
   loadEntitlements() {
-    return adminClient.loadEntitlementsData.apply(adminClient).then(onResponse.bind(this));
+    return this.adminClient.loadEntitlementsData.apply(this.adminClient).then(onResponse.bind(this));
 
     function onResponse(entitlements) {
       this.entitlements = entitlements;
+    }
+  }
+
+  /** @private */
+  loadComplianceRuleSchemas() {
+    return this.definitionsServiceClient.loadComplianceRuleSchemas.apply(this.definitionsServiceClient)
+      .then(onResponse.bind(this));
+
+    function onResponse(ruleSchemas) {
+      this.complianceRuleSchemas = ruleSchemas;
+    }
+  }
+
+  /** @private */
+  loadMarkets() {
+    return this.definitionsServiceClient.loadMarketDatabase.apply(this.definitionsServiceClient)
+      .then(onResponse.bind(this));
+
+    function onResponse(response) {
+      this.markets = new HashMap();
+      for (let i=0; i<response.entries.length; i++) {
+        let marketCode = response.entries[i].code;
+        this.markets.set(marketCode, response.entries[i]);
+      }
+      this.markets.set('*', {
+        code: '*',
+        country_code: 65535,
+        currency: 65535,
+        description: '*',
+        display_name: '*'
+      });
     }
   }
 
@@ -49,7 +85,9 @@ class DefinitionsService {
     return Promise.all([
       this.loadCountries.apply(this),
       this.loadCurrencies.apply(this),
-      this.loadEntitlements.apply(this)
+      this.loadEntitlements.apply(this),
+      this.loadComplianceRuleSchemas.apply(this),
+      this.loadMarkets(this)
     ]);
   }
 
@@ -104,6 +142,23 @@ class DefinitionsService {
   getEntitlements() {
     return this.entitlements;
   }
+
+  getComplianceRuleSchemas() {
+    return this.complianceRuleSchemas;
+  }
+
+  getComplianceRuleScehma(schemaName) {
+    for (let i=0; i<this.complianceRuleSchemas.length; i++) {
+      if (this.complianceRuleSchemas[i].name === schemaName) {
+        return this.complianceRuleSchemas[i];
+      }
+    }
+    return null;
+  }
+
+  getMarket(marketCode) {
+    return this.markets.get(marketCode);
+  }
 }
 
-export default new DefinitionsService();
+export default new DefService();

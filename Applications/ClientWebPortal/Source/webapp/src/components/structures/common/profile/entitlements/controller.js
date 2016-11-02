@@ -1,4 +1,4 @@
-import adminClient from 'utils/spire-clients/admin';
+import {Admin} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
 import definitionsService from 'services/definitions';
@@ -6,6 +6,7 @@ import definitionsService from 'services/definitions';
 class Controller {
   constructor(componentModel) {
     this.componentModel = cloneObject(componentModel);
+    this.adminClient = new Admin();
   }
 
   getView() {
@@ -19,11 +20,11 @@ class Controller {
   /** @private */
   getRequiredData() {
     let directoryEntry = this.componentModel.directoryEntry;
-    let loadAccountEntitlements = adminClient.loadAccountEntitlements.apply(
-      adminClient,
+    let loadAccountEntitlements = this.adminClient.loadAccountEntitlements.apply(
+      this.adminClient,
       [directoryEntry]
     );
-    let loadAccountRoles = adminClient.loadAccountRoles.apply(adminClient, [directoryEntry]);
+    let loadAccountRoles = this.adminClient.loadAccountRoles.apply(this.adminClient, [directoryEntry]);
 
     return Promise.all([
       loadAccountEntitlements,
@@ -85,7 +86,7 @@ class Controller {
 
   save() {
     let directoryEntry = this.componentModel.directoryEntry;
-    adminClient.storeAccountEntitlements(directoryEntry, this.componentModel.accountEntitlements)
+    this.adminClient.storeAccountEntitlements.apply(this.adminClient, [directoryEntry, this.componentModel.accountEntitlements])
       .then(this.view.showSaveSuccessMessage)
       .catch(this.view.showSaveFailMessage);
   }
