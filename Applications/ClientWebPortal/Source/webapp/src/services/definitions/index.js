@@ -1,6 +1,5 @@
 import {Admin, DefinitionsService} from 'spire-client';
 import HashMap from 'hashmap';
-import {Money} from 'spire-client';
 
 /** Various definitions queried from back-end */
 class DefService {

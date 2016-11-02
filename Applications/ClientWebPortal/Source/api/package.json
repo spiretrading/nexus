@@ -12,6 +12,7 @@
   ],
   "author": "Spire",
   "dependencies": {
+    "hashmap": "^2.0.6",
     "popsicle": "^8.2.0"
   },
   "devDependencies": {
