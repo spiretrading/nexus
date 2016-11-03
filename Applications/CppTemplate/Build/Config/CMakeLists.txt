@@ -6,7 +6,6 @@ include_directories($ENV{QT_INCLUDE_PATH})
 include_directories($ENV{QT_CORE_INCLUDE_PATH})
 include_directories($ENV{QT_GUI_INCLUDE_PATH})
 include_directories($ENV{QT_WIDGETS_INCLUDE_PATH})
-include_directories($ENV{ZLIB_INCLUDE_PATH})
 
 link_directories($ENV{BOOST_DEBUG_PATH})
 link_directories($ENV{BOOST_OPTIMIZED_PATH})
