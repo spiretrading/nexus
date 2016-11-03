@@ -1,4 +1,4 @@
-import {Admin, ServiceLocator} from 'spire-client';
+import {AdministrationClient, ServiceLocatorClient} from 'spire-client';
 import ResultCode from './result-codes';
 
 /** Centralized user related states and service actions */
@@ -12,8 +12,8 @@ class UserService {
     };
     this.userName;
     this.directoryEntry;
-    this.adminClient = new Admin();
-    this.serviceLocatorClient = new ServiceLocator();
+    this.adminClient = new AdministrationClient();
+    this.serviceLocatorClient = new ServiceLocatorClient();
   }
 
   initialize(userDirectoryEntry) {
