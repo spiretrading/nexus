@@ -67,4 +67,3 @@ Money.BIP = BIP;
 Money.EPSILON = EPSILON;
 
 export default Money;
-
