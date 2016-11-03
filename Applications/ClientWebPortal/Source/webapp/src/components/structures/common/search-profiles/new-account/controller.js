@@ -1,4 +1,4 @@
-import {Admin, ServiceLocator} from 'spire-client';
+import {AdministrationClient, ServiceLocatorClient} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
 import {browserHistory} from 'react-router/es6';
@@ -6,8 +6,8 @@ import {browserHistory} from 'react-router/es6';
 class Controller {
   constructor(componentModel) {
     this.componentModel = cloneObject(componentModel);
-    this.adminClient = new Admin();
-    this.serviceLocatorClient = new ServiceLocator();
+    this.adminClient = new AdministrationClient();
+    this.serviceLocatorClient = new ServiceLocatorClient();
   }
 
   getView() {

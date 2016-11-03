@@ -14,7 +14,7 @@ import configs from './configs';
 import eventBus from 'utils/event-bus';
 import event from 'utils/event-bus/events';
 import userService from 'services/user';
-import {ServiceLocator} from 'spire-client';
+import {ServiceLocatorClient} from 'spire-client';
 import sessionInitializer from 'commons/session-initializer';
 
 window.cloneObject = (originalObj) => {
@@ -25,7 +25,7 @@ window.Event = event;
 window.Config = configs;
 ES6Promise.polyfill();
 
-let serviceLocatorClient = new ServiceLocator();
+let serviceLocatorClient = new ServiceLocatorClient();
 
 serviceLocatorClient.loadCurrentAccount.apply(serviceLocatorClient)
   .then((account) => {

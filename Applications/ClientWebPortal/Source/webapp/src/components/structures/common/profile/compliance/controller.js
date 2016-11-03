@@ -1,12 +1,12 @@
-import {Admin, ComplianceService} from 'spire-client';
+import {AdministrationClient, ComplianceServiceClient} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
 
 class Controller {
   constructor(componentModel) {
     this.componentModel = cloneObject(componentModel);
-    this.adminClient = new Admin();
-    this.complianceServiceClient = new ComplianceService();
+    this.adminClient = new AdministrationClient();
+    this.complianceServiceClient = new ComplianceServiceClient();
   }
 
   getView() {

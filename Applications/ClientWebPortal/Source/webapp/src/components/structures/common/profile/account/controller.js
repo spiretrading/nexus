@@ -1,13 +1,12 @@
-import {Admin, ServiceLocator} from 'spire-client';
+import {AdministrationClient, ServiceLocatorClient, ServiceLocatorResultCode} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
-import {ServiceLocatorResultCode} from 'spire-client';
 import userService from 'services/user';
 
 class Controller {
   constructor(componentModel) {
     this.componentModel = cloneObject(componentModel);
-    this.adminClient = new Admin();
-    this.serviceLocatorClient = new ServiceLocator();
+    this.adminClient = new AdministrationClient();
+    this.serviceLocatorClient = new ServiceLocatorClient();
   }
 
   getView() {

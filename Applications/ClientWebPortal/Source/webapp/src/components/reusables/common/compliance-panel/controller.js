@@ -1,10 +1,10 @@
-import {MarketDataService} from 'spire-client';
+import {MarketDataServiceClient} from 'spire-client';
 
 class Controller {
   constructor(react, componentModel) {
     this.componentModel = cloneObject(componentModel);
     this.onUpdated = react.props.onUpdate;
-    this.marketDataServiceClient = new MarketDataService();
+    this.marketDataServiceClient = new MarketDataServiceClient();
   }
 
   getView() {

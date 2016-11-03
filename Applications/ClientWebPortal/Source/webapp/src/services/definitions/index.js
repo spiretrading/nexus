@@ -1,11 +1,11 @@
-import {Admin, DefinitionsService} from 'spire-client';
+import {AdministrationClient, DefinitionsServiceClient} from 'spire-client';
 import HashMap from 'hashmap';
 
 /** Various definitions queried from back-end */
 class DefService {
   constructor() {
-    this.adminClient = new Admin();
-    this.definitionsServiceClient = new DefinitionsService();
+    this.adminClient = new AdministrationClient();
+    this.definitionsServiceClient = new DefinitionsServiceClient();
   }
 
   /** @private */

@@ -1,5 +1,4 @@
-import {Admin} from 'spire-client';
-import {ServiceLocator} from 'spire-client';
+import {AdministrationClient, ServiceLocatorClient} from 'spire-client';
 import userService from 'services/user';
 import preloaderTimer from 'utils/preloader-timer';
 import HashMap from 'hashmap';
@@ -9,8 +8,8 @@ class Controller {
   constructor(componentModel) {
     this.componentModel = cloneObject(componentModel);
     this.accountDirectoryEntries = new HashMap();
-    this.adminClient = new Admin();
-    this.serviceLocatorClient = new ServiceLocator();
+    this.adminClient = new AdministrationClient();
+    this.serviceLocatorClient = new ServiceLocatorClient();
   }
 
   getView() {
