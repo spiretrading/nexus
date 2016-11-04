@@ -183,7 +183,12 @@ HttpResponse ClientWebPortalServlet::OnLoadCurrentAccount(
     }
     return session->GetAccount();
   }();
-  session->ShuttleResponse(account, Store(response));
+  if(session != nullptr) {
+    session->ShuttleResponse(account, Store(response));
+  } else {
+    response.SetHeader({"Content-Type", "application/json"});
+    response.SetBody(Encode<SharedBuffer>(JsonSender<SharedBuffer>{}, account));
+  }
   return response;
 }
 
