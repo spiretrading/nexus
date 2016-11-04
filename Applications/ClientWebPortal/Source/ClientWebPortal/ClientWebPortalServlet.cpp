@@ -187,7 +187,8 @@ HttpResponse ClientWebPortalServlet::OnLoadCurrentAccount(
     session->ShuttleResponse(account, Store(response));
   } else {
     response.SetHeader({"Content-Type", "application/json"});
-    response.SetBody(Encode<SharedBuffer>(JsonSender<SharedBuffer>{}, account));
+    JsonSender<SharedBuffer> sender;
+    response.SetBody(Encode<SharedBuffer>(sender, account));
   }
   return response;
 }
