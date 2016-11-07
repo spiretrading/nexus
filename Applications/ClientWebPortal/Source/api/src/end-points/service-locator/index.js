@@ -6,10 +6,10 @@ const ResultCode = ResultCodes;
 /** Spire service locator client class */
 class ServiceLocator {
   /** @private */
-  logErrorAndThrow(xhr) {
+  logErrorAndThrow(error) {
     let errorMessage = 'Spire Service Locator Client: Unexpected error happened.';
     console.error(errorMessage);
-    console.error(xhr);
+    console.error(error);
     throw errorMessage;
   }
 
@@ -30,13 +30,13 @@ class ServiceLocator {
       };
     }
 
-    function onHttpError(xhr) {
-      if (xhr.status === 401) {
+    function onHttpError(errorCode) {
+      if (errorCode.message == 401) {
         return {
           resultCode: ResultCode.FAIL
         };
       } else {
-        this.logErrorAndThrow(xhr);
+        this.logErrorAndThrow('HTTP Error: ' + errorCode.message);
       }
     }
   }
