@@ -5,4 +5,7 @@ cd $directory/../../
 {
     npm install
 }
+rm -rf $directory/../../../webapp/node_modules/spire-client
+ln -s $directory/../../../api $directory/../../../webapp/node_modules/spire-client
 popd
+
