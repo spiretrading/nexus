@@ -1,4 +1,10 @@
-import {AdministrationClient, DefinitionsServiceClient} from 'spire-client';
+import {
+  AdministrationClient,
+  DefinitionsServiceClient,
+  CountryDatabase,
+  CountryCode,
+  CurrencyDatabase
+} from 'spire-client';
 import HashMap from 'hashmap';
 
 /** Various definitions queried from back-end */
@@ -6,6 +12,8 @@ class DefService {
   constructor() {
     this.adminClient = new AdministrationClient();
     this.definitionsServiceClient = new DefinitionsServiceClient();
+    this.countryDatabase = new CountryDatabase();
+    this.currencyDatabase = new CurrencyDatabase();
   }
 
   /** @private */
@@ -13,13 +21,8 @@ class DefService {
     return this.definitionsServiceClient.loadCountryData.apply(this.definitionsServiceClient).then(onResponse.bind(this));
 
     function onResponse(countries) {
-      this.countries = countries;
-      this.countriesByNumber = new HashMap();
-      this.countriesByThreeLetterCode = new HashMap();
       for (let i=0; i<countries.length; i++) {
-        let country = countries[i];
-        this.countriesByNumber.set(country.code, country);
-        this.countriesByThreeLetterCode.set(country.threeLetterCode, country);
+        this.countryDatabase.add(countries[i]);
       }
     }
   }
@@ -29,13 +32,8 @@ class DefService {
     return this.definitionsServiceClient.loadCurrencyData.apply(this.definitionsServiceClient).then(onResponse.bind(this));
 
     function onResponse(currencies) {
-      this.currencies = currencies;
-      this.currenciesById = new HashMap();
-      this.currenciesByCode = new HashMap();
       for (let i=0; i<currencies.length; i++) {
-        let currency = currencies[i];
-        this.currenciesById.set(currency.id, currency);
-        this.currenciesByCode.set(currency.code, currency);
+        this.currencyDatabase.add(currencies[i]);
       }
     }
   }
@@ -91,51 +89,53 @@ class DefService {
   }
 
   getCountries() {
-    return this.countries;
+    return this.countryDatabase.entries();
   }
 
   getCountryThreeLetterCode(number) {
-    return this.countriesByNumber.get(number).threeLetterCode;
+    let countryCode = CountryCode.fromNumber(number);
+    return this.countryDatabase.fromCode(countryCode).threeLetterCode;
   }
 
   getCountryNumber(threeLetterCode) {
-    return this.countriesByThreeLetterCode.get(threeLetterCode).code;
+    let countryCode = this.countryDatabase.fromThreeLetterCode(threeLetterCode);
+    return countryCode.toNumber();
   }
 
   getCountryName(number) {
-    return this.countriesByNumber.get(number).name;
+    let countryCode = CountryCode.fromNumber(number);
+    return this.countryDatabase.fromCode(countryCode).name;
+  }
+
+  doesCurrencyExist(id) {
+    return this.currencyDatabase.fromId(id) != null;
   }
 
   getAllCurrencyCodes() {
     let codes = [];
-    for (let i=0; i<this.currencies.length; i++) {
-      codes.push(this.currencies[i].code);
+    let entries = this.currencyDatabase.entries();
+    for (let i=0; i<entries.length; i++) {
+      let entry = entries[i];
+      codes.push(entry.code);
     }
     return codes;
   }
 
   getCurrencyCode(id) {
-    return this.currenciesById.get(id).code;
+    return this.currencyDatabase.fromId(id).code;
   }
 
   getCurrencySign(id) {
-    if (this.doesCurrencyExist(id)){
-      return this.currenciesById.get(id).sign;
+    let currencyEntry = this.currencyDatabase.fromId(id);
+    if (currencyEntry != null){
+      return currencyEntry.sign;
     } else {
       return '';
     }
   }
 
   getCurrencyNumber(code) {
-    return this.currenciesByCode.get(code).id;
-  }
-
-  doesCurrencyExist(id) {
-    if (this.currenciesById.get(id) == null) {
-      return false;
-    } else {
-      return true;
-    }
+    return this.currencyDatabase.fromCode(code).id;
   }
 
   getEntitlements() {
