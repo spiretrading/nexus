@@ -16,10 +16,14 @@ class HTTPConnectionManager {
 
     return post(options)
       .then((response) => {
-        if (isJsonResponse) {
-          return JSON.parse(response.body);
+        if (response.status == 200) {
+          if (isJsonResponse) {
+            return JSON.parse(response.body);
+          } else {
+            return null;
+          }
         } else {
-          return null;
+          throw new Error(response.status);
         }
       });
   }
