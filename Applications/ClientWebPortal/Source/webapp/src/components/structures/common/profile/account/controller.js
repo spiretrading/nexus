@@ -1,4 +1,9 @@
-import {AdministrationClient, ServiceLocatorClient, ServiceLocatorResultCode} from 'spire-client';
+import {
+  AdministrationClient,
+  ServiceLocatorClient,
+  ServiceLocatorResultCode,
+  AccountIdentity
+} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
 
@@ -36,6 +41,7 @@ class Controller {
   /** @private */
   loadRequiredDataAndRender() {
     let requiredDataFetchPromise = this.getRequiredData();
+    let directoryEntry = this.componentModel.directoryEntry;
 
     preloaderTimer.start(
       requiredDataFetchPromise,
@@ -45,6 +51,7 @@ class Controller {
     ).then((responses) => {
       this.componentModel.roles = responses[0];
       $.extend(true, this.componentModel, responses[1]);
+      this.componentModel.userName = directoryEntry.name;
       this.componentModel.isAdmin = userService.isAdmin();
       this.view.update(this.componentModel);
     });
@@ -90,10 +97,23 @@ class Controller {
   }
 
   save() {
-    let accountIdentity = cloneObject(this.componentModel);
-    let directoryEntry = accountIdentity.directoryEntry;
-    delete accountIdentity.roles;
-    delete accountIdentity.directoryEntry;
+    let model = this.componentModel;
+    let directoryEntry = model.directoryEntry;
+    let accountIdentity = new AccountIdentity(
+      model.addressLineOne,
+      model.addressLineTwo,
+      model.addressLineThree,
+      model.city,
+      model.country,
+      model.email,
+      model.firstName,
+      model.lastLoginTime,
+      model.lastName,
+      model.picture,
+      model.province,
+      model.registrationTime,
+      model.userNotes
+    );
     this.adminClient.storeAccountIdentity.apply(this.adminClient, [directoryEntry, accountIdentity])
       .then(this.view.showSavePersonalDetailsSuccessMessage)
       .catch(this.view.showSavePersonalDetailsFailMessage);

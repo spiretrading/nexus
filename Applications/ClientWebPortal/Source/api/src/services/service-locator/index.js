@@ -67,12 +67,11 @@ class ServiceLocator {
     let payload = {
       name: userName,
       group: group,
-      identity: accountIdentity,
+      identity: accountIdentity.toData(),
       roles: accountRoles.encode(roles)
     };
 
-    return httpConnectionManager.send(apiPath, payload, false)
-      .then(JSON.parse)
+    return httpConnectionManager.send(apiPath, payload, true)
       .catch(this.logErrorAndThrow);
   }
 
