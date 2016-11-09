@@ -1,4 +1,4 @@
-import {AdministrationClient, ServiceLocatorClient} from 'spire-client';
+import {AdministrationClient, ServiceLocatorClient, AccountIdentity} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
 import {browserHistory} from 'react-router/es6';
@@ -90,19 +90,23 @@ class Controller {
   }
 
   createAccount() {
-    let accountIdentity = {
-      address_line_one: this.componentModel.addressLineOne,
-      address_line_two: this.componentModel.addressLineTwo,
-      address_line_three: this.componentModel.addressLineThree,
-      city: this.componentModel.city,
-      country: this.componentModel.country,
-      e_mail: this.componentModel.email,
-      first_name: this.componentModel.firstName,
-      last_name: this.componentModel.lastName,
-      photo_id: this.componentModel.photoId || '',
-      province: this.componentModel.province,
-      user_notes: this.componentModel.userNotes
-    };
+    let model = this.componentModel;
+    let accountIdentity = new AccountIdentity(
+      model.addressLineOne,
+      model.addressLineTwo,
+      model.addressLineThree,
+      model.city,
+      model.country,
+      model.email,
+      model.firstName,
+      model.lastLoginTime,
+      model.lastName,
+      model.picture,
+      model.province,
+      model.registrationTime,
+      model.userNotes
+    );
+
     this.serviceLocatorClient.createAccount(
       this.componentModel.userName,
       this.componentModel.groups[0] || null,

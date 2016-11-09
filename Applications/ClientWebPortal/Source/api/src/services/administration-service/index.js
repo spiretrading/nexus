@@ -1,5 +1,6 @@
 import httpConnectionManager from '../commons/http-connection-manager';
 import accountRoles from '../commons/account-roles';
+import AccountIdentity from './account-identity';
 
 /** Spire admin client class */
 class Admin {
@@ -39,22 +40,7 @@ class Admin {
       .catch(this.logErrorAndThrow);
 
     function parseResponse(response) {
-      return {
-        addressLineOne: response.address_line_one,
-        addressLineTwo: response.address_line_two,
-        addressLineThree: response.address_line_three,
-        city: response.city,
-        country: response.country,
-        email: response.e_mail,
-        firstName: response.first_name,
-        lastLoginTime: response.last_login_time,
-        lastName: response.last_name,
-        picture: response.photo_id,
-        province: response.province,
-        registrationTime: response.registration_time,
-        userName: directoryEntry.name,
-        userNotes: response.user_notes
-      };
+      return AccountIdentity.fromData(response);
     }
   }
 
