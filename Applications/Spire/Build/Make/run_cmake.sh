@@ -12,8 +12,6 @@ fi
 pushd $directory
 . ./set_env.sh
 export INSTALL_DIRECTORY=$directory/../../Application
-export LIB_INSTALL_DIRECTORY=$directory/../../Library
-export TEST_INSTALL_DIRECTORY=$directory/../../Tests
 export NEXUS_BUILD_TYPE=$build_type
 cmake -G"Unix Makefiles" $directory/../Config
 unset NEXUS_BUILD_TYPE
