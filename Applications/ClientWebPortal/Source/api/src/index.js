@@ -6,7 +6,7 @@ import marketDataServiceClient from './services/market-data-service';
 import serviceLocatorClient from './services/service-locator';
 import serviceLocatorResultCodes from './services/service-locator/result-codes';
 
-import accountIdentity from './services/administration/account-identity';
+import accountIdentity from './services/administration-service/account-identity';
 
 // definitions
 import money from './definitions/money';
