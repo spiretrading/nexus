@@ -1,11 +1,12 @@
 // services
-import administrationClient from './services/administration';
+import administrationClient from './services/administration-service';
 import complianceServiceClient from './services/compliance-service';
 import definitionsServiceClient from './services/definitions-service';
 import marketDataServiceClient from './services/market-data-service';
 import serviceLocatorClient from './services/service-locator';
-import serviceLocatorResultCodes from './services/service-locator/result-codes';
 
+import serviceLocatorResultCodes from './services/service-locator/result-codes';
+import directoryEntry from './services/service-locator/directory-entry';
 import accountIdentity from './services/administration-service/account-identity';
 
 // definitions
@@ -22,7 +23,10 @@ export const ComplianceServiceClient = complianceServiceClient;
 export const DefinitionsServiceClient = definitionsServiceClient;
 export const MarketDataServiceClient = marketDataServiceClient;
 export const ServiceLocatorClient = serviceLocatorClient;
+
 export const ServiceLocatorResultCode = serviceLocatorResultCodes;
+export const DirectoryEntry = directoryEntry;
+export const AccountIdentity = accountIdentity;
 
 export const Money = money;
 export const CountryCode = countryCode;
@@ -30,5 +34,3 @@ export const CountryDatabase = countryDatabase;
 export const CountryDatabaseEntry = countryDatabaseEntry;
 export const CurrencyDatabase = currencyDatabase;
 export const CurrencyDatabaseEntry = currencyDatabaseEntry;
-
-export const AccountIdentity = accountIdentity;
