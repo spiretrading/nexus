@@ -1,4 +1,4 @@
-import {AdministrationClient} from 'spire-client';
+import {AdministrationClient, DirectoryEntry} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
 import definitionsService from 'services/definitions';
@@ -6,6 +6,11 @@ import definitionsService from 'services/definitions';
 class Controller {
   constructor(componentModel) {
     this.componentModel = cloneObject(componentModel);
+    this.componentModel.directoryEntry = new DirectoryEntry(
+      this.componentModel.directoryEntry.id,
+      this.componentModel.directoryEntry.type,
+      this.componentModel.directoryEntry.name
+    );
     this.adminClient = new AdministrationClient();
   }
 

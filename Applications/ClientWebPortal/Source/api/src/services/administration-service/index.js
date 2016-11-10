@@ -15,7 +15,7 @@ class Admin {
   loadAccountRoles(directoryEntry) {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_account_roles';
     let payload = {
-      account: directoryEntry
+      account: directoryEntry.toData()
     };
 
     return httpConnectionManager.send(apiPath, payload, true)
@@ -32,7 +32,7 @@ class Admin {
   loadAccountIdentity(directoryEntry) {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_account_identity';
     let payload = {
-      account: directoryEntry
+      account: directoryEntry.toData()
     };
 
     return httpConnectionManager.send(apiPath, payload, true)
@@ -47,7 +47,7 @@ class Admin {
   storeAccountIdentity(directoryEntry, accountIdentity) {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/store_account_identity';
     let payload = {
-      account: directoryEntry,
+      account: directoryEntry.toData(),
       identity: {
         address_line_one: accountIdentity.addressLineOne,
         address_line_two: accountIdentity.addressLineTwo,
@@ -72,7 +72,7 @@ class Admin {
   loadRiskParameters(directoryEntry) {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_risk_parameters';
     let payload = {
-      account: directoryEntry
+      account: directoryEntry.toData()
     };
 
     return httpConnectionManager.send(apiPath, payload, true)
@@ -92,7 +92,7 @@ class Admin {
   storeRiskParameters(directoryEntry, riskParameters) {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/store_risk_parameters';
     let payload = {
-      account: directoryEntry,
+      account: directoryEntry.toData(),
       risk_parameters: {
         buying_power: riskParameters.buyingPower,
         currency: riskParameters.currency,
@@ -119,7 +119,7 @@ class Admin {
   loadAccountEntitlements(directoryEntry) {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_account_entitlements';
     let payload = {
-      account: directoryEntry
+      account: directoryEntry.toData()
     };
 
     return httpConnectionManager.send(apiPath, payload, true)
@@ -135,7 +135,7 @@ class Admin {
   storeAccountEntitlements(directoryEntry, entitlements) {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/store_account_entitlements';
     let payload = {
-      account: directoryEntry,
+      account: directoryEntry.toData(),
       entitlements: entitlements
     };
 
@@ -146,7 +146,7 @@ class Admin {
   loadManagedTradingGroups(directoryEntry) {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_managed_trading_groups';
     let payload = {
-      account: directoryEntry
+      account: directoryEntry.toData()
     };
 
     return httpConnectionManager.send(apiPath, payload, true)
@@ -156,7 +156,7 @@ class Admin {
   loadTradingGroup(directoryEntry) {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_trading_group';
     let payload = {
-      directory_entry: directoryEntry
+      directory_entry: directoryEntry.toData()
     };
 
     return httpConnectionManager.send(apiPath, payload, true)

@@ -1,10 +1,15 @@
-import {AdministrationClient, ComplianceServiceClient} from 'spire-client';
+import {AdministrationClient, ComplianceServiceClient, DirectoryEntry} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
 
 class Controller {
   constructor(componentModel) {
     this.componentModel = cloneObject(componentModel);
+    this.componentModel.directoryEntry = new DirectoryEntry(
+      this.componentModel.directoryEntry.id,
+      this.componentModel.directoryEntry.type,
+      this.componentModel.directoryEntry.name
+    );
     this.adminClient = new AdministrationClient();
     this.complianceServiceClient = new ComplianceServiceClient();
   }
@@ -114,11 +119,6 @@ class Controller {
   }
 
   componentDidMount() {
-    this.componentModel.directoryEntry = {
-      id: 38,
-      name: "head_office",
-      type: 1
-    };
     let directoryEntry = this.componentModel.directoryEntry;
     let requiredDataFetchPromise = this.getRequiredData();
 

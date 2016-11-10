@@ -13,7 +13,7 @@ class ComplianceService {
   loadComplianceRuleEntries(directoryEntry) {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'compliance_service/load_directory_entry_compliance_rule_entry';
     let payload = {
-      directory_entry: directoryEntry
+      directory_entry: directoryEntry.toData()
     };
 
     return httpConnectionManager.send(apiPath, payload, true)
