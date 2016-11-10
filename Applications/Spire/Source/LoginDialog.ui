@@ -16,7 +16,7 @@
   <property name="styleSheet">
    <string notr="true"/>
   </property>
-  <widget class="QWidget" name="widget" native="true">
+  <widget class="QWidget" name="m_widget" native="true">
    <property name="geometry">
     <rect>
      <x>0</x>
@@ -38,7 +38,7 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
-        <spacer name="LeftSpacer">
+        <spacer name="m_leftSpacer">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -56,9 +56,9 @@
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
-          <layout class="QVBoxLayout" name="MainLayout">
+          <layout class="QVBoxLayout" name="m_mainLayout">
            <item>
-            <spacer name="LogoTopSpacer">
+            <spacer name="m_logoTopSpacer">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
              </property>
@@ -71,7 +71,7 @@
             </spacer>
            </item>
            <item alignment="Qt::AlignHCenter|Qt::AlignVCenter">
-            <widget class="QLabel" name="SpireLogoLabel">
+            <widget class="QLabel" name="m_spireLogoLabel">
              <property name="enabled">
               <bool>true</bool>
              </property>
@@ -96,7 +96,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="InvalidLabel">
+            <widget class="QLabel" name="m_invalidLabel">
              <property name="layoutDirection">
               <enum>Qt::LeftToRight</enum>
              </property>
@@ -112,7 +112,7 @@
             </widget>
            </item>
            <item>
-            <spacer name="LogoSpacer">
+            <spacer name="m_logoSpacer">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
              </property>
@@ -125,7 +125,7 @@
             </spacer>
            </item>
            <item>
-            <widget class="QLineEdit" name="UsernameInput">
+            <widget class="QLineEdit" name="m_usernameInput">
              <property name="styleSheet">
               <string notr="true">background-color: rgb(255, 255, 255);
 color: rgb(168, 168, 168);
@@ -140,7 +140,7 @@ font: 10pt &quot;Roboto&quot;;</string>
             </widget>
            </item>
            <item>
-            <spacer name="UsernamePasswordSpacer">
+            <spacer name="m_usernamePasswordSpacer">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
              </property>
@@ -153,7 +153,7 @@ font: 10pt &quot;Roboto&quot;;</string>
             </spacer>
            </item>
            <item>
-            <widget class="QLineEdit" name="PasswordInput">
+            <widget class="QLineEdit" name="m_passwordInput">
              <property name="styleSheet">
               <string notr="true">background-color: rgb(255, 255, 255);
 font: 10pt &quot;Roboto&quot;;
@@ -166,7 +166,7 @@ color: rgb(168, 168, 168);
             </widget>
            </item>
            <item>
-            <spacer name="PasswordLoginSpacer">
+            <spacer name="m_passwordLoginSpacer">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
              </property>
@@ -181,7 +181,7 @@ color: rgb(168, 168, 168);
            <item>
             <layout class="QHBoxLayout" name="VersionLoginButtonLayout">
              <item>
-              <widget class="QLabel" name="VersionLabel">
+              <widget class="QLabel" name="m_versionLabel">
                <property name="frameShape">
                 <enum>QFrame::NoFrame</enum>
                </property>
@@ -191,7 +191,7 @@ color: rgb(168, 168, 168);
               </widget>
              </item>
              <item>
-              <spacer name="VersionLoginSpacer">
+              <spacer name="m_versionLoginSpacer">
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
                </property>
@@ -207,14 +207,14 @@ color: rgb(168, 168, 168);
               </spacer>
              </item>
              <item>
-              <widget class="QLabel" name="LoadingLabel">
+              <widget class="QLabel" name="m_loadingLabel">
                <property name="text">
                 <string/>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="LoginButton">
+              <widget class="QPushButton" name="m_loginButton">
                <property name="styleSheet">
                 <string notr="true"/>
                </property>
@@ -230,7 +230,7 @@ color: rgb(168, 168, 168);
         </layout>
        </item>
        <item>
-        <spacer name="RightSpacer">
+        <spacer name="m_rightSpacer">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -248,7 +248,7 @@ color: rgb(168, 168, 168);
       </layout>
      </item>
      <item>
-      <spacer name="BottomSpacer">
+      <spacer name="m_bottomSpacer">
        <property name="orientation">
         <enum>Qt::Vertical</enum>
        </property>
