@@ -1,4 +1,4 @@
-import {AdministrationClient, ServiceLocatorClient, AccountIdentity} from 'spire-client';
+import {AdministrationClient, ServiceLocatorClient, AccountIdentity, DirectoryEntry} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
 import {browserHistory} from 'react-router/es6';
@@ -6,6 +6,11 @@ import {browserHistory} from 'react-router/es6';
 class Controller {
   constructor(componentModel) {
     this.componentModel = cloneObject(componentModel);
+    this.componentModel.directoryEntry = new DirectoryEntry(
+      this.componentModel.directoryEntry.id,
+      this.componentModel.directoryEntry.type,
+      this.componentModel.directoryEntry.name
+    );
     this.adminClient = new AdministrationClient();
     this.serviceLocatorClient = new ServiceLocatorClient();
   }

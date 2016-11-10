@@ -2,7 +2,8 @@ import {
   AdministrationClient,
   ServiceLocatorClient,
   ServiceLocatorResultCode,
-  AccountIdentity
+  AccountIdentity,
+  DirectoryEntry
 } from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
@@ -10,6 +11,11 @@ import userService from 'services/user';
 class Controller {
   constructor(componentModel) {
     this.componentModel = cloneObject(componentModel);
+    this.componentModel.directoryEntry = new DirectoryEntry(
+      this.componentModel.directoryEntry.id,
+      this.componentModel.directoryEntry.type,
+      this.componentModel.directoryEntry.name
+    );
     this.adminClient = new AdministrationClient();
     this.serviceLocatorClient = new ServiceLocatorClient();
   }

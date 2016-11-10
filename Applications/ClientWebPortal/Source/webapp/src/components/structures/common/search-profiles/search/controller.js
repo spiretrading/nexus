@@ -1,4 +1,4 @@
-import {AdministrationClient, ServiceLocatorClient} from 'spire-client';
+import {AdministrationClient, ServiceLocatorClient, DirectoryEntry} from 'spire-client';
 import userService from 'services/user';
 import preloaderTimer from 'utils/preloader-timer';
 import HashMap from 'hashmap';
@@ -7,6 +7,11 @@ import {browserHistory} from 'react-router/es6';
 class Controller {
   constructor(componentModel) {
     this.componentModel = cloneObject(componentModel);
+    this.componentModel.directoryEntry = new DirectoryEntry(
+      this.componentModel.directoryEntry.id,
+      this.componentModel.directoryEntry.type,
+      this.componentModel.directoryEntry.name
+    );
     this.accountDirectoryEntries = new HashMap();
     this.adminClient = new AdministrationClient();
     this.serviceLocatorClient = new ServiceLocatorClient();
@@ -38,6 +43,11 @@ class Controller {
       let loadTradingGroupsPromises = [];
       for (let i=0; i<managedGroups.length; i++) {
         let managedGroupDirectoryEntry = managedGroups[i];
+        managedGroupDirectoryEntry = new DirectoryEntry(
+          managedGroupDirectoryEntry.id,
+          managedGroupDirectoryEntry.type,
+          managedGroupDirectoryEntry.name
+        );
         loadTradingGroupsPromises.push(this.adminClient.loadTradingGroup.apply(this.adminClient, [managedGroupDirectoryEntry]));
       }
       return Promise.all(loadTradingGroupsPromises)
@@ -74,6 +84,11 @@ class Controller {
         let groupTraders = groupAccounts.accounts.traders;
         for (let j=0; j<groupTraders.length; j++) {
           let traderDirectoryEntry = groupTraders[j];
+          traderDirectoryEntry = new DirectoryEntry(
+            traderDirectoryEntry.id,
+            traderDirectoryEntry.type,
+            traderDirectoryEntry.name
+          );
           accountDirectoryEntries.set(traderDirectoryEntry.id, traderDirectoryEntry);
           if (!requestedRoles.has(traderDirectoryEntry.id)) {
             loadRolesPromises.push(this.adminClient.loadAccountRoles.apply(this.adminClient, [traderDirectoryEntry]));

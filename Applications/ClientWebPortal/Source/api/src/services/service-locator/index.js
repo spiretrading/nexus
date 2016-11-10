@@ -1,6 +1,7 @@
 import httpConnectionManager from '../commons/http-connection-manager';
 import ResultCodes from './result-codes';
 import accountRoles from '../commons/account-roles';
+import DirectoryEntry from './directory-entry';
 const ResultCode = ResultCodes;
 
 /** Spire service locator client class */
@@ -23,10 +24,10 @@ class ServiceLocator {
     return httpConnectionManager.send(apiPath, payload, true)
       .then(onSuccess, onHttpError.bind(this));
 
-    function onSuccess(directoryEntry) {
+    function onSuccess(directoryEntryData) {
       return {
         resultCode: ResultCode.SUCCESS,
-        directoryEntry: directoryEntry
+        directoryEntry: DirectoryEntry.fromData(directoryEntryData)
       };
     }
 
@@ -50,7 +51,7 @@ class ServiceLocator {
   storePassword(directoryEntry, newPassword) {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'service_locator/store_password';
     let payload = {
-      account: directoryEntry,
+      account: directoryEntry.toData(),
       password: newPassword
     };
     return httpConnectionManager.send(apiPath, payload, false)
