@@ -7,11 +7,6 @@ import {browserHistory} from 'react-router/es6';
 class Controller {
   constructor(componentModel) {
     this.componentModel = cloneObject(componentModel);
-    this.componentModel.directoryEntry = new DirectoryEntry(
-      this.componentModel.directoryEntry.id,
-      this.componentModel.directoryEntry.type,
-      this.componentModel.directoryEntry.name
-    );
     this.accountDirectoryEntries = new HashMap();
     this.adminClient = new AdministrationClient();
     this.serviceLocatorClient = new ServiceLocatorClient();
