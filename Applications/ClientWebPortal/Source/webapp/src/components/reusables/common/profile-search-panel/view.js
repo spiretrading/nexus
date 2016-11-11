@@ -23,7 +23,7 @@ class View extends UpdatableView {
         height: contentHeight
       });
       $(event.currentTarget).removeClass('collapsed').addClass('expanded');
-      $('#' + this.componentModel.componentId).find('.trader-row.non-match').animate({
+      $('#' + this.componentModel.componentId).find('.trader-row.non-match').stop().animate({
         height: this.traderRowHeight
       });
     } else {
@@ -31,7 +31,7 @@ class View extends UpdatableView {
         height: this.visibleHeight
       });
       $(event.currentTarget).removeClass('expanded').addClass('collapsed');
-      $('#' + this.componentModel.componentId).find('.trader-row.non-match').animate({
+      $('#' + this.componentModel.componentId).find('.trader-row.non-match').stop().animate({
         height: 0
       });
     }
