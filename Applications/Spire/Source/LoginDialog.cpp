@@ -1,6 +1,8 @@
 #include "Spire/LoginDialog.hpp"
 #include <QMovie>
+#include <QMouseEvent>
 #include <QScreen>
+#include <QTGui>
 #include "ui_LoginDialog.h"
 
 using namespace Spire;
@@ -8,6 +10,7 @@ using namespace Spire;
 LoginDialog::LoginDialog(QWidget* parent)
     : QDialog{parent},
     m_ui{std::make_unique<Ui_LoginDialog>()} {
+  setWindowFlags(Qt::FramelessWindowHint);
   m_ui->setupUi(this);
   setStyleSheet("background-image: url(:/newPrefix/login-bg.png);");
   auto screen = qApp->screens().at(0);
@@ -93,3 +96,18 @@ LoginDialog::LoginDialog(QWidget* parent)
 }
 
 LoginDialog::~LoginDialog() {}
+
+void LoginDialog::mousePressEvent(QMouseEvent* event) {
+  if (event->button() == Qt::LeftButton) {
+    mousePoint = event->pos();
+  }
+}
+
+void LoginDialog::mouseMoveEvent(QMouseEvent* event) {
+  if (event->buttons() & Qt::LeftButton) {
+    QPoint diff = event->pos() - mousePoint;
+    QPoint newpos = this->pos() + diff;
+    this->move(newpos);
+  }
+}
+
