@@ -264,6 +264,7 @@ namespace OasisOrderExecutionService {
     const auto SPIRE_FEE = Money::BIP;
     const auto SEC_RATE = boost::rational<int>{218, 10000000};
     const auto TAF_FEE = (119 * Money::BIP) / 100;
+    const auto NSCC_RATE = boost::rational<int>{15, 100000000};
     const auto CLEARING_FEE = Money::BIP;
     auto feesReport = executionReport;
     if(feesReport.m_lastQuantity != 0) {
@@ -273,6 +274,8 @@ namespace OasisOrderExecutionService {
         processingFee += SEC_RATE *
           (feesReport.m_lastQuantity * feesReport.m_lastPrice);
       }
+      processingFee += Money::CENT + NSCC_RATE *
+        (feesReport.m_lastQuantity * feesReport.m_lastPrice);
       feesReport.m_processingFee += Ceil(processingFee, 3);
     }
     feesReport.m_commission += feesReport.m_lastQuantity * SPIRE_FEE;
