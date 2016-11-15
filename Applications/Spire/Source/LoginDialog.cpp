@@ -105,8 +105,8 @@ void LoginDialog::mousePressEvent(QMouseEvent* event) {
 
 void LoginDialog::mouseMoveEvent(QMouseEvent* event) {
   if (event->buttons() & Qt::LeftButton) {
-    QPoint diff = event->pos() - mousePoint;
-    QPoint newpos = this->pos() + diff;
+    auto diff = event->pos() - mousePoint;
+    auto newpos = pos() + diff;
     move(newpos);
   }
 }

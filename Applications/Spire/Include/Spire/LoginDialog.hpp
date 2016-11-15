@@ -16,6 +16,7 @@ namespace Spire {
     private:
       std::unique_ptr<Ui_LoginDialog> m_ui;
       QPoint mousePoint;
+
       void mousePressEvent(QMouseEvent* event);
       void mouseMoveEvent(QMouseEvent* event);
   };
