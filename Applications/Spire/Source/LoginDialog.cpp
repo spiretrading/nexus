@@ -2,7 +2,7 @@
 #include <QMovie>
 #include <QMouseEvent>
 #include <QScreen>
-#include <QTGui>
+#include <QtGui>
 #include "ui_LoginDialog.h"
 
 using namespace Spire;
@@ -107,7 +107,7 @@ void LoginDialog::mouseMoveEvent(QMouseEvent* event) {
   if (event->buttons() & Qt::LeftButton) {
     QPoint diff = event->pos() - mousePoint;
     QPoint newpos = this->pos() + diff;
-    this->move(newpos);
+    move(newpos);
   }
 }
 

@@ -1,9 +1,10 @@
 #ifndef SPIRE_LOGINDIALOG_HPP
 #define SPIRE_LOGINDIALOG_HPP
 #include <memory>
-#include <QMouseEvent>
 #include <QDialog>
+#include <QMouseEvent>
 #include <QPoint>
+
 class Ui_LoginDialog;
 
 namespace Spire {
@@ -14,9 +15,9 @@ namespace Spire {
 
     private:
       std::unique_ptr<Ui_LoginDialog> m_ui;
+      QPoint mousePoint;
       void mousePressEvent(QMouseEvent* event);
       void mouseMoveEvent(QMouseEvent* event);
-      QPoint mousePoint;
   };
 }
 
