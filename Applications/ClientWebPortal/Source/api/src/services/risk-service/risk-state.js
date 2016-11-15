@@ -1,12 +1,12 @@
 class RiskState {
-  constructor(riskState, expiry) {
-    this.riskState = riskState;
+  constructor(type, expiry) {
+    this.type = type;
     this.expiry = expiry || '00000000T000000';
   }
 
   toData() {
     return {
-      type: this.riskState,
+      type: this.type,
       expiry: this.expiry
     };
   }
