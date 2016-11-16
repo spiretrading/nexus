@@ -29,17 +29,23 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>40</y>
+      <y>20</y>
       <width>591</width>
       <height>511</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout">
+     <property name="spacing">
+      <number>0</number>
+     </property>
      <property name="sizeConstraint">
       <enum>QLayout::SetFixedSize</enum>
      </property>
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <property name="spacing">
+        <number>0</number>
+       </property>
        <item>
         <spacer name="m_leftSpacer">
          <property name="orientation">
@@ -58,8 +64,14 @@
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout">
+         <property name="spacing">
+          <number>0</number>
+         </property>
          <item>
           <layout class="QVBoxLayout" name="m_mainLayout">
+           <property name="spacing">
+            <number>0</number>
+           </property>
            <property name="sizeConstraint">
             <enum>QLayout::SetFixedSize</enum>
            </property>
@@ -67,6 +79,9 @@
             <spacer name="m_logoTopSpacer">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Fixed</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -135,13 +150,17 @@
              <property name="styleSheet">
               <string notr="true">background-color: rgb(255, 255, 255);
 color: rgb(168, 168, 168);
+color: rgb(0, 0, 0);
 font: 10pt &quot;Roboto&quot;;</string>
              </property>
              <property name="inputMask">
               <string/>
              </property>
              <property name="text">
-              <string>   Username</string>
+              <string/>
+             </property>
+             <property name="placeholderText">
+              <string>  Username</string>
              </property>
             </widget>
            </item>
@@ -149,6 +168,9 @@ font: 10pt &quot;Roboto&quot;;</string>
             <spacer name="m_usernamePasswordSpacer">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Fixed</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -164,10 +186,14 @@ font: 10pt &quot;Roboto&quot;;</string>
               <string notr="true">background-color: rgb(255, 255, 255);
 font: 10pt &quot;Roboto&quot;;
 color: rgb(168, 168, 168);
+color: rgb(0, 0, 0);
 </string>
              </property>
              <property name="text">
-              <string>   Password</string>
+              <string/>
+             </property>
+             <property name="placeholderText">
+              <string>  Password</string>
              </property>
             </widget>
            </item>
@@ -175,6 +201,9 @@ color: rgb(168, 168, 168);
             <spacer name="m_passwordLoginSpacer">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Fixed</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -186,6 +215,9 @@ color: rgb(168, 168, 168);
            </item>
            <item>
             <layout class="QHBoxLayout" name="VersionLoginButtonLayout">
+             <property name="spacing">
+              <number>0</number>
+             </property>
              <item>
               <widget class="QLabel" name="m_versionLabel">
                <property name="frameShape">
@@ -202,7 +234,7 @@ color: rgb(168, 168, 168);
                 <enum>Qt::Horizontal</enum>
                </property>
                <property name="sizeType">
-                <enum>QSizePolicy::Fixed</enum>
+                <enum>QSizePolicy::Expanding</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
