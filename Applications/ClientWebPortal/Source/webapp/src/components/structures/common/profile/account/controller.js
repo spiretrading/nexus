@@ -75,11 +75,13 @@ class Controller {
   }
 
   onAccountPictureChange(newPictureData) {
+    this.view.hideSavePersonalDetailsMessage();
     this.componentModel.photoId = newPictureData;
     this.view.update(this.componentModel);
   }
 
   onUserNotesChange(newNotes) {
+    this.view.hideSavePersonalDetailsMessage();
     this.componentModel.userNotes = newNotes;
   }
 
@@ -99,6 +101,7 @@ class Controller {
   }
 
   onPersonalDetailsChange(newPersonalDetails) {
+    this.view.hideSavePersonalDetailsMessage();
     $.extend(true, this.componentModel, newPersonalDetails);
   }
 

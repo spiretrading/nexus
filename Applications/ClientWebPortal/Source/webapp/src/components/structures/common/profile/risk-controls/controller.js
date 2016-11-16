@@ -65,20 +65,24 @@ class Controller {
   }
 
   onCurrencyChange(newCurrencyNumber) {
+    this.view.hideSavedMessage();
     EventBus.publish(Event.Profile.RiskControls.CURRENCY_SELECTED);
     this.componentModel.riskParameters.currencyId = CurrencyId.fromNumber(newCurrencyNumber);
     this.view.update(this.componentModel);
   }
 
   onNetLossChange(newAmount) {
+    this.view.hideSavedMessage();
     this.componentModel.riskParameters.netLoss = Money.fromValue(newAmount);
   }
 
   onBuyingPowerChange(newAmount) {
+    this.view.hideSavedMessage();
     this.componentModel.riskParameters.buyingPower = Money.fromValue(newAmount);
   }
 
   onTransitionTimeChange(newTime) {
+    this.view.hideSavedMessage();
     this.componentModel.riskParameters.transitionTime = newTime;
   }
 

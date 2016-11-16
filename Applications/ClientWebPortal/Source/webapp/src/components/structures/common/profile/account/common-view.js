@@ -52,6 +52,10 @@ class CommonView extends UpdatableView {
     }
   }
 
+  hideSavePersonalDetailsMessage() {
+    $('#account-container .save-button-wrapper .save-message').stop().fadeOut();
+  }
+
   showSavePersonalDetailsSuccessMessage() {
     let $saveMessage = $('#account-container .save-button-wrapper .save-message');
     $saveMessage
@@ -74,6 +78,10 @@ class CommonView extends UpdatableView {
           .addClass('red')
           .fadeIn();
       });
+  }
+
+  hideSavePasswordMessage() {
+    $('#account-container .change-password-wrapper .message').stop().fadeOut();
   }
 
   showSavePasswordSuccess() {

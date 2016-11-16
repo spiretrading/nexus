@@ -75,12 +75,14 @@ class Controller {
   }
 
   onEntitlementSelected(id) {
+    this.view.hideSaveMessage();
     let groupEntry = this.getGroupEntry(id);
     this.componentModel.accountEntitlements.push(groupEntry);
     this.view.update(this.componentModel);
   }
 
   onEntitlementDeselected(id) {
+    this.view.hideSaveMessage();
     for (let i=0; i<this.componentModel.accountEntitlements.length; i++) {
       if (this.componentModel.accountEntitlements[i].id === id) {
         this.componentModel.accountEntitlements.splice(i, 1);

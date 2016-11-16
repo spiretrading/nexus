@@ -105,8 +105,8 @@ class DesktopView extends CommonView {
           </div>
           <div className="change-password-wrapper row">
             <div className="input-row">
-              <input className="new-password-input" type="password" placeholder="New Password"/>
-              <input className="confirm-password-input" type="password" placeholder="Confirm New Password"/>
+              <input className="new-password-input" type="password" placeholder="New Password" onInput={this.hideSavePasswordMessage}/>
+              <input className="confirm-password-input" type="password" placeholder="Confirm New Password" onInput={this.hideSavePasswordMessage}/>
               <div className="save-password-button-wrapper">
                 <PrimaryButton className="save-password-button" model={changePasswordButtonModel} onClick={onPasswordChangeClick}/>
                 <div className="message"></div>

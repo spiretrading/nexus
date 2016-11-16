@@ -17,6 +17,10 @@ class View extends UpdatableView {
     });
   }
 
+  hideSaveMessage() {
+    $('#entitlements-container .save-message').stop().fadeOut();
+  }
+
   showSaveSuccessMessage() {
     let $saveMessage = $('#entitlements-container .save-message');
     $saveMessage
