@@ -88,6 +88,8 @@ LoginDialog::LoginDialog(QWidget* parent)
   m_ui->m_spireLogoLabel->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
   m_ui->m_spireLogoLabel->setStyleSheet(
     "border-image - image: url(: / newPrefix / spire - white.png);");
+  m_ui->m_spireLogoInvalidSpacer->changeSize(0, 0.15 *
+    physicalDotsPerInchY, QSizePolicy::Fixed);
   m_ui->m_mainLayout->setAlignment(Qt::AlignCenter);
   const auto M_LOGOTOPSPACER_HEIGHT = 0.8;
   m_ui->m_logoTopSpacer->changeSize(0, M_LOGOTOPSPACER_HEIGHT *
