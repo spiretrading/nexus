@@ -19,6 +19,10 @@ class CountryCode {
   toNumber() {
     return this.value;
   }
+
+  clone() {
+    return CountryCode.fromNumber(this.value);
+  }
 }
 
 CountryCode.fromNumber = (number) => {

@@ -10,6 +10,13 @@ class RiskState {
       expiry: this.expiry
     };
   }
+
+  clone() {
+    return new RiskState(
+      this.type,
+      this.expiry
+    );
+  }
 }
 
 RiskState.fromData = (data) => {

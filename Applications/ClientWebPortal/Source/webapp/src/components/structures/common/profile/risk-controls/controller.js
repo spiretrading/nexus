@@ -1,10 +1,15 @@
-import {AdministrationClient, DirectoryEntry} from 'spire-client';
+import {
+  AdministrationClient,
+  DirectoryEntry,
+  CurrencyId,
+  Money
+} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
 
 class Controller {
   constructor(componentModel) {
-    this.componentModel = cloneObject(componentModel);
+    this.componentModel = clone(componentModel);
     this.componentModel.directoryEntry = new DirectoryEntry(
       this.componentModel.directoryEntry.id,
       this.componentModel.directoryEntry.type,
@@ -43,8 +48,7 @@ class Controller {
       Config.WHOLE_PAGE_PRELOADER_WIDTH,
       Config.WHOLE_PAGE_PRELOADER_HEIGHT
     ).then((responses) => {
-      let riskParameters = responses[0];
-      this.componentModel.riskParameters = riskParameters;
+      this.componentModel.riskParameters = responses[0];
       this.componentModel.directoryEntry = directoryEntry;
       this.componentModel.roles = responses[1];
       this.componentModel.userName = directoryEntry.name;
@@ -54,7 +58,7 @@ class Controller {
   }
 
   isModelInitialized() {
-    let model = cloneObject(this.componentModel);
+    let model = clone(this.componentModel);
     delete model.componentId;
     delete model.directoryEntry;
     return !$.isEmptyObject(model);
@@ -62,16 +66,16 @@ class Controller {
 
   onCurrencyChange(newCurrencyNumber) {
     EventBus.publish(Event.Profile.RiskControls.CURRENCY_SELECTED);
-    this.componentModel.riskParameters.currency = newCurrencyNumber;
+    this.componentModel.riskParameters.currencyId = CurrencyId.fromNumber(newCurrencyNumber);
     this.view.update(this.componentModel);
   }
 
   onNetLossChange(newAmount) {
-    this.componentModel.riskParameters.netLoss = newAmount;
+    this.componentModel.riskParameters.netLoss = Money.fromValue(newAmount);
   }
 
   onBuyingPowerChange(newAmount) {
-    this.componentModel.riskParameters.buyingPower = newAmount;
+    this.componentModel.riskParameters.buyingPower = Money.fromValue(newAmount);
   }
 
   onTransitionTimeChange(newTime) {

@@ -5,7 +5,7 @@ import {browserHistory} from 'react-router/es6';
 
 class Controller {
   constructor(componentModel) {
-    this.componentModel = cloneObject(componentModel);
+    this.componentModel = clone(componentModel);
     this.adminClient = new AdministrationClient();
     this.serviceLocatorClient = new ServiceLocatorClient();
   }
@@ -19,7 +19,7 @@ class Controller {
   }
 
   isModelEmpty() {
-    let model = cloneObject(this.componentModel);
+    let model = clone(this.componentModel);
     delete model.componentId;
     return $.isEmptyObject(model);
   }
