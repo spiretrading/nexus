@@ -13,6 +13,10 @@ class MarketCode {
   toCode() {
     return this.value;
   }
+
+  clone() {
+    return MarketCode.fromCode(this.value);
+  }
 }
 
 MarketCode.fromCode = (code) => {

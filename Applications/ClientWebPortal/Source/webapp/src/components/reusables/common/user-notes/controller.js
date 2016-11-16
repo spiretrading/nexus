@@ -1,6 +1,6 @@
 class Controller {
   constructor(react) {
-    this.componentModel = cloneObject(react.props.model);
+    this.componentModel = clone(react.props.model);
     this.onChange = react.props.onChange;
   }
 

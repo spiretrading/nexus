@@ -5,7 +5,7 @@ import definitionsService from 'services/definitions';
 
 class Controller {
   constructor(componentModel) {
-    this.componentModel = cloneObject(componentModel);
+    this.componentModel = clone(componentModel);
     this.componentModel.directoryEntry = new DirectoryEntry(
       this.componentModel.directoryEntry.id,
       this.componentModel.directoryEntry.type,
@@ -68,7 +68,7 @@ class Controller {
   }
 
   isModelInitialized() {
-    let model = cloneObject(this.componentModel);
+    let model = clone(this.componentModel);
     delete model.componentId;
     delete model.directoryEntry;
     return !$.isEmptyObject(model);
