@@ -15,6 +15,14 @@ class CurrencyId {
   toNumber() {
     return this.value;
   }
+
+  toData() {
+    return this.value;
+  }
+
+  clone() {
+    return CurrencyId.fromNumber(this.value);
+  }
 }
 
 CurrencyId.fromNumber = (number) => {

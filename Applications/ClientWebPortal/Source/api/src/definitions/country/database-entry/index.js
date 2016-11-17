@@ -5,6 +5,15 @@ class CountryDatabaseEntry {
     this.twoLetterCode = twoLetterCode;
     this.threeLetterCode = threeLetterCode;
   }
+
+  clone() {
+    return new CountryDatabaseEntry(
+      this.code.clone(),
+      this.name,
+      this.twoLetterCode,
+      this.threeLetterCode
+    );
+  }
 }
 
 export default CountryDatabaseEntry;

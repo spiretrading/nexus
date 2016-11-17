@@ -5,7 +5,7 @@ import definitionsService from 'services/definitions';
 
 class Controller {
   constructor(componentModel) {
-    this.componentModel = cloneObject(componentModel);
+    this.componentModel = clone(componentModel);
     this.componentModel.directoryEntry = new DirectoryEntry(
       this.componentModel.directoryEntry.id,
       this.componentModel.directoryEntry.type,
@@ -68,19 +68,21 @@ class Controller {
   }
 
   isModelInitialized() {
-    let model = cloneObject(this.componentModel);
+    let model = clone(this.componentModel);
     delete model.componentId;
     delete model.directoryEntry;
     return !$.isEmptyObject(model);
   }
 
   onEntitlementSelected(id) {
+    this.view.hideSaveMessage();
     let groupEntry = this.getGroupEntry(id);
     this.componentModel.accountEntitlements.push(groupEntry);
     this.view.update(this.componentModel);
   }
 
   onEntitlementDeselected(id) {
+    this.view.hideSaveMessage();
     for (let i=0; i<this.componentModel.accountEntitlements.length; i++) {
       if (this.componentModel.accountEntitlements[i].id === id) {
         this.componentModel.accountEntitlements.splice(i, 1);

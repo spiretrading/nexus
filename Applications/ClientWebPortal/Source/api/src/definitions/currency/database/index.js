@@ -7,7 +7,7 @@ class CurrencyDatabase {
   }
 
   add(entry) {
-    this.idEntries.set(entry.id, entry);
+    this.idEntries.set(entry.id.toNumber(), entry);
     this.codeEntries.set(entry.code, entry);
   }
 
@@ -16,7 +16,7 @@ class CurrencyDatabase {
   }
 
   fromId(id) {
-    return this.idEntries.get(id);
+    return this.idEntries.get(id.toNumber());
   }
 
   fromCode(code) {

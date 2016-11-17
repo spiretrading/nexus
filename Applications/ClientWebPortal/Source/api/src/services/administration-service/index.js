@@ -1,6 +1,7 @@
 import httpConnectionManager from '../commons/http-connection-manager';
 import accountRoles from '../commons/account-roles';
 import AccountIdentity from './account-identity';
+import RiskParameters from '../risk-service/risk-parameters';
 
 /** Spire admin client class */
 class Admin {
@@ -80,12 +81,7 @@ class Admin {
       .catch(this.logErrorAndThrow);
 
     function parseResponse(response) {
-      return {
-        currency: response.currency,
-        netLoss: response.net_loss,
-        buyingPower: response.buying_power,
-        transitionTime: response.transition_time
-      };
+      return RiskParameters.fromData(response);
     }
   }
 
@@ -93,12 +89,7 @@ class Admin {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/store_risk_parameters';
     let payload = {
       account: directoryEntry.toData(),
-      risk_parameters: {
-        buying_power: riskParameters.buyingPower,
-        currency: riskParameters.currency,
-        net_loss: riskParameters.netLoss,
-        transition_time: riskParameters.transitionTime
-      }
+      risk_parameters: riskParameters.toData()
     };
 
     return httpConnectionManager.send(apiPath, payload, false)

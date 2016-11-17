@@ -100,8 +100,8 @@ class MobileView extends CommonView {
             Change Password
           </div>
           <div className="change-password-wrapper row">
-            <input className="new-password-input" type="password" placeholder="New Password"/>
-            <input className="confirm-password-input" type="password" placeholder="Confirm New Password"/>
+            <input className="new-password-input" type="password" placeholder="New Password" onInput={this.hideSavePasswordMessage}/>
+            <input className="confirm-password-input" type="password" placeholder="Confirm New Password" onInput={this.hideSavePasswordMessage}/>
             <PrimaryButton className="change-button" model={changePasswordButtonModel} onClick={this.onPasswordChangeClick.bind(this)}/>
             <div className="message-wrapper">
               <div className="message"></div>

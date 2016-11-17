@@ -8,6 +8,18 @@ class CountryDatabaseEntry {
     this.description = description;
     this.displayName = displayName;
   }
+
+  clone() {
+    new CountryDatabaseEntry(
+      this.marketCode.clone(),
+      this.countryCode.clone(),
+      this.timeZone,
+      this.currencyId.clone(),
+      this.boardLot,
+      this.description,
+      this.displayName
+    );
+  }
 }
 
 export default CountryDatabaseEntry;

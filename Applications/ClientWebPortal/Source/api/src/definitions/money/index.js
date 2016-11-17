@@ -43,6 +43,14 @@ class Money {
     result = Math.trunc(result);
     return new Money(result);
   }
+
+  toData() {
+    return this.toNumber();
+  }
+
+  clone() {
+    return Money.fromRepresentation(this.value);
+  }
 }
 
 Money.fromRepresentation = (value) => {

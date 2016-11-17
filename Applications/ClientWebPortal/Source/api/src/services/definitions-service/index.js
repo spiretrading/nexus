@@ -1,4 +1,5 @@
 import httpConnectionManager from '../commons/http-connection-manager';
+import CurrencyId from '../../definitions/currency/id';
 
 /** Spire definitions service client class */
 class DefinitionsService {
@@ -45,7 +46,7 @@ class DefinitionsService {
         let currency = response.entries[i];
         currencies.push({
           code: currency.code,
-          id: currency.id,
+          id: new CurrencyId(currency.id),
           sign: currency.sign
         });
       }

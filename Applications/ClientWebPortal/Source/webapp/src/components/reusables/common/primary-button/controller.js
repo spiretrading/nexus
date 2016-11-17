@@ -1,6 +1,6 @@
 class Controller {
   constructor(react, componentModel) {
-    this.componentModel = cloneObject(componentModel);
+    this.componentModel = clone(componentModel);
     this.onClick = react.props.onClick;
   }
 

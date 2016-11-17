@@ -20,6 +20,16 @@ class RiskParameters {
       transition_time: this.transitionTime
     };
   }
+
+  clone() {
+    return new RiskParameters(
+      this.currencyId.clone(),
+      this.buyingPower.clone(),
+      this.allowedState.clone(),
+      this.netLoss.clone(),
+      this.transitionTime
+    );
+  }
 }
 
 RiskParameters.fromData = (data) => {

@@ -3,7 +3,8 @@ import {
   DefinitionsServiceClient,
   CountryDatabase,
   CountryCode,
-  CurrencyDatabase
+  CurrencyDatabase,
+  CurrencyId
 } from 'spire-client';
 import HashMap from 'hashmap';
 
@@ -108,6 +109,9 @@ class DefService {
   }
 
   doesCurrencyExist(id) {
+    if (!(id instanceof CurrencyId)) {
+      id = CurrencyId.fromNumber(id);
+    }
     return this.currencyDatabase.fromId(id) != null;
   }
 
@@ -122,10 +126,16 @@ class DefService {
   }
 
   getCurrencyCode(id) {
+    if (!(id instanceof CurrencyId)) {
+      id = CurrencyId.fromNumber(id);
+    }
     return this.currencyDatabase.fromId(id).code;
   }
 
   getCurrencySign(id) {
+    if (!(id instanceof CurrencyId)) {
+      id = CurrencyId.fromNumber(id);
+    }
     let currencyEntry = this.currencyDatabase.fromId(id);
     if (currencyEntry != null){
       return currencyEntry.sign;
@@ -135,7 +145,7 @@ class DefService {
   }
 
   getCurrencyNumber(code) {
-    return this.currencyDatabase.fromCode(code).id;
+    return this.currencyDatabase.fromCode(code).id.toNumber();
   }
 
   getEntitlements() {

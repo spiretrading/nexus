@@ -4,6 +4,14 @@ class CurrencyDatabaseEntry {
     this.code = code;
     this.sign = sign;
   }
+
+  clone() {
+    return new CountryDatabaseEntry(
+      this.id.clone(),
+      this.code,
+      this.sign
+    );
+  }
 }
 
 export default CurrencyDatabaseEntry;

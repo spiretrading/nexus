@@ -17,8 +17,22 @@ import userService from 'services/user';
 import {ServiceLocatorClient, DirectoryEntry} from 'spire-client';
 import sessionInitializer from 'commons/session-initializer';
 
-window.cloneObject = (originalObj) => {
-  return JSON.parse(JSON.stringify(originalObj));
+window.clone = (originalObj) => {
+  if (typeof originalObj == 'object') {
+    let clone = {};
+    for (let property in originalObj) {
+      if (originalObj[property] != null) {
+        if (originalObj[property].clone != null) {
+          clone[property] = originalObj[property].clone.apply(originalObj[property]);
+        } else {
+          clone[property] = JSON.parse(JSON.stringify(originalObj[property]));
+        }
+      }
+    }
+    return clone;
+  } else {
+    return JSON.parse(JSON.stringify(originalObj));
+  }
 };
 window.EventBus = eventBus;
 window.Event = event;
