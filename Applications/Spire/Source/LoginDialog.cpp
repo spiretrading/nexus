@@ -1,6 +1,14 @@
 #include "Spire/LoginDialog.hpp"
 #include <string>
+#include <Beam/Network/IpAddress.hpp>
+#include <Beam/Pointers/Ref.hpp>
+#include <Beam/Queues/RoutineTaskQueue.hpp>
+#include <Beam/Queues/TaskQueue.hpp>
+#include <Beam/ServiceLocator/ServiceLocator.hpp>
+#include <Beam/Threading/Threading.hpp>
+#include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <boost/lexical_cast.hpp>
+#if 0
 #include <QApplication>
 #include <QCoreApplication>
 #include <QDesktopWidget>
@@ -10,9 +18,6 @@
 #include <QPixmap>
 #include <QScreen>
 #include <QtGui>
-
-#include <Beam/Json/JsonObject.hpp>
-#include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #if 0
 #include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include <Beam/ServiceLocator/SessionEncryption.hpp>
@@ -143,4 +148,4 @@ void LoginDialog::mouseMoveEvent(QMouseEvent* event) {
     move(newpos);
   }
 }
-
+#endif
