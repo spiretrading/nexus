@@ -8,6 +8,7 @@
 #include <QSlider>
 #include <QSpinBox>
 #include <Spire/LoginDialog.hpp>
+#include <Qt>
 
 using namespace Spire;
 
