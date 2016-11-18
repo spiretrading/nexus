@@ -1,19 +1,14 @@
-#include "Spire/Login/LoginDialog.hpp"
-#include <Beam/Network/IpAddress.hpp>
-#include <Beam/Pointers/Ref.hpp>
-#include <Beam/Queues/RoutineTaskQueue.hpp>
-#include <Beam/Queues/TaskQueue.hpp>
-#include <Beam/Threading/Threading.hpp>
+#include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
+#include <Beam/ServiceLocator/AuthenticationException.hpp>
+#include <Beam/ServiceLocator/SessionEncryption.hpp>
 #include <boost/lexical_cast.hpp>
-#include <QApplication>
-#include <QCoreApplication>
-#include <QDesktopWidget>
 #include <QMouseEvent>
 #include <QMovie>
 #include <QPalette>
 #include <QPixmap>
 #include <QScreen>
-#include <QtGui>
+#include "Spire/Login/LoginDialog.hpp"
+#include "Spire/Spire/ServiceClients.hpp"
 #include "ui_LoginDialog.h"
 
 using namespace Beam;
@@ -25,9 +20,27 @@ using namespace boost;
 using namespace Spire;
 using namespace std;
 
-LoginDialog::LoginDialog(QWidget* parent)
-    : QDialog{parent},
-      m_ui{std::make_unique<Ui_LoginDialog>()} {
+namespace {
+  const auto UPDATE_INTERVAL = 100;
+}
+
+LoginDialog::ServerInstance::ServerInstance(string name, IpAddress address)
+  : m_name{ std::move(name) },
+  m_address{ std::move(address) } {}
+
+unique_ptr<ServiceClients> LoginDialog::GetServiceClients() {
+  return std::move(m_serviceClients);
+}
+LoginDialog::LoginDialog(vector<ServerInstance> instances,
+    RefType<SocketThreadPool> socketThreadPool,
+    RefType<TimerThreadPool> timerThreadPool)
+    : m_ui{ std::make_unique<Ui_LoginDialog>() },
+    m_instances{ std::move(instances) },
+    m_socketThreadPool{ socketThreadPool.Get() },
+    m_timerThreadPool{ timerThreadPool.Get() },
+    m_state{ State::READY },
+    m_loginCount{ 0 } {
+
   setWindowFlags(Qt::FramelessWindowHint);
   m_ui->setupUi(this);
   auto screen = qApp->screens().at(0);
@@ -79,6 +92,8 @@ LoginDialog::LoginDialog(QWidget* parent)
     "font: 10pt 'Roboto';"});
   m_ui->m_passwordInput->setTextMargins(LINE_EDIT_MARGIN * 
     physicalDotsPerInchX, 0, 0, 0);
+  m_ui->m_passwordInput->setEchoMode(QLineEdit::Password);
+
   const auto VERSION_LABEL_HEIGHT = 0.28;
   m_ui->m_versionLabel->setFixedHeight(VERSION_LABEL_HEIGHT *
     physicalDotsPerInchY);
@@ -89,16 +104,16 @@ LoginDialog::LoginDialog(QWidget* parent)
   const auto VERSION_LOGIN_SPACER_WIDTH = 0.3;
   m_ui->m_versionLoginSpacer->changeSize(VERSION_LOGIN_SPACER_WIDTH *
     physicalDotsPerInchX, 0, QSizePolicy::Fixed);
-  auto movie = new QMovie{":/newPrefix/spire_desktop_loading_icon.gif"};
-  m_ui->m_loadingLabel->setMovie(movie);
+  //auto movie = new QMovie{":/newPrefix/spire_desktop_loading_icon.gif"};
+  //m_ui->m_loadingLabel->setMovie(movie);
   const auto LOADING_LABEL_HEIGHT = 0.28;
   m_ui->m_loadingLabel->setFixedHeight(LOADING_LABEL_HEIGHT *
     physicalDotsPerInchY);
   m_ui->m_loadingLabel->setFixedWidth(0.2288 * physicalDotsPerInchX);
   m_ui->m_loadingLabel->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
-  movie->setScaledSize(m_ui->m_loadingLabel->size());
+  //movie->setScaledSize(m_ui->m_loadingLabel->size());
   m_ui->m_loadingLabel->setStyleSheet("background color : black");
-  movie->start();
+  //movie->start();
   const auto LOADING_LABEL_LOGIN_SPACER_WIDTH = 0.2;
   m_ui->m_loadingLabelLoginSpacer->changeSize(LOADING_LABEL_LOGIN_SPACER_WIDTH *
     physicalDotsPerInchX, 0, QSizePolicy::Fixed);
@@ -149,9 +164,10 @@ LoginDialog::LoginDialog(QWidget* parent)
     physicalDotsPerInchY, QSizePolicy::Fixed);
   m_ui->m_invalidLabel->setAlignment(Qt::AlignHCenter);
   m_ui->m_invalidLabel->setFont(f);
-  m_ui->m_invalidLabel->setStyleSheet(
-    "background-color : rgba(0,0,0,0%);"
-    "color:rgb(219, 213, 44)");
+  m_ui->m_invalidLabel->setStyleSheet("QLabel { color: qrgba(255, 255, 255, 0); }"); 
+
+  connect(m_ui->m_loginButton, &QPushButton::clicked, this,
+    &LoginDialog::HandleLoginButtonClicked);
 }
 
 LoginDialog::~LoginDialog() {}
@@ -168,4 +184,72 @@ void LoginDialog::mouseMoveEvent(QMouseEvent* event) {
     auto newpos = pos() + diff;
     move(newpos);
   }
+}
+
+void LoginDialog::HandleLoginButtonClicked() {
+  m_ui->m_invalidLabel->setStyleSheet("QLabel { color: qrgba(255, 255, 255, 0); }");
+  m_ui->m_usernameInput->setEnabled(false);
+  m_ui->m_passwordInput->setEnabled(false);
+  m_ui->m_loginButton->setText(tr("Cancel"));
+  auto movie = new QMovie{":/newPrefix/spire_desktop_loading_icon.gif"};
+  m_ui->m_loadingLabel->setMovie(movie);
+  movie->setScaledSize(m_ui->m_loadingLabel->size());
+  movie->start();
+
+  auto username = m_ui->m_usernameInput->text().toStdString();
+  auto password = m_ui->m_passwordInput->text().toStdString();
+  
+  auto serviceLocatorClient =
+    std::make_unique<ApplicationServiceLocatorClient>();
+  std::unique_ptr<ServiceClients> serviceClients;
+  try {
+    serviceLocatorClient->BuildSession(m_instances.front().m_address,
+      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
+    (*serviceLocatorClient)->SetCredentials(username, password);
+    (*serviceLocatorClient)->Open();
+    serviceClients = std::make_unique<ServiceClients>(
+      std::move(serviceLocatorClient), Ref(*m_socketThreadPool),
+      Ref(*m_timerThreadPool));
+    serviceClients->Open();
+  }
+  catch (const AuthenticationException&) {
+    HandleAuthenticationError();
+    return;
+  }
+  catch (const std::exception& e) {
+    HandleConnectionError();
+    cout << "Authentication Exception";
+    cout << e.what() << "\n";
+
+    return;
+  }
+  HandleSuccess();
+}
+void LoginDialog::HandleAuthenticationError() {
+  SetReadyState(tr("Invalid username or password."));
+}
+
+void LoginDialog::HandleConnectionError() {
+  SetReadyState(tr("Unable to connect to server."));
+}
+
+void LoginDialog::HandleSuccess(){
+  SetReadyState({});
+  Q_EMIT accept();
+}
+
+void LoginDialog::SetReadyState(const QString& response) {
+  m_ui->m_usernameInput->setEnabled(true);
+  m_ui->m_passwordInput->setEnabled(true);
+  m_ui->m_loginButton->setText(tr("Login"));
+  auto loadingIcon = m_ui->m_loadingLabel->movie();
+  loadingIcon->stop();
+  m_ui->m_loadingLabel->clear();
+  delete loadingIcon;
+  m_ui->m_invalidLabel->setText(response);
+  m_ui->m_invalidLabel->setStyleSheet(
+    "background-color : rgba(0,0,0,0%);"
+    "color:rgb(219, 213, 44)");
+  
+  m_state = State::READY;
 }

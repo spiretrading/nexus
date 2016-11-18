@@ -1,7 +1,7 @@
 find_package(Qt5Widgets REQUIRED)
 
 file(GLOB header_files
-  ./../../../Include/Spire/*.hpp)
+  ./../../../Include/Spire/Spire/*.hpp)
 file(GLOB source_files
   ./../../../Source/Spire/*.cpp)
 file(GLOB form_files 
