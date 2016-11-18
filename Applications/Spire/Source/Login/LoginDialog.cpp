@@ -1,4 +1,4 @@
-#include "Spire/LoginDialog.hpp"
+#include "Spire/Login/LoginDialog.hpp"
 #include <Beam/Network/IpAddress.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>

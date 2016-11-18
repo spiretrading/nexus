@@ -1,4 +1,4 @@
-#include "Spire/LoginDialog.hpp"
+#include "Spire/Login/LoginDialog.hpp"
 #include <QApplication>
 #include <QtPlugin>
 

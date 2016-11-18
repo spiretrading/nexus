@@ -79,5 +79,6 @@ if(NOT EXISTS $ENV{TEST_INSTALL_DIRECTORY}/Release)
   file(MAKE_DIRECTORY $ENV{TEST_INSTALL_DIRECTORY}/Release)
 endif()
 
-add_subdirectory(Spire)
+add_subdirectory(Login)
 add_subdirectory(Resources)
+add_subdirectory(Spire)
