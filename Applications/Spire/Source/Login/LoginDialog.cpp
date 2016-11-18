@@ -63,9 +63,22 @@ LoginDialog::LoginDialog(QWidget* parent)
     physicalDotsPerInchY);
   m_ui->m_usernameInput->setFixedWidth(3.0 * physicalDotsPerInchX);
   const auto PASSWORD_INPUT_HEIGHT = 0.28;
+  m_ui->m_usernameInput->setStyleSheet({ "background-color:rgb(255, 255, 255);"
+    "color: rgb(168, 168, 168);"
+    "color: rgb(0, 0, 0);"
+    "font: 10pt 'Roboto';" });
+  const auto LINE_EDIT_MARGIN = 0.1;
+  m_ui->m_usernameInput->setTextMargins(LINE_EDIT_MARGIN * 
+    physicalDotsPerInchX,0, 0, 0);
   m_ui->m_passwordInput->setFixedHeight(PASSWORD_INPUT_HEIGHT *
     physicalDotsPerInchY);
   m_ui->m_passwordInput->setFixedWidth(3.0 * physicalDotsPerInchX);
+  m_ui->m_passwordInput->setStyleSheet({"background-color: rgb(255, 255, 255);"
+    "color: rgb(168, 168, 168);"
+    "color: rgb(0, 0, 0);"
+    "font: 10pt 'Roboto';"});
+  m_ui->m_passwordInput->setTextMargins(LINE_EDIT_MARGIN * 
+    physicalDotsPerInchX, 0, 0, 0);
   const auto VERSION_LABEL_HEIGHT = 0.28;
   m_ui->m_versionLabel->setFixedHeight(VERSION_LABEL_HEIGHT *
     physicalDotsPerInchY);
