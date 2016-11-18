@@ -1,13 +1,32 @@
 #include "Spire/LoginDialog.hpp"
-#include <QMovie>
+#include <string>
+#include <boost/lexical_cast.hpp>
+#include <QApplication>
+#include <QCoreApplication>
+#include <QDesktopWidget>
 #include <QMouseEvent>
-#include <QScreen>
-#include <QtGui>
-#include "ui_LoginDialog.h"
+#include <QMovie>
 #include <QPalette>
 #include <QPixmap>
+#include <QScreen>
+#include <QtGui>
 
+#include <Beam/Json/JsonObject.hpp>
+#include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
+#if 0
+#include <Beam/ServiceLocator/AuthenticationException.hpp>
+#include <Beam/ServiceLocator/SessionEncryption.hpp>
+#endif
+#include "ui_LoginDialog.h"
+
+//using namespace Beam;
+//using namespace Beam::Network;
+//using namespace Beam::Routines;
+//using namespace Beam::ServiceLocator;
+//using namespace Beam::Threading;
+//using namespace boost;
 using namespace Spire;
+using namespace std;
 
 LoginDialog::LoginDialog(QWidget* parent)
   : QDialog{ parent },
