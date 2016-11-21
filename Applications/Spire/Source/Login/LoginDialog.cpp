@@ -1,4 +1,4 @@
-#include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
+#include "Spire/Login/LoginDialog.hpp"
 #include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include <Beam/ServiceLocator/SessionEncryption.hpp>
 #include <boost/lexical_cast.hpp>
@@ -7,7 +7,6 @@
 #include <QPalette>
 #include <QPixmap>
 #include <QScreen>
-#include "Spire/Login/LoginDialog.hpp"
 #include "Spire/Spire/ServiceClients.hpp"
 #include "ui_LoginDialog.h"
 
@@ -25,21 +24,18 @@ namespace {
 }
 
 LoginDialog::ServerInstance::ServerInstance(string name, IpAddress address)
-  : m_name{ std::move(name) },
-  m_address{ std::move(address) } {}
+  : m_name{std::move(name)},
+    m_address{std::move(address)} {}
 
-unique_ptr<ServiceClients> LoginDialog::GetServiceClients() {
-  return std::move(m_serviceClients);
-}
 LoginDialog::LoginDialog(vector<ServerInstance> instances,
     RefType<SocketThreadPool> socketThreadPool,
     RefType<TimerThreadPool> timerThreadPool)
-    : m_ui{ std::make_unique<Ui_LoginDialog>() },
-    m_instances{ std::move(instances) },
-    m_socketThreadPool{ socketThreadPool.Get() },
-    m_timerThreadPool{ timerThreadPool.Get() },
-    m_state{ State::READY },
-    m_loginCount{ 0 } {
+    : m_ui{std::make_unique<Ui_LoginDialog>()},
+      m_instances{std::move(instances)},
+      m_socketThreadPool{socketThreadPool.Get()},
+      m_timerThreadPool{timerThreadPool.Get()},
+      m_state{State::READY},
+      m_loginCount{0} {
   setWindowFlags(Qt::FramelessWindowHint);
   m_ui->setupUi(this);
   auto screen = qApp->screens().at(0);
@@ -69,22 +65,24 @@ LoginDialog::LoginDialog(vector<ServerInstance> instances,
     physicalDotsPerInchY);
   m_ui->m_usernameInput->setFixedWidth(3.0 * physicalDotsPerInchX);
   const auto PASSWORD_INPUT_HEIGHT = 0.28;
-  m_ui->m_usernameInput->setStyleSheet({ "background-color:rgb(255, 255, 255);"
+  m_ui->m_usernameInput->setStyleSheet(
+    "background-color:rgb(255, 255, 255);"
     "color: rgb(168, 168, 168);"
     "color: rgb(0, 0, 0);"
-    "font: 10pt 'Roboto';" });
+    "font: 10pt 'Roboto';");
   const auto LINE_EDIT_MARGIN = 0.1;
-  m_ui->m_usernameInput->setTextMargins(LINE_EDIT_MARGIN * 
+  m_ui->m_usernameInput->setTextMargins(LINE_EDIT_MARGIN *
     physicalDotsPerInchX,0, 0, 0);
   m_ui->m_passwordInput->setFixedHeight(PASSWORD_INPUT_HEIGHT *
     physicalDotsPerInchY);
   m_ui->m_passwordInput->setFixedWidth(2.76 * physicalDotsPerInchX);
-  m_ui->m_passwordInput->setStyleSheet({"background-color: rgb(255, 255, 255);"
+  m_ui->m_passwordInput->setStyleSheet(
+    "background-color: rgb(255, 255, 255);"
     "color: rgb(168, 168, 168);"
     "color: rgb(0, 0, 0);"
-    "font: 10pt 'Roboto';"});
-  m_ui->m_passwordInput->setTextMargins(LINE_EDIT_MARGIN * 
-    physicalDotsPerInchX, 0, 0, 0);
+    "font: 10pt 'Roboto';");
+  m_ui->m_passwordInput->setTextMargins(LINE_EDIT_MARGIN * physicalDotsPerInchX,
+    0, 0, 0);
   m_ui->m_passwordInput->setEchoMode(QLineEdit::Password);
   const auto VERSION_LABEL_HEIGHT = 0.28;
   m_ui->m_versionLabel->setFixedHeight(VERSION_LABEL_HEIGHT *
@@ -107,8 +105,7 @@ LoginDialog::LoginDialog(vector<ServerInstance> instances,
   m_ui->m_loadingLabel->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
   m_ui->m_loadingLabel->setStyleSheet("background color : black");
   const auto LOADING_LABEL_LOGIN_SPACER_WIDTH = 0.2;
-  m_ui->m_loadingLabelLoginSpacer->changeSize(
-    LOADING_LABEL_LOGIN_SPACER_WIDTH *
+  m_ui->m_loadingLabelLoginSpacer->changeSize(LOADING_LABEL_LOGIN_SPACER_WIDTH *
     physicalDotsPerInchX, 0, QSizePolicy::Fixed);
   const auto LOGIN_BUTTON_HEIGHT = 0.28;
   m_ui->m_loginButton->setFixedHeight(LOGIN_BUTTON_HEIGHT *
@@ -141,7 +138,7 @@ LoginDialog::LoginDialog(vector<ServerInstance> instances,
   m_ui->m_spireLogoLabel->setStyleSheet(
     "border-image - image: url(: / newPrefix / spire - white.png);");
   const auto SPIRE_LOGO_INVALID_SPACER_WIDTH = 0.15;
-  m_ui->m_spireLogoInvalidSpacer->changeSize(0, 
+  m_ui->m_spireLogoInvalidSpacer->changeSize(0,
     SPIRE_LOGO_INVALID_SPACER_WIDTH * physicalDotsPerInchY,
     QSizePolicy::Fixed);
   m_ui->m_mainLayout->setAlignment(Qt::AlignCenter);
@@ -163,8 +160,8 @@ LoginDialog::LoginDialog(vector<ServerInstance> instances,
   m_ui->m_invalidLabel->setStyleSheet(
     "QLabel { color: qrgba(255, 255, 255, 0); }");
   const auto PASSWORD_CONTAINER_HEIGHT = 0.28;
-  m_ui->m_passwordContainer->setFixedSize(
-    3*physicalDotsPerInchX, PASSWORD_CONTAINER_HEIGHT * physicalDotsPerInchY);
+  m_ui->m_passwordContainer->setFixedSize(3 * physicalDotsPerInchX,
+    PASSWORD_CONTAINER_HEIGHT * physicalDotsPerInchY);
   m_ui->m_passwordContainer->setStyleSheet("background-color:white");
   const auto CHROMA_WIDTH = 0.08;
   const auto CHROMA_HEIGHT = 0.24;
@@ -182,33 +179,9 @@ LoginDialog::LoginDialog(vector<ServerInstance> instances,
 }
 
 LoginDialog::~LoginDialog() {}
-void LoginDialog::HandlePasswordTextChanged(const QString& text) {
-  UpdatePasswordColor();
-}
 
-void LoginDialog::UpdatePasswordColor() {
-  const auto CHROMA_HASHES = 3;
-  const auto COLOR_LENGTH = 6;
-  auto password = m_ui->m_passwordInput->text().toStdString();
-  auto hash = ComputeSHA(password);
-  for (auto i = 0; i < CHROMA_HASHES; ++i) {
-    auto color = hash.substr(COLOR_LENGTH * i, COLOR_LENGTH);
-    auto styleSheet = QString::fromStdString(
-      "\
-      QWidget#m_chroma" + lexical_cast<string>(i + 1) + " {\
-        background-color: #" + color + ";\
-      }\
-    ");
-    if (i == 0) {
-      m_ui->m_chroma1->setStyleSheet(styleSheet);
-    }
-    else if (i == 1) {
-      m_ui->m_chroma2->setStyleSheet(styleSheet);
-    }
-    else {
-      m_ui->m_chroma3->setStyleSheet(styleSheet);
-    }
-  }
+unique_ptr<ServiceClients> LoginDialog::GetServiceClients() {
+  return std::move(m_serviceClients);
 }
 
 void LoginDialog::mousePressEvent(QMouseEvent* event) {
@@ -222,6 +195,44 @@ void LoginDialog::mouseMoveEvent(QMouseEvent* event) {
     auto diff = event->pos() - m_mousePoint;
     auto newpos = pos() + diff;
     move(newpos);
+  }
+}
+
+void LoginDialog::SetReadyState(const QString& response) {
+  m_ui->m_usernameInput->setEnabled(true);
+  m_ui->m_passwordInput->setEnabled(true);
+  m_ui->m_loginButton->setText(tr("Login"));
+  auto loadingIcon = m_ui->m_loadingLabel->movie();
+  loadingIcon->stop();
+  m_ui->m_loadingLabel->clear();
+  delete loadingIcon;
+  m_ui->m_invalidLabel->setText(response);
+  m_ui->m_invalidLabel->setStyleSheet(
+    "background-color : rgba(0,0,0,0%);"
+    "color:rgb(219, 213, 44)");
+  m_state = State::READY;
+}
+
+void LoginDialog::UpdatePasswordColor() {
+  const auto CHROMA_HASHES = 3;
+  const auto COLOR_LENGTH = 6;
+  auto password = m_ui->m_passwordInput->text().toStdString();
+  auto hash = ComputeSHA(password);
+  for(auto i = 0; i < CHROMA_HASHES; ++i) {
+    auto color = hash.substr(COLOR_LENGTH * i, COLOR_LENGTH);
+    auto styleSheet = QString::fromStdString(
+      "\
+      QWidget#m_chroma" + lexical_cast<string>(i + 1) + " {\
+        background-color: #" + color + ";\
+      }\
+    ");
+    if(i == 0) {
+      m_ui->m_chroma1->setStyleSheet(styleSheet);
+    } else if(i == 1) {
+      m_ui->m_chroma2->setStyleSheet(styleSheet);
+    } else {
+      m_ui->m_chroma3->setStyleSheet(styleSheet);
+    }
   }
 }
 
@@ -249,20 +260,16 @@ void LoginDialog::HandleLoginButtonClicked() {
       std::move(serviceLocatorClient), Ref(*m_socketThreadPool),
       Ref(*m_timerThreadPool));
     serviceClients->Open();
-  }
-  catch (const AuthenticationException&) {
+  } catch (const AuthenticationException&) {
     HandleAuthenticationError();
     return;
-  }
-  catch (const std::exception& e) {
+  } catch (const std::exception&) {
     HandleConnectionError();
-    cout << "Authentication Exception";
-    cout << e.what() << "\n";
-
     return;
   }
   HandleSuccess();
 }
+
 void LoginDialog::HandleAuthenticationError() {
   SetReadyState(tr("Invalid username or password."));
 }
@@ -276,17 +283,6 @@ void LoginDialog::HandleSuccess(){
   Q_EMIT accept();
 }
 
-void LoginDialog::SetReadyState(const QString& response) {
-  m_ui->m_usernameInput->setEnabled(true);
-  m_ui->m_passwordInput->setEnabled(true);
-  m_ui->m_loginButton->setText(tr("Login"));
-  auto loadingIcon = m_ui->m_loadingLabel->movie();
-  loadingIcon->stop();
-  m_ui->m_loadingLabel->clear();
-  delete loadingIcon;
-  m_ui->m_invalidLabel->setText(response);
-  m_ui->m_invalidLabel->setStyleSheet(
-    "background-color : rgba(0,0,0,0%);"
-    "color:rgb(219, 213, 44)");
-  m_state = State::READY;
+void LoginDialog::HandlePasswordTextChanged(const QString& text) {
+  UpdatePasswordColor();
 }

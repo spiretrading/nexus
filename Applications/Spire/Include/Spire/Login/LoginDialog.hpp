@@ -5,6 +5,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Queues/TaskQueue.hpp>
+#include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/ServiceLocator/ServiceLocator.hpp>
 #include <Beam/Threading/Threading.hpp>
 #include <QDialog>
@@ -51,12 +52,12 @@ namespace Spire {
       Beam::TaskQueue m_slotHandler;
       Beam::RoutineTaskQueue m_tasks;
 
-      void HandleLoginButtonClicked();
       void SetReadyState(const QString& response);
+      void UpdatePasswordColor();
+      void HandleLoginButtonClicked();
       void HandleAuthenticationError();
       void HandleConnectionError();
       void HandleSuccess();
-      void UpdatePasswordColor();
       void HandlePasswordTextChanged(const QString& text);
   };
 }
