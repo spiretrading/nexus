@@ -56,6 +56,8 @@ namespace Spire {
       void HandleAuthenticationError();
       void HandleConnectionError();
       void HandleSuccess();
+      void UpdatePasswordColor();
+      void HandlePasswordTextChanged(const QString& text);
   };
 }
 

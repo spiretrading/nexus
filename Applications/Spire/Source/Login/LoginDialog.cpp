@@ -57,7 +57,7 @@ LoginDialog::LoginDialog(vector<ServerInstance> instances,
   setPalette(palette);
   setFixedHeight(3.6 * physicalDotsPerInchY);
   setFixedWidth(4.0 * physicalDotsPerInchX);
-  const auto LEFT_SPACER_SIZE = 0.425;
+  const auto LEFT_SPACER_SIZE = 0.5;
   m_ui->m_leftSpacer->changeSize(LEFT_SPACER_SIZE * physicalDotsPerInchX, 0,
     QSizePolicy::Fixed);
   const auto RIGHT_SPACER_SIZE = 0.5;
@@ -65,12 +65,12 @@ LoginDialog::LoginDialog(vector<ServerInstance> instances,
     QSizePolicy::Fixed);
   m_ui->m_bottomSpacer->changeSize(0, 0.5 * physicalDotsPerInchY,
     QSizePolicy::Fixed);
-  m_ui->m_widget->move(0, 0);
-  m_ui->m_widget->setFixedHeight(
-    LOGIN_DIALOG_HEIGHT_INCHES * physicalDotsPerInchY);
-  m_ui->m_widget->setFixedWidth(
-    LOGIN_DIALOG_WIDTH_INCHES * physicalDotsPerInchX);
-  m_ui->m_widget->setStyleSheet("background:transparent;");
+  //m_ui->m_widget->move(0, 0);
+  //m_ui->m_widget->setFixedHeight(
+    //LOGIN_DIALOG_HEIGHT_INCHES * physicalDotsPerInchY);
+  //m_ui->m_widget->setFixedWidth(
+   // LOGIN_DIALOG_WIDTH_INCHES * physicalDotsPerInchX);
+  //m_ui->m_widget->setStyleSheet("background:transparent;");
   const auto USERNAME_INPUT_HEIGHT = 0.28;
   m_ui->m_usernameInput->setFixedHeight(USERNAME_INPUT_HEIGHT *
     physicalDotsPerInchY);
@@ -85,7 +85,7 @@ LoginDialog::LoginDialog(vector<ServerInstance> instances,
     physicalDotsPerInchX,0, 0, 0);
   m_ui->m_passwordInput->setFixedHeight(PASSWORD_INPUT_HEIGHT *
     physicalDotsPerInchY);
-  m_ui->m_passwordInput->setFixedWidth(3.0 * physicalDotsPerInchX);
+  m_ui->m_passwordInput->setFixedWidth(2.76 * physicalDotsPerInchX);
   m_ui->m_passwordInput->setStyleSheet({"background-color: rgb(255, 255, 255);"
     "color: rgb(168, 168, 168);"
     "color: rgb(0, 0, 0);"
@@ -164,13 +164,52 @@ LoginDialog::LoginDialog(vector<ServerInstance> instances,
     physicalDotsPerInchY, QSizePolicy::Fixed);
   m_ui->m_invalidLabel->setAlignment(Qt::AlignHCenter);
   m_ui->m_invalidLabel->setFont(f);
-  m_ui->m_invalidLabel->setStyleSheet("QLabel { color: qrgba(255, 255, 255, 0); }"); 
+  m_ui->m_invalidLabel->setStyleSheet("QLabel { color: qrgba(255, 255, 255, 0); }");
+  m_ui->m_passwordContainer->setFixedSize(3*physicalDotsPerInchX, 0.28*physicalDotsPerInchY);
+  m_ui->m_passwordContainer->setStyleSheet("background-color:white");
+  m_ui->m_chroma1->setFixedSize(0.08 * physicalDotsPerInchX,
+    0.24 * physicalDotsPerInchY);
+  m_ui->m_chroma2->setFixedSize(0.08 * physicalDotsPerInchX,
+    0.24 * physicalDotsPerInchY);
+  m_ui->m_chroma3->setFixedSize(0.08 * physicalDotsPerInchX,
+    0.24 * physicalDotsPerInchY);
 
   connect(m_ui->m_loginButton, &QPushButton::clicked, this,
     &LoginDialog::HandleLoginButtonClicked);
+  connect(m_ui->m_passwordInput, &QLineEdit::textChanged, this,
+    &LoginDialog::HandlePasswordTextChanged);
+  UpdatePasswordColor();
 }
 
 LoginDialog::~LoginDialog() {}
+void LoginDialog::HandlePasswordTextChanged(const QString& text) {
+  UpdatePasswordColor();
+}
+
+void LoginDialog::UpdatePasswordColor() {
+  const auto CHROMA_HASHES = 3;
+  const auto COLOR_LENGTH = 6;
+  auto password = m_ui->m_passwordInput->text().toStdString();
+  auto hash = ComputeSHA(password);
+  for (auto i = 0; i < CHROMA_HASHES; ++i) {
+    auto color = hash.substr(COLOR_LENGTH * i, COLOR_LENGTH);
+    auto styleSheet = QString::fromStdString(
+      "\
+      QWidget#m_chroma" + lexical_cast<string>(i + 1) + " {\
+        background-color: #" + color + ";\
+      }\
+    ");
+    if (i == 0) {
+      m_ui->m_chroma1->setStyleSheet(styleSheet);
+    }
+    else if (i == 1) {
+      m_ui->m_chroma2->setStyleSheet(styleSheet);
+    }
+    else {
+      m_ui->m_chroma3->setStyleSheet(styleSheet);
+    }
+  }
+}
 
 void LoginDialog::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
