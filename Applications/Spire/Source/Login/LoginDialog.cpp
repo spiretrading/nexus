@@ -40,7 +40,6 @@ LoginDialog::LoginDialog(vector<ServerInstance> instances,
     m_timerThreadPool{ timerThreadPool.Get() },
     m_state{ State::READY },
     m_loginCount{ 0 } {
-
   setWindowFlags(Qt::FramelessWindowHint);
   m_ui->setupUi(this);
   auto screen = qApp->screens().at(0);
@@ -55,8 +54,8 @@ LoginDialog::LoginDialog(vector<ServerInstance> instances,
   QPalette palette;
   palette.setBrush(QPalette::Background, brush);
   setPalette(palette);
-  setFixedHeight(3.6 * physicalDotsPerInchY);
-  setFixedWidth(4.0 * physicalDotsPerInchX);
+  setFixedHeight(LOGIN_DIALOG_HEIGHT_INCHES * physicalDotsPerInchY);
+  setFixedWidth(LOGIN_DIALOG_WIDTH_INCHES * physicalDotsPerInchX);
   const auto LEFT_SPACER_SIZE = 0.5;
   m_ui->m_leftSpacer->changeSize(LEFT_SPACER_SIZE * physicalDotsPerInchX, 0,
     QSizePolicy::Fixed);
@@ -65,12 +64,6 @@ LoginDialog::LoginDialog(vector<ServerInstance> instances,
     QSizePolicy::Fixed);
   m_ui->m_bottomSpacer->changeSize(0, 0.5 * physicalDotsPerInchY,
     QSizePolicy::Fixed);
-  //m_ui->m_widget->move(0, 0);
-  //m_ui->m_widget->setFixedHeight(
-    //LOGIN_DIALOG_HEIGHT_INCHES * physicalDotsPerInchY);
-  //m_ui->m_widget->setFixedWidth(
-   // LOGIN_DIALOG_WIDTH_INCHES * physicalDotsPerInchX);
-  //m_ui->m_widget->setStyleSheet("background:transparent;");
   const auto USERNAME_INPUT_HEIGHT = 0.28;
   m_ui->m_usernameInput->setFixedHeight(USERNAME_INPUT_HEIGHT *
     physicalDotsPerInchY);
@@ -93,29 +86,29 @@ LoginDialog::LoginDialog(vector<ServerInstance> instances,
   m_ui->m_passwordInput->setTextMargins(LINE_EDIT_MARGIN * 
     physicalDotsPerInchX, 0, 0, 0);
   m_ui->m_passwordInput->setEchoMode(QLineEdit::Password);
-
   const auto VERSION_LABEL_HEIGHT = 0.28;
   m_ui->m_versionLabel->setFixedHeight(VERSION_LABEL_HEIGHT *
     physicalDotsPerInchY);
-  m_ui->m_versionLabel->setFixedWidth(1.2 * physicalDotsPerInchX);
+  const auto VERSION_LABEL_WIDTH = 1.2;
+  m_ui->m_versionLabel->setFixedWidth(
+    VERSION_LABEL_WIDTH * physicalDotsPerInchX);
   m_ui->m_versionLabel->setStyleSheet("color:rgb(255,255,255)");
   m_ui->m_versionLabel->setText("Version 1.0.0");
   m_ui->m_versionLabel->setFont(f);
   const auto VERSION_LOGIN_SPACER_WIDTH = 0.3;
   m_ui->m_versionLoginSpacer->changeSize(VERSION_LOGIN_SPACER_WIDTH *
     physicalDotsPerInchX, 0, QSizePolicy::Fixed);
-  //auto movie = new QMovie{":/newPrefix/spire_desktop_loading_icon.gif"};
-  //m_ui->m_loadingLabel->setMovie(movie);
   const auto LOADING_LABEL_HEIGHT = 0.28;
   m_ui->m_loadingLabel->setFixedHeight(LOADING_LABEL_HEIGHT *
     physicalDotsPerInchY);
-  m_ui->m_loadingLabel->setFixedWidth(0.2288 * physicalDotsPerInchX);
+  const auto LOADING_LABEL_WIDTH = 0.2288;
+  m_ui->m_loadingLabel->setFixedWidth(
+    LOADING_LABEL_WIDTH * physicalDotsPerInchX);
   m_ui->m_loadingLabel->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
-  //movie->setScaledSize(m_ui->m_loadingLabel->size());
   m_ui->m_loadingLabel->setStyleSheet("background color : black");
-  //movie->start();
   const auto LOADING_LABEL_LOGIN_SPACER_WIDTH = 0.2;
-  m_ui->m_loadingLabelLoginSpacer->changeSize(LOADING_LABEL_LOGIN_SPACER_WIDTH *
+  m_ui->m_loadingLabelLoginSpacer->changeSize(
+    LOADING_LABEL_LOGIN_SPACER_WIDTH *
     physicalDotsPerInchX, 0, QSizePolicy::Fixed);
   const auto LOGIN_BUTTON_HEIGHT = 0.28;
   m_ui->m_loginButton->setFixedHeight(LOGIN_BUTTON_HEIGHT *
@@ -147,7 +140,9 @@ LoginDialog::LoginDialog(vector<ServerInstance> instances,
   m_ui->m_spireLogoLabel->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
   m_ui->m_spireLogoLabel->setStyleSheet(
     "border-image - image: url(: / newPrefix / spire - white.png);");
-  m_ui->m_spireLogoInvalidSpacer->changeSize(0, 0.15 * physicalDotsPerInchY,
+  const auto SPIRE_LOGO_INVALID_SPACER_WIDTH = 0.15;
+  m_ui->m_spireLogoInvalidSpacer->changeSize(0, 
+    SPIRE_LOGO_INVALID_SPACER_WIDTH * physicalDotsPerInchY,
     QSizePolicy::Fixed);
   m_ui->m_mainLayout->setAlignment(Qt::AlignCenter);
   const auto LOGO_TOP_SPACER_HEIGHT = 0.8;
@@ -158,22 +153,27 @@ LoginDialog::LoginDialog(vector<ServerInstance> instances,
     QSizePolicy::Fixed);
   const auto USERNAME_PASSWORD_SPACER_HEIGHT = 0.125;
   m_ui->m_usernamePasswordSpacer->changeSize(0,
-    USERNAME_PASSWORD_SPACER_HEIGHT * physicalDotsPerInchY, QSizePolicy::Fixed);
+    USERNAME_PASSWORD_SPACER_HEIGHT * physicalDotsPerInchY,
+    QSizePolicy::Fixed);
   const auto PASSWORD_LOGIN_SPACER = 0.25;
   m_ui->m_passwordLoginSpacer->changeSize(0, PASSWORD_LOGIN_SPACER *
     physicalDotsPerInchY, QSizePolicy::Fixed);
   m_ui->m_invalidLabel->setAlignment(Qt::AlignHCenter);
   m_ui->m_invalidLabel->setFont(f);
-  m_ui->m_invalidLabel->setStyleSheet("QLabel { color: qrgba(255, 255, 255, 0); }");
-  m_ui->m_passwordContainer->setFixedSize(3*physicalDotsPerInchX, 0.28*physicalDotsPerInchY);
+  m_ui->m_invalidLabel->setStyleSheet(
+    "QLabel { color: qrgba(255, 255, 255, 0); }");
+  const auto PASSWORD_CONTAINER_HEIGHT = 0.28;
+  m_ui->m_passwordContainer->setFixedSize(
+    3*physicalDotsPerInchX, PASSWORD_CONTAINER_HEIGHT * physicalDotsPerInchY);
   m_ui->m_passwordContainer->setStyleSheet("background-color:white");
-  m_ui->m_chroma1->setFixedSize(0.08 * physicalDotsPerInchX,
-    0.24 * physicalDotsPerInchY);
-  m_ui->m_chroma2->setFixedSize(0.08 * physicalDotsPerInchX,
-    0.24 * physicalDotsPerInchY);
-  m_ui->m_chroma3->setFixedSize(0.08 * physicalDotsPerInchX,
-    0.24 * physicalDotsPerInchY);
-
+  const auto CHROMA_WIDTH = 0.08;
+  const auto CHROMA_HEIGHT = 0.24;
+  m_ui->m_chroma1->setFixedSize(CHROMA_WIDTH * physicalDotsPerInchX,
+    CHROMA_HEIGHT * physicalDotsPerInchY);
+  m_ui->m_chroma2->setFixedSize(CHROMA_WIDTH * physicalDotsPerInchX,
+    CHROMA_HEIGHT * physicalDotsPerInchY);
+  m_ui->m_chroma3->setFixedSize(CHROMA_WIDTH * physicalDotsPerInchX,
+    CHROMA_HEIGHT * physicalDotsPerInchY);
   connect(m_ui->m_loginButton, &QPushButton::clicked, this,
     &LoginDialog::HandleLoginButtonClicked);
   connect(m_ui->m_passwordInput, &QLineEdit::textChanged, this,
@@ -226,7 +226,8 @@ void LoginDialog::mouseMoveEvent(QMouseEvent* event) {
 }
 
 void LoginDialog::HandleLoginButtonClicked() {
-  m_ui->m_invalidLabel->setStyleSheet("QLabel { color: qrgba(255, 255, 255, 0); }");
+  m_ui->m_invalidLabel->setStyleSheet(
+    "QLabel { color: qrgba(255, 255, 255, 0); }");
   m_ui->m_usernameInput->setEnabled(false);
   m_ui->m_passwordInput->setEnabled(false);
   m_ui->m_loginButton->setText(tr("Cancel"));
@@ -234,10 +235,8 @@ void LoginDialog::HandleLoginButtonClicked() {
   m_ui->m_loadingLabel->setMovie(movie);
   movie->setScaledSize(m_ui->m_loadingLabel->size());
   movie->start();
-
   auto username = m_ui->m_usernameInput->text().toStdString();
   auto password = m_ui->m_passwordInput->text().toStdString();
-  
   auto serviceLocatorClient =
     std::make_unique<ApplicationServiceLocatorClient>();
   std::unique_ptr<ServiceClients> serviceClients;
@@ -289,6 +288,5 @@ void LoginDialog::SetReadyState(const QString& response) {
   m_ui->m_invalidLabel->setStyleSheet(
     "background-color : rgba(0,0,0,0%);"
     "color:rgb(219, 213, 44)");
-  
   m_state = State::READY;
 }
