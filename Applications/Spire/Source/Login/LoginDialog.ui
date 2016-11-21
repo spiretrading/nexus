@@ -360,9 +360,6 @@ color: rgb(0, 0, 0);
     </spacer>
    </item>
   </layout>
-  <zorder>m_leftSpacer</zorder>
-  <zorder></zorder>
-  <zorder>m_rightSpacer</zorder>
  </widget>
  <resources>
   <include location="../../Resources/Resources.qrc"/>
