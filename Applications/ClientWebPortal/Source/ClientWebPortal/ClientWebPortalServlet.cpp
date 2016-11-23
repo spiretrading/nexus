@@ -8,12 +8,16 @@
 #include <Beam/WebServices/HttpServerPredicates.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "ClientWebPortal/ClientWebPortal/ServiceClients.hpp"
+#include "Nexus/Accounting/Portfolio.hpp"
+#include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
 #include "Nexus/Compliance/VirtualComplianceClient.hpp"
 #include "Nexus/Definitions/Country.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
+#include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
+#include "Nexus/OrderExecutionService/StandardQueries.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
 
 using namespace Beam;
@@ -21,11 +25,22 @@ using namespace Beam::IO;
 using namespace Beam::Serialization;
 using namespace Beam::ServiceLocator;
 using namespace Beam::WebServices;
+using namespace boost;
+using namespace boost::posix_time;
 using namespace Nexus;
+using namespace Nexus::Accounting;
 using namespace Nexus::AdministrationService;
 using namespace Nexus::ClientWebPortal;
+using namespace Nexus::OrderExecutionService;
 using namespace Nexus::RiskService;
 using namespace std;
+
+namespace {
+  using WebPosition = Nexus::Accounting::Position<Nexus::Security>;
+  using WebInventory = Nexus::Accounting::Inventory<WebPosition>;
+  using WebBookkeeper = Nexus::Accounting::TrueAverageBookkeeper<WebInventory>;
+  using WebPortfolio = Nexus::Accounting::Portfolio<WebBookkeeper>;
+}
 
 ClientWebPortalServlet::ClientWebPortalServlet(
     RefType<ServiceClients> serviceClients)
@@ -40,97 +55,103 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
   vector<HttpRequestSlot> slots;
   slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/login"),
-    bind(&ClientWebPortalServlet::OnLogin, this, std::placeholders::_1));
+    std::bind(&ClientWebPortalServlet::OnLogin, this, std::placeholders::_1));
   slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/logout"),
-    bind(&ClientWebPortalServlet::OnLogout, this, std::placeholders::_1));
+    std::bind(&ClientWebPortalServlet::OnLogout, this, std::placeholders::_1));
   slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/create_account"),
-    bind(&ClientWebPortalServlet::OnCreateAccount, this,
+    std::bind(&ClientWebPortalServlet::OnCreateAccount, this,
     std::placeholders::_1));
   slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/create_group"),
-    bind(&ClientWebPortalServlet::OnCreateGroup, this, std::placeholders::_1));
+    std::bind(&ClientWebPortalServlet::OnCreateGroup, this,
+    std::placeholders::_1));
   slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/load_current_account"),
-    bind(&ClientWebPortalServlet::OnLoadCurrentAccount, this,
+    std::bind(&ClientWebPortalServlet::OnLoadCurrentAccount, this,
     std::placeholders::_1));
   slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/store_password"),
-    bind(&ClientWebPortalServlet::OnStorePassword, this,
+    std::bind(&ClientWebPortalServlet::OnStorePassword, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_trading_group"),
-    bind(&ClientWebPortalServlet::OnLoadTradingGroup, this,
+    std::bind(&ClientWebPortalServlet::OnLoadTradingGroup, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_managed_trading_groups"),
-    bind(&ClientWebPortalServlet::OnLoadManagedTradingGroups, this,
+    std::bind(&ClientWebPortalServlet::OnLoadManagedTradingGroups, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_account_roles"),
-    bind(&ClientWebPortalServlet::OnLoadAccountRoles, this,
+    std::bind(&ClientWebPortalServlet::OnLoadAccountRoles, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_account_identity"),
-    bind(&ClientWebPortalServlet::OnLoadAccountIdentity, this,
+    std::bind(&ClientWebPortalServlet::OnLoadAccountIdentity, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/store_account_identity"),
-    bind(&ClientWebPortalServlet::OnStoreAccountIdentity, this,
+    std::bind(&ClientWebPortalServlet::OnStoreAccountIdentity, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_entitlements_database"),
-    bind(&ClientWebPortalServlet::OnLoadEntitlementsDatabase, this,
+    std::bind(&ClientWebPortalServlet::OnLoadEntitlementsDatabase, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_account_entitlements"),
-    bind(&ClientWebPortalServlet::OnLoadAccountEntitlements, this,
+    std::bind(&ClientWebPortalServlet::OnLoadAccountEntitlements, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/store_account_entitlements"),
-    bind(&ClientWebPortalServlet::OnStoreAccountEntitlements, this,
+    std::bind(&ClientWebPortalServlet::OnStoreAccountEntitlements, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_risk_parameters"),
-    bind(&ClientWebPortalServlet::OnLoadRiskParameters, this,
+    std::bind(&ClientWebPortalServlet::OnLoadRiskParameters, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/store_risk_parameters"),
-    bind(&ClientWebPortalServlet::OnStoreRiskParameters, this,
+    std::bind(&ClientWebPortalServlet::OnStoreRiskParameters, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/compliance_service/load_directory_entry_compliance_rule_entry"),
-    bind(&ClientWebPortalServlet::OnLoadDirectoryEntryComplianceRuleEntry, this,
-    std::placeholders::_1));
+    std::bind(&ClientWebPortalServlet::OnLoadDirectoryEntryComplianceRuleEntry,
+    this, std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/definitions_service/load_compliance_rule_schemas"),
-    bind(&ClientWebPortalServlet::OnLoadComplianceRuleSchemas, this,
+    std::bind(&ClientWebPortalServlet::OnLoadComplianceRuleSchemas, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/definitions_service/load_country_database"),
-    bind(&ClientWebPortalServlet::OnLoadCountryDatabase, this,
+    std::bind(&ClientWebPortalServlet::OnLoadCountryDatabase, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/definitions_service/load_currency_database"),
-    bind(&ClientWebPortalServlet::OnLoadCurrencyDatabase, this,
+    std::bind(&ClientWebPortalServlet::OnLoadCurrencyDatabase, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/definitions_service/load_market_database"),
-    bind(&ClientWebPortalServlet::OnLoadMarketDatabase, this,
+    std::bind(&ClientWebPortalServlet::OnLoadMarketDatabase, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/market_data_service/load_security_info_from_prefix"),
-    bind(&ClientWebPortalServlet::OnLoadSecurityInfoFromPrefix, this,
+    std::bind(&ClientWebPortalServlet::OnLoadSecurityInfoFromPrefix, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/reporting_service/load_profit_and_loss_report"),
+    std::bind(&ClientWebPortalServlet::OnLoadProfitAndLossReport, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, "/"),
-    bind(&ClientWebPortalServlet::OnIndex, this, std::placeholders::_1));
+    std::bind(&ClientWebPortalServlet::OnIndex, this, std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, ""),
-    bind(&ClientWebPortalServlet::OnIndex, this, std::placeholders::_1));
+    std::bind(&ClientWebPortalServlet::OnIndex, this, std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, "/index.html"),
-    bind(&ClientWebPortalServlet::OnIndex, this, std::placeholders::_1));
+    std::bind(&ClientWebPortalServlet::OnIndex, this, std::placeholders::_1));
   slots.emplace_back(MatchAny(HttpMethod::GET),
-    bind(&ClientWebPortalServlet::OnServeFile, this, std::placeholders::_1));
+    std::bind(&ClientWebPortalServlet::OnServeFile, this,
+    std::placeholders::_1));
   return slots;
 }
 
@@ -699,5 +720,57 @@ HttpResponse ClientWebPortalServlet::OnLoadSecurityInfoFromPrefix(
     m_serviceClients->GetMarketDataClient().LoadSecurityInfoFromPrefix(
     parameters.m_prefix);
   session->ShuttleResponse(securityInfos, Store(response));
+  return response;
+}
+
+HttpResponse ClientWebPortalServlet::OnLoadProfitAndLossReport(
+    const HttpRequest& request) {
+  struct Parameters {
+    DirectoryEntry m_directoryEntry;
+    ptime m_startDate;
+    ptime m_endDate;
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("directory_entry", m_directoryEntry);
+      shuttle.Shuttle("start_date", m_startDate);
+      shuttle.Shuttle("end_date", m_endDate);
+    }
+  };
+  HttpResponse response;
+  auto session = m_sessions.Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  auto orderQueue = std::make_shared<Queue<const Order*>>();
+  auto marketDatabase =
+    m_serviceClients->GetDefinitionsClient().LoadMarketDatabase();
+  auto timeZoneDatabase =
+    m_serviceClients->GetDefinitionsClient().LoadTimeZoneDatabase();
+  QueryDailyOrderSubmissions(parameters.m_directoryEntry,
+    parameters.m_startDate, parameters.m_endDate, marketDatabase,
+    timeZoneDatabase, m_serviceClients->GetOrderExecutionClient(), orderQueue);
+  WebPortfolio portfolio{marketDatabase};
+  try {
+    while(true) {
+      auto order = orderQueue->Top();
+      orderQueue->Pop();
+      vector<ExecutionReport> executionReports;
+      order->GetPublisher().WithSnapshot(
+        [&] (auto snapshot) {
+          if(snapshot.is_initialized()) {
+            executionReports = *snapshot;
+          }
+        });
+      for(auto& executionReport : executionReports) {
+        portfolio.Update(order->GetInfo().m_fields, executionReport);
+      }
+    }
+  } catch(const PipeBrokenException&) {}
+  vector<WebInventory> inventories;
+  for(auto& inventory : portfolio.GetBookkeeper().GetInventoryRange()) {
+    inventories.push_back(inventory.second);
+  }
+  session->ShuttleResponse(inventories, Store(response));
   return response;
 }

@@ -90,6 +90,8 @@ namespace ClientWebPortal {
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadSecurityInfoFromPrefix(
         const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadProfitAndLossReport(
+        const Beam::WebServices::HttpRequest& request);
   };
 }
 }
