@@ -103,8 +103,7 @@ LoginDialog::LoginDialog(vector<ServerInstance> instances,
   m_ui->m_loadingLabel->setFixedWidth(
     LOADING_LABEL_WIDTH * physicalDotsPerInchX);
   m_ui->m_loadingLabel->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
-  m_ui->m_loadingLabel->setStyleSheet("background color : black");
-  const auto LOADING_LABEL_LOGIN_SPACER_WIDTH = 0.2;
+  const auto LOADING_LABEL_LOGIN_SPACER_WIDTH = 0.25;
   m_ui->m_loadingLabelLoginSpacer->changeSize(LOADING_LABEL_LOGIN_SPACER_WIDTH *
     physicalDotsPerInchX, 0, QSizePolicy::Fixed);
   const auto LOGIN_BUTTON_HEIGHT = 0.28;
@@ -175,7 +174,10 @@ LoginDialog::LoginDialog(vector<ServerInstance> instances,
     &LoginDialog::HandleLoginButtonClicked);
   connect(m_ui->m_passwordInput, &QLineEdit::textChanged, this,
     &LoginDialog::HandlePasswordTextChanged);
+  connect(&m_updateTimer, &QTimer::timeout, this,
+    &LoginDialog::HandleUpdateTimer);
   UpdatePasswordColor();
+  m_updateTimer.start(UPDATE_INTERVAL);
 }
 
 LoginDialog::~LoginDialog() {}
@@ -210,6 +212,7 @@ void LoginDialog::SetReadyState(const QString& response) {
   m_ui->m_invalidLabel->setStyleSheet(
     "background-color : rgba(0,0,0,0%);"
     "color:rgb(219, 213, 44)");
+  ++m_loginCount;
   m_state = State::READY;
 }
 
@@ -237,37 +240,61 @@ void LoginDialog::UpdatePasswordColor() {
 }
 
 void LoginDialog::HandleLoginButtonClicked() {
-  m_ui->m_invalidLabel->setStyleSheet(
-    "QLabel { color: qrgba(255, 255, 255, 0); }");
-  m_ui->m_usernameInput->setEnabled(false);
-  m_ui->m_passwordInput->setEnabled(false);
-  m_ui->m_loginButton->setText(tr("Cancel"));
-  auto movie = new QMovie{":/newPrefix/spire_desktop_loading_icon.gif"};
-  m_ui->m_loadingLabel->setMovie(movie);
-  movie->setScaledSize(m_ui->m_loadingLabel->size());
-  movie->start();
-  auto username = m_ui->m_usernameInput->text().toStdString();
-  auto password = m_ui->m_passwordInput->text().toStdString();
-  auto serviceLocatorClient =
-    std::make_unique<ApplicationServiceLocatorClient>();
-  std::unique_ptr<ServiceClients> serviceClients;
-  try {
-    serviceLocatorClient->BuildSession(m_instances.front().m_address,
-      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
-    (*serviceLocatorClient)->SetCredentials(username, password);
-    (*serviceLocatorClient)->Open();
-    serviceClients = std::make_unique<ServiceClients>(
-      std::move(serviceLocatorClient), Ref(*m_socketThreadPool),
-      Ref(*m_timerThreadPool));
-    serviceClients->Open();
-  } catch (const AuthenticationException&) {
-    HandleAuthenticationError();
-    return;
-  } catch (const std::exception&) {
-    HandleConnectionError();
-    return;
+  if (m_state == State::READY) {
+    m_ui->m_invalidLabel->setStyleSheet(
+      "QLabel { color: qrgba(255, 255, 255, 0); }");
+    m_ui->m_usernameInput->setEnabled(false);
+    m_ui->m_passwordInput->setEnabled(false);
+    m_ui->m_loginButton->setText(tr("Cancel"));
+    auto movie = new QMovie{ ":/newPrefix/spire_desktop_loading_icon.gif" };
+    movie->setScaledSize(m_ui->m_loadingLabel->size());
+    m_ui->m_loadingLabel->setMovie(movie);
+    movie->start();
+    connect(movie, SIGNAL(finished()), movie, SLOT(start()));
+    m_state = State::LOGGING_IN;
+    m_tasks.Push([=, loginCount = m_loginCount] {
+      auto username = m_ui->m_usernameInput->text().toStdString();
+      auto password = m_ui->m_passwordInput->text().toStdString();
+      auto serviceLocatorClient =
+        std::make_unique<ApplicationServiceLocatorClient>();
+      std::unique_ptr<ServiceClients> serviceClients;
+      try {
+        serviceLocatorClient->BuildSession(m_instances.front().m_address,
+          Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
+        (*serviceLocatorClient)->SetCredentials(username, password);
+        (*serviceLocatorClient)->Open();
+        serviceClients = std::make_unique<ServiceClients>(
+          std::move(serviceLocatorClient), Ref(*m_socketThreadPool),
+          Ref(*m_timerThreadPool));
+        serviceClients->Open();
+      }
+      catch (const AuthenticationException&) {
+        m_slotHandler.Push([=] {
+          if (loginCount != m_loginCount) {
+            return;
+          }
+          HandleAuthenticationError();
+        });
+        return;
+      } catch (const std::exception& e) {
+        m_slotHandler.Push([=] {
+          if (loginCount != m_loginCount) {
+            return;
+          }
+          HandleConnectionError();
+        });
+        return;
+      }
+      m_slotHandler.Push([=, serviceClients = serviceClients.release()]{
+        if (loginCount != m_loginCount) {
+          return;
+        }
+      HandleSuccess(unique_ptr<ServiceClients>{serviceClients});
+      });
+    });
+  } else {
+    SetReadyState(tr("Login canceled."));
   }
-  HandleSuccess();
 }
 
 void LoginDialog::HandleAuthenticationError() {
@@ -278,11 +305,17 @@ void LoginDialog::HandleConnectionError() {
   SetReadyState(tr("Unable to connect to server."));
 }
 
-void LoginDialog::HandleSuccess(){
+void LoginDialog::HandleSuccess(
+    std::unique_ptr<ServiceClients> serviceClients){
   SetReadyState({});
+  m_serviceClients = std::move(serviceClients);
   Q_EMIT accept();
 }
 
 void LoginDialog::HandlePasswordTextChanged(const QString& text) {
   UpdatePasswordColor();
+}
+
+void LoginDialog::HandleUpdateTimer() {
+  HandleTasks(m_slotHandler);
 }

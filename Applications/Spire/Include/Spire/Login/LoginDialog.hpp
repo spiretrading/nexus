@@ -57,8 +57,9 @@ namespace Spire {
       void HandleLoginButtonClicked();
       void HandleAuthenticationError();
       void HandleConnectionError();
-      void HandleSuccess();
+      void HandleSuccess(std::unique_ptr<ServiceClients> serviceClients);
       void HandlePasswordTextChanged(const QString& text);
+      void HandleUpdateTimer();
   };
 }
 
