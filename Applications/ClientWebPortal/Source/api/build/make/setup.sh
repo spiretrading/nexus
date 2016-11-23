@@ -6,4 +6,3 @@ cd $directory/../../
     npm install
 }
 popd
-
