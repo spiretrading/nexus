@@ -104,7 +104,8 @@ LoginDialog::LoginDialog(vector<ServerInstance> instances,
     LOADING_LABEL_WIDTH * physicalDotsPerInchX);
   m_ui->m_loadingLabel->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
   const auto LOADING_LABEL_LOGIN_SPACER_WIDTH = 0.25;
-  m_ui->m_loadingLabelLoginSpacer->changeSize(LOADING_LABEL_LOGIN_SPACER_WIDTH *
+  m_ui->m_loadingLabelLoginSpacer->changeSize(
+    LOADING_LABEL_LOGIN_SPACER_WIDTH *
     physicalDotsPerInchX, 0, QSizePolicy::Fixed);
   const auto LOGIN_BUTTON_HEIGHT = 0.28;
   m_ui->m_loginButton->setFixedHeight(LOGIN_BUTTON_HEIGHT *
@@ -267,8 +268,7 @@ void LoginDialog::HandleLoginButtonClicked() {
           std::move(serviceLocatorClient), Ref(*m_socketThreadPool),
           Ref(*m_timerThreadPool));
         serviceClients->Open();
-      }
-      catch (const AuthenticationException&) {
+      } catch (const AuthenticationException&) {
         m_slotHandler.Push([=] {
           if (loginCount != m_loginCount) {
             return;
@@ -285,11 +285,11 @@ void LoginDialog::HandleLoginButtonClicked() {
         });
         return;
       }
-      m_slotHandler.Push([=, serviceClients = serviceClients.release()]{
+      m_slotHandler.Push([=, serviceClients = serviceClients.release()] {
         if (loginCount != m_loginCount) {
           return;
         }
-      HandleSuccess(unique_ptr<ServiceClients>{serviceClients});
+        HandleSuccess(unique_ptr<ServiceClients>{serviceClients});
       });
     });
   } else {
