@@ -276,7 +276,7 @@ void LoginDialog::HandleLoginButtonClicked() {
           HandleAuthenticationError();
         });
         return;
-      } catch (const std::exception& e) {
+      } catch (const std::exception&) {
         m_slotHandler.Push([=] {
           if (loginCount != m_loginCount) {
             return;
