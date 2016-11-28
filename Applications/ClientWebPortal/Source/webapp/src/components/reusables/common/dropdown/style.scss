@@ -1,0 +1,28 @@
+@import "src/styles/variables";
+
+.dropdown-container {
+  position: relative;
+
+  select {
+    width: 100%;
+    padding-top: 5px;
+    padding-right: 35px;
+    padding-bottom: 6px;
+    padding-left: 15px;
+    background-image: url('/images/arrow-down.png');
+    background-color: $lightGrey;
+    background-position: right;
+    background-repeat: no-repeat;
+    background-position: right 10px bottom 7px;
+    background-size: 14px 14px;
+    border-radius: 0px;
+  }
+
+  .icon-arrow-down {
+    position: absolute;
+    right: 0;
+    top: 9px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+}

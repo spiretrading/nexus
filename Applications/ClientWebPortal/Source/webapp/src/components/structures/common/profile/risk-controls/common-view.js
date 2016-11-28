@@ -13,6 +13,10 @@ class CommonView extends UpdatableView {
     });
   }
 
+  hideSavedMessage() {
+    $('#risk-control-container .save-message').stop().fadeOut();
+  }
+
   showSavedMessage() {
     let $saveMessage = $('#risk-control-container .save-message');
     $saveMessage

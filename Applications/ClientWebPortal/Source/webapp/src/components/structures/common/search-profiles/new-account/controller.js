@@ -1,13 +1,13 @@
-import adminClient from 'utils/spire-clients/admin';
+import {AdministrationClient, ServiceLocatorClient, AccountIdentity, DirectoryEntry} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
-import serviceLocatorClient from 'utils/spire-clients/service-locator';
-import ResultCode from 'utils/spire-clients/service-locator/result-codes';
 import userService from 'services/user';
 import {browserHistory} from 'react-router/es6';
 
 class Controller {
   constructor(componentModel) {
-    this.componentModel = cloneObject(componentModel);
+    this.componentModel = clone(componentModel);
+    this.adminClient = new AdministrationClient();
+    this.serviceLocatorClient = new ServiceLocatorClient();
   }
 
   getView() {
@@ -19,7 +19,7 @@ class Controller {
   }
 
   isModelEmpty() {
-    let model = cloneObject(this.componentModel);
+    let model = clone(this.componentModel);
     delete model.componentId;
     return $.isEmptyObject(model);
   }
@@ -27,7 +27,7 @@ class Controller {
   /** @private */
   getRequiredData() {
     let directoryEntry = this.componentModel.directoryEntry;
-    let loadManagedTradingGroups = adminClient.loadManagedTradingGroups.apply(adminClient, [directoryEntry]);
+    let loadManagedTradingGroups = this.adminClient.loadManagedTradingGroups.apply(this.adminClient, [directoryEntry]);
 
     return Promise.all([
       loadManagedTradingGroups
@@ -90,20 +90,24 @@ class Controller {
   }
 
   createAccount() {
-    let accountIdentity = {
-      address_line_one: this.componentModel.addressLineOne,
-      address_line_two: this.componentModel.addressLineTwo,
-      address_line_three: this.componentModel.addressLineThree,
-      city: this.componentModel.city,
-      country: this.componentModel.country,
-      e_mail: this.componentModel.email,
-      first_name: this.componentModel.firstName,
-      last_name: this.componentModel.lastName,
-      photo_id: this.componentModel.photoId || '',
-      province: this.componentModel.province,
-      user_notes: this.componentModel.userNotes
-    };
-    serviceLocatorClient.createAccount(
+    let model = this.componentModel;
+    let accountIdentity = new AccountIdentity(
+      model.addressLineOne,
+      model.addressLineTwo,
+      model.addressLineThree,
+      model.city,
+      model.country,
+      model.email,
+      model.firstName,
+      model.lastLoginTime,
+      model.lastName,
+      model.picture,
+      model.province,
+      model.registrationTime,
+      model.userNotes
+    );
+
+    this.serviceLocatorClient.createAccount(
       this.componentModel.userName,
       this.componentModel.groups[0] || null,
       accountIdentity,

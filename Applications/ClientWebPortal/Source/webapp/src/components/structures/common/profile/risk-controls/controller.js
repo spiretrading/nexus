@@ -1,10 +1,21 @@
-import adminClient from 'utils/spire-clients/admin';
+import {
+  AdministrationClient,
+  DirectoryEntry,
+  CurrencyId,
+  Money
+} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
 
 class Controller {
   constructor(componentModel) {
-    this.componentModel = cloneObject(componentModel);
+    this.componentModel = clone(componentModel);
+    this.componentModel.directoryEntry = new DirectoryEntry(
+      this.componentModel.directoryEntry.id,
+      this.componentModel.directoryEntry.type,
+      this.componentModel.directoryEntry.name
+    );
+    this.adminClient = new AdministrationClient();
   }
 
   getView() {
@@ -18,8 +29,8 @@ class Controller {
   /** @private */
   getRequiredData() {
     let directoryEntry = this.componentModel.directoryEntry;
-    let loadAccountRiskParameters = adminClient.loadRiskParameters.apply(adminClient, [directoryEntry]);
-    let loadAccountRoles = adminClient.loadAccountRoles.apply(adminClient, [directoryEntry]);
+    let loadAccountRiskParameters = this.adminClient.loadRiskParameters.apply(this.adminClient, [directoryEntry]);
+    let loadAccountRoles = this.adminClient.loadAccountRoles.apply(this.adminClient, [directoryEntry]);
 
     return Promise.all([
       loadAccountRiskParameters,
@@ -31,9 +42,13 @@ class Controller {
     let directoryEntry = this.componentModel.directoryEntry;
     let requiredDataFetchPromise = this.getRequiredData();
 
-    preloaderTimer.start(requiredDataFetchPromise, null, Config.WHOLE_PAGE_PRELOADER_WIDTH, Config.WHOLE_PAGE_PRELOADER_HEIGHT).then((responses) => {
-      let riskParameters = responses[0];
-      this.componentModel.riskParameters = riskParameters;
+    preloaderTimer.start(
+      requiredDataFetchPromise,
+      null,
+      Config.WHOLE_PAGE_PRELOADER_WIDTH,
+      Config.WHOLE_PAGE_PRELOADER_HEIGHT
+    ).then((responses) => {
+      this.componentModel.riskParameters = responses[0];
       this.componentModel.directoryEntry = directoryEntry;
       this.componentModel.roles = responses[1];
       this.componentModel.userName = directoryEntry.name;
@@ -43,27 +58,31 @@ class Controller {
   }
 
   isModelInitialized() {
-    let model = cloneObject(this.componentModel);
+    let model = clone(this.componentModel);
     delete model.componentId;
     delete model.directoryEntry;
     return !$.isEmptyObject(model);
   }
 
   onCurrencyChange(newCurrencyNumber) {
+    this.view.hideSavedMessage();
     EventBus.publish(Event.Profile.RiskControls.CURRENCY_SELECTED);
-    this.componentModel.riskParameters.currency = newCurrencyNumber;
+    this.componentModel.riskParameters.currencyId = CurrencyId.fromNumber(newCurrencyNumber);
     this.view.update(this.componentModel);
   }
 
   onNetLossChange(newAmount) {
-    this.componentModel.riskParameters.netLoss = newAmount;
+    this.view.hideSavedMessage();
+    this.componentModel.riskParameters.netLoss = Money.fromValue(newAmount);
   }
 
   onBuyingPowerChange(newAmount) {
-    this.componentModel.riskParameters.buyingPower = newAmount;
+    this.view.hideSavedMessage();
+    this.componentModel.riskParameters.buyingPower = Money.fromValue(newAmount);
   }
 
   onTransitionTimeChange(newTime) {
+    this.view.hideSavedMessage();
     this.componentModel.riskParameters.transitionTime = newTime;
   }
 
@@ -71,7 +90,7 @@ class Controller {
     if (this.componentModel.riskParameters.currency != 0) {
       let riskParameters = this.componentModel.riskParameters;
       let directoryEntry = this.componentModel.directoryEntry;
-      adminClient.storeRiskParameters.apply(adminClient, [directoryEntry, riskParameters])
+      this.adminClient.storeRiskParameters.apply(this.adminClient, [directoryEntry, riskParameters])
         .then(onSaved.bind(this))
         .catch(onFailed.bind(this));
     } else {

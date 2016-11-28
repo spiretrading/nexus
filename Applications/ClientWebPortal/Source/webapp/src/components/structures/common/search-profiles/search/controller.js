@@ -1,5 +1,4 @@
-import adminClient from 'utils/spire-clients/admin';
-import serviceLocator from 'utils/spire-clients/service-locator';
+import {AdministrationClient, ServiceLocatorClient, DirectoryEntry} from 'spire-client';
 import userService from 'services/user';
 import preloaderTimer from 'utils/preloader-timer';
 import HashMap from 'hashmap';
@@ -7,8 +6,10 @@ import {browserHistory} from 'react-router/es6';
 
 class Controller {
   constructor(componentModel) {
-    this.componentModel = cloneObject(componentModel);
+    this.componentModel = clone(componentModel);
     this.accountDirectoryEntries = new HashMap();
+    this.adminClient = new AdministrationClient();
+    this.serviceLocatorClient = new ServiceLocatorClient();
   }
 
   getView() {
@@ -20,7 +21,7 @@ class Controller {
   }
 
   isModelEmpty() {
-    let model = cloneObject(this.componentModel);
+    let model = clone(this.componentModel);
     delete model.componentId;
     return $.isEmptyObject(model);
   }
@@ -30,14 +31,19 @@ class Controller {
     let directoryEntry = this.componentModel.directoryEntry;
     let accountDirectoryEntries = this.accountDirectoryEntries;
     let groupedAccounts;
-    let loadAllManagedAccounts = adminClient.loadManagedTradingGroups.apply(
-      adminClient,
+    let loadAllManagedAccounts = this.adminClient.loadManagedTradingGroups.apply(
+      this.adminClient,
       [(directoryEntry)]
     ).then((managedGroups) => {
       let loadTradingGroupsPromises = [];
       for (let i=0; i<managedGroups.length; i++) {
         let managedGroupDirectoryEntry = managedGroups[i];
-        loadTradingGroupsPromises.push(adminClient.loadTradingGroup.apply(adminClient, [managedGroupDirectoryEntry]));
+        managedGroupDirectoryEntry = new DirectoryEntry(
+          managedGroupDirectoryEntry.id,
+          managedGroupDirectoryEntry.type,
+          managedGroupDirectoryEntry.name
+        );
+        loadTradingGroupsPromises.push(this.adminClient.loadTradingGroup.apply(this.adminClient, [managedGroupDirectoryEntry]));
       }
       return Promise.all(loadTradingGroupsPromises)
         .then((groupAccounts) => {
@@ -57,8 +63,8 @@ class Controller {
     });
 
     loadAllManagedAccounts = loadAllManagedAccounts
-      .then(loadRoles)
-      .then(rolesLoaded);
+      .then(loadRoles.bind(this))
+      .then(rolesLoaded.bind(this));
 
     return Promise.all([
       loadAllManagedAccounts
@@ -73,9 +79,14 @@ class Controller {
         let groupTraders = groupAccounts.accounts.traders;
         for (let j=0; j<groupTraders.length; j++) {
           let traderDirectoryEntry = groupTraders[j];
+          traderDirectoryEntry = new DirectoryEntry(
+            traderDirectoryEntry.id,
+            traderDirectoryEntry.type,
+            traderDirectoryEntry.name
+          );
           accountDirectoryEntries.set(traderDirectoryEntry.id, traderDirectoryEntry);
           if (!requestedRoles.has(traderDirectoryEntry.id)) {
-            loadRolesPromises.push(adminClient.loadAccountRoles.apply(adminClient, [traderDirectoryEntry]));
+            loadRolesPromises.push(this.adminClient.loadAccountRoles.apply(this.adminClient, [traderDirectoryEntry]));
             requestedRoles.set(traderDirectoryEntry.id, true);
           }
         }
@@ -142,7 +153,7 @@ class Controller {
   }
 
   createGroup(groupName) {
-    serviceLocator.createGroup.apply(serviceLocator, [groupName])
+    this.serviceLocatorClient.createGroup.apply(this.serviceLocatorClient, [groupName])
       .then(this.view.closeCreateGroupModal.bind(this.view))
       .then(refreshSearchPage.bind(this));
 

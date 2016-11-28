@@ -4,6 +4,7 @@
 namespace Nexus {
 namespace ClientWebPortal {
   class ClientWebPortalServlet;
+  class ClientWebPortalSession;
   class ServiceClients;
 }
 }

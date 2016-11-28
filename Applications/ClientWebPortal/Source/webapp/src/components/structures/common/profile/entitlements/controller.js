@@ -1,11 +1,17 @@
-import adminClient from 'utils/spire-clients/admin';
+import {AdministrationClient, DirectoryEntry} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
 import definitionsService from 'services/definitions';
 
 class Controller {
   constructor(componentModel) {
-    this.componentModel = cloneObject(componentModel);
+    this.componentModel = clone(componentModel);
+    this.componentModel.directoryEntry = new DirectoryEntry(
+      this.componentModel.directoryEntry.id,
+      this.componentModel.directoryEntry.type,
+      this.componentModel.directoryEntry.name
+    );
+    this.adminClient = new AdministrationClient();
   }
 
   getView() {
@@ -19,11 +25,11 @@ class Controller {
   /** @private */
   getRequiredData() {
     let directoryEntry = this.componentModel.directoryEntry;
-    let loadAccountEntitlements = adminClient.loadAccountEntitlements.apply(
-      adminClient,
+    let loadAccountEntitlements = this.adminClient.loadAccountEntitlements.apply(
+      this.adminClient,
       [directoryEntry]
     );
-    let loadAccountRoles = adminClient.loadAccountRoles.apply(adminClient, [directoryEntry]);
+    let loadAccountRoles = this.adminClient.loadAccountRoles.apply(this.adminClient, [directoryEntry]);
 
     return Promise.all([
       loadAccountEntitlements,
@@ -62,19 +68,21 @@ class Controller {
   }
 
   isModelInitialized() {
-    let model = cloneObject(this.componentModel);
+    let model = clone(this.componentModel);
     delete model.componentId;
     delete model.directoryEntry;
     return !$.isEmptyObject(model);
   }
 
   onEntitlementSelected(id) {
+    this.view.hideSaveMessage();
     let groupEntry = this.getGroupEntry(id);
     this.componentModel.accountEntitlements.push(groupEntry);
     this.view.update(this.componentModel);
   }
 
   onEntitlementDeselected(id) {
+    this.view.hideSaveMessage();
     for (let i=0; i<this.componentModel.accountEntitlements.length; i++) {
       if (this.componentModel.accountEntitlements[i].id === id) {
         this.componentModel.accountEntitlements.splice(i, 1);
@@ -85,7 +93,7 @@ class Controller {
 
   save() {
     let directoryEntry = this.componentModel.directoryEntry;
-    adminClient.storeAccountEntitlements(directoryEntry, this.componentModel.accountEntitlements)
+    this.adminClient.storeAccountEntitlements.apply(this.adminClient, [directoryEntry, this.componentModel.accountEntitlements])
       .then(this.view.showSaveSuccessMessage)
       .catch(this.view.showSaveFailMessage);
   }

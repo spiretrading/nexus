@@ -13,7 +13,7 @@ class CurrencyCard extends Component {
     componentModel.componentId = uuid.v4();
     componentModel.className = this.props.className;
     this.controller = new Controller(this, componentModel);
-    this.view = new View(this, this.controller, cloneObject(componentModel));
+    this.view = new View(this, this.controller, clone(componentModel));
     this.controller.setView(this.view);
   }
 

@@ -17,10 +17,6 @@ class Modal {
         e.preventDefault();
       });
 
-      $('.modal').on('touchmove', (e) => {
-        e.preventDefault();
-      });
-
       if (onModalOpened != null) {
         onModalOpened();
       }
@@ -28,7 +24,6 @@ class Modal {
 
     function onHidden(event) {
       $('.modal-backdrop').off();
-      $('.modal').off();
 
       if (this.onModalClosed != null) {
         this.onModalClosed();

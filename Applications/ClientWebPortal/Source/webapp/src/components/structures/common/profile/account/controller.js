@@ -1,13 +1,23 @@
-import adminClient from 'utils/spire-clients/admin';
+import {
+  AdministrationClient,
+  ServiceLocatorClient,
+  ServiceLocatorResultCode,
+  AccountIdentity,
+  DirectoryEntry
+} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
-import serviceLocatorClient from 'utils/spire-clients/service-locator';
-import ResultCode from 'utils/spire-clients/service-locator/result-codes';
 import userService from 'services/user';
-import {browserHistory} from 'react-router/es6';
 
 class Controller {
   constructor(componentModel) {
-    this.componentModel = cloneObject(componentModel);
+    this.componentModel = clone(componentModel);
+    this.componentModel.directoryEntry = new DirectoryEntry(
+      this.componentModel.directoryEntry.id,
+      this.componentModel.directoryEntry.type,
+      this.componentModel.directoryEntry.name
+    );
+    this.adminClient = new AdministrationClient();
+    this.serviceLocatorClient = new ServiceLocatorClient();
   }
 
   getView() {
@@ -25,8 +35,8 @@ class Controller {
   /** @private */
   getRequiredData() {
     let directoryEntry = this.componentModel.directoryEntry;
-    let loadAccountRoles = adminClient.loadAccountRoles.apply(adminClient, [directoryEntry]);
-    let loadAccountIdentity = adminClient.loadAccountIdentity.apply(adminClient, [directoryEntry]);
+    let loadAccountRoles = this.adminClient.loadAccountRoles.apply(this.adminClient, [directoryEntry]);
+    let loadAccountIdentity = this.adminClient.loadAccountIdentity.apply(this.adminClient, [directoryEntry]);
 
     return Promise.all([
       loadAccountRoles,
@@ -37,6 +47,7 @@ class Controller {
   /** @private */
   loadRequiredDataAndRender() {
     let requiredDataFetchPromise = this.getRequiredData();
+    let directoryEntry = this.componentModel.directoryEntry;
 
     preloaderTimer.start(
       requiredDataFetchPromise,
@@ -46,13 +57,14 @@ class Controller {
     ).then((responses) => {
       this.componentModel.roles = responses[0];
       $.extend(true, this.componentModel, responses[1]);
+      this.componentModel.userName = directoryEntry.name;
       this.componentModel.isAdmin = userService.isAdmin();
       this.view.update(this.componentModel);
     });
   }
 
   isModelInitialized() {
-    let model = cloneObject(this.componentModel);
+    let model = clone(this.componentModel);
     delete model.componentId;
     delete model.directoryEntry;
     return !$.isEmptyObject(model);
@@ -63,21 +75,23 @@ class Controller {
   }
 
   onAccountPictureChange(newPictureData) {
+    this.view.hideSavePersonalDetailsMessage();
     this.componentModel.photoId = newPictureData;
     this.view.update(this.componentModel);
   }
 
   onUserNotesChange(newNotes) {
+    this.view.hideSavePersonalDetailsMessage();
     this.componentModel.userNotes = newNotes;
   }
 
   onPasswordUpdate(newPassword) {
-    serviceLocatorClient.storePassword(this.componentModel.directoryEntry, newPassword)
+    this.serviceLocatorClient.storePassword(this.componentModel.directoryEntry, newPassword)
       .then(onResponse.bind(this))
       .catch(this.view.showSavePasswordFailMessage);
 
     function onResponse(response) {
-      if (response.resultCode === ResultCode.SUCCESS) {
+      if (response.resultCode === ServiceLocatorResultCode.SUCCESS) {
         this.view.showSavePasswordSuccess();
         this.view.resetInputs();
       } else {
@@ -87,15 +101,29 @@ class Controller {
   }
 
   onPersonalDetailsChange(newPersonalDetails) {
+    this.view.hideSavePersonalDetailsMessage();
     $.extend(true, this.componentModel, newPersonalDetails);
   }
 
   save() {
-    let accountIdentity = cloneObject(this.componentModel);
-    let directoryEntry = accountIdentity.directoryEntry;
-    delete accountIdentity.roles;
-    delete accountIdentity.directoryEntry;
-    adminClient.storeAccountIdentity.apply(adminClient, [directoryEntry, accountIdentity])
+    let model = this.componentModel;
+    let directoryEntry = model.directoryEntry;
+    let accountIdentity = new AccountIdentity(
+      model.addressLineOne,
+      model.addressLineTwo,
+      model.addressLineThree,
+      model.city,
+      model.country,
+      model.email,
+      model.firstName,
+      model.lastLoginTime,
+      model.lastName,
+      model.picture,
+      model.province,
+      model.registrationTime,
+      model.userNotes
+    );
+    this.adminClient.storeAccountIdentity.apply(this.adminClient, [directoryEntry, accountIdentity])
       .then(this.view.showSavePersonalDetailsSuccessMessage)
       .catch(this.view.showSavePersonalDetailsFailMessage);
   }

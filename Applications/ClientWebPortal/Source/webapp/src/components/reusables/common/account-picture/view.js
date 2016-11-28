@@ -3,6 +3,7 @@ import React from 'react';
 import UpdatableView from 'commons/updatable-view';
 import ChangePicture from 'components/reusables/common/change-picture';
 import modal from 'utils/modal';
+import Dropdown from 'components/reusables/common/dropdown';
 
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {

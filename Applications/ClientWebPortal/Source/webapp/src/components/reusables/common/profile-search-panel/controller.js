@@ -1,6 +1,6 @@
 class Controller {
   constructor(react, componentModel) {
-    this.componentModel = cloneObject(componentModel);
+    this.componentModel = clone(componentModel);
     this.navigateToProfile = react.props.navigateToProfile;
   }
 

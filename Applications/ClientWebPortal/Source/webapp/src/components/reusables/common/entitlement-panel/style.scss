@@ -43,6 +43,7 @@
       text-overflow: ellipsis;
       white-space: nowrap;
       overflow: hidden;
+      margin-top: 4px;
     }
 
     .price {
@@ -78,8 +79,9 @@
       margin-bottom: 20px;
 
       thead {
-        border: 1px solid $darkGrey;
+        border: 1px solid $lightGrey;
         height: 30px;
+        background: $lightGrey;
 
         td {
           padding: 5px 0;
@@ -87,9 +89,9 @@
       }
 
       tbody {
-        border-left: 1px solid $darkGrey;
-        border-right: 1px solid $darkGrey;
-        border-bottom: 1px solid $darkGrey;
+        border-left: 1px solid $lightGrey;
+        border-right: 1px solid $lightGrey;
+        border-bottom: 1px solid $lightGrey;
 
         tr {
           height: 30px;

@@ -1,6 +1,6 @@
 class Controller {
   constructor(react, componentModel) {
-    this.componentModel = cloneObject(componentModel);
+    this.componentModel = clone(componentModel);
     this.onSelected = react.props.onSelected;
     this.onDeselected = react.props.onDeselected;
   }

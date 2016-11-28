@@ -40,15 +40,15 @@ class DesktopView extends CommonView {
 
         netLossModel = {
           title: 'Net Loss',
-          value: this.componentModel.riskParameters.netLoss,
-          countryIso: this.componentModel.riskParameters.currency,
+          value: this.componentModel.riskParameters.netLoss.toNumber(),
+          countryIso: this.componentModel.riskParameters.currencyId.toNumber(),
           isReadOnly: !this.componentModel.isAdmin
         };
 
         buyingPowerModel = {
           title: 'Buying Power',
-          value: this.componentModel.riskParameters.buyingPower,
-          countryIso: this.componentModel.riskParameters.currency,
+          value: this.componentModel.riskParameters.buyingPower.toNumber(),
+          countryIso: this.componentModel.riskParameters.currencyId.toNumber(),
           isReadOnly: !this.componentModel.isAdmin
         };
 
@@ -67,15 +67,15 @@ class DesktopView extends CommonView {
 
         netLossModel = {
           title: 'Net Loss',
-          value: this.componentModel.riskParameters.netLoss,
-          countryIso: this.componentModel.riskParameters.currency,
+          value: this.componentModel.riskParameters.netLoss.toNumber(),
+          countryIso: this.componentModel.riskParameters.currencyId.toNumber(),
           isReadOnly: !this.componentModel.isAdmin
         };
 
         buyingPowerModel = {
           title: 'Buying Power',
-          value: this.componentModel.riskParameters.buyingPower,
-          countryIso: this.componentModel.riskParameters.currency,
+          value: this.componentModel.riskParameters.buyingPower.toNumber(),
+          countryIso: this.componentModel.riskParameters.currencyId.toNumber(),
           isReadOnly: !this.componentModel.isAdmin
         };
 

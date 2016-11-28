@@ -8,7 +8,7 @@ class EventBus {
     function cloneAndPassToEventListener(eventName, eventPayload) {
       let clonedEventPayload;
       if (eventPayload != null) {
-        clonedEventPayload = cloneObject(eventPayload);
+        clonedEventPayload = clone(eventPayload);
       }
       eventListener(eventName, clonedEventPayload);
     }

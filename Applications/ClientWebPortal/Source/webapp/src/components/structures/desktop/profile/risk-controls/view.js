@@ -30,26 +30,26 @@ class DesktopView extends CommonView {
       };
 
       let currencyModel, netLossModel, buyingPowerModel, transitionTimeModel;
-      if (definitionsService.doesCurrencyExist.apply(definitionsService, [this.componentModel.riskParameters.currency])) {
+      if (definitionsService.doesCurrencyExist.apply(definitionsService, [this.componentModel.riskParameters.currencyId])) {
         currencyModel = {
           title: 'Currency',
-          value: definitionsService.getCurrencyCode.apply(definitionsService, [this.componentModel.riskParameters.currency]),
+          value: definitionsService.getCurrencyCode.apply(definitionsService, [this.componentModel.riskParameters.currencyId]),
           options: definitionsService.getAllCurrencyCodes.apply(definitionsService),
           isReadOnly: !this.componentModel.isAdmin
         };
 
         netLossModel = {
           title: 'Net Loss',
-          value: this.componentModel.riskParameters.netLoss,
-          countryIso: this.componentModel.riskParameters.currency,
+          value: this.componentModel.riskParameters.netLoss.toNumber(),
+          countryIso: this.componentModel.riskParameters.currencyId.toNumber(),
           isReadOnly: !this.componentModel.isAdmin,
           isEnabled: true
         };
 
         buyingPowerModel = {
           title: 'Buying Power',
-          value: this.componentModel.riskParameters.buyingPower,
-          countryIso: this.componentModel.riskParameters.currency,
+          value: this.componentModel.riskParameters.buyingPower.toNumber(),
+          countryIso: this.componentModel.riskParameters.currencyId.toNumber(),
           isReadOnly: !this.componentModel.isAdmin,
           isEnabled: true
         };
@@ -70,16 +70,16 @@ class DesktopView extends CommonView {
 
         netLossModel = {
           title: 'Net Loss',
-          value: this.componentModel.riskParameters.netLoss,
-          countryIso: this.componentModel.riskParameters.currency,
+          value: this.componentModel.riskParameters.netLoss.toNumber(),
+          countryIso: this.componentModel.riskParameters.currencyId.toNumber(),
           isReadOnly: !this.componentModel.isAdmin,
           isEnabled: false
         };
 
         buyingPowerModel = {
           title: 'Buying Power',
-          value: this.componentModel.riskParameters.buyingPower,
-          countryIso: this.componentModel.riskParameters.currency,
+          value: this.componentModel.riskParameters.buyingPower.toNumber(),
+          countryIso: this.componentModel.riskParameters.currencyId.toNumber(),
           isReadOnly: !this.componentModel.isAdmin,
           isEnabled: false
         };

@@ -24,6 +24,27 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-add-remove-panel:before {
+  content: "\38";
+}
+.icon-remove-grp:before {
+  content: "\35";
+}
+.icon-add:before {
+  content: "\37";
+}
+.icon-edit:before {
+  content: "\7a";
+}
+.icon-remove:before {
+  content: "\36";
+}
+.icon-group:before {
+  content: "\34";
+}
+.icon-close:before {
+  content: "\33";
+}
 .icon-expand:before {
   content: "\72";
 }
@@ -35,9 +56,6 @@
 }
 .icon-photo:before {
   content: "\31";
-}
-.icon-edit:before {
-  content: "\7a";
 }
 .icon-performance:before {
   content: "\6b";
