@@ -28,7 +28,6 @@ class View extends CommonView {
       for (let i=0; i<this.componentModel.groupedAccounts.length; i++) {
         let panelModel = {
           groupName: this.componentModel.groupedAccounts[i].name,
-          accounts: this.componentModel.groupedAccounts[i].accounts,
           searchString: this.componentModel.searchString
         };
         panels.push(
