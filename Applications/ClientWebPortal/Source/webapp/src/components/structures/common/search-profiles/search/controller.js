@@ -31,43 +31,13 @@ class Controller {
     let directoryEntry = this.componentModel.directoryEntry;
     let accountDirectoryEntries = this.accountDirectoryEntries;
     let groupedAccounts;
-    let loadAllManagedAccounts = this.adminClient.loadManagedTradingGroups.apply(
+    let loadManagedTradingGroups = this.adminClient.loadManagedTradingGroups.apply(
       this.adminClient,
       [(directoryEntry)]
-    ).then((managedGroups) => {
-      let loadTradingGroupsPromises = [];
-      for (let i=0; i<managedGroups.length; i++) {
-        let managedGroupDirectoryEntry = managedGroups[i];
-        managedGroupDirectoryEntry = new DirectoryEntry(
-          managedGroupDirectoryEntry.id,
-          managedGroupDirectoryEntry.type,
-          managedGroupDirectoryEntry.name
-        );
-        loadTradingGroupsPromises.push(this.adminClient.loadTradingGroup.apply(this.adminClient, [managedGroupDirectoryEntry]));
-      }
-      return Promise.all(loadTradingGroupsPromises)
-        .then((groupAccounts) => {
-          return new Promise((resolve, reject) => {
-            let mergedResults = mergeResults(managedGroups, groupAccounts);
-            resolve(mergedResults);
-
-            function mergeResults(managedGroups, groupAccounts) {
-              for (let i=0; i<managedGroups.length; i++) {
-                managedGroups[i].accounts = groupAccounts[i];
-              }
-
-              return managedGroups;
-            }
-          });
-        });
-    });
-
-    loadAllManagedAccounts = loadAllManagedAccounts
-      .then(loadRoles.bind(this))
-      .then(rolesLoaded.bind(this));
+    );
 
     return Promise.all([
-      loadAllManagedAccounts
+      loadManagedTradingGroups
     ]);
 
     function loadRoles(accounts) {
@@ -150,6 +120,58 @@ class Controller {
 
   navigateToNewAccount() {
     browserHistory.push('searchProfiles-newAccount');
+  }
+
+  getGroupAccounts(groupId) {
+    let group = findDirectoryEntry.apply(this, [groupId]);
+    let groupDirectoryEntry = new DirectoryEntry(
+      group.id,
+      group.type,
+      group.name
+    );
+    this.adminClient.loadTradingGroup.apply(this.adminClient, [groupDirectoryEntry])
+      .then((accounts) => {
+        group.accounts = accounts;
+        let traders = accounts.traders;
+        let requestedRoles = new HashMap();
+        let loadRolesPromises = [];
+        for (let i=0; i<traders.length; i++) {
+          let traderDirectoryEntry = traders[i];
+          traderDirectoryEntry = new DirectoryEntry(
+            traderDirectoryEntry.id,
+            traderDirectoryEntry.type,
+            traderDirectoryEntry.name
+          );
+          this.accountDirectoryEntries.set(traderDirectoryEntry.id, traderDirectoryEntry);
+          if (!requestedRoles.has(traderDirectoryEntry.id)) {
+            loadRolesPromises.push(this.adminClient.loadAccountRoles.apply(this.adminClient, [traderDirectoryEntry]));
+            requestedRoles.set(traderDirectoryEntry.id, true);
+          }
+        }
+        return Promise.all(loadRolesPromises);
+      })
+      .then((roles) => {
+        let rolesMap = new HashMap();
+        for (let i=0; i<roles.length; i++) {
+          rolesMap.set(roles[i].id, roles[i]);
+        }
+
+        let groupTraders = group.accounts.traders;
+        for (let i=0; i<groupTraders.length; i++) {
+          groupTraders[i].roles = rolesMap.get(groupTraders[i].id);
+        }
+
+        this.view.update(this.componentModel);
+      });
+
+
+    function findDirectoryEntry(groupId) {
+      for (let i=0; i<this.componentModel.groupedAccounts.length; i++) {
+        if (this.componentModel.groupedAccounts[i].id == groupId) {
+          return this.componentModel.groupedAccounts[i];
+        }
+      }
+    }
   }
 
   createGroup(groupName) {
