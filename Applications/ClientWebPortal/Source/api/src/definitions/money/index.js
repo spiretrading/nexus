@@ -45,7 +45,7 @@ class Money {
   }
 
   toData() {
-    return this.toNumber();
+    return this.value;
   }
 
   clone() {
@@ -57,7 +57,7 @@ Money.fromRepresentation = (value) => {
   return new Money(value);
 }
 
-Money.fromValue = (value) => {
+Money.fromNumber = (value) => {
   return new Money(value * MULTIPLIER);
 }
 

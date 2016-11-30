@@ -26,5 +26,4 @@ module.exports = function(grunt) {
 
   grunt.registerTask('default', ['clean', 'babel']);
   grunt.registerTask('dev', ['clean', 'babel', 'watch']);
-
 };
