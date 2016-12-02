@@ -1,0 +1,13 @@
+<RCC>
+  <qresource prefix="newPrefix">
+    <file>close_click.png</file>
+    <file>close_hover.png</file>
+    <file>close_normal.png</file>
+    <file>maximize_click.png</file>
+    <file>maximize_hover.png</file>
+    <file>maximize_normal.png</file>
+    <file>minimize_click.png</file>
+    <file>minimize_hover.png</file>
+    <file>minimize_normal.png</file>
+  </qresource>
+</RCC>

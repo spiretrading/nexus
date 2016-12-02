@@ -10,7 +10,8 @@
 #include <QMessageBox>
 #include <QStandardPaths>
 #include <QtPlugin>
-#include "Spire/Login/LoginDialog.hpp"
+//#include "Spire/Login/LoginDialog.hpp"
+#include "Spire/Toolbar/Toolbar.hpp"
 #include "Spire/Spire/ServiceClients.hpp"
 #include "Spire/Version.hpp"
 
@@ -29,7 +30,7 @@ inline void InitializeResources() {
 }
 
 namespace {
-  vector<LoginDialog::ServerInstance> ParseServerInstances(
+  /*vector<LoginDialog::ServerInstance> ParseServerInstances(
     const YAML::Node& config) {
     vector<LoginDialog::ServerInstance> serverInstances;
     try {
@@ -51,7 +52,7 @@ namespace {
       return{};
     }
     return serverInstances;
-  }
+  }*/
 }
 
 int main(int argc, char** argv){
@@ -69,7 +70,7 @@ int main(int argc, char** argv){
     "}");
   InitializeResources();
 
-  auto applicationPath = QStandardPaths::writableLocation(
+  /*auto applicationPath = QStandardPaths::writableLocation(
     QStandardPaths::DataLocation);
   path configPath = applicationPath.toStdString();
   if (!exists(configPath)) {
@@ -106,9 +107,9 @@ int main(int argc, char** argv){
     return -1;
   }
   SocketThreadPool socketThreadPool;
-  TimerThreadPool timerThreadPool;
+  TimerThreadPool timerThreadPool;*/
 
-  LoginDialog loginDialog{ std::move(serverInstances), Ref(socketThreadPool),
+  /*LoginDialog loginDialog{ std::move(serverInstances), Ref(socketThreadPool),
     Ref(timerThreadPool) };
   auto loginResultCode = loginDialog.exec();
   if (loginResultCode == QDialog::Rejected) {
@@ -117,11 +118,12 @@ int main(int argc, char** argv){
   auto serviceClients = loginDialog.GetServiceClients();
   try {
     //    userProfile.CreateProfilePath();
-  }
-  catch (const std::exception&) {
+  } catch (const std::exception&) {
     QMessageBox::critical(nullptr, QObject::tr("Error"),
       QObject::tr("Error creating profile path."));
     return -1;
-  }
+  }*/
+  Toolbar toolbar;
+  toolbar.show();
   return application.exec();
 }

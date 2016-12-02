@@ -1,7 +1,10 @@
 find_package(Qt5Widgets REQUIRED)
 
 set(resource_files
-./../../../Resources/Resources.qrc)
+./../../../Resources/Resources.qrc
+./../../../Resources/Toolbar/Resources.qrc
+./../../../Resources/Login/Resources.qrc
+./../../../Resources/UI/Resources.qrc)
 
 qt5_add_resources(generated_resource_files ${resource_files})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

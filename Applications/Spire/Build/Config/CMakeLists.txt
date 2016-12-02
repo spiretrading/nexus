@@ -80,5 +80,7 @@ if(NOT EXISTS $ENV{TEST_INSTALL_DIRECTORY}/Release)
 endif()
 
 add_subdirectory(Login)
+add_subdirectory(Toolbar)
 add_subdirectory(Resources)
 add_subdirectory(Spire)
+add_subdirectory(UI)

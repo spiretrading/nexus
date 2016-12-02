@@ -90,7 +90,7 @@
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap resource="../../Resources/Resources.qrc">:/newPrefix/spire-white.png</pixmap>
+        <pixmap resource="../../Resources/Login/Resources.qrc">:/newPrefix/spire-white.png</pixmap>
        </property>
        <property name="scaledContents">
         <bool>true</bool>
@@ -362,9 +362,7 @@ color: rgb(0, 0, 0);
   </layout>
  </widget>
  <resources>
-  <include location="../../Resources/Resources.qrc"/>
-  <include location="../../Resources/Resources.qrc"/>
-  <include location="../../Resources/Resources.qrc"/>
+  <include location="../../Resources/Login/Resources.qrc"/>
  </resources>
  <connections/>
 </ui>

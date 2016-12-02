@@ -28,7 +28,7 @@ endif(WIN32)
 add_executable(Spire ${app_type} ${header_files} ${source_files}
   ${generated_header_files} ${generated_source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
-target_link_libraries(Spire Login Resources
+target_link_libraries(Spire Login Resources Toolbar UI
   debug $ENV{CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized $ENV{CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{LUA_LIBRARY_DEBUG_PATH}

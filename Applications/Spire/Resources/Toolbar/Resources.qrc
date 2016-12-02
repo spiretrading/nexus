@@ -1,0 +1,35 @@
+<RCC>
+  <qresource prefix="newPrefix">
+    <file>account_click.png</file>
+    <file>account_hover.png</file>
+    <file>account_normal.png</file>
+    <file>blotter_click.png</file>
+    <file>blotter_hover.png</file>
+    <file>blotter_normal.png</file>
+    <file>bookview_click.png</file>
+    <file>bookview_hover.png</file>
+    <file>bookview_normal.png</file>
+    <file>canvas_click.png</file>
+    <file>canvas_hover.png</file>
+    <file>canvas_normal.png</file>
+    <file>chart_click.png</file>
+    <file>chart_hover.png</file>
+    <file>chart_normal.png</file>
+    <file>dashboard_click.png</file>
+    <file>dashboard_hover.png</file>
+    <file>dashboard_normal.png</file>
+    <file>key_bindings_click.png</file>
+    <file>key_bindings_hover.png</file>
+    <file>key_bindings_normal.png</file>
+    <file>order_imbalances_click.png</file>
+    <file>order_imbalances_hover.png</file>
+    <file>order_imbalances_normal.png</file>
+    <file>Resources.qrc</file>
+    <file>risk_control_hover.png</file>
+    <file>risk_manager_click.png</file>
+    <file>risk_manager_normal.png</file>
+    <file>time_and_sale_click.png</file>
+    <file>time_and_sale_hover.png</file>
+    <file>time_and_sale_normal.png</file>
+  </qresource>
+</RCC>
