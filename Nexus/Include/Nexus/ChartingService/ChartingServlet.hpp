@@ -222,11 +222,10 @@ namespace Details {
     TimePriceQueryResult result;
     if(!timeAndSales.empty()) {
       result.start = timeAndSales.front().GetSequence();
-      result.end  = timeAndSales.back().GetSequence();
+      result.end = timeAndSales.back().GetSequence();
     }
     auto currentStart = startTime;
     auto currentEnd = startTime + interval;
-    auto lastTimestamp = startTime - boost::posix_time::seconds(1);
     auto timeAndSalesIterator = timeAndSales.begin();
     while(timeAndSalesIterator != timeAndSales.end() &&
         currentStart <= endTime) {
@@ -234,13 +233,9 @@ namespace Details {
         currentEnd};
       auto hasPoint = false;
       while(timeAndSalesIterator != timeAndSales.end() &&
-          (*timeAndSalesIterator)->m_timestamp >= currentStart &&
           (*timeAndSalesIterator)->m_timestamp < currentEnd) {
-        if((*timeAndSalesIterator)->m_timestamp != lastTimestamp) {
-          candlestick.Update((*timeAndSalesIterator)->m_price);
-          hasPoint = true;
-        }
-        lastTimestamp = (*timeAndSalesIterator)->m_timestamp;
+        candlestick.Update((*timeAndSalesIterator)->m_price);
+        hasPoint = true;
         ++timeAndSalesIterator;
       }
       if(hasPoint) {
