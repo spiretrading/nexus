@@ -10,10 +10,10 @@ namespace Nexus {
 namespace TechnicalAnalysis {
 
   //! Defines a Candlestick representing a price at a point in time.
-  typedef Candlestick<boost::posix_time::ptime, Money> TimePriceCandlestick;
+  using TimePriceCandlestick = Candlestick<boost::posix_time::ptime, Money>;
 
   //! Defines a time/price series.
-  typedef std::vector<TimePriceCandlestick> TimePriceSeries;
+  using TimePriceSeries = std::vector<TimePriceCandlestick>;
 }
 }
 

@@ -73,12 +73,12 @@ class Controller {
 
   onNetLossChange(newAmount) {
     this.view.hideSavedMessage();
-    this.componentModel.riskParameters.netLoss = Money.fromValue(newAmount);
+    this.componentModel.riskParameters.netLoss = Money.fromNumber(newAmount);
   }
 
   onBuyingPowerChange(newAmount) {
     this.view.hideSavedMessage();
-    this.componentModel.riskParameters.buyingPower = Money.fromValue(newAmount);
+    this.componentModel.riskParameters.buyingPower = Money.fromNumber(newAmount);
   }
 
   onTransitionTimeChange(newTime) {

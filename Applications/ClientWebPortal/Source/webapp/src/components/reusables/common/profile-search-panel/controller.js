@@ -2,6 +2,7 @@ class Controller {
   constructor(react, componentModel) {
     this.componentModel = clone(componentModel);
     this.navigateToProfile = react.props.navigateToProfile;
+    this.getGroupAccounts = react.props.getAccounts;
   }
 
   getView() {
@@ -25,6 +26,10 @@ class Controller {
 
   navigateToAccountProfile(traderId) {
     this.navigateToProfile(traderId);
+  }
+
+  getAccounts() {
+    this.getGroupAccounts(this.componentModel.groupId);
   }
 }
 

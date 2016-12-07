@@ -18,10 +18,10 @@ namespace TechnicalAnalysis {
     public:
 
       //! The type used to represent the domain (eg. time).
-      typedef DomainType Domain;
+      using Domain = DomainType;
 
       //! The type used to represent the range (eg. price).
-      typedef RangeType Range;
+      using Range = RangeType;
 
       //! Constructs an empty Candlestick.
       Candlestick();
@@ -103,7 +103,7 @@ namespace TechnicalAnalysis {
 
   template<typename DomainType, typename RangeType>
   Candlestick<DomainType, RangeType>::Candlestick()
-      : m_hasOpen(false),
+      : m_hasOpen{false},
         m_start(),
         m_end(),
         m_open(),
@@ -113,14 +113,14 @@ namespace TechnicalAnalysis {
 
   template<typename DomainType, typename RangeType>
   Candlestick<DomainType, RangeType>::Candlestick(Domain start, Domain end)
-      : m_hasOpen(false),
+      : m_hasOpen{false},
         m_start(start),
         m_end(end) {}
 
   template<typename DomainType, typename RangeType>
   Candlestick<DomainType, RangeType>::Candlestick(Domain start, Domain end,
       Range open, Range close, Range high, Range low)
-      : m_hasOpen(true),
+      : m_hasOpen{true},
         m_start(start),
         m_end(end),
         m_open(open),
