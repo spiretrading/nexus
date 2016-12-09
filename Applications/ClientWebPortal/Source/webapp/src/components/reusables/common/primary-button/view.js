@@ -13,6 +13,10 @@ class View extends UpdatableView {
       className += ' ' + this.componentModel.className;
     }
 
+    if (this.componentModel.isEnabled) {
+      className += ' enabled';
+    }
+
     let onButtonClick = this.controller.onButtonClick.bind(this.controller);
 
     return (

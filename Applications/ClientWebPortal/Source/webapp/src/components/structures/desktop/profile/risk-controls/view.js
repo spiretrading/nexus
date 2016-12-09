@@ -1,17 +1,48 @@
-import React from 'react';
 import './style.scss';
-import CommonView from 'components/structures/common/profile/risk-controls/common-view';
-import UserInfoNav from 'components/reusables/common/user-info-nav';
-import DropDownCard from 'components/reusables/desktop/cards/drop-down-card';
-import CurrencyCard from 'components/reusables/common/cards/currency-card';
-import TimeCard from 'components/reusables/common/cards/time-card';
-import PrimaryButton from 'components/reusables/common/primary-button';
+import React from 'react';
 import deviceDetector from 'utils/device-detector';
+import PrimaryButton from 'components/reusables/common/primary-button';
+import UserInfoNav from 'components/reusables/common/user-info-nav';
 import definitionsService from 'services/definitions';
+import StepNumberInput from 'components/reusables/common/step-number-input';
+import CommonView from 'components/structures/common/profile/risk-controls/common-view';
 
-class DesktopView extends CommonView {
+class View extends CommonView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
+  }
+
+  onHourValueChange(newValue) {
+    newValue = newValue.toString();
+    if (newValue.length == 1) {
+      newValue = '0' + newValue;
+    }
+    let currentTime = this.componentModel.riskParameters.transitionTime;
+    let updatedTime = newValue + currentTime.substring(2);
+    this.componentModel.riskParameters.transitionTime = updatedTime;
+    this.controller.onTransitionTimeChange.apply(this.controller, [updatedTime]);
+  }
+
+  onMinuteValueChange(newValue) {
+    newValue = newValue.toString();
+    if (newValue.length == 1) {
+      newValue = '0' + newValue;
+    }
+    let currentTime = this.componentModel.riskParameters.transitionTime;
+    let updatedTime = currentTime.substring(0, 3) + newValue + currentTime.substring(5);
+    this.componentModel.riskParameters.transitionTime = updatedTime;
+    this.controller.onTransitionTimeChange.apply(this.controller, [updatedTime]);
+  }
+
+  onSecondValueChange(newValue) {
+    newValue = newValue.toString();
+    if (newValue.length == 1) {
+      newValue = '0' + newValue;
+    }
+    let currentTime = this.componentModel.riskParameters.transitionTime;
+    let updatedTime = currentTime.substring(0, 6) + newValue;
+    this.componentModel.riskParameters.transitionTime = updatedTime;
+    this.controller.onTransitionTimeChange.apply(this.controller, [updatedTime]);
   }
 
   render() {
@@ -23,112 +54,166 @@ class DesktopView extends CommonView {
       containerClassName = '';
     }
 
+    let userInfoNavModel;
     if (this.controller.isModelInitialized.apply(this.controller)) {
-      let userInfoNavModel = {
-        userName: this.componentModel.userName,
+      let currencySign = definitionsService.getCurrencySign(this.componentModel.riskParameters.currencyId.value);
+      if (currencySign != '') {
+        currencySign = '(' + currencySign + ')';
+      }
+
+      userInfoNavModel = {
+        userName: this.componentModel.directoryEntry.name,
         roles: this.componentModel.roles
       };
 
-      let currencyModel, netLossModel, buyingPowerModel, transitionTimeModel;
-      if (definitionsService.doesCurrencyExist.apply(definitionsService, [this.componentModel.riskParameters.currencyId])) {
-        currencyModel = {
-          title: 'Currency',
-          value: definitionsService.getCurrencyCode.apply(definitionsService, [this.componentModel.riskParameters.currencyId]),
-          options: definitionsService.getAllCurrencyCodes.apply(definitionsService),
-          isReadOnly: !this.componentModel.isAdmin
-        };
-
-        netLossModel = {
-          title: 'Net Loss',
-          value: this.componentModel.riskParameters.netLoss.toNumber(),
-          countryIso: this.componentModel.riskParameters.currencyId.toNumber(),
-          isReadOnly: !this.componentModel.isAdmin,
-          isEnabled: true
-        };
-
-        buyingPowerModel = {
-          title: 'Buying Power',
-          value: this.componentModel.riskParameters.buyingPower.toNumber(),
-          countryIso: this.componentModel.riskParameters.currencyId.toNumber(),
-          isReadOnly: !this.componentModel.isAdmin,
-          isEnabled: true
-        };
-
-        transitionTimeModel = {
-          title: 'Transition Time',
-          value: this.componentModel.riskParameters.transitionTime,
-          isReadOnly: !this.componentModel.isAdmin,
-          isEnabled: true
-        };
-      } else {
-        currencyModel = {
-          title: 'Currency',
-          value: 'None',
-          options: definitionsService.getAllCurrencyCodes.apply(definitionsService),
-          isReadOnly: !this.componentModel.isAdmin
-        };
-
-        netLossModel = {
-          title: 'Net Loss',
-          value: this.componentModel.riskParameters.netLoss.toNumber(),
-          countryIso: this.componentModel.riskParameters.currencyId.toNumber(),
-          isReadOnly: !this.componentModel.isAdmin,
-          isEnabled: false
-        };
-
-        buyingPowerModel = {
-          title: 'Buying Power',
-          value: this.componentModel.riskParameters.buyingPower.toNumber(),
-          countryIso: this.componentModel.riskParameters.currencyId.toNumber(),
-          isReadOnly: !this.componentModel.isAdmin,
-          isEnabled: false
-        };
-
-        transitionTimeModel = {
-          title: 'Transition Time',
-          value: this.componentModel.riskParameters.transitionTime,
-          isReadOnly: !this.componentModel.isAdmin,
-          isEnabled: false
-        };
-      }
-
-      let onCurrencyChange = this.onCurrencyChange.bind(this);
-      let onNetLossChange = this.controller.onNetLossChange.bind(this.controller);
-      let onBuyingPowerChange = this.controller.onBuyingPowerChange.bind(this.controller);
-      let onTransitionTimeChange = this.controller.onTransitionTimeChange.bind(this.controller);
-      let onSave = this.controller.save.bind(this.controller);
-
+      let onSave = this.onSaveClick.bind(this);
       let saveBtnModel = {
         label: 'Save Changes'
       };
-      let saveButton, horizontalDivider;
+      if (this.componentModel.riskParameters.currencyId.value != 0) {
+        saveBtnModel.isEnabled = true;
+      }
+
+      let saveButton;
       if (this.componentModel.isAdmin) {
         saveButton = <PrimaryButton className="save-button" model={saveBtnModel} onClick={onSave}/>
-        horizontalDivider = <hr/>
       }
+
+      let currencies = definitionsService.getAllCurrencies();
+      let options = [];
+      options.push(
+        <option key={-1} value="-1" disabled>Select a currency</option>
+      );
+      for (let i=0; i<currencies.length; i++) {
+        let id = currencies[i].id.value;
+        let code = currencies[i].code;
+        options.push(
+          <option key={i} value={id}>
+            {code}
+          </option>
+        );
+      }
+      let selectedCurrency;
+      if (this.componentModel.riskParameters.currencyId.value == 0) {
+        selectedCurrency = -1;
+      } else {
+        selectedCurrency = this.componentModel.riskParameters.currencyId.value;
+      }
+
+      let buyingPowerInputModel = {
+        placeholder: '0.00',
+        allowedDecimals: 2,
+        stepSize: 1,
+        doRoll: false,
+        min: 0,
+        defaultValue: this.componentModel.riskParameters.buyingPower.toString(),
+        isRequired: true
+      };
+
+      let netLossInputModel = {
+        placeholder: '0.00',
+        allowedDecimals: 2,
+        stepSize: 1,
+        doRoll: false,
+        min: 0,
+        defaultValue: this.componentModel.riskParameters.netLoss.toString(),
+        isRequired: true
+      };
+
+      let timeValues = this.componentModel.riskParameters.transitionTime.split(':');
+
+      let hourInputModel = {
+        placeholder: '00',
+        allowedDecimals: 0,
+        stepSize: 1,
+        doRoll: true,
+        min: 0,
+        max: 23,
+        maxLength: 2,
+        defaultValue: timeValues[0],
+        isRequired: true
+      };
+
+      let minInputModel = {
+        placeholder: '00',
+        allowedDecimals: 0,
+        stepSize: 1,
+        doRoll: true,
+        min: 0,
+        max: 59,
+        maxLength: 2,
+        defaultValue: timeValues[1],
+        isRequired: true
+      };
+
+      let secInputModel = {
+        placeholder: '00',
+        allowedDecimals: 0,
+        stepSize: 1,
+        doRoll: true,
+        min: 0,
+        max: 59,
+        maxLength: 2,
+        defaultValue: timeValues[2],
+        isRequired: true
+      };
 
       content =
         <div>
-          <div className="row">
+          <div className="user-info-nav-wrapper">
             <UserInfoNav model={userInfoNavModel}/>
           </div>
-          <div className="row cards-wrapper">
-            <div className="card-wrapper">
-              <DropDownCard model={currencyModel} onChange={onCurrencyChange}/>
+          <div className="form-wrapper">
+            <div className="risk-control-label">
+              Currency
             </div>
-            <div className="card-wrapper">
-              <CurrencyCard model={netLossModel} onChange={onNetLossChange}/>
+            <div className="currency-select-wrapper">
+              <select className="currency-select"
+                      defaultValue={selectedCurrency}
+                      onChange={this.onCurrencyChange.bind(this)}>
+                {options}
+              </select>
+              <span className="icon-arrow-down"/>
             </div>
-            <div className="card-wrapper">
-              <CurrencyCard model={buyingPowerModel} onChange={onBuyingPowerChange}/>
+            <div className="risk-control-label">
+              Buying Power <span className="currency-sign">{currencySign}</span>
             </div>
-            <div className="card-wrapper last-card">
-              <TimeCard model={transitionTimeModel} onChange={onTransitionTimeChange}/>
+            <StepNumberInput model={buyingPowerInputModel}
+                             onChange={this.onBuyingPowerChange.bind(this)}
+                             onInputValidationFail={this.onBuyingPowerInputFail.bind(this)}/>
+            <div className="buying-power-error validation-error"></div>
+            <div className="risk-control-label">
+              Net Loss <span className="currency-sign">{currencySign}</span>
             </div>
+            <StepNumberInput model={netLossInputModel}
+                             onChange={this.onNetLossChange.bind(this)}
+                             onInputValidationFail={this.onNetLossInputFail.bind(this)}/>
+            <div className="net-loss-error validation-error"></div>
+            <div className="risk-control-label">
+              Transition Time
+            </div>
+            <div className="time-input-wrapper">
+              <div className="hour-input-wrapper input-wrapper">
+                <StepNumberInput model={hourInputModel}
+                                 onChange={this.onHourValueChange.bind(this)}/>
+                <div className="time-input-label">hr</div>
+              </div>
+              <span className="colon">:</span>
+              <div className="minute-input-wrapper input-wrapper">
+                <StepNumberInput model={minInputModel}
+                                 onChange={this.onMinuteValueChange.bind(this)}/>
+                <div className="time-input-label">min</div>
+              </div>
+              <span className="colon">:</span>
+              <div className="second-input-wrapper input-wrapper">
+                <StepNumberInput model={secInputModel}
+                                 onChange={this.onSecondValueChange.bind(this)}/>
+                <div className="time-input-label">sec</div>
+              </div>
+            </div>
+            {saveButton}
+            <div className="save-message"></div>
           </div>
-          {horizontalDivider}
-          {saveButton}
-          <div className="save-message"></div>
         </div>
     }
 
@@ -140,4 +225,4 @@ class DesktopView extends CommonView {
   }
 }
 
-export default DesktopView;
+export default View;

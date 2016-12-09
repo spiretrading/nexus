@@ -1,0 +1,32 @@
+@import "src/styles/variables";
+
+.step-number-input-container {
+  position: relative;
+  width: 100%;
+
+  input {
+    margin: 0;
+    width: 100%;
+    padding-right: 25px;
+
+    &.invalid {
+      border: 1px solid $red;
+    }
+  }
+
+  .icon-arrow-up {
+    position: absolute;
+    top: 6px;
+    right: 10px;
+    font-size: 10px;
+    cursor: pointer;
+  }
+
+  .icon-arrow-down {
+    position: absolute;
+    bottom: 6px;
+    right: 10px;
+    font-size: 10px;
+    cursor: pointer;
+  }
+}

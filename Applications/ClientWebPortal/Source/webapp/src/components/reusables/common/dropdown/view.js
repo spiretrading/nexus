@@ -31,7 +31,6 @@ class View extends UpdatableView {
           <select className={this.componentModel.className} defaultValue={this.componentModel.selectedValue}>
             {options}
           </select>
-
         </div>
     );
   }
