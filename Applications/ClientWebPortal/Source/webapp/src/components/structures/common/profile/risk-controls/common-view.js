@@ -69,7 +69,7 @@ class CommonView extends UpdatableView {
 
   onSaveClick() {
     if ($('#risk-control-container .invalid').length == 0) {
-      this.controller.save.bind(this.controller);
+      this.controller.save.apply(this.controller);
     } else {
       this.showSaveFailedMessage('Failed due to invalid input(s)');
     }
