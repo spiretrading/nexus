@@ -132,15 +132,6 @@ class Controller {
       this.componentModel.isAdmin = userService.isAdmin();
       this.componentModel.isGroup = directoryEntry.type === 1;
 
-      let rules = this.componentModel.complianceRuleEntries;
-      rules[0].schema.parameters.push({
-        name: 'test_boolean',
-        value: {
-          value: true,
-          which: 0
-        }
-      });
-
       this.view.update(this.componentModel);
     });
   }
