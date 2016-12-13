@@ -122,7 +122,7 @@ class Controller {
     browserHistory.push('searchProfiles-newAccount');
   }
 
-  getGroupAccounts(groupId) {
+  loadGroupAccounts(groupId) {
     let group = findDirectoryEntry.apply(this, [groupId]);
     let groupDirectoryEntry = new DirectoryEntry(
       group.id,

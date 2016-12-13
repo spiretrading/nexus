@@ -82,14 +82,6 @@ class View extends UpdatableView {
           My Profile
         </div>
         {searchProfilesMenuItem}
-        <div className="menu-item">
-          <span className="icon-reports"></span>
-          Reports
-        </div>
-        <div className="menu-item">
-          <span className="icon-portfolio"></span>
-          Portfolio
-        </div>
         <div className="menu-item" onClick={this.onSignOutClick.bind(this)}>
           <span className="icon-signout"></span>
           Sign Out
