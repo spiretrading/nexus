@@ -1,49 +1,28 @@
 @import "src/styles/variables";
 
 #risk-control-container {
-  font-size: 16px;
-  position: relative;
-  display: none;
+  .form-wrapper {
+    width: 246px;
+    margin: 0 auto;
 
-  .row {
-    margin: 0 0 30px 0;
-  }
+    .time-input-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 31px;
 
-  .cards-wrapper {
-    display: flex;
-    margin-top: 15px;
-  }
+      input {
+        margin: 0;
+        width: 65px;
+        text-align: center;
+      }
 
-  .card-wrapper {
-    height: 150px;
-    width: 240px;
-    margin-right: 60px;
-
-    &.last-card {
-      margin: 0;
-    }
-  }
-
-  .save-button {
-    margin-top:10px;
-    width: 200px;
-    position: relative;
-    left: 50%;
-    transform: translate(-50%, 0);
-  }
-
-  .save-message {
-    color: $primaryGradient3;
-    margin-top:10px;
-    display: none;
-    text-align: center;
-
-    &.red {
-      color: $red;
-    }
-
-    &.purple {
-      color: $primaryGradient3;
+      .colon {
+        margin: 5px 10px 0px;
+      }
+      
+      .input-wrapper {
+        text-align: center;
+      }
     }
   }
 }

@@ -125,6 +125,10 @@ class DefService {
     return codes;
   }
 
+  getAllCurrencies() {
+    return this.currencyDatabase.entries();
+  }
+
   getCurrencyCode(id) {
     if (!(id instanceof CurrencyId)) {
       id = CurrencyId.fromNumber(id);

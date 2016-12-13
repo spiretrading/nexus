@@ -3,8 +3,6 @@ class Money {
     this.value = Number(number);
     if (isNaN(this.value)) {
       throw new Error('Input must be a number.');
-    } else if (this.value % 1 != 0) {
-      throw new Error('Input must be an integer.');
     }
   }
 

@@ -13,7 +13,7 @@
   -ms-user-select: none;
   text-align: center;
 
-  &:hover {
+  &.enabled {
     background: $primaryGradient1;
     color: $white;
   }
