@@ -182,6 +182,7 @@ class View extends UpdatableView {
           }
 
           $input.val(currentValue);
+          this.controller.onValueChange.apply(this.controller, [currentValue]);
         }
       });
     });
