@@ -21,11 +21,11 @@ class AccountEntity {
     this.country = country;
     this.email = email;
     this.firstName = firstName;
-    this.lastLoginTime = lastLoginTime || '00000000T000000';
+    this.lastLoginTime = lastLoginTime || 'not-a-date-time';
     this.lastName = lastName;
     this.picture = picture;
     this.province = province;
-    this.registrationTime = registrationTime || '00000000T000000';
+    this.registrationTime = registrationTime || 'not-a-date-time';
     this.userNotes = userNotes;
   }
 
