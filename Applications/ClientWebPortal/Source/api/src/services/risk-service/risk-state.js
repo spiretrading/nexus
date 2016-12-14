@@ -1,7 +1,7 @@
 class RiskState {
   constructor(type, expiry) {
     this.type = type;
-    this.expiry = expiry || '00000000T000000';
+    this.expiry = expiry || 'not-a-date-time';
   }
 
   toData() {
