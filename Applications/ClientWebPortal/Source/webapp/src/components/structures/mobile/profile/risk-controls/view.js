@@ -50,11 +50,11 @@ class View extends CommonView {
       let currentTime = this.componentModel.riskParameters.transitionTime;
       let updatedTime;
       if ($input.hasClass('hour')) {
-        updatedTime = newValue + currentTime.substring(2);
+        updatedTime = input + currentTime.substring(2);
       } else if ($input.hasClass('minute')) {
-        updatedTime = currentTime.substring(0, 3) + newValue + currentTime.substring(5);
+        updatedTime = currentTime.substring(0, 3) + input + currentTime.substring(5);
       } else {
-        updatedTime = currentTime.substring(0, 6) + newValue;
+        updatedTime = currentTime.substring(0, 6) + input;
       }
       this.componentModel.riskParameters.transitionTime = updatedTime;
       this.controller.onTransitionTimeChange.apply(this.controller, [updatedTime]);
@@ -151,6 +151,8 @@ class View extends CommonView {
         selectedCurrency = this.componentModel.riskParameters.currencyId.value;
       }
 
+      let timeValues = this.componentModel.riskParameters.transitionTime.split(':');
+
       content =
         <div>
           <div className="user-info-nav-wrapper">
@@ -174,7 +176,8 @@ class View extends CommonView {
             <input type="text" className="buying-power-input money-input"
                    placeholder="0.00"
                    data-control="buying-power"
-                   onKeyUp={this.onMoneyInputKeyUp.bind(this)}/>
+                   onKeyUp={this.onMoneyInputKeyUp.bind(this)}
+                   defaultValue={this.componentModel.riskParameters.buyingPower.toString()}/>
             <div className="buying-power-error validation-error"></div>
             <div className="risk-control-label">
               Net Loss <span className="currency-sign">{currencySign}</span>
@@ -182,7 +185,8 @@ class View extends CommonView {
             <input type="text" className="net-loss-input money-input"
                    placeholder="0.00"
                    data-control="net-loss"
-                   onKeyUp={this.onMoneyInputKeyUp.bind(this)}/>
+                   onKeyUp={this.onMoneyInputKeyUp.bind(this)}
+                   defaultValue={this.componentModel.riskParameters.netLoss.toString()}/>
             <div className="net-loss-error validation-error"></div>
             <div className="risk-control-label">
               Transition Time
@@ -192,7 +196,8 @@ class View extends CommonView {
                 <input type="text" className="hour time-input"
                        placeholder="00"
                        maxLength="2"
-                       onKeyUp={this.onTimeInputKeyUp.bind(this)}/>
+                       onKeyUp={this.onTimeInputKeyUp.bind(this)}
+                       defaultValue={timeValues[0]}/>
                 <div className="time-input-label">hr</div>
               </div>
               <span className="colon">:</span>
@@ -200,7 +205,8 @@ class View extends CommonView {
                 <input type="text" className="minute time-input"
                        placeholder="00"
                        maxLength="2"
-                       onKeyUp={this.onTimeInputKeyUp.bind(this)}/>
+                       onKeyUp={this.onTimeInputKeyUp.bind(this)}
+                       defaultValue={timeValues[1]}/>
                 <div className="time-input-label">min</div>
               </div>
               <span className="colon">:</span>
@@ -208,7 +214,8 @@ class View extends CommonView {
                 <input type="text" className="second time-input"
                        placeholder="00"
                        maxLength="2"
-                       onKeyUp={this.onTimeInputKeyUp.bind(this)}/>
+                       onKeyUp={this.onTimeInputKeyUp.bind(this)}
+                       defaultValue={timeValues[2]}/>
                 <div className="time-input-label">sec</div>
               </div>
             </div>
