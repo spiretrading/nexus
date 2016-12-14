@@ -3,12 +3,13 @@ import Money from '../../definitions/money';
 import RiskState from './risk-state';
 
 class RiskParameters {
-  constructor(currencyId, buyingPower, allowedState, netLoss, transitionTime) {
+  constructor(currencyId, buyingPower, allowedState, netLoss, transitionTime, lossFromTop) {
     this.currencyId = currencyId;
     this.buyingPower = buyingPower;
     this.allowedState = allowedState;
     this.netLoss = netLoss;
     this.transitionTime = transitionTime;
+    this.lossFromTop = lossFromTop;
   }
 
   toData() {
@@ -17,7 +18,8 @@ class RiskParameters {
       buying_power: this.buyingPower.toData(),
       allowed_state: this.allowedState.toData(),
       net_loss: this.netLoss.toData(),
-      transition_time: this.transitionTime
+      transition_time: this.transitionTime,
+      loss_from_top: this.lossFromTop.toData()
     };
   }
 
@@ -27,7 +29,8 @@ class RiskParameters {
       this.buyingPower.clone(),
       this.allowedState.clone(),
       this.netLoss.clone(),
-      this.transitionTime
+      this.transitionTime,
+      this.lossFromTop.clone()
     );
   }
 }
@@ -45,7 +48,8 @@ RiskParameters.fromData = (data) => {
     buyingPower,
     allowedState,
     netLoss,
-    transitionTime
+    transitionTime,
+    lossFromTop
   );
 }
 
