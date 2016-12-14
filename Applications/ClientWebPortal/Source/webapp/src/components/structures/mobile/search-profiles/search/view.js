@@ -21,17 +21,23 @@ class View extends CommonView {
     let onNewAccountClick = this.onNewAccountClick.bind(this);
     let onNewGroupClick = this.onNewGroupClick.bind(this);
     let onSearchInputChange = this.onSearchInputChange.bind(this);
+    let loadGroupAccounts = this.controller.loadGroupAccounts.bind(this.controller);
 
     let navigateToProfile = this.controller.navigateToProfile.bind(this.controller);
     let panels = [];
     if (this.componentModel.groupedAccounts != null) {
       for (let i=0; i<this.componentModel.groupedAccounts.length; i++) {
         let panelModel = {
+          groupId: this.componentModel.groupedAccounts[i].id,
           groupName: this.componentModel.groupedAccounts[i].name,
+          accounts: this.componentModel.groupedAccounts[i].accounts || null,
           searchString: this.componentModel.searchString
         };
         panels.push(
-          <ProfileSearchPanel key={i} model={panelModel} navigateToProfile={navigateToProfile}/>
+          <ProfileSearchPanel key={i}
+                              model={panelModel}
+                              navigateToProfile={navigateToProfile}
+                              loadAccounts={loadGroupAccounts}/>
         );
       }
     }

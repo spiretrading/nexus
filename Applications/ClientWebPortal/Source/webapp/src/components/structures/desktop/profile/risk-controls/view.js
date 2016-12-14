@@ -70,8 +70,10 @@ class View extends CommonView {
       let saveBtnModel = {
         label: 'Save Changes'
       };
-      if (this.componentModel.riskParameters.currencyId.value != 0) {
-        saveBtnModel.isEnabled = true;
+      if (this.componentModel.riskParameters.currencyId.value == 0) {
+        saveBtnModel.isDisabled = true;
+      } else {
+        saveBtnModel.isDisabled = false;
       }
 
       let saveButton;

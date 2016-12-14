@@ -13,7 +13,7 @@ class View extends UpdatableView {
       className += ' ' + this.componentModel.className;
     }
 
-    if (this.componentModel.isEnabled) {
+    if (!this.componentModel.isDisabled) {
       className += ' enabled';
     }
 
