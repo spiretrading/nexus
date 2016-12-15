@@ -104,8 +104,7 @@ class DefService {
   }
 
   getCountryName(number) {
-    let countryCode = CountryCode.fromNumber(number);
-    return this.countryDatabase.fromCode(countryCode).name;
+    return this.countryDatabase.fromCode.apply(this.countryDatabase, [number]).name;
   }
 
   doesCurrencyExist(id) {

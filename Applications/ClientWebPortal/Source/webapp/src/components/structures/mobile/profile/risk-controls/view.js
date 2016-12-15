@@ -153,6 +153,11 @@ class View extends CommonView {
 
       let timeValues = this.componentModel.riskParameters.transitionTime.split(':');
 
+      let currencyWrapperClass = 'currency-select-wrapper';
+      if (!this.componentModel.isAdmin) {
+        currencyWrapperClass += ' disabled';
+      }
+
       content =
         <div>
           <div className="user-info-nav-wrapper">
@@ -162,10 +167,11 @@ class View extends CommonView {
             <div className="risk-control-label">
               Currency
             </div>
-            <div className="currency-select-wrapper">
+            <div className={currencyWrapperClass}>
               <select className="currency-select"
                       defaultValue={selectedCurrency}
-                      onChange={this.onCurrencyChange.bind(this)}>
+                      onChange={this.onCurrencyChange.bind(this)}
+                      disabled={!this.componentModel.isAdmin}>
                 {options}
               </select>
               <span className="icon-arrow-down"/>
@@ -177,7 +183,8 @@ class View extends CommonView {
                    placeholder="0.00"
                    data-control="buying-power"
                    onKeyUp={this.onMoneyInputKeyUp.bind(this)}
-                   defaultValue={this.componentModel.riskParameters.buyingPower.toString()}/>
+                   defaultValue={this.componentModel.riskParameters.buyingPower.toString()}
+                   disabled={!this.componentModel.isAdmin}/>
             <div className="buying-power-error validation-error"></div>
             <div className="risk-control-label">
               Net Loss <span className="currency-sign">{currencySign}</span>
@@ -186,7 +193,8 @@ class View extends CommonView {
                    placeholder="0.00"
                    data-control="net-loss"
                    onKeyUp={this.onMoneyInputKeyUp.bind(this)}
-                   defaultValue={this.componentModel.riskParameters.netLoss.toString()}/>
+                   defaultValue={this.componentModel.riskParameters.netLoss.toString()}
+                   disabled={!this.componentModel.isAdmin}/>
             <div className="net-loss-error validation-error"></div>
             <div className="risk-control-label">
               Transition Time
@@ -197,7 +205,8 @@ class View extends CommonView {
                        placeholder="00"
                        maxLength="2"
                        onKeyUp={this.onTimeInputKeyUp.bind(this)}
-                       defaultValue={timeValues[0]}/>
+                       defaultValue={timeValues[0]}
+                       disabled={!this.componentModel.isAdmin}/>
                 <div className="time-input-label">hr</div>
               </div>
               <span className="colon">:</span>
@@ -206,7 +215,8 @@ class View extends CommonView {
                        placeholder="00"
                        maxLength="2"
                        onKeyUp={this.onTimeInputKeyUp.bind(this)}
-                       defaultValue={timeValues[1]}/>
+                       defaultValue={timeValues[1]}
+                       disabled={!this.componentModel.isAdmin}/>
                 <div className="time-input-label">min</div>
               </div>
               <span className="colon">:</span>
@@ -215,7 +225,8 @@ class View extends CommonView {
                        placeholder="00"
                        maxLength="2"
                        onKeyUp={this.onTimeInputKeyUp.bind(this)}
-                       defaultValue={timeValues[2]}/>
+                       defaultValue={timeValues[2]}
+                       disabled={!this.componentModel.isAdmin}/>
                 <div className="time-input-label">sec</div>
               </div>
             </div>

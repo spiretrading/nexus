@@ -109,7 +109,8 @@ class View extends CommonView {
         doRoll: false,
         min: 0,
         defaultValue: this.componentModel.riskParameters.buyingPower.toString(),
-        isRequired: true
+        isRequired: true,
+        isDisabled: !this.componentModel.isAdmin
       };
 
       let netLossInputModel = {
@@ -119,7 +120,8 @@ class View extends CommonView {
         doRoll: false,
         min: 0,
         defaultValue: this.componentModel.riskParameters.netLoss.toString(),
-        isRequired: true
+        isRequired: true,
+        isDisabled: !this.componentModel.isAdmin
       };
 
       let timeValues = this.componentModel.riskParameters.transitionTime.split(':');
@@ -133,7 +135,8 @@ class View extends CommonView {
         max: 23,
         maxLength: 2,
         defaultValue: timeValues[0],
-        isRequired: true
+        isRequired: true,
+        isDisabled: !this.componentModel.isAdmin
       };
 
       let minInputModel = {
@@ -145,7 +148,8 @@ class View extends CommonView {
         max: 59,
         maxLength: 2,
         defaultValue: timeValues[1],
-        isRequired: true
+        isRequired: true,
+        isDisabled: !this.componentModel.isAdmin
       };
 
       let secInputModel = {
@@ -157,8 +161,14 @@ class View extends CommonView {
         max: 59,
         maxLength: 2,
         defaultValue: timeValues[2],
-        isRequired: true
+        isRequired: true,
+        isDisabled: !this.componentModel.isAdmin
       };
+
+      let currencyWrapperClass = 'currency-select-wrapper';
+      if (!this.componentModel.isAdmin) {
+        currencyWrapperClass += ' disabled';
+      }
 
       content =
         <div>
@@ -169,10 +179,11 @@ class View extends CommonView {
             <div className="risk-control-label">
               Currency
             </div>
-            <div className="currency-select-wrapper">
+            <div className={currencyWrapperClass}>
               <select className="currency-select"
                       defaultValue={selectedCurrency}
-                      onChange={this.onCurrencyChange.bind(this)}>
+                      onChange={this.onCurrencyChange.bind(this)}
+                      disabled={!this.componentModel.isAdmin}>
                 {options}
               </select>
               <span className="icon-arrow-down"/>
