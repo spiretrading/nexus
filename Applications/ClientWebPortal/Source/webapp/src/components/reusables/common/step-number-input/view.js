@@ -113,41 +113,45 @@ class View extends UpdatableView {
 
   /** @private */
   onArrowUpClick() {
-    let $input = $('#' + this.componentModel.componentId).find('input');
-    let currentValue = Number($input.val());
-    if (!$input.hasClass('invalid')) {
-      currentValue += this.componentModel.stepSize;
-      if (this.componentModel.doRoll) {
-        if (currentValue > this.componentModel.max) {
-          currentValue = this.componentModel.min;
+    if (!this.componentModel.isDisabled) {
+      let $input = $('#' + this.componentModel.componentId).find('input');
+      let currentValue = Number($input.val());
+      if (!$input.hasClass('invalid')) {
+        currentValue += this.componentModel.stepSize;
+        if (this.componentModel.doRoll) {
+          if (currentValue > this.componentModel.max) {
+            currentValue = this.componentModel.min;
+          }
+        } else {
+          if (currentValue > this.componentModel.max) {
+            currentValue = this.componentModel.max;
+          }
         }
-      } else {
-        if (currentValue > this.componentModel.max) {
-          currentValue = this.componentModel.max;
-        }
+        $input.val(currentValue).focus();
+        this.controller.onValueChange.apply(this.controller, [currentValue]);
       }
-      $input.val(currentValue).focus();
-      this.controller.onValueChange.apply(this.controller, [currentValue]);
     }
   }
 
   /** @private */
   onArrowDownClick() {
-    let $input = $('#' + this.componentModel.componentId).find('input');
-    let currentValue = Number($input.val());
-    if (!$input.hasClass('invalid')) {
-      currentValue -= this.componentModel.stepSize;
-      if (this.componentModel.doRoll) {
-        if (currentValue < this.componentModel.min) {
-          currentValue = this.componentModel.max;
+    if (!this.componentModel.isDisabled) {
+      let $input = $('#' + this.componentModel.componentId).find('input');
+      let currentValue = Number($input.val());
+      if (!$input.hasClass('invalid')) {
+        currentValue -= this.componentModel.stepSize;
+        if (this.componentModel.doRoll) {
+          if (currentValue < this.componentModel.min) {
+            currentValue = this.componentModel.max;
+          }
+        } else {
+          if (currentValue < this.componentModel.min) {
+            currentValue = this.componentModel.min;
+          }
         }
-      } else {
-        if (currentValue < this.componentModel.min) {
-          currentValue = this.componentModel.min;
-        }
+        $input.val(currentValue).focus();
+        this.controller.onValueChange.apply(this.controller, [currentValue]);
       }
-      $input.val(currentValue).focus();
-      this.controller.onValueChange.apply(this.controller, [currentValue]);
     }
   }
 
@@ -199,6 +203,10 @@ class View extends UpdatableView {
       className = className + ' ' + this.componentModel.className;
     }
 
+    if (this.componentModel.isDisabled) {
+      className += ' disabled';
+    }
+
     return (
         <div id={this.componentModel.componentId} className={className}>
           <input type="text"
@@ -207,6 +215,7 @@ class View extends UpdatableView {
                  onKeyUp={this.onKeyUp.bind(this)}
                  maxLength={this.componentModel.maxLength}
                  defaultValue={this.componentModel.defaultValue}
+                 disabled={this.componentModel.isDisabled}
           />
           <span className="icon-arrow-up" onClick={this.onArrowUpClick.bind(this)}/>
           <span className="icon-arrow-down" onClick={this.onArrowDownClick.bind(this)}/>

@@ -5,6 +5,19 @@
     width: 100%;
     margin: 0 auto;
 
+    .currency-select-wrapper {
+      &.disabled {
+        select {
+          color: $darkGrey;
+          border: 1px solid $darkGrey !important;
+        }
+
+        span {
+          color: $darkGrey;
+        }
+      }
+    }
+
     input.invalid {
       color: $red;
     }
