@@ -16,6 +16,10 @@ class View extends UpdatableView {
   render() {
     let className = this.componentModel.className + ' dropdown-container';
 
+    if (this.componentModel.isDisabled) {
+      className += ' disabled';
+    }
+
     let options = [];
     for (let i=0; i<this.componentModel.options.length; i++) {
       let optionModel = this.componentModel.options[i];
@@ -28,9 +32,12 @@ class View extends UpdatableView {
 
     return (
         <div id={this.componentModel.componentId} className={className} onChange={onSelectionChange}>
-          <select className={this.componentModel.className} defaultValue={this.componentModel.selectedValue}>
+          <select className={this.componentModel.className}
+                  defaultValue={this.componentModel.selectedValue}
+                  disabled={this.componentModel.isDisabled}>
             {options}
           </select>
+          <span className="icon-arrow-down"/>
         </div>
     );
   }
