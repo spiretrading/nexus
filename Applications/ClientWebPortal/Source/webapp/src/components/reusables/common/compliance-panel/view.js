@@ -139,7 +139,8 @@ class View extends UpdatableView {
 
     let currencyDropdownModel = {
       selectedValue: parameters[parameterIndex].value.value,
-      options: currencyOptions
+      options: currencyOptions,
+      isDisabled: !this.componentModel.isAdmin
     };
     let onCurrencyChange = (newValue) => {
       this.controller.onParameterUpdated.apply(this.controller, [
@@ -176,7 +177,8 @@ class View extends UpdatableView {
           <input type="text" className="money-input"
                  data-parameter-name={parameters[parameterIndex].name}
                  onBlur={onMoneyInputBlur}
-                 defaultValue={formattedNumber}/>
+                 defaultValue={formattedNumber}
+                 readOnly={!this.componentModel.isAdmin}/>
         </div>
       </div>;
 
@@ -237,9 +239,9 @@ class View extends UpdatableView {
         <div className="name">{parameterName}</div>
         <div className="value">
           <div className="time-input-wrapper">
-            <input className="hour numeric" type="text" size="2" maxLength="2" defaultValue={hour}/>:
-            <input className="minute numeric" type="text" size="2" maxLength="2" defaultValue={minute}/>:
-            <input className="second numeric" type="text" size="2" maxLength="2" defaultValue={second}/>
+            <input className="hour numeric" type="text" size="2" maxLength="2" defaultValue={hour} readOnly={!this.componentModel.isAdmin}/>:
+            <input className="minute numeric" type="text" size="2" maxLength="2" defaultValue={minute} readOnly={!this.componentModel.isAdmin}/>:
+            <input className="second numeric" type="text" size="2" maxLength="2" defaultValue={second} readOnly={!this.componentModel.isAdmin}/>
             <input className="ampm" type="text" size="3" maxLength="2" defaultValue={ampm}/>
           </div>
         </div>
@@ -263,7 +265,8 @@ class View extends UpdatableView {
           <input type="text" className="count-input"
                  data-parameter-name={parameters[parameterIndex].name}
                  onBlur={onIntegerInputBlur}
-                 defaultValue={formattedNumber}/>
+                 defaultValue={formattedNumber}
+                 readOnly={!this.componentModel.isAdmin}/>
         </div>
       </div>;
 
@@ -285,7 +288,8 @@ class View extends UpdatableView {
           <input type="checkbox"
                  data-parameter-name={parameters[parameterIndex].name}
                  defaultChecked={isTrue}
-                 onChange={onBooleanInputChange}/>
+                 onChange={onBooleanInputChange}
+                 readOnly={!this.componentModel.isAdmin}/>
         </div>
       </div>;
 
@@ -346,7 +350,8 @@ class View extends UpdatableView {
         this.adjustContentSlideWrapperHeight();
         this.onSymbolsChange.apply(this);
       },
-      allowDuplicates: true
+      allowDuplicates: true,
+      readOnly: !this.componentModel.isAdmin
     });
 
     this.isInitialized = true;
@@ -361,6 +366,7 @@ class View extends UpdatableView {
     if (this.componentModel.isGroup) {
       stateDropdownModel = {
         selectedValue: this.componentModel.state,
+        isDisabled: !this.componentModel.isAdmin,
         options: [
           {
             label: 'Consolidated Active',
@@ -391,6 +397,7 @@ class View extends UpdatableView {
     } else {
       stateDropdownModel = {
         selectedValue: this.componentModel.state,
+        isDisabled: !this.componentModel.isAdmin,
         options: [
           {
             label: 'Active',

@@ -9,7 +9,6 @@
     padding-right: 35px;
     padding-bottom: 6px;
     padding-left: 15px;
-    background-image: url('/images/arrow-down.png');
     background-color: $lightGrey;
     background-position: right;
     background-repeat: no-repeat;
@@ -20,9 +19,15 @@
 
   .icon-arrow-down {
     position: absolute;
-    right: 0;
-    top: 9px;
+    right: 10px;
+    top: 15px;
     font-size: 12px;
     cursor: pointer;
+  }
+
+  &.disabled {
+    .icon-arrow-down {
+      color: $darkGrey;
+    }
   }
 }
