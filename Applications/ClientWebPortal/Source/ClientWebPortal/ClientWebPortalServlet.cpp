@@ -271,9 +271,9 @@ HttpResponse ClientWebPortalServlet::OnSearchDirectoryEntry(
     }
   };
   HttpResponse response;
-  auto session = m_sessions.Get(request, Store(response));
-  if(session->IsLoggedIn()) {
-    response.SetStatusCode(HttpStatusCode::BAD_REQUEST);
+  auto session = m_sessions.Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
   auto parameters = session->ShuttleParameters<Parameters>(request);
