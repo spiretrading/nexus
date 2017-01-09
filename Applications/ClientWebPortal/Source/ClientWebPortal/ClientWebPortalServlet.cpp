@@ -3,6 +3,7 @@
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Serialization/ShuttleBitset.hpp>
 #include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
+#include <Beam/Utilities/Trie.hpp>
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
 #include <Beam/WebServices/HttpServerPredicates.hpp>
@@ -74,6 +75,10 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
   slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/store_password"),
     std::bind(&ClientWebPortalServlet::OnStorePassword, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/service_locator/search_directory_entry"),
+    std::bind(&ClientWebPortalServlet::OnSearchDirectoryEntry, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_trading_group"),
@@ -219,6 +224,7 @@ HttpResponse ClientWebPortalServlet::OnStorePassword(
   struct Parameters {
     DirectoryEntry m_account;
     std::string m_password;
+
     void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.Shuttle("account", m_account);
       shuttle.Shuttle("password", m_password);
@@ -244,12 +250,71 @@ HttpResponse ClientWebPortalServlet::OnStorePassword(
   return response;
 }
 
+HttpResponse ClientWebPortalServlet::OnSearchDirectoryEntry(
+    const HttpRequest& request) {
+  struct Parameters {
+    std::string m_name;
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("name", m_name);
+    }
+  };
+  struct ResultEntry {
+    DirectoryEntry m_directoryEntry;
+    AccountRoles m_roles;
+    DirectoryEntry m_group;
+
+    void Shuttle(JsonSender<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("directory_entry", m_directoryEntry);
+      shuttle.Shuttle("roles", m_roles);
+      shuttle.Shuttle("group", m_group);
+    }
+  };
+  HttpResponse response;
+  auto session = m_sessions.Get(request, Store(response));
+  if(session->IsLoggedIn()) {
+    response.SetStatusCode(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  to_lower(parameters.m_name);
+  auto managedTradingGroups =
+    m_serviceClients->GetAdministrationClient().LoadManagedTradingGroups(
+    session->GetAccount());
+  rtv::Trie<char, ResultEntry> entries{'\0'};
+  for(auto& managedTradingGroup : managedTradingGroups) {
+    auto group = m_serviceClients->GetAdministrationClient().LoadTradingGroup(
+      managedTradingGroup);
+    entries[to_lower_copy(group.GetEntry().m_name).c_str()] =
+      ResultEntry{group.GetEntry(), AccountRoles{0}, group.GetEntry()};
+    for(auto& manager : group.GetManagers()) {
+      auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
+        manager);
+      entries[to_lower_copy(manager.m_name).c_str()] =
+        ResultEntry{manager, roles, group.GetEntry()};
+    }
+    for(auto& trader : group.GetTraders()) {
+      auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
+        trader);
+      entries[to_lower_copy(trader.m_name).c_str()] =
+        ResultEntry{trader, roles, group.GetEntry()};
+    }
+  }
+  vector<ResultEntry> result;
+  for(auto i = entries.startsWith(parameters.m_name.c_str());
+      i != entries.end(); ++i) {
+    result.push_back(*i->second);
+  }
+  session->ShuttleResponse(result, Store(response));
+  return response;
+}
+
 HttpResponse ClientWebPortalServlet::OnLogin(const HttpRequest& request) {
   struct Parameters {
     std::string m_username;
     std::string m_password;
-    void Shuttle(JsonReceiver<SharedBuffer>& shuttle,
-        unsigned int version) {
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.Shuttle("username", m_username);
       shuttle.Shuttle("password", m_password);
     }
@@ -292,8 +357,7 @@ HttpResponse ClientWebPortalServlet::OnCreateAccount(
     AccountIdentity m_identity;
     AccountRoles m_accountRoles;
 
-    void Shuttle(JsonReceiver<SharedBuffer>& shuttle,
-        unsigned int version) {
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.Shuttle("name", m_name);
       shuttle.Shuttle("group", m_group);
       shuttle.Shuttle("identity", m_identity);
@@ -363,6 +427,7 @@ HttpResponse ClientWebPortalServlet::OnCreateAccount(
 HttpResponse ClientWebPortalServlet::OnCreateGroup(const HttpRequest& request) {
   struct Parameters {
     std::string m_name;
+
     void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.Shuttle("name", m_name);
     }
@@ -399,6 +464,7 @@ HttpResponse ClientWebPortalServlet::OnLoadTradingGroup(
     const HttpRequest& request) {
   struct Parameters {
     DirectoryEntry m_directoryEntry;
+
     void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.Shuttle("directory_entry", m_directoryEntry);
     }
@@ -421,6 +487,7 @@ HttpResponse ClientWebPortalServlet::OnLoadManagedTradingGroups(
     const HttpRequest& request) {
   struct Parameters {
     DirectoryEntry m_account;
+
     void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.Shuttle("account", m_account);
     }
@@ -443,6 +510,7 @@ HttpResponse ClientWebPortalServlet::OnLoadAccountRoles(
     const HttpRequest& request) {
   struct Parameters {
     DirectoryEntry m_account;
+
     void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.Shuttle("account", m_account);
     }
@@ -464,6 +532,7 @@ HttpResponse ClientWebPortalServlet::OnLoadAccountIdentity(
     const HttpRequest& request) {
   struct Parameters {
     DirectoryEntry m_account;
+
     void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.Shuttle("account", m_account);
     }
@@ -486,6 +555,7 @@ HttpResponse ClientWebPortalServlet::OnStoreAccountIdentity(
   struct Parameters {
     DirectoryEntry m_account;
     AccountIdentity m_identity;
+
     void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.Shuttle("account", m_account);
       shuttle.Shuttle("identity", m_identity);
@@ -527,6 +597,7 @@ HttpResponse ClientWebPortalServlet::OnLoadAccountEntitlements(
     const HttpRequest& request) {
   struct Parameters {
     DirectoryEntry m_account;
+
     void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.Shuttle("account", m_account);
     }
@@ -550,6 +621,7 @@ HttpResponse ClientWebPortalServlet::OnStoreAccountEntitlements(
   struct Parameters {
     DirectoryEntry m_account;
     vector<DirectoryEntry> m_entitlements;
+
     void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.Shuttle("account", m_account);
       shuttle.Shuttle("entitlements", m_entitlements);
@@ -577,6 +649,7 @@ HttpResponse ClientWebPortalServlet::OnLoadRiskParameters(
     const HttpRequest& request) {
   struct Parameters {
     DirectoryEntry m_account;
+
     void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.Shuttle("account", m_account);
     }
@@ -601,6 +674,7 @@ HttpResponse ClientWebPortalServlet::OnStoreRiskParameters(
   struct Parameters {
     DirectoryEntry m_account;
     RiskParameters m_riskParameters;
+
     void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.Shuttle("account", m_account);
       shuttle.Shuttle("risk_parameters", m_riskParameters);
@@ -628,6 +702,7 @@ HttpResponse ClientWebPortalServlet::OnLoadDirectoryEntryComplianceRuleEntry(
     const HttpRequest& request) {
   struct Parameters {
     DirectoryEntry m_directoryEntry;
+
     void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.Shuttle("directory_entry", m_directoryEntry);
     }
@@ -705,6 +780,7 @@ HttpResponse ClientWebPortalServlet::OnLoadSecurityInfoFromPrefix(
     const HttpRequest& request) {
   struct Parameters {
     string m_prefix;
+
     void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.Shuttle("prefix", m_prefix);
     }
@@ -729,6 +805,7 @@ HttpResponse ClientWebPortalServlet::OnLoadProfitAndLossReport(
     DirectoryEntry m_directoryEntry;
     ptime m_startDate;
     ptime m_endDate;
+
     void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.Shuttle("directory_entry", m_directoryEntry);
       shuttle.Shuttle("start_date", m_startDate);
