@@ -278,6 +278,12 @@ HttpResponse ClientWebPortalServlet::OnSearchDirectoryEntry(
   }
   auto parameters = session->ShuttleParameters<Parameters>(request);
   to_lower(parameters.m_name);
+  trim(parameters.m_name);
+  vector<ResultEntry> result;
+  if(parameters.m_name.empty()) {
+    session->ShuttleResponse(result, Store(response));
+    return response;
+  }
   auto managedTradingGroups =
     m_serviceClients->GetAdministrationClient().LoadManagedTradingGroups(
     session->GetAccount());
@@ -300,7 +306,6 @@ HttpResponse ClientWebPortalServlet::OnSearchDirectoryEntry(
         ResultEntry{trader, roles, group.GetEntry()};
     }
   }
-  vector<ResultEntry> result;
   for(auto i = entries.startsWith(parameters.m_name.c_str());
       i != entries.end(); ++i) {
     result.push_back(*i->second);
