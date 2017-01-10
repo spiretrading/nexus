@@ -96,6 +96,9 @@ class Controller {
       Config.WHOLE_PAGE_PRELOADER_HEIGHT
     ).then((responses) => {
       this.componentModel.groupedAccounts = responses[0];
+      for (let i=0; i<this.componentModel.groupedAccounts.length; i++) {
+        this.componentModel.groupedAccounts[i].isLoaded = false;
+      }
       this.componentModel.searchString = '';
       this.view.update(this.componentModel);
     });
@@ -106,8 +109,50 @@ class Controller {
   }
 
   search(searchString) {
-    this.componentModel.searchString = searchString;
-    this.view.update(this.componentModel);
+    this.serviceLocatorClient.searchDirectoryEntry.apply(this.serviceLocatorClient, [searchString])
+      .then((results) => {
+        // results come in a mix of groups and individual traders in an array
+        // console.debug(results);
+        for (let i=0; i<results.length; i++) {
+          if (results[i].directory_entry.type == 0) {
+            // in the case of individual trader
+            let group = null;
+            let groupId = results[i].group.id;
+            // find existing group in the model
+            for (let j=0; j<this.componentModel.groupedAccounts.length; j++) {
+              if (this.componentModel.groupedAccounts[j].id == groupId) {
+                group = this.componentModel.groupedAccounts[j];
+                break;
+              }
+            }
+
+            // initialize the group
+            if (group.accounts == null) {
+              group.accounts = {
+                traders: []
+              };
+            }
+
+            // add the trader in group if it does not exist
+            let trader = results[i].directory_entry;
+            trader.roles = results[i].roles;
+
+            let doesTraderExist = false;
+            for (let j=0; j<group.accounts.traders.length; j++) {
+              if (group.accounts.traders[j].id == trader.id) {
+                doesTraderExist = true;
+              }
+            }
+
+            if (!doesTraderExist) {
+              group.accounts.traders.push(trader);
+            }
+          }
+        }
+
+        this.componentModel.searchString = searchString;
+        this.view.update(this.componentModel);
+      });
   }
 
   navigateToProfile(traderId) {
@@ -131,6 +176,7 @@ class Controller {
     );
     this.adminClient.loadTradingGroup.apply(this.adminClient, [groupDirectoryEntry])
       .then((accounts) => {
+        group.isLoaded = true;
         group.accounts = accounts;
         let traders = accounts.traders;
         let requestedRoles = new HashMap();

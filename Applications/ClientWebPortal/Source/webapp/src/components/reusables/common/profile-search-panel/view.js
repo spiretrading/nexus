@@ -13,7 +13,7 @@ class View extends UpdatableView {
 
   /** @private */
   onExpandClick(event) {
-    if (this.componentModel.accounts == null) {
+    if (!this.componentModel.isLoaded) {
       this.shouldExpand = true;
       this.controller.loadAccounts.apply(this.controller);
     } else {
@@ -97,12 +97,14 @@ class View extends UpdatableView {
 
     let traders = [];
     let numVisibleTraders = 0;
+
     if (this.componentModel.accounts != null) {
       let groupTraders = this.componentModel.accounts.traders;
       let onTraderClick = this.onTraderClick.bind(this);
       for (let i=0; i<groupTraders.length; i++) {
         let traderRowClassName = 'trader-row';
         let matchedString, nonMatchedString;
+
         if (groupTraders[i].name.indexOf(this.componentModel.searchString) == 0 &&
           this.componentModel.searchString !== '') {
           traderRowClassName += ' match';

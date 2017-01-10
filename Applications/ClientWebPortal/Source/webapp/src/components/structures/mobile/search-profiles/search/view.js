@@ -31,6 +31,7 @@ class View extends CommonView {
           groupId: this.componentModel.groupedAccounts[i].id,
           groupName: this.componentModel.groupedAccounts[i].name,
           accounts: this.componentModel.groupedAccounts[i].accounts || null,
+          isLoaded: this.componentModel.groupedAccounts[i].isLoaded,
           searchString: this.componentModel.searchString
         };
         panels.push(
