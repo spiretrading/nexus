@@ -7,6 +7,9 @@
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
 #include <Beam/WebServices/HttpServerPredicates.hpp>
+#include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "ClientWebPortal/ClientWebPortal/ServiceClients.hpp"
 #include "Nexus/Accounting/Portfolio.hpp"
@@ -287,28 +290,29 @@ HttpResponse ClientWebPortalServlet::OnSearchDirectoryEntry(
   auto managedTradingGroups =
     m_serviceClients->GetAdministrationClient().LoadManagedTradingGroups(
     session->GetAccount());
-  rtv::Trie<char, ResultEntry> entries{'\0'};
   for(auto& managedTradingGroup : managedTradingGroups) {
     auto group = m_serviceClients->GetAdministrationClient().LoadTradingGroup(
       managedTradingGroup);
-    entries[to_lower_copy(group.GetEntry().m_name).c_str()] =
-      ResultEntry{group.GetEntry(), AccountRoles{0}, group.GetEntry()};
+    if(starts_with(to_lower_copy(group.GetEntry().m_name), parameters.m_name)) {
+      result.push_back(
+        ResultEntry{group.GetEntry(), AccountRoles{0}, group.GetEntry()});
+    }
     for(auto& manager : group.GetManagers()) {
-      auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
-        manager);
-      entries[to_lower_copy(manager.m_name).c_str()] =
-        ResultEntry{manager, roles, group.GetEntry()};
+      if(starts_with(to_lower_copy(manager.m_name), parameters.m_name)) {
+        auto roles =
+          m_serviceClients->GetAdministrationClient().LoadAccountRoles(manager);
+        result.push_back(
+          ResultEntry{manager, roles, group.GetEntry()});
+      }
     }
     for(auto& trader : group.GetTraders()) {
-      auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
-        trader);
-      entries[to_lower_copy(trader.m_name).c_str()] =
-        ResultEntry{trader, roles, group.GetEntry()};
+      if(starts_with(to_lower_copy(trader.m_name), parameters.m_name)) {
+        auto roles =
+          m_serviceClients->GetAdministrationClient().LoadAccountRoles(trader);
+        result.push_back(
+          ResultEntry{trader, roles, group.GetEntry()});
+      }
     }
-  }
-  for(auto i = entries.startsWith(parameters.m_name.c_str());
-      i != entries.end(); ++i) {
-    result.push_back(*i->second);
   }
   session->ShuttleResponse(result, Store(response));
   return response;
