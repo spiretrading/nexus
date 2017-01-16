@@ -7,11 +7,6 @@
 
     .currency-select-wrapper {
       &.disabled {
-        select {
-          color: $darkGrey;
-          border: 1px solid $darkGrey !important;
-        }
-
         span {
           color: $darkGrey;
         }
