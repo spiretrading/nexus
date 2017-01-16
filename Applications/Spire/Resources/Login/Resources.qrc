@@ -1,0 +1,7 @@
+<RCC>
+  <qresource prefix="newPrefix">
+    <file>login-bg.png</file>
+    <file>spire_desktop_loading_icon.gif</file>
+    <file>spire-white.png</file>
+  </qresource>
+</RCC>

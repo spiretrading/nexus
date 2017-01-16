@@ -1,5 +1,7 @@
 #ifndef SPIRE_SERVICECLIENTS_HPP
 #define SPIRE_SERVICECLIENTS_HPP
+
+
 #include <memory>
 #include <Beam/Network/Network.hpp>
 #include <Beam/Pointers/Ref.hpp>

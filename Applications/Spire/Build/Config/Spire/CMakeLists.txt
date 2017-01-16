@@ -4,11 +4,20 @@ file(GLOB header_files
   ./../../../Include/Spire/Spire/*.hpp)
 file(GLOB source_files
   ./../../../Source/Spire/*.cpp)
+file(GLOB form_files 
+  ./../../../Source/Spire/*.ui)
+
+qt5_wrap_ui(generated_header_files ${form_files})
+find_cpp_qobject(qobject_source_files ${header_files})
+qt5_wrap_cpp(generated_source_files ${qobject_source_files}
+  OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED)
+
+source_group("Form Files" FILES ${form_files})
+source_group("Generated Files\\Header Files" FILES ${generated_header_files})
+source_group("Generated Files\\Source Files" FILES ${generated_source_files})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 if(WIN32)
-  file(GLOB resource_files
-    ./../../../Source/Spire/*.rc)
   set(app_type WIN32)
 elseif(APPLE)
   set(app_type MACOSX_BUNDLE)
@@ -17,11 +26,9 @@ else()
 endif(WIN32)
 
 add_executable(Spire ${app_type} ${header_files} ${source_files}
-  ${resource_files})
+  ${generated_header_files} ${generated_source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
-target_link_libraries(Spire Dashboard Charting PortfolioViewer Utilities
-  RiskTimer AccountViewer KeyBindings Blotter Catalog BookView TimeAndSales
-  OrderImbalanceIndicator InputWidgets CanvasView Canvas UI Resources
+target_link_libraries(Spire Login Resources Toolbar UI
   debug $ENV{CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized $ENV{CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{LUA_LIBRARY_DEBUG_PATH}
@@ -46,6 +53,8 @@ target_link_libraries(Spire Dashboard Charting PortfolioViewer Utilities
   optimized $ENV{QT_PCRE_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{QT_PLATFORM_SUPPORT_LIBRARY_DEBUG_PATH}
   optimized $ENV{QT_PLATFORM_SUPPORT_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{QT_SVG_LIBRARY_DEBUG_PATH}
+  optimized $ENV{QT_SVG_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{QT_WIDGETS_LIBRARY_DEBUG_PATH}
   optimized $ENV{QT_WIDGETS_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{ZLIB_LIBRARY_DEBUG_PATH}
