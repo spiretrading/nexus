@@ -91,8 +91,10 @@ namespace MarketDataService {
       std::string m_username;
       std::string m_password;
       Beam::MySql::DatabaseConnectionPool m_readerDatabaseConnectionPool;
-      Beam::Threading::Sync<mysqlpp::Connection> m_readerDatabaseConnection;
-      Beam::Threading::Sync<mysqlpp::Connection> m_writerDatabaseConnection;
+      Beam::Threading::Sync<mysqlpp::Connection, Beam::Threading::Mutex>
+        m_readerDatabaseConnection;
+      Beam::Threading::Sync<mysqlpp::Connection, Beam::Threading::Mutex>
+        m_writerDatabaseConnection;
       Beam::Threading::ThreadPool m_readerThreadPool;
       DataStore<MarketWideDataQuery, OrderImbalance, Details::order_imbalances>
         m_orderImbalanceDataStore;

@@ -1,8 +1,8 @@
 class Controller {
   constructor(react, componentModel) {
     this.componentModel = clone(componentModel);
-    this.navigateToProfile = react.props.navigateToProfile;
-    this.loadGroupAccounts = react.props.loadAccounts;
+    this.onChange = react.props.onChange;
+    this.onInputValidationFail = react.props.onInputValidationFail;
   }
 
   getView() {
@@ -14,7 +14,7 @@ class Controller {
   }
 
   componentDidMount() {
-    this.view.initialize();
+    this.view.initialize.apply(this.view);
   }
 
   componentWillUpdate(model) {
@@ -24,12 +24,18 @@ class Controller {
     }
   }
 
-  navigateToAccountProfile(traderId) {
-    this.navigateToProfile(traderId);
+  componentDidUpdate() {
+    this.view.componentDidUpdate();
   }
 
-  loadAccounts() {
-    this.loadGroupAccounts(this.componentModel.groupId);
+  onValueChange(newValue) {
+    this.onChange(newValue);
+  }
+
+  onValidationFail(failMessage) {
+    if (this.onInputValidationFail != null) {
+      this.onInputValidationFail(failMessage);
+    }
   }
 }
 

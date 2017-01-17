@@ -1,9 +1,6 @@
 import './style.scss';
 import React from 'react';
 import UpdatableView from 'commons/updatable-view';
-import currencyFormatter from 'utils/currency-formatter';
-import definitionsService from 'services/definitions';
-import deviceDetector from 'utils/device-detector';
 
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
@@ -11,13 +8,14 @@ class View extends UpdatableView {
     this.traderRowHeight = 27;
     this.visibleHeight = 0;
     this.shouldExpand = false;
+    this.lastSearchString = null;
   }
 
   /** @private */
   onExpandClick(event) {
-    if (this.componentModel.accounts == null) {
+    if (!this.componentModel.isLoaded) {
       this.shouldExpand = true;
-      this.controller.getAccounts.apply(this.controller);
+      this.controller.loadAccounts.apply(this.controller);
     } else {
       this.togglePanel.apply(this);
     }
@@ -59,21 +57,25 @@ class View extends UpdatableView {
   }
 
   componentDidUpdate() {
-    this.setContentSlideWrapperToVisibleHeight();
-    let $component = $('#' + this.componentModel.componentId);
-    $component.find('.trader-row').removeAttr('style');
-    $component.find('.icon-expand').removeClass('collapsed').removeClass('expanded');
-    if ($component.find('.trader-row.match').size() >= 1 ||
-      isGroupNameMatch.apply(this, [this.componentModel.searchString])) {
-      $component.css('display', 'inherit');
-    } else {
-      $component.css('display', 'none');
+    if (this.componentModel.searchString != this.lastSearchString) {
+      this.setContentSlideWrapperToVisibleHeight();
+      let $component = $('#' + this.componentModel.componentId);
+      $component.find('.trader-row').removeAttr('style');
+      $component.find('.icon-expand').removeClass('collapsed').removeClass('expanded');
+      if ($component.find('.trader-row.match').size() >= 1 ||
+        isGroupNameMatch.apply(this, [this.componentModel.searchString])) {
+        $component.css('display', 'inherit');
+      } else {
+        $component.css('display', 'none');
+      }
     }
 
     if (this.shouldExpand) {
       this.togglePanel();
       this.shouldExpand = false;
     }
+
+    this.lastSearchString = this.componentModel.searchString;
 
     function isGroupNameMatch(searchString) {
       if (this.componentModel.groupName.indexOf(searchString) == 0) {
@@ -95,12 +97,14 @@ class View extends UpdatableView {
 
     let traders = [];
     let numVisibleTraders = 0;
+
     if (this.componentModel.accounts != null) {
       let groupTraders = this.componentModel.accounts.traders;
       let onTraderClick = this.onTraderClick.bind(this);
       for (let i=0; i<groupTraders.length; i++) {
         let traderRowClassName = 'trader-row';
         let matchedString, nonMatchedString;
+
         if (groupTraders[i].name.indexOf(this.componentModel.searchString) == 0 &&
           this.componentModel.searchString !== '') {
           traderRowClassName += ' match';

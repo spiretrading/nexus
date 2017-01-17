@@ -91,6 +91,25 @@ class ServiceLocator {
     return httpConnectionManager.send(apiPath, null, true)
       .catch(this.logErrorAndThrow);
   }
+
+  searchDirectoryEntry(prefix) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'service_locator/search_directory_entry';
+    let payload = {
+      name: prefix
+    };
+    return httpConnectionManager.send(apiPath, payload, true)
+      .then(onResponse)
+      .catch(this.logErrorAndThrow);
+
+    function onResponse(results) {
+      for (let i=0; i<results.length; i++) {
+        let roles = results[i].roles;
+        results[i].roles = accountRoles.parse(roles);
+      }
+
+      return results;
+    }
+  }
 }
 
 export default ServiceLocator;

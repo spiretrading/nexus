@@ -3,7 +3,7 @@ import Controller from 'components/structures/common/profile/risk-controls/contr
 import View from './view';
 import uuid from 'uuid';
 
-class ProfileAccount extends Component {
+class ProfileRiskControls extends Component {
   constructor(props) {
     super(props);
   }
@@ -34,4 +34,4 @@ class ProfileAccount extends Component {
   }
 }
 
-export default ProfileAccount;
+export default ProfileRiskControls;
