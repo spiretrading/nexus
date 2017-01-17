@@ -91,8 +91,10 @@ namespace OrderExecutionService {
       Beam::KeyValueCache<unsigned int, Beam::ServiceLocator::DirectoryEntry,
         Beam::Threading::Mutex> m_accountEntries;
       Beam::MySql::DatabaseConnectionPool m_readerDatabaseConnectionPool;
-      Beam::Threading::Sync<mysqlpp::Connection> m_readerDatabaseConnection;
-      Beam::Threading::Sync<mysqlpp::Connection> m_writerDatabaseConnection;
+      Beam::Threading::Sync<mysqlpp::Connection, Beam::Threading::Mutex>
+        m_readerDatabaseConnection;
+      Beam::Threading::Sync<mysqlpp::Connection, Beam::Threading::Mutex>
+        m_writerDatabaseConnection;
       Beam::Threading::ThreadPool m_readerThreadPool;
       DataStore<OrderInfo, Details::status_submissions>
         m_statusSubmissionsDataStore;
