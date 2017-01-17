@@ -21,6 +21,9 @@
     position: absolute;
     right: 10px;
     top: 15px;
+    height: 0;
+    overlfow: visible;
+    pointer-events:none;
     font-size: 12px;
     cursor: pointer;
   }

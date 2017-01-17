@@ -184,7 +184,7 @@ class View extends CommonView {
                    data-control="buying-power"
                    onKeyUp={this.onMoneyInputKeyUp.bind(this)}
                    defaultValue={this.componentModel.riskParameters.buyingPower.toString()}
-                   disabled={!this.componentModel.isAdmin}/>
+                   readOnly={!this.componentModel.isAdmin}/>
             <div className="buying-power-error validation-error"></div>
             <div className="risk-control-label">
               Net Loss <span className="currency-sign">{currencySign}</span>
@@ -194,7 +194,7 @@ class View extends CommonView {
                    data-control="net-loss"
                    onKeyUp={this.onMoneyInputKeyUp.bind(this)}
                    defaultValue={this.componentModel.riskParameters.netLoss.toString()}
-                   disabled={!this.componentModel.isAdmin}/>
+                   readOnly={!this.componentModel.isAdmin}/>
             <div className="net-loss-error validation-error"></div>
             <div className="risk-control-label">
               Transition Time
@@ -206,7 +206,7 @@ class View extends CommonView {
                        maxLength="2"
                        onKeyUp={this.onTimeInputKeyUp.bind(this)}
                        defaultValue={timeValues[0]}
-                       disabled={!this.componentModel.isAdmin}/>
+                       readOnly={!this.componentModel.isAdmin}/>
                 <div className="time-input-label">hr</div>
               </div>
               <span className="colon">:</span>
@@ -216,7 +216,7 @@ class View extends CommonView {
                        maxLength="2"
                        onKeyUp={this.onTimeInputKeyUp.bind(this)}
                        defaultValue={timeValues[1]}
-                       disabled={!this.componentModel.isAdmin}/>
+                       readOnly={!this.componentModel.isAdmin}/>
                 <div className="time-input-label">min</div>
               </div>
               <span className="colon">:</span>
@@ -226,7 +226,7 @@ class View extends CommonView {
                        maxLength="2"
                        onKeyUp={this.onTimeInputKeyUp.bind(this)}
                        defaultValue={timeValues[2]}
-                       disabled={!this.componentModel.isAdmin}/>
+                       readOnly={!this.componentModel.isAdmin}/>
                 <div className="time-input-label">sec</div>
               </div>
             </div>

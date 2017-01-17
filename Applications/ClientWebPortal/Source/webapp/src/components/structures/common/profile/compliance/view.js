@@ -32,7 +32,8 @@ class View extends UpdatableView {
         ruleEntryId: entry.id,
         schema: entry.schema,
         state: entry.state,
-        isGroup: this.componentModel.isGroup
+        isGroup: this.componentModel.isGroup,
+        isAdmin: this.componentModel.isAdmin
       };
       entryPanels.push(
         <CompliancePanel key={i} model={model} onUpdate={onRuleUpdate}/>
@@ -60,7 +61,8 @@ class View extends UpdatableView {
         ruleEntryId: 0,
         schema: schema,
         state: 0,
-        isGroup: this.componentModel.isGroup
+        isGroup: this.componentModel.isGroup,
+        isAdmin: this.componentModel.isAdmin
       };
       ReactDOM.render(
         <CompliancePanel model={model} onUpdate={onRuleUpdate}/>,
