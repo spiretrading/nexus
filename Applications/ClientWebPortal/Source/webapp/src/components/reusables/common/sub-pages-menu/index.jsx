@@ -11,12 +11,12 @@ class SubPages extends Component {
     this.controller = new Controller(this);
   }
 
-  componentWillUpdate(nextProps) {
-    this.controller.componentWillUpdate(nextProps.model);
+  componentDidMount() {
+    this.controller.componentDidMount.apply(this.controller);
   }
 
-  componentDidUpdate() {
-    this.controller.getView().componentDidUpdate();
+  componentWillUnmount() {
+    this.controller.componentWillUnmount.apply(this.controller);
   }
 
   render() {

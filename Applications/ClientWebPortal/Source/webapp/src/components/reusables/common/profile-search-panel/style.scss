@@ -26,6 +26,20 @@
       margin-top: 2px;
       font-size: 16px;
     }
+
+    .expanded {
+      color: $primaryGradient1;
+      transform: rotate(90deg);
+      animation: arrowExpand .5s;
+      -webkit-animation-fill-mode: forwards;
+    }
+
+    .collapsed {
+      color: $primaryGradient3;
+      transform: rotate(-90deg);
+      animation: arrowCollapse .5s;
+      -webkit-animation-fill-mode: forwards;
+    }
   }
 
   .content-slide-wrapper {

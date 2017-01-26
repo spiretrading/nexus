@@ -13,8 +13,14 @@
   text-align: center;
 
   &.enabled {
-    background: $primaryGradient1;
+    background: $primaryGradient1Light;
+    border: 1px solid $primaryGradient1Light;
     color: $white;
     cursor: pointer;
+
+    &:hover {
+      background: $primaryGradient1;
+      border: 1px solid $primaryGradient1;
+    }
   }
 }
