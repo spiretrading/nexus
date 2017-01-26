@@ -49,6 +49,20 @@
     .price {
       margin-right: 20px;
     }
+
+    .expanded {
+      color: $primaryGradient1;
+      transform: rotate(90deg) !important;
+      animation: arrowExpand .5s;
+      -webkit-animation-fill-mode: forwards;
+    }
+
+    .collapsed {
+      color: $primaryGradient3;
+      transform: rotate(-90deg);
+      animation: arrowCollapse .5s;
+      -webkit-animation-fill-mode: forwards;
+    }
   }
 
   .content-slide-wrapper {
@@ -138,12 +152,16 @@ main.mobile {
       .price {
         display: none;
       }
+
+      .icon-check {
+        margin-left: 0;
+      }
     }
 
     .content-slide-wrapper {
       width: 100%;
-      padding-left: 15px;
-      padding-right: 20px;
+      padding-left: 0px;
+      padding-right: 0px;
 
       .content-header {
         position: relative;

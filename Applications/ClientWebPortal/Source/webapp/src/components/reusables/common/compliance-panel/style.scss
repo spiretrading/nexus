@@ -30,6 +30,20 @@
     .status-dropdown {
       margin-top: 4px;
     }
+
+    .expanded {
+      color: $primaryGradient1;
+      transform: rotate(90deg) !important;
+      animation: arrowExpand .5s;
+      -webkit-animation-fill-mode: forwards;
+    }
+
+    .collapsed {
+      color: $primaryGradient3;
+      transform: rotate(-90deg);
+      animation: arrowCollapse .5s;
+      -webkit-animation-fill-mode: forwards;
+    }
   }
 
   .value {
@@ -165,41 +179,5 @@ main.mobile {
         }
       }
     }
-  }
-}
-
-.expanded {
-  color: $primaryGradient1;
-  transform: rotate(90deg) !important;
-  animation: entitlementsArrowExpand .5s;
-  -webkit-animation-fill-mode: forwards;
-}
-
-.collapsed {
-  color: $primaryGradient3;
-  transform: rotate(-90deg);
-  animation: entitlementsArrowCollapse .5s;
-  -webkit-animation-fill-mode: forwards;
-}
-
-@keyframes entitlementsArrowExpand {
-  0% {
-    color: $primaryGradient3;
-    transform: rotateZ(0deg);
-  }
-  100% {
-    color: $primaryGradient1;
-    transform: rotateZ(90deg);
-  }
-}
-
-@keyframes entitlementsArrowCollapse {
-  0% {
-    color: $primaryGradient1;
-    transform: rotateZ(90deg);
-  }
-  100% {
-    color: $primaryGradient3;
-    transform: rotateZ(0deg);
   }
 }

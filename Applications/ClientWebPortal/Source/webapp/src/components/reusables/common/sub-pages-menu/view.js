@@ -15,9 +15,16 @@ class View extends UpdatableView {
   }
 
   render() {
-    let className;
+    let className = 'sub-pages-container';
     if (deviceDetector.isMobile()){
-      className = 'mobile';
+      className += ' mobile';
+    }
+
+    if (this.componentModel.length == 0) {
+      className += ' empty';
+      $('#top-nav-filler').css('height', '75px');
+    } else {
+      $('#top-nav-filler').css('height', '125px');
     }
 
     let menuItems = [];

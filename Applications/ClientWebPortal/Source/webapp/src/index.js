@@ -7,6 +7,7 @@ import 'jquery-ui';
 import 'jquery-ui-css';
 import 'jquery-tagit';
 import 'jquery-tagit-css';
+import 'jquery-slimscroll';
 import 'index.html';
 import 'bootstrap-css';
 import 'styles/general.scss';
@@ -18,7 +19,9 @@ import {ServiceLocatorClient, DirectoryEntry} from 'spire-client';
 import sessionInitializer from 'commons/session-initializer';
 
 window.clone = (originalObj) => {
-  if (typeof originalObj == 'object') {
+  if (originalObj.constructor == Array) {
+    return JSON.parse(JSON.stringify(originalObj));
+  } else if (typeof originalObj == 'object') {
     let clone = {};
     for (let property in originalObj) {
       if (originalObj[property] != null) {

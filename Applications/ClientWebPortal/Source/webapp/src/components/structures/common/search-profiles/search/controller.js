@@ -112,7 +112,6 @@ class Controller {
     this.serviceLocatorClient.searchDirectoryEntry.apply(this.serviceLocatorClient, [searchString])
       .then((results) => {
         // results come in a mix of groups and individual traders in an array
-        // console.debug(results);
         for (let i=0; i<results.length; i++) {
           if (results[i].directory_entry.type == 0) {
             // in the case of individual trader
