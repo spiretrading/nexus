@@ -4,6 +4,7 @@
 #include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/TimeService/VirtualTimeClient.hpp>
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include <Beam/Utilities/Remote.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
@@ -181,6 +182,7 @@ namespace Nexus {
   template<typename ServiceClientsForward>
   WrapperServiceClients<ClientType>::WrapperServiceClients(
       ServiceClientsForward&& client)
+      BEAM_SUPPRESS_THIS_INITIALIZER()
       : m_client{std::forward<ServiceClientsForward>(client)},
         m_serviceLocatorClient{
           [=] (Beam::DelayPtr<std::unique_ptr<ServiceLocatorClient>>& client) {
@@ -245,6 +247,7 @@ namespace Nexus {
               &m_client->GetTimeClient()));
           }
         } {}
+      BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
   template<typename ClientType>
   typename WrapperServiceClients<ClientType>::ServiceLocatorClient&

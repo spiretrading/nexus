@@ -4,6 +4,7 @@
 #include <Beam/Python/PythonBindings.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
+#include "Nexus/ServiceClients/TestServiceClientsInstance.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 
 using namespace Beam;
@@ -146,6 +147,15 @@ void Nexus::Python::ExportApplicationServiceClients() {
 void Nexus::Python::ExportServiceClients() {
   ExportVirtualServiceClients();
   ExportApplicationServiceClients();
+}
+
+void Nexus::Python::ExportTestServiceClientsInstance() {
+/*
+  class_<TestServiceClientsInstance, boost::noncopyable>(
+      "TestServiceClientsInstance", init<>())
+    .def("open", BlockingFunction(&TestServiceClientsInstance::Open))
+    .def("close", BlockingFunction(&TestServiceClientsInstance::Close));
+*/
 }
 
 void Nexus::Python::ExportVirtualServiceClients() {
