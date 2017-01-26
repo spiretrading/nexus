@@ -5,6 +5,7 @@
 #include <boost/noncopyable.hpp>
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
 #include "Nexus/ServiceClients/TestServiceClientsInstance.hpp"
+#include "Nexus/ServiceClients/TestServiceClients.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 
 using namespace Beam;
@@ -94,6 +95,26 @@ namespace {
     return new PythonApplicationServiceClients{
       MakeVirtualServiceClients(std::move(baseClient))};
   }
+
+  class PythonTestServiceClients :
+      public WrapperServiceClients<std::unique_ptr<VirtualServiceClients>> {
+    public:
+      PythonTestServiceClients(std::unique_ptr<VirtualServiceClients> client,
+          std::shared_ptr<TestServiceClientsInstance> instance)
+          : WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>(
+              std::move(client)),
+            m_instance{std::move(instance)} {}
+
+    private:
+      std::shared_ptr<TestServiceClientsInstance> m_instance;
+  };
+
+  VirtualServiceClients* BuildTestServiceClients(
+      std::shared_ptr<TestServiceClientsInstance> instance) {
+    auto baseClient = std::make_unique<TestServiceClients>(Ref(*instance));
+    return new PythonTestServiceClients{
+      MakeVirtualServiceClients(std::move(baseClient)), instance};
+  }
 }
 
 void Nexus::Python::ExportApplicationServiceClients() {
@@ -147,15 +168,57 @@ void Nexus::Python::ExportApplicationServiceClients() {
 void Nexus::Python::ExportServiceClients() {
   ExportVirtualServiceClients();
   ExportApplicationServiceClients();
+  ExportTestServiceClients();
 }
 
 void Nexus::Python::ExportTestServiceClientsInstance() {
-/*
   class_<TestServiceClientsInstance, boost::noncopyable>(
       "TestServiceClientsInstance", init<>())
     .def("open", BlockingFunction(&TestServiceClientsInstance::Open))
     .def("close", BlockingFunction(&TestServiceClientsInstance::Close));
-*/
+}
+
+void Nexus::Python::ExportTestServiceClients() {
+  class_<PythonTestServiceClients, boost::noncopyable,
+      bases<VirtualServiceClients>>("TestClients", no_init)
+    .def("__init__", make_constructor(&BuildTestServiceClients))
+    .def("get_service_locator_client",
+      BlockingFunction<PythonTestServiceClients>(
+      &PythonTestServiceClients::GetServiceLocatorClient,
+      return_value_policy<reference_existing_object>()))
+    .def("get_registry_client", BlockingFunction<PythonTestServiceClients>(
+      &PythonTestServiceClients::GetRegistryClient,
+      return_value_policy<reference_existing_object>()))
+    .def("get_administration_client",
+      BlockingFunction<PythonTestServiceClients>(
+      &PythonTestServiceClients::GetAdministrationClient,
+      return_value_policy<reference_existing_object>()))
+    .def("get_definitions_client", BlockingFunction<PythonTestServiceClients>(
+      &PythonTestServiceClients::GetDefinitionsClient,
+      return_value_policy<reference_existing_object>()))
+    .def("get_market_data_client", BlockingFunction<PythonTestServiceClients>(
+      &PythonTestServiceClients::GetMarketDataClient,
+      return_value_policy<reference_existing_object>()))
+    .def("get_charting_client", BlockingFunction<PythonTestServiceClients>(
+      &PythonTestServiceClients::GetChartingClient,
+      return_value_policy<reference_existing_object>()))
+    .def("get_compliance_client", BlockingFunction<PythonTestServiceClients>(
+      &PythonTestServiceClients::GetComplianceClient,
+      return_value_policy<reference_existing_object>()))
+    .def("get_order_execution_client",
+      BlockingFunction<PythonTestServiceClients>(
+      &PythonTestServiceClients::GetOrderExecutionClient,
+      return_value_policy<reference_existing_object>()))
+    .def("get_risk_client", BlockingFunction<PythonTestServiceClients>(
+      &PythonTestServiceClients::GetRiskClient,
+      return_value_policy<reference_existing_object>()))
+    .def("get_time_client", BlockingFunction<PythonTestServiceClients>(
+      &PythonTestServiceClients::GetTimeClient,
+      return_value_policy<reference_existing_object>()))
+    .def("open", BlockingFunction<PythonTestServiceClients>(
+      &PythonTestServiceClients::Open))
+    .def("close", BlockingFunction<PythonTestServiceClients>(
+      &PythonTestServiceClients::Close));
 }
 
 void Nexus::Python::ExportVirtualServiceClients() {
