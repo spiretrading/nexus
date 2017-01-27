@@ -94,6 +94,11 @@ class View extends UpdatableView {
 
   render() {
     let componentContainerClassName = 'profile-search-panel-container';
+    let titleClass = 'title';
+
+    if (this.componentModel.accounts == null || this.componentModel.accounts.traders.length === 0) {
+      titleClass += ' empty';
+    }
 
     let traders = [];
     let numVisibleTraders = 0;
@@ -166,7 +171,7 @@ class View extends UpdatableView {
         <div id={this.componentModel.componentId} className={componentContainerClassName}>
           <div className="header">
             <span className="icon-expand" onClick={this.onExpandClick.bind(this)}></span>
-            <span className="title"><span className="matched-string">{matchedTitleString}</span>{nonMatchedTitleString}</span>
+            <span className={titleClass}><span className="matched-string">{matchedTitleString}</span>{nonMatchedTitleString}</span>
           </div>
           <div className="content-slide-wrapper">
             <div className="content-wrapper">

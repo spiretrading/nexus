@@ -39,48 +39,6 @@ class Controller {
     return Promise.all([
       loadManagedTradingGroups
     ]);
-
-    function loadRoles(accounts) {
-      groupedAccounts = accounts;
-      let requestedRoles = new HashMap();
-      let loadRolesPromises = [];
-      for (let i=0; i<groupedAccounts.length; i++) {
-        let groupAccounts = groupedAccounts[i];
-        let groupTraders = groupAccounts.accounts.traders;
-        for (let j=0; j<groupTraders.length; j++) {
-          let traderDirectoryEntry = groupTraders[j];
-          traderDirectoryEntry = new DirectoryEntry(
-            traderDirectoryEntry.id,
-            traderDirectoryEntry.type,
-            traderDirectoryEntry.name
-          );
-          accountDirectoryEntries.set(traderDirectoryEntry.id, traderDirectoryEntry);
-          if (!requestedRoles.has(traderDirectoryEntry.id)) {
-            loadRolesPromises.push(this.adminClient.loadAccountRoles.apply(this.adminClient, [traderDirectoryEntry]));
-            requestedRoles.set(traderDirectoryEntry.id, true);
-          }
-        }
-      }
-      return Promise.all(loadRolesPromises);
-    }
-
-    function rolesLoaded(roles) {
-      let rolesMap = new HashMap();
-      for (let i=0; i<roles.length; i++) {
-        rolesMap.set(roles[i].id, roles[i]);
-      }
-
-      for (let i=0; i<groupedAccounts.length; i++) {
-        let groupAccounts = groupedAccounts[i];
-        let groupTraders = groupAccounts.accounts.traders;
-        for (let j=0; j<groupTraders.length; j++) {
-          let traderDirectoryEntry = groupTraders[j];
-          traderDirectoryEntry.roles = rolesMap.get(traderDirectoryEntry.id);
-        }
-      }
-
-      return groupedAccounts;
-    }
   }
 
   componentDidMount() {

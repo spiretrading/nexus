@@ -25,6 +25,10 @@
       overflow: hidden;
       margin-top: 2px;
       font-size: 16px;
+
+      &.empty {
+        color: $darkGrey;
+      }
     }
 
     .expanded {
