@@ -185,10 +185,26 @@ class Controller {
     function refreshSearchPage() {
       this.getRequiredData()
         .then((responses) => {
-          this.componentModel.groupedAccounts = responses[0];
+          let groups = responses[0];
+          for (let i=0; i<groups.length; i++) {
+            let groupId = groups.id;
+            if (!doesGroupExist.apply(this, [groupId])) {
+              this.componentModel.groupedAccounts.push(groups[i]);
+            }
+          }
           this.componentModel.searchString = '';
           this.view.update(this.componentModel);
         });
+    }
+
+    function doesGroupExist(groupId) {
+      let groupedAccounts = this.componentModel.groupedAccounts;
+      for (let i=0; i<groupedAccounts.length; i++) {
+        if (groupedAccounts[i].id === groupId) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 }
