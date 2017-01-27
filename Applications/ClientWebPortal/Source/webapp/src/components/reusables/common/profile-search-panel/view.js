@@ -96,7 +96,7 @@ class View extends UpdatableView {
     let componentContainerClassName = 'profile-search-panel-container';
     let titleClass = 'title';
 
-    if (this.componentModel.accounts == null || this.componentModel.accounts.traders.length === 0) {
+    if (this.componentModel.accounts != null && this.componentModel.accounts.traders.length === 0) {
       titleClass += ' empty';
     }
 
