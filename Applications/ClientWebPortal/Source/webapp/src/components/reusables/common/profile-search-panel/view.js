@@ -13,6 +13,12 @@ class View extends UpdatableView {
 
   /** @private */
   onExpandClick(event) {
+    let $icon = $(event.target);
+    let $title = $icon.parent().find('.title');
+    if ($icon.hasClass('collapsed') && $title.hasClass('empty')) {
+      return;
+    }
+
     if (!this.componentModel.isLoaded) {
       this.shouldExpand = true;
       this.controller.loadAccounts.apply(this.controller);
