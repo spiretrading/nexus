@@ -18,6 +18,16 @@
       transform: rotate(0deg);
     }
 
+    &.empty {
+      .icon-expand {
+        color: $primaryGradient4;
+      }
+
+      .title {
+        color: $darkGrey;
+      }
+    }
+
     .title {
       flex: 1;
       text-overflow: ellipsis;
@@ -25,10 +35,6 @@
       overflow: hidden;
       margin-top: 2px;
       font-size: 16px;
-
-      &.empty {
-        color: $darkGrey;
-      }
     }
 
     .expanded {

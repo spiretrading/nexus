@@ -13,9 +13,9 @@ class View extends UpdatableView {
 
   /** @private */
   onExpandClick(event) {
-    let $icon = $(event.target);
-    let $title = $icon.parent().find('.title');
-    if ($icon.hasClass('collapsed') && $title.hasClass('empty')) {
+    let $header = $(event.target).parent();
+
+    if ($header.hasClass('empty')) {
       return;
     }
 
@@ -23,33 +23,39 @@ class View extends UpdatableView {
       this.shouldExpand = true;
       this.controller.loadAccounts.apply(this.controller);
     } else {
-      this.togglePanel.apply(this);
+      this.togglePanel.apply(this, [$header]);
     }
   }
 
   /** @private */
-  togglePanel() {
-    let $contentSlideWrapper = $('#' + this.componentModel.componentId).find('.content-slide-wrapper');
-    let $expandIcon = $('#' + this.componentModel.componentId).find('.icon-expand');
-    let numTraders = this.componentModel.accounts.traders.length;
-    let contentHeight = this.traderRowHeight * numTraders;
-    let isExpanded = !$('#' + this.componentModel.componentId).find('.icon-expand').hasClass('expanded');
-    if (isExpanded) {
-      $contentSlideWrapper.stop().animate({
-        height: contentHeight
-      });
-      $expandIcon.removeClass('collapsed').addClass('expanded');
-      $('#' + this.componentModel.componentId).find('.trader-row.non-match').stop().animate({
-        height: this.traderRowHeight
-      });
-    } else {
-      $contentSlideWrapper.stop().animate({
-        height: this.visibleHeight
-      });
-      $expandIcon.removeClass('expanded').addClass('collapsed');
-      $('#' + this.componentModel.componentId).find('.trader-row.non-match').stop().animate({
-        height: 0
-      });
+  togglePanel($header) {
+    if (this.componentModel.accounts != null && this.componentModel.accounts.traders.length > 0) {
+      // results came back and is not empty
+      let $contentSlideWrapper = $('#' + this.componentModel.componentId).find('.content-slide-wrapper');
+      let $expandIcon = $('#' + this.componentModel.componentId).find('.icon-expand');
+      let numTraders = this.componentModel.accounts.traders.length;
+      let contentHeight = this.traderRowHeight * numTraders;
+      let isExpanded = !$('#' + this.componentModel.componentId).find('.icon-expand').hasClass('expanded');
+      if (isExpanded) {
+        $contentSlideWrapper.stop().animate({
+          height: contentHeight
+        });
+        $expandIcon.removeClass('collapsed').addClass('expanded');
+        $('#' + this.componentModel.componentId).find('.trader-row.non-match').stop().animate({
+          height: this.traderRowHeight
+        });
+      } else {
+        $contentSlideWrapper.stop().animate({
+          height: this.visibleHeight
+        });
+        $expandIcon.removeClass('expanded').addClass('collapsed');
+        $('#' + this.componentModel.componentId).find('.trader-row.non-match').stop().animate({
+          height: 0
+        });
+      }
+    } else if (this.componentModel.accounts != null && this.componentModel.accounts.traders.length === 0 && $header) {
+      // 0 accounts
+      $header.addClass('empty');
     }
   }
 
@@ -100,10 +106,10 @@ class View extends UpdatableView {
 
   render() {
     let componentContainerClassName = 'profile-search-panel-container';
-    let titleClass = 'title';
+    let headerClass = 'header';
 
     if (this.componentModel.accounts != null && this.componentModel.accounts.traders.length === 0) {
-      titleClass += ' empty';
+      headerClass += ' empty';
     }
 
     let traders = [];
@@ -175,9 +181,9 @@ class View extends UpdatableView {
 
     return (
         <div id={this.componentModel.componentId} className={componentContainerClassName}>
-          <div className="header">
+          <div className={headerClass}>
             <span className="icon-expand" onClick={this.onExpandClick.bind(this)}></span>
-            <span className={titleClass}><span className="matched-string">{matchedTitleString}</span>{nonMatchedTitleString}</span>
+            <span className="title"><span className="matched-string">{matchedTitleString}</span>{nonMatchedTitleString}</span>
           </div>
           <div className="content-slide-wrapper">
             <div className="content-wrapper">
