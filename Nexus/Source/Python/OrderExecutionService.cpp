@@ -28,6 +28,7 @@
 #include "Nexus/OrderExecutionServiceTests/MockOrderExecutionDriver.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceInstance.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
+#include "Nexus/Python/PythonOrderExecutionClient.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;
@@ -56,39 +57,6 @@ namespace {
     std::unique_ptr<TcpSocketChannel>, BinarySender<SharedBuffer>, NullEncoder>,
     LiveTimer>;
   using Client = OrderExecutionClient<SessionBuilder>;
-
-  class PythonOrderExecutionClient : public WrapperOrderExecutionClient<
-      std::unique_ptr<VirtualOrderExecutionClient>> {
-    public:
-      PythonOrderExecutionClient(
-          std::unique_ptr<VirtualOrderExecutionClient> client)
-          : WrapperOrderExecutionClient<std::unique_ptr<
-              VirtualOrderExecutionClient>>(std::move(client)) {}
-
-      void QueryOrderRecords(const AccountQuery& query,
-          const std::shared_ptr<PythonQueueWriter>& queue) {
-        WrapperOrderExecutionClient<unique_ptr<VirtualOrderExecutionClient>>::
-          QueryOrderRecords(query, queue->GetSlot<OrderRecord>());
-      }
-
-      void QuerySequencedOrderSubmissions(const AccountQuery& query,
-          const std::shared_ptr<PythonQueueWriter>& queue) {
-        WrapperOrderExecutionClient<unique_ptr<VirtualOrderExecutionClient>>::
-          QueryOrderSubmissions(query, queue->GetSlot<SequencedOrder>());
-      }
-
-      void QueryOrderSubmissions(const AccountQuery& query,
-          const std::shared_ptr<PythonQueueWriter>& queue) {
-        WrapperOrderExecutionClient<unique_ptr<VirtualOrderExecutionClient>>::
-          QueryOrderSubmissions(query, queue->GetSlot<const Order*>());
-      }
-
-      void QueryExecutionReports(const AccountQuery& query,
-          const std::shared_ptr<PythonQueueWriter>& queue) {
-        WrapperOrderExecutionClient<unique_ptr<VirtualOrderExecutionClient>>::
-          QueryExecutionReports(query, queue->GetSlot<ExecutionReport>());
-      }
-  };
 
   PythonOrderExecutionClient* BuildClient(
       VirtualServiceLocatorClient& serviceLocatorClient) {

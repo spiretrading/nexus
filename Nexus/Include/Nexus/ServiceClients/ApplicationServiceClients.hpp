@@ -136,6 +136,7 @@ namespace Nexus {
             client.Initialize();
             client->BuildSession(Beam::Ref(*m_serviceLocatorClient),
               Beam::Ref(*m_socketThreadPool), Beam::Ref(*m_timerThreadPool));
+            (*client)->Open();
           }
         },
         m_administrationClient{
@@ -144,6 +145,7 @@ namespace Nexus {
             client.Initialize();
             client->BuildSession(Beam::Ref(*m_serviceLocatorClient),
               Beam::Ref(*m_socketThreadPool), Beam::Ref(*m_timerThreadPool));
+            (*client)->Open();
           }
         },
         m_definitionsClient{
@@ -152,6 +154,7 @@ namespace Nexus {
             client.Initialize();
             client->BuildSession(Beam::Ref(*m_serviceLocatorClient),
               Beam::Ref(*m_socketThreadPool), Beam::Ref(*m_timerThreadPool));
+            (*client)->Open();
           }
         },
         m_marketDataClient{
@@ -160,6 +163,7 @@ namespace Nexus {
             client.Initialize();
             client->BuildSession(Beam::Ref(*m_serviceLocatorClient),
               Beam::Ref(*m_socketThreadPool), Beam::Ref(*m_timerThreadPool));
+            (*client)->Open();
           }
         },
         m_chartingClient{
@@ -168,6 +172,7 @@ namespace Nexus {
             client.Initialize();
             client->BuildSession(Beam::Ref(*m_serviceLocatorClient),
               Beam::Ref(*m_socketThreadPool), Beam::Ref(*m_timerThreadPool));
+            (*client)->Open();
           }
         },
         m_complianceClient{
@@ -176,6 +181,7 @@ namespace Nexus {
             client.Initialize();
             client->BuildSession(Beam::Ref(*m_serviceLocatorClient),
               Beam::Ref(*m_socketThreadPool), Beam::Ref(*m_timerThreadPool));
+            (*client)->Open();
           }
         },
         m_orderExecutionClient{
@@ -184,6 +190,7 @@ namespace Nexus {
             client.Initialize();
             client->BuildSession(Beam::Ref(*m_serviceLocatorClient),
               Beam::Ref(*m_socketThreadPool), Beam::Ref(*m_timerThreadPool));
+            (*client)->Open();
           }
         },
         m_riskClient{
@@ -191,6 +198,7 @@ namespace Nexus {
             client.Initialize();
             client->BuildSession(Beam::Ref(*m_serviceLocatorClient),
               Beam::Ref(*m_socketThreadPool), Beam::Ref(*m_timerThreadPool));
+            (*client)->Open();
           }
         },
         m_timeClient{

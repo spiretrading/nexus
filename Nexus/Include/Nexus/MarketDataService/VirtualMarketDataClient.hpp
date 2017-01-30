@@ -6,6 +6,7 @@
 #include <Beam/Queues/Queues.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
+#include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/Definitions/SecurityTechnicals.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"

@@ -3,6 +3,8 @@
 #include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/PythonBindings.hpp>
 #include <boost/noncopyable.hpp>
+#include "Nexus/Python/PythonMarketDataClient.hpp"
+#include "Nexus/Python/PythonOrderExecutionClient.hpp"
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
 #include "Nexus/ServiceClients/TestServiceClientsInstance.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
@@ -14,6 +16,7 @@ using namespace Beam::Python;
 using namespace boost;
 using namespace boost::python;
 using namespace Nexus;
+using namespace Nexus::MarketDataService;
 using namespace Nexus::Python;
 using namespace std;
 
@@ -84,6 +87,30 @@ namespace {
           std::unique_ptr<VirtualServiceClients> client)
           : WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>(
               std::move(client)) {}
+
+      virtual PythonMarketDataClient& GetMarketDataClient() override {
+        if(m_marketDataClient == nullptr) {
+          m_marketDataClient = std::make_unique<PythonMarketDataClient>(
+            MakeVirtualMarketDataClient(
+            &WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>::
+            GetMarketDataClient()));
+        }
+        return *m_marketDataClient;
+      }
+
+      virtual PythonOrderExecutionClient& GetOrderExecutionClient() override {
+        if(m_orderExecutionClient == nullptr) {
+          m_orderExecutionClient = std::make_unique<PythonOrderExecutionClient>(
+            MakeVirtualOrderExecutionClient(
+            &WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>::
+            GetOrderExecutionClient()));
+        }
+        return *m_orderExecutionClient;
+      }
+
+    private:
+      std::unique_ptr<PythonMarketDataClient> m_marketDataClient;
+      std::unique_ptr<PythonOrderExecutionClient> m_orderExecutionClient;
   };
 
   VirtualServiceClients* BuildApplicationServiceClients(
