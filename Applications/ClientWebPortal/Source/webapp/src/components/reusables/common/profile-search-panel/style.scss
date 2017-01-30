@@ -18,6 +18,16 @@
       transform: rotate(0deg);
     }
 
+    &.empty {
+      .icon-expand {
+        color: $primaryGradient4;
+      }
+
+      .title {
+        color: $darkerGrey;
+      }
+    }
+
     .title {
       flex: 1;
       text-overflow: ellipsis;
@@ -112,41 +122,5 @@ main.mobile {
         }
       }
     }
-  }
-}
-
-.expanded {
-  color: $primaryGradient1;
-  transform: rotate(90deg);
-  animation: profileSearchArrowExpand .5s;
-  -webkit-animation-fill-mode: forwards;
-}
-
-.collapsed {
-  color: $primaryGradient3;
-  transform: rotate(-90deg);
-  animation: profileSearchArrowCollapse .5s;
-  -webkit-animation-fill-mode: forwards;
-}
-
-@keyframes profileSearchArrowExpand {
-  0% {
-    color: $primaryGradient3;
-    transform: rotateZ(0deg);
-  }
-  100% {
-    color: $primaryGradient1;
-    transform: rotateZ(90deg);
-  }
-}
-
-@keyframes profileSearchArrowCollapse {
-  0% {
-    color: $primaryGradient1;
-    transform: rotateZ(90deg);
-  }
-  100% {
-    color: $primaryGradient3;
-    transform: rotateZ(0deg);
   }
 }
