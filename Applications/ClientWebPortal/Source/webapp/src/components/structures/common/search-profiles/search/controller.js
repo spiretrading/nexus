@@ -29,8 +29,6 @@ class Controller {
   /** @private */
   getRequiredData() {
     let directoryEntry = this.componentModel.directoryEntry;
-    let accountDirectoryEntries = this.accountDirectoryEntries;
-    let groupedAccounts;
     let loadManagedTradingGroups = this.adminClient.loadManagedTradingGroups.apply(
       this.adminClient,
       [(directoryEntry)]
@@ -54,6 +52,11 @@ class Controller {
       Config.WHOLE_PAGE_PRELOADER_HEIGHT
     ).then((responses) => {
       this.componentModel.groupedAccounts = responses[0];
+      this.componentModel.groupedAccounts.sort((a,b) => {
+        if (a.name < b.name) return -1;
+        if (a.name > b.name) return 1;
+        return 0;
+      });
       for (let i=0; i<this.componentModel.groupedAccounts.length; i++) {
         this.componentModel.groupedAccounts[i].isLoaded = false;
       }
