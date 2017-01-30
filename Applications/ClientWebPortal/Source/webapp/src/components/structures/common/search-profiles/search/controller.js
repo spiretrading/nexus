@@ -29,8 +29,6 @@ class Controller {
   /** @private */
   getRequiredData() {
     let directoryEntry = this.componentModel.directoryEntry;
-    let accountDirectoryEntries = this.accountDirectoryEntries;
-    let groupedAccounts;
     let loadManagedTradingGroups = this.adminClient.loadManagedTradingGroups.apply(
       this.adminClient,
       [(directoryEntry)]
@@ -39,48 +37,6 @@ class Controller {
     return Promise.all([
       loadManagedTradingGroups
     ]);
-
-    function loadRoles(accounts) {
-      groupedAccounts = accounts;
-      let requestedRoles = new HashMap();
-      let loadRolesPromises = [];
-      for (let i=0; i<groupedAccounts.length; i++) {
-        let groupAccounts = groupedAccounts[i];
-        let groupTraders = groupAccounts.accounts.traders;
-        for (let j=0; j<groupTraders.length; j++) {
-          let traderDirectoryEntry = groupTraders[j];
-          traderDirectoryEntry = new DirectoryEntry(
-            traderDirectoryEntry.id,
-            traderDirectoryEntry.type,
-            traderDirectoryEntry.name
-          );
-          accountDirectoryEntries.set(traderDirectoryEntry.id, traderDirectoryEntry);
-          if (!requestedRoles.has(traderDirectoryEntry.id)) {
-            loadRolesPromises.push(this.adminClient.loadAccountRoles.apply(this.adminClient, [traderDirectoryEntry]));
-            requestedRoles.set(traderDirectoryEntry.id, true);
-          }
-        }
-      }
-      return Promise.all(loadRolesPromises);
-    }
-
-    function rolesLoaded(roles) {
-      let rolesMap = new HashMap();
-      for (let i=0; i<roles.length; i++) {
-        rolesMap.set(roles[i].id, roles[i]);
-      }
-
-      for (let i=0; i<groupedAccounts.length; i++) {
-        let groupAccounts = groupedAccounts[i];
-        let groupTraders = groupAccounts.accounts.traders;
-        for (let j=0; j<groupTraders.length; j++) {
-          let traderDirectoryEntry = groupTraders[j];
-          traderDirectoryEntry.roles = rolesMap.get(traderDirectoryEntry.id);
-        }
-      }
-
-      return groupedAccounts;
-    }
   }
 
   componentDidMount() {
@@ -96,6 +52,11 @@ class Controller {
       Config.WHOLE_PAGE_PRELOADER_HEIGHT
     ).then((responses) => {
       this.componentModel.groupedAccounts = responses[0];
+      this.componentModel.groupedAccounts.sort((a,b) => {
+        if (a.name < b.name) return -1;
+        if (a.name > b.name) return 1;
+        return 0;
+      });
       for (let i=0; i<this.componentModel.groupedAccounts.length; i++) {
         this.componentModel.groupedAccounts[i].isLoaded = false;
       }
@@ -227,10 +188,26 @@ class Controller {
     function refreshSearchPage() {
       this.getRequiredData()
         .then((responses) => {
-          this.componentModel.groupedAccounts = responses[0];
+          let groups = responses[0];
+          for (let i=0; i<groups.length; i++) {
+            let groupId = groups.id;
+            if (!doesGroupExist.apply(this, [groupId])) {
+              this.componentModel.groupedAccounts.push(groups[i]);
+            }
+          }
           this.componentModel.searchString = '';
           this.view.update(this.componentModel);
         });
+    }
+
+    function doesGroupExist(groupId) {
+      let groupedAccounts = this.componentModel.groupedAccounts;
+      for (let i=0; i<groupedAccounts.length; i++) {
+        if (groupedAccounts[i].id === groupId) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 }

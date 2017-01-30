@@ -55,6 +55,11 @@
       overflow: hidden;
       cursor: pointer;
 
+      &.empty {
+        color: $darkerGrey;
+        cursor: auto;
+      }
+
       &.match {
         height: 27px;
       }
@@ -75,7 +80,7 @@
         }
       }
 
-      &:hover {
+      &:hover:not(.empty) {
         color: $primaryGradient2;
 
         .roles-wrapper {
@@ -112,41 +117,5 @@ main.mobile {
         }
       }
     }
-  }
-}
-
-.expanded {
-  color: $primaryGradient1;
-  transform: rotate(90deg);
-  animation: profileSearchArrowExpand .5s;
-  -webkit-animation-fill-mode: forwards;
-}
-
-.collapsed {
-  color: $primaryGradient3;
-  transform: rotate(-90deg);
-  animation: profileSearchArrowCollapse .5s;
-  -webkit-animation-fill-mode: forwards;
-}
-
-@keyframes profileSearchArrowExpand {
-  0% {
-    color: $primaryGradient3;
-    transform: rotateZ(0deg);
-  }
-  100% {
-    color: $primaryGradient1;
-    transform: rotateZ(90deg);
-  }
-}
-
-@keyframes profileSearchArrowCollapse {
-  0% {
-    color: $primaryGradient1;
-    transform: rotateZ(90deg);
-  }
-  100% {
-    color: $primaryGradient3;
-    transform: rotateZ(0deg);
   }
 }
