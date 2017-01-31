@@ -141,9 +141,12 @@ class DesktopView extends CommonView {
 
       countryInput =
         <div className="personal-detail-row editable">
-          <select className="country-input" defaultValue={this.componentModel.country} onChange={this.onChange.bind(this)}>
-            {countryOptions}
-          </select>
+          <div className="country-dropdown-wrapper">
+            <select className="country-input" defaultValue={this.componentModel.country} onChange={this.onChange.bind(this)}>
+              {countryOptions}
+            </select>
+            <span className="icon-arrow-down country-dropdown-arrow"></span>
+          </div>
         </div>;
     }
 
