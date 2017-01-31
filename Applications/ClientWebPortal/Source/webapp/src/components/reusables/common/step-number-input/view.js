@@ -207,6 +207,12 @@ class View extends UpdatableView {
       className += ' disabled';
     }
 
+    let upArrow, downArrow;
+    if (!this.componentModel.hideArrows) {
+      upArrow = <span className="icon-arrow-up" onClick={this.onArrowUpClick.bind(this)}/>;
+      downArrow = <span className="icon-arrow-down" onClick={this.onArrowDownClick.bind(this)}/>;
+    }
+
     return (
         <div id={this.componentModel.componentId} className={className}>
           <input type="text"
@@ -217,8 +223,8 @@ class View extends UpdatableView {
                  defaultValue={this.componentModel.defaultValue}
                  disabled={this.componentModel.isDisabled}
           />
-          <span className="icon-arrow-up" onClick={this.onArrowUpClick.bind(this)}/>
-          <span className="icon-arrow-down" onClick={this.onArrowDownClick.bind(this)}/>
+          {upArrow}
+          {downArrow}
         </div>
     );
   }
