@@ -78,7 +78,7 @@ class View extends UpdatableView {
         </div>
         <span className="icon-burger close-btn" onClick={this.closeMenu.bind(this)}></span>
         <div className="menu-item" onClick={this.onMyProfileClick.bind(this)}>
-          <span className="icon-my_profile"></span>
+          <span className="icon-profile"></span>
           My Profile
         </div>
         {searchProfilesMenuItem}

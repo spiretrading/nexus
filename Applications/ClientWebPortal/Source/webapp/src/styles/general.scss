@@ -228,3 +228,25 @@ label {
   cursor: pointer;
   font-weight: 300;
 }
+
+@keyframes arrowExpand {
+  0% {
+    color: $primaryGradient3;
+    transform: rotateZ(0deg);
+  }
+  100% {
+    color: $primaryGradient1;
+    transform: rotateZ(90deg);
+  }
+}
+
+@keyframes arrowCollapse {
+  0% {
+    color: $primaryGradient1;
+    transform: rotateZ(90deg);
+  }
+  100% {
+    color: $primaryGradient3;
+    transform: rotateZ(0deg);
+  }
+}

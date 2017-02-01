@@ -1,5 +1,10 @@
 @import "src/styles/variables";
 
+main {
+  display: flex;
+  flex-direction: column;
+}
+
 .viewport {
   min-width: $minSiteWidth;
 
@@ -14,8 +19,8 @@
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 1030;
-  border-bottom: 1px solid #ebebeb;
+  z-index: 98;
+  border-bottom: 1px solid $lightGrey;
   min-width: $minSiteWidth;
   background: $white;
 }
@@ -51,4 +56,8 @@
 #content-wrapper {
   position: relative;
   z-index: -1;
+}
+
+#site-content-container {
+  flex: 1;
 }

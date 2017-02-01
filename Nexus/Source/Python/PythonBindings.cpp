@@ -8,6 +8,7 @@
 #include "Nexus/Python/MarketDataService.hpp"
 #include "Nexus/Python/OrderExecutionService.hpp"
 #include "Nexus/Python/Queries.hpp"
+#include "Nexus/Python/ServiceClients.hpp"
 
 using namespace Nexus;
 using namespace Nexus::Python;
@@ -33,4 +34,5 @@ BOOST_PYTHON_MODULE(nexus) {
   ExportMarketDataService();
   ExportOrderExecutionService();
   ExportQueries();
+  ExportServiceClients();
 }

@@ -13,19 +13,21 @@ class View extends UpdatableView {
 
   /** @private */
   onExpandClick(event) {
+    let $header = $(event.target).parent();
     if (!this.componentModel.isLoaded) {
       this.shouldExpand = true;
       this.controller.loadAccounts.apply(this.controller);
     } else {
-      this.togglePanel.apply(this);
+      this.togglePanel.apply(this, [$header]);
     }
   }
 
   /** @private */
-  togglePanel() {
+  togglePanel($header) {
     let $contentSlideWrapper = $('#' + this.componentModel.componentId).find('.content-slide-wrapper');
     let $expandIcon = $('#' + this.componentModel.componentId).find('.icon-expand');
-    let numTraders = this.componentModel.accounts.traders.length;
+    // let numTraders = this.componentModel.accounts.traders.length;
+    let numTraders = $contentSlideWrapper.find('.trader-row').length;
     let contentHeight = this.traderRowHeight * numTraders;
     let isExpanded = !$('#' + this.componentModel.componentId).find('.icon-expand').hasClass('expanded');
     if (isExpanded) {
@@ -94,7 +96,6 @@ class View extends UpdatableView {
 
   render() {
     let componentContainerClassName = 'profile-search-panel-container';
-
     let traders = [];
     let numVisibleTraders = 0;
 
@@ -149,6 +150,15 @@ class View extends UpdatableView {
           </div>
         );
       }
+    }
+
+    if (this.componentModel.accounts != null && traders.length === 0) {
+      // no traders for this group
+      traders.push(
+        <div key="1" className="trader-row non-match empty">
+          <i>empty</i>
+        </div>
+      );
     }
 
     this.visibleHeight = this.traderRowHeight * numVisibleTraders;

@@ -43,10 +43,28 @@ class App extends Component {
     }
   }
 
+  /** @private */
+  onSubMenuUpdated(eventName, doesSubMenuExist) {
+    let height;
+    if (doesSubMenuExist) {
+      height = 'calc(100vh - 125px)';
+    } else {
+      height = 'calc(100vh - 75px)';
+    }
+
+    if (!deviceDetector.isMobile()){
+      $('#site-content-container').slimScroll({
+        height: height,
+        opacity: '0.4'
+      });
+    }
+  }
+
   componentDidMount() {
     this.hideIfHome();
     EventBus.subscribe(Event.TopNav.SIDE_MENU_OPENED, this.onSideMenuOpened.bind(this));
     EventBus.subscribe(Event.TopNav.SIDE_MENU_CLOSED, this.onSideMenuClosed.bind(this));
+    EventBus.subscribe(Event.TopNav.SUBMENU_UPDATED, this.onSubMenuUpdated.bind(this));
 
     let greyScreen = document.getElementById('menu-grey-screen');
     greyScreen.addEventListener('touchcancel', function(e) {
@@ -61,6 +79,7 @@ class App extends Component {
     }, false);
 
     EventBus.publish(Event.Application.RENDERED);
+    this.publishPageTransitioned.apply(this);
   }
 
   componentDidUpdate() {
