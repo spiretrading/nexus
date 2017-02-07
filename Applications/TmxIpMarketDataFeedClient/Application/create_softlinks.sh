@@ -3,9 +3,9 @@ reset=$(tput sgr0)
 yellow=$(tput setaf 3)
 all_feeds=$(ls -d */)
 feed_title="TMX IP"
-feed_prefix="feed_"
-feed_suffix="_feed"
-pattern="^feed_(.*)/$"
+feed_prefix="tmxip_"
+feed_suffix="_tmxip"
+pattern="^tmxip_(.*)/$"
 client_app=TmxIpMarketDataFeedClient
 echo
 for var in $all_feeds; do
