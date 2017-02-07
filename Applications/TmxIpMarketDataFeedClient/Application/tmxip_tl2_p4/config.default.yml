@@ -1,8 +1,8 @@
 ---
 service_locator:
-  address: local_interface:20000
-  username: market_data_feed
-  password: admin_password
+  address: $service_locator_address
+  username: $username
+  password: $password
 
 enable_logging: false
 use_broker_number: true
@@ -13,7 +13,7 @@ enable_retransmission: false
 max_retransmissions: 10000
 retransmission_block_size: 20000
 host: 233.102.209.220:61105
-interface: local_interface:61105
+interface: $local_interface:61105
 retransmission_request_address: 142.201.149.44:61107
 retransmission_response_address: 142.201.149.44:61108
 

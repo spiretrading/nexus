@@ -1,8 +1,8 @@
 ---
 service_locator:
-  address: local_interface:20000
-  username: market_data_feed
-  password: admin_password
+  address: $service_locator_address
+  username: $username
+  password: $password
 
 enable_logging: false
 market: TSXV
@@ -12,7 +12,7 @@ enable_retransmission: false
 max_retransmissions: 10000
 retransmission_block_size: 20000
 host: 233.102.209.236:61004
-interface: local_interface:61004
+interface: $local_interface:61004
 retransmission_request_address: 142.201.149.36:61021
 retransmission_response_address: 142.201.149.36:61052
 ...
