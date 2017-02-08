@@ -11,6 +11,6 @@ mpid: CXA
 time_zone: Australian_Eastern_Standard_Time 
 is_time_and_sale: true
 sampling: 100ms
-host: 233.218.133.51:16001
-interface: $local_interface:16001
+host: 233.218.133.1:6001
+interface: $local_interface:6001
 ...
