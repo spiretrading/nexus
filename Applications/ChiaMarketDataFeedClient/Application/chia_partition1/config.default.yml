@@ -6,6 +6,7 @@ service_locator:
 
 enable_logging: false
 market: CXA
+disseminating_market: CXA
 mpid: CXA
 time_zone: Australian_Eastern_Standard_Time 
 is_time_and_sale: true
