@@ -3,8 +3,8 @@ reset=$(tput sgr0)
 red=$(tput setaf 1)
 yellow=$(tput setaf 3)
 feed_title="TMX IP"
-feed_prefix="feed_"
-feed_suffix="_feed"
+feed_prefix="tmxip_"
+feed_suffix="_tmxip"
 pattern="^\./(.*)${feed_suffix}$"
 echo
 if [ "$1" = "" ]; then

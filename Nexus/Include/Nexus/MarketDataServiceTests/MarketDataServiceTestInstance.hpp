@@ -160,14 +160,19 @@ namespace Tests {
     EntitlementDatabase::Entry globalEntitlement;
     globalEntitlement.m_name = "global";
     globalEntitlement.m_groupEntry = m_globalEntitlementGroup;
-    globalEntitlement.m_applicability[EntitlementKey("XNAS", "XNAS")].Set(
-      MarketDataType::BBO_QUOTE);
-    globalEntitlement.m_applicability[EntitlementKey("XNAS", "XNAS")].Set(
-      MarketDataType::TIME_AND_SALE);
-    globalEntitlement.m_applicability[EntitlementKey("XNYS", "XNYS")].Set(
-      MarketDataType::BBO_QUOTE);
-    globalEntitlement.m_applicability[EntitlementKey("XNYS", "XNYS")].Set(
-      MarketDataType::TIME_AND_SALE);
+    auto& marketDatabase = GetDefaultMarketDatabase();
+    for(auto& market : marketDatabase.GetEntries()) {
+      globalEntitlement.m_applicability[EntitlementKey{market.m_code}].Set(
+        MarketDataType::TIME_AND_SALE);
+      globalEntitlement.m_applicability[EntitlementKey{market.m_code}].Set(
+        MarketDataType::BOOK_QUOTE);
+      globalEntitlement.m_applicability[EntitlementKey{market.m_code}].Set(
+        MarketDataType::MARKET_QUOTE);
+      globalEntitlement.m_applicability[EntitlementKey{market.m_code}].Set(
+        MarketDataType::BBO_QUOTE);
+      globalEntitlement.m_applicability[EntitlementKey{market.m_code}].Set(
+        MarketDataType::ORDER_IMBALANCE);
+    }
     m_entitlements.Add(globalEntitlement);
     m_registryServlet.Initialize(m_entitlements,
       Beam::Ref(*m_serviceLocatorClient), &m_registry, &m_dataStore);

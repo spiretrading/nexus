@@ -3,8 +3,8 @@ reset=$(tput sgr0)
 green=$(tput setaf 2)
 yellow=$(tput setaf 3)
 feed_title="TMX IP"
-feed_suffix="_feed"
-pattern="^\./(.*)_feed$"
+feed_suffix="_tmxip"
+pattern="^\./(.*)_tmxip$"
 echo
 live_feeds=$(ps -ef | grep -i ".*${feed_suffix}" | grep -v "grep" | grep -v "bash" | awk '{ print $8 }')
 if [ -z "${live_feeds}" ]; then

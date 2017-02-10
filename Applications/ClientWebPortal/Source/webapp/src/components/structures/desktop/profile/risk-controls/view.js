@@ -110,7 +110,8 @@ class View extends CommonView {
         min: 0,
         defaultValue: this.componentModel.riskParameters.buyingPower.toString(),
         isRequired: true,
-        isDisabled: !this.componentModel.isAdmin
+        isDisabled: !this.componentModel.isAdmin,
+        hideArrows: true
       };
 
       let netLossInputModel = {
@@ -121,7 +122,8 @@ class View extends CommonView {
         min: 0,
         defaultValue: this.componentModel.riskParameters.netLoss.toString(),
         isRequired: true,
-        isDisabled: !this.componentModel.isAdmin
+        isDisabled: !this.componentModel.isAdmin,
+        hideArrows: true
       };
 
       let timeValues = this.componentModel.riskParameters.transitionTime.split(':');
