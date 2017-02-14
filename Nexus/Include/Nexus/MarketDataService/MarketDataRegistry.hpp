@@ -30,6 +30,14 @@ namespace Details {
           return {"TSE", "CDX"};
         } else if(security.GetCountry() == DefaultCountries::AU()) {
           return {"ASX"};
+        } else if(security.GetMarket() == DefaultMarkets::NYSE()) {
+          return {"XNYS"};
+        } else if(security.GetMarket() == DefaultMarkets::NASDAQ()) {
+          return {"XNAS"};
+        } else if(security.GetMarket() == DefaultMarkets::ARCX()) {
+          return {"ARCX"};
+        } else if(security.GetMarket() == DefaultMarkets::BATS()) {
+          return {"BATY", "BATS"};
         } else {
           return {};
         }
@@ -165,8 +173,10 @@ namespace Details {
       void Clear(int sourceId);
 
     private:
-      using SyncMarketEntry = Beam::Threading::Sync<MarketEntry>;
-      using SyncSecurityEntry = Beam::Threading::Sync<SecurityEntry>;
+      using SyncMarketEntry = Beam::Threading::Sync<MarketEntry,
+        Beam::Threading::Mutex>;
+      using SyncSecurityEntry = Beam::Threading::Sync<SecurityEntry,
+        Beam::Threading::Mutex>;
       Beam::Threading::Sync<rtv::Trie<char, SecurityInfo>> m_securityDatabase;
       Beam::SynchronizedUnorderedMap<Security, Security> m_verifiedSecurities;
       Beam::SynchronizedUnorderedMap<MarketCode, std::shared_ptr<Beam::Remote<
