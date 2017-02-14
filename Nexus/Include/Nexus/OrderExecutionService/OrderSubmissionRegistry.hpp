@@ -50,7 +50,8 @@ namespace OrderExecutionService {
 
     private:
       using SyncAccountOrderSubmissionEntry =
-        Beam::Threading::Sync<AccountOrderSubmissionEntry>;
+        Beam::Threading::Sync<AccountOrderSubmissionEntry,
+        Beam::Threading::Mutex>;
       Beam::SynchronizedUnorderedSet<Beam::ServiceLocator::DirectoryEntry>
         m_accounts;
       Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
