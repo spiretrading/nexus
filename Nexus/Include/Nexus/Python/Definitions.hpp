@@ -68,6 +68,9 @@ namespace Python {
   //! Exports the Security class.
   void ExportSecurity();
 
+  //! Exports the SecurityInfo class.
+  void ExportSecurityInfo();
+
   //! Exports the SecurityTechnicals class.
   void ExportSecurityTechnicals();
 

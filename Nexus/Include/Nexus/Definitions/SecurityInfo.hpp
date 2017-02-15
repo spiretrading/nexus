@@ -22,7 +22,7 @@ namespace Nexus {
     std::string m_sector;
 
     //! Constructs an empty SecurityInfo.
-    SecurityInfo();
+    SecurityInfo() = default;
 
     //! Constructs a SecurityInfo.
     /*!
@@ -50,13 +50,11 @@ namespace Nexus {
     bool operator !=(const SecurityInfo& rhs) const;
   };
 
-  inline SecurityInfo::SecurityInfo() {}
-
   inline SecurityInfo::SecurityInfo(const Security& security, std::string name,
       std::string sector)
-      : m_security(security),
-        m_name(std::move(name)),
-        m_sector(std::move(sector)) {}
+      : m_security{security},
+        m_name{std::move(name)},
+        m_sector{std::move(sector)} {}
 
   inline bool SecurityInfo::operator ==(const SecurityInfo& rhs) const {
     return std::tie(m_security, m_name, m_sector) ==

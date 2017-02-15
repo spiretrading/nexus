@@ -27,6 +27,7 @@
 #include "Nexus/Definitions/OrderType.hpp"
 #include "Nexus/Definitions/Quote.hpp"
 #include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/Definitions/SecurityTechnicals.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/Tag.hpp"
@@ -300,6 +301,7 @@ void Nexus::Python::ExportDefinitions() {
   ExportDefaultDestinations();
   ExportDefaultMarkets();
   ExportSecurityTechnicals();
+  ExportSecurityInfo();
 }
 
 void Nexus::Python::ExportExchangeRate() {
@@ -478,6 +480,13 @@ void Nexus::Python::ExportSecurity() {
   def("parse_security",
     static_cast<Security (*)(const string&)>(&ParseSecurity));
   ExportFixedString<4>();
+}
+
+void Nexus::Python::ExportSecurityInfo() {
+  class_<SecurityInfo>("SecurityInfo", init<>())
+    .def_readwrite("security", &SecurityInfo::m_security)
+    .def_readwrite("name", &SecurityInfo::m_name)
+    .def_readwrite("sector", &SecurityInfo::m_sector);
 }
 
 void Nexus::Python::ExportSecurityTechnicals() {
