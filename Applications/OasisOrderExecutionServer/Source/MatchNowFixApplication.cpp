@@ -38,6 +38,12 @@ const Order& MatchNowFixApplication::Submit(const OrderInfo& info) {
   return m_orderLog.Submit(info, GetSessionId().getSenderCompID(),
     GetSessionId().getTargetCompID(),
     [&] (Out<FIX42::NewOrderSingle> newOrderSingle) {
+      if(info.m_fields.m_security.GetCountry() != DefaultCountries::CA()) {
+        BOOST_THROW_EXCEPTION(FixOrderRejectedException{"Invalid country."});
+      }
+      if(info.m_fields.m_currency != DefaultCurrencies::CAD()) {
+        BOOST_THROW_EXCEPTION(FixOrderRejectedException{"Invalid currency."});
+      }
       newOrderSingle->getHeader().set(FIX::SenderSubID(GetSenderSubID()));
       newOrderSingle->set(FIX::Account(GetAccount()));
       newOrderSingle->setField(UMIR_ACCOUNT_TYPE_TAG, "CL");

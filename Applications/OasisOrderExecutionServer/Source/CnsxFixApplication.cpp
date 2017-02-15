@@ -41,6 +41,12 @@ const Order& CnsxFixApplication::Submit(const OrderInfo& info) {
   return m_orderLog.Submit(info, GetSessionId().getSenderCompID(),
     GetSessionId().getTargetCompID(),
     [&] (Out<FIX42::NewOrderSingle> newOrderSingle) {
+      if(info.m_fields.m_security.GetCountry() != DefaultCountries::CA()) {
+        BOOST_THROW_EXCEPTION(FixOrderRejectedException{"Invalid country."});
+      }
+      if(info.m_fields.m_currency != DefaultCurrencies::CAD()) {
+        BOOST_THROW_EXCEPTION(FixOrderRejectedException{"Invalid currency."});
+      }
       newOrderSingle->getHeader().set(FIX::SenderSubID(GetSenderSubID()));
       newOrderSingle->getHeader().set(
         FIX::OnBehalfOfCompID(info.m_submissionAccount.m_name));
