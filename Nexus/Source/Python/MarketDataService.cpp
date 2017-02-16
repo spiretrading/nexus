@@ -7,6 +7,7 @@
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Python/BoostPython.hpp>
 #include <Beam/Python/GilRelease.hpp>
+#include <Beam/Python/ListToVector.hpp>
 #include <Beam/Python/PythonBindings.hpp>
 #include <Beam/Python/PythonQueueWriter.hpp>
 #include <Beam/Python/Queries.hpp>
@@ -125,6 +126,9 @@ void Nexus::Python::ExportMarketDataClient() {
       &PythonMarketDataClient::Open))
     .def("close", BlockingFunction<PythonMarketDataClient>(
       &PythonMarketDataClient::Close));
+  class_<vector<SecurityInfo>>("VectorSecurityInfo")
+    .def(vector_indexing_suite<vector<SecurityInfo>>());
+  ExportVector<vector<SecurityInfo>>();
 }
 
 void Nexus::Python::ExportMarketDataService() {
