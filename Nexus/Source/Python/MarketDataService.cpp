@@ -157,7 +157,7 @@ void Nexus::Python::ExportMarketDataServiceTestInstance() {
     .def("__init__", make_constructor(BuildMarketDataServiceTestInstance))
     .def("open", BlockingFunction(&MarketDataServiceTestInstance::Open))
     .def("close", BlockingFunction(&MarketDataServiceTestInstance::Close))
-    .def("set_bbo", &MarketDataServiceTestInstance::SetBbo)
+    .def("set_bbo", BlockingFunction(&MarketDataServiceTestInstance::SetBbo))
     .def("build_client", &MarketDataServiceTestInstanceBuildClient,
       return_value_policy<manage_new_object>());
 }
