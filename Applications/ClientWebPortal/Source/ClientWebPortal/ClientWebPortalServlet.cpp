@@ -16,6 +16,7 @@
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
 #include "Nexus/Compliance/VirtualComplianceClient.hpp"
+#include "Nexus/Compliance/ComplianceRuleEntry.hpp"
 #include "Nexus/Definitions/Country.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
@@ -35,6 +36,7 @@ using namespace Nexus;
 using namespace Nexus::Accounting;
 using namespace Nexus::AdministrationService;
 using namespace Nexus::ClientWebPortal;
+using namespace Nexus::Compliance;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::RiskService;
 using namespace std;
@@ -127,6 +129,18 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
     "/api/compliance_service/load_directory_entry_compliance_rule_entry"),
     std::bind(&ClientWebPortalServlet::OnLoadDirectoryEntryComplianceRuleEntry,
     this, std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/compliance_service/add_compliance_rule_entry"),
+    std::bind(&ClientWebPortalServlet::OnAddComplianceRuleEntry, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/compliance_service/update_compliance_rule_entry"),
+    std::bind(&ClientWebPortalServlet::OnUpdateComplianceRuleEntry, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/compliance_service/delete_compliance_rule_entry"),
+    std::bind(&ClientWebPortalServlet::OnDeleteComplianceRuleEntry, this,
+    std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/definitions_service/load_compliance_rule_schemas"),
     std::bind(&ClientWebPortalServlet::OnLoadComplianceRuleSchemas, this,
@@ -726,6 +740,90 @@ HttpResponse ClientWebPortalServlet::OnLoadDirectoryEntryComplianceRuleEntry(
   auto rules = m_serviceClients->GetComplianceClient().Load(
     parameters.m_directoryEntry);
   session->ShuttleResponse(rules, Store(response));
+  return response;
+}
+
+HttpResponse ClientWebPortalServlet::OnAddComplianceRuleEntry(
+    const HttpRequest& request) {
+  struct Parameters {
+    DirectoryEntry m_directoryEntry;
+    ComplianceRuleEntry::State m_state;
+    ComplianceRuleSchema m_schema;
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("directory_entry", m_directoryEntry);
+      shuttle.Shuttle("state", m_state);
+      shuttle.Shuttle("schema", m_schema);
+    }
+  };
+  HttpResponse response;
+  auto session = m_sessions.Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
+    session->GetAccount());
+  if(!roles.Test(AccountRole::ADMINISTRATOR)) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  auto id = m_serviceClients->GetComplianceClient().Add(
+    parameters.m_directoryEntry, parameters.m_state, parameters.m_schema);
+  session->ShuttleResponse(id, Store(response));
+  return response;
+}
+
+HttpResponse ClientWebPortalServlet::OnUpdateComplianceRuleEntry(
+    const HttpRequest& request) {
+  struct Parameters {
+    ComplianceRuleEntry m_ruleEntry;
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("rule_entry", m_ruleEntry);
+    }
+  };
+  HttpResponse response;
+  auto session = m_sessions.Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
+    session->GetAccount());
+  if(!roles.Test(AccountRole::ADMINISTRATOR)) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  m_serviceClients->GetComplianceClient().Update(parameters.m_ruleEntry);
+  return response;
+}
+
+HttpResponse ClientWebPortalServlet::OnDeleteComplianceRuleEntry(
+    const HttpRequest& request) {
+  struct Parameters {
+    ComplianceRuleId m_id;
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("id", m_id);
+    }
+  };
+  HttpResponse response;
+  auto session = m_sessions.Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
+    session->GetAccount());
+  if(!roles.Test(AccountRole::ADMINISTRATOR)) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  m_serviceClients->GetComplianceClient().Delete(parameters.m_id);
   return response;
 }
 
