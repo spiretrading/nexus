@@ -21,6 +21,21 @@ namespace Nexus {
    */
   struct ConsolidatedUsFeeTable {
 
+    //! Fee charged for the software.
+    Money m_spireFee;
+
+    //! The SEC rate.
+    boost::rational<int> m_secRate;
+
+    //! The TAF fee.
+    Money m_tafFee;
+
+    //! The NSCC rate.
+    boost::rational<int> m_nsccRate;
+
+    //! The clearing fee.
+    Money m_clearingFee;
+
     //! Fee table used by NSDQ.
     NsdqFeeTable m_nsdqFeeTable;
 
@@ -37,6 +52,13 @@ namespace Nexus {
   inline ConsolidatedUsFeeTable ParseConsolidatedUsFeeTable(
       const YAML::Node& config, const MarketDatabase& marketDatabase) {
     ConsolidatedUsFeeTable feeTable;
+    feeTable.m_spireFee = Beam::Extract<Money>(config, "spire_fee");
+    feeTable.m_secRate = Beam::Extract<boost::rational<int>>(
+      config, "sec_rate");
+    feeTable.m_tafFee = Beam::Extract<Money>(config, "taf_fee");
+    feeTable.m_nsccRate = Beam::Extract<boost::rational<int>>(
+      config, "nscc_rate");
+    feeTable.m_clearingFee = Beam::Extract<Money>(config, "clearing_fee");
     auto nasdaqConfig = config.FindValue("nasdaq");
     if(nasdaqConfig == nullptr) {
       BOOST_THROW_EXCEPTION(
@@ -58,11 +80,13 @@ namespace Nexus {
     \param feeTable The ConsolidatedUsFeeTable used to calculate the fee.
     \param order The Order that was traded against.
     \param executionReport The ExecutionReport to calculate the fee for.
-    \return The fee calculated for the specified trade.
+    \return An ExecutionReport containing the calculated fees.
   */
-  inline Money CalculateFee(const ConsolidatedUsFeeTable& feeTable,
+  inline OrderExecutionService::ExecutionReport CalculateFee(
+      const ConsolidatedUsFeeTable& feeTable,
       const OrderExecutionService::Order& order,
       const OrderExecutionService::ExecutionReport& executionReport) {
+    auto feesReport = executionReport;
     auto lastMarket = [&] {
       auto& destination = order.GetInfo().m_fields.m_destination;
       if(destination == DefaultDestinations::NASDAQ()) {
@@ -73,16 +97,35 @@ namespace Nexus {
         return std::string{};
       }
     }();
-    if(lastMarket == DefaultMarkets::NASDAQ()) {
-      return CalculateFee(feeTable.m_nsdqFeeTable, executionReport);
-    } else if(lastMarket == DefaultMarkets::NYSE()) {
-      return CalculateFee(feeTable.m_nyseFeeTable, order.GetInfo().m_fields,
-        executionReport);
-    } else {
-      std::cout << "Unknown last market [US]: \"" <<
-        order.GetInfo().m_fields.m_destination << "\"\n";
-      return Money::ZERO;
-    }
+    feesReport.m_executionFee += [&] {
+      if(lastMarket == DefaultMarkets::NASDAQ()) {
+        return CalculateFee(feeTable.m_nsdqFeeTable, executionReport);
+      } else if(lastMarket == DefaultMarkets::NYSE()) {
+        return CalculateFee(feeTable.m_nyseFeeTable, order.GetInfo().m_fields,
+          executionReport);
+      } else {
+        std::cout << "Unknown last market [US]: \"" <<
+          order.GetInfo().m_fields.m_destination << "\"\n";
+        return Money::ZERO;
+      }
+    }();
+    feesReport.m_processingFee += [&] {
+      if(feesReport.m_lastQuantity != 0) {
+        auto processingFee = feesReport.m_lastQuantity *
+          (feeTable.m_clearingFee + feeTable.m_tafFee);
+        if(order.GetInfo().m_fields.m_side == Side::BID) {
+          processingFee += feeTable.m_secRate *
+            (feesReport.m_lastQuantity * feesReport.m_lastPrice);
+        }
+        processingFee += Money::CENT + feeTable.m_nsccRate *
+          (feesReport.m_lastQuantity * feesReport.m_lastPrice);
+        return Ceil(processingFee, 3);
+      } else {
+        return Money::ZERO;
+      }
+    }();
+    feesReport.m_commission += feesReport.m_lastQuantity * feeTable.m_spireFee;
+    return feesReport;
   }
 }
 

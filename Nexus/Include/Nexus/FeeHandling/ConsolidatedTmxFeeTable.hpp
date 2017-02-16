@@ -4,6 +4,7 @@
 #include <sstream>
 #include <unordered_set>
 #include <Beam/Utilities/Algorithm.hpp>
+#include <Beam/Utilities/SynchronizedMap.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
@@ -27,6 +28,41 @@ namespace Nexus {
       \brief Consolidates all TMX related market fees together.
    */
   struct ConsolidatedTmxFeeTable {
+
+    /*! \struct State
+        \brief Stores the historical state needed to carry out fee calculations.
+     */
+    struct State {
+
+      //! Stores the fees charged per Order.
+      Beam::SynchronizedUnorderedMap<OrderExecutionService::OrderId, Money>
+        m_perOrderCharges;
+
+      //! The number of times an Order has been filled.
+      Beam::SynchronizedUnorderedMap<OrderExecutionService::OrderId, int>
+        m_fillCount;
+    };
+
+    //! The fee charged by the software.
+    Money m_spireFee;
+
+    //! The fee charged by IIROC.
+    Money m_iirocFee;
+
+    //! The CDS fee.
+    Money m_cdsFee;
+
+    //! The CDS cap.
+    int m_cdsCap;
+
+    //! The clearing fee;
+    Money m_clearingFee;
+
+    //! The fee charged per Order traded.
+    Money m_perOrderFee;
+
+    //! The cap charged per Order.
+    Money m_perOrderCap;
 
     //! Fee table used by CHIC.
     ChicFeeTable m_chicFeeTable;
@@ -152,6 +188,13 @@ namespace Nexus {
   inline ConsolidatedTmxFeeTable ParseConsolidatedTmxFeeTable(
       const YAML::Node& config, const MarketDatabase& marketDatabase) {
     ConsolidatedTmxFeeTable feeTable;
+    feeTable.m_spireFee = Beam::Extract<Money>(config, "spire_fee");
+    feeTable.m_iirocFee = Beam::Extract<Money>(config, "iiroc_fee");
+    feeTable.m_cdsFee = Beam::Extract<Money>(config, "cds_fee");
+    feeTable.m_cdsCap = Beam::Extract<int>(config, "cds_cap");
+    feeTable.m_clearingFee = Beam::Extract<Money>(config, "clearing_fee");
+    feeTable.m_perOrderFee = Beam::Extract<Money>(config, "per_order_fee");
+    feeTable.m_perOrderCap = Beam::Extract<Money>(config, "per_order_cap");
     auto xatsConfig = config.FindValue("xats");
     if(xatsConfig == nullptr) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for XATS missing."});
@@ -224,115 +267,142 @@ namespace Nexus {
   //! Calculates the fee on a trade executed on a TMX market.
   /*!
     \param feeTable The ConsolidatedTmxFeeTable used to calculate the fee.
+    \param state The historical State of fee calculations.
     \param order The Order that was traded against.
     \param executionReport The ExecutionReport to calculate the fee for.
     \return The fee calculated for the specified trade.
   */
-  inline Money CalculateFee(const ConsolidatedTmxFeeTable& feeTable,
+  inline OrderExecutionService::ExecutionReport CalculateFee(
+      const ConsolidatedTmxFeeTable& feeTable,
+      ConsolidatedTmxFeeTable::State& state,
       const OrderExecutionService::Order& order,
       const OrderExecutionService::ExecutionReport& executionReport) {
-    auto lastMarket = [&] {
-      if(!executionReport.m_lastMarket.empty()) {
-        return std::string{executionReport.m_lastMarket};
-      } else {
-        auto& destination = order.GetInfo().m_fields.m_destination;
-        if(destination == DefaultDestinations::ALPHA()) {
-          return ToString(DefaultMarkets::XATS());
-        } else if(destination == DefaultDestinations::CHIX()) {
-          return ToString(DefaultMarkets::CHIC());
-        } else if(destination == DefaultDestinations::CX2()) {
-          return ToString(DefaultMarkets::XCX2());
-        } else if(destination == DefaultDestinations::LYNX()) {
-          return ToString(DefaultMarkets::LYNX());
-        } else if(destination == DefaultDestinations::MATNLP()) {
-          return ToString(DefaultMarkets::MATN());
-        } else if(destination == DefaultDestinations::MATNMF()) {
-          return ToString(DefaultMarkets::MATN());
-        } else if(destination == DefaultDestinations::NEOE()) {
-          return ToString(DefaultMarkets::NEOE());
-        } else if(destination == DefaultDestinations::OMEGA()) {
-          return ToString(DefaultMarkets::OMGA());
-        } else if(destination == DefaultDestinations::PURE()) {
-          return ToString(DefaultMarkets::PURE());
-        } else if(destination == DefaultDestinations::TSX()) {
-          return ToString(DefaultMarkets::TSX());
+    auto feesReport = executionReport;
+    feesReport.m_processingFee += feesReport.m_lastQuantity *
+      feeTable.m_clearingFee;
+    if(feesReport.m_lastQuantity != 0) {
+      auto& fillCount = state.m_fillCount.Get(order.GetInfo().m_orderId);
+      ++fillCount;
+      feesReport.m_processingFee += feeTable.m_iirocFee;
+      if(fillCount <= feeTable.m_cdsCap) {
+        feesReport.m_processingFee += feeTable.m_cdsFee;
+      }
+    }
+    feesReport.m_commission += feesReport.m_lastQuantity * feeTable.m_spireFee;
+    auto& perOrderCharge = state.m_perOrderCharges.Get(
+      order.GetInfo().m_orderId);
+    auto perOrderDelta = executionReport.m_lastQuantity *
+      feeTable.m_perOrderFee;
+    if(perOrderCharge + perOrderDelta > feeTable.m_perOrderCap) {
+      perOrderDelta = feeTable.m_perOrderCap - perOrderCharge;
+    }
+    perOrderCharge += perOrderDelta;
+    feesReport.m_processingFee += perOrderDelta;
+    feesReport.m_executionFee += [&] {
+      auto lastMarket = [&] {
+        if(!executionReport.m_lastMarket.empty()) {
+          return std::string{executionReport.m_lastMarket};
         } else {
-          return std::string{};
+          auto& destination = order.GetInfo().m_fields.m_destination;
+          if(destination == DefaultDestinations::ALPHA()) {
+            return ToString(DefaultMarkets::XATS());
+          } else if(destination == DefaultDestinations::CHIX()) {
+            return ToString(DefaultMarkets::CHIC());
+          } else if(destination == DefaultDestinations::CX2()) {
+            return ToString(DefaultMarkets::XCX2());
+          } else if(destination == DefaultDestinations::LYNX()) {
+            return ToString(DefaultMarkets::LYNX());
+          } else if(destination == DefaultDestinations::MATNLP()) {
+            return ToString(DefaultMarkets::MATN());
+          } else if(destination == DefaultDestinations::MATNMF()) {
+            return ToString(DefaultMarkets::MATN());
+          } else if(destination == DefaultDestinations::NEOE()) {
+            return ToString(DefaultMarkets::NEOE());
+          } else if(destination == DefaultDestinations::OMEGA()) {
+            return ToString(DefaultMarkets::OMGA());
+          } else if(destination == DefaultDestinations::PURE()) {
+            return ToString(DefaultMarkets::PURE());
+          } else if(destination == DefaultDestinations::TSX()) {
+            return ToString(DefaultMarkets::TSX());
+          } else {
+            return std::string{};
+          }
         }
+      }();
+      if(lastMarket == DefaultMarkets::XATS()) {
+        auto isEtf = Beam::Contains(feeTable.m_etfs,
+          order.GetInfo().m_fields.m_security);
+        return CalculateFee(feeTable.m_xatsFeeTable, isEtf, executionReport);
+      } else if(lastMarket == DefaultMarkets::CHIC()) {
+        auto isEtf = Beam::Contains(feeTable.m_etfs,
+          order.GetInfo().m_fields.m_security);
+        auto isInterlisted = Beam::Contains(feeTable.m_interlisted,
+          order.GetInfo().m_fields.m_security);
+        return CalculateFee(feeTable.m_chicFeeTable, isEtf, isInterlisted,
+          order.GetInfo().m_fields, executionReport);
+      } else if(lastMarket == DefaultMarkets::XCX2()) {
+        return CalculateFee(feeTable.m_xcx2FeeTable, order.GetInfo().m_fields,
+          executionReport);
+      } else if(lastMarket == DefaultMarkets::LYNX()) {
+        return CalculateFee(feeTable.m_lynxFeeTable,
+          order.GetInfo().m_fields.m_security, executionReport);
+      } else if(lastMarket == DefaultMarkets::MATN()) {
+        auto classification = [&] {
+          if(Beam::Contains(feeTable.m_etfs,
+              order.GetInfo().m_fields.m_security)) {
+            return MatnFeeTable::Classification::ETF;
+          } else {
+            return MatnFeeTable::Classification::DEFAULT;
+          }
+        }();
+        return CalculateFee(feeTable.m_matnFeeTable, classification,
+          executionReport);
+      } else if(lastMarket == DefaultMarkets::NEOE()) {
+        auto isInterlisted = Beam::Contains(feeTable.m_interlisted,
+          order.GetInfo().m_fields.m_security);
+        return CalculateFee(feeTable.m_neoeFeeTable, isInterlisted,
+          order.GetInfo().m_fields, executionReport);
+      } else if(lastMarket == DefaultMarkets::OMGA()) {
+        auto isEtf = Beam::Contains(feeTable.m_etfs,
+          order.GetInfo().m_fields.m_security);
+        return CalculateFee(feeTable.m_omgaFeeTable, isEtf,
+          order.GetInfo().m_fields, executionReport);
+      } else if(lastMarket == DefaultMarkets::PURE()) {
+        return CalculateFee(feeTable.m_pureFeeTable,
+          order.GetInfo().m_fields.m_security, executionReport);
+      } else if(lastMarket == DefaultMarkets::TSX() ||
+          lastMarket == DefaultMarkets::TSXV()) {
+        auto classification = [&] {
+          if(Beam::Contains(feeTable.m_etfs,
+              order.GetInfo().m_fields.m_security)) {
+            return TsxFeeTable::Classification::ETF;
+          } else if(Beam::Contains(feeTable.m_interlisted,
+              order.GetInfo().m_fields.m_security)) {
+            return TsxFeeTable::Classification::INTERLISTED;
+          } else {
+            return TsxFeeTable::Classification::DEFAULT;
+          }
+        }();
+        if(order.GetInfo().m_fields.m_security.GetMarket() ==
+            DefaultMarkets::TSX()) {
+          return CalculateFee(feeTable.m_tsxFeeTable, classification,
+            order.GetInfo().m_fields, executionReport);
+        } else if(order.GetInfo().m_fields.m_security.GetMarket() ==
+            DefaultMarkets::TSXV()) {
+          return CalculateFee(feeTable.m_tsxVentureTable, classification,
+            order.GetInfo().m_fields, executionReport);
+        } else {
+          std::cout << "Unknown market [TMX]: \"" <<
+            order.GetInfo().m_fields.m_security.GetMarket() << "\"\n";
+          return CalculateFee(feeTable.m_tsxFeeTable, classification,
+            order.GetInfo().m_fields, executionReport);
+        }
+      } else {
+        std::cout << "Unknown last market [TMX]: \"" << lastMarket << "\"\n";
+        return Money::ZERO;
       }
     }();
-    if(lastMarket == DefaultMarkets::XATS()) {
-      auto isEtf = Beam::Contains(feeTable.m_etfs,
-        order.GetInfo().m_fields.m_security);
-      return CalculateFee(feeTable.m_xatsFeeTable, isEtf, executionReport);
-    } else if(lastMarket == DefaultMarkets::CHIC()) {
-      auto isEtf = Beam::Contains(feeTable.m_etfs,
-        order.GetInfo().m_fields.m_security);
-      auto isInterlisted = Beam::Contains(feeTable.m_interlisted,
-        order.GetInfo().m_fields.m_security);
-      return CalculateFee(feeTable.m_chicFeeTable, isEtf, isInterlisted,
-        order.GetInfo().m_fields, executionReport);
-    } else if(lastMarket == DefaultMarkets::XCX2()) {
-      return CalculateFee(feeTable.m_xcx2FeeTable, order.GetInfo().m_fields,
-        executionReport);
-    } else if(lastMarket == DefaultMarkets::LYNX()) {
-      return CalculateFee(feeTable.m_lynxFeeTable,
-        order.GetInfo().m_fields.m_security, executionReport);
-    } else if(lastMarket == DefaultMarkets::MATN()) {
-      auto classification = [&] {
-        if(Beam::Contains(feeTable.m_etfs,
-            order.GetInfo().m_fields.m_security)) {
-          return MatnFeeTable::Classification::ETF;
-        } else {
-          return MatnFeeTable::Classification::DEFAULT;
-        }
-      }();
-      return CalculateFee(feeTable.m_matnFeeTable, classification,
-        executionReport);
-    } else if(lastMarket == DefaultMarkets::NEOE()) {
-      auto isInterlisted = Beam::Contains(feeTable.m_interlisted,
-        order.GetInfo().m_fields.m_security);
-      return CalculateFee(feeTable.m_neoeFeeTable, isInterlisted,
-        order.GetInfo().m_fields, executionReport);
-    } else if(lastMarket == DefaultMarkets::OMGA()) {
-      auto isEtf = Beam::Contains(feeTable.m_etfs,
-        order.GetInfo().m_fields.m_security);
-      return CalculateFee(feeTable.m_omgaFeeTable, isEtf,
-        order.GetInfo().m_fields, executionReport);
-    } else if(lastMarket == DefaultMarkets::PURE()) {
-      return CalculateFee(feeTable.m_pureFeeTable,
-        order.GetInfo().m_fields.m_security, executionReport);
-    } else if(lastMarket == DefaultMarkets::TSX() ||
-        lastMarket == DefaultMarkets::TSXV()) {
-      auto classification = [&] {
-        if(Beam::Contains(feeTable.m_etfs,
-            order.GetInfo().m_fields.m_security)) {
-          return TsxFeeTable::Classification::ETF;
-        } else if(Beam::Contains(feeTable.m_interlisted,
-            order.GetInfo().m_fields.m_security)) {
-          return TsxFeeTable::Classification::INTERLISTED;
-        } else {
-          return TsxFeeTable::Classification::DEFAULT;
-        }
-      }();
-      if(order.GetInfo().m_fields.m_security.GetMarket() ==
-          DefaultMarkets::TSX()) {
-        return CalculateFee(feeTable.m_tsxFeeTable, classification,
-          order.GetInfo().m_fields, executionReport);
-      } else if(order.GetInfo().m_fields.m_security.GetMarket() ==
-          DefaultMarkets::TSXV()) {
-        return CalculateFee(feeTable.m_tsxVentureTable, classification,
-          order.GetInfo().m_fields, executionReport);
-      } else {
-        std::cout << "Unknown market [TMX]: \"" <<
-          order.GetInfo().m_fields.m_security.GetMarket() << "\"\n";
-        return CalculateFee(feeTable.m_tsxFeeTable, classification,
-          order.GetInfo().m_fields, executionReport);
-      }
-    } else {
-      std::cout << "Unknown last market [TMX]: \"" << lastMarket << "\"\n";
-      return Money::ZERO;
-    }
+    return feesReport;
   }
 }
 
