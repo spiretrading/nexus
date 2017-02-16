@@ -69,13 +69,10 @@ namespace OasisOrderExecutionService {
         m_orderExecutionDriver;
       AsxtFeeTable m_asxtFeeTable;
       ConsolidatedTmxFeeTable m_tmxFeeTable;
+      ConsolidatedTmxFeeTable::State m_tmxState;
       ConsolidatedUsFeeTable m_usFeeTable;
       Beam::SynchronizedUnorderedSet<
         std::shared_ptr<OrderExecutionService::Order>> m_orders;
-      Beam::SynchronizedUnorderedMap<OrderExecutionService::OrderId, Money>
-        m_perOrderCharges;
-      Beam::SynchronizedUnorderedMap<OrderExecutionService::OrderId, int>
-        m_fillCount;
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 
@@ -203,15 +200,7 @@ namespace OasisOrderExecutionService {
   void FeesCalculatorOrderExecutionDriver<OrderExecutionDriverType>::
       HandleAustralianMarketFees(OrderExecutionService::PrimitiveOrder& order,
       const OrderExecutionService::ExecutionReport& executionReport) {
-    const auto SPIRE_FEE = 18 * Money::CENT;
-    const auto CLEARING_FEE = boost::rational<int>{125, 1000000};
-    auto feesReport = executionReport;
-    feesReport.m_processingFee += CLEARING_FEE *
-      (feesReport.m_lastQuantity * feesReport.m_lastPrice);
-    if(feesReport.m_lastQuantity != 0) {
-      feesReport.m_commission += SPIRE_FEE;
-    }
-    feesReport.m_executionFee += CalculateFee(m_asxtFeeTable, executionReport);
+    auto feesReport = CalculateFee(m_asxtFeeTable, executionReport);
     order.With(
       [&] (OrderStatus status,
           const std::vector<OrderExecutionService::ExecutionReport>& reports) {
@@ -223,32 +212,7 @@ namespace OasisOrderExecutionService {
   void FeesCalculatorOrderExecutionDriver<OrderExecutionDriverType>::
       HandleCanadianMarketFees(OrderExecutionService::PrimitiveOrder& order,
       const OrderExecutionService::ExecutionReport& executionReport) {
-    const auto SPIRE_FEE = (14 * Money::BIP) / 10;
-    const auto IIROC_FEE = (132 * Money::CENT) / 10;
-    const auto CDS_FEE = 13 * Money::CENT;
-    const auto CDS_CAP = 5;
-    const auto CLEARING_FEE = Money::BIP;
-    const auto PER_ORDER_FEE = Money::BIP;
-    const auto PER_ORDER_CAP = 10 * Money::CENT;
-    auto feesReport = executionReport;
-    feesReport.m_processingFee += feesReport.m_lastQuantity * CLEARING_FEE;
-    if(feesReport.m_lastQuantity != 0) {
-      auto& fillCount = m_fillCount.Get(order.GetInfo().m_orderId);
-      ++fillCount;
-      feesReport.m_processingFee += IIROC_FEE;
-      if(fillCount <= CDS_CAP) {
-        feesReport.m_processingFee += CDS_FEE;
-      }
-    }
-    feesReport.m_commission += feesReport.m_lastQuantity * SPIRE_FEE;
-    auto& perOrderCharge = m_perOrderCharges.Get(order.GetInfo().m_orderId);
-    auto perOrderDelta = executionReport.m_lastQuantity * PER_ORDER_FEE;
-    if(perOrderCharge + perOrderDelta > PER_ORDER_CAP) {
-      perOrderDelta = PER_ORDER_CAP - perOrderCharge;
-    }
-    perOrderCharge += perOrderDelta;
-    feesReport.m_processingFee += perOrderDelta;
-    feesReport.m_executionFee += CalculateFee(m_tmxFeeTable, order,
+    auto feesReport = CalculateFee(m_tmxFeeTable, m_tmxState, order,
       executionReport);
     order.With(
       [&] (OrderStatus status,
@@ -261,26 +225,7 @@ namespace OasisOrderExecutionService {
   void FeesCalculatorOrderExecutionDriver<OrderExecutionDriverType>::
       HandleUsMarketFees(OrderExecutionService::PrimitiveOrder& order,
       const OrderExecutionService::ExecutionReport& executionReport) {
-    const auto SPIRE_FEE = Money::BIP;
-    const auto SEC_RATE = boost::rational<int>{218, 10000000};
-    const auto TAF_FEE = (119 * Money::BIP) / 100;
-    const auto NSCC_RATE = boost::rational<int>{15, 100000000};
-    const auto CLEARING_FEE = Money::BIP;
-    auto feesReport = executionReport;
-    if(feesReport.m_lastQuantity != 0) {
-      auto processingFee = feesReport.m_lastQuantity *
-        (CLEARING_FEE + TAF_FEE);
-      if(order.GetInfo().m_fields.m_side == Side::BID) {
-        processingFee += SEC_RATE *
-          (feesReport.m_lastQuantity * feesReport.m_lastPrice);
-      }
-      processingFee += Money::CENT + NSCC_RATE *
-        (feesReport.m_lastQuantity * feesReport.m_lastPrice);
-      feesReport.m_processingFee += Ceil(processingFee, 3);
-    }
-    feesReport.m_commission += feesReport.m_lastQuantity * SPIRE_FEE;
-    feesReport.m_executionFee += CalculateFee(m_usFeeTable, order,
-      executionReport);
+    auto feesReport = CalculateFee(m_usFeeTable, order, executionReport);
     order.With(
       [&] (OrderStatus status,
           const std::vector<OrderExecutionService::ExecutionReport>& reports) {

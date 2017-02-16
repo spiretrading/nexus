@@ -305,7 +305,7 @@ int main(int argc, const char** argv) {
     fixApplicationEntries};
   AsxtFeeTable asxtFeeTable;
   try {
-    asxtFeeTable = ParseAsxFeeTable(GetNode(feeTableConfig, "asxt"));
+    asxtFeeTable = ParseAsxFeeTable(GetNode(feeTableConfig, "au_equities"));
   } catch(const std::exception& e) {
     cerr << "Unable to initialize ASX fee table: " << e.what() << endl;
     return -1;
@@ -313,7 +313,8 @@ int main(int argc, const char** argv) {
   ConsolidatedTmxFeeTable tmxFeeTable;
   try {
     auto marketDatabase = definitionsClient->LoadMarketDatabase();
-    tmxFeeTable = ParseConsolidatedTmxFeeTable(feeTableConfig, marketDatabase);
+    tmxFeeTable = ParseConsolidatedTmxFeeTable(
+      GetNode(feeTableConfig, "ca_equities"), marketDatabase);
   } catch(const std::exception& e) {
     cerr << "Unable to initialize TMX fee table: " << e.what() << endl;
     return -1;
@@ -321,7 +322,8 @@ int main(int argc, const char** argv) {
   ConsolidatedUsFeeTable usFeeTable;
   try {
     auto marketDatabase = definitionsClient->LoadMarketDatabase();
-    usFeeTable = ParseConsolidatedUsFeeTable(feeTableConfig, marketDatabase);
+    usFeeTable = ParseConsolidatedUsFeeTable(
+      GetNode(feeTableConfig, "us_equities"), marketDatabase);
   } catch(const std::exception& e) {
     cerr << "Unable to initialize US fee table: " << e.what() << endl;
     return -1;
