@@ -141,7 +141,7 @@ ca_equities:
        [0.0026, -0.0022]]
 
     neo_book_table:
-      [[-0.0015, 0.0018]
+      [[-0.0015, 0.0018],
        [-0.0015, 0.0018]]
 
   # Omega ATS fees based on http://omegaats.com/fees/
