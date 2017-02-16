@@ -42,7 +42,8 @@ namespace Nexus {
       m_interlistedFeeTable;
 
     //! The NEO book fee table.
-    std::array<Money, LIQUIDITY_FLAG_COUNT> m_neoBookFeeTable;
+    std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
+      m_neoBookFeeTable;
   };
 
   //! Parses a NeoeFeeTable from a YAML configuration.
@@ -103,11 +104,13 @@ namespace Nexus {
   /*!
     \param feeTable The NeoeFeeTable used to lookup the fee.
     \param liquidityFlag The trade's LiquidityFlag.
+    \param priceClass The trade's PriceClass.
     \return The fee corresponding to the specified <i>liquidityFlag</i>.
   */
   inline Money LookupNeoBookFee(const NeoeFeeTable& feeTable,
-      LiquidityFlag liquidityFlag) {
-    return feeTable.m_neoBookFeeTable[static_cast<int>(liquidityFlag)];
+      LiquidityFlag liquidityFlag, NeoeFeeTable::PriceClass priceClass) {
+    return feeTable.m_neoBookFeeTable[static_cast<int>(priceClass)][
+      static_cast<int>(liquidityFlag)];
   }
 
   //! Calculates the fee on a trade executed on NEOE.
@@ -150,7 +153,7 @@ namespace Nexus {
     }();
     auto fee = [&] {
       if(IsNeoBookOrder(orderFields)) {
-        return LookupNeoBookFee(feeTable, liquidityFlag);
+        return LookupNeoBookFee(feeTable, liquidityFlag, priceClass);
       } else if(isInterlisted) {
         return LookupInterlistedFee(feeTable, liquidityFlag, priceClass);
       } else {

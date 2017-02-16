@@ -167,10 +167,10 @@ void Nexus::Python::ExportMockOrderExecutionDriver() {
       return_value_policy<reference_existing_object>())
     .def("recover", &MockOrderExecutionDriver::Recover,
       return_value_policy<reference_existing_object>())
-    .def("submit", &MockOrderExecutionDriver::Submit,
-      return_value_policy<reference_existing_object>())
-    .def("cancel", &MockOrderExecutionDriver::Cancel)
-    .def("update", &MockOrderExecutionDriver::Update)
+    .def("submit", BlockingFunction(&MockOrderExecutionDriver::Submit,
+      return_value_policy<reference_existing_object>()))
+    .def("cancel", BlockingFunction(&MockOrderExecutionDriver::Cancel))
+    .def("update", BlockingFunction(&MockOrderExecutionDriver::Update))
     .def("open", BlockingFunction(&MockOrderExecutionDriver::Open))
     .def("close", BlockingFunction(&MockOrderExecutionDriver::Close));
 }
@@ -238,12 +238,14 @@ void Nexus::Python::ExportOrderExecutionService() {
     scope child = nestedModule;
     ExportOrderExecutionServiceTestInstance();
     ExportMockOrderExecutionDriver();
-    def("cancel_order", &CancelOrder);
-    def("set_order_status", &SetOrderStatus);
-    def("fill_order", static_cast<void (*)(PrimitiveOrder& order, Money price,
-      Quantity quantity, const ptime& timestamp)>(&FillOrder));
-    def("fill_order", static_cast<void (*)(PrimitiveOrder& order,
-      Quantity quantity, const ptime& timestamp)>(&FillOrder));
+    def("cancel_order", BlockingFunction(&CancelOrder));
+    def("set_order_status", BlockingFunction(&SetOrderStatus));
+    def("fill_order", BlockingFunction(
+      static_cast<void (*)(PrimitiveOrder& order, Money price,
+      Quantity quantity, const ptime& timestamp)>(&FillOrder)));
+    def("fill_order", BlockingFunction(
+      static_cast<void (*)(PrimitiveOrder& order,
+      Quantity quantity, const ptime& timestamp)>(&FillOrder)));
   }
 }
 
@@ -321,7 +323,7 @@ void Nexus::Python::ExportPrimitiveOrder() {
   class_<PrimitiveOrder, bases<Order>, boost::noncopyable>("PrimitiveOrder",
     init<OrderInfo>())
     .def(init<OrderRecord>())
-    .def("update", &PrimitiveOrder::Update);
+    .def("update", BlockingFunction(&PrimitiveOrder::Update));
   def("build_rejected_order", &BuildRejectedOrder);
   def("reject_cancel_request", &RejectCancelRequest);
 }
