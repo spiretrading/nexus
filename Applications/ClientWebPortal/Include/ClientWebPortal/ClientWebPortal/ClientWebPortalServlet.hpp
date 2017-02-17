@@ -10,6 +10,7 @@
 #include <boost/noncopyable.hpp>
 #include "ClientWebPortal/ClientWebPortal/ClientWebPortal.hpp"
 #include "ClientWebPortal/ClientWebPortal/ClientWebPortalSession.hpp"
+#include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
 
 namespace Nexus {
 namespace ClientWebPortal {
@@ -24,7 +25,8 @@ namespace ClientWebPortal {
       /*!
         \param serviceClients The clients used to access Spire services.
       */
-      ClientWebPortalServlet(Beam::RefType<ServiceClients> serviceClients);
+      ClientWebPortalServlet(
+        Beam::RefType<ApplicationServiceClients> serviceClients);
 
       ~ClientWebPortalServlet();
 
@@ -38,7 +40,7 @@ namespace ClientWebPortal {
     private:
       Beam::WebServices::FileStore m_fileStore;
       Beam::WebServices::SessionStore<ClientWebPortalSession> m_sessions;
-      ServiceClients* m_serviceClients;
+      ApplicationServiceClients* m_serviceClients;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();

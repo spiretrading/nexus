@@ -11,7 +11,6 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include "ClientWebPortal/ClientWebPortal/ServiceClients.hpp"
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
@@ -49,7 +48,7 @@ namespace {
 }
 
 ClientWebPortalServlet::ClientWebPortalServlet(
-    RefType<ServiceClients> serviceClients)
+    RefType<ApplicationServiceClients> serviceClients)
     : m_fileStore{"webapp"},
       m_serviceClients{serviceClients.Get()} {}
 
