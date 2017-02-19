@@ -6,7 +6,7 @@
 #include "Nexus/Python/PythonMarketDataClient.hpp"
 #include "Nexus/Python/PythonOrderExecutionClient.hpp"
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
-#include "Nexus/ServiceClients/TestServiceClientsInstance.hpp"
+#include "Nexus/ServiceClients/TestEnvironment.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 
@@ -127,20 +127,20 @@ namespace {
       public WrapperServiceClients<std::unique_ptr<VirtualServiceClients>> {
     public:
       PythonTestServiceClients(std::unique_ptr<VirtualServiceClients> client,
-          std::shared_ptr<TestServiceClientsInstance> instance)
+          std::shared_ptr<TestEnvironment> environment)
           : WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>(
               std::move(client)),
-            m_instance{std::move(instance)} {}
+            m_environment{std::move(environment)} {}
 
     private:
-      std::shared_ptr<TestServiceClientsInstance> m_instance;
+      std::shared_ptr<TestEnvironment> m_environment;
   };
 
   VirtualServiceClients* BuildTestServiceClients(
-      std::shared_ptr<TestServiceClientsInstance> instance) {
-    auto baseClient = std::make_unique<TestServiceClients>(Ref(*instance));
+      std::shared_ptr<TestEnvironment> environment) {
+    auto baseClient = std::make_unique<TestServiceClients>(Ref(*environment));
     return new PythonTestServiceClients{
-      MakeVirtualServiceClients(std::move(baseClient)), instance};
+      MakeVirtualServiceClients(std::move(baseClient)), environment};
   }
 }
 
@@ -195,14 +195,14 @@ void Nexus::Python::ExportApplicationServiceClients() {
 void Nexus::Python::ExportServiceClients() {
   ExportVirtualServiceClients();
   ExportApplicationServiceClients();
+  ExportTestEnvironment();
   ExportTestServiceClients();
 }
 
-void Nexus::Python::ExportTestServiceClientsInstance() {
-  class_<TestServiceClientsInstance, boost::noncopyable>(
-      "TestServiceClientsInstance", init<>())
-    .def("open", BlockingFunction(&TestServiceClientsInstance::Open))
-    .def("close", BlockingFunction(&TestServiceClientsInstance::Close));
+void Nexus::Python::ExportTestEnvironment() {
+  class_<TestEnvironment, boost::noncopyable>("TestEnvironment", init<>())
+    .def("open", BlockingFunction(&TestEnvironment::Open))
+    .def("close", BlockingFunction(&TestEnvironment::Close));
 }
 
 void Nexus::Python::ExportTestServiceClients() {

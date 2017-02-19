@@ -11,8 +11,8 @@ namespace Python {
   //! Exports all ServiceClients classes.
   void ExportServiceClients();
 
-  //! Exports the TestServiceClientsInstance class.
-  void ExportTestServiceClientsInstance();
+  //! Exports the TestEnvironment class.
+  void ExportTestEnvironment();
 
   //! Exports the TestServiceClients class.
   void ExportTestServiceClients();

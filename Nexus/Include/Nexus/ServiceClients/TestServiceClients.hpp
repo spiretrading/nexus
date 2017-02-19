@@ -4,6 +4,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/RegistryService/VirtualRegistryClient.hpp>
 #include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
+#include <Beam/Threading/VirtualTimer.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <boost/noncopyable.hpp>
@@ -14,7 +15,7 @@
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 #include "Nexus/RiskService/VirtualRiskClient.hpp"
-#include "Nexus/ServiceClients/TestServiceClientsInstance.hpp"
+#include "Nexus/ServiceClients/TestEnvironment.hpp"
 
 namespace Nexus {
 
@@ -46,11 +47,13 @@ namespace Nexus {
 
       using TimeClient = Beam::TimeService::VirtualTimeClient;
 
+      using Timer = Beam::Threading::VirtualTimer;
+
       //! Constructs a TestServiceClients.
       /*!
-        \param instance The TestServiceClientsInstance to connect to.
+        \param environment The TestEnvironment to use.
       */
-      TestServiceClients(Beam::RefType<TestServiceClientsInstance> instance);
+      TestServiceClients(Beam::RefType<TestEnvironment> environment);
 
       ~TestServiceClients();
 
@@ -79,7 +82,7 @@ namespace Nexus {
       void Close();
 
     private:
-      TestServiceClientsInstance* m_instance;
+      TestEnvironment* m_environment;
       std::unique_ptr<ServiceLocatorClient> m_serviceLocatorClient;
       std::unique_ptr<RegistryClient> m_registryClient;
       std::unique_ptr<AdministrationClient> m_administrationClient;
@@ -96,8 +99,8 @@ namespace Nexus {
   };
 
   inline TestServiceClients::TestServiceClients(
-      Beam::RefType<TestServiceClientsInstance> instance)
-      : m_instance{instance.Get()} {}
+      Beam::RefType<TestEnvironment> environment)
+      : m_environment{environment.Get()} {}
 
   inline TestServiceClients::~TestServiceClients() {
     Close();
@@ -157,18 +160,18 @@ namespace Nexus {
     }
     try {
       m_serviceLocatorClient =
-        m_instance->GetServiceLocatorInstance().BuildClient();
+        m_environment->GetServiceLocatorInstance().BuildClient();
       m_serviceLocatorClient->SetCredentials("root", "");
       m_serviceLocatorClient->Open();
       m_administrationClient =
-        m_instance->GetAdministrationInstance().BuildClient(
+        m_environment->GetAdministrationInstance().BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
       m_administrationClient->Open();
-      m_marketDataClient = m_instance->GetMarketDataInstance().BuildClient(
+      m_marketDataClient = m_environment->GetMarketDataInstance().BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
       m_marketDataClient->Open();
       m_orderExecutionClient =
-        m_instance->GetOrderExecutionInstance().BuildClient(
+        m_environment->GetOrderExecutionInstance().BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
       m_timeClient = Beam::TimeService::MakeVirtualTimeClient(
         std::make_unique<Beam::TimeService::FixedTimeClient>());
