@@ -17,6 +17,12 @@ namespace Python {
   //! Exports the TestServiceClients class.
   void ExportTestServiceClients();
 
+  //! Exports the TestTimeClient class.
+  void ExportTestTimeClient();
+
+  //! Exports the TestTimer class.
+  void ExportTestTimer();
+
   //! Exports the VirtualServiceClients class.
   void ExportVirtualServiceClients();
 }
