@@ -16,6 +16,8 @@
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 #include "Nexus/RiskService/VirtualRiskClient.hpp"
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
+#include "Nexus/ServiceClients/TestTimeClient.hpp"
+#include "Nexus/ServiceClients/TestTimer.hpp"
 
 namespace Nexus {
 
@@ -76,6 +78,9 @@ namespace Nexus {
       RiskClient& GetRiskClient();
 
       TimeClient& GetTimeClient();
+
+      std::unique_ptr<Timer> BuildTimer(
+        boost::posix_time::time_duration expiry);
 
       void Open();
 
@@ -154,6 +159,12 @@ namespace Nexus {
     return *m_timeClient;
   }
 
+  inline std::unique_ptr<TestServiceClients::Timer>
+      TestServiceClients::BuildTimer(boost::posix_time::time_duration expiry) {
+    return Beam::Threading::MakeVirtualTimer(
+      std::make_unique<TestTimer>(expiry, Beam::Ref(*m_environment)));
+  }
+
   inline void TestServiceClients::Open() {
     if(m_openState.SetOpening()) {
       return;
@@ -174,7 +185,7 @@ namespace Nexus {
         m_environment->GetOrderExecutionInstance().BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
       m_timeClient = Beam::TimeService::MakeVirtualTimeClient(
-        std::make_unique<Beam::TimeService::FixedTimeClient>());
+        std::make_unique<TestTimeClient>(Beam::Ref(*m_environment)));
       m_timeClient->Open();
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();

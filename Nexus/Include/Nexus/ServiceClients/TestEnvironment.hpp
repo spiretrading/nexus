@@ -125,6 +125,15 @@ namespace Nexus {
     LockedSetTime(m_currentTime + duration, lock);
   }
 
+  inline void TestEnvironment::Update(const Security& security,
+      const BboQuote& bboQuote) {
+    if(bboQuote.m_timestamp != boost::posix_time::not_a_date_time) {
+      SetTime(bboQuote.m_timestamp);
+    }
+    GetMarketDataInstance().SetBbo(security, bboQuote);
+    Beam::Routines::FlushPendingRoutines();
+  }
+
   inline Beam::ServiceLocator::Tests::ServiceLocatorTestInstance&
       TestEnvironment::GetServiceLocatorInstance() {
     return m_serviceLocatorInstance;
@@ -172,6 +181,7 @@ namespace Nexus {
       marketDataServiceLocatorClient->SetCredentials("root", "");
       marketDataServiceLocatorClient->Open();
       m_marketDataInstance.emplace(std::move(marketDataServiceLocatorClient));
+      m_marketDataInstance->Open();
       auto orderExecutionServiceLocatorClient =
         m_serviceLocatorInstance.BuildClient();
       orderExecutionServiceLocatorClient->SetCredentials("root", "");
