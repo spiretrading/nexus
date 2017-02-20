@@ -101,6 +101,10 @@ namespace {
           : WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>(
               std::move(client)) {}
 
+      virtual ~PythonApplicationServiceClients() override {
+        Close();
+      }
+
       virtual PythonMarketDataClient& GetMarketDataClient() override {
         if(m_marketDataClient == nullptr) {
           m_marketDataClient = std::make_unique<PythonMarketDataClient>(
@@ -145,6 +149,10 @@ namespace {
               std::move(client)),
             m_environment{std::move(environment)} {}
 
+      virtual ~PythonTestServiceClients() override {
+        Close();
+      }
+
     private:
       std::shared_ptr<TestEnvironment> m_environment;
   };
@@ -156,6 +164,10 @@ namespace {
           : WrapperTimer<TestTimer>(Initialize(expiry, Ref(*environment))),
             m_environment{std::move(environment)} {}
 
+      virtual ~PythonTestTimer() override {
+        Cancel();
+      }
+
     private:
       std::shared_ptr<TestEnvironment> m_environment;
   };
@@ -165,6 +177,10 @@ namespace {
       PythonTestTimeClient(std::shared_ptr<TestEnvironment> environment)
           : WrapperTimeClient<TestTimeClient>(Initialize(Ref(*environment))),
             m_environment{std::move(environment)} {}
+
+      virtual ~PythonTestTimeClient() override {
+        Close();
+      }
 
     private:
       std::shared_ptr<TestEnvironment> m_environment;
