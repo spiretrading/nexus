@@ -31,18 +31,18 @@ namespace Nexus {
       friend class TestEnvironment;
       TestEnvironment* m_environment;
       Beam::TimeService::FixedTimeClient m_timeClient;
+      Beam::IO::OpenState m_openState;
 
+      void Shutdown();
       void SetTime(boost::posix_time::ptime time);
   };
 
   inline TestTimeClient::TestTimeClient(
       Beam::RefType<TestEnvironment> environment)
-      : m_environment{environment.Get()} {
-    m_environment->Add(this);
-  }
+      : m_environment{environment.Get()} {}
 
   inline TestTimeClient::~TestTimeClient() {
-    m_environment->Remove(this);
+    Close();
   }
 
   inline boost::posix_time::ptime TestTimeClient::GetTime() {
@@ -50,11 +50,30 @@ namespace Nexus {
   }
 
   inline void TestTimeClient::Open() {
-    m_timeClient.Open();
+    if(m_openState.SetOpening()) {
+      return;
+    }
+    try {
+      m_environment->Add(this);
+      m_timeClient.Open();
+    } catch(const std::exception&) {
+      m_openState.SetOpenFailure();
+      Shutdown();
+    }
+    m_openState.SetOpen();
   }
 
   inline void TestTimeClient::Close() {
+    if(m_openState.SetClosing()) {
+      return;
+    }
+    Shutdown();
+  }
+
+  inline void TestTimeClient::Shutdown() {
     m_timeClient.Close();
+    m_environment->Remove(this);
+    m_openState.SetClosed();
   }
 
   inline void TestTimeClient::SetTime(boost::posix_time::ptime time) {

@@ -36,26 +36,43 @@ namespace Nexus {
     private:
       friend class TestEnvironment;
       friend void Trigger(TestTimer& timer);
+      mutable boost::mutex m_mutex;
       boost::posix_time::time_duration m_interval;
       TestEnvironment* m_environment;
+      bool m_hasStarted;
       Beam::Threading::TriggerTimer m_timer;
   };
 
   inline TestTimer::TestTimer(boost::posix_time::time_duration interval,
       Beam::RefType<TestEnvironment> environment)
       : m_interval{std::move(interval)},
-        m_environment{environment.Get()} {}
+        m_environment{environment.Get()},
+        m_hasStarted{false} {}
 
   inline TestTimer::~TestTimer() {
     Cancel();
   }
 
   inline void TestTimer::Start() {
+    {
+      boost::lock_guard<boost::mutex> lock{m_mutex};
+      if(m_hasStarted) {
+        return;
+      }
+      m_hasStarted = true;
+    }
     m_timer.Start();
     m_environment->Add(this);
   }
 
   inline void TestTimer::Cancel() {
+    {
+      boost::lock_guard<boost::mutex> lock{m_mutex};
+      if(!m_hasStarted) {
+        return;
+      }
+      m_hasStarted = false;
+    }
     m_environment->Remove(this);
     m_timer.Cancel();
   }
@@ -81,6 +98,10 @@ namespace Nexus {
   }
 
   inline void Trigger(TestTimer& timer) {
+    {
+      boost::lock_guard<boost::mutex> lock{timer.m_mutex};
+      timer.m_hasStarted = false;
+    }
     timer.m_timer.Trigger();
   }
 }
