@@ -5,6 +5,9 @@
 namespace Nexus {
 namespace Python {
 
+  //! Exports the AsxtFeeTable classes.
+  void ExportAsxtFeeTable();
+
   //! Exports FeeHandling classes.
   void ExportFeeHandling();
 
