@@ -3,6 +3,7 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/RegistryService/ApplicationDefinitions.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
+#include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include <boost/noncopyable.hpp>
@@ -50,6 +51,8 @@ namespace Nexus {
 
       using TimeClient = Beam::TimeService::LiveNtpTimeClient;
 
+      using Timer = Beam::Threading::LiveTimer;
+
       //! Constructs an ApplicationServiceClients.
       /*!
         \param address The IpAddress to connect to.
@@ -84,6 +87,9 @@ namespace Nexus {
       RiskClient& GetRiskClient();
 
       TimeClient& GetTimeClient();
+
+      std::unique_ptr<Timer> BuildTimer(
+        boost::posix_time::time_duration duration);
 
       void Open();
 
@@ -278,6 +284,12 @@ namespace Nexus {
   inline ApplicationServiceClients::TimeClient&
       ApplicationServiceClients::GetTimeClient() {
     return **m_timeClient;
+  }
+
+  inline std::unique_ptr<ApplicationServiceClients::Timer>
+      ApplicationServiceClients::BuildTimer(
+      boost::posix_time::time_duration duration) {
+    return std::make_unique<Timer>(duration, Beam::Ref(*m_timerThreadPool));
   }
 
   inline void ApplicationServiceClients::Open() {

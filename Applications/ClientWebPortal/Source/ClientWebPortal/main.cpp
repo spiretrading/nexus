@@ -7,7 +7,6 @@
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <Beam/WebServices/HttpServletContainer.hpp>
 #include <tclap/CmdLine.h>
-#include "ClientWebPortal/ClientWebPortal/ServiceClients.hpp"
 #include "ClientWebPortal/ClientWebPortal/ClientWebPortalServlet.hpp"
 #include "ClientWebPortal/Version.hpp"
 
@@ -81,19 +80,16 @@ int main(int argc, const char** argv) {
     cerr << "Error parsing section 'service_locator': " << e.what() << endl;
     return -1;
   }
-  ApplicationServiceLocatorClient serviceLocatorClient;
+  ApplicationServiceClients serviceClients{serviceLocatorClientConfig.m_address,
+    serviceLocatorClientConfig.m_username,
+    serviceLocatorClientConfig.m_password, Ref(socketThreadPool),
+    Ref(timerThreadPool)};
   try {
-    serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_address,
-      Ref(socketThreadPool), Ref(timerThreadPool));
-    serviceLocatorClient->SetCredentials(serviceLocatorClientConfig.m_username,
-      serviceLocatorClientConfig.m_password);
-    serviceLocatorClient->Open();
+    serviceClients.Open();
   } catch(const std::exception& e) {
     cerr << "Error logging in: " << e.what() << endl;
     return -1;
   }
-  ServiceClients serviceClients{Ref(serviceLocatorClient),
-    Ref(socketThreadPool), Ref(timerThreadPool)};
   ServerConnectionInitializer serverConnectionInitializer;
   try {
     serverConnectionInitializer.Initialize(GetNode(config, "server"));

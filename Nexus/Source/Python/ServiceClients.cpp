@@ -2,18 +2,25 @@
 #include <Beam/Python/BoostPython.hpp>
 #include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/PythonBindings.hpp>
+#include <Beam/Threading/VirtualTimer.hpp>
+#include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/Python/PythonMarketDataClient.hpp"
 #include "Nexus/Python/PythonOrderExecutionClient.hpp"
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
-#include "Nexus/ServiceClients/TestServiceClientsInstance.hpp"
+#include "Nexus/ServiceClients/TestEnvironment.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
+#include "Nexus/ServiceClients/TestTimeClient.hpp"
+#include "Nexus/ServiceClients/TestTimer.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 
 using namespace Beam;
 using namespace Beam::Network;
 using namespace Beam::Python;
+using namespace Beam::Threading;
+using namespace Beam::TimeService;
 using namespace boost;
+using namespace boost::posix_time;
 using namespace boost::python;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
@@ -71,6 +78,12 @@ namespace {
       return *static_cast<TimeClient*>(this->get_override("get_time_client")());
     }
 
+    virtual std::unique_ptr<Timer> BuildTimer(
+        boost::posix_time::time_duration expiry) override {
+      return std::unique_ptr<Timer>{
+        static_cast<Timer*>(this->get_override("build_timer")())};
+    }
+
     virtual void Open() override {
       this->get_override("open")();
     }
@@ -87,6 +100,10 @@ namespace {
           std::unique_ptr<VirtualServiceClients> client)
           : WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>(
               std::move(client)) {}
+
+      virtual ~PythonApplicationServiceClients() override {
+        Close();
+      }
 
       virtual PythonMarketDataClient& GetMarketDataClient() override {
         if(m_marketDataClient == nullptr) {
@@ -127,20 +144,63 @@ namespace {
       public WrapperServiceClients<std::unique_ptr<VirtualServiceClients>> {
     public:
       PythonTestServiceClients(std::unique_ptr<VirtualServiceClients> client,
-          std::shared_ptr<TestServiceClientsInstance> instance)
+          std::shared_ptr<TestEnvironment> environment)
           : WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>(
               std::move(client)),
-            m_instance{std::move(instance)} {}
+            m_environment{std::move(environment)} {}
+
+      virtual ~PythonTestServiceClients() override {
+        Close();
+      }
 
     private:
-      std::shared_ptr<TestServiceClientsInstance> m_instance;
+      std::shared_ptr<TestEnvironment> m_environment;
+  };
+
+  class PythonTestTimer : public WrapperTimer<TestTimer> {
+    public:
+      PythonTestTimer(time_duration expiry,
+          std::shared_ptr<TestEnvironment> environment)
+          : WrapperTimer<TestTimer>(Initialize(expiry, Ref(*environment))),
+            m_environment{std::move(environment)} {}
+
+      virtual ~PythonTestTimer() override {
+        Cancel();
+      }
+
+    private:
+      std::shared_ptr<TestEnvironment> m_environment;
+  };
+
+  class PythonTestTimeClient : public WrapperTimeClient<TestTimeClient> {
+    public:
+      PythonTestTimeClient(std::shared_ptr<TestEnvironment> environment)
+          : WrapperTimeClient<TestTimeClient>(Initialize(Ref(*environment))),
+            m_environment{std::move(environment)} {}
+
+      virtual ~PythonTestTimeClient() override {
+        Close();
+      }
+
+    private:
+      std::shared_ptr<TestEnvironment> m_environment;
   };
 
   VirtualServiceClients* BuildTestServiceClients(
-      std::shared_ptr<TestServiceClientsInstance> instance) {
-    auto baseClient = std::make_unique<TestServiceClients>(Ref(*instance));
+      std::shared_ptr<TestEnvironment> environment) {
+    auto baseClient = std::make_unique<TestServiceClients>(Ref(*environment));
     return new PythonTestServiceClients{
-      MakeVirtualServiceClients(std::move(baseClient)), instance};
+      MakeVirtualServiceClients(std::move(baseClient)), environment};
+  }
+
+  VirtualTimer* BuildTestTimer(time_duration expiry,
+      std::shared_ptr<TestEnvironment> environment) {
+    return new PythonTestTimer{expiry, environment};
+  }
+
+  VirtualTimeClient* BuildTestTimeClient(
+      std::shared_ptr<TestEnvironment> environment) {
+    return new PythonTestTimeClient{environment};
   }
 }
 
@@ -186,6 +246,8 @@ void Nexus::Python::ExportApplicationServiceClients() {
     .def("get_time_client", BlockingFunction<PythonApplicationServiceClients>(
       &PythonApplicationServiceClients::GetTimeClient,
       return_value_policy<reference_existing_object>()))
+    .def("build_timer", ReleaseUniquePtr<PythonApplicationServiceClients>(
+      &PythonApplicationServiceClients::BuildTimer))
     .def("open", BlockingFunction<PythonApplicationServiceClients>(
       &PythonApplicationServiceClients::Open))
     .def("close", BlockingFunction<PythonApplicationServiceClients>(
@@ -195,19 +257,38 @@ void Nexus::Python::ExportApplicationServiceClients() {
 void Nexus::Python::ExportServiceClients() {
   ExportVirtualServiceClients();
   ExportApplicationServiceClients();
+  ExportTestEnvironment();
   ExportTestServiceClients();
+  ExportTestTimeClient();
+  ExportTestTimer();
 }
 
-void Nexus::Python::ExportTestServiceClientsInstance() {
-  class_<TestServiceClientsInstance, boost::noncopyable>(
-      "TestServiceClientsInstance", init<>())
-    .def("open", BlockingFunction(&TestServiceClientsInstance::Open))
-    .def("close", BlockingFunction(&TestServiceClientsInstance::Close));
+void Nexus::Python::ExportTestEnvironment() {
+  class_<TestEnvironment, std::shared_ptr<TestEnvironment>, boost::noncopyable>(
+      "TestEnvironment", init<>())
+    .def("set_time", BlockingFunction(&TestEnvironment::SetTime))
+    .def("advance_time", BlockingFunction(&TestEnvironment::AdvanceTime))
+    .def("update", BlockingFunction(&TestEnvironment::Update))
+    .def("get_service_locator_instance",
+      &TestEnvironment::GetServiceLocatorInstance,
+      return_value_policy<reference_existing_object>())
+    .def("get_uid_instance", &TestEnvironment::GetUidInstance,
+      return_value_policy<reference_existing_object>())
+    .def("get_administration_instance",
+      &TestEnvironment::GetAdministrationInstance,
+      return_value_policy<reference_existing_object>())
+    .def("get_market_data_instance", &TestEnvironment::GetMarketDataInstance,
+      return_value_policy<reference_existing_object>())
+    .def("get_order_execution_instance",
+      &TestEnvironment::GetOrderExecutionInstance,
+      return_value_policy<reference_existing_object>())
+    .def("open", BlockingFunction(&TestEnvironment::Open))
+    .def("close", BlockingFunction(&TestEnvironment::Close));
 }
 
 void Nexus::Python::ExportTestServiceClients() {
   class_<PythonTestServiceClients, boost::noncopyable,
-      bases<VirtualServiceClients>>("TestClients", no_init)
+      bases<VirtualServiceClients>>("TestServiceClients", no_init)
     .def("__init__", make_constructor(&BuildTestServiceClients))
     .def("get_service_locator_client",
       BlockingFunction<PythonTestServiceClients>(
@@ -242,10 +323,32 @@ void Nexus::Python::ExportTestServiceClients() {
     .def("get_time_client", BlockingFunction<PythonTestServiceClients>(
       &PythonTestServiceClients::GetTimeClient,
       return_value_policy<reference_existing_object>()))
+    .def("build_timer", ReleaseUniquePtr<PythonTestServiceClients>(
+      &PythonTestServiceClients::BuildTimer))
     .def("open", BlockingFunction<PythonTestServiceClients>(
       &PythonTestServiceClients::Open))
     .def("close", BlockingFunction<PythonTestServiceClients>(
       &PythonTestServiceClients::Close));
+}
+
+void Nexus::Python::ExportTestTimeClient() {
+  class_<PythonTestTimeClient, boost::noncopyable, bases<VirtualTimeClient>>(
+      "TestTimeClient", no_init)
+    .def("__init__", make_constructor(&BuildTestTimeClient))
+    .def("get_time", &PythonTestTimeClient::GetTime)
+    .def("open", BlockingFunction<PythonTestTimeClient>(
+      &PythonTestTimeClient::Open))
+    .def("close", BlockingFunction<PythonTestTimeClient>(
+      &PythonTestTimeClient::Close));
+}
+
+void Nexus::Python::ExportTestTimer() {
+  class_<PythonTestTimer, boost::noncopyable, bases<VirtualTimer>>("TestTimer",
+      no_init)
+    .def("__init__", make_constructor(&BuildTestTimer))
+    .def("start", BlockingFunction<PythonTestTimer>(&PythonTestTimer::Start))
+    .def("cancel", BlockingFunction<PythonTestTimer>(&PythonTestTimer::Cancel))
+    .def("wait", BlockingFunction<PythonTestTimer>(&PythonTestTimer::Wait));
 }
 
 void Nexus::Python::ExportVirtualServiceClients() {
@@ -278,6 +381,7 @@ void Nexus::Python::ExportVirtualServiceClients() {
       return_value_policy<reference_existing_object>())
     .def("get_time_client", pure_virtual(&VirtualServiceClients::GetTimeClient),
       return_value_policy<reference_existing_object>())
+    .def("build_timer", ReleaseUniquePtr(&VirtualServiceClients::BuildTimer))
     .def("open", pure_virtual(&VirtualServiceClients::Open))
     .def("close", pure_virtual(&VirtualServiceClients::Close));
 }
