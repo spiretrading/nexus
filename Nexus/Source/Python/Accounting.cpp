@@ -4,6 +4,7 @@
 #include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/Pair.hpp>
 #include <Beam/Python/PythonBindings.hpp>
+#include <Beam/Python/Vector.hpp>
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Accounting/Position.hpp"
 #include "Nexus/Accounting/PositionOrderBook.hpp"
@@ -73,8 +74,8 @@ void Nexus::Python::ExportPositionOrderBook() {
           &PositionOrderBook::PositionEntry::m_security)
         .def_readwrite("quantity",
           &PositionOrderBook::PositionEntry::m_quantity);
-      class_<vector<PositionOrderBook::PositionEntry>>("VectorPositionEntry")
-        .def(vector_indexing_suite<vector<PositionOrderBook::PositionEntry>>());
+      ExportVector<vector<PositionOrderBook::PositionEntry>>(
+        "VectorPositionEntry");
   }
 }
 

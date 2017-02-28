@@ -1,4 +1,5 @@
 #include "Nexus/Python/PythonMarketDataClient.hpp"
+#include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/PythonQueueWriter.hpp>
 
 using namespace Beam;
@@ -12,6 +13,12 @@ PythonMarketDataClient::PythonMarketDataClient(
     std::unique_ptr<VirtualMarketDataClient> client)
     : WrapperMarketDataClient<unique_ptr<VirtualMarketDataClient>>{
       std::move(client)} {}
+
+PythonMarketDataClient::~PythonMarketDataClient() {
+  GilRelease gil;
+  boost::lock_guard<GilRelease> lock{gil};
+  Close();
+}
 
 void PythonMarketDataClient::QueryOrderImbalances(
     const MarketWideDataQuery& query,

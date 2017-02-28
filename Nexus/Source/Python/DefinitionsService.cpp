@@ -69,6 +69,7 @@ void Nexus::Python::ExportDefinitionsClient() {
   class_<VirtualDefinitionsClient, boost::noncopyable>("DefinitionsClient",
       no_init)
     .def("__init__", make_constructor(&BuildClient))
+    .def("__del__", BlockingFunction(&VirtualDefinitionsClient::Close))
     .def("load_minimum_spire_client_version", BlockingFunction(
       &VirtualDefinitionsClient::LoadMinimumSpireClientVersion))
     .def("load_country_database",

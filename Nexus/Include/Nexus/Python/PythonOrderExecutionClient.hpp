@@ -25,6 +25,8 @@ namespace Python {
       PythonOrderExecutionClient(std::unique_ptr<
         OrderExecutionService::VirtualOrderExecutionClient> client);
 
+      virtual ~PythonOrderExecutionClient();
+
       //! Submits a query for OrderRecords.
       /*!
         \param query The query to submit.

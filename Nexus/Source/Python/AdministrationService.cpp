@@ -114,6 +114,7 @@ void Nexus::Python::ExportAdministrationClient() {
   class_<VirtualAdministrationClient, boost::noncopyable>(
     "AdministrationClient", no_init)
     .def("__init__", make_constructor(&BuildClient))
+    .def("__del__", BlockingFunction(&VirtualAdministrationClient::Close))
     .def("check_administrator",
       BlockingFunction(&VirtualAdministrationClient::CheckAdministrator))
     .def("load_account_roles",
@@ -180,6 +181,7 @@ void Nexus::Python::ExportAdministrationServiceTestInstance() {
   class_<AdministrationServiceTestInstance, boost::noncopyable>(
       "AdministrationServiceTestInstance", no_init)
     .def("__init__", make_constructor(BuildAdministrationServiceTestInstance))
+    .def("__del__", BlockingFunction(&AdministrationServiceTestInstance::Close))
     .def("open", BlockingFunction(&AdministrationServiceTestInstance::Open))
     .def("close", BlockingFunction(&AdministrationServiceTestInstance::Close))
     .def("build_client", &AdministrationServiceTestInstanceBuildClient,

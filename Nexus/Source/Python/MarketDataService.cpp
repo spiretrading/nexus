@@ -7,10 +7,10 @@
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Python/BoostPython.hpp>
 #include <Beam/Python/GilRelease.hpp>
-#include <Beam/Python/ListToVector.hpp>
 #include <Beam/Python/PythonBindings.hpp>
 #include <Beam/Python/PythonQueueWriter.hpp>
 #include <Beam/Python/Queries.hpp>
+#include <Beam/Python/Vector.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/ServiceLocatorClient.hpp>
@@ -126,9 +126,7 @@ void Nexus::Python::ExportMarketDataClient() {
       &PythonMarketDataClient::Open))
     .def("close", BlockingFunction<PythonMarketDataClient>(
       &PythonMarketDataClient::Close));
-  class_<vector<SecurityInfo>>("VectorSecurityInfo")
-    .def(vector_indexing_suite<vector<SecurityInfo>>());
-  ExportVector<vector<SecurityInfo>>();
+  ExportVector<vector<SecurityInfo>>("VectorSecurityInfo");
 }
 
 void Nexus::Python::ExportMarketDataService() {
@@ -155,6 +153,7 @@ void Nexus::Python::ExportMarketDataServiceTestInstance() {
   class_<MarketDataServiceTestInstance, boost::noncopyable>(
       "MarketDataServiceTestInstance", no_init)
     .def("__init__", make_constructor(BuildMarketDataServiceTestInstance))
+    .def("__del__", BlockingFunction(&MarketDataServiceTestInstance::Close))
     .def("open", BlockingFunction(&MarketDataServiceTestInstance::Open))
     .def("close", BlockingFunction(&MarketDataServiceTestInstance::Close))
     .def("set_bbo", BlockingFunction(&MarketDataServiceTestInstance::SetBbo))

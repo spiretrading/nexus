@@ -102,6 +102,8 @@ namespace {
               std::move(client)) {}
 
       virtual ~PythonApplicationServiceClients() override {
+        GilRelease gil;
+        boost::lock_guard<GilRelease> lock{gil};
         Close();
       }
 
@@ -150,6 +152,8 @@ namespace {
             m_environment{std::move(environment)} {}
 
       virtual ~PythonTestServiceClients() override {
+        GilRelease gil;
+        boost::lock_guard<GilRelease> lock{gil};
         Close();
       }
 
@@ -165,6 +169,8 @@ namespace {
             m_environment{std::move(environment)} {}
 
       virtual ~PythonTestTimer() override {
+        GilRelease gil;
+        boost::lock_guard<GilRelease> lock{gil};
         Cancel();
       }
 
@@ -179,6 +185,8 @@ namespace {
             m_environment{std::move(environment)} {}
 
       virtual ~PythonTestTimeClient() override {
+        GilRelease gil;
+        boost::lock_guard<GilRelease> lock{gil};
         Close();
       }
 
@@ -266,6 +274,7 @@ void Nexus::Python::ExportServiceClients() {
 void Nexus::Python::ExportTestEnvironment() {
   class_<TestEnvironment, std::shared_ptr<TestEnvironment>, boost::noncopyable>(
       "TestEnvironment", init<>())
+    .def("__del__", BlockingFunction(&TestEnvironment::Close))
     .def("set_time", BlockingFunction(&TestEnvironment::SetTime))
     .def("advance_time", BlockingFunction(&TestEnvironment::AdvanceTime))
     .def("update", BlockingFunction(&TestEnvironment::Update))
