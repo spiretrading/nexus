@@ -156,18 +156,17 @@ void Nexus::Python::ExportExecutionReport() {
 void Nexus::Python::ExportMockOrderExecutionDriver() {
   class_<MockOrderExecutionDriver, boost::noncopyable>(
       "MockOrderExecutionDriver", init<>())
-    .def("__del__", BlockingFunction(&MockOrderExecutionDriver::Close))
     .def("set_order_status_new_on_submission",
       &MockOrderExecutionDriver::SetOrderStatusNewOnSubmission)
     .def("find_order", &MockOrderExecutionDriver::FindOrder,
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("add_recovery", &MockOrderExecutionDriver::AddRecovery)
     .def("get_publisher", &MockOrderExecutionDriver::GetPublisher,
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("recover", &MockOrderExecutionDriver::Recover,
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("submit", BlockingFunction(&MockOrderExecutionDriver::Submit,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("cancel", BlockingFunction(&MockOrderExecutionDriver::Cancel))
     .def("update", BlockingFunction(&MockOrderExecutionDriver::Update))
     .def("open", BlockingFunction(&MockOrderExecutionDriver::Open))
@@ -181,15 +180,13 @@ void Nexus::Python::ExportOrder() {
   class_<Order, boost::noncopyable>("Order", no_init)
     .add_property("info", make_function(&Order::GetInfo,
       return_value_policy<copy_const_reference>()))
-    .def("get_publisher", &Order::GetPublisher,
-      return_value_policy<reference_existing_object>());
+    .def("get_publisher", &Order::GetPublisher, return_internal_reference<>());
   ExportVector<vector<const Order*>>("VectorOrder");
 }
 
 void Nexus::Python::ExportOrderExecutionClient() {
   class_<VirtualOrderExecutionClient, boost::noncopyable>(
-    "VirtualOrderExecutionClient", no_init)
-    .def("__del__", BlockingFunction(&VirtualOrderExecutionClient::Close));
+    "VirtualOrderExecutionClient", no_init);
   class_<PythonOrderExecutionClient, boost::noncopyable,
       bases<VirtualOrderExecutionClient>>("OrderExecutionClient", no_init)
     .def("__init__", make_constructor(&BuildClient))
@@ -202,10 +199,9 @@ void Nexus::Python::ExportOrderExecutionClient() {
       &PythonOrderExecutionClient::QueryExecutionReports)
     .def("get_order_submission_publisher",
       &PythonOrderExecutionClient::GetOrderSubmissionPublisher,
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("submit", BlockingFunction<PythonOrderExecutionClient>(
-      &PythonOrderExecutionClient::Submit,
-      return_value_policy<reference_existing_object>()))
+      &PythonOrderExecutionClient::Submit, return_internal_reference<>()))
     .def("cancel", &PythonOrderExecutionClient::Cancel)
     .def("open", BlockingFunction<PythonOrderExecutionClient>(
       &PythonOrderExecutionClient::Open))
@@ -254,7 +250,7 @@ void Nexus::Python::ExportOrderExecutionServiceTestInstance() {
     .def("__init__", make_constructor(BuildOrderExecutionServiceTestInstance))
     .def("__del__", BlockingFunction(&OrderExecutionServiceTestInstance::Close))
     .def("get_driver", &OrderExecutionServiceTestInstance::GetDriver,
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("open", BlockingFunction(&OrderExecutionServiceTestInstance::Open))
     .def("close", BlockingFunction(&OrderExecutionServiceTestInstance::Close))
     .def("build_client", &OrderExecutionServiceTestInstanceBuildClient,

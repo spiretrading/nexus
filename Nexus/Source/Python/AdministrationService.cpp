@@ -114,7 +114,6 @@ void Nexus::Python::ExportAdministrationClient() {
   class_<VirtualAdministrationClient, boost::noncopyable>(
     "AdministrationClient", no_init)
     .def("__init__", make_constructor(&BuildClient))
-    .def("__del__", BlockingFunction(&VirtualAdministrationClient::Close))
     .def("check_administrator",
       BlockingFunction(&VirtualAdministrationClient::CheckAdministrator))
     .def("load_account_roles",
@@ -143,12 +142,12 @@ void Nexus::Python::ExportAdministrationClient() {
       BlockingFunction(&VirtualAdministrationClient::StoreEntitlements))
     .def("get_risk_parameters_publisher", BlockingFunction(
       &VirtualAdministrationClient::GetRiskParametersPublisher,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("store_risk_parameters", BlockingFunction(
       &VirtualAdministrationClient::StoreRiskParameters))
     .def("get_risk_state_publisher", BlockingFunction(
       &VirtualAdministrationClient::GetRiskStatePublisher,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("store_risk_state", BlockingFunction(
       &VirtualAdministrationClient::StoreRiskState))
     .def("open", BlockingFunction(&VirtualAdministrationClient::Open))

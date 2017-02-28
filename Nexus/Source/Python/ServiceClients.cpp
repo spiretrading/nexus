@@ -219,41 +219,41 @@ void Nexus::Python::ExportApplicationServiceClients() {
     .def("get_service_locator_client",
       BlockingFunction<PythonApplicationServiceClients>(
       &PythonApplicationServiceClients::GetServiceLocatorClient,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("get_registry_client",
       BlockingFunction<PythonApplicationServiceClients>(
       &PythonApplicationServiceClients::GetRegistryClient,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("get_administration_client",
       BlockingFunction<PythonApplicationServiceClients>(
       &PythonApplicationServiceClients::GetAdministrationClient,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("get_definitions_client",
       BlockingFunction<PythonApplicationServiceClients>(
       &PythonApplicationServiceClients::GetDefinitionsClient,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("get_market_data_client",
       BlockingFunction<PythonApplicationServiceClients>(
       &PythonApplicationServiceClients::GetMarketDataClient,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("get_charting_client",
       BlockingFunction<PythonApplicationServiceClients>(
       &PythonApplicationServiceClients::GetChartingClient,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("get_compliance_client",
       BlockingFunction<PythonApplicationServiceClients>(
       &PythonApplicationServiceClients::GetComplianceClient,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("get_order_execution_client",
       BlockingFunction<PythonApplicationServiceClients>(
       &PythonApplicationServiceClients::GetOrderExecutionClient,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("get_risk_client", BlockingFunction<PythonApplicationServiceClients>(
       &PythonApplicationServiceClients::GetRiskClient,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("get_time_client", BlockingFunction<PythonApplicationServiceClients>(
       &PythonApplicationServiceClients::GetTimeClient,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("build_timer", ReleaseUniquePtr<PythonApplicationServiceClients>(
       &PythonApplicationServiceClients::BuildTimer))
     .def("open", BlockingFunction<PythonApplicationServiceClients>(
@@ -274,23 +274,22 @@ void Nexus::Python::ExportServiceClients() {
 void Nexus::Python::ExportTestEnvironment() {
   class_<TestEnvironment, std::shared_ptr<TestEnvironment>, boost::noncopyable>(
       "TestEnvironment", init<>())
-    .def("__del__", BlockingFunction(&TestEnvironment::Close))
     .def("set_time", BlockingFunction(&TestEnvironment::SetTime))
     .def("advance_time", BlockingFunction(&TestEnvironment::AdvanceTime))
     .def("update", BlockingFunction(&TestEnvironment::Update))
     .def("get_service_locator_instance",
       &TestEnvironment::GetServiceLocatorInstance,
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("get_uid_instance", &TestEnvironment::GetUidInstance,
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("get_administration_instance",
       &TestEnvironment::GetAdministrationInstance,
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("get_market_data_instance", &TestEnvironment::GetMarketDataInstance,
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("get_order_execution_instance",
       &TestEnvironment::GetOrderExecutionInstance,
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("open", BlockingFunction(&TestEnvironment::Open))
     .def("close", BlockingFunction(&TestEnvironment::Close));
 }
@@ -302,36 +301,34 @@ void Nexus::Python::ExportTestServiceClients() {
     .def("get_service_locator_client",
       BlockingFunction<PythonTestServiceClients>(
       &PythonTestServiceClients::GetServiceLocatorClient,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("get_registry_client", BlockingFunction<PythonTestServiceClients>(
       &PythonTestServiceClients::GetRegistryClient,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("get_administration_client",
       BlockingFunction<PythonTestServiceClients>(
       &PythonTestServiceClients::GetAdministrationClient,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("get_definitions_client", BlockingFunction<PythonTestServiceClients>(
       &PythonTestServiceClients::GetDefinitionsClient,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("get_market_data_client", BlockingFunction<PythonTestServiceClients>(
       &PythonTestServiceClients::GetMarketDataClient,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("get_charting_client", BlockingFunction<PythonTestServiceClients>(
       &PythonTestServiceClients::GetChartingClient,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("get_compliance_client", BlockingFunction<PythonTestServiceClients>(
       &PythonTestServiceClients::GetComplianceClient,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("get_order_execution_client",
       BlockingFunction<PythonTestServiceClients>(
       &PythonTestServiceClients::GetOrderExecutionClient,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("get_risk_client", BlockingFunction<PythonTestServiceClients>(
-      &PythonTestServiceClients::GetRiskClient,
-      return_value_policy<reference_existing_object>()))
+      &PythonTestServiceClients::GetRiskClient, return_internal_reference<>()))
     .def("get_time_client", BlockingFunction<PythonTestServiceClients>(
-      &PythonTestServiceClients::GetTimeClient,
-      return_value_policy<reference_existing_object>()))
+      &PythonTestServiceClients::GetTimeClient, return_internal_reference<>()))
     .def("build_timer", ReleaseUniquePtr<PythonTestServiceClients>(
       &PythonTestServiceClients::BuildTimer))
     .def("open", BlockingFunction<PythonTestServiceClients>(
@@ -364,32 +361,32 @@ void Nexus::Python::ExportVirtualServiceClients() {
   class_<VirtualServiceClientsWrapper, boost::noncopyable>("ServiceClients")
     .def("get_service_locator_client",
       pure_virtual(&VirtualServiceClients::GetServiceLocatorClient),
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("get_registry_client",
       pure_virtual(&VirtualServiceClients::GetRegistryClient),
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("get_administration_client",
       pure_virtual(&VirtualServiceClients::GetAdministrationClient),
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("get_definitions_client",
       pure_virtual(&VirtualServiceClients::GetDefinitionsClient),
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("get_market_data_client",
       pure_virtual(&VirtualServiceClients::GetMarketDataClient),
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("get_charting_client",
       pure_virtual(&VirtualServiceClients::GetChartingClient),
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("get_compliance_client",
       pure_virtual(&VirtualServiceClients::GetComplianceClient),
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("get_order_execution_client",
       pure_virtual(&VirtualServiceClients::GetOrderExecutionClient),
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("get_risk_client", pure_virtual(&VirtualServiceClients::GetRiskClient),
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("get_time_client", pure_virtual(&VirtualServiceClients::GetTimeClient),
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("build_timer", ReleaseUniquePtr(&VirtualServiceClients::BuildTimer))
     .def("open", pure_virtual(&VirtualServiceClients::Open))
     .def("close", pure_virtual(&VirtualServiceClients::Close));
