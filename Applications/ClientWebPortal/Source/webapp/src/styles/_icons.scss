@@ -24,22 +24,31 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-.icon-add-remove-panel:before {
+.icon-single-arrow:before {
+  content: "\5d";
+}
+.icon-double-arrow:before {
+  content: "\5b";
+}
+.icon-column:before {
+  content: "\2d";
+}
+.icon-currency:before {
   content: "\30";
 }
-.icon-calender:before {
+.icon-market:before {
   content: "\39";
 }
-.icon-dot:before {
+.icon-calender:before {
   content: "\38";
 }
-.icon-edit:before {
+.icon-dot:before {
   content: "\37";
 }
-.icon-photo:before {
+.icon-edit:before {
   content: "\36";
 }
-.icon-remove-grp:before {
+.icon-photo:before {
   content: "\35";
 }
 .icon-remove:before {
@@ -87,7 +96,7 @@
 .icon-entitlements:before {
   content: "\70";
 }
-.icon-group:before {
+.icon-group2:before {
   content: "\6f";
 }
 .icon-performance:before {

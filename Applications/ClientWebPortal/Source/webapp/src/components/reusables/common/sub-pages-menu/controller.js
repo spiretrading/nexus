@@ -21,7 +21,7 @@ class Controller {
     if (path.indexOf('/profile') >= 0) {
       this.componentModel = this.getProfilePages(path);
       EventBus.publish(Event.TopNav.SUBMENU_UPDATED, true);
-    } else if (path.indexOf('/searchProfiles') >= 0) {
+    } else {
       this.componentModel = [];
       EventBus.publish(Event.TopNav.SUBMENU_UPDATED, false);
     }

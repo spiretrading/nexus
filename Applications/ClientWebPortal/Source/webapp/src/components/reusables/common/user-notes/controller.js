@@ -13,7 +13,7 @@ class Controller {
   }
 
   componentWillUpdate(model) {
-    this.componentModel = model;
+    overwriteMerge(this.componentModel, model);
     this.view.setComponentModel(this.componentModel);
   }
 

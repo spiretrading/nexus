@@ -33,6 +33,12 @@ class View extends UpdatableView {
     this.controller.navigateToSearchProfiles.apply(this.controller);
   }
 
+  /** @private */
+  onPortfolioClick() {
+    this.closeMenu();
+    this.controller.navigateToPortfolio.apply(this.controller);
+  }
+
   initialize() {
     $('#side-menu-container .close-btn').on('mouseenter', () => {
       $('#side-menu-container .close-btn').addClass('close-btn-hover');
@@ -63,12 +69,19 @@ class View extends UpdatableView {
   }
 
   render() {
-    let searchProfilesMenuItem;
+    let searchProfilesMenuItem, portfolioMenuItem;
     if (this.componentModel.isAdmin || this.componentModel.isManager) {
-      searchProfilesMenuItem = <div className="menu-item" onClick={this.onSearchProfilesClick.bind(this)}>
-        <span className="icon-search"></span>
-        Search
-      </div>
+      searchProfilesMenuItem =
+        <div className="menu-item" onClick={this.onSearchProfilesClick.bind(this)}>
+          <span className="icon-search"></span>
+          Search
+        </div>
+
+      portfolioMenuItem =
+        <div className="menu-item" onClick={this.onPortfolioClick.bind(this)}>
+          <span className="icon-portfolio"></span>
+          Portfolio
+        </div>
     }
 
     return (
@@ -82,6 +95,7 @@ class View extends UpdatableView {
           My Profile
         </div>
         {searchProfilesMenuItem}
+        {portfolioMenuItem}
         <div className="menu-item" onClick={this.onSignOutClick.bind(this)}>
           <span className="icon-signout"></span>
           Sign Out

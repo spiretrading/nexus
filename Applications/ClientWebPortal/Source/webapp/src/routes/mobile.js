@@ -83,6 +83,14 @@ class MobileRoutes extends Routes {
             .then(loadRoute(cb))
             .catch(errorLoading);
         }
+      },
+      {
+        path: 'portfolio',
+        getComponent(location, cb) {
+          System.import('../components/structures/mobile/portfolio/index')
+            .then(loadRoute(cb))
+            .catch(errorLoading);
+        }
       }
     ];
   }
