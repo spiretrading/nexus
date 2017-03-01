@@ -45,10 +45,20 @@ def main():
   mysql_username = data_store_config['username']
   mysql_password = data_store_config['password']
   schema = data_store_config['schema']
-  connection = mysql.connector.connect(host = mysql_address.host,
-    database = schema, user = mysql_username, password = mysql_password)
-  for line in open(args.report, 'r')
-    print line
+  for line in open(args.report, 'r'):
+    line = line.strip()
+    tokens = line.split(',')
+    order_id = tokens[0]
+    sequence = tokens[1]
+    execution_fee, processing_fee, commission = \
+      (nexus.Money.from_value(tokens[12]), nexus.Money.from_value(tokens[13]),
+       nexus.Money.from_value(tokens[14]))
+    query = 'UPDATE execution_reports SET ' \
+      'execution_fee = %s, processing_fee = %s, commission = %s WHERE ' \
+      'order_id = %s AND sequence = %s;' % \
+      (execution_fee.representation, processing_fee.representation,
+       commission.representation, order_id, sequence)
+    print query
 
 if __name__ == '__main__':
   main()
