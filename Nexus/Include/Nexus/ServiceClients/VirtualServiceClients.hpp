@@ -45,6 +45,8 @@ namespace Nexus {
 
       using TimeClient = Beam::TimeService::VirtualTimeClient;
 
+      using Timer = Beam::Threading::VirtualTimer;
+
       virtual ~VirtualServiceClients() = default;
 
       virtual ServiceLocatorClient& GetServiceLocatorClient() = 0;
@@ -66,6 +68,9 @@ namespace Nexus {
       virtual RiskClient& GetRiskClient() = 0;
 
       virtual TimeClient& GetTimeClient() = 0;
+
+      virtual std::unique_ptr<Timer> BuildTimer(
+        boost::posix_time::time_duration expiry) = 0;
 
       virtual void Open() = 0;
 
@@ -107,6 +112,8 @@ namespace Nexus {
 
       using TimeClient = Beam::TimeService::VirtualTimeClient;
 
+      using Timer = Beam::Threading::VirtualTimer;
+
       //! The ServiceClients to wrap.
       using Client = Beam::GetTryDereferenceType<ClientType>;
 
@@ -138,6 +145,9 @@ namespace Nexus {
       virtual RiskClient& GetRiskClient() override;
 
       virtual TimeClient& GetTimeClient() override;
+
+      virtual std::unique_ptr<Timer> BuildTimer(
+        boost::posix_time::time_duration expiry) override;
 
       virtual void Open() override;
 
@@ -307,6 +317,13 @@ namespace Nexus {
   typename WrapperServiceClients<ClientType>::TimeClient&
       WrapperServiceClients<ClientType>::GetTimeClient() {
     return **m_timeClient;
+  }
+
+  template<typename ClientType>
+  std::unique_ptr<typename WrapperServiceClients<ClientType>::Timer>
+      WrapperServiceClients<ClientType>::BuildTimer(
+      boost::posix_time::time_duration expiry) {
+    return Beam::Threading::MakeVirtualTimer(m_client->BuildTimer(expiry));
   }
 
   template<typename ClientType>
