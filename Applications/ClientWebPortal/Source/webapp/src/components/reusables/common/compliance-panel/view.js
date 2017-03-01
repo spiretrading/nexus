@@ -63,7 +63,7 @@ class View extends UpdatableView {
   onMoneyInputBlur(event) {
     let $input = $(event.currentTarget);
     let input = $input.val().trim();
-    let formattedNumber = numberFormatter.formatCurrencyWithComma(input);
+    let formattedNumber = numberFormatter.formatTwoDecimalsWithComma(input);
     $input.val(formattedNumber);
 
     let value = formattedNumber.replace(',', '');
@@ -165,7 +165,7 @@ class View extends UpdatableView {
   /** @private */
   getMoneyInput(parameterIndex) {
     let parameters = this.componentModel.schema.parameters;
-    let formattedNumber = numberFormatter.formatCurrencyWithComma(parameters[parameterIndex].value.value);
+    let formattedNumber = numberFormatter.formatTwoDecimalsWithComma(parameters[parameterIndex].value.value);
     let onMoneyInputBlur = this.onMoneyInputBlur.bind(this);
     let parameterName = parameters[parameterIndex].name.replace(/\\/g, '');
     parameterName = labelFormatter.toCapitalWithSpace(parameterName);

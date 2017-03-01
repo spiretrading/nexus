@@ -58,6 +58,15 @@ class DesktopRoutes extends Routes {
         }
       },
       {
+        path: 'profile-performance/:type/:id/:name',
+        getComponent(location, cb) {
+          System.import('../components/structures/desktop/profile/routes')
+            .then((module) => { return { default: module.performance } })
+            .then(loadRoute(cb))
+            .catch(errorLoading);
+        }
+      },
+      {
         path: 'searchProfiles-search',
         getComponent(location, cb) {
           System.import('../components/structures/desktop/search-profiles/routes')
@@ -71,6 +80,14 @@ class DesktopRoutes extends Routes {
         getComponent(location, cb) {
           System.import('../components/structures/desktop/search-profiles/routes')
             .then((module) => { return { default: module.newAccount } })
+            .then(loadRoute(cb))
+            .catch(errorLoading);
+        }
+      },
+      {
+        path: 'portfolio',
+        getComponent(location, cb) {
+          System.import('../components/structures/desktop/portfolio/index')
             .then(loadRoute(cb))
             .catch(errorLoading);
         }

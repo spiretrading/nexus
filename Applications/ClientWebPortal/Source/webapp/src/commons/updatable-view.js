@@ -9,7 +9,13 @@ class UpdatableView {
   }
 
   update(newComponentModel) {
-    this.componentModel = clone(newComponentModel);
+    if ($.isArray(this.componentModel)) {
+      this.componentModel = newComponentModel;
+    } else if (typeof this.componentModel !== 'object') {
+      this.componentModel = newComponentModel;
+    } else {
+      overwriteMerge(this.componentModel, newComponentModel);
+    }
     this.react.forceUpdate();
   }
 

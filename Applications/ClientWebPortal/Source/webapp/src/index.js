@@ -8,6 +8,8 @@ import 'jquery-ui-css';
 import 'jquery-tagit';
 import 'jquery-tagit-css';
 import 'jquery-slimscroll';
+import 'jquery-ellipsis';
+import 'jquery-ellipsis-css';
 import 'index.html';
 import 'bootstrap-css';
 import 'styles/general.scss';
@@ -36,6 +38,14 @@ window.clone = (originalObj) => {
   } else {
     return JSON.parse(JSON.stringify(originalObj));
   }
+};
+window.overwriteMerge = (originalObj, newObj) => {
+  for (let property in originalObj) {
+    if (newObj[property] !== undefined){
+      originalObj[property] = newObj[property];
+    }
+  }
+  $.extend(true, originalObj, newObj);
 };
 window.EventBus = eventBus;
 window.Event = event;

@@ -29,7 +29,7 @@ class CommonView extends UpdatableView {
   onCurrencyChange() {
     let currencyId = $('#risk-control-container select.currency-select').val();
     this.controller.onCurrencyChange.apply(this.controller, [currencyId]);
-    let currencySign = definitionsService.getCurrencySign(currencyId);
+    let currencySign = definitionsService.getCurrencySignFromId(currencyId);
     $('#risk-control-container .currency-sign').text('(' + currencySign + ')');
   }
 

@@ -9,30 +9,28 @@
     margin: 0 0 30px 0;
   }
 
-  .parameters-wrapper {
-    display: flex;
+  .report-header {
+    color: $primaryGradient1;
+    font-weight: bold;
+    margin-top: 45px;
+    margin-bottom: 20px;
+  }
 
-    .start-date {
-      margin-right: 40px;
-    }
-
-    .end-date {
-      margin-right: 80px;
-    }
-
-    .generate-button-wrapper {
-      flex: 1;
-      text-align: right;
-
-      .generate-button {
-        width: 200px;
-      }
-    }
+  .report-status-update-wrapper {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    z-index: 2000;
   }
 }
 
 main.mobile {
   #performance-container{
-
+    .report-header {
+      text-align: center;
+      margin-top: 30px;
+      margin-bottom: 30px;
+    }
   }
 }

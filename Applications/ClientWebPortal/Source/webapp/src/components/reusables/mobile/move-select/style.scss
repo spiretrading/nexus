@@ -1,0 +1,107 @@
+@import "src/styles/variables";
+
+main.mobile {
+  .move-select-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+
+    .list-wrapper {
+      .list-label {
+        color: $black;
+        font-size: 14px;
+        margin-bottom: 10px;
+      }
+
+      .select-wrapper {
+        position: relative;
+
+        ul {
+          padding: 0px;
+          width: calc(100% - 45px);
+          background: $white;
+          border: 1px solid $darkGrey;
+          list-style-type: none;
+          height: 224px;
+          overflow-y: scroll;
+
+          li {
+            padding: 5px 15px;
+            min-height: 32px;
+
+            &.selected-item {
+              background: $primaryGradient2;
+              color: $white;
+            }
+          }
+        }
+
+        .move-select-button {
+          min-width: 30px;
+          min-height: 30px;
+          font-size: 22px;
+          position: absolute;
+          background: $primaryGradient2;
+          cursor: pointer;
+
+          span {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+          }
+        }
+
+        .add-button {
+          position: absolute;
+          top: 0px;
+          right: 0px;
+          transform: rotate(90deg);
+        }
+
+        .add-all-button {
+          position: absolute;
+          top: 45px;
+          right: 0px;
+          transform: rotate(90deg);
+        }
+
+        .remove-button {
+          position: absolute;
+          top: 0px;
+          right: 0px;
+          transform: rotate(270deg);
+        }
+
+        .remove-all-button {
+          position: absolute;
+          top: 45px;
+          right: 0px;
+          transform: rotate(270deg);
+        }
+      }
+
+      select.options {
+        border: 1px solid $darkGrey;
+        height: 178px;
+        min-width: 200px;
+
+        option {
+          font-size: 14px;
+          padding: 3px 0 3px 10px;
+          min-height: 22px;
+
+          &:checked {
+            background: $primaryGradient3 linear-gradient(0deg, $primaryGradient3 0%, $primaryGradient3 100%);
+          }
+        }
+      }
+    }
+
+    .selected-list-wrapper {
+      margin-top: 20px;
+    }
+  }
+}

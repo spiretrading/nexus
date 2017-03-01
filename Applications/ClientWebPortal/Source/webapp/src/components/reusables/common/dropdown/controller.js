@@ -14,7 +14,7 @@ class Controller {
 
   componentWillUpdate(model) {
     if (model != null) {
-      $.extend(true, this.componentModel, model);
+      overwriteMerge(this.componentModel, model);
       this.view.setComponentModel(this.componentModel);
     }
   }
