@@ -6,6 +6,7 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Python/BoostPython.hpp>
+#include <Beam/Python/Copy.hpp>
 #include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/PythonBindings.hpp>
 #include <Beam/Python/PythonQueueWriter.hpp>
@@ -165,7 +166,9 @@ void Nexus::Python::ExportMarketWideDataQuery() {
   ExportIndexedQuery<MarketCode>("MarketWideDataQuery");
   class_<MarketWideDataQuery, bases<IndexedQuery<MarketCode>, RangedQuery,
     SnapshotLimitedQuery, InterruptableQuery, FilteredQuery>>(
-    "MarketWideDataQuery", init<>());
+    "MarketWideDataQuery", init<>())
+    .def("__copy__", &MakeCopy<MarketWideDataQuery>)
+    .def("__deepcopy__", &MakeDeepCopy<MarketWideDataQuery>);
   def("query_real_time_with_snapshot",
     static_cast<MarketWideDataQuery (*)(const MarketCode&)>(
     &QueryRealTimeWithSnapshot));
@@ -175,7 +178,9 @@ void Nexus::Python::ExportSecurityMarketDataQuery() {
   ExportIndexedQuery<Security>("SecurityIndexedQuery");
   class_<SecurityMarketDataQuery, bases<IndexedQuery<Security>, RangedQuery,
     SnapshotLimitedQuery, InterruptableQuery, FilteredQuery>>(
-    "SecurityMarketDataQuery", init<>());
+    "SecurityMarketDataQuery", init<>())
+    .def("__copy__", &MakeCopy<SecurityMarketDataQuery>)
+    .def("__deepcopy__", &MakeDeepCopy<SecurityMarketDataQuery>);
   def("query_real_time_with_snapshot",
     static_cast<SecurityMarketDataQuery (*)(Security)>(
     &QueryRealTimeWithSnapshot));

@@ -2,6 +2,7 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Python/BoostPython.hpp>
+#include <Beam/Python/Copy.hpp>
 #include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/PythonBindings.hpp>
 #include <Beam/Python/Queues.hpp>
@@ -87,6 +88,8 @@ namespace {
 
 void Nexus::Python::ExportAccountIdentity() {
   class_<AccountIdentity>("AccountIdentity", init<>())
+    .def("__copy__", &MakeCopy<AccountIdentity>)
+    .def("__deepcopy__", &MakeDeepCopy<AccountIdentity>)
     .add_property("registration_time", make_getter(
       &AccountIdentity::m_registrationTime,
       return_value_policy<return_by_value>()), make_setter(
@@ -192,6 +195,8 @@ void Nexus::Python::ExportTradingGroup() {
     .def(init<const DirectoryEntry&, const DirectoryEntry&,
       const vector<DirectoryEntry>&, const DirectoryEntry&,
       const vector<DirectoryEntry>&>())
+    .def("__copy__", &MakeCopy<TradingGroup>)
+    .def("__deepcopy__", &MakeDeepCopy<TradingGroup>)
     .add_property("entry", make_function(&TradingGroup::GetEntry,
       return_value_policy<return_by_value>()))
     .add_property("managers", make_function(&TradingGroup::GetManagers,

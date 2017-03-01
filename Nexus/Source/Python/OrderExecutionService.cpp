@@ -2,6 +2,7 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Python/BoostPython.hpp>
+#include <Beam/Python/Copy.hpp>
 #include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/PythonBindings.hpp>
 #include <Beam/Python/Vector.hpp>
@@ -119,7 +120,9 @@ void Nexus::Python::ExportAccountQuery() {
   ExportIndexedQuery<DirectoryEntry>("DirectoryEntryIndexedQuery");
   class_<AccountQuery, bases<IndexedQuery<DirectoryEntry>, RangedQuery,
     SnapshotLimitedQuery, InterruptableQuery, FilteredQuery>>(
-    "AccountQuery", init<>());
+    "AccountQuery", init<>())
+    .def("__copy__", &MakeCopy<AccountQuery>)
+    .def("__deepcopy__", &MakeDeepCopy<AccountQuery>);
 }
 
 void Nexus::Python::ExportExecutionReport() {
@@ -127,6 +130,8 @@ void Nexus::Python::ExportExecutionReport() {
   ExportSnapshotPublisher<ExecutionReport, vector<ExecutionReport>>(
     "ExecutionReportSnapshotPublisher");
   class_<ExecutionReport>("ExecutionReport", init<>())
+    .def("__copy__", &MakeCopy<ExecutionReport>)
+    .def("__deepcopy__", &MakeDeepCopy<ExecutionReport>)
     .def("build_initial_report", &ExecutionReport::BuildInitialReport)
     .staticmethod("build_initial_report")
     .def("build_updated_report", &ExecutionReport::BuildUpdatedReport)
@@ -259,6 +264,8 @@ void Nexus::Python::ExportOrderExecutionServiceTestInstance() {
 
 void Nexus::Python::ExportOrderFields() {
   class_<OrderFields>("OrderFields", init<>())
+    .def("__copy__", &MakeCopy<OrderFields>)
+    .def("__deepcopy__", &MakeDeepCopy<OrderFields>)
     .def("build_limit_order", &OrderFields::BuildLimitOrder)
     .staticmethod("build_limit_order")
     .def("build_market_order", &OrderFields::BuildMarketOrder)
@@ -288,6 +295,8 @@ void Nexus::Python::ExportOrderInfo() {
     .def(init<OrderFields, DirectoryEntry, OrderId, bool, ptime>())
     .def(init<OrderFields, OrderId, bool, ptime>())
     .def(init<OrderFields, OrderId, ptime>())
+    .def("__copy__", &MakeCopy<OrderInfo>)
+    .def("__deepcopy__", &MakeDeepCopy<OrderInfo>)
     .def_readwrite("fields", &OrderInfo::m_fields)
     .def_readwrite("submission_account", &OrderInfo::m_submissionAccount)
     .def_readwrite("order_id", &OrderInfo::m_orderId)
@@ -303,6 +312,8 @@ void Nexus::Python::ExportOrderInfo() {
 void Nexus::Python::ExportOrderRecord() {
   class_<OrderRecord>("OrderRecord", init<>())
     .def(init<OrderInfo, vector<ExecutionReport>>())
+    .def("__copy__", &MakeCopy<OrderRecord>)
+    .def("__deepcopy__", &MakeDeepCopy<OrderRecord>)
     .def_readwrite("info", &OrderRecord::m_info)
     .def_readwrite("execution_reports", &OrderRecord::m_executionReports)
     .def(self == self)

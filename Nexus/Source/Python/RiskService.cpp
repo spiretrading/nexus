@@ -1,5 +1,6 @@
 #include "Nexus/Python/RiskService.hpp"
 #include <Beam/Python/BoostPython.hpp>
+#include <Beam/Python/Copy.hpp>
 #include <Beam/Python/Queries.hpp>
 #include "Nexus/RiskService/RiskParameters.hpp"
 
@@ -24,6 +25,8 @@ void Nexus::Python::ExportRiskService() {
 
 void Nexus::Python::ExportRiskParameters() {
   class_<RiskParameters>("RiskParameters", init<>())
+    .def("__copy__", &MakeCopy<RiskParameters>)
+    .def("__deepcopy__", &MakeDeepCopy<RiskParameters>)
     .def_readwrite("currency", &RiskParameters::m_currency)
     .def_readwrite("buying_power", &RiskParameters::m_buyingPower)
     .def_readwrite("allowed_state", &RiskParameters::m_allowedState)
