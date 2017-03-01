@@ -1,0 +1,107 @@
+@import "src/styles/variables";
+
+.portfolio-filters-container {
+  width: 100%;
+
+  .header {
+    position: relative;
+    background: $lightestGrey;
+    color: $darkerGrey;
+    font-weight: bold;
+    text-align: center;
+    padding-top: 7px;
+    padding-bottom: 7px;
+    cursor: pointer;
+
+    .arrow-icon {
+      font-size: 13px;
+      margin-left: 15px;
+    }
+  }
+
+  .body {
+    background: $lightestGrey;
+
+    overflow: hidden;
+
+    .content-wrapper {
+      padding: 0 30px 30px 30px;
+      position: relative;
+
+      .filter-buttons-wrapper {
+        display: flex;
+        width: 398px;
+        margin: 0 auto;
+        padding: 35px 0;
+
+        .button-wrapper {
+          margin-right: 30px;
+          color: $primaryGradient3;
+          cursor: pointer;
+
+          span {
+            margin-right: 5px;
+            font-size: 15px;
+          }
+
+          &:last-child {
+            margin-right: 0;
+          }
+
+          &.selected {
+            color: $primaryGradient1;
+          }
+        }
+      }
+
+      .parameters-body {
+        border-top: 1px solid $lightGrey;
+        padding-top: 30px;
+      }
+
+      .update-button {
+        width: 200px;
+        position: relative;
+        left: 615px;
+        margin-top: 20px;
+      }
+    }
+  }
+}
+
+main.mobile {
+  .portfolio-filters-container {
+    .body {
+      .content-wrapper {
+        padding: 0 15px 15px 15px;
+
+        .filter-buttons-wrapper {
+          width: 100%;
+          justify-content: center;
+
+          .button-wrapper {
+            margin-right: 20px;
+
+            span {
+              font-size: 20px;
+
+              &:last-child {
+                margin-right: 0;
+              }
+            }
+          }
+
+          .button-wrapper:last-child {
+            margin-right: 0;
+          }
+        }
+
+        .update-button {
+          width: 100%;
+          margin-top: 20px;
+          left: 0;
+        }
+      }
+    }
+  }
+}

@@ -5,7 +5,7 @@ class NumberFormatter {
     return parts.join(".");
   }
 
-  formatCurrencyWithComma(number) {
+  formatTwoDecimalsWithComma(number) {
     let numberStr = number.toString().replace(/,/g, '');
     let numbers = numberStr.split('.');
     let formattedWholeNumber = this.formatWithComma(numbers[0]);

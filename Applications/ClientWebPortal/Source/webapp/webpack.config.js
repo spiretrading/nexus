@@ -86,7 +86,9 @@ module.exports = function(env) {
       alias: {
         'bootstrap-css': '../node_modules/bootstrap/dist/css/bootstrap.min.css',
         'jquery-tagit': '../resources/js/jquery-tagit',
-        'jquery-tagit-css': '../resources/js/jquery-tagit/jquery.tagit.css',
+        'jquery-tagit-css': '../resources/js/jquery-tagit/style.css',
+        'jquery-ellipsis': '../resources/js/jquery-ellipsis',
+        'jquery-ellipsis-css': '../resources/js/jquery-ellipsis/style.css',
         'jquery-ui': '../node_modules/jquery-ui-dist/jquery-ui.min.js',
         'jquery-ui-css': '../node_modules/jquery-ui-dist/jquery-ui.min.css'
       }

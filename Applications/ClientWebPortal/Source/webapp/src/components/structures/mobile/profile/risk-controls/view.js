@@ -105,7 +105,7 @@ class View extends CommonView {
 
     let userInfoNavModel;
     if (this.controller.isModelInitialized.apply(this.controller)) {
-      let currencySign = definitionsService.getCurrencySign(this.componentModel.riskParameters.currencyId.value);
+      let currencySign = definitionsService.getCurrencySignFromId(this.componentModel.riskParameters.currencyId.value);
       if (currencySign != '') {
         currencySign = '(' + currencySign + ')';
       }

@@ -3,61 +3,19 @@ import React from 'react';
 import UpdatableView from 'commons/updatable-view';
 import deviceDetector from 'utils/device-detector';
 import UserInfoNav from 'components/reusables/common/user-info-nav';
-import moment from 'moment';
-import PrimaryButton from 'components/reusables/common/primary-button';
-import ProfitAndLossPanel from 'components/reusables/common/profit-and-loss-panel';
+import ProfitAndLossPanel from 'components/reusables/common/profit-loss-panel';
+import ProfitLossReportParameters from 'components/reusables/common/profit-loss-report-parameters';
+import ReportStatusPanel from 'components/reusables/common/report-status-panel';
 
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
-    this.selectedStartDate = null;
-    this.selectedEndDate = null;
   }
 
   componentDidUpdate() {
     $('#performance-container').fadeIn({
       duration: Config.FADE_DURATION
     });
-  }
-
-  initialize() {
-    $('#performance-container .start-date-input').datepicker({
-      changeMonth: true,
-      changeYear: true,
-      onSelect: (dateText, date) => {
-        this.selectedStartDate = moment(dateText, 'MM/DD/YYYY');
-      },
-      beforeShowDay: (date) => {
-        if (this.selectedEndDate == null) {
-          return [true];
-        }
-
-        let showingDate = moment(date, 'ddd MMM DD YYYY');
-        return [this.selectedEndDate >= showingDate];
-      }
-    });
-
-    $('#performance-container .end-date-input').datepicker({
-      changeMonth: true,
-      changeYear: true,
-      onSelect: (dateText, date) => {
-        this.selectedEndDate = moment(dateText, 'MM/DD/YYYY');
-      },
-      beforeShowDay: (date) => {
-        if (this.selectedStartDate == null) {
-          return [true];
-        }
-
-        let showingDate = moment(date, 'ddd MMM DD YYYY');
-        return [this.selectedStartDate <= showingDate];
-      }
-    });
-  }
-
-  onGenerateClick() {
-    let startDate = $('#performance-container .start-date-input').val().trim();
-    let endDate = $('#performance-container .end-date-input').val().trim();
-    this.controller.generate(startDate, endDate);
   }
 
   render() {
@@ -69,8 +27,6 @@ class View extends UpdatableView {
     let generateBtnModel = {
       label: 'Generate'
     };
-
-    let onGenerateClick = this.onGenerateClick.bind(this);
 
     let pnlPanels = [];
     for (let currency in this.componentModel.pnlReport) {
@@ -87,20 +43,38 @@ class View extends UpdatableView {
       className = 'container-fixed-width';
     }
 
+    let onGenerate = this.controller.generate.bind(this.controller);
+
+    let reportHeader;
+    if (this.componentModel.pnlReport != null) {
+      if (deviceDetector.isMobile()) {
+        reportHeader =
+          <div className="report-header">
+            Your P/L Report Summary<br/>{this.componentModel.startDate} - {this.componentModel.endDate}
+          </div>;
+      } else {
+        reportHeader =
+          <div className="report-header">
+            Your P/L Report Summary {this.componentModel.startDate} - {this.componentModel.endDate}
+          </div>;
+      }
+    }
+
     return (
       <div id="performance-container" className={className}>
         <div className="row">
           <UserInfoNav model={userInfoNavModel}/>
         </div>
-        <div className="row parameters-wrapper">
-          <div className="start-date">Start Date: <input type="text" className="start-date-input"/></div>
-          <div className="end-date">End Date: <input type="text" className="end-date-input"/></div>
-          <div className="generate-button-wrapper">
-            <PrimaryButton className="generate-button" model={generateBtnModel} onClick={onGenerateClick}/>
-          </div>
-        </div>
+
+        <ProfitLossReportParameters onGenerate={onGenerate}/>
+
+        {reportHeader}
         <div className="row">
           {pnlPanels}
+        </div>
+
+        <div className="report-status-update-wrapper">
+          <ReportStatusPanel/>
         </div>
       </div>
     );
@@ -108,4 +82,3 @@ class View extends UpdatableView {
 }
 
 export default View;
- 

@@ -82,6 +82,12 @@ class Controller {
     this.saveLastVisitedPath(path);
   }
 
+  navigateToPortfolio() {
+    let path = '/portfolio';
+    browserHistory.push(path);
+    this.saveLastVisitedPath(path);
+  }
+
   publishSideMenuClosed() {
     EventBus.publish(Event.TopNav.SIDE_MENU_CLOSED);
   }

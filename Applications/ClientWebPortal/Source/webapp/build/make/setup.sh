@@ -6,5 +6,5 @@ cd $directory/../../
     npm install
 }
 rm -rf $directory/../../node_modules/spire-client
-ln -s $directory/../../../api $directory/../../node_modules/spire-client
+ln -s $directory/../../../api/dist $directory/../../node_modules/spire-client
 popd
