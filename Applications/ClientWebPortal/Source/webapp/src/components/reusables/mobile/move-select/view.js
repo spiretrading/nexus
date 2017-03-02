@@ -107,13 +107,21 @@ class View extends UpdatableView {
               <ul>
                 {availableOptions}
               </ul>
+            </div>
+          </div>
 
-              <div className="add-button move-select-button" onClick={this.onAddClick.bind(this)}>
-                <span className="icon-single-arrow"></span>
-              </div>
-              <div className="add-all-button move-select-button" onClick={this.onAddAllClick.bind(this)}>
-                <span className="icon-double-arrow"></span>
-              </div>
+          <div className="buttons-wrapper">
+            <div className="add-all-button move-select-button" onClick={this.onAddAllClick.bind(this)}>
+              <span className="icon-double-arrow"></span>
+            </div>
+            <div className="add-button move-select-button" onClick={this.onAddClick.bind(this)}>
+              <span className="icon-single-arrow"></span>
+            </div>
+            <div className="remove-button move-select-button" onClick={this.onRemoveClick.bind(this)}>
+              <span className="icon-single-arrow"></span>
+            </div>
+            <div className="remove-all-button move-select-button" onClick={this.onRemoveAllClick.bind(this)}>
+              <span className="icon-double-arrow"></span>
             </div>
           </div>
 
@@ -123,13 +131,6 @@ class View extends UpdatableView {
               <ul>
                 {selectedOptions}
               </ul>
-
-              <div className="remove-button move-select-button" onClick={this.onRemoveClick.bind(this)}>
-                <span className="icon-single-arrow"></span>
-              </div>
-              <div className="remove-all-button move-select-button" onClick={this.onRemoveAllClick.bind(this)}>
-                <span className="icon-double-arrow"></span>
-              </div>
             </div>
           </div>
 
