@@ -80,10 +80,9 @@ namespace {
   }
 
   MarketDataServiceTestInstance* BuildMarketDataServiceTestInstance(
-      std::auto_ptr<VirtualServiceLocatorClient> serviceLocatorClient) {
-    std::unique_ptr<VirtualServiceLocatorClient> clientWrapper{
-      serviceLocatorClient.release()};
-    return new MarketDataServiceTestInstance{std::move(clientWrapper)};
+      const std::shared_ptr<VirtualServiceLocatorClient>&
+      serviceLocatorClient) {
+    return new MarketDataServiceTestInstance{serviceLocatorClient};
   }
 
   PythonMarketDataClient* MarketDataServiceTestInstanceBuildClient(

@@ -46,8 +46,8 @@ namespace Tests {
       OrderExecutionServiceTestInstance(const std::shared_ptr<
         Beam::ServiceLocator::VirtualServiceLocatorClient>&
         serviceLocatorClient,
-        std::unique_ptr<Beam::UidService::VirtualUidClient> uidClient,
-        std::unique_ptr<
+        std::shared_ptr<Beam::UidService::VirtualUidClient> uidClient,
+        std::shared_ptr<
         Nexus::AdministrationService::VirtualAdministrationClient>
         administrationClient);
 
@@ -85,8 +85,8 @@ namespace Tests {
         Beam::Services::ServiceProtocolServletContainer<
         Beam::ServiceLocator::MetaAuthenticationServletAdapter<
         MetaOrderExecutionServlet<Beam::TimeService::IncrementalTimeClient,
-        std::shared_ptr<ServiceLocatorClient>, std::unique_ptr<UidClient>,
-        std::unique_ptr<AdministrationClient>, MockOrderExecutionDriver*,
+        std::shared_ptr<ServiceLocatorClient>, std::shared_ptr<UidClient>,
+        std::shared_ptr<AdministrationClient>, MockOrderExecutionDriver*,
         LocalOrderExecutionDataStore*>, std::shared_ptr<ServiceLocatorClient>>,
         ServerConnection*,
         Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
@@ -106,8 +106,8 @@ namespace Tests {
 
   inline OrderExecutionServiceTestInstance::OrderExecutionServiceTestInstance(
       const std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>&
-      serviceLocatorClient, std::unique_ptr<Beam::UidService::VirtualUidClient>
-      uidClient, std::unique_ptr<
+      serviceLocatorClient, std::shared_ptr<Beam::UidService::VirtualUidClient>
+      uidClient, std::shared_ptr<
       AdministrationService::VirtualAdministrationClient> administrationClient)
       : m_container(Beam::Initialize(serviceLocatorClient,
           Beam::Initialize(boost::posix_time::pos_infin, Beam::Initialize(),

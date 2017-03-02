@@ -44,7 +44,7 @@ namespace Tests {
         \param serviceLocatorClient The ServiceLocatorClient to use.
       */
       MarketDataServiceTestInstance(
-        std::unique_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
+        std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
         serviceLocatorClient);
 
       ~MarketDataServiceTestInstance();
@@ -129,7 +129,7 @@ namespace Tests {
       using MarketDataClient = MarketDataService::VirtualMarketDataClient;
       using MarketDataFeedClient =
         MarketDataService::VirtualMarketDataFeedClient;
-      std::unique_ptr<ServiceLocatorClient> m_serviceLocatorClient;
+      std::shared_ptr<ServiceLocatorClient> m_serviceLocatorClient;
       MarketDataRegistry m_registry;
       EntitlementDatabase m_entitlements;
       Beam::ServiceLocator::DirectoryEntry m_globalEntitlementGroup;
@@ -144,7 +144,7 @@ namespace Tests {
   };
 
   inline MarketDataServiceTestInstance::MarketDataServiceTestInstance(
-      std::unique_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
+      std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
       serviceLocatorClient)
       : m_serviceLocatorClient{std::move(serviceLocatorClient)} {}
 

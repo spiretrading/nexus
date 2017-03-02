@@ -96,16 +96,12 @@ namespace {
   }
 
   OrderExecutionServiceTestInstance* BuildOrderExecutionServiceTestInstance(
-      std::auto_ptr<VirtualServiceLocatorClient> serviceLocatorClient,
-      std::auto_ptr<VirtualUidClient> uidClient,
-      std::auto_ptr<VirtualAdministrationClient> administrationClient) {
-    std::shared_ptr<VirtualServiceLocatorClient> serviceLocatorClientWrapper{
-      serviceLocatorClient.release(), [] (VirtualServiceLocatorClient*) {}};
-    std::unique_ptr<VirtualUidClient> uidClientWrapper{uidClient.release()};
-    std::unique_ptr<VirtualAdministrationClient> administrationClientWrapper{
-      administrationClient.release()};
-    return new OrderExecutionServiceTestInstance{serviceLocatorClientWrapper,
-      std::move(uidClientWrapper), std::move(administrationClientWrapper)};
+      const std::shared_ptr<VirtualServiceLocatorClient>& serviceLocatorClient,
+      const std::shared_ptr<VirtualUidClient>& uidClient,
+      const std::shared_ptr<VirtualAdministrationClient>&
+      administrationClient) {
+    return new OrderExecutionServiceTestInstance{serviceLocatorClient,
+      uidClient, administrationClient};
   }
 
   PythonOrderExecutionClient* OrderExecutionServiceTestInstanceBuildClient(
