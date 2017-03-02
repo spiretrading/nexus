@@ -73,10 +73,9 @@ namespace {
   }
 
   AdministrationServiceTestInstance* BuildAdministrationServiceTestInstance(
-      std::auto_ptr<VirtualServiceLocatorClient> serviceLocatorClient) {
-    std::shared_ptr<VirtualServiceLocatorClient> clientWrapper{
-      serviceLocatorClient.release(), [] (VirtualServiceLocatorClient*) {}};
-    return new AdministrationServiceTestInstance{clientWrapper};
+      const std::shared_ptr<VirtualServiceLocatorClient>&
+      serviceLocatorClient) {
+    return new AdministrationServiceTestInstance{serviceLocatorClient};
   }
 
   VirtualAdministrationClient* AdministrationServiceTestInstanceBuildClient(
