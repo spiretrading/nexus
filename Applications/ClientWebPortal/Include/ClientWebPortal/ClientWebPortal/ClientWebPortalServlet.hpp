@@ -3,13 +3,18 @@
 #include <vector>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
+#include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Pointers/Ref.hpp>
+#include <Beam/Stomp/StompServer.hpp>
 #include <Beam/WebServices/FileStore.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
+#include <Beam/WebServices/HttpUpgradeSlot.hpp>
 #include <Beam/WebServices/SessionStore.hpp>
+#include <Beam/WebServices/WebSocketChannel.hpp>
 #include <boost/noncopyable.hpp>
 #include "ClientWebPortal/ClientWebPortal/ClientWebPortal.hpp"
 #include "ClientWebPortal/ClientWebPortal/ClientWebPortalSession.hpp"
+#include "ClientWebPortal/ClientWebPortal/PortfolioModel.hpp"
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
 
 namespace Nexus {
@@ -20,6 +25,10 @@ namespace ClientWebPortal {
    */
   class ClientWebPortalServlet : private boost::noncopyable {
     public:
+
+      //! The type of WebSocketChannel used.
+      using WebSocketChannel = Beam::WebServices::WebSocketChannel<
+        std::shared_ptr<Beam::Network::TcpSocketChannel>>;
 
       //! Constructs a ClientWebPortalServlet.
       /*!
@@ -33,15 +42,23 @@ namespace ClientWebPortal {
       //! Returns the HTTP request slots.
       std::vector<Beam::WebServices::HttpRequestSlot> GetSlots();
 
+      //! Returns the WebSocket upgrade slots.
+      std::vector<Beam::WebServices::HttpUpgradeSlot<WebSocketChannel>>
+        GetWebSocketSlots();
+
       void Open();
 
       void Close();
 
     private:
+      using StompServer =
+        Beam::Stomp::StompServer<std::unique_ptr<WebSocketChannel>>;
       Beam::WebServices::FileStore m_fileStore;
       Beam::WebServices::SessionStore<ClientWebPortalSession> m_sessions;
       ApplicationServiceClients* m_serviceClients;
+      PortfolioModel m_portfolioModel;
       Beam::IO::OpenState m_openState;
+      Beam::RoutineTaskQueue m_tasks;
 
       void Shutdown();
       Beam::WebServices::HttpResponse OnIndex(
@@ -102,6 +119,9 @@ namespace ClientWebPortal {
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadProfitAndLossReport(
         const Beam::WebServices::HttpRequest& request);
+      void OnPortfolioUpgrade(const Beam::WebServices::HttpRequest& request,
+        std::unique_ptr<WebSocketChannel> channel);
+      void OnPortfolioUpdate(const PortfolioModel::Entry& entry);
   };
 }
 }

@@ -3,6 +3,7 @@
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Serialization/ShuttleBitset.hpp>
 #include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
+#include <Beam/Stomp/StompServer.hpp>
 #include <Beam/Utilities/Trie.hpp>
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
@@ -26,8 +27,10 @@
 
 using namespace Beam;
 using namespace Beam::IO;
+using namespace Beam::Network;
 using namespace Beam::Serialization;
 using namespace Beam::ServiceLocator;
+using namespace Beam::Stomp;
 using namespace Beam::WebServices;
 using namespace boost;
 using namespace boost::posix_time;
@@ -50,7 +53,8 @@ namespace {
 ClientWebPortalServlet::ClientWebPortalServlet(
     RefType<ApplicationServiceClients> serviceClients)
     : m_fileStore{"webapp"},
-      m_serviceClients{serviceClients.Get()} {}
+      m_serviceClients{serviceClients.Get()},
+      m_portfolioModel{Ref(*m_serviceClients)} {}
 
 ClientWebPortalServlet::~ClientWebPortalServlet() {
   Close();
@@ -176,12 +180,27 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
   return slots;
 }
 
+vector<HttpUpgradeSlot<ClientWebPortalServlet::WebSocketChannel>>
+    ClientWebPortalServlet::GetWebSocketSlots() {
+  vector<HttpUpgradeSlot<WebSocketChannel>> slots;
+  slots.emplace_back(MatchesPath(HttpMethod::GET,
+    "/api/risk_service/portfolio"), std::bind(
+    &ClientWebPortalServlet::OnPortfolioUpgrade, this, std::placeholders::_1,
+    std::placeholders::_2));
+  return slots;
+}
+
 void ClientWebPortalServlet::Open() {
   if(m_openState.SetOpening()) {
     return;
   }
   try {
     m_serviceClients->Open();
+    m_portfolioModel.GetPublisher().Monitor(
+      m_tasks.GetSlot<PortfolioModel::Entry>(
+      std::bind(&ClientWebPortalServlet::OnPortfolioUpdate, this,
+      std::placeholders::_1)));
+    m_portfolioModel.Open();
   } catch(const std::exception&) {
     m_openState.SetOpenFailure();
     Shutdown();
@@ -197,6 +216,7 @@ void ClientWebPortalServlet::Close() {
 }
 
 void ClientWebPortalServlet::Shutdown() {
+  m_portfolioModel.Close();
   m_serviceClients->Close();
   m_openState.SetClosed();
 }
@@ -956,4 +976,22 @@ HttpResponse ClientWebPortalServlet::OnLoadProfitAndLossReport(
   }
   session->ShuttleResponse(inventories, Store(response));
   return response;
+}
+
+void ClientWebPortalServlet::OnPortfolioUpgrade(const HttpRequest& request,
+    std::unique_ptr<WebSocketChannel> channel) {
+  auto stompServer = std::make_unique<StompServer>(std::move(channel));
+  Routines::Spawn(
+    [=, stompServer = std::move(stompServer)] {
+      stompServer->Open();
+      while(true) {
+        auto frame = stompServer->Read();
+        if(frame.GetCommand() == StompCommand::SUBSCRIBE) {
+        }
+      }
+    });
+}
+
+void ClientWebPortalServlet::OnPortfolioUpdate(
+    const PortfolioModel::Entry& entry) {
 }
