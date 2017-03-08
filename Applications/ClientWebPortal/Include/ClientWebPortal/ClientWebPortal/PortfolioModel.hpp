@@ -14,39 +14,76 @@
 
 namespace Nexus {
 namespace ClientWebPortal {
+
+  /*! \class PortfolioModel
+      \brief Publishes updates for positions held by trading accounts.
+   */
   class PortfolioModel : private boost::noncopyable {
     public:
+
+      /*! \struct Entry
+          \brief Represents a single position.
+       */
       struct Entry {
+
+        //! The account holding the position.
         Beam::ServiceLocator::DirectoryEntry m_account;
 
+        //! The position's Security.
         Security m_security;
 
+        //! The position's currency.
         CurrencyId m_currency;
 
+        //! The position's quantity.
         Quantity m_openQuantity;
 
+        //! The average price of the position.
         Money m_averagePrice;
 
+        //! The position's total profit and loss.
         Money m_totalProfitAndLoss;
 
+        //! The position's unrealized profit and loss.
         Money m_unrealizedProfitAndLoss;
 
+        //! The position's realized profit and loss.
         Money m_realizedProfitAndLoss;
 
+        //! The amount of fees paid for this entry.
         Money m_fees;
 
+        //! The position's cost basis.
         Money m_costBasis;
 
+        //! The quantity traded for this entry.
         Quantity m_volume;
 
+        //! The number of trades made for this entry.
         int m_trades;
 
+        //! Constructs an Entry.
+        /*!
+          \param account The account holding the position.
+          \param security The position's Security.
+          \param currency The position's currency.
+        */
         Entry(Beam::ServiceLocator::DirectoryEntry account, Security security,
           CurrencyId currency);
 
+        //! Tests if two Entry's are equal.
+        /*!
+          \param rhs The right hand side of the comparison.
+          \return <code>true</code> iff the two Entry's represent the same
+                  account, security and currency.
+        */
         bool operator ==(const Entry& rhs) const;
       };
 
+      //! Constructs a PortfolioModel.
+      /*!
+        \param serviceClients The ServiceClients used to query for positions.
+      */
       PortfolioModel(Beam::RefType<ApplicationServiceClients> serviceClients);
 
       ~PortfolioModel();
@@ -55,6 +92,7 @@ namespace ClientWebPortal {
 
       void Close();
 
+      //! Returns the Publisher updating the position Entries.
       const Beam::Publisher<Entry>& GetPublisher() const;
 
     private:

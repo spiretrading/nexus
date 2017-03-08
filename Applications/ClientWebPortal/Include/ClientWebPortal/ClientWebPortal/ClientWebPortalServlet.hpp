@@ -12,9 +12,14 @@
 #include <Beam/WebServices/SessionStore.hpp>
 #include <Beam/WebServices/WebSocketChannel.hpp>
 #include <boost/noncopyable.hpp>
+#include "ClientWebPortal/ClientWebPortal/AdministrationWebServlet.hpp"
 #include "ClientWebPortal/ClientWebPortal/ClientWebPortal.hpp"
 #include "ClientWebPortal/ClientWebPortal/ClientWebPortalSession.hpp"
+#include "ClientWebPortal/ClientWebPortal/ComplianceWebServlet.hpp"
+#include "ClientWebPortal/ClientWebPortal/DefinitionsWebServlet.hpp"
+#include "ClientWebPortal/ClientWebPortal/MarketDataWebServlet.hpp"
 #include "ClientWebPortal/ClientWebPortal/PortfolioModel.hpp"
+#include "ClientWebPortal/ClientWebPortal/ServiceLocatorWebServlet.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
 
@@ -61,6 +66,11 @@ namespace ClientWebPortal {
       Beam::WebServices::FileStore m_fileStore;
       Beam::WebServices::SessionStore<ClientWebPortalSession> m_sessions;
       ApplicationServiceClients* m_serviceClients;
+      ServiceLocatorWebServlet m_serviceLocatorServlet;
+      DefinitionsWebServlet m_definitionsServlet;
+      AdministrationWebServlet m_administrationServlet;
+      MarketDataWebServlet m_marketDataServlet;
+      ComplianceWebServlet m_complianceServlet;
       std::unique_ptr<ApplicationServiceClients::Timer> m_portfolioTimer;
       std::unordered_map<RiskService::RiskPortfolioKey, PortfolioModel::Entry>
         m_portfolioEntries;
@@ -74,58 +84,6 @@ namespace ClientWebPortal {
       Beam::WebServices::HttpResponse OnIndex(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnServeFile(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadCurrentAccount(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnStorePassword(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnSearchDirectoryEntry(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLogin(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLogout(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnCreateAccount(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnCreateGroup(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadTradingGroup(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadManagedTradingGroups(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadAccountRoles(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadAccountIdentity(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnStoreAccountIdentity(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadEntitlementsDatabase(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadAccountEntitlements(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnStoreAccountEntitlements(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadRiskParameters(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnStoreRiskParameters(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadDirectoryEntryComplianceRuleEntry(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnAddComplianceRuleEntry(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnUpdateComplianceRuleEntry(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnDeleteComplianceRuleEntry(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadComplianceRuleSchemas(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadCountryDatabase(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadCurrencyDatabase(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadMarketDatabase(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadSecurityInfoFromPrefix(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadProfitAndLossReport(
         const Beam::WebServices::HttpRequest& request);

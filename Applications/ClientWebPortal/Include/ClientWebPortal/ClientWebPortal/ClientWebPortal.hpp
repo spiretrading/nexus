@@ -3,9 +3,14 @@
 
 namespace Nexus {
 namespace ClientWebPortal {
+  class AdministrationWebServlet;
   class ClientWebPortalServlet;
   class ClientWebPortalSession;
-  class ServiceClients;
+  class ComplianceWebServlet;
+  class DefinitionsWebServlet;
+  class MarketDataWebServlet;
+  class ServiceLocatorWebServlet;
+  class PortfolioModel;
 }
 }
 
