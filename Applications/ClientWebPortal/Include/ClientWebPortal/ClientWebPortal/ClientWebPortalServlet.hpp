@@ -15,6 +15,7 @@
 #include "ClientWebPortal/ClientWebPortal/ClientWebPortal.hpp"
 #include "ClientWebPortal/ClientWebPortal/ClientWebPortalSession.hpp"
 #include "ClientWebPortal/ClientWebPortal/PortfolioModel.hpp"
+#include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
 
 namespace Nexus {
@@ -53,9 +54,18 @@ namespace ClientWebPortal {
     private:
       using StompServer =
         Beam::Stomp::StompServer<std::unique_ptr<WebSocketChannel>>;
+      struct PortfolioSubscriber {
+        std::shared_ptr<StompServer> m_client;
+        std::string m_subscriptionId;
+      };
       Beam::WebServices::FileStore m_fileStore;
       Beam::WebServices::SessionStore<ClientWebPortalSession> m_sessions;
       ApplicationServiceClients* m_serviceClients;
+      std::unique_ptr<ApplicationServiceClients::Timer> m_portfolioTimer;
+      std::unordered_map<RiskService::RiskPortfolioKey, PortfolioModel::Entry>
+        m_portfolioEntries;
+      std::unordered_set<PortfolioModel::Entry> m_updatedPortfolioEntries;
+      std::vector<std::shared_ptr<PortfolioSubscriber>> m_porfolioSubscribers;
       PortfolioModel m_portfolioModel;
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
@@ -122,6 +132,7 @@ namespace ClientWebPortal {
       void OnPortfolioUpgrade(const Beam::WebServices::HttpRequest& request,
         std::unique_ptr<WebSocketChannel> channel);
       void OnPortfolioUpdate(const PortfolioModel::Entry& entry);
+      void OnPortfolioTimerExpired(Beam::Threading::Timer::Result result);
   };
 }
 }

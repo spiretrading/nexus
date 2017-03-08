@@ -43,6 +43,8 @@ namespace ClientWebPortal {
 
         Entry(Beam::ServiceLocator::DirectoryEntry account, Security security,
           CurrencyId currency);
+
+        bool operator ==(const Entry& rhs) const;
       };
 
       PortfolioModel(Beam::RefType<ApplicationServiceClients> serviceClients);
@@ -96,5 +98,13 @@ namespace Serialization {
   };
 }
 }
+
+namespace std {
+  template <>
+  struct hash<Nexus::ClientWebPortal::PortfolioModel::Entry> {
+    size_t operator()(
+      const Nexus::ClientWebPortal::PortfolioModel::Entry& value) const;
+  };
+};
 
 #endif

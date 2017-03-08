@@ -31,6 +31,7 @@ using namespace Beam::Network;
 using namespace Beam::Serialization;
 using namespace Beam::ServiceLocator;
 using namespace Beam::Stomp;
+using namespace Beam::Threading;
 using namespace Beam::WebServices;
 using namespace boost;
 using namespace boost::posix_time;
@@ -196,6 +197,10 @@ void ClientWebPortalServlet::Open() {
   }
   try {
     m_serviceClients->Open();
+    m_portfolioTimer = m_serviceClients->BuildTimer(seconds(1));
+    m_portfolioTimer->GetPublisher().Monitor(m_tasks.GetSlot<Timer::Result>(
+      std::bind(&ClientWebPortalServlet::OnPortfolioTimerExpired, this,
+      std::placeholders::_1)));
     m_portfolioModel.GetPublisher().Monitor(
       m_tasks.GetSlot<PortfolioModel::Entry>(
       std::bind(&ClientWebPortalServlet::OnPortfolioUpdate, this,
@@ -980,13 +985,45 @@ HttpResponse ClientWebPortalServlet::OnLoadProfitAndLossReport(
 
 void ClientWebPortalServlet::OnPortfolioUpgrade(const HttpRequest& request,
     std::unique_ptr<WebSocketChannel> channel) {
-  auto stompServer = std::make_unique<StompServer>(std::move(channel));
+  auto session = m_sessions.Find(request);
+  if(session == nullptr) {
+    channel->GetConnection().Close();
+    return;
+  }
+  auto subscriber = std::make_shared<PortfolioSubscriber>();
+  subscriber->m_client = std::make_shared<StompServer>(std::move(channel));
   Routines::Spawn(
-    [=, stompServer = std::move(stompServer)] {
-      stompServer->Open();
+    [=] {
+      subscriber->m_client->Open();
       while(true) {
-        auto frame = stompServer->Read();
+        auto frame = subscriber->m_client->Read();
         if(frame.GetCommand() == StompCommand::SUBSCRIBE) {
+          auto idHeader = frame.FindHeader("id");
+          if(!idHeader.is_initialized()) {
+            continue;
+          }
+          subscriber->m_subscriptionId = *idHeader;
+          m_tasks.Push(
+            [=] {
+              JsonSender<SharedBuffer> sender;
+              for(auto& entry : m_portfolioEntries) {
+                StompFrame entryFrame{StompCommand::MESSAGE};
+                entryFrame.AddHeader(
+                  {"subscription", subscriber->m_subscriptionId});
+                entryFrame.AddHeader(
+                  {"destination", "/api/risk_service/portfolio"});
+                entryFrame.AddHeader(
+                  {"content-type", "application/json"});
+                auto buffer = Encode<SharedBuffer>(sender, entry);
+                entryFrame.SetBody(std::move(buffer));
+                try {
+                  subscriber->m_client->Write(entryFrame);
+                } catch(const std::exception&) {
+                  return;
+                }
+              }
+              m_porfolioSubscribers.push_back(subscriber);
+            });
         }
       }
     });
@@ -994,4 +1031,39 @@ void ClientWebPortalServlet::OnPortfolioUpgrade(const HttpRequest& request,
 
 void ClientWebPortalServlet::OnPortfolioUpdate(
     const PortfolioModel::Entry& entry) {
+  m_updatedPortfolioEntries.insert(entry);
+}
+
+void ClientWebPortalServlet::OnPortfolioTimerExpired(Timer::Result result) {
+  vector<PortfolioModel::Entry> updatedEntries;
+  updatedEntries.reserve(m_updatedPortfolioEntries.size());
+  std::move(m_updatedPortfolioEntries.begin(), m_updatedPortfolioEntries.end(),
+    std::back_inserter(updatedEntries));
+  for(auto& updatedEntry : updatedEntries) {
+    RiskPortfolioKey key{updatedEntry.m_account, updatedEntry.m_security};
+    auto entryResult = m_portfolioEntries.insert(make_pair(key, updatedEntry));
+    if(!entryResult.second) {
+      entryResult.first->second = updatedEntry;
+    }
+  }
+  m_updatedPortfolioEntries.clear();
+  JsonSender<SharedBuffer> sender;
+  auto i = m_porfolioSubscribers.begin();
+  while(i != m_porfolioSubscribers.end()) {
+    auto& subscriber = *i;
+    try {
+      for(auto& entry : updatedEntries) {
+        StompFrame entryFrame{StompCommand::MESSAGE};
+        entryFrame.AddHeader({"subscription", subscriber->m_subscriptionId});
+        entryFrame.AddHeader({"destination", "/api/risk_service/portfolio"});
+        entryFrame.AddHeader({"content-type", "application/json"});
+        auto buffer = Encode<SharedBuffer>(sender, entry);
+        entryFrame.SetBody(std::move(buffer));
+        subscriber->m_client->Write(entryFrame);
+      }
+      ++i;
+    } catch(const std::exception&) {
+      i = m_porfolioSubscribers.erase(i);
+    }
+  }
 }

@@ -1,7 +1,9 @@
 #include "ClientWebPortal/ClientWebPortal/PortfolioModel.hpp"
+#include <boost/functional/hash.hpp>
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;
+using namespace boost;
 using namespace Nexus;
 using namespace Nexus::ClientWebPortal;
 using namespace Nexus::RiskService;
@@ -12,6 +14,11 @@ PortfolioModel::Entry::Entry(Beam::ServiceLocator::DirectoryEntry account,
     : m_account{std::move(account)},
       m_security{std::move(security)},
       m_currency{currency} {}
+
+bool PortfolioModel::Entry::operator ==(const Entry& rhs) const {
+  return tie(m_account, m_security, m_currency) ==
+    tie(rhs.m_account, rhs.m_security, rhs.m_currency);
+}
 
 PortfolioModel::PortfolioModel(
     RefType<ApplicationServiceClients> serviceClients)
@@ -55,4 +62,13 @@ void PortfolioModel::OnRiskPortfolioInventoryUpdate(
   entry->m_volume = inventory.m_value.m_volume;
   entry->m_trades = inventory.m_value.m_transactionCount;
   m_publisher.Push(*entry);
+}
+
+size_t std::hash<PortfolioModel::Entry>::operator()(
+    const PortfolioModel::Entry& value) const {
+  std::size_t seed = 0;
+  boost::hash_combine(seed, value.m_account);
+  boost::hash_combine(seed, value.m_security);
+  boost::hash_combine(seed, value.m_currency);
+  return seed;
 }
