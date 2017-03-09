@@ -148,6 +148,14 @@ ul.tagit {
     margin-bottom: 0px;
     padding-top: 1px;
     padding-bottom: 1px;
+
+    input {
+      border: 0 !important;
+
+      &:focus {
+        border: 0 !important;
+      }
+    }
   }
 
   li.tagit-choice {

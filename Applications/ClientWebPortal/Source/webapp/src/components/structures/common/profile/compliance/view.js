@@ -9,6 +9,7 @@ import CompliancePanel from 'components/reusables/common/compliance-panel';
 import definitionsService from 'services/definitions';
 import labelFormatter from 'utils/label-formatter';
 import modal from 'utils/modal';
+import uuid from 'uuid';
 
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
@@ -64,10 +65,10 @@ class View extends UpdatableView {
         isGroup: this.componentModel.isGroup,
         isAdmin: this.componentModel.isAdmin
       };
-      ReactDOM.render(
-        <CompliancePanel model={model} onUpdate={onRuleUpdate}/>,
-        $newEntryWrapper[0]
-      );
+
+      let id = uuid.v4();
+      this.controller.onRuleAdd.apply(this.controller, [id, schema, 0]);
+
       $('#compliance-container .rule-types li').removeClass('selected');
       modal.hide($('#add-rule-modal'));
     }
@@ -109,6 +110,20 @@ class View extends UpdatableView {
       });
   }
 
+  /** @private */
+  onSaveClick() {
+    let numInvalidInputs = $('#compliance-container .invalid-input').size();
+    if (numInvalidInputs == 0) {
+      this.controller.save.apply(this.controller);
+      $('#compliance-container .save-message').text('').removeClass('red').css('display', 'none');
+    } else {
+      $('#compliance-container .save-message')
+        .text('Invalid inputs exist.')
+        .addClass('red')
+        .css('display', 'inherit');
+    }
+  }
+
   render() {
     let content;
 
@@ -120,7 +135,7 @@ class View extends UpdatableView {
 
       let complianceRuleEntries = this.getRuleEntryPanels();
 
-      let onSave = this.controller.save.bind(this.controller);
+      let onSave = this.onSaveClick.bind(this);
 
       let saveBtnModel = {
         label: 'Save Changes'

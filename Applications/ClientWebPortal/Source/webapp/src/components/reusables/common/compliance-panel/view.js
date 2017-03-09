@@ -13,6 +13,7 @@ class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
     this.isInitialized = false;
+    this.isInputFocused = false;
   }
 
   /** @private */
@@ -65,13 +66,35 @@ class View extends UpdatableView {
     let input = $input.val().trim();
     let formattedNumber = numberFormatter.formatTwoDecimalsWithComma(input);
     $input.val(formattedNumber);
+    let value = formattedNumber.replace(new RegExp(',', 'g'), '');
 
-    let value = formattedNumber.replace(',', '');
-    let parameterName = $(event.currentTarget).attr('data-parameter-name');
-    this.controller.onParameterUpdated.apply(this.controller, [
-      parameterName,
-      value
-    ]);
+    // validate input
+    let valueNumber = Number(value);
+    let errorMessage;
+    if (isNaN(valueNumber)) {
+      errorMessage = 'Must be a number.';
+    } else if (valueNumber < 0) {
+      errorMessage = 'Cannot be a negative number.';
+    }
+
+    let $inputWrapper = $input.parent();
+    if (errorMessage != null) {
+      $inputWrapper.find('.validation-error').html(errorMessage).css('display', 'inherit');
+
+      if (!$input.hasClass('invalid-input')) {
+        this.showValidationErrorMessage($input, errorMessage);
+      }
+    } else {
+      let parameterName = $(event.currentTarget).attr('data-parameter-name');
+      this.controller.onParameterUpdated.apply(this.controller, [
+        parameterName,
+        value
+      ]);
+
+      if ($input.hasClass('invalid-input')) {
+        this.hideValidationErrorMessage($input);
+      }
+    }
   }
 
   /** @private */
@@ -122,6 +145,72 @@ class View extends UpdatableView {
       parameterName,
       isChecked
     ]);
+  }
+
+  /** @private */
+  onStatusChange(newValue) {
+    this.controller.onStatusChange.apply(this.controller, [newValue, this.componentModel.schema.parameters]);
+  }
+
+  /** @private */
+  onTimeChange(e) {
+    let $timeWrapper = $(e.currentTarget).parent();
+    let hours = $timeWrapper.find('.hour').val();
+    if (hours.length == 1) {
+      hours = '0' + hours;
+    }
+    let minutes = $timeWrapper.find('.minute').val();
+    if (minutes.length == 1) {
+      minutes = '0' + minutes;
+    }
+    let seconds = $timeWrapper.find('.second').val();
+    if (seconds.length == 1) {
+      seconds = '0' + seconds;
+    }
+
+    // validate input
+    let errorMessage;
+    if (Number(hours) > 23) {
+      errorMessage = 'Hours must be less than 24.';
+    } else if (Number(minutes) > 59) {
+      errorMessage = 'Minutes must be less than 60.';
+    } else if (Number(seconds) > 59) {
+      errorMessage = 'Seconds must be less than 60.';
+    }
+
+    if (errorMessage != null) {
+      $timeWrapper.parent().find('.validation-error').html(errorMessage).css('display', 'inherit');
+
+      if (!$timeWrapper.hasClass('invalid-input')) {
+        this.showValidationErrorMessage($timeWrapper, errorMessage);
+      }
+    } else {
+      let timeInput = hours + ':' + minutes + ':' + seconds;
+      let parameterName = $timeWrapper.attr('data-parameter-name');
+
+      this.controller.onParameterUpdated.apply(this.controller, [parameterName, timeInput]);
+
+      if ($timeWrapper.hasClass('invalid-input')) {
+        this.hideValidationErrorMessage($timeWrapper);
+      }
+    }
+  }
+
+  /** @private */
+  showValidationErrorMessage($input, errorMessage) {
+    $input.addClass('invalid-input');
+    let $contentSlideWrapper = $('#' + this.componentModel.componentId + ' .content-slide-wrapper');
+    let contentSlideWrapperHeight = $contentSlideWrapper.height();
+    $contentSlideWrapper.height(contentSlideWrapperHeight + 15);
+  }
+
+  /** @private */
+  hideValidationErrorMessage($input) {
+    $input.removeClass('invalid-input');
+    $input.parent().find('.validation-error').html('').css('display', 'none');
+    let $contentSlideWrapper = $('#' + this.componentModel.componentId + ' .content-slide-wrapper');
+    let contentSlideWrapperHeight = $contentSlideWrapper.height();
+    $contentSlideWrapper.height(contentSlideWrapperHeight - 15);
   }
 
   /** @private */
@@ -179,6 +268,7 @@ class View extends UpdatableView {
                  onBlur={onMoneyInputBlur}
                  defaultValue={formattedNumber}
                  readOnly={!this.componentModel.isAdmin}/>
+          <div className="validation-error"></div>
         </div>
       </div>;
 
@@ -223,27 +313,33 @@ class View extends UpdatableView {
     let hour = timeValues[0];
     let minute = timeValues[1];
     let second = timeValues[2];
-    let ampm;
-    if (parseInt(hour) >= 12) {
-      ampm = 'PM';
-      hour = (parseInt(hour) - 12).toString();
-      if (hour.length == 1) {
-        hour = '0' + hour;
-      }
-    } else {
-      ampm = 'AM';
-    }
 
     let input =
       <div className="entry-wrapper" key={parameterIndex}>
         <div className="name">{parameterName}</div>
         <div className="value">
-          <div className="time-input-wrapper">
-            <input className="hour numeric" type="text" size="2" maxLength="2" defaultValue={hour} readOnly={!this.componentModel.isAdmin}/>:
-            <input className="minute numeric" type="text" size="2" maxLength="2" defaultValue={minute} readOnly={!this.componentModel.isAdmin}/>:
-            <input className="second numeric" type="text" size="2" maxLength="2" defaultValue={second} readOnly={!this.componentModel.isAdmin}/>
-            <input className="ampm" type="text" size="3" maxLength="2" defaultValue={ampm}/>
+          <div className="time-input-wrapper" data-parameter-name={parameters[parameterIndex].name}>
+            <input className="hour numeric"
+                   type="text" size="2"
+                   maxLength="2"
+                   defaultValue={hour}
+                   onBlur={this.onTimeChange.bind(this)}
+                   readOnly={!this.componentModel.isAdmin}/>:
+            <input className="minute numeric"
+                   type="text" size="2"
+                   maxLength="2"
+                   defaultValue={minute}
+                   onBlur={this.onTimeChange.bind(this)}
+                   readOnly={!this.componentModel.isAdmin}/>:
+            <input className="second numeric"
+                   type="text"
+                   size="2"
+                   maxLength="2"
+                   defaultValue={second}
+                   onBlur={this.onTimeChange.bind(this)}
+                   readOnly={!this.componentModel.isAdmin}/>
           </div>
+          <div className="validation-error"></div>
         </div>
       </div>;
 
@@ -299,7 +395,6 @@ class View extends UpdatableView {
   initialize() {
     inputValidator.onlyNumbers($('#' + this.componentModel.componentId + ' .buying-power-input'));
     inputValidator.onlyNumbers($('#' + this.componentModel.componentId + ' .time-input-wrapper input.numeric'));
-    inputValidator.onlyAmPm($('#' + this.componentModel.componentId + ' .time-input-wrapper input.ampm'));
 
     var _this = this;
     $('#' + this.componentModel.componentId + ' .symbols-input').tagit({
@@ -357,6 +452,26 @@ class View extends UpdatableView {
     this.isInitialized = true;
 
     $('#' + this.componentModel.componentId + ' .boolean-input input').prop('checked', true);
+
+    $('#' + this.componentModel.componentId + ' .symbols-input input').focus(function() {
+      if (!_this.isInputFocused) {
+        _this.isInputFocused = true;
+        $(this).parent().parent().addClass('p1-solid-border');
+      }
+    }).blur(function() {
+      _this.isInputFocused = false;
+      $(this).parent().parent().removeClass('p1-solid-border');
+    });
+
+    $('#' + this.componentModel.componentId + ' .time-input-wrapper input').focus(function() {
+      if (!_this.isInputFocused) {
+        _this.isInputFocused = true;
+        $(this).parent().addClass('p1-solid-border');
+      }
+    }).blur(function() {
+      _this.isInputFocused = false;
+      $(this).parent().removeClass('p1-solid-border');
+    });
   }
 
   render() {
@@ -419,7 +534,7 @@ class View extends UpdatableView {
       };
     }
 
-    let onStatusChange = this.controller.onStatusChange.bind(this.controller);
+    let onStatusChange = this.onStatusChange.bind(this);
 
     let content = [];
     let parameters = this.componentModel.schema.parameters;

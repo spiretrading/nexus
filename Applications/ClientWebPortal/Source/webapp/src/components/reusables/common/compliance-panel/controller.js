@@ -40,8 +40,9 @@ class Controller {
     );
   }
 
-  onStatusChange(newValue) {
+  onStatusChange(newValue, parameters) {
     this.componentModel.status = newValue;
+    this.componentModel.parameters = parameters;
     this.onUpdated(
       this.componentModel.ruleEntryId,
       this.componentModel.parameters,

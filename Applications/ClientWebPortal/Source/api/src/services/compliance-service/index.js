@@ -19,6 +19,38 @@ class ComplianceService {
     return httpConnectionManager.send(apiPath, payload, true)
       .catch(this.logErrorAndThrow);
   }
+
+  addComplianceRuleEntry(directoryEntry, state, schema) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'compliance_service/add_compliance_rule_entry';
+    let payload = {
+      directory_entry: directoryEntry.toData(),
+      state: state,
+      schema: schema
+    };
+
+    return httpConnectionManager.send(apiPath, payload, false)
+      .catch(this.logErrorAndThrow);
+  }
+
+  updateComplianceRuleEntry(ruleEntry) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'compliance_service/update_compliance_rule_entry';
+    let payload = {
+      rule_entry: ruleEntry
+    };
+
+    return httpConnectionManager.send(apiPath, payload, false)
+      .catch(this.logErrorAndThrow);
+  }
+
+  deleteComplianceRuleEntry(id) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'compliance_service/update_compliance_rule_entry';
+    let payload = {
+      id: id
+    };
+
+    return httpConnectionManager.send(apiPath, payload, false)
+      .catch(this.logErrorAndThrow);
+  }
 }
 
 export default ComplianceService;
