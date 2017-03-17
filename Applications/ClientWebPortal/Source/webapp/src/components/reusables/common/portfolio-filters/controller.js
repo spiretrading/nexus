@@ -17,24 +17,20 @@ class Controller {
   initializeColumns() {
     this.componentModel.columns = [
       { id: 1, name: 'Group' },
-      { id: 2, name: 'Account' },
-      { id: 3, name: 'Account Total P&L' },
-      { id: 4, name: 'Account Unrealized' },
-      { id: 5, name: 'Account Realized' },
-      { id: 6, name: 'Account Fees' },
-      { id: 7, name: 'Security' },
-      { id: 8, name: 'Open Quantity' },
-      { id: 9, name: 'Side' },
-      { id: 10, name: 'Average Price' },
-      { id: 11, name: 'Total P&L' },
-      { id: 12, name: 'Unrealized' },
-      { id: 13, name: 'Realized' },
-      { id: 14, name: 'Fees' },
-      { id: 15, name: 'Cost Basis' },
-      { id: 16, name: 'Currency' },
-      { id: 17, name: 'Currency' },
-      { id: 18, name: 'Volume' },
-      { id: 19, name: 'Trades' }
+      { id: 2, name: 'Account Total P&L' },
+      { id: 3, name: 'Account Unrealized' },
+      { id: 4, name: 'Account Realized' },
+      { id: 5, name: 'Account Fees' },
+      { id: 6, name: 'Open Quantity' },
+      { id: 7, name: 'Side' },
+      { id: 8, name: 'Average Price' },
+      { id: 9, name: 'Total P&L' },
+      { id: 10, name: 'Unrealized' },
+      { id: 11, name: 'Realized' },
+      { id: 12, name: 'Fees' },
+      { id: 13, name: 'Cost Basis' },
+      { id: 14, name: 'Volume' },
+      { id: 15, name: 'Trades' }
     ];
   }
 
@@ -43,6 +39,12 @@ class Controller {
       if (!this.isInitialized) {
         this.isInitialized = true;
         overwriteMerge(this.componentModel, model);
+        this.componentModel.filter = {
+          columns: [],
+          currencies: [],
+          groups: [],
+          markets: []
+        };
         this.initializeColumns();
       }
 
@@ -68,7 +70,7 @@ class Controller {
   }
 
   update() {
-    // TODO: update parameters to back-end when the API is ready
+    this.onParametersSave(this.componentModel.filter);
   }
 }
 

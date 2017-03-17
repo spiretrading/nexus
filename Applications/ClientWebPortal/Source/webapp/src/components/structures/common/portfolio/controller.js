@@ -1,12 +1,15 @@
-import {AdministrationClient, DirectoryEntry} from 'spire-client';
+import {AdministrationClient, DirectoryEntry, RiskServiceClient} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
 import definitionsService from 'services/definitions';
+import HashMap from 'hashmap';
 
 class Controller {
   constructor(componentModel) {
     this.componentModel = clone(componentModel);
     this.adminClient = new AdministrationClient();
+    this.riskServiceClient = new RiskServiceClient();
+    this.portfolioData = new HashMap();
   }
 
   getView() {
@@ -29,11 +32,23 @@ class Controller {
     ]);
   }
 
+  /** @private */
+  onPortfolioMessageReceived(message) {
+    let cacheKey = message.account + message.currency + message.security;
+    this.portfolioData.set(cacheKey, message);
+    this.componentModel.portfolioData = this.portfolioData.values();
+    this.view.update(this.componentModel);
+  }
+
   componentDidMount() {
     this.componentModel = {
       directoryEntry: userService.getDirectoryEntry()
     };
     let requiredDataFetchPromise = this.getRequiredData.apply(this);
+
+    this.portfolioSubscriptionId = this.riskServiceClient.subscribePortfolio(this.onPortfolioMessageReceived.bind(this));
+
+    this.view.initialize.apply(this.view);
 
     preloaderTimer.start(
       requiredDataFetchPromise,
@@ -75,6 +90,12 @@ class Controller {
     });
   }
 
+  componentWillUnmount() {
+    this.riskServiceClient.unsubscribe.apply(this.riskServiceClient, [this.portfolioSubscriptionId]);
+
+    this.view.dispose.apply(this.view);
+  }
+
   isModelInitialized() {
     let model = clone(this.componentModel);
     delete model.componentId;
@@ -82,8 +103,14 @@ class Controller {
     return !$.isEmptyObject(model);
   }
 
-  saveParameters() {
-
+  saveParameters(filter) {
+    this.componentModel.filter = filter;
+    let apiFilter = {
+      currencies: filter.currencies,
+      groups: filter.groups,
+      markets: filter.markets
+    };
+    this.riskServiceClient.setFilter(apiFilter);
   }
 }
 

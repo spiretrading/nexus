@@ -4,6 +4,7 @@ import complianceServiceClient from './services/compliance-service';
 import definitionsServiceClient from './services/definitions-service';
 import marketDataServiceClient from './services/market-data-service';
 import serviceLocatorClient from './services/service-locator';
+import riskServiceClient from './services/risk-service';
 
 import serviceLocatorResultCodes from './services/service-locator/result-codes';
 import directoryEntry from './services/service-locator/directory-entry';
@@ -24,6 +25,7 @@ export const ComplianceServiceClient = complianceServiceClient;
 export const DefinitionsServiceClient = definitionsServiceClient;
 export const MarketDataServiceClient = marketDataServiceClient;
 export const ServiceLocatorClient = serviceLocatorClient;
+export const RiskServiceClient = riskServiceClient;
 
 export const ServiceLocatorResultCode = serviceLocatorResultCodes;
 export const DirectoryEntry = directoryEntry;

@@ -1,9 +1,9 @@
 import {Component} from 'react';
-import Controller from 'components/structures/common/portfolio/controller';
+import Controller from './controller';
 import View from './view';
 import uuid from 'uuid';
 
-class ProfileAccount extends Component {
+class PortfolioChart extends Component {
   constructor(props) {
     super(props);
   }
@@ -11,26 +11,23 @@ class ProfileAccount extends Component {
   componentWillMount() {
     let componentModel = this.props.model || {};
     componentModel.componentId = uuid.v4();
-    this.controller = new Controller(componentModel);
+    componentModel.className = this.props.className;
+    this.controller = new Controller(this, componentModel);
     this.view = new View(this, this.controller, componentModel);
     this.controller.setView(this.view);
   }
 
-  componentDidMount() {
-    this.controller.componentDidMount.apply(this.controller);
+  componentWillUpdate(nextProps) {
+    this.controller.componentWillUpdate(nextProps.model);
   }
 
   componentDidUpdate() {
     this.controller.getView().componentDidUpdate();
   }
 
-  componentWillUnmount() {
-    this.controller.componentWillUnmount.apply(this.controller);
-  }
-
   render() {
-    return this.view.render.apply(this.view);
+    return this.controller.getView().render();
   }
 }
 
-export default ProfileAccount;
+export default PortfolioChart;
