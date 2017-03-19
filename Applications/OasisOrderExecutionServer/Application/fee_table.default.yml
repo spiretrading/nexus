@@ -134,14 +134,14 @@ ca_equities:
   neoe:
     general_table:
       [[0.0003, -0.0002],
-       [0.0020, -0.0016]]
+       [0.0014, -0.0010]]
 
     interlisted_table:
       [[0.0003, -0.0002],
-       [0.0026, -0.0022]]
+       [0.0014, -0.0010]]
 
     neo_book_table:
-      [[-0.0015, 0.0018],
+      [[-0.0011, 0.0014],
        [-0.0015, 0.0018]]
 
   # Omega ATS fees based on http://omegaats.com/fees/
