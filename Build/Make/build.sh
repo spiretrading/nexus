@@ -36,8 +36,6 @@ applications+="ClientWebPortal "
 applications+="ComplianceServer "
 applications+="CtaMarketDataFeedClient "
 applications+="DefinitionsServer "
-applications+="EndOfSessionClient "
-applications+="EntitlementsReport "
 applications+="MarketDataClientStressTest "
 applications+="MarketDataClientTemplate "
 applications+="MarketDataRelayServer "
@@ -52,3 +50,10 @@ applications+="TmxIpMarketDataFeedClient "
 applications+="TmxTl1MarketDataFeedClient "
 applications+="UtpMarketDataFeedClient "
 parallel -j$cores --no-notice build_function ::: $applications
+
+pushd $directory/../../Applications/ClientWebPortal/Source/api/build/make
+./build.sh
+popd
+pushd $directory/../../Applications/ClientWebPortal/Source/webapp/build/make
+./build.sh
+popd

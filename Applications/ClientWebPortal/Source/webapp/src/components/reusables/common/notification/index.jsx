@@ -2,7 +2,7 @@ import {Component} from 'react';
 import Controller from './controller';
 import uuid from 'uuid';
 
-class EntitlementPanel extends Component {
+class Notification extends Component {
   constructor(props) {
     super(props);
   }
@@ -27,4 +27,4 @@ class EntitlementPanel extends Component {
   }
 }
 
-export default EntitlementPanel;
+export default Notification;

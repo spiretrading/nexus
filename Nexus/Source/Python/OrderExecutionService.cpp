@@ -2,9 +2,10 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Python/BoostPython.hpp>
+#include <Beam/Python/Copy.hpp>
 #include <Beam/Python/GilRelease.hpp>
-#include <Beam/Python/ListToVector.hpp>
 #include <Beam/Python/PythonBindings.hpp>
+#include <Beam/Python/Vector.hpp>
 #include <Beam/Python/Queries.hpp>
 #include <Beam/Python/Queues.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
@@ -95,16 +96,12 @@ namespace {
   }
 
   OrderExecutionServiceTestInstance* BuildOrderExecutionServiceTestInstance(
-      std::auto_ptr<VirtualServiceLocatorClient> serviceLocatorClient,
-      std::auto_ptr<VirtualUidClient> uidClient,
-      std::auto_ptr<VirtualAdministrationClient> administrationClient) {
-    std::shared_ptr<VirtualServiceLocatorClient> serviceLocatorClientWrapper{
-      serviceLocatorClient.release(), [] (VirtualServiceLocatorClient*) {}};
-    std::unique_ptr<VirtualUidClient> uidClientWrapper{uidClient.release()};
-    std::unique_ptr<VirtualAdministrationClient> administrationClientWrapper{
-      administrationClient.release()};
-    return new OrderExecutionServiceTestInstance{serviceLocatorClientWrapper,
-      std::move(uidClientWrapper), std::move(administrationClientWrapper)};
+      const std::shared_ptr<VirtualServiceLocatorClient>& serviceLocatorClient,
+      const std::shared_ptr<VirtualUidClient>& uidClient,
+      const std::shared_ptr<VirtualAdministrationClient>&
+      administrationClient) {
+    return new OrderExecutionServiceTestInstance{serviceLocatorClient,
+      uidClient, administrationClient};
   }
 
   PythonOrderExecutionClient* OrderExecutionServiceTestInstanceBuildClient(
@@ -119,7 +116,9 @@ void Nexus::Python::ExportAccountQuery() {
   ExportIndexedQuery<DirectoryEntry>("DirectoryEntryIndexedQuery");
   class_<AccountQuery, bases<IndexedQuery<DirectoryEntry>, RangedQuery,
     SnapshotLimitedQuery, InterruptableQuery, FilteredQuery>>(
-    "AccountQuery", init<>());
+    "AccountQuery", init<>())
+    .def("__copy__", &MakeCopy<AccountQuery>)
+    .def("__deepcopy__", &MakeDeepCopy<AccountQuery>);
 }
 
 void Nexus::Python::ExportExecutionReport() {
@@ -127,6 +126,8 @@ void Nexus::Python::ExportExecutionReport() {
   ExportSnapshotPublisher<ExecutionReport, vector<ExecutionReport>>(
     "ExecutionReportSnapshotPublisher");
   class_<ExecutionReport>("ExecutionReport", init<>())
+    .def("__copy__", &MakeCopy<ExecutionReport>)
+    .def("__deepcopy__", &MakeDeepCopy<ExecutionReport>)
     .def("build_initial_report", &ExecutionReport::BuildInitialReport)
     .staticmethod("build_initial_report")
     .def("build_updated_report", &ExecutionReport::BuildUpdatedReport)
@@ -150,9 +151,7 @@ void Nexus::Python::ExportExecutionReport() {
     .def_readwrite("additional_tags", &ExecutionReport::m_additionalTags)
     .def(self == self)
     .def(self != self);
-  class_<vector<ExecutionReport>>("VectorExecutionReport")
-    .def(vector_indexing_suite<vector<ExecutionReport>>());
-  ExportVector<vector<ExecutionReport>>();
+  ExportVector<vector<ExecutionReport>>("VectorExecutionReport");
 }
 
 void Nexus::Python::ExportMockOrderExecutionDriver() {
@@ -161,14 +160,14 @@ void Nexus::Python::ExportMockOrderExecutionDriver() {
     .def("set_order_status_new_on_submission",
       &MockOrderExecutionDriver::SetOrderStatusNewOnSubmission)
     .def("find_order", &MockOrderExecutionDriver::FindOrder,
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("add_recovery", &MockOrderExecutionDriver::AddRecovery)
     .def("get_publisher", &MockOrderExecutionDriver::GetPublisher,
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("recover", &MockOrderExecutionDriver::Recover,
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("submit", BlockingFunction(&MockOrderExecutionDriver::Submit,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("cancel", BlockingFunction(&MockOrderExecutionDriver::Cancel))
     .def("update", BlockingFunction(&MockOrderExecutionDriver::Update))
     .def("open", BlockingFunction(&MockOrderExecutionDriver::Open))
@@ -182,15 +181,13 @@ void Nexus::Python::ExportOrder() {
   class_<Order, boost::noncopyable>("Order", no_init)
     .add_property("info", make_function(&Order::GetInfo,
       return_value_policy<copy_const_reference>()))
-    .def("get_publisher", &Order::GetPublisher,
-      return_value_policy<reference_existing_object>());
-  class_<vector<const Order*>>("VectorOrder")
-    .def(vector_indexing_suite<vector<const Order*>>());
+    .def("get_publisher", &Order::GetPublisher, return_internal_reference<>());
+  ExportVector<vector<const Order*>>("VectorOrder");
 }
 
 void Nexus::Python::ExportOrderExecutionClient() {
   class_<VirtualOrderExecutionClient, boost::noncopyable>(
-      "VirtualOrderExecutionClient", no_init);
+    "VirtualOrderExecutionClient", no_init);
   class_<PythonOrderExecutionClient, boost::noncopyable,
       bases<VirtualOrderExecutionClient>>("OrderExecutionClient", no_init)
     .def("__init__", make_constructor(&BuildClient))
@@ -203,10 +200,9 @@ void Nexus::Python::ExportOrderExecutionClient() {
       &PythonOrderExecutionClient::QueryExecutionReports)
     .def("get_order_submission_publisher",
       &PythonOrderExecutionClient::GetOrderSubmissionPublisher,
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("submit", BlockingFunction<PythonOrderExecutionClient>(
-      &PythonOrderExecutionClient::Submit,
-      return_value_policy<reference_existing_object>()))
+      &PythonOrderExecutionClient::Submit, return_internal_reference<>()))
     .def("cancel", &PythonOrderExecutionClient::Cancel)
     .def("open", BlockingFunction<PythonOrderExecutionClient>(
       &PythonOrderExecutionClient::Open))
@@ -253,8 +249,9 @@ void Nexus::Python::ExportOrderExecutionServiceTestInstance() {
   class_<OrderExecutionServiceTestInstance, boost::noncopyable>(
       "OrderExecutionServiceTestInstance", no_init)
     .def("__init__", make_constructor(BuildOrderExecutionServiceTestInstance))
+    .def("__del__", BlockingFunction(&OrderExecutionServiceTestInstance::Close))
     .def("get_driver", &OrderExecutionServiceTestInstance::GetDriver,
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("open", BlockingFunction(&OrderExecutionServiceTestInstance::Open))
     .def("close", BlockingFunction(&OrderExecutionServiceTestInstance::Close))
     .def("build_client", &OrderExecutionServiceTestInstanceBuildClient,
@@ -263,6 +260,8 @@ void Nexus::Python::ExportOrderExecutionServiceTestInstance() {
 
 void Nexus::Python::ExportOrderFields() {
   class_<OrderFields>("OrderFields", init<>())
+    .def("__copy__", &MakeCopy<OrderFields>)
+    .def("__deepcopy__", &MakeDeepCopy<OrderFields>)
     .def("build_limit_order", &OrderFields::BuildLimitOrder)
     .staticmethod("build_limit_order")
     .def("build_market_order", &OrderFields::BuildMarketOrder)
@@ -292,6 +291,8 @@ void Nexus::Python::ExportOrderInfo() {
     .def(init<OrderFields, DirectoryEntry, OrderId, bool, ptime>())
     .def(init<OrderFields, OrderId, bool, ptime>())
     .def(init<OrderFields, OrderId, ptime>())
+    .def("__copy__", &MakeCopy<OrderInfo>)
+    .def("__deepcopy__", &MakeDeepCopy<OrderInfo>)
     .def_readwrite("fields", &OrderInfo::m_fields)
     .def_readwrite("submission_account", &OrderInfo::m_submissionAccount)
     .def_readwrite("order_id", &OrderInfo::m_orderId)
@@ -307,6 +308,8 @@ void Nexus::Python::ExportOrderInfo() {
 void Nexus::Python::ExportOrderRecord() {
   class_<OrderRecord>("OrderRecord", init<>())
     .def(init<OrderInfo, vector<ExecutionReport>>())
+    .def("__copy__", &MakeCopy<OrderRecord>)
+    .def("__deepcopy__", &MakeDeepCopy<OrderRecord>)
     .def_readwrite("info", &OrderRecord::m_info)
     .def_readwrite("execution_reports", &OrderRecord::m_executionReports)
     .def(self == self)

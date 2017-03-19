@@ -1,4 +1,5 @@
 #include "Nexus/Python/PythonOrderExecutionClient.hpp"
+#include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/PythonQueueWriter.hpp>
 #include "Nexus/OrderExecutionService/Order.hpp"
 
@@ -13,6 +14,12 @@ PythonOrderExecutionClient::PythonOrderExecutionClient(
     std::unique_ptr<VirtualOrderExecutionClient> client)
     : WrapperOrderExecutionClient<std::unique_ptr<
         VirtualOrderExecutionClient>>{std::move(client)} {}
+
+PythonOrderExecutionClient::~PythonOrderExecutionClient() {
+  GilRelease gil;
+  boost::lock_guard<GilRelease> lock{gil};
+  Close();
+}
 
 void PythonOrderExecutionClient::QueryOrderRecords(const AccountQuery& query,
     const std::shared_ptr<PythonQueueWriter>& queue) {

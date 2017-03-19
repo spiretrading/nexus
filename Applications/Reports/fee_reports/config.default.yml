@@ -1,0 +1,11 @@
+---
+service_locator:
+  address: local_interface:20000
+  username: risk_service
+  password: admin_password
+
+data_store:
+  address: local_interface:20000
+  username: spireadmin
+  password: admin_password
+...

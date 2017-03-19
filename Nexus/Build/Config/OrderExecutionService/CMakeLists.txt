@@ -6,6 +6,7 @@ file(GLOB source_files
 add_library(OrderExecutionService ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(OrderExecutionService PROPERTIES
+  STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME nexus_order_execution_service)
 install(TARGETS OrderExecutionService CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)
@@ -22,6 +23,7 @@ add_library(OrderExecutionServiceTests
 set_source_files_properties(${test_header_files}
   PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(OrderExecutionServiceTests PROPERTIES
+  STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME nexus_order_execution_service_tests)
 install(TARGETS OrderExecutionServiceTests CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)
@@ -36,9 +38,6 @@ target_link_libraries(OrderExecutionServiceTester OrderExecutionServiceTests
   debug $ENV{CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized $ENV{CRYPTOPP_LIBRARY_OPTIMIZED_PATH})
 
-if(MSVC)
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj")
-endif()
 if(UNIX)
   target_link_libraries(OrderExecutionServiceTester
     debug $ENV{BOOST_CHRONO_LIBRARY_DEBUG_PATH}
@@ -57,7 +56,7 @@ if(UNIX)
     optimized $ENV{BOOST_FILE_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     pthread rt)
 endif()
-if(${CMAKE_SYSTEM_NAME} STREQUAL SunOS)
+if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
   target_link_libraries(OrderExecutionServiceTester rt socket nsl)
 endif()
 

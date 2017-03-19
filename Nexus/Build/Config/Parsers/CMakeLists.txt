@@ -5,7 +5,9 @@ file(GLOB source_files
 
 add_library(Parsers ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
-set_target_properties(Parsers PROPERTIES OUTPUT_NAME nexus_parsers)
+set_target_properties(Parsers PROPERTIES
+  STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
+  OUTPUT_NAME nexus_parsers)
 install(TARGETS Parsers CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)
 install(TARGETS Parsers CONFIGURATIONS Release RelWithDebInfo
@@ -20,6 +22,7 @@ add_library(ParsersTests ${test_header_files} ${test_source_files})
 set_source_files_properties(${test_header_files}
   PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(ParsersTests PROPERTIES
+  STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME nexus_parsers_tests)
 install(TARGETS ParsersTests CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)
@@ -34,9 +37,6 @@ target_link_libraries(ParsersTester ParsersTests
   debug $ENV{CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized $ENV{CRYPTOPP_LIBRARY_OPTIMIZED_PATH})
 
-if(MSVC)
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj")
-endif()
 if(UNIX)
   target_link_libraries(ParsersTester
     debug $ENV{BOOST_CHRONO_LIBRARY_DEBUG_PATH}
@@ -55,7 +55,7 @@ if(UNIX)
     optimized $ENV{BOOST_FILE_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     pthread rt)
 endif()
-if(${CMAKE_SYSTEM_NAME} STREQUAL SunOS)
+if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
   target_link_libraries(ParsersTester rt socket nsl)
 endif()
 

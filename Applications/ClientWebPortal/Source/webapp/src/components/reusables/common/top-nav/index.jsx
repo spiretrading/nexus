@@ -11,6 +11,14 @@ class TopNav extends Component {
     this.controller = new Controller(this);
   }
 
+  componentDidMount() {
+    this.controller.componentDidMount.apply(this.controller);
+  }
+
+  componentWillUnmount() {
+    this.controller.componentWillUnmount.apply(this.controller);
+  }
+
   render() {
     return this.controller.getView().render();
   }

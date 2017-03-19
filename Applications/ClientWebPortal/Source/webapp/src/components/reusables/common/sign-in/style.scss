@@ -37,6 +37,8 @@
     border-bottom: 1px solid white;
     color: $white;
     text-align: center;
+    background: transparent;
+    padding: .5rem;
 
     &::-webkit-input-placeholder {
       text-align: center;
@@ -68,6 +70,7 @@
 
     &:focus {
       border: 0 !important;
+      border-bottom: 1px solid $white !important;
     }
   }
 

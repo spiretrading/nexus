@@ -3,6 +3,6 @@ directory=$(dirname $(readlink -f $0))
 pushd $directory/
 cd $directory/../../
 {
-    npm install
+  sudo -u $(logname) npm install
 }
 popd

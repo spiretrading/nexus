@@ -12,10 +12,13 @@ class PreloaderUtils {
   }
 
   showOnEntireScreen(id, width, height) {
-    let style = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(255, 255, 255, 0.5);";
+    let style = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(255, 255, 255, 0.5); z-index: 999998";
+    let coverStyle = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: transparent; z-index:999999;";
     let containerId = id + '-preloader-container';
     let $container = $('<div id="' + containerId + '" style="' + style + '"></div>');
-    $('body').append($container);
+    let $containerCover = $('<div id="' + containerId + '-cover" style="' + coverStyle + '"></div>');
+    $('body').append($container).append($containerCover);
+
     ReactDOM.render(<Preloader id={id} width={width} height={height}/>, $container[0]);
     EventBus.publish(Event.Application.SHOW_PRELOADER, id);
   }
@@ -23,6 +26,7 @@ class PreloaderUtils {
   hide(id) {
     let containerId = id + '-preloader-container';
     let $container = $('#' + containerId);
+    let $containerCover = $('#' + containerId + '-cover');
     let resolve;
     let promise = new Promise((aResolve, aReject) => {
       resolve = aResolve;
@@ -34,6 +38,7 @@ class PreloaderUtils {
       if (preloaderId === id) {
         ReactDOM.unmountComponentAtNode($container[0]);
         $container.remove();
+        $containerCover.remove();
         resolve();
       }
     });

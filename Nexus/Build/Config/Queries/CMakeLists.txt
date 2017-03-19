@@ -5,7 +5,9 @@ file(GLOB source_files
 
 add_library(Queries ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
-set_target_properties(Queries PROPERTIES OUTPUT_NAME nexus_queries)
+set_target_properties(Queries PROPERTIES
+  STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
+  OUTPUT_NAME nexus_queries)
 install(TARGETS Queries CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)
 install(TARGETS Queries CONFIGURATIONS Release RelWithDebInfo
@@ -19,7 +21,9 @@ file(GLOB test_source_files
 add_library(QueriesTests ${test_header_files} ${test_source_files})
 set_source_files_properties(${test_header_files}
   PROPERTIES HEADER_FILE_ONLY TRUE)
-set_target_properties(QueriesTests PROPERTIES OUTPUT_NAME nexus_queries_tests)
+set_target_properties(QueriesTests PROPERTIES
+  STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
+  OUTPUT_NAME nexus_queries_tests)
 install(TARGETS QueriesTests CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)
 install(TARGETS QueriesTests CONFIGURATIONS Release RelWithDebInfo
@@ -33,9 +37,6 @@ target_link_libraries(QueriesTester QueriesTests
   debug $ENV{CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized $ENV{CRYPTOPP_LIBRARY_OPTIMIZED_PATH})
 
-if(MSVC)
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj")
-endif()
 if(UNIX)
   target_link_libraries(QueriesTester
     debug $ENV{BOOST_CHRONO_LIBRARY_DEBUG_PATH}
@@ -54,7 +55,7 @@ if(UNIX)
     optimized $ENV{BOOST_FILE_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     pthread rt)
 endif()
-if(${CMAKE_SYSTEM_NAME} STREQUAL SunOS)
+if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
   target_link_libraries(QueriesTester rt socket nsl)
 endif()
 

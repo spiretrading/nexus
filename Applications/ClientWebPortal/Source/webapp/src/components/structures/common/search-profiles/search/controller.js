@@ -53,8 +53,8 @@ class Controller {
     ).then((responses) => {
       this.componentModel.groupedAccounts = responses[0];
       this.componentModel.groupedAccounts.sort((a,b) => {
-        if (a.name < b.name) return -1;
-        if (a.name > b.name) return 1;
+        if (a.name.toLowerCase() < b.name.toLowerCase()) return -1;
+        if (a.name.toLowerCase() > b.name.toLowerCase()) return 1;
         return 0;
       });
       for (let i=0; i<this.componentModel.groupedAccounts.length; i++) {

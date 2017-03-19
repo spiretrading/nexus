@@ -6,11 +6,12 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Python/BoostPython.hpp>
+#include <Beam/Python/Copy.hpp>
 #include <Beam/Python/GilRelease.hpp>
-#include <Beam/Python/ListToVector.hpp>
 #include <Beam/Python/PythonBindings.hpp>
 #include <Beam/Python/PythonQueueWriter.hpp>
 #include <Beam/Python/Queries.hpp>
+#include <Beam/Python/Vector.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/ServiceLocatorClient.hpp>
@@ -79,10 +80,9 @@ namespace {
   }
 
   MarketDataServiceTestInstance* BuildMarketDataServiceTestInstance(
-      std::auto_ptr<VirtualServiceLocatorClient> serviceLocatorClient) {
-    std::unique_ptr<VirtualServiceLocatorClient> clientWrapper{
-      serviceLocatorClient.release()};
-    return new MarketDataServiceTestInstance{std::move(clientWrapper)};
+      const std::shared_ptr<VirtualServiceLocatorClient>&
+      serviceLocatorClient) {
+    return new MarketDataServiceTestInstance{serviceLocatorClient};
   }
 
   PythonMarketDataClient* MarketDataServiceTestInstanceBuildClient(
@@ -126,9 +126,7 @@ void Nexus::Python::ExportMarketDataClient() {
       &PythonMarketDataClient::Open))
     .def("close", BlockingFunction<PythonMarketDataClient>(
       &PythonMarketDataClient::Close));
-  class_<vector<SecurityInfo>>("VectorSecurityInfo")
-    .def(vector_indexing_suite<vector<SecurityInfo>>());
-  ExportVector<vector<SecurityInfo>>();
+  ExportVector<vector<SecurityInfo>>("VectorSecurityInfo");
 }
 
 void Nexus::Python::ExportMarketDataService() {
@@ -155,6 +153,7 @@ void Nexus::Python::ExportMarketDataServiceTestInstance() {
   class_<MarketDataServiceTestInstance, boost::noncopyable>(
       "MarketDataServiceTestInstance", no_init)
     .def("__init__", make_constructor(BuildMarketDataServiceTestInstance))
+    .def("__del__", BlockingFunction(&MarketDataServiceTestInstance::Close))
     .def("open", BlockingFunction(&MarketDataServiceTestInstance::Open))
     .def("close", BlockingFunction(&MarketDataServiceTestInstance::Close))
     .def("set_bbo", BlockingFunction(&MarketDataServiceTestInstance::SetBbo))
@@ -166,7 +165,9 @@ void Nexus::Python::ExportMarketWideDataQuery() {
   ExportIndexedQuery<MarketCode>("MarketWideDataQuery");
   class_<MarketWideDataQuery, bases<IndexedQuery<MarketCode>, RangedQuery,
     SnapshotLimitedQuery, InterruptableQuery, FilteredQuery>>(
-    "MarketWideDataQuery", init<>());
+    "MarketWideDataQuery", init<>())
+    .def("__copy__", &MakeCopy<MarketWideDataQuery>)
+    .def("__deepcopy__", &MakeDeepCopy<MarketWideDataQuery>);
   def("query_real_time_with_snapshot",
     static_cast<MarketWideDataQuery (*)(const MarketCode&)>(
     &QueryRealTimeWithSnapshot));
@@ -176,7 +177,9 @@ void Nexus::Python::ExportSecurityMarketDataQuery() {
   ExportIndexedQuery<Security>("SecurityIndexedQuery");
   class_<SecurityMarketDataQuery, bases<IndexedQuery<Security>, RangedQuery,
     SnapshotLimitedQuery, InterruptableQuery, FilteredQuery>>(
-    "SecurityMarketDataQuery", init<>());
+    "SecurityMarketDataQuery", init<>())
+    .def("__copy__", &MakeCopy<SecurityMarketDataQuery>)
+    .def("__deepcopy__", &MakeDeepCopy<SecurityMarketDataQuery>);
   def("query_real_time_with_snapshot",
     static_cast<SecurityMarketDataQuery (*)(Security)>(
     &QueryRealTimeWithSnapshot));

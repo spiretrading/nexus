@@ -24,6 +24,8 @@ namespace Python {
       PythonMarketDataClient(
         std::unique_ptr<MarketDataService::VirtualMarketDataClient> client);
 
+      virtual ~PythonMarketDataClient();
+
       //! Submits a query for OrderImbalances.
       /*!
         \param query The query to submit.

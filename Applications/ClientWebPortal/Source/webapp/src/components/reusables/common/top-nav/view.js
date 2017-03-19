@@ -16,6 +16,14 @@ class View extends UpdatableView {
     this.controller.openMenu();
   }
 
+  hideBottomBorder() {
+    $('#top-nav-container').removeClass('show-bottom-border');
+  }
+
+  showBottomBorder() {
+    $('#top-nav-container').addClass('show-bottom-border');
+  }
+
   render() {
     return (
       <div id="top-nav-container">

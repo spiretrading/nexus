@@ -135,7 +135,11 @@ class DefService {
     return this.currencyDatabase.fromId(id).code;
   }
 
-  getCurrencySign(id) {
+  getCurrencyId(code) {
+    return this.currencyDatabase.fromCode(code).id;
+  }
+
+  getCurrencySignFromId(id) {
     if (!(id instanceof CurrencyId)) {
       id = CurrencyId.fromNumber(id);
     }
@@ -145,6 +149,10 @@ class DefService {
     } else {
       return '';
     }
+  }
+
+  getCurrencySignFromCode(code) {
+    return this.currencyDatabase.fromCode(code).sign;
   }
 
   getCurrencyNumber(code) {
@@ -170,6 +178,10 @@ class DefService {
 
   getMarket(marketCode) {
     return this.markets.get(marketCode);
+  }
+
+  getAllMarkets() {
+    return this.markets.values();
   }
 }
 

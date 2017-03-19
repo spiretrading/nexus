@@ -47,7 +47,7 @@ class View extends UpdatableView {
       priceLabel = 'FREE';
     } else {
       let price = this.componentModel.entitlement.price / 1000000;
-      let formattedAmount = currencyFormatter.format(this.componentModel.entitlement.currency, price);
+      let formattedAmount = currencyFormatter.formatById(this.componentModel.entitlement.currency, price);
       let currencyCode = definitionsService.getCurrencyCode(this.componentModel.entitlement.currency);
       priceLabel = formattedAmount + " " + currencyCode;
     }

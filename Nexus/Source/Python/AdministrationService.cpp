@@ -2,6 +2,7 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Python/BoostPython.hpp>
+#include <Beam/Python/Copy.hpp>
 #include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/PythonBindings.hpp>
 #include <Beam/Python/Queues.hpp>
@@ -72,10 +73,9 @@ namespace {
   }
 
   AdministrationServiceTestInstance* BuildAdministrationServiceTestInstance(
-      std::auto_ptr<VirtualServiceLocatorClient> serviceLocatorClient) {
-    std::shared_ptr<VirtualServiceLocatorClient> clientWrapper{
-      serviceLocatorClient.release(), [] (VirtualServiceLocatorClient*) {}};
-    return new AdministrationServiceTestInstance{clientWrapper};
+      const std::shared_ptr<VirtualServiceLocatorClient>&
+      serviceLocatorClient) {
+    return new AdministrationServiceTestInstance{serviceLocatorClient};
   }
 
   VirtualAdministrationClient* AdministrationServiceTestInstanceBuildClient(
@@ -87,6 +87,8 @@ namespace {
 
 void Nexus::Python::ExportAccountIdentity() {
   class_<AccountIdentity>("AccountIdentity", init<>())
+    .def("__copy__", &MakeCopy<AccountIdentity>)
+    .def("__deepcopy__", &MakeDeepCopy<AccountIdentity>)
     .add_property("registration_time", make_getter(
       &AccountIdentity::m_registrationTime,
       return_value_policy<return_by_value>()), make_setter(
@@ -142,12 +144,12 @@ void Nexus::Python::ExportAdministrationClient() {
       BlockingFunction(&VirtualAdministrationClient::StoreEntitlements))
     .def("get_risk_parameters_publisher", BlockingFunction(
       &VirtualAdministrationClient::GetRiskParametersPublisher,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("store_risk_parameters", BlockingFunction(
       &VirtualAdministrationClient::StoreRiskParameters))
     .def("get_risk_state_publisher", BlockingFunction(
       &VirtualAdministrationClient::GetRiskStatePublisher,
-      return_value_policy<reference_existing_object>()))
+      return_internal_reference<>()))
     .def("store_risk_state", BlockingFunction(
       &VirtualAdministrationClient::StoreRiskState))
     .def("open", BlockingFunction(&VirtualAdministrationClient::Open))
@@ -180,6 +182,7 @@ void Nexus::Python::ExportAdministrationServiceTestInstance() {
   class_<AdministrationServiceTestInstance, boost::noncopyable>(
       "AdministrationServiceTestInstance", no_init)
     .def("__init__", make_constructor(BuildAdministrationServiceTestInstance))
+    .def("__del__", BlockingFunction(&AdministrationServiceTestInstance::Close))
     .def("open", BlockingFunction(&AdministrationServiceTestInstance::Open))
     .def("close", BlockingFunction(&AdministrationServiceTestInstance::Close))
     .def("build_client", &AdministrationServiceTestInstanceBuildClient,
@@ -191,6 +194,8 @@ void Nexus::Python::ExportTradingGroup() {
     .def(init<const DirectoryEntry&, const DirectoryEntry&,
       const vector<DirectoryEntry>&, const DirectoryEntry&,
       const vector<DirectoryEntry>&>())
+    .def("__copy__", &MakeCopy<TradingGroup>)
+    .def("__deepcopy__", &MakeDeepCopy<TradingGroup>)
     .add_property("entry", make_function(&TradingGroup::GetEntry,
       return_value_policy<return_by_value>()))
     .add_property("managers", make_function(&TradingGroup::GetManagers,

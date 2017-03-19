@@ -1,5 +1,6 @@
 #include "Nexus/Python/FeeHandling.hpp"
 #include <Beam/Python/BoostPython.hpp>
+#include <Beam/Python/Copy.hpp>
 #include "Nexus/FeeHandling/AsxtFeeTable.hpp"
 #include "Nexus/FeeHandling/ChicFeeTable.hpp"
 #include "Nexus/FeeHandling/ConsolidatedTmxFeeTable.hpp"
@@ -18,6 +19,8 @@ using namespace std;
 
 void Nexus::Python::ExportAsxtFeeTable() {
   class_<AsxtFeeTable>("AsxtFeeTable", init<>())
+    .def("__copy__", &MakeCopy<AsxtFeeTable>)
+    .def("__deepcopy__", &MakeDeepCopy<AsxtFeeTable>)
     .def_readwrite("spire_fee", &AsxtFeeTable::m_spireFee)
     .def_readwrite("clearing_rate", &AsxtFeeTable::m_clearingRate)
     .def_readwrite("trade_rate", &AsxtFeeTable::m_tradeRate)
@@ -31,6 +34,8 @@ void Nexus::Python::ExportAsxtFeeTable() {
 void Nexus::Python::ExportChicFeeTable() {
   {
     scope outer = class_<ChicFeeTable>("ChicFeeTable", init<>())
+      .def("__copy__", &MakeCopy<ChicFeeTable>)
+      .def("__deepcopy__", &MakeDeepCopy<ChicFeeTable>)
       .def_readwrite("fee_table", &ChicFeeTable::m_feeTable);
     enum_<ChicFeeTable::Category>("Category")
       .value("NONE", ChicFeeTable::Category::NONE)
@@ -56,6 +61,8 @@ void Nexus::Python::ExportConsolidatedTmxFeeTable() {
   {
     scope outer = class_<ConsolidatedTmxFeeTable>(
       "ConsolidatedTmxFeeTable", init<>())
+      .def("__copy__", &MakeCopy<ConsolidatedTmxFeeTable>)
+      .def("__deepcopy__", &MakeDeepCopy<ConsolidatedTmxFeeTable>)
       .def_readwrite("spire_fee", &ConsolidatedTmxFeeTable::m_spireFee)
       .def_readwrite("iiroc_fee", &ConsolidatedTmxFeeTable::m_iirocFee)
       .def_readwrite("cds_fee", &ConsolidatedTmxFeeTable::m_cdsFee)
@@ -103,7 +110,9 @@ void Nexus::Python::ExportLiquidityFlag() {
 }
 
 void Nexus::Python::ExportPureFeeTable() {
-  class_<PureFeeTable>("PureFeeTable");
+  class_<PureFeeTable>("PureFeeTable")
+    .def("__copy__", &MakeCopy<PureFeeTable>)
+    .def("__deepcopy__", &MakeDeepCopy<PureFeeTable>);
   def("parse_pure_fee_table", &ParsePureFeeTable);
   def("calculate_fee", static_cast<Money (*)(const PureFeeTable&,
     const Security&, const ExecutionReport&)>(&CalculateFee));
