@@ -6,7 +6,7 @@ file(GLOB source_files
 add_library(RiskService ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(RiskService PROPERTIES
-  STATIC_LIBRARY_FLAGS_RELEASE "/LTCG"
+  STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME nexus_risk_service)
 install(TARGETS RiskService CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)
@@ -22,7 +22,7 @@ add_library(RiskServiceTests ${test_header_files} ${test_source_files})
 set_source_files_properties(${test_header_files}
   PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(RiskServiceTests PROPERTIES
-  STATIC_LIBRARY_FLAGS_RELEASE "/LTCG"
+  STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME nexus_risk_service_tests)
 install(TARGETS RiskServiceTests CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)

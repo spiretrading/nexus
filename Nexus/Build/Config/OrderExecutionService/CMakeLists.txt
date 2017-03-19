@@ -6,7 +6,7 @@ file(GLOB source_files
 add_library(OrderExecutionService ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(OrderExecutionService PROPERTIES
-  STATIC_LIBRARY_FLAGS_RELEASE "/LTCG"
+  STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME nexus_order_execution_service)
 install(TARGETS OrderExecutionService CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)
@@ -23,7 +23,7 @@ add_library(OrderExecutionServiceTests
 set_source_files_properties(${test_header_files}
   PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(OrderExecutionServiceTests PROPERTIES
-  STATIC_LIBRARY_FLAGS_RELEASE "/LTCG"
+  STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME nexus_order_execution_service_tests)
 install(TARGETS OrderExecutionServiceTests CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)
