@@ -23,6 +23,7 @@ add_library(TimeAndSales
   ${generated_source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(TimeAndSales PROPERTIES
+  STATIC_LIBRARY_FLAGS_RELEASE "/LTCG"
   OUTPUT_NAME spire_time_and_sales)
 install(TARGETS TimeAndSales CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)
