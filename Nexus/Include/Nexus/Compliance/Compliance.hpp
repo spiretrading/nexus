@@ -7,6 +7,7 @@ namespace Nexus {
 namespace Compliance {
   class ApplicationComplianceClient;
   template<typename MarketDataClientType> class BuyingPowerComplianceRule;
+  template<typename DataStoreType> class CachedComplianceRuleDataStore;
   template<typename TimeClientType> class CancelRestrictionPeriodComplianceRule;
   class ComplianceCheckException;
   template<typename OrderExecutionDriverType, typename TimeClientType,

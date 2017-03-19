@@ -112,6 +112,49 @@ namespace {
   }
 }
 
+#ifdef _MSC_VER
+namespace boost {
+  template<> inline const volatile Order* get_pointer(const volatile Order* p) {
+    return p;
+  }
+
+  template<> inline const volatile PrimitiveOrder* get_pointer(
+      const volatile PrimitiveOrder* p) {
+    return p;
+  }
+
+  template<> inline const volatile Publisher<PrimitiveOrder*>*
+      get_pointer(const volatile Publisher<PrimitiveOrder*>* p) {
+    return p;
+  }
+
+  template<> inline const volatile PythonOrderExecutionClient* get_pointer(
+      const volatile PythonOrderExecutionClient* p) {
+    return p;
+  }
+
+  template<> inline const volatile
+      SnapshotPublisher<ExecutionReport, vector<ExecutionReport>>*
+      get_pointer(const volatile
+      SnapshotPublisher<ExecutionReport, vector<ExecutionReport>>* p) {
+    return p;
+  }
+
+  template<> inline const volatile
+      SnapshotPublisher<const Order*, vector<const Order*>>* get_pointer(
+      const volatile SnapshotPublisher<const Order*, vector<const Order*>>* p) {
+    return p;
+  }
+
+  template<> inline const volatile
+      SnapshotPublisher<const PrimitiveOrder*, vector<const PrimitiveOrder*>>*
+      get_pointer(const volatile SnapshotPublisher<
+      const PrimitiveOrder*, vector<const PrimitiveOrder*>>* p) {
+    return p;
+  }
+}
+#endif
+
 void Nexus::Python::ExportAccountQuery() {
   ExportIndexedQuery<DirectoryEntry>("DirectoryEntryIndexedQuery");
   class_<AccountQuery, bases<IndexedQuery<DirectoryEntry>, RangedQuery,
