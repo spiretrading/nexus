@@ -3,9 +3,10 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include <Beam/IO/OpenState.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
 #include <boost/thread/locks.hpp>
-#include <boost/thread/recursive_mutex.hpp>
+#include <boost/thread/mutex.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceRuleDataStore.hpp"
@@ -21,6 +22,8 @@ namespace Compliance {
 
       //! Constructs a LocalComplianceRuleDataStore.
       LocalComplianceRuleDataStore() = default;
+
+      ~LocalComplianceRuleDataStore();
 
       ComplianceRuleId LoadNextComplianceRuleEntryId();
 
@@ -41,17 +44,22 @@ namespace Compliance {
       void Close();
 
     private:
-      mutable boost::recursive_mutex m_mutex;
+      mutable boost::mutex m_mutex;
       std::unordered_map<ComplianceRuleId, std::shared_ptr<ComplianceRuleEntry>>
         m_entriesById;
       std::unordered_map<Beam::ServiceLocator::DirectoryEntry,
         std::vector<std::shared_ptr<ComplianceRuleEntry>>>
         m_entriesByDirectoryEntry;
+      Beam::IO::OpenState m_openState;
   };
+
+  inline LocalComplianceRuleDataStore::~LocalComplianceRuleDataStore() {
+    Close();
+  }
 
   inline ComplianceRuleId LocalComplianceRuleDataStore::
       LoadNextComplianceRuleEntryId() {
-    boost::lock_guard<boost::recursive_mutex> lock{m_mutex};
+    boost::lock_guard<boost::mutex> lock{m_mutex};
     ComplianceRuleId id = 1;
     for(auto& entry : m_entriesById) {
       id = std::max(entry.second->GetId() + 1, id);
@@ -62,7 +70,7 @@ namespace Compliance {
   inline boost::optional<ComplianceRuleEntry>
       LocalComplianceRuleDataStore::LoadComplianceRuleEntry(
       ComplianceRuleId id) {
-    boost::lock_guard<boost::recursive_mutex> lock{m_mutex};
+    boost::lock_guard<boost::mutex> lock{m_mutex};
     auto entry = Beam::Retrieve(m_entriesById, id);
     if(!entry.is_initialized()) {
       return boost::none;
@@ -73,7 +81,7 @@ namespace Compliance {
   inline std::vector<ComplianceRuleEntry> LocalComplianceRuleDataStore::
       LoadComplianceRuleEntries(
       const Beam::ServiceLocator::DirectoryEntry& directoryEntry) {
-    boost::lock_guard<boost::recursive_mutex> lock{m_mutex};
+    boost::lock_guard<boost::mutex> lock{m_mutex};
     auto entries = Beam::Retrieve(m_entriesByDirectoryEntry, directoryEntry);
     if(!entries.is_initialized()) {
       return {};
@@ -89,7 +97,7 @@ namespace Compliance {
 
   inline void LocalComplianceRuleDataStore::Store(
       const ComplianceRuleEntry& entry) {
-    boost::lock_guard<boost::recursive_mutex> lock{m_mutex};
+    boost::lock_guard<boost::mutex> lock{m_mutex};
     auto newEntry = std::make_shared<ComplianceRuleEntry>(entry);
     auto& previousEntry = m_entriesById[entry.GetId()];
     if(previousEntry != nullptr) {
@@ -107,7 +115,7 @@ namespace Compliance {
   }
 
   inline void LocalComplianceRuleDataStore::Delete(ComplianceRuleId id) {
-    boost::lock_guard<boost::recursive_mutex> lock{m_mutex};
+    boost::lock_guard<boost::mutex> lock{m_mutex};
     auto entryByIdIterator = m_entriesById.find(id);
     if(entryByIdIterator == m_entriesById.end()) {
       return;
@@ -126,9 +134,19 @@ namespace Compliance {
   inline void LocalComplianceRuleDataStore::Store(
     const ComplianceRuleViolationRecord& violationRecord) {}
 
-  inline void LocalComplianceRuleDataStore::Open() {}
+  inline void LocalComplianceRuleDataStore::Open() {
+    if(m_openState.SetOpening()) {
+      return;
+    }
+    m_openState.SetOpen();
+  }
 
-  inline void LocalComplianceRuleDataStore::Close() {}
+  inline void LocalComplianceRuleDataStore::Close() {
+    if(m_openState.SetClosing()) {
+      return;
+    }
+    m_openState.SetClosed();
+  }
 }
 }
 
