@@ -6,7 +6,7 @@ file(GLOB source_files
 add_library(AdministrationService ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(AdministrationService PROPERTIES
-  STATIC_LIBRARY_FLAGS_RELEASE "/LTCG"
+  STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME nexus_administration_service)
 install(TARGETS AdministrationService CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)
@@ -23,7 +23,7 @@ add_library(AdministrationServiceTests ${test_header_files}
 set_source_files_properties(${test_header_files}
   PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(AdministrationServiceTests PROPERTIES
-  STATIC_LIBRARY_FLAGS_RELEASE "/LTCG"
+  STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME nexus_administration_service_tests)
 install(TARGETS AdministrationServiceTests CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)

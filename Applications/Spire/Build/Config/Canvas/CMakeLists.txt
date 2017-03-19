@@ -139,7 +139,7 @@ add_library(Canvas
 
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(Canvas PROPERTIES
-  STATIC_LIBRARY_FLAGS_RELEASE "/LTCG"
+  STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME spire_canvas)
 install(TARGETS Canvas CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)
@@ -155,7 +155,7 @@ add_library(CanvasTests ${test_header_files} ${test_source_files})
 set_source_files_properties(${test_header_files}
   PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(CanvasTests PROPERTIES
-  STATIC_LIBRARY_FLAGS_RELEASE "/LTCG"
+  STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME spire_canvas_tests)
 install(TARGETS CanvasTests CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)
