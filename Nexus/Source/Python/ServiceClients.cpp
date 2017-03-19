@@ -212,6 +212,66 @@ namespace {
   }
 }
 
+#ifdef _MSC_VER
+namespace boost {
+  template<> inline const volatile
+      ChartingService::VirtualChartingClient* get_pointer(
+      const volatile ChartingService::VirtualChartingClient* p) {
+    return p;
+  }
+
+  template<> inline const volatile
+      Compliance::VirtualComplianceClient* get_pointer(
+      const volatile Compliance::VirtualComplianceClient* p) {
+    return p;
+  }
+
+  template<> inline const volatile
+      DefinitionsService::VirtualDefinitionsClient* get_pointer(
+      const volatile DefinitionsService::VirtualDefinitionsClient* p) {
+    return p;
+  }
+
+  template<> inline const volatile VirtualMarketDataClient* get_pointer(
+      const volatile VirtualMarketDataClient* p) {
+    return p;
+  }
+
+  template<> inline const volatile
+      OrderExecutionService::VirtualOrderExecutionClient* get_pointer(
+      const volatile OrderExecutionService::VirtualOrderExecutionClient* p) {
+    return p;
+  }
+
+  template<> inline const volatile
+      RegistryService::VirtualRegistryClient* get_pointer(
+      const volatile RegistryService::VirtualRegistryClient* p) {
+    return p;
+  }
+
+  template<> inline const volatile RiskService::VirtualRiskClient* get_pointer(
+      const volatile RiskService::VirtualRiskClient* p) {
+    return p;
+  }
+
+  template<> inline const volatile
+      ServiceLocator::VirtualServiceLocatorClient* get_pointer(
+      const volatile ServiceLocator::VirtualServiceLocatorClient* p) {
+    return p;
+  }
+
+  template<> inline const volatile VirtualTimeClient* get_pointer(
+      const volatile VirtualTimeClient* p) {
+    return p;
+  }
+
+  template<> inline const volatile VirtualTimer* get_pointer(
+      const volatile VirtualTimer* p) {
+    return p;
+  }
+}
+#endif
+
 void Nexus::Python::ExportApplicationServiceClients() {
   class_<PythonApplicationServiceClients, boost::noncopyable,
       bases<VirtualServiceClients>>("ApplicationServiceClients", no_init)

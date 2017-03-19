@@ -85,6 +85,25 @@ namespace {
   }
 }
 
+#ifdef _MSC_VER
+namespace boost {
+  template<> inline const volatile Publisher<RiskParameters>*
+      get_pointer(const volatile Publisher<RiskParameters>* p) {
+    return p;
+  }
+
+  template<> inline const volatile Publisher<RiskState>*
+      get_pointer(const volatile Publisher<RiskState>* p) {
+    return p;
+  }
+
+  template<> inline const volatile VirtualAdministrationClient*
+      get_pointer(const volatile VirtualAdministrationClient* p) {
+    return p;
+  }
+}
+#endif
+
 void Nexus::Python::ExportAccountIdentity() {
   class_<AccountIdentity>("AccountIdentity", init<>())
     .def("__copy__", &MakeCopy<AccountIdentity>)

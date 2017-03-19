@@ -93,6 +93,15 @@ namespace {
   }
 }
 
+#ifdef _MSC_VER
+namespace boost {
+  template<> inline const volatile PythonMarketDataClient*
+      get_pointer(const volatile PythonMarketDataClient* p) {
+    return p;
+  }
+}
+#endif
+
 void Nexus::Python::ExportMarketDataClient() {
   class_<VirtualMarketDataClient, boost::noncopyable>("VirtualMarketDataClient",
     no_init);
