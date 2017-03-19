@@ -38,6 +38,8 @@ namespace Compliance {
 
       ~MySqlComplianceRuleDataStore();
 
+      std::vector<ComplianceRuleEntry> LoadAllComplianceRuleEntries();
+
       ComplianceRuleId LoadNextComplianceRuleEntryId();
 
       boost::optional<ComplianceRuleEntry> LoadComplianceRuleEntry(
@@ -83,6 +85,25 @@ namespace Compliance {
     Close();
   }
 
+  inline std::vector<ComplianceRuleEntry> MySqlComplianceRuleDataStore::
+      LoadAllComplianceRuleEntries() {
+    std::vector<ComplianceRuleEntry> entries;
+    std::vector<Details::compliance_rule_entries> rows;
+    {
+      boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
+      auto query = m_databaseConnection.query();
+      query << "SELECT * FROM compliance_rule_entries";
+      query.storein(rows);
+      if(query.errnum() != 0) {
+        BOOST_THROW_EXCEPTION(ComplianceRuleDataStoreException{query.error()});
+      }
+    }
+    for(auto& row : rows) {
+      entries.push_back(ConvertRow(row));
+    }
+    return entries;
+  }
+
   inline ComplianceRuleId MySqlComplianceRuleDataStore::
       LoadNextComplianceRuleEntryId() {
     boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
@@ -98,13 +119,15 @@ namespace Compliance {
 
   inline boost::optional<ComplianceRuleEntry> MySqlComplianceRuleDataStore::
       LoadComplianceRuleEntry(ComplianceRuleId id) {
-    boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
-    auto query = m_databaseConnection.query();
-    query << "SELECT * FROM compliance_rule_entries WHERE entry_id = " << id;
     std::vector<Details::compliance_rule_entries> rows;
-    query.storein(rows);
-    if(query.errnum() != 0) {
-      BOOST_THROW_EXCEPTION(ComplianceRuleDataStoreException{query.error()});
+    {
+      boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
+      auto query = m_databaseConnection.query();
+      query << "SELECT * FROM compliance_rule_entries WHERE entry_id = " << id;
+      query.storein(rows);
+      if(query.errnum() != 0) {
+        BOOST_THROW_EXCEPTION(ComplianceRuleDataStoreException{query.error()});
+      }
     }
     if(rows.empty()) {
       return boost::none;
@@ -117,16 +140,18 @@ namespace Compliance {
   inline std::vector<ComplianceRuleEntry>
       MySqlComplianceRuleDataStore::LoadComplianceRuleEntries(
       const Beam::ServiceLocator::DirectoryEntry& directoryEntry) {
-    boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
-    auto query = m_databaseConnection.query();
-    query << "SELECT * FROM compliance_rule_entries WHERE "
-      "directory_entry = " << directoryEntry.m_id;
-    std::vector<Details::compliance_rule_entries> rows;
-    query.storein(rows);
-    if(query.errnum() != 0) {
-      BOOST_THROW_EXCEPTION(ComplianceRuleDataStoreException{query.error()});
-    }
     std::vector<ComplianceRuleEntry> complianceRuleEntries;
+    std::vector<Details::compliance_rule_entries> rows;
+    {
+      boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
+      auto query = m_databaseConnection.query();
+      query << "SELECT * FROM compliance_rule_entries WHERE "
+        "directory_entry = " << directoryEntry.m_id;
+      query.storein(rows);
+      if(query.errnum() != 0) {
+        BOOST_THROW_EXCEPTION(ComplianceRuleDataStoreException{query.error()});
+      }
+    }
     std::transform(rows.begin(), rows.end(),
       std::back_inserter(complianceRuleEntries), ConvertRow);
     return complianceRuleEntries;
@@ -134,8 +159,6 @@ namespace Compliance {
 
   inline void MySqlComplianceRuleDataStore::Store(
       const ComplianceRuleEntry& entry) {
-    boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
-    auto query = m_databaseConnection.query();
     Beam::IO::SharedBuffer parameterBuffer;
     Beam::Serialization::BinarySender<Beam::IO::SharedBuffer> sender;
     sender.SetSink(Beam::Ref(parameterBuffer));
@@ -150,6 +173,8 @@ namespace Compliance {
       static_cast<mysqlpp::sql_int_unsigned>(entry.GetDirectoryEntry().m_type),
       entry.GetState(), entry.GetSchema().GetName(),
       mysqlpp::sql_blob{parameterBuffer.GetData(), parameterBuffer.GetSize()}};
+    boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
+    auto query = m_databaseConnection.query();
     query.replace(row);
     if(!query.execute()) {
       BOOST_THROW_EXCEPTION(ComplianceRuleDataStoreException{query.error()});
@@ -167,13 +192,13 @@ namespace Compliance {
 
   inline void MySqlComplianceRuleDataStore::Store(
       const ComplianceRuleViolationRecord& violationRecord) {
-    boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
-    auto query = m_databaseConnection.query();
     Details::compliance_rule_violation_records row{
       violationRecord.m_account.m_id, violationRecord.m_orderId,
       violationRecord.m_ruleId, violationRecord.m_schemaName,
       violationRecord.m_reason,
       Beam::MySql::ToMySqlTimestamp(violationRecord.m_timestamp)};
+    boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
+    auto query = m_databaseConnection.query();
     query.insert(row);
     if(!query.execute()) {
       BOOST_THROW_EXCEPTION(ComplianceRuleDataStoreException{query.error()});

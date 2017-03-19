@@ -25,6 +25,8 @@ namespace Compliance {
 
       ~LocalComplianceRuleDataStore();
 
+      std::vector<ComplianceRuleEntry> LoadAllComplianceRuleEntries();
+
       ComplianceRuleId LoadNextComplianceRuleEntryId();
 
       boost::optional<ComplianceRuleEntry> LoadComplianceRuleEntry(
@@ -57,6 +59,19 @@ namespace Compliance {
     Close();
   }
 
+  inline std::vector<ComplianceRuleEntry> LocalComplianceRuleDataStore::
+      LoadAllComplianceRuleEntries() {
+    std::vector<ComplianceRuleEntry> entries;
+    boost::lock_guard<boost::mutex> lock{m_mutex};
+    entries.reserve(m_entriesById.size());
+    std::transform(m_entriesById.begin(), m_entriesById.end(),
+      std::back_inserter(entries),
+      [] (auto& entry) {
+        return *entry.second;
+      });
+    return entries;
+  }
+
   inline ComplianceRuleId LocalComplianceRuleDataStore::
       LoadNextComplianceRuleEntryId() {
     boost::lock_guard<boost::mutex> lock{m_mutex};
@@ -87,9 +102,10 @@ namespace Compliance {
       return {};
     }
     std::vector<ComplianceRuleEntry> result;
+    result.reserve(entries->size());
     std::transform(entries->begin(), entries->end(),
       std::back_inserter(result),
-      [] (const std::shared_ptr<ComplianceRuleEntry>& entry) {
+      [] (auto& entry) {
         return *entry;
       });
     return result;
@@ -97,15 +113,15 @@ namespace Compliance {
 
   inline void LocalComplianceRuleDataStore::Store(
       const ComplianceRuleEntry& entry) {
-    boost::lock_guard<boost::mutex> lock{m_mutex};
     auto newEntry = std::make_shared<ComplianceRuleEntry>(entry);
+    boost::lock_guard<boost::mutex> lock{m_mutex};
     auto& previousEntry = m_entriesById[entry.GetId()];
     if(previousEntry != nullptr) {
       auto& previousAccountEntries = m_entriesByDirectoryEntry[
         previousEntry->GetDirectoryEntry()];
       previousAccountEntries.erase(std::find_if(previousAccountEntries.begin(),
         previousAccountEntries.end(),
-        [&] (const std::shared_ptr<ComplianceRuleEntry>& accountEntry) {
+        [&] (auto& accountEntry) {
           return accountEntry->GetId() == entry.GetId();
         }));
     }
@@ -125,7 +141,7 @@ namespace Compliance {
       m_entriesByDirectoryEntry[entry->GetDirectoryEntry()];
     accountEntries.erase(std::find_if(accountEntries.begin(),
       accountEntries.end(),
-      [&] (const std::shared_ptr<ComplianceRuleEntry>& accountEntry) {
+      [&] (auto& accountEntry) {
         return accountEntry->GetId() == id;
       }));
     m_entriesById.erase(entryByIdIterator);
