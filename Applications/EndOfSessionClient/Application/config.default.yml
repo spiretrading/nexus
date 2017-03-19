@@ -1,6 +1,0 @@
----
-service_locator:
-  address: global_address:20000
-  username: order_execution_service
-  password: admin_password
-...

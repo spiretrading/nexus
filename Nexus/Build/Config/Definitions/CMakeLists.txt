@@ -5,7 +5,9 @@ file(GLOB source_files
 
 add_library(Definitions ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
-set_target_properties(Definitions PROPERTIES OUTPUT_NAME nexus_definitions)
+set_target_properties(Definitions PROPERTIES
+  STATIC_LIBRARY_FLAGS_RELEASE "/LTCG"
+  OUTPUT_NAME nexus_definitions)
 install(TARGETS Definitions CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)
 install(TARGETS Definitions CONFIGURATIONS Release RelWithDebInfo
@@ -21,6 +23,7 @@ add_library(DefinitionsTests ${test_header_files}
 set_source_files_properties(${test_header_files}
   PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(DefinitionsTests PROPERTIES
+  STATIC_LIBRARY_FLAGS_RELEASE "/LTCG"
   OUTPUT_NAME nexus_definitions_tests)
 install(TARGETS DefinitionsTests CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)
@@ -35,9 +38,6 @@ target_link_libraries(DefinitionsTester DefinitionsTests
   debug $ENV{CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized $ENV{CRYPTOPP_LIBRARY_OPTIMIZED_PATH})
 
-if(MSVC)
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj")
-endif()
 if(UNIX)
   target_link_libraries(DefinitionsTester
     debug $ENV{BOOST_CHRONO_LIBRARY_DEBUG_PATH}
@@ -56,7 +56,7 @@ if(UNIX)
     optimized $ENV{BOOST_FILE_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     pthread rt)
 endif()
-if(${CMAKE_SYSTEM_NAME} STREQUAL SunOS)
+if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
   target_link_libraries(DefinitionsTester rt socket nsl)
 endif()
 

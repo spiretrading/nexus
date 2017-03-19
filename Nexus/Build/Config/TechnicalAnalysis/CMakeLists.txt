@@ -6,6 +6,7 @@ file(GLOB source_files
 add_library(TechnicalAnalysis ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(TechnicalAnalysis PROPERTIES
+  STATIC_LIBRARY_FLAGS_RELEASE "/LTCG"
   OUTPUT_NAME nexus_technical_analysis)
 install(TARGETS TechnicalAnalysis CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)

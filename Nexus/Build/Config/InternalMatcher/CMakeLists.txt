@@ -6,6 +6,7 @@ file(GLOB source_files
 add_library(InternalMatcher ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(InternalMatcher PROPERTIES
+  STATIC_LIBRARY_FLAGS_RELEASE "/LTCG"
   OUTPUT_NAME nexus_internal_matcher_service)
 install(TARGETS InternalMatcher CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)
@@ -21,6 +22,7 @@ add_library(InternalMatcherTests ${test_header_files} ${test_source_files})
 set_source_files_properties(${test_header_files}
   PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(InternalMatcherTests PROPERTIES
+  STATIC_LIBRARY_FLAGS_RELEASE "/LTCG"
   OUTPUT_NAME nexus_internal_matcher_tests)
 install(TARGETS InternalMatcherTests CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)
@@ -35,9 +37,6 @@ target_link_libraries(InternalMatcherTester InternalMatcherTests
   debug $ENV{CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized $ENV{CRYPTOPP_LIBRARY_OPTIMIZED_PATH})
 
-if(MSVC)
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj")
-endif()
 if(UNIX)
   target_link_libraries(InternalMatcherTester
     debug $ENV{BOOST_CHRONO_LIBRARY_DEBUG_PATH}
@@ -56,7 +55,7 @@ if(UNIX)
     optimized $ENV{BOOST_FILE_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     pthread rt)
 endif()
-if(${CMAKE_SYSTEM_NAME} STREQUAL SunOS)
+if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
   target_link_libraries(InternalMatcherTester rt socket nsl)
 endif()
 

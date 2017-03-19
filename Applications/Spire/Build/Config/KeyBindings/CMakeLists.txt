@@ -23,7 +23,9 @@ add_library(KeyBindings
   ${generated_source_files})
 
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
-set_target_properties(KeyBindings PROPERTIES OUTPUT_NAME spire_key_bindings)
+set_target_properties(KeyBindings PROPERTIES
+  STATIC_LIBRARY_FLAGS_RELEASE "/LTCG"
+  OUTPUT_NAME spire_key_bindings)
 install(TARGETS KeyBindings CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)
 install(TARGETS KeyBindings CONFIGURATIONS Release

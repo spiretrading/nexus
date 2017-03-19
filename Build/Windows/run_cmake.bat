@@ -7,7 +7,6 @@ CALL %~dp0../../Applications/ClientWebPortal/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/ComplianceServer/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/CtaMarketDataFeedClient/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/DefinitionsServer/Build/Windows/run_cmake.bat
-CALL %~dp0../../Applications/EndOfSessionClient/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/MarketDataClientStressTest/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/MarketDataClientTemplate/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/MarketDataRelayServer/Build/Windows/run_cmake.bat

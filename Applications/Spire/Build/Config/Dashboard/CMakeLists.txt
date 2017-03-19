@@ -22,7 +22,9 @@ add_library(Dashboard
   ${generated_header_files}
   ${generated_source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
-set_target_properties(Dashboard PROPERTIES OUTPUT_NAME spire_dashboard)
+set_target_properties(Dashboard PROPERTIES
+  STATIC_LIBRARY_FLAGS_RELEASE "/LTCG"
+  OUTPUT_NAME spire_dashboard)
 install(TARGETS Dashboard CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)
 install(TARGETS Dashboard CONFIGURATIONS Release
