@@ -12,6 +12,7 @@ namespace AdministrationService {
     typename AdministrationDataStoreType> class AdministrationServlet;
   class AdministrationSession;
   class ApplicationAdministrationClient;
+  template<typename DataStoreType> class CachedAdministrationDataStore;
   class LocalAdministrationDataStore;
   class MySqlAdministrationDataStore;
   class TradingGroup;
