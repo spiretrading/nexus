@@ -14,7 +14,12 @@ namespace AdministrationService {
    */
   class AdministrationDataStore : private boost::noncopyable {
     public:
-      virtual ~AdministrationDataStore();
+      virtual ~AdministrationDataStore() = default;
+
+      //! Loads all AccountIdentities.
+      virtual std::vector<
+        std::tuple<Beam::ServiceLocator::DirectoryEntry, AccountIdentity>>
+        LoadAllAccountIdentities() = 0;
 
       //! Loads an AccountIdentity.
       /*!
@@ -32,6 +37,10 @@ namespace AdministrationService {
       virtual void Store(const Beam::ServiceLocator::DirectoryEntry& account,
         const AccountIdentity& identity) = 0;
 
+      //! Loads all RiskParameters.
+      virtual std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
+        RiskService::RiskParameters>> LoadAllRiskParameters() = 0;
+
       //! Loads an account's RiskParameters.
       /*!
         \param account The account whose RiskParameters are to be loaded.
@@ -48,6 +57,10 @@ namespace AdministrationService {
       */
       virtual void Store(const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskService::RiskParameters& riskParameters) = 0;
+
+      //! Loads all RiskStates.
+      virtual std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
+        RiskService::RiskState>> LoadAllRiskStates() = 0;
 
       //! Loads an account's RiskState.
       /*!
@@ -76,8 +89,6 @@ namespace AdministrationService {
 
       virtual void Close() = 0;
   };
-
-  inline  AdministrationDataStore::~AdministrationDataStore() {}
 }
 }
 
