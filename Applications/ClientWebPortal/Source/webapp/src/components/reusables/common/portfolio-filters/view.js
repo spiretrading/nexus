@@ -108,8 +108,14 @@ class View extends UpdatableView {
       selectList = <MoveSelectDesktop model={selectListModel} onChange={this.onMoveSelectChange.bind(this)}/>;
     }
 
+    let className = "portfolio-filters-container";
+    if (this.componentModel.className != null)
+    {
+      className += " " + this.componentModel.className;
+    }
+
     return (
-        <div id={this.componentModel.componentId} className="portfolio-filters-container">
+        <div id={this.componentModel.componentId} className={className}>
           <div className="header" onClick={this.onHeaderClicked.bind(this)}>
             Filters
             <span className="icon-arrow-up arrow-icon"/>

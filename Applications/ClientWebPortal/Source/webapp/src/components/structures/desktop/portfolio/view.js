@@ -17,6 +17,19 @@ class View extends UpdatableView {
   onWindowResize() {
     let chartOuterWrapperOffset = $('#portfolio-container .chart-outer-wrapper').offset();
     $('#portfolio-container .chart-inner-wrapper').css('left', -1 * chartOuterWrapperOffset.left);
+
+    let $container = $('#portfolio-container');
+    let $chartOuterWrapper = $('#portfolio-container .chart-outer-wrapper');
+    if ($chartOuterWrapper.outerWidth() < $container.outerWidth()) {
+      $('#portfolio-container .chart-inner-wrapper').css('width', $container.outerWidth());
+    } else {
+      $('#portfolio-container .chart-inner-wrapper').css('width', '100%');
+    }
+
+    // $chartOuterWrapper.removeClass('stretch').addClass('stretch');
+    let $portfolioParametersWrapper = $container.find('.porfolio-parameters-wrapper');
+    let chartOuterWrapperHeight = $container.height() - $portfolioParametersWrapper.height();
+    $chartOuterWrapper.height(chartOuterWrapperHeight);
   }
 
   dispose() {
@@ -48,7 +61,7 @@ class View extends UpdatableView {
 
     return (
       <div id="portfolio-container" className="container-fixed-width">
-        <PortfolioParameters model={parametersModel} onSave={onParametersSave}/>
+        <PortfolioParameters model={parametersModel} onSave={onParametersSave} className={"porfolio-parameters-wrapper"}/>
         <div className="chart-outer-wrapper">
           <div className="chart-inner-wrapper">
             <PortfolioChart model={chartModel} />

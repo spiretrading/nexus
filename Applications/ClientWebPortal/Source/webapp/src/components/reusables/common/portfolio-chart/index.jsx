@@ -17,12 +17,20 @@ class PortfolioChart extends Component {
     this.controller.setView(this.view);
   }
 
+  componentDidMount() {
+    this.controller.componentDidMount.apply(this.controller);
+  }
+
   componentWillUpdate(nextProps) {
     this.controller.componentWillUpdate(nextProps.model);
   }
 
   componentDidUpdate() {
     this.controller.getView().componentDidUpdate();
+  }
+
+  componentWillUnmount() {
+    this.controller.componentWillUnmount.apply(this.controller);
   }
 
   render() {

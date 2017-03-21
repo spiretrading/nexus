@@ -10,7 +10,10 @@
   .chart-outer-wrapper {
     position: relative;
     width: 100vw;
-    flex: 1;
+
+    &.stretch {
+      flex: 1;
+    }
 
     .chart-inner-wrapper {
       position: absolute;

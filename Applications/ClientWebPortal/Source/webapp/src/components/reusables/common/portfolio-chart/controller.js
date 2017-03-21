@@ -19,6 +19,14 @@ class Controller {
       this.view.setComponentModel(this.componentModel);
     }
   }
+
+  componentDidMount() {
+    this.view.initialize.apply(this.view);
+  }
+
+  componentWillUnmount() {
+    this.view.dispose.apply(this.view);
+  }
 }
 
 export default Controller;

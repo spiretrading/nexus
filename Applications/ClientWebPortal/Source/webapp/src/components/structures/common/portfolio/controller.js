@@ -46,7 +46,10 @@ class Controller {
     };
     let requiredDataFetchPromise = this.getRequiredData.apply(this);
 
-    this.portfolioSubscriptionId = this.riskServiceClient.subscribePortfolio(this.onPortfolioMessageReceived.bind(this));
+    this.riskServiceClient.subscribePortfolio(this.onPortfolioMessageReceived.bind(this))
+      .then((subscriptionId) => {
+        this.portfolioSubscriptionId = subscriptionId;
+      });
 
     this.view.initialize.apply(this.view);
 

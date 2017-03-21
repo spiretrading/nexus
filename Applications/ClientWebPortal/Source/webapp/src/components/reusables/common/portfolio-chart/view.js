@@ -28,6 +28,19 @@ class View extends UpdatableView {
     return label.split(' ').map((word) => [word[0].toUpperCase(), ...word.substr(1)].join('')).join(' ');
   }
 
+  initialize() {
+    $('#' + this.componentModel.componentId).scroll(this.onScroll);
+
+    this.onResize = this.onResize.bind(this);
+    $(window).resize(this.onResize);
+  }
+
+  /** @private */
+  onScroll() {
+    let scrollTopOffset = $(this).scrollTop();
+    $(this).find('.header').css('top', scrollTopOffset);
+  }
+
   /** @private */
   synchronizeColumnWidths() {
     let $headerTds = $('#' + this.componentModel.componentId + ' .header td');
@@ -43,8 +56,26 @@ class View extends UpdatableView {
     }
   }
 
+  /** @private */
+  onResize() {
+    let $container = $('#' + this.componentModel.componentId);
+    let $header = $container.find('.header');
+    let headerWidth = $header.outerWidth();
+    let containerWidth = $container.outerWidth();
+    if (headerWidth < containerWidth) {
+      $header.removeClass('wide').addClass('wide');
+    } else {
+      $header.removeClass('wide');
+    }
+  }
+
   componentDidUpdate() {
     this.synchronizeColumnWidths.apply(this);
+  }
+
+  dispose() {
+    $('#' + this.componentModel.componentId).unbind('scroll', this.onScroll);
+    $(window).unbind('resize', this.onResize);
   }
 
   render() {

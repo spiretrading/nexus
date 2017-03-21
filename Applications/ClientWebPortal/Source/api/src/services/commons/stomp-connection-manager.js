@@ -87,7 +87,8 @@ class MockServer {
 
 /** Spire STOMP connection manager */
 class StompConnectionManager {
-  constructor() {
+  constructor(connectionPath) {
+    this.connectionUrl = 'ws://' + window.location.host + Config.BACKEND_API_ROOT_URL + connectionPath;
     this.subIdToTopic = new HashMap();
     this.destinationToListeners = new HashMap();      // subId - listener callbacks
     this.destinationToSubscription = new HashMap();
@@ -96,10 +97,19 @@ class StompConnectionManager {
   connect() {
     // later to be replaced with the stomp client at
     // https://github.com/JSteunou/webstomp-client
-    this.client = new MockServer();
+    // this.client = new MockServer();
 
     // below is a test code to see if a WS connection can be made
-    this.realClient = webstomp.client('ws://192.168.1.129:8080/api/risk_service/portfolio');
+    // this.realClient = webstomp.client('ws://192.168.1.129:8080/api/risk_service/portfolio');
+    return new Promise((resolve, reject) => {
+      // TODO: temporarily hardcoded url
+      let websocket = new WebSocket(this.connectionUrl);
+      this.client = webstomp.over(websocket);
+      this.client.connect({}, () => {
+        console.debug('STOMP connection has been made.');
+        resolve();
+      });
+    });
   }
 
   /** @private */
@@ -118,22 +128,45 @@ class StompConnectionManager {
 
   subscribe(destination, listener) {
     if (!this.isConnected.apply(this)){
-      this.connect.apply(this);
+      // connection doesn't exist, connect and subscribe
+      return this.connect.apply(this)
+        .then(() => {
+          return new Promise((resolve, reject) => {
+
+            // TODO: TEMPORARY CODE pause for 2 seconds to allow STOMP to make the connection to rule out race condition
+            setTimeout(() => {
+              console.debug('performed 2 seconds pause');
+              resolve();
+            }, 2000);
+
+          });
+        })
+        .then(performSubscribe.bind(this));
+    } else {
+
+      // connection exists, just perform subscribe
+      return new Promise((resolve, reject) => {
+        resolve();
+      }).then(performSubscribe.bind(this));
+
     }
 
-    let subId = uuid.v4();
-    this.subIdToTopic.set(subId, destination);
-    if (!this.destinationToListeners.has(destination)) {
-      this.destinationToListeners.set(destination, new HashMap());
-      let context = {
-        connectionManager: this,
-        destination: destination
-      };
-      let subscription = this.client.subscribe(destination, this.onAllMessage.bind(context));
-      this.destinationToSubscription.set(destination, subscription);
+    function performSubscribe() {
+      console.debug('performing subscribe');
+      let subId = uuid.v4();
+      this.subIdToTopic.set(subId, destination);
+      if (!this.destinationToListeners.has(destination)) {
+        this.destinationToListeners.set(destination, new HashMap());
+        let context = {
+          connectionManager: this,
+          destination: destination
+        };
+        let subscription = this.client.subscribe(destination, this.onAllMessage.bind(context));
+        this.destinationToSubscription.set(destination, subscription);
+      }
+      this.destinationToListeners.get(destination).set(subId, listener);
+      return subId;
     }
-    this.destinationToListeners.get(destination).set(subId, listener);
-    return subId;
   }
 
   unsubscribe(subId) {
@@ -157,4 +190,4 @@ class StompConnectionManager {
   }
 }
 
-export default new StompConnectionManager();
+export default StompConnectionManager;
