@@ -51,8 +51,8 @@ applications+="UtpMarketDataFeedClient "
 parallel -j$cores --no-notice build_function ::: $applications
 
 pushd $directory/../../Applications/ClientWebPortal/Source/api/build/make
-./build.sh
+./build.sh $config
 popd
 pushd $directory/../../Applications/ClientWebPortal/Source/webapp/build/make
-./build.sh
+./build.sh $config
 popd
