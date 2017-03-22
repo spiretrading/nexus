@@ -72,8 +72,8 @@ namespace OrderExecutionService {
   template<typename MarketDataClientType, typename TimeClientType>
   BoardLotCheck<MarketDataClientType, TimeClientType>::ClosingEntry::
       ClosingEntry()
-      : m_lastUpdate(boost::posix_time::neg_infin),
-        m_closingPrice(Money::ZERO) {}
+      : m_lastUpdate{boost::posix_time::neg_infin},
+        m_closingPrice{Money::ZERO} {}
 
   template<typename MarketDataClient, typename TimeClient>
   std::unique_ptr<BoardLotCheck<typename std::decay<MarketDataClient>::type,
@@ -94,11 +94,11 @@ namespace OrderExecutionService {
       MarketDataClientForward&& marketDataClient,
       TimeClientForward&& timeClient, const MarketDatabase& marketDatabase,
         const boost::local_time::tz_database& timeZoneDatabase)
-      : m_marketDataClient(std::forward<MarketDataClientForward>(
-          marketDataClient)),
-        m_timeClient(std::forward<TimeClientForward>(timeClient)),
-        m_marketDatabase(marketDatabase),
-        m_timeZoneDatabase(timeZoneDatabase) {}
+      : m_marketDataClient{std::forward<MarketDataClientForward>(
+          marketDataClient)},
+        m_timeClient{std::forward<TimeClientForward>(timeClient)},
+        m_marketDatabase{marketDatabase},
+        m_timeZoneDatabase{timeZoneDatabase} {}
 
   template<typename MarketDataClientType, typename TimeClientType>
   void BoardLotCheck<MarketDataClientType, TimeClientType>::Submit(
@@ -110,18 +110,18 @@ namespace OrderExecutionService {
     auto currentPrice = LoadPrice(orderInfo.m_fields.m_security);
     if(currentPrice <= 10 * Money::CENT) {
       if(orderInfo.m_fields.m_quantity % 1000 != 0) {
-        BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
-          "Quantity must be a multiple of 1000."));
+        BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
+          "Quantity must be a multiple of 1000."});
       }
     } else if(currentPrice < Money::ONE) {
       if(orderInfo.m_fields.m_quantity % 500 != 0) {
-        BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
-          "Quantity must be a multiple of 500."));
+        BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
+          "Quantity must be a multiple of 500."});
       }
     } else {
       if(orderInfo.m_fields.m_quantity % 100 != 0) {
-        BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
-          "Quantity must be a multiple of 100."));
+        BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
+          "Quantity must be a multiple of 100."});
       }
     }
   }
@@ -152,11 +152,17 @@ namespace OrderExecutionService {
     auto publisher = m_bboQuotes.GetOrInsert(security,
       [&] {
         auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
-        auto bboQuery = MarketDataService::QueryRealTimeWithSnapshot(security);
-        m_marketDataClient->QueryBboQuotes(bboQuery, publisher);
+        MarketDataService::QueryRealTimeWithSnapshot(*m_marketDataClient,
+          publisher);
         return publisher;
       });
-    return publisher->Top().m_bid.m_price;
+    try {
+      return publisher->Top().m_bid.m_price;
+    } catch(const Beam::PipeBrokenException&) {
+      m_bboQuotes.Erase(security);
+      BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
+        "No BBO quote available."});
+    }
   }
 }
 }
