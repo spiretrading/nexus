@@ -98,7 +98,12 @@ class StompConnectionManager {
     // later to be replaced with the stomp client at
     // https://github.com/JSteunou/webstomp-client
     // this.client = new MockServer();
+    return new Promise((resolve, reject) => {
+      this.client = new MockServer();
+      resolve();
+    });
 
+    /*
     // below is a test code to see if a WS connection can be made
     // this.realClient = webstomp.client('ws://192.168.1.129:8080/api/risk_service/portfolio');
     return new Promise((resolve, reject) => {
@@ -110,6 +115,7 @@ class StompConnectionManager {
         resolve();
       });
     });
+    */
   }
 
   /** @private */
