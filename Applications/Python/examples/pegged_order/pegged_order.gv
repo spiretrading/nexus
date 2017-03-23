@@ -1,0 +1,31 @@
+digraph PeggedOrder {
+  rankdir = LR;
+  node [shape = circle];
+
+  S0 [color = green, fontcolor = green];
+  S2 [color = red, fontcolor = red];
+  S4 [color = blue, fontcolor = blue];
+
+  S0 -> S1 [label = "E0"];
+  S1 -> S2 [label = "E1"]; 
+  S1 -> S3 [label = "E2"];
+  S3 -> S3 [label = "E0"];
+  S3 -> S4 [label = "E3"];
+  S3 -> S5 [label = "C0"];
+  S5 -> S4 [label = "E3"];
+  S5 -> S1 [label = "E4"];
+}
+
+S0 - Subscribe to BBO quotes.
+S1 - Submit order:
+         price = BBO quote price minus offset.
+         quantity = initial quantity minus filled quantity
+S5 - Cancel order.
+
+E0 - BBO quote update.
+E1 - Execution report with status REJECTED.
+E2 - Execution report with status NEW.
+E3 - Execution report with status FILLED.
+E4 - Execution report with status TERMINAL.
+
+C0 - Order submission price not equal to BBO quote price minus offset.
