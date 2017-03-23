@@ -127,10 +127,15 @@ namespace Nexus {
 
   inline void TestEnvironment::Update(const Security& security,
       const BboQuote& bboQuote) {
+    boost::unique_lock<Beam::Threading::Mutex> lock{m_timeMutex};
     if(bboQuote.m_timestamp != boost::posix_time::not_a_date_time) {
-      SetTime(bboQuote.m_timestamp);
+      LockedSetTime(bboQuote.m_timestamp, lock);
+      GetMarketDataInstance().SetBbo(security, bboQuote);
+    } else {
+      auto revisedBboQuote = bboQuote;
+      revisedBboQuote.m_timestamp = m_currentTime;
+      GetMarketDataInstance().SetBbo(security, bboQuote);
     }
-    GetMarketDataInstance().SetBbo(security, bboQuote);
     Beam::Routines::FlushPendingRoutines();
   }
 

@@ -184,6 +184,7 @@ namespace Nexus {
       m_orderExecutionClient =
         m_environment->GetOrderExecutionInstance().BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
+      m_orderExecutionClient->Open();
       m_timeClient = Beam::TimeService::MakeVirtualTimeClient(
         std::make_unique<TestTimeClient>(Beam::Ref(*m_environment)));
       m_timeClient->Open();

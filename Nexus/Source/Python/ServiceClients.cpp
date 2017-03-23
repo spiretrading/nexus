@@ -147,8 +147,8 @@ namespace {
     public:
       PythonTestServiceClients(std::unique_ptr<VirtualServiceClients> client,
           std::shared_ptr<TestEnvironment> environment)
-          : WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>(
-              std::move(client)),
+          : WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>{
+              std::move(client)},
             m_environment{std::move(environment)} {}
 
       virtual ~PythonTestServiceClients() override {
@@ -157,8 +157,30 @@ namespace {
         Close();
       }
 
+      virtual PythonMarketDataClient& GetMarketDataClient() override {
+        if(m_marketDataClient == nullptr) {
+          m_marketDataClient = std::make_unique<PythonMarketDataClient>(
+            MakeVirtualMarketDataClient(
+            &WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>::
+            GetMarketDataClient()));
+        }
+        return *m_marketDataClient;
+      }
+
+      virtual PythonOrderExecutionClient& GetOrderExecutionClient() override {
+        if(m_orderExecutionClient == nullptr) {
+          m_orderExecutionClient = std::make_unique<PythonOrderExecutionClient>(
+            MakeVirtualOrderExecutionClient(
+            &WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>::
+            GetOrderExecutionClient()));
+        }
+        return *m_orderExecutionClient;
+      }
+
     private:
       std::shared_ptr<TestEnvironment> m_environment;
+      std::unique_ptr<PythonMarketDataClient> m_marketDataClient;
+      std::unique_ptr<PythonOrderExecutionClient> m_orderExecutionClient;
   };
 
   class PythonTestTimer : public WrapperTimer<TestTimer> {
