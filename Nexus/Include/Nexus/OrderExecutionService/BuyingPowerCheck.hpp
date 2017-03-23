@@ -212,8 +212,8 @@ namespace OrderExecutionService {
     auto publisher = m_bboQuotes.GetOrInsert(security,
       [&] {
         auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
-        MarketDataService::QueryRealTimeWithSnapshot(*m_marketDataClient,
-          publisher);
+        MarketDataService::QueryRealTimeWithSnapshot(security,
+          *m_marketDataClient, publisher);
         return publisher;
       });
     try {

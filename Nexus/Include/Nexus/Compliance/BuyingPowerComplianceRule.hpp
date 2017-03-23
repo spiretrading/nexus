@@ -208,12 +208,18 @@ namespace Compliance {
       const Security& security) {
     auto publisher = m_bboQuotes.GetOrInsert(security,
       [&] {
-        auto bboQuery = MarketDataService::QueryRealTimeWithSnapshot(security);
         auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
-        m_marketDataClient->QueryBboQuotes(bboQuery, publisher);
+        MarketDataService::QueryRealTimeWithSnapshot(security,
+          *m_marketDataClient, publisher);
         return publisher;
       });
-    return publisher->Top();
+    try {
+      return publisher->Top();
+    } catch(const Beam::PipeBrokenException&) {
+      m_bboQuotes.Erase(security);
+      BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
+        "No BBO quote available."});
+    }
   }
 
   template<typename MarketDataClientType>
