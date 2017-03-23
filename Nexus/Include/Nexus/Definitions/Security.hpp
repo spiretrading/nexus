@@ -126,7 +126,6 @@ namespace Nexus {
     return ToString(value, GetDefaultMarketDatabase());
   }
 
-  template<typename T>
   std::ostream& operator <<(std::ostream& out, const Security& value) {
     return out << ToString(value);
   }
