@@ -217,7 +217,7 @@ namespace Compliance {
       return publisher->Top();
     } catch(const Beam::PipeBrokenException&) {
       m_bboQuotes.Erase(security);
-      BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
+      BOOST_THROW_EXCEPTION(ComplianceCheckException{
         "No BBO quote available."});
     }
   }

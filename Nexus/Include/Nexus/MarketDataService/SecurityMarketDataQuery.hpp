@@ -3,6 +3,7 @@
 #include <Beam/Queries/BasicQuery.hpp>
 #include <Beam/Queries/IndexedValue.hpp>
 #include <Beam/Queries/SequencedValue.hpp>
+#include <Beam/Queues/Queue.hpp>
 #include <Beam/Queues/QueueWriter.hpp>
 #include <Beam/Routines/Routine.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
@@ -13,24 +14,24 @@
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 
 namespace Nexus {
-  typedef Beam::Queries::SequencedValue<BboQuote> SequencedBboQuote;
-  typedef Beam::Queries::SequencedValue<BookQuote> SequencedBookQuote;
-  typedef Beam::Queries::SequencedValue<MarketQuote> SequencedMarketQuote;
-  typedef Beam::Queries::SequencedValue<TimeAndSale> SequencedTimeAndSale;
-  typedef Beam::Queries::IndexedValue<BboQuote, Security> SecurityBboQuote;
-  typedef Beam::Queries::IndexedValue<BookQuote, Security> SecurityBookQuote;
-  typedef Beam::Queries::IndexedValue<MarketQuote, Security>
-    SecurityMarketQuote;
-  typedef Beam::Queries::IndexedValue<TimeAndSale, Security>
-    SecurityTimeAndSale;
-  typedef Beam::Queries::SequencedValue<SecurityBboQuote>
-    SequencedSecurityBboQuote;
-  typedef Beam::Queries::SequencedValue<SecurityBookQuote>
-    SequencedSecurityBookQuote;
-  typedef Beam::Queries::SequencedValue<SecurityMarketQuote>
-    SequencedSecurityMarketQuote;
-  typedef Beam::Queries::SequencedValue<SecurityTimeAndSale>
-    SequencedSecurityTimeAndSale;
+  using SequencedBboQuote = Beam::Queries::SequencedValue<BboQuote>;
+  using SequencedBookQuote = Beam::Queries::SequencedValue<BookQuote>;
+  using SequencedMarketQuote = Beam::Queries::SequencedValue<MarketQuote>;
+  using SequencedTimeAndSale = Beam::Queries::SequencedValue<TimeAndSale>;
+  using SecurityBboQuote = Beam::Queries::IndexedValue<BboQuote, Security>;
+  using SecurityBookQuote = Beam::Queries::IndexedValue<BookQuote, Security>;
+  using SecurityMarketQuote =
+    Beam::Queries::IndexedValue<MarketQuote, Security>;
+  using SecurityTimeAndSale =
+    Beam::Queries::IndexedValue<TimeAndSale, Security>;
+  using SequencedSecurityBboQuote =
+    Beam::Queries::SequencedValue<SecurityBboQuote>;
+  using SequencedSecurityBookQuote =
+    Beam::Queries::SequencedValue<SecurityBookQuote>;
+  using SequencedSecurityMarketQuote =
+    Beam::Queries::SequencedValue<SecurityMarketQuote>;
+  using SequencedSecurityTimeAndSale =
+    Beam::Queries::SequencedValue<SecurityTimeAndSale>;
 
 namespace MarketDataService {
 
