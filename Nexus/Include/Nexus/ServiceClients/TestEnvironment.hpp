@@ -178,6 +178,9 @@ namespace Nexus {
   }
 
   inline void TestEnvironment::SetTime(boost::posix_time::ptime time) {
+    if(time.is_special()) {
+      BOOST_THROW_EXCEPTION(TestEnvironmentException{"Invalid date/time."});
+    }
     boost::unique_lock<Beam::Threading::Mutex> lock{m_timeMutex};
     LockedSetTime(time, lock);
   }
@@ -185,6 +188,10 @@ namespace Nexus {
   inline void TestEnvironment::AdvanceTime(
       boost::posix_time::time_duration duration) {
     boost::unique_lock<Beam::Threading::Mutex> lock{m_timeMutex};
+    if(m_currentTime == boost::posix_time::not_a_date_time) {
+      m_currentTime = boost::posix_time::ptime{
+        boost::gregorian::date{2016, 8, 14}, boost::posix_time::seconds(0)};
+    }
     LockedSetTime(m_currentTime + duration, lock);
   }
 
