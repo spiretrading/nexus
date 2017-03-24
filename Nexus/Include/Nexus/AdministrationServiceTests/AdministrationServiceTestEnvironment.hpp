@@ -1,5 +1,5 @@
-#ifndef NEXUS_ADMINISTRATIONSERVICETESTINSTANCE_HPP
-#define NEXUS_ADMINISTRATIONSERVICETESTINSTANCE_HPP
+#ifndef NEXUS_ADMINISTRATIONSERVICETESTENVIRONMENT_HPP
+#define NEXUS_ADMINISTRATIONSERVICETESTENVIRONMENT_HPP
 #include <Beam/IO/LocalClientChannel.hpp>
 #include <Beam/IO/LocalServerConnection.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
@@ -9,7 +9,7 @@
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
 #include <Beam/ServiceLocator/SessionAuthenticator.hpp>
-#include <Beam/ServiceLocatorTests/ServiceLocatorTestInstance.hpp>
+#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/Services/AuthenticatedServiceProtocolClientBuilder.hpp>
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
@@ -28,22 +28,22 @@ namespace Nexus {
 namespace AdministrationService {
 namespace Tests {
 
-  /*! \class AdministrationServiceTestInstance
+  /*! \class AdministrationServiceTestEnvironment
       \brief Wraps most components needed to run an instance of the
              AdministrationService with helper functions.
    */
-  class AdministrationServiceTestInstance : private boost::noncopyable {
+  class AdministrationServiceTestEnvironment : private boost::noncopyable {
     public:
 
-      //! Constructs an AdministrationServiceTestInstance.
+      //! Constructs an AdministrationServiceTestEnvironment.
       /*!
         \param serviceLocatorClient The ServiceLocatorClient to use.
       */
-      AdministrationServiceTestInstance(const std::shared_ptr<
+      AdministrationServiceTestEnvironment(const std::shared_ptr<
         Beam::ServiceLocator::VirtualServiceLocatorClient>&
         serviceLocatorClient);
 
-      ~AdministrationServiceTestInstance();
+      ~AdministrationServiceTestEnvironment();
 
       //! Opens the servlet.
       void Open();
@@ -86,7 +86,8 @@ namespace Tests {
       ServiceProtocolServletContainer m_container;
   };
 
-  inline AdministrationServiceTestInstance::AdministrationServiceTestInstance(
+  inline AdministrationServiceTestEnvironment::
+      AdministrationServiceTestEnvironment(
       const std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>&
       serviceLocatorClient)
       : m_container(Beam::Initialize(serviceLocatorClient,
@@ -95,21 +96,21 @@ namespace Tests {
           &m_serverConnection,
           boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
 
-  inline AdministrationServiceTestInstance::
-      ~AdministrationServiceTestInstance() {
+  inline AdministrationServiceTestEnvironment::
+      ~AdministrationServiceTestEnvironment() {
     Close();
   }
 
-  inline void AdministrationServiceTestInstance::Open() {
+  inline void AdministrationServiceTestEnvironment::Open() {
     m_container.Open();
   }
 
-  inline void AdministrationServiceTestInstance::Close() {
+  inline void AdministrationServiceTestEnvironment::Close() {
     m_container.Close();
   }
 
   inline std::unique_ptr<VirtualAdministrationClient>
-      AdministrationServiceTestInstance::BuildClient(
+      AdministrationServiceTestEnvironment::BuildClient(
       Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
       serviceLocatorClient) {
     ServiceProtocolClientBuilder builder(Beam::Ref(serviceLocatorClient),

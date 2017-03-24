@@ -27,7 +27,7 @@
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 #include "Nexus/OrderExecutionServiceTests/MockOrderExecutionDriver.hpp"
-#include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceInstance.hpp"
+#include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 #include "Nexus/Python/PythonOrderExecutionClient.hpp"
 
@@ -95,20 +95,21 @@ namespace {
       *orderExecutionClient), queue->GetSlot<const Order*>());
   }
 
-  OrderExecutionServiceTestInstance* BuildOrderExecutionServiceTestInstance(
+  OrderExecutionServiceTestEnvironment*
+      BuildOrderExecutionServiceTestEnvironment(
       const std::shared_ptr<VirtualServiceLocatorClient>& serviceLocatorClient,
       const std::shared_ptr<VirtualUidClient>& uidClient,
       const std::shared_ptr<VirtualAdministrationClient>&
       administrationClient) {
-    return new OrderExecutionServiceTestInstance{serviceLocatorClient,
+    return new OrderExecutionServiceTestEnvironment{serviceLocatorClient,
       uidClient, administrationClient};
   }
 
-  PythonOrderExecutionClient* OrderExecutionServiceTestInstanceBuildClient(
-      OrderExecutionServiceTestInstance& instance,
+  PythonOrderExecutionClient* OrderExecutionServiceTestEnvironmentBuildClient(
+      OrderExecutionServiceTestEnvironment& environment,
       VirtualServiceLocatorClient& serviceLocatorClient) {
     return new PythonOrderExecutionClient{
-      instance.BuildClient(Ref(serviceLocatorClient))};
+      environment.BuildClient(Ref(serviceLocatorClient))};
   }
 }
 
@@ -275,7 +276,7 @@ void Nexus::Python::ExportOrderExecutionService() {
       borrowed(PyImport_AddModule(nestedName.c_str())))};
     parent.attr("tests") = nestedModule;
     scope child = nestedModule;
-    ExportOrderExecutionServiceTestInstance();
+    ExportOrderExecutionServiceTestEnvironment();
     ExportMockOrderExecutionDriver();
     def("cancel_order", BlockingFunction(&CancelOrder));
     def("set_order_status", BlockingFunction(&SetOrderStatus));
@@ -289,15 +290,17 @@ void Nexus::Python::ExportOrderExecutionService() {
   }
 }
 
-void Nexus::Python::ExportOrderExecutionServiceTestInstance() {
-  class_<OrderExecutionServiceTestInstance, boost::noncopyable>(
-      "OrderExecutionServiceTestInstance", no_init)
-    .def("__init__", make_constructor(BuildOrderExecutionServiceTestInstance))
-    .def("get_driver", &OrderExecutionServiceTestInstance::GetDriver,
+void Nexus::Python::ExportOrderExecutionServiceTestEnvironment() {
+  class_<OrderExecutionServiceTestEnvironment, boost::noncopyable>(
+      "OrderExecutionServiceTestEnvironment", no_init)
+    .def("__init__",
+      make_constructor(BuildOrderExecutionServiceTestEnvironment))
+    .def("get_driver", &OrderExecutionServiceTestEnvironment::GetDriver,
       return_internal_reference<>())
-    .def("open", BlockingFunction(&OrderExecutionServiceTestInstance::Open))
-    .def("close", BlockingFunction(&OrderExecutionServiceTestInstance::Close))
-    .def("build_client", &OrderExecutionServiceTestInstanceBuildClient,
+    .def("open", BlockingFunction(&OrderExecutionServiceTestEnvironment::Open))
+    .def("close", BlockingFunction(
+      &OrderExecutionServiceTestEnvironment::Close))
+    .def("build_client", &OrderExecutionServiceTestEnvironmentBuildClient,
       return_value_policy<manage_new_object>());
 }
 

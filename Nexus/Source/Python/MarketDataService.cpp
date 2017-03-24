@@ -24,7 +24,7 @@
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
-#include "Nexus/MarketDataServiceTests/MarketDataServiceTestInstance.hpp"
+#include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/Python/PythonMarketDataClient.hpp"
 
 using namespace Beam;
@@ -79,17 +79,17 @@ namespace {
       MakeVirtualMarketDataClient(std::move(baseClient))};
   }
 
-  MarketDataServiceTestInstance* BuildMarketDataServiceTestInstance(
+  MarketDataServiceTestEnvironment* BuildMarketDataServiceTestEnvironment(
       const std::shared_ptr<VirtualServiceLocatorClient>&
       serviceLocatorClient) {
-    return new MarketDataServiceTestInstance{serviceLocatorClient};
+    return new MarketDataServiceTestEnvironment{serviceLocatorClient};
   }
 
-  PythonMarketDataClient* MarketDataServiceTestInstanceBuildClient(
-      MarketDataServiceTestInstance& instance,
+  PythonMarketDataClient* MarketDataServiceTestEnvironmentBuildClient(
+      MarketDataServiceTestEnvironment& environment,
       VirtualServiceLocatorClient& serviceLocatorClient) {
     return new PythonMarketDataClient{
-      instance.BuildClient(Ref(serviceLocatorClient))};
+      environment.BuildClient(Ref(serviceLocatorClient))};
   }
 }
 
@@ -154,18 +154,18 @@ void Nexus::Python::ExportMarketDataService() {
       borrowed(PyImport_AddModule(nestedName.c_str())))};
     parent.attr("tests") = nestedModule;
     scope child = nestedModule;
-    ExportMarketDataServiceTestInstance();
+    ExportMarketDataServiceTestEnvironment();
   }
 }
 
-void Nexus::Python::ExportMarketDataServiceTestInstance() {
-  class_<MarketDataServiceTestInstance, boost::noncopyable>(
-      "MarketDataServiceTestInstance", no_init)
-    .def("__init__", make_constructor(BuildMarketDataServiceTestInstance))
-    .def("open", BlockingFunction(&MarketDataServiceTestInstance::Open))
-    .def("close", BlockingFunction(&MarketDataServiceTestInstance::Close))
-    .def("set_bbo", BlockingFunction(&MarketDataServiceTestInstance::SetBbo))
-    .def("build_client", &MarketDataServiceTestInstanceBuildClient,
+void Nexus::Python::ExportMarketDataServiceTestEnvironment() {
+  class_<MarketDataServiceTestEnvironment, boost::noncopyable>(
+      "MarketDataServiceTestEnvironment", no_init)
+    .def("__init__", make_constructor(BuildMarketDataServiceTestEnvironment))
+    .def("open", BlockingFunction(&MarketDataServiceTestEnvironment::Open))
+    .def("close", BlockingFunction(&MarketDataServiceTestEnvironment::Close))
+    .def("set_bbo", BlockingFunction(&MarketDataServiceTestEnvironment::SetBbo))
+    .def("build_client", &MarketDataServiceTestEnvironmentBuildClient,
       return_value_policy<manage_new_object>());
 }
 

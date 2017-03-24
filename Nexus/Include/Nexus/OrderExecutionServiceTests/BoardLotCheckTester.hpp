@@ -1,12 +1,12 @@
 #ifndef NEXUS_BOARDLOTCHECKTESTER_HPP
 #define NEXUS_BOARDLOTCHECKTESTER_HPP
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
-#include <Beam/ServiceLocatorTests/ServiceLocatorTestInstance.hpp>
+#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/TimeService/IncrementalTimeClient.hpp>
 #include <cppunit/extensions/HelperMacros.h>
-#include "Nexus/MarketDataServiceTests/MarketDataServiceTestInstance.hpp"
+#include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionService/BoardLotCheck.hpp"
-#include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceInstance.hpp"
+#include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 
 namespace Nexus {
 namespace OrderExecutionService {
@@ -40,10 +40,12 @@ namespace Tests {
       void TestUnavailableBboQuote();
 
     private:
-      boost::optional<Beam::ServiceLocator::Tests::ServiceLocatorTestInstance>
-        m_serviceLocatorInstance;
-      boost::optional<MarketDataService::Tests::MarketDataServiceTestInstance>
-        m_marketDataServiceInstance;
+      boost::optional<
+        Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment>
+        m_serviceLocatorEnvironment;
+      boost::optional<
+        MarketDataService::Tests::MarketDataServiceTestEnvironment>
+        m_marketDataServiceEnvironment;
       std::unique_ptr<ServiceLocatorClient> m_serviceLocatorClient;
       boost::optional<BoardLotCheck> m_check;
 

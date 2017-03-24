@@ -6,7 +6,7 @@
 #include <Beam/Pointers/DelayPtr.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
-#include <Beam/ServiceLocatorTests/ServiceLocatorTestInstance.hpp>
+#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/Services/ServiceProtocolClientBuilder.hpp>
 #include <Beam/Services/ServiceProtocolServer.hpp>
 #include <Beam/Threading/TriggerTimer.hpp>
@@ -68,8 +68,8 @@ namespace Tests {
       void TestSubmit();
 
     private:
-      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestInstance>
-        m_serviceLocatorInstance;
+      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment>
+        m_serviceLocatorEnvironment;
       Beam::DelayPtr<ServerConnection> m_serverConnection;
       Beam::DelayPtr<ServiceProtocolServer> m_server;
       Beam::DelayPtr<TestComplianceClient> m_complianceClient;

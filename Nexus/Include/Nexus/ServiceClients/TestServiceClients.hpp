@@ -171,21 +171,21 @@ namespace Nexus {
     }
     try {
       m_serviceLocatorClient =
-        m_environment->GetServiceLocatorInstance().BuildClient();
+        m_environment->GetServiceLocatorEnvironment().BuildClient();
       m_serviceLocatorClient->SetCredentials("root", "");
       m_serviceLocatorClient->Open();
-      m_definitionsClient = m_environment->GetDefinitionsInstance().BuildClient(
+      m_definitionsClient = m_environment->GetDefinitionsEnvironment().BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
       m_definitionsClient->Open();
       m_administrationClient =
-        m_environment->GetAdministrationInstance().BuildClient(
+        m_environment->GetAdministrationEnvironment().BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
       m_administrationClient->Open();
-      m_marketDataClient = m_environment->GetMarketDataInstance().BuildClient(
+      m_marketDataClient = m_environment->GetMarketDataEnvironment().BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
       m_marketDataClient->Open();
       m_orderExecutionClient =
-        m_environment->GetOrderExecutionInstance().BuildClient(
+        m_environment->GetOrderExecutionEnvironment().BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
       m_orderExecutionClient->Open();
       m_timeClient = Beam::TimeService::MakeVirtualTimeClient(

@@ -7,14 +7,14 @@
 #include <Beam/Pointers/DelayPtr.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
-#include <Beam/ServiceLocatorTests/ServiceLocatorTestInstance.hpp>
+#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Threading/TriggerTimer.hpp>
-#include "Nexus/AdministrationServiceTests/AdministrationServiceTestInstance.hpp"
+#include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/ChartingService/ChartingServlet.hpp"
 #include "Nexus/ChartingServiceTests/ChartingServiceTests.hpp"
-#include "Nexus/MarketDataServiceTests/MarketDataServiceTestInstance.hpp"
+#include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 
 namespace Nexus {
 namespace ChartingService {
@@ -58,15 +58,15 @@ namespace Tests {
       void TestLoadSecurityTimePriceSeries();
 
     private:
-      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestInstance>
-        m_serviceLocatorInstance;
+      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment>
+        m_serviceLocatorEnvironment;
       Beam::DelayPtr<
-        AdministrationService::Tests::AdministrationServiceTestInstance>
-        m_administrationInstance;
+        AdministrationService::Tests::AdministrationServiceTestEnvironment>
+        m_administrationEnvironment;
       std::unique_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
         m_serviceLocatorClient;
-      Beam::DelayPtr<MarketDataService::Tests::MarketDataServiceTestInstance>
-        m_marketDataServiceInstance;
+      Beam::DelayPtr<MarketDataService::Tests::MarketDataServiceTestEnvironment>
+        m_marketDataServiceEnvironment;
       std::shared_ptr<ServerConnection> m_serverConnection;
       Beam::DelayPtr<ServletContainer> m_container;
       Beam::DelayPtr<ClientServiceProtocolClient> m_clientProtocol;

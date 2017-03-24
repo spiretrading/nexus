@@ -18,7 +18,7 @@
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
-#include "Nexus/AdministrationServiceTests/AdministrationServiceTestInstance.hpp"
+#include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;
@@ -72,16 +72,17 @@ namespace {
       std::move(baseClient)};
   }
 
-  AdministrationServiceTestInstance* BuildAdministrationServiceTestInstance(
+  AdministrationServiceTestEnvironment*
+      BuildAdministrationServiceTestEnvironment(
       const std::shared_ptr<VirtualServiceLocatorClient>&
       serviceLocatorClient) {
-    return new AdministrationServiceTestInstance{serviceLocatorClient};
+    return new AdministrationServiceTestEnvironment{serviceLocatorClient};
   }
 
-  VirtualAdministrationClient* AdministrationServiceTestInstanceBuildClient(
-      AdministrationServiceTestInstance& instance,
+  VirtualAdministrationClient* AdministrationServiceTestEnvironmentBuildClient(
+      AdministrationServiceTestEnvironment& environment,
       VirtualServiceLocatorClient& serviceLocatorClient) {
-    return instance.BuildClient(Ref(serviceLocatorClient)).release();
+    return environment.BuildClient(Ref(serviceLocatorClient)).release();
   }
 }
 
@@ -193,17 +194,19 @@ void Nexus::Python::ExportAdministrationService() {
       borrowed(PyImport_AddModule(nestedName.c_str())))};
     parent.attr("tests") = nestedModule;
     scope child = nestedModule;
-    ExportAdministrationServiceTestInstance();
+    ExportAdministrationServiceTestEnvironment();
   }
 }
 
-void Nexus::Python::ExportAdministrationServiceTestInstance() {
-  class_<AdministrationServiceTestInstance, boost::noncopyable>(
-      "AdministrationServiceTestInstance", no_init)
-    .def("__init__", make_constructor(BuildAdministrationServiceTestInstance))
-    .def("open", BlockingFunction(&AdministrationServiceTestInstance::Open))
-    .def("close", BlockingFunction(&AdministrationServiceTestInstance::Close))
-    .def("build_client", &AdministrationServiceTestInstanceBuildClient,
+void Nexus::Python::ExportAdministrationServiceTestEnvironment() {
+  class_<AdministrationServiceTestEnvironment, boost::noncopyable>(
+      "AdministrationServiceTestEnvironment", no_init)
+    .def("__init__",
+      make_constructor(BuildAdministrationServiceTestEnvironment))
+    .def("open", BlockingFunction(&AdministrationServiceTestEnvironment::Open))
+    .def("close", BlockingFunction(
+      &AdministrationServiceTestEnvironment::Close))
+    .def("build_client", &AdministrationServiceTestEnvironmentBuildClient,
       return_value_policy<manage_new_object>());
 }
 

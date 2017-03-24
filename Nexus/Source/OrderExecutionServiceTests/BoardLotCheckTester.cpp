@@ -18,18 +18,18 @@ using namespace Nexus::OrderExecutionService::Tests;
 using namespace std;
 
 void BoardLotCheckTester::setUp() {
-  m_serviceLocatorInstance.emplace();
-  m_serviceLocatorInstance->Open();
-  auto marketDataServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
+  m_serviceLocatorEnvironment.emplace();
+  m_serviceLocatorEnvironment->Open();
+  auto marketDataServiceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
   marketDataServiceLocatorClient->SetCredentials("root", "");
   marketDataServiceLocatorClient->Open();
-  m_marketDataServiceInstance.emplace(
+  m_marketDataServiceEnvironment.emplace(
     std::move(marketDataServiceLocatorClient));
-  m_marketDataServiceInstance->Open();
-  m_serviceLocatorClient = m_serviceLocatorInstance->BuildClient();
+  m_marketDataServiceEnvironment->Open();
+  m_serviceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
   m_serviceLocatorClient->SetCredentials("root", "");
   m_serviceLocatorClient->Open();
-  auto marketDataClient = m_marketDataServiceInstance->BuildClient(
+  auto marketDataClient = m_marketDataServiceEnvironment->BuildClient(
     Ref(*m_serviceLocatorClient));
   marketDataClient->Open();
   m_check.emplace(std::move(marketDataClient), std::make_unique<TimeClient>(),
@@ -39,8 +39,8 @@ void BoardLotCheckTester::setUp() {
 void BoardLotCheckTester::tearDown() {
   m_check.reset();
   m_serviceLocatorClient.reset();
-  m_marketDataServiceInstance.reset();
-  m_serviceLocatorInstance.reset();
+  m_marketDataServiceEnvironment.reset();
+  m_serviceLocatorEnvironment.reset();
 }
 
 void BoardLotCheckTester::TestUnavailableBboQuote() {
@@ -51,7 +51,7 @@ void BoardLotCheckTester::TestUnavailableBboQuote() {
   PrimitiveOrder orderA{orderInfoA};
   CPPUNIT_ASSERT_THROW(m_check->Submit(orderInfoA),
     OrderSubmissionCheckException);
-  m_marketDataServiceInstance->SetBbo(security,
+  m_marketDataServiceEnvironment->SetBbo(security,
     BboQuote{Quote{Money::ONE, 100, Side::BID},
     Quote{Money::ONE + Money::CENT, 100, Side::ASK},
     second_clock::universal_time()});

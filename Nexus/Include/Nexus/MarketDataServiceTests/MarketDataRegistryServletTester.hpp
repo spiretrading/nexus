@@ -8,7 +8,7 @@
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
-#include <Beam/ServiceLocatorTests/ServiceLocatorTestInstance.hpp>
+#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Threading/TriggerTimer.hpp>
@@ -75,8 +75,8 @@ namespace Tests {
       void TestMarketAndSourceEntitlement();
 
     private:
-      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestInstance>
-        m_serviceLocatorInstance;
+      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment>
+        m_serviceLocatorEnvironment;
       std::unique_ptr<TestServiceLocatorClient> m_servletServiceLocatorClient;
       std::unique_ptr<TestServiceLocatorClient> m_clientServiceLocatorClient;
       Beam::DelayPtr<EntitlementDatabase> m_entitlements;

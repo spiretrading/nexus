@@ -381,18 +381,18 @@ void Nexus::Python::ExportTestEnvironment() {
     .def("update", BlockingFunction(
       static_cast<void (TestEnvironment::*)(const Order&,
       const ExecutionReport&)>(&TestEnvironment::Update)))
-    .def("get_service_locator_instance",
-      &TestEnvironment::GetServiceLocatorInstance,
+    .def("get_service_locator_environment",
+      &TestEnvironment::GetServiceLocatorEnvironment,
       return_internal_reference<>())
-    .def("get_uid_instance", &TestEnvironment::GetUidInstance,
+    .def("get_uid_environment", &TestEnvironment::GetUidEnvironment,
       return_internal_reference<>())
-    .def("get_administration_instance",
-      &TestEnvironment::GetAdministrationInstance,
+    .def("get_administration_environment",
+      &TestEnvironment::GetAdministrationEnvironment,
       return_internal_reference<>())
-    .def("get_market_data_instance", &TestEnvironment::GetMarketDataInstance,
-      return_internal_reference<>())
-    .def("get_order_execution_instance",
-      &TestEnvironment::GetOrderExecutionInstance,
+    .def("get_market_data_environment",
+      &TestEnvironment::GetMarketDataEnvironment, return_internal_reference<>())
+    .def("get_order_execution_environment",
+      &TestEnvironment::GetOrderExecutionEnvironment,
       return_internal_reference<>())
     .def("open", BlockingFunction(&TestEnvironment::Open))
     .def("close", BlockingFunction(&TestEnvironment::Close));

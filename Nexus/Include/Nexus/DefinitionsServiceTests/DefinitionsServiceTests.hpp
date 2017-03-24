@@ -4,7 +4,7 @@
 namespace Nexus {
 namespace DefinitionsService {
 namespace Tests {
-  class DefinitionsServiceTestInstance;
+  class DefinitionsServiceTestEnvironment;
 }
 }
 }

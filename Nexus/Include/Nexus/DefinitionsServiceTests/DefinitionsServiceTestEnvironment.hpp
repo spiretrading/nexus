@@ -1,5 +1,5 @@
-#ifndef NEXUS_DEFINITIONSSERVICETESTINSTANCE_HPP
-#define NEXUS_DEFINITIONSSERVICETESTINSTANCE_HPP
+#ifndef NEXUS_DEFINITIONSSERVICETESTENVIRONMENT_HPP
+#define NEXUS_DEFINITIONSSERVICETESTENVIRONMENT_HPP
 #include <Beam/IO/LocalClientChannel.hpp>
 #include <Beam/IO/LocalServerConnection.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
@@ -9,7 +9,7 @@
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
 #include <Beam/ServiceLocator/SessionAuthenticator.hpp>
-#include <Beam/ServiceLocatorTests/ServiceLocatorTestInstance.hpp>
+#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/Services/AuthenticatedServiceProtocolClientBuilder.hpp>
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
@@ -31,21 +31,21 @@ namespace Nexus {
 namespace DefinitionsService {
 namespace Tests {
 
-  /*! \class DefinitionsServiceTestInstance
+  /*! \class DefinitionsServiceTestEnvironment
       \brief Provides DefinitionsService related classes for testing purposes.
    */
-  class DefinitionsServiceTestInstance : private boost::noncopyable {
+  class DefinitionsServiceTestEnvironment : private boost::noncopyable {
     public:
 
-      //! Constructs an DefinitionsServiceTestInstance.
+      //! Constructs an DefinitionsServiceTestEnvironment.
       /*!
         \param serviceLocatorClient The ServiceLocatorClient to use.
       */
-      DefinitionsServiceTestInstance(const std::shared_ptr<
+      DefinitionsServiceTestEnvironment(const std::shared_ptr<
         Beam::ServiceLocator::VirtualServiceLocatorClient>&
         serviceLocatorClient);
 
-      ~DefinitionsServiceTestInstance();
+      ~DefinitionsServiceTestEnvironment();
 
       //! Opens the servlet.
       void Open();
@@ -87,7 +87,7 @@ namespace Tests {
       ServiceProtocolServletContainer m_container;
   };
 
-  inline DefinitionsServiceTestInstance::DefinitionsServiceTestInstance(
+  inline DefinitionsServiceTestEnvironment::DefinitionsServiceTestEnvironment(
       const std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>&
       serviceLocatorClient)
       : m_container{Beam::Initialize(serviceLocatorClient,
@@ -99,20 +99,21 @@ namespace Tests {
           serviceLocatorClient)), &m_serverConnection,
           boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()} {}
 
-  inline DefinitionsServiceTestInstance::~DefinitionsServiceTestInstance() {
+  inline DefinitionsServiceTestEnvironment::
+      ~DefinitionsServiceTestEnvironment() {
     Close();
   }
 
-  inline void DefinitionsServiceTestInstance::Open() {
+  inline void DefinitionsServiceTestEnvironment::Open() {
     m_container.Open();
   }
 
-  inline void DefinitionsServiceTestInstance::Close() {
+  inline void DefinitionsServiceTestEnvironment::Close() {
     m_container.Close();
   }
 
   inline std::unique_ptr<VirtualDefinitionsClient>
-      DefinitionsServiceTestInstance::BuildClient(
+      DefinitionsServiceTestEnvironment::BuildClient(
       Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
       serviceLocatorClient) {
     ServiceProtocolClientBuilder builder(Beam::Ref(serviceLocatorClient),
