@@ -11,6 +11,7 @@
 #include <boost/optional/optional.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestInstance.hpp"
+#include "Nexus/DefinitionsServiceTests/DefinitionsServiceTestInstance.hpp"
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestInstance.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceInstance.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
@@ -109,6 +110,10 @@ namespace Nexus {
       //! Returns the UidServiceTestInstance.
       Beam::UidService::Tests::UidServiceTestInstance& GetUidInstance();
 
+      //! Returns the DefinitionsServiceTestInstance.
+      DefinitionsService::Tests::DefinitionsServiceTestInstance&
+        GetDefinitionsInstance();
+
       //! Returns the AdministrationServiceTestInstance.
       AdministrationService::Tests::AdministrationServiceTestInstance&
         GetAdministrationInstance();
@@ -140,6 +145,8 @@ namespace Nexus {
       std::unique_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
         m_serviceLocatorClient;
       Beam::UidService::Tests::UidServiceTestInstance m_uidInstance;
+      boost::optional<DefinitionsService::Tests::DefinitionsServiceTestInstance>
+        m_definitionsInstance;
       boost::optional<
         AdministrationService::Tests::AdministrationServiceTestInstance>
         m_administrationInstance;
@@ -355,6 +362,11 @@ namespace Nexus {
     return m_uidInstance;
   }
 
+  inline DefinitionsService::Tests::DefinitionsServiceTestInstance&
+      TestEnvironment::GetDefinitionsInstance() {
+    return *m_definitionsInstance;
+  }
+
   inline AdministrationService::Tests::AdministrationServiceTestInstance&
       TestEnvironment::GetAdministrationInstance() {
     return *m_administrationInstance;
@@ -380,6 +392,12 @@ namespace Nexus {
       m_serviceLocatorClient->SetCredentials("root", "");
       m_serviceLocatorClient->Open();
       m_uidInstance.Open();
+      auto definitionsServiceLocatorClient =
+        m_serviceLocatorInstance.BuildClient();
+      definitionsServiceLocatorClient->SetCredentials("root", "");
+      definitionsServiceLocatorClient->Open();
+      m_definitionsInstance.emplace(std::move(definitionsServiceLocatorClient));
+      m_definitionsInstance->Open();
       auto administrationServiceLocatorClient =
         m_serviceLocatorInstance.BuildClient();
       administrationServiceLocatorClient->SetCredentials("root", "");
@@ -424,6 +442,7 @@ namespace Nexus {
     m_orderExecutionInstance.reset();
     m_marketDataInstance.reset();
     m_administrationInstance.reset();
+    m_definitionsInstance.reset();
     m_uidInstance.Close();
     m_serviceLocatorClient.reset();
     m_serviceLocatorInstance.Close();

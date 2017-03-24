@@ -174,6 +174,9 @@ namespace Nexus {
         m_environment->GetServiceLocatorInstance().BuildClient();
       m_serviceLocatorClient->SetCredentials("root", "");
       m_serviceLocatorClient->Open();
+      m_definitionsClient = m_environment->GetDefinitionsInstance().BuildClient(
+        Beam::Ref(*m_serviceLocatorClient));
+      m_definitionsClient->Open();
       m_administrationClient =
         m_environment->GetAdministrationInstance().BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
