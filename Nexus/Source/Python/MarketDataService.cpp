@@ -162,7 +162,6 @@ void Nexus::Python::ExportMarketDataServiceTestInstance() {
   class_<MarketDataServiceTestInstance, boost::noncopyable>(
       "MarketDataServiceTestInstance", no_init)
     .def("__init__", make_constructor(BuildMarketDataServiceTestInstance))
-    .def("__del__", BlockingFunction(&MarketDataServiceTestInstance::Close))
     .def("open", BlockingFunction(&MarketDataServiceTestInstance::Open))
     .def("close", BlockingFunction(&MarketDataServiceTestInstance::Close))
     .def("set_bbo", BlockingFunction(&MarketDataServiceTestInstance::SetBbo))

@@ -285,6 +285,7 @@ void Nexus::Python::ExportOrderExecutionService() {
     def("fill_order", BlockingFunction(
       static_cast<void (*)(PrimitiveOrder& order,
       Quantity quantity, const ptime& timestamp)>(&FillOrder)));
+    def("is_pending_cancel", BlockingFunction(&IsPendingCancel));
   }
 }
 
@@ -292,7 +293,6 @@ void Nexus::Python::ExportOrderExecutionServiceTestInstance() {
   class_<OrderExecutionServiceTestInstance, boost::noncopyable>(
       "OrderExecutionServiceTestInstance", no_init)
     .def("__init__", make_constructor(BuildOrderExecutionServiceTestInstance))
-    .def("__del__", BlockingFunction(&OrderExecutionServiceTestInstance::Close))
     .def("get_driver", &OrderExecutionServiceTestInstance::GetDriver,
       return_internal_reference<>())
     .def("open", BlockingFunction(&OrderExecutionServiceTestInstance::Open))

@@ -1,6 +1,7 @@
 #ifndef NEXUS_TESTENVIRONMENT_HPP
 #define NEXUS_TESTENVIRONMENT_HPP
 #include <Beam/IO/OpenState.hpp>
+#include <Beam/Queues/ConverterWriterQueue.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestInstance.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/UidServiceTests/UidServiceTestInstance.hpp>
@@ -12,6 +13,8 @@
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestInstance.hpp"
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestInstance.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceInstance.hpp"
+#include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
+#include "Nexus/ServiceClients/TestEnvironmentException.hpp"
 
 namespace Nexus {
   class TestTimeClient;
@@ -47,6 +50,57 @@ namespace Nexus {
         \param bboQuote The updated BboQuote.
       */
       void Update(const Security& security, const BboQuote& bboQuote);
+
+      //! Monitors Orders submitted to this environment.
+      /*!
+        \param queue The Queue to publish submitted Orders to.
+      */
+      void MonitorOrderSubmissions(const std::shared_ptr<
+        Beam::QueueWriter<const OrderExecutionService::Order*>>& queue);
+
+      //! Updates a submitted order to OrderStatus NEW.
+      /*!
+        \param order The Order to accept.
+      */
+      void AcceptOrder(const OrderExecutionService::Order& order);
+
+      //! Updates a submitted order to OrderStatus REJECTED.
+      /*!
+        \param order The Order to reject.
+      */
+      void RejectOrder(const OrderExecutionService::Order& order);
+
+      //! Updates a submitted order to OrderStatus CANCELED.
+      /*!
+        \param order The Order to reject.
+      */
+      void CancelOrder(const OrderExecutionService::Order& order);
+
+      //! Fills an Order.
+      /*!
+        \param order The Order to fill.
+        \param price The price of the fill.
+        \param quantity The Quantity to fill the <i>order</i> for.
+      */
+      void FillOrder(const OrderExecutionService::Order& order, Money price,
+        Quantity quantity);
+
+      //! Fills an Order.
+      /*!
+        \param order The Order to fill.
+        \param quantity The Quantity to fill the <i>order</i> for.
+      */
+      void FillOrder(const OrderExecutionService::Order& order,
+        Quantity quantity);
+
+      //! Updates an Order.
+      /*!
+        \param order The Order to update.
+        \param executionReport The ExecutionReport to update the <i>order</i>
+               with.
+      */
+      void Update(const OrderExecutionService::Order& order,
+        const OrderExecutionService::ExecutionReport& executionReport);
 
       //! Returns the ServiceLocatorTestInstance.
       Beam::ServiceLocator::Tests::ServiceLocatorTestInstance&
@@ -96,9 +150,11 @@ namespace Nexus {
         m_orderExecutionInstance;
       Beam::SynchronizedVector<TestTimeClient*> m_timeClients;
       Beam::SynchronizedVector<TimerEntry> m_timers;
+      Beam::SynchronizedVector<std::shared_ptr<void>> m_converters;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
+      
       void LockedSetTime(boost::posix_time::ptime time,
         boost::unique_lock<Beam::Threading::Mutex>& lock);
       void Add(TestTimeClient* timeClient);
@@ -127,14 +183,164 @@ namespace Nexus {
 
   inline void TestEnvironment::Update(const Security& security,
       const BboQuote& bboQuote) {
-    boost::unique_lock<Beam::Threading::Mutex> lock{m_timeMutex};
-    if(bboQuote.m_timestamp != boost::posix_time::not_a_date_time) {
-      LockedSetTime(bboQuote.m_timestamp, lock);
-      GetMarketDataInstance().SetBbo(security, bboQuote);
-    } else {
-      auto revisedBboQuote = bboQuote;
-      revisedBboQuote.m_timestamp = m_currentTime;
-      GetMarketDataInstance().SetBbo(security, bboQuote);
+    {
+      boost::unique_lock<Beam::Threading::Mutex> lock{m_timeMutex};
+      if(bboQuote.m_timestamp != boost::posix_time::not_a_date_time) {
+        LockedSetTime(bboQuote.m_timestamp, lock);
+        GetMarketDataInstance().SetBbo(security, bboQuote);
+      } else {
+        auto revisedBboQuote = bboQuote;
+        revisedBboQuote.m_timestamp = m_currentTime;
+        GetMarketDataInstance().SetBbo(security, revisedBboQuote);
+      }
+    }
+    Beam::Routines::FlushPendingRoutines();
+  }
+
+  inline void TestEnvironment::MonitorOrderSubmissions(const std::shared_ptr<
+      Beam::QueueWriter<const OrderExecutionService::Order*>>& queue) {
+    auto weakQueue = Beam::MakeWeakQueue(queue);
+    auto conversionQueue = Beam::MakeConverterWriterQueue<
+      OrderExecutionService::PrimitiveOrder*>(weakQueue,
+      Beam::StaticCastConverter<const OrderExecutionService::Order*>());
+    GetOrderExecutionInstance().GetDriver().GetPublisher().Monitor(
+      conversionQueue);
+    m_converters.PushBack(conversionQueue);
+  }
+
+  inline void TestEnvironment::AcceptOrder(
+      const OrderExecutionService::Order& order) {
+    auto primitiveOrder = const_cast<OrderExecutionService::PrimitiveOrder*>(
+      dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
+    if(primitiveOrder == nullptr) {
+      BOOST_THROW_EXCEPTION(
+        TestEnvironmentException{"Invalid Order specified."});
+    }
+    {
+      boost::lock_guard<Beam::Threading::Mutex> lock{m_timeMutex};
+      primitiveOrder->With(
+        [&] (auto status, auto& executionReports) {
+          if(status != OrderStatus::PENDING_NEW) {
+            BOOST_THROW_EXCEPTION(
+              TestEnvironmentException{"Order must be PENDING_NEW."});
+          }
+        });
+      OrderExecutionService::Tests::SetOrderStatus(
+        *const_cast<OrderExecutionService::PrimitiveOrder*>(primitiveOrder),
+        OrderStatus::NEW, m_currentTime);
+    }
+    Beam::Routines::FlushPendingRoutines();
+  }
+
+  inline void TestEnvironment::RejectOrder(
+      const OrderExecutionService::Order& order) {
+    auto primitiveOrder = const_cast<OrderExecutionService::PrimitiveOrder*>(
+      dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
+    if(primitiveOrder == nullptr) {
+      BOOST_THROW_EXCEPTION(
+        TestEnvironmentException{"Invalid Order specified."});
+    }
+    {
+      boost::lock_guard<Beam::Threading::Mutex> lock{m_timeMutex};
+      primitiveOrder->With(
+        [&] (auto status, auto& executionReports) {
+          if(IsTerminal(status)) {
+            BOOST_THROW_EXCEPTION(
+              TestEnvironmentException{"Order is already TERMINAL."});
+          }
+        });
+      OrderExecutionService::Tests::SetOrderStatus(
+        *const_cast<OrderExecutionService::PrimitiveOrder*>(primitiveOrder),
+        OrderStatus::REJECTED, m_currentTime);
+    }
+    Beam::Routines::FlushPendingRoutines();
+  }
+
+  inline void TestEnvironment::CancelOrder(
+      const OrderExecutionService::Order& order) {
+    auto primitiveOrder = const_cast<OrderExecutionService::PrimitiveOrder*>(
+      dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
+    if(primitiveOrder == nullptr) {
+      BOOST_THROW_EXCEPTION(
+        TestEnvironmentException{"Invalid Order specified."});
+    }
+    {
+      boost::lock_guard<Beam::Threading::Mutex> lock{m_timeMutex};
+      primitiveOrder->With(
+        [&] (auto status, auto& executionReports) {
+          if(IsTerminal(status)) {
+            BOOST_THROW_EXCEPTION(
+              TestEnvironmentException{"Order is already TERMINAL."});
+          }
+        });
+      OrderExecutionService::Tests::CancelOrder(
+        *const_cast<OrderExecutionService::PrimitiveOrder*>(primitiveOrder),
+        m_currentTime);
+    }
+    Beam::Routines::FlushPendingRoutines();
+  }
+
+  inline void TestEnvironment::FillOrder(
+      const OrderExecutionService::Order& order, Money price,
+      Quantity quantity) {
+    auto primitiveOrder = const_cast<OrderExecutionService::PrimitiveOrder*>(
+      dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
+    if(primitiveOrder == nullptr) {
+      BOOST_THROW_EXCEPTION(
+        TestEnvironmentException{"Invalid Order specified."});
+    }
+    {
+      boost::lock_guard<Beam::Threading::Mutex> lock{m_timeMutex};
+      primitiveOrder->With(
+        [&] (auto status, auto& executionReports) {
+          if(IsTerminal(status)) {
+            BOOST_THROW_EXCEPTION(
+              TestEnvironmentException{"Order is already TERMINAL."});
+          }
+        });
+      OrderExecutionService::Tests::FillOrder(
+        *const_cast<OrderExecutionService::PrimitiveOrder*>(primitiveOrder),
+        price, quantity, m_currentTime);
+    }
+    Beam::Routines::FlushPendingRoutines();
+  }
+
+  void TestEnvironment::FillOrder(const OrderExecutionService::Order& order,
+      Quantity quantity) {
+    FillOrder(order, order.GetInfo().m_fields.m_price, quantity);
+  }
+
+  void TestEnvironment::Update(const OrderExecutionService::Order& order,
+      const OrderExecutionService::ExecutionReport& executionReport) {
+    auto primitiveOrder = const_cast<OrderExecutionService::PrimitiveOrder*>(
+      dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
+    if(primitiveOrder == nullptr) {
+      BOOST_THROW_EXCEPTION(
+        TestEnvironmentException{"Invalid Order specified."});
+    }
+    {
+      boost::unique_lock<Beam::Threading::Mutex> lock{m_timeMutex};
+      primitiveOrder->With(
+        [&] (auto status, auto& executionReports) {
+          if(IsTerminal(status)) {
+            BOOST_THROW_EXCEPTION(
+              TestEnvironmentException{"Order is already TERMINAL."});
+          }
+        });
+      auto revisedExecutionReport = executionReport;
+      if(revisedExecutionReport.m_timestamp !=
+          boost::posix_time::not_a_date_time) {
+        LockedSetTime(revisedExecutionReport.m_timestamp, lock);
+      } else {
+        revisedExecutionReport.m_timestamp = m_currentTime;
+      }
+      primitiveOrder->With(
+        [&] (auto status, auto& reports) {
+          auto& lastReport = reports.back();
+          revisedExecutionReport.m_id = lastReport.m_id;
+          revisedExecutionReport.m_sequence = lastReport.m_sequence + 1;
+          primitiveOrder->Update(revisedExecutionReport);
+        });
     }
     Beam::Routines::FlushPendingRoutines();
   }

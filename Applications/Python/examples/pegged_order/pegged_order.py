@@ -46,6 +46,7 @@ class PeggedOrder:
 
   def s2(self):
     self.state = 2
+    self.completion_queue.push(True)
 
   def s3(self):
     self.state = 3
@@ -60,7 +61,7 @@ class PeggedOrder:
 
   def s5(self):
     self.state = 5
-    self.service_clients.get_order_execution_client().cancel(order)
+    self.service_clients.get_order_execution_client().cancel(self.order)
 
   def on_bbo_quote(self, bbo_quote):
     self.bbo_quote = bbo_quote

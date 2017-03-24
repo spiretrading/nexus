@@ -201,7 +201,6 @@ void Nexus::Python::ExportAdministrationServiceTestInstance() {
   class_<AdministrationServiceTestInstance, boost::noncopyable>(
       "AdministrationServiceTestInstance", no_init)
     .def("__init__", make_constructor(BuildAdministrationServiceTestInstance))
-    .def("__del__", BlockingFunction(&AdministrationServiceTestInstance::Close))
     .def("open", BlockingFunction(&AdministrationServiceTestInstance::Open))
     .def("close", BlockingFunction(&AdministrationServiceTestInstance::Close))
     .def("build_client", &AdministrationServiceTestInstanceBuildClient,

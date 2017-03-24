@@ -2,6 +2,7 @@
 #include <Beam/Python/BoostPython.hpp>
 #include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/PythonBindings.hpp>
+#include <Beam/Python/PythonQueueWriter.hpp>
 #include <Beam/Threading/VirtualTimer.hpp>
 #include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <boost/noncopyable.hpp>
@@ -24,6 +25,7 @@ using namespace boost::posix_time;
 using namespace boost::python;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
+using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Python;
 using namespace std;
 
@@ -232,6 +234,11 @@ namespace {
       std::shared_ptr<TestEnvironment> environment) {
     return new PythonTestTimeClient{environment};
   }
+
+  void TestEnvironmentMonitorOrderSubmissions(TestEnvironment& environment,
+      const std::shared_ptr<PythonQueueWriter>& queue) {
+    environment.MonitorOrderSubmissions(queue->GetSlot<const Order*>());
+  }
 }
 
 #ifdef _MSC_VER
@@ -358,7 +365,22 @@ void Nexus::Python::ExportTestEnvironment() {
       "TestEnvironment", init<>())
     .def("set_time", BlockingFunction(&TestEnvironment::SetTime))
     .def("advance_time", BlockingFunction(&TestEnvironment::AdvanceTime))
-    .def("update", BlockingFunction(&TestEnvironment::Update))
+    .def("update", BlockingFunction(
+      static_cast<void (TestEnvironment::*)(const Security&, const BboQuote&)>(
+      &TestEnvironment::Update)))
+    .def("monitor_order_submissions", &TestEnvironmentMonitorOrderSubmissions)
+    .def("accept_order", BlockingFunction(&TestEnvironment::AcceptOrder))
+    .def("reject_order", BlockingFunction(&TestEnvironment::RejectOrder))
+    .def("cancel_order", BlockingFunction(&TestEnvironment::CancelOrder))
+    .def("fill_order", BlockingFunction(
+      static_cast<void (TestEnvironment::*)(const Order&, Money, Quantity)>(
+      &TestEnvironment::FillOrder)))
+    .def("fill_order", BlockingFunction(
+      static_cast<void (TestEnvironment::*)(const Order&, Quantity)>(
+      &TestEnvironment::FillOrder)))
+    .def("update", BlockingFunction(
+      static_cast<void (TestEnvironment::*)(const Order&,
+      const ExecutionReport&)>(&TestEnvironment::Update)))
     .def("get_service_locator_instance",
       &TestEnvironment::GetServiceLocatorInstance,
       return_internal_reference<>())
