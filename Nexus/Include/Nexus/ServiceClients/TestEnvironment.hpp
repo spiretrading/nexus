@@ -4,8 +4,8 @@
 #include <Beam/Queues/ConverterWriterQueue.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/Threading/Mutex.hpp>
+#include <Beam/TimeServiceTests/TimeServiceTestEnvironment.hpp>
 #include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
-#include <Beam/Utilities/SynchronizedList.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
@@ -18,9 +18,6 @@
 #include "Nexus/ServiceClients/TestEnvironmentException.hpp"
 
 namespace Nexus {
-  class TestTimeClient;
-  class TestTimer;
-  void Trigger(TestTimer& timer);
 
   /*! \class TestEnvironment
       \brief Maintains the state needed to test a market environment.
@@ -29,7 +26,7 @@ namespace Nexus {
     public:
 
       //! Constructs a TestEnvironment.
-      TestEnvironment();
+      TestEnvironment() = default;
 
       ~TestEnvironment();
 
@@ -103,6 +100,10 @@ namespace Nexus {
       void Update(const OrderExecutionService::Order& order,
         const OrderExecutionService::ExecutionReport& executionReport);
 
+      //! Returns the TimeServiceTestEnvironment.
+      Beam::TimeService::Tests::TimeServiceTestEnvironment&
+        GetTimeEnvironment();
+
       //! Returns the ServiceLocatorTestEnvironment.
       Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment&
         GetServiceLocatorEnvironment();
@@ -131,15 +132,7 @@ namespace Nexus {
       void Close();
 
     private:
-      struct TimerEntry {
-        TestTimer* m_timer;
-        boost::posix_time::time_duration m_timeRemaining;
-      };
-      friend class TestTimeClient;
-      friend class TestTimer;
-      Beam::Threading::Mutex m_timeMutex;
-      boost::posix_time::ptime m_currentTime;
-      boost::posix_time::time_duration m_nextTrigger;
+      Beam::TimeService::Tests::TimeServiceTestEnvironment m_timeEnvironment;
       Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment
         m_serviceLocatorEnvironment;
       std::unique_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
@@ -157,58 +150,36 @@ namespace Nexus {
       boost::optional<
         OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment>
         m_orderExecutionEnvironment;
-      Beam::SynchronizedVector<TestTimeClient*> m_timeClients;
-      Beam::SynchronizedVector<TimerEntry> m_timers;
       Beam::SynchronizedVector<std::shared_ptr<void>> m_converters;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
-      
-      void LockedSetTime(boost::posix_time::ptime time,
-        boost::unique_lock<Beam::Threading::Mutex>& lock);
-      void Add(TestTimeClient* timeClient);
-      void Remove(TestTimeClient* timeClient);
-      void Add(TestTimer* timer);
-      void Remove(TestTimer* timer);
   };
-
-  inline TestEnvironment::TestEnvironment()
-      : m_nextTrigger{boost::posix_time::pos_infin} {}
 
   inline TestEnvironment::~TestEnvironment() {
     Close();
   }
 
   inline void TestEnvironment::SetTime(boost::posix_time::ptime time) {
-    if(time.is_special()) {
-      BOOST_THROW_EXCEPTION(TestEnvironmentException{"Invalid date/time."});
-    }
-    boost::unique_lock<Beam::Threading::Mutex> lock{m_timeMutex};
-    LockedSetTime(time, lock);
+    m_timeEnvironment.SetTime(time);
+    Beam::Routines::FlushPendingRoutines();
   }
 
   inline void TestEnvironment::AdvanceTime(
       boost::posix_time::time_duration duration) {
-    boost::unique_lock<Beam::Threading::Mutex> lock{m_timeMutex};
-    if(m_currentTime == boost::posix_time::not_a_date_time) {
-      m_currentTime = boost::posix_time::ptime{
-        boost::gregorian::date{2016, 8, 14}, boost::posix_time::seconds(0)};
-    }
-    LockedSetTime(m_currentTime + duration, lock);
+    m_timeEnvironment.AdvanceTime(duration);
+    Beam::Routines::FlushPendingRoutines();
   }
 
   inline void TestEnvironment::Update(const Security& security,
       const BboQuote& bboQuote) {
-    {
-      boost::unique_lock<Beam::Threading::Mutex> lock{m_timeMutex};
-      if(bboQuote.m_timestamp != boost::posix_time::not_a_date_time) {
-        LockedSetTime(bboQuote.m_timestamp, lock);
-        GetMarketDataEnvironment().SetBbo(security, bboQuote);
-      } else {
-        auto revisedBboQuote = bboQuote;
-        revisedBboQuote.m_timestamp = m_currentTime;
-        GetMarketDataEnvironment().SetBbo(security, revisedBboQuote);
-      }
+    if(bboQuote.m_timestamp != boost::posix_time::not_a_date_time) {
+      m_timeEnvironment.SetTime(bboQuote.m_timestamp);
+      GetMarketDataEnvironment().SetBbo(security, bboQuote);
+    } else {
+      auto revisedBboQuote = bboQuote;
+      revisedBboQuote.m_timestamp = m_timeEnvironment.GetTime();
+      GetMarketDataEnvironment().SetBbo(security, revisedBboQuote);
     }
     Beam::Routines::FlushPendingRoutines();
   }
@@ -232,19 +203,16 @@ namespace Nexus {
       BOOST_THROW_EXCEPTION(
         TestEnvironmentException{"Invalid Order specified."});
     }
-    {
-      boost::lock_guard<Beam::Threading::Mutex> lock{m_timeMutex};
-      primitiveOrder->With(
-        [&] (auto status, auto& executionReports) {
-          if(status != OrderStatus::PENDING_NEW) {
-            BOOST_THROW_EXCEPTION(
-              TestEnvironmentException{"Order must be PENDING_NEW."});
-          }
-        });
-      OrderExecutionService::Tests::SetOrderStatus(
-        *const_cast<OrderExecutionService::PrimitiveOrder*>(primitiveOrder),
-        OrderStatus::NEW, m_currentTime);
-    }
+    primitiveOrder->With(
+      [&] (auto status, auto& executionReports) {
+        if(status != OrderStatus::PENDING_NEW) {
+          BOOST_THROW_EXCEPTION(
+            TestEnvironmentException{"Order must be PENDING_NEW."});
+        }
+      });
+    OrderExecutionService::Tests::SetOrderStatus(
+      *const_cast<OrderExecutionService::PrimitiveOrder*>(primitiveOrder),
+      OrderStatus::NEW, m_timeEnvironment.GetTime());
     Beam::Routines::FlushPendingRoutines();
   }
 
@@ -256,19 +224,16 @@ namespace Nexus {
       BOOST_THROW_EXCEPTION(
         TestEnvironmentException{"Invalid Order specified."});
     }
-    {
-      boost::lock_guard<Beam::Threading::Mutex> lock{m_timeMutex};
-      primitiveOrder->With(
-        [&] (auto status, auto& executionReports) {
-          if(IsTerminal(status)) {
-            BOOST_THROW_EXCEPTION(
-              TestEnvironmentException{"Order is already TERMINAL."});
-          }
-        });
-      OrderExecutionService::Tests::SetOrderStatus(
-        *const_cast<OrderExecutionService::PrimitiveOrder*>(primitiveOrder),
-        OrderStatus::REJECTED, m_currentTime);
-    }
+    primitiveOrder->With(
+      [&] (auto status, auto& executionReports) {
+        if(IsTerminal(status)) {
+          BOOST_THROW_EXCEPTION(
+            TestEnvironmentException{"Order is already TERMINAL."});
+        }
+      });
+    OrderExecutionService::Tests::SetOrderStatus(
+      *const_cast<OrderExecutionService::PrimitiveOrder*>(primitiveOrder),
+      OrderStatus::REJECTED, m_timeEnvironment.GetTime());
     Beam::Routines::FlushPendingRoutines();
   }
 
@@ -280,19 +245,16 @@ namespace Nexus {
       BOOST_THROW_EXCEPTION(
         TestEnvironmentException{"Invalid Order specified."});
     }
-    {
-      boost::lock_guard<Beam::Threading::Mutex> lock{m_timeMutex};
-      primitiveOrder->With(
-        [&] (auto status, auto& executionReports) {
-          if(IsTerminal(status)) {
-            BOOST_THROW_EXCEPTION(
-              TestEnvironmentException{"Order is already TERMINAL."});
-          }
-        });
-      OrderExecutionService::Tests::CancelOrder(
-        *const_cast<OrderExecutionService::PrimitiveOrder*>(primitiveOrder),
-        m_currentTime);
-    }
+    primitiveOrder->With(
+      [&] (auto status, auto& executionReports) {
+        if(IsTerminal(status)) {
+          BOOST_THROW_EXCEPTION(
+            TestEnvironmentException{"Order is already TERMINAL."});
+        }
+      });
+    OrderExecutionService::Tests::CancelOrder(
+      *const_cast<OrderExecutionService::PrimitiveOrder*>(primitiveOrder),
+      m_timeEnvironment.GetTime());
     Beam::Routines::FlushPendingRoutines();
   }
 
@@ -305,19 +267,16 @@ namespace Nexus {
       BOOST_THROW_EXCEPTION(
         TestEnvironmentException{"Invalid Order specified."});
     }
-    {
-      boost::lock_guard<Beam::Threading::Mutex> lock{m_timeMutex};
-      primitiveOrder->With(
-        [&] (auto status, auto& executionReports) {
-          if(IsTerminal(status)) {
-            BOOST_THROW_EXCEPTION(
-              TestEnvironmentException{"Order is already TERMINAL."});
-          }
-        });
-      OrderExecutionService::Tests::FillOrder(
-        *const_cast<OrderExecutionService::PrimitiveOrder*>(primitiveOrder),
-        price, quantity, m_currentTime);
-    }
+    primitiveOrder->With(
+      [&] (auto status, auto& executionReports) {
+        if(IsTerminal(status)) {
+          BOOST_THROW_EXCEPTION(
+            TestEnvironmentException{"Order is already TERMINAL."});
+        }
+      });
+    OrderExecutionService::Tests::FillOrder(
+      *const_cast<OrderExecutionService::PrimitiveOrder*>(primitiveOrder),
+      price, quantity, m_timeEnvironment.GetTime());
     Beam::Routines::FlushPendingRoutines();
   }
 
@@ -334,31 +293,33 @@ namespace Nexus {
       BOOST_THROW_EXCEPTION(
         TestEnvironmentException{"Invalid Order specified."});
     }
-    {
-      boost::unique_lock<Beam::Threading::Mutex> lock{m_timeMutex};
-      primitiveOrder->With(
-        [&] (auto status, auto& executionReports) {
-          if(IsTerminal(status)) {
-            BOOST_THROW_EXCEPTION(
-              TestEnvironmentException{"Order is already TERMINAL."});
-          }
-        });
-      auto revisedExecutionReport = executionReport;
-      if(revisedExecutionReport.m_timestamp !=
-          boost::posix_time::not_a_date_time) {
-        LockedSetTime(revisedExecutionReport.m_timestamp, lock);
-      } else {
-        revisedExecutionReport.m_timestamp = m_currentTime;
-      }
-      primitiveOrder->With(
-        [&] (auto status, auto& reports) {
-          auto& lastReport = reports.back();
-          revisedExecutionReport.m_id = lastReport.m_id;
-          revisedExecutionReport.m_sequence = lastReport.m_sequence + 1;
-          primitiveOrder->Update(revisedExecutionReport);
-        });
+    primitiveOrder->With(
+      [&] (auto status, auto& executionReports) {
+        if(IsTerminal(status)) {
+          BOOST_THROW_EXCEPTION(
+            TestEnvironmentException{"Order is already TERMINAL."});
+        }
+      });
+    auto revisedExecutionReport = executionReport;
+    if(revisedExecutionReport.m_timestamp !=
+        boost::posix_time::not_a_date_time) {
+      m_timeEnvironment.SetTime(revisedExecutionReport.m_timestamp);
+    } else {
+      revisedExecutionReport.m_timestamp = m_timeEnvironment.GetTime();
     }
+    primitiveOrder->With(
+      [&] (auto status, auto& reports) {
+        auto& lastReport = reports.back();
+        revisedExecutionReport.m_id = lastReport.m_id;
+        revisedExecutionReport.m_sequence = lastReport.m_sequence + 1;
+        primitiveOrder->Update(revisedExecutionReport);
+      });
     Beam::Routines::FlushPendingRoutines();
+  }
+
+  inline Beam::TimeService::Tests::TimeServiceTestEnvironment&
+      TestEnvironment::GetTimeEnvironment() {
+    return m_timeEnvironment;
   }
 
   inline Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment&
@@ -396,6 +357,7 @@ namespace Nexus {
       return;
     }
     try {
+      m_timeEnvironment.Open();
       m_serviceLocatorEnvironment.Open();
       m_serviceLocatorClient = m_serviceLocatorEnvironment.BuildClient();
       m_serviceLocatorClient->SetCredentials("root", "");
@@ -455,70 +417,8 @@ namespace Nexus {
     m_uidEnvironment.Close();
     m_serviceLocatorClient.reset();
     m_serviceLocatorEnvironment.Close();
+    m_timeEnvironment.Close();
     m_openState.SetClosed();
-  }
-
-  inline void TestEnvironment::LockedSetTime(boost::posix_time::ptime time,
-      boost::unique_lock<Beam::Threading::Mutex>& lock) {
-    if(m_currentTime != boost::posix_time::not_a_date_time &&
-        m_currentTime >= time) {
-      return;
-    }
-    auto delta =
-      [&] {
-        if(m_currentTime == boost::posix_time::not_a_date_time) {
-          return boost::posix_time::time_duration{};
-        } else {
-          return time - m_currentTime;
-        }
-      }();
-    while(delta > m_nextTrigger) {
-      delta -= m_nextTrigger;
-      LockedSetTime(m_currentTime + m_nextTrigger, lock);
-    }
-    m_nextTrigger -= delta;
-    if(m_nextTrigger <= boost::posix_time::seconds(0)) {
-      m_nextTrigger = boost::posix_time::pos_infin;
-    }
-    m_currentTime = time;
-    m_timeClients.ForEach(
-      [&] (auto& timeClient) {
-        timeClient->SetTime(time);
-      });
-    std::vector<TestTimer*> expiredTimers;
-    m_timers.With(
-      [&] (auto& timers) {
-        auto i = timers.begin();
-        while(i != timers.end()) {
-          auto& timer = *i;
-          timer.m_timeRemaining -= delta;
-          if(timer.m_timeRemaining <= boost::posix_time::seconds(0)) {
-            expiredTimers.push_back(timer.m_timer);
-            i = timers.erase(i);
-          } else {
-            m_nextTrigger = std::min(m_nextTrigger, timer.m_timeRemaining);
-            ++i;
-          }
-        }
-      });
-    {
-      auto release = Beam::Threading::Release(lock);
-      for(auto& expiredTimer : expiredTimers) {
-        Trigger(*expiredTimer);
-      }
-      Beam::Routines::FlushPendingRoutines();
-    }
-  }
-
-  inline void TestEnvironment::Remove(TestTimeClient* timeClient) {
-    m_timeClients.Remove(timeClient);
-  }
-
-  inline void TestEnvironment::Remove(TestTimer* timer) {
-    m_timers.RemoveIf(
-      [&] (auto& entry) {
-        return entry.m_timer == timer;
-      });
   }
 }
 

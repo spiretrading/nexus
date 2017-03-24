@@ -7,6 +7,8 @@
 #include <Beam/Threading/VirtualTimer.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <Beam/TimeService/VirtualTimeClient.hpp>
+#include <Beam/TimeServiceTests/TestTimeClient.hpp>
+#include <Beam/TimeServiceTests/TestTimer.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/ChartingService/VirtualChartingClient.hpp"
@@ -16,8 +18,6 @@
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 #include "Nexus/RiskService/VirtualRiskClient.hpp"
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
-#include "Nexus/ServiceClients/TestTimeClient.hpp"
-#include "Nexus/ServiceClients/TestTimer.hpp"
 
 namespace Nexus {
 
@@ -162,7 +162,8 @@ namespace Nexus {
   inline std::unique_ptr<TestServiceClients::Timer>
       TestServiceClients::BuildTimer(boost::posix_time::time_duration expiry) {
     return Beam::Threading::MakeVirtualTimer(
-      std::make_unique<TestTimer>(expiry, Beam::Ref(*m_environment)));
+      std::make_unique<Beam::TimeService::Tests::TestTimer>(expiry,
+      Beam::Ref(m_environment->GetTimeEnvironment())));
   }
 
   inline void TestServiceClients::Open() {
@@ -189,7 +190,8 @@ namespace Nexus {
         Beam::Ref(*m_serviceLocatorClient));
       m_orderExecutionClient->Open();
       m_timeClient = Beam::TimeService::MakeVirtualTimeClient(
-        std::make_unique<TestTimeClient>(Beam::Ref(*m_environment)));
+        std::make_unique<Beam::TimeService::Tests::TestTimeClient>(
+        Beam::Ref(m_environment->GetTimeEnvironment())));
       m_timeClient->Open();
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
