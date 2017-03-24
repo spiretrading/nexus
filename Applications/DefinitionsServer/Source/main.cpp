@@ -44,9 +44,9 @@ using namespace TCLAP;
 namespace {
   using DefinitionsServletContainer =
     ServiceProtocolServletContainer<MetaAuthenticationServletAdapter<
-    MetaDefinitionsServlet<ApplicationServiceLocatorClient::Client*>,
-    ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
-    BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
+    MetaDefinitionsServlet, ApplicationServiceLocatorClient::Client*>,
+    TcpServerSocket, BinarySender<SharedBuffer>, NullEncoder,
+    std::shared_ptr<LiveTimer>>;
 
   struct DefinitionsServerConnectionInitializer {
     string m_serviceName;
@@ -178,8 +178,7 @@ int main(int argc, const char** argv) {
       Initialize(minimumSpireClientVersion, timeZoneDatabaseBuffer.str(),
         std::move(countryDatabase), std::move(currencyDatabase),
         std::move(marketDatabase), std::move(destinationDatabase),
-        std::move(exchangeRates), std::move(complianceRuleSchemas),
-        serviceLocatorClient.Get())),
+        std::move(exchangeRates), std::move(complianceRuleSchemas))),
       Initialize(definitionsServerConnectionInitializer.m_interface,
       Ref(socketThreadPool)),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10),

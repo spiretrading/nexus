@@ -72,8 +72,8 @@ namespace Tests {
       using ServiceProtocolServletContainer =
         Beam::Services::ServiceProtocolServletContainer<
         Beam::ServiceLocator::MetaAuthenticationServletAdapter<
-        MetaDefinitionsServlet<std::shared_ptr<ServiceLocatorClient>>,
-        std::shared_ptr<ServiceLocatorClient>>, ServerConnection*,
+        MetaDefinitionsServlet, std::shared_ptr<ServiceLocatorClient>>,
+        ServerConnection*,
         Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
         Beam::Codecs::NullEncoder,
         std::shared_ptr<Beam::Threading::TriggerTimer>>;
@@ -95,8 +95,8 @@ namespace Tests {
           GetDefaultCountryDatabase(), GetDefaultCurrencyDatabase(),
           GetDefaultMarketDatabase(), GetDefaultDestinationDatabase(),
           std::vector<ExchangeRate>(),
-          std::vector<Compliance::ComplianceRuleSchema>(),
-          serviceLocatorClient)), &m_serverConnection,
+          std::vector<Compliance::ComplianceRuleSchema>())),
+          &m_serverConnection,
           boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()} {}
 
   inline DefinitionsServiceTestEnvironment::
