@@ -22,22 +22,22 @@ using namespace Nexus::TechnicalAnalysis;
 using namespace std;
 
 void ChartingServletTester::setUp() {
-  m_serviceLocatorInstance.Initialize();
-  m_serviceLocatorInstance->Open();
-  m_serviceLocatorClient = m_serviceLocatorInstance->BuildClient();
+  m_serviceLocatorEnvironment.Initialize();
+  m_serviceLocatorEnvironment->Open();
+  m_serviceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
   m_serviceLocatorClient->SetCredentials("root", "");
   m_serviceLocatorClient->Open();
-  auto marketDataServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
+  auto marketDataServiceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
   marketDataServiceLocatorClient->SetCredentials("root", "");
   marketDataServiceLocatorClient->Open();
-  m_marketDataServiceInstance.Initialize(
+  m_marketDataServiceEnvironment.Initialize(
     std::move(marketDataServiceLocatorClient));
-  m_marketDataServiceInstance->Open();
+  m_marketDataServiceEnvironment->Open();
   m_serverConnection = std::make_shared<ServerConnection>();
   m_clientProtocol.Initialize(Initialize(string("test"),
     Ref(*m_serverConnection)), Initialize());
   RegisterChartingServices(Store(m_clientProtocol->GetSlots()));
-  m_container.Initialize(Initialize(m_marketDataServiceInstance->BuildClient(
+  m_container.Initialize(Initialize(m_marketDataServiceEnvironment->BuildClient(
     Ref(*m_serviceLocatorClient))), m_serverConnection,
     factory<std::shared_ptr<TriggerTimer>>());
   m_container->Open();
@@ -48,9 +48,9 @@ void ChartingServletTester::tearDown() {
   m_clientProtocol.Reset();
   m_container.Reset();
   m_serverConnection.reset();
-  m_marketDataServiceInstance.Reset();
+  m_marketDataServiceEnvironment.Reset();
   m_serviceLocatorClient.reset();
-  m_serviceLocatorInstance.Reset();
+  m_serviceLocatorEnvironment.Reset();
 }
 
 void ChartingServletTester::TestLoadSecurityTimePriceSeries() {
@@ -65,7 +65,7 @@ void ChartingServletTester::TestLoadSecurityTimePriceSeries() {
     SecurityTimeAndSale timeAndSale(TimeAndSale(timestamp, price, i * 100,
       TimeAndSale::Condition(TimeAndSale::Condition::Type::NONE, "?"), "N"),
       security);
-    m_marketDataServiceInstance->GetDataStore().Store(
+    m_marketDataServiceEnvironment->GetDataStore().Store(
       MakeSequencedValue(timeAndSale, Beam::Queries::Sequence(i + 1)));
     expectedSeries.emplace_back(timestamp, timestamp + interval, price, price,
       price, price);

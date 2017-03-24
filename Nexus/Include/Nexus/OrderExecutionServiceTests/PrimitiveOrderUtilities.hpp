@@ -95,6 +95,26 @@ namespace Tests {
       const boost::posix_time::ptime& timestamp) {
     FillOrder(order, order.GetInfo().m_fields.m_price, quantity, timestamp);
   }
+
+  //! Returns <code>true</code> iff an Order is in the PENDING_CANCEL state.
+  /*!
+    \param order The Order to test.
+    \return <code>true</code> iff the <i>order</i> is PENDING_CANCEL.
+  */
+  inline bool IsPendingCancel(const PrimitiveOrder& order) {
+    auto isPendingCancel = false;
+    const_cast<PrimitiveOrder&>(order).With(
+      [&] (auto status, auto& executionReports) {
+        for(auto& executionReport : executionReports) {
+          if(executionReport.m_status == OrderStatus::PENDING_CANCEL) {
+            isPendingCancel = true;
+            break;
+          }
+        }
+        isPendingCancel &= !IsTerminal(status);
+      });
+    return isPendingCancel;
+  }
 }
 }
 }

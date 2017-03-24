@@ -23,34 +23,34 @@ using namespace Nexus::Queries;
 using namespace std;
 
 void OrderExecutionServletTester::setUp() {
-  m_serviceLocatorInstance.Initialize();
-  m_serviceLocatorInstance->Open();
+  m_serviceLocatorEnvironment.Initialize();
+  m_serviceLocatorEnvironment->Open();
   DirectoryEntry servicesDirectory =
-    m_serviceLocatorInstance->GetRoot().MakeDirectory("services",
+    m_serviceLocatorEnvironment->GetRoot().MakeDirectory("services",
     DirectoryEntry::GetStarDirectory());
   DirectoryEntry administratorsDirectory =
-    m_serviceLocatorInstance->GetRoot().MakeDirectory("administrators",
+    m_serviceLocatorEnvironment->GetRoot().MakeDirectory("administrators",
     DirectoryEntry::GetStarDirectory());
   DirectoryEntry administrationAccount =
-    m_serviceLocatorInstance->GetRoot().MakeAccount("administration_service",
+    m_serviceLocatorEnvironment->GetRoot().MakeAccount("administration_service",
     "", servicesDirectory);
-  m_serviceLocatorInstance->GetRoot().StorePermissions(administrationAccount,
+  m_serviceLocatorEnvironment->GetRoot().StorePermissions(administrationAccount,
     DirectoryEntry::GetStarDirectory(), Permissions(~0));
-  m_serviceLocatorInstance->GetRoot().MakeAccount("order_execution_service", "",
+  m_serviceLocatorEnvironment->GetRoot().MakeAccount("order_execution_service", "",
     servicesDirectory);
-  DirectoryEntry clientEntry = m_serviceLocatorInstance->GetRoot().MakeAccount(
+  DirectoryEntry clientEntry = m_serviceLocatorEnvironment->GetRoot().MakeAccount(
     "client", "", DirectoryEntry::GetStarDirectory());
-  m_uidServiceInstance.Initialize();
-  m_uidServiceInstance->Open();
+  m_uidServiceEnvironment.Initialize();
+  m_uidServiceEnvironment->Open();
   std::unique_ptr<ServiceLocatorClient> administationServiceLocatorClient =
-    m_serviceLocatorInstance->BuildClient();
+    m_serviceLocatorEnvironment->BuildClient();
   administationServiceLocatorClient->SetCredentials("administration_service",
     "");
   administationServiceLocatorClient->Open();
-  m_administrationServiceInstance.Initialize(
+  m_administrationServiceEnvironment.Initialize(
     std::move(administationServiceLocatorClient));
-  m_administrationServiceInstance->Open();
-  m_servletServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
+  m_administrationServiceEnvironment->Open();
+  m_servletServiceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
   m_servletServiceLocatorClient->SetCredentials("order_execution_service", "");
   m_servletServiceLocatorClient->Open();
   m_serverConnection.Initialize();
@@ -62,14 +62,14 @@ void OrderExecutionServletTester::setUp() {
   m_driver.Initialize();
   m_dataStore.Initialize();
   m_servlet.Initialize(boost::posix_time::pos_infin, Initialize(),
-    m_servletServiceLocatorClient.get(), m_uidServiceInstance->BuildClient(),
-    m_administrationServiceInstance->BuildClient(
+    m_servletServiceLocatorClient.get(), m_uidServiceEnvironment->BuildClient(),
+    m_administrationServiceEnvironment->BuildClient(
     Ref(*m_servletServiceLocatorClient)), &*m_driver, &*m_dataStore);
   m_container.Initialize(Initialize(&*m_servletServiceLocatorClient,
     &*m_servlet), &*m_serverConnection,
     factory<std::shared_ptr<TriggerTimer>>());
   m_container->Open();
-  m_clientServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
+  m_clientServiceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
   m_clientServiceLocatorClient->SetCredentials("client", "");
   m_clientServiceLocatorClient->Open();
   m_clientProtocol->Open();
@@ -93,9 +93,9 @@ void OrderExecutionServletTester::tearDown() {
   m_dataStore.Reset();
   m_driver.Reset();
   m_serverConnection.Reset();
-  m_administrationServiceInstance.Reset();
-  m_uidServiceInstance.Reset();
-  m_serviceLocatorInstance.Reset();
+  m_administrationServiceEnvironment.Reset();
+  m_uidServiceEnvironment.Reset();
+  m_serviceLocatorEnvironment.Reset();
 }
 
 void OrderExecutionServletTester::TestNewOrderSingle() {

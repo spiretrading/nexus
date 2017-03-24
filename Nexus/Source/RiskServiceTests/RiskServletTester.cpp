@@ -26,63 +26,63 @@ using namespace Nexus::RiskService::Tests;
 using namespace std;
 
 void RiskServletTester::setUp() {
-  m_serviceLocatorInstance.Initialize();
-  m_serviceLocatorInstance->Open();
-  m_uidServiceInstance.Initialize();
-  m_uidServiceInstance->Open();
+  m_serviceLocatorEnvironment.Initialize();
+  m_serviceLocatorEnvironment->Open();
+  m_uidServiceEnvironment.Initialize();
+  m_uidServiceEnvironment->Open();
   DirectoryEntry servicesDirectory =
-    m_serviceLocatorInstance->GetRoot().MakeDirectory("services",
+    m_serviceLocatorEnvironment->GetRoot().MakeDirectory("services",
     DirectoryEntry::GetStarDirectory());
   DirectoryEntry administrationAccount =
-    m_serviceLocatorInstance->GetRoot().MakeAccount("administration_service",
+    m_serviceLocatorEnvironment->GetRoot().MakeAccount("administration_service",
     "", servicesDirectory);
-  m_serviceLocatorInstance->GetRoot().StorePermissions(administrationAccount,
+  m_serviceLocatorEnvironment->GetRoot().StorePermissions(administrationAccount,
     DirectoryEntry::GetStarDirectory(), Permissions(~0));
   auto administrationServiceLocatorClient =
-    m_serviceLocatorInstance->BuildClient();
+    m_serviceLocatorEnvironment->BuildClient();
   administrationServiceLocatorClient->SetCredentials("administration_service",
     "");
   administrationServiceLocatorClient->Open();
-  m_administrationServiceInstance.Initialize(
+  m_administrationServiceEnvironment.Initialize(
     std::move(administrationServiceLocatorClient));
-  m_administrationServiceInstance->Open();
-  auto marketDataServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
+  m_administrationServiceEnvironment->Open();
+  auto marketDataServiceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
   marketDataServiceLocatorClient->SetCredentials("root", "");
   marketDataServiceLocatorClient->Open();
-  m_marketDataServiceInstance.Initialize(
+  m_marketDataServiceEnvironment.Initialize(
     std::move(marketDataServiceLocatorClient));
-  m_marketDataServiceInstance->Open();
-  m_serviceLocatorInstance->GetRoot().MakeAccount("order_execution_service", "",
+  m_marketDataServiceEnvironment->Open();
+  m_serviceLocatorEnvironment->GetRoot().MakeAccount("order_execution_service", "",
     servicesDirectory);
   auto orderExecutionServiceLocatorClient =
-    m_serviceLocatorInstance->BuildClient();
-  auto orderExecutionUidClient = m_uidServiceInstance->BuildClient();
+    m_serviceLocatorEnvironment->BuildClient();
+  auto orderExecutionUidClient = m_uidServiceEnvironment->BuildClient();
   orderExecutionServiceLocatorClient->SetCredentials("order_execution_service",
     "");
   orderExecutionServiceLocatorClient->Open();
   auto orderExecutionAdministrationClient =
-    m_administrationServiceInstance->BuildClient(
+    m_administrationServiceEnvironment->BuildClient(
     Ref(*orderExecutionServiceLocatorClient));
-  m_orderExecutionServiceInstance.Initialize(
+  m_orderExecutionServiceEnvironment.Initialize(
     std::move(orderExecutionServiceLocatorClient),
     std::move(orderExecutionUidClient),
     std::move(orderExecutionAdministrationClient));
-  m_orderExecutionServiceInstance->Open();
-  m_serviceLocatorInstance->GetRoot().MakeAccount("trader", "",
+  m_orderExecutionServiceEnvironment->Open();
+  m_serviceLocatorEnvironment->GetRoot().MakeAccount("trader", "",
     servicesDirectory);
-  m_serviceLocatorInstance->GetRoot().MakeAccount("risk_service", "",
+  m_serviceLocatorEnvironment->GetRoot().MakeAccount("risk_service", "",
     servicesDirectory);
-  auto riskServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
+  auto riskServiceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
   riskServiceLocatorClient->SetCredentials("risk_service", "");
   riskServiceLocatorClient->Open();
   std::unique_ptr<AdministrationClient> riskAdministrationClient =
-    m_administrationServiceInstance->BuildClient(
+    m_administrationServiceEnvironment->BuildClient(
     Ref(*riskServiceLocatorClient));
-  m_marketDataClient = m_marketDataServiceInstance->BuildClient(
+  m_marketDataClient = m_marketDataServiceEnvironment->BuildClient(
     Ref(*riskServiceLocatorClient));
   m_marketDataClient->Open();
   std::shared_ptr<OrderExecutionClient> riskOrderExecutionClient =
-    m_orderExecutionServiceInstance->BuildClient(
+    m_orderExecutionServiceEnvironment->BuildClient(
     Ref(*riskServiceLocatorClient));
   riskOrderExecutionClient->Open();
   m_serverConnection.Initialize();
@@ -113,33 +113,12 @@ void RiskServletTester::tearDown() {
   m_container.Reset();
   m_serverConnection.Reset();
   m_transitionTimer.Reset();
-  m_orderExecutionServiceInstance.Reset();
+  m_orderExecutionServiceEnvironment.Reset();
   m_marketDataClient.reset();
-  m_marketDataServiceInstance.Reset();
-  m_administrationServiceInstance.Reset();
-  m_uidServiceInstance.Reset();
-  m_serviceLocatorInstance.Reset();
+  m_marketDataServiceEnvironment.Reset();
+  m_administrationServiceEnvironment.Reset();
+  m_uidServiceEnvironment.Reset();
+  m_serviceLocatorEnvironment.Reset();
 }
 
-void RiskServletTester::TestOpenPosition() {
-/* TODO
-  std::unique_ptr<OrderExecutionServiceTestInstance::ServiceLocatorClient>
-    orderExecutionServiceLocatorClient =
-    m_serviceLocatorInstance->BuildClient();
-  orderExecutionServiceLocatorClient->Login("trader", "");
-  std::unique_ptr<OrderExecutionServiceTestInstance::OrderExecutionClient>
-    orderExecutionClient = m_orderExecutionServiceInstance->BuildClient(
-    Ref(*orderExecutionServiceLocatorClient));
-  orderExecutionClient->Open();
-  Security security("A", DefaultMarkets::NYSE(), DefaultCountries::US());
-  const Order& order = orderExecutionClient->Submit(
-    OrderFields::BuildMarketOrder(
-    orderExecutionServiceLocatorClient->GetAccount(), security,
-    DefaultCurrencies::USD(), Side::BID, "NYSE", 100));
-  PrimitiveOrder& serverOrder =
-    m_orderExecutionServiceInstance->GetDriver().FindOrder(order.GetId());
-  SetOrderStatus(serverOrder, OrderStatus::NEW,
-    microsec_clock::universal_time());
-  FillOrder(serverOrder, 100, microsec_clock::universal_time());
-*/
-}
+void RiskServletTester::TestOpenPosition() {}

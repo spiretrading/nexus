@@ -1,5 +1,5 @@
-#ifndef NEXUS_ADMINISTRATIONSERVICETESTINSTANCE_HPP
-#define NEXUS_ADMINISTRATIONSERVICETESTINSTANCE_HPP
+#ifndef NEXUS_DEFINITIONSSERVICETESTENVIRONMENT_HPP
+#define NEXUS_DEFINITIONSSERVICETESTENVIRONMENT_HPP
 #include <Beam/IO/LocalClientChannel.hpp>
 #include <Beam/IO/LocalServerConnection.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
@@ -9,7 +9,7 @@
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
 #include <Beam/ServiceLocator/SessionAuthenticator.hpp>
-#include <Beam/ServiceLocatorTests/ServiceLocatorTestInstance.hpp>
+#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/Services/AuthenticatedServiceProtocolClientBuilder.hpp>
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
@@ -17,33 +17,35 @@
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
 #include <boost/noncopyable.hpp>
-#include "Nexus/AdministrationService/AdministrationClient.hpp"
-#include "Nexus/AdministrationService/AdministrationServlet.hpp"
-#include "Nexus/AdministrationService/LocalAdministrationDataStore.hpp"
-#include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
-#include "Nexus/AdministrationServiceTests/AdministrationServiceTests.hpp"
-#include "Nexus/MarketDataService/EntitlementDatabase.hpp"
+#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
+#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
+#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
+#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/DefinitionsService/DefinitionsClient.hpp"
+#include "Nexus/DefinitionsService/DefinitionsServlet.hpp"
+#include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
+#include "Nexus/DefinitionsServiceTests/DefinitionsServiceTests.hpp"
 
 namespace Nexus {
-namespace AdministrationService {
+namespace DefinitionsService {
 namespace Tests {
 
-  /*! \class AdministrationServiceTestInstance
-      \brief Wraps most components needed to run an instance of the
-             AdministrationService with helper functions.
+  /*! \class DefinitionsServiceTestEnvironment
+      \brief Provides DefinitionsService related classes for testing purposes.
    */
-  class AdministrationServiceTestInstance : private boost::noncopyable {
+  class DefinitionsServiceTestEnvironment : private boost::noncopyable {
     public:
 
-      //! Constructs an AdministrationServiceTestInstance.
+      //! Constructs an DefinitionsServiceTestEnvironment.
       /*!
         \param serviceLocatorClient The ServiceLocatorClient to use.
       */
-      AdministrationServiceTestInstance(const std::shared_ptr<
+      DefinitionsServiceTestEnvironment(const std::shared_ptr<
         Beam::ServiceLocator::VirtualServiceLocatorClient>&
         serviceLocatorClient);
 
-      ~AdministrationServiceTestInstance();
+      ~DefinitionsServiceTestEnvironment();
 
       //! Opens the servlet.
       void Open();
@@ -51,12 +53,12 @@ namespace Tests {
       //! Closes the servlet.
       void Close();
 
-      //! Builds a new AdministrationClient.
+      //! Builds a new DefinitionsClient.
       /*!
         \param serviceLocatorClient The ServiceLocatorClient used to
-               authenticate the AdministrationClient.
+               authenticate the DefinitionsClient.
       */
-      std::unique_ptr<VirtualAdministrationClient> BuildClient(
+      std::unique_ptr<VirtualDefinitionsClient> BuildClient(
         Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
         serviceLocatorClient);
 
@@ -70,10 +72,10 @@ namespace Tests {
       using ServiceProtocolServletContainer =
         Beam::Services::ServiceProtocolServletContainer<
         Beam::ServiceLocator::MetaAuthenticationServletAdapter<
-        MetaAdministrationServlet<std::shared_ptr<ServiceLocatorClient>,
-        LocalAdministrationDataStore*>, std::shared_ptr<ServiceLocatorClient>>,
-        ServerConnection*, Beam::Serialization::BinarySender<
-        Beam::IO::SharedBuffer>, Beam::Codecs::NullEncoder,
+        MetaDefinitionsServlet, std::shared_ptr<ServiceLocatorClient>>,
+        ServerConnection*,
+        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+        Beam::Codecs::NullEncoder,
         std::shared_ptr<Beam::Threading::TriggerTimer>>;
       using ServiceProtocolClientBuilder =
         Beam::Services::AuthenticatedServiceProtocolClientBuilder<
@@ -81,48 +83,50 @@ namespace Tests {
         std::unique_ptr<ClientChannel>,
         Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
         Beam::Codecs::NullEncoder>, Beam::Threading::TriggerTimer>;
-      LocalAdministrationDataStore m_dataStore;
       ServerConnection m_serverConnection;
       ServiceProtocolServletContainer m_container;
   };
 
-  inline AdministrationServiceTestInstance::AdministrationServiceTestInstance(
+  inline DefinitionsServiceTestEnvironment::DefinitionsServiceTestEnvironment(
       const std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>&
       serviceLocatorClient)
-      : m_container(Beam::Initialize(serviceLocatorClient,
-          Beam::Initialize(serviceLocatorClient,
-          MarketDataService::EntitlementDatabase(), &m_dataStore)),
+      : m_container{Beam::Initialize(serviceLocatorClient,
+          Beam::Initialize("1", GetDefaultTimeZoneTable(),
+          GetDefaultCountryDatabase(), GetDefaultCurrencyDatabase(),
+          GetDefaultMarketDatabase(), GetDefaultDestinationDatabase(),
+          std::vector<ExchangeRate>(),
+          std::vector<Compliance::ComplianceRuleSchema>())),
           &m_serverConnection,
-          boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
+          boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()} {}
 
-  inline AdministrationServiceTestInstance::
-      ~AdministrationServiceTestInstance() {
+  inline DefinitionsServiceTestEnvironment::
+      ~DefinitionsServiceTestEnvironment() {
     Close();
   }
 
-  inline void AdministrationServiceTestInstance::Open() {
+  inline void DefinitionsServiceTestEnvironment::Open() {
     m_container.Open();
   }
 
-  inline void AdministrationServiceTestInstance::Close() {
+  inline void DefinitionsServiceTestEnvironment::Close() {
     m_container.Close();
   }
 
-  inline std::unique_ptr<VirtualAdministrationClient>
-      AdministrationServiceTestInstance::BuildClient(
+  inline std::unique_ptr<VirtualDefinitionsClient>
+      DefinitionsServiceTestEnvironment::BuildClient(
       Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
       serviceLocatorClient) {
     ServiceProtocolClientBuilder builder(Beam::Ref(serviceLocatorClient),
       [&] {
         return std::make_unique<ServiceProtocolClientBuilder::Channel>(
-          "test_administration_client", Beam::Ref(m_serverConnection));
+          "test_definitions_client", Beam::Ref(m_serverConnection));
       },
       [&] {
         return std::make_unique<ServiceProtocolClientBuilder::Timer>();
       });
-    auto client = std::make_unique<AdministrationService::AdministrationClient<
+    auto client = std::make_unique<DefinitionsService::DefinitionsClient<
         ServiceProtocolClientBuilder>>(builder);
-    return MakeVirtualAdministrationClient(std::move(client));
+    return MakeVirtualDefinitionsClient(std::move(client));
   }
 }
 }
