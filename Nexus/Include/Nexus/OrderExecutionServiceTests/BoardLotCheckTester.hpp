@@ -2,7 +2,6 @@
 #define NEXUS_BOARDLOTCHECKTESTER_HPP
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
-#include <Beam/TimeService/IncrementalTimeClient.hpp>
 #include <cppunit/extensions/HelperMacros.h>
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionService/BoardLotCheck.hpp"
@@ -25,12 +24,9 @@ namespace Tests {
       //! The type of MarketDataClient.
       using MarketDataClient = MarketDataService::VirtualMarketDataClient;
 
-      //! The type of TimeClient used.
-      using TimeClient = Beam::TimeService::IncrementalTimeClient;
-
       //! The type of BoardLotCheck to test.
       using BoardLotCheck = OrderExecutionService::BoardLotCheck<
-        std::unique_ptr<MarketDataClient>, std::unique_ptr<TimeClient>>;
+        std::unique_ptr<MarketDataClient>>;
 
       virtual void setUp();
 

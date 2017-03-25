@@ -32,8 +32,8 @@ void BoardLotCheckTester::setUp() {
   auto marketDataClient = m_marketDataServiceEnvironment->BuildClient(
     Ref(*m_serviceLocatorClient));
   marketDataClient->Open();
-  m_check.emplace(std::move(marketDataClient), std::make_unique<TimeClient>(),
-    GetDefaultMarketDatabase(), GetDefaultTimeZoneDatabase());
+  m_check.emplace(std::move(marketDataClient), GetDefaultMarketDatabase(),
+    GetDefaultTimeZoneDatabase());
 }
 
 void BoardLotCheckTester::tearDown() {
