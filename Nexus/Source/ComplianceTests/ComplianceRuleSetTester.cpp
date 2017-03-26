@@ -23,9 +23,9 @@ namespace {
 }
 
 void ComplianceRuleSetTester::setUp() {
-  m_serviceLocatorInstance.Initialize();
-  m_serviceLocatorInstance->Open();
-  auto serviceLocatorClient = m_serviceLocatorInstance->BuildClient();
+  m_serviceLocatorEnvironment.Initialize();
+  m_serviceLocatorEnvironment->Open();
+  auto serviceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
   serviceLocatorClient->SetCredentials("root", "");
   serviceLocatorClient->Open();
   ServiceProtocolClientBuilder builder(
@@ -48,7 +48,7 @@ void ComplianceRuleSetTester::setUp() {
 void ComplianceRuleSetTester::tearDown() {
   m_complianceRuleSet.Reset();
   m_complianceClient.Reset();
-  m_serviceLocatorInstance.Reset();
+  m_serviceLocatorEnvironment.Reset();
 }
 
 void ComplianceRuleSetTester::TestSubmit() {

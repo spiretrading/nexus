@@ -1,5 +1,6 @@
 #ifndef NEXUS_SECURITY_HPP
 #define NEXUS_SECURITY_HPP
+#include <ostream>
 #include <string>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <boost/functional/hash.hpp>
@@ -113,13 +114,20 @@ namespace Nexus {
     if(value.GetMarket().IsEmpty() || value.GetSymbol().empty()) {
       return value.GetSymbol();
     }
-    const MarketDatabase::Entry& market = marketDatabase.FromCode(
-      value.GetMarket());
-    return (value.GetSymbol() + ".") + market.m_displayName;
+    auto& market = marketDatabase.FromCode(value.GetMarket());
+    if(market.m_code.IsEmpty()) {
+      return (value.GetSymbol() + ".") + value.GetMarket().GetData();
+    } else {
+      return (value.GetSymbol() + ".") + market.m_displayName;
+    }
   }
 
   inline std::string ToString(const Security& value) {
     return ToString(value, GetDefaultMarketDatabase());
+  }
+
+  inline std::ostream& operator <<(std::ostream& out, const Security& value) {
+    return out << ToString(value);
   }
 
   inline std::size_t hash_value(const Security& security) {

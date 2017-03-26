@@ -95,8 +95,8 @@ namespace Nexus {
   }
 
   inline std::ostream& operator <<(std::ostream& out, const BookQuote& quote) {
-    return out << "[" << quote.m_mpid << " " << quote.m_isPrimaryMpid << " " <<
-      quote.m_market << " " << quote.m_quote << " " << quote.m_timestamp << "]";
+    return out << "(" << quote.m_mpid << " " << quote.m_isPrimaryMpid << " " <<
+      quote.m_market << " " << quote.m_quote << " " << quote.m_timestamp << ")";
   }
 }
 

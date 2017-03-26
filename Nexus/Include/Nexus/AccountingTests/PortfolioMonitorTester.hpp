@@ -1,11 +1,11 @@
 #ifndef NEXUS_PORTFOLIOMONITORTESTER_HPP
 #define NEXUS_PORTFOLIOMONITORTESTER_HPP
-#include <Beam/ServiceLocatorTests/ServiceLocatorTestInstance.hpp>
+#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/Utilities/BeamWorkaround.hpp>
 #include <cppunit/extensions/HelperMacros.h>
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
 #include "Nexus/AccountingTests/AccountingTests.hpp"
-#include "Nexus/MarketDataServiceTests/MarketDataServiceTestInstance.hpp"
+#include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 
 namespace Nexus {
 namespace Accounting {
@@ -37,11 +37,11 @@ namespace Tests {
       void TestOutOfOrderExecutionReports();
 
     private:
-      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestInstance>
-        m_serviceLocatorInstance;
+      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment>
+        m_serviceLocatorEnvironment;
       std::unique_ptr<ServiceLocatorClient> m_serviceLocatorClient;
-      Beam::DelayPtr<MarketDataService::Tests::MarketDataServiceTestInstance>
-        m_marketDataServiceInstance;
+      Beam::DelayPtr<MarketDataService::Tests::MarketDataServiceTestEnvironment>
+        m_marketDataServiceEnvironment;
 
       CPPUNIT_TEST_SUITE(PortfolioMonitorTester);
         CPPUNIT_TEST(TestOutOfOrderExecutionReports);

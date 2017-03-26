@@ -2,16 +2,16 @@
 #define NEXUS_INTERNALMATCHINGORDEREXECUTIONDRIVERTESTER_HPP
 #include <Beam/Pointers/DelayPtr.hpp>
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
-#include <Beam/ServiceLocatorTests/ServiceLocatorTestInstance.hpp>
+#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/Threading/TimerThreadPool.hpp>
 #include <Beam/TimeService/IncrementalTimeClient.hpp>
-#include <Beam/UidServiceTests/UidServiceTestInstance.hpp>
+#include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
 #include <Beam/Utilities/BeamWorkaround.hpp>
 #include <cppunit/extensions/HelperMacros.h>
 #include "Nexus/InternalMatcher/InternalMatchingOrderExecutionDriver.hpp"
 #include "Nexus/InternalMatcher/NullMatchReportBuilder.hpp"
 #include "Nexus/InternalMatcherTests/InternalMatcherTests.hpp"
-#include "Nexus/MarketDataServiceTests/MarketDataServiceTestInstance.hpp"
+#include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/MockOrderExecutionDriver.hpp"
 
 namespace Nexus {
@@ -156,13 +156,13 @@ namespace Tests {
         OrderEntry();
       };
       Beam::DelayPtr<Beam::Threading::TimerThreadPool> m_timerThreadPool;
-      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestInstance>
-        m_serviceLocatorInstance;
+      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment>
+        m_serviceLocatorEnvironment;
       std::unique_ptr<ServiceLocatorClient> m_serviceLocatorClient;
-      Beam::DelayPtr<MarketDataService::Tests::MarketDataServiceTestInstance>
-        m_marketDataServiceInstance;
-      Beam::DelayPtr<Beam::UidService::Tests::UidServiceTestInstance>
-        m_uidServiceInstance;
+      Beam::DelayPtr<MarketDataService::Tests::MarketDataServiceTestEnvironment>
+        m_marketDataServiceEnvironment;
+      Beam::DelayPtr<Beam::UidService::Tests::UidServiceTestEnvironment>
+        m_uidServiceEnvironment;
       Beam::DelayPtr<OrderExecutionService::Tests::MockOrderExecutionDriver>
         m_mockOrderExecutionDriver;
       std::shared_ptr<Beam::Queue<OrderExecutionService::PrimitiveOrder*>>

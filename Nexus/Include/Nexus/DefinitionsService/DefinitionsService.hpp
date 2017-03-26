@@ -6,8 +6,7 @@ namespace Nexus {
 namespace DefinitionsService {
   class ApplicationDefinitionsClient;
   template<typename ServiceProtocolClientBuilderType> class DefinitionsClient;
-  template<typename ContainerType, typename ServiceLocatorClientType>
-    class DefinitionsServlet;
+  template<typename ContainerType> class DefinitionsServlet;
   class DefinitionsSession;
   class VirtualDefinitionsClient;
   template<typename ClientType> class WrapperDefinitionsClient;

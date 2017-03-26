@@ -41,39 +41,39 @@ InternalMatchingOrderExecutionDriverTester::OrderEntry::OrderEntry()
 
 void InternalMatchingOrderExecutionDriverTester::setUp() {
   m_timerThreadPool.Initialize();
-  m_serviceLocatorInstance.Initialize();
-  m_serviceLocatorInstance->Open();
-  m_serviceLocatorClient = m_serviceLocatorInstance->BuildClient();
+  m_serviceLocatorEnvironment.Initialize();
+  m_serviceLocatorEnvironment->Open();
+  m_serviceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
   m_serviceLocatorClient->SetCredentials("root", "");
   m_serviceLocatorClient->Open();
-  m_uidServiceInstance.Initialize();
-  m_uidServiceInstance->Open();
+  m_uidServiceEnvironment.Initialize();
+  m_uidServiceEnvironment->Open();
   DirectoryEntry servicesDirectory =
-    m_serviceLocatorInstance->GetRoot().MakeDirectory("services",
+    m_serviceLocatorEnvironment->GetRoot().MakeDirectory("services",
     DirectoryEntry::GetStarDirectory());
-  auto marketDataServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
+  auto marketDataServiceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
   marketDataServiceLocatorClient->SetCredentials("root", "");
   marketDataServiceLocatorClient->Open();
-  m_marketDataServiceInstance.Initialize(
+  m_marketDataServiceEnvironment.Initialize(
     std::move(marketDataServiceLocatorClient));
-  m_marketDataServiceInstance->Open();
+  m_marketDataServiceEnvironment->Open();
   m_mockOrderExecutionDriver.Initialize();
   m_mockOrderExecutionDriver->SetOrderStatusNewOnSubmission(true);
   m_mockDriverMonitor = std::make_shared<Queue<PrimitiveOrder*>>();
   m_mockOrderExecutionDriver->GetPublisher().Monitor(m_mockDriverMonitor);
   unique_ptr<MarketDataClient> marketDataClient  =
-    m_marketDataServiceInstance->BuildClient(Ref(*m_serviceLocatorClient));
-  m_uidClient = m_uidServiceInstance->BuildClient();
+    m_marketDataServiceEnvironment->BuildClient(Ref(*m_serviceLocatorClient));
+  m_uidClient = m_uidServiceEnvironment->BuildClient();
   m_uidClient->Open();
   m_orderExecutionDriver.Initialize(DirectoryEntry::GetRootAccount(),
     Initialize(), std::move(marketDataClient), Initialize(),
-    m_uidServiceInstance->BuildClient(), &*m_mockOrderExecutionDriver,
+    m_uidServiceEnvironment->BuildClient(), &*m_mockOrderExecutionDriver,
     Ref(*m_timerThreadPool));
   m_orderExecutionDriver->Open();
-  m_serviceLocatorInstance->GetRoot().MakeAccount("market_data_feed_service",
+  m_serviceLocatorEnvironment->GetRoot().MakeAccount("market_data_feed_service",
     "", servicesDirectory);
   m_marketDataFeedServiceLocatorClient =
-    m_serviceLocatorInstance->BuildClient();
+    m_serviceLocatorEnvironment->BuildClient();
   m_marketDataFeedServiceLocatorClient->SetCredentials(
     "market_data_feed_service", "");
   m_marketDataFeedServiceLocatorClient->Open();
@@ -86,10 +86,10 @@ void InternalMatchingOrderExecutionDriverTester::tearDown() {
   m_uidClient.reset();
   m_mockDriverMonitor.reset();
   m_mockOrderExecutionDriver.Reset();
-  m_marketDataServiceInstance.Reset();
-  m_uidServiceInstance.Reset();
+  m_marketDataServiceEnvironment.Reset();
+  m_uidServiceEnvironment.Reset();
   m_serviceLocatorClient.reset();
-  m_serviceLocatorInstance.Reset();
+  m_serviceLocatorEnvironment.Reset();
   m_timerThreadPool.Reset();
 }
 
@@ -223,7 +223,7 @@ void InternalMatchingOrderExecutionDriverTester::
 void InternalMatchingOrderExecutionDriverTester::SetBbo(Money bid, Money ask) {
   BboQuote bbo(Quote(bid, 100, Side::BID), Quote(ask, 100, Side::ASK),
     second_clock::universal_time());
-  m_marketDataServiceInstance->SetBbo(TST, bbo);
+  m_marketDataServiceEnvironment->SetBbo(TST, bbo);
 }
 
 InternalMatchingOrderExecutionDriverTester::OrderEntry

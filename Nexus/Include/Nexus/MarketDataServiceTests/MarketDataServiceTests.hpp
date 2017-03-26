@@ -9,7 +9,7 @@ namespace Tests {
   class MarketDataFeedClientTester;
   class MarketDataRegistryTester;
   class MarketDataRegistryServletTester;
-  class MarketDataServiceTestInstance;
+  class MarketDataServiceTestEnvironment;
   class MarketEntryTester;
   class SecurityEntryTester;
 }

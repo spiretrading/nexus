@@ -108,8 +108,8 @@ namespace Nexus {
   }
 
   inline std::ostream& operator <<(std::ostream& out, const Quote& quote) {
-    return out << "[" << quote.m_side << " " << quote.m_size << " @ " <<
-      quote.m_price << "]";
+    return out << "(" << quote.m_price << " " << quote.m_size << " " <<
+      quote.m_side << ")";
   }
 }
 

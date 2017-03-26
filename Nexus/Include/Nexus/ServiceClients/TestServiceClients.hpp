@@ -7,6 +7,8 @@
 #include <Beam/Threading/VirtualTimer.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <Beam/TimeService/VirtualTimeClient.hpp>
+#include <Beam/TimeServiceTests/TestTimeClient.hpp>
+#include <Beam/TimeServiceTests/TestTimer.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/ChartingService/VirtualChartingClient.hpp"
@@ -16,8 +18,6 @@
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 #include "Nexus/RiskService/VirtualRiskClient.hpp"
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
-#include "Nexus/ServiceClients/TestTimeClient.hpp"
-#include "Nexus/ServiceClients/TestTimer.hpp"
 
 namespace Nexus {
 
@@ -162,7 +162,8 @@ namespace Nexus {
   inline std::unique_ptr<TestServiceClients::Timer>
       TestServiceClients::BuildTimer(boost::posix_time::time_duration expiry) {
     return Beam::Threading::MakeVirtualTimer(
-      std::make_unique<TestTimer>(expiry, Beam::Ref(*m_environment)));
+      std::make_unique<Beam::TimeService::Tests::TestTimer>(expiry,
+      Beam::Ref(m_environment->GetTimeEnvironment())));
   }
 
   inline void TestServiceClients::Open() {
@@ -171,21 +172,26 @@ namespace Nexus {
     }
     try {
       m_serviceLocatorClient =
-        m_environment->GetServiceLocatorInstance().BuildClient();
+        m_environment->GetServiceLocatorEnvironment().BuildClient();
       m_serviceLocatorClient->SetCredentials("root", "");
       m_serviceLocatorClient->Open();
+      m_definitionsClient = m_environment->GetDefinitionsEnvironment().BuildClient(
+        Beam::Ref(*m_serviceLocatorClient));
+      m_definitionsClient->Open();
       m_administrationClient =
-        m_environment->GetAdministrationInstance().BuildClient(
+        m_environment->GetAdministrationEnvironment().BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
       m_administrationClient->Open();
-      m_marketDataClient = m_environment->GetMarketDataInstance().BuildClient(
+      m_marketDataClient = m_environment->GetMarketDataEnvironment().BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
       m_marketDataClient->Open();
       m_orderExecutionClient =
-        m_environment->GetOrderExecutionInstance().BuildClient(
+        m_environment->GetOrderExecutionEnvironment().BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
+      m_orderExecutionClient->Open();
       m_timeClient = Beam::TimeService::MakeVirtualTimeClient(
-        std::make_unique<TestTimeClient>(Beam::Ref(*m_environment)));
+        std::make_unique<Beam::TimeService::Tests::TestTimeClient>(
+        Beam::Ref(m_environment->GetTimeEnvironment())));
       m_timeClient->Open();
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();

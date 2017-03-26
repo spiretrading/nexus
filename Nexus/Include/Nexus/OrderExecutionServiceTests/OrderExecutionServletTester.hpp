@@ -7,13 +7,13 @@
 #include <Beam/Pointers/DelayPtr.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
-#include <Beam/ServiceLocatorTests/ServiceLocatorTestInstance.hpp>
+#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Threading/TriggerTimer.hpp>
 #include <Beam/TimeService/IncrementalTimeClient.hpp>
-#include <Beam/UidServiceTests/UidServiceTestInstance.hpp>
-#include "Nexus/AdministrationServiceTests/AdministrationServiceTestInstance.hpp"
+#include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
+#include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionService/LocalOrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionServlet.hpp"
 #include "Nexus/OrderExecutionServiceTests/MockOrderExecutionDriver.hpp"
@@ -74,13 +74,13 @@ namespace Tests {
       void TestNewOrderSingle();
 
     private:
-      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestInstance>
-        m_serviceLocatorInstance;
-      Beam::DelayPtr<Beam::UidService::Tests::UidServiceTestInstance>
-        m_uidServiceInstance;
+      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment>
+        m_serviceLocatorEnvironment;
+      Beam::DelayPtr<Beam::UidService::Tests::UidServiceTestEnvironment>
+        m_uidServiceEnvironment;
       Beam::DelayPtr<
-        AdministrationService::Tests::AdministrationServiceTestInstance>
-        m_administrationServiceInstance;
+        AdministrationService::Tests::AdministrationServiceTestEnvironment>
+        m_administrationServiceEnvironment;
       std::unique_ptr<ServiceLocatorClient> m_servletServiceLocatorClient;
       std::unique_ptr<ServiceLocatorClient> m_clientServiceLocatorClient;
       Beam::DelayPtr<ServerConnection> m_serverConnection;
