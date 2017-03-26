@@ -176,9 +176,9 @@ void Nexus::Python::ExportMarketWideDataQuery() {
     "MarketWideDataQuery", init<>())
     .def("__copy__", &MakeCopy<MarketWideDataQuery>)
     .def("__deepcopy__", &MakeDeepCopy<MarketWideDataQuery>);
-  def("query_real_time_with_snapshot",
+  def("build_real_time_with_snapshot_query",
     static_cast<MarketWideDataQuery (*)(const MarketCode&)>(
-    &QueryRealTimeWithSnapshot));
+    &BuildRealTimeWithSnapshotQuery));
 }
 
 void Nexus::Python::ExportSecurityMarketDataQuery() {
@@ -188,7 +188,7 @@ void Nexus::Python::ExportSecurityMarketDataQuery() {
     "SecurityMarketDataQuery", init<>())
     .def("__copy__", &MakeCopy<SecurityMarketDataQuery>)
     .def("__deepcopy__", &MakeDeepCopy<SecurityMarketDataQuery>);
-  def("query_real_time_with_snapshot",
+  def("build_real_time_with_snapshot_query",
     static_cast<SecurityMarketDataQuery (*)(Security)>(
-    &QueryRealTimeWithSnapshot));
+    &BuildRealTimeWithSnapshotQuery));
 }

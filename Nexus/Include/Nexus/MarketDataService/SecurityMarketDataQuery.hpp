@@ -43,7 +43,7 @@ namespace MarketDataService {
   /*!
     \param security The Security to query.
   */
-  inline SecurityMarketDataQuery QueryRealTimeWithSnapshot(
+  inline SecurityMarketDataQuery BuildRealTimeWithSnapshotQuery(
       Security security) {
     SecurityMarketDataQuery query;
     query.SetIndex(std::move(security));

@@ -3,6 +3,7 @@
 #include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/date_time/posix_time/posix_time_io.hpp>
 #include "Nexus/Definitions/Quote.hpp"
 
 namespace Nexus {
