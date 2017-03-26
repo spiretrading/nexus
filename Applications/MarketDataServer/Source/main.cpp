@@ -53,7 +53,7 @@ namespace {
     MetaMarketDataRegistryServlet<MarketDataRegistry*,
     SessionCachedHistoricalDataStore<
     BufferedHistoricalDataStore<MySqlHistoricalDataStore*>*>,
-    ApplicationServiceLocatorClient::Client>,
+    ApplicationAdministrationClient::Client*>,
     ApplicationServiceLocatorClient::Client*, NativePointerPolicy>,
     TcpServerSocket, BinarySender<SharedBuffer>, NullEncoder,
     std::shared_ptr<LiveTimer>>;
@@ -61,7 +61,7 @@ namespace {
     MarketDataRegistryServlet<RegistryServletContainer, MarketDataRegistry*,
     SessionCachedHistoricalDataStore<
     BufferedHistoricalDataStore<MySqlHistoricalDataStore*>*>,
-    ApplicationServiceLocatorClient::Client>;
+    ApplicationAdministrationClient::Client*>;
   using FeedServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<
     MetaMarketDataFeedServlet<BaseRegistryServlet*>,
@@ -242,7 +242,7 @@ int main(int argc, const char** argv) {
       "database_threads", boost::thread::hardware_concurrency()));
     bufferedDataStore.emplace(&historicalDataStore, historicalBufferSize,
       Ref(threadPool));
-    baseRegistryServlet.emplace(entitlements, Ref(*serviceLocatorClient),
+    baseRegistryServlet.emplace(entitlements, &*administrationClient,
       &marketDataRegistry, Initialize(&*bufferedDataStore, cacheBlockSize));
   } catch(const std::exception& e) {
     cerr << "Error initializing server: " << e.what() << endl;

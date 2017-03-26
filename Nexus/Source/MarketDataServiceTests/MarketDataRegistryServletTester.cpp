@@ -24,16 +24,23 @@ namespace {
 }
 
 void MarketDataRegistryServletTester::setUp() {
-  m_serviceLocatorEnvironment.Initialize();
+  m_serviceLocatorEnvironment.emplace();
   m_serviceLocatorEnvironment->Open();
+  auto administrationServiceLocatorClient =
+    m_serviceLocatorEnvironment->BuildClient();
+  administrationServiceLocatorClient->SetCredentials("root", "");
+  m_administrationEnvironment.emplace(
+    std::move(administrationServiceLocatorClient));
+  m_administrationEnvironment->Open();
   auto servletAccount = m_serviceLocatorEnvironment->GetRoot().MakeAccount(
     "servlet", "", DirectoryEntry::GetStarDirectory());
-  auto clientEntry = m_serviceLocatorEnvironment->GetRoot().MakeAccount("client",
-    "", DirectoryEntry::GetStarDirectory());
+  auto clientEntry = m_serviceLocatorEnvironment->GetRoot().MakeAccount(
+    "client", "", DirectoryEntry::GetStarDirectory());
   auto entitlementsDirectory =
     m_serviceLocatorEnvironment->GetRoot().MakeDirectory("entitlements",
     DirectoryEntry::GetStarDirectory());
-  auto nyseEntitlementGroup = m_serviceLocatorEnvironment->GetRoot().MakeDirectory(
+  auto nyseEntitlementGroup =
+    m_serviceLocatorEnvironment->GetRoot().MakeDirectory(
     "NYSE", entitlementsDirectory);
   Permissions servletPermissions;
   servletPermissions.Set(Permission::READ);
@@ -41,9 +48,10 @@ void MarketDataRegistryServletTester::setUp() {
   servletPermissions.Set(Permission::ADMINISTRATE);
   m_serviceLocatorEnvironment->GetRoot().StorePermissions(servletAccount,
     entitlementsDirectory, servletPermissions);
-  auto tsxEntitlementGroup = m_serviceLocatorEnvironment->GetRoot().MakeDirectory(
+  auto tsxEntitlementGroup =
+    m_serviceLocatorEnvironment->GetRoot().MakeDirectory(
     "TSX", entitlementsDirectory);
-  m_entitlements.Initialize();
+  m_entitlements.emplace();
   EntitlementDatabase::Entry nyseEntitlement;
   nyseEntitlement.m_name = "NYSE";
   nyseEntitlement.m_groupEntry = nyseEntitlementGroup;
@@ -64,9 +72,9 @@ void MarketDataRegistryServletTester::setUp() {
     nyseEntitlementGroup);
   m_serviceLocatorEnvironment->GetRoot().Associate(clientEntry,
     tsxEntitlementGroup);
-  m_serverConnection.Initialize();
-  m_clientProtocol.Initialize(Initialize(string("test"),
-    Ref(*m_serverConnection)), Initialize());
+  m_serverConnection.emplace();
+  m_clientProtocol.emplace(Initialize(string("test"), Ref(*m_serverConnection)),
+    Initialize());
   Nexus::Queries::RegisterQueryTypes(
     Store(m_clientProtocol->GetSlots().GetRegistry()));
   RegisterMarketDataRegistryServices(Store(m_clientProtocol->GetSlots()));
@@ -74,11 +82,14 @@ void MarketDataRegistryServletTester::setUp() {
   m_servletServiceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
   m_servletServiceLocatorClient->SetCredentials("servlet", "");
   m_servletServiceLocatorClient->Open();
-  m_registry.Initialize();
-  m_registryServlet.Initialize(*m_entitlements,
-    Ref(*m_servletServiceLocatorClient), &*m_registry, Initialize());
-  m_servlet.Initialize(&*m_servletServiceLocatorClient, &*m_registryServlet);
-  m_container.Initialize(&*m_servlet, &*m_serverConnection,
+  auto marketDataAdministrationClient =
+    m_administrationEnvironment->BuildClient(
+    Ref(*m_servletServiceLocatorClient));
+  m_registry.emplace();
+  m_registryServlet.emplace(*m_entitlements,
+    std::move(marketDataAdministrationClient), &*m_registry, Initialize());
+  m_servlet.emplace(&*m_servletServiceLocatorClient, &*m_registryServlet);
+  m_container.emplace(&*m_servlet, &*m_serverConnection,
     factory<std::shared_ptr<TriggerTimer>>());
   m_container->Open();
   m_clientServiceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
@@ -91,13 +102,13 @@ void MarketDataRegistryServletTester::setUp() {
 }
 
 void MarketDataRegistryServletTester::tearDown() {
-  m_clientProtocol.Reset();
+  m_clientProtocol.reset();
   m_clientServiceLocatorClient.reset();
-  m_container.Reset();
-  m_servlet.Reset();
-  m_registryServlet.Reset();
-  m_registry.Reset();
-  m_entitlements.Reset();
+  m_container.reset();
+  m_servlet.reset();
+  m_registryServlet.reset();
+  m_registry.reset();
+  m_entitlements.reset();
   m_servletServiceLocatorClient.reset();
   m_serviceLocatorEnvironment->Close();
 }

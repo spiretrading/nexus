@@ -52,13 +52,13 @@ namespace {
   using MarketDataRelayServletContainer =
     ServiceProtocolServletContainer<MetaAuthenticationServletAdapter<
     MetaMarketDataRelayServlet<IncomingMarketDataClient,
-    ApplicationServiceLocatorClient::Client>,
+    ApplicationAdministrationClient::Client*>,
     ApplicationServiceLocatorClient::Client*, NativePointerPolicy>,
     TcpServerSocket, BinarySender<SharedBuffer>,
     SizeDeclarativeEncoder<ZLibEncoder>, std::shared_ptr<LiveTimer>>;
   using BaseMarketDataRelayServlet = MarketDataRelayServlet<
     MarketDataRelayServletContainer, IncomingMarketDataClient,
-    ApplicationServiceLocatorClient::Client>;
+    ApplicationAdministrationClient::Client*>;
 
   struct MarketDataRelayServerConnectionInitializer {
     string m_serviceName;
@@ -166,7 +166,7 @@ int main(int argc, const char** argv) {
       "max_connections", 10 * minConnections));
     baseRegistryServlet.emplace(entitlements, clientTimeout,
       marketDataClientBuilder, minConnections, maxConnections,
-      Ref(*serviceLocatorClient), Ref(timerThreadPool));
+      &*administrationClient, Ref(timerThreadPool));
   } catch(const std::exception& e) {
     cerr << "Error initializing registry servlet: " << e.what() << endl;
     return -1;

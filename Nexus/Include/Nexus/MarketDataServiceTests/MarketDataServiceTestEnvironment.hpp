@@ -18,6 +18,7 @@
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
 #include <boost/noncopyable.hpp>
+#include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
@@ -41,9 +42,12 @@ namespace Tests {
 
       //! Constructs an MarketDataServiceTestEnvironment.
       /*!
+        \param administrationClient The AdministrationClient to use.
         \param serviceLocatorClient The ServiceLocatorClient to use.
       */
       MarketDataServiceTestEnvironment(
+        std::shared_ptr<AdministrationService::VirtualAdministrationClient>
+        administrationClient,
         std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
         serviceLocatorClient);
 
@@ -94,20 +98,22 @@ namespace Tests {
         Beam::IO::LocalServerConnection<Beam::IO::SharedBuffer>;
       using ClientChannel =
         Beam::IO::LocalClientChannel<Beam::IO::SharedBuffer>;
+      using AdministrationClient =
+        AdministrationService::VirtualAdministrationClient;
       using ServiceLocatorClient =
         Beam::ServiceLocator::VirtualServiceLocatorClient;
       using ServiceProtocolServletContainer =
         Beam::Services::ServiceProtocolServletContainer<
         Beam::ServiceLocator::MetaAuthenticationServletAdapter<
         MetaMarketDataRegistryServlet<MarketDataRegistry*,
-        LocalHistoricalDataStore*, ServiceLocatorClient>,
+        LocalHistoricalDataStore*, std::shared_ptr<AdministrationClient>>,
         ServiceLocatorClient*, Beam::NativePointerPolicy>, ServerConnection*,
         Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
         Beam::Codecs::NullEncoder,
         std::shared_ptr<Beam::Threading::TriggerTimer>>;
       using BaseRegistryServlet = MarketDataRegistryServlet<
         ServiceProtocolServletContainer, MarketDataRegistry*,
-        LocalHistoricalDataStore*, ServiceLocatorClient>;
+        LocalHistoricalDataStore*, std::shared_ptr<AdministrationClient>>;
       using RegistryServlet =
         Beam::ServiceLocator::AuthenticationServletAdapter<
         ServiceProtocolServletContainer, BaseRegistryServlet*,
@@ -129,6 +135,7 @@ namespace Tests {
       using MarketDataClient = MarketDataService::VirtualMarketDataClient;
       using MarketDataFeedClient =
         MarketDataService::VirtualMarketDataFeedClient;
+      std::shared_ptr<AdministrationClient> m_administrationClient;
       std::shared_ptr<ServiceLocatorClient> m_serviceLocatorClient;
       MarketDataRegistry m_registry;
       EntitlementDatabase m_entitlements;
@@ -144,9 +151,12 @@ namespace Tests {
   };
 
   inline MarketDataServiceTestEnvironment::MarketDataServiceTestEnvironment(
+      std::shared_ptr<AdministrationService::VirtualAdministrationClient>
+      administrationClient,
       std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
       serviceLocatorClient)
-      : m_serviceLocatorClient{std::move(serviceLocatorClient)} {}
+      : m_administrationClient{std::move(administrationClient)},
+        m_serviceLocatorClient{std::move(serviceLocatorClient)} {}
 
   inline MarketDataServiceTestEnvironment::~MarketDataServiceTestEnvironment() {
     Close();
@@ -174,8 +184,8 @@ namespace Tests {
         MarketDataType::ORDER_IMBALANCE);
     }
     m_entitlements.Add(globalEntitlement);
-    m_registryServlet.Initialize(m_entitlements,
-      Beam::Ref(*m_serviceLocatorClient), &m_registry, &m_dataStore);
+    m_registryServlet.Initialize(m_entitlements, m_administrationClient,
+      &m_registry, &m_dataStore);
     m_container.Initialize(Beam::Initialize(m_serviceLocatorClient.get(),
       &*m_registryServlet), &m_serverConnection,
       boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>());
