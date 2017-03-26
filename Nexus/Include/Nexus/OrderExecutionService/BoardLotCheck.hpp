@@ -71,8 +71,7 @@ namespace OrderExecutionService {
   auto MakeBoardLotCheck(MarketDataClient&& marketDataClient,
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase) {
-    return std::make_unique<BoardLotCheck<std::decay_t<MarketDataClient>,
-      std::decay_t<TimeClient>>>(
+    return std::make_unique<BoardLotCheck<std::decay_t<MarketDataClient>>>(
       std::forward<MarketDataClient>(marketDataClient), marketDatabase,
       timeZoneDatabase);
   }
