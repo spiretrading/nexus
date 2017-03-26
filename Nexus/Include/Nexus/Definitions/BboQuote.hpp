@@ -1,5 +1,6 @@
 #ifndef NEXUS_BBOQUOTE_HPP
 #define NEXUS_BBOQUOTE_HPP
+#include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/Definitions/Quote.hpp"
@@ -46,6 +47,11 @@ namespace Nexus {
     */
     bool operator !=(const BboQuote& rhs) const;
   };
+
+  inline std::ostream& operator <<(std::ostream& out, const BboQuote& value) {
+    return out << "(" << value.m_bid << " " << value.m_ask << " " <<
+      value.m_timestamp << ")";
+  }
 
   inline BboQuote::BboQuote(const Quote& bid, const Quote& ask,
       const boost::posix_time::ptime& timestamp)
