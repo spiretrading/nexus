@@ -181,15 +181,18 @@ void OmegaFixApplication::onMessage(const FIX42::OrderCancelReject& message,
     const FIX::SessionID& sessionId) {}
 
 BboQuote OmegaFixApplication::LoadBboQuote(const Security& security) {
-  std::shared_ptr<StateQueue<BboQuote>> publisher = m_bboQuotes.GetOrInsert(
-    security,
+  auto publisher = m_bboQuotes.GetOrInsert(security,
     [&] {
       auto publisher = std::make_shared<StateQueue<BboQuote>>();
-      auto bboQuery = QueryRealTimeWithSnapshot(security);
-      m_marketDataClient->QueryBboQuotes(bboQuery, publisher);
+      QueryRealTimeWithSnapshot(security, *m_marketDataClient, publisher);
       return publisher;
     });
-  return publisher->Top();
+  try {
+    return publisher->Top();
+  } catch(const Beam::PipeBrokenException&) {
+    m_bboQuotes.Erase(security);
+    BOOST_THROW_EXCEPTION(FixOrderRejectedException{"No BBO quote available."});
+  }
 }
 
 string OmegaFixApplication::GetAccount() const {
