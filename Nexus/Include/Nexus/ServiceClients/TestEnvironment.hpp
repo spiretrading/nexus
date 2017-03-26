@@ -1,6 +1,7 @@
 #ifndef NEXUS_TESTENVIRONMENT_HPP
 #define NEXUS_TESTENVIRONMENT_HPP
 #include <Beam/IO/OpenState.hpp>
+#include "Beam/Queues/AliasQueue.hpp"
 #include <Beam/Queues/ConverterWriterQueue.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/Threading/Mutex.hpp>
@@ -150,7 +151,6 @@ namespace Nexus {
       boost::optional<
         OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment>
         m_orderExecutionEnvironment;
-      Beam::SynchronizedVector<std::shared_ptr<void>> m_converters;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
@@ -186,13 +186,12 @@ namespace Nexus {
 
   inline void TestEnvironment::MonitorOrderSubmissions(const std::shared_ptr<
       Beam::QueueWriter<const OrderExecutionService::Order*>>& queue) {
-    auto weakQueue = Beam::MakeWeakQueue(queue);
-    auto conversionQueue = Beam::MakeConverterWriterQueue<
-      OrderExecutionService::PrimitiveOrder*>(weakQueue,
+    std::shared_ptr<Beam::QueueWriter<OrderExecutionService::PrimitiveOrder*>>
+      conversionQueue = Beam::MakeConverterWriterQueue<
+      OrderExecutionService::PrimitiveOrder*>(Beam::MakeWeakQueue(queue),
       Beam::StaticCastConverter<const OrderExecutionService::Order*>());
     GetOrderExecutionEnvironment().GetDriver().GetPublisher().Monitor(
-      conversionQueue);
-    m_converters.PushBack(conversionQueue);
+      Beam::MakeAliasQueue(conversionQueue, queue));
   }
 
   inline void TestEnvironment::AcceptOrder(
