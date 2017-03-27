@@ -206,6 +206,8 @@ void Nexus::Python::ExportAdministrationServiceTestEnvironment() {
     .def("open", BlockingFunction(&AdministrationServiceTestEnvironment::Open))
     .def("close", BlockingFunction(
       &AdministrationServiceTestEnvironment::Close))
+    .def("make_administrator", BlockingFunction(
+      &AdministrationServiceTestEnvironment::MakeAdministrator))
     .def("build_client", &AdministrationServiceTestEnvironmentBuildClient,
       return_value_policy<manage_new_object>());
 }

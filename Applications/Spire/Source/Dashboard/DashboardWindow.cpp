@@ -193,7 +193,7 @@ void DashboardWindow::OnRowAdded(const DashboardRow& row) {
   auto& bboQuoteEntry = GetOrInsert(m_bboQuotes, *security);
   if(bboQuoteEntry.m_counter == 0) {
     bboQuoteEntry.m_bboQuote = std::make_shared<StateQueue<BboQuote>>();
-    auto query = QueryRealTimeWithSnapshot(*security);
+    auto query = BuildRealTimeWithSnapshotQuery(*security);
     m_userProfile->GetServiceClients().GetMarketDataClient().QueryBboQuotes(
       query, bboQuoteEntry.m_bboQuote);
   }

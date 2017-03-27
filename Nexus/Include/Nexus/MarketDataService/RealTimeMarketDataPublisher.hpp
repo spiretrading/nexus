@@ -1,6 +1,5 @@
 #ifndef NEXUS_MARKETDATAREALTIMEMARKETDATAPUBLISHER_HPP
 #define NEXUS_MARKETDATAREALTIMEMARKETDATAPUBLISHER_HPP
-#include <Beam/Queues/MultiQueueWriter.hpp>
 #include <Beam/Queues/QueuePublisher.hpp>
 #include <Beam/Queues/SnapshotPublisher.hpp>
 #include <Beam/Queues/StatePublisher.hpp>
@@ -23,8 +22,8 @@ namespace MarketDataService {
     public:
 
       //! The type of MarketDataClient to query.
-      typedef typename Beam::TryDereferenceType<MarketDataClientType>::type
-        MarketDataClient;
+      using MarketDataClient =
+        Beam::GetTryDereferenceType<MarketDataClientType>;
 
       //! Constructs a RealTimeMarketDataPublisher.
       /*!
@@ -42,10 +41,9 @@ namespace MarketDataService {
         const Security& security);
 
     private:
-      typedef Beam::QueuePublisher<Beam::StatePublisher<BboQuote>>
-        BboQuotePublisher;
-      typename Beam::OptionalLocalPtr<MarketDataClientType>::type
-        m_marketDataClient;
+      using BboQuotePublisher =
+        Beam::QueuePublisher<Beam::StatePublisher<BboQuote>>;
+      Beam::GetOptionalLocalPtr<MarketDataClientType> m_marketDataClient;
       Beam::SynchronizedUnorderedMap<Security,
         std::shared_ptr<BboQuotePublisher>> m_bboQuotePublishers;
   };
@@ -54,8 +52,8 @@ namespace MarketDataService {
   template<typename MarketDataClientForward>
   RealTimeMarketDataPublisher<MarketDataClientType>::
       RealTimeMarketDataPublisher(MarketDataClientForward&& marketDataClient)
-      : m_marketDataClient(std::forward<MarketDataClientForward>(
-          marketDataClient)) {}
+      : m_marketDataClient{std::forward<MarketDataClientForward>(
+          marketDataClient)} {}
 
   template<typename MarketDataClientType>
   const Beam::SnapshotPublisher<BboQuote, BboQuote>&
@@ -63,9 +61,8 @@ namespace MarketDataService {
       const Security& security) {
     auto publisher = m_bboQuotePublishers.GetOrInsert(security,
       [&] {
-        auto bboQuoteQuery = QueryRealTimeWithSnapshot(security);
         auto queue = std::make_shared<Beam::Queue<BboQuote>>();
-        m_marketDataClient->QueryBboQuotes(bboQuoteQuery, queue);
+        QueryRealTimeWithSnapshot(security, *m_marketDataClient, queue);
         auto publisher = std::make_shared<BboQuotePublisher>(queue);
         return publisher;
       });

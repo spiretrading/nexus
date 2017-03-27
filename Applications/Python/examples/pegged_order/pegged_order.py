@@ -28,7 +28,7 @@ class PeggedOrder:
 
   def s0(self):
     self.state = 0
-    query = nexus.market_data_service.query_real_time_with_snapshot(
+    query = nexus.market_data_service.build_real_time_with_snapshot_query(
       self.order_fields.security)
     self.service_clients.get_market_data_client().query_bbo_quotes(
       query, self.tasks.get_slot(self.on_bbo_quote))

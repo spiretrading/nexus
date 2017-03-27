@@ -1,5 +1,6 @@
 #ifndef NEXUS_ORDERIMBALANCE_HPP
 #define NEXUS_ORDERIMBALANCE_HPP
+#include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/Definitions/Money.hpp"
@@ -56,6 +57,13 @@ namespace Nexus {
     */
     bool operator !=(const OrderImbalance& orderImbalance) const;
   };
+
+  inline std::ostream& operator <<(std::ostream& out,
+      const OrderImbalance& value) {
+    return out << "(" << value.m_security << " " << value.m_side << " " <<
+      value.m_size << " " << value.m_referencePrice << " " <<
+      value.m_timestamp << ")";
+  }
 
   inline OrderImbalance::OrderImbalance(Security security, Side side,
       Quantity size, Money referencePrice,

@@ -2,6 +2,7 @@
 #define NEXUS_MARKETDATARELAYSERVLET_HPP
 #include <vector>
 #include <Beam/IO/OpenState.hpp>
+#include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queries/IndexedSubscriptions.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
@@ -9,6 +10,7 @@
 #include <Beam/Utilities/ResourcePool.hpp>
 #include <Beam/Utilities/SynchronizedSet.hpp>
 #include <boost/noncopyable.hpp>
+#include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Nexus/MarketDataService/MarketDataClientUtilities.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServices.hpp"
@@ -26,10 +28,10 @@ namespace MarketDataService {
       \tparam ContainerType The container instantiating this servlet.
       \tparam MarketDataClientType The type of MarketDataClient connected to
               the source providing market data queries.
-      \tparam ServiceLocatorClientType The type of ServiceLocatorClient to use.
+      \tparam AdministrationClientType The type of AdministrationClient to use.
    */
   template<typename ContainerType, typename MarketDataClientType,
-    typename ServiceLocatorClientType>
+    typename AdministrationClientType>
   class MarketDataRelayServlet : private boost::noncopyable {
     public:
       using Container = ContainerType;
@@ -37,10 +39,12 @@ namespace MarketDataService {
 
       //! The type of MarketDataClient connected to the source providing market
       //! data queries.
-      using MarketDataClient = MarketDataClientType;
+      using MarketDataClient = Beam::GetTryDereferenceType<
+        MarketDataClientType>;
 
-      //! The type of ServiceLocatorClient to use.
-      using ServiceLocatorClient = ServiceLocatorClientType;
+      //! The type of AdministrationClient to use.
+      using AdministrationClient = Beam::GetTryDereferenceType<
+        AdministrationClientType>;
 
       //! The type of function used to builds MarketDataClients.
       using MarketDataClientBuilder =
@@ -57,14 +61,15 @@ namespace MarketDataService {
                pool.
         \param maxMarketDataClients The maximum number of MarketDataClients to
                pool.
-        \param serviceLocatorClient Used to check for entitlements.
+        \param administrationClient Used to check for entitlements.
         \param timerThreadPool The thread pool used for timed operations.
       */
+      template<typename AdministrationClientForward>
       MarketDataRelayServlet(const EntitlementDatabase& entitlementDatabase,
         const boost::posix_time::time_duration& clientTimeout,
         const MarketDataClientBuilder& marketDataClientBuilder,
         std::size_t minMarketDataClients, std::size_t maxMarketDataClients,
-        Beam::RefType<ServiceLocatorClient> serviceLocatorClient,
+        AdministrationClientForward&& administrationClient,
         Beam::RefType<Beam::Threading::TimerThreadPool> timerThreadPool);
 
       void RegisterServices(Beam::Out<Beam::Services::ServiceSlots<
@@ -106,7 +111,8 @@ namespace MarketDataService {
       RealTimeSubscriptionSet<Security> m_timeAndSaleRealTimeSubscriptions;
       EntitlementDatabase m_entitlementDatabase;
       Beam::ResourcePool<MarketDataClient> m_marketDataClients;
-      ServiceLocatorClient* m_serviceLocatorClient;
+      Beam::GetOptionalLocalPtr<AdministrationClientType>
+        m_administrationClient;
       Beam::IO::OpenState m_openState;
       std::vector<std::unique_ptr<RealTimeQueryEntry>> m_realTimeQueryEntries;
 
@@ -139,38 +145,40 @@ namespace MarketDataService {
         const Index& index, const Value& value, Subscriptions& subscriptions);
   };
 
-  template<typename MarketDataClientType, typename ServiceLocatorClientType>
+  template<typename MarketDataClientType, typename AdministrationClientType>
   struct MetaMarketDataRelayServlet {
     using Session = MarketDataRegistrySession;
     template<typename ContainerType>
     struct apply {
       using type = MarketDataRelayServlet<ContainerType, MarketDataClientType,
-        ServiceLocatorClientType>;
+        AdministrationClientType>;
     };
   };
 
   template<typename ContainerType, typename MarketDataClientType,
-    typename ServiceLocatorClientType>
+    typename AdministrationClientType>
   MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      ServiceLocatorClientType>::RealTimeQueryEntry::RealTimeQueryEntry(
+      AdministrationClientType>::RealTimeQueryEntry::RealTimeQueryEntry(
       std::unique_ptr<MarketDataClient> marketDataClient)
-      : m_marketDataClient(std::move(marketDataClient)) {}
+      : m_marketDataClient{std::move(marketDataClient)} {}
 
   template<typename ContainerType, typename MarketDataClientType,
-    typename ServiceLocatorClientType>
+    typename AdministrationClientType>
+  template<typename AdministrationClientForward>
   MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      ServiceLocatorClientType>::MarketDataRelayServlet(
+      AdministrationClientType>::MarketDataRelayServlet(
       const EntitlementDatabase& entitlementDatabase,
       const boost::posix_time::time_duration& clientTimeout,
       const MarketDataClientBuilder& marketDataClientBuilder,
       std::size_t minMarketDataClients, std::size_t maxMarketDataClients,
-      Beam::RefType<ServiceLocatorClient> serviceLocatorClient,
+      AdministrationClientForward&& administrationClient,
       Beam::RefType<Beam::Threading::TimerThreadPool> timerThreadPool)
-      : m_entitlementDatabase(entitlementDatabase),
-        m_marketDataClients(clientTimeout, marketDataClientBuilder,
+      : m_entitlementDatabase{entitlementDatabase},
+        m_marketDataClients{clientTimeout, marketDataClientBuilder,
           Beam::Ref(timerThreadPool), minMarketDataClients,
-          maxMarketDataClients),
-        m_serviceLocatorClient(serviceLocatorClient.Get()) {
+          maxMarketDataClients},
+        m_administrationClient{std::forward<AdministrationClientForward>(
+          administrationClient)} {
     for(std::size_t i = 0; i < boost::thread::hardware_concurrency(); ++i) {
       m_realTimeQueryEntries.emplace_back(
         std::make_unique<RealTimeQueryEntry>(marketDataClientBuilder()));
@@ -178,9 +186,9 @@ namespace MarketDataService {
   }
 
   template<typename ContainerType, typename MarketDataClientType,
-    typename ServiceLocatorClientType>
+    typename AdministrationClientType>
   void MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      ServiceLocatorClientType>::RegisterServices(
+      AdministrationClientType>::RegisterServices(
       Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     Queries::RegisterQueryTypes(Beam::Store(slots->GetRegistry()));
     RegisterMarketDataRegistryServices(Beam::Store(slots));
@@ -257,29 +265,41 @@ namespace MarketDataService {
   }
 
   template<typename ContainerType, typename MarketDataClientType,
-    typename ServiceLocatorClientType>
+    typename AdministrationClientType>
   void MarketDataRelayServlet<ContainerType, MarketDataClientType, 
-      ServiceLocatorClientType>::HandleClientAccepted(
+      AdministrationClientType>::HandleClientAccepted(
       ServiceProtocolClient& client) {
     auto& session = client.GetSession();
-    auto parents = m_serviceLocatorClient->LoadParents(session.GetAccount());
-    const auto& entitlements = m_entitlementDatabase.GetEntries();
-    for(const auto& entitlement : entitlements) {
-      auto entryIterator = std::find(parents.begin(), parents.end(),
-        entitlement.m_groupEntry);
-      if(entryIterator != parents.end()) {
-        for(const auto& applicability : entitlement.m_applicability) {
+    auto roles = m_administrationClient->LoadAccountRoles(session.GetAccount());
+    if(roles.Test(AdministrationService::AccountRole::SERVICE)) {
+      auto& entitlements = m_entitlementDatabase.GetEntries();
+      for(auto& entitlement : entitlements) {
+        for(auto& applicability : entitlement.m_applicability) {
           session.GetEntitlements().GrantEntitlement(applicability.first,
             applicability.second);
+        }
+      }
+    } else {
+      auto& entitlements = m_entitlementDatabase.GetEntries();
+      auto accountEntitlements = m_administrationClient->LoadEntitlements(
+        session.GetAccount());
+      for(auto& entitlement : entitlements) {
+        auto entryIterator = std::find(accountEntitlements.begin(),
+          accountEntitlements.end(), entitlement.m_groupEntry);
+        if(entryIterator != accountEntitlements.end()) {
+          for(auto& applicability : entitlement.m_applicability) {
+            session.GetEntitlements().GrantEntitlement(applicability.first,
+              applicability.second);
+          }
         }
       }
     }
   }
 
   template<typename ContainerType, typename MarketDataClientType,
-    typename ServiceLocatorClientType>
+    typename AdministrationClientType>
   void MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      ServiceLocatorClientType>::HandleClientClosed(
+      AdministrationClientType>::HandleClientClosed(
       ServiceProtocolClient& client) {
     m_orderImbalanceSubscriptions.RemoveAll(client);
     m_bboQuoteSubscriptions.RemoveAll(client);
@@ -289,9 +309,9 @@ namespace MarketDataService {
   }
 
   template<typename ContainerType, typename MarketDataClientType,
-    typename ServiceLocatorClientType>
+    typename AdministrationClientType>
   void MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      ServiceLocatorClientType>::Open() {
+      AdministrationClientType>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
@@ -299,9 +319,9 @@ namespace MarketDataService {
   }
 
   template<typename ContainerType, typename MarketDataClientType,
-    typename ServiceLocatorClientType>
+    typename AdministrationClientType>
   void MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      ServiceLocatorClientType>::Close() {
+      AdministrationClientType>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
@@ -309,9 +329,9 @@ namespace MarketDataService {
   }
 
   template<typename ContainerType, typename MarketDataClientType,
-    typename ServiceLocatorClientType>
+    typename AdministrationClientType>
   void MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      ServiceLocatorClientType>::Shutdown() {
+      AdministrationClientType>::Shutdown() {
     for(const auto& entry : m_realTimeQueryEntries) {
       entry->m_marketDataClient->Close();
     }
@@ -319,22 +339,22 @@ namespace MarketDataService {
   }
 
   template<typename ContainerType, typename MarketDataClientType,
-    typename ServiceLocatorClientType>
+    typename AdministrationClientType>
   template<typename T>
   typename MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      ServiceLocatorClientType>::RealTimeQueryEntry&
+      AdministrationClientType>::RealTimeQueryEntry&
       MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      ServiceLocatorClientType>::GetRealTimeQueryEntry(const T& index) {
+      AdministrationClientType>::GetRealTimeQueryEntry(const T& index) {
     auto i = std::hash<T>()(index) % m_realTimeQueryEntries.size();
     return *m_realTimeQueryEntries[i];
   }
 
   template<typename ContainerType, typename MarketDataClientType,
-    typename ServiceLocatorClientType>
+    typename AdministrationClientType>
   template<typename Service, typename Query, typename Subscriptions,
     typename RealTimeSubscriptions>
   void MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      ServiceLocatorClientType>::HandleQueryRequest(
+      AdministrationClientType>::HandleQueryRequest(
       Beam::Services::RequestToken<ServiceProtocolClient, Service>& request,
       const Query& query, Subscriptions& subscriptions,
       RealTimeSubscriptions& realTimeSubscriptions) {
@@ -409,19 +429,19 @@ namespace MarketDataService {
   }
 
   template<typename ContainerType, typename MarketDataClientType,
-    typename ServiceLocatorClientType>
+    typename AdministrationClientType>
   template<typename Subscriptions>
   void MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      ServiceLocatorClientType>::OnEndQuery(ServiceProtocolClient& client,
+      AdministrationClientType>::OnEndQuery(ServiceProtocolClient& client,
       const typename Subscriptions::Index& index, int id,
       Subscriptions& subscriptions) {
     subscriptions.End(index, id);
   }
 
   template<typename ContainerType, typename MarketDataClientType,
-    typename ServiceLocatorClientType>
+    typename AdministrationClientType>
   SecuritySnapshot MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      ServiceLocatorClientType>::OnLoadSecuritySnapshot(
+      AdministrationClientType>::OnLoadSecuritySnapshot(
       ServiceProtocolClient& client, const Security& security) {
     auto& session = client.GetSession();
     auto marketDataClient = m_marketDataClients.Acquire();
@@ -460,18 +480,18 @@ namespace MarketDataService {
   }
 
    template<typename ContainerType, typename MarketDataClientType,
-     typename ServiceLocatorClientType>
+     typename AdministrationClientType>
   SecurityTechnicals MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      ServiceLocatorClientType>::OnLoadSecurityTechnicals(
+      AdministrationClientType>::OnLoadSecurityTechnicals(
       ServiceProtocolClient& client, const Security& security) {
     auto marketDataClient = m_marketDataClients.Acquire();
     return marketDataClient->LoadSecurityTechnicals(security);
   }
 
   template<typename ContainerType, typename MarketDataClientType,
-    typename ServiceLocatorClientType>
+    typename AdministrationClientType>
   std::vector<SecurityInfo> MarketDataRelayServlet<ContainerType,
-      MarketDataClientType, ServiceLocatorClientType>::
+      MarketDataClientType, AdministrationClientType>::
       OnLoadSecurityInfoFromPrefix(ServiceProtocolClient& client,
       const std::string& prefix) {
     auto marketDataClient = m_marketDataClients.Acquire();
@@ -479,11 +499,11 @@ namespace MarketDataService {
   }
 
   template<typename ContainerType, typename MarketDataClientType,
-    typename ServiceLocatorClientType>
+    typename AdministrationClientType>
   template<typename Index, typename Value, typename Subscriptions>
   typename std::enable_if<!std::is_same<Value, SequencedBookQuote>::value>::type
       MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      ServiceLocatorClientType>::OnRealTimeUpdate(const Index& index,
+      AdministrationClientType>::OnRealTimeUpdate(const Index& index,
       const Value& value, Subscriptions& subscriptions) {
     auto indexedValue = Beam::Queries::MakeSequencedValue(
       Beam::Queries::MakeIndexedValue(*value, index), value.GetSequence());
@@ -496,11 +516,11 @@ namespace MarketDataService {
   }
 
   template<typename ContainerType, typename MarketDataClientType,
-    typename ServiceLocatorClientType>
+    typename AdministrationClientType>
   template<typename Index, typename Value, typename Subscriptions>
   typename std::enable_if<std::is_same<Value, SequencedBookQuote>::value>::type
       MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      ServiceLocatorClientType>::OnRealTimeUpdate(const Index& index,
+      AdministrationClientType>::OnRealTimeUpdate(const Index& index,
       const Value& value, Subscriptions& subscriptions) {
     auto key = EntitlementKey{index.GetMarket(), value.GetValue().m_market};
     auto indexedValue = Beam::Queries::MakeSequencedValue(

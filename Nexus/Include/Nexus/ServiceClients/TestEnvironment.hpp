@@ -1,6 +1,7 @@
 #ifndef NEXUS_TESTENVIRONMENT_HPP
 #define NEXUS_TESTENVIRONMENT_HPP
 #include <Beam/IO/OpenState.hpp>
+#include "Beam/Queues/AliasQueue.hpp"
 #include <Beam/Queues/ConverterWriterQueue.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/Threading/Mutex.hpp>
@@ -150,7 +151,6 @@ namespace Nexus {
       boost::optional<
         OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment>
         m_orderExecutionEnvironment;
-      Beam::SynchronizedVector<std::shared_ptr<void>> m_converters;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
@@ -186,13 +186,12 @@ namespace Nexus {
 
   inline void TestEnvironment::MonitorOrderSubmissions(const std::shared_ptr<
       Beam::QueueWriter<const OrderExecutionService::Order*>>& queue) {
-    auto weakQueue = Beam::MakeWeakQueue(queue);
-    auto conversionQueue = Beam::MakeConverterWriterQueue<
-      OrderExecutionService::PrimitiveOrder*>(weakQueue,
+    std::shared_ptr<Beam::QueueWriter<OrderExecutionService::PrimitiveOrder*>>
+      conversionQueue = Beam::MakeConverterWriterQueue<
+      OrderExecutionService::PrimitiveOrder*>(Beam::MakeWeakQueue(queue),
       Beam::StaticCastConverter<const OrderExecutionService::Order*>());
     GetOrderExecutionEnvironment().GetDriver().GetPublisher().Monitor(
-      conversionQueue);
-    m_converters.PushBack(conversionQueue);
+      Beam::MakeAliasQueue(conversionQueue, queue));
   }
 
   inline void TestEnvironment::AcceptOrder(
@@ -280,12 +279,13 @@ namespace Nexus {
     Beam::Routines::FlushPendingRoutines();
   }
 
-  void TestEnvironment::FillOrder(const OrderExecutionService::Order& order,
-      Quantity quantity) {
+  inline void TestEnvironment::FillOrder(
+      const OrderExecutionService::Order& order, Quantity quantity) {
     FillOrder(order, order.GetInfo().m_fields.m_price, quantity);
   }
 
-  void TestEnvironment::Update(const OrderExecutionService::Order& order,
+  inline void TestEnvironment::Update(
+      const OrderExecutionService::Order& order,
       const OrderExecutionService::ExecutionReport& executionReport) {
     auto primitiveOrder = const_cast<OrderExecutionService::PrimitiveOrder*>(
       dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
@@ -367,7 +367,8 @@ namespace Nexus {
         m_serviceLocatorEnvironment.BuildClient();
       definitionsServiceLocatorClient->SetCredentials("root", "");
       definitionsServiceLocatorClient->Open();
-      m_definitionsEnvironment.emplace(std::move(definitionsServiceLocatorClient));
+      m_definitionsEnvironment.emplace(
+        std::move(definitionsServiceLocatorClient));
       m_definitionsEnvironment->Open();
       auto administrationServiceLocatorClient =
         m_serviceLocatorEnvironment.BuildClient();
@@ -380,7 +381,12 @@ namespace Nexus {
         m_serviceLocatorEnvironment.BuildClient();
       marketDataServiceLocatorClient->SetCredentials("root", "");
       marketDataServiceLocatorClient->Open();
-      m_marketDataEnvironment.emplace(std::move(marketDataServiceLocatorClient));
+      auto marketDataAdministrationClient =
+        m_administrationEnvironment->BuildClient(
+        Beam::Ref(*marketDataServiceLocatorClient));
+      m_marketDataEnvironment.emplace(
+        std::move(marketDataServiceLocatorClient),
+        std::move(marketDataAdministrationClient));
       m_marketDataEnvironment->Open();
       auto orderExecutionServiceLocatorClient =
         m_serviceLocatorEnvironment.BuildClient();

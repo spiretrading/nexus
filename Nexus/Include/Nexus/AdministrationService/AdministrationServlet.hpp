@@ -255,6 +255,7 @@ namespace AdministrationService {
       return;
     }
     try {
+      m_serviceLocatorClient->Open();
       m_dataStore->Open();
       m_administratorsRoot = Beam::ServiceLocator::LoadOrCreateDirectory(
         *m_serviceLocatorClient, "administrators",

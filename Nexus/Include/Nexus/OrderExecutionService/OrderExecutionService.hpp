@@ -9,8 +9,7 @@ namespace Nexus {
 namespace OrderExecutionService {
   class AccountOrderSubmissionEntry;
   class ApplicationOrderExecutionClient;
-  template<typename MarketDataClientType, typename TimeClientType>
-    class BoardLotCheck;
+  template<typename MarketDataClientType> class BoardLotCheck;
   template<typename AdministrationClientType, typename MarketDataClientType>
     class BuyingPowerCheck;
   struct ExecutionReport;

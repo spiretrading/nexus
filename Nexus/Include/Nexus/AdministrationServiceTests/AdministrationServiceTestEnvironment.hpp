@@ -3,26 +3,22 @@
 #include <Beam/IO/LocalClientChannel.hpp>
 #include <Beam/IO/LocalServerConnection.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
-#include <Beam/Pointers/DelayPtr.hpp>
-#include <Beam/Pointers/UniquePointerPolicy.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
-#include <Beam/ServiceLocator/SessionAuthenticator.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/Services/AuthenticatedServiceProtocolClientBuilder.hpp>
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Threading/TriggerTimer.hpp>
 #include <boost/functional/factory.hpp>
-#include <boost/functional/value_factory.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/optional/optional.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/AdministrationService/AdministrationServlet.hpp"
 #include "Nexus/AdministrationService/LocalAdministrationDataStore.hpp"
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTests.hpp"
-#include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 
 namespace Nexus {
 namespace AdministrationService {
@@ -50,6 +46,17 @@ namespace Tests {
 
       //! Closes the servlet.
       void Close();
+
+      //! Sets the EntitlementDatabase used by the AdministrationServlet.
+      void SetEntitlements(const MarketDataService::EntitlementDatabase&
+        entitlements);
+
+      //! Grants an account administrative privileges.
+      /*!
+        \param account The account to grant administrative privileges to.
+      */
+      void MakeAdministrator(const Beam::ServiceLocator::DirectoryEntry&
+        account);
 
       //! Builds a new AdministrationClient.
       /*!
@@ -81,20 +88,20 @@ namespace Tests {
         std::unique_ptr<ClientChannel>,
         Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
         Beam::Codecs::NullEncoder>, Beam::Threading::TriggerTimer>;
+      std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
+        m_serviceLocatorClient;
       LocalAdministrationDataStore m_dataStore;
       ServerConnection m_serverConnection;
-      ServiceProtocolServletContainer m_container;
+      boost::optional<ServiceProtocolServletContainer> m_container;
+      boost::optional<MarketDataService::EntitlementDatabase> m_entitlements;
+      Beam::ServiceLocator::DirectoryEntry m_globalEntitlementGroup;
   };
 
   inline AdministrationServiceTestEnvironment::
       AdministrationServiceTestEnvironment(
       const std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>&
       serviceLocatorClient)
-      : m_container(Beam::Initialize(serviceLocatorClient,
-          Beam::Initialize(serviceLocatorClient,
-          MarketDataService::EntitlementDatabase(), &m_dataStore)),
-          &m_serverConnection,
-          boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
+      : m_serviceLocatorClient{serviceLocatorClient} {}
 
   inline AdministrationServiceTestEnvironment::
       ~AdministrationServiceTestEnvironment() {
@@ -102,11 +109,60 @@ namespace Tests {
   }
 
   inline void AdministrationServiceTestEnvironment::Open() {
-    m_container.Open();
+    m_serviceLocatorClient->Open();
+    if(!m_entitlements.is_initialized()) {
+      auto entitlementsDirectory = m_serviceLocatorClient->MakeDirectory(
+        "entitlements",
+        Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
+      m_globalEntitlementGroup = m_serviceLocatorClient->MakeDirectory("global",
+        entitlementsDirectory);
+      MarketDataService::EntitlementDatabase::Entry globalEntitlement;
+      globalEntitlement.m_name = "global";
+      globalEntitlement.m_groupEntry = m_globalEntitlementGroup;
+      auto& marketDatabase = GetDefaultMarketDatabase();
+      for(auto& market : marketDatabase.GetEntries()) {
+        globalEntitlement.m_applicability[
+          MarketDataService::EntitlementKey{market.m_code}].Set(
+          MarketDataService::MarketDataType::TIME_AND_SALE);
+        globalEntitlement.m_applicability[
+          MarketDataService::EntitlementKey{market.m_code}].Set(
+          MarketDataService::MarketDataType::BOOK_QUOTE);
+        globalEntitlement.m_applicability[
+          MarketDataService::EntitlementKey{market.m_code}].Set(
+          MarketDataService::MarketDataType::MARKET_QUOTE);
+        globalEntitlement.m_applicability[
+          MarketDataService::EntitlementKey{market.m_code}].Set(
+          MarketDataService::MarketDataType::BBO_QUOTE);
+        globalEntitlement.m_applicability[
+          MarketDataService::EntitlementKey{market.m_code}].Set(
+          MarketDataService::MarketDataType::ORDER_IMBALANCE);
+      }
+      m_entitlements.emplace();
+      m_entitlements->Add(globalEntitlement);
+    }
+    m_container.emplace(Beam::Initialize(m_serviceLocatorClient,
+      Beam::Initialize(m_serviceLocatorClient, *m_entitlements, &m_dataStore)),
+      &m_serverConnection,
+      boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>());
+    m_container->Open();
   }
 
   inline void AdministrationServiceTestEnvironment::Close() {
-    m_container.Close();
+    m_container->Close();
+    m_container.reset();
+  }
+
+  inline void AdministrationServiceTestEnvironment::SetEntitlements(
+      const MarketDataService::EntitlementDatabase& entitlements) {
+    m_entitlements = entitlements;
+  }
+
+  inline void AdministrationServiceTestEnvironment::MakeAdministrator(
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto administrators = m_serviceLocatorClient->LoadDirectoryEntry(
+      Beam::ServiceLocator::DirectoryEntry::GetStarDirectory(),
+      "administrators");
+    m_serviceLocatorClient->Associate(account, administrators);
   }
 
   inline std::unique_ptr<VirtualAdministrationClient>
@@ -123,6 +179,11 @@ namespace Tests {
       });
     auto client = std::make_unique<AdministrationService::AdministrationClient<
         ServiceProtocolClientBuilder>>(builder);
+    if(m_globalEntitlementGroup.m_type !=
+        Beam::ServiceLocator::DirectoryEntry::Type::NONE) {
+      m_serviceLocatorClient->Associate(serviceLocatorClient->GetAccount(),
+        m_globalEntitlementGroup);
+    }
     return MakeVirtualAdministrationClient(std::move(client));
   }
 }

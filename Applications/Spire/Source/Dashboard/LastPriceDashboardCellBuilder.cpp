@@ -26,7 +26,7 @@ std::unique_ptr<DashboardCell> LastPriceDashboardCellBuilder::Build(
     [] (const TimeAndSale& timeAndSale) {
       return timeAndSale.m_price;
     });
-  auto query = QueryRealTimeWithSnapshot(security);
+  auto query = BuildRealTimeWithSnapshotQuery(security);
   marketDataClient.QueryTimeAndSales(query, baseQueue);
   auto last = std::make_unique<QueueDashboardCell>(queue);
   return std::move(last);

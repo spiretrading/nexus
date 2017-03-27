@@ -8,6 +8,7 @@
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/BeamWorkaround.hpp>
 #include <Beam/Utilities/ReportException.hpp>
+#include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/RiskService/RiskService.hpp"
 #include "Nexus/RiskService/RiskServices.hpp"

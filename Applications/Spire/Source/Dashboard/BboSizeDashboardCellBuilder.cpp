@@ -30,7 +30,7 @@ std::unique_ptr<DashboardCell> BboSizeDashboardCellBuilder::Build(
     [=] (const BboQuote& quote) {
       return Pick(side, quote.m_ask.m_size, quote.m_bid.m_size);
     });
-  auto query = QueryRealTimeWithSnapshot(security);
+  auto query = BuildRealTimeWithSnapshotQuery(security);
   marketDataClient.QueryBboQuotes(query, baseQueue);
   auto last = std::make_unique<QueueDashboardCell>(queue);
   return std::move(last);
