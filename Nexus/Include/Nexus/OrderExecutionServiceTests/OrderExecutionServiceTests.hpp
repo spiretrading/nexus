@@ -4,9 +4,10 @@
 namespace Nexus {
 namespace OrderExecutionService {
 namespace Tests {
+  class BoardLotCheckTester;
   class MockOrderExecutionDriver;
   class OrderExecutionClientTester;
-  class OrderExecutionServiceInstance;
+  class OrderExecutionServiceTestEnvironment;
   class OrderExecutionServletTester;
 }
 }

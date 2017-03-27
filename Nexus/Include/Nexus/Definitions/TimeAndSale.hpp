@@ -1,5 +1,6 @@
 #ifndef NEXUS_TIMEANDSALE_HPP
 #define NEXUS_TIMEANDSALE_HPP
+#include <ostream>
 #include <string>
 #include <Beam/Collections/Enum.hpp>
 #include <Beam/Serialization/DataShuttle.hpp>
@@ -92,6 +93,31 @@ namespace Details {
     //! Tests a TimeAndSale for inequality.
     bool operator !=(const TimeAndSale& timeAndSale) const;
   };
+
+  inline std::ostream& operator <<(std::ostream& out,
+      TimeAndSale::Condition::Type value) {
+    if(value == TimeAndSale::Condition::Type::REGULAR) {
+      return out << "@";
+    } else if(value == TimeAndSale::Condition::Type::OPEN) {
+      return out << "OPEN";
+    } else if(value == TimeAndSale::Condition::Type::CLOSE) {
+      return out << "CLOSE";
+    } else {
+      return out << "NONE";
+    }
+  }
+
+  inline std::ostream& operator <<(std::ostream& out,
+      const TimeAndSale::Condition& value) {
+    return out << "(" << value.m_type << " " << value.m_code << ")";
+  }
+
+  inline std::ostream& operator <<(std::ostream& out,
+      const TimeAndSale& value) {
+    return out << "(" << value.m_timestamp << " " << value.m_price << " " <<
+      value.m_size << " " << value.m_condition << " " << value.m_marketCenter <<
+      ")";
+  }
 
   inline TimeAndSale::Condition::Condition(Type type, std::string code)
       : m_type(type),

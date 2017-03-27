@@ -228,7 +228,7 @@ int main(int argc, const char** argv) {
   vector<unique_ptr<OrderSubmissionCheck>> checks;
   try {
     checks.emplace_back(MakeBoardLotCheck(marketDataClient.Get(),
-      timeClient.get(), definitionsClient->LoadMarketDatabase(),
+      definitionsClient->LoadMarketDatabase(),
       definitionsClient->LoadTimeZoneDatabase()));
     checks.emplace_back(std::make_unique<
       BuyingPowerCheck<ApplicationAdministrationClient::Client*,

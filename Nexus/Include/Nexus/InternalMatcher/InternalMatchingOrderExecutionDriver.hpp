@@ -374,9 +374,8 @@ namespace Details {
     auto securityEntry = Beam::GetOrInsert(m_securityEntries, fields.m_security,
       [&] {
         auto securityEntry = std::make_shared<SecurityEntry>();
-        auto bboQuery = MarketDataService::QueryRealTimeWithSnapshot(
-          fields.m_security);
-        m_marketDataClient->QueryBboQuotes(bboQuery, securityEntry->m_bboQuote);
+        MarketDataService::QueryRealTimeWithSnapshot(fields.m_security,
+          *m_marketDataClient, securityEntry->m_bboQuote);
         return securityEntry;
       });
     std::vector<std::shared_ptr<OrderEntry>>* orderEntries;

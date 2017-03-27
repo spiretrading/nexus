@@ -2,6 +2,7 @@
 #include <Beam/Python/BoostPython.hpp>
 #include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/PythonBindings.hpp>
+#include <Beam/Python/PythonQueueWriter.hpp>
 #include <Beam/Threading/VirtualTimer.hpp>
 #include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <boost/noncopyable.hpp>
@@ -10,8 +11,6 @@
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
-#include "Nexus/ServiceClients/TestTimeClient.hpp"
-#include "Nexus/ServiceClients/TestTimer.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 
 using namespace Beam;
@@ -24,6 +23,7 @@ using namespace boost::posix_time;
 using namespace boost::python;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
+using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Python;
 using namespace std;
 
@@ -147,8 +147,8 @@ namespace {
     public:
       PythonTestServiceClients(std::unique_ptr<VirtualServiceClients> client,
           std::shared_ptr<TestEnvironment> environment)
-          : WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>(
-              std::move(client)),
+          : WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>{
+              std::move(client)},
             m_environment{std::move(environment)} {}
 
       virtual ~PythonTestServiceClients() override {
@@ -157,41 +157,30 @@ namespace {
         Close();
       }
 
-    private:
-      std::shared_ptr<TestEnvironment> m_environment;
-  };
+      virtual PythonMarketDataClient& GetMarketDataClient() override {
+        if(m_marketDataClient == nullptr) {
+          m_marketDataClient = std::make_unique<PythonMarketDataClient>(
+            MakeVirtualMarketDataClient(
+            &WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>::
+            GetMarketDataClient()));
+        }
+        return *m_marketDataClient;
+      }
 
-  class PythonTestTimer : public WrapperTimer<TestTimer> {
-    public:
-      PythonTestTimer(time_duration expiry,
-          std::shared_ptr<TestEnvironment> environment)
-          : WrapperTimer<TestTimer>(Initialize(expiry, Ref(*environment))),
-            m_environment{std::move(environment)} {}
-
-      virtual ~PythonTestTimer() override {
-        GilRelease gil;
-        boost::lock_guard<GilRelease> lock{gil};
-        Cancel();
+      virtual PythonOrderExecutionClient& GetOrderExecutionClient() override {
+        if(m_orderExecutionClient == nullptr) {
+          m_orderExecutionClient = std::make_unique<PythonOrderExecutionClient>(
+            MakeVirtualOrderExecutionClient(
+            &WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>::
+            GetOrderExecutionClient()));
+        }
+        return *m_orderExecutionClient;
       }
 
     private:
       std::shared_ptr<TestEnvironment> m_environment;
-  };
-
-  class PythonTestTimeClient : public WrapperTimeClient<TestTimeClient> {
-    public:
-      PythonTestTimeClient(std::shared_ptr<TestEnvironment> environment)
-          : WrapperTimeClient<TestTimeClient>(Initialize(Ref(*environment))),
-            m_environment{std::move(environment)} {}
-
-      virtual ~PythonTestTimeClient() override {
-        GilRelease gil;
-        boost::lock_guard<GilRelease> lock{gil};
-        Close();
-      }
-
-    private:
-      std::shared_ptr<TestEnvironment> m_environment;
+      std::unique_ptr<PythonMarketDataClient> m_marketDataClient;
+      std::unique_ptr<PythonOrderExecutionClient> m_orderExecutionClient;
   };
 
   VirtualServiceClients* BuildTestServiceClients(
@@ -201,16 +190,71 @@ namespace {
       MakeVirtualServiceClients(std::move(baseClient)), environment};
   }
 
-  VirtualTimer* BuildTestTimer(time_duration expiry,
-      std::shared_ptr<TestEnvironment> environment) {
-    return new PythonTestTimer{expiry, environment};
-  }
-
-  VirtualTimeClient* BuildTestTimeClient(
-      std::shared_ptr<TestEnvironment> environment) {
-    return new PythonTestTimeClient{environment};
+  void TestEnvironmentMonitorOrderSubmissions(TestEnvironment& environment,
+      const std::shared_ptr<PythonQueueWriter>& queue) {
+    environment.MonitorOrderSubmissions(queue->GetSlot<const Order*>());
   }
 }
+
+#ifdef _MSC_VER
+namespace boost {
+  template<> inline const volatile
+      ChartingService::VirtualChartingClient* get_pointer(
+      const volatile ChartingService::VirtualChartingClient* p) {
+    return p;
+  }
+
+  template<> inline const volatile
+      Compliance::VirtualComplianceClient* get_pointer(
+      const volatile Compliance::VirtualComplianceClient* p) {
+    return p;
+  }
+
+  template<> inline const volatile
+      DefinitionsService::VirtualDefinitionsClient* get_pointer(
+      const volatile DefinitionsService::VirtualDefinitionsClient* p) {
+    return p;
+  }
+
+  template<> inline const volatile VirtualMarketDataClient* get_pointer(
+      const volatile VirtualMarketDataClient* p) {
+    return p;
+  }
+
+  template<> inline const volatile
+      OrderExecutionService::VirtualOrderExecutionClient* get_pointer(
+      const volatile OrderExecutionService::VirtualOrderExecutionClient* p) {
+    return p;
+  }
+
+  template<> inline const volatile
+      RegistryService::VirtualRegistryClient* get_pointer(
+      const volatile RegistryService::VirtualRegistryClient* p) {
+    return p;
+  }
+
+  template<> inline const volatile RiskService::VirtualRiskClient* get_pointer(
+      const volatile RiskService::VirtualRiskClient* p) {
+    return p;
+  }
+
+  template<> inline const volatile
+      ServiceLocator::VirtualServiceLocatorClient* get_pointer(
+      const volatile ServiceLocator::VirtualServiceLocatorClient* p) {
+    return p;
+  }
+
+  template<> inline const volatile VirtualTimeClient* get_pointer(
+      const volatile VirtualTimeClient* p) {
+    return p;
+  }
+
+  template<> inline const volatile VirtualTimer* get_pointer(
+      const volatile VirtualTimer* p) {
+    return p;
+  }
+}
+#endif
 
 void Nexus::Python::ExportApplicationServiceClients() {
   class_<PythonApplicationServiceClients, boost::noncopyable,
@@ -267,8 +311,6 @@ void Nexus::Python::ExportServiceClients() {
   ExportApplicationServiceClients();
   ExportTestEnvironment();
   ExportTestServiceClients();
-  ExportTestTimeClient();
-  ExportTestTimer();
 }
 
 void Nexus::Python::ExportTestEnvironment() {
@@ -276,19 +318,36 @@ void Nexus::Python::ExportTestEnvironment() {
       "TestEnvironment", init<>())
     .def("set_time", BlockingFunction(&TestEnvironment::SetTime))
     .def("advance_time", BlockingFunction(&TestEnvironment::AdvanceTime))
-    .def("update", BlockingFunction(&TestEnvironment::Update))
-    .def("get_service_locator_instance",
-      &TestEnvironment::GetServiceLocatorInstance,
+    .def("update", BlockingFunction(
+      static_cast<void (TestEnvironment::*)(const Security&, const BboQuote&)>(
+      &TestEnvironment::Update)))
+    .def("monitor_order_submissions", &TestEnvironmentMonitorOrderSubmissions)
+    .def("accept_order", BlockingFunction(&TestEnvironment::AcceptOrder))
+    .def("reject_order", BlockingFunction(&TestEnvironment::RejectOrder))
+    .def("cancel_order", BlockingFunction(&TestEnvironment::CancelOrder))
+    .def("fill_order", BlockingFunction(
+      static_cast<void (TestEnvironment::*)(const Order&, Money, Quantity)>(
+      &TestEnvironment::FillOrder)))
+    .def("fill_order", BlockingFunction(
+      static_cast<void (TestEnvironment::*)(const Order&, Quantity)>(
+      &TestEnvironment::FillOrder)))
+    .def("update", BlockingFunction(
+      static_cast<void (TestEnvironment::*)(const Order&,
+      const ExecutionReport&)>(&TestEnvironment::Update)))
+    .def("get_time_environment", &TestEnvironment::GetTimeEnvironment,
       return_internal_reference<>())
-    .def("get_uid_instance", &TestEnvironment::GetUidInstance,
+    .def("get_service_locator_environment",
+      &TestEnvironment::GetServiceLocatorEnvironment,
       return_internal_reference<>())
-    .def("get_administration_instance",
-      &TestEnvironment::GetAdministrationInstance,
+    .def("get_uid_environment", &TestEnvironment::GetUidEnvironment,
       return_internal_reference<>())
-    .def("get_market_data_instance", &TestEnvironment::GetMarketDataInstance,
+    .def("get_administration_environment",
+      &TestEnvironment::GetAdministrationEnvironment,
       return_internal_reference<>())
-    .def("get_order_execution_instance",
-      &TestEnvironment::GetOrderExecutionInstance,
+    .def("get_market_data_environment",
+      &TestEnvironment::GetMarketDataEnvironment, return_internal_reference<>())
+    .def("get_order_execution_environment",
+      &TestEnvironment::GetOrderExecutionEnvironment,
       return_internal_reference<>())
     .def("open", BlockingFunction(&TestEnvironment::Open))
     .def("close", BlockingFunction(&TestEnvironment::Close));
@@ -335,26 +394,6 @@ void Nexus::Python::ExportTestServiceClients() {
       &PythonTestServiceClients::Open))
     .def("close", BlockingFunction<PythonTestServiceClients>(
       &PythonTestServiceClients::Close));
-}
-
-void Nexus::Python::ExportTestTimeClient() {
-  class_<PythonTestTimeClient, boost::noncopyable, bases<VirtualTimeClient>>(
-      "TestTimeClient", no_init)
-    .def("__init__", make_constructor(&BuildTestTimeClient))
-    .def("get_time", &PythonTestTimeClient::GetTime)
-    .def("open", BlockingFunction<PythonTestTimeClient>(
-      &PythonTestTimeClient::Open))
-    .def("close", BlockingFunction<PythonTestTimeClient>(
-      &PythonTestTimeClient::Close));
-}
-
-void Nexus::Python::ExportTestTimer() {
-  class_<PythonTestTimer, boost::noncopyable, bases<VirtualTimer>>("TestTimer",
-      no_init)
-    .def("__init__", make_constructor(&BuildTestTimer))
-    .def("start", BlockingFunction<PythonTestTimer>(&PythonTestTimer::Start))
-    .def("cancel", BlockingFunction<PythonTestTimer>(&PythonTestTimer::Cancel))
-    .def("wait", BlockingFunction<PythonTestTimer>(&PythonTestTimer::Wait));
 }
 
 void Nexus::Python::ExportVirtualServiceClients() {

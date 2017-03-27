@@ -21,34 +21,35 @@ using namespace Nexus::OrderExecutionService::Tests;
 using namespace std;
 
 void PortfolioMonitorTester::setUp() {
-  m_serviceLocatorInstance.Initialize();
-  m_serviceLocatorInstance->Open();
-  m_serviceLocatorClient = m_serviceLocatorInstance->BuildClient();
+  m_serviceLocatorEnvironment.Initialize();
+  m_serviceLocatorEnvironment->Open();
+  m_serviceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
   m_serviceLocatorClient->SetCredentials("root", "");
   m_serviceLocatorClient->Open();
-  auto servicesDirectory = m_serviceLocatorInstance->GetRoot().MakeDirectory(
+  auto servicesDirectory = m_serviceLocatorEnvironment->GetRoot().MakeDirectory(
     "services", DirectoryEntry::GetStarDirectory());
-  auto marketDataServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
+  auto marketDataServiceLocatorClient =
+    m_serviceLocatorEnvironment->BuildClient();
   marketDataServiceLocatorClient->SetCredentials("root", "");
   marketDataServiceLocatorClient->Open();
-  m_marketDataServiceInstance.Initialize(
+  m_marketDataServiceEnvironment.Initialize(
     std::move(marketDataServiceLocatorClient));
-  m_marketDataServiceInstance->Open();
+  m_marketDataServiceEnvironment->Open();
 }
 
 void PortfolioMonitorTester::tearDown() {
-  m_marketDataServiceInstance.Reset();
+  m_marketDataServiceEnvironment.Reset();
   m_serviceLocatorClient.reset();
-  m_serviceLocatorInstance.Reset();
+  m_serviceLocatorEnvironment.Reset();
 }
 
 void PortfolioMonitorTester::TestOutOfOrderExecutionReports() {
   Security security("TST", DefaultMarkets::NYSE(), DefaultCountries::US());
-  m_marketDataServiceInstance->SetBbo(security, BboQuote(
+  m_marketDataServiceEnvironment->SetBbo(security, BboQuote(
     Quote(Money::ONE, 100, Side::BID), Quote(Money::ONE, 100, Side::ASK),
     second_clock::local_time()));
   SequencePublisher<const Order*> orderPublisher;
-  auto marketDataClient = m_marketDataServiceInstance->BuildClient(
+  auto marketDataClient = m_marketDataServiceEnvironment->BuildClient(
     Ref(*m_serviceLocatorClient));
   marketDataClient->Open();
   PortfolioMonitor portfolioMonitor(Initialize(GetDefaultMarketDatabase()),

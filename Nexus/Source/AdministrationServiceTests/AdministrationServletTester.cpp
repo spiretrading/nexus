@@ -16,15 +16,15 @@ using namespace Nexus::MarketDataService;
 using namespace std;
 
 void AdministrationServletTester::setUp() {
-  m_serviceLocatorInstance.Initialize();
-  m_serviceLocatorInstance->Open();
+  m_serviceLocatorEnvironment.Initialize();
+  m_serviceLocatorEnvironment->Open();
   m_dataStore = std::make_shared<LocalAdministrationDataStore>();
   m_serverConnection = std::make_shared<ServerConnection>();
   m_clientProtocol.Initialize(Initialize(string("test"),
     Ref(*m_serverConnection)), Initialize());
   RegisterAdministrationServices(Store(m_clientProtocol->GetSlots()));
   RegisterAdministrationMessages(Store(m_clientProtocol->GetSlots()));
-  m_container.Initialize(Initialize(&m_serviceLocatorInstance->GetRoot(),
+  m_container.Initialize(Initialize(&m_serviceLocatorEnvironment->GetRoot(),
     EntitlementDatabase(), m_dataStore), m_serverConnection,
     factory<std::shared_ptr<TriggerTimer>>());
   m_container->Open();
@@ -35,7 +35,7 @@ void AdministrationServletTester::tearDown() {
   m_clientProtocol.Reset();
   m_container.Reset();
   m_dataStore.reset();
-  m_serviceLocatorInstance.Reset();
+  m_serviceLocatorEnvironment.Reset();
 }
 
 void AdministrationServletTester::TestLoadAccountIdentity() {
@@ -137,10 +137,10 @@ void AdministrationServletTester::TestLoadManagedTradingGroups() {
   auto tradingGroupA = MakeTradingGroup("test_group_a");
   auto tradingGroupB = MakeTradingGroup("test_group_b");
   auto managers =
-    m_serviceLocatorInstance->GetRoot().LoadDirectoryEntry(tradingGroupA,
+    m_serviceLocatorEnvironment->GetRoot().LoadDirectoryEntry(tradingGroupA,
     "managers");
   auto traders =
-    m_serviceLocatorInstance->GetRoot().LoadDirectoryEntry(tradingGroupA,
+    m_serviceLocatorEnvironment->GetRoot().LoadDirectoryEntry(tradingGroupA,
     "traders");
   auto manager = MakeAccount("test_manager", managers);
   auto trader = MakeAccount("test_trader", traders);
@@ -154,28 +154,29 @@ void AdministrationServletTester::TestLoadManagedTradingGroups() {
 }
 
 DirectoryEntry AdministrationServletTester::GetAdministratorsDirectory() {
-  return m_serviceLocatorInstance->GetRoot().LoadDirectoryEntry(
+  return m_serviceLocatorEnvironment->GetRoot().LoadDirectoryEntry(
     DirectoryEntry::GetStarDirectory(), "administrators");
 }
 
 DirectoryEntry AdministrationServletTester::GetServicesDirectory() {
-  return m_serviceLocatorInstance->GetRoot().LoadDirectoryEntry(
+  return m_serviceLocatorEnvironment->GetRoot().LoadDirectoryEntry(
     DirectoryEntry::GetStarDirectory(), "services");
 }
 
 DirectoryEntry AdministrationServletTester::GetTradingGroupsDirectory() {
-  return m_serviceLocatorInstance->GetRoot().LoadDirectoryEntry(
+  return m_serviceLocatorEnvironment->GetRoot().LoadDirectoryEntry(
     DirectoryEntry::GetStarDirectory(), "trading_groups");
 }
 
 DirectoryEntry AdministrationServletTester::MakeAccount(const string& name,
     const DirectoryEntry& parent) {
-  return m_serviceLocatorInstance->GetRoot().MakeAccount(name, "1234", parent);
+  return m_serviceLocatorEnvironment->GetRoot().MakeAccount(name, "1234",
+    parent);
 }
 
 DirectoryEntry AdministrationServletTester::MakeTradingGroup(
     const string& name) {
-  auto& rootServiceLocatorClient = m_serviceLocatorInstance->GetRoot();
+  auto& rootServiceLocatorClient = m_serviceLocatorEnvironment->GetRoot();
   auto tradingGroups = rootServiceLocatorClient.MakeDirectory(name,
     GetTradingGroupsDirectory());
   auto managers = rootServiceLocatorClient.MakeDirectory("managers",

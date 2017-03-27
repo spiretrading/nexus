@@ -5,7 +5,7 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/MySql/PosixTimeToMySqlDateTime.hpp>
 #include <Beam/Network/IpAddress.hpp>
-#include <boost/thread/mutex.hpp>
+#include <Beam/Threading/Mutex.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
@@ -33,34 +33,44 @@ namespace AdministrationService {
         const std::string& schema, const std::string& username,
         const std::string& password);
 
-      virtual ~MySqlAdministrationDataStore();
+      virtual ~MySqlAdministrationDataStore() override;
+
+      virtual std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
+        AccountIdentity>> LoadAllAccountIdentities() override;
 
       virtual AccountIdentity LoadIdentity(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::ServiceLocator::DirectoryEntry& account) override;
 
       virtual void Store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const AccountIdentity& identity);
+        const AccountIdentity& identity) override;
+
+      virtual std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
+        RiskService::RiskParameters>> LoadAllRiskParameters() override;
 
       virtual RiskService::RiskParameters LoadRiskParameters(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::ServiceLocator::DirectoryEntry& account) override;
 
       virtual void Store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskParameters& riskParameters);
+        const RiskService::RiskParameters& riskParameters) override;
+
+      virtual std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
+        RiskService::RiskState>> LoadAllRiskStates() override;
 
       virtual RiskService::RiskState LoadRiskState(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::ServiceLocator::DirectoryEntry& account) override;
 
       virtual void Store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskState& riskState);
+        const RiskService::RiskState& riskState) override;
 
-      virtual void WithTransaction(const std::function<void ()>& transaction);
+      virtual void WithTransaction(
+        const std::function<void ()>& transaction) override;
 
-      virtual void Open();
+      virtual void Open() override;
 
-      virtual void Close();
+      virtual void Close() override;
 
     private:
-      mutable boost::mutex m_mutex;
+      mutable Beam::Threading::Mutex m_mutex;
       Beam::Network::IpAddress m_address;
       std::string m_schema;
       std::string m_username;
@@ -74,31 +84,65 @@ namespace AdministrationService {
   inline MySqlAdministrationDataStore::MySqlAdministrationDataStore(
       const Beam::Network::IpAddress& address, const std::string& schema,
       const std::string& username, const std::string& password)
-      : m_address(address),
-        m_schema(schema),
-        m_username(username),
-        m_password(password),
-        m_databaseConnection(false) {}
+      : m_address{address},
+        m_schema{schema},
+        m_username{username},
+        m_password{password},
+        m_databaseConnection{false} {}
 
   inline MySqlAdministrationDataStore::~MySqlAdministrationDataStore() {
     Close();
   }
 
+  inline std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
+      AccountIdentity>> MySqlAdministrationDataStore::
+      LoadAllAccountIdentities() {
+    auto query = m_databaseConnection.query();
+    query << "SELECT * FROM account_identities";
+    std::vector<Details::account_identities> identities;
+    query.storein(identities);
+    if(query.errnum() != 0) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
+    }
+    std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
+      AccountIdentity>> results;
+    results.reserve(identities.size());
+    std::transform(identities.begin(), identities.end(),
+      std::back_inserter(results),
+      [] (auto& row) {
+        Beam::ServiceLocator::DirectoryEntry account{
+          Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT, row.account, ""};
+        AccountIdentity identity;
+        identity.m_firstName = row.first_name;
+        identity.m_lastName = row.last_name;
+        identity.m_emailAddress = row.e_mail;
+        identity.m_addressLineOne = row.address_line_one;
+        identity.m_addressLineTwo = row.address_line_two;
+        identity.m_addressLineThree = row.address_line_three;
+        identity.m_city = row.city;
+        identity.m_province = row.province;
+        identity.m_country = row.country;
+        identity.m_userNotes = row.user_notes;
+        return std::make_tuple(account, identity);
+      });
+    return results;
+  }
+
   inline AccountIdentity MySqlAdministrationDataStore::LoadIdentity(
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    mysqlpp::Query query = m_databaseConnection.query();
+    auto query = m_databaseConnection.query();
     query << "SELECT * FROM account_identities WHERE account = " <<
       account.m_id;
     std::vector<Details::account_identities> identities;
     query.storein(identities);
     if(query.errnum() != 0) {
-      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(query.error()));
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
     }
     AccountIdentity result;
     if(identities.empty()) {
       return result;
     }
-    const Details::account_identities& row = identities.front();
+    auto& row = identities.front();
     result.m_firstName = row.first_name;
     result.m_lastName = row.last_name;
     result.m_emailAddress = row.e_mail;
@@ -115,32 +159,64 @@ namespace AdministrationService {
   inline void MySqlAdministrationDataStore::Store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const AccountIdentity& identity) {
-    mysqlpp::Query query = m_databaseConnection.query();
-    Details::SqlInsert::account_identities entryRow(account.m_id,
+    auto query = m_databaseConnection.query();
+    Details::SqlInsert::account_identities entryRow{account.m_id,
       identity.m_firstName, identity.m_lastName, identity.m_emailAddress,
       identity.m_addressLineOne, identity.m_addressLineTwo,
       identity.m_addressLineThree, identity.m_city, identity.m_province,
-      identity.m_country, identity.m_userNotes, "");
+      identity.m_country, identity.m_userNotes, ""};
     query.replace(entryRow);
     if(!query.execute()) {
-      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(query.error()));
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
     }
   }
 
-  RiskService::RiskParameters MySqlAdministrationDataStore::LoadRiskParameters(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
-    mysqlpp::Query query = m_databaseConnection.query();
+  inline std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
+      RiskService::RiskParameters>> MySqlAdministrationDataStore::
+      LoadAllRiskParameters() {
+    auto query = m_databaseConnection.query();
+    query << "SELECT * FROM risk_parameters";
+    std::vector<Details::risk_parameters> riskParameters;
+    query.storein(riskParameters);
+    if(query.errnum() != 0) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
+    }
+    std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
+      RiskService::RiskParameters>> results;
+    results.reserve(riskParameters.size());
+    std::transform(riskParameters.begin(), riskParameters.end(),
+      std::back_inserter(results),
+      [] (auto& row) {
+        Beam::ServiceLocator::DirectoryEntry account{
+          Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT, row.account, ""};
+        RiskService::RiskParameters parameters;
+        parameters.m_currency = CurrencyId{row.currency};
+        parameters.m_buyingPower = Money::FromRepresentation(row.buying_power);
+        parameters.m_allowedState = static_cast<RiskService::RiskState::Type>(
+          row.allowed_state);
+        parameters.m_netLoss = Money::FromRepresentation(row.net_loss);
+        parameters.m_lossFromTop = row.loss_from_top;
+        parameters.m_transitionTime = boost::posix_time::seconds(
+          row.transition_time);
+        return std::make_tuple(account, parameters);
+      });
+    return results;
+  }
+
+  inline RiskService::RiskParameters MySqlAdministrationDataStore::
+      LoadRiskParameters(const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto query = m_databaseConnection.query();
     query << "SELECT * FROM risk_parameters WHERE account = " << account.m_id;
     std::vector<Details::risk_parameters> riskParameters;
     query.storein(riskParameters);
     if(query.errnum() != 0) {
-      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(query.error()));
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
     }
     RiskService::RiskParameters result;
     if(riskParameters.empty()) {
       return result;
     }
-    const Details::risk_parameters& row = riskParameters.front();
+    auto& row = riskParameters.front();
     result.m_currency = CurrencyId{row.currency};
     result.m_buyingPower = Money::FromRepresentation(row.buying_power);
     result.m_allowedState = static_cast<RiskService::RiskState::Type>(
@@ -151,58 +227,83 @@ namespace AdministrationService {
     return result;
   }
 
-  void MySqlAdministrationDataStore::Store(
+  inline void MySqlAdministrationDataStore::Store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskParameters& riskParameters) {
-    mysqlpp::Query query = m_databaseConnection.query();
-    Details::SqlInsert::risk_parameters entryRow(account.m_id,
+    auto query = m_databaseConnection.query();
+    Details::SqlInsert::risk_parameters entryRow{account.m_id,
       riskParameters.m_currency.m_value,
       riskParameters.m_buyingPower.GetRepresentation(),
       riskParameters.m_netLoss.GetRepresentation(),
       static_cast<int>(riskParameters.m_allowedState.m_type),
       riskParameters.m_lossFromTop,
-      riskParameters.m_transitionTime.total_seconds());
+      riskParameters.m_transitionTime.total_seconds()};
     query.replace(entryRow);
     if(!query.execute()) {
-      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(query.error()));
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
     }
   }
 
-  RiskService::RiskState MySqlAdministrationDataStore::LoadRiskState(
+  inline std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
+      RiskService::RiskState>> MySqlAdministrationDataStore::
+      LoadAllRiskStates() {
+    auto query = m_databaseConnection.query();
+    query << "SELECT * FROM risk_states";
+    std::vector<Details::risk_states> riskStates;
+    query.storein(riskStates);
+    if(query.errnum() != 0) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
+    }
+    std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
+      RiskService::RiskState>> results;
+    results.reserve(riskStates.size());
+    std::transform(riskStates.begin(), riskStates.end(),
+      std::back_inserter(results),
+      [] (auto& row) {
+        Beam::ServiceLocator::DirectoryEntry account{
+          Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT, row.account, ""};
+        RiskService::RiskState state{static_cast<RiskService::RiskState::Type>(
+          row.state), Beam::MySql::FromDateTime(row.expiry)};
+        return std::make_tuple(account, state);
+      });
+    return results;
+  }
+
+  inline RiskService::RiskState MySqlAdministrationDataStore::LoadRiskState(
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    mysqlpp::Query query = m_databaseConnection.query();
+    auto query = m_databaseConnection.query();
     query << "SELECT * FROM risk_states WHERE account = " << account.m_id;
     std::vector<Details::risk_states> riskStates;
     query.storein(riskStates);
     if(query.errnum() != 0) {
-      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(query.error()));
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
     }
     if(riskStates.empty()) {
       return RiskService::RiskState();
     }
-    Details::risk_states row = riskStates.front();
-    RiskService::RiskState result(static_cast<RiskService::RiskState::Type>(
-      row.state), Beam::MySql::FromDateTime(row.expiry));
+    auto row = riskStates.front();
+    RiskService::RiskState result{static_cast<RiskService::RiskState::Type>(
+      row.state), Beam::MySql::FromDateTime(row.expiry)};
     return result;
   }
 
-  void MySqlAdministrationDataStore::Store(
+  inline void MySqlAdministrationDataStore::Store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskState& riskState) {
-    mysqlpp::Query query = m_databaseConnection.query();
-    Details::SqlInsert::risk_states entryRow(account.m_id,
+    auto query = m_databaseConnection.query();
+    Details::SqlInsert::risk_states entryRow{account.m_id,
       static_cast<int>(riskState.m_type),
-      Beam::MySql::ToDateTime(riskState.m_expiry));
+      Beam::MySql::ToDateTime(riskState.m_expiry)};
     query.replace(entryRow);
     if(!query.execute()) {
-      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(query.error()));
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
     }
   }
 
   inline void MySqlAdministrationDataStore::WithTransaction(
       const std::function<void ()>& transaction) {
-    boost::lock_guard<boost::mutex> lock(m_mutex);
-    mysqlpp::Transaction t(m_databaseConnection);
+    boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
+    mysqlpp::Transaction t{m_databaseConnection};
     try {
       transaction();
     } catch(...) {
@@ -217,23 +318,23 @@ namespace AdministrationService {
       return;
     }
     try {
-      bool connectionResult = m_databaseConnection.set_option(
-        new mysqlpp::ReconnectOption(true));
+      auto connectionResult = m_databaseConnection.set_option(
+        new mysqlpp::ReconnectOption{true});
       if(!connectionResult) {
-        BOOST_THROW_EXCEPTION(Beam::IO::IOException(
-          "Unable to set MySQL reconnect option."));
+        BOOST_THROW_EXCEPTION(Beam::IO::IOException{
+          "Unable to set MySQL reconnect option."});
       }
       connectionResult = m_databaseConnection.connect(m_schema.c_str(),
         m_address.GetHost().c_str(), m_username.c_str(), m_password.c_str(),
         m_address.GetPort());
       if(!connectionResult) {
-        BOOST_THROW_EXCEPTION(Beam::IO::ConnectException(std::string(
+        BOOST_THROW_EXCEPTION(Beam::IO::ConnectException{std::string(
           "Unable to connect to MySQL database - ") +
-          m_databaseConnection.error()));
+          m_databaseConnection.error()});
       }
       if(!Details::LoadTables(m_databaseConnection, m_schema)) {
-        BOOST_THROW_EXCEPTION(Beam::IO::IOException(
-          "Unable to load database tables."));
+        BOOST_THROW_EXCEPTION(Beam::IO::IOException{
+          "Unable to load database tables."});
       }
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();

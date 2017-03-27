@@ -2,15 +2,15 @@
 #define NEXUS_BUYINGPOWERCHECKTESTER_HPP
 #include <Beam/Pointers/DelayPtr.hpp>
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
-#include <Beam/ServiceLocatorTests/ServiceLocatorTestInstance.hpp>
+#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/Threading/TriggerTimer.hpp>
 #include <Beam/TimeService/IncrementalTimeClient.hpp>
-#include <Beam/UidServiceTests/UidServiceTestInstance.hpp>
+#include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
 #include <cppunit/extensions/HelperMacros.h>
-#include "Nexus/AdministrationServiceTests/AdministrationServiceTestInstance.hpp"
-#include "Nexus/MarketDataServiceTests/MarketDataServiceTestInstance.hpp"
+#include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
+#include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionService/BuyingPowerCheck.hpp"
-#include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceInstance.hpp"
+#include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 
 namespace Nexus {
 namespace OrderExecutionService {
@@ -52,15 +52,15 @@ namespace Tests {
       void TestSubmissionThenRejection();
 
     private:
-      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestInstance>
-        m_serviceLocatorInstance;
-      Beam::DelayPtr<Beam::UidService::Tests::UidServiceTestInstance>
-        m_uidServiceInstance;
+      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment>
+        m_serviceLocatorEnvironment;
+      Beam::DelayPtr<Beam::UidService::Tests::UidServiceTestEnvironment>
+        m_uidServiceEnvironment;
       Beam::DelayPtr<
-        AdministrationService::Tests::AdministrationServiceTestInstance>
-        m_administrationServiceInstance;
-      Beam::DelayPtr<MarketDataService::Tests::MarketDataServiceTestInstance>
-        m_marketDataServiceInstance;
+        AdministrationService::Tests::AdministrationServiceTestEnvironment>
+        m_administrationServiceEnvironment;
+      Beam::DelayPtr<MarketDataService::Tests::MarketDataServiceTestEnvironment>
+        m_marketDataServiceEnvironment;
       std::unique_ptr<ServiceLocatorClient> m_serviceLocatorClient;
       Beam::DelayPtr<BuyingPowerCheck> m_buyingPowerCheck;
       Beam::ServiceLocator::DirectoryEntry m_traderAccount;

@@ -2,16 +2,16 @@
 #define NEXUS_RISKSERVLETTESTER_HPP
 #include <Beam/Pointers/DelayPtr.hpp>
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
-#include <Beam/ServiceLocatorTests/ServiceLocatorTestInstance.hpp>
+#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/Threading/TriggerTimer.hpp>
 #include <Beam/TimeService/IncrementalTimeClient.hpp>
-#include <Beam/UidServiceTests/UidServiceTestInstance.hpp>
+#include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
 #include <cppunit/extensions/HelperMacros.h>
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
-#include "Nexus/AdministrationServiceTests/AdministrationServiceTestInstance.hpp"
-#include "Nexus/MarketDataServiceTests/MarketDataServiceTestInstance.hpp"
-#include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceInstance.hpp"
+#include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
+#include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
+#include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 #include "Nexus/RiskService/RiskServlet.hpp"
 #include "Nexus/RiskService/RiskStateMonitor.hpp"
 
@@ -72,18 +72,19 @@ namespace Tests {
       void TestOpenPosition();
 
     private:
-      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestInstance>
-        m_serviceLocatorInstance;
-      Beam::DelayPtr<Beam::UidService::Tests::UidServiceTestInstance>
-        m_uidServiceInstance;
+      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment>
+        m_serviceLocatorEnvironment;
+      Beam::DelayPtr<Beam::UidService::Tests::UidServiceTestEnvironment>
+        m_uidServiceEnvironment;
       Beam::DelayPtr<
-        AdministrationService::Tests::AdministrationServiceTestInstance>
-        m_administrationServiceInstance;
-      Beam::DelayPtr<MarketDataService::Tests::MarketDataServiceTestInstance>
-        m_marketDataServiceInstance;
+        AdministrationService::Tests::AdministrationServiceTestEnvironment>
+        m_administrationServiceEnvironment;
+      Beam::DelayPtr<MarketDataService::Tests::MarketDataServiceTestEnvironment>
+        m_marketDataServiceEnvironment;
       std::unique_ptr<MarketDataClient> m_marketDataClient;
       Beam::DelayPtr<OrderExecutionService::Tests::
-        OrderExecutionServiceTestInstance> m_orderExecutionServiceInstance;
+        OrderExecutionServiceTestEnvironment>
+        m_orderExecutionServiceEnvironment;
       Beam::DelayPtr<Beam::Threading::TriggerTimer> m_transitionTimer;
       Beam::DelayPtr<ServerConnection> m_serverConnection;
       Beam::DelayPtr<ServletContainer> m_container;

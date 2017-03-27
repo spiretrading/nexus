@@ -22,7 +22,9 @@ add_library(CanvasView
   ${generated_header_files}
   ${generated_source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
-set_target_properties(CanvasView PROPERTIES OUTPUT_NAME spire_canvas_view)
+set_target_properties(CanvasView PROPERTIES
+  STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
+  OUTPUT_NAME spire_canvas_view)
 install(TARGETS CanvasView CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)
 install(TARGETS CanvasView CONFIGURATIONS Release

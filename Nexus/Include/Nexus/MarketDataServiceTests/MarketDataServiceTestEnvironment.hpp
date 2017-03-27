@@ -1,5 +1,5 @@
-#ifndef NEXUS_MARKETDATASERVICETESTINSTANCE_HPP
-#define NEXUS_MARKETDATASERVICETESTINSTANCE_HPP
+#ifndef NEXUS_MARKETDATASERVICETESTENVIRONMENT_HPP
+#define NEXUS_MARKETDATASERVICETESTENVIRONMENT_HPP
 #include <Beam/IO/LocalClientChannel.hpp>
 #include <Beam/IO/LocalServerConnection.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
@@ -9,7 +9,7 @@
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
 #include <Beam/ServiceLocator/SessionAuthenticator.hpp>
-#include <Beam/ServiceLocatorTests/ServiceLocatorTestInstance.hpp>
+#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/Services/AuthenticatedServiceProtocolClientBuilder.hpp>
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
@@ -32,22 +32,22 @@ namespace Nexus {
 namespace MarketDataService {
 namespace Tests {
 
-  /*! \class MarketDataServiceTestInstance
+  /*! \class MarketDataServiceTestEnvironment
       \brief Wraps most components needed to run an instance of the
              MarketDataService with helper functions.
    */
-  class MarketDataServiceTestInstance : private boost::noncopyable {
+  class MarketDataServiceTestEnvironment : private boost::noncopyable {
     public:
 
-      //! Constructs an MarketDataServiceTestInstance.
+      //! Constructs an MarketDataServiceTestEnvironment.
       /*!
         \param serviceLocatorClient The ServiceLocatorClient to use.
       */
-      MarketDataServiceTestInstance(
+      MarketDataServiceTestEnvironment(
         std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
         serviceLocatorClient);
 
-      ~MarketDataServiceTestInstance();
+      ~MarketDataServiceTestEnvironment();
 
       //! Opens the servlet.
       void Open();
@@ -143,16 +143,16 @@ namespace Tests {
       std::unique_ptr<MarketDataFeedClient> m_feedClient;
   };
 
-  inline MarketDataServiceTestInstance::MarketDataServiceTestInstance(
+  inline MarketDataServiceTestEnvironment::MarketDataServiceTestEnvironment(
       std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
       serviceLocatorClient)
       : m_serviceLocatorClient{std::move(serviceLocatorClient)} {}
 
-  inline MarketDataServiceTestInstance::~MarketDataServiceTestInstance() {
+  inline MarketDataServiceTestEnvironment::~MarketDataServiceTestEnvironment() {
     Close();
   }
 
-  inline void MarketDataServiceTestInstance::Open() {
+  inline void MarketDataServiceTestEnvironment::Open() {
     auto entitlementsDirectory = m_serviceLocatorClient->MakeDirectory(
       "entitlements", Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
     m_globalEntitlementGroup = m_serviceLocatorClient->MakeDirectory("global",
@@ -186,33 +186,33 @@ namespace Tests {
     m_feedContainer->Open();
   }
 
-  inline void MarketDataServiceTestInstance::Close() {
+  inline void MarketDataServiceTestEnvironment::Close() {
     m_feedContainer.Reset();
     m_container.Reset();
   }
 
-  inline const LocalHistoricalDataStore& MarketDataServiceTestInstance::
+  inline const LocalHistoricalDataStore& MarketDataServiceTestEnvironment::
       GetDataStore() const {
     return m_dataStore;
   }
 
-  inline LocalHistoricalDataStore& MarketDataServiceTestInstance::
+  inline LocalHistoricalDataStore& MarketDataServiceTestEnvironment::
       GetDataStore() {
     return m_dataStore;
   }
 
   inline const MarketDataRegistry&
-      MarketDataServiceTestInstance::GetRegistry() const {
+      MarketDataServiceTestEnvironment::GetRegistry() const {
     return m_registry;
   }
 
-  inline void MarketDataServiceTestInstance::SetBbo(const Security& security,
+  inline void MarketDataServiceTestEnvironment::SetBbo(const Security& security,
       const BboQuote& bbo) {
     m_registryServlet->PublishBboQuote(SecurityBboQuote(bbo, security), 0);
   }
 
   inline std::unique_ptr<VirtualMarketDataClient>
-      MarketDataServiceTestInstance::BuildClient(
+      MarketDataServiceTestEnvironment::BuildClient(
       Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
       serviceLocatorClient) {
     ServiceProtocolClientBuilder builder(Beam::Ref(serviceLocatorClient),
@@ -231,7 +231,7 @@ namespace Tests {
   }
 
   inline std::unique_ptr<VirtualMarketDataFeedClient>
-      MarketDataServiceTestInstance::BuildFeedClient(
+      MarketDataServiceTestEnvironment::BuildFeedClient(
       Beam::RefType<ServiceLocatorClient> serviceLocatorClient) {
     using Client = MarketDataService::MarketDataFeedClient<std::string,
       Beam::Threading::TriggerTimer*, Beam::Services::MessageProtocol<
