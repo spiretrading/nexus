@@ -41,6 +41,7 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::python;
 using namespace Nexus;
+using namespace Nexus::AdministrationService;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::MarketDataService::Tests;
 using namespace Nexus::Python;
