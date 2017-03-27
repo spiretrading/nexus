@@ -1,11 +1,10 @@
 #ifndef NEXUS_BOARDLOTCHECKTESTER_HPP
 #define NEXUS_BOARDLOTCHECKTESTER_HPP
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
-#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <cppunit/extensions/HelperMacros.h>
-#include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionService/BoardLotCheck.hpp"
-#include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
+#include "Nexus/ServiceClients/TestEnvironment.hpp"
+#include "Nexus/ServiceClients/TestServiceClients.hpp"
 
 namespace Nexus {
 namespace OrderExecutionService {
@@ -17,16 +16,9 @@ namespace Tests {
   class BoardLotCheckTester : public CPPUNIT_NS::TestFixture {
     public:
 
-      //! The type of ServiceLocatorClient.
-      using ServiceLocatorClient =
-        Beam::ServiceLocator::VirtualServiceLocatorClient;
-
-      //! The type of MarketDataClient.
-      using MarketDataClient = MarketDataService::VirtualMarketDataClient;
-
       //! The type of BoardLotCheck to test.
       using BoardLotCheck = OrderExecutionService::BoardLotCheck<
-        std::unique_ptr<MarketDataClient>>;
+        MarketDataService::VirtualMarketDataClient*>;
 
       virtual void setUp();
 
@@ -36,13 +28,8 @@ namespace Tests {
       void TestUnavailableBboQuote();
 
     private:
-      boost::optional<
-        Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment>
-        m_serviceLocatorEnvironment;
-      boost::optional<
-        MarketDataService::Tests::MarketDataServiceTestEnvironment>
-        m_marketDataServiceEnvironment;
-      std::unique_ptr<ServiceLocatorClient> m_serviceLocatorClient;
+      boost::optional<TestEnvironment> m_environment;
+      boost::optional<TestServiceClients> m_serviceClients;
       boost::optional<BoardLotCheck> m_check;
 
       CPPUNIT_TEST_SUITE(BoardLotCheckTester);

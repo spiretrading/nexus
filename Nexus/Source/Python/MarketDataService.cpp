@@ -41,6 +41,7 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::python;
 using namespace Nexus;
+using namespace Nexus::AdministrationService;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::MarketDataService::Tests;
 using namespace Nexus::Python;
@@ -80,9 +81,11 @@ namespace {
   }
 
   MarketDataServiceTestEnvironment* BuildMarketDataServiceTestEnvironment(
-      const std::shared_ptr<VirtualServiceLocatorClient>&
-      serviceLocatorClient) {
-    return new MarketDataServiceTestEnvironment{serviceLocatorClient};
+      const std::shared_ptr<VirtualServiceLocatorClient>& serviceLocatorClient,
+      const std::shared_ptr<VirtualAdministrationClient>&
+      administrationClient) {
+    return new MarketDataServiceTestEnvironment{serviceLocatorClient,
+      administrationClient};
   }
 
   PythonMarketDataClient* MarketDataServiceTestEnvironmentBuildClient(
