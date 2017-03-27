@@ -21,57 +21,50 @@ using namespace Nexus::OrderExecutionService::Tests;
 using namespace std;
 
 void PortfolioMonitorTester::setUp() {
-  m_serviceLocatorEnvironment.Initialize();
-  m_serviceLocatorEnvironment->Open();
-  m_serviceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
-  m_serviceLocatorClient->SetCredentials("root", "");
-  m_serviceLocatorClient->Open();
-  auto servicesDirectory = m_serviceLocatorEnvironment->GetRoot().MakeDirectory(
-    "services", DirectoryEntry::GetStarDirectory());
-  auto marketDataServiceLocatorClient =
-    m_serviceLocatorEnvironment->BuildClient();
-  marketDataServiceLocatorClient->SetCredentials("root", "");
-  marketDataServiceLocatorClient->Open();
-  m_marketDataServiceEnvironment.Initialize(
-    std::move(marketDataServiceLocatorClient));
-  m_marketDataServiceEnvironment->Open();
+  m_environment.emplace();
+  m_environment->SetTime(ptime{
+    gregorian::date{2000, gregorian::Jan, 1}, seconds(0)});
+  m_environment->Open();
+  m_serviceClients.emplace(Ref(*m_environment));
+  m_serviceClients->Open();
 }
 
 void PortfolioMonitorTester::tearDown() {
-  m_marketDataServiceEnvironment.Reset();
-  m_serviceLocatorClient.reset();
-  m_serviceLocatorEnvironment.Reset();
+  m_serviceClients.reset();
+  m_environment.reset();
 }
 
 void PortfolioMonitorTester::TestOutOfOrderExecutionReports() {
-  Security security("TST", DefaultMarkets::NYSE(), DefaultCountries::US());
-  m_marketDataServiceEnvironment->SetBbo(security, BboQuote(
-    Quote(Money::ONE, 100, Side::BID), Quote(Money::ONE, 100, Side::ASK),
-    second_clock::local_time()));
+  Security security{"TST", DefaultMarkets::NYSE(), DefaultCountries::US()};
+  m_environment->Update(security, BboQuote{
+    Quote{Money::ONE, 100, Side::BID}, Quote{Money::ONE, 100, Side::ASK},
+    not_a_date_time});
   SequencePublisher<const Order*> orderPublisher;
-  auto marketDataClient = m_marketDataServiceEnvironment->BuildClient(
-    Ref(*m_serviceLocatorClient));
-  marketDataClient->Open();
-  PortfolioMonitor portfolioMonitor(Initialize(GetDefaultMarketDatabase()),
-    std::move(marketDataClient), orderPublisher);
+  PortfolioMonitor portfolioMonitor{Initialize(GetDefaultMarketDatabase()),
+    &m_serviceClients->GetMarketDataClient(), orderPublisher};
   auto queue = std::make_shared<Queue<PortfolioMonitor::UpdateEntry>>();
   portfolioMonitor.GetPublisher().Monitor(queue);
-  gregorian::date date(2000, gregorian::Jan, 1);
   auto fieldsA = OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(),
     security, DefaultCurrencies::USD(), Side::BID, "NYSE", 100, Money::CENT);
-  PrimitiveOrder orderA{{fieldsA, 1, ptime{date, seconds(1)}}};
+  PrimitiveOrder orderA{{fieldsA, 1,
+    m_serviceClients->GetTimeClient().GetTime()}};
   auto fieldsB = OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(),
     security, DefaultCurrencies::USD(), Side::BID, "NYSE", 100,
     2 * Money::CENT);
-  PrimitiveOrder orderB{{fieldsB, 2, ptime{date, seconds(2)}}};
+  m_environment->AdvanceTime(seconds(1));
+  PrimitiveOrder orderB{{fieldsB, 2,
+    m_serviceClients->GetTimeClient().GetTime()}};
   auto fieldsC = OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(),
     security, DefaultCurrencies::USD(), Side::ASK, "NYSE", 100,
     3 * Money::CENT);
-  PrimitiveOrder orderC{{fieldsC, 3, ptime{date, seconds(3)}}};
+  m_environment->AdvanceTime(seconds(1));
+  PrimitiveOrder orderC{{fieldsC, 3,
+    m_serviceClients->GetTimeClient().GetTime()}};
   orderPublisher.Push(&orderA);
   orderPublisher.Push(&orderB);
   orderPublisher.Push(&orderC);
-  FillOrder(orderA, 100, ptime(date, seconds(1)));
+  auto date = m_serviceClients->GetTimeClient().GetTime().date();
+  FillOrder(orderA, 100, ptime{date, seconds(1)});
   {
     auto update = queue->Top();
     queue->Pop();
@@ -79,7 +72,7 @@ void PortfolioMonitorTester::TestOutOfOrderExecutionReports() {
     CPPUNIT_ASSERT(GetAveragePrice(update.m_securityInventory.m_position) ==
       Money::CENT);
   }
-  FillOrder(orderC, 100, ptime(date, seconds(2)));
+  FillOrder(orderC, 100, ptime{date, seconds(2)});
   {
     auto update = queue->Top();
     queue->Pop();
@@ -87,7 +80,7 @@ void PortfolioMonitorTester::TestOutOfOrderExecutionReports() {
     CPPUNIT_ASSERT(GetAveragePrice(update.m_securityInventory.m_position) ==
       Money::ZERO);
   }
-  FillOrder(orderB, 100, ptime(date, seconds(3)));
+  FillOrder(orderB, 100, ptime{date, seconds(3)});
   {
     auto update = queue->Top();
     queue->Pop();
