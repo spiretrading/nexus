@@ -34,6 +34,8 @@ class Controller {
 
   /** @private */
   onPortfolioMessageReceived(message) {
+    console.debug('portfolio message received');
+    console.debug(message);
     let cacheKey = message.account + message.currency + message.security;
     this.portfolioData.set(cacheKey, message);
     this.componentModel.portfolioData = this.portfolioData.values();
