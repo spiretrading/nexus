@@ -279,12 +279,13 @@ namespace Nexus {
     Beam::Routines::FlushPendingRoutines();
   }
 
-  void TestEnvironment::FillOrder(const OrderExecutionService::Order& order,
-      Quantity quantity) {
+  inline void TestEnvironment::FillOrder(
+      const OrderExecutionService::Order& order, Quantity quantity) {
     FillOrder(order, order.GetInfo().m_fields.m_price, quantity);
   }
 
-  void TestEnvironment::Update(const OrderExecutionService::Order& order,
+  inline void TestEnvironment::Update(
+      const OrderExecutionService::Order& order,
       const OrderExecutionService::ExecutionReport& executionReport) {
     auto primitiveOrder = const_cast<OrderExecutionService::PrimitiveOrder*>(
       dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
@@ -366,7 +367,8 @@ namespace Nexus {
         m_serviceLocatorEnvironment.BuildClient();
       definitionsServiceLocatorClient->SetCredentials("root", "");
       definitionsServiceLocatorClient->Open();
-      m_definitionsEnvironment.emplace(std::move(definitionsServiceLocatorClient));
+      m_definitionsEnvironment.emplace(
+        std::move(definitionsServiceLocatorClient));
       m_definitionsEnvironment->Open();
       auto administrationServiceLocatorClient =
         m_serviceLocatorEnvironment.BuildClient();
@@ -379,7 +381,12 @@ namespace Nexus {
         m_serviceLocatorEnvironment.BuildClient();
       marketDataServiceLocatorClient->SetCredentials("root", "");
       marketDataServiceLocatorClient->Open();
-      m_marketDataEnvironment.emplace(std::move(marketDataServiceLocatorClient));
+      auto marketDataAdministrationClient =
+        m_administrationEnvironment->BuildClient(
+        Beam::Ref(*marketDataServiceLocatorClient));
+      m_marketDataEnvironment.emplace(
+        std::move(marketDataServiceLocatorClient),
+        std::move(marketDataAdministrationClient));
       m_marketDataEnvironment->Open();
       auto orderExecutionServiceLocatorClient =
         m_serviceLocatorEnvironment.BuildClient();

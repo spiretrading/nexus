@@ -50,15 +50,15 @@ namespace MarketDataService {
 
       //! Constructs a MarketDataRegistryServlet.
       /*!
-        \param entitlementDatabase The database of all market data entitlements.
         \param administrationClient Used to check for entitlements.
         \param marketDataRegistry The registry storing all market data
                originating from this servlet.
         \param dataStore Initializes the historical market data store.
       */
       template<typename AdministrationClientForward,
-        typename MarketDataRegistryForward, typename HistoricalDataStoreForward>
-      MarketDataRegistryServlet(const EntitlementDatabase& entitlementDatabase,
+        typename MarketDataRegistryForward,
+        typename HistoricalDataStoreForward>
+      MarketDataRegistryServlet(
         AdministrationClientForward&& administrationClient,
         MarketDataRegistryForward&& marketDataRegistry,
         HistoricalDataStoreForward&& dataStore);
@@ -138,8 +138,8 @@ namespace MarketDataService {
         const Security& security, int id);
       SecuritySnapshot OnLoadSecuritySnapshot(ServiceProtocolClient& client,
         const Security& security);
-      SecurityTechnicals OnLoadSecurityTechnicals(ServiceProtocolClient& client,
-        const Security& security);
+      SecurityTechnicals OnLoadSecurityTechnicals(
+        ServiceProtocolClient& client, const Security& security);
       std::vector<SecurityInfo> OnLoadSecurityInfoFromPrefix(
         ServiceProtocolClient& client, const std::string& prefix);
   };
@@ -162,12 +162,11 @@ namespace MarketDataService {
     typename MarketDataRegistryForward, typename HistoricalDataStoreForward>
   MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
       HistoricalDataStoreType, AdministrationClientType>::
-      MarketDataRegistryServlet(const EntitlementDatabase& entitlementDatabase,
+      MarketDataRegistryServlet(
       AdministrationClientForward&& administrationClient,
       MarketDataRegistryForward&& registry,
       HistoricalDataStoreForward&& dataStore)
-      : m_entitlementDatabase{entitlementDatabase},
-        m_administrationClient{
+      : m_administrationClient{
           std::forward<AdministrationClientForward>(administrationClient)},
         m_registry{std::forward<MarketDataRegistryForward>(registry)},
         m_dataStore{std::forward<HistoricalDataStoreForward>(dataStore)} {}
@@ -183,8 +182,9 @@ namespace MarketDataService {
   template<typename ContainerType, typename MarketDataRegistryType,
     typename HistoricalDataStoreType, typename AdministrationClientType>
   void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::PublishOrderImbalance(
-      const MarketOrderImbalance& orderImbalance, int sourceId) {
+      HistoricalDataStoreType, AdministrationClientType>::
+      PublishOrderImbalance(const MarketOrderImbalance& orderImbalance,
+      int sourceId) {
     m_registry->PublishOrderImbalance(orderImbalance, sourceId, *m_dataStore,
       [&] (const SequencedMarketOrderImbalance& orderImbalance) {
         m_dataStore->Store(orderImbalance);
@@ -291,8 +291,8 @@ namespace MarketDataService {
       std::bind(&MarketDataRegistryServlet::OnEndOrderImbalanceQuery, this,
       std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     QueryBboQuotesService::AddRequestSlot(Store(slots), std::bind(
-      &MarketDataRegistryServlet::OnQueryBboQuotes, this, std::placeholders::_1,
-      std::placeholders::_2));
+      &MarketDataRegistryServlet::OnQueryBboQuotes, this,
+      std::placeholders::_1, std::placeholders::_2));
     Beam::Services::AddMessageSlot<EndBboQuoteQueryMessage>(Store(slots),
       std::bind(&MarketDataRegistryServlet::OnEndBboQuoteQuery, this,
       std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
@@ -331,7 +331,8 @@ namespace MarketDataService {
       HistoricalDataStoreType, AdministrationClientType>::HandleClientAccepted(
       ServiceProtocolClient& client) {
     auto& session = client.GetSession();
-    auto roles = m_administrationClient->LoadAccountRoles(session.GetAccount());
+    auto roles = m_administrationClient->LoadAccountRoles(
+      session.GetAccount());
     if(roles.Test(AdministrationService::AccountRole::SERVICE)) {
       auto& entitlements = m_entitlementDatabase.GetEntries();
       for(auto& entitlement : entitlements) {
@@ -377,7 +378,9 @@ namespace MarketDataService {
       return;
     }
     try {
+      m_administrationClient->Open();
       m_dataStore->Open();
+      m_entitlementDatabase = m_administrationClient->LoadEntitlements();
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
       Shutdown();
@@ -407,8 +410,9 @@ namespace MarketDataService {
     typename HistoricalDataStoreType, typename AdministrationClientType>
   void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
       HistoricalDataStoreType, AdministrationClientType>::
-      OnQueryOrderImbalances(Beam::Services::RequestToken<ServiceProtocolClient,
-      QueryOrderImbalancesService>& request, const MarketWideDataQuery& query) {
+      OnQueryOrderImbalances(Beam::Services::RequestToken<
+      ServiceProtocolClient, QueryOrderImbalancesService>& request,
+      const MarketWideDataQuery& query) {
     auto& session = request.GetSession();
     if(!session.GetEntitlements().HasEntitlement(query.GetIndex(),
         MarketDataType::ORDER_IMBALANCE)) {
@@ -433,8 +437,8 @@ namespace MarketDataService {
     typename HistoricalDataStoreType, typename AdministrationClientType>
   void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
       HistoricalDataStoreType, AdministrationClientType>::
-      OnEndOrderImbalanceQuery(ServiceProtocolClient& client, MarketCode market,
-      int id) {
+      OnEndOrderImbalanceQuery(ServiceProtocolClient& client,
+      MarketCode market, int id) {
     auto& session = client.GetSession();
     m_orderImbalanceSubscriptions.End(market, id);
   }
@@ -536,8 +540,9 @@ namespace MarketDataService {
   template<typename ContainerType, typename MarketDataRegistryType,
     typename HistoricalDataStoreType, typename AdministrationClientType>
   void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::OnEndMarketQuoteQuery(
-      ServiceProtocolClient& client, const Security& security, int id) {
+      HistoricalDataStoreType, AdministrationClientType>::
+      OnEndMarketQuoteQuery(ServiceProtocolClient& client,
+      const Security& security, int id) {
     auto& session = client.GetSession();
     m_marketQuoteSubscriptions.End(security, id);
   }
@@ -571,8 +576,9 @@ namespace MarketDataService {
   template<typename ContainerType, typename MarketDataRegistryType,
     typename HistoricalDataStoreType, typename AdministrationClientType>
   void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::OnEndTimeAndSaleQuery(
-      ServiceProtocolClient& client, const Security& security, int id) {
+      HistoricalDataStoreType, AdministrationClientType>::
+      OnEndTimeAndSaleQuery(ServiceProtocolClient& client,
+      const Security& security, int id) {
     auto& session = client.GetSession();
     m_timeAndSaleSubscriptions.End(security, id);
   }

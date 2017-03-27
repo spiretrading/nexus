@@ -80,9 +80,11 @@ namespace {
   }
 
   MarketDataServiceTestEnvironment* BuildMarketDataServiceTestEnvironment(
-      const std::shared_ptr<VirtualServiceLocatorClient>&
-      serviceLocatorClient) {
-    return new MarketDataServiceTestEnvironment{serviceLocatorClient};
+      const std::shared_ptr<VirtualServiceLocatorClient>& serviceLocatorClient,
+      const std::shared_ptr<VirtualAdministrationClient>&
+      administrationClient) {
+    return new MarketDataServiceTestEnvironment{serviceLocatorClient,
+      administrationClient};
   }
 
   PythonMarketDataClient* MarketDataServiceTestEnvironmentBuildClient(

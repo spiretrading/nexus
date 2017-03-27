@@ -3,7 +3,6 @@
 #include <Beam/IO/LocalClientChannel.hpp>
 #include <Beam/IO/LocalServerConnection.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
-#include <Beam/Pointers/DelayPtr.hpp>
 #include <Beam/Pointers/UniquePointerPolicy.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
@@ -18,8 +17,8 @@
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/optional/optional.hpp>
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
-#include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
@@ -42,14 +41,14 @@ namespace Tests {
 
       //! Constructs an MarketDataServiceTestEnvironment.
       /*!
-        \param administrationClient The AdministrationClient to use.
         \param serviceLocatorClient The ServiceLocatorClient to use.
+        \param administrationClient The AdministrationClient to use.
       */
       MarketDataServiceTestEnvironment(
-        std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-        administrationClient,
         std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-        serviceLocatorClient);
+        serviceLocatorClient,
+        std::shared_ptr<AdministrationService::VirtualAdministrationClient>
+        administrationClient);
 
       ~MarketDataServiceTestEnvironment();
 
@@ -135,61 +134,38 @@ namespace Tests {
       using MarketDataClient = MarketDataService::VirtualMarketDataClient;
       using MarketDataFeedClient =
         MarketDataService::VirtualMarketDataFeedClient;
-      std::shared_ptr<AdministrationClient> m_administrationClient;
       std::shared_ptr<ServiceLocatorClient> m_serviceLocatorClient;
+      std::shared_ptr<AdministrationClient> m_administrationClient;
       MarketDataRegistry m_registry;
-      EntitlementDatabase m_entitlements;
-      Beam::ServiceLocator::DirectoryEntry m_globalEntitlementGroup;
       ServerConnection m_serverConnection;
       LocalHistoricalDataStore m_dataStore;
-      Beam::DelayPtr<BaseRegistryServlet> m_registryServlet;
-      Beam::DelayPtr<ServiceProtocolServletContainer> m_container;
+      boost::optional<BaseRegistryServlet> m_registryServlet;
+      boost::optional<ServiceProtocolServletContainer> m_container;
       ServerConnection m_feedServerConnection;
-      Beam::DelayPtr<FeedServiceProtocolServletContainer> m_feedContainer;
+      boost::optional<FeedServiceProtocolServletContainer> m_feedContainer;
       Beam::Threading::TriggerTimer m_samplingTimer;
       std::unique_ptr<MarketDataFeedClient> m_feedClient;
   };
 
   inline MarketDataServiceTestEnvironment::MarketDataServiceTestEnvironment(
-      std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-      administrationClient,
       std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-      serviceLocatorClient)
-      : m_administrationClient{std::move(administrationClient)},
-        m_serviceLocatorClient{std::move(serviceLocatorClient)} {}
+      serviceLocatorClient,
+      std::shared_ptr<AdministrationService::VirtualAdministrationClient>
+      administrationClient)
+      : m_serviceLocatorClient{std::move(serviceLocatorClient)},
+        m_administrationClient{std::move(administrationClient)} {}
 
   inline MarketDataServiceTestEnvironment::~MarketDataServiceTestEnvironment() {
     Close();
   }
 
   inline void MarketDataServiceTestEnvironment::Open() {
-    auto entitlementsDirectory = m_serviceLocatorClient->MakeDirectory(
-      "entitlements", Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
-    m_globalEntitlementGroup = m_serviceLocatorClient->MakeDirectory("global",
-      entitlementsDirectory);
-    EntitlementDatabase::Entry globalEntitlement;
-    globalEntitlement.m_name = "global";
-    globalEntitlement.m_groupEntry = m_globalEntitlementGroup;
-    auto& marketDatabase = GetDefaultMarketDatabase();
-    for(auto& market : marketDatabase.GetEntries()) {
-      globalEntitlement.m_applicability[EntitlementKey{market.m_code}].Set(
-        MarketDataType::TIME_AND_SALE);
-      globalEntitlement.m_applicability[EntitlementKey{market.m_code}].Set(
-        MarketDataType::BOOK_QUOTE);
-      globalEntitlement.m_applicability[EntitlementKey{market.m_code}].Set(
-        MarketDataType::MARKET_QUOTE);
-      globalEntitlement.m_applicability[EntitlementKey{market.m_code}].Set(
-        MarketDataType::BBO_QUOTE);
-      globalEntitlement.m_applicability[EntitlementKey{market.m_code}].Set(
-        MarketDataType::ORDER_IMBALANCE);
-    }
-    m_entitlements.Add(globalEntitlement);
-    m_registryServlet.Initialize(m_entitlements, m_administrationClient,
-      &m_registry, &m_dataStore);
-    m_container.Initialize(Beam::Initialize(m_serviceLocatorClient.get(),
+    m_registryServlet.emplace(m_administrationClient, &m_registry,
+      &m_dataStore);
+    m_container.emplace(Beam::Initialize(m_serviceLocatorClient.get(),
       &*m_registryServlet), &m_serverConnection,
       boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>());
-    m_feedContainer.Initialize(Beam::Initialize(m_serviceLocatorClient.get(),
+    m_feedContainer.emplace(Beam::Initialize(m_serviceLocatorClient.get(),
       &*m_registryServlet), &m_feedServerConnection,
       boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>());
     m_container->Open();
@@ -197,8 +173,9 @@ namespace Tests {
   }
 
   inline void MarketDataServiceTestEnvironment::Close() {
-    m_feedContainer.Reset();
-    m_container.Reset();
+    m_feedContainer.reset();
+    m_container.reset();
+    m_registryServlet.reset();
   }
 
   inline const LocalHistoricalDataStore& MarketDataServiceTestEnvironment::
@@ -235,8 +212,6 @@ namespace Tests {
       });
     auto client = std::make_unique<MarketDataService::MarketDataClient<
       ServiceProtocolClientBuilder>>(builder);
-    m_serviceLocatorClient->Associate(serviceLocatorClient->GetAccount(),
-      m_globalEntitlementGroup);
     return MakeVirtualMarketDataClient(std::move(client));
   }
 
