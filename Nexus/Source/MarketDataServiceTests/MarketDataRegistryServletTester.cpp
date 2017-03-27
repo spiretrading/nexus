@@ -29,9 +29,6 @@ void MarketDataRegistryServletTester::setUp() {
   auto administrationServiceLocatorClient =
     m_serviceLocatorEnvironment->BuildClient();
   administrationServiceLocatorClient->SetCredentials("root", "");
-  m_administrationEnvironment.emplace(
-    std::move(administrationServiceLocatorClient));
-  m_administrationEnvironment->Open();
   auto servletAccount = m_serviceLocatorEnvironment->GetRoot().MakeAccount(
     "servlet", "", DirectoryEntry::GetStarDirectory());
   auto clientEntry = m_serviceLocatorEnvironment->GetRoot().MakeAccount(
@@ -82,12 +79,16 @@ void MarketDataRegistryServletTester::setUp() {
   m_servletServiceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
   m_servletServiceLocatorClient->SetCredentials("servlet", "");
   m_servletServiceLocatorClient->Open();
+  m_administrationEnvironment.emplace(
+    std::move(administrationServiceLocatorClient));
+  m_administrationEnvironment->SetEntitlements(*m_entitlements);
+  m_administrationEnvironment->Open();
   auto marketDataAdministrationClient =
     m_administrationEnvironment->BuildClient(
     Ref(*m_servletServiceLocatorClient));
   m_registry.emplace();
-  m_registryServlet.emplace(*m_entitlements,
-    std::move(marketDataAdministrationClient), &*m_registry, Initialize());
+  m_registryServlet.emplace(std::move(marketDataAdministrationClient),
+    &*m_registry, Initialize());
   m_servlet.emplace(&*m_servletServiceLocatorClient, &*m_registryServlet);
   m_container.emplace(&*m_servlet, &*m_serverConnection,
     factory<std::shared_ptr<TriggerTimer>>());
@@ -96,8 +97,8 @@ void MarketDataRegistryServletTester::setUp() {
   m_clientServiceLocatorClient->SetCredentials("client", "");
   m_clientServiceLocatorClient->Open();
   m_clientProtocol->Open();
-  SessionAuthenticator<TestServiceLocatorClient> authenticator(
-    Ref(*m_clientServiceLocatorClient));
+  SessionAuthenticator<TestServiceLocatorClient> authenticator{
+    Ref(*m_clientServiceLocatorClient)};
   authenticator(*m_clientProtocol);
 }
 
@@ -118,8 +119,8 @@ void MarketDataRegistryServletTester::TestMarketAndSourceEntitlement() {
   query.SetIndex(GetTsxTestSecurity());
   query.SetRange(Range::RealTime());
   auto snapshot = m_clientProtocol->SendRequest<QueryBookQuotesService>(query);
-  SecurityBookQuote bookQuote(BookQuote("CHIC", false, DefaultMarkets::CHIC(),
-    Quote(Money::ONE, 100, Side::BID), second_clock::universal_time()),
-    GetTsxTestSecurity());
+  SecurityBookQuote bookQuote{BookQuote{"CHIC", false, DefaultMarkets::CHIC(),
+    Quote{Money::ONE, 100, Side::BID}, second_clock::universal_time()},
+    GetTsxTestSecurity()};
   m_registryServlet->UpdateBookQuote(bookQuote, 1);
 }

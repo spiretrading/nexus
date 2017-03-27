@@ -25,6 +25,8 @@ void BuyingPowerCheckTester::setUp() {
   m_traderRiskParameters.m_currency = DefaultCurrencies::USD();
   m_traderRiskParameters.m_allowedState.m_type = RiskState::Type::ACTIVE;
   m_traderRiskParameters.m_buyingPower = 1000 * Money::ONE;
+  m_environment->GetAdministrationEnvironment().MakeAdministrator(
+    m_serviceClients->GetServiceLocatorClient().GetAccount());
   m_serviceClients->GetAdministrationClient().StoreRiskParameters(
     DirectoryEntry::GetRootAccount(), m_traderRiskParameters);
   m_buyingPowerCheck.emplace(vector<ExchangeRate>{},
