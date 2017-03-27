@@ -110,6 +110,7 @@ void ClientWebPortalServlet::Open() {
       std::bind(&ClientWebPortalServlet::OnPortfolioUpdate, this,
       std::placeholders::_1)));
     m_portfolioModel.Open();
+    m_portfolioTimer->Start();
   } catch(const std::exception&) {
     m_openState.SetOpenFailure();
     Shutdown();
@@ -285,4 +286,5 @@ void ClientWebPortalServlet::OnPortfolioTimerExpired(Timer::Result result) {
       i = m_porfolioSubscribers.erase(i);
     }
   }
+  m_portfolioTimer->Start();
 }
