@@ -232,7 +232,6 @@ int main(int argc, const char** argv) {
   MarketDataRegistry marketDataRegistry;
   optional<BaseRegistryServlet> baseRegistryServlet;
   try {
-    auto entitlements = administrationClient->LoadEntitlements();
     PopulateRegistrySecurityInfo(Store(marketDataRegistry),
       definitionsClient->LoadMarketDatabase());
     auto cacheBlockSize = Extract<int>(config, "cache_block_size", 1000);
@@ -242,8 +241,8 @@ int main(int argc, const char** argv) {
       "database_threads", boost::thread::hardware_concurrency()));
     bufferedDataStore.emplace(&historicalDataStore, historicalBufferSize,
       Ref(threadPool));
-    baseRegistryServlet.emplace(entitlements, &*administrationClient,
-      &marketDataRegistry, Initialize(&*bufferedDataStore, cacheBlockSize));
+    baseRegistryServlet.emplace(&*administrationClient, &marketDataRegistry,
+      Initialize(&*bufferedDataStore, cacheBlockSize));
   } catch(const std::exception& e) {
     cerr << "Error initializing server: " << e.what() << endl;
     return -1;
