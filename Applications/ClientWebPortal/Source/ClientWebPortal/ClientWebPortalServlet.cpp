@@ -234,7 +234,7 @@ void ClientWebPortalServlet::OnPortfolioUpgrade(const HttpRequest& request,
                   {"destination", "/api/risk_service/portfolio"});
                 entryFrame.AddHeader(
                   {"content-type", "application/json"});
-                auto buffer = Encode<SharedBuffer>(sender, entry);
+                auto buffer = Encode<SharedBuffer>(sender, entry.second);
                 entryFrame.SetBody(std::move(buffer));
                 try {
                   subscriber->m_client->Write(entryFrame);

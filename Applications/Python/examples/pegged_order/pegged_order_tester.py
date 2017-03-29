@@ -9,12 +9,6 @@ class TestPeggedOrder(unittest.TestCase):
     self.environment.open()
     self.service_clients = nexus.TestServiceClients(self.environment)
     self.service_clients.open()
-    query = nexus.order_execution_service.AccountQuery()
-    query.index = self.service_clients.get_service_locator_client().account
-    query.range = beam.queries.Range.REAL_TIME
-    queue = beam.Queue()
-    self.service_clients.get_order_execution_client().query_order_submissions(
-      query, queue)
 
   def tearDown(self):
     self.service_clients.close()
