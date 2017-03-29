@@ -156,7 +156,8 @@ namespace MarketDataService {
   inline boost::optional<SequencedSecurityBboQuote> SecurityEntry::
       PublishBboQuote(const BboQuote& bboQuote, int sourceId) {
     m_technicalsSourceId = sourceId;
-    auto sequence = ++m_nextSequences.m_nextBboQuoteSequence;
+    auto sequence = m_nextSequences.m_nextBboQuoteSequence;
+    ++m_nextSequences.m_nextBboQuoteSequence;
     auto sequencedBboQuote = Beam::Queries::MakeSequencedValue(
       Beam::Queries::MakeIndexedValue(bboQuote, m_security), sequence);
     m_bboQuote = sequencedBboQuote;
@@ -165,7 +166,8 @@ namespace MarketDataService {
 
   inline boost::optional<SequencedSecurityMarketQuote> SecurityEntry::
       PublishMarketQuote(const MarketQuote& marketQuote, int sourceId) {
-    auto sequence = ++m_nextSequences.m_nextMarketQuoteSequence;
+    auto sequence = m_nextSequences.m_nextMarketQuoteSequence;
+    ++m_nextSequences.m_nextMarketQuoteSequence;
     auto sequencedMarketQuote = Beam::Queries::MakeSequencedValue(
       Beam::Queries::MakeIndexedValue(marketQuote, m_security), sequence);
     m_marketQuotes[marketQuote.m_market] = sequencedMarketQuote;
@@ -189,7 +191,8 @@ namespace MarketDataService {
       if(delta.m_quote.m_size <= 0) {
         return boost::none;
       }
-      auto sequence = ++m_nextSequences.m_nextBookQuoteSequence;
+      auto sequence = m_nextSequences.m_nextBookQuoteSequence;
+      ++m_nextSequences.m_nextBookQuoteSequence;
       book->emplace_back(Beam::Queries::MakeSequencedValue(
         Beam::Queries::MakeIndexedValue(delta, m_security), sequence),
         sourceId);
@@ -202,13 +205,15 @@ namespace MarketDataService {
           return boost::none;
         }
         if((*entry.m_quote)->m_quote.m_size == 0) {
-          auto sequence = ++m_nextSequences.m_nextBookQuoteSequence;
+          auto sequence = m_nextSequences.m_nextBookQuoteSequence;
+          ++m_nextSequences.m_nextBookQuoteSequence;
           BookQuoteEntry quoteEntry{Beam::Queries::MakeSequencedValue(
             Beam::Queries::MakeIndexedValue(delta, m_security), sequence),
             sourceId};
           entry = quoteEntry;
         } else {
-          auto sequence = ++m_nextSequences.m_nextBookQuoteSequence;
+          auto sequence = m_nextSequences.m_nextBookQuoteSequence;
+          ++m_nextSequences.m_nextBookQuoteSequence;
           entryIterator = book->emplace(entryIterator,
             Beam::Queries::MakeSequencedValue(Beam::Queries::MakeIndexedValue(
             delta, m_security), sequence), sourceId);
@@ -217,7 +222,8 @@ namespace MarketDataService {
         (*entry.m_quote)->m_quote.m_size = std::max<Quantity>(0,
           (*entry.m_quote)->m_quote.m_size + delta.m_quote.m_size);
         (*entry.m_quote)->m_timestamp = delta.m_timestamp;
-        auto sequence = ++m_nextSequences.m_nextBookQuoteSequence;
+        auto sequence = m_nextSequences.m_nextBookQuoteSequence;
+        ++m_nextSequences.m_nextBookQuoteSequence;
         entry.m_quote.GetSequence() = sequence;
         entry.m_sourceId = sourceId;
       }
@@ -239,7 +245,8 @@ namespace MarketDataService {
       m_technicals.m_low = timeAndSale.m_price;
     }
     m_technicals.m_volume += timeAndSale.m_size;
-    auto sequence = ++m_nextSequences.m_nextTimeAndSaleSequence;
+    auto sequence = m_nextSequences.m_nextTimeAndSaleSequence;
+    ++m_nextSequences.m_nextTimeAndSaleSequence;
     auto sequencedTimeAndSale(Beam::Queries::MakeSequencedValue(
       Beam::Queries::MakeIndexedValue(timeAndSale, m_security), sequence));
     m_timeAndSale = sequencedTimeAndSale;
