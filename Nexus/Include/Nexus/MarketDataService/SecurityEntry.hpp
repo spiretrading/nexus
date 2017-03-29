@@ -3,7 +3,6 @@
 #include <unordered_map>
 #include <vector>
 #include <Beam/Utilities/Algorithm.hpp>
-#include <boost/atomic/atomic.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Definitions/SecurityTechnicals.hpp"
@@ -116,34 +115,26 @@ namespace MarketDataService {
       };
       Security m_security;
       SecurityTechnicals m_technicals;
+      int m_technicalsSourceId;
       SequencedSecurityBboQuote m_bboQuote;
       SequencedSecurityTimeAndSale m_timeAndSale;
       std::unordered_map<MarketCode, SequencedSecurityMarketQuote>
         m_marketQuotes;
       std::vector<BookQuoteEntry> m_askBook;
       std::vector<BookQuoteEntry> m_bidBook;
-      boost::atomic<Beam::Queries::Sequence::Ordinal> m_bboQuoteSequence;
-      boost::atomic<Beam::Queries::Sequence::Ordinal> m_bookQuoteSequence;
-      boost::atomic<Beam::Queries::Sequence::Ordinal> m_marketQuoteSequence;
-      boost::atomic<Beam::Queries::Sequence::Ordinal> m_timeAndSalesSequence;
+      InitialSequences m_nextSequences;
   };
 
   inline SecurityEntry::BookQuoteEntry::BookQuoteEntry(
       const SequencedSecurityBookQuote& quote, int sourceId)
-      : m_quote(quote),
-        m_sourceId(sourceId) {}
+      : m_quote{quote},
+        m_sourceId{sourceId} {}
 
   inline SecurityEntry::SecurityEntry(const Security& security,
       Money closePrice, const InitialSequences& initialSequences)
-      : m_security(security),
-        m_bboQuoteSequence(
-          initialSequences.m_nextBboQuoteSequence.GetOrdinal()),
-        m_bookQuoteSequence(
-          initialSequences.m_nextBookQuoteSequence.GetOrdinal()),
-        m_marketQuoteSequence(
-          initialSequences.m_nextMarketQuoteSequence.GetOrdinal()),
-        m_timeAndSalesSequence(
-          initialSequences.m_nextTimeAndSaleSequence.GetOrdinal()) {
+      : m_security{security},
+        m_technicalsSourceId{-1},
+        m_nextSequences{initialSequences} {
     m_technicals.m_close = closePrice;
   }
 
@@ -161,20 +152,19 @@ namespace MarketDataService {
 
   inline boost::optional<SequencedSecurityBboQuote> SecurityEntry::
       PublishBboQuote(const BboQuote& bboQuote, int sourceId) {
-    auto sequence = ++m_bboQuoteSequence;
+    m_technicalsSourceId = sourceId;
+    auto sequence = ++m_nextSequences.m_nextBboQuoteSequence;
     auto sequencedBboQuote = Beam::Queries::MakeSequencedValue(
-      Beam::Queries::MakeIndexedValue(bboQuote, m_security),
-      Beam::Queries::Sequence(sequence));
+      Beam::Queries::MakeIndexedValue(bboQuote, m_security), sequence);
     m_bboQuote = sequencedBboQuote;
     return sequencedBboQuote;
   }
 
   inline boost::optional<SequencedSecurityMarketQuote> SecurityEntry::
       PublishMarketQuote(const MarketQuote& marketQuote, int sourceId) {
-    auto sequence = ++m_marketQuoteSequence;
+    auto sequence = ++m_nextSequences.m_nextMarketQuoteSequence;
     auto sequencedMarketQuote = Beam::Queries::MakeSequencedValue(
-      Beam::Queries::MakeIndexedValue(marketQuote, m_security),
-      Beam::Queries::Sequence(sequence));
+      Beam::Queries::MakeIndexedValue(marketQuote, m_security), sequence);
     m_marketQuotes[marketQuote.m_market] = sequencedMarketQuote;
     return sequencedMarketQuote;
   }
@@ -189,17 +179,17 @@ namespace MarketDataService {
     }
     auto entryIterator = Beam::LinearLowerBound(book->begin(), book->end(),
       delta,
-      [] (const BookQuoteEntry& lhs, const BookQuote& rhs) {
+      [] (auto& lhs, auto& rhs) {
         return BookQuoteListingComparator(**lhs.m_quote, rhs);
       });
     if(entryIterator == book->end()) {
       if(delta.m_quote.m_size <= 0) {
         return boost::none;
       }
-      auto sequence = ++m_bookQuoteSequence;
+      auto sequence = ++m_nextSequences.m_nextBookQuoteSequence;
       book->emplace_back(Beam::Queries::MakeSequencedValue(
-        Beam::Queries::MakeIndexedValue(delta, m_security),
-        Beam::Queries::Sequence(sequence)), sourceId);
+        Beam::Queries::MakeIndexedValue(delta, m_security), sequence),
+        sourceId);
       entryIterator = book->end() - 1;
     } else {
       auto& entry = *entryIterator;
@@ -209,24 +199,23 @@ namespace MarketDataService {
           return boost::none;
         }
         if((*entry.m_quote)->m_quote.m_size == 0) {
-          auto sequence = ++m_bookQuoteSequence;
-          BookQuoteEntry quoteEntry(Beam::Queries::MakeSequencedValue(
-            Beam::Queries::MakeIndexedValue(delta, m_security),
-            Beam::Queries::Sequence(sequence)), sourceId);
+          auto sequence = ++m_nextSequences.m_nextBookQuoteSequence;
+          BookQuoteEntry quoteEntry{Beam::Queries::MakeSequencedValue(
+            Beam::Queries::MakeIndexedValue(delta, m_security), sequence),
+            sourceId};
           entry = quoteEntry;
         } else {
-          auto sequence = ++m_bookQuoteSequence;
+          auto sequence = ++m_nextSequences.m_nextBookQuoteSequence;
           entryIterator = book->emplace(entryIterator,
-            Beam::Queries::MakeSequencedValue(
-            Beam::Queries::MakeIndexedValue(delta, m_security),
-            Beam::Queries::Sequence(sequence)), sourceId);
+            Beam::Queries::MakeSequencedValue(Beam::Queries::MakeIndexedValue(
+            delta, m_security), sequence), sourceId);
         }
       } else {
         (*entry.m_quote)->m_quote.m_size = std::max<Quantity>(0,
           (*entry.m_quote)->m_quote.m_size + delta.m_quote.m_size);
         (*entry.m_quote)->m_timestamp = delta.m_timestamp;
-        auto sequence = ++m_bookQuoteSequence;
-        entry.m_quote.GetSequence() = Beam::Queries::Sequence(sequence);
+        auto sequence = ++m_nextSequences.m_nextBookQuoteSequence;
+        entry.m_quote.GetSequence() = sequence;
         entry.m_sourceId = sourceId;
       }
     }
@@ -247,10 +236,9 @@ namespace MarketDataService {
       m_technicals.m_low = timeAndSale.m_price;
     }
     m_technicals.m_volume += timeAndSale.m_size;
-    auto sequence = ++m_timeAndSalesSequence;
+    auto sequence = ++m_nextSequences.m_nextTimeAndSaleSequence;
     auto sequencedTimeAndSale(Beam::Queries::MakeSequencedValue(
-      Beam::Queries::MakeIndexedValue(timeAndSale, m_security),
-      Beam::Queries::Sequence(sequence)));
+      Beam::Queries::MakeIndexedValue(timeAndSale, m_security), sequence));
     m_timeAndSale = sequencedTimeAndSale;
     return sequencedTimeAndSale;
   }
@@ -264,17 +252,17 @@ namespace MarketDataService {
     if(m_security.GetMarket().IsEmpty()) {
       return boost::none;
     }
-    SecuritySnapshot snapshot(m_security);
+    SecuritySnapshot snapshot{m_security};
     snapshot.m_bboQuote = m_bboQuote;
     snapshot.m_timeAndSale = m_timeAndSale;
     snapshot.m_marketQuotes.insert(m_marketQuotes.begin(),
       m_marketQuotes.end());
-    for(const auto& entry : m_askBook) {
+    for(auto& entry : m_askBook) {
       if((*entry.m_quote)->m_quote.m_size > 0) {
         snapshot.m_askBook.push_back(entry.m_quote);
       }
     }
-    for(const auto& entry : m_bidBook) {
+    for(auto& entry : m_bidBook) {
       if((*entry.m_quote)->m_quote.m_size > 0) {
         snapshot.m_bidBook.push_back(entry.m_quote);
       }
@@ -283,13 +271,16 @@ namespace MarketDataService {
   }
 
   inline void SecurityEntry::Clear(int sourceId) {
+    if(sourceId == m_technicalsSourceId) {
+      m_technicals = {};
+    }
     auto askRange = std::remove_if(m_askBook.begin(), m_askBook.end(),
-      [&] (const BookQuoteEntry& bookQuoteEntry) {
+      [&] (auto& bookQuoteEntry) {
         return bookQuoteEntry.m_sourceId == sourceId;
       });
     m_askBook.erase(askRange, m_askBook.end());
     auto bidRange = std::remove_if(m_bidBook.begin(), m_bidBook.end(),
-      [&] (const BookQuoteEntry& bookQuoteEntry) {
+      [&] (auto& bookQuoteEntry) {
         return bookQuoteEntry.m_sourceId == sourceId;
       });
     m_bidBook.erase(bidRange, m_bidBook.end());
