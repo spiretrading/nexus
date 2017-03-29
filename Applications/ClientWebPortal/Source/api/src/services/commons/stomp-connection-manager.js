@@ -95,25 +95,12 @@ class StompConnectionManager {
   }
 
   connect() {
-    // later to be replaced with the stomp client at
-    // https://github.com/JSteunou/webstomp-client
-    // this.client = new MockServer();
-    /*
     return new Promise((resolve, reject) => {
-      this.client = new MockServer();
-      resolve();
-    });
-    */
-
-
-    // below is a test code to see if a WS connection can be made
-    // this.realClient = webstomp.client('ws://192.168.1.129:8080/api/risk_service/portfolio');
-    return new Promise((resolve, reject) => {
-      // TODO: temporarily hardcoded url
       let websocket = new WebSocket(this.connectionUrl);
-      this.client = webstomp.over(websocket);
+      this.client = webstomp.over(websocket, {
+        debug: false
+      });
       this.client.connect({}, () => {
-        console.debug('STOMP connection has been made.');
         resolve();
       });
     });
@@ -138,17 +125,6 @@ class StompConnectionManager {
     if (!this.isConnected.apply(this)){
       // connection doesn't exist, connect and subscribe
       return this.connect.apply(this)
-        .then(() => {
-          return new Promise((resolve, reject) => {
-
-            // TODO: TEMPORARY CODE pause for 2 seconds to allow STOMP to make the connection to rule out race condition
-            setTimeout(() => {
-              console.debug('performed 2 seconds pause');
-              resolve();
-            }, 2000);
-
-          });
-        })
         .then(performSubscribe.bind(this));
     } else {
 
@@ -160,7 +136,6 @@ class StompConnectionManager {
     }
 
     function performSubscribe() {
-      console.debug('performing subscribe');
       let subId = uuid.v4();
       this.subIdToTopic.set(subId, destination);
       if (!this.destinationToListeners.has(destination)) {

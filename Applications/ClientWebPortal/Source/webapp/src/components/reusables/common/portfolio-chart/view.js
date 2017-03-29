@@ -2,6 +2,8 @@ import './style.scss';
 import React from 'react';
 import UpdatableView from 'commons/updatable-view';
 import currencyFormatter from 'utils/currency-formatter';
+import definitionsService from 'services/definitions';
+import numberFormatter from 'utils/number-formatter';
 
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
@@ -105,6 +107,7 @@ class View extends UpdatableView {
     let rows = [];
     let accountIds = [];
     let fixedBodyRows = [];
+
     if (this.componentModel.data != null && this.componentModel.data[0] != null) {
       for (let column in this.componentModel.data[0]) {
         columns.push(
@@ -120,26 +123,38 @@ class View extends UpdatableView {
         accountIds.push(rowData.account);
         let columns = [];
         for (let property in rowData) {
-          let value = rowData[property];
 
+          // get the value
+          let value;
+          if (property == 'account') {
+            value = rowData[property].name;
+          } else if (property == 'average_price' ||
+            property == 'cost_basis' ||
+            property == 'fees' ||
+            property == 'realized_profit_and_loss' ||
+            property == 'total_profit_and_loss' ||
+            property == 'unrealized_profit_and_loss') {
+            value = rowData[property].toNumber();
+          } else if (property == 'currency') {
+            value = definitionsService.getCurrencyCode(rowData[property].value);
+          } else if (property == 'open_quantity' ||
+            property == 'trades' ||
+            property == 'volume') {
+            value = numberFormatter.formatWithComma(rowData[property]);
+          } else if (property == 'security') {
+            value = rowData[property].symbol + '.' + rowData[property].market.value;
+          }
+
+          // set classes to color the fonts for P&L values
           let className = '';
           if (property === 'total_profit_and_loss' ||
             property === 'unrealized_profit_and_loss' ||
             property === 'realized_profit_and_loss') {
             if (value > 0) {
               className = 'profit';
-            } else {
+            } else if (value < 0) {
               className = 'loss';
             }
-          }
-
-          if (property === 'average_price' ||
-            property === 'total_profit_and_loss' ||
-            property === 'unrealized_profit_and_loss' ||
-            property === 'realized_profit_and_loss' ||
-            property === 'fees' ||
-            property === 'cost_basis') {
-            value = currencyFormatter.formatByCode(rowData.currency, value);
           }
 
           columns.push(
@@ -159,7 +174,7 @@ class View extends UpdatableView {
       for (let i=0; i<accountIds.length; i++){
         fixedBodyRows.push(
           <tr key={i}>
-            <td className="body-cell">{accountIds[i]}</td>
+            <td className="body-cell">{accountIds[i].name}</td>
           </tr>
         );
       }

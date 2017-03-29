@@ -7,7 +7,7 @@ import serviceLocatorClient from './services/service-locator';
 import riskServiceClient from './services/risk-service';
 
 import serviceLocatorResultCodes from './services/service-locator/result-codes';
-import directoryEntry from './services/service-locator/directory-entry';
+import directoryEntry from './definitions/directory-entry';
 import accountIdentity from './services/administration-service/account-identity';
 
 // definitions

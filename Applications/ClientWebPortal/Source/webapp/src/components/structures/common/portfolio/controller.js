@@ -33,11 +33,9 @@ class Controller {
   }
 
   /** @private */
-  onPortfolioMessageReceived(message) {
-    console.debug('portfolio message received');
-    console.debug(message);
-    let cacheKey = message.account + message.currency + message.security;
-    this.portfolioData.set(cacheKey, message);
+  onPortfolioDataReceived(data) {
+    let cacheKey = data.account.id + data.currency.value + data.security.market.value + data.security.symbol;
+    this.portfolioData.set(cacheKey, data);
     this.componentModel.portfolioData = this.portfolioData.values();
     this.view.update(this.componentModel);
   }
@@ -48,7 +46,7 @@ class Controller {
     };
     let requiredDataFetchPromise = this.getRequiredData.apply(this);
 
-    this.riskServiceClient.subscribePortfolio(this.onPortfolioMessageReceived.bind(this))
+    this.riskServiceClient.subscribePortfolio(this.onPortfolioDataReceived.bind(this))
       .then((subscriptionId) => {
         this.portfolioSubscriptionId = subscriptionId;
       });
