@@ -7,6 +7,7 @@
 #include <Beam/Utilities/AssertionException.hpp>
 #include <Beam/Utilities/Remote.hpp>
 #include <Beam/Utilities/SynchronizedMap.hpp>
+#include <Beam/Utilities/SynchronizedSet.hpp>
 #include <Beam/Utilities/Trie.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
@@ -43,12 +44,12 @@ namespace Details {
         }
       }();
     for(auto& marketCenter : marketCenters) {
-      Beam::Queries::StringValue queryMarketCode(marketCenter);
-      Beam::Queries::ConstantExpression marketCodeExpression(queryMarketCode);
-      Beam::Queries::ParameterExpression parameterExpression(
-        0, Nexus::Queries::TimeAndSaleType());
-      Beam::Queries::MemberAccessExpression accessExpression("market_center",
-        Beam::Queries::StringType(), parameterExpression);
+      Beam::Queries::StringValue queryMarketCode{marketCenter};
+      Beam::Queries::ConstantExpression marketCodeExpression{queryMarketCode};
+      Beam::Queries::ParameterExpression parameterExpression{
+        0, Nexus::Queries::TimeAndSaleType{}};
+      Beam::Queries::MemberAccessExpression accessExpression{"market_center",
+        Beam::Queries::StringType{}, parameterExpression};
       auto equalExpression = Beam::Queries::MakeEqualsExpression(
         marketCodeExpression, accessExpression);
       MarketDataService::SecurityMarketDataQuery previousCloseQuery;
@@ -183,6 +184,7 @@ namespace Details {
         SyncMarketEntry, Beam::Threading::Mutex>>> m_marketEntries;
       Beam::SynchronizedUnorderedMap<Security, std::shared_ptr<Beam::Remote<
         SyncSecurityEntry, Beam::Threading::Mutex>>> m_securityEntries;
+      Beam::SynchronizedUnorderedSet<Security> m_clearedSecurities;
 
       template<typename DataStore>
       boost::optional<SyncMarketEntry&> LoadMarketEntry(MarketCode market,
@@ -199,7 +201,7 @@ namespace Details {
     auto key = ToString(securityInfo.m_security, GetDefaultMarketDatabase());
     auto name = boost::to_upper_copy(securityInfo.m_name);
     Beam::Threading::With(m_securityDatabase,
-      [&] (rtv::Trie<char, SecurityInfo>& securityDatabase) {
+      [&] (auto& securityDatabase) {
         securityDatabase[key.c_str()] = securityInfo;
         securityDatabase[name.c_str()] = securityInfo;
       });
@@ -213,7 +215,7 @@ namespace Details {
     std::unordered_set<SecurityInfo> matches;
     auto uppercasePrefix = boost::to_upper_copy(prefix);
     Beam::Threading::With(m_securityDatabase,
-      [&] (const rtv::Trie<char, SecurityInfo>& securityDatabase) {
+      [&] (auto& securityDatabase) {
         for(auto i = securityDatabase.startsWith(uppercasePrefix.c_str());
             i != securityDatabase.end(); ++i) {
           matches.insert(*i->second);
@@ -226,7 +228,7 @@ namespace Details {
         i = matches.erase(i);
       } else {
         Beam::Threading::With(***entry,
-          [&] (SecurityEntry& entry) {
+          [&] (auto& entry) {
             if((*entry.GetBboQuote())->m_ask.m_price == Money::ZERO) {
               i = matches.erase(i);
             } else {
@@ -257,7 +259,7 @@ namespace Details {
       return Security{security.GetSymbol(), CountryDatabase::NONE};
     }
     return Beam::Threading::With(***entry,
-      [&] (SecurityEntry& entry) {
+      [&] (auto& entry) {
         if(entry.GetSecurity().GetMarket().IsEmpty()) {
           return Security{security.GetSymbol(), CountryDatabase::NONE};
         }
@@ -281,7 +283,7 @@ namespace Details {
     Security security;
     Money referencePrice;
     Beam::Threading::With(*securityEntry,
-      [&] (SecurityEntry& securityEntry) {
+      [&] (auto& securityEntry) {
         security = securityEntry.GetSecurity();
         if(orderImbalance->m_referencePrice == Money::ZERO) {
           if(orderImbalance->m_side == Side::BID) {
@@ -294,7 +296,7 @@ namespace Details {
         }
       });
     Beam::Threading::With(*marketEntry,
-      [&] (MarketEntry& entry) {
+      [&] (auto& entry) {
         OrderImbalance sanitizedOrderImbalance = orderImbalance;
         sanitizedOrderImbalance.m_security = std::move(security);
         sanitizedOrderImbalance.m_referencePrice = std::move(referencePrice);
@@ -314,7 +316,7 @@ namespace Details {
       return;
     }
     Beam::Threading::With(*entry,
-      [&] (SecurityEntry& entry) {
+      [&] (auto& entry) {
         if(entry.GetSecurity().GetMarket().IsEmpty()) {
           auto verifiedSecurity = m_verifiedSecurities.Find(
             bboQuote.GetIndex());
@@ -326,7 +328,7 @@ namespace Details {
           auto key = ToString(entry.GetSecurity(), GetDefaultMarketDatabase());
           SecurityInfo securityInfo{entry.GetSecurity(), key, ""};
           Beam::Threading::With(m_securityDatabase,
-            [&] (rtv::Trie<char, SecurityInfo>& securityDatabase) {
+            [&] (auto& securityDatabase) {
               securityDatabase.insert(key.c_str(), securityInfo);
           });
         }
@@ -347,7 +349,7 @@ namespace Details {
       return;
     }
     Beam::Threading::With(*entry,
-      [&] (SecurityEntry& entry) {
+      [&] (auto& entry) {
         auto sequencedMarketQuote = entry.PublishMarketQuote(
           std::move(marketQuote), sourceId);
         if(sequencedMarketQuote.is_initialized()) {
@@ -364,7 +366,7 @@ namespace Details {
       return;
     }
     Beam::Threading::With(*entry,
-      [&] (SecurityEntry& entry) {
+      [&] (auto& entry) {
         auto sequencedBookQuote = entry.UpdateBookQuote(std::move(delta),
           sourceId);
         if(sequencedBookQuote.is_initialized()) {
@@ -382,7 +384,15 @@ namespace Details {
       return;
     }
     Beam::Threading::With(*entry,
-      [&] (SecurityEntry& entry) {
+      [&] (auto& entry) {
+        if(entry.GetSecurityTechnicals().m_close == Money::ZERO) {
+          if(m_clearedSecurities.Contains(timeAndSale.GetIndex())) {
+            auto closePrice = Details::LoadClosePrice(timeAndSale.GetIndex(),
+              dataStore);
+            entry.GetSecurityTechnicals().m_close = closePrice;
+            m_clearedSecurities.Erase(timeAndSale.GetIndex());
+          }
+        }
         auto sequencedTimeAndSale = entry.PublishTimeAndSale(
           std::move(timeAndSale), sourceId);
         if(sequencedTimeAndSale.is_initialized()) {
@@ -398,7 +408,7 @@ namespace Details {
       return boost::none;
     }
     return Beam::Threading::With(***entry,
-      [&] (SecurityEntry& entry) {
+      [&] (auto& entry) {
         return entry.GetSecurityTechnicals();
       });
   }
@@ -410,19 +420,22 @@ namespace Details {
       return boost::none;
     }
     return Beam::Threading::With(***entry,
-      [&] (SecurityEntry& entry) {
+      [&] (auto& entry) {
         return entry.LoadSnapshot();
       });
   }
 
   inline void MarketDataRegistry::Clear(int sourceId) {
     m_securityEntries.With(
-      [&] (const auto& securityEntries) {
-      for(const auto& entry : securityEntries | boost::adaptors::map_values) {
+      [&] (auto& securityEntries) {
+      for(auto& entry : securityEntries | boost::adaptors::map_values) {
         if(entry->IsAvailable()) {
           Beam::Threading::With(**entry,
             [&] (auto& entry) {
               entry.Clear(sourceId);
+              if(entry.GetSecurityTechnicals().m_high == Money::ZERO) {
+                m_clearedSecurities.Insert(entry.GetSecurity());
+              }
             });
         }
       }
@@ -440,7 +453,7 @@ namespace Details {
       [&] {
         return std::make_shared<
             Beam::Remote<SyncMarketEntry, Beam::Threading::Mutex>>(
-          [&] (Beam::DelayPtr<SyncMarketEntry>& entry) {
+          [&] (auto& entry) {
             auto initialSequences = dataStore.LoadInitialSequences(market);
             entry.Initialize(market, initialSequences);
           });
@@ -461,7 +474,7 @@ namespace Details {
         Security sanitizedSecurity{security.GetSymbol(), security.GetCountry()};
         return std::make_shared<
             Beam::Remote<SyncSecurityEntry, Beam::Threading::Mutex>>(
-          [&, sanitizedSecurity] (Beam::DelayPtr<SyncSecurityEntry>& entry) {
+          [&, sanitizedSecurity] (auto& entry) {
             auto initialSequences = dataStore.LoadInitialSequences(
               sanitizedSecurity);
             auto closePrice = Details::LoadClosePrice(sanitizedSecurity,

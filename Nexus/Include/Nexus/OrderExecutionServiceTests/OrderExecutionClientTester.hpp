@@ -4,12 +4,12 @@
 #include <Beam/IO/LocalClientChannel.hpp>
 #include <Beam/IO/LocalServerConnection.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
-#include <Beam/Pointers/DelayPtr.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/Services/ServiceProtocolClientBuilder.hpp>
 #include <Beam/Services/ServiceProtocolServer.hpp>
 #include <Beam/Threading/TriggerTimer.hpp>
+#include <boost/optional/optional.hpp>
 #include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTests.hpp"
 
@@ -57,9 +57,9 @@ namespace Tests {
       void TestSubmitOrder();
 
     private:
-      Beam::DelayPtr<ServerConnection> m_serverConnection;
-      Beam::DelayPtr<ServiceProtocolServer> m_server;
-      Beam::DelayPtr<TestOrderExecutionClient> m_client;
+      boost::optional<ServerConnection> m_serverConnection;
+      boost::optional<ServiceProtocolServer> m_server;
+      boost::optional<TestOrderExecutionClient> m_client;
 
       CPPUNIT_TEST_SUITE(OrderExecutionClientTester);
         CPPUNIT_TEST(TestSubmitOrder);
