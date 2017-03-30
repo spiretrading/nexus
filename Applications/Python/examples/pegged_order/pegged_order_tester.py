@@ -28,10 +28,8 @@ class TestPeggedOrder(unittest.TestCase):
     order = pegged_order.PeggedOrder(self.service_clients, order_fields,
       nexus.Money.CENT)
     order.start()
-    bbo = nexus.BboQuote(
-      nexus.Quote(nexus.Money.from_value('1.00'), 100, nexus.Side.BID),
-      nexus.Quote(nexus.Money.from_value('1.01'), 100, nexus.Side.ASK), None)
-    self.environment.update(security, bbo)
+    self.environment.update_bbo_price(security,
+      nexus.Money.from_value('1.00'), nexus.Money.from_value('1.01'))
     submission_queue = beam.Queue()
     self.environment.monitor_order_submissions(submission_queue)
     expected_order = submission_queue.top()
@@ -63,10 +61,8 @@ class TestPeggedOrder(unittest.TestCase):
     order = pegged_order.PeggedOrder(self.service_clients, order_fields,
       nexus.Money.CENT)
     order.start()
-    bbo = nexus.BboQuote(
-      nexus.Quote(nexus.Money.from_value('1.00'), 100, nexus.Side.BID),
-      nexus.Quote(nexus.Money.from_value('1.01'), 100, nexus.Side.ASK), None)
-    self.environment.update(security, bbo)
+    self.environment.update_bbo_price(security,
+      nexus.Money.from_value('1.00'), nexus.Money.from_value('1.01'))
     submission_queue = beam.Queue()
     self.environment.monitor_order_submissions(submission_queue)
     expected_order = submission_queue.top()
@@ -75,10 +71,8 @@ class TestPeggedOrder(unittest.TestCase):
       nexus.Money.from_value('1.02'))
     self.assertEqual(expected_order.info.fields.quantity, 1000)
     self.environment.accept_order(expected_order)
-    bbo = nexus.BboQuote(
-      nexus.Quote(nexus.Money.from_value('0.90'), 100, nexus.Side.BID),
-      nexus.Quote(nexus.Money.from_value('0.91'), 100, nexus.Side.ASK), None)
-    self.environment.update(security, bbo)
+    self.environment.update_bbo_price(security,
+      nexus.Money.from_value('0.90'), nexus.Money.from_value('0.91'))
     self.assertTrue(nexus.order_execution_service.tests.is_pending_cancel(
       expected_order))
     self.environment.cancel_order(expected_order)
