@@ -7,7 +7,7 @@
 #include <Beam/Pointers/DelayPtr.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
-#include <Beam/ServiceLocatorTests/ServiceLocatorTestInstance.hpp>
+#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Threading/TriggerTimer.hpp>
@@ -79,8 +79,8 @@ namespace Tests {
       void TestLoadManagedTradingGroups();
 
     private:
-      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestInstance>
-        m_serviceLocatorInstance;
+      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment>
+        m_serviceLocatorEnvironment;
       std::shared_ptr<LocalAdministrationDataStore> m_dataStore;
       std::shared_ptr<ServerConnection> m_serverConnection;
       Beam::DelayPtr<ServletContainer> m_container;

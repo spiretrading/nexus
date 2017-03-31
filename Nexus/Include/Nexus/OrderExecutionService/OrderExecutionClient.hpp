@@ -8,7 +8,9 @@
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Queues/WeakQueue.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
+#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/SynchronizedMap.hpp>
+#include <Beam/Utilities/SynchronizedSet.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/range/adaptor/map.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
@@ -129,6 +131,8 @@ namespace OrderExecutionService {
       Beam::SequencePublisher<const Order*> m_submissionPublisher;
       Beam::SynchronizedUnorderedMap<OrderId, std::shared_ptr<PrimitiveOrder>>
         m_orders;
+      Beam::SynchronizedUnorderedSet<Beam::ServiceLocator::DirectoryEntry,
+        Beam::Threading::Mutex> m_realTimeSubscriptions;
       std::unordered_map<OrderId, OrderEntry> m_orderEntries;
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_executionReportTasks;
@@ -225,6 +229,20 @@ namespace OrderExecutionService {
   const Order& OrderExecutionClient<ServiceProtocolClientBuilderType>::Submit(
       const OrderFields& fields) {
     auto client = m_clientHandler.GetClient();
+    if(!m_realTimeSubscriptions.Contains(fields.m_account)) {
+      m_realTimeSubscriptions.With(
+        [&] (auto& realTimeSubscriptions) {
+          if(Beam::Contains(realTimeSubscriptions, fields.m_account)) {
+            return;
+          }
+          AccountQuery realTimeQuery;
+          realTimeQuery.SetIndex(fields.m_account);
+          realTimeQuery.SetRange(Beam::Queries::Range::RealTime());
+          client->template SendRequest<QueryOrderSubmissionsService>(
+            realTimeQuery);
+          realTimeSubscriptions.insert(fields.m_account);
+        });
+    }
     auto orderInfo = client->template SendRequest<NewOrderSingleService>(
       fields);
     auto orderRecord = Beam::Queries::MakeSequencedValue(

@@ -15,7 +15,7 @@ namespace MarketDataService {
     public:
 
       //! Constructs a MarketDataRegistrySession.
-      MarketDataRegistrySession();
+      MarketDataRegistrySession() = default;
 
       //! Returns the set of market data entitlements.
       EntitlementSet GetEntitlements() const;
@@ -26,8 +26,6 @@ namespace MarketDataService {
     private:
       EntitlementSet m_entitlements;
   };
-
-  inline MarketDataRegistrySession::MarketDataRegistrySession() {}
 
   inline EntitlementSet MarketDataRegistrySession::GetEntitlements() const {
     return m_entitlements;

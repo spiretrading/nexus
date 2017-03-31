@@ -7,13 +7,13 @@
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
-#include <Beam/ServiceLocatorTests/ServiceLocatorTestInstance.hpp>
+#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Threading/TriggerTimer.hpp>
 #include <Beam/TimeService/IncrementalTimeClient.hpp>
 #include <Beam/Utilities/BeamWorkaround.hpp>
 #include <cppunit/extensions/HelperMacros.h>
-#include "Nexus/AdministrationServiceTests/AdministrationServiceTestInstance.hpp"
+#include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Compliance/ComplianceRuleSet.hpp"
 #include "Nexus/Compliance/ComplianceServlet.hpp"
 #include "Nexus/Compliance/LocalComplianceRuleDataStore.hpp"
@@ -61,11 +61,11 @@ namespace Tests {
       virtual void tearDown();
 
     private:
-      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestInstance>
-        m_serviceLocatorInstance;
+      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment>
+        m_serviceLocatorEnvironment;
       Beam::DelayPtr<
-        AdministrationService::Tests::AdministrationServiceTestInstance>
-        m_administrationServiceInstance;
+        AdministrationService::Tests::AdministrationServiceTestEnvironment>
+        m_administrationServiceEnvironment;
       Beam::DelayPtr<LocalComplianceRuleDataStore> m_dataStore;
       Beam::DelayPtr<TestComplianceRuleSet> m_complianceRuleSet;
       Beam::DelayPtr<ServerConnection> m_serverConnection;

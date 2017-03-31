@@ -1,5 +1,6 @@
 #ifndef NEXUS_TAG_HPP
 #define NEXUS_TAG_HPP
+#include <ostream>
 #include <string>
 #include <Beam/Serialization/ShuttleVariant.hpp>
 #include <boost/date_time/gregorian/greg_date.hpp>
@@ -77,9 +78,13 @@ namespace Nexus {
       Type m_value;
   };
 
+  inline std::ostream& operator <<(std::ostream& out, const Tag& value) {
+    return out << "(" << value.GetKey() << " " << value.GetValue() << ")";
+  }
+
   inline Tag::Tag(int key, const Type& value)
-      : m_key(key),
-        m_value(value) {}
+      : m_key{key},
+        m_value{value} {}
 
   inline bool Tag::operator ==(const Tag& tag) const {
     return std::tie(m_key, m_value) == std::tie(tag.m_key, tag.m_value);

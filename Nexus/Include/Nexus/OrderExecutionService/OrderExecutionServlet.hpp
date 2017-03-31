@@ -10,6 +10,7 @@
 #include <boost/noncopyable.hpp>
 #include "Nexus/Accounting/ShortingTracker.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
+#include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionServices.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionSession.hpp"

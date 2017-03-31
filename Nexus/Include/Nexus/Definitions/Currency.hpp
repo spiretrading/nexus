@@ -1,6 +1,7 @@
 #ifndef NEXUS_CURRENCY_HPP
 #define NEXUS_CURRENCY_HPP
 #include <algorithm>
+#include <ostream>
 #include <string>
 #include <vector>
 #include <Beam/Serialization/DataShuttle.hpp>
@@ -193,6 +194,10 @@ namespace Nexus {
       currencyDatabase.Add(entry);
     }
     return currencyDatabase;
+  }
+
+  inline std::ostream& operator <<(std::ostream& out, CurrencyId value) {
+    return out << value.m_value;
   }
 
   inline CurrencyId CurrencyId::NONE() {

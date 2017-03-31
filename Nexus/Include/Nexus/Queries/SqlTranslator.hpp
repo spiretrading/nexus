@@ -37,7 +37,7 @@ namespace Queries {
         \param expression The Expression to translate.
       */
       SqlTranslator(std::string parameter,
-        const Beam::Queries::Expression& expression);
+        Beam::Queries::Expression expression);
 
       virtual void Visit(const Beam::Queries::ConstantExpression& expression)
         override;
@@ -63,14 +63,15 @@ namespace Queries {
     \return The SQL query representing the <i>expression</i>.
   */
   inline std::string BuildSqlQuery(std::string parameter,
-      const Beam::Queries::Expression& expression) {
-    SqlTranslator translator{std::move(parameter), expression};
+      Beam::Queries::Expression expression) {
+    SqlTranslator translator{std::move(parameter), std::move(expression)};
     return translator.BuildQuery();
   }
 
   inline SqlTranslator::SqlTranslator(std::string parameter,
-      const Beam::Queries::Expression& expression)
-      : Beam::Queries::SqlTranslator{std::move(parameter), expression} {}
+      Beam::Queries::Expression expression)
+      : Beam::Queries::SqlTranslator{std::move(parameter),
+          std::move(expression)} {}
 
   inline void SqlTranslator::Visit(
       const Beam::Queries::ConstantExpression& expression) {

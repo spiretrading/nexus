@@ -23,7 +23,9 @@ add_library(Catalog
   ${generated_source_files})
 
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
-set_target_properties(Catalog PROPERTIES OUTPUT_NAME spire_catalog)
+set_target_properties(Catalog PROPERTIES
+  STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
+  OUTPUT_NAME spire_catalog)
 install(TARGETS Catalog CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/Debug)
 install(TARGETS Catalog CONFIGURATIONS Release

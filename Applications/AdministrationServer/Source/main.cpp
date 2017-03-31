@@ -16,6 +16,7 @@
 #include <tclap/CmdLine.h>
 #include "AdministrationServer/Version.hpp"
 #include "Nexus/AdministrationService/AdministrationServlet.hpp"
+#include "Nexus/AdministrationService/CachedAdministrationDataStore.hpp"
 #include "Nexus/AdministrationService/MySqlAdministrationDataStore.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 
@@ -41,9 +42,10 @@ using namespace TCLAP;
 namespace {
   typedef ServiceProtocolServletContainer<MetaAuthenticationServletAdapter<
     MetaAdministrationServlet<ApplicationServiceLocatorClient::Client*,
-    MySqlAdministrationDataStore>, ApplicationServiceLocatorClient::Client*>,
-    TcpServerSocket, BinarySender<SharedBuffer>,
-    NullEncoder, std::shared_ptr<LiveTimer>> AdministrationServletContainer;
+    CachedAdministrationDataStore<MySqlAdministrationDataStore*>>,
+    ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
+    BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>
+    AdministrationServletContainer;
 
   struct AdministrationServerConnectionInitializer {
     string m_serviceName;
@@ -192,11 +194,12 @@ int main(int argc, const char** argv) {
     cerr << "Error parsing section 'entitlements': " << e.what() << endl;
     return -1;
   }
+  MySqlAdministrationDataStore mySqlDataStore{mySqlConfig.m_address,
+    mySqlConfig.m_schema, mySqlConfig.m_username, mySqlConfig.m_password};
   AdministrationServletContainer administrationServer{
     Initialize(serviceLocatorClient.Get(),
     Initialize(serviceLocatorClient.Get(), entitlements,
-    Initialize(mySqlConfig.m_address, mySqlConfig.m_schema,
-    mySqlConfig.m_username, mySqlConfig.m_password))),
+    Initialize(&mySqlDataStore))),
     Initialize(administrationServerConnectionInitializer.m_interface,
     Ref(socketThreadPool)),
     std::bind(factory<std::shared_ptr<LiveTimer>>{}, seconds{10},
