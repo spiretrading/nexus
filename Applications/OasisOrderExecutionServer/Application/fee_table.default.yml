@@ -166,19 +166,19 @@ ca_equities:
 
   pure:
     tsx_venture_listed_fee_table:
-      [[0.00020, 0.00020],
-       [0.00020, 0.00020],
-       [0.00008, 0.00008],
-       [0.00004, 0.00004]]
+      [[-0.0002, 0.0004],
+       [-0.0002, 0.0004],
+       [-0.0002, 0.0004],
+       [-0.0002, 0.0004]]
 
     tsx_listed_fee_table:
-      [[ 0.00250, -0.00210],
-       [-0.00140,  0.00180],
-       [ 0.00008,  0.00008],
-       [ 0.00004,  0.00004]]
+      [[-0.0014, 0.0018]
+       [-0.0014, 0.0018],
+       [-0.0002, 0.0004],
+       [-0.0002, 0.0004]]
 
     odd_lot: 0.0002
-    tsx_venture_sub_dime_cap: 15.00
+    tsx_venture_sub_dime_cap: 1000.00
     designated_securities_path: "./pure_designated_securities.yml"
 
   # TMX Select fees based on http://www.tsx.com/trading/tmx-select/fee-schedule
