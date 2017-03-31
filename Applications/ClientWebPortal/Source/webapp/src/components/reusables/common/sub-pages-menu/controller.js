@@ -47,7 +47,7 @@ class Controller {
       },
       {
         name: 'Risk Controls',
-        iconClass: 'icon-risk_manager',
+        iconClass: 'icon-risk-controls',
         isActive: 'riskControls' === subPath,
         path: '/profile-riskControls/' + directoryEntry.type + '/' + directoryEntry.id + '/' + directoryEntry.name
       },
@@ -65,7 +65,7 @@ class Controller {
       },
       {
         name: 'Performance',
-        iconClass: 'icon-performance',
+        iconClass: 'icon-profit-loss',
         isActive: 'performance' === subPath,
         path: '/profile-performance/' + directoryEntry.type + '/' + directoryEntry.id + '/' + directoryEntry.name
       }

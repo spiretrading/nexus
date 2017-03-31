@@ -7,6 +7,12 @@ class View extends UpdatableView {
     super(react, controller, componentModel);
   }
 
+  onButtonClick() {
+    if (!this.componentModel.isDisabled) {
+      this.controller.onButtonClick.apply(this);
+    }
+  }
+
   render() {
     let className = 'primary-button-container';
     if (this.componentModel.className != null) {
@@ -17,7 +23,7 @@ class View extends UpdatableView {
       className += ' enabled';
     }
 
-    let onButtonClick = this.controller.onButtonClick.bind(this.controller);
+    let onButtonClick = onButtonClick = this.onButtonClick.bind(this);
 
     return (
         <div id={this.componentModel.componentId} className={className} onClick={onButtonClick}>

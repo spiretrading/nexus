@@ -61,7 +61,7 @@ class View extends CommonView {
           <div className="search-wrapper">
             <div className="search-input-wrapper">
               <input className="search-input" onChange={onSearchInputChange}/>
-              <span className="icon-magnifying_glass"></span>
+              <span className="icon-magnifying-glass"></span>
             </div>
             <div className="search-results-wrapper">
               {panels}

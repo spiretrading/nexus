@@ -90,12 +90,12 @@ class View extends UpdatableView {
 
     let groupMenu, currencyMenu, marketMenu, columnMenu;
     if (deviceDetector.isMobile()) {
-      groupMenu = <span className="icon-group2"/>;
+      groupMenu = <span className="icon-group"/>;
       currencyMenu = <span className="icon-currency"/>;
       marketMenu = <span className="icon-market"/>;
       columnMenu = <span className="icon-column"/>;
     } else {
-      groupMenu = <span><span className="icon-group2"/> Group</span>;
+      groupMenu = <span><span className="icon-group"/> Group</span>;
       currencyMenu = <span><span className="icon-currency"/> Currency</span>;
       marketMenu = <span><span className="icon-market"/> Market</span>;
       columnMenu = <span><span className="icon-column"/> Column</span>;

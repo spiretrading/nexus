@@ -72,10 +72,10 @@
 
         span {
           margin-left: 5px;
-          color: $darkGrey;
+          color: $greyedIcon;
 
           &.active {
-            color: $primaryGradient1;
+            color: $darkerGrey;
           }
         }
       }

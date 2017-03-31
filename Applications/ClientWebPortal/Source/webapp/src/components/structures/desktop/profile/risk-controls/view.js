@@ -211,19 +211,19 @@ class View extends CommonView {
               <div className="hour-input-wrapper input-wrapper">
                 <StepNumberInput model={hourInputModel}
                                  onChange={this.onHourValueChange.bind(this)}/>
-                <div className="time-input-label">hr</div>
+                <div className="time-input-label">hour</div>
               </div>
               <span className="colon">:</span>
               <div className="minute-input-wrapper input-wrapper">
                 <StepNumberInput model={minInputModel}
                                  onChange={this.onMinuteValueChange.bind(this)}/>
-                <div className="time-input-label">min</div>
+                <div className="time-input-label">minute</div>
               </div>
               <span className="colon">:</span>
               <div className="second-input-wrapper input-wrapper">
                 <StepNumberInput model={secInputModel}
                                  onChange={this.onSecondValueChange.bind(this)}/>
-                <div className="time-input-label">sec</div>
+                <div className="time-input-label">second</div>
               </div>
             </div>
             {saveButton}
