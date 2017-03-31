@@ -75,6 +75,89 @@ namespace OrderExecutionService {
       const Security& security, CurrencyId currency, Side side,
       const std::string& destination, Quantity quantity, Money price);
 
+    //! Builds an OrderFields for a LIMIT order with all mandatory fields
+    //! populated.
+    /*!
+      \param security The Security the Order was submitted for.
+      \param currency The Currency being used.
+      \param orderType The type of Order.
+      \param side The Side of the Order.
+      \param destination The destination to submit the Order to.
+      \param quantity The quantity to order.
+      \param price The price of the Order.
+    */
+    static OrderFields BuildLimitOrder(const Security& security,
+      CurrencyId currency, Side side, const std::string& destination,
+      Quantity quantity, Money price);
+
+    //! Builds an OrderFields for a LIMIT order with all mandatory fields
+    //! populated.
+    /*!
+      \param account The account to assign the Order to.
+      \param security The Security the Order was submitted for.
+      \param orderType The type of Order.
+      \param side The Side of the Order.
+      \param destination The destination to submit the Order to.
+      \param quantity The quantity to order.
+      \param price The price of the Order.
+    */
+    static OrderFields BuildLimitOrder(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Security& security, Side side, const std::string& destination,
+      Quantity quantity, Money price);
+
+    //! Builds an OrderFields for a LIMIT order with all mandatory fields
+    //! populated.
+    /*!
+      \param security The Security the Order was submitted for.
+      \param orderType The type of Order.
+      \param side The Side of the Order.
+      \param destination The destination to submit the Order to.
+      \param quantity The quantity to order.
+      \param price The price of the Order.
+    */
+    static OrderFields BuildLimitOrder(const Security& security, Side side,
+      const std::string& destination, Quantity quantity, Money price);
+
+    //! Builds an OrderFields for a LIMIT order with all mandatory fields
+    //! populated.
+    /*!
+      \param security The Security the Order was submitted for.
+      \param currency The Currency being used.
+      \param orderType The type of Order.
+      \param side The Side of the Order.
+      \param quantity The quantity to order.
+      \param price The price of the Order.
+    */
+    static OrderFields BuildLimitOrder(const Security& security,
+      CurrencyId currency, Side side, Quantity quantity, Money price);
+
+    //! Builds an OrderFields for a LIMIT order with all mandatory fields
+    //! populated.
+    /*!
+      \param account The account to assign the Order to.
+      \param security The Security the Order was submitted for.
+      \param orderType The type of Order.
+      \param side The Side of the Order.
+      \param quantity The quantity to order.
+      \param price The price of the Order.
+    */
+    static OrderFields BuildLimitOrder(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Security& security, Side side, Quantity quantity, Money price);
+
+    //! Builds an OrderFields for a LIMIT order with all mandatory fields
+    //! populated.
+    /*!
+      \param security The Security the Order was submitted for.
+      \param orderType The type of Order.
+      \param side The Side of the Order.
+      \param quantity The quantity to order.
+      \param price The price of the Order.
+    */
+    static OrderFields BuildLimitOrder(const Security& security, Side side,
+      Quantity quantity, Money price);
+
     //! Builds an OrderFields for a MARKET order with all mandatory fields
     //! populated.
     /*!
@@ -91,6 +174,89 @@ namespace OrderExecutionService {
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Security& security, CurrencyId currency, Side side,
       const std::string& destination, Quantity quantity);
+
+    //! Builds an OrderFields for a MARKET order with all mandatory fields
+    //! populated.
+    /*!
+      \param security The Security the Order was submitted for.
+      \param currency The Currency being used.
+      \param orderType The type of Order.
+      \param side The Side of the Order.
+      \param destination The destination to submit the Order to.
+      \param quantity The quantity to order.
+      \param price The price of the Order.
+    */
+    static OrderFields BuildMarketOrder(const Security& security,
+      CurrencyId currency, Side side, const std::string& destination,
+      Quantity quantity);
+
+    //! Builds an OrderFields for a MARKET order with all mandatory fields
+    //! populated.
+    /*!
+      \param account The account to assign the Order to.
+      \param security The Security the Order was submitted for.
+      \param orderType The type of Order.
+      \param side The Side of the Order.
+      \param destination The destination to submit the Order to.
+      \param quantity The quantity to order.
+      \param price The price of the Order.
+    */
+    static OrderFields BuildMarketOrder(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Security& security, Side side, const std::string& destination,
+      Quantity quantity);
+
+    //! Builds an OrderFields for a MARKET order with all mandatory fields
+    //! populated.
+    /*!
+      \param security The Security the Order was submitted for.
+      \param orderType The type of Order.
+      \param side The Side of the Order.
+      \param destination The destination to submit the Order to.
+      \param quantity The quantity to order.
+      \param price The price of the Order.
+    */
+    static OrderFields BuildMarketOrder(const Security& security, Side side,
+      const std::string& destination, Quantity quantity);
+
+    //! Builds an OrderFields for a MARKET order with all mandatory fields
+    //! populated.
+    /*!
+      \param security The Security the Order was submitted for.
+      \param currency The Currency being used.
+      \param orderType The type of Order.
+      \param side The Side of the Order.
+      \param quantity The quantity to order.
+      \param price The price of the Order.
+    */
+    static OrderFields BuildMarketOrder(const Security& security,
+      CurrencyId currency, Side side, Quantity quantity);
+
+    //! Builds an OrderFields for a MARKET order with all mandatory fields
+    //! populated.
+    /*!
+      \param account The account to assign the Order to.
+      \param security The Security the Order was submitted for.
+      \param orderType The type of Order.
+      \param side The Side of the Order.
+      \param quantity The quantity to order.
+      \param price The price of the Order.
+    */
+    static OrderFields BuildMarketOrder(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Security& security, Side side, Quantity quantity);
+
+    //! Builds an OrderFields for a MARKET order with all mandatory fields
+    //! populated.
+    /*!
+      \param security The Security the Order was submitted for.
+      \param orderType The type of Order.
+      \param side The Side of the Order.
+      \param quantity The quantity to order.
+      \param price The price of the Order.
+    */
+    static OrderFields BuildMarketOrder(const Security& security, Side side,
+      Quantity quantity);
 
     //! Constructs an OrderFields.
     OrderFields();
@@ -163,8 +329,49 @@ namespace OrderExecutionService {
     fields.m_destination = destination;
     fields.m_quantity = quantity;
     fields.m_price = price;
-    fields.m_timeInForce = TimeInForce(TimeInForce::Type::DAY);
+    fields.m_timeInForce = TimeInForce{TimeInForce::Type::DAY};
     return fields;
+  }
+
+  inline OrderFields OrderFields::BuildLimitOrder(const Security& security,
+      CurrencyId currency, Side side, const std::string& destination,
+      Quantity quantity, Money price) {
+    return BuildLimitOrder(Beam::ServiceLocator::DirectoryEntry{}, security,
+      currency, side, destination, quantity, price);
+  }
+
+  inline OrderFields OrderFields::BuildLimitOrder(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Security& security, Side side,
+      const std::string& destination, Quantity quantity, Money price) {
+    return BuildLimitOrder(account, security, CurrencyId::NONE(), side,
+      destination, quantity, price);
+  }
+
+  inline OrderFields OrderFields::BuildLimitOrder(const Security& security,
+      Side side, const std::string& destination, Quantity quantity,
+      Money price) {
+    return BuildLimitOrder(Beam::ServiceLocator::DirectoryEntry{}, security,
+      CurrencyId::NONE(), side, destination, quantity, price);
+  }
+
+  inline OrderFields OrderFields::BuildLimitOrder(const Security& security,
+      CurrencyId currency, Side side, Quantity quantity, Money price) {
+    return BuildLimitOrder(Beam::ServiceLocator::DirectoryEntry{}, security,
+      currency, side, {}, quantity, price);
+  }
+
+  inline OrderFields OrderFields::BuildLimitOrder(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Security& security, Side side, Quantity quantity, Money price) {
+    return BuildLimitOrder(account, security, CurrencyId::NONE(), side, {},
+      quantity, price);
+  }
+
+  inline OrderFields OrderFields::BuildLimitOrder(const Security& security,
+      Side side, Quantity quantity, Money price) {
+    return BuildLimitOrder(Beam::ServiceLocator::DirectoryEntry{}, security,
+      CurrencyId::NONE(), side, {}, quantity, price);
   }
 
   inline OrderFields OrderFields::BuildMarketOrder(
@@ -179,16 +386,56 @@ namespace OrderExecutionService {
     fields.m_side = side;
     fields.m_destination = destination;
     fields.m_quantity = quantity;
-    fields.m_timeInForce = TimeInForce(TimeInForce::Type::DAY);
+    fields.m_timeInForce = TimeInForce{TimeInForce::Type::DAY};
     return fields;
   }
 
+  inline OrderFields OrderFields::BuildMarketOrder(const Security& security,
+      CurrencyId currency, Side side, const std::string& destination,
+      Quantity quantity) {
+    return BuildMarketOrder(Beam::ServiceLocator::DirectoryEntry{}, security,
+      currency, side, destination, quantity);
+  }
+
+  inline OrderFields OrderFields::BuildMarketOrder(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Security& security, Side side,
+      const std::string& destination, Quantity quantity) {
+    return BuildMarketOrder(account, security, CurrencyId::NONE(), side,
+      destination, quantity);
+  }
+
+  inline OrderFields OrderFields::BuildMarketOrder(const Security& security,
+      Side side, const std::string& destination, Quantity quantity) {
+    return BuildMarketOrder(Beam::ServiceLocator::DirectoryEntry{}, security,
+      CurrencyId::NONE(), side, destination, quantity);
+  }
+
+  inline OrderFields OrderFields::BuildMarketOrder(const Security& security,
+      CurrencyId currency, Side side, Quantity quantity) {
+    return BuildMarketOrder(Beam::ServiceLocator::DirectoryEntry{}, security,
+      currency, side, {}, quantity);
+  }
+
+  inline OrderFields OrderFields::BuildMarketOrder(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Security& security, Side side, Quantity quantity) {
+    return BuildMarketOrder(account, security, CurrencyId::NONE(), side, {},
+      quantity);
+  }
+
+  inline OrderFields OrderFields::BuildMarketOrder(const Security& security,
+      Side side, Quantity quantity) {
+    return BuildMarketOrder(Beam::ServiceLocator::DirectoryEntry{}, security,
+      CurrencyId::NONE(), side, {}, quantity);
+  }
+
   inline OrderFields::OrderFields()
-      : m_type(OrderType::NONE),
-        m_side(Side::NONE),
-        m_quantity(0),
-        m_price(Money::ZERO),
-        m_timeInForce(TimeInForce::Type::GTC) {}
+      : m_type{OrderType::NONE},
+        m_side{Side::NONE},
+        m_quantity{0},
+        m_price{Money::ZERO},
+        m_timeInForce{TimeInForce::Type::GTC} {}
 
   inline bool OrderFields::operator <(const OrderFields& rhs) const {
     return m_type < rhs.m_type || (m_type == rhs.m_type &&

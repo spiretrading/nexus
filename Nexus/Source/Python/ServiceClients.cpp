@@ -321,6 +321,12 @@ void Nexus::Python::ExportTestEnvironment() {
     .def("update", BlockingFunction(
       static_cast<void (TestEnvironment::*)(const Security&, const BboQuote&)>(
       &TestEnvironment::Update)))
+    .def("update_bbo_price", BlockingFunction(
+      static_cast<void (TestEnvironment::*)(const Security&, Money, Money)>(
+      &TestEnvironment::UpdateBboPrice)))
+    .def("update_bbo_price", BlockingFunction(
+      static_cast<void (TestEnvironment::*)(const Security&, Money, Money,
+      const ptime&)>(&TestEnvironment::UpdateBboPrice)))
     .def("monitor_order_submissions", &TestEnvironmentMonitorOrderSubmissions)
     .def("accept_order", BlockingFunction(&TestEnvironment::AcceptOrder))
     .def("reject_order", BlockingFunction(&TestEnvironment::RejectOrder))

@@ -19,6 +19,8 @@
 #include <boost/functional/value_factory.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
+#include "Nexus/Definitions/Destination.hpp"
+#include "Nexus/Definitions/Market.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionServlet.hpp"
 #include "Nexus/OrderExecutionService/LocalOrderExecutionDataStore.hpp"
@@ -39,11 +41,14 @@ namespace Tests {
 
       //! Constructs an OrderExecutionServiceTestEnvironment.
       /*!
+        \param marketDatabase The MarketDatabase to use.
+        \param destinationDatabase The DestinationDatabase to use.
         \param serviceLocatorClient The ServiceLocatorClient to use.
         \param uidClient The UidClient to use.
         \param administrationClient The AdministrationClient to use.
       */
-      OrderExecutionServiceTestEnvironment(const std::shared_ptr<
+      OrderExecutionServiceTestEnvironment(const MarketDatabase& marketDatabase,
+        const DestinationDatabase& destinationDatabase, const std::shared_ptr<
         Beam::ServiceLocator::VirtualServiceLocatorClient>&
         serviceLocatorClient,
         std::shared_ptr<Beam::UidService::VirtualUidClient> uidClient,
@@ -105,17 +110,18 @@ namespace Tests {
   };
 
   inline OrderExecutionServiceTestEnvironment::
-      OrderExecutionServiceTestEnvironment(
+      OrderExecutionServiceTestEnvironment(const MarketDatabase& marketDatabase,
+      const DestinationDatabase& destinationDatabase,
       const std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>&
       serviceLocatorClient, std::shared_ptr<Beam::UidService::VirtualUidClient>
       uidClient, std::shared_ptr<
       AdministrationService::VirtualAdministrationClient> administrationClient)
-      : m_container(Beam::Initialize(serviceLocatorClient,
-          Beam::Initialize(boost::posix_time::pos_infin, Beam::Initialize(),
-          serviceLocatorClient, std::move(uidClient),
-          std::move(administrationClient), &m_driver, &m_dataStore)),
-          &m_serverConnection,
-          boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
+      : m_container{Beam::Initialize(serviceLocatorClient,
+          Beam::Initialize(boost::posix_time::pos_infin, marketDatabase,
+          destinationDatabase, Beam::Initialize(), serviceLocatorClient,
+          std::move(uidClient), std::move(administrationClient), &m_driver,
+          &m_dataStore)), &m_serverConnection,
+          boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()} {}
 
   inline OrderExecutionServiceTestEnvironment::
       ~OrderExecutionServiceTestEnvironment() {
@@ -139,14 +145,14 @@ namespace Tests {
       OrderExecutionServiceTestEnvironment::BuildClient(
       Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
       serviceLocatorClient) {
-    ServiceProtocolClientBuilder builder(Beam::Ref(serviceLocatorClient),
+    ServiceProtocolClientBuilder builder{Beam::Ref(serviceLocatorClient),
       [&] {
         return std::make_unique<ServiceProtocolClientBuilder::Channel>(
           "test_order_execution_client", Beam::Ref(m_serverConnection));
       },
       [&] {
         return std::make_unique<ServiceProtocolClientBuilder::Timer>();
-      });
+      }};
     auto client = std::make_unique<OrderExecutionService::OrderExecutionClient<
       ServiceProtocolClientBuilder>>(builder);
     return MakeVirtualOrderExecutionClient(std::move(client));
