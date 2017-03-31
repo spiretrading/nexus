@@ -50,6 +50,25 @@ namespace Nexus {
       */
       void Update(const Security& security, const BboQuote& bboQuote);
 
+      //! Updates the price of a BboQuote.
+      /*!
+        \param security The Security to update.
+        \param bidPrice The updated bid price.
+        \param askPrice The updated ask price.
+        \param timestamp The timestamp.
+      */
+      void UpdateBboPrice(const Security& security, Money bidPrice,
+        Money askPrice, const boost::posix_time::ptime& timestamp);
+
+      //! Updates the price of a BboQuote.
+      /*!
+        \param security The Security to update.
+        \param bidPrice The updated bid price.
+        \param askPrice The updated ask price.
+      */
+      void UpdateBboPrice(const Security& security, Money bidPrice,
+        Money askPrice);
+
       //! Monitors Orders submitted to this environment.
       /*!
         \param queue The Queue to publish submitted Orders to.
@@ -182,6 +201,20 @@ namespace Nexus {
       GetMarketDataEnvironment().SetBbo(security, revisedBboQuote);
     }
     Beam::Routines::FlushPendingRoutines();
+  }
+
+  inline void TestEnvironment::UpdateBboPrice(const Security& security,
+      Money bidPrice, Money askPrice,
+      const boost::posix_time::ptime& timestamp) {
+    BboQuote quote{Quote{bidPrice, 100, Side::BID},
+      Quote{askPrice, 100, Side::ASK}, timestamp};
+    Update(security, quote);
+  }
+
+  inline void TestEnvironment::UpdateBboPrice(const Security& security,
+      Money bidPrice, Money askPrice) {
+    UpdateBboPrice(security, bidPrice, askPrice,
+      boost::posix_time::not_a_date_time);
   }
 
   inline void TestEnvironment::MonitorOrderSubmissions(const std::shared_ptr<
