@@ -15,7 +15,6 @@
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
-#include <boost/functional/value_factory.hpp>
 #include <tclap/CmdLine.h>
 #include "SimulationOrderExecutionServer/SimulationOrderExecutionDriver.hpp"
 #include "SimulationOrderExecutionServer/Version.hpp"
@@ -286,9 +285,10 @@ int main(int argc, const char** argv) {
     accountSource);
   OrderExecutionServletContainer orderExecutionServer{
     Initialize(serviceLocatorClient.Get(), Initialize(sessionStartTime,
-    timeClient.get(), serviceLocatorClient.Get(), uidClient.Get(),
-    administrationClient.Get(), &complianceCheckOrderExecutionDriver,
-    dataStore.get())),
+    definitionsClient->LoadMarketDatabase(),
+    definitionsClient->LoadDestinationDatabase(), timeClient.get(),
+    serviceLocatorClient.Get(), uidClient.Get(), administrationClient.Get(),
+    &complianceCheckOrderExecutionDriver, dataStore.get())),
     Initialize(orderExecutionServerConnectionInitializer.m_interface,
     Ref(socketThreadPool)),
     std::bind(factory<std::shared_ptr<LiveTimer>>{}, seconds{10},
