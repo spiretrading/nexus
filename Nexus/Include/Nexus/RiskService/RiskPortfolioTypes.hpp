@@ -54,8 +54,8 @@ namespace RiskService {
     Beam::TableEntry<RiskPortfolioKey, RiskPortfolioInventory>;
 
   //! The Publisher used for portfolio events.
-  using RiskPortfolioUpdatePublisher =
-    Beam::Publisher<Beam::TableEntry<RiskPortfolioKey, RiskPortfolioInventory>>;
+  using RiskPortfolioUpdatePublisher = Beam::Publisher<
+    Beam::TableEntry<RiskPortfolioKey, RiskPortfolioInventory>>;
 
   inline std::size_t hash_value(const RiskPortfolioKey& value) {
     std::size_t seed = 0;

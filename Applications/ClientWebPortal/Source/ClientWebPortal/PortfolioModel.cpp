@@ -1,23 +1,25 @@
 #include "ClientWebPortal/ClientWebPortal/PortfolioModel.hpp"
 #include <boost/functional/hash.hpp>
+#include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace Nexus;
+using namespace Nexus::Accounting;
 using namespace Nexus::ClientWebPortal;
+using namespace Nexus::MarketDataService;
 using namespace Nexus::RiskService;
 using namespace std;
 
 PortfolioModel::Entry::Entry(Beam::ServiceLocator::DirectoryEntry account,
     Security security, CurrencyId currency)
     : m_account{std::move(account)},
-      m_security{std::move(security)},
-      m_currency{currency} {}
+      m_inventory{{security, currency}} {}
 
 bool PortfolioModel::Entry::operator ==(const Entry& rhs) const {
-  return tie(m_account, m_security, m_currency) ==
-    tie(rhs.m_account, rhs.m_security, rhs.m_currency);
+  return tie(m_account, m_inventory.m_position.m_key) ==
+    tie(rhs.m_account, rhs.m_inventory.m_position.m_key);
 }
 
 PortfolioModel::PortfolioModel(
@@ -53,22 +55,48 @@ void PortfolioModel::OnRiskPortfolioInventoryUpdate(
       std::make_pair(inventory.m_key, entry)).first;
     m_securityToEntries[security].push_back(entry);
   }
+  auto& valuation =
+    [&] () -> SecurityValuation& {
+      auto valuationIterator = m_valuations.find(security);
+      if(valuationIterator == m_valuations.end()) {
+        auto query = BuildRealTimeWithSnapshotQuery(security);
+        valuationIterator = m_valuations.insert(std::make_pair(security,
+          SecurityValuation{
+          inventory.m_value.m_position.m_key.m_currency})).first;
+        m_serviceClients->GetMarketDataClient().QueryBboQuotes(query,
+          m_tasks.GetSlot<BboQuote>(std::bind(&PortfolioModel::OnBboQuote,
+          this, security, std::ref(valuationIterator->second),
+          std::placeholders::_1)));
+      }
+      return valuationIterator->second;
+    }();
   auto entry = entryIterator->second;
-  entry->m_openQuantity = inventory.m_value.m_position.m_quantity;
-  entry->m_averagePrice = GetAveragePrice(inventory.m_value.m_position);
-  entry->m_realizedProfitAndLoss = GetRealizedProfitAndLoss(inventory.m_value);
-  entry->m_fees = inventory.m_value.m_fees;
-  entry->m_costBasis = inventory.m_value.m_position.m_costBasis;
-  entry->m_volume = inventory.m_value.m_volume;
-  entry->m_trades = inventory.m_value.m_transactionCount;
+  entry->m_inventory = inventory.m_value;
+  entry->m_unrealizedProfitAndLoss = GetUnrealizedProfitAndLoss(
+    inventory.m_value, valuation);
   m_publisher.Push(*entry);
+}
+
+void PortfolioModel::OnBboQuote(const Security& security,
+    SecurityValuation& valuation, const BboQuote& quote) {
+  if(valuation.m_bidValue == quote.m_bid.m_price &&
+      valuation.m_askValue == quote.m_ask.m_price) {
+    return;
+  }
+  valuation.m_bidValue = quote.m_bid.m_price;
+  valuation.m_askValue = quote.m_ask.m_price;
+/*
+  for(auto& entry : m_securityToEntries[security]) {
+    entry->m_unrealizedProfitAndLoss = GetUnrealizedProfitAndLoss(
+      entry->m_inv inventory.m_value, valuation);
+  }
+*/
 }
 
 size_t std::hash<PortfolioModel::Entry>::operator()(
     const PortfolioModel::Entry& value) const {
   std::size_t seed = 0;
   boost::hash_combine(seed, value.m_account);
-  boost::hash_combine(seed, value.m_security);
-  boost::hash_combine(seed, value.m_currency);
+  boost::hash_combine(seed, value.m_inventory.m_position.m_key.m_index);
   return seed;
 }
