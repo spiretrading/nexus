@@ -73,7 +73,7 @@ void PortfolioModel::OnRiskPortfolioInventoryUpdate(
   auto entry = entryIterator->second;
   entry->m_inventory = inventory.m_value;
   entry->m_unrealizedProfitAndLoss = GetUnrealizedProfitAndLoss(
-    inventory.m_value, valuation);
+    entry->m_inventory, valuation);
   m_publisher.Push(*entry);
 }
 
@@ -85,12 +85,11 @@ void PortfolioModel::OnBboQuote(const Security& security,
   }
   valuation.m_bidValue = quote.m_bid.m_price;
   valuation.m_askValue = quote.m_ask.m_price;
-/*
   for(auto& entry : m_securityToEntries[security]) {
     entry->m_unrealizedProfitAndLoss = GetUnrealizedProfitAndLoss(
-      entry->m_inv inventory.m_value, valuation);
+      entry->m_inventory, valuation);
+    m_publisher.Push(*entry);
   }
-*/
 }
 
 size_t std::hash<PortfolioModel::Entry>::operator()(
