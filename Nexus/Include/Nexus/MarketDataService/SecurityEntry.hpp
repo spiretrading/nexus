@@ -125,6 +125,7 @@ namespace MarketDataService {
       std::vector<BookQuoteEntry> m_askBook;
       std::vector<BookQuoteEntry> m_bidBook;
       InitialSequences m_nextSequences;
+      boost::gregorian::date m_bboDate;
   };
 
   inline SecurityEntry::BookQuoteEntry::BookQuoteEntry(
@@ -137,6 +138,8 @@ namespace MarketDataService {
       : m_security{security},
         m_nextSequences{initialSequences} {
     m_technicals.m_close = closePrice;
+    m_bboDate = Beam::Queries::DecodeTimestamp(
+      m_nextSequences.m_nextBboQuoteSequence).date();
   }
 
   inline const Security& SecurityEntry::GetSecurity() const {
@@ -153,6 +156,11 @@ namespace MarketDataService {
 
   inline boost::optional<SequencedSecurityBboQuote> SecurityEntry::
       PublishBboQuote(const BboQuote& bboQuote, int sourceId) {
+    if(bboQuote.m_timestamp.date() != m_bboDate) {
+      m_bboDate = bboQuote.m_timestamp.date();
+      m_nextSequences.m_nextBboQuoteSequence = Beam::Queries::EncodeTimestamp(
+        m_bboDate);
+    }
     auto sequence = m_nextSequences.m_nextBboQuoteSequence;
     ++m_nextSequences.m_nextBboQuoteSequence;
     auto sequencedBboQuote = Beam::Queries::MakeSequencedValue(
