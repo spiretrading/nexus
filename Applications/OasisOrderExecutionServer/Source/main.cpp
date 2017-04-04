@@ -389,8 +389,10 @@ int main(int argc, const char** argv) {
     accountSource);
   OrderExecutionServletContainer orderExecutionServer{
     Initialize(serviceLocatorClient.Get(), Initialize(sessionStartTime,
-    timeClient.get(), serviceLocatorClient.Get(), uidClient.Get(),
-    administrationClient.Get(), &manualOrderExecutionDriver, dataStore.get())),
+    definitionsClient->LoadMarketDatabase(),
+    definitionsClient->LoadDestinationDatabase(), timeClient.get(),
+    serviceLocatorClient.Get(), uidClient.Get(), administrationClient.Get(),
+    &manualOrderExecutionDriver, dataStore.get())),
     Initialize(orderExecutionServerConnectionInitializer.m_interface,
     Ref(socketThreadPool)),
     std::bind(factory<std::shared_ptr<LiveTimer>>{}, seconds{10},
