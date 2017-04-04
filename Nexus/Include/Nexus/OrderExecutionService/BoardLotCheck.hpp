@@ -120,14 +120,8 @@ namespace OrderExecutionService {
     auto closingPrice = Beam::Threading::With(closingEntry,
       [&] (ClosingEntry& entry) {
         if(timestamp - entry.m_lastUpdate > boost::posix_time::hours(1)) {
-          auto previousClose = TechnicalAnalysis::LoadPreviousClose(
-            *m_marketDataClient, security, timestamp, m_marketDatabase,
-            m_timeZoneDatabase, "");
-          if(previousClose.is_initialized()) {
-            entry.m_closingPrice = previousClose->m_price;
-          } else {
-            entry.m_closingPrice = Money::ZERO;
-          }
+          entry.m_closingPrice = m_marketDataClient->LoadSecurityTechnicals(
+            security).m_close;
           entry.m_lastUpdate = timestamp;
         }
         return entry.m_closingPrice;

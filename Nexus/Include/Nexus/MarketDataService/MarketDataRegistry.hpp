@@ -184,7 +184,6 @@ namespace Details {
         SyncMarketEntry, Beam::Threading::Mutex>>> m_marketEntries;
       Beam::SynchronizedUnorderedMap<Security, std::shared_ptr<Beam::Remote<
         SyncSecurityEntry, Beam::Threading::Mutex>>> m_securityEntries;
-      Beam::SynchronizedUnorderedSet<Security> m_clearedSecurities;
 
       template<typename DataStore>
       boost::optional<SyncMarketEntry&> LoadMarketEntry(MarketCode market,
@@ -385,14 +384,6 @@ namespace Details {
     }
     Beam::Threading::With(*entry,
       [&] (auto& entry) {
-        if(entry.GetSecurityTechnicals().m_close == Money::ZERO) {
-          if(m_clearedSecurities.Contains(timeAndSale.GetIndex())) {
-            auto closePrice = Details::LoadClosePrice(timeAndSale.GetIndex(),
-              dataStore);
-            entry.GetSecurityTechnicals().m_close = closePrice;
-            m_clearedSecurities.Erase(timeAndSale.GetIndex());
-          }
-        }
         auto sequencedTimeAndSale = entry.PublishTimeAndSale(
           std::move(timeAndSale), sourceId);
         if(sequencedTimeAndSale.is_initialized()) {
@@ -433,9 +424,6 @@ namespace Details {
           Beam::Threading::With(**entry,
             [&] (auto& entry) {
               entry.Clear(sourceId);
-              if(entry.GetSecurityTechnicals().m_high == Money::ZERO) {
-                m_clearedSecurities.Insert(entry.GetSecurity());
-              }
             });
         }
       }
