@@ -1,6 +1,8 @@
-import {AdministrationClient, ComplianceServiceClient, DirectoryEntry} from 'spire-client';
+import {AdministrationClient, ComplianceServiceClient, DirectoryEntry, DataType} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
+import definitionsService from 'services/definitions';
+import uuid from 'uuid';
 
 class Controller {
   constructor(componentModel) {
@@ -135,7 +137,8 @@ class Controller {
     let requiredDataFetchPromise = this.getRequiredData();
 
     preloaderTimer.start(requiredDataFetchPromise, null, Config.WHOLE_PAGE_PRELOADER_WIDTH, Config.WHOLE_PAGE_PRELOADER_HEIGHT).then((responses) => {
-      let ruleEntries = clone(responses[0]);
+      let ruleEntries = responses[0];
+
       ruleEntries = this.transformFromPerAccountRuleEntries.apply(this, [ruleEntries]);
       ruleEntries = this.initializeFlags.apply(this, [ruleEntries]);
       this.componentModel.complianceRuleEntries = ruleEntries;
@@ -144,7 +147,6 @@ class Controller {
       this.componentModel.userName = directoryEntry.name;
       this.componentModel.isAdmin = userService.isAdmin();
       this.componentModel.isGroup = directoryEntry.type === 1;
-
       this.view.update(this.componentModel);
     });
   }
@@ -177,11 +179,13 @@ class Controller {
     }
   }
 
-  onRuleAdd(id, schema, state) {
+  onRuleAdd(ruleTypeName) {
+    let schema = definitionsService.getComplianceRuleScehma(ruleTypeName);
+    let id = uuid.v4();
     this.componentModel.complianceRuleEntries.push({
       id: id,
       schema: schema,
-      state: state,
+      state: 0,
       toBeAdded: true
     });
     this.view.update(this.componentModel);
@@ -192,9 +196,20 @@ class Controller {
     let savePromises = this.getSavePromises.apply(this);
     let allPromises = Promise.all(savePromises);
 
-    // preloaderTimer.start(allPromises, null, Config.WHOLE_PAGE_PRELOADER_WIDTH, Config.WHOLE_PAGE_PRELOADER_HEIGHT).then((responses) => {
-    //   console.debug(responses);
-    // });
+    preloaderTimer.start(allPromises, null, Config.WHOLE_PAGE_PRELOADER_WIDTH, Config.WHOLE_PAGE_PRELOADER_HEIGHT).then((responses) => {
+      let ruleEntries = this.componentModel.complianceRuleEntries;
+      let i = ruleEntries.length;
+      while (i--) {
+        if (ruleEntries[i].toBeDeleted) {
+          ruleEntries.splice(i, 1);
+        } else {
+          ruleEntries[i].toBeUpdated = false;
+          ruleEntries[i].toBeAdded = false;
+          ruleEntries[i].toBeDeleted = false;
+        }
+      }
+      this.view.update(this.componentModel);
+    });
   }
 
   /** @private */
@@ -203,24 +218,21 @@ class Controller {
     for (let i=0; i<this.componentModel.complianceRuleEntries.length; i++) {
       let ruleEntry = this.componentModel.complianceRuleEntries[i];
       if (ruleEntry.toBeAdded && ruleEntry.toBeDeleted) {
-        console.debug('rule entry was added and deleted. dont send api: ' + i);
         this.componentModel.complianceRuleEntries.splice(i, 1);
         i--;
       } else if (ruleEntry.toBeAdded) {
-        console.debug('rule entry was added: ' + i);
         let addPromise = this.complianceServiceClient.addComplianceRuleEntry.apply(this.complianceServiceClient,
           [
             this.componentModel.directoryEntry,
             ruleEntry.state,
-            ruleEntry.schema
+            clone(ruleEntry.schema)
           ]);
         savePromises.push(addPromise);
       } else if (ruleEntry.toBeUpdated) {
-        console.debug('rule entry was updated: ' + i);
         let apiRuleEntry = {
           directory_entry: this.componentModel.directoryEntry,
           id: ruleEntry.id,
-          schema: ruleEntry.schema,
+          schema: clone(ruleEntry.schema),
           state: ruleEntry.state
         };
         let updatePromise = this.complianceServiceClient.updateComplianceRuleEntry.apply(this.complianceServiceClient,
@@ -229,7 +241,6 @@ class Controller {
           ]);
         savePromises.push(updatePromise);
       } else if (ruleEntry.toBeDeleted) {
-        console.debug('rule entry was deleted: ' + i);
         let deletePromise = this.complianceServiceClient.deleteComplianceRuleEntry.apply(this.complianceServiceClient, [
           ruleEntry.id
         ]);

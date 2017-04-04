@@ -5,9 +5,9 @@ import Dropdown from 'components/reusables/common/dropdown';
 import definitionsService from 'services/definitions';
 import numberFormatter from 'utils/number-formatter';
 import inputValidator from 'utils/input-validator';
-import DataType from 'commons/data-types';
 import deviceDetector from 'utils/device-detector';
 import labelFormatter from 'utils/label-formatter';
+import {DataType} from 'spire-client';
 
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
@@ -254,7 +254,7 @@ class View extends UpdatableView {
   /** @private */
   getMoneyInput(parameterIndex) {
     let parameters = this.componentModel.schema.parameters;
-    let formattedNumber = numberFormatter.formatTwoDecimalsWithComma(parameters[parameterIndex].value.value);
+    let formattedNumber = numberFormatter.formatTwoDecimalsWithComma(parameters[parameterIndex].value.value.toNumber());
     let onMoneyInputBlur = this.onMoneyInputBlur.bind(this);
     let parameterName = parameters[parameterIndex].name.replace(/\\/g, '');
     parameterName = labelFormatter.toCapitalWithSpace(parameterName);
@@ -281,6 +281,7 @@ class View extends UpdatableView {
     let tags = [];
     for (let j=0; j<parameters[parameterIndex].value.value.length; j++) {
       let security = parameters[parameterIndex].value.value[j].value;
+      console.debug(security);
       if (security.symbol.length > 0 && security.market.length > 0) {
         let tagLabel = security.symbol + '.' + security.market;
         tags.push(

@@ -1,4 +1,7 @@
 import httpConnectionManager from '../commons/http-connection-manager';
+import Money from '../../definitions/money';
+import DataType from '../../definitions/data-type';
+import dataTypeConverter from '../commons/data-type-converter';
 
 /** Spire compliance service client class */
 class ComplianceService {
@@ -17,6 +20,18 @@ class ComplianceService {
     };
 
     return httpConnectionManager.send(apiPath, payload, true)
+      .then(ruleEntries => {
+        for (let i=0; i<ruleEntries.length; i++) {
+          let parameters = ruleEntries[i].schema.parameters;
+          for (let j=0; j<parameters.length; j++) {
+            let parameterType = parameters[j].value.which;
+            if (parameterType == DataType.MONEY) {
+              parameters[j].value.value = Money.fromRepresentation(parameters[j].value.value);
+            }
+          }
+        }
+        return ruleEntries;
+      })
       .catch(this.logErrorAndThrow);
   }
 
@@ -27,12 +42,13 @@ class ComplianceService {
       state: state,
       schema: schema
     };
-
+    dataTypeConverter.toData(payload);
     return httpConnectionManager.send(apiPath, payload, false)
       .catch(this.logErrorAndThrow);
   }
 
   updateComplianceRuleEntry(ruleEntry) {
+    dataTypeConverter.toData.apply(dataTypeConverter, [ruleEntry.schema]);
     let apiPath = Config.BACKEND_API_ROOT_URL + 'compliance_service/update_compliance_rule_entry';
     let payload = {
       rule_entry: ruleEntry
@@ -43,7 +59,7 @@ class ComplianceService {
   }
 
   deleteComplianceRuleEntry(id) {
-    let apiPath = Config.BACKEND_API_ROOT_URL + 'compliance_service/update_compliance_rule_entry';
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'compliance_service/delete_compliance_rule_entry';
     let payload = {
       id: id
     };
