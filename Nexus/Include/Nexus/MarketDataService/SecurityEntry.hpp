@@ -118,7 +118,6 @@ namespace MarketDataService {
       };
       Security m_security;
       SecurityTechnicals m_technicals;
-      int m_technicalsSourceId;
       SequencedSecurityBboQuote m_bboQuote;
       SequencedSecurityTimeAndSale m_timeAndSale;
       std::unordered_map<MarketCode, SequencedSecurityMarketQuote>
@@ -136,7 +135,6 @@ namespace MarketDataService {
   inline SecurityEntry::SecurityEntry(const Security& security,
       Money closePrice, const InitialSequences& initialSequences)
       : m_security{security},
-        m_technicalsSourceId{-1},
         m_nextSequences{initialSequences} {
     m_technicals.m_close = closePrice;
   }
@@ -155,7 +153,6 @@ namespace MarketDataService {
 
   inline boost::optional<SequencedSecurityBboQuote> SecurityEntry::
       PublishBboQuote(const BboQuote& bboQuote, int sourceId) {
-    m_technicalsSourceId = sourceId;
     auto sequence = m_nextSequences.m_nextBboQuoteSequence;
     ++m_nextSequences.m_nextBboQuoteSequence;
     auto sequencedBboQuote = Beam::Queries::MakeSequencedValue(
@@ -285,9 +282,6 @@ namespace MarketDataService {
   }
 
   inline void SecurityEntry::Clear(int sourceId) {
-    if(sourceId == m_technicalsSourceId) {
-      m_technicals = {};
-    }
     auto askRange = std::remove_if(m_askBook.begin(), m_askBook.end(),
       [&] (auto& bookQuoteEntry) {
         return bookQuoteEntry.m_sourceId == sourceId;
