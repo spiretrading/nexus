@@ -3,6 +3,7 @@
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/MarketDataService/SecurityEntry.hpp"
 
+using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -11,9 +12,9 @@ using namespace Nexus::MarketDataService::Tests;
 using namespace std;
 
 namespace {
-  Security TEST_SECURITY("TST", DefaultMarkets::NASDAQ(),
-    DefaultCountries::US());
-  int TEST_SOURCE = 321;
+  Security TEST_SECURITY{"TST", DefaultMarkets::NASDAQ(),
+    DefaultCountries::US()};
+  auto TEST_SOURCE = 321;
 }
 
 void SecurityEntryTester::setUp() {
@@ -26,86 +27,74 @@ void SecurityEntryTester::tearDown() {
 
 void SecurityEntryTester::TestPublishBboQuote() {
   SecurityEntry::InitialSequences initialSequences;
-  initialSequences.m_nextBboQuoteSequence = Beam::Queries::Sequence(5);
-  SecurityEntry entry(TEST_SECURITY, Money::ZERO, initialSequences);
-  SequencedSecurityBboQuote bboQuoteA = PublishBboQuote(entry, Money::ONE, 100,
-    Money::ONE + Money::CENT, 100,
-    Decrement(initialSequences.m_nextBboQuoteSequence));
-  SequencedSecurityBboQuote bboQuoteB = PublishBboQuote(entry, 2 * Money::ONE,
-    100, 2 * Money::ONE + Money::CENT, 100, bboQuoteA.GetSequence());
-  SequencedSecurityBboQuote bboQuoteC = PublishBboQuote(entry, 1 * Money::ONE,
-    100, 1 * Money::ONE + Money::CENT, 100, bboQuoteB.GetSequence());
+  SecurityEntry entry{TEST_SECURITY, Money::ZERO, initialSequences};
+  auto bboQuoteA = PublishBboQuote(entry, Money::ONE, 100,
+    Money::ONE + Money::CENT, 100, Queries::Sequence{0});
+  auto bboQuoteB = PublishBboQuote(entry, 2 * Money::ONE, 100,
+    2 * Money::ONE + Money::CENT, 100, Queries::Sequence{1});
+  auto bboQuoteC = PublishBboQuote(entry, 1 * Money::ONE, 100,
+    1 * Money::ONE + Money::CENT, 100, Queries::Sequence{2});
 }
 
 void SecurityEntryTester::TestPublishMarketQuote() {
   SecurityEntry::InitialSequences initialSequences;
-  initialSequences.m_nextMarketQuoteSequence = Beam::Queries::Sequence(5);
-  SecurityEntry entry(TEST_SECURITY, Money::ZERO, initialSequences);
-  SequencedSecurityMarketQuote nyseQuoteA = PublishMarketQuote(entry,
-    DefaultMarkets::NYSE(), Money::ONE, 100, Money::ONE + Money::CENT, 100,
-    Decrement(initialSequences.m_nextMarketQuoteSequence));
+  SecurityEntry entry{TEST_SECURITY, Money::ZERO, initialSequences};
+  auto nyseQuoteA = PublishMarketQuote(entry, DefaultMarkets::NYSE(),
+    Money::ONE, 100, Money::ONE + Money::CENT, 100, Queries::Sequence{0});
   TestMarketQuoteSnapshot(entry, {nyseQuoteA});
-  SequencedSecurityMarketQuote nasdaqQuoteA = PublishMarketQuote(entry,
-    DefaultMarkets::NASDAQ(), Money::ONE, 100, Money::ONE + Money::CENT, 100,
-    nyseQuoteA.GetSequence());
+  auto nasdaqQuoteA = PublishMarketQuote(entry, DefaultMarkets::NASDAQ(),
+    Money::ONE, 100, Money::ONE + Money::CENT, 100, Queries::Sequence{1});
   TestMarketQuoteSnapshot(entry, {nyseQuoteA, nasdaqQuoteA});
-  SequencedSecurityMarketQuote nyseQuoteB = PublishMarketQuote(entry,
-    DefaultMarkets::NYSE(), 2 * Money::ONE, 100, 2 * Money::ONE + Money::CENT,
-    100, nasdaqQuoteA.GetSequence());
+  auto nyseQuoteB = PublishMarketQuote(entry, DefaultMarkets::NYSE(),
+    2 * Money::ONE, 100, 2 * Money::ONE + Money::CENT, 100,
+    Queries::Sequence{2});
   TestMarketQuoteSnapshot(entry, {nyseQuoteB, nasdaqQuoteA});
-  SequencedSecurityMarketQuote nasdaqQuoteB = PublishMarketQuote(entry,
-    DefaultMarkets::NASDAQ(), 2 * Money::ONE, 100, 3 * Money::ONE + Money::CENT,
-    100, nyseQuoteB.GetSequence());
+  auto nasdaqQuoteB = PublishMarketQuote(entry, DefaultMarkets::NASDAQ(),
+    2 * Money::ONE, 100, 3 * Money::ONE + Money::CENT, 100,
+    Queries::Sequence{3});
   TestMarketQuoteSnapshot(entry, {nyseQuoteB, nasdaqQuoteB});
 }
 
 void SecurityEntryTester::TestAddAndRemoveBookQuote() {
   SecurityEntry::InitialSequences initialSequences;
-  initialSequences.m_nextBookQuoteSequence = Beam::Queries::Sequence(5);
-  SecurityEntry entry(TEST_SECURITY, Money::ZERO, initialSequences);
-  SequencedSecurityBookQuote abcBidA = PublishBookQuote(entry, "ABC", false,
-    DefaultMarkets::NYSE(), Money::ONE, 100, Side::BID,
-    Decrement(initialSequences.m_nextBookQuoteSequence), 100);
+  SecurityEntry entry{TEST_SECURITY, Money::ZERO, initialSequences};
+  auto abcBidA = PublishBookQuote(entry, "ABC", false, DefaultMarkets::NYSE(),
+    Money::ONE, 100, Side::BID, Queries::Sequence{0}, 100);
   TestBookQuoteSnapshot(entry, {}, {abcBidA});
-  SequencedSecurityBookQuote abcAskA = PublishBookQuote(entry, "ABC", false,
-    DefaultMarkets::NYSE(), 2 * Money::ONE, 100, Side::ASK,
-    abcBidA.GetSequence(), 100);
+  auto abcAskA = PublishBookQuote(entry, "ABC", false, DefaultMarkets::NYSE(),
+    2 * Money::ONE, 100, Side::ASK, Queries::Sequence{1}, 100);
   TestBookQuoteSnapshot(entry, {abcAskA}, {abcBidA});
-  SequencedSecurityBookQuote abcAskB = PublishBookQuote(entry, "ABC", false,
-    DefaultMarkets::NYSE(), 2 * Money::ONE, 100, Side::ASK,
-    abcAskA.GetSequence(), 200);
+  auto abcAskB = PublishBookQuote(entry, "ABC", false, DefaultMarkets::NYSE(),
+    2 * Money::ONE, 100, Side::ASK, Queries::Sequence{2}, 200);
   TestBookQuoteSnapshot(entry, {abcAskB}, {abcBidA});
-  SequencedSecurityBookQuote abcAskC = PublishBookQuote(entry, "ABC", false,
-    DefaultMarkets::NYSE(), 2 * Money::ONE, -200, Side::ASK,
-    abcAskB.GetSequence(), 0);
+  auto abcAskC = PublishBookQuote(entry, "ABC", false, DefaultMarkets::NYSE(),
+    2 * Money::ONE, -200, Side::ASK, Queries::Sequence{3}, 0);
   TestBookQuoteSnapshot(entry, {}, {abcBidA});
-  SequencedSecurityBookQuote abcBidB = PublishBookQuote(entry, "ABC", false,
-    DefaultMarkets::NYSE(), Money::ONE, -100, Side::BID, abcAskC.GetSequence(),
-    0);
+  auto abcBidB = PublishBookQuote(entry, "ABC", false, DefaultMarkets::NYSE(),
+    Money::ONE, -100, Side::BID, Queries::Sequence{4}, 0);
   TestBookQuoteSnapshot(entry, {}, {});
-  SequencedSecurityBookQuote abcBidC = PublishBookQuote(entry, "ABC", false,
-    DefaultMarkets::NYSE(), Money::ONE, 100, Side::BID, abcBidB.GetSequence(),
-    100);
+  auto abcBidC = PublishBookQuote(entry, "ABC", false, DefaultMarkets::NYSE(),
+    Money::ONE, 100, Side::BID, Queries::Sequence{5}, 100);
   TestBookQuoteSnapshot(entry, {}, {abcBidC});
-  SequencedSecurityBookQuote abcAskD = PublishBookQuote(entry, "ABC", false,
-    DefaultMarkets::NYSE(), 2 * Money::ONE, 100, Side::ASK,
-    abcBidC.GetSequence(), 100);
+  auto abcAskD = PublishBookQuote(entry, "ABC", false, DefaultMarkets::NYSE(),
+    2 * Money::ONE, 100, Side::ASK, Queries::Sequence{6}, 100);
   TestBookQuoteSnapshot(entry, {abcAskD}, {abcBidC});
 }
 
 SequencedSecurityBboQuote SecurityEntryTester::PublishBboQuote(
     SecurityEntry& entry, Money bidPrice, Quantity bidQuantity, Money askPrice,
     Quantity askQuantity, const Beam::Queries::Sequence& expectedSequence) {
-  BboQuote bboQuote(Quote(bidPrice, bidQuantity, Side::BID),
-    Quote(askPrice, askQuantity, Side::ASK), m_timeClient->GetTime());
-  optional<SequencedSecurityBboQuote> sequencedBboQuote =
-    entry.PublishBboQuote(bboQuote, TEST_SOURCE);
+  BboQuote bboQuote{Quote{bidPrice, bidQuantity, Side::BID},
+    Quote{askPrice, askQuantity, Side::ASK}, m_timeClient->GetTime()};
+  auto sequencedBboQuote = entry.PublishBboQuote(bboQuote, TEST_SOURCE);
+  auto timestampedSequence = EncodeTimestamp(bboQuote.m_timestamp,
+    expectedSequence);
   CPPUNIT_ASSERT(sequencedBboQuote.is_initialized());
-  CPPUNIT_ASSERT(sequencedBboQuote->GetSequence() > expectedSequence);
+  CPPUNIT_ASSERT(sequencedBboQuote->GetSequence() == timestampedSequence);
   CPPUNIT_ASSERT((*sequencedBboQuote)->GetIndex() == TEST_SECURITY);
   CPPUNIT_ASSERT(bboQuote == **sequencedBboQuote);
   CPPUNIT_ASSERT(bboQuote == *entry.GetBboQuote());
-  optional<SecuritySnapshot> snapshot = entry.LoadSnapshot();
+  auto snapshot = entry.LoadSnapshot();
   CPPUNIT_ASSERT(snapshot.is_initialized());
   CPPUNIT_ASSERT(bboQuote == snapshot->m_bboQuote);
   return *sequencedBboQuote;
@@ -115,12 +104,13 @@ SequencedSecurityMarketQuote SecurityEntryTester::PublishMarketQuote(
     SecurityEntry& entry, MarketCode market, Money bidPrice,
     Quantity bidQuantity, Money askPrice, Quantity askQuantity,
     const Beam::Queries::Sequence& expectedSequence) {
-  MarketQuote quote(market, Quote(bidPrice, bidQuantity, Side::BID),
-    Quote(askPrice, askQuantity, Side::ASK), m_timeClient->GetTime());
-  optional<SequencedSecurityMarketQuote> sequencedQuote =
-    entry.PublishMarketQuote(quote, TEST_SOURCE);
+  MarketQuote quote{market, Quote{bidPrice, bidQuantity, Side::BID},
+    Quote{askPrice, askQuantity, Side::ASK}, m_timeClient->GetTime()};
+  auto sequencedQuote = entry.PublishMarketQuote(quote, TEST_SOURCE);
+  auto timestampedSequence = EncodeTimestamp(quote.m_timestamp,
+    expectedSequence);
   CPPUNIT_ASSERT(sequencedQuote.is_initialized());
-  CPPUNIT_ASSERT(sequencedQuote->GetSequence() > expectedSequence);
+  CPPUNIT_ASSERT(sequencedQuote->GetSequence() == timestampedSequence);
   CPPUNIT_ASSERT((*sequencedQuote)->GetIndex() == TEST_SECURITY);
   CPPUNIT_ASSERT(quote == **sequencedQuote);
   return *sequencedQuote;
@@ -128,10 +118,10 @@ SequencedSecurityMarketQuote SecurityEntryTester::PublishMarketQuote(
 
 void SecurityEntryTester::TestMarketQuoteSnapshot(const SecurityEntry& entry,
     const std::vector<SequencedSecurityMarketQuote>& marketQuotes) {
-  optional<SecuritySnapshot> snapshot = entry.LoadSnapshot();
+  auto snapshot = entry.LoadSnapshot();
   CPPUNIT_ASSERT(snapshot.is_initialized());
   CPPUNIT_ASSERT(snapshot->m_marketQuotes.size() == marketQuotes.size());
-  for(const SequencedSecurityMarketQuote& marketQuote : marketQuotes) {
+  for(auto& marketQuote : marketQuotes) {
     CPPUNIT_ASSERT_NO_THROW(snapshot->m_marketQuotes.at(
       (*marketQuote)->m_market));
     CPPUNIT_ASSERT(snapshot->m_marketQuotes.at((*marketQuote)->m_market) ==
@@ -144,14 +134,15 @@ SequencedSecurityBookQuote SecurityEntryTester::PublishBookQuote(
     Money price, Quantity quantity, Side side,
     const Beam::Queries::Sequence& expectedSequence,
     Quantity expectedQuantity) {
-  BookQuote quote(mpid, isPrimaryMpid, market, Quote(price, quantity, side),
-    m_timeClient->GetTime());
-  optional<SequencedSecurityBookQuote> sequencedQuote =
-    entry.UpdateBookQuote(quote, TEST_SOURCE);
+  BookQuote quote{mpid, isPrimaryMpid, market, Quote{price, quantity, side},
+    m_timeClient->GetTime()};
+  auto timestampedSequence = EncodeTimestamp(quote.m_timestamp,
+    expectedSequence);
+  auto sequencedQuote = entry.UpdateBookQuote(quote, TEST_SOURCE);
   CPPUNIT_ASSERT(sequencedQuote.is_initialized());
-  BookQuote expectedQuote = quote;
+  auto expectedQuote = quote;
   expectedQuote.m_quote.m_size = expectedQuantity;
-  CPPUNIT_ASSERT(sequencedQuote->GetSequence() > expectedSequence);
+  CPPUNIT_ASSERT(sequencedQuote->GetSequence() == timestampedSequence);
   CPPUNIT_ASSERT((*sequencedQuote)->GetIndex() == TEST_SECURITY);
   CPPUNIT_ASSERT(expectedQuote == **sequencedQuote);
   return *sequencedQuote;
@@ -160,16 +151,16 @@ SequencedSecurityBookQuote SecurityEntryTester::PublishBookQuote(
 void SecurityEntryTester::TestBookQuoteSnapshot(const SecurityEntry& entry,
     const vector<SequencedSecurityBookQuote>& expectedAsks,
     const vector<SequencedSecurityBookQuote>& expectedBids) {
-  optional<SecuritySnapshot> snapshot = entry.LoadSnapshot();
+  auto snapshot = entry.LoadSnapshot();
   CPPUNIT_ASSERT(snapshot.is_initialized());
   CPPUNIT_ASSERT(snapshot->m_askBook.size() == expectedAsks.size());
   CPPUNIT_ASSERT(snapshot->m_bidBook.size() == expectedBids.size());
-  for(const SequencedSecurityBookQuote& ask : expectedAsks) {
+  for(auto& ask : expectedAsks) {
     auto quoteIterator = find(snapshot->m_askBook.begin(),
       snapshot->m_askBook.end(), ask);
     CPPUNIT_ASSERT(quoteIterator != snapshot->m_askBook.end());
   }
-  for(const SequencedSecurityBookQuote& bid : expectedBids) {
+  for(auto& bid : expectedBids) {
     auto quoteIterator = find(snapshot->m_bidBook.begin(),
       snapshot->m_bidBook.end(), bid);
     CPPUNIT_ASSERT(quoteIterator != snapshot->m_bidBook.end());
