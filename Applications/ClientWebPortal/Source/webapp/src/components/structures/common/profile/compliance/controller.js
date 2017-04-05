@@ -164,7 +164,7 @@ class Controller {
       let entry = ruleEntries[i];
       if (entry.id == id) {
         entry.schema.parameters = parameters;
-        entry.state = state;
+        entry.state = Number(state);
 
         if (state == 3) {
           entry.toBeDeleted = true;
@@ -209,6 +209,7 @@ class Controller {
         }
       }
       this.view.update(this.componentModel);
+      this.view.showSaveSuccessMessage.apply(this.view);
     });
   }
 
@@ -235,10 +236,7 @@ class Controller {
           schema: clone(ruleEntry.schema),
           state: ruleEntry.state
         };
-        let updatePromise = this.complianceServiceClient.updateComplianceRuleEntry.apply(this.complianceServiceClient,
-          [
-            apiRuleEntry
-          ]);
+        let updatePromise = this.complianceServiceClient.updateComplianceRuleEntry.apply(this.complianceServiceClient, [apiRuleEntry]);
         savePromises.push(updatePromise);
       } else if (ruleEntry.toBeDeleted) {
         let deletePromise = this.complianceServiceClient.deleteComplianceRuleEntry.apply(this.complianceServiceClient, [

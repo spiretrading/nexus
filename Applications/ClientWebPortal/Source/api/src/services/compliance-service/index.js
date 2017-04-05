@@ -21,15 +21,7 @@ class ComplianceService {
 
     return httpConnectionManager.send(apiPath, payload, true)
       .then(ruleEntries => {
-        for (let i=0; i<ruleEntries.length; i++) {
-          let parameters = ruleEntries[i].schema.parameters;
-          for (let j=0; j<parameters.length; j++) {
-            let parameterType = parameters[j].value.which;
-            if (parameterType == DataType.MONEY) {
-              parameters[j].value.value = Money.fromRepresentation(parameters[j].value.value);
-            }
-          }
-        }
+        dataTypeConverter.fromData(ruleEntries);
         return ruleEntries;
       })
       .catch(this.logErrorAndThrow);
@@ -44,6 +36,9 @@ class ComplianceService {
     };
     dataTypeConverter.toData(payload);
     return httpConnectionManager.send(apiPath, payload, false)
+      .then(response => {
+        console.debug(response);
+      })
       .catch(this.logErrorAndThrow);
   }
 
@@ -54,6 +49,8 @@ class ComplianceService {
       rule_entry: ruleEntry
     };
 
+    console.debug(payload);
+
     return httpConnectionManager.send(apiPath, payload, false)
       .catch(this.logErrorAndThrow);
   }
@@ -63,6 +60,8 @@ class ComplianceService {
     let payload = {
       id: id
     };
+
+    console.debug(payload);
 
     return httpConnectionManager.send(apiPath, payload, false)
       .catch(this.logErrorAndThrow);

@@ -18,6 +18,7 @@ import countryDatabaseEntry from './definitions/country/database-entry'
 import currencyId from './definitions/currency/id';
 import currencyDatabase from './definitions/currency/database';
 import currencyDatabaseEntry from './definitions/currency/database-entry';
+import security from './definitions/security';
 
 // module export configurations
 export const AdministrationClient = administrationClient;
@@ -38,3 +39,4 @@ export const CountryDatabaseEntry = countryDatabaseEntry;
 export const CurrencyId = currencyId;
 export const CurrencyDatabase = currencyDatabase;
 export const CurrencyDatabaseEntry = currencyDatabaseEntry;
+export const Security = security;

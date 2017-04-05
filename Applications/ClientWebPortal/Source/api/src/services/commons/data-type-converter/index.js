@@ -1,5 +1,6 @@
 import DataType from '../../../definitions/data-type';
 import Money from '../../../definitions/money';
+import Security from '../../../definitions/security';
 
 /** Converts data to their respective classes */
 class DataTypeConverter {
@@ -13,9 +14,11 @@ class DataTypeConverter {
         }
       } else if (object.which == DataType.MONEY) {
         object.value = object.value.toData();
-      }
-
-      else if (typeof object == 'object' && object.which == null) {
+      } else if (object.which == DataType.SECURITY) {
+        object.value = object.value.toData();
+      } else if (object.which == DataType.LIST) {
+        convertToData.apply(this, [object.value]);
+      } else if (typeof object == 'object' && object.which == null) {
         for (let property in object) {
           convertToData.apply(this, [object[property]]);
         }
@@ -33,9 +36,11 @@ class DataTypeConverter {
         }
       } else if (object.which == DataType.MONEY) {
         object.value = Money.fromRepresentation(object.value);
-      }
-
-      else if (typeof object == 'object' && object.which == null) {
+      } else if (object.which == DataType.SECURITY) {
+        object.value = Security.fromData(object.value);
+      } else if (object.which == DataType.LIST) {
+        convertFromData.apply(this, [object.value]);
+      } else if (typeof object == 'object' && object.which == null) {
         for (let property in object) {
           convertFromData.apply(this, [object[property]]);
         }

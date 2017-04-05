@@ -1,76 +1,53 @@
+import MarketCode from '../market/code';
+import CountryCode from '../country/code';
+import SecuritySet from '../security-set';
 
 class Security {
-  constructor(number) {
-    this.value = Number(number);
-    if (isNaN(this.value)) {
-      throw new Error('Input must be a number.');
-    }
-  }
-
-  toNumber() {
-    return this.value / MULTIPLIER;
-  }
-
-  toString() {
-    return (this.value / MULTIPLIER).toString();
-  }
-
-  equals(operand) {
-    return this.value === operand.value;
-  }
-
-  compare(operand) {
-    return this.value - operand.value;
-  }
-
-  add(operand) {
-    return new Money(this.value + operand.value);
-  }
-
-  subtract(operand) {
-    return new Money(this.value - operand.value);
-  }
-
-  multiply(operand) {
-    let result = this.value * operand;
-    result = Math.trunc(result);
-    return new Money(result);
-  }
-
-  divide(operand) {
-    let result = this.value / operand;
-    result = Math.trunc(result);
-    return new Money(result);
+  constructor(country, market, symbol) {
+    this.country = country;
+    this.market = market;
+    this.symbol = symbol;
   }
 
   toData() {
-    return this.value;
+    if (this.country == CountryCode.NONE && this.market == SecuritySet.MARKET_CODE_WILD_CARD && this.symbol == SecuritySet.SYMBOL_WILD_CARD) {
+      return {
+        country: this.country,
+        market: this.market,
+        symbol: this.symbol
+      };
+    } else {
+      return {
+        country: this.country.toNumber(),
+        market: this.market.toCode(),
+        symbol: this.symbol
+      };
+    }
   }
 
   clone() {
-    return Money.fromRepresentation(this.value);
+    return new Security(this.country, this.market, this.symbol);
   }
 }
 
-Money.fromRepresentation = (value) => {
-  return new Money(value);
-}
+Security.fromData = data => {
+  let country = new CountryCode(data.country);
+  let market = new MarketCode(data.market);
+  return new Security(country, market, data.symbol);
+};
 
-Money.fromNumber = (value) => {
-  return new Money(value * MULTIPLIER);
-}
+Security.getWildCard = () => {
+  let country = new CountryCode(CountryCode.NONE);
+  let market = new MarketCode(SecuritySet.MARKET_CODE_WILD_CARD);
+  return new Security(country, market, SecuritySet.SYMBOL_WILD_CARD);
+};
 
-const MULTIPLIER = 1000000;
-const ZERO = Money.fromRepresentation(0);
-const ONE = Money.fromRepresentation(MULTIPLIER);
-const CENT = Money.fromRepresentation(MULTIPLIER / 100);
-const BIP = Money.fromRepresentation(MULTIPLIER / 10000);
-const EPSILON = Money.fromRepresentation(1);
-
-Money.ZERO = ZERO;
-Money.ONE = ONE;
-Money.CENT = CENT;
-Money.BIP = BIP;
-Money.EPSILON = EPSILON;
+Security.isWildCard = securityLabel => {
+  if (securityLabel === '*' || securityLabel === '*.*' || securityLabel === '*.*.*') {
+    return true;
+  } else {
+    return false;
+  }
+};
 
 export default Security;

@@ -75,7 +75,7 @@ class View extends UpdatableView {
     $(event.currentTarget).addClass('selected');
   }
 
-  showSavedMessage() {
+  showSaveSuccessMessage() {
     let $saveMessage = $('#compliance-container .save-message');
     $saveMessage
       .fadeOut(() => {
@@ -137,8 +137,8 @@ class View extends UpdatableView {
             <span className="icon-add" onClick={this.onAddClick.bind(this)}></span>
             <span className="title">Add new rule</span>
           </div>
-        saveButton = <PrimaryButton className="save-button" model={saveBtnModel} onClick={onSave}/>
-        horizontalDivider = <hr/>
+        saveButton = <PrimaryButton className="save-button" model={saveBtnModel} onClick={onSave}/>;
+        horizontalDivider = <hr/>;
       }
 
       content =

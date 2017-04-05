@@ -25,6 +25,10 @@ class CountryCode {
   }
 }
 
+const NONE = 65535;
+
+CountryCode.NONE = NONE;
+
 CountryCode.fromNumber = (number) => {
   return new CountryCode(number);
 };

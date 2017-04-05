@@ -25,6 +25,10 @@ class BuyingPowerPanel extends Component {
     this.controller.componentWillUpdate(nextProps.model);
   }
 
+  shouldComponentUpdate() {
+    return false;
+  }
+
   componentDidUpdate() {
     this.controller.getView().componentDidUpdate();
   }
