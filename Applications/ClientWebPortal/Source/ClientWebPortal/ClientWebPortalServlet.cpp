@@ -260,7 +260,8 @@ void ClientWebPortalServlet::OnPortfolioTimerExpired(Timer::Result result) {
   std::move(m_updatedPortfolioEntries.begin(), m_updatedPortfolioEntries.end(),
     std::back_inserter(updatedEntries));
   for(auto& updatedEntry : updatedEntries) {
-    RiskPortfolioKey key{updatedEntry.m_account, updatedEntry.m_security};
+    RiskPortfolioKey key{updatedEntry.m_account,
+      updatedEntry.m_inventory.m_position.m_key.m_index};
     auto entryResult = m_portfolioEntries.insert(make_pair(key, updatedEntry));
     if(!entryResult.second) {
       entryResult.first->second = updatedEntry;

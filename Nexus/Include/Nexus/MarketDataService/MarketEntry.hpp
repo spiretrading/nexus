@@ -1,7 +1,6 @@
 #ifndef NEXUS_MARKETDATAMARKETENTRY_HPP
 #define NEXUS_MARKETDATAMARKETENTRY_HPP
-#include <Beam/Queries/Sequence.hpp>
-#include <boost/atomic/atomic.hpp>
+#include <Beam/Queries/Sequencer.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/MarketDataService/MarketDataService.hpp"
@@ -50,25 +49,22 @@ namespace MarketDataService {
 
     private:
       MarketCode m_market;
-      boost::atomic<Beam::Queries::Sequence::Ordinal> m_orderImbalanceSequence;
+      Beam::Queries::Sequencer m_orderImbalanceSequencer;
   };
 
   inline MarketEntry::MarketEntry(MarketCode market,
       const InitialSequences& initialSequences)
-      : m_market(market),
-        m_orderImbalanceSequence(
-          initialSequences.m_nextOrderImbalanceSequence.GetOrdinal()) {}
+      : m_market{market},
+        m_orderImbalanceSequencer{
+          initialSequences.m_nextOrderImbalanceSequence} {}
 
   inline void MarketEntry::Clear(int sourceId) {}
 
   inline boost::optional<SequencedMarketOrderImbalance> MarketEntry::
       PublishOrderImbalance(const OrderImbalance& orderImbalance,
       int sourceId) {
-    auto sequence = ++m_orderImbalanceSequence;
-    auto sequencedOrderImbalance = Beam::Queries::MakeSequencedValue(
-      Beam::Queries::MakeIndexedValue(orderImbalance, m_market),
-      Beam::Queries::Sequence(sequence));
-    return sequencedOrderImbalance;
+    return m_orderImbalanceSequencer.MakeSequencedValue(orderImbalance,
+      m_market);
   }
 }
 }

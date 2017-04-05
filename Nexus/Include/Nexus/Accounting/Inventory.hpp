@@ -44,16 +44,16 @@ namespace Accounting {
 
   template<typename PositionType>
   Inventory<PositionType>::Inventory()
-      : m_fees(Money::ZERO),
-        m_volume(0),
-        m_transactionCount(0) {}
+      : m_fees{Money::ZERO},
+        m_volume{0},
+        m_transactionCount{0} {}
 
   template<typename PositionType>
   Inventory<PositionType>::Inventory(const typename PositionType::Key& key)
-      : m_position(key),
-        m_fees(Money::ZERO),
-        m_volume(0),
-        m_transactionCount(0) {}
+      : m_position{key},
+        m_fees{Money::ZERO},
+        m_volume{0},
+        m_transactionCount{0} {}
 }
 }
 
