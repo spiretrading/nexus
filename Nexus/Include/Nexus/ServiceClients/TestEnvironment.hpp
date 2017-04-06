@@ -12,6 +12,9 @@
 #include <boost/optional/optional.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
+#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
+#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/Definitions/Market.hpp"
 #include "Nexus/DefinitionsServiceTests/DefinitionsServiceTestEnvironment.hpp"
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
@@ -430,9 +433,10 @@ namespace Nexus {
       auto administrationClient = m_administrationEnvironment->BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
       administrationClient->Open();
-      m_orderExecutionEnvironment.emplace(
-        std::move(orderExecutionServiceLocatorClient),
-        std::move(uidClient), std::move(administrationClient));
+      m_orderExecutionEnvironment.emplace(GetDefaultMarketDatabase(),
+        GetDefaultDestinationDatabase(),
+        std::move(orderExecutionServiceLocatorClient), std::move(uidClient),
+        std::move(administrationClient));
       m_orderExecutionEnvironment->Open();
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
