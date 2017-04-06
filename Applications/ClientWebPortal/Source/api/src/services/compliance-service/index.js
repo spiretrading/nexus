@@ -1,4 +1,7 @@
 import httpConnectionManager from '../commons/http-connection-manager';
+import Money from '../../definitions/money';
+import DataType from '../../definitions/data-type';
+import dataTypeConverter from '../commons/data-type-converter';
 
 /** Spire compliance service client class */
 class ComplianceService {
@@ -17,6 +20,10 @@ class ComplianceService {
     };
 
     return httpConnectionManager.send(apiPath, payload, true)
+      .then(ruleEntries => {
+        dataTypeConverter.fromData(ruleEntries);
+        return ruleEntries;
+      })
       .catch(this.logErrorAndThrow);
   }
 
@@ -27,26 +34,34 @@ class ComplianceService {
       state: state,
       schema: schema
     };
-
+    dataTypeConverter.toData(payload);
     return httpConnectionManager.send(apiPath, payload, false)
+      .then(response => {
+        console.debug(response);
+      })
       .catch(this.logErrorAndThrow);
   }
 
   updateComplianceRuleEntry(ruleEntry) {
+    dataTypeConverter.toData.apply(dataTypeConverter, [ruleEntry.schema]);
     let apiPath = Config.BACKEND_API_ROOT_URL + 'compliance_service/update_compliance_rule_entry';
     let payload = {
       rule_entry: ruleEntry
     };
+
+    console.debug(payload);
 
     return httpConnectionManager.send(apiPath, payload, false)
       .catch(this.logErrorAndThrow);
   }
 
   deleteComplianceRuleEntry(id) {
-    let apiPath = Config.BACKEND_API_ROOT_URL + 'compliance_service/update_compliance_rule_entry';
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'compliance_service/delete_compliance_rule_entry';
     let payload = {
       id: id
     };
+
+    console.debug(payload);
 
     return httpConnectionManager.send(apiPath, payload, false)
       .catch(this.logErrorAndThrow);

@@ -1,4 +1,4 @@
-import {MarketDataServiceClient} from 'spire-client';
+import {MarketDataServiceClient, Money, DataType} from 'spire-client';
 
 class Controller {
   constructor(react, componentModel) {
@@ -18,7 +18,7 @@ class Controller {
   componentWillUpdate(model) {
     if (model != null) {
       overwriteMerge(this.componentModel, model);
-      this.view.setComponentModel(this.componentModel);
+      this.view.setComponentModel.apply(this.view, [this.componentModel]);
     }
   }
 
@@ -30,7 +30,11 @@ class Controller {
     let parameters = this.componentModel.schema.parameters;
     for (let i=0; i<parameters.length; i++) {
       if (parameters[i].name == parameterName) {
-        parameters[i].value.value = value;
+        if (parameters[i].value.which == DataType.MONEY) {
+          parameters[i].value.value = Money.fromNumber(value);
+        } else {
+          parameters[i].value.value = value;
+        }
       }
     }
     this.onUpdated(

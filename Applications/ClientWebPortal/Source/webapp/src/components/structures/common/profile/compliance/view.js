@@ -54,20 +54,9 @@ class View extends UpdatableView {
     let ruleTypeName = $('#compliance-container .rule-types li.selected').text();
     if (ruleTypeName != '') {
       ruleTypeName = labelFormatter.toLowerCaseWithUnderscore(ruleTypeName);
-      let schema = definitionsService.getComplianceRuleScehma(ruleTypeName);
       let $newEntryWrapper = $('<div class="new-entry-wrapper"></div>');
-      let onRuleUpdate = this.controller.onRuleUpdate.bind(this.controller);
       $('#compliance-container .add-rule-wrapper').before($newEntryWrapper);
-      let model = {
-        ruleEntryId: 0,
-        schema: schema,
-        state: 0,
-        isGroup: this.componentModel.isGroup,
-        isAdmin: this.componentModel.isAdmin
-      };
-
-      let id = uuid.v4();
-      this.controller.onRuleAdd.apply(this.controller, [id, schema, 0]);
+      this.controller.onRuleAdd.apply(this.controller, [ruleTypeName]);
 
       $('#compliance-container .rule-types li').removeClass('selected');
       modal.hide($('#add-rule-modal'));
@@ -86,7 +75,7 @@ class View extends UpdatableView {
     $(event.currentTarget).addClass('selected');
   }
 
-  showSavedMessage() {
+  showSaveSuccessMessage() {
     let $saveMessage = $('#compliance-container .save-message');
     $saveMessage
       .fadeOut(() => {
@@ -148,8 +137,8 @@ class View extends UpdatableView {
             <span className="icon-add" onClick={this.onAddClick.bind(this)}></span>
             <span className="title">Add new rule</span>
           </div>
-        saveButton = <PrimaryButton className="save-button" model={saveBtnModel} onClick={onSave}/>
-        horizontalDivider = <hr/>
+        saveButton = <PrimaryButton className="save-button" model={saveBtnModel} onClick={onSave}/>;
+        horizontalDivider = <hr/>;
       }
 
       content =

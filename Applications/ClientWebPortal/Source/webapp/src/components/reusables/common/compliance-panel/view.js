@@ -5,9 +5,9 @@ import Dropdown from 'components/reusables/common/dropdown';
 import definitionsService from 'services/definitions';
 import numberFormatter from 'utils/number-formatter';
 import inputValidator from 'utils/input-validator';
-import DataType from 'commons/data-types';
 import deviceDetector from 'utils/device-detector';
 import labelFormatter from 'utils/label-formatter';
+import {DataType, Security} from 'spire-client';
 
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
@@ -103,19 +103,26 @@ class View extends UpdatableView {
     let $tagsUl = $('#' + this.componentModel.componentId + ' ul.symbols-input');
     $tagsUl.find('.tagit-label').each(function() {
       let label = $(this).text();
-      let labelTokens = label.split('.');
-      let symbol = labelTokens[0];
-      let market = labelTokens[1];
-      let country = definitionsService.getMarket(market).country_code;
-      let security = {
-        value: {
+      let security;
+      if (Security.isWildCard(label)) {
+        security = Security.getWildCard();
+      } else {
+        let labelTokens = label.split('.');
+        let symbol = labelTokens[0];
+        let market = labelTokens[1];
+        let country = definitionsService.getMarket(market).country_code;
+        security = Security.fromData({
           country: country,
           market: market,
           symbol: symbol
-        },
+        });
+      }
+
+      let securityDefinition = {
+        value: security,
         which: 8
       };
-      securities.push(security);
+      securities.push(securityDefinition);
     });
     let parameterName = $tagsUl.attr('data-parameter-name');
     this.controller.onParameterUpdated(parameterName, securities);
@@ -254,7 +261,7 @@ class View extends UpdatableView {
   /** @private */
   getMoneyInput(parameterIndex) {
     let parameters = this.componentModel.schema.parameters;
-    let formattedNumber = numberFormatter.formatTwoDecimalsWithComma(parameters[parameterIndex].value.value);
+    let formattedNumber = numberFormatter.formatTwoDecimalsWithComma(parameters[parameterIndex].value.value.toNumber());
     let onMoneyInputBlur = this.onMoneyInputBlur.bind(this);
     let parameterName = parameters[parameterIndex].name.replace(/\\/g, '');
     parameterName = labelFormatter.toCapitalWithSpace(parameterName);
@@ -281,8 +288,11 @@ class View extends UpdatableView {
     let tags = [];
     for (let j=0; j<parameters[parameterIndex].value.value.length; j++) {
       let security = parameters[parameterIndex].value.value[j].value;
-      if (security.symbol.length > 0 && security.market.length > 0) {
-        let tagLabel = security.symbol + '.' + security.market;
+      if (security.symbol.length > 0) {
+        let tagLabel = security.symbol;
+        if (security.market.toCode().length > 0) {
+          tagLabel += '.' + security.market.toCode();
+        }
         tags.push(
           <li key={j} data-country-code={security.country} data-symbol={security.symbol}>{tagLabel}</li>
         );
@@ -397,56 +407,73 @@ class View extends UpdatableView {
     inputValidator.onlyNumbers($('#' + this.componentModel.componentId + ' .time-input-wrapper input.numeric'));
 
     var _this = this;
-    $('#' + this.componentModel.componentId + ' .symbols-input').tagit({
-      autocomplete: {
-        delay: 0,
-        minLength: 1,
-        source: (request, response) => {
-          if (this.symbolsTimeout != null) {
-            clearTimeout(this.symbolsTimeout);
+    $('#' + this.componentModel.componentId + ' .symbols-input').each(function(){
+      let $tagContainer = $(this);
+      let sourceLabels = [];
+      $tagContainer.tagit({
+        autocomplete: {
+          delay: 0,
+          minLength: 1,
+          source: function(request, response) {
+            if (_this.symbolsTimeout != null) {
+              clearTimeout(_this.symbolsTimeout);
+            }
+
+            _this.symbolsTimeout = setTimeout(() => {
+              _this.symbolsTimeout = null;
+              let input = $('#' + _this.componentModel.componentId + ' .ui-autocomplete-input').val().trim();
+              _this.controller.searchSymbols(input)
+                .then((results) => {
+                  let labels = [];
+                  for (let i=0; i<results.length; i++) {
+                    let symbol = results[i].security.symbol + '.' + results[i].security.market;
+                    let label = {
+                      label: symbol + ' (' + results[i].name + ')',
+                      value: symbol
+                    };
+                    labels.push(label);
+                    if (sourceLabels.indexOf(label.value) < 0) {
+                      sourceLabels.push(label.value);
+                    }
+                  }
+                  response(labels);
+                });
+            }, Config.INPUT_TIMEOUT_DURATION);
+          }
+        },
+        beforeTagAdded: function(event, ui) {
+          if (_this.isInitialized) {
+            if (ui.tagLabel != '*' && !doesExistInSourceLabels(ui.tagLabel)){
+              $(this).find('.ui-autocomplete-input').val('');
+              return false;
+            }
           }
 
-          this.symbolsTimeout = setTimeout(() => {
-            this.symbolsTimeout = null;
-            let input = $('#' + this.componentModel.componentId + ' .ui-autocomplete-input').val().trim();
-            this.controller.searchSymbols(input)
-              .then((results) => {
-                let labels = [];
-                for (let i=0; i<results.length; i++) {
-                  let symbol = results[i].security.symbol + '.' + results[i].security.market;
-                  labels.push({
-                    label: symbol + ' (' + results[i].name + ')',
-                    value: symbol
-                  });
-                }
-                response(labels);
-              });
-          }, Config.INPUT_TIMEOUT_DURATION);
-        }
-      },
-      beforeTagAdded: function(event, ui) {
-        if (_this.isInitialized) {
-          let tokens = ui.tagLabel.split('.');
-          if (tokens.length !== 2){
-            $(this).find('.ui-autocomplete-input').val('');
+          function doesExistInSourceLabels(label) {
+            for (let i=0; i<sourceLabels.length; i++) {
+              if (sourceLabels[i] == label) {
+                return true;
+              }
+            }
             return false;
           }
-        }
-      },
-      afterTagAdded: (event, ui) => {
-        if (this.isInitialized) {
-          this.adjustContentSlideWrapperHeight();
-          this.onSymbolsChange.apply(this);
-        } else {
-          $(event.currentTarget).parent().parent().find('.content-slide-wrapper').height(0);
-        }
-      },
-      afterTagRemoved: (event, ui) => {
-        this.adjustContentSlideWrapperHeight();
-        this.onSymbolsChange.apply(this);
-      },
-      allowDuplicates: true,
-      readOnly: !this.componentModel.isAdmin
+        },
+        afterTagAdded: (event, ui) => {
+          if (_this.isInitialized) {
+            _this.adjustContentSlideWrapperHeight();
+            _this.onSymbolsChange.apply(_this);
+          } else {
+            $(event.currentTarget).parent().parent().find('.content-slide-wrapper').height(0);
+          }
+        },
+        afterTagRemoved: (event, ui) => {
+          _this.adjustContentSlideWrapperHeight();
+          _this.onSymbolsChange.apply(_this);
+          return false;
+        },
+        allowDuplicates: false,
+        readOnly: !_this.componentModel.isAdmin
+      });
     });
 
     this.isInitialized = true;
