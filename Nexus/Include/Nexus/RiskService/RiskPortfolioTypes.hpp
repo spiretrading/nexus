@@ -40,7 +40,7 @@ namespace RiskService {
     bool operator !=(const RiskPortfolioKey& key) const;
   };
 
-  //! The type used to represent a porfolio's position.
+  //! The type used to represent a portfolio's position.
   using RiskPortfolioPosition = Accounting::Position<Security>;
 
   //! The type used to represent a portfolio's Inventory.
@@ -54,8 +54,8 @@ namespace RiskService {
     Beam::TableEntry<RiskPortfolioKey, RiskPortfolioInventory>;
 
   //! The Publisher used for portfolio events.
-  using RiskPortfolioUpdatePublisher =
-    Beam::Publisher<Beam::TableEntry<RiskPortfolioKey, RiskPortfolioInventory>>;
+  using RiskPortfolioUpdatePublisher = Beam::Publisher<
+    Beam::TableEntry<RiskPortfolioKey, RiskPortfolioInventory>>;
 
   inline std::size_t hash_value(const RiskPortfolioKey& value) {
     std::size_t seed = 0;
@@ -72,11 +72,13 @@ namespace RiskService {
       : m_account(account),
         m_security(security) {}
 
-  inline bool RiskPortfolioKey::operator ==(const RiskPortfolioKey& key) const {
+  inline bool RiskPortfolioKey::operator ==(
+      const RiskPortfolioKey& key) const {
     return m_account == key.m_account && m_security == key.m_security;
   }
 
-  inline bool RiskPortfolioKey::operator !=(const RiskPortfolioKey& key) const {
+  inline bool RiskPortfolioKey::operator !=(
+      const RiskPortfolioKey& key) const {
     return !(*this == key);
   }
 }
@@ -100,7 +102,8 @@ namespace Serialization {
 namespace std {
   template <>
   struct hash<Nexus::RiskService::RiskPortfolioKey> {
-    size_t operator()(const Nexus::RiskService::RiskPortfolioKey& value) const {
+    size_t operator()(
+        const Nexus::RiskService::RiskPortfolioKey& value) const {
       return Nexus::RiskService::hash_value(value);
     }
   };

@@ -4,6 +4,7 @@
 #include <boost/functional/value_factory.hpp>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
+#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 
 using namespace Beam;
@@ -23,58 +24,61 @@ using namespace Nexus::Queries;
 using namespace std;
 
 void OrderExecutionServletTester::setUp() {
-  m_serviceLocatorInstance.Initialize();
-  m_serviceLocatorInstance->Open();
-  DirectoryEntry servicesDirectory =
-    m_serviceLocatorInstance->GetRoot().MakeDirectory("services",
+  m_serviceLocatorEnvironment.Initialize();
+  m_serviceLocatorEnvironment->Open();
+  auto servicesDirectory =
+    m_serviceLocatorEnvironment->GetRoot().MakeDirectory("services",
     DirectoryEntry::GetStarDirectory());
-  DirectoryEntry administratorsDirectory =
-    m_serviceLocatorInstance->GetRoot().MakeDirectory("administrators",
+  auto administratorsDirectory =
+    m_serviceLocatorEnvironment->GetRoot().MakeDirectory("administrators",
     DirectoryEntry::GetStarDirectory());
-  DirectoryEntry administrationAccount =
-    m_serviceLocatorInstance->GetRoot().MakeAccount("administration_service",
+  auto administrationAccount =
+    m_serviceLocatorEnvironment->GetRoot().MakeAccount(
+    "administration_service", "", servicesDirectory);
+  m_serviceLocatorEnvironment->GetRoot().StorePermissions(
+    administrationAccount, DirectoryEntry::GetStarDirectory(),
+    Permissions(~0));
+  m_serviceLocatorEnvironment->GetRoot().MakeAccount("order_execution_service",
     "", servicesDirectory);
-  m_serviceLocatorInstance->GetRoot().StorePermissions(administrationAccount,
-    DirectoryEntry::GetStarDirectory(), Permissions(~0));
-  m_serviceLocatorInstance->GetRoot().MakeAccount("order_execution_service", "",
-    servicesDirectory);
-  DirectoryEntry clientEntry = m_serviceLocatorInstance->GetRoot().MakeAccount(
+  auto clientEntry = m_serviceLocatorEnvironment->GetRoot().MakeAccount(
     "client", "", DirectoryEntry::GetStarDirectory());
-  m_uidServiceInstance.Initialize();
-  m_uidServiceInstance->Open();
-  std::unique_ptr<ServiceLocatorClient> administationServiceLocatorClient =
-    m_serviceLocatorInstance->BuildClient();
+  m_uidServiceEnvironment.Initialize();
+  m_uidServiceEnvironment->Open();
+  auto administationServiceLocatorClient =
+    m_serviceLocatorEnvironment->BuildClient();
   administationServiceLocatorClient->SetCredentials("administration_service",
     "");
   administationServiceLocatorClient->Open();
-  m_administrationServiceInstance.Initialize(
+  m_administrationServiceEnvironment.Initialize(
     std::move(administationServiceLocatorClient));
-  m_administrationServiceInstance->Open();
-  m_servletServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
+  m_administrationServiceEnvironment->Open();
+  m_servletServiceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
   m_servletServiceLocatorClient->SetCredentials("order_execution_service", "");
   m_servletServiceLocatorClient->Open();
   m_serverConnection.Initialize();
-  m_clientProtocol.Initialize(Initialize(string("test"),
+  m_clientProtocol.Initialize(Initialize(string{"test"},
     Ref(*m_serverConnection)), Initialize());
   RegisterQueryTypes(Store(m_clientProtocol->GetSlots().GetRegistry()));
   RegisterOrderExecutionServices(Store(m_clientProtocol->GetSlots()));
   RegisterOrderExecutionMessages(Store(m_clientProtocol->GetSlots()));
   m_driver.Initialize();
   m_dataStore.Initialize();
-  m_servlet.Initialize(boost::posix_time::pos_infin, Initialize(),
-    m_servletServiceLocatorClient.get(), m_uidServiceInstance->BuildClient(),
-    m_administrationServiceInstance->BuildClient(
+  m_servlet.Initialize(boost::posix_time::pos_infin,
+    GetDefaultMarketDatabase(), GetDefaultDestinationDatabase(), Initialize(),
+    m_servletServiceLocatorClient.get(),
+    m_uidServiceEnvironment->BuildClient(),
+    m_administrationServiceEnvironment->BuildClient(
     Ref(*m_servletServiceLocatorClient)), &*m_driver, &*m_dataStore);
   m_container.Initialize(Initialize(&*m_servletServiceLocatorClient,
     &*m_servlet), &*m_serverConnection,
     factory<std::shared_ptr<TriggerTimer>>());
   m_container->Open();
-  m_clientServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
+  m_clientServiceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
   m_clientServiceLocatorClient->SetCredentials("client", "");
   m_clientServiceLocatorClient->Open();
   m_clientProtocol->Open();
-  SessionAuthenticator<ServiceLocatorClient> authenticator(
-    Ref(*m_clientServiceLocatorClient));
+  SessionAuthenticator<ServiceLocatorClient> authenticator{
+    Ref(*m_clientServiceLocatorClient)};
   authenticator(*m_clientProtocol);
   m_clientProtocol->SpawnMessageHandler();
   AccountQuery orderSubmissionQuery;
@@ -93,15 +97,15 @@ void OrderExecutionServletTester::tearDown() {
   m_dataStore.Reset();
   m_driver.Reset();
   m_serverConnection.Reset();
-  m_administrationServiceInstance.Reset();
-  m_uidServiceInstance.Reset();
-  m_serviceLocatorInstance.Reset();
+  m_administrationServiceEnvironment.Reset();
+  m_uidServiceEnvironment.Reset();
+  m_serviceLocatorEnvironment.Reset();
 }
 
 void OrderExecutionServletTester::TestNewOrderSingle() {
   auto orderFields = OrderFields::BuildLimitOrder(
     m_clientServiceLocatorClient->GetAccount(),
-    Security("TST", DefaultMarkets::NYSE(), DefaultCountries::US()),
+    Security{"TST", DefaultMarkets::NYSE(), DefaultCountries::US()},
     DefaultCurrencies::USD(), Side::BID, "TEST", 100, Money::CENT);
   ExecutionReport report;
   Async<void> messageAsync;

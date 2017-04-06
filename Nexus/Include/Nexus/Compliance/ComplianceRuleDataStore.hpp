@@ -1,6 +1,8 @@
 #ifndef NEXUS_COMPLIANCERULEDATASTORE_HPP
 #define NEXUS_COMPLIANCERULEDATASTORE_HPP
+#include <vector>
 #include <Beam/Utilities/Concept.hpp>
+#include <boost/optional/optional.hpp>
 #include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceRuleEntry.hpp"
 #include "Nexus/Compliance/ComplianceRuleViolationRecord.hpp"
@@ -12,6 +14,9 @@ namespace Compliance {
       \brief Models a data store for all compliance rules.
    */
   struct ComplianceRuleDataStore : Beam::Concept<ComplianceRuleDataStore> {
+
+    //! Returns all ComplianceRuleEntries.
+    std::vector<ComplianceRuleEntry> LoadAllComplianceRuleEntries();
 
     //! Loads the next id to use for a ComplianceRuleEntry.
     ComplianceRuleId LoadNextComplianceRuleEntryId();

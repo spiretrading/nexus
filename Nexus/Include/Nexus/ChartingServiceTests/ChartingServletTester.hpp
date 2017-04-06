@@ -4,17 +4,16 @@
 #include <Beam/IO/LocalClientChannel.hpp>
 #include <Beam/IO/LocalServerConnection.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
-#include <Beam/Pointers/DelayPtr.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
-#include <Beam/ServiceLocatorTests/ServiceLocatorTestInstance.hpp>
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Threading/TriggerTimer.hpp>
-#include "Nexus/AdministrationServiceTests/AdministrationServiceTestInstance.hpp"
+#include <boost/optional/optional.hpp>
 #include "Nexus/ChartingService/ChartingServlet.hpp"
 #include "Nexus/ChartingServiceTests/ChartingServiceTests.hpp"
-#include "Nexus/MarketDataServiceTests/MarketDataServiceTestInstance.hpp"
+#include "Nexus/ServiceClients/TestEnvironment.hpp"
+#include "Nexus/ServiceClients/TestServiceClients.hpp"
 
 namespace Nexus {
 namespace ChartingService {
@@ -36,8 +35,7 @@ namespace Tests {
 
       //! The type of ServiceProtocolServer.
       using ServletContainer = Beam::Services::ServiceProtocolServletContainer<
-        MetaChartingServlet<
-        std::unique_ptr<MarketDataService::VirtualMarketDataClient>>,
+        MetaChartingServlet<MarketDataService::VirtualMarketDataClient*>,
         std::shared_ptr<ServerConnection>,
         Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
         Beam::Codecs::NullEncoder,
@@ -58,18 +56,11 @@ namespace Tests {
       void TestLoadSecurityTimePriceSeries();
 
     private:
-      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestInstance>
-        m_serviceLocatorInstance;
-      Beam::DelayPtr<
-        AdministrationService::Tests::AdministrationServiceTestInstance>
-        m_administrationInstance;
-      std::unique_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-        m_serviceLocatorClient;
-      Beam::DelayPtr<MarketDataService::Tests::MarketDataServiceTestInstance>
-        m_marketDataServiceInstance;
+      boost::optional<TestEnvironment> m_environment;
+      boost::optional<TestServiceClients> m_serviceClients;
       std::shared_ptr<ServerConnection> m_serverConnection;
-      Beam::DelayPtr<ServletContainer> m_container;
-      Beam::DelayPtr<ClientServiceProtocolClient> m_clientProtocol;
+      boost::optional<ServletContainer> m_container;
+      boost::optional<ClientServiceProtocolClient> m_clientProtocol;
 
       CPPUNIT_TEST_SUITE(ChartingServletTester);
         CPPUNIT_TEST(TestLoadSecurityTimePriceSeries);

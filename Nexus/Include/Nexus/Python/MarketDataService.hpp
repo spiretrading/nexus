@@ -14,8 +14,8 @@ namespace Python {
   //! Exports the MarketDataService namespace.
   void ExportMarketDataService();
 
-  //! Exports the MarketDataServiceTestInstance class.
-  void ExportMarketDataServiceTestInstance();
+  //! Exports the MarketDataServiceTestEnvironment class.
+  void ExportMarketDataServiceTestEnvironment();
 
   //! Exports the SecurityMarketDataQuery class.
   void ExportSecurityMarketDataQuery();

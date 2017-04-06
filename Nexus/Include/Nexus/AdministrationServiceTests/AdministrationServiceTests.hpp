@@ -5,7 +5,7 @@ namespace Nexus {
 namespace AdministrationService {
 namespace Tests {
   class AdministrationServletTester;
-  class AdministrationServiceTestInstance;
+  class AdministrationServiceTestEnvironment;
 }
 }
 }

@@ -176,7 +176,8 @@ namespace Accounting {
       auto& security = executionReport.m_order->GetInfo().m_fields.m_security;
       auto securityIterator = m_securities.find(security);
       if(securityIterator == m_securities.end()) {
-        auto bboQuery = MarketDataService::QueryRealTimeWithSnapshot(security);
+        auto bboQuery = MarketDataService::BuildRealTimeWithSnapshotQuery(
+          security);
         m_marketDataClient->QueryBboQuotes(bboQuery,
           m_tasks.GetSlot<BboQuote>(std::bind(&PortfolioMonitor::OnBbo, this,
           security, std::placeholders::_1)));

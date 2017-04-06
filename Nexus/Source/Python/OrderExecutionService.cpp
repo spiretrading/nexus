@@ -27,7 +27,7 @@
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 #include "Nexus/OrderExecutionServiceTests/MockOrderExecutionDriver.hpp"
-#include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceInstance.hpp"
+#include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 #include "Nexus/Python/PythonOrderExecutionClient.hpp"
 
@@ -55,8 +55,8 @@ using namespace std;
 namespace {
   using SessionBuilder = AuthenticatedServiceProtocolClientBuilder<
     VirtualServiceLocatorClient, MessageProtocol<
-    std::unique_ptr<TcpSocketChannel>, BinarySender<SharedBuffer>, NullEncoder>,
-    LiveTimer>;
+    std::unique_ptr<TcpSocketChannel>, BinarySender<SharedBuffer>,
+    NullEncoder>, LiveTimer>;
   using Client = OrderExecutionClient<SessionBuilder>;
 
   PythonOrderExecutionClient* BuildClient(
@@ -95,22 +95,71 @@ namespace {
       *orderExecutionClient), queue->GetSlot<const Order*>());
   }
 
-  OrderExecutionServiceTestInstance* BuildOrderExecutionServiceTestInstance(
+  OrderExecutionServiceTestEnvironment*
+      BuildOrderExecutionServiceTestEnvironment(
+      const MarketDatabase& marketDatabase,
+      const DestinationDatabase& destinationDatabase,
       const std::shared_ptr<VirtualServiceLocatorClient>& serviceLocatorClient,
       const std::shared_ptr<VirtualUidClient>& uidClient,
       const std::shared_ptr<VirtualAdministrationClient>&
       administrationClient) {
-    return new OrderExecutionServiceTestInstance{serviceLocatorClient,
-      uidClient, administrationClient};
+    return new OrderExecutionServiceTestEnvironment{marketDatabase,
+      destinationDatabase, serviceLocatorClient, uidClient,
+      administrationClient};
   }
 
-  PythonOrderExecutionClient* OrderExecutionServiceTestInstanceBuildClient(
-      OrderExecutionServiceTestInstance& instance,
+  PythonOrderExecutionClient* OrderExecutionServiceTestEnvironmentBuildClient(
+      OrderExecutionServiceTestEnvironment& environment,
       VirtualServiceLocatorClient& serviceLocatorClient) {
     return new PythonOrderExecutionClient{
-      instance.BuildClient(Ref(serviceLocatorClient))};
+      environment.BuildClient(Ref(serviceLocatorClient))};
   }
 }
+
+#ifdef _MSC_VER
+namespace boost {
+  template<> inline const volatile Order* get_pointer(
+      const volatile Order* p) {
+    return p;
+  }
+
+  template<> inline const volatile PrimitiveOrder* get_pointer(
+      const volatile PrimitiveOrder* p) {
+    return p;
+  }
+
+  template<> inline const volatile Publisher<PrimitiveOrder*>*
+      get_pointer(const volatile Publisher<PrimitiveOrder*>* p) {
+    return p;
+  }
+
+  template<> inline const volatile PythonOrderExecutionClient* get_pointer(
+      const volatile PythonOrderExecutionClient* p) {
+    return p;
+  }
+
+  template<> inline const volatile
+      SnapshotPublisher<ExecutionReport, vector<ExecutionReport>>*
+      get_pointer(const volatile
+      SnapshotPublisher<ExecutionReport, vector<ExecutionReport>>* p) {
+    return p;
+  }
+
+  template<> inline const volatile
+      SnapshotPublisher<const Order*, vector<const Order*>>* get_pointer(
+      const volatile SnapshotPublisher<const Order*, vector<const Order*>>*
+      p) {
+    return p;
+  }
+
+  template<> inline const volatile
+      SnapshotPublisher<const PrimitiveOrder*, vector<const PrimitiveOrder*>>*
+      get_pointer(const volatile SnapshotPublisher<
+      const PrimitiveOrder*, vector<const PrimitiveOrder*>>* p) {
+    return p;
+  }
+}
+#endif
 
 void Nexus::Python::ExportAccountQuery() {
   ExportIndexedQuery<DirectoryEntry>("DirectoryEntryIndexedQuery");
@@ -232,7 +281,7 @@ void Nexus::Python::ExportOrderExecutionService() {
       borrowed(PyImport_AddModule(nestedName.c_str())))};
     parent.attr("tests") = nestedModule;
     scope child = nestedModule;
-    ExportOrderExecutionServiceTestInstance();
+    ExportOrderExecutionServiceTestEnvironment();
     ExportMockOrderExecutionDriver();
     def("cancel_order", BlockingFunction(&CancelOrder));
     def("set_order_status", BlockingFunction(&SetOrderStatus));
@@ -242,19 +291,21 @@ void Nexus::Python::ExportOrderExecutionService() {
     def("fill_order", BlockingFunction(
       static_cast<void (*)(PrimitiveOrder& order,
       Quantity quantity, const ptime& timestamp)>(&FillOrder)));
+    def("is_pending_cancel", BlockingFunction(&IsPendingCancel));
   }
 }
 
-void Nexus::Python::ExportOrderExecutionServiceTestInstance() {
-  class_<OrderExecutionServiceTestInstance, boost::noncopyable>(
-      "OrderExecutionServiceTestInstance", no_init)
-    .def("__init__", make_constructor(BuildOrderExecutionServiceTestInstance))
-    .def("__del__", BlockingFunction(&OrderExecutionServiceTestInstance::Close))
-    .def("get_driver", &OrderExecutionServiceTestInstance::GetDriver,
+void Nexus::Python::ExportOrderExecutionServiceTestEnvironment() {
+  class_<OrderExecutionServiceTestEnvironment, boost::noncopyable>(
+      "OrderExecutionServiceTestEnvironment", no_init)
+    .def("__init__",
+      make_constructor(BuildOrderExecutionServiceTestEnvironment))
+    .def("get_driver", &OrderExecutionServiceTestEnvironment::GetDriver,
       return_internal_reference<>())
-    .def("open", BlockingFunction(&OrderExecutionServiceTestInstance::Open))
-    .def("close", BlockingFunction(&OrderExecutionServiceTestInstance::Close))
-    .def("build_client", &OrderExecutionServiceTestInstanceBuildClient,
+    .def("open", BlockingFunction(&OrderExecutionServiceTestEnvironment::Open))
+    .def("close", BlockingFunction(
+      &OrderExecutionServiceTestEnvironment::Close))
+    .def("build_client", &OrderExecutionServiceTestEnvironmentBuildClient,
       return_value_policy<manage_new_object>());
 }
 
@@ -262,19 +313,53 @@ void Nexus::Python::ExportOrderFields() {
   class_<OrderFields>("OrderFields", init<>())
     .def("__copy__", &MakeCopy<OrderFields>)
     .def("__deepcopy__", &MakeDeepCopy<OrderFields>)
-    .def("build_limit_order", &OrderFields::BuildLimitOrder)
+    .def("build_limit_order", static_cast<OrderFields (*)(
+      const DirectoryEntry&, const Security&, CurrencyId, Side, const string&,
+      Quantity, Money)>(&OrderFields::BuildLimitOrder))
+    .def("build_limit_order", static_cast<OrderFields (*)(const Security&,
+      CurrencyId, Side, const string&, Quantity, Money)>(
+      &OrderFields::BuildLimitOrder))
+    .def("build_limit_order", static_cast<OrderFields (*)(
+      const DirectoryEntry&, const Security&, Side, const string&, Quantity,
+      Money)>(&OrderFields::BuildLimitOrder))
+    .def("build_limit_order", static_cast<OrderFields (*)(const Security&,
+      Side, const string&, Quantity, Money)>(&OrderFields::BuildLimitOrder))
+    .def("build_limit_order", static_cast<OrderFields (*)(const Security&,
+      CurrencyId, Side, Quantity, Money)>(&OrderFields::BuildLimitOrder))
+    .def("build_limit_order", static_cast<OrderFields (*)(
+      const DirectoryEntry&, const Security&, Side, Quantity, Money)>(
+      &OrderFields::BuildLimitOrder))
+    .def("build_limit_order", static_cast<OrderFields (*)(const Security&,
+      Side, Quantity, Money)>(&OrderFields::BuildLimitOrder))
     .staticmethod("build_limit_order")
-    .def("build_market_order", &OrderFields::BuildMarketOrder)
+    .def("build_market_order", static_cast<OrderFields (*)(
+      const DirectoryEntry&, const Security&, CurrencyId, Side, const string&,
+      Quantity)>(&OrderFields::BuildMarketOrder))
+    .def("build_market_order", static_cast<OrderFields (*)(const Security&,
+      CurrencyId, Side, const string&, Quantity)>(
+      &OrderFields::BuildMarketOrder))
+    .def("build_market_order", static_cast<OrderFields (*)(
+      const DirectoryEntry&, const Security&, Side, const string&, Quantity)>(
+      &OrderFields::BuildMarketOrder))
+    .def("build_market_order", static_cast<OrderFields (*)(const Security&,
+      Side, const string&, Quantity)>(&OrderFields::BuildMarketOrder))
+    .def("build_market_order", static_cast<OrderFields (*)(const Security&,
+      CurrencyId, Side, Quantity)>(&OrderFields::BuildMarketOrder))
+    .def("build_market_order", static_cast<OrderFields (*)(
+      const DirectoryEntry&, const Security&, Side, Quantity)>(
+      &OrderFields::BuildMarketOrder))
+    .def("build_market_order", static_cast<OrderFields (*)(const Security&,
+      Side, Quantity)>(&OrderFields::BuildMarketOrder))
     .staticmethod("build_market_order")
     .def_readwrite("account", &OrderFields::m_account)
     .def_readwrite("security", &OrderFields::m_security)
     .def_readwrite("currency", &OrderFields::m_currency)
     .add_property("type", make_getter(&OrderFields::m_type,
-      return_value_policy<return_by_value>()), make_setter(&OrderFields::m_type,
-      return_value_policy<return_by_value>()))
+      return_value_policy<return_by_value>()), make_setter(
+      &OrderFields::m_type, return_value_policy<return_by_value>()))
     .add_property("side", make_getter(&OrderFields::m_side,
-      return_value_policy<return_by_value>()), make_setter(&OrderFields::m_side,
-      return_value_policy<return_by_value>()))
+      return_value_policy<return_by_value>()), make_setter(
+      &OrderFields::m_side, return_value_policy<return_by_value>()))
     .def_readwrite("destination", &OrderFields::m_destination)
     .def_readwrite("quantity", &OrderFields::m_quantity)
     .def_readwrite("price", &OrderFields::m_price)
@@ -319,8 +404,8 @@ void Nexus::Python::ExportOrderRecord() {
 void Nexus::Python::ExportPrimitiveOrder() {
   ExportPublisher<const PrimitiveOrder*>("ConstPrimitiveOrderPublisher");
   ExportPublisher<PrimitiveOrder*>("PrimitiveOrderPublisher");
-  ExportSnapshotPublisher<const PrimitiveOrder*, vector<const PrimitiveOrder*>>(
-    "PrimitiveOrderSnapshotPublisher");
+  ExportSnapshotPublisher<const PrimitiveOrder*,
+    vector<const PrimitiveOrder*>>("PrimitiveOrderSnapshotPublisher");
   ExportSnapshotPublisher<PrimitiveOrder*, vector<PrimitiveOrder*>>(
     "ConstPrimitiveOrderSnapshotPublisher");
   class_<PrimitiveOrder, bases<Order>, boost::noncopyable>("PrimitiveOrder",

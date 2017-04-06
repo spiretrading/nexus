@@ -3,8 +3,10 @@
 #include <memory>
 #include <unordered_map>
 #include <boost/noncopyable.hpp>
+#include <boost/optional/optional.hpp>
 #include <Beam/Queues/MultiQueueWriter.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
+#include <Beam/Serialization/ShuttleOptional.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "ClientWebPortal/ClientWebPortal/ClientWebPortal.hpp"
 #include "Nexus/Definitions/Money.hpp"
@@ -29,38 +31,11 @@ namespace ClientWebPortal {
         //! The account holding the position.
         Beam::ServiceLocator::DirectoryEntry m_account;
 
-        //! The position's Security.
-        Security m_security;
-
-        //! The position's currency.
-        CurrencyId m_currency;
-
-        //! The position's quantity.
-        Quantity m_openQuantity;
-
-        //! The average price of the position.
-        Money m_averagePrice;
-
-        //! The position's total profit and loss.
-        Money m_totalProfitAndLoss;
+        //! The Entry's Inventory.
+        RiskService::RiskPortfolioInventory m_inventory;
 
         //! The position's unrealized profit and loss.
-        Money m_unrealizedProfitAndLoss;
-
-        //! The position's realized profit and loss.
-        Money m_realizedProfitAndLoss;
-
-        //! The amount of fees paid for this entry.
-        Money m_fees;
-
-        //! The position's cost basis.
-        Money m_costBasis;
-
-        //! The quantity traded for this entry.
-        Quantity m_volume;
-
-        //! The number of trades made for this entry.
-        int m_trades;
+        boost::optional<Money> m_unrealizedProfitAndLoss;
 
         //! Constructs an Entry.
         /*!
@@ -102,10 +77,13 @@ namespace ClientWebPortal {
       std::unordered_map<Security, std::vector<std::shared_ptr<Entry>>>
         m_securityToEntries;
       Beam::MultiQueueWriter<Entry> m_publisher;
+      std::unordered_map<Security, Accounting::SecurityValuation> m_valuations;
       Beam::RoutineTaskQueue m_tasks;
 
       void OnRiskPortfolioInventoryUpdate(
         const RiskService::RiskPortfolioInventoryEntry& inventory);
+      void OnBboQuote(const Security& security,
+        Accounting::SecurityValuation& valuation, const BboQuote& quote);
   };
 }
 }
@@ -119,19 +97,9 @@ namespace Serialization {
         Nexus::ClientWebPortal::PortfolioModel::Entry& entry,
         unsigned int version) {
       shuttle.Shuttle("account", entry.m_account);
-      shuttle.Shuttle("security", entry.m_security);
-      shuttle.Shuttle("currency", entry.m_currency);
-      shuttle.Shuttle("open_quantity", entry.m_openQuantity);
-      shuttle.Shuttle("average_price", entry.m_averagePrice);
-      shuttle.Shuttle("total_profit_and_loss", entry.m_totalProfitAndLoss);
+      shuttle.Shuttle("inventory", entry.m_inventory);
       shuttle.Shuttle("unrealized_profit_and_loss",
         entry.m_unrealizedProfitAndLoss);
-      shuttle.Shuttle("realized_profit_and_loss",
-        entry.m_realizedProfitAndLoss);
-      shuttle.Shuttle("fees", entry.m_fees);
-      shuttle.Shuttle("cost_basis", entry.m_costBasis);
-      shuttle.Shuttle("volume", entry.m_volume);
-      shuttle.Shuttle("trades", entry.m_trades);
     }
   };
 }

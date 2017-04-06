@@ -110,6 +110,7 @@ void ClientWebPortalServlet::Open() {
       std::bind(&ClientWebPortalServlet::OnPortfolioUpdate, this,
       std::placeholders::_1)));
     m_portfolioModel.Open();
+    m_portfolioTimer->Start();
   } catch(const std::exception&) {
     m_openState.SetOpenFailure();
     Shutdown();
@@ -233,7 +234,7 @@ void ClientWebPortalServlet::OnPortfolioUpgrade(const HttpRequest& request,
                   {"destination", "/api/risk_service/portfolio"});
                 entryFrame.AddHeader(
                   {"content-type", "application/json"});
-                auto buffer = Encode<SharedBuffer>(sender, entry);
+                auto buffer = Encode<SharedBuffer>(sender, entry.second);
                 entryFrame.SetBody(std::move(buffer));
                 try {
                   subscriber->m_client->Write(entryFrame);
@@ -259,7 +260,8 @@ void ClientWebPortalServlet::OnPortfolioTimerExpired(Timer::Result result) {
   std::move(m_updatedPortfolioEntries.begin(), m_updatedPortfolioEntries.end(),
     std::back_inserter(updatedEntries));
   for(auto& updatedEntry : updatedEntries) {
-    RiskPortfolioKey key{updatedEntry.m_account, updatedEntry.m_security};
+    RiskPortfolioKey key{updatedEntry.m_account,
+      updatedEntry.m_inventory.m_position.m_key.m_index};
     auto entryResult = m_portfolioEntries.insert(make_pair(key, updatedEntry));
     if(!entryResult.second) {
       entryResult.first->second = updatedEntry;
@@ -285,4 +287,5 @@ void ClientWebPortalServlet::OnPortfolioTimerExpired(Timer::Result result) {
       i = m_porfolioSubscribers.erase(i);
     }
   }
+  m_portfolioTimer->Start();
 }
