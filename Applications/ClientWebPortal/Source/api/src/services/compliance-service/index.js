@@ -36,9 +36,6 @@ class ComplianceService {
     };
     dataTypeConverter.toData(payload);
     return httpConnectionManager.send(apiPath, payload, false)
-      .then(response => {
-        console.debug(response);
-      })
       .catch(this.logErrorAndThrow);
   }
 
@@ -48,9 +45,6 @@ class ComplianceService {
     let payload = {
       rule_entry: ruleEntry
     };
-
-    console.debug(payload);
-
     return httpConnectionManager.send(apiPath, payload, false)
       .catch(this.logErrorAndThrow);
   }
@@ -60,9 +54,6 @@ class ComplianceService {
     let payload = {
       id: id
     };
-
-    console.debug(payload);
-
     return httpConnectionManager.send(apiPath, payload, false)
       .catch(this.logErrorAndThrow);
   }

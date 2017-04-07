@@ -138,7 +138,6 @@ class Controller {
 
     preloaderTimer.start(requiredDataFetchPromise, null, Config.WHOLE_PAGE_PRELOADER_WIDTH, Config.WHOLE_PAGE_PRELOADER_HEIGHT).then((responses) => {
       let ruleEntries = responses[0];
-
       ruleEntries = this.transformFromPerAccountRuleEntries.apply(this, [ruleEntries]);
       ruleEntries = this.initializeFlags.apply(this, [ruleEntries]);
       this.componentModel.complianceRuleEntries = ruleEntries;

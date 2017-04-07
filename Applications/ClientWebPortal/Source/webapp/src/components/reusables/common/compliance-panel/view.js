@@ -562,21 +562,22 @@ class View extends UpdatableView {
     }
 
     let onStatusChange = this.onStatusChange.bind(this);
-
     let content = [];
     let parameters = this.componentModel.schema.parameters;
+    let schema = definitionsService.getComplianceRuleScehma(this.componentModel.schema.name);
+    let schemaParameters = schema.parameters;
     for (let i=0; i<parameters.length; i++) {
-      if (parameters[i].value.which == DataType.CURRENCY) {
+      if (schemaParameters[i].value.which == DataType.CURRENCY) {
         content.push(this.getCurrencyInput.apply(this, [i]));
-      } else if (parameters[i].value.which == DataType.MONEY) {
+      } else if (schemaParameters[i].value.which == DataType.MONEY) {
         content.push(this.getMoneyInput.apply(this, [i]));
-      } else if (parameters[i].value.which == DataType.LIST && parameters[i].value.value[0].which == DataType.SECURITY) {
+      } else if (schemaParameters[i].value.which == DataType.LIST && schemaParameters[i].value.value[0].which == DataType.SECURITY) {
         content.push(this.getSymbolsInput.apply(this, [i]));
-      } else if (parameters[i].value.which == DataType.TIME_DURATION) {
+      } else if (schemaParameters[i].value.which == DataType.TIME_DURATION) {
         content.push(this.getPeriodInput.apply(this, [i]));
-      } else if (parameters[i].value.which == DataType.INTEGER) {
+      } else if (schemaParameters[i].value.which == DataType.INTEGER) {
         content.push(this.getIntegerInput.apply(this, [i]));
-      } else if (parameters[i].value.which == DataType.BOOLEAN) {
+      } else if (schemaParameters[i].value.which == DataType.BOOLEAN) {
         content.push(this.getBooleanInput.apply(this, [i]));
       }
     }
