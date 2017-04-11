@@ -91,6 +91,10 @@
         &.ampm {
           padding-left: 0px;
         }
+
+        &:focus {
+          border: 0 !important;
+        }
       }
     }
 
@@ -99,6 +103,22 @@
         margin-top: 9px;
         outline: none;
       }
+    }
+
+    .p1-solid-border {
+      border: 1px solid $primaryGradient1;
+    }
+
+    .validation-error {
+      font-size: 11px;
+      color: $red;
+      display: none;
+      margin-top: 5px;
+      margin-bottom: 10px;
+    }
+
+    .invalid-input {
+      border: 1px solid $red !important;
     }
   }
 
