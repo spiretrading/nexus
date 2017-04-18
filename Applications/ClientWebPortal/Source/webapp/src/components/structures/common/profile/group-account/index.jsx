@@ -1,9 +1,9 @@
 import {Component} from 'react';
-import Controller from './controller';
+import Controller from 'components/structures/common/profile/group-account/controller';
 import View from './view';
 import uuid from 'uuid';
 
-class BuyingPowerPanel extends Component {
+class ProfileAccount extends Component {
   constructor(props) {
     super(props);
   }
@@ -11,22 +11,18 @@ class BuyingPowerPanel extends Component {
   componentWillMount() {
     let componentModel = this.props.model || {};
     componentModel.componentId = uuid.v4();
-    componentModel.className = this.props.className;
-    this.controller = new Controller(this, componentModel);
+    componentModel.directoryEntry = {
+      id: parseInt(this.props.routeParams.id),
+      name: this.props.routeParams.name,
+      type: parseInt(this.props.routeParams.type)
+    };
+    this.controller = new Controller(componentModel);
     this.view = new View(this, this.controller, componentModel);
     this.controller.setView(this.view);
   }
 
   componentDidMount() {
-    this.controller.componentDidMount.apply(this.controller);
-  }
-
-  componentWillUpdate(nextProps) {
-    this.controller.componentWillUpdate(nextProps.model);
-  }
-
-  shouldComponentUpdate() {
-    return false;
+    this.controller.componentDidMount();
   }
 
   componentDidUpdate() {
@@ -34,8 +30,8 @@ class BuyingPowerPanel extends Component {
   }
 
   render() {
-    return this.controller.getView().render();
+    return this.view.render.apply(this.view);
   }
 }
 
-export default BuyingPowerPanel;
+export default ProfileAccount;

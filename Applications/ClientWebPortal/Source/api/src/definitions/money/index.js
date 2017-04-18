@@ -51,11 +51,11 @@ class Money {
   }
 }
 
-Money.fromRepresentation = (value) => {
+Money.fromRepresentation = value => {
   return new Money(value);
 }
 
-Money.fromNumber = (value) => {
+Money.fromNumber = value => {
   return new Money(value * MULTIPLIER);
 }
 

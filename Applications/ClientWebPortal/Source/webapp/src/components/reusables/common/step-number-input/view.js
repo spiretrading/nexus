@@ -69,7 +69,9 @@ class View extends UpdatableView {
   validateInput(input) {
     let inputNumber = Number(input);
     if (isNaN(inputNumber)) {
-      return 'Not a number.';
+      return 'Must be a number.';
+    } else if (inputNumber < 0) {
+      return 'Cannot be a negative number.';
     } else if (!this.isValidDecimals.apply(this, [input])) {
       if (this.componentModel.allowedDecimals > 0) {
         return 'Exceeded ' + this.componentModel.allowedDecimals + ' decimal places.';

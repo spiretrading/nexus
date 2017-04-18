@@ -19,7 +19,10 @@ class Controller {
   /** @private */
   onPageTransitioned(eventName, path) {
     if (path.indexOf('/profile') >= 0) {
-      this.componentModel = this.getProfilePages(path);
+      this.componentModel = this.getTraderProfilePages.apply(this, [path]);
+      EventBus.publish(Event.TopNav.SUBMENU_UPDATED, true);
+    } else if (path.indexOf('/group-profile') >= 0) {
+      this.componentModel = this.getGroupProfilePages.apply(this, [path]);
       EventBus.publish(Event.TopNav.SUBMENU_UPDATED, true);
     } else {
       this.componentModel = [];
@@ -29,7 +32,7 @@ class Controller {
   }
 
   /** @private */
-  getProfilePages(path) {
+  getTraderProfilePages(path) {
     let dashIndex = path.indexOf('-');
     let subPath = path.substring(dashIndex + 1).split('/')[0];
     let params = window.location.pathname.split('/');
@@ -64,10 +67,43 @@ class Controller {
         path: '/profile-compliance/' + directoryEntry.type + '/' + directoryEntry.id + '/' + directoryEntry.name
       },
       {
-        name: 'Performance',
+        name: 'Profit & Loss',
         iconClass: 'icon-profit-loss',
         isActive: 'performance' === subPath,
         path: '/profile-performance/' + directoryEntry.type + '/' + directoryEntry.id + '/' + directoryEntry.name
+      }
+    ];
+    return subPages;
+  }
+
+  /** @private */
+  getGroupProfilePages(path) {
+    let dashIndex = path.lastIndexOf('-');
+    let subPath = path.substring(dashIndex + 1).split('/')[0];
+    let params = window.location.pathname.split('/');
+    let directoryEntry = {
+      type: params[params.length - 3],
+      id: params[params.length - 2],
+      name: params[params.length - 1]
+    };
+    let subPages = [
+      {
+        name: 'Account',
+        iconClass: 'icon-group',
+        isActive: 'account' === subPath,
+        path: '/group-profile-account/' + directoryEntry.type + '/' + directoryEntry.id + '/' + directoryEntry.name
+      },
+      {
+        name: 'Compliance',
+        iconClass: 'icon-compliance',
+        isActive: 'compliance' === subPath,
+        path: '/group-profile-compliance/' + directoryEntry.type + '/' + directoryEntry.id + '/' + directoryEntry.name
+      },
+      {
+        name: 'Profit & Loss',
+        iconClass: 'icon-profit-loss',
+        isActive: 'performance' === subPath,
+        path: '/group-profile-performance/' + directoryEntry.type + '/' + directoryEntry.id + '/' + directoryEntry.name
       }
     ];
     return subPages;

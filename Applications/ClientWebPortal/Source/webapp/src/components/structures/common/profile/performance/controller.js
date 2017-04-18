@@ -42,6 +42,7 @@ class Controller {
       Config.WHOLE_PAGE_PRELOADER_HEIGHT
     ).then((responses) => {
       this.componentModel.directoryEntry = directoryEntry;
+      this.componentModel.isGroup = directoryEntry.type === 1;
       this.componentModel.roles = responses[0];
       this.componentModel.userName = directoryEntry.name;
       this.componentModel.isAdmin = userService.isAdmin();
