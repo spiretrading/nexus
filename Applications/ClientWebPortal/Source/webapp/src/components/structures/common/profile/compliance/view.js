@@ -117,11 +117,6 @@ class View extends UpdatableView {
     let content;
 
     if (this.controller.isModelInitialized.apply(this.controller)) {
-      let userInfoNavModel = {
-        userName: this.componentModel.userName,
-        roles: this.componentModel.roles
-      };
-
       let complianceRuleEntries = this.getRuleEntryPanels();
 
       let onSave = this.onSaveClick.bind(this);
@@ -141,10 +136,23 @@ class View extends UpdatableView {
         horizontalDivider = <hr/>;
       }
 
+      let userInfo;
+      if (this.componentModel.isGroup) {
+        userInfo = <div className="group-id">
+                    {this.componentModel.userName}
+                  </div>;
+      } else {
+        let userInfoNavModel = {
+          userName: this.componentModel.userName,
+          roles: this.componentModel.roles
+        };
+        userInfo = <UserInfoNav model={userInfoNavModel}/>;
+      }
+
       content =
         <div>
           <div className="row">
-            <UserInfoNav model={userInfoNavModel}/>
+            {userInfo}
           </div>
           {complianceRuleEntries}
           {addNewRule}

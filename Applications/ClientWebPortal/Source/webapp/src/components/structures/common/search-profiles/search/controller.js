@@ -115,9 +115,17 @@ class Controller {
       });
   }
 
-  navigateToProfile(traderId) {
+  navigateToTraderProfile(traderId) {
     let directoryEntry = this.accountDirectoryEntries.get(traderId);
     browserHistory.push('/profile-account/' +
+      directoryEntry.type +
+      '/' + directoryEntry.id +
+      '/' + directoryEntry.name);
+  }
+
+  navigateToGroupProfile(groupId) {
+    let directoryEntry = this.findGroupDirectoryEntry.apply(this, [groupId]);
+    browserHistory.push('/group-profile-account/' +
       directoryEntry.type +
       '/' + directoryEntry.id +
       '/' + directoryEntry.name);
@@ -128,7 +136,7 @@ class Controller {
   }
 
   loadGroupAccounts(groupId) {
-    let group = findDirectoryEntry.apply(this, [groupId]);
+    let group = this.findGroupDirectoryEntry.apply(this, [groupId]);
     let groupDirectoryEntry = new DirectoryEntry(
       group.id,
       group.type,
@@ -169,13 +177,13 @@ class Controller {
 
         this.view.update(this.componentModel);
       });
+  }
 
-
-    function findDirectoryEntry(groupId) {
-      for (let i=0; i<this.componentModel.groupedAccounts.length; i++) {
-        if (this.componentModel.groupedAccounts[i].id == groupId) {
-          return this.componentModel.groupedAccounts[i];
-        }
+  /** @private */
+  findGroupDirectoryEntry(groupId) {
+    for (let i=0; i<this.componentModel.groupedAccounts.length; i++) {
+      if (this.componentModel.groupedAccounts[i].id == groupId) {
+        return this.componentModel.groupedAccounts[i];
       }
     }
   }

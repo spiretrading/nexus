@@ -26,7 +26,6 @@ class View extends UpdatableView {
   togglePanel($header) {
     let $contentSlideWrapper = $('#' + this.componentModel.componentId).find('.content-slide-wrapper');
     let $expandIcon = $('#' + this.componentModel.componentId).find('.icon-expand');
-    // let numTraders = this.componentModel.accounts.traders.length;
     let numTraders = $contentSlideWrapper.find('.trader-row').length;
     let contentHeight = this.traderRowHeight * numTraders;
     let isExpanded = !$('#' + this.componentModel.componentId).find('.icon-expand').hasClass('expanded');
@@ -91,7 +90,11 @@ class View extends UpdatableView {
   onTraderClick(event) {
     let traderId = $(event.currentTarget).attr('data-traderId');
     traderId = parseInt(traderId);
-    this.controller.navigateToAccountProfile.apply(this.controller, [traderId]);
+    this.controller.navigateToTraderProfile.apply(this.controller, [traderId]);
+  }
+
+  onGroupClick(event) {
+    this.controller.navigateToGroupProfile.apply(this.controller, [this.componentModel.groupId]);
   }
 
   render() {
@@ -176,7 +179,7 @@ class View extends UpdatableView {
         <div id={this.componentModel.componentId} className={componentContainerClassName}>
           <div className="header">
             <span className="icon-expand" onClick={this.onExpandClick.bind(this)}></span>
-            <span className="title"><span className="matched-string">{matchedTitleString}</span>{nonMatchedTitleString}</span>
+            <span className="title" onClick={this.onGroupClick.bind(this)}><span className="matched-string">{matchedTitleString}</span>{nonMatchedTitleString}</span>
           </div>
           <div className="content-slide-wrapper">
             <div className="content-wrapper">
