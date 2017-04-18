@@ -23,7 +23,8 @@ class View extends CommonView {
     let onSearchInputChange = this.onSearchInputChange.bind(this);
     let loadGroupAccounts = this.controller.loadGroupAccounts.bind(this.controller);
 
-    let navigateToProfile = this.controller.navigateToProfile.bind(this.controller);
+    let navigateToTraderProfile = this.controller.navigateToTraderProfile.bind(this.controller);
+    let navigateToGroupProfile = this.controller.navigateToGroupProfile.bind(this.controller);
     let panels = [];
     if (this.componentModel.groupedAccounts != null) {
       for (let i=0; i<this.componentModel.groupedAccounts.length; i++) {
@@ -37,7 +38,8 @@ class View extends CommonView {
         panels.push(
           <ProfileSearchPanel key={i}
                               model={panelModel}
-                              navigateToProfile={navigateToProfile}
+                              navigateToTraderProfile={navigateToTraderProfile}
+                              navigateToGroupProfile={navigateToGroupProfile}
                               loadAccounts={loadGroupAccounts}/>
         );
       }
