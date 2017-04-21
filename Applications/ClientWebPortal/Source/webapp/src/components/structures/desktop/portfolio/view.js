@@ -1,7 +1,7 @@
 import './style.scss';
 import React from 'react';
 import UpdatableView from 'commons/updatable-view';
-import PortfolioParameters from 'components/reusables/common/portfolio-filters';
+import PortfolioFilters from 'components/reusables/common/portfolio-filters';
 import PortfolioChart from 'components/reusables/common/portfolio-chart';
 
 class View extends UpdatableView {
@@ -57,11 +57,14 @@ class View extends UpdatableView {
       $('#portfolio-container').css('display', 'flex');
     }
 
-    let chartModel = this.componentModel.portfolioData;
+    let chartModel = {
+      data: this.componentModel.portfolioData,
+      filter: this.componentModel.filter
+    };
 
     return (
       <div id="portfolio-container" className="container-fixed-width">
-        <PortfolioParameters model={parametersModel} onSave={onParametersSave} className={"porfolio-parameters-wrapper"}/>
+        <PortfolioFilters model={parametersModel} onSave={onParametersSave} className={"porfolio-parameters-wrapper"}/>
         <div className="chart-outer-wrapper">
           <div className="chart-inner-wrapper">
             <PortfolioChart model={chartModel} />

@@ -9,7 +9,7 @@ class View extends UpdatableView {
 
   onButtonClick() {
     if (!this.componentModel.isDisabled) {
-      this.controller.onButtonClick.apply(this);
+      this.controller.onButtonClick.apply(this.controller);
     }
   }
 
@@ -23,7 +23,7 @@ class View extends UpdatableView {
       className += ' enabled';
     }
 
-    let onButtonClick = onButtonClick = this.onButtonClick.bind(this);
+    let onButtonClick = this.onButtonClick.bind(this);
 
     return (
         <div id={this.componentModel.componentId} className={className} onClick={onButtonClick}>

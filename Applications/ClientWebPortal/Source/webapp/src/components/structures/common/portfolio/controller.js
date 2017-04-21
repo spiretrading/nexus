@@ -33,9 +33,57 @@ class Controller {
   }
 
   /** @private */
+  toUIModel(data) {
+    let model = {};
+
+    model.account = data.account;
+    model.security = data.inventory.position.key.index;
+    model.quantity = data.inventory.position.quantity;
+
+    if (data.inventory.position.quantity > 0) {
+      model.side = 'Long';
+    } else if (data.inventory.position.quantity < 0) {
+      model.side = 'Short';
+    } else {
+      model.side = 'Flat';
+    }
+
+    let averagePrice = null;
+    if (data.inventory.position.quantity != 0) {
+      let costBasis = data.inventory.position.cost_basis;
+      let quantity = data.inventory.position.quantity;
+      averagePrice = costBasis.divide(quantity);
+      if (averagePrice.toNumber < 0) {
+        averagePrice.multiply(-1);
+      }
+    }
+    model.averagePrice = averagePrice;
+
+    let totalPnL = null;
+    let unrealizedPnL = null;
+    let grossPnL = data.inventory.gross_profit_and_loss;
+    let fees = data.inventory.fees;
+    if (data.unrealized_profit_and_loss.is_initialized) {
+      unrealizedPnL = data.unrealized_profit_and_loss.value;
+      totalPnL = unrealizedPnL.add(grossPnL).subtract(fees);
+    }
+    model.totalPnL = totalPnL;
+    model.unrealizedPnL = unrealizedPnL;
+    model.realizedPnL = grossPnL.subtract(fees);
+    model.fees = fees;
+    model.costBasis = data.inventory.position.cost_basis;
+    model.currency = data.inventory.position.key.currency;
+    model.volume = data.inventory.volume;
+    model.trades = data.inventory.transaction_count;
+
+    return model;
+  }
+
+  /** @private */
   onPortfolioDataReceived(data) {
-    let cacheKey = data.account.id + data.currency.value + data.security.market.value + data.security.symbol;
-    this.portfolioData.set(cacheKey, data);
+    let model = this.toUIModel.apply(this, [data]);
+    let cacheKey = model.account.id + model.currency.value + model.security.market.value + model.security.symbol;
+    this.portfolioData.set(cacheKey, model);
     this.componentModel.portfolioData = this.portfolioData.values();
     this.view.update(this.componentModel);
   }
@@ -114,6 +162,7 @@ class Controller {
       markets: filter.markets
     };
     this.riskServiceClient.setFilter(apiFilter);
+    this.view.update(this.componentModel);
   }
 }
 

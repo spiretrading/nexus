@@ -11,23 +11,23 @@ class View extends UpdatableView {
   }
 
   convertToHeaderLabel(label) {
-    // convert dashes to spaces
-    label = label.replace(/_/g, ' ');
-    label = this.toTitleCase(label);
-
-    if (label === 'Total Profit And Loss') {
+    if (label === 'totalPnL') {
       label = 'Total P/L';
-    } else if (label === 'Unrealized Profit And Loss') {
+    } else if (label === 'unrealizedPnL') {
       label = 'Unrealized P/L';
-    } else if (label === 'Realized Profit And Loss') {
+    } else if (label === 'realizedPnL') {
       label = 'Realized P/L';
+    } else {
+      label = this.toTitleCase(label);
     }
 
     return label;
   }
 
   toTitleCase(label) {
-    return label.split(' ').map((word) => [word[0].toUpperCase(), ...word.substr(1)].join('')).join(' ');
+    // return label.split(' ').map((word) => [word[0].toUpperCase(), ...word.substr(1)].join('')).join(' ');
+    label = label.replace(/([A-Z]+)*([A-Z][a-z])/g, "$1 $2");
+    return label.charAt(0).toUpperCase() + label.slice(1);
   }
 
   initialize() {
@@ -101,6 +101,20 @@ class View extends UpdatableView {
     $(window).unbind('resize', this.onResize);
   }
 
+  shouldIncludeColumn(columnHeader) {
+    if (this.componentModel.filter == null || this.componentModel.filter.length == 0 || columnHeader == 'Account') {
+      return true;
+    }
+
+    for (let i=0; i<this.componentModel.filter.length; i++) {
+      if (columnHeader == this.componentModel.filter[i].name) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   render() {
     let columns = [];
     let columnLabels = [];
@@ -110,12 +124,15 @@ class View extends UpdatableView {
 
     if (this.componentModel.data != null && this.componentModel.data[0] != null) {
       for (let column in this.componentModel.data[0]) {
-        columns.push(
-          <td key={column}>
-            {this.convertToHeaderLabel.apply(this, [column])}
-          </td>
-        );
-        columnLabels.push(column);
+        let columnHeader = this.convertToHeaderLabel.apply(this, [column]);
+        if (this.shouldIncludeColumn.apply(this, [columnHeader])) {
+          columns.push(
+            <td key={column}>
+              {columnHeader}
+            </td>
+          );
+          columnLabels.push(column);
+        }
       }
 
       for (let i=0; i<this.componentModel.data.length; i++) {
@@ -126,42 +143,57 @@ class View extends UpdatableView {
 
           // get the value
           let value;
+          let rawAmount;
           if (property == 'account') {
             value = rowData[property].name;
-          } else if (property == 'average_price' ||
-            property == 'cost_basis' ||
+          } else if (property == 'averagePrice' ||
+            property == 'costBasis' ||
             property == 'fees' ||
-            property == 'realized_profit_and_loss' ||
-            property == 'total_profit_and_loss' ||
-            property == 'unrealized_profit_and_loss') {
-            value = rowData[property].toNumber();
+            property == 'realizedPnL' ||
+            property == 'totalPnL' ||
+            property == 'unrealizedPnL') {
+            if (rowData[property] == null) {
+              value = 'N/A';
+            } else {
+              if (property == 'costBasis') {
+                rawAmount = Math.abs(rowData[property].toNumber());
+              } else {
+                rawAmount = rowData[property].toNumber();
+              }
+              value = currencyFormatter.formatById(rowData.currency.toNumber(), rawAmount);
+            }
           } else if (property == 'currency') {
             value = definitionsService.getCurrencyCode(rowData[property].value);
-          } else if (property == 'open_quantity' ||
+          } else if (property == 'quantity' ||
             property == 'trades' ||
             property == 'volume') {
-            value = numberFormatter.formatWithComma(rowData[property]);
+            value = numberFormatter.formatWithComma(Math.abs(rowData[property]));
           } else if (property == 'security') {
             value = rowData[property].symbol + '.' + rowData[property].market.value;
+          } else {
+            value = rowData[property];
           }
 
           // set classes to color the fonts for P&L values
           let className = '';
-          if (property === 'total_profit_and_loss' ||
-            property === 'unrealized_profit_and_loss' ||
-            property === 'realized_profit_and_loss') {
-            if (value > 0) {
+          if (property === 'totalPnL' ||
+            property === 'unrealizedPnL' ||
+            property === 'realizedPnL') {
+            if (rawAmount > 0) {
               className = 'profit';
-            } else if (value < 0) {
+            } else if (rawAmount < 0) {
               className = 'loss';
             }
           }
 
-          columns.push(
-            <td key={i + property} className={className}>
-              {value}
-            </td>
-          );
+          let columnHeader = this.convertToHeaderLabel.apply(this, [property]);
+          if (this.shouldIncludeColumn.apply(this, [columnHeader])) {
+            columns.push(
+              <td key={i + property} className={className}>
+                {value}
+              </td>
+            );
+          }
         }
 
         rows.push(

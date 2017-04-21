@@ -1,9 +1,6 @@
 import MarketCode from '../market/code';
 import CountryCode from '../country/code';
-<<<<<<< HEAD
-=======
 import SecuritySet from '../security-set';
->>>>>>> master
 
 class Security {
   constructor(country, market, symbol) {
@@ -11,11 +8,6 @@ class Security {
     this.market = market;
     this.symbol = symbol;
   }
-<<<<<<< HEAD
-}
-
-Security.fromData = (data) => {
-=======
 
   toData() {
     if (this.country == CountryCode.NONE && this.market == SecuritySet.MARKET_CODE_WILD_CARD && this.symbol == SecuritySet.SYMBOL_WILD_CARD) {
@@ -39,14 +31,11 @@ Security.fromData = (data) => {
 }
 
 Security.fromData = data => {
->>>>>>> master
   let country = new CountryCode(data.country);
   let market = new MarketCode(data.market);
   return new Security(country, market, data.symbol);
 };
 
-<<<<<<< HEAD
-=======
 Security.getWildCard = () => {
   let country = new CountryCode(CountryCode.NONE);
   let market = new MarketCode(SecuritySet.MARKET_CODE_WILD_CARD);
@@ -61,5 +50,4 @@ Security.isWildCard = securityLabel => {
   }
 };
 
->>>>>>> master
 export default Security;

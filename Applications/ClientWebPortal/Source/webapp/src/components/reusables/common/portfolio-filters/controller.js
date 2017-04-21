@@ -16,21 +16,18 @@ class Controller {
   /** @private */
   initializeColumns() {
     this.componentModel.columns = [
-      { id: 1, name: 'Group' },
-      { id: 2, name: 'Account Total P&L' },
-      { id: 3, name: 'Account Unrealized' },
-      { id: 4, name: 'Account Realized' },
-      { id: 5, name: 'Account Fees' },
-      { id: 6, name: 'Open Quantity' },
-      { id: 7, name: 'Side' },
-      { id: 8, name: 'Average Price' },
-      { id: 9, name: 'Total P&L' },
-      { id: 10, name: 'Unrealized' },
-      { id: 11, name: 'Realized' },
-      { id: 12, name: 'Fees' },
-      { id: 13, name: 'Cost Basis' },
-      { id: 14, name: 'Volume' },
-      { id: 15, name: 'Trades' }
+      { id: 1, name: 'Security' },
+      { id: 2, name: 'Quantity' },
+      { id: 3, name: 'Side' },
+      { id: 4, name: 'Average Price' },
+      { id: 5, name: 'Total P/L' },
+      { id: 6, name: 'Unrealized P/L' },
+      { id: 7, name: 'Realized P/L' },
+      { id: 8, name: 'Fees' },
+      { id: 9, name: 'Cost Basis' },
+      { id: 10, name: 'Currency' },
+      { id: 11, name: 'Volume' },
+      { id: 12, name: 'Trades' }
     ];
   }
 
@@ -70,7 +67,7 @@ class Controller {
   }
 
   update() {
-    this.onParametersSave(this.componentModel.filter);
+    this.onParametersSave(clone(this.componentModel.filter));
   }
 }
 

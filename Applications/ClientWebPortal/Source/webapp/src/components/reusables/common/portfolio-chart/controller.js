@@ -15,7 +15,10 @@ class Controller {
 
   componentWillUpdate(model) {
     if (model != null) {
-      this.componentModel.data = model;
+      this.componentModel.data = model.data;
+      if (model.filter != null && model.filter.columns != null) {
+        this.componentModel.filter = model.filter.columns;
+      }
       this.view.setComponentModel(this.componentModel);
     }
   }

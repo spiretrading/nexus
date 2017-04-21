@@ -32,32 +32,26 @@ class RiskService {
   unmarshallPortfolioMessage(frameMessage) {
     let payload = JSON.parse(frameMessage.body);
 
+    if (payload.inventory.position.key.index.symbol !== 'ABX') {
+      console.debug(payload);
+    }
+
     let account = DirectoryEntry.fromData(payload.account);
     payload.account = account;
 
-    let security = Security.fromData(payload.security);
-    payload.security = security;
+    payload.inventory.position.key.index = Security.fromData(payload.inventory.position.key.index);
 
-    let currency = CurrencyId.fromNumber(payload.currency);
-    payload.currency = currency;
+    payload.inventory.position.key.currency = CurrencyId.fromNumber(payload.inventory.position.key.currency);
 
-    let averagePrice = Money.fromRepresentation(payload.average_price);
-    payload.average_price = averagePrice;
+    payload.inventory.position.cost_basis = Money.fromRepresentation(payload.inventory.position.cost_basis);
 
-    let costBasis = Money.fromRepresentation(payload.cost_basis);
-    payload.cost_basis = costBasis;
+    payload.inventory.gross_profit_and_loss = Money.fromRepresentation(payload.inventory.gross_profit_and_loss);
 
-    let fees = Money.fromRepresentation(payload.fees);
-    payload.fees = fees;
+    payload.inventory.fees = Money.fromRepresentation(payload.inventory.fees);
 
-    let realizedPnL = Money.fromRepresentation(payload.realized_profit_and_loss);
-    payload.realized_profit_and_loss = realizedPnL;
-
-    let totalPnL = Money.fromRepresentation(payload.total_profit_and_loss);
-    payload.total_profit_and_loss = totalPnL;
-
-    let unrealizedPnL = Money.fromRepresentation(payload.unrealized_profit_and_loss);
-    payload.unrealized_profit_and_loss = unrealizedPnL;
+    if (payload.unrealized_profit_and_loss.is_initialized) {
+      payload.unrealized_profit_and_loss.value = Money.fromRepresentation(payload.unrealized_profit_and_loss.value);
+    }
 
     delete payload.__version;
 
