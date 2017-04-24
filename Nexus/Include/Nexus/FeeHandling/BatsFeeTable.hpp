@@ -30,7 +30,7 @@ namespace Nexus {
   */
   inline BatsFeeTable ParseBatsFeeTable(const YAML::Node& config) {
     BatsFeeTable feeTable;
-    ParseFeeTable(config, Beam::Store(feeTable.m_feeTable));
+    ParseFeeTable(config, "liquidity_flags", Beam::Store(feeTable.m_feeTable));
     feeTable.m_defaultFlag = Beam::Extract<std::string>(config, "default");
     return feeTable;
   }
