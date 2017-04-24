@@ -144,12 +144,14 @@ void LekFixApplication::onMessage(const FIX42::ExecutionReport& message,
     const FIX::SessionID& sessionId) {
   m_orderLog.Update(message, sessionId, m_timeClient->GetTime(),
     [=] (Out<ExecutionReport> update) {
-      if(message.isSetField(ALTERNATE_TRADE_LIQUIDITY_INDICATOR_TAG)) {
-        update->m_liquidityFlag = message.getField(
-          ALTERNATE_TRADE_LIQUIDITY_INDICATOR_TAG);
-      } else if(message.isSetField(PRIMARY_TRADE_LIQUIDITY_INDICATOR_TAG)) {
-        update->m_liquidityFlag = message.getField(
-          PRIMARY_TRADE_LIQUIDITY_INDICATOR_TAG);
+      if(update->m_lastQuantity != 0) {
+        if(message.isSetField(ALTERNATE_TRADE_LIQUIDITY_INDICATOR_TAG)) {
+          update->m_liquidityFlag = message.getField(
+            ALTERNATE_TRADE_LIQUIDITY_INDICATOR_TAG);
+        } else if(message.isSetField(PRIMARY_TRADE_LIQUIDITY_INDICATOR_TAG)) {
+          update->m_liquidityFlag = message.getField(
+            PRIMARY_TRADE_LIQUIDITY_INDICATOR_TAG);
+        }
       }
     });
 }
