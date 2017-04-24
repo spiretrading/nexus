@@ -170,7 +170,7 @@ class DefService {
   getComplianceRuleScehma(schemaName) {
     for (let i=0; i<this.complianceRuleSchemas.length; i++) {
       if (this.complianceRuleSchemas[i].name === schemaName) {
-        return this.complianceRuleSchemas[i];
+        return clone(this.complianceRuleSchemas[i]);
       }
     }
     return null;

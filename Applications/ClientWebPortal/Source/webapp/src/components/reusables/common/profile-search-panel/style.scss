@@ -25,6 +25,17 @@
       overflow: hidden;
       margin-top: 2px;
       font-size: 16px;
+      cursor: pointer;
+
+      &:hover {
+        color: $primaryGradient2;
+
+        .roles-wrapper {
+          span.active {
+            color: $primaryGradient2;
+          }
+        }
+      }
     }
 
     .expanded {

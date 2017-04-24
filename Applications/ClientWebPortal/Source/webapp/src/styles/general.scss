@@ -148,6 +148,14 @@ ul.tagit {
     margin-bottom: 0px;
     padding-top: 1px;
     padding-bottom: 1px;
+
+    input {
+      border: 0 !important;
+
+      &:focus {
+        border: 0 !important;
+      }
+    }
   }
 
   li.tagit-choice {
@@ -284,7 +292,8 @@ label {
 }
 
 .ui-autocomplete {
-  max-height: 260px;
+  min-width: 200px;
+  max-height: 270px;
   overflow-y: auto;   /* prevent horizontal scrollbar */
   overflow-x: hidden; /* add padding to account for vertical scrollbar */
   z-index:1000 !important;

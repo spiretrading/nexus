@@ -9,6 +9,7 @@ import CompliancePanel from 'components/reusables/common/compliance-panel';
 import definitionsService from 'services/definitions';
 import labelFormatter from 'utils/label-formatter';
 import modal from 'utils/modal';
+import uuid from 'uuid';
 
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
@@ -53,21 +54,10 @@ class View extends UpdatableView {
     let ruleTypeName = $('#compliance-container .rule-types li.selected').text();
     if (ruleTypeName != '') {
       ruleTypeName = labelFormatter.toLowerCaseWithUnderscore(ruleTypeName);
-      let schema = definitionsService.getComplianceRuleScehma(ruleTypeName);
       let $newEntryWrapper = $('<div class="new-entry-wrapper"></div>');
-      let onRuleUpdate = this.controller.onRuleUpdate.bind(this.controller);
       $('#compliance-container .add-rule-wrapper').before($newEntryWrapper);
-      let model = {
-        ruleEntryId: 0,
-        schema: schema,
-        state: 0,
-        isGroup: this.componentModel.isGroup,
-        isAdmin: this.componentModel.isAdmin
-      };
-      ReactDOM.render(
-        <CompliancePanel model={model} onUpdate={onRuleUpdate}/>,
-        $newEntryWrapper[0]
-      );
+      this.controller.onRuleAdd.apply(this.controller, [ruleTypeName]);
+
       $('#compliance-container .rule-types li').removeClass('selected');
       modal.hide($('#add-rule-modal'));
     }
@@ -85,7 +75,7 @@ class View extends UpdatableView {
     $(event.currentTarget).addClass('selected');
   }
 
-  showSavedMessage() {
+  showSaveSuccessMessage() {
     let $saveMessage = $('#compliance-container .save-message');
     $saveMessage
       .fadeOut(() => {
@@ -109,18 +99,27 @@ class View extends UpdatableView {
       });
   }
 
+  /** @private */
+  onSaveClick() {
+    let numInvalidInputs = $('#compliance-container .invalid-input').size();
+    if (numInvalidInputs == 0) {
+      this.controller.save.apply(this.controller);
+      $('#compliance-container .save-message').text('').removeClass('red').css('display', 'none');
+    } else {
+      $('#compliance-container .save-message')
+        .text('Invalid inputs exist.')
+        .addClass('red')
+        .css('display', 'inherit');
+    }
+  }
+
   render() {
     let content;
 
     if (this.controller.isModelInitialized.apply(this.controller)) {
-      let userInfoNavModel = {
-        userName: this.componentModel.userName,
-        roles: this.componentModel.roles
-      };
-
       let complianceRuleEntries = this.getRuleEntryPanels();
 
-      let onSave = this.controller.save.bind(this.controller);
+      let onSave = this.onSaveClick.bind(this);
 
       let saveBtnModel = {
         label: 'Save Changes'
@@ -133,14 +132,27 @@ class View extends UpdatableView {
             <span className="icon-add" onClick={this.onAddClick.bind(this)}></span>
             <span className="title">Add new rule</span>
           </div>
-        saveButton = <PrimaryButton className="save-button" model={saveBtnModel} onClick={onSave}/>
-        horizontalDivider = <hr/>
+        saveButton = <PrimaryButton className="save-button" model={saveBtnModel} onClick={onSave}/>;
+        horizontalDivider = <hr/>;
+      }
+
+      let userInfo;
+      if (this.componentModel.isGroup) {
+        userInfo = <div className="group-id">
+                    {this.componentModel.userName}
+                  </div>;
+      } else {
+        let userInfoNavModel = {
+          userName: this.componentModel.userName,
+          roles: this.componentModel.roles
+        };
+        userInfo = <UserInfoNav model={userInfoNavModel}/>;
       }
 
       content =
         <div>
           <div className="row">
-            <UserInfoNav model={userInfoNavModel}/>
+            {userInfo}
           </div>
           {complianceRuleEntries}
           {addNewRule}

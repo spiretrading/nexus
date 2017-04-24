@@ -1,7 +1,8 @@
 class Controller {
   constructor(react, componentModel) {
     this.componentModel = clone(componentModel);
-    this.navigateToProfile = react.props.navigateToProfile;
+    this.navigateToTraderProfile = react.props.navigateToTraderProfile;
+    this.navigateToGroupProfile = react.props.navigateToGroupProfile;
     this.loadGroupAccounts = react.props.loadAccounts;
   }
 
@@ -24,8 +25,12 @@ class Controller {
     }
   }
 
-  navigateToAccountProfile(traderId) {
-    this.navigateToProfile(traderId);
+  navigateToTraderProfile(traderId) {
+    this.navigateToTraderProfile(traderId);
+  }
+
+  navigateToGroupProfile(groupId) {
+    this.navigateToGroupProfile(groupId);
   }
 
   loadAccounts() {

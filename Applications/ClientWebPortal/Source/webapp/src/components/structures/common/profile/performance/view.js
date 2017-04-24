@@ -19,11 +19,6 @@ class View extends UpdatableView {
   }
 
   render() {
-    let userInfoNavModel = {
-      userName: this.componentModel.userName,
-      roles: this.componentModel.roles
-    };
-
     let generateBtnModel = {
       label: 'Generate'
     };
@@ -60,10 +55,23 @@ class View extends UpdatableView {
       }
     }
 
+    let userInfo;
+    if (this.componentModel.isGroup) {
+      userInfo = <div className="group-id">
+                    {this.componentModel.userName}
+                  </div>;
+    } else {
+      let userInfoNavModel = {
+        userName: this.componentModel.userName,
+        roles: this.componentModel.roles
+      };
+      userInfo = <UserInfoNav model={userInfoNavModel}/>;
+    }
+
     return (
       <div id="performance-container" className={className}>
         <div className="row">
-          <UserInfoNav model={userInfoNavModel}/>
+          {userInfo}
         </div>
 
         <ProfitLossReportParameters onGenerate={onGenerate}/>

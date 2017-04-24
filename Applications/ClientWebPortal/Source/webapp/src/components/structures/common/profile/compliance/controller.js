@@ -1,6 +1,8 @@
-import {AdministrationClient, ComplianceServiceClient, DirectoryEntry} from 'spire-client';
+import {AdministrationClient, ComplianceServiceClient, DirectoryEntry, DataType} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
+import definitionsService from 'services/definitions';
+import uuid from 'uuid';
 
 class Controller {
   constructor(componentModel) {
@@ -80,6 +82,18 @@ class Controller {
   }
 
   /** @private */
+  initializeFlags(ruleEntries) {
+    for (let i=0; i<ruleEntries.length; i++) {
+      let ruleEntry = ruleEntries[i];
+      ruleEntry.toBeUpdated = false;
+      ruleEntry.toBeAdded = false;
+      ruleEntry.toBeDeleted = false;
+    }
+
+    return ruleEntries;
+  }
+
+  /** @private */
   transformToPerAccountRuleEntries(ruleEntries) {
     for (let i=0; i<ruleEntries.length; i++) {
       let ruleEntry = ruleEntries[i];
@@ -124,14 +138,14 @@ class Controller {
 
     preloaderTimer.start(requiredDataFetchPromise, null, Config.WHOLE_PAGE_PRELOADER_WIDTH, Config.WHOLE_PAGE_PRELOADER_HEIGHT).then((responses) => {
       let ruleEntries = responses[0];
-      ruleEntries = this.transformFromPerAccountRuleEntries(ruleEntries);
+      ruleEntries = this.transformFromPerAccountRuleEntries.apply(this, [ruleEntries]);
+      ruleEntries = this.initializeFlags.apply(this, [ruleEntries]);
       this.componentModel.complianceRuleEntries = ruleEntries;
       this.componentModel.directoryEntry = directoryEntry;
       this.componentModel.roles = responses[1];
       this.componentModel.userName = directoryEntry.name;
       this.componentModel.isAdmin = userService.isAdmin();
       this.componentModel.isGroup = directoryEntry.type === 1;
-
       this.view.update(this.componentModel);
     });
   }
@@ -149,13 +163,89 @@ class Controller {
       let entry = ruleEntries[i];
       if (entry.id == id) {
         entry.schema.parameters = parameters;
-        entry.state = state;
+        entry.state = Number(state);
+
+        if (state == 3) {
+          entry.toBeDeleted = true;
+          entry.toBeUpdated = false;
+        } else {
+          if (!entry.toBeAdded) {
+            entry.toBeUpdated = true;
+          }
+          entry.toBeDeleted = false;
+        }
       }
     }
   }
 
+  onRuleAdd(ruleTypeName) {
+    let schema = definitionsService.getComplianceRuleScehma(ruleTypeName);
+    let id = uuid.v4();
+    this.componentModel.complianceRuleEntries.push({
+      id: id,
+      schema: schema,
+      state: 0,
+      toBeAdded: true
+    });
+    this.view.update(this.componentModel);
+  }
+
   save() {
     this.componentModel.complianceRuleEntries = this.transformToPerAccountRuleEntries(this.componentModel.complianceRuleEntries);
+    let savePromises = this.getSavePromises.apply(this);
+    let allPromises = Promise.all(savePromises);
+
+    preloaderTimer.start(allPromises, null, Config.WHOLE_PAGE_PRELOADER_WIDTH, Config.WHOLE_PAGE_PRELOADER_HEIGHT).then((responses) => {
+      let ruleEntries = this.componentModel.complianceRuleEntries;
+      let i = ruleEntries.length;
+      while (i--) {
+        if (ruleEntries[i].toBeDeleted) {
+          ruleEntries.splice(i, 1);
+        } else {
+          ruleEntries[i].toBeUpdated = false;
+          ruleEntries[i].toBeAdded = false;
+          ruleEntries[i].toBeDeleted = false;
+        }
+      }
+      this.view.update(this.componentModel);
+      this.view.showSaveSuccessMessage.apply(this.view);
+    });
+  }
+
+  /** @private */
+  getSavePromises() {
+    let savePromises = [];
+    for (let i=0; i<this.componentModel.complianceRuleEntries.length; i++) {
+      let ruleEntry = this.componentModel.complianceRuleEntries[i];
+      if (ruleEntry.toBeAdded && ruleEntry.toBeDeleted) {
+        this.componentModel.complianceRuleEntries.splice(i, 1);
+        i--;
+      } else if (ruleEntry.toBeAdded) {
+        let addPromise = this.complianceServiceClient.addComplianceRuleEntry.apply(this.complianceServiceClient,
+          [
+            this.componentModel.directoryEntry,
+            ruleEntry.state,
+            clone(ruleEntry.schema)
+          ]);
+        savePromises.push(addPromise);
+      } else if (ruleEntry.toBeUpdated) {
+        let apiRuleEntry = {
+          directory_entry: this.componentModel.directoryEntry,
+          id: ruleEntry.id,
+          schema: clone(ruleEntry.schema),
+          state: ruleEntry.state
+        };
+        let updatePromise = this.complianceServiceClient.updateComplianceRuleEntry.apply(this.complianceServiceClient, [apiRuleEntry]);
+        savePromises.push(updatePromise);
+      } else if (ruleEntry.toBeDeleted) {
+        let deletePromise = this.complianceServiceClient.deleteComplianceRuleEntry.apply(this.complianceServiceClient, [
+          ruleEntry.id
+        ]);
+        savePromises.push(deletePromise);
+      }
+    }
+
+    return savePromises;
   }
 }
 
