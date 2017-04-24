@@ -8,6 +8,8 @@ namespace Nexus {
   struct ChicFeeTable;
   struct ConsolidatedTmxFeeTable;
   struct ConsolidatedUsFeeTable;
+  struct EdgaFeeTable;
+  struct EdgxFeeTable;
   struct LynxFeeTable;
   enum class LiquidityFlag;
   struct MatnFeeTable;

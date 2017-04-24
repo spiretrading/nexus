@@ -2042,6 +2042,376 @@ namespace {
     orderTypes.emplace_back(marketPegAsk.Build());
   }
 
+  void PopulateEdgaOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
+    CanvasNodeBuilder limitBid(*GetLimitBidOrderTaskNode()->Rename(
+      "EDGA Limit Bid")->AddField("max_floor", 111,
+      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+    limitBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGA()));
+    limitBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    limitBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    limitBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    limitBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    limitBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    limitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(limitBid.Build());
+    CanvasNodeBuilder limitAsk(*GetLimitAskOrderTaskNode()->Rename(
+      "EDGA Limit Ask")->AddField("max_floor", 111,
+      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+    limitAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGA()));
+    limitAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    limitAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    limitAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    limitAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    limitAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    limitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(limitAsk.Build());
+    CanvasNodeBuilder marketBid(*GetMarketBidOrderTaskNode()->Rename(
+      "EDGA Market Bid")->AddField("max_floor", 111,
+      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+    marketBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGA()));
+    marketBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    marketBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    marketBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    marketBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    marketBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    marketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(marketBid.Build());
+    CanvasNodeBuilder marketAsk(*GetMarketAskOrderTaskNode()->Rename(
+      "EDGA Market Ask")->AddField("max_floor", 111,
+      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+    marketAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGA()));
+    marketAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    marketAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    marketAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    marketAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    marketAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    marketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(marketAsk.Build());
+    CanvasNodeBuilder buy(*GetMarketBidOrderTaskNode()->Rename("EDGA Buy"));
+    buy.SetVisible(BaseSingleOrderTaskFactory::QUANTITY, false);
+    buy.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGA()));
+    buy.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    buy.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    buy.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    buy.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    buy.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    buy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(buy.Build());
+    CanvasNodeBuilder sell(*GetMarketAskOrderTaskNode()->Rename("EDGA Sell"));
+    sell.SetVisible(BaseSingleOrderTaskFactory::QUANTITY, false);
+    sell.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGA()));
+    sell.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    sell.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    sell.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    sell.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    sell.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    sell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(sell.Build());
+    CanvasNodeBuilder primaryPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
+      "EDGA Primary Peg Bid")->AddField("exec_inst", 18,
+      make_unique<TextNode>("R"))->AddField("peg_difference", 211,
+      make_unique<MoneyNode>(Money::ZERO)));
+    primaryPegBid.SetReadOnly("exec_inst", true);
+    primaryPegBid.SetVisible("exec_inst", false);
+    primaryPegBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGA()));
+    primaryPegBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION,
+      false);
+    primaryPegBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION,
+      true);
+    primaryPegBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    primaryPegBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      false);
+    primaryPegBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      true);
+    primaryPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(primaryPegBid.Build());
+    CanvasNodeBuilder primaryPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
+      "EDGA Primary Peg Ask")->AddField("exec_inst", 18,
+      make_unique<TextNode>("R"))->AddField("peg_difference", 211,
+      make_unique<MoneyNode>(Money::ZERO)));
+    primaryPegAsk.SetReadOnly("exec_inst", true);
+    primaryPegAsk.SetVisible("exec_inst", false);
+    primaryPegAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGA()));
+    primaryPegAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION,
+      false);
+    primaryPegAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION,
+      true);
+    primaryPegAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    primaryPegAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      false);
+    primaryPegAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      true);
+    primaryPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(primaryPegAsk.Build());
+    CanvasNodeBuilder midPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
+      "EDGA Mid Peg Bid")->AddField("exec_inst", 18,
+      make_unique<TextNode>("M")));
+    midPegBid.SetReadOnly("exec_inst", true);
+    midPegBid.SetVisible("exec_inst", false);
+    midPegBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGA()));
+    midPegBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    midPegBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    midPegBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    midPegBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    midPegBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    midPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(midPegBid.Build());
+    CanvasNodeBuilder midPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
+      "EDGA Mid Peg Ask")->AddField("exec_inst", 18,
+      make_unique<TextNode>("M")));
+    midPegAsk.SetReadOnly("exec_inst", true);
+    midPegAsk.SetVisible("exec_inst", false);
+    midPegAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGA()));
+    midPegAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    midPegAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    midPegAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    midPegAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    midPegAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    midPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(midPegAsk.Build());
+    CanvasNodeBuilder marketPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
+      "EDGA Market Peg Bid")->AddField("exec_inst", 18,
+      make_unique<TextNode>("P"))->AddField("peg_difference", 211,
+      make_unique<MoneyNode>(-Money::CENT)));
+    marketPegBid.SetReadOnly("exec_inst", true);
+    marketPegBid.SetVisible("exec_inst", false);
+    marketPegBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGA()));
+    marketPegBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    marketPegBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    marketPegBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    marketPegBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      false);
+    marketPegBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      true);
+    marketPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(marketPegBid.Build());
+    CanvasNodeBuilder marketPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
+      "EDGA Market Peg Ask")->AddField("exec_inst", 18,
+      make_unique<TextNode>("P"))->AddField("peg_difference", 211,
+      make_unique<MoneyNode>(-Money::CENT)));
+    marketPegAsk.SetReadOnly("exec_inst", true);
+    marketPegAsk.SetVisible("exec_inst", false);
+    marketPegAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGA()));
+    marketPegAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    marketPegAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    marketPegAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    marketPegAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      false);
+    marketPegAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      true);
+    marketPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(marketPegAsk.Build());
+  }
+
+  void PopulateEdgxOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
+    CanvasNodeBuilder limitBid(*GetLimitBidOrderTaskNode()->Rename(
+      "EDGX Limit Bid")->AddField("max_floor", 111,
+      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+    limitBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGX()));
+    limitBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    limitBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    limitBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    limitBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    limitBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    limitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(limitBid.Build());
+    CanvasNodeBuilder limitAsk(*GetLimitAskOrderTaskNode()->Rename(
+      "EDGX Limit Ask")->AddField("max_floor", 111,
+      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+    limitAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGX()));
+    limitAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    limitAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    limitAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    limitAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    limitAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    limitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(limitAsk.Build());
+    CanvasNodeBuilder marketBid(*GetMarketBidOrderTaskNode()->Rename(
+      "EDGX Market Bid")->AddField("max_floor", 111,
+      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+    marketBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGX()));
+    marketBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    marketBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    marketBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    marketBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    marketBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    marketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(marketBid.Build());
+    CanvasNodeBuilder marketAsk(*GetMarketAskOrderTaskNode()->Rename(
+      "EDGX Market Ask")->AddField("max_floor", 111,
+      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+    marketAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGX()));
+    marketAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    marketAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    marketAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    marketAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    marketAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    marketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(marketAsk.Build());
+    CanvasNodeBuilder buy(*GetMarketBidOrderTaskNode()->Rename("EDGX Buy"));
+    buy.SetVisible(BaseSingleOrderTaskFactory::QUANTITY, false);
+    buy.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGX()));
+    buy.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    buy.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    buy.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    buy.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    buy.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    buy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(buy.Build());
+    CanvasNodeBuilder sell(*GetMarketAskOrderTaskNode()->Rename("EDGX Sell"));
+    sell.SetVisible(BaseSingleOrderTaskFactory::QUANTITY, false);
+    sell.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGX()));
+    sell.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    sell.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    sell.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    sell.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    sell.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    sell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(sell.Build());
+    CanvasNodeBuilder primaryPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
+      "EDGX Primary Peg Bid")->AddField("exec_inst", 18,
+      make_unique<TextNode>("R"))->AddField("peg_difference", 211,
+      make_unique<MoneyNode>(Money::ZERO)));
+    primaryPegBid.SetReadOnly("exec_inst", true);
+    primaryPegBid.SetVisible("exec_inst", false);
+    primaryPegBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGX()));
+    primaryPegBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION,
+      false);
+    primaryPegBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION,
+      true);
+    primaryPegBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    primaryPegBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      false);
+    primaryPegBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      true);
+    primaryPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(primaryPegBid.Build());
+    CanvasNodeBuilder primaryPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
+      "EDGX Primary Peg Ask")->AddField("exec_inst", 18,
+      make_unique<TextNode>("R"))->AddField("peg_difference", 211,
+      make_unique<MoneyNode>(Money::ZERO)));
+    primaryPegAsk.SetReadOnly("exec_inst", true);
+    primaryPegAsk.SetVisible("exec_inst", false);
+    primaryPegAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGX()));
+    primaryPegAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION,
+      false);
+    primaryPegAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION,
+      true);
+    primaryPegAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    primaryPegAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      false);
+    primaryPegAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      true);
+    primaryPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(primaryPegAsk.Build());
+    CanvasNodeBuilder midPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
+      "EDGX Mid Peg Bid")->AddField("exec_inst", 18,
+      make_unique<TextNode>("M")));
+    midPegBid.SetReadOnly("exec_inst", true);
+    midPegBid.SetVisible("exec_inst", false);
+    midPegBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGX()));
+    midPegBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    midPegBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    midPegBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    midPegBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    midPegBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    midPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(midPegBid.Build());
+    CanvasNodeBuilder midPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
+      "EDGX Mid Peg Ask")->AddField("exec_inst", 18,
+      make_unique<TextNode>("M")));
+    midPegAsk.SetReadOnly("exec_inst", true);
+    midPegAsk.SetVisible("exec_inst", false);
+    midPegAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGX()));
+    midPegAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    midPegAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    midPegAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    midPegAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    midPegAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    midPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(midPegAsk.Build());
+    CanvasNodeBuilder marketPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
+      "EDGX Market Peg Bid")->AddField("exec_inst", 18,
+      make_unique<TextNode>("P"))->AddField("peg_difference", 211,
+      make_unique<MoneyNode>(-Money::CENT)));
+    marketPegBid.SetReadOnly("exec_inst", true);
+    marketPegBid.SetVisible("exec_inst", false);
+    marketPegBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGX()));
+    marketPegBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    marketPegBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    marketPegBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    marketPegBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      false);
+    marketPegBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      true);
+    marketPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(marketPegBid.Build());
+    CanvasNodeBuilder marketPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
+      "EDGX Market Peg Ask")->AddField("exec_inst", 18,
+      make_unique<TextNode>("P"))->AddField("peg_difference", 211,
+      make_unique<MoneyNode>(-Money::CENT)));
+    marketPegAsk.SetReadOnly("exec_inst", true);
+    marketPegAsk.SetVisible("exec_inst", false);
+    marketPegAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::EDGX()));
+    marketPegAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    marketPegAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    marketPegAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    marketPegAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      false);
+    marketPegAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      true);
+    marketPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(marketPegAsk.Build());
+  }
+
   void PopulateNyseOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
     CanvasNodeBuilder limitBid(*GetLimitBidOrderTaskNode()->Rename(
       "NYSE Limit Bid")->AddField("max_floor", 111,
@@ -2650,16 +3020,22 @@ namespace {
     auto& asexOrderTypes = orderTypes[DefaultMarkets::ASEX()];
     PopulateBatsOrders(asexOrderTypes);
     PopulateBatyOrders(asexOrderTypes);
+    PopulateEdgaOrders(asexOrderTypes);
+    PopulateEdgxOrders(asexOrderTypes);
     PopulateNyseOrders(asexOrderTypes);
     PopulateNyseOpenCloseOrders(asexOrderTypes);
     PopulateNasdaqOrders(asexOrderTypes);
     auto& nasdaqOrderTypes = orderTypes[DefaultMarkets::NASDAQ()];
     PopulateBatsOrders(nasdaqOrderTypes);
     PopulateBatyOrders(nasdaqOrderTypes);
+    PopulateEdgaOrders(nasdaqOrderTypes);
+    PopulateEdgxOrders(nasdaqOrderTypes);
     PopulateNasdaqOrders(nasdaqOrderTypes);
     auto& nyseOrderTypes = orderTypes[DefaultMarkets::NYSE()];
     PopulateBatsOrders(nyseOrderTypes);
     PopulateBatyOrders(nyseOrderTypes);
+    PopulateEdgaOrders(nyseOrderTypes);
+    PopulateEdgxOrders(nyseOrderTypes);
     PopulateNyseOrders(nyseOrderTypes);
     PopulateNyseOpenCloseOrders(nyseOrderTypes);
     PopulateNasdaqOrders(nyseOrderTypes);
