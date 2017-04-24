@@ -245,107 +245,109 @@ us_equities:
 
   # BATS fees based on https://www.bats.com/us/equities/membership/fee_schedule/bzx/
   bats:
-    10: -0.0022    # Routed to NYSE Arca, adds liquidity (Tape B)
-    8 : -0.0015    # Routed to NYSE MKT, adds liquidity
-    9 : -0.0021    # Routed to NYSE Arca, adds liquidity (Tapes A or C)
-    A : -0.0015    # Routed to NASDAQ, adds liquidity
-    AA: -0.0002    # Routed to EDGA using ALLB routing strategy
-    AC:  0.0010    # Closing Auction, BZX listed security
-    AL:  0         # Closing Auction, Late-Limit-On-Close order, BZX listed security
-    AN:  0         # Continuous Book Order that executed in the Opening or Closing Auction, BZX listed security
-    AO:  0.0005    # Opening, IPO or Halt Auction, BZX listed security
-    AP:  0         # Opening, IPO or Halt Auction, Late-Limit-On-Open order, BZX listed security
-    AX:  0.0029    # Routed to EDGX using ALLB routing strategy
-    AY: -0.0015    # Routed to BYX using ALLB routing strategy
-    B : -0.0025    # Displayed order, adds liquidity to BZX (Tape B)
-    BA:  0.0027    # Routed to NYSE Arca using Destination Specific routing strategy (Tape B)
-    BB:  0.0030    # Removes liquidity from BZX (Tape B)
-    BJ: -0.0002    # Routed to EDGA using TRIM or TRIM2 routing strategy
-    BO:  0.0030    # Routed using Destination Specific routing strategy unless otherwise specified
-    BY: -0.0015    # Routed to BYX using Destination Specific, TRIM, TRIM2 or SLIM routing strategy
-    CL:  0.0010    # Routed to listing market closing process
-    D :  0.00265   # Routed to NYSE using Destination Specific, RDOT, RDOX, TRIM or SLIM routing strategy
-    F : -0.0015    # Routed to NYSE, adds liquidity
-    G :  0.0029    # Routed to NYSE Arca using Destination Specific routing strategy (Tapes A or C)
-    HA: -0.0017    # Non-displayed order, adds liquidity
-    HI:  0         # Non-displayed order that receives price improvement, adds liquidity
-    J :  0.0029    # Routed to NASDAQ using Destination Specific or INET routing strategy
-    N :  0.0030    # Removes liquidity from BZX (Tape C)
-    NA:  0         # Routed to EDGX, NYSE, NYSE Arca, NYSE MKT or Nasdaq; adds non-displayed liquidity
-    NB:  0.0030    # Routed to any exchange not covered by Fee Code NA, adds non-displayed liquidity
-    O :  0.0015    # Routed to listing market opening or re-opening cross
-    OO:  0.0005    # BZX Opening or Re-opening, non-BZX listed security
-    P : -0.0020    # Routed to EDGX, adds liquidity
-    R :  0.0030    # Re-routed by NYSE using RDOT, RDOX or Post to Away routing strategy
-    RA:  0.0005    # Routed to EDGA, adds liquidity
-    RB:  0.0020    # Routed to NASDAQ BX, adds liquidity
-    RN: -0.0015    # Routed to NASDAQ using ROOC routing strategy, adds liquidity
-    RP: -0.0017    # Non-displayed order, adds liquidity using Supplemental Peg
-    RY:  0.0018    # Routed to BYX, adds liquidity
-    S :  0.0033    # Directed ISO
-    SW:  0.0033    # Routed using Parallel T or SWPA/B routing strategy
-    SX:  0.0026    # Routed using SLIM routing strategy (except to BYX or NYSE)
-    TV: -0.001     # Routed to NASDAQ BX using TRIM or TRIM2 routing strategy
-    V : -0.0020    # Displayed order, adds liquidity to BZX (Tape A)
-    VI:  0         # Displayed order subject to price sliding that receives price improvement, adds liquidity
-    W :  0.0030    # Removes liquidity from BZX (Tape A)
-    X :  0.0030    # Routed to a displayed market to remove liquidity using Parallel D, Parallel 2D, ROUT, ROUX or Post to Away routing strategy
-    Y : -0.0020    # Displayed order, adds liquidity to BZX (Tape C)
-    Z :  0.0028    # Routed to a dark liquidity venue (except through SLIM)
-    ZA: -0.0032    # Retail Order, adds liquidity
-    ZR:  0.0030    # Retail Order, removes liquidity
+    liquidity_flags:
+      10: -0.0022    # Routed to NYSE Arca, adds liquidity (Tape B)
+      8 : -0.0015    # Routed to NYSE MKT, adds liquidity
+      9 : -0.0021    # Routed to NYSE Arca, adds liquidity (Tapes A or C)
+      A : -0.0015    # Routed to NASDAQ, adds liquidity
+      AA: -0.0002    # Routed to EDGA using ALLB routing strategy
+      AC:  0.0010    # Closing Auction, BZX listed security
+      AL:  0         # Closing Auction, Late-Limit-On-Close order, BZX listed security
+      AN:  0         # Continuous Book Order that executed in the Opening or Closing Auction, BZX listed security
+      AO:  0.0005    # Opening, IPO or Halt Auction, BZX listed security
+      AP:  0         # Opening, IPO or Halt Auction, Late-Limit-On-Open order, BZX listed security
+      AX:  0.0029    # Routed to EDGX using ALLB routing strategy
+      AY: -0.0015    # Routed to BYX using ALLB routing strategy
+      B : -0.0025    # Displayed order, adds liquidity to BZX (Tape B)
+      BA:  0.0027    # Routed to NYSE Arca using Destination Specific routing strategy (Tape B)
+      BB:  0.0030    # Removes liquidity from BZX (Tape B)
+      BJ: -0.0002    # Routed to EDGA using TRIM or TRIM2 routing strategy
+      BO:  0.0030    # Routed using Destination Specific routing strategy unless otherwise specified
+      BY: -0.0015    # Routed to BYX using Destination Specific, TRIM, TRIM2 or SLIM routing strategy
+      CL:  0.0010    # Routed to listing market closing process
+      D :  0.00265   # Routed to NYSE using Destination Specific, RDOT, RDOX, TRIM or SLIM routing strategy
+      F : -0.0015    # Routed to NYSE, adds liquidity
+      G :  0.0029    # Routed to NYSE Arca using Destination Specific routing strategy (Tapes A or C)
+      HA: -0.0017    # Non-displayed order, adds liquidity
+      HI:  0         # Non-displayed order that receives price improvement, adds liquidity
+      J :  0.0029    # Routed to NASDAQ using Destination Specific or INET routing strategy
+      N :  0.0030    # Removes liquidity from BZX (Tape C)
+      NA:  0         # Routed to EDGX, NYSE, NYSE Arca, NYSE MKT or Nasdaq; adds non-displayed liquidity
+      NB:  0.0030    # Routed to any exchange not covered by Fee Code NA, adds non-displayed liquidity
+      O :  0.0015    # Routed to listing market opening or re-opening cross
+      OO:  0.0005    # BZX Opening or Re-opening, non-BZX listed security
+      P : -0.0020    # Routed to EDGX, adds liquidity
+      R :  0.0030    # Re-routed by NYSE using RDOT, RDOX or Post to Away routing strategy
+      RA:  0.0005    # Routed to EDGA, adds liquidity
+      RB:  0.0020    # Routed to NASDAQ BX, adds liquidity
+      RN: -0.0015    # Routed to NASDAQ using ROOC routing strategy, adds liquidity
+      RP: -0.0017    # Non-displayed order, adds liquidity using Supplemental Peg
+      RY:  0.0018    # Routed to BYX, adds liquidity
+      S :  0.0033    # Directed ISO
+      SW:  0.0033    # Routed using Parallel T or SWPA/B routing strategy
+      SX:  0.0026    # Routed using SLIM routing strategy (except to BYX or NYSE)
+      TV: -0.001     # Routed to NASDAQ BX using TRIM or TRIM2 routing strategy
+      V : -0.0020    # Displayed order, adds liquidity to BZX (Tape A)
+      VI:  0         # Displayed order subject to price sliding that receives price improvement, adds liquidity
+      W :  0.0030    # Removes liquidity from BZX (Tape A)
+      X :  0.0030    # Routed to a displayed market to remove liquidity using Parallel D, Parallel 2D, ROUT, ROUX or Post to Away routing strategy
+      Y : -0.0020    # Displayed order, adds liquidity to BZX (Tape C)
+      Z :  0.0028    # Routed to a dark liquidity venue (except through SLIM)
+      ZA: -0.0032    # Retail Order, adds liquidity
+      ZR:  0.0030    # Retail Order, removes liquidity
     default: N
 
   # BATY fees based on https://www.bats.com/us/equities/membership/fee_schedule/byx/
   baty:
-    10: -0.0022    # Routed to NYSE Arca, adds liquidity (Tape B)
-    8 : -0.0015    # Routed to NYSE MKT, adds liquidity
-    9 : -0.0021    # Routed to NYSE Arca, adds liquidity (Tapes A or C)
-    A : -0.0015    # Routed to NASDAQ, adds liquidity
-    AA: -0.0002    # Routed to EDGA using ALLB routing strategy
-    AX:  0.0029    # Routed to EDGX using ALLB routing strategy
-    AZ:  0.0030    # Routed to BZX using ALLB routing strategy
-    B :  0.0018    # Displayed order, adds liquidity to BYX (Tape B)
-    BA:  0.0027    # Routed to NYSE Arca using Destination Specific routing strategy (Tape B)
-    BB: -0.0010    # Removes liquidity from BYX (Tape B)
-    BJ: -0.0002    # Routed to EDGA using Destination Specific, TRIM or TRIM2 routing strategy
-    BO:  0.0030    # Routed using Destination Specific routing strategy unless otherwise specified
-    C : -0.0010    # Routed to NASDAQ BX using Destination Specific, TRIM or TRIM2 routing strategy
-    CL:  0.0010    # Routed to listing market closing process
-    D :  0.00265   # Routed to NYSE using Destination Specific, RDOT, RDOX, TRIM or SLIM routing strategy
-    F : -0.0015    # Routed to NYSE, adds liquidity
-    G :  0.0029    # Routed to NYSE Arca using Destination Specific routing strategy (Tapes A or C)
-    HA:  0.0024    # Non-displayed order, adds liquidity
-    HI:  0.0030    # Non-displayed order that receives price improvement, adds liquidity
-    IX:  0.0010    # Routed to IEX using Destination Specific routing strategy
-    J :  0.0029    # Routed to NASDAQ using Destination Specific or INET routing strategy
-    MM:  0.0010    # Non-displayed order, adds liquidity using Mid-Point Peg
-    MT:  0         # Removes Mid-Point Peg liquidity from BYX
-    N : -0.0010    # Removes liquidity from BYX (Tape C)
-    NA:  0         # Routed to BZX, EDGX, NYSE, NYSE Arca, NYSE MKT or Nasdaq; adds non-displayed liquidity
-    NB:  0.0030    # Routed to any exchange not covered by Fee Code NA, adds non-displayed liquidity
-    O :  0.0015    # Routed to listing market opening or re-opening cross
-    OO:  0         # BYX Opening or Re-opening
-    P : -0.0020    # Routed to EDGX, adds liquidity
-    PL:  0.0030    # Routed to BZX, EDGX, NYSE, NYSE Arca or Nasdaq using RMPL routing strategy
-    PX:  0.0012    # Routed using RMPT routing strategy or routed to any destination not covered by Fee Code PL using RMPL routing strategy
-    R :  0.0030    # Re-routed by NYSE using RDOT, RDOX or Post to Away routing strategy
-    RA:  0.0005    # Routed to EDGA, adds liquidity
-    RB:  0.0020    # Routed to NASDAQ BX, adds liquidity
-    RP:  0.0024    # Non-displayed order, adds liquidity using Supplemental Peg
-    RZ: -0.0020    # Routed to BZX, adds liquidity
-    S :  0.0033    # Directed ISO
-    SW:  0.0033    # Routed using Parallel T or SWPA/B routing strategy
-    SX:  0.0027    # Routed using SLIM routing strategy (except to BZX or NYSE)
-    SZ:  0.0030    # Routed to BZX using SLIM or TRIM routing strategy
-    V :  0.0018    # Displayed order, adds liquidity to BYX (Tape A)
-    VI:  0.0030    # Displayed order subject to price sliding that receives price improvement, adds liquidity
-    W : -0.0010    # Removes liquidity from BYX (Tape A)
-    X :  0.0029    # Routed to a displayed market to remove liquidity using Parallel D, Parallel 2D, ROUT, ROUX or Post to Away routing strategy
-    Y :  0.0018    # Displayed order, adds liquidity to BYX (Tape C)
-    Z :  0.0022    # Routed to a dark liquidity venue (except through SLIM)
-    ZP:  0.0025    # Retail Price Improving Order, adds liquidity
-    ZR: -0.0025    # Retail Order, removes liquidity against a Retail Price Improving Order
+    liquidity_flags:
+      10: -0.0022    # Routed to NYSE Arca, adds liquidity (Tape B)
+      8 : -0.0015    # Routed to NYSE MKT, adds liquidity
+      9 : -0.0021    # Routed to NYSE Arca, adds liquidity (Tapes A or C)
+      A : -0.0015    # Routed to NASDAQ, adds liquidity
+      AA: -0.0002    # Routed to EDGA using ALLB routing strategy
+      AX:  0.0029    # Routed to EDGX using ALLB routing strategy
+      AZ:  0.0030    # Routed to BZX using ALLB routing strategy
+      B :  0.0018    # Displayed order, adds liquidity to BYX (Tape B)
+      BA:  0.0027    # Routed to NYSE Arca using Destination Specific routing strategy (Tape B)
+      BB: -0.0010    # Removes liquidity from BYX (Tape B)
+      BJ: -0.0002    # Routed to EDGA using Destination Specific, TRIM or TRIM2 routing strategy
+      BO:  0.0030    # Routed using Destination Specific routing strategy unless otherwise specified
+      C : -0.0010    # Routed to NASDAQ BX using Destination Specific, TRIM or TRIM2 routing strategy
+      CL:  0.0010    # Routed to listing market closing process
+      D :  0.00265   # Routed to NYSE using Destination Specific, RDOT, RDOX, TRIM or SLIM routing strategy
+      F : -0.0015    # Routed to NYSE, adds liquidity
+      G :  0.0029    # Routed to NYSE Arca using Destination Specific routing strategy (Tapes A or C)
+      HA:  0.0024    # Non-displayed order, adds liquidity
+      HI:  0.0030    # Non-displayed order that receives price improvement, adds liquidity
+      IX:  0.0010    # Routed to IEX using Destination Specific routing strategy
+      J :  0.0029    # Routed to NASDAQ using Destination Specific or INET routing strategy
+      MM:  0.0010    # Non-displayed order, adds liquidity using Mid-Point Peg
+      MT:  0         # Removes Mid-Point Peg liquidity from BYX
+      N : -0.0010    # Removes liquidity from BYX (Tape C)
+      NA:  0         # Routed to BZX, EDGX, NYSE, NYSE Arca, NYSE MKT or Nasdaq; adds non-displayed liquidity
+      NB:  0.0030    # Routed to any exchange not covered by Fee Code NA, adds non-displayed liquidity
+      O :  0.0015    # Routed to listing market opening or re-opening cross
+      OO:  0         # BYX Opening or Re-opening
+      P : -0.0020    # Routed to EDGX, adds liquidity
+      PL:  0.0030    # Routed to BZX, EDGX, NYSE, NYSE Arca or Nasdaq using RMPL routing strategy
+      PX:  0.0012    # Routed using RMPT routing strategy or routed to any destination not covered by Fee Code PL using RMPL routing strategy
+      R :  0.0030    # Re-routed by NYSE using RDOT, RDOX or Post to Away routing strategy
+      RA:  0.0005    # Routed to EDGA, adds liquidity
+      RB:  0.0020    # Routed to NASDAQ BX, adds liquidity
+      RP:  0.0024    # Non-displayed order, adds liquidity using Supplemental Peg
+      RZ: -0.0020    # Routed to BZX, adds liquidity
+      S :  0.0033    # Directed ISO
+      SW:  0.0033    # Routed using Parallel T or SWPA/B routing strategy
+      SX:  0.0027    # Routed using SLIM routing strategy (except to BZX or NYSE)
+      SZ:  0.0030    # Routed to BZX using SLIM or TRIM routing strategy
+      V :  0.0018    # Displayed order, adds liquidity to BYX (Tape A)
+      VI:  0.0030    # Displayed order subject to price sliding that receives price improvement, adds liquidity
+      W : -0.0010    # Removes liquidity from BYX (Tape A)
+      X :  0.0029    # Routed to a displayed market to remove liquidity using Parallel D, Parallel 2D, ROUT, ROUX or Post to Away routing strategy
+      Y :  0.0018    # Displayed order, adds liquidity to BYX (Tape C)
+      Z :  0.0022    # Routed to a dark liquidity venue (except through SLIM)
+      ZP:  0.0025    # Retail Price Improving Order, adds liquidity
+      ZR: -0.0025    # Retail Order, removes liquidity against a Retail Price Improving Order
     default: N
 
   # NASDAQ fees based on http://nasdaqtrader.com/Trader.aspx?id=PriceListTrading2
