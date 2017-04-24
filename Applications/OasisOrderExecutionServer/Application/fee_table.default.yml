@@ -350,6 +350,135 @@ us_equities:
       ZR: -0.0025    # Retail Order, removes liquidity against a Retail Price Improving Order
     default: N
 
+  # EDGA fees based on: https://www.bats.com/us/equities/membership/fee_schedule/edga/
+  edga:
+    liquidity_flags:
+      10: -0.0022    # Routed to NYSE Arca, adds liquidity (Tape B)
+      2 :  0.0030    # Routed to NASDAQ using INET routing strategy (Tape B)
+      3 :  0.0005    # Adds liquidity to EDGA, pre and post market (Tapes A or C)
+      4 :  0.0005    # Adds liquidity to EDGA, pre and post market (Tape B)
+      6 : -0.0002    # Removes liquidity from EDGA, pre and post market (All Tapes)
+      7 :  0.0027    # Routed, pre and post market
+      8 : -0.0015    # Routed to NYSE MKT LLC, adds liquidity
+      9 : -0.0021    # Routed to NYSE Arca, adds liquidity (Tapes A or C)
+      A : -0.0015    # Routed to NASDAQ, adds liquidity
+      AX:  0.0029    # Routed to EDGX using ALLB routing strategy
+      AY: -0.0015    # Routed to BYX using ALLB routing strategy
+      AZ:  0.0030    # Routed to BZX using ALLB routing strategy
+      B :  0.0005    # Adds liquidity to EDGA (Tape B)
+      BB: -0.0002    # Removes liquidity from EDGA (Tape B)
+      BY: -0.0015    # Routed to BYX using Destination Specific ("DIRC"), ROUC, ROUE, ROBB or ROCO routing strategy
+      C : -0.0011    # Routed to BX
+      CL:  0.0010    # Routed to listing market closing process, except for NYSE Arca & BZX
+      CR: -0.0002    # Removes liquidity from EDGA using eligible routing strategies
+      D :  0.00275   # Routed to NYSE or routed using RDOT routing strategy
+      DM:  0.0005    # Non-displayed order, adds liquidity using MidPoint Discretionary order
+      DT:  0.0005    # Non-displayed order, removes liquidity using MidPoint Discretionary order
+      F : -0.0015    # Routed to NYSE, adds liquidity
+      G :  0.0030    # Routed to NYSE Arca (Tapes A or C)
+      HA:  0.001     # Non-displayed order, adds liquidity
+      HR:  0.001     # Non-displayed order, removes liquidity
+      I :  0.0029    # Routed to EDGX
+      IX:  0.0010    # Routed to IEX using DIRC routing strategy
+      J :  0.0030    # Routed to NASDAQ
+      K :  0.0029    # Routed to PSX using ROUC or ROUE routing strategy
+      L :  0.0030    # Routed to NASDAQ using INET routing strategy (Tapes A or C)
+      MM:  0.0008    # Non-displayed order, adds liquidity using Mid-Point Peg
+      MT:  0.0008    # Non-displayed order, removes liquidity using Mid-Point Peg
+      N : -0.0002    # Removes liquidity from EDGA (Tape C)
+      NA:  0         # Routed to BZX, EDGX, NYSE, NYSE Arca, NYSE MKT or Nasdaq; adds non-displayed liquidity
+      NB:  0.0030    # Routed to any exchange not covered by Fee Code NA, adds non-displayed liquidity
+      O :  0.0010    # Routed to listing market opening or re-opening cross
+      OO:  0         # EDGA Opening or Re-opening
+      P : -0.0027    # Routed to EDGX, including pre and post market, adds liquidity
+      PA:  0.0008    # Adds liquidity to EDGA using RMPT or RMPL routing strategy
+      PL:  0.0030    # Routed to BZX, EDGX, NYSE, NYSE Arca or Nasdaq using RMPL routing strategy
+      PR: -0.0002    # Removes liquidity from EDGA using eligible routing strategies
+      PT:  0.001     # Removes liquidity from EDGA using RMPT or RMPL routing strategy
+      PX:  0.0012    # Routed using RMPL routing strategy to a destination not covered by Fee Code PL or routed using RMPT routing strategy
+      Q :  0.0020    # Routed to a non-exchange destination using ROUQ or ROUC routing strategy
+      R :  0.0030    # Re-routed by NYSE
+      RB:  0.0020    # Routed to BX, adds liquidity
+      RP:  0.0004    # Non-displayed order, adds liquidity using Supplemental Peg
+      RR:  0.0029    # Routed to EDGX using DIRC routing strategy
+      RT:  0.0026    # Routed using ROUT routing strategy
+      RX:  0.0028    # Routed using ROUX routing strategy
+      RY:  0.0018    # Routed to BYX, adds liquidity
+      RZ: -0.0020    # Routed to BZX, adds liquidity
+      S :  0.0032    # Directed ISO
+      SW:  0.0031    # Routed using SWPA/SWPB routing strategy (except for removal of liquidity from NYSE)
+      T :  0.0012    # Routed to a non-exchange destination using ROUD or ROUE routing strategy
+      V :  0.0005    # Adds liquidity to EDGA (Tape A)
+      W : -0.0002    # Removes liquidity from EDGA (Tape A)
+      X :  0.0029    # Routed
+      XR: -0.0002    # Removes liquidity from EDGA using eligible routing strategies
+      Y :  0.0005    # Adds liquidity to EDGA (Tape C)
+      Z :  0.0012    # Routed to a non-exchange destination using ROCO or ROUZ routing strategy
+    default: N
+
+  # EDGX fees based on: https://www.bats.com/us/equities/membership/fee_schedule/edgx/
+  edgx:
+    liquidity_flags:
+      10: -0.0022    # Routed to NYSE Arca, adds liquidity (Tape B)
+      2 :  0.0030    # Routed to NASDAQ using INET routing strategy (Tape B)
+      3 : -0.0020    # Adds liquidity to EDGX, pre and post market (Tapes A or C)
+      4 : -0.0020    # Adds liquidity to EDGX, pre and post market (Tape B)
+      6 :  0.0030    # Removes liquidity from EDGX, pre and post market (All Tapes)
+      7 :  0.0030    # Routed, pre and post market
+      8 : -0.0015    # Routed to NYSE MKT LLC, adds liquidity
+      9 : -0.0021    # Routed to NYSE Arca, adds liquidity (Tapes A or C)
+      A : -0.0015    # Routed to NASDAQ, adds liquidity
+      AA: -0.0002    # Routed to EDGA using ALLB routing strategy
+      AY: -0.0015    # Routed to BYX using ALLB routing strategy
+      AZ:  0.0030    # Routed to BZX using ALLB routing strategy
+      B : -0.0020    # Adds liquidity to EDGX (Tape B)
+      BB:  0.0030    # Removes liquidity from EDGX (Tape B)
+      BY: -0.0015    # Routed to BYX using Destination Specific ("DIRC"), ROUC or ROUE routing strategy
+      C : -0.0011    # Routed to BX
+      CL:  0.0010    # Routed to listing market closing process, except for NYSE Arca & BZX
+      D :  0.00275   # Routed to NYSE or routed using RDOT routing strategy
+      EA:  0.0005    # Internalization, adds liquidity
+      ER:  0.0005    # Internalization, removes liquidity
+      F : -0.0015    # Routed to NYSE, adds liquidity
+      G :  0.0030    # Routed to NYSE Arca (Tapes A or C)
+      HA: -0.0015    # Non-displayed order, adds liquidity
+      HI:  0         # Non-displayed order that receives price improvement, adds liquidity
+      I :  0.0029    # Routed to EDGA
+      J :  0.0030    # Routed to NASDAQ
+      K :  0.0029    # Routed to PSX using ROUC or ROUE routing strategy
+      L :  0.0030    # Routed to NASDAQ using INET routing strategy (Tapes A or C)
+      MM: -0.0015    # Non-displayed order, adds liquidity using Mid-Point Peg
+      N :  0.0030    # Removes liquidity from EDGX (Tape C)
+      NA:  0         # Routed to BZX, NYSE, NYSE Arca, NYSE MKT or Nasdaq; adds non-displayed liquidity
+      NB:  0.0030    # Routed to any exchange not covered by Fee Code NA, adds non-displayed liquidity
+      O :  0.0010    # Routed to listing market opening or re-opening cross
+      OO:  0.0010    # EDGX Opening or Re-Opening
+      PR:  0.0030    # Removes liquidity from EDGX using ROUQ routing strategy
+      Q :  0.0020    # Routed to a non-exchange destination using ROUC routing strategy
+      R :  0.0030    # Re-routed by NYSE
+      RA:  0.0005    # Routed to EDGA, adds liquidity
+      RB:  0.0020    # Routed to BX, adds liquidity
+      RN: -0.0015    # Routed to NASDAQ using ROOC routing strategy, adds liquidity
+      RP: -0.0015    # Non-displayed order, adds liquidity using Supplemental Peg
+      RQ:  0.0029    # Routed using ROUQ routing strategy
+      RR: -0.0002    # Routed to EDGA using DIRC routing strategy
+      RT:  0.0030    # Routed using ROUT routing strategy
+      RX:  0.0030    # Routed using ROUX routing strategy
+      RY:  0.0018    # Routed to BYX, adds liquidity
+      RZ: -0.0020    # Routed to BZX, adds liquidity
+      S :  0.0032    # Directed ISO
+      SW:  0.0031    # Routed using SWPA/SWPB routing strategy (except for removal of liquidity from NYSE)
+      T :  0.0012    # Routed to a non-exchange destination using ROUD or ROUE routing strategy
+      V : -0.0020    # Adds liquidity to EDGX (Tape A)
+      VI:  0         # Displayed order subject to price sliding that receives price improvement, adds liquidity
+      W :  0.0030    # Removes liquidity from EDGX (Tape A)
+      X :  0.0029    # Routed
+      Y : -0.0020    # Adds liquidity to EDGX (Tape C)
+      Z :  0.0012    # Routed to a non-exchange destination using ROUZ routing strategy
+      ZA: -0.0034    # Retail Order, adds liquidity
+      ZR:  0.0030    # Retail Order, removes liquidity
+    default: N
+
   # NASDAQ fees based on http://nasdaqtrader.com/Trader.aspx?id=PriceListTrading2
   nasdaq:
 
