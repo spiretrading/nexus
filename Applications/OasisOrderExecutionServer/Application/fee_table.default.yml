@@ -294,6 +294,7 @@ us_equities:
     Z :  0.0028    # Routed to a dark liquidity venue (except through SLIM)
     ZA: -0.0032    # Retail Order, adds liquidity
     ZR:  0.0030    # Retail Order, removes liquidity
+    default: N
 
   # BATY fees based on https://www.bats.com/us/equities/membership/fee_schedule/byx/
   baty:
@@ -345,6 +346,7 @@ us_equities:
     Z :  0.0022    # Routed to a dark liquidity venue (except through SLIM)
     ZP:  0.0025    # Retail Price Improving Order, adds liquidity
     ZR: -0.0025    # Retail Order, removes liquidity against a Retail Price Improving Order
+    default: N
 
   # NASDAQ fees based on http://nasdaqtrader.com/Trader.aspx?id=PriceListTrading2
   nasdaq:
