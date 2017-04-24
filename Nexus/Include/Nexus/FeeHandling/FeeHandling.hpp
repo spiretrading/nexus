@@ -3,6 +3,8 @@
 
 namespace Nexus {
   struct AsxtFeeTable;
+  struct BatyFeeTable;
+  struct BatsFeeTable;
   struct ChicFeeTable;
   struct ConsolidatedTmxFeeTable;
   struct ConsolidatedUsFeeTable;
