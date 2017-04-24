@@ -24,6 +24,18 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-request-approved:before {
+  content: "\3d";
+}
+.icon-request-rejected:before {
+  content: "\3b";
+}
+.icon-request-sent:before {
+  content: "\5c";
+}
+.icon-notifications:before {
+  content: "\60";
+}
 .icon-single-arrow:before {
   content: "\5d";
 }
@@ -66,49 +78,49 @@
 .icon-arrow-up:before {
   content: "\7a";
 }
-.icon-change_image:before {
+.icon-request:before {
   content: "\79";
 }
-.icon-check:before {
+.icon-comment:before {
   content: "\78";
 }
-.icon-close:before {
+.icon-change-image:before {
   content: "\77";
 }
-.icon-expand:before {
+.icon-check:before {
   content: "\76";
 }
-.icon-hide:before {
+.icon-close:before {
   content: "\75";
 }
-.icon-magnifying_glass:before {
+.icon-expand:before {
   content: "\74";
 }
-.icon-notification:before {
+.icon-hide:before {
   content: "\73";
 }
-.icon-account:before {
+.icon-magnifying-glass:before {
   content: "\72";
 }
-.icon-compliance:before {
+.icon-notification:before {
   content: "\71";
 }
-.icon-entitlements:before {
+.icon-account:before {
   content: "\70";
 }
-.icon-group2:before {
+.icon-compliance:before {
   content: "\6f";
 }
-.icon-performance:before {
+.icon-profit-loss:before {
   content: "\6e";
 }
-.icon-profit-loss:before {
+.icon-entitlements:before {
   content: "\6d";
 }
-.icon-risk_manager:before {
+.icon-group:before {
   content: "\6c";
 }
-.icon-volatility:before {
+.icon-risk-controls:before {
   content: "\6b";
 }
 .icon-burger:before {

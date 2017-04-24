@@ -1,5 +1,6 @@
 import httpConnectionManager from '../commons/http-connection-manager';
 import CurrencyId from '../../definitions/currency/id';
+import dataTypeConverter from '../commons/data-type-converter';
 
 /** Spire definitions service client class */
 class DefinitionsService {
@@ -58,6 +59,10 @@ class DefinitionsService {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'definitions_service/load_compliance_rule_schemas';
 
     return httpConnectionManager.send(apiPath, null, true)
+      .then(ruleSchemas => {
+        dataTypeConverter.fromData(ruleSchemas);
+        return ruleSchemas;
+      })
       .catch(this.logErrorAndThrow);
   }
 

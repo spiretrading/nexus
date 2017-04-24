@@ -21,22 +21,30 @@ import {ServiceLocatorClient, DirectoryEntry} from 'spire-client';
 import sessionInitializer from 'commons/session-initializer';
 
 window.clone = (originalObj) => {
-  if (originalObj.constructor == Array) {
-    return JSON.parse(JSON.stringify(originalObj));
-  } else if (typeof originalObj == 'object') {
-    let clone = {};
-    for (let property in originalObj) {
-      if (originalObj[property] != null) {
-        if (originalObj[property].clone != null) {
-          clone[property] = originalObj[property].clone.apply(originalObj[property]);
-        } else {
-          clone[property] = JSON.parse(JSON.stringify(originalObj[property]));
-        }
+  if (originalObj != null) {
+    if (originalObj.constructor == Array) {
+      let cloneArray = [];
+      for (let i=0; i<originalObj.length; i++) {
+        cloneArray.push(window.clone(originalObj[i]));
       }
+      return cloneArray;
+    } else if (typeof originalObj == 'object') {
+      if (originalObj.clone != null) {
+        return originalObj.clone.apply(originalObj);
+      } else {
+        let cloneObj = {};
+        for (let property in originalObj) {
+          if (originalObj[property] != null) {
+            cloneObj[property] = clone(originalObj[property]);
+          }
+        }
+        return cloneObj;
+      }
+    } else {
+      return JSON.parse(JSON.stringify(originalObj));
     }
-    return clone;
   } else {
-    return JSON.parse(JSON.stringify(originalObj));
+    return null;
   }
 };
 window.overwriteMerge = (originalObj, newObj) => {

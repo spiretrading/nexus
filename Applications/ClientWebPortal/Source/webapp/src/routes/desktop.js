@@ -22,6 +22,33 @@ class DesktopRoutes extends Routes {
         }
       },
       {
+        path: 'group-profile-account/:type/:id/:name',
+        getComponent(location, cb) {
+          System.import('../components/structures/desktop/profile/routes')
+            .then((module) => { return { default: module.groupAccount } })
+            .then(loadRoute(cb))
+            .catch(errorLoading);
+        }
+      },
+      {
+        path: 'group-profile-compliance/:type/:id/:name',
+        getComponent(location, cb) {
+          System.import('../components/structures/desktop/profile/routes')
+            .then((module) => { return { default: module.compliance } })
+            .then(loadRoute(cb))
+            .catch(errorLoading);
+        }
+      },
+      {
+        path: 'group-profile-performance/:type/:id/:name',
+        getComponent(location, cb) {
+          System.import('../components/structures/desktop/profile/routes')
+            .then((module) => { return { default: module.performance } })
+            .then(loadRoute(cb))
+            .catch(errorLoading);
+        }
+      },
+      {
         path: 'profile-account/:type/:id/:name',
         getComponent(location, cb) {
           System.import('../components/structures/desktop/profile/routes')
