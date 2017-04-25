@@ -8,6 +8,7 @@
 #include <boost/throw_exception.hpp>
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/FeeHandling/AmexFeeTable.hpp"
 #include "Nexus/FeeHandling/ArcaFeeTable.hpp"
 #include "Nexus/FeeHandling/BatsFeeTable.hpp"
 #include "Nexus/FeeHandling/BatyFeeTable.hpp"
@@ -40,6 +41,9 @@ namespace Nexus {
 
     //! The clearing fee.
     Money m_clearingFee;
+
+    //! Fee table used by AMEX.
+    AmexFeeTable m_amexFeeTable;
 
     //! Fee table used by ARCA.
     ArcaFeeTable m_arcaFeeTable;
@@ -79,6 +83,12 @@ namespace Nexus {
     feeTable.m_nsccRate = Beam::Extract<boost::rational<int>>(
       config, "nscc_rate");
     feeTable.m_clearingFee = Beam::Extract<Money>(config, "clearing_fee");
+    auto amexConfig = config.FindValue("amex");
+    if(amexConfig == nullptr) {
+      BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for AMEX missing."});
+    } else {
+      feeTable.m_amexFeeTable = ParseAmexFeeTable(*amexConfig);
+    }
     auto arcaConfig = config.FindValue("arca");
     if(arcaConfig == nullptr) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for ARCA missing."});
