@@ -243,6 +243,31 @@ us_equities:
   nscc_rate: 0.00000015
   clearing_fee: 0.0001
 
+  # ARCA fees based on https://www.nyse.com/markets/nyse-arca/trading-info#Fees
+  arca:
+
+    # Table is structured as follows:
+    #         Active   Passive   Hidden Active   Hidden Passive   Open   Close
+    # Tape A     X        X            X               X            X      X
+    # Tape B     X        X            X               X            X      X
+    # Tape C     X        X            X               X            X      X
+    fee_table:
+      [[0.0030, -0.0020, 0.0030, -0.0010, 0.0015, 0.0012],
+       [0.0030, -0.0020, 0.0030, -0.0010, 0.0015, 0.0012],
+       [0.0030, -0.0020, 0.0030, -0.0010, 0.0015, 0.0012]]
+
+    # Table is structured as follows:
+    #   Routed   Auction   Active   Passive
+    #      X        X         X         X
+    sub_dollar_table:
+      [0.0030, 0.0010, 0.0030, 0.0000]
+
+    # Fee for orders routed to other markets.
+    routed_fee: 0.0035
+
+    # Fee for orders participating in the auction.
+    auction_fee: 0.0006
+
   # BATS fees based on https://www.bats.com/us/equities/membership/fee_schedule/bzx/
   bats:
     liquidity_flags:
