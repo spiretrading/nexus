@@ -243,6 +243,18 @@ us_equities:
   nscc_rate: 0.00000015
   clearing_fee: 0.0001
 
+  # AMEX fees based on https://www.nyse.com/markets/nyse-mkt/trading-fees
+  amex:
+
+    # Table is structured as follows:
+    #   Active   Passive   Hidden Active   Hidden Passive   Open   Close   Routed
+    #      X        X            X               X            X      X       X
+    fee_table:
+      [0.00280, -0.00160, 0.00280, -0.00160, 0.00100, 0.00085, 0.00300]
+
+    sub_dollar_table:
+      [0.00250,  0.00000, 0.00250,  0.00000, 0.00300, 0.00250, 0.00300]
+
   # ARCA fees based on https://www.nyse.com/markets/nyse-arca/trading-info#Fees
   arca:
 
