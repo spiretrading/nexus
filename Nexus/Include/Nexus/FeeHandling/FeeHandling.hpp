@@ -2,6 +2,7 @@
 #define NEXUS_FEEHANDLING_HPP
 
 namespace Nexus {
+  struct ArcaFeeTable;
   struct AsxtFeeTable;
   struct BatyFeeTable;
   struct BatsFeeTable;

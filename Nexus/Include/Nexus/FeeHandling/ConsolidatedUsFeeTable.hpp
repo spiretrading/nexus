@@ -8,6 +8,7 @@
 #include <boost/throw_exception.hpp>
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/FeeHandling/ArcaFeeTable.hpp"
 #include "Nexus/FeeHandling/BatsFeeTable.hpp"
 #include "Nexus/FeeHandling/BatyFeeTable.hpp"
 #include "Nexus/FeeHandling/EdgaFeeTable.hpp"
@@ -39,6 +40,9 @@ namespace Nexus {
 
     //! The clearing fee.
     Money m_clearingFee;
+
+    //! Fee table used by ARCA.
+    ArcaFeeTable m_arcaFeeTable;
 
     //! Fee table used by BATS.
     BatsFeeTable m_batsFeeTable;
@@ -75,6 +79,12 @@ namespace Nexus {
     feeTable.m_nsccRate = Beam::Extract<boost::rational<int>>(
       config, "nscc_rate");
     feeTable.m_clearingFee = Beam::Extract<Money>(config, "clearing_fee");
+    auto arcaConfig = config.FindValue("arca");
+    if(arcaConfig == nullptr) {
+      BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for ARCA missing."});
+    } else {
+      feeTable.m_arcaFeeTable = ParseArcaFeeTable(*arcaConfig);
+    }
     auto batsConfig = config.FindValue("bats");
     if(batsConfig == nullptr) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for BATS missing."});
@@ -129,7 +139,9 @@ namespace Nexus {
     auto feesReport = executionReport;
     auto lastMarket = [&] {
       auto& destination = order.GetInfo().m_fields.m_destination;
-      if(destination == DefaultDestinations::BATS()) {
+      if(destination == DefaultDestinations::ARCA()) {
+        return ToString(DefaultMarkets::ARCX());
+      } else if(destination == DefaultDestinations::BATS()) {
         return ToString(DefaultMarkets::BATS());
       } else if(destination == DefaultDestinations::BATY()) {
         return ToString(DefaultMarkets::BATY());
@@ -146,7 +158,10 @@ namespace Nexus {
       }
     }();
     feesReport.m_executionFee += [&] {
-      if(lastMarket == DefaultMarkets::BATS()) {
+      if(lastMarket == DefaultMarkets::ARCX()) {
+        return CalculateFee(feeTable.m_arcaFeeTable, order.GetInfo().m_fields,
+          executionReport);
+      } else if(lastMarket == DefaultMarkets::BATS()) {
         return CalculateFee(feeTable.m_batsFeeTable, executionReport);
       } else if(lastMarket == DefaultMarkets::BATY()) {
         return CalculateFee(feeTable.m_batyFeeTable, executionReport);
