@@ -3,6 +3,7 @@
 #include <array>
 #include <exception>
 #include <string>
+#include <unordered_map>
 #include <Beam/Pointers/Out.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/throw_exception.hpp>
@@ -48,6 +49,39 @@ namespace Nexus {
       static auto flag = std::string{"?"};
       return flag;
     }
+  }
+
+  //! Parses a table of fees from a YAML Node.
+  /*!
+    \param config The YAML Node to parse the fees from.
+    \param table The table to store the fees in.
+  */
+  template<typename T>
+  void ParseFeeTable(const YAML::Node& config,
+      Beam::Out<std::unordered_map<std::string, T>> table) {
+    for(auto i = config.begin(); i != config.end(); ++i) {
+      std::string flag;
+      i.first() >> flag;
+      auto fee = Beam::Extract<T>(i.second());
+      table->insert(std::make_pair(flag, fee));
+    }
+  }
+
+  //! Parses a table of fees from a YAML Node.
+  /*!
+    \param config The YAML Node to parse the fees from.
+    \param name The name of the fee table to parse.
+    \param table The table to store the fees in.
+  */
+  template<typename T>
+  void ParseFeeTable(const YAML::Node& config, const std::string& name,
+      Beam::Out<std::unordered_map<std::string, T>> table) {
+    auto node = config.FindValue(name);
+    if(node == nullptr) {
+      BOOST_THROW_EXCEPTION(
+        std::runtime_error{"Fee table \"" + name + "\" not found."});
+    }
+    ParseFeeTable(*node, Beam::Store(table));
   }
 
   //! Parses a table of fees from a YAML Node.

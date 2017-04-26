@@ -8,6 +8,12 @@
 #include <boost/throw_exception.hpp>
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/FeeHandling/AmexFeeTable.hpp"
+#include "Nexus/FeeHandling/ArcaFeeTable.hpp"
+#include "Nexus/FeeHandling/BatsFeeTable.hpp"
+#include "Nexus/FeeHandling/BatyFeeTable.hpp"
+#include "Nexus/FeeHandling/EdgaFeeTable.hpp"
+#include "Nexus/FeeHandling/EdgxFeeTable.hpp"
 #include "Nexus/FeeHandling/FeeHandling.hpp"
 #include "Nexus/FeeHandling/NsdqFeeTable.hpp"
 #include "Nexus/FeeHandling/NyseFeeTable.hpp"
@@ -36,6 +42,24 @@ namespace Nexus {
     //! The clearing fee.
     Money m_clearingFee;
 
+    //! Fee table used by AMEX.
+    AmexFeeTable m_amexFeeTable;
+
+    //! Fee table used by ARCA.
+    ArcaFeeTable m_arcaFeeTable;
+
+    //! Fee table used by BATS.
+    BatsFeeTable m_batsFeeTable;
+
+    //! Fee table used by BATY.
+    BatyFeeTable m_batyFeeTable;
+
+    //! Fee table used by EDGA.
+    EdgaFeeTable m_edgaFeeTable;
+
+    //! Fee table used by EDGX.
+    EdgxFeeTable m_edgxFeeTable;
+
     //! Fee table used by NSDQ.
     NsdqFeeTable m_nsdqFeeTable;
 
@@ -59,6 +83,42 @@ namespace Nexus {
     feeTable.m_nsccRate = Beam::Extract<boost::rational<int>>(
       config, "nscc_rate");
     feeTable.m_clearingFee = Beam::Extract<Money>(config, "clearing_fee");
+    auto amexConfig = config.FindValue("amex");
+    if(amexConfig == nullptr) {
+      BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for AMEX missing."});
+    } else {
+      feeTable.m_amexFeeTable = ParseAmexFeeTable(*amexConfig);
+    }
+    auto arcaConfig = config.FindValue("arca");
+    if(arcaConfig == nullptr) {
+      BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for ARCA missing."});
+    } else {
+      feeTable.m_arcaFeeTable = ParseArcaFeeTable(*arcaConfig);
+    }
+    auto batsConfig = config.FindValue("bats");
+    if(batsConfig == nullptr) {
+      BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for BATS missing."});
+    } else {
+      feeTable.m_batsFeeTable = ParseBatsFeeTable(*batsConfig);
+    }
+    auto batyConfig = config.FindValue("baty");
+    if(batyConfig == nullptr) {
+      BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for BATY missing."});
+    } else {
+      feeTable.m_batyFeeTable = ParseBatyFeeTable(*batyConfig);
+    }
+    auto edgaConfig = config.FindValue("edga");
+    if(edgaConfig == nullptr) {
+      BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for EDGA missing."});
+    } else {
+      feeTable.m_edgaFeeTable = ParseEdgaFeeTable(*edgaConfig);
+    }
+    auto edgxConfig = config.FindValue("edgx");
+    if(edgxConfig == nullptr) {
+      BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for EDGX missing."});
+    } else {
+      feeTable.m_edgxFeeTable = ParseEdgxFeeTable(*edgxConfig);
+    }
     auto nasdaqConfig = config.FindValue("nasdaq");
     if(nasdaqConfig == nullptr) {
       BOOST_THROW_EXCEPTION(
@@ -89,7 +149,17 @@ namespace Nexus {
     auto feesReport = executionReport;
     auto lastMarket = [&] {
       auto& destination = order.GetInfo().m_fields.m_destination;
-      if(destination == DefaultDestinations::NASDAQ()) {
+      if(destination == DefaultDestinations::ARCA()) {
+        return ToString(DefaultMarkets::ARCX());
+      } else if(destination == DefaultDestinations::BATS()) {
+        return ToString(DefaultMarkets::BATS());
+      } else if(destination == DefaultDestinations::BATY()) {
+        return ToString(DefaultMarkets::BATY());
+      } else if(destination == DefaultDestinations::EDGA()) {
+        return ToString(DefaultMarkets::EDGA());
+      } else if(destination == DefaultDestinations::EDGX()) {
+        return ToString(DefaultMarkets::EDGX());
+      } else if(destination == DefaultDestinations::NASDAQ()) {
         return ToString(DefaultMarkets::NASDAQ());
       } else if(destination == DefaultDestinations::NYSE()) {
         return ToString(DefaultMarkets::NYSE());
@@ -98,7 +168,18 @@ namespace Nexus {
       }
     }();
     feesReport.m_executionFee += [&] {
-      if(lastMarket == DefaultMarkets::NASDAQ()) {
+      if(lastMarket == DefaultMarkets::ARCX()) {
+        return CalculateFee(feeTable.m_arcaFeeTable, order.GetInfo().m_fields,
+          executionReport);
+      } else if(lastMarket == DefaultMarkets::BATS()) {
+        return CalculateFee(feeTable.m_batsFeeTable, executionReport);
+      } else if(lastMarket == DefaultMarkets::BATY()) {
+        return CalculateFee(feeTable.m_batyFeeTable, executionReport);
+      } else if(lastMarket == DefaultMarkets::EDGA()) {
+        return CalculateFee(feeTable.m_edgaFeeTable, executionReport);
+      } else if(lastMarket == DefaultMarkets::EDGX()) {
+        return CalculateFee(feeTable.m_edgxFeeTable, executionReport);
+      } else if(lastMarket == DefaultMarkets::NASDAQ()) {
         return CalculateFee(feeTable.m_nsdqFeeTable, executionReport);
       } else if(lastMarket == DefaultMarkets::NYSE()) {
         return CalculateFee(feeTable.m_nyseFeeTable, order.GetInfo().m_fields,

@@ -2,10 +2,16 @@
 #define NEXUS_FEEHANDLING_HPP
 
 namespace Nexus {
+  struct AmexFeeTable;
+  struct ArcaFeeTable;
   struct AsxtFeeTable;
+  struct BatyFeeTable;
+  struct BatsFeeTable;
   struct ChicFeeTable;
   struct ConsolidatedTmxFeeTable;
   struct ConsolidatedUsFeeTable;
+  struct EdgaFeeTable;
+  struct EdgxFeeTable;
   struct LynxFeeTable;
   enum class LiquidityFlag;
   struct MatnFeeTable;
