@@ -124,12 +124,13 @@ namespace FixUtilities {
     private:
       struct RecoveredExecutionReport {
         FIX42::ExecutionReport m_message;
-        std::function<void (Beam::Out<OrderExecutionService::ExecutionReport>)>
-          m_callback;
+        std::function<void (const OrderExecutionService::Order&,
+          Beam::Out<OrderExecutionService::ExecutionReport>)> m_callback;
 
         RecoveredExecutionReport(const FIX42::ExecutionReport& message,
           const std::function<
-          void (Beam::Out<OrderExecutionService::ExecutionReport>)>& callback);
+          void (const OrderExecutionService::Order&,
+          Beam::Out<OrderExecutionService::ExecutionReport>)>& callback);
       };
       Beam::Threading::Sync<std::unordered_map<OrderExecutionService::OrderId,
         std::shared_ptr<OrderExecutionService::PrimitiveOrder>>> m_orders;
@@ -153,7 +154,8 @@ namespace FixUtilities {
 
   inline FixOrderLog::RecoveredExecutionReport::RecoveredExecutionReport(
       const FIX42::ExecutionReport& message, const std::function<
-      void (Beam::Out<OrderExecutionService::ExecutionReport>)>& callback)
+      void (const OrderExecutionService::Order&,
+      Beam::Out<OrderExecutionService::ExecutionReport>)>& callback)
       : m_message(message),
         m_callback(callback) {}
 
@@ -362,13 +364,7 @@ namespace FixUtilities {
     // TODO: Turn this into a transaction to avoid possible race condition.
     auto order = FindOrder(*orderId);
     if(order == nullptr) {
-      RecoveredExecutionReport recoveredExecutionReport(message,
-        [f = std::move(f), order] (
-            Beam::Out<OrderExecutionService::ExecutionReport>
-            executionReport) {
-          f(static_cast<const OrderExecutionService::Order&>(*order),
-            Beam::Store(executionReport));
-        });
+      RecoveredExecutionReport recoveredExecutionReport(message, std::move(f));
       m_recoveredExecutionReports.Get(*orderId).PushBack(
         recoveredExecutionReport);
       return;
