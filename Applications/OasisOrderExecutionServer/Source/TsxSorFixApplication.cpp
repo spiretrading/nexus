@@ -115,7 +115,8 @@ void TsxSorFixApplication::Cancel(const OrderExecutionSession& session,
 
 void TsxSorFixApplication::Update(const OrderExecutionSession& session,
     OrderId orderId, const ExecutionReport& executionReport) {
-  m_orderLog.Update(session, orderId, executionReport, m_timeClient->GetTime());
+  m_orderLog.Update(session, orderId, executionReport,
+    m_timeClient->GetTime());
 }
 
 void TsxSorFixApplication::onCreate(const FIX::SessionID& sessionID) {}
@@ -184,8 +185,9 @@ void TsxSorFixApplication::onMessage(const FIX42::ExecutionReport& message,
     });
 }
 
-void TsxSorFixApplication::onMessage(const FIX42::TradingSessionStatus& message,
-  const FIX::SessionID& sessionId) {}
+void TsxSorFixApplication::onMessage(
+    const FIX42::TradingSessionStatus& message,
+    const FIX::SessionID& sessionId) {}
 
 void TsxSorFixApplication::onMessage(const FIX42::OrderCancelReject& message,
     const FIX::SessionID& sessionId) {}
@@ -207,7 +209,8 @@ string TsxSorFixApplication::GetTsxUserID() const {
 
 string TsxSorFixApplication::GetNoTradeFeat() const {
   if(GetSessionSettings().get(GetSessionId()).has("TSXNoTradeFeat")) {
-    return GetSessionSettings().get(GetSessionId()).getString("TSXNoTradeFeat");
+    return GetSessionSettings().get(GetSessionId()).getString(
+      "TSXNoTradeFeat");
   }
   return {};
 }

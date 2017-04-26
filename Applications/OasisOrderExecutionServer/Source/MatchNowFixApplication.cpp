@@ -84,7 +84,8 @@ void MatchNowFixApplication::Cancel(const OrderExecutionSession& session,
 
 void MatchNowFixApplication::Update(const OrderExecutionSession& session,
     OrderId orderId, const ExecutionReport& executionReport) {
-  m_orderLog.Update(session, orderId, executionReport, m_timeClient->GetTime());
+  m_orderLog.Update(session, orderId, executionReport,
+    m_timeClient->GetTime());
 }
 
 void MatchNowFixApplication::onCreate(const FIX::SessionID& sessionID) {}

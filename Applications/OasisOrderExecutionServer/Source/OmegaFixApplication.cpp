@@ -51,7 +51,8 @@ const Order& OmegaFixApplication::Submit(const OrderInfo& info) {
     modifiedInfo->m_fields.m_type = OrderType::LIMIT;
     auto bboQuote = LoadBboQuote(modifiedInfo->m_fields.m_security);
     if(info.m_fields.m_side == Side::BID) {
-      modifiedInfo->m_fields.m_price = bboQuote.m_ask.m_price + 2 * Money::CENT;
+      modifiedInfo->m_fields.m_price = bboQuote.m_ask.m_price +
+        2 * Money::CENT;
     } else {
       modifiedInfo->m_fields.m_price = std::max(
         bboQuote.m_bid.m_price - 2 * Money::CENT, Money::CENT / 2);
@@ -112,7 +113,8 @@ void OmegaFixApplication::Cancel(const OrderExecutionSession& session,
 
 void OmegaFixApplication::Update(const OrderExecutionSession& session,
     OrderId orderId, const ExecutionReport& executionReport) {
-  m_orderLog.Update(session, orderId, executionReport, m_timeClient->GetTime());
+  m_orderLog.Update(session, orderId, executionReport,
+    m_timeClient->GetTime());
 }
 
 void OmegaFixApplication::onCreate(const FIX::SessionID& sessionID) {}
@@ -192,7 +194,8 @@ BboQuote OmegaFixApplication::LoadBboQuote(const Security& security) {
     return publisher->Top();
   } catch(const Beam::PipeBrokenException&) {
     m_bboQuotes.Erase(security);
-    BOOST_THROW_EXCEPTION(FixOrderRejectedException{"No BBO quote available."});
+    BOOST_THROW_EXCEPTION(
+      FixOrderRejectedException{"No BBO quote available."});
   }
 }
 

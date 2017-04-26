@@ -84,7 +84,8 @@ const Order& ChixFixApplication::Submit(const OrderInfo& info) {
           FIX::TargetSubID route;
           if(info.m_fields.m_destination == DefaultDestinations::CHIX()) {
             route = FIX::TargetSubID("CHIX");
-          } else if(info.m_fields.m_destination == DefaultDestinations::CX2()) {
+          } else if(info.m_fields.m_destination ==
+              DefaultDestinations::CX2()) {
             route = FIX::TargetSubID("CX2");
           } else {
             BOOST_THROW_EXCEPTION(
@@ -95,7 +96,8 @@ const Order& ChixFixApplication::Submit(const OrderInfo& info) {
           FIX::TargetSubID route;
           if(info.m_fields.m_destination == DefaultDestinations::CHIX()) {
             route = FIX::TargetSubID("SMRTCHIX");
-          } else if(info.m_fields.m_destination == DefaultDestinations::CX2()) {
+          } else if(info.m_fields.m_destination ==
+              DefaultDestinations::CX2()) {
             route = FIX::TargetSubID("SMRTCX2");
           } else {
             BOOST_THROW_EXCEPTION(

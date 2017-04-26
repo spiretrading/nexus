@@ -45,13 +45,10 @@ LekFixApplication::LekFixApplication(RefType<LiveNtpTimeClient> timeClient)
 
 const Order& LekFixApplication::Recover(
     const SequencedAccountOrderRecord& orderRecord) {
-  m_securities.Insert((*orderRecord)->m_info.m_orderId,
-    (*orderRecord)->m_info.m_fields.m_security);
   return m_orderLog.Recover(orderRecord);
 }
 
 const Order& LekFixApplication::Submit(const OrderInfo& info) {
-  m_securities.Insert(info.m_orderId, info.m_fields.m_security);
   return m_orderLog.Submit(info, GetSessionId().getSenderCompID(),
     GetSessionId().getTargetCompID(),
     [&] (Out<FIX42::NewOrderSingle> newOrderSingle) {
@@ -101,21 +98,19 @@ const Order& LekFixApplication::Submit(const OrderInfo& info) {
 
 void LekFixApplication::Cancel(const OrderExecutionSession& session,
     OrderId orderId) {
-  auto security = m_securities.Find(orderId);
-  if(!security.is_initialized()) {
-    return;
-  }
   m_orderLog.Cancel(session, orderId, m_timeClient->GetTime(),
     GetSessionId().getSenderCompID(), GetSessionId().getTargetCompID(),
     [&] (const Order& order,
         Out<FIX42::OrderCancelRequest> orderCancelRequest) {
-      UpdateSymbology(*security, Store(orderCancelRequest));
+      UpdateSymbology(order.GetInfo().m_fields.m_security,
+        Store(orderCancelRequest));
     });
 }
 
 void LekFixApplication::Update(const OrderExecutionSession& session,
     OrderId orderId, const ExecutionReport& executionReport) {
-  m_orderLog.Update(session, orderId, executionReport, m_timeClient->GetTime());
+  m_orderLog.Update(session, orderId, executionReport,
+    m_timeClient->GetTime());
 }
 
 void LekFixApplication::onCreate(const FIX::SessionID& sessionID) {}
@@ -152,7 +147,11 @@ void LekFixApplication::onMessage(const FIX42::ExecutionReport& message,
         } else if(message.isSetField(PRIMARY_TRADE_LIQUIDITY_INDICATOR_TAG)) {
           update->m_liquidityFlag = message.getField(
             PRIMARY_TRADE_LIQUIDITY_INDICATOR_TAG);
+        } else if(order.GetInfo().m_fields.m_destination ==
+            DefaultDestinations::AMEX()) {
+          update->m_liquidityFlag = "X";
         }
+        update->m_lastMarket = order.GetInfo().m_fields.m_destination;
       }
     });
 }
