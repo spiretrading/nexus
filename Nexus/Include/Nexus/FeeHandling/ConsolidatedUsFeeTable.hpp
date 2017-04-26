@@ -149,7 +149,9 @@ namespace Nexus {
     auto feesReport = executionReport;
     auto lastMarket = [&] {
       auto& destination = order.GetInfo().m_fields.m_destination;
-      if(destination == DefaultDestinations::ARCA()) {
+      if(destination == DefaultDestinations::AMEX()) {
+        return ToString(DefaultMarkets::ASEX());
+      } else if(destination == DefaultDestinations::ARCA()) {
         return ToString(DefaultMarkets::ARCX());
       } else if(destination == DefaultDestinations::BATS()) {
         return ToString(DefaultMarkets::BATS());
@@ -168,7 +170,10 @@ namespace Nexus {
       }
     }();
     feesReport.m_executionFee += [&] {
-      if(lastMarket == DefaultMarkets::ARCX()) {
+      if(lastMarket == DefaultMarkets::ASEX()) {
+        return CalculateFee(feeTable.m_amexFeeTable, order.GetInfo().m_fields,
+          executionReport);
+      } else if(lastMarket == DefaultMarkets::ARCX()) {
         return CalculateFee(feeTable.m_arcaFeeTable, order.GetInfo().m_fields,
           executionReport);
       } else if(lastMarket == DefaultMarkets::BATS()) {
