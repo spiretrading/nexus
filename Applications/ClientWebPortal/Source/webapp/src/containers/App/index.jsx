@@ -44,10 +44,22 @@ class App extends Component {
   }
 
   /** @private */
+  isFullScreen() {
+    // initial home login screen
+    if (location.pathname == '/') {
+      return true;
+    }
+
+    return false;
+  }
+
+  /** @private */
   onSubMenuUpdated(eventName, doesSubMenuExist) {
     let height;
     if (doesSubMenuExist) {
       height = 'calc(100vh - 125px)';
+    } else if (this.isFullScreen.apply(this)) {
+      height = 'calc(100vh)';
     } else {
       height = 'calc(100vh - 75px)';
     }
