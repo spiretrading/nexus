@@ -57,7 +57,10 @@ class View extends UpdatableView {
       $('#portfolio-container').css('display', 'flex');
     }
 
-    let chartModel = this.componentModel.portfolioData;
+    let chartModel = {
+      data: this.componentModel.portfolioData,
+      filter: this.componentModel.filter
+    };
 
     return (
       <div id="portfolio-container" className="container">

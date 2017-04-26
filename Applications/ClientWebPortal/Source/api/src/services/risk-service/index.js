@@ -32,10 +32,6 @@ class RiskService {
   unmarshallPortfolioMessage(frameMessage) {
     let payload = JSON.parse(frameMessage.body);
 
-    if (payload.inventory.position.key.index.symbol !== 'ABX') {
-      console.debug(payload);
-    }
-
     let account = DirectoryEntry.fromData(payload.account);
     payload.account = account;
 

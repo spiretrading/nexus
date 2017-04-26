@@ -29,8 +29,22 @@
     }
 
     td {
+      position: relative;
       padding: 20px 20px;
       white-space: nowrap;
+      cursor: pointer;
+
+      &:hover {
+        background: $lighterGrey;
+      }
+    }
+
+    .icon-arrow-icon-down, .icon-arrow-icon-up {
+      position: absolute;
+      right: 7px;
+      top: 50%;
+      transform: translate(0, -50%);
+      font-size: 7px;
     }
   }
 
@@ -57,8 +71,22 @@
       opacity: 0;
 
       td {
+        position: relative;
         padding: 20px;
         background: $white;
+        cursor: pointer;
+
+        &:hover {
+          background: $lighterGrey;
+        }
+
+        .icon-arrow-icon-down, .icon-arrow-icon-up {
+          position: absolute;
+          right: 7px;
+          top: 50%;
+          transform: translate(0, -50%);
+          font-size: 7px;
+        }
       }
     }
 
