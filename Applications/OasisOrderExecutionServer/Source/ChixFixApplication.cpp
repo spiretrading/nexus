@@ -111,7 +111,8 @@ void ChixFixApplication::Cancel(const OrderExecutionSession& session,
     OrderId orderId) {
   m_orderLog.Cancel(session, orderId, m_timeClient->GetTime(),
     GetSessionId().getSenderCompID(), GetSessionId().getTargetCompID(),
-    [&] (Out<FIX42::OrderCancelRequest> orderCancelRequest) {
+    [&] (const Order& order,
+        Out<FIX42::OrderCancelRequest> orderCancelRequest) {
       orderCancelRequest->getHeader().set(
         FIX::SenderSubID(GetSenderSubID()));
       orderCancelRequest->getHeader().set(
@@ -153,7 +154,7 @@ void ChixFixApplication::fromApp(const FIX::Message& message,
 void ChixFixApplication::onMessage(const FIX42::ExecutionReport& message,
     const FIX::SessionID& sessionId) {
   m_orderLog.Update(message, sessionId, m_timeClient->GetTime(),
-    [=] (Out<ExecutionReport> update) {
+    [=] (const Order& order, Out<ExecutionReport> update) {
       string liquidityFlag;
       if(message.isSetField(TRADE_LIQUIDITY_INDICATOR_TAG)) {
         liquidityFlag = message.getField(TRADE_LIQUIDITY_INDICATOR_TAG);

@@ -73,7 +73,8 @@ void CnsxFixApplication::Cancel(const OrderExecutionSession& session,
     OrderId orderId) {
   m_orderLog.Cancel(session, orderId, m_timeClient->GetTime(),
     GetSessionId().getSenderCompID(), GetSessionId().getTargetCompID(),
-    [&] (Out<FIX42::OrderCancelRequest> orderCancelRequest) {
+    [&] (const Order& order,
+        Out<FIX42::OrderCancelRequest> orderCancelRequest) {
       orderCancelRequest->getHeader().set(
         FIX::SenderSubID(GetSenderSubID()));
       orderCancelRequest->getHeader().set(
@@ -113,7 +114,7 @@ void CnsxFixApplication::fromApp(const FIX::Message& message,
 void CnsxFixApplication::onMessage(const FIX42::ExecutionReport& message,
     const FIX::SessionID& sessionId) {
   m_orderLog.Update(message, sessionId, m_timeClient->GetTime(),
-    [=] (Out<ExecutionReport> update) {
+    [=] (const Order& order, Out<ExecutionReport> update) {
       string exchangeAdminValue;
       if(message.isSetField(EXCHANGE_ADMIN_TAG)) {
         exchangeAdminValue = message.getField(EXCHANGE_ADMIN_TAG);

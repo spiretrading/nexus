@@ -102,7 +102,8 @@ void OmegaFixApplication::Cancel(const OrderExecutionSession& session,
     OrderId orderId) {
   m_orderLog.Cancel(session, orderId, m_timeClient->GetTime(),
     GetSessionId().getSenderCompID(), GetSessionId().getTargetCompID(),
-    [&] (Out<FIX42::OrderCancelRequest> orderCancelRequest) {
+    [&] (const Order& order,
+        Out<FIX42::OrderCancelRequest> orderCancelRequest) {
       orderCancelRequest->getHeader().set(
         FIX::OnBehalfOfCompID(session.GetAccount().m_name));
       orderCancelRequest->setField(UMIR_USER_ID_TAG, GetUmirUserID());
@@ -140,7 +141,7 @@ void OmegaFixApplication::fromApp(const FIX::Message& message,
 void OmegaFixApplication::onMessage(const FIX42::ExecutionReport& message,
     const FIX::SessionID& sessionId) {
   m_orderLog.Update(message, sessionId, m_timeClient->GetTime(),
-    [=] (Out<ExecutionReport> update) {
+    [=] (const Order& order, Out<ExecutionReport> update) {
       if(update->m_lastQuantity != 0) {
         string liquidityFlag;
         if(message.isSetField(TRADE_LIQUIDITY_INDICATOR_TAG)) {

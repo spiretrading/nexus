@@ -64,19 +64,17 @@ const Order& AsxFixApplication::Submit(const OrderInfo& info) {
 
 void AsxFixApplication::Cancel(const OrderExecutionSession& session,
     OrderId orderId) {
-  auto order = m_orderLog.FindOrder(orderId);
   m_orderLog.Cancel(session, orderId, m_timeClient->GetTime(),
     GetSessionId().getSenderCompID(), GetSessionId().getTargetCompID(),
-    [&] (Out<FIX42::OrderCancelRequest> orderCancelRequest) {
+    [&] (const Order& order,
+        Out<FIX42::OrderCancelRequest> orderCancelRequest) {
       orderCancelRequest->set(FIX::Account(GetAccount()));
       orderCancelRequest->setField(ACCOUNT_TAG, session.GetAccount().m_name);
-      if(order != nullptr) {
-        auto& fields = order->GetInfo().m_fields;
-        if(fields.m_security.GetMarket() == DefaultMarkets::ASX()) {
-          orderCancelRequest->set(FIX::SecurityExchange{"ASX"});
-        } else {
-          BOOST_THROW_EXCEPTION(FixOrderRejectedException{"Invalid market."});
-        }
+      auto& fields = order.GetInfo().m_fields;
+      if(fields.m_security.GetMarket() == DefaultMarkets::ASX()) {
+        orderCancelRequest->set(FIX::SecurityExchange{"ASX"});
+      } else {
+        BOOST_THROW_EXCEPTION(FixOrderRejectedException{"Invalid market."});
       }
     });
 }
@@ -111,18 +109,11 @@ void AsxFixApplication::fromApp(const FIX::Message& message,
 
 void AsxFixApplication::onMessage(const FIX42::ExecutionReport& message,
     const FIX::SessionID& sessionId) {
-  auto orderId = FixOrderLog::GetOrderId(message);
-  std::shared_ptr<Order> order;
-  if(orderId.is_initialized()) {
-    order = m_orderLog.FindOrder(*orderId);
-  }
   m_orderLog.Update(message, sessionId, m_timeClient->GetTime(),
-    [=] (Out<ExecutionReport> update) {
+    [=] (const Order& order, Out<ExecutionReport> update) {
       if(update->m_lastQuantity != 0) {
         update->m_liquidityFlag = ToString(LiquidityFlag::ACTIVE);
-        if(order != nullptr) {
-          update->m_lastMarket = order->GetInfo().m_fields.m_destination;
-        }
+        update->m_lastMarket = order.GetInfo().m_fields.m_destination;
       }
     });
 }

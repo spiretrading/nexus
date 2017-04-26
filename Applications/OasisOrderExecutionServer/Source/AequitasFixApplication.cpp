@@ -102,7 +102,8 @@ void AequitasFixApplication::Cancel(const OrderExecutionSession& session,
     OrderId orderId) {
   m_orderLog.Cancel(session, orderId, m_timeClient->GetTime(),
     GetSessionId().getSenderCompID(), GetSessionId().getTargetCompID(),
-    [&] (Out<FIX42::OrderCancelRequest> orderCancelRequest) {
+    [&] (const Order& order,
+        Out<FIX42::OrderCancelRequest> orderCancelRequest) {
       orderCancelRequest->getHeader().set(
         FIX::OnBehalfOfCompID(session.GetAccount().m_name));
       orderCancelRequest->setField(UMIR_ACCOUNT_TYPE_TAG, "CL");
@@ -112,7 +113,8 @@ void AequitasFixApplication::Cancel(const OrderExecutionSession& session,
 
 void AequitasFixApplication::Update(const OrderExecutionSession& session,
     OrderId orderId, const ExecutionReport& executionReport) {
-  m_orderLog.Update(session, orderId, executionReport, m_timeClient->GetTime());
+  m_orderLog.Update(session, orderId, executionReport,
+    m_timeClient->GetTime());
 }
 
 void AequitasFixApplication::onCreate(const FIX::SessionID& sessionID) {}
@@ -141,7 +143,7 @@ void AequitasFixApplication::fromApp(const FIX::Message& message,
 void AequitasFixApplication::onMessage(const FIX42::ExecutionReport& message,
     const FIX::SessionID& sessionId) {
   m_orderLog.Update(message, sessionId, m_timeClient->GetTime(),
-    [=] (Out<ExecutionReport> update) {
+    [=] (const Order& order, Out<ExecutionReport> update) {
       string liquidityFlag;
       if(message.isSetField(AGGRESSOR_INDICATOR_TAG)) {
         liquidityFlag = message.getField(AGGRESSOR_INDICATOR_TAG);

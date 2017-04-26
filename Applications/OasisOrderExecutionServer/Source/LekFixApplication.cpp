@@ -107,7 +107,8 @@ void LekFixApplication::Cancel(const OrderExecutionSession& session,
   }
   m_orderLog.Cancel(session, orderId, m_timeClient->GetTime(),
     GetSessionId().getSenderCompID(), GetSessionId().getTargetCompID(),
-    [&] (Out<FIX42::OrderCancelRequest> orderCancelRequest) {
+    [&] (const Order& order,
+        Out<FIX42::OrderCancelRequest> orderCancelRequest) {
       UpdateSymbology(*security, Store(orderCancelRequest));
     });
 }
@@ -143,7 +144,7 @@ void LekFixApplication::fromApp(const FIX::Message& message,
 void LekFixApplication::onMessage(const FIX42::ExecutionReport& message,
     const FIX::SessionID& sessionId) {
   m_orderLog.Update(message, sessionId, m_timeClient->GetTime(),
-    [=] (Out<ExecutionReport> update) {
+    [=] (const Order& order, Out<ExecutionReport> update) {
       if(update->m_lastQuantity != 0) {
         if(message.isSetField(ALTERNATE_TRADE_LIQUIDITY_INDICATOR_TAG)) {
           update->m_liquidityFlag = message.getField(

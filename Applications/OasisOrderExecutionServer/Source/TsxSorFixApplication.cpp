@@ -102,7 +102,8 @@ void TsxSorFixApplication::Cancel(const OrderExecutionSession& session,
     OrderId orderId) {
   m_orderLog.Cancel(session, orderId, m_timeClient->GetTime(),
     GetSessionId().getSenderCompID(), GetSessionId().getTargetCompID(),
-    [&] (Out<FIX42::OrderCancelRequest> orderCancelRequest) {
+    [&] (const Order& order,
+        Out<FIX42::OrderCancelRequest> orderCancelRequest) {
       orderCancelRequest->getHeader().set(
         FIX::SenderSubID(GetSenderSubID()));
       orderCancelRequest->getHeader().set(
@@ -147,7 +148,7 @@ void TsxSorFixApplication::onMessage(const FIX42::ExecutionReport& message,
     return;
   }
   m_orderLog.Update(message, sessionId, m_timeClient->GetTime(),
-    [=] (Out<ExecutionReport> update) {
+    [=] (const Order& order, Out<ExecutionReport> update) {
       string tsxExchangeAdminValue;
       if(message.isSetField(TSX_EXCHANGE_ADMIN_TAG)) {
         tsxExchangeAdminValue = message.getField(TSX_EXCHANGE_ADMIN_TAG);

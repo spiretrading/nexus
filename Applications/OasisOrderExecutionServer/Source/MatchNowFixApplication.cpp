@@ -73,7 +73,8 @@ void MatchNowFixApplication::Cancel(const OrderExecutionSession& session,
     OrderId orderId) {
   m_orderLog.Cancel(session, orderId, m_timeClient->GetTime(),
     GetSessionId().getSenderCompID(), GetSessionId().getTargetCompID(),
-    [&] (Out<FIX42::OrderCancelRequest> orderCancelRequest) {
+    [&] (const Order& order,
+        Out<FIX42::OrderCancelRequest> orderCancelRequest) {
       orderCancelRequest->getHeader().set(
         FIX::SenderSubID(GetSenderSubID()));
       orderCancelRequest->setField(UMIR_ACCOUNT_TYPE_TAG, "CL");
@@ -136,7 +137,7 @@ void MatchNowFixApplication::onMessage(const FIX42::ExecutionReport& message,
     }
   }
   m_orderLog.Update(message, sessionId, m_timeClient->GetTime(),
-    [=] (Out<ExecutionReport> update) {
+    [=] (const Order& order, Out<ExecutionReport> update) {
       if(update->m_lastQuantity != 0) {
         update->m_lastMarket = DefaultMarkets::MATN().GetData();
         update->m_liquidityFlag = "A";
