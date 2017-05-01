@@ -1,9 +1,9 @@
 import {Component} from 'react';
-import Controller from 'components/structures/common/search-profiles/new-account/controller';
+import Controller from 'components/structures/common/accounts/new-account/controller';
 import View from './view';
 import uuid from 'uuid';
 
-class ProfileAccount extends Component {
+class NewAccount extends Component {
   constructor(props) {
     super(props);
   }
@@ -29,4 +29,4 @@ class ProfileAccount extends Component {
   }
 }
 
-export default ProfileAccount;
+export default NewAccount;

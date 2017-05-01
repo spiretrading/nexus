@@ -18,7 +18,6 @@ class View extends UpdatableView {
   }
 
   onMemeberClicked(event) {
-    console.debug('clicked');
     let id = $(event.currentTarget).attr('data-id');
     this.controller.navigateToMemberProfile.apply(this.controller, [id]);
   }
