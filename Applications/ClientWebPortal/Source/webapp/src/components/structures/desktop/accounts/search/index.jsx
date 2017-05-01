@@ -1,9 +1,9 @@
 import {Component} from 'react';
-import Controller from 'components/structures/common/search-profiles/search/controller';
+import Controller from 'components/structures/common/accounts/search/controller';
 import View from './view';
 import uuid from 'uuid';
 
-class SearchProfiles extends Component {
+class Search extends Component {
   constructor(props) {
     super(props);
   }
@@ -33,4 +33,4 @@ class SearchProfiles extends Component {
   }
 }
 
-export default SearchProfiles;
+export default Search;

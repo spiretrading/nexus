@@ -74,6 +74,8 @@ class Controller {
       .then((results) => {
         // results come in a mix of groups and individual traders in an array
         for (let i=0; i<results.length; i++) {
+          this.accountDirectoryEntries.set(results[i].directory_entry.id, results[i].directory_entry);
+
           if (results[i].directory_entry.type == 0) {
             // in the case of individual trader
             let group = null;
@@ -132,7 +134,7 @@ class Controller {
   }
 
   navigateToNewAccount() {
-    browserHistory.push('searchProfiles-newAccount');
+    browserHistory.push('accounts-newAccount');
   }
 
   loadGroupAccounts(groupId) {

@@ -94,18 +94,18 @@ class DesktopRoutes extends Routes {
         }
       },
       {
-        path: 'searchProfiles-search',
+        path: 'accounts',
         getComponent(location, cb) {
-          System.import('../components/structures/desktop/search-profiles/routes')
-            .then((module) => { return { default: module.searchProfiles } })
+          System.import('../components/structures/desktop/accounts/routes')
+            .then((module) => { return { default: module.accounts } })
             .then(loadRoute(cb))
             .catch(errorLoading);
         }
       },
       {
-        path: 'searchProfiles-newAccount',
+        path: 'accounts-newAccount',
         getComponent(location, cb) {
-          System.import('../components/structures/desktop/search-profiles/routes')
+          System.import('../components/structures/desktop/accounts/routes')
             .then((module) => { return { default: module.newAccount } })
             .then(loadRoute(cb))
             .catch(errorLoading);
