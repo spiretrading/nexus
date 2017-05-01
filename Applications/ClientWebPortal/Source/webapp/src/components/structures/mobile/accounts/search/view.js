@@ -2,7 +2,7 @@ import './style.scss';
 import React from 'react';
 import PrimaryButton from 'components/reusables/common/primary-button';
 import ProfileSearchPanel from 'components/reusables/common/profile-search-panel';
-import CommonView from 'components/structures/common/search-profiles/search/common-view';
+import CommonView from 'components/structures/common/accounts/search/common-view';
 
 class View extends CommonView {
   constructor(react, controller, componentModel) {

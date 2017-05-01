@@ -76,8 +76,8 @@ class Controller {
     browserHistory.push('blank');
   }
 
-  navigateToSearchProfiles() {
-    let path = '/searchProfiles-search';
+  navigateToAccounts() {
+    let path = '/accounts';
     browserHistory.push(path);
     this.saveLastVisitedPath(path);
   }

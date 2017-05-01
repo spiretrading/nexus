@@ -87,25 +87,25 @@ class MobileRoutes extends Routes {
       {
         path: 'profile-performance/:type/:id/:name',
         getComponent(location, cb) {
-          System.import('../components/structures/desktop/profile/routes')
+          System.import('../components/structures/mobile/profile/routes')
             .then((module) => { return { default: module.performance } })
             .then(loadRoute(cb))
             .catch(errorLoading);
         }
       },
       {
-        path: 'searchProfiles-search',
+        path: 'accounts',
         getComponent(location, cb) {
-          System.import('../components/structures/mobile/search-profiles/routes')
-            .then((module) => { return { default: module.searchProfiles } })
+          System.import('../components/structures/mobile/accounts/routes')
+            .then((module) => { return { default: module.accounts } })
             .then(loadRoute(cb))
             .catch(errorLoading);
         }
       },
       {
-        path: 'searchProfiles-newAccount',
+        path: 'accounts-newAccount',
         getComponent(location, cb) {
-          System.import('../components/structures/mobile/search-profiles/routes')
+          System.import('../components/structures/mobile/accounts/routes')
             .then((module) => { return { default: module.newAccount } })
             .then(loadRoute(cb))
             .catch(errorLoading);
