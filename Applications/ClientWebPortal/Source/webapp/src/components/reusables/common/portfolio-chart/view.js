@@ -174,7 +174,15 @@ class View extends UpdatableView {
         }
         let constructorName = a[propertyName].constructor.name;
 
-        if (constructorName == 'Money') {
+        if (constructorName == 'CurrencyId') {
+          let currencyA = definitionsService.getCurrencyCode(a[propertyName].value);
+          let currencyB = definitionsService.getCurrencyCode(b[propertyName].value);
+          if (sortingColumn.direction === 'asc') {
+            return currencyA.localeCompare(currencyB);
+          } else if (sortingColumn.direction === 'desc') {
+            return currencyB.localeCompare(currencyA);
+          }
+        } else if (constructorName == 'Money') {
           if (sortingColumn.direction === 'asc') {
             return a[propertyName].compare(b[propertyName]);
           } else if (sortingColumn.direction === 'desc') {

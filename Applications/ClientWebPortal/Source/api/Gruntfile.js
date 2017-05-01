@@ -22,6 +22,14 @@ module.exports = function(grunt) {
           dest: 'dist'
         }]
       },
+      tests: {
+        files: [{
+          expand: true,
+          cwd: 'test',
+          src: ['**/*.js'],
+          dest: 'spec/tests'
+        }]
+      },
       prod: {
         files: [{
           expand: true,
@@ -52,10 +60,10 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-uglify');
 
-
   grunt.registerTask('build-dev', [
     'clean:dist',
-    'babel:dev'
+    'babel:dev',
+    'bable:tests'
   ]);
 
   grunt.registerTask('update-dev', [
