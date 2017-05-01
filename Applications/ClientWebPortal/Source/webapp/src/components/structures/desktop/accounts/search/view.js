@@ -2,7 +2,7 @@ import './style.scss';
 import React from 'react';
 import PrimaryButton from 'components/reusables/common/primary-button';
 import ProfileSearchPanel from 'components/reusables/common/profile-search-panel';
-import CommonView from 'components/structures/common/search-profiles/search/common-view';
+import CommonView from 'components/structures/common/accounts/search/common-view';
 
 class View extends CommonView {
   constructor(react, controller, componentModel) {
@@ -54,11 +54,27 @@ class View extends CommonView {
     };
 
     return (
-      <div id="search-profiles-container">
+      <div id="search-profiles-container" className="container-fixed-width">
         <div className="search-profiles-wrapper">
           <div className="menu-info-wrapper">
             <PrimaryButton className="new-account-btn" model={newAccountBtnModel} onClick={onNewAccountClick}/>
             <PrimaryButton className="new-group-btn" model={newGroupModel} onClick={onNewGroupClick}/>
+            <div className="count-label-wrapper">
+              <span className="count-label">Total Accounts</span><br/>
+              <span className="count-counter">20</span>
+            </div>
+            <div className="count-label-wrapper">
+              <span className="count-label">Traders</span><br/>
+              <span className="count-counter">20</span>
+            </div>
+            <div className="count-label-wrapper">
+              <span className="count-label">Managers</span><br/>
+              <span className="count-counter">20</span>
+            </div>
+            <div className="count-label-wrapper">
+              <span className="count-label">Admins</span><br/>
+              <span className="count-counter">20</span>
+            </div>
           </div>
           <div className="search-wrapper">
             <div className="search-input-wrapper">

@@ -4,7 +4,7 @@ import PersonalDetails from 'components/reusables/desktop/new-personal-details';
 import AccountPicture from 'components/reusables/common/account-picture';
 import PrimaryButton from 'components/reusables/common/primary-button';
 import UserNotes from 'components/reusables/common/user-notes';
-import CommonView from 'components/structures/common/search-profiles/new-account/common-view';
+import CommonView from 'components/structures/common/accounts/new-account/common-view';
 
 class DesktopView extends CommonView {
   constructor(react, controller, componentModel) {

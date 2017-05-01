@@ -65,36 +65,42 @@ destinations:
   - id: ARCA
     description: NYSE ARCA
     markets:
+      - ARCX
       - XASE
       - XNAS
       - XNYS
   - id: BATS
     description: BATS Exchange
     markets:
+      - ARCX
       - XASE
       - XNAS
       - XNYS
   - id: BATY
     description: BATS Y-Exchange
     markets:
+      - ARCX
       - XASE
       - XNAS
       - XNYS
   - id: CBSX
     description: CBOF Stock Exchange
     markets:
+      - ARCX
       - XASE
       - XNAS
       - XNYS
   - id: EDGA
     description: EDGA Exchange
     markets:
+      - ARCX
       - XASE
       - XNAS
       - XNYS
   - id: EDGX
     description: EDGX Exchange
     markets:
+      - ARCX
       - XASE
       - XNAS
       - XNYS
@@ -106,11 +112,14 @@ destinations:
   - id: NASDAQ
     description: NASDAQ
     markets:
+      - ARCX
       - XASE
       - XNAS
       - XNYS
 
 preferred_destinations:
+  - market: ARCX
+    destination: NASDAQ
   - market: XASE
     destination: NASDAQ
   - market: XASX
@@ -128,6 +137,7 @@ manual_order_entry:
   id: MOE
   description: Manual Order Entry
   markets:
+    - ARCX
     - XASE
     - XASX
     - XNAS

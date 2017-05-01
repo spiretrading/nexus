@@ -3424,6 +3424,13 @@ namespace {
     auto& asxOrderTypes = orderTypes[DefaultMarkets::ASX()];
     PopulateAsxOrders(asxOrderTypes);
     PopulateCxaOrders(asxOrderTypes);
+    auto& arcxOrderTypes = orderTypes[DefaultMarkets::ARCX()];
+    PopulateArcaOrders(arcxOrderTypes);
+    PopulateBatsOrders(arcxOrderTypes);
+    PopulateBatyOrders(arcxOrderTypes);
+    PopulateEdgaOrders(arcxOrderTypes);
+    PopulateEdgxOrders(arcxOrderTypes);
+    PopulateNasdaqOrders(arcxOrderTypes);
     auto& asexOrderTypes = orderTypes[DefaultMarkets::ASEX()];
     PopulateAmexOrders(asexOrderTypes);
     PopulateArcaOrders(asexOrderTypes);

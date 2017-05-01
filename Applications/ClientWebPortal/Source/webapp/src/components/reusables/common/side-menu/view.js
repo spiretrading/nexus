@@ -28,9 +28,9 @@ class View extends UpdatableView {
   }
 
   /** @private */
-  onSearchProfilesClick() {
+  onAccountsClick() {
     this.closeMenu();
-    this.controller.navigateToSearchProfiles.apply(this.controller);
+    this.controller.navigateToAccounts.apply(this.controller);
   }
 
   /** @private */
@@ -72,9 +72,9 @@ class View extends UpdatableView {
     let searchProfilesMenuItem, portfolioMenuItem;
     if (this.componentModel.isAdmin || this.componentModel.isManager) {
       searchProfilesMenuItem =
-        <div className="menu-item" onClick={this.onSearchProfilesClick.bind(this)}>
+        <div className="menu-item" onClick={this.onAccountsClick.bind(this)}>
           <span className="icon-search"></span>
-          Search
+          Accounts
         </div>
 
       portfolioMenuItem =
