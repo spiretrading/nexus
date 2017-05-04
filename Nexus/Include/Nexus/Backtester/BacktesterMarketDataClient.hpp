@@ -18,9 +18,13 @@ namespace Nexus {
       //! Constructs a BacktesterMarketDataClient.
       /*!
         \param environment The BacktesterEnvironment to connect to.
+        \param marketDataClient The underlying MarketDataClient to submit
+               queries to.
       */
       BacktesterMarketDataClient(
-        Beam::RefType<BacktesterEnvironment> environment);
+        Beam::RefType<BacktesterEnvironment> environment,
+        std::unique_ptr<MarketDataService::VirtualMarketDataClient>
+        marketDataClient);
 
       ~BacktesterMarketDataClient();
 
@@ -91,8 +95,11 @@ namespace Nexus {
   };
 
   inline BacktesterMarketDataClient::BacktesterMarketDataClient(
-      Beam::RefType<BacktesterEnvironment> environment)
-      : m_environment{environment.Get()} {}
+      Beam::RefType<BacktesterEnvironment> environment,
+      std::unique_ptr<MarketDataService::VirtualMarketDataClient>
+      marketDataClient)
+      : m_environment{environment.Get()},
+        m_marketDataClient{std::move(marketDataClient)} {}
 
   inline BacktesterMarketDataClient::~BacktesterMarketDataClient() {
     Close();

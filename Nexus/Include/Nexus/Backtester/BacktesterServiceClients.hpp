@@ -1,28 +1,29 @@
-#ifndef NEXUS_TESTSERVICECLIENTS_HPP
-#define NEXUS_TESTSERVICECLIENTS_HPP
+#ifndef NEXUS_BACKTESTERSERVICECLIENTS_HPP
+#define NEXUS_BACKTESTERSERVICECLIENTS_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/RegistryService/VirtualRegistryClient.hpp>
 #include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
 #include <Beam/Threading/VirtualTimer.hpp>
 #include <Beam/TimeService/VirtualTimeClient.hpp>
-#include <Beam/TimeServiceTests/TestTimeClient.hpp>
-#include <Beam/TimeServiceTests/TestTimer.hpp>
 #include <boost/noncopyable.hpp>
+#include "Nexus/Backtester/Backtester.hpp"
+#include "Nexus/Backtester/BacktesterEnvironment.hpp"
+#include "Nexus/Backtester/BacktesterMarketDataClient.hpp"
 #include "Nexus/ChartingService/VirtualChartingClient.hpp"
 #include "Nexus/Compliance/VirtualComplianceClient.hpp"
 #include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 #include "Nexus/RiskService/VirtualRiskClient.hpp"
-#include "Nexus/ServiceClients/TestEnvironment.hpp"
 
 namespace Nexus {
 
-  /*! \class TestServiceClients
-      \brief Implements the ServiceClients interface for testing.
+  /*! \class BacktesterServiceClients
+      \brief Implements the ServiceClients interface for the purpose of
+             backtesting.
    */
-  class TestServiceClients : private boost::noncopyable {
+  class BacktesterServiceClients : private boost::noncopyable {
     public:
       using ServiceLocatorClient =
         Beam::ServiceLocator::VirtualServiceLocatorClient;
@@ -49,13 +50,14 @@ namespace Nexus {
 
       using Timer = Beam::Threading::VirtualTimer;
 
-      //! Constructs a TestServiceClients.
+      //! Constructs a BacktesterServiceClients.
       /*!
-        \param environment The TestEnvironment to use.
+        \param environment The BacktesterEnvironment to use.
       */
-      TestServiceClients(Beam::RefType<TestEnvironment> environment);
+      BacktesterServiceClients(
+        Beam::RefType<BacktesterEnvironment> environment);
 
-      ~TestServiceClients();
+      ~BacktesterServiceClients();
 
       ServiceLocatorClient& GetServiceLocatorClient();
 
@@ -85,7 +87,7 @@ namespace Nexus {
       void Close();
 
     private:
-      TestEnvironment* m_environment;
+      BacktesterEnvironment* m_environment;
       std::unique_ptr<ServiceLocatorClient> m_serviceLocatorClient;
       std::unique_ptr<RegistryClient> m_registryClient;
       std::unique_ptr<AdministrationClient> m_administrationClient;
@@ -101,95 +103,104 @@ namespace Nexus {
       void Shutdown();
   };
 
-  inline TestServiceClients::TestServiceClients(
-      Beam::RefType<TestEnvironment> environment)
+  inline BacktesterServiceClients::BacktesterServiceClients(
+      Beam::RefType<BacktesterEnvironment> environment)
       : m_environment{environment.Get()} {}
 
-  inline TestServiceClients::~TestServiceClients() {
+  inline BacktesterServiceClients::~BacktesterServiceClients() {
     Close();
   }
 
-  inline TestServiceClients::ServiceLocatorClient&
-      TestServiceClients::GetServiceLocatorClient() {
+  inline BacktesterServiceClients::ServiceLocatorClient&
+      BacktesterServiceClients::GetServiceLocatorClient() {
     return *m_serviceLocatorClient;
   }
 
-  inline TestServiceClients::RegistryClient&
-      TestServiceClients::GetRegistryClient() {
+  inline BacktesterServiceClients::RegistryClient&
+      BacktesterServiceClients::GetRegistryClient() {
     return *m_registryClient;
   }
 
-  inline TestServiceClients::AdministrationClient&
-      TestServiceClients::GetAdministrationClient() {
+  inline BacktesterServiceClients::AdministrationClient&
+      BacktesterServiceClients::GetAdministrationClient() {
     return *m_administrationClient;
   }
 
-  inline TestServiceClients::DefinitionsClient&
-      TestServiceClients::GetDefinitionsClient() {
+  inline BacktesterServiceClients::DefinitionsClient&
+      BacktesterServiceClients::GetDefinitionsClient() {
     return *m_definitionsClient;
   }
 
-  inline TestServiceClients::MarketDataClient&
-      TestServiceClients::GetMarketDataClient() {
+  inline BacktesterServiceClients::MarketDataClient&
+      BacktesterServiceClients::GetMarketDataClient() {
     return *m_marketDataClient;
   }
 
-  inline TestServiceClients::ChartingClient&
-      TestServiceClients::GetChartingClient() {
+  inline BacktesterServiceClients::ChartingClient&
+      BacktesterServiceClients::GetChartingClient() {
     return *m_chartingClient;
   }
 
-  inline TestServiceClients::ComplianceClient&
-      TestServiceClients::GetComplianceClient() {
+  inline BacktesterServiceClients::ComplianceClient&
+      BacktesterServiceClients::GetComplianceClient() {
     return *m_complianceClient;
   }
 
-  inline TestServiceClients::OrderExecutionClient&
-      TestServiceClients::GetOrderExecutionClient() {
+  inline BacktesterServiceClients::OrderExecutionClient&
+      BacktesterServiceClients::GetOrderExecutionClient() {
     return *m_orderExecutionClient;
   }
 
-  inline TestServiceClients::RiskClient& TestServiceClients::GetRiskClient() {
+  inline BacktesterServiceClients::RiskClient&
+      BacktesterServiceClients::GetRiskClient() {
     return *m_riskClient;
   }
 
-  inline TestServiceClients::TimeClient& TestServiceClients::GetTimeClient() {
+  inline BacktesterServiceClients::TimeClient&
+      BacktesterServiceClients::GetTimeClient() {
     return *m_timeClient;
   }
 
-  inline std::unique_ptr<TestServiceClients::Timer>
-      TestServiceClients::BuildTimer(boost::posix_time::time_duration expiry) {
+  inline std::unique_ptr<BacktesterServiceClients::Timer>
+      BacktesterServiceClients::BuildTimer(
+      boost::posix_time::time_duration expiry) {
     return Beam::Threading::MakeVirtualTimer(
       std::make_unique<Beam::TimeService::Tests::TestTimer>(expiry,
-      Beam::Ref(m_environment->GetTimeEnvironment())));
+      Beam::Ref(m_environment->m_testEnvironment.GetTimeEnvironment())));
   }
 
-  inline void TestServiceClients::Open() {
+  inline void BacktesterServiceClients::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
     try {
       m_serviceLocatorClient =
-        m_environment->GetServiceLocatorEnvironment().BuildClient();
+        m_environment->m_testEnvironment.GetServiceLocatorEnvironment().
+        BuildClient();
       m_serviceLocatorClient->SetCredentials("root", "");
       m_serviceLocatorClient->Open();
-      m_definitionsClient = m_environment->GetDefinitionsEnvironment().BuildClient(
+      m_definitionsClient = m_environment->m_testEnvironment.
+        GetDefinitionsEnvironment().BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
       m_definitionsClient->Open();
       m_administrationClient =
-        m_environment->GetAdministrationEnvironment().BuildClient(
-        Beam::Ref(*m_serviceLocatorClient));
+        m_environment->m_testEnvironment.GetAdministrationEnvironment().
+        BuildClient(Beam::Ref(*m_serviceLocatorClient));
       m_administrationClient->Open();
-      m_marketDataClient = m_environment->GetMarketDataEnvironment().BuildClient(
+      auto baseMarketDataClient = m_environment->m_testEnvironment.
+        GetMarketDataEnvironment().BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
+      m_marketDataClient = MarketDataService::MakeVirtualMarketDataClient(
+        std::make_unique<BacktesterMarketDataClient>(Beam::Ref(*m_environment),
+        std::move(baseMarketDataClient)));
       m_marketDataClient->Open();
-      m_orderExecutionClient =
-        m_environment->GetOrderExecutionEnvironment().BuildClient(
+      m_orderExecutionClient = m_environment->m_testEnvironment.
+        GetOrderExecutionEnvironment().BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
       m_orderExecutionClient->Open();
       m_timeClient = Beam::TimeService::MakeVirtualTimeClient(
         std::make_unique<Beam::TimeService::Tests::TestTimeClient>(
-        Beam::Ref(m_environment->GetTimeEnvironment())));
+        Beam::Ref(m_environment->m_testEnvironment.GetTimeEnvironment())));
       m_timeClient->Open();
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
@@ -198,14 +209,14 @@ namespace Nexus {
     m_openState.SetOpen();
   }
 
-  inline void TestServiceClients::Close() {
+  inline void BacktesterServiceClients::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  inline void TestServiceClients::Shutdown() {
+  inline void BacktesterServiceClients::Shutdown() {
     if(m_timeClient != nullptr) {
       m_timeClient->Close();
     }
