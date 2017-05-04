@@ -3,9 +3,7 @@
 #include <Beam/Utilities/BeamWorkaround.hpp>
 #include <boost/optional/optional.hpp>
 #include <cppunit/extensions/HelperMacros.h>
-#include "Nexus/Backtester/BacktesterEnvironment.hpp"
-#include "Nexus/Backtester/BacktesterMarketDataClient.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
+#include "Nexus/BacktesterTests/BacktesterTests.hpp"
 
 namespace Nexus {
 namespace Tests {
@@ -15,10 +13,6 @@ namespace Tests {
    */
   class BacktesterMarketDataClientTester : public CPPUNIT_NS::TestFixture {
     public:
-
-      //! The type of BacktesterEnvironment used for testing.
-      using BacktesterEnvironment = ::Nexus::BacktesterEnvironment<
-        MarketDataService::VirtualMarketDataClient*>;
 
       //! Tests submitting a query for real time data.
       void TestRealTimeQuery();

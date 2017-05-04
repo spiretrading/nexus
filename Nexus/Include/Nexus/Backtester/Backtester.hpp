@@ -2,7 +2,8 @@
 #define NEXUS_BACKTESTER_HPP
 
 namespace Nexus {
-  template<typename MarketDataClientType> class BacktesterEnvironment;
+  class BacktesterEnvironment;
+  class BacktesterMarketDataClient;
 }
 
 #endif

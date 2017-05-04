@@ -4,6 +4,7 @@
 #include <Beam/IO/OpenState.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
+#include "Nexus/Backtester/BacktesterEnvironment.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 
 namespace Nexus {
@@ -13,6 +14,14 @@ namespace Nexus {
    */
   class BacktesterMarketDataClient : private boost::noncopyable {
     public:
+
+      //! Constructs a BacktesterMarketDataClient.
+      /*!
+        \param environment The BacktesterEnvironment to connect to.
+      */
+      BacktesterMarketDataClient(
+        Beam::RefType<BacktesterEnvironment> environment);
+
       ~BacktesterMarketDataClient();
 
       void QueryOrderImbalances(
@@ -73,6 +82,7 @@ namespace Nexus {
       void Close();
 
     private:
+      BacktesterEnvironment* m_environment;
       std::unique_ptr<MarketDataService::VirtualMarketDataClient>
         m_marketDataClient;
       Beam::IO::OpenState m_openState;
@@ -80,69 +90,79 @@ namespace Nexus {
       void Shutdown();
   };
 
-  BacktesterMarketDataClient::~BacktesterMarketDataClient() {
+  inline BacktesterMarketDataClient::BacktesterMarketDataClient(
+      Beam::RefType<BacktesterEnvironment> environment)
+      : m_environment{environment.Get()} {}
+
+  inline BacktesterMarketDataClient::~BacktesterMarketDataClient() {
     Close();
   }
 
-  void BacktesterMarketDataClient::QueryOrderImbalances(
+  inline void BacktesterMarketDataClient::QueryOrderImbalances(
       const MarketDataService::MarketWideDataQuery& query,
       const std::shared_ptr<
       Beam::QueueWriter<SequencedOrderImbalance>>& queue) {}
 
-  void BacktesterMarketDataClient::QueryOrderImbalances(
+  inline void BacktesterMarketDataClient::QueryOrderImbalances(
       const MarketDataService::MarketWideDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<OrderImbalance>>& queue) {}
 
-  void BacktesterMarketDataClient::QueryBboQuotes(
+  inline void BacktesterMarketDataClient::QueryBboQuotes(
       const MarketDataService::SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<SequencedBboQuote>>& queue) {}
+      const std::shared_ptr<Beam::QueueWriter<SequencedBboQuote>>& queue) {
+    m_environment->QueryBboQuotes(query);
+    m_marketDataClient->QueryBboQuotes(query, queue);
+  }
 
-  void BacktesterMarketDataClient::QueryBboQuotes(
+  inline void BacktesterMarketDataClient::QueryBboQuotes(
       const MarketDataService::SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<BboQuote>>& queue) {}
+      const std::shared_ptr<Beam::QueueWriter<BboQuote>>& queue) {
+    m_environment->QueryBboQuotes(query);
+    m_marketDataClient->QueryBboQuotes(query, queue);
+  }
 
-  void BacktesterMarketDataClient::QueryBookQuotes(
+  inline void BacktesterMarketDataClient::QueryBookQuotes(
       const MarketDataService::SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<SequencedBookQuote>>& queue) {}
 
-  void BacktesterMarketDataClient::QueryBookQuotes(
+  inline void BacktesterMarketDataClient::QueryBookQuotes(
       const MarketDataService::SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<BookQuote>>& queue) {}
 
-  void BacktesterMarketDataClient::QueryMarketQuotes(
+  inline void BacktesterMarketDataClient::QueryMarketQuotes(
       const MarketDataService::SecurityMarketDataQuery& query,
       const std::shared_ptr<
       Beam::QueueWriter<SequencedMarketQuote>>& queue) {}
 
-  void BacktesterMarketDataClient::QueryMarketQuotes(
+  inline void BacktesterMarketDataClient::QueryMarketQuotes(
       const MarketDataService::SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<MarketQuote>>& queue) {}
 
-  void BacktesterMarketDataClient::QueryTimeAndSales(
+  inline void BacktesterMarketDataClient::QueryTimeAndSales(
       const MarketDataService::SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<SequencedTimeAndSale>>& queue) {}
 
-  void BacktesterMarketDataClient::QueryTimeAndSales(
+  inline void BacktesterMarketDataClient::QueryTimeAndSales(
       const MarketDataService::SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<TimeAndSale>>& queue) {}
 
-  MarketDataService::SecuritySnapshot
+  inline MarketDataService::SecuritySnapshot
       BacktesterMarketDataClient::LoadSecuritySnapshot(
       const Security& security) {
     return m_marketDataClient->LoadSecuritySnapshot(security);
   }
 
-  SecurityTechnicals BacktesterMarketDataClient::LoadSecurityTechnicals(
+  inline SecurityTechnicals BacktesterMarketDataClient::LoadSecurityTechnicals(
       const Security& security) {
     return m_marketDataClient->LoadSecurityTechnicals(security);
   }
 
-  std::vector<SecurityInfo> BacktesterMarketDataClient::
+  inline std::vector<SecurityInfo> BacktesterMarketDataClient::
       LoadSecurityInfoFromPrefix(const std::string& prefix) {
     return m_marketDataClient->LoadSecurityInfoFromPrefix(prefix);
   }
 
-  void BacktesterMarketDataClient::Open() {
+  inline void BacktesterMarketDataClient::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
@@ -155,14 +175,14 @@ namespace Nexus {
     m_openState.SetOpen();
   }
 
-  void BacktesterMarketDataClient::Close() {
+  inline void BacktesterMarketDataClient::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  void BacktesterMarketDataClient::Shutdown() {
+  inline void BacktesterMarketDataClient::Shutdown() {
     m_marketDataClient->Close();
     m_openState.SetClosed();
   }

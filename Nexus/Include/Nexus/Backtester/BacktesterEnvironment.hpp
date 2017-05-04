@@ -1,26 +1,20 @@
 #ifndef NEXUS_BACKTESTERENVIRONMENT_HPP
 #define NEXUS_BACKTESTERENVIRONMENT_HPP
 #include <Beam/IO/OpenState.hpp>
-#include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Pointers/Ref.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
+#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
 
 namespace Nexus {
 
   /*! \class BacktesterEnvironment
       \brief Provides all of the services needed to run historical data.
-      \tparam MarketDataClientType The type of MarketDataClient used to
-              retrieve historical market data.
    */
-  template<typename MarketDataClientType>
   class BacktesterEnvironment : private boost::noncopyable {
     public:
-
-      //! The type of MarketDataClient used to retrieve historical market data.
-      using MarketDataClient =
-        Beam::GetTryDereferenceType<MarketDataClientType>;
 
       //! Constructs a BacktesterEnvironment.
       /*!
@@ -28,8 +22,8 @@ namespace Nexus {
                historical market data.
         \param startTime The initial time to retrieve data for.
       */
-      template<typename MarketDataClientForward>
-      BacktesterEnvironment(MarketDataClientForward&& marketDataClient,
+      BacktesterEnvironment(Beam::RefType<
+        MarketDataService::VirtualMarketDataClient> marketDataClient,
         boost::posix_time::ptime startTime);
 
       //! Constructs a BacktesterEnvironment.
@@ -39,8 +33,8 @@ namespace Nexus {
         \param startTime The initial time to retrieve data for.
         \param endTime The time to stop retrieving data.
       */
-      template<typename MarketDataClientForward>
-      BacktesterEnvironment(MarketDataClientForward&& marketDataClient,
+      BacktesterEnvironment(Beam::RefType<
+        MarketDataService::VirtualMarketDataClient> marketDataClient,
         boost::posix_time::ptime startTime, boost::posix_time::ptime endTime);
 
       ~BacktesterEnvironment();
@@ -50,42 +44,37 @@ namespace Nexus {
       void Close();
 
     private:
-      Beam::GetOptionalLocalPtr<MarketDataClientType> m_marketDataClient;
+      friend class BacktesterMarketDataClient;
+      MarketDataService::VirtualMarketDataClient* m_marketDataClient;
       boost::posix_time::ptime m_startTime;
       boost::posix_time::ptime m_endTime;
       TestEnvironment m_testEnvironment;
       Beam::IO::OpenState m_openState;
 
+      void QueryBboQuotes(
+        const MarketDataService::SecurityMarketDataQuery& query);
       void Shutdown();
   };
 
-  template<typename MarketDataClientType>
-  template<typename MarketDataClientForward>
-  BacktesterEnvironment<MarketDataClientType>::BacktesterEnvironment(
-      MarketDataClientForward&& marketDataClient,
-      boost::posix_time::ptime startTime)
-      : BacktesterEnvironment{
-          std::forward<MarketDataClientForward>(marketDataClient),
+  inline BacktesterEnvironment::BacktesterEnvironment(
+      Beam::RefType<MarketDataService::VirtualMarketDataClient>
+      marketDataClient, boost::posix_time::ptime startTime)
+      : BacktesterEnvironment{Beam::Ref(marketDataClient),
           std::move(startTime), boost::posix_time::pos_infin} {}
 
-  template<typename MarketDataClientType>
-  template<typename MarketDataClientForward>
-  BacktesterEnvironment<MarketDataClientType>::BacktesterEnvironment(
-      MarketDataClientForward&& marketDataClient,
-      boost::posix_time::ptime startTime,
+  inline BacktesterEnvironment::BacktesterEnvironment(
+      Beam::RefType<MarketDataService::VirtualMarketDataClient>
+      marketDataClient, boost::posix_time::ptime startTime,
       boost::posix_time::ptime endTime)
-      : m_marketDataClient{
-          std::forward<MarketDataClientForward>(marketDataClient)},
+      : m_marketDataClient{marketDataClient.Get()},
         m_startTime{std::move(startTime)},
         m_endTime{std::move(endTime)} {}
 
-  template<typename MarketDataClientType>
-  BacktesterEnvironment<MarketDataClientType>::~BacktesterEnvironment() {
+  inline BacktesterEnvironment::~BacktesterEnvironment() {
     Close();
   }
 
-  template<typename MarketDataClientType>
-  void BacktesterEnvironment<MarketDataClientType>::Open() {
+  inline void BacktesterEnvironment::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
@@ -99,16 +88,18 @@ namespace Nexus {
     m_openState.SetOpen();
   }
 
-  template<typename MarketDataClientType>
-  void BacktesterEnvironment<MarketDataClientType>::Close() {
+  inline void BacktesterEnvironment::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  template<typename MarketDataClientType>
-  void BacktesterEnvironment<MarketDataClientType>::Shutdown() {
+  inline void BacktesterEnvironment::QueryBboQuotes(
+      const MarketDataService::SecurityMarketDataQuery& query) {
+  }
+
+  inline void BacktesterEnvironment::Shutdown() {
     m_testEnvironment.Close();
     m_openState.SetClosed();
   }
