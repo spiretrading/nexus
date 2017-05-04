@@ -65,6 +65,7 @@ endif()
 
 add_subdirectory(Accounting)
 add_subdirectory(AdministrationService)
+add_subdirectory(Backtester)
 add_subdirectory(BinarySequenceProtocol)
 add_subdirectory(ChartingService)
 add_subdirectory(Compliance)
