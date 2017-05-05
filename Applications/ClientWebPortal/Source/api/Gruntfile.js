@@ -25,9 +25,9 @@ module.exports = function(grunt) {
       tests: {
         files: [{
           expand: true,
-          cwd: 'test',
+          cwd: 'spec/src',
           src: ['**/*.js'],
-          dest: 'spec/tests'
+          dest: 'spec/transpiled'
         }]
       },
       prod: {
@@ -52,6 +52,9 @@ module.exports = function(grunt) {
     watch: {
       files: ['src/**/*.js'],
       tasks: ['babel']
+    },
+    exec: {
+      jasmine: 'jasmine'
     }
   });
 
@@ -59,11 +62,13 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks('grunt-exec');
 
   grunt.registerTask('build-dev', [
     'clean:dist',
     'babel:dev',
-    'bable:tests'
+    'babel:tests',
+    'exec:jasmine'
   ]);
 
   grunt.registerTask('update-dev', [

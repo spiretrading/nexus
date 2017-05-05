@@ -1,7 +1,7 @@
 import StompConnectionManager from '../commons/stomp-connection-manager';
 import DirectoryEntry from '../../definitions/directory-entry';
 import Security from '../../definitions/security';
-import CurrencyId from '../../definitions/currency/id';
+import CurrencyId from '../../definitions/currency-id';
 import Money from '../../definitions/money';
 
 /** Spire risk service client class */

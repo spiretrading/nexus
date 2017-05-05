@@ -1,6 +1,4 @@
 import httpConnectionManager from '../commons/http-connection-manager';
-import Money from '../../definitions/money';
-import DataType from '../../definitions/data-type';
 import dataTypeConverter from '../commons/data-type-converter';
 
 /** Spire compliance service client class */

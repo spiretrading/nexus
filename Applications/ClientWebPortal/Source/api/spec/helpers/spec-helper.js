@@ -1,3 +1,6 @@
+// example helper code for Jasmine framework
+
+/*
 beforeEach(function () {
   jasmine.addMatchers({
     toBePlaying: function () {
@@ -13,3 +16,4 @@ beforeEach(function () {
     }
   });
 });
+*/

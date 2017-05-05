@@ -13,12 +13,12 @@ import accountIdentity from './services/administration-service/account-identity'
 // definitions
 import dataType from './definitions/data-type';
 import money from './definitions/money';
-import countryCode from './definitions/country/code';
-import countryDatabase from './definitions/country/database';
-import countryDatabaseEntry from './definitions/country/database-entry'
-import currencyId from './definitions/currency/id';
-import currencyDatabase from './definitions/currency/database';
-import currencyDatabaseEntry from './definitions/currency/database-entry';
+import countryCode from './definitions/country-code';
+import countryDatabase from './definitions/country-database';
+import countryDatabaseEntry from './definitions/country-database-entry'
+import currencyId from './definitions/currency-id';
+import currencyDatabase from './definitions/currency-database';
+import currencyDatabaseEntry from './definitions/currency-database-entry';
 import security from './definitions/security';
 
 // module export configurations

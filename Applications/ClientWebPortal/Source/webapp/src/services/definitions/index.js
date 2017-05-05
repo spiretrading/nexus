@@ -33,6 +33,7 @@ class DefService {
     return this.definitionsServiceClient.loadCurrencyData.apply(this.definitionsServiceClient).then(onResponse.bind(this));
 
     function onResponse(currencies) {
+      console.debug(currencies);
       for (let i=0; i<currencies.length; i++) {
         this.currencyDatabase.add(currencies[i]);
       }
