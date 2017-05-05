@@ -74,6 +74,8 @@ namespace Nexus {
         const SequencedMarketDataValue& value);
       boost::optional<SequencedMarketDataValue> LoadNextValue(
         const SecurityEntry& entry);
+      void UpdateMarketData(const Security& security,
+        const SequencedMarketDataValue& value);
       void EventLoop();
       void QueryBboQuotes(
         const MarketDataService::SecurityMarketDataQuery& query);
@@ -124,7 +126,7 @@ namespace Nexus {
 
   inline const boost::posix_time::ptime& BacktesterEnvironment::GetTimestamp(
       const SequencedMarketDataValue& value) {
-    if(auto quote = boost::get<const SequencedBboQuote*>(value)) {
+    if(auto quote = boost::get<const SequencedBboQuote>(&value)) {
       return Beam::Queries::GetTimestamp(quote->GetValue());
     } else {
       return Beam::Queries::GetTimestamp(
@@ -134,7 +136,26 @@ namespace Nexus {
 
   inline boost::optional<BacktesterEnvironment::SequencedMarketDataValue>
       BacktesterEnvironment::LoadNextValue(const SecurityEntry& entry) {
-    return boost::none;
+    boost::optional<SequencedMarketDataValue> nextValue;
+    if(!entry.m_bboQuotes.empty()) {
+      nextValue = entry.m_bboQuotes.front();
+    }
+    if(!entry.m_timeAndSales.empty() && (!nextValue.is_initialized() ||
+        Beam::Queries::GetTimestamp(entry.m_timeAndSales.front()) <
+        GetTimestamp(*nextValue))) {
+      nextValue = entry.m_timeAndSales.front();
+    }
+    return nextValue;
+  }
+
+  inline void BacktesterEnvironment::UpdateMarketData(const Security& security,
+      const SequencedMarketDataValue& value) {
+    if(auto quote = boost::get<const SequencedBboQuote>(&value)) {
+      m_securityEntries[security].m_bboQuotes.pop_front();
+      m_testEnvironment.Update(security, *quote);
+    } else {
+      m_securityEntries[security].m_timeAndSales.pop_front();
+    }
   }
 
   inline void BacktesterEnvironment::EventLoop() {
@@ -162,9 +183,9 @@ namespace Nexus {
           }
         }
         if(nextValue.is_initialized()) {
-//        m_securityEntries[security].pop_front();
-//          m_testEnvironment.Update(security,
-//            std::move(entry.second.front()));
+          UpdateMarketData(security, *nextValue);
+        } else {
+          m_securityEntries.clear();
         }
       }
     }
