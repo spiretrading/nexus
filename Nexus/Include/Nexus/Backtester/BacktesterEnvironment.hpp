@@ -55,8 +55,10 @@ namespace Nexus {
         boost::variant<SequencedBboQuote, SequencedTimeAndSale>;
       struct SecurityEntry {
         Security m_security;
-        std::deque<SequencedBboQuote> m_bboQuotes;
-        std::deque<SequencedTimeAndSale> m_timeAndSales;
+        boost::optional<std::deque<SequencedBboQuote>> m_bboQuotes;
+        Beam::Queries::Sequence m_lastBboSequence;
+        boost::optional<std::deque<SequencedTimeAndSale>> m_timeAndSales;
+        Beam::Queries::Sequence m_lastTimeAndSaleSequence;
       };
       friend class BacktesterMarketDataClient;
       friend class BacktesterServiceClients;
@@ -73,7 +75,7 @@ namespace Nexus {
       static const boost::posix_time::ptime& GetTimestamp(
         const SequencedMarketDataValue& value);
       boost::optional<SequencedMarketDataValue> LoadNextValue(
-        const SecurityEntry& entry);
+        SecurityEntry& entry);
       void UpdateMarketData(const Security& security,
         const SequencedMarketDataValue& value);
       void EventLoop();
@@ -135,15 +137,54 @@ namespace Nexus {
   }
 
   inline boost::optional<BacktesterEnvironment::SequencedMarketDataValue>
-      BacktesterEnvironment::LoadNextValue(const SecurityEntry& entry) {
+      BacktesterEnvironment::LoadNextValue(SecurityEntry& entry) {
     boost::optional<SequencedMarketDataValue> nextValue;
-    if(!entry.m_bboQuotes.empty()) {
-      nextValue = entry.m_bboQuotes.front();
+    if(entry.m_bboQuotes.is_initialized()) {
+      if(entry.m_bboQuotes->empty()) {
+        if(entry.m_lastBboSequence != Beam::Queries::Sequence::Last()) {
+          auto startPoint =
+            [&] () -> Beam::Queries::Range::Point {
+              if(entry.m_lastBboSequence == Beam::Queries::Sequence::First()) {
+                return m_startTime;
+              } else {
+                return Beam::Queries::Increment(entry.m_lastBboSequence);
+              }
+            }();
+          auto endPoint =
+            [&] () -> Beam::Queries::Range::Point {
+              if(m_endTime == boost::posix_time::pos_infin) {
+                return Beam::Queries::Sequence::Present();
+              }
+              return m_endTime;
+            }();
+          MarketDataService::SecurityMarketDataQuery updateQuery;
+          updateQuery.SetIndex(entry.m_security);
+          updateQuery.SetRange(startPoint, endPoint);
+          updateQuery.SetSnapshotLimit(
+            Beam::Queries::SnapshotLimit::Type::HEAD, 1000);
+          auto queue = std::make_shared<Beam::Queue<SequencedBboQuote>>();
+          m_marketDataClient->QueryBboQuotes(updateQuery, queue);
+          Beam::FlushQueue(queue, std::back_inserter(*entry.m_bboQuotes));
+          if(!entry.m_bboQuotes->empty()) {
+            entry.m_lastBboSequence = entry.m_bboQuotes->back().GetSequence();
+          } else {
+            entry.m_lastBboSequence = Beam::Queries::Sequence::Last();
+          }
+        }
+      }
+      if(!entry.m_bboQuotes->empty()) {
+        nextValue = entry.m_bboQuotes->front();
+      }
     }
-    if(!entry.m_timeAndSales.empty() && (!nextValue.is_initialized() ||
-        Beam::Queries::GetTimestamp(entry.m_timeAndSales.front()) <
-        GetTimestamp(*nextValue))) {
-      nextValue = entry.m_timeAndSales.front();
+    if(entry.m_timeAndSales.is_initialized()) {
+      if(entry.m_timeAndSales->empty()) {
+      }
+      if(!entry.m_timeAndSales->empty() && (!nextValue.is_initialized() ||
+          Beam::Queries::GetTimestamp(
+          entry.m_timeAndSales->front().GetValue()) <
+          GetTimestamp(*nextValue))) {
+        nextValue = entry.m_timeAndSales->front();
+      }
     }
     return nextValue;
   }
@@ -151,10 +192,10 @@ namespace Nexus {
   inline void BacktesterEnvironment::UpdateMarketData(const Security& security,
       const SequencedMarketDataValue& value) {
     if(auto quote = boost::get<const SequencedBboQuote>(&value)) {
-      m_securityEntries[security].m_bboQuotes.pop_front();
+      m_securityEntries[security].m_bboQuotes->pop_front();
       m_testEnvironment.Update(security, *quote);
     } else {
-      m_securityEntries[security].m_timeAndSales.pop_front();
+      m_securityEntries[security].m_timeAndSales->pop_front();
     }
   }
 
@@ -198,13 +239,17 @@ namespace Nexus {
     }
     {
       boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
-/*
-      if(m_bboQuotes.find(query.GetIndex()) != m_bboQuotes.end()) {
-        return;
+      auto entryIterator = m_securityEntries.find(query.GetIndex());
+      if(entryIterator != m_securityEntries.end()) {
+        auto& entry = entryIterator->second;
+        if(entry.m_bboQuotes.is_initialized()) {
+          return;
+        }
       }
-      m_bboQuotes[query.GetIndex()] = std::deque<SequencedBboQuote>();
+      auto& entry = m_securityEntries[query.GetIndex()];
+      entry.m_security = query.GetIndex();
+      entry.m_bboQuotes.emplace();
       m_marketDataCondition.notify_one();
-*/
     }
     Beam::Routines::FlushPendingRoutines();
   }
