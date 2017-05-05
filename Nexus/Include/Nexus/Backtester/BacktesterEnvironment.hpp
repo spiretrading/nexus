@@ -9,7 +9,8 @@
 #include <Beam/Threading/Mutex.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/noncopyable.hpp>
-#include <boost/thread/mutex.hpp>
+#include <boost/optional/optional.hpp>
+#include <boost/variant/variant.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
@@ -50,6 +51,13 @@ namespace Nexus {
       void Close();
 
     private:
+      using SequencedMarketDataValue =
+        boost::variant<SequencedBboQuote, SequencedTimeAndSale>;
+      struct SecurityEntry {
+        Security m_security;
+        std::deque<SequencedBboQuote> m_bboQuotes;
+        std::deque<SequencedTimeAndSale> m_timeAndSales;
+      };
       friend class BacktesterMarketDataClient;
       friend class BacktesterServiceClients;
       mutable Beam::Threading::Mutex m_mutex;
@@ -57,11 +65,15 @@ namespace Nexus {
       MarketDataService::VirtualMarketDataClient* m_marketDataClient;
       boost::posix_time::ptime m_startTime;
       boost::posix_time::ptime m_endTime;
-      std::unordered_map<Security, std::deque<SequencedBboQuote>> m_bboQuotes;
+      std::unordered_map<Security, SecurityEntry> m_securityEntries;
       TestEnvironment m_testEnvironment;
       Beam::Routines::RoutineHandler m_eventLoopRoutine;
       Beam::IO::OpenState m_openState;
 
+      static const boost::posix_time::ptime& GetTimestamp(
+        const SequencedMarketDataValue& value);
+      boost::optional<SequencedMarketDataValue> LoadNextValue(
+        const SecurityEntry& entry);
       void EventLoop();
       void QueryBboQuotes(
         const MarketDataService::SecurityMarketDataQuery& query);
@@ -110,62 +122,49 @@ namespace Nexus {
     Shutdown();
   }
 
+  inline const boost::posix_time::ptime& BacktesterEnvironment::GetTimestamp(
+      const SequencedMarketDataValue& value) {
+    if(auto quote = boost::get<const SequencedBboQuote*>(value)) {
+      return Beam::Queries::GetTimestamp(quote->GetValue());
+    } else {
+      return Beam::Queries::GetTimestamp(
+        boost::get<const SequencedTimeAndSale&>(value).GetValue());
+    }
+  }
+
+  inline boost::optional<BacktesterEnvironment::SequencedMarketDataValue>
+      BacktesterEnvironment::LoadNextValue(const SecurityEntry& entry) {
+    return boost::none;
+  }
+
   inline void BacktesterEnvironment::EventLoop() {
     while(true) {
       {
+
+        // TODO: Don't hold lock when updating testEnvironment.
         boost::unique_lock<Beam::Threading::Mutex> lock{m_mutex};
-        while(m_openState.IsOpen() && m_bboQuotes.empty()) {
+        while(m_openState.IsOpen() && m_securityEntries.empty()) {
           m_marketDataCondition.wait(lock);
         }
         if(!m_openState.IsOpen()) {
           return;
         }
-        auto i = m_bboQuotes.begin();
-        while(i != m_bboQuotes.end()) {
-          auto& entry = *i;
-          if(entry.second.size() <= 1) {
-            MarketDataService::SecurityMarketDataQuery historicalQuery;
-            historicalQuery.SetIndex(entry.first);
-            auto endRange =
-              [&] {
-                if(m_endTime == boost::posix_time::pos_infin) {
-                  return Beam::Queries::Range::Point{
-                    Beam::Queries::Sequence::Present()};
-                } else {
-                  return Beam::Queries::Range::Point{m_endTime};
-                }
-              }();
-            if(entry.second.empty()) {
-              if(m_testEnvironment.GetTimeEnvironment().GetTime() <
-                  m_endTime) {
-                historicalQuery.SetRange(
-                  m_testEnvironment.GetTimeEnvironment().GetTime(), endRange);
-              } else {
-                historicalQuery.SetRange(Beam::Queries::Range::Empty());
-              }
-            } else {
-              historicalQuery.SetRange(
-                Beam::Queries::Increment(entry.second.front().GetSequence()),
-                endRange);
-            }
-            if(historicalQuery.GetRange() != Beam::Queries::Range::Empty()) {
-              historicalQuery.SetSnapshotLimit(
-                Beam::Queries::SnapshotLimit::Type::HEAD, 1000);
-              auto queue = std::make_shared<Beam::Queue<SequencedBboQuote>>();
-              m_marketDataClient->QueryBboQuotes(historicalQuery, queue);
-              Beam::FlushQueue(queue, std::back_inserter(entry.second));
+        Security security;
+        boost::optional<SequencedMarketDataValue> nextValue;
+        for(auto& securityEntry : m_securityEntries) {
+          auto value = LoadNextValue(securityEntry.second);
+          if(value.is_initialized()) {
+            if(!nextValue.is_initialized() ||
+                GetTimestamp(*value) < GetTimestamp(*nextValue)) {
+              security = securityEntry.first;
+              nextValue = std::move(value);
             }
           }
-          if(!entry.second.empty()) {
-            m_testEnvironment.Update(entry.first,
-              std::move(entry.second.front()));
-            entry.second.pop_front();
-          }
-          if(entry.second.empty()) {
-            i = m_bboQuotes.erase(i);
-          } else {
-            ++i;
-          }
+        }
+        if(nextValue.is_initialized()) {
+//        m_securityEntries[security].pop_front();
+//          m_testEnvironment.Update(security,
+//            std::move(entry.second.front()));
         }
       }
     }
@@ -178,11 +177,13 @@ namespace Nexus {
     }
     {
       boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
+/*
       if(m_bboQuotes.find(query.GetIndex()) != m_bboQuotes.end()) {
         return;
       }
       m_bboQuotes[query.GetIndex()] = std::deque<SequencedBboQuote>();
       m_marketDataCondition.notify_one();
+*/
     }
     Beam::Routines::FlushPendingRoutines();
   }
