@@ -197,24 +197,25 @@ namespace Details {
   struct SqlFunctor {
     std::string operator ()(MarketCode market) const {
       std::string index = "market = \"";
-      index += market.GetData();
+      index += Beam::Queries::EscapeSql(market.GetData());
       index += "\"";
       return index;
     };
 
     std::string InsertKey(MarketCode market) const {
-      return "\"" + std::string(market.GetData()) + "\"";
+      return "\"" + Beam::Queries::EscapeSql(market.GetData()) + "\"";
     }
 
     std::string operator ()(const Security& security) const {
-      std::string index = "symbol = \"" + security.GetSymbol() +
+      std::string index = "symbol = \"" +
+        Beam::Queries::EscapeSql(security.GetSymbol()) +
         "\" AND country = " + boost::lexical_cast<std::string>(
         static_cast<int>(security.GetCountry()));
       return index;
     };
 
     std::string InsertKey(const Security& security) const {
-      return "\"" + security.GetSymbol() + "\", " +
+      return "\"" + Beam::Queries::EscapeSql(security.GetSymbol()) + "\", " +
         boost::lexical_cast<std::string>(
         static_cast<int>(security.GetCountry()));
     }
