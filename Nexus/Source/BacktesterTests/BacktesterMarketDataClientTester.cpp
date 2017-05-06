@@ -35,13 +35,14 @@ void BacktesterMarketDataClientTester::TestRealTimeQuery() {
   BacktesterServiceClients backtesterServiceClients{
     Ref(backtesterEnvironment)};
   backtesterServiceClients.Open();
+  RoutineTaskQueue routines;
   auto& marketDataClient = backtesterServiceClients.GetMarketDataClient();
   auto query = BuildRealTimeWithSnapshotQuery(security);
-  auto queue = std::make_shared<Queue<SequencedBboQuote>>();
-  marketDataClient.QueryBboQuotes(query, queue);
-  while(true) {
-    auto quote = queue->Top();
-    queue->Pop();
-    std::cout << quote << std::endl;
-  }
+  auto expectedSequence = Beam::Queries::Sequence{
+    static_cast<Beam::Queries::Sequence::Ordinal>(1)};
+  marketDataClient.QueryBboQuotes(query, routines.GetSlot<SequencedBboQuote>(
+    [&] (const SequencedBboQuote& bboQuote) {
+      CPPUNIT_ASSERT(bboQuote.GetSequence() == expectedSequence);
+      expectedSequence = Increment(expectedSequence);
+    }));
 }
