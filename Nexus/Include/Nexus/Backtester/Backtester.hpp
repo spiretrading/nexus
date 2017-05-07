@@ -4,6 +4,7 @@
 namespace Nexus {
   class BacktesterEnvironment;
   class BacktesterMarketDataClient;
+  class BacktesterOrderExecutionClient;
   class BacktesterServiceClients;
 }
 

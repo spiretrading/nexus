@@ -255,9 +255,9 @@ namespace Nexus {
   }
 
   inline void BacktesterEnvironment::Shutdown() {
-    m_testEnvironment.Close();
     m_marketDataCondition.notify_one();
     m_eventLoopRoutine.Wait();
+    m_testEnvironment.Close();
     m_openState.SetClosed();
   }
 }

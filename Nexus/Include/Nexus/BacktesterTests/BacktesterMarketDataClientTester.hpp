@@ -1,7 +1,6 @@
 #ifndef NEXUS_BACKTESTERMARKETDATACLIENTTESTER_HPP
 #define NEXUS_BACKTESTERMARKETDATACLIENTTESTER_HPP
 #include <Beam/Utilities/BeamWorkaround.hpp>
-#include <boost/optional/optional.hpp>
 #include <cppunit/extensions/HelperMacros.h>
 #include "Nexus/BacktesterTests/BacktesterTests.hpp"
 

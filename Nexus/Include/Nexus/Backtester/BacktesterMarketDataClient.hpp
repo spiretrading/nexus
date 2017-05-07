@@ -1,7 +1,7 @@
 #ifndef NEXUS_BACKTESTERMARKETDATACLIENT_HPP
 #define NEXUS_BACKTESTERMARKETDATACLIENT_HPP
-#include <atomic>
 #include <Beam/IO/OpenState.hpp>
+#include <Beam/Pointers/Ref.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterEnvironment.hpp"

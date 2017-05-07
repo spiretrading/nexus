@@ -1,9 +1,9 @@
-#include "Nexus/BacktesterTests/BacktesterMarketDataClientTester.hpp"
+#include "Nexus/BacktesterTests/BacktesterOrderExecutionClientTester.hpp"
+#include <Beam/Queues/StateQueue.hpp>
 #include <Beam/Threading/ConditionVariable.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include "Nexus/Backtester/BacktesterEnvironment.hpp"
 #include "Nexus/Backtester/BacktesterServiceClients.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
 
 using namespace Beam;
@@ -14,19 +14,20 @@ using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
+using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Tests;
 using namespace std;
 
-void BacktesterMarketDataClientTester::TestRealTimeQuery() {
+void BacktesterOrderExecutionClientTester::TestOrderSubmissionAndFill() {
   ptime startTime{date{2016, 5, 6}, seconds(0)};
   TestEnvironment testEnvironment;
   testEnvironment.Open();
   Security security{"TST", DefaultMarkets::NYSE(), DefaultCountries::US()};
   for(auto i = 0; i < 100; ++i) {
     auto bboQuote = MakeSequencedValue(MakeIndexedValue(
-      BboQuote{Quote{Money::ONE, 100, Side::BID},
-      Quote{Money::ONE, 100, Side::ASK}, startTime + seconds(i)}, security),
-      Beam::Queries::Sequence{
+      BboQuote{Quote{Money::ONE - i * Money::CENT, 100, Side::BID},
+      Quote{Money::ONE  - i * Money::CENT, 100, Side::ASK},
+      startTime + seconds(i)}, security), Beam::Queries::Sequence{
       static_cast<Beam::Queries::Sequence::Ordinal>(i)});
     testEnvironment.GetMarketDataEnvironment().GetDataStore().Store(bboQuote);
   }
@@ -38,27 +39,31 @@ void BacktesterMarketDataClientTester::TestRealTimeQuery() {
   BacktesterServiceClients backtesterServiceClients{
     Ref(backtesterEnvironment)};
   backtesterServiceClients.Open();
-  RoutineTaskQueue routines;
   auto& marketDataClient = backtesterServiceClients.GetMarketDataClient();
-  auto query = BuildRealTimeWithSnapshotQuery(security);
-  auto expectedTimestamp = startTime;
-  auto finalTimestamp = startTime + seconds(99);
+  auto& orderExecutionClient =
+    backtesterServiceClients.GetOrderExecutionClient();
+  RoutineTaskQueue routines;
+  auto bboQuoteQueue = std::make_shared<StateQueue<BboQuote>>();
   Mutex queryCompleteMutex;
   ConditionVariable queryCompleteCondition;
   optional<bool> testSucceeded;
-  marketDataClient.QueryBboQuotes(query, routines.GetSlot<SequencedBboQuote>(
-    [&] (const SequencedBboQuote& bboQuote) {
+  routines.Push(
+    [&] {
+      auto bboQuery = BuildRealTimeWithSnapshotQuery(security);
+      marketDataClient.QueryBboQuotes(bboQuery, bboQuoteQueue);
+      auto fields = OrderFields::BuildLimitOrder(security, Side::BID, 100,
+        90 * Money::CENT);
+      auto& order = orderExecutionClient.Submit(fields);
+      order.GetPublisher().Monitor(
+        routines.GetSlot<ExecutionReport>(
+        [=] (const ExecutionReport& report) {
+          std::cout << bboQuoteQueue->Top().m_timestamp << std::endl;
+          std::cout << report.m_status << std::endl;
+        }));
       boost::lock_guard<Mutex> lock{queryCompleteMutex};
-      if(bboQuote->m_timestamp != expectedTimestamp) {
-        testSucceeded = false;
-        queryCompleteCondition.notify_one();
-      } else if(expectedTimestamp == finalTimestamp) {
-        testSucceeded = true;
-        queryCompleteCondition.notify_one();
-      } else {
-        expectedTimestamp = expectedTimestamp + seconds(1);
-      }
-    }));
+      testSucceeded = true;
+      queryCompleteCondition.notify_one();
+    });
   boost::unique_lock<Mutex> lock{queryCompleteMutex};
   while(!testSucceeded.is_initialized()) {
     queryCompleteCondition.wait(lock);
