@@ -2,8 +2,10 @@
 #define NEXUS_BACKTESTERENVIRONMENT_HPP
 #include <deque>
 #include <unordered_map>
+#include <vector>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
+#include <Beam/Queues/Queue.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/Threading/ConditionVariable.hpp>
 #include <Beam/Threading/Mutex.hpp>
@@ -13,6 +15,7 @@
 #include <boost/variant/variant.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
+#include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
 
 namespace Nexus {
@@ -57,10 +60,13 @@ namespace Nexus {
         Security m_security;
         boost::optional<std::deque<SequencedBboQuote>> m_bboQuotes;
         Beam::Queries::Sequence m_lastBboSequence;
+        boost::optional<BboQuote> m_currentBbo;
         boost::optional<std::deque<SequencedTimeAndSale>> m_timeAndSales;
         Beam::Queries::Sequence m_lastTimeAndSaleSequence;
+        std::vector<const OrderExecutionService::Order*> m_pendingOrders;
       };
       friend class BacktesterMarketDataClient;
+      friend class BacktesterOrderExecutionClient;
       friend class BacktesterServiceClients;
       mutable Beam::Threading::Mutex m_mutex;
       mutable Beam::Threading::ConditionVariable m_marketDataCondition;
@@ -69,6 +75,8 @@ namespace Nexus {
       boost::posix_time::ptime m_endTime;
       std::unordered_map<Security, SecurityEntry> m_securityEntries;
       TestEnvironment m_testEnvironment;
+      std::unordered_map<OrderExecutionService::OrderId,
+        const OrderExecutionService::Order*> m_orders;
       Beam::Routines::RoutineHandler m_eventLoopRoutine;
       Beam::IO::OpenState m_openState;
 
@@ -81,6 +89,7 @@ namespace Nexus {
       void EventLoop();
       void QueryBboQuotes(
         const MarketDataService::SecurityMarketDataQuery& query);
+      void Submit(const OrderExecutionService::Order& order);
       void Shutdown();
   };
 
@@ -192,8 +201,31 @@ namespace Nexus {
   inline void BacktesterEnvironment::UpdateMarketData(const Security& security,
       const SequencedMarketDataValue& value) {
     if(auto quote = boost::get<const SequencedBboQuote>(&value)) {
-      m_securityEntries[security].m_bboQuotes->pop_front();
+      auto& securityEntry = m_securityEntries[security];
+      securityEntry.m_bboQuotes->pop_front();
       m_testEnvironment.Update(security, *quote);
+      securityEntry.m_currentBbo = *quote;
+      auto orderIterator = securityEntry.m_pendingOrders.begin();
+      while(orderIterator != securityEntry.m_pendingOrders.end()) {
+        auto& order = *orderIterator;
+        if(order->GetInfo().m_fields.m_side == Side::BID &&
+            securityEntry.m_currentBbo->m_ask.m_price <=
+            order->GetInfo().m_fields.m_price) {
+          m_testEnvironment.FillOrder(*order,
+            securityEntry.m_currentBbo->m_ask.m_price,
+            order->GetInfo().m_fields.m_quantity);
+          orderIterator = securityEntry.m_pendingOrders.erase(orderIterator);
+        } else if(order->GetInfo().m_fields.m_side == Side::ASK &&
+            securityEntry.m_currentBbo->m_bid.m_price >=
+            order->GetInfo().m_fields.m_price) {
+          m_testEnvironment.FillOrder(*order,
+            securityEntry.m_currentBbo->m_bid.m_price,
+            order->GetInfo().m_fields.m_quantity);
+          orderIterator = securityEntry.m_pendingOrders.erase(orderIterator);
+        } else {
+          ++orderIterator;
+        }
+      }
     } else {
       m_securityEntries[security].m_timeAndSales->pop_front();
     }
@@ -252,6 +284,36 @@ namespace Nexus {
       m_marketDataCondition.notify_one();
     }
     Beam::Routines::FlushPendingRoutines();
+  }
+
+  inline void BacktesterEnvironment::Submit(
+      const OrderExecutionService::Order& order) {
+    boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
+    m_orders.insert(std::make_pair(order.GetInfo().m_orderId, &order));
+    m_testEnvironment.AcceptOrder(order);
+    if(order.GetInfo().m_fields.m_type == OrderType::LIMIT) {
+      auto& securityEntry =
+        m_securityEntries[order.GetInfo().m_fields.m_security];
+      if(securityEntry.m_currentBbo.is_initialized()) {
+        if(order.GetInfo().m_fields.m_side == Side::BID &&
+            securityEntry.m_currentBbo->m_ask.m_price <=
+            order.GetInfo().m_fields.m_price) {
+          m_testEnvironment.FillOrder(order,
+            securityEntry.m_currentBbo->m_ask.m_price,
+            order.GetInfo().m_fields.m_quantity);
+        } else if(order.GetInfo().m_fields.m_side == Side::ASK &&
+            securityEntry.m_currentBbo->m_bid.m_price >=
+            order.GetInfo().m_fields.m_price) {
+          m_testEnvironment.FillOrder(order,
+            securityEntry.m_currentBbo->m_bid.m_price,
+            order.GetInfo().m_fields.m_quantity);
+        } else {
+          securityEntry.m_pendingOrders.push_back(&order);
+        }
+      } else {
+        securityEntry.m_pendingOrders.push_back(&order);
+      }
+    }
   }
 
   inline void BacktesterEnvironment::Shutdown() {

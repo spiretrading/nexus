@@ -22,7 +22,8 @@ void BacktesterMarketDataClientTester::TestRealTimeQuery() {
   TestEnvironment testEnvironment;
   testEnvironment.Open();
   Security security{"TST", DefaultMarkets::NYSE(), DefaultCountries::US()};
-  for(auto i = 0; i < 100; ++i) {
+  auto COUNT = 3;
+  for(auto i = 0; i < COUNT; ++i) {
     auto bboQuote = MakeSequencedValue(MakeIndexedValue(
       BboQuote{Quote{Money::ONE, 100, Side::BID},
       Quote{Money::ONE, 100, Side::ASK}, startTime + seconds(i)}, security),
@@ -42,7 +43,7 @@ void BacktesterMarketDataClientTester::TestRealTimeQuery() {
   auto& marketDataClient = backtesterServiceClients.GetMarketDataClient();
   auto query = BuildRealTimeWithSnapshotQuery(security);
   auto expectedTimestamp = startTime;
-  auto finalTimestamp = startTime + seconds(99);
+  auto finalTimestamp = startTime + seconds(COUNT - 1);
   Mutex queryCompleteMutex;
   ConditionVariable queryCompleteCondition;
   optional<bool> testSucceeded;

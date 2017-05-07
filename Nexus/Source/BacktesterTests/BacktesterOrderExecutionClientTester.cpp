@@ -56,13 +56,15 @@ void BacktesterOrderExecutionClientTester::TestOrderSubmissionAndFill() {
       auto& order = orderExecutionClient.Submit(fields);
       order.GetPublisher().Monitor(
         routines.GetSlot<ExecutionReport>(
-        [=] (const ExecutionReport& report) {
+        [&] (const ExecutionReport& report) {
           std::cout << bboQuoteQueue->Top().m_timestamp << std::endl;
           std::cout << report.m_status << std::endl;
+          if(report.m_status == OrderStatus::FILLED) {
+            boost::lock_guard<Mutex> lock{queryCompleteMutex};
+            testSucceeded = true;
+            queryCompleteCondition.notify_one();
+          }
         }));
-      boost::lock_guard<Mutex> lock{queryCompleteMutex};
-      testSucceeded = true;
-      queryCompleteCondition.notify_one();
     });
   boost::unique_lock<Mutex> lock{queryCompleteMutex};
   while(!testSucceeded.is_initialized()) {

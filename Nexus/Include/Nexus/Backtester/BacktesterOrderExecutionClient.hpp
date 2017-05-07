@@ -115,7 +115,9 @@ namespace Nexus {
   inline const OrderExecutionService::Order&
       BacktesterOrderExecutionClient::Submit(
       const OrderExecutionService::OrderFields& fields) {
-    return m_orderExecutionClient->Submit(fields);
+    auto& order = m_orderExecutionClient->Submit(fields);
+    m_environment->Submit(order);
+    return order;
   }
 
   inline void BacktesterOrderExecutionClient::Cancel(
