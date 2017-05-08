@@ -75,6 +75,8 @@ namespace Nexus {
       boost::posix_time::ptime m_endTime;
       std::unordered_map<Security, SecurityEntry> m_securityEntries;
       TestEnvironment m_testEnvironment;
+      std::shared_ptr<Beam::Queue<const OrderExecutionService::Order*>>
+        m_orderSubmissionQueue;
       std::unordered_map<OrderExecutionService::OrderId,
         const OrderExecutionService::Order*> m_orders;
       Beam::Routines::RoutineHandler m_eventLoopRoutine;
@@ -90,6 +92,7 @@ namespace Nexus {
       void QueryBboQuotes(
         const MarketDataService::SecurityMarketDataQuery& query);
       void Submit(const OrderExecutionService::Order& order);
+      void Cancel(const OrderExecutionService::Order& order);
       void Shutdown();
   };
 
@@ -105,7 +108,9 @@ namespace Nexus {
       boost::posix_time::ptime endTime)
       : m_marketDataClient{marketDataClient.Get()},
         m_startTime{std::move(startTime)},
-        m_endTime{std::move(endTime)} {}
+        m_endTime{std::move(endTime)},
+        m_orderSubmissionQueue{std::make_shared<
+          Beam::Queue<const OrderExecutionService::Order*>>()} {}
 
   inline BacktesterEnvironment::~BacktesterEnvironment() {
     Close();
@@ -119,6 +124,7 @@ namespace Nexus {
       m_marketDataClient->Open();
       m_testEnvironment.SetTime(m_startTime);
       m_testEnvironment.Open();
+      m_testEnvironment.MonitorOrderSubmissions(m_orderSubmissionQueue);
       m_eventLoopRoutine = Beam::Routines::Spawn(
         std::bind(&BacktesterEnvironment::EventLoop, this));
     } catch(const std::exception&) {
@@ -289,29 +295,82 @@ namespace Nexus {
   inline void BacktesterEnvironment::Submit(
       const OrderExecutionService::Order& order) {
     boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
-    m_orders.insert(std::make_pair(order.GetInfo().m_orderId, &order));
-    m_testEnvironment.AcceptOrder(order);
-    if(order.GetInfo().m_fields.m_type == OrderType::LIMIT) {
+    auto serverOrder =
+      [&] {
+        auto orderIterator = m_orders.find(order.GetInfo().m_orderId);
+        if(orderIterator == m_orders.end()) {
+          while(true) {
+            auto orderSubmission = m_orderSubmissionQueue->Top();
+            m_orderSubmissionQueue->Pop();
+            m_orders.insert(std::make_pair(
+              orderSubmission->GetInfo().m_orderId, orderSubmission));
+            if(orderSubmission->GetInfo().m_orderId ==
+                order.GetInfo().m_orderId) {
+              return orderSubmission;
+            }
+          }
+        }
+        return orderIterator->second;
+      }();
+    if(serverOrder->GetInfo().m_fields.m_type == OrderType::LIMIT) {
+      m_testEnvironment.AcceptOrder(*serverOrder);
       auto& securityEntry =
-        m_securityEntries[order.GetInfo().m_fields.m_security];
+        m_securityEntries[serverOrder->GetInfo().m_fields.m_security];
       if(securityEntry.m_currentBbo.is_initialized()) {
-        if(order.GetInfo().m_fields.m_side == Side::BID &&
+        if(serverOrder->GetInfo().m_fields.m_side == Side::BID &&
             securityEntry.m_currentBbo->m_ask.m_price <=
-            order.GetInfo().m_fields.m_price) {
-          m_testEnvironment.FillOrder(order,
+            serverOrder->GetInfo().m_fields.m_price) {
+          m_testEnvironment.FillOrder(*serverOrder,
             securityEntry.m_currentBbo->m_ask.m_price,
-            order.GetInfo().m_fields.m_quantity);
-        } else if(order.GetInfo().m_fields.m_side == Side::ASK &&
+            serverOrder->GetInfo().m_fields.m_quantity);
+        } else if(serverOrder->GetInfo().m_fields.m_side == Side::ASK &&
             securityEntry.m_currentBbo->m_bid.m_price >=
-            order.GetInfo().m_fields.m_price) {
-          m_testEnvironment.FillOrder(order,
+            serverOrder->GetInfo().m_fields.m_price) {
+          m_testEnvironment.FillOrder(*serverOrder,
             securityEntry.m_currentBbo->m_bid.m_price,
-            order.GetInfo().m_fields.m_quantity);
+            serverOrder->GetInfo().m_fields.m_quantity);
         } else {
-          securityEntry.m_pendingOrders.push_back(&order);
+          securityEntry.m_pendingOrders.push_back(serverOrder);
         }
       } else {
-        securityEntry.m_pendingOrders.push_back(&order);
+        securityEntry.m_pendingOrders.push_back(serverOrder);
+      }
+    } else {
+      m_testEnvironment.RejectOrder(*serverOrder);
+    }
+  }
+
+  inline void BacktesterEnvironment::Cancel(
+      const OrderExecutionService::Order& order) {
+    const OrderExecutionService::Order* serverOrder;
+    {
+      boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
+      auto orderIterator = m_orders.find(order.GetInfo().m_orderId);
+      if(orderIterator == m_orders.end()) {
+        return;
+      }
+      serverOrder = orderIterator->second;
+      auto& securityEntry =
+        m_securityEntries[serverOrder->GetInfo().m_fields.m_security];
+      auto pendingOrderIterator =
+        std::find(securityEntry.m_pendingOrders.begin(),
+        securityEntry.m_pendingOrders.end(), serverOrder);
+      if(pendingOrderIterator == securityEntry.m_pendingOrders.end()) {
+        return;
+      }
+      securityEntry.m_pendingOrders.erase(pendingOrderIterator);
+    }
+    auto queue = std::make_shared<
+      Beam::Queue<OrderExecutionService::ExecutionReport>>();
+    serverOrder->GetPublisher().Monitor(queue);
+    while(true) {
+      auto executionReport = queue->Top();
+      queue->Pop();
+      if(IsTerminal(executionReport.m_status)) {
+        return;
+      } else if(executionReport.m_status == OrderStatus::PENDING_CANCEL) {
+        m_testEnvironment.CancelOrder(*serverOrder);
+        return;
       }
     }
   }

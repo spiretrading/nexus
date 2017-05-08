@@ -16,9 +16,13 @@ namespace Tests {
       //! Tests submitting an Order and having it get filled.
       void TestOrderSubmissionAndFill();
 
+      //! Tests submitting an Order and cancelling it.
+      void TestOrderSubmissionAndCancel();
+
     private:
       CPPUNIT_TEST_SUITE(BacktesterOrderExecutionClientTester);
         CPPUNIT_TEST(TestOrderSubmissionAndFill);
+        CPPUNIT_TEST(TestOrderSubmissionAndCancel);
       BEAM_CPPUNIT_TEST_SUITE_END();
   };
 }

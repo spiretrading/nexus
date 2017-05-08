@@ -123,6 +123,7 @@ namespace Nexus {
   inline void BacktesterOrderExecutionClient::Cancel(
       const OrderExecutionService::Order& order) {
     m_orderExecutionClient->Cancel(order);
+    m_environment->Cancel(order);
   }
 
   inline void BacktesterOrderExecutionClient::Open() {
