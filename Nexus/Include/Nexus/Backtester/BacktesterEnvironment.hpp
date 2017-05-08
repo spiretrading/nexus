@@ -240,8 +240,6 @@ namespace Nexus {
   inline void BacktesterEnvironment::EventLoop() {
     while(true) {
       {
-
-        // TODO: Don't hold lock when updating testEnvironment.
         boost::unique_lock<Beam::Threading::Mutex> lock{m_mutex};
         while(m_openState.IsOpen() && m_securityEntries.empty()) {
           m_marketDataCondition.wait(lock);
@@ -331,6 +329,23 @@ namespace Nexus {
             serverOrder->GetInfo().m_fields.m_quantity);
         } else {
           securityEntry.m_pendingOrders.push_back(serverOrder);
+        }
+      } else {
+        securityEntry.m_pendingOrders.push_back(serverOrder);
+      }
+    } else if(serverOrder->GetInfo().m_fields.m_type == OrderType::MARKET) {
+      m_testEnvironment.AcceptOrder(*serverOrder);
+      auto& securityEntry =
+        m_securityEntries[serverOrder->GetInfo().m_fields.m_security];
+      if(securityEntry.m_currentBbo.is_initialized()) {
+        if(serverOrder->GetInfo().m_fields.m_side == Side::BID) {
+          m_testEnvironment.FillOrder(*serverOrder,
+            securityEntry.m_currentBbo->m_ask.m_price,
+            serverOrder->GetInfo().m_fields.m_quantity);
+        } else if(serverOrder->GetInfo().m_fields.m_side == Side::ASK) {
+          m_testEnvironment.FillOrder(*serverOrder,
+            securityEntry.m_currentBbo->m_bid.m_price,
+            serverOrder->GetInfo().m_fields.m_quantity);
         }
       } else {
         securityEntry.m_pendingOrders.push_back(serverOrder);
