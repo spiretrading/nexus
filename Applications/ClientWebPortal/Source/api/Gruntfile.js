@@ -7,6 +7,9 @@ module.exports = function(grunt) {
       },
       tempDist: {
         src: ['temp-dist']
+      },
+      transpiledTests: {
+        src: ['spec/transpiled']
       }
     },
     babel: {
@@ -66,6 +69,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('build-dev', [
     'clean:dist',
+    'clean:transpiledTests',
     'babel:dev',
     'babel:tests',
     'exec:jasmine'

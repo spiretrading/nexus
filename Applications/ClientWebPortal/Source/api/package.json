@@ -12,6 +12,7 @@
   ],
   "author": "Spire",
   "dependencies": {
+    "fraction.js": "^4.0.0",
     "hashmap": "^2.0.6",
     "popsicle": "^8.2.0",
     "uuid": "^3.0.1",

@@ -1,9 +1,10 @@
 import CurrencyPair from '../currency-pair';
+import Fraction from 'fraction.js';
 
 class ExchangeRate {
   constructor(currencyPair, rate) {
     this.currencyPair = currencyPair;
-    this.rate = rate;
+    this.rate = new Fraction(rate);
   }
 
   clone() {
@@ -14,7 +15,7 @@ class ExchangeRate {
 
 ExchangeRate.invert = exchangeRate => {
   let invertedCurrencyPair = CurrencyPair.invert(exchangeRate.currencyPair);
-  let invertedRate = 1 / exchangeRate.rate;
+  let invertedRate = exchangeRate.rate.inverse();
   return new ExchangeRate(invertedCurrencyPair, invertedRate);
 };
 

@@ -24,7 +24,7 @@ describe("ExchangeRateTable", function() {
     this.exchangeRateTable.add.apply(this.exchangeRateTable, [this.exchangeRate]);
     let counterExchangeRates = this.exchangeRateTable.exchangeRates.get(840);
     let exchangeRate = counterExchangeRates.get(124);
-    expect(0.25).toBe(exchangeRate.rate);
+    expect(0.25).toBe(exchangeRate.rate.valueOf());
   });
 
   it("Find an exchange rate - currency in right order", function() {
@@ -32,7 +32,7 @@ describe("ExchangeRateTable", function() {
     let counterCurrencyId = new CurrencyId(124);
     let currencyPair = new CurrencyPair(baseCurrencyId, counterCurrencyId);
     let exchangeRate = this.exchangeRateTable.find.apply(this.exchangeRateTable, [currencyPair]);
-    expect(0.25).toBe(exchangeRate.rate);
+    expect(0.25).toBe(exchangeRate.rate.valueOf());
     expect(840).toBe(exchangeRate.currencyPair.base.toNumber());
     expect(124).toBe(exchangeRate.currencyPair.counter.toNumber());
   });
@@ -42,7 +42,7 @@ describe("ExchangeRateTable", function() {
     let counterCurrencyId = new CurrencyId(840);
     let currencyPair = new CurrencyPair(baseCurrencyId, counterCurrencyId);
     let exchangeRate = this.exchangeRateTable.find.apply(this.exchangeRateTable, [currencyPair]);
-    expect(4).toBe(exchangeRate.rate);
+    expect(4).toBe(exchangeRate.rate.valueOf());
     expect(124).toBe(exchangeRate.currencyPair.base.toNumber());
     expect(840).toBe(exchangeRate.currencyPair.counter.toNumber());
   });

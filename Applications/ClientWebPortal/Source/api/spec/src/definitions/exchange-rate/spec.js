@@ -20,7 +20,7 @@ describe("ExchangeRate", function() {
     let invertedRate = ExchangeRate.invert(this.exchangeRate);
     expect(124).toBe(invertedRate.currencyPair.base.toNumber());
     expect(840).toBe(invertedRate.currencyPair.counter.toNumber());
-    expect(4).toBe(invertedRate.rate);
+    expect(4).toBe(invertedRate.rate.valueOf());
   });
 
   it("Convert money.", function() {
