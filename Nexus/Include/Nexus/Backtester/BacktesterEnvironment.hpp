@@ -310,6 +310,13 @@ namespace Nexus {
         }
         return orderIterator->second;
       }();
+    if(serverOrder->GetInfo().m_fields.m_timeInForce.GetType() !=
+        TimeInForce::Type::DAY &&
+        serverOrder->GetInfo().m_fields.m_timeInForce.GetType() !=
+        TimeInForce::Type::GTC) {
+      m_testEnvironment.RejectOrder(*serverOrder);
+      return;
+    }
     if(serverOrder->GetInfo().m_fields.m_type == OrderType::LIMIT) {
       m_testEnvironment.AcceptOrder(*serverOrder);
       auto& securityEntry =
