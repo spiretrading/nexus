@@ -91,8 +91,8 @@ void Nexus::Python::ExportBacktester() {
 void Nexus::Python::ExportBacktesterEnvironment() {
   class_<BacktesterEnvironment, std::shared_ptr<BacktesterEnvironment>,
       boost::noncopyable>("BacktesterEnvironment", no_init)
-    .def("__init__", &MakeBacktesterEnvironmentA)
-    .def("__init__", &MakeBacktesterEnvironmentB)
+    .def("__init__", make_constructor(&MakeBacktesterEnvironmentA))
+    .def("__init__", make_constructor(&MakeBacktesterEnvironmentB))
     .def("open", BlockingFunction(&BacktesterEnvironment::Open))
     .def("close", BlockingFunction(&BacktesterEnvironment::Close));
 }
