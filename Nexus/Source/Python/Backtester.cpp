@@ -19,15 +19,15 @@ using namespace std;
 
 namespace {
   std::shared_ptr<BacktesterEnvironment> MakeBacktesterEnvironmentA(
-      VirtualMarketDataClient* marketDataClient, const ptime& startTime) {
-    return std::make_shared<BacktesterEnvironment>(Ref(*marketDataClient),
+      PythonMarketDataClient& marketDataClient, const ptime& startTime) {
+    return std::make_shared<BacktesterEnvironment>(Ref(marketDataClient),
       startTime);
   }
 
   std::shared_ptr<BacktesterEnvironment> MakeBacktesterEnvironmentB(
-      VirtualMarketDataClient* marketDataClient, const ptime& startTime,
+      PythonMarketDataClient& marketDataClient, const ptime& startTime,
       const ptime& endTime) {
-    return std::make_shared<BacktesterEnvironment>(Ref(*marketDataClient),
+    return std::make_shared<BacktesterEnvironment>(Ref(marketDataClient),
       startTime, endTime);
   }
 
