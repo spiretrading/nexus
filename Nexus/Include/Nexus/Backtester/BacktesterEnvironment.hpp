@@ -14,31 +14,12 @@
 #include <boost/optional/optional.hpp>
 #include <boost/variant/variant.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
+#include "Nexus/Backtester/BacktesterEvent.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
 
 namespace Nexus {
-namespace Details {
-  struct TimerExpiredEvent {
-    Beam::Threading::Mutex m_mutex;
-    BacktesterTimer* m_timer;
-    Beam::Threading::Timer::Result m_result;
-    boost::posix_time::ptime m_timestamp;
-    bool m_isTriggered;
-    Beam::Threading::ConditionVariable m_expiredCondition;
-
-    TimerExpiredEvent(BacktesterTimer& timer,
-        Beam::Threading::Timer::Result result,
-        boost::posix_time::ptime timestamp)
-        : m_timer{&timer},
-          m_result{result},
-          m_timestamp{timestamp},
-          m_isTriggered{false} {}
-  };
-
-  void TriggerTimer(TimerExpiredEvent& event);
-}
 
   /*! \class BacktesterEnvironment
       \brief Provides all of the services needed to run historical data.
@@ -95,7 +76,7 @@ namespace Details {
       boost::posix_time::ptime m_startTime;
       boost::posix_time::ptime m_endTime;
       std::unordered_map<Security, SecurityEntry> m_securityEntries;
-      std::deque<Details::TimerExpiredEvent*> m_timerEvents;
+      std::deque<BacktesterEvent*> m_timerEvents;
       TestEnvironment m_testEnvironment;
       std::shared_ptr<Beam::Queue<const OrderExecutionService::Order*>>
         m_orderSubmissionQueue;
@@ -261,11 +242,6 @@ namespace Details {
   }
 
   inline void BacktesterEnvironment::EventLoop() {
-    struct MarketDataEvent {
-      Security m_security;
-      SequencedMarketDataValue m_value;
-    };
-    using Event = boost::variant<MarketDataEvent, Details::TimerExpiredEvent*>;
     while(true) {
       {
         boost::unique_lock<Beam::Threading::Mutex> lock{m_mutex};
@@ -276,11 +252,11 @@ namespace Details {
         if(!m_openState.IsOpen()) {
           return;
         }
-        boost::posix_time::ptime nextTimestamp = boost::posix_time::pos_infin;
-        boost::optional<Event> nextEvent;
+        BacktesterEvent sentinelEvent;
+        BacktesterEvent* nextEvent = &sentinelEvent;
         if(!m_timerEvents.empty() &&
-            m_timerEvents.front()->m_timestamp < nextTimestamp) {
-          nextTimestamp = m_timerEvents.front()->m_timestamp;
+            m_timerEvents.front()->GetTimestamp() <
+            nextEvent->GetTimestamp()) {
           nextEvent = m_timerEvents.front();
         }
         for(auto& securityEntry : m_securityEntries) {
