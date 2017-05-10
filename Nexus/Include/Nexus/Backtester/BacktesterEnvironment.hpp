@@ -261,6 +261,11 @@ namespace Details {
   }
 
   inline void BacktesterEnvironment::EventLoop() {
+    struct MarketDataEvent {
+      Security m_security;
+      SequencedMarketDataValue m_value;
+    };
+    using Event = boost::variant<MarketDataEvent, Details::TimerExpiredEvent*>;
     while(true) {
       {
         boost::unique_lock<Beam::Threading::Mutex> lock{m_mutex};
@@ -271,35 +276,33 @@ namespace Details {
         if(!m_openState.IsOpen()) {
           return;
         }
-        Security security;
-        boost::optional<SequencedMarketDataValue> nextValue;
+        boost::posix_time::ptime nextTimestamp = boost::posix_time::pos_infin;
+        boost::optional<Event> nextEvent;
+        if(!m_timerEvents.empty() &&
+            m_timerEvents.front()->m_timestamp < nextTimestamp) {
+          nextTimestamp = m_timerEvents.front()->m_timestamp;
+          nextEvent = m_timerEvents.front();
+        }
         for(auto& securityEntry : m_securityEntries) {
           auto value = LoadNextValue(securityEntry.second);
-          if(value.is_initialized()) {
-            if(!nextValue.is_initialized() ||
-                GetTimestamp(*value) < GetTimestamp(*nextValue)) {
-              security = securityEntry.first;
-              nextValue = std::move(value);
-            }
+          if(value.is_initialized() && GetTimestamp(*value) < nextTimestamp) {
+            nextTimestamp = GetTimestamp(*value);
+            nextEvent = MarketDataEvent{securityEntry.first,
+              std::move(*value)};
           }
         }
-        if(nextValue.is_initialized()) {
-          if(m_timerEvents.empty() ||
-              m_timerEvents.front()->m_timestamp > GetTimestamp(*nextValue)) {
-            UpdateMarketData(security, *nextValue);
-          } else if(m_timerEvents.front()->m_timestamp <=
-              GetTimestamp(*nextValue)) {
-            auto timerEvent = m_timerEvents.front();
+        if(nextEvent.is_initialized()) {
+          if(auto timerEvent =
+              boost::get<Details::TimerExpiredEvent*>(&*nextEvent)) {
             m_timerEvents.pop_front();
-            Details::TriggerTimer(*timerEvent);
+            Details::TriggerTimer(**timerEvent);
+          } else if(auto marketDataEvent =
+              boost::get<MarketDataEvent>(&*nextEvent)) {
+            UpdateMarketData(marketDataEvent->m_security,
+              marketDataEvent->m_value);
           }
         } else {
           m_securityEntries.clear();
-          if(!m_timerEvents.empty()) {
-            auto timerEvent = m_timerEvents.front();
-            m_timerEvents.pop_front();
-            Details::TriggerTimer(*timerEvent);
-          }
         }
       }
     }
