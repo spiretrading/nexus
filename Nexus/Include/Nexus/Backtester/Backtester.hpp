@@ -6,6 +6,7 @@ namespace Nexus {
   class BacktesterMarketDataClient;
   class BacktesterOrderExecutionClient;
   class BacktesterServiceClients;
+  class BacktesterTimer;
 }
 
 #endif

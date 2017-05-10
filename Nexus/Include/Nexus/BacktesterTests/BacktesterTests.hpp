@@ -4,6 +4,8 @@
 namespace Nexus {
 namespace Tests {
   class BacktesterMarketDataClientTester;
+  class BacktesterOrderExecutionClientTester;
+  class BacktesterTimerTester;
 }
 }
 

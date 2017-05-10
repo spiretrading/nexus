@@ -19,6 +19,26 @@
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
 
 namespace Nexus {
+namespace Details {
+  struct TimerExpiredEvent {
+    Beam::Threading::Mutex m_mutex;
+    BacktesterTimer* m_timer;
+    Beam::Threading::Timer::Result m_result;
+    boost::posix_time::ptime m_timestamp;
+    bool m_isTriggered;
+    Beam::Threading::ConditionVariable m_expiredCondition;
+
+    TimerExpiredEvent(BacktesterTimer& timer,
+        Beam::Threading::Timer::Result result,
+        boost::posix_time::ptime timestamp)
+        : m_timer{&timer},
+          m_result{result},
+          m_timestamp{timestamp},
+          m_isTriggered{false} {}
+  };
+
+  void TriggerTimer(TimerExpiredEvent& event);
+}
 
   /*! \class BacktesterEnvironment
       \brief Provides all of the services needed to run historical data.
@@ -68,12 +88,14 @@ namespace Nexus {
       friend class BacktesterMarketDataClient;
       friend class BacktesterOrderExecutionClient;
       friend class BacktesterServiceClients;
+      friend class BacktesterTimer;
       mutable Beam::Threading::Mutex m_mutex;
-      mutable Beam::Threading::ConditionVariable m_marketDataCondition;
+      mutable Beam::Threading::ConditionVariable m_eventAvailableCondition;
       MarketDataService::VirtualMarketDataClient* m_marketDataClient;
       boost::posix_time::ptime m_startTime;
       boost::posix_time::ptime m_endTime;
       std::unordered_map<Security, SecurityEntry> m_securityEntries;
+      std::deque<Details::TimerExpiredEvent*> m_timerEvents;
       TestEnvironment m_testEnvironment;
       std::shared_ptr<Beam::Queue<const OrderExecutionService::Order*>>
         m_orderSubmissionQueue;
@@ -93,6 +115,7 @@ namespace Nexus {
         const MarketDataService::SecurityMarketDataQuery& query);
       void Submit(const OrderExecutionService::Order& order);
       void Cancel(const OrderExecutionService::Order& order);
+      void Expire(Details::TimerExpiredEvent& event);
       void Shutdown();
   };
 
@@ -241,8 +264,9 @@ namespace Nexus {
     while(true) {
       {
         boost::unique_lock<Beam::Threading::Mutex> lock{m_mutex};
-        while(m_openState.IsOpen() && m_securityEntries.empty()) {
-          m_marketDataCondition.wait(lock);
+        while(m_openState.IsOpen() && m_securityEntries.empty() &&
+            m_timerEvents.empty()) {
+          m_eventAvailableCondition.wait(lock);
         }
         if(!m_openState.IsOpen()) {
           return;
@@ -260,9 +284,22 @@ namespace Nexus {
           }
         }
         if(nextValue.is_initialized()) {
-          UpdateMarketData(security, *nextValue);
+          if(m_timerEvents.empty() ||
+              m_timerEvents.front()->m_timestamp > GetTimestamp(*nextValue)) {
+            UpdateMarketData(security, *nextValue);
+          } else if(m_timerEvents.front()->m_timestamp <=
+              GetTimestamp(*nextValue)) {
+            auto timerEvent = m_timerEvents.front();
+            m_timerEvents.pop_front();
+            Details::TriggerTimer(*timerEvent);
+          }
         } else {
           m_securityEntries.clear();
+          if(!m_timerEvents.empty()) {
+            auto timerEvent = m_timerEvents.front();
+            m_timerEvents.pop_front();
+            Details::TriggerTimer(*timerEvent);
+          }
         }
       }
     }
@@ -285,7 +322,7 @@ namespace Nexus {
       auto& entry = m_securityEntries[query.GetIndex()];
       entry.m_security = query.GetIndex();
       entry.m_bboQuotes.emplace();
-      m_marketDataCondition.notify_one();
+      m_eventAvailableCondition.notify_one();
     }
     Beam::Routines::FlushPendingRoutines();
   }
@@ -397,8 +434,21 @@ namespace Nexus {
     }
   }
 
+  inline void BacktesterEnvironment::Expire(
+      Details::TimerExpiredEvent& event) {
+    {
+      boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
+      m_timerEvents.push_back(&event);
+    }
+    m_eventAvailableCondition.notify_one();
+    boost::unique_lock<Beam::Threading::Mutex> lock{event.m_mutex};
+    while(!event.m_isTriggered) {
+      event.m_expiredCondition.wait(lock);
+    }
+  }
+
   inline void BacktesterEnvironment::Shutdown() {
-    m_marketDataCondition.notify_one();
+    m_eventAvailableCondition.notify_one();
     m_eventLoopRoutine.Wait();
     m_testEnvironment.Close();
     m_openState.SetClosed();

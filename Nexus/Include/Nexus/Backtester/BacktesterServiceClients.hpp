@@ -12,6 +12,7 @@
 #include "Nexus/Backtester/BacktesterEnvironment.hpp"
 #include "Nexus/Backtester/BacktesterMarketDataClient.hpp"
 #include "Nexus/Backtester/BacktesterOrderExecutionClient.hpp"
+#include "Nexus/Backtester/BacktesterTimer.hpp"
 #include "Nexus/ChartingService/VirtualChartingClient.hpp"
 #include "Nexus/Compliance/VirtualComplianceClient.hpp"
 #include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
@@ -166,9 +167,8 @@ namespace Nexus {
   inline std::unique_ptr<BacktesterServiceClients::Timer>
       BacktesterServiceClients::BuildTimer(
       boost::posix_time::time_duration expiry) {
-    return Beam::Threading::MakeVirtualTimer(
-      std::make_unique<Beam::TimeService::Tests::TestTimer>(expiry,
-      Beam::Ref(m_environment->m_testEnvironment.GetTimeEnvironment())));
+    return Beam::Threading::MakeVirtualTimer(std::make_unique<BacktesterTimer>(
+      expiry, Beam::Ref(*m_environment)));
   }
 
   inline void BacktesterServiceClients::Open() {
