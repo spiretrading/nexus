@@ -117,14 +117,14 @@ namespace Nexus {
   inline void BacktesterMarketDataClient::QueryBboQuotes(
       const MarketDataService::SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<SequencedBboQuote>>& queue) {
-    m_environment->QueryBboQuotes(query);
+//    m_environment->QueryBboQuotes(query);
     m_marketDataClient->QueryBboQuotes(query, queue);
   }
 
   inline void BacktesterMarketDataClient::QueryBboQuotes(
       const MarketDataService::SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<BboQuote>>& queue) {
-    m_environment->QueryBboQuotes(query);
+//    m_environment->QueryBboQuotes(query);
     m_marketDataClient->QueryBboQuotes(query, queue);
   }
 

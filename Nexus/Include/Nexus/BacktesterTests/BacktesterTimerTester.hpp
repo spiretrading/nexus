@@ -16,9 +16,13 @@ namespace Tests {
       //! Tests allowing a timer to expire.
       void TestExpiry();
 
+      //! Tests canceling a timer.
+      void TestCancel();
+
     private:
       CPPUNIT_TEST_SUITE(BacktesterTimerTester);
         CPPUNIT_TEST(TestExpiry);
+        CPPUNIT_TEST(TestCancel);
       BEAM_CPPUNIT_TEST_SUITE_END();
   };
 }

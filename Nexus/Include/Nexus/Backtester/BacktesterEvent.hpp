@@ -8,8 +8,6 @@
 namespace Nexus {
   class BacktesterEvent : private boost::noncopyable {
     public:
-      BacktesterEvent();
-
       virtual ~BacktesterEvent() = default;
 
       const boost::posix_time::ptime& GetTimestamp() const;
@@ -29,9 +27,6 @@ namespace Nexus {
       Beam::Threading::ConditionVariable m_isCompleteCondition;
       boost::posix_time::ptime m_timestamp;
   };
-
-  inline BacktesterEvent::BacktesterEvent()
-      : m_timestamp{boost::posix_time::pos_infin} {}
 
   inline const boost::posix_time::ptime&
       BacktesterEvent::GetTimestamp() const {

@@ -1,9 +1,8 @@
 #ifndef NEXUS_BACKTESTERTIMER_HPP
 #define NEXUS_BACKTESTERTIMER_HPP
 #include <Beam/Queues/MultiQueueWriter.hpp>
-#include <Beam/Queues/RoutineTaskQueue.hpp>
-#include <Beam/TimeServiceTests/TestTimer.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/thread/mutex.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterEnvironment.hpp"
 #include "Nexus/Backtester/BacktesterEvent.hpp"
@@ -37,89 +36,115 @@ namespace Nexus {
 
     private:
       friend class TimerBacktesterEvent;
+      mutable boost::mutex m_mutex;
+      boost::posix_time::time_duration m_interval;
       BacktesterEnvironment* m_environment;
-      Beam::TimeService::Tests::TestTimer m_testTimer;
+      int m_iteration;
+      std::shared_ptr<TimerBacktesterEvent> m_expireEvent;
+      std::shared_ptr<TimerBacktesterEvent> m_cancelEvent;
       Beam::MultiQueueWriter<Beam::Threading::Timer::Result> m_publisher;
-      Beam::RoutineTaskQueue m_tasks;
-
-      void OnExpired(Beam::Threading::Timer::Result result);
   };
 
   class TimerBacktesterEvent : public BacktesterEvent {
     public:
       TimerBacktesterEvent(BacktesterTimer& timer,
-        Beam::Threading::Timer::Result result,
-        boost::posix_time::ptime timestamp);
-
-      virtual ~TimerBacktesterEvent() = default;
-
-      BacktesterTimer& GetTimer();
-
-      Beam::Threading::Timer::Result GetResult() const;
+        boost::posix_time::ptime timestamp,
+        Beam::Threading::Timer::Result result);
 
       virtual void Execute() override;
 
     private:
       BacktesterTimer* m_timer;
       Beam::Threading::Timer::Result m_result;
+      int m_iteration;
   };
 
   inline BacktesterTimer::BacktesterTimer(
       boost::posix_time::time_duration interval,
       Beam::RefType<BacktesterEnvironment> environment)
-      : m_environment{environment.Get()},
-        m_testTimer{interval,
-          Beam::Ref(environment->m_testEnvironment.GetTimeEnvironment())} {
-    m_testTimer.GetPublisher().Monitor(
-      m_tasks.GetSlot<Beam::Threading::Timer::Result>(
-      std::bind(&BacktesterTimer::OnExpired, this, std::placeholders::_1)));
-  }
+      : m_interval{interval},
+        m_environment{environment.Get()},
+        m_iteration{0} {}
 
   inline BacktesterTimer::~BacktesterTimer() {
     Cancel();
   }
 
   inline void BacktesterTimer::Start() {
-    m_testTimer.Start();
+    {
+      boost::lock_guard<boost::mutex> lock{m_mutex};
+      if(m_expireEvent != nullptr) {
+        return;
+      }
+      m_expireEvent = std::make_shared<TimerBacktesterEvent>(*this,
+        m_environment->GetTestEnvironment().GetTimeEnvironment().GetTime() +
+        m_interval, Beam::Threading::Timer::Result::EXPIRED);
+    }
+    m_environment->Add(m_expireEvent);
   }
 
   inline void BacktesterTimer::Cancel() {
-    m_testTimer.Cancel();
+    auto addEvent = false;
+    std::shared_ptr<TimerBacktesterEvent> cancelEvent;
+    {
+      boost::lock_guard<boost::mutex> lock{m_mutex};
+      if(m_expireEvent == nullptr) {
+        return;
+      } else if(m_cancelEvent == nullptr) {
+        m_cancelEvent = std::make_shared<TimerBacktesterEvent>(*this,
+          m_environment->GetTestEnvironment().GetTimeEnvironment().GetTime(),
+          Beam::Threading::Timer::Result::CANCELED);
+        addEvent = true;
+      }
+      cancelEvent = m_cancelEvent;
+    }
+    if(addEvent) {
+      m_environment->Add(cancelEvent);
+    }
+    cancelEvent->Wait();
   }
 
-  inline void BacktesterTimer::Wait() {}
+  inline void BacktesterTimer::Wait() {
+    std::shared_ptr<TimerBacktesterEvent> event;
+    {
+      boost::lock_guard<boost::mutex> lock{m_mutex};
+      if(m_expireEvent == nullptr) {
+        return;
+      }
+      if(m_cancelEvent != nullptr &&
+          m_cancelEvent->GetTimestamp() < m_expireEvent->GetTimestamp()) {
+        event = m_cancelEvent;
+      } else {
+        event = m_expireEvent;
+      }
+    }
+    event->Wait();
+  }
 
   inline const Beam::Publisher<Beam::Threading::Timer::Result>&
       BacktesterTimer::GetPublisher() const {
     return m_publisher;
   }
 
-  inline void BacktesterTimer::OnExpired(
-      Beam::Threading::Timer::Result result) {
-    auto event = std::make_shared<TimerBacktesterEvent>(*this,
-      result, m_environment->m_testEnvironment.GetTimeEnvironment().GetTime());
-    m_environment->Push(event);
-    event->Wait();
-  }
-
   inline TimerBacktesterEvent::TimerBacktesterEvent(BacktesterTimer& timer,
-      Beam::Threading::Timer::Result result,
-      boost::posix_time::ptime timestamp)
+      boost::posix_time::ptime timestamp,
+      Beam::Threading::Timer::Result result)
       : BacktesterEvent{timestamp},
         m_timer{&timer},
-        m_result{result} {}
-
-  inline BacktesterTimer& TimerBacktesterEvent::GetTimer() {
-    return *m_timer;
-  }
-
-  inline Beam::Threading::Timer::Result
-      TimerBacktesterEvent::GetResult() const {
-    return m_result;
-  }
+        m_result{result},
+        m_iteration{timer.m_iteration} {}
 
   inline void TimerBacktesterEvent::Execute() {
-    m_timer->m_publisher.Push(m_result);
+    {
+      boost::lock_guard<boost::mutex> lock{m_timer->m_mutex};
+      if(m_timer->m_iteration != m_iteration) {
+        return;
+      }
+      m_timer->m_publisher.Push(m_result);
+      m_timer->m_expireEvent = nullptr;
+      m_timer->m_cancelEvent = nullptr;
+      ++m_timer->m_iteration;
+    }
     Beam::Routines::FlushPendingRoutines();
     Complete();
   }

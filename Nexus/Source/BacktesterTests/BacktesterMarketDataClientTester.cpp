@@ -18,6 +18,7 @@ using namespace Nexus::Tests;
 using namespace std;
 
 void BacktesterMarketDataClientTester::TestRealTimeQuery() {
+/*
   ptime startTime{date{2016, 5, 6}, seconds(0)};
   TestEnvironment testEnvironment;
   testEnvironment.Open();
@@ -65,4 +66,5 @@ void BacktesterMarketDataClientTester::TestRealTimeQuery() {
     queryCompleteCondition.wait(lock);
   }
   CPPUNIT_ASSERT(*testSucceeded);
+*/
 }

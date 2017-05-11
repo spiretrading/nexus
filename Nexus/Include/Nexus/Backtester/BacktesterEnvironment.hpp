@@ -1,22 +1,18 @@
 #ifndef NEXUS_BACKTESTERENVIRONMENT_HPP
 #define NEXUS_BACKTESTERENVIRONMENT_HPP
 #include <deque>
-#include <unordered_map>
 #include <vector>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/Threading/ConditionVariable.hpp>
+#include <Beam/Threading/LockRelease.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/noncopyable.hpp>
-#include <boost/optional/optional.hpp>
-#include <boost/variant/variant.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterEvent.hpp"
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
-#include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
 
 namespace Nexus {
@@ -29,96 +25,98 @@ namespace Nexus {
 
       //! Constructs a BacktesterEnvironment.
       /*!
-        \param marketDataClient The MarketDataClient used to retrieve
-               historical market data.
-        \param startTime The initial time to retrieve data for.
+        \param startTime The starting point of the backtester.
       */
-      BacktesterEnvironment(Beam::RefType<
-        MarketDataService::VirtualMarketDataClient> marketDataClient,
-        boost::posix_time::ptime startTime);
+      BacktesterEnvironment(boost::posix_time::ptime startTime);
 
       //! Constructs a BacktesterEnvironment.
       /*!
-        \param marketDataClient The MarketDataClient used to retrieve
-               historical market data.
-        \param startTime The initial time to retrieve data for.
-        \param endTime The time to stop retrieving data.
+        \param startTime The starting point of the backtester.
+        \param endTime The time to stop backtesting.
       */
-      BacktesterEnvironment(Beam::RefType<
-        MarketDataService::VirtualMarketDataClient> marketDataClient,
-        boost::posix_time::ptime startTime, boost::posix_time::ptime endTime);
+      BacktesterEnvironment(boost::posix_time::ptime startTime,
+        boost::posix_time::ptime endTime);
 
       ~BacktesterEnvironment();
+
+      void Add(std::shared_ptr<BacktesterEvent> event);
+
+      void Add(std::vector<std::shared_ptr<BacktesterEvent>> events);
+
+      const TestEnvironment& GetTestEnvironment() const;
+
+      TestEnvironment& GetTestEnvironment();
 
       void Open();
 
       void Close();
 
     private:
-      using SequencedMarketDataValue =
-        boost::variant<SequencedBboQuote, SequencedTimeAndSale>;
-      struct SecurityEntry {
-        Security m_security;
-        boost::optional<std::deque<SequencedBboQuote>> m_bboQuotes;
-        Beam::Queries::Sequence m_lastBboSequence;
-        boost::optional<BboQuote> m_currentBbo;
-        boost::optional<std::deque<SequencedTimeAndSale>> m_timeAndSales;
-        Beam::Queries::Sequence m_lastTimeAndSaleSequence;
-        std::vector<const OrderExecutionService::Order*> m_pendingOrders;
-      };
-      friend class BacktesterMarketDataClient;
-      friend class BacktesterOrderExecutionClient;
-      friend class BacktesterServiceClients;
-      friend class BacktesterTimer;
       mutable Beam::Threading::Mutex m_mutex;
-      mutable Beam::Threading::ConditionVariable m_eventAvailableCondition;
-      MarketDataService::VirtualMarketDataClient* m_marketDataClient;
       boost::posix_time::ptime m_startTime;
       boost::posix_time::ptime m_endTime;
-      std::unordered_map<Security, SecurityEntry> m_securityEntries;
-      std::deque<std::shared_ptr<BacktesterEvent>> m_events;
       TestEnvironment m_testEnvironment;
-      std::shared_ptr<Beam::Queue<const OrderExecutionService::Order*>>
-        m_orderSubmissionQueue;
-      std::unordered_map<OrderExecutionService::OrderId,
-        const OrderExecutionService::Order*> m_orders;
+      std::deque<std::shared_ptr<BacktesterEvent>> m_events;
+      Beam::Threading::ConditionVariable m_eventAvailableCondition;
       Beam::Routines::RoutineHandler m_eventLoopRoutine;
       Beam::IO::OpenState m_openState;
 
-      static const boost::posix_time::ptime& GetTimestamp(
-        const SequencedMarketDataValue& value);
-      boost::optional<SequencedMarketDataValue> LoadNextValue(
-        SecurityEntry& entry);
-      void UpdateMarketData(const Security& security,
-        const SequencedMarketDataValue& value);
-      void Push(std::shared_ptr<BacktesterEvent> event);
       void EventLoop();
-      void QueryBboQuotes(
-        const MarketDataService::SecurityMarketDataQuery& query);
-      void Submit(const OrderExecutionService::Order& order);
-      void Cancel(const OrderExecutionService::Order& order);
-      void Expire(Details::TimerExpiredEvent& event);
       void Shutdown();
   };
 
   inline BacktesterEnvironment::BacktesterEnvironment(
-      Beam::RefType<MarketDataService::VirtualMarketDataClient>
-      marketDataClient, boost::posix_time::ptime startTime)
-      : BacktesterEnvironment{Beam::Ref(marketDataClient),
-          std::move(startTime), boost::posix_time::pos_infin} {}
+      boost::posix_time::ptime startTime)
+      : BacktesterEnvironment{std::move(startTime),
+          boost::posix_time::pos_infin} {}
 
   inline BacktesterEnvironment::BacktesterEnvironment(
-      Beam::RefType<MarketDataService::VirtualMarketDataClient>
-      marketDataClient, boost::posix_time::ptime startTime,
-      boost::posix_time::ptime endTime)
-      : m_marketDataClient{marketDataClient.Get()},
-        m_startTime{std::move(startTime)},
-        m_endTime{std::move(endTime)},
-        m_orderSubmissionQueue{std::make_shared<
-          Beam::Queue<const OrderExecutionService::Order*>>()} {}
+      boost::posix_time::ptime startTime, boost::posix_time::ptime endTime)
+      : m_startTime{std::move(startTime)},
+        m_endTime{std::move(endTime)} {}
 
   inline BacktesterEnvironment::~BacktesterEnvironment() {
     Close();
+  }
+
+  inline void BacktesterEnvironment::Add(
+      std::shared_ptr<BacktesterEvent> event) {
+    {
+      boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
+      auto insertIterator = std::lower_bound(m_events.begin(), m_events.end(),
+        event,
+        [] (auto& lhs, auto& rhs) {
+          return lhs->GetTimestamp() < rhs->GetTimestamp();
+        });
+      m_events.insert(insertIterator, std::move(event));
+    }
+    m_eventAvailableCondition.notify_one();
+  }
+
+  inline void BacktesterEnvironment::Add(
+      std::vector<std::shared_ptr<BacktesterEvent>> events) {
+    if(events.empty()) {
+      return;
+    }
+    {
+      boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
+      auto insertIterator = std::lower_bound(m_events.begin(), m_events.end(),
+        events.front(),
+        [] (auto& lhs, auto& rhs) {
+          return lhs->GetTimestamp() < rhs->GetTimestamp();
+        });
+      m_events.insert(insertIterator, m_events.begin(), m_events.end());
+    }
+    m_eventAvailableCondition.notify_one();
+  }
+
+  inline const TestEnvironment& BacktesterEnvironment::
+      GetTestEnvironment() const {
+    return m_testEnvironment;
+  }
+
+  inline TestEnvironment& BacktesterEnvironment::GetTestEnvironment() {
+    return m_testEnvironment;
   }
 
   inline void BacktesterEnvironment::Open() {
@@ -126,10 +124,8 @@ namespace Nexus {
       return;
     }
     try {
-      m_marketDataClient->Open();
       m_testEnvironment.SetTime(m_startTime);
       m_testEnvironment.Open();
-      m_testEnvironment.MonitorOrderSubmissions(m_orderSubmissionQueue);
       m_eventLoopRoutine = Beam::Routines::Spawn(
         std::bind(&BacktesterEnvironment::EventLoop, this));
     } catch(const std::exception&) {
@@ -146,113 +142,9 @@ namespace Nexus {
     Shutdown();
   }
 
-  inline const boost::posix_time::ptime& BacktesterEnvironment::GetTimestamp(
-      const SequencedMarketDataValue& value) {
-    if(auto quote = boost::get<const SequencedBboQuote>(&value)) {
-      return Beam::Queries::GetTimestamp(quote->GetValue());
-    } else {
-      return Beam::Queries::GetTimestamp(
-        boost::get<const SequencedTimeAndSale&>(value).GetValue());
-    }
-  }
-
-  inline boost::optional<BacktesterEnvironment::SequencedMarketDataValue>
-      BacktesterEnvironment::LoadNextValue(SecurityEntry& entry) {
-    boost::optional<SequencedMarketDataValue> nextValue;
-    if(entry.m_bboQuotes.is_initialized()) {
-      if(entry.m_bboQuotes->empty()) {
-        if(entry.m_lastBboSequence != Beam::Queries::Sequence::Last()) {
-          auto startPoint =
-            [&] () -> Beam::Queries::Range::Point {
-              if(entry.m_lastBboSequence == Beam::Queries::Sequence::First()) {
-                return m_startTime;
-              } else {
-                return Beam::Queries::Increment(entry.m_lastBboSequence);
-              }
-            }();
-          auto endPoint =
-            [&] () -> Beam::Queries::Range::Point {
-              if(m_endTime == boost::posix_time::pos_infin) {
-                return Beam::Queries::Sequence::Present();
-              }
-              return m_endTime;
-            }();
-          MarketDataService::SecurityMarketDataQuery updateQuery;
-          updateQuery.SetIndex(entry.m_security);
-          updateQuery.SetRange(startPoint, endPoint);
-          updateQuery.SetSnapshotLimit(
-            Beam::Queries::SnapshotLimit::Type::HEAD, 1000);
-          auto queue = std::make_shared<Beam::Queue<SequencedBboQuote>>();
-          m_marketDataClient->QueryBboQuotes(updateQuery, queue);
-          Beam::FlushQueue(queue, std::back_inserter(*entry.m_bboQuotes));
-          if(!entry.m_bboQuotes->empty()) {
-            entry.m_lastBboSequence = entry.m_bboQuotes->back().GetSequence();
-          } else {
-            entry.m_lastBboSequence = Beam::Queries::Sequence::Last();
-          }
-        }
-      }
-      if(!entry.m_bboQuotes->empty()) {
-        nextValue = entry.m_bboQuotes->front();
-      }
-    }
-    if(entry.m_timeAndSales.is_initialized()) {
-      if(entry.m_timeAndSales->empty()) {
-      }
-      if(!entry.m_timeAndSales->empty() && (!nextValue.is_initialized() ||
-          Beam::Queries::GetTimestamp(
-          entry.m_timeAndSales->front().GetValue()) <
-          GetTimestamp(*nextValue))) {
-        nextValue = entry.m_timeAndSales->front();
-      }
-    }
-    return nextValue;
-  }
-
-  inline void BacktesterEnvironment::UpdateMarketData(const Security& security,
-      const SequencedMarketDataValue& value) {
-    if(auto quote = boost::get<const SequencedBboQuote>(&value)) {
-      auto& securityEntry = m_securityEntries[security];
-      securityEntry.m_bboQuotes->pop_front();
-      m_testEnvironment.Update(security, *quote);
-      securityEntry.m_currentBbo = *quote;
-      auto orderIterator = securityEntry.m_pendingOrders.begin();
-      while(orderIterator != securityEntry.m_pendingOrders.end()) {
-        auto& order = *orderIterator;
-        if(order->GetInfo().m_fields.m_side == Side::BID &&
-            securityEntry.m_currentBbo->m_ask.m_price <=
-            order->GetInfo().m_fields.m_price) {
-          m_testEnvironment.FillOrder(*order,
-            securityEntry.m_currentBbo->m_ask.m_price,
-            order->GetInfo().m_fields.m_quantity);
-          orderIterator = securityEntry.m_pendingOrders.erase(orderIterator);
-        } else if(order->GetInfo().m_fields.m_side == Side::ASK &&
-            securityEntry.m_currentBbo->m_bid.m_price >=
-            order->GetInfo().m_fields.m_price) {
-          m_testEnvironment.FillOrder(*order,
-            securityEntry.m_currentBbo->m_bid.m_price,
-            order->GetInfo().m_fields.m_quantity);
-          orderIterator = securityEntry.m_pendingOrders.erase(orderIterator);
-        } else {
-          ++orderIterator;
-        }
-      }
-    } else {
-      m_securityEntries[security].m_timeAndSales->pop_front();
-    }
-  }
-
-  inline void BacktesterEnvironment::Push(
-      std::shared_ptr<BacktesterEvent> event) {
-    {
-      boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
-      m_events.push_back(std::move(event));
-    }
-    m_eventAvailableCondition.notify_one();
-  }
-
   inline void BacktesterEnvironment::EventLoop() {
     while(true) {
+      std::shared_ptr<BacktesterEvent> event;
       {
         boost::unique_lock<Beam::Threading::Mutex> lock{m_mutex};
         while(m_openState.IsOpen() && m_events.empty()) {
@@ -261,152 +153,15 @@ namespace Nexus {
         if(!m_openState.IsOpen()) {
           return;
         }
-        auto event = m_events.front();
+        {
+          auto release = Beam::Threading::Release(lock);
+          Beam::Routines::FlushPendingRoutines();
+        }
+        event = m_events.front();
         m_events.pop_front();
-        event->Execute();
+        m_testEnvironment.SetTime(event->GetTimestamp());
       }
-    }
-  }
-
-  inline void BacktesterEnvironment::QueryBboQuotes(
-      const MarketDataService::SecurityMarketDataQuery& query) {
-    if(query.GetRange().GetEnd() != Beam::Queries::Sequence::Last()) {
-      return;
-    }
-    {
-      boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
-      auto entryIterator = m_securityEntries.find(query.GetIndex());
-      if(entryIterator != m_securityEntries.end()) {
-        auto& entry = entryIterator->second;
-        if(entry.m_bboQuotes.is_initialized()) {
-          return;
-        }
-      }
-      auto& entry = m_securityEntries[query.GetIndex()];
-      entry.m_security = query.GetIndex();
-      entry.m_bboQuotes.emplace();
-      m_eventAvailableCondition.notify_one();
-    }
-    Beam::Routines::FlushPendingRoutines();
-  }
-
-  inline void BacktesterEnvironment::Submit(
-      const OrderExecutionService::Order& order) {
-    boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
-    auto serverOrder =
-      [&] {
-        auto orderIterator = m_orders.find(order.GetInfo().m_orderId);
-        if(orderIterator == m_orders.end()) {
-          while(true) {
-            auto orderSubmission = m_orderSubmissionQueue->Top();
-            m_orderSubmissionQueue->Pop();
-            m_orders.insert(std::make_pair(
-              orderSubmission->GetInfo().m_orderId, orderSubmission));
-            if(orderSubmission->GetInfo().m_orderId ==
-                order.GetInfo().m_orderId) {
-              return orderSubmission;
-            }
-          }
-        }
-        return orderIterator->second;
-      }();
-    if(serverOrder->GetInfo().m_fields.m_timeInForce.GetType() !=
-        TimeInForce::Type::DAY &&
-        serverOrder->GetInfo().m_fields.m_timeInForce.GetType() !=
-        TimeInForce::Type::GTC) {
-      m_testEnvironment.RejectOrder(*serverOrder);
-      return;
-    }
-    if(serverOrder->GetInfo().m_fields.m_type == OrderType::LIMIT) {
-      m_testEnvironment.AcceptOrder(*serverOrder);
-      auto& securityEntry =
-        m_securityEntries[serverOrder->GetInfo().m_fields.m_security];
-      if(securityEntry.m_currentBbo.is_initialized()) {
-        if(serverOrder->GetInfo().m_fields.m_side == Side::BID &&
-            securityEntry.m_currentBbo->m_ask.m_price <=
-            serverOrder->GetInfo().m_fields.m_price) {
-          m_testEnvironment.FillOrder(*serverOrder,
-            securityEntry.m_currentBbo->m_ask.m_price,
-            serverOrder->GetInfo().m_fields.m_quantity);
-        } else if(serverOrder->GetInfo().m_fields.m_side == Side::ASK &&
-            securityEntry.m_currentBbo->m_bid.m_price >=
-            serverOrder->GetInfo().m_fields.m_price) {
-          m_testEnvironment.FillOrder(*serverOrder,
-            securityEntry.m_currentBbo->m_bid.m_price,
-            serverOrder->GetInfo().m_fields.m_quantity);
-        } else {
-          securityEntry.m_pendingOrders.push_back(serverOrder);
-        }
-      } else {
-        securityEntry.m_pendingOrders.push_back(serverOrder);
-      }
-    } else if(serverOrder->GetInfo().m_fields.m_type == OrderType::MARKET) {
-      m_testEnvironment.AcceptOrder(*serverOrder);
-      auto& securityEntry =
-        m_securityEntries[serverOrder->GetInfo().m_fields.m_security];
-      if(securityEntry.m_currentBbo.is_initialized()) {
-        if(serverOrder->GetInfo().m_fields.m_side == Side::BID) {
-          m_testEnvironment.FillOrder(*serverOrder,
-            securityEntry.m_currentBbo->m_ask.m_price,
-            serverOrder->GetInfo().m_fields.m_quantity);
-        } else if(serverOrder->GetInfo().m_fields.m_side == Side::ASK) {
-          m_testEnvironment.FillOrder(*serverOrder,
-            securityEntry.m_currentBbo->m_bid.m_price,
-            serverOrder->GetInfo().m_fields.m_quantity);
-        }
-      } else {
-        securityEntry.m_pendingOrders.push_back(serverOrder);
-      }
-    } else {
-      m_testEnvironment.RejectOrder(*serverOrder);
-    }
-  }
-
-  inline void BacktesterEnvironment::Cancel(
-      const OrderExecutionService::Order& order) {
-    const OrderExecutionService::Order* serverOrder;
-    {
-      boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
-      auto orderIterator = m_orders.find(order.GetInfo().m_orderId);
-      if(orderIterator == m_orders.end()) {
-        return;
-      }
-      serverOrder = orderIterator->second;
-      auto& securityEntry =
-        m_securityEntries[serverOrder->GetInfo().m_fields.m_security];
-      auto pendingOrderIterator =
-        std::find(securityEntry.m_pendingOrders.begin(),
-        securityEntry.m_pendingOrders.end(), serverOrder);
-      if(pendingOrderIterator == securityEntry.m_pendingOrders.end()) {
-        return;
-      }
-      securityEntry.m_pendingOrders.erase(pendingOrderIterator);
-    }
-    auto queue = std::make_shared<
-      Beam::Queue<OrderExecutionService::ExecutionReport>>();
-    serverOrder->GetPublisher().Monitor(queue);
-    while(true) {
-      auto executionReport = queue->Top();
-      queue->Pop();
-      if(IsTerminal(executionReport.m_status)) {
-        return;
-      } else if(executionReport.m_status == OrderStatus::PENDING_CANCEL) {
-        m_testEnvironment.CancelOrder(*serverOrder);
-        return;
-      }
-    }
-  }
-
-  inline void BacktesterEnvironment::Expire(
-      Details::TimerExpiredEvent& event) {
-    {
-      boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
-      m_timerEvents.push_back(&event);
-    }
-    m_eventAvailableCondition.notify_one();
-    boost::unique_lock<Beam::Threading::Mutex> lock{event.m_mutex};
-    while(!event.m_isTriggered) {
-      event.m_expiredCondition.wait(lock);
+      event->Execute();
     }
   }
 

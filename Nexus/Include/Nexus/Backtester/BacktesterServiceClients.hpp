@@ -177,26 +177,26 @@ namespace Nexus {
     }
     try {
       m_serviceLocatorClient =
-        m_environment->m_testEnvironment.GetServiceLocatorEnvironment().
+        m_environment->GetTestEnvironment().GetServiceLocatorEnvironment().
         BuildClient();
       m_serviceLocatorClient->SetCredentials("root", "");
       m_serviceLocatorClient->Open();
-      m_definitionsClient = m_environment->m_testEnvironment.
+      m_definitionsClient = m_environment->GetTestEnvironment().
         GetDefinitionsEnvironment().BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
       m_definitionsClient->Open();
       m_administrationClient =
-        m_environment->m_testEnvironment.GetAdministrationEnvironment().
+        m_environment->GetTestEnvironment().GetAdministrationEnvironment().
         BuildClient(Beam::Ref(*m_serviceLocatorClient));
       m_administrationClient->Open();
-      auto baseMarketDataClient = m_environment->m_testEnvironment.
+      auto baseMarketDataClient = m_environment->GetTestEnvironment().
         GetMarketDataEnvironment().BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
       m_marketDataClient = MarketDataService::MakeVirtualMarketDataClient(
         std::make_unique<BacktesterMarketDataClient>(Beam::Ref(*m_environment),
         std::move(baseMarketDataClient)));
       m_marketDataClient->Open();
-      auto baseOrderExecutionClient = m_environment->m_testEnvironment.
+      auto baseOrderExecutionClient = m_environment->GetTestEnvironment().
         GetOrderExecutionEnvironment().BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
       m_orderExecutionClient =
@@ -206,7 +206,7 @@ namespace Nexus {
       m_orderExecutionClient->Open();
       m_timeClient = Beam::TimeService::MakeVirtualTimeClient(
         std::make_unique<Beam::TimeService::Tests::TestTimeClient>(
-        Beam::Ref(m_environment->m_testEnvironment.GetTimeEnvironment())));
+        Beam::Ref(m_environment->GetTestEnvironment().GetTimeEnvironment())));
       m_timeClient->Open();
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
