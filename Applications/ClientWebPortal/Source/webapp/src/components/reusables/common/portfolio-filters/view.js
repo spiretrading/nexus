@@ -23,6 +23,10 @@ class View extends UpdatableView {
       this.isClosed = false;
       $body.stop(true, true).animate({
         height: this.bodyHeight
+      }, {
+        step: function() {
+          EventBus.publish(Event.Portfolio.FILTER_RESIZE);
+        }
       });
 
       $('#' + this.componentModel.componentId + ' .arrow-icon').stop(true, true).fadeOut(200, () => {
@@ -33,6 +37,10 @@ class View extends UpdatableView {
       this.bodyHeight = $body.outerHeight();
       $body.stop(true, true).animate({
         height: '0px'
+      }, {
+        step: function() {
+          EventBus.publish(Event.Portfolio.FILTER_RESIZE);
+        }
       });
 
       $('#' + this.componentModel.componentId + ' .arrow-icon').stop(true, true).fadeOut(200, () => {

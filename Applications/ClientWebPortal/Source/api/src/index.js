@@ -17,9 +17,12 @@ import countryCode from './definitions/country-code';
 import countryDatabase from './definitions/country-database';
 import countryDatabaseEntry from './definitions/country-database-entry'
 import currencyId from './definitions/currency-id';
+import currencyPair from './definitions/currency-pair';
 import currencyDatabase from './definitions/currency-database';
 import currencyDatabaseEntry from './definitions/currency-database-entry';
 import security from './definitions/security';
+import exchangeRate from './definitions/exchange-rate'
+import exchangeRateTable from './definitions/exchange-rate-table';
 
 // module export configurations
 export const AdministrationClient = administrationClient;
@@ -39,6 +42,9 @@ export const CountryCode = countryCode;
 export const CountryDatabase = countryDatabase;
 export const CountryDatabaseEntry = countryDatabaseEntry;
 export const CurrencyId = currencyId;
+export const CurrencyPair = currencyPair;
 export const CurrencyDatabase = currencyDatabase;
 export const CurrencyDatabaseEntry = currencyDatabaseEntry;
 export const Security = security;
+export const ExchangeRate = exchangeRate;
+export const ExchangeRateTable = exchangeRateTable;

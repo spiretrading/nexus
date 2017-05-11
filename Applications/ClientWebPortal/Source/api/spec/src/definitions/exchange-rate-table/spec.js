@@ -1,5 +1,4 @@
 import ExchangeRate from '../../../../dist/definitions/exchange-rate';
-import Money from '../../../../dist/definitions/money';
 import ExchangeRateTable from '../../../../dist/definitions/exchange-rate-table';
 import CurrencyDatabase from '../../../../dist/definitions/currency-database';
 import CurrencyDatabaseEntry from '../../../../dist/definitions/currency-database-entry';

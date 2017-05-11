@@ -110,9 +110,11 @@ class View extends UpdatableView {
     if (headerWidth < containerWidth) {
       $header.removeClass('wide').addClass('wide');
       $container.find('.fixed-column-header').css('opacity', '0');
+      $container.find('.fixed-column-body').css('opacity', '0');
     } else {
       $header.removeClass('wide');
       $container.find('.fixed-column-header').css('opacity', '1');
+      $container.find('.fixed-column-body').css('opacity', '1');
     }
   }
 

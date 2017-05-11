@@ -1,4 +1,15 @@
-import {AdministrationClient, DirectoryEntry, RiskServiceClient} from 'spire-client';
+import {
+  AdministrationClient,
+  DirectoryEntry,
+  RiskServiceClient,
+  ExchangeRate,
+  ExchangeRateTable,
+  Money,
+  CurrencyId,
+  CurrencyPair,
+  CurrencyDatabaseEntry,
+  CurrencyDatabase
+} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
 import definitionsService from 'services/definitions';
@@ -9,6 +20,26 @@ class Controller {
     this.componentModel = clone(componentModel);
     this.adminClient = new AdministrationClient();
     this.riskServiceClient = new RiskServiceClient();
+    this.exchangeRateTable = new ExchangeRateTable();
+
+    // TODO: temporary hardcoded exchange rates
+    let usdEntry = new CurrencyDatabaseEntry(new CurrencyId(840), 'USD', '$');
+    let cadEntry = new CurrencyDatabaseEntry(new CurrencyId(124), 'CAD', '$');
+    let audEntry = new CurrencyDatabaseEntry(new CurrencyId(36), 'AUD', '$');
+    let currencyDatabase = new CurrencyDatabase();
+    currencyDatabase.add(usdEntry);
+    currencyDatabase.add(cadEntry);
+    currencyDatabase.add(audEntry);
+
+    let usdCadPair = CurrencyPair.parse('USD/CAD', currencyDatabase);
+    let usdCadRate = new ExchangeRate(usdCadPair, 1.36944);
+    this.exchangeRateTable.add.apply(this.exchangeRateTable, [usdCadRate]);
+
+    let audCadPair = CurrencyPair.parse('AUD/CAD', currencyDatabase);
+    let audCadRate = new ExchangeRate(audCadPair, 1.00838);
+    this.exchangeRateTable.add.apply(this.exchangeRateTable, [audCadRate]);
+    // TODO: end of temporary code
+
     this.portfolioData = new HashMap();
   }
 
@@ -27,8 +58,12 @@ class Controller {
       [(this.componentModel.directoryEntry)]
     );
 
+    let directoryEntry = userService.getDirectoryEntry.apply(userService);
+    let loadAccountRiskParameters = this.adminClient.loadRiskParameters.apply(this.adminClient, [directoryEntry]);
+
     return Promise.all([
-      loadManagedTradingGroups
+      loadManagedTradingGroups,
+      loadAccountRiskParameters
     ]);
   }
 
@@ -53,7 +88,7 @@ class Controller {
       let costBasis = data.inventory.position.cost_basis;
       let quantity = data.inventory.position.quantity;
       averagePrice = costBasis.divide(quantity);
-      if (averagePrice.toNumber < 0) {
+      if (averagePrice.toNumber() < 0) {
         averagePrice.multiply(-1);
       }
     }
@@ -85,10 +120,92 @@ class Controller {
     let cacheKey = model.account.id + model.currency.value + model.security.market.value + model.security.symbol;
     this.portfolioData.set(cacheKey, model);
     this.componentModel.portfolioData = this.portfolioData.values();
+    if (this.componentModel.baseCurrencyId != null) {
+      this.aggregateTotals.apply(this);
+    }
     this.view.update(this.componentModel);
   }
 
+  /** @private */
+  aggregateTotals() {
+    let portfolioData = this.componentModel.portfolioData;
+    let totalPnL = Money.fromNumber(0);
+    let unrealizedPnL = Money.fromNumber(0);
+    let realizedPnL = Money.fromNumber(0);
+    let fees = Money.fromNumber(0);
+    let volumes = 0;
+    let trades = 0;
+    for (let i=0; i<portfolioData.length; i++) {
+      let originalTotalPnL = portfolioData[i].totalPnL || Money.fromNumber(0);
+      let convertedTotalPnL = this.convertCurrencies.apply(this, [
+        portfolioData[i].currency,
+        this.componentModel.baseCurrencyId,
+        originalTotalPnL
+      ]);
+      totalPnL = totalPnL.add(convertedTotalPnL);
+
+      let originalUnrealizedPnL = portfolioData[i].unrealizedPnL || Money.fromNumber(0);
+      let convertedUnrealizedPnL = this.convertCurrencies.apply(this, [
+        portfolioData[i].currency,
+        this.componentModel.baseCurrencyId,
+        originalUnrealizedPnL
+      ]);
+      unrealizedPnL = unrealizedPnL.add(convertedUnrealizedPnL);
+
+      let originalRealizedPnL = portfolioData[i].realizedPnL || Money.fromNumber(0);
+      let convertedRealizedPnL = this.convertCurrencies.apply(this, [
+        portfolioData[i].currency,
+        this.componentModel.baseCurrencyId,
+        originalRealizedPnL
+      ]);
+      realizedPnL = realizedPnL.add(convertedRealizedPnL);
+
+      let originalFees = portfolioData[i].fees || Money.fromNumber(0);
+      let convertedFees = this.convertCurrencies.apply(this, [
+        portfolioData[i].currency,
+        this.componentModel.baseCurrencyId,
+        originalFees
+      ]);
+      fees = fees.add(convertedFees);
+
+      let volume = portfolioData[i].volume || 0;
+      volumes += volume
+
+      let trade = portfolioData[i].trades || 0;
+      trades += trade;
+    }
+
+    this.componentModel.aggregates = {
+      totalPnL: totalPnL,
+      unrealizedPnL: unrealizedPnL,
+      realizedPnL: realizedPnL,
+      fees: fees,
+      volumes: volumes,
+      trades: trades
+    };
+  }
+
+  /** @private */
+  convertCurrencies(fromCurrencyId, toCurrencyId, amount) {
+    if (fromCurrencyId.toNumber() == toCurrencyId.toNumber()) {
+      return Money.fromNumber(amount);
+    } else {
+      return this.exchangeRateTable.convert.apply(this.exchangeRateTable, [
+        amount,
+        fromCurrencyId,
+        toCurrencyId
+      ]);
+    }
+  }
+
+  /** @private */
+  onFilterResize() {
+    this.view.resizePortfolioChart.apply(this.view);
+  }
+
   componentDidMount() {
+    this.filterResizeSubId = EventBus.subscribe(Event.Portfolio.FILTER_RESIZE, this.onFilterResize.bind(this));
+
     this.componentModel = {
       directoryEntry: userService.getDirectoryEntry()
     };
@@ -107,6 +224,7 @@ class Controller {
       Config.WHOLE_PAGE_PRELOADER_WIDTH,
       Config.WHOLE_PAGE_PRELOADER_HEIGHT
     ).then((responses) => {
+      this.componentModel.baseCurrencyId = responses[1].currencyId;
       this.componentModel.isAdmin = userService.isAdmin();
 
       // groups
@@ -143,7 +261,7 @@ class Controller {
 
   componentWillUnmount() {
     this.riskServiceClient.unsubscribe.apply(this.riskServiceClient, [this.portfolioSubscriptionId]);
-
+    EventBus.unsubscribe(this.filterResizeSubId);
     this.view.dispose.apply(this.view);
   }
 

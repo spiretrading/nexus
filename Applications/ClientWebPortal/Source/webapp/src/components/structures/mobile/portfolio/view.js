@@ -1,8 +1,9 @@
 import './style.scss';
 import React from 'react';
 import UpdatableView from 'commons/updatable-view';
-import PortfolioParameters from 'components/reusables/common/portfolio-filters';
+import PortfolioFilters from 'components/reusables/common/portfolio-filters';
 import PortfolioChart from 'components/reusables/common/portfolio-chart';
+import numberFormatter from 'utils/number-formatter';
 
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
@@ -10,11 +11,15 @@ class View extends UpdatableView {
   }
 
   initialize() {
-    $(window).resize(this.onWindowResize);
+    $(window).resize(this.onWindowResize.bind(this));
   }
 
   /** @private */
   onWindowResize() {
+    this.resizePortfolioChart.apply(this);
+  }
+
+  resizePortfolioChart() {
     let chartOuterWrapperOffset = $('#portfolio-container .chart-outer-wrapper').offset();
     $('#portfolio-container .chart-inner-wrapper').css('left', -1 * chartOuterWrapperOffset.left);
 
@@ -62,9 +67,37 @@ class View extends UpdatableView {
       filter: this.componentModel.filter
     };
 
+    let totalPnL, unrealizedPnL, realizedPnL, fees, volumes, trades;
+    if (this.componentModel.aggregates != null) {
+      totalPnL = numberFormatter.formatTwoDecimalsWithComma.apply(numberFormatter, [this.componentModel.aggregates.totalPnL.toNumber()]);
+      unrealizedPnL = numberFormatter.formatTwoDecimalsWithComma.apply(numberFormatter, [this.componentModel.aggregates.unrealizedPnL.toNumber()]);
+      realizedPnL = numberFormatter.formatTwoDecimalsWithComma.apply(numberFormatter, [this.componentModel.aggregates.realizedPnL.toNumber()]);
+      fees = numberFormatter.formatTwoDecimalsWithComma.apply(numberFormatter, [this.componentModel.aggregates.realizedPnL.toNumber()]);
+      volumes = numberFormatter.formatWithComma.apply(numberFormatter, [this.componentModel.aggregates.volumes]);
+      trades = numberFormatter.formatWithComma.apply(numberFormatter, [this.componentModel.aggregates.trades]);
+    }
+
     return (
       <div id="portfolio-container" className="container">
-        <PortfolioParameters model={parametersModel} onSave={onParametersSave}/>
+        <PortfolioFilters model={parametersModel} onSave={onParametersSave}/>
+        <div className="total-wrapper">
+          <table>
+            <tbody>
+              <tr>
+                <td>Total P/L<br/>{totalPnL}</td>
+                <td>Unrealized P/L<br/>{unrealizedPnL}</td>
+              </tr>
+              <tr>
+                <td>Realized P/L<br/>{realizedPnL}</td>
+                <td>Fees<br/>{fees}</td>
+              </tr>
+              <tr>
+                <td>Volume<br/>{volumes}</td>
+                <td>Trades<br/>{trades}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <div className="chart-outer-wrapper">
           <div className="chart-inner-wrapper">
             <PortfolioChart model={chartModel} />
