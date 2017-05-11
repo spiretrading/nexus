@@ -3,10 +3,12 @@
 
 namespace Nexus {
   class BacktesterEnvironment;
+  class BacktesterEvent;
   class BacktesterMarketDataClient;
   class BacktesterOrderExecutionClient;
   class BacktesterServiceClients;
   class BacktesterTimer;
+  class TimerBacktesterEvent;
 }
 
 #endif

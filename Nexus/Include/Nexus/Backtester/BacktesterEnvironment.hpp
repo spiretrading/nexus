@@ -76,7 +76,7 @@ namespace Nexus {
       boost::posix_time::ptime m_startTime;
       boost::posix_time::ptime m_endTime;
       std::unordered_map<Security, SecurityEntry> m_securityEntries;
-      std::deque<BacktesterEvent*> m_timerEvents;
+      std::deque<std::shared_ptr<BacktesterEvent>> m_events;
       TestEnvironment m_testEnvironment;
       std::shared_ptr<Beam::Queue<const OrderExecutionService::Order*>>
         m_orderSubmissionQueue;
@@ -91,6 +91,7 @@ namespace Nexus {
         SecurityEntry& entry);
       void UpdateMarketData(const Security& security,
         const SequencedMarketDataValue& value);
+      void Push(std::shared_ptr<BacktesterEvent> event);
       void EventLoop();
       void QueryBboQuotes(
         const MarketDataService::SecurityMarketDataQuery& query);
@@ -241,45 +242,28 @@ namespace Nexus {
     }
   }
 
+  inline void BacktesterEnvironment::Push(
+      std::shared_ptr<BacktesterEvent> event) {
+    {
+      boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
+      m_events.push_back(std::move(event));
+    }
+    m_eventAvailableCondition.notify_one();
+  }
+
   inline void BacktesterEnvironment::EventLoop() {
     while(true) {
       {
         boost::unique_lock<Beam::Threading::Mutex> lock{m_mutex};
-        while(m_openState.IsOpen() && m_securityEntries.empty() &&
-            m_timerEvents.empty()) {
+        while(m_openState.IsOpen() && m_events.empty()) {
           m_eventAvailableCondition.wait(lock);
         }
         if(!m_openState.IsOpen()) {
           return;
         }
-        BacktesterEvent sentinelEvent;
-        BacktesterEvent* nextEvent = &sentinelEvent;
-        if(!m_timerEvents.empty() &&
-            m_timerEvents.front()->GetTimestamp() <
-            nextEvent->GetTimestamp()) {
-          nextEvent = m_timerEvents.front();
-        }
-        for(auto& securityEntry : m_securityEntries) {
-          auto value = LoadNextValue(securityEntry.second);
-          if(value.is_initialized() && GetTimestamp(*value) < nextTimestamp) {
-            nextTimestamp = GetTimestamp(*value);
-            nextEvent = MarketDataEvent{securityEntry.first,
-              std::move(*value)};
-          }
-        }
-        if(nextEvent.is_initialized()) {
-          if(auto timerEvent =
-              boost::get<Details::TimerExpiredEvent*>(&*nextEvent)) {
-            m_timerEvents.pop_front();
-            Details::TriggerTimer(**timerEvent);
-          } else if(auto marketDataEvent =
-              boost::get<MarketDataEvent>(&*nextEvent)) {
-            UpdateMarketData(marketDataEvent->m_security,
-              marketDataEvent->m_value);
-          }
-        } else {
-          m_securityEntries.clear();
-        }
+        auto event = m_events.front();
+        m_events.pop_front();
+        event->Execute();
       }
     }
   }

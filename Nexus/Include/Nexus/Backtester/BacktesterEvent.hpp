@@ -14,12 +14,14 @@ namespace Nexus {
 
       const boost::posix_time::ptime& GetTimestamp() const;
 
-      void Complete();
-
       void Wait();
+
+      virtual void Execute() = 0;
 
     protected:
       BacktesterEvent(boost::posix_time::ptime timestamp);
+
+      void Complete();
 
     private:
       mutable Beam::Threading::Mutex m_mutex;
@@ -36,17 +38,6 @@ namespace Nexus {
     return m_timestamp;
   }
 
-  inline void BacktesterEvent::Complete() {
-    {
-      boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
-      if(m_isComplete) {
-        return;
-      }
-      m_isComplete = true;
-    }
-    m_isCompleteCondition.notify_one();
-  }
-
   inline void BacktesterEvent::Wait() {
     boost::unique_lock<Beam::Threading::Mutex> lock{m_mutex};
     while(!m_isComplete) {
@@ -57,6 +48,17 @@ namespace Nexus {
   inline BacktesterEvent::BacktesterEvent(boost::posix_time::ptime timestamp)
       : m_isComplete{false},
         m_timestamp{timestamp} {}
+
+  inline void BacktesterEvent::Complete() {
+    {
+      boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
+      if(m_isComplete) {
+        return;
+      }
+      m_isComplete = true;
+    }
+    m_isCompleteCondition.notify_one();
+  }
 }
 
 #endif

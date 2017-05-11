@@ -6,6 +6,7 @@
 #include <boost/noncopyable.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterEnvironment.hpp"
+#include "Nexus/Backtester/BacktesterEvent.hpp"
 
 namespace Nexus {
 
@@ -35,13 +36,32 @@ namespace Nexus {
         GetPublisher() const;
 
     private:
-      friend void Details::TriggerTimer(TimerExpiredEvent& event);
+      friend class TimerBacktesterEvent;
       BacktesterEnvironment* m_environment;
       Beam::TimeService::Tests::TestTimer m_testTimer;
       Beam::MultiQueueWriter<Beam::Threading::Timer::Result> m_publisher;
       Beam::RoutineTaskQueue m_tasks;
 
       void OnExpired(Beam::Threading::Timer::Result result);
+  };
+
+  class TimerBacktesterEvent : public BacktesterEvent {
+    public:
+      TimerBacktesterEvent(BacktesterTimer& timer,
+        Beam::Threading::Timer::Result result,
+        boost::posix_time::ptime timestamp);
+
+      virtual ~TimerBacktesterEvent() = default;
+
+      BacktesterTimer& GetTimer();
+
+      Beam::Threading::Timer::Result GetResult() const;
+
+      virtual void Execute() override;
+
+    private:
+      BacktesterTimer* m_timer;
+      Beam::Threading::Timer::Result m_result;
   };
 
   inline BacktesterTimer::BacktesterTimer(
@@ -76,22 +96,33 @@ namespace Nexus {
 
   inline void BacktesterTimer::OnExpired(
       Beam::Threading::Timer::Result result) {
-    Details::TimerExpiredEvent event{*this, result,
-      m_environment->m_testEnvironment.GetTimeEnvironment().GetTime()};
-    m_environment->Expire(event);
+    auto event = std::make_shared<TimerBacktesterEvent>(*this,
+      result, m_environment->m_testEnvironment.GetTimeEnvironment().GetTime());
+    m_environment->Push(event);
+    event->Wait();
   }
 
-namespace Details {
-  inline void TriggerTimer(TimerExpiredEvent& event) {
-    event.m_timer->m_publisher.Push(event.m_result);
-    Beam::Routines::FlushPendingRoutines();
-    {
-      boost::lock_guard<Beam::Threading::Mutex> lock{event.m_mutex};
-      event.m_isTriggered = true;
-    }
-    event.m_expiredCondition.notify_one();
+  inline TimerBacktesterEvent::TimerBacktesterEvent(BacktesterTimer& timer,
+      Beam::Threading::Timer::Result result,
+      boost::posix_time::ptime timestamp)
+      : BacktesterEvent{timestamp},
+        m_timer{&timer},
+        m_result{result} {}
+
+  inline BacktesterTimer& TimerBacktesterEvent::GetTimer() {
+    return *m_timer;
   }
-}
+
+  inline Beam::Threading::Timer::Result
+      TimerBacktesterEvent::GetResult() const {
+    return m_result;
+  }
+
+  inline void TimerBacktesterEvent::Execute() {
+    m_timer->m_publisher.Push(m_result);
+    Beam::Routines::FlushPendingRoutines();
+    Complete();
+  }
 }
 
 namespace Beam {
