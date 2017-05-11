@@ -49,9 +49,6 @@ namespace Nexus {
 
       TestEnvironment& GetTestEnvironment();
 
-      void QueryBboQuotes(
-        const MarketDataService::SecurityMarketDataQuery& query);
-
       void Open();
 
       void Close();
@@ -60,9 +57,7 @@ namespace Nexus {
       mutable Beam::Threading::Mutex m_mutex;
       boost::posix_time::ptime m_startTime;
       boost::posix_time::ptime m_endTime;
-      MarketDataService::VirtualMarketDataClient* m_marketDataClient;
       TestEnvironment m_testEnvironment;
-      std::unordered_set<Security> m_bboQueries;
       std::deque<std::shared_ptr<BacktesterEvent>> m_events;
       Beam::Threading::ConditionVariable m_eventAvailableCondition;
       Beam::Routines::RoutineHandler m_eventLoopRoutine;
@@ -124,33 +119,6 @@ namespace Nexus {
 
   inline TestEnvironment& BacktesterEnvironment::GetTestEnvironment() {
     return m_testEnvironment;
-  }
-
-  inline void BacktesterEnvironment::QueryBboQuotes(
-      const MarketDataService::SecurityMarketDataQuery& query) {
-    boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
-    if(m_bboQueries.find(query.GetIndex()) != m_bboQueries.end()) {
-      return;
-    }
-    m_bboQueries.insert(query.GetIndex());
-    auto queue = std::make_shared<Beam::Queue<SequencedBboQuote>>();
-    MarketDataService::SecurityMarketDataQuery realTimeQuery;
-    realTimeQuery.SetIndex(query.GetIndex());
-    realTimeQuery.SetRange(m_testEnvironment.GetTimeEnvironment().GetTime(),
-      Beam::Queries::Sequence::Present());
-    realTimeQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Type::HEAD,
-      1000);
-    m_marketDataClient->QueryBboQuotes(query, queue);
-    std::vector<SequencedBboQuote> bboQuotes;
-    Beam::FlushQueue(queue, std::back_inserter(bboQuotes));
-    if(bboQuotes.empty()) {
-      return;
-    }
-    for(auto& bboQuote :
-        boost::make_iterator_range(bboQuotes.begin(), bboQuotes.end() - 1)) {
-      auto marketDataEvent = std::make_shared<BboQuoteBacktesterEvent>(
-        query.GetIndex(), bboQuote);
-    }
   }
 
   inline void BacktesterEnvironment::Open() {
