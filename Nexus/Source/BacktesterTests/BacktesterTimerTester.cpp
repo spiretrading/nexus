@@ -1,7 +1,7 @@
 #include "Nexus/BacktesterTests/BacktesterTimerTester.hpp"
 #include <Beam/Threading/ConditionVariable.hpp>
 #include <Beam/Threading/Mutex.hpp>
-#include "Nexus/Backtester/BacktesterEnvironment.hpp"
+#include "Nexus/Backtester/BacktesterEventHandler.hpp"
 #include "Nexus/Backtester/BacktesterServiceClients.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
 
@@ -21,10 +21,9 @@ void BacktesterTimerTester::TestExpiry() {
   testEnvironment.Open();
   TestServiceClients serviceClients{Ref(testEnvironment)};
   serviceClients.Open();
-  BacktesterEnvironment backtesterEnvironment{startTime};
-  backtesterEnvironment.Open();
-  BacktesterServiceClients backtesterServiceClients{
-    Ref(backtesterEnvironment)};
+  BacktesterEventHandler eventHandler{startTime};
+  eventHandler.Open();
+  BacktesterServiceClients backtesterServiceClients{Ref(eventHandler)};
   backtesterServiceClients.Open();
   auto timer = backtesterServiceClients.BuildTimer(seconds(1));
   RoutineTaskQueue routines;
@@ -59,10 +58,9 @@ void BacktesterTimerTester::TestCancel() {
   testEnvironment.Open();
   TestServiceClients serviceClients{Ref(testEnvironment)};
   serviceClients.Open();
-  BacktesterEnvironment backtesterEnvironment{startTime};
-  backtesterEnvironment.Open();
-  BacktesterServiceClients backtesterServiceClients{
-    Ref(backtesterEnvironment)};
+  BacktesterEventHandler eventHandler{startTime};
+  eventHandler.Open();
+  BacktesterServiceClients backtesterServiceClients{Ref(eventHandler)};
   backtesterServiceClients.Open();
   auto timerA = backtesterServiceClients.BuildTimer(seconds(1));
   auto timerB = backtesterServiceClients.BuildTimer(seconds(2));

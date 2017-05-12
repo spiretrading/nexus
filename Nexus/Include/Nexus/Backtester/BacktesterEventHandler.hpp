@@ -1,5 +1,5 @@
-#ifndef NEXUS_BACKTESTERENVIRONMENT_HPP
-#define NEXUS_BACKTESTERENVIRONMENT_HPP
+#ifndef NEXUS_BACKTESTEREVENTHANDLER_HPP
+#define NEXUS_BACKTESTEREVENTHANDLER_HPP
 #include <deque>
 #include <unordered_set>
 #include <vector>
@@ -19,27 +19,27 @@
 
 namespace Nexus {
 
-  /*! \class BacktesterEnvironment
-      \brief Provides all of the services needed to run historical data.
+  /*! \class BacktesterEventHandler
+      \brief Implements an event loop to handle BacktesterEvents.
    */
-  class BacktesterEnvironment : private boost::noncopyable {
+  class BacktesterEventHandler : private boost::noncopyable {
     public:
 
-      //! Constructs a BacktesterEnvironment.
+      //! Constructs a BacktesterEventHandler.
       /*!
         \param startTime The starting point of the backtester.
       */
-      BacktesterEnvironment(boost::posix_time::ptime startTime);
+      BacktesterEventHandler(boost::posix_time::ptime startTime);
 
-      //! Constructs a BacktesterEnvironment.
+      //! Constructs a BacktesterEventHandler.
       /*!
         \param startTime The starting point of the backtester.
         \param endTime The time to stop backtesting.
       */
-      BacktesterEnvironment(boost::posix_time::ptime startTime,
+      BacktesterEventHandler(boost::posix_time::ptime startTime,
         boost::posix_time::ptime endTime);
 
-      ~BacktesterEnvironment();
+      ~BacktesterEventHandler();
 
       void Add(std::shared_ptr<BacktesterEvent> event);
 
@@ -67,21 +67,21 @@ namespace Nexus {
       void Shutdown();
   };
 
-  inline BacktesterEnvironment::BacktesterEnvironment(
+  inline BacktesterEventHandler::BacktesterEventHandler(
       boost::posix_time::ptime startTime)
-      : BacktesterEnvironment{std::move(startTime),
+      : BacktesterEventHandler{std::move(startTime),
           boost::posix_time::pos_infin} {}
 
-  inline BacktesterEnvironment::BacktesterEnvironment(
+  inline BacktesterEventHandler::BacktesterEventHandler(
       boost::posix_time::ptime startTime, boost::posix_time::ptime endTime)
       : m_startTime{std::move(startTime)},
         m_endTime{std::move(endTime)} {}
 
-  inline BacktesterEnvironment::~BacktesterEnvironment() {
+  inline BacktesterEventHandler::~BacktesterEventHandler() {
     Close();
   }
 
-  inline void BacktesterEnvironment::Add(
+  inline void BacktesterEventHandler::Add(
       std::shared_ptr<BacktesterEvent> event) {
     {
       boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
@@ -95,7 +95,7 @@ namespace Nexus {
     m_eventAvailableCondition.notify_one();
   }
 
-  inline void BacktesterEnvironment::Add(
+  inline void BacktesterEventHandler::Add(
       std::vector<std::shared_ptr<BacktesterEvent>> events) {
     if(events.empty()) {
       return;
@@ -112,16 +112,16 @@ namespace Nexus {
     m_eventAvailableCondition.notify_one();
   }
 
-  inline const TestEnvironment& BacktesterEnvironment::
+  inline const TestEnvironment& BacktesterEventHandler::
       GetTestEnvironment() const {
     return m_testEnvironment;
   }
 
-  inline TestEnvironment& BacktesterEnvironment::GetTestEnvironment() {
+  inline TestEnvironment& BacktesterEventHandler::GetTestEnvironment() {
     return m_testEnvironment;
   }
 
-  inline void BacktesterEnvironment::Open() {
+  inline void BacktesterEventHandler::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
@@ -129,7 +129,7 @@ namespace Nexus {
       m_testEnvironment.SetTime(m_startTime);
       m_testEnvironment.Open();
       m_eventLoopRoutine = Beam::Routines::Spawn(
-        std::bind(&BacktesterEnvironment::EventLoop, this));
+        std::bind(&BacktesterEventHandler::EventLoop, this));
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
       Shutdown();
@@ -137,14 +137,14 @@ namespace Nexus {
     m_openState.SetOpen();
   }
 
-  inline void BacktesterEnvironment::Close() {
+  inline void BacktesterEventHandler::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  inline void BacktesterEnvironment::EventLoop() {
+  inline void BacktesterEventHandler::EventLoop() {
     while(true) {
       std::shared_ptr<BacktesterEvent> event;
       {
@@ -167,7 +167,7 @@ namespace Nexus {
     }
   }
 
-  inline void BacktesterEnvironment::Shutdown() {
+  inline void BacktesterEventHandler::Shutdown() {
     m_eventAvailableCondition.notify_one();
     m_eventLoopRoutine.Wait();
     m_testEnvironment.Close();

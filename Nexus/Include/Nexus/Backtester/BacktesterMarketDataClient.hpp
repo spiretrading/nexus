@@ -4,7 +4,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
-#include "Nexus/Backtester/BacktesterEnvironment.hpp"
+#include "Nexus/Backtester/BacktesterEventHandler.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 
 namespace Nexus {
@@ -17,12 +17,12 @@ namespace Nexus {
 
       //! Constructs a BacktesterMarketDataClient.
       /*!
-        \param environment The BacktesterEnvironment to connect to.
+        \param environment The BacktesterEventHandler to connect to.
         \param marketDataClient The underlying MarketDataClient to submit
                queries to.
       */
       BacktesterMarketDataClient(
-        Beam::RefType<BacktesterEnvironment> environment,
+        Beam::RefType<BacktesterEventHandler> environment,
         std::unique_ptr<MarketDataService::VirtualMarketDataClient>
         marketDataClient);
 
@@ -86,7 +86,7 @@ namespace Nexus {
       void Close();
 
     private:
-      BacktesterEnvironment* m_environment;
+      BacktesterEventHandler* m_environment;
       std::unique_ptr<MarketDataService::VirtualMarketDataClient>
         m_marketDataClient;
       Beam::IO::OpenState m_openState;
@@ -95,7 +95,7 @@ namespace Nexus {
   };
 
   inline BacktesterMarketDataClient::BacktesterMarketDataClient(
-      Beam::RefType<BacktesterEnvironment> environment,
+      Beam::RefType<BacktesterEventHandler> environment,
       std::unique_ptr<MarketDataService::VirtualMarketDataClient>
       marketDataClient)
       : m_environment{environment.Get()},

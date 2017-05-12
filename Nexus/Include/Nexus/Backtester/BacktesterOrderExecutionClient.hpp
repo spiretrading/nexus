@@ -4,7 +4,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
-#include "Nexus/Backtester/BacktesterEnvironment.hpp"
+#include "Nexus/Backtester/BacktesterEventHandler.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 
 namespace Nexus {
@@ -17,12 +17,12 @@ namespace Nexus {
 
       //! Constructs a BacktesterOrderExecutionClient.
       /*!
-        \param environment The BacktesterEnvironment to connect to.
+        \param environment The BacktesterEventHandler to connect to.
         \param orderExecutionClient The underlying OrderExecutionClient to
                submit Orders to.
       */
       BacktesterOrderExecutionClient(
-        Beam::RefType<BacktesterEnvironment> environment,
+        Beam::RefType<BacktesterEventHandler> environment,
         std::unique_ptr<OrderExecutionService::VirtualOrderExecutionClient>
         orderExecutionClient);
 
@@ -60,7 +60,7 @@ namespace Nexus {
       void Close();
 
     private:
-      BacktesterEnvironment* m_environment;
+      BacktesterEventHandler* m_environment;
       std::unique_ptr<OrderExecutionService::VirtualOrderExecutionClient>
         m_orderExecutionClient;
       Beam::IO::OpenState m_openState;
@@ -69,7 +69,7 @@ namespace Nexus {
   };
 
   inline BacktesterOrderExecutionClient::BacktesterOrderExecutionClient(
-      Beam::RefType<BacktesterEnvironment> environment,
+      Beam::RefType<BacktesterEventHandler> environment,
       std::unique_ptr<OrderExecutionService::VirtualOrderExecutionClient>
       orderExecutionClient)
       : m_environment{environment.Get()},

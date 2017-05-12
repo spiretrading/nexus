@@ -1,7 +1,7 @@
 #include "Nexus/Python/Backtester.hpp"
 #include <Beam/Python/BoostPython.hpp>
 #include <Beam/Python/GilRelease.hpp>
-#include "Nexus/Backtester/BacktesterEnvironment.hpp"
+#include "Nexus/Backtester/BacktesterEventHandler.hpp"
 #include "Nexus/Backtester/BacktesterServiceClients.hpp"
 #include "Nexus/Python/PythonMarketDataClient.hpp"
 #include "Nexus/Python/PythonOrderExecutionClient.hpp"
@@ -18,14 +18,14 @@ using namespace Nexus::Python;
 using namespace std;
 
 namespace {
-  std::shared_ptr<BacktesterEnvironment> MakeBacktesterEnvironmentA(
+  std::shared_ptr<BacktesterEventHandler> MakeBacktesterEventHandlerA(
       const ptime& startTime) {
-    return std::make_shared<BacktesterEnvironment>(startTime);
+    return std::make_shared<BacktesterEventHandler>(startTime);
   }
 
-  std::shared_ptr<BacktesterEnvironment> MakeBacktesterEnvironmentB(
+  std::shared_ptr<BacktesterEventHandler> MakeBacktesterEventHandlerB(
       const ptime& startTime, const ptime& endTime) {
-    return std::make_shared<BacktesterEnvironment>(startTime, endTime);
+    return std::make_shared<BacktesterEventHandler>(startTime, endTime);
   }
 
   class PythonBacktesterServiceClients :
@@ -33,7 +33,7 @@ namespace {
     public:
       PythonBacktesterServiceClients(
         std::unique_ptr<VirtualServiceClients> client,
-        std::shared_ptr<BacktesterEnvironment> environment)
+        std::shared_ptr<BacktesterEventHandler> environment)
           : WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>{
               std::move(client)},
             m_environment{std::move(environment)} {}
@@ -66,13 +66,13 @@ namespace {
       }
 
     private:
-      std::shared_ptr<BacktesterEnvironment> m_environment;
+      std::shared_ptr<BacktesterEventHandler> m_environment;
       std::unique_ptr<PythonMarketDataClient> m_marketDataClient;
       std::unique_ptr<PythonOrderExecutionClient> m_orderExecutionClient;
   };
 
   VirtualServiceClients* BuildBacktesterServiceClients(
-      std::shared_ptr<BacktesterEnvironment> environment) {
+      std::shared_ptr<BacktesterEventHandler> environment) {
     auto baseClient = std::make_unique<BacktesterServiceClients>(
       Ref(*environment));
     return new PythonBacktesterServiceClients{
@@ -81,17 +81,17 @@ namespace {
 }
 
 void Nexus::Python::ExportBacktester() {
-  ExportBacktesterEnvironment();
+  ExportBacktesterEventHandler();
   ExportBacktesterServiceClients();
 }
 
-void Nexus::Python::ExportBacktesterEnvironment() {
-  class_<BacktesterEnvironment, std::shared_ptr<BacktesterEnvironment>,
-      boost::noncopyable>("BacktesterEnvironment", no_init)
-    .def("__init__", make_constructor(&MakeBacktesterEnvironmentA))
-    .def("__init__", make_constructor(&MakeBacktesterEnvironmentB))
-    .def("open", BlockingFunction(&BacktesterEnvironment::Open))
-    .def("close", BlockingFunction(&BacktesterEnvironment::Close));
+void Nexus::Python::ExportBacktesterEventHandler() {
+  class_<BacktesterEventHandler, std::shared_ptr<BacktesterEventHandler>,
+      boost::noncopyable>("BacktesterEventHandler", no_init)
+    .def("__init__", make_constructor(&MakeBacktesterEventHandlerA))
+    .def("__init__", make_constructor(&MakeBacktesterEventHandlerB))
+    .def("open", BlockingFunction(&BacktesterEventHandler::Open))
+    .def("close", BlockingFunction(&BacktesterEventHandler::Close));
 }
 
 void Nexus::Python::ExportBacktesterServiceClients() {

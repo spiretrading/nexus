@@ -9,7 +9,7 @@
 #include <Beam/TimeServiceTests/TestTimer.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
-#include "Nexus/Backtester/BacktesterEnvironment.hpp"
+#include "Nexus/Backtester/BacktesterEventHandler.hpp"
 #include "Nexus/Backtester/BacktesterMarketDataClient.hpp"
 #include "Nexus/Backtester/BacktesterOrderExecutionClient.hpp"
 #include "Nexus/Backtester/BacktesterTimer.hpp"
@@ -55,10 +55,10 @@ namespace Nexus {
 
       //! Constructs a BacktesterServiceClients.
       /*!
-        \param environment The BacktesterEnvironment to use.
+        \param environment The BacktesterEventHandler to use.
       */
       BacktesterServiceClients(
-        Beam::RefType<BacktesterEnvironment> environment);
+        Beam::RefType<BacktesterEventHandler> environment);
 
       ~BacktesterServiceClients();
 
@@ -90,7 +90,7 @@ namespace Nexus {
       void Close();
 
     private:
-      BacktesterEnvironment* m_environment;
+      BacktesterEventHandler* m_environment;
       std::unique_ptr<ServiceLocatorClient> m_serviceLocatorClient;
       std::unique_ptr<RegistryClient> m_registryClient;
       std::unique_ptr<AdministrationClient> m_administrationClient;
@@ -107,7 +107,7 @@ namespace Nexus {
   };
 
   inline BacktesterServiceClients::BacktesterServiceClients(
-      Beam::RefType<BacktesterEnvironment> environment)
+      Beam::RefType<BacktesterEventHandler> environment)
       : m_environment{environment.Get()} {}
 
   inline BacktesterServiceClients::~BacktesterServiceClients() {

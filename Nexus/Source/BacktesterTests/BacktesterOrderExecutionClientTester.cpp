@@ -2,7 +2,7 @@
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/Threading/ConditionVariable.hpp>
 #include <Beam/Threading/Mutex.hpp>
-#include "Nexus/Backtester/BacktesterEnvironment.hpp"
+#include "Nexus/Backtester/BacktesterEventHandler.hpp"
 #include "Nexus/Backtester/BacktesterServiceClients.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
 

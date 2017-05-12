@@ -4,8 +4,8 @@
 #include <boost/noncopyable.hpp>
 #include <boost/thread/mutex.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
-#include "Nexus/Backtester/BacktesterEnvironment.hpp"
 #include "Nexus/Backtester/BacktesterEvent.hpp"
+#include "Nexus/Backtester/BacktesterEventHandler.hpp"
 
 namespace Nexus {
 
@@ -21,7 +21,7 @@ namespace Nexus {
         \param environment The TestEnvironment this Timer belongs to.
       */
       BacktesterTimer(boost::posix_time::time_duration interval,
-        Beam::RefType<BacktesterEnvironment> environment);
+        Beam::RefType<BacktesterEventHandler> environment);
 
       ~BacktesterTimer();
 
@@ -38,7 +38,7 @@ namespace Nexus {
       friend class TimerBacktesterEvent;
       mutable std::shared_ptr<boost::mutex> m_mutex;
       boost::posix_time::time_duration m_interval;
-      BacktesterEnvironment* m_environment;
+      BacktesterEventHandler* m_environment;
       std::shared_ptr<bool> m_isAlive;
       int m_iteration;
       std::shared_ptr<TimerBacktesterEvent> m_expireEvent;
@@ -64,7 +64,7 @@ namespace Nexus {
 
   inline BacktesterTimer::BacktesterTimer(
       boost::posix_time::time_duration interval,
-      Beam::RefType<BacktesterEnvironment> environment)
+      Beam::RefType<BacktesterEventHandler> environment)
       : m_mutex{std::make_shared<boost::mutex>()},
         m_interval{interval},
         m_environment{environment.Get()},
