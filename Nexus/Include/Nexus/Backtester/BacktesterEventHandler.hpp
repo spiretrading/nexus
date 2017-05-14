@@ -41,12 +41,22 @@ namespace Nexus {
 
       ~BacktesterEventHandler();
 
+      //! Adds an event to be handled.
+      /*!
+        \param event The event to handle.
+      */
       void Add(std::shared_ptr<BacktesterEvent> event);
 
+      //! Adds a list of events to be handled.
+      /*!
+        \param events The list of events to handle.
+      */
       void Add(std::vector<std::shared_ptr<BacktesterEvent>> events);
 
+      //! Returns the TestEnvironment used.
       const TestEnvironment& GetTestEnvironment() const;
 
+      //! Returns the TestEnvironment used.
       TestEnvironment& GetTestEnvironment();
 
       void Open();

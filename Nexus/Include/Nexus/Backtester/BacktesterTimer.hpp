@@ -46,8 +46,18 @@ namespace Nexus {
       Beam::MultiQueueWriter<Beam::Threading::Timer::Result> m_publisher;
   };
 
+  /*! \class TimerBacktesterEvent
+      \brief Represents a Timer event.
+   */
   class TimerBacktesterEvent : public BacktesterEvent {
     public:
+
+      //! Constructs a TimerBacktesterEvent.
+      /*!
+        \param timer The BacktesterTimer that produced the event.
+        \param timestamp The time this event is to be executed.
+        \param result The Timer result.
+      */
       TimerBacktesterEvent(BacktesterTimer& timer,
         boost::posix_time::ptime timestamp,
         Beam::Threading::Timer::Result result);

@@ -6,19 +6,32 @@
 #include "Nexus/Backtester/Backtester.hpp"
 
 namespace Nexus {
+
+  /*! \class BacktesterEvent
+      \brief Base class of an event to be handled by the backtester.
+   */
   class BacktesterEvent : private boost::noncopyable {
     public:
       virtual ~BacktesterEvent() = default;
 
+      //! Returns the timestamp that this event takes place.
       const boost::posix_time::ptime& GetTimestamp() const;
 
+      //! Waits for this event to be executed.
       void Wait();
 
+      //! Executes this event.
       virtual void Execute() = 0;
 
     protected:
+
+      //! Constructs a BacktesterEvent.
+      /*!
+        \param timestamp The time that this event is to take place.
+      */
       BacktesterEvent(boost::posix_time::ptime timestamp);
 
+      //! Marks this event as complete/executed.
       void Complete();
 
     private:
