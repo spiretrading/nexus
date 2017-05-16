@@ -13,14 +13,14 @@ class View extends UpdatableView {
 
   /** @private */
   convertToHeaderLabel(label) {
-    if (label === 'totalPnL') {
+    if (label === 'totalPnL' || label === 'Total P/L') {
       label = 'Total P/L';
-    } else if (label === 'unrealizedPnL') {
+    } else if (label === 'unrealizedPnL' || label === 'Unrealized P/L') {
       label = 'Unrealized P/L';
-    } else if (label === 'realizedPnL') {
+    } else if (label === 'realizedPnL' || label === 'Realized P/L') {
       label = 'Realized P/L';
     } else {
-      label = this.toTitleCase.apply(this, [label]);
+      label = this.convertToTitle.apply(this, [label]);
     }
 
     return label;
@@ -52,9 +52,11 @@ class View extends UpdatableView {
   }
 
   /** @private */
-  toTitleCase(label) {
+  convertToTitle(label) {
     label = label.replace(/([A-Z]+)*([A-Z][a-z])/g, "$1$2");
-    return label.charAt(0).toUpperCase() + label.slice(1);
+    label = label.charAt(0).toUpperCase() + label.slice(1);
+    label = label.replace(/([A-Z])/g, ' $1').trim().replace('  ', ' ');
+    return label;
   }
 
   initialize() {
@@ -108,10 +110,12 @@ class View extends UpdatableView {
     let headerWidth = $header.outerWidth();
     let containerWidth = $container.outerWidth();
     if (headerWidth < containerWidth) {
+      this.isChartTooWide = false;
       $header.removeClass('wide').addClass('wide');
       $container.find('.fixed-column-header').css('opacity', '0');
       $container.find('.fixed-column-body').css('opacity', '0');
     } else {
+      this.isChartTooWide = true;
       $header.removeClass('wide');
       $container.find('.fixed-column-header').css('opacity', '1');
       $container.find('.fixed-column-body').css('opacity', '1');
@@ -121,7 +125,9 @@ class View extends UpdatableView {
   componentDidUpdate() {
     this.synchronizeColumnWidths.apply(this);
     if (this.componentModel.data != null && this.componentModel.data[0] != null) {
-      $('#' + this.componentModel.componentId + ' .fixed-column-header').css('opacity', '1');
+      if (this.isChartTooWide) {
+        $('#' + this.componentModel.componentId + ' .fixed-column-header').css('opacity', '1');
+      }
     }
   }
 
@@ -234,13 +240,26 @@ class View extends UpdatableView {
     let accountIds = [];
     let fixedBodyRows = [];
 
+    // render account column header
+    let arrowIcon;
+    if (this.componentModel.sortingColumn != null && this.componentModel.sortingColumn.name == 'Account') {
+      let arrowIconClass;
+      if (this.componentModel.sortingColumn.direction == 'asc') {
+        arrowIconClass = 'icon-arrow-icon-down';
+      } else if (this.componentModel.sortingColumn.direction == 'desc') {
+        arrowIconClass = 'icon-arrow-icon-up';
+      }
+      arrowIcon = <span className={arrowIconClass}></span>;
+    }
     columns.push(
-      <td key={-1}>
+      <td key={-1} className="no-select" onClick={this.onHeaderClick.bind(this)}>
         Account
+        {arrowIcon}
       </td>
     );
     columnLabels.push('Account');
 
+    // add column headers
     for (let i=0; i<chartColumns.length; i++) {
       let column = chartColumns[i];
       let columnHeader = this.convertToHeaderLabel.apply(this, [column.name]);
@@ -256,7 +275,7 @@ class View extends UpdatableView {
           arrowIcon = <span className={arrowIconClass}></span>;
         }
         columns.push(
-          <td key={column.id} onClick={this.onHeaderClick.bind(this)}>
+          <td key={column.id} className="no-select" onClick={this.onHeaderClick.bind(this)}>
             {columnHeader}
             {arrowIcon}
           </td>
@@ -378,7 +397,7 @@ class View extends UpdatableView {
               <table>
                 <tbody>
                   <tr>
-                    <td onClick={this.onHeaderClick.bind(this)}>
+                    <td className="no-select" onClick={this.onHeaderClick.bind(this)}>
                       Account
                       {fixedArrowIcon}
                     </td>

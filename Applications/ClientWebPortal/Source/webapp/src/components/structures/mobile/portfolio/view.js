@@ -54,7 +54,7 @@ class View extends UpdatableView {
       currencies: this.componentModel.currencies || [],
       markets: this.componentModel.markets || [],
       filter: {}
-    }
+    };
 
     let onParametersSave = this.controller.saveParameters.bind(this.controller);
 

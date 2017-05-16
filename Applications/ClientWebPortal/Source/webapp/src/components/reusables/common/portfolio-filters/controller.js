@@ -17,7 +17,7 @@ class Controller {
 
   /** @private */
   initializeColumns() {
-    this.componentModel.columns = columns;
+    this.componentModel.columns = clone(columns);
   }
 
   componentWillUpdate(model) {

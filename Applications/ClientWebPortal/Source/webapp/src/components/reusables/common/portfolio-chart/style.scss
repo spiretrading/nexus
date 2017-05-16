@@ -23,7 +23,10 @@
     }
 
     table {
-      border: 1px solid $lightGrey;
+      border-left: 1px solid $lightGrey;
+      border-top: 1px solid $lightGrey;
+      border-right: 1px solid $lightGrey;
+      border-bottom: 1px solid $lightGrey;
       margin-left: auto;
       margin-right: auto;
     }
