@@ -34,11 +34,11 @@
         cursor: pointer;
 
         &:hover {
-          color: $primaryGradient3;
+          color: $primaryGradient2;
 
           .member-role {
             .icon.active {
-              color: $primaryGradient3;
+              color: $primaryGradient2;
             }
           }
         }

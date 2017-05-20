@@ -30,7 +30,7 @@ class MarketDatabase {
     return this.marketCodeEntries.get(marketCode);
   }
 
-  fromCountryCode(countryCode) {4
+  fromCountryCode(countryCode) {
     return this.countryCodeEntries.get(countryCode).values();
   }
 

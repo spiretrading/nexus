@@ -6,6 +6,8 @@ main.mobile {
     font-size: 16px;
     position: relative;
     display: none;
+    height: calc(100vh - 75px);
+    flex-direction: column;
 
     .row {
       margin: 0 0 30px 0;
@@ -47,8 +49,41 @@ main.mobile {
       position: fixed;
       bottom: 0;
       left: 0;
-      width: 100vw;
+      width: 100%;
       z-index: 2000;
+    }
+
+    .chart-outer-wrapper {
+      position: relative;
+      width: 100%;
+
+      &.stretch {
+        flex: 1;
+      }
+
+      .chart-inner-wrapper {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        text-align: center;
+        padding: 20px 15px;
+        z-index: 10;
+      }
+    }
+
+    .total-wrapper {
+      margin-top: 20px;
+      padding: 15px;
+
+      table {
+        width: 100%;
+
+        td {
+          width: 50%;
+        }
+      }
     }
   }
 }

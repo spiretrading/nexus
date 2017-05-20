@@ -1,4 +1,4 @@
-import CurrencyId from '../../definitions/currency/id';
+import CurrencyId from '../../definitions/currency-id';
 import Money from '../../definitions/money';
 import RiskState from './risk-state';
 

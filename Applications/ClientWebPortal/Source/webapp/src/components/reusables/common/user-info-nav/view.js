@@ -12,7 +12,7 @@ class View extends UpdatableView {
     let traderClass = defaultClass + 'trader';
     let managerClass = defaultClass + 'manager';
     let adminClass = defaultClass + 'admin';
-    let serviceClass = defaultClass + 'server';
+    let serviceClass = defaultClass + 'service';
 
     if (this.componentModel.roles != null) {
       if (this.componentModel.roles.isTrader) {

@@ -1,7 +1,7 @@
 import httpConnectionManager from '../commons/http-connection-manager';
 import ResultCodes from './result-codes';
 import accountRoles from '../commons/account-roles';
-import DirectoryEntry from './directory-entry';
+import DirectoryEntry from '../../definitions/directory-entry';
 const ResultCode = ResultCodes;
 
 /** Spire service locator client class */
