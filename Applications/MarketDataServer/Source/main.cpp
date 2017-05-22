@@ -279,8 +279,10 @@ int main(int argc, const char** argv) {
     JsonObject registryService;
     registryService["addresses"] =
       ToString(registryServerConnectionInitializer.m_addresses);
-    registryService["countries"] =
-      ToString(registryServerConnectionInitializer.m_countries);
+    if(!registryServerConnectionInitializer.m_countries.empty()) {
+      registryService["countries"] =
+        ToString(registryServerConnectionInitializer.m_countries);
+    }
     serviceLocatorClient->Register(
       registryServerConnectionInitializer.m_serviceName, registryService);
   } catch(const std::exception& e) {
@@ -302,8 +304,10 @@ int main(int argc, const char** argv) {
     JsonObject feedService;
     feedService["addresses"] =
       ToString(feedServerConnectionInitializer.m_addresses);
-    feedService["countries"] =
-      ToString(registryServerConnectionInitializer.m_countries);
+    if(!registryServerConnectionInitializer.m_countries.empty()) {
+      feedService["countries"] =
+        ToString(registryServerConnectionInitializer.m_countries);
+    }
     serviceLocatorClient->Register(
       feedServerConnectionInitializer.m_serviceName, feedService);
   } catch(const std::exception& e) {
