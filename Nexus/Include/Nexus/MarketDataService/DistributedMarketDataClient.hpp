@@ -206,7 +206,7 @@ namespace MarketDataService {
     if(marketDataClient == nullptr) {
       return SecuritySnapshot{};
     }
-    marketDataClient->LoadSecuritySnapshot(security);
+    return marketDataClient->LoadSecuritySnapshot(security);
   }
 
   inline SecurityTechnicals DistributedMarketDataClient::
@@ -215,11 +215,12 @@ namespace MarketDataService {
     if(marketDataClient == nullptr) {
       return SecurityTechnicals{};
     }
-    marketDataClient->LoadSecurityTechnicals(security);
+    return marketDataClient->LoadSecurityTechnicals(security);
   }
 
   inline std::vector<SecurityInfo> DistributedMarketDataClient::
       LoadSecurityInfoFromPrefix(const std::string& prefix) {
+    return {};
   }
 
   inline void DistributedMarketDataClient::Open() {
