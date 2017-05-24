@@ -200,10 +200,9 @@ int main(int argc, const char** argv) {
           if(lastCountries.empty()) {
             return incomingMarketDataClient;
           }
-          std::cout << lastCountries.size() << std::endl;
+          std::shared_ptr<VirtualMarketDataClient> client =
+            std::move(incomingMarketDataClient);
           for(auto& country : lastCountries) {
-            std::shared_ptr<VirtualMarketDataClient> client =
-              std::move(incomingMarketDataClient);
             countryToMarketDataClients[country] = client;
             for(auto& market : marketDatabase.FromCountry(country)) {
               marketToMarketDataClients[market.m_code] = client;
@@ -217,11 +216,12 @@ int main(int argc, const char** argv) {
           break;
         }
       }
-      std::cout << "Yao" << std::endl;
-      return MakeVirtualMarketDataClient(
+      auto distributedClient = MakeVirtualMarketDataClient(
         std::make_unique<DistributedMarketDataClient>(
         std::move(countryToMarketDataClients),
         std::move(marketToMarketDataClients)));
+      distributedClient->Open();
+      return distributedClient;
     };
   optional<BaseMarketDataRelayServlet> baseRegistryServlet;
   try {
