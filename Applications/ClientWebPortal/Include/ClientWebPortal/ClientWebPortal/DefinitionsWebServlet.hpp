@@ -47,6 +47,10 @@ namespace ClientWebPortal {
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadCurrencyDatabase(
         const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadDestinationDatabase(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadExchangeRates(
+        const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadMarketDatabase(
         const Beam::WebServices::HttpRequest& request);
   };
