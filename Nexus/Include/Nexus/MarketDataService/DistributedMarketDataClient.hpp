@@ -115,106 +115,126 @@ namespace MarketDataService {
   inline void DistributedMarketDataClient::QueryBboQuotes(
       const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<SequencedBboQuote>>& queue) {
+    std::cout << "BBO: " << query.GetIndex().GetSymbol() << std::endl;
     auto marketDataClient = FindMarketDataClient(query.GetIndex());
     if(marketDataClient == nullptr) {
       queue->Break();
       return;
     }
     marketDataClient->QueryBboQuotes(query, queue);
+    std::cout << "Done BBO: " << query.GetIndex().GetSymbol() << std::endl;
   }
 
   inline void DistributedMarketDataClient::QueryBboQuotes(
       const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<BboQuote>>& queue) {
+    std::cout << "BBO: " << query.GetIndex().GetSymbol() << std::endl;
     auto marketDataClient = FindMarketDataClient(query.GetIndex());
     if(marketDataClient == nullptr) {
       queue->Break();
       return;
     }
     marketDataClient->QueryBboQuotes(query, queue);
+    std::cout << "Done BBO: " << query.GetIndex().GetSymbol() << std::endl;
   }
 
   inline void DistributedMarketDataClient::QueryBookQuotes(
       const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<SequencedBookQuote>>& queue) {
+    std::cout << "Book: " << query.GetIndex().GetSymbol() << std::endl;
     auto marketDataClient = FindMarketDataClient(query.GetIndex());
     if(marketDataClient == nullptr) {
       queue->Break();
       return;
     }
     marketDataClient->QueryBookQuotes(query, queue);
+    std::cout << "Done Book: " << query.GetIndex().GetSymbol() << std::endl;
   }
 
   inline void DistributedMarketDataClient::QueryBookQuotes(
       const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<BookQuote>>& queue) {
+    std::cout << "Book: " << query.GetIndex().GetSymbol() << std::endl;
     auto marketDataClient = FindMarketDataClient(query.GetIndex());
     if(marketDataClient == nullptr) {
       queue->Break();
       return;
     }
     marketDataClient->QueryBookQuotes(query, queue);
+    std::cout << "Done Book: " << query.GetIndex().GetSymbol() << std::endl;
   }
 
   inline void DistributedMarketDataClient::QueryMarketQuotes(
       const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<SequencedMarketQuote>>& queue) {
+    std::cout << "Market: " << query.GetIndex().GetSymbol() << std::endl;
     auto marketDataClient = FindMarketDataClient(query.GetIndex());
     if(marketDataClient == nullptr) {
       queue->Break();
       return;
     }
     marketDataClient->QueryMarketQuotes(query, queue);
+    std::cout << "Done market: " << query.GetIndex().GetSymbol() << std::endl;
   }
 
   inline void DistributedMarketDataClient::QueryMarketQuotes(
       const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<MarketQuote>>& queue) {
+    std::cout << "Market: " << query.GetIndex().GetSymbol() << std::endl;
     auto marketDataClient = FindMarketDataClient(query.GetIndex());
     if(marketDataClient == nullptr) {
       queue->Break();
       return;
     }
     marketDataClient->QueryMarketQuotes(query, queue);
+    std::cout << "Done market: " << query.GetIndex().GetSymbol() << std::endl;
   }
 
   inline void DistributedMarketDataClient::QueryTimeAndSales(
       const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<SequencedTimeAndSale>>& queue) {
+    std::cout << "TAS: " << query.GetIndex().GetSymbol() << std::endl;
     auto marketDataClient = FindMarketDataClient(query.GetIndex());
     if(marketDataClient == nullptr) {
       queue->Break();
       return;
     }
     marketDataClient->QueryTimeAndSales(query, queue);
+    std::cout << "Done tas: " << query.GetIndex().GetSymbol() << std::endl;
   }
 
   inline void DistributedMarketDataClient::QueryTimeAndSales(
       const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<TimeAndSale>>& queue) {
+    std::cout << "TAS: " << query.GetIndex().GetSymbol() << std::endl;
     auto marketDataClient = FindMarketDataClient(query.GetIndex());
     if(marketDataClient == nullptr) {
       queue->Break();
       return;
     }
     marketDataClient->QueryTimeAndSales(query, queue);
+    std::cout << "Done tas: " << query.GetIndex().GetSymbol() << std::endl;
   }
 
   inline SecuritySnapshot DistributedMarketDataClient::LoadSecuritySnapshot(
       const Security& security) {
+    std::cout << "Snapshot: " << security.GetSymbol() << std::endl;
     auto marketDataClient = FindMarketDataClient(security);
     if(marketDataClient == nullptr) {
       return SecuritySnapshot{};
     }
+    std::cout << "Done." << std::endl;
     return marketDataClient->LoadSecuritySnapshot(security);
   }
 
   inline SecurityTechnicals DistributedMarketDataClient::
       LoadSecurityTechnicals(const Security& security) {
+    std::cout << "Tech: " << security.GetSymbol() << std::endl;
     auto marketDataClient = FindMarketDataClient(security);
     if(marketDataClient == nullptr) {
       return SecurityTechnicals{};
     }
+    std::cout << "Done tech: " << security.GetSymbol() << std::endl;
     return marketDataClient->LoadSecurityTechnicals(security);
   }
 

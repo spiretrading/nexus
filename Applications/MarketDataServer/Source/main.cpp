@@ -69,12 +69,15 @@ namespace {
     BinarySender<SharedBuffer>, SizeDeclarativeEncoder<ZLibEncoder>,
     std::shared_ptr<LiveTimer>>;
 
-  vector<CountryCode> ParseCountries(const YAML::Node& config,
+  JsonValue ParseCountries(const YAML::Node& config,
       const CountryDatabase& countryDatabase) {
-    vector<CountryCode> countries;
+    vector<JsonValue> countries;
     for(auto& item : config) {
       auto country = ParseCountryCode(item.to<string>(), countryDatabase);
-      countries.push_back(country);
+      countries.push_back(static_cast<double>(country));
+    }
+    if(countries.empty()) {
+      return JsonNull{};
     }
     return countries;
   }
@@ -83,7 +86,6 @@ namespace {
     string m_serviceName;
     IpAddress m_interface;
     vector<IpAddress> m_addresses;
-    vector<CountryCode> m_countries;
 
     void Initialize(const YAML::Node& config,
       const CountryDatabase& countryDatabase);
@@ -105,10 +107,6 @@ namespace {
     vector<IpAddress> addresses;
     addresses.push_back(m_interface);
     m_addresses = Extract<vector<IpAddress>>(config, "addresses", addresses);
-    auto countriesNode = config.FindValue("countries");
-    if(countriesNode != nullptr) {
-      m_countries = ParseCountries(*countriesNode, countryDatabase);
-    }
   }
 
   void FeedServerConnectionInitializer::Initialize(
@@ -235,6 +233,17 @@ int main(int argc, const char** argv) {
     cerr << "Error parsing section 'feed_server': " << e.what() << endl;
     return -1;
   }
+  JsonValue countries = JsonNull{};
+  try {
+    auto countriesNode = config.FindValue("countries");
+    if(countriesNode != nullptr) {
+      countries = ParseCountries(*countriesNode,
+        definitionsClient->LoadCountryDatabase());
+    }
+  } catch(const std::exception& e) {
+    cerr << "Error parsing section 'countries': " << e.what() << endl;
+    return -1;
+  }
   MySqlConfig mySqlConfig;
   try {
     mySqlConfig = MySqlConfig::Parse(GetNode(config, "data_store"));
@@ -279,9 +288,8 @@ int main(int argc, const char** argv) {
     JsonObject registryService;
     registryService["addresses"] =
       ToString(registryServerConnectionInitializer.m_addresses);
-    if(!registryServerConnectionInitializer.m_countries.empty()) {
-      registryService["countries"] =
-        ToString(registryServerConnectionInitializer.m_countries);
+    if(countries != JsonNull{}) {
+      registryService["countries"] = countries;
     }
     serviceLocatorClient->Register(
       registryServerConnectionInitializer.m_serviceName, registryService);
@@ -304,9 +312,8 @@ int main(int argc, const char** argv) {
     JsonObject feedService;
     feedService["addresses"] =
       ToString(feedServerConnectionInitializer.m_addresses);
-    if(!registryServerConnectionInitializer.m_countries.empty()) {
-      feedService["countries"] =
-        ToString(registryServerConnectionInitializer.m_countries);
+    if(countries != JsonNull{}) {
+      feedService["countries"] = countries;
     }
     serviceLocatorClient->Register(
       feedServerConnectionInitializer.m_serviceName, feedService);

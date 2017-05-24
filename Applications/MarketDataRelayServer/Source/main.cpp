@@ -149,13 +149,14 @@ int main(int argc, const char** argv) {
   auto marketDatabase = definitionsClient->LoadMarketDatabase();
   auto marketDataClientBuilder =
     [&] {
+      const auto SENTINEL = CountryDatabase::NONE;
       std::unordered_set<CountryCode> availableCountries;
       std::vector<CountryCode> lastCountries;
       auto servicePredicate =
         [&] (const ServiceEntry& entry) {
           auto countriesNode = entry.GetProperties().Get("countries");
           if(!countriesNode.is_initialized()) {
-            availableCountries.insert(CountryDatabase::NONE);
+            availableCountries.insert(SENTINEL);
             return true;
           }
           if(auto countriesList =
@@ -187,27 +188,36 @@ int main(int argc, const char** argv) {
         countryToMarketDataClients;
       std::unordered_map<MarketCode, std::shared_ptr<VirtualMarketDataClient>>
         marketToMarketDataClients;
-      while(availableCountries.find(CountryDatabase::NONE) ==
-          availableCountries.end()) {
-        auto incomingMarketDataClient =
-          MakeVirtualMarketDataClient(std::make_unique<MarketDataClient<
-          IncomingMarketDataClientSessionBuilder>>(
-          BuildBasicMarketDataClientSessionBuilder<
-          IncomingMarketDataClientSessionBuilder>(Ref(*serviceLocatorClient),
-          Ref(socketThreadPool), Ref(timerThreadPool), servicePredicate,
-          REGISTRY_SERVICE_NAME)));
-        if(lastCountries.empty()) {
-          return incomingMarketDataClient;
-        }
-        for(auto& country : lastCountries) {
-          std::shared_ptr<VirtualMarketDataClient> client =
-            std::move(incomingMarketDataClient);
-          countryToMarketDataClients[country] = client;
-          for(auto& market : marketDatabase.FromCountry(country)) {
-            marketToMarketDataClients[market.m_code] = client;
+      while(availableCountries.find(SENTINEL) == availableCountries.end()) {
+        try {
+          auto incomingMarketDataClient = MakeVirtualMarketDataClient(
+            std::make_unique<MarketDataClient<
+            IncomingMarketDataClientSessionBuilder>>(
+            BuildBasicMarketDataClientSessionBuilder<
+            IncomingMarketDataClientSessionBuilder>(Ref(*serviceLocatorClient),
+            Ref(socketThreadPool), Ref(timerThreadPool), servicePredicate,
+            REGISTRY_SERVICE_NAME)));
+          if(lastCountries.empty()) {
+            return incomingMarketDataClient;
           }
+          std::cout << lastCountries.size() << std::endl;
+          for(auto& country : lastCountries) {
+            std::shared_ptr<VirtualMarketDataClient> client =
+              std::move(incomingMarketDataClient);
+            countryToMarketDataClients[country] = client;
+            for(auto& market : marketDatabase.FromCountry(country)) {
+              marketToMarketDataClients[market.m_code] = client;
+            }
+          }
+          lastCountries.clear();
+        } catch(const std::exception&) {
+          if(countryToMarketDataClients.empty()) {
+            throw;
+          }
+          break;
         }
       }
+      std::cout << "Yao" << std::endl;
       return MakeVirtualMarketDataClient(
         std::make_unique<DistributedMarketDataClient>(
         std::move(countryToMarketDataClients),
