@@ -2,6 +2,7 @@
 #define NEXUS_DISTRIBUTEDMARKETDATACLIENT_HPP
 #include <unordered_map>
 #include <boost/noncopyable.hpp>
+#include <boost/range/adaptor/map.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include "Nexus/Definitions/Country.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
@@ -226,7 +227,17 @@ namespace MarketDataService {
 
   inline std::vector<SecurityInfo> DistributedMarketDataClient::
       LoadSecurityInfoFromPrefix(const std::string& prefix) {
-    return {};
+    std::vector<SecurityInfo> securityInfos;
+    std::unordered_set<std::shared_ptr<VirtualMarketDataClient>> clients;
+    for(auto& client :
+        m_countryToMarketDataClients | boost::adaptors::map_values) {
+      clients.insert(client);
+    }
+    for(auto& client : clients) {
+      auto result = client->LoadSecurityInfoFromPrefix(prefix);
+      securityInfos.insert(securityInfos.end(), result.begin(), result.end());
+    }
+    return securityInfos;
   }
 
   inline void DistributedMarketDataClient::Open() {
