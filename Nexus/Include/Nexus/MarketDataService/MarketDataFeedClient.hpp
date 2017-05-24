@@ -203,6 +203,38 @@ namespace MarketDataService {
       void OnTimerExpired(const Beam::Threading::Timer::Result& result);
   };
 
+  //! Finds a MarketDataFeedService for a specified country.
+  /*!
+    \param country The country to service.
+    \param serviceLocatorClient The ServiceLocatorClient used to locate
+           services.
+    \return The ServiceEntry belonging to the MarketDataFeedService for the
+            specified <i>country</i>.
+  */
+  template<typename ServiceLocatorClient>
+  boost::optional<Beam::ServiceLocator::ServiceEntry>
+      FindMarketDataFeedService(CountryCode country,
+      ServiceLocatorClient& serviceLocatorClient) {
+    auto services = serviceLocatorClient.Locate(FEED_SERVICE_NAME);
+    for(auto& entry : services) {
+      auto& properties = entry.GetProperties();
+      auto countriesProperty = properties.Get("countries");
+      if(!countriesProperty.is_initialized()) {
+        return entry;
+      } else if(auto countriesList = boost::get<std::vector<Beam::JsonValue>>(
+          &*countriesProperty)) {
+        for(auto countryEntry : *countriesList) {
+          if(auto value = boost::get<double>(&countryEntry)) {
+            if(static_cast<CountryCode>(*value) == country) {
+              return entry;
+            }
+          }
+        }
+      }
+    }
+    return boost::none;
+  }
+
   template<typename OrderIdType, typename SamplingTimerType,
     typename MessageProtocolType, typename HeartbeatTimerType>
   MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
