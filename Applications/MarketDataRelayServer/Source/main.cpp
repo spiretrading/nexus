@@ -198,6 +198,7 @@ int main(int argc, const char** argv) {
             Ref(socketThreadPool), Ref(timerThreadPool), servicePredicate,
             REGISTRY_SERVICE_NAME)));
           if(lastCountries.empty()) {
+            incomingMarketDataClient->Open();
             return incomingMarketDataClient;
           }
           std::shared_ptr<VirtualMarketDataClient> client =
