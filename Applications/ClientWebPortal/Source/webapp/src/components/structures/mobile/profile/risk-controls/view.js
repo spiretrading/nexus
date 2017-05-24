@@ -207,7 +207,7 @@ class View extends CommonView {
                        onKeyUp={this.onTimeInputKeyUp.bind(this)}
                        defaultValue={timeValues[0]}
                        readOnly={!this.componentModel.isAdmin}/>
-                <div className="time-input-label">hr</div>
+                <div className="time-input-label">hour</div>
               </div>
               <span className="colon">:</span>
               <div className="minute-input-wrapper input-wrapper">
@@ -217,7 +217,7 @@ class View extends CommonView {
                        onKeyUp={this.onTimeInputKeyUp.bind(this)}
                        defaultValue={timeValues[1]}
                        readOnly={!this.componentModel.isAdmin}/>
-                <div className="time-input-label">min</div>
+                <div className="time-input-label">minute</div>
               </div>
               <span className="colon">:</span>
               <div className="second-input-wrapper input-wrapper">
@@ -227,7 +227,7 @@ class View extends CommonView {
                        onKeyUp={this.onTimeInputKeyUp.bind(this)}
                        defaultValue={timeValues[2]}
                        readOnly={!this.componentModel.isAdmin}/>
-                <div className="time-input-label">sec</div>
+                <div className="time-input-label">second</div>
               </div>
             </div>
             {saveButton}

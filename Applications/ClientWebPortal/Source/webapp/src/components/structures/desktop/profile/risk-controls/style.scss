@@ -36,6 +36,13 @@
       .input-wrapper {
         text-align: center;
       }
+
+      .time-input-label {
+        margin-top: 5px;
+        font-size: 13px;
+        font-style: italic;
+        color: $darkerGrey;
+      }
     }
   }
 }

@@ -1,5 +1,5 @@
-import MarketCode from '../market/code';
-import CountryCode from '../country/code';
+import MarketCode from '../market-code';
+import CountryCode from '../country-code';
 import SecuritySet from '../security-set';
 
 class Security {
