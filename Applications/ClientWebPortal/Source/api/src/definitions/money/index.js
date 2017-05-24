@@ -49,6 +49,20 @@ class Money {
   clone() {
     return Money.fromRepresentation(this.value);
   }
+
+  toString() {
+    let number = this.toNumber().toString();
+    let dotIndex = number.indexOf('.');
+    if (dotIndex != -1) {
+      if (dotIndex == number.length - 2) {
+        return number + '0';
+      } else {
+        return number;
+      }
+    } else {
+      return number + '.00';
+    }
+  }
 }
 
 Money.fromRepresentation = value => {

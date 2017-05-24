@@ -95,10 +95,9 @@
       thead {
         border: 1px solid $lightGrey;
         height: 30px;
-        background: $lightGrey;
 
         td {
-          padding: 5px 0;
+          padding: 15px 0;
         }
       }
 
@@ -126,7 +125,7 @@
         td {
           color: $darkGrey;
           vertical-align: middle;
-          padding: 5px 0;
+          padding: 10px 0;
 
           &.market-name {
             color: $black;

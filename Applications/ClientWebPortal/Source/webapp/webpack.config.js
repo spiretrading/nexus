@@ -7,7 +7,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 // Loaders
 const copyHTML = {
   test: /\.html$/,
-  loader: 'file',
+  loader: 'file-loader',
   query: {
     name: '[name].[ext]'
   }
@@ -15,12 +15,18 @@ const copyHTML = {
 
 const extractCSS = {
   test: /\.css$/,
-  loader: ExtractTextPlugin.extract("style-loader", "css-loader")
+  loader: ExtractTextPlugin.extract({
+    fallback: "style-loader",
+    use: "css-loader"
+  })
 };
 
 const extractSASS = {
   test: /\.scss$/,
-  loaders: ExtractTextPlugin.extract('style-loader', 'css-loader!sass-loader')
+  loaders: ExtractTextPlugin.extract({
+    fallback: 'style-loader',
+    use: 'css-loader!sass-loader'
+  })
 };
 
 const transpileES6JSX = {
@@ -28,7 +34,7 @@ const transpileES6JSX = {
   exclude: /node_modules/,
   loaders: [
     {
-      loader: 'babel',
+      loader: 'babel-loader',
       query: {
         cacheDirectory: true
       }
@@ -38,7 +44,7 @@ const transpileES6JSX = {
 
 const copyStaticFiles = {
   test: /\.(gif|png|jpg|jpeg|ttf|eot|svg|woff(2)?)(\?[a-z0-9]+)?$/,
-  loader: 'file'
+  loader: 'file-loader'
 };
 
 module.exports = function(env) {
@@ -78,7 +84,7 @@ module.exports = function(env) {
       ]
     },
     resolve: {
-      extensions: ['', '.js', '.jsx'],
+      extensions: ['.js', '.jsx'],
       modules: [
         path.resolve('./src'),
         'node_modules'

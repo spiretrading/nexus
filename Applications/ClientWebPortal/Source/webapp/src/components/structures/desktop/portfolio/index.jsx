@@ -24,6 +24,10 @@ class ProfileAccount extends Component {
     this.controller.getView().componentDidUpdate();
   }
 
+  componentWillUnmount() {
+    this.controller.componentWillUnmount.apply(this.controller);
+  }
+
   render() {
     return this.view.render.apply(this.view);
   }

@@ -88,18 +88,22 @@ namespace Details {
            sessions.
     \param socketThreadPool The SocketThreadPool used for the socket connection.
     \param timerThreadPool The TimerThreadPool used for heartbeats.
+    \param servicePredicate The function used to match an appropriate
+           ServiceEntry.
+    \param service The name of the service to connect to.
   */
-  template<typename SessionBuilder>
+  template<typename SessionBuilder, typename Predicate>
   SessionBuilder BuildBasicMarketDataClientSessionBuilder(Beam::RefType<
       Beam::ServiceLocator::ApplicationServiceLocatorClient::Client>
       serviceLocatorClient, Beam::RefType<Beam::Network::SocketThreadPool>
       socketThreadPool, Beam::RefType<Beam::Threading::TimerThreadPool>
-      timerThreadPool, const std::string& service = RELAY_SERVICE_NAME) {
+      timerThreadPool, const Predicate& servicePredicate,
+      const std::string& service = RELAY_SERVICE_NAME) {
     auto serviceLocatorClientHandle = serviceLocatorClient.Get();
     auto socketThreadPoolHandle = socketThreadPool.Get();
     auto timerThreadPoolHandle = timerThreadPool.Get();
     auto addresses = Beam::ServiceLocator::LocateServiceAddresses(
-      *serviceLocatorClientHandle, service);
+      *serviceLocatorClientHandle, service, servicePredicate);
     auto delay = false;
     SessionBuilder sessionBuilder(Beam::Ref(serviceLocatorClient),
       [=] () mutable {
@@ -126,6 +130,7 @@ namespace Details {
            sessions.
     \param socketThreadPool The SocketThreadPool used for the socket connection.
     \param timerThreadPool The TimerThreadPool used for heartbeats.
+    \param service The name of the service to connect to.
   */
   inline Details::MarketDataClientSessionBuilder
       BuildMarketDataClientSessionBuilder(Beam::RefType<

@@ -1,4 +1,4 @@
-import CountryCode from '../country/code';
+import CountryCode from '../country-code';
 import Security from '../security';
 
 class SecuritySet {

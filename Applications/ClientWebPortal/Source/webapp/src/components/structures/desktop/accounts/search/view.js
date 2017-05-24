@@ -59,27 +59,11 @@ class View extends CommonView {
           <div className="menu-info-wrapper">
             <PrimaryButton className="new-account-btn" model={newAccountBtnModel} onClick={onNewAccountClick}/>
             <PrimaryButton className="new-group-btn" model={newGroupModel} onClick={onNewGroupClick}/>
-            <div className="count-label-wrapper">
-              <span className="count-label">Total Accounts</span><br/>
-              <span className="count-counter">20</span>
-            </div>
-            <div className="count-label-wrapper">
-              <span className="count-label">Traders</span><br/>
-              <span className="count-counter">20</span>
-            </div>
-            <div className="count-label-wrapper">
-              <span className="count-label">Managers</span><br/>
-              <span className="count-counter">20</span>
-            </div>
-            <div className="count-label-wrapper">
-              <span className="count-label">Admins</span><br/>
-              <span className="count-counter">20</span>
-            </div>
           </div>
           <div className="search-wrapper">
             <div className="search-input-wrapper">
               <input className="search-input" onChange={onSearchInputChange}/>
-              <span className="icon-magnifying_glass"></span>
+              <span className="icon-magnifying-glass"></span>
             </div>
             <div className="search-results-wrapper">
               {panels}
