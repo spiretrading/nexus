@@ -6,6 +6,7 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/ServiceLocator/Authenticator.hpp>
+#include <Beam/ServiceLocator/ServiceEntry.hpp>
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Threading/Timer.hpp>
 #include <Beam/Utilities/AssertionException.hpp>
