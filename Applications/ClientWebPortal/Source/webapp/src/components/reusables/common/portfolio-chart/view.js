@@ -284,7 +284,8 @@ class View extends UpdatableView {
       }
     }
 
-    this.sortData.apply(this);
+    // TODO: temporarily disabling chart sorting on every update for performance reasons.
+    // this.sortData.apply(this);
 
     if (this.componentModel.data != null && this.componentModel.data[0] != null) {
       for (let i=0; i<this.componentModel.data.length; i++) {
