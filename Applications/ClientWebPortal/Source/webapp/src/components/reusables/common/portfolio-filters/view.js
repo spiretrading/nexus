@@ -12,7 +12,7 @@ class View extends UpdatableView {
     this.selectedStartDate = null;
     this.selectedEndDate = null;
     this.selectedParameterInput = "Group";
-    this.isClosed = false;
+    this.isClosed = true;
   }
 
   /** @private */
@@ -22,7 +22,7 @@ class View extends UpdatableView {
     if (this.isClosed) {
       this.isClosed = false;
       $body.stop(true, true).animate({
-        height: this.bodyHeight
+        height: $body.find('.content-wrapper').outerHeight()
       }, {
         step: function() {
           EventBus.publish(Event.Portfolio.FILTER_RESIZE);
@@ -34,7 +34,6 @@ class View extends UpdatableView {
       });
     } else {
       this.isClosed = true;
-      this.bodyHeight = $body.outerHeight();
       $body.stop(true, true).animate({
         height: '0px'
       }, {
@@ -126,7 +125,7 @@ class View extends UpdatableView {
         <div id={this.componentModel.componentId} className={className}>
           <div className="header" onClick={this.onHeaderClicked.bind(this)}>
             Filters
-            <span className="icon-arrow-up arrow-icon"/>
+            <span className="icon-arrow-down arrow-icon"/>
           </div>
           <div className="body">
             <div className="content-wrapper">

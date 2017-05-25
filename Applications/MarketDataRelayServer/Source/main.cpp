@@ -154,6 +154,10 @@ int main(int argc, const char** argv) {
       std::vector<CountryCode> lastCountries;
       auto servicePredicate =
         [&] (const ServiceEntry& entry) {
+          if(availableCountries.find(SENTINEL) != availableCountries.end() ||
+              !lastCountries.empty()) {
+            return false;
+          }
           auto countriesNode = entry.GetProperties().Get("countries");
           if(!countriesNode.is_initialized()) {
             availableCountries.insert(SENTINEL);
