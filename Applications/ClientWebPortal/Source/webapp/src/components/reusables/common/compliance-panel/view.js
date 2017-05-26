@@ -426,7 +426,8 @@ class View extends UpdatableView {
                 .then((results) => {
                   let labels = [];
                   for (let i=0; i<results.length; i++) {
-                    let symbol = results[i].security.symbol + '.' + results[i].security.market;
+                    let market = definitionsService.getMarket.apply(definitionsService, [results[i].security.market]);
+                    let symbol = results[i].security.symbol + '.' + market.display_name;
                     let label = {
                       label: symbol + ' (' + results[i].name + ')',
                       value: symbol
