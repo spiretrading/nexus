@@ -20,6 +20,7 @@
 #include <Beam/Services/ServiceProtocolClientBuilder.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/python/suite/indexing/map_indexing_suite.hpp>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
@@ -151,6 +152,7 @@ void Nexus::Python::ExportMarketDataService() {
   ExportMarketDataClient();
   ExportMarketWideDataQuery();
   ExportSecurityMarketDataQuery();
+  ExportSecuritySnapshot();
   {
     string nestedName = extract<string>(parent.attr("__name__") + ".tests");
     object nestedModule{handle<>(
@@ -194,4 +196,22 @@ void Nexus::Python::ExportSecurityMarketDataQuery() {
   def("build_real_time_with_snapshot_query",
     static_cast<SecurityMarketDataQuery (*)(Security)>(
     &BuildRealTimeWithSnapshotQuery));
+}
+
+void Nexus::Python::ExportSecuritySnapshot() {
+  class_<SecuritySnapshot>("SecuritySnapshot", init<>())
+    .def(init<const Security&>())
+    .def("__copy__", &MakeCopy<SecuritySnapshot>)
+    .def("__deepcopy__", &MakeDeepCopy<SecuritySnapshot>)
+    .def_readwrite("security", &SecuritySnapshot::m_security)
+    .def_readwrite("bbo_quote", &SecuritySnapshot::m_bboQuote)
+    .def_readwrite("time_and_sale", &SecuritySnapshot::m_timeAndSale)
+    .def_readwrite("market_quotes", &SecuritySnapshot::m_marketQuotes)
+    .def_readwrite("ask_book", &SecuritySnapshot::m_askBook)
+    .def_readwrite("bid_book", &SecuritySnapshot::m_bidBook);
+  ExportVector<vector<SequencedBookQuote>>("VectorSequencedBookQuote");
+  class_<std::unordered_map<MarketCode, SequencedMarketQuote>>(
+    "MarketCodeToSequencedMarketQuoteMap")
+    .def(map_indexing_suite<
+      std::unordered_map<MarketCode, SequencedMarketQuote>>());
 }
