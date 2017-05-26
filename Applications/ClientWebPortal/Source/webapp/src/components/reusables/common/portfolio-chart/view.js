@@ -9,6 +9,7 @@ import chartColumns from './columns';
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
+    this.columnsSyncCounter = 0;
   }
 
   /** @private */
@@ -49,6 +50,10 @@ class View extends UpdatableView {
       return chr.toUpperCase();
     });
     return converted.charAt(0).toLowerCase() + converted.slice(1);
+  }
+
+  resetColumnsSyncCounter() {
+    this.columnsSyncCounter = 0;
   }
 
   /** @private */
@@ -123,7 +128,10 @@ class View extends UpdatableView {
   }
 
   componentDidUpdate() {
-    this.synchronizeColumnWidths.apply(this);
+    if (this.columnsSyncCounter <= 2) {
+      this.synchronizeColumnWidths.apply(this);
+      this.columnsSyncCounter++;
+    }
     if (this.componentModel.data != null && this.componentModel.data[0] != null) {
       if (this.isChartTooWide) {
         $('#' + this.componentModel.componentId + ' .fixed-column-header').css('opacity', '1');
@@ -137,7 +145,10 @@ class View extends UpdatableView {
   }
 
   shouldIncludeColumn(columnHeader) {
-    if (this.componentModel.filter == null || this.componentModel.filter.length == 0 || columnHeader == 'Account') {
+    if (this.componentModel.filter == null ||
+      this.componentModel.filter.length == 0 ||
+      columnHeader == 'Account' ||
+      columnHeader == 'Security') {
       return true;
     }
 
@@ -235,7 +246,6 @@ class View extends UpdatableView {
 
   render() {
     let columns = [];
-    let columnLabels = [];
     let rows = [];
     let accountIds = [];
     let fixedBodyRows = [];
@@ -257,7 +267,23 @@ class View extends UpdatableView {
         {arrowIcon}
       </td>
     );
-    columnLabels.push('Account');
+
+    // render security column header
+    if (this.componentModel.sortingColumn != null && this.componentModel.sortingColumn.name == 'Security') {
+      let arrowIconClass;
+      if (this.componentModel.sortingColumn.direction == 'asc') {
+        arrowIconClass = 'icon-arrow-icon-down';
+      } else if (this.componentModel.sortingColumn.direction == 'desc') {
+        arrowIconClass = 'icon-arrow-icon-up';
+      }
+      arrowIcon = <span className={arrowIconClass}></span>;
+    }
+    columns.push(
+      <td key={-2} className="no-select" onClick={this.onHeaderClick.bind(this)}>
+        Security
+        {arrowIcon}
+      </td>
+    );
 
     // add column headers
     for (let i=0; i<chartColumns.length; i++) {
@@ -280,7 +306,6 @@ class View extends UpdatableView {
             {arrowIcon}
           </td>
         );
-        columnLabels.push(column);
       }
     }
 

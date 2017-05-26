@@ -273,6 +273,7 @@ class Controller {
   }
 
   saveParameters(filter) {
+    EventBus.publish(Event.Portfolio.FILTER_PARAMETERS_CHANGED);
     this.componentModel.filter = filter;
     let apiFilter = {
       currencies: filter.currencies,
