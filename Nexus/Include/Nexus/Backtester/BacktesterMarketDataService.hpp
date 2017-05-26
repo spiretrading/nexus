@@ -15,53 +15,51 @@ namespace Nexus {
     public:
       BacktesterMarketDataService(
         Beam::RefType<BacktesterEventHandler> eventHandler,
-        std::unique_ptr<MarketDataService::VirtualMarketDataClient>
+        Beam::RefType<MarketDataService::VirtualMarketDataClient>
         marketDataClient);
 
       void QueryBboQuotes(
         const MarketDataService::SecurityMarketDataQuery& query);
 
     private:
+      friend class QueryBboQuotesEvent;
       BacktesterEventHandler* m_eventHandler;
-      std::unique_ptr<MarketDataService::VirtualMarketDataClient>
-        m_marketDataClient;
+      MarketDataService::VirtualMarketDataClient* m_marketDataClient;
   };
 
   class QueryBboQuotesEvent : public BacktesterEvent {
     public:
       QueryBboQuotesEvent(
         const MarketDataService::SecurityMarketDataQuery& query,
-        Beam::RefType<MarketDataService::VirtualMarketDataClient>
-        marketDataClient);
+        Beam::RefType<BacktesterMarketDataService> marketDataClient);
 
       virtual void Execute() override;
 
     private:
       MarketDataService::SecurityMarketDataQuery m_query;
-      MarketDataService::VirtualMarketDataClient* m_marketDataClient;
+      BacktesterMarketDataService* m_service;
   };
 
   inline BacktesterMarketDataService::BacktesterMarketDataService(
       Beam::RefType<BacktesterEventHandler> eventHandler,
-      std::unique_ptr<MarketDataService::VirtualMarketDataClient>
+      Beam::RefType<MarketDataService::VirtualMarketDataClient>
       marketDataClient)
       : m_eventHandler{eventHandler.Get()},
-        m_marketDataClient{std::move(marketDataClient)} {}
+        m_marketDataClient{marketDataClient.Get()} {}
 
   inline void BacktesterMarketDataService::QueryBboQuotes(
       const MarketDataService::SecurityMarketDataQuery& query) {
     auto event = std::make_shared<QueryBboQuotesEvent>(query,
-      Beam::Ref(*m_marketDataClient));
+      Beam::Ref(*this));
     m_eventHandler->Add(event);
   }
 
   inline QueryBboQuotesEvent::QueryBboQuotesEvent(
       const MarketDataService::SecurityMarketDataQuery& query,
-      Beam::RefType<MarketDataService::VirtualMarketDataClient>
-      marketDataClient)
+      Beam::RefType<BacktesterMarketDataService> service)
       : BacktesterEvent{boost::posix_time::neg_infin},
         m_query{query},
-        m_marketDataClient{marketDataClient.Get()} {}
+        m_service{service.Get()} {}
 
   inline void QueryBboQuotesEvent::Execute() {
   }

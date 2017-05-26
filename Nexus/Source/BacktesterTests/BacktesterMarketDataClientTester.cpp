@@ -2,6 +2,7 @@
 #include <Beam/Threading/ConditionVariable.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include "Nexus/Backtester/BacktesterEventHandler.hpp"
+#include "Nexus/Backtester/BacktesterMarketDataService.hpp"
 #include "Nexus/Backtester/BacktesterServiceClients.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
@@ -18,7 +19,6 @@ using namespace Nexus::Tests;
 using namespace std;
 
 void BacktesterMarketDataClientTester::TestRealTimeQuery() {
-/*
   ptime startTime{date{2016, 5, 6}, seconds(0)};
   TestEnvironment testEnvironment;
   testEnvironment.Open();
@@ -34,8 +34,9 @@ void BacktesterMarketDataClientTester::TestRealTimeQuery() {
   }
   TestServiceClients serviceClients{Ref(testEnvironment)};
   serviceClients.Open();
-  BacktesterEventHandler backtesterEnvironment{
-    Ref(serviceClients.GetMarketDataClient()), startTime};
+  BacktesterEventHandler backtesterEnvironment{startTime};
+  BacktesterMarketDataService marketDataService{Ref(backtesterEnvironment),
+    Beam::Ref(serviceClients.GetMarketDataClient())};
   backtesterEnvironment.Open();
   BacktesterServiceClients backtesterServiceClients{
     Ref(backtesterEnvironment)};
@@ -43,6 +44,7 @@ void BacktesterMarketDataClientTester::TestRealTimeQuery() {
   RoutineTaskQueue routines;
   auto& marketDataClient = backtesterServiceClients.GetMarketDataClient();
   auto query = BuildRealTimeWithSnapshotQuery(security);
+/*
   auto expectedTimestamp = startTime;
   auto finalTimestamp = startTime + seconds(COUNT - 1);
   Mutex queryCompleteMutex;
