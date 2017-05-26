@@ -210,8 +210,4 @@ void Nexus::Python::ExportSecuritySnapshot() {
     .def_readwrite("ask_book", &SecuritySnapshot::m_askBook)
     .def_readwrite("bid_book", &SecuritySnapshot::m_bidBook);
   ExportVector<vector<SequencedBookQuote>>("VectorSequencedBookQuote");
-  class_<std::unordered_map<MarketCode, SequencedMarketQuote>>(
-    "MarketCodeToSequencedMarketQuoteMap")
-    .def(map_indexing_suite<
-      std::unordered_map<MarketCode, SequencedMarketQuote>>());
 }
