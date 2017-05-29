@@ -72,9 +72,10 @@ namespace {
   };
 
   VirtualServiceClients* BuildBacktesterServiceClients(
-      std::shared_ptr<BacktesterEventHandler> environment) {
+      std::shared_ptr<BacktesterEventHandler> environment,
+      std::shared_ptr<BacktesterMarketDataService> marketDataService) {
     auto baseClient = std::make_unique<BacktesterServiceClients>(
-      Ref(*environment));
+      Ref(*environment), Ref(*marketDataService));
     return new PythonBacktesterServiceClients{
       MakeVirtualServiceClients(std::move(baseClient)), environment};
   }

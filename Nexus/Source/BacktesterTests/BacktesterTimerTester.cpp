@@ -23,7 +23,10 @@ void BacktesterTimerTester::TestExpiry() {
   serviceClients.Open();
   BacktesterEventHandler eventHandler{startTime};
   eventHandler.Open();
-  BacktesterServiceClients backtesterServiceClients{Ref(eventHandler)};
+  BacktesterMarketDataService marketDataService{Ref(eventHandler),
+    Beam::Ref(serviceClients.GetMarketDataClient())};
+  BacktesterServiceClients backtesterServiceClients{Ref(eventHandler),
+    Ref(marketDataService)};
   backtesterServiceClients.Open();
   auto timer = backtesterServiceClients.BuildTimer(seconds(1));
   RoutineTaskQueue routines;
@@ -60,7 +63,10 @@ void BacktesterTimerTester::TestCancel() {
   serviceClients.Open();
   BacktesterEventHandler eventHandler{startTime};
   eventHandler.Open();
-  BacktesterServiceClients backtesterServiceClients{Ref(eventHandler)};
+  BacktesterMarketDataService marketDataService{Ref(eventHandler),
+    Beam::Ref(serviceClients.GetMarketDataClient())};
+  BacktesterServiceClients backtesterServiceClients{Ref(eventHandler),
+    Ref(marketDataService)};
   backtesterServiceClients.Open();
   auto timerA = backtesterServiceClients.BuildTimer(seconds(1));
   auto timerB = backtesterServiceClients.BuildTimer(seconds(2));

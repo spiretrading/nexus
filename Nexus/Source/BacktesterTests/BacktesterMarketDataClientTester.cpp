@@ -34,17 +34,16 @@ void BacktesterMarketDataClientTester::TestRealTimeQuery() {
   }
   TestServiceClients serviceClients{Ref(testEnvironment)};
   serviceClients.Open();
-  BacktesterEventHandler backtesterEnvironment{startTime};
-  BacktesterMarketDataService marketDataService{Ref(backtesterEnvironment),
+  BacktesterEventHandler eventHandler{startTime};
+  BacktesterMarketDataService marketDataService{Ref(eventHandler),
     Beam::Ref(serviceClients.GetMarketDataClient())};
-  backtesterEnvironment.Open();
-  BacktesterServiceClients backtesterServiceClients{
-    Ref(backtesterEnvironment)};
+  eventHandler.Open();
+  BacktesterServiceClients backtesterServiceClients{Ref(eventHandler),
+    Ref(marketDataService)};
   backtesterServiceClients.Open();
   RoutineTaskQueue routines;
   auto& marketDataClient = backtesterServiceClients.GetMarketDataClient();
   auto query = BuildRealTimeWithSnapshotQuery(security);
-/*
   auto expectedTimestamp = startTime;
   auto finalTimestamp = startTime + seconds(COUNT - 1);
   Mutex queryCompleteMutex;
@@ -68,5 +67,4 @@ void BacktesterMarketDataClientTester::TestRealTimeQuery() {
     queryCompleteCondition.wait(lock);
   }
   CPPUNIT_ASSERT(*testSucceeded);
-*/
 }

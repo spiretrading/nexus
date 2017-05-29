@@ -117,7 +117,7 @@ namespace Nexus {
         [] (auto& lhs, auto& rhs) {
           return lhs->GetTimestamp() < rhs->GetTimestamp();
         });
-      m_events.insert(insertIterator, m_events.begin(), m_events.end());
+      m_events.insert(insertIterator, events.begin(), events.end());
     }
     m_eventAvailableCondition.notify_one();
   }
@@ -171,7 +171,9 @@ namespace Nexus {
         }
         event = m_events.front();
         m_events.pop_front();
-        m_testEnvironment.SetTime(event->GetTimestamp());
+        if(event->GetTimestamp() != boost::posix_time::neg_infin) {
+          m_testEnvironment.SetTime(event->GetTimestamp());
+        }
       }
       event->Execute();
     }

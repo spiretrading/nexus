@@ -56,9 +56,11 @@ namespace Nexus {
       //! Constructs a BacktesterServiceClients.
       /*!
         \param environment The BacktesterEventHandler to use.
+        \param marketDataService The BacktesterMarketDataService to use.
       */
       BacktesterServiceClients(
-        Beam::RefType<BacktesterEventHandler> environment);
+        Beam::RefType<BacktesterEventHandler> environment,
+        Beam::RefType<BacktesterMarketDataService> marketDataService);
 
       ~BacktesterServiceClients();
 
@@ -91,6 +93,7 @@ namespace Nexus {
 
     private:
       BacktesterEventHandler* m_environment;
+      BacktesterMarketDataService* m_marketDataService;
       std::unique_ptr<ServiceLocatorClient> m_serviceLocatorClient;
       std::unique_ptr<RegistryClient> m_registryClient;
       std::unique_ptr<AdministrationClient> m_administrationClient;
@@ -107,8 +110,10 @@ namespace Nexus {
   };
 
   inline BacktesterServiceClients::BacktesterServiceClients(
-      Beam::RefType<BacktesterEventHandler> environment)
-      : m_environment{environment.Get()} {}
+      Beam::RefType<BacktesterEventHandler> environment,
+      Beam::RefType<BacktesterMarketDataService> marketDataService)
+      : m_environment{environment.Get()},
+        m_marketDataService{marketDataService.Get()} {}
 
   inline BacktesterServiceClients::~BacktesterServiceClients() {
     Close();
@@ -193,8 +198,8 @@ namespace Nexus {
         GetMarketDataEnvironment().BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
       m_marketDataClient = MarketDataService::MakeVirtualMarketDataClient(
-        std::make_unique<BacktesterMarketDataClient>(Beam::Ref(*m_environment),
-        std::move(baseMarketDataClient)));
+        std::make_unique<BacktesterMarketDataClient>(
+        Beam::Ref(*m_marketDataService), std::move(baseMarketDataClient)));
       m_marketDataClient->Open();
       auto baseOrderExecutionClient = m_environment->GetTestEnvironment().
         GetOrderExecutionEnvironment().BuildClient(

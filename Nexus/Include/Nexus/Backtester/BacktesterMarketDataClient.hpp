@@ -4,7 +4,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
-#include "Nexus/Backtester/BacktesterEventHandler.hpp"
+#include "Nexus/Backtester/BacktesterMarketDataService.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 
 namespace Nexus {
@@ -17,12 +17,12 @@ namespace Nexus {
 
       //! Constructs a BacktesterMarketDataClient.
       /*!
-        \param environment The BacktesterEventHandler to connect to.
+        \param service The BacktesterMarketDataService to connect to.
         \param marketDataClient The underlying MarketDataClient to submit
                queries to.
       */
       BacktesterMarketDataClient(
-        Beam::RefType<BacktesterEventHandler> environment,
+        Beam::RefType<BacktesterMarketDataService> service,
         std::unique_ptr<MarketDataService::VirtualMarketDataClient>
         marketDataClient);
 
@@ -86,7 +86,7 @@ namespace Nexus {
       void Close();
 
     private:
-      BacktesterEventHandler* m_environment;
+      BacktesterMarketDataService* m_service;
       std::unique_ptr<MarketDataService::VirtualMarketDataClient>
         m_marketDataClient;
       Beam::IO::OpenState m_openState;
@@ -95,10 +95,10 @@ namespace Nexus {
   };
 
   inline BacktesterMarketDataClient::BacktesterMarketDataClient(
-      Beam::RefType<BacktesterEventHandler> environment,
+      Beam::RefType<BacktesterMarketDataService> service,
       std::unique_ptr<MarketDataService::VirtualMarketDataClient>
       marketDataClient)
-      : m_environment{environment.Get()},
+      : m_service{service.Get()},
         m_marketDataClient{std::move(marketDataClient)} {}
 
   inline BacktesterMarketDataClient::~BacktesterMarketDataClient() {
@@ -117,12 +117,14 @@ namespace Nexus {
   inline void BacktesterMarketDataClient::QueryBboQuotes(
       const MarketDataService::SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<SequencedBboQuote>>& queue) {
+    m_service->QueryBboQuotes(query);
     m_marketDataClient->QueryBboQuotes(query, queue);
   }
 
   inline void BacktesterMarketDataClient::QueryBboQuotes(
       const MarketDataService::SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<BboQuote>>& queue) {
+    m_service->QueryBboQuotes(query);
     m_marketDataClient->QueryBboQuotes(query, queue);
   }
 
