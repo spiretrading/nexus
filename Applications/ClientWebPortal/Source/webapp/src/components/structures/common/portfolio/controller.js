@@ -250,8 +250,8 @@ class Controller {
       this.componentModel.markets = [];
       for (let i=0; i<markets.length; i++) {
         this.componentModel.markets.push({
-          id: markets[i].code,
-          name: markets[i].display_name
+          id: markets[i].marketCode.toCode.apply(markets[i].marketCode),
+          name: markets[i].displayName
         });
       }
 

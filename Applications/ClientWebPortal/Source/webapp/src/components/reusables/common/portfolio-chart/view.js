@@ -240,8 +240,8 @@ class View extends UpdatableView {
 
   /** @private */
   getSecurityLabel(security) {
-    let market = definitionsService.getMarket.apply(definitionsService, [security.market.value]);
-    return security.symbol + '.' + market.display_name;
+    let marketDatabase = definitionsService.getMarketDatabase.apply(definitionsService);
+    return security.toString.apply(security, [marketDatabase]);
   }
 
   render() {
