@@ -43,6 +43,31 @@ namespace MarketDataService {
   struct MarketDataQueryType<SequencedMarketQuote> {
     using type = SecurityMarketDataQuery;
   };
+
+  template<>
+  struct MarketDataQueryType<OrderImbalance> {
+    using type = MarketWideDataQuery;
+  };
+
+  template<>
+  struct MarketDataQueryType<TimeAndSale> {
+    using type = SecurityMarketDataQuery;
+  };
+
+  template<>
+  struct MarketDataQueryType<BboQuote> {
+    using type = SecurityMarketDataQuery;
+  };
+
+  template<>
+  struct MarketDataQueryType<BookQuote> {
+    using type = SecurityMarketDataQuery;
+  };
+
+  template<>
+  struct MarketDataQueryType<MarketQuote> {
+    using type = SecurityMarketDataQuery;
+  };
 }
 }
 
