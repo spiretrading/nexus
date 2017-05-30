@@ -102,6 +102,7 @@ class View extends UpdatableView {
     let securities = [];
     let $tagsUl = $('#' + this.componentModel.componentId + ' ul.symbols-input');
     $tagsUl.find('.tagit-label').each(function() {
+      let marketCode = $(this).parent().attr('data-market-code');
       let label = $(this).text();
       let security;
       if (Security.isWildCard(label)) {
@@ -110,9 +111,9 @@ class View extends UpdatableView {
         let labelTokens = label.split('.');
         let symbol = labelTokens[0];
         let market = labelTokens[1];
-        let country = definitionsService.getMarket(market).country_code;
+        let country = definitionsService.getMarket(marketCode).countryCode;
         security = Security.fromData({
-          country: country,
+          country: country.toNumber(),
           market: market,
           symbol: symbol
         });
@@ -419,6 +420,7 @@ class View extends UpdatableView {
               clearTimeout(_this.symbolsTimeout);
             }
 
+            let marketDatabase = definitionsService.getMarketDatabase.apply(definitionsService);
             _this.symbolsTimeout = setTimeout(() => {
               _this.symbolsTimeout = null;
               let input = $('#' + _this.componentModel.componentId + ' .ui-autocomplete-input').val().trim();
@@ -426,10 +428,11 @@ class View extends UpdatableView {
                 .then((results) => {
                   let labels = [];
                   for (let i=0; i<results.length; i++) {
-                    let symbol = results[i].security.symbol + '.' + results[i].security.market;
+                    let symbol = results[i].security.toString.apply(results[i].security, [marketDatabase]);
+                    let marketCode = results[i].security.market.toCode();
                     let label = {
                       label: symbol + ' (' + results[i].name + ')',
-                      value: symbol
+                      value: symbol + '|' + marketCode
                     };
                     labels.push(label);
                     if (sourceLabels.indexOf(label.value) < 0) {
@@ -446,6 +449,13 @@ class View extends UpdatableView {
             if (ui.tagLabel != '*' && !doesExistInSourceLabels(ui.tagLabel)){
               $(this).find('.ui-autocomplete-input').val('');
               return false;
+            } else {
+              let pipeIndex = ui.tagLabel.indexOf('|');
+              let marketCode = ui.tagLabel.substring(pipeIndex + 1);
+              let tagLabel = ui.tagLabel.substring(0, pipeIndex);
+              let html = ui.tag.html();
+              ui.tag.html(html.replace('|' + marketCode, ''));
+              ui.tag.attr('data-market-code', marketCode);
             }
           }
 

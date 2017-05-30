@@ -14,6 +14,10 @@ class MarketCode {
     return this.value;
   }
 
+  isEmpty() {
+    return this.value == '';
+  }
+
   clone() {
     return MarketCode.fromCode(this.value);
   }

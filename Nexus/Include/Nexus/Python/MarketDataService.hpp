@@ -19,6 +19,9 @@ namespace Python {
 
   //! Exports the SecurityMarketDataQuery class.
   void ExportSecurityMarketDataQuery();
+
+  //! Exports the SecuritySnapshot class.
+  void ExportSecuritySnapshot();
 }
 }
 

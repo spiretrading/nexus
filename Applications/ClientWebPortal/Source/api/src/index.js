@@ -23,6 +23,9 @@ import currencyDatabaseEntry from './definitions/currency-database-entry';
 import security from './definitions/security';
 import exchangeRate from './definitions/exchange-rate'
 import exchangeRateTable from './definitions/exchange-rate-table';
+import marketCode from './definitions/market-code';
+import marketDatabase from './definitions/market-database';
+import marketDatabaseEntry from './definitions/market-database-entry';
 
 // module export configurations
 export const AdministrationClient = administrationClient;
@@ -48,3 +51,6 @@ export const CurrencyDatabaseEntry = currencyDatabaseEntry;
 export const Security = security;
 export const ExchangeRate = exchangeRate;
 export const ExchangeRateTable = exchangeRateTable;
+export const MarketCode = marketCode;
+export const MarketDatabase = marketDatabase;
+export const MarketDatabaseEntry = marketDatabaseEntry;

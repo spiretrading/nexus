@@ -31,6 +31,7 @@ export default {
     }
   },
   Portfolio: {
-    FILTER_RESIZE: 'all.portfolio.filterResize'
+    FILTER_RESIZE: 'all.portfolio.filterResize',
+    FILTER_PARAMETERS_CHANGED: 'all.portfolio.filterParametersChanged'
   }
 };

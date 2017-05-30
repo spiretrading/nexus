@@ -23,12 +23,19 @@ class Controller {
     }
   }
 
+  /** @private */
+  onFilterChange() {
+    this.view.resetColumnsSyncCounter.apply(this);
+  }
+
   componentDidMount() {
     this.view.initialize.apply(this.view);
+    this.filterChangeSubId = EventBus.subscribe(Event.Portfolio.FILTER_PARAMETERS_CHANGED, this.onFilterChange.bind(this));
   }
 
   componentWillUnmount() {
     this.view.dispose.apply(this.view);
+    EventBus.unsubscribe(this.filterChangeSubId);
   }
 }
 

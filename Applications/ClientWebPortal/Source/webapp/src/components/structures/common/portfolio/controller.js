@@ -116,9 +116,11 @@ class Controller {
 
   /** @private */
   onPortfolioDataReceived(data) {
-    let model = this.toUIModel.apply(this, [data]);
-    let cacheKey = model.account.id + model.currency.value + model.security.market.value + model.security.symbol;
-    this.portfolioData.set(cacheKey, model);
+    for (let i=0; i<data.length; i++) {
+      data[i] = this.toUIModel.apply(this, [data[i]]);
+      let cacheKey = data[i].account.id + data[i].currency.value + data[i].security.market.value + data[i].security.symbol;
+      this.portfolioData.set(cacheKey, data[i]);
+    }
     this.componentModel.portfolioData = this.portfolioData.values();
     if (this.componentModel.baseCurrencyId != null) {
       this.aggregateTotals.apply(this);
@@ -250,8 +252,8 @@ class Controller {
       this.componentModel.markets = [];
       for (let i=0; i<markets.length; i++) {
         this.componentModel.markets.push({
-          id: markets[i].code,
-          name: markets[i].display_name
+          id: markets[i].marketCode.toCode.apply(markets[i].marketCode),
+          name: markets[i].displayName
         });
       }
 
@@ -273,6 +275,7 @@ class Controller {
   }
 
   saveParameters(filter) {
+    EventBus.publish(Event.Portfolio.FILTER_PARAMETERS_CHANGED);
     this.componentModel.filter = filter;
     let apiFilter = {
       currencies: filter.currencies,
