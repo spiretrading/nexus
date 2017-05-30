@@ -20,31 +20,6 @@ namespace MarketDataService {
     MarketDataType>::type;
 
   template<>
-  struct MarketDataQueryType<SequencedOrderImbalance> {
-    using type = MarketWideDataQuery;
-  };
-
-  template<>
-  struct MarketDataQueryType<SequencedTimeAndSale> {
-    using type = SecurityMarketDataQuery;
-  };
-
-  template<>
-  struct MarketDataQueryType<SequencedBboQuote> {
-    using type = SecurityMarketDataQuery;
-  };
-
-  template<>
-  struct MarketDataQueryType<SequencedBookQuote> {
-    using type = SecurityMarketDataQuery;
-  };
-
-  template<>
-  struct MarketDataQueryType<SequencedMarketQuote> {
-    using type = SecurityMarketDataQuery;
-  };
-
-  template<>
   struct MarketDataQueryType<OrderImbalance> {
     using type = MarketWideDataQuery;
   };
@@ -67,6 +42,11 @@ namespace MarketDataService {
   template<>
   struct MarketDataQueryType<MarketQuote> {
     using type = SecurityMarketDataQuery;
+  };
+
+  template<typename T>
+  struct MarketDataQueryType<Beam::Queries::SequencedValue<T>> {
+    using type = GetMarketDataQueryType<T>;
   };
 }
 }

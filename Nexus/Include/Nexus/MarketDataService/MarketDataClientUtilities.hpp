@@ -23,7 +23,8 @@ namespace Details {
   };
 
   template<typename MarketDataClient>
-  struct QueryMarketDataClientOperator<SequencedTimeAndSale, MarketDataClient> {
+  struct QueryMarketDataClientOperator<SequencedTimeAndSale,
+      MarketDataClient> {
     void operator ()(MarketDataClient& client,
         const SecurityMarketDataQuery& query,
         const std::shared_ptr<Beam::QueueWriter<
@@ -43,7 +44,8 @@ namespace Details {
   };
 
   template<typename MarketDataClient>
-  struct QueryMarketDataClientOperator<SequencedMarketQuote, MarketDataClient> {
+  struct QueryMarketDataClientOperator<SequencedMarketQuote,
+      MarketDataClient> {
     void operator ()(MarketDataClient& client,
         const SecurityMarketDataQuery& query,
         const std::shared_ptr<Beam::QueueWriter<
@@ -61,6 +63,52 @@ namespace Details {
       client.QueryBboQuotes(query, queue);
     };
   };
+
+  template<typename MarketDataClient>
+  struct QueryMarketDataClientOperator<OrderImbalance, MarketDataClient> {
+    void operator ()(MarketDataClient& client,
+        const MarketWideDataQuery& query,
+        const std::shared_ptr<Beam::QueueWriter<
+        OrderImbalance>>& queue) const {
+      client.QueryOrderImbalances(query, queue);
+    };
+  };
+
+  template<typename MarketDataClient>
+  struct QueryMarketDataClientOperator<TimeAndSale, MarketDataClient> {
+    void operator ()(MarketDataClient& client,
+        const SecurityMarketDataQuery& query,
+        const std::shared_ptr<Beam::QueueWriter<TimeAndSale>>& queue) const {
+      client.QueryTimeAndSales(query, queue);
+    };
+  };
+
+  template<typename MarketDataClient>
+  struct QueryMarketDataClientOperator<BookQuote, MarketDataClient> {
+    void operator ()(MarketDataClient& client,
+        const SecurityMarketDataQuery& query,
+        const std::shared_ptr<Beam::QueueWriter<BookQuote>>& queue) const {
+      client.QueryBookQuotes(query, queue);
+    };
+  };
+
+  template<typename MarketDataClient>
+  struct QueryMarketDataClientOperator<MarketQuote, MarketDataClient> {
+    void operator ()(MarketDataClient& client,
+        const SecurityMarketDataQuery& query,
+        const std::shared_ptr<Beam::QueueWriter<MarketQuote>>& queue) const {
+      client.QueryMarketQuotes(query, queue);
+    };
+  };
+
+  template<typename MarketDataClient>
+  struct QueryMarketDataClientOperator<BboQuote, MarketDataClient> {
+    void operator ()(MarketDataClient& client,
+        const SecurityMarketDataQuery& query,
+        const std::shared_ptr<Beam::QueueWriter<BboQuote>>& queue) const {
+      client.QueryBboQuotes(query, queue);
+    };
+  };
 }
 
   //! Submits a query for market data.
@@ -69,12 +117,11 @@ namespace Details {
     \param query The query to submit.
     \param queue The queue that will store the result of the query.
   */
-  template<typename MarketDataType, typename MarketDataClient>
+  template<typename MarketDataClient, typename Query, typename Queue>
   void QueryMarketDataClient(MarketDataClient& client,
-      const typename MarketDataQueryType<MarketDataType>::type& query,
-      const std::shared_ptr<Beam::QueueWriter<MarketDataType>>& queue) {
-    return Details::QueryMarketDataClientOperator<
-      MarketDataType, MarketDataClient>()(client, query, queue);
+      const Query& query, const std::shared_ptr<Queue>& queue) {
+    return Details::QueryMarketDataClientOperator<typename Queue::Source,
+      MarketDataClient>()(client, query, queue);
   }
 }
 }
