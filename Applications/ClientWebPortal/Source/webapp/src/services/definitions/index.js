@@ -4,7 +4,10 @@ import {
   CountryDatabase,
   CountryCode,
   CurrencyDatabase,
-  CurrencyId
+  CurrencyId,
+  MarketCode,
+  MarketDatabase,
+  MarketDatabaseEntry
 } from 'spire-client';
 import HashMap from 'hashmap';
 
@@ -15,6 +18,7 @@ class DefService {
     this.definitionsServiceClient = new DefinitionsServiceClient();
     this.countryDatabase = new CountryDatabase();
     this.currencyDatabase = new CurrencyDatabase();
+    this.marketDatabase = new MarketDatabase();
   }
 
   /** @private */
@@ -64,18 +68,28 @@ class DefService {
       .then(onResponse.bind(this));
 
     function onResponse(response) {
-      this.markets = new HashMap();
       for (let i=0; i<response.entries.length; i++) {
-        let marketCode = response.entries[i].code;
-        this.markets.set(marketCode, response.entries[i]);
+        let marketDatabaseEntry = new MarketDatabaseEntry(
+          new MarketCode(response.entries[i].code),
+          CountryCode.fromNumber(response.entries[i].country_code),
+          response.entries[i].time_zone,
+          CurrencyId.fromNumber(response.entries[i].currency),
+          response.entries[i].board_lot,
+          response.entries[i].description,
+          response.entries[i].display_name
+        );
+        this.marketDatabase.add.apply(this.marketDatabase, [marketDatabaseEntry]);
       }
-      this.markets.set('*', {
-        code: '*',
-        country_code: 65535,
-        currency: 65535,
-        description: '*',
-        display_name: '*'
-      });
+
+      this.marketDatabase.add.apply(this.marketDatabase, [new MarketDatabaseEntry(
+        new MarketCode('*'),
+        CountryCode.fromNumber(65535),
+        null,
+        CurrencyId.fromNumber(65535),
+        null,
+        '*',
+        '*'
+      )]);
     }
   }
 
@@ -177,11 +191,15 @@ class DefService {
   }
 
   getMarket(marketCode) {
-    return this.markets.get(marketCode);
+    return this.marketDatabase.fromMarketCode.apply(this.marketDatabase, [marketCode]);
   }
 
   getAllMarkets() {
-    return this.markets.values();
+    return this.marketDatabase.entries.apply(this.marketDatabase);
+  }
+
+  getMarketDatabase() {
+    return this.marketDatabase;
   }
 }
 

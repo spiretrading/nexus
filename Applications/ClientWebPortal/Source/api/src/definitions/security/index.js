@@ -25,6 +25,19 @@ class Security {
     }
   }
 
+  toString(marketDatabase) {
+    if (this.market.isEmpty.apply(this.market) || this.symbol == '') {
+      return this.symbol;
+    }
+    let marketCode = this.market.toCode.apply(this.market);
+    let market = marketDatabase.fromMarketCode.apply(marketDatabase, [marketCode]);
+    if (market == null || market.marketCode == '') {
+      return this.symbol + '.' + marketCode;
+    } else {
+      return this.symbol + '.' + market.displayName;
+    }
+  }
+
   clone() {
     return new Security(this.country, this.market, this.symbol);
   }
