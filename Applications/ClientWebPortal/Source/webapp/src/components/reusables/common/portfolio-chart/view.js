@@ -128,11 +128,12 @@ class View extends UpdatableView {
   }
 
   componentDidUpdate() {
-    if (this.columnsSyncCounter <= 2) {
-      this.synchronizeColumnWidths.apply(this);
-      this.columnsSyncCounter++;
-    }
     if (this.componentModel.data != null && this.componentModel.data[0] != null) {
+      if (this.columnsSyncCounter <= 2) {
+        this.synchronizeColumnWidths.apply(this);
+        this.columnsSyncCounter++;
+      }
+
       if (this.isChartTooWide) {
         $('#' + this.componentModel.componentId + ' .fixed-column-header').css('opacity', '1');
       }
