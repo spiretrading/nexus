@@ -116,9 +116,11 @@ class Controller {
 
   /** @private */
   onPortfolioDataReceived(data) {
-    let model = this.toUIModel.apply(this, [data]);
-    let cacheKey = model.account.id + model.currency.value + model.security.market.value + model.security.symbol;
-    this.portfolioData.set(cacheKey, model);
+    for (let i=0; i<data.length; i++) {
+      data[i] = this.toUIModel.apply(this, [data[i]]);
+      let cacheKey = data[i].account.id + data[i].currency.value + data[i].security.market.value + data[i].security.symbol;
+      this.portfolioData.set(cacheKey, data[i]);
+    }
     this.componentModel.portfolioData = this.portfolioData.values();
     if (this.componentModel.baseCurrencyId != null) {
       this.aggregateTotals.apply(this);

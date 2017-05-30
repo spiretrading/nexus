@@ -30,4 +30,17 @@ describe("Security", function() {
     expect(false).toBe(Security.isWildCard('*.'));
     expect(false).toBe(Security.isWildCard('XIU'));
   });
+
+  it("toString check", function() {
+    let marketDatabaseEntry = {
+      displayName: 'TSX'
+    };
+    let marketDatabase = {
+      fromMarketCode: function(marketCode) {
+        return marketDatabaseEntry;
+      }
+    };
+    let security = Security.fromData(this.securityData);
+    expect('XIU.TSX').toBe(security.toString(marketDatabase));
+  });
 });
