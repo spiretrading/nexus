@@ -195,8 +195,9 @@ namespace Nexus {
 
   template<typename IndexType, typename MarketDataTypeType>
   MarketDataEvent<IndexType, MarketDataTypeType>::MarketDataEvent(Index index,
-      MarketDataType value, Beam::RefType<BacktesterMarketDataService> service)
-      : BacktesterEvent{Beam::Queries::GetTimestamp(value)},
+      MarketDataType value, boost::posix_time::ptime timestamp,
+      Beam::RefType<BacktesterMarketDataService> service)
+      : BacktesterEvent{timestamp},
         m_index{std::move(index)},
         m_value{std::move(value)},
         m_service{service.Get()} {}
