@@ -45,6 +45,7 @@ namespace Nexus {
 
     private:
       template<typename, typename> friend class MarketDataEvent;
+      template<typename> friend class MarketDataLoadEvent;
       template<typename> friend class MarketDataQueryEvent;
       BacktesterEventHandler* m_eventHandler;
       MarketDataService::VirtualMarketDataClient* m_marketDataClient;
@@ -67,6 +68,26 @@ namespace Nexus {
 
     private:
       Query m_query;
+      BacktesterMarketDataService* m_service;
+  };
+
+  template<typename MarketDataTypeType>
+  class MarketDataLoadEvent : public BacktesterEvent {
+    public:
+      using MarketDataType = MarketDataTypeType;
+
+      using Query = MarketDataService::GetMarketDataQueryType<
+        Beam::Queries::SequencedValue<MarketDataType>>;
+
+      MarketDataLoadEvent(typename Query::Index index,
+        Beam::Queries::Range::Point startPoint,
+        Beam::RefType<BacktesterMarketDataService> service);
+
+      virtual void Execute() override;
+
+    private:
+      typename Query::Index m_index;
+      Beam::Queries::Range::Point m_startPoint;
       BacktesterMarketDataService* m_service;
   };
 
@@ -118,30 +139,57 @@ namespace Nexus {
         MarketDataService::GetMarketDataType<MarketDataType>())).second) {
       return;
     }
+    auto startTime = m_service->m_eventHandler->GetTestEnvironment().
+      GetTimeEnvironment().GetTime();
+    auto event = std::make_shared<MarketDataLoadEvent<MarketDataType>>(
+      m_query.GetIndex(), startTime, Beam::Ref(*m_service));
+    m_service->m_eventHandler->Add(std::move(event));
+  }
+
+  template<typename MarketDataTypeType>
+  MarketDataLoadEvent<MarketDataTypeType>::MarketDataLoadEvent(
+      typename Query::Index index, Beam::Queries::Range::Point startPoint,
+      Beam::RefType<BacktesterMarketDataService> service)
+      : BacktesterEvent{boost::posix_time::neg_infin},
+        m_index{std::move(index)},
+        m_startPoint{startPoint},
+        m_service{service.Get()} {}
+
+  template<typename MarketDataTypeType>
+  void MarketDataLoadEvent<MarketDataTypeType>::Execute() {
     auto QUERY_SIZE = 1000;
-    auto startTime =
-      m_service->m_eventHandler->GetTestEnvironment().GetTimeEnvironment().
-      GetTime();
-    Query backtestQuery;
-    backtestQuery.SetIndex(m_query.GetIndex());
-    backtestQuery.SetRange(startTime, Beam::Queries::Sequence::Present());
-    backtestQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Type::HEAD,
+    auto endPoint =
+      [&] () -> Beam::Queries::Range::Point {
+        if(m_service->m_eventHandler->GetEndTime() ==
+            boost::posix_time::pos_infin) {
+          return Beam::Queries::Sequence::Present();
+        }
+        return m_service->m_eventHandler->GetEndTime();
+      }();
+    Query query;
+    query.SetIndex(m_index);
+    query.SetRange(m_startPoint, endPoint);
+    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Type::HEAD,
       QUERY_SIZE);
     auto queue = std::make_shared<Beam::Queue<
       Beam::Queries::SequencedValue<MarketDataType>>>();
     MarketDataService::QueryMarketDataClient(*m_service->m_marketDataClient,
-      backtestQuery, queue);
+      query, queue);
     std::vector<Beam::Queries::SequencedValue<MarketDataType>> data;
     Beam::FlushQueue(queue, std::back_inserter(data));
     if(data.empty()) {
       return;
     }
     std::vector<std::shared_ptr<BacktesterEvent>> events;
+    auto reloadEvent = std::make_shared<MarketDataLoadEvent>(m_index,
+      Beam::Queries::Increment(data.back().GetSequence()),
+      Beam::Ref(*m_service));
     for(auto& value : data) {
       events.push_back(std::make_shared<
         MarketDataEvent<typename Query::Index, MarketDataType>>(
-        backtestQuery.GetIndex(), std::move(value), Beam::Ref(*m_service)));
+        query.GetIndex(), std::move(value), Beam::Ref(*m_service)));
     }
+    events.push_back(std::move(reloadEvent));
     m_service->m_eventHandler->Add(std::move(events));
   }
 

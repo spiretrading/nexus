@@ -41,6 +41,12 @@ namespace Nexus {
 
       ~BacktesterEventHandler();
 
+      //! Returns the start time.
+      boost::posix_time::ptime GetStartTime() const;
+
+      //! Returns the end time.
+      boost::posix_time::ptime GetEndTime() const;
+
       //! Adds an event to be handled.
       /*!
         \param event The event to handle.
@@ -91,6 +97,15 @@ namespace Nexus {
     Close();
   }
 
+  inline boost::posix_time::ptime BacktesterEventHandler::
+      GetStartTime() const {
+    return m_startTime;
+  }
+
+  inline boost::posix_time::ptime BacktesterEventHandler::GetEndTime() const {
+    return m_endTime;
+  }
+
   inline void BacktesterEventHandler::Add(
       std::shared_ptr<BacktesterEvent> event) {
     {
@@ -112,12 +127,14 @@ namespace Nexus {
     }
     {
       boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
-      auto insertIterator = std::lower_bound(m_events.begin(), m_events.end(),
-        events.front(),
-        [] (auto& lhs, auto& rhs) {
-          return lhs->GetTimestamp() < rhs->GetTimestamp();
-        });
-      m_events.insert(insertIterator, events.begin(), events.end());
+      for(auto& event : events) {
+        auto insertIterator = std::lower_bound(m_events.begin(),
+          m_events.end(), event,
+          [] (auto& lhs, auto& rhs) {
+            return lhs->GetTimestamp() < rhs->GetTimestamp();
+          });
+        m_events.insert(insertIterator, std::move(event));
+      }
     }
     m_eventAvailableCondition.notify_one();
   }
