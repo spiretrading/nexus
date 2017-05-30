@@ -99,6 +99,7 @@ namespace Nexus {
       using MarketDataType = MarketDataTypeType;
 
       MarketDataEvent(Index index, MarketDataType value,
+        boost::posix_time::ptime timestamp,
         Beam::RefType<BacktesterMarketDataService> service);
 
       virtual void Execute() override;
@@ -184,10 +185,14 @@ namespace Nexus {
     auto reloadEvent = std::make_shared<MarketDataLoadEvent>(m_index,
       Beam::Queries::Increment(data.back().GetSequence()),
       Beam::Ref(*m_service));
+    auto timestamp = m_service->m_eventHandler->GetTestEnvironment().
+      GetTimeEnvironment().GetTime();
     for(auto& value : data) {
+      timestamp = std::max(timestamp,
+        Beam::Queries::GetTimestamp(value.GetValue()));
       events.push_back(std::make_shared<
         MarketDataEvent<typename Query::Index, MarketDataType>>(
-        query.GetIndex(), std::move(value), Beam::Ref(*m_service)));
+        query.GetIndex(), std::move(value), timestamp, Beam::Ref(*m_service)));
     }
     events.push_back(std::move(reloadEvent));
     m_service->m_eventHandler->Add(std::move(events));
