@@ -73,6 +73,7 @@ serviceLocatorClient.loadCurrentAccount.apply(serviceLocatorClient)
       if (window.location.href != Config.HOME_URL) {
         window.location.href = Config.HOME_URL;
       } else {
+
         renderGUI();
       }
     } else {

@@ -173,15 +173,14 @@ int main(int argc, const char** argv) {
   }
   optional<BaseMarketDataFeedClient> baseMarketDataFeedClient;
   try {
-    auto marketDataServices = serviceLocatorClient->Locate(
-      MarketDataService::FEED_SERVICE_NAME);
-    if(marketDataServices.empty()) {
+    auto marketDataService = FindMarketDataFeedService(DefaultCountries::AU(),
+      *serviceLocatorClient);
+    if(!marketDataService.is_initialized()) {
       cerr << "No market data services available." << endl;
       return -1;
     }
-    auto& marketDataService = marketDataServices.front();
     auto marketDataAddresses = FromString<vector<IpAddress>>(
-      get<string>(marketDataService.GetProperties().At("addresses")));
+      get<string>(marketDataService->GetProperties().At("addresses")));
     auto samplingTime = Extract<time_duration>(config, "sampling");
     baseMarketDataFeedClient.emplace(
       Initialize(marketDataAddresses, Ref(socketThreadPool)),

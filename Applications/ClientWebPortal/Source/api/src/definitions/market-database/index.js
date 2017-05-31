@@ -8,15 +8,15 @@ class MarketDatabase {
   }
 
   add(entry) {
-    this.marketCodeEntries.set(entry.marketCode, entry);
+    this.marketCodeEntries.set(entry.marketCode.toCode(), entry);
 
-    if (this.countryCodeEntries.has(entry.countryCode)) {
-      let countryMarketCodeEntries = this.countryCodeEntries.get(entry.countryCode);
-      countryMarketCodeEntries.set(entry.marketCode, entry);
+    if (this.countryCodeEntries.has(entry.countryCode.toNumber())) {
+      let countryMarketCodeEntries = this.countryCodeEntries.get(entry.countryCode.toNumber());
+      countryMarketCodeEntries.set(entry.marketCode.toCode(), entry);
     } else {
       let countryMarketCodeEntries = new HashMap();
-      countryMarketCodeEntries.set(entry.marketCode, entry);
-      this.countryCodeEntries.set(entry.countryCode, countryMarketCodeEntries);
+      countryMarketCodeEntries.set(entry.marketCode.toCode(), entry);
+      this.countryCodeEntries.set(entry.countryCode.toNumber(), countryMarketCodeEntries);
     }
 
     this.displayNameEntries.set(entry.displayName, entry);
@@ -30,7 +30,7 @@ class MarketDatabase {
     return this.marketCodeEntries.get(marketCode);
   }
 
-  fromCountryCode(countryCode) {4
+  fromCountryCode(countryCode) {
     return this.countryCodeEntries.get(countryCode).values();
   }
 

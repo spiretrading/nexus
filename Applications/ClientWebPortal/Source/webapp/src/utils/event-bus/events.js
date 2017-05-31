@@ -29,5 +29,9 @@ export default {
     RiskControls: {
       CURRENCY_SELECTED: 'all.profile.riskControls.currencySelected'
     }
+  },
+  Portfolio: {
+    FILTER_RESIZE: 'all.portfolio.filterResize',
+    FILTER_PARAMETERS_CHANGED: 'all.portfolio.filterParametersChanged'
   }
 };

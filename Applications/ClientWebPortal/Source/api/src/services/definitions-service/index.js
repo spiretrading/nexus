@@ -1,5 +1,5 @@
 import httpConnectionManager from '../commons/http-connection-manager';
-import CurrencyId from '../../definitions/currency/id';
+import CurrencyId from '../../definitions/currency-id';
 import dataTypeConverter from '../commons/data-type-converter';
 
 /** Spire definitions service client class */

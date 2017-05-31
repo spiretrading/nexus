@@ -36,6 +36,14 @@ vector<HttpRequestSlot> DefinitionsWebServlet::GetSlots() {
     std::bind(&DefinitionsWebServlet::OnLoadCurrencyDatabase, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/definitions_service/load_destination_database"),
+    std::bind(&DefinitionsWebServlet::OnLoadDestinationDatabase, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/definitions_service/load_exchange_rates"),
+    std::bind(&DefinitionsWebServlet::OnLoadExchangeRates, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/definitions_service/load_market_database"),
     std::bind(&DefinitionsWebServlet::OnLoadMarketDatabase, this,
     std::placeholders::_1));
@@ -105,6 +113,34 @@ HttpResponse DefinitionsWebServlet::OnLoadCurrencyDatabase(
   auto database =
     m_serviceClients->GetDefinitionsClient().LoadCurrencyDatabase();
   session->ShuttleResponse(database, Store(response));
+  return response;
+}
+
+HttpResponse DefinitionsWebServlet::OnLoadDestinationDatabase(
+    const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto database =
+    m_serviceClients->GetDefinitionsClient().LoadDestinationDatabase();
+  session->ShuttleResponse(database, Store(response));
+  return response;
+}
+
+HttpResponse DefinitionsWebServlet::OnLoadExchangeRates(
+    const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto exchangeRates =
+    m_serviceClients->GetDefinitionsClient().LoadExchangeRates();
+  session->ShuttleResponse(exchangeRates, Store(response));
   return response;
 }
 

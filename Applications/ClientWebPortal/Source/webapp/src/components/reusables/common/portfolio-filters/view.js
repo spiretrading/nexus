@@ -12,7 +12,7 @@ class View extends UpdatableView {
     this.selectedStartDate = null;
     this.selectedEndDate = null;
     this.selectedParameterInput = "Group";
-    this.isClosed = false;
+    this.isClosed = true;
   }
 
   /** @private */
@@ -22,7 +22,11 @@ class View extends UpdatableView {
     if (this.isClosed) {
       this.isClosed = false;
       $body.stop(true, true).animate({
-        height: this.bodyHeight
+        height: $body.find('.content-wrapper').outerHeight()
+      }, {
+        step: function() {
+          EventBus.publish(Event.Portfolio.FILTER_RESIZE);
+        }
       });
 
       $('#' + this.componentModel.componentId + ' .arrow-icon').stop(true, true).fadeOut(200, () => {
@@ -30,9 +34,12 @@ class View extends UpdatableView {
       });
     } else {
       this.isClosed = true;
-      this.bodyHeight = $body.outerHeight();
       $body.stop(true, true).animate({
         height: '0px'
+      }, {
+        step: function() {
+          EventBus.publish(Event.Portfolio.FILTER_RESIZE);
+        }
       });
 
       $('#' + this.componentModel.componentId + ' .arrow-icon').stop(true, true).fadeOut(200, () => {
@@ -90,12 +97,12 @@ class View extends UpdatableView {
 
     let groupMenu, currencyMenu, marketMenu, columnMenu;
     if (deviceDetector.isMobile()) {
-      groupMenu = <span className="icon-group2"/>;
+      groupMenu = <span className="icon-group"/>;
       currencyMenu = <span className="icon-currency"/>;
       marketMenu = <span className="icon-market"/>;
       columnMenu = <span className="icon-column"/>;
     } else {
-      groupMenu = <span><span className="icon-group2"/> Group</span>;
+      groupMenu = <span><span className="icon-group"/> Group</span>;
       currencyMenu = <span><span className="icon-currency"/> Currency</span>;
       marketMenu = <span><span className="icon-market"/> Market</span>;
       columnMenu = <span><span className="icon-column"/> Column</span>;
@@ -108,11 +115,17 @@ class View extends UpdatableView {
       selectList = <MoveSelectDesktop model={selectListModel} onChange={this.onMoveSelectChange.bind(this)}/>;
     }
 
+    let className = "portfolio-filters-container";
+    if (this.componentModel.className != null)
+    {
+      className += " " + this.componentModel.className;
+    }
+
     return (
-        <div id={this.componentModel.componentId} className="portfolio-filters-container">
+        <div id={this.componentModel.componentId} className={className}>
           <div className="header" onClick={this.onHeaderClicked.bind(this)}>
             Filters
-            <span className="icon-arrow-up arrow-icon"/>
+            <span className="icon-arrow-down arrow-icon"/>
           </div>
           <div className="body">
             <div className="content-wrapper">

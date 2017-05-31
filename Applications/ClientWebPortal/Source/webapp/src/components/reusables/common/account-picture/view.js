@@ -52,7 +52,7 @@ class View extends UpdatableView {
     if (!this.componentModel.isReadOnly) {
       changeButton =
         <div className="picture-change-btn"  onClick={this.onChangeButtonClick}>
-          <span className="icon-change_image" style={buttonStyle}></span>
+          <span className="icon-change-image" style={buttonStyle}></span>
         </div>
     }
 

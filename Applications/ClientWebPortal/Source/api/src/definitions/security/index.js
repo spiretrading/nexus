@@ -1,5 +1,5 @@
-import MarketCode from '../market/code';
-import CountryCode from '../country/code';
+import MarketCode from '../market-code';
+import CountryCode from '../country-code';
 import SecuritySet from '../security-set';
 
 class Security {
@@ -22,6 +22,19 @@ class Security {
         market: this.market.toCode(),
         symbol: this.symbol
       };
+    }
+  }
+
+  toString(marketDatabase) {
+    if (this.market.isEmpty.apply(this.market) || this.symbol == '') {
+      return this.symbol;
+    }
+    let marketCode = this.market.toCode.apply(this.market);
+    let market = marketDatabase.fromMarketCode.apply(marketDatabase, [marketCode]);
+    if (market == null || market.marketCode == '') {
+      return this.symbol + '.' + marketCode;
+    } else {
+      return this.symbol + '.' + market.displayName;
     }
   }
 
