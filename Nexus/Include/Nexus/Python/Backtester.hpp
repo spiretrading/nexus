@@ -8,6 +8,9 @@ namespace Python {
   //! Exports all of the backtester classes.
   void ExportBacktester();
 
+  //! Exports the BacktesterEnvironment class.
+  void ExportBacktesterEnvironment();
+
   //! Exports the BacktesterEventHandler class.
   void ExportBacktesterEventHandler();
 

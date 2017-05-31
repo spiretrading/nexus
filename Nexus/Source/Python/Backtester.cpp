@@ -1,6 +1,7 @@
 #include "Nexus/Python/Backtester.hpp"
 #include <Beam/Python/BoostPython.hpp>
 #include <Beam/Python/GilRelease.hpp>
+#include "Nexus/Backtester/BacktesterEnvironment.hpp"
 #include "Nexus/Backtester/BacktesterEventHandler.hpp"
 #include "Nexus/Backtester/BacktesterServiceClients.hpp"
 #include "Nexus/Python/PythonMarketDataClient.hpp"
@@ -33,7 +34,7 @@ namespace {
     public:
       PythonBacktesterServiceClients(
         std::unique_ptr<VirtualServiceClients> client,
-        std::shared_ptr<BacktesterEventHandler> environment)
+        std::shared_ptr<BacktesterEnvironment> environment)
           : WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>{
               std::move(client)},
             m_environment{std::move(environment)} {}
@@ -66,24 +67,31 @@ namespace {
       }
 
     private:
-      std::shared_ptr<BacktesterEventHandler> m_environment;
+      std::shared_ptr<BacktesterEnvironment> m_environment;
       std::unique_ptr<PythonMarketDataClient> m_marketDataClient;
       std::unique_ptr<PythonOrderExecutionClient> m_orderExecutionClient;
   };
 
   VirtualServiceClients* BuildBacktesterServiceClients(
-      std::shared_ptr<BacktesterEventHandler> environment,
-      std::shared_ptr<BacktesterMarketDataService> marketDataService) {
+      std::shared_ptr<BacktesterEnvironment> environment) {
     auto baseClient = std::make_unique<BacktesterServiceClients>(
-      Ref(*environment), Ref(*marketDataService));
+      Ref(*environment));
     return new PythonBacktesterServiceClients{
       MakeVirtualServiceClients(std::move(baseClient)), environment};
   }
 }
 
 void Nexus::Python::ExportBacktester() {
+  ExportBacktesterEnvironment();
   ExportBacktesterEventHandler();
   ExportBacktesterServiceClients();
+}
+
+void Nexus::Python::ExportBacktesterEnvironment() {
+  class_<BacktesterEnvironment, std::shared_ptr<BacktesterEnvironment>,
+      boost::noncopyable>("BacktesterEnvironment", no_init)
+    .def("open", BlockingFunction(&BacktesterEnvironment::Open))
+    .def("close", BlockingFunction(&BacktesterEnvironment::Close));
 }
 
 void Nexus::Python::ExportBacktesterEventHandler() {

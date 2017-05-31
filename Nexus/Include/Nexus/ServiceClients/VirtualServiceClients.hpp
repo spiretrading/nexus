@@ -188,6 +188,16 @@ namespace Nexus {
       std::forward<ServiceClients>(client));
   }
 
+  //! Wraps ServiceClients into a VirtualServiceClients.
+  /*!
+    \param client The client to wrap.
+  */
+  template<typename ServiceClients, typename... Args>
+  std::unique_ptr<VirtualServiceClients> MakeVirtualServiceClients(
+      Beam::Initializer<Args...>&& initializer) {
+    return std::make_unique<WrapperServiceClients<ServiceClients>>(
+      std::move(initializer));
+  }
   template<typename ClientType>
   template<typename ServiceClientsForward>
   WrapperServiceClients<ClientType>::WrapperServiceClients(

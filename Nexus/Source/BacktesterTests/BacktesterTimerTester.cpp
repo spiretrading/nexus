@@ -19,12 +19,13 @@ void BacktesterTimerTester::TestExpiry() {
   ptime startTime{date{2016, 5, 6}, seconds(0)};
   TestEnvironment testEnvironment;
   testEnvironment.Open();
-  TestServiceClients serviceClients{Ref(testEnvironment)};
-  serviceClients.Open();
-  BacktesterEnvironment backtesterEnvironment{startTime};
+  auto testServiceClients = MakeVirtualServiceClients<TestServiceClients>(
+    Initialize(Ref(testEnvironment)));
+  BacktesterEnvironment backtesterEnvironment{startTime,
+    Ref(*testServiceClients)};
   backtesterEnvironment.Open();
   BacktesterServiceClients backtesterServiceClients{
-    Ref(backtesterServiceClients)};
+    Ref(backtesterEnvironment)};
   backtesterServiceClients.Open();
   auto timer = backtesterServiceClients.BuildTimer(seconds(1));
   RoutineTaskQueue routines;
@@ -57,12 +58,13 @@ void BacktesterTimerTester::TestCancel() {
   ptime startTime{date{2016, 5, 6}, seconds(0)};
   TestEnvironment testEnvironment;
   testEnvironment.Open();
-  TestServiceClients serviceClients{Ref(testEnvironment)};
-  serviceClients.Open();
-  BacktesterEnvironment backtesterEnvironment{startTime};
+  auto testServiceClients = MakeVirtualServiceClients<TestServiceClients>(
+    Initialize(Ref(testEnvironment)));
+  BacktesterEnvironment backtesterEnvironment{startTime,
+    Ref(*testServiceClients)};
   backtesterEnvironment.Open();
   BacktesterServiceClients backtesterServiceClients{
-    Ref(backtesterServiceClients)};
+    Ref(backtesterEnvironment)};
   backtesterServiceClients.Open();
   auto timerA = backtesterServiceClients.BuildTimer(seconds(1));
   auto timerB = backtesterServiceClients.BuildTimer(seconds(2));

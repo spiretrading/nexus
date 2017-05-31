@@ -5,6 +5,7 @@
 #include "Nexus/Backtester/BacktesterServiceClients.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;
@@ -31,9 +32,10 @@ void BacktesterMarketDataClientTester::TestRealTimeQuery() {
       static_cast<Beam::Queries::Sequence::Ordinal>(i)});
     testEnvironment.GetMarketDataEnvironment().GetDataStore().Store(bboQuote);
   }
-  TestServiceClients serviceClients{Ref(testEnvironment)};
-  serviceClients.Open();
-  BacktesterEnvironment backtesterEnvironment{startTime};
+  auto testServiceClients = MakeVirtualServiceClients<TestServiceClients>(
+    Initialize(Ref(testEnvironment)));
+  BacktesterEnvironment backtesterEnvironment{startTime,
+    Ref(*testServiceClients)};
   backtesterEnvironment.Open();
   BacktesterServiceClients backtesterServiceClients{
     Ref(backtesterEnvironment)};
