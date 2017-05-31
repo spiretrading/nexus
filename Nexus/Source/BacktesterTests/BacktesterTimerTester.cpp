@@ -21,12 +21,10 @@ void BacktesterTimerTester::TestExpiry() {
   testEnvironment.Open();
   TestServiceClients serviceClients{Ref(testEnvironment)};
   serviceClients.Open();
-  BacktesterEventHandler eventHandler{startTime};
-  eventHandler.Open();
-  BacktesterMarketDataService marketDataService{Ref(eventHandler),
-    Beam::Ref(serviceClients.GetMarketDataClient())};
-  BacktesterServiceClients backtesterServiceClients{Ref(eventHandler),
-    Ref(marketDataService)};
+  BacktesterEnvironment backtesterEnvironment{startTime};
+  backtesterEnvironment.Open();
+  BacktesterServiceClients backtesterServiceClients{
+    Ref(backtesterServiceClients)};
   backtesterServiceClients.Open();
   auto timer = backtesterServiceClients.BuildTimer(seconds(1));
   RoutineTaskQueue routines;
@@ -61,12 +59,10 @@ void BacktesterTimerTester::TestCancel() {
   testEnvironment.Open();
   TestServiceClients serviceClients{Ref(testEnvironment)};
   serviceClients.Open();
-  BacktesterEventHandler eventHandler{startTime};
-  eventHandler.Open();
-  BacktesterMarketDataService marketDataService{Ref(eventHandler),
-    Beam::Ref(serviceClients.GetMarketDataClient())};
-  BacktesterServiceClients backtesterServiceClients{Ref(eventHandler),
-    Ref(marketDataService)};
+  BacktesterEnvironment backtesterEnvironment{startTime};
+  backtesterEnvironment.Open();
+  BacktesterServiceClients backtesterServiceClients{
+    Ref(backtesterServiceClients)};
   backtesterServiceClients.Open();
   auto timerA = backtesterServiceClients.BuildTimer(seconds(1));
   auto timerB = backtesterServiceClients.BuildTimer(seconds(2));

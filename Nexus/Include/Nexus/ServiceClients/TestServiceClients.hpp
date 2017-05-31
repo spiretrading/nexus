@@ -88,8 +88,8 @@ namespace Nexus {
       TestEnvironment* m_environment;
       std::unique_ptr<ServiceLocatorClient> m_serviceLocatorClient;
       std::unique_ptr<RegistryClient> m_registryClient;
-      std::unique_ptr<AdministrationClient> m_administrationClient;
       std::unique_ptr<DefinitionsClient> m_definitionsClient;
+      std::unique_ptr<AdministrationClient> m_administrationClient;
       std::unique_ptr<MarketDataClient> m_marketDataClient;
       std::unique_ptr<ChartingClient> m_chartingClient;
       std::unique_ptr<ComplianceClient> m_complianceClient;
@@ -103,7 +103,20 @@ namespace Nexus {
 
   inline TestServiceClients::TestServiceClients(
       Beam::RefType<TestEnvironment> environment)
-      : m_environment{environment.Get()} {}
+      : m_environment{environment.Get()},
+        m_serviceLocatorClient{
+          m_environment->GetServiceLocatorEnvironment().BuildClient()},
+        m_definitionsClient{m_environment->GetDefinitionsEnvironment().
+          BuildClient(Beam::Ref(*m_serviceLocatorClient))},
+        m_administrationClient{m_environment->GetAdministrationEnvironment().
+          BuildClient(Beam::Ref(*m_serviceLocatorClient))},
+        m_marketDataClient{m_environment->GetMarketDataEnvironment().
+          BuildClient(Beam::Ref(*m_serviceLocatorClient))},
+        m_orderExecutionClient{m_environment->GetOrderExecutionEnvironment().
+          BuildClient(Beam::Ref(*m_serviceLocatorClient))},
+        m_timeClient{Beam::TimeService::MakeVirtualTimeClient(
+          std::make_unique<Beam::TimeService::Tests::TestTimeClient>(
+          Beam::Ref(m_environment->GetTimeEnvironment())))} {}
 
   inline TestServiceClients::~TestServiceClients() {
     Close();
@@ -169,27 +182,12 @@ namespace Nexus {
       return;
     }
     try {
-      m_serviceLocatorClient =
-        m_environment->GetServiceLocatorEnvironment().BuildClient();
       m_serviceLocatorClient->SetCredentials("root", "");
       m_serviceLocatorClient->Open();
-      m_definitionsClient = m_environment->GetDefinitionsEnvironment().BuildClient(
-        Beam::Ref(*m_serviceLocatorClient));
       m_definitionsClient->Open();
-      m_administrationClient =
-        m_environment->GetAdministrationEnvironment().BuildClient(
-        Beam::Ref(*m_serviceLocatorClient));
       m_administrationClient->Open();
-      m_marketDataClient = m_environment->GetMarketDataEnvironment().BuildClient(
-        Beam::Ref(*m_serviceLocatorClient));
       m_marketDataClient->Open();
-      m_orderExecutionClient =
-        m_environment->GetOrderExecutionEnvironment().BuildClient(
-        Beam::Ref(*m_serviceLocatorClient));
       m_orderExecutionClient->Open();
-      m_timeClient = Beam::TimeService::MakeVirtualTimeClient(
-        std::make_unique<Beam::TimeService::Tests::TestTimeClient>(
-        Beam::Ref(m_environment->GetTimeEnvironment())));
       m_timeClient->Open();
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
@@ -206,36 +204,11 @@ namespace Nexus {
   }
 
   inline void TestServiceClients::Shutdown() {
-    if(m_timeClient != nullptr) {
-      m_timeClient->Close();
-    }
-    if(m_riskClient != nullptr) {
-      m_riskClient->Close();
-    }
-    if(m_orderExecutionClient != nullptr) {
-      m_orderExecutionClient->Close();
-    }
-    if(m_complianceClient != nullptr) {
-      m_complianceClient->Close();
-    }
-    if(m_chartingClient != nullptr) {
-      m_chartingClient->Close();
-    }
-    if(m_marketDataClient != nullptr) {
-      m_marketDataClient->Close();
-    }
-    if(m_definitionsClient != nullptr) {
-      m_definitionsClient->Close();
-    }
-    if(m_administrationClient != nullptr) {
-      m_administrationClient->Close();
-    }
-    if(m_registryClient != nullptr) {
-      m_registryClient->Close();
-    }
-    if(m_serviceLocatorClient != nullptr) {
-      m_serviceLocatorClient->Close();
-    }
+    m_timeClient->Close();
+    m_orderExecutionClient->Close();
+    m_marketDataClient->Close();
+    m_administrationClient->Close();
+    m_serviceLocatorClient->Close();
     m_openState.SetClosed();
   }
 }

@@ -170,7 +170,12 @@ namespace Tests {
       Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
       serviceLocatorClient) {
     ServiceProtocolClientBuilder builder(Beam::Ref(serviceLocatorClient),
-      [&] {
+      [&, serviceLocatorClient = serviceLocatorClient.Get()] {
+        if(m_globalEntitlementGroup.m_type !=
+            Beam::ServiceLocator::DirectoryEntry::Type::NONE) {
+          m_serviceLocatorClient->Associate(serviceLocatorClient->GetAccount(),
+            m_globalEntitlementGroup);
+        }
         return std::make_unique<ServiceProtocolClientBuilder::Channel>(
           "test_administration_client", Beam::Ref(m_serverConnection));
       },
@@ -178,12 +183,7 @@ namespace Tests {
         return std::make_unique<ServiceProtocolClientBuilder::Timer>();
       });
     auto client = std::make_unique<AdministrationService::AdministrationClient<
-        ServiceProtocolClientBuilder>>(builder);
-    if(m_globalEntitlementGroup.m_type !=
-        Beam::ServiceLocator::DirectoryEntry::Type::NONE) {
-      m_serviceLocatorClient->Associate(serviceLocatorClient->GetAccount(),
-        m_globalEntitlementGroup);
-    }
+      ServiceProtocolClientBuilder>>(builder);
     return MakeVirtualAdministrationClient(std::move(client));
   }
 }

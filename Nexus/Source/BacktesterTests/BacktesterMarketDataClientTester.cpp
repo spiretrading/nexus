@@ -1,8 +1,7 @@
 #include "Nexus/BacktesterTests/BacktesterMarketDataClientTester.hpp"
 #include <Beam/Threading/ConditionVariable.hpp>
 #include <Beam/Threading/Mutex.hpp>
-#include "Nexus/Backtester/BacktesterEventHandler.hpp"
-#include "Nexus/Backtester/BacktesterMarketDataService.hpp"
+#include "Nexus/Backtester/BacktesterEnvironment.hpp"
 #include "Nexus/Backtester/BacktesterServiceClients.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
@@ -34,12 +33,10 @@ void BacktesterMarketDataClientTester::TestRealTimeQuery() {
   }
   TestServiceClients serviceClients{Ref(testEnvironment)};
   serviceClients.Open();
-  BacktesterEventHandler eventHandler{startTime};
-  BacktesterMarketDataService marketDataService{Ref(eventHandler),
-    Beam::Ref(serviceClients.GetMarketDataClient())};
-  eventHandler.Open();
-  BacktesterServiceClients backtesterServiceClients{Ref(eventHandler),
-    Ref(marketDataService)};
+  BacktesterEnvironment backtesterEnvironment{startTime};
+  backtesterEnvironment.Open();
+  BacktesterServiceClients backtesterServiceClients{
+    Ref(backtesterEnvironment)};
   backtesterServiceClients.Open();
   RoutineTaskQueue routines;
   auto& marketDataClient = backtesterServiceClients.GetMarketDataClient();
