@@ -8,23 +8,45 @@
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 
 namespace Nexus {
+
+  /*! \class BacktesterEnvironment
+      \brief Maintains the state needed to run the historical backtester.
+   */
   class BacktesterEnvironment : private boost::noncopyable {
     public:
+
+      //! Constructs a BacktesterEnvironment.
+      /*!
+        \param startTime The backtester's starting time.
+        \param serviceClients The ServiceClients connected to the historical
+               data source.
+      */
       BacktesterEnvironment(boost::posix_time::ptime startTime,
         Beam::RefType<VirtualServiceClients> serviceClients);
 
+      //! Constructs a BacktesterEnvironment.
+      /*!
+        \param startTime The backtester's starting time.
+        \param endTime The backtester's ending time.
+        \param serviceClients The ServiceClients connected to the historical
+               data source.
+      */
       BacktesterEnvironment(boost::posix_time::ptime startTime,
         boost::posix_time::ptime endTime,
         Beam::RefType<VirtualServiceClients> serviceClients);
 
       ~BacktesterEnvironment();
 
+      //! Returns the BacktesterEventHandler.
       const BacktesterEventHandler& GetEventHandler() const;
 
+      //! Returns the BacktesterEventHandler.
       BacktesterEventHandler& GetEventHandler();
 
+      //! Returns the BacktesterMarketDataService.
       BacktesterMarketDataService& GetMarketDataService();
 
+      //! Returns the BacktesterMarketDataService.
       const BacktesterMarketDataService& GetMarketDataService() const;
 
       void Open();
