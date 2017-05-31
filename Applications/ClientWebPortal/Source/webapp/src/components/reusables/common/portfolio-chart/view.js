@@ -52,10 +52,6 @@ class View extends UpdatableView {
     return converted.charAt(0).toLowerCase() + converted.slice(1);
   }
 
-  resetColumnsSyncCounter() {
-    this.columnsSyncCounter = 0;
-  }
-
   /** @private */
   convertToTitle(label) {
     label = label.replace(/([A-Z]+)*([A-Z][a-z])/g, "$1$2");
@@ -87,7 +83,6 @@ class View extends UpdatableView {
     }
   }
 
-  /** @private */
   synchronizeColumnWidths() {
     let $headerTds = $('#' + this.componentModel.componentId + ' .header td');
     let $bodyTds = $('#' + this.componentModel.componentId + '>.body tr:first td');
@@ -147,7 +142,6 @@ class View extends UpdatableView {
 
   shouldIncludeColumn(columnHeader) {
     if (this.componentModel.filter == null ||
-      this.componentModel.filter.length == 0 ||
       columnHeader == 'Account' ||
       columnHeader == 'Security') {
       return true;
