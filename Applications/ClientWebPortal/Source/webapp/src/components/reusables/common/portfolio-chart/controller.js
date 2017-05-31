@@ -25,7 +25,7 @@ class Controller {
 
   /** @private */
   onFilterChange() {
-    this.view.resetColumnsSyncCounter.apply(this);
+    this.view.synchronizeColumnWidths.apply(this.view);
   }
 
   componentDidMount() {
