@@ -6,7 +6,6 @@ namespace Nexus {
   class BacktesterEvent;
   class BacktesterEventHandler;
   class BacktesterMarketDataClient;
-  class BacktesterOrderExecutionClient;
   class BacktesterServiceClients;
   class BacktesterTimer;
   template<typename IndexType, typename MarketDataTypeType>

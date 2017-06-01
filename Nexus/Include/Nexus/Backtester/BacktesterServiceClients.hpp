@@ -11,7 +11,6 @@
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterEnvironment.hpp"
 #include "Nexus/Backtester/BacktesterMarketDataClient.hpp"
-#include "Nexus/Backtester/BacktesterOrderExecutionClient.hpp"
 #include "Nexus/Backtester/BacktesterTimer.hpp"
 #include "Nexus/ChartingService/VirtualChartingClient.hpp"
 #include "Nexus/Compliance/VirtualComplianceClient.hpp"
@@ -123,13 +122,9 @@ namespace Nexus {
           m_environment->GetEventHandler().GetTestEnvironment().
           GetMarketDataEnvironment().BuildClient(Beam::Ref(
           *m_serviceLocatorClient))))},
-        m_orderExecutionClient{
-          OrderExecutionService::MakeVirtualOrderExecutionClient(
-          std::make_unique<BacktesterOrderExecutionClient>(
-          Beam::Ref(m_environment->GetEventHandler()),
-          m_environment->GetEventHandler().GetTestEnvironment().
-          GetOrderExecutionEnvironment().BuildClient(Beam::Ref(
-          *m_serviceLocatorClient))))},
+        m_orderExecutionClient{m_environment->GetEventHandler().
+          GetTestEnvironment().GetOrderExecutionEnvironment().BuildClient(
+          Beam::Ref(*m_serviceLocatorClient))},
         m_timeClient{Beam::TimeService::MakeVirtualTimeClient(
           std::make_unique<Beam::TimeService::Tests::TestTimeClient>(Beam::Ref(
           m_environment->GetEventHandler().GetTestEnvironment().
