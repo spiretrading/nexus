@@ -190,7 +190,7 @@ namespace Nexus {
 
   //! Wraps ServiceClients into a VirtualServiceClients.
   /*!
-    \param client The client to wrap.
+    \param initializer Initializes the client being wrapped.
   */
   template<typename ServiceClients, typename... Args>
   std::unique_ptr<VirtualServiceClients> MakeVirtualServiceClients(

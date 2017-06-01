@@ -26,6 +26,7 @@
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
+#include "Nexus/OrderExecutionService/VirtualOrderExecutionDriver.hpp"
 #include "Nexus/OrderExecutionServiceTests/MockOrderExecutionDriver.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
@@ -156,6 +157,11 @@ namespace boost {
       SnapshotPublisher<const PrimitiveOrder*, vector<const PrimitiveOrder*>>*
       get_pointer(const volatile SnapshotPublisher<
       const PrimitiveOrder*, vector<const PrimitiveOrder*>>* p) {
+    return p;
+  }
+
+  template<> inline const volatile VirtualOrderExecutionDriver* get_pointer(
+      const volatile VirtualOrderExecutionDriver* p) {
     return p;
   }
 }

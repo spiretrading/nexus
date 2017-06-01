@@ -59,6 +59,12 @@ namespace OrderExecutionService {
 
       virtual ~WrapperOrderExecutionDriver() override = default;
 
+      //! Returns the driver being wrapped.
+      const Driver& GetDriver() const;
+
+      //! Returns the driver being wrapped.
+      Driver& GetDriver();
+
       virtual const Order& Recover(
         const SequencedAccountOrderRecord& order) override;
 
@@ -89,11 +95,34 @@ namespace OrderExecutionService {
       std::forward<OrderExecutionDriver>(driver));
   }
 
+  //! Wraps an OrderExecutionDriver into a VirtualOrderExecutionDriver.
+  /*!
+    \param initializer Initializes the driver being wrapped.
+  */
+  template<typename OrderExecutionDriver, typename... Args>
+  std::unique_ptr<VirtualOrderExecutionDriver> MakeVirtualOrderExecutionDriver(
+      Beam::Initializer<Args...>&& initializer) {
+    return std::make_unique<WrapperOrderExecutionDriver<OrderExecutionDriver>>(
+      std::move(initializer));
+  }
+
   template<typename DriverType>
   template<typename OrderExecutionDriverForward>
   WrapperOrderExecutionDriver<DriverType>::WrapperOrderExecutionDriver(
       OrderExecutionDriverForward&& driver)
       : m_driver{std::forward<OrderExecutionDriverForward>(driver)} {}
+
+  template<typename DriverType>
+  const typename WrapperOrderExecutionDriver<DriverType>::Driver&
+      WrapperOrderExecutionDriver<DriverType>::GetDriver() const {
+    return *m_driver;
+  }
+
+  template<typename DriverType>
+  typename WrapperOrderExecutionDriver<DriverType>::Driver&
+      WrapperOrderExecutionDriver<DriverType>::GetDriver() {
+    return *m_driver;
+  }
 
   template<typename DriverType>
   const Order& WrapperOrderExecutionDriver<DriverType>::Recover(
