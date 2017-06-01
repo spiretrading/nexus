@@ -10,12 +10,12 @@
 #include <Beam/Threading/ConditionVariable.hpp>
 #include <Beam/Threading/LockRelease.hpp>
 #include <Beam/Threading/Mutex.hpp>
+#include <Beam/TimeServiceTests/TimeServiceTestEnvironment.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/range/iterator_range.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterEvent.hpp"
-#include "Nexus/ServiceClients/TestEnvironment.hpp"
 
 namespace Nexus {
 
@@ -59,12 +59,6 @@ namespace Nexus {
       */
       void Add(std::vector<std::shared_ptr<BacktesterEvent>> events);
 
-      //! Returns the TestEnvironment used.
-      const TestEnvironment& GetTestEnvironment() const;
-
-      //! Returns the TestEnvironment used.
-      TestEnvironment& GetTestEnvironment();
-
       void Open();
 
       void Close();
@@ -73,7 +67,7 @@ namespace Nexus {
       mutable Beam::Threading::Mutex m_mutex;
       boost::posix_time::ptime m_startTime;
       boost::posix_time::ptime m_endTime;
-      TestEnvironment m_testEnvironment;
+      Beam::TimeService::Tests::TimeServiceTestEnvironment m_timeEnvironment;
       std::deque<std::shared_ptr<BacktesterEvent>> m_events;
       Beam::Threading::ConditionVariable m_eventAvailableCondition;
       Beam::Routines::RoutineHandler m_eventLoopRoutine;
@@ -139,22 +133,13 @@ namespace Nexus {
     m_eventAvailableCondition.notify_one();
   }
 
-  inline const TestEnvironment& BacktesterEventHandler::
-      GetTestEnvironment() const {
-    return m_testEnvironment;
-  }
-
-  inline TestEnvironment& BacktesterEventHandler::GetTestEnvironment() {
-    return m_testEnvironment;
-  }
-
   inline void BacktesterEventHandler::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
     try {
-      m_testEnvironment.SetTime(m_startTime);
-      m_testEnvironment.Open();
+      m_timeEnvironment.SetTime(m_startTime);
+      m_timeEnvironment.Open();
       m_eventLoopRoutine = Beam::Routines::Spawn(
         std::bind(&BacktesterEventHandler::EventLoop, this));
     } catch(const std::exception&) {
@@ -189,7 +174,7 @@ namespace Nexus {
         event = m_events.front();
         m_events.pop_front();
         if(event->GetTimestamp() != boost::posix_time::neg_infin) {
-          m_testEnvironment.SetTime(event->GetTimestamp());
+          m_timeEnvironment.SetTime(event->GetTimestamp());
         }
       }
       event->Execute();
@@ -199,7 +184,7 @@ namespace Nexus {
   inline void BacktesterEventHandler::Shutdown() {
     m_eventAvailableCondition.notify_one();
     m_eventLoopRoutine.Wait();
-    m_testEnvironment.Close();
+    m_timeEnvironment.Close();
     m_openState.SetClosed();
   }
 }

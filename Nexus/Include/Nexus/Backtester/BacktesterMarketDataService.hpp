@@ -140,8 +140,7 @@ namespace Nexus {
         MarketDataService::GetMarketDataType<MarketDataType>())).second) {
       return;
     }
-    auto startTime = m_service->m_eventHandler->GetTestEnvironment().
-      GetTimeEnvironment().GetTime();
+    auto startTime = m_service->m_eventHandler->GetTime();
     auto event = std::make_shared<MarketDataLoadEvent<MarketDataType>>(
       m_query.GetIndex(), startTime, Beam::Ref(*m_service));
     m_service->m_eventHandler->Add(std::move(event));
@@ -185,8 +184,7 @@ namespace Nexus {
     auto reloadEvent = std::make_shared<MarketDataLoadEvent>(m_index,
       Beam::Queries::Increment(data.back().GetSequence()),
       Beam::Ref(*m_service));
-    auto timestamp = m_service->m_eventHandler->GetTestEnvironment().
-      GetTimeEnvironment().GetTime();
+    auto timestamp = m_service->m_eventHandler->GetTime();
     for(auto& value : data) {
       timestamp = std::max(timestamp,
         Beam::Queries::GetTimestamp(value.GetValue()));
@@ -209,7 +207,9 @@ namespace Nexus {
 
   template<typename IndexType, typename MarketDataTypeType>
   void MarketDataEvent<IndexType, MarketDataTypeType>::Execute() {
-    m_service->m_eventHandler->GetTestEnvironment().Update(m_index, m_value);
+
+    // TODO
+//    m_service->m_eventHandler->GetTestEnvironment().Update(m_index, m_value);
   }
 }
 
