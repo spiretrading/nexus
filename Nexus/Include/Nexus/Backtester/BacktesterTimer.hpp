@@ -98,7 +98,8 @@ namespace Nexus {
         Beam::Threading::Timer::Result::CANCELED);
       m_eventHandler->Add(m_cancelEvent);
     }
-    m_cancelEvent->Wait();
+    auto cancelEvent = m_cancelEvent;
+    cancelEvent->Wait();
   }
 
   inline void BacktesterTimer::Wait() {

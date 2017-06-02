@@ -119,10 +119,6 @@ void Nexus::Python::ExportBacktesterEventHandler() {
     .def("add", static_cast<void (BacktesterEventHandler::*)(
       std::shared_ptr<BacktesterEvent>)>(&BacktesterEventHandler::Add))
     .def("add", &BacktesterEventHandlerAddEvents)
-    .add_property("test_environment", make_function(
-      static_cast<TestEnvironment& (BacktesterEventHandler::*)()>(
-      &BacktesterEventHandler::GetTestEnvironment),
-      return_internal_reference<>()))
     .def("open", BlockingFunction(&BacktesterEventHandler::Open))
     .def("close", BlockingFunction(&BacktesterEventHandler::Close));
 }

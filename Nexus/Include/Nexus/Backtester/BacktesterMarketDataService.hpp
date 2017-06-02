@@ -15,6 +15,7 @@
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
+#include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 
 namespace Nexus {
 
@@ -28,13 +29,16 @@ namespace Nexus {
       /*!
         \param eventHandler The BacktesterEventHandler to push historical
                market data events to.
+        \param marketDataEnvironment The object to publish market data updates
+               to.
         \param marketDataClient The MarketDataClient used to retrieve
                historicalMarketData.
       */
       BacktesterMarketDataService(
-        Beam::RefType<BacktesterEventHandler> eventHandler,
-        Beam::RefType<MarketDataService::VirtualMarketDataClient>
-        marketDataClient);
+        Beam::RefType<BacktesterEventHandler> eventHandler, Beam::RefType<
+        MarketDataService::Tests::MarketDataServiceTestEnvironment>
+        marketDataEnvironment, Beam::RefType<
+        MarketDataService::VirtualMarketDataClient> marketDataClient);
 
       //! Submits a query for BboQuotes.
       /*!
@@ -48,6 +52,8 @@ namespace Nexus {
       template<typename> friend class MarketDataLoadEvent;
       template<typename> friend class MarketDataQueryEvent;
       BacktesterEventHandler* m_eventHandler;
+      MarketDataService::Tests::MarketDataServiceTestEnvironment*
+        m_marketDataEnvironment;
       MarketDataService::VirtualMarketDataClient* m_marketDataClient;
       std::unordered_set<std::tuple<boost::variant<Security, MarketCode>,
         MarketDataService::MarketDataType>> m_queries;
@@ -111,10 +117,12 @@ namespace Nexus {
   };
 
   inline BacktesterMarketDataService::BacktesterMarketDataService(
-      Beam::RefType<BacktesterEventHandler> eventHandler,
-      Beam::RefType<MarketDataService::VirtualMarketDataClient>
-      marketDataClient)
+      Beam::RefType<BacktesterEventHandler> eventHandler, Beam::RefType<
+      MarketDataService::Tests::MarketDataServiceTestEnvironment>
+      marketDataEnvironment, Beam::RefType<
+      MarketDataService::VirtualMarketDataClient> marketDataClient)
       : m_eventHandler{eventHandler.Get()},
+        m_marketDataEnvironment{marketDataEnvironment.Get()},
         m_marketDataClient{marketDataClient.Get()} {}
 
   inline void BacktesterMarketDataService::QueryBboQuotes(
@@ -207,9 +215,7 @@ namespace Nexus {
 
   template<typename IndexType, typename MarketDataTypeType>
   void MarketDataEvent<IndexType, MarketDataTypeType>::Execute() {
-
-    // TODO
-//    m_service->m_eventHandler->GetTestEnvironment().Update(m_index, m_value);
+    m_service->m_marketDataEnvironment->SetBbo(m_index, m_value);
   }
 }
 

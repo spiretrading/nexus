@@ -11,6 +11,7 @@
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/TimeServiceTests/TestTimeClient.hpp>
 #include <Beam/TimeServiceTests/TimeServiceTestEnvironment.hpp>
+#include <Beam/TimeServiceTests/TestTimer.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/range/iterator_range.hpp>

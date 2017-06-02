@@ -108,27 +108,22 @@ namespace Nexus {
   inline BacktesterServiceClients::BacktesterServiceClients(
       Beam::RefType<BacktesterEnvironment> environment)
       : m_environment{environment.Get()},
-        m_serviceLocatorClient{m_environment->GetEventHandler().
-          GetTestEnvironment().GetServiceLocatorEnvironment().BuildClient()},
-        m_definitionsClient{m_environment->GetEventHandler().
-          GetTestEnvironment().GetDefinitionsEnvironment().BuildClient(
+        m_serviceLocatorClient{
+          m_environment->GetServiceLocatorEnvironment().BuildClient()},
+        m_definitionsClient{
+          m_environment->GetDefinitionsEnvironment().BuildClient(
           Beam::Ref(*m_serviceLocatorClient))},
-        m_administrationClient{m_environment->GetEventHandler().
-          GetTestEnvironment().GetAdministrationEnvironment().BuildClient(
+        m_administrationClient{
+          m_environment->GetAdministrationEnvironment().BuildClient(
           Beam::Ref(*m_serviceLocatorClient))},
         m_marketDataClient{MarketDataService::MakeVirtualMarketDataClient(
           std::make_unique<BacktesterMarketDataClient>(
           Beam::Ref(m_environment->GetMarketDataService()),
-          m_environment->GetEventHandler().GetTestEnvironment().
-          GetMarketDataEnvironment().BuildClient(Beam::Ref(
+          m_environment->GetMarketDataEnvironment().BuildClient(Beam::Ref(
           *m_serviceLocatorClient))))},
-        m_orderExecutionClient{m_environment->GetEventHandler().
-          GetTestEnvironment().GetOrderExecutionEnvironment().BuildClient(
-          Beam::Ref(*m_serviceLocatorClient))},
-        m_timeClient{Beam::TimeService::MakeVirtualTimeClient(
-          std::make_unique<Beam::TimeService::Tests::TestTimeClient>(Beam::Ref(
-          m_environment->GetEventHandler().GetTestEnvironment().
-          GetTimeEnvironment())))} {}
+        m_orderExecutionClient{
+          m_environment->GetOrderExecutionEnvironment().BuildClient(
+          Beam::Ref(*m_serviceLocatorClient))} {}
 
   inline BacktesterServiceClients::~BacktesterServiceClients() {
     Close();
@@ -202,7 +197,7 @@ namespace Nexus {
       m_administrationClient->Open();
       m_marketDataClient->Open();
       m_orderExecutionClient->Open();
-      m_timeClient->Open();
+// TODO      m_timeClient->Open();
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
       Shutdown();
@@ -218,7 +213,7 @@ namespace Nexus {
   }
 
   inline void BacktesterServiceClients::Shutdown() {
-    m_timeClient->Close();
+//    m_timeClient->Close();
     m_orderExecutionClient->Close();
     m_marketDataClient->Close();
     m_administrationClient->Close();

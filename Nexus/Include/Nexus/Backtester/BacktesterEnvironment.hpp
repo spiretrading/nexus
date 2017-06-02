@@ -2,9 +2,16 @@
 #define NEXUS_BACKTESTERENVIRONMENT_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
+#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
+#include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
+#include <boost/optional/optional.hpp>
+#include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterEventHandler.hpp"
 #include "Nexus/Backtester/BacktesterMarketDataService.hpp"
+#include "Nexus/DefinitionsServiceTests/DefinitionsServiceTestEnvironment.hpp"
+#include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
+#include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 
 namespace Nexus {
@@ -43,6 +50,29 @@ namespace Nexus {
       //! Returns the BacktesterEventHandler.
       BacktesterEventHandler& GetEventHandler();
 
+      //! Returns the ServiceLocatorTestEnvironment.
+      Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment&
+        GetServiceLocatorEnvironment();
+
+      //! Returns the UidServiceTestEnvironment.
+      Beam::UidService::Tests::UidServiceTestEnvironment& GetUidEnvironment();
+
+      //! Returns the DefinitionsServiceTestEnvironment.
+      DefinitionsService::Tests::DefinitionsServiceTestEnvironment&
+        GetDefinitionsEnvironment();
+
+      //! Returns the AdministrationServiceTestEnvironment.
+      AdministrationService::Tests::AdministrationServiceTestEnvironment&
+        GetAdministrationEnvironment();
+
+      //! Returns the MarketDataServiceTestEnvironment.
+      MarketDataService::Tests::MarketDataServiceTestEnvironment&
+        GetMarketDataEnvironment();
+
+      //! Returns the OrderExecutionServiceTestEnvironment.
+      OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment&
+        GetOrderExecutionEnvironment();
+
       //! Returns the BacktesterMarketDataService.
       BacktesterMarketDataService& GetMarketDataService();
 
@@ -56,7 +86,24 @@ namespace Nexus {
     private:
       VirtualServiceClients* m_serviceClients;
       BacktesterEventHandler m_eventHandler;
-      BacktesterMarketDataService m_marketDataService;
+      Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment
+        m_serviceLocatorEnvironment;
+      std::unique_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
+        m_serviceLocatorClient;
+      Beam::UidService::Tests::UidServiceTestEnvironment m_uidEnvironment;
+      boost::optional<
+        DefinitionsService::Tests::DefinitionsServiceTestEnvironment>
+        m_definitionsEnvironment;
+      boost::optional<
+        AdministrationService::Tests::AdministrationServiceTestEnvironment>
+        m_administrationEnvironment;
+      boost::optional<
+        MarketDataService::Tests::MarketDataServiceTestEnvironment>
+        m_marketDataEnvironment;
+      boost::optional<
+        OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment>
+        m_orderExecutionEnvironment;
+      boost::optional<BacktesterMarketDataService> m_marketDataService;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
@@ -72,9 +119,7 @@ namespace Nexus {
       boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
       Beam::RefType<VirtualServiceClients> serviceClients)
       : m_serviceClients{serviceClients.Get()},
-        m_eventHandler{startTime, endTime},
-        m_marketDataService{Beam::Ref(m_eventHandler),
-          Beam::Ref(m_serviceClients->GetMarketDataClient())} {}
+        m_eventHandler{startTime, endTime} {}
 
   inline BacktesterEnvironment::~BacktesterEnvironment() {
     Close();
@@ -89,14 +134,44 @@ namespace Nexus {
     return m_eventHandler;
   }
 
+  inline Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment&
+      BacktesterEnvironment::GetServiceLocatorEnvironment() {
+    return m_serviceLocatorEnvironment;
+  }
+
+  inline Beam::UidService::Tests::UidServiceTestEnvironment&
+      BacktesterEnvironment::GetUidEnvironment() {
+    return m_uidEnvironment;
+  }
+
+  inline DefinitionsService::Tests::DefinitionsServiceTestEnvironment&
+      BacktesterEnvironment::GetDefinitionsEnvironment() {
+    return *m_definitionsEnvironment;
+  }
+
+  inline AdministrationService::Tests::AdministrationServiceTestEnvironment&
+      BacktesterEnvironment::GetAdministrationEnvironment() {
+    return *m_administrationEnvironment;
+  }
+
+  inline MarketDataService::Tests::MarketDataServiceTestEnvironment&
+      BacktesterEnvironment::GetMarketDataEnvironment() {
+    return *m_marketDataEnvironment;
+  }
+
+  inline OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment&
+      BacktesterEnvironment::GetOrderExecutionEnvironment() {
+    return *m_orderExecutionEnvironment;
+  }
+
   inline BacktesterMarketDataService&
       BacktesterEnvironment::GetMarketDataService() {
-    return m_marketDataService;
+    return *m_marketDataService;
   }
 
   inline const BacktesterMarketDataService&
       BacktesterEnvironment::GetMarketDataService() const {
-    return m_marketDataService;
+    return *m_marketDataService;
   }
 
   inline void BacktesterEnvironment::Open() {
@@ -106,6 +181,53 @@ namespace Nexus {
     try {
       m_serviceClients->Open();
       m_eventHandler.Open();
+      m_serviceLocatorEnvironment.Open();
+      m_serviceLocatorClient = m_serviceLocatorEnvironment.BuildClient();
+      m_serviceLocatorClient->SetCredentials("root", "");
+      m_serviceLocatorClient->Open();
+      m_uidEnvironment.Open();
+      auto definitionsServiceLocatorClient =
+        m_serviceLocatorEnvironment.BuildClient();
+      definitionsServiceLocatorClient->SetCredentials("root", "");
+      definitionsServiceLocatorClient->Open();
+      m_definitionsEnvironment.emplace(
+        std::move(definitionsServiceLocatorClient));
+      m_definitionsEnvironment->Open();
+      auto administrationServiceLocatorClient =
+        m_serviceLocatorEnvironment.BuildClient();
+      administrationServiceLocatorClient->SetCredentials("root", "");
+      administrationServiceLocatorClient->Open();
+      m_administrationEnvironment.emplace(
+        std::move(administrationServiceLocatorClient));
+      m_administrationEnvironment->Open();
+      auto marketDataServiceLocatorClient =
+        m_serviceLocatorEnvironment.BuildClient();
+      marketDataServiceLocatorClient->SetCredentials("root", "");
+      marketDataServiceLocatorClient->Open();
+      auto marketDataAdministrationClient =
+        m_administrationEnvironment->BuildClient(
+        Beam::Ref(*marketDataServiceLocatorClient));
+      m_marketDataEnvironment.emplace(
+        std::move(marketDataServiceLocatorClient),
+        std::move(marketDataAdministrationClient));
+      m_marketDataEnvironment->Open();
+      auto orderExecutionServiceLocatorClient =
+        m_serviceLocatorEnvironment.BuildClient();
+      orderExecutionServiceLocatorClient->SetCredentials("root", "");
+      orderExecutionServiceLocatorClient->Open();
+      auto uidClient = m_uidEnvironment.BuildClient();
+      uidClient->Open();
+      auto administrationClient = m_administrationEnvironment->BuildClient(
+        Beam::Ref(*m_serviceLocatorClient));
+      administrationClient->Open();
+      m_orderExecutionEnvironment.emplace(GetDefaultMarketDatabase(),
+        GetDefaultDestinationDatabase(),
+        std::move(orderExecutionServiceLocatorClient), std::move(uidClient),
+        std::move(administrationClient));
+      m_orderExecutionEnvironment->Open();
+      m_marketDataService.emplace(Beam::Ref(m_eventHandler),
+        Beam::Ref(*m_marketDataEnvironment),
+        Beam::Ref(m_serviceClients->GetMarketDataClient()));
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
       Shutdown();
@@ -121,6 +243,13 @@ namespace Nexus {
   }
 
   inline void BacktesterEnvironment::Shutdown() {
+    m_orderExecutionEnvironment.reset();
+    m_marketDataEnvironment.reset();
+    m_administrationEnvironment.reset();
+    m_definitionsEnvironment.reset();
+    m_uidEnvironment.Close();
+    m_serviceLocatorClient.reset();
+    m_serviceLocatorEnvironment.Close();
     m_eventHandler.Close();
     m_openState.SetClosed();
   }
