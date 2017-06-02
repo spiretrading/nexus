@@ -9,6 +9,7 @@
 #include <Beam/Threading/ConditionVariable.hpp>
 #include <Beam/Threading/LockRelease.hpp>
 #include <Beam/Threading/Mutex.hpp>
+#include <Beam/TimeServiceTests/TestTimeClient.hpp>
 #include <Beam/TimeServiceTests/TimeServiceTestEnvironment.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/noncopyable.hpp>
@@ -45,6 +46,9 @@ namespace Nexus {
 
       //! Returns the end time.
       boost::posix_time::ptime GetEndTime() const;
+
+      //! Returns the current time.
+      boost::posix_time::ptime GetTime() const;
 
       //! Adds an event to be handled.
       /*!
@@ -97,6 +101,10 @@ namespace Nexus {
 
   inline boost::posix_time::ptime BacktesterEventHandler::GetEndTime() const {
     return m_endTime;
+  }
+
+  inline boost::posix_time::ptime BacktesterEventHandler::GetTime() const {
+    return m_timeEnvironment.GetTime();
   }
 
   inline void BacktesterEventHandler::Add(
