@@ -78,6 +78,7 @@ void Nexus::Python::ExportBookQuote() {
     .def(self != self);
   ExportFixedString<4>();
   ExportSequencedValue<BookQuote>("SequencedBookQuote");
+  def("book_quote_listing_comparator", &BookQuoteListingComparator);
 }
 
 void Nexus::Python::ExportCountry() {

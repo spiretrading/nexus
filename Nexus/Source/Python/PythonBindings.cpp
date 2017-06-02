@@ -2,6 +2,7 @@
 #include <Beam/Python/BoostPython.hpp>
 #include "Nexus/Python/Accounting.hpp"
 #include "Nexus/Python/AdministrationService.hpp"
+#include "Nexus/Python/Backtester.hpp"
 #include "Nexus/Python/Definitions.hpp"
 #include "Nexus/Python/DefinitionsService.hpp"
 #include "Nexus/Python/FeeHandling.hpp"
@@ -37,4 +38,5 @@ BOOST_PYTHON_MODULE(nexus) {
   ExportQueries();
   ExportRiskService();
   ExportServiceClients();
+  ExportBacktester();
 }

@@ -5,6 +5,7 @@
 #include <Beam/Queues/ConverterWriterQueue.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/Threading/Mutex.hpp>
+#include <Beam/TimeServiceTests/TestTimeClient.hpp>
 #include <Beam/TimeServiceTests/TimeServiceTestEnvironment.hpp>
 #include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
@@ -226,7 +227,11 @@ namespace Nexus {
       conversionQueue = Beam::MakeConverterWriterQueue<
       OrderExecutionService::PrimitiveOrder*>(Beam::MakeWeakQueue(queue),
       Beam::StaticCastConverter<const OrderExecutionService::Order*>());
-    GetOrderExecutionEnvironment().GetDriver().GetPublisher().Monitor(
+    auto& driver = static_cast<
+      OrderExecutionService::WrapperOrderExecutionDriver<
+      OrderExecutionService::Tests::MockOrderExecutionDriver>&>(
+      GetOrderExecutionEnvironment().GetDriver()).GetDriver();
+    driver.GetPublisher().Monitor(
       Beam::MakeAliasQueue(conversionQueue, queue));
   }
 

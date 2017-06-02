@@ -10,10 +10,6 @@ class Money {
     return this.value / MULTIPLIER;
   }
 
-  toString() {
-    return (this.value / MULTIPLIER).toString();
-  }
-
   equals(operand) {
     return this.value === operand.value;
   }

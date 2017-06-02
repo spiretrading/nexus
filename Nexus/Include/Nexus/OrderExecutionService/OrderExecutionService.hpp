@@ -44,8 +44,10 @@ namespace OrderExecutionService {
   template<typename AdministrationClientType> class RiskStateCheck;
   class VirtualOrderExecutionClient;
   class VirtualOrderExecutionDataStore;
+  class VirtualOrderExecutionDriver;
   template<typename ClientType> class WrapperOrderExecutionClient;
   template<typename DataStoreType> class WrapperOrderExecutionDataStore;
+  template<typename DriverType> class WrapperOrderExecutionDriver;
 
   // Standard name for the order execution service.
   static const std::string SERVICE_NAME = "order_execution_service";

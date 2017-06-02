@@ -7,7 +7,7 @@
 #include "Nexus/InternalMatcher/InternalMatchingOrderExecutionDriver.hpp"
 #include "Nexus/InternalMatcher/NullMatchReportBuilder.hpp"
 #include "Nexus/InternalMatcherTests/InternalMatcherTests.hpp"
-#include "Nexus/OrderExecutionServiceTests/MockOrderExecutionDriver.hpp"
+#include "Nexus/OrderExecutionService/VirtualOrderExecutionDriver.hpp"
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
 
@@ -28,7 +28,7 @@ namespace Tests {
         MarketDataService::VirtualMarketDataClient*,
         Beam::TimeService::VirtualTimeClient*,
         std::unique_ptr<Beam::UidService::VirtualUidClient>,
-        OrderExecutionService::Tests::MockOrderExecutionDriver*>;
+        OrderExecutionService::VirtualOrderExecutionDriver*>;
 
       virtual void setUp();
 

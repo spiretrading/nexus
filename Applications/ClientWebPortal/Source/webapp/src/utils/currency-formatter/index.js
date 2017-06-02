@@ -13,7 +13,7 @@ class CurrencyFormatter {
       sign = '';
     }
 
-    return sign + ' ' + number;
+    return sign + number;
   }
 
   formatByCode(code, amount) {

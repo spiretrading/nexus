@@ -26,8 +26,8 @@ namespace Details {
     template<typename T>
     static std::unique_ptr<Beam::Queries::BaseEvaluatorNode> Template(
         std::unique_ptr<Beam::Queries::BaseEvaluatorNode> baseExpression) {
-      auto expression = Beam::UniqueStaticCast<Beam::Queries::EvaluatorNode<T>>(
-        std::move(baseExpression));
+      auto expression = Beam::UniqueStaticCast<
+        Beam::Queries::EvaluatorNode<T>>(std::move(baseExpression));
       return Beam::Queries::MakeConstructEvaluatorNode<
         T, Queries::QueryVariant>(std::move(expression));
     }
@@ -71,7 +71,8 @@ namespace Details {
     private:
       template<typename MarketDataType>
       struct QueryEntry {
-        using Query = MarketDataService::GetMarketDataQueryType<MarketDataType>;
+        using Query = MarketDataService::GetMarketDataQueryType<
+          MarketDataType>;
         Beam::Queries::IndexedExpressionSubscriptions<
           typename MarketDataType::Value, Queries::QueryVariant,
           typename Query::Index, ServiceProtocolClient> m_queries;
@@ -143,8 +144,8 @@ namespace Details {
   }
 
   template<typename ContainerType, typename MarketDataClientType>
-  void ChartingServlet<ContainerType, MarketDataClientType>::HandleClientClosed(
-      ServiceProtocolClient& client) {
+  void ChartingServlet<ContainerType, MarketDataClientType>::
+      HandleClientClosed(ServiceProtocolClient& client) {
     m_timeAndSaleQueries.m_queries.RemoveAll(client);
   }
 
@@ -179,9 +180,9 @@ namespace Details {
 
   template<typename ContainerType, typename MarketDataClientType>
   void ChartingServlet<ContainerType, MarketDataClientType>::
-      OnQuerySecurityRequest(
-      Beam::Services::RequestToken<ServiceProtocolClient, QuerySecurityService>&
-      request, const SecurityChartingQuery& query, int clientQueryId) {
+      OnQuerySecurityRequest(Beam::Services::RequestToken<
+      ServiceProtocolClient, QuerySecurityService>& request,
+      const SecurityChartingQuery& query, int clientQueryId) {
     auto& session = request.GetSession();
     if(query.GetMarketDataType() ==
         MarketDataService::MarketDataType::TIME_AND_SALE) {
@@ -193,8 +194,8 @@ namespace Details {
   }
 
   template<typename ContainerType, typename MarketDataClientType>
-  void ChartingServlet<ContainerType, MarketDataClientType>::OnEndSecurityQuery(
-      ServiceProtocolClient& client, int id) {
+  void ChartingServlet<ContainerType, MarketDataClientType>::
+      OnEndSecurityQuery(ServiceProtocolClient& client, int id) {
     auto& session = client.GetSession();
     m_timeAndSaleQueries.m_queries.End(client, id);
   }
@@ -250,9 +251,9 @@ namespace Details {
   template<typename ContainerType, typename MarketDataClientType>
   template<typename MarketDataType>
   void ChartingServlet<ContainerType, MarketDataClientType>::HandleQuery(
-      Beam::Services::RequestToken<ServiceProtocolClient, QuerySecurityService>&
-      request, const SecurityChartingQuery& query, int clientQueryId,
-      QueryEntry<MarketDataType>& queryEntry) {
+      Beam::Services::RequestToken<ServiceProtocolClient,
+      QuerySecurityService>& request, const SecurityChartingQuery& query,
+      int clientQueryId, QueryEntry<MarketDataType>& queryEntry) {
     using Query = MarketDataService::GetMarketDataQueryType<MarketDataType>;
     if(query.GetRange().GetEnd() == Beam::Queries::Sequence::Last()) {
       queryEntry.m_realTimeSubscriptions.TestAndSet(query.GetIndex(),
@@ -260,9 +261,8 @@ namespace Details {
           Query realTimeQuery;
           realTimeQuery.SetIndex(query.GetIndex());
           realTimeQuery.SetRange(Beam::Queries::Range::RealTime());
-          MarketDataService::QueryMarketDataClient<MarketDataType>(
-            *m_marketDataClient, realTimeQuery,
-            m_taskQueue.GetSlot<MarketDataType>(std::bind(
+          MarketDataService::QueryMarketDataClient(*m_marketDataClient,
+            realTimeQuery, m_taskQueue.GetSlot<MarketDataType>(std::bind(
             &ChartingServlet::OnQueryUpdate<
             typename Query::Index, MarketDataType>, this, query.GetIndex(),
             std::placeholders::_1, std::ref(queryEntry))));

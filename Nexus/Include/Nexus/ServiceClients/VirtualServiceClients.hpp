@@ -3,6 +3,7 @@
 #include <Beam/RegistryService/VirtualRegistryClient.hpp>
 #include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
 #include <Beam/Threading/Mutex.hpp>
+#include <Beam/Threading/VirtualTimer.hpp>
 #include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <Beam/Utilities/BeamWorkaround.hpp>
 #include <Beam/Utilities/Remote.hpp>
@@ -188,6 +189,16 @@ namespace Nexus {
       std::forward<ServiceClients>(client));
   }
 
+  //! Wraps ServiceClients into a VirtualServiceClients.
+  /*!
+    \param initializer Initializes the client being wrapped.
+  */
+  template<typename ServiceClients, typename... Args>
+  std::unique_ptr<VirtualServiceClients> MakeVirtualServiceClients(
+      Beam::Initializer<Args...>&& initializer) {
+    return std::make_unique<WrapperServiceClients<ServiceClients>>(
+      std::move(initializer));
+  }
   template<typename ClientType>
   template<typename ServiceClientsForward>
   WrapperServiceClients<ClientType>::WrapperServiceClients(
