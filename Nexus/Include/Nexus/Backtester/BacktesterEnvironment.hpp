@@ -13,6 +13,7 @@
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include "Nexus/SimulationMatcher/SimulationOrderExecutionDriver.hpp"
 
 namespace Nexus {
 
@@ -86,6 +87,7 @@ namespace Nexus {
     private:
       VirtualServiceClients* m_serviceClients;
       BacktesterEventHandler m_eventHandler;
+      boost::optional<BacktesterMarketDataService> m_marketDataService;
       Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment
         m_serviceLocatorEnvironment;
       std::unique_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
@@ -103,7 +105,6 @@ namespace Nexus {
       boost::optional<
         OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment>
         m_orderExecutionEnvironment;
-      boost::optional<BacktesterMarketDataService> m_marketDataService;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
@@ -211,6 +212,9 @@ namespace Nexus {
         std::move(marketDataServiceLocatorClient),
         std::move(marketDataAdministrationClient));
       m_marketDataEnvironment->Open();
+      m_marketDataService.emplace(Beam::Ref(m_eventHandler),
+        Beam::Ref(*m_marketDataEnvironment),
+        Beam::Ref(m_serviceClients->GetMarketDataClient()));
       auto orderExecutionServiceLocatorClient =
         m_serviceLocatorEnvironment.BuildClient();
       orderExecutionServiceLocatorClient->SetCredentials("root", "");
@@ -220,14 +224,24 @@ namespace Nexus {
       auto administrationClient = m_administrationEnvironment->BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
       administrationClient->Open();
+      auto driverMarketDataClient =
+        MarketDataService::MakeVirtualMarketDataClient(
+        std::make_unique<BacktesterMarketDataClient>(
+        Beam::Ref(*m_marketDataService),
+        m_marketDataEnvironment->BuildClient(Beam::Ref(
+        *orderExecutionServiceLocatorClient))));
+      auto driverTimeClient = Beam::TimeService::MakeVirtualTimeClient<
+        BacktesterTimeClient>(Beam::Initialize(Beam::Ref(m_eventHandler)));
+      auto driver = OrderExecutionService::MakeVirtualOrderExecutionDriver(
+        std::make_unique<OrderExecutionService::SimulationOrderExecutionDriver<
+        std::unique_ptr<MarketDataService::VirtualMarketDataClient>,
+        std::unique_ptr<Beam::TimeService::VirtualTimeClient>>>(
+        std::move(driverMarketDataClient), std::move(driverTimeClient)));
       m_orderExecutionEnvironment.emplace(GetDefaultMarketDatabase(),
         GetDefaultDestinationDatabase(),
         std::move(orderExecutionServiceLocatorClient), std::move(uidClient),
-        std::move(administrationClient));
+        std::move(administrationClient), std::move(driver));
       m_orderExecutionEnvironment->Open();
-      m_marketDataService.emplace(Beam::Ref(m_eventHandler),
-        Beam::Ref(*m_marketDataEnvironment),
-        Beam::Ref(m_serviceClients->GetMarketDataClient()));
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
       Shutdown();
