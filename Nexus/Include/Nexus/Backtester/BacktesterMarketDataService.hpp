@@ -87,6 +87,7 @@ namespace Nexus {
 
       MarketDataLoadEvent(typename Query::Index index,
         Beam::Queries::Range::Point startPoint,
+        boost::posix_time::ptime timestamp,
         Beam::RefType<BacktesterMarketDataService> service);
 
       virtual void Execute() override;
@@ -150,15 +151,17 @@ namespace Nexus {
     }
     auto startTime = m_service->m_eventHandler->GetTime();
     auto event = std::make_shared<MarketDataLoadEvent<MarketDataType>>(
-      m_query.GetIndex(), startTime, Beam::Ref(*m_service));
+      m_query.GetIndex(), startTime, boost::posix_time::neg_infin,
+      Beam::Ref(*m_service));
     m_service->m_eventHandler->Add(std::move(event));
   }
 
   template<typename MarketDataTypeType>
   MarketDataLoadEvent<MarketDataTypeType>::MarketDataLoadEvent(
       typename Query::Index index, Beam::Queries::Range::Point startPoint,
+      boost::posix_time::ptime timestamp,
       Beam::RefType<BacktesterMarketDataService> service)
-      : BacktesterEvent{boost::posix_time::neg_infin},
+      : BacktesterEvent{timestamp},
         m_index{std::move(index)},
         m_startPoint{startPoint},
         m_service{service.Get()} {}
@@ -189,9 +192,6 @@ namespace Nexus {
       return;
     }
     std::vector<std::shared_ptr<BacktesterEvent>> events;
-    auto reloadEvent = std::make_shared<MarketDataLoadEvent>(m_index,
-      Beam::Queries::Increment(data.back().GetSequence()),
-      Beam::Ref(*m_service));
     auto timestamp = m_service->m_eventHandler->GetTime();
     for(auto& value : data) {
       timestamp = std::max(timestamp,
@@ -200,6 +200,9 @@ namespace Nexus {
         MarketDataEvent<typename Query::Index, MarketDataType>>(
         query.GetIndex(), std::move(value), timestamp, Beam::Ref(*m_service)));
     }
+    auto reloadEvent = std::make_shared<MarketDataLoadEvent>(m_index,
+      Beam::Queries::Increment(data.back().GetSequence()),
+      events.back()->GetTimestamp(), Beam::Ref(*m_service));
     events.push_back(std::move(reloadEvent));
     m_service->m_eventHandler->Add(std::move(events));
   }

@@ -19,6 +19,19 @@ using namespace Nexus::Python;
 using namespace std;
 
 namespace {
+  std::shared_ptr<BacktesterEnvironment> MakeBacktesterEnvironmentA(
+      const ptime& startTime, VirtualServiceClients& serviceClients) {
+    return std::make_shared<BacktesterEnvironment>(startTime,
+      Ref(serviceClients));
+  }
+
+  std::shared_ptr<BacktesterEnvironment> MakeBacktesterEnvironmentB(
+      const ptime& startTime, const ptime& endTime,
+      VirtualServiceClients& serviceClients) {
+    return std::make_shared<BacktesterEnvironment>(startTime, endTime,
+      Ref(serviceClients));
+  }
+
   std::shared_ptr<BacktesterEventHandler> MakeBacktesterEventHandlerA(
       const ptime& startTime) {
     return std::make_shared<BacktesterEventHandler>(startTime);
@@ -98,6 +111,8 @@ void Nexus::Python::ExportBacktester() {
 void Nexus::Python::ExportBacktesterEnvironment() {
   class_<BacktesterEnvironment, std::shared_ptr<BacktesterEnvironment>,
       boost::noncopyable>("BacktesterEnvironment", no_init)
+    .def("__init__", make_constructor(&MakeBacktesterEnvironmentA))
+    .def("__init__", make_constructor(&MakeBacktesterEnvironmentB))
     .add_property("event_handler", make_function(
       static_cast<BacktesterEventHandler& (BacktesterEnvironment::*)()>(
       &BacktesterEnvironment::GetEventHandler), return_internal_reference<>()))
