@@ -1,7 +1,6 @@
 #ifndef NEXUS_BACKTESTEREVENTHANDLER_HPP
 #define NEXUS_BACKTESTEREVENTHANDLER_HPP
 #include <deque>
-#include <unordered_set>
 #include <vector>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>

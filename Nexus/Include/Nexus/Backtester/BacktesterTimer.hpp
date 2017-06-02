@@ -18,10 +18,10 @@ namespace Nexus {
       //! Constructs a BacktesterTimer.
       /*!
         \param interval The time interval before expiring.
-        \param environment The TestEnvironment this Timer belongs to.
+        \param eventHandler The event handler to publish timer events to.
       */
       BacktesterTimer(boost::posix_time::time_duration interval,
-        Beam::RefType<BacktesterEventHandler> environment);
+        Beam::RefType<BacktesterEventHandler> eventHandler);
 
       ~BacktesterTimer();
 
@@ -38,7 +38,7 @@ namespace Nexus {
       friend class TimerBacktesterEvent;
       mutable std::shared_ptr<boost::mutex> m_mutex;
       boost::posix_time::time_duration m_interval;
-      BacktesterEventHandler* m_environment;
+      BacktesterEventHandler* m_eventHandler;
       std::shared_ptr<bool> m_isAlive;
       int m_iteration;
       std::shared_ptr<TimerBacktesterEvent> m_expireEvent;
@@ -74,10 +74,10 @@ namespace Nexus {
 
   inline BacktesterTimer::BacktesterTimer(
       boost::posix_time::time_duration interval,
-      Beam::RefType<BacktesterEventHandler> environment)
+      Beam::RefType<BacktesterEventHandler> eventHandler)
       : m_mutex{std::make_shared<boost::mutex>()},
         m_interval{interval},
-        m_environment{environment.Get()},
+        m_eventHandler{eventHandler.Get()},
         m_isAlive{std::make_shared<bool>(true)},
         m_iteration{0} {}
 
@@ -94,10 +94,10 @@ namespace Nexus {
         return;
       }
       m_expireEvent = std::make_shared<TimerBacktesterEvent>(*this,
-        m_environment->GetTestEnvironment().GetTimeEnvironment().GetTime() +
+        m_eventHandler->GetTestEnvironment().GetTimeEnvironment().GetTime() +
         m_interval, Beam::Threading::Timer::Result::EXPIRED);
     }
-    m_environment->Add(m_expireEvent);
+    m_eventHandler->Add(m_expireEvent);
   }
 
   inline void BacktesterTimer::Cancel() {
@@ -109,14 +109,14 @@ namespace Nexus {
         return;
       } else if(m_cancelEvent == nullptr) {
         m_cancelEvent = std::make_shared<TimerBacktesterEvent>(*this,
-          m_environment->GetTestEnvironment().GetTimeEnvironment().GetTime(),
+          m_eventHandler->GetTestEnvironment().GetTimeEnvironment().GetTime(),
           Beam::Threading::Timer::Result::CANCELED);
         addEvent = true;
       }
       cancelEvent = m_cancelEvent;
     }
     if(addEvent) {
-      m_environment->Add(cancelEvent);
+      m_eventHandler->Add(cancelEvent);
     }
     cancelEvent->Wait();
   }
