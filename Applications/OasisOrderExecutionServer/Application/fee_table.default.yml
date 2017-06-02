@@ -237,10 +237,10 @@ ca_equities:
 
 # The fees charged for U.S. equity markets.
 us_equities:
-  spire_fee: 0.0001
+  spire_fee: 0.0003
   sec_rate: 0.0000218
   taf_fee: 0.000119
-  nscc_rate: 0.00000015
+  nscc_rate: 0.0000015
   clearing_fee: 0.0001
 
   # AMEX fees based on https://www.nyse.com/markets/nyse-mkt/trading-fees
