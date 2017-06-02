@@ -383,7 +383,7 @@ namespace MarketDataService {
             Beam::Queries::SnapshotLimit::Type::TAIL, 1);
           auto initialValueQueue =
             std::make_shared<Beam::Queue<MarketDataType>>();
-          QueryMarketDataClient<MarketDataType>(*queryEntry.m_marketDataClient,
+          QueryMarketDataClient(*queryEntry.m_marketDataClient,
             initialValueQuery, initialValueQueue);
           std::vector<MarketDataType> initialValues;
           Beam::FlushQueue(initialValueQueue,
@@ -401,8 +401,7 @@ namespace MarketDataService {
             Beam::Queries::InterruptionPolicy::RECOVER_DATA);
           realTimeQuery.SetRange(initialSequence,
             Beam::Queries::Sequence::Last());
-          QueryMarketDataClient<MarketDataType>(
-            *queryEntry.m_marketDataClient, realTimeQuery,
+          QueryMarketDataClient(*queryEntry.m_marketDataClient, realTimeQuery,
             queryEntry.m_tasks.template GetSlot<MarketDataType>(
             std::bind(&MarketDataRelayServlet::OnRealTimeUpdate<
             typename Query::Index, MarketDataType, Subscriptions>, this,
@@ -413,7 +412,7 @@ namespace MarketDataService {
       auto snapshotQuery = query;
       snapshotQuery.SetRange(query.GetRange().GetStart(),
         Beam::Queries::Sequence::Present());
-      QueryMarketDataClient<MarketDataType>(*client, snapshotQuery, queue);
+      QueryMarketDataClient(*client, snapshotQuery, queue);
       Beam::FlushQueue(queue, std::back_inserter(result.m_snapshot));
       subscriptions.Commit(query.GetIndex(), std::move(result),
         [&] (const Result& result) {
@@ -422,7 +421,7 @@ namespace MarketDataService {
     } else {
       auto queue = std::make_shared<Beam::Queue<MarketDataType>>();
       auto client = m_marketDataClients.Acquire();
-      QueryMarketDataClient<MarketDataType>(*client, query, queue);
+      QueryMarketDataClient(*client, query, queue);
       Beam::FlushQueue(queue, std::back_inserter(result.m_snapshot));
       request.SetResult(result);
     }
