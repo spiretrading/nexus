@@ -201,14 +201,14 @@ namespace OrderExecutionService {
         if(order.GetInfo().m_fields.m_type == OrderType::MARKET) {
           auto price = Pick(side, bboQuote.m_bid.m_price,
             bboQuote.m_ask.m_price);
-          finalStatus = FillOrder(order, price);
+          finalStatus = this->FillOrder(order, price);
         } else {
           if(side == Side::BID && bboQuote.m_ask.m_price <=
               order.GetInfo().m_fields.m_price) {
-            finalStatus = FillOrder(order, bboQuote.m_ask.m_price);
+            finalStatus = this->FillOrder(order, bboQuote.m_ask.m_price);
           } else if(side == Side::ASK && bboQuote.m_bid.m_price >=
               order.GetInfo().m_fields.m_price) {
-            finalStatus = FillOrder(order, bboQuote.m_bid.m_price);
+            finalStatus = this->FillOrder(order, bboQuote.m_bid.m_price);
           }
         }
       });

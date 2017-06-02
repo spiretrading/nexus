@@ -3,6 +3,7 @@
 #include <Beam/RegistryService/VirtualRegistryClient.hpp>
 #include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
 #include <Beam/Threading/Mutex.hpp>
+#include <Beam/Threading/VirtualTimer.hpp>
 #include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <Beam/Utilities/BeamWorkaround.hpp>
 #include <Beam/Utilities/Remote.hpp>
