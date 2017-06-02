@@ -106,18 +106,19 @@ class View extends UpdatableView {
   /** @private */
   onResize() {
     let $container = $('#' + this.componentModel.componentId);
+    let $headerTable = $container.find('.header table');
     let $header = $container.find('.header');
-    let headerWidth = $header.outerWidth();
+    let headerTableWidth = $headerTable.outerWidth();
     let containerWidth = $container.outerWidth();
-    if (headerWidth < containerWidth) {
+    if (headerTableWidth < containerWidth) {
       this.isChartTooWide = false;
-      $header.removeClass('wide').addClass('wide');
-      $container.find('.fixed-column-header').css('opacity', '0');
+      $header.removeClass('wide').addClass('wide').css('width', '100%');
+      $container.find('.fixed-column-header').css('opacity', '0').css('width', '100%');
       $container.find('.fixed-column-body').css('opacity', '0');
     } else {
       this.isChartTooWide = true;
-      $header.removeClass('wide');
-      $container.find('.fixed-column-header').css('opacity', '1');
+      $header.removeClass('wide').css('width', headerTableWidth).css('overflow-x', 'hidden');
+      $container.find('.fixed-column-header').css('opacity', '1').width(headerTableWidth);
       $container.find('.fixed-column-body').css('opacity', '1');
     }
   }
@@ -128,11 +129,10 @@ class View extends UpdatableView {
         this.synchronizeColumnWidths.apply(this);
         this.columnsSyncCounter++;
       }
-
-      if (this.isChartTooWide) {
-        $('#' + this.componentModel.componentId + ' .fixed-column-header').css('opacity', '1');
-      }
     }
+
+    let headerTableWidth = $('#' + this.componentModel.componentId + ' .header table').width();
+    $('#' + this.componentModel.componentId + ' .body').css('width', headerTableWidth);
   }
 
   dispose() {
@@ -243,7 +243,6 @@ class View extends UpdatableView {
     let columns = [];
     let rows = [];
     let accountIds = [];
-    let fixedBodyRows = [];
 
     // render account column header
     let arrowIcon;
@@ -304,8 +303,7 @@ class View extends UpdatableView {
       }
     }
 
-    // TODO: temporarily disabling chart sorting on every update for performance reasons.
-    // this.sortData.apply(this);
+    this.sortData.apply(this);
 
     if (this.componentModel.data != null && this.componentModel.data[0] != null) {
       for (let i=0; i<this.componentModel.data.length; i++) {
@@ -313,7 +311,6 @@ class View extends UpdatableView {
         accountIds.push(rowData.account);
         let columns = [];
         for (let property in rowData) {
-
           // get the value
           let value;
           let rawAmount;
@@ -378,17 +375,8 @@ class View extends UpdatableView {
           </tr>
         );
       }
-
-      for (let i=0; i<accountIds.length; i++){
-        fixedBodyRows.push(
-          <tr key={i}>
-            <td className="body-cell">{accountIds[i].name}</td>
-          </tr>
-        );
-      }
     }
 
-    let fixedArrowIcon;
     let columnHeader = 'Account';
     if (this.componentModel.sortingColumn != null && this.componentModel.sortingColumn.name == columnHeader) {
       let arrowIconClass;
@@ -397,7 +385,6 @@ class View extends UpdatableView {
       } else if (this.componentModel.sortingColumn.direction == 'desc') {
         arrowIconClass = 'icon-arrow-icon-up';
       }
-      fixedArrowIcon = <span className={arrowIconClass}></span>;
     }
 
     return (
@@ -412,30 +399,6 @@ class View extends UpdatableView {
               </thead>
             </table>
           </div>
-
-          <div className="fixed-column">
-            <div className="fixed-column-header">
-              <table>
-                <tbody>
-                  <tr>
-                    <td className="no-select" onClick={this.onHeaderClick.bind(this)}>
-                      Account
-                      {fixedArrowIcon}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div className="fixed-column-body">
-              <table>
-                <tbody>
-                  {fixedBodyRows}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div className="header-filler"></div>
 
           <div className="body">
             <table>
