@@ -7,20 +7,14 @@
   font-size: 14px;
   display: flex;
   flex-direction: column;
-  overflow: scroll;
+  overflow-x: scroll;
 
   .header {
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    height: 61px;
+    height: 62px;
+    width: 100%;
     background: white;
-    z-index: 100;
-
-    &.wide {
-      left: 50%;
-      transform: translate(-50%, 0);
-    }
+    overflow-y: scroll;
+    overflow-x: visible;
 
     table {
       border-left: 1px solid $lightGrey;
@@ -51,73 +45,11 @@
     }
   }
 
-  .header-filler {
-    min-height: 61px;
-  }
-
-  .fixed-column {
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    background: white;
-    z-index: 200;
-
-    .fixed-column-header {
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 400;
-      border-top: 1px solid $lightGrey;
-      border-right: 1px solid $lightGrey;
-      border-left: 1px solid $lightGrey;
-      border-bottom: 1px solid $lightGrey;
-      opacity: 0;
-
-      td {
-        position: relative;
-        padding: 20px;
-        background: $white;
-        cursor: pointer;
-
-        &:hover {
-          background: $lighterGrey;
-        }
-
-        .icon-arrow-icon-down, .icon-arrow-icon-up {
-          position: absolute;
-          right: 7px;
-          top: 50%;
-          transform: translate(0, -50%);
-          font-size: 7px;
-        }
-      }
-    }
-
-    .fixed-column-body {
-      position: absolute;
-      top: 60px;
-      left: 0;
-      z-index: 300;
-      border-right: 1px solid $lightGrey;
-      border-left: 1px solid $lightGrey;
-
-      td {
-        padding: 10px 20px;
-      }
-
-      tr:nth-child(even) {
-        background-color: $lightestGrey;
-      }
-
-      tr:nth-child(odd) {
-        background-color: $white;
-      }
-    }
-  }
-
   .body {
     flex: 1;
-    width: 100%;
+    min-width: 100%;
+    overflow-y: scroll;
+    overflow-x: hidden;
 
     table {
       border-right: 1px solid $lightGrey;

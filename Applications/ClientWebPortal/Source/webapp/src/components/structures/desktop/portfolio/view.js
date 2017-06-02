@@ -31,7 +31,6 @@ class View extends UpdatableView {
       $('#portfolio-container .chart-inner-wrapper').css('width', '100%');
     }
 
-    // $chartOuterWrapper.removeClass('stretch').addClass('stretch');
     let $portfolioParametersWrapper = $container.find('.porfolio-parameters-wrapper');
     let chartOuterWrapperHeight = $container.height() - $portfolioParametersWrapper.height();
     $chartOuterWrapper.height(chartOuterWrapperHeight);
