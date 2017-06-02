@@ -11,6 +11,7 @@
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterEnvironment.hpp"
 #include "Nexus/Backtester/BacktesterMarketDataClient.hpp"
+#include "Nexus/Backtester/BacktesterTimeClient.hpp"
 #include "Nexus/Backtester/BacktesterTimer.hpp"
 #include "Nexus/ChartingService/VirtualChartingClient.hpp"
 #include "Nexus/Compliance/VirtualComplianceClient.hpp"
@@ -123,7 +124,10 @@ namespace Nexus {
           *m_serviceLocatorClient))))},
         m_orderExecutionClient{
           m_environment->GetOrderExecutionEnvironment().BuildClient(
-          Beam::Ref(*m_serviceLocatorClient))} {}
+          Beam::Ref(*m_serviceLocatorClient))},
+        m_timeClient{Beam::TimeService::MakeVirtualTimeClient<
+          BacktesterTimeClient>(Beam::Initialize(Beam::Ref(
+          m_environment->GetEventHandler())))} {}
 
   inline BacktesterServiceClients::~BacktesterServiceClients() {
     Close();
@@ -197,7 +201,7 @@ namespace Nexus {
       m_administrationClient->Open();
       m_marketDataClient->Open();
       m_orderExecutionClient->Open();
-// TODO      m_timeClient->Open();
+      m_timeClient->Open();
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
       Shutdown();
@@ -213,7 +217,7 @@ namespace Nexus {
   }
 
   inline void BacktesterServiceClients::Shutdown() {
-//    m_timeClient->Close();
+    m_timeClient->Close();
     m_orderExecutionClient->Close();
     m_marketDataClient->Close();
     m_administrationClient->Close();
