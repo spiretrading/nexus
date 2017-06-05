@@ -18,6 +18,19 @@
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 
 namespace Nexus {
+namespace Details {
+  void UpdateMarketData(
+      MarketDataService::Tests::MarketDataServiceTestEnvironment& environment,
+      const Security& security, const BboQuote& bboQuote) {
+    environment.SetBbo(security, bboQuote);
+  }
+
+  void UpdateMarketData(
+      MarketDataService::Tests::MarketDataServiceTestEnvironment& environment,
+      const Security& security, const TimeAndSale& timeAndSale) {
+    environment.Publish(security, timeAndSale);
+  }
+}
 
   /*! \class BacktesterMarketDataService
       \brief Provides historical market data to the backtester.
@@ -45,6 +58,13 @@ namespace Nexus {
         \param query The query to submit.
       */
       void QueryBboQuotes(
+        const MarketDataService::SecurityMarketDataQuery& query);
+
+      //! Submits a query for TimeAndSales.
+      /*!
+        \param query The query to submit.
+      */
+      void QueryTimeAndSales(
         const MarketDataService::SecurityMarketDataQuery& query);
 
     private:
@@ -129,6 +149,13 @@ namespace Nexus {
   inline void BacktesterMarketDataService::QueryBboQuotes(
       const MarketDataService::SecurityMarketDataQuery& query) {
     auto event = std::make_shared<MarketDataQueryEvent<BboQuote>>(query,
+      Beam::Ref(*this));
+    m_eventHandler->Add(event);
+  }
+
+  inline void BacktesterMarketDataService::QueryTimeAndSales(
+      const MarketDataService::SecurityMarketDataQuery& query) {
+    auto event = std::make_shared<MarketDataQueryEvent<TimeAndSale>>(query,
       Beam::Ref(*this));
     m_eventHandler->Add(event);
   }
@@ -218,7 +245,8 @@ namespace Nexus {
 
   template<typename IndexType, typename MarketDataTypeType>
   void MarketDataEvent<IndexType, MarketDataTypeType>::Execute() {
-    m_service->m_marketDataEnvironment->SetBbo(m_index, m_value);
+    Details::UpdateMarketData(*m_service->m_marketDataEnvironment, m_index,
+      m_value);
   }
 }
 

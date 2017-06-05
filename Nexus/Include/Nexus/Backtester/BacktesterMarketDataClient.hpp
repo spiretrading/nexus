@@ -147,11 +147,17 @@ namespace Nexus {
 
   inline void BacktesterMarketDataClient::QueryTimeAndSales(
       const MarketDataService::SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<SequencedTimeAndSale>>& queue) {}
+      const std::shared_ptr<Beam::QueueWriter<SequencedTimeAndSale>>& queue) {
+    m_service->QueryTimeAndSales(query);
+    m_marketDataClient->QueryTimeAndSales(query, queue);
+  }
 
   inline void BacktesterMarketDataClient::QueryTimeAndSales(
       const MarketDataService::SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<TimeAndSale>>& queue) {}
+      const std::shared_ptr<Beam::QueueWriter<TimeAndSale>>& queue) {
+    m_service->QueryTimeAndSales(query);
+    m_marketDataClient->QueryTimeAndSales(query, queue);
+  }
 
   inline MarketDataService::SecuritySnapshot
       BacktesterMarketDataClient::LoadSecuritySnapshot(

@@ -74,6 +74,13 @@ namespace Tests {
       */
       void SetBbo(const Security& security, const BboQuote& bbo);
 
+      //! Publishes a TimeAndSale.
+      /*!
+        \param security The Security publishing the TimeAndSale.
+        \param timeAndSale The TimeAndSale to publish.
+      */
+      void Publish(const Security& security, const TimeAndSale& timeAndSale);
+
       //! Builds a new MarketDataClient.
       /*!
         \param serviceLocatorClient The ServiceLocatorClient used to
@@ -193,9 +200,16 @@ namespace Tests {
     return m_registry;
   }
 
-  inline void MarketDataServiceTestEnvironment::SetBbo(const Security& security,
-      const BboQuote& bbo) {
-    m_registryServlet->PublishBboQuote(SecurityBboQuote(bbo, security), 0);
+  inline void MarketDataServiceTestEnvironment::SetBbo(
+      const Security& security, const BboQuote& bbo) {
+    m_registryServlet->PublishBboQuote(
+      SecurityBboQuote{bbo, security}, 0);
+  }
+
+  inline void MarketDataServiceTestEnvironment::Publish(
+      const Security& security, const TimeAndSale& timeAndSale) {
+    m_registryServlet->PublishTimeAndSale(
+      SecurityTimeAndSale{timeAndSale, security}, 0);
   }
 
   inline std::unique_ptr<VirtualMarketDataClient>
