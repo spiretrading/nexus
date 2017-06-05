@@ -49,7 +49,8 @@ ReactorMonitor& CanvasNodeTranslationContext::GetReactorMonitor() {
   return *m_reactorMonitor;
 }
 
-const DirectoryEntry& CanvasNodeTranslationContext::GetExecutingAccount() const {
+const DirectoryEntry& CanvasNodeTranslationContext::
+    GetExecutingAccount() const {
   return m_executingAccount;
 }
 

@@ -10,7 +10,8 @@ using namespace Nexus;
 using namespace Spire;
 using namespace std;
 
-OrderImbalanceIndicatorWindowSettings::OrderImbalanceIndicatorWindowSettings() {}
+OrderImbalanceIndicatorWindowSettings::
+    OrderImbalanceIndicatorWindowSettings() {}
 
 OrderImbalanceIndicatorWindowSettings::OrderImbalanceIndicatorWindowSettings(
     const OrderImbalanceIndicatorWindow& window,

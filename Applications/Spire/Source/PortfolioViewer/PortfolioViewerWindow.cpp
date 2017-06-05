@@ -105,8 +105,8 @@ PortfolioViewerWindow::~PortfolioViewerWindow() {}
 void PortfolioViewerWindow::SetProperties(
     const PortfolioViewerProperties& properties) {
   m_properties = properties;
-  m_selectionModel = std::make_unique<PortfolioSelectionModel>(Ref(*m_userProfile),
-    m_properties);
+  m_selectionModel = std::make_unique<PortfolioSelectionModel>(
+    Ref(*m_userProfile), m_properties);
   m_ui->m_selectionTreeView->setModel(m_selectionModel.get());
   m_viewerModel = std::make_unique<PortfolioViewerModel>(Ref(*m_userProfile),
     Ref(*m_selectionModel));
