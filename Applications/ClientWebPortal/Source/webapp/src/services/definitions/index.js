@@ -199,6 +199,8 @@ class DefService {
   }
 
   getMarketDatabase() {
+    console.debug('this.marketDatabase');
+    console.debug(this.marketDatabase);
     return this.marketDatabase;
   }
 }

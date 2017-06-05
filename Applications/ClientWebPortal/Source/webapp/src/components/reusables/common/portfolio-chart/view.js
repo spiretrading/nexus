@@ -176,6 +176,11 @@ class View extends UpdatableView {
   /** @private */
   sortData() {
     if (this.componentModel.sortingColumn != null) {
+      // for (let i=0; i<10; i++) {
+      //     let cloned = clone(this.componentModel.data[0]);
+      //     cloned.account.name = i + cloned.account.name;
+      //     this.componentModel.data.push(cloned);
+      // }
       this.componentModel.data.sort(getComparer.apply(this, [this.componentModel.sortingColumn]));
     }
 
@@ -202,7 +207,7 @@ class View extends UpdatableView {
           } else if (sortingColumn.direction === 'desc') {
             return b[propertyName].compare(a[propertyName]);
           }
-        } else if (constructorName == 'DirectoryEntry') {
+        } else if (sortingColumn.name === 'Account') {
           if (sortingColumn.direction === 'asc') {
             return a[propertyName].name.localeCompare(b[propertyName].name);
           } else if (sortingColumn.direction === 'desc') {
@@ -215,6 +220,12 @@ class View extends UpdatableView {
             return aSecurityLabel.localeCompare(bSecurityLabel);
           } else if (sortingColumn.direction === 'desc') {
             return bSecurityLabel.localeCompare(aSecurityLabel);
+          }
+        } else if (sortingColumn.name === 'Quantity' || sortingColumn.name === 'Cost Basis') {
+          if (sortingColumn.direction === 'asc') {
+            return Math.abs(a[propertyName]) - Math.abs(b[propertyName]);
+          } else if (sortingColumn.direction === 'desc') {
+            return Math.abs(b[propertyName]) - Math.abs(a[propertyName]);
           }
         } else if (!isNaN(a[propertyName])) {
           if (sortingColumn.direction === 'asc') {
@@ -240,6 +251,8 @@ class View extends UpdatableView {
   }
 
   render() {
+    this.sortData.apply(this);
+
     let columns = [];
     let rows = [];
     let accountIds = [];
@@ -263,6 +276,7 @@ class View extends UpdatableView {
     );
 
     // render security column header
+    arrowIcon = null;
     if (this.componentModel.sortingColumn != null && this.componentModel.sortingColumn.name == 'Security') {
       let arrowIconClass;
       if (this.componentModel.sortingColumn.direction == 'asc') {
@@ -302,8 +316,6 @@ class View extends UpdatableView {
         );
       }
     }
-
-    this.sortData.apply(this);
 
     if (this.componentModel.data != null && this.componentModel.data[0] != null) {
       for (let i=0; i<this.componentModel.data.length; i++) {
@@ -374,16 +386,6 @@ class View extends UpdatableView {
             {columns}
           </tr>
         );
-      }
-    }
-
-    let columnHeader = 'Account';
-    if (this.componentModel.sortingColumn != null && this.componentModel.sortingColumn.name == columnHeader) {
-      let arrowIconClass;
-      if (this.componentModel.sortingColumn.direction == 'asc') {
-        arrowIconClass = 'icon-arrow-icon-down';
-      } else if (this.componentModel.sortingColumn.direction == 'desc') {
-        arrowIconClass = 'icon-arrow-icon-up';
       }
     }
 
