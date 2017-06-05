@@ -15,23 +15,11 @@ class Controller {
     this.view = view;
   }
 
-  /** @private */
-  initializeColumns() {
-    this.componentModel.filter.columns = clone(columns);
-  }
-
   componentWillUpdate(model) {
     if (model != null) {
       if (!this.isInitialized) {
         this.isInitialized = true;
         overwriteMerge(this.componentModel, model);
-        this.componentModel.filter = {
-          columns: [],
-          currencies: [],
-          groups: [],
-          markets: []
-        };
-        this.initializeColumns();
       }
 
       this.view.setComponentModel(this.componentModel);

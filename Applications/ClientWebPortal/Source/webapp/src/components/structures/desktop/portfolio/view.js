@@ -3,6 +3,7 @@ import React from 'react';
 import UpdatableView from 'commons/updatable-view';
 import PortfolioFilters from 'components/reusables/common/portfolio-filters';
 import PortfolioChart from 'components/reusables/common/portfolio-chart';
+import columns from 'components/reusables/common/portfolio-chart/columns';
 import numberFormatter from 'utils/number-formatter';
 
 class View extends UpdatableView {
@@ -49,10 +50,15 @@ class View extends UpdatableView {
 
   render() {
     let parametersModel = {
-      groups: this.componentModel.managedGroups || [],
-      currencies: this.componentModel.currencies || [],
-      markets: this.componentModel.markets || [],
-      filter: {}
+      groups: [],
+      currencies: [],
+      markets: [],
+      filter: {
+        columns: clone(columns),
+        currencies: this.componentModel.currencies || [],
+        groups: this.componentModel.managedGroups || [],
+        markets: this.componentModel.markets || []
+      }
     };
 
     let onParametersSave = this.controller.saveParameters.bind(this.controller);
