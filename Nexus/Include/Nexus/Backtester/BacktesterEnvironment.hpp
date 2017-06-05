@@ -237,10 +237,13 @@ namespace Nexus {
         std::unique_ptr<MarketDataService::VirtualMarketDataClient>,
         std::unique_ptr<Beam::TimeService::VirtualTimeClient>>>(
         std::move(driverMarketDataClient), std::move(driverTimeClient)));
+      auto orderTimeClient = Beam::TimeService::MakeVirtualTimeClient<
+        BacktesterTimeClient>(Beam::Initialize(Beam::Ref(m_eventHandler)));
       m_orderExecutionEnvironment.emplace(GetDefaultMarketDatabase(),
         GetDefaultDestinationDatabase(),
         std::move(orderExecutionServiceLocatorClient), std::move(uidClient),
-        std::move(administrationClient), std::move(driver));
+        std::move(administrationClient), std::move(orderTimeClient),
+        std::move(driver));
       m_orderExecutionEnvironment->Open();
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
