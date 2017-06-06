@@ -4,10 +4,13 @@ import {
   CountryDatabase,
   CountryCode,
   CurrencyDatabase,
+  CurrencyPair,
   CurrencyId,
   MarketCode,
   MarketDatabase,
-  MarketDatabaseEntry
+  MarketDatabaseEntry,
+  ExchangeRate,
+  ExchangeRateTable
 } from 'spire-client';
 import HashMap from 'hashmap';
 
@@ -19,6 +22,7 @@ class DefService {
     this.countryDatabase = new CountryDatabase();
     this.currencyDatabase = new CurrencyDatabase();
     this.marketDatabase = new MarketDatabase();
+    this.exchangeRateTable = new ExchangeRateTable();
   }
 
   /** @private */
@@ -93,10 +97,32 @@ class DefService {
     }
   }
 
+  /** @private */
+  loadExchangeRates() {
+    return this.definitionsServiceClient.loadExchangeRates.apply(this.definitionsServiceClient).then(onResponse.bind(this));
+
+    function onResponse(exchangeRates) {
+      for (let i=0; i<exchangeRates.length; i++) {
+        let baseCurrencyId = CurrencyId.fromNumber(exchangeRates[i].pair.base);
+        let baseCurrencyDatabaseEntry = this.currencyDatabase.fromId.apply(this.currencyDatabase, [baseCurrencyId]);
+        let counterCurrencyId = CurrencyId.fromNumber(exchangeRates[i].pair.counter);
+        let counterCurrencyDatabaseEntry = this.currencyDatabase.fromId.apply(this.currencyDatabase, [counterCurrencyId]);
+        let pairCurrencyCode = baseCurrencyDatabaseEntry.code + '/' + counterCurrencyDatabaseEntry.code;
+        let currencyPair = CurrencyPair.parse(pairCurrencyCode, this.currencyDatabase);
+        let rateFraction = exchangeRates[i].rate.numerator + '/' + exchangeRates[i].rate.denominator;
+        let exchangeRate = new ExchangeRate(currencyPair, rateFraction);
+        this.exchangeRateTable.add.apply(this.exchangeRateTable, [exchangeRate]);
+      }
+    }
+  }
+
   initialize() {
+    let loadCurrenciesAndExchangeRates = this.loadCurrencies.apply(this)
+      .then(this.loadExchangeRates.apply(this));
+
     return Promise.all([
       this.loadCountries.apply(this),
-      this.loadCurrencies.apply(this),
+      loadCurrenciesAndExchangeRates,
       this.loadEntitlements.apply(this),
       this.loadComplianceRuleSchemas.apply(this),
       this.loadMarkets(this)
@@ -199,9 +225,11 @@ class DefService {
   }
 
   getMarketDatabase() {
-    console.debug('this.marketDatabase');
-    console.debug(this.marketDatabase);
     return this.marketDatabase;
+  }
+
+  getExchangeRateTable() {
+    return this.exchangeRateTable;
   }
 }
 

@@ -25,13 +25,13 @@ CurrencyPair.parse = (symbol, currencyDatabase) => {
   let baseCode = symbol.substring(0, slashIndex);
   let counterCode = symbol.substring(slashIndex + 1);
 
-  let baseCurrency = currencyDatabase.fromCode(baseCode);
+  let baseCurrency = currencyDatabase.fromCode.apply(currencyDatabase, [baseCode]);
   if (baseCurrency == null) {
     throw new Error('Invalid base currency code');
   }
   let baseCurrencyId = new CurrencyId(baseCurrency.id.toNumber());
 
-  let counterCurrency = currencyDatabase.fromCode(counterCode);
+  let counterCurrency = currencyDatabase.fromCode.apply(currencyDatabase, [counterCode]);
   if (counterCurrency == null) {
     throw new Error('Invalid counter currency code');
   }

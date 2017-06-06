@@ -2,13 +2,7 @@ import {
   AdministrationClient,
   DirectoryEntry,
   RiskServiceClient,
-  ExchangeRate,
-  ExchangeRateTable,
-  Money,
-  CurrencyId,
-  CurrencyPair,
-  CurrencyDatabaseEntry,
-  CurrencyDatabase
+  Money
 } from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
@@ -20,26 +14,7 @@ class Controller {
     this.componentModel = clone(componentModel);
     this.adminClient = new AdministrationClient();
     this.riskServiceClient = new RiskServiceClient();
-    this.exchangeRateTable = new ExchangeRateTable();
-
-    // TODO: temporary hardcoded exchange rates
-    let usdEntry = new CurrencyDatabaseEntry(new CurrencyId(840), 'USD', '$');
-    let cadEntry = new CurrencyDatabaseEntry(new CurrencyId(124), 'CAD', '$');
-    let audEntry = new CurrencyDatabaseEntry(new CurrencyId(36), 'AUD', '$');
-    let currencyDatabase = new CurrencyDatabase();
-    currencyDatabase.add(usdEntry);
-    currencyDatabase.add(cadEntry);
-    currencyDatabase.add(audEntry);
-
-    let usdCadPair = CurrencyPair.parse('USD/CAD', currencyDatabase);
-    let usdCadRate = new ExchangeRate(usdCadPair, 1.36944);
-    this.exchangeRateTable.add.apply(this.exchangeRateTable, [usdCadRate]);
-
-    let audCadPair = CurrencyPair.parse('AUD/CAD', currencyDatabase);
-    let audCadRate = new ExchangeRate(audCadPair, 1.00838);
-    this.exchangeRateTable.add.apply(this.exchangeRateTable, [audCadRate]);
-    // TODO: end of temporary code
-
+    this.exchangeRateTable = definitionsService.getExchangeRateTable.apply(definitionsService);
     this.portfolioData = new HashMap();
   }
 

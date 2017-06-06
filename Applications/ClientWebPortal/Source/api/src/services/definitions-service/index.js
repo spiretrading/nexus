@@ -72,6 +72,13 @@ class DefinitionsService {
     return httpConnectionManager.send(apiPath, null, true)
       .catch(this.logErrorAndThrow);
   }
+
+  loadExchangeRates() {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'definitions_service/load_exchange_rates';
+
+    return httpConnectionManager.send(apiPath, null, true)
+      .catch(this.logErrorAndThrow);
+  }
 }
 
 export default DefinitionsService;
