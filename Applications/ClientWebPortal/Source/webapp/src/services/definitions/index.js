@@ -217,6 +217,8 @@ class DefService {
   }
 
   getMarket(marketCode) {
+    console.debug('getMarket is entered, checking if marketDatabase exists');
+    console.debug(this.marketDatabase);
     return this.marketDatabase.fromMarketCode.apply(this.marketDatabase, [marketCode]);
   }
 
