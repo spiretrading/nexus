@@ -142,7 +142,7 @@ namespace Queries {
     } else if(expression.GetName() == "market") {
       SetEvaluator(Beam::Queries::MakeFunctionEvaluatorNode(
         [] (Security security) {
-          return security.GetMarket();
+          return static_cast<std::string>(security.GetMarket().GetData());
         }, std::move(securityExpression)));
     } else if(expression.GetName() == "country") {
       SetEvaluator(Beam::Queries::MakeFunctionEvaluatorNode(

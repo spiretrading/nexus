@@ -212,7 +212,8 @@ namespace OrderExecutionService {
       [&] (auto status, auto& reports) {
         auto side = order.GetInfo().m_fields.m_side;
         finalStatus = status;
-        if(status == OrderStatus::PENDING_NEW || IsTerminal(status)) {
+        if(status == OrderStatus::PENDING_NEW || IsTerminal(status) ||
+            m_bboQuote.m_bid.m_price == Money::ZERO) {
           return;
         }
         if(order.GetInfo().m_fields.m_timeInForce.GetType() ==
