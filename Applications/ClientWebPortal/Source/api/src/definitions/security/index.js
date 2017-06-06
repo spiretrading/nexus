@@ -30,6 +30,8 @@ class Security {
       return this.symbol;
     }
     let marketCode = this.market.toCode.apply(this.market);
+    console.debug('marketDataBase in Security toString:');
+    console.debug(marketDatabase);
     let market = marketDatabase.fromMarketCode.apply(marketDatabase, [marketCode]);
     if (market == null || market.marketCode == '') {
       return this.symbol + '.' + marketCode;
