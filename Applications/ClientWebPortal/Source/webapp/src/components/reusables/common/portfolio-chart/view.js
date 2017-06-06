@@ -198,6 +198,7 @@ class View extends UpdatableView {
         }
         let constructorName = a[propertyName].constructor.name;
 
+        console.debug(sortingColumn.name);
         if (constructorName == 'CurrencyId') {
           let currencyA = definitionsService.getCurrencyCode(a[propertyName].value);
           let currencyB = definitionsService.getCurrencyCode(b[propertyName].value);
@@ -218,7 +219,7 @@ class View extends UpdatableView {
           } else if (sortingColumn.direction === 'desc') {
             return b[propertyName].name.localeCompare(a[propertyName].name);
           }
-        } else if (constructorName == 'Security') {
+        } else if (sortingColumn.name == 'Security') {
           let aSecurityLabel = this.getSecurityLabel.apply(this, [a[propertyName]]);
           let bSecurityLabel = this.getSecurityLabel.apply(this, [b[propertyName]]);
           if (sortingColumn.direction === 'asc') {
@@ -232,7 +233,7 @@ class View extends UpdatableView {
           } else if (sortingColumn.direction === 'desc') {
             return Math.abs(b[propertyName]) - Math.abs(a[propertyName]);
           }
-        } else if (!isNaN(a[propertyName])) {
+        } else if (typeof(a[propertyName]) != 'object' && !isNaN(a[propertyName])) {
           if (sortingColumn.direction === 'asc') {
             return a[propertyName] - b[propertyName];
           } else if (sortingColumn.direction === 'desc') {
