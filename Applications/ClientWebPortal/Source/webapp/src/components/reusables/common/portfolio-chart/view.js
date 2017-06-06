@@ -189,6 +189,16 @@ class View extends UpdatableView {
 
       return function(a, b) {
         if (a == null || a[propertyName] == null || b == null || b[propertyName] == null) {
+          if (sortingColumn.name === 'Average Price' ||
+              sortingColumn.name === 'Total P/L' ||
+              sortingColumn.name === 'Unrealized P/L' ||
+              sortingColumn.name === 'Cost Basis') {
+            if (a != null && a[propertyName] == null && b != null && b[propertyName] != null) {
+              return -1;
+            } else if (a != null && a[propertyName] != null && b != null && b[propertyName] == null) {
+              return 1;
+            }
+          }
           return 0;
         }
         let constructorName = a[propertyName].constructor.name;
