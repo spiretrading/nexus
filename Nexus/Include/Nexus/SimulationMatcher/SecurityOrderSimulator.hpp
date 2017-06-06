@@ -4,9 +4,10 @@
 #include <boost/noncopyable.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
-#include <Beam/Queues/StateQueue.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
+#include "Nexus/Definitions/TimeAndSale.hpp"
+#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
@@ -64,13 +65,18 @@ namespace OrderExecutionService {
 
     private:
       TimeClient* m_timeClient;
+      boost::gregorian::date m_date;
+      boost::posix_time::ptime m_marketCloseTime;
+      bool m_isMocPending;
       std::unordered_set<std::shared_ptr<PrimitiveOrder>> m_orders;
-      std::shared_ptr<Beam::StateQueue<BboQuote>> m_bboQuoteQueue;
+      BboQuote m_bboQuote;
       Beam::RoutineTaskQueue m_tasks;
 
+      void SetSessionTimestamps(boost::posix_time::ptime timestamp);
       OrderStatus FillOrder(PrimitiveOrder& order, Money price);
       OrderStatus UpdateOrder(PrimitiveOrder& order);
       void OnBbo(const BboQuote& bboQuote);
+      void OnTimeAndSale(const TimeAndSale& timeAndSale);
   };
 
   template<typename TimeClientType>
@@ -78,13 +84,16 @@ namespace OrderExecutionService {
   SecurityOrderSimulator<TimeClientType>::SecurityOrderSimulator(
       MarketDataClient& marketDataClient, const Security& security,
       Beam::RefType<TimeClient> timeClient)
-      : m_timeClient{timeClient.Get()},
-        m_bboQuoteQueue{std::make_shared<Beam::StateQueue<BboQuote>>()} {
-    auto bboQuery = MarketDataService::BuildRealTimeWithSnapshotQuery(
+      : m_timeClient{timeClient.Get()} {
+    SetSessionTimestamps(m_timeClient->GetTime());
+    auto realTimeQuery = MarketDataService::BuildRealTimeWithSnapshotQuery(
       security);
-    marketDataClient.QueryBboQuotes(bboQuery, m_bboQuoteQueue);
-    marketDataClient.QueryBboQuotes(bboQuery, m_tasks.GetSlot<BboQuote>(
+    marketDataClient.QueryBboQuotes(realTimeQuery, m_tasks.GetSlot<BboQuote>(
       std::bind(&SecurityOrderSimulator::OnBbo, this, std::placeholders::_1)));
+    marketDataClient.QueryTimeAndSales(realTimeQuery,
+      m_tasks.GetSlot<TimeAndSale>(
+      std::bind(&SecurityOrderSimulator::OnTimeAndSale, this,
+      std::placeholders::_1)));
   }
 
   template<typename TimeClientType>
@@ -157,6 +166,19 @@ namespace OrderExecutionService {
   }
 
   template<typename TimeClientType>
+  void SecurityOrderSimulator<TimeClientType>::SetSessionTimestamps(
+      boost::posix_time::ptime timestamp) {
+    m_date = timestamp.date();
+    auto easternTimestamp = Beam::TimeService::AdjustDateTime(timestamp, "UTC",
+      "Eastern_Time", GetDefaultTimeZoneDatabase());
+    m_marketCloseTime = Beam::TimeService::AdjustDateTime(
+      boost::posix_time::ptime{easternTimestamp.date(),
+      boost::posix_time::hours(16)}, "Eastern_Time", "UTC",
+      GetDefaultTimeZoneDatabase());
+    m_isMocPending = timestamp < m_marketCloseTime;
+  }
+
+  template<typename TimeClientType>
   OrderStatus SecurityOrderSimulator<TimeClientType>::FillOrder(
       PrimitiveOrder& order, Money price) {
     const auto BOARD_LOT = 100;
@@ -186,12 +208,12 @@ namespace OrderExecutionService {
   OrderStatus SecurityOrderSimulator<TimeClientType>::UpdateOrder(
       PrimitiveOrder& order) {
     OrderStatus finalStatus;
-    auto bboQuote = m_bboQuoteQueue->Top();
     order.With(
       [&] (auto status, auto& reports) {
         auto side = order.GetInfo().m_fields.m_side;
         finalStatus = status;
-        if(status == OrderStatus::PENDING_NEW || IsTerminal(status)) {
+        if(status == OrderStatus::PENDING_NEW || IsTerminal(status) ||
+            m_bboQuote.m_bid.m_price == Money::ZERO) {
           return;
         }
         if(order.GetInfo().m_fields.m_timeInForce.GetType() ==
@@ -199,16 +221,16 @@ namespace OrderExecutionService {
           return;
         }
         if(order.GetInfo().m_fields.m_type == OrderType::MARKET) {
-          auto price = Pick(side, bboQuote.m_bid.m_price,
-            bboQuote.m_ask.m_price);
+          auto price = Pick(side, m_bboQuote.m_bid.m_price,
+            m_bboQuote.m_ask.m_price);
           finalStatus = this->FillOrder(order, price);
         } else {
-          if(side == Side::BID && bboQuote.m_ask.m_price <=
+          if(side == Side::BID && m_bboQuote.m_ask.m_price <=
               order.GetInfo().m_fields.m_price) {
-            finalStatus = this->FillOrder(order, bboQuote.m_ask.m_price);
-          } else if(side == Side::ASK && bboQuote.m_bid.m_price >=
+            finalStatus = this->FillOrder(order, m_bboQuote.m_ask.m_price);
+          } else if(side == Side::ASK && m_bboQuote.m_bid.m_price >=
               order.GetInfo().m_fields.m_price) {
-            finalStatus = this->FillOrder(order, bboQuote.m_bid.m_price);
+            finalStatus = this->FillOrder(order, m_bboQuote.m_bid.m_price);
           }
         }
       });
@@ -218,6 +240,10 @@ namespace OrderExecutionService {
   template<typename TimeClientType>
   void SecurityOrderSimulator<TimeClientType>::OnBbo(
       const BboQuote& bboQuote) {
+    if(bboQuote.m_timestamp.date() != m_date) {
+      SetSessionTimestamps(bboQuote.m_timestamp);
+    }
+    m_bboQuote = bboQuote;
     auto i = m_orders.begin();
     while(i != m_orders.end()) {
       auto status = UpdateOrder(**i);
@@ -225,6 +251,30 @@ namespace OrderExecutionService {
         i = m_orders.erase(i);
       } else {
         ++i;
+      }
+    }
+  }
+
+  template<typename TimeClientType>
+  void SecurityOrderSimulator<TimeClientType>::OnTimeAndSale(
+      const TimeAndSale& timeAndSale) {
+    if(timeAndSale.m_timestamp.date() != m_date) {
+      SetSessionTimestamps(timeAndSale.m_timestamp);
+    }
+    if(m_isMocPending && timeAndSale.m_timestamp >= m_marketCloseTime &&
+        timeAndSale.m_marketCenter == "TSE") {
+      m_isMocPending = false;
+      auto closingPrice = timeAndSale.m_price;
+      auto i = m_orders.begin();
+      while(i != m_orders.end()) {
+        auto& order = **i;
+        if(order.GetInfo().m_fields.m_timeInForce.GetType() ==
+            TimeInForce::Type::MOC) {
+          FillOrder(order, closingPrice);
+          i = m_orders.erase(i);
+        } else {
+          ++i;
+        }
       }
     }
   }
