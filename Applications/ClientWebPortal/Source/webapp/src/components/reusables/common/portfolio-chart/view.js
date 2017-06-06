@@ -176,11 +176,6 @@ class View extends UpdatableView {
   /** @private */
   sortData() {
     if (this.componentModel.sortingColumn != null) {
-      // for (let i=0; i<10; i++) {
-      //     let cloned = clone(this.componentModel.data[0]);
-      //     cloned.account.name = i + cloned.account.name;
-      //     this.componentModel.data.push(cloned);
-      // }
       this.componentModel.data.sort(getComparer.apply(this, [this.componentModel.sortingColumn]));
     }
 
@@ -256,7 +251,11 @@ class View extends UpdatableView {
 
   /** @private */
   getSecurityLabel(security) {
+    console.debug('definitions service: ');
+    console.debug(definitionsService);
     let marketDatabase = definitionsService.getMarketDatabase.apply(definitionsService);
+    console.debug('marketDatabase: ');
+    console.debug(marketDatabase);
     return security.toString.apply(security, [marketDatabase]);
   }
 
