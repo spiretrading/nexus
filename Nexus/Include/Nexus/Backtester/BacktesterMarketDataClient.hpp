@@ -108,11 +108,17 @@ namespace Nexus {
   inline void BacktesterMarketDataClient::QueryOrderImbalances(
       const MarketDataService::MarketWideDataQuery& query,
       const std::shared_ptr<
-      Beam::QueueWriter<SequencedOrderImbalance>>& queue) {}
+      Beam::QueueWriter<SequencedOrderImbalance>>& queue) {
+    m_service->QueryOrderImbalances(query);
+    m_marketDataClient->QueryOrderImbalances(query, queue);
+  }
 
   inline void BacktesterMarketDataClient::QueryOrderImbalances(
       const MarketDataService::MarketWideDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<OrderImbalance>>& queue) {}
+      const std::shared_ptr<Beam::QueueWriter<OrderImbalance>>& queue) {
+    m_service->QueryOrderImbalances(query);
+    m_marketDataClient->QueryOrderImbalances(query, queue);
+  }
 
   inline void BacktesterMarketDataClient::QueryBboQuotes(
       const MarketDataService::SecurityMarketDataQuery& query,
@@ -130,20 +136,32 @@ namespace Nexus {
 
   inline void BacktesterMarketDataClient::QueryBookQuotes(
       const MarketDataService::SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<SequencedBookQuote>>& queue) {}
+      const std::shared_ptr<Beam::QueueWriter<SequencedBookQuote>>& queue) {
+    m_service->QueryBookQuotes(query);
+    m_marketDataClient->QueryBookQuotes(query, queue);
+  }
 
   inline void BacktesterMarketDataClient::QueryBookQuotes(
       const MarketDataService::SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<BookQuote>>& queue) {}
+      const std::shared_ptr<Beam::QueueWriter<BookQuote>>& queue) {
+    m_service->QueryBookQuotes(query);
+    m_marketDataClient->QueryBookQuotes(query, queue);
+  }
 
   inline void BacktesterMarketDataClient::QueryMarketQuotes(
       const MarketDataService::SecurityMarketDataQuery& query,
       const std::shared_ptr<
-      Beam::QueueWriter<SequencedMarketQuote>>& queue) {}
+      Beam::QueueWriter<SequencedMarketQuote>>& queue) {
+    m_service->QueryMarketQuotes(query);
+    m_marketDataClient->QueryMarketQuotes(query, queue);
+  }
 
   inline void BacktesterMarketDataClient::QueryMarketQuotes(
       const MarketDataService::SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<MarketQuote>>& queue) {}
+      const std::shared_ptr<Beam::QueueWriter<MarketQuote>>& queue) {
+    m_service->QueryMarketQuotes(query);
+    m_marketDataClient->QueryMarketQuotes(query, queue);
+  }
 
   inline void BacktesterMarketDataClient::QueryTimeAndSales(
       const MarketDataService::SecurityMarketDataQuery& query,

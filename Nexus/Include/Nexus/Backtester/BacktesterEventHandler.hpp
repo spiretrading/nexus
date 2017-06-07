@@ -193,6 +193,7 @@ namespace Nexus {
     m_eventAvailableCondition.notify_one();
     m_eventLoopRoutine.Wait();
     m_timeEnvironment.Close();
+    Beam::Routines::FlushPendingRoutines();
     m_openState.SetClosed();
   }
 }

@@ -12,6 +12,7 @@
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterEventHandler.hpp"
 #include "Nexus/MarketDataService/MarketDataClientUtilities.hpp"
+#include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
@@ -40,11 +41,32 @@ namespace Nexus {
         marketDataEnvironment, Beam::RefType<
         MarketDataService::VirtualMarketDataClient> marketDataClient);
 
+      //! Submits a query for OrderImbalances.
+      /*!
+        \param query The query to submit.
+      */
+      void QueryOrderImbalances(
+        const MarketDataService::MarketWideDataQuery& query);
+
       //! Submits a query for BboQuotes.
       /*!
         \param query The query to submit.
       */
       void QueryBboQuotes(
+        const MarketDataService::SecurityMarketDataQuery& query);
+
+      //! Submits a query for BookQuotes.
+      /*!
+        \param query The query to submit.
+      */
+      void QueryBookQuotes(
+        const MarketDataService::SecurityMarketDataQuery& query);
+
+      //! Submits a query for MarketQuotes.
+      /*!
+        \param query The query to submit.
+      */
+      void QueryMarketQuotes(
         const MarketDataService::SecurityMarketDataQuery& query);
 
       //! Submits a query for TimeAndSales.
@@ -133,9 +155,30 @@ namespace Nexus {
         m_marketDataEnvironment{marketDataEnvironment.Get()},
         m_marketDataClient{marketDataClient.Get()} {}
 
+  inline void BacktesterMarketDataService::QueryOrderImbalances(
+      const MarketDataService::MarketWideDataQuery& query) {
+    auto event = std::make_shared<MarketDataQueryEvent<OrderImbalance>>(query,
+      Beam::Ref(*this));
+    m_eventHandler->Add(event);
+  }
+
   inline void BacktesterMarketDataService::QueryBboQuotes(
       const MarketDataService::SecurityMarketDataQuery& query) {
     auto event = std::make_shared<MarketDataQueryEvent<BboQuote>>(query,
+      Beam::Ref(*this));
+    m_eventHandler->Add(event);
+  }
+
+  inline void BacktesterMarketDataService::QueryBookQuotes(
+      const MarketDataService::SecurityMarketDataQuery& query) {
+    auto event = std::make_shared<MarketDataQueryEvent<BookQuote>>(query,
+      Beam::Ref(*this));
+    m_eventHandler->Add(event);
+  }
+
+  inline void BacktesterMarketDataService::QueryMarketQuotes(
+      const MarketDataService::SecurityMarketDataQuery& query) {
+    auto event = std::make_shared<MarketDataQueryEvent<MarketQuote>>(query,
       Beam::Ref(*this));
     m_eventHandler->Add(event);
   }
