@@ -18,19 +18,6 @@
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 
 namespace Nexus {
-namespace Details {
-  void UpdateMarketData(
-      MarketDataService::Tests::MarketDataServiceTestEnvironment& environment,
-      const Security& security, const BboQuote& bboQuote) {
-    environment.SetBbo(security, bboQuote);
-  }
-
-  void UpdateMarketData(
-      MarketDataService::Tests::MarketDataServiceTestEnvironment& environment,
-      const Security& security, const TimeAndSale& timeAndSale) {
-    environment.Publish(security, timeAndSale);
-  }
-}
 
   /*! \class BacktesterMarketDataService
       \brief Provides historical market data to the backtester.
@@ -245,8 +232,7 @@ namespace Details {
 
   template<typename IndexType, typename MarketDataTypeType>
   void MarketDataEvent<IndexType, MarketDataTypeType>::Execute() {
-    Details::UpdateMarketData(*m_service->m_marketDataEnvironment, m_index,
-      m_value);
+    m_service->m_marketDataEnvironment->Publish(m_index, m_value);
   }
 }
 

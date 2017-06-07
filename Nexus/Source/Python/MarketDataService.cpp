@@ -169,7 +169,23 @@ void Nexus::Python::ExportMarketDataServiceTestEnvironment() {
     .def("__init__", make_constructor(BuildMarketDataServiceTestEnvironment))
     .def("open", BlockingFunction(&MarketDataServiceTestEnvironment::Open))
     .def("close", BlockingFunction(&MarketDataServiceTestEnvironment::Close))
-    .def("set_bbo", BlockingFunction(&MarketDataServiceTestEnvironment::SetBbo))
+    .def("publish", BlockingFunction(
+      static_cast<void (MarketDataServiceTestEnvironment::*)(
+      MarketCode, const OrderImbalance&)>(
+      &MarketDataServiceTestEnvironment::Publish)))
+    .def("publish", BlockingFunction(
+      static_cast<void (MarketDataServiceTestEnvironment::*)(
+      const Security&, const BboQuote&)>(
+      &MarketDataServiceTestEnvironment::Publish)))
+    .def("publish", BlockingFunction(
+      static_cast<void (MarketDataServiceTestEnvironment::*)(const Security&,
+      const BookQuote&)>(&MarketDataServiceTestEnvironment::Publish)))
+    .def("publish", BlockingFunction(
+      static_cast<void (MarketDataServiceTestEnvironment::*)(const Security&,
+      const MarketQuote&)>(&MarketDataServiceTestEnvironment::Publish)))
+    .def("publish", BlockingFunction(
+      static_cast<void (MarketDataServiceTestEnvironment::*)(const Security&,
+      const TimeAndSale&)>(&MarketDataServiceTestEnvironment::Publish)))
     .def("build_client", &MarketDataServiceTestEnvironmentBuildClient,
       return_value_policy<manage_new_object>());
 }
