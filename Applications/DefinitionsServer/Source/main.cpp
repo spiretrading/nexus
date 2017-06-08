@@ -21,6 +21,7 @@
 #include "Nexus/Compliance/OpposingOrderCancellationComplianceRule.hpp"
 #include "Nexus/Compliance/OpposingOrderSubmissionComplianceRule.hpp"
 #include "Nexus/Compliance/OrderCountPerSideComplianceRule.hpp"
+#include "Nexus/Compliance/SubmissionRestrictionPeriodComplianceRule.hpp"
 #include "Nexus/Compliance/SymbolRestrictionComplianceRule.hpp"
 #include "Nexus/DefinitionsService/DefinitionsServlet.hpp"
 
@@ -138,6 +139,8 @@ int main(int argc, const char** argv) {
   complianceRuleSchemas.push_back(
     BuildOpposingOrderSubmissionComplianceRuleSchema());
   complianceRuleSchemas.push_back(BuildOrderCountPerSideComplianceRuleSchema());
+  complianceRuleSchemas.push_back(
+    BuildSubmissionRestrictionPeriodComplianceRuleSchema());
   complianceRuleSchemas.push_back(BuildSymbolRestrictionComplianceRuleSchema());
   optional<DefinitionsServletContainer> definitionsServer;
   try {

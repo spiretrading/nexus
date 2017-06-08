@@ -14,6 +14,7 @@
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Threading/TriggerTimer.hpp>
 #include <Beam/TimeService/IncrementalTimeClient.hpp>
+#include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
@@ -65,6 +66,7 @@ namespace Tests {
         \param serviceLocatorClient The ServiceLocatorClient to use.
         \param uidClient The UidClient to use.
         \param administrationClient The AdministrationClient to use.
+        \param timeClient The TimeClient to use.
         \param driver The OrderExecutionDriver to use.
       */
       OrderExecutionServiceTestEnvironment(
@@ -76,6 +78,7 @@ namespace Tests {
         std::shared_ptr<
         Nexus::AdministrationService::VirtualAdministrationClient>
         administrationClient,
+        std::unique_ptr<Beam::TimeService::VirtualTimeClient> timeClient,
         std::unique_ptr<VirtualOrderExecutionDriver> driver);
 
       ~OrderExecutionServiceTestEnvironment();
@@ -111,7 +114,8 @@ namespace Tests {
       using ServiceProtocolServletContainer =
         Beam::Services::ServiceProtocolServletContainer<
         Beam::ServiceLocator::MetaAuthenticationServletAdapter<
-        MetaOrderExecutionServlet<Beam::TimeService::IncrementalTimeClient,
+        MetaOrderExecutionServlet<
+        std::unique_ptr<Beam::TimeService::VirtualTimeClient>,
         std::shared_ptr<ServiceLocatorClient>, std::shared_ptr<UidClient>,
         std::shared_ptr<AdministrationClient>, VirtualOrderExecutionDriver*,
         LocalOrderExecutionDataStore*>, std::shared_ptr<ServiceLocatorClient>>,
@@ -141,7 +145,8 @@ namespace Tests {
       AdministrationService::VirtualAdministrationClient> administrationClient)
       : OrderExecutionServiceTestEnvironment{marketDatabase,
           destinationDatabase, serviceLocatorClient, uidClient,
-          administrationClient,
+          administrationClient, Beam::TimeService::MakeVirtualTimeClient<
+          Beam::TimeService::IncrementalTimeClient>(Beam::Initialize()),
           MakeVirtualOrderExecutionDriver<MockOrderExecutionDriver>(
           Beam::Initialize())} {}
 
@@ -153,11 +158,12 @@ namespace Tests {
       serviceLocatorClient, std::shared_ptr<Beam::UidService::VirtualUidClient>
       uidClient, std::shared_ptr<
       AdministrationService::VirtualAdministrationClient> administrationClient,
+      std::unique_ptr<Beam::TimeService::VirtualTimeClient> timeClient,
       std::unique_ptr<VirtualOrderExecutionDriver> driver)
       : m_driver{std::move(driver)},
         m_container{Beam::Initialize(serviceLocatorClient,
           Beam::Initialize(boost::posix_time::pos_infin, marketDatabase,
-          destinationDatabase, Beam::Initialize(), serviceLocatorClient,
+          destinationDatabase, std::move(timeClient), serviceLocatorClient,
           std::move(uidClient), std::move(administrationClient), &*m_driver,
           &m_dataStore)), &m_serverConnection,
           boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()} {}

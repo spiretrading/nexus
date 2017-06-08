@@ -96,8 +96,8 @@ namespace OrderExecutionService {
   }
 
   inline std::ostream& operator <<(std::ostream& out, const OrderInfo& value) {
-    return out << "(" << value.m_fields << " " << value.m_submissionAccount << " " <<
-      value.m_orderId << " " << value.m_shortingFlag << " " <<
+    return out << "(" << value.m_fields << " " << value.m_submissionAccount <<
+      " " << value.m_orderId << " " << value.m_shortingFlag << " " <<
       value.m_timestamp << ")";
   }
 

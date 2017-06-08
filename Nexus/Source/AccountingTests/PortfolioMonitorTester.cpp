@@ -36,7 +36,7 @@ void PortfolioMonitorTester::tearDown() {
 
 void PortfolioMonitorTester::TestOutOfOrderExecutionReports() {
   Security security{"TST", DefaultMarkets::NYSE(), DefaultCountries::US()};
-  m_environment->Update(security, BboQuote{
+  m_environment->Publish(security, BboQuote{
     Quote{Money::ONE, 100, Side::BID}, Quote{Money::ONE, 100, Side::ASK},
     not_a_date_time});
   SequencePublisher<const Order*> orderPublisher;

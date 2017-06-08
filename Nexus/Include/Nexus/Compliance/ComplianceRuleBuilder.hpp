@@ -8,6 +8,7 @@
 #include "Nexus/Compliance/OpposingOrderSubmissionComplianceRule.hpp"
 #include "Nexus/Compliance/OrderCountPerSideComplianceRule.hpp"
 #include "Nexus/Compliance/PerAccountComplianceRule.hpp"
+#include "Nexus/Compliance/SubmissionRestrictionPeriodComplianceRule.hpp"
 #include "Nexus/Compliance/SymbolRestrictionComplianceRule.hpp"
 
 namespace Nexus {
@@ -23,26 +24,30 @@ namespace Compliance {
   inline std::unique_ptr<ComplianceRule> BuildComplianceRule(
       const ComplianceRuleSchema& schema, MarketDataClient& marketDataClient,
       DefinitionsClient& definitionsClient, TimeClient& timeClient) {
-    if(schema.GetName() == "cancel_restriction_period") {
-      return std::make_unique<
-        CancelRestrictionPeriodComplianceRule<TimeClient*>>(
-        schema.GetParameters(), &timeClient);
-    } else if(schema.GetName() == "symbol_restriction") {
-      return std::make_unique<SymbolRestrictionComplianceRule>(
-        schema.GetParameters());
-    } else if(schema.GetName() == "buying_power") {
+    if(schema.GetName() == "buying_power") {
       return std::make_unique<BuyingPowerComplianceRule<MarketDataClient*>>(
         schema.GetParameters(), definitionsClient.LoadExchangeRates(),
         &marketDataClient);
-    } else if(schema.GetName() == "orders_per_side_limit") {
-      return std::make_unique<OrderCountPerSideComplianceRule>(
-        schema.GetParameters());
+    } else if(schema.GetName() == "cancel_restriction_period") {
+      return std::make_unique<
+        CancelRestrictionPeriodComplianceRule<TimeClient*>>(
+        schema.GetParameters(), &timeClient);
     } else if(schema.GetName() == "opposing_order_cancellation") {
       return MakeOpposingOrderCancellationComplianceRule(schema.GetParameters(),
         &timeClient);
     } else if(schema.GetName() == "opposing_order_submission") {
       return MakeOpposingOrderSubmissionComplianceRule(schema.GetParameters(),
         &timeClient);
+    } else if(schema.GetName() == "orders_per_side_limit") {
+      return std::make_unique<OrderCountPerSideComplianceRule>(
+        schema.GetParameters());
+    } else if(schema.GetName() == "submission_restriction_period") {
+      return std::make_unique<
+        SubmissionRestrictionPeriodComplianceRule<TimeClient*>>(
+        schema.GetParameters(), &timeClient);
+    } else if(schema.GetName() == "symbol_restriction") {
+      return std::make_unique<SymbolRestrictionComplianceRule>(
+        schema.GetParameters());
     } else if(schema.GetName() == PerAccountComplianceRule::GetName()) {
       std::string name;
       std::vector<ComplianceParameter> parameters;

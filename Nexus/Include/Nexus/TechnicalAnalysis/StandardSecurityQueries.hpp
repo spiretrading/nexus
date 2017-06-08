@@ -45,6 +45,8 @@ namespace TechnicalAnalysis {
         marketCenter = "CDX";
       } else if(security.GetMarket() == DefaultMarkets::ASX()) {
         marketCenter = "ASX";
+      } else if(!security.GetMarket().IsEmpty()) {
+        marketCenter = security.GetMarket().GetData();
       }
     }
     auto marketStartOfDay = MarketDateToUtc(security.GetMarket(), date,
@@ -154,12 +156,14 @@ namespace TechnicalAnalysis {
       const boost::local_time::tz_database& timeZoneDatabase,
       std::string marketCenter) {
     if(marketCenter.empty()) {
-      if(security.GetMarket() == DefaultMarkets::TSX()) {
+      if(security.GetMarket() == DefaultMarkets::ASX()) {
+        marketCenter = "ASX";
+      } else if(security.GetMarket() == DefaultMarkets::TSX()) {
         marketCenter = "TSE";
       } else if(security.GetMarket() == DefaultMarkets::TSXV()) {
         marketCenter = "CDX";
-      } else if(security.GetMarket() == DefaultMarkets::ASX()) {
-        marketCenter = "ASX";
+      } else if(!security.GetMarket().IsEmpty()) {
+        marketCenter = security.GetMarket().GetData();
       }
     }
     auto marketStartOfDay = MarketDateToUtc(security.GetMarket(), date,

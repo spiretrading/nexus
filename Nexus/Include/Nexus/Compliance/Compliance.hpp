@@ -38,6 +38,8 @@ namespace Compliance {
   class RejectCancelsComplianceRule;
   class RejectSubmissionsComplianceRule;
   class SecurityFilterComplianceRule;
+  template<typename TimeClientType>
+    class SubmissionRestrictionPeriodComplianceRule;
   template<typename TimeClientType> class TimeFilterComplianceRule;
   class VirtualComplianceClient;
 

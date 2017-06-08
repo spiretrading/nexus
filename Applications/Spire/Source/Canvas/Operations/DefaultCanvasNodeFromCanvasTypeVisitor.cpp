@@ -98,7 +98,8 @@ void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(const MoneyType& type) {
   m_node = make_unique<MoneyNode>();
 }
 
-void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(const OrderStatusType& type) {
+void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(
+    const OrderStatusType& type) {
   m_node = make_unique<OrderStatusNode>();
 }
 

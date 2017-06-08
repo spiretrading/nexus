@@ -190,7 +190,7 @@ void InternalMatchingOrderExecutionDriverTester::
 void InternalMatchingOrderExecutionDriverTester::SetBbo(Money bid, Money ask) {
   BboQuote bbo{Quote{bid, 100, Side::BID}, Quote{ask, 100, Side::ASK},
     not_a_date_time};
-  m_environment->Update(TST, bbo);
+  m_environment->Publish(TST, bbo);
 }
 
 InternalMatchingOrderExecutionDriverTester::OrderEntry

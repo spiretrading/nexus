@@ -43,7 +43,7 @@ void BuyingPowerCheckTester::tearDown() {
 void BuyingPowerCheckTester::TestSubmission() {
   OrderExecutionSession session;
   Security security{"TST", DefaultMarkets::NYSE(), DefaultCountries::US()};
-  m_environment->Update(security,
+  m_environment->Publish(security,
     BboQuote{Quote{Money::ONE, 100, Side::BID},
     Quote{Money::ONE + Money::CENT, 100, Side::ASK}, not_a_date_time});
   OrderInfo orderInfoA{OrderFields::BuildLimitOrder(
@@ -64,7 +64,7 @@ void BuyingPowerCheckTester::TestSubmission() {
 void BuyingPowerCheckTester::TestAddWithoutSubmission() {
   OrderExecutionSession session;
   Security security{"TST", DefaultMarkets::NYSE(), DefaultCountries::US()};
-  m_environment->Update(security,
+  m_environment->Publish(security,
     BboQuote{Quote{Money::ONE, 100, Side::BID},
     Quote{Money::ONE + Money::CENT, 100, Side::ASK}, not_a_date_time});
   OrderInfo orderInfoA{OrderFields::BuildLimitOrder(
@@ -84,7 +84,7 @@ void BuyingPowerCheckTester::TestAddWithoutSubmission() {
 void BuyingPowerCheckTester::TestSubmissionThenRejection() {
   OrderExecutionSession session;
   Security security{"TST", DefaultMarkets::NYSE(), DefaultCountries::US()};
-  m_environment->Update(security,
+  m_environment->Publish(security,
     BboQuote{Quote{Money::ONE, 100, Side::BID},
     Quote{Money::ONE + Money::CENT, 100, Side::ASK}, not_a_date_time});
   OrderInfo orderInfoA{OrderFields::BuildLimitOrder(

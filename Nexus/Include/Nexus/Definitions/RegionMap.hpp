@@ -245,7 +245,8 @@ namespace Details {
 
   template<typename T>
   std::tuple<const Region, T>& RegionMap<T>::Iterator::operator *() {
-    return static_cast<std::tuple<const Region, T>&>(m_nodes.front()->m_element);
+    return static_cast<std::tuple<const Region, T>&>(
+      m_nodes.front()->m_element);
   }
 
   template<typename T>

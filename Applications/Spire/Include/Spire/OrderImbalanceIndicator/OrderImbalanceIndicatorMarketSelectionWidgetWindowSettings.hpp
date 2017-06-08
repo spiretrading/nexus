@@ -15,7 +15,8 @@ namespace Spire {
       public UI::WindowSettings {
     public:
 
-      //! Constructs an OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings.
+      //! Constructs an
+      //! OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings.
       /*!
         \param widget The widget to represent.
       */

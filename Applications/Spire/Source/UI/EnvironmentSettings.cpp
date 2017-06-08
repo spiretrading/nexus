@@ -106,7 +106,8 @@ bool Spire::UI::Import(const path& environmentPath,
     userProfile->GetSavedDashboards() = *environmentSettings.m_dashboards;
   }
   if(settings.Test(EnvironmentSettings::Type::ORDER_IMBALANCE_INDICATOR) &&
-      environmentSettings.m_orderImbalanceIndicatorProperties.is_initialized()) {
+      environmentSettings.m_orderImbalanceIndicatorProperties.
+      is_initialized()) {
     userProfile->SetDefaultOrderImbalanceIndicatorProperties(
       *environmentSettings.m_orderImbalanceIndicatorProperties);
   }

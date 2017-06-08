@@ -200,8 +200,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
   template<typename MarketDataClientType, typename MarketExpressionType,
     typename TimeRangeExpressionType>
-  void MarketOrderImbalanceExpression<MarketDataClientType, MarketExpressionType,
-      TimeRangeExpressionType>::OnOrderImbalance(
+  void MarketOrderImbalanceExpression<MarketDataClientType,
+      MarketExpressionType, TimeRangeExpressionType>::OnOrderImbalance(
       const OrderImbalance& imbalance) {
     m_values.push_back(imbalance);
     this->SignalUpdate();
