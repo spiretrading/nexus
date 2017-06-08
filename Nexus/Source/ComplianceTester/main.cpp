@@ -13,6 +13,7 @@
 #include "Nexus/ComplianceTests/RejectCancelsComplianceRuleTester.hpp"
 #include "Nexus/ComplianceTests/RejectSubmissionsComplianceRuleTester.hpp"
 #include "Nexus/ComplianceTests/SecurityFilterComplianceRuleTester.hpp"
+#include "Nexus/ComplianceTests/SubmissionRestrictionPeriodComplianceRuleTester.hpp"
 #include "Nexus/ComplianceTests/SymbolRestrictionComplianceRuleTester.hpp"
 #include "Nexus/ComplianceTests/TimeFilterComplianceRuleTester.hpp"
 
@@ -29,6 +30,7 @@ int main() {
   runner.addTest(RejectCancelsComplianceRuleTester::suite());
   runner.addTest(RejectSubmissionsComplianceRuleTester::suite());
   runner.addTest(SecurityFilterComplianceRuleTester::suite());
+  runner.addTest(SubmissionRestrictionPeriodComplianceRuleTester::suite());
   runner.addTest(SymbolRestrictionComplianceRuleTester::suite());
   runner.addTest(TimeFilterComplianceRuleTester::suite());
   runner.addTest(ComplianceServletTester::suite());
