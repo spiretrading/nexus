@@ -28,6 +28,9 @@ namespace OrderExecutionService {
 
       ~ReplicatedOrderExecutionDataStore();
 
+      AccountOrderSubmissionEntry::InitialSequences LoadInitialSequences(
+        const Beam::ServiceLocator::DirectoryEntry& account);
+
       std::vector<SequencedOrderRecord> LoadOrderSubmissions(
         const AccountQuery& query);
 
@@ -60,6 +63,12 @@ namespace OrderExecutionService {
   inline ReplicatedOrderExecutionDataStore::
       ~ReplicatedOrderExecutionDataStore() {
     Close();
+  }
+
+  inline AccountOrderSubmissionEntry::InitialSequences
+      ReplicatedOrderExecutionDataStore::LoadInitialSequences(
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    return m_primaryDataStore->LoadInitialSequences(account);
   }
 
   inline std::vector<SequencedOrderRecord>

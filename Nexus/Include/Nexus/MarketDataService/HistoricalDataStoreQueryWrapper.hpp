@@ -57,6 +57,10 @@ namespace MarketDataService {
               OrderImbalance, MarketCode, DataStoreType>(
               std::forward<DataStoreForward>(dataStore)) {}
 
+      Beam::Queries::Sequence LoadInitialSequence(const MarketCode& market) {
+        return this->m_dataStore->LoadInitialSequences(
+          market).m_nextOrderImbalanceSequence;
+      }
       std::vector<SequencedOrderImbalance> Load(
           const MarketWideDataQuery& query) {
         return this->m_dataStore->LoadOrderImbalances(query);
@@ -73,6 +77,11 @@ namespace MarketDataService {
           : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
               BboQuote, Security, DataStoreType>(
               std::forward<DataStoreForward>(dataStore)) {}
+
+      Beam::Queries::Sequence LoadInitialSequence(const Security& security) {
+        return this->m_dataStore->LoadInitialSequences(
+          security).m_nextBboQuoteSequence;
+      }
 
       std::vector<SequencedBboQuote> Load(
           const SecurityMarketDataQuery& query) {
@@ -91,6 +100,11 @@ namespace MarketDataService {
               BookQuote, Security, DataStoreType>(
               std::forward<DataStoreForward>(dataStore)) {}
 
+      Beam::Queries::Sequence LoadInitialSequence(const Security& security) {
+        return this->m_dataStore->LoadInitialSequences(
+          security).m_nextBookQuoteSequence;
+      }
+
       std::vector<SequencedBookQuote> Load(
           const SecurityMarketDataQuery& query) {
         return this->m_dataStore->LoadBookQuotes(query);
@@ -108,6 +122,11 @@ namespace MarketDataService {
               MarketQuote, Security, DataStoreType>(
               std::forward<DataStoreForward>(dataStore)) {}
 
+      Beam::Queries::Sequence LoadInitialSequence(const Security& security) {
+        return this->m_dataStore->LoadInitialSequences(
+          security).m_nextMarketQuoteSequence;
+      }
+
       std::vector<SequencedMarketQuote> Load(
           const SecurityMarketDataQuery& query) {
         return this->m_dataStore->LoadMarketQuotes(query);
@@ -124,6 +143,11 @@ namespace MarketDataService {
           : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
               TimeAndSale, Security, DataStoreType>(
               std::forward<DataStoreForward>(dataStore)) {}
+
+      Beam::Queries::Sequence LoadInitialSequence(const Security& security) {
+        return this->m_dataStore->LoadInitialSequences(
+          security).m_nextTimeAndSaleSequence;
+      }
 
       std::vector<SequencedTimeAndSale> Load(
           const SecurityMarketDataQuery& query) {
