@@ -407,7 +407,7 @@ namespace OrderExecutionService {
     m_registry.Publish(
       Beam::Queries::MakeIndexedValue(executionReport, account),
       [&] {
-        return m_dataStore->LoadInitialSequences(account);
+        return LoadInitialSequences(*m_dataStore, account);
       },
       [&] (auto& executionReport) {
         m_dataStore->Store(executionReport);
@@ -586,7 +586,7 @@ namespace OrderExecutionService {
     }
     m_registry.Publish(orderInfo,
       [&] {
-        return m_dataStore->LoadInitialSequences(orderInfo.m_fields.m_account);
+        return LoadInitialSequences(*m_dataStore, orderInfo.m_fields.m_account);
       },
       [&] (auto& orderInfo) {
         m_liveOrders.Insert((*orderInfo)->m_orderId);
