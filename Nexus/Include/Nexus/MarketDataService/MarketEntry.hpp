@@ -52,7 +52,7 @@ namespace MarketDataService {
       Beam::Queries::Sequencer m_orderImbalanceSequencer;
   };
 
-  //! Returns the InitialSequences from a MarketEntry.
+  //! Returns the InitialSequences for a MarketEntry.
   /*!
     \param dataStore The DataStore to load the InitialSequences from.
     \param market The market to load the InitialSequences for.
@@ -65,14 +65,14 @@ namespace MarketDataService {
     query.SetIndex(market);
     query.SetRange(Beam::Queries::Range::Total());
     query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Type::TAIL, 1);
-    auto results = dataStore.Load(dataStore);
     MarketEntry::InitialSequences initialSequences;
+    auto results = dataStore.LoadOrderImbalances(query);
     if(results.empty()) {
       initialSequences.m_nextOrderImbalanceSequence =
         Beam::Queries::Sequence::First();
     } else {
       initialSequences.m_nextOrderImbalanceSequence =
-        results.back().GetSequence();
+        Beam::Queries::Increment(results.back().GetSequence());
     }
     return initialSequences;
   }
