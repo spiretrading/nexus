@@ -27,9 +27,6 @@ namespace OrderExecutionService {
       //! Returns all the ExecutionReports stored.
       std::vector<SequencedAccountExecutionReport> LoadExecutionReports() const;
 
-      AccountOrderSubmissionEntry::InitialSequences LoadInitialSequences(
-        const Beam::ServiceLocator::DirectoryEntry& account);
-
       std::vector<SequencedOrderRecord> LoadOrderSubmissions(
         const AccountQuery& query);
 
@@ -80,17 +77,6 @@ namespace OrderExecutionService {
   inline std::vector<SequencedAccountExecutionReport>
       LocalOrderExecutionDataStore::LoadExecutionReports() const {
     return m_executionReportDataStore.LoadAll();
-  }
-
-  inline AccountOrderSubmissionEntry::InitialSequences
-      LocalOrderExecutionDataStore::LoadInitialSequences(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
-    AccountOrderSubmissionEntry::InitialSequences initialSequences;
-    initialSequences.m_nextOrderInfoSequence =
-      m_orderSubmissionDataStore.LoadInitialSequence(account);
-    initialSequences.m_nextExecutionReportSequence =
-      m_executionReportDataStore.LoadInitialSequence(account);
-    return initialSequences;
   }
 
   inline std::vector<SequencedOrderRecord>

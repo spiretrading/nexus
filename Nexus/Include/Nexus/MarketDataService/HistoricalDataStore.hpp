@@ -17,21 +17,6 @@ namespace MarketDataService {
    */
   struct HistoricalDataStore : Beam::Concept<HistoricalDataStore> {
 
-    //! Loads the initial Sequences to use for a Market.
-    /*!
-      \param market The market to load the initial Sequences for.
-      \return The initial Sequences to use for the <i>market</i>.
-    */
-    MarketEntry::InitialSequences LoadInitialSequences(MarketCode market);
-
-    //! Loads the initial Sequences to use for a Security.
-    /*!
-      \param security The Security to load the initial Sequences for.
-      \return The initial Sequences to use for the <i>security</i>.
-    */
-    SecurityEntry::InitialSequences LoadInitialSequences(
-      const Security& security);
-
     //! Executes a search query over a Market's OrderImbalances.
     /*!
       \param query The search query to execute.
