@@ -40,7 +40,7 @@ namespace {
       const auto& account = entry.first;
       const auto& orderRecords = entry.second;
       auto sequence =
-        targetDataStore.LoadInitialSequences(account).m_nextOrderInfoSequence;
+        LoadInitialSequences(targetDataStore, account).m_nextOrderInfoSequence;
       vector<SequencedAccountOrderInfo> sequencedOrderInfo;
       for(const auto& orderRecord : orderRecords) {
         auto entry = MakeSequencedValue(
@@ -59,8 +59,8 @@ namespace {
     for(const auto& entry : executionReports) {
       const auto& account = entry.first;
       const auto& executionReports = entry.second;
-      auto sequence = targetDataStore.LoadInitialSequences(
-        account).m_nextExecutionReportSequence;
+      auto sequence = LoadInitialSequences(
+        targetDataStore, account).m_nextExecutionReportSequence;
       vector<SequencedAccountExecutionReport> sequencedExecutionReports;
       for(const auto& executionReport : executionReports) {
         auto sequencedExecutionReport = MakeSequencedValue(
