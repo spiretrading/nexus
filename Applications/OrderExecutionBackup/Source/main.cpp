@@ -48,7 +48,7 @@ namespace {
     auto queue = std::make_shared<Queue<OrderRecord>>();
     orderExecutionClient->QueryOrderRecords(query, queue);
     auto sequence =
-      dataStore.LoadInitialSequences(account).m_nextOrderInfoSequence;
+      LoadInitialSequences(dataStore, account).m_nextOrderInfoSequence;
     try {
       while(true) {
         auto orderRecord = queue->Top();
@@ -72,7 +72,7 @@ namespace {
     auto queue = std::make_shared<Queue<ExecutionReport>>();
     orderExecutionClient->QueryExecutionReports(query, queue);
     auto sequence =
-      dataStore.LoadInitialSequences(account).m_nextExecutionReportSequence;
+      LoadInitialSequences(dataStore, account).m_nextExecutionReportSequence;
     try {
       while(true) {
         auto executionReport = queue->Top();
