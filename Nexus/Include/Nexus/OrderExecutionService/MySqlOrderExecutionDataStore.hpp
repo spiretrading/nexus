@@ -89,8 +89,6 @@ namespace OrderExecutionService {
         Beam::Threading::Mutex> m_accountEntries;
       Beam::MySql::DatabaseConnectionPool m_readerDatabaseConnectionPool;
       Beam::Threading::Sync<mysqlpp::Connection, Beam::Threading::Mutex>
-        m_readerDatabaseConnection;
-      Beam::Threading::Sync<mysqlpp::Connection, Beam::Threading::Mutex>
         m_writerDatabaseConnection;
       Beam::Threading::ThreadPool m_readerThreadPool;
       DataStore<OrderInfo, Details::status_submissions>
@@ -140,32 +138,28 @@ namespace OrderExecutionService {
       const Beam::Network::IpAddress& address, const std::string& schema,
       const std::string& username, const std::string& password,
       const AccountSourceFunction& accountSourceFunction)
-      : m_address(address),
-        m_schema(schema),
-        m_username(username),
-        m_password(password),
-        m_accountEntries(accountSourceFunction),
-        m_readerDatabaseConnection(false),
-        m_writerDatabaseConnection(false),
-        m_statusSubmissionsDataStore(Beam::Ref(m_readerDatabaseConnectionPool),
-          Beam::Ref(m_readerDatabaseConnection),
-          Beam::Ref(m_writerDatabaseConnection), Beam::Ref(m_readerThreadPool)),
-        m_submissionsDataStore(Beam::Ref(m_readerDatabaseConnectionPool),
-          Beam::Ref(m_readerDatabaseConnection),
-          Beam::Ref(m_writerDatabaseConnection), Beam::Ref(m_readerThreadPool)),
-        m_executionReportsDataStore(Beam::Ref(m_readerDatabaseConnectionPool),
-          Beam::Ref(m_readerDatabaseConnection),
+      : m_address{address},
+        m_schema{schema},
+        m_username{username},
+        m_password{password},
+        m_accountEntries{accountSourceFunction},
+        m_writerDatabaseConnection{false},
+        m_statusSubmissionsDataStore{Beam::Ref(m_readerDatabaseConnectionPool),
+          Beam::Ref(m_writerDatabaseConnection), Beam::Ref(m_readerThreadPool)},
+        m_submissionsDataStore{Beam::Ref(m_readerDatabaseConnectionPool),
+          Beam::Ref(m_writerDatabaseConnection), Beam::Ref(m_readerThreadPool)},
+        m_executionReportsDataStore{Beam::Ref(m_readerDatabaseConnectionPool),
           Beam::Ref(m_writerDatabaseConnection),
-          Beam::Ref(m_readerThreadPool)) {}
+          Beam::Ref(m_readerThreadPool)} {}
 
   inline MySqlOrderExecutionDataStore::MySqlOrderExecutionDataStore(
       const Beam::Network::IpAddress& address, const std::string& schema,
       const std::string& username, const std::string& password)
-      : MySqlOrderExecutionDataStore(address, schema, username, password,
+      : MySqlOrderExecutionDataStore{address, schema, username, password,
         [] (unsigned int id) {
           return Beam::ServiceLocator::DirectoryEntry(
             Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT, id, "");
-        }) {}
+        }} {}
 
   inline MySqlOrderExecutionDataStore::~MySqlOrderExecutionDataStore() {
     Close();
@@ -210,7 +204,7 @@ namespace OrderExecutionService {
     m_submissionsDataStore.Store(orderInfo);
     Details::live_orders liveOrdersRow{(*orderInfo)->m_orderId};
     Beam::Threading::With(m_writerDatabaseConnection,
-      [&] (mysqlpp::Connection& connection) {
+      [&] (auto& connection) {
         auto query = connection.query();
         query.insert(liveOrdersRow);
         query.execute();
@@ -230,7 +224,7 @@ namespace OrderExecutionService {
         return (*orderInfo)->m_orderId;
       });
     Beam::Threading::With(m_writerDatabaseConnection,
-      [&] (mysqlpp::Connection& connection) {
+      [&] (auto& connection) {
         auto insertStart = rows.begin();
         while(insertStart != rows.end()) {
           auto query = connection.query();
@@ -252,7 +246,7 @@ namespace OrderExecutionService {
     if(IsTerminal((*executionReport)->m_status)) {
       Details::live_orders liveOrdersRow{(*executionReport)->m_id};
       Beam::Threading::With(m_writerDatabaseConnection,
-        [&] (mysqlpp::Connection& connection) {
+        [&] (auto& connection) {
           auto query = connection.query();
           query << "DELETE FROM live_orders WHERE order_id = " <<
             (*executionReport)->m_id;
@@ -278,7 +272,7 @@ namespace OrderExecutionService {
     }
     if(count != 0) {
       Beam::Threading::With(m_writerDatabaseConnection,
-        [&] (mysqlpp::Connection& connection) {
+        [&] (auto& connection) {
           auto query = connection.query();
           query << queryString;
           query.execute();
@@ -291,20 +285,12 @@ namespace OrderExecutionService {
       return;
     }
     try {
-      Beam::Threading::With(m_readerDatabaseConnection,
-        [&] (mysqlpp::Connection& connection) {
-          OpenDatabaseConnection(connection);
-          if(!Details::LoadTables(connection, m_schema)) {
-            BOOST_THROW_EXCEPTION(Beam::IO::ConnectException(
-              "Unable to load database tables."));
-          }
-        });
       Beam::Threading::With(m_writerDatabaseConnection,
-        [&] (mysqlpp::Connection& connection) {
+        [&] (auto& connection) {
           OpenDatabaseConnection(connection);
           if(!Details::LoadTables(connection, m_schema)) {
-            BOOST_THROW_EXCEPTION(Beam::IO::ConnectException(
-              "Unable to load database tables."));
+            BOOST_THROW_EXCEPTION(Beam::IO::ConnectException{
+              "Unable to load database tables."});
           }
         });
       for(std::size_t i = 0; i < boost::thread::hardware_concurrency(); ++i) {
@@ -328,29 +314,25 @@ namespace OrderExecutionService {
 
   inline void MySqlOrderExecutionDataStore::OpenDatabaseConnection(
       mysqlpp::Connection& connection) {
-    bool connectionResult = connection.set_option(
-      new mysqlpp::ReconnectOption(true));
+    auto connectionResult = connection.set_option(
+      new mysqlpp::ReconnectOption{true});
     if(!connectionResult) {
-      BOOST_THROW_EXCEPTION(Beam::IO::ConnectException(
-        "Unable to set MySQL reconnect option."));
+      BOOST_THROW_EXCEPTION(Beam::IO::ConnectException{
+        "Unable to set MySQL reconnect option."});
     }
     connectionResult = connection.connect(m_schema.c_str(),
       m_address.GetHost().c_str(), m_username.c_str(), m_password.c_str(),
       m_address.GetPort());
     if(!connectionResult) {
-      BOOST_THROW_EXCEPTION(Beam::IO::ConnectException(std::string(
-        "Unable to connect to MySQL database - ") + connection.error()));
+      BOOST_THROW_EXCEPTION(Beam::IO::ConnectException{std::string(
+        "Unable to connect to MySQL database - ") + connection.error()});
     }
   }
 
   inline void MySqlOrderExecutionDataStore::Shutdown() {
     m_readerDatabaseConnectionPool.Close();
     Beam::Threading::With(m_writerDatabaseConnection,
-      [] (mysqlpp::Connection& connection) {
-        connection.disconnect();
-      });
-    Beam::Threading::With(m_readerDatabaseConnection,
-      [] (mysqlpp::Connection& connection) {
+      [] (auto& connection) {
         connection.disconnect();
       });
     m_openState.SetClosed();
