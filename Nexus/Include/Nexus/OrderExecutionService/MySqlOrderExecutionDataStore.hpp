@@ -58,6 +58,9 @@ namespace OrderExecutionService {
 
       ~MySqlOrderExecutionDataStore();
 
+      AccountOrderSubmissionEntry::InitialSequences LoadInitialSequences(
+        const Beam::ServiceLocator::DirectoryEntry& account);
+
       std::vector<SequencedOrderRecord> LoadOrderSubmissions(
         const AccountQuery& query);
 
@@ -163,6 +166,17 @@ namespace OrderExecutionService {
 
   inline MySqlOrderExecutionDataStore::~MySqlOrderExecutionDataStore() {
     Close();
+  }
+
+  inline AccountOrderSubmissionEntry::InitialSequences
+      MySqlOrderExecutionDataStore::LoadInitialSequences(
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    AccountOrderSubmissionEntry::InitialSequences initialSequences;
+    initialSequences.m_nextOrderInfoSequence =
+      m_submissionsDataStore.LoadInitialSequence(account);
+    initialSequences.m_nextExecutionReportSequence =
+      m_executionReportsDataStore.LoadInitialSequence(account);
+    return initialSequences;
   }
 
   inline std::vector<SequencedOrderRecord> MySqlOrderExecutionDataStore::

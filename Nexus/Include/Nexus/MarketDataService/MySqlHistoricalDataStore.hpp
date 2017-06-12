@@ -37,6 +37,11 @@ namespace MarketDataService {
 
       ~MySqlHistoricalDataStore();
 
+      MarketEntry::InitialSequences LoadInitialSequences(MarketCode market);
+
+      SecurityEntry::InitialSequences LoadInitialSequences(
+        const Security& security);
+
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query);
 
@@ -127,6 +132,28 @@ namespace MarketDataService {
 
   inline MySqlHistoricalDataStore::~MySqlHistoricalDataStore() {
     Close();
+  }
+
+  inline MarketEntry::InitialSequences MySqlHistoricalDataStore::
+      LoadInitialSequences(MarketCode market) {
+    MarketEntry::InitialSequences initialSequences;
+    initialSequences.m_nextOrderImbalanceSequence =
+      m_orderImbalanceDataStore.LoadInitialSequence(market);
+    return initialSequences;
+  }
+
+  inline SecurityEntry::InitialSequences MySqlHistoricalDataStore::
+      LoadInitialSequences(const Security& security) {
+    SecurityEntry::InitialSequences initialSequences;
+    initialSequences.m_nextBboQuoteSequence =
+      m_bboQuoteDataStore.LoadInitialSequence(security);
+    initialSequences.m_nextBookQuoteSequence =
+      m_bookQuoteDataStore.LoadInitialSequence(security);
+    initialSequences.m_nextMarketQuoteSequence =
+      m_marketQuoteDataStore.LoadInitialSequence(security);
+    initialSequences.m_nextTimeAndSaleSequence =
+      m_timeAndSaleDataStore.LoadInitialSequence(security);
+    return initialSequences;
   }
 
   inline std::vector<SequencedOrderImbalance> MySqlHistoricalDataStore::
