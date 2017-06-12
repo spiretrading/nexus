@@ -453,10 +453,10 @@ namespace Details {
     }
     auto entry = m_securityEntries.GetOrInsert(security,
       [&] {
-        auto sanitizedSecurity = GetPrimaryListing(security);
         return std::make_shared<
             Beam::Remote<SyncSecurityEntry, Beam::Threading::Mutex>>(
-          [&, sanitizedSecurity] (auto& entry) {
+          [&] (auto& entry) {
+            auto sanitizedSecurity = GetPrimaryListing(security);
             auto initialSequences = LoadInitialSequences(dataStore,
               sanitizedSecurity);
             auto closePrice = Details::LoadClosePrice(sanitizedSecurity,
