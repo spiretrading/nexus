@@ -31,14 +31,8 @@ namespace Details {
           return {"TSE", "CDX"};
         } else if(security.GetCountry() == DefaultCountries::AU()) {
           return {"ASX"};
-        } else if(security.GetMarket() == DefaultMarkets::NYSE()) {
-          return {"XNYS"};
-        } else if(security.GetMarket() == DefaultMarkets::NASDAQ()) {
-          return {"XNAS"};
-        } else if(security.GetMarket() == DefaultMarkets::ARCX()) {
-          return {"ARCX"};
-        } else if(security.GetMarket() == DefaultMarkets::BATS()) {
-          return {"BATY", "BATS"};
+        } else if(!security.GetMarket().IsEmpty()) {
+          return {std::string{security.GetMarket().GetData()}};
         } else {
           return {};
         }
@@ -255,12 +249,12 @@ namespace Details {
     }
     auto entry = m_securityEntries.Find(security);
     if(!entry.is_initialized() || !(*entry)->IsAvailable()) {
-      return Security{security.GetSymbol(), CountryDatabase::NONE};
+      return Security{security.GetSymbol(), security.GetCountry()};
     }
     return Beam::Threading::With(***entry,
       [&] (auto& entry) {
         if(entry.GetSecurity().GetMarket().IsEmpty()) {
-          return Security{security.GetSymbol(), CountryDatabase::NONE};
+          return Security{security.GetSymbol(), security.GetCountry()};
         }
         return entry.GetSecurity();
       });
@@ -459,7 +453,7 @@ namespace Details {
     }
     auto entry = m_securityEntries.GetOrInsert(security,
       [&] {
-        Security sanitizedSecurity{security.GetSymbol(), security.GetCountry()};
+        auto sanitizedSecurity = GetPrimaryListing(security);
         return std::make_shared<
             Beam::Remote<SyncSecurityEntry, Beam::Threading::Mutex>>(
           [&, sanitizedSecurity] (auto& entry) {
