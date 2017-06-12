@@ -436,7 +436,7 @@ namespace Details {
         return std::make_shared<
             Beam::Remote<SyncMarketEntry, Beam::Threading::Mutex>>(
           [&] (auto& entry) {
-            auto initialSequences = dataStore.LoadInitialSequences(market);
+            auto initialSequences = LoadInitialSequences(dataStore, market);
             entry.Initialize(market, initialSequences);
           });
       });
@@ -457,7 +457,7 @@ namespace Details {
             Beam::Remote<SyncSecurityEntry, Beam::Threading::Mutex>>(
           [&] (auto& entry) {
             auto sanitizedSecurity = this->GetPrimaryListing(security);
-            auto initialSequences = dataStore.LoadInitialSequences(
+            auto initialSequences = LoadInitialSequences(dataStore,
               sanitizedSecurity);
             auto closePrice = Details::LoadClosePrice(sanitizedSecurity,
               dataStore);

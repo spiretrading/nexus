@@ -18,10 +18,6 @@ namespace OrderExecutionService {
     public:
       virtual ~VirtualOrderExecutionDataStore() = default;
 
-      virtual AccountOrderSubmissionEntry::InitialSequences
-        LoadInitialSequences(
-        const Beam::ServiceLocator::DirectoryEntry& account) = 0;
-
       virtual std::vector<SequencedOrderRecord> LoadOrderSubmissions(
         const AccountQuery& query) = 0;
 
@@ -65,10 +61,6 @@ namespace OrderExecutionService {
 
       virtual ~WrapperOrderExecutionDataStore() override final;
 
-      virtual AccountOrderSubmissionEntry::InitialSequences
-        LoadInitialSequences(
-        const Beam::ServiceLocator::DirectoryEntry& account) override final;
-
       virtual std::vector<SequencedOrderRecord> LoadOrderSubmissions(
         const AccountQuery& query) override final;
 
@@ -111,13 +103,6 @@ namespace OrderExecutionService {
   WrapperOrderExecutionDataStore<DataStoreType>::
       ~WrapperOrderExecutionDataStore() {
     Close();
-  }
-
-  template<typename DataStoreType>
-  AccountOrderSubmissionEntry::InitialSequences
-      WrapperOrderExecutionDataStore<DataStoreType>::LoadInitialSequences(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
-    return m_dataStore->LoadInitialSequences(account);
   }
 
   template<typename DataStoreType>

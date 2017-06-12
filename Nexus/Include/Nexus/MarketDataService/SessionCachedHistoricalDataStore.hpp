@@ -34,11 +34,6 @@ namespace MarketDataService {
 
       ~SessionCachedHistoricalDataStore();
 
-      MarketEntry::InitialSequences LoadInitialSequences(MarketCode market);
-
-      SecurityEntry::InitialSequences LoadInitialSequences(
-        const Security& security);
-
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query);
 
@@ -109,30 +104,6 @@ namespace MarketDataService {
   SessionCachedHistoricalDataStore<HistoricalDataStoreType>::
       ~SessionCachedHistoricalDataStore() {
     Close();
-  }
-
-  template<typename HistoricalDataStoreType>
-  MarketEntry::InitialSequences SessionCachedHistoricalDataStore<
-      HistoricalDataStoreType>::LoadInitialSequences(MarketCode market) {
-    MarketEntry::InitialSequences initialSequences;
-    initialSequences.m_nextOrderImbalanceSequence =
-      m_dataStore->LoadInitialSequences(market).m_nextOrderImbalanceSequence;
-    return initialSequences;
-  }
-
-  template<typename HistoricalDataStoreType>
-  SecurityEntry::InitialSequences SessionCachedHistoricalDataStore<
-      HistoricalDataStoreType>::LoadInitialSequences(const Security& security) {
-    SecurityEntry::InitialSequences initialSequences;
-    initialSequences.m_nextBboQuoteSequence =
-      m_bboQuoteDataStore.LoadInitialSequence(security);
-    initialSequences.m_nextBookQuoteSequence =
-      m_bookQuoteDataStore.LoadInitialSequence(security);
-    initialSequences.m_nextMarketQuoteSequence =
-      m_marketQuoteDataStore.LoadInitialSequence(security);
-    initialSequences.m_nextTimeAndSaleSequence =
-      m_timeAndSaleDataStore.LoadInitialSequence(security);
-    return initialSequences;
   }
 
   template<typename HistoricalDataStoreType>

@@ -57,6 +57,44 @@ namespace OrderExecutionService {
       boost::atomic<Beam::Queries::Sequence::Ordinal> m_executionReportSequence;
   };
 
+  //! Returns the InitialSequences for a AccountOrderSubmissionEntry.
+  /*!
+    \param dataStore The DataStore to load the InitialSequences from.
+    \param account The account to load the InitialSequences for.
+    \return The set of InitialSequences for the specified <i>account</i>.
+  */
+  template<typename DataStore>
+  AccountOrderSubmissionEntry::InitialSequences LoadInitialSequences(
+      DataStore& dataStore,
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    AccountQuery query;
+    query.SetIndex(account);
+    query.SetRange(Beam::Queries::Range::Total());
+    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Type::TAIL, 1);
+    AccountOrderSubmissionEntry::InitialSequences initialSequences;
+    {
+      auto results = dataStore.LoadOrderSubmissions(query);
+      if(results.empty()) {
+        initialSequences.m_nextOrderInfoSequence =
+          Beam::Queries::Sequence::First();
+      } else {
+        initialSequences.m_nextOrderInfoSequence =
+          Beam::Queries::Increment(results.back().GetSequence());
+      }
+    }
+    {
+      auto results = dataStore.LoadExecutionReports(query);
+      if(results.empty()) {
+        initialSequences.m_nextExecutionReportSequence =
+          Beam::Queries::Sequence::First();
+      } else {
+        initialSequences.m_nextExecutionReportSequence =
+          Beam::Queries::Increment(results.back().GetSequence());
+      }
+    }
+    return initialSequences;
+  }
+
   inline AccountOrderSubmissionEntry::AccountOrderSubmissionEntry(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const InitialSequences& initialSequences)
