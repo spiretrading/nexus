@@ -456,7 +456,7 @@ namespace Details {
         return std::make_shared<
             Beam::Remote<SyncSecurityEntry, Beam::Threading::Mutex>>(
           [&] (auto& entry) {
-            auto sanitizedSecurity = GetPrimaryListing(security);
+            auto sanitizedSecurity = this->GetPrimaryListing(security);
             auto initialSequences = LoadInitialSequences(dataStore,
               sanitizedSecurity);
             auto closePrice = Details::LoadClosePrice(sanitizedSecurity,
