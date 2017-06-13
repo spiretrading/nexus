@@ -4,11 +4,13 @@ file(GLOB source_files
   ./../../../Source/Python/*.cpp)
 
 include_directories($ENV{PYTHON_INCLUDE_PATH})
+include_directories($ENV{UNWIND_INCLUDE_PATH})
 
 add_library(Python SHARED ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(Python PROPERTIES OUTPUT_NAME nexus)
 add_definitions("-DBEAM_USE_DLL")
+add_definitions("-DBEAM_ENABLE_STACK_PRINT")
 if(MSVC)
   set_target_properties(Python PROPERTIES SUFFIX ".pyd" LINK_FLAGS /SAFESEH:NO
     LINK_FLAGS_RELEASE /LTCG)
@@ -31,6 +33,8 @@ target_link_libraries(Python
   optimized $ENV{BEAM_PYTHON_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{PYTHON_LIBRARY_DEBUG_PATH}
   optimized $ENV{PYTHON_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{UNWIND_LIBRARY_DEBUG_PATH}
+  optimized $ENV{UNWIND_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{YAML_LIBRARY_DEBUG_PATH}
   optimized $ENV{YAML_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{ZLIB_LIBRARY_DEBUG_PATH}
