@@ -13,13 +13,12 @@ class PeggedOrder:
     self.bbo_quote = None
     self.state = None
     self.tasks = beam.RoutineTaskQueue()
-    self.completion_queue = beam.Queue()
 
   def start(self):
     self.tasks.push(self.s0)
 
   def wait(self):
-    self.completion_queue.top()
+    self.tasks.wait()
 
   def calculate_expected_price(self):
     return nexus.pick(self.order_fields.side,
@@ -46,7 +45,6 @@ class PeggedOrder:
 
   def s2(self):
     self.state = 2
-    self.completion_queue.push(True)
     self.tasks.close()
 
   def s3(self):
@@ -58,7 +56,6 @@ class PeggedOrder:
 
   def s4(self):
     self.state = 4
-    self.completion_queue.push(True)
     self.tasks.close()
 
   def s5(self):
