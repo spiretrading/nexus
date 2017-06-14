@@ -47,6 +47,7 @@ class PeggedOrder:
   def s2(self):
     self.state = 2
     self.completion_queue.push(True)
+    self.tasks.close()
 
   def s3(self):
     self.state = 3
@@ -58,6 +59,7 @@ class PeggedOrder:
   def s4(self):
     self.state = 4
     self.completion_queue.push(True)
+    self.tasks.close()
 
   def s5(self):
     self.state = 5
