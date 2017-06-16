@@ -43,6 +43,7 @@ namespace MarketDataService {
 
     private:
       MoldUdp64::MoldUdp64Client<ChannelType> m_moldClient;
+      std::uint64_t m_sequenceNumber;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
@@ -63,7 +64,13 @@ namespace MarketDataService {
     if(!m_openState.IsOpen()) {
       BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException{});
     }
-    auto moldMessage = m_moldClient.Read();
+    std::uint64_t sequenceNumber;
+    auto moldMessage = m_moldClient.Read(Beam::Store(sequenceNumber));
+    if(m_sequenceNumber != -1 && sequenceNumber > m_sequenceNumber + 1) {
+      std::cout << "Packets dropped: " << (m_sequenceNumber + 1) << " - " <<
+        (sequenceNumber - 1) << std::endl;
+    }
+    m_sequenceNumber = sequenceNumber;
     auto token = moldMessage.m_data;
     auto message = UtpMessage::Parse(Beam::Store(token), moldMessage.m_length);
     return message;
@@ -76,6 +83,7 @@ namespace MarketDataService {
     }
     try {
       m_moldClient.Open();
+      m_sequenceNumber = -1;
     } catch(std::exception&) {
       m_openState.SetOpenFailure();
       Shutdown();

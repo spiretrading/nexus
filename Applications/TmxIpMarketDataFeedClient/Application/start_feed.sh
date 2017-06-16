@@ -61,7 +61,6 @@ else
         # Target directory is not a valid feed sub-directory.
         echo "${red}[ERROR]${reset} Invalid ${feed_title} feed sub-directory '${var}'."
       fi
-      sleep 2
     done
     echo
   else

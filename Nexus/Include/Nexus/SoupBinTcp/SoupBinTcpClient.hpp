@@ -86,13 +86,17 @@ namespace SoupBinTcp {
   template<typename ChannelForward, typename TimerForward>
   SoupBinTcpClient<ChannelType, TimerType>::SoupBinTcpClient(
       ChannelForward&& channel, TimerForward&& timer)
-      : m_channel(std::forward<ChannelForward>(channel)),
-        m_timer(std::forward<TimerForward>(timer)) {}
+      : m_channel{std::forward<ChannelForward>(channel)},
+        m_timer{std::forward<TimerForward>(timer)},
+        m_timerQueue{std::make_shared<
+          Beam::Queue<Beam::Threading::Timer::Result>>()} {
+    m_timer->GetPublisher().Monitor(m_timerQueue);
+  }
 
   template<typename ChannelType, typename TimerType>
   SoupBinTcpPacket SoupBinTcpClient<ChannelType, TimerType>::Read() {
     if(!m_openState.IsOpen()) {
-      BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException());
+      BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException{});
     }
     m_buffer.Reset();
     return ReadPacket(m_channel->GetReader(), Beam::Store(m_buffer));
@@ -101,7 +105,7 @@ namespace SoupBinTcp {
   template<typename ChannelType, typename TimerType>
   void SoupBinTcpClient<ChannelType, TimerType>::Login(
       const std::string& username, const std::string& password) {
-    Login(username, password, "", 1);
+    Login(username, password, {}, 1);
   }
 
   template<typename ChannelType, typename TimerType>
@@ -129,23 +133,20 @@ namespace SoupBinTcp {
       if(loginResponse.m_type == 'J') {
         auto loginRejectedPacket = ParseLoginRejectedPacket(loginResponse);
         if(loginRejectedPacket.m_reason == "A") {
-          BOOST_THROW_EXCEPTION(Beam::IO::ConnectException("Not authorized."));
+          BOOST_THROW_EXCEPTION(Beam::IO::ConnectException{"Not authorized."});
         } else if(loginRejectedPacket.m_reason == "S") {
           BOOST_THROW_EXCEPTION(
-            Beam::IO::ConnectException("Session unavailable."));
+            Beam::IO::ConnectException{"Session unavailable."});
         } else {
-          BOOST_THROW_EXCEPTION(Beam::IO::ConnectException("Unable to login."));
+          BOOST_THROW_EXCEPTION(Beam::IO::ConnectException{"Unable to login."});
         }
       } else if(loginResponse.m_type != 'A') {
         BOOST_THROW_EXCEPTION(
-          Beam::IO::ConnectException("Unrecognized login response."));
+          Beam::IO::ConnectException{"Unrecognized login response."});
       }
       auto loginAcceptedPacket = ParseLoginAcceptedPacket(loginResponse);
       m_session = loginAcceptedPacket.m_session;
       m_sequenceNumber = loginAcceptedPacket.m_sequenceNumber;
-      m_timerQueue = std::make_shared<
-        Beam::Queue<Beam::Threading::Timer::Result>>();
-      m_timer->GetPublisher().Monitor(m_timerQueue);
       m_timer->Start();
       m_heartbeatLoop = Beam::Routines::Spawn(
         std::bind(&SoupBinTcpClient::HeartbeatLoop, this));

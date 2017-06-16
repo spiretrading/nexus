@@ -183,13 +183,13 @@ namespace MarketDataService {
       Beam::RefType<CurrencyDatabase> currencyDatabase,
       MarketDataFeedClientForward&& marketDataFeedClient,
       ItchClientForward&& itchClient, GlimpseClientForward&& glimpseClient)
-      : m_config(config),
-        m_currencyDatabase(currencyDatabase.Get()),
-        m_marketDataFeedClient(std::forward<MarketDataFeedClientForward>(
-          marketDataFeedClient)),
-        m_itchClient(std::forward<ItchClientForward>(itchClient)),
-        m_glimpseClient(std::forward<GlimpseClientForward>(glimpseClient)),
-        m_lastTimePoint(boost::posix_time::not_a_date_time) {}
+      : m_config{config},
+        m_currencyDatabase{currencyDatabase.Get()},
+        m_marketDataFeedClient{std::forward<MarketDataFeedClientForward>(
+          marketDataFeedClient)},
+        m_itchClient{std::forward<ItchClientForward>(itchClient)},
+        m_glimpseClient{std::forward<GlimpseClientForward>(glimpseClient)},
+        m_lastTimePoint{boost::posix_time::not_a_date_time} {}
 
   template<typename MarketDataFeedClientType, typename ItchClientType,
     typename GlimpseClientType>
@@ -741,7 +741,7 @@ namespace MarketDataService {
     typename GlimpseClientType>
   void AsxItchMarketDataFeedClient<MarketDataFeedClientType, ItchClientType,
       GlimpseClientType>::ReadLoop() {
-    std::uint64_t initialSequenceNumber = -1;
+    std::uint64_t lastSequenceNumber = -1;
     while(true) {
       SoupBinTcp::SoupBinTcpPacket packet;
       try {
@@ -758,7 +758,7 @@ namespace MarketDataService {
         message.m_data = &packet.m_payload[1];
         if(message.m_messageType == 'G') {
           auto cursor = message.m_data;
-          initialSequenceNumber =
+          lastSequenceNumber =
             SoupBinTcp::ParseLeftPaddedNumeric<std::uint64_t>(20,
             Beam::Store(cursor));
           break;
@@ -773,9 +773,15 @@ namespace MarketDataService {
       try {
         std::uint64_t sequenceNumber;
         auto message = m_itchClient->Read(Beam::Store(sequenceNumber));
-        if(sequenceNumber <= initialSequenceNumber) {
+        if(lastSequenceNumber != -1 && sequenceNumber <= lastSequenceNumber) {
           continue;
         }
+        if(lastSequenceNumber != -1 &&
+            sequenceNumber > lastSequenceNumber + 1) {
+          std::cout << "Packets dropped: " << (lastSequenceNumber + 1) <<
+            " - " << (sequenceNumber - 1) << std::endl;
+        }
+        lastSequenceNumber = sequenceNumber;
         Dispatch(message);
       } catch(Beam::IO::NotConnectedException&) {
         break;
