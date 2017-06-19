@@ -64,7 +64,7 @@ namespace RiskService {
   template<typename ClientBuilderForward>
   RiskClient<ServiceProtocolClientBuilderType>::RiskClient(
       ClientBuilderForward&& clientBuilder)
-      : m_clientHandler(std::forward<ClientBuilderForward>(clientBuilder)) {
+      : m_clientHandler{std::forward<ClientBuilderForward>(clientBuilder)} {
     m_clientHandler.SetReconnectHandler(
       std::bind(&RiskClient::OnReconnect, this, std::placeholders::_1));
     RegisterRiskServices(Beam::Store(m_clientHandler.GetSlots()));
@@ -74,23 +74,25 @@ namespace RiskService {
       std::bind(&RiskClient::OnInventoryUpdate, this, std::placeholders::_1,
       std::placeholders::_2));
     m_publisher.SetInitializationFunction(
-      [=] (Beam::DelayPtr<Beam::TablePublisher<RiskPortfolioKey,
-          RiskPortfolioInventory>>& publisher) {
+      [=] (auto& publisher) {
         publisher.Initialize();
         m_tasks.Push(
           [=] {
             std::vector<RiskPortfolioInventoryEntry> entries;
             try {
-              std::shared_ptr<ServiceProtocolClient> client =
-                m_clientHandler.GetClient();
+              auto client = m_clientHandler.GetClient();
               entries = client->template SendRequest<
                 SubscribeRiskPortfolioUpdatesService>(0);
             } catch(const std::exception&) {
               m_publisher->Break(std::current_exception());
               return;
             }
-            for(const RiskPortfolioInventoryEntry& entry : entries) {
-              m_publisher->Push(entry);
+            for(auto& entry : entries) {
+              if(entry.m_value.m_transactionCount == 0) {
+                m_publisher->Delete(entry);
+              } else {
+                m_publisher->Push(entry);
+              }
             }
           });
       });
@@ -152,7 +154,25 @@ namespace RiskService {
           m_publisher->Break(std::current_exception());
           return;
         }
-        for(const RiskPortfolioInventoryEntry& entry : entries) {
+        Beam::TablePublisher<RiskPortfolioKey, RiskPortfolioInventory>::
+          Snapshot snapshot;
+        m_publisher->WithSnapshot(
+          [&] (auto publisherSnapshot) {
+            if(publisherSnapshot.is_initialized()) {
+              snapshot = *publisherSnapshot;
+            }
+          });
+        for(auto& snapshotEntry : snapshot) {
+          auto entryIterator = std::find_if(entries.begin(), entries.end(),
+            [&] (auto& entry) {
+              return entry.m_key == snapshotEntry.first;
+            });
+          if(entryIterator == entries.end()) {
+            m_publisher->Delete(snapshotEntry.first,
+              RiskPortfolioInventory{snapshotEntry.second.m_position.m_key});
+          }
+        }
+        for(auto& entry : entries) {
           m_publisher->Push(entry);
         }
       });
@@ -164,9 +184,14 @@ namespace RiskService {
       const std::vector<InventoryUpdate>& inventories) {
     m_tasks.Push(
       [=] {
-        for(const InventoryUpdate& update : inventories) {
-          m_publisher->Push(RiskPortfolioKey(update.account,
-            update.inventory.m_position.m_key.m_index), update.inventory);
+        for(auto& update : inventories) {
+          if(update.inventory.m_transactionCount == 0) {
+            m_publisher->Delete(RiskPortfolioKey(update.account,
+              update.inventory.m_position.m_key.m_index), update.inventory);
+          } else {
+            m_publisher->Push(RiskPortfolioKey(update.account,
+              update.inventory.m_position.m_key.m_index), update.inventory);
+          }
         }
       });
   }
