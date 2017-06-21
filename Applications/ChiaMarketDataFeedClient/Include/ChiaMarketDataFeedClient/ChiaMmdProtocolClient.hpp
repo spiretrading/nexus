@@ -41,15 +41,19 @@ namespace MarketDataService {
       void Close();
 
     private:
-      Nexus::BinarySequenceProtocol::BinarySequenceProtocolClient<ChannelType>
-        m_client;
-      std::uint32_t m_sequenceNumber;
+      using ProtocolClient =
+        Nexus::BinarySequenceProtocol::BinarySequenceProtocolClient<
+        ChannelType, std::uint32_t>;
+      Nexus::BinarySequenceProtocol::BinarySequenceProtocolClient<
+        ChannelType, std::uint32_t> m_client;
+      typename ProtocolClient::Sequence m_sequenceNumber;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
   };
 
   template<typename ChannelType>
+  template<typename ChannelForward>
   ChiaMmdProtocolClient<ChannelType>::ChiaMmdProtocolClient(
       ChannelForward&& channel)
       : m_client{std::forward<ChannelForward>(channel)} {}
@@ -72,7 +76,7 @@ namespace MarketDataService {
       }
       m_sequenceNumber = sequenceNumber;
       auto message = ChiaMessage::Parse(protocolMessage.m_data,
-        protocolMessage.m_length)
+        protocolMessage.m_length);
       return message;
     }
   }

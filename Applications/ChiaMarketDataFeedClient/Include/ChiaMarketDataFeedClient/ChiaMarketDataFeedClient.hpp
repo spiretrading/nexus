@@ -406,19 +406,10 @@ namespace MarketDataService {
   template<typename MarketDataFeedClientType, typename ProtocolClientType>
   void ChiaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
       ReadLoop() {
-    std::uint32_t lastSequenceNumber = 0;
     while(true) {
       try {
-        std::uint32_t sequenceNumber;
-        auto protocolMessage =
-          m_protocolClient->Read(Beam::Store(sequenceNumber));
-        if(sequenceNumber <= lastSequenceNumber) {
-          continue;
-        }
-        auto message = ChiaMessage::Parse(protocolMessage.m_data,
-          protocolMessage.m_length);
+        auto message = m_protocolClient->Read();
         Dispatch(message);
-        lastSequenceNumber = sequenceNumber;
       } catch(const Beam::IO::EndOfFileException&) {
         break;
       }

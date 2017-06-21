@@ -23,6 +23,7 @@
 #include <tclap/CmdLine.h>
 #include "ChiaMarketDataFeedClient/ChiaConfiguration.hpp"
 #include "ChiaMarketDataFeedClient/ChiaMarketDataFeedClient.hpp"
+#include "ChiaMarketDataFeedClient/ChiaMmdProtocolClient.hpp"
 #include "ChiaMarketDataFeedClient/Version.hpp"
 #include "Nexus/BinarySequenceProtocol/BinarySequenceProtocolClient.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
@@ -52,8 +53,8 @@ namespace {
     SizeDeclarativeEncoder<ZLibEncoder>>, LiveTimer>;
   using ApplicationFeedChannel = WrapperChannel<MulticastSocketChannel*,
     QueuedReader<SharedBuffer, MulticastSocketChannel::Reader*>>;
-  using ApplicationProtocolClient = BinarySequenceProtocolClient<
-    ApplicationFeedChannel*, std::uint32_t>;
+  using ApplicationProtocolClient = ChiaMmdProtocolClient<
+    ApplicationFeedChannel*>;
   using ApplicationMarketDataFeedClient = ChiaMarketDataFeedClient<
     BaseMarketDataFeedClient*, ApplicationProtocolClient*>;
 
