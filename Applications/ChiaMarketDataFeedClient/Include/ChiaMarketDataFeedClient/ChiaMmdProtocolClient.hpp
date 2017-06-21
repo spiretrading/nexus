@@ -3,7 +3,6 @@
 #include <Beam/IO/NotConnectedException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
-#include <Beam/Pointers/LocalPtr.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/throw_exception.hpp>
 #include "ChiaMarketDataFeedClient/ChiaMessage.hpp"
@@ -89,7 +88,7 @@ namespace MarketDataService {
     try {
       m_client.Open();
       m_sequenceNumber = 0;
-    } catch(std::exception&) {
+    } catch(const std::exception&) {
       m_openState.SetOpenFailure();
       Shutdown();
     }

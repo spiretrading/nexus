@@ -23,9 +23,9 @@
 #include <tclap/CmdLine.h>
 #include "ChiaMarketDataFeedClient/ChiaConfiguration.hpp"
 #include "ChiaMarketDataFeedClient/ChiaMarketDataFeedClient.hpp"
+#include "ChiaMarketDataFeedClient/ChiaMdProtocolClient.hpp"
 #include "ChiaMarketDataFeedClient/ChiaMmdProtocolClient.hpp"
 #include "ChiaMarketDataFeedClient/Version.hpp"
-#include "Nexus/BinarySequenceProtocol/BinarySequenceProtocolClient.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 
@@ -41,7 +41,6 @@ using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::BinarySequenceProtocol;
 using namespace Nexus::DefinitionsService;
 using namespace Nexus::MarketDataService;
 using namespace std;
