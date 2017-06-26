@@ -6,16 +6,16 @@ using namespace Nexus::Tests;
 using namespace std;
 
 void MoneyTester::TestToString() {
-  CPPUNIT_ASSERT(Money::FromRepresentation(0).ToString() == "0.00");
-  CPPUNIT_ASSERT(Money::FromRepresentation(1000000).ToString() == "1.00");
-  CPPUNIT_ASSERT(Money::FromRepresentation(100000).ToString() == "0.10");
-  CPPUNIT_ASSERT(Money::FromRepresentation(10000).ToString() == "0.01");
-  CPPUNIT_ASSERT(Money::FromRepresentation(1000).ToString() == "0.001");
-  CPPUNIT_ASSERT(Money::FromRepresentation(100).ToString() == "0.0001");
-  CPPUNIT_ASSERT(Money::FromRepresentation(10).ToString() == "0.00001");
-  CPPUNIT_ASSERT(Money::FromRepresentation(1).ToString() == "0.000001");
-  CPPUNIT_ASSERT(Money::FromRepresentation(135000).ToString() == "0.135");
-  CPPUNIT_ASSERT(Money::FromRepresentation(35000).ToString() == "0.035");
+  CPPUNIT_ASSERT(Money::ZERO.ToString() == "0.00");
+  CPPUNIT_ASSERT(Money::ONE.ToString() == "1.00");
+  CPPUNIT_ASSERT((Money::ONE / 10).ToString() == "0.10");
+  CPPUNIT_ASSERT((Money::ONE / 100).ToString() == "0.01");
+  CPPUNIT_ASSERT((Money::ONE / 1000).ToString() == "0.001");
+  CPPUNIT_ASSERT((Money::ONE / 10000).ToString() == "0.0001");
+  CPPUNIT_ASSERT((Money::ONE / 100000).ToString() == "0.00001");
+  CPPUNIT_ASSERT((Money::ONE / 1000000).ToString() == "0.000001");
+  CPPUNIT_ASSERT((13 * Money::CENT + Money::CENT / 2).ToString() == "0.135");
+  CPPUNIT_ASSERT((3 * Money::CENT + Money::CENT / 2).ToString() == "0.035");
 }
 
 void MoneyTester::TestFromString() {

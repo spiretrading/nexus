@@ -11,6 +11,7 @@
 #include <boost/optional/optional.hpp>
 #include <boost/rational.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
+#include "Nexus/Definitions/Quantity.hpp"
 
 namespace Nexus {
 namespace Details {
@@ -28,37 +29,19 @@ namespace Details {
 
     //! Stores a value of 0.0001.
     static const T BIP;
-
-    //! Stores the minimum value.
-    static const T MIN;
-
-    //! Stores the maximum value.
-    static const T MAX;
-
-    //! Stores the smallest unit of Money.
-    static const T EPSILON;
   };
 
   template<typename T>
-  const T MoneyStaticDefinitions<T>::ZERO(256);
+  const T MoneyStaticDefinitions<T>::ZERO(0);
 
   template<typename T>
-  const T MoneyStaticDefinitions<T>::ONE((1000000 << 8) | std::uint8_t(-6));
+  const T MoneyStaticDefinitions<T>::ONE(1);
 
   template<typename T>
-  const T MoneyStaticDefinitions<T>::CENT((10000 << 8) | std::uint8_t(-6));
+  const T MoneyStaticDefinitions<T>::CENT(ONE / 100);
 
   template<typename T>
-  const T MoneyStaticDefinitions<T>::BIP((100 << 8) | std::uint8_t(-6));
-
-  template<typename T>
-  const T MoneyStaticDefinitions<T>::MIN((1 << 8) | std::uint8_t(-255));
-
-  template<typename T>
-  const T MoneyStaticDefinitions<T>::MAX((1 << 8) | std::uint8_t(-255));
-
-  template<typename T>
-  const T MoneyStaticDefinitions<T>::EPSILON((1 << 8) | std::uint8_t(-255));
+  const T MoneyStaticDefinitions<T>::BIP(CENT / 100);
 }
 
   /*! \class Money
@@ -81,8 +64,8 @@ namespace Details {
       */
       static boost::optional<Money> FromValue(const std::string& value);
 
-      //! Constructs a value of ZERO.
-      Money();
+      //! Constructs a Money value of ZERO.
+      Money() = default;
 
       //! Returns the string representation of this value.
       std::string ToString() const;
@@ -198,17 +181,19 @@ namespace Details {
       using Details::MoneyStaticDefinitions<Money>::ONE;
       using Details::MoneyStaticDefinitions<Money>::CENT;
       using Details::MoneyStaticDefinitions<Money>::BIP;
-      using Details::MoneyStaticDefinitions<Money>::MIN;
-      using Details::MoneyStaticDefinitions<Money>::MAX;
-      using Details::MoneyStaticDefinitions<Money>::EPSILON;
     private:
       friend struct Details::MoneyStaticDefinitions<Money>;
-      static constexpr auto COEFFICIENT_LENGTH = 56;
-      static constexpr auto EXPONENT_LENGTH = 8;
-      static constexpr auto MONEY_LENGTH = 64;
-      std::uint64_t m_value;
+      template<typename T> friend Money operator *(T lhs, Money rhs);
+      template<typename T> friend Money operator /(Money lhs, T rhs);
+      friend Money Abs(Money value);
+      friend Money Floor(Money value, int decimalPlaces);
+      friend Money Ceil(Money value, int decimalPlaces);
+      friend Money Truncate(Money value, int decimalPlaces);
+      friend Money Round(Money value, int decimalPlaces);
+      friend double ToDouble(Money value);
+      Quantity m_value;
 
-      explicit Money(std::uint64_t value);
+      explicit Money(Quantity value);
   };
 
 #ifdef _MSC_VER
@@ -217,9 +202,6 @@ namespace Details {
   static auto MoneyOne = Details::MoneyStaticDefinitions<Money>::ONE;
   static auto MoneyCent = Details::MoneyStaticDefinitions<Money>::CENT;
   static auto MoneyBip = Details::MoneyStaticDefinitions<Money>::BIP;
-  static auto MoneyMin = Details::MoneyStaticDefinitions<Money>::MIN;
-  static auto MoneyMax = Details::MoneyStaticDefinitions<Money>::MAX;
-  static auto MoneyEpsilon = Details::MoneyStaticDefinitions<Money>::EPSILON;
 #endif
 
   //! Multiplies a Money instance by a scalar quantity.
@@ -230,26 +212,7 @@ namespace Details {
   */
   template<typename T>
   Money operator *(T lhs, Money rhs) {
-
-    // TODO
-    return Money{};
-//    return Money::FromRepresentation(
-//      static_cast<std::int64_t>(lhs * rhs.GetRepresentation()));
-  }
-
-  //! Multiplies a Money instance by a rational quantity.
-  /*!
-    \param lhs The rational quantity.
-    \param rhs The Money instance to be multiplied.
-    \return <i>lhs</i> * <i>rhs</i>.
-  */
-  template<typename T>
-  Money operator *(const boost::rational<T>& lhs, Money rhs) {
-
-    // TODO
-    return Money{};
-//    return Money::FromRepresentation(static_cast<std::int64_t>(
-//      (lhs.numerator() * rhs.GetRepresentation()) / lhs.denominator()));
+    return Money{lhs * rhs.m_value};
   }
 
   //! Divides a Money instance by a scalar quantity.
@@ -260,11 +223,7 @@ namespace Details {
   */
   template<typename T>
   Money operator /(Money lhs, T rhs) {
-
-    // TODO
-    return Money{};
-//    return Money::FromRepresentation(
-//      static_cast<std::int64_t>(lhs.GetRepresentation() / rhs));
+    return Money{lhs.m_value / rhs};
   }
 
   //! Returns the absolute value.
@@ -272,10 +231,7 @@ namespace Details {
     \param value The value.
   */
   inline Money Abs(Money value) {
-
-    // TODO
-    return Money{};
-//    return Money::FromRepresentation(std::abs(value.GetRepresentation()));
+    return Money{Abs(value.m_value)};
   }
 
   //! Returns the floor.
@@ -283,14 +239,18 @@ namespace Details {
     \param value The value to floor.
     \param decimalPlaces The decimal place to floor to.
   */
-  Money Floor(Money value, int decimalPlaces);
+  inline Money Floor(Money value, int decimalPlaces) {
+    return Money{Floor(value.m_value, decimalPlaces)};
+  }
 
   //! Returns the ceiling.
   /*!
     \param value The value to ceil.
     \param decimalPlaces The decimal place to ceil to.
   */
-  Money Ceil(Money value, int decimalPlaces);
+  inline Money Ceil(Money value, int decimalPlaces) {
+    return Money{Ceil(value.m_value, decimalPlaces)};
+  }
 
   //! Returns the truncated value.
   /*!
@@ -298,11 +258,7 @@ namespace Details {
     \param decimalPlaces The decimal place to truncate.
   */
   inline Money Truncate(Money value, int decimalPlaces) {
-
-    // TODO
-    return Money{};
-//    auto decimalPoint = Beam::PowerOfTen(Money::DECIMAL_PLACES - decimalPlaces);
-//    return decimalPoint * (value / decimalPoint);
+    return Money{Truncate(value.m_value, decimalPlaces)};
   }
 
   //! Returns the rounded value.
@@ -311,17 +267,7 @@ namespace Details {
     \param decimalPlaces The decimal place to round to.
   */
   inline Money Round(Money value, int decimalPlaces) {
-    // TODO
-    return Money{};
-/*
-    auto absValue = Abs(value);
-    auto floorValue = Floor(value, decimalPlaces);
-    auto decimalPoint = Beam::PowerOfTen(decimalPlaces);
-    if(absValue - floorValue >= ((Money::ONE / 2) / decimalPoint)) {
-      floorValue += Money::ONE / Beam::PowerOfTen(decimalPlaces);
-    }
-    return floorValue;
-*/
+    return Money{Round(value.m_value, decimalPlaces)};
   }
 
   //! Returns the floating point representation of the value.
@@ -330,11 +276,7 @@ namespace Details {
     \return The floating point representation of the <i>value</i>.
   */
   inline double ToDouble(Money value) {
-
-    // TODO
-    return 0.0;
-//    return value.GetRepresentation() /
-//      static_cast<double>(Money::MULTIPLIER);
+    return static_cast<double>(value.m_value);
   }
 
   inline std::ostream& operator <<(std::ostream& out, Money value) {
@@ -354,124 +296,46 @@ namespace Details {
   }
 
   inline Money Money::FromValue(double value) {
-    // TODO
-    return Money{};
-//    return Money(static_cast<std::int64_t>(value * MULTIPLIER));
+    return Money{value};
   }
 
   inline boost::optional<Money> Money::FromValue(const std::string& value) {
-
-    // TODO
-    return boost::none;
-/*
-    if(value.empty()) {
+    auto quantity = Quantity::FromValue(value);
+    if(!quantity.is_initialized()) {
       return boost::none;
     }
-    auto i = value.begin();
-    std::int64_t sign;
-    if(*i == '-') {
-      sign = -1;
-      ++i;
-    } else {
-      sign = 1;
-      if(*i == '+') {
-        ++i;
-      }
-    }
-    std::int64_t leftHand = 0;
-    auto hasDecimals = false;
-    while(i != value.end()) {
-      if(*i >= '0' && *i <= '9') {
-        leftHand *= 10;
-        leftHand += *i - '0';
-        ++i;
-      } else if(*i == '.') {
-        hasDecimals = true;
-        ++i;
-        break;
-      } else {
-        return boost::none;
-      }
-    }
-    std::int64_t rightHand = 0;
-    auto multiplier = Beam::PowerOfTen(DECIMAL_PLACES);
-    if(hasDecimals) {
-      while(i != value.end()) {
-        if(*i >= '0' && *i <= '9') {
-          rightHand *= 10;
-          rightHand += *i - '0';
-          ++i;
-          multiplier /= 10;
-        } else {
-          return boost::none;
-        }
-      }
-    }
-    auto finalValue = sign * (leftHand * Beam::PowerOfTen(DECIMAL_PLACES) +
-      rightHand * multiplier);
-    return Money{static_cast<std::int64_t>(finalValue)};
-*/
+    return Money{*quantity};
   }
 
-  inline Money::Money()
-      : m_value{0} {}
-
-  inline Money::Money(std::uint64_t value)
+  inline Money::Money(Quantity value)
       : m_value{value} {}
 
   inline std::string Money::ToString() const {
-    const auto MINIMUM_DECIMAL_PLACES = 2;
-    auto value = std::to_string(m_value >> EXPONENT_LENGTH);
-    auto exponent = static_cast<std::int8_t>(m_value & std::uint8_t(~0));
-    if(exponent > 0) {
-      while(exponent > 0) {
-        value += "0";
-        --exponent;
-      }
-      value += ".00";
-    } else {
-      exponent = -exponent;
-      while(static_cast<std::int8_t>(value.size()) < exponent) {
-        value = "0" + value;
-      }
-      auto dotPosition = value.size() - exponent;
-      value.insert(value.begin() + dotPosition, '.');
-      while(value.back() == '0' && value.size() >
-          dotPosition + (MINIMUM_DECIMAL_PLACES + 1)) {
-        value.pop_back();
-      }
-    }
-    return value;
+    return Beam::ToString(m_value);
   }
 
   inline bool Money::operator <(Money rhs) const {
-    return false;
-//    return m_value < rhs.m_value;
+    return m_value < rhs.m_value;
   }
 
   inline bool Money::operator <=(Money rhs) const {
-    return false;
-//    return m_value <= rhs.m_value;
+    return m_value <= rhs.m_value;
   }
 
   inline bool Money::operator ==(Money rhs) const {
-    return false;
-//    return m_value == rhs.m_value;
+    return m_value == rhs.m_value;
   }
 
   inline bool Money::operator !=(Money rhs) const {
-    return false;
-//    return m_value != rhs.m_value;
+    return m_value != rhs.m_value;
   }
 
   inline bool Money::operator >=(Money rhs) const {
-    return false;
-//    return m_value >= rhs.m_value;
+    return m_value >= rhs.m_value;
   }
 
   inline bool Money::operator >(Money rhs) const {
-    return false;
-//    return m_value > rhs.m_value;
+    return m_value > rhs.m_value;
   }
 
   inline Money& Money::operator =(Money rhs) {
@@ -480,85 +344,41 @@ namespace Details {
   }
 
   inline Money Money::operator +(Money rhs) const {
-    auto exponentComparison = (m_value & std::uint8_t(~0)) -
-      (rhs.m_value & std::uint8_t(~0));
-    if(exponentComparison == 0) {
-      return Money{m_value +
-        (rhs.m_value & (std::uint64_t(~0ULL) << EXPONENT_LENGTH))};
-    } else if(exponentComparison > 1) {
-      auto coefficient = (m_value & (std::uint64_t(~0ULL) << EXPONENT_LENGTH));
-      auto result = 10 * coefficient;
-      if(result < coefficient) {
-
-        // TODO
-        return Money::ZERO;
-      }
-    } else {
-      return rhs + *this;
-    }
+    return Money(m_value + rhs.m_value);
   }
 
   inline Money& Money::operator +=(Money rhs) {
-    *this = *this + rhs;
+    m_value += rhs.m_value;
     return *this;
   }
 
   inline Money Money::operator -(Money rhs) const {
-    return Money{};
-//    return Money(m_value - rhs.m_value);
+    return Money(m_value - rhs.m_value);
   }
 
   inline Money& Money::operator -=(Money rhs) {
-//    m_value -= rhs.m_value;
+    m_value -= rhs.m_value;
     return *this;
   }
 
   inline double Money::operator /(Money rhs) const {
-//    return m_value / static_cast<double>(rhs.m_value);
-    return 0.0;
+    return static_cast<double>(m_value / rhs.m_value);
   }
 
   template<typename T>
   Money& Money::operator *=(T rhs) {
-//    m_value *= rhs;
+    m_value *= rhs;
     return *this;
   }
 
   template<typename T>
   Money& Money::operator /=(T rhs) {
-//    m_value /= rhs;
+    m_value /= rhs;
     return *this;
   }
 
   inline Money Money::operator -() const {
-    return Money{};
-//    return Money(-m_value);
-  }
-
-  inline Money Floor(Money value, int decimalPlaces) {
-    return Money{};
-/*
-    if(value < Money::ZERO) {
-      return -Ceil(-value, decimalPlaces);
-    }
-    return Beam::PowerOfTen(Money::DECIMAL_PLACES - decimalPlaces) *
-      (value / Beam::PowerOfTen(Money::DECIMAL_PLACES - decimalPlaces));
-*/
-  }
-
-  inline Money Ceil(Money value, int decimalPlaces) {
-/*
-    if(value < Money::ZERO) {
-      return -Floor(-value, decimalPlaces);
-    }
-    auto floor = Floor(value, decimalPlaces);
-    if(value - floor == Money::ZERO) {
-      return floor;
-    }
-    return floor + Beam::PowerOfTen(Money::DECIMAL_PLACES - decimalPlaces) *
-      Money::EPSILON;
-*/
-    return Money{};
+    return Money{-m_value};
   }
 }
 
@@ -576,7 +396,7 @@ namespace Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, const char* name,
         const Nexus::Money& value) const {
-      shuttle.Send(name, value.GetRepresentation());
+      shuttle.Send(name, value.m_value);
     }
   };
 
@@ -585,9 +405,9 @@ namespace Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, const char* name,
         Nexus::Money& value) const {
-      std::int64_t representation;
+      Quantity representation;
       shuttle.Shuttle(name, representation);
-      value = Nexus::Money::FromRepresentation(representation);
+      value = Nexus::Money{representation};
     }
   };
 }
@@ -595,16 +415,7 @@ namespace Serialization {
 
 namespace std {
   template<>
-  class numeric_limits<Nexus::Money> {
-    public:
-      static Nexus::Money min() {
-        return Nexus::Money::MIN;
-      }
-
-      static Nexus::Money max() {
-        return Nexus::Money::MAX;
-      }
-  };
+  class numeric_limits<Nexus::Money> {};
 }
 
 #endif

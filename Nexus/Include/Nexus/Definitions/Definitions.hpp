@@ -1,6 +1,5 @@
 #ifndef NEXUS_DEFINITIONS_HPP
 #define NEXUS_DEFINITIONS_HPP
-#include <cstdint>
 
 namespace Nexus {
   struct BboQuote;
@@ -21,7 +20,6 @@ namespace Nexus {
   class Money;
   struct OrderImbalance;
   struct Quote;
-  using Quantity = std::int64_t;
   class Region;
   template<typename T> class RegionMap;
   class Security;
