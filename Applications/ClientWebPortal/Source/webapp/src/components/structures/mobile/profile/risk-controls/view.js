@@ -66,7 +66,7 @@ class View extends CommonView {
   /** @private */
   validateInput(input, numDecimalPlaces, isTime, isHour) {
     let inputNumber = Number(input);
-    if (isNaN(inputNumber)) {
+    if (!$.isNumeric(inputNumber)) {
       return 'Not a number.';
     } else if (!this.isValidDecimals.apply(this, [input, numDecimalPlaces]) && numDecimalPlaces == 0) {
       return 'Decimal places are not allowed.';

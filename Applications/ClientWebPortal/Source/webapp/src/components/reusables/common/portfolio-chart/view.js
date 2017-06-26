@@ -198,7 +198,6 @@ class View extends UpdatableView {
         }
         let constructorName = a[propertyName].constructor.name;
 
-        console.debug(sortingColumn.name);
         if (constructorName == 'CurrencyId') {
           let currencyA = definitionsService.getCurrencyCode(a[propertyName].value);
           let currencyB = definitionsService.getCurrencyCode(b[propertyName].value);
@@ -233,7 +232,7 @@ class View extends UpdatableView {
           } else if (sortingColumn.direction === 'desc') {
             return Math.abs(b[propertyName]) - Math.abs(a[propertyName]);
           }
-        } else if (typeof(a[propertyName]) != 'object' && !isNaN(a[propertyName])) {
+        } else if (typeof(a[propertyName]) != 'object' && typeof(a[propertyName]) != 'string' && $.isNumeric(a[propertyName])) {
           if (sortingColumn.direction === 'asc') {
             return a[propertyName] - b[propertyName];
           } else if (sortingColumn.direction === 'desc') {
@@ -252,11 +251,7 @@ class View extends UpdatableView {
 
   /** @private */
   getSecurityLabel(security) {
-    console.debug('definitions service: ');
-    console.debug(definitionsService);
     let marketDatabase = definitionsService.getMarketDatabase.apply(definitionsService);
-    console.debug('marketDatabase: ');
-    console.debug(marketDatabase);
     return security.toString.apply(security, [marketDatabase]);
   }
 

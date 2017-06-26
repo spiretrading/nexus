@@ -68,7 +68,7 @@ class View extends UpdatableView {
   /** @private */
   validateInput(input) {
     let inputNumber = Number(input);
-    if (isNaN(inputNumber)) {
+    if (!$.isNumeric(inputNumber)) {
       return 'Must be a number.';
     } else if (inputNumber < 0) {
       return 'Cannot be a negative number.';
