@@ -47,12 +47,40 @@ namespace Nexus {
       */
       void AdvanceTime(boost::posix_time::time_duration duration);
 
-      //! Updates a BboQuote.
+      //! Publishes an OrderImbalance.
       /*!
-        \param security The Security to update.
-        \param bboQuote The updated BboQuote.
+        \param market The market to publish to.
+        \param orderImbalance The OrderImbalance to publish.
       */
-      void Update(const Security& security, const BboQuote& bboQuote);
+      void Publish(MarketCode market, const OrderImbalance& orderImbalance);
+
+      //! Publishes a BboQuote.
+      /*!
+        \param security The Security to publish to.
+        \param bboQuote The BboQuote to publish.
+      */
+      void Publish(const Security& security, const BboQuote& bboQuote);
+
+      //! Publishes a BookQuote.
+      /*!
+        \param security The Security to publish to.
+        \param bookQuote The BookQuote to publish.
+      */
+      void Publish(const Security& security, const BookQuote& bookQuote);
+
+      //! Publishes a MarketQuote.
+      /*!
+        \param security The Security to publish to.
+        \param marketQuote The MarketQuote to publish.
+      */
+      void Publish(const Security& security, const MarketQuote& marketQuote);
+
+      //! Publishes a TimeAndSale.
+      /*!
+        \param security The Security to publish to.
+        \param timeAndSale The TimeAndSale to publish.
+      */
+      void Publish(const Security& security, const TimeAndSale& timeAndSale);
 
       //! Updates the price of a BboQuote.
       /*!
@@ -176,6 +204,8 @@ namespace Nexus {
         m_orderExecutionEnvironment;
       Beam::IO::OpenState m_openState;
 
+      template<typename Index, typename Value>
+      void PublishMarketData(const Index& index, const Value& value);
       void Shutdown();
   };
 
@@ -194,17 +224,29 @@ namespace Nexus {
     Beam::Routines::FlushPendingRoutines();
   }
 
-  inline void TestEnvironment::Update(const Security& security,
+  inline void TestEnvironment::Publish(MarketCode market,
+      const OrderImbalance& orderImbalance) {
+    PublishMarketData(market, orderImbalance);
+  }
+
+  inline void TestEnvironment::Publish(const Security& security,
       const BboQuote& bboQuote) {
-    if(bboQuote.m_timestamp != boost::posix_time::not_a_date_time) {
-      m_timeEnvironment.SetTime(bboQuote.m_timestamp);
-      GetMarketDataEnvironment().SetBbo(security, bboQuote);
-    } else {
-      auto revisedBboQuote = bboQuote;
-      revisedBboQuote.m_timestamp = m_timeEnvironment.GetTime();
-      GetMarketDataEnvironment().SetBbo(security, revisedBboQuote);
-    }
-    Beam::Routines::FlushPendingRoutines();
+    PublishMarketData(security, bboQuote);
+  }
+
+  inline void TestEnvironment::Publish(const Security& security,
+      const BookQuote& bookQuote) {
+    PublishMarketData(security, bookQuote);
+  }
+
+  inline void TestEnvironment::Publish(const Security& security,
+      const MarketQuote& marketQuote) {
+    PublishMarketData(security, marketQuote);
+  }
+
+  inline void TestEnvironment::Publish(const Security& security,
+      const TimeAndSale& timeAndSale) {
+    PublishMarketData(security, timeAndSale);
   }
 
   inline void TestEnvironment::UpdateBboPrice(const Security& security,
@@ -212,7 +254,7 @@ namespace Nexus {
       const boost::posix_time::ptime& timestamp) {
     BboQuote quote{Quote{bidPrice, 100, Side::BID},
       Quote{askPrice, 100, Side::ASK}, timestamp};
-    Update(security, quote);
+    Publish(security, quote);
   }
 
   inline void TestEnvironment::UpdateBboPrice(const Security& security,
@@ -455,6 +497,21 @@ namespace Nexus {
       return;
     }
     Shutdown();
+  }
+
+  template<typename Index, typename Value>
+  void TestEnvironment::PublishMarketData(const Index& index,
+      const Value& value) {
+    if(Beam::Queries::GetTimestamp(value) !=
+        boost::posix_time::not_a_date_time) {
+      m_timeEnvironment.SetTime(Beam::Queries::GetTimestamp(value));
+      GetMarketDataEnvironment().Publish(index, value);
+    } else {
+      auto revisedValue = value;
+      Beam::Queries::GetTimestamp(revisedValue) = m_timeEnvironment.GetTime();
+      GetMarketDataEnvironment().Publish(index, revisedValue);
+    }
+    Beam::Routines::FlushPendingRoutines();
   }
 
   inline void TestEnvironment::Shutdown() {

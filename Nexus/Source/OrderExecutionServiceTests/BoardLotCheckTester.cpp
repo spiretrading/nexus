@@ -39,7 +39,7 @@ void BoardLotCheckTester::TestUnavailableBboQuote() {
   PrimitiveOrder orderA{orderInfoA};
   CPPUNIT_ASSERT_THROW(m_check->Submit(orderInfoA),
     OrderSubmissionCheckException);
-  m_environment->Update(security,
+  m_environment->Publish(security,
     BboQuote{Quote{Money::ONE, 100, Side::BID},
     Quote{Money::ONE + Money::CENT, 100, Side::ASK}, not_a_date_time});
   CPPUNIT_ASSERT_NO_THROW(m_check->Submit(orderInfoA));

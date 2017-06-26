@@ -33,11 +33,6 @@ namespace MarketDataService {
 
       ~ClientHistoricalDataStore();
 
-      MarketEntry::InitialSequences LoadInitialSequences(MarketCode market);
-
-      SecurityEntry::InitialSequences LoadInitialSequences(
-        const Security& security);
-
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query);
 
@@ -97,18 +92,6 @@ namespace MarketDataService {
   ClientHistoricalDataStore<MarketDataClientType>::
       ~ClientHistoricalDataStore() {
     Close();
-  }
-
-  template<typename MarketDataClientType>
-  MarketEntry::InitialSequences ClientHistoricalDataStore<
-      MarketDataClientType>::LoadInitialSequences(MarketCode market) {
-    return Beam::Default();
-  }
-
-  template<typename MarketDataClientType>
-  SecurityEntry::InitialSequences ClientHistoricalDataStore<
-      MarketDataClientType>::LoadInitialSequences(const Security& security) {
-    return Beam::Default();
   }
 
   template<typename MarketDataClientType>

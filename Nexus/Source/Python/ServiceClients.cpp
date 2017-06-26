@@ -318,9 +318,19 @@ void Nexus::Python::ExportTestEnvironment() {
       "TestEnvironment", init<>())
     .def("set_time", BlockingFunction(&TestEnvironment::SetTime))
     .def("advance_time", BlockingFunction(&TestEnvironment::AdvanceTime))
-    .def("update", BlockingFunction(
-      static_cast<void (TestEnvironment::*)(const Security&, const BboQuote&)>(
-      &TestEnvironment::Update)))
+    .def("publish", BlockingFunction(static_cast<void (TestEnvironment::*)(
+      MarketCode, const OrderImbalance&)>(&TestEnvironment::Publish)))
+    .def("publish", BlockingFunction(static_cast<void (TestEnvironment::*)(
+      const Security&, const BboQuote&)>(&TestEnvironment::Publish)))
+    .def("publish", BlockingFunction(
+      static_cast<void (TestEnvironment::*)(const Security&, const BookQuote&)>(
+      &TestEnvironment::Publish)))
+    .def("publish", BlockingFunction(
+      static_cast<void (TestEnvironment::*)(
+      const Security&, const MarketQuote&)>(&TestEnvironment::Publish)))
+    .def("publish", BlockingFunction(
+      static_cast<void (TestEnvironment::*)(
+      const Security&, const TimeAndSale&)>(&TestEnvironment::Publish)))
     .def("update_bbo_price", BlockingFunction(
       static_cast<void (TestEnvironment::*)(const Security&, Money, Money)>(
       &TestEnvironment::UpdateBboPrice)))

@@ -31,14 +31,8 @@ namespace Details {
           return {"TSE", "CDX"};
         } else if(security.GetCountry() == DefaultCountries::AU()) {
           return {"ASX"};
-        } else if(security.GetMarket() == DefaultMarkets::NYSE()) {
-          return {"XNYS"};
-        } else if(security.GetMarket() == DefaultMarkets::NASDAQ()) {
-          return {"XNAS"};
-        } else if(security.GetMarket() == DefaultMarkets::ARCX()) {
-          return {"ARCX"};
-        } else if(security.GetMarket() == DefaultMarkets::BATS()) {
-          return {"BATY", "BATS"};
+        } else if(!security.GetMarket().IsEmpty()) {
+          return {std::string{security.GetMarket().GetData()}};
         } else {
           return {};
         }
@@ -255,12 +249,12 @@ namespace Details {
     }
     auto entry = m_securityEntries.Find(security);
     if(!entry.is_initialized() || !(*entry)->IsAvailable()) {
-      return Security{security.GetSymbol(), CountryDatabase::NONE};
+      return Security{security.GetSymbol(), security.GetCountry()};
     }
     return Beam::Threading::With(***entry,
       [&] (auto& entry) {
         if(entry.GetSecurity().GetMarket().IsEmpty()) {
-          return Security{security.GetSymbol(), CountryDatabase::NONE};
+          return Security{security.GetSymbol(), security.GetCountry()};
         }
         return entry.GetSecurity();
       });
@@ -442,7 +436,7 @@ namespace Details {
         return std::make_shared<
             Beam::Remote<SyncMarketEntry, Beam::Threading::Mutex>>(
           [&] (auto& entry) {
-            auto initialSequences = dataStore.LoadInitialSequences(market);
+            auto initialSequences = LoadInitialSequences(dataStore, market);
             entry.Initialize(market, initialSequences);
           });
       });
@@ -459,11 +453,11 @@ namespace Details {
     }
     auto entry = m_securityEntries.GetOrInsert(security,
       [&] {
-        Security sanitizedSecurity{security.GetSymbol(), security.GetCountry()};
         return std::make_shared<
             Beam::Remote<SyncSecurityEntry, Beam::Threading::Mutex>>(
-          [&, sanitizedSecurity] (auto& entry) {
-            auto initialSequences = dataStore.LoadInitialSequences(
+          [&] (auto& entry) {
+            auto sanitizedSecurity = this->GetPrimaryListing(security);
+            auto initialSequences = LoadInitialSequences(dataStore,
               sanitizedSecurity);
             auto closePrice = Details::LoadClosePrice(sanitizedSecurity,
               dataStore);

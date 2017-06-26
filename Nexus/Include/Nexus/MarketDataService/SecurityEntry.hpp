@@ -131,6 +131,63 @@ namespace MarketDataService {
       std::vector<BookQuoteEntry> m_bidBook;
   };
 
+  //! Returns the InitialSequences for a SecurityEntry.
+  /*!
+    \param dataStore The DataStore to load the InitialSequences from.
+    \param security The security to load the InitialSequences for.
+    \return The set of InitialSequences for the specified <i>security</i>.
+  */
+  template<typename DataStore>
+  SecurityEntry::InitialSequences LoadInitialSequences(DataStore& dataStore,
+      const Security& security) {
+    SecurityMarketDataQuery query;
+    query.SetIndex(security);
+    query.SetRange(Beam::Queries::Range::Total());
+    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Type::TAIL, 1);
+    SecurityEntry::InitialSequences initialSequences;
+    {
+      auto results = dataStore.LoadBboQuotes(query);
+      if(results.empty()) {
+        initialSequences.m_nextBboQuoteSequence =
+          Beam::Queries::Sequence::First();
+      } else {
+        initialSequences.m_nextBboQuoteSequence =
+          Beam::Queries::Increment(results.back().GetSequence());
+      }
+    }
+    {
+      auto results = dataStore.LoadBookQuotes(query);
+      if(results.empty()) {
+        initialSequences.m_nextBookQuoteSequence =
+          Beam::Queries::Sequence::First();
+      } else {
+        initialSequences.m_nextBookQuoteSequence =
+          Beam::Queries::Increment(results.back().GetSequence());
+      }
+    }
+    {
+      auto results = dataStore.LoadMarketQuotes(query);
+      if(results.empty()) {
+        initialSequences.m_nextMarketQuoteSequence =
+          Beam::Queries::Sequence::First();
+      } else {
+        initialSequences.m_nextMarketQuoteSequence =
+          Beam::Queries::Increment(results.back().GetSequence());
+      }
+    }
+    {
+      auto results = dataStore.LoadTimeAndSales(query);
+      if(results.empty()) {
+        initialSequences.m_nextTimeAndSaleSequence =
+          Beam::Queries::Sequence::First();
+      } else {
+        initialSequences.m_nextTimeAndSaleSequence =
+          Beam::Queries::Increment(results.back().GetSequence());
+      }
+    }
+    return initialSequences;
+  }
+
   inline SecurityEntry::BookQuoteEntry::BookQuoteEntry(
       const SequencedSecurityBookQuote& quote, int sourceId)
       : m_quote{quote},

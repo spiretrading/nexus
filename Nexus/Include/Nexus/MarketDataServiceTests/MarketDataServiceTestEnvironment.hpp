@@ -67,16 +67,37 @@ namespace Tests {
       //! Returns the MarketDataRegistry.
       const MarketDataRegistry& GetRegistry() const;
 
-      //! Sets a Security's BBO.
+      //! Publishes an OrderImbalance.
       /*!
-        \param security The Security to set.
-        \param bbo The <i>security</i>'s BBO.
+        \param market The market to publish to.
+        \param orderImbalance The OrderImbalance to publish.
       */
-      void SetBbo(const Security& security, const BboQuote& bbo);
+      void Publish(MarketCode market, const OrderImbalance& orderImbalance);
+
+      //! Publishes a BboQuote.
+      /*!
+        \param security The Security to publish to.
+        \param bboQuote The BboQuote to publish.
+      */
+      void Publish(const Security& security, const BboQuote& bboQuote);
+
+      //! Publishes a BookQuote.
+      /*!
+        \param security The Security to publish to.
+        \param bookQuote The BookQuote to publish.
+      */
+      void Publish(const Security& security, const BookQuote& bookQuote);
+
+      //! Publishes a MarketQuote.
+      /*!
+        \param security The Security to publish to.
+        \param marketQuote The MarketQuote to publish.
+      */
+      void Publish(const Security& security, const MarketQuote& marketQuote);
 
       //! Publishes a TimeAndSale.
       /*!
-        \param security The Security publishing the TimeAndSale.
+        \param security The Security to publish to.
         \param timeAndSale The TimeAndSale to publish.
       */
       void Publish(const Security& security, const TimeAndSale& timeAndSale);
@@ -200,10 +221,28 @@ namespace Tests {
     return m_registry;
   }
 
-  inline void MarketDataServiceTestEnvironment::SetBbo(
-      const Security& security, const BboQuote& bbo) {
+  inline void MarketDataServiceTestEnvironment::Publish(
+      MarketCode market, const OrderImbalance& orderImbalance) {
+    m_registryServlet->PublishOrderImbalance(
+      MarketOrderImbalance{orderImbalance, market}, 0);
+  }
+
+  inline void MarketDataServiceTestEnvironment::Publish(
+      const Security& security, const BboQuote& bboQuote) {
     m_registryServlet->PublishBboQuote(
-      SecurityBboQuote{bbo, security}, 0);
+      SecurityBboQuote{bboQuote, security}, 0);
+  }
+
+  inline void MarketDataServiceTestEnvironment::Publish(
+      const Security& security, const BookQuote& bookQuote) {
+    m_registryServlet->UpdateBookQuote(
+      SecurityBookQuote{bookQuote, security}, 0);
+  }
+
+  inline void MarketDataServiceTestEnvironment::Publish(
+      const Security& security, const MarketQuote& marketQuote) {
+    m_registryServlet->PublishMarketQuote(
+      SecurityMarketQuote{marketQuote, security}, 0);
   }
 
   inline void MarketDataServiceTestEnvironment::Publish(
