@@ -50,13 +50,6 @@ namespace Details {
   class Money : private Details::MoneyStaticDefinitions<Money> {
     public:
 
-      //! Returns a Money value from a double.
-      /*!
-        \param value The value to represent.
-        \return A Money value instance representing the specified <i>value</i>.
-      */
-      static Money FromValue(double value);
-
       //! Returns a Money value from a string.
       /*!
         \param value The value to represent.
@@ -66,6 +59,12 @@ namespace Details {
 
       //! Constructs a Money value of ZERO.
       Money() = default;
+
+      //! Constructs a Money value.
+      /*!
+        \param value The value to represent.
+      */
+      explicit Money(Quantity value);
 
       //! Returns the string representation of this value.
       std::string ToString() const;
@@ -194,8 +193,6 @@ namespace Details {
       template<typename, typename> friend struct Beam::Serialization::Send;
       template<typename, typename> friend struct Beam::Serialization::Receive;
       Quantity m_value;
-
-      explicit Money(Quantity value);
   };
 
 #ifdef _MSC_VER
@@ -295,10 +292,6 @@ namespace Details {
     }
     value = *parsedValue;
     return in;
-  }
-
-  inline Money Money::FromValue(double value) {
-    return Money{value};
   }
 
   inline boost::optional<Money> Money::FromValue(const std::string& value) {
@@ -417,7 +410,16 @@ namespace Serialization {
 
 namespace std {
   template<>
-  class numeric_limits<Nexus::Money> {};
+  class numeric_limits<Nexus::Money> {
+    public:
+      static Nexus::Money min() {
+        return Nexus::Money{numeric_limits<Nexus::Quantity>::min()};
+      }
+
+      static Nexus::Money max() {
+        return Nexus::Money{numeric_limits<Nexus::Quantity>::max()};
+      }
+  };
 }
 
 #endif

@@ -393,11 +393,11 @@ void Nexus::Python::ExportMarketQuote() {
 
 void Nexus::Python::ExportMoney() {
   class_<Money>("Money", init<>())
+    .def(init<double>())
     .def_readonly("ZERO", Money::ZERO)
     .def_readonly("ONE", Money::ONE)
     .def_readonly("CENT", Money::CENT)
     .def_readonly("BIP", Money::BIP)
-    .def("from_value", static_cast<Money (*)(double)>(&Money::FromValue))
     .def("from_value",
       static_cast<boost::optional<Money> (*)(const std::string&)>(
       &Money::FromValue))

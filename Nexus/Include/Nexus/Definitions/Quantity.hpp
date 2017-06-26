@@ -166,7 +166,9 @@ namespace Nexus {
       template<typename, typename> friend struct Beam::Serialization::Send;
       template<typename, typename> friend struct Beam::Serialization::Receive;
       friend std::ostream& operator <<(std::ostream& out, Quantity value);
+      friend Quantity operator %(Quantity lhs, Quantity rhs);
       friend Quantity Abs(Quantity);
+      friend class std::numeric_limits<Nexus::Quantity>;
       struct RawValue{};
       boost::float64_t m_value;
 
@@ -203,6 +205,16 @@ namespace Nexus {
   template<typename T>
   Quantity operator *(const boost::rational<T>& lhs, Quantity rhs) {
     return (lhs.numerator() * rhs) / lhs.denominator();
+  }
+
+  //! Returns the modulus of two Quantities.
+  /*!
+    \param lhs The left hand side.
+    \param rhs The right hand side.
+    \return <i>lhs</i> % <i>rhs</i>
+  */
+  inline Quantity operator %(Quantity lhs, Quantity rhs) {
+    return Quantity{std::fmod(lhs.m_value, rhs.m_value)};
   }
 
   //! Returns the absolute value.
@@ -382,11 +394,11 @@ namespace Nexus {
   }
 
   inline Quantity Quantity::operator /(Quantity rhs) const {
-    return {m_value / (rhs.m_value / MULTIPLIER), RawValue{}};
+    return {MULTIPLIER * (m_value / rhs.m_value), RawValue{}};
   }
 
   inline Quantity& Quantity::operator /=(Quantity rhs) {
-    m_value /= (rhs.m_value / MULTIPLIER);
+    m_value = MULTIPLIER * (m_value / rhs.m_value);
     return *this;
   }
 
@@ -427,6 +439,22 @@ namespace Serialization {
     }
   };
 }
+}
+
+namespace std {
+  template<>
+  class numeric_limits<Nexus::Quantity> {
+    public:
+      static Nexus::Quantity min() {
+        return Nexus::Quantity{numeric_limits<boost::float64_t>::min(),
+          Nexus::Quantity::RawValue{}};
+      }
+
+      static Nexus::Quantity max() {
+        return Nexus::Quantity{numeric_limits<boost::float64_t>::max(),
+          Nexus::Quantity::RawValue{}};
+      }
+  };
 }
 
 #endif
