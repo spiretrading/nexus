@@ -191,6 +191,8 @@ namespace Details {
       friend Money Truncate(Money value, int decimalPlaces);
       friend Money Round(Money value, int decimalPlaces);
       friend double ToDouble(Money value);
+      template<typename, typename> friend struct Beam::Serialization::Send;
+      template<typename, typename> friend struct Beam::Serialization::Receive;
       Quantity m_value;
 
       explicit Money(Quantity value);
@@ -405,7 +407,7 @@ namespace Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, const char* name,
         Nexus::Money& value) const {
-      Quantity representation;
+      Nexus::Quantity representation;
       shuttle.Shuttle(name, representation);
       value = Nexus::Money{representation};
     }

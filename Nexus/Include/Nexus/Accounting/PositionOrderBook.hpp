@@ -238,7 +238,7 @@ namespace Accounting {
     }
     auto openQuantity = Pick(fields.m_side, securityEntry.m_askOpenQuantity,
       securityEntry.m_bidOpenQuantity);
-    if(openQuantity + fields.m_quantity > std::abs(securityEntry.m_position)) {
+    if(openQuantity + fields.m_quantity > Abs(securityEntry.m_position)) {
       return true;
     }
     return false;

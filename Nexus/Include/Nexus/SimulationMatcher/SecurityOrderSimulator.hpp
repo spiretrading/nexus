@@ -181,26 +181,15 @@ namespace OrderExecutionService {
   template<typename TimeClientType>
   OrderStatus SecurityOrderSimulator<TimeClientType>::FillOrder(
       PrimitiveOrder& order, Money price) {
-    const auto BOARD_LOT = 100;
-    for(int i = 0; i != order.GetInfo().m_fields.m_quantity / BOARD_LOT; ++i) {
-      order.With(
-        [&] (auto status, auto& reports) {
-          auto& lastReport = reports.back();
-          auto fillStatus =
-            [&] {
-              if(i + 1 < order.GetInfo().m_fields.m_quantity / BOARD_LOT) {
-                return OrderStatus::PARTIALLY_FILLED;
-              } else {
-                return OrderStatus::FILLED;
-              }
-            }();
-          auto updatedReport = ExecutionReport::BuildUpdatedReport(lastReport,
-            fillStatus, m_timeClient->GetTime());
-          updatedReport.m_lastQuantity = BOARD_LOT;
-          updatedReport.m_lastPrice = price;
-          order.Update(updatedReport);
-        });
-    }
+    order.With(
+      [&] (auto status, auto& reports) {
+        auto& lastReport = reports.back();
+        auto updatedReport = ExecutionReport::BuildUpdatedReport(lastReport,
+          OrderStatus::FILLED, m_timeClient->GetTime());
+        updatedReport.m_lastQuantity = order.GetInfo().m_fields.m_quantity;
+        updatedReport.m_lastPrice = price;
+        order.Update(updatedReport);
+      });
     return OrderStatus::FILLED;
   }
 

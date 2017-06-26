@@ -397,14 +397,13 @@ void Nexus::Python::ExportMoney() {
     .def_readonly("ONE", Money::ONE)
     .def_readonly("CENT", Money::CENT)
     .def_readonly("BIP", Money::BIP)
-    .def_readonly("EPSILON", Money::EPSILON)
     .def("from_value", static_cast<Money (*)(double)>(&Money::FromValue))
     .def("from_value",
       static_cast<boost::optional<Money> (*)(const std::string&)>(
       &Money::FromValue))
     .staticmethod("from_value")
     .def("__str__", &Money::ToString)
-    .def("__abs__", &Abs)
+    .def("__abs__", static_cast<Money (*)(Money)>(&Abs))
     .def("__float__", &ToDouble)
     .def(self < self)
     .def(self <= self)
@@ -419,12 +418,11 @@ void Nexus::Python::ExportMoney() {
     .def(int() * self)
     .def(double() * self)
     .def(self / int())
-    .def(self / double())
-    .add_property("representation", &Money::GetRepresentation);
-  def("floor", &Floor);
-  def("ceil", &Ceil);
-  def("truncate", &Truncate);
-  def("round", &Round);
+    .def(self / double());
+  def("floor", static_cast<Money (*)(Money, int)>(&Floor));
+  def("ceil", static_cast<Money (*)(Money, int)>(&Ceil));
+  def("truncate", static_cast<Money (*)(Money, int)>(&Truncate));
+  def("round", static_cast<Money (*)(Money, int)>(&Round));
   python_optional<Money>();
 }
 

@@ -168,7 +168,7 @@ namespace Accounting {
     if((orderFields.m_side == Side::BID && buyingPowerEntry.m_quantity < 0) ||
         (orderFields.m_side == Side::ASK && buyingPowerEntry.m_quantity > 0)) {
       auto delta =
-        std::min(std::abs(buyingPowerEntry.m_quantity), lastQuantity);
+        std::min(Abs(buyingPowerEntry.m_quantity), lastQuantity);
       buyingPowerEntry.m_expenditure -=
         GetDirection(GetOpposite(orderFields.m_side)) * delta *
         (buyingPowerEntry.m_expenditure / buyingPowerEntry.m_quantity);
