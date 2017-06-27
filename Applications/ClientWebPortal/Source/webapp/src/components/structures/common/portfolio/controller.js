@@ -97,6 +97,7 @@ class Controller {
       this.portfolioData.set(cacheKey, data[i]);
     }
     this.componentModel.portfolioData = this.portfolioData.values();
+
     if (this.componentModel.baseCurrencyId != null) {
       this.aggregateTotals.apply(this);
     }
@@ -112,7 +113,20 @@ class Controller {
     let fees = Money.fromNumber(0);
     let volumes = 0;
     let trades = 0;
+    let accountTotals = new HashMap();
     for (let i=0; i<portfolioData.length; i++) {
+      let accountTotal;
+      if (!accountTotals.has(portfolioData[i].account.id)) {
+        accountTotal = {
+          totalPnL: Money.fromNumber(0),
+          unrealizedPnL: Money.fromNumber(0),
+          fees: Money.fromNumber(0)
+        };
+        accountTotals.set(portfolioData[i].account.id, accountTotal);
+      } else {
+        accountTotal = accountTotals.get(portfolioData[i].account.id);
+      }
+
       let originalTotalPnL = portfolioData[i].totalPnL || Money.fromNumber(0);
       let convertedTotalPnL = this.convertCurrencies.apply(this, [
         portfolioData[i].currency,
@@ -120,6 +134,7 @@ class Controller {
         originalTotalPnL
       ]);
       totalPnL = totalPnL.add(convertedTotalPnL);
+      accountTotal.totalPnL = accountTotal.totalPnL.add(convertedTotalPnL);
 
       let originalUnrealizedPnL = portfolioData[i].unrealizedPnL || Money.fromNumber(0);
       let convertedUnrealizedPnL = this.convertCurrencies.apply(this, [
@@ -128,6 +143,7 @@ class Controller {
         originalUnrealizedPnL
       ]);
       unrealizedPnL = unrealizedPnL.add(convertedUnrealizedPnL);
+      accountTotal.unrealizedPnL = accountTotal.unrealizedPnL.add(convertedUnrealizedPnL);
 
       let originalRealizedPnL = portfolioData[i].realizedPnL || Money.fromNumber(0);
       let convertedRealizedPnL = this.convertCurrencies.apply(this, [
@@ -144,12 +160,21 @@ class Controller {
         originalFees
       ]);
       fees = fees.add(convertedFees);
+      accountTotal.fees = accountTotal.fees.add(convertedFees);
 
       let volume = portfolioData[i].volume || 0;
       volumes += volume
 
       let trade = portfolioData[i].trades || 0;
       trades += trade;
+    }
+
+    for (let i=0; i<portfolioData.length; i++) {
+      let accountId = portfolioData[i].account.id;
+      let accountTotal = accountTotals.get(accountId);
+      portfolioData[i].accountTotalPnL = accountTotal.totalPnL;
+      portfolioData[i].accountUnrealizedPnL = accountTotal.unrealizedPnL;
+      portfolioData[i].accountFees = accountTotal.fees;
     }
 
     this.componentModel.aggregates = {

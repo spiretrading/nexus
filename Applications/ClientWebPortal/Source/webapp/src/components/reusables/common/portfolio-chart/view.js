@@ -338,7 +338,10 @@ class View extends UpdatableView {
             property == 'fees' ||
             property == 'realizedPnL' ||
             property == 'totalPnL' ||
-            property == 'unrealizedPnL') {
+            property == 'unrealizedPnL' ||
+            property == 'accountTotalPnL' ||
+            property == 'accountUnrealizedPnL' ||
+            property == 'accountFees') {
             if (rowData[property] == null) {
               value = 'N/A';
             } else {
