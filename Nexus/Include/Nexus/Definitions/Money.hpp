@@ -66,6 +66,12 @@ namespace Details {
       */
       explicit Money(Quantity value);
 
+      //! Converts this Money to a float.
+      explicit operator boost::float64_t() const;
+
+      //! Converts this Money to a Quantity.
+      explicit operator Quantity() const;
+
       //! Returns the string representation of this value.
       std::string ToString() const;
 
@@ -189,7 +195,6 @@ namespace Details {
       friend Money Ceil(Money value, int decimalPlaces);
       friend Money Truncate(Money value, int decimalPlaces);
       friend Money Round(Money value, int decimalPlaces);
-      friend double ToDouble(Money value);
       template<typename, typename> friend struct Beam::Serialization::Send;
       template<typename, typename> friend struct Beam::Serialization::Receive;
       Quantity m_value;
@@ -269,15 +274,6 @@ namespace Details {
     return Money{Round(value.m_value, decimalPlaces)};
   }
 
-  //! Returns the floating point representation of the value.
-  /*!
-    \param value The value to get the floating point representation of.
-    \return The floating point representation of the <i>value</i>.
-  */
-  inline double ToDouble(Money value) {
-    return static_cast<double>(value.m_value);
-  }
-
   inline std::ostream& operator <<(std::ostream& out, Money value) {
     return out << value.ToString();
   }
@@ -305,8 +301,31 @@ namespace Details {
   inline Money::Money(Quantity value)
       : m_value{value} {}
 
+  inline Money::operator boost::float64_t() const {
+    return static_cast<boost::float64_t>(m_value);
+  }
+
+  inline Money::operator Quantity() const {
+    return m_value;
+  }
+
   inline std::string Money::ToString() const {
-    return Beam::ToString(m_value);
+    auto fraction = m_value - Floor(m_value, 0);
+    auto s = Beam::ToString(m_value);
+    if(s.size() > 1 && *(s.end() - 1) == '.') {
+      return s + "00";
+    } else if(s.size() > 2 && *(s.end() - 2) == '.') {
+      return s + "0";
+    } else {
+      while(s.size() > 3) {
+        if(s.back() == '0' && *(s.end() - 3) != '.') {
+          s.pop_back();
+        } else {
+          break;
+        }
+      }
+      return s;
+    }
   }
 
   inline bool Money::operator <(Money rhs) const {

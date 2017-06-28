@@ -31,8 +31,8 @@ namespace Details {
     mysqlpp::sql_int, type,
     mysqlpp::sql_int, side,
     mysqlpp::sql_varchar, destination,
-    mysqlpp::sql_bigint, quantity,
-    mysqlpp::sql_bigint, price,
+    mysqlpp::sql_double, quantity,
+    mysqlpp::sql_double, price,
     mysqlpp::sql_int, time_in_force,
     mysqlpp::sql_bigint_unsigned, time_in_force_expiry,
     mysqlpp::sql_blob, additional_fields,
@@ -54,8 +54,8 @@ namespace Details {
     mysqlpp::sql_int, type,
     mysqlpp::sql_int, side,
     mysqlpp::sql_varchar, destination,
-    mysqlpp::sql_bigint, quantity,
-    mysqlpp::sql_bigint, price,
+    mysqlpp::sql_double, quantity,
+    mysqlpp::sql_double, price,
     mysqlpp::sql_int, time_in_force,
     mysqlpp::sql_bigint_unsigned, time_in_force_expiry,
     mysqlpp::sql_blob, additional_fields,
@@ -68,13 +68,13 @@ namespace Details {
     mysqlpp::sql_int, sequence,
     mysqlpp::sql_bigint_unsigned, timestamp,
     mysqlpp::sql_int, status,
-    mysqlpp::sql_bigint, last_quantity,
-    mysqlpp::sql_bigint, last_price,
+    mysqlpp::sql_double, last_quantity,
+    mysqlpp::sql_double, last_price,
     mysqlpp::sql_varchar, liquidity_flag,
     mysqlpp::sql_varchar, last_market,
-    mysqlpp::sql_bigint, execution_fee,
-    mysqlpp::sql_bigint, processing_fee,
-    mysqlpp::sql_bigint, commission,
+    mysqlpp::sql_double, execution_fee,
+    mysqlpp::sql_double, processing_fee,
+    mysqlpp::sql_double, commission,
     mysqlpp::sql_varchar, text,
     mysqlpp::sql_bigint_unsigned, query_sequence);
 
@@ -96,8 +96,8 @@ namespace Details {
       "type INTEGER UNSIGNED NOT NULL,"
       "side INTEGER UNSIGNED NOT NULL,"
       "destination VARCHAR(16) BINARY NOT NULL,"
-      "quantity BIGINT NOT NULL,"
-      "price BIGINT NOT NULL,"
+      "quantity DOUBLE NOT NULL,"
+      "price DOUBLE NOT NULL,"
       "time_in_force INTEGER UNSIGNED NOT NULL,"
       "time_in_force_expiry BIGINT UNSIGNED NOT NULL,"
       "additional_fields BLOB NOT NULL,"
@@ -145,13 +145,13 @@ namespace Details {
       "sequence INTEGER NOT NULL,"
       "timestamp BIGINT UNSIGNED NOT NULL,"
       "status INTEGER UNSIGNED NOT NULL,"
-      "last_quantity BIGINT NOT NULL,"
-      "last_price BIGINT NOT NULL,"
+      "last_quantity DOUBLE NOT NULL,"
+      "last_price DOUBLE NOT NULL,"
       "liquidity_flag VARCHAR(8) BINARY NOT NULL,"
       "last_market VARCHAR(16) BINARY NOT NULL,"
-      "execution_fee BIGINT NOT NULL,"
-      "processing_fee BIGINT NOT NULL,"
-      "commission BIGINT NOT NULL,"
+      "execution_fee DOUBLE NOT NULL,"
+      "processing_fee DOUBLE NOT NULL,"
+      "commission DOUBLE NOT NULL,"
       "text VARCHAR(256) BINARY NOT NULL,"
       "query_sequence BIGINT UNSIGNED NOT NULL,"
       "INDEX(order_id),"
@@ -195,17 +195,19 @@ namespace Details {
       orderInfo->m_fields.m_account.m_type =
         Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT;
       orderInfo->m_fields.m_account.m_id = row.account;
-      orderInfo->m_fields.m_security = Security(row.symbol, row.market,
-        row.country);
+      orderInfo->m_fields.m_security = Security{row.symbol, row.market,
+        static_cast<CountryCode>(row.country)};
       orderInfo->m_fields.m_currency = CurrencyId{row.currency};
       orderInfo->m_fields.m_type = static_cast<OrderType>(row.type);
       orderInfo->m_fields.m_side = static_cast<Side>(row.side);
       orderInfo->m_fields.m_destination = row.destination;
-      orderInfo->m_fields.m_quantity = row.quantity;
-      orderInfo->m_fields.m_price = Money::FromRepresentation(row.price);
-      orderInfo->m_fields.m_timeInForce = TimeInForce(
+      orderInfo->m_fields.m_quantity =
+        Quantity::FromRepresentation(row.quantity);
+      orderInfo->m_fields.m_price =
+        Money{Quantity::FromRepresentation(row.price)};
+      orderInfo->m_fields.m_timeInForce = TimeInForce{
         static_cast<TimeInForce::Type>(row.time_in_force),
-        Beam::MySql::FromMySqlTimestamp(row.time_in_force_expiry));
+        Beam::MySql::FromMySqlTimestamp(row.time_in_force_expiry)};
       if(!row.additional_fields.empty()) {
         Beam::Serialization::BinaryReceiver<Beam::IO::SharedBuffer> receiver;
         Beam::IO::SharedBuffer additionalFieldsBuffer{
@@ -214,8 +216,8 @@ namespace Details {
         try {
           receiver.Shuttle(orderInfo->m_fields.m_additionalFields);
         } catch(const Beam::Serialization::SerializationException&) {
-          BOOST_THROW_EXCEPTION(OrderExecutionDataStoreException(
-            "Unable to load additional fields."));
+          BOOST_THROW_EXCEPTION(OrderExecutionDataStoreException{
+            "Unable to load additional fields."});
         }
       }
       orderInfo->m_submissionAccount.m_type =
@@ -224,7 +226,7 @@ namespace Details {
       orderInfo->m_orderId = row.order_id;
       orderInfo->m_shortingFlag = row.shorting_flag;
       orderInfo->m_timestamp = Beam::MySql::FromMySqlTimestamp(row.timestamp);
-      orderInfo.GetSequence() = Beam::Queries::Sequence(row.query_sequence);
+      orderInfo.GetSequence() = Beam::Queries::Sequence{row.query_sequence};
       return orderInfo;
     }
 
@@ -233,17 +235,19 @@ namespace Details {
       orderInfo->m_fields.m_account.m_type =
         Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT;
       orderInfo->m_fields.m_account.m_id = row.account;
-      orderInfo->m_fields.m_security = Security(row.symbol, row.market,
-        row.country);
+      orderInfo->m_fields.m_security = Security{row.symbol, row.market,
+        static_cast<CountryCode>(row.country)};
       orderInfo->m_fields.m_currency = CurrencyId{row.currency};
       orderInfo->m_fields.m_type = static_cast<OrderType>(row.type);
       orderInfo->m_fields.m_side = static_cast<Side>(row.side);
       orderInfo->m_fields.m_destination = row.destination;
-      orderInfo->m_fields.m_quantity = row.quantity;
-      orderInfo->m_fields.m_price = Money::FromRepresentation(row.price);
-      orderInfo->m_fields.m_timeInForce = TimeInForce(
+      orderInfo->m_fields.m_quantity =
+        Quantity::FromRepresentation(row.quantity);
+      orderInfo->m_fields.m_price =
+        Money{Quantity::FromRepresentation(row.price)};
+      orderInfo->m_fields.m_timeInForce = TimeInForce{
         static_cast<TimeInForce::Type>(row.time_in_force),
-        Beam::MySql::FromMySqlTimestamp(row.time_in_force_expiry));
+        Beam::MySql::FromMySqlTimestamp(row.time_in_force_expiry)};
       if(!row.additional_fields.empty()) {
         Beam::Serialization::BinaryReceiver<Beam::IO::SharedBuffer> receiver;
         Beam::IO::SharedBuffer additionalFieldsBuffer{
@@ -262,7 +266,7 @@ namespace Details {
       orderInfo->m_orderId = row.order_id;
       orderInfo->m_shortingFlag = row.shorting_flag;
       orderInfo->m_timestamp = Beam::MySql::FromMySqlTimestamp(row.timestamp);
-      orderInfo.GetSequence() = Beam::Queries::Sequence(row.query_sequence);
+      orderInfo.GetSequence() = Beam::Queries::Sequence{row.query_sequence};
       return orderInfo;
     }
 
@@ -273,18 +277,21 @@ namespace Details {
         row.timestamp);
       executionReport->m_sequence = row.sequence;
       executionReport->m_status = static_cast<OrderStatus>(row.status);
-      executionReport->m_lastQuantity = row.last_quantity;
-      executionReport->m_lastPrice = Money::FromRepresentation(row.last_price);
+      executionReport->m_lastQuantity =
+        Quantity::FromRepresentation(row.last_quantity);
+      executionReport->m_lastPrice =
+        Money{Quantity::FromRepresentation(row.last_price)};
       executionReport->m_liquidityFlag = row.liquidity_flag;
       executionReport->m_lastMarket = row.last_market;
-      executionReport->m_executionFee = Money::FromRepresentation(
-        row.execution_fee);
-      executionReport->m_processingFee = Money::FromRepresentation(
-        row.processing_fee);
-      executionReport->m_commission = Money::FromRepresentation(row.commission);
+      executionReport->m_executionFee = Money{Quantity::FromRepresentation(
+        row.execution_fee)};
+      executionReport->m_processingFee = Money{Quantity::FromRepresentation(
+        row.processing_fee)};
+      executionReport->m_commission = Money{Quantity::FromRepresentation(
+        row.commission)};
       executionReport->m_text = row.text;
-      executionReport.GetSequence() = Beam::Queries::Sequence(
-        row.query_sequence);
+      executionReport.GetSequence() = Beam::Queries::Sequence{
+        row.query_sequence};
       return executionReport;
     }
 
@@ -297,11 +304,11 @@ namespace Details {
         try {
           sender.Shuttle((*orderInfo)->m_fields.m_additionalFields);
         } catch(const Beam::Serialization::SerializationException&) {
-          BOOST_THROW_EXCEPTION(OrderExecutionDataStoreException(
-            "Unable to store additional fields."));
+          BOOST_THROW_EXCEPTION(OrderExecutionDataStoreException{
+            "Unable to store additional fields."});
         }
       }
-      submissions row((*orderInfo)->m_orderId,
+      submissions row{(*orderInfo)->m_orderId,
         (*orderInfo)->m_submissionAccount.m_id,
         (*orderInfo)->m_fields.m_account.m_id,
         Beam::MySql::ToMySqlTimestamp((*orderInfo)->m_timestamp),
@@ -312,30 +319,35 @@ namespace Details {
         static_cast<int>((*orderInfo)->m_fields.m_type),
         static_cast<int>((*orderInfo)->m_fields.m_side),
         (*orderInfo)->m_fields.m_destination,
-        (*orderInfo)->m_fields.m_quantity,
-        (*orderInfo)->m_fields.m_price.GetRepresentation(),
+        (*orderInfo)->m_fields.m_quantity.GetRepresentation(),
+        static_cast<Quantity>(
+          (*orderInfo)->m_fields.m_price).GetRepresentation(),
         static_cast<int>((*orderInfo)->m_fields.m_timeInForce.GetType()),
         Beam::MySql::ToMySqlTimestamp(
-        (*orderInfo)->m_fields.m_timeInForce.GetExpiry()),
+          (*orderInfo)->m_fields.m_timeInForce.GetExpiry()),
         mysqlpp::sql_blob(additionalFieldsBuffer.GetData(),
           additionalFieldsBuffer.GetSize()),
-        (*orderInfo)->m_shortingFlag, orderInfo.GetSequence().GetOrdinal());
+        (*orderInfo)->m_shortingFlag, orderInfo.GetSequence().GetOrdinal()};
       return row;
     }
 
     execution_reports operator ()(
         const SequencedAccountExecutionReport& executionReport) const {
-      execution_reports row(executionReport->GetIndex().m_id,
+      execution_reports row{executionReport->GetIndex().m_id,
         (*executionReport)->m_id, (*executionReport)->m_sequence,
         Beam::MySql::ToMySqlTimestamp((*executionReport)->m_timestamp),
         static_cast<int>((*executionReport)->m_status),
-        (*executionReport)->m_lastQuantity,
-        (*executionReport)->m_lastPrice.GetRepresentation(),
+        (*executionReport)->m_lastQuantity.GetRepresentation(),
+        static_cast<Quantity>(
+          (*executionReport)->m_lastPrice).GetRepresentation(),
         (*executionReport)->m_liquidityFlag, (*executionReport)->m_lastMarket,
-        (*executionReport)->m_executionFee.GetRepresentation(),
-        (*executionReport)->m_processingFee.GetRepresentation(),
-        (*executionReport)->m_commission.GetRepresentation(),
-        (*executionReport)->m_text, executionReport.GetSequence().GetOrdinal());
+        static_cast<Quantity>(
+          (*executionReport)->m_executionFee).GetRepresentation(),
+        static_cast<Quantity>(
+          (*executionReport)->m_processingFee).GetRepresentation(),
+        static_cast<Quantity>(
+          (*executionReport)->m_commission).GetRepresentation(),
+        (*executionReport)->m_text, executionReport.GetSequence().GetOrdinal()};
       return row;
     }
   };

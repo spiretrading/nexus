@@ -211,7 +211,7 @@ namespace RiskService {
       auto orderFields = OrderExecutionService::OrderFields::BuildMarketOrder(
         m_account, position.m_security, currency,
         GetOpposite(GetSide(position.m_quantity)), destination,
-        std::abs(position.m_quantity));
+        Abs(position.m_quantity));
       try {
         m_orderExecutionClient->Submit(orderFields);
       } catch(const std::exception&) {

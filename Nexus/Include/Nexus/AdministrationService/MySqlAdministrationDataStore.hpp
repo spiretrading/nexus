@@ -191,10 +191,12 @@ namespace AdministrationService {
           Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT, row.account, ""};
         RiskService::RiskParameters parameters;
         parameters.m_currency = CurrencyId{row.currency};
-        parameters.m_buyingPower = Money::FromRepresentation(row.buying_power);
+        parameters.m_buyingPower =
+          Money{Quantity::FromRepresentation(row.buying_power)};
         parameters.m_allowedState = static_cast<RiskService::RiskState::Type>(
           row.allowed_state);
-        parameters.m_netLoss = Money::FromRepresentation(row.net_loss);
+        parameters.m_netLoss =
+          Money{Quantity::FromRepresentation(row.net_loss)};
         parameters.m_lossFromTop = row.loss_from_top;
         parameters.m_transitionTime = boost::posix_time::seconds(
           row.transition_time);
@@ -218,10 +220,11 @@ namespace AdministrationService {
     }
     auto& row = riskParameters.front();
     result.m_currency = CurrencyId{row.currency};
-    result.m_buyingPower = Money::FromRepresentation(row.buying_power);
+    result.m_buyingPower =
+      Money{Quantity::FromRepresentation(row.buying_power)};
     result.m_allowedState = static_cast<RiskService::RiskState::Type>(
       row.allowed_state);
-    result.m_netLoss = Money::FromRepresentation(row.net_loss);
+    result.m_netLoss = Money{Quantity::FromRepresentation(row.net_loss)};
     result.m_lossFromTop = row.loss_from_top;
     result.m_transitionTime = boost::posix_time::seconds(row.transition_time);
     return result;
@@ -233,8 +236,8 @@ namespace AdministrationService {
     auto query = m_databaseConnection.query();
     Details::SqlInsert::risk_parameters entryRow{account.m_id,
       riskParameters.m_currency.m_value,
-      riskParameters.m_buyingPower.GetRepresentation(),
-      riskParameters.m_netLoss.GetRepresentation(),
+      static_cast<Quantity>(riskParameters.m_buyingPower).GetRepresentation(),
+      static_cast<Quantity>(riskParameters.m_netLoss).GetRepresentation(),
       static_cast<int>(riskParameters.m_allowedState.m_type),
       riskParameters.m_lossFromTop,
       riskParameters.m_transitionTime.total_seconds()};

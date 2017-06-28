@@ -404,7 +404,7 @@ void Nexus::Python::ExportMoney() {
     .staticmethod("from_value")
     .def("__str__", &Money::ToString)
     .def("__abs__", static_cast<Money (*)(Money)>(&Abs))
-    .def("__float__", &ToDouble)
+    .def(float_(self))
     .def(self < self)
     .def(self <= self)
     .def(self == self)

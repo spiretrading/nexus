@@ -10,6 +10,7 @@
 #include <Beam/Serialization/Sender.hpp>
 #include <Beam/Utilities/Math.hpp>
 #include <boost/cstdfloat.hpp>
+#include <boost/io/ios_state.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/rational.hpp>
@@ -54,8 +55,14 @@ namespace Nexus {
       //! Constructs a Quantity from a double.
       Quantity(double value);
 
+      //! Returns a Quantity from its raw representation.
+      static Quantity FromRepresentation(boost::float64_t value);
+
       //! Converts this Quantity into a float.
       explicit operator boost::float64_t() const;
+
+      //! Converts this Quantity into an int.
+      explicit operator int() const;
 
       //! Less than test.
       /*!
@@ -114,6 +121,12 @@ namespace Nexus {
       */
       Quantity& operator +=(Quantity rhs);
 
+      //! Increments this Quantity.
+      Quantity& operator ++();
+
+      //! Increments this Quantity.
+      Quantity& operator ++(int);
+
       //! Subtracts two Quantities together.
       /*!
         \param rhs The right hand side of the operation.
@@ -127,6 +140,12 @@ namespace Nexus {
         \return <i>this</i>.
       */
       Quantity& operator -=(Quantity rhs);
+
+      //! Decrements this Quantity.
+      Quantity& operator --();
+
+      //! Decrements this Quantity.
+      Quantity& operator --(int);
 
       //! Multiplies two Quantities together.
       /*!
@@ -162,6 +181,9 @@ namespace Nexus {
       */
       Quantity operator -() const;
 
+      //! Returns the raw representation of this Quantity.
+      boost::float64_t GetRepresentation() const;
+
     private:
       template<typename, typename> friend struct Beam::Serialization::Send;
       template<typename, typename> friend struct Beam::Serialization::Receive;
@@ -169,13 +191,12 @@ namespace Nexus {
       friend Quantity operator %(Quantity lhs, Quantity rhs);
       friend Quantity Abs(Quantity);
       friend class std::numeric_limits<Nexus::Quantity>;
-      struct RawValue{};
       boost::float64_t m_value;
-
-      Quantity(boost::float64_t value, RawValue);
   };
 
   inline std::ostream& operator <<(std::ostream& out, Quantity value) {
+    boost::io::ios_flags_saver ifs{out};
+    out << std::fixed;
     out << (value.m_value / Quantity::MULTIPLIER);
     return out;
   }
@@ -222,7 +243,7 @@ namespace Nexus {
     \param value The value.
   */
   inline Quantity Abs(Quantity value) {
-    return Quantity{std::abs(value.m_value), Quantity::RawValue{}};
+    return Quantity::FromRepresentation(std::abs(value.m_value));
   }
 
   //! Returns the floor.
@@ -317,7 +338,7 @@ namespace Nexus {
       }
     }
     auto finalValue = sign * (leftHand * MULTIPLIER + rightHand * multiplier);
-    return Quantity{static_cast<boost::float64_t>(finalValue), RawValue{}};
+    return FromRepresentation(static_cast<boost::float64_t>(finalValue));
   }
 
   inline Quantity::Quantity()
@@ -338,8 +359,18 @@ namespace Nexus {
   inline Quantity::Quantity(double value)
       : m_value{static_cast<boost::float64_t>(MULTIPLIER * value)} {}
 
+  inline Quantity Quantity::FromRepresentation(boost::float64_t value) {
+    Quantity q;
+    q.m_value = value;
+    return q;
+  }
+
   inline Quantity::operator boost::float64_t() const {
     return m_value / MULTIPLIER;
+  }
+
+  inline Quantity::operator int() const {
+    return static_cast<int>(m_value / MULTIPLIER);
   }
 
   inline bool Quantity::operator <(Quantity rhs) const {
@@ -367,7 +398,7 @@ namespace Nexus {
   }
 
   inline Quantity Quantity::operator +(Quantity rhs) const {
-    return {m_value + rhs.m_value, RawValue{}};
+    return FromRepresentation(m_value + rhs.m_value);
   }
 
   inline Quantity& Quantity::operator +=(Quantity rhs) {
@@ -375,8 +406,19 @@ namespace Nexus {
     return *this;
   }
 
+  inline Quantity& Quantity::operator ++() {
+    m_value += MULTIPLIER;
+    return *this;
+  }
+
+  inline Quantity& Quantity::operator ++(int) {
+    Quantity q{*this};
+    ++(*this);
+    return q;
+  }
+
   inline Quantity Quantity::operator -(Quantity rhs) const {
-    return {m_value - rhs.m_value, RawValue{}};
+    return FromRepresentation(m_value - rhs.m_value);
   }
 
   inline Quantity& Quantity::operator -=(Quantity rhs) {
@@ -384,8 +426,19 @@ namespace Nexus {
     return *this;
   }
 
+  inline Quantity& Quantity::operator --() {
+    m_value -= MULTIPLIER;
+    return *this;
+  }
+
+  inline Quantity& Quantity::operator --(int) {
+    Quantity q{*this};
+    --(*this);
+    return q;
+  }
+
   inline Quantity Quantity::operator *(Quantity rhs) const {
-    return {m_value * (rhs.m_value / MULTIPLIER), RawValue{}};
+    return FromRepresentation(m_value * (rhs.m_value / MULTIPLIER));
   }
 
   inline Quantity& Quantity::operator *=(Quantity rhs) {
@@ -394,7 +447,7 @@ namespace Nexus {
   }
 
   inline Quantity Quantity::operator /(Quantity rhs) const {
-    return {MULTIPLIER * (m_value / rhs.m_value), RawValue{}};
+    return FromRepresentation(MULTIPLIER * (m_value / rhs.m_value));
   }
 
   inline Quantity& Quantity::operator /=(Quantity rhs) {
@@ -403,11 +456,12 @@ namespace Nexus {
   }
 
   inline Quantity Quantity::operator -() const {
-    return {-m_value, RawValue{}};
+    return FromRepresentation(-m_value);
   }
 
-  inline Quantity::Quantity(boost::float64_t value, RawValue)
-      : m_value{value} {}
+  inline boost::float64_t Quantity::GetRepresentation() const {
+    return m_value;
+  }
 }
 
 namespace Beam {
@@ -435,7 +489,7 @@ namespace Serialization {
         Nexus::Quantity& value) const {
       boost::float64_t representation;
       shuttle.Shuttle(name, representation);
-      value = Nexus::Quantity{representation, Nexus::Quantity::RawValue{}};
+      value = Nexus::Quantity::FromRepresentation(representation);
     }
   };
 }
@@ -446,13 +500,13 @@ namespace std {
   class numeric_limits<Nexus::Quantity> {
     public:
       static Nexus::Quantity min() {
-        return Nexus::Quantity{numeric_limits<boost::float64_t>::min(),
-          Nexus::Quantity::RawValue{}};
+        return Nexus::Quantity::FromRepresentation(
+          numeric_limits<boost::float64_t>::min());
       }
 
       static Nexus::Quantity max() {
-        return Nexus::Quantity{numeric_limits<boost::float64_t>::max(),
-          Nexus::Quantity::RawValue{}};
+        return Nexus::Quantity::FromRepresentation(
+          numeric_limits<boost::float64_t>::max());
       }
   };
 }
