@@ -92,11 +92,10 @@ namespace OrderExecutionService {
       [=] {
         m_orders.insert(order);
         order->With(
-          [&] (OrderStatus status,
-              const std::vector<ExecutionReport>& reports) {
-            const ExecutionReport& lastReport = reports.back();
-            ExecutionReport updatedReport = ExecutionReport::BuildUpdatedReport(
-              lastReport, OrderStatus::NEW, order->GetInfo().m_timestamp);
+          [&] (auto status, auto& reports) {
+            auto& lastReport = reports.back();
+            auto updatedReport = ExecutionReport::BuildUpdatedReport(lastReport,
+              OrderStatus::NEW, order->GetInfo().m_timestamp);
             order->Update(updatedReport);
           });
         UpdateOrder(*order);
@@ -109,16 +108,15 @@ namespace OrderExecutionService {
     m_tasks.Push(
       [=] {
         order->With(
-          [&] (OrderStatus status,
-              const std::vector<ExecutionReport>& reports) {
+          [&] (auto status, auto& reports) {
             if(IsTerminal(status) || reports.empty()) {
               return;
             }
-            ExecutionReport pendingCancelReport =
-              ExecutionReport::BuildUpdatedReport(reports.back(),
-              OrderStatus::PENDING_CANCEL, m_timeClient->GetTime());
+            auto pendingCancelReport = ExecutionReport::BuildUpdatedReport(
+              reports.back(), OrderStatus::PENDING_CANCEL,
+              m_timeClient->GetTime());
             order->Update(pendingCancelReport);
-            ExecutionReport cancelReport = ExecutionReport::BuildUpdatedReport(
+            auto cancelReport = ExecutionReport::BuildUpdatedReport(
               reports.back(), OrderStatus::CANCELED, m_timeClient->GetTime());
             order->Update(cancelReport);
           });
@@ -132,8 +130,7 @@ namespace OrderExecutionService {
     m_tasks.Push(
       [=] {
         order->With(
-          [&] (OrderStatus status,
-              const std::vector<ExecutionReport>& executionReports) {
+          [&] (auto status, auto& executionReports) {
             if(IsTerminal(status)) {
               return;
             }
@@ -179,8 +176,8 @@ namespace OrderExecutionService {
     OrderStatus finalStatus;
     BboQuote bboQuote = m_bboQuoteQueue->Top();
     order.With(
-      [&] (OrderStatus status, const std::vector<ExecutionReport>& reports) {
-        Side side = order.GetInfo().m_fields.m_side;
+      [&] (auto status, auto& reports) {
+        auto side = order.GetInfo().m_fields.m_side;
         finalStatus = status;
         if(status == OrderStatus::PENDING_NEW || IsTerminal(status)) {
           return;
@@ -214,7 +211,7 @@ namespace OrderExecutionService {
   void SecurityOrderSimulator<TimeClientType>::OnBbo(const BboQuote& bboQuote) {
     auto i = m_orders.begin();
     while(i != m_orders.end()) {
-      OrderStatus status = UpdateOrder(**i);
+      auto status = UpdateOrder(**i);
       if(IsTerminal(status)) {
         i = m_orders.erase(i);
       } else {
