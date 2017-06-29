@@ -241,8 +241,8 @@ namespace MarketDataService {
         }
         return 4;
       }();
-    auto multiplier = PowerOfTen(Money::DECIMAL_PLACES - decimalPlaces);
-    auto price = Money::FromRepresentation(value * multiplier);
+    auto multiplier = Quantity{1} / PowerOfTen(decimalPlaces);
+    auto price = Money{multiplier * value};
     return price;
   }
 

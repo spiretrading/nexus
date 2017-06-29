@@ -270,9 +270,9 @@ namespace MarketDataService {
       ++token;
     }
     *cursor = token;
-    return dollarValue * Money::ONE +
-      Beam::PowerOfTen(Money::DECIMAL_PLACES - decimalDigits) *
-      decimalValue * Money::EPSILON;
+    auto multiplier = Quantity{1} / Beam::PowerOfTen(decimalDigits);
+    auto price = dollarValue * Money::ONE + Money{multiplier * decimalValue};
+    return price;
   }
 
   template<typename MarketDataFeedClientType, typename ProtocolClientType>
