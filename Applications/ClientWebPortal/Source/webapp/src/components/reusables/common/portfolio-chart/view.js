@@ -5,6 +5,7 @@ import currencyFormatter from 'utils/currency-formatter';
 import definitionsService from 'services/definitions';
 import numberFormatter from 'utils/number-formatter';
 import chartColumns from './columns';
+import {CurrencyId, Money} from 'spire-client';
 
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
@@ -208,9 +209,8 @@ class View extends UpdatableView {
             }
             return 0;
           }
-          let constructorName = a[propertyName].constructor.name;
 
-          if (constructorName == 'CurrencyId') {
+          if (a[propertyName] instanceof CurrencyId) {
             let currencyA = definitionsService.getCurrencyCode(a[propertyName].value);
             let currencyB = definitionsService.getCurrencyCode(b[propertyName].value);
             if (sortingColumn.direction === 'asc') {
@@ -218,7 +218,7 @@ class View extends UpdatableView {
             } else if (sortingColumn.direction === 'desc') {
               return currencyB.localeCompare(currencyA);
             }
-          } else if (constructorName == 'Money') {
+          } else if (a[propertyName] instanceof Money) {
             if (sortingColumn.direction === 'asc') {
               return a[propertyName].compare(b[propertyName]);
             } else if (sortingColumn.direction === 'desc') {
