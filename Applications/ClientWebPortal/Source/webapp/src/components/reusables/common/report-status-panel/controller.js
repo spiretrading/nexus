@@ -13,7 +13,7 @@ class Controller {
   }
 
   componentDidMount() {
-    this.view.initialize.apply(this.view);
+    this.view.initialize();
 
     // Example report status model structure
     this.componentModel.reportStatuses = [];
@@ -28,7 +28,7 @@ class Controller {
   }
 
   componentWillUnmount() {
-    this.view.dispose.apply(this.view);
+    this.view.dispose();
   }
 
   generate(startDate, endDate) {

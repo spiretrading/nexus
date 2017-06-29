@@ -17,7 +17,7 @@ class View extends CommonView {
     let $input = $(event.currentTarget);
     let input = $input.val();
     let $error = $('#risk-control-container').find('.' + $input.attr('data-control') + '-error');
-    let validationFailMessage = this.validateInput.apply(this, [input, 2]);
+    let validationFailMessage = this.validateInput(input, 2);
 
     if (validationFailMessage == null) {
       $input.removeClass('invalid').addClass('valid');
@@ -38,7 +38,7 @@ class View extends CommonView {
     let $input = $(event.currentTarget);
     let input = $input.val();
     let isHour = $input.hasClass('hour');
-    let validationFailMessage = this.validateInput.apply(this, [input, 0, true, isHour]);
+    let validationFailMessage = this.validateInput(input, 0, true, isHour);
 
     if (validationFailMessage == null) {
       $input.removeClass('invalid').addClass('valid');
@@ -57,7 +57,7 @@ class View extends CommonView {
         updatedTime = currentTime.substring(0, 6) + input;
       }
       this.componentModel.riskParameters.transitionTime = updatedTime;
-      this.controller.onTransitionTimeChange.apply(this.controller, [updatedTime]);
+      this.controller.onTransitionTimeChange(updatedTime);
     } else {
       $input.removeClass('valid').addClass('invalid');
     }
@@ -68,9 +68,9 @@ class View extends CommonView {
     let inputNumber = Number(input);
     if (!$.isNumeric(inputNumber)) {
       return 'Not a number.';
-    } else if (!this.isValidDecimals.apply(this, [input, numDecimalPlaces]) && numDecimalPlaces == 0) {
+    } else if (!this.isValidDecimals(input, numDecimalPlaces) && numDecimalPlaces == 0) {
       return 'Decimal places are not allowed.';
-    } else if (!this.isValidDecimals.apply(this, [input, numDecimalPlaces])) {
+    } else if (!this.isValidDecimals(input, numDecimalPlaces)) {
       return 'Exceeded ' + numDecimalPlaces + ' decimal places.';
     } else if (isTime && !isHour && inputNumber > 59) {
       return 'Cannot be more than 59 minutes.';
@@ -104,7 +104,7 @@ class View extends CommonView {
     }
 
     let userInfoNavModel;
-    if (this.controller.isModelInitialized.apply(this.controller)) {
+    if (this.controller.isModelInitialized()) {
       let currencySign = definitionsService.getCurrencySignFromId(this.componentModel.riskParameters.currencyId.value);
       if (currencySign != '') {
         currencySign = '(' + currencySign + ')';

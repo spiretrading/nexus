@@ -14,8 +14,13 @@ class Controller {
     this.componentModel = clone(componentModel);
     this.adminClient = new AdministrationClient();
     this.riskServiceClient = new RiskServiceClient();
-    this.exchangeRateTable = definitionsService.getExchangeRateTable.apply(definitionsService);
+    this.exchangeRateTable = definitionsService.getExchangeRateTable();
     this.portfolioData = new HashMap();
+
+    this.toUIModel = this.toUIModel.bind(this);
+    this.aggregateTotals = this.aggregateTotals.bind(this);
+    this.convertCurrencies = this.convertCurrencies.bind(this);
+    this.getRequiredData = this.getRequiredData.bind(this);
   }
 
   getView() {
@@ -28,13 +33,10 @@ class Controller {
 
   /** @private */
   getRequiredData() {
-    let loadManagedTradingGroups = this.adminClient.loadManagedTradingGroups.apply(
-      this.adminClient,
-      [(this.componentModel.directoryEntry)]
-    );
+    let loadManagedTradingGroups = this.adminClient.loadManagedTradingGroups(this.componentModel.directoryEntry);
 
-    let directoryEntry = userService.getDirectoryEntry.apply(userService);
-    let loadAccountRiskParameters = this.adminClient.loadRiskParameters.apply(this.adminClient, [directoryEntry]);
+    let directoryEntry = userService.getDirectoryEntry();
+    let loadAccountRiskParameters = this.adminClient.loadRiskParameters(directoryEntry);
 
     return Promise.all([
       loadManagedTradingGroups,
@@ -92,14 +94,14 @@ class Controller {
   /** @private */
   onPortfolioDataReceived(data) {
     for (let i=0; i<data.length; i++) {
-      data[i] = this.toUIModel.apply(this, [data[i]]);
+      data[i] = this.toUIModel(data[i]);
       let cacheKey = data[i].account.id + data[i].currency.value + data[i].security.market.value + data[i].security.symbol;
       this.portfolioData.set(cacheKey, data[i]);
     }
     this.componentModel.portfolioData = this.portfolioData.values();
 
     if (this.componentModel.baseCurrencyId != null) {
-      this.aggregateTotals.apply(this);
+      this.aggregateTotals();
     }
     this.view.update(this.componentModel);
   }
@@ -128,37 +130,37 @@ class Controller {
       }
 
       let originalTotalPnL = portfolioData[i].totalPnL || Money.fromNumber(0);
-      let convertedTotalPnL = this.convertCurrencies.apply(this, [
+      let convertedTotalPnL = this.convertCurrencies(
         portfolioData[i].currency,
         this.componentModel.baseCurrencyId,
         originalTotalPnL
-      ]);
+      );
       totalPnL = totalPnL.add(convertedTotalPnL);
       accountTotal.totalPnL = accountTotal.totalPnL.add(convertedTotalPnL);
 
       let originalUnrealizedPnL = portfolioData[i].unrealizedPnL || Money.fromNumber(0);
-      let convertedUnrealizedPnL = this.convertCurrencies.apply(this, [
+      let convertedUnrealizedPnL = this.convertCurrencies(
         portfolioData[i].currency,
         this.componentModel.baseCurrencyId,
         originalUnrealizedPnL
-      ]);
+      );
       unrealizedPnL = unrealizedPnL.add(convertedUnrealizedPnL);
       accountTotal.unrealizedPnL = accountTotal.unrealizedPnL.add(convertedUnrealizedPnL);
 
       let originalRealizedPnL = portfolioData[i].realizedPnL || Money.fromNumber(0);
-      let convertedRealizedPnL = this.convertCurrencies.apply(this, [
+      let convertedRealizedPnL = this.convertCurrencies(
         portfolioData[i].currency,
         this.componentModel.baseCurrencyId,
         originalRealizedPnL
-      ]);
+      );
       realizedPnL = realizedPnL.add(convertedRealizedPnL);
 
       let originalFees = portfolioData[i].fees || Money.fromNumber(0);
-      let convertedFees = this.convertCurrencies.apply(this, [
+      let convertedFees = this.convertCurrencies(
         portfolioData[i].currency,
         this.componentModel.baseCurrencyId,
         originalFees
-      ]);
+      );
       fees = fees.add(convertedFees);
       accountTotal.fees = accountTotal.fees.add(convertedFees);
 
@@ -192,17 +194,17 @@ class Controller {
     if (fromCurrencyId.toNumber() == toCurrencyId.toNumber()) {
       return Money.fromNumber(amount);
     } else {
-      return this.exchangeRateTable.convert.apply(this.exchangeRateTable, [
+      return this.exchangeRateTable.convert(
         amount,
         fromCurrencyId,
         toCurrencyId
-      ]);
+      );
     }
   }
 
   /** @private */
   onFilterResize() {
-    this.view.resizePortfolioChart.apply(this.view);
+    this.view.resizePortfolioChart();
   }
 
   componentDidMount() {
@@ -211,14 +213,14 @@ class Controller {
     this.componentModel = {
       directoryEntry: userService.getDirectoryEntry()
     };
-    let requiredDataFetchPromise = this.getRequiredData.apply(this);
+    let requiredDataFetchPromise = this.getRequiredData();
 
     this.riskServiceClient.subscribePortfolio(this.onPortfolioDataReceived.bind(this))
       .then((subscriptionId) => {
         this.portfolioSubscriptionId = subscriptionId;
       });
 
-    this.view.initialize.apply(this.view);
+    this.view.initialize();
 
     preloaderTimer.start(
       requiredDataFetchPromise,
@@ -252,7 +254,7 @@ class Controller {
       this.componentModel.markets = [];
       for (let i=0; i<markets.length; i++) {
         this.componentModel.markets.push({
-          id: markets[i].marketCode.toCode.apply(markets[i].marketCode),
+          id: markets[i].marketCode.toCode(),
           name: markets[i].displayName
         });
       }
@@ -262,9 +264,9 @@ class Controller {
   }
 
   componentWillUnmount() {
-    this.riskServiceClient.unsubscribe.apply(this.riskServiceClient, [this.portfolioSubscriptionId]);
+    this.riskServiceClient.unsubscribe(this.portfolioSubscriptionId);
     EventBus.unsubscribe(this.filterResizeSubId);
-    this.view.dispose.apply(this.view);
+    this.view.dispose();
   }
 
   isModelInitialized() {

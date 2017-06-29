@@ -18,9 +18,9 @@ class Controller {
   /** @private */
   onSubMenuUpdated(eventName, doesSubMenuExist) {
     if (doesSubMenuExist) {
-      this.view.showBottomBorder.apply(this.view);
+      this.view.showBottomBorder();
     } else {
-      this.view.hideBottomBorder.apply(this.view);
+      this.view.hideBottomBorder();
     }
   }
 

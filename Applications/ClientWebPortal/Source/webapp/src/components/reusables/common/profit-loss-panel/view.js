@@ -54,10 +54,10 @@ class View extends UpdatableView {
         trClassName += ' last-row';
       }
 
-      let pnl = currencyFormatter.formatByCode.apply(currencyFormatter, [
+      let pnl = currencyFormatter.formatByCode(
         this.componentModel.currency,
         this.componentModel.securities[i].pnl
-      ]);
+      );
 
       securities.push(
         <tr key={i} className={trClassName}>
@@ -81,10 +81,10 @@ class View extends UpdatableView {
       totalPnLValueClassName += ' loss';
     }
 
-    totalPnl = currencyFormatter.formatByCode.apply(currencyFormatter, [
+    totalPnl = currencyFormatter.formatByCode(
       this.componentModel.currency,
       totalPnl
-    ]);
+    );
 
     totalVolume = numberFormatter.formatWithComma(totalVolume);
 

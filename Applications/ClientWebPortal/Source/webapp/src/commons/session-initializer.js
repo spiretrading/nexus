@@ -4,7 +4,7 @@ import definitionsService from 'services/definitions';
 class SessionInitializer {
   initialize() {
     return Promise.all([
-      definitionsService.initialize.apply(definitionsService)
+      definitionsService.initialize()
     ]);
   }
 }

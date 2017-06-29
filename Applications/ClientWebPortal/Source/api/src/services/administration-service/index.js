@@ -5,6 +5,18 @@ import RiskParameters from '../risk-service/risk-parameters';
 
 /** Spire admin client class */
 class Admin {
+  constructor() {
+    this.loadManagedTradingGroups = this.loadManagedTradingGroups.bind(this);
+    this.loadTradingGroup = this.loadTradingGroup.bind(this);
+    this.loadAccountRoles = this.loadAccountRoles.bind(this);
+    this.loadRiskParameters = this.loadRiskParameters.bind(this);
+    this.loadAccountIdentity = this.loadAccountIdentity.bind(this);
+    this.storeAccountIdentity = this.storeAccountIdentity.bind(this);
+    this.loadAccountEntitlements = this.loadAccountEntitlements.bind(this);
+    this.storeAccountEntitlements = this.storeAccountEntitlements.bind(this);
+    this.storeRiskParameters = this.storeRiskParameters.bind(this);
+  }
+
   /** @private */
   logErrorAndThrow(xhr) {
     let errorMessage = 'Spire Admin Client: Unexpected error happened.';

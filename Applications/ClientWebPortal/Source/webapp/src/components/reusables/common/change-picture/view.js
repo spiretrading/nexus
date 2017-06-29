@@ -109,7 +109,7 @@ class View extends UpdatableView {
         let context = this;
         context.componentId = componentId;
         context.cropper = cropper;
-        initializeCrop.apply(context);
+        initializeCrop.call(context);
       }
     }
 

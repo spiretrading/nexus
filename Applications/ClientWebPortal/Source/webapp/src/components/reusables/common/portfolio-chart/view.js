@@ -10,6 +10,17 @@ class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
     this.columnsSyncCounter = 0;
+
+    this.initialize = this.initialize.bind(this);
+    this.dispose = this.dispose.bind(this);
+    this.synchronizeColumnWidths = this.synchronizeColumnWidths.bind(this);
+    this.convertToTitle = this.convertToTitle.bind(this);
+    this.convertToCamelCase = this.convertToCamelCase.bind(this);
+    this.convertToPropertyName = this.convertToPropertyName.bind(this);
+    this.getSecurityLabel = this.getSecurityLabel.bind(this);
+    this.sortData = this.sortData.bind(this);
+    this.convertToHeaderLabel = this.convertToHeaderLabel.bind(this);
+    this.shouldIncludeColumn = this.shouldIncludeColumn.bind(this);
   }
 
   /** @private */
@@ -21,7 +32,7 @@ class View extends UpdatableView {
     } else if (label === 'realizedPnL' || label === 'Realized P/L') {
       label = 'Realized P/L';
     } else {
-      label = this.convertToTitle.apply(this, [label]);
+      label = this.convertToTitle(label);
     }
 
     return label;
@@ -37,7 +48,7 @@ class View extends UpdatableView {
     } else if (headerLabel === 'Realized P/L') {
       propertyName = 'realizedPnL';
     } else {
-      propertyName = this.convertToCamelCase.apply(this, [headerLabel]);
+      propertyName = this.convertToCamelCase(headerLabel);
     }
 
     return propertyName;
@@ -126,7 +137,7 @@ class View extends UpdatableView {
   componentDidUpdate() {
     if (this.componentModel.data != null && this.componentModel.data[0] != null) {
       if (this.columnsSyncCounter <= 2) {
-        this.synchronizeColumnWidths.apply(this);
+        this.synchronizeColumnWidths();
         this.columnsSyncCounter++;
       }
     }
@@ -176,11 +187,11 @@ class View extends UpdatableView {
   /** @private */
   sortData() {
     if (this.componentModel.sortingColumn != null) {
-      this.componentModel.data.sort(getComparer.apply(this, [this.componentModel.sortingColumn]));
+      this.componentModel.data.sort(getComparer.call(this, this.componentModel.sortingColumn));
     }
 
     function getComparer(sortingColumn) {
-      let propertyName = this.convertToPropertyName.apply(this, [sortingColumn.name]);
+      let propertyName = this.convertToPropertyName(sortingColumn.name);
 
       return function(a, b) {
         try {
@@ -220,8 +231,8 @@ class View extends UpdatableView {
               return b[propertyName].name.localeCompare(a[propertyName].name);
             }
           } else if (sortingColumn.name == 'Security') {
-            let aSecurityLabel = this.getSecurityLabel.apply(this, [a[propertyName]]);
-            let bSecurityLabel = this.getSecurityLabel.apply(this, [b[propertyName]]);
+            let aSecurityLabel = this.getSecurityLabel(a[propertyName]);
+            let bSecurityLabel = this.getSecurityLabel(b[propertyName]);
             if (sortingColumn.direction === 'asc') {
               return aSecurityLabel.localeCompare(bSecurityLabel);
             } else if (sortingColumn.direction === 'desc') {
@@ -258,12 +269,12 @@ class View extends UpdatableView {
 
   /** @private */
   getSecurityLabel(security) {
-    let marketDatabase = definitionsService.getMarketDatabase.apply(definitionsService);
-    return security.toString.apply(security, [marketDatabase]);
+    let marketDatabase = definitionsService.getMarketDatabase();
+    return security.toString(marketDatabase);
   }
 
   render() {
-    this.sortData.apply(this);
+    this.sortData();
 
     let columns = [];
     let rows = [];
@@ -308,8 +319,8 @@ class View extends UpdatableView {
     // add column headers
     for (let i=0; i<chartColumns.length; i++) {
       let column = chartColumns[i];
-      let columnHeader = this.convertToHeaderLabel.apply(this, [column.name]);
-      if (this.shouldIncludeColumn.apply(this, [columnHeader])) {
+      let columnHeader = this.convertToHeaderLabel(column.name);
+      if (this.shouldIncludeColumn(columnHeader)) {
         let arrowIcon;
         if (this.componentModel.sortingColumn != null && this.componentModel.sortingColumn.name == columnHeader) {
           let arrowIconClass;
@@ -353,12 +364,12 @@ class View extends UpdatableView {
               value = 'N/A';
             } else {
               if (property == 'costBasis') {
-                rawAmount = rowData[property].toString.apply(rowData[property]);
+                rawAmount = rowData[property].toString();
                 if (rawAmount < 0) {
                   rawAmount *= -1;
                 }
               } else {
-                rawAmount = rowData[property].toString.apply(rowData[property]);
+                rawAmount = rowData[property].toString();
               }
               value = currencyFormatter.formatById(rowData.currency.toNumber(), rawAmount);
             }
@@ -369,7 +380,7 @@ class View extends UpdatableView {
             property == 'volume') {
             value = numberFormatter.formatWithComma(Math.abs(rowData[property]));
           } else if (property == 'security') {
-            value = this.getSecurityLabel.apply(this, [rowData[property]]);
+            value = this.getSecurityLabel(rowData[property]);
           } else {
             value = rowData[property];
           }
@@ -386,8 +397,8 @@ class View extends UpdatableView {
             }
           }
 
-          let columnHeader = this.convertToHeaderLabel.apply(this, [property]);
-          if (this.shouldIncludeColumn.apply(this, [columnHeader])) {
+          let columnHeader = this.convertToHeaderLabel(property);
+          if (this.shouldIncludeColumn(columnHeader)) {
             columns.push(
               <td key={i + property} className={className}>
                 {value}

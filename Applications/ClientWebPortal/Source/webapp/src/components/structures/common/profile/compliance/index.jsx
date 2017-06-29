@@ -30,7 +30,7 @@ class ProfileAccount extends Component {
   }
 
   render() {
-    return this.view.render.apply(this.view);
+    return this.view.render();
   }
 }
 

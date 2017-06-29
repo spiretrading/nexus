@@ -3,7 +3,7 @@ import CurrencyId from '../../definitions/currency-id';
 import dataTypeConverter from '../commons/data-type-converter';
 
 /** Spire definitions service client class */
-class DefinitionsService {
+class DefinitionsService {  
   /** @private */
   logErrorAndThrow(xhr) {
     let errorMessage = 'Spire Definitions Service Client: Unexpected error happened.';

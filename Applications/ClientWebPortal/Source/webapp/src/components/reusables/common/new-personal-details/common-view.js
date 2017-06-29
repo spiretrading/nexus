@@ -7,6 +7,9 @@ class CommonView extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
     this.isLastInputLineBreak = false;
+
+    this.initialize = this.initialize.bind(this);
+    this.onChange = this.onChange.bind(this);
   }
 
   ignoreNewLineIfNecessary(event) {

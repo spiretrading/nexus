@@ -18,6 +18,8 @@ class Controller {
     );
     this.adminClient = new AdministrationClient();
     this.serviceLocatorClient = new ServiceLocatorClient();
+
+    this.onPasswordUpdate = this.onPasswordUpdate.bind(this);
   }
 
   getView() {
@@ -35,8 +37,8 @@ class Controller {
   /** @private */
   getRequiredData() {
     let directoryEntry = this.componentModel.directoryEntry;
-    let loadAccountRoles = this.adminClient.loadAccountRoles.apply(this.adminClient, [directoryEntry]);
-    let loadAccountIdentity = this.adminClient.loadAccountIdentity.apply(this.adminClient, [directoryEntry]);
+    let loadAccountRoles = this.adminClient.loadAccountRoles(directoryEntry);
+    let loadAccountIdentity = this.adminClient.loadAccountIdentity(directoryEntry);
 
     return Promise.all([
       loadAccountRoles,
@@ -123,7 +125,7 @@ class Controller {
       model.registrationTime,
       model.userNotes
     );
-    this.adminClient.storeAccountIdentity.apply(this.adminClient, [directoryEntry, accountIdentity])
+    this.adminClient.storeAccountIdentity(directoryEntry, accountIdentity)
       .then(this.view.showSavePersonalDetailsSuccessMessage)
       .catch(this.view.showSavePersonalDetailsFailMessage);
   }

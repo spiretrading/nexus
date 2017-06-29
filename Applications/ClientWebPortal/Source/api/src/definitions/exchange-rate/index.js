@@ -8,7 +8,7 @@ class ExchangeRate {
   }
 
   clone() {
-    let currencyPairClone = this.currencyPair.clone.apply(this.currencyPair);
+    let currencyPairClone = this.currencyPair.clone();
     return new ExchangeRate(currencyPairClone, this.rate);
   }
 }

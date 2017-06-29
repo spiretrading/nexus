@@ -10,8 +10,8 @@ class CurrencyPair {
   }
 
   clone() {
-    let baseClone = this.base.clone.apply(this.base);
-    let counterClone = this.counter.clone.apply(this.counter);
+    let baseClone = this.base.clone();
+    let counterClone = this.counter.clone();
     return new CurrencyPair(baseClone, counterClone);
   }
 }
@@ -25,13 +25,13 @@ CurrencyPair.parse = (symbol, currencyDatabase) => {
   let baseCode = symbol.substring(0, slashIndex);
   let counterCode = symbol.substring(slashIndex + 1);
 
-  let baseCurrency = currencyDatabase.fromCode.apply(currencyDatabase, [baseCode]);
+  let baseCurrency = currencyDatabase.fromCode(baseCode);
   if (baseCurrency == null) {
     throw new Error('Invalid base currency code');
   }
   let baseCurrencyId = new CurrencyId(baseCurrency.id.toNumber());
 
-  let counterCurrency = currencyDatabase.fromCode.apply(currencyDatabase, [counterCode]);
+  let counterCurrency = currencyDatabase.fromCode(counterCode);
   if (counterCurrency == null) {
     throw new Error('Invalid counter currency code');
   }

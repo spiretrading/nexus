@@ -58,7 +58,7 @@ class App extends Component {
     let height;
     if (doesSubMenuExist) {
       height = 'calc(100vh - 125px)';
-    } else if (this.isFullScreen.apply(this)) {
+    } else if (this.isFullScreen()) {
       height = 'calc(100vh)';
     } else {
       height = 'calc(100vh - 75px)';
@@ -91,7 +91,7 @@ class App extends Component {
     }, false);
 
     EventBus.publish(Event.Application.RENDERED);
-    this.publishPageTransitioned.apply(this);
+    this.publishPageTransitioned();
   }
 
   componentDidUpdate() {

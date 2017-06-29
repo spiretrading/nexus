@@ -4,6 +4,10 @@ class Controller {
     this.navigateToTraderProfile = react.props.navigateToTraderProfile;
     this.navigateToGroupProfile = react.props.navigateToGroupProfile;
     this.loadGroupAccounts = react.props.loadAccounts;
+
+    this.loadAccounts = this.loadAccounts.bind(this);
+    this.navigateToTraderProfile = this.navigateToTraderProfile.bind(this);
+    this.navigateToGroupProfile = this.navigateToGroupProfile.bind(this);
   }
 
   getView() {

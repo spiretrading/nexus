@@ -14,7 +14,7 @@ class Dropdown extends Component {
     componentModel.className = this.props.className;
     this.controller = new Controller(this, componentModel);
     this.view = new View(this, this.controller, componentModel);
-    this.controller.setView.apply(this.controller, [this.view]);
+    this.controller.setView(this.view);
   }
 
   componentWillUpdate(nextProps) {
@@ -22,7 +22,7 @@ class Dropdown extends Component {
   }
 
   componentDidUpdate() {
-    this.controller.componentDidUpdate.apply(this.controller);
+    this.controller.componentDidUpdate();
   }
 
   render() {

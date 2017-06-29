@@ -2,6 +2,8 @@ class Controller {
   constructor(react, componentModel) {
     this.componentModel = clone(componentModel);
     this.onGenerate = react.props.onGenerate;
+
+    this.generate = this.generate.bind(this);
   }
 
   getView() {
@@ -13,7 +15,7 @@ class Controller {
   }
 
   componentDidMount() {
-    this.view.initialize.apply(this.view);
+    this.view.initialize();
   }
 
   componentWillUpdate(model) {
