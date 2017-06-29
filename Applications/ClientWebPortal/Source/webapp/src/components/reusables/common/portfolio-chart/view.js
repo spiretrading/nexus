@@ -195,73 +195,66 @@ class View extends UpdatableView {
       let propertyName = this.convertToPropertyName(sortingColumn.name);
 
       return function(a, b) {
-        try {
-          if (a == null || a[propertyName] == null || b == null || b[propertyName] == null) {
-            if (sortingColumn.name === 'Average Price' ||
-                sortingColumn.name === 'Total P/L' ||
-                sortingColumn.name === 'Unrealized P/L' ||
-                sortingColumn.name === 'Cost Basis') {
-              if (a != null && a[propertyName] == null && b != null && b[propertyName] != null) {
-                return -1;
-              } else if (a != null && a[propertyName] != null && b != null && b[propertyName] == null) {
-                return 1;
-              }
+        if (a == null || a[propertyName] == null || b == null || b[propertyName] == null) {
+          if (sortingColumn.name === 'Average Price' ||
+              sortingColumn.name === 'Total P/L' ||
+              sortingColumn.name === 'Unrealized P/L' ||
+              sortingColumn.name === 'Cost Basis') {
+            if (a != null && a[propertyName] == null && b != null && b[propertyName] != null) {
+              return -1;
+            } else if (a != null && a[propertyName] != null && b != null && b[propertyName] == null) {
+              return 1;
             }
-            return 0;
           }
+          return 0;
+        }
 
-          if (a[propertyName] instanceof CurrencyId) {
-            let currencyA = definitionsService.getCurrencyCode(a[propertyName].value);
-            let currencyB = definitionsService.getCurrencyCode(b[propertyName].value);
-            if (sortingColumn.direction === 'asc') {
-              return currencyA.localeCompare(currencyB);
-            } else if (sortingColumn.direction === 'desc') {
-              return currencyB.localeCompare(currencyA);
-            }
-          } else if (a[propertyName] instanceof Money) {
-            if (sortingColumn.direction === 'asc') {
-              return a[propertyName].compare(b[propertyName]);
-            } else if (sortingColumn.direction === 'desc') {
-              return b[propertyName].compare(a[propertyName]);
-            }
-          } else if (sortingColumn.name === 'Account') {
-            if (sortingColumn.direction === 'asc') {
-              return a[propertyName].name.localeCompare(b[propertyName].name);
-            } else if (sortingColumn.direction === 'desc') {
-              return b[propertyName].name.localeCompare(a[propertyName].name);
-            }
-          } else if (sortingColumn.name == 'Security') {
-            let aSecurityLabel = this.getSecurityLabel(a[propertyName]);
-            let bSecurityLabel = this.getSecurityLabel(b[propertyName]);
-            if (sortingColumn.direction === 'asc') {
-              return aSecurityLabel.localeCompare(bSecurityLabel);
-            } else if (sortingColumn.direction === 'desc') {
-              return bSecurityLabel.localeCompare(aSecurityLabel);
-            }
-          } else if (sortingColumn.name === 'Quantity' || sortingColumn.name === 'Cost Basis') {
-            if (sortingColumn.direction === 'asc') {
-              return Math.abs(a[propertyName]) - Math.abs(b[propertyName]);
-            } else if (sortingColumn.direction === 'desc') {
-              return Math.abs(b[propertyName]) - Math.abs(a[propertyName]);
-            }
-          } else if (typeof(a[propertyName]) != 'object' && typeof(a[propertyName]) != 'string' && $.isNumeric(a[propertyName])) {
-            if (sortingColumn.direction === 'asc') {
-              return a[propertyName] - b[propertyName];
-            } else if (sortingColumn.direction === 'desc') {
-              return b[propertyName] - a[propertyName];
-            }
-          } else {
-            if (sortingColumn.direction === 'asc') {
-              return a[propertyName].localeCompare(b[propertyName]);
-            } else if (sortingColumn.direction === 'desc') {
-              return b[propertyName].localeCompare(a[propertyName]);
-            }
+        if (a[propertyName] instanceof CurrencyId) {
+          let currencyA = definitionsService.getCurrencyCode(a[propertyName].value);
+          let currencyB = definitionsService.getCurrencyCode(b[propertyName].value);
+          if (sortingColumn.direction === 'asc') {
+            return currencyA.localeCompare(currencyB);
+          } else if (sortingColumn.direction === 'desc') {
+            return currencyB.localeCompare(currencyA);
           }
-        } catch (err) {
-          console.debug('localeCompare error occurred while comparing the following two objects');
-          console.debug(a);
-          console.debug(b);
-          console.debug('property name: ' + propertyName);
+        } else if (a[propertyName] instanceof Money) {
+          if (sortingColumn.direction === 'asc') {
+            return a[propertyName].compare(b[propertyName]);
+          } else if (sortingColumn.direction === 'desc') {
+            return b[propertyName].compare(a[propertyName]);
+          }
+        } else if (sortingColumn.name === 'Account') {
+          if (sortingColumn.direction === 'asc') {
+            return a[propertyName].name.localeCompare(b[propertyName].name);
+          } else if (sortingColumn.direction === 'desc') {
+            return b[propertyName].name.localeCompare(a[propertyName].name);
+          }
+        } else if (sortingColumn.name == 'Security') {
+          let aSecurityLabel = this.getSecurityLabel(a[propertyName]);
+          let bSecurityLabel = this.getSecurityLabel(b[propertyName]);
+          if (sortingColumn.direction === 'asc') {
+            return aSecurityLabel.localeCompare(bSecurityLabel);
+          } else if (sortingColumn.direction === 'desc') {
+            return bSecurityLabel.localeCompare(aSecurityLabel);
+          }
+        } else if (sortingColumn.name === 'Quantity' || sortingColumn.name === 'Cost Basis') {
+          if (sortingColumn.direction === 'asc') {
+            return Math.abs(a[propertyName]) - Math.abs(b[propertyName]);
+          } else if (sortingColumn.direction === 'desc') {
+            return Math.abs(b[propertyName]) - Math.abs(a[propertyName]);
+          }
+        } else if (typeof(a[propertyName]) != 'object' && typeof(a[propertyName]) != 'string' && $.isNumeric(a[propertyName])) {
+          if (sortingColumn.direction === 'asc') {
+            return a[propertyName] - b[propertyName];
+          } else if (sortingColumn.direction === 'desc') {
+            return b[propertyName] - a[propertyName];
+          }
+        } else {
+          if (sortingColumn.direction === 'asc') {
+            return a[propertyName].localeCompare(b[propertyName]);
+          } else if (sortingColumn.direction === 'desc') {
+            return b[propertyName].localeCompare(a[propertyName]);
+          }
         }
       }.bind(this);
     }
