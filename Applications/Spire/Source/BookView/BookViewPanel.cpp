@@ -170,7 +170,8 @@ void BookViewPanel::OnBbo(const Security& security, const BboQuote& bbo) {
   } else {
     quantity = std::max<Quantity>(1, m_bestQuote.m_size / m_boardLot);
   }
-  m_ui->m_bboQuantityLabel->setText(QString::number(quantity));
+  m_ui->m_bboQuantityLabel->setText(QString::number(
+    static_cast<int>(quantity)));
 }
 
 void BookViewPanel::OnUpdateTimer() {

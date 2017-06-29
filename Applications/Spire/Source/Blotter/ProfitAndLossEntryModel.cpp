@@ -96,7 +96,7 @@ QVariant ProfitAndLossEntryModel::data(const QModelIndex& index,
     } else if(index.column() == FEES_COLUMN) {
       return QVariant::fromValue(entry.m_fees);
     } else if(index.column() == VOLUME_COLUMN) {
-      return static_cast<qlonglong>(entry.m_volume);
+      return QVariant::fromValue(entry.m_volume);
     }
   }
   return QVariant();

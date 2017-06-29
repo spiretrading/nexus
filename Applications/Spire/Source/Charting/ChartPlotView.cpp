@@ -437,7 +437,7 @@ QString ChartPlotView::LoadLabel(ChartValue value,
     return QString::fromStdString(s);
   } else if(type.GetCompatibility(IntegerType::GetInstance()) ==
       CanvasType::Compatibility::EQUAL) {
-    return QString::number(value.ToQuantity());
+    return QString::number(static_cast<int>(value.ToQuantity()));
   }
   return QString();
 }

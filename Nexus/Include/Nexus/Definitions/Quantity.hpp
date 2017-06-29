@@ -6,6 +6,7 @@
 #include <limits>
 #include <ostream>
 #include <string>
+#include <type_traits>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
 #include <Beam/Utilities/Math.hpp>
@@ -63,6 +64,15 @@ namespace Nexus {
 
       //! Converts this Quantity into an int.
       explicit operator int() const;
+
+      //! Converts this Quantity into an unsigned int.
+      explicit operator unsigned int() const;
+
+      //! Converts this Quantity into a long long.
+      explicit operator long long() const;
+
+      //! Converts this Quantity into a long long.
+      explicit operator unsigned long long() const;
 
       //! Less than test.
       /*!
@@ -213,19 +223,69 @@ namespace Nexus {
     return in;
   }
 
-  template<typename T>
-  Quantity operator +(T lhs, Quantity rhs) {
+  template<typename T, typename U>
+  std::enable_if_t<std::is_convertible<T, Quantity>::value &&
+      std::is_same<U, Quantity>::value, bool> operator <(T lhs, U rhs) {
+    return Quantity{lhs} < rhs;
+  }
+
+  template<typename T, typename U>
+  std::enable_if_t<std::is_convertible<T, Quantity>::value &&
+      std::is_same<U, Quantity>::value, bool> operator <=(T lhs, U rhs) {
+    return Quantity{lhs} <= rhs;
+  }
+
+  template<typename T, typename U>
+  std::enable_if_t<std::is_convertible<T, Quantity>::value &&
+      std::is_same<U, Quantity>::value, bool> operator ==(T lhs, U rhs) {
+    return Quantity{lhs} == rhs;
+  }
+
+  template<typename T, typename U>
+  std::enable_if_t<std::is_convertible<T, Quantity>::value &&
+      std::is_same<U, Quantity>::value, bool> operator !=(T lhs, U rhs) {
+    return Quantity{lhs} != rhs;
+  }
+
+  template<typename T, typename U>
+  std::enable_if_t<std::is_convertible<T, Quantity>::value &&
+      std::is_same<U, Quantity>::value, bool> operator >(T lhs, U rhs) {
+    return Quantity{lhs} > rhs;
+  }
+
+  template<typename T, typename U>
+  std::enable_if_t<std::is_convertible<T, Quantity>::value &&
+      std::is_same<U, Quantity>::value, bool> operator >=(T lhs, U rhs) {
+    return Quantity{lhs} >= rhs;
+  }
+
+  template<typename T, typename U>
+  std::enable_if_t<std::is_convertible<T, Quantity>::value &&
+      std::is_same<U, Quantity>::value, Quantity> operator +(T lhs, U rhs) {
     return Quantity{lhs} + rhs;
   }
 
-  template<typename T>
-  Quantity operator *(T lhs, Quantity rhs) {
+  template<typename T, typename U>
+  std::enable_if_t<std::is_convertible<T, Quantity>::value &&
+      std::is_same<U, Quantity>::value, Quantity> operator -(T lhs, U rhs) {
+    return Quantity{lhs} - rhs;
+  }
+
+  template<typename T, typename U>
+  std::enable_if_t<std::is_convertible<T, Quantity>::value &&
+      std::is_same<U, Quantity>::value, Quantity> operator *(T lhs, U rhs) {
     return Quantity{lhs} * rhs;
   }
 
   template<typename T>
   Quantity operator *(const boost::rational<T>& lhs, Quantity rhs) {
     return (lhs.numerator() * rhs) / lhs.denominator();
+  }
+
+  template<typename T, typename U>
+  std::enable_if_t<std::is_convertible<T, Quantity>::value &&
+      std::is_same<U, Quantity>::value, Quantity> operator /(T lhs, U rhs) {
+    return Quantity{lhs} / rhs;
   }
 
   //! Returns the modulus of two Quantities.
@@ -373,6 +433,18 @@ namespace Nexus {
     return static_cast<int>(m_value / MULTIPLIER);
   }
 
+  inline Quantity::operator unsigned int() const {
+    return static_cast<unsigned int>(m_value / MULTIPLIER);
+  }
+
+  inline Quantity::operator long long() const {
+    return static_cast<long long>(m_value / MULTIPLIER);
+  }
+
+  inline Quantity::operator unsigned long long() const {
+    return static_cast<unsigned long long>(m_value / MULTIPLIER);
+  }
+
   inline bool Quantity::operator <(Quantity rhs) const {
     return m_value < rhs.m_value;
   }
@@ -499,6 +571,11 @@ namespace std {
   template<>
   class numeric_limits<Nexus::Quantity> {
     public:
+      static Nexus::Quantity infinity() {
+        return Nexus::Quantity::FromRepresentation(
+          numeric_limits<boost::float64_t>::infinity());
+      }
+
       static Nexus::Quantity min() {
         return Nexus::Quantity::FromRepresentation(
           numeric_limits<boost::float64_t>::min());
@@ -507,6 +584,11 @@ namespace std {
       static Nexus::Quantity max() {
         return Nexus::Quantity::FromRepresentation(
           numeric_limits<boost::float64_t>::max());
+      }
+
+      static Nexus::Quantity quiet_NaN() {
+        return Nexus::Quantity::FromRepresentation(
+          numeric_limits<boost::float64_t>::quiet_NaN());
       }
   };
 }

@@ -320,7 +320,8 @@ unique_ptr<CanvasNode> BookViewWindow::PrepareTaskNode(const CanvasNode& node) {
             quantity = m_userProfile->GetInteractionProperties().Get(
               m_security).m_defaultQuantity;
           }
-          builder.Replace(*quantityNode, quantityValueNode->SetValue(quantity));
+          builder.Replace(*quantityNode, quantityValueNode->SetValue(
+            static_cast<int>(quantity)));
         }
       }
       taskNode = builder.Build();

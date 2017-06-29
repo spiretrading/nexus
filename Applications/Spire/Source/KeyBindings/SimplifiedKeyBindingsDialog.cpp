@@ -3658,8 +3658,8 @@ bool SimplifiedKeyBindingsDialog::FilterTaskBindingsTable(QEvent* event) {
           dynamic_cast<const IntegerNode*>(&*baseQuantityNode)) {
         try {
           orderType = baseOrderType->Replace("quantity",
-            quantityNode->SetValue(m_keyBindings.GetDefaultQuantity(
-            m_currentMarket)));
+            quantityNode->SetValue(static_cast<int>(
+            m_keyBindings.GetDefaultQuantity(m_currentMarket))));
         } catch(const CanvasOperationException&) {
           orderType = CanvasNode::Clone(*baseOrderType);
         }

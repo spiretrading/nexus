@@ -7,6 +7,7 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
+using namespace Nexus;
 using namespace Spire;
 using namespace std;
 
@@ -146,16 +147,14 @@ optional<ChartValue> ChartPlotController::LoadLastValue() {
   auto lastValueIndex = m_lastValueIndex;
   m_taskQueue.Push(
     [=] {
-      auto lastValue = ChartValue::FromRepresentation(
-        std::numeric_limits<std::int64_t>().min());
+      auto lastValue = ChartValue{std::numeric_limits<Quantity>::min()};
       for(const auto& s : series) {
         try {
           auto seriesLastValue = s->LoadLastCurrentDomain();
           lastValue = std::max(lastValue, seriesLastValue);
         } catch(const std::exception&) {}
       }
-      if(lastValue.GetRepresentation() !=
-          std::numeric_limits<std::int64_t>().min()) {
+      if(lastValue != ChartValue{std::numeric_limits<Quantity>().min()}) {
         m_lastValuesLoaded.PushBack(std::make_tuple(lastValueIndex, lastValue));
       }
     });
@@ -177,17 +176,15 @@ void ChartPlotController::UpdateAutoScale() {
     ChartValue());
   auto rightIterator = std::lower_bound(m_plots.begin(), m_plots.end(),
     rightPoint, ChartPlotComparator());
-  auto min = ChartValue::FromRepresentation(
-    std::numeric_limits<int64_t>::max());
-  auto max = ChartValue::FromRepresentation(
-    std::numeric_limits<int64_t>::min());
+  auto min = ChartValue{std::numeric_limits<Quantity>::max()};
+  auto max = ChartValue{std::numeric_limits<Quantity>::min()};
   for(auto i = leftIterator; i != rightIterator; ++i) {
     min = std::min(min, GetBottomViewPoint(**i));
     max = std::max(max, GetTopViewPoint(**i));
   }
   if(min == max) {
-    min -= ChartValue(Nexus::Money::CENT);
-    max += ChartValue(Nexus::Money::CENT);
+    min -= ChartValue{Nexus::Money::CENT};
+    max += ChartValue{Nexus::Money::CENT};
   }
   auto yAxisParameters = m_view->GetYAxisParameters();
   yAxisParameters.m_min = min;

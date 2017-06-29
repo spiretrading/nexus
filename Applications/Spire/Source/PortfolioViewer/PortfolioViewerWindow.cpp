@@ -40,7 +40,7 @@ namespace {
       GetOpposite(GetSide(entry.m_inventory.m_position)),
       userProfile.GetDestinationDatabase().GetPreferredDestination(
       entry.m_inventory.m_position.m_key.m_index.GetMarket()).m_id,
-      abs(entry.m_inventory.m_position.m_quantity));
+      Abs(entry.m_inventory.m_position.m_quantity));
     auto orderNode = BuildOrderTaskNodeFromOrderFields(orderFields,
       userProfile);
     auto& taskEntry = blotter.GetTasksModel().Add(*orderNode);
@@ -151,7 +151,7 @@ void PortfolioViewerWindow::OnTotalsUpdated(
   m_unrealizedProfitAndLossLabel->SetValue(QVariant::fromValue(
     totals.m_unrealizedProfitAndLoss));
   m_feesLabel->SetValue(QVariant::fromValue(totals.m_fees));
-  m_volumeLabel->SetValue(static_cast<qlonglong>(totals.m_volume));
+  m_volumeLabel->SetValue(QVariant::fromValue(totals.m_volume));
   m_tradesLabel->SetValue(totals.m_trades);
 }
 

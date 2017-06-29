@@ -269,9 +269,9 @@ Quantity UserProfile::GetDefaultQuantity(const Security& security,
   }
   if(side == Side::BID && currentQuantity < 0 ||
       side == Side::ASK && currentQuantity > 0) {
-    defaultQuantity = std::min(baseQuantity, std::abs(currentQuantity));
+    defaultQuantity = std::min(baseQuantity, Abs(currentQuantity));
   } else {
-    defaultQuantity = baseQuantity - std::abs(currentQuantity) % baseQuantity;
+    defaultQuantity = baseQuantity - Abs(currentQuantity) % baseQuantity;
   }
   return defaultQuantity;
 }

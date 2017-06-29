@@ -288,13 +288,13 @@ void OpenEditorCanvasNodeVisitor::Visit(const IntegerNode& node) {
       text = keyEvent->text();
     }
     if(text.isEmpty() || !text[0].isLetterOrNumber()) {
-      editor->setValue(node.GetValue());
+      editor->setValue(static_cast<int>(node.GetValue()));
     } else {
       editor->clear();
     }
     QApplication::sendEvent(editor, m_event);
   } else {
-    editor->setValue(node.GetValue());
+    editor->setValue(static_cast<int>(node.GetValue()));
   }
   m_editVariant = editor;
 }
@@ -346,13 +346,13 @@ void OpenEditorCanvasNodeVisitor::Visit(const MaxFloorNode& node) {
       text = keyEvent->text();
     }
     if(text.isEmpty() || !text[0].isLetterOrNumber()) {
-      editor->setValue(node.GetValue());
+      editor->setValue(static_cast<int>(node.GetValue()));
     } else {
       editor->clear();
     }
     QApplication::sendEvent(editor, m_event);
   } else {
-    editor->setValue(node.GetValue());
+    editor->setValue(static_cast<int>(node.GetValue()));
   }
   m_editVariant = editor;
 }

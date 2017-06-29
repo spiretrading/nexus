@@ -243,7 +243,7 @@ void TimeAndSalesWindow::SetupSecurityTechnicals() {
 }
 
 void TimeAndSalesWindow::OnVolumeUpdate(Quantity volume) {
-  m_volumeLabel->SetValue(volume);
+  m_volumeLabel->SetValue(static_cast<int>(volume));
 }
 
 void TimeAndSalesWindow::OnContextMenu(const QPoint& position) {

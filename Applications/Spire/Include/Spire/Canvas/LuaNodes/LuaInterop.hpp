@@ -39,7 +39,8 @@ namespace Reactors {
   template<>
   struct PushLuaValue<Nexus::Money> {
     void operator ()(lua_State& state, Nexus::Money value) const {
-      lua_pushnumber(&state, static_cast<Quantity>(value).GetRepresentation());
+      lua_pushnumber(&state,
+        static_cast<Nexus::Quantity>(value).GetRepresentation());
     }
   };
 

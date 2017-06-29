@@ -81,8 +81,7 @@ QVariant OpenPositionsModel::data(const QModelIndex& index, int role) const {
     if(index.column() == SECURITY_COLUMN) {
       return QVariant::fromValue(entry.m_key.m_index);
     } else if(index.column() == QUANTITY_COLUMN) {
-      return static_cast<qlonglong>(
-        abs(entry.m_inventory.m_position.m_quantity));
+      return QVariant::fromValue(Abs(entry.m_inventory.m_position.m_quantity));
     } else if(index.column() == SIDE_COLUMN) {
       Side side = GetSide(entry.m_inventory.m_position);
       return QVariant::fromValue(PositionSideToken(side));

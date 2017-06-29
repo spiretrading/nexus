@@ -53,5 +53,5 @@ void ProfitAndLossHeader::OnProfitAndLossChanged(Money profitAndLoss) {
 }
 
 void ProfitAndLossHeader::OnVolumeChanged(Quantity volume) {
-  m_ui->m_volumeValue->setText(QString::number(volume));
+  m_ui->m_volumeValue->setText(QString::number(static_cast<int>(volume)));
 }
