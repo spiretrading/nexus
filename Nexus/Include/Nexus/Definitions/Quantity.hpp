@@ -125,7 +125,7 @@ namespace Nexus {
       Quantity& operator ++();
 
       //! Increments this Quantity.
-      Quantity& operator ++(int);
+      Quantity operator ++(int);
 
       //! Subtracts two Quantities together.
       /*!
@@ -145,7 +145,7 @@ namespace Nexus {
       Quantity& operator --();
 
       //! Decrements this Quantity.
-      Quantity& operator --(int);
+      Quantity operator --(int);
 
       //! Multiplies two Quantities together.
       /*!
@@ -411,7 +411,7 @@ namespace Nexus {
     return *this;
   }
 
-  inline Quantity& Quantity::operator ++(int) {
+  inline Quantity Quantity::operator ++(int) {
     Quantity q{*this};
     ++(*this);
     return q;
@@ -431,7 +431,7 @@ namespace Nexus {
     return *this;
   }
 
-  inline Quantity& Quantity::operator --(int) {
+  inline Quantity Quantity::operator --(int) {
     Quantity q{*this};
     --(*this);
     return q;
