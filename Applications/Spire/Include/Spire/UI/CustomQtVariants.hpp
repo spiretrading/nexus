@@ -11,6 +11,7 @@
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderStatus.hpp"
 #include "Nexus/Definitions/OrderType.hpp"
+#include "Nexus/Definitions/Quantity.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
@@ -70,6 +71,7 @@ Q_DECLARE_METATYPE(Nexus::CurrencyId);
 Q_DECLARE_METATYPE(Nexus::Money);
 Q_DECLARE_METATYPE(Nexus::OrderStatus);
 Q_DECLARE_METATYPE(Nexus::OrderType);
+Q_DECLARE_METATYPE(Nexus::Quantity);
 Q_DECLARE_METATYPE(Nexus::Security);
 Q_DECLARE_METATYPE(Nexus::Side);
 Q_DECLARE_METATYPE(Nexus::TimeInForce);

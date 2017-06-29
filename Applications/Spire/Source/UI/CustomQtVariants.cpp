@@ -38,6 +38,8 @@ namespace {
       return QVariant::fromValue(any_cast<MarketToken>(value));
     } else if(value.type() == typeid(Money)) {
       return QVariant::fromValue(any_cast<Money>(value));
+    } else if(value.type() == typeid(Quantity)) {
+      return QVariant::fromValue(any_cast<Quantity>(value));
     } else if(value.type() == typeid(OrderStatus)) {
       return QVariant::fromValue(any_cast<OrderStatus>(value));
     } else if(value.type() == typeid(Task::State)) {
@@ -144,6 +146,8 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     return QString::fromStdString(entry.m_displayName);
   } else if(value.canConvert<Money>()) {
     return QString::fromStdString(value.value<Money>().ToString());
+  } else if(value.canConvert<Quantity>()) {
+    return QString::fromStdString(value.value<Quantity>().ToString());
   } else if(value.canConvert<OrderStatus>()) {
     return QString::fromStdString(ToString(value.value<OrderStatus>()));
   } else if(value.canConvert<Task::State>()) {
@@ -205,6 +209,9 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
   } else if(leftVariant.canConvert<Money>()) {
     return Compare(leftVariant.value<Money>(), rightVariant.value<Money>(),
       left, right);
+  } else if(leftVariant.canConvert<Quantity>()) {
+    return Compare(leftVariant.value<Quantity>(),
+      rightVariant.value<Quantity>(), left, right);
   } else if(leftVariant.canConvert<OrderStatus>()) {
     return Compare(ToString(leftVariant.value<OrderStatus>()),
       ToString(rightVariant.value<OrderStatus>()), left, right);

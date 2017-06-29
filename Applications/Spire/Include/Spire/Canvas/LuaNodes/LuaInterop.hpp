@@ -31,15 +31,15 @@ namespace Reactors {
   template<>
   struct PopLuaValue<Nexus::Money> {
     Nexus::Money operator ()(lua_State& state) const {
-      return Nexus::Money::FromRepresentation(
-        static_cast<std::uint64_t>(lua_tonumber(&state, -1)));
+      return Nexus::Money{Nexus::Quantity::FromRepresentation(
+        lua_tonumber(&state, -1))};
     }
   };
 
   template<>
   struct PushLuaValue<Nexus::Money> {
     void operator ()(lua_State& state, Nexus::Money value) const {
-      lua_pushnumber(&state, static_cast<int>(value.GetRepresentation()));
+      lua_pushnumber(&state, static_cast<Quantity>(value).GetRepresentation());
     }
   };
 

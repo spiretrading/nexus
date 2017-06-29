@@ -40,7 +40,7 @@ Record PortfolioEntryToRecordConverter::operator ()(
     value.m_securityInventory.m_position.m_key.m_index,
     value.m_securityInventory.m_position.m_key.m_currency,
     GetSide(value.m_securityInventory.m_position),
-    abs(value.m_securityInventory.m_position.m_quantity),
+    Abs(value.m_securityInventory.m_position.m_quantity),
     value.m_securityInventory.m_position.m_costBasis,
     value.m_securityInventory.m_grossProfitAndLoss,
     value.m_securityInventory.m_fees,

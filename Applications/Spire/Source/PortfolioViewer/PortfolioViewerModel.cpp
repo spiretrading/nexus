@@ -136,8 +136,7 @@ QVariant PortfolioViewerModel::data(const QModelIndex& index, int role) const {
     } else if(index.column() == SECURITY_COLUMN) {
       return QVariant::fromValue(entry.m_inventory.m_position.m_key.m_index);
     } else if(index.column() == OPEN_QUANTITY_COLUMN) {
-      return QVariant::fromValue(
-        std::abs(entry.m_inventory.m_position.m_quantity));
+      return QVariant::fromValue(Abs(entry.m_inventory.m_position.m_quantity));
     } else if(index.column() == SIDE_COLUMN) {
       return QVariant::fromValue(PositionSideToken(
         GetSide(entry.m_inventory.m_position)));

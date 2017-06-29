@@ -98,7 +98,7 @@ QVariant OrderImbalanceIndicatorModel::data(
     } else if(index.column() == SIDE_COLUMN) {
       return QVariant::fromValue(orderImbalance->m_side);
     } else if(index.column() == SIZE_COLUMN) {
-      return static_cast<qlonglong>(orderImbalance->m_size);
+      return QVariant::fromValue(orderImbalance->m_size);
     } else if(index.column() == REFERENCE_PRICE_COLUMN) {
       return QVariant::fromValue(orderImbalance->m_referencePrice);
     } else if(index.column() == NOTIONAL_VALUE_COLUMN) {
