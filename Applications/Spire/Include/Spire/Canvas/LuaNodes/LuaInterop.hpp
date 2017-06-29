@@ -45,6 +45,21 @@ namespace Reactors {
   };
 
   template<>
+  struct PopLuaValue<Nexus::Quantity> {
+    Nexus::Quantity operator ()(lua_State& state) const {
+      return Nexus::Quantity::FromRepresentation(lua_tonumber(&state, -1));
+    }
+  };
+
+  template<>
+  struct PushLuaValue<Nexus::Quantity> {
+    void operator ()(lua_State& state, Nexus::Quantity value) const {
+      lua_pushnumber(&state,
+        static_cast<Nexus::Quantity>(value).GetRepresentation());
+    }
+  };
+
+  template<>
   struct PopLuaValue<Nexus::Security> {
     Nexus::Security operator ()(lua_State& state) const {
 
