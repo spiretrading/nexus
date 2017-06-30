@@ -68,10 +68,16 @@ namespace Nexus {
       //! Converts this Quantity into an unsigned int.
       explicit operator unsigned int() const;
 
+      //! Converts this Quantity into a long.
+      explicit operator long() const;
+
+      //! Converts this Quantity into an unsigned long.
+      explicit operator unsigned long() const;
+
       //! Converts this Quantity into a long long.
       explicit operator long long() const;
 
-      //! Converts this Quantity into a long long.
+      //! Converts this Quantity into an unsigned long long.
       explicit operator unsigned long long() const;
 
       //! Less than test.
@@ -435,6 +441,14 @@ namespace Nexus {
 
   inline Quantity::operator unsigned int() const {
     return static_cast<unsigned int>(m_value / MULTIPLIER);
+  }
+
+  inline Quantity::operator long() const {
+    return static_cast<long>(m_value / MULTIPLIER);
+  }
+
+  inline Quantity::operator unsigned long() const {
+    return static_cast<unsigned long>(m_value / MULTIPLIER);
   }
 
   inline Quantity::operator long long() const {

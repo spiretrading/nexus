@@ -26,6 +26,7 @@
 #include "Nexus/Definitions/OrderImbalance.hpp"
 #include "Nexus/Definitions/OrderStatus.hpp"
 #include "Nexus/Definitions/OrderType.hpp"
+#include "Nexus/Definitions/Quantity.hpp"
 #include "Nexus/Definitions/Quote.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
@@ -43,6 +44,32 @@ using namespace boost::python;
 using namespace Nexus;
 using namespace Nexus::Python;
 using namespace std;
+
+namespace {
+  struct QuantityFromPythonConverter {
+    static void* convertible(PyObject* object) {
+      if(PyInt_Check(object) || PyLong_Check(object) ||
+          PyFloat_Check(object)) {
+        return object;
+      }
+      return nullptr;
+    }
+
+    static void construct(PyObject* object,
+        boost::python::converter::rvalue_from_python_stage1_data* data) {
+      auto storage = reinterpret_cast<converter::rvalue_from_python_storage<
+          Quantity>*>(data)->storage.bytes;
+      if(PyInt_Check(object)) {
+        new(storage) Quantity{PyInt_AS_LONG(object)};
+      } else if(PyLong_Check(object)) {
+        new(storage) Quantity{PyLong_AsLong(object)};
+      } else {
+        new(storage) Quantity{PyFloat_AS_DOUBLE(object)};
+      }
+      data->convertible = storage;
+    }
+  };
+}
 
 void Nexus::Python::ExportBboQuote() {
   class_<BboQuote>("BboQuote", init<>())
@@ -294,6 +321,7 @@ void Nexus::Python::ExportDestination() {
 }
 
 void Nexus::Python::ExportDefinitions() {
+  ExportQuantity();
   ExportSecurity();
   ExportBboQuote();
   ExportBookQuote();
@@ -394,6 +422,7 @@ void Nexus::Python::ExportMarketQuote() {
 void Nexus::Python::ExportMoney() {
   class_<Money>("Money", init<>())
     .def(init<double>())
+    .def(init<Quantity>())
     .def_readonly("ZERO", Money::ZERO)
     .def_readonly("ONE", Money::ONE)
     .def_readonly("CENT", Money::CENT)
@@ -472,6 +501,82 @@ void Nexus::Python::ExportOrderType() {
     .value("PEGGED", OrderType::PEGGED)
     .value("STOP", OrderType::STOP);
   ExportEnum<OrderType>();
+}
+
+void Nexus::Python::ExportQuantity() {
+  class_<Quantity>("Quantity", init<>())
+    .def(init<int>())
+    .def(init<double>())
+    .def("from_value",
+      static_cast<boost::optional<Quantity> (*)(const std::string&)>(
+      &Quantity::FromValue))
+    .staticmethod("from_value")
+    .def("__str__", &lexical_cast<std::string, Quantity>)
+    .def("__abs__", static_cast<Quantity (*)(Quantity)>(&Abs))
+    .def(int_(self))
+    .def(float_(self))
+    .def(self < self)
+    .def(self < int())
+    .def(int() < self)
+    .def(self < double())
+    .def(double() < self)
+    .def(self <= self)
+    .def(self <= int())
+    .def(int() <= self)
+    .def(self <= double())
+    .def(double() <= self)
+    .def(self == self)
+    .def(self == int())
+    .def(int() == self)
+    .def(self == double())
+    .def(double() == self)
+    .def(self != self)
+    .def(self != int())
+    .def(int() != self)
+    .def(self != double())
+    .def(double() != self)
+    .def(self >= self)
+    .def(self >= int())
+    .def(int() >= self)
+    .def(self >= double())
+    .def(double() >= self)
+    .def(self > self)
+    .def(self > int())
+    .def(int() > self)
+    .def(self > double())
+    .def(double() > self)
+    .def(self + self)
+    .def(self + int())
+    .def(int() + self)
+    .def(self + double())
+    .def(double() + self)
+    .def(self - self)
+    .def(self - int())
+    .def(int() - self)
+    .def(self - double())
+    .def(double() - self)
+    .def(self * self)
+    .def(self * int())
+    .def(int() * self)
+    .def(self * double())
+    .def(double() * self)
+    .def(self / self)
+    .def(self / int())
+    .def(int() / self)
+    .def(self / double())
+    .def(double() / self)
+    .def(-self)
+    .def(int() * self)
+    .def(double() * self);
+  def("floor", static_cast<Quantity (*)(Quantity, int)>(&Floor));
+  def("ceil", static_cast<Quantity (*)(Quantity, int)>(&Ceil));
+  def("truncate", static_cast<Quantity (*)(Quantity, int)>(&Truncate));
+  def("round", static_cast<Quantity (*)(Quantity, int)>(&Round));
+  python_optional<Quantity>();
+  class_<vector<Quantity>>("VectorQuantity")
+    .def(vector_indexing_suite<vector<Quantity>>());
+  converter::registry::push_back(&QuantityFromPythonConverter::convertible,
+    &QuantityFromPythonConverter::construct, type_id<Quantity>());
 }
 
 void Nexus::Python::ExportQuote() {
