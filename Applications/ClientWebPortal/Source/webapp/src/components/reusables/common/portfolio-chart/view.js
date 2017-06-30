@@ -26,13 +26,18 @@ class View extends UpdatableView {
 
   /** @private */
   convertToHeaderLabel(label) {
-    if (label === 'totalPnL' || label === 'Total P/L') {
+    if (label === 'totalPnL') {
       label = 'Total P/L';
-    } else if (label === 'unrealizedPnL' || label === 'Unrealized P/L') {
+    } else if (label === 'unrealizedPnL') {
       label = 'Unrealized P/L';
-    } else if (label === 'realizedPnL' || label === 'Realized P/L') {
+    } else if (label === 'realizedPnL') {
       label = 'Realized P/L';
-    } else {
+    } else if (label !== 'Total P/L' &&
+               label !== 'Unrealized P/L' &&
+               label !== 'Realized P/L' &&
+               label !== 'Acc. Total P/L' &&
+               label !== 'Acc. Unrealized P/L' &&
+               label !== 'Acc. Fees') {
       label = this.convertToTitle(label);
     }
 
@@ -48,6 +53,12 @@ class View extends UpdatableView {
       propertyName = 'unrealizedPnL';
     } else if (headerLabel === 'Realized P/L') {
       propertyName = 'realizedPnL';
+    } else if (headerLabel === 'Acc. Total P/L') {
+      propertyName = 'accountTotalPnL';
+    } else if (headerLabel === 'Acc. Unrealized P/L') {
+      propertyName = 'accountUnrealizedPnL';
+    } else if (headerLabel === 'Acc. Fees') {
+      propertyName = 'accountFees';
     } else {
       propertyName = this.convertToCamelCase(headerLabel);
     }
@@ -199,7 +210,10 @@ class View extends UpdatableView {
           if (sortingColumn.name === 'Average Price' ||
               sortingColumn.name === 'Total P/L' ||
               sortingColumn.name === 'Unrealized P/L' ||
-              sortingColumn.name === 'Cost Basis') {
+              sortingColumn.name === 'Cost Basis' ||
+              sortingColumn.name === 'Acc. Total P/L' ||
+              sortingColumn.name === 'Acc. Unrealized P/L' ||
+              sortingColumn.name === 'Acc. Fees') {
             if (a != null && a[propertyName] == null && b != null && b[propertyName] != null) {
               return -1;
             } else if (a != null && a[propertyName] != null && b != null && b[propertyName] == null) {
