@@ -155,7 +155,7 @@ class View extends UpdatableView {
     }
 
     let headerTableWidth = $('#' + this.componentModel.componentId + ' .header table').width();
-    $('#' + this.componentModel.componentId + ' .body').css('width', headerTableWidth);
+    $('#' + this.componentModel.componentId + ' .body').css('width', headerTableWidth + 2);
   }
 
   dispose() {
