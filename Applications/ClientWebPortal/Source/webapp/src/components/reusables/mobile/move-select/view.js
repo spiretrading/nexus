@@ -6,6 +6,8 @@ import deviceDetector from 'utils/device-detector';
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
+
+    this.deselectAll = this.deselectAll.bind(this);
   }
 
   /** @private */
@@ -15,17 +17,17 @@ class View extends UpdatableView {
       addingItems.push($(this).attr('value'));
     });
 
-    this.deselectAll.apply(this);
+    this.deselectAll();
 
     if (addingItems.length > 0) {
-      this.controller.addItems.apply(this.controller, [addingItems]);
+      this.controller.addItems(addingItems);
     }
   }
 
   /** @private */
   onAddAllClick() {
-    this.deselectAll.apply(this);
-    this.controller.addAllItems.apply(this.controller);
+    this.deselectAll();
+    this.controller.addAllItems();
   }
 
   /** @private */
@@ -35,17 +37,17 @@ class View extends UpdatableView {
       removingItems.push($(this).attr('value'));
     });
 
-    this.deselectAll.apply(this);
+    this.deselectAll();
 
     if (removingItems.length > 0) {
-      this.controller.removeItems.apply(this.controller, [removingItems]);
+      this.controller.removeItems(removingItems);
     }
   }
 
   /** @private */
   onRemoveAllClick() {
-    this.deselectAll.apply(this);
-    this.controller.removeAllItems.apply(this.controller);
+    this.deselectAll();
+    this.controller.removeAllItems();
   }
 
   /** @private */

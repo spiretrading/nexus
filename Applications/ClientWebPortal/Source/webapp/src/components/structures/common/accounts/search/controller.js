@@ -10,6 +10,9 @@ class Controller {
     this.accountDirectoryEntries = new HashMap();
     this.adminClient = new AdministrationClient();
     this.serviceLocatorClient = new ServiceLocatorClient();
+
+    this.createGroup = this.createGroup.bind(this);
+    this.findGroupDirectoryEntry = this.findGroupDirectoryEntry.bind(this);
   }
 
   getView() {
@@ -29,10 +32,7 @@ class Controller {
   /** @private */
   getRequiredData() {
     let directoryEntry = this.componentModel.directoryEntry;
-    let loadManagedTradingGroups = this.adminClient.loadManagedTradingGroups.apply(
-      this.adminClient,
-      [(directoryEntry)]
-    );
+    let loadManagedTradingGroups = this.adminClient.loadManagedTradingGroups(directoryEntry);
 
     return Promise.all([
       loadManagedTradingGroups
@@ -66,11 +66,11 @@ class Controller {
   }
 
   componentWillUnmount() {
-    this.view.dispose.apply(this.view);
+    this.view.dispose();
   }
 
   search(searchString) {
-    this.serviceLocatorClient.searchDirectoryEntry.apply(this.serviceLocatorClient, [searchString])
+    this.serviceLocatorClient.searchDirectoryEntry(searchString)
       .then((results) => {
         // results come in a mix of groups and individual traders in an array
         for (let i=0; i<results.length; i++) {
@@ -126,7 +126,7 @@ class Controller {
   }
 
   navigateToGroupProfile(groupId) {
-    let directoryEntry = this.findGroupDirectoryEntry.apply(this, [groupId]);
+    let directoryEntry = this.findGroupDirectoryEntry(groupId);
     browserHistory.push('/group-profile-account/' +
       directoryEntry.type +
       '/' + directoryEntry.id +
@@ -138,13 +138,13 @@ class Controller {
   }
 
   loadGroupAccounts(groupId) {
-    let group = this.findGroupDirectoryEntry.apply(this, [groupId]);
+    let group = this.findGroupDirectoryEntry(groupId);
     let groupDirectoryEntry = new DirectoryEntry(
       group.id,
       group.type,
       group.name
     );
-    this.adminClient.loadTradingGroup.apply(this.adminClient, [groupDirectoryEntry])
+    this.adminClient.loadTradingGroup(groupDirectoryEntry)
       .then((accounts) => {
         group.isLoaded = true;
         group.accounts = accounts;
@@ -160,7 +160,7 @@ class Controller {
           );
           this.accountDirectoryEntries.set(traderDirectoryEntry.id, traderDirectoryEntry);
           if (!requestedRoles.has(traderDirectoryEntry.id)) {
-            loadRolesPromises.push(this.adminClient.loadAccountRoles.apply(this.adminClient, [traderDirectoryEntry]));
+            loadRolesPromises.push(this.adminClient.loadAccountRoles(traderDirectoryEntry));
             requestedRoles.set(traderDirectoryEntry.id, true);
           }
         }
@@ -191,7 +191,7 @@ class Controller {
   }
 
   createGroup(groupName) {
-    this.serviceLocatorClient.createGroup.apply(this.serviceLocatorClient, [groupName])
+    this.serviceLocatorClient.createGroup(groupName)
       .then(this.view.closeCreateGroupModal.bind(this.view))
       .then(refreshSearchPage.bind(this));
 
@@ -201,7 +201,7 @@ class Controller {
           let groups = responses[0];
           for (let i=0; i<groups.length; i++) {
             let groupId = groups.id;
-            if (!doesGroupExist.apply(this, [groupId])) {
+            if (!doesGroupExist.call(this, groupId)) {
               this.componentModel.groupedAccounts.push(groups[i]);
             }
           }

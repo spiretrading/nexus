@@ -9,7 +9,7 @@ class View extends UpdatableView {
 
   onButtonClick() {
     if (!this.componentModel.isDisabled) {
-      this.controller.onButtonClick.apply(this.controller);
+      this.controller.onButtonClick();
     }
   }
 

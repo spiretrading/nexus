@@ -5,12 +5,11 @@ import UpdatableView from 'commons/updatable-view';
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
-  }
 
-  /** @private */
-  onValueChange(event) {
-    let newValue = $('#' + this.componentModel.componentId + ' select').val();
-    this.controller.onSelectionChange.apply(this.controller, [newValue]);
+    this.initialize = this.initialize.bind(this);
+    this.validateInput = this.validateInput.bind(this);
+    this.isValidDecimals = this.isValidDecimals.bind(this);
+    this.isUpScroll = this.isUpScroll.bind(this);
   }
 
   /** @private */
@@ -54,25 +53,25 @@ class View extends UpdatableView {
     clearInterval(this.decrementInterval);
 
     let $input = $(event.currentTarget);
-    let validationFailMessage = this.validateInput.apply(this, [$input.val()]);
+    let validationFailMessage = this.validateInput($input.val());
 
     if (validationFailMessage == null) {
       $input.removeClass('invalid').addClass('valid');
-      this.controller.onValueChange.apply(this.controller, [Number($input.val())]);
+      this.controller.onValueChange(Number($input.val()));
     } else {
       $input.removeClass('valid').addClass('invalid');
-      this.controller.onValidationFail.apply(this.controller, [validationFailMessage]);
+      this.controller.onValidationFail(validationFailMessage);
     }
   }
 
   /** @private */
   validateInput(input) {
     let inputNumber = Number(input);
-    if (isNaN(inputNumber)) {
+    if (!$.isNumeric(inputNumber)) {
       return 'Must be a number.';
     } else if (inputNumber < 0) {
       return 'Cannot be a negative number.';
-    } else if (!this.isValidDecimals.apply(this, [input])) {
+    } else if (!this.isValidDecimals(input)) {
       if (this.componentModel.allowedDecimals > 0) {
         return 'Exceeded ' + this.componentModel.allowedDecimals + ' decimal places.';
       } else {
@@ -130,7 +129,7 @@ class View extends UpdatableView {
           }
         }
         $input.val(currentValue).focus();
-        this.controller.onValueChange.apply(this.controller, [currentValue]);
+        this.controller.onValueChange(currentValue);
       }
     }
   }
@@ -152,7 +151,7 @@ class View extends UpdatableView {
           }
         }
         $input.val(currentValue).focus();
-        this.controller.onValueChange.apply(this.controller, [currentValue]);
+        this.controller.onValueChange(currentValue);
       }
     }
   }
@@ -163,7 +162,7 @@ class View extends UpdatableView {
         let $input = $('#' + this.componentModel.componentId).find('input');
         let currentValue = Number($input.val());
         if (!$input.hasClass('invalid')) {
-          if(this.isUpScroll.apply(this, [event])) {
+          if(this.isUpScroll(event)) {
             currentValue += this.componentModel.stepSize;
             if (this.componentModel.doRoll) {
               if (currentValue > this.componentModel.max) {
@@ -188,7 +187,7 @@ class View extends UpdatableView {
           }
 
           $input.val(currentValue);
-          this.controller.onValueChange.apply(this.controller, [currentValue]);
+          this.controller.onValueChange(currentValue);
         }
       });
     });

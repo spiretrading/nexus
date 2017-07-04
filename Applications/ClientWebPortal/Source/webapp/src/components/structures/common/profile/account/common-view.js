@@ -47,7 +47,7 @@ class CommonView extends UpdatableView {
     } else {
       $('#account-container .change-password-wrapper .message')
         .fadeOut(() => {
-          this.controller.onPasswordUpdate.apply(this.controller, [newPassword]);
+          this.controller.onPasswordUpdate(newPassword);
         });
     }
   }

@@ -10,7 +10,7 @@ class Controller {
       this.componentModel.directoryEntry.type,
       this.componentModel.directoryEntry.name
     );
-    this.adminClient = new AdministrationClient();
+    this.adminClient = new AdministrationClient();    
   }
 
   getView() {
@@ -24,7 +24,7 @@ class Controller {
   /** @private */
   getRequiredData() {
     let directoryEntry = this.componentModel.directoryEntry;
-    let loadAccountRoles = this.adminClient.loadAccountRoles.apply(this.adminClient, [directoryEntry]);
+    let loadAccountRoles = this.adminClient.loadAccountRoles(directoryEntry);
 
     return Promise.all([
       loadAccountRoles
@@ -125,7 +125,7 @@ class Controller {
       this.componentModel.startDate = startDate;
       this.componentModel.endDate = endDate;
       this.componentModel.pnlReport = pnlData;
-      this.view.update.apply(this.view, [this.componentModel]);
+      this.view.update(this.componentModel);
     });
   }
 }

@@ -8,9 +8,9 @@ var isMobile = deviceDetector.isMobile();
 let childRoutes;
 
 if (!isMobile) {
-  childRoutes = desktopRoutes.getRoutes.apply(desktopRoutes);
+  childRoutes = desktopRoutes.getRoutes();
 } else {
-  childRoutes = mobileRoutes.getRoutes.apply(mobileRoutes);
+  childRoutes = mobileRoutes.getRoutes();
 }
 
 export default {

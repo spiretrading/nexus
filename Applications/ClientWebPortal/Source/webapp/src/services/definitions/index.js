@@ -4,10 +4,13 @@ import {
   CountryDatabase,
   CountryCode,
   CurrencyDatabase,
+  CurrencyPair,
   CurrencyId,
   MarketCode,
   MarketDatabase,
-  MarketDatabaseEntry
+  MarketDatabaseEntry,
+  ExchangeRate,
+  ExchangeRateTable
 } from 'spire-client';
 import HashMap from 'hashmap';
 
@@ -19,11 +22,12 @@ class DefService {
     this.countryDatabase = new CountryDatabase();
     this.currencyDatabase = new CurrencyDatabase();
     this.marketDatabase = new MarketDatabase();
+    this.exchangeRateTable = new ExchangeRateTable();
   }
 
   /** @private */
   loadCountries() {
-    return this.definitionsServiceClient.loadCountryData.apply(this.definitionsServiceClient).then(onResponse.bind(this));
+    return this.definitionsServiceClient.loadCountryData().then(onResponse.bind(this));
 
     function onResponse(countries) {
       for (let i=0; i<countries.length; i++) {
@@ -34,7 +38,7 @@ class DefService {
 
   /** @private */
   loadCurrencies() {
-    return this.definitionsServiceClient.loadCurrencyData.apply(this.definitionsServiceClient).then(onResponse.bind(this));
+    return this.definitionsServiceClient.loadCurrencyData().then(onResponse.bind(this));
 
     function onResponse(currencies) {
       for (let i=0; i<currencies.length; i++) {
@@ -45,7 +49,7 @@ class DefService {
 
   /** @private */
   loadEntitlements() {
-    return this.adminClient.loadEntitlementsData.apply(this.adminClient).then(onResponse.bind(this));
+    return this.adminClient.loadEntitlementsData().then(onResponse.bind(this));
 
     function onResponse(entitlements) {
       this.entitlements = entitlements;
@@ -54,7 +58,7 @@ class DefService {
 
   /** @private */
   loadComplianceRuleSchemas() {
-    return this.definitionsServiceClient.loadComplianceRuleSchemas.apply(this.definitionsServiceClient)
+    return this.definitionsServiceClient.loadComplianceRuleSchemas()
       .then(onResponse.bind(this));
 
     function onResponse(ruleSchemas) {
@@ -64,7 +68,7 @@ class DefService {
 
   /** @private */
   loadMarkets() {
-    return this.definitionsServiceClient.loadMarketDatabase.apply(this.definitionsServiceClient)
+    return this.definitionsServiceClient.loadMarketDatabase()
       .then(onResponse.bind(this));
 
     function onResponse(response) {
@@ -78,10 +82,10 @@ class DefService {
           response.entries[i].description,
           response.entries[i].display_name
         );
-        this.marketDatabase.add.apply(this.marketDatabase, [marketDatabaseEntry]);
+        this.marketDatabase.add(marketDatabaseEntry);
       }
 
-      this.marketDatabase.add.apply(this.marketDatabase, [new MarketDatabaseEntry(
+      this.marketDatabase.add(new MarketDatabaseEntry(
         new MarketCode('*'),
         CountryCode.fromNumber(65535),
         null,
@@ -89,17 +93,39 @@ class DefService {
         null,
         '*',
         '*'
-      )]);
+      ));
+    }
+  }
+
+  /** @private */
+  loadExchangeRates() {
+    return this.definitionsServiceClient.loadExchangeRates().then(onResponse.bind(this));
+
+    function onResponse(exchangeRates) {
+      for (let i=0; i<exchangeRates.length; i++) {
+        let baseCurrencyId = CurrencyId.fromNumber(exchangeRates[i].pair.base);
+        let baseCurrencyDatabaseEntry = this.currencyDatabase.fromId(baseCurrencyId);
+        let counterCurrencyId = CurrencyId.fromNumber(exchangeRates[i].pair.counter);
+        let counterCurrencyDatabaseEntry = this.currencyDatabase.fromId(counterCurrencyId);
+        let pairCurrencyCode = baseCurrencyDatabaseEntry.code + '/' + counterCurrencyDatabaseEntry.code;
+        let currencyPair = CurrencyPair.parse(pairCurrencyCode, this.currencyDatabase);
+        let rateFraction = exchangeRates[i].rate.numerator + '/' + exchangeRates[i].rate.denominator;
+        let exchangeRate = new ExchangeRate(currencyPair, rateFraction);
+        this.exchangeRateTable.add(exchangeRate);
+      }
     }
   }
 
   initialize() {
+    let loadCurrenciesAndExchangeRates = this.loadCurrencies()
+      .then(this.loadExchangeRates());
+
     return Promise.all([
-      this.loadCountries.apply(this),
-      this.loadCurrencies.apply(this),
-      this.loadEntitlements.apply(this),
-      this.loadComplianceRuleSchemas.apply(this),
-      this.loadMarkets(this)
+      this.loadCountries(),
+      loadCurrenciesAndExchangeRates,
+      this.loadEntitlements(),
+      this.loadComplianceRuleSchemas(),
+      this.loadMarkets()
     ]);
   }
 
@@ -118,7 +144,7 @@ class DefService {
   }
 
   getCountryName(number) {
-    return this.countryDatabase.fromCode.apply(this.countryDatabase, [number]).name;
+    return this.countryDatabase.fromCode(number).name;
   }
 
   doesCurrencyExist(id) {
@@ -191,15 +217,19 @@ class DefService {
   }
 
   getMarket(marketCode) {
-    return this.marketDatabase.fromMarketCode.apply(this.marketDatabase, [marketCode]);
+    return this.marketDatabase.fromMarketCode(marketCode);
   }
 
   getAllMarkets() {
-    return this.marketDatabase.entries.apply(this.marketDatabase);
+    return this.marketDatabase.entries();
   }
 
   getMarketDatabase() {
     return this.marketDatabase;
+  }
+
+  getExchangeRateTable() {
+    return this.exchangeRateTable;
   }
 }
 

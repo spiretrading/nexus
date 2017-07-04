@@ -10,6 +10,9 @@ import SubPagesMenu from 'components/reusables/common/sub-pages-menu';
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
+
+    this.showBottomBorder = this.showBottomBorder.bind(this);
+    this.hideBottomBorder = this.hideBottomBorder.bind(this);
   }
 
   onMenuClick() {

@@ -5,23 +5,40 @@ import currencyFormatter from 'utils/currency-formatter';
 import definitionsService from 'services/definitions';
 import numberFormatter from 'utils/number-formatter';
 import chartColumns from './columns';
+import {CurrencyId, Money} from 'spire-client';
 
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
     this.columnsSyncCounter = 0;
+
+    this.initialize = this.initialize.bind(this);
+    this.dispose = this.dispose.bind(this);
+    this.synchronizeColumnWidths = this.synchronizeColumnWidths.bind(this);
+    this.convertToTitle = this.convertToTitle.bind(this);
+    this.convertToCamelCase = this.convertToCamelCase.bind(this);
+    this.convertToPropertyName = this.convertToPropertyName.bind(this);
+    this.getSecurityLabel = this.getSecurityLabel.bind(this);
+    this.sortData = this.sortData.bind(this);
+    this.convertToHeaderLabel = this.convertToHeaderLabel.bind(this);
+    this.shouldIncludeColumn = this.shouldIncludeColumn.bind(this);
   }
 
   /** @private */
   convertToHeaderLabel(label) {
-    if (label === 'totalPnL' || label === 'Total P/L') {
+    if (label === 'totalPnL') {
       label = 'Total P/L';
-    } else if (label === 'unrealizedPnL' || label === 'Unrealized P/L') {
+    } else if (label === 'unrealizedPnL') {
       label = 'Unrealized P/L';
-    } else if (label === 'realizedPnL' || label === 'Realized P/L') {
+    } else if (label === 'realizedPnL') {
       label = 'Realized P/L';
-    } else {
-      label = this.convertToTitle.apply(this, [label]);
+    } else if (label !== 'Total P/L' &&
+               label !== 'Unrealized P/L' &&
+               label !== 'Realized P/L' &&
+               label !== 'Acc. Total P/L' &&
+               label !== 'Acc. Unrealized P/L' &&
+               label !== 'Acc. Fees') {
+      label = this.convertToTitle(label);
     }
 
     return label;
@@ -36,8 +53,14 @@ class View extends UpdatableView {
       propertyName = 'unrealizedPnL';
     } else if (headerLabel === 'Realized P/L') {
       propertyName = 'realizedPnL';
+    } else if (headerLabel === 'Acc. Total P/L') {
+      propertyName = 'accountTotalPnL';
+    } else if (headerLabel === 'Acc. Unrealized P/L') {
+      propertyName = 'accountUnrealizedPnL';
+    } else if (headerLabel === 'Acc. Fees') {
+      propertyName = 'accountFees';
     } else {
-      propertyName = this.convertToCamelCase.apply(this, [headerLabel]);
+      propertyName = this.convertToCamelCase(headerLabel);
     }
 
     return propertyName;
@@ -126,13 +149,13 @@ class View extends UpdatableView {
   componentDidUpdate() {
     if (this.componentModel.data != null && this.componentModel.data[0] != null) {
       if (this.columnsSyncCounter <= 2) {
-        this.synchronizeColumnWidths.apply(this);
+        this.synchronizeColumnWidths();
         this.columnsSyncCounter++;
       }
     }
 
     let headerTableWidth = $('#' + this.componentModel.componentId + ' .header table').width();
-    $('#' + this.componentModel.componentId + ' .body').css('width', headerTableWidth);
+    $('#' + this.componentModel.componentId + ' .body').css('width', headerTableWidth + 2);
   }
 
   dispose() {
@@ -176,19 +199,31 @@ class View extends UpdatableView {
   /** @private */
   sortData() {
     if (this.componentModel.sortingColumn != null) {
-      this.componentModel.data.sort(getComparer.apply(this, [this.componentModel.sortingColumn]));
+      this.componentModel.data.sort(getComparer.call(this, this.componentModel.sortingColumn));
     }
 
     function getComparer(sortingColumn) {
-      let propertyName = this.convertToPropertyName.apply(this, [sortingColumn.name]);
+      let propertyName = this.convertToPropertyName(sortingColumn.name);
 
       return function(a, b) {
         if (a == null || a[propertyName] == null || b == null || b[propertyName] == null) {
+          if (sortingColumn.name === 'Average Price' ||
+              sortingColumn.name === 'Total P/L' ||
+              sortingColumn.name === 'Unrealized P/L' ||
+              sortingColumn.name === 'Cost Basis' ||
+              sortingColumn.name === 'Acc. Total P/L' ||
+              sortingColumn.name === 'Acc. Unrealized P/L' ||
+              sortingColumn.name === 'Acc. Fees') {
+            if (a != null && a[propertyName] == null && b != null && b[propertyName] != null) {
+              return -1;
+            } else if (a != null && a[propertyName] != null && b != null && b[propertyName] == null) {
+              return 1;
+            }
+          }
           return 0;
         }
-        let constructorName = a[propertyName].constructor.name;
 
-        if (constructorName == 'CurrencyId') {
+        if (a[propertyName] instanceof CurrencyId) {
           let currencyA = definitionsService.getCurrencyCode(a[propertyName].value);
           let currencyB = definitionsService.getCurrencyCode(b[propertyName].value);
           if (sortingColumn.direction === 'asc') {
@@ -196,27 +231,33 @@ class View extends UpdatableView {
           } else if (sortingColumn.direction === 'desc') {
             return currencyB.localeCompare(currencyA);
           }
-        } else if (constructorName == 'Money') {
+        } else if (a[propertyName] instanceof Money) {
           if (sortingColumn.direction === 'asc') {
             return a[propertyName].compare(b[propertyName]);
           } else if (sortingColumn.direction === 'desc') {
             return b[propertyName].compare(a[propertyName]);
           }
-        } else if (constructorName == 'DirectoryEntry') {
+        } else if (sortingColumn.name === 'Account') {
           if (sortingColumn.direction === 'asc') {
             return a[propertyName].name.localeCompare(b[propertyName].name);
           } else if (sortingColumn.direction === 'desc') {
             return b[propertyName].name.localeCompare(a[propertyName].name);
           }
-        } else if (constructorName == 'Security') {
-          let aSecurityLabel = this.getSecurityLabel.apply(this, [a[propertyName]]);
-          let bSecurityLabel = this.getSecurityLabel.apply(this, [b[propertyName]]);
+        } else if (sortingColumn.name == 'Security') {
+          let aSecurityLabel = this.getSecurityLabel(a[propertyName]);
+          let bSecurityLabel = this.getSecurityLabel(b[propertyName]);
           if (sortingColumn.direction === 'asc') {
             return aSecurityLabel.localeCompare(bSecurityLabel);
           } else if (sortingColumn.direction === 'desc') {
             return bSecurityLabel.localeCompare(aSecurityLabel);
           }
-        } else if (!isNaN(a[propertyName])) {
+        } else if (sortingColumn.name === 'Quantity' || sortingColumn.name === 'Cost Basis') {
+          if (sortingColumn.direction === 'asc') {
+            return Math.abs(a[propertyName]) - Math.abs(b[propertyName]);
+          } else if (sortingColumn.direction === 'desc') {
+            return Math.abs(b[propertyName]) - Math.abs(a[propertyName]);
+          }
+        } else if (typeof(a[propertyName]) != 'object' && typeof(a[propertyName]) != 'string' && $.isNumeric(a[propertyName])) {
           if (sortingColumn.direction === 'asc') {
             return a[propertyName] - b[propertyName];
           } else if (sortingColumn.direction === 'desc') {
@@ -235,11 +276,13 @@ class View extends UpdatableView {
 
   /** @private */
   getSecurityLabel(security) {
-    let marketDatabase = definitionsService.getMarketDatabase.apply(definitionsService);
-    return security.toString.apply(security, [marketDatabase]);
+    let marketDatabase = definitionsService.getMarketDatabase();
+    return security.toString(marketDatabase);
   }
 
   render() {
+    this.sortData();
+
     let columns = [];
     let rows = [];
     let accountIds = [];
@@ -263,6 +306,7 @@ class View extends UpdatableView {
     );
 
     // render security column header
+    arrowIcon = null;
     if (this.componentModel.sortingColumn != null && this.componentModel.sortingColumn.name == 'Security') {
       let arrowIconClass;
       if (this.componentModel.sortingColumn.direction == 'asc') {
@@ -282,8 +326,8 @@ class View extends UpdatableView {
     // add column headers
     for (let i=0; i<chartColumns.length; i++) {
       let column = chartColumns[i];
-      let columnHeader = this.convertToHeaderLabel.apply(this, [column.name]);
-      if (this.shouldIncludeColumn.apply(this, [columnHeader])) {
+      let columnHeader = this.convertToHeaderLabel(column.name);
+      if (this.shouldIncludeColumn(columnHeader)) {
         let arrowIcon;
         if (this.componentModel.sortingColumn != null && this.componentModel.sortingColumn.name == columnHeader) {
           let arrowIconClass;
@@ -303,8 +347,6 @@ class View extends UpdatableView {
       }
     }
 
-    this.sortData.apply(this);
-
     if (this.componentModel.data != null && this.componentModel.data[0] != null) {
       for (let i=0; i<this.componentModel.data.length; i++) {
         let rowData = this.componentModel.data[i];
@@ -321,17 +363,20 @@ class View extends UpdatableView {
             property == 'fees' ||
             property == 'realizedPnL' ||
             property == 'totalPnL' ||
-            property == 'unrealizedPnL') {
+            property == 'unrealizedPnL' ||
+            property == 'accountTotalPnL' ||
+            property == 'accountUnrealizedPnL' ||
+            property == 'accountFees') {
             if (rowData[property] == null) {
               value = 'N/A';
             } else {
               if (property == 'costBasis') {
-                rawAmount = rowData[property].toString.apply(rowData[property]);
+                rawAmount = rowData[property].toString();
                 if (rawAmount < 0) {
                   rawAmount *= -1;
                 }
               } else {
-                rawAmount = rowData[property].toString.apply(rowData[property]);
+                rawAmount = rowData[property].toString();
               }
               value = currencyFormatter.formatById(rowData.currency.toNumber(), rawAmount);
             }
@@ -342,7 +387,7 @@ class View extends UpdatableView {
             property == 'volume') {
             value = numberFormatter.formatWithComma(Math.abs(rowData[property]));
           } else if (property == 'security') {
-            value = this.getSecurityLabel.apply(this, [rowData[property]]);
+            value = this.getSecurityLabel(rowData[property]);
           } else {
             value = rowData[property];
           }
@@ -359,8 +404,8 @@ class View extends UpdatableView {
             }
           }
 
-          let columnHeader = this.convertToHeaderLabel.apply(this, [property]);
-          if (this.shouldIncludeColumn.apply(this, [columnHeader])) {
+          let columnHeader = this.convertToHeaderLabel(property);
+          if (this.shouldIncludeColumn(columnHeader)) {
             columns.push(
               <td key={i + property} className={className}>
                 {value}
@@ -374,16 +419,6 @@ class View extends UpdatableView {
             {columns}
           </tr>
         );
-      }
-    }
-
-    let columnHeader = 'Account';
-    if (this.componentModel.sortingColumn != null && this.componentModel.sortingColumn.name == columnHeader) {
-      let arrowIconClass;
-      if (this.componentModel.sortingColumn.direction == 'asc') {
-        arrowIconClass = 'icon-arrow-icon-down';
-      } else if (this.componentModel.sortingColumn.direction == 'desc') {
-        arrowIconClass = 'icon-arrow-icon-up';
       }
     }
 

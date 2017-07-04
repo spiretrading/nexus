@@ -10,13 +10,20 @@ class Controller {
     this.componentModel.isOpen = false;
     this.notificationRepo = new NotificationRepo();
     this.view = new View(react, this, this.componentModel);
+
+    this.closePanel = this.closePanel.bind(this);
+    this.openPanel = this.openPanel.bind(this);
+    this.openPopup = this.openPopup.bind(this);
+    this.closePopup = this.closePopup.bind(this);
+    this.itemClicked = this.itemClicked.bind(this);
+    this.setItemClickStatus = this.setItemClickStatus.bind(this);
   }
 
   componentDidMount() {
     this.onReportLoadedListenerId = EventBus.subscribe(Event.Application.REPORT_LOADED, this.onReportLoaded.bind(this));
     this.onItemSelectedListenerId = EventBus.subscribe(Event.TopNav.NOTIFICATION_ITEM_SELECTED, this.onItemSelected.bind(this));
     this.onItemUpdatedListenerId = EventBus.subscribe(Event.TopNav.NOTIFICATION_ITEM_READ_UPDATED, this.onItemReadUpdated.bind(this));
-    this.view.initialize.apply(this.view);
+    this.view.initialize();
   }
 
   componentWillUnmount() {
@@ -27,19 +34,19 @@ class Controller {
 
   /** @private */
   onItemSelected(eventName, itemIndex) {
-    this.itemClicked.apply(this, [itemIndex]);
+    this.itemClicked(itemIndex);
   }
 
   /** @private */
   onItemReadUpdated(eventName, payload) {
     let itemIndex = payload.itemIndex;
     let isRead = payload.isRead;
-    this.notificationRepo.setItemClicked.apply(this.notificationRepo, [itemIndex, isRead]);
-    this.componentModel.notifications = this.notificationRepo.getAll.apply(this.notificationRepo);
+    this.notificationRepo.setItemClicked(itemIndex, isRead);
+    this.componentModel.notifications = this.notificationRepo.getAll();
     this.componentModel.isOpen = true;
-    this.componentModel.numUnchecked = this.notificationRepo.getNumUnchecked.apply(this.notificationRepo);
-    this.view.update.apply(this.view, [this.componentModel]);
-    EventBus.publish(Event.TopNav.UPDATE_NOTIFICATION_PANEL, this.notificationRepo.getAll.apply(this.notificationRepo));
+    this.componentModel.numUnchecked = this.notificationRepo.getNumUnchecked();
+    this.view.update(this.componentModel);
+    EventBus.publish(Event.TopNav.UPDATE_NOTIFICATION_PANEL, this.notificationRepo.getAll());
   }
 
   /** @private */
@@ -62,9 +69,9 @@ class Controller {
       description
     );
 
-    this.componentModel.numUnchecked = this.notificationRepo.getNumUnchecked.apply(this.notificationRepo);
-    this.view.update.apply(this.view, [this.componentModel]);
-    EventBus.publish(Event.TopNav.UPDATE_NOTIFICATION_PANEL, this.notificationRepo.getAll.apply(this.notificationRepo));
+    this.componentModel.numUnchecked = this.notificationRepo.getNumUnchecked();
+    this.view.update(this.componentModel);
+    EventBus.publish(Event.TopNav.UPDATE_NOTIFICATION_PANEL, this.notificationRepo.getAll());
   }
 
   getView() {
@@ -73,43 +80,43 @@ class Controller {
 
   closePopup() {
     this.componentModel.isOpen = false;
-    this.componentModel.numUnchecked = this.notificationRepo.getNumUnchecked.apply(this.notificationRepo);
-    this.view.update.apply(this.view, [this.componentModel]);
+    this.componentModel.numUnchecked = this.notificationRepo.getNumUnchecked();
+    this.view.update(this.componentModel);
   }
 
   openPopup() {
-    this.componentModel.notifications = this.notificationRepo.getAll.apply(this.notificationRepo);
-    this.componentModel.numUnchecked = this.notificationRepo.getNumUnchecked.apply(this.notificationRepo);
+    this.componentModel.notifications = this.notificationRepo.getAll();
+    this.componentModel.numUnchecked = this.notificationRepo.getNumUnchecked();
     this.componentModel.isOpen = true;
-    this.componentModel.numUnchecked = this.notificationRepo.getNumUnchecked.apply(this.notificationRepo);
-    this.view.update.apply(this.view, [this.componentModel]);
+    this.componentModel.numUnchecked = this.notificationRepo.getNumUnchecked();
+    this.view.update(this.componentModel);
   }
 
   itemClicked(itemIndex) {
-    this.notificationRepo.setItemClicked.apply(this.notificationRepo, [itemIndex, true]);
-    this.componentModel.notifications = this.notificationRepo.getAll.apply(this.notificationRepo);
+    this.notificationRepo.setItemClicked(itemIndex, true);
+    this.componentModel.notifications = this.notificationRepo.getAll();
     this.componentModel.isOpen = false;
-    this.componentModel.numUnchecked = this.notificationRepo.getNumUnchecked.apply(this.notificationRepo);
-    this.view.update.apply(this.view, [this.componentModel]);
+    this.componentModel.numUnchecked = this.notificationRepo.getNumUnchecked();
+    this.view.update(this.componentModel);
   }
 
   setItemClickStatus(itemIndex, isClicked) {
-    this.notificationRepo.setItemClicked.apply(this.notificationRepo, [itemIndex, isClicked]);
-    this.componentModel.notifications = this.notificationRepo.getAll.apply(this.notificationRepo);
-    this.componentModel.numUnchecked = this.notificationRepo.getNumUnchecked.apply(this.notificationRepo);
-    this.view.update.apply(this.view, [this.componentModel]);
+    this.notificationRepo.setItemClicked(itemIndex, isClicked);
+    this.componentModel.notifications = this.notificationRepo.getAll();
+    this.componentModel.numUnchecked = this.notificationRepo.getNumUnchecked();
+    this.view.update(this.componentModel);
   }
 
   openPanel() {
-    EventBus.publish(Event.TopNav.OPEN_NOTIFICATION_PANEL, this.notificationRepo.getAll.apply(this.notificationRepo));
+    EventBus.publish(Event.TopNav.OPEN_NOTIFICATION_PANEL, this.notificationRepo.getAll());
     this.componentModel.isOpen = true;
-    this.view.update.apply(this.view, [this.componentModel]);
+    this.view.update(this.componentModel);
   }
 
   closePanel() {
     EventBus.publish(Event.TopNav.CLOSE_NOTIFICATION_PANEL);
     this.componentModel.isOpen = false;
-    this.view.update.apply(this.view, [this.componentModel]);
+    this.view.update(this.componentModel);
   }
 }
 

@@ -14,6 +14,8 @@ import uuid from 'uuid';
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
+
+    this.showSaveSuccessMessage = this.showSaveSuccessMessage.bind(this);
   }
 
   componentDidUpdate() {
@@ -56,7 +58,7 @@ class View extends UpdatableView {
       ruleTypeName = labelFormatter.toLowerCaseWithUnderscore(ruleTypeName);
       let $newEntryWrapper = $('<div class="new-entry-wrapper"></div>');
       $('#compliance-container .add-rule-wrapper').before($newEntryWrapper);
-      this.controller.onRuleAdd.apply(this.controller, [ruleTypeName]);
+      this.controller.onRuleAdd(ruleTypeName);
 
       $('#compliance-container .rule-types li').removeClass('selected');
       modal.hide($('#add-rule-modal'));
@@ -103,7 +105,7 @@ class View extends UpdatableView {
   onSaveClick() {
     let numInvalidInputs = $('#compliance-container .invalid-input').size();
     if (numInvalidInputs == 0) {
-      this.controller.save.apply(this.controller);
+      this.controller.save();
       $('#compliance-container .save-message').text('').removeClass('red').css('display', 'none');
     } else {
       $('#compliance-container .save-message')
@@ -116,7 +118,7 @@ class View extends UpdatableView {
   render() {
     let content;
 
-    if (this.controller.isModelInitialized.apply(this.controller)) {
+    if (this.controller.isModelInitialized()) {
       let complianceRuleEntries = this.getRuleEntryPanels();
 
       let onSave = this.onSaveClick.bind(this);

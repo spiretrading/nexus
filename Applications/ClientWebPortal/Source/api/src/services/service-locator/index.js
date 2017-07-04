@@ -6,6 +6,11 @@ const ResultCode = ResultCodes;
 
 /** Spire service locator client class */
 class ServiceLocator {
+  constructor() {
+    this.searchDirectoryEntry = this.searchDirectoryEntry.bind(this);
+    this.createGroup = this.createGroup.bind(this);
+  }
+
   /** @private */
   logErrorAndThrow(error) {
     let errorMessage = 'Spire Service Locator Client: Unexpected error happened.';
