@@ -80,5 +80,19 @@ main.mobile {
         }
       }
     }
+
+    .group-tags {
+      position: relative;
+      left: -5px;
+      border: 0;
+
+      input {
+        padding-left: 5px;
+      }
+
+      &:hover {
+        border: 1px solid $primaryGradient4;
+      }
+    }
   }
 }
