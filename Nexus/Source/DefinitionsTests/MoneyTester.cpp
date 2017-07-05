@@ -75,6 +75,7 @@ void MoneyTester::TestFromString() {
   CPPUNIT_ASSERT(Money::FromValue("-.10") == -(10 * Money::CENT));
   CPPUNIT_ASSERT(Money::FromValue("-.11") == -(11 * Money::CENT));
   CPPUNIT_ASSERT(Money::FromValue("-.12") == -(12 * Money::CENT));
+  CPPUNIT_ASSERT(Money::FromValue("0.00000100") == (Money::ONE / 1000000));
 }
 
 void MoneyTester::TestFloor() {

@@ -389,22 +389,32 @@ namespace Nexus {
         return boost::none;
       }
     }
+    std::int64_t exponent = 0;
     std::int64_t rightHand = 0;
-    auto multiplier = MULTIPLIER;
     if(hasDecimals) {
-      while(i != value.end()) {
+      auto q = value.end() - 1;
+      while(*q == '0') {
+        --q;
+      }
+      while(i <= q) {
         if(*i >= '0' && *i <= '9') {
           rightHand *= 10;
           rightHand += *i - '0';
+          --exponent;
           ++i;
-          multiplier /= 10;
         } else {
           return boost::none;
         }
       }
     }
-    auto finalValue = sign * (leftHand * MULTIPLIER + rightHand * multiplier);
-    return FromRepresentation(static_cast<boost::float64_t>(finalValue));
+    boost::float64_t lhs = MULTIPLIER * static_cast<boost::float64_t>(leftHand);
+    boost::float64_t rhs = MULTIPLIER * static_cast<boost::float64_t>(
+      rightHand);
+    while(exponent != 0) {
+      rhs /= 10;
+      ++exponent;
+    }
+    return Quantity::FromRepresentation(sign * (lhs + rhs));
   }
 
   inline Quantity::Quantity()
