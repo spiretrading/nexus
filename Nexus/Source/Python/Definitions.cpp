@@ -205,7 +205,7 @@ void Nexus::Python::ExportDefaultCurrencies() {
   class_<Dummy, noncopyable>("default_currencies", no_init)
     .add_static_property("AUD", make_function(&DefaultCurrencies::AUD))
     .add_static_property("CAD", make_function(&DefaultCurrencies::CAD))
-    .add_static_property("USD", make_function(&DefaultCurrencies::USD));
+    .add_static_property("USD", make_function(&DefaultCurrencies::USD))
     .add_static_property("XBT", make_function(&DefaultCurrencies::XBT));
 }
 
