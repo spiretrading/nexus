@@ -206,6 +206,7 @@ void Nexus::Python::ExportDefaultCurrencies() {
     .add_static_property("AUD", make_function(&DefaultCurrencies::AUD))
     .add_static_property("CAD", make_function(&DefaultCurrencies::CAD))
     .add_static_property("USD", make_function(&DefaultCurrencies::USD));
+    .add_static_property("XBT", make_function(&DefaultCurrencies::XBT));
 }
 
 void Nexus::Python::ExportDefaultDestinations() {
@@ -507,6 +508,8 @@ void Nexus::Python::ExportQuantity() {
   class_<Quantity>("Quantity", init<>())
     .def(init<int>())
     .def(init<double>())
+    .def("__copy__", &MakeCopy<Quantity>)
+    .def("__deepcopy__", &MakeDeepCopy<Quantity>)
     .def("from_value",
       static_cast<boost::optional<Quantity> (*)(const std::string&)>(
       &Quantity::FromValue))
