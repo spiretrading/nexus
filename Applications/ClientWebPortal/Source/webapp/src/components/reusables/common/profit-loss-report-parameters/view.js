@@ -11,6 +11,8 @@ class View extends UpdatableView {
     this.selectedStartDate = null;
     this.selectedEndDate = null;
     this.isClosed = false;
+
+    this.initialize = this.initialize.bind(this);
   }
 
   initialize() {
@@ -81,7 +83,7 @@ class View extends UpdatableView {
   onGenerateClick() {
     let startDate = $('#' + this.componentModel.componentId + ' .start-date-input').val().trim();
     let endDate = $('#' + this.componentModel.componentId + ' .end-date-input').val().trim();
-    this.controller.generate.apply(this.controller, [startDate, endDate]);
+    this.controller.generate(startDate, endDate);
   }
 
   render() {

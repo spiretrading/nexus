@@ -11,7 +11,7 @@ class View extends UpdatableView {
   /** @private */
   onMenuClick(event) {
     let path = $(event.currentTarget).attr('data-path');
-    this.controller.navigateTo.apply(this.controller, [path]);
+    this.controller.navigateTo(path);
   }
 
   render() {

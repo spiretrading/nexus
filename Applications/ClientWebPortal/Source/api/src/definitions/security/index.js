@@ -7,6 +7,8 @@ class Security {
     this.country = country;
     this.market = market;
     this.symbol = symbol;
+
+    this.toString = this.toString.bind(this);
   }
 
   toData() {
@@ -26,11 +28,11 @@ class Security {
   }
 
   toString(marketDatabase) {
-    if (this.market.isEmpty.apply(this.market) || this.symbol == '') {
+    if (this.market.isEmpty() || this.symbol == '') {
       return this.symbol;
     }
-    let marketCode = this.market.toCode.apply(this.market);
-    let market = marketDatabase.fromMarketCode.apply(marketDatabase, [marketCode]);
+    let marketCode = this.market.toCode();
+    let market = marketDatabase.fromMarketCode(marketCode);
     if (market == null || market.marketCode == '') {
       return this.symbol + '.' + marketCode;
     } else {

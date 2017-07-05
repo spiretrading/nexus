@@ -18,7 +18,7 @@ class BuyingPowerPanel extends Component {
   }
 
   componentDidMount() {
-    this.controller.componentDidMount.apply(this.controller);
+    this.controller.componentDidMount();
   }
 
   componentWillUpdate(nextProps) {

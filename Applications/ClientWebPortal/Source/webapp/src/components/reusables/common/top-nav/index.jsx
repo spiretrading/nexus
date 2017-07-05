@@ -12,11 +12,11 @@ class TopNav extends Component {
   }
 
   componentDidMount() {
-    this.controller.componentDidMount.apply(this.controller);
+    this.controller.componentDidMount();
   }
 
   componentWillUnmount() {
-    this.controller.componentWillUnmount.apply(this.controller);
+    this.controller.componentWillUnmount();
   }
 
   render() {

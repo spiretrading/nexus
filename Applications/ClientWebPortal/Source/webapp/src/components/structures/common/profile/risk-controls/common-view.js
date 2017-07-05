@@ -28,7 +28,7 @@ class CommonView extends UpdatableView {
 
   onCurrencyChange() {
     let currencyId = $('#risk-control-container select.currency-select').val();
-    this.controller.onCurrencyChange.apply(this.controller, [currencyId]);
+    this.controller.onCurrencyChange(currencyId);
     let currencySign = definitionsService.getCurrencySignFromId(currencyId);
     $('#risk-control-container .currency-sign').text('(' + currencySign + ')');
   }
@@ -69,7 +69,7 @@ class CommonView extends UpdatableView {
 
   onSaveClick() {
     if ($('#risk-control-container .invalid').length == 0) {
-      this.controller.save.apply(this.controller);
+      this.controller.save();
     } else {
       this.showSaveFailedMessage('Failed due to invalid input(s)');
     }

@@ -10,7 +10,7 @@ class View extends UpdatableView {
   /** @private */
   onSelectionChange(event) {
     let newValue = $('#' + this.componentModel.componentId + ' select').val();
-    this.controller.onSelectionChange.apply(this.controller, [newValue]);
+    this.controller.onSelectionChange(newValue);
   }
 
   render() {

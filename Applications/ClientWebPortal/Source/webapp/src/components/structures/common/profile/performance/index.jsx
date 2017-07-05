@@ -22,7 +22,7 @@ class ProfileAccount extends Component {
   }
 
   componentDidMount() {
-    this.controller.componentDidMount.apply(this.controller);
+    this.controller.componentDidMount();
   }
 
   componentDidUpdate() {
@@ -30,7 +30,7 @@ class ProfileAccount extends Component {
   }
 
   render() {
-    return this.view.render.apply(this.view);
+    return this.view.render();
   }
 }
 

@@ -7,13 +7,13 @@
   font-size: 14px;
   display: flex;
   flex-direction: column;
-  overflow-x: scroll;
+  overflow-x: auto;
 
   .header {
     height: 62px;
     width: 100%;
     background: white;
-    overflow-y: scroll;
+    overflow-y: hidden;
     overflow-x: visible;
 
     table {
@@ -48,7 +48,7 @@
   .body {
     flex: 1;
     min-width: 100%;
-    overflow-y: scroll;
+    overflow-y: auto;
     overflow-x: hidden;
 
     table {

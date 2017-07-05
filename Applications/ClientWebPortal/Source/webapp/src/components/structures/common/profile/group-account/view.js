@@ -19,13 +19,13 @@ class View extends UpdatableView {
 
   onMemeberClicked(event) {
     let id = $(event.currentTarget).attr('data-id');
-    this.controller.navigateToMemberProfile.apply(this.controller, [id]);
+    this.controller.navigateToMemberProfile(id);
   }
 
   render() {
     let content;
     let members = [];
-    if (this.controller.isModelInitialized.apply(this.controller)) {
+    if (this.controller.isModelInitialized()) {
       let numMembers = this.componentModel.members.length;
       let numTraders = 0;
       let numManagers = 0;
