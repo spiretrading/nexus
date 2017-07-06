@@ -63,6 +63,18 @@
       background-color: $lightestGrey;
     }
 
+    tr {
+      cursor: pointer;
+
+      &:hover{
+        background: $primaryGradient6;
+      }
+
+      &.selected {
+        background: $primaryGradient5;
+      }
+    }
+
     td {
       padding: 10px 20px;
       white-space: nowrap;

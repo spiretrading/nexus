@@ -6,11 +6,13 @@ import definitionsService from 'services/definitions';
 import numberFormatter from 'utils/number-formatter';
 import chartColumns from './columns';
 import {CurrencyId, Money} from 'spire-client';
+import HashMap from 'hashmap';
 
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
     this.columnsSyncCounter = 0;
+    this.selectedRows = new HashMap();
 
     this.initialize = this.initialize.bind(this);
     this.dispose = this.dispose.bind(this);
@@ -280,6 +282,23 @@ class View extends UpdatableView {
     return security.toString(marketDatabase);
   }
 
+  /** @private */
+  onRowClick(e) {
+    let $row = $(e.currentTarget);
+    let accountId = $row.attr('data-account-id');
+    let securitySymbol = $row.attr('data-security-symbol');
+    let securityMarket = $row.attr('data-security-market');
+    let id = accountId + '-' + securitySymbol + '-' + securityMarket;
+
+    if (this.selectedRows.has(id)) {
+      this.selectedRows.remove(id);
+    } else {
+      this.selectedRows.set(id, true);
+    }
+
+    this.react.forceUpdate();
+  }
+
   render() {
     this.sortData();
 
@@ -414,8 +433,22 @@ class View extends UpdatableView {
           }
         }
 
+        let accountId = rowData.account.id;
+        let securitySymbol = rowData.security.symbol;
+        let securityMarket = rowData.security.market.value;
+        let id = accountId + '-' + securitySymbol + '-' + securityMarket;
+
+        let rowClass = '';
+        if (this.selectedRows.has(id)) {
+          rowClass = 'selected';
+        }
+
         rows.push(
-          <tr key={i}>
+          <tr key={i} className={rowClass}
+            onClick={this.onRowClick.bind(this)}
+            data-account-id={accountId}
+            data-security-symbol={securitySymbol}
+            data-security-market={securityMarket}>
             {columns}
           </tr>
         );
