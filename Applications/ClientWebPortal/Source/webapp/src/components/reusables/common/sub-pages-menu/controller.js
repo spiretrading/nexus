@@ -5,11 +5,16 @@ class Controller {
   constructor(react) {
     this.componentModel = react.props.model || [];
     this.view = new View(react, this, this.componentModel);
+
+    this.onPageTransitioned = this.onPageTransitioned.bind(this);
+    this.getTraderProfilePages = this.getTraderProfilePages.bind(this);
+    this.getGroupProfilePages = this.getGroupProfilePages.bind(this);
+    this.navigateTo = this.navigateTo.bind(this);
   }
 
   componentDidMount() {
     this.pageTransitionedEventListenerId = EventBus.subscribe(Event.Application.PAGE_TRANSITIONED, this.onPageTransitioned.bind(this));
-    this.onPageTransitioned.apply(this, [null, window.location.pathname]);
+    this.onPageTransitioned(null, window.location.pathname);
   }
 
   componentWillUnmount() {
@@ -19,10 +24,10 @@ class Controller {
   /** @private */
   onPageTransitioned(eventName, path) {
     if (path.indexOf('/profile') >= 0) {
-      this.componentModel = this.getTraderProfilePages.apply(this, [path]);
+      this.componentModel = this.getTraderProfilePages(path);
       EventBus.publish(Event.TopNav.SUBMENU_UPDATED, true);
     } else if (path.indexOf('/group-profile') >= 0) {
-      this.componentModel = this.getGroupProfilePages.apply(this, [path]);
+      this.componentModel = this.getGroupProfilePages(path);
       EventBus.publish(Event.TopNav.SUBMENU_UPDATED, true);
     } else {
       this.componentModel = [];

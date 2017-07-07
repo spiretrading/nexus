@@ -4,6 +4,10 @@ import Notification from './notification';
 class NotificationRepo {
   constructor() {
     this.notifications = [];
+
+    this.getAll = this.getAll.bind(this);
+    this.getNumUnchecked = this.getNumUnchecked.bind(this);
+    this.setItemClicked = this.setItemClicked.bind(this);
   }
 
   getAll() {

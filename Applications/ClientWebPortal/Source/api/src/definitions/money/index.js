@@ -4,6 +4,8 @@ class Money {
     if (isNaN(this.value)) {
       throw new Error('Input must be a number.');
     }
+
+    this.toString = this.toString.bind(this);
   }
 
   toNumber() {

@@ -6,6 +6,8 @@ import imageResLoader from 'utils/image-res-loader';
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
+
+    this.closeMenu = this.closeMenu.bind(this);
   }
 
   closeMenu() {
@@ -24,19 +26,19 @@ class View extends UpdatableView {
   /** @private */
   onMyProfileClick() {
     this.closeMenu();
-    this.controller.navigateToProfileAccount.apply(this.controller);
+    this.controller.navigateToProfileAccount();
   }
 
   /** @private */
   onAccountsClick() {
     this.closeMenu();
-    this.controller.navigateToAccounts.apply(this.controller);
+    this.controller.navigateToAccounts();
   }
 
   /** @private */
   onPortfolioClick() {
     this.closeMenu();
-    this.controller.navigateToPortfolio.apply(this.controller);
+    this.controller.navigateToPortfolio();
   }
 
   initialize() {

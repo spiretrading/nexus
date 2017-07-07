@@ -4,6 +4,8 @@ class MarketCode {
       throw new Error('Invalid market code.');
     }
     this.value = code;
+
+    this.toCode = this.toCode.bind(this);
   }
 
   equals(operand) {

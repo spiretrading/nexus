@@ -7,6 +7,10 @@ import NotificationType from 'components/reusables/common/notification/notificat
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
+
+    this.initialize = this.initialize.bind(this);
+    this.closePopup = this.closePopup.bind(this);
+    this.openPopup = this.openPopup.bind(this);
   }
 
   /** @private */
@@ -14,23 +18,23 @@ class View extends UpdatableView {
     if (!deviceDetector.isMobile()) {
       // desktop
       if (this.componentModel.isOpen) {
-        this.closePopup.apply(this);
+        this.closePopup();
       } else {
-        this.openPopup.apply(this);
+        this.openPopup();
       }
     } else {
       // mobile
       if (this.componentModel.isOpen) {
-        this.controller.closePanel.apply(this.controller);
+        this.controller.closePanel();
       } else {
-        this.controller.openPanel.apply(this.controller);
+        this.controller.openPanel();
       }
     }
   }
 
   /** @private */
   openPopup() {
-    this.controller.openPopup.apply(this.controller);
+    this.controller.openPopup();
 
     $(document).mouseup((e) => {
       var $container = $("#" + this.componentModel.componentId + ' .list-panel');
@@ -41,14 +45,14 @@ class View extends UpdatableView {
         && !$icon.is(e.target)
         && $icon.has(e.target).length === 0) // ... nor a descendant of the container
       {
-        this.closePopup.apply(this);
+        this.closePopup();
       }
     });
   }
 
   /** @private */
   closePopup() {
-    this.controller.closePopup.apply(this.controller);
+    this.controller.closePopup();
     $(document).unbind('mouseup');
   }
 
@@ -68,7 +72,7 @@ class View extends UpdatableView {
       $target = $target.parent();
     }
     let itemIndex = $target.attr('data-index');
-    this.controller.itemClicked.apply(this.controller, [itemIndex]);
+    this.controller.itemClicked(itemIndex);
   }
 
   /** @private */
@@ -78,7 +82,7 @@ class View extends UpdatableView {
     let $target = $(e.target).parent();
     let wasRead = !$target.hasClass('new');
     let itemIndex = $target.attr('data-index');
-    this.controller.setItemClickStatus.apply(this.controller, [itemIndex, !wasRead])
+    this.controller.setItemClickStatus(itemIndex, !wasRead)
   }
 
   render() {

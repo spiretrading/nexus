@@ -8,6 +8,10 @@ import numberFormatter from 'utils/number-formatter';
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
+
+    this.resizePortfolioChart = this.resizePortfolioChart.bind(this);
+    this.initialize = this.initialize.bind(this);
+    this.dispose = this.dispose.bind(this);
   }
 
   initialize() {
@@ -16,7 +20,7 @@ class View extends UpdatableView {
 
   /** @private */
   onWindowResize() {
-    this.resizePortfolioChart.apply(this);
+    this.resizePortfolioChart();
   }
 
   resizePortfolioChart() {
@@ -69,12 +73,12 @@ class View extends UpdatableView {
 
     let totalPnL, unrealizedPnL, realizedPnL, fees, volumes, trades;
     if (this.componentModel.aggregates != null) {
-      totalPnL = numberFormatter.formatTwoDecimalsWithComma.apply(numberFormatter, [this.componentModel.aggregates.totalPnL.toNumber()]);
-      unrealizedPnL = numberFormatter.formatTwoDecimalsWithComma.apply(numberFormatter, [this.componentModel.aggregates.unrealizedPnL.toNumber()]);
-      realizedPnL = numberFormatter.formatTwoDecimalsWithComma.apply(numberFormatter, [this.componentModel.aggregates.realizedPnL.toNumber()]);
-      fees = numberFormatter.formatTwoDecimalsWithComma.apply(numberFormatter, [this.componentModel.aggregates.realizedPnL.toNumber()]);
-      volumes = numberFormatter.formatWithComma.apply(numberFormatter, [this.componentModel.aggregates.volumes]);
-      trades = numberFormatter.formatWithComma.apply(numberFormatter, [this.componentModel.aggregates.trades]);
+      totalPnL = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.totalPnL.toNumber());
+      unrealizedPnL = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.unrealizedPnL.toNumber());
+      realizedPnL = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.realizedPnL.toNumber());
+      fees = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.realizedPnL.toNumber());
+      volumes = numberFormatter.formatWithComma(this.componentModel.aggregates.volumes);
+      trades = numberFormatter.formatWithComma(this.componentModel.aggregates.trades);
     }
 
     return (

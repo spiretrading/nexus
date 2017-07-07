@@ -33,7 +33,7 @@ class MobileView extends CommonView {
 
     let details;
     if (this.componentModel.isReadOnly) {
-      let countryName = definitionsService.getCountryName.apply(definitionsService, [this.componentModel.country]);
+      let countryName = definitionsService.getCountryName(this.componentModel.country);
 
       details =
         <div className="details-container">

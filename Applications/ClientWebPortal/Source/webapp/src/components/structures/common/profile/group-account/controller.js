@@ -12,6 +12,9 @@ class Controller {
       this.componentModel.directoryEntry.name
     );
     this.adminClient = new AdministrationClient();
+
+    this.navigateToMemberProfile = this.navigateToMemberProfile.bind(this);
+    this.isModelInitialized = this.isModelInitialized.bind(this);
   }
 
   getView() {
@@ -41,7 +44,7 @@ class Controller {
   getRequiredData() {
     let traders;
     let directoryEntry = this.componentModel.directoryEntry;
-    let loadAccountRoles = this.adminClient.loadTradingGroup.apply(this.adminClient, [directoryEntry])
+    let loadAccountRoles = this.adminClient.loadTradingGroup(directoryEntry)
       .then((accounts) => {
         traders = accounts.traders;
         let requestedRoles = new HashMap();
@@ -54,7 +57,7 @@ class Controller {
             traderDirectoryEntry.name
           );
           if (!requestedRoles.has(traderDirectoryEntry.id)) {
-            loadRolesPromises.push(this.adminClient.loadAccountRoles.apply(this.adminClient, [traderDirectoryEntry]));
+            loadRolesPromises.push(this.adminClient.loadAccountRoles(traderDirectoryEntry));
             requestedRoles.set(traderDirectoryEntry.id, true);
           }
         }

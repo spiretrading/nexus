@@ -10,8 +10,8 @@ class CurrencyPair {
   }
 
   clone() {
-    let baseClone = this.base.clone.apply(this.base);
-    let counterClone = this.counter.clone.apply(this.counter);
+    let baseClone = this.base.clone();
+    let counterClone = this.counter.clone();
     return new CurrencyPair(baseClone, counterClone);
   }
 }

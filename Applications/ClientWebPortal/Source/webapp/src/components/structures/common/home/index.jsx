@@ -9,7 +9,7 @@ class Home extends Component {
   }
 
   componentDidMount() {
-    if (userService.isSignedIn.apply(userService)) {
+    if (userService.isSignedIn()) {
       let directoryEntry = userService.getDirectoryEntry();
       let path = 'profile-account/' + directoryEntry.type + '/' + directoryEntry.id + '/' + directoryEntry.name;
       window.location.href = Config.HOME_URL + path;

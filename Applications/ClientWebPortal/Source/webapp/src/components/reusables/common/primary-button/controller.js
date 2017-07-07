@@ -2,6 +2,8 @@ class Controller {
   constructor(react, componentModel) {
     this.componentModel = clone(componentModel);
     this.onClick = react.props.onClick;
+
+    this.onButtonClick = this.onButtonClick.bind(this);
   }
 
   getView() {

@@ -25,7 +25,7 @@ class Search extends Component {
   }
 
   componentWillUnmount() {
-    this.controller.componentWillUnmount.apply(this.controller);
+    this.controller.componentWillUnmount();
   }
 
   render() {

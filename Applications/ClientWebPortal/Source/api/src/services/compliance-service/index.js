@@ -3,6 +3,13 @@ import dataTypeConverter from '../commons/data-type-converter';
 
 /** Spire compliance service client class */
 class ComplianceService {
+  constructor() {
+    this.loadComplianceRuleEntries = this.loadComplianceRuleEntries.bind(this);
+    this.addComplianceRuleEntry = this.addComplianceRuleEntry.bind(this);
+    this.updateComplianceRuleEntry = this.updateComplianceRuleEntry.bind(this);
+    this.deleteComplianceRuleEntry = this.deleteComplianceRuleEntry.bind(this);
+  }
+
   /** @private */
   logErrorAndThrow(xhr) {
     let errorMessage = 'Spire Compliance Service Client: Unexpected error happened.';
@@ -38,7 +45,7 @@ class ComplianceService {
   }
 
   updateComplianceRuleEntry(ruleEntry) {
-    dataTypeConverter.toData.apply(dataTypeConverter, [ruleEntry.schema]);
+    dataTypeConverter.toData(ruleEntry.schema);
     let apiPath = Config.BACKEND_API_ROOT_URL + 'compliance_service/update_compliance_rule_entry';
     let payload = {
       rule_entry: ruleEntry

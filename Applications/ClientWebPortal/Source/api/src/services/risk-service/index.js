@@ -7,6 +7,8 @@ class RiskService {
   constructor() {
     this.stompConnectionManager = new StompConnectionManager('risk_service/portfolio');
     this.portfolioMessageHandlers = new HashMap();
+
+    this.unsubscribe = this.unsubscribe.bind(this);
   }
 
   /** @private */
@@ -20,9 +22,8 @@ class RiskService {
   subscribePortfolio(listener) {
     let destination = Config.BACKEND_API_ROOT_URL + 'risk_service/portfolio';
     let portfolioMsgHandler = new PortfolioMessageHandler(listener);
-    return this.stompConnectionManager.subscribe.apply(
-      this.stompConnectionManager,
-      [destination, portfolioMsgHandler.handle.bind(portfolioMsgHandler)]
+    return this.stompConnectionManager.subscribe(
+      destination, portfolioMsgHandler.handle.bind(portfolioMsgHandler)
     ).then(subId => {
       this.portfolioMessageHandlers.set(subId, portfolioMsgHandler);
       return subId;
@@ -30,15 +31,15 @@ class RiskService {
   }
 
   unsubscribe(subId) {
-    this.stompConnectionManager.unsubscribe.apply(this.stompConnectionManager, [subId]);
+    this.stompConnectionManager.unsubscribe(subId);
     let portfolioMsgHandler = this.portfolioMessageHandlers.get(subId);
-    portfolioMsgHandler.dispose.apply(portfolioMsgHandler);
+    portfolioMsgHandler.dispose();
     this.portfolioMessageHandlers.remove(subId);
   }
 
   setFilter(filter) {
     let destination = Config.BACKEND_API_ROOT_URL + 'risk_service/portfolio/filter';
-    this.stompConnectionManager.send.apply(this.stompConnectionManager, [destination, filter]);
+    this.stompConnectionManager.send(destination, filter);
   }
 }
 

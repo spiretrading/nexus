@@ -17,7 +17,7 @@ class View extends UpdatableView {
 
     this.inputTimeout = setTimeout(() => {
       this.inputTimeout = null;
-      this.controller.onUserNotesChange.apply(this.controller, [userNotes]);
+      this.controller.onUserNotesChange(userNotes);
     }, Config.INPUT_TIMEOUT_DURATION);
   }
 

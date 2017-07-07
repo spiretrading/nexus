@@ -55,7 +55,7 @@ class View extends UpdatableView {
     let onEntitlementSelected = this.controller.onEntitlementSelected.bind(this.controller);
     let onEntitlementDeselected = this.controller.onEntitlementDeselected.bind(this.controller);
 
-    if (this.controller.isModelInitialized.apply(this.controller)) {
+    if (this.controller.isModelInitialized()) {
       userInfoNavModel = {
         userName: this.componentModel.directoryEntry.name,
         roles: this.componentModel.roles

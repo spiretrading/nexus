@@ -14,6 +14,13 @@ class Controller {
     );
     this.adminClient = new AdministrationClient();
     this.complianceServiceClient = new ComplianceServiceClient();
+
+    this.transformFromPerAccountRuleEntries = this.transformFromPerAccountRuleEntries.bind(this);
+    this.initializeFlags = this.initializeFlags.bind(this);
+    this.getSavePromises = this.getSavePromises.bind(this);
+    this.onRuleAdd = this.onRuleAdd.bind(this);
+    this.save = this.save.bind(this);
+    this.isModelInitialized = this.isModelInitialized.bind(this);
   }
 
   getView() {
@@ -27,9 +34,8 @@ class Controller {
   /** @private */
   getRequiredData() {
     let directoryEntry = this.componentModel.directoryEntry;
-    let loadAccountRoles = this.adminClient.loadAccountRoles.apply(this.adminClient, [directoryEntry]);
-    let loadComplianceSettings = this.complianceServiceClient.loadComplianceRuleEntries
-      .apply(this.complianceServiceClient, [directoryEntry]);
+    let loadAccountRoles = this.adminClient.loadAccountRoles(directoryEntry);
+    let loadComplianceSettings = this.complianceServiceClient.loadComplianceRuleEntries(directoryEntry);
 
     return Promise.all([
       loadComplianceSettings,
@@ -138,8 +144,8 @@ class Controller {
 
     preloaderTimer.start(requiredDataFetchPromise, null, Config.WHOLE_PAGE_PRELOADER_WIDTH, Config.WHOLE_PAGE_PRELOADER_HEIGHT).then((responses) => {
       let ruleEntries = responses[0];
-      ruleEntries = this.transformFromPerAccountRuleEntries.apply(this, [ruleEntries]);
-      ruleEntries = this.initializeFlags.apply(this, [ruleEntries]);
+      ruleEntries = this.transformFromPerAccountRuleEntries(ruleEntries);
+      ruleEntries = this.initializeFlags(ruleEntries);
       this.componentModel.complianceRuleEntries = ruleEntries;
       this.componentModel.directoryEntry = directoryEntry;
       this.componentModel.roles = responses[1];
@@ -192,7 +198,7 @@ class Controller {
 
   save() {
     this.componentModel.complianceRuleEntries = this.transformToPerAccountRuleEntries(this.componentModel.complianceRuleEntries);
-    let savePromises = this.getSavePromises.apply(this);
+    let savePromises = this.getSavePromises();
     let allPromises = Promise.all(savePromises);
 
     preloaderTimer.start(allPromises, null, Config.WHOLE_PAGE_PRELOADER_WIDTH, Config.WHOLE_PAGE_PRELOADER_HEIGHT).then((responses) => {
@@ -208,7 +214,7 @@ class Controller {
         }
       }
       this.view.update(this.componentModel);
-      this.view.showSaveSuccessMessage.apply(this.view);
+      this.view.showSaveSuccessMessage();
     });
   }
 
@@ -221,12 +227,10 @@ class Controller {
         this.componentModel.complianceRuleEntries.splice(i, 1);
         i--;
       } else if (ruleEntry.toBeAdded) {
-        let addPromise = this.complianceServiceClient.addComplianceRuleEntry.apply(this.complianceServiceClient,
-          [
-            this.componentModel.directoryEntry,
-            ruleEntry.state,
-            clone(ruleEntry.schema)
-          ]);
+        let addPromise = this.complianceServiceClient.addComplianceRuleEntry(
+          this.componentModel.directoryEntry,
+          ruleEntry.state,
+          clone(ruleEntry.schema));
         savePromises.push(addPromise);
       } else if (ruleEntry.toBeUpdated) {
         let apiRuleEntry = {
@@ -235,12 +239,10 @@ class Controller {
           schema: clone(ruleEntry.schema),
           state: ruleEntry.state
         };
-        let updatePromise = this.complianceServiceClient.updateComplianceRuleEntry.apply(this.complianceServiceClient, [apiRuleEntry]);
+        let updatePromise = this.complianceServiceClient.updateComplianceRuleEntry(apiRuleEntry);
         savePromises.push(updatePromise);
       } else if (ruleEntry.toBeDeleted) {
-        let deletePromise = this.complianceServiceClient.deleteComplianceRuleEntry.apply(this.complianceServiceClient, [
-          ruleEntry.id
-        ]);
+        let deletePromise = this.complianceServiceClient.deleteComplianceRuleEntry(ruleEntry.id);
         savePromises.push(deletePromise);
       }
     }

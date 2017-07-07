@@ -26,7 +26,7 @@ class ProfileAccount extends Component {
   }
 
   componentDidUpdate() {
-    let existingDirectoryEntry = this.controller.getDirectoryEntry.apply(this.controller);
+    let existingDirectoryEntry = this.controller.getDirectoryEntry();
 
     let id = parseInt(this.props.routeParams.id);
     let name = this.props.routeParams.name;
@@ -35,8 +35,8 @@ class ProfileAccount extends Component {
     if (id != existingDirectoryEntry.id ||
       name != existingDirectoryEntry.name ||
       type != existingDirectoryEntry.type) {
-      this.controller.setDirectoryEntry.apply(this.controller, [type, id, name]);
-      this.controller.reloadAcountProfile.apply(this.controller);
+      this.controller.setDirectoryEntry(type, id, name);
+      this.controller.reloadAcountProfile();
     } else {
       this.controller.getView().componentDidUpdate();
     }

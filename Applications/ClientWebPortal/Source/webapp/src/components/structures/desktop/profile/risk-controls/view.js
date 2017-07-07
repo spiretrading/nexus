@@ -20,7 +20,7 @@ class View extends CommonView {
     let currentTime = this.componentModel.riskParameters.transitionTime;
     let updatedTime = newValue + currentTime.substring(2);
     this.componentModel.riskParameters.transitionTime = updatedTime;
-    this.controller.onTransitionTimeChange.apply(this.controller, [updatedTime]);
+    this.controller.onTransitionTimeChange(updatedTime);
   }
 
   onMinuteValueChange(newValue) {
@@ -31,7 +31,7 @@ class View extends CommonView {
     let currentTime = this.componentModel.riskParameters.transitionTime;
     let updatedTime = currentTime.substring(0, 3) + newValue + currentTime.substring(5);
     this.componentModel.riskParameters.transitionTime = updatedTime;
-    this.controller.onTransitionTimeChange.apply(this.controller, [updatedTime]);
+    this.controller.onTransitionTimeChange(updatedTime);
   }
 
   onSecondValueChange(newValue) {
@@ -42,7 +42,7 @@ class View extends CommonView {
     let currentTime = this.componentModel.riskParameters.transitionTime;
     let updatedTime = currentTime.substring(0, 6) + newValue;
     this.componentModel.riskParameters.transitionTime = updatedTime;
-    this.controller.onTransitionTimeChange.apply(this.controller, [updatedTime]);
+    this.controller.onTransitionTimeChange(updatedTime);
   }
 
   render() {
@@ -55,7 +55,7 @@ class View extends CommonView {
     }
 
     let userInfoNavModel;
-    if (this.controller.isModelInitialized.apply(this.controller)) {
+    if (this.controller.isModelInitialized()) {
       let currencySign = definitionsService.getCurrencySignFromId(this.componentModel.riskParameters.currencyId.value);
       if (currencySign != '') {
         currencySign = '(' + currencySign + ')';

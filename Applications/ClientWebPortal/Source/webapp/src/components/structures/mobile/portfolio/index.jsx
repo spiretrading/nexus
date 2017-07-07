@@ -17,7 +17,7 @@ class ProfileAccount extends Component {
   }
 
   componentDidMount() {
-    this.controller.componentDidMount.apply(this.controller);
+    this.controller.componentDidMount();
   }
 
   componentDidUpdate() {
@@ -25,11 +25,11 @@ class ProfileAccount extends Component {
   }
 
   componentWillUnmount() {
-    this.controller.componentWillUnmount.apply(this.controller);
+    this.controller.componentWillUnmount();
   }
 
   render() {
-    return this.view.render.apply(this.view);
+    return this.view.render();
   }
 }
 

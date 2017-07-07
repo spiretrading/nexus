@@ -2,6 +2,8 @@ class Controller {
   constructor(react) {
     this.componentModel = clone(react.props.model);
     this.onChange = react.props.onChange;
+
+    this.onUserNotesChange = this.onUserNotesChange.bind(this);
   }
 
   getView() {

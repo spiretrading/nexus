@@ -23,7 +23,7 @@ class DesktopView extends CommonView {
       userNotesModel,
       changePasswordButtonModel,
       saveButton;
-    if (this.controller.isModelInitialized.apply(this.controller)) {
+    if (this.controller.isModelInitialized()) {
       userInfoNavModel = {
         userName: this.componentModel.directoryEntry.name,
         roles: this.componentModel.roles

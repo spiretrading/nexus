@@ -3,6 +3,10 @@ class Controller {
     this.componentModel = clone(componentModel);
     this.onChange = react.props.onChange;
     this.onInputValidationFail = react.props.onInputValidationFail;
+
+    this.setView = this.setView.bind(this);
+    this.onValueChange = this.onValueChange.bind(this);
+    this.onValidationFail = this.onValidationFail.bind(this);
   }
 
   getView() {
@@ -14,7 +18,7 @@ class Controller {
   }
 
   componentDidMount() {
-    this.view.initialize.apply(this.view);
+    this.view.initialize();
   }
 
   componentWillUpdate(model) {

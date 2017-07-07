@@ -24,7 +24,7 @@ class MobileView extends CommonView {
       userNotesModel,
       changePasswordButtonModel,
       saveButton;
-    if (this.controller.isModelInitialized.apply(this.controller)) {
+    if (this.controller.isModelInitialized()) {
       userInfoNavModel = {
         userName: this.componentModel.userName,
         roles: this.componentModel.roles

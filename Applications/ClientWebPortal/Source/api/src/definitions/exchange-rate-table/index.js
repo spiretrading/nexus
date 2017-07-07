@@ -11,26 +11,26 @@ class ExchangeRateTable {
     let baseCurrencyId = exchangeRate.currencyPair.base.toNumber();
     let counterCurrencyId = exchangeRate.currencyPair.counter.toNumber();
     let counterExchangeRates;
-    if (this.exchangeRates.has.apply(this.exchangeRates, [baseCurrencyId])) {
-      counterExchangeRates = this.exchangeRates.get.apply(this.exchangeRates, [baseCurrencyId]);
+    if (this.exchangeRates.has(baseCurrencyId)) {
+      counterExchangeRates = this.exchangeRates.get(baseCurrencyId);
     } else {
       counterExchangeRates = new HashMap();
-      this.exchangeRates.set.apply(this.exchangeRates, [baseCurrencyId, counterExchangeRates]);
+      this.exchangeRates.set(baseCurrencyId, counterExchangeRates);
     }
-    counterExchangeRates.set.apply(counterExchangeRates, [counterCurrencyId, exchangeRate]);
+    counterExchangeRates.set(counterCurrencyId, exchangeRate);
   }
 
   find(currencyPair) {
     let baseCurrencyId = currencyPair.base.toNumber();
     let counterCurrencyId = currencyPair.counter.toNumber();
-    let rate = findRate.apply(this, [baseCurrencyId, counterCurrencyId]);
+    let rate = findRate.call(this, baseCurrencyId, counterCurrencyId);
     if (rate != null) {
       return rate;
     }
 
     baseCurrencyId = currencyPair.counter.toNumber();
     counterCurrencyId = currencyPair.base.toNumber();
-    rate = findRate.apply(this, [baseCurrencyId, counterCurrencyId]);
+    rate = findRate.call(this, baseCurrencyId, counterCurrencyId);
     if (rate != null) {
       return ExchangeRate.invert(rate);
     }
@@ -38,9 +38,9 @@ class ExchangeRateTable {
     return null;
 
     function findRate(baseCurrencyId, counterCurrencyId) {
-      if (this.exchangeRates.has.apply(this.exchangeRates, [baseCurrencyId])) {
-        let counterExchangeRates = this.exchangeRates.get.apply(this.exchangeRates, [baseCurrencyId]);
-        return counterExchangeRates.get.apply(counterExchangeRates, [counterCurrencyId]);
+      if (this.exchangeRates.has(baseCurrencyId)) {
+        let counterExchangeRates = this.exchangeRates.get(baseCurrencyId);
+        return counterExchangeRates.get(counterCurrencyId);
       }
       return null;
     }
@@ -48,7 +48,7 @@ class ExchangeRateTable {
 
   convert(amount, baseCurrencyId, counterCurrencyId) {
     let currencyPair = new CurrencyPair(baseCurrencyId, counterCurrencyId);
-    let rate = this.find.apply(this, [currencyPair]);
+    let rate = this.find(currencyPair);
     return ExchangeRate.convert(amount, rate);
   }
 }

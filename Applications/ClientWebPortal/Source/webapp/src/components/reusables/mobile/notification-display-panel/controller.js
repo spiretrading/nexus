@@ -7,6 +7,9 @@ class Controller {
     this.componentModel.isOpen = false;
     this.componentModel.hasEverBeenOpened = false;
     this.view = new View(react, this, this.componentModel);
+
+    this.itemClicked = this.itemClicked.bind(this);
+    this.setItemClickStatus = this.setItemClickStatus.bind(this);
   }
 
   componentDidMount() {
@@ -25,23 +28,23 @@ class Controller {
     this.componentModel.notifications = notifications;
     this.componentModel.isOpen = true;
     this.componentModel.hasEverBeenOpened = true;
-    this.view.update.apply(this.view, [this.componentModel]);
+    this.view.update(this.componentModel);
   }
 
   onClose() {
     this.componentModel.isOpen = false;
-    this.view.update.apply(this.view, [this.componentModel]);
+    this.view.update(this.componentModel);
   }
 
   onUpdate(eventName, notifications) {
     this.componentModel.notifications = notifications;
-    this.view.update.apply(this.view, [this.componentModel]);
+    this.view.update(this.componentModel);
   }
 
   itemClicked(itemIndex) {
     EventBus.publish(Event.TopNav.NOTIFICATION_ITEM_SELECTED, itemIndex);
     this.componentModel.isOpen = false;
-    this.view.update.apply(this.view, [this.componentModel]);
+    this.view.update(this.componentModel);
   }
 
   setItemClickStatus(itemIndex, isClicked) {

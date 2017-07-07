@@ -5,6 +5,9 @@ class Controller {
     this.componentModel = clone(componentModel);
     this.onUpdated = react.props.onUpdate;
     this.marketDataServiceClient = new MarketDataServiceClient();
+
+    this.onParameterUpdated = this.onParameterUpdated.bind(this);
+    this.onStatusChange = this.onStatusChange.bind(this);
   }
 
   getView() {
@@ -18,7 +21,7 @@ class Controller {
   componentWillUpdate(model) {
     if (model != null) {
       overwriteMerge(this.componentModel, model);
-      this.view.setComponentModel.apply(this.view, [this.componentModel]);
+      this.view.setComponentModel(this.componentModel);
     }
   }
 

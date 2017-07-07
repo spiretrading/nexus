@@ -58,7 +58,7 @@ class View extends UpdatableView {
 
   /** @private */
   onMoveSelectChange(availableItems, selectedItems) {
-    this.controller.onFilterChange.apply(this.controller, [this.selectedParameterInput, availableItems, selectedItems]);
+    this.controller.onFilterChange(this.selectedParameterInput, availableItems, selectedItems);
   }
 
   render() {

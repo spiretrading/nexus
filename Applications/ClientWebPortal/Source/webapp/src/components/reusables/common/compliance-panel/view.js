@@ -14,6 +14,14 @@ class View extends UpdatableView {
     super(react, controller, componentModel);
     this.isInitialized = false;
     this.isInputFocused = false;
+
+    this.onSymbolsChange = this.onSymbolsChange.bind(this);
+    this.getCurrencyInput = this.getCurrencyInput.bind(this);
+    this.getMoneyInput = this.getMoneyInput.bind(this);
+    this.getSymbolsInput = this.getSymbolsInput.bind(this);
+    this.getPeriodInput = this.getPeriodInput.bind(this);
+    this.getIntegerInput = this.getIntegerInput.bind(this);
+    this.getBooleanInput = this.getBooleanInput.bind(this);
   }
 
   /** @private */
@@ -71,7 +79,7 @@ class View extends UpdatableView {
     // validate input
     let valueNumber = Number(value);
     let errorMessage;
-    if (isNaN(valueNumber)) {
+    if (!$.isNumeric(valueNumber)) {
       errorMessage = 'Must be a number.';
     } else if (valueNumber < 0) {
       errorMessage = 'Cannot be a negative number.';
@@ -86,10 +94,7 @@ class View extends UpdatableView {
       }
     } else {
       let parameterName = $(event.currentTarget).attr('data-parameter-name');
-      this.controller.onParameterUpdated.apply(this.controller, [
-        parameterName,
-        value
-      ]);
+      this.controller.onParameterUpdated(parameterName, value);
 
       if ($input.hasClass('invalid-input')) {
         this.hideValidationErrorMessage($input);
@@ -138,10 +143,7 @@ class View extends UpdatableView {
 
     let value = formattedNumber.replace(',', '');
     let parameterName = $(event.currentTarget).attr('data-parameter-name');
-    this.controller.onParameterUpdated.apply(this.controller, [
-      parameterName,
-      value
-    ]);
+    this.controller.onParameterUpdated(parameterName, value);
   }
 
   /** @private */
@@ -149,15 +151,12 @@ class View extends UpdatableView {
     let $checkbox = $(event.currentTarget);
     let parameterName = $checkbox.attr('data-parameter-name');
     let isChecked = $checkbox.prop('checked');
-    this.controller.onParameterUpdated.apply(this.controller, [
-      parameterName,
-      isChecked
-    ]);
+    this.controller.onParameterUpdated(parameterName, isChecked);
   }
 
   /** @private */
   onStatusChange(newValue) {
-    this.controller.onStatusChange.apply(this.controller, [newValue, this.componentModel.schema.parameters]);
+    this.controller.onStatusChange(newValue, this.componentModel.schema.parameters);
   }
 
   /** @private */
@@ -196,7 +195,7 @@ class View extends UpdatableView {
       let timeInput = hours + ':' + minutes + ':' + seconds;
       let parameterName = $timeWrapper.attr('data-parameter-name');
 
-      this.controller.onParameterUpdated.apply(this.controller, [parameterName, timeInput]);
+      this.controller.onParameterUpdated(parameterName, timeInput);
 
       if ($timeWrapper.hasClass('invalid-input')) {
         this.hideValidationErrorMessage($timeWrapper);
@@ -240,10 +239,7 @@ class View extends UpdatableView {
       isDisabled: !this.componentModel.isAdmin
     };
     let onCurrencyChange = (newValue) => {
-      this.controller.onParameterUpdated.apply(this.controller, [
-        parameters[parameterIndex].name,
-        newValue
-      ]);
+      this.controller.onParameterUpdated(parameters[parameterIndex].name, newValue);
     };
     let parameterName = parameters[parameterIndex].name.replace(/\\/g, '');
     parameterName = labelFormatter.toCapitalWithSpace(parameterName);
@@ -420,7 +416,7 @@ class View extends UpdatableView {
               clearTimeout(_this.symbolsTimeout);
             }
 
-            let marketDatabase = definitionsService.getMarketDatabase.apply(definitionsService);
+            let marketDatabase = definitionsService.getMarketDatabase();
             _this.symbolsTimeout = setTimeout(() => {
               _this.symbolsTimeout = null;
               let input = $('#' + _this.componentModel.componentId + ' .ui-autocomplete-input').val().trim();
@@ -428,7 +424,7 @@ class View extends UpdatableView {
                 .then((results) => {
                   let labels = [];
                   for (let i=0; i<results.length; i++) {
-                    let symbol = results[i].security.toString.apply(results[i].security, [marketDatabase]);
+                    let symbol = results[i].security.toString(marketDatabase);
                     let marketCode = results[i].security.market.toCode();
                     let label = {
                       label: symbol + ' (' + results[i].name + ')',
@@ -471,14 +467,14 @@ class View extends UpdatableView {
         afterTagAdded: (event, ui) => {
           if (_this.isInitialized) {
             _this.adjustContentSlideWrapperHeight();
-            _this.onSymbolsChange.apply(_this);
+            _this.onSymbolsChange();
           } else {
             $(event.currentTarget).parent().parent().find('.content-slide-wrapper').height(0);
           }
         },
         afterTagRemoved: (event, ui) => {
           _this.adjustContentSlideWrapperHeight();
-          _this.onSymbolsChange.apply(_this);
+          _this.onSymbolsChange();
           return false;
         },
         allowDuplicates: false,
@@ -578,17 +574,17 @@ class View extends UpdatableView {
     let schemaParameters = schema.parameters;
     for (let i=0; i<parameters.length; i++) {
       if (schemaParameters[i].value.which == DataType.CURRENCY) {
-        content.push(this.getCurrencyInput.apply(this, [i]));
+        content.push(this.getCurrencyInput(i));
       } else if (schemaParameters[i].value.which == DataType.MONEY) {
-        content.push(this.getMoneyInput.apply(this, [i]));
+        content.push(this.getMoneyInput(i));
       } else if (schemaParameters[i].value.which == DataType.LIST && schemaParameters[i].value.value[0].which == DataType.SECURITY) {
-        content.push(this.getSymbolsInput.apply(this, [i]));
+        content.push(this.getSymbolsInput(i));
       } else if (schemaParameters[i].value.which == DataType.TIME_DURATION) {
-        content.push(this.getPeriodInput.apply(this, [i]));
+        content.push(this.getPeriodInput(i));
       } else if (schemaParameters[i].value.which == DataType.INTEGER) {
-        content.push(this.getIntegerInput.apply(this, [i]));
+        content.push(this.getIntegerInput(i));
       } else if (schemaParameters[i].value.which == DataType.BOOLEAN) {
-        content.push(this.getBooleanInput.apply(this, [i]));
+        content.push(this.getBooleanInput(i));
       }
     }
 

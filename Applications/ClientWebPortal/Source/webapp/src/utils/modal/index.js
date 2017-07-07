@@ -8,7 +8,7 @@ class Modal {
     $element.modal({
       backdrop: 'static',
       keyboard: false
-    }).on('shown.bs.modal', onShown)
+    }).on('shown.bs.modal', onShown.bind(this))
       .on('hidden.bs.modal', onHidden.bind(this))
       .show();
 

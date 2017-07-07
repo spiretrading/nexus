@@ -12,6 +12,8 @@ class Controller {
       this.componentModel.directoryEntry.name
     );
     this.adminClient = new AdministrationClient();
+
+    this.isModelInitialized = this.isModelInitialized.bind(this);
   }
 
   getView() {
@@ -25,11 +27,8 @@ class Controller {
   /** @private */
   getRequiredData() {
     let directoryEntry = this.componentModel.directoryEntry;
-    let loadAccountEntitlements = this.adminClient.loadAccountEntitlements.apply(
-      this.adminClient,
-      [directoryEntry]
-    );
-    let loadAccountRoles = this.adminClient.loadAccountRoles.apply(this.adminClient, [directoryEntry]);
+    let loadAccountEntitlements = this.adminClient.loadAccountEntitlements(directoryEntry);
+    let loadAccountRoles = this.adminClient.loadAccountRoles(directoryEntry);
 
     return Promise.all([
       loadAccountEntitlements,
@@ -58,7 +57,7 @@ class Controller {
       Config.WHOLE_PAGE_PRELOADER_HEIGHT
     ).then((responses) => {
       this.componentModel.accountEntitlements = responses[0];
-      this.componentModel.entitlements = definitionsService.getEntitlements.apply(definitionsService);
+      this.componentModel.entitlements = definitionsService.getEntitlements();
       this.componentModel.directoryEntry = directoryEntry;
       this.componentModel.roles = responses[1];
       this.componentModel.userName = directoryEntry.name;
@@ -93,7 +92,7 @@ class Controller {
 
   save() {
     let directoryEntry = this.componentModel.directoryEntry;
-    this.adminClient.storeAccountEntitlements.apply(this.adminClient, [directoryEntry, this.componentModel.accountEntitlements])
+    this.adminClient.storeAccountEntitlements(directoryEntry, this.componentModel.accountEntitlements)
       .then(this.view.showSaveSuccessMessage)
       .catch(this.view.showSaveFailMessage);
   }

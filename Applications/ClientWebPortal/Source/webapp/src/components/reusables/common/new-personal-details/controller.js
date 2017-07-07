@@ -13,7 +13,7 @@ class Controller {
   }
 
   componentDidMount() {
-    this.view.initialize.apply(this.view);
+    this.view.initialize();
   }
 
   componentWillUpdate(model) {

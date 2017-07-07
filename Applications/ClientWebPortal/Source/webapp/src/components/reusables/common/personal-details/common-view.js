@@ -6,6 +6,8 @@ class CommonView extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
     this.isLastInputLineBreak = false;
+
+    this.initialize = this.initialize.bind(this);
   }
 
   ignoreNewLineIfNecessary(event) {
@@ -26,7 +28,7 @@ class CommonView extends UpdatableView {
     this.onChange();
   }
 
-  /** private */
+  /** @private */
   onChange() {
     this.componentModel.firstName = $('#' + this.componentModel.componentId + ' .first-name-input').val().trim();
     this.componentModel.lastName = $('#' + this.componentModel.componentId + ' .last-name-input').val().trim();
@@ -57,7 +59,24 @@ class CommonView extends UpdatableView {
       }
     }
 
+    // roles
+    this.componentModel.roles.isAdmin = $('#' + this.componentModel.componentId + ' .icon-admin').hasClass('active');
+    this.componentModel.roles.isManager = $('#' + this.componentModel.componentId + ' .icon-manager').hasClass('active');
+    this.componentModel.roles.isTrader = $('#' + this.componentModel.componentId + ' .icon-trader').hasClass('active');
+    this.componentModel.roles.isService = $('#' + this.componentModel.componentId + ' .icon-service').hasClass('active');
+
     this.controller.onPersonalDetailsChange(this.componentModel);
+  }
+
+  /** @private */
+  onRoleClick(e) {
+    let $role = $(e.currentTarget);
+    if ($role.hasClass('active')) {
+      $role.removeClass('active');
+    } else {
+      $role.removeClass('active').addClass('active');
+    }
+    this.onChange();
   }
 
   /** @private */

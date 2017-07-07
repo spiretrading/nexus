@@ -16,7 +16,7 @@ class DesktopView extends CommonView {
     } else {
       $icon.addClass('active');
     }
-    this.onChange.apply(this);
+    this.onChange();
   }
 
   render() {

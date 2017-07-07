@@ -9,6 +9,8 @@ class View extends UpdatableView {
     this.visibleHeight = 0;
     this.shouldExpand = false;
     this.lastSearchString = null;
+
+    this.togglePanel = this.togglePanel.bind(this);
   }
 
   /** @private */
@@ -16,9 +18,9 @@ class View extends UpdatableView {
     let $header = $(event.target).parent();
     if (!this.componentModel.isLoaded) {
       this.shouldExpand = true;
-      this.controller.loadAccounts.apply(this.controller);
+      this.controller.loadAccounts();
     } else {
-      this.togglePanel.apply(this, [$header]);
+      this.togglePanel($header);
     }
   }
 
@@ -64,7 +66,7 @@ class View extends UpdatableView {
       $component.find('.trader-row').removeAttr('style');
       $component.find('.icon-expand').removeClass('collapsed').removeClass('expanded');
       if ($component.find('.trader-row.match').size() >= 1 ||
-        isGroupNameMatch.apply(this, [this.componentModel.searchString])) {
+        isGroupNameMatch.call(this, this.componentModel.searchString)) {
         $component.css('display', 'inherit');
       } else {
         $component.css('display', 'none');
@@ -90,11 +92,11 @@ class View extends UpdatableView {
   onTraderClick(event) {
     let traderId = $(event.currentTarget).attr('data-traderId');
     traderId = parseInt(traderId);
-    this.controller.navigateToTraderProfile.apply(this.controller, [traderId]);
+    this.controller.navigateToTraderProfile(traderId);
   }
 
   onGroupClick(event) {
-    this.controller.navigateToGroupProfile.apply(this.controller, [this.componentModel.groupId]);
+    this.controller.navigateToGroupProfile(this.componentModel.groupId);
   }
 
   render() {

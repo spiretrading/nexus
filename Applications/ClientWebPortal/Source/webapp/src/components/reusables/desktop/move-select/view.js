@@ -18,14 +18,14 @@ class View extends UpdatableView {
     $('#' + this.componentModel.componentId + ' option:selected').removeAttr('selected');
 
     if (addingItems.length > 0) {
-      this.controller.addItems.apply(this.controller, [addingItems]);
+      this.controller.addItems(addingItems);
     }
   }
 
   /** @private */
   onAddAllClick() {
     $('#' + this.componentModel.componentId + ' option:selected').removeAttr('selected');
-    this.controller.addAllItems.apply(this.controller);
+    this.controller.addAllItems();
   }
 
   /** @private */
@@ -38,14 +38,14 @@ class View extends UpdatableView {
     $('#' + this.componentModel.componentId + ' option:selected').removeAttr('selected');
 
     if (removingItems.length > 0) {
-      this.controller.removeItems.apply(this.controller, [removingItems]);
+      this.controller.removeItems(removingItems);
     }
   }
 
   /** @private */
   onRemoveAllClick() {
     $('#' + this.componentModel.componentId + ' option:selected').removeAttr('selected');
-    this.controller.removeAllItems.apply(this.controller);
+    this.controller.removeAllItems();
   }
 
   render() {

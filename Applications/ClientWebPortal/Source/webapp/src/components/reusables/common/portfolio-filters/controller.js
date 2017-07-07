@@ -5,6 +5,8 @@ class Controller {
     this.componentModel = componentModel;
     this.onParametersSave = react.props.onSave;
     this.isInitialized = false;
+
+    this.onFilterChange = this.onFilterChange.bind(this);
   }
 
   getView() {

@@ -34,7 +34,7 @@ class MockServer {
   subscribe(destination, listener) {
     if (destination === '/api/risk_service/portfolio') {
       this.portfolioInterval = setInterval(() => {
-        let portfolioData = this.generateRandomPortfolioData.apply(this);
+        let portfolioData = this.generateRandomPortfolioData();
         listener(portfolioData);
       }, 1000);
     }
@@ -47,7 +47,7 @@ class MockServer {
       };
     }
 
-    return generateSubscription.apply(this, [destination]);
+    return generateSubscription(destination);
   }
 
   generateRandomPortfolioData() {
@@ -122,9 +122,9 @@ class StompConnectionManager {
   }
 
   subscribe(destination, listener) {
-    if (!this.isConnected.apply(this)){
+    if (!this.isConnected()){
       // connection doesn't exist, connect and subscribe
-      return this.connect.apply(this)
+      return this.connect()
         .then(performSubscribe.bind(this));
     } else {
 
@@ -165,8 +165,8 @@ class StompConnectionManager {
   }
 
   send(destination, body) {
-    if (!this.isConnected.apply(this)){
-      this.connect.apply(this);
+    if (!this.isConnected()){
+      this.connect();
     }
 
     this.client.send(destination, body);

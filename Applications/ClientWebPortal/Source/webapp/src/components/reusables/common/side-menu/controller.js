@@ -9,6 +9,10 @@ class Controller {
       isAdmin: false,
       isManager: false
     };
+
+    this.navigateToProfileAccount = this.navigateToProfileAccount.bind(this);
+    this.navigateToAccounts = this.navigateToAccounts.bind(this);
+    this.navigateToPortfolio = this.navigateToPortfolio.bind(this);
   }
 
   /** @private */
@@ -32,7 +36,7 @@ class Controller {
 
   /** @private */
   onCloseMenu() {
-    this.view.closeMenu.apply(this.view);
+    this.view.closeMenu();
   }
 
   getView() {

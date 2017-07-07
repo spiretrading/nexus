@@ -2,11 +2,15 @@ import './style.scss';
 import React from 'react';
 import UpdatableView from 'commons/updatable-view';
 import autosize from 'autosize';
+import deviceDetector from 'utils/device-detector';
 
 class CommonView extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
     this.isLastInputLineBreak = false;
+
+    this.initialize = this.initialize.bind(this);
+    this.onChange = this.onChange.bind(this);
   }
 
   ignoreNewLineIfNecessary(event) {
@@ -134,6 +138,16 @@ class CommonView extends UpdatableView {
       afterTagRemoved: () => {
         this.onChange();
       }
+    });
+
+    if (!deviceDetector.isMobile()) {
+      $('#' + this.componentModel.componentId + ' .group-tags').parent().css('padding', '0');
+    }
+
+    $('#' + this.componentModel.componentId + ' .group-tags input').focus(function() {
+      $(this).parent().parent().css('border', '1px solid #8d78ec');
+    }).blur(function() {
+      $(this).parent().parent().removeAttr('style');
     });
   }
 

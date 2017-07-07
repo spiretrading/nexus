@@ -30,7 +30,7 @@ window.clone = (originalObj) => {
       return cloneArray;
     } else if (typeof originalObj == 'object') {
       if (originalObj.clone != null) {
-        return originalObj.clone.apply(originalObj);
+        return originalObj.clone.call(originalObj);
       } else {
         let cloneObj = {};
         for (let property in originalObj) {
@@ -62,7 +62,7 @@ ES6Promise.polyfill();
 
 let serviceLocatorClient = new ServiceLocatorClient();
 
-serviceLocatorClient.loadCurrentAccount.apply(serviceLocatorClient)
+serviceLocatorClient.loadCurrentAccount.call(serviceLocatorClient)
   .then((account) => {
     let accountDirectoryEntry = new DirectoryEntry(
       account.id,
@@ -73,11 +73,10 @@ serviceLocatorClient.loadCurrentAccount.apply(serviceLocatorClient)
       if (window.location.href != Config.HOME_URL) {
         window.location.href = Config.HOME_URL;
       } else {
-
         renderGUI();
       }
     } else {
-      userService.initialize.apply(userService, [accountDirectoryEntry])
+      userService.initialize(accountDirectoryEntry)
         .then(sessionInitializer.initialize.bind(sessionInitializer))
         .then(renderGUI)
         .then(publishSignedInEvent)

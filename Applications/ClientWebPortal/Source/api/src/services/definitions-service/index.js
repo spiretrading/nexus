@@ -3,7 +3,7 @@ import CurrencyId from '../../definitions/currency-id';
 import dataTypeConverter from '../commons/data-type-converter';
 
 /** Spire definitions service client class */
-class DefinitionsService {
+class DefinitionsService {  
   /** @private */
   logErrorAndThrow(xhr) {
     let errorMessage = 'Spire Definitions Service Client: Unexpected error happened.';
@@ -68,6 +68,13 @@ class DefinitionsService {
 
   loadMarketDatabase() {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'definitions_service/load_market_database';
+
+    return httpConnectionManager.send(apiPath, null, true)
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadExchangeRates() {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'definitions_service/load_exchange_rates';
 
     return httpConnectionManager.send(apiPath, null, true)
       .catch(this.logErrorAndThrow);

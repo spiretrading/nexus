@@ -14,12 +14,15 @@ class UserService {
     this.directoryEntry;
     this.adminClient = new AdministrationClient();
     this.serviceLocatorClient = new ServiceLocatorClient();
+
+    this.isSignedIn = this.isSignedIn.bind(this);
+    this.getDirectoryEntry = this.getDirectoryEntry.bind(this);
   }
 
   initialize(userDirectoryEntry) {
     this.directoryEntry = userDirectoryEntry;
     this.userName = userDirectoryEntry.name;
-    return this.adminClient.loadAccountRoles.apply(this.adminClient, [this.directoryEntry])
+    return this.adminClient.loadAccountRoles(this.directoryEntry)
       .then((response) => {
         this.roles = response;
       });
@@ -41,7 +44,7 @@ class UserService {
         this.directoryEntry = response.directoryEntry;
       }
 
-      return this.adminClient.loadAccountRoles.apply(this.adminClient, [this.directoryEntry]);
+      return this.adminClient.loadAccountRoles(this.directoryEntry);
     }
 
     function onUserRolesResponse(response) {

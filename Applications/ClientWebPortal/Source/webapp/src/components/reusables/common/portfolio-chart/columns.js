@@ -9,6 +9,9 @@ let columns = [
   { id: 8, name: 'Cost Basis' },
   { id: 9, name: 'Currency' },
   { id: 10, name: 'Volume' },
-  { id: 11, name: 'Trades' }
+  { id: 11, name: 'Trades' },
+  { id: 12, name: 'Acc. Total P/L'},
+  { id: 13, name: 'Acc. Unrealized P/L'},
+  { id: 14, name: 'Acc. Fees'}
 ];
 export default columns;
