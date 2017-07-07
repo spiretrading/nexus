@@ -1,5 +1,5 @@
 import httpConnectionManager from '../commons/http-connection-manager';
-import accountRoles from '../commons/account-roles';
+import AccountRoles from '../commons/account-roles';
 import AccountIdentity from './account-identity';
 import RiskParameters from '../risk-service/risk-parameters';
 
@@ -36,7 +36,7 @@ class Admin {
       .catch(this.logErrorAndThrow);
 
     function onResponse(roles) {
-      let accRoles = accountRoles.parse(roles)
+      let accRoles = AccountRoles.parse(roles)
       accRoles.id = directoryEntry.id;
       return accRoles;
     }
@@ -160,6 +160,17 @@ class Admin {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_trading_group';
     let payload = {
       directory_entry: directoryEntry.toData()
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .catch(this.logErrorAndThrow);
+  }
+
+  storeAccountRoles(directoryEntry, roles) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/store_account_roles';
+    let payload = {
+      account: directoryEntry.toData(),
+      roles: AccountRoles.encode(roles)
     };
 
     return httpConnectionManager.send(apiPath, payload, true)

@@ -1,6 +1,6 @@
 import httpConnectionManager from '../commons/http-connection-manager';
 import ResultCodes from './result-codes';
-import accountRoles from '../commons/account-roles';
+import AccountRoles from '../commons/account-roles';
 import DirectoryEntry from '../../definitions/directory-entry';
 const ResultCode = ResultCodes;
 
@@ -74,7 +74,7 @@ class ServiceLocator {
       name: userName,
       group: group,
       identity: accountIdentity.toData(),
-      roles: accountRoles.encode(roles)
+      roles: AccountRoles.encode(roles)
     };
 
     return httpConnectionManager.send(apiPath, payload, true)
@@ -109,7 +109,7 @@ class ServiceLocator {
     function onResponse(results) {
       for (let i=0; i<results.length; i++) {
         let roles = results[i].roles;
-        results[i].roles = accountRoles.parse(roles);
+        results[i].roles = AccountRoles.parse(roles);
       }
 
       return results;

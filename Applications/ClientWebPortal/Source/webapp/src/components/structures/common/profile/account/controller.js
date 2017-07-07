@@ -125,7 +125,9 @@ class Controller {
       model.registrationTime,
       model.userNotes
     );
+    let saveRoles = this.adminClient.storeAccountRoles(directoryEntry, model.roles);
     this.adminClient.storeAccountIdentity(directoryEntry, accountIdentity)
+      .then(saveRoles)
       .then(this.view.showSavePersonalDetailsSuccessMessage)
       .catch(this.view.showSavePersonalDetailsFailMessage);
   }
