@@ -146,6 +146,17 @@ class View extends UpdatableView {
       $container.find('.fixed-column-header').css('opacity', '1').width(headerTableWidth);
       $container.find('.fixed-column-body').css('opacity', '1');
     }
+
+    let $body = $container.find('.body');
+    let hasVerticalScrollbar= $body[0].scrollHeight>$body[0].clientHeight;
+    if (hasVerticalScrollbar) {
+      $header.removeClass('shift-left').addClass('shift-left')
+    } else {
+      $header.removeClass('shift-left');
+    }
+
+    let $wrapper = $container.find('.header .wrapper');
+    $wrapper.outerWidth($headerTable.outerWidth());
   }
 
   componentDidUpdate() {
@@ -459,6 +470,7 @@ class View extends UpdatableView {
         <div id={this.componentModel.componentId} className="portfolio-chart-container">
 
           <div className="header">
+            <div className="wrapper">
             <table>
               <thead>
                 <tr>
@@ -466,6 +478,7 @@ class View extends UpdatableView {
                 </tr>
               </thead>
             </table>
+            </div>
           </div>
 
           <div className="body">
