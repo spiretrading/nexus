@@ -16,7 +16,7 @@ class View extends UpdatableView {
   }
 
   initialize() {
-    $(window).resize(this.onWindowResize.bind(this));
+    $(window).resize(this.onWindowResize);
   }
 
   /** @private */
@@ -42,7 +42,7 @@ class View extends UpdatableView {
   }
 
   dispose() {
-    $(window).unbind('resize', this.onWindowResize);
+    $(window).off('resize', this.onWindowResize);
   }
 
   componentDidUpdate() {
