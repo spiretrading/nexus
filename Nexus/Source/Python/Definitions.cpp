@@ -447,8 +447,10 @@ void Nexus::Python::ExportMoney() {
     .def(-self)
     .def(int() * self)
     .def(double() * self)
+    .def(Quantity() * self)
     .def(self / int())
-    .def(self / double());
+    .def(self / double())
+    .def(self / Quantity());
   def("floor", static_cast<Money (*)(Money, int)>(&Floor));
   def("ceil", static_cast<Money (*)(Money, int)>(&Ceil));
   def("truncate", static_cast<Money (*)(Money, int)>(&Truncate));
