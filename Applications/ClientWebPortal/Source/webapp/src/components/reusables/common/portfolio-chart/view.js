@@ -13,6 +13,9 @@ class View extends UpdatableView {
     super(react, controller, componentModel);
     this.columnsSyncCounter = 0;
     this.selectedRows = new HashMap();
+    this.isCntrlPressed = false;
+    this.isShiftPressed = false;
+    this.activeRowId = null;
 
     this.initialize = this.initialize.bind(this);
     this.dispose = this.dispose.bind(this);
@@ -24,6 +27,8 @@ class View extends UpdatableView {
     this.sortData = this.sortData.bind(this);
     this.convertToHeaderLabel = this.convertToHeaderLabel.bind(this);
     this.shouldIncludeColumn = this.shouldIncludeColumn.bind(this);
+    this.onKeyDownCheckSelectionModifiers = this.onKeyDownCheckSelectionModifiers.bind(this);
+    this.onKeyUpCheckSelectionModifiers = this.onKeyUpCheckSelectionModifiers.bind(this);
   }
 
   /** @private */
@@ -90,6 +95,28 @@ class View extends UpdatableView {
 
     this.onResize = this.onResize.bind(this);
     $(window).resize(this.onResize);
+    $(document).keydown(this.onKeyDownCheckSelectionModifiers)
+      .keyup(this.onKeyUpCheckSelectionModifiers);
+  }
+
+  /** @private */
+  onKeyDownCheckSelectionModifiers(event) {
+    let isMac = navigator.platform.toUpperCase().indexOf('MAC')>=0;
+    if((!isMac && event.which == '17') || (isMac && event.which == '91')) {
+      this.isCntrlPressed = true;
+    } else if (event.which == '16') {
+      this.isShiftPressed = true;
+    }
+  }
+
+  /** @private */
+  onKeyUpCheckSelectionModifiers(event) {
+    let isMac = navigator.platform.toUpperCase().indexOf('MAC')>=0;
+    if((!isMac && event.which == '17') || (isMac && event.which == '91')) {
+      this.isCntrlPressed = false;
+    } else if (event.which == '16') {
+      this.isShiftPressed = false;
+    }
   }
 
   /** @private */
@@ -174,6 +201,8 @@ class View extends UpdatableView {
   dispose() {
     $('#' + this.componentModel.componentId).unbind('scroll', this.onScroll);
     $(window).unbind('resize', this.onResize);
+    $(document).unbind('keydown', this.onKeyDownCheckSelectionModifiers)
+      .unbind('keyup', this.onKeyUpCheckSelectionModifiers);
   }
 
   shouldIncludeColumn(columnHeader) {
@@ -296,15 +325,60 @@ class View extends UpdatableView {
   /** @private */
   onRowClick(e) {
     let $row = $(e.currentTarget);
-    let accountId = $row.attr('data-account-id');
-    let securitySymbol = $row.attr('data-security-symbol');
-    let securityMarket = $row.attr('data-security-market');
-    let id = accountId + '-' + securitySymbol + '-' + securityMarket;
+    let clickedRowId = $row.attr('data-row-id');
+    let selectTargetRowId;
 
-    if (this.selectedRows.has(id)) {
-      this.selectedRows.remove(id);
+    if (!this.isCntrlPressed && !this.isShiftPressed) {
+      // when no modifiers are pressed
+      this.activeRowId = clickedRowId;
+      this.selectedRows.clear();
+      this.selectedRows.set(clickedRowId, false);
+    } else if (this.isCntrlPressed && !this.isShiftPressed) {
+      // when only the control modifier is pressed
+      this.activeRowId = clickedRowId;
+      if (this.selectedRows.has(clickedRowId)) {
+        this.selectedRows.remove(clickedRowId);
+      } else {
+        this.selectedRows.set(clickedRowId, true);
+
+        // set all existing selected rows with control modifier applied
+        this.selectedRows.forEach((value, key) => {
+          this.selectedRows.set(key, true);
+        });
+      }
     } else {
-      this.selectedRows.set(id, true);
+      // when shift modifier is pressed
+      let $allRows = $row.parent().children();
+      let pivotRowsMetCounter = 0;
+      let model = this;
+
+      // unselect the selected rows not chosen by control modifier
+      let selectedRowsClone = model.selectedRows.clone();
+      selectedRowsClone.forEach(function(value, key) {
+        if (!value) {
+          model.selectedRows.remove(key);
+        }
+      });
+
+      $allRows.each(function() {
+        if (model.activeRowId == null) {
+          model.activeRowId = clickedRowId;
+        }
+
+        let $currentRow = $(this);
+        let currentRowId = $currentRow.attr('data-row-id');
+        if (currentRowId === model.activeRowId || currentRowId === clickedRowId) {
+          pivotRowsMetCounter++;
+        }
+
+        if (pivotRowsMetCounter > 0 && pivotRowsMetCounter <= 2) {
+          model.selectedRows.set(currentRowId, false);
+
+          if (pivotRowsMetCounter == 2) {
+            pivotRowsMetCounter++;
+          }
+        }
+      });
     }
 
     this.react.forceUpdate();
@@ -449,17 +523,15 @@ class View extends UpdatableView {
         let securityMarket = rowData.security.market.value;
         let id = accountId + '-' + securitySymbol + '-' + securityMarket;
 
-        let rowClass = '';
+        let rowClass = 'no-select';
         if (this.selectedRows.has(id)) {
-          rowClass = 'selected';
+          rowClass += ' selected';
         }
 
         rows.push(
           <tr key={i} className={rowClass}
             onClick={this.onRowClick.bind(this)}
-            data-account-id={accountId}
-            data-security-symbol={securitySymbol}
-            data-security-market={securityMarket}>
+            data-row-id={id}>
             {columns}
           </tr>
         );
