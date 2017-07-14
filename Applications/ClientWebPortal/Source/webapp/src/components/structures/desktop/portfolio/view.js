@@ -11,6 +11,7 @@ class View extends UpdatableView {
     super(react, controller, componentModel);
 
     this.resizePortfolioChart = this.resizePortfolioChart.bind(this);
+    this.onWindowResize = this.onWindowResize.bind(this);
     this.initialize = this.initialize.bind(this);
     this.dispose = this.dispose.bind(this);
   }
