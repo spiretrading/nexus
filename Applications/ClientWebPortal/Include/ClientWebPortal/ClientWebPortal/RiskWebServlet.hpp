@@ -1,9 +1,11 @@
 #ifndef NEXUS_RISKWEBSERVLET_HPP
 #define NEXUS_RISKWEBSERVLET_HPP
+#include <unordered_set>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
+#include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Stomp/StompServer.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
 #include <Beam/WebServices/HttpUpgradeSlot.hpp>
@@ -13,6 +15,8 @@
 #include "ClientWebPortal/ClientWebPortal/ClientWebPortal.hpp"
 #include "ClientWebPortal/ClientWebPortal/ClientWebPortalSession.hpp"
 #include "ClientWebPortal/ClientWebPortal/PortfolioModel.hpp"
+#include "Nexus/Definitions/Currency.hpp"
+#include "Nexus/Definitions/Market.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
 
@@ -52,9 +56,22 @@ namespace ClientWebPortal {
     private:
       using StompServer =
         Beam::Stomp::StompServer<std::unique_ptr<WebSocketChannel>>;
+      struct PortfolioFilter {
+        std::unordered_set<Beam::ServiceLocator::DirectoryEntry> m_groups;
+        std::unordered_set<MarketCode> m_markets;
+        std::unordered_set<CurrencyId> m_currencies;
+
+        bool IsFiltered(const PortfolioModel::Entry& entry,
+          const Beam::ServiceLocator::DirectoryEntry& group) const;
+      };
       struct PortfolioSubscriber {
-        std::shared_ptr<StompServer> m_client;
+        Beam::ServiceLocator::DirectoryEntry m_account;
+        StompServer m_client;
         std::string m_subscriptionId;
+        PortfolioFilter m_filter;
+
+        PortfolioSubscriber(Beam::ServiceLocator::DirectoryEntry account,
+          std::unique_ptr<WebSocketChannel> channel);
       };
       ApplicationServiceClients* m_serviceClients;
       Beam::WebServices::SessionStore<ClientWebPortalSession>* m_sessions;
@@ -64,12 +81,25 @@ namespace ClientWebPortal {
       std::unordered_set<PortfolioModel::Entry> m_updatedPortfolioEntries;
       std::vector<std::shared_ptr<PortfolioSubscriber>> m_porfolioSubscribers;
       PortfolioModel m_portfolioModel;
+      std::unordered_map<Beam::ServiceLocator::DirectoryEntry,
+        Beam::ServiceLocator::DirectoryEntry> m_traderGroups;
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 
       void Shutdown();
+      const Beam::ServiceLocator::DirectoryEntry& FindTradingGroup(
+        const Beam::ServiceLocator::DirectoryEntry& trader);
+      void SendPortfolioEntry(const PortfolioModel::Entry& entry,
+        const Beam::ServiceLocator::DirectoryEntry& group,
+        PortfolioSubscriber& subscriber, bool checkFilter);
       void OnPortfolioUpgrade(const Beam::WebServices::HttpRequest& request,
         std::unique_ptr<WebSocketChannel> channel);
+      void OnPortfolioRequest(
+        const std::shared_ptr<PortfolioSubscriber>& subscriber,
+        const Beam::Stomp::StompFrame& frame);
+      void OnPortfolioFilterRequest(
+        const std::shared_ptr<PortfolioSubscriber>& subscriber,
+        const Beam::Stomp::StompFrame& frame);
       void OnPortfolioUpdate(const PortfolioModel::Entry& entry);
       void OnPortfolioTimerExpired(Beam::Threading::Timer::Result result);
   };
