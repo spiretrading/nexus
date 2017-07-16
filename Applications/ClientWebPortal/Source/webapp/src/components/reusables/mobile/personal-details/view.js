@@ -139,10 +139,10 @@ class MobileView extends CommonView {
 
           <div className="personal-detail-row">
             <div className="personal-detail-label">Role(s)</div>
-            <span title="Trader" className={traderClass}/>
-            <span title="Manager" className={managerClass}/>
-            <span title="Admin" className={adminClass}/>
-            <span title="Service" className={serviceClass}/>
+            <span title="Trader" className={traderClass} onClick={this.onRoleClick.bind(this)}/>
+            <span title="Manager" className={managerClass} onClick={this.onRoleClick.bind(this)}/>
+            <span title="Admin" className={adminClass} onClick={this.onRoleClick.bind(this)}/>
+            <span title="Service" className={serviceClass} onClick={this.onRoleClick.bind(this)}/>
           </div>
 
           <div className="personal-detail-row">

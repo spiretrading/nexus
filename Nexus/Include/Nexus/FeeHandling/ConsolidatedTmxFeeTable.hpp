@@ -217,7 +217,7 @@ namespace Nexus {
     if(lynxConfig == nullptr) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for LYNX missing."});
     } else {
-      feeTable.m_lynxFeeTable = ParseLynxFeeTable(*lynxConfig, marketDatabase);
+      feeTable.m_lynxFeeTable = ParseLynxFeeTable(*lynxConfig);
     }
     auto matnConfig = config.FindValue("matn");
     if(matnConfig == nullptr) {
@@ -344,8 +344,7 @@ namespace Nexus {
         return CalculateFee(feeTable.m_xcx2FeeTable, order.GetInfo().m_fields,
           executionReport);
       } else if(lastMarket == DefaultMarkets::LYNX()) {
-        return CalculateFee(feeTable.m_lynxFeeTable,
-          order.GetInfo().m_fields.m_security, executionReport);
+        return CalculateFee(feeTable.m_lynxFeeTable, executionReport);
       } else if(lastMarket == DefaultMarkets::MATN()) {
         auto classification = [&] {
           if(Beam::Contains(feeTable.m_etfs,

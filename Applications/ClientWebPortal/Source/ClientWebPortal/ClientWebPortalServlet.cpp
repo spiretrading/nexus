@@ -1,13 +1,10 @@
 #include "ClientWebPortal/ClientWebPortal/ClientWebPortalServlet.hpp"
 #include <Beam/Queues/Publisher.hpp>
 #include <Beam/Queues/Queue.hpp>
-#include <Beam/Stomp/StompServer.hpp>
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
 #include <Beam/WebServices/HttpServerPredicates.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include "Nexus/Accounting/Portfolio.hpp"
-#include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
 
 using namespace Beam;
@@ -28,13 +25,6 @@ using namespace Nexus::OrderExecutionService;
 using namespace Nexus::RiskService;
 using namespace std;
 
-namespace {
-  using WebPosition = Nexus::Accounting::Position<Nexus::Security>;
-  using WebInventory = Nexus::Accounting::Inventory<WebPosition>;
-  using WebBookkeeper = Nexus::Accounting::TrueAverageBookkeeper<WebInventory>;
-  using WebPortfolio = Nexus::Accounting::Portfolio<WebBookkeeper>;
-}
-
 ClientWebPortalServlet::ClientWebPortalServlet(
     RefType<ApplicationServiceClients> serviceClients)
     : m_fileStore{"webapp"},
@@ -44,7 +34,7 @@ ClientWebPortalServlet::ClientWebPortalServlet(
       m_administrationServlet{Ref(m_sessions), Ref(*m_serviceClients)},
       m_marketDataServlet{Ref(m_sessions), Ref(*m_serviceClients)},
       m_complianceServlet{Ref(m_sessions), Ref(*m_serviceClients)},
-      m_portfolioModel{Ref(*m_serviceClients)} {}
+      m_riskServlet{Ref(m_sessions), Ref(*m_serviceClients)} {}
 
 ClientWebPortalServlet::~ClientWebPortalServlet() {
   Close();
@@ -77,16 +67,16 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
   slots.insert(slots.end(), marketDataSlots.begin(), marketDataSlots.end());
   auto complianceSlots = m_complianceServlet.GetSlots();
   slots.insert(slots.end(), complianceSlots.begin(), complianceSlots.end());
+  auto riskSlots = m_riskServlet.GetSlots();
+  slots.insert(slots.end(), riskSlots.begin(), riskSlots.end());
   return slots;
 }
 
 vector<HttpUpgradeSlot<ClientWebPortalServlet::WebSocketChannel>>
     ClientWebPortalServlet::GetWebSocketSlots() {
   vector<HttpUpgradeSlot<WebSocketChannel>> slots;
-  slots.emplace_back(MatchesPath(HttpMethod::GET,
-    "/api/risk_service/portfolio"), std::bind(
-    &ClientWebPortalServlet::OnPortfolioUpgrade, this, std::placeholders::_1,
-    std::placeholders::_2));
+  auto riskSlots = m_riskServlet.GetWebSocketSlots();
+  slots.insert(slots.end(), riskSlots.begin(), riskSlots.end());
   return slots;
 }
 
@@ -101,16 +91,7 @@ void ClientWebPortalServlet::Open() {
     m_administrationServlet.Open();
     m_marketDataServlet.Open();
     m_complianceServlet.Open();
-    m_portfolioTimer = m_serviceClients->BuildTimer(seconds(1));
-    m_portfolioTimer->GetPublisher().Monitor(m_tasks.GetSlot<Timer::Result>(
-      std::bind(&ClientWebPortalServlet::OnPortfolioTimerExpired, this,
-      std::placeholders::_1)));
-    m_portfolioModel.GetPublisher().Monitor(
-      m_tasks.GetSlot<PortfolioModel::Entry>(
-      std::bind(&ClientWebPortalServlet::OnPortfolioUpdate, this,
-      std::placeholders::_1)));
-    m_portfolioModel.Open();
-    m_portfolioTimer->Start();
+    m_riskServlet.Open();
   } catch(const std::exception&) {
     m_openState.SetOpenFailure();
     Shutdown();
@@ -126,7 +107,7 @@ void ClientWebPortalServlet::Close() {
 }
 
 void ClientWebPortalServlet::Shutdown() {
-  m_portfolioModel.Close();
+  m_riskServlet.Close();
   m_complianceServlet.Close();
   m_marketDataServlet.Close();
   m_administrationServlet.Close();
@@ -201,91 +182,4 @@ HttpResponse ClientWebPortalServlet::OnLoadProfitAndLossReport(
   }
   session->ShuttleResponse(inventories, Store(response));
   return response;
-}
-
-void ClientWebPortalServlet::OnPortfolioUpgrade(const HttpRequest& request,
-    std::unique_ptr<WebSocketChannel> channel) {
-  auto session = m_sessions.Find(request);
-  if(session == nullptr) {
-    channel->GetConnection().Close();
-    return;
-  }
-  auto subscriber = std::make_shared<PortfolioSubscriber>();
-  subscriber->m_client = std::make_shared<StompServer>(std::move(channel));
-  Routines::Spawn(
-    [=] {
-      subscriber->m_client->Open();
-      while(true) {
-        auto frame = subscriber->m_client->Read();
-        if(frame.GetCommand() == StompCommand::SUBSCRIBE) {
-          auto idHeader = frame.FindHeader("id");
-          if(!idHeader.is_initialized()) {
-            continue;
-          }
-          subscriber->m_subscriptionId = *idHeader;
-          m_tasks.Push(
-            [=] {
-              JsonSender<SharedBuffer> sender;
-              for(auto& entry : m_portfolioEntries) {
-                StompFrame entryFrame{StompCommand::MESSAGE};
-                entryFrame.AddHeader(
-                  {"subscription", subscriber->m_subscriptionId});
-                entryFrame.AddHeader(
-                  {"destination", "/api/risk_service/portfolio"});
-                entryFrame.AddHeader(
-                  {"content-type", "application/json"});
-                auto buffer = Encode<SharedBuffer>(sender, entry.second);
-                entryFrame.SetBody(std::move(buffer));
-                try {
-                  subscriber->m_client->Write(entryFrame);
-                } catch(const std::exception&) {
-                  return;
-                }
-              }
-              m_porfolioSubscribers.push_back(subscriber);
-            });
-        }
-      }
-    });
-}
-
-void ClientWebPortalServlet::OnPortfolioUpdate(
-    const PortfolioModel::Entry& entry) {
-  m_updatedPortfolioEntries.insert(entry);
-}
-
-void ClientWebPortalServlet::OnPortfolioTimerExpired(Timer::Result result) {
-  vector<PortfolioModel::Entry> updatedEntries;
-  updatedEntries.reserve(m_updatedPortfolioEntries.size());
-  std::move(m_updatedPortfolioEntries.begin(), m_updatedPortfolioEntries.end(),
-    std::back_inserter(updatedEntries));
-  for(auto& updatedEntry : updatedEntries) {
-    RiskPortfolioKey key{updatedEntry.m_account,
-      updatedEntry.m_inventory.m_position.m_key.m_index};
-    auto entryResult = m_portfolioEntries.insert(make_pair(key, updatedEntry));
-    if(!entryResult.second) {
-      entryResult.first->second = updatedEntry;
-    }
-  }
-  m_updatedPortfolioEntries.clear();
-  JsonSender<SharedBuffer> sender;
-  auto i = m_porfolioSubscribers.begin();
-  while(i != m_porfolioSubscribers.end()) {
-    auto& subscriber = *i;
-    try {
-      for(auto& entry : updatedEntries) {
-        StompFrame entryFrame{StompCommand::MESSAGE};
-        entryFrame.AddHeader({"subscription", subscriber->m_subscriptionId});
-        entryFrame.AddHeader({"destination", "/api/risk_service/portfolio"});
-        entryFrame.AddHeader({"content-type", "application/json"});
-        auto buffer = Encode<SharedBuffer>(sender, entry);
-        entryFrame.SetBody(std::move(buffer));
-        subscriber->m_client->Write(entryFrame);
-      }
-      ++i;
-    } catch(const std::exception&) {
-      i = m_porfolioSubscribers.erase(i);
-    }
-  }
-  m_portfolioTimer->Start();
 }

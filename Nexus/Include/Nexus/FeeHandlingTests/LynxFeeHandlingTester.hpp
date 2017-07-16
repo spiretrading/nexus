@@ -31,20 +31,6 @@ namespace Tests {
       //! Tests sub-dollar passive fee calculations on all liquidity levels.
       void TestSubDollarPassive();
 
-      //! Tests odd-lot active fee calculations on all liquidity levels.
-      void TestOddLotActive();
-
-      //! Tests odd-lot passive fee calculations on all liquidity levels.
-      void TestOddLotPassive();
-
-      //! Tests sub-dollar odd-lot active fee calculations on all liquidity
-      //! levels.
-      void TestSubDollarOddLotActive();
-
-      //! Tests sub-dollar odd-lot passive fee calculations on all liquidity
-      //! levels.
-      void TestSubDollarOddLotPassive();
-
       //! Tests calculating fees with an unknown liquidity flag.
       void TestUnknownLiquidityFlag();
 
@@ -59,10 +45,6 @@ namespace Tests {
         CPPUNIT_TEST(TestPassive);
         CPPUNIT_TEST(TestSubDollarActive);
         CPPUNIT_TEST(TestSubDollarPassive);
-        CPPUNIT_TEST(TestOddLotActive);
-        CPPUNIT_TEST(TestOddLotPassive);
-        CPPUNIT_TEST(TestSubDollarOddLotActive);
-        CPPUNIT_TEST(TestSubDollarOddLotPassive);
         CPPUNIT_TEST(TestUnknownLiquidityFlag);
         CPPUNIT_TEST(TestEmptyLiquidityFlag);
       BEAM_CPPUNIT_TEST_SUITE_END();

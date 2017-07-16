@@ -11,12 +11,13 @@ class View extends UpdatableView {
     super(react, controller, componentModel);
 
     this.resizePortfolioChart = this.resizePortfolioChart.bind(this);
+    this.onWindowResize = this.onWindowResize.bind(this);
     this.initialize = this.initialize.bind(this);
     this.dispose = this.dispose.bind(this);
   }
 
   initialize() {
-    $(window).resize(this.onWindowResize.bind(this));
+    $(window).resize(this.onWindowResize);
   }
 
   /** @private */
@@ -42,7 +43,7 @@ class View extends UpdatableView {
   }
 
   dispose() {
-    $(window).unbind('resize', this.onWindowResize);
+    $(window).off('resize', this.onWindowResize);
   }
 
   componentDidUpdate() {
