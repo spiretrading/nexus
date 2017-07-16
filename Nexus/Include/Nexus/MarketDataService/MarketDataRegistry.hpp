@@ -416,16 +416,16 @@ namespace Details {
     m_securityEntries.With(
       [&] (auto& securityEntries) {
         for(auto& entry : securityEntries | boost::adaptors::map_values) {
-          if(entry->IsAvailable()) {
-            entries.push_back(entry);
-          }
+          entries.push_back(entry);
         }
       });
     for(auto& entry : entries) {
-      Beam::Threading::With(**entry,
-        [&] (auto& entry) {
-          entry.Clear(sourceId);
-        });
+      if(entry->IsAvailable()) {
+        Beam::Threading::With(**entry,
+          [&] (auto& entry) {
+            entry.Clear(sourceId);
+          });
+      }
     }
   }
 
