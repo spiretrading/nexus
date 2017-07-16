@@ -30,8 +30,8 @@ namespace MarketDataService {
         \param password The password.
       */
       template<typename ChannelForward>
-      ChiaMdProtocolClient(ChannelForward&& channel,
-        std::string username, std::string password);
+      ChiaMdProtocolClient(ChannelForward&& channel, std::string username,
+        std::string password);
 
       //! Constructs a ChiaMdProtocolClient.
       /*!
@@ -42,14 +42,26 @@ namespace MarketDataService {
         \param sequence The sequence of the next expected message.
       */
       template<typename ChannelForward>
-      ChiaMdProtocolClient(ChannelForward&& channel,
-        std::string username, std::string password, std::string session,
-        std::uint32_t sequence);
+      ChiaMdProtocolClient(ChannelForward&& channel, std::string username,
+        std::string password, std::string session, std::uint32_t sequence);
 
       ~ChiaMdProtocolClient();
 
       //! Reads the next message.
       ChiaMessage Read();
+
+      //! Reads the next message.
+      /*!
+        \param sequenceNumber The message's sequence number.
+      */
+      ChiaMessage Read(Beam::Out<std::uint32_t> sequenceNumber);
+
+      //! Reads the next message.
+      /*!
+        \param sequenceNumber The message's sequence number.
+      */
+      Beam::IO::SharedBuffer ReadBuffer(
+        Beam::Out<std::uint32_t> sequenceNumber);
 
       void Open();
 
@@ -61,6 +73,7 @@ namespace MarketDataService {
       std::string m_password;
       std::string m_session;
       std::uint32_t m_sequence;
+      std::uint32_t m_nextSequence;
       Beam::IO::SharedBuffer m_message;
       Beam::IO::SharedBuffer m_buffer;
       Beam::IO::OpenState m_openState;
@@ -87,7 +100,7 @@ namespace MarketDataService {
   ChiaMdProtocolClient<ChannelType>::ChiaMdProtocolClient(
       ChannelForward&& channel, std::string username, std::string password,
       std::string session, std::uint32_t sequence)
-      : m_client{std::forward<ChannelForward>(channel)},
+      : m_channel{std::forward<ChannelForward>(channel)},
         m_username{std::move(username)},
         m_password{std::move(password)},
         m_session{std::move(session)},
@@ -100,12 +113,36 @@ namespace MarketDataService {
 
   template<typename ChannelType>
   ChiaMessage ChiaMdProtocolClient<ChannelType>::Read() {
+    std::uint32_t sequence;
+    return Read(Beam::Store(sequence));
+  }
+
+  template<typename ChannelType>
+  ChiaMessage ChiaMdProtocolClient<ChannelType>::Read(
+      Beam::Out<std::uint32_t> sequenceNumber) {
     while(true) {
       m_message = ReadBuffer();
       if(!m_message.IsEmpty() && m_message.GetData()[0] == 'S') {
         auto message = ChiaMessage::Parse(m_message.GetData() + 1,
           m_message.GetSize() - 2);
+        *sequenceNumber = m_nextSequence;
+        ++m_nextSequence;
         return message;
+      }
+    }
+  }
+
+  template<typename ChannelType>
+  Beam::IO::SharedBuffer ChiaMdProtocolClient<ChannelType>::ReadBuffer(
+      Beam::Out<std::uint32_t> sequenceNumber) {
+    while(true) {
+      auto buffer = ReadBuffer();
+      if(!buffer.IsEmpty() && buffer.GetData()[0] == 'S') {
+        buffer.ShrinkFront(1);
+        buffer.Shrink(2);
+        *sequenceNumber = m_nextSequence;
+        ++m_nextSequence;
+        return buffer;
       }
     }
   }
@@ -115,12 +152,13 @@ namespace MarketDataService {
     const auto USERNAME_LENGTH = 6;
     const auto PASSWORD_LENGTH = 10;
     const auto SESSION_LENGTH = 10;
+    const auto SEQUENCE_OFFSET = 11;
     const auto SEQUENCE_LENGTH = 10;
     if(m_openState.SetOpening()) {
       return;
     }
     try {
-      m_channel->Open();
+      m_channel->GetConnection().Open();
       Beam::IO::SharedBuffer loginBuffer;
       Append("L", 1, Beam::Store(loginBuffer));
       Append(m_username, USERNAME_LENGTH, Beam::Store(loginBuffer));
@@ -130,9 +168,13 @@ namespace MarketDataService {
       loginBuffer.Append('\x0A');
       m_channel->GetWriter().Write(loginBuffer);
       auto response = ReadBuffer();
-      if(response.GetSize() == 0 || response.GetData()[0] != 'A') {
+      if(response.GetSize() < SEQUENCE_OFFSET + SEQUENCE_LENGTH ||
+          response.GetData()[0] != 'A') {
         BOOST_THROW_EXCEPTION(Beam::IO::ConnectException{"Invalid response."});
       }
+      auto cursor = &(response.GetData()[SEQUENCE_OFFSET]);
+      m_nextSequence = static_cast<std::uint32_t>(ChiaMessage::ParseNumeric(
+        SEQUENCE_LENGTH, Beam::Store(cursor)));
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
       Shutdown();
@@ -150,7 +192,7 @@ namespace MarketDataService {
 
   template<typename ChannelType>
   void ChiaMdProtocolClient<ChannelType>::Shutdown() {
-    m_channel->Close();
+    m_channel->GetConnection().Close();
     m_openState.SetClosed();
   }
 
@@ -171,7 +213,8 @@ namespace MarketDataService {
         return buffer;
       } else {
         auto size = delimiter - m_buffer.GetData();
-        Beam::IO::SharedBuffer buffer{m_buffer.GetData(), size};
+        Beam::IO::SharedBuffer buffer{m_buffer.GetData(),
+          static_cast<std::size_t>(size)};
         m_buffer.ShrinkFront(size + 1);
         return buffer;
       }

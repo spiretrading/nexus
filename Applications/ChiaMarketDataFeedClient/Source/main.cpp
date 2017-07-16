@@ -53,7 +53,7 @@ namespace {
   using ApplicationFeedChannel = WrapperChannel<MulticastSocketChannel*,
     QueuedReader<SharedBuffer, MulticastSocketChannel::Reader*>>;
   using ApplicationProtocolClient = ChiaMmdProtocolClient<
-    ApplicationFeedChannel*>;
+    ApplicationFeedChannel*, TcpSocketChannel>;
   using ApplicationMarketDataFeedClient = ChiaMarketDataFeedClient<
     BaseMarketDataFeedClient*, ApplicationProtocolClient*>;
 
@@ -208,9 +208,26 @@ int main(int argc, const char** argv) {
     cerr << "Unable to initialize multicast socket: " << e.what() << endl;
     return -1;
   }
+  optional<IpAddress> retransmissionHost;
+  optional<string> retransmissionUsername;
+  optional<string> retransmissionPassword;
+  try {
+    retransmissionHost = Extract<IpAddress>(config, "retransmission_host");
+    retransmissionUsername = Extract<string>(config, "retransmission_username");
+    retransmissionPassword = Extract<string>(config, "retransmission_password");
+  } catch(const std::exception& e) {
+    cerr << "Unable to initialize retransmission: " << e.what() << endl;
+    return -1;
+  }
   ApplicationFeedChannel feedChannel{multicastSocketChannel.get_ptr(),
     &multicastSocketChannel->GetReader()};
-  ApplicationProtocolClient protocolClient{&feedChannel};
+  ApplicationProtocolClient protocolClient{&feedChannel,
+    *retransmissionUsername, *retransmissionPassword,
+    [&] {
+      return std::make_unique<TcpSocketChannel>(*retransmissionHost,
+        Ref(socketThreadPool));
+    }
+  };
   optional<ApplicationMarketDataFeedClient> feedClient;
   try {
     auto marketDatabase = definitionsClient->LoadMarketDatabase();
