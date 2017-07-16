@@ -79,27 +79,12 @@ ca_equities:
   # Fees for notes and debentures are not supported.
   #
   #            Active, Passive
-  #  Level A      X       X
-  #  Level B      X       X
-  #  Level C      X       X
-  #  Level D      X       X
-
+  #  >= $1.00     X       X
+  #   < $1.00     X       X
   lynx:
-    liquidity_table:
-      [[0.00115, -0.0006],
-       [0.00173, -0.0011],
-       [0.00173, -0.0011],
-       [0.00173, -0.0011]]
-
-  #                Active, Passive
-  # Sub Dollar        X       X
-  # Odd Lot           X       X
-
-    alternative_table:
-      [[0.0002, -0.0001],
-       [0.0010,  0.0010]]
-
-    liquidity_levels: "./lynx_liquidity_levels.yml"
+    fee_table:
+      [[ 0.00015, 0.00015],
+       [-0.00010, 0.00020]]
 
   # Match NOW fees based on http://www.triactcanada.com/fee-schedule.htm
   # Fees for notes and debentures are not supported.
