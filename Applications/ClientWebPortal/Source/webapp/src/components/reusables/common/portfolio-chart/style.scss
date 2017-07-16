@@ -7,16 +7,16 @@
   font-size: 14px;
   display: flex;
   flex-direction: column;
-  overflow-x: scroll;
+  overflow-x: auto;
 
   .header {
     height: 62px;
     width: 100%;
     background: white;
-    overflow-y: scroll;
+    overflow-y: hidden;
     overflow-x: visible;
 
-    table {
+    .wrapper {
       border-left: 1px solid $lightGrey;
       border-top: 1px solid $lightGrey;
       border-right: 1px solid $lightGrey;
@@ -36,6 +36,10 @@
       }
     }
 
+    &.wide.shift-left {
+      padding-right: 15px;
+    }
+
     .icon-arrow-icon-down, .icon-arrow-icon-up {
       position: absolute;
       right: 7px;
@@ -48,7 +52,7 @@
   .body {
     flex: 1;
     min-width: 100%;
-    overflow-y: scroll;
+    overflow-y: auto;
     overflow-x: hidden;
 
     table {
@@ -61,6 +65,18 @@
 
     tr:nth-child(even) {
       background-color: $lightestGrey;
+    }
+
+    tr {
+      cursor: pointer;
+
+      &:hover{
+        background: $primaryGradient6;
+      }
+
+      &.selected {
+        background: $primaryGradient5;
+      }
     }
 
     td {

@@ -11,6 +11,9 @@ class View extends UpdatableView {
     this.selectedEndDate = null;
     this.isClosed = false;
     this.screenHeightWithoutHeader;
+
+    this.initialize = this.initialize.bind(this);
+    this.dispose = this.dispose.bind(this);
   }
 
   initialize() {

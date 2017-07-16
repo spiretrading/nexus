@@ -16,6 +16,10 @@ class Controller {
       this.componentModel.directoryEntry.name
     );
     this.adminClient = new AdministrationClient();
+
+    this.onCurrencyChange = this.onCurrencyChange.bind(this);
+    this.save = this.save.bind(this);
+    this.onTransitionTimeChange = this.onTransitionTimeChange.bind(this);
   }
 
   getView() {
@@ -29,8 +33,8 @@ class Controller {
   /** @private */
   getRequiredData() {
     let directoryEntry = this.componentModel.directoryEntry;
-    let loadAccountRiskParameters = this.adminClient.loadRiskParameters.apply(this.adminClient, [directoryEntry]);
-    let loadAccountRoles = this.adminClient.loadAccountRoles.apply(this.adminClient, [directoryEntry]);
+    let loadAccountRiskParameters = this.adminClient.loadRiskParameters(directoryEntry);
+    let loadAccountRoles = this.adminClient.loadAccountRoles(directoryEntry);
 
     return Promise.all([
       loadAccountRiskParameters,
@@ -90,7 +94,7 @@ class Controller {
     if (this.componentModel.riskParameters.currency != 0) {
       let riskParameters = this.componentModel.riskParameters;
       let directoryEntry = this.componentModel.directoryEntry;
-      this.adminClient.storeRiskParameters.apply(this.adminClient, [directoryEntry, riskParameters])
+      this.adminClient.storeRiskParameters(directoryEntry, riskParameters)
         .then(onSaved.bind(this))
         .catch(onFailed.bind(this));
     } else {

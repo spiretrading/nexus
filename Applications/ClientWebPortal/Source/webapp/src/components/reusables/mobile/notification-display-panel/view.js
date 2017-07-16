@@ -15,7 +15,7 @@ class View extends UpdatableView {
       $target = $target.parent();
     }
     let itemIndex = $target.attr('data-index');
-    this.controller.itemClicked.apply(this.controller, [itemIndex]);
+    this.controller.itemClicked(itemIndex);
   }
 
   /** @private */
@@ -25,7 +25,7 @@ class View extends UpdatableView {
     let $target = $(e.target).parent();
     let wasRead = !$target.hasClass('new');
     let itemIndex = $target.attr('data-index');
-    this.controller.setItemClickStatus.apply(this.controller, [itemIndex, !wasRead])
+    this.controller.setItemClickStatus(itemIndex, !wasRead)
   }
 
   render() {

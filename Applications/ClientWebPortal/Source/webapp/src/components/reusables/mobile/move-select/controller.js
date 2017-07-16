@@ -2,6 +2,11 @@ class Controller {
   constructor(react, componentModel) {
     this.componentModel = clone(componentModel);
     this.onSelectedChange = react.props.onChange;
+
+    this.addAllItems = this.addAllItems.bind(this);
+    this.addItems = this.addItems.bind(this);
+    this.removeItems = this.removeItems.bind(this);
+    this.removeAllItems = this.removeAllItems.bind(this);
   }
 
   getView() {
@@ -20,7 +25,7 @@ class Controller {
       overwriteMerge(this.componentModel, model);
       this.view.setComponentModel(this.componentModel);
     }
-    this.view.deselectAll.apply(this.view);
+    this.view.deselectAll();
   }
 
   onChange(availableItems, selectedItems) {

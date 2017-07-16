@@ -1,4 +1,9 @@
 class NumberFormatter {
+  constructor() {
+    this.formatWithComma = this.formatWithComma.bind(this);
+    this.formatTwoDecimalsWithComma = this.formatTwoDecimalsWithComma.bind(this);
+  }
+
   formatWithComma(number) {
     var parts = number.toString().split(".");
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");

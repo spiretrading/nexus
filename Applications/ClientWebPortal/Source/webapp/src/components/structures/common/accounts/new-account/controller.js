@@ -27,7 +27,7 @@ class Controller {
   /** @private */
   getRequiredData() {
     let directoryEntry = this.componentModel.directoryEntry;
-    let loadManagedTradingGroups = this.adminClient.loadManagedTradingGroups.apply(this.adminClient, [directoryEntry]);
+    let loadManagedTradingGroups = this.adminClient.loadManagedTradingGroups(directoryEntry);
 
     return Promise.all([
       loadManagedTradingGroups

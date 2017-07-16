@@ -20,7 +20,7 @@ class DesktopView extends CommonView {
       changePasswordButtonModel,
       createButton;
 
-    if (!this.controller.isModelEmpty.apply(this.controller)) {
+    if (!this.controller.isModelEmpty()) {
       personalDetailsModel = JSON.parse(JSON.stringify(this.componentModel));
       personalDetailsModel.isReadOnly = !this.componentModel.isAdmin;
 

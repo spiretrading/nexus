@@ -8,15 +8,19 @@ import numberFormatter from 'utils/number-formatter';
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
+
+    this.onWindowResize = this.onWindowResize.bind(this);
+    this.initialize = this.initialize.bind(this);
+    this.dispose = this.dispose.bind(this);
   }
 
   initialize() {
-    $(window).resize(this.onWindowResize.bind(this));
+    $(window).resize(this.onWindowResize);
   }
 
   /** @private */
   onWindowResize() {
-    this.resizePortfolioChart.apply(this);
+    this.resizePortfolioChart();
   }
 
   resizePortfolioChart() {
@@ -38,7 +42,7 @@ class View extends UpdatableView {
   }
 
   dispose() {
-    $(window).unbind('resize', this.onWindowResize);
+    $(window).off('resize', this.onWindowResize);
   }
 
   componentDidUpdate() {
@@ -69,12 +73,12 @@ class View extends UpdatableView {
 
     let totalPnL, unrealizedPnL, realizedPnL, fees, volumes, trades;
     if (this.componentModel.aggregates != null) {
-      totalPnL = numberFormatter.formatTwoDecimalsWithComma.apply(numberFormatter, [this.componentModel.aggregates.totalPnL.toNumber()]);
-      unrealizedPnL = numberFormatter.formatTwoDecimalsWithComma.apply(numberFormatter, [this.componentModel.aggregates.unrealizedPnL.toNumber()]);
-      realizedPnL = numberFormatter.formatTwoDecimalsWithComma.apply(numberFormatter, [this.componentModel.aggregates.realizedPnL.toNumber()]);
-      fees = numberFormatter.formatTwoDecimalsWithComma.apply(numberFormatter, [this.componentModel.aggregates.realizedPnL.toNumber()]);
-      volumes = numberFormatter.formatWithComma.apply(numberFormatter, [this.componentModel.aggregates.volumes]);
-      trades = numberFormatter.formatWithComma.apply(numberFormatter, [this.componentModel.aggregates.trades]);
+      totalPnL = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.totalPnL.toNumber());
+      unrealizedPnL = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.unrealizedPnL.toNumber());
+      realizedPnL = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.realizedPnL.toNumber());
+      fees = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.realizedPnL.toNumber());
+      volumes = numberFormatter.formatWithComma(this.componentModel.aggregates.volumes);
+      trades = numberFormatter.formatWithComma(this.componentModel.aggregates.trades);
     }
 
     return (

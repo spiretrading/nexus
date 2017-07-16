@@ -1,4 +1,5 @@
 .DS_STORE
+._*
 node_modules
 .module-cache
 *.log*

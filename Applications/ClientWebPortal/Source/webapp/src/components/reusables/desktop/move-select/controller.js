@@ -2,6 +2,11 @@ class Controller {
   constructor(react, componentModel) {
     this.componentModel = clone(componentModel);
     this.onSelectedChange = react.props.onChange;
+
+    this.addItems = this.addItems.bind(this);
+    this.addAllItems = this.addAllItems.bind(this);
+    this.removeItems = this.removeItems.bind(this);
+    this.removeAllItems = this.removeAllItems.bind(this);
   }
 
   getView() {

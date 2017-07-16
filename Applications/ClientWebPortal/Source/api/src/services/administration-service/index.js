@@ -1,10 +1,22 @@
 import httpConnectionManager from '../commons/http-connection-manager';
-import accountRoles from '../commons/account-roles';
+import AccountRoles from '../commons/account-roles';
 import AccountIdentity from './account-identity';
 import RiskParameters from '../risk-service/risk-parameters';
 
 /** Spire admin client class */
 class Admin {
+  constructor() {
+    this.loadManagedTradingGroups = this.loadManagedTradingGroups.bind(this);
+    this.loadTradingGroup = this.loadTradingGroup.bind(this);
+    this.loadAccountRoles = this.loadAccountRoles.bind(this);
+    this.loadRiskParameters = this.loadRiskParameters.bind(this);
+    this.loadAccountIdentity = this.loadAccountIdentity.bind(this);
+    this.storeAccountIdentity = this.storeAccountIdentity.bind(this);
+    this.loadAccountEntitlements = this.loadAccountEntitlements.bind(this);
+    this.storeAccountEntitlements = this.storeAccountEntitlements.bind(this);
+    this.storeRiskParameters = this.storeRiskParameters.bind(this);
+  }
+
   /** @private */
   logErrorAndThrow(xhr) {
     let errorMessage = 'Spire Admin Client: Unexpected error happened.';
@@ -24,7 +36,7 @@ class Admin {
       .catch(this.logErrorAndThrow);
 
     function onResponse(roles) {
-      let accRoles = accountRoles.parse(roles)
+      let accRoles = AccountRoles.parse(roles)
       accRoles.id = directoryEntry.id;
       return accRoles;
     }
@@ -148,6 +160,17 @@ class Admin {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_trading_group';
     let payload = {
       directory_entry: directoryEntry.toData()
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .catch(this.logErrorAndThrow);
+  }
+
+  storeAccountRoles(directoryEntry, roles) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/store_account_roles';
+    let payload = {
+      account: directoryEntry.toData(),
+      roles: AccountRoles.encode(roles)
     };
 
     return httpConnectionManager.send(apiPath, payload, true)

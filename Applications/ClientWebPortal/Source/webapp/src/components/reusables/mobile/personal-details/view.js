@@ -33,7 +33,7 @@ class MobileView extends CommonView {
 
     let details;
     if (this.componentModel.isReadOnly) {
-      let countryName = definitionsService.getCountryName.apply(definitionsService, [this.componentModel.country]);
+      let countryName = definitionsService.getCountryName(this.componentModel.country);
 
       details =
         <div className="details-container">
@@ -139,10 +139,10 @@ class MobileView extends CommonView {
 
           <div className="personal-detail-row">
             <div className="personal-detail-label">Role(s)</div>
-            <span title="Trader" className={traderClass}/>
-            <span title="Manager" className={managerClass}/>
-            <span title="Admin" className={adminClass}/>
-            <span title="Service" className={serviceClass}/>
+            <span title="Trader" className={traderClass} onClick={this.onRoleClick.bind(this)}/>
+            <span title="Manager" className={managerClass} onClick={this.onRoleClick.bind(this)}/>
+            <span title="Admin" className={adminClass} onClick={this.onRoleClick.bind(this)}/>
+            <span title="Service" className={serviceClass} onClick={this.onRoleClick.bind(this)}/>
           </div>
 
           <div className="personal-detail-row">

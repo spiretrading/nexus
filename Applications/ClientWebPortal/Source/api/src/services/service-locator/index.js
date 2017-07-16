@@ -1,11 +1,16 @@
 import httpConnectionManager from '../commons/http-connection-manager';
 import ResultCodes from './result-codes';
-import accountRoles from '../commons/account-roles';
+import AccountRoles from '../commons/account-roles';
 import DirectoryEntry from '../../definitions/directory-entry';
 const ResultCode = ResultCodes;
 
 /** Spire service locator client class */
 class ServiceLocator {
+  constructor() {
+    this.searchDirectoryEntry = this.searchDirectoryEntry.bind(this);
+    this.createGroup = this.createGroup.bind(this);
+  }
+
   /** @private */
   logErrorAndThrow(error) {
     let errorMessage = 'Spire Service Locator Client: Unexpected error happened.';
@@ -69,7 +74,7 @@ class ServiceLocator {
       name: userName,
       group: group,
       identity: accountIdentity.toData(),
-      roles: accountRoles.encode(roles)
+      roles: AccountRoles.encode(roles)
     };
 
     return httpConnectionManager.send(apiPath, payload, true)
@@ -104,7 +109,7 @@ class ServiceLocator {
     function onResponse(results) {
       for (let i=0; i<results.length; i++) {
         let roles = results[i].roles;
-        results[i].roles = accountRoles.parse(roles);
+        results[i].roles = AccountRoles.parse(roles);
       }
 
       return results;

@@ -25,16 +25,16 @@ class Controller {
 
   /** @private */
   onFilterChange() {
-    this.view.synchronizeColumnWidths.apply(this.view);
+    this.view.synchronizeColumnWidths();
   }
 
   componentDidMount() {
-    this.view.initialize.apply(this.view);
+    this.view.initialize();
     this.filterChangeSubId = EventBus.subscribe(Event.Portfolio.FILTER_PARAMETERS_CHANGED, this.onFilterChange.bind(this));
   }
 
   componentWillUnmount() {
-    this.view.dispose.apply(this.view);
+    this.view.dispose();
     EventBus.unsubscribe(this.filterChangeSubId);
   }
 }

@@ -41,6 +41,10 @@ vector<HttpRequestSlot> AdministrationWebServlet::GetSlots() {
     std::bind(&AdministrationWebServlet::OnLoadAccountRoles, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/store_account_roles"),
+    std::bind(&AdministrationWebServlet::OnStoreAccountRoles, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_account_identity"),
     std::bind(&AdministrationWebServlet::OnLoadAccountIdentity, this,
     std::placeholders::_1));
@@ -160,6 +164,84 @@ HttpResponse AdministrationWebServlet::OnLoadAccountRoles(
   auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
     parameters.m_account);
   session->ShuttleResponse(roles, Store(response));
+  return response;
+}
+
+HttpResponse AdministrationWebServlet::OnStoreAccountRoles(
+    const HttpRequest& request) {
+  struct Parameters {
+    DirectoryEntry m_account;
+    AccountRoles m_roles;
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("account", m_account);
+      shuttle.Shuttle("roles", m_roles);
+    }
+  };
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
+    session->GetAccount());
+  if(!roles.Test(AccountRole::ADMINISTRATOR)) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  auto groups =
+    m_serviceClients->GetAdministrationClient().LoadManagedTradingGroups(
+    m_serviceClients->GetServiceLocatorClient().GetAccount());
+  TradingGroup memberGroup;
+  for(auto& group : groups) {
+    auto tradingGroup =
+      m_serviceClients->GetAdministrationClient().LoadTradingGroup(group);
+    if(std::find(tradingGroup.GetManagers().begin(),
+        tradingGroup.GetManagers().end(), parameters.m_account) !=
+        tradingGroup.GetManagers().end() ||
+        std::find(tradingGroup.GetTraders().begin(),
+        tradingGroup.GetTraders().end(), parameters.m_account) !=
+        tradingGroup.GetTraders().end()) {
+      memberGroup = tradingGroup;
+      break;
+    }
+  }
+  auto previousRoles =
+    m_serviceClients->GetAdministrationClient().LoadAccountRoles(
+    parameters.m_account);
+  if(memberGroup.GetEntry().m_type != DirectoryEntry::Type::DIRECTORY) {
+    session->ShuttleResponse(previousRoles, Store(response));
+    return response;
+  }
+  if(parameters.m_roles.Test(AccountRole::MANAGER) !=
+      previousRoles.Test(AccountRole::MANAGER)) {
+    if(parameters.m_roles.Test(AccountRole::MANAGER)) {
+      m_serviceClients->GetServiceLocatorClient().StorePermissions(
+        parameters.m_account, memberGroup.GetEntry(), Permission::READ);
+      m_serviceClients->GetServiceLocatorClient().Associate(
+        parameters.m_account, memberGroup.GetManagersDirectory());
+    } else {
+      m_serviceClients->GetServiceLocatorClient().StorePermissions(
+        parameters.m_account, memberGroup.GetEntry(), Permissions{0});
+      m_serviceClients->GetServiceLocatorClient().Detach(
+        parameters.m_account, memberGroup.GetManagersDirectory());
+    }
+  }
+  if(parameters.m_roles.Test(AccountRole::TRADER) !=
+      previousRoles.Test(AccountRole::TRADER)) {
+    if(parameters.m_roles.Test(AccountRole::TRADER)) {
+      m_serviceClients->GetServiceLocatorClient().Associate(
+        parameters.m_account, memberGroup.GetTradersDirectory());
+    } else {
+      m_serviceClients->GetServiceLocatorClient().Detach(
+        parameters.m_account, memberGroup.GetTradersDirectory());
+    }
+  }
+  auto newRoles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
+    parameters.m_account);
+  session->ShuttleResponse(newRoles, Store(response));
   return response;
 }
 

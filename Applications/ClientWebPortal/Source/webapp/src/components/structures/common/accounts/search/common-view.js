@@ -5,6 +5,8 @@ import UpdatableView from 'commons/updatable-view';
 class CommonView extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
+
+    this.dispose = this.dispose.bind(this);
   }
 
   componentDidUpdate() {
@@ -48,14 +50,14 @@ class CommonView extends UpdatableView {
   onNewGroupCreateClick() {
     let $groupNameInput = $('#new-group-modal .name-input');
     let groupName = $groupNameInput.val().trim();
-    this.controller.createGroup.apply(this.controller, [groupName]);
+    this.controller.createGroup(groupName);
   }
 
   onGroupNamePress(event) {
     if (event.key === 'Enter') {
       let $groupNameInput = $('#new-group-modal .name-input');
       let groupName = $groupNameInput.val().trim();
-      this.controller.createGroup.apply(this.controller, [groupName]);
+      this.controller.createGroup(groupName);
     }
   }
 
