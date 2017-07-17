@@ -411,17 +411,22 @@ namespace Details {
   }
 
   inline void MarketDataRegistry::Clear(int sourceId) {
+    std::vector<std::shared_ptr<Beam::Remote<SyncSecurityEntry,
+      Beam::Threading::Mutex>>> entries;
     m_securityEntries.With(
       [&] (auto& securityEntries) {
-      for(auto& entry : securityEntries | boost::adaptors::map_values) {
-        if(entry->IsAvailable()) {
-          Beam::Threading::With(**entry,
-            [&] (auto& entry) {
-              entry.Clear(sourceId);
-            });
+        for(auto& entry : securityEntries | boost::adaptors::map_values) {
+          entries.push_back(entry);
         }
+      });
+    for(auto& entry : entries) {
+      if(entry->IsAvailable()) {
+        Beam::Threading::With(**entry,
+          [&] (auto& entry) {
+            entry.Clear(sourceId);
+          });
       }
-    });
+    }
   }
 
   template<typename DataStore>
