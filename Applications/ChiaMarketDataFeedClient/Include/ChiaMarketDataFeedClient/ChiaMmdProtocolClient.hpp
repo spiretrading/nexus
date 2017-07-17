@@ -115,29 +115,31 @@ namespace MarketDataService {
       }
       if(m_sequenceNumber != 0 &&
           sequenceNumber > m_sequenceNumber + 1) {
+        auto retransmissionChannel = m_retransmissionChannelFactory();
+        if(retransmissionChannel != nullptr) {
+          try {
+            ChiaMdProtocolClient<std::unique_ptr<RetransmissionChannel>>
+              retransmissionClient{std::move(retransmissionChannel), m_username,
+              m_password, "", m_sequenceNumber + 1};
+            std::uint32_t retransmissionSequence = 0;
+            retransmissionClient.Open();
+            while(retransmissionSequence < sequenceNumber) {
+              auto buffer = retransmissionClient.ReadBuffer(
+                Beam::Store(retransmissionSequence));
+              if(retransmissionSequence == (m_sequenceNumber + 1) +
+                  m_pendingMessageBuffers.size()) {
+                m_pendingMessageBuffers.push_back(std::move(buffer));
+              }
+            }
+          } catch(const std::exception&) {
+            std::cout << BEAM_REPORT_CURRENT_EXCEPTION() << std::flush;
+          }
+          if(!m_pendingMessageBuffers.empty()) {
+            return Read();
+          }
+        }
         std::cout << "Packets dropped: " << (m_sequenceNumber + 1) <<
           " - " << (sequenceNumber - 1) << std::endl;
-        ChiaMdProtocolClient<std::unique_ptr<RetransmissionChannel>>
-          retransmissionClient{m_retransmissionChannelFactory(), m_username,
-          m_password, "", m_sequenceNumber + 1};
-        retransmissionClient.Open();
-        std::uint32_t retransmissionSequence = 0;
-        try {
-          while(true) {
-            auto buffer = retransmissionClient.ReadBuffer(
-              Beam::Store(retransmissionSequence));
-            if(retransmissionSequence < m_sequenceNumber) {
-              continue;
-            } else if(retransmissionSequence > sequenceNumber) {
-              break;
-            }
-            m_pendingMessageBuffers.push_back(std::move(buffer));
-          }
-        } catch(const std::exception&) {
-        }
-        std::cout << "Recovered packets: " << (m_sequenceNumber + 1) <<
-          " - " << retransmissionSequence << std::endl;
-        return Read();
       }
       m_sequenceNumber = sequenceNumber;
       auto message = ChiaMessage::Parse(protocolMessage.m_data,
