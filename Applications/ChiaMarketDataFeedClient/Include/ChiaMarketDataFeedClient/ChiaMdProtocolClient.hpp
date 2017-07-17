@@ -199,9 +199,6 @@ namespace MarketDataService {
   template<typename ChannelType>
   Beam::IO::SharedBuffer ChiaMdProtocolClient<ChannelType>::ReadBuffer() {
     const auto READ_SIZE = 1024;
-    if(!m_openState.IsOpen()) {
-      BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException{});
-    }
     while(true) {
       auto delimiter = std::find(m_buffer.GetData(),
         m_buffer.GetData() + m_buffer.GetSize(), '\x0A');
