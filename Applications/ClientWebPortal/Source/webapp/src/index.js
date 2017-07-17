@@ -1,7 +1,7 @@
 import ES6Promise from 'es6-promise';
 import {render} from 'react-dom';
 import React from 'react';
-import {Router, browserHistory} from 'react-router/es6';
+import {Router, browserHistory} from 'react-router';
 import rootRoute from 'routes/';
 import 'jquery-ui';
 import 'jquery-ui-css';
