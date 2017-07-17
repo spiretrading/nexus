@@ -209,8 +209,8 @@ int main(int argc, const char** argv) {
     return -1;
   }
   optional<IpAddress> retransmissionHost;
-  optional<string> retransmissionUsername;
-  optional<string> retransmissionPassword;
+  string retransmissionUsername;
+  string retransmissionPassword;
   try {
     if(config.FindValue("retransmission_host") != nullptr) {
       retransmissionHost = Extract<IpAddress>(config, "retransmission_host");
@@ -225,8 +225,8 @@ int main(int argc, const char** argv) {
   }
   ApplicationFeedChannel feedChannel{multicastSocketChannel.get_ptr(),
     &multicastSocketChannel->GetReader()};
-  ApplicationProtocolClient protocolClient{&feedChannel,
-    *retransmissionUsername, *retransmissionPassword,
+  ApplicationProtocolClient protocolClient{&feedChannel, retransmissionUsername,
+    retransmissionPassword,
     [&] () -> std::unique_ptr<TcpSocketChannel> {
       if(retransmissionHost.is_initialized()) {
         return std::make_unique<TcpSocketChannel>(*retransmissionHost,
