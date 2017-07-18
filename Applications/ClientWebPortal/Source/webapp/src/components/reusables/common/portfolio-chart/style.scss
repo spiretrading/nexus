@@ -16,7 +16,7 @@
     overflow-y: hidden;
     overflow-x: visible;
 
-    table {
+    .wrapper {
       border-left: 1px solid $lightGrey;
       border-top: 1px solid $lightGrey;
       border-right: 1px solid $lightGrey;
@@ -34,6 +34,10 @@
       &:hover {
         background: $lighterGrey;
       }
+    }
+
+    &.wide.shift-left {
+      padding-right: 15px;
     }
 
     .icon-arrow-icon-down, .icon-arrow-icon-up {

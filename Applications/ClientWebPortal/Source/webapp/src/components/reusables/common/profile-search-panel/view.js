@@ -106,6 +106,9 @@ class View extends UpdatableView {
 
     if (this.componentModel.accounts != null) {
       let groupTraders = this.componentModel.accounts.traders;
+      groupTraders.sort((a, b) => {
+        return a.name.localeCompare(b.name);
+      });
       let onTraderClick = this.onTraderClick.bind(this);
       for (let i=0; i<groupTraders.length; i++) {
         let traderRowClassName = 'trader-row';

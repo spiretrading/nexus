@@ -5,7 +5,7 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Pointers/Ref.hpp>
-#include <Beam/Stomp/StompServer.hpp>
+#include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/WebServices/FileStore.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
 #include <Beam/WebServices/HttpUpgradeSlot.hpp>
@@ -18,9 +18,8 @@
 #include "ClientWebPortal/ClientWebPortal/ComplianceWebServlet.hpp"
 #include "ClientWebPortal/ClientWebPortal/DefinitionsWebServlet.hpp"
 #include "ClientWebPortal/ClientWebPortal/MarketDataWebServlet.hpp"
-#include "ClientWebPortal/ClientWebPortal/PortfolioModel.hpp"
+#include "ClientWebPortal/ClientWebPortal/RiskWebServlet.hpp"
 #include "ClientWebPortal/ClientWebPortal/ServiceLocatorWebServlet.hpp"
-#include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
 
 namespace Nexus {
@@ -57,12 +56,6 @@ namespace ClientWebPortal {
       void Close();
 
     private:
-      using StompServer =
-        Beam::Stomp::StompServer<std::unique_ptr<WebSocketChannel>>;
-      struct PortfolioSubscriber {
-        std::shared_ptr<StompServer> m_client;
-        std::string m_subscriptionId;
-      };
       Beam::WebServices::FileStore m_fileStore;
       Beam::WebServices::SessionStore<ClientWebPortalSession> m_sessions;
       ApplicationServiceClients* m_serviceClients;
@@ -71,12 +64,7 @@ namespace ClientWebPortal {
       AdministrationWebServlet m_administrationServlet;
       MarketDataWebServlet m_marketDataServlet;
       ComplianceWebServlet m_complianceServlet;
-      std::unique_ptr<ApplicationServiceClients::Timer> m_portfolioTimer;
-      std::unordered_map<RiskService::RiskPortfolioKey, PortfolioModel::Entry>
-        m_portfolioEntries;
-      std::unordered_set<PortfolioModel::Entry> m_updatedPortfolioEntries;
-      std::vector<std::shared_ptr<PortfolioSubscriber>> m_porfolioSubscribers;
-      PortfolioModel m_portfolioModel;
+      RiskWebServlet m_riskServlet;
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 
@@ -87,10 +75,6 @@ namespace ClientWebPortal {
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadProfitAndLossReport(
         const Beam::WebServices::HttpRequest& request);
-      void OnPortfolioUpgrade(const Beam::WebServices::HttpRequest& request,
-        std::unique_ptr<WebSocketChannel> channel);
-      void OnPortfolioUpdate(const PortfolioModel::Entry& entry);
-      void OnPortfolioTimerExpired(Beam::Threading::Timer::Result result);
   };
 }
 }
