@@ -83,15 +83,16 @@ class StompConnectionManager {
 
   send(destination, body) {
     let payload = JSON.stringify(body);
-    console.debug(payload);
+    console.debug('destination: ' + destination);
+    console.debug('payload: ' + payload);
 
     if (!this.isConnected()){
       this.connect()
         .then(() => {
-          this.client.send(payload);
+          this.client.send(destination, payload);
         });
     } else {
-      this.client.send(payload);
+      this.client.send(destination, payload);
     }
   }
 }
