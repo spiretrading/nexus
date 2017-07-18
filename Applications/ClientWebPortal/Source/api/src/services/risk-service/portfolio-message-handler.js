@@ -17,7 +17,7 @@ class PortfolioMessageHandler {
     let unmarshalledMessage = this.unmarshallPortfolioMessage(message);
     let messageKey = unmarshalledMessage.account.name.toString() + '.' +
       unmarshalledMessage.inventory.position.key.index.symbol + '.' +
-      unmarshalledMessage.inventory.position.key.index.market.toCode();
+      unmarshalledMessage.inventory.position.key.index.market.toData();
     this.messages.set(messageKey, unmarshalledMessage);
   }
 
@@ -30,7 +30,7 @@ class PortfolioMessageHandler {
 
     payload.inventory.position.key.index = Security.fromData(payload.inventory.position.key.index);
 
-    payload.inventory.position.key.currency = CurrencyId.fromNumber(payload.inventory.position.key.currency);
+    payload.inventory.position.key.currency = CurrencyId.fromData(payload.inventory.position.key.currency);
 
     payload.inventory.position.cost_basis = Money.fromRepresentation(payload.inventory.position.cost_basis);
 

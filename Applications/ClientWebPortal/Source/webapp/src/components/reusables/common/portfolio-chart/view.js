@@ -208,7 +208,9 @@ class View extends UpdatableView {
   shouldIncludeColumn(columnHeader) {
     if (this.componentModel.filter == null ||
       columnHeader == 'Account' ||
-      columnHeader == 'Security') {
+      columnHeader == 'Security' ||
+      columnHeader.indexOf('Account ') >= 0
+    ) {
       return true;
     }
 
@@ -543,13 +545,13 @@ class View extends UpdatableView {
 
           <div className="header">
             <div className="wrapper">
-            <table>
-              <thead>
-                <tr>
-                  {columns}
-                </tr>
-              </thead>
-            </table>
+              <table>
+                <thead>
+                  <tr>
+                    {columns}
+                  </tr>
+                </thead>
+              </table>
             </div>
           </div>
 

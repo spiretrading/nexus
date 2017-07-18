@@ -1,7 +1,9 @@
 import {
   AdministrationClient,
+  CurrencyId,
   DirectoryEntry,
   RiskServiceClient,
+  MarketCode,
   Money
 } from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
@@ -254,7 +256,7 @@ class Controller {
       this.componentModel.markets = [];
       for (let i=0; i<markets.length; i++) {
         this.componentModel.markets.push({
-          id: markets[i].marketCode.toCode(),
+          id: markets[i].marketCode.toData(),
           name: markets[i].displayName
         });
       }
@@ -278,13 +280,31 @@ class Controller {
 
   saveParameters(filter) {
     EventBus.publish(Event.Portfolio.FILTER_PARAMETERS_CHANGED);
+
     this.componentModel.filter = filter;
+
+    let groups = [];
+    for (let i=0; i<filter.groups.length; i++) {
+      groups.push(DirectoryEntry.fromData(filter.groups[i]));
+    }
+
+    let currencies = [];
+    for (let i=0; i<filter.currencies.length; i++) {
+      currencies.push(CurrencyId.fromData(filter.currencies[i].id));
+    }
+
+    let marketCodes = [];
+    for (let i=0; i<filter.markets.length; i++) {
+      marketCodes.push(MarketCode.fromData(filter.markets[i].id));
+    }
+
     let apiFilter = {
-      currencies: filter.currencies,
-      groups: filter.groups,
-      markets: filter.markets
+      currencies: currencies,
+      groups: groups,
+      markets: marketCodes
     };
-    this.riskServiceClient.setFilter(apiFilter);
+
+    this.riskServiceClient.setPortfolioDataFilter(this.portfolioSubscriptionId, apiFilter);
     this.view.update(this.componentModel);
   }
 }
