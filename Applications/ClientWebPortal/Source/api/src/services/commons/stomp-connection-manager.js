@@ -6,7 +6,7 @@ import webstomp from 'webstomp-client';
 class StompConnectionManager {
   constructor(connectionPath) {
     this.connectionUrl = 'ws://' + window.location.host + Config.BACKEND_API_ROOT_URL + connectionPath;
-    this.subIdToTopic = new HashMap();
+    this.subIdToDestination = new HashMap();
     this.destinationToListeners = new HashMap();      // subId - listener callbacks
     this.destinationToSubscription = new HashMap();
   }
@@ -53,8 +53,7 @@ class StompConnectionManager {
     }
 
     function performSubscribe() {
-      let subId = uuid.v4();
-      this.subIdToTopic.set(subId, destination);
+      let subId;
       if (!this.destinationToListeners.has(destination)) {
         this.destinationToListeners.set(destination, new HashMap());
         let context = {
@@ -62,16 +61,18 @@ class StompConnectionManager {
           destination: destination
         };
         let subscription = this.client.subscribe(destination, this.onAllMessage.bind(context));
+        subId = subscription.id;
         this.destinationToSubscription.set(destination, subscription);
       }
       this.destinationToListeners.get(destination).set(subId, listener);
+      this.subIdToDestination.set(subId, destination);
       return subId;
     }
   }
 
   unsubscribe(subId) {
-    let destination = this.subIdToTopic.get(subId);
-    this.subIdToTopic.remove(subId);
+    let destination = this.subIdToDestination.get(subId);
+    this.subIdToDestination.remove(subId);
     let subIds = this.destinationToListeners.get(destination);
     subIds.remove(subId)
     if (subIds.count() == 0) {
@@ -83,8 +84,6 @@ class StompConnectionManager {
 
   send(destination, body) {
     let payload = JSON.stringify(body);
-    console.debug('destination: ' + destination);
-    console.debug('payload: ' + payload);
 
     if (!this.isConnected()){
       this.connect()
