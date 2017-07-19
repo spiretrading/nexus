@@ -6,7 +6,7 @@ import HashMap from 'hashmap';
 
 const THROTTLE_INTERVAL = 500;
 
-class PortfolioMessageHandler {
+export default class {
   constructor(listener) {
     this.listener = listener;
     this.messages = new HashMap();
@@ -57,5 +57,3 @@ class PortfolioMessageHandler {
     clearInterval(this.listenerRunner);
   }
 }
-
-export default PortfolioMessageHandler;

@@ -100,6 +100,18 @@ class Controller {
       let cacheKey = data[i].account.id + data[i].currency.value + data[i].security.market.value + data[i].security.symbol;
       this.portfolioData.set(cacheKey, data[i]);
     }
+
+    // remove any row for which the streaming has stopped
+    let dataToRemoveKeys = [];
+    this.portfolioData.forEach((value, key) => {
+      if (value.trades == 0) {
+        dataToRemoveKeys.push(key);
+      }
+    });
+    for (let i=0; i<dataToRemoveKeys.length; i++) {
+      this.portfolioData.remove(dataToRemoveKeys[i]);
+    }
+
     this.componentModel.portfolioData = this.portfolioData.values();
 
     if (this.componentModel.baseCurrencyId != null) {
