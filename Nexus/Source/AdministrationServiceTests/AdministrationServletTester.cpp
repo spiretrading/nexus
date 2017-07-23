@@ -1,12 +1,10 @@
 #include "Nexus/AdministrationServiceTests/AdministrationServletTester.hpp"
 #include <boost/functional/factory.hpp>
-#include <boost/functional/value_factory.hpp>
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Serialization;
 using namespace Beam::ServiceLocator;
 using namespace Beam::Services;
+using namespace Beam::Services::Tests;
 using namespace Beam::Threading;
 using namespace boost;
 using namespace Nexus;
@@ -16,26 +14,26 @@ using namespace Nexus::MarketDataService;
 using namespace std;
 
 void AdministrationServletTester::setUp() {
-  m_serviceLocatorEnvironment.Initialize();
+  m_serviceLocatorEnvironment.emplace();
   m_serviceLocatorEnvironment->Open();
   m_dataStore = std::make_shared<LocalAdministrationDataStore>();
-  m_serverConnection = std::make_shared<ServerConnection>();
-  m_clientProtocol.Initialize(Initialize(string("test"),
-    Ref(*m_serverConnection)), Initialize());
+  auto serverConnection = std::make_unique<TestServerConnection>();
+  m_clientProtocol.emplace(Initialize("test", Ref(*serverConnection)),
+    Initialize());
   RegisterAdministrationServices(Store(m_clientProtocol->GetSlots()));
   RegisterAdministrationMessages(Store(m_clientProtocol->GetSlots()));
-  m_container.Initialize(Initialize(&m_serviceLocatorEnvironment->GetRoot(),
-    EntitlementDatabase(), m_dataStore), m_serverConnection,
-    factory<std::shared_ptr<TriggerTimer>>());
+  m_container.emplace(Initialize(&m_serviceLocatorEnvironment->GetRoot(),
+    EntitlementDatabase(), m_dataStore), std::move(serverConnection),
+    factory<std::unique_ptr<TriggerTimer>>());
   m_container->Open();
   m_clientProtocol->Open();
 }
 
 void AdministrationServletTester::tearDown() {
-  m_clientProtocol.Reset();
-  m_container.Reset();
+  m_clientProtocol.reset();
+  m_container.reset();
   m_dataStore.reset();
-  m_serviceLocatorEnvironment.Reset();
+  m_serviceLocatorEnvironment.reset();
 }
 
 void AdministrationServletTester::TestLoadAccountIdentity() {
