@@ -159,21 +159,24 @@ void RiskWebServlet::OnPortfolioUpgrade(const HttpRequest& request,
       subscriber->m_client.Open();
       while(true) {
         auto frame = subscriber->m_client.Read();
+        SharedBuffer buffer;
+        Serialize(frame, Store(buffer));
+        std::cout << buffer << std::endl << std::endl << std::endl;
         if(frame.GetCommand() == StompCommand::SEND) {
-          auto destination = frame.FindHeader("destination");
-          if(!destination.is_initialized()) {
-            continue;
-          }
-          if(*destination == "/api/risk_service/portfolio/filter") {
+          auto destination = *frame.FindHeader("destination");
+          if(destination == "/api/risk_service/portfolio/filter") {
             OnPortfolioFilterRequest(subscriber, frame);
+          } else {
+            subscriber->m_client.Write(
+              StompFrame::MakeDestinationNotFoundFrame(frame));
           }
         } else if(frame.GetCommand() == StompCommand::SUBSCRIBE) {
-          auto destination = frame.FindHeader("destination");
-          if(!destination.is_initialized()) {
-            continue;
-          }
-          if(*destination == "/api/risk_service/portfolio") {
+          auto destination = *frame.FindHeader("destination");
+          if(destination == "/api/risk_service/portfolio") {
             OnPortfolioRequest(subscriber, frame);
+          } else {
+            subscriber->m_client.Write(
+              StompFrame::MakeDestinationNotFoundFrame(frame));
           }
         }
       }
@@ -183,14 +186,13 @@ void RiskWebServlet::OnPortfolioUpgrade(const HttpRequest& request,
 void RiskWebServlet::OnPortfolioRequest(
     const std::shared_ptr<PortfolioSubscriber>& subscriber,
     const StompFrame& frame) {
-  auto idHeader = frame.FindHeader("id");
-  if(!idHeader.is_initialized()) {
-    return;
-  }
+  auto idHeader = *frame.FindHeader("id");
   if(!subscriber->m_subscriptionId.empty()) {
+    subscriber->m_client.Write(StompFrame::MakeBadRequestFrame(frame,
+      "Client already subscribed to portfolio."));
     return;
   }
-  subscriber->m_subscriptionId = *idHeader;
+  subscriber->m_subscriptionId = idHeader;
   m_tasks.Push(
     [=] {
       auto groups =
@@ -241,9 +243,16 @@ void RiskWebServlet::OnPortfolioFilterRequest(
   }
   JsonReceiver<SharedBuffer> receiver;
   Parameters parameters;
-  receiver.SetSource(Ref(frame.GetBody()));
-  receiver.Shuttle(parameters);
+  try {
+    receiver.SetSource(Ref(frame.GetBody()));
+    receiver.Shuttle(parameters);
+  } catch(const std::exception&) {
+    subscriber->m_client.Write(StompFrame::MakeBadRequestFrame(frame));
+    return;
+  }
   if(parameters.m_id != subscriber->m_subscriptionId) {
+    subscriber->m_client.Write(StompFrame::MakeBadRequestFrame(frame,
+      "Subscription id not found."));
     return;
   }
   auto managedGroupsList =
