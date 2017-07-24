@@ -5,7 +5,8 @@
 using namespace Beam;
 using namespace Beam::IO;
 using namespace Beam::Queries;
-using namespace Beam::Serialization;
+using namespace Beam::Services;
+using namespace Beam::Services::Tests;
 using namespace Beam::ServiceLocator;
 using namespace Beam::ServiceLocator::Tests;
 using namespace Beam::Threading;
@@ -69,48 +70,44 @@ void MarketDataRegistryServletTester::setUp() {
     nyseEntitlementGroup);
   m_serviceLocatorEnvironment->GetRoot().Associate(clientEntry,
     tsxEntitlementGroup);
-  m_serverConnection.emplace();
-  m_clientProtocol.emplace(Initialize(string("test"), Ref(*m_serverConnection)),
+  auto serverConnection = std::make_shared<TestServerConnection>();
+  m_clientProtocol.emplace(Initialize("test", Ref(*serverConnection)),
     Initialize());
   Nexus::Queries::RegisterQueryTypes(
     Store(m_clientProtocol->GetSlots().GetRegistry()));
   RegisterMarketDataRegistryServices(Store(m_clientProtocol->GetSlots()));
   RegisterMarketDataRegistryMessages(Store(m_clientProtocol->GetSlots()));
-  m_servletServiceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
-  m_servletServiceLocatorClient->SetCredentials("servlet", "");
-  m_servletServiceLocatorClient->Open();
+  auto servletServiceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
+  servletServiceLocatorClient->SetCredentials("servlet", "");
+  servletServiceLocatorClient->Open();
   m_administrationEnvironment.emplace(
     std::move(administrationServiceLocatorClient));
   m_administrationEnvironment->SetEntitlements(*m_entitlements);
   m_administrationEnvironment->Open();
   auto marketDataAdministrationClient =
-    m_administrationEnvironment->BuildClient(
-    Ref(*m_servletServiceLocatorClient));
+    m_administrationEnvironment->BuildClient(Ref(*servletServiceLocatorClient));
   m_registry.emplace();
   m_registryServlet.emplace(std::move(marketDataAdministrationClient),
     &*m_registry, Initialize());
-  m_servlet.emplace(&*m_servletServiceLocatorClient, &*m_registryServlet);
-  m_container.emplace(&*m_servlet, &*m_serverConnection,
-    factory<std::shared_ptr<TriggerTimer>>());
+  m_container.emplace(Initialize(std::move(servletServiceLocatorClient),
+    &*m_registryServlet), serverConnection,
+    factory<std::unique_ptr<TriggerTimer>>());
   m_container->Open();
-  m_clientServiceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
-  m_clientServiceLocatorClient->SetCredentials("client", "");
-  m_clientServiceLocatorClient->Open();
+  auto clientServiceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
+  clientServiceLocatorClient->SetCredentials("client", "");
+  clientServiceLocatorClient->Open();
   m_clientProtocol->Open();
-  SessionAuthenticator<TestServiceLocatorClient> authenticator{
-    Ref(*m_clientServiceLocatorClient)};
+  SessionAuthenticator<VirtualServiceLocatorClient> authenticator{
+    Ref(*clientServiceLocatorClient)};
   authenticator(*m_clientProtocol);
 }
 
 void MarketDataRegistryServletTester::tearDown() {
   m_clientProtocol.reset();
-  m_clientServiceLocatorClient.reset();
   m_container.reset();
-  m_servlet.reset();
   m_registryServlet.reset();
   m_registry.reset();
   m_entitlements.reset();
-  m_servletServiceLocatorClient.reset();
   m_serviceLocatorEnvironment->Close();
 }
 

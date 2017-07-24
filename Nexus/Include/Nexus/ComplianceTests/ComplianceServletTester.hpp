@@ -1,17 +1,10 @@
 #ifndef NEXUS_COMPLIANCESERVLETTESTER_HPP
 #define NEXUS_COMPLIANCESERVLETTESTER_HPP
-#include <Beam/Codecs/NullDecoder.hpp>
-#include <Beam/Codecs/NullEncoder.hpp>
-#include <Beam/IO/LocalServerConnection.hpp>
-#include <Beam/IO/SharedBuffer.hpp>
-#include <Beam/Serialization/BinaryReceiver.hpp>
-#include <Beam/Serialization/BinarySender.hpp>
-#include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
-#include <Beam/Services/ServiceProtocolServletContainer.hpp>
-#include <Beam/Threading/TriggerTimer.hpp>
+#include <Beam/ServicesTests/ServicesTests.hpp>
 #include <Beam/TimeService/IncrementalTimeClient.hpp>
 #include <Beam/Utilities/BeamWorkaround.hpp>
+#include <boost/optional/optional.hpp>
 #include <cppunit/extensions/HelperMacros.h>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Compliance/ComplianceRuleSet.hpp"
@@ -29,47 +22,33 @@ namespace Tests {
   class ComplianceServletTester : public CPPUNIT_NS::TestFixture {
     public:
 
-      //! The type of ServiceLocatorClient.
-      using ServiceLocatorClient =
-        Beam::ServiceLocator::VirtualServiceLocatorClient;
-
-      //! The type of AdministrationClient.
-      using AdministrationClient =
-        AdministrationService::VirtualAdministrationClient;
-
       //! The type of ComplianceRuleSet to test.
       using TestComplianceRuleSet = ComplianceRuleSet<
-        LocalComplianceRuleDataStore*, std::unique_ptr<ServiceLocatorClient>>;
-
-      //! The type of ServerConnection.
-      using ServerConnection =
-        Beam::IO::LocalServerConnection<Beam::IO::SharedBuffer>;
+        LocalComplianceRuleDataStore*,
+        std::unique_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>>;
 
       //! The type of ServiceProtocolServer.
-      using ServletContainer = Beam::Services::ServiceProtocolServletContainer<
-        Beam::ServiceLocator::MetaAuthenticationServletAdapter<
-        MetaComplianceServlet<std::unique_ptr<ServiceLocatorClient>,
-        std::unique_ptr<AdministrationClient>, TestComplianceRuleSet*,
-        Beam::TimeService::IncrementalTimeClient>,
-        std::unique_ptr<ServiceLocatorClient>>, ServerConnection*,
-        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-        Beam::Codecs::NullEncoder,
-        std::shared_ptr<Beam::Threading::TriggerTimer>>;
+      using ServletContainer =
+        Beam::Services::Tests::TestAuthenticatedServiceProtocolServletContainer<
+        MetaComplianceServlet<
+        std::unique_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>,
+        std::unique_ptr<AdministrationService::VirtualAdministrationClient>,
+        TestComplianceRuleSet*, Beam::TimeService::IncrementalTimeClient>>;
 
       virtual void setUp();
 
       virtual void tearDown();
 
     private:
-      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment>
+      boost::optional<
+        Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment>
         m_serviceLocatorEnvironment;
-      Beam::DelayPtr<
+      boost::optional<
         AdministrationService::Tests::AdministrationServiceTestEnvironment>
         m_administrationServiceEnvironment;
-      Beam::DelayPtr<LocalComplianceRuleDataStore> m_dataStore;
-      Beam::DelayPtr<TestComplianceRuleSet> m_complianceRuleSet;
-      Beam::DelayPtr<ServerConnection> m_serverConnection;
-      Beam::DelayPtr<ServletContainer> m_container;
+      boost::optional<LocalComplianceRuleDataStore> m_dataStore;
+      boost::optional<TestComplianceRuleSet> m_complianceRuleSet;
+      boost::optional<ServletContainer> m_container;
 
       CPPUNIT_TEST_SUITE(ComplianceServletTester);
       BEAM_CPPUNIT_TEST_SUITE_END();

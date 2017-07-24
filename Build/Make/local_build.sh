@@ -8,11 +8,7 @@ then
 else
   config=$2
 fi
-
 let cores="`grep -c "processor" < /proc/cpuinfo` / 2 + 1"
-if [ $cores -gt 8 ]
-then
-  cores=8
-fi
-
-cmake --build $directory --target $config -- -j$cores
+let mem="`grep -oP "MemTotal: +\K([[:digit:]]+)(?=.*)" < /proc/meminfo` / 8388608"
+let jobs="$(($cores<$mem?$cores:$mem))"
+cmake --build $directory --target $config -- -j$jobs

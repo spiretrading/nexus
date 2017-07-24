@@ -1,6 +1,7 @@
 #ifndef NEXUS_RISKSERVLETTESTER_HPP
 #define NEXUS_RISKSERVLETTESTER_HPP
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
+#include <Beam/ServicesTests/ServicesTests.hpp>
 #include <boost/optional/optional.hpp>
 #include <cppunit/extensions/HelperMacros.h>
 #include "Nexus/Accounting/Portfolio.hpp"
@@ -31,20 +32,12 @@ namespace Tests {
         MarketDataService::VirtualMarketDataClient*,
         Beam::Threading::VirtualTimer*, Beam::TimeService::VirtualTimeClient*>;
 
-      //! The type of ServerConnection.
-      using ServerConnection =
-        Beam::IO::LocalServerConnection<Beam::IO::SharedBuffer>;
-
       //! The type of ServiceProtocolServer.
-      using ServletContainer = Beam::Services::ServiceProtocolServletContainer<
-        Beam::ServiceLocator::MetaAuthenticationServletAdapter<
+      using ServletContainer =
+        Beam::Services::Tests::TestAuthenticatedServiceProtocolServletContainer<
         MetaRiskServlet<AdministrationService::VirtualAdministrationClient*,
         OrderExecutionService::VirtualOrderExecutionClient*,
-        TestRiskStateMonitor>,
-        Beam::ServiceLocator::VirtualServiceLocatorClient*>, ServerConnection*,
-        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-        Beam::Codecs::NullEncoder,
-        std::shared_ptr<Beam::Threading::TriggerTimer>>;
+        TestRiskStateMonitor>>;
 
       virtual void setUp();
 
@@ -56,7 +49,6 @@ namespace Tests {
     private:
       boost::optional<TestEnvironment> m_environment;
       boost::optional<TestServiceClients> m_serviceClients;
-      boost::optional<ServerConnection> m_serverConnection;
       boost::optional<ServletContainer> m_container;
       std::shared_ptr<Beam::Queue<const OrderExecutionService::Order*>>
         m_orderSubmissionServletQueue;

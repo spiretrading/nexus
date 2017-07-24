@@ -1,17 +1,15 @@
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionClientTester.hpp"
-#include <Beam/ServiceLocator/NullAuthenticator.hpp>
 #include <Beam/SignalHandling/NullSlot.hpp>
 #include <boost/functional/factory.hpp>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
 using namespace Beam::Queries;
 using namespace Beam::Routines;
-using namespace Beam::Serialization;
 using namespace Beam::ServiceLocator;
 using namespace Beam::Services;
+using namespace Beam::Services::Tests;
 using namespace Beam::SignalHandling;
 using namespace Beam::Threading;
 using namespace boost;
@@ -22,20 +20,17 @@ using namespace Nexus::Queries;
 using namespace std;
 
 void OrderExecutionClientTester::setUp() {
-  m_serverConnection.emplace();
-  m_server.emplace(&*m_serverConnection,
-    factory<std::shared_ptr<TriggerTimer>>(), NullSlot{}, NullSlot{});
+  auto serverConnection = std::make_shared<TestServerConnection>();
+  m_server.emplace(serverConnection, factory<std::unique_ptr<TriggerTimer>>(),
+    NullSlot{}, NullSlot{});
   Nexus::Queries::RegisterQueryTypes(Store(m_server->GetSlots().GetRegistry()));
   RegisterOrderExecutionServices(Store(m_server->GetSlots()));
   RegisterOrderExecutionMessages(Store(m_server->GetSlots()));
-  ServiceProtocolClientBuilder builder{
-    [&] {
-      return std::make_unique<ServiceProtocolClientBuilder::Channel>("test",
-        Ref(*m_serverConnection));
-    },
-    [&] {
-      return std::make_unique<ServiceProtocolClientBuilder::Timer>();
-    }};
+  TestServiceProtocolClientBuilder builder{
+    [=] {
+      return std::make_unique<TestServiceProtocolClientBuilder::Channel>("test",
+        Ref(*serverConnection));
+    }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>()};
   m_client.emplace(builder);
   m_server->Open();
   m_client->Open();
@@ -44,14 +39,13 @@ void OrderExecutionClientTester::setUp() {
 void OrderExecutionClientTester::tearDown() {
   m_client.reset();
   m_server.reset();
-  m_serverConnection.reset();
 }
 
 void OrderExecutionClientTester::TestSubmitOrder() {
   Security security{"TST", DefaultMarkets::NYSE(), DefaultCountries::US()};
   auto sentSubmitOrderRequest = false;
   OrderFields orderFields;
-  ServiceProtocolServer::ServiceProtocolClient* serverClient;
+  TestServiceProtocolServer::ServiceProtocolClient* serverClient;
   QueryOrderSubmissionsService::AddSlot(Store(m_server->GetSlots()),
     [&] (auto& client, auto& query) {
       CPPUNIT_ASSERT(query.GetIndex() == DirectoryEntry::GetRootAccount());

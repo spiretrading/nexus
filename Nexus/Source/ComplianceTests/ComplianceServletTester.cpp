@@ -21,8 +21,6 @@ namespace {
   }
 }
 
-void ComplianceServletTester::setUp() {
-}
+void ComplianceServletTester::setUp() {}
 
-void ComplianceServletTester::tearDown() {
-}
+void ComplianceServletTester::tearDown() {}

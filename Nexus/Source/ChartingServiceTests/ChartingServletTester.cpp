@@ -2,6 +2,8 @@
 #include <boost/functional/factory.hpp>
 
 using namespace Beam;
+using namespace Beam::Services;
+using namespace Beam::Services::Tests;
 using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::gregorian;
@@ -17,20 +19,19 @@ void ChartingServletTester::setUp() {
   m_environment->Open();
   m_serviceClients.emplace(Ref(*m_environment));
   m_serviceClients->Open();
-  m_serverConnection = std::make_shared<ServerConnection>();
-  m_clientProtocol.emplace(Initialize(string("test"),
-    Ref(*m_serverConnection)), Initialize());
-  RegisterChartingServices(Store(m_clientProtocol->GetSlots()));
+  auto serverConnection = std::make_shared<TestServerConnection>();
   m_container.emplace(Initialize(&m_serviceClients->GetMarketDataClient()),
-    m_serverConnection, factory<std::shared_ptr<TriggerTimer>>());
+    serverConnection, factory<std::unique_ptr<TriggerTimer>>());
   m_container->Open();
+  m_clientProtocol.emplace(Initialize("test", Ref(*serverConnection)),
+    Initialize());
+  RegisterChartingServices(Store(m_clientProtocol->GetSlots()));
   m_clientProtocol->Open();
 }
 
 void ChartingServletTester::tearDown() {
   m_clientProtocol.reset();
   m_container.reset();
-  m_serverConnection.reset();
   m_serviceClients.reset();
   m_environment.reset();
 }

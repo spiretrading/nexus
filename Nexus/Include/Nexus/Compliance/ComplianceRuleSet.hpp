@@ -27,7 +27,7 @@
 namespace Nexus {
 namespace Compliance {
 
-  /*! \class ComplianceClientType
+  /*! \class ComplianceRuleSet
       \brief Validates an Order operation against a set of
              ComplianceRuleEntries.
       \tparam ComplianceClientType The type of ComplianceClient to
