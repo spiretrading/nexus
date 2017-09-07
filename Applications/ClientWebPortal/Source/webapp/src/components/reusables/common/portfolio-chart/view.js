@@ -147,10 +147,14 @@ class View extends UpdatableView {
       let bodyWidth = $($bodyTds[i]).outerWidth();
       let maxWidth = Math.max(headerWidth, bodyWidth);
       $($headerTds[i]).css('min-width', maxWidth);
+      $($headerTds[i]).css('max-width', maxWidth);
       $($bodyTds[i]).css('min-width', maxWidth);
+      $($bodyTds[i]).css('max-width', maxWidth);
       $($fixColumnBodyTds[i]).css('min-width', maxWidth);
+      $($fixColumnBodyTds[i]).css('max-width', maxWidth);
       if (i == 0) {
         $($fixColumnHeaderTds[i]).css('min-width', maxWidth);
+        $($fixColumnHeaderTds[i]).css('max-width', maxWidth);
       }
     }
   }

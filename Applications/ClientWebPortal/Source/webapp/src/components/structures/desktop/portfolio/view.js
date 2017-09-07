@@ -82,7 +82,7 @@ class View extends UpdatableView {
       totalPnL = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.totalPnL.toNumber());
       unrealizedPnL = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.unrealizedPnL.toNumber());
       realizedPnL = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.realizedPnL.toNumber());
-      fees = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.realizedPnL.toNumber());
+      fees = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.fees.toNumber());
       volumes = numberFormatter.formatWithComma(this.componentModel.aggregates.volumes);
       trades = numberFormatter.formatWithComma(this.componentModel.aggregates.trades);
     }
