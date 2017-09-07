@@ -7,8 +7,6 @@
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Serialization;
 using namespace Beam::ServiceLocator;
 using namespace Beam::Threading;
 using namespace Beam::UidService;
