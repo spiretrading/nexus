@@ -22,7 +22,7 @@ class View extends UpdatableView {
 
   /** @private */
   onWindowResize() {
-    this.resizePortfolioChart();
+    //this.resizePortfolioChart();
   }
 
   resizePortfolioChart() {
@@ -98,10 +98,8 @@ class View extends UpdatableView {
           <div>Volume {volumes}</div>
           <div>Trades {trades}</div>
         </div>
-        <div className="chart-outer-wrapper">
-          <div className="chart-inner-wrapper">
-            <PortfolioChart model={chartModel} />
-          </div>
+        <div className="chart-wrapper">
+          <PortfolioChart model={chartModel} />
         </div>
       </div>
     );

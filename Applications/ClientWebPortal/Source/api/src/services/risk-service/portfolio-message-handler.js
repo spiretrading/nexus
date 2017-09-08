@@ -11,6 +11,11 @@ export default class {
     this.listener = listener;
     this.messages = new HashMap();
     this.listenerRunner = setInterval(this.runListener.bind(this), THROTTLE_INTERVAL);
+
+    // TODO: remove this temporary code
+    setInterval(this.runRandomDataGenerator.bind(this), 100);
+    this.randomAccountCache = new HashMap();
+    this.randomAccountNameCache = new HashMap();
   }
 
   handle(message) {
@@ -47,8 +52,125 @@ export default class {
     return payload;
   }
 
+  // TODO: remove this temporary code
+  runRandomDataGenerator() {
+    let unmarshalledMessage = this.randomlyGenerateData();
+    if (unmarshalledMessage != null) {
+      let messageKey = unmarshalledMessage.account.name.toString() + '.' +
+        unmarshalledMessage.inventory.position.key.index.symbol + '.' +
+        unmarshalledMessage.inventory.position.key.index.market.toData();
+      this.messages.set(messageKey, unmarshalledMessage);
+    }
+  }
+
+  // TODO: remove this temporary code
+  randomlyGenerateData() {
+    let payload = {};
+
+    let randomId = this.randomIntegerGenerator(1,5000);
+    let directoryEntry;
+    if (this.randomAccountCache.has(randomId)) {
+      directoryEntry = this.randomAccountCache.get(randomId);
+    } else {
+      let name = this.randomlyGeneratedString();
+      if (this.randomAccountNameCache.has(name)) {
+        return null;
+      } else {
+        this.randomAccountNameCache.set(name, true);
+      }
+      directoryEntry = {
+        id: randomId,
+        type: 0,
+        name: name
+      };
+      this.randomAccountCache.set(randomId, directoryEntry);
+    }
+
+    payload.account = directoryEntry;
+    payload.inventory = {
+      fees: Money.fromNumber(this.randomMoneyNumberGenerator(2, 10)),
+      gross_profit_and_loss: Money.fromNumber(this.randomMoneyNumberGenerator(300, 1000)),
+      position: {
+        cost_basis: Money.fromNumber(this.randomMoneyNumberGenerator(10000, 50000)),
+        key: {
+          currency: this.randomCurrencyIdGenerator(),
+          index: this.randomSecurityGenerator()
+        },
+        quantity: this.randomIntegerGenerator(100, 10000)
+      },
+      transaction_count: this.randomIntegerGenerator(1, 100),
+      volume: this.randomIntegerGenerator(100, 10000)
+    };
+    payload.unrealized_profit_and_loss = {
+      is_initialized: true,
+      value: Money.fromNumber(this.randomMoneyNumberGenerator(300, 1000))
+    };
+
+    return payload;
+  }
+
+  // TODO: remove this temporary code
+  randomlyGeneratedString() {
+    var text = "";
+    var possible = "ABCDE";
+
+    for (var i = 0; i < 5; i++)
+      text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+    return text;
+  }
+
+  // TODO: remove this temporary code
+  randomMoneyNumberGenerator(minDollars, maxDollars) {
+    minDollars = minDollars * 100;
+    maxDollars = maxDollars * 100;
+    var ranNum = Math.floor(Math.random() * (maxDollars - minDollars + 1)) + minDollars;
+    return ranNum / 100;
+  }
+
+  // TODO: remove this temporary code
+  randomIntegerGenerator(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  // TODO: remove this temporary code
+  randomCurrencyIdGenerator() {
+    let randomNum = this.randomIntegerGenerator(1,2);
+    if (randomNum == 1) {
+      // cad
+      return CurrencyId.fromData(124);
+    } else {
+      // usd
+      return CurrencyId.fromData(840);
+    }
+  }
+
+  // TODO: remove this temporary code
+  randomSecurityGenerator() {
+    let randomNum = this.randomIntegerGenerator(1,2);
+    let countryCode;
+    if (randomNum == 1) {
+      // cad
+      countryCode = 124;
+    } else {
+      // usd
+      countryCode = 840;
+    }
+
+    let data = {
+      country: countryCode,
+      market: 'XTSE',
+      symbol: 'ABX'
+    };
+
+    return Security.fromData(data);
+  }
+
   /** @private */
   runListener() {
+    // TODO: remove this temporary code
+    this.randomlyGenerateData();
+
     this.listener(this.messages.values());
     this.messages.clear();
   }
