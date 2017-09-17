@@ -57,7 +57,11 @@ If(-Not (Test-Path "C:\Program Files (x86)\Microsoft Visual Studio")) {
   ./vs_Community.exe --passive --norestart --wait `
     --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
     --add Microsoft.VisualStudio.Component.Windows10SDK.15063.Desktop `
-    --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Win81 | Out-Null
+    --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Win81 `
+    --add Microsoft.Component.MSBuild `
+    --add Microsoft.VisualStudio.Component.VC.CoreIde `
+    --add Microsoft.VisualStudio.Component.VC.Redist.14.Latest `
+    --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Core | Out-Null
   rm vs_Community.exe
   $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
 }
