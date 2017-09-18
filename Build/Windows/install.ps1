@@ -14,7 +14,7 @@ If($program_files_x86_path -eq "C:\Program Files") {
 }
 If((Get-Command "grep.exe" -ErrorAction SilentlyContinue) -eq $null) {
   Invoke-WebRequest -UseBasicParsing -Uri https://github.com/bmatzelle/gow/releases/download/v0.8.0/Gow-0.8.0.exe -UserAgent [Microsoft.PowerShell.Commands.PSUserAgent]::FireFox -OutFile Gow-0.8.0.exe
-  .\Gow-0.8.0.exe /S
+  .\Gow-0.8.0.exe /S | Out-Null
   $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
   rm Gow-0.8.0.exe -Force
 }
