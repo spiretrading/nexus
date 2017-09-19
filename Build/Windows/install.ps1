@@ -55,6 +55,7 @@ If((Get-Command "perl.exe" -ErrorAction SilentlyContinue) -eq $null) {
 If(-Not (Test-Path "C:\Program Files (x86)\Microsoft Visual Studio")) {
   Invoke-WebRequest -UseBasicParsing -Uri "https://aka.ms/vs/15/release/vs_community.exe" -OutFile vs_Community.exe
   ./vs_Community.exe --passive --norestart --wait `
+    --add Microsoft.VisualStudio.Workload.NativeDesktop `
     --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
     --add Microsoft.VisualStudio.Component.Windows10SDK.15063.Desktop `
     --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Win81 `
