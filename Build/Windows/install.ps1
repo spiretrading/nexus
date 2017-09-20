@@ -67,7 +67,7 @@ If(-Not (Test-Path "C:\Program Files (x86)\Microsoft Visual Studio")) {
   $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
 }
 pushd "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build"
-cmd /c "vsvars32.bat&set" |
+cmd /c "vcvars32.bat&set" |
 foreach {
   if ($_ -match "=") {
     $v = $_.split("="); set-item -force -path "ENV:\$($v[0])"  -value "$($v[1])"
