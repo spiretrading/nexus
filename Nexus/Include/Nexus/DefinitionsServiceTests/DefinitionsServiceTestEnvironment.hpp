@@ -37,7 +37,7 @@ namespace Tests {
   class DefinitionsServiceTestEnvironment : private boost::noncopyable {
     public:
 
-      //! Constructs an DefinitionsServiceTestEnvironment.
+      //! Constructs a DefinitionsServiceTestEnvironment.
       /*!
         \param serviceLocatorClient The ServiceLocatorClient to use.
       */
