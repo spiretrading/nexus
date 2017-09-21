@@ -57,7 +57,6 @@ class Controller {
       Config.WHOLE_PAGE_PRELOADER_WIDTH,
       Config.WHOLE_PAGE_PRELOADER_HEIGHT
     ).then((responses) => {
-      console.debug(responses);
       this.componentModel.roles = responses[0];
       $.extend(true, this.componentModel, responses[1]);
       this.componentModel.userName = directoryEntry.name;

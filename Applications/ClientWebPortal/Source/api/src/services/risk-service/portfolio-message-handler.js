@@ -4,6 +4,8 @@ import CurrencyId from '../../definitions/currency-id';
 import Money from '../../definitions/money';
 import HashMap from 'hashmap';
 
+// const THROTTLE_INTERVAL = 500;
+// TODO: remove this temporary code
 const THROTTLE_INTERVAL = 500;
 
 export default class {
@@ -13,9 +15,10 @@ export default class {
     this.listenerRunner = setInterval(this.runListener.bind(this), THROTTLE_INTERVAL);
 
     // TODO: remove this temporary code
-    setInterval(this.runRandomDataGenerator.bind(this), 100);
+    setInterval(this.runRandomDataGenerator.bind(this), 400);
     this.randomAccountCache = new HashMap();
     this.randomAccountNameCache = new HashMap();
+    this.counter = 0;
   }
 
   handle(message) {
@@ -78,20 +81,16 @@ export default class {
       } else {
         this.randomAccountNameCache.set(name, true);
       }
-      directoryEntry = {
-        id: randomId,
-        type: 0,
-        name: name
-      };
+      directoryEntry = new DirectoryEntry(randomId, 0, name);
       this.randomAccountCache.set(randomId, directoryEntry);
     }
 
     payload.account = directoryEntry;
     payload.inventory = {
-      fees: Money.fromNumber(this.randomMoneyNumberGenerator(2, 10)),
-      gross_profit_and_loss: Money.fromNumber(this.randomMoneyNumberGenerator(300, 1000)),
+      fees: Money.fromRepresentation(this.randomMoneyNumberGenerator(2, 10)),
+      gross_profit_and_loss: Money.fromRepresentation(this.randomMoneyNumberGenerator(300, 1000)),
       position: {
-        cost_basis: Money.fromNumber(this.randomMoneyNumberGenerator(10000, 50000)),
+        cost_basis: Money.fromRepresentation(this.randomMoneyNumberGenerator(10000, 50000)),
         key: {
           currency: this.randomCurrencyIdGenerator(),
           index: this.randomSecurityGenerator()
@@ -103,7 +102,7 @@ export default class {
     };
     payload.unrealized_profit_and_loss = {
       is_initialized: true,
-      value: Money.fromNumber(this.randomMoneyNumberGenerator(300, 1000))
+      value: Money.fromRepresentation(this.randomMoneyNumberGenerator(300, 1000))
     };
 
     return payload;
@@ -125,7 +124,7 @@ export default class {
     minDollars = minDollars * 100;
     maxDollars = maxDollars * 100;
     var ranNum = Math.floor(Math.random() * (maxDollars - minDollars + 1)) + minDollars;
-    return ranNum / 100;
+    return ranNum * 10000;
   }
 
   // TODO: remove this temporary code
@@ -169,10 +168,14 @@ export default class {
   /** @private */
   runListener() {
     // TODO: remove this temporary code
-    this.randomlyGenerateData();
+    if (this.counter < 30) {
+      this.randomlyGenerateData();
 
-    this.listener(this.messages.values());
-    this.messages.clear();
+      this.listener(this.messages.values());
+      this.messages.clear();
+      this.counter++;
+    }
+
   }
 
   dispose() {

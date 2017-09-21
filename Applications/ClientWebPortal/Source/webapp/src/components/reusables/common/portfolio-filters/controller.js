@@ -1,5 +1,3 @@
-import columns from 'components/reusables/common/portfolio-chart/columns';
-
 class Controller {
   constructor(react, componentModel) {
     this.componentModel = componentModel;

@@ -9,7 +9,10 @@ import {
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
 import definitionsService from 'services/definitions';
-import HashMap from 'hashmap';
+import PortfolioModel from './portfolio-model';
+import SortModel from './sort-model';
+import StringifyModel from './stringify-model';
+import DataChangeType from './data-change-type';
 
 class Controller {
   constructor(componentModel) {
@@ -17,12 +20,13 @@ class Controller {
     this.adminClient = new AdministrationClient();
     this.riskServiceClient = new RiskServiceClient();
     this.exchangeRateTable = definitionsService.getExchangeRateTable();
-    this.portfolioData = new HashMap();
+    this.portfolioModel = new PortfolioModel();
+    this.sortModel = new SortModel(this.portfolioModel);
+    this.stringifyModel = new StringifyModel(this.sortModel);
 
-    this.toUIModel = this.toUIModel.bind(this);
-    this.aggregateTotals = this.aggregateTotals.bind(this);
-    this.convertCurrencies = this.convertCurrencies.bind(this);
     this.getRequiredData = this.getRequiredData.bind(this);
+    this.setTableRef = this.setTableRef.bind(this);
+    this.onDataModelChange = this.onDataModelChange.bind(this);
   }
 
   getView() {
@@ -31,6 +35,22 @@ class Controller {
 
   setView(view) {
     this.view = view;
+  }
+
+  setTableRef(ref) {
+    this.table = ref;
+  }
+
+  onDataModelChange(dataChangeType, rowIndex, toIndex) {
+    if (dataChangeType == DataChangeType.ADD) {
+      this.table.rowAdd(rowIndex);
+    } else if (dataChangeType == DataChangeType.REMOVE) {
+      this.table.rowRemove(rowIndex);
+    } else if (dataChangeType == DataChangeType.UPDATE) {
+      this.table.rowUpdate(rowIndex);
+    } else if (dataChangeType == DataChangeType.MOVE) {
+      this.table.rowMove(rowIndex, toIndex);
+    }
   }
 
   /** @private */
@@ -47,173 +67,10 @@ class Controller {
   }
 
   /** @private */
-  toUIModel(data) {
-    let model = {};
-
-    model.account = data.account;
-    model.security = data.inventory.position.key.index;
-    model.quantity = data.inventory.position.quantity;
-
-    if (data.inventory.position.quantity > 0) {
-      model.side = 'Long';
-    } else if (data.inventory.position.quantity < 0) {
-      model.side = 'Short';
-    } else {
-      model.side = 'Flat';
-    }
-
-    let averagePrice = null;
-    if (data.inventory.position.quantity != 0) {
-      let costBasis = data.inventory.position.cost_basis;
-      let quantity = data.inventory.position.quantity;
-      averagePrice = costBasis.divide(quantity);
-      if (averagePrice.toNumber() < 0) {
-        averagePrice.multiply(-1);
-      }
-    }
-    model.averagePrice = averagePrice;
-
-    let totalPnL = null;
-    let unrealizedPnL = null;
-    let grossPnL = data.inventory.gross_profit_and_loss;
-    let fees = data.inventory.fees;
-    if (data.unrealized_profit_and_loss.is_initialized) {
-      unrealizedPnL = data.unrealized_profit_and_loss.value;
-      totalPnL = unrealizedPnL.add(grossPnL).subtract(fees);
-    }
-    model.totalPnL = totalPnL;
-    model.unrealizedPnL = unrealizedPnL;
-    model.realizedPnL = grossPnL.subtract(fees);
-    model.fees = fees;
-    model.costBasis = data.inventory.position.cost_basis;
-    model.currency = data.inventory.position.key.currency;
-    model.volume = data.inventory.volume;
-    model.trades = data.inventory.transaction_count;
-
-    return model;
-  }
-
-  /** @private */
   onPortfolioDataReceived(data) {
-    for (let i=0; i<data.length; i++) {
-      data[i] = this.toUIModel(data[i]);
-      let cacheKey = data[i].account.id + data[i].currency.value + data[i].security.market.value + data[i].security.symbol;
-      this.portfolioData.set(cacheKey, data[i]);
-    }
-
-    // remove any row for which the streaming has stopped
-    let dataToRemoveKeys = [];
-    this.portfolioData.forEach((value, key) => {
-      if (value.trades == 0) {
-        dataToRemoveKeys.push(key);
-      }
-    });
-    for (let i=0; i<dataToRemoveKeys.length; i++) {
-      this.portfolioData.remove(dataToRemoveKeys[i]);
-    }
-
-    this.componentModel.portfolioData = this.portfolioData.values();
-
-    if (this.componentModel.baseCurrencyId != null) {
-      this.aggregateTotals();
-    }
+    this.portfolioModel.onDataReceived(data);
+    this.componentModel.aggregates = this.portfolioModel.getTotals();
     this.view.update(this.componentModel);
-  }
-
-  /** @private */
-  aggregateTotals() {
-    let portfolioData = this.componentModel.portfolioData;
-    let totalPnL = Money.fromNumber(0);
-    let unrealizedPnL = Money.fromNumber(0);
-    let realizedPnL = Money.fromNumber(0);
-    let fees = Money.fromNumber(0);
-    let volumes = 0;
-    let trades = 0;
-    let accountTotals = new HashMap();
-    for (let i=0; i<portfolioData.length; i++) {
-      let accountTotal;
-      if (!accountTotals.has(portfolioData[i].account.id)) {
-        accountTotal = {
-          totalPnL: Money.fromNumber(0),
-          unrealizedPnL: Money.fromNumber(0),
-          fees: Money.fromNumber(0)
-        };
-        accountTotals.set(portfolioData[i].account.id, accountTotal);
-      } else {
-        accountTotal = accountTotals.get(portfolioData[i].account.id);
-      }
-
-      let originalTotalPnL = portfolioData[i].totalPnL || Money.fromNumber(0);
-      let convertedTotalPnL = this.convertCurrencies(
-        portfolioData[i].currency,
-        this.componentModel.baseCurrencyId,
-        originalTotalPnL
-      );
-      totalPnL = totalPnL.add(convertedTotalPnL);
-      accountTotal.totalPnL = accountTotal.totalPnL.add(convertedTotalPnL);
-
-      let originalUnrealizedPnL = portfolioData[i].unrealizedPnL || Money.fromNumber(0);
-      let convertedUnrealizedPnL = this.convertCurrencies(
-        portfolioData[i].currency,
-        this.componentModel.baseCurrencyId,
-        originalUnrealizedPnL
-      );
-      unrealizedPnL = unrealizedPnL.add(convertedUnrealizedPnL);
-      accountTotal.unrealizedPnL = accountTotal.unrealizedPnL.add(convertedUnrealizedPnL);
-
-      let originalRealizedPnL = portfolioData[i].realizedPnL || Money.fromNumber(0);
-      let convertedRealizedPnL = this.convertCurrencies(
-        portfolioData[i].currency,
-        this.componentModel.baseCurrencyId,
-        originalRealizedPnL
-      );
-      realizedPnL = realizedPnL.add(convertedRealizedPnL);
-
-      let originalFees = portfolioData[i].fees || Money.fromNumber(0);
-      let convertedFees = this.convertCurrencies(
-        portfolioData[i].currency,
-        this.componentModel.baseCurrencyId,
-        originalFees
-      );
-      fees = fees.add(convertedFees);
-      accountTotal.fees = accountTotal.fees.add(convertedFees);
-
-      let volume = portfolioData[i].volume || 0;
-      volumes += volume
-
-      let trade = portfolioData[i].trades || 0;
-      trades += trade;
-    }
-
-    for (let i=0; i<portfolioData.length; i++) {
-      let accountId = portfolioData[i].account.id;
-      let accountTotal = accountTotals.get(accountId);
-      portfolioData[i].accountTotalPnL = accountTotal.totalPnL;
-      portfolioData[i].accountUnrealizedPnL = accountTotal.unrealizedPnL;
-      portfolioData[i].accountFees = accountTotal.fees;
-    }
-
-    this.componentModel.aggregates = {
-      totalPnL: totalPnL,
-      unrealizedPnL: unrealizedPnL,
-      realizedPnL: realizedPnL,
-      fees: fees,
-      volumes: volumes,
-      trades: trades
-    };
-  }
-
-  /** @private */
-  convertCurrencies(fromCurrencyId, toCurrencyId, amount) {
-    if (fromCurrencyId.toNumber() == toCurrencyId.toNumber()) {
-      return Money.fromNumber(amount);
-    } else {
-      return this.exchangeRateTable.convert(
-        amount,
-        fromCurrencyId,
-        toCurrencyId
-      );
-    }
   }
 
   /** @private */
@@ -222,6 +79,7 @@ class Controller {
   }
 
   componentDidMount() {
+    this.dataModelChangeSubId = this.stringifyModel.addDataChangeListener(this.onDataModelChange);
     this.filterResizeSubId = EventBus.subscribe(Event.Portfolio.FILTER_RESIZE, this.onFilterResize.bind(this));
 
     this.componentModel = {
@@ -242,7 +100,7 @@ class Controller {
       Config.WHOLE_PAGE_PRELOADER_WIDTH,
       Config.WHOLE_PAGE_PRELOADER_HEIGHT
     ).then((responses) => {
-      this.componentModel.baseCurrencyId = responses[1].currencyId;
+      this.portfolioModel.setBaseCurrencyId(responses[1].currencyId);
       this.componentModel.isAdmin = userService.isAdmin();
 
       // groups
@@ -278,6 +136,7 @@ class Controller {
   }
 
   componentWillUnmount() {
+    this.stringifyModel.removeDataChangeListener(this.dataModelChangeSubId);
     this.riskServiceClient.unsubscribe(this.portfolioSubscriptionId);
     EventBus.unsubscribe(this.filterResizeSubId);
     this.view.dispose();
@@ -318,6 +177,10 @@ class Controller {
 
     this.riskServiceClient.setPortfolioDataFilter(this.portfolioSubscriptionId, apiFilter);
     this.view.update(this.componentModel);
+  }
+
+  getDataModel() {
+    return this.stringifyModel;
   }
 }
 

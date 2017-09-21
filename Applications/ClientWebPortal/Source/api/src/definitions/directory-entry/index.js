@@ -28,14 +28,18 @@ class DirectoryEntry {
       name: this.name
     };
   }
+
+  clone() {
+    return new DirectoryEntry(
+      this.id,
+      this.type,
+      this.name
+    );
+  }
 }
 
 DirectoryEntry.fromData = (data) => {
-  let directoryEntry = new DirectoryEntry();
-  directoryEntry.id = data.id;
-  directoryEntry.type = data.type;
-  directoryEntry.name = data.name;
-  return directoryEntry;
+  return new DirectoryEntry(data.id, data.type, data.name);
 };
 
 export default DirectoryEntry;

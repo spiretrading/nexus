@@ -7,7 +7,9 @@ class Security {
     this.country = country;
     this.market = market;
     this.symbol = symbol;
-
+    this.constructor = {
+      name: 'Security'
+    };
     this.toString = this.toString.bind(this);
   }
 
