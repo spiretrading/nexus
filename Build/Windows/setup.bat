@@ -23,28 +23,13 @@ if exist qt-5.5.0 goto end_qt_setup
     mv qt-everywhere-opensource-src-5.5.0 qt-5.5.0
     cd qt-5.5.0
     echo y >> accept
-    configure -opensource -static -make libs -make tools -opengl desktop -no-icu -qt-zlib -mp < accept
-    (
-      echo set CL=/MP
-      echo nmake
-    ) | cmd.exe
+    start /wait cmd.exe @cmd /k "configure -opensource -static -make libs -make tools -opengl desktop -no-icu -qt-zlib -mp < accept & exit"
+    set CL=/MP
     nmake
     rm accept
     cd ..
     rm qt-everywhere-opensource-src-5.5.0.zip
 :end_qt_setup
-
-if exist sqlite goto end_sqlite_setup
-  wget http://www.sqlite.org/2015/sqlite-amalgamation-3080803.zip
-  if not exist sqlite-amalgamation-3080803.zip goto end_sqlite_setup
-    unzip sqlite-amalgamation-3080803.zip
-    mv sqlite-amalgamation-3080803 sqlite
-    cd sqlite
-    cl /c /O2 sqlite3.c
-    lib sqlite3.obj
-    cd ..
-    rm sqlite-amalgamation-3080803.zip
-:end_sqlite_setup
 
 CALL %~dp0../../Applications/ClientWebPortal/Build/Windows/setup.bat
 
