@@ -4,6 +4,7 @@
 namespace Nexus {
 namespace Compliance {
 namespace Tests {
+  class BuyingPowerComplianceRuleTester;
   class CancelRestrictionPeriodComplianceRuleTester;
   class ComplianceRuleSetTester;
   class LocalComplianceRuleDataStoreTester;

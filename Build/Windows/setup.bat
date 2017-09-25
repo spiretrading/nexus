@@ -24,11 +24,10 @@ if exist qt-5.5.0 goto end_qt_setup
     unzip qt-everywhere-opensource-src-5.5.0.zip
     mv qt-everywhere-opensource-src-5.5.0 qt-5.5.0
     pushd qt-5.5.0
-    wget --no-check-certificate http://download.qt.io/official_releases/jom/jom.zip -O jom.zip
-    unzip jom.zip
     echo y >> accept
-    configure -opensource -static -make libs -make tools -opengl desktop -no-icu -qt-zlib -mp < accept
-    jom -j 12 > qt.log
+    start /wait cmd.exe @cmd /k "configure -opensource -static -make libs -make tools -opengl desktop -no-icu -qt-zlib -mp < accept & exit"
+    set CL=/MP
+    nmake
     rm accept
     popd
     rm qt-everywhere-opensource-src-5.5.0.zip

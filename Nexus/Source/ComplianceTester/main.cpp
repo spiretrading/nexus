@@ -3,6 +3,7 @@
 #include <cppunit/TestResult.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TestRunner.h>
+#include "Nexus/ComplianceTests/BuyingPowerComplianceRuleTester.hpp"
 #include "Nexus/ComplianceTests/CancelRestrictionPeriodComplianceRuleTester.hpp"
 #include "Nexus/ComplianceTests/ComplianceRuleSetTester.hpp"
 #include "Nexus/ComplianceTests/ComplianceServletTester.hpp"
@@ -24,6 +25,7 @@ int main() {
   CppUnit::BriefTestProgressListener listener;
   runner.addTest(LocalComplianceRuleDataStoreTester::suite());
   runner.addTest(ComplianceRuleSetTester::suite());
+  runner.addTest(BuyingPowerComplianceRuleTester::suite());
   runner.addTest(CancelRestrictionPeriodComplianceRuleTester::suite());
   runner.addTest(OpposingOrderCancellationComplianceRuleTester::suite());
   runner.addTest(OpposingOrderSubmissionComplianceRuleTester::suite());
