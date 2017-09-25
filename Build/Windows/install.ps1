@@ -2,7 +2,7 @@ pushd C:\
 If(-Not (Test-Path C:\Development)) {
   mkdir Development
 }
-cd Development
+pushd Development
 $program_files_x86_path = (Get-Item -LiteralPath "C:\Progra~1").FullName
 $program_files_path = (Get-Item -LiteralPath "C:\Progra~2").FullName
 If($program_files_x86_path -eq "C:\Program Files") {
@@ -77,27 +77,32 @@ popd
 If(-Not (Test-Path C:\Development\Projects)) {
   mkdir Projects
 }
-cd Projects
+pushd Projects
 If(-Not (Test-Path C:\Development\Projects\Beam)) {
   git clone http://www.github.com/eidolonsystems/beam.git Beam
 }
-cd ..
+popd
 If(-Not (Test-Path C:\Development\Libraries)) {
   mkdir Libraries
 }
-cd Libraries
+pushd Libraries
 ..\Projects\Beam\Build\Windows\setup.bat
-cd ..\Projects\Beam\Build\Windows
+pushd ..\Projects\Beam\Build\Windows
 .\run_cmake.bat
 .\build.bat
-cd ..\..\..
+popd
+popd
+pushd Projects
 If(-Not (Test-Path C:\Development\Projects\Nexus)) {
   git clone http://www.github.com/eidolonsystems/nexus.git Nexus
 }
-cd ..\Libraries
+popd
+pushd Libraries
 ..\Projects\Nexus\Build\Windows\setup.bat
-cd ..\Projects\Nexus\Build\Windows
+pushd ..\Projects\Nexus\Build\Windows
 .\run_cmake.bat
 .\build.bat
-cd ..\..\..
+popd
+popd
+popd
 popd
