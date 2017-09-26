@@ -20,8 +20,10 @@ if [ ! -d "quickfix-v.1.14.4" ]; then
   if [ -f v.1.14.4.zip ]; then
     sudo -u $(logname) unzip v.1.14.4.zip
     pushd quickfix-v.1.14.4
+    sudo -u $(logname) ./bootstrap
     sudo -u $(logname) ./configure
     sudo -u $(logname) make -j $cores
+    sudo -u $(logname) make check
     make install
     popd
     rm v.1.14.4.zip
