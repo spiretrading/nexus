@@ -15,16 +15,16 @@ if [ -d "Beam" ]; then
   popd
 fi
 
-if [ ! -d "quickfix" ]; then
-  sudo -u $(logname) wget http://prdownloads.sourceforge.net/quickfix/quickfix-1.14.3.tar.gz
-  if [ -f quickfix-1.14.3.tar.gz ]; then
-    sudo -u $(logname) gzip -d -c quickfix-1.14.3.tar.gz | sudo -u $(logname) tar -x
-    pushd quickfix
+if [ ! -d "quickfix-v.1.14.4" ]; then
+  sudo -u $(logname) wget https://github.com/quickfix/quickfix/archive/v.1.14.4.zip --no-check-certificate -O v.1.14.4.zip
+  if [ -f v.1.14.4.zip ]; then
+    sudo -u $(logname) unzip v.1.14.4.zip
+    pushd quickfix-v.1.14.4
     sudo -u $(logname) ./configure
     sudo -u $(logname) make -j $cores
     make install
     popd
-    rm quickfix-1.14.3.tar.gz
+    rm v.1.14.4.zip
   fi
 fi
 
