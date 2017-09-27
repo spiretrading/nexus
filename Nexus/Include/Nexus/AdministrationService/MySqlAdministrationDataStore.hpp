@@ -121,7 +121,7 @@ namespace AdministrationService {
         identity.m_addressLineThree = row.address_line_three;
         identity.m_city = row.city;
         identity.m_province = row.province;
-        identity.m_country = row.country;
+        identity.m_country = static_cast<CountryCode>(row.country);
         identity.m_userNotes = row.user_notes;
         return std::make_tuple(account, identity);
       });
@@ -151,7 +151,7 @@ namespace AdministrationService {
     result.m_addressLineThree = row.address_line_three;
     result.m_city = row.city;
     result.m_province = row.province;
-    result.m_country = row.country;
+    result.m_country = static_cast<CountryCode>(row.country);
     result.m_userNotes = row.user_notes;
     return result;
   }

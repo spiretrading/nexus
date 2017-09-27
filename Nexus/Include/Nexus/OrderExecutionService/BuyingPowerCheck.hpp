@@ -171,6 +171,8 @@ namespace OrderExecutionService {
         if(buyingPowerTracker.HasOrder(order.GetInfo().m_orderId)) {
           return;
         }
+        buyingPowerEntry.m_currencies.Insert(order.GetInfo().m_orderId,
+          order.GetInfo().m_fields.m_currency);
         auto convertedFields = order.GetInfo().m_fields;
         convertedFields.m_currency =
           buyingPowerEntry.m_riskParametersQueue->Top().m_currency;

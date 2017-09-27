@@ -1,8 +1,9 @@
-cd %~dp0../..
+pushd %~dp0..\..
 mkdir Include
-cd Include
+pushd Include
 mkdir SimulationMarketDataFeedClient
-cd %~dp0
+popd
+popd
 printf "#define SIMULATION_MARKET_DATA_FEED_CLIENT_VERSION """> %~dp0../../Include/SimulationMarketDataFeedClient/Version.hpp
 git rev-list --count --first-parent HEAD | tr -d "\n\" >> %~dp0../../Include/SimulationMarketDataFeedClient/Version.hpp
 printf """\n" >> %~dp0../../Include/SimulationMarketDataFeedClient/Version.hpp

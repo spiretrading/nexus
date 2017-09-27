@@ -1,8 +1,9 @@
-cd %~dp0../..
+pushd %~dp0..\..
 mkdir Include
-cd Include
+pushd Include
 mkdir MarketDataClientTemplate
-cd %~dp0
+popd
+popd
 printf "#define MARKET_DATA_CLIENT_TEMPLATE_VERSION """> %~dp0../../Include/MarketDataClientTemplate/Version.hpp
 git rev-list --count --first-parent HEAD | tr -d "\n\" >> %~dp0../../Include/MarketDataClientTemplate/Version.hpp
 printf """\n" >> %~dp0../../Include/MarketDataClientTemplate/Version.hpp

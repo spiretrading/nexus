@@ -2,7 +2,7 @@
 config=$1
 directory=$(dirname $(readlink -f $0))
 pushd $directory/
-cd $directory/../..
+pushd $directory/../..
 if [ "$config" = "clean" ]
 then
   rm -rf dist
@@ -12,4 +12,5 @@ then
 else
   grunt build-prod
 fi
+popd
 popd
