@@ -237,7 +237,7 @@ namespace AdministrationService {
       riskParameters.m_netLoss.GetRepresentation(),
       static_cast<int>(riskParameters.m_allowedState.m_type),
       riskParameters.m_lossFromTop,
-      riskParameters.m_transitionTime.total_seconds()};
+      static_cast<int>(riskParameters.m_transitionTime.total_seconds())};
     query.replace(entryRow);
     if(!query.execute()) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
