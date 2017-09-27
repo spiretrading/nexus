@@ -11,6 +11,7 @@ if [ -d "Beam" ]; then
   popd
   ./Beam/Build/Make/setup.sh
   pushd ./Beam/Build/Make
+  sudo -u $(logname) ./run_cmake.sh
   sudo -u $(logname) ./build.sh
   popd
 fi
