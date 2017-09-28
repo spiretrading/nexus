@@ -65,6 +65,9 @@ const Order& ChixFixApplication::Submit(const OrderInfo& info) {
           if(auto value = boost::get<string>(&tag.GetValue())) {
             FIX::ExDestination destination(*value);
             newOrderSingle->getHeader().setField(destination);
+            if(*value == "SMRTXDARKNR") {
+              newOrderSingle->setField(ANONYMOUS_TAG, "Y");
+            }
             hasDestination = true;
             break;
           } else {
