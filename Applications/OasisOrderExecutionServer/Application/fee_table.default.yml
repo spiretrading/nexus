@@ -3,7 +3,11 @@
 # ASX TradeMatch fees based on https://www.asxonline.com/intradoc-cgi/groups/participant_services/documents/information/asx_027373.pdf
 au_equities:
   spire_fee: 0.18
-  clearing_rate: 0.000125
+
+  #  Price < 0.25    0.25 <= Price < 1.00   Price >= 1.00
+  #       X                   X                  X
+  clearing_rate_table:
+    [0.000195, 0.000160, 0.000125]
   trade_rate: 0.000015
   trade_fee_cap: 75.00
   gst_rate: 0
