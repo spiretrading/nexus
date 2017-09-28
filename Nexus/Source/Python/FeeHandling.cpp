@@ -18,15 +18,24 @@ using namespace Nexus::Python;
 using namespace std;
 
 void Nexus::Python::ExportAsxtFeeTable() {
-  class_<AsxtFeeTable>("AsxtFeeTable", init<>())
+  {
+    scope outer = class_<AsxtFeeTable>("AsxtFeeTable", init<>())
     .def("__copy__", &MakeCopy<AsxtFeeTable>)
     .def("__deepcopy__", &MakeDeepCopy<AsxtFeeTable>)
     .def_readwrite("spire_fee", &AsxtFeeTable::m_spireFee)
-    .def_readwrite("clearing_rate", &AsxtFeeTable::m_clearingRate)
+    .def_readwrite("clearing_rate_table", &AsxtFeeTable::m_clearingRateTable)
     .def_readwrite("trade_rate", &AsxtFeeTable::m_tradeRate)
     .def_readwrite("gst_rate", &AsxtFeeTable::m_gstRate)
     .def_readwrite("trade_fee_cap", &AsxtFeeTable::m_tradeFeeCap);
+    enum_<AsxtFeeTable::PriceClass>("PriceClass")
+      .value("NONE", AsxtFeeTable::PriceClass::NONE)
+      .value("TIER_ONE", AsxtFeeTable::PriceClass::TIER_ONE)
+      .value("TIER_TWO", AsxtFeeTable::PriceClass::TIER_TWO)
+      .value("TIER_THREE", AsxtFeeTable::PriceClass::TIER_THREE);
+  }
   def("parse_asx_fee_table", &ParseAsxFeeTable);
+  def("lookup_clearing_fee", &LookupClearingFee);
+  def("lookup_price_class", &LookupPriceClass);
   def("calculate_fee", static_cast<ExecutionReport (*)(const AsxtFeeTable&,
     const ExecutionReport&)>(&CalculateFee));
 }
