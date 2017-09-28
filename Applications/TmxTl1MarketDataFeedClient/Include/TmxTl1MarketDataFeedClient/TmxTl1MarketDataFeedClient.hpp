@@ -137,7 +137,9 @@ namespace MarketDataService {
     auto mn = boost::lexical_cast<int>(value.substr(10, 2));
     auto sec = boost::lexical_cast<int>(value.substr(12, 2));
     auto mill = boost::lexical_cast<int>(value.substr(14, 2));
-    boost::posix_time::ptime timestamp(boost::gregorian::date(y, m, d),
+    boost::posix_time::ptime timestamp(
+      boost::gregorian::date(static_cast<unsigned short>(y),
+      static_cast<unsigned short>(m), static_cast<unsigned short>(d)),
       boost::posix_time::hours(hr) + boost::posix_time::minutes(mn) +
       boost::posix_time::seconds(sec) +
       boost::posix_time::milliseconds(10 * mill));

@@ -11,7 +11,7 @@
 namespace Nexus {
 
   //! Identifies a country by a unique code.
-  typedef std::uint16_t CountryCode;
+  using CountryCode = std::uint16_t;
 
   /*! \class CountryDatabase
       \brief Stores the database of all countries.
@@ -135,7 +135,7 @@ namespace Nexus {
     entry.m_twoLetterCode = Beam::Extract<std::string>(node, "two_letter_code");
     entry.m_threeLetterCode = Beam::Extract<std::string>(node,
       "three_letter_code");
-    entry.m_code = Beam::Extract<int>(node, "code");
+    entry.m_code = Beam::Extract<CountryCode>(node, "code");
     return entry;
   }
 

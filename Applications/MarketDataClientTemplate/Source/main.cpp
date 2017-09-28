@@ -174,7 +174,7 @@ int main(int argc, const char** argv) {
   bool hasRegression = false;
   while(!ReceivedKillEvent()) {
     if(!hasRegression) {
-      this_thread::sleep(seconds{1});
+      boost::this_thread::sleep(seconds(1));
     }
     hasRegression = false;
     int counter = 0;

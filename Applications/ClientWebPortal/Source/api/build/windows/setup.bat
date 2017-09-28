@@ -1,6 +1,7 @@
 SETLOCAL
 PUSHD %~dp0
-cd %~dp0../../
+PUSHD %~dp0..\..\
 npm install
+POPD
 POPD
 ENDLOCAL

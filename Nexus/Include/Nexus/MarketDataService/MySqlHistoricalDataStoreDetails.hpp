@@ -222,7 +222,8 @@ namespace Details {
 
     SequencedOrderImbalance operator ()(const order_imbalances& row) const {
       auto orderImbalance = Beam::Queries::MakeSequencedValue(OrderImbalance(
-        Security(row.symbol, std::string(row.symbol_market), row.country),
+        Security(row.symbol, std::string(row.symbol_market),
+        static_cast<CountryCode>(row.country)),
         static_cast<Side>(row.side), row.size,
         Money::FromRepresentation(row.price),
         Beam::MySql::FromMySqlTimestamp(row.timestamp)),
