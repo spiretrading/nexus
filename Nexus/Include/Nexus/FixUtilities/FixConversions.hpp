@@ -16,8 +16,9 @@ namespace FixUtilities {
   //! Converts a ptime into its FIX representation.
   inline FIX::DateTime GetTimestamp(const boost::posix_time::ptime& timestamp) {
     FIX::DateTime dateTime{timestamp.date().year(), timestamp.date().month(),
-      timestamp.date().day(), timestamp.time_of_day().hours(),
-      timestamp.time_of_day().minutes(), timestamp.time_of_day().seconds(),
+      timestamp.date().day(), static_cast<int>(timestamp.time_of_day().hours()),
+      static_cast<int>(timestamp.time_of_day().minutes()),
+      static_cast<int>(timestamp.time_of_day().seconds()),
       static_cast<int>(1000 * (static_cast<double>(
       timestamp.time_of_day().fractional_seconds()) /
       boost::posix_time::time_duration::ticks_per_second()))};
@@ -54,8 +55,10 @@ namespace FixUtilities {
   //! Converts a ptime into its FIX representation.
   inline FIX::UtcTimeStamp GetUtcTimestamp(
       const boost::posix_time::ptime& timestamp) {
-    FIX::UtcTimeStamp utcTimestamp{timestamp.time_of_day().hours(),
-      timestamp.time_of_day().minutes(), timestamp.time_of_day().seconds(),
+    FIX::UtcTimeStamp utcTimestamp{
+      static_cast<int>(timestamp.time_of_day().hours()),
+      static_cast<int>(timestamp.time_of_day().minutes()),
+      static_cast<int>(timestamp.time_of_day().seconds()),
       static_cast<int>(1000 * (static_cast<double>(
       timestamp.time_of_day().fractional_seconds()) /
       boost::posix_time::time_duration::ticks_per_second())),
