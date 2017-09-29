@@ -49,18 +49,21 @@ def build_repo(repo, name, ftp_site, username, password):
   for commit in commits:
     timestamp = int(commit.committed_date)
     repo.git.checkout(commit.hexsha)
-    terminal_output = subprocess.Popen(
-      ['chmod', '-R', 'a+rw', './%s' % name], stdout=subprocess.PIPE,
-      stderr=subprocess.PIPE).communicate()[0]
-    terminal_output = subprocess.Popen('./%s/Build/Make/setup.sh' % name,
-      shell=True, stdout=subprocess.PIPE,
-      stderr=subprocess.PIPE).communicate()[0]
+    result = []
+    result.append(subprocess.Popen(['chmod', '-R', 'a+rw', './%s' % name],
+      stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate())
+    result.append(subprocess.Popen('./%s/Build/Make/setup.sh' % name,
+      shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate())
     os.chdir('./%s/Build/Make/' % name)
-    terminal_output += '\n\n\n\n'
-    terminal_output += subprocess.Popen('./run_cmake.sh', shell=True,
-      stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
-    terminal_output += subprocess.Popen('./build.sh', shell=True,
-      stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
+    result.append(subprocess.Popen('./run_cmake.sh', shell=True,
+      stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate())
+    result.append(subprocess.Popen('./build.sh', shell=True,
+      stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate())
+    terminal_output = ''
+    for output in result:
+      terminal_output += output[0] + '\n\n\n\n'
+    for output in result:
+      terminal_output += output[1] + '\n\n\n\n'
     os.chdir('./../../../')
     os.makedirs(str(timestamp))
     log_file = open('./%s/build.log' % str(timestamp), 'w')
