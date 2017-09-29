@@ -24,8 +24,12 @@ void Nexus::Python::ExportAsxtFeeTable() {
     .def("__deepcopy__", &MakeDeepCopy<AsxtFeeTable>)
     .def_readwrite("spire_fee", &AsxtFeeTable::m_spireFee)
     .def_readwrite("clearing_rate_table", &AsxtFeeTable::m_clearingRateTable)
-    .def_readwrite("trade_rate", &AsxtFeeTable::m_tradeRate)
-    .def_readwrite("gst_rate", &AsxtFeeTable::m_gstRate)
+    .add_property("trade_rate", make_getter(&AsxtFeeTable::m_tradeRate,
+      return_value_policy<return_by_value>()), make_setter(
+      &AsxtFeeTable::m_tradeRate, return_value_policy<return_by_value>()))
+    .add_property("gst_rate", make_getter(&AsxtFeeTable::m_gstRate,
+      return_value_policy<return_by_value>()), make_setter(
+      &AsxtFeeTable::m_gstRate, return_value_policy<return_by_value>()))
     .def_readwrite("trade_fee_cap", &AsxtFeeTable::m_tradeFeeCap);
     enum_<AsxtFeeTable::PriceClass>("PriceClass")
       .value("NONE", AsxtFeeTable::PriceClass::NONE)

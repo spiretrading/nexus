@@ -15,6 +15,9 @@ namespace Nexus {
    */
   struct AsxtFeeTable {
 
+    /*! \enum PriceClass
+        \brief Used to categorize fees based on the price of the security.
+     */
     enum class PriceClass {
 
       //! Not recognized.
