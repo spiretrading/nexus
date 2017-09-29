@@ -1,4 +1,5 @@
 #include "Nexus/Python/FeeHandling.hpp"
+#include <Beam/Python/Array.hpp>
 #include <Beam/Python/BoostPython.hpp>
 #include <Beam/Python/Copy.hpp>
 #include "Nexus/FeeHandling/AsxtFeeTable.hpp"
@@ -23,7 +24,8 @@ void Nexus::Python::ExportAsxtFeeTable() {
     .def("__copy__", &MakeCopy<AsxtFeeTable>)
     .def("__deepcopy__", &MakeDeepCopy<AsxtFeeTable>)
     .def_readwrite("spire_fee", &AsxtFeeTable::m_spireFee)
-    .def_readwrite("clearing_rate_table", &AsxtFeeTable::m_clearingRateTable)
+    .add_property("clearing_rate_table",
+      MakeArray(&AsxtFeeTable::m_clearingRateTable))
     .add_property("trade_rate", make_getter(&AsxtFeeTable::m_tradeRate,
       return_value_policy<return_by_value>()), make_setter(
       &AsxtFeeTable::m_tradeRate, return_value_policy<return_by_value>()))
