@@ -456,6 +456,128 @@ namespace {
     chixSell.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
     chixSell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
     orderTypes.emplace_back(chixSell.Build());
+    CanvasNodeBuilder chixFeeSensitiveLimitBid(
+      *GetLimitBidOrderTaskNode()->Rename(
+      "CHI-X Fee Sensitive Limit Bid")->AddField("max_floor", 111,
+      LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+      "ex_destination", 100, make_unique<TextNode>("SMRTFEE")));
+    chixFeeSensitiveLimitBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::CHIX()));
+    chixFeeSensitiveLimitBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION,
+      false);
+    chixFeeSensitiveLimitBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION,
+      true);
+    chixFeeSensitiveLimitBid.SetVisible("ex_destination", false);
+    chixFeeSensitiveLimitBid.SetReadOnly("ex_destination", true);
+    chixFeeSensitiveLimitBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    chixFeeSensitiveLimitBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      false);
+    chixFeeSensitiveLimitBid.SetReadOnly(
+      BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    chixFeeSensitiveLimitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(chixFeeSensitiveLimitBid.Build());
+    CanvasNodeBuilder chixFeeSensitiveLimitAsk(
+      *GetLimitAskOrderTaskNode()->Rename(
+      "CHI-X Fee Sensitive Limit Ask")->AddField("max_floor", 111,
+      LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+      "ex_destination", 100, make_unique<TextNode>("SMRTFEE")));
+    chixFeeSensitiveLimitAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::CHIX()));
+    chixFeeSensitiveLimitAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION,
+      false);
+    chixFeeSensitiveLimitAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION,
+      true);
+    chixFeeSensitiveLimitAsk.SetVisible("ex_destination", false);
+    chixFeeSensitiveLimitAsk.SetReadOnly("ex_destination", true);
+    chixFeeSensitiveLimitAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    chixFeeSensitiveLimitAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      false);
+    chixFeeSensitiveLimitAsk.SetReadOnly(
+      BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    chixFeeSensitiveLimitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(chixFeeSensitiveLimitAsk.Build());
+    CanvasNodeBuilder chixFeeSensitiveMarketBid(
+      *GetMarketBidOrderTaskNode()->Rename(
+      "CHI-X Fee Sensitive Market Bid")->AddField(
+      "ex_destination", 100, make_unique<TextNode>("SMRTFEE")));
+    chixFeeSensitiveMarketBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::CHIX()));
+    chixFeeSensitiveMarketBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION,
+      false);
+    chixFeeSensitiveMarketBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION,
+      true);
+    chixFeeSensitiveMarketBid.SetVisible("ex_destination", false);
+    chixFeeSensitiveMarketBid.SetReadOnly("ex_destination", true);
+    chixFeeSensitiveMarketBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    chixFeeSensitiveMarketBid.SetVisible(
+      BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    chixFeeSensitiveMarketBid.SetReadOnly(
+      BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    chixFeeSensitiveMarketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(chixFeeSensitiveMarketBid.Build());
+    CanvasNodeBuilder chixFeeSensitiveMarketAsk(
+      *GetMarketAskOrderTaskNode()->Rename(
+      "CHI-X Fee Sensitive Market Ask")->AddField(
+      "ex_destination", 100, make_unique<TextNode>("SMRTFEE")));
+    chixFeeSensitiveMarketAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::CHIX()));
+    chixFeeSensitiveMarketAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION,
+      false);
+    chixFeeSensitiveMarketAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION,
+      true);
+    chixFeeSensitiveMarketAsk.SetVisible("ex_destination", false);
+    chixFeeSensitiveMarketAsk.SetReadOnly("ex_destination", true);
+    chixFeeSensitiveMarketAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    chixFeeSensitiveMarketAsk.SetVisible(
+      BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    chixFeeSensitiveMarketAsk.SetReadOnly(
+      BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    chixFeeSensitiveMarketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(chixFeeSensitiveMarketAsk.Build());
+    CanvasNodeBuilder chixFeeSensitiveBuy(
+      *GetMarketBidOrderTaskNode()->Rename("CHI-X Fee Sensitive Buy")->AddField(
+      "ex_destination", 100, make_unique<TextNode>("SMRTFEE")));
+    chixFeeSensitiveBuy.SetVisible(BaseSingleOrderTaskFactory::QUANTITY, false);
+    chixFeeSensitiveBuy.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::CHIX()));
+    chixFeeSensitiveBuy.SetVisible(BaseSingleOrderTaskFactory::DESTINATION,
+      false);
+    chixFeeSensitiveBuy.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION,
+      true);
+    chixFeeSensitiveBuy.SetVisible("ex_destination", false);
+    chixFeeSensitiveBuy.SetReadOnly("ex_destination", true);
+    chixFeeSensitiveBuy.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    chixFeeSensitiveBuy.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      false);
+    chixFeeSensitiveBuy.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      true);
+    chixFeeSensitiveBuy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(chixFeeSensitiveBuy.Build());
+    CanvasNodeBuilder chixFeeSensitiveSell(*GetMarketAskOrderTaskNode()->Rename(
+      "CHI-X Fee Sensitive Sell")->AddField(
+      "ex_destination", 100, make_unique<TextNode>("SMRTFEE")));
+    chixFeeSensitiveSell.SetVisible(BaseSingleOrderTaskFactory::QUANTITY, false);
+    chixFeeSensitiveSell.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::CHIX()));
+    chixFeeSensitiveSell.SetVisible(BaseSingleOrderTaskFactory::DESTINATION,
+      false);
+    chixFeeSensitiveSell.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION,
+      true);
+    chixFeeSensitiveSell.SetVisible("ex_destination", false);
+    chixFeeSensitiveSell.SetReadOnly("ex_destination", true);
+    chixFeeSensitiveSell.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    chixFeeSensitiveSell.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      false);
+    chixFeeSensitiveSell.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      true);
+    chixFeeSensitiveSell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(chixFeeSensitiveSell.Build());
     CanvasNodeBuilder chixSmartXDarkLimitBid(
       *GetLimitBidOrderTaskNode()->Rename(
       "CHI-X SMART X Dark Limit Bid")->AddField("max_floor", 111,

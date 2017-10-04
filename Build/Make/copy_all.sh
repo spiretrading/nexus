@@ -15,14 +15,14 @@ nexus_applications+=" SimulationOrderExecutionServer"
 nexus_applications+=" SimulationMarketDataFeedClient"
 
 for application in $beam_applications; do
-  cd $application
+  pushd $application
   cp /home/developers/Beam/Applications/$application/Application/$application .
-  cd ..
+  popd
 done
 for application in $nexus_applications; do
-  cd $application
+  pushd $application
   cp /home/developers/Nexus/Applications/$application/Application/$application .
-  cd ..
+  popd
 done
 
 cp -R /home/developers/Nexus/Applications/ClientWebPortal/Application/webapp ./ClientWebPortal

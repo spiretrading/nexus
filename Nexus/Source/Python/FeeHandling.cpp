@@ -1,4 +1,5 @@
 #include "Nexus/Python/FeeHandling.hpp"
+#include <Beam/Python/Array.hpp>
 #include <Beam/Python/BoostPython.hpp>
 #include <Beam/Python/Copy.hpp>
 #include "Nexus/FeeHandling/AsxtFeeTable.hpp"
@@ -18,15 +19,29 @@ using namespace Nexus::Python;
 using namespace std;
 
 void Nexus::Python::ExportAsxtFeeTable() {
-  class_<AsxtFeeTable>("AsxtFeeTable", init<>())
-    .def("__copy__", &MakeCopy<AsxtFeeTable>)
-    .def("__deepcopy__", &MakeDeepCopy<AsxtFeeTable>)
-    .def_readwrite("spire_fee", &AsxtFeeTable::m_spireFee)
-    .def_readwrite("clearing_rate", &AsxtFeeTable::m_clearingRate)
-    .def_readwrite("trade_rate", &AsxtFeeTable::m_tradeRate)
-    .def_readwrite("gst_rate", &AsxtFeeTable::m_gstRate)
-    .def_readwrite("trade_fee_cap", &AsxtFeeTable::m_tradeFeeCap);
+  {
+    scope outer = class_<AsxtFeeTable>("AsxtFeeTable", init<>())
+      .def("__copy__", &MakeCopy<AsxtFeeTable>)
+      .def("__deepcopy__", &MakeDeepCopy<AsxtFeeTable>)
+      .def_readwrite("spire_fee", &AsxtFeeTable::m_spireFee)
+      .add_property("clearing_rate_table",
+        MakeArray(&AsxtFeeTable::m_clearingRateTable))
+      .add_property("trade_rate", make_getter(&AsxtFeeTable::m_tradeRate,
+        return_value_policy<return_by_value>()), make_setter(
+        &AsxtFeeTable::m_tradeRate, return_value_policy<return_by_value>()))
+      .add_property("gst_rate", make_getter(&AsxtFeeTable::m_gstRate,
+        return_value_policy<return_by_value>()), make_setter(
+        &AsxtFeeTable::m_gstRate, return_value_policy<return_by_value>()))
+      .def_readwrite("trade_fee_cap", &AsxtFeeTable::m_tradeFeeCap);
+    enum_<AsxtFeeTable::PriceClass>("PriceClass")
+      .value("NONE", AsxtFeeTable::PriceClass::NONE)
+      .value("TIER_ONE", AsxtFeeTable::PriceClass::TIER_ONE)
+      .value("TIER_TWO", AsxtFeeTable::PriceClass::TIER_TWO)
+      .value("TIER_THREE", AsxtFeeTable::PriceClass::TIER_THREE);
+  }
   def("parse_asx_fee_table", &ParseAsxFeeTable);
+  def("lookup_clearing_fee", &LookupClearingFee);
+  def("lookup_price_class", &LookupPriceClass);
   def("calculate_fee", static_cast<ExecutionReport (*)(const AsxtFeeTable&,
     const ExecutionReport&)>(&CalculateFee));
 }
@@ -36,7 +51,7 @@ void Nexus::Python::ExportChicFeeTable() {
     scope outer = class_<ChicFeeTable>("ChicFeeTable", init<>())
       .def("__copy__", &MakeCopy<ChicFeeTable>)
       .def("__deepcopy__", &MakeDeepCopy<ChicFeeTable>)
-      .def_readwrite("fee_table", &ChicFeeTable::m_feeTable);
+      .add_property("fee_table", MakeArray(&ChicFeeTable::m_feeTable));
     enum_<ChicFeeTable::Category>("Category")
       .value("NONE", ChicFeeTable::Category::NONE)
       .value("DEFAULT", ChicFeeTable::Category::DEFAULT)

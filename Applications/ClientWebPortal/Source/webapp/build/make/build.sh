@@ -2,7 +2,7 @@
 config=$1
 directory=$(dirname $(readlink -f $0))
 pushd $directory/
-cd $directory/../..
+pushd $directory/../..
 echo $config
 if [ "$config" = "clean" ]
 then
@@ -12,5 +12,6 @@ else
   rm -rf ../../Application/webapp
   cp -a dist/. ../../Application/webapp/
 fi
+popd
 popd
 

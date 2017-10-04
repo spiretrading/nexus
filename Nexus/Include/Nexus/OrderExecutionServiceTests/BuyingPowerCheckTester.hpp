@@ -1,6 +1,6 @@
 #ifndef NEXUS_BUYINGPOWERCHECKTESTER_HPP
 #define NEXUS_BUYINGPOWERCHECKTESTER_HPP
-#include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
+#include <Beam/Queues/Queue.hpp>
 #include <boost/optional/optional.hpp>
 #include <cppunit/extensions/HelperMacros.h>
 #include "Nexus/OrderExecutionService/BuyingPowerCheck.hpp"
@@ -35,8 +35,15 @@ namespace Tests {
       //! Tests a submission that is then rejected.
       void TestSubmissionThenRejection();
 
+      //! Add a filled order for 100 shares at $1.00.
+      //! Submit an order for 100 shares at $2.00.
+      //! Expect the order to be accepted.
+      void TestOrderRecovery();
+
     private:
       boost::optional<TestEnvironment> m_environment;
+      std::shared_ptr<Beam::Queue<const OrderExecutionService::Order*>>
+        m_orderSubmissions;
       boost::optional<TestServiceClients> m_serviceClients;
       boost::optional<BuyingPowerCheck> m_buyingPowerCheck;
       RiskService::RiskParameters m_traderRiskParameters;
@@ -45,6 +52,7 @@ namespace Tests {
         CPPUNIT_TEST(TestSubmission);
         CPPUNIT_TEST(TestAddWithoutSubmission);
         CPPUNIT_TEST(TestSubmissionThenRejection);
+        CPPUNIT_TEST(TestOrderRecovery);
       BEAM_CPPUNIT_TEST_SUITE_END();
   };
 }

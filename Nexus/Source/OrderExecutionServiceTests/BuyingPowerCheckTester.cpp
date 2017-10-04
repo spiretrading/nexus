@@ -1,25 +1,25 @@
 #include "Nexus/OrderExecutionServiceTests/BuyingPowerCheckTester.hpp"
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
-#include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::MarketDataService;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::OrderExecutionService::Tests;
 using namespace Nexus::RiskService;
 using namespace std;
 
+namespace {
+  Security TST{"TST", DefaultMarkets::NYSE(), DefaultCountries::US()};
+}
+
 void BuyingPowerCheckTester::setUp() {
   m_environment.emplace();
   m_environment->Open();
+  m_orderSubmissions = std::make_shared<Queue<const Order*>>();
+  m_environment->MonitorOrderSubmissions(m_orderSubmissions);
+  m_environment->UpdateBboPrice(TST, Money::ONE, Money::ONE + Money::CENT);
   m_serviceClients.emplace(Ref(*m_environment));
   m_serviceClients->Open();
   m_traderRiskParameters.m_currency = DefaultCurrencies::USD();
@@ -37,24 +37,20 @@ void BuyingPowerCheckTester::setUp() {
 void BuyingPowerCheckTester::tearDown() {
   m_buyingPowerCheck.reset();
   m_serviceClients.reset();
+  m_orderSubmissions.reset();
   m_environment.reset();
 }
 
 void BuyingPowerCheckTester::TestSubmission() {
-  OrderExecutionSession session;
-  Security security{"TST", DefaultMarkets::NYSE(), DefaultCountries::US()};
-  m_environment->Publish(security,
-    BboQuote{Quote{Money::ONE, 100, Side::BID},
-    Quote{Money::ONE + Money::CENT, 100, Side::ASK}, not_a_date_time});
   OrderInfo orderInfoA{OrderFields::BuildLimitOrder(
-    DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
+    DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
     Side::BID, "NYSE", 100, Money::ONE), 1,
     m_environment->GetTimeEnvironment().GetTime()};
   PrimitiveOrder orderA{orderInfoA};
   CPPUNIT_ASSERT_NO_THROW(m_buyingPowerCheck->Submit(orderInfoA));
   m_buyingPowerCheck->Add(orderA);
   OrderInfo orderInfoB{OrderFields::BuildLimitOrder(
-    DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
+    DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
     Side::BID, "NYSE", 1000, Money::ONE), 2,
     m_environment->GetTimeEnvironment().GetTime()};
   CPPUNIT_ASSERT_THROW(m_buyingPowerCheck->Submit(orderInfoB),
@@ -62,19 +58,14 @@ void BuyingPowerCheckTester::TestSubmission() {
 }
 
 void BuyingPowerCheckTester::TestAddWithoutSubmission() {
-  OrderExecutionSession session;
-  Security security{"TST", DefaultMarkets::NYSE(), DefaultCountries::US()};
-  m_environment->Publish(security,
-    BboQuote{Quote{Money::ONE, 100, Side::BID},
-    Quote{Money::ONE + Money::CENT, 100, Side::ASK}, not_a_date_time});
   OrderInfo orderInfoA{OrderFields::BuildLimitOrder(
-    DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
+    DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
     Side::BID, "NYSE", 100, Money::ONE), 1,
     m_environment->GetTimeEnvironment().GetTime()};
   PrimitiveOrder orderA(orderInfoA);
   m_buyingPowerCheck->Add(orderA);
   OrderInfo orderInfoB{OrderFields::BuildLimitOrder(
-    DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
+    DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
     Side::BID, "NYSE", 1000, Money::ONE), 2,
     m_environment->GetTimeEnvironment().GetTime()};
   CPPUNIT_ASSERT_THROW(m_buyingPowerCheck->Submit(orderInfoB),
@@ -82,20 +73,35 @@ void BuyingPowerCheckTester::TestAddWithoutSubmission() {
 }
 
 void BuyingPowerCheckTester::TestSubmissionThenRejection() {
-  OrderExecutionSession session;
-  Security security{"TST", DefaultMarkets::NYSE(), DefaultCountries::US()};
-  m_environment->Publish(security,
-    BboQuote{Quote{Money::ONE, 100, Side::BID},
-    Quote{Money::ONE + Money::CENT, 100, Side::ASK}, not_a_date_time});
   OrderInfo orderInfoA{OrderFields::BuildLimitOrder(
-    DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
+    DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
     Side::BID, "NYSE", 100, Money::ONE), 1, not_a_date_time};
   PrimitiveOrder orderA{orderInfoA};
   CPPUNIT_ASSERT_NO_THROW(m_buyingPowerCheck->Submit(orderInfoA));
   m_buyingPowerCheck->Reject(orderInfoA);
   OrderInfo orderInfoB{OrderFields::BuildLimitOrder(
-    DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
+    DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
     Side::BID, "NYSE", 1000, Money::ONE), 2,
     m_environment->GetTimeEnvironment().GetTime()};
   CPPUNIT_ASSERT_NO_THROW(m_buyingPowerCheck->Submit(orderInfoB));
+}
+
+void BuyingPowerCheckTester::TestOrderRecovery() {
+  auto recoveryFields = OrderFields::BuildLimitOrder(TST, Side::BID, 100,
+    Money::ONE);
+  auto& recoverOrder = m_serviceClients->GetOrderExecutionClient().Submit(
+    recoveryFields);
+  auto submittedRecoveryOrder = m_orderSubmissions->Top();
+  m_orderSubmissions->Pop();
+  m_environment->AcceptOrder(*submittedRecoveryOrder);
+  m_environment->FillOrder(*submittedRecoveryOrder, 100);
+  CPPUNIT_ASSERT_NO_THROW(m_buyingPowerCheck->Add(*submittedRecoveryOrder));
+  auto submissionFields = OrderFields::BuildLimitOrder(TST, Side::BID, 100,
+    2 * Money::ONE);
+  auto& submissionOrder = m_serviceClients->GetOrderExecutionClient().Submit(
+    submissionFields);
+  auto submittedOrder = m_orderSubmissions->Top();
+  m_orderSubmissions->Pop();
+  CPPUNIT_ASSERT_NO_THROW(m_buyingPowerCheck->Submit(
+    submittedOrder->GetInfo()));
 }
