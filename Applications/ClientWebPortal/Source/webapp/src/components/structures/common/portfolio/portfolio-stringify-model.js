@@ -2,6 +2,8 @@ import DataChangeType from './data-change-type';
 import uuid from 'uuid';
 import HashMap from 'hashmap';
 import definitionsService from 'services/definitions';
+import numberFormatter from 'utils/number-formatter';
+import currencyFormatter from 'utils/currency-formatter';
 
 export default class {
   constructor(sourceModel) {
@@ -21,7 +23,6 @@ export default class {
 
   getValueAt(x, y) {
     let value = this.sourceModel.getValueAt(x, y);
-    let constructorName = null;
     switch(x) {
       case 0:
         constructorName = 'DirectoryEntry';
@@ -29,11 +30,23 @@ export default class {
       case 1:
         constructorName = 'Security';
         break;
+      case 2:
+      case 11:
+      case 12:
+        constructorName = 'Number';
+        break;
       case 10:
         constructorName = 'CurrencyId';
         break;
     }
-    value = this.stringifyValue(value, constructorName);
+
+    let constructorName = value.constructor.name;
+    let currencyId;
+    if (constructorName == 'Money') {
+      currencyId = this.sourceModel.getValueAt(10, y);
+    }
+
+    value = this.stringifyValue(value, constructorName, currencyId);
     return value;
   }
 
@@ -59,7 +72,7 @@ export default class {
   }
 
   /** @private */
-  stringifyValue(value, constructorName) {
+  stringifyValue(value, constructorName, currencyId) {
     if (value.toString != null) {
       if (constructorName == 'Security') {
         return value.toString(definitionsService.getMarketDatabase());
@@ -67,19 +80,18 @@ export default class {
         return value.name;
       } else if (constructorName == 'CurrencyId') {
         return definitionsService.getCurrencyCode(value.toNumber());
+      } else if (constructorName == 'Money') {
+        return currencyFormatter.formatById(
+          currencyId.toNumber(),
+          value
+        );
+      } else if (constructorName == 'Number') {
+        return numberFormatter.formatWithComma(value);
       } else {
         return value.toString();
       }
     } else {
       return '' + value;
     }
-  }
-
-  /** @private */
-  stringifyRow(row) {
-    for (let property in row) {
-      row[property] = this.stringifyValue(row[property], row[property].constructor.name);
-    }
-    return row;
   }
 }

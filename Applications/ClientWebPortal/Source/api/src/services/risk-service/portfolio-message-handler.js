@@ -6,24 +6,55 @@ import HashMap from 'hashmap';
 
 // const THROTTLE_INTERVAL = 500;
 // TODO: remove this temporary code
-const THROTTLE_INTERVAL = 500;
+const THROTTLE_INTERVAL = 80;
 
 export default class {
   constructor(listener) {
     this.listener = listener;
     this.messages = new HashMap();
     this.listenerRunner = setInterval(this.runListener.bind(this), THROTTLE_INTERVAL);
+    this.runListener = this.runListener.bind(this);
 
     // TODO: remove this temporary code
-    setInterval(this.runRandomDataGenerator.bind(this), 400);
+    setInterval(this.runRandomDataGenerator.bind(this), 40);
     this.randomAccountCache = new HashMap();
     this.randomAccountNameCache = new HashMap();
     this.counter = 0;
+    this.mockAccount = [
+      'DDDDA',
+      'DDDEC',
+      'DDDDE',
+      'DDDED',
+      'DDEAB',
+      'DDDDD',
+      'DDECA',
+      'DDEBB',
+      'DDECB',
+      'DDECC',
+      'DDECE',
+      'DDECD',
+      'DDEDA',
+      'DDEEA',
+      'DDEDA',
+      'DDDDD',
+      'DEAAA',
+      'DEAAA',
+      'DEAAE',
+      'DEABB',
+      'DEABC',
+      'DDDDD',
+      'DEABE',
+      'DEACB',
+      'DEACC',
+      'DEACB',
+      'DDDDD'
+    ];
+    this.randomIdsInOrder = [];
   }
 
   handle(message) {
     let unmarshalledMessage = this.unmarshallPortfolioMessage(message);
-    let messageKey = unmarshalledMessage.account.name.toString() + '.' +
+    let messageKey = unmarshalledMessage.account.name + '.' +
       unmarshalledMessage.inventory.position.key.index.symbol + '.' +
       unmarshalledMessage.inventory.position.key.index.market.toData();
     this.messages.set(messageKey, unmarshalledMessage);
@@ -59,7 +90,7 @@ export default class {
   runRandomDataGenerator() {
     let unmarshalledMessage = this.randomlyGenerateData();
     if (unmarshalledMessage != null) {
-      let messageKey = unmarshalledMessage.account.name.toString() + '.' +
+      let messageKey = unmarshalledMessage.account.name + '.' +
         unmarshalledMessage.inventory.position.key.index.symbol + '.' +
         unmarshalledMessage.inventory.position.key.index.market.toData();
       this.messages.set(messageKey, unmarshalledMessage);
@@ -70,13 +101,15 @@ export default class {
   randomlyGenerateData() {
     let payload = {};
 
-    let randomId = this.randomIntegerGenerator(1,5000);
+    let randomId = this.randomIntegerGenerator(1,3000);
+    this.randomIdsInOrder.push(randomId);
+
     let directoryEntry;
     if (this.randomAccountCache.has(randomId)) {
       directoryEntry = this.randomAccountCache.get(randomId);
     } else {
       let name = this.randomlyGeneratedString();
-      if (this.randomAccountNameCache.has(name)) {
+      if (this.randomAccountNameCache.get(name)) {
         return null;
       } else {
         this.randomAccountNameCache.set(name, true);
@@ -116,7 +149,20 @@ export default class {
     for (var i = 0; i < 5; i++)
       text += possible.charAt(Math.floor(Math.random() * possible.length));
 
-    return text;
+    return text.trim();
+    // return this.mockAccount[this.counter];
+  }
+
+  // TODO: remove this temporary code
+  randomlyGeneratedSecurityName() {
+    // var text = "";
+    // var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    //
+    // for (var i = 0; i < 3; i++)
+    //   text += possible.charAt(Math.floor(Math.random() * possible.length));
+    //
+    // return text.trim();
+    return 'ABX';
   }
 
   // TODO: remove this temporary code
@@ -142,6 +188,8 @@ export default class {
       // usd
       return CurrencyId.fromData(840);
     }
+
+    // return CurrencyId.fromData(840);
   }
 
   // TODO: remove this temporary code
@@ -159,7 +207,7 @@ export default class {
     let data = {
       country: countryCode,
       market: 'XTSE',
-      symbol: 'ABX'
+      symbol: this.randomlyGeneratedSecurityName()
     };
 
     return Security.fromData(data);
@@ -168,13 +216,17 @@ export default class {
   /** @private */
   runListener() {
     // TODO: remove this temporary code
-    if (this.counter < 30) {
-      this.randomlyGenerateData();
-
-      this.listener(this.messages.values());
-      this.messages.clear();
-      this.counter++;
-    }
+    // if (this.counter < 26) {
+      let values = this.messages.values();
+      this.messages = new HashMap();
+      this.listener(values);
+      // this.counter++;
+    // } else if (this.counter === 26) {
+      // for (let i=0; i<this.randomIdsInOrder.length; i++) {
+      //   console.debug(this.randomIdsInOrder[i]);
+      // }
+      // this.counter++;
+    // }
 
   }
 

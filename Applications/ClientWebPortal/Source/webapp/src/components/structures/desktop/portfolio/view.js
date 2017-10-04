@@ -99,6 +99,7 @@ class View extends UpdatableView {
             fontWeight='200'
             fontSize='16px'
             lineHeight='40'
+            changeSortOrder={this.controller.changeSortOrder}
           />
         </div>
       </div>

@@ -11,7 +11,9 @@ import userService from 'services/user';
 import definitionsService from 'services/definitions';
 import PortfolioModel from './portfolio-model';
 import SortModel from './sort-model';
-import StringifyModel from './stringify-model';
+import ColumnSubsetModel from './column-subset-model';
+import ColumnSumModel from './column-sum-model';
+import StringifyModel from './portfolio-stringify-model';
 import DataChangeType from './data-change-type';
 
 class Controller {
@@ -21,12 +23,21 @@ class Controller {
     this.riskServiceClient = new RiskServiceClient();
     this.exchangeRateTable = definitionsService.getExchangeRateTable();
     this.portfolioModel = new PortfolioModel();
-    this.sortModel = new SortModel(this.portfolioModel);
-    this.stringifyModel = new StringifyModel(this.sortModel);
+    let sortModel = new SortModel(this.portfolioModel, [
+      { index: 0, isAsc: true },
+      { index: 1, isAsc: false }
+    ]);
+    let subsetModel = new ColumnSubsetModel(sortModel, [0, 1, 3, 10]);
+    // let subsetModel = new ColumnSubsetModel(this.portfolioModel, [0,1,3,10]);
+    this.sumModel = new ColumnSumModel(subsetModel);
+    this.stringifyModel = new StringifyModel(sortModel);
+    // this.stringifyModel = new StringifyModel(this.portfolioModel);
 
     this.getRequiredData = this.getRequiredData.bind(this);
     this.setTableRef = this.setTableRef.bind(this);
     this.onDataModelChange = this.onDataModelChange.bind(this);
+    this.onSumModelDataChange = this.onSumModelDataChange.bind(this);
+    this.changeSortOrder = this.changeSortOrder.bind(this);
   }
 
   getView() {
@@ -69,8 +80,6 @@ class Controller {
   /** @private */
   onPortfolioDataReceived(data) {
     this.portfolioModel.onDataReceived(data);
-    this.componentModel.aggregates = this.portfolioModel.getTotals();
-    this.view.update(this.componentModel);
   }
 
   /** @private */
@@ -78,8 +87,21 @@ class Controller {
     this.view.resizePortfolioChart();
   }
 
+  onSumModelDataChange() {
+    this.componentModel.aggregates = {
+      totalPnL: this.sumModel.getValueAt(2, 0),
+      unrealizedPnL: this.sumModel.getValueAt(3, 0),
+      realizedPnL: this.sumModel.getValueAt(4, 0),
+      fees: this.sumModel.getValueAt(5, 0),
+      volumes: this.sumModel.getValueAt(7, 0),
+      trades: this.sumModel.getValueAt(8, 0)
+    };
+    this.view.update(this.componentModel);
+  }
+
   componentDidMount() {
     this.dataModelChangeSubId = this.stringifyModel.addDataChangeListener(this.onDataModelChange);
+    this.dataSumChangeSubId = this.sumModel.addDataChangeListener(this.onSumModelDataChange);
     this.filterResizeSubId = EventBus.subscribe(Event.Portfolio.FILTER_RESIZE, this.onFilterResize.bind(this));
 
     this.componentModel = {
@@ -137,6 +159,7 @@ class Controller {
 
   componentWillUnmount() {
     this.stringifyModel.removeDataChangeListener(this.dataModelChangeSubId);
+    this.sumModel.removeDataChangeListener(this.dataSumChangeSubId);
     this.riskServiceClient.unsubscribe(this.portfolioSubscriptionId);
     EventBus.unsubscribe(this.filterResizeSubId);
     this.view.dispose();
@@ -181,6 +204,10 @@ class Controller {
 
   getDataModel() {
     return this.stringifyModel;
+  }
+
+  changeSortOrder(sortOrders) {
+    console.debug(sortOrders);
   }
 }
 

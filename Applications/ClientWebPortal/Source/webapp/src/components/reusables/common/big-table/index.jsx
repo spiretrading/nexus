@@ -26,6 +26,10 @@ class BigTable extends Component {
     this.view.componentWillUpdate();
   }
 
+  componentDidUpdate() {
+    this.view.componentDidUpdate();
+  }
+
   render() {
     return this.controller.getView().render();
   }

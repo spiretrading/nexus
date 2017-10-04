@@ -13,9 +13,12 @@ class View extends UpdatableView {
     this.componentId = uuid.v4();
 
     this.isInitialized = false;
+    this.areColumnHeadersRendered = false;
     this.isViewingRegionDimensionsSet = false;  // due to bug in Safari you need to manually set
     this.onViewingRegionScroll = this.onViewingRegionScroll.bind(this);
     this.render = this.render.bind(this);
+    this.onColumnHeaderClick = this.onColumnHeaderClick.bind(this);
+    this.cellSidePaddings = 20;
   }
 
   setTableModel(tableModel) {
@@ -26,7 +29,7 @@ class View extends UpdatableView {
     let $viewingRegion = $('#' + this.componentId + ' .viewing-region');
     return {
       width: $viewingRegion.outerWidth(),
-      height: $viewingRegion.outerHeight()
+      height: $viewingRegion.height()
     };
   }
 
@@ -78,6 +81,15 @@ class View extends UpdatableView {
     for (let i=bottomY; i<numRecords; i++) {
       this.bottomPadding += singleRowHeight;
     }
+
+    let viewingRegionWidth = this.getViewingRegionWidthHeight().width;
+    $('#' + this.componentId + ' .big-table-wrapper').css({
+      paddingTop: this.topPadding || 0,
+      paddingBottom: this.bottomPadding || 0,
+      paddingLeft: this.leftPadding || 0,
+      paddingRight: this.rightPadding || 0,
+      width: this.totalWidthPx
+    });
   }
 
   /** @private */
@@ -91,14 +103,13 @@ class View extends UpdatableView {
     var context = canvas.getContext("2d");
     context.font = font;
     var metrics = context.measureText(Ws);
-    return metrics.width;
+    return Math.ceil(metrics.width) + 20;
   }
 
   /** @private */
-  getWidthPixels(textLength) {
-    let sidePaddings = 20;
-    let width = this.getTextWidth(textLength, this.componentModel.fontFamily) + sidePaddings;
-    return Math.ceil(width);
+  onColumnHeaderClick(e) {
+    let columnIndex = $(e.currentTarget).attr('data-index');
+    this.controller.onSortColumnSelected(Number(columnIndex));
   }
 
   setViewingRegionDimensions() {
@@ -150,7 +161,14 @@ class View extends UpdatableView {
 
   onViewingRegionScroll() {
     this.updateViewingRegiongCoordinates();
+    this.updateColumnHeaderPosition();
     this.update();
+  }
+
+  /** @private */
+  updateColumnHeaderPosition() {
+    let left = this.scrolledPx.left * -1;
+    $('#' + this.componentId + ' .column-headers').css('left', left);
   }
 
   /** @private */
@@ -160,10 +178,13 @@ class View extends UpdatableView {
     this.scrolledPx.left = parseInt($bigTableWrapper.scrollLeft());
 
     let columnLengths = this.tableModel.getColumnLengths();
+    let $columnHeaders = $('#' + this.componentId + ' .column-headers div');
     this.columnWidthsPx = [];
     this.totalWidthPx = 0;
     for (let i=0; i<columnLengths.length; i++) {
-      let columnWidthPx = this.getWidthPixels(columnLengths[i]);
+      let headerText = $($columnHeaders[i]).text();
+      let columnLength = Math.max(columnLengths[i].length, headerText.length);
+      let columnWidthPx = this.getTextWidth(columnLength);
       this.columnWidthsPx.push(columnWidthPx);
       this.totalWidthPx += columnWidthPx;
     }
@@ -223,6 +244,7 @@ class View extends UpdatableView {
           width: columnWidth,
           height: Number(this.componentModel.lineHeight)
         };
+        // let cellStyle = {};
         columns.push(
           <td key={x + '-' + y} style={cellStyle} className={className}>
             {cellValue}
@@ -256,9 +278,59 @@ class View extends UpdatableView {
 
     if (this.isInitialized) {
       this.updateViewingRegiongCoordinates();
-      this.calculatePaddings();
       this.renderTable();
+      this.calculatePaddings();
     }
+  }
+
+  componentDidUpdate() {
+    if (this.isInitialized) {
+      this.adjustColumnWidths();
+    }
+  }
+
+  /** @private */
+  adjustColumnWidths() {
+    let columnLengths = this.tableModel.getColumnLengths();
+    let $columnHeaders = $('#' + this.componentId + ' .column-headers div');
+    let totalWidth = 0;
+
+    let coords = this.getXCoordinatesIncludingBuffers();
+
+    for (let i=0; i<$columnHeaders.length; i++) {
+      let $columnHeader = $($columnHeaders[i]);
+      let columnHeaderText = $columnHeader.text();
+      let maxLength;
+      if (columnLengths[i] != null && columnLengths[i].length != null) {
+        maxLength = Math.max(columnHeaderText.length, columnLengths[i].length);
+      } else {
+        maxLength = columnHeaderText.length;
+      }
+      let maxWidth = this.getTextWidth(maxLength, this.componentModel.fontFamily);
+      totalWidth += maxWidth;
+      if (coords.leftX <= i && coords.rightX >= i) {
+        let childIndex = i + 1 - coords.leftX;
+        $('#' + this.componentId + ' .big-table-wrapper table tr td:nth-child(' + childIndex + ')').width(maxWidth);
+      }
+      $columnHeader.width(maxWidth);
+    }
+
+    $('#' + this.componentId + ' .column-headers').width(totalWidth);
+  }
+
+  /** @private */
+  renderColumnHeaders() {
+    let cells = [];
+    for (let i=0; i<this.componentModel.columnTypes.length; i++) {
+      cells.push(
+        <div key={i} onClick={this.onColumnHeaderClick} data-index={i}>
+          {this.componentModel.columnTypes[i].name}
+        </div>
+      );
+    }
+    this.columnHeaders =  <div className="column-headers">
+                            {cells}
+                          </div>;
   }
 
   render() {
@@ -266,12 +338,17 @@ class View extends UpdatableView {
       paddingTop: this.topPadding || 0,
       paddingBottom: this.bottomPadding || 0,
       paddingLeft: this.leftPadding || 0,
-      paddingRight: this.rightPadding || 0,
-      width: this.totalWidthPx
+      paddingRight: this.rightPadding || 0
     };
+
+    if (!this.areColumnHeadersRendered) {
+      this.renderColumnHeaders();
+      this.areColumnHeadersRendered = true;
+    }
 
     return (
         <div id={this.componentId} className="big-table-container">
+          {this.columnHeaders}
           <div className="viewing-region">
             <div className="big-table-wrapper" style={tableWrapperStyle}>
               {this.table}

@@ -10,21 +10,9 @@ class PortfolioModel {
   constructor() {
     this.dataIndices = new HashMap();
     this.data = [];
-    this.aggregation = {
-      totalPnL: Money.fromNumber(0),
-      unrealizedPnL: Money.fromNumber(0),
-      realizedPnL: Money.fromNumber(0),
-      fees: Money.fromNumber(0),
-      volumes: 0,
-      trades: 0
-    };
     this.accountTotals = new HashMap();
     this.exchangeRateTable = definitionsService.getExchangeRateTable();
     this.dataChangeListeners = new HashMap();
-  }
-
-  getTotals() {
-    return this.aggregation;
   }
 
   onDataReceived(data) {
@@ -95,6 +83,12 @@ class PortfolioModel {
         return row.volume;
       case 12:
         return row.trades;
+      case 13:
+        return this.accountTotals.get(row.account.id).totalPnL;
+      case 14:
+        return this.accountTotals.get(row.account.id).unrealizedPnL;
+      case 15:
+        return this.accountTotals.get(row.account.id).fees;
     }
   }
 
@@ -103,7 +97,7 @@ class PortfolioModel {
   }
 
   getColumnCount() {
-    return 13;
+    return 16;
   }
 
   addDataChangeListener(listener) {
@@ -170,14 +164,6 @@ class PortfolioModel {
     accountTotal.totalPnL.subtract(data.totalPnL);
     accountTotal.unrealizedPnL.subtract(data.unrealizedPnL);
     accountTotal.fees.subtract(data.fees);
-
-    // entire total
-    this.aggregation.totalPnL.subtract(data.totalPnL);
-    this.aggregation.unrealizedPnL.subtract(data.unrealizedPnL);
-    this.aggregation.realizedPnL.subtract(data.realizedPnL);
-    this.aggregation.fees.subtract(data.fees);
-    this.aggregation.volume -= data.volume;
-    this.aggregation.trades -= data.trades;
   }
 
   /** @private */
@@ -203,7 +189,6 @@ class PortfolioModel {
       this.baseCurrencyId,
       totalPnLDifference
     );
-    this.aggregation.totalPnL = this.aggregation.totalPnL.add(convertedTotalPnL);
     accountTotal.totalPnL = accountTotal.totalPnL.add(convertedTotalPnL);
 
     // unrealizedPnL
@@ -215,7 +200,6 @@ class PortfolioModel {
       this.baseCurrencyId,
       unrealizedPnLDifference
     );
-    this.aggregation.unrealizedPnL = this.aggregation.unrealizedPnL.add(convertedUnrealizedPnL);
     accountTotal.unrealizedPnL = accountTotal.unrealizedPnL.add(convertedUnrealizedPnL);
 
     // realizedPnL
@@ -227,7 +211,6 @@ class PortfolioModel {
       this.baseCurrencyId,
       realizedPnLDifference
     );
-    this.aggregation.realizedPnL = this.aggregation.realizedPnL.add(convertedRealizedPnL);
 
     // fees
     let oldFees = oldData.fees || Money.fromNumber(0);
@@ -238,14 +221,7 @@ class PortfolioModel {
       this.baseCurrencyId,
       feesDifference
     );
-    this.aggregation.fees = this.aggregation.fees.add(convertedFees);
     accountTotal.fees = accountTotal.fees.add(convertedFees);
-
-    // volume
-    this.aggregation.volumes += newData.volume - oldData.volume;
-
-    // trade
-    this.aggregation.trades += newData.trades - oldData.trades;
   }
 
   /** @private */
@@ -269,7 +245,6 @@ class PortfolioModel {
       this.baseCurrencyId,
       originalTotalPnL
     );
-    this.aggregation.totalPnL = this.aggregation.totalPnL.add(convertedTotalPnL);
     accountTotal.totalPnL = accountTotal.totalPnL.add(convertedTotalPnL);
 
     // unrealizedPnL
@@ -279,7 +254,6 @@ class PortfolioModel {
       this.baseCurrencyId,
       originalUnrealizedPnL
     );
-    this.aggregation.unrealizedPnL = this.aggregation.unrealizedPnL.add(convertedUnrealizedPnL);
     accountTotal.unrealizedPnL = accountTotal.unrealizedPnL.add(convertedUnrealizedPnL);
 
     // realizedPnL
@@ -289,7 +263,6 @@ class PortfolioModel {
       this.baseCurrencyId,
       originalRealizedPnL
     );
-    this.aggregation.realizedPnL = this.aggregation.realizedPnL.add(convertedRealizedPnL);
 
     // fees
     let originalFees = data.fees || Money.fromNumber(0);
@@ -298,16 +271,7 @@ class PortfolioModel {
       this.baseCurrencyId,
       originalFees
     );
-    this.aggregation.fees = this.aggregation.fees.add(convertedFees);
     accountTotal.fees = accountTotal.fees.add(convertedFees);
-
-    // volume
-    let volume = data.volume || 0;
-    this.aggregation.volumes += volume;
-
-    // trade
-    let trade = data.trades || 0;
-    this.aggregation.trades += trade;
   }
 
   /** @private */

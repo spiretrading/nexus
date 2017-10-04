@@ -2,18 +2,29 @@ import DataChangeType from './data-change-type';
 import uuid from 'uuid';
 import HashMap from 'hashmap';
 import definitionsService from 'services/definitions';
+import ValueComparer from './value-comparer';
 
 export default class {
-  constructor(sourceModel) {
+  constructor(sourceModel, columnSortOrders) {
     this.sourceModel = sourceModel;
     this.onDataChange = this.onDataChange.bind(this);
     this.dataChangeSubId = this.sourceModel.addDataChangeListener(this.onDataChange);
     this.dataChangeListeners = new HashMap();
 
-    this.sortingColumnIndex = 0;
+    this.columnSortOrders = columnSortOrders;
     this.sourceToSortedIndices = [];
     this.sortedToSourceIndices = [];
-    this.sortedColumnValues = [];
+
+    // initialize sorting with given source model for already existing data
+    this.initialize();
+  }
+
+  /** @private */
+  initialize() {
+    let rowCount = this.sourceModel.getRowCount();
+    for (let i=0; i<rowCount; i++) {
+      this.addData(i);
+    }
   }
 
   getRowCount() {
@@ -43,25 +54,7 @@ export default class {
 
   /** @private */
   handleDataAdd(rowIndex) {
-    let value = this.sourceModel.getValueAt(this.sortingColumnIndex, rowIndex);
-    let sortedIndex = this.searchIndex(value);
-
-    for (let i=0; i<this.sourceToSortedIndices.length; i++) {
-      if (this.sourceToSortedIndices[i] >= sortedIndex) {
-        this.sourceToSortedIndices[i]++;
-      }
-    }
-
-    for (let i=0; i<this.sortedToSourceIndices.length; i++) {
-      if (this.sortedToSourceIndices[i] >= rowIndex) {
-        this.sortedToSourceIndices[i]++;
-      }
-    }
-
-    this.sortedColumnValues.splice(sortedIndex, 0, value);
-    this.sortedToSourceIndices.splice(sortedIndex, 0, rowIndex);
-    this.sourceToSortedIndices.splice(rowIndex, 0, sortedIndex);
-
+    let sortedIndex = this.addData(rowIndex);
     let listeners = this.dataChangeListeners.values();
     for (let i=0; i<listeners.length; i++) {
       listeners[i](DataChangeType.ADD, sortedIndex);
@@ -69,71 +62,58 @@ export default class {
   }
 
   /** @private */
-  handleDataUpdate(rowIndex) {
-    let listeners = this.dataChangeListeners.values();
-    let value = this.sourceModel.getValueAt(this.sortingColumnIndex, rowIndex);
-    let oldIndex = this.sourceToSortedIndices[rowIndex];
-    let newIndex = this.searchIndex(value);
-    if (newIndex == oldIndex) {
-      // sort order hasn't changed
-      this.sortedColumnValues[oldIndex] = value;
-      for (let i=0; i<listeners.length; i++) {
-        listeners[i](DataChangeType.UPDATE, oldIndex);
-      }
+  addData(rowIndex) {
+    let sortedIndex;
+    if (this.columnSortOrders.length == 0) {
+      sortedIndex = rowIndex;
     } else {
-      // sort order has changed
-      // iterate and update values between the old and new
-      let prevValue, prevIndex;
-      let nextValue = value;
-      let nextIndex = this.sortedToSourceIndices[oldIndex];
-      if (newIndex > oldIndex) {
-        newIndex--;   // deduct 1 value due to the nature of searchIndex implementation
-        for (let i=newIndex; i>=oldIndex; i--) {
-          // update source index mapping
-          let sourceIndex = this.sortedToSourceIndices[i];
-          this.sourceToSortedIndices[sourceIndex]--;
-          // move the values and index
-          prevValue = this.sortedColumnValues[i];
-          prevIndex = this.sortedToSourceIndices[i];
-          this.sortedColumnValues[i] = nextValue;
-          this.sortedToSourceIndices[i] = nextIndex;
-          nextValue = prevValue;
-          nextIndex = prevIndex;
-        }
-      } else if (newIndex < oldIndex) {
-        for (let i=newIndex; i<=oldIndex; i++) {
-          // update source index mapping
-          let sourceIndex = this.sortedToSourceIndices[i];
-          this.sourceToSortedIndices[sourceIndex]++;
-          // move the values and index
-          prevValue = this.sortedColumnValues[i];
-          prevIndex = this.sortedToSourceIndices[i];
-          this.sortedColumnValues[i] = nextValue;
-          this.sortedToSourceIndices[i] = nextIndex;
-          nextValue = prevValue;
-          nextIndex = prevIndex;
-        }
-      }
+      let values = this.getValuesOfSortOrderColumns(rowIndex);
+      sortedIndex = this.searchIndex(values);
+    }
 
+    for (let i=0; i<this.sourceToSortedIndices.length; i++) {
+      if (this.sourceToSortedIndices[i] >= sortedIndex) {
+        this.sourceToSortedIndices[i]++;
+      }
+    }
+
+    this.sortedToSourceIndices.splice(sortedIndex, 0, rowIndex);
+    this.sourceToSortedIndices.splice(rowIndex, 0, sortedIndex);
+
+    return sortedIndex;
+  }
+
+  /** @private */
+  handleDataUpdate(rowIndex) {
+    let prevSortedIndex = this.sourceToSortedIndices[rowIndex];
+    this.sortedToSourceIndices.splice(prevSortedIndex, 1);
+
+    let sortedIndex;
+    if (this.columnSortOrders.length == 0) {
+      sortedIndex = rowIndex;
+    } else {
+      let updatedValues = this.getValuesOfSortOrderColumns(rowIndex);
+      sortedIndex = this.searchIndex(updatedValues);
+    }
+
+    this.sortedToSourceIndices.splice(sortedIndex, 0, rowIndex);
+    for (let i=0; i<this.sortedToSourceIndices.length; i++) {
+      let sourceIndex = this.sortedToSourceIndices[i];
+      this.sourceToSortedIndices[sourceIndex] = i;
+    }
+
+    // notify the listeners of the changes
+    let listeners = this.dataChangeListeners.values();
+    if (prevSortedIndex != sortedIndex) {
       // notify MOVE
       for (let i=0; i<listeners.length; i++) {
-        listeners[i](DataChangeType.MOVE, oldIndex, newIndex);
+        listeners[i](DataChangeType.MOVE, prevSortedIndex, sortedIndex);
       }
+    }
 
-      // notify UPDATE
-      if (oldIndex < newIndex) {
-        for (let i=oldIndex; i<=newIndex; i++) {
-          for (let i=0; i<listeners.length; i++) {
-            listeners[i](DataChangeType.UPDATE, i);
-          }
-        }
-      } else {
-        for (let i=newIndex; i<=oldIndex; i++) {
-          for (let i=0; i<listeners.length; i++) {
-            listeners[i](DataChangeType.UPDATE, i);
-          }
-        }
-      }
+    // notify UPDATE
+    for (let i=0; i<listeners.length; i++) {
+      listeners[i](DataChangeType.UPDATE, sortedIndex);
     }
   }
 
@@ -141,7 +121,6 @@ export default class {
   handleDataRemove(rowIndex) {
     let sortedIndex = this.sourceToSortedIndices[rowIndex];
     this.sourceToSortedIndices.splice(rowIndex, 1);
-    this.sortedColumnValues.splice(sortedIndex, 1);
     this.sortedToSourceIndices.splice(sortedIndex, 1);
 
     for (let i=0; i<this.sourceToSortedIndices.length; i++) {
@@ -158,17 +137,18 @@ export default class {
   }
 
   /** @private */
-  searchIndex(value) {
+  searchIndex(values) {
     // binary search
     let startIndex = 0;
-    let endIndex = this.sortedColumnValues.length - 1;
+    let endIndex = this.sortedToSourceIndices.length - 1;
     while (startIndex + 2 <= endIndex) {
       // loop until we have the smallest possible array in our search
       let midIndex = Math.ceil((startIndex + endIndex) / 2);
-      let midValue = this.sortedColumnValues[midIndex];
-      let compareResult = this.compareValues(value, midValue);
+      let sourceIndex = this.sortedToSourceIndices[midIndex];
+      let midValues = this.getValuesOfSortOrderColumns(sourceIndex);
+      let compareResult = this.compareValuesBySortOrders(values, midValues);
       if (compareResult == 0) {
-        return midIndex;
+        return this.findHeadOfDuplicates(midIndex);
       } else if (compareResult < 0) {
         endIndex = midIndex - 1;
       } else if (compareResult > 0) {
@@ -176,41 +156,84 @@ export default class {
       }
     }
 
-    let startValue = this.sortedColumnValues[startIndex];
-    let endValue = this.sortedColumnValues[endIndex];
     if (endIndex == -1) {
       // very beginning without any values
       return startIndex;
     } else {
-      let compareToStartResult = this.compareValues(value, startValue);
-      let compareToEndResult = this.compareValues(value, endValue);
+      // compare value at start index
+      let startSourceIndex = this.sortedToSourceIndices[startIndex];
+      let startValues = this.getValuesOfSortOrderColumns(startSourceIndex);
+      let compareToStartResult = this.compareValuesBySortOrders(values, startValues);
       if (compareToStartResult <= 0) {
         return startIndex;
-      } else if (compareToEndResult <= 0) {
+      }
+
+      // compare value at end index
+      let endSourceIndex = this.sortedToSourceIndices[endIndex];
+      let endValues = this.getValuesOfSortOrderColumns(endSourceIndex);
+      let compareToEndResult = this.compareValuesBySortOrders(values, endValues);
+      if (compareToEndResult <= 0) {
         return endIndex;
-      } else {
+      }
+
+      if (compareToEndResult > 0) {
         return endIndex + 1;
       }
     }
   }
 
   /** @private */
-  compareValues(a, b) {
-    let constructorName = a.constructor.name;
-    if (constructorName == 'DirectoryEntry') {
-      return a.name.localeCompare(b.name);
-    } else if (constructorName == 'Security') {
-      let stringA = a.toString(definitionsService.getMarketDatabase());
-      let stringB = b.toString(definitionsService.getMarketDatabase());
-      return stringA.localeCompare(stringB);
-    } else if (constructorName == 'CurrencyId') {
-      let stringA = definitionsService.getCurrencyCode(a.toNumber());
-      let stringB = definitionsService.getCurrencyCode(b.toNumber());
-      return stringA.localeCompare(stringB);
-    } else if (typeof a == 'string') {
-      return a.localeCompare(b);
+  findHeadOfDuplicates(sortedIndex) {
+    if (sortedIndex == 0) {
+      return sortedIndex;
+    }
+
+    let isDuplicate = true;
+    while (isDuplicate) {
+      let sourceIndex = this.sortedToSourceIndices[sortedIndex];
+      let currentValues = this.getValuesOfSortOrderColumns(sourceIndex);
+      let sourceIndexOneBefore = this.sortedToSourceIndices[sortedIndex - 1];
+      let valuesOneBefore = this.getValuesOfSortOrderColumns(sourceIndexOneBefore);
+      let compareResult = this.compareValuesBySortOrders(currentValues, valuesOneBefore);
+      if (compareResult == 0) {
+        sortedIndex--;
+      } else {
+        isDuplicate = false;
+      }
+    }
+
+    return sortedIndex;
+  }
+
+  /** @private */
+  getValuesOfSortOrderColumns(rowIndex) {
+    let values = [];
+    for (let i=0; i<this.columnSortOrders.length; i++) {
+      let value = this.sourceModel.getValueAt(this.columnSortOrders[i].index, rowIndex);
+      values.push(value);
+    }
+    return values;
+  }
+
+  /** @private */
+  compareValuesBySortOrders(aValues, bValues) {
+    for (let i=0; i<this.columnSortOrders.length; i++) {
+      let isAsc = this.columnSortOrders[i].isAsc;
+      let compareResult = this.compareValues(aValues[i], bValues[i], isAsc);
+      if (compareResult != 0) {
+        return compareResult;
+      }
+    }
+    return 0;
+  }
+
+  /** @private */
+  compareValues(a, b, isAsc) {
+    let result = ValueComparer.compare(a, b);
+    if (isAsc) {
+      return result;
     } else {
-      return a - b;
+      return -1 * result;
     }
   }
 

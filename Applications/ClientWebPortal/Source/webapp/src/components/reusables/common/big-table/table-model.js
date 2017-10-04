@@ -1,5 +1,10 @@
+import ColumnType from './column-type';
+import numberFormatter from 'utils/number-formatter';
+import currencyFormatter from 'utils/currency-formatter';
+
 class TableModel {
-  constructor(dataModel) {
+  constructor(dataModel, columnTypes) {
+    this.columnTypes = columnTypes;
     this.dataModel = dataModel;
     this.allLengthsCache = [];
     this.columnMaxLengthCells = [];
@@ -35,8 +40,7 @@ class TableModel {
   }
 
   getValueAt(x, y) {
-    let value = this.dataModel.getValueAt(x, y);
-    return this.formatValue(value, x);
+    return this.dataModel.getValueAt(x, y);
   }
 
   rowUpdate(rowIndex) {
@@ -45,7 +49,6 @@ class TableModel {
     let cellLengths = [];
     for (let columnIndex=0; columnIndex<columnCount; columnIndex++) {
       let cellValue = this.getValueAt(columnIndex, rowIndex);
-      cellValue = this.formatValue(cellValue, columnIndex);
       cellLengths.push(cellValue.length);
       // update column max length cells
       if (cellValue.length > this.columnMaxLengthCells[columnIndex].length) {
@@ -66,7 +69,6 @@ class TableModel {
     let cellLengths = [];
     for (let columnIndex=0; columnIndex<columnCount; columnIndex++) {
       let cellValue = this.getValueAt(columnIndex, rowIndex);
-      cellValue = this.formatValue(cellValue, columnIndex);
       cellLengths.push(cellValue.length);
       // update column max length cells
       if (this.columnMaxLengthCells[columnIndex] == null) {
@@ -113,7 +115,13 @@ class TableModel {
   }
 
   /** @private */
-  formatValue(value, x) {
+  formatValue(value, columnIndex) {
+    let type = this.columnTypes[columnIndex].type;
+    if (type == ColumnType.Number) {
+      value = numberFormatter.formatWithComma(value);
+    } else if (type == ColumnType.MONEY || type == ColumnType.POSITIVE_NEGATIVE_MONEY) {
+      value = currencyFormatter.formatByCode()
+    }
     return value;
   }
 }
