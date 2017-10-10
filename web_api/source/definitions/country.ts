@@ -1,0 +1,4 @@
+class CountryCode {
+}
+
+export {CountryCode};

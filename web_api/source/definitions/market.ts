@@ -1,0 +1,4 @@
+class MarketCode {
+}
+
+export {MarketCode};
