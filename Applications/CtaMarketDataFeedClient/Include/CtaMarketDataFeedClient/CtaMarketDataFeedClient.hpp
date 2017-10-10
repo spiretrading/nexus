@@ -314,10 +314,10 @@ namespace MarketDataService {
     auto bidSize = LOT_SIZE * ParseNumeric<std::uint16_t>(Beam::Store(cursor));
     auto askPrice = ParseMoney(PRICE_LENGTH, Beam::Store(cursor));
     auto askSize = LOT_SIZE * ParseNumeric<std::uint16_t>(Beam::Store(cursor));
-    auto market = ParseMarket(message.m_header.m_participantId);
-    cursor += sizeof(std::uint8_t);
+    auto primaryMarket = ParseMarket(Beam::Store(cursor));
     auto nationalBboIndicator = ParseChar(Beam::Store(cursor));
-    Security security{symbol, m_config.m_country};
+    auto market = ParseMarket(message.m_header.m_participantId);
+    Security security{symbol, primaryMarket, m_config.m_country};
     Quote bid{bidPrice, bidSize, Side::BID};
     Quote ask{askPrice, askSize, Side::ASK};
     if(nationalBboIndicator == 'G') {
@@ -368,14 +368,14 @@ namespace MarketDataService {
     cursor += sizeof(std::uint8_t);
     cursor += sizeof(std::uint64_t);
     cursor += sizeof(std::uint8_t);
-    auto market = ParseMarket(message.m_header.m_participantId);
-    cursor += sizeof(std::uint8_t);
+    auto primaryMarket = ParseMarket(Beam::Store(cursor));
     cursor += sizeof(std::uint8_t);
     cursor += sizeof(std::uint8_t);
     cursor += sizeof(std::uint8_t);
     cursor += sizeof(std::uint8_t);
     auto nationalBboIndicator = ParseChar(Beam::Store(cursor));
-    Security security{symbol, m_config.m_country};
+    auto market = ParseMarket(message.m_header.m_participantId);
+    Security security{symbol, primaryMarket, m_config.m_country};
     Quote bid{bidPrice, bidSize, Side::BID};
     Quote ask{askPrice, askSize, Side::ASK};
     if(nationalBboIndicator == 'G') {
@@ -415,13 +415,13 @@ namespace MarketDataService {
     cursor += sizeof(std::uint8_t);
     auto price = ParseMoney(PRICE_LENGTH, Beam::Store(cursor));
     auto quantity = ParseNumeric<std::uint16_t>(Beam::Store(cursor));
+    auto primaryMarket = ParseMarket(Beam::Store(cursor));
     auto market = ParseMarket(message.m_header.m_participantId);
-    cursor += sizeof(std::uint8_t);
     TimeAndSale::Condition condition{
       TimeAndSale::Condition::Type::REGULAR, std::string{saleCondition}};
     TimeAndSale timeAndSale{message.m_header.m_timestamp, price, quantity,
       condition, market.GetData()};
-    Security security{symbol, m_config.m_country};
+    Security security{symbol, primaryMarket, m_config.m_country};
     m_marketDataFeedClient->PublishTimeAndSale(
       SecurityTimeAndSale{timeAndSale, security});
   }
@@ -445,13 +445,13 @@ namespace MarketDataService {
     cursor += sizeof(std::uint8_t);
     cursor += sizeof(std::uint64_t);
     cursor += sizeof(std::uint8_t);
+    auto primaryMarket = ParseMarket(Beam::Store(cursor));
     auto market = ParseMarket(message.m_header.m_participantId);
-    cursor += sizeof(std::uint8_t);
     TimeAndSale::Condition condition{
       TimeAndSale::Condition::Type::REGULAR, saleCondition};
     TimeAndSale timeAndSale{message.m_header.m_timestamp, price, quantity,
       condition, market.GetData()};
-    Security security{symbol, m_config.m_country};
+    Security security{symbol, primaryMarket, m_config.m_country};
     m_marketDataFeedClient->PublishTimeAndSale(
       SecurityTimeAndSale{timeAndSale, security});
   }
