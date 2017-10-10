@@ -314,7 +314,8 @@ namespace MarketDataService {
     auto bidSize = LOT_SIZE * ParseNumeric<std::uint16_t>(Beam::Store(cursor));
     auto askPrice = ParseMoney(PRICE_LENGTH, Beam::Store(cursor));
     auto askSize = LOT_SIZE * ParseNumeric<std::uint16_t>(Beam::Store(cursor));
-    auto market = ParseMarket(Beam::Store(cursor));
+    auto market = ParseMarket(message.m_header.m_participantId);
+    cursor += sizeof(std::uint8_t);
     auto nationalBboIndicator = ParseChar(Beam::Store(cursor));
     Security security{symbol, m_config.m_country};
     Quote bid{bidPrice, bidSize, Side::BID};
@@ -355,6 +356,7 @@ namespace MarketDataService {
     auto symbol = ParseSymbol(SYMBOL_LENGTH, Beam::Store(cursor));
     cursor += sizeof(std::uint8_t);
     cursor += sizeof(std::uint8_t);
+    cursor += sizeof(std::uint8_t);
     auto bidPrice = ParseMoney(PRICE_LENGTH, Beam::Store(cursor));
     auto bidSize = LOT_SIZE * ParseNumeric<std::uint32_t>(Beam::Store(cursor));
     auto askPrice = ParseMoney(PRICE_LENGTH, Beam::Store(cursor));
@@ -366,7 +368,8 @@ namespace MarketDataService {
     cursor += sizeof(std::uint8_t);
     cursor += sizeof(std::uint64_t);
     cursor += sizeof(std::uint8_t);
-    auto market = ParseMarket(Beam::Store(cursor));
+    auto market = ParseMarket(message.m_header.m_participantId);
+    cursor += sizeof(std::uint8_t);
     cursor += sizeof(std::uint8_t);
     cursor += sizeof(std::uint8_t);
     cursor += sizeof(std::uint8_t);
@@ -412,7 +415,8 @@ namespace MarketDataService {
     cursor += sizeof(std::uint8_t);
     auto price = ParseMoney(PRICE_LENGTH, Beam::Store(cursor));
     auto quantity = ParseNumeric<std::uint16_t>(Beam::Store(cursor));
-    auto market = ParseMarket(Beam::Store(cursor));
+    auto market = ParseMarket(message.m_header.m_participantId);
+    cursor += sizeof(std::uint8_t);
     TimeAndSale::Condition condition{
       TimeAndSale::Condition::Type::REGULAR, std::string{saleCondition}};
     TimeAndSale timeAndSale{message.m_header.m_timestamp, price, quantity,
@@ -427,10 +431,12 @@ namespace MarketDataService {
       HandleLongFormTradeMessage(const CtaMessage& message) {
     const auto SYMBOL_LENGTH = 11;
     const auto PRICE_LENGTH = 8;
+    const auto CONDITION_LENGTH = 4;
     auto cursor = message.m_body;
     auto symbol = ParseSymbol(SYMBOL_LENGTH, Beam::Store(cursor));
     cursor += sizeof(std::uint8_t);
-    auto saleCondition = ParseChar(Beam::Store(cursor));
+    auto saleCondition = ParseAlphanumeric(CONDITION_LENGTH,
+      Beam::Store(cursor));
     auto price = ParseMoney(PRICE_LENGTH, Beam::Store(cursor));
     auto quantity = ParseNumeric<std::uint32_t>(Beam::Store(cursor));
     cursor += sizeof(std::uint8_t);
@@ -439,9 +445,10 @@ namespace MarketDataService {
     cursor += sizeof(std::uint8_t);
     cursor += sizeof(std::uint64_t);
     cursor += sizeof(std::uint8_t);
-    auto market = ParseMarket(Beam::Store(cursor));
+    auto market = ParseMarket(message.m_header.m_participantId);
+    cursor += sizeof(std::uint8_t);
     TimeAndSale::Condition condition{
-      TimeAndSale::Condition::Type::REGULAR, std::string{saleCondition}};
+      TimeAndSale::Condition::Type::REGULAR, saleCondition};
     TimeAndSale timeAndSale{message.m_header.m_timestamp, price, quantity,
       condition, market.GetData()};
     Security security{symbol, m_config.m_country};
@@ -474,10 +481,9 @@ namespace MarketDataService {
       try {
         auto message = m_protocolClient->Read();
         if(m_config.m_isLoggingMessages) {
-          std::cout << message.m_header.m_category << " " <<
-            message.m_header.m_type << ": " <<
-            std::string{message.m_body,
-            message.m_header.m_length - CtaMessageHeader::SIZE} << std::endl;
+          std::cout << message.m_header.m_timestamp << ": " <<
+            message.m_header.m_category << " " <<
+            message.m_header.m_type << std::endl;
         }
         Dispatch(message);
       } catch(const Beam::IO::EndOfFileException&) {
