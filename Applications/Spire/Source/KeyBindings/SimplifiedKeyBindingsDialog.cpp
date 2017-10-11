@@ -700,6 +700,84 @@ namespace {
       true);
     chixSmartXDarkSell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
     orderTypes.emplace_back(chixSmartXDarkSell.Build());
+    CanvasNodeBuilder chixDarkAttBid(*GetPeggedBidOrderTaskNode(false)->Rename(
+      "CHI-X Dark ATT Bid")->AddField("ex_destination", 100,
+      make_unique<TextNode>("CXD"))->AddField("exec_inst", 18,
+      make_unique<TextNode>("P")));
+    chixDarkAttBid.SetReadOnly("exec_inst", true);
+    chixDarkAttBid.SetVisible("exec_inst", false);
+    chixDarkAttBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::CHIX()));
+    chixDarkAttBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION,
+      false);
+    chixDarkAttBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION,
+      true);
+    chixDarkAttBid.SetVisible("ex_destination", false);
+    chixDarkAttBid.SetReadOnly("ex_destination", true);
+    chixDarkAttBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    chixDarkAttBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      false);
+    chixDarkAttBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    chixDarkAttBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(chixDarkAttBid.Build());
+    CanvasNodeBuilder chixDarkAttAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
+      "CHI-X Dark ATT Ask")->AddField("ex_destination", 100,
+      make_unique<TextNode>("CXD"))->AddField("exec_inst", 18,
+      make_unique<TextNode>("P")));
+    chixDarkAttAsk.SetReadOnly("exec_inst", true);
+    chixDarkAttAsk.SetVisible("exec_inst", false);
+    chixDarkAttAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::CHIX()));
+    chixDarkAttAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    chixDarkAttAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    chixDarkAttAsk.SetVisible("ex_destination", false);
+    chixDarkAttAsk.SetReadOnly("ex_destination", true);
+    chixDarkAttAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    chixDarkAttAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    chixDarkAttAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    chixDarkAttAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(chixDarkAttAsk.Build());
+    CanvasNodeBuilder chixDarkMpiBid(*GetPeggedBidOrderTaskNode(false)->Rename(
+      "CHI-X Dark MPI Bid")->AddField("ex_destination", 100,
+      make_unique<TextNode>("CXD"))->AddField("exec_inst", 18,
+      make_unique<TextNode>("x")));
+    chixDarkMpiBid.SetReadOnly("exec_inst", true);
+    chixDarkMpiBid.SetVisible("exec_inst", false);
+    chixDarkMpiBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::CHIX()));
+    chixDarkMpiBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION,
+      false);
+    chixDarkMpiBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION,
+      true);
+    chixDarkMpiBid.SetVisible("ex_destination", false);
+    chixDarkMpiBid.SetReadOnly("ex_destination", true);
+    chixDarkMpiBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    chixDarkMpiBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      false);
+    chixDarkMpiBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    chixDarkMpiBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(chixDarkMpiBid.Build());
+    CanvasNodeBuilder chixDarkMpiAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
+      "CHI-X Dark MPI Ask")->AddField("ex_destination", 100,
+      make_unique<TextNode>("CXD"))->AddField("exec_inst", 18,
+      make_unique<TextNode>("x")));
+    chixDarkMpiAsk.SetReadOnly("exec_inst", true);
+    chixDarkMpiAsk.SetVisible("exec_inst", false);
+    chixDarkMpiAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::CHIX()));
+    chixDarkMpiAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    chixDarkMpiAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    chixDarkMpiAsk.SetVisible("ex_destination", false);
+    chixDarkMpiAsk.SetReadOnly("ex_destination", true);
+    chixDarkMpiAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    chixDarkMpiAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    chixDarkMpiAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    chixDarkMpiAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(chixDarkMpiAsk.Build());
     CanvasNodeBuilder chixPrimaryPegBid(
       *GetPeggedBidOrderTaskNode(false)->Rename(
       "CHI-X Primary Peg Bid")->AddField("exec_inst", 18,
