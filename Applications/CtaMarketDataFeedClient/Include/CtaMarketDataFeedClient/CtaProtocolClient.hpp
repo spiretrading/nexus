@@ -46,6 +46,8 @@ namespace MarketDataService {
       Beam::GetOptionalLocalPtr<ChannelType> m_channel;
       Buffer m_buffer;
       const char* m_token;
+      CtaBlock m_block;
+      std::uint8_t m_blockIndex;
       std::uint32_t m_sequenceNumber;
       Beam::IO::OpenState m_openState;
 
@@ -67,25 +69,32 @@ namespace MarketDataService {
     if(!m_openState.IsOpen()) {
       BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException{});
     }
-    while(true) {
-      if(m_token == m_buffer.GetData() + m_buffer.GetSize()) {
-        m_buffer.Reset();
-        m_channel->GetReader().Read(Beam::Store(m_buffer));
-        m_token = m_buffer.GetData() + 1;
-      }
-      auto remainingSize = static_cast<std::uint16_t>(
-        (m_buffer.GetData() + m_buffer.GetSize()) - m_token);
-      auto message = CtaMessage::Parse(Beam::Store(m_token), remainingSize);
-      if(m_sequenceNumber == -1 || message.m_sequenceNumber ==
+    while(m_blockIndex == m_block.m_header.m_messageCount) {
+      m_buffer.Reset();
+      m_channel->GetReader().Read(Beam::Store(m_buffer));
+      auto blockToken = m_buffer.GetData();
+      m_block = CtaBlock::Parse(Beam::Store(blockToken),
+        static_cast<std::uint16_t>(m_buffer.GetSize()));
+      m_blockIndex = 0;
+      m_token = m_block.m_messages;
+      if(m_sequenceNumber == -1 || m_block.m_header.m_sequenceNumber ==
           m_sequenceNumber + 1) {
-        m_sequenceNumber = message.m_sequenceNumber;
-        return message;
-      } else if(message.m_sequenceNumber > m_sequenceNumber + 1) {
+        m_sequenceNumber = m_block.m_header.m_sequenceNumber;
+      } else if(m_block.m_header.m_sequenceNumber > m_sequenceNumber + 1) {
         std::cout << "Packets dropped: " << (m_sequenceNumber + 1) << " - " <<
-          (message.m_sequenceNumber - 1) << std::endl;
-        m_sequenceNumber = message.m_sequenceNumber;
-        return message;
+          (m_block.m_header.m_sequenceNumber - 1) << std::endl;
+        m_sequenceNumber = m_block.m_header.m_sequenceNumber;
       }
+    }
+    auto remainingSize = static_cast<std::uint16_t>(
+      (m_buffer.GetData() + m_buffer.GetSize()) - m_token);
+    try {
+      auto message = CtaMessage::Parse(Beam::Store(m_token), remainingSize);
+      ++m_blockIndex;
+      return message;
+    } catch(const std::exception&) {
+      m_blockIndex = m_block.m_header.m_messageCount;
+      throw;
     }
   }
 
@@ -96,7 +105,9 @@ namespace MarketDataService {
     }
     try {
       m_channel->GetConnection().Open();
+      m_block.m_header.m_messageCount = 0;
       m_sequenceNumber = -1;
+      m_blockIndex = 0;
       m_token = m_buffer.GetData();
     } catch(std::exception&) {
       m_openState.SetOpenFailure();
