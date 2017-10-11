@@ -18,14 +18,29 @@
     z-index: 1;
     height: 40px;
     background: white;
+    border-bottom: 1px solid $lighterGrey;
 
-    div {
+    &>div {
+      position: relative;
       padding-top: 10px;
       text-align: center;
       cursor: pointer;
-    }
 
-    border-bottom: 1px solid $lighterGrey;
+      .header-label {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        white-space: nowrap;
+
+        span {
+          position: absolute;
+          top: 6px;
+          right: -15px;
+          font-size: 10px;
+        }
+      }
+    }
   }
 
   .viewing-region {

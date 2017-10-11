@@ -70,6 +70,10 @@ class Controller {
 
     this.changeSortOrder(this.columnSortOrders);
   }
+
+  getColumnSortOrders() {
+    return this.columnSortOrders;
+  }
 }
 
 export default Controller;

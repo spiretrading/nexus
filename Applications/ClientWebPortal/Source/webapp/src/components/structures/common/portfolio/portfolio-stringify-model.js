@@ -94,4 +94,13 @@ export default class {
       return '' + value;
     }
   }
+
+  setSourceModel(sourceModel) {
+    // unsub from previous source model
+    this.sourceModel.removeDataChangeListener(this.dataChangeSubId);
+
+    // sub new source model
+    this.sourceModel = sourceModel;
+    this.dataChangeSubId = this.sourceModel.addDataChangeListener(this.onDataChange);
+  }
 }

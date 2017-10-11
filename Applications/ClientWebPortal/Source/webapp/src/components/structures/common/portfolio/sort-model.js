@@ -193,6 +193,9 @@ export default class {
       let sourceIndex = this.sortedToSourceIndices[sortedIndex];
       let currentValues = this.getValuesOfSortOrderColumns(sourceIndex);
       let sourceIndexOneBefore = this.sortedToSourceIndices[sortedIndex - 1];
+      if (sourceIndexOneBefore == null) {
+        break;
+      }
       let valuesOneBefore = this.getValuesOfSortOrderColumns(sourceIndexOneBefore);
       let compareResult = this.compareValuesBySortOrders(currentValues, valuesOneBefore);
       if (compareResult == 0) {
@@ -245,5 +248,9 @@ export default class {
 
   removeDataChangeListener(subId) {
     this.dataChangeListeners.remove(subId);
+  }
+
+  dispose() {
+    this.sourceModel.removeDataChangeListener(this.dataChangeSubId);
   }
 }

@@ -23,15 +23,27 @@ class Controller {
     this.riskServiceClient = new RiskServiceClient();
     this.exchangeRateTable = definitionsService.getExchangeRateTable();
     this.portfolioModel = new PortfolioModel();
-    let sortModel = new SortModel(this.portfolioModel, [
+    this.sortModel = new SortModel(this.portfolioModel, [
       { index: 0, isAsc: true },
-      { index: 1, isAsc: false }
+      { index: 1, isAsc: true },
+      { index: 2, isAsc: true },
+      { index: 3, isAsc: true },
+      { index: 4, isAsc: true },
+      { index: 5, isAsc: true },
+      { index: 6, isAsc: true },
+      { index: 7, isAsc: true },
+      { index: 8, isAsc: true },
+      { index: 9, isAsc: true },
+      { index: 10, isAsc: true },
+      { index: 11, isAsc: true },
+      { index: 12, isAsc: true },
+      { index: 13, isAsc: true },
+      { index: 14, isAsc: true },
+      { index: 15, isAsc: true }
     ]);
-    let subsetModel = new ColumnSubsetModel(sortModel, [0, 1, 3, 10]);
-    // let subsetModel = new ColumnSubsetModel(this.portfolioModel, [0,1,3,10]);
-    this.sumModel = new ColumnSumModel(subsetModel);
-    this.stringifyModel = new StringifyModel(sortModel);
-    // this.stringifyModel = new StringifyModel(this.portfolioModel);
+    this.subsetModel = new ColumnSubsetModel(this.sortModel, [0, 1, 3, 10]);
+    this.sumModel = new ColumnSumModel(this.subsetModel);
+    this.stringifyModel = new StringifyModel(this.sortModel);
 
     this.getRequiredData = this.getRequiredData.bind(this);
     this.setTableRef = this.setTableRef.bind(this);
@@ -207,7 +219,10 @@ class Controller {
   }
 
   changeSortOrder(sortOrders) {
-    console.debug(sortOrders);
+    this.sortModel.dispose();
+    this.sortModel = new SortModel(this.portfolioModel, sortOrders);
+    this.subsetModel.setSourceModel(this.sortModel);
+    this.stringifyModel.setSourceModel(this.sortModel);
   }
 }
 

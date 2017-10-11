@@ -13,12 +13,11 @@ class View extends UpdatableView {
     this.componentId = uuid.v4();
 
     this.isInitialized = false;
-    this.areColumnHeadersRendered = false;
     this.isViewingRegionDimensionsSet = false;  // due to bug in Safari you need to manually set
     this.onViewingRegionScroll = this.onViewingRegionScroll.bind(this);
     this.render = this.render.bind(this);
     this.onColumnHeaderClick = this.onColumnHeaderClick.bind(this);
-    this.cellSidePaddings = 20;
+    this.cellSidePaddings = 55;
   }
 
   setTableModel(tableModel) {
@@ -97,13 +96,13 @@ class View extends UpdatableView {
     // re-use canvas object for better performance
     let Ws = '';
     for (let i=0; i<textLength; i++) {
-      Ws += 'W';
+      Ws += 'A';
     }
     var canvas = this.canvas || (this.canvas = document.createElement("canvas"));
     var context = canvas.getContext("2d");
     context.font = font;
     var metrics = context.measureText(Ws);
-    return Math.ceil(metrics.width) + 20;
+    return Math.ceil(metrics.width) + this.cellSidePaddings;
   }
 
   /** @private */
@@ -179,15 +178,7 @@ class View extends UpdatableView {
 
     let columnLengths = this.tableModel.getColumnLengths();
     let $columnHeaders = $('#' + this.componentId + ' .column-headers div');
-    this.columnWidthsPx = [];
-    this.totalWidthPx = 0;
-    for (let i=0; i<columnLengths.length; i++) {
-      let headerText = $($columnHeaders[i]).text();
-      let columnLength = Math.max(columnLengths[i].length, headerText.length);
-      let columnWidthPx = this.getTextWidth(columnLength);
-      this.columnWidthsPx.push(columnWidthPx);
-      this.totalWidthPx += columnWidthPx;
-    }
+    this.columnWidthsPx = this.columnWidthsPx || [];
 
     // update viewing coordinates
     let totalWidths = 0;
@@ -234,7 +225,7 @@ class View extends UpdatableView {
       // loop for rows
       for (let x=xCoords.leftX; x<=xCoords.rightX; x++) {
         // loop for columns
-        let columnWidth = this.columnWidthsPx[y];
+        let columnWidth = this.columnWidthsPx[x];
         let cellValue = this.tableModel.getValueAt(x, y);
         let className;
         if (y % 2 == 1) {
@@ -292,7 +283,7 @@ class View extends UpdatableView {
   /** @private */
   adjustColumnWidths() {
     let columnLengths = this.tableModel.getColumnLengths();
-    let $columnHeaders = $('#' + this.componentId + ' .column-headers div');
+    let $columnHeaders = $('#' + this.componentId + ' .column-headers>div');
     let totalWidth = 0;
 
     let coords = this.getXCoordinatesIncludingBuffers();
@@ -313,6 +304,8 @@ class View extends UpdatableView {
         $('#' + this.componentId + ' .big-table-wrapper table tr td:nth-child(' + childIndex + ')').width(maxWidth);
       }
       $columnHeader.width(maxWidth);
+      // console.debug('i: ' + i + ', assigning width: ' + maxWidth);
+      this.columnWidthsPx[i] = maxWidth;
     }
 
     $('#' + this.componentId + ' .column-headers').width(totalWidth);
@@ -321,10 +314,26 @@ class View extends UpdatableView {
   /** @private */
   renderColumnHeaders() {
     let cells = [];
+    let columnSortOrders = this.controller.getColumnSortOrders();
     for (let i=0; i<this.componentModel.columnTypes.length; i++) {
+      let arrowIconClass = "hidden";
+      if (columnSortOrders.length > 0) {
+        if (columnSortOrders[0].index == i) {
+          if (columnSortOrders[0].isAsc) {
+            // ascending
+            arrowIconClass = 'icon-arrow-icon-down';
+          } else {
+            // descending
+            arrowIconClass = 'icon-arrow-icon-up';
+          }
+        }
+      }
       cells.push(
         <div key={i} onClick={this.onColumnHeaderClick} data-index={i}>
-          {this.componentModel.columnTypes[i].name}
+          <div className="header-label">
+            {this.componentModel.columnTypes[i].name}
+            <span className={arrowIconClass}></span>
+          </div>
         </div>
       );
     }
@@ -341,10 +350,7 @@ class View extends UpdatableView {
       paddingRight: this.rightPadding || 0
     };
 
-    if (!this.areColumnHeadersRendered) {
-      this.renderColumnHeaders();
-      this.areColumnHeadersRendered = true;
-    }
+    this.renderColumnHeaders();
 
     return (
         <div id={this.componentId} className="big-table-container">
