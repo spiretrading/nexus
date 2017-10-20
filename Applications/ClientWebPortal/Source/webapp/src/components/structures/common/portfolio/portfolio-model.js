@@ -3,16 +3,17 @@ import {
 } from 'spire-client';
 import HashMap from 'hashmap';
 import definitionsService from 'services/definitions';
-import uuid from 'uuid';
 import DataChangeType from './data-change-type';
+import ChainableModel from './chainable-model';
+import tableColumns from './table-columns';
 
-class PortfolioModel {
+class PortfolioModel extends ChainableModel{
   constructor() {
+    super(null);
     this.dataIndices = new HashMap();
     this.data = [];
     this.accountTotals = new HashMap();
     this.exchangeRateTable = definitionsService.getExchangeRateTable();
-    this.dataChangeListeners = new HashMap();
   }
 
   onDataReceived(data) {
@@ -92,22 +93,20 @@ class PortfolioModel {
     }
   }
 
+  getColumnHeader(x) {
+    return tableColumns[x].name;
+  }
+
+  getCurrencyForRow(y) {
+    return this.data[y].currency;
+  }
+
   getRowCount() {
     return this.data.length;
   }
 
   getColumnCount() {
     return 16;
-  }
-
-  addDataChangeListener(listener) {
-    let subId = uuid.v4();
-    this.dataChangeListeners.set(subId, listener);
-    return subId;
-  }
-
-  removeDataChangeListener(subId) {
-    this.dataChangeListeners.remove(subId);
   }
 
   /** @private */

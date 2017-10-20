@@ -13,8 +13,11 @@ import PortfolioModel from './portfolio-model';
 import SortModel from './sort-model';
 import ColumnSubsetModel from './column-subset-model';
 import ColumnSumModel from './column-sum-model';
-import StringifyModel from './portfolio-stringify-model';
+import ViewModel from './portfolio-view-model';
 import DataChangeType from './data-change-type';
+import tableColumns from './table-columns';
+import HashMap from 'hashmap';
+import ValueComparer from './value-comparer';
 
 class Controller {
   constructor(componentModel) {
@@ -40,16 +43,19 @@ class Controller {
       { index: 13, isAsc: true },
       { index: 14, isAsc: true },
       { index: 15, isAsc: true }
-    ]);
-    this.subsetModel = new ColumnSubsetModel(this.sortModel, [0, 1, 3, 10]);
-    this.sumModel = new ColumnSumModel(this.subsetModel);
-    this.stringifyModel = new StringifyModel(this.sortModel);
+    ], ValueComparer);
+    this.viewModel = new ViewModel(this.sortModel);
+    this.filterSubsetModel = new ColumnSubsetModel(this.viewModel, []);
+
+    this.totalSubsetModel = new ColumnSubsetModel(this.portfolioModel, [0, 1, 3, 10]);
+    this.sumModel = new ColumnSumModel(this.totalSubsetModel);
 
     this.getRequiredData = this.getRequiredData.bind(this);
     this.setTableRef = this.setTableRef.bind(this);
     this.onDataModelChange = this.onDataModelChange.bind(this);
     this.onSumModelDataChange = this.onSumModelDataChange.bind(this);
     this.changeSortOrder = this.changeSortOrder.bind(this);
+    this.resizeTable = this.resizeTable.bind(this);
   }
 
   getView() {
@@ -95,8 +101,8 @@ class Controller {
   }
 
   /** @private */
-  onFilterResize() {
-    this.view.resizePortfolioChart();
+  resizeTable() {
+    this.table.resize();
   }
 
   onSumModelDataChange() {
@@ -112,9 +118,9 @@ class Controller {
   }
 
   componentDidMount() {
-    this.dataModelChangeSubId = this.stringifyModel.addDataChangeListener(this.onDataModelChange);
+    this.dataModelChangeSubId = this.filterSubsetModel.addDataChangeListener(this.onDataModelChange);
     this.dataSumChangeSubId = this.sumModel.addDataChangeListener(this.onSumModelDataChange);
-    this.filterResizeSubId = EventBus.subscribe(Event.Portfolio.FILTER_RESIZE, this.onFilterResize.bind(this));
+    this.filterResizeSubId = EventBus.subscribe(Event.Portfolio.FILTER_RESIZE, this.resizeTable);
 
     this.componentModel = {
       directoryEntry: userService.getDirectoryEntry()
@@ -170,7 +176,7 @@ class Controller {
   }
 
   componentWillUnmount() {
-    this.stringifyModel.removeDataChangeListener(this.dataModelChangeSubId);
+    this.filterSubsetModel.removeDataChangeListener(this.dataModelChangeSubId);
     this.sumModel.removeDataChangeListener(this.dataSumChangeSubId);
     this.riskServiceClient.unsubscribe(this.portfolioSubscriptionId);
     EventBus.unsubscribe(this.filterResizeSubId);
@@ -185,8 +191,6 @@ class Controller {
   }
 
   saveParameters(filter) {
-    EventBus.publish(Event.Portfolio.FILTER_PARAMETERS_CHANGED);
-
     this.componentModel.filter = filter;
 
     let groups = [];
@@ -211,18 +215,50 @@ class Controller {
     };
 
     this.riskServiceClient.setPortfolioDataFilter(this.portfolioSubscriptionId, apiFilter);
-    this.view.update(this.componentModel);
+    this.updateColumnFilters(this.componentModel.filter.columns);
+  }
+
+  /** @private */
+  updateColumnFilters(includedColumns) {
+    // clean up models
+    this.filterSubsetModel.removeDataChangeListener(this.dataModelChangeSubId);
+    this.filterSubsetModel.dispose();
+
+    // construct and chain new models
+    let omittedColumns = this.getOmittedColumns(includedColumns);
+    this.filterSubsetModel = new ColumnSubsetModel(this.viewModel, omittedColumns);
+    this.dataModelChangeSubId = this.filterSubsetModel.addDataChangeListener(this.onDataModelChange);
+
+    // update big table of the changes
+    this.table.updateColumnChange(this.filterSubsetModel);
+  }
+
+  /** @private */
+  getOmittedColumns(includedColumns) {
+    // map of column ids of included columns
+    let includedColumnsMap = new HashMap();
+    for (let i=0; i<includedColumns.length; i++) {
+      includedColumnsMap.set(includedColumns[i].id, true);
+    }
+
+    let omittedColumns = [];
+    for (let i=0; i<tableColumns.length; i++) {
+      if (!tableColumns[i].isPrimaryKey && !includedColumnsMap.has(tableColumns[i].id)) {
+        omittedColumns.push(i);
+      }
+    }
+
+    return omittedColumns;
   }
 
   getDataModel() {
-    return this.stringifyModel;
+    return this.filterSubsetModel;
   }
 
   changeSortOrder(sortOrders) {
     this.sortModel.dispose();
-    this.sortModel = new SortModel(this.portfolioModel, sortOrders);
-    this.subsetModel.setSourceModel(this.sortModel);
-    this.stringifyModel.setSourceModel(this.sortModel);
+    this.sortModel = new SortModel(this.portfolioModel, sortOrders, ValueComparer);
+    this.viewModel.setSourceModel(this.sortModel);
   }
 }
 

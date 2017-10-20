@@ -44,6 +44,15 @@ class Controller {
     this.tableModel.rowMove(fromIndex, toIndex);
   }
 
+  resize() {
+    this.view.setViewingRegionDimensions();
+  }
+
+  updateColumnChange(dataModel) {
+    this.view.updateColumnChange();
+    this.tableModel.updateColumnChange(dataModel);
+  }
+
   onSortColumnSelected(columnIndex) {
     let sortOrderIndex = null;
     for (let i=0; i<this.columnSortOrders.length; i++) {

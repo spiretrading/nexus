@@ -1,14 +1,12 @@
+import ChainableModel from './chainable-model';
 import DataChangeType from './data-change-type';
-import uuid from 'uuid';
-import HashMap from 'hashmap';
 
-export default class {
+export default class extends ChainableModel{
   constructor(sourceModel, columnsToOmit) {
+    super(sourceModel);
     this.omittedCount = 0;
-    this.sourceModel = sourceModel;
     this.onDataChange = this.onDataChange.bind(this);
     this.dataChangeSubId = this.sourceModel.addDataChangeListener(this.onDataChange);
-    this.dataChangeListeners = new HashMap();
 
     // initialize omittedToSourceColumns mapping
     this.omittedToSourceColumns = [];
@@ -30,6 +28,10 @@ export default class {
     return this.sourceModel.getColumnCount() - this.omittedCount;
   }
 
+  getColumnHeader(x) {
+    return this.sourceModel.getColumnHeader(this.omittedToSourceColumns[x]);
+  }
+
   getValueAt(x, y) {
     return this.sourceModel.getValueAt(this.omittedToSourceColumns[x], y);
   }
@@ -45,24 +47,5 @@ export default class {
         listeners[i](DataChangeType.MOVE, rowIndex, toIndex);
       }
     }
-  }
-
-  addDataChangeListener(listener) {
-    let subId = uuid.v4();
-    this.dataChangeListeners.set(subId, listener);
-    return subId;
-  }
-
-  removeDataChangeListener(subId) {
-    this.dataChangeListeners.remove(subId);
-  }
-
-  setSourceModel(sourceModel) {
-    // unsub from previous source model
-    this.sourceModel.removeDataChangeListener(this.dataChangeSubId);
-
-    // sub new source model
-    this.sourceModel = sourceModel;
-    this.dataChangeSubId = this.sourceModel.addDataChangeListener(this.onDataChange);
   }
 }

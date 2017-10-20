@@ -11,17 +11,27 @@ class View extends UpdatableView {
     super(react, controller, {});
     this.componentModel = componentModel;
     this.componentId = uuid.v4();
+    this.isCntrlPressed = false;
+    this.isShiftPressed = false;
+    this.activeRowIndex = null;
 
     this.isInitialized = false;
     this.isViewingRegionDimensionsSet = false;  // due to bug in Safari you need to manually set
     this.onViewingRegionScroll = this.onViewingRegionScroll.bind(this);
     this.render = this.render.bind(this);
     this.onColumnHeaderClick = this.onColumnHeaderClick.bind(this);
+    this.onTableRowClick = this.onTableRowClick.bind(this);
+    this.onKeyDownCheckSelectionModifiers = this.onKeyDownCheckSelectionModifiers.bind(this);
+    this.onKeyUpCheckSelectionModifiers = this.onKeyUpCheckSelectionModifiers.bind(this);
     this.cellSidePaddings = 55;
   }
 
   setTableModel(tableModel) {
     this.tableModel = tableModel;
+  }
+
+  updateColumnChange() {
+    this.columnWidthsPx = [];
   }
 
   getViewingRegionWidthHeight() {
@@ -34,6 +44,8 @@ class View extends UpdatableView {
 
   initialize() {
     $('#' + this.componentId + ' .viewing-region').scroll(this.onViewingRegionScroll);
+    $(document).keydown(this.onKeyDownCheckSelectionModifiers)
+      .keyup(this.onKeyUpCheckSelectionModifiers);
 
     this.scrolledPx = {
       top: 0,
@@ -48,6 +60,15 @@ class View extends UpdatableView {
     };
 
     this.totalWidthPx = 0;
+
+    $.contextMenu({
+      selector: '#' + this.componentId + ' .viewing-region',
+      appendTo: '#' + this.componentId,
+      items: {
+        menu1: {name: 'Stop'},
+        menu2: {name: 'Settings'}
+      }
+    });
   }
 
   /** @private */
@@ -58,7 +79,8 @@ class View extends UpdatableView {
     let coords = this.getXCoordinatesIncludingBuffers();
     let leftX = coords.leftX;
     let rightX = coords.rightX;
-    for (let i=0; i<this.columnWidthsPx.length; i++) {
+    let columnCount = this.tableModel.getColumnCount();
+    for (let i=0; i<columnCount; i++) {
       if (leftX > i) {
         this.leftPadding += this.columnWidthsPx[i];
       } else if (i > rightX) {
@@ -123,16 +145,21 @@ class View extends UpdatableView {
 
   dispose() {
     $('#' + this.componentId + ' .viewing-region').unbind('scroll');
+    $(document).unbind('keydown', this.onKeyDownCheckSelectionModifiers)
+      .unbind('keyup', this.onKeyUpCheckSelectionModifiers);
+    $.contextMenu('destroy');
+    $('#' + this.componentId + ' .context-menu-list').remove();
   }
 
   getXCoordinatesIncludingBuffers() {
+    let columnCount = this.tableModel.getColumnCount();
     let leftX = this.viewingCoords.topLeftX - BUFFER_CELL_NUM;
     if (leftX < 0) {
       leftX = 0;
     }
     let rightX = this.viewingCoords.bottomRightX + BUFFER_CELL_NUM;
-    if (rightX >= this.columnWidthsPx.length) {
-      rightX = this.columnWidthsPx.length - 1;
+    if (rightX >= columnCount) {
+      rightX = columnCount - 1;
     }
 
     return {
@@ -147,7 +174,7 @@ class View extends UpdatableView {
     if (topY < 0) {
       topY = 0;
     }
-    let bottomY = this.viewingCoords.bottomRightY + BUFFER_CELL_NUM;
+    let bottomY = this.viewingCoords.bottomRightY + BUFFER_CELL_NUM + 1;
     if (bottomY >= numRecords) {
       bottomY = numRecords - 1;
     }
@@ -185,7 +212,7 @@ class View extends UpdatableView {
     let leftX = 0;
     let rightX = 0;
     let viewingRegionRightPx = this.scrolledPx.left + this.getViewingRegionWidthHeight().width;
-    for (let i=0; i<this.columnWidthsPx.length; i++) {
+    for (let i=0; i<this.tableModel.getColumnCount(); i++) {
       totalWidths += this.columnWidthsPx[i];
       if (this.scrolledPx.left > totalWidths) {
         leftX++;
@@ -227,23 +254,28 @@ class View extends UpdatableView {
         // loop for columns
         let columnWidth = this.columnWidthsPx[x];
         let cellValue = this.tableModel.getValueAt(x, y);
-        let className;
-        if (y % 2 == 1) {
-          className = 'dark';
-        }
+        let className = '';
         let cellStyle = {
           width: columnWidth,
-          height: Number(this.componentModel.lineHeight)
+          height: Number(this.componentModel.lineHeight),
+          color: cellValue.color,
+          backgroundColor: cellValue.backgroundColor
         };
-        // let cellStyle = {};
+
+        let cellClassName = '';
+        if (this.tableModel.isRowSelectedControlModified(y)) {
+          cellClassName += 'selected';
+        }
+
         columns.push(
-          <td key={x + '-' + y} style={cellStyle} className={className}>
-            {cellValue}
+          <td key={x + '-' + y} style={cellStyle} className={cellClassName}>
+            {cellValue.display}
           </td>
         );
       }
+
       rows.push(
-        <tr key={y}>
+        <tr key={y} className="no-select" data-row-index={y} onClick={this.onTableRowClick}>
           {columns}
         </tr>
       );
@@ -255,6 +287,58 @@ class View extends UpdatableView {
                       {rows}
                     </tbody>
                   </table>;
+  }
+
+  /** @private */
+  onTableRowClick(e) {
+   let $row = $(e.currentTarget);
+   let clickedRowIndex = Number($row.attr('data-row-index'));
+
+   if (!this.isCntrlPressed && !this.isShiftPressed) {
+     // when no modifiers are pressed
+     this.activeRowIndex = clickedRowIndex;
+     this.tableModel.clearSelectedRows();
+     this.tableModel.setSelectedRow(clickedRowIndex, false);
+   } else if (this.isCntrlPressed && !this.isShiftPressed) {
+     // when only the control modifier is pressed
+     this.activeRowIndex = clickedRowIndex;
+     if (this.tableModel.isRowSelectedControlModified(clickedRowIndex)) {
+      this.tableModel.removeRowSelection(clickedRowIndex);
+     } else {
+       this.tableModel.setSelectedRow(clickedRowIndex, true);
+
+       // set all existing selected rows with control modifier applied
+       this.tableModel.setAllSelectedRowsControlModified();
+     }
+   } else {
+     // when shift modifier is pressed
+     let $allRows = $row.parent().children();
+     let rowCounter = this.tableModel.getRowCount();
+     let pivotRowsMetCounter = 0;
+
+     // unselect the selected rows not chosen by control modifier
+     this.tableModel.removeNonControlModifiedSelectedRows();
+
+     for (let i=0; i<rowCounter; i++) {
+       if (this.activeRowIndex == null) {
+         this.activeRowIndex = clickedRowIndex;
+       }
+
+       let $currentRow = $(this);
+       let currentRowIndex = i;
+       if (currentRowIndex === this.activeRowIndex || currentRowIndex === clickedRowIndex) {
+         pivotRowsMetCounter++;
+       }
+
+       if (pivotRowsMetCounter > 0 && pivotRowsMetCounter <= 2) {
+         this.tableModel.setSelectedRow(currentRowIndex, false);
+
+         if (pivotRowsMetCounter == 2) {
+           pivotRowsMetCounter++;
+         }
+       }
+     }
+   }
   }
 
   componentWillUpdate() {
@@ -288,7 +372,8 @@ class View extends UpdatableView {
 
     let coords = this.getXCoordinatesIncludingBuffers();
 
-    for (let i=0; i<$columnHeaders.length; i++) {
+    let columnCount = this.tableModel.getColumnCount();
+    for (let i=0; i<columnCount; i++) {
       let $columnHeader = $($columnHeaders[i]);
       let columnHeaderText = $columnHeader.text();
       let maxLength;
@@ -304,7 +389,6 @@ class View extends UpdatableView {
         $('#' + this.componentId + ' .big-table-wrapper table tr td:nth-child(' + childIndex + ')').width(maxWidth);
       }
       $columnHeader.width(maxWidth);
-      // console.debug('i: ' + i + ', assigning width: ' + maxWidth);
       this.columnWidthsPx[i] = maxWidth;
     }
 
@@ -315,7 +399,8 @@ class View extends UpdatableView {
   renderColumnHeaders() {
     let cells = [];
     let columnSortOrders = this.controller.getColumnSortOrders();
-    for (let i=0; i<this.componentModel.columnTypes.length; i++) {
+    let columnCount = this.tableModel.getColumnCount();
+    for (let i=0; i<columnCount; i++) {
       let arrowIconClass = "hidden";
       if (columnSortOrders.length > 0) {
         if (columnSortOrders[0].index == i) {
@@ -331,7 +416,7 @@ class View extends UpdatableView {
       cells.push(
         <div key={i} onClick={this.onColumnHeaderClick} data-index={i}>
           <div className="header-label">
-            {this.componentModel.columnTypes[i].name}
+            {this.tableModel.getColumnHeader(i)}
             <span className={arrowIconClass}></span>
           </div>
         </div>
@@ -340,6 +425,26 @@ class View extends UpdatableView {
     this.columnHeaders =  <div className="column-headers">
                             {cells}
                           </div>;
+  }
+
+  /** @private */
+  onKeyDownCheckSelectionModifiers(event) {
+    let isMac = navigator.platform.toUpperCase().indexOf('MAC')>=0;
+    if((!isMac && event.which == '17') || (isMac && event.which == '91')) {
+      this.isCntrlPressed = true;
+    } else if (event.which == '16') {
+      this.isShiftPressed = true;
+    }
+  }
+
+  /** @private */
+  onKeyUpCheckSelectionModifiers(event) {
+    let isMac = navigator.platform.toUpperCase().indexOf('MAC')>=0;
+    if((!isMac && event.which == '17') || (isMac && event.which == '91')) {
+      this.isCntrlPressed = false;
+    } else if (event.which == '16') {
+      this.isShiftPressed = false;
+    }
   }
 
   render() {

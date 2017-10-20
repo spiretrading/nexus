@@ -10,6 +10,8 @@ import 'jquery-tagit-css';
 import 'jquery-slimscroll';
 import 'jquery-ellipsis';
 import 'jquery-ellipsis-css';
+import 'jquery-contextmenu';
+import 'jquery-contextmenu-css';
 import 'index.html';
 import 'bootstrap-css';
 import 'styles/general.scss';

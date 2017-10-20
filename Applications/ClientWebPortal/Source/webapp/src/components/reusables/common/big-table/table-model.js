@@ -1,13 +1,13 @@
-import ColumnType from './column-type';
 import numberFormatter from 'utils/number-formatter';
 import currencyFormatter from 'utils/currency-formatter';
+import HashMap from 'hashmap';
 
 class TableModel {
-  constructor(dataModel, columnTypes) {
-    this.columnTypes = columnTypes;
+  constructor(dataModel) {
     this.dataModel = dataModel;
     this.allLengthsCache = [];
     this.columnMaxLengthCells = [];
+    this.selectedRowsControlModApplied = new HashMap();
   }
 
   getColumnLengths() {
@@ -32,15 +32,31 @@ class TableModel {
   }
 
   getRowCount() {
-    return this.dataModel.getRowCount();
+    return this.allLengthsCache.length;
   }
 
   getColumnCount() {
     return this.dataModel.getColumnCount();
   }
 
+  getColumnHeader(x) {
+    return this.dataModel.getColumnHeader(x);
+  }
+
   getValueAt(x, y) {
     return this.dataModel.getValueAt(x, y);
+  }
+
+  updateColumnChange(dataModel) {
+    // reset variables
+    this.dataModel = dataModel;
+    this.allLengthsCache = [];
+    this.columnMaxLengthCells = [];
+
+    // initialize empty caches
+    for (let i=0; i<this.getRowCount(); i++) {
+      this.rowAdd(i);
+    }
   }
 
   rowUpdate(rowIndex) {
@@ -84,9 +100,28 @@ class TableModel {
       }
     }
     this.allLengthsCache.splice(rowIndex, 0, cellLengths);
+
+    // update selected rows
+    for (let i=this.allLengthsCache.length-1; i>=rowIndex; i--) {
+      if (this.selectedRowsControlModApplied.has(i)) {
+        let previousValue = this.selectedRowsControlModApplied.get(i);
+        this.selectedRowsControlModApplied.set(i+1, previousValue);
+        this.selectedRowsControlModApplied.remove(i);
+      }
+    }
   }
 
   rowRemove(rowIndex) {
+    // update selected rows
+    for (let i=rowIndex; i<this.allLengthsCache.length; i++) {
+      if (this.selectedRowsControlModApplied.has(i)) {
+        let previousValue = this.selectedRowsControlModApplied.get(i);
+        this.selectedRowsControlModApplied.set(i-1, previousValue);
+        this.selectedRowsControlModApplied.remove(i);
+      }
+    }
+
+    // update cell size cache
     this.allLengthsCache.splice(rowIndex, 1);
     for (let columnIndex=0; columnIndex<this.columnMaxLengthCells.length; columnIndex++) {
       let maxRow = this.columnMaxLengthCells[columnIndex].rowIndex;
@@ -99,30 +134,70 @@ class TableModel {
   rowMove(fromIndex, toIndex) {
     let prevValue;
     let nextValue = this.allLengthsCache[fromIndex];
+    let nextSelectedRowValue = this.selectedRowsControlModApplied.get(fromIndex);
+    this.selectedRowsControlModApplied.remove(fromIndex);
     if (fromIndex < toIndex) {
       for (let i=toIndex; i>=fromIndex; i--) {
+        // update the length cache
         prevValue = this.allLengthsCache[i];
         this.allLengthsCache[i] = nextValue;
         nextValue = prevValue;
+
+        // update the selected rows
+        let valueToUpdateTo = nextSelectedRowValue;
+        nextSelectedRowValue = this.selectedRowsControlModApplied.get(i);
+        this.selectedRowsControlModApplied.remove(i);
+        if (valueToUpdateTo != null) {
+          this.selectedRowsControlModApplied.set(i, valueToUpdateTo);
+        }
       }
     } else {
-      for (let i=toIndex; i>=fromIndex; i++) {
+      for (let i=toIndex; i<=fromIndex; i++) {
+        // update the length cache
         prevValue = this.allLengthsCache[i];
         this.allLengthsCache[i] = nextValue;
         nextValue = prevValue;
+
+        // update the selected rows
+        let valueToUpdateTo = nextSelectedRowValue;
+        nextSelectedRowValue = this.selectedRowsControlModApplied.get(i);
+        this.selectedRowsControlModApplied.remove(i);
+        if (valueToUpdateTo != null) {
+          this.selectedRowsControlModApplied.set(i, valueToUpdateTo);
+        }
       }
     }
   }
 
-  /** @private */
-  formatValue(value, columnIndex) {
-    let type = this.columnTypes[columnIndex].type;
-    if (type == ColumnType.Number) {
-      value = numberFormatter.formatWithComma(value);
-    } else if (type == ColumnType.MONEY || type == ColumnType.POSITIVE_NEGATIVE_MONEY) {
-      value = currencyFormatter.formatByCode()
-    }
-    return value;
+  isRowSelectedControlModified(rowIndex) {
+    return this.selectedRowsControlModApplied.has(rowIndex);
+  }
+
+  clearSelectedRows() {
+    this.selectedRowsControlModApplied.clear();
+  }
+
+  setSelectedRow(rowIndex, isSelected) {
+    this.selectedRowsControlModApplied.set(rowIndex, isSelected);
+  }
+
+  removeRowSelection(rowIndex) {
+    this.selectedRowsControlModApplied.remove(rowIndex);
+  }
+
+  setAllSelectedRowsControlModified() {
+    this.selectedRowsControlModApplied.forEach((value, key) => {
+      this.selectedRowsControlModApplied.set(key, true);
+    });
+  }
+
+  removeNonControlModifiedSelectedRows() {
+    let selectedRowsClone = this.selectedRowsControlModApplied.clone();
+    selectedRowsClone.forEach(function(value, key) {
+      if (!value) {
+        this.selectedRowsControlModApplied.remove(key);
+      }
+    }.bind(this));
   }
 }
 

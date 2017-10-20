@@ -1,101 +1,84 @@
-import ColumnType from 'components/reusables/common/big-table/column-type';
-
 let columns = [
   {
-    id: 1,
+    id: 0,
     name: 'Account',
-    type: ColumnType.STRING,
+    isPrimaryKey: true
+  },
+  {
+    id: 1,
+    name: 'Security',
     isPrimaryKey: true
   },
   {
     id: 2,
-    name: 'Security',
-    type: ColumnType.STRING,
-    isPrimaryKey: true
+    name: 'Quantity',
+    isPrimaryKey: false
   },
   {
     id: 3,
-    name: 'Quantity',
-    type: ColumnType.Number,
+    name: 'Side',
     isPrimaryKey: false
   },
   {
     id: 4,
-    name: 'Side',
-    type: ColumnType.STRING,
+    name: 'Average Price',
     isPrimaryKey: false
   },
   {
     id: 5,
-    name: 'Average Price',
-    type: ColumnType.MONEY,
+    name: 'Total P/L',
     isPrimaryKey: false
   },
   {
     id: 6,
-    name: 'Total P/L',
-    type: ColumnType.POSITIVE_NEGATIVE_MONEY,
+    name: 'Unrealized P/L',
     isPrimaryKey: false
   },
   {
     id: 7,
-    name: 'Unrealized P/L',
-    type: ColumnType.POSITIVE_NEGATIVE_MONEY,
+    name: 'Realized P/L',
     isPrimaryKey: false
   },
   {
     id: 8,
-    name: 'Realized P/L',
-    type: ColumnType.POSITIVE_NEGATIVE_MONEY,
+    name: 'Fees',
     isPrimaryKey: false
   },
   {
     id: 9,
-    name: 'Fees',
-    type: ColumnType.MONEY,
+    name: 'Cost Basis',
     isPrimaryKey: false
   },
   {
     id: 10,
-    name: 'Cost Basis',
-    type: ColumnType.MONEY,
+    name: 'Currency',
     isPrimaryKey: false
   },
   {
     id: 11,
-    name: 'Currency',
-    type: ColumnType.STRING,
+    name: 'Volume',
     isPrimaryKey: false
   },
   {
     id: 12,
-    name: 'Volume',
-    type: ColumnType.NUMBER,
+    name: 'Trades',
     isPrimaryKey: false
   },
   {
     id: 13,
-    name: 'Trades',
-    type: ColumnType.NUMBER,
+    name: 'Acc. Total P/L',
     isPrimaryKey: false
   },
   {
     id: 14,
-    name: 'Acc. Total P/L',
-    type: ColumnType.POSITIVE_NEGATIVE_MONEY,
+    name: 'Acc. Unrealized P/L',
     isPrimaryKey: false
   },
   {
     id: 15,
-    name: 'Acc. Unrealized P/L',
-    type: ColumnType.POSITIVE_NEGATIVE_MONEY,
-    isPrimaryKey: false
-  },
-  {
-    id: 16,
     name: 'Acc. Fees',
-    type: ColumnType.MONEY,
     isPrimaryKey: false
   }
 ];
+
 export default columns;

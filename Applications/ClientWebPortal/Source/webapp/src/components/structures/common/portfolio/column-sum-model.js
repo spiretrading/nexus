@@ -1,16 +1,25 @@
+import ChainableModel from './chainable-model';
 import DataChangeType from './data-change-type';
-import uuid from 'uuid';
-import HashMap from 'hashmap';
 import ValueComparer from './value-comparer';
 
-export default class {
+export default class extends ChainableModel {
   constructor(sourceModel) {
-    this.sourceModel = sourceModel;
+    super(sourceModel);
     this.onDataChange = this.onDataChange.bind(this);
     this.dataChangeSubId = this.sourceModel.addDataChangeListener(this.onDataChange);
-    this.dataChangeListeners = new HashMap();
     this.lastValuesCache = [];  // 2D array of row x column
     this.totals = [];
+
+    // initialize totals with given source model for already existing data
+    this.initialize();
+  }
+
+  /** @private */
+  initialize() {
+    let rowCount = this.sourceModel.getRowCount();
+    for (let i=0; i<rowCount; i++) {
+      this.addData(i);
+    }
   }
 
   getRowCount() {
@@ -19,6 +28,10 @@ export default class {
 
   getColumnCount() {
     return this.sourceModel.getColumnCount();
+  }
+
+  getColumnHeader(x) {
+    return this.sourceModel.getColumnHeader(x);
   }
 
   getValueAt(x, y) {
@@ -37,6 +50,17 @@ export default class {
 
   /** @private */
   handleDataAdd(rowIndex) {
+    this.addData(rowIndex);
+
+    // notify the listeners
+    let listeners = this.dataChangeListeners.values();
+    for (let i=0; i<listeners.length; i++) {
+      listeners[i](DataChangeType.UPDATE, 0);
+    }
+  }
+
+  /** @private */
+  addData(rowIndex) {
     // cache the new row
     let row = [];
     let columnCount = this.sourceModel.getColumnCount();
@@ -46,12 +70,6 @@ export default class {
       this.addTotal(i, value);
     }
     this.lastValuesCache.push(row);
-
-    // notify the listeners
-    let listeners = this.dataChangeListeners.values();
-    for (let i=0; i<listeners.length; i++) {
-      listeners[i](DataChangeType.UPDATE, 0);
-    }
   }
 
   /** @private */
@@ -113,15 +131,5 @@ export default class {
     for (let i=0; i<listeners.length; i++) {
       listeners[i](DataChangeType.UPDATE, 0);
     }
-  }
-
-  addDataChangeListener(listener) {
-    let subId = uuid.v4();
-    this.dataChangeListeners.set(subId, listener);
-    return subId;
-  }
-
-  removeDataChangeListener(subId) {
-    this.dataChangeListeners.remove(subId);
   }
 }

@@ -2,7 +2,6 @@ import './style.scss';
 import React from 'react';
 import UpdatableView from 'commons/updatable-view';
 import PortfolioFilters from 'components/reusables/common/portfolio-filters';
-import PortfolioChart from 'components/reusables/common/portfolio-chart';
 import tableColumns from 'components/structures/common/portfolio/table-columns';
 import numberFormatter from 'utils/number-formatter';
 import BigTable from 'components/reusables/common/big-table';
@@ -22,7 +21,7 @@ class View extends UpdatableView {
 
   /** @private */
   onWindowResize() {
-    //this.resizePortfolioChart();
+    this.controller.resizeTable();
   }
 
   dispose() {
@@ -33,7 +32,6 @@ class View extends UpdatableView {
     $('#portfolio-container').fadeIn({
       duration: Config.FADE_DURATION
     });
-    $(window).resize();
   }
 
   getNonPrimaryKeyColumns() {
@@ -93,7 +91,6 @@ class View extends UpdatableView {
         <div className="table-wrapper">
           <BigTable
             dataModel={dataModel}
-            columnTypes={tableColumns}
             setReference={this.controller.setTableRef}
             fontFamily='Roboto'
             fontWeight='200'

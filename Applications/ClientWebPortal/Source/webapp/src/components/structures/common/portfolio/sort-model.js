@@ -1,15 +1,13 @@
+import ChainableModel from './chainable-model';
 import DataChangeType from './data-change-type';
-import uuid from 'uuid';
-import HashMap from 'hashmap';
 import definitionsService from 'services/definitions';
-import ValueComparer from './value-comparer';
 
-export default class {
-  constructor(sourceModel, columnSortOrders) {
-    this.sourceModel = sourceModel;
+export default class extends ChainableModel{
+  constructor(sourceModel, columnSortOrders, valueComparer) {
+    super(sourceModel);
+    this.valueComparer = valueComparer;
     this.onDataChange = this.onDataChange.bind(this);
     this.dataChangeSubId = this.sourceModel.addDataChangeListener(this.onDataChange);
-    this.dataChangeListeners = new HashMap();
 
     this.columnSortOrders = columnSortOrders;
     this.sourceToSortedIndices = [];
@@ -27,12 +25,20 @@ export default class {
     }
   }
 
+  getColumnSortOrders() {
+    return this.columnSortOrders;
+  }
+
   getRowCount() {
     return this.sourceModel.getRowCount();
   }
 
   getColumnCount() {
     return this.sourceModel.getColumnCount();
+  }
+
+  getColumnHeader(x) {
+    return this.sourceModel.getColumnHeader(x);
   }
 
   getValueAt(x, y) {
@@ -232,25 +238,11 @@ export default class {
 
   /** @private */
   compareValues(a, b, isAsc) {
-    let result = ValueComparer.compare(a, b);
+    let result = this.valueComparer.compare(a, b);
     if (isAsc) {
       return result;
     } else {
       return -1 * result;
     }
-  }
-
-  addDataChangeListener(listener) {
-    let subId = uuid.v4();
-    this.dataChangeListeners.set(subId, listener);
-    return subId;
-  }
-
-  removeDataChangeListener(subId) {
-    this.dataChangeListeners.remove(subId);
-  }
-
-  dispose() {
-    this.sourceModel.removeDataChangeListener(this.dataChangeSubId);
   }
 }
