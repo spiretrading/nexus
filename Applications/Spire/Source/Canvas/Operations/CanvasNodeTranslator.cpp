@@ -4,6 +4,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Reactors/AggregateReactor.hpp>
 #include <Beam/Reactors/AlarmReactor.hpp>
+#include <Beam/Reactors/BasicReactor.hpp>
 #include <Beam/Reactors/ChainReactor.hpp>
 #include <Beam/Reactors/ConstantReactor.hpp>
 #include <Beam/Reactors/FilterReactor.hpp>
@@ -11,7 +12,7 @@
 #include <Beam/Reactors/LuaReactor.hpp>
 #include <Beam/Reactors/NativeLuaReactorParameter.hpp>
 #include <Beam/Reactors/NoneReactor.hpp>
-#include <Beam/Reactors/PublisherReactor.hpp>
+#include <Beam/Reactors/QueueReactor.hpp>
 #include <Beam/Reactors/RangeReactor.hpp>
 #include <Beam/Reactors/Reactor.hpp>
 #include <Beam/Reactors/ReactorError.hpp>
@@ -19,7 +20,6 @@
 #include <Beam/Reactors/SwitchReactor.hpp>
 #include <Beam/Reactors/ThrowReactor.hpp>
 #include <Beam/Reactors/TimerReactor.hpp>
-#include <Beam/Reactors/TriggeredReactor.hpp>
 #include <Beam/Tasks/AggregateTask.hpp>
 #include <Beam/Tasks/IdleTask.hpp>
 #include <Beam/Tasks/ReactorTask.hpp>
@@ -1046,9 +1046,10 @@ void CanvasNodeTranslationVisitor::Visit(const AlarmNode& node) {
     node.GetChildren().front()));
   auto reactor = MakeAlarmReactor(timerFactory,
     &m_context->GetUserProfile().GetServiceClients().GetTimeClient(),
-    std::static_pointer_cast<Reactor<ptime>>(expiry));
-  m_context->GetReactorMonitor().AddEvent(std::get<1>(reactor));
-  m_translation = std::get<0>(reactor);
+    std::static_pointer_cast<Reactor<ptime>>(expiry),
+    Ref(m_context->GetReactorMonitor().GetTrigger()));
+  m_context->GetReactorMonitor().Add(reactor);
+  m_translation = reactor;
 }
 
 void CanvasNodeTranslationVisitor::Visit(const BlotterTaskMonitorNode& node) {
@@ -1091,8 +1092,6 @@ void CanvasNodeTranslationVisitor::Visit(const ChainNode& node) {
       InternalTranslation(node.GetChildren()[i]));
     auto chainReactor = Instantiate<ChainTranslator>(
       nativeType.GetNativeType())(previousReactor, currentReactor);
-    m_context->GetReactorMonitor().AddEvent(
-      std::dynamic_pointer_cast<Event>(chainReactor));
     previousReactor = chainReactor;
   }
   m_translation = previousReactor;
@@ -1179,18 +1178,16 @@ void CanvasNodeTranslationVisitor::Visit(
   auto taskTranslation = boost::get<TaskTranslation>(InternalTranslation(
     node.GetChildren().front()));
   auto orderSubmissionReactor = MakePublisherReactor(
-    taskTranslation.m_publisher.get());
-  auto reactorMonitor = &m_context->GetReactorMonitor();
-  reactorMonitor->AddEvent(orderSubmissionReactor);
+    *taskTranslation.m_publisher,
+    Ref(m_context->GetReactorMonitor().GetTrigger()));
   auto executionReportReactor = MakeFunctionReactor(
-    [=] (const Order* order) {
-      auto executionReportReactor =
-        MakePublisherReactor(&order->GetPublisher());
-      reactorMonitor->AddEvent(executionReportReactor);
+    [reactorMonitor = &m_context->GetReactorMonitor()] (const Order* order) {
+      auto executionReportReactor = MakePublisherReactor(order->GetPublisher(),
+        Ref(reactorMonitor->GetTrigger()));
       return executionReportReactor;
     }, orderSubmissionReactor);
   auto aggregateReactor = MakeAggregateReactor(executionReportReactor);
-  m_translation = MakeFunctionReactor(ExecutionReportToRecordConverter(),
+  m_translation = MakeFunctionReactor(ExecutionReportToRecordConverter{},
     aggregateReactor);
 }
 
@@ -1361,14 +1358,11 @@ void CanvasNodeTranslationVisitor::Visit(const OrderImbalanceQueryNode& node) {
       query.SetSnapshotLimit(SnapshotLimit::Unlimited());
       auto queue = std::make_shared<Queue<SequencedOrderImbalance>>();
       marketDataClient->QueryOrderImbalances(query, queue);
-      auto publisher = std::make_shared<QueuePublisher<
-        MultiQueueWriter<SequencedOrderImbalance>>>(std::move(queue));
-      auto reactor = MakePublisherReactor(std::move(publisher));
-      reactorMonitor->AddEvent(reactor);
+      auto reactor = MakeQueueReactor(queue, Ref(reactorMonitor->GetTrigger()));
       return reactor;
     }, std::move(market), std::move(range));
   auto query = MakeSwitchReactor(orderImbalancePublisher);
-  m_translation = MakeFunctionReactor(OrderImbalanceToRecordConverter(), query);
+  m_translation = MakeFunctionReactor(OrderImbalanceToRecordConverter{}, query);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const OrderStatusNode& node) {
@@ -1423,9 +1417,9 @@ void CanvasNodeTranslationVisitor::Visit(const RangeNode& node) {
   auto upper = std::static_pointer_cast<Reactor<Quantity>>(
     boost::get<std::shared_ptr<BaseReactor>>(
     InternalTranslation(node.GetChildren().back())));
-  auto reactor = MakeRangeReactor(lower, upper);
-  m_context->GetReactorMonitor().AddEvent(std::get<1>(reactor));
-  m_translation = std::get<0>(reactor);
+  auto reactor = MakeRangeReactor(lower, upper,
+    Ref(m_context->GetReactorMonitor().GetTrigger()));
+  m_translation = reactor;
 }
 
 void CanvasNodeTranslationVisitor::Visit(const ReferenceNode& node) {
@@ -1543,8 +1537,8 @@ void CanvasNodeTranslationVisitor::Visit(const TaskStateMonitorNode& node) {
     InternalTranslation(node.GetChildren().front()));
   auto task =
     translation.m_factory.DynamicCast<IndirectTaskFactory>()->GetTask();
-  auto publisher = MakePublisherReactor(&task->GetPublisher());
-  m_context->GetReactorMonitor().AddEvent(publisher);
+  auto publisher = MakePublisherReactor(task->GetPublisher(),
+    Ref(m_context->GetReactorMonitor().GetTrigger()));
   m_translation = publisher;
 }
 
@@ -1574,14 +1568,10 @@ void CanvasNodeTranslationVisitor::Visit(const TimeAndSaleQueryNode& node) {
       query.SetSnapshotLimit(SnapshotLimit::Unlimited());
       auto queue = std::make_shared<Queue<SequencedTimeAndSale>>();
       marketDataClient->QueryTimeAndSales(query, queue);
-      auto publisher = std::make_shared<QueuePublisher<
-        MultiQueueWriter<SequencedTimeAndSale>>>(std::move(queue));
-      auto reactor = MakePublisherReactor(std::move(publisher));
-      reactorMonitor->AddEvent(reactor);
-      return reactor;
+      return MakeQueueReactor(queue, Ref(reactorMonitor->GetTrigger()));
     }, std::move(security), std::move(range));
   auto query = MakeSwitchReactor(timeAndSalePublisher);
-  m_translation = MakeFunctionReactor(TimeAndSaleToRecordConverter(), query);
+  m_translation = MakeFunctionReactor(TimeAndSaleToRecordConverter{}, query);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const TimeInForceNode& node) {
@@ -1609,9 +1599,9 @@ void CanvasNodeTranslationVisitor::Visit(const TimerNode& node) {
   auto timerFactory = [=] (time_duration interval) {
     return make_unique<LiveTimer>(interval, Ref(*timerThreadPool));
   };
-  auto reactor = MakeTimerReactor<Quantity>(timerFactory, period);
-  m_translation = std::get<0>(reactor);
-  m_context->GetReactorMonitor().AddEvent(std::get<1>(reactor));
+  auto reactor = MakeTimerReactor<Quantity>(timerFactory, period,
+    Ref(m_context->GetReactorMonitor().GetTrigger()));
+  m_translation = reactor;
 }
 
 void CanvasNodeTranslationVisitor::Visit(const UnequalNode& node) {
@@ -1624,7 +1614,7 @@ void CanvasNodeTranslationVisitor::Visit(const UntilNode& node) {
   auto condition = std::static_pointer_cast<Reactor<bool>>(
     boost::get<std::shared_ptr<BaseReactor>>(
     InternalTranslation(node.GetChildren().front())));
-  m_context->GetReactorMonitor().AddReactor(condition);
+  m_context->GetReactorMonitor().Add(condition);
   TaskTranslation taskTranslation;
   taskTranslation.m_factory = UntilTaskFactory(taskFactory, condition,
     Ref(m_context->GetReactorMonitor()));
@@ -1638,7 +1628,7 @@ void CanvasNodeTranslationVisitor::Visit(const WhenNode& node) {
   auto condition = std::static_pointer_cast<Reactor<bool>>(
     boost::get<std::shared_ptr<BaseReactor>>(
     InternalTranslation(node.GetChildren().front())));
-  m_context->GetReactorMonitor().AddReactor(condition);
+  m_context->GetReactorMonitor().Add(condition);
   TaskTranslation taskTranslation;
   taskTranslation.m_factory = WhenTaskFactory(taskFactory, condition,
     Ref(m_context->GetReactorMonitor()));
