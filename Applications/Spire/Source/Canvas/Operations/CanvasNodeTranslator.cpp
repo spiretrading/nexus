@@ -12,6 +12,7 @@
 #include <Beam/Reactors/LuaReactor.hpp>
 #include <Beam/Reactors/NativeLuaReactorParameter.hpp>
 #include <Beam/Reactors/NoneReactor.hpp>
+#include <Beam/Reactors/PublisherReactor.hpp>
 #include <Beam/Reactors/QueueReactor.hpp>
 #include <Beam/Reactors/RangeReactor.hpp>
 #include <Beam/Reactors/Reactor.hpp>
@@ -465,7 +466,8 @@ namespace {
       auto publisher = std::make_shared<
         ParserPublisher<BasicIStreamReader<ifstream>, Parser>>(path, parser,
         errorPolicy);
-      auto reactor = MakePublisherReactor(std::move(publisher));
+      auto reactor = MakePublisherReactor(std::move(publisher),
+        Ref(reactorMonitor->GetTrigger()));
       return reactor;
     }
 
@@ -480,7 +482,8 @@ namespace {
       auto publisher = std::make_shared<
         ParserPublisher<BasicIStreamReader<ifstream>, Parser>>(path, parser,
         errorPolicy);
-      auto reactor = MakePublisherReactor(std::move(publisher));
+      auto reactor = MakePublisherReactor(std::move(publisher),
+        Ref(reactorMonitor->GetTrigger()));
       return reactor;
     }
 
@@ -495,7 +498,8 @@ namespace {
       auto publisher = std::make_shared<
         ParserPublisher<BasicIStreamReader<ifstream>, Parser>>(path, parser,
         errorPolicy);
-      auto reactor = MakePublisherReactor(std::move(publisher));
+      auto reactor = MakePublisherReactor(std::move(publisher),
+        Ref(reactorMonitor->GetTrigger()));
       return reactor;
     }
 
@@ -511,7 +515,8 @@ namespace {
       auto publisher = std::make_shared<
         ParserPublisher<BasicIStreamReader<ifstream>, Parser>>(path, parser,
         errorPolicy);
-      auto reactor = MakePublisherReactor(std::move(publisher));
+      auto reactor = MakePublisherReactor(std::move(publisher),
+        Ref(reactorMonitor->GetTrigger()));
       return reactor;
     }
 
@@ -526,7 +531,8 @@ namespace {
       auto publisher = std::make_shared<
         ParserPublisher<BasicIStreamReader<ifstream>, Parser>>(path, parser,
         errorPolicy);
-      auto reactor = MakePublisherReactor(std::move(publisher));
+      auto reactor = MakePublisherReactor(std::move(publisher),
+        Ref(reactorMonitor->GetTrigger()));
       return reactor;
     }
 
@@ -583,8 +589,8 @@ namespace {
       return MakeFoldReactor(
         std::static_pointer_cast<Reactor<SourceType>>(source),
         std::static_pointer_cast<Reactor<CombinerType>>(combiner),
-        std::static_pointer_cast<TriggeredReactor<CombinerType>>(leftTrigger),
-        std::static_pointer_cast<TriggeredReactor<SourceType>>(rightTrigger));
+        std::static_pointer_cast<BasicReactor<CombinerType>>(leftTrigger),
+        std::static_pointer_cast<BasicReactor<SourceType>>(rightTrigger));
     }
 
     using SupportedTypes = FoldSignatures::type;
@@ -963,8 +969,9 @@ namespace {
 
   struct VariableTranslator {
     template<typename T>
-    static std::shared_ptr<BaseReactor> Template() {
-      return MakeTriggeredReactor<T>();
+    static std::shared_ptr<BaseReactor> Template(
+        CanvasNodeTranslationContext& context) {
+      return MakeBasicReactor<T>(Ref(context.GetReactorMonitor().GetTrigger()));
     }
 
     using SupportedTypes = ValueTypes;
@@ -1237,7 +1244,8 @@ void CanvasNodeTranslationVisitor::Visit(const FoldNode& node) {
 
 void CanvasNodeTranslationVisitor::Visit(const FoldOperandNode& node) {
   m_translation = Instantiate<VariableTranslator>(
-    static_cast<const NativeType&>(node.GetType()).GetNativeType())();
+    static_cast<const NativeType&>(node.GetType()).GetNativeType())(
+    *m_context);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const GreaterNode& node) {

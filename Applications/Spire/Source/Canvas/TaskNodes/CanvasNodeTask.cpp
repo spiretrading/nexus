@@ -1,6 +1,6 @@
 #include "Spire/Canvas/TaskNodes/CanvasNodeTask.hpp"
 #include <Beam/Reactors/DoReactor.hpp>
-#include <Beam/Reactors/QueueReactor.hpp>
+#include <Beam/Reactors/PublisherReactor.hpp>
 #include <boost/throw_exception.hpp>
 #include "Spire/Canvas/Operations/CanvasNodeTranslator.hpp"
 #include "Spire/Spire/UserProfile.hpp"

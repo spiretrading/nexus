@@ -1,6 +1,6 @@
 #include "Spire/Canvas/TaskNodes/IndirectTask.hpp"
 #include <Beam/Reactors/DoReactor.hpp>
-#include <Beam/Reactors/QueueReactor.hpp>
+#include <Beam/Reactors/PublisherReactor.hpp>
 #include <Beam/Reactors/ReactorMonitor.hpp>
 #include <boost/throw_exception.hpp>
 
