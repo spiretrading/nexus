@@ -12,7 +12,6 @@ def output(tokens, destination, address, interface, password):
   destination.write('  password: "%s"\n' % password)
   destination.write('\n')
   destination.write('enable_logging: false\n')
-  destination.write('market: XNYS\n')
   destination.write('sampling: 100ms\n')
   destination.write('host: %s:%s\n' % (host, port))
   destination.write('interface: %s:%s\n' % (interface, port))
