@@ -581,6 +581,15 @@ namespace {
     using SupportedTypes = RoundingNodeSignatures::type;
   };
 
+  struct FoldParameterTranslator {
+    template<typename T>
+    static std::shared_ptr<BaseReactor> Template() {
+      return MakeFoldParameterReactor<T>();
+    }
+
+    using SupportedTypes = ValueTypes;
+  };
+
   struct FoldTranslator {
     template<typename SourceType, typename CombinerType, typename Unused>
     static std::shared_ptr<BaseReactor> Template(
@@ -591,8 +600,9 @@ namespace {
       return MakeFoldReactor(
         std::static_pointer_cast<Reactor<SourceType>>(source),
         std::static_pointer_cast<Reactor<CombinerType>>(combiner),
-        std::static_pointer_cast<BasicReactor<CombinerType>>(leftTrigger),
-        std::static_pointer_cast<BasicReactor<SourceType>>(rightTrigger));
+        std::static_pointer_cast<FoldParameterReactor<CombinerType>>(
+          leftTrigger),
+        std::static_pointer_cast<FoldParameterReactor<SourceType>>(rightTrigger));
     }
 
     using SupportedTypes = FoldSignatures::type;
@@ -1245,9 +1255,8 @@ void CanvasNodeTranslationVisitor::Visit(const FoldNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const FoldOperandNode& node) {
-  m_translation = Instantiate<VariableTranslator>(
-    static_cast<const NativeType&>(node.GetType()).GetNativeType())(
-    *m_context);
+  m_translation = Instantiate<FoldParameterTranslator>(
+    static_cast<const NativeType&>(node.GetType()).GetNativeType())();
 }
 
 void CanvasNodeTranslationVisitor::Visit(const GreaterNode& node) {
