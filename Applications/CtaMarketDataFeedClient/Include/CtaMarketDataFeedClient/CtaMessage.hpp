@@ -9,6 +9,7 @@
 
 namespace Nexus {
 namespace MarketDataService {
+  struct CtaBlock;
 
   /*! \struct CtaMessageHeader
       \brief Stores the header of a single CTA message.
@@ -56,12 +57,14 @@ namespace MarketDataService {
 
     //! Parses a CtaMessage.
     /*!
+      \param block The CtaBlock that the message belongs to.
       \param data A pointer to the first byte in the packet to parse, this
                   pointer will be modified to point to the end of the message.
       \param size The number of bytes available to parse.
       \return The CtaMessage represented by the <i>buffer</i>.
     */
-    static CtaMessage Parse(Beam::Out<const char*> data, std::uint16_t size);
+    static CtaMessage Parse(const CtaBlock& block, Beam::Out<const char*> data,
+      std::uint16_t size);
   };
 
   /*! \struct CtaBlockHeader
@@ -115,8 +118,8 @@ namespace MarketDataService {
     static CtaBlock Parse(Beam::Out<const char*> data, std::uint16_t size);
   };
 
-  inline CtaMessage CtaMessage::Parse(Beam::Out<const char*> data,
-      std::uint16_t size) {
+  inline CtaMessage CtaMessage::Parse(const CtaBlock& block,
+      Beam::Out<const char*> data, std::uint16_t size) {
     if(size < CtaMessageHeader::SIZE) {
       BOOST_THROW_EXCEPTION(std::runtime_error{
         "Buffer too short for message header."});
@@ -149,6 +152,8 @@ namespace MarketDataService {
       message.m_header.m_timestamp =
         boost::posix_time::from_time_t(epochTimestamp) +
         boost::posix_time::microseconds(nanosecondTimestamp / 1000);
+    } else {
+      message.m_header.m_timestamp = block.m_header.m_timestamp;
     }
     message.m_header.m_messageId = Beam::FromBigEndian(
       *reinterpret_cast<const std::uint8_t*>(token));
