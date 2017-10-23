@@ -372,9 +372,11 @@ namespace {
     template<typename T>
     static std::shared_ptr<BaseReactor> Template(
         const std::shared_ptr<BaseReactor>& initial,
-        const std::shared_ptr<BaseReactor>& continuation) {
+        const std::shared_ptr<BaseReactor>& continuation,
+        CanvasNodeTranslationContext& context) {
       return MakeChainReactor(std::static_pointer_cast<Reactor<T>>(initial),
-        std::static_pointer_cast<Reactor<T>>(continuation));
+        std::static_pointer_cast<Reactor<T>>(continuation),
+        Ref(context.GetReactorMonitor().GetTrigger()));
     }
 
     using SupportedTypes = ValueTypes;
@@ -1098,7 +1100,7 @@ void CanvasNodeTranslationVisitor::Visit(const ChainNode& node) {
     auto currentReactor = boost::get<std::shared_ptr<BaseReactor>>(
       InternalTranslation(node.GetChildren()[i]));
     auto chainReactor = Instantiate<ChainTranslator>(
-      nativeType.GetNativeType())(previousReactor, currentReactor);
+      nativeType.GetNativeType())(previousReactor, currentReactor, *m_context);
     previousReactor = chainReactor;
   }
   m_translation = previousReactor;
