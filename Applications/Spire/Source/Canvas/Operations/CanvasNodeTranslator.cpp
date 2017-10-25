@@ -7,6 +7,7 @@
 #include <Beam/Reactors/BasicReactor.hpp>
 #include <Beam/Reactors/ChainReactor.hpp>
 #include <Beam/Reactors/ConstantReactor.hpp>
+#include <Beam/Reactors/Expressions.hpp>
 #include <Beam/Reactors/FilterReactor.hpp>
 #include <Beam/Reactors/FoldReactor.hpp>
 #include <Beam/Reactors/LuaReactor.hpp>
@@ -332,8 +333,7 @@ namespace {
         const std::shared_ptr<BaseReactor>& left,
         const std::shared_ptr<BaseReactor>& right,
         CanvasNodeTranslationContext& context) {
-      return MakeFunctionReactor(Operation<T0, T1, R>(),
-        std::static_pointer_cast<Reactor<T0>>(left),
+      return Add(std::static_pointer_cast<Reactor<T0>>(left),
         std::static_pointer_cast<Reactor<T1>>(right));
     }
 
