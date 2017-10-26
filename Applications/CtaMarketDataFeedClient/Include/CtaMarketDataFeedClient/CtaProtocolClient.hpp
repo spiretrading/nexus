@@ -89,7 +89,8 @@ namespace MarketDataService {
     auto remainingSize = static_cast<std::uint16_t>(
       (m_buffer.GetData() + m_buffer.GetSize()) - m_token);
     try {
-      auto message = CtaMessage::Parse(Beam::Store(m_token), remainingSize);
+      auto message = CtaMessage::Parse(m_block, Beam::Store(m_token),
+        remainingSize);
       ++m_blockIndex;
       return message;
     } catch(const std::exception&) {
