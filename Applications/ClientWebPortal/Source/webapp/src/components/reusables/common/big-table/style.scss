@@ -14,30 +14,37 @@
     position: absolute;
     top: 0;
     left: 0;
-    display: flex;
     z-index: 1;
     height: 50px;
     background: white;
-    border-bottom: 1px solid $lighterGrey;
 
-    &>div {
-      position: relative;
-      padding-top: 10px;
+    table {
       text-align: center;
-      cursor: pointer;
 
-      .header-label {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+      td {
         white-space: nowrap;
 
-        span {
-          position: absolute;
-          top: 7px;
-          right: -15px;
-          font-size: 8px;
+        div {
+          position: relative;
+          min-height: 50px;
+          border-left: 1px solid $lighterGrey;
+          border-right: 1px solid $lighterGrey;
+          border-bottom: 1px solid $lighterGrey;
+
+          .header-label {
+            position: absolute;
+            top: 13px;
+            left: 50%;
+            transform: translate(-50%, 0);
+            border: 0;
+
+            .arrow-icon {
+              position: absolute;
+              top: 7px;
+              right: -15px;
+              font-size: 8px;
+            }
+          }
         }
       }
     }
@@ -59,6 +66,8 @@
         }
 
         td {
+          border-left: 1px solid transparent;
+          border-right: 1px solid transparent;
           display: block;
           text-align: center;
           padding-top: 10px;

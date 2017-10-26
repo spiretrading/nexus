@@ -5,34 +5,12 @@ import HashMap from 'hashmap';
 class TableModel {
   constructor(dataModel) {
     this.dataModel = dataModel;
-    this.allLengthsCache = [];
-    this.columnMaxLengthCells = [];
+    this.rowCount = 0;
     this.selectedRowsControlModApplied = new HashMap();
   }
 
-  getColumnLengths() {
-    return this.columnMaxLengthCells;
-  }
-
-  /** @private */
-  updateColumnMaxLength(columnIndex) {
-    let max = 0;
-    let maxRowIndex;
-    for (let rowIndex=0; rowIndex<this.getRowCount(); rowIndex++) {
-      let cellLength = this.allLengthsCache[rowIndex][columnIndex];
-      if (max < cellLength) {
-        max = cellLength;
-        maxRowIndex = rowIndex;
-      }
-    }
-    this.columnMaxLengthCells[columnIndex] = {
-      rowIndex: maxRowIndex,
-      length: max
-    };
-  }
-
   getRowCount() {
-    return this.allLengthsCache.length;
+    return this.rowCount;
   }
 
   getColumnCount() {
@@ -50,59 +28,17 @@ class TableModel {
   updateColumnChange(dataModel) {
     // reset variables
     this.dataModel = dataModel;
-    this.allLengthsCache = [];
-    this.columnMaxLengthCells = [];
-
-    // initialize empty caches
-    for (let i=0; i<this.getRowCount(); i++) {
-      this.rowAdd(i);
-    }
   }
 
   rowUpdate(rowIndex) {
-    // update cell sizes cache
-    let columnCount = this.getColumnCount();
-    let cellLengths = [];
-    for (let columnIndex=0; columnIndex<columnCount; columnIndex++) {
-      let cellValue = this.getValueAt(columnIndex, rowIndex);
-      cellLengths.push(cellValue.length);
-      // update column max length cells
-      if (cellValue.length > this.columnMaxLengthCells[columnIndex].length) {
-        this.columnMaxLengthCells[columnIndex] = {
-          rowIndex: rowIndex,
-          length: cellValue.length
-        };
-      } else if (rowIndex == this.columnMaxLengthCells[columnIndex].rowIndex && cellValue.length < this.columnMaxLengthCells[columnIndex].length) {
-        this.updateColumnMaxLength(columnIndex);
-      }
-    }
-    this.allLengthsCache[rowIndex] = cellLengths;
+
   }
 
   rowAdd(rowIndex) {
-    // update cell sizes cache
-    let columnCount = this.getColumnCount();
-    let cellLengths = [];
-    for (let columnIndex=0; columnIndex<columnCount; columnIndex++) {
-      let cellValue = this.getValueAt(columnIndex, rowIndex);
-      cellLengths.push(cellValue.length);
-      // update column max length cells
-      if (this.columnMaxLengthCells[columnIndex] == null) {
-        this.columnMaxLengthCells.push({
-          rowIndex: rowIndex,
-          length: cellValue.length
-        });
-      } else if (cellValue.length > this.columnMaxLengthCells[columnIndex].length) {
-        this.columnMaxLengthCells[columnIndex] = {
-          rowIndex: rowIndex,
-          length: cellValue.length
-        };
-      }
-    }
-    this.allLengthsCache.splice(rowIndex, 0, cellLengths);
+    this.rowCount++;
 
     // update selected rows
-    for (let i=this.allLengthsCache.length-1; i>=rowIndex; i--) {
+    for (let i=this.rowCount-1; i>=rowIndex; i--) {
       if (this.selectedRowsControlModApplied.has(i)) {
         let previousValue = this.selectedRowsControlModApplied.get(i);
         this.selectedRowsControlModApplied.set(i+1, previousValue);
@@ -112,37 +48,25 @@ class TableModel {
   }
 
   rowRemove(rowIndex) {
+    this.rowCount--;
+
     // update selected rows
-    for (let i=rowIndex; i<this.allLengthsCache.length; i++) {
+    for (let i=rowIndex; i<this.rowCount; i++) {
       if (this.selectedRowsControlModApplied.has(i)) {
         let previousValue = this.selectedRowsControlModApplied.get(i);
         this.selectedRowsControlModApplied.set(i-1, previousValue);
         this.selectedRowsControlModApplied.remove(i);
       }
     }
-
-    // update cell size cache
-    this.allLengthsCache.splice(rowIndex, 1);
-    for (let columnIndex=0; columnIndex<this.columnMaxLengthCells.length; columnIndex++) {
-      let maxRow = this.columnMaxLengthCells[columnIndex].rowIndex;
-      if (maxRow == rowIndex) {
-        this.updateColumnMaxLength(columnIndex);
-      }
-    }
   }
 
   rowMove(fromIndex, toIndex) {
     let prevValue;
-    let nextValue = this.allLengthsCache[fromIndex];
+    // let nextValue = this.allLengthsCache[fromIndex];
     let nextSelectedRowValue = this.selectedRowsControlModApplied.get(fromIndex);
     this.selectedRowsControlModApplied.remove(fromIndex);
     if (fromIndex < toIndex) {
       for (let i=toIndex; i>=fromIndex; i--) {
-        // update the length cache
-        prevValue = this.allLengthsCache[i];
-        this.allLengthsCache[i] = nextValue;
-        nextValue = prevValue;
-
         // update the selected rows
         let valueToUpdateTo = nextSelectedRowValue;
         nextSelectedRowValue = this.selectedRowsControlModApplied.get(i);
@@ -153,11 +77,6 @@ class TableModel {
       }
     } else {
       for (let i=toIndex; i<=fromIndex; i++) {
-        // update the length cache
-        prevValue = this.allLengthsCache[i];
-        this.allLengthsCache[i] = nextValue;
-        nextValue = prevValue;
-
         // update the selected rows
         let valueToUpdateTo = nextSelectedRowValue;
         nextSelectedRowValue = this.selectedRowsControlModApplied.get(i);

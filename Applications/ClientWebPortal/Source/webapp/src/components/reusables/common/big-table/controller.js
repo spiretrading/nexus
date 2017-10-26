@@ -20,11 +20,10 @@ class Controller {
   }
 
   componentDidMount() {
-    this.renderInterval = setInterval(this.view.render, 500);
+    this.view.initialize();
   }
 
   componentWillUnmount() {
-    clearInterval(this.renderInterval);
     this.view.dispose();
   }
 
@@ -49,8 +48,8 @@ class Controller {
   }
 
   updateColumnChange(dataModel) {
-    this.view.updateColumnChange();
     this.tableModel.updateColumnChange(dataModel);
+    this.view.updateColumnChange();
   }
 
   onSortColumnSelected(columnIndex) {

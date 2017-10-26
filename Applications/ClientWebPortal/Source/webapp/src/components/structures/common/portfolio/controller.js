@@ -19,6 +19,8 @@ import tableColumns from './table-columns';
 import HashMap from 'hashmap';
 import ValueComparer from './value-comparer';
 
+const RENDER_THROTTLE_INTERVAL = 500;
+
 class Controller {
   constructor(componentModel) {
     this.componentModel = clone(componentModel);
@@ -56,6 +58,7 @@ class Controller {
     this.onSumModelDataChange = this.onSumModelDataChange.bind(this);
     this.changeSortOrder = this.changeSortOrder.bind(this);
     this.resizeTable = this.resizeTable.bind(this);
+    this.onRenderThrottleCall = this.onRenderThrottleCall.bind(this);
   }
 
   getView() {
@@ -114,6 +117,10 @@ class Controller {
       volumes: this.sumModel.getValueAt(7, 0),
       trades: this.sumModel.getValueAt(8, 0)
     };
+  }
+
+  /** @private */
+  onRenderThrottleCall() {
     this.view.update(this.componentModel);
   }
 
@@ -133,6 +140,8 @@ class Controller {
       });
 
     this.view.initialize();
+
+    this.renderThrottle = setInterval(this.onRenderThrottleCall, RENDER_THROTTLE_INTERVAL);
 
     preloaderTimer.start(
       requiredDataFetchPromise,
@@ -180,6 +189,7 @@ class Controller {
     this.sumModel.removeDataChangeListener(this.dataSumChangeSubId);
     this.riskServiceClient.unsubscribe(this.portfolioSubscriptionId);
     EventBus.unsubscribe(this.filterResizeSubId);
+    clearInterval(this.renderThrottle);
     this.view.dispose();
   }
 

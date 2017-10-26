@@ -2,9 +2,14 @@ import './style.scss';
 import React from 'react';
 import UpdatableView from 'commons/updatable-view';
 import deviceDetector from 'utils/device-detector';
+import HeaderInteractionState from './header-interaction-states';
 import uuid from 'uuid';
 
 const BUFFER_CELL_NUM = 4;
+const DEFAULT_COLUMN_WIDTH = 200;
+const CELL_SIDE_PADDING = 90;
+const COLUMN_ADJUST_MOUSE_PADDING = 2;
+const MINIMUM_COLUMN_WIDTH = 100;
 
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
@@ -14,6 +19,8 @@ class View extends UpdatableView {
     this.isCntrlPressed = false;
     this.isShiftPressed = false;
     this.activeRowIndex = null;
+    this.headerInteractionState = HeaderInteractionState.IDLE;
+    this.hoveredColumnIndex = null;
 
     this.isInitialized = false;
     this.isViewingRegionDimensionsSet = false;  // due to bug in Safari you need to manually set
@@ -23,7 +30,10 @@ class View extends UpdatableView {
     this.onTableRowClick = this.onTableRowClick.bind(this);
     this.onKeyDownCheckSelectionModifiers = this.onKeyDownCheckSelectionModifiers.bind(this);
     this.onKeyUpCheckSelectionModifiers = this.onKeyUpCheckSelectionModifiers.bind(this);
-    this.cellSidePaddings = 55;
+    this.onColumnHeaderMouseMove = this.onColumnHeaderMouseMove.bind(this);
+    this.onColumnHeaderMouseDown = this.onColumnHeaderMouseDown.bind(this);
+    this.onColumnHeaderMouseUp = this.onColumnHeaderMouseUp.bind(this);
+    this.onColumnHeaderMouseLeave = this.onColumnHeaderMouseLeave.bind(this);
   }
 
   setTableModel(tableModel) {
@@ -31,7 +41,7 @@ class View extends UpdatableView {
   }
 
   updateColumnChange() {
-    this.columnWidthsPx = [];
+    this.resetColumnWidthsPx();
   }
 
   getViewingRegionWidthHeight() {
@@ -59,8 +69,6 @@ class View extends UpdatableView {
       bottomRightY: 0
     };
 
-    this.totalWidthPx = 0;
-
     $.contextMenu({
       selector: '#' + this.componentId + ' .viewing-region',
       appendTo: '#' + this.componentId,
@@ -69,6 +77,166 @@ class View extends UpdatableView {
         menu2: {name: 'Settings'}
       }
     });
+
+    this.resetColumnWidthsPx();
+    this.updateColumnWidthsAndEllipsis();
+
+    $('#' + this.componentId + ' .column-headers tr').mousemove(this.onColumnHeaderMouseMove)
+      .mousedown(this.onColumnHeaderMouseDown)
+      .mouseup(this.onColumnHeaderMouseUp)
+      .mouseleave(this.onColumnHeaderMouseLeave);
+  }
+
+  /** @private */
+  onColumnHeaderMouseMove(e) {
+    let headerPageOffsetX = $(e.currentTarget).offset().left;
+    let eventPageOffsetX = e.pageX;
+    let relativeToHeaderOffsetX = eventPageOffsetX - headerPageOffsetX;
+    if (this.headerInteractionState != HeaderInteractionState.DRAGGING_COLUMN_BORDER) {
+      let hoveredColumnIndex = this.gethoveredColumnIndex(relativeToHeaderOffsetX);
+      if (hoveredColumnIndex != -1) {
+        if (this.headerInteractionState == HeaderInteractionState.IDLE) {
+          this.headerInteractionState = HeaderInteractionState.HOVER_COLUMN_BORDER;
+          this.onHeaderHoverColumnBorderEnter(hoveredColumnIndex);
+        }
+      } else {
+        this.headerInteractionState = HeaderInteractionState.IDLE;
+        this.onHeaderIdleEnter();
+      }
+    } else {
+      // column border is being dragged, findout what the delta is
+      let currentBorderOffsetX = this.getBorderOffsetX(this.hoveredColumnIndex);
+      let draggedDelta = currentBorderOffsetX - relativeToHeaderOffsetX;
+      this.updateColumnWidth(this.hoveredColumnIndex, draggedDelta);
+    }
+  }
+
+  /** @private */
+  // border indices are based from 0 and the edges of the table do not count
+  // delta: positive is moving to left, negative is moving to right
+  updateColumnWidth(borderIndex, delta) {
+    // update column widths
+    let leftColumnIndex = borderIndex;
+    let rightColumnIndex = borderIndex + 1;
+    let leftColumnOriginalWidth = this.columnWidthsPx[leftColumnIndex];
+    let rightColumnOriginalWidth = this.columnWidthsPx[rightColumnIndex];
+    this.columnWidthsPx[leftColumnIndex] -= delta;
+    this.columnWidthsPx[rightColumnIndex] += delta;
+
+    // check if one of the columns has hit the minimum width
+    let isLeftReachedMinimum = this.columnWidthsPx[leftColumnIndex] < MINIMUM_COLUMN_WIDTH;
+    let isRightReachedMinimum = this.columnWidthsPx[rightColumnIndex] < MINIMUM_COLUMN_WIDTH;
+    if (isLeftReachedMinimum || isRightReachedMinimum) {
+      if (isLeftReachedMinimum) {
+        this.columnWidthsPx[leftColumnIndex] = MINIMUM_COLUMN_WIDTH;
+        let leftColumnDelta = leftColumnOriginalWidth - this.columnWidthsPx[leftColumnIndex];
+        this.columnWidthsPx[rightColumnIndex] = rightColumnOriginalWidth + leftColumnDelta;
+      } else {
+        this.columnWidthsPx[rightColumnIndex] = MINIMUM_COLUMN_WIDTH;
+        let rightColumnDelta = rightColumnOriginalWidth - this.columnWidthsPx[rightColumnIndex];
+        this.columnWidthsPx[leftColumnIndex] = leftColumnOriginalWidth + rightColumnDelta;
+      }
+    }
+
+    this.update();
+    this.updateColumnWidthsAndEllipsis();
+  }
+
+  /** @private */
+  getBorderOffsetX(columnIndex) {
+    let offset = 0;
+    for (let i=0; i<=columnIndex; i++) {
+      offset += this.columnWidthsPx[i];
+    }
+    return offset;
+  }
+
+  /** @private */
+  onColumnHeaderMouseDown(e) {
+    if (this.headerInteractionState == HeaderInteractionState.HOVER_COLUMN_BORDER) {
+      this.headerInteractionState = HeaderInteractionState.DRAGGING_COLUMN_BORDER;
+    }
+  }
+
+  /** @private */
+  onColumnHeaderMouseUp(e) {
+    let headerPageOffsetX = $(e.currentTarget).offset().left;
+    let eventPageOffsetX = e.pageX;
+    let relativeToHeaderOffsetX = eventPageOffsetX - headerPageOffsetX;
+    let hoveredColumnIndex = this.gethoveredColumnIndex(relativeToHeaderOffsetX);
+    if (hoveredColumnIndex != -1) {
+      this.headerInteractionState = HeaderInteractionState.HOVER_COLUMN_BORDER;
+      this.onHeaderHoverColumnBorderEnter(hoveredColumnIndex);
+    } else {
+      this.headerInteractionState = HeaderInteractionState.IDLE;
+      this.onHeaderIdleEnter();
+    }
+  }
+
+  /** @private */
+  onColumnHeaderMouseLeave(e) {
+    if (this.headerInteractionState == HeaderInteractionState.DRAGGING_COLUMN_BORDER) {
+      this.headerInteractionState = HeaderInteractionState.IDLE;
+      this.onHeaderIdleEnter();
+    }
+  }
+
+  /** @private */
+  onHeaderHoverColumnBorderEnter(hoveredColumnIndex) {
+    this.hoveredColumnIndex = hoveredColumnIndex;
+    $('#' + this.componentId + ' .column-headers tr')[0].style.cursor = 'ew-resize';
+  }
+
+  /** @private */
+  onHeaderIdleEnter() {
+    this.hoveredColumnIndex = null;
+    $('#' + this.componentId + ' .column-headers tr')[0].style.cursor = 'pointer';
+  }
+
+  /** @private */
+  gethoveredColumnIndex(position) {
+    let cumulativeWidth = 0;
+    for (let i=0; i<this.columnWidthsPx.length-1; i++) {
+      cumulativeWidth += this.columnWidthsPx[i];
+      let leftBoundary = cumulativeWidth - COLUMN_ADJUST_MOUSE_PADDING;
+      let rightBoundary = cumulativeWidth + COLUMN_ADJUST_MOUSE_PADDING;
+      if (position >= leftBoundary && position <= rightBoundary) {
+        return i;
+      }
+    }
+
+    return -1;
+  }
+
+  /** @private */
+  resetColumnWidthsPx() {
+    this.columnWidthsPx = [];
+    for (let i=0; i<this.tableModel.getColumnCount(); i++) {
+      this.columnWidthsPx.push(DEFAULT_COLUMN_WIDTH);
+    }
+  }
+
+  /** @private */
+  updateColumnWidthsAndEllipsis() {
+    let $cells = $('#' + this.componentId + ' .column-headers td div.header-label .text-label');
+    for (let i=0; i<$cells.size(); i++) {
+      let $cell = $($cells[i]);
+      let $arrow = $cell.find('span');
+      let text = this.tableModel.getColumnHeader(i);
+      let textWidthPx = this.getTextWidth(text, this.fontFamily);
+      if (textWidthPx > $cell.width()) {
+        for (let j=0; j<text.length; j++) {
+          let substring = text.substring(0, j);
+          substring += '...';
+          let substringWidthPx = this.getTextWidth(substring, this.fontFamily);
+          if (substringWidthPx > this.columnWidthsPx[i]) {
+            text = text.substring(0, j-1) + '...';
+            break;
+          }
+        }
+      }
+      $cell.text(text);
+    }
   }
 
   /** @private */
@@ -108,29 +276,26 @@ class View extends UpdatableView {
       paddingTop: this.topPadding || 0,
       paddingBottom: this.bottomPadding || 0,
       paddingLeft: this.leftPadding || 0,
-      paddingRight: this.rightPadding || 0,
-      width: this.totalWidthPx
+      paddingRight: this.rightPadding || 0
     });
   }
 
   /** @private */
-  getTextWidth(textLength, font) {
+  getTextWidth(text, font) {
     // re-use canvas object for better performance
-    let Ws = '';
-    for (let i=0; i<textLength; i++) {
-      Ws += 'A';
-    }
     var canvas = this.canvas || (this.canvas = document.createElement("canvas"));
     var context = canvas.getContext("2d");
     context.font = font;
-    var metrics = context.measureText(Ws);
-    return Math.ceil(metrics.width) + this.cellSidePaddings;
+    var metrics = context.measureText(text);
+    return Math.ceil(metrics.width) + CELL_SIDE_PADDING;
   }
 
   /** @private */
   onColumnHeaderClick(e) {
-    let columnIndex = $(e.currentTarget).attr('data-index');
-    this.controller.onSortColumnSelected(Number(columnIndex));
+    if (this.headerInteractionState == HeaderInteractionState.IDLE) {
+      let columnIndex = $(e.currentTarget).attr('data-index');
+      this.controller.onSortColumnSelected(Number(columnIndex));
+    }
   }
 
   setViewingRegionDimensions() {
@@ -149,6 +314,7 @@ class View extends UpdatableView {
       .unbind('keyup', this.onKeyUpCheckSelectionModifiers);
     $.contextMenu('destroy');
     $('#' + this.componentId + ' .context-menu-list').remove();
+    $('#' + this.componentId + ' .column-headers tr').unbind('mousemove');
   }
 
   getXCoordinatesIncludingBuffers() {
@@ -203,8 +369,7 @@ class View extends UpdatableView {
     this.scrolledPx.top = parseInt($bigTableWrapper.scrollTop());
     this.scrolledPx.left = parseInt($bigTableWrapper.scrollLeft());
 
-    let columnLengths = this.tableModel.getColumnLengths();
-    let $columnHeaders = $('#' + this.componentId + ' .column-headers div');
+    let $columnHeaders = $('#' + this.componentId + ' .column-headers td');
     this.columnWidthsPx = this.columnWidthsPx || [];
 
     // update viewing coordinates
@@ -347,7 +512,7 @@ class View extends UpdatableView {
         this.setViewingRegionDimensions();
         this.isViewingRegionDimensionsSet = true;
       }
-      this.initialize();
+      // this.initialize();
       this.isInitialized = true;
     }
 
@@ -359,40 +524,7 @@ class View extends UpdatableView {
   }
 
   componentDidUpdate() {
-    if (this.isInitialized) {
-      this.adjustColumnWidths();
-    }
-  }
 
-  /** @private */
-  adjustColumnWidths() {
-    let columnLengths = this.tableModel.getColumnLengths();
-    let $columnHeaders = $('#' + this.componentId + ' .column-headers>div');
-    let totalWidth = 0;
-
-    let coords = this.getXCoordinatesIncludingBuffers();
-
-    let columnCount = this.tableModel.getColumnCount();
-    for (let i=0; i<columnCount; i++) {
-      let $columnHeader = $($columnHeaders[i]);
-      let columnHeaderText = $columnHeader.text();
-      let maxLength;
-      if (columnLengths[i] != null && columnLengths[i].length != null) {
-        maxLength = Math.max(columnHeaderText.length, columnLengths[i].length);
-      } else {
-        maxLength = columnHeaderText.length;
-      }
-      let maxWidth = this.getTextWidth(maxLength, this.componentModel.fontFamily);
-      totalWidth += maxWidth;
-      if (coords.leftX <= i && coords.rightX >= i) {
-        let childIndex = i + 1 - coords.leftX;
-        $('#' + this.componentId + ' .big-table-wrapper table tr td:nth-child(' + childIndex + ')').width(maxWidth);
-      }
-      $columnHeader.width(maxWidth);
-      this.columnWidthsPx[i] = maxWidth;
-    }
-
-    $('#' + this.componentId + ' .column-headers').width(totalWidth);
   }
 
   /** @private */
@@ -406,24 +538,41 @@ class View extends UpdatableView {
         if (columnSortOrders[0].index == i) {
           if (columnSortOrders[0].isAsc) {
             // ascending
-            arrowIconClass = 'icon-arrow-icon-down';
+            arrowIconClass = 'arrow-icon icon-arrow-icon-down';
           } else {
             // descending
-            arrowIconClass = 'icon-arrow-icon-up';
+            arrowIconClass = 'arrow-icon icon-arrow-icon-up';
           }
         }
       }
+      let cellWidth;
+      if (this.columnWidthsPx != null && this.columnWidthsPx[i] != null) {
+        cellWidth = this.columnWidthsPx[i];
+      } else {
+        cellWidth = DEFAULT_COLUMN_WIDTH;
+      }
+      let style = {
+        width: cellWidth
+      };
       cells.push(
-        <div key={i} onClick={this.onColumnHeaderClick} data-index={i}>
-          <div className="header-label">
-            {this.tableModel.getColumnHeader(i)}
-            <span className={arrowIconClass}></span>
+        <td key={i} onClick={this.onColumnHeaderClick} data-index={i}>
+          <div style={style}>
+            <div className="header-label">
+              <span className="text-label">{this.tableModel.getColumnHeader(i)}</span>
+              <span className={arrowIconClass}></span>
+            </div>
           </div>
-        </div>
+        </td>
       );
     }
-    this.columnHeaders =  <div className="column-headers">
-                            {cells}
+    this.columnHeaders =  <div className="column-headers no-select">
+                            <table>
+                              <thead>
+                                <tr>
+                                  {cells}
+                                </tr>
+                              </thead>
+                            </table>
                           </div>;
   }
 

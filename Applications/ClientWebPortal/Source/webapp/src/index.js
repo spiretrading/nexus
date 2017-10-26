@@ -22,6 +22,7 @@ import userService from 'services/user';
 import {ServiceLocatorClient, DirectoryEntry} from 'spire-client';
 import sessionInitializer from 'commons/session-initializer';
 
+// clones value object with deep copy
 window.clone = (originalObj) => {
   if (originalObj != null) {
     if (originalObj.constructor == Array) {
@@ -49,6 +50,8 @@ window.clone = (originalObj) => {
     return null;
   }
 };
+
+// merges two objects. with same property, new object overwrites the original.
 window.overwriteMerge = (originalObj, newObj) => {
   for (let property in originalObj) {
     if (newObj[property] !== undefined){
@@ -57,6 +60,7 @@ window.overwriteMerge = (originalObj, newObj) => {
   }
   $.extend(true, originalObj, newObj);
 };
+
 window.EventBus = eventBus;
 window.Event = event;
 window.Config = configs;
