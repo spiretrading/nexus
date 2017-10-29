@@ -2,12 +2,9 @@
 #include <Beam/Python/BoostPython.hpp>
 #include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/PythonBindings.hpp>
-#include <Beam/Python/PythonQueueWriter.hpp>
 #include <Beam/Threading/VirtualTimer.hpp>
 #include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <boost/noncopyable.hpp>
-#include "Nexus/Python/PythonMarketDataClient.hpp"
-#include "Nexus/Python/PythonOrderExecutionClient.hpp"
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
@@ -92,108 +89,6 @@ namespace {
       this->get_override("close")();
     }
   };
-
-  class PythonApplicationServiceClients :
-      public WrapperServiceClients<std::unique_ptr<VirtualServiceClients>> {
-    public:
-      PythonApplicationServiceClients(
-          std::unique_ptr<VirtualServiceClients> client)
-          : WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>(
-              std::move(client)) {}
-
-      virtual ~PythonApplicationServiceClients() override {
-        GilRelease gil;
-        boost::lock_guard<GilRelease> lock{gil};
-        Close();
-      }
-
-      virtual PythonMarketDataClient& GetMarketDataClient() override {
-        if(m_marketDataClient == nullptr) {
-          m_marketDataClient = std::make_unique<PythonMarketDataClient>(
-            MakeVirtualMarketDataClient(
-            &WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>::
-            GetMarketDataClient()));
-        }
-        return *m_marketDataClient;
-      }
-
-      virtual PythonOrderExecutionClient& GetOrderExecutionClient() override {
-        if(m_orderExecutionClient == nullptr) {
-          m_orderExecutionClient = std::make_unique<PythonOrderExecutionClient>(
-            MakeVirtualOrderExecutionClient(
-            &WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>::
-            GetOrderExecutionClient()));
-        }
-        return *m_orderExecutionClient;
-      }
-
-    private:
-      std::unique_ptr<PythonMarketDataClient> m_marketDataClient;
-      std::unique_ptr<PythonOrderExecutionClient> m_orderExecutionClient;
-  };
-
-  VirtualServiceClients* BuildApplicationServiceClients(
-      const IpAddress& address, const string& username,
-      const string& password) {
-    auto baseClient = std::make_unique<ApplicationServiceClients>(
-      address, username, password, Ref(*GetSocketThreadPool()),
-      Ref(*GetTimerThreadPool()));
-    return new PythonApplicationServiceClients{
-      MakeVirtualServiceClients(std::move(baseClient))};
-  }
-
-  class PythonTestServiceClients :
-      public WrapperServiceClients<std::unique_ptr<VirtualServiceClients>> {
-    public:
-      PythonTestServiceClients(std::unique_ptr<VirtualServiceClients> client,
-          std::shared_ptr<TestEnvironment> environment)
-          : WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>{
-              std::move(client)},
-            m_environment{std::move(environment)} {}
-
-      virtual ~PythonTestServiceClients() override {
-        GilRelease gil;
-        boost::lock_guard<GilRelease> lock{gil};
-        Close();
-      }
-
-      virtual PythonMarketDataClient& GetMarketDataClient() override {
-        if(m_marketDataClient == nullptr) {
-          m_marketDataClient = std::make_unique<PythonMarketDataClient>(
-            MakeVirtualMarketDataClient(
-            &WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>::
-            GetMarketDataClient()));
-        }
-        return *m_marketDataClient;
-      }
-
-      virtual PythonOrderExecutionClient& GetOrderExecutionClient() override {
-        if(m_orderExecutionClient == nullptr) {
-          m_orderExecutionClient = std::make_unique<PythonOrderExecutionClient>(
-            MakeVirtualOrderExecutionClient(
-            &WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>::
-            GetOrderExecutionClient()));
-        }
-        return *m_orderExecutionClient;
-      }
-
-    private:
-      std::shared_ptr<TestEnvironment> m_environment;
-      std::unique_ptr<PythonMarketDataClient> m_marketDataClient;
-      std::unique_ptr<PythonOrderExecutionClient> m_orderExecutionClient;
-  };
-
-  VirtualServiceClients* BuildTestServiceClients(
-      std::shared_ptr<TestEnvironment> environment) {
-    auto baseClient = std::make_unique<TestServiceClients>(Ref(*environment));
-    return new PythonTestServiceClients{
-      MakeVirtualServiceClients(std::move(baseClient)), environment};
-  }
-
-  void TestEnvironmentMonitorOrderSubmissions(TestEnvironment& environment,
-      const std::shared_ptr<PythonQueueWriter>& queue) {
-    environment.MonitorOrderSubmissions(queue->GetSlot<const Order*>());
-  }
 }
 
 #ifdef _MSC_VER
@@ -257,53 +152,40 @@ namespace boost {
 #endif
 
 void Nexus::Python::ExportApplicationServiceClients() {
-  class_<PythonApplicationServiceClients, boost::noncopyable,
-      bases<VirtualServiceClients>>("ApplicationServiceClients", no_init)
-    .def("__init__", make_constructor(&BuildApplicationServiceClients))
-    .def("get_service_locator_client",
-      BlockingFunction<PythonApplicationServiceClients>(
-      &PythonApplicationServiceClients::GetServiceLocatorClient,
+  class_<ApplicationServiceClients, boost::noncopyable,
+    bases<VirtualServiceClients>>("ApplicationServiceClients", no_init)
+    .def("get_service_locator_client", BlockingFunction(
+      &ApplicationServiceClients::GetServiceLocatorClient,
       return_internal_reference<>()))
-    .def("get_registry_client",
-      BlockingFunction<PythonApplicationServiceClients>(
-      &PythonApplicationServiceClients::GetRegistryClient,
+    .def("get_registry_client", BlockingFunction(
+      &ApplicationServiceClients::GetRegistryClient,
       return_internal_reference<>()))
-    .def("get_administration_client",
-      BlockingFunction<PythonApplicationServiceClients>(
-      &PythonApplicationServiceClients::GetAdministrationClient,
+    .def("get_administration_client", BlockingFunction(
+      &ApplicationServiceClients::GetAdministrationClient,
       return_internal_reference<>()))
-    .def("get_definitions_client",
-      BlockingFunction<PythonApplicationServiceClients>(
-      &PythonApplicationServiceClients::GetDefinitionsClient,
+    .def("get_definitions_client", BlockingFunction(
+      &ApplicationServiceClients::GetDefinitionsClient,
       return_internal_reference<>()))
-    .def("get_market_data_client",
-      BlockingFunction<PythonApplicationServiceClients>(
-      &PythonApplicationServiceClients::GetMarketDataClient,
+    .def("get_market_data_client", BlockingFunction(
+      &ApplicationServiceClients::GetMarketDataClient,
       return_internal_reference<>()))
-    .def("get_charting_client",
-      BlockingFunction<PythonApplicationServiceClients>(
-      &PythonApplicationServiceClients::GetChartingClient,
+    .def("get_charting_client", BlockingFunction(
+      &ApplicationServiceClients::GetChartingClient,
       return_internal_reference<>()))
-    .def("get_compliance_client",
-      BlockingFunction<PythonApplicationServiceClients>(
-      &PythonApplicationServiceClients::GetComplianceClient,
+    .def("get_compliance_client", BlockingFunction(
+      &ApplicationServiceClients::GetComplianceClient,
       return_internal_reference<>()))
-    .def("get_order_execution_client",
-      BlockingFunction<PythonApplicationServiceClients>(
-      &PythonApplicationServiceClients::GetOrderExecutionClient,
+    .def("get_order_execution_client", BlockingFunction(
+      &ApplicationServiceClients::GetOrderExecutionClient,
       return_internal_reference<>()))
-    .def("get_risk_client", BlockingFunction<PythonApplicationServiceClients>(
-      &PythonApplicationServiceClients::GetRiskClient,
-      return_internal_reference<>()))
-    .def("get_time_client", BlockingFunction<PythonApplicationServiceClients>(
-      &PythonApplicationServiceClients::GetTimeClient,
-      return_internal_reference<>()))
-    .def("build_timer", ReleaseUniquePtr<PythonApplicationServiceClients>(
-      &PythonApplicationServiceClients::BuildTimer))
-    .def("open", BlockingFunction<PythonApplicationServiceClients>(
-      &PythonApplicationServiceClients::Open))
-    .def("close", BlockingFunction<PythonApplicationServiceClients>(
-      &PythonApplicationServiceClients::Close));
+    .def("get_risk_client", BlockingFunction(
+      &ApplicationServiceClients::GetRiskClient, return_internal_reference<>()))
+    .def("get_time_client", BlockingFunction(
+      &ApplicationServiceClients::GetTimeClient, return_internal_reference<>()))
+    .def("build_timer", ReleaseUniquePtr<ApplicationServiceClients>(
+      &ApplicationServiceClients::BuildTimer))
+    .def("open", BlockingFunction(&ApplicationServiceClients::Open))
+    .def("close", BlockingFunction(&ApplicationServiceClients::Close));
 }
 
 void Nexus::Python::ExportServiceClients() {
@@ -337,7 +219,8 @@ void Nexus::Python::ExportTestEnvironment() {
     .def("update_bbo_price", BlockingFunction(
       static_cast<void (TestEnvironment::*)(const Security&, Money, Money,
       const ptime&)>(&TestEnvironment::UpdateBboPrice)))
-    .def("monitor_order_submissions", &TestEnvironmentMonitorOrderSubmissions)
+    .def("monitor_order_submissions",
+      BlockingFunction(&TestEnvironment::MonitorOrderSubmissions))
     .def("accept_order", BlockingFunction(&TestEnvironment::AcceptOrder))
     .def("reject_order", BlockingFunction(&TestEnvironment::RejectOrder))
     .def("cancel_order", BlockingFunction(&TestEnvironment::CancelOrder))
@@ -370,46 +253,35 @@ void Nexus::Python::ExportTestEnvironment() {
 }
 
 void Nexus::Python::ExportTestServiceClients() {
-  class_<PythonTestServiceClients, boost::noncopyable,
-      bases<VirtualServiceClients>>("TestServiceClients", no_init)
-    .def("__init__", make_constructor(&BuildTestServiceClients))
-    .def("get_service_locator_client",
-      BlockingFunction<PythonTestServiceClients>(
-      &PythonTestServiceClients::GetServiceLocatorClient,
+  class_<TestServiceClients, boost::noncopyable, bases<VirtualServiceClients>>(
+    "TestServiceClients", no_init)
+    .def("get_service_locator_client", BlockingFunction(
+      &TestServiceClients::GetServiceLocatorClient,
       return_internal_reference<>()))
-    .def("get_registry_client", BlockingFunction<PythonTestServiceClients>(
-      &PythonTestServiceClients::GetRegistryClient,
+    .def("get_registry_client", BlockingFunction(
+      &TestServiceClients::GetRegistryClient, return_internal_reference<>()))
+    .def("get_administration_client", BlockingFunction(
+      &TestServiceClients::GetAdministrationClient,
       return_internal_reference<>()))
-    .def("get_administration_client",
-      BlockingFunction<PythonTestServiceClients>(
-      &PythonTestServiceClients::GetAdministrationClient,
+    .def("get_definitions_client", BlockingFunction(
+      &TestServiceClients::GetDefinitionsClient, return_internal_reference<>()))
+    .def("get_market_data_client", BlockingFunction(
+      &TestServiceClients::GetMarketDataClient, return_internal_reference<>()))
+    .def("get_charting_client", BlockingFunction(
+      &TestServiceClients::GetChartingClient, return_internal_reference<>()))
+    .def("get_compliance_client", BlockingFunction(
+      &TestServiceClients::GetComplianceClient, return_internal_reference<>()))
+    .def("get_order_execution_client", BlockingFunction(
+      &TestServiceClients::GetOrderExecutionClient,
       return_internal_reference<>()))
-    .def("get_definitions_client", BlockingFunction<PythonTestServiceClients>(
-      &PythonTestServiceClients::GetDefinitionsClient,
+    .def("get_risk_client", BlockingFunction(&TestServiceClients::GetRiskClient,
       return_internal_reference<>()))
-    .def("get_market_data_client", BlockingFunction<PythonTestServiceClients>(
-      &PythonTestServiceClients::GetMarketDataClient,
+    .def("get_time_client", BlockingFunction(&TestServiceClients::GetTimeClient,
       return_internal_reference<>()))
-    .def("get_charting_client", BlockingFunction<PythonTestServiceClients>(
-      &PythonTestServiceClients::GetChartingClient,
-      return_internal_reference<>()))
-    .def("get_compliance_client", BlockingFunction<PythonTestServiceClients>(
-      &PythonTestServiceClients::GetComplianceClient,
-      return_internal_reference<>()))
-    .def("get_order_execution_client",
-      BlockingFunction<PythonTestServiceClients>(
-      &PythonTestServiceClients::GetOrderExecutionClient,
-      return_internal_reference<>()))
-    .def("get_risk_client", BlockingFunction<PythonTestServiceClients>(
-      &PythonTestServiceClients::GetRiskClient, return_internal_reference<>()))
-    .def("get_time_client", BlockingFunction<PythonTestServiceClients>(
-      &PythonTestServiceClients::GetTimeClient, return_internal_reference<>()))
-    .def("build_timer", ReleaseUniquePtr<PythonTestServiceClients>(
-      &PythonTestServiceClients::BuildTimer))
-    .def("open", BlockingFunction<PythonTestServiceClients>(
-      &PythonTestServiceClients::Open))
-    .def("close", BlockingFunction<PythonTestServiceClients>(
-      &PythonTestServiceClients::Close));
+    .def("build_timer", ReleaseUniquePtr<TestServiceClients>(
+      &TestServiceClients::BuildTimer))
+    .def("open", BlockingFunction(&TestServiceClients::Open))
+    .def("close", BlockingFunction(&TestServiceClients::Close));
 }
 
 void Nexus::Python::ExportVirtualServiceClients() {

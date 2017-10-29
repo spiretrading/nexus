@@ -4,8 +4,6 @@
 #include "Nexus/Backtester/BacktesterEnvironment.hpp"
 #include "Nexus/Backtester/BacktesterEventHandler.hpp"
 #include "Nexus/Backtester/BacktesterServiceClients.hpp"
-#include "Nexus/Python/PythonMarketDataClient.hpp"
-#include "Nexus/Python/PythonOrderExecutionClient.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 
 using namespace Beam;
@@ -40,57 +38,6 @@ namespace {
   std::shared_ptr<BacktesterEventHandler> MakeBacktesterEventHandlerB(
       const ptime& startTime, const ptime& endTime) {
     return std::make_shared<BacktesterEventHandler>(startTime, endTime);
-  }
-
-  class PythonBacktesterServiceClients :
-      public WrapperServiceClients<std::unique_ptr<VirtualServiceClients>> {
-    public:
-      PythonBacktesterServiceClients(
-        std::unique_ptr<VirtualServiceClients> client,
-        std::shared_ptr<BacktesterEnvironment> environment)
-          : WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>{
-              std::move(client)},
-            m_environment{std::move(environment)} {}
-
-      virtual ~PythonBacktesterServiceClients() override {
-        GilRelease gil;
-        boost::lock_guard<GilRelease> lock{gil};
-        Close();
-      }
-
-      virtual PythonMarketDataClient& GetMarketDataClient() override {
-        if(m_marketDataClient == nullptr) {
-          m_marketDataClient = std::make_unique<PythonMarketDataClient>(
-            MakeVirtualMarketDataClient(
-            &WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>::
-            GetMarketDataClient()));
-        }
-        return *m_marketDataClient;
-      }
-
-      virtual PythonOrderExecutionClient& GetOrderExecutionClient() override {
-        if(m_orderExecutionClient == nullptr) {
-          m_orderExecutionClient =
-            std::make_unique<PythonOrderExecutionClient>(
-            MakeVirtualOrderExecutionClient(
-            &WrapperServiceClients<std::unique_ptr<VirtualServiceClients>>::
-            GetOrderExecutionClient()));
-        }
-        return *m_orderExecutionClient;
-      }
-
-    private:
-      std::shared_ptr<BacktesterEnvironment> m_environment;
-      std::unique_ptr<PythonMarketDataClient> m_marketDataClient;
-      std::unique_ptr<PythonOrderExecutionClient> m_orderExecutionClient;
-  };
-
-  VirtualServiceClients* BuildBacktesterServiceClients(
-      std::shared_ptr<BacktesterEnvironment> environment) {
-    auto baseClient = std::make_unique<BacktesterServiceClients>(
-      Ref(*environment));
-    return new PythonBacktesterServiceClients{
-      MakeVirtualServiceClients(std::move(baseClient)), environment};
   }
 
   void BacktesterEventHandlerAddEvents(BacktesterEventHandler& eventHandler,
@@ -139,51 +86,38 @@ void Nexus::Python::ExportBacktesterEventHandler() {
 }
 
 void Nexus::Python::ExportBacktesterServiceClients() {
-  class_<PythonBacktesterServiceClients, boost::noncopyable,
+  class_<BacktesterServiceClients, boost::noncopyable,
       bases<VirtualServiceClients>>("BacktesterServiceClients", no_init)
-    .def("__init__", make_constructor(&BuildBacktesterServiceClients))
-    .def("get_service_locator_client",
-      BlockingFunction<PythonBacktesterServiceClients>(
-      &PythonBacktesterServiceClients::GetServiceLocatorClient,
+    .def("get_service_locator_client", BlockingFunction(
+      &BacktesterServiceClients::GetServiceLocatorClient,
       return_internal_reference<>()))
-    .def("get_registry_client",
-      BlockingFunction<PythonBacktesterServiceClients>(
-      &PythonBacktesterServiceClients::GetRegistryClient,
+    .def("get_registry_client", BlockingFunction(
+      &BacktesterServiceClients::GetRegistryClient,
       return_internal_reference<>()))
-    .def("get_administration_client",
-      BlockingFunction<PythonBacktesterServiceClients>(
-      &PythonBacktesterServiceClients::GetAdministrationClient,
+    .def("get_administration_client", BlockingFunction(
+      &BacktesterServiceClients::GetAdministrationClient,
       return_internal_reference<>()))
-    .def("get_definitions_client",
-      BlockingFunction<PythonBacktesterServiceClients>(
-      &PythonBacktesterServiceClients::GetDefinitionsClient,
+    .def("get_definitions_client", BlockingFunction(
+      &BacktesterServiceClients::GetDefinitionsClient,
       return_internal_reference<>()))
-    .def("get_market_data_client",
-      BlockingFunction<PythonBacktesterServiceClients>(
-      &PythonBacktesterServiceClients::GetMarketDataClient,
+    .def("get_market_data_client", BlockingFunction(
+      &BacktesterServiceClients::GetMarketDataClient,
       return_internal_reference<>()))
-    .def("get_charting_client",
-      BlockingFunction<PythonBacktesterServiceClients>(
-      &PythonBacktesterServiceClients::GetChartingClient,
+    .def("get_charting_client", BlockingFunction(
+      &BacktesterServiceClients::GetChartingClient,
       return_internal_reference<>()))
-    .def("get_compliance_client",
-      BlockingFunction<PythonBacktesterServiceClients>(
-      &PythonBacktesterServiceClients::GetComplianceClient,
+    .def("get_compliance_client", BlockingFunction(
+      &BacktesterServiceClients::GetComplianceClient,
       return_internal_reference<>()))
-    .def("get_order_execution_client",
-      BlockingFunction<PythonBacktesterServiceClients>(
-      &PythonBacktesterServiceClients::GetOrderExecutionClient,
+    .def("get_order_execution_client", BlockingFunction(
+      &BacktesterServiceClients::GetOrderExecutionClient,
       return_internal_reference<>()))
-    .def("get_risk_client", BlockingFunction<PythonBacktesterServiceClients>(
-      &PythonBacktesterServiceClients::GetRiskClient,
-      return_internal_reference<>()))
-    .def("get_time_client", BlockingFunction<PythonBacktesterServiceClients>(
-      &PythonBacktesterServiceClients::GetTimeClient,
-      return_internal_reference<>()))
-    .def("build_timer", ReleaseUniquePtr<PythonBacktesterServiceClients>(
-      &PythonBacktesterServiceClients::BuildTimer))
-    .def("open", BlockingFunction<PythonBacktesterServiceClients>(
-      &PythonBacktesterServiceClients::Open))
-    .def("close", BlockingFunction<PythonBacktesterServiceClients>(
-      &PythonBacktesterServiceClients::Close));
+    .def("get_risk_client", BlockingFunction(
+      &BacktesterServiceClients::GetRiskClient, return_internal_reference<>()))
+    .def("get_time_client", BlockingFunction(
+      &BacktesterServiceClients::GetTimeClient, return_internal_reference<>()))
+    .def("build_timer", ReleaseUniquePtr<BacktesterServiceClients>(
+      &BacktesterServiceClients::BuildTimer))
+    .def("open", BlockingFunction(&BacktesterServiceClients::Open))
+    .def("close", BlockingFunction(&BacktesterServiceClients::Close));
 }

@@ -9,7 +9,6 @@
 #include <Beam/Python/Copy.hpp>
 #include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/PythonBindings.hpp>
-#include <Beam/Python/PythonQueueWriter.hpp>
 #include <Beam/Python/Queries.hpp>
 #include <Beam/Python/Vector.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
@@ -26,7 +25,6 @@
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
-#include "Nexus/Python/PythonMarketDataClient.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;
@@ -56,7 +54,7 @@ namespace {
     LiveTimer>;
   using Client = MarketDataClient<SessionBuilder>;
 
-  PythonMarketDataClient* BuildClient(
+  VirtualMarketDataClient* BuildClient(
       VirtualServiceLocatorClient& serviceLocatorClient) {
     auto addresses = LocateServiceAddresses(serviceLocatorClient,
       MarketDataService::RELAY_SERVICE_NAME);
@@ -77,8 +75,7 @@ namespace {
           Ref(*GetTimerThreadPool()));
       });
     auto baseClient = std::make_unique<Client>(sessionBuilder);
-    return new PythonMarketDataClient{
-      MakeVirtualMarketDataClient(std::move(baseClient))};
+    return MakeVirtualMarketDataClient(std::move(baseClient)).release();
   }
 
   MarketDataServiceTestEnvironment* BuildMarketDataServiceTestEnvironment(
@@ -89,56 +86,52 @@ namespace {
       administrationClient};
   }
 
-  PythonMarketDataClient* MarketDataServiceTestEnvironmentBuildClient(
+  VirtualMarketDataClient* MarketDataServiceTestEnvironmentBuildClient(
       MarketDataServiceTestEnvironment& environment,
       VirtualServiceLocatorClient& serviceLocatorClient) {
-    return new PythonMarketDataClient{
-      environment.BuildClient(Ref(serviceLocatorClient))};
+    return environment.BuildClient(Ref(serviceLocatorClient)).release();
   }
 }
 
 #ifdef _MSC_VER
 namespace boost {
-  template<> inline const volatile PythonMarketDataClient*
-      get_pointer(const volatile PythonMarketDataClient* p) {
-    return p;
-  }
+//  template<> inline const volatile PythonMarketDataClient*
+//      get_pointer(const volatile PythonMarketDataClient* p) {
+//    return p;
+//  }
 }
 #endif
 
 void Nexus::Python::ExportMarketDataClient() {
-  class_<VirtualMarketDataClient, boost::noncopyable>("VirtualMarketDataClient",
-    no_init);
-  class_<PythonMarketDataClient, boost::noncopyable,
-      bases<VirtualMarketDataClient>>("MarketDataClient", no_init)
-    .def("__init__", make_constructor(&BuildClient))
+  class_<VirtualMarketDataClient, boost::noncopyable>("MarketDataClient",
+    no_init)
+    .def("__init__", make_constructor(&BuildClient));
+/*
     .def("query_order_imbalances",
-      &PythonMarketDataClient::QueryOrderImbalances)
+      &VirtualMarketDataClient::QueryOrderImbalances)
     .def("query_sequenced_order_imbalances",
-      &PythonMarketDataClient::QuerySequencedOrderImbalances)
-    .def("query_bbo_quotes", &PythonMarketDataClient::QueryBboQuotes)
+      &VirtualMarketDataClient::QuerySequencedOrderImbalances)
+    .def("query_bbo_quotes", &VirtualMarketDataClient::QueryBboQuotes)
     .def("query_sequenced_bbo_quotes",
-      &PythonMarketDataClient::QuerySequencedBboQuotes)
-    .def("query_book_quotes", &PythonMarketDataClient::QueryBookQuotes)
+      &VirtualMarketDataClient::QuerySequencedBboQuotes)
+    .def("query_book_quotes", &VirtualMarketDataClient::QueryBookQuotes)
     .def("query_sequenced_book_quotes",
-      &PythonMarketDataClient::QuerySequencedBookQuotes)
-    .def("query_market_quotes", &PythonMarketDataClient::QueryMarketQuotes)
+      &VirtualMarketDataClient::QuerySequencedBookQuotes)
+    .def("query_market_quotes", &VirtualMarketDataClient::QueryMarketQuotes)
     .def("query_sequenced_market_quotes",
-      &PythonMarketDataClient::QuerySequencedMarketQuotes)
-    .def("query_time_and_sales", &PythonMarketDataClient::QueryTimeAndSales)
+      &VirtualMarketDataClient::QuerySequencedMarketQuotes)
+    .def("query_time_and_sales", &VirtualMarketDataClient::QueryTimeAndSales)
     .def("query_sequenced_time_and_sales",
-      &PythonMarketDataClient::QuerySequencedTimeAndSales)
-    .def("load_security_snapshot", BlockingFunction<PythonMarketDataClient>(
-      &PythonMarketDataClient::LoadSecuritySnapshot))
-    .def("load_security_technicals", BlockingFunction<PythonMarketDataClient>(
-      &PythonMarketDataClient::LoadSecurityTechnicals))
-    .def("load_security_info_from_prefix",
-      BlockingFunction<PythonMarketDataClient>(
-      &PythonMarketDataClient::LoadSecurityInfoFromPrefix))
-    .def("open", BlockingFunction<PythonMarketDataClient>(
-      &PythonMarketDataClient::Open))
-    .def("close", BlockingFunction<PythonMarketDataClient>(
-      &PythonMarketDataClient::Close));
+      &VirtualMarketDataClient::QuerySequencedTimeAndSales)
+    .def("load_security_snapshot", BlockingFunction(
+      &VirtualMarketDataClient::LoadSecuritySnapshot))
+    .def("load_security_technicals", BlockingFunction(
+      &VirtualMarketDataClient::LoadSecurityTechnicals))
+    .def("load_security_info_from_prefix", BlockingFunction(
+      &VirtualMarketDataClient::LoadSecurityInfoFromPrefix))
+    .def("open", BlockingFunction(&VirtualMarketDataClient::Open))
+    .def("close", BlockingFunction(&VirtualMarketDataClient::Close));
+*/
   ExportVector<vector<SecurityInfo>>("VectorSecurityInfo");
 }
 
