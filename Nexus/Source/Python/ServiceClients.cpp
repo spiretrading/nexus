@@ -2,6 +2,7 @@
 #include <Beam/Python/BoostPython.hpp>
 #include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/PythonBindings.hpp>
+#include <Beam/Python/Threading.hpp>
 #include <Beam/Threading/VirtualTimer.hpp>
 #include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <boost/noncopyable.hpp>
@@ -25,69 +26,164 @@ using namespace Nexus::Python;
 using namespace std;
 
 namespace {
-  struct VirtualServiceClientsWrapper :
-      VirtualServiceClients, wrapper<VirtualServiceClients> {
-    virtual ServiceLocatorClient& GetServiceLocatorClient() override {
+  struct FromPythonServiceClients : VirtualServiceClients,
+      wrapper<VirtualServiceClients> {
+    virtual ServiceLocatorClient& GetServiceLocatorClient() override final {
       return *static_cast<ServiceLocatorClient*>(
         this->get_override("get_service_locator_client")());
     }
 
-    virtual RegistryClient& GetRegistryClient() override {
+    virtual RegistryClient& GetRegistryClient() override final {
       return *static_cast<RegistryClient*>(
         this->get_override("get_registry_client")());
     }
 
-    virtual AdministrationClient& GetAdministrationClient() override {
+    virtual AdministrationClient& GetAdministrationClient() override final {
       return *static_cast<AdministrationClient*>(
         this->get_override("get_administration_client")());
     }
 
-    virtual DefinitionsClient& GetDefinitionsClient() override {
+    virtual DefinitionsClient& GetDefinitionsClient() override final {
       return *static_cast<DefinitionsClient*>(
         this->get_override("get_definitions_client")());
     }
 
-    virtual MarketDataClient& GetMarketDataClient() override {
+    virtual MarketDataClient& GetMarketDataClient() override final {
       return *static_cast<MarketDataClient*>(
         this->get_override("get_market_data_client")());
     }
 
-    virtual ChartingClient& GetChartingClient() override {
+    virtual ChartingClient& GetChartingClient() override final {
       return *static_cast<ChartingClient*>(
         this->get_override("get_charting_client")());
     }
 
-    virtual ComplianceClient& GetComplianceClient() override {
+    virtual ComplianceClient& GetComplianceClient() override final {
       return *static_cast<ComplianceClient*>(
         this->get_override("get_compliance_client")());
     }
 
-    virtual OrderExecutionClient& GetOrderExecutionClient() override {
+    virtual OrderExecutionClient& GetOrderExecutionClient() override final {
       return *static_cast<OrderExecutionClient*>(
         this->get_override("get_order_execution_client")());
     }
 
-    virtual RiskClient& GetRiskClient() override {
+    virtual RiskClient& GetRiskClient() override final {
       return *static_cast<RiskClient*>(this->get_override("get_risk_client")());
     }
 
-    virtual TimeClient& GetTimeClient() override {
+    virtual TimeClient& GetTimeClient() override final {
       return *static_cast<TimeClient*>(this->get_override("get_time_client")());
     }
 
     virtual std::unique_ptr<Timer> BuildTimer(
-        boost::posix_time::time_duration expiry) override {
+        boost::posix_time::time_duration expiry) override final {
       return std::unique_ptr<Timer>{
-        static_cast<Timer*>(this->get_override("build_timer")())};
+        static_cast<Timer*>(this->get_override("build_timer")(expiry))};
     }
 
-    virtual void Open() override {
+    virtual void Open() override final {
       this->get_override("open")();
     }
 
-    virtual void Close() override {
+    virtual void Close() override final {
       this->get_override("close")();
     }
+  };
+
+  template<typename ClientType>
+  class ToPythonServiceClients : public VirtualServiceClients {
+    public:
+      ToPythonServiceClients(std::unique_ptr<ClientType> client)
+          : m_client{std::move(client)} {}
+
+      virtual ~ToPythonServiceClients() override final {
+        GilRelease gil;
+        boost::lock_guard<GilRelease> lock{gil};
+        m_client.reset();
+      }
+
+      virtual ServiceLocatorClient& GetServiceLocatorClient() override final {
+        GilRelease gil;
+        boost::lock_guard<GilRelease> lock{gil};
+        return m_client->GetServiceLocatorClient();
+      }
+
+      virtual RegistryClient& GetRegistryClient() override final {
+        GilRelease gil;
+        boost::lock_guard<GilRelease> lock{gil};
+        return m_client->GetRegistryClient();
+      }
+
+      virtual AdministrationClient& GetAdministrationClient() override final {
+        GilRelease gil;
+        boost::lock_guard<GilRelease> lock{gil};
+        return m_client->GetAdministrationClient();
+      }
+
+      virtual DefinitionsClient& GetDefinitionsClient() override final {
+        GilRelease gil;
+        boost::lock_guard<GilRelease> lock{gil};
+        return m_client->GetDefinitionsClient();
+      }
+
+      virtual MarketDataClient& GetMarketDataClient() override final {
+        GilRelease gil;
+        boost::lock_guard<GilRelease> lock{gil};
+        return m_client->GetMarketDataClient();
+      }
+
+      virtual ChartingClient& GetChartingClient() override final {
+        GilRelease gil;
+        boost::lock_guard<GilRelease> lock{gil};
+        return m_client->GetChartingClient();
+      }
+
+      virtual ComplianceClient& GetComplianceClient() override final {
+        GilRelease gil;
+        boost::lock_guard<GilRelease> lock{gil};
+        return m_client->GetComplianceClient();
+      }
+
+      virtual OrderExecutionClient& GetOrderExecutionClient() override final {
+        GilRelease gil;
+        boost::lock_guard<GilRelease> lock{gil};
+        return m_client->GetOrderExecutionClient();
+      }
+
+      virtual RiskClient& GetRiskClient() override final {
+        GilRelease gil;
+        boost::lock_guard<GilRelease> lock{gil};
+        return m_client->GetRiskClient();
+      }
+
+      virtual TimeClient& GetTimeClient() override final {
+        GilRelease gil;
+        boost::lock_guard<GilRelease> lock{gil};
+        return m_client->GetTimeClient();
+      }
+
+      virtual std::unique_ptr<Timer> BuildTimer(
+          boost::posix_time::time_duration expiry) override final {
+        GilRelease gil;
+        boost::lock_guard<GilRelease> lock{gil};
+        return MakeToPythonTimer(m_client->BuildTimer(expiry));
+      }
+
+      virtual void Open() override final {
+        GilRelease gil;
+        boost::lock_guard<GilRelease> lock{gil};
+        m_client->Open();
+      }
+
+      virtual void Close() override final {
+        GilRelease gil;
+        boost::lock_guard<GilRelease> lock{gil};
+        return m_client->Close();
+      }
+
+    private:
+      std::unique_ptr<ClientType> m_client;
   };
 }
 
@@ -152,40 +248,9 @@ namespace boost {
 #endif
 
 void Nexus::Python::ExportApplicationServiceClients() {
-  class_<ApplicationServiceClients, boost::noncopyable,
-    bases<VirtualServiceClients>>("ApplicationServiceClients", no_init)
-    .def("get_service_locator_client", BlockingFunction(
-      &ApplicationServiceClients::GetServiceLocatorClient,
-      return_internal_reference<>()))
-    .def("get_registry_client", BlockingFunction(
-      &ApplicationServiceClients::GetRegistryClient,
-      return_internal_reference<>()))
-    .def("get_administration_client", BlockingFunction(
-      &ApplicationServiceClients::GetAdministrationClient,
-      return_internal_reference<>()))
-    .def("get_definitions_client", BlockingFunction(
-      &ApplicationServiceClients::GetDefinitionsClient,
-      return_internal_reference<>()))
-    .def("get_market_data_client", BlockingFunction(
-      &ApplicationServiceClients::GetMarketDataClient,
-      return_internal_reference<>()))
-    .def("get_charting_client", BlockingFunction(
-      &ApplicationServiceClients::GetChartingClient,
-      return_internal_reference<>()))
-    .def("get_compliance_client", BlockingFunction(
-      &ApplicationServiceClients::GetComplianceClient,
-      return_internal_reference<>()))
-    .def("get_order_execution_client", BlockingFunction(
-      &ApplicationServiceClients::GetOrderExecutionClient,
-      return_internal_reference<>()))
-    .def("get_risk_client", BlockingFunction(
-      &ApplicationServiceClients::GetRiskClient, return_internal_reference<>()))
-    .def("get_time_client", BlockingFunction(
-      &ApplicationServiceClients::GetTimeClient, return_internal_reference<>()))
-    .def("build_timer", ReleaseUniquePtr<ApplicationServiceClients>(
-      &ApplicationServiceClients::BuildTimer))
-    .def("open", BlockingFunction(&ApplicationServiceClients::Open))
-    .def("close", BlockingFunction(&ApplicationServiceClients::Close));
+  class_<ToPythonServiceClients<ApplicationServiceClients>,
+    boost::noncopyable, bases<VirtualServiceClients>>(
+    "ApplicationServiceClients", no_init);
 }
 
 void Nexus::Python::ExportServiceClients() {
@@ -253,39 +318,12 @@ void Nexus::Python::ExportTestEnvironment() {
 }
 
 void Nexus::Python::ExportTestServiceClients() {
-  class_<TestServiceClients, boost::noncopyable, bases<VirtualServiceClients>>(
-    "TestServiceClients", no_init)
-    .def("get_service_locator_client", BlockingFunction(
-      &TestServiceClients::GetServiceLocatorClient,
-      return_internal_reference<>()))
-    .def("get_registry_client", BlockingFunction(
-      &TestServiceClients::GetRegistryClient, return_internal_reference<>()))
-    .def("get_administration_client", BlockingFunction(
-      &TestServiceClients::GetAdministrationClient,
-      return_internal_reference<>()))
-    .def("get_definitions_client", BlockingFunction(
-      &TestServiceClients::GetDefinitionsClient, return_internal_reference<>()))
-    .def("get_market_data_client", BlockingFunction(
-      &TestServiceClients::GetMarketDataClient, return_internal_reference<>()))
-    .def("get_charting_client", BlockingFunction(
-      &TestServiceClients::GetChartingClient, return_internal_reference<>()))
-    .def("get_compliance_client", BlockingFunction(
-      &TestServiceClients::GetComplianceClient, return_internal_reference<>()))
-    .def("get_order_execution_client", BlockingFunction(
-      &TestServiceClients::GetOrderExecutionClient,
-      return_internal_reference<>()))
-    .def("get_risk_client", BlockingFunction(&TestServiceClients::GetRiskClient,
-      return_internal_reference<>()))
-    .def("get_time_client", BlockingFunction(&TestServiceClients::GetTimeClient,
-      return_internal_reference<>()))
-    .def("build_timer", ReleaseUniquePtr<TestServiceClients>(
-      &TestServiceClients::BuildTimer))
-    .def("open", BlockingFunction(&TestServiceClients::Open))
-    .def("close", BlockingFunction(&TestServiceClients::Close));
+  class_<ToPythonServiceClients<TestServiceClients>, boost::noncopyable,
+    bases<VirtualServiceClients>>("TestServiceClients", no_init);
 }
 
 void Nexus::Python::ExportVirtualServiceClients() {
-  class_<VirtualServiceClientsWrapper, boost::noncopyable>("ServiceClients")
+  class_<VirtualServiceClients, boost::noncopyable>("ServiceClients")
     .def("get_service_locator_client",
       pure_virtual(&VirtualServiceClients::GetServiceLocatorClient),
       return_internal_reference<>())
@@ -314,7 +352,7 @@ void Nexus::Python::ExportVirtualServiceClients() {
       return_internal_reference<>())
     .def("get_time_client", pure_virtual(&VirtualServiceClients::GetTimeClient),
       return_internal_reference<>())
-    .def("build_timer", ReleaseUniquePtr(&VirtualServiceClients::BuildTimer))
+    .def("build_timer", pure_virtual(&VirtualServiceClients::BuildTimer))
     .def("open", pure_virtual(&VirtualServiceClients::Open))
     .def("close", pure_virtual(&VirtualServiceClients::Close));
 }
