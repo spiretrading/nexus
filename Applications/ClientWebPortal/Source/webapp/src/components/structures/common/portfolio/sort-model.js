@@ -74,7 +74,7 @@ export default class extends ChainableModel{
       sortedIndex = rowIndex;
     } else {
       let values = this.getValuesOfSortOrderColumns(rowIndex);
-      sortedIndex = this.searchIndex(values);
+      sortedIndex = this.searchIndex(values, 0, this.sortedToSourceIndices.length - 1);
     }
 
     for (let i=0; i<this.sourceToSortedIndices.length; i++) {
@@ -99,7 +99,7 @@ export default class extends ChainableModel{
       sortedIndex = rowIndex;
     } else {
       let updatedValues = this.getValuesOfSortOrderColumns(rowIndex);
-      sortedIndex = this.searchIndex(updatedValues);
+      sortedIndex = this.searchIndex(updatedValues, 0, this.sortedToSourceIndices.length - 1);
     }
 
     this.sortedToSourceIndices.splice(sortedIndex, 0, rowIndex);
@@ -143,10 +143,10 @@ export default class extends ChainableModel{
   }
 
   /** @private */
-  searchIndex(values) {
+  searchIndex(values, initialStart, initialEnd) {
     // binary search
-    let startIndex = 0;
-    let endIndex = this.sortedToSourceIndices.length - 1;
+    let startIndex = initialStart;
+    let endIndex = initialEnd;
     while (startIndex + 2 <= endIndex) {
       // loop until we have the smallest possible array in our search
       let midIndex = Math.ceil((startIndex + endIndex) / 2);
@@ -243,6 +243,39 @@ export default class extends ChainableModel{
       return result;
     } else {
       return -1 * result;
+    }
+  }
+
+  changeSortOrder(newSortOrder) {
+    this.columnSortOrders = newSortOrder;
+
+    let soFarSortedIndex = -1;
+    let elementsCount = this.sortedToSourceIndices.length;
+    for (let i=0; i<elementsCount; i++) {
+      let prevSortedIndex = i;
+      let sourceIndex = this.sortedToSourceIndices[prevSortedIndex];
+      let elementValues = this.getValuesOfSortOrderColumns(sourceIndex);
+      let newIndex = this.searchIndex(elementValues, 0, soFarSortedIndex);
+      soFarSortedIndex++;
+
+      if (newIndex != i) {
+        // move the element
+        let value = this.sortedToSourceIndices[i];
+        this.sortedToSourceIndices.splice(i, 1);
+        this.sortedToSourceIndices.splice(newIndex, 0, value);
+
+        // notify element move
+        let listeners = this.dataChangeListeners.values();
+        for (let j=0; j<listeners.length; j++) {
+          listeners[j](DataChangeType.MOVE, i, newIndex);
+        }
+      }
+    }
+
+    // update source to sorted indices
+    for (let i=0; i<this.sortedToSourceIndices.length; i++) {
+      let sourceIndex = this.sortedToSourceIndices[i];
+      this.sourceToSortedIndices[sourceIndex] = i;
     }
   }
 }

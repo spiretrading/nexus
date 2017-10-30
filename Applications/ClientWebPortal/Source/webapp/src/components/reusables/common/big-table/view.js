@@ -428,7 +428,7 @@ class View extends UpdatableView {
         };
 
         let cellClassName = '';
-        if (this.tableModel.isRowSelectedControlModified(y)) {
+        if (this.tableModel.isRowSelected(y)) {
           cellClassName += 'selected';
         }
 
