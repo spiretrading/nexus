@@ -96,7 +96,8 @@ module.exports = function(env) {
         'jquery-ellipsis': '../resources/js/jquery-ellipsis',
         'jquery-ellipsis-css': '../resources/js/jquery-ellipsis/style.css',
         'jquery-ui': '../node_modules/jquery-ui-dist/jquery-ui.min.js',
-        'jquery-ui-css': '../node_modules/jquery-ui-dist/jquery-ui.min.css'
+        'jquery-ui-css': '../node_modules/jquery-ui-dist/jquery-ui.min.css',
+        'jquery-contextmenu-css': '../node_modules/jquery-contextmenu/dist/jquery.contextMenu.min.css'
       }
     },
     plugins: [

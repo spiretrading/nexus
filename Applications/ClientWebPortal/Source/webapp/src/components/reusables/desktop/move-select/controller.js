@@ -23,14 +23,9 @@ class Controller {
   componentWillUpdate(model) {
     if (model != null) {
       overwriteMerge(this.componentModel, model);
+      this.componentModel.selectedItems.sort(this.compareAlphabetically);
       this.view.setComponentModel(this.componentModel);
     }
-  }
-
-  onChange(availableItems, selectedItems) {
-    this.onSelectedChange(selectedItems);
-    this.componentModel.availableItems = availableItems;
-    this.view.update(this.componentModel);
   }
 
   /** @private */
