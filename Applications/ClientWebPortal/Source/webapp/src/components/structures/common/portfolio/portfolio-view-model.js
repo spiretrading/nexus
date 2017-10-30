@@ -41,6 +41,10 @@ export default class extends ChainableModel {
 
   /** @private */
   stringifyValue(value, x, y) {
+    if (value == null) {
+      return 'N/A';
+    }
+
     // constructor name
     let constructorName = value.constructor.name;
     switch(x) {
@@ -89,6 +93,10 @@ export default class extends ChainableModel {
 
   /** @private */
   getColor(x, value) {
+    if (value == null) {
+      return BLACK;
+    }
+
     if (x == 5 ||
       x == 6 ||
       x == 7 ||

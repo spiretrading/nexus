@@ -29,24 +29,6 @@ class View extends UpdatableView {
     $(window).off('resize', this.onWindowResize);
   }
 
-  resizePortfolioChart() {
-    let chartOuterWrapperOffset = $('#portfolio-container .chart-outer-wrapper').offset();
-    $('#portfolio-container .chart-inner-wrapper').css('left', -1 * chartOuterWrapperOffset.left);
-
-    let $container = $('#portfolio-container');
-    let $chartOuterWrapper = $('#portfolio-container .chart-outer-wrapper');
-    if ($chartOuterWrapper.outerWidth() < $container.outerWidth()) {
-      $('#portfolio-container .chart-inner-wrapper').css('width', $container.outerWidth());
-    } else {
-      $('#portfolio-container .chart-inner-wrapper').css('width', '100%');
-    }
-
-    // $chartOuterWrapper.removeClass('stretch').addClass('stretch');
-    let $portfolioParametersWrapper = $container.find('.porfolio-parameters-wrapper');
-    let chartOuterWrapperHeight = $container.height() - $portfolioParametersWrapper.height();
-    $chartOuterWrapper.height(chartOuterWrapperHeight);
-  }
-
   componentDidUpdate() {
     $('#portfolio-container').fadeIn({
       duration: Config.FADE_DURATION

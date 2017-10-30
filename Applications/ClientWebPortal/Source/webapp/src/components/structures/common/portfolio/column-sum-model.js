@@ -77,6 +77,10 @@ export default class extends ChainableModel {
     if (this.totals[columnIndex] == null) {
       this.totals.push(value);
     } else {
+      if (value == null) {
+        return;
+      }
+
       let constructorName = value.constructor.name;
       if (constructorName == 'Money') {
         this.totals[columnIndex] = this.totals[columnIndex].add(value);
@@ -91,7 +95,22 @@ export default class extends ChainableModel {
     let columnCount = this.sourceModel.getColumnCount();
     for (let i=0; i<columnCount; i++) {
       let newValue = this.sourceModel.getValueAt(i, rowIndex);
+      if (newValue == null) {
+        continue;
+      }
+
       let lastValue = this.lastValuesCache[rowIndex][i];
+      if (lastValue == null) {
+        this.lastValuesCache[rowIndex][i] = newValue;
+        continue;
+      }
+
+      if (this.totals[i] == null) {
+        this.totals[i] = newValue;
+        this.lastValuesCache[rowIndex][i] = newValue;
+        continue;
+      }
+
       let constructorName = lastValue.constructor.name;
       let delta;
       if (constructorName == 'Money') {

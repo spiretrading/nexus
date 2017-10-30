@@ -33,6 +33,7 @@ export default class extends ChainableModel{
   }
 
   getValueAt(x, y) {
+    let value = this.sourceModel.getValueAt(this.omittedToSourceColumns[x], y);
     return this.sourceModel.getValueAt(this.omittedToSourceColumns[x], y);
   }
 
