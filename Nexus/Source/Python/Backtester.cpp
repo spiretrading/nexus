@@ -1,10 +1,9 @@
 #include "Nexus/Python/Backtester.hpp"
 #include <Beam/Python/BoostPython.hpp>
-#include <Beam/Python/GilRelease.hpp>
 #include "Nexus/Backtester/BacktesterEnvironment.hpp"
 #include "Nexus/Backtester/BacktesterEventHandler.hpp"
 #include "Nexus/Backtester/BacktesterServiceClients.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include "Nexus/Python/ToPythonServiceClients.hpp"
 
 using namespace Beam;
 using namespace Beam::Python;
@@ -17,26 +16,24 @@ using namespace Nexus::Python;
 using namespace std;
 
 namespace {
-  std::shared_ptr<BacktesterEnvironment> MakeBacktesterEnvironmentA(
-      const ptime& startTime, VirtualServiceClients& serviceClients) {
+  auto MakeBacktesterEnvironmentA(const ptime& startTime,
+      VirtualServiceClients& serviceClients) {
     return std::make_shared<BacktesterEnvironment>(startTime,
       Ref(serviceClients));
   }
 
-  std::shared_ptr<BacktesterEnvironment> MakeBacktesterEnvironmentB(
-      const ptime& startTime, const ptime& endTime,
+  auto MakeBacktesterEnvironmentB(const ptime& startTime, const ptime& endTime,
       VirtualServiceClients& serviceClients) {
     return std::make_shared<BacktesterEnvironment>(startTime, endTime,
       Ref(serviceClients));
   }
 
-  std::shared_ptr<BacktesterEventHandler> MakeBacktesterEventHandlerA(
-      const ptime& startTime) {
+  auto MakeBacktesterEventHandlerA(const ptime& startTime) {
     return std::make_shared<BacktesterEventHandler>(startTime);
   }
 
-  std::shared_ptr<BacktesterEventHandler> MakeBacktesterEventHandlerB(
-      const ptime& startTime, const ptime& endTime) {
+  auto MakeBacktesterEventHandlerB(const ptime& startTime,
+      const ptime& endTime) {
     return std::make_shared<BacktesterEventHandler>(startTime, endTime);
   }
 
@@ -46,6 +43,12 @@ namespace {
     stl_input_iterator<std::shared_ptr<BacktesterEvent>> end;
     vector<std::shared_ptr<BacktesterEvent>> e{begin, end};
     eventHandler.Add(std::move(e));
+  }
+
+  auto MakeBacktesterServiceClients(
+      std::shared_ptr<BacktesterEnvironment> environment) {
+    return MakeToPythonServiceClients(
+      std::make_unique<BacktesterServiceClients>(Ref(*environment))).release();
   }
 }
 
@@ -86,38 +89,7 @@ void Nexus::Python::ExportBacktesterEventHandler() {
 }
 
 void Nexus::Python::ExportBacktesterServiceClients() {
-  class_<BacktesterServiceClients, boost::noncopyable,
-      bases<VirtualServiceClients>>("BacktesterServiceClients", no_init)
-    .def("get_service_locator_client", BlockingFunction(
-      &BacktesterServiceClients::GetServiceLocatorClient,
-      return_internal_reference<>()))
-    .def("get_registry_client", BlockingFunction(
-      &BacktesterServiceClients::GetRegistryClient,
-      return_internal_reference<>()))
-    .def("get_administration_client", BlockingFunction(
-      &BacktesterServiceClients::GetAdministrationClient,
-      return_internal_reference<>()))
-    .def("get_definitions_client", BlockingFunction(
-      &BacktesterServiceClients::GetDefinitionsClient,
-      return_internal_reference<>()))
-    .def("get_market_data_client", BlockingFunction(
-      &BacktesterServiceClients::GetMarketDataClient,
-      return_internal_reference<>()))
-    .def("get_charting_client", BlockingFunction(
-      &BacktesterServiceClients::GetChartingClient,
-      return_internal_reference<>()))
-    .def("get_compliance_client", BlockingFunction(
-      &BacktesterServiceClients::GetComplianceClient,
-      return_internal_reference<>()))
-    .def("get_order_execution_client", BlockingFunction(
-      &BacktesterServiceClients::GetOrderExecutionClient,
-      return_internal_reference<>()))
-    .def("get_risk_client", BlockingFunction(
-      &BacktesterServiceClients::GetRiskClient, return_internal_reference<>()))
-    .def("get_time_client", BlockingFunction(
-      &BacktesterServiceClients::GetTimeClient, return_internal_reference<>()))
-    .def("build_timer", ReleaseUniquePtr<BacktesterServiceClients>(
-      &BacktesterServiceClients::BuildTimer))
-    .def("open", BlockingFunction(&BacktesterServiceClients::Open))
-    .def("close", BlockingFunction(&BacktesterServiceClients::Close));
+  class_<ToPythonServiceClients<BacktesterServiceClients>, boost::noncopyable,
+    bases<VirtualServiceClients>>("BacktesterServiceClients", no_init)
+    .def("__init__", make_constructor(&MakeBacktesterServiceClients));
 }
