@@ -265,10 +265,8 @@ class Controller {
     return this.filterSubsetModel;
   }
 
-  changeSortOrder(sortOrders) {
-    this.sortModel.dispose();
-    this.sortModel = new SortModel(this.portfolioModel, sortOrders, ValueComparer);
-    this.viewModel.setSourceModel(this.sortModel);
+  changeSortOrder(sortOrder) {
+    this.sortModel.changeSortOrder(sortOrder);
   }
 }
 

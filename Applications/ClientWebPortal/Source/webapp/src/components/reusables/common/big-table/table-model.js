@@ -88,8 +88,12 @@ class TableModel {
     }
   }
 
-  isRowSelectedControlModified(rowIndex) {
+  isRowSelected(rowIndex) {
     return this.selectedRowsControlModApplied.has(rowIndex);
+  }
+
+  isRowSelectedControlModified(rowIndex) {
+    return this.selectedRowsControlModApplied.has(rowIndex) && this.selectedRowsControlModApplied.get(rowIndex);
   }
 
   clearSelectedRows() {
