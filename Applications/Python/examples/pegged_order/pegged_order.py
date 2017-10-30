@@ -31,6 +31,7 @@ class PeggedOrder:
       self.order_fields.security)
     self.service_clients.get_market_data_client().query_bbo_quotes(
       query, self.tasks.get_slot(self.on_bbo_quote))
+    print 'ss'
 
   def s1(self):
     self.state = 1

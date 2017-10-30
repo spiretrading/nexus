@@ -1,12 +1,12 @@
 #include "Nexus/Python/ServiceClients.hpp"
 #include <Beam/Python/BoostPython.hpp>
 #include <Beam/Python/PythonBindings.hpp>
+#include <Beam/Python/UniquePtr.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/Python/ToPythonServiceClients.hpp"
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
-#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 
 using namespace Beam;
 using namespace Beam::Network;
@@ -110,6 +110,7 @@ BEAM_DEFINE_PYTHON_POINTER_LINKER(
 BEAM_DEFINE_PYTHON_POINTER_LINKER(RegistryService::VirtualRegistryClient);
 BEAM_DEFINE_PYTHON_POINTER_LINKER(RiskService::VirtualRiskClient);
 BEAM_DEFINE_PYTHON_POINTER_LINKER(ServiceLocator::VirtualServiceLocatorClient);
+BEAM_DEFINE_PYTHON_POINTER_LINKER(VirtualServiceClients);
 BEAM_DEFINE_PYTHON_POINTER_LINKER(VirtualTimeClient);
 BEAM_DEFINE_PYTHON_POINTER_LINKER(VirtualTimer);
 
@@ -191,7 +192,8 @@ void Nexus::Python::ExportTestServiceClients() {
 }
 
 void Nexus::Python::ExportVirtualServiceClients() {
-  class_<VirtualServiceClients, boost::noncopyable>("ServiceClients", no_init)
+  class_<FromPythonServiceClients, boost::noncopyable>("ServiceClients",
+    no_init)
     .def("get_service_locator_client",
       pure_virtual(&VirtualServiceClients::GetServiceLocatorClient),
       return_internal_reference<>())
@@ -223,4 +225,5 @@ void Nexus::Python::ExportVirtualServiceClients() {
     .def("build_timer", pure_virtual(&VirtualServiceClients::BuildTimer))
     .def("open", pure_virtual(&VirtualServiceClients::Open))
     .def("close", pure_virtual(&VirtualServiceClients::Close));
+  ExportUniquePtr<std::unique_ptr<VirtualServiceClients>>();
 }

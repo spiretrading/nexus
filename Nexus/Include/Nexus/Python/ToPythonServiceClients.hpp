@@ -1,12 +1,14 @@
 #ifndef NEXUS_TO_PYTHON_SERVICE_CLIENTS_HPP
 #define NEXUS_TO_PYTHON_SERVICE_CLIENTS_HPP
 #include <Beam/Python/GilRelease.hpp>
+#include <Beam/Python/ToPythonServiceLocatorClient.hpp>
 #include <Beam/Python/ToPythonTimeClient.hpp>
 #include <Beam/Python/ToPythonTimer.hpp>
 #include <Beam/Threading/Mutex.hpp>
-#include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <Beam/Utilities/Remote.hpp>
 #include <boost/optional/optional.hpp>
+#include "Nexus/Python/ToPythonMarketDataClient.hpp"
+#include "Nexus/Python/ToPythonOrderExecutionClient.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 
 namespace Nexus {
@@ -59,8 +61,14 @@ namespace Nexus {
 
     private:
       std::unique_ptr<Client> m_client;
-      boost::optional<Beam::Remote<
-        std::unique_ptr<TimeClient>, Beam::Threading::Mutex>> m_timeClient;
+      boost::optional<Beam::Remote<std::unique_ptr<ServiceLocatorClient>,
+        Beam::Threading::Mutex>> m_serviceLocatorClient;
+      boost::optional<Beam::Remote<std::unique_ptr<MarketDataClient>,
+        Beam::Threading::Mutex>> m_marketDataClient;
+      boost::optional<Beam::Remote<std::unique_ptr<OrderExecutionClient>,
+        Beam::Threading::Mutex>> m_orderExecutionClient;
+      boost::optional<Beam::Remote<std::unique_ptr<TimeClient>,
+        Beam::Threading::Mutex>> m_timeClient;
   };
 
   //! Builds a ToPythonServiceClients instance.
@@ -77,6 +85,30 @@ namespace Nexus {
       std::unique_ptr<Client> client)
       BEAM_SUPPRESS_THIS_INITIALIZER()
       : m_client{std::move(client)},
+        m_serviceLocatorClient{
+          [=] (auto& client) {
+            client.Initialize(
+              Beam::ServiceLocator::MakeToPythonServiceLocatorClient(
+              Beam::ServiceLocator::MakeVirtualServiceLocatorClient(
+              &m_client->GetServiceLocatorClient())));
+          }
+        },
+        m_marketDataClient{
+          [=] (auto& client) {
+            client.Initialize(
+              MarketDataService::MakeToPythonMarketDataClient(
+              MarketDataService::MakeVirtualMarketDataClient(
+              &m_client->GetMarketDataClient())));
+          }
+        },
+        m_orderExecutionClient{
+          [=] (auto& client) {
+            client.Initialize(
+              OrderExecutionService::MakeToPythonOrderExecutionClient(
+              OrderExecutionService::MakeVirtualOrderExecutionClient(
+              &m_client->GetOrderExecutionClient())));
+          }
+        },
         m_timeClient{
           [=] (auto& client) {
             client.Initialize(Beam::TimeService::MakeToPythonTimeClient(
@@ -91,13 +123,18 @@ namespace Nexus {
     Beam::Python::GilRelease gil;
     boost::lock_guard<Beam::Python::GilRelease> lock{gil};
     m_timeClient.reset();
+    m_orderExecutionClient.reset();
+    m_marketDataClient.reset();
+    m_serviceLocatorClient.reset();
     m_client.reset();
   }
 
   template<typename ClientType>
   typename ToPythonServiceClients<ClientType>::ServiceLocatorClient&
       ToPythonServiceClients<ClientType>::GetServiceLocatorClient() {
-    throw std::runtime_error{"Not implemented"};
+    Beam::Python::GilRelease gil;
+    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    return ***m_serviceLocatorClient;
   }
 
   template<typename ClientType>
@@ -121,7 +158,9 @@ namespace Nexus {
   template<typename ClientType>
   typename ToPythonServiceClients<ClientType>::MarketDataClient&
       ToPythonServiceClients<ClientType>::GetMarketDataClient() {
-    throw std::runtime_error{"Not implemented"};
+    Beam::Python::GilRelease gil;
+    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    return ***m_marketDataClient;
   }
 
   template<typename ClientType>
@@ -139,7 +178,9 @@ namespace Nexus {
   template<typename ClientType>
   typename ToPythonServiceClients<ClientType>::OrderExecutionClient&
       ToPythonServiceClients<ClientType>::GetOrderExecutionClient() {
-    throw std::runtime_error{"Not implemented"};
+    Beam::Python::GilRelease gil;
+    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    return ***m_orderExecutionClient;
   }
 
   template<typename ClientType>
@@ -176,7 +217,7 @@ namespace Nexus {
   void ToPythonServiceClients<ClientType>::Close() {
     Beam::Python::GilRelease gil;
     boost::lock_guard<Beam::Python::GilRelease> lock{gil};
-    return m_client->Close();
+    m_client->Close();
   }
 }
 
