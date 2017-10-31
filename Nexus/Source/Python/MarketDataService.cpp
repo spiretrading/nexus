@@ -10,7 +10,6 @@
 #include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/PythonBindings.hpp>
 #include <Beam/Python/Queries.hpp>
-#include <Beam/Python/Queues.hpp>
 #include <Beam/Python/UniquePtr.hpp>
 #include <Beam/Python/Vector.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
@@ -178,9 +177,6 @@ namespace {
   }
 }
 
-BEAM_DEFINE_PYTHON_QUEUE_LINKER(BboQuote);
-BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedBboQuote);
-
 void Nexus::Python::ExportApplicationMarketDataClient() {
   class_<ToPythonMarketDataClient<Client>, boost::noncopyable>(
     "ApplicationMarketDataClient", no_init)
@@ -262,8 +258,6 @@ void Nexus::Python::ExportMarketDataService() {
   ExportMarketWideDataQuery();
   ExportSecurityMarketDataQuery();
   ExportSecuritySnapshot();
-  ExportQueueSuite<BboQuote>("BboQuote");
-  ExportQueueSuite<SequencedBboQuote>("SequencedBboQuote");
   {
     string nestedName = extract<string>(parent.attr("__name__") + ".tests");
     object nestedModule{handle<>(

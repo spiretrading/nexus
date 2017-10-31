@@ -164,6 +164,9 @@ BEAM_DEFINE_PYTHON_POINTER_LINKER(
   vector<const PrimitiveOrder*>>);
 BEAM_DEFINE_PYTHON_POINTER_LINKER(VirtualOrderExecutionDriver);
 BEAM_DEFINE_PYTHON_QUEUE_LINKER(const Order*);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedOrder);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(ExecutionReport);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedExecutionReport);
 
 void Nexus::Python::ExportAccountQuery() {
   ExportIndexedQuery<DirectoryEntry>("DirectoryEntryIndexedQuery");
@@ -210,6 +213,9 @@ void Nexus::Python::ExportExecutionReport() {
     .def_readwrite("additional_tags", &ExecutionReport::m_additionalTags)
     .def(self == self)
     .def(self != self);
+  ExportSequencedValue<ExecutionReport>("SequencedExecutionReport");
+  ExportQueueSuite<ExecutionReport>("ExecutionReport");
+  ExportQueueSuite<SequencedExecutionReport>("SequencedExecutionReport");
   ExportVector<vector<ExecutionReport>>("VectorExecutionReport");
 }
 
@@ -241,6 +247,9 @@ void Nexus::Python::ExportOrder() {
     .add_property("info", make_function(&Order::GetInfo,
       return_value_policy<copy_const_reference>()))
     .def("get_publisher", &Order::GetPublisher, return_internal_reference<>());
+  ExportSequencedValue<const Order*>("SequencedOrder");
+  ExportQueueSuite<const Order*>("Order");
+  ExportQueueSuite<SequencedOrder>("SequencedOrder");
   ExportVector<vector<const Order*>>("VectorOrder");
 }
 
@@ -287,7 +296,6 @@ void Nexus::Python::ExportOrderExecutionService() {
   ExportOrderRecord();
   ExportPrimitiveOrder();
   ExportStandardQueries();
-  ExportQueueSuite<const Order*>("Order");
   {
     string nestedName = extract<string>(parent.attr("__name__") + ".tests");
     object nestedModule{handle<>(

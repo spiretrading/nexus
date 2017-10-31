@@ -63,6 +63,7 @@ class TestPeggedOrder(unittest.TestCase):
     self.environment.monitor_order_submissions(submission_queue)
     expected_order = submission_queue.top()
     submission_queue.pop()
+    print 'gao'
     self.assertEqual(expected_order.info.fields.price,
       nexus.Money.from_value('1.02'))
     self.assertEqual(expected_order.info.fields.quantity, 1000)
