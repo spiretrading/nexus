@@ -31,7 +31,6 @@ class PeggedOrder:
       self.order_fields.security)
     self.service_clients.get_market_data_client().query_bbo_quotes(
       query, self.tasks.get_slot(self.on_bbo_quote))
-    print 'ss'
 
   def s1(self):
     self.state = 1
@@ -41,10 +40,8 @@ class PeggedOrder:
     order_fields.quantity = self.order_fields.quantity - self.filled_quantity
     self.order = self.service_clients.get_order_execution_client().submit(
       order_fields)
-    print 's1 %s' % self.order
     self.order.get_publisher().monitor(
       self.tasks.get_slot(self.on_execution_report))
-    print 's2'
 
   def s2(self):
     self.state = 2
@@ -66,7 +63,6 @@ class PeggedOrder:
     self.service_clients.get_order_execution_client().cancel(self.order)
 
   def on_bbo_quote(self, bbo_quote):
-    print 'hai'
     self.bbo_quote = bbo_quote
     if self.state == 0:
 
