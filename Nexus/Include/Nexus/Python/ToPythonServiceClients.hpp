@@ -201,8 +201,8 @@ namespace Nexus {
   std::unique_ptr<typename ToPythonServiceClients<ClientType>::Timer>
       ToPythonServiceClients<ClientType>::BuildTimer(
       boost::posix_time::time_duration expiry) {
-    GilRelease gil;
-    boost::lock_guard<GilRelease> lock{gil};
+    Beam::Python::GilRelease gil;
+    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
     return Beam::Threading::MakeToPythonTimer(m_client->BuildTimer(expiry));
   }
 
