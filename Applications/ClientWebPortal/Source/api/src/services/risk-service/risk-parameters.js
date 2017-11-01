@@ -36,7 +36,7 @@ class RiskParameters {
 }
 
 RiskParameters.fromData = (data) => {
-  let currencyId = CurrencyId.fromNumber(data.currency);
+  let currencyId = CurrencyId.fromData(data.currency);
   let buyingPower = Money.fromRepresentation(data.buying_power);
   let allowedState = RiskState.fromData(data.allowed_state);
   let netLoss = Money.fromRepresentation(data.net_loss);

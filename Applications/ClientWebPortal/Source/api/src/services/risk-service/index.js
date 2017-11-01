@@ -37,9 +37,29 @@ class RiskService {
     this.portfolioMessageHandlers.remove(subId);
   }
 
-  setFilter(filter) {
+  setPortfolioDataFilter(subId, filter) {
     let destination = Config.BACKEND_API_ROOT_URL + 'risk_service/portfolio/filter';
-    this.stompConnectionManager.send(destination, filter);
+
+    let serializedFilter = {
+      id: subId,
+      groups: [],
+      currencies: [],
+      markets: []
+    };
+
+    for (let i=0; i<filter.groups.length; i++) {
+      serializedFilter.groups.push(filter.groups[i].toData());
+    }
+
+    for (let i=0; i<filter.currencies.length; i++) {
+      serializedFilter.currencies.push(filter.currencies[i].toData());
+    }
+
+    for (let i=0; i<filter.markets.length; i++) {
+      serializedFilter.markets.push(filter.markets[i].toData());
+    }
+
+    this.stompConnectionManager.send(destination, serializedFilter);
   }
 }
 

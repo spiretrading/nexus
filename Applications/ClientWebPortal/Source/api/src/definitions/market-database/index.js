@@ -8,14 +8,14 @@ class MarketDatabase {
   }
 
   add(entry) {
-    this.marketCodeEntries.set(entry.marketCode.toCode(), entry);
+    this.marketCodeEntries.set(entry.marketCode.toData(), entry);
 
     if (this.countryCodeEntries.has(entry.countryCode.toNumber())) {
       let countryMarketCodeEntries = this.countryCodeEntries.get(entry.countryCode.toNumber());
-      countryMarketCodeEntries.set(entry.marketCode.toCode(), entry);
+      countryMarketCodeEntries.set(entry.marketCode.toData(), entry);
     } else {
       let countryMarketCodeEntries = new HashMap();
-      countryMarketCodeEntries.set(entry.marketCode.toCode(), entry);
+      countryMarketCodeEntries.set(entry.marketCode.toData(), entry);
       this.countryCodeEntries.set(entry.countryCode.toNumber(), countryMarketCodeEntries);
     }
 

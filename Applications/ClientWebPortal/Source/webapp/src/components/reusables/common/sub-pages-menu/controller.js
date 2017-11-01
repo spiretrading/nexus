@@ -1,5 +1,5 @@
 import View from './view';
-import {browserHistory} from 'react-router/es6';
+import {browserHistory} from 'react-router';
 
 class Controller {
   constructor(react) {
