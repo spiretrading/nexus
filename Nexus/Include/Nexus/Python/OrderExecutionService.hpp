@@ -8,6 +8,9 @@ namespace Python {
   //! Exports the AccountQuery class.
   void ExportAccountQuery();
 
+  //! Exports the ApplicationOrderExecutionClient class.
+  void ExportApplicationOrderExecutionClient();
+
   //! Exports the ExecutionReport struct.
   void ExportExecutionReport();
 

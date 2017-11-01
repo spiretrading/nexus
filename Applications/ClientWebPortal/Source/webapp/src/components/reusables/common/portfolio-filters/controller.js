@@ -1,5 +1,3 @@
-import columns from 'components/reusables/common/portfolio-chart/columns';
-
 class Controller {
   constructor(react, componentModel) {
     this.componentModel = componentModel;
@@ -40,9 +38,16 @@ class Controller {
       this.componentModel.filter.markets = selectedItems;
     } else if (category === 'Column') {
       this.componentModel.columns = availableItems;
-      this.componentModel.filter.columns = selectedItems;
+      let clonedSelectedItems = clone(selectedItems);
+      clonedSelectedItems.sort(this.compareId);
+      this.componentModel.filter.columns = clonedSelectedItems;
     }
     this.view.update(this.componentModel);
+  }
+
+  /** @private */
+  compareId(a, b) {
+    return a.id - b.id;
   }
 
   update() {

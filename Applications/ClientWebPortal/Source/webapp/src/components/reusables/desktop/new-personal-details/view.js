@@ -23,6 +23,9 @@ class DesktopView extends CommonView {
     let countryInput;
     let countryOptions = [];
     let countries = definitionsService.getCountries();
+    countryOptions.push(
+      <option key={-1} value={'none'} disabled>Select</option>
+    );
     for (let i=0; i<countries.length; i++) {
       let country = countries[i];
       countryOptions.push(
@@ -32,9 +35,12 @@ class DesktopView extends CommonView {
 
     countryInput =
       <div className="personal-detail-row editable">
-        <select className="country-input" defaultValue={this.componentModel.country} onChange={this.onChange.bind(this)}>
-          {countryOptions}
-        </select>
+        <div className="country-dropdown-wrapper">
+          <select className="country-input" defaultValue={'none'} onChange={this.onChange.bind(this)}>
+            {countryOptions}
+          </select>
+          <span className="icon-arrow-down country-dropdown-arrow"></span>
+        </div>
       </div>;
 
     return (

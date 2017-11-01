@@ -6,18 +6,19 @@ import HashMap from 'hashmap';
 
 const THROTTLE_INTERVAL = 500;
 
-class PortfolioMessageHandler {
+export default class {
   constructor(listener) {
     this.listener = listener;
     this.messages = new HashMap();
     this.listenerRunner = setInterval(this.runListener.bind(this), THROTTLE_INTERVAL);
+    this.runListener = this.runListener.bind(this);
   }
 
   handle(message) {
     let unmarshalledMessage = this.unmarshallPortfolioMessage(message);
-    let messageKey = unmarshalledMessage.account.name.toString() + '.' +
+    let messageKey = unmarshalledMessage.account.name + '.' +
       unmarshalledMessage.inventory.position.key.index.symbol + '.' +
-      unmarshalledMessage.inventory.position.key.index.market.toCode();
+      unmarshalledMessage.inventory.position.key.index.market.toData();
     this.messages.set(messageKey, unmarshalledMessage);
   }
 
@@ -30,7 +31,7 @@ class PortfolioMessageHandler {
 
     payload.inventory.position.key.index = Security.fromData(payload.inventory.position.key.index);
 
-    payload.inventory.position.key.currency = CurrencyId.fromNumber(payload.inventory.position.key.currency);
+    payload.inventory.position.key.currency = CurrencyId.fromData(payload.inventory.position.key.currency);
 
     payload.inventory.position.cost_basis = Money.fromRepresentation(payload.inventory.position.cost_basis);
 
@@ -49,13 +50,12 @@ class PortfolioMessageHandler {
 
   /** @private */
   runListener() {
-    this.listener(this.messages.values());
-    this.messages.clear();
+    let values = this.messages.values();
+    this.messages = new HashMap();
+    this.listener(values);
   }
 
   dispose() {
     clearInterval(this.listenerRunner);
   }
 }
-
-export default PortfolioMessageHandler;

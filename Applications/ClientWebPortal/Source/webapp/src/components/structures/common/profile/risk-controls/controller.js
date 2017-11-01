@@ -71,7 +71,7 @@ class Controller {
   onCurrencyChange(newCurrencyNumber) {
     this.view.hideSavedMessage();
     EventBus.publish(Event.Profile.RiskControls.CURRENCY_SELECTED);
-    this.componentModel.riskParameters.currencyId = CurrencyId.fromNumber(newCurrencyNumber);
+    this.componentModel.riskParameters.currencyId = CurrencyId.fromData(newCurrencyNumber);
     this.view.update(this.componentModel);
   }
 

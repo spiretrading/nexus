@@ -2,7 +2,6 @@
 #define SPIRE_INDIRECTTASKFACTORY_HPP
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Reactors/Reactors.hpp>
-#include <Beam/Reactors/Trigger.hpp>
 #include <Beam/SignalHandling/ScopedSlotAdaptor.hpp>
 #include <Beam/Tasks/BasicTask.hpp>
 #include <boost/optional/optional.hpp>
@@ -27,17 +26,16 @@ namespace Spire {
       /*!
         \param task The Task to reference.
       */
-      void SetTask(const std::shared_ptr<Beam::Tasks::Task>& task);
+      void SetTask(std::shared_ptr<Beam::Tasks::Task> task);
 
     protected:
-      virtual void OnExecute();
+      virtual void OnExecute() override final;
 
-      virtual void OnCancel();
+      virtual void OnCancel() override final;
 
     private:
       std::shared_ptr<Task> m_task;
       Beam::Reactors::ReactorMonitor* m_reactorMonitor;
-      Beam::Reactors::Trigger m_trigger;
       Beam::SignalHandling::ScopedSlotAdaptor m_callbacks;
 
       void OnTaskUpdate(const Beam::Tasks::Task::StateEntry& update);
@@ -70,9 +68,9 @@ namespace Spire {
       */
       void SetTaskFactory(const Beam::Tasks::TaskFactory& taskFactory);
 
-      virtual std::shared_ptr<Beam::Tasks::Task> Create();
+      virtual std::shared_ptr<Beam::Tasks::Task> Create() override final;
 
-      virtual boost::any& FindProperty(const std::string& name);
+      virtual boost::any& FindProperty(const std::string& name) override final;
 
     private:
       std::shared_ptr<boost::optional<Beam::Tasks::TaskFactory>> m_taskFactory;

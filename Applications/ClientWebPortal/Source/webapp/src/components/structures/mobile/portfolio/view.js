@@ -3,7 +3,9 @@ import React from 'react';
 import UpdatableView from 'commons/updatable-view';
 import PortfolioFilters from 'components/reusables/common/portfolio-filters';
 import PortfolioChart from 'components/reusables/common/portfolio-chart';
+import tableColumns from 'components/structures/common/portfolio/table-columns';
 import numberFormatter from 'utils/number-formatter';
+import BigTable from 'components/reusables/common/big-table';
 
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
@@ -20,25 +22,7 @@ class View extends UpdatableView {
 
   /** @private */
   onWindowResize() {
-    this.resizePortfolioChart();
-  }
-
-  resizePortfolioChart() {
-    let chartOuterWrapperOffset = $('#portfolio-container .chart-outer-wrapper').offset();
-    $('#portfolio-container .chart-inner-wrapper').css('left', -1 * chartOuterWrapperOffset.left);
-
-    let $container = $('#portfolio-container');
-    let $chartOuterWrapper = $('#portfolio-container .chart-outer-wrapper');
-    if ($chartOuterWrapper.outerWidth() < $container.outerWidth()) {
-      $('#portfolio-container .chart-inner-wrapper').css('width', $container.outerWidth());
-    } else {
-      $('#portfolio-container .chart-inner-wrapper').css('width', '100%');
-    }
-
-    // $chartOuterWrapper.removeClass('stretch').addClass('stretch');
-    let $portfolioParametersWrapper = $container.find('.porfolio-parameters-wrapper');
-    let chartOuterWrapperHeight = $container.height() - $portfolioParametersWrapper.height();
-    $chartOuterWrapper.height(chartOuterWrapperHeight);
+    this.controller.resizeTable();
   }
 
   dispose() {
@@ -49,15 +33,31 @@ class View extends UpdatableView {
     $('#portfolio-container').fadeIn({
       duration: Config.FADE_DURATION
     });
-    $(window).resize();
+  }
+
+  getNonPrimaryKeyColumns() {
+    let columns = [];
+    let clonedColumns = clone(tableColumns);
+    for (let i=0; i<clonedColumns.length; i++) {
+      if (!clonedColumns[i].isPrimaryKey) {
+        columns.push(clonedColumns[i]);
+      }
+    }
+    return columns;
   }
 
   render() {
+    let filterColumns = this.getNonPrimaryKeyColumns();
     let parametersModel = {
       groups: this.componentModel.managedGroups || [],
       currencies: this.componentModel.currencies || [],
       markets: this.componentModel.markets || [],
-      filter: {}
+      filter: {
+        columns: filterColumns,
+        currencies: this.componentModel.currencies || [],
+        groups: this.componentModel.managedGroups || [],
+        markets: this.componentModel.markets || []
+      }
     };
 
     let onParametersSave = this.controller.saveParameters.bind(this.controller);
@@ -81,6 +81,8 @@ class View extends UpdatableView {
       trades = numberFormatter.formatWithComma(this.componentModel.aggregates.trades);
     }
 
+    let dataModel = this.controller.getDataModel();
+
     return (
       <div id="portfolio-container" className="container">
         <PortfolioFilters model={parametersModel} onSave={onParametersSave}/>
@@ -102,10 +104,17 @@ class View extends UpdatableView {
             </tbody>
           </table>
         </div>
-        <div className="chart-outer-wrapper">
-          <div className="chart-inner-wrapper">
-            <PortfolioChart model={chartModel} />
-          </div>
+        <div className="table-wrapper">
+          <BigTable
+            dataModel={dataModel}
+            columnTypes={tableColumns}
+            setReference={this.controller.setTableRef}
+            fontFamily='Roboto'
+            fontWeight='200'
+            fontSize='16px'
+            lineHeight='40'
+            changeSortOrder={this.controller.changeSortOrder}
+          />
         </div>
       </div>
     );

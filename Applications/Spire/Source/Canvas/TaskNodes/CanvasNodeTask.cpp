@@ -1,4 +1,5 @@
 #include "Spire/Canvas/TaskNodes/CanvasNodeTask.hpp"
+#include <Beam/Reactors/DoReactor.hpp>
 #include <Beam/Reactors/PublisherReactor.hpp>
 #include <boost/throw_exception.hpp>
 #include "Spire/Canvas/Operations/CanvasNodeTranslator.hpp"
@@ -17,9 +18,8 @@ CanvasNodeTask::CanvasNodeTask(RefType<CanvasNodeTranslationContext> context,
       RefType<const CanvasNode> node,
       const std::shared_ptr<SpireAggregateOrderExecutionPublisher>&
       orderExecutionPublisher)
-    : m_context(Ref(context)),
-      m_node(node.Get()),
-      m_trigger(m_context.GetReactorMonitor()) {
+    : m_context{Ref(context)},
+      m_node{node.Get()} {
   auto translation = Translate(m_context, *m_node);
   auto& taskTranslation = get<TaskTranslation&>(translation);
   m_taskFactory = taskTranslation.m_factory;
@@ -35,7 +35,7 @@ void CanvasNodeTask::OnExecute() {
 }
 
 void CanvasNodeTask::OnCancel() {
-  m_trigger.Do(
+  m_context.GetReactorMonitor().Do(
     [=] {
       if(m_state != 2 && m_state != 4) {
         return S5();
@@ -75,12 +75,12 @@ void CanvasNodeTask::S1() {
   m_state = 1;
   SetActive();
   m_taskState = State::INITIALIZING;
-  auto publisher = MakePublisherReactor(&m_task->GetPublisher());
+  auto publisher = MakePublisherReactor(m_task->GetPublisher(),
+    Ref(m_context.GetReactorMonitor().GetTrigger()));
   auto taskReactor = Reactors::Do(m_callbacks.GetCallback(
     std::bind(&CanvasNodeTask::OnTaskUpdate, this, std::placeholders::_1)),
     publisher);
-  m_context.GetReactorMonitor().AddEvent(publisher);
-  m_context.GetReactorMonitor().AddReactor(taskReactor);
+  m_context.GetReactorMonitor().Add(taskReactor);
   m_task->Execute();
 }
 
@@ -101,7 +101,7 @@ void CanvasNodeTask::S4(StateEntry state) {
 void CanvasNodeTask::S5() {
   m_state = 5;
   if(C0()) {
-    return S4(StateEntry(State::CANCELED));
+    return S4(State::CANCELED);
   }
   m_task->Cancel();
 }
@@ -109,9 +109,9 @@ void CanvasNodeTask::S5() {
 CanvasNodeTaskFactory::CanvasNodeTaskFactory(
     RefType<CanvasNodeTranslationContext> context,
     RefType<const CanvasNode> node)
-    : m_context(context.Get()),
-      m_orderExecutionPublisher(MakeAggregateOrderExecutionPublisher()),
-      m_node(node.Get()) {}
+    : m_context{context.Get()},
+      m_orderExecutionPublisher{MakeAggregateOrderExecutionPublisher()},
+      m_node{node.Get()} {}
 
 std::shared_ptr<OrderExecutionPublisher> CanvasNodeTaskFactory::
     GetOrderExecutionPublisher() const {
@@ -124,7 +124,7 @@ std::shared_ptr<Task> CanvasNodeTaskFactory::Create() {
 }
 
 any& CanvasNodeTaskFactory::FindProperty(const string& name) {
-  BOOST_THROW_EXCEPTION(TaskPropertyNotFoundException(name));
+  BOOST_THROW_EXCEPTION(TaskPropertyNotFoundException{name});
 }
 
 std::shared_ptr<SpireAggregateOrderExecutionPublisher>

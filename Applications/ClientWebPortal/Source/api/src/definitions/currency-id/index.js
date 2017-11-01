@@ -21,11 +21,11 @@ class CurrencyId {
   }
 
   clone() {
-    return CurrencyId.fromNumber(this.value);
+    return CurrencyId.fromData(this.value);
   }
 }
 
-CurrencyId.fromNumber = (number) => {
+CurrencyId.fromData = (number) => {
   return new CurrencyId(number);
 };
 

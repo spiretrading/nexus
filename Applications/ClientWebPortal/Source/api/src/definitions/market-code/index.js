@@ -5,14 +5,14 @@ class MarketCode {
     }
     this.value = code;
 
-    this.toCode = this.toCode.bind(this);
+    this.toData = this.toData.bind(this);
   }
 
   equals(operand) {
     return this.value === operand.value;
   }
 
-  toCode() {
+  toData() {
     return this.value;
   }
 
@@ -21,11 +21,11 @@ class MarketCode {
   }
 
   clone() {
-    return MarketCode.fromCode(this.value);
+    return MarketCode.fromData(this.value);
   }
 }
 
-MarketCode.fromCode = (code) => {
+MarketCode.fromData = (code) => {
   return new MarketCode(code);
 };
 

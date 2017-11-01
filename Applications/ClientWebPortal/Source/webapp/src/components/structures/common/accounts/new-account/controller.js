@@ -1,7 +1,7 @@
 import {AdministrationClient, ServiceLocatorClient, AccountIdentity, DirectoryEntry} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
-import {browserHistory} from 'react-router/es6';
+import {browserHistory} from 'react-router';
 
 class Controller {
   constructor(componentModel) {

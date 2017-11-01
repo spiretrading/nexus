@@ -7,26 +7,6 @@
   height: calc(100vh - 75px);
   flex-direction: column;
 
-  .chart-outer-wrapper {
-    position: relative;
-    width: 100vw;
-
-    &.stretch {
-      flex: 1;
-    }
-
-    .chart-inner-wrapper {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      text-align: center;
-      padding: 10px 30px 30px 30px;
-      overflow: hidden;
-    }
-  }
-
   .total-wrapper {
     margin-top: 10px;
     padding: 7px;
@@ -43,5 +23,11 @@
         margin-right: 0px;
       }
     }
+  }
+
+  .table-wrapper {
+    display: flex;
+    flex: 1;
+    padding-bottom: 20px;
   }
 }

@@ -1,6 +1,5 @@
-#ifndef SPIRE_CANVASNODETASK_HPP
-#define SPIRE_CANVASNODETASK_HPP
-#include <Beam/Reactors/Trigger.hpp>
+#ifndef SPIRE_CANVAS_NODE_TASK_HPP
+#define SPIRE_CANVAS_NODE_TASK_HPP
 #include <Beam/SignalHandling/ScopedSlotAdaptor.hpp>
 #include <Beam/Tasks/BasicTask.hpp>
 #include "Spire/Canvas/Canvas.hpp"
@@ -27,9 +26,9 @@ namespace Spire {
         orderExecutionPublisher);
 
     protected:
-      virtual void OnExecute();
+      virtual void OnExecute() override final;
 
-      virtual void OnCancel();
+      virtual void OnCancel() override final;
 
     private:
       CanvasNodeTranslationContext m_context;
@@ -39,7 +38,6 @@ namespace Spire {
       std::shared_ptr<Beam::Publisher<
         const Nexus::OrderExecutionService::Order*>> m_publisher;
       State m_taskState;
-      Beam::Reactors::Trigger m_trigger;
       int m_state;
       Beam::SignalHandling::ScopedSlotAdaptor m_callbacks;
 
@@ -72,9 +70,9 @@ namespace Spire {
       std::shared_ptr<Nexus::OrderExecutionService::OrderExecutionPublisher>
         GetOrderExecutionPublisher() const;
 
-      virtual std::shared_ptr<Beam::Tasks::Task> Create();
+      virtual std::shared_ptr<Beam::Tasks::Task> Create() override final;
 
-      virtual boost::any& FindProperty(const std::string& name);
+      virtual boost::any& FindProperty(const std::string& name) override final;
 
     private:
       CanvasNodeTranslationContext* m_context;

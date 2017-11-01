@@ -125,7 +125,7 @@ void CanvasObserver::Translate() {
         observerReactor->GetType())(observerReactor, m_callbacks.GetCallback(
         std::bind(&CanvasObserver::OnReactorUpdate, this,
         std::placeholders::_1)));
-      m_context->GetReactorMonitor().AddReactor(reactor);
+      m_context->GetReactorMonitor().Add(reactor);
       monitorTranslated = true;
       m_isTranslated = true;
     }

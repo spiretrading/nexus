@@ -19,7 +19,7 @@ describe("Security", function() {
 
   it("Get wild card security.", function() {
     let wildCardSecurity = Security.getWildCard();
-    expect('*').toBe(wildCardSecurity.market.toCode());
+    expect('*').toBe(wildCardSecurity.market.toData());
     expect('*').toBe(wildCardSecurity.symbol);
   });
 

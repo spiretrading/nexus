@@ -1,5 +1,5 @@
 import userService from 'services/user';
-import {browserHistory} from 'react-router/es6';
+import {browserHistory} from 'react-router';
 import store from 'store';
 import LocalstorageKey from 'commons/localstorage-keys';
 

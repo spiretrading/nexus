@@ -51,14 +51,10 @@ namespace OrderExecutionService {
       ExecutionReportPublisher(
         const OrderExecutionPublisher& orderExecutionPublisher);
 
-      virtual void Lock() const;
+      virtual void With(const std::function<void ()>& f) const override final;
 
-      virtual void Unlock() const;
-
-      virtual void With(const std::function<void ()>& f) const;
-
-      virtual void Monitor(
-        std::shared_ptr<Beam::QueueWriter<ExecutionReportEntry>> monitor) const;
+      virtual void Monitor(std::shared_ptr<
+        Beam::QueueWriter<ExecutionReportEntry>> monitor) const override final;
 
     private:
       std::shared_ptr<Beam::SequencePublisher<ExecutionReportEntry>>
@@ -101,9 +97,6 @@ namespace OrderExecutionService {
         if(!orderSnapshot.is_initialized()) {
           return;
         }
-        for(const Order* order : *orderSnapshot) {
-          order->GetPublisher().Lock();
-        }
         try {
           std::vector<ExecutionReportEntry> executionReportEntrySnapshot;
           for(const Order* order : *orderSnapshot) {
@@ -143,18 +136,7 @@ namespace OrderExecutionService {
             m_publisher->Push(executionReportEntry);
           }
         } catch(...) {}
-        for(const Order* order : *orderSnapshot) {
-          order->GetPublisher().Unlock();
-        }
       });
-  }
-
-  inline void ExecutionReportPublisher::Lock() const {
-    m_publisher->Lock();
-  }
-
-  inline void ExecutionReportPublisher::Unlock() const {
-    m_publisher->Unlock();
   }
 
   inline void ExecutionReportPublisher::With(

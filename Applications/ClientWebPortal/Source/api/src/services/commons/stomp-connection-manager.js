@@ -2,94 +2,11 @@ import HashMap from 'hashmap';
 import uuid from 'uuid';
 import webstomp from 'webstomp-client';
 
-/** Mock Server - only committed during development. Will be removed when pull request is submitted */
-class MockServer {
-  constructor() {
-    // test securities
-    this.securities = [
-      'WOW.TSX',
-      'LOL.TSX',
-      'DOTA.TSX',
-    ];
-
-    this.currencies = [
-      'AUD',
-      'CAD'
-    ];
-
-    this.accounts = [
-      'hill319',
-      'jimin123'
-    ];
-  }
-
-  getRandomInt(inclusiveMin, inclusiveMax) {
-    return Math.floor(Math.random() * (inclusiveMax - inclusiveMin + 1)) + inclusiveMin;
-  }
-
-  getRandomDecimals(min, max, decimals) {
-    return Number((Math.random() * (max - min) + min).toFixed(decimals));
-  }
-
-  subscribe(destination, listener) {
-    if (destination === '/api/risk_service/portfolio') {
-      this.portfolioInterval = setInterval(() => {
-        let portfolioData = this.generateRandomPortfolioData();
-        listener(portfolioData);
-      }, 1000);
-    }
-
-    function generateSubscription(destination) {
-      return {
-        unsubscribe: function() {
-          this.unsubscribe(destination);
-        }.bind(this)
-      };
-    }
-
-    return generateSubscription(destination);
-  }
-
-  generateRandomPortfolioData() {
-    let data = {};
-    data.account = this.accounts[this.getRandomInt(0, this.accounts.length-1)];
-    data.security = this.securities[this.getRandomInt(0, this.securities.length-1)];
-    data.currency = this.currencies[this.getRandomInt(0, this.currencies.length-1)];
-    data.open_quantity = this.getRandomInt(0, 5000);
-    data.average_price = this.getRandomDecimals(0, 100, 2);
-    data.total_profit_and_loss = this.getRandomDecimals(0, 1000, 2);
-    data.unrealized_profit_and_loss = this.getRandomDecimals(0, 1000, 2);
-    data.realized_profit_and_loss = this.getRandomDecimals(0, 1000, 2);
-    data.fees = this.getRandomDecimals(0, 1000, 2);
-    data.cost_basis = this.getRandomDecimals(0, 1000, 2);
-    data.volume = this.getRandomInt(0, 1000);
-    data.trades = this.getRandomInt(0, 1000);
-    if (this.getRandomInt(0, 1) == 0) {
-      data.total_profit_and_loss = (-1) * data.total_profit_and_loss;
-      data.unrealized_profit_and_loss = (-1) * data.unrealized_profit_and_loss;
-      data.realized_profit_and_loss = (-1) * data.realized_profit_and_loss;
-    }
-    return data;
-  }
-
-  unsubscribe(destination, listener) {
-    if (destination === '/api/risk_service/portfolio') {
-      clearInterval(this.portfolioInterval);
-    }
-  }
-
-  send(destination, body) {
-    if (destination === '/api/risk_service/portfolio/filter'){
-      this.portfolioFilter = body;
-    }
-  }
-}
-
 /** Spire STOMP connection manager */
 class StompConnectionManager {
   constructor(connectionPath) {
     this.connectionUrl = 'ws://' + window.location.host + Config.BACKEND_API_ROOT_URL + connectionPath;
-    this.subIdToTopic = new HashMap();
+    this.subIdToDestination = new HashMap();
     this.destinationToListeners = new HashMap();      // subId - listener callbacks
     this.destinationToSubscription = new HashMap();
   }
@@ -136,8 +53,7 @@ class StompConnectionManager {
     }
 
     function performSubscribe() {
-      let subId = uuid.v4();
-      this.subIdToTopic.set(subId, destination);
+      let subId;
       if (!this.destinationToListeners.has(destination)) {
         this.destinationToListeners.set(destination, new HashMap());
         let context = {
@@ -145,16 +61,18 @@ class StompConnectionManager {
           destination: destination
         };
         let subscription = this.client.subscribe(destination, this.onAllMessage.bind(context));
+        subId = subscription.id;
         this.destinationToSubscription.set(destination, subscription);
       }
       this.destinationToListeners.get(destination).set(subId, listener);
+      this.subIdToDestination.set(subId, destination);
       return subId;
     }
   }
 
   unsubscribe(subId) {
-    let destination = this.subIdToTopic.get(subId);
-    this.subIdToTopic.remove(subId);
+    let destination = this.subIdToDestination.get(subId);
+    this.subIdToDestination.remove(subId);
     let subIds = this.destinationToListeners.get(destination);
     subIds.remove(subId)
     if (subIds.count() == 0) {
@@ -165,11 +83,16 @@ class StompConnectionManager {
   }
 
   send(destination, body) {
-    if (!this.isConnected()){
-      this.connect();
-    }
+    let payload = JSON.stringify(body);
 
-    this.client.send(destination, body);
+    if (!this.isConnected()){
+      this.connect()
+        .then(() => {
+          this.client.send(destination, payload);
+        });
+    } else {
+      this.client.send(destination, payload);
+    }
   }
 }
 

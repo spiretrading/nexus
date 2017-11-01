@@ -287,8 +287,8 @@ class View extends UpdatableView {
       let security = parameters[parameterIndex].value.value[j].value;
       if (security.symbol.length > 0) {
         let tagLabel = security.symbol;
-        if (security.market.toCode().length > 0) {
-          tagLabel += '.' + security.market.toCode();
+        if (security.market.toData().length > 0) {
+          tagLabel += '.' + security.market.toData();
         }
         tags.push(
           <li key={j} data-country-code={security.country} data-symbol={security.symbol}>{tagLabel}</li>
@@ -425,7 +425,7 @@ class View extends UpdatableView {
                   let labels = [];
                   for (let i=0; i<results.length; i++) {
                     let symbol = results[i].security.toString(marketDatabase);
-                    let marketCode = results[i].security.market.toCode();
+                    let marketCode = results[i].security.market.toData();
                     let label = {
                       label: symbol + ' (' + results[i].name + ')',
                       value: symbol + '|' + marketCode
