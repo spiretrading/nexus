@@ -178,8 +178,8 @@ namespace {
 }
 
 void Nexus::Python::ExportApplicationMarketDataClient() {
-  class_<ToPythonMarketDataClient<Client>, boost::noncopyable>(
-    "ApplicationMarketDataClient", no_init)
+  class_<ToPythonMarketDataClient<Client>, bases<VirtualMarketDataClient>,
+    boost::noncopyable>("ApplicationMarketDataClient", no_init)
     .def("__init__", make_constructor(&BuildClient));
 }
 
