@@ -3,6 +3,7 @@ const path = require('path');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const WebpackShellPlugin = require('webpack-shell-plugin');
 
 // Loaders
 const copyHTML = {
@@ -29,7 +30,7 @@ const extractSASS = {
   })
 };
 
-const transpileES6JSX = {
+const transpileSource = {
   test: /\.(js|jsx)$/,
   exclude: /node_modules/,
   loaders: [
@@ -41,6 +42,19 @@ const transpileES6JSX = {
     }
   ]
 };
+
+const transpileTest = {
+  test: /\.(js)$/,
+  exclude: /node_modules/,
+  loaders: [
+    {
+      loader: 'babel-loader',
+      query: {
+        cacheDirectory: true
+      }
+    }
+  ]
+}
 
 const copyStaticFiles = {
   test: /\.(gif|png|jpg|jpeg|ttf|eot|svg|woff(2)?)(\?[a-z0-9]+)?$/,
@@ -59,6 +73,7 @@ module.exports = function(env) {
   return {
     devtool: isProd ? 'hidden-source-map' : 'cheap-eval-source-map',
     context: path.join(__dirname, './src'),
+    bail: true,
     entry: {
       js: [
         'index'
@@ -79,7 +94,8 @@ module.exports = function(env) {
         copyHTML,
         extractCSS,
         extractSASS,
-        transpileES6JSX,
+        transpileSource,
+        transpileTest,
         copyStaticFiles
       ]
     },
@@ -133,6 +149,9 @@ module.exports = function(env) {
       new ExtractTextPlugin('style.css'),
       new CleanWebpackPlugin(['dist'], {
         verbose: true
+      }),
+      new WebpackShellPlugin({
+        onBuildEnd:['grunt test']
       })
     ]
   };
