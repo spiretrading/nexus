@@ -10,3 +10,4 @@ webapp
 dist
 build/output
 .fuse*
+spec/transpiled
