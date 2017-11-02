@@ -9,7 +9,7 @@ if [ -d "Beam" ]; then
   pushd Beam
   sudo -u $(logname) git checkout master
   sudo -u $(logname) git pull
-  sudo -u $(logname) git checkout 856366364acd139e44cbc49b758f38175cd37144
+  sudo -u $(logname) git checkout eeddf4f4b49d8870233839583a47de8a5dbaf5fb
   popd
   ./Beam/Build/Make/setup.sh
   pushd ./Beam/Build/Make
