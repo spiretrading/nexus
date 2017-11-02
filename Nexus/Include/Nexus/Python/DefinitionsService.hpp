@@ -5,6 +5,9 @@
 namespace Nexus {
 namespace Python {
 
+  //! Exports the ApplicationDefinitionsClient class.
+  void ExportApplicationDefinitionsClient();
+
   //! Exports the DefinitionsClient class.
   void ExportDefinitionsClient();
 
