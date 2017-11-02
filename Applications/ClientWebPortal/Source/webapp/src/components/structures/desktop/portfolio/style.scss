@@ -6,10 +6,12 @@
   display: none;
   height: calc(100vh - 75px);
   flex-direction: column;
+  width: auto !important;
 
   .total-wrapper {
     margin-top: 10px;
     padding: 7px;
+    padding-bottom: 17px;
     font-size: 13px;
     text-align: center;
     display: flex;

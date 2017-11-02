@@ -4,7 +4,6 @@
 
 namespace Nexus {
 namespace Python {
-  class PythonMarketDataClient;
 }
 }
 
