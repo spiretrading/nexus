@@ -225,5 +225,5 @@ void Nexus::Python::ExportVirtualServiceClients() {
     .def("build_timer", pure_virtual(&VirtualServiceClients::BuildTimer))
     .def("open", pure_virtual(&VirtualServiceClients::Open))
     .def("close", pure_virtual(&VirtualServiceClients::Close));
-  ExportUniquePtr<std::unique_ptr<VirtualServiceClients>>();
+  ExportUniquePtr<VirtualServiceClients>();
 }

@@ -276,7 +276,7 @@ void Nexus::Python::ExportOrderExecutionClient() {
     .def("cancel", pure_virtual(&VirtualOrderExecutionClient::Cancel))
     .def("open", pure_virtual(&VirtualOrderExecutionClient::Open))
     .def("open", pure_virtual(&VirtualOrderExecutionClient::Close));
-  ExportUniquePtr<std::unique_ptr<VirtualOrderExecutionClient>>();
+  ExportUniquePtr<VirtualOrderExecutionClient>();
 }
 
 void Nexus::Python::ExportOrderExecutionService() {

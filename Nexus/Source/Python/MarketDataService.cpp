@@ -242,7 +242,7 @@ void Nexus::Python::ExportMarketDataClient() {
       &VirtualMarketDataClient::LoadSecurityInfoFromPrefix))
     .def("open", pure_virtual(&VirtualMarketDataClient::Open))
     .def("close", pure_virtual(&VirtualMarketDataClient::Close));
-  ExportUniquePtr<std::unique_ptr<VirtualMarketDataClient>>();
+  ExportUniquePtr<VirtualMarketDataClient>();
   ExportVector<vector<SecurityInfo>>("VectorSecurityInfo");
 }
 
