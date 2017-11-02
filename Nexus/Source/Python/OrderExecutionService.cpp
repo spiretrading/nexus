@@ -270,13 +270,13 @@ void Nexus::Python::ExportOrderExecutionClient() {
     .def("query_execution_reports", pure_virtual(
       &VirtualOrderExecutionClient::QueryExecutionReports))
     .def("get_order_submission_publisher", pure_virtual(
-      &VirtualOrderExecutionClient::QueryExecutionReports),
+      &VirtualOrderExecutionClient::GetOrderSubmissionPublisher),
       return_internal_reference<>())
     .def("submit", pure_virtual(&VirtualOrderExecutionClient::Submit),
       return_internal_reference<>())
     .def("cancel", pure_virtual(&VirtualOrderExecutionClient::Cancel))
     .def("open", pure_virtual(&VirtualOrderExecutionClient::Open))
-    .def("open", pure_virtual(&VirtualOrderExecutionClient::Close));
+    .def("close", pure_virtual(&VirtualOrderExecutionClient::Close));
   ExportUniquePtr<VirtualOrderExecutionClient>();
 }
 
