@@ -3,7 +3,7 @@ import userService from 'services/user';
 import ResultCode from 'services/user/result-codes';
 import store from 'store';
 import LocalstorageKey from 'commons/localstorage-keys';
-import {browserHistory} from 'react-router/es6';
+import {browserHistory} from 'react-router';
 import sessionInitializer from 'commons/session-initializer';
 
 class Controller {

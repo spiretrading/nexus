@@ -12,12 +12,14 @@ class UpdatableView {
   }
 
   update(newComponentModel) {
-    if ($.isArray(this.componentModel)) {
-      this.componentModel = newComponentModel;
-    } else if (typeof this.componentModel !== 'object') {
-      this.componentModel = newComponentModel;
-    } else {
-      overwriteMerge(this.componentModel, newComponentModel);
+    if (newComponentModel != null) {
+      if ($.isArray(this.componentModel)) {
+        this.componentModel = newComponentModel;
+      } else if (typeof this.componentModel !== 'object') {
+        this.componentModel = newComponentModel;
+      } else {
+        overwriteMerge(this.componentModel, newComponentModel);
+      }
     }
     this.react.forceUpdate();
   }

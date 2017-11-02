@@ -39,7 +39,12 @@ class CommonView extends UpdatableView {
     this.componentModel.email = $componentContainer.find('.email-input').val().trim();
     this.componentModel.city = $componentContainer.find('.city-input').val().trim();
     this.componentModel.province = $componentContainer.find('.province-input').val().trim();
-    this.componentModel.country = parseInt($componentContainer.find('.country-input').val().trim());
+
+    let countryInput = $componentContainer.find('.country-input').val();
+    if (countryInput != null) {
+      this.componentModel.country = parseInt(countryInput.trim());
+    }
+
     this.componentModel.userName = $componentContainer.find('.user-name-input').val().trim();
 
     // address
