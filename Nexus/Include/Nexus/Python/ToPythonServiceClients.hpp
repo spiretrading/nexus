@@ -7,6 +7,7 @@
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/Remote.hpp>
 #include <boost/optional/optional.hpp>
+#include "Nexus/Python/ToPythonDefinitionsClient.hpp"
 #include "Nexus/Python/ToPythonMarketDataClient.hpp"
 #include "Nexus/Python/ToPythonOrderExecutionClient.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
@@ -63,6 +64,8 @@ namespace Nexus {
       std::unique_ptr<Client> m_client;
       boost::optional<Beam::Remote<std::unique_ptr<ServiceLocatorClient>,
         Beam::Threading::Mutex>> m_serviceLocatorClient;
+      boost::optional<Beam::Remote<std::unique_ptr<DefinitionsClient>,
+        Beam::Threading::Mutex>> m_definitionsClient;
       boost::optional<Beam::Remote<std::unique_ptr<MarketDataClient>,
         Beam::Threading::Mutex>> m_marketDataClient;
       boost::optional<Beam::Remote<std::unique_ptr<OrderExecutionClient>,
@@ -91,6 +94,14 @@ namespace Nexus {
               Beam::ServiceLocator::MakeToPythonServiceLocatorClient(
               Beam::ServiceLocator::MakeVirtualServiceLocatorClient(
               &m_client->GetServiceLocatorClient())));
+          }
+        },
+        m_definitionsClient{
+          [=] (auto& client) {
+            client.Initialize(
+              DefinitionsService::MakeToPythonDefinitionsClient(
+              DefinitionsService::MakeVirtualDefinitionsClient(
+              &m_client->GetDefinitionsClient())));
           }
         },
         m_marketDataClient{
@@ -125,6 +136,7 @@ namespace Nexus {
     m_timeClient.reset();
     m_orderExecutionClient.reset();
     m_marketDataClient.reset();
+    m_definitionsClient.reset();
     m_serviceLocatorClient.reset();
     m_client.reset();
   }
@@ -152,7 +164,9 @@ namespace Nexus {
   template<typename ClientType>
   typename ToPythonServiceClients<ClientType>::DefinitionsClient&
       ToPythonServiceClients<ClientType>::GetDefinitionsClient() {
-    throw std::runtime_error{"Not implemented"};
+    Beam::Python::GilRelease gil;
+    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    return ***m_definitionsClient;
   }
 
   template<typename ClientType>
