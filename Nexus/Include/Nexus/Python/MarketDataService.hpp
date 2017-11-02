@@ -5,6 +5,9 @@
 namespace Nexus {
 namespace Python {
 
+  //! Exports the ApplicationMarketDataClient class.
+  void ExportApplicationMarketDataClient();
+
   //! Exports the MarketDataClient class.
   void ExportMarketDataClient();
 
