@@ -12,12 +12,22 @@ export default class extends ChainableModel{
     this.omittedToSourceColumns = [];
     let sourceColumnsCount = this.sourceModel.getColumnCount();
     for (let x=0; x<sourceColumnsCount; x++) {
-      if (columnsToOmit.includes(x)) {
+      if (this.hasElement(columnsToOmit, x)) {
         this.omittedCount++;
       } else {
         this.omittedToSourceColumns.push(x);
       }
     }
+  }
+
+  /** @private */
+  hasElement(array, element) {
+    for (let i=0; i<array.length; i++) {
+      if (array[i] == element) {
+        return true;
+      }
+    }
+    return false;
   }
 
   getRowCount() {

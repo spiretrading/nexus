@@ -14,6 +14,7 @@ class View extends UpdatableView {
     this.onWindowResize = this.onWindowResize.bind(this);
     this.initialize = this.initialize.bind(this);
     this.dispose = this.dispose.bind(this);
+    this.onExportCSVClick = this.onExportCSVClick.bind(this);
   }
 
   initialize() {
@@ -44,6 +45,10 @@ class View extends UpdatableView {
       }
     }
     return columns;
+  }
+  
+  onExportCSVClick() {
+    this.controller.exportToCSV();
   }
 
   render() {
@@ -116,6 +121,7 @@ class View extends UpdatableView {
             changeSortOrder={this.controller.changeSortOrder}
           />
         </div>
+        <div className="export-btn" onClick={this.onExportCSVClick}>Export to CSV</div>
       </div>
     );
   }

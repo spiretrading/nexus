@@ -6,10 +6,12 @@
   display: none;
   height: calc(100vh - 75px);
   flex-direction: column;
+  width: auto !important;
 
   .total-wrapper {
     margin-top: 10px;
     padding: 7px;
+    padding-bottom: 17px;
     font-size: 13px;
     text-align: center;
     display: flex;
@@ -29,5 +31,16 @@
     display: flex;
     flex: 1;
     padding-bottom: 20px;
+  }
+
+  .export-btn {
+    text-align: center;
+    position: absolute;
+    width: 150px;
+    top: 50px;
+    right: 20px;
+    color: white;
+    background: black;
+    cursor: pointer;
   }
 }
