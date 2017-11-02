@@ -116,7 +116,7 @@ BEAM_DEFINE_PYTHON_POINTER_LINKER(VirtualTimer);
 
 void Nexus::Python::ExportApplicationServiceClients() {
   class_<ToPythonServiceClients<ApplicationServiceClients>,
-    boost::noncopyable, bases<VirtualServiceClients>>(
+    bases<VirtualServiceClients>, boost::noncopyable>(
     "ApplicationServiceClients", no_init)
     .def("__init__", make_constructor(&BuildApplicationServiceClients));
 }

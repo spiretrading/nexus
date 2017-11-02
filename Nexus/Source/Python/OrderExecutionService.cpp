@@ -178,7 +178,8 @@ void Nexus::Python::ExportAccountQuery() {
 }
 
 void Nexus::Python::ExportApplicationOrderExecutionClient() {
-  class_<ToPythonOrderExecutionClient<Client>, boost::noncopyable>(
+  class_<ToPythonOrderExecutionClient<Client>,
+    bases<VirtualOrderExecutionClient>, boost::noncopyable>(
     "ApplicationOrderExecutionClient", no_init)
     .def("__init__", make_constructor(&BuildClient));
 }
