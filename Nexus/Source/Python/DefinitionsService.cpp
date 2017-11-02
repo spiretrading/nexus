@@ -144,5 +144,6 @@ void Nexus::Python::ExportDefinitionsService() {
     borrowed(PyImport_AddModule(nestedName.c_str())))};
   scope().attr("definitions_service") = nestedModule;
   scope parent = nestedModule;
+  ExportApplicationDefinitionsClient();
   ExportDefinitionsClient();
 }
