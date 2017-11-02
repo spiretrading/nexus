@@ -18,6 +18,9 @@ import DataChangeType from './data-change-type';
 import tableColumns from './table-columns';
 import HashMap from 'hashmap';
 import ValueComparer from './value-comparer';
+import ModelToCsvExporter from './model-to-csv-exporter';
+import deviceDetector from 'utils/device-detector';
+import PlainNumberModel from './plain-number-model';
 
 const RENDER_THROTTLE_INTERVAL = 500;
 
@@ -267,6 +270,27 @@ class Controller {
 
   changeSortOrder(sortOrder) {
     this.sortModel.changeSortOrder(sortOrder);
+  }
+
+  exportToCSV() {
+    let plainNumberModel = new PlainNumberModel(this.filterSubsetModel);
+    let csvExporter = new ModelToCsvExporter(plainNumberModel);
+    let csvString = csvExporter.getCsvString();
+
+    if (deviceDetector.isInternetExplorer()) {
+      var blob = new Blob([decodeURIComponent(encodeURI(csvString))], {
+        type: "text/csv;charset=utf-8;"
+      });
+      navigator.msSaveBlob(blob, 'portfolio.csv');
+    } else {
+      let a = document.createElement('a');
+      let csvData = new Blob([csvString], { type: 'text/csv' });
+      let csvUrl = URL.createObjectURL(csvData);
+      a.href = csvUrl;
+      a.target = '_blank';
+      a.download = 'portfolio.csv';
+      a.click();
+    }
   }
 }
 

@@ -1,3 +1,4 @@
+import 'babel-polyfill';
 import ES6Promise from 'es6-promise';
 import {render} from 'react-dom';
 import React from 'react';
