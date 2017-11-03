@@ -9,14 +9,27 @@ module.exports = function(grunt) {
     babel: {
       options: {
         sourceMap: true,
-        presets: ['es2015']
+        presets: ['es2015'],
+        plugins: [
+          ['module-resolver', {
+            'root': ['./src']
+          }]
+        ]
+      },
+      appSrc: {
+        files: [{
+          expand: true,
+          cwd: 'src',
+          src: ['**/*.js'],
+          dest: 'spec/transpiled/webapp'
+        }]
       },
       tests: {
         files: [{
           expand: true,
           cwd: 'spec/src',
           src: ['**/*.js'],
-          dest: 'spec/transpiled'
+          dest: 'spec/transpiled/test'
         }]
       }
     },
@@ -31,6 +44,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('test', [
     'clean:transpiledTests',
+    'babel:appSrc',
     'babel:tests',
     'exec:jasmine'
   ]);
