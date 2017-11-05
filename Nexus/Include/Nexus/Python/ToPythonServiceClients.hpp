@@ -76,8 +76,8 @@ namespace Nexus {
   */
   template<typename Client>
   auto MakeToPythonServiceClients(std::unique_ptr<Client> client) {
-    GilRelease gil;
-    boost::lock_guard<GilRelease> lock{gil};
+    Beam::Python::GilRelease gil;
+    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
     return std::make_unique<ToPythonServiceClients<Client>>(std::move(client));
   }
 
