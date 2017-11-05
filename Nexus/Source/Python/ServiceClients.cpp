@@ -88,6 +88,22 @@ namespace {
     }
   };
 
+  struct PythonTestServiceClients : ToPythonServiceClients<TestServiceClients> {
+    std::shared_ptr<TestEnvironment> m_environment;
+
+    PythonTestServiceClients(std::unique_ptr<TestServiceClients> serviceClients,
+        std::shared_ptr<TestEnvironment> environment)
+        : ToPythonServiceClients<TestServiceClients>{std::move(serviceClients)},
+          m_environment{std::move(environment)} {}
+
+    virtual ~PythonTestServiceClients() override final {
+      GilRelease gil;
+      boost::lock_guard<GilRelease> lock{gil};
+      Close();
+      m_environment.reset();
+    }
+  };
+
   auto BuildApplicationServiceClients(const IpAddress& address,
       const string& username, const string& password) {
     return MakeToPythonServiceClients(
@@ -96,8 +112,8 @@ namespace {
   }
 
   auto BuildTestServiceClients(std::shared_ptr<TestEnvironment> environment) {
-    return MakeToPythonServiceClients(std::make_unique<TestServiceClients>(
-      Ref(*environment))).release();
+    return new PythonTestServiceClients{std::make_unique<TestServiceClients>(
+      Ref(*environment)), environment};
   }
 }
 
@@ -186,7 +202,7 @@ void Nexus::Python::ExportTestEnvironment() {
 }
 
 void Nexus::Python::ExportTestServiceClients() {
-  class_<ToPythonServiceClients<TestServiceClients>, boost::noncopyable,
+  class_<PythonTestServiceClients, boost::noncopyable,
     bases<VirtualServiceClients>>("TestServiceClients", no_init)
     .def("__init__", make_constructor(&BuildTestServiceClients));
 }

@@ -1,5 +1,6 @@
 #ifndef NEXUS_TO_PYTHON_MARKET_DATA_CLIENT_HPP
 #define NEXUS_TO_PYTHON_MARKET_DATA_CLIENT_HPP
+#include <Beam/IO/OpenState.hpp>
 #include <Beam/Python/GilRelease.hpp>
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
@@ -81,6 +82,9 @@ namespace MarketDataService {
 
     private:
       std::unique_ptr<Client> m_client;
+      Beam::IO::OpenState m_openState;
+
+      void Shutdown();
   };
 
   //! Makes a ToPythonMarketDataClient.
@@ -102,6 +106,7 @@ namespace MarketDataService {
   ToPythonMarketDataClient<ClientType>::~ToPythonMarketDataClient() {
     Beam::Python::GilRelease gil;
     boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    Close();
     m_client.reset();
   }
 
@@ -223,14 +228,32 @@ namespace MarketDataService {
   void ToPythonMarketDataClient<ClientType>::Open() {
     Beam::Python::GilRelease gil;
     boost::lock_guard<Beam::Python::GilRelease> lock{gil};
-    m_client->Open();
+    if(m_openState.SetOpening()) {
+      return;
+    }
+    try {
+      m_client->Open();
+    } catch(const std::exception&) {
+      m_openState.SetOpenFailure();
+      Shutdown();
+    }
+    m_openState.SetOpen();
   }
 
   template<typename ClientType>
   void ToPythonMarketDataClient<ClientType>::Close() {
     Beam::Python::GilRelease gil;
     boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    if(m_openState.SetClosing()) {
+      return;
+    }
+    Shutdown();
+  }
+
+  template<typename ClientType>
+  void ToPythonMarketDataClient<ClientType>::Shutdown() {
     m_client->Close();
+    m_openState.SetClosed();
   }
 }
 }

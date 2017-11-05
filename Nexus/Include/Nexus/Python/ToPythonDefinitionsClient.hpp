@@ -1,5 +1,6 @@
 #ifndef NEXUS_TO_PYTHON_DEFINITIONS_CLIENT_HPP
 #define NEXUS_TO_PYTHON_DEFINITIONS_CLIENT_HPP
+#include <Beam/IO/OpenState.hpp>
 #include <Beam/Python/GilRelease.hpp>
 #include "Nexus/DefinitionsService/DefinitionsService.hpp"
 #include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
@@ -50,6 +51,9 @@ namespace DefinitionsService {
 
     private:
       std::unique_ptr<Client> m_client;
+      Beam::IO::OpenState m_openState;
+
+      void Shutdown();
   };
 
   //! Makes a ToPythonDefinitionsClient.
@@ -71,6 +75,7 @@ namespace DefinitionsService {
   ToPythonDefinitionsClient<ClientType>::~ToPythonDefinitionsClient() {
     Beam::Python::GilRelease gil;
     boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    Close();
     m_client.reset();
   }
 
@@ -140,14 +145,32 @@ namespace DefinitionsService {
   void ToPythonDefinitionsClient<ClientType>::Open() {
     Beam::Python::GilRelease gil;
     boost::lock_guard<Beam::Python::GilRelease> lock{gil};
-    m_client->Open();
+    if(m_openState.SetOpening()) {
+      return;
+    }
+    try {
+      m_client->Open();
+    } catch(const std::exception&) {
+      m_openState.SetOpenFailure();
+      Shutdown();
+    }
+    m_openState.SetOpen();
   }
 
   template<typename ClientType>
   void ToPythonDefinitionsClient<ClientType>::Close() {
     Beam::Python::GilRelease gil;
     boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    if(m_openState.SetClosing()) {
+      return;
+    }
+    Shutdown();
+  }
+
+  template<typename ClientType>
+  void ToPythonDefinitionsClient<ClientType>::Shutdown() {
     m_client->Close();
+    m_openState.SetClosed();
   }
 }
 }
