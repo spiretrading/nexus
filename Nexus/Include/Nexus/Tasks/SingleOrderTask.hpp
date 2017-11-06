@@ -127,6 +127,24 @@ namespace Tasks {
         orderExecutionPublisher,
         const Beam::ServiceLocator::DirectoryEntry& account);
 
+      //! Constructs a SingleOrderTaskFactory.
+      /*!
+        \param orderExecutionClient The OrderExecutionClient to use.
+        \param orderExecutionPublisher Used to report Order executions.
+        \param fields The initial set of OrderFields.
+      */
+      SingleOrderTaskFactory(
+        Beam::RefType<OrderExecutionClient> orderExecutionClient,
+        std::shared_ptr<Beam::QueueWriter<const OrderExecutionService::Order*>>
+        orderExecutionPublisher,
+        const OrderExecutionService::OrderFields& fields);
+
+      //! Sets the properties of this factory based on an OrderFields object.
+      /*!
+        \param fields The OrderFields specifying the properties to set.
+      */
+      void Set(const OrderExecutionService::OrderFields& fields);
+
       //! Adds a field used to submit an Order.
       /*!
         \param name The name of the field.
@@ -140,6 +158,7 @@ namespace Tasks {
       virtual void PrepareContinuation(
         const Beam::Tasks::Task& task) override final;
 
+      using VirtualTaskFactory::Set;
     private:
       struct AdditionalFieldEntry {
         int m_typeIndex;
@@ -321,6 +340,31 @@ namespace Tasks {
     this->template DefineProperty<CurrencyId>(CURRENCY, CurrencyId::NONE());
     this->template DefineProperty<TimeInForce>(TIME_IN_FORCE,
       TimeInForce(TimeInForce::Type::DAY));
+  }
+
+  template<typename OrderExecutionClientType>
+  SingleOrderTaskFactory<OrderExecutionClientType>::SingleOrderTaskFactory(
+      Beam::RefType<OrderExecutionClient> orderExecutionClient,
+      std::shared_ptr<Beam::QueueWriter<const OrderExecutionService::Order*>>
+      orderExecutionPublisher, const OrderExecutionService::OrderFields& fields)
+      : SingleOrderTaskFactory<OrderExecutionClientType>{
+          Beam::Ref(orderExecutionClient), std::move(orderExecutionPublisher),
+          fields.m_account} {
+    Set(fields);
+  }
+
+  template<typename OrderExecutionClientType>
+  void SingleOrderTaskFactory<OrderExecutionClientType>::Set(
+      const OrderExecutionService::OrderFields& fields) {
+    m_account = fields.m_account;
+    Set(SECURITY, fields.m_security);
+    Set(ORDER_TYPE, fields.m_type);
+    Set(SIDE, fields.m_side);
+    Set(DESTINATION, fields.m_destination);
+    Set(QUANTITY, fields.m_quantity);
+    Set(PRICE, fields.m_price);
+    Set(CURRENCY, fields.m_currency);
+    Set(TIME_IN_FORCE, fields.m_timeInForce);
   }
 
   template<typename OrderExecutionClientType>

@@ -7,6 +7,7 @@
 #include <Beam/Python/Vector.hpp>
 #include <Beam/Python/Queries.hpp>
 #include <Beam/Python/Queues.hpp>
+#include <Beam/Python/Ref.hpp>
 #include <Beam/Python/UniquePtr.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
@@ -277,6 +278,7 @@ void Nexus::Python::ExportOrderExecutionClient() {
     .def("cancel", pure_virtual(&VirtualOrderExecutionClient::Cancel))
     .def("open", pure_virtual(&VirtualOrderExecutionClient::Open))
     .def("close", pure_virtual(&VirtualOrderExecutionClient::Close));
+  ExportRef<VirtualOrderExecutionClient>("RefOrderExecutionClient");
   ExportUniquePtr<VirtualOrderExecutionClient>();
 }
 
