@@ -8,14 +8,6 @@ describe('SignalManager', function() {
       signalManager = new SignalManager();
     });
 
-    it('Null listener', function() {
-      let testMethod = function() {
-        signalManager.addListener(null);
-      };
-      let errorMessage = 'Listener function cannot be null';
-      expect(testMethod).toThrow(new RangeError(errorMessage));
-    });
-
     it('Non function listener', function() {
       let testMethod = function() {
         signalManager.addListener(2);
@@ -32,9 +24,7 @@ describe('SignalManager', function() {
       expect(payload).toBe('test payload');
       done();
     };
-    let subId = signalManager.addListener(listener);
-    let isSubIdUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(subId);
-    expect(isSubIdUUID).toBe(true);
+    signalManager.addListener(listener);
     signalManager.emitSignal(2, 'test payload');
   });
 

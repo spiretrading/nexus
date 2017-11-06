@@ -1,8 +1,3 @@
-class ValueValidator {
-  isFunction(functionToCheck) {
-    var getType = {};
-    return functionToCheck && getType.toString.call(functionToCheck) === '[object Function]';
-  }
-}
-
-export default new ValueValidator();
+export function isFunction(functionToCheck) {
+  return functionToCheck && ({}).toString.call(functionToCheck) === '[object Function]';
+};

@@ -1,24 +1,21 @@
 import HashMap from 'hashmap';
 import uuid from 'uuid';
-import valueValidator from 'utils/value-validator';
+import { isFunction } from 'utils/value-validator';
 
 export default class {
   constructor() {
     this.listeners = new HashMap();
+    this.subIdCounter = 0;
   }
 
   addListener(listener) {
-    if (listener == null) {
-      let errorMessage = 'Listener function cannot be null';
-      throw new RangeError(errorMessage);
-    } else if (!valueValidator.isFunction(listener)) {
+    if (!isFunction(listener)) {
       let errorMessage = 'Listener must be a function';
-      throw new RangeError(errorMessage);
+      throw new TypeError(errorMessage);
     }
-
-    let subId = uuid.v4();
-    this.listeners.set(subId, listener);
-    return subId;
+    this.subId++;
+    this.listeners.set(this.subId, listener);
+    return this.subId;
   }
 
   removeListener(subId) {
