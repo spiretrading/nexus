@@ -38,19 +38,6 @@ describe('SignalManager', function() {
     signalManager.emitSignal(2, 'test payload');
   });
 
-  it('Valid listener add and emit', function(done) {
-    let signalManager = new SignalManager();
-    let listener = function(signalType, payload) {
-      expect(signalType).toBe(2);
-      expect(payload).toBe('test payload');
-      done();
-    };
-    let subId = signalManager.addListener(listener);
-    let isSubIdUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(subId);
-    expect(isSubIdUUID).toBe(true);
-    signalManager.emitSignal(2, 'test payload');
-  });
-
   describe('removeListener', function() {
     let signalManager;
 
