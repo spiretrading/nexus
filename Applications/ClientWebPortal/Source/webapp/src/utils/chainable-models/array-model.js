@@ -4,7 +4,7 @@ import DataChangeType from './data-change-type';
 export default class {
   constructor(columnNames) {
     if (columnNames == null) {
-      throw new RangeError('Column names cannot be null');
+      throw new TypeError('Column names cannot be null');
     }
 
     this.data = [];
@@ -47,6 +47,7 @@ export default class {
     this.data.push(Object.freeze(rowData.slice()));
     let rowIndex = this.data.length - 1;
     this.signalManager.emitSignal(DataChangeType.ADD, rowIndex);
+    return rowIndex;
   }
 
   removeRow(rowIndex) {
