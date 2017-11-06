@@ -5,7 +5,7 @@ import { isFunction } from 'utils/value-validator';
 export default class {
   constructor() {
     this.listeners = new HashMap();
-    this.subIdCounter = 0;
+    this.subId = 0;
   }
 
   addListener(listener) {
