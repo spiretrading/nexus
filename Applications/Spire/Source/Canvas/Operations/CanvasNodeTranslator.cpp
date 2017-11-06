@@ -1476,7 +1476,7 @@ void CanvasNodeTranslationVisitor::Visit(const SingleOrderTaskNode& node) {
     std::make_shared<SequencePublisher<const Order*>>();
   SingleOrderTaskFactory<VirtualOrderExecutionClient> singleOrderTaskFactory(
     Ref(m_context->GetUserProfile().GetServiceClients().
-    GetOrderExecutionClient()), Ref(*orderExecutionPublisher),
+    GetOrderExecutionClient()), orderExecutionPublisher,
     m_context->GetExecutingAccount());
   for(const auto& field : node.GetFields()) {
     if(field.m_type->GetCompatibility(IntegerType::GetInstance()) ==

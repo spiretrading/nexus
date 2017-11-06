@@ -1,5 +1,5 @@
-#ifndef NEXUS_SINGLEREDISPLAYABLEORDERTASK_HPP
-#define NEXUS_SINGLEREDISPLAYABLEORDERTASK_HPP
+#ifndef NEXUS_SINGLE_REDISPLAYABLE_ORDER_TASK_HPP
+#define NEXUS_SINGLE_REDISPLAYABLE_ORDER_TASK_HPP
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Tasks/BasicTask.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
@@ -42,9 +42,9 @@ namespace Details {
         const Beam::Tasks::TaskFactory& taskFactory, Quantity quantity);
 
     protected:
-      virtual void OnExecute();
+      virtual void OnExecute() override final;
 
-      virtual void OnCancel();
+      virtual void OnCancel() override final;
 
     private:
       friend class SingleRedisplayableOrderTaskFactory;
@@ -55,7 +55,7 @@ namespace Details {
       std::shared_ptr<Beam::Tasks::Task> m_task;
       State m_taskState;
       int m_state;
-      Beam::RoutineTaskQueue m_taskQueue;
+      Beam::RoutineTaskQueue m_tasks;
 
       void OnTaskUpdate(const StateEntry& update);
       bool C0();
@@ -90,11 +90,12 @@ namespace Details {
       SingleRedisplayableOrderTaskFactory(
         const Beam::Tasks::TaskFactory& taskFactory);
 
-      virtual std::shared_ptr<Beam::Tasks::Task> Create();
+      virtual std::shared_ptr<Beam::Tasks::Task> Create() override final;
 
-      virtual boost::any& FindProperty(const std::string& name);
+      virtual boost::any& FindProperty(const std::string& name) override final;
 
-      virtual void PrepareContinuation(const Beam::Tasks::Task& task);
+      virtual void PrepareContinuation(
+        const Beam::Tasks::Task& task) override final;
 
     private:
       Beam::Tasks::TaskFactory m_taskFactory;
@@ -102,18 +103,18 @@ namespace Details {
 
   inline SingleRedisplayableOrderTask::SingleRedisplayableOrderTask(
       const Beam::Tasks::TaskFactory& taskFactory, Quantity display)
-      : m_taskFactory(taskFactory),
-        m_currentDisplay(display) {}
+      : m_taskFactory{taskFactory},
+        m_currentDisplay{display} {}
 
   inline void SingleRedisplayableOrderTask::OnExecute() {
-    m_taskQueue.Push(
+    m_tasks.Push(
       [=] {
-        return S0();
+        S0();
       });
   }
 
   inline void SingleRedisplayableOrderTask::OnCancel() {
-    m_taskQueue.Push(
+    m_tasks.Push(
       [=] {
         if(m_state != 2 && m_state != 4 && m_state != 8) {
           return S4(Beam::Tasks::Task::State::CANCELED, "");
@@ -123,7 +124,7 @@ namespace Details {
 
   inline void SingleRedisplayableOrderTask::OnTaskUpdate(
       const StateEntry& update) {
-    m_taskQueue.Push(
+    m_tasks.Push(
       [=] {
         m_taskState = update.m_state;
         if(m_state == 1) {
@@ -191,7 +192,7 @@ namespace Details {
     m_taskState = State::INITIALIZING;
     m_task = m_taskFactory->Create();
     Manage(m_task);
-    m_task->GetPublisher().Monitor(m_taskQueue.GetSlot<StateEntry>(
+    m_task->GetPublisher().Monitor(m_tasks.GetSlot<StateEntry>(
       std::bind(&SingleRedisplayableOrderTask::OnTaskUpdate, this,
       std::placeholders::_1)));
     m_task->Execute();
@@ -240,7 +241,7 @@ namespace Details {
     m_taskState = State::INITIALIZING;
     m_task = m_taskFactory->Create();
     Manage(m_task);
-    m_task->GetPublisher().Monitor(m_taskQueue.GetSlot<StateEntry>(
+    m_task->GetPublisher().Monitor(m_tasks.GetSlot<StateEntry>(
       std::bind(&SingleRedisplayableOrderTask::OnTaskUpdate, this,
       std::placeholders::_1)));
     m_task->Execute();
@@ -260,7 +261,7 @@ namespace Details {
   inline SingleRedisplayableOrderTaskFactory::
       SingleRedisplayableOrderTaskFactory(
       const Beam::Tasks::TaskFactory& taskFactory)
-      : m_taskFactory(taskFactory) {
+      : m_taskFactory{taskFactory} {
     DefineProperty<Quantity>(DISPLAY, 0);
   }
 
@@ -280,16 +281,15 @@ namespace Details {
   }
 
   inline void SingleRedisplayableOrderTaskFactory::PrepareContinuation(
-      const Beam::Tasks::Task& orderSchema) {
-    const SingleRedisplayableOrderTask& singleRedisplayableOrderSchema =
-      static_cast<const SingleRedisplayableOrderTask&>(orderSchema);
-    Set(DISPLAY, singleRedisplayableOrderSchema.m_currentDisplay);
-    if(singleRedisplayableOrderSchema.m_task != nullptr) {
-      m_taskFactory->PrepareContinuation(
-        *singleRedisplayableOrderSchema.m_task);
+      const Beam::Tasks::Task& task) {
+    auto& singleRedisplayableOrderTask =
+      static_cast<const SingleRedisplayableOrderTask&>(task);
+    Set(DISPLAY, singleRedisplayableOrderTask.m_currentDisplay);
+    if(singleRedisplayableOrderTask.m_task != nullptr) {
+      m_taskFactory->PrepareContinuation(*singleRedisplayableOrderTask.m_task);
     }
     m_taskFactory->Set(SingleRedisplayableOrderTaskFactory::QUANTITY,
-      singleRedisplayableOrderSchema.m_quantity);
+      singleRedisplayableOrderTask.m_quantity);
   }
 }
 }

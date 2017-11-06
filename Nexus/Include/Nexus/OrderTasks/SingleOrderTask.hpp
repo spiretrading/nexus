@@ -1,5 +1,6 @@
-#ifndef NEXUS_SINGLEORDERTASK_HPP
-#define NEXUS_SINGLEORDERTASK_HPP
+#ifndef NEXUS_SINGLE_ORDER_TASK_HPP
+#define NEXUS_SINGLE_ORDER_TASK_HPP
+#include <Beam/Queues/QueueWriter.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Tasks/BasicTask.hpp>
 #include <Beam/Utilities/AssertionException.hpp>
@@ -18,10 +19,11 @@ namespace OrderTasks {
    */
   template<typename OrderExecutionClientType>
   class SingleOrderTask : public Beam::Tasks::BasicTask {
+      struct Guard {};
     public:
 
       //! The OrderExecutionClient used to execute and cancel the Order.
-      typedef OrderExecutionClientType OrderExecutionClient;
+      using OrderExecutionClient = OrderExecutionClientType;
 
       //! Constructs a SingleOrderTask.
       /*!
@@ -30,19 +32,25 @@ namespace OrderTasks {
         \param fields The Order's execution fields.
       */
       SingleOrderTask(Beam::RefType<OrderExecutionClient> orderExecutionClient,
-        Beam::RefType<Beam::QueueWriter<const OrderExecutionService::Order*>>
+        std::shared_ptr<Beam::QueueWriter<const OrderExecutionService::Order*>>
         orderExecutionPublisher,
         const OrderExecutionService::OrderFields& fields);
 
-    protected:
-      virtual void OnExecute();
+      SingleOrderTask(Beam::RefType<OrderExecutionClient> orderExecutionClient,
+        std::shared_ptr<Beam::QueueWriter<const OrderExecutionService::Order*>>
+        orderExecutionPublisher,
+        const OrderExecutionService::OrderFields& fields, Quantity fillSize,
+        Guard);
 
-      virtual void OnCancel();
+    protected:
+      virtual void OnExecute() override final;
+
+      virtual void OnCancel() override final;
 
     private:
       friend class SingleOrderTaskFactory<OrderExecutionClientType>;
       OrderExecutionClient* m_orderExecutionClient;
-      Beam::QueueWriter<const OrderExecutionService::Order*>*
+      std::shared_ptr<Beam::QueueWriter<const OrderExecutionService::Order*>>
         m_orderExecutionPublisher;
       OrderExecutionService::OrderFields m_fields;
       const OrderExecutionService::Order* m_order;
@@ -50,13 +58,8 @@ namespace OrderTasks {
       bool m_cancellable;
       bool m_pendingCancel;
       int m_state;
-      Beam::RoutineTaskQueue m_callbacks;
+      Beam::RoutineTaskQueue m_tasks;
 
-      SingleOrderTask(
-        Beam::RefType<OrderExecutionClient> orderExecutionClient,
-        Beam::RefType<Beam::QueueWriter<const OrderExecutionService::Order*>>
-        orderExecutionPublisher,
-        const OrderExecutionService::OrderFields& fields, Quantity fillSize);
       void OnExecutionReport(
         const OrderExecutionService::ExecutionReport& report);
       void S0();
@@ -110,27 +113,19 @@ namespace OrderTasks {
     public:
 
       //! The OrderExecutionClient used to execute and cancel the Order.
-      typedef OrderExecutionClientType OrderExecutionClient;
+      using OrderExecutionClient = OrderExecutionClientType;
 
       //! Constructs a SingleOrderTaskFactory.
       /*!
         \param orderExecutionClient The OrderExecutionClient to use.
         \param orderExecutionPublisher Used to report Order executions.
         \param account The account to assign the Order to.
-        \param additionalFields The list of additional fields used by the
-               Order.
       */
       SingleOrderTaskFactory(
         Beam::RefType<OrderExecutionClient> orderExecutionClient,
-        Beam::RefType<Beam::QueueWriter<const OrderExecutionService::Order*>>
+        std::shared_ptr<Beam::QueueWriter<const OrderExecutionService::Order*>>
         orderExecutionPublisher,
         const Beam::ServiceLocator::DirectoryEntry& account);
-
-      //! Copies a SingleOrderTaskFactory.
-      /*!
-        \param factory The SingleOrderTaskFactory to copy.
-      */
-      SingleOrderTaskFactory(const SingleOrderTaskFactory& factory);
 
       //! Adds a field used to submit an Order.
       /*!
@@ -140,9 +135,10 @@ namespace OrderTasks {
       template<typename T>
       void AddField(const std::string& name, int key);
 
-      virtual std::shared_ptr<Beam::Tasks::Task> Create();
+      virtual std::shared_ptr<Beam::Tasks::Task> Create() override final;
 
-      virtual void PrepareContinuation(const Beam::Tasks::Task& task);
+      virtual void PrepareContinuation(
+        const Beam::Tasks::Task& task) override final;
 
     private:
       struct AdditionalFieldEntry {
@@ -152,7 +148,7 @@ namespace OrderTasks {
       };
       OrderExecutionClient* m_orderExecutionClient;
       std::vector<AdditionalFieldEntry> m_additionalFields;
-      Beam::QueueWriter<const OrderExecutionService::Order*>*
+      std::shared_ptr<Beam::QueueWriter<const OrderExecutionService::Order*>>
         m_orderExecutionPublisher;
       Beam::ServiceLocator::DirectoryEntry m_account;
       Quantity m_fillSize;
@@ -161,27 +157,27 @@ namespace OrderTasks {
   template<typename OrderExecutionClientType>
   SingleOrderTask<OrderExecutionClientType>::SingleOrderTask(
       Beam::RefType<OrderExecutionClient> orderExecutionClient,
-      Beam::RefType<Beam::QueueWriter<const OrderExecutionService::Order*>>
+      std::shared_ptr<Beam::QueueWriter<const OrderExecutionService::Order*>>
       orderExecutionPublisher, const OrderExecutionService::OrderFields& fields)
-      : m_orderExecutionClient(orderExecutionClient.Get()),
-        m_orderExecutionPublisher(orderExecutionPublisher.Get()),
-        m_fields(fields),
-        m_fillSize(0) {}
+      : m_orderExecutionClient{orderExecutionClient.Get()},
+        m_orderExecutionPublisher{std::move(orderExecutionPublisher)},
+        m_fields{fields},
+        m_fillSize{0} {}
 
   template<typename OrderExecutionClientType>
   void SingleOrderTask<OrderExecutionClientType>::OnExecute() {
-    m_callbacks.Push(
+    m_tasks.Push(
       [=] {
-        return this->S0();
+        S0();
       });
   }
 
   template<typename OrderExecutionClientType>
   void SingleOrderTask<OrderExecutionClientType>::OnCancel() {
-    m_callbacks.Push(
+    m_tasks.Push(
       [=] {
         m_pendingCancel = true;
-        return this->S4();
+        S4();
       });
   }
 
@@ -229,7 +225,7 @@ namespace OrderTasks {
     }
     m_orderExecutionPublisher->Push(m_order);
     m_order->GetPublisher().Monitor(
-      m_callbacks.GetSlot<OrderExecutionService::ExecutionReport>(
+      m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(
       std::bind(&SingleOrderTask::OnExecutionReport, this,
       std::placeholders::_1)));
   }
@@ -272,13 +268,13 @@ namespace OrderTasks {
   template<typename OrderExecutionClientType>
   SingleOrderTask<OrderExecutionClientType>::SingleOrderTask(
       Beam::RefType<OrderExecutionClient> orderExecutionClient,
-      Beam::RefType<Beam::QueueWriter<const OrderExecutionService::Order*>>
+      std::shared_ptr<Beam::QueueWriter<const OrderExecutionService::Order*>>
       orderExecutionPublisher, const OrderExecutionService::OrderFields& fields,
-      Quantity fillSize)
-      : m_orderExecutionClient(orderExecutionClient.Get()),
-        m_orderExecutionPublisher(orderExecutionPublisher.Get()),
-        m_fields(fields),
-        m_fillSize(fillSize) {}
+      Quantity fillSize, Guard)
+      : m_orderExecutionClient{orderExecutionClient.Get()},
+        m_orderExecutionPublisher{std::move(orderExecutionPublisher)},
+        m_fields{fields},
+        m_fillSize{fillSize} {}
 
   template<typename T>
   const std::string BaseSingleOrderTaskFactoryExports<T>::SECURITY = "security";
@@ -309,13 +305,13 @@ namespace OrderTasks {
   template<typename OrderExecutionClientType>
   SingleOrderTaskFactory<OrderExecutionClientType>::SingleOrderTaskFactory(
       Beam::RefType<OrderExecutionClient> orderExecutionClient,
-      Beam::RefType<Beam::QueueWriter<const OrderExecutionService::Order*>>
+      std::shared_ptr<Beam::QueueWriter<const OrderExecutionService::Order*>>
       orderExecutionPublisher,
       const Beam::ServiceLocator::DirectoryEntry& account)
-      : m_orderExecutionClient(orderExecutionClient.Get()),
-        m_orderExecutionPublisher(orderExecutionPublisher.Get()),
-        m_account(account),
-        m_fillSize(0) {
+      : m_orderExecutionClient{orderExecutionClient.Get()},
+        m_orderExecutionPublisher{std::move(orderExecutionPublisher)},
+        m_account{account},
+        m_fillSize{0} {
     this->template DefineProperty<Security>(SECURITY, Security());
     this->template DefineProperty<OrderType>(ORDER_TYPE, OrderType::NONE);
     this->template DefineProperty<Side>(SIDE, Side::NONE);
@@ -326,16 +322,6 @@ namespace OrderTasks {
     this->template DefineProperty<TimeInForce>(TIME_IN_FORCE,
       TimeInForce(TimeInForce::Type::DAY));
   }
-
-  template<typename OrderExecutionClientType>
-  SingleOrderTaskFactory<OrderExecutionClientType>::SingleOrderTaskFactory(
-      const SingleOrderTaskFactory& factory)
-      : Beam::Tasks::BasicTaskFactory<SingleOrderTaskFactory>(factory),
-        m_orderExecutionClient(factory.m_orderExecutionClient),
-        m_additionalFields(factory.m_additionalFields),
-        m_orderExecutionPublisher(factory.m_orderExecutionPublisher),
-        m_account(factory.m_account),
-        m_fillSize(factory.m_fillSize) {}
 
   template<typename OrderExecutionClientType>
   template<typename T>
@@ -400,18 +386,17 @@ namespace OrderTasks {
       }
       fields.m_additionalFields.push_back(Tag(entry.m_key, value));
     }
-    std::shared_ptr<Beam::Tasks::Task> task(
-      new SingleOrderTask<OrderExecutionClient>(
-      Beam::Ref(*m_orderExecutionClient), Beam::Ref(*m_orderExecutionPublisher),
-      fields, m_fillSize));
+    auto fillSize = m_fillSize;
     m_fillSize = 0;
-    return task;
+    return std::make_shared<SingleOrderTask<OrderExecutionClient>>(
+      Beam::Ref(*m_orderExecutionClient), m_orderExecutionPublisher, fields,
+      fillSize, typename SingleOrderTask<OrderExecutionClient>::Guard{});
   }
 
   template<typename OrderExecutionClientType>
   void SingleOrderTaskFactory<OrderExecutionClientType>::PrepareContinuation(
       const Beam::Tasks::Task& task) {
-    const SingleOrderTask<OrderExecutionClient>& singleOrderTask =
+    auto& singleOrderTask =
       static_cast<const SingleOrderTask<OrderExecutionClient>&>(task);
     Set(SECURITY, singleOrderTask.m_fields.m_security);
     Set(ORDER_TYPE, singleOrderTask.m_fields.m_type);

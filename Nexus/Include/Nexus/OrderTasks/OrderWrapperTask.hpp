@@ -1,8 +1,7 @@
-#ifndef NEXUS_ORDERWRAPPERTASK_HPP
-#define NEXUS_ORDERWRAPPERTASK_HPP
+#ifndef NEXUS_ORDER_WRAPPER_TASK_HPP
+#define NEXUS_ORDER_WRAPPER_TASK_HPP
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Tasks/BasicTask.hpp>
-#include <Beam/Utilities/NotSupportedException.hpp>
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderTasks/OrderTasks.hpp"
 
@@ -19,21 +18,20 @@ namespace OrderTasks {
     public:
 
       //! The OrderExecutionClient used to execute and cancel the Order.
-      typedef OrderExecutionClientType OrderExecutionClient;
+      using OrderExecutionClient = OrderExecutionClientType;
 
       //! Constructs a OrderWrapperTask.
       /*!
         \param orderExecutionClient The OrderExecutionClient to use.
         \param order The Order to wrap.
       */
-      OrderWrapperTask(
-        Beam::RefType<OrderExecutionClient> orderExecutionClient,
+      OrderWrapperTask(Beam::RefType<OrderExecutionClient> orderExecutionClient,
         const OrderExecutionService::Order& order);
 
     protected:
-      virtual void OnExecute();
+      virtual void OnExecute() override final;
 
-      virtual void OnCancel();
+      virtual void OnCancel() override final;
 
     private:
       OrderExecutionClient* m_orderExecutionClient;
@@ -41,7 +39,7 @@ namespace OrderTasks {
       bool m_cancellable;
       bool m_pendingCancel;
       int m_state;
-      Beam::RoutineTaskQueue m_callbacks;
+      Beam::RoutineTaskQueue m_tasks;
 
       void OnExecutionReport(
         const OrderExecutionService::ExecutionReport& report);
@@ -63,7 +61,7 @@ namespace OrderTasks {
     public:
 
       //! The OrderExecutionClient used to execute and cancel the Order.
-      typedef OrderExecutionClientType OrderExecutionClient;
+      using OrderExecutionClient = OrderExecutionClientType;
 
       //! Constructs an OrderWrapperTaskFactory.
       /*!
@@ -74,15 +72,7 @@ namespace OrderTasks {
         Beam::RefType<OrderExecutionClient> orderExecutionClient,
         const OrderExecutionService::Order& order);
 
-      //! Copies an OrderWrapperTaskFactory.
-      /*!
-        \param factory The OrderWrapperTaskFactory to copy.
-      */
-      OrderWrapperTaskFactory(const OrderWrapperTaskFactory& factory);
-
-      virtual std::shared_ptr<Beam::Tasks::Task> Create();
-
-      virtual void PrepareContinuation(const Beam::Tasks::Task& task);
+      virtual std::shared_ptr<Beam::Tasks::Task> Create() override final;
 
     private:
       OrderExecutionClient* m_orderExecutionClient;
@@ -93,23 +83,23 @@ namespace OrderTasks {
   OrderWrapperTask<OrderExecutionClientType>::OrderWrapperTask(
       Beam::RefType<OrderExecutionClient> orderExecutionClient,
       const OrderExecutionService::Order& order)
-      : m_orderExecutionClient(orderExecutionClient.Get()),
-        m_order(&order) {}
+      : m_orderExecutionClient{orderExecutionClient.Get()},
+        m_order{&order} {}
 
   template<typename OrderExecutionClientType>
   void OrderWrapperTask<OrderExecutionClientType>::OnExecute() {
-    m_callbacks.Push(
+    m_tasks.Push(
       [=] {
-        this->S0();
+        S0();
       });
   }
 
   template<typename OrderExecutionClientType>
   void OrderWrapperTask<OrderExecutionClientType>::OnCancel() {
-    m_callbacks.Push(
+    m_tasks.Push(
       [=] {
         m_pendingCancel = true;
-        this->S4();
+        S4();
       });
   }
 
@@ -145,7 +135,7 @@ namespace OrderTasks {
     m_pendingCancel = false;
     SetActive();
     m_order->GetPublisher().Monitor(
-      m_callbacks.GetSlot<OrderExecutionService::ExecutionReport>(
+      m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(
       std::bind(&OrderWrapperTask::OnExecutionReport, this,
       std::placeholders::_1)));
   }
@@ -189,30 +179,14 @@ namespace OrderTasks {
   OrderWrapperTaskFactory<OrderExecutionClientType>::OrderWrapperTaskFactory(
       Beam::RefType<OrderExecutionClient> orderExecutionClient,
       const OrderExecutionService::Order& order)
-      : m_orderExecutionClient(orderExecutionClient.Get()),
-        m_order(&order) {}
-
-  template<typename OrderExecutionClientType>
-  OrderWrapperTaskFactory<OrderExecutionClientType>::OrderWrapperTaskFactory(
-      const OrderWrapperTaskFactory& factory)
-      : Beam::Tasks::BasicTaskFactory<OrderWrapperTaskFactory>(factory),
-        m_orderExecutionClient(factory.m_orderExecutionClient),
-        m_order(factory.m_order) {}
+      : m_orderExecutionClient{orderExecutionClient.Get()},
+        m_order{&order} {}
 
   template<typename OrderExecutionClientType>
   std::shared_ptr<Beam::Tasks::Task> OrderWrapperTaskFactory<
       OrderExecutionClientType>::Create() {
-    std::shared_ptr<Beam::Tasks::Task> task(
-      new OrderWrapperTask<OrderExecutionClient>(
-      Beam::Ref(*m_orderExecutionClient), *m_order));
-    return task;
-  }
-
-  template<typename OrderExecutionClientType>
-  void OrderWrapperTaskFactory<OrderExecutionClientType>::PrepareContinuation(
-      const Beam::Tasks::Task& task) {
-    BOOST_THROW_EXCEPTION(Beam::NotSupportedException(
-      "OrderWrapperTaskFactory::PrepareContinuation"));
+    return std::make_shared<OrderWrapperTask<OrderExecutionClient>>(
+      Beam::Ref(*m_orderExecutionClient), *m_order);
   }
 }
 }
