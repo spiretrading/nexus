@@ -7,10 +7,10 @@
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
-#include "Nexus/OrderTasks/OrderTasks.hpp"
+#include "Nexus/Tasks/Tasks.hpp"
 
 namespace Nexus {
-namespace OrderTasks {
+namespace Tasks {
 
   /*! \class SingleOrderTask
       \brief Executes and manages a single Order.

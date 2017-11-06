@@ -3,10 +3,10 @@
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Tasks/BasicTask.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
-#include "Nexus/OrderTasks/OrderTasks.hpp"
+#include "Nexus/Tasks/Tasks.hpp"
 
 namespace Nexus {
-namespace OrderTasks {
+namespace Tasks {
 namespace Details {
   template<typename Dummy>
   struct SingleRedisplayableOrderTaskProperties {

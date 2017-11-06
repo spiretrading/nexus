@@ -1,8 +1,8 @@
-#ifndef NEXUS_ORDERTASKS_HPP
-#define NEXUS_ORDERTASKS_HPP
+#ifndef NEXUS_TASKS_HPP
+#define NEXUS_TASKS_HPP
 
 namespace Nexus {
-namespace OrderTasks {
+namespace Tasks {
   template<typename OrderExecutionClientType> class OrderWrapperTask;
   template<typename OrderExecutionClientType> class OrderWrapperTaskFactory;
   template<typename OrderExecutionClientType> class SingleOrderTask;

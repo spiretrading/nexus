@@ -3,10 +3,10 @@
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Tasks/BasicTask.hpp>
 #include "Nexus/OrderExecutionService/Order.hpp"
-#include "Nexus/OrderTasks/OrderTasks.hpp"
+#include "Nexus/Tasks/Tasks.hpp"
 
 namespace Nexus {
-namespace OrderTasks {
+namespace Tasks {
 
   /*! \class OrderWrapperTask
       \brief Wraps an existing and already executed Order.

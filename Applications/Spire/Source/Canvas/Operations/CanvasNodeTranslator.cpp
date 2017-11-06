@@ -43,9 +43,9 @@
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
-#include "Nexus/OrderTasks/OrderWrapperTask.hpp"
-#include "Nexus/OrderTasks/SingleOrderTask.hpp"
-#include "Nexus/OrderTasks/SingleRedisplayableOrderTask.hpp"
+#include "Nexus/Tasks/OrderWrapperTask.hpp"
+#include "Nexus/Tasks/SingleOrderTask.hpp"
+#include "Nexus/Tasks/SingleRedisplayableOrderTask.hpp"
 #include "Spire/Canvas/Common/BreadthFirstCanvasNodeIterator.hpp"
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
@@ -156,7 +156,7 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::OrderExecutionService;
-using namespace Nexus::OrderTasks;
+using namespace Nexus::Tasks;
 using namespace Spire;
 using namespace std;
 
