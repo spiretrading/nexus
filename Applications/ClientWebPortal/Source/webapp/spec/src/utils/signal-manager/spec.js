@@ -24,7 +24,9 @@ describe('SignalManager', function() {
       expect(payload).toBe('test payload');
       done();
     };
-    signalManager.addListener(listener);
+    let firstSubId = signalManager.addListener(listener);
+    let secondSubId = signalManager.addListener(function(){});
+    expect(secondSubId - firstSubId).toBe(1);
     signalManager.emitSignal(2, 'test payload');
   });
 
@@ -38,7 +40,7 @@ describe('SignalManager', function() {
     it('Non existent subscription ID', function() {
       signalManager.addListener(function() {});
       let testMethod = function() {
-        let invalidSubId = 1;
+        let invalidSubId = 100;
         signalManager.removeListener(invalidSubId);
       };
       let errorMessage = 'Subscription ID does not exist';
