@@ -8,10 +8,9 @@ if [ "$config" = "clean" ]
 then
   rm -rf dist
 else
-  webpack --env.environment $config
+  npm run-script build
   rm -rf ../../Application/webapp
   cp -a dist/. ../../Application/webapp/
 fi
 popd
 popd
-
