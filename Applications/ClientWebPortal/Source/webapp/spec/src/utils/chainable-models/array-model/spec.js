@@ -62,7 +62,7 @@ describe('ArrayModel', function() {
         let manipulateRowArray = function() {
           payload.row.push('hello');
         }
-        expect(manipulateRowArray).toThrow(new TypeError('Cannot add property 3, object is not extensible'));
+        expect(manipulateRowArray).toThrow();
         done();
       });
       arrayModel.removeRow(0);
@@ -95,7 +95,7 @@ describe('ArrayModel', function() {
         let manipulateOriginalArray = function() {
           payload.original.push('hello');
         }
-        expect(manipulateOriginalArray).toThrow(new TypeError('Cannot add property 3, object is not extensible'));
+        expect(manipulateOriginalArray).toThrow();
         done();
       });
       let newData = ['r0c0c0', 'r0c1c1', 'r0c2c2'];

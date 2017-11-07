@@ -4,7 +4,10 @@
   "description": "Spire API Javascript client for both browser and Node.",
   "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "node node_modules/.bin/grunt build-prod && npm run-script test",
+    "build-dev": "node node_modules/.bin/grunt build-dev && npm run-script test",
+    "test-no-build": "node node_modules/.bin/jasmine",
+    "test": "node node_modules/.bin/grunt build-test && npm run-script test-no-build"
   },
   "keywords": [
     "Spire",
@@ -25,7 +28,6 @@
     "grunt-contrib-clean": "^1.0.0",
     "grunt-contrib-uglify": "^2.0.0",
     "grunt-contrib-watch": "^1.0.0",
-    "grunt-exec": "^2.0.0",
     "jasmine": "^2.6.0"
   }
 }

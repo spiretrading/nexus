@@ -11,9 +11,8 @@ describe("Security", function() {
 
   it("Convert to Security from plain object.", function() {
     let security = Security.fromData(this.securityData);
-    expect('Security').toBe(security.constructor.name);
-    expect('CountryCode').toBe(security.country.constructor.name);
-    expect('MarketCode').toBe(security.market.constructor.name);
+    expect(security.country.toNumber()).toBe(124);
+    expect(security.market.toData()).toBe('XTSE');
     expect('XIU').toBe(security.symbol);
   });
 
