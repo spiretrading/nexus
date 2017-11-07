@@ -4,7 +4,7 @@ import DataChangeType from './data-change-type';
 export default class {
   constructor(columnNames) {
     if (columnNames == null) {
-      throw new RangeError('Column names cannot be null');
+      throw new TypeError('Column names cannot be null');
     }
 
     this.data = [];

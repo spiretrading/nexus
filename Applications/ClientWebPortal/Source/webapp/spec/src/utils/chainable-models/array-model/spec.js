@@ -11,7 +11,7 @@ describe('ArrayModel', function() {
       new ArrayModel(null);
     };
     let errorMessage = 'Column names cannot be null';
-    expect(testConstructor).toThrow(new RangeError(errorMessage));
+    expect(testConstructor).toThrow(new TypeError(errorMessage));
   });
 
   describe('addRow', function() {
