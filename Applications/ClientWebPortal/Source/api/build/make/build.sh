@@ -8,9 +8,9 @@ then
   rm -rf dist
 elif [ "$config" = "Debug" ]
 then
-  grunt build-dev
+  npm run-script build-dev
 else
-  grunt build-prod
+  npm run-script build
 fi
 popd
 popd
