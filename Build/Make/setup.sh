@@ -7,14 +7,18 @@ if [ ! -d "Beam" ]; then
 fi
 if [ -d "Beam" ]; then
   pushd Beam
-  sudo -u $(logname) git checkout master
-  sudo -u $(logname) git pull
-  sudo -u $(logname) git checkout b99bd89f0a59b11ef9459a3a04c558722f94b940
-  popd
-  ./Beam/Build/Make/setup.sh
-  pushd ./Beam/Build/Make
-  sudo -u $(logname) ./run_cmake.sh
-  sudo -u $(logname) ./build.sh
+  let expected_commit = b99bd89f0a59b11ef9459a3a04c558722f94b940
+  let commit="`git log -1 | head -1 | awk '{ print $2 }'`"
+  if [ "$commit" -ne "$expected_commit" ]; then
+    sudo -u $(logname) git checkout master
+    sudo -u $(logname) git pull
+    sudo -u $(logname) git checkout "$expected_commit"
+    popd
+    ./Beam/Build/Make/setup.sh
+    pushd ./Beam/Build/Make
+    sudo -u $(logname) ./run_cmake.sh
+    sudo -u $(logname) ./build.sh
+  fi
   popd
 fi
 

@@ -374,9 +374,9 @@ namespace {
         const std::shared_ptr<BaseReactor>& initial,
         const std::shared_ptr<BaseReactor>& continuation,
         CanvasNodeTranslationContext& context) {
-      return MakeChainReactor(std::static_pointer_cast<Reactor<T>>(initial),
-        std::static_pointer_cast<Reactor<T>>(continuation),
-        Ref(context.GetReactorMonitor().GetTrigger()));
+      return MakeChainReactor(Ref(context.GetReactorMonitor().GetTrigger()),
+        std::static_pointer_cast<Reactor<T>>(initial),
+        std::static_pointer_cast<Reactor<T>>(continuation));
     }
 
     using SupportedTypes = ValueTypes;
@@ -591,18 +591,19 @@ namespace {
   };
 
   struct FoldTranslator {
-    template<typename SourceType, typename CombinerType, typename Unused>
+    template<typename CombinerType, typename SourceType, typename Unused>
     static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& source,
         const std::shared_ptr<BaseReactor>& combiner,
         const std::shared_ptr<BaseReactor>& leftTrigger,
-        const std::shared_ptr<BaseReactor>& rightTrigger) {
+        const std::shared_ptr<BaseReactor>& rightTrigger,
+        const std::shared_ptr<BaseReactor>& source) {
       return MakeFoldReactor(
-        std::static_pointer_cast<Reactor<SourceType>>(source),
         std::static_pointer_cast<Reactor<CombinerType>>(combiner),
         std::static_pointer_cast<FoldParameterReactor<CombinerType>>(
           leftTrigger),
-        std::static_pointer_cast<FoldParameterReactor<SourceType>>(rightTrigger));
+        std::static_pointer_cast<FoldParameterReactor<SourceType>>(
+          rightTrigger),
+        std::static_pointer_cast<Reactor<SourceType>>(source));
     }
 
     using SupportedTypes = FoldSignatures::type;
@@ -1063,10 +1064,10 @@ void CanvasNodeTranslationVisitor::Visit(const AlarmNode& node) {
   };
   auto expiry = boost::get<std::shared_ptr<BaseReactor>>(InternalTranslation(
     node.GetChildren().front()));
-  auto reactor = MakeAlarmReactor(timerFactory,
+  auto reactor = MakeAlarmReactor(
+    Ref(m_context->GetReactorMonitor().GetTrigger()),
     &m_context->GetUserProfile().GetServiceClients().GetTimeClient(),
-    std::static_pointer_cast<Reactor<ptime>>(expiry),
-    Ref(m_context->GetReactorMonitor().GetTrigger()));
+    timerFactory, std::static_pointer_cast<Reactor<ptime>>(expiry));
   m_context->GetReactorMonitor().Add(reactor);
   m_translation = reactor;
 }
@@ -1241,17 +1242,17 @@ void CanvasNodeTranslationVisitor::Visit(const FloorNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const FoldNode& node) {
-  auto source = boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren().front()));
   auto combiner = boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren().back()));
+    InternalTranslation(node.GetChildren().front()));
   auto leftTrigger = boost::get<std::shared_ptr<BaseReactor>>(
     InternalTranslation(*node.FindLeftOperand()));
   auto rightTrigger = boost::get<std::shared_ptr<BaseReactor>>(
     InternalTranslation(*node.FindRightOperand()));
-  m_translation = Instantiate<FoldTranslator>(source->GetType(),
-    combiner->GetType(), combiner->GetType())(source, combiner, leftTrigger,
-    rightTrigger);
+  auto source = boost::get<std::shared_ptr<BaseReactor>>(
+    InternalTranslation(node.GetChildren().back()));
+  m_translation = Instantiate<FoldTranslator>(combiner->GetType(),
+    source->GetType(), source->GetType())(combiner, leftTrigger, rightTrigger,
+    source);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const FoldOperandNode& node) {
@@ -1436,8 +1437,8 @@ void CanvasNodeTranslationVisitor::Visit(const RangeNode& node) {
   auto upper = std::static_pointer_cast<Reactor<Quantity>>(
     boost::get<std::shared_ptr<BaseReactor>>(
     InternalTranslation(node.GetChildren().back())));
-  auto reactor = MakeRangeReactor(lower, upper,
-    Ref(m_context->GetReactorMonitor().GetTrigger()));
+  auto reactor = MakeRangeReactor(
+    Ref(m_context->GetReactorMonitor().GetTrigger()), lower, upper);
   m_translation = reactor;
 }
 
@@ -1618,8 +1619,8 @@ void CanvasNodeTranslationVisitor::Visit(const TimerNode& node) {
   auto timerFactory = [=] (time_duration interval) {
     return make_unique<LiveTimer>(interval, Ref(*timerThreadPool));
   };
-  auto reactor = MakeTimerReactor<Quantity>(timerFactory, period,
-    Ref(m_context->GetReactorMonitor().GetTrigger()));
+  auto reactor = MakeTimerReactor<Quantity>(
+    Ref(m_context->GetReactorMonitor().GetTrigger()), timerFactory, period);
   m_translation = reactor;
 }
 
