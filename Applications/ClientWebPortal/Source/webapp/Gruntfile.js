@@ -32,20 +32,15 @@ module.exports = function(grunt) {
           dest: 'spec/transpiled/test'
         }]
       }
-    },
-    exec: {
-      jasmine: 'jasmine'
     }
   });
 
   grunt.loadNpmTasks('grunt-babel');
   grunt.loadNpmTasks('grunt-contrib-clean');
-  grunt.loadNpmTasks('grunt-exec');
 
-  grunt.registerTask('test', [
+  grunt.registerTask('build-test', [
     'clean:transpiledTests',
     'babel:appSrc',
-    'babel:tests',
-    'exec:jasmine'
+    'babel:tests'
   ]);
 };
