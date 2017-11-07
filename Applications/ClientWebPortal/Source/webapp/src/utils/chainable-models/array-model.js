@@ -47,7 +47,6 @@ export default class {
     this.data.push(Object.freeze(rowData.slice()));
     let rowIndex = this.data.length - 1;
     this.signalManager.emitSignal(DataChangeType.ADD, rowIndex);
-    return rowIndex;
   }
 
   removeRow(rowIndex) {

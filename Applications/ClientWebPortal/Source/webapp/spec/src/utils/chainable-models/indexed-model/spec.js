@@ -7,14 +7,6 @@ describe('IndexedModel', function() {
   });
 
   describe('constructor', function(){
-    it('Null indices', function() {
-      let testConstructor = function() {
-        new IndexedModel(null, this.columnNames);
-      }.bind(this);
-      let errorMessage = 'Indices has to be an array of column numbers';
-      expect(testConstructor).toThrow(new TypeError(errorMessage));
-    });
-
     it('Indices out of bounds', function() {
       let testConstructor = function() {
         new IndexedModel([-1, 2], this.columnNames);
@@ -45,6 +37,8 @@ describe('IndexedModel', function() {
       indexedModel.addDataChangeListener(function(dataChangeType, rowIndex) {
         expect(dataChangeType).toBe(DataChangeType.ADD);
         expect(rowIndex).toBe(0);
+        let cellValue = indexedModel.getValueAt(1, 0);
+        expect(cellValue).toBe(1);
         done();
       });
 
@@ -93,6 +87,12 @@ describe('IndexedModel', function() {
       let rowCount = indexedModel.getRowCount();
 
       expect(rowCount).toBe(0);
+    });
+
+    it('Non-existent values', function() {
+      indexedModel.removeRow(['r0c0', 'rrrr', 'r0c2']);
+      let rowCount = indexedModel.getRowCount();
+      expect(rowCount).toBe(1);
     });
   });
 

@@ -5,20 +5,14 @@ import ArrayStringKeyGenerator from 'utils/array-string-key-generator';
 export default class {
   constructor(indices, columnNames, keyGenerator = new ArrayStringKeyGenerator()) {
     // validate indices
-    let columnLength = columnNames.length;
-    if (indices == null || indices.length > columnNames) {
-      let errorMessage = 'Indices has to be an array of column numbers';
-      throw new TypeError(errorMessage);
-    } else {
-      for (let i=0; i<indices.length; i++) {
-        if (indices[i] < 0 || indices[i] >= columnNames.length) {
-          let errorMessage = 'Index ' + indices[i] + ' is out of bounds';
-          throw new RangeError(errorMessage);
-        }
+    for (let i=0; i<indices.length; i++) {
+      if (indices[i] < 0 || indices[i] >= columnNames.length) {
+        let errorMessage = 'Index ' + indices[i] + ' is out of bounds';
+        throw new RangeError(errorMessage);
       }
     }
 
-    this.indices = indices;
+    this.indices = indices.slice(0);
     this.arrayModel = new ArrayModel(columnNames);
     this.keyGenerator = keyGenerator;
     this.indicesToRow = new HashMap();
@@ -48,8 +42,9 @@ export default class {
     let key = this.keyGenerator.get(indexValues);
 
     if (!this.indicesToRow.has(key)) {
-      let rowNumber = this.arrayModel.addRow(values);
+      let rowNumber = this.arrayModel.getRowCount();
       this.indicesToRow.set(key, rowNumber);
+      this.arrayModel.addRow(values);
     } else {
       let rowNumber = this.indicesToRow.get(key);
       this.arrayModel.updateRow(rowNumber, values);
@@ -62,8 +57,10 @@ export default class {
       indexValues.push(values[i]);
     }
     let key = this.keyGenerator.get(indexValues);
-    let rowNumber = this.indicesToRow.get(key);
-    this.arrayModel.removeRow(rowNumber);
+    if (this.indicesToRow.has(key)) {
+      let rowNumber = this.indicesToRow.get(key);
+      this.arrayModel.removeRow(rowNumber);
+    }
   }
 
   addDataChangeListener(listener) {
