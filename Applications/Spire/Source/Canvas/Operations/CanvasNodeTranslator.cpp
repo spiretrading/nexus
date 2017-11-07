@@ -1154,8 +1154,9 @@ void CanvasNodeTranslationVisitor::Visit(const CustomNode& node) {
     }
     TaskTranslation taskTranslation;
     taskTranslation.m_publisher = baseTranslation.m_publisher;
-    taskTranslation.m_factory = ReactorTaskFactory(baseTranslation.m_factory,
-      properties, Ref(m_context->GetReactorMonitor()));
+    taskTranslation.m_factory = ReactorTaskFactory(
+      Ref(m_context->GetReactorMonitor()), properties,
+      baseTranslation.m_factory);
     m_translation = taskTranslation;
   }
 }
@@ -1409,8 +1410,9 @@ void CanvasNodeTranslationVisitor::Visit(const OrderWrapperTaskNode& node) {
   }
   TaskTranslation taskTranslation;
   taskTranslation.m_publisher = orderExecutionPublisher;
-  taskTranslation.m_factory = ReactorTaskFactory(orderWrapperTaskFactory,
-    std::move(properties), Ref(m_context->GetReactorMonitor()));
+  taskTranslation.m_factory = ReactorTaskFactory(
+    Ref(m_context->GetReactorMonitor()), std::move(properties),
+    orderWrapperTaskFactory);
   orderExecutionPublisher->Push(&node.GetOrder());
   m_translation = taskTranslation;
 }
@@ -1523,8 +1525,8 @@ void CanvasNodeTranslationVisitor::Visit(const SingleOrderTaskNode& node) {
   TaskTranslation taskTranslation;
   taskTranslation.m_publisher = orderExecutionPublisher;
   taskTranslation.m_factory = OrderExecutionPublisherTaskFactory(
-    ReactorTaskFactory(singleRedisplayableOrderTaskFactory,
-    std::move(properties), Ref(m_context->GetReactorMonitor())),
+    ReactorTaskFactory(Ref(m_context->GetReactorMonitor()),
+    std::move(properties), singleRedisplayableOrderTaskFactory),
     orderExecutionPublisher);
   m_translation = taskTranslation;
 }
@@ -1535,8 +1537,8 @@ void CanvasNodeTranslationVisitor::Visit(const SpawnNode& node) {
   CanvasNodeTaskFactory taskFactory(Ref(*m_context),
     Ref(node.GetChildren().back()));
   TaskTranslation taskTranslation;
-  taskTranslation.m_factory = SpawnTaskFactory(taskFactory, trigger,
-    Ref(m_context->GetReactorMonitor()));
+  taskTranslation.m_factory = SpawnTaskFactory(
+    Ref(m_context->GetReactorMonitor()), trigger, taskFactory);
   taskTranslation.m_publisher = taskFactory.GetOrderExecutionPublisher();
   m_translation = taskTranslation;
 }
@@ -1636,8 +1638,8 @@ void CanvasNodeTranslationVisitor::Visit(const UntilNode& node) {
     InternalTranslation(node.GetChildren().front())));
   m_context->GetReactorMonitor().Add(condition);
   TaskTranslation taskTranslation;
-  taskTranslation.m_factory = UntilTaskFactory(taskFactory, condition,
-    Ref(m_context->GetReactorMonitor()));
+  taskTranslation.m_factory = UntilTaskFactory(
+    Ref(m_context->GetReactorMonitor()), condition, taskFactory);
   taskTranslation.m_publisher = taskFactory.GetOrderExecutionPublisher();
   m_translation = taskTranslation;
 }
@@ -1650,8 +1652,8 @@ void CanvasNodeTranslationVisitor::Visit(const WhenNode& node) {
     InternalTranslation(node.GetChildren().front())));
   m_context->GetReactorMonitor().Add(condition);
   TaskTranslation taskTranslation;
-  taskTranslation.m_factory = WhenTaskFactory(taskFactory, condition,
-    Ref(m_context->GetReactorMonitor()));
+  taskTranslation.m_factory = WhenTaskFactory(
+    Ref(m_context->GetReactorMonitor()), condition, taskFactory);
   taskTranslation.m_publisher = taskFactory.GetOrderExecutionPublisher();
   m_translation = taskTranslation;
 }

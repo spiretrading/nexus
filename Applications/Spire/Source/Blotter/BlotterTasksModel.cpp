@@ -98,8 +98,8 @@ BlotterTasksModel::TaskContext::TaskContext(RefType<UserProfile> userProfile,
   CanvasNodeTaskFactory canvasNodeTaskFactory(Ref(m_context), Ref(*m_node));
   m_orderExecutionPublisher =
     canvasNodeTaskFactory.GetOrderExecutionPublisher();
-  m_factory = ReactorMonitorTaskFactory(canvasNodeTaskFactory,
-    Ref(m_context.GetReactorMonitor()));
+  m_factory = ReactorMonitorTaskFactory(Ref(m_context.GetReactorMonitor()),
+    canvasNodeTaskFactory);
   m_task = m_factory->Create();
 }
 
