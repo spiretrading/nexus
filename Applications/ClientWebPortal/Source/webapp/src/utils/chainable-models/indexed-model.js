@@ -12,7 +12,7 @@ export default class {
       }
     }
 
-    this.indices = indices.slice(0);
+    this.indices = indices.slice();
     this.arrayModel = new ArrayModel(columnNames);
     this.keyGenerator = keyGenerator;
     this.indicesToRow = new HashMap();
