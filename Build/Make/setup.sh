@@ -2,12 +2,20 @@
 let cores="`grep -c "processor" < /proc/cpuinfo`"
 directory=$(dirname $(readlink -f $0))
 
+let expected_commit="b99bd89f0a59b11ef9459a3a04c558722f94b940"
 if [ ! -d "Beam" ]; then
   sudo -u $(logname) git clone https://www.github.com/eidolonsystems/beam.git Beam
+  pushd Beam
+  sudo -u $(logname) git checkout "$expected_commit"
+  popd
+  ./Beam/Build/Make/setup.sh
+  pushd ./Beam/Build/Make
+  sudo -u $(logname) ./run_cmake.sh
+  sudo -u $(logname) ./build.sh
+  popd
 fi
 if [ -d "Beam" ]; then
   pushd Beam
-  let expected_commit="b99bd89f0a59b11ef9459a3a04c558722f94b940"
   let commit="`git log -1 | head -1 | awk '{ print $2 }'`"
   if [ "$commit" -ne "$expected_commit" ]; then
     sudo -u $(logname) git checkout master
