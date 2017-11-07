@@ -2,6 +2,7 @@
 #include <Beam/Python/Tasks.hpp>
 #include <Beam/Python/ToPythonTask.hpp>
 #include "Nexus/Tasks/SingleOrderTask.hpp"
+#include "Nexus/Tasks/SingleRedisplayableOrderTask.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 
 using namespace Beam;
@@ -28,6 +29,11 @@ BEAM_DEFINE_PYTHON_POINTER_LINKER(
   ToPythonTask<SingleOrderTask<VirtualOrderExecutionClient>>);
 BEAM_DEFINE_PYTHON_POINTER_LINKER(
   ToPythonTaskFactory<SingleOrderTaskFactory<VirtualOrderExecutionClient>>);
+BEAM_DEFINE_PYTHON_POINTER_LINKER(
+  ToPythonTask<SingleRedisplayableOrderTask>);
+BEAM_DEFINE_PYTHON_POINTER_LINKER(
+  ToPythonTaskFactory<SingleRedisplayableOrderTaskFactory>);
+
 
 void Nexus::Python::ExportSingleOrderTask() {
   using SingleOrderTask =
@@ -80,6 +86,30 @@ void Nexus::Python::ExportSingleOrderTask() {
   ExportTaskFactoryProperty<TimeInForce>();
 }
 
+void Nexus::Python::ExportSingleRedisplayableOrderTask() {
+  class_<ToPythonTask<SingleRedisplayableOrderTask>,
+    std::shared_ptr<ToPythonTask<SingleRedisplayableOrderTask>>,
+    boost::noncopyable, bases<Task>>("SingleRedisplayableOrderTask",
+    init<const TaskFactory&, Quantity>());
+  implicitly_convertible<std::shared_ptr<
+    ToPythonTask<SingleRedisplayableOrderTask>>, std::shared_ptr<Task>>();
+  {
+    class_<ToPythonTaskFactory<SingleRedisplayableOrderTaskFactory>,
+      bases<VirtualTaskFactory>>("SingleRedisplayableOrderTaskFactory", init<
+      const TaskFactory&>())
+      .def("__copy__", &MakeCopy<
+        ToPythonTaskFactory<SingleRedisplayableOrderTaskFactory>>)
+      .def("__deepcopy__", &MakeDeepCopy<
+        ToPythonTaskFactory<SingleRedisplayableOrderTaskFactory>>)
+      .add_static_property("QUANTITY", make_getter(
+        &SingleRedisplayableOrderTaskFactory::QUANTITY))
+      .add_static_property("DISPLAY", make_getter(
+        &SingleRedisplayableOrderTaskFactory::DISPLAY));
+    implicitly_convertible<
+      ToPythonTaskFactory<SingleRedisplayableOrderTaskFactory>, TaskFactory>();
+  }
+}
+
 void Nexus::Python::ExportTasks() {
   string nestedName = extract<string>(scope().attr("__name__") + ".tasks");
   object nestedModule{handle<>(
@@ -87,4 +117,5 @@ void Nexus::Python::ExportTasks() {
   scope().attr("tasks") = nestedModule;
   scope parent = nestedModule;
   ExportSingleOrderTask();
+  ExportSingleRedisplayableOrderTask();
 }

@@ -8,6 +8,9 @@ namespace Python {
   //! Exports the SingleOrderTask class.
   void ExportSingleOrderTask();
 
+  //! Exports the SingleRedisplayableOrderTask class.
+  void ExportSingleRedisplayableOrderTask();
+
   //! Exports the Tasks namespace.
   void ExportTasks();
 }
