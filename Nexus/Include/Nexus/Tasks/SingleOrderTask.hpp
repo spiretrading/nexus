@@ -158,7 +158,7 @@ namespace Tasks {
       virtual void PrepareContinuation(
         const Beam::Tasks::Task& task) override final;
 
-      using VirtualTaskFactory::Set;
+      using Beam::Tasks::VirtualTaskFactory::Set;
     private:
       struct AdditionalFieldEntry {
         int m_typeIndex;
@@ -408,7 +408,7 @@ namespace Tasks {
     fields.m_timeInForce = this->template Get<TimeInForce>(TIME_IN_FORCE);
     for(const AdditionalFieldEntry& entry : m_additionalFields) {
       Tag::Type value;
-      boost::any& property = FindProperty(entry.m_name);
+      boost::any& property = this->FindProperty(entry.m_name);
       switch(entry.m_typeIndex) {
         case Tag::INT_INDEX:
           value = boost::any_cast<int>(property);
