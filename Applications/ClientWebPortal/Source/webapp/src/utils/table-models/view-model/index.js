@@ -6,6 +6,7 @@ import numberFormatter from 'utils/number-formatter';
 export default class extends ChainableModel {
   constructor(sourceModel) {
     super(sourceModel);
+    this.defaultTyle = new DefaultStyleRule();
   }
 
   getRowCount() {
@@ -28,8 +29,7 @@ export default class extends ChainableModel {
   /** @protected */
   toViewData(x, y, value) {
     let display = this.getDisplay(value);
-    let style = new DefaultStyleRule();
-    return new ViewData(value, display, style);
+    return new ViewData(value, display, this.defaultStyleRule);
   }
 
   getDisplay(value) {
