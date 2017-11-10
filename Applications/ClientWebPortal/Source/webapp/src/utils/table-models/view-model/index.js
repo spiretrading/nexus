@@ -12,6 +12,7 @@ export default class extends Model {
     this.defaultStyle = new DefaultStyleRule();
     this.signalManager = new SignalManager();
     this.onDataChange = this.onDataChange.bind(this);
+    this.toViewData = this.toViewData.bind(this);
     this.dataChangeSubId = this.sourceModel.addDataChangeListener(this.onDataChange);
   }
 
@@ -60,16 +61,12 @@ export default class extends Model {
     if (dataChangeType == DataChangeType.REMOVE) {
       this.signalManager.emitSignal(dataChangeType, {
         index: payload.index,
-        row: payload.row.map(value => {
-          return this.toViewData(value);
-        })
+        row: payload.row.map(this.toViewData).slice()
       });
     } else if (dataChangeType == DataChangeType.UPDATE) {
       this.signalManager.emitSignal(dataChangeType, {
         index: payload.index,
-        original: payload.original.map(value => {
-          return this.toViewData(value);
-        })
+        original: payload.original.map(this.toViewData).slice()
       });
     } else {
       this.signalManager.emitSignal(dataChangeType, payload);
