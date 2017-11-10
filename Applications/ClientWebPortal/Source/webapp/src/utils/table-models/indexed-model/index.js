@@ -1,9 +1,9 @@
 import ArrayModel from 'utils/table-models/array-model';
 import HashMap from 'hashmap';
 import ArrayStringKeyGenerator from 'utils/array-string-key-generator';
-import NotifyChangeModel from 'utils/table-models/notify-change-model';
+import Model from 'utils/table-models/model';
 
-export default class extends NotifyChangeModel {
+export default class extends Model {
   constructor(indices, columnNames, keyGenerator = new ArrayStringKeyGenerator()) {
     super();
     // validate indices

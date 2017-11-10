@@ -1,8 +1,8 @@
-import DataChangeType from 'utils/table-models/notify-change-model/data-change-type';
-import NotifyChangeModel from 'utils/table-models/notify-change-model';
+import DataChangeType from 'utils/table-models/model/data-change-type';
+import Model from 'utils/table-models/model';
 import SignalManager from 'utils/signal-manager';
 
-export default class extends NotifyChangeModel {
+export default class extends Model {
   constructor(columnNames) {
     super();
     if (columnNames == null) {

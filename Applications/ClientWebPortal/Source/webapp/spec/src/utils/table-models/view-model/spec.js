@@ -36,7 +36,7 @@ describe('ViewModel', function() {
       expect(value.value.name).toBe('John Doe');
       expect(value.display).toBe('John Doe');
     });
-  });  
+  });
 });
 
 class MockSourceModel {

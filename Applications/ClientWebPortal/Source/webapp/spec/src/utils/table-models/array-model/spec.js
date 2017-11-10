@@ -1,5 +1,5 @@
 import ArrayModel from '../../../../webapp/utils/table-models/array-model';
-import DataChangeType from '../../../../webapp/utils/table-models/notify-change-model/data-change-type';
+import DataChangeType from '../../../../webapp/utils/table-models/model/data-change-type';
 
 describe('ArrayModel', function() {
   beforeAll(function() {

@@ -1,4 +1,4 @@
-import DataChangeType from 'utils/table-models/notify-change-model/data-change-type';
+import DataChangeType from 'utils/table-models/model/data-change-type';
 import ArrayStringKeyGenerator from 'utils/array-string-key-generator';
 import definitionsService from 'services/definitions';
 import numberFormatter from 'utils/number-formatter';
@@ -22,7 +22,8 @@ const LIGHT_GRAY = '#fbfbfb';
 
 export default class extends ViewModel {
   constructor(sourceModel) {
-    super(sourceModel);
+    super();
+    this.sourceModel = sourceModel;
   }
 
   getRowCount() {

@@ -1,12 +1,16 @@
-import ChainableModel from 'utils/table-models/chainable-model';
+import Model from 'utils/table-models/model';
 import ViewData from 'utils/table-models/view-model/view-data';
 import DefaultStyleRule from 'utils/table-models/default-style-rule';
 import numberFormatter from 'utils/number-formatter';
+import DataChangeType from 'utils/table-models/model/data-change-type';
 
-export default class extends ChainableModel {
+export default class extends Model {
   constructor(sourceModel) {
-    super(sourceModel);
+    super();
+    this.sourceModel = sourceModel;
     this.defaultStyle = new DefaultStyleRule();
+
+    this.getDataChangeListener = this.getDataChangeListener.bind(this);
   }
 
   getRowCount() {
@@ -29,9 +33,10 @@ export default class extends ChainableModel {
   /** @protected */
   toViewData(x, y, value) {
     let display = this.getDisplay(value);
-    return new ViewData(value, display, this.defaultStyle);
+    return new ViewData(value, display, this.getStyle(x, y));
   }
 
+ /** @private */
   getDisplay(value) {
     if (value == null) {
       return 'N/A';
@@ -44,11 +49,50 @@ export default class extends ChainableModel {
     }
   }
 
+  /** @private */
+  getStyle(x, y) {
+    return this.defaultStyle;
+  }
+
   addDataChangeListener(listener) {
-    return this.signalManager.addListener(listener);
+    let dataChangeListener = this.getDataChangeListener(listener);
+    return this.source.addDataChangeListener(dataChangeListener);
+  }
+
+  /** @private */
+  getDataChangeListener(listener) {
+    return function(dataChangeType, payload) {
+      if (changeType == DataChangeType.REMOVE) {
+        let transformed = this.transformRemoveRowEventPayload(payload);
+        listener(dataChangeType, transformed);
+      } else if (changeType == DataChangeType.UPDATE) {
+        let transformed = this.transformUpdateRowEventPayload(payload);
+        listener(dataChangeType, transformed);
+      } else {
+        listener(dataChangeType, payload);
+      }
+    }.bind(this);
+  }
+
+  /** @private */
+  transformRemoveRowEventPayload(payload) {
+    let display = this.getDisplay(payload.row);
+    return {
+      index: payload.index,
+      row: new ViewData(payload.row, display, this.defaultStyle)
+    };
+  }
+
+  /** @private */
+  transformUpdateRowEventPayload(payload) {
+    let display = this.getDisplay(payload.original);
+    return {
+      index: payload.index,
+      row: new ViewData(payload.original, display, this.defaultStyle)
+    };
   }
 
   removeDataChangeListener(subId) {
-    this.signalManager.removeListener(subId);
+    this.source.removeDataChangeListener(subId);
   }
 }

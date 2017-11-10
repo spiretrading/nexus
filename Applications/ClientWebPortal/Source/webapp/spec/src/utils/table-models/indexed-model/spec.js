@@ -1,5 +1,5 @@
 import IndexedModel from '../../../../webapp/utils/table-models/indexed-model';
-import DataChangeType from '../../../../webapp/utils/table-models/notify-change-model/data-change-type';
+import DataChangeType from '../../../../webapp/utils/table-models/model/data-change-type';
 
 describe('IndexedModel', function() {
   beforeAll(function() {
