@@ -33,6 +33,18 @@ export default class extends Model {
     return this.toViewData(value);
   }
 
+  addDataChangeListener(listener) {
+    return this.signalManager.addListener(listener);
+  }
+
+  removeDataChangeListener(subId) {
+    this.signalManager.removeListener(subId);
+  }
+
+  dispose() {
+    this.sourceModel.removeDataChangeListener(this.dataChangeSubId);
+  }
+
   /** @protected */
   toViewData(value) {
     let display = this.getDisplay(value);
@@ -52,32 +64,20 @@ export default class extends Model {
     }
   }
 
-  addDataChangeListener(listener) {
-    return this.signalManager.addListener(listener);
-  }
-
   /** @private */
   onDataChange(dataChangeType, payload) {
     if (dataChangeType == DataChangeType.REMOVE) {
       this.signalManager.emitSignal(dataChangeType, {
         index: payload.index,
-        row: payload.row.map(this.toViewData).slice()
+        row: Object.freeze(payload.row.map(this.toViewData))
       });
     } else if (dataChangeType == DataChangeType.UPDATE) {
       this.signalManager.emitSignal(dataChangeType, {
         index: payload.index,
-        original: payload.original.map(this.toViewData).slice()
+        original: Object.freeze(payload.original.map(this.toViewData))
       });
     } else {
       this.signalManager.emitSignal(dataChangeType, payload);
     }
-  }
-
-  removeDataChangeListener(subId) {
-    this.signalManager.removeListener(subId);
-  }
-
-  dispose() {
-    this.sourceModel.removeDataChangeListener(this.dataChangeSubId);
   }
 }
