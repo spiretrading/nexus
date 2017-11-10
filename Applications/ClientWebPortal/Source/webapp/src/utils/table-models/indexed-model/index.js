@@ -1,9 +1,11 @@
-import ArrayModel from './array-model';
+import ArrayModel from 'utils/table-models/array-model';
 import HashMap from 'hashmap';
 import ArrayStringKeyGenerator from 'utils/array-string-key-generator';
+import NotifyChangeModel from 'utils/table-models/notify-change-model';
 
-export default class {
+export default class extends NotifyChangeModel {
   constructor(indices, columnNames, keyGenerator = new ArrayStringKeyGenerator()) {
+    super();
     // validate indices
     for (let i=0; i<indices.length; i++) {
       if (indices[i] < 0 || indices[i] >= columnNames.length) {

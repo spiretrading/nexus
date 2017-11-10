@@ -1,8 +1,10 @@
+import DataChangeType from 'utils/table-models/notify-change-model/data-change-type';
+import NotifyChangeModel from 'utils/table-models/notify-change-model';
 import SignalManager from 'utils/signal-manager';
-import DataChangeType from './data-change-type';
 
-export default class {
+export default class extends NotifyChangeModel {
   constructor(columnNames) {
+    super();
     if (columnNames == null) {
       throw new TypeError('Column names cannot be null');
     }
