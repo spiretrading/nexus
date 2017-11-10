@@ -1,9 +1,12 @@
 import ViewModel from '../../../../webapp/utils/table-models/view-model';
+import SignalManager from '../../../../webapp/utils/signal-manager';
+import DataChangeType from '../../../../webapp/utils/table-models/model/data-change-type';
+import DefaultStyleRule from '../../../../webapp/utils/table-models/default-style-rule';
 
 describe('ViewModel', function() {
   beforeAll(function() {
-    let sourceModel = new MockSourceModel();
-    this.viewModel = new ViewModel(sourceModel);
+    this.sourceModel = new MockSourceModel();
+    this.viewModel = new ViewModel(this.sourceModel);
   });
 
   it('getRowCount', function() {
@@ -37,6 +40,39 @@ describe('ViewModel', function() {
       expect(value.display).toBe('John Doe');
     });
   });
+
+  describe('onDataChange data transformation', function() {
+    let sourceModel, viewModel;
+
+    beforeEach(function() {
+      sourceModel = new MockSourceModel();
+      viewModel = new ViewModel(sourceModel);
+    });
+
+    it('Row remove', function(done) {
+      viewModel.addDataChangeListener(function(dataChangeType, payload) {
+        expect(dataChangeType).toBe(DataChangeType.REMOVE);
+        expect(payload.index).toBe(1);
+        expect(payload.row[0].value).toBe(5123478);
+        expect(payload.row[0].display).toBe('5,123,478');
+        expect(payload.row[0].style instanceof DefaultStyleRule).toBe(true);
+        done();
+      });
+      sourceModel.emitDataRemoveSignal(1);
+    });
+
+    it('Row update', function(done) {
+      viewModel.addDataChangeListener(function(dataChangeType, payload) {
+        expect(dataChangeType).toBe(DataChangeType.UPDATE);
+        expect(payload.index).toBe(1);
+        expect(payload.original[2].value instanceof MockName).toBe(true);
+        expect(payload.original[2].display).toBe('Will Smith');
+        expect(payload.original[2].style instanceof DefaultStyleRule).toBe(true);
+        done();
+      });
+      sourceModel.emitDataUpdateSignal(1);
+    });
+  });
 });
 
 class MockSourceModel {
@@ -59,6 +95,8 @@ class MockSourceModel {
         new MockName('Will Smith')
       ]
     ];
+
+    this.signalManager = new SignalManager();
   }
 
   getRowCount() {
@@ -75,6 +113,28 @@ class MockSourceModel {
 
   getValueAt(x, y) {
     return this.data[y][x];
+  }
+
+  addDataChangeListener(listener) {
+    return this.signalManager.addListener(listener);
+  }
+
+  removeDataChangeListener(subId) {
+    this.signalManager.removeListener(subId);
+  }
+
+  emitDataRemoveSignal(index) {
+    this.signalManager.emitSignal(DataChangeType.REMOVE, {
+      index: index,
+      row: this.data[index]
+    });
+  }
+
+  emitDataUpdateSignal(index) {
+    this.signalManager.emitSignal(DataChangeType.UPDATE, {
+      index: index,
+      original: this.data[index]
+    });
   }
 }
 

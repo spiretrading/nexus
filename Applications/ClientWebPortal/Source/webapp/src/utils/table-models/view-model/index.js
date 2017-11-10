@@ -3,14 +3,16 @@ import ViewData from 'utils/table-models/view-model/view-data';
 import DefaultStyleRule from 'utils/table-models/default-style-rule';
 import numberFormatter from 'utils/number-formatter';
 import DataChangeType from 'utils/table-models/model/data-change-type';
+import SignalManager from 'utils/signal-manager';
 
 export default class extends Model {
   constructor(sourceModel) {
     super();
     this.sourceModel = sourceModel;
     this.defaultStyle = new DefaultStyleRule();
-
-    this.getDataChangeListener = this.getDataChangeListener.bind(this);
+    this.signalManager = new SignalManager();
+    this.onDataChange = this.onDataChange.bind(this);
+    this.dataChangeSubId = this.sourceModel.addDataChangeListener(this.onDataChange);
   }
 
   getRowCount() {
@@ -27,13 +29,13 @@ export default class extends Model {
 
   getValueAt(x, y) {
     let value = this.sourceModel.getValueAt(x, y);
-    return this.toViewData(x, y, value);
+    return this.toViewData(value);
   }
 
   /** @protected */
-  toViewData(x, y, value) {
+  toViewData(value) {
     let display = this.getDisplay(value);
-    return new ViewData(value, display, this.getStyle(x, y));
+    return new ViewData(value, display, this.defaultStyle);
   }
 
  /** @private */
@@ -49,50 +51,36 @@ export default class extends Model {
     }
   }
 
-  /** @private */
-  getStyle(x, y) {
-    return this.defaultStyle;
-  }
-
   addDataChangeListener(listener) {
-    let dataChangeListener = this.getDataChangeListener(listener);
-    return this.source.addDataChangeListener(dataChangeListener);
+    return this.signalManager.addListener(listener);
   }
 
   /** @private */
-  getDataChangeListener(listener) {
-    return function(dataChangeType, payload) {
-      if (changeType == DataChangeType.REMOVE) {
-        let transformed = this.transformRemoveRowEventPayload(payload);
-        listener(dataChangeType, transformed);
-      } else if (changeType == DataChangeType.UPDATE) {
-        let transformed = this.transformUpdateRowEventPayload(payload);
-        listener(dataChangeType, transformed);
-      } else {
-        listener(dataChangeType, payload);
-      }
-    }.bind(this);
-  }
-
-  /** @private */
-  transformRemoveRowEventPayload(payload) {
-    let display = this.getDisplay(payload.row);
-    return {
-      index: payload.index,
-      row: new ViewData(payload.row, display, this.defaultStyle)
-    };
-  }
-
-  /** @private */
-  transformUpdateRowEventPayload(payload) {
-    let display = this.getDisplay(payload.original);
-    return {
-      index: payload.index,
-      row: new ViewData(payload.original, display, this.defaultStyle)
-    };
+  onDataChange(dataChangeType, payload) {
+    if (dataChangeType == DataChangeType.REMOVE) {
+      this.signalManager.emitSignal(dataChangeType, {
+        index: payload.index,
+        row: payload.row.map(value => {
+          return this.toViewData(value);
+        })
+      });
+    } else if (dataChangeType == DataChangeType.UPDATE) {
+      this.signalManager.emitSignal(dataChangeType, {
+        index: payload.index,
+        original: payload.original.map(value => {
+          return this.toViewData(value);
+        })
+      });
+    } else {
+      this.signalManager.emitSignal(dataChangeType, payload);
+    }
   }
 
   removeDataChangeListener(subId) {
-    this.source.removeDataChangeListener(subId);
+    this.signalManager.removeListener(subId);
+  }
+
+  dispose() {
+    this.sourceModel.removeDataChangeListener(this.dataChangeSubId);
   }
 }
