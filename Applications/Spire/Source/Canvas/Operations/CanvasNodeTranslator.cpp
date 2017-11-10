@@ -1365,14 +1365,14 @@ void CanvasNodeTranslationVisitor::Visit(const OrderImbalanceQueryNode& node) {
   auto market = std::static_pointer_cast<Reactor<MarketCode>>(
     boost::get<std::shared_ptr<BaseReactor>>(
     InternalTranslation(node.GetChildren()[0])));
-  auto range = std::static_pointer_cast<Reactor<Range>>(
+  auto range = std::static_pointer_cast<Reactor<Queries::Range>>(
     boost::get<std::shared_ptr<BaseReactor>>(
     InternalTranslation(node.GetChildren()[1])));
   auto marketDataClient =
     &m_context->GetUserProfile().GetServiceClients().GetMarketDataClient();
   auto reactorMonitor = &m_context->GetReactorMonitor();
   auto orderImbalancePublisher = MakeFunctionReactor(
-    [=] (MarketCode market, const Range& range) {
+    [=] (MarketCode market, const Queries::Range& range) {
       MarketWideDataQuery query;
       query.SetIndex(market);
       query.SetRange(range);
@@ -1576,14 +1576,14 @@ void CanvasNodeTranslationVisitor::Visit(const TimeAndSaleQueryNode& node) {
   auto security = std::static_pointer_cast<Reactor<Security>>(
     boost::get<std::shared_ptr<BaseReactor>>(
     InternalTranslation(node.GetChildren()[0])));
-  auto range = std::static_pointer_cast<Reactor<Range>>(
+  auto range = std::static_pointer_cast<Reactor<Queries::Range>>(
     boost::get<std::shared_ptr<BaseReactor>>(
     InternalTranslation(node.GetChildren()[1])));
   auto marketDataClient = &m_context->GetUserProfile().GetServiceClients().
     GetMarketDataClient();
   auto reactorMonitor = &m_context->GetReactorMonitor();
   auto timeAndSalePublisher = MakeFunctionReactor(
-    [=] (const Security& security, const Range& range) {
+    [=] (const Security& security, const Queries::Range& range) {
       SecurityMarketDataQuery query;
       query.SetIndex(security);
       query.SetRange(range);
