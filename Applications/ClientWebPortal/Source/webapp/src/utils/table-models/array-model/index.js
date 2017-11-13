@@ -1,8 +1,10 @@
+import DataChangeType from 'utils/table-models/model/data-change-type';
+import Model from 'utils/table-models/model';
 import SignalManager from 'utils/signal-manager';
-import DataChangeType from './data-change-type';
 
-export default class {
+export default class extends Model {
   constructor(columnNames) {
+    super();
     if (columnNames == null) {
       throw new TypeError('Column names cannot be null');
     }
