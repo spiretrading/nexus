@@ -1,11 +1,14 @@
 import ViewModel from '../../../../webapp/utils/table-models/view-model';
+import ArrayModel from '../../../../webapp/utils/table-models/array-model';
 import SignalManager from '../../../../webapp/utils/signal-manager';
 import DataChangeType from '../../../../webapp/utils/table-models/model/data-change-type';
 import DefaultStyleRule from '../../../../webapp/utils/table-models/default-style-rule';
 
 describe('ViewModel', function() {
   beforeAll(function() {
-    this.sourceModel = new MockSourceModel();
+    this.columnNames = ['Number', 'String', 'Name'];
+    this.sourceModel = new ArrayModel(this.columnNames);
+    initializeSourceModel(this.sourceModel);
     this.viewModel = new ViewModel(this.sourceModel);
   });
 
@@ -45,7 +48,8 @@ describe('ViewModel', function() {
     let sourceModel, viewModel;
 
     beforeEach(function() {
-      sourceModel = new MockSourceModel();
+      sourceModel = new ArrayModel(this.columnNames);
+      initializeSourceModel(sourceModel);
       viewModel = new ViewModel(sourceModel);
     });
 
@@ -58,7 +62,7 @@ describe('ViewModel', function() {
         expect(payload.row[0].style instanceof DefaultStyleRule).toBe(true);
         done();
       });
-      sourceModel.emitDataRemoveSignal(1);
+      sourceModel.removeRow(1);
     });
 
     it('Row update', function(done) {
@@ -70,72 +74,27 @@ describe('ViewModel', function() {
         expect(payload.original[2].style instanceof DefaultStyleRule).toBe(true);
         done();
       });
-      sourceModel.emitDataUpdateSignal(1);
+      sourceModel.updateRow(1, [
+        111111111,
+        'Some String Value 3',
+        new MockName('Test Name')
+      ]);
     });
   });
 });
 
-class MockSourceModel {
-  constructor() {
-    this.columnNames = [
-      'Number',
-      'String',
-      'Name'
-    ];
+function initializeSourceModel(sourceModel) {
+  sourceModel.addRow([
+    12345678910,
+    'Some String Value 1',
+    new MockName('John Doe')
+  ]);
 
-    this.data = [
-      [
-        12345678910,
-        'Some String Value 1',
-        new MockName('John Doe')
-      ],
-      [
-        5123478,
-        'Some String Value 2',
-        new MockName('Will Smith')
-      ]
-    ];
-
-    this.signalManager = new SignalManager();
-  }
-
-  getRowCount() {
-    return this.data.length;
-  }
-
-  getColumnCount() {
-    return this.columnNames.length;
-  }
-
-  getColumnName(x) {
-    return this.columnNames[x];
-  }
-
-  getValueAt(x, y) {
-    return this.data[y][x];
-  }
-
-  addDataChangeListener(listener) {
-    return this.signalManager.addListener(listener);
-  }
-
-  removeDataChangeListener(subId) {
-    this.signalManager.removeListener(subId);
-  }
-
-  emitDataRemoveSignal(index) {
-    this.signalManager.emitSignal(DataChangeType.REMOVE, {
-      index: index,
-      row: this.data[index]
-    });
-  }
-
-  emitDataUpdateSignal(index) {
-    this.signalManager.emitSignal(DataChangeType.UPDATE, {
-      index: index,
-      original: this.data[index]
-    });
-  }
+  sourceModel.addRow([
+    5123478,
+    'Some String Value 2',
+    new MockName('Will Smith')
+  ]);
 }
 
 class MockName {
