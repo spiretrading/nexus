@@ -52,6 +52,7 @@ namespace Spire {
   class FileReaderNode;
   class FilterNode;
   class FloorNode;
+  class FirstNode;
   class FoldNode;
   class FoldOperandNode;
   class FunctionNode;
@@ -105,7 +106,6 @@ namespace Spire {
   class SignatureNode;
   class SingleOrderTaskNode;
   class SpawnNode;
-  class StaticNode;
   class SubtractionNode;
   class TaskType;
   class TaskStateMonitorNode;

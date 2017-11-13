@@ -65,6 +65,8 @@ namespace Spire {
 
       virtual void Visit(const FilterNode& node);
 
+      virtual void Visit(const FirstNode& node);
+
       virtual void Visit(const FloorNode& node);
 
       virtual void Visit(const FoldNode& node);
@@ -140,8 +142,6 @@ namespace Spire {
       virtual void Visit(const SingleOrderTaskNode& node);
 
       virtual void Visit(const SpawnNode& node);
-
-      virtual void Visit(const StaticNode& node);
 
       virtual void Visit(const SubtractionNode& node);
 

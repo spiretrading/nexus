@@ -1,12 +1,12 @@
-#ifndef SPIRE_STATICNODE_HPP
-#define SPIRE_STATICNODE_HPP
+#ifndef SPIRE_FIRST_NODE_HPP
+#define SPIRE_FIRST_NODE_HPP
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/FunctionNode.hpp"
 
 namespace Spire {
 
-  //! Specifies a StaticNode's signatures.
-  struct StaticNodeSignatures {
+  //! Specifies a FirstNode's signatures.
+  struct FirstNodeSignatures {
     template<typename T>
     struct MakeSignature {
       typedef typename boost::mpl::vector<T, T>::type type;
@@ -16,14 +16,14 @@ namespace Spire {
       MakeSignature<boost::mpl::placeholders::_1>>::type type;
   };
 
-  /*! \class StaticNode
+  /*! \class FirstNode
       \brief Evaluates to the first value it receives.
    */
-  class StaticNode : public FunctionNode {
+  class FirstNode : public FunctionNode {
     public:
 
-      //! Constructs a StaticNode.
-      StaticNode();
+      //! Constructs a FirstNode.
+      FirstNode();
 
       virtual void Apply(CanvasNodeVisitor& visitor) const;
 
@@ -33,13 +33,13 @@ namespace Spire {
     private:
       friend struct Beam::Serialization::DataShuttle;
 
-      StaticNode(Beam::Serialization::ReceiveBuilder);
+      FirstNode(Beam::Serialization::ReceiveBuilder);
       template<typename Shuttler>
       void Shuttle(Shuttler& shuttle, unsigned int version);
   };
 
   template<typename Shuttler>
-  void StaticNode::Shuttle(Shuttler& shuttle, unsigned int version) {
+  void FirstNode::Shuttle(Shuttler& shuttle, unsigned int version) {
     FunctionNode::Shuttle(shuttle, version);
   }
 }
@@ -47,7 +47,7 @@ namespace Spire {
 namespace Beam {
 namespace Serialization {
   template<>
-  struct IsDefaultConstructable<Spire::StaticNode> : std::false_type {};
+  struct IsDefaultConstructable<Spire::FirstNode> : std::false_type {};
 }
 }
 

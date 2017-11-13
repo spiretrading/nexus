@@ -35,6 +35,7 @@
 #include "Spire/Canvas/StandardNodes/DivisionNode.hpp"
 #include "Spire/Canvas/StandardNodes/EqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/FilterNode.hpp"
+#include "Spire/Canvas/StandardNodes/FirstNode.hpp"
 #include "Spire/Canvas/StandardNodes/FloorNode.hpp"
 #include "Spire/Canvas/StandardNodes/FoldNode.hpp"
 #include "Spire/Canvas/StandardNodes/FoldOperandNode.hpp"
@@ -49,7 +50,6 @@
 #include "Spire/Canvas/StandardNodes/NotNode.hpp"
 #include "Spire/Canvas/StandardNodes/RangeNode.hpp"
 #include "Spire/Canvas/StandardNodes/RoundNode.hpp"
-#include "Spire/Canvas/StandardNodes/StaticNode.hpp"
 #include "Spire/Canvas/StandardNodes/SubtractionNode.hpp"
 #include "Spire/Canvas/StandardNodes/TimeRangeParameterNode.hpp"
 #include "Spire/Canvas/StandardNodes/TimerNode.hpp"
@@ -184,6 +184,10 @@ void CanvasNodeVisitor::Visit(const FileReaderNode& node) {
 
 void CanvasNodeVisitor::Visit(const FilterNode& node) {
   Visit(static_cast<const SignatureNode&>(node));
+}
+
+void CanvasNodeVisitor::Visit(const FirstNode& node) {
+  Visit(static_cast<const FunctionNode&>(node));
 }
 
 void CanvasNodeVisitor::Visit(const FloorNode& node) {
@@ -336,10 +340,6 @@ void CanvasNodeVisitor::Visit(const SingleOrderTaskNode& node) {
 
 void CanvasNodeVisitor::Visit(const SpawnNode& node) {
   Visit(static_cast<const SignatureNode&>(node));
-}
-
-void CanvasNodeVisitor::Visit(const StaticNode& node) {
-  Visit(static_cast<const FunctionNode&>(node));
 }
 
 void CanvasNodeVisitor::Visit(const SubtractionNode& node) {
