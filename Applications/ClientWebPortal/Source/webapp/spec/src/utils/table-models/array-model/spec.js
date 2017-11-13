@@ -1,5 +1,5 @@
-import ArrayModel from '../../../../webapp/utils/chainable-models/array-model';
-import DataChangeType from '../../../../webapp/utils/chainable-models/data-change-type';
+import ArrayModel from '../../../../webapp/utils/table-models/array-model';
+import DataChangeType from '../../../../webapp/utils/table-models/model/data-change-type';
 
 describe('ArrayModel', function() {
   beforeAll(function() {
