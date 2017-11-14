@@ -169,15 +169,6 @@ BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedOrder);
 BEAM_DEFINE_PYTHON_QUEUE_LINKER(ExecutionReport);
 BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedExecutionReport);
 
-void Nexus::Python::ExportAccountQuery() {
-  ExportIndexedQuery<DirectoryEntry>("DirectoryEntryIndexedQuery");
-  class_<AccountQuery, bases<IndexedQuery<DirectoryEntry>, RangedQuery,
-    SnapshotLimitedQuery, InterruptableQuery, FilteredQuery>>(
-    "AccountQuery", init<>())
-    .def("__copy__", &MakeCopy<AccountQuery>)
-    .def("__deepcopy__", &MakeDeepCopy<AccountQuery>);
-}
-
 void Nexus::Python::ExportApplicationOrderExecutionClient() {
   class_<ToPythonOrderExecutionClient<Client>,
     bases<VirtualOrderExecutionClient>, boost::noncopyable>(
@@ -289,7 +280,6 @@ void Nexus::Python::ExportOrderExecutionService() {
     borrowed(PyImport_AddModule(nestedName.c_str())))};
   scope().attr("order_execution_service") = nestedModule;
   scope parent = nestedModule;
-  ExportAccountQuery();
   ExportExecutionReport();
   ExportOrder();
   ExportOrderExecutionClient();
@@ -298,6 +288,7 @@ void Nexus::Python::ExportOrderExecutionService() {
   ExportOrderInfo();
   ExportOrderRecord();
   ExportPrimitiveOrder();
+  ExportBasicQuery<DirectoryEntry>("Account");
   ExportStandardQueries();
   {
     string nestedName = extract<string>(parent.attr("__name__") + ".tests");

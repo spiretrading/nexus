@@ -5,9 +5,6 @@
 namespace Nexus {
 namespace Python {
 
-  //! Exports the AccountQuery class.
-  void ExportAccountQuery();
-
   //! Exports the ApplicationOrderExecutionClient class.
   void ExportApplicationOrderExecutionClient();
 
