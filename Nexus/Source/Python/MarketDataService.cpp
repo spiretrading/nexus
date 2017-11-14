@@ -255,8 +255,8 @@ void Nexus::Python::ExportMarketDataService() {
   scope parent = nestedModule;
   ExportMarketDataClient();
   ExportApplicationMarketDataClient();
-  ExportMarketWideDataQuery();
-  ExportSecurityMarketDataQuery();
+  ExportBasicQuery<MarketCode>("MarketWideData");
+  ExportBasicQuery<Security>("SecurityMarketData");
   ExportSecuritySnapshot();
   {
     string nestedName = extract<string>(parent.attr("__name__") + ".tests");
@@ -292,30 +292,6 @@ void Nexus::Python::ExportMarketDataServiceTestEnvironment() {
       static_cast<void (MarketDataServiceTestEnvironment::*)(const Security&,
       const TimeAndSale&)>(&MarketDataServiceTestEnvironment::Publish)))
     .def("build_client", &MarketDataServiceTestEnvironmentBuildClient);
-}
-
-void Nexus::Python::ExportMarketWideDataQuery() {
-  ExportIndexedQuery<MarketCode>("MarketWideDataQuery");
-  class_<MarketWideDataQuery, bases<IndexedQuery<MarketCode>, RangedQuery,
-    SnapshotLimitedQuery, InterruptableQuery, FilteredQuery>>(
-    "MarketWideDataQuery", init<>())
-    .def("__copy__", &MakeCopy<MarketWideDataQuery>)
-    .def("__deepcopy__", &MakeDeepCopy<MarketWideDataQuery>);
-  def("build_real_time_with_snapshot_query",
-    static_cast<MarketWideDataQuery (*)(const MarketCode&)>(
-    &BuildRealTimeWithSnapshotQuery));
-}
-
-void Nexus::Python::ExportSecurityMarketDataQuery() {
-  ExportIndexedQuery<Security>("SecurityIndexedQuery");
-  class_<SecurityMarketDataQuery, bases<IndexedQuery<Security>, RangedQuery,
-    SnapshotLimitedQuery, InterruptableQuery, FilteredQuery>>(
-    "SecurityMarketDataQuery", init<>())
-    .def("__copy__", &MakeCopy<SecurityMarketDataQuery>)
-    .def("__deepcopy__", &MakeDeepCopy<SecurityMarketDataQuery>);
-  def("build_real_time_with_snapshot_query",
-    static_cast<SecurityMarketDataQuery (*)(Security)>(
-    &BuildRealTimeWithSnapshotQuery));
 }
 
 void Nexus::Python::ExportSecuritySnapshot() {

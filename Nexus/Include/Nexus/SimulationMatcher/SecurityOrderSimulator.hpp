@@ -86,8 +86,7 @@ namespace OrderExecutionService {
       Beam::RefType<TimeClient> timeClient)
       : m_timeClient{timeClient.Get()} {
     SetSessionTimestamps(m_timeClient->GetTime());
-    auto realTimeQuery = MarketDataService::BuildRealTimeWithSnapshotQuery(
-      security);
+    auto realTimeQuery = Beam::Queries::BuildCurrentQuery(security);
     marketDataClient.QueryBboQuotes(realTimeQuery, m_tasks.GetSlot<BboQuote>(
       std::bind(&SecurityOrderSimulator::OnBbo, this, std::placeholders::_1)));
     marketDataClient.QueryTimeAndSales(realTimeQuery,
