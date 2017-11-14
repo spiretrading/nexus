@@ -37,7 +37,7 @@ export default class extends Model {
     );
   }
 
-  moveTranslationRow(from, to) {
+  moveRow(from, to) {
     let next = this.transToSrcRow[from];
     if (from < to) {
       for (let i=to; i>=from; i--) {
@@ -50,7 +50,7 @@ export default class extends Model {
     }
   }
 
-  moveTranslationColumn(from, to) {
+  moveColumn(from, to) {
     let next = this.transToSrcColumn[from];
     if (from < to) {
       for (let i=to; i>=from; i--) {
