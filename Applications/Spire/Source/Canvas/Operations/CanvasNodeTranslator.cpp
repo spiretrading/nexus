@@ -23,6 +23,7 @@
 #include <Beam/Reactors/ThrowReactor.hpp>
 #include <Beam/Reactors/TimerReactor.hpp>
 #include <Beam/Tasks/AggregateTask.hpp>
+#include <Beam/Tasks/ChainedTask.hpp>
 #include <Beam/Tasks/IdleTask.hpp>
 #include <Beam/Tasks/ReactorTask.hpp>
 #include <Beam/Tasks/SpawnTask.hpp>
@@ -1089,21 +1090,40 @@ void CanvasNodeTranslationVisitor::Visit(const CeilNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const ChainNode& node) {
-  auto previousReactor = boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren().front()));
-  if(node.GetChildren().size() == 1) {
+  if(node.GetType().GetCompatibility(TaskType::GetInstance()) ==
+      CanvasType::Compatibility::EQUAL) {
+    vector<TaskFactory> factories;
+    auto orderExecutionPublisher = MakeAggregateOrderExecutionPublisher();
+    for(auto& child : node.GetChildren()) {
+      if(dynamic_cast<const NoneNode*>(&child) == nullptr) {
+        auto translation = get<TaskTranslation>(InternalTranslation(child));
+        factories.push_back(translation.m_factory);
+        orderExecutionPublisher->Add(*translation.m_publisher);
+      }
+    }
+    TaskTranslation taskTranslation;
+    taskTranslation.m_publisher = orderExecutionPublisher;
+    taskTranslation.m_factory = OrderExecutionPublisherTaskFactory(
+      ChainedTaskFactory(factories), orderExecutionPublisher);
+    m_translation = taskTranslation;
+  } else {
+    auto previousReactor = boost::get<std::shared_ptr<BaseReactor>>(
+      InternalTranslation(node.GetChildren().front()));
+    if(node.GetChildren().size() == 1) {
+      m_translation = previousReactor;
+      return;
+    }
+    auto& nativeType = static_cast<const NativeType&>(node.GetType());
+    for(auto i = std::size_t{1}; i < node.GetChildren().size() - 1; ++i) {
+      auto currentReactor = boost::get<std::shared_ptr<BaseReactor>>(
+        InternalTranslation(node.GetChildren()[i]));
+      auto chainReactor = Instantiate<ChainTranslator>(
+        nativeType.GetNativeType())(previousReactor, currentReactor,
+        *m_context);
+      previousReactor = chainReactor;
+    }
     m_translation = previousReactor;
-    return;
   }
-  auto& nativeType = static_cast<const NativeType&>(node.GetType());
-  for(auto i = std::size_t{1}; i < node.GetChildren().size() - 1; ++i) {
-    auto currentReactor = boost::get<std::shared_ptr<BaseReactor>>(
-      InternalTranslation(node.GetChildren()[i]));
-    auto chainReactor = Instantiate<ChainTranslator>(
-      nativeType.GetNativeType())(previousReactor, currentReactor, *m_context);
-    previousReactor = chainReactor;
-  }
-  m_translation = previousReactor;
 }
 
 void CanvasNodeTranslationVisitor::Visit(const CurrencyNode& node) {
