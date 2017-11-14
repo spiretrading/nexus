@@ -2,7 +2,7 @@
 let cores="`grep -c "processor" < /proc/cpuinfo`"
 directory=$(dirname $(readlink -f $0))
 
-expected_commit="82ecb13dc89ad89a2b5ab5387b028b5c27bef3b2"
+expected_commit="75666a474d1984a2201998a045bc81b2e452b51f"
 if [ ! -d "Beam" ]; then
   sudo -u $(logname) git clone https://www.github.com/eidolonsystems/beam.git Beam
   pushd Beam
