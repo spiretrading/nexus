@@ -11,6 +11,7 @@
 #include <Beam/Reactors/FilterReactor.hpp>
 #include <Beam/Reactors/FirstReactor.hpp>
 #include <Beam/Reactors/FoldReactor.hpp>
+#include <Beam/Reactors/LastReactor.hpp>
 #include <Beam/Reactors/LuaReactor.hpp>
 #include <Beam/Reactors/NativeLuaReactorParameter.hpp>
 #include <Beam/Reactors/NoneReactor.hpp>
@@ -95,6 +96,7 @@
 #include "Spire/Canvas/StandardNodes/GreaterNode.hpp"
 #include "Spire/Canvas/StandardNodes/GreaterOrEqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/IfNode.hpp"
+#include "Spire/Canvas/StandardNodes/LastNode.hpp"
 #include "Spire/Canvas/StandardNodes/LesserNode.hpp"
 #include "Spire/Canvas/StandardNodes/LesserOrEqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/MathSignatures.hpp"
@@ -202,6 +204,7 @@ namespace {
       virtual void Visit(const IfNode& node);
       virtual void Visit(const IntegerNode& node);
       virtual void Visit(const IsTerminalNode& node);
+      virtual void Visit(const LastNode& node);
       virtual void Visit(const LesserNode& node);
       virtual void Visit(const LesserOrEqualsNode& node);
       virtual void Visit(const LuaScriptNode& node);
@@ -673,6 +676,16 @@ namespace {
     }
 
     using SupportedTypes = IfNodeSignatures::type;
+  };
+
+  struct LastTranslator {
+    template<typename T>
+    static std::shared_ptr<BaseReactor> Template(
+        const std::shared_ptr<BaseReactor>& source) {
+      return MakeLastReactor(std::static_pointer_cast<Reactor<T>>(source));
+    }
+
+    using SupportedTypes = ValueTypes;
   };
 
   struct LesserTranslator {
@@ -1275,6 +1288,13 @@ void CanvasNodeTranslationVisitor::Visit(const IsTerminalNode& node) {
     InternalTranslation(node.GetChildren().front()));
   m_translation = MakeFunctionReactor(Beam::Tasks::IsTerminal,
     std::static_pointer_cast<Reactor<Task::State>>(state));
+}
+
+void CanvasNodeTranslationVisitor::Visit(const LastNode& node) {
+  auto reactor = boost::get<std::shared_ptr<BaseReactor>>(
+    InternalTranslation(node.GetChildren().front()));
+  m_translation = Instantiate<LastTranslator>(
+    static_cast<const NativeType&>(node.GetType()).GetNativeType())(reactor);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const LesserNode& node) {

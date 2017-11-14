@@ -44,6 +44,7 @@ namespace Spire {
       static const boost::uuids::uuid IF_UUID;
       static const boost::uuids::uuid INTEGER_UUID;
       static const boost::uuids::uuid IS_TERMINAL_UUID;
+      static const boost::uuids::uuid LAST_UUID;
       static const boost::uuids::uuid LESS_EQUAL_UUID;
       static const boost::uuids::uuid LESS_UUID;
       static const boost::uuids::uuid LIMIT_ASK_ORDER_TASK_UUID;

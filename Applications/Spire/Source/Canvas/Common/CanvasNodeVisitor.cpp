@@ -42,6 +42,7 @@
 #include "Spire/Canvas/StandardNodes/GreaterNode.hpp"
 #include "Spire/Canvas/StandardNodes/GreaterOrEqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/IfNode.hpp"
+#include "Spire/Canvas/StandardNodes/LastNode.hpp"
 #include "Spire/Canvas/StandardNodes/LesserNode.hpp"
 #include "Spire/Canvas/StandardNodes/LesserOrEqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/MaxNode.hpp"
@@ -228,6 +229,10 @@ void CanvasNodeVisitor::Visit(const InteractionsNode& node) {
 
 void CanvasNodeVisitor::Visit(const IsTerminalNode& node) {
   Visit(static_cast<const CanvasNode&>(node));
+}
+
+void CanvasNodeVisitor::Visit(const LastNode& node) {
+  Visit(static_cast<const FunctionNode&>(node));
 }
 
 void CanvasNodeVisitor::Visit(const LesserNode& node) {

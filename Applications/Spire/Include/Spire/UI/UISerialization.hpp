@@ -45,6 +45,7 @@
 #include "Spire/Canvas/StandardNodes/GreaterNode.hpp"
 #include "Spire/Canvas/StandardNodes/GreaterOrEqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/IfNode.hpp"
+#include "Spire/Canvas/StandardNodes/LastNode.hpp"
 #include "Spire/Canvas/StandardNodes/LesserNode.hpp"
 #include "Spire/Canvas/StandardNodes/LesserOrEqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/MaxNode.hpp"
@@ -182,6 +183,7 @@ namespace Spire {
     (GreaterNode, "Spire.GreaterNode"),
     (GreaterOrEqualsNode, "Spire.GreaterOrEqualsNode"),
     (IfNode, "Spire.IfNode"),
+    (LastNode, "Spire.LastNode"),
     (LesserNode, "Spire.LesserNode"),
     (LesserOrEqualsNode, "Spire.LesserOrEqualsNode"),
     (MaxNode, "Spire.MaxNode"),

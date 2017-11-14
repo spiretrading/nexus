@@ -45,6 +45,7 @@
 #include "Spire/Canvas/StandardNodes/GreaterNode.hpp"
 #include "Spire/Canvas/StandardNodes/GreaterOrEqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/IfNode.hpp"
+#include "Spire/Canvas/StandardNodes/LastNode.hpp"
 #include "Spire/Canvas/StandardNodes/LesserNode.hpp"
 #include "Spire/Canvas/StandardNodes/LesserOrEqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/MaxNode.hpp"
@@ -163,6 +164,8 @@ const uuid BuiltInCatalogEntry::INTEGER_UUID = stringUuidGenerator(
   "{0ff0640f-e00d-4a39-81e1-2efb64721681}");
 const uuid BuiltInCatalogEntry::IS_TERMINAL_UUID = stringUuidGenerator(
   "{556b1d84-0d33-40e0-988b-0db86336c065}");
+const uuid BuiltInCatalogEntry::LAST_UUID = stringUuidGenerator(
+  "{23a93e8c-7c3b-4fcf-97fa-700e7345d428}");
 const uuid BuiltInCatalogEntry::LESS_EQUAL_UUID = stringUuidGenerator(
   "{c32348eb-a25d-4c07-abd4-31a211f1463d}");
 const uuid BuiltInCatalogEntry::LESS_UUID = stringUuidGenerator(
@@ -310,6 +313,8 @@ vector<unique_ptr<CatalogEntry>> BuiltInCatalogEntry::
     ":/icons/floppy_disk.png", "", FileReaderNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(FILTER_UUID,
     ":/icons/funnel.png", "", FilterNode()));
+  entries.push_back(std::make_unique<BuiltInCatalogEntry>(FIRST_UUID,
+    ":/icons/note_pinned.png", "", FirstNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(FLOOR_UUID,
     ":/icons/calculator.png", "", FloorNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(FOLD_UUID,
@@ -324,6 +329,8 @@ vector<unique_ptr<CatalogEntry>> BuiltInCatalogEntry::
     INTEGER_UUID, ":/icons/weight.png", "", IntegerNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(IS_TERMINAL_UUID,
     ":/icons/logic_not.png", "", IsTerminalNode()));
+  entries.push_back(std::make_unique<BuiltInCatalogEntry>(LAST_UUID,
+    ":/icons/note_pinned.png", "", LastNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(LESS_EQUAL_UUID,
     ":/icons/scales.png", "", LesserOrEqualsNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(LESS_UUID,
@@ -403,8 +410,6 @@ vector<unique_ptr<CatalogEntry>> BuiltInCatalogEntry::
     SingleOrderTaskNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(SPAWN_TASK_UUID,
     ":/icons/flash_yellow.png", "", SpawnNode()));
-  entries.push_back(std::make_unique<BuiltInCatalogEntry>(FIRST_UUID,
-    ":/icons/note_pinned.png", "", FirstNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(SUBTRACTION_UUID,
     ":/icons/calculator.png", "", SubtractionNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>("Task State",

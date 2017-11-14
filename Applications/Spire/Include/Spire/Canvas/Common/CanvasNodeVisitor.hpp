@@ -87,6 +87,8 @@ namespace Spire {
 
       virtual void Visit(const IsTerminalNode& node);
 
+      virtual void Visit(const LastNode& node);
+
       virtual void Visit(const LesserNode& node);
 
       virtual void Visit(const LesserOrEqualsNode& node);

@@ -65,6 +65,7 @@ namespace Spire {
   class IntegerType;
   class InteractionsNode;
   class IsTerminalNode;
+  class LastNode;
   class LesserNode;
   class LesserOrEqualsNode;
   class LuaScriptNode;
