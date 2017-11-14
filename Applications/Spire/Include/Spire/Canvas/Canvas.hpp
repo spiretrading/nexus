@@ -52,6 +52,7 @@ namespace Spire {
   class FileReaderNode;
   class FilterNode;
   class FloorNode;
+  class FirstNode;
   class FoldNode;
   class FoldOperandNode;
   class FunctionNode;
@@ -64,6 +65,7 @@ namespace Spire {
   class IntegerType;
   class InteractionsNode;
   class IsTerminalNode;
+  class LastNode;
   class LesserNode;
   class LesserOrEqualsNode;
   class LuaScriptNode;
@@ -105,7 +107,6 @@ namespace Spire {
   class SignatureNode;
   class SingleOrderTaskNode;
   class SpawnNode;
-  class StaticNode;
   class SubtractionNode;
   class TaskType;
   class TaskStateMonitorNode;

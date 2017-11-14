@@ -9,7 +9,9 @@
 #include <Beam/Reactors/ConstantReactor.hpp>
 #include <Beam/Reactors/Expressions.hpp>
 #include <Beam/Reactors/FilterReactor.hpp>
+#include <Beam/Reactors/FirstReactor.hpp>
 #include <Beam/Reactors/FoldReactor.hpp>
+#include <Beam/Reactors/LastReactor.hpp>
 #include <Beam/Reactors/LuaReactor.hpp>
 #include <Beam/Reactors/NativeLuaReactorParameter.hpp>
 #include <Beam/Reactors/NoneReactor.hpp>
@@ -18,11 +20,11 @@
 #include <Beam/Reactors/RangeReactor.hpp>
 #include <Beam/Reactors/Reactor.hpp>
 #include <Beam/Reactors/ReactorError.hpp>
-#include <Beam/Reactors/StaticReactor.hpp>
 #include <Beam/Reactors/SwitchReactor.hpp>
 #include <Beam/Reactors/ThrowReactor.hpp>
 #include <Beam/Reactors/TimerReactor.hpp>
 #include <Beam/Tasks/AggregateTask.hpp>
+#include <Beam/Tasks/ChainedTask.hpp>
 #include <Beam/Tasks/IdleTask.hpp>
 #include <Beam/Tasks/ReactorTask.hpp>
 #include <Beam/Tasks/SpawnTask.hpp>
@@ -88,12 +90,14 @@
 #include "Spire/Canvas/StandardNodes/DivisionNode.hpp"
 #include "Spire/Canvas/StandardNodes/EqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/FilterNode.hpp"
+#include "Spire/Canvas/StandardNodes/FirstNode.hpp"
 #include "Spire/Canvas/StandardNodes/FloorNode.hpp"
 #include "Spire/Canvas/StandardNodes/FoldNode.hpp"
 #include "Spire/Canvas/StandardNodes/FoldOperandNode.hpp"
 #include "Spire/Canvas/StandardNodes/GreaterNode.hpp"
 #include "Spire/Canvas/StandardNodes/GreaterOrEqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/IfNode.hpp"
+#include "Spire/Canvas/StandardNodes/LastNode.hpp"
 #include "Spire/Canvas/StandardNodes/LesserNode.hpp"
 #include "Spire/Canvas/StandardNodes/LesserOrEqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/MathSignatures.hpp"
@@ -103,7 +107,6 @@
 #include "Spire/Canvas/StandardNodes/NotNode.hpp"
 #include "Spire/Canvas/StandardNodes/RangeNode.hpp"
 #include "Spire/Canvas/StandardNodes/RoundNode.hpp"
-#include "Spire/Canvas/StandardNodes/StaticNode.hpp"
 #include "Spire/Canvas/StandardNodes/SubtractionNode.hpp"
 #include "Spire/Canvas/StandardNodes/TimeRangeParameterNode.hpp"
 #include "Spire/Canvas/StandardNodes/TimerNode.hpp"
@@ -193,6 +196,7 @@ namespace {
       virtual void Visit(const FilePathNode& node);
       virtual void Visit(const FileReaderNode& node);
       virtual void Visit(const FilterNode& node);
+      virtual void Visit(const FirstNode& node);
       virtual void Visit(const FloorNode& node);
       virtual void Visit(const FoldNode& node);
       virtual void Visit(const FoldOperandNode& node);
@@ -201,6 +205,7 @@ namespace {
       virtual void Visit(const IfNode& node);
       virtual void Visit(const IntegerNode& node);
       virtual void Visit(const IsTerminalNode& node);
+      virtual void Visit(const LastNode& node);
       virtual void Visit(const LesserNode& node);
       virtual void Visit(const LesserOrEqualsNode& node);
       virtual void Visit(const LuaScriptNode& node);
@@ -225,7 +230,6 @@ namespace {
       virtual void Visit(const SideNode& node);
       virtual void Visit(const SingleOrderTaskNode& node);
       virtual void Visit(const SpawnNode& node);
-      virtual void Visit(const StaticNode& node);
       virtual void Visit(const SubtractionNode& node);
       virtual void Visit(const TaskStateMonitorNode& node);
       virtual void Visit(const TaskStateNode& node);
@@ -333,7 +337,8 @@ namespace {
         const std::shared_ptr<BaseReactor>& left,
         const std::shared_ptr<BaseReactor>& right,
         CanvasNodeTranslationContext& context) {
-      return Add(std::static_pointer_cast<Reactor<T0>>(left),
+      return MakeFunctionReactor(Operation<T0, T1, R>(),
+        std::static_pointer_cast<Reactor<T0>>(left),
         std::static_pointer_cast<Reactor<T1>>(right));
     }
 
@@ -542,6 +547,16 @@ namespace {
     using SupportedTypes = ValueTypes;
   };
 
+  struct FirstTranslator {
+    template<typename T>
+    static std::shared_ptr<BaseReactor> Template(
+        const std::shared_ptr<BaseReactor>& source) {
+      return MakeFirstReactor(std::static_pointer_cast<Reactor<T>>(source));
+    }
+
+    using SupportedTypes = ValueTypes;
+  };
+
   struct FloorTranslator {
     template<typename T0, typename T1, typename R>
     struct Operation {
@@ -662,6 +677,16 @@ namespace {
     }
 
     using SupportedTypes = IfNodeSignatures::type;
+  };
+
+  struct LastTranslator {
+    template<typename T>
+    static std::shared_ptr<BaseReactor> Template(
+        const std::shared_ptr<BaseReactor>& source) {
+      return MakeLastReactor(std::static_pointer_cast<Reactor<T>>(source));
+    }
+
+    using SupportedTypes = ValueTypes;
   };
 
   struct LesserTranslator {
@@ -907,16 +932,6 @@ namespace {
     using SupportedTypes = RoundingNodeSignatures::type;
   };
 
-  struct StaticTranslator {
-    template<typename T>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& source) {
-      return MakeStaticReactor(std::static_pointer_cast<Reactor<T>>(source));
-    }
-
-    using SupportedTypes = ValueTypes;
-  };
-
   struct SubtractionTranslator {
     template<typename T0, typename T1, typename R>
     struct Operation {
@@ -1088,21 +1103,40 @@ void CanvasNodeTranslationVisitor::Visit(const CeilNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const ChainNode& node) {
-  auto previousReactor = boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren().front()));
-  if(node.GetChildren().size() == 1) {
+  if(node.GetType().GetCompatibility(TaskType::GetInstance()) ==
+      CanvasType::Compatibility::EQUAL) {
+    vector<TaskFactory> factories;
+    auto orderExecutionPublisher = MakeAggregateOrderExecutionPublisher();
+    for(auto& child : node.GetChildren()) {
+      if(dynamic_cast<const NoneNode*>(&child) == nullptr) {
+        auto translation = get<TaskTranslation>(InternalTranslation(child));
+        factories.push_back(translation.m_factory);
+        orderExecutionPublisher->Add(*translation.m_publisher);
+      }
+    }
+    TaskTranslation taskTranslation;
+    taskTranslation.m_publisher = orderExecutionPublisher;
+    taskTranslation.m_factory = OrderExecutionPublisherTaskFactory(
+      ChainedTaskFactory(factories), orderExecutionPublisher);
+    m_translation = taskTranslation;
+  } else {
+    auto previousReactor = boost::get<std::shared_ptr<BaseReactor>>(
+      InternalTranslation(node.GetChildren().front()));
+    if(node.GetChildren().size() == 1) {
+      m_translation = previousReactor;
+      return;
+    }
+    auto& nativeType = static_cast<const NativeType&>(node.GetType());
+    for(auto i = std::size_t{1}; i < node.GetChildren().size() - 1; ++i) {
+      auto currentReactor = boost::get<std::shared_ptr<BaseReactor>>(
+        InternalTranslation(node.GetChildren()[i]));
+      auto chainReactor = Instantiate<ChainTranslator>(
+        nativeType.GetNativeType())(previousReactor, currentReactor,
+        *m_context);
+      previousReactor = chainReactor;
+    }
     m_translation = previousReactor;
-    return;
   }
-  auto& nativeType = static_cast<const NativeType&>(node.GetType());
-  for(auto i = std::size_t{1}; i < node.GetChildren().size() - 1; ++i) {
-    auto currentReactor = boost::get<std::shared_ptr<BaseReactor>>(
-      InternalTranslation(node.GetChildren()[i]));
-    auto chainReactor = Instantiate<ChainTranslator>(
-      nativeType.GetNativeType())(previousReactor, currentReactor, *m_context);
-    previousReactor = chainReactor;
-  }
-  m_translation = previousReactor;
 }
 
 void CanvasNodeTranslationVisitor::Visit(const CurrencyNode& node) {
@@ -1223,6 +1257,13 @@ void CanvasNodeTranslationVisitor::Visit(const FilterNode& node) {
     source);
 }
 
+void CanvasNodeTranslationVisitor::Visit(const FirstNode& node) {
+  auto reactor = boost::get<std::shared_ptr<BaseReactor>>(
+    InternalTranslation(node.GetChildren().front()));
+  m_translation = Instantiate<FirstTranslator>(
+    static_cast<const NativeType&>(node.GetType()).GetNativeType())(reactor);
+}
+
 void CanvasNodeTranslationVisitor::Visit(const FloorNode& node) {
   m_translation = TranslateFunction<FloorTranslator>(node);
 }
@@ -1267,6 +1308,13 @@ void CanvasNodeTranslationVisitor::Visit(const IsTerminalNode& node) {
     InternalTranslation(node.GetChildren().front()));
   m_translation = MakeFunctionReactor(Beam::Tasks::IsTerminal,
     std::static_pointer_cast<Reactor<Task::State>>(state));
+}
+
+void CanvasNodeTranslationVisitor::Visit(const LastNode& node) {
+  auto reactor = boost::get<std::shared_ptr<BaseReactor>>(
+    InternalTranslation(node.GetChildren().front()));
+  m_translation = Instantiate<LastTranslator>(
+    static_cast<const NativeType&>(node.GetType()).GetNativeType())(reactor);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const LesserNode& node) {
@@ -1437,7 +1485,7 @@ void CanvasNodeTranslationVisitor::Visit(const ReferenceNode& node) {
     if(parent.is_initialized() &&
         dynamic_cast<const SpawnNode*>(&*parent) != nullptr) {
       if(&referent == &parent->GetChildren().front()) {
-        m_translation = Instantiate<StaticTranslator>(
+        m_translation = Instantiate<FirstTranslator>(
           static_cast<const NativeType&>(node.GetType()).GetNativeType())(
           boost::get<std::shared_ptr<BaseReactor>>(m_translation));
       }
@@ -1524,13 +1572,6 @@ void CanvasNodeTranslationVisitor::Visit(const SpawnNode& node) {
     Ref(m_context->GetReactorMonitor()), trigger, taskFactory);
   taskTranslation.m_publisher = taskFactory.GetOrderExecutionPublisher();
   m_translation = taskTranslation;
-}
-
-void CanvasNodeTranslationVisitor::Visit(const StaticNode& node) {
-  auto reactor = boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren().front()));
-  m_translation = Instantiate<StaticTranslator>(
-    static_cast<const NativeType&>(node.GetType()).GetNativeType())(reactor);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const SubtractionNode& node) {
