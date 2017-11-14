@@ -40,7 +40,7 @@ describe('TranslationModel', function() {
     expect(translationModel.getValueAt(3,4)).toBe('Row 3 Column 1');
   });
 
-  describe('moveTranslationRow', function() {
+  describe('moveRow', function() {
     let translationModel;
 
     beforeEach(function() {
@@ -48,7 +48,7 @@ describe('TranslationModel', function() {
     });
 
     it('From lower to higher', function() {
-      translationModel.moveTranslationRow(1, 3);
+      translationModel.moveRow(1, 3);
       expect(translationModel.getValueAt(0,0)).toBe('Row 2 Column 3');
       expect(translationModel.getValueAt(1,1)).toBe(1410);
       expect(translationModel.getValueAt(2,2)).toBe(1112);
@@ -57,7 +57,7 @@ describe('TranslationModel', function() {
     });
 
     it('From higher to lower', function() {
-      translationModel.moveTranslationRow(3, 1);
+      translationModel.moveRow(3, 1);
       expect(translationModel.getValueAt(0,0)).toBe('Row 2 Column 3');
       expect(translationModel.getValueAt(1,1)).toBe(1110);
       expect(translationModel.getValueAt(2,2)).toBe(1012);
@@ -66,7 +66,7 @@ describe('TranslationModel', function() {
     })
   });
 
-  describe('moveTranslationColumn', function() {
+  describe('moveColumn', function() {
     let translationModel;
 
     beforeEach(function() {
@@ -74,7 +74,7 @@ describe('TranslationModel', function() {
     });
 
     it('From lower to higher', function() {
-      translationModel.moveTranslationColumn(1, 3);
+      translationModel.moveColumn(1, 3);
       expect(translationModel.getValueAt(0,0)).toBe('Row 2 Column 3');
       expect(translationModel.getValueAt(1,1)).toBe(1012);
       expect(translationModel.getValueAt(2,2)).toBe('Row 4 Column 1');
@@ -83,7 +83,7 @@ describe('TranslationModel', function() {
     });
 
     it('From higher to lower', function() {
-      translationModel.moveTranslationColumn(3, 1);
+      translationModel.moveColumn(3, 1);
       expect(translationModel.getValueAt(0,0)).toBe('Row 2 Column 3');
       expect(translationModel.getValueAt(1,1)).toBe('Row 0 Column 1');
       expect(translationModel.getValueAt(2,2)).toBe(1410);
