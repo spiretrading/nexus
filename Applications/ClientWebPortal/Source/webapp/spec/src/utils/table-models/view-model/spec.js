@@ -1,6 +1,5 @@
 import ViewModel from '../../../../webapp/utils/table-models/view-model';
 import ArrayModel from '../../../../webapp/utils/table-models/array-model';
-import SignalManager from '../../../../webapp/utils/signal-manager';
 import DataChangeType from '../../../../webapp/utils/table-models/model/data-change-type';
 import DefaultStyleRule from '../../../../webapp/utils/table-models/default-style-rule';
 

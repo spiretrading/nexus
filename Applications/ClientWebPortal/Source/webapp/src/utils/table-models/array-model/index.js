@@ -10,7 +10,7 @@ export default class extends Model {
     }
 
     this.data = [];
-    this.columnNames = columnNames;
+    this.columnNames = columnNames.slice();
     this.signalManager = new SignalManager();
   }
 
