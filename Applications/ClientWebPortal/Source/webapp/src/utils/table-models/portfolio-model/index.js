@@ -25,7 +25,6 @@ export default class extends Model {
   constructor(riskServiceClient) {
     super();
     this.riskServiceClient = riskServiceClient;
-    this.keyIndicies = [0, 1, 2];
     this.indexedModel = new IndexedModel(KEY_INDICES, COLUMN_NAMES);
     this.onDataReceived = this.onDataReceived.bind(this);
 
