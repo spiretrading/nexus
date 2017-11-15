@@ -65,7 +65,7 @@ export default class extends Model {
   /** @private */
   onDataReceived(data) {
     for (let i=0; i<data.length; i++) {
-      let rowData = Object.freeze(this.toRowData(data[i]));
+      let rowData = this.toRowData(data[i]);
       if (data[i].inventory.transaction_count == 0) {
         this.indexedModel.removeRow(rowData);
       } else {
