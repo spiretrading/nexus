@@ -260,6 +260,7 @@ namespace Nexus {
   }
 
   inline void BacktesterEnvironment::Shutdown() {
+    m_eventHandler.Close();
     m_orderExecutionEnvironment.reset();
     m_marketDataEnvironment.reset();
     m_administrationEnvironment.reset();
@@ -267,7 +268,6 @@ namespace Nexus {
     m_uidEnvironment.Close();
     m_serviceLocatorClient.reset();
     m_serviceLocatorEnvironment.Close();
-    m_eventHandler.Close();
     m_openState.SetClosed();
   }
 }

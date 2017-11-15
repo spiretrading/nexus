@@ -181,7 +181,8 @@ namespace Nexus {
       boost::posix_time::time_duration expiry) {
     Beam::Python::GilRelease gil;
     boost::lock_guard<Beam::Python::GilRelease> lock{gil};
-    return Beam::Threading::MakeToPythonTimer(m_client->BuildTimer(expiry));
+    return Beam::Threading::MakeVirtualTimer(
+      Beam::Threading::MakeToPythonTimer(m_client->BuildTimer(expiry)));
   }
 
   template<typename ClientType>

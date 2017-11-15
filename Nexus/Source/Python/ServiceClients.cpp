@@ -75,8 +75,7 @@ namespace {
 
     virtual std::unique_ptr<Timer> BuildTimer(
         boost::posix_time::time_duration expiry) override final {
-      return std::unique_ptr<Timer>{
-        static_cast<Timer*>(get_override("build_timer")(expiry))};
+      return MakeVirtualTimer(BuildPythonTimer(expiry));
     }
 
     virtual void Open() override final {
@@ -85,6 +84,11 @@ namespace {
 
     virtual void Close() override final {
       get_override("close")();
+    }
+
+    std::shared_ptr<Timer> BuildPythonTimer(
+        boost::posix_time::time_duration expiry) {
+      return get_override("build_timer")(expiry);
     }
   };
 
@@ -114,6 +118,11 @@ namespace {
   auto BuildTestServiceClients(std::shared_ptr<TestEnvironment> environment) {
     return std::make_shared<PythonTestServiceClients>(
       std::make_unique<TestServiceClients>(Ref(*environment)), environment);
+  }
+
+  auto ServiceClientsBuildTimer(VirtualServiceClients& serviceClients,
+      const time_duration& expiry) {
+    return std::shared_ptr<VirtualTimer>{serviceClients.BuildTimer(expiry)};
   }
 }
 
@@ -250,7 +259,7 @@ void Nexus::Python::ExportVirtualServiceClients() {
       return_internal_reference<>())
     .def("get_time_client", pure_virtual(&VirtualServiceClients::GetTimeClient),
       return_internal_reference<>())
-    .def("build_timer", pure_virtual(&VirtualServiceClients::BuildTimer))
+    .def("build_timer", &ServiceClientsBuildTimer)
     .def("open", pure_virtual(&VirtualServiceClients::Open))
     .def("close", pure_virtual(&VirtualServiceClients::Close));
   boost::python::register_ptr_to_python<
