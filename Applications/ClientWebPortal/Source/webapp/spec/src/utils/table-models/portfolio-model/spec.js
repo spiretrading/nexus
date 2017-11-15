@@ -6,7 +6,7 @@ import {
   Security
 } from 'spire-client';
 
-describe('ViewModel', function() {
+describe('PortfolioModel', function() {
   beforeAll(function() {
     this.portfolioModel = new PortfolioModel(new MockRiskServiceClient());
   });
