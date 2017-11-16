@@ -40,7 +40,7 @@ void BacktesterMarketDataClientTester::TestRealTimeQuery() {
   serviceClients.Open();
   RoutineTaskQueue routines;
   auto& marketDataClient = serviceClients.GetMarketDataClient();
-  auto query = BuildRealTimeWithSnapshotQuery(security);
+  auto query = BuildCurrentQuery(security);
   auto expectedTimestamp = startTime;
   auto finalTimestamp = startTime + seconds(COUNT - 1);
   Mutex queryCompleteMutex;

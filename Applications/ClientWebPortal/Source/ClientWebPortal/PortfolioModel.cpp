@@ -59,7 +59,7 @@ void PortfolioModel::OnRiskPortfolioInventoryUpdate(
     [&] () -> SecurityValuation& {
       auto valuationIterator = m_valuations.find(security);
       if(valuationIterator == m_valuations.end()) {
-        auto query = BuildRealTimeWithSnapshotQuery(security);
+        auto query = Queries::BuildCurrentQuery(security);
         valuationIterator = m_valuations.insert(std::make_pair(security,
           SecurityValuation{
           inventory.m_value.m_position.m_key.m_currency})).first;

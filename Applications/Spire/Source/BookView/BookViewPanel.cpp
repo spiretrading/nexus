@@ -109,7 +109,7 @@ void BookViewPanel::DisplaySecurity(const Security& security) {
   }
   m_boardLot = m_userProfile->GetMarketDatabase().FromCode(
     m_security.GetMarket()).m_boardLot;
-  SecurityMarketDataQuery bboQuery = BuildRealTimeWithSnapshotQuery(security);
+  auto bboQuery = BuildCurrentQuery(security);
   bboQuery.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
   m_userProfile->GetServiceClients().GetMarketDataClient().QueryBboQuotes(
     bboQuery, m_slotHandler->GetSlot<BboQuote>(

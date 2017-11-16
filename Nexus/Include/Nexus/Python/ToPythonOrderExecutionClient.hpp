@@ -1,5 +1,6 @@
 #ifndef NEXUS_TO_PYTHON_ORDER_EXECUTION_CLIENT_HPP
 #define NEXUS_TO_PYTHON_ORDER_EXECUTION_CLIENT_HPP
+#include <Beam/IO/OpenState.hpp>
 #include <Beam/Python/GilRelease.hpp>
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
@@ -55,6 +56,9 @@ namespace OrderExecutionService {
 
     private:
       std::unique_ptr<Client> m_client;
+      Beam::IO::OpenState m_openState;
+
+      void Shutdown();
   };
 
   //! Makes a ToPythonOrderExecutionClient.
@@ -76,6 +80,7 @@ namespace OrderExecutionService {
   ToPythonOrderExecutionClient<ClientType>::~ToPythonOrderExecutionClient() {
     Beam::Python::GilRelease gil;
     boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    Close();
     m_client.reset();
   }
 
@@ -140,14 +145,32 @@ namespace OrderExecutionService {
   void ToPythonOrderExecutionClient<ClientType>::Open() {
     Beam::Python::GilRelease gil;
     boost::lock_guard<Beam::Python::GilRelease> lock{gil};
-    m_client->Open();
+    if(m_openState.SetOpening()) {
+      return;
+    }
+    try {
+      m_client->Open();
+    } catch(const std::exception&) {
+      m_openState.SetOpenFailure();
+      Shutdown();
+    }
+    m_openState.SetOpen();
   }
 
   template<typename ClientType>
   void ToPythonOrderExecutionClient<ClientType>::Close() {
     Beam::Python::GilRelease gil;
     boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    if(m_openState.SetClosing()) {
+      return;
+    }
+    Shutdown();
+  }
+
+  template<typename ClientType>
+  void ToPythonOrderExecutionClient<ClientType>::Shutdown() {
     m_client->Close();
+    m_openState.SetClosed();
   }
 }
 }

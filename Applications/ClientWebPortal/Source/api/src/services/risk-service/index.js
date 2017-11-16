@@ -8,7 +8,7 @@ class RiskService {
     this.stompConnectionManager = new StompConnectionManager('risk_service/portfolio');
     this.portfolioMessageHandlers = new HashMap();
 
-    this.unsubscribe = this.unsubscribe.bind(this);
+    this.unsubscribePortfolio = this.unsubscribePortfolio.bind(this);
   }
 
   /** @private */
@@ -30,7 +30,7 @@ class RiskService {
     });
   }
 
-  unsubscribe(subId) {
+  unsubscribePortfolio(subId) {
     this.stompConnectionManager.unsubscribe(subId);
     let portfolioMsgHandler = this.portfolioMessageHandlers.get(subId);
     portfolioMsgHandler.dispose();

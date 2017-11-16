@@ -20,8 +20,7 @@ void IndirectTask::SetTask(std::shared_ptr<Task> task) {
 
 void IndirectTask::OnExecute() {
   assert(m_task != nullptr);
-  auto publisher = MakePublisherReactor(m_task->GetPublisher(),
-    Ref(m_reactorMonitor->GetTrigger()));
+  auto publisher = MakePublisherReactor(m_task->GetPublisher());
   auto taskReactor = Do(m_callbacks.GetCallback(
     std::bind(&IndirectTask::OnTaskUpdate, this, std::placeholders::_1)),
     publisher);

@@ -1,5 +1,5 @@
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
-#include "Nexus/OrderTasks/SingleOrderTask.hpp"
+#include "Nexus/Tasks/SingleOrderTask.hpp"
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 #include "Spire/Canvas/Operations/CanvasOperationException.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/DefaultCurrencyNode.hpp"
@@ -18,7 +18,7 @@
 using namespace Beam;
 using namespace Beam::Serialization;
 using namespace Nexus;
-using namespace Nexus::OrderTasks;
+using namespace Nexus::Tasks;
 using namespace Spire;
 using namespace std;
 

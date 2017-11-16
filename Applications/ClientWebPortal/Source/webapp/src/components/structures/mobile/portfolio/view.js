@@ -2,7 +2,6 @@ import './style.scss';
 import React from 'react';
 import UpdatableView from 'commons/updatable-view';
 import PortfolioFilters from 'components/reusables/common/portfolio-filters';
-import PortfolioChart from 'components/reusables/common/portfolio-chart';
 import tableColumns from 'components/structures/common/portfolio/table-columns';
 import numberFormatter from 'utils/number-formatter';
 import BigTable from 'components/reusables/common/big-table';

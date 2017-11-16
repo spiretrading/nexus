@@ -75,8 +75,7 @@ void CanvasNodeTask::S1() {
   m_state = 1;
   SetActive();
   m_taskState = State::INITIALIZING;
-  auto publisher = MakePublisherReactor(m_task->GetPublisher(),
-    Ref(m_context.GetReactorMonitor().GetTrigger()));
+  auto publisher = MakePublisherReactor(m_task->GetPublisher());
   auto taskReactor = Reactors::Do(m_callbacks.GetCallback(
     std::bind(&CanvasNodeTask::OnTaskUpdate, this, std::placeholders::_1)),
     publisher);

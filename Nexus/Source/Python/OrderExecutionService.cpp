@@ -7,6 +7,7 @@
 #include <Beam/Python/Vector.hpp>
 #include <Beam/Python/Queries.hpp>
 #include <Beam/Python/Queues.hpp>
+#include <Beam/Python/Ref.hpp>
 #include <Beam/Python/UniquePtr.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
@@ -168,15 +169,6 @@ BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedOrder);
 BEAM_DEFINE_PYTHON_QUEUE_LINKER(ExecutionReport);
 BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedExecutionReport);
 
-void Nexus::Python::ExportAccountQuery() {
-  ExportIndexedQuery<DirectoryEntry>("DirectoryEntryIndexedQuery");
-  class_<AccountQuery, bases<IndexedQuery<DirectoryEntry>, RangedQuery,
-    SnapshotLimitedQuery, InterruptableQuery, FilteredQuery>>(
-    "AccountQuery", init<>())
-    .def("__copy__", &MakeCopy<AccountQuery>)
-    .def("__deepcopy__", &MakeDeepCopy<AccountQuery>);
-}
-
 void Nexus::Python::ExportApplicationOrderExecutionClient() {
   class_<ToPythonOrderExecutionClient<Client>,
     bases<VirtualOrderExecutionClient>, boost::noncopyable>(
@@ -270,13 +262,14 @@ void Nexus::Python::ExportOrderExecutionClient() {
     .def("query_execution_reports", pure_virtual(
       &VirtualOrderExecutionClient::QueryExecutionReports))
     .def("get_order_submission_publisher", pure_virtual(
-      &VirtualOrderExecutionClient::QueryExecutionReports),
+      &VirtualOrderExecutionClient::GetOrderSubmissionPublisher),
       return_internal_reference<>())
     .def("submit", pure_virtual(&VirtualOrderExecutionClient::Submit),
       return_internal_reference<>())
     .def("cancel", pure_virtual(&VirtualOrderExecutionClient::Cancel))
     .def("open", pure_virtual(&VirtualOrderExecutionClient::Open))
-    .def("open", pure_virtual(&VirtualOrderExecutionClient::Close));
+    .def("close", pure_virtual(&VirtualOrderExecutionClient::Close));
+  ExportRef<VirtualOrderExecutionClient>("RefOrderExecutionClient");
   ExportUniquePtr<VirtualOrderExecutionClient>();
 }
 
@@ -287,7 +280,6 @@ void Nexus::Python::ExportOrderExecutionService() {
     borrowed(PyImport_AddModule(nestedName.c_str())))};
   scope().attr("order_execution_service") = nestedModule;
   scope parent = nestedModule;
-  ExportAccountQuery();
   ExportExecutionReport();
   ExportOrder();
   ExportOrderExecutionClient();
@@ -296,6 +288,7 @@ void Nexus::Python::ExportOrderExecutionService() {
   ExportOrderInfo();
   ExportOrderRecord();
   ExportPrimitiveOrder();
+  ExportBasicQuery<DirectoryEntry>("Account");
   ExportStandardQueries();
   {
     string nestedName = extract<string>(parent.attr("__name__") + ".tests");

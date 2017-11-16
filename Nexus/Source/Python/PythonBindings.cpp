@@ -11,6 +11,7 @@
 #include "Nexus/Python/Queries.hpp"
 #include "Nexus/Python/RiskService.hpp"
 #include "Nexus/Python/ServiceClients.hpp"
+#include "Nexus/Python/Tasks.hpp"
 
 using namespace Nexus;
 using namespace Nexus::Python;
@@ -39,4 +40,5 @@ BOOST_PYTHON_MODULE(nexus) {
   ExportRiskService();
   ExportServiceClients();
   ExportBacktester();
+  ExportTasks();
 }

@@ -75,8 +75,7 @@ namespace {
 
     virtual std::unique_ptr<Timer> BuildTimer(
         boost::posix_time::time_duration expiry) override final {
-      return std::unique_ptr<Timer>{
-        static_cast<Timer*>(get_override("build_timer")(expiry))};
+      return MakeVirtualTimer(BuildPythonTimer(expiry));
     }
 
     virtual void Open() override final {
@@ -86,39 +85,73 @@ namespace {
     virtual void Close() override final {
       get_override("close")();
     }
+
+    std::shared_ptr<Timer> BuildPythonTimer(
+        boost::posix_time::time_duration expiry) {
+      return get_override("build_timer")(expiry);
+    }
+  };
+
+  struct PythonTestServiceClients : ToPythonServiceClients<TestServiceClients> {
+    std::shared_ptr<TestEnvironment> m_environment;
+
+    PythonTestServiceClients(std::unique_ptr<TestServiceClients> serviceClients,
+        std::shared_ptr<TestEnvironment> environment)
+        : ToPythonServiceClients<TestServiceClients>{std::move(serviceClients)},
+          m_environment{std::move(environment)} {}
+
+    virtual ~PythonTestServiceClients() override final {
+      GilRelease gil;
+      boost::lock_guard<GilRelease> lock{gil};
+      Close();
+      m_environment.reset();
+    }
   };
 
   auto BuildApplicationServiceClients(const IpAddress& address,
       const string& username, const string& password) {
     return MakeToPythonServiceClients(
       std::make_unique<ApplicationServiceClients>(address, username, password,
-      Ref(*GetSocketThreadPool()), Ref(*GetTimerThreadPool()))).release();
+      Ref(*GetSocketThreadPool()), Ref(*GetTimerThreadPool())));
   }
 
   auto BuildTestServiceClients(std::shared_ptr<TestEnvironment> environment) {
-    return MakeToPythonServiceClients(std::make_unique<TestServiceClients>(
-      Ref(*environment))).release();
+    return std::make_shared<PythonTestServiceClients>(
+      std::make_unique<TestServiceClients>(Ref(*environment)), environment);
+  }
+
+  auto ServiceClientsBuildTimer(VirtualServiceClients& serviceClients,
+      const time_duration& expiry) {
+    return std::shared_ptr<VirtualTimer>{serviceClients.BuildTimer(expiry)};
   }
 }
 
 BEAM_DEFINE_PYTHON_POINTER_LINKER(ChartingService::VirtualChartingClient);
 BEAM_DEFINE_PYTHON_POINTER_LINKER(Compliance::VirtualComplianceClient);
 BEAM_DEFINE_PYTHON_POINTER_LINKER(DefinitionsService::VirtualDefinitionsClient);
+BEAM_DEFINE_PYTHON_POINTER_LINKER(FromPythonServiceClients);
 BEAM_DEFINE_PYTHON_POINTER_LINKER(VirtualMarketDataClient);
 BEAM_DEFINE_PYTHON_POINTER_LINKER(
   OrderExecutionService::VirtualOrderExecutionClient);
+BEAM_DEFINE_PYTHON_POINTER_LINKER(PythonTestServiceClients);
 BEAM_DEFINE_PYTHON_POINTER_LINKER(RegistryService::VirtualRegistryClient);
 BEAM_DEFINE_PYTHON_POINTER_LINKER(RiskService::VirtualRiskClient);
 BEAM_DEFINE_PYTHON_POINTER_LINKER(ServiceLocator::VirtualServiceLocatorClient);
+BEAM_DEFINE_PYTHON_POINTER_LINKER(
+  ToPythonServiceClients<ApplicationServiceClients>);
 BEAM_DEFINE_PYTHON_POINTER_LINKER(VirtualServiceClients);
 BEAM_DEFINE_PYTHON_POINTER_LINKER(VirtualTimeClient);
 BEAM_DEFINE_PYTHON_POINTER_LINKER(VirtualTimer);
 
 void Nexus::Python::ExportApplicationServiceClients() {
   class_<ToPythonServiceClients<ApplicationServiceClients>,
+    std::shared_ptr<ToPythonServiceClients<ApplicationServiceClients>>,
     bases<VirtualServiceClients>, boost::noncopyable>(
     "ApplicationServiceClients", no_init)
     .def("__init__", make_constructor(&BuildApplicationServiceClients));
+  implicitly_convertible<
+    std::shared_ptr<ToPythonServiceClients<ApplicationServiceClients>>,
+    std::shared_ptr<VirtualServiceClients>>();
 }
 
 void Nexus::Python::ExportServiceClients() {
@@ -186,14 +219,18 @@ void Nexus::Python::ExportTestEnvironment() {
 }
 
 void Nexus::Python::ExportTestServiceClients() {
-  class_<ToPythonServiceClients<TestServiceClients>, boost::noncopyable,
-    bases<VirtualServiceClients>>("TestServiceClients", no_init)
+  class_<PythonTestServiceClients, std::shared_ptr<PythonTestServiceClients>,
+    boost::noncopyable, bases<VirtualServiceClients>>("TestServiceClients",
+    no_init)
     .def("__init__", make_constructor(&BuildTestServiceClients));
+  boost::python::register_ptr_to_python<std::shared_ptr<TestServiceClients>>();
+  implicitly_convertible<std::shared_ptr<PythonTestServiceClients>,
+    std::shared_ptr<VirtualServiceClients>>();
 }
 
 void Nexus::Python::ExportVirtualServiceClients() {
-  class_<FromPythonServiceClients, boost::noncopyable>("ServiceClients",
-    no_init)
+  class_<FromPythonServiceClients, std::shared_ptr<FromPythonServiceClients>,
+    boost::noncopyable>("ServiceClients", no_init)
     .def("get_service_locator_client",
       pure_virtual(&VirtualServiceClients::GetServiceLocatorClient),
       return_internal_reference<>())
@@ -222,8 +259,10 @@ void Nexus::Python::ExportVirtualServiceClients() {
       return_internal_reference<>())
     .def("get_time_client", pure_virtual(&VirtualServiceClients::GetTimeClient),
       return_internal_reference<>())
-    .def("build_timer", pure_virtual(&VirtualServiceClients::BuildTimer))
+    .def("build_timer", &ServiceClientsBuildTimer)
     .def("open", pure_virtual(&VirtualServiceClients::Open))
     .def("close", pure_virtual(&VirtualServiceClients::Close));
+  boost::python::register_ptr_to_python<
+    std::shared_ptr<VirtualServiceClients>>();
   ExportUniquePtr<VirtualServiceClients>();
 }

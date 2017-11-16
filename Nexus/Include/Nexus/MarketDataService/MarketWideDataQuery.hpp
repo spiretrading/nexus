@@ -18,22 +18,6 @@ namespace MarketDataService {
 
   //! Defines the type of query used to receive a market data for a market.
   using MarketWideDataQuery = Beam::Queries::BasicQuery<MarketCode>;
-
-  //! Builds a MarketWideDataQuery for real time data with a snapshot
-  //! containing the most recent value.
-  /*!
-    \param market The market to query.
-  */
-  inline MarketWideDataQuery BuildRealTimeWithSnapshotQuery(
-      const MarketCode& market) {
-    MarketWideDataQuery query;
-    query.SetIndex(market);
-    query.SetRange(Beam::Queries::Range::Total());
-    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Type::TAIL, 1);
-    query.SetInterruptionPolicy(
-      Beam::Queries::InterruptionPolicy::IGNORE_CONTINUE);
-    return query;
-  }
 }
 }
 

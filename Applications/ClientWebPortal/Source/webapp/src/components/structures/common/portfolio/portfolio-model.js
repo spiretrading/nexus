@@ -17,6 +17,7 @@ class PortfolioModel extends ChainableModel{
   }
 
   onDataReceived(data) {
+    console.debug(data);
     for (let i=0; i<data.length; i++) {
       let parsedData = this.parse(data[i]);
       let cacheKey = parsedData.account.id + parsedData.currency.value + parsedData.security.market.value + parsedData.security.symbol;

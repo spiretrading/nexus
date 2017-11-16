@@ -55,9 +55,6 @@ module.exports = function(grunt) {
     watch: {
       files: ['src/**/*.js'],
       tasks: ['babel']
-    },
-    exec: {
-      jasmine: 'jasmine'
     }
   });
 
@@ -65,14 +62,17 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-uglify');
-  grunt.loadNpmTasks('grunt-exec');
+
+  grunt.registerTask('build-test', [
+    'clean:transpiledTests',
+    'babel:tests'
+  ]);
 
   grunt.registerTask('build-dev', [
     'clean:dist',
     'clean:transpiledTests',
     'babel:dev',
-    'babel:tests',
-    'exec:jasmine'
+    'babel:tests'
   ]);
 
   grunt.registerTask('update-dev', [

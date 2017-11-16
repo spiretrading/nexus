@@ -151,7 +151,7 @@ module.exports = function(env) {
         verbose: true
       }),
       new WebpackShellPlugin({
-        onBuildEnd:['grunt test']
+        onBuildEnd:['npm run-script test']
       })
     ]
   };

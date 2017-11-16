@@ -121,7 +121,7 @@ void CanvasNodeValidator::Visit(const FilePathNode& node) {
 }
 
 void CanvasNodeValidator::Visit(const FoldNode& node) {
-  auto& combiner = node.GetChildren().back();
+  auto& combiner = node.GetChildren().front();
   if(combiner.GetChildren().size() < 2) {
     m_errors.push_back(CanvasNodeValidationError(Ref(node),
       "combiner must have two parameters."));
@@ -149,7 +149,7 @@ void CanvasNodeValidator::Visit(const FoldNode& node) {
       "combiner's first parameter type is incompatible."));
     return;
   }
-  auto& source = node.GetChildren().front();
+  auto& source = node.GetChildren().back();
   auto rightOperand = node.FindRightOperand();
   if(!rightOperand.is_initialized()) {
     m_errors.push_back(CanvasNodeValidationError(Ref(node),

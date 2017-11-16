@@ -8,7 +8,7 @@ using namespace Spire;
 using namespace std;
 
 FoldNode::FoldNode() {
-  DefineFunction("Fold", { "source", "combiner" },
+  DefineFunction("Fold", { "combiner", "source" },
     BuildSignatures<FoldSignatures>());
 }
 
