@@ -46,7 +46,6 @@ export default class extends Model {
 
   /** @private */
   initialize(columnsToOmit) {
-    this.projectionToSourceColumns = [];
     let sourceColumnsCount = this.sourceModel.getColumnCount();
     for (let x=0; x<sourceColumnsCount; x++) {
       if (columnsToOmit.includes(x)) {
