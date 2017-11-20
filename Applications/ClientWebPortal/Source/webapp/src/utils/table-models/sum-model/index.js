@@ -1,15 +1,18 @@
 import Model from 'utils/table-models/model';
 import SignalManager from 'utils/signal-manager';
 import DataChangeType from 'utils/table-models/model/data-change-type';
+import definitionsService from 'services/definitions';
 import { Money } from 'spire-client';
 
 export default class extends Model {
-  constructor(sourceModel) {
+  constructor(sourceModel, baseCurrencyId) {
     super();
     this.sourceModel = sourceModel;
+    this.baseCurrencyId = baseCurrencyId;
     this.signalManager = new SignalManager();
     this.onDataChange = this.onDataChange.bind(this);
     this.dataChangeSubId = this.sourceModel.addDataChangeListener(this.onDataChange);
+    this.exchangeRateTable = definitionsService.getExchangeRateTable();
 
     this.totals = [];
 
@@ -32,12 +35,7 @@ export default class extends Model {
     if (y != 0) {
       throw new RangeError('There is only ever one row. Received: ' + y);
     }
-
-    if (this.totals[x] == null) {
-      return null;
-    } else {
-      return this.totals[x];
-    }
+    return this.totals[x];
   }
 
   addDataChangeListener(listener) {
@@ -54,6 +52,7 @@ export default class extends Model {
 
   /** @private */
   initialize() {
+    this.totals[0] = this.baseCurrencyId;
     let rowCount = this.sourceModel.getRowCount();
     if (rowCount > 0) {
       for (let i=0; i<rowCount; i++) {
@@ -61,7 +60,7 @@ export default class extends Model {
       }
     } else {
       let columnCount = this.sourceModel.getColumnCount();
-      for (let i=0; i<columnCount; i++) {
+      for (let i=1; i<columnCount; i++) {
         this.totals.push(null);
       }
     }
@@ -70,16 +69,21 @@ export default class extends Model {
   /** @private */
   addSourceData(rowIndex) {
     let columnCount = this.sourceModel.getColumnCount();
-    for (let i=0; i<columnCount; i++) {
+    for (let i=1; i<columnCount; i++) {
       let value = this.sourceModel.getValueAt(i, rowIndex);
-      this.addToTotals(i, value);
+      this.addToTotals(rowIndex, i, value);
     }
   }
 
   /** @private */
-  addToTotals(columnIndex, value) {
+  addToTotals(rowIndex, columnIndex, value) {
+    if (value instanceof Money) {
+      let currencyId = this.sourceModel.getValueAt(0, rowIndex);
+      value = this.convertCurrencies(currencyId, this.baseCurrencyId, value);
+    }
+
     if (this.totals[columnIndex] == null) {
-      this.totals.push(value);
+      this.totals[columnIndex] = value;
     } else {
       if (value == null) {
         return;
@@ -100,7 +104,7 @@ export default class extends Model {
     } else if (dataChangeType == DataChangeType.UPDATE) {
       this.handleDataUpdate(payload.index, payload.original);
     } else if (dataChangeType == DataChangeType.REMOVE) {
-      this.handleDataRemove(payload.row);
+      this.handleDataRemove(payload.index, payload.row);
     }
   }
 
@@ -118,26 +122,16 @@ export default class extends Model {
   handleDataUpdate(rowIndex, originalRow) {
     let originalTotals = this.totals.slice();
     let columnCount = this.sourceModel.getColumnCount();
-    for (let i=0; i<columnCount; i++) {
+    for (let i=1; i<this.totals.length; i++) {
       let newValue = this.sourceModel.getValueAt(i, rowIndex);
-      if (newValue == null) {
-        continue;
-      }
-
-      if (this.totals[i] == null) {
-        this.totals[i] = newValue;
-        continue;
-      }
-
       let delta;
       let lastValue = originalRow[i];
       if (newValue instanceof Money) {
         delta = newValue.subtract(lastValue);
-        this.totals[i] = this.totals[i].add(delta);
       } else {
         delta = newValue - lastValue;
-        this.totals[i] = this.totals[i] + delta;
       }
+      this.addToTotals(rowIndex, i, delta);
     }
 
     this.signalManager.emitSignal(DataChangeType.UPDATE, {
@@ -147,19 +141,34 @@ export default class extends Model {
   }
 
   /** @private */
-  handleDataRemove(removedRow) {
+  handleDataRemove(rowIndex, removedRow) {
     let originalTotals = this.totals.slice();
-    for (let i=0; i<this.totals.length; i++) {
+    for (let i=1; i<this.totals.length; i++) {
+      let delta;
       if (this.totals[i] instanceof Money) {
-        this.totals[i] = this.totals[i].subtract(removedRow[i]);
+        delta = removedRow[i].multiply(-1);
       } else {
-        this.totals[i] = this.totals[i] - removedRow[i];
+        delta = removedRow[i] * -1;
       }
+      this.addToTotals(rowIndex, i, delta);
     }
 
     this.signalManager.emitSignal(DataChangeType.UPDATE, {
       index: 0,
       original: Object.freeze(originalTotals)
     });
+  }
+
+  /** @private */
+  convertCurrencies(fromCurrencyId, toCurrencyId, amount) {
+    if (fromCurrencyId.toNumber() != toCurrencyId.toNumber()) {
+      return this.exchangeRateTable.convert(
+        amount,
+        fromCurrencyId,
+        toCurrencyId
+      );
+    } else {
+      return amount;
+    }
   }
 }
