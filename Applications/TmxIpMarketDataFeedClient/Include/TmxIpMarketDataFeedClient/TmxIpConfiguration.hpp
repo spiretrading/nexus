@@ -1,5 +1,5 @@
-#ifndef NEXUS_TMXIPCONFIGURATION_HPP
-#define NEXUS_TMXIPCONFIGURATION_HPP
+#ifndef NEXUS_TMX_IP_CONFIGURATION_HPP
+#define NEXUS_TMX_IP_CONFIGURATION_HPP
 #include <string>
 #include <unordered_map>
 #include "Nexus/Definitions/Country.hpp"
@@ -36,6 +36,9 @@ namespace MarketDataService {
 
     //! Whether to consolidate all Orders as originating from a single MPID.
     bool m_consolidateMpids;
+
+    //! Whether the NEO book is being parsed.
+    bool m_isNeoBook;
 
     //! Maps native MPIDs.
     std::unordered_map<std::string, std::string> m_mpidMappings;
