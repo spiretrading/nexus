@@ -78,25 +78,25 @@ class View extends UpdatableView {
       let dataModel = this.controller.getDataModel();
 
       filter = <PortfolioFilters model={parametersModel} onSave={onParametersSave} className={"porfolio-parameters-wrapper"}/>;
-      totals = <div className="total-wrapper">
-        <div>Total P/L {totalPnL}</div>
-        <div>Unrealized P/L {unrealizedPnL}</div>
-        <div>Realized P/L {realizedPnL}</div>
-        <div>Fees {fees}</div>
-        <div>Volume {volumes}</div>
-        <div>Trades {trades}</div>
-      </div>;
-      table = <div className="table-wrapper">
-        <BigTable
-          dataModel={dataModel}
-          setReference={this.controller.setTableRef}
-          fontFamily='Roboto'
-          fontWeight='200'
-          fontSize='16px'
-          lineHeight='40'
-          changeSortOrder={this.controller.changeSortOrder}
-        />
-      </div>;
+      totals =  <div className="total-wrapper">
+                  <div>Total P/L {totalPnL}</div>
+                  <div>Unrealized P/L {unrealizedPnL}</div>
+                  <div>Realized P/L {realizedPnL}</div>
+                  <div>Fees {fees}</div>
+                  <div>Volume {volumes}</div>
+                  <div>Trades {trades}</div>
+                </div>;
+      table =   <div className="table-wrapper">
+                  <BigTable
+                    dataModel={dataModel}
+                    setReference={this.controller.setTableRef}
+                    fontFamily='Roboto'
+                    fontWeight='200'
+                    fontSize='16px'
+                    lineHeight='40'
+                    changeSortOrder={this.controller.changeSortOrder}
+                  />
+                </div>;
     }
 
     return (
