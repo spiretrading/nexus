@@ -100,7 +100,7 @@ export default class extends Model {
   /** @private */
   onDataChange(dataChangeType, payload) {
     if (dataChangeType == DataChangeType.ADD) {
-      this.handleDataAdd(payload)
+      this.handleDataAdd(payload);
     } else if (dataChangeType == DataChangeType.UPDATE) {
       this.handleDataUpdate(payload.index, payload.original);
     } else if (dataChangeType == DataChangeType.REMOVE) {

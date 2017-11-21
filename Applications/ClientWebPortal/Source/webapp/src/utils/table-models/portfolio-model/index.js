@@ -1,5 +1,9 @@
 import Model from 'utils/table-models/model';
 import IndexedModel from 'utils/table-models/indexed-model';
+import HashMap from 'hashmap';
+import SignalManager from 'utils/signal-manager';
+import DataChangeType from 'utils/table-models/model/data-change-type';
+import { Money } from 'spire-client';
 
 const KEY_INDICES = [0, 1, 10];
 const COLUMN_NAMES = [
@@ -15,18 +19,26 @@ const COLUMN_NAMES = [
   'Cost Basis',
   'Currency',
   'Volume',
-  'Trades',
+  'Trades'
+];
+
+const ACCOUNT_TOTAL_COLUMN_NAMES = [
   'Acc. Total P&L',
   'Acc. Unrealized P&L',
   'Acc. Fees'
 ];
 
 export default class extends Model {
-  constructor(riskServiceClient) {
+  constructor(riskServiceClient, baseCurrencyId) {
     super();
     this.riskServiceClient = riskServiceClient;
+    this.baseCurrencyId = baseCurrencyId;
+    this.signalManager = new SignalManager();
     this.indexedModel = new IndexedModel(KEY_INDICES, COLUMN_NAMES);
+    this.onDataChange = this.onDataChange.bind(this);
+    this.dataChangeSubId = this.indexedModel.addDataChangeListener(this.onDataChange);
     this.onDataReceived = this.onDataReceived.bind(this);
+    this.accountTotals = new HashMap();
 
     this.riskServiceClient.subscribePortfolio(this.onDataReceived)
       .then(subscriptionId => {
@@ -38,27 +50,44 @@ export default class extends Model {
     return this.indexedModel.getRowCount();
   }
 
-  getColumnCount(columnIndex) {
-    return this.indexedModel.getColumnCount(columnIndex);
+  getColumnCount() {
+    return this.indexedModel.getColumnCount() + ACCOUNT_TOTAL_COLUMN_NAMES.length;
   }
 
   getValueAt(x, y) {
-    return this.indexedModel.getValueAt(x, y);
+    if (x < 13) {
+      return this.indexedModel.getValueAt(x, y);
+    } else {
+      let directoryEntry = this.indexedModel.getValueAt(0, y);
+      let accountTotals = this.accountTotals.get(directoryEntry.id);
+      if (x == 13) {
+        return accountTotals.totalPnL;
+      } else if (x == 14) {
+        return accountTotals.unrealizedPnL;
+      } else if (x == 15) {
+        return accountTotals.fees;
+      }
+    }
   }
 
   getColumnName(columnIndex) {
-    return this.indexedModel.getColumnName(columnIndex);
+    if (columnIndex < 13) {
+      return this.indexedModel.getColumnName(columnIndex);
+    } else {
+      return ACCOUNT_TOTAL_COLUMN_NAMES[13 - columnIndex];
+    }
   }
 
   addDataChangeListener(listener) {
-    return this.indexedModel.addDataChangeListener(listener);
+    return this.signalManager.addListener(listener);
   }
 
   removeDataChangeListener(subId) {
-    this.indexedModel.removeDataChangeListener(subId);
+    this.signalManager.removeListener(subId);
   }
 
   dispose() {
+    this.indexedModel.removeDataChangeListener(this.dataChangeSubId);
     this.riskServiceClient.unsubscribePortfolio(this.subscriptionId);
   }
 
@@ -126,5 +155,127 @@ export default class extends Model {
     rowData.push(data.inventory.transaction_count);
 
     return rowData;
+  }
+
+  /** @private */
+  onDataChange(dataChangeType, payload) {
+    if (dataChangeType == DataChangeType.ADD) {
+      this.handleDataAdd(payload);
+    } else if (dataChangeType == DataChangeType.REMOVE) {
+      this.handleDataRemove(payload);
+    } else if (dataChangeType == DataChangeType.UPDATE) {
+      this.handleDataUpdate(payload);
+    }
+  }
+
+  /** @private */
+  handleDataAdd(payload) {
+    let rowIndex = payload;
+    let account = this.indexedModel.getValueAt(0, rowIndex);
+    let totalPnL = this.indexedModel.getValueAt(5, rowIndex);
+    let unrealizedPnL = this.indexedModel.getValueAt(6, rowIndex);
+    let fees = this.indexedModel.getValueAt(8, rowIndex);
+    let currencyId = this.indexedModel.getValueAt(10, rowIndex);
+
+    if (!this.accountTotals.has(account.id)) {
+      this.accountTotals.set(account.id, {
+        totalPnL: Money.fromNumber(0),
+        unrealizedPnL: Money.fromNumber(0),
+        fees: Money.fromNumber(0),
+        count: 0
+      });
+    }
+
+    this.addToAccountTotals(account, totalPnL, unrealizedPnL, fees, currencyId);
+    this.accountTotals.get(account.id).count++;
+    this.signalManager.emitSignal(DataChangeType.ADD, rowIndex);
+  }
+
+  /** @private */
+  handleDataRemove(payload) {
+    let row = payload.row.slice();
+    row = this.appendAccountTotals(row);
+    let account = row[0];
+
+    if (this.accountTotals.get(account.id).count == 1) {
+      this.accountTotals.remove(account.id);
+    } else {
+      this.accountTotals.get(account.id).count--;
+      let totalPnL = row[5];
+      let unrealizedPnL = row[6];
+      let fees = row[8];
+      let currencyId = row[10];
+      this.subtractFromAccountTotals(account, totalPnL, unrealizedPnL, fees, currencyId);
+    }
+
+    this.signalManager.emitSignal(DataChangeType.REMOVE, {
+      index: payload.index,
+      row: Object.freeze(row)
+    });
+  };
+
+  /** @private */
+  handleDataUpdate(payload) {
+    let original = payload.original.slice();
+    original = this.appendAccountTotals(original);
+    let rowIndex = payload.index;
+    let account = original[0];
+    let totalPnLDelta = this.indexedModel.getValueAt(5, rowIndex).subtract(original[5]);
+    let unrealizedPnLDelta = this.indexedModel.getValueAt(6, rowIndex).subtract(original[6]);
+    let feesDelta = this.indexedModel.getValueAt(8, rowIndex).subtract(original[8]);
+    let currencyId = original[10];
+    this.addToAccountTotals(account, totalPnLDelta, unrealizedPnLDelta, feesDelta, currencyId);
+    this.signalManager.emitSignal(DataChangeType.UPDATE, {
+      index: rowIndex,
+      original: Object.freeze(original)
+    });
+  }
+
+  /** @private */
+  appendAccountTotals(row) {
+    let accountTotals = this.accountTotals.get(row[0].id);
+    row.push(accountTotals.totalPnL);
+    row.push(accountTotals.unrealizedPnL);
+    row.push(accountTotals.fees);
+    return row;
+  }
+
+  /** @private **/
+  addToAccountTotals(account, totalPnL, unrealizedPnL, fees, currencyId) {
+    // currency conversion
+    totalPnL = this.convertCurrencies(currencyId, this.baseCurrencyId, totalPnL);
+    unrealizedPnL = this.convertCurrencies(currencyId, this.baseCurrencyId, unrealizedPnL);
+    fees = this.convertCurrencies(currencyId, this.baseCurrencyId, fees);
+
+    let accountTotals = this.accountTotals.get(account.id);
+    accountTotals.totalPnL = accountTotals.totalPnL.add(totalPnL);
+    accountTotals.unrealizedPnL = accountTotals.unrealizedPnL.add(unrealizedPnL);
+    accountTotals.fees = accountTotals.fees.add(fees);
+  }
+
+  /** @private */
+  subtractFromAccountTotals(account, totalPnL, unrealizedPnL, fees, currencyId) {
+    // currency conversion
+    totalPnL = this.convertCurrencies(currencyId, this.baseCurrencyId, totalPnL);
+    unrealizedPnL = this.convertCurrencies(currencyId, this.baseCurrencyId, unrealizedPnL);
+    fees = this.convertCurrencies(currencyId, this.baseCurrencyId, fees);
+
+    let accountTotals = this.accountTotals.get(account.id);
+    accountTotals.totalPnL = accountTotals.totalPnL.subtract(totalPnL);
+    accountTotals.unrealizedPnL = accountTotals.unrealizedPnL.subtract(unrealizedPnL);
+    accountTotals.fees = accountTotals.fees.subtract(fees);
+  }
+
+  /** @private */
+  convertCurrencies(fromCurrencyId, toCurrencyId, amount) {
+    if (fromCurrencyId.toNumber() != toCurrencyId.toNumber()) {
+      return this.exchangeRateTable.convert(
+        amount,
+        fromCurrencyId,
+        toCurrencyId
+      );
+    } else {
+      return amount;
+    }
   }
 }

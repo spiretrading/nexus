@@ -36,10 +36,15 @@ export default class extends Model {
     return this.arrayModel.getValueAt(x, y);
   }
 
+  getRowNumber(indexValues) {
+    let key = this.keyGenerator.get(indexValues);
+    return this.indicesToRow.get(key);
+  }
+
   update(values) {
     let indexValues = [];
     for (let i=0; i<this.indices.length; i++) {
-      indexValues.push(values[i]);
+      indexValues.push(values[this.indices[i]]);
     }
     let key = this.keyGenerator.get(indexValues);
 
@@ -56,7 +61,7 @@ export default class extends Model {
   removeRow(values) {
     let indexValues = [];
     for (let i=0; i<this.indices.length; i++) {
-      indexValues.push(values[i]);
+      indexValues.push(values[this.indices[i]]);
     }
     let key = this.keyGenerator.get(indexValues);
     if (this.indicesToRow.has(key)) {

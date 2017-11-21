@@ -29,6 +29,10 @@ class DirectoryEntry {
     };
   }
 
+  toString() {
+    return 'id:' + this.id + ', type:' + this.type + ', name:' + this.name;
+  }
+
   clone() {
     return new DirectoryEntry(
       this.id,
