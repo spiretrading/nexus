@@ -20,6 +20,10 @@ class CurrencyId {
     return this.value;
   }
 
+  toString() {
+    return this.value;
+  }
+
   clone() {
     return CurrencyId.fromData(this.value);
   }
