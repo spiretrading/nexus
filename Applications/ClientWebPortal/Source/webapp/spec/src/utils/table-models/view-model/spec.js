@@ -1,7 +1,7 @@
 import ViewModel from '../../../../webapp/utils/table-models/view-model';
 import ArrayModel from '../../../../webapp/utils/table-models/array-model';
 import DataChangeType from '../../../../webapp/utils/table-models/model/data-change-type';
-import DefaultStyleRule from '../../../../webapp/utils/table-models/default-style-rule';
+import DefaultStyleRule from '../../../../webapp/utils/table-models/style-rules/default-style-rule';
 
 describe('ViewModel', function() {
   beforeAll(function() {

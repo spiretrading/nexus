@@ -1,5 +1,4 @@
 import numberFormatter from 'utils/number-formatter';
-import currencyFormatter from 'utils/currency-formatter';
 import HashMap from 'hashmap';
 
 class TableModel {
@@ -18,7 +17,7 @@ class TableModel {
   }
 
   getColumnHeader(x) {
-    return this.dataModel.getColumnHeader(x);
+    return this.dataModel.getColumnName(x);
   }
 
   getValueAt(x, y) {

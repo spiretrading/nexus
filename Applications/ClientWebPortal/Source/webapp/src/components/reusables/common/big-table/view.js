@@ -423,8 +423,8 @@ class View extends UpdatableView {
         let cellStyle = {
           width: columnWidth,
           height: Number(this.componentModel.lineHeight),
-          color: cellValue.color,
-          backgroundColor: cellValue.backgroundColor
+          color: cellValue.style.fontColor,
+          backgroundColor: cellValue.style.backgroundColor
         };
 
         let cellClassName = '';
@@ -504,6 +504,7 @@ class View extends UpdatableView {
        }
      }
    }
+   this.update();
   }
 
   componentWillUpdate() {

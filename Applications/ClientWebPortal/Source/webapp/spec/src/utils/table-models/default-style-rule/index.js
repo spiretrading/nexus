@@ -1,4 +1,4 @@
-import DefaultStyleRule from '../../../../webapp/utils/table-models/default-style-rule';
+import DefaultStyleRule from '../../../../webapp/utils/table-models/style-rules/default-style-rule';
 
 const BLACK = 'black';
 const WHITE = 'white';
