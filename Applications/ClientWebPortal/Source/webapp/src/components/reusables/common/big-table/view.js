@@ -21,6 +21,7 @@ class View extends UpdatableView {
     this.activeRowIndex = null;
     this.headerInteractionState = HeaderInteractionState.IDLE;
     this.hoveredColumnIndex = null;
+    this.contextMenu = componentModel.contextMenu;
 
     this.isInitialized = false;
     this.isViewingRegionDimensionsSet = false;  // due to bug in Safari you need to manually set
@@ -53,6 +54,7 @@ class View extends UpdatableView {
   }
 
   initialize() {
+    this.contextMenu.setTableModel(this.tableModel);
     $('#' + this.componentId + ' .viewing-region').scroll(this.onViewingRegionScroll);
     $(document).keydown(this.onKeyDownCheckSelectionModifiers)
       .keyup(this.onKeyUpCheckSelectionModifiers);
@@ -72,10 +74,8 @@ class View extends UpdatableView {
     $.contextMenu({
       selector: '#' + this.componentId + ' .viewing-region',
       appendTo: '#' + this.componentId,
-      items: {
-        menu1: {name: 'Stop'},
-        menu2: {name: 'Settings'}
-      }
+      items: this.componentModel.contextMenu.getMenuItems(),
+      callback: this.componentModel.contextMenu.onMenuItemClick.bind(this.componentModel.contextMenu)
     });
 
     this.resetColumnWidthsPx();
@@ -317,6 +317,7 @@ class View extends UpdatableView {
     $('#' + this.componentId + ' .column-headers tr').unbind('mousemove');
   }
 
+  /** @private */
   getXCoordinatesIncludingBuffers() {
     let columnCount = this.tableModel.getColumnCount();
     let leftX = this.viewingCoords.topLeftX - BUFFER_CELL_NUM;
@@ -334,6 +335,7 @@ class View extends UpdatableView {
     };
   }
 
+  /** @private */
   getYCoordinatesIncludingBuffers() {
     let numRecords = this.tableModel.getRowCount();
     let topY = this.viewingCoords.topLeftY  - BUFFER_CELL_NUM;
@@ -351,6 +353,7 @@ class View extends UpdatableView {
     };
   }
 
+  /** @private */
   onViewingRegionScroll() {
     this.updateViewingRegiongCoordinates();
     this.updateColumnHeaderPosition();
@@ -522,10 +525,6 @@ class View extends UpdatableView {
       this.renderTable();
       this.calculatePaddings();
     }
-  }
-
-  componentDidUpdate() {
-
   }
 
   /** @private */

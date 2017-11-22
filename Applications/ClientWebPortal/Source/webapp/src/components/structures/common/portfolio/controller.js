@@ -120,7 +120,7 @@ class Controller {
   componentWillUnmount() {
     this.filterSubsetModel.removeDataChangeListener(this.dataModelChangeSubId);
     this.totalsSumModel.removeDataChangeListener(this.dataSumChangeSubId);
-    this.riskServiceClient.unsubscribePortfolio(this.portfolioSubscriptionId);
+    this.portfolioModel.dispose();
     EventBus.unsubscribe(this.filterResizeSubId);
     clearInterval(this.renderThrottle);
     this.view.dispose();
