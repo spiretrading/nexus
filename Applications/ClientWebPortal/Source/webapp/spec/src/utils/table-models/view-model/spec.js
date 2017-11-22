@@ -58,7 +58,7 @@ describe('ViewModel', function() {
         expect(payload.index).toBe(1);
         expect(payload.row[0].value).toBe(5123478);
         expect(payload.row[0].display).toBe('5,123,478');
-        expect(payload.row[0].style instanceof DefaultStyleRule).toBe(true);
+        expect(payload.row[0].style.fontColor).toBe('black');
         done();
       });
       sourceModel.removeRow(1);
@@ -70,7 +70,7 @@ describe('ViewModel', function() {
         expect(payload.index).toBe(1);
         expect(payload.original[2].value instanceof MockName).toBe(true);
         expect(payload.original[2].display).toBe('Will Smith');
-        expect(payload.original[2].style instanceof DefaultStyleRule).toBe(true);
+        expect(payload.original[2].style.fontColor).toBe('black');
         done();
       });
       sourceModel.updateRow(1, [

@@ -12,7 +12,7 @@ export default class {
     // headers
     let headers = [];
     for (let i=0; i<columnCount; i++) {
-      headers.push(this.sourceModel.getColumnHeader(i));
+      headers.push(this.sourceModel.getColumnName(i));
     }
 
     // data

@@ -15,7 +15,7 @@ import tableColumns from './table-columns';
 import HashMap from 'hashmap';
 import ModelToCsvExporter from './model-to-csv-exporter';
 import deviceDetector from 'utils/device-detector';
-import PlainNumberModel from './plain-number-model';
+import PlainNumberViewModel from 'utils/table-models/plain-number-view-model';
 import PortfolioModel from 'utils/table-models/portfolio-model';
 import TypedViewModel from 'utils/table-models/typed-view-model';
 import SubsetModel from 'utils/table-models/subset-model';
@@ -39,6 +39,7 @@ class Controller {
     this.changeSortOrder = this.changeSortOrder.bind(this);
     this.resizeTable = this.resizeTable.bind(this);
     this.onRenderThrottleCall = this.onRenderThrottleCall.bind(this);
+    this.exportToCSV = this.exportToCSV.bind(this);
   }
 
   getView() {
@@ -164,8 +165,8 @@ class Controller {
   }
 
   exportToCSV() {
-    let plainNumberModel = new PlainNumberModel(this.filterSubsetModel);
-    let csvExporter = new ModelToCsvExporter(plainNumberModel);
+    let plainNumberViewModel = new PlainNumberViewModel(this.filterSubsetModel);
+    let csvExporter = new ModelToCsvExporter(plainNumberViewModel);
     let csvString = csvExporter.getCsvString();
 
     if (deviceDetector.isInternetExplorer()) {

@@ -79,12 +79,28 @@ class View extends UpdatableView {
 
       filter = <PortfolioFilters model={parametersModel} onSave={onParametersSave} className={"porfolio-parameters-wrapper"}/>;
       totals =  <div className="total-wrapper">
-                  <div>Total P/L {totalPnL}</div>
-                  <div>Unrealized P/L {unrealizedPnL}</div>
-                  <div>Realized P/L {realizedPnL}</div>
-                  <div>Fees {fees}</div>
-                  <div>Volume {volumes}</div>
-                  <div>Trades {trades}</div>
+                  <div className="total-label">Total P/L</div>
+                  <div className="total-value">{totalPnL}</div>
+                  <div className="total-label">Unrealized P/L</div>
+                  <div className="total-value">{unrealizedPnL}</div>
+                  <div className="total-label">Realized P/L</div>
+                  <div className="total-value">{realizedPnL}</div>
+                  <div className="total-label">Fees</div>
+                  <div className="total-value">{fees}</div>
+                  <div className="total-label">Volume</div>
+                  <div className="total-value">{fees}</div>
+                  <div className="total-label">Trades</div>
+                  <div className="total-value">{trades}</div>
+                  <div className="menu">
+                    <div className="export-table no-select" onClick={this.controller.exportToCSV}>
+                      <span className="icon-export"/>
+                      Export Table
+                    </div>
+                    <div className="no-select">
+                      <span className="icon-cancel-all-orders"/>
+                      Cancel All Orders
+                    </div>
+                  </div>
                 </div>;
       table =   <div className="table-wrapper">
                   <BigTable

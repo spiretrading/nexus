@@ -66,14 +66,14 @@ export default class extends Model {
         index: payload.index,
         row: Object.freeze(payload.row.map(function(element) {
           return this.toViewData(element, payload.index);
-        }))
+        }.bind(this)))
       });
     } else if (dataChangeType == DataChangeType.UPDATE) {
       this.signalManager.emitSignal(dataChangeType, {
         index: payload.index,
         original: Object.freeze(payload.original.map(function(element) {
           return this.toViewData(element, payload.index);
-        }))
+        }.bind(this)))
       });
     } else {
       this.signalManager.emitSignal(dataChangeType, payload);
