@@ -5,6 +5,7 @@ import PortfolioFilters from 'components/reusables/common/portfolio-filters';
 import tableColumns from 'components/structures/common/portfolio/table-columns';
 import numberFormatter from 'utils/number-formatter';
 import BigTable from 'components/reusables/common/big-table';
+import PortfolioContextMenu from 'components/structures/desktop/portfolio/portfolio-context-menu';
 
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
@@ -13,6 +14,10 @@ class View extends UpdatableView {
     this.onWindowResize = this.onWindowResize.bind(this);
     this.initialize = this.initialize.bind(this);
     this.dispose = this.dispose.bind(this);
+    this.bigTableContextMenu = new PortfolioContextMenu({
+      flatten: {name: 'Flatten'},
+      viewProfile: {name: 'View Profile'}
+    });
   }
 
   initialize() {
@@ -111,6 +116,7 @@ class View extends UpdatableView {
                     fontSize='16px'
                     lineHeight='40'
                     changeSortOrder={this.controller.changeSortOrder}
+                    contextMenu={this.bigTableContextMenu}
                   />
                 </div>;
     }

@@ -121,6 +121,10 @@ class TableModel {
       }
     }.bind(this));
   }
+
+  getSelectedRows() {
+    return this.selectedRowsControlModApplied.keys();
+  }
 }
 
 export default TableModel;
