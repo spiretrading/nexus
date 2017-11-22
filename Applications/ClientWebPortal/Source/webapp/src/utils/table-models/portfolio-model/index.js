@@ -74,7 +74,7 @@ export default class extends Model {
     if (columnIndex < 13) {
       return this.indexedModel.getColumnName(columnIndex);
     } else {
-      return ACCOUNT_TOTAL_COLUMN_NAMES[13 - columnIndex];
+      return ACCOUNT_TOTAL_COLUMN_NAMES[columnIndex - 13];
     }
   }
 

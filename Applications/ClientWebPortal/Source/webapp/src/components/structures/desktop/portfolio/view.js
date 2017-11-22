@@ -46,59 +46,80 @@ class View extends UpdatableView {
   }
 
   render() {
-    let filterColumns = this.getNonPrimaryKeyColumns();
-    let parametersModel = {
-      groups: [],
-      currencies: [],
-      markets: [],
-      filter: {
-        columns: filterColumns,
-        currencies: this.componentModel.currencies || [],
-        groups: this.componentModel.managedGroups || [],
-        markets: this.componentModel.markets || []
-      }
-    };
+    let filter, totals, table;
+    if (this.componentModel.isInitialized) {
+      let filterColumns = this.getNonPrimaryKeyColumns();
+      let parametersModel = {
+        groups: [],
+        currencies: [],
+        markets: [],
+        filter: {
+          columns: filterColumns,
+          currencies: this.componentModel.currencies || [],
+          groups: this.componentModel.managedGroups || [],
+          markets: this.componentModel.markets || []
+        }
+      };
 
-    let onParametersSave = this.controller.saveParameters.bind(this.controller);
+      let onParametersSave = this.controller.saveParameters.bind(this.controller);
 
-    if (this.controller.isModelInitialized()) {
       $('#portfolio-container').css('display', 'flex');
-    }
 
-    let totalPnL, unrealizedPnL, realizedPnL, fees, volumes, trades;
-    if (this.componentModel.aggregates != null && this.componentModel.aggregates.totalPnL != null) {
-      totalPnL = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.totalPnL.toNumber());
-      unrealizedPnL = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.unrealizedPnL.toNumber());
-      realizedPnL = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.realizedPnL.toNumber());
-      fees = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.fees.toNumber());
-      volumes = numberFormatter.formatWithComma(this.componentModel.aggregates.volumes);
-      trades = numberFormatter.formatWithComma(this.componentModel.aggregates.trades);
-    }
+      let totalPnL, unrealizedPnL, realizedPnL, fees, volumes, trades;
+      if (this.componentModel.aggregates != null && this.componentModel.aggregates.totalPnL != null) {
+        totalPnL = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.totalPnL.toNumber());
+        unrealizedPnL = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.unrealizedPnL.toNumber());
+        realizedPnL = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.realizedPnL.toNumber());
+        fees = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.fees.toNumber());
+        volumes = numberFormatter.formatWithComma(this.componentModel.aggregates.volumes);
+        trades = numberFormatter.formatWithComma(this.componentModel.aggregates.trades);
+      }
 
-    let dataModel = this.controller.getDataModel();
+      let dataModel = this.controller.getDataModel();
+
+      filter = <PortfolioFilters model={parametersModel} onSave={onParametersSave} className={"porfolio-parameters-wrapper"}/>;
+      totals =  <div className="total-wrapper">
+                  <div className="total-label">Total P/L</div>
+                  <div className="total-value">{totalPnL}</div>
+                  <div className="total-label">Unrealized P/L</div>
+                  <div className="total-value">{unrealizedPnL}</div>
+                  <div className="total-label">Realized P/L</div>
+                  <div className="total-value">{realizedPnL}</div>
+                  <div className="total-label">Fees</div>
+                  <div className="total-value">{fees}</div>
+                  <div className="total-label">Volume</div>
+                  <div className="total-value">{fees}</div>
+                  <div className="total-label">Trades</div>
+                  <div className="total-value">{trades}</div>
+                  <div className="menu">
+                    <div className="export-table no-select" onClick={this.controller.exportToCSV}>
+                      <span className="icon-export"/>
+                      Export Table
+                    </div>
+                    <div className="no-select">
+                      <span className="icon-cancel-all-orders"/>
+                      Cancel All Orders
+                    </div>
+                  </div>
+                </div>;
+      table =   <div className="table-wrapper">
+                  <BigTable
+                    dataModel={dataModel}
+                    setReference={this.controller.setTableRef}
+                    fontFamily='Roboto'
+                    fontWeight='200'
+                    fontSize='16px'
+                    lineHeight='40'
+                    changeSortOrder={this.controller.changeSortOrder}
+                  />
+                </div>;
+    }
 
     return (
       <div id="portfolio-container" className="container-fixed-width">
-        <PortfolioFilters model={parametersModel} onSave={onParametersSave} className={"porfolio-parameters-wrapper"}/>
-        <div className="total-wrapper">
-          <div>Total P/L {totalPnL}</div>
-          <div>Unrealized P/L {unrealizedPnL}</div>
-          <div>Realized P/L {realizedPnL}</div>
-          <div>Fees {fees}</div>
-          <div>Volume {volumes}</div>
-          <div>Trades {trades}</div>
-        </div>
-        <div className="table-wrapper">
-          <BigTable
-            dataModel={dataModel}
-            setReference={this.controller.setTableRef}
-            fontFamily='Roboto'
-            fontWeight='200'
-            fontSize='16px'
-            lineHeight='40'
-            changeSortOrder={this.controller.changeSortOrder}
-          />
-        </div>
+        {filter}
+        {totals}
+        {table}
       </div>
     );
   }

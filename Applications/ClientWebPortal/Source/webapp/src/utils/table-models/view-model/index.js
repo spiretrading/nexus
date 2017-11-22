@@ -1,6 +1,6 @@
 import Model from 'utils/table-models/model';
 import ViewData from 'utils/table-models/view-model/view-data';
-import DefaultStyleRule from 'utils/table-models/default-style-rule';
+import DefaultStyleRule from 'utils/table-models/style-rules/default-style-rule';
 import numberFormatter from 'utils/number-formatter';
 import DataChangeType from 'utils/table-models/model/data-change-type';
 import SignalManager from 'utils/signal-manager';
@@ -28,11 +28,6 @@ export default class extends Model {
     return this.sourceModel.getColumnName(columnIndex);
   }
 
-  getValueAt(x, y) {
-    let value = this.sourceModel.getValueAt(x, y);
-    return this.toViewData(value);
-  }
-
   addDataChangeListener(listener) {
     return this.signalManager.addListener(listener);
   }
@@ -46,12 +41,12 @@ export default class extends Model {
   }
 
   /** @protected */
-  toViewData(value) {
-    let display = this.getDisplay(value);
-    return new ViewData(value, display, this.defaultStyle);
+  getValueAt(x, y) {
+    let value = this.sourceModel.getValueAt(x, y);
+    return this.toViewData(value, y);
   }
 
- /** @private */
+  /** @protected */
   getDisplay(value) {
     if (value == null) {
       return 'N/A';
@@ -64,20 +59,34 @@ export default class extends Model {
     }
   }
 
-  /** @private */
+  /** @protected */
   onDataChange(dataChangeType, payload) {
     if (dataChangeType == DataChangeType.REMOVE) {
       this.signalManager.emitSignal(dataChangeType, {
         index: payload.index,
-        row: Object.freeze(payload.row.map(this.toViewData))
+        row: Object.freeze(payload.row.map(function(element) {
+          return this.toViewData(element, payload.index);
+        }.bind(this)))
       });
     } else if (dataChangeType == DataChangeType.UPDATE) {
       this.signalManager.emitSignal(dataChangeType, {
         index: payload.index,
-        original: Object.freeze(payload.original.map(this.toViewData))
+        original: Object.freeze(payload.original.map(function(element) {
+          return this.toViewData(element, payload.index);
+        }.bind(this)))
       });
     } else {
       this.signalManager.emitSignal(dataChangeType, payload);
     }
+  }
+
+  /** @private */
+  toViewData(value, y) {
+    let display = this.getDisplay(value);
+    let style = {
+      fontColor: this.defaultStyle.getFontColor(value),
+      backgroundColor: this.defaultStyle.getBackgroundColor(y, value)
+    };
+    return new ViewData(value, display, style);
   }
 }

@@ -46,75 +46,80 @@ class View extends UpdatableView {
   }
 
   render() {
-    let filterColumns = this.getNonPrimaryKeyColumns();
-    let parametersModel = {
-      groups: this.componentModel.managedGroups || [],
-      currencies: this.componentModel.currencies || [],
-      markets: this.componentModel.markets || [],
-      filter: {
-        columns: filterColumns,
-        currencies: this.componentModel.currencies || [],
+    let filter, totals, table;
+    if (this.componentModel.isInitialized) {
+      let filterColumns = this.getNonPrimaryKeyColumns();
+      let parametersModel = {
         groups: this.componentModel.managedGroups || [],
-        markets: this.componentModel.markets || []
-      }
-    };
+        currencies: this.componentModel.currencies || [],
+        markets: this.componentModel.markets || [],
+        filter: {
+          columns: filterColumns,
+          currencies: this.componentModel.currencies || [],
+          groups: this.componentModel.managedGroups || [],
+          markets: this.componentModel.markets || []
+        }
+      };
 
-    let onParametersSave = this.controller.saveParameters.bind(this.controller);
+      let onParametersSave = this.controller.saveParameters.bind(this.controller);
 
-    if (this.controller.isModelInitialized()) {
       $('#portfolio-container').css('display', 'flex');
+
+      let chartModel = {
+        data: this.componentModel.portfolioData,
+        filter: this.componentModel.filter
+      };
+
+      let totalPnL, unrealizedPnL, realizedPnL, fees, volumes, trades;
+      if (this.componentModel.aggregates != null) {
+        totalPnL = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.totalPnL.toNumber());
+        unrealizedPnL = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.unrealizedPnL.toNumber());
+        realizedPnL = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.realizedPnL.toNumber());
+        fees = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.realizedPnL.toNumber());
+        volumes = numberFormatter.formatWithComma(this.componentModel.aggregates.volumes);
+        trades = numberFormatter.formatWithComma(this.componentModel.aggregates.trades);
+      }
+
+      let dataModel = this.controller.getDataModel();
+
+      filter = <PortfolioFilters model={parametersModel} onSave={onParametersSave}/>;
+      totals =  <div className="total-wrapper">
+                  <table>
+                    <tbody>
+                      <tr>
+                        <td>Total P/L<br/>{totalPnL}</td>
+                        <td>Unrealized P/L<br/>{unrealizedPnL}</td>
+                      </tr>
+                      <tr>
+                        <td>Realized P/L<br/>{realizedPnL}</td>
+                        <td>Fees<br/>{fees}</td>
+                      </tr>
+                      <tr>
+                        <td>Volume<br/>{volumes}</td>
+                        <td>Trades<br/>{trades}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>;
+      table =   <div className="table-wrapper">
+                  <BigTable
+                    dataModel={dataModel}
+                    columnTypes={tableColumns}
+                    setReference={this.controller.setTableRef}
+                    fontFamily='Roboto'
+                    fontWeight='200'
+                    fontSize='16px'
+                    lineHeight='40'
+                    changeSortOrder={this.controller.changeSortOrder}
+                  />
+                </div>;
     }
-
-    let chartModel = {
-      data: this.componentModel.portfolioData,
-      filter: this.componentModel.filter
-    };
-
-    let totalPnL, unrealizedPnL, realizedPnL, fees, volumes, trades;
-    if (this.componentModel.aggregates != null) {
-      totalPnL = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.totalPnL.toNumber());
-      unrealizedPnL = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.unrealizedPnL.toNumber());
-      realizedPnL = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.realizedPnL.toNumber());
-      fees = numberFormatter.formatTwoDecimalsWithComma(this.componentModel.aggregates.realizedPnL.toNumber());
-      volumes = numberFormatter.formatWithComma(this.componentModel.aggregates.volumes);
-      trades = numberFormatter.formatWithComma(this.componentModel.aggregates.trades);
-    }
-
-    let dataModel = this.controller.getDataModel();
 
     return (
       <div id="portfolio-container" className="container">
-        <PortfolioFilters model={parametersModel} onSave={onParametersSave}/>
-        <div className="total-wrapper">
-          <table>
-            <tbody>
-              <tr>
-                <td>Total P/L<br/>{totalPnL}</td>
-                <td>Unrealized P/L<br/>{unrealizedPnL}</td>
-              </tr>
-              <tr>
-                <td>Realized P/L<br/>{realizedPnL}</td>
-                <td>Fees<br/>{fees}</td>
-              </tr>
-              <tr>
-                <td>Volume<br/>{volumes}</td>
-                <td>Trades<br/>{trades}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div className="table-wrapper">
-          <BigTable
-            dataModel={dataModel}
-            columnTypes={tableColumns}
-            setReference={this.controller.setTableRef}
-            fontFamily='Roboto'
-            fontWeight='200'
-            fontSize='16px'
-            lineHeight='40'
-            changeSortOrder={this.controller.changeSortOrder}
-          />
-        </div>
+        {filter}
+        {totals}
+        {table}
       </div>
     );
   }
