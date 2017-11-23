@@ -55,10 +55,10 @@ entitlements:
       - market: XASX
         source: CHIA
         messages: [TAS, BOOK]
-  - name: CNSX
+  - name: CSE
     price: 0.00
     currency: CAD
-    group: cnsx
+    group: cse
     applicability:
       - source: XCNQ
         messages: [BBO, MQT, BOOK, TAS, IMB]
