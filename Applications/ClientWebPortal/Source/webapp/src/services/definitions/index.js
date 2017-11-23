@@ -23,6 +23,8 @@ class DefService {
     this.currencyDatabase = new CurrencyDatabase();
     this.marketDatabase = new MarketDatabase();
     this.exchangeRateTable = new ExchangeRateTable();
+
+    this.loadExchangeRates = this.loadExchangeRates.bind(this);
   }
 
   /** @private */
@@ -118,7 +120,7 @@ class DefService {
 
   initialize() {
     let loadCurrenciesAndExchangeRates = this.loadCurrencies()
-      .then(this.loadExchangeRates());
+      .then(this.loadExchangeRates);
 
     return Promise.all([
       this.loadCountries(),

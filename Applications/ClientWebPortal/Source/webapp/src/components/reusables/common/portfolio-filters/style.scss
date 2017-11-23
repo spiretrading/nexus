@@ -37,12 +37,12 @@
 
         .button-wrapper {
           margin-right: 30px;
-          color: $primaryGradient3;
+          color: $darkerGrey;
           cursor: pointer;
 
           span {
             margin-right: 5px;
-            font-size: 15px;
+            font-size: 14px;
           }
 
           &:last-child {
@@ -63,7 +63,7 @@
       .update-button {
         width: 200px;
         position: relative;
-        left: 615px;
+        left: 668px;
         margin-top: 20px;
       }
     }

@@ -1,19 +1,15 @@
 import Model from 'utils/table-models/model';
 import SignalManager from 'utils/signal-manager';
 import DataChangeType from 'utils/table-models/model/data-change-type';
+import { Money } from 'spire-client';
 
 export default class extends Model {
-  constructor(sourceModel, columnsToOmit) {
+  constructor(sourceModel) {
     super();
     this.sourceModel = sourceModel;
     this.signalManager = new SignalManager();
     this.onDataChange = this.onDataChange.bind(this);
     this.dataChangeSubId = this.sourceModel.addDataChangeListener(this.onDataChange);
-
-    this.omittedCount = 0;
-    this.projectionToSourceColumns = [];
-
-    this.initialize(columnsToOmit);
   }
 
   getRowCount() {
@@ -21,15 +17,16 @@ export default class extends Model {
   }
 
   getColumnCount() {
-    return this.sourceModel.getColumnCount() - this.omittedCount;
+    return this.sourceModel.getColumnCount();
   }
 
   getColumnName(x) {
-    return this.sourceModel.getColumnName(this.projectionToSourceColumns[x]);
+    return this.sourceModel.getColumnName(x);
   }
 
   getValueAt(x, y) {
-    return this.sourceModel.getValueAt(this.projectionToSourceColumns[x], y);
+    let cellValue = this.sourceModel.getValueAt(x, y);
+    return this.transform(cellValue);
   }
 
   addDataChangeListener(listener) {
@@ -45,40 +42,30 @@ export default class extends Model {
   }
 
   /** @private */
-  initialize(columnsToOmit) {
-    let sourceColumnsCount = this.sourceModel.getColumnCount();
-    for (let x=0; x<sourceColumnsCount; x++) {
-      if (columnsToOmit.includes(x)) {
-        this.omittedCount++;
-      } else {
-        this.projectionToSourceColumns.push(x);
-      }
-    }
-  }
-
-  /** @private */
   onDataChange(dataChangeType, payload) {
     if (dataChangeType == DataChangeType.ADD) {
       this.signalManager.emitSignal(dataChangeType, payload);
     } else if (dataChangeType == DataChangeType.REMOVE) {
       this.signalManager.emitSignal(dataChangeType, {
         index: payload.index,
-        row: Object.freeze(this.transformRow(payload.row))
+        row: Object.freeze(payload.row.map(this.transform))
       });
     } else if (dataChangeType == DataChangeType.UPDATE) {
       this.signalManager.emitSignal(dataChangeType, {
         index: payload.index,
-        original: Object.freeze(this.transformRow(payload.original))
+        original: Object.freeze(payload.original.map(this.transform))
       });
     }
   }
 
   /** @private */
-  transformRow(row) {
-    let transformed = [];
-    for (let i=0; i<this.projectionToSourceColumns.length; i++) {
-      transformed.push(row[this.projectionToSourceColumns[i]]);
+  transform(cellValue) {
+    if (cellValue.value.constructor != null && cellValue.value instanceof Money) {
+      let display = cellValue.display.replace(/,/g, '');
+      display = display.replace(/\$/g, '');
+      return display;
+    } else {
+      return cellValue.display;
     }
-    return transformed;
   }
 }

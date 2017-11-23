@@ -84,9 +84,7 @@ describe('IndexedModel', function() {
         done();
       });
       indexedModel.removeRow(['r0c0', 'r0c1', 'r0c2']);
-      let rowCount = indexedModel.getRowCount();
-
-      expect(rowCount).toBe(0);
+      expect(indexedModel.getRowCount()).toBe(0);
     });
 
     it('Non-existent values', function() {

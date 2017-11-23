@@ -9,20 +9,56 @@
   width: auto !important;
 
   .total-wrapper {
-    margin-top: 10px;
-    padding: 7px;
+    margin-top: 20px;
+    padding-left: 5px;
+    padding-right: 5px;
     padding-bottom: 17px;
     font-size: 13px;
-    text-align: center;
     display: flex;
-    justify-content: center;
 
     div {
       padding: 0;
-      margin-right: 20px;
+
+      &.total-label {
+        padding-right: 6px;
+      }
+
+      &.total-value {
+        width: 65px;
+      }
 
       &:last-of-type {
         margin-right: 0px;
+      }
+
+      &.menu {
+        flex: 1;
+        display: flex;
+        flex-direction: row-reverse;
+
+        div {
+          position: relative;
+          padding-left: 20px;
+          margin-left: 20px;
+          cursor: pointer;
+          font-size: 14px;
+          color: $darkerGrey;
+
+          span {
+            position: absolute;
+            top: 2px;
+            left: 0px;
+            color: $darkerGrey;
+          }
+
+          &:hover {
+            color: $primaryGradient1;
+
+            span {
+              color: $primaryGradient1;
+            }
+          }
+        }
       }
     }
   }

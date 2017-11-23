@@ -12,6 +12,7 @@ namespace Details {
       entry.m_description = "Manual Order Entry";
       entry.m_markets.push_back("XASE");
       entry.m_markets.push_back("XASX");
+      entry.m_markets.push_back("XCNQ");
       entry.m_markets.push_back("XNAS");
       entry.m_markets.push_back("XNYS");
       entry.m_markets.push_back("XTSE");
@@ -128,6 +129,13 @@ namespace Details {
     }
     {
       DestinationDatabase::Entry entry;
+      entry.m_id = "CSE";
+      entry.m_description = "Canadian Securities Exchange";
+      entry.m_markets.push_back("XCNQ");
+      database.Add(entry);
+    }
+    {
+      DestinationDatabase::Entry entry;
       entry.m_id = "CX2";
       entry.m_description = "Chi-X 2";
       entry.m_markets.push_back("XTSE");
@@ -192,6 +200,7 @@ namespace Details {
     }
     database.SetPreferredDesintation("XASE", "NASDAQ");
     database.SetPreferredDesintation("XASX", "ASXT");
+    database.SetPreferredDesintation("XCNQ", "CSE");
     database.SetPreferredDesintation("XNYS", "NASDAQ");
     database.SetPreferredDesintation("XNAS", "NASDAQ");
     database.SetPreferredDesintation("XTSE", "TSX");
@@ -276,6 +285,11 @@ namespace Details {
 
     inline const std::string& CHIX() {
       static auto value = std::string{"CHIX"};
+      return value;
+    }
+
+    inline const std::string& CSE() {
+      static auto value = std::string{"CSE"};
       return value;
     }
 
