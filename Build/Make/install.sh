@@ -33,7 +33,10 @@ mkdir developers
 chgrp developers developers
 chmod g+rwx ./developers
 apt-get update
-apt-get install parallel gcc g++ gdb git cmake zip make mysql-server ruby python python-dev libtool m4 automake libxml2 libxml2-dev libreadline6-dev libncurses5-dev vim nodejs nodejs-legacy npm <<< Y
+apt-get install parallel gcc g++ gdb git cmake zip make mysql-server ruby python python-dev libtool m4 automake libxml2 libxml2-dev libreadline6-dev libncurses5-dev vim nodejs npm <<< Y
+npm install -g n
+n 9.2.0
+ln -sf /usr/local/n/versions/node/9.2.0/bin/node /usr/bin/nodejs
 
 # Locate MySQL's shared library
 cd /etc/ld.so.conf.d
