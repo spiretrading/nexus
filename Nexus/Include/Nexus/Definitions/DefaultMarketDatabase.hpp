@@ -208,6 +208,17 @@ namespace Details {
     }
     {
       MarketDatabase::Entry entry;
+      entry.m_code = "XCNQ";
+      entry.m_countryCode = DefaultCountries::CA();
+      entry.m_timeZone = "Eastern_Time";
+      entry.m_currency = DefaultCurrencies::CAD();
+      entry.m_boardLot = 100;
+      entry.m_description = "Canadian Securities Exchange";
+      entry.m_displayName = "CSE";
+      database.Add(entry);
+    }
+    {
+      MarketDatabase::Entry entry;
       entry.m_code = "XCX2";
       entry.m_countryCode = DefaultCountries::CA();
       entry.m_timeZone = "Eastern_Time";
@@ -344,6 +355,11 @@ namespace Details {
 
     inline MarketCode CBOE() {
       static auto value = GetDefaultMarketDatabase().FromCode("XCBO").m_code;
+      return value;
+    }
+
+    inline MarketCode CSE() {
+      static auto value = GetDefaultMarketDatabase().FromCode("XCNQ").m_code;
       return value;
     }
 
