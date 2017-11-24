@@ -3,7 +3,7 @@ reset=$(tput sgr0)
 green=$(tput setaf 2)
 yellow=$(tput setaf 3)
 feed_title="CSE"
-feed_suffix="_cseip"
+feed_suffix="_cse"
 pattern="^\./(.*)_cse$"
 echo
 live_feeds=$(ps -ef | grep -i ".*${feed_suffix}" | grep -v "grep" | grep -v "bash" | awk '{ print $8 }')
