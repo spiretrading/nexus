@@ -9,7 +9,6 @@ import {
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
 import definitionsService from 'services/definitions';
-import SortModel from './sort-model';
 import DataChangeType from './data-change-type';
 import tableColumns from './table-columns';
 import HashMap from 'hashmap';
@@ -20,6 +19,7 @@ import PortfolioModel from 'utils/table-models/portfolio-model';
 import TypedViewModel from 'utils/table-models/typed-view-model';
 import SubsetModel from 'utils/table-models/subset-model';
 import SumModel from 'utils/table-models/sum-model';
+import SortModel from 'utils/table-models/sort-model';
 import TranslationModel from 'utils/table-models/translation-model';
 import PositiveNegativeMoneyStyle from 'utils/table-models/style-rules/positive-negative-money';
 
@@ -31,6 +31,7 @@ class Controller {
     this.adminClient = new AdministrationClient();
     this.riskServiceClient = new RiskServiceClient();
     this.exchangeRateTable = definitionsService.getExchangeRateTable();
+    this.columnSortOrders = [];
 
     this.getRequiredData = this.getRequiredData.bind(this);
     this.setTableRef = this.setTableRef.bind(this);
@@ -72,7 +73,8 @@ class Controller {
       let baseCurrencyId = responses[1].currencyId;
       this.portfolioModel = new PortfolioModel(this.riskServiceClient, baseCurrencyId);
       this.viewModel = new TypedViewModel(this.portfolioModel, this.getColumnStyles(), 10);
-      this.filterSubsetModel = new SubsetModel(this.viewModel, []);
+      this.sortModel = new SortModel(this.viewModel, this.columnSortOrders);
+      this.filterSubsetModel = new SubsetModel(this.sortModel, []);
 
       this.totalsSubsetModel = new SubsetModel(this.portfolioModel, [0, 1, 3, 13, 14, 15]);
       this.totalsTranslationModel = new TranslationModel(this.totalsSubsetModel, null, [7, 0, 1, 2, 3, 4, 5, 6, 8, 9]);
@@ -161,7 +163,8 @@ class Controller {
   }
 
   changeSortOrder(sortOrder) {
-    this.sortModel.changeSortOrder(sortOrder);
+    this.columnSortOrders = sortOrder;
+    this.sortModel.changeSortOrder(this.columnSortOrders);
   }
 
   exportToCSV() {
@@ -210,9 +213,6 @@ class Controller {
 
   /** @private */
   onDataModelChange(dataChangeType, payload) {
-    console.debug('controller onDataModelChange');
-    console.debug(rowIndex);
-    console.debug(toIndex);
     if (dataChangeType == DataChangeType.ADD) {
       this.table.rowAdd(payload);
     } else if (dataChangeType == DataChangeType.REMOVE) {
@@ -249,11 +249,20 @@ class Controller {
 
     // construct and chain new models
     let omittedColumns = this.getOmittedColumns(includedColumns);
-    this.filterSubsetModel = new SubsetModel(this.viewModel, omittedColumns);
+    this.removeFromSortOrders(omittedColumns);
+    this.sortModel.changeSortOrder(this.columnSortOrders);
+    this.filterSubsetModel = new SubsetModel(this.sortModel, omittedColumns);
     this.dataModelChangeSubId = this.filterSubsetModel.addDataChangeListener(this.onDataModelChange);
 
     // update big table of the changes
-    this.table.updateColumnChange(this.filterSubsetModel);
+    this.table.updateColumnChange(this.filterSubsetModel, omittedColumns);
+  }
+
+  /** @private */
+  removeFromSortOrders(omittedColumns) {
+    this.columnSortOrders = this.columnSortOrders.filter(element => {
+      return !omittedColumns.includes(element.index);
+    });
   }
 
   /** @private */

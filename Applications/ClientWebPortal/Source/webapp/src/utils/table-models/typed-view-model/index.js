@@ -73,13 +73,17 @@ export default class extends ViewModel {
 
   /** @private */
   toViewData(currencyId, columnName, value, y) {
-    let display = this.getDisplay(currencyId, value);
-    let style = this.getStyle(columnName);
-    let generatedStyle = {
-      fontColor: style.getFontColor(value),
-      backgroundColor: style.getBackgroundColor(y, value)
-    };
-    return new ViewData(value, display, generatedStyle);
+    if (value == null) {
+      return super.toViewData(value, y);
+    } else {
+      let display = this.getDisplay(currencyId, value);
+      let style = this.getStyle(columnName);
+      let generatedStyle = {
+        fontColor: style.getFontColor(value),
+        backgroundColor: style.getBackgroundColor(y, value)
+      };
+      return new ViewData(value, display, generatedStyle);
+    }
   }
 
   /** @private */

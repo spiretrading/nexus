@@ -70,6 +70,8 @@ export default class extends Model {
         index: payload.index,
         original: Object.freeze(this.transformRow(payload.original))
       });
+    } else if (dataChangeType == DataChangeType.MOVE) {
+      this.signalManager.emitSignal(DataChangeType.MOVE, payload);
     }
   }
 

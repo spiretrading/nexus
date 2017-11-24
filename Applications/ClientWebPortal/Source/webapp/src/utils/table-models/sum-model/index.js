@@ -126,11 +126,13 @@ export default class extends Model {
       let newValue = this.sourceModel.getValueAt(i, rowIndex);
       let delta;
       let lastValue = originalRow[i];
-      if (newValue instanceof Money) {
-        delta = newValue.subtract(lastValue);
-      } else {
-        delta = newValue - lastValue;
-      }
+      if (lastValue != null) {
+        if (newValue instanceof Money) {
+          delta = newValue.subtract(lastValue);
+        } else {
+          delta = newValue - lastValue;
+        }
+      }      
       this.addToTotals(rowIndex, i, delta);
     }
 

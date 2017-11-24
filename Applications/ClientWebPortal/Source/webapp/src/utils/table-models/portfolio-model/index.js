@@ -220,9 +220,20 @@ export default class extends Model {
     original = this.appendAccountTotals(original);
     let rowIndex = payload.index;
     let account = original[0];
-    let totalPnLDelta = this.indexedModel.getValueAt(5, rowIndex).subtract(original[5]);
-    let unrealizedPnLDelta = this.indexedModel.getValueAt(6, rowIndex).subtract(original[6]);
-    let feesDelta = this.indexedModel.getValueAt(8, rowIndex).subtract(original[8]);
+
+    // calculate deltas
+    let totalPnLDelta = this.indexedModel.getValueAt(5, rowIndex);
+    if (original[5] != null) {
+      totalPnLDelta = totalPnLDelta.subtract(original[5]);
+    }
+    let unrealizedPnLDelta = this.indexedModel.getValueAt(6, rowIndex);
+    if (original[6] != null) {
+      unrealizedPnLDelta = unrealizedPnLDelta.subtract(original[6]);
+    }
+    let feesDelta = this.indexedModel.getValueAt(8, rowIndex);
+    if (original[8] != null) {
+      feesDelta = feesDelta.subtract(original[8]);
+    }
     let currencyId = original[10];
     this.addToAccountTotals(account, totalPnLDelta, unrealizedPnLDelta, feesDelta, currencyId);
     this.signalManager.emitSignal(DataChangeType.UPDATE, {
@@ -248,8 +259,12 @@ export default class extends Model {
     fees = this.convertCurrencies(currencyId, this.baseCurrencyId, fees);
 
     let accountTotals = this.accountTotals.get(account.id);
-    accountTotals.totalPnL = accountTotals.totalPnL.add(totalPnL);
-    accountTotals.unrealizedPnL = accountTotals.unrealizedPnL.add(unrealizedPnL);
+    if (totalPnL != null) {
+      accountTotals.totalPnL = accountTotals.totalPnL.add(totalPnL);
+    }
+    if (unrealizedPnL != null) {
+      accountTotals.unrealizedPnL = accountTotals.unrealizedPnL.add(unrealizedPnL);
+    }
     accountTotals.fees = accountTotals.fees.add(fees);
   }
 

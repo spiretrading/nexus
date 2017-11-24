@@ -77,6 +77,8 @@ export default class extends Model {
       this.handleDataRemove(payload);
     } else if (dataChangeType == DataChangeType.UPDATE) {
       this.handleDataUpdate(payload);
+    } else if (dataChangeType == DataChangeType.MOVE) {
+      this.signalManager.emitSignal(DataChangeType.MOVE, payload);
     }
   }
 
