@@ -5,9 +5,7 @@ service_locator:
   password: $password
 
 enable_logging: false
-use_broker_number: true
-consolidate_mpids: false
-market: CSE
+symbol_list: "../symbols.yml"
 sampling: 100ms
 enable_retransmission: false
 max_retransmissions: 10000

@@ -209,15 +209,18 @@ class Controller {
   }
 
   /** @private */
-  onDataModelChange(dataChangeType, rowIndex, toIndex) {
+  onDataModelChange(dataChangeType, payload) {
+    console.debug('controller onDataModelChange');
+    console.debug(rowIndex);
+    console.debug(toIndex);
     if (dataChangeType == DataChangeType.ADD) {
-      this.table.rowAdd(rowIndex);
+      this.table.rowAdd(payload);
     } else if (dataChangeType == DataChangeType.REMOVE) {
-      this.table.rowRemove(rowIndex);
+      this.table.rowRemove(payload.index, payload.row);
     } else if (dataChangeType == DataChangeType.UPDATE) {
-      this.table.rowUpdate(rowIndex);
+      this.table.rowUpdate(payload.index, payload.original);
     } else if (dataChangeType == DataChangeType.MOVE) {
-      this.table.rowMove(rowIndex, toIndex);
+      this.table.rowMove(payload.from, payload.to);
     }
   }
 
