@@ -29,7 +29,7 @@ class TableModel {
     this.dataModel = dataModel;
   }
 
-  rowUpdate(rowIndex) {
+  rowUpdate(index, original) {
 
   }
 
@@ -46,7 +46,7 @@ class TableModel {
     }
   }
 
-  rowRemove(rowIndex) {
+  rowRemove(rowIndex, removedRow) {
     this.rowCount--;
 
     // update selected rows
