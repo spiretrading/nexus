@@ -249,6 +249,12 @@ namespace MarketDataService {
     if(!askVolume.is_initialized()) {
       return;
     }
+    if(m_config.m_market == DefaultMarkets::CSE()) {
+      auto bidExchangeId = message.GetBusinessField<std::string>(247, 0);
+      if(!bidExchangeId.is_initialized() || *bidExchangeId != "CNQ") {
+        return;
+      }
+    }
     Security security(std::move(*symbol), m_config.m_market,
       m_config.m_country);
     Quote bid(*bidPrice, *bidVolume, Side::BID);

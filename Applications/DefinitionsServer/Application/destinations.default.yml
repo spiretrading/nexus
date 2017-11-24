@@ -18,6 +18,10 @@ destinations:
     markets:
       - XTSE
       - XTSX
+  - id: CSE
+    description: Canadian Securities Exchange
+    markets:
+      - XCNQ
   - id: CX2
     description: Chi-X 2
     markets:
@@ -124,6 +128,8 @@ preferred_destinations:
     destination: NASDAQ
   - market: XASX
     destination: ASXT
+  - market: XCNQ
+    destination: CSE
   - market: XNAS
     destination: NASDAQ
   - market: XNYSE
@@ -140,6 +146,7 @@ manual_order_entry:
     - ARCX
     - XASE
     - XASX
+    - XCNQ
     - XNAS
     - XNYS
     - XTSE
