@@ -8,35 +8,54 @@ describe('SortModel', function() {
       { index: 2, isAsc: true },
       { index: 1, isAsc: false }
     ];
+    let arrayModel = createSourceModel();
+    this.sortModel = new SortModel(arrayModel, this.sortColumns);
   });
 
-  // it('getRowCount', function() {
-  //   expect(this.sumModel.getRowCount()).toBe(1);
-  // });
-  //
-  // it('getColumnCount', function() {
-  //   expect(this.sumModel.getColumnCount()).toBe(5);
-  // });
-  //
-  // it('getColumnName', function() {
-  //   expect(this.sumModel.getColumnName(1)).toBe('Column 1');
-  // });
+  it('getRowCount', function() {
+    expect(this.sortModel.getRowCount()).toBe(10);
+  });
 
-  it('constructor', function() {
-    // check to see if sorting is done at initialization
-    let arrayModel = createSourceModel();
-    let sortModel = new SortModel(arrayModel, this.sortColumns);
+  it('getColumnCount', function() {
+    expect(this.sortModel.getColumnCount()).toBe(4);
+  });
 
-    expect(sortModel.getValueAt(1, 0)).toBe('Jennifer');
-    expect(sortModel.getValueAt(1, 1)).toBe('Tom');
-    expect(sortModel.getValueAt(1, 2)).toBe('April');
-    expect(sortModel.getValueAt(1, 3)).toBe('April');
-    expect(sortModel.getValueAt(1, 4)).toBe('April');
-    expect(sortModel.getValueAt(1, 5)).toBe('April');
-    expect(sortModel.getValueAt(1, 6)).toBe('April');
-    expect(sortModel.getValueAt(1, 7)).toBe('April');
-    expect(sortModel.getValueAt(1, 8)).toBe('Josh');
-    expect(sortModel.getValueAt(1, 9)).toBe('Katy');
+  it('getColumnName', function() {
+    expect(this.sortModel.getColumnName(1)).toBe('Column 1');
+  });
+
+  describe('constructor', function() {
+    it('constructor - with sort orders', function() {
+      let arrayModel = createSourceModel();
+      let sortModel = new SortModel(arrayModel, this.sortColumns);
+
+      expect(sortModel.getValueAt(1, 0).value).toBe('Jennifer');
+      expect(sortModel.getValueAt(1, 1).value).toBe('Tom');
+      expect(sortModel.getValueAt(1, 2).value).toBe('April');
+      expect(sortModel.getValueAt(1, 3).value).toBe('April');
+      expect(sortModel.getValueAt(1, 4).value).toBe('April');
+      expect(sortModel.getValueAt(1, 5).value).toBe('April');
+      expect(sortModel.getValueAt(1, 6).value).toBe('April');
+      expect(sortModel.getValueAt(1, 7).value).toBe('April');
+      expect(sortModel.getValueAt(1, 8).value).toBe('Josh');
+      expect(sortModel.getValueAt(1, 9).value).toBe('Katy');
+    });
+
+    it('constructor - without sort orders', function() {
+      let arrayModel = createSourceModel();
+      let sortModel = new SortModel(arrayModel);
+
+      expect(sortModel.getValueAt(1, 0).value).toBe('Josh');
+      expect(sortModel.getValueAt(1, 1).value).toBe('April');
+      expect(sortModel.getValueAt(1, 2).value).toBe('April');
+      expect(sortModel.getValueAt(1, 3).value).toBe('April');
+      expect(sortModel.getValueAt(1, 4).value).toBe('April');
+      expect(sortModel.getValueAt(1, 5).value).toBe('April');
+      expect(sortModel.getValueAt(1, 6).value).toBe('April');
+      expect(sortModel.getValueAt(1, 7).value).toBe('Jennifer');
+      expect(sortModel.getValueAt(1, 8).value).toBe('Tom');
+      expect(sortModel.getValueAt(1, 9).value).toBe('Katy');
+    });
   });
 
   describe('onDataChange', function(){
@@ -51,12 +70,12 @@ describe('SortModel', function() {
       sortModel.addDataChangeListener(function(dataChangeType, payload) {
         expect(dataChangeType).toBe(DataChangeType.ADD);
         expect(payload).toBe(8);
-        expect(sortModel.getValueAt(1, 8)).toBe('Alex');
-        expect(sortModel.getValueAt(2, 8)).toBe(2351);
+        expect(sortModel.getValueAt(1, 8).value).toBe('Alex');
+        expect(sortModel.getValueAt(2, 8).value).toBe(2351);
         done();
       });
 
-      let newRow = [2341, 'Alex', 2351, 8362];
+      let newRow = [{value:2341}, {value:'Alex'}, {value:2351}, {value:8362}];
       arrayModel.addRow(newRow);
       expect(sortModel.getRowCount()).toBe(11);
     });
@@ -65,12 +84,12 @@ describe('SortModel', function() {
       sortModel.addDataChangeListener(function(dataChangeType, payload) {
         expect(dataChangeType).toBe(DataChangeType.ADD);
         expect(payload).toBe(0);
-        expect(sortModel.getValueAt(1, 0)).toBe('Alex');
-        expect(sortModel.getValueAt(2, 0)).toBe(30);
+        expect(sortModel.getValueAt(1, 0).value).toBe('Alex');
+        expect(sortModel.getValueAt(2, 0).value).toBe(30);
         done();
       });
 
-      let newRow = [2341, 'Alex', 30, 8362];
+      let newRow = [{value:2341}, {value:'Alex'}, {value:30}, {value:8362}];
       arrayModel.addRow(newRow);
       expect(sortModel.getRowCount()).toBe(11);
     });
@@ -79,12 +98,12 @@ describe('SortModel', function() {
       sortModel.addDataChangeListener(function(dataChangeType, payload) {
         expect(dataChangeType).toBe(DataChangeType.ADD);
         expect(payload).toBe(10);
-        expect(sortModel.getValueAt(1, 10)).toBe('Alex');
-        expect(sortModel.getValueAt(2, 10)).toBe(7234);
+        expect(sortModel.getValueAt(1, 10).value).toBe('Alex');
+        expect(sortModel.getValueAt(2, 10).value).toBe(7234);
         done();
       });
 
-      let newRow = [2341, 'Alex', 7234, 8362];
+      let newRow = [{value:2341}, {value:'Alex'}, {value:7234}, {value:8362}];
       arrayModel.addRow(newRow);
       expect(sortModel.getRowCount()).toBe(11);
     });
@@ -99,15 +118,15 @@ describe('SortModel', function() {
         } else if (eventCount == 2) {
           expect(dataChangeType).toBe(DataChangeType.UPDATE);
           expect(payload.index).toBe(0);
-          expect(sortModel.getValueAt(1, 0)).toBe('Alex');
-          expect(sortModel.getValueAt(2, 0)).toBe(30);
-          expect(payload.original[1]).toBe('April');
-          expect(payload.original[2]).toBe(2351);
+          expect(sortModel.getValueAt(1, 0).value).toBe('Alex');
+          expect(sortModel.getValueAt(2, 0).value).toBe(30);
+          expect(payload.original[1].value).toBe('April');
+          expect(payload.original[2].value).toBe(2351);
           done();
         }
       });
 
-      let newRow = [2341, 'Alex', 30, 8362];
+      let newRow = [{value:2341}, {value:'Alex'}, {value:30}, {value:8362}];
       arrayModel.updateRow(2, newRow);
       expect(sortModel.getRowCount()).toBe(10);
     });
@@ -123,15 +142,15 @@ describe('SortModel', function() {
         } else if (eventCount == 2) {
           expect(dataChangeType).toBe(DataChangeType.UPDATE);
           expect(payload.index).toBe(9);
-          expect(sortModel.getValueAt(1, 9)).toBe('Alex');
-          expect(sortModel.getValueAt(2, 9)).toBe(7234);
-          expect(payload.original[1]).toBe('Josh');
-          expect(payload.original[2]).toBe(3463);
+          expect(sortModel.getValueAt(1, 9).value).toBe('Alex');
+          expect(sortModel.getValueAt(2, 9).value).toBe(7234);
+          expect(payload.original[1].value).toBe('Josh');
+          expect(payload.original[2].value).toBe(3463);
           done();
         }
       });
 
-      let newRow = [2341, 'Alex', 7234, 8362];
+      let newRow = [{value:2341}, {value:'Alex'}, {value:7234}, {value:8362}];
       arrayModel.updateRow(0, newRow);
       expect(sortModel.getRowCount()).toBe(10);
     });
@@ -147,15 +166,15 @@ describe('SortModel', function() {
         } else if (eventCount == 2) {
           expect(dataChangeType).toBe(DataChangeType.UPDATE);
           expect(payload.index).toBe(1);
-          expect(sortModel.getValueAt(1, 1)).toBe('Josh');
-          expect(sortModel.getValueAt(2, 1)).toBe(1000);
-          expect(payload.original[1]).toBe('Josh');
-          expect(payload.original[2]).toBe(3463);
+          expect(sortModel.getValueAt(1, 1).value).toBe('Josh');
+          expect(sortModel.getValueAt(2, 1).value).toBe(1000);
+          expect(payload.original[1].value).toBe('Josh');
+          expect(payload.original[2].value).toBe(3463);
           done();
         }
       });
 
-      let newRow = [2341, 'Josh', 1000, 8362];
+      let newRow = [{value:2341}, {value:'Josh'}, {value:1000}, {value:8362}];
       arrayModel.updateRow(0, newRow);
       expect(sortModel.getRowCount()).toBe(10);
     });
@@ -164,18 +183,18 @@ describe('SortModel', function() {
       sortModel.addDataChangeListener(function(dataChangeType, payload) {
         expect(dataChangeType).toBe(DataChangeType.UPDATE);
         expect(payload.index).toBe(0);
-        expect(sortModel.getValueAt(0, 0)).toBe(2341);
-        expect(sortModel.getValueAt(1, 0)).toBe('Jennifer');
-        expect(sortModel.getValueAt(2, 0)).toBe(34);
-        expect(sortModel.getValueAt(3, 0)).toBe(8362);
-        expect(payload.original[0]).toBe(3333);
-        expect(payload.original[1]).toBe('Jennifer');
-        expect(payload.original[2]).toBe(34);
-        expect(payload.original[3]).toBe(3333);
+        expect(sortModel.getValueAt(0, 0).value).toBe(2341);
+        expect(sortModel.getValueAt(1, 0).value).toBe('Jennifer');
+        expect(sortModel.getValueAt(2, 0).value).toBe(34);
+        expect(sortModel.getValueAt(3, 0).value).toBe(8362);
+        expect(payload.original[0].value).toBe(3333);
+        expect(payload.original[1].value).toBe('Jennifer');
+        expect(payload.original[2].value).toBe(34);
+        expect(payload.original[3].value).toBe(3333);
         done();
       });
 
-      let newRow = [2341, 'Jennifer', 34, 8362];
+      let newRow = [{value:2341}, {value:'Jennifer'}, {value:34}, {value:8362}];
       arrayModel.updateRow(5, newRow);
       expect(sortModel.getRowCount()).toBe(10);
     });
@@ -184,8 +203,8 @@ describe('SortModel', function() {
       sortModel.addDataChangeListener(function(dataChangeType, payload) {
         expect(dataChangeType).toBe(DataChangeType.REMOVE);
         expect(payload.index).toBe(0);
-        expect(payload.row[1]).toBe('Jennifer');
-        expect(payload.row[2]).toBe(34);
+        expect(payload.row[1].value).toBe('Jennifer');
+        expect(payload.row[2].value).toBe(34);
         done();
       });
 
@@ -197,15 +216,15 @@ describe('SortModel', function() {
 
 function createSourceModel() {
   let sourceModel = new ArrayModel(['Column 0', 'Column 1', 'Column 2', 'Column 3']);
-  sourceModel.addRow([1111, 'Josh', 3463, 1111]);
-  sourceModel.addRow([2222, 'April', 2351, 2222]);
-  sourceModel.addRow([2222, 'April', 2351, 2222]);
-  sourceModel.addRow([2222, 'April', 2351, 2222]);
-  sourceModel.addRow([2222, 'April', 2351, 2222]);
-  sourceModel.addRow([3333, 'Jennifer', 34, 3333]);
-  sourceModel.addRow([2222, 'April', 2351, 2222]);
-  sourceModel.addRow([4444, 'Tom', 2351, 4444]);
-  sourceModel.addRow([2222, 'April', 2351, 2222]);
-  sourceModel.addRow([5555, 'Katy', 7234, 5555]);
+  sourceModel.addRow([{value:1111}, {value:'Josh'}, {value:3463}, {value:1111}]);
+  sourceModel.addRow([{value:2222}, {value:'April'}, {value:2351}, {value:2222}]);
+  sourceModel.addRow([{value:2222}, {value:'April'}, {value:2351}, {value:2222}]);
+  sourceModel.addRow([{value:2222}, {value:'April'}, {value:2351}, {value:2222}]);
+  sourceModel.addRow([{value:2222}, {value:'April'}, {value:2351}, {value:2222}]);
+  sourceModel.addRow([{value:3333}, {value:'Jennifer'}, {value:34}, {value:3333}]);
+  sourceModel.addRow([{value:2222}, {value:'April'}, {value:2351}, {value:2222}]);
+  sourceModel.addRow([{value:4444}, {value:'Tom'}, {value:2351}, {value:4444}]);
+  sourceModel.addRow([{value:2222}, {value:'April'}, {value:2351}, {value:2222}]);
+  sourceModel.addRow([{value:5555}, {value:'Katy'}, {value:7234}, {value:5555}]);
   return sourceModel;
 }
