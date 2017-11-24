@@ -5,6 +5,7 @@ CALL %~dp0../../Applications/ChartingServer/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/ChiaMarketDataFeedClient/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/ClientWebPortal/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/ComplianceServer/Build/Windows/run_cmake.bat
+CALL %~dp0../../Applications/CseMarketDataFeedClient/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/CtaMarketDataFeedClient/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/DefinitionsServer/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/MarketDataClientStressTest/Build/Windows/run_cmake.bat
