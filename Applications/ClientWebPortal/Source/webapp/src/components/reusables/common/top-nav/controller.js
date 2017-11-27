@@ -3,7 +3,7 @@ import View from './view';
 /** Top nav controller */
 class Controller {
   constructor(react) {
-    this.componentModel = {};
+    this.componentModel = react.props || {};
     this.view = new View(react, this, this.componentModel);
   }
 

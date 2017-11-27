@@ -1,20 +1,36 @@
 import View from './view';
 import {browserHistory} from 'react-router';
+import {AdministrationClient} from 'spire-client';
 
 class Controller {
   constructor(react) {
     this.componentModel = react.props.model || [];
     this.view = new View(react, this, this.componentModel);
+    this.contextDirectoryEntry = react.props.contextDirectoryEntry;
+    this.adminClient = new AdministrationClient();
 
     this.onPageTransitioned = this.onPageTransitioned.bind(this);
     this.getTraderProfilePages = this.getTraderProfilePages.bind(this);
     this.getGroupProfilePages = this.getGroupProfilePages.bind(this);
     this.navigateTo = this.navigateTo.bind(this);
+    this.getRequiredData = this.getRequiredData.bind(this);
+
+    console.debug('++++++++++++ sub pages controller constructor +++++++++++++++++');
   }
 
   componentDidMount() {
     this.pageTransitionedEventListenerId = EventBus.subscribe(Event.Application.PAGE_TRANSITIONED, this.onPageTransitioned.bind(this));
     this.onPageTransitioned(null, window.location.pathname);
+
+    this.getRequiredData().then(responses => {
+      // account roles
+      this.contextUserInfoModel = {
+        userName: this.contextDirectoryEntry.name,
+        roles: responses[0]
+      };
+      this.componentModel.userInfoModel = this.contextUserInfoModel;
+      this.view.update(this.componentModel);
+    });
   }
 
   componentWillUnmount() {
@@ -22,7 +38,17 @@ class Controller {
   }
 
   /** @private */
+  getRequiredData() {
+    let loadAccountRoles = this.adminClient.loadAccountRoles(this.contextDirectoryEntry);
+
+    return Promise.all([
+      loadAccountRoles
+    ]);
+  }
+
+  /** @private */
   onPageTransitioned(eventName, path) {
+    console.debug('onPageTransitioned is called');
     if (path.indexOf('/profile') >= 0) {
       this.componentModel = this.getTraderProfilePages(path);
       EventBus.publish(Event.TopNav.SUBMENU_UPDATED, true);
@@ -33,6 +59,7 @@ class Controller {
       this.componentModel = [];
       EventBus.publish(Event.TopNav.SUBMENU_UPDATED, false);
     }
+    this.componentModel.userInfoModel = this.contextUserInfoModel;
     this.view.update(this.componentModel);
   }
 

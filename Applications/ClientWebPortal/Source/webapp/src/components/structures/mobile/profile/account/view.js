@@ -2,7 +2,6 @@ import './style.scss';
 import React from 'react';
 import PersonalDetails from 'components/reusables/mobile/personal-details';
 import AccountPicture from 'components/reusables/common/account-picture';
-import UserInfoNav from 'components/reusables/common/user-info-nav';
 import moment from 'moment';
 import PrimaryButton from 'components/reusables/common/primary-button';
 import UserNotes from 'components/reusables/common/user-notes';
@@ -16,8 +15,7 @@ class MobileView extends CommonView {
 
   render() {
     let content;
-    let userInfoNavModel,
-      lastSignin,
+    let lastSignin,
       personalDetailsModel,
       accountPictureModel,
       saveButtonModel,
@@ -25,11 +23,6 @@ class MobileView extends CommonView {
       changePasswordButtonModel,
       saveButton;
     if (this.controller.isModelInitialized()) {
-      userInfoNavModel = {
-        userName: this.componentModel.userName,
-        roles: this.componentModel.roles
-      };
-
       personalDetailsModel = JSON.parse(JSON.stringify(this.componentModel));
       personalDetailsModel.id = personalDetailsModel.directoryEntry.id;
       delete personalDetailsModel.directoryEntry;
@@ -73,9 +66,6 @@ class MobileView extends CommonView {
 
       content =
         <div>
-          <div className="row">
-            <UserInfoNav model={userInfoNavModel}/>
-          </div>
           <div className="row">
             Last sign-in: {lastSignin}
           </div>
