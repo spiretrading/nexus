@@ -54,7 +54,6 @@ class View extends UpdatableView {
   }
 
   initialize() {
-    this.contextMenu.setTableModel(this.tableModel);
     $('#' + this.componentId + ' .viewing-region').scroll(this.onViewingRegionScroll);
     $(document).keydown(this.onKeyDownCheckSelectionModifiers)
       .keyup(this.onKeyUpCheckSelectionModifiers);
@@ -71,12 +70,15 @@ class View extends UpdatableView {
       bottomRightY: 0
     };
 
-    $.contextMenu({
-      selector: '#' + this.componentId + ' .viewing-region',
-      appendTo: '#' + this.componentId,
-      items: this.componentModel.contextMenu.getMenuItems(),
-      callback: this.componentModel.contextMenu.onMenuItemClick.bind(this.componentModel.contextMenu)
-    });
+    if (this.contextMenu != null) {
+      this.contextMenu.setTableModel(this.tableModel);
+      $.contextMenu({
+        selector: '#' + this.componentId + ' .viewing-region',
+        appendTo: '#' + this.componentId,
+        items: this.contextMenu.getMenuItems(),
+        callback: this.contextMenu.onMenuItemClick.bind(this.contextMenu)
+      });
+    }
 
     this.resetColumnWidthsPx();
     this.updateColumnWidthsAndEllipsis();
@@ -312,7 +314,11 @@ class View extends UpdatableView {
     $('#' + this.componentId + ' .viewing-region').unbind('scroll');
     $(document).unbind('keydown', this.onKeyDownCheckSelectionModifiers)
       .unbind('keyup', this.onKeyUpCheckSelectionModifiers);
-    $.contextMenu('destroy');
+
+    if (this.contextMenu != null) {
+      $.contextMenu('destroy');
+    }
+
     $('#' + this.componentId + ' .context-menu-list').remove();
     $('#' + this.componentId + ' .column-headers tr').unbind('mousemove');
   }
