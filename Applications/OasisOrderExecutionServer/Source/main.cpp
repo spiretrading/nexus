@@ -276,6 +276,7 @@ int main(int argc, const char** argv) {
     pureEntry.m_application = std::make_shared<CnsxFixApplication>(
       Ref(*timeClient));
     pureEntry.m_destinations.push_back(DefaultDestinations::PURE());
+    pureEntry.m_destinations.push_back(DefaultDestinations::CSE());
     fixApplicationEntries.push_back(pureEntry);
     FixApplicationEntry neoeEntry;
     neoeEntry.m_configPath = "neoe.cfg";
