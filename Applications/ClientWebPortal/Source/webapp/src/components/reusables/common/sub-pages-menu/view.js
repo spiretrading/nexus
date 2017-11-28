@@ -2,6 +2,7 @@ import './style.scss';
 import React from 'react';
 import UpdatableView from 'commons/updatable-view';
 import deviceDetector from 'utils/device-detector';
+import UserInfoNav from 'components/reusables/common/user-info-nav';
 
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
@@ -24,7 +25,7 @@ class View extends UpdatableView {
       className += ' empty';
       $('#top-nav-filler').css('height', '75px');
     } else {
-      $('#top-nav-filler').css('height', '125px');
+      $('#top-nav-filler').css('height', '135px');
     }
 
     let menuItems = [];
@@ -41,9 +42,19 @@ class View extends UpdatableView {
       );
     }
 
+    let userInfo;
+    if (this.componentModel.userInfoModel != null) {
+      userInfo =  <div className="user-info-nav-wrapper">
+                    <UserInfoNav model={this.componentModel.userInfoModel}/>
+                  </div>;
+    }
+
     return (
         <div id="sub-pages-container" className={className}>
-          {menuItems}
+          <div className="menu-wrapper">
+            {menuItems}
+            {userInfo}
+          </div>
         </div>
     );
   }

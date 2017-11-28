@@ -1,38 +1,58 @@
 import View from './view';
 import {browserHistory} from 'react-router';
+import {AdministrationClient} from 'spire-client';
 
 class Controller {
   constructor(react) {
     this.componentModel = react.props.model || [];
     this.view = new View(react, this, this.componentModel);
+    this.contextDirectoryEntry = react.props.contextDirectoryEntry;
+    this.adminClient = new AdministrationClient();
 
     this.onPageTransitioned = this.onPageTransitioned.bind(this);
     this.getTraderProfilePages = this.getTraderProfilePages.bind(this);
     this.getGroupProfilePages = this.getGroupProfilePages.bind(this);
     this.navigateTo = this.navigateTo.bind(this);
+    this.onProfileViewingContextLoaded = this.onProfileViewingContextLoaded.bind(this);
   }
 
   componentDidMount() {
     this.pageTransitionedEventListenerId = EventBus.subscribe(Event.Application.PAGE_TRANSITIONED, this.onPageTransitioned.bind(this));
+    this.profileViewingContextLoadedListenerId = EventBus.subscribe(
+      Event.Profile.VIEWING_CONTEXT_LOADED,
+      this.onProfileViewingContextLoaded
+    );
     this.onPageTransitioned(null, window.location.pathname);
   }
 
   componentWillUnmount() {
     EventBus.unsubscribe(this.pageTransitionedEventListenerId);
+    EventBus.unsubscribe(this.profileViewingContextLoadedListenerId);
   }
 
   /** @private */
   onPageTransitioned(eventName, path) {
     if (path.indexOf('/profile') >= 0) {
       this.componentModel = this.getTraderProfilePages(path);
+      this.view.update(this.componentModel);
       EventBus.publish(Event.TopNav.SUBMENU_UPDATED, true);
     } else if (path.indexOf('/group-profile') >= 0) {
       this.componentModel = this.getGroupProfilePages(path);
+      this.view.update(this.componentModel);
       EventBus.publish(Event.TopNav.SUBMENU_UPDATED, true);
     } else {
       this.componentModel = [];
+      this.view.update(this.componentModel);
       EventBus.publish(Event.TopNav.SUBMENU_UPDATED, false);
     }
+  }
+
+  /** @private */
+  onProfileViewingContextLoaded(eventName, payload) {
+    this.componentModel.userInfoModel = {
+      userName: payload.directoryEntry.name,
+      roles: payload.roles
+    };
     this.view.update(this.componentModel);
   }
 

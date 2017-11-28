@@ -10,11 +10,11 @@
     height: 40px;
 
     .icon-expand {
-      height: 23px;
-      font-size: 25px;
-      color: $primaryGradient3;
+      height: 16px;
+      font-size: 16px;
+      color: $darkGrey;
       cursor: pointer;
-      margin-right: 5px;
+      margin-right: 10px;
       transform: rotate(0deg);
     }
 
@@ -46,7 +46,7 @@
     }
 
     .collapsed {
-      color: $primaryGradient3;
+      color: $darkGrey;
       transform: rotate(-90deg);
       animation: arrowCollapse .5s;
       -webkit-animation-fill-mode: forwards;

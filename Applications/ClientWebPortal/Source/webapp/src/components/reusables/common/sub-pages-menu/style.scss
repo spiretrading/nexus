@@ -13,21 +13,34 @@
     border-bottom: 0;
   }
 
+  .menu-wrapper {
+    width: $minSiteWidth;
+    display: flex;
+    padding-left: 20px;
+    padding-right: 20px;
+
+    .user-info-nav-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+  }
+
   .menu-item {
     display: flex;
     align-items: center;
     height: 50px;
     size: 20px;
     margin-right: 40px;
-    font-size: 16px;
-    color: $primaryGradient3;
-    border-bottom: 3px solid $white;
+    font-size: 14px;
+    color: $darkerGrey;
+    border-bottom: 2px solid $white;
     border-top: 3px solid $white;
     cursor: pointer;
 
     span {
       margin-right: 10px;
-      font-size: 17px;
+      font-size: 14px;
     }
 
     div {

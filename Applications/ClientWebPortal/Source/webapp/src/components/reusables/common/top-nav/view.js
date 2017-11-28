@@ -37,7 +37,7 @@ class View extends UpdatableView {
         </div>
         <div>
           <NotificationDisplayPanel/>
-          <SubPagesMenu/>
+          <SubPagesMenu />
         </div>
       </div>
     );

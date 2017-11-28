@@ -2,7 +2,6 @@ import './style.scss';
 import React from 'react';
 import UpdatableView from 'commons/updatable-view';
 import deviceDetector from 'utils/device-detector';
-import UserInfoNav from 'components/reusables/common/user-info-nav';
 import EntitlementPanel from 'components/reusables/common/entitlement-panel';
 import PrimaryButton from 'components/reusables/common/primary-button';
 
@@ -46,7 +45,7 @@ class View extends UpdatableView {
   }
 
   render() {
-    let userInfoNavModel, entitlements;
+    let entitlements;
     let className = '';
     if (!deviceDetector.isMobile()) {
       className = 'container-fixed-width';
@@ -56,11 +55,6 @@ class View extends UpdatableView {
     let onEntitlementDeselected = this.controller.onEntitlementDeselected.bind(this.controller);
 
     if (this.controller.isModelInitialized()) {
-      userInfoNavModel = {
-        userName: this.componentModel.directoryEntry.name,
-        roles: this.componentModel.roles
-      };
-
       entitlements = [];
       for (let i=0; i<this.componentModel.entitlements.length; i++) {
         let entitlement = this.componentModel.entitlements[i];
@@ -100,9 +94,6 @@ class View extends UpdatableView {
 
     return (
       <div id="entitlements-container" className={className}>
-        <div className="user-info-nav-wrapper">
-          <UserInfoNav model={userInfoNavModel}/>
-        </div>
         {entitlements}
         {hr}
         {saveButton}

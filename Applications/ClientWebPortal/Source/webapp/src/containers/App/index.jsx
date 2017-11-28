@@ -2,6 +2,7 @@ import React, {PropTypes, Component} from 'react';
 import TopNav from 'components/reusables/common/top-nav';
 import SideMenu from 'components/reusables/common/side-menu';
 import deviceDetector from 'utils/device-detector';
+import {DirectoryEntry} from 'spire-client';
 import './style.scss';
 
 class App extends Component {
