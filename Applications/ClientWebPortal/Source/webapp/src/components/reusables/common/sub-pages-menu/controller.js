@@ -13,53 +13,46 @@ class Controller {
     this.getTraderProfilePages = this.getTraderProfilePages.bind(this);
     this.getGroupProfilePages = this.getGroupProfilePages.bind(this);
     this.navigateTo = this.navigateTo.bind(this);
-    this.getRequiredData = this.getRequiredData.bind(this);
-
-    console.debug('++++++++++++ sub pages controller constructor +++++++++++++++++');
+    this.onProfileViewingContextLoaded = this.onProfileViewingContextLoaded.bind(this);
   }
 
   componentDidMount() {
     this.pageTransitionedEventListenerId = EventBus.subscribe(Event.Application.PAGE_TRANSITIONED, this.onPageTransitioned.bind(this));
+    this.profileViewingContextLoadedListenerId = EventBus.subscribe(
+      Event.Profile.VIEWING_CONTEXT_LOADED,
+      this.onProfileViewingContextLoaded
+    );
     this.onPageTransitioned(null, window.location.pathname);
-
-    this.getRequiredData().then(responses => {
-      // account roles
-      this.contextUserInfoModel = {
-        userName: this.contextDirectoryEntry.name,
-        roles: responses[0]
-      };
-      this.componentModel.userInfoModel = this.contextUserInfoModel;
-      this.view.update(this.componentModel);
-    });
   }
 
   componentWillUnmount() {
     EventBus.unsubscribe(this.pageTransitionedEventListenerId);
-  }
-
-  /** @private */
-  getRequiredData() {
-    let loadAccountRoles = this.adminClient.loadAccountRoles(this.contextDirectoryEntry);
-
-    return Promise.all([
-      loadAccountRoles
-    ]);
+    EventBus.unsubscribe(this.profileViewingContextLoadedListenerId);
   }
 
   /** @private */
   onPageTransitioned(eventName, path) {
-    console.debug('onPageTransitioned is called');
     if (path.indexOf('/profile') >= 0) {
       this.componentModel = this.getTraderProfilePages(path);
+      this.view.update(this.componentModel);
       EventBus.publish(Event.TopNav.SUBMENU_UPDATED, true);
     } else if (path.indexOf('/group-profile') >= 0) {
       this.componentModel = this.getGroupProfilePages(path);
+      this.view.update(this.componentModel);
       EventBus.publish(Event.TopNav.SUBMENU_UPDATED, true);
     } else {
       this.componentModel = [];
+      this.view.update(this.componentModel);
       EventBus.publish(Event.TopNav.SUBMENU_UPDATED, false);
     }
-    this.componentModel.userInfoModel = this.contextUserInfoModel;
+  }
+
+  /** @private */
+  onProfileViewingContextLoaded(eventName, payload) {
+    this.componentModel.userInfoModel = {
+      userName: payload.directoryEntry.name,
+      roles: payload.roles
+    };
     this.view.update(this.componentModel);
   }
 

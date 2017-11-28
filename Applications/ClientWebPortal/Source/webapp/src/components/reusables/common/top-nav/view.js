@@ -13,7 +13,6 @@ class View extends UpdatableView {
 
     this.showBottomBorder = this.showBottomBorder.bind(this);
     this.hideBottomBorder = this.hideBottomBorder.bind(this);
-    this.contextDirectoryEntry = componentModel.contextDirectoryEntry;
   }
 
   onMenuClick() {
@@ -29,9 +28,6 @@ class View extends UpdatableView {
   }
 
   render() {
-    console.debug('top-nav render()');
-    console.debug(this.contextDirectoryEntry);
-
     return (
       <div id="top-nav-container">
         <div className="header">
@@ -41,7 +37,7 @@ class View extends UpdatableView {
         </div>
         <div>
           <NotificationDisplayPanel/>
-          <SubPagesMenu contextDirectoryEntry={this.contextDirectoryEntry} />
+          <SubPagesMenu />
         </div>
       </div>
     );

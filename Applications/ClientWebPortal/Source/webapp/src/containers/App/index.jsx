@@ -8,13 +8,6 @@ import './style.scss';
 class App extends Component {
   constructor(props) {
     super(props);
-    if (props.params.type != null && props.params.id != null && props.params.name != null) {
-      this.contextDirectoryEntry = DirectoryEntry.fromData({
-        id: Number(props.params.id),
-        type: Number(props.params.type),
-        name: props.params.name
-      });
-    }
   }
 
   /** @private */
@@ -113,13 +106,10 @@ class App extends Component {
       className += " mobile";
     }
 
-    console.debug('app container render()');
-    console.debug(this.contextDirectoryEntry);
-
     return (
       <main className={className}>
         <div id="top-nav-wrapper">
-          <TopNav contextDirectoryEntry={this.contextDirectoryEntry} />
+          <TopNav />
         </div>
         <div id="top-nav-filler"></div>
         <div id="side-menu-wrapper">

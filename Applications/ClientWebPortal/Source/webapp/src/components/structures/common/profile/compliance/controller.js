@@ -153,6 +153,11 @@ class Controller {
       this.componentModel.isAdmin = userService.isAdmin();
       this.componentModel.isGroup = directoryEntry.type === 1;
       this.view.update(this.componentModel);
+
+      EventBus.publish(Event.Profile.VIEWING_CONTEXT_LOADED, {
+        directoryEntry: this.componentModel.directoryEntry,
+        roles: this.componentModel.roles
+      });
     });
   }
 

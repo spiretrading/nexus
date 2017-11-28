@@ -43,8 +43,6 @@ class View extends UpdatableView {
     }
 
     let userInfo;
-    console.debug('sub pages render()');
-    console.debug(this.componentModel.userInfoModel);
     if (this.componentModel.userInfoModel != null) {
       userInfo =  <div className="user-info-nav-wrapper">
                     <UserInfoNav model={this.componentModel.userInfoModel}/>

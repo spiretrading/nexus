@@ -63,6 +63,11 @@ class Controller {
       this.componentModel.userName = directoryEntry.name;
       this.componentModel.isAdmin = userService.isAdmin();
       this.view.update(this.componentModel);
+
+      EventBus.publish(Event.Profile.VIEWING_CONTEXT_LOADED, {
+        directoryEntry: this.componentModel.directoryEntry,
+        roles: this.componentModel.roles
+      });
     });
   }
 
