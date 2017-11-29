@@ -15,6 +15,14 @@
     }
   }
 
+  &.expanded {
+    .header {
+      .title {
+        color: $primaryGradient1;
+      }
+    }
+  }
+
   .header {
     display: flex;
     width: 100%;
