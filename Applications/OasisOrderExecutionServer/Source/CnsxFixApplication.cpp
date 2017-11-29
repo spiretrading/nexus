@@ -132,6 +132,8 @@ void CnsxFixApplication::onMessage(const FIX42::ExecutionReport& message,
         char lastMarket = exchangeAdminValue[0];
         if(lastMarket == 'P') {
           update->m_lastMarket = DefaultMarkets::PURE().GetData();
+        } else if(lastMarket == 'Q') {
+          update->m_lastMarket = DefaultMarkets::CSE().GetData();
         }
       }
     });
