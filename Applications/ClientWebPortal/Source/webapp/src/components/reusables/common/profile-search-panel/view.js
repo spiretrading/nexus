@@ -5,7 +5,7 @@ import UpdatableView from 'commons/updatable-view';
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
-    this.traderRowHeight = 27;
+    this.traderRowHeight = 32;
     this.visibleHeight = 0;
     this.shouldExpand = false;
     this.lastSearchString = null;

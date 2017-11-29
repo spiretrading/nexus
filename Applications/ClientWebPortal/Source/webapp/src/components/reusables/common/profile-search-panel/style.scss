@@ -68,7 +68,7 @@
       height: 0;
       overflow: hidden;
       cursor: pointer;
-      padding-top: 2px;
+      padding-top: 4px;
 
       &.empty {
         color: $darkerGrey;
@@ -85,7 +85,7 @@
 
       .roles-wrapper {
         position: absolute;
-        top: 6px;
+        top: 8px;
         right: 0px;
         display: flex;
         padding-right: 10px;
