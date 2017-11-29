@@ -59,25 +59,28 @@
 
     .country-dropdown-wrapper {
       position: relative;
+      left: -5px;
 
       select {
         padding-left: 5px;
         padding-right: 30px;
         border: 1px solid $white;
+        border-radius: 0;
+        height: 28px;
       }
 
       .country-dropdown-arrow {
         position: absolute;
-        top: 7px;
+        top: 9px;
         right: 10px;
         font-size: 12px;
-        color: $primaryGradient4;
+        color: $darkGrey;
         opacity: 0;
       }
 
       &:hover {
         select {
-          border: 1px solid $primaryGradient4;
+          border: 1px solid $darkGrey;
           border-radius: 0;
         }
 
@@ -91,17 +94,17 @@
       position: absolute;
       top: 5px;
       right: 16px;
-      color: $primaryGradient4;
+      color: $darkGrey;
       opacity: 0;
     }
 
     &.editable:hover {
       input {
-        border: 1px solid $primaryGradient4;
+        border: 1px solid $darkGrey;
       }
 
       textarea {
-        border: 1px solid $primaryGradient4;
+        border: 1px solid $darkGrey;
       }
 
       .edit-icon-wrapper {
