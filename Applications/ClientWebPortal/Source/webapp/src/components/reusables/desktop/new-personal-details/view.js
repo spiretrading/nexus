@@ -44,7 +44,7 @@ class DesktopView extends CommonView {
       </div>;
 
     return (
-        <div id={this.componentModel.componentId} className="personal-details-container">
+        <div id={this.componentModel.componentId} className="new-personal-details-container">
           <table className="details-container">
             <tbody>
               <tr>
@@ -97,8 +97,11 @@ class DesktopView extends CommonView {
               <tr>
                 <td>Group(s)</td>
                 <td>
-                  <div className="personal-detail-row groups">
+                  <div className="personal-detail-row editable groups">
                     <ul className="group-tags"></ul>
+                    <div className="edit-icon-wrapper">
+                      <span className="icon-edit"/>
+                    </div>
                   </div>
                 </td>
               </tr>

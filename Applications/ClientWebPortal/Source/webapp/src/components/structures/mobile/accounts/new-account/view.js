@@ -45,15 +45,15 @@ class MobileView extends CommonView {
 
       if (userService.isAdmin()) {
         createButton =
-          <div className="row save-button-wrapper">
-            <PrimaryButton className="save-button" model={createButtonModel} onClick={createAccount}/>
+          <div className="row create-button-wrapper">
+            <PrimaryButton className="create-button" model={createButtonModel} onClick={createAccount}/>
             <div className="create-message"></div>
           </div>
       }
 
       content =
         <div>
-          <div className="header row">
+          <div className="top-page-header row">
             Create Account
           </div>
           <div className="account-picture-wrapper row">
@@ -62,7 +62,7 @@ class MobileView extends CommonView {
           <div className="personal-details-wrapper">
             <PersonalDetails model={personalDetailsModel} onChange={onPersonalDetailsChange}/>
           </div>
-          <div className="header row">
+          <div className="user-notes-header row">
             User Notes
           </div>
           <div className="row">
@@ -73,7 +73,7 @@ class MobileView extends CommonView {
     }
 
     return (
-      <div id="account-container">
+      <div id="new-account-container">
         {content}
       </div>
     );
