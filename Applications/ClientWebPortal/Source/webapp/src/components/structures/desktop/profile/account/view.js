@@ -2,7 +2,6 @@ import './style.scss';
 import React from 'react';
 import PersonalDetails from 'components/reusables/desktop/personal-details';
 import AccountPicture from 'components/reusables/common/account-picture';
-import UserInfoNav from 'components/reusables/common/user-info-nav';
 import moment from 'moment';
 import PrimaryButton from 'components/reusables/common/primary-button';
 import UserNotes from 'components/reusables/common/user-notes';
@@ -15,8 +14,7 @@ class DesktopView extends CommonView {
 
   render() {
     let content;
-    let userInfoNavModel,
-      lastSignin,
+    let lastSignin,
       personalDetailsModel,
       accountPictureModel,
       saveButtonModel,
@@ -24,11 +22,6 @@ class DesktopView extends CommonView {
       changePasswordButtonModel,
       saveButton;
     if (this.controller.isModelInitialized()) {
-      userInfoNavModel = {
-        userName: this.componentModel.directoryEntry.name,
-        roles: this.componentModel.roles
-      };
-
       personalDetailsModel = JSON.parse(JSON.stringify(this.componentModel));
       personalDetailsModel.id = personalDetailsModel.directoryEntry.id;
       personalDetailsModel.userName = personalDetailsModel.directoryEntry.name;
@@ -75,9 +68,6 @@ class DesktopView extends CommonView {
 
       content =
         <div>
-          <div className="row">
-            <UserInfoNav model={userInfoNavModel}/>
-          </div>
           <div className="row">
             Last sign-in: {lastSignin}
           </div>

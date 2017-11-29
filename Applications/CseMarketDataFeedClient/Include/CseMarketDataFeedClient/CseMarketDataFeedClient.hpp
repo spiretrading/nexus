@@ -231,7 +231,7 @@ namespace MarketDataService {
       return;
     }
     auto bidPrice = message.GetBusinessField<Money>(196, 0);
-    if(!bidPrice.is_initialized()) {
+    if(!bidPrice.is_initialized() || *bidPrice == Money::ZERO) {
       return;
     }
     auto bidVolume = message.GetBusinessField<Quantity>(64, 0);
@@ -239,7 +239,7 @@ namespace MarketDataService {
       return;
     }
     auto askPrice = message.GetBusinessField<Money>(196, 1);
-    if(!askPrice.is_initialized()) {
+    if(!askPrice.is_initialized() || *askPrice == Money::ZERO) {
       return;
     }
     auto askVolume = message.GetBusinessField<Quantity>(64, 1);

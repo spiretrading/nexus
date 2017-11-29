@@ -1,18 +1,24 @@
 @import "src/styles/variables";
 
 main.mobile {
-  #account-container {
+  #new-account-container {
     font-size: 16px;
     position: relative;
-    display: none;
 
     .row {
       margin: 0 0 30px 0;
     }
 
-    .header{
+    .top-page-header{
+      text-align: center;
+      font-size: 20px;
+      margin-top: 10px;
+    }
+
+    .user-notes-header{
       color: $primaryGradient1;
       font-weight: bold;
+      margin-bottom: 5px;
     }
 
     .account-picture-wrapper {
@@ -25,9 +31,18 @@ main.mobile {
       margin-bottom: 25px;
     }
 
+    .personal-detail-row {
+      padding: 0;
+
+      input {
+        margin-left: 0;
+      }
+    }
+
     .create-button-wrapper {
       .create-button {
         width: 100%;
+        padding: 10px 15px;
       }
 
       .create-message {

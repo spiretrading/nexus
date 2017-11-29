@@ -2,7 +2,6 @@ import './style.scss';
 import React from 'react';
 import deviceDetector from 'utils/device-detector';
 import PrimaryButton from 'components/reusables/common/primary-button';
-import UserInfoNav from 'components/reusables/common/user-info-nav';
 import definitionsService from 'services/definitions';
 import StepNumberInput from 'components/reusables/common/step-number-input';
 import CommonView from 'components/structures/common/profile/risk-controls/common-view';
@@ -103,17 +102,11 @@ class View extends CommonView {
       containerClassName = '';
     }
 
-    let userInfoNavModel;
     if (this.controller.isModelInitialized()) {
       let currencySign = definitionsService.getCurrencySignFromId(this.componentModel.riskParameters.currencyId.value);
       if (currencySign != '') {
         currencySign = '(' + currencySign + ')';
       }
-
-      userInfoNavModel = {
-        userName: this.componentModel.directoryEntry.name,
-        roles: this.componentModel.roles
-      };
 
       let onSave = this.onSaveClick.bind(this);
       let saveBtnModel = {
@@ -160,9 +153,6 @@ class View extends CommonView {
 
       content =
         <div>
-          <div className="user-info-nav-wrapper">
-            <UserInfoNav model={userInfoNavModel}/>
-          </div>
           <div className="form-wrapper">
             <div className="risk-control-label">
               Currency

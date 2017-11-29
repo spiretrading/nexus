@@ -41,14 +41,6 @@ main.mobile {
         margin-left: -5px;
       }
 
-      .edit-icon-wrapper {
-        position: absolute;
-        top: 48px;
-        right: 16px;
-        color: $primaryGradient4;
-        opacity: 0;
-      }
-
       &.editable:hover {
         input {
           border: 1px solid $primaryGradient4;
@@ -57,10 +49,6 @@ main.mobile {
         textarea {
           border: 1px solid $primaryGradient4;
         }
-
-        .edit-icon-wrapper {
-          opacity: 1;
-        }
       }
     }
 
@@ -68,7 +56,8 @@ main.mobile {
       width: 100%;
 
       .icon {
-        margin-right: 5px;
+        font-size: 20px;
+        margin-right: 10px;
         color: $greyedIcon;
 
         &.active {

@@ -1,6 +1,7 @@
 import './style.scss';
 import React from 'react';
 import UpdatableView from 'commons/updatable-view';
+import deviceDetector from 'utils/device-detector';
 
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
@@ -29,10 +30,16 @@ class View extends UpdatableView {
       }
     }
 
+    let lineBreak;
+    if (deviceDetector.isMobile()) {
+      lineBreak = <br/>;
+    }
+
     return (
         <div className="user-info-nav-container">
           <div className="info-container">
             <span className="user-name">{this.componentModel.userName}</span>
+            {lineBreak}
             <span title="Trader" className={traderClass}></span>
             <span title="Manager" className={managerClass}></span>
             <span title="Admin" className={adminClass}></span>

@@ -61,7 +61,6 @@ class TableModel {
 
   rowMove(fromIndex, toIndex) {
     let prevValue;
-    // let nextValue = this.allLengthsCache[fromIndex];
     let nextSelectedRowValue = this.selectedRowsControlModApplied.get(fromIndex);
     this.selectedRowsControlModApplied.remove(fromIndex);
     if (fromIndex < toIndex) {

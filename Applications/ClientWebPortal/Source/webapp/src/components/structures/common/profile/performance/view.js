@@ -2,7 +2,6 @@ import './style.scss';
 import React from 'react';
 import UpdatableView from 'commons/updatable-view';
 import deviceDetector from 'utils/device-detector';
-import UserInfoNav from 'components/reusables/common/user-info-nav';
 import ProfitAndLossPanel from 'components/reusables/common/profit-loss-panel';
 import ProfitLossReportParameters from 'components/reusables/common/profit-loss-report-parameters';
 import ReportStatusPanel from 'components/reusables/common/report-status-panel';
@@ -55,25 +54,8 @@ class View extends UpdatableView {
       }
     }
 
-    let userInfo;
-    if (this.componentModel.isGroup) {
-      userInfo = <div className="group-id">
-                    {this.componentModel.userName}
-                  </div>;
-    } else {
-      let userInfoNavModel = {
-        userName: this.componentModel.userName,
-        roles: this.componentModel.roles
-      };
-      userInfo = <UserInfoNav model={userInfoNavModel}/>;
-    }
-
     return (
       <div id="performance-container" className={className}>
-        <div className="row">
-          {userInfo}
-        </div>
-
         <ProfitLossReportParameters onGenerate={onGenerate}/>
 
         {reportHeader}

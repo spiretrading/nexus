@@ -3,7 +3,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import UpdatableView from 'commons/updatable-view';
 import deviceDetector from 'utils/device-detector';
-import UserInfoNav from 'components/reusables/common/user-info-nav';
 import PrimaryButton from 'components/reusables/common/primary-button';
 import CompliancePanel from 'components/reusables/common/compliance-panel';
 import definitionsService from 'services/definitions';
@@ -138,24 +137,8 @@ class View extends UpdatableView {
         horizontalDivider = <hr/>;
       }
 
-      let userInfo;
-      if (this.componentModel.isGroup) {
-        userInfo = <div className="group-id">
-                    {this.componentModel.userName}
-                  </div>;
-      } else {
-        let userInfoNavModel = {
-          userName: this.componentModel.userName,
-          roles: this.componentModel.roles
-        };
-        userInfo = <UserInfoNav model={userInfoNavModel}/>;
-      }
-
       content =
         <div>
-          <div className="row">
-            {userInfo}
-          </div>
           {complianceRuleEntries}
           {addNewRule}
           {horizontalDivider}

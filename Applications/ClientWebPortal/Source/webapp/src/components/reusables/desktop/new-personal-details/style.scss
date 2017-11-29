@@ -1,6 +1,6 @@
 @import "src/styles/variables";
 
-.personal-details-container {
+.new-personal-details-container {
   table tbody tr {
     td{
       padding-bottom: 12px;
@@ -32,40 +32,47 @@
       width: 100%;
       outline: none;
       resize: none;
-      border: 1px solid $white;
+      border: 1px solid $darkGrey;
       padding-left: 5px;
       padding-right: 5px;
       margin-left: -5px;
     }
 
     input {
-      border: 1px solid $white;
+      border: 1px solid $darkGrey;
       height: 28px;
       width: 100%;
       margin-left: -5px;
     }
 
+    &.groups {
+      width: 270px;
+    }
+
     .country-dropdown-wrapper {
       position: relative;
+      left: -5px;
 
       select {
         padding-left: 5px;
         padding-right: 30px;
-        border: 1px solid $white;
+        border: 1px solid $darkGrey;
+        border-radius: 0;
+        height: 28px;
       }
 
       .country-dropdown-arrow {
         position: absolute;
-        top: 7px;
+        top: 9px;
         right: 10px;
         font-size: 12px;
-        color: $primaryGradient4;
+        color: $darkGrey;
         opacity: 0;
       }
 
       &:hover {
         select {
-          border: 1px solid $primaryGradient4;
+          border: 1px solid $darkGrey;
           border-radius: 0;
         }
 
@@ -79,17 +86,17 @@
       position: absolute;
       top: 5px;
       right: 16px;
-      color: $primaryGradient4;
+      color: $darkGrey;
       opacity: 0;
     }
 
     &.editable:hover {
       input {
-        border: 1px solid $primaryGradient4;
+        border: 1px solid $darkGrey;
       }
 
       textarea {
-        border: 1px solid $primaryGradient4;
+        border: 1px solid $darkGrey;
       }
 
       .edit-icon-wrapper {
@@ -99,6 +106,14 @@
 
     .role.icon {
       cursor: pointer;
+      font-size: 20px;
+    }
+
+    &.groups {
+      .edit-icon-wrapper {
+        top: 8px;
+        right: 7px;
+      }
     }
   }
 
@@ -106,7 +121,7 @@
     width: 100%;
 
     .icon {
-      margin-right: 5px;
+      margin-right: 8px;
       color: $greyedIcon;
 
       &.active {
@@ -116,11 +131,25 @@
   }
 
   .group-tags {
-    padding: 0;
-    border: 0;
+    margin: 0;
+    width: 100%;
+    padding: 2px 5px 0 5px;
+    border: 1px solid $darkGrey;
+    border-radius: 0;
+
+    .tagit-choice {
+      margin: 0 5px 2px 0;
+      border-radius: 0;
+      padding: 2px 16px 2px 5px;
+    }
+
+    .tagit-new {
+      margin: 0;
+      padding: 0;
+    }
 
     &:hover {
-      border: 1px solid $primaryGradient4;
+      border: 1px solid $darkGrey;
     }
   }
 }

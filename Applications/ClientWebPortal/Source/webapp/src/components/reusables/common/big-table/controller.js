@@ -47,8 +47,9 @@ class Controller {
     this.view.setViewingRegionDimensions();
   }
 
-  updateColumnChange(dataModel) {
+  updateColumnChange(dataModel, omittedColumns) {
     this.tableModel.updateColumnChange(dataModel);
+    this.removeFromSortOrders(omittedColumns);
     this.view.updateColumnChange();
   }
 
@@ -81,6 +82,13 @@ class Controller {
 
   getColumnSortOrders() {
     return this.columnSortOrders;
+  }
+
+  /** @private */
+  removeFromSortOrders(omittedColumns) {
+    this.columnSortOrders = this.columnSortOrders.filter(element => {
+      return !omittedColumns.includes(element.index);
+    });
   }
 }
 

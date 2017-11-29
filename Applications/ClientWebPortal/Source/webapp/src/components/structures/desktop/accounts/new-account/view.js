@@ -54,7 +54,7 @@ class DesktopView extends CommonView {
 
       content =
         <div>
-          <div className="header row">
+          <div className="page-top-header row">
             Create Account
           </div>
           <div className="account-information-body row">
@@ -65,7 +65,7 @@ class DesktopView extends CommonView {
               <PersonalDetails model={personalDetailsModel} onChange={onPersonalDetailsChange}/>
             </div>
           </div>
-          <div className="header row">
+          <div className="user-notes-header row">
             User Notes
           </div>
           <div className="row">
@@ -76,7 +76,7 @@ class DesktopView extends CommonView {
     }
 
     return (
-      <div id="account-container" className="container-fixed-width">
+      <div id="new-account-container" className="container-fixed-width">
         {content}
       </div>
     );

@@ -5,7 +5,7 @@ import TranslationModel from 'utils/table-models/translation-model';
 import ValueComparer from 'utils/value-comparer';
 
 export default class extends Model {
-  constructor(sourceModel, columnSortOrders, valueComparer = new ValueComparer()) {
+  constructor(sourceModel, columnSortOrders = null, valueComparer = new ValueComparer()) {
     super();
     this.columnSortOrders = columnSortOrders;
     this.valueComparer = valueComparer;
@@ -41,6 +41,11 @@ export default class extends Model {
     this.signalManager.removeListener(subId);
   }
 
+  changeSortOrder(newSortOrder) {
+    this.columnSortOrders = newSortOrder;
+    this.initialize();
+  }
+
   dispose() {
     this.translationModel.removeDataChangeListener(this.dataChangeSubId);
     this.translationModel.dispose();
@@ -48,9 +53,24 @@ export default class extends Model {
 
   /** @private */
   initialize() {
+    if (this.columnSortOrders == null || this.columnSortOrders.length == 0) {
+      this.columnSortOrders = [];
+      let columnCount = this.translationModel.getColumnCount();
+      for (let i=0; i<columnCount; i++) {
+        this.columnSortOrders.push({
+          index: i,
+          isAsc: true
+        });
+      }
+    }
+
     let rowCount = this.translationModel.getRowCount();
     for (let i=1; i<rowCount; i++) {
-      this.sortAddedData(i, i - 1);
+      let newSortedIndex = this.sortAddedData(i, i - 1);
+      this.signalManager.emitSignal(DataChangeType.MOVE, Object.freeze({
+        from: i,
+        to: newSortedIndex
+      }));
     }
   }
 
@@ -71,7 +91,7 @@ export default class extends Model {
   getValuesOfSortOrderColumns(rowIndex) {
     let values = [];
     for (let i=0; i<this.columnSortOrders.length; i++) {
-      let value = this.translationModel.getValueAt(this.columnSortOrders[i].index, rowIndex);
+      let value = this.translationModel.getValueAt(this.columnSortOrders[i].index, rowIndex).value;
       values.push(value);
     }
     return values;
@@ -250,8 +270,8 @@ export default class extends Model {
   /** @private */
   shouldSort(currentSortColumnValues, priorRowValues) {
     let priorSortColumnValues = [];
-    for (let i=0; i<this.columnSortOrders; i++) {
-      priorSortColumnValues.push(this.columnSortOrders[i].index);
+    for (let i=0; i<this.columnSortOrders.length; i++) {
+      priorSortColumnValues.push(priorRowValues[this.columnSortOrders[i].index].value);
     }
     if (this.compareValuesBySortOrders(priorSortColumnValues, currentSortColumnValues) != 0) {
       return true;

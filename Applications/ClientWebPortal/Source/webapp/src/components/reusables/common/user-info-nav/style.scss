@@ -27,3 +27,18 @@
     }
   }
 }
+
+main.mobile {
+  .user-info-nav-container {
+    .info-container {
+      position: absolute;
+      right: 0;
+      top: -9px;
+      text-align: right;
+
+      .user-name {
+        margin-right: 0px;
+      }
+    }
+  }
+}

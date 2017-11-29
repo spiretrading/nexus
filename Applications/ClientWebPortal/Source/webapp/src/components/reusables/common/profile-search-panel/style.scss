@@ -8,13 +8,14 @@
     width: 100%;
     align-items: center;
     height: 40px;
+    margin-bottom: 10px;
 
     .icon-expand {
-      height: 23px;
-      font-size: 25px;
-      color: $primaryGradient3;
+      height: 16px;
+      font-size: 16px;
+      color: $darkGrey;
       cursor: pointer;
-      margin-right: 5px;
+      margin-right: 10px;
       transform: rotate(0deg);
     }
 
@@ -28,13 +29,7 @@
       cursor: pointer;
 
       &:hover {
-        color: $primaryGradient2;
-
-        .roles-wrapper {
-          span.active {
-            color: $primaryGradient2;
-          }
-        }
+        color: $primaryGradient1;
       }
     }
 
@@ -46,10 +41,17 @@
     }
 
     .collapsed {
-      color: $primaryGradient3;
+      color: $darkGrey;
       transform: rotate(-90deg);
       animation: arrowCollapse .5s;
       -webkit-animation-fill-mode: forwards;
+    }
+  }
+
+  &.expanded {
+    .header {
+      border-bottom: 1px solid $lightGrey;
+      color: $primaryGradient1;
     }
   }
 
@@ -57,8 +59,8 @@
     width: 100%;
     height: 0px;
     overflow: hidden;
-    padding-left: 45px;
-    padding-right: 20px;
+    padding-left: 0px;
+    padding-right: 0px;
 
     .trader-row {
       position: relative;
@@ -66,6 +68,7 @@
       height: 0;
       overflow: hidden;
       cursor: pointer;
+      padding-top: 4px;
 
       &.empty {
         color: $darkerGrey;
@@ -76,11 +79,16 @@
         height: 27px;
       }
 
+      &>span, i {
+        padding-left: 26px;
+      }
+
       .roles-wrapper {
         position: absolute;
-        top: 0px;
+        top: 8px;
         right: 0px;
         display: flex;
+        padding-right: 10px;
 
         span {
           margin-left: 5px;
@@ -93,11 +101,12 @@
       }
 
       &:hover:not(.empty) {
-        color: $primaryGradient2;
+        background: $lighterGrey;
+        color: $primaryGradient1;
 
         .roles-wrapper {
           span.active {
-            color: $primaryGradient2;
+            color: $primaryGradient1;
           }
         }
       }
