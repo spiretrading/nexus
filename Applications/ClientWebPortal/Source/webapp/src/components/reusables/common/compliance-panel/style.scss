@@ -50,7 +50,10 @@
   &.expanded {
     .header {
       border-bottom: 1px solid $lightGrey;
-      color: $primaryGradient1;
+
+      .title {
+        color: $primaryGradient1;
+      }
     }
   }
 
