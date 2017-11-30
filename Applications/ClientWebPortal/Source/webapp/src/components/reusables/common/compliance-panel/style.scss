@@ -8,12 +8,13 @@
     display: flex;
     width: 100%;
     align-items: center;
-    height: 40px;
+    height: 45px;
+    border-bottom: 1px solid $white;
 
     .icon-expand {
-      height: 23px;
-      font-size: 25px;
-      color: $primaryGradient3;
+      height: 16px;
+      font-size: 16px;
+      color: $darkGrey;
       cursor: pointer;
       margin-right: 15px;
       transform: rotate(0deg);
@@ -28,7 +29,7 @@
     }
 
     .status-dropdown {
-      margin-top: 4px;
+      margin-top: 0px;
     }
 
     .expanded {
@@ -43,6 +44,13 @@
       transform: rotate(-90deg);
       animation: arrowCollapse .5s;
       -webkit-animation-fill-mode: forwards;
+    }
+  }
+
+  &.expanded {
+    .header {
+      border-bottom: 1px solid $lightGrey;
+      color: $primaryGradient1;
     }
   }
 
@@ -129,8 +137,8 @@
     padding-left: 40px;
 
     .content-wrapper {
-      padding-top: 5px;
-      padding-bottom: 10px;
+      padding-top: 10px;
+      padding-bottom: 5px;
 
       .content-header {
         width: 100%;
