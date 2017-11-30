@@ -44,7 +44,7 @@ window.clone = (originalObj) => {
         }
         return cloneObj;
       }
-    } else {
+    } else if (typeof originalObj != 'function') {
       return JSON.parse(JSON.stringify(originalObj));
     }
   } else {
