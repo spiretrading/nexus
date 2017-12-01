@@ -14,7 +14,7 @@ class UpdatableView {
   update(newComponentModel) {
     if (newComponentModel != null) {
       if ($.isArray(this.componentModel)) {
-        this.componentModel = newComponentModel;
+        this.componentModel = newComponentModel.slice();
       } else if (typeof this.componentModel !== 'object') {
         this.componentModel = newComponentModel;
       } else {

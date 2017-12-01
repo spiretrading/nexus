@@ -509,6 +509,13 @@ class View extends UpdatableView {
     });
   }
 
+  dispose() {
+    $('#' + this.componentModel.componentId + ' .symbols-input').each(function(){
+      let $tagContainer = $(this);
+      $tagContainer.tagit('destroy');
+    });
+  }
+
   render() {
     let name = this.componentModel.schema.name;
 
@@ -583,7 +590,7 @@ class View extends UpdatableView {
         content.push(this.getSymbolsInput(i));
       } else if (schemaParameters[i].value.which == DataType.TIME_DURATION) {
         content.push(this.getPeriodInput(i));
-      } else if (schemaParameters[i].value.which == DataType.INTEGER) {
+      } else if (schemaParameters[i].value.which == DataType.INT64) {
         content.push(this.getIntegerInput(i));
       } else if (schemaParameters[i].value.which == DataType.BOOLEAN) {
         content.push(this.getBooleanInput(i));
