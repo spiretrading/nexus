@@ -146,6 +146,12 @@ class Admin {
       .catch(this.logErrorAndThrow);
   }
 
+  submitAccountEntitlementsChangeRequest(directoryEntry, entitlements) {
+    return new Promise((resolve, reject) => {
+      resolve('EN0042');
+    });
+  }
+
   loadManagedTradingGroups(directoryEntry) {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_managed_trading_groups';
     let payload = {

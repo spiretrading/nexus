@@ -4,6 +4,7 @@ import UpdatableView from 'commons/updatable-view';
 import deviceDetector from 'utils/device-detector';
 import EntitlementPanel from 'components/reusables/common/entitlement-panel';
 import PrimaryButton from 'components/reusables/common/primary-button';
+import modal from 'utils/modal';
 
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
@@ -44,6 +45,10 @@ class View extends UpdatableView {
       });
   }
 
+  showRequestSubmittedMessage(requestId) {
+    modal.show($('#req-submitted-modal'));
+  }
+
   render() {
     let entitlements;
     let className = '';
@@ -68,8 +73,7 @@ class View extends UpdatableView {
         }
         let model = {
           entitlement: entitlement,
-          isSelected: isSelected,
-          isAdmin: this.componentModel.isAdmin
+          isSelected: isSelected
         };
         entitlements.push(
           <EntitlementPanel key={i}
@@ -84,12 +88,20 @@ class View extends UpdatableView {
       label: 'Save Changes'
     };
 
+    let submitRequestBtnModel = {
+      label: 'Submit Request'
+    };
+
     let onSave = this.controller.save.bind(this.controller);
+    let onSubmitRequest = this.controller.submitRequest.bind(this.controller);
 
     let hr, saveButton;
     if (this.componentModel.isAdmin) {
       hr = <hr />;
       saveButton = <PrimaryButton className="save-button" model={saveBtnModel} onClick={onSave}/>;
+    } else {
+      hr = <hr />;
+      saveButton = <PrimaryButton className="save-button" model={submitRequestBtnModel} onClick={onSubmitRequest}/>;
     }
 
     return (
@@ -99,6 +111,19 @@ class View extends UpdatableView {
         {saveButton}
         <div className="save-message-wrapper">
           <div className="save-message"></div>
+        </div>
+
+        <div id="req-submitted-modal" className="modal fade" tabIndex="-1" role="dialog">
+          <div className="modal-dialog" role="document">
+            <div className="modal-content">
+              <div className="modal-header">
+                Change Picture
+              </div>
+              <div className="modal-body change-picture-wrapper">
+                Hi this is some dummy message
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

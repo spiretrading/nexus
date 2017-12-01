@@ -61,7 +61,7 @@ class Controller {
       this.componentModel.directoryEntry = directoryEntry;
       this.componentModel.roles = responses[1];
       this.componentModel.userName = directoryEntry.name;
-      this.componentModel.isAdmin = userService.isAdmin();
+      this.componentModel.isAdmin = !userService.isAdmin();
       this.view.update(this.componentModel);
 
       EventBus.publish(Event.Profile.VIEWING_CONTEXT_LOADED, {
@@ -100,6 +100,14 @@ class Controller {
     this.adminClient.storeAccountEntitlements(directoryEntry, this.componentModel.accountEntitlements)
       .then(this.view.showSaveSuccessMessage)
       .catch(this.view.showSaveFailMessage);
+  }
+
+  submitRequest() {
+    let directoryEntry = this.componentModel.directoryEntry;
+    this.adminClient.submitAccountEntitlementsChangeRequest(directoryEntry, this.componentModel.accountEntitlements)
+      .then((requestId) => {
+        this.view.showRequestSubmittedMessage(requestId);
+      });
   }
 }
 
