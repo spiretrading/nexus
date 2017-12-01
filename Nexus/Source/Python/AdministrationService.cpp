@@ -15,7 +15,10 @@
 #include <Beam/Threading/LiveTimer.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
+#include "Nexus/AdministrationService/EntitlementModificationRequest.hpp"
+#include "Nexus/AdministrationService/Message.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
@@ -132,6 +135,34 @@ void Nexus::Python::ExportAccountIdentity() {
     .def_readwrite("user_notes", &AccountIdentity::m_userNotes);
 }
 
+void Nexus::Python::ExportAccountModificationRequest() {
+  {
+    scope outer =
+      class_<AccountModificationRequest>("AccountModificationRequest",
+        init<AccountModificationRequest::Id, AccountModificationRequest::Type,
+        DirectoryEntry, DirectoryEntry, ptime>())
+        .def("__copy__", &MakeCopy<AccountModificationRequest>)
+        .def("__deepcopy__", &MakeDeepCopy<AccountModificationRequest>)
+        .add_property("id", &AccountModificationRequest::GetId)
+        .add_property("type", &AccountModificationRequest::GetType)
+        .add_property("account", make_function(
+          &AccountModificationRequest::GetAccount,
+          return_value_policy<return_by_value>()))
+        .add_property("submission_account", make_function(
+          &AccountModificationRequest::GetSubmissionAccount,
+          return_value_policy<return_by_value>()))
+        .add_property("timestamp", make_function(
+          &AccountModificationRequest::GetTimestamp,
+          return_value_policy<return_by_value>()));
+    enum_<AccountModificationRequest::Type>("Type")
+      .value("ENTITLEMENTS", AccountModificationRequest::Type::ENTITLEMENTS);
+    enum_<AccountModificationRequest::Status>("Status")
+      .value("PENDING", AccountModificationRequest::Status::PENDING)
+      .value("APPROVED", AccountModificationRequest::Status::APPROVED)
+      .value("REJECTED", AccountModificationRequest::Status::REJECTED);
+  }
+}
+
 void Nexus::Python::ExportAdministrationClient() {
   class_<VirtualAdministrationClient, boost::noncopyable>(
     "AdministrationClient", no_init)
@@ -186,7 +217,9 @@ void Nexus::Python::ExportAdministrationService() {
   scope().attr("administration_service") = nestedModule;
   scope parent = nestedModule;
   ExportAccountIdentity();
+  ExportAccountModificationRequest();
   ExportAdministrationClient();
+  ExportMessage();
   ExportTradingGroup();
   {
     string nestedName = extract<string>(parent.attr("__name__") + ".tests");
@@ -210,6 +243,48 @@ void Nexus::Python::ExportAdministrationServiceTestEnvironment() {
       &AdministrationServiceTestEnvironment::MakeAdministrator))
     .def("build_client", &AdministrationServiceTestEnvironmentBuildClient,
       return_value_policy<manage_new_object>());
+}
+
+void Nexus::Python::ExportEntitlementModificationRequest() {
+  class_<EntitlementModificationRequest>("EntitlementModificationRequest",
+    init<vector<DirectoryEntry>>())
+    .def("__copy__", &MakeCopy<EntitlementModificationRequest>)
+    .def("__deepcopy__", &MakeDeepCopy<EntitlementModificationRequest>)
+    .add_property("entitlements", make_function(
+      &EntitlementModificationRequest::GetEntitlements,
+      return_value_policy<return_by_value>()));
+}
+
+void Nexus::Python::ExportMessage() {
+  {
+    scope outer =
+      class_<AdministrationService::Message>("Message",
+        init<AdministrationService::Message::Id, DirectoryEntry, ptime,
+        vector<AdministrationService::Message::Body>>())
+        .def("__copy__", &MakeCopy<AdministrationService::Message>)
+        .def("__deepcopy__", &MakeDeepCopy<AdministrationService::Message>)
+        .add_property("id", &AdministrationService::Message::GetId)
+        .add_property("account", make_function(
+          &AdministrationService::Message::GetAccount,
+          return_value_policy<return_by_value>()))
+        .add_property("timestamp", make_function(
+          &AdministrationService::Message::GetTimestamp,
+          return_value_policy<return_by_value>()))
+        .add_property("body", make_function(
+          &AdministrationService::Message::GetBody,
+          return_value_policy<return_by_value>()))
+        .add_property("bodies", make_function(
+          &AdministrationService::Message::GetBodies,
+          return_value_policy<return_by_value>()));
+      class_<AdministrationService::Message::Body>("Body")
+        .def("__copy__", &MakeCopy<AdministrationService::Message::Body>)
+        .def("__deepcopy__", &MakeDeepCopy<
+          AdministrationService::Message::Body>)
+        .def_readwrite("content_type",
+          &AdministrationService::Message::Body::m_contentType)
+        .def_readwrite("message",
+          &AdministrationService::Message::Body::m_message);
+  }
 }
 
 void Nexus::Python::ExportTradingGroup() {

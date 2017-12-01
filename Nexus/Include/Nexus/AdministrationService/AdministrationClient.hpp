@@ -10,9 +10,12 @@
 #include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/AccountRoles.hpp"
+#include "Nexus/AdministrationService/EntitlementModificationRequest.hpp"
 #include "Nexus/AdministrationService/AdministrationService.hpp"
 #include "Nexus/AdministrationService/AdministrationServices.hpp"
+#include "Nexus/AdministrationService/Message.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
 
@@ -172,6 +175,42 @@ namespace AdministrationService {
       */
       void StoreRiskState(const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskService::RiskState& riskState);
+
+      //! Submits a request to modify an account's entitlements.
+      /*!
+        \param account The account to modify.
+        \param request The modification to apply.
+        \param message The comment to associate with the request.
+        \return An object representing the request.
+      */
+      AccountModificationRequest SubmitAccountModificationRequest(
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        const EntitlementModificationRequest& request,
+        const std::vector<Message::Body>& comments);
+
+      //! Loads an account modification request.
+      /*!
+        \param id The id of the request to load.
+        \return The request with the specified <i>id</i>.
+      */
+      AccountModificationRequest LoadAccountModificationRequest(
+        AccountModificationRequest::Id id);
+
+      //! Loads the status of an account modification request.
+      /*!
+        \param id The id of the request.
+        \return The status of the request.
+      */
+      AccountModificationRequest::Status LoadAccountModificationStatus(
+        AccountModificationRequest::Id id);
+
+      //! Loads the list of messages associated with an account modification.
+      /*!
+        \param id The id of the request.
+        \return A list of message ids associated with the request.
+      */
+      std::vector<Message::Id> LoadMessageIds(
+        AccountModificationRequest::Id id);
 
       void Open();
 
