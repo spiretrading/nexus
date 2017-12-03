@@ -6,6 +6,7 @@
 #include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/PythonBindings.hpp>
 #include <Beam/Python/Queues.hpp>
+#include <Beam/Python/UniquePtr.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/ServiceLocatorClient.hpp>
@@ -22,6 +23,7 @@
 #include "Nexus/AdministrationService/TradingGroup.hpp"
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
+#include "Nexus/Python/ToPythonAdministrationClient.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;
@@ -50,8 +52,170 @@ namespace {
     LiveTimer>;
   using Client = AdministrationClient<SessionBuilder>;
 
-  VirtualAdministrationClient* BuildClient(
-      VirtualServiceLocatorClient& serviceLocatorClient) {
+  struct FromPythonAdministrationClient : VirtualAdministrationClient,
+      wrapper<VirtualAdministrationClient> {
+    virtual bool CheckAdministrator(
+        const DirectoryEntry& account) override final {
+      return get_override("check_administrator")(account);
+    }
+
+    virtual AccountRoles LoadAccountRoles(
+        const DirectoryEntry& account) override final {
+      return get_override("load_account_roles")(account);
+    }
+
+    virtual DirectoryEntry LoadTradingGroupEntry(
+        const DirectoryEntry& account) override final {
+      return get_override("load_trading_group_entry")(account);
+    }
+
+    virtual AccountIdentity LoadIdentity(
+        const DirectoryEntry& account) override final {
+      return get_override("load_identity")(account);
+    }
+
+    virtual void StoreIdentity(const DirectoryEntry& account,
+        const AccountIdentity& identity) override final {
+      get_override("store_identity")(account, identity);
+    }
+
+    virtual TradingGroup LoadTradingGroup(
+        const DirectoryEntry& directory) override final {
+      return get_override("load_trading_group")(directory);
+    }
+
+    virtual vector<DirectoryEntry> LoadManagedTradingGroups(
+        const DirectoryEntry& account) override final {
+      return get_override("load_managed_trading_groups")(account);
+    }
+
+    virtual vector<DirectoryEntry> LoadAdministrators() override final {
+      return get_override("load_administrators")();
+    }
+
+    virtual vector<DirectoryEntry> LoadServices() override final {
+      return get_override("load_services")();
+    }
+
+    virtual EntitlementDatabase LoadEntitlements() override final {
+      return get_override("load_entitlements")();
+    }
+
+    virtual vector<DirectoryEntry> LoadEntitlements(
+        const DirectoryEntry& account) override final {
+      return get_override("load_entitlements")(account);
+    }
+
+    virtual void StoreEntitlements(const DirectoryEntry& account,
+        const vector<DirectoryEntry>& entitlements) override final {
+      get_override("store_entitlements")(account, entitlements);
+    }
+
+    virtual const Publisher<RiskParameters>& GetRiskParametersPublisher(
+        const DirectoryEntry& account) override final {
+      return *static_cast<const Publisher<RiskParameters>*>(
+        get_override("get_risk_parameters_publisher")(account));
+    }
+
+    virtual void StoreRiskParameters(const DirectoryEntry& account,
+        const RiskParameters& riskParameters) override final {
+      get_override("store_risk_parameters")(account, riskParameters);
+    }
+
+    virtual const Publisher<RiskState>& GetRiskStatePublisher(
+        const DirectoryEntry& account) override final {
+      return *static_cast<const Publisher<RiskState>*>(
+        get_override("get_risk_state_publisher")(account));
+    }
+
+    virtual void StoreRiskState(const DirectoryEntry& account,
+        const RiskState& riskState) override final {
+      get_override("store_risk_state")(account, riskState);
+    }
+
+    virtual AccountModificationRequest LoadAccountModificationRequest(
+        AccountModificationRequest::Id id) override final {
+      return get_override("load_account_modification_request")(id);
+    }
+
+    virtual vector<AccountModificationRequest::Id>
+        LoadAccountModificationRequestIds(const DirectoryEntry& account,
+        AccountModificationRequest::Id startId, int maxCount) override final {
+      return get_override("load_account_modification_request_ids")(account,
+        startId, maxCount);
+    }
+
+    virtual vector<AccountModificationRequest::Id>
+        LoadManagedAccountModificationRequestIds(const DirectoryEntry& account,
+        AccountModificationRequest::Id startId, int maxCount) override final {
+      return get_override("load_managed_account_modification_request_ids")(
+        account, startId, maxCount);
+    }
+
+    virtual EntitlementModification LoadEntitlementModification(
+        AccountModificationRequest::Id id) override final {
+      return get_override("load_entitlement_modification")(id);
+    }
+
+    virtual AccountModificationRequest SubmitAccountModificationRequest(
+        const DirectoryEntry& account, const DirectoryEntry& submissionAccount,
+        const EntitlementModification& modification,
+        const AdministrationService::Message& comment) override final {
+      return get_override("submit_account_modification_request")(account,
+        submissionAccount, modification, comment);
+    }
+
+    virtual AccountModificationRequest::Status LoadAccountModificationStatus(
+        AccountModificationRequest::Id id) override final {
+      return get_override("load_account_modification_status")(id);
+    }
+
+    virtual void ReviewAccountModificationRequest(
+        AccountModificationRequest::Id id, const DirectoryEntry& account,
+        const AdministrationService::Message& comment) override final {
+      get_override("review_account_modification_request")(id, account, comment);
+    }
+
+    virtual void ApproveAccountModificationRequest(
+        AccountModificationRequest::Id id, const DirectoryEntry& account,
+        const AdministrationService::Message& comment) override final {
+      get_override("approve_account_modification_request")(id, account,
+        comment);
+    }
+
+    virtual void RejectAccountModificationRequest(
+        AccountModificationRequest::Id id, const DirectoryEntry& account,
+        const AdministrationService::Message& comment) override final {
+      get_override("reject_account_modification_request")(id, account, comment);
+    }
+
+    virtual AdministrationService::Message LoadMessage(
+        AdministrationService::Message::Id id) override final {
+      return get_override("load_message")(id);
+    }
+
+    virtual vector<AdministrationService::Message::Id> LoadMessageIds(
+        AccountModificationRequest::Id id) override final {
+      return get_override("load_message_ids")(id);
+    }
+
+    virtual AdministrationService::Message
+        SendAccountModificationRequestMessage(AccountModificationRequest::Id id,
+        const AdministrationService::Message& message) override final {
+      return get_override("send_account_modification_request_message")(id,
+        message);
+    }
+
+    virtual void Open() override final {
+      get_override("open")();
+    }
+
+    virtual void Close() override final {
+      get_override("close")();
+    }
+  };
+
+  auto BuildClient(VirtualServiceLocatorClient& serviceLocatorClient) {
     auto addresses = LocateServiceAddresses(serviceLocatorClient,
       AdministrationService::SERVICE_NAME);
     auto delay = false;
@@ -70,43 +234,27 @@ namespace {
         return std::make_unique<LiveTimer>(seconds(10),
           Ref(*GetTimerThreadPool()));
       });
-    auto baseClient = std::make_unique<Client>(sessionBuilder);
-    return new WrapperAdministrationClient<std::unique_ptr<Client>>{
-      std::move(baseClient)};
+    return MakeToPythonAdministrationClient(std::make_unique<Client>(
+      sessionBuilder)).release();
   }
 
-  AdministrationServiceTestEnvironment*
-      BuildAdministrationServiceTestEnvironment(
+  auto BuildAdministrationServiceTestEnvironment(
       const std::shared_ptr<VirtualServiceLocatorClient>&
       serviceLocatorClient) {
     return new AdministrationServiceTestEnvironment{serviceLocatorClient};
   }
 
-  VirtualAdministrationClient* AdministrationServiceTestEnvironmentBuildClient(
+  auto AdministrationServiceTestEnvironmentBuildClient(
       AdministrationServiceTestEnvironment& environment,
       VirtualServiceLocatorClient& serviceLocatorClient) {
-    return environment.BuildClient(Ref(serviceLocatorClient)).release();
+    return MakeToPythonAdministrationClient(environment.BuildClient(
+      Ref(serviceLocatorClient)));
   }
 }
 
-#ifdef _MSC_VER
-namespace boost {
-  template<> inline const volatile Publisher<RiskParameters>*
-      get_pointer(const volatile Publisher<RiskParameters>* p) {
-    return p;
-  }
-
-  template<> inline const volatile Publisher<RiskState>*
-      get_pointer(const volatile Publisher<RiskState>* p) {
-    return p;
-  }
-
-  template<> inline const volatile VirtualAdministrationClient*
-      get_pointer(const volatile VirtualAdministrationClient* p) {
-    return p;
-  }
-}
-#endif
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(RiskParameters);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(RiskState);
+BEAM_DEFINE_PYTHON_POINTER_LINKER(VirtualAdministrationClient);
 
 void Nexus::Python::ExportAccountIdentity() {
   class_<AccountIdentity>("AccountIdentity", init<>())
@@ -158,55 +306,78 @@ void Nexus::Python::ExportAccountModificationRequest() {
       .value("ENTITLEMENTS", AccountModificationRequest::Type::ENTITLEMENTS);
     enum_<AccountModificationRequest::Status>("Status")
       .value("PENDING", AccountModificationRequest::Status::PENDING)
+      .value("REVIEWED", AccountModificationRequest::Status::REVIEWED)
       .value("APPROVED", AccountModificationRequest::Status::APPROVED)
       .value("REJECTED", AccountModificationRequest::Status::REJECTED);
   }
 }
 
 void Nexus::Python::ExportAdministrationClient() {
-  class_<VirtualAdministrationClient, boost::noncopyable>(
+  class_<FromPythonAdministrationClient, boost::noncopyable>(
     "AdministrationClient", no_init)
-    .def("__init__", make_constructor(&BuildClient))
     .def("check_administrator",
-      BlockingFunction(&VirtualAdministrationClient::CheckAdministrator))
+      pure_virtual(&VirtualAdministrationClient::CheckAdministrator))
     .def("load_account_roles",
-      BlockingFunction(&VirtualAdministrationClient::LoadAccountRoles))
+      pure_virtual(&VirtualAdministrationClient::LoadAccountRoles))
     .def("load_trading_group_entry",
-      BlockingFunction(&VirtualAdministrationClient::LoadTradingGroupEntry))
-    .def("load_identity", BlockingFunction(
-      &VirtualAdministrationClient::LoadIdentity))
-    .def("store_identity", BlockingFunction(
-      &VirtualAdministrationClient::StoreIdentity))
-    .def("load_trading_group", BlockingFunction(
-      &VirtualAdministrationClient::LoadTradingGroup))
+      pure_virtual(&VirtualAdministrationClient::LoadTradingGroupEntry))
+    .def("load_identity",
+      pure_virtual(&VirtualAdministrationClient::LoadIdentity))
+    .def("store_identity",
+      pure_virtual(&VirtualAdministrationClient::StoreIdentity))
+    .def("load_trading_group",
+      pure_virtual(&VirtualAdministrationClient::LoadTradingGroup))
     .def("load_managed_trading_groups",
-      BlockingFunction(&VirtualAdministrationClient::LoadManagedTradingGroups))
+      pure_virtual(&VirtualAdministrationClient::LoadManagedTradingGroups))
     .def("load_administrators",
-      BlockingFunction(&VirtualAdministrationClient::LoadAdministrators))
+      pure_virtual(&VirtualAdministrationClient::LoadAdministrators))
     .def("load_services",
-      BlockingFunction(&VirtualAdministrationClient::LoadServices))
-    .def("load_entitlements", BlockingFunction(
-        static_cast<EntitlementDatabase (VirtualAdministrationClient::*)()>(
-        &VirtualAdministrationClient::LoadEntitlements)))
-    .def("load_entitlements", BlockingFunction(
+      pure_virtual(&VirtualAdministrationClient::LoadServices))
+    .def("load_entitlements", pure_virtual(
+      static_cast<EntitlementDatabase (VirtualAdministrationClient::*)()>(
+      &VirtualAdministrationClient::LoadEntitlements)))
+    .def("load_entitlements", pure_virtual(
       static_cast<vector<DirectoryEntry> (VirtualAdministrationClient::*)(
       const DirectoryEntry&)>(&VirtualAdministrationClient::LoadEntitlements)))
     .def("store_entitlements",
-      BlockingFunction(&VirtualAdministrationClient::StoreEntitlements))
-    .def("get_risk_parameters_publisher", BlockingFunction(
-      &VirtualAdministrationClient::GetRiskParametersPublisher,
-      return_internal_reference<>()))
-    .def("store_risk_parameters", BlockingFunction(
-      &VirtualAdministrationClient::StoreRiskParameters))
-    .def("get_risk_state_publisher", BlockingFunction(
-      &VirtualAdministrationClient::GetRiskStatePublisher,
-      return_internal_reference<>()))
-    .def("store_risk_state", BlockingFunction(
-      &VirtualAdministrationClient::StoreRiskState))
-    .def("open", BlockingFunction(&VirtualAdministrationClient::Open))
-    .def("close", BlockingFunction(&VirtualAdministrationClient::Close));
-  ExportPublisher<RiskState>("RiskStatePublisher");
-  ExportPublisher<RiskParameters>("RiskParametersPublisher");
+      pure_virtual(&VirtualAdministrationClient::StoreEntitlements))
+    .def("get_risk_parameters_publisher",
+      pure_virtual(&VirtualAdministrationClient::GetRiskParametersPublisher),
+      return_internal_reference<>())
+    .def("store_risk_parameters",
+      pure_virtual(&VirtualAdministrationClient::StoreRiskParameters))
+    .def("get_risk_state_publisher",
+      pure_virtual(&VirtualAdministrationClient::GetRiskStatePublisher),
+      return_internal_reference<>())
+    .def("store_risk_state",
+      pure_virtual(&VirtualAdministrationClient::StoreRiskState))
+    .def("load_account_modification_request", pure_virtual(
+      &VirtualAdministrationClient::LoadAccountModificationRequest))
+    .def("load_account_modification_request_ids", pure_virtual(
+      &VirtualAdministrationClient::LoadAccountModificationRequestIds))
+    .def("load_managed_account_modification_request_ids", pure_virtual(
+      &VirtualAdministrationClient::LoadManagedAccountModificationRequestIds))
+    .def("load_entitlement_modification", pure_virtual(
+      &VirtualAdministrationClient::LoadEntitlementModification))
+    .def("submit_account_modification_request", pure_virtual(
+      &VirtualAdministrationClient::SubmitAccountModificationRequest))
+    .def("load_account_modification_status", pure_virtual(
+      &VirtualAdministrationClient::LoadAccountModificationStatus))
+    .def("review_account_modification_request", pure_virtual(
+      &VirtualAdministrationClient::ReviewAccountModificationRequest))
+    .def("approve_account_modification_request", pure_virtual(
+      &VirtualAdministrationClient::ApproveAccountModificationRequest))
+    .def("reject_account_modification_request", pure_virtual(
+      &VirtualAdministrationClient::RejectAccountModificationRequest))
+    .def("load_message", pure_virtual(
+      &VirtualAdministrationClient::LoadMessage))
+    .def("load_message_ids", pure_virtual(
+      &VirtualAdministrationClient::LoadMessageIds))
+    .def("send_account_modification_request_message", pure_virtual(
+      &VirtualAdministrationClient::SendAccountModificationRequestMessage))
+    .def("open", pure_virtual(&VirtualAdministrationClient::Open))
+    .def("close", pure_virtual(&VirtualAdministrationClient::Close));
+  ExportUniquePtr<VirtualAdministrationClient>();
 }
 
 void Nexus::Python::ExportAdministrationService() {
@@ -219,8 +390,12 @@ void Nexus::Python::ExportAdministrationService() {
   ExportAccountIdentity();
   ExportAccountModificationRequest();
   ExportAdministrationClient();
+  ExportApplicationAdministrationClient();
+  ExportEntitlementModification();
   ExportMessage();
   ExportTradingGroup();
+  ExportQueueSuite<RiskState>("RiskState");
+  ExportQueueSuite<RiskParameters>("RiskParameters");
   {
     string nestedName = extract<string>(parent.attr("__name__") + ".tests");
     object nestedModule{handle<>(
@@ -241,8 +416,14 @@ void Nexus::Python::ExportAdministrationServiceTestEnvironment() {
       &AdministrationServiceTestEnvironment::Close))
     .def("make_administrator", BlockingFunction(
       &AdministrationServiceTestEnvironment::MakeAdministrator))
-    .def("build_client", &AdministrationServiceTestEnvironmentBuildClient,
-      return_value_policy<manage_new_object>());
+    .def("build_client", &AdministrationServiceTestEnvironmentBuildClient);
+}
+
+void Nexus::Python::ExportApplicationAdministrationClient() {
+  class_<ToPythonAdministrationClient<Client>,
+    bases<VirtualAdministrationClient>, boost::noncopyable>(
+    "ApplicationAdministrationClient", no_init)
+    .def("__init__", make_constructor(&BuildClient));
 }
 
 void Nexus::Python::ExportEntitlementModification() {

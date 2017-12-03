@@ -1,5 +1,5 @@
-#ifndef NEXUS_PYTHONADMINISTRATIONSERVICE_HPP
-#define NEXUS_PYTHONADMINISTRATIONSERVICE_HPP
+#ifndef NEXUS_PYTHON_ADMINISTRATION_SERVICE_HPP
+#define NEXUS_PYTHON_ADMINISTRATION_SERVICE_HPP
 #include "Nexus/Python/Python.hpp"
 
 namespace Nexus {
@@ -19,6 +19,9 @@ namespace Python {
 
   //! Exports the AdministrationServiceTestEnvironment class.
   void ExportAdministrationServiceTestEnvironment();
+
+  //! Exports the ApplicationAdministrationClient class.
+  void ExportApplicationAdministrationClient();
 
   //! Exports the EntitlementModificationRequest class.
   void ExportEntitlementModification();
