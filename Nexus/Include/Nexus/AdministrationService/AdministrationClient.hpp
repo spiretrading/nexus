@@ -211,6 +211,14 @@ namespace AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& account,
         AccountModificationRequest::Id startId, int maxCount);
 
+      //! Loads an entitlement modification.
+      /*!
+        \param id The id of the request to load.
+        \return The entitlement modification with the specified <i>id</i>.
+      */
+      EntitlementModification LoadEntitlementModification(
+        AccountModificationRequest::Id id);
+
       //! Submits a request to modify an account's entitlements.
       /*!
         \param account The account to modify.
@@ -261,6 +269,13 @@ namespace AdministrationService {
       void RejectAccountModificationRequest(AccountModificationRequest::Id id,
         const Beam::ServiceLocator::DirectoryEntry& account,
         const Message& comment);
+
+      //! Loads a message.
+      /*!
+        \param id The id of the message.
+        \return The message with the specified <i>id</i>.
+      */
+      Message LoadMessage(Message::Id id);
 
       //! Loads the list of messages associated with an account modification.
       /*!
@@ -525,6 +540,14 @@ namespace AdministrationService {
   }
 
   template<typename ServiceProtocolClientBuilderType>
+  EntitlementModification AdministrationClient<
+      ServiceProtocolClientBuilderType>::LoadEntitlementModification(
+      AccountModificationRequest::Id id) {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<LoadEntitlementModificationService>(id);
+  }
+
+  template<typename ServiceProtocolClientBuilderType>
   AccountModificationRequest AdministrationClient<
       ServiceProtocolClientBuilderType>::SubmitAccountModificationRequest(
       const Beam::ServiceLocator::DirectoryEntry& account,
@@ -573,6 +596,13 @@ namespace AdministrationService {
     auto client = m_clientHandler.GetClient();
     client->template SendRequest<RejectAccountModificationRequestService>(id,
       account, comment);
+  }
+
+  template<typename ServiceProtocolClientBuilderType>
+  Message AdministrationClient<ServiceProtocolClientBuilderType>::LoadMessage(
+      Message::Id id) {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<LoadMessageService>(id);
   }
 
   template<typename ServiceProtocolClientBuilderType>

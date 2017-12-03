@@ -274,6 +274,18 @@ namespace AdministrationService {
       Beam::ServiceLocator::DirectoryEntry, account,
       AccountModificationRequest::Id, start_id, int, max_count),
 
+    /*! \interface Nexus::AdministrationServices::LoadEntitlementModificationService
+        \brief Loads an entitlement modification.
+        \param id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
+               The id of the modification to load.
+        \return <code>Nexus::AdministrationService::EntitlementModification</code>
+                The entitlement modification with the specified <i>id</i>.
+    */
+    //! \cond
+    (LoadEntitlementModificationService,
+      "Nexus.AdministrationServices.LoadEntitlementModificationService",
+      EntitlementModification, AccountModificationRequest::Id, id),
+
     /*! \interface Nexus::AdministrationServices::SubmitEntitlementsAccountModificationRequestService
         \brief Submits a request to modify an account's entitlements.
         \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
@@ -350,6 +362,17 @@ namespace AdministrationService {
       "Nexus.AdministrationServices.RejectAccountModificationRequestService",
       void, AccountModificationRequest::Id, id,
       Beam::ServiceLocator::DirectoryEntry, account, Message, comment),
+
+    /*! \interface Nexus::AdministrationServices::LoadMessageService
+        \brief Loads a message.
+        \param id <code>Nexus::AdministrationService::Message::Id</code>
+               The id of the message to load.
+        \return <code>Nexus::AdministrationService::Message</code>
+                The message with the specified <i>id</i>.
+    */
+    //! \cond
+    (LoadMessageService, "Nexus.AdministrationServices.LoadMessageService",
+      Message, Message::Id, id),
 
     /*! \interface Nexus::AdministrationServices::LoadMessageIdsService
         \brief Loads the list of messages associated with an account

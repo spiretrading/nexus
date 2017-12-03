@@ -97,6 +97,9 @@ namespace AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& account,
         AccountModificationRequest::Id startId, int maxCount) = 0;
 
+      virtual EntitlementModification LoadEntitlementModification(
+        AccountModificationRequest::Id id) = 0;
+
       virtual AccountModificationRequest SubmitAccountModificationRequest(
         const Beam::ServiceLocator::DirectoryEntry& account,
         const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
@@ -120,6 +123,8 @@ namespace AdministrationService {
         AccountModificationRequest::Id id,
         const Beam::ServiceLocator::DirectoryEntry& account,
         const Message& comment) = 0;
+
+      virtual Message LoadMessage(Message::Id id) = 0;
 
       virtual std::vector<Message::Id> LoadMessageIds(
         AccountModificationRequest::Id id) = 0;
@@ -228,6 +233,9 @@ namespace AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& account,
         AccountModificationRequest::Id startId, int maxCount) override;
 
+      virtual EntitlementModification LoadEntitlementModification(
+        AccountModificationRequest::Id id) override;
+
       virtual AccountModificationRequest SubmitAccountModificationRequest(
         const Beam::ServiceLocator::DirectoryEntry& account,
         const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
@@ -251,6 +259,8 @@ namespace AdministrationService {
         AccountModificationRequest::Id id,
         const Beam::ServiceLocator::DirectoryEntry& account,
         const Message& comment) override;
+
+      virtual Message LoadMessage(Message::Id id) override;
 
       virtual std::vector<Message::Id> LoadMessageIds(
         AccountModificationRequest::Id id) override;
@@ -418,6 +428,12 @@ namespace AdministrationService {
   }
 
   template<typename ClientType>
+  EntitlementModification WrapperAdministrationClient<ClientType>::
+      LoadEntitlementModification(AccountModificationRequest::Id id) {
+    return m_client->LoadEntitlementModification(id);
+  }
+
+  template<typename ClientType>
   AccountModificationRequest WrapperAdministrationClient<ClientType>::
       SubmitAccountModificationRequest(
       const Beam::ServiceLocator::DirectoryEntry& account,
@@ -455,6 +471,11 @@ namespace AdministrationService {
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Message& comment) {
     m_client->RejectAccountModificationRequest(id, account, comment);
+  }
+
+  template<typename ClientType>
+  Message WrapperAdministrationClient<ClientType>::LoadMessage(Message::Id id) {
+    return m_client->LoadMessage(id);
   }
 
   template<typename ClientType>
