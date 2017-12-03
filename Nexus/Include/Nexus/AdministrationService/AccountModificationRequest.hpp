@@ -35,12 +35,18 @@ namespace AdministrationService {
         //! The request is pending.
         PENDING,
 
+        //! The request has been reviewed by a manager.
+        REVIEWED,
+
         //! The request has been approved.
         APPROVED,
 
         //! The request has been rejected.
         REJECTED
       };
+
+      //! Constructs an empty request.
+      AccountModificationRequest();
 
       //! Constructs an AccountModificationRequest.
       /*!
@@ -77,9 +83,11 @@ namespace AdministrationService {
       Beam::ServiceLocator::DirectoryEntry m_account;
       Beam::ServiceLocator::DirectoryEntry m_submissionAccount;
       boost::posix_time::ptime m_timestamp;
-
-      AccountModificationRequest(Beam::Serialization::ReceiveBuilder);
   };
+
+  inline AccountModificationRequest::AccountModificationRequest()
+      : m_id{-1},
+        m_type{Type::ENTITLEMENTS} {}
 
   inline AccountModificationRequest::AccountModificationRequest(Id id,
       Type type, Beam::ServiceLocator::DirectoryEntry account,

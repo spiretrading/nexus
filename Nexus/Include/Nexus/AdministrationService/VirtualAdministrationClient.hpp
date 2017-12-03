@@ -8,8 +8,11 @@
 #include <Beam/Queues/Queues.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/AdministrationService/AdministrationService.hpp"
+#include "Nexus/AdministrationService/EntitlementModification.hpp"
+#include "Nexus/AdministrationService/Message.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
@@ -81,6 +84,49 @@ namespace AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskService::RiskState& riskState) = 0;
 
+      virtual AccountModificationRequest LoadAccountModificationRequest(
+        AccountModificationRequest::Id id) = 0;
+
+      virtual std::vector<AccountModificationRequest::Id>
+        LoadAccountModificationRequestIds(
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        AccountModificationRequest::Id startId, int maxCount) = 0;
+
+      virtual std::vector<AccountModificationRequest::Id>
+        LoadManagedAccountModificationRequestIds(
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        AccountModificationRequest::Id startId, int maxCount) = 0;
+
+      virtual AccountModificationRequest SubmitAccountModificationRequest(
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
+        const EntitlementModification& modification,
+        const Message& comment) = 0;
+
+      virtual AccountModificationRequest::Status LoadAccountModificationStatus(
+        AccountModificationRequest::Id id) = 0;
+
+      virtual void ReviewAccountModificationRequest(
+        AccountModificationRequest::Id id,
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        const Message& comment) = 0;
+
+      virtual void ApproveAccountModificationRequest(
+        AccountModificationRequest::Id id,
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        const Message& comment) = 0;
+
+      virtual void RejectAccountModificationRequest(
+        AccountModificationRequest::Id id,
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        const Message& comment) = 0;
+
+      virtual std::vector<Message::Id> LoadMessageIds(
+        AccountModificationRequest::Id id) = 0;
+
+      virtual Message SendAccountModificationRequestMessage(
+        AccountModificationRequest::Id id, const Message& message) = 0;
+
       virtual void Open() = 0;
 
       virtual void Close() = 0;
@@ -113,62 +159,108 @@ namespace AdministrationService {
       virtual ~WrapperAdministrationClient();
 
       virtual bool CheckAdministrator(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::ServiceLocator::DirectoryEntry& account) override;
 
       virtual AccountRoles LoadAccountRoles(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::ServiceLocator::DirectoryEntry& account) override;
 
       virtual Beam::ServiceLocator::DirectoryEntry LoadTradingGroupEntry(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::ServiceLocator::DirectoryEntry& account) override;
 
       virtual AccountIdentity LoadIdentity(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::ServiceLocator::DirectoryEntry& account) override;
 
       virtual void StoreIdentity(
         const Beam::ServiceLocator::DirectoryEntry& account,
-        const AccountIdentity& identity);
+        const AccountIdentity& identity) override;
 
       virtual TradingGroup LoadTradingGroup(
-        const Beam::ServiceLocator::DirectoryEntry& directory);
+        const Beam::ServiceLocator::DirectoryEntry& directory) override;
 
       virtual std::vector<Beam::ServiceLocator::DirectoryEntry>
         LoadManagedTradingGroups(const Beam::ServiceLocator::DirectoryEntry&
-        account);
+        account) override;
 
       virtual std::vector<Beam::ServiceLocator::DirectoryEntry>
-        LoadAdministrators();
+        LoadAdministrators() override;
 
-      virtual std::vector<Beam::ServiceLocator::DirectoryEntry> LoadServices();
+      virtual std::vector<Beam::ServiceLocator::DirectoryEntry>
+        LoadServices() override;
 
-      virtual MarketDataService::EntitlementDatabase LoadEntitlements();
+      virtual MarketDataService::EntitlementDatabase
+        LoadEntitlements() override;
 
       virtual std::vector<Beam::ServiceLocator::DirectoryEntry>
         LoadEntitlements(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::ServiceLocator::DirectoryEntry& account) override;
 
       virtual void StoreEntitlements(
         const Beam::ServiceLocator::DirectoryEntry& account,
-        const std::vector<Beam::ServiceLocator::DirectoryEntry>& entitlements);
+        const std::vector<Beam::ServiceLocator::DirectoryEntry>&
+        entitlements) override;
 
       virtual const Beam::Publisher<RiskService::RiskParameters>&
         GetRiskParametersPublisher(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::ServiceLocator::DirectoryEntry& account) override;
 
       virtual void StoreRiskParameters(
         const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskParameters& riskParameters);
+        const RiskService::RiskParameters& riskParameters) override;
 
       virtual const Beam::Publisher<RiskService::RiskState>&
         GetRiskStatePublisher(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::ServiceLocator::DirectoryEntry& account) override;
 
       virtual void StoreRiskState(
         const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskState& riskState);
+        const RiskService::RiskState& riskState) override;
 
-      virtual void Open();
+      virtual AccountModificationRequest LoadAccountModificationRequest(
+        AccountModificationRequest::Id id) override;
 
-      virtual void Close();
+      virtual std::vector<AccountModificationRequest::Id>
+        LoadAccountModificationRequestIds(
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        AccountModificationRequest::Id startId, int maxCount) override;
+
+      virtual std::vector<AccountModificationRequest::Id>
+        LoadManagedAccountModificationRequestIds(
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        AccountModificationRequest::Id startId, int maxCount) override;
+
+      virtual AccountModificationRequest SubmitAccountModificationRequest(
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
+        const EntitlementModification& modification,
+        const Message& comment) override;
+
+      virtual AccountModificationRequest::Status LoadAccountModificationStatus(
+        AccountModificationRequest::Id id) override;
+
+      virtual void ReviewAccountModificationRequest(
+        AccountModificationRequest::Id id,
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        const Message& comment) override;
+
+      virtual void ApproveAccountModificationRequest(
+        AccountModificationRequest::Id id,
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        const Message& comment) override;
+
+      virtual void RejectAccountModificationRequest(
+        AccountModificationRequest::Id id,
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        const Message& comment) override;
+
+      virtual std::vector<Message::Id> LoadMessageIds(
+        AccountModificationRequest::Id id) override;
+
+      virtual Message SendAccountModificationRequestMessage(
+        AccountModificationRequest::Id id, const Message& message) override;
+
+      virtual void Open() override;
+
+      virtual void Close() override;
 
     private:
       Beam::GetOptionalLocalPtr<ClientType> m_client;
@@ -299,6 +391,83 @@ namespace AdministrationService {
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskState& riskState) {
     m_client->StoreRiskState(account, riskState);
+  }
+
+  template<typename ClientType>
+  AccountModificationRequest WrapperAdministrationClient<ClientType>::
+      LoadAccountModificationRequest(AccountModificationRequest::Id id) {
+    return m_client->LoadAccountModificationRequest(id);
+  }
+
+  template<typename ClientType>
+  std::vector<AccountModificationRequest::Id> WrapperAdministrationClient<
+      ClientType>::LoadAccountModificationRequestIds(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      AccountModificationRequest::Id startId, int maxCount) {
+    return m_client->LoadAccountModificationRequestIds(account, startId,
+      maxCount);
+  }
+
+  template<typename ClientType>
+  std::vector<AccountModificationRequest::Id> WrapperAdministrationClient<
+      ClientType>::LoadManagedAccountModificationRequestIds(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      AccountModificationRequest::Id startId, int maxCount) {
+    return m_client->LoadManagedAccountModificationRequestIds(account, startId,
+      maxCount);
+  }
+
+  template<typename ClientType>
+  AccountModificationRequest WrapperAdministrationClient<ClientType>::
+      SubmitAccountModificationRequest(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
+      const EntitlementModification& modification, const Message& comment) {
+    return m_client->SubmitAccountModificationRequest(account,
+      submissionAccount, modification, comment);
+  }
+
+  template<typename ClientType>
+  AccountModificationRequest::Status WrapperAdministrationClient<ClientType>::
+      LoadAccountModificationStatus(AccountModificationRequest::Id id) {
+    return m_client->LoadAccountModificationStatus(id);
+  }
+
+  template<typename ClientType>
+  void WrapperAdministrationClient<ClientType>::
+      ReviewAccountModificationRequest(AccountModificationRequest::Id id,
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Message& comment) {
+    m_client->ReviewAccountModificationRequest(id, account, comment);
+  }
+
+  template<typename ClientType>
+  void WrapperAdministrationClient<ClientType>::
+      ApproveAccountModificationRequest(AccountModificationRequest::Id id,
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Message& comment) {
+    m_client->ApproveAccountModificationRequest(id, account, comment);
+  }
+
+  template<typename ClientType>
+  void WrapperAdministrationClient<ClientType>::
+      RejectAccountModificationRequest(AccountModificationRequest::Id id,
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Message& comment) {
+    m_client->RejectAccountModificationRequest(id, account, comment);
+  }
+
+  template<typename ClientType>
+  std::vector<Message::Id> WrapperAdministrationClient<ClientType>::
+      LoadMessageIds(AccountModificationRequest::Id id) {
+    return m_client->LoadMessageIds(id);
+  }
+
+  template<typename ClientType>
+  Message WrapperAdministrationClient<ClientType>::
+      SendAccountModificationRequestMessage(AccountModificationRequest::Id id,
+      const Message& message) {
+    return m_client->SendAccountModificationRequestMessage(id, message);
   }
 
   template<typename ClientType>

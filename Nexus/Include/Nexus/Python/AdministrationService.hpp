@@ -21,7 +21,7 @@ namespace Python {
   void ExportAdministrationServiceTestEnvironment();
 
   //! Exports the EntitlementModificationRequest class.
-  void ExportEntitlementModificationRequest();
+  void ExportEntitlementModification();
 
   //! Exports the Message class.
   void ExportMessage();

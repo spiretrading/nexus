@@ -33,6 +33,9 @@ namespace AdministrationService {
         std::string m_message;
       };
 
+      //! Constructs an empty Message.
+      Message();
+
       //! Constructs a Message.
       /*!
         \param id The message's unique id.
@@ -64,9 +67,10 @@ namespace AdministrationService {
       Beam::ServiceLocator::DirectoryEntry m_account;
       boost::posix_time::ptime m_timestamp;
       std::vector<Body> m_bodies;
-
-      Message(Beam::Serialization::ReceiveBuilder);
   };
+
+  inline Message::Message()
+      : m_id{-1} {}
 
   inline Message::Message(Id id, Beam::ServiceLocator::DirectoryEntry account,
       boost::posix_time::ptime timestamp, std::vector<Body> bodies)
@@ -100,8 +104,6 @@ namespace AdministrationService {
   inline const std::vector<Message::Body>& Message::GetBodies() const {
     return m_bodies;
   }
-
-  inline Message::Message(Beam::Serialization::ReceiveBuilder) {}
 }
 }
 

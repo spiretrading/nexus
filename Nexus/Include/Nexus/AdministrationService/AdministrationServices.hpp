@@ -5,8 +5,11 @@
 #include <Beam/Services/RecordMessage.hpp>
 #include <Beam/Services/Service.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/AdministrationService/AdministrationService.hpp"
+#include "Nexus/AdministrationService/EntitlementModification.hpp"
+#include "Nexus/AdministrationService/Message.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
@@ -219,7 +222,161 @@ namespace AdministrationService {
     (LoadManagedTradingGroupsService,
       "Nexus.AdministrationServices.LoadManagedTradingGroupsService",
       std::vector<Beam::ServiceLocator::DirectoryEntry>,
-      Beam::ServiceLocator::DirectoryEntry, account));
+      Beam::ServiceLocator::DirectoryEntry, account),
+
+    /*! \interface Nexus::AdministrationServices::LoadAccountModificationRequestService
+        \brief Loads an account modification request.
+        \param id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
+               The id of the request to load.
+        \return <code>Nexus::AdministrationService::AccountModificationRequest</code>
+                The request with the specified <i>id</i>.
+    */
+    //! \cond
+    (LoadAccountModificationRequestService,
+      "Nexus.AdministrationServices.LoadAccountModificationRequestService",
+      AccountModificationRequest, AccountModificationRequest::Id, id),
+
+    /*! \interface Nexus::AdministrationServices::LoadAccountModificationRequestIdsService
+        \brief Given an account, loads the ids of requests to modify that
+               account.
+        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
+               account whose requests are to be loaded.
+        \param start_id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
+               The id of the first request to load (exclusive) or -1 to start
+               with the most recent request.
+        \param max_count <code>int</code> The maximum number of ids to load.
+        \return <code>std::vector\<Nexus::AdministrationService::AccountModificationRequest::Id\></code>
+                The list of account modification requests.
+    */
+    //! \cond
+    (LoadAccountModificationRequestIdsService,
+      "Nexus.AdministrationServices.LoadAccountModificationRequestIdsService",
+      std::vector<AccountModificationRequest::Id>,
+      Beam::ServiceLocator::DirectoryEntry, account,
+      AccountModificationRequest::Id, start_id, int, max_count),
+
+    /*! \interface Nexus::AdministrationServices::LoadManagedAccountModificationRequestIdsService
+        \brief Given an account, loads the ids of requests that the account is
+               authorized to manage.
+        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
+               account managing the modification requests.
+        \param start_id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
+               The id of the first request to load (exclusive) or -1 to start
+               with the most recent request.
+        \param max_count <code>int</code> The maximum number of ids to load.
+        \return <code>std::vector\<Nexus::AdministrationService::AccountModificationRequest::Id\></code>
+                The list of account modification requests.
+    */
+    //! \cond
+    (LoadManagedAccountModificationRequestIdsService,
+      "Nexus.AdministrationServices.LoadManagedAccountModificationRequestIdsService",
+      std::vector<AccountModificationRequest::Id>,
+      Beam::ServiceLocator::DirectoryEntry, account,
+      AccountModificationRequest::Id, start_id, int, max_count),
+
+    /*! \interface Nexus::AdministrationServices::SubmitEntitlementsAccountModificationRequestService
+        \brief Submits a request to modify an account's entitlements.
+        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
+               account to modify.
+        \param submission_account <code>Beam::ServiceLocator::DirectoryEntry</code>
+               The account submitting the request.
+        \param modification <code>Nexus::AdministrationService::EntitlementModification</code>
+               The modification to apply.
+        \param comment <code>Nexus::AdministrationService::Message</code> The
+               comment to associate with the request.
+        \return <code>Nexus::AdministrationService::AccountModificationRequest</code>
+                An object representing the request.
+    */
+    //! \cond
+    (SubmitEntitlementsAccountModificationRequestService,
+      "Nexus.AdministrationServices.SubmitEntitlementsAccountModificationRequestService",
+      AccountModificationRequest, Beam::ServiceLocator::DirectoryEntry, account,
+      Beam::ServiceLocator::DirectoryEntry, submission_account,
+      EntitlementModification, modification, Message, comment),
+
+    /*! \interface Nexus::AdministrationServices::LoadAccountModificationStatusService
+        \brief Loads the status of an account modification request.
+        \param id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
+               The id of the request.
+        \return <code>Nexus::AdministrationService::AccountModificationRequest::Status</code>
+                The status of the request.
+    */
+    //! \cond
+    (LoadAccountModificationStatusService,
+      "Nexus.AdministrationServices.LoadAccountModificationStatusService",
+      AccountModificationRequest::Status, AccountModificationRequest::Id, id),
+
+    /*! \interface Nexus::AdministrationServices::ReviewAccountModificationRequestService
+        \brief Marks an account modification request as having been reviewed.
+        \param id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
+               The id of the request.
+        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
+               account that reviewed the request.
+        \param comment <code>Nexus::AdministrationService::Message</code> The
+               comment to associate with the review.
+    */
+    //! \cond
+    (ReviewAccountModificationRequestService,
+      "Nexus.AdministrationServices.ReviewAccountModificationRequestService",
+      void, AccountModificationRequest::Id, id,
+      Beam::ServiceLocator::DirectoryEntry, account, Message, comment),
+
+    /*! \interface Nexus::AdministrationServices::ApproveAccountModificationRequestService
+        \brief Approves an account modification request.
+        \param id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
+               The id of the request.
+        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
+               account that approved the request.
+        \param comment <code>Nexus::AdministrationService::Message</code> The
+               comment to associate with the approval.
+    */
+    //! \cond
+    (ApproveAccountModificationRequestService,
+      "Nexus.AdministrationServices.ApproveAccountModificationRequestService",
+      void, AccountModificationRequest::Id, id,
+      Beam::ServiceLocator::DirectoryEntry, account, Message, comment),
+
+    /*! \interface Nexus::AdministrationServices::RejectAccountModificationRequestService
+        \brief Rejects an account modification request.
+        \param id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
+               The id of the request.
+        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
+               account that rejected the request.
+        \param comment <code>Nexus::AdministrationService::Message</code> The
+               comment to associate with the rejection.
+    */
+    //! \cond
+    (RejectAccountModificationRequestService,
+      "Nexus.AdministrationServices.RejectAccountModificationRequestService",
+      void, AccountModificationRequest::Id, id,
+      Beam::ServiceLocator::DirectoryEntry, account, Message, comment),
+
+    /*! \interface Nexus::AdministrationServices::LoadMessageIdsService
+        \brief Loads the list of messages associated with an account
+               modification.
+        \param id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
+               The id of the request.
+        \return <code>std::vector\<Nexus::AdministrationServices::Message::Id\></code>
+                The list of message ids associated with the request.
+    */
+    //! \cond
+    (LoadMessageIdsService,
+      "Nexus.AdministrationServices.LoadMessageIdsService",
+      std::vector<Message::Id>, AccountModificationRequest::Id, id),
+
+    /*! \interface Nexus::AdministrationServices::SendAccountModificationRequestMessageService
+        \brief Appends a message to an account modification request.
+        \param id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
+               The id of the request to send the message to.
+        \param message <code>Nexus::AdministrationService::Message</code> The
+               message to append.
+        \return <code>Nexus::AdministrationServices::Message</code>
+                The appended message.
+    */
+    //! \cond
+    (SendAccountModificationRequestMessageService,
+      "Nexus.AdministrationServices.SendAccountModificationRequestMessageService",
+      Message, AccountModificationRequest::Id, id, Message, message));
     //! \endcond
 
   BEAM_DEFINE_MESSAGES(AdministrationMessages,

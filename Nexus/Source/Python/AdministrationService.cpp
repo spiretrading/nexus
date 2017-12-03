@@ -17,7 +17,7 @@
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
-#include "Nexus/AdministrationService/EntitlementModificationRequest.hpp"
+#include "Nexus/AdministrationService/EntitlementModification.hpp"
 #include "Nexus/AdministrationService/Message.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
@@ -245,21 +245,21 @@ void Nexus::Python::ExportAdministrationServiceTestEnvironment() {
       return_value_policy<manage_new_object>());
 }
 
-void Nexus::Python::ExportEntitlementModificationRequest() {
-  class_<EntitlementModificationRequest>("EntitlementModificationRequest",
-    init<vector<DirectoryEntry>>())
-    .def("__copy__", &MakeCopy<EntitlementModificationRequest>)
-    .def("__deepcopy__", &MakeDeepCopy<EntitlementModificationRequest>)
+void Nexus::Python::ExportEntitlementModification() {
+  class_<EntitlementModification>("EntitlementModification", init<>())
+    .def(init<vector<DirectoryEntry>>())
+    .def("__copy__", &MakeCopy<EntitlementModification>)
+    .def("__deepcopy__", &MakeDeepCopy<EntitlementModification>)
     .add_property("entitlements", make_function(
-      &EntitlementModificationRequest::GetEntitlements,
+      &EntitlementModification::GetEntitlements,
       return_value_policy<return_by_value>()));
 }
 
 void Nexus::Python::ExportMessage() {
   {
     scope outer =
-      class_<AdministrationService::Message>("Message",
-        init<AdministrationService::Message::Id, DirectoryEntry, ptime,
+      class_<AdministrationService::Message>("Message", init<>())
+        .def(init<AdministrationService::Message::Id, DirectoryEntry, ptime,
         vector<AdministrationService::Message::Body>>())
         .def("__copy__", &MakeCopy<AdministrationService::Message>)
         .def("__deepcopy__", &MakeDeepCopy<AdministrationService::Message>)

@@ -14,7 +14,7 @@ namespace AdministrationService {
   class AdministrationSession;
   class ApplicationAdministrationClient;
   template<typename DataStoreType> class CachedAdministrationDataStore;
-  class EntitlementModificationRequest;
+  class EntitlementModification;
   class LocalAdministrationDataStore;
   class Message;
   class MySqlAdministrationDataStore;
