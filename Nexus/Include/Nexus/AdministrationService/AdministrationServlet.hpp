@@ -8,10 +8,13 @@
 #include <Beam/Utilities/Algorithm.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/range/adaptor/map.hpp>
+#include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
 #include "Nexus/AdministrationService/AdministrationService.hpp"
 #include "Nexus/AdministrationService/AdministrationServices.hpp"
 #include "Nexus/AdministrationService/AdministrationSession.hpp"
+#include "Nexus/AdministrationService/EntitlementModification.hpp"
+#include "Nexus/AdministrationService/Message.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
 
@@ -89,8 +92,18 @@ namespace AdministrationService {
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
+      AccountRoles LoadAccountRoles(
+        const Beam::ServiceLocator::DirectoryEntry& account);
       bool CheckAdministrator(
         const Beam::ServiceLocator::DirectoryEntry& account);
+      bool CheckReadPermission(
+        const Beam::ServiceLocator::DirectoryEntry& parent,
+        const Beam::ServiceLocator::DirectoryEntry& child);
+      std::vector<Beam::ServiceLocator::DirectoryEntry>
+        LoadManagedTradingGroups(
+        const Beam::ServiceLocator::DirectoryEntry& account);
+      TradingGroup LoadTradingGroup(
+        const Beam::ServiceLocator::DirectoryEntry& directory);
       std::vector<Beam::ServiceLocator::DirectoryEntry> LoadEntitlements(
         const Beam::ServiceLocator::DirectoryEntry& account);
       bool OnCheckAdministratorRequest(ServiceProtocolClient& client,
@@ -138,6 +151,19 @@ namespace AdministrationService {
       std::vector<Beam::ServiceLocator::DirectoryEntry>
         OnLoadManagedTradingGroupsRequest(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account);
+      AccountModificationRequest OnLoadAccountModificationRequest(
+        ServiceProtocolClient& client, AccountModificationRequest::Id id);
+      std::vector<AccountModificationRequest::Id>
+        OnLoadAccountModificationRequestIds(ServiceProtocolClient& client,
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        AccountModificationRequest::Id startId, int maxCount);
+      std::vector<AccountModificationRequest::Id>
+        OnLoadManagedAccountModificationRequestIds(
+        ServiceProtocolClient& client,
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        AccountModificationRequest::Id startId, int maxCount);
+      EntitlementModification OnLoadEntitlementModification(
+        ServiceProtocolClient& client, AccountModificationRequest::Id id);
   };
 
   template<typename ServiceLocatorClientType,
@@ -222,6 +248,21 @@ namespace AdministrationService {
     LoadManagedTradingGroupsService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnLoadManagedTradingGroupsRequest, this,
       std::placeholders::_1, std::placeholders::_2));
+    LoadAccountModificationRequestService::AddSlot(Store(slots), std::bind(
+      &AdministrationServlet::OnLoadAccountModificationRequest, this,
+      std::placeholders::_1, std::placeholders::_2));
+    LoadAccountModificationRequestIdsService::AddSlot(Store(slots), std::bind(
+      &AdministrationServlet::OnLoadAccountModificationRequestIds, this,
+      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+      std::placeholders::_4));
+    LoadManagedAccountModificationRequestIdsService::AddSlot(Store(slots),
+      std::bind(
+      &AdministrationServlet::OnLoadManagedAccountModificationRequestIds, this,
+      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+      std::placeholders::_4));
+    LoadEntitlementModificationService::AddSlot(Store(slots),
+      std::bind(&AdministrationServlet::OnLoadEntitlementModification, this,
+      std::placeholders::_1, std::placeholders::_2));
   }
 
   template<typename ContainerType, typename ServiceLocatorClientType,
@@ -293,6 +334,45 @@ namespace AdministrationService {
 
   template<typename ContainerType, typename ServiceLocatorClientType,
     typename AdministrationDataStoreType>
+  AccountRoles AdministrationServlet<ContainerType, ServiceLocatorClientType,
+      AdministrationDataStoreType>::LoadAccountRoles(
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    AccountRoles roles;
+    auto parents = m_serviceLocatorClient->LoadParents(account);
+    auto tradingGroups = m_serviceLocatorClient->LoadChildren(
+      m_tradingGroupsRoot);
+    for(auto& parent : parents) {
+      if(parent == m_administratorsRoot) {
+        roles.Set(AccountRole::ADMINISTRATOR);
+      } else if(parent == m_servicesRoot) {
+        roles.Set(AccountRole::SERVICE);
+      } else if(!roles.Test(AccountRole::TRADER) &&
+          parent.m_name == "traders") {
+        auto entryParents = m_serviceLocatorClient->LoadParents(parent);
+        for(auto& entryParent : entryParents) {
+          if(std::find(tradingGroups.begin(), tradingGroups.end(),
+              entryParent) != tradingGroups.end()) {
+            roles.Set(AccountRole::TRADER);
+            break;
+          }
+        }
+      } else if(!roles.Test(AccountRole::MANAGER) &&
+          parent.m_name == "managers") {
+        auto entryParents = m_serviceLocatorClient->LoadParents(parent);
+        for(auto& entryParent : entryParents) {
+          if(std::find(tradingGroups.begin(), tradingGroups.end(),
+              entryParent) != tradingGroups.end()) {
+            roles.Set(AccountRole::MANAGER);
+            break;
+          }
+        }
+      }
+    }
+    return roles;
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
   bool AdministrationServlet<ContainerType, ServiceLocatorClientType,
       AdministrationDataStoreType>::CheckAdministrator(
       const Beam::ServiceLocator::DirectoryEntry& account) {
@@ -300,6 +380,83 @@ namespace AdministrationService {
     auto isAdministrator = std::find(parents.begin(), parents.end(),
       m_administratorsRoot) != parents.end();
     return isAdministrator;
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
+  bool AdministrationServlet<ContainerType, ServiceLocatorClientType,
+      AdministrationDataStoreType>::CheckReadPermission(
+      const Beam::ServiceLocator::DirectoryEntry& parent,
+      const Beam::ServiceLocator::DirectoryEntry& child) {
+    if(parent == child) {
+      return true;
+    }
+    if(CheckAdministrator(parent)) {
+      return true;
+    }
+    auto tradingGroups = LoadManagedTradingGroups(parent);
+    auto parentGroups = m_serviceLocatorClient->LoadParents(child);
+    for(auto& tradingGroup : tradingGroups) {
+      auto traders = m_serviceLocatorClient->LoadDirectoryEntry(tradingGroup,
+        "traders");
+      if(std::find(parentGroups.begin(), parentGroups.end(), traders) !=
+          parentGroups.end()) {
+        return true;
+      }
+      auto managers = m_serviceLocatorClient->LoadDirectoryEntry(tradingGroup,
+        "managers");
+      if(std::find(parentGroups.begin(), parentGroups.end(), managers) !=
+          parentGroups.end()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
+  std::vector<Beam::ServiceLocator::DirectoryEntry> AdministrationServlet<
+      ContainerType, ServiceLocatorClientType, AdministrationDataStoreType>::
+      LoadManagedTradingGroups(
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto parents = m_serviceLocatorClient->LoadParents(account);
+    auto tradingGroups = m_serviceLocatorClient->LoadChildren(
+      m_tradingGroupsRoot);
+    for(auto& parent : parents) {
+      if(parent == m_administratorsRoot) {
+        return tradingGroups;
+      }
+    }
+    std::vector<Beam::ServiceLocator::DirectoryEntry> result;
+    for(auto& parent : parents) {
+      if(parent.m_name == "managers") {
+        auto entryParents = m_serviceLocatorClient->LoadParents(parent);
+        for(auto& entryParent : entryParents) {
+          if(std::find(tradingGroups.begin(), tradingGroups.end(),
+              entryParent) != tradingGroups.end()) {
+            result.push_back(entryParent);
+            break;
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
+  TradingGroup AdministrationServlet<ContainerType, ServiceLocatorClientType,
+      AdministrationDataStoreType>::LoadTradingGroup(
+      const Beam::ServiceLocator::DirectoryEntry& directory) {
+    auto managersDirectory = m_serviceLocatorClient->LoadDirectoryEntry(
+      directory, "managers");
+    auto tradersDirectory = m_serviceLocatorClient->LoadDirectoryEntry(
+      directory, "traders");
+    auto managers = m_serviceLocatorClient->LoadChildren(managersDirectory);
+    auto traders = m_serviceLocatorClient->LoadChildren(tradersDirectory);
+    TradingGroup tradingGroup(directory, managersDirectory, managers,
+      tradersDirectory, traders);
+    return tradingGroup;
   }
 
   template<typename ContainerType, typename ServiceLocatorClientType,
@@ -335,38 +492,7 @@ namespace AdministrationService {
       AdministrationDataStoreType>::OnLoadAccountRolesRequest(
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    AccountRoles roles;
-    auto parents = m_serviceLocatorClient->LoadParents(account);
-    auto tradingGroups = m_serviceLocatorClient->LoadChildren(
-      m_tradingGroupsRoot);
-    for(auto& parent : parents) {
-      if(parent == m_administratorsRoot) {
-        roles.Set(AccountRole::ADMINISTRATOR);
-      } else if(parent == m_servicesRoot) {
-        roles.Set(AccountRole::SERVICE);
-      } else if(!roles.Test(AccountRole::TRADER) &&
-          parent.m_name == "traders") {
-        auto entryParents = m_serviceLocatorClient->LoadParents(parent);
-        for(auto& entryParent : entryParents) {
-          if(std::find(tradingGroups.begin(), tradingGroups.end(),
-              entryParent) != tradingGroups.end()) {
-            roles.Set(AccountRole::TRADER);
-            break;
-          }
-        }
-      } else if(!roles.Test(AccountRole::MANAGER) &&
-          parent.m_name == "managers") {
-        auto entryParents = m_serviceLocatorClient->LoadParents(parent);
-        for(auto& entryParent : entryParents) {
-          if(std::find(tradingGroups.begin(), tradingGroups.end(),
-              entryParent) != tradingGroups.end()) {
-            roles.Set(AccountRole::MANAGER);
-            break;
-          }
-        }
-      }
-    }
-    return roles;
+    return LoadAccountRoles(account);
   }
 
   template<typename ContainerType, typename ServiceLocatorClientType,
@@ -433,15 +559,7 @@ namespace AdministrationService {
       const Beam::ServiceLocator::DirectoryEntry& directory) {
     auto properDirectory = m_serviceLocatorClient->LoadDirectoryEntry(
       directory.m_id);
-    auto managersDirectory = m_serviceLocatorClient->LoadDirectoryEntry(
-      properDirectory, "managers");
-    auto tradersDirectory = m_serviceLocatorClient->LoadDirectoryEntry(
-      properDirectory, "traders");
-    auto managers = m_serviceLocatorClient->LoadChildren(managersDirectory);
-    auto traders = m_serviceLocatorClient->LoadChildren(tradersDirectory);
-    TradingGroup tradingGroup(properDirectory, managersDirectory, managers,
-      tradersDirectory, traders);
-    return tradingGroup;
+    return LoadTradingGroup(properDirectory);
   }
 
   template<typename ContainerType, typename ServiceLocatorClientType,
@@ -648,28 +766,94 @@ namespace AdministrationService {
       ContainerType, ServiceLocatorClientType, AdministrationDataStoreType>::
       OnLoadManagedTradingGroupsRequest(ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    auto parents = m_serviceLocatorClient->LoadParents(account);
-    auto tradingGroups = m_serviceLocatorClient->LoadChildren(
-      m_tradingGroupsRoot);
-    for(auto& parent : parents) {
-      if(parent == m_administratorsRoot) {
-        return tradingGroups;
-      }
+    return LoadManagedTradingGroups(account);
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
+  AccountModificationRequest AdministrationServlet<
+      ContainerType, ServiceLocatorClientType, AdministrationDataStoreType>::
+      OnLoadAccountModificationRequest(ServiceProtocolClient& client,
+      AccountModificationRequest::Id id) {
+    auto& session = client.GetSession();
+    auto request = m_dataStore->LoadAccountModificationRequest(id);
+    if(!CheckReadPermission(session.GetAccount(), request.GetAccount())) {
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
     }
-    std::vector<Beam::ServiceLocator::DirectoryEntry> result;
-    for(auto& parent : parents) {
-      if(parent.m_name == "managers") {
-        auto entryParents = m_serviceLocatorClient->LoadParents(parent);
-        for(auto& entryParent : entryParents) {
-          if(std::find(tradingGroups.begin(), tradingGroups.end(),
-              entryParent) != tradingGroups.end()) {
-            result.push_back(entryParent);
-            break;
-          }
-        }
-      }
+    return request;
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
+  std::vector<AccountModificationRequest::Id> AdministrationServlet<
+      ContainerType, ServiceLocatorClientType, AdministrationDataStoreType>::
+      OnLoadAccountModificationRequestIds(ServiceProtocolClient& client,
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      AccountModificationRequest::Id startId, int maxCount) {
+    auto& session = client.GetSession();
+    if(!CheckReadPermission(session.GetAccount(), account)) {
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
     }
-    return result;
+    return m_dataStore->LoadAccountModificationRequestIds(account, startId,
+      maxCount);
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
+  std::vector<AccountModificationRequest::Id> AdministrationServlet<
+      ContainerType, ServiceLocatorClientType, AdministrationDataStoreType>::
+      OnLoadManagedAccountModificationRequestIds(ServiceProtocolClient& client,
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      AccountModificationRequest::Id startId, int maxCount) {
+    auto& session = client.GetSession();
+    if(!CheckReadPermission(session.GetAccount(), account)) {
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
+    }
+    if(CheckAdministrator(session.GetAccount())) {
+      return m_dataStore->LoadAccountModificationRequestIds(startId, maxCount);
+    }
+    auto tradingGroupEntries = LoadManagedTradingGroups(account);
+    std::vector<Beam::ServiceLocator::DirectoryEntry> accounts;
+    for(auto& tradingGroupEntry : tradingGroupEntries) {
+      auto tradingGroup = LoadTradingGroup(tradingGroupEntry);
+      std::move(tradingGroup.GetManagers().begin(),
+        tradingGroup.GetManagers().end(), std::back_inserter(accounts));
+      std::move(tradingGroup.GetTraders().begin(),
+        tradingGroup.GetTraders().end(), std::back_inserter(accounts));
+    }
+    std::sort(accounts.begin(), accounts.end());
+    std::vector<AccountModificationRequest::Id> ids;
+    for(std::size_t i = 0; i != accounts.size(); ++i) {
+      if(i != 0 && accounts[i] == accounts[i - 1]) {
+        continue;
+      }
+      auto accountRequestIds = m_dataStore->LoadAccountModificationRequestIds(
+        accounts[i], startId, maxCount);
+      ids.insert(ids.end(), accountRequestIds.begin(), accountRequestIds.end());
+    }
+    std::sort(ids.begin(), ids.end());
+    if(static_cast<int>(ids.size()) > maxCount) {
+      ids.erase(ids.begin() + maxCount, ids.end());
+    }
+    return ids;
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
+  EntitlementModification AdministrationServlet<ContainerType,
+      ServiceLocatorClientType, AdministrationDataStoreType>::
+      OnLoadEntitlementModification(ServiceProtocolClient& client,
+      AccountModificationRequest::Id id) {
+    auto& session = client.GetSession();
+    auto request = m_dataStore->LoadAccountModificationRequest(id);
+    if(!CheckReadPermission(session.GetAccount(), request.GetAccount())) {
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
+    }
+    return m_dataStore->LoadEntitlementModification(id);
   }
 }
 }

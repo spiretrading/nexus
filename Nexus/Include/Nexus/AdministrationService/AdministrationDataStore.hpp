@@ -3,7 +3,10 @@
 #include <Beam/IO/Connection.hpp>
 #include <Beam/ServiceLocator/ServiceLocator.hpp>
 #include <boost/noncopyable.hpp>
+#include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/AdministrationService.hpp"
+#include "Nexus/AdministrationService/EntitlementModification.hpp"
+#include "Nexus/AdministrationService/Message.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
 
 namespace Nexus {
@@ -77,6 +80,46 @@ namespace AdministrationService {
       */
       virtual void Store(const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskService::RiskState& riskState) = 0;
+
+      //! Loads an AccountModificationRequest.
+      /*!
+        \param id The id of the request to load.
+        \return The AccountModificationRequest with the specified <i>id</i>.
+      */
+      virtual AccountModificationRequest LoadAccountModificationRequest(
+        AccountModificationRequest::Id id) = 0;
+
+      //! Loads all account modification request ids to modify an account.
+      /*!
+        \param account The account being modified.
+        \param startId The id of the most recent request to load (exclusive), or
+               -1 to start with the most recent request.
+        \param maxCount The maximum number of ids to load.
+        \return The list of ids specified.
+      */
+      virtual std::vector<AccountModificationRequest::Id>
+        LoadAccountModificationRequestIds(
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        AccountModificationRequest::Id startId, int maxCount) = 0;
+
+      //! Loads all account modification request ids.
+      /*!
+        \param startId The id of the most recent request to load (exclusive), or
+               -1 to start with the most recent request.
+        \param maxCount The maximum number of ids to load.
+        \return The list of ids specified.
+      */
+      virtual std::vector<AccountModificationRequest::Id>
+        LoadAccountModificationRequestIds(
+        AccountModificationRequest::Id startId, int maxCount) = 0;
+
+      //! Loads an EntitlementModification.
+      /*!
+        \param id The id of the request to load.
+        \return The EntitlementModification with the specified <i>id</i>.
+      */
+      virtual EntitlementModification LoadEntitlementModification(
+        AccountModificationRequest::Id id) = 0;
 
       //! Performs an atomic transaction.
       /*!
