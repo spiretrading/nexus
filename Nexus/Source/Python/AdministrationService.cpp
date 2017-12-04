@@ -64,6 +64,11 @@ namespace {
       return get_override("load_account_roles")(account);
     }
 
+    virtual AccountRoles LoadAccountRoles(const DirectoryEntry& parent,
+        const DirectoryEntry& child) override final {
+      return get_override("load_account_roles")(parent, child);
+    }
+
     virtual DirectoryEntry LoadTradingGroupEntry(
         const DirectoryEntry& account) override final {
       return get_override("load_trading_group_entry")(account);
@@ -317,8 +322,13 @@ void Nexus::Python::ExportAdministrationClient() {
     "AdministrationClient", no_init)
     .def("check_administrator",
       pure_virtual(&VirtualAdministrationClient::CheckAdministrator))
-    .def("load_account_roles",
-      pure_virtual(&VirtualAdministrationClient::LoadAccountRoles))
+    .def("load_account_roles", pure_virtual(
+      static_cast<AccountRoles (VirtualAdministrationClient::*)(
+      const DirectoryEntry&)>(&VirtualAdministrationClient::LoadAccountRoles)))
+    .def("load_account_roles", pure_virtual(
+      static_cast<AccountRoles (VirtualAdministrationClient::*)(
+      const DirectoryEntry&, const DirectoryEntry&)>(
+      &VirtualAdministrationClient::LoadAccountRoles)))
     .def("load_trading_group_entry",
       pure_virtual(&VirtualAdministrationClient::LoadTradingGroupEntry))
     .def("load_identity",

@@ -66,6 +66,17 @@ namespace AdministrationService {
       AccountRoles LoadAccountRoles(
         const Beam::ServiceLocator::DirectoryEntry& account);
 
+      //! Returns the roles one account has over another.
+      /*!
+        \param parent The account whose roles are to be loaded.
+        \param child The account being supervised.
+        \return The roles that the <i>parent</i> account has over the
+                <i>child</i> account.
+      */
+      AccountRoles LoadAccountRoles(
+        const Beam::ServiceLocator::DirectoryEntry& parent,
+        const Beam::ServiceLocator::DirectoryEntry& child);
+
       //! Loads an account's trading group Directory.
       /*!
         \param account The account whose trading group is to be loaded.
@@ -363,6 +374,16 @@ namespace AdministrationService {
       LoadAccountRoles(const Beam::ServiceLocator::DirectoryEntry& account) {
     auto client = m_clientHandler.GetClient();
     return client->template SendRequest<LoadAccountRolesService>(account);
+  }
+
+  template<typename ServiceProtocolClientBuilderType>
+  AccountRoles AdministrationClient<
+      ServiceProtocolClientBuilderType>::LoadAccountRoles(
+      const Beam::ServiceLocator::DirectoryEntry& parent,
+      const Beam::ServiceLocator::DirectoryEntry& child) {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<LoadSupervisedAccountRolesService>(
+      parent, child);
   }
 
   template<typename ServiceProtocolClientBuilderType>

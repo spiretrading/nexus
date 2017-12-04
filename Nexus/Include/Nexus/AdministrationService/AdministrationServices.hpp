@@ -44,6 +44,22 @@ namespace AdministrationService {
       Beam::ServiceLocator::DirectoryEntry, account),
     //! \endcond
 
+    /*! \interface Nexus::AdministrationServices::LoadSupervisedAccountRolesService
+        \brief Returns the roles one account has over another.
+        \param parent <code>Beam::ServiceLocator::DirectoryEntry</code> The
+               account whose roles are to be loaded.
+        \param child <code>Beam::ServiceLocator::DirectoryEntry</code> The
+               account being supervised.
+        \return <code>AccountRoles</code> The roles that the <i>parent</i>
+                account has over the <i>child</i> account.
+    */
+    //! \cond
+    (LoadSupervisedAccountRolesService,
+      "Nexus.AdministrationServices.LoadSupervisedAccountRolesService",
+      AccountRoles, Beam::ServiceLocator::DirectoryEntry, parent,
+      Beam::ServiceLocator::DirectoryEntry, child),
+    //! \endcond
+
     /*! \interface Nexus::AdministrationServices::LoadAccountTradingGroupEntryService
         \brief Loads an account's trading group Directory.
         \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The

@@ -33,6 +33,10 @@ namespace AdministrationService {
       virtual AccountRoles LoadAccountRoles(
         const Beam::ServiceLocator::DirectoryEntry& account) override final;
 
+      virtual AccountRoles LoadAccountRoles(
+        const Beam::ServiceLocator::DirectoryEntry& parent,
+        const Beam::ServiceLocator::DirectoryEntry& child) override final;
+
       virtual Beam::ServiceLocator::DirectoryEntry LoadTradingGroupEntry(
         const Beam::ServiceLocator::DirectoryEntry& account) override final;
 
@@ -181,6 +185,15 @@ namespace AdministrationService {
     Beam::Python::GilRelease gil;
     boost::lock_guard<Beam::Python::GilRelease> lock{gil};
     return m_client->LoadAccountRoles(account);
+  }
+
+  template<typename ClientType>
+  AccountRoles ToPythonAdministrationClient<ClientType>::LoadAccountRoles(
+      const Beam::ServiceLocator::DirectoryEntry& parent,
+      const Beam::ServiceLocator::DirectoryEntry& child) {
+    Beam::Python::GilRelease gil;
+    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    return m_client->LoadAccountRoles(parent, child);
   }
 
   template<typename ClientType>

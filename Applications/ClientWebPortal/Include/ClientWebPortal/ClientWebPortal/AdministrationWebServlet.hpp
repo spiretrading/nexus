@@ -63,6 +63,31 @@ namespace ClientWebPortal {
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnStoreRiskParameters(
         const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadAccountModificationRequest(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadAccountModificationRequestIds(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse
+        OnLoadManagedAccountModificationRequestIds(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadEntitlementModification(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnSubmitAccountModificationRequest(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadAccountModificationStatus(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnReviewAccountModificationRequest(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnApproveAccountModificationRequest(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnRejectAccountModificationRequest(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadMessage(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadMessageIds(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnSendAccountModificationRequestMessage(
+        const Beam::WebServices::HttpRequest& request);
   };
 }
 }

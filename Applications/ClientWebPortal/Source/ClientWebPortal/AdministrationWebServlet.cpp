@@ -414,3 +414,78 @@ HttpResponse AdministrationWebServlet::OnStoreRiskParameters(
     parameters.m_account, parameters.m_riskParameters);
   return response;
 }
+
+HttpResponse AdministrationWebServlet::OnLoadAccountModificationRequest(
+    const HttpRequest& request) {
+  struct Parameters {
+    AccountModificationRequest::Id m_id;
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("id", m_id);
+    }
+  };
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  auto modification =
+    m_serviceClients->GetAdministrationClient().LoadAccountModificationRequest(
+    parameters.m_id);
+  if(modification.GetAccount() != session->GetAccount()) {
+    auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
+      session->GetAccount(), modification.GetAccount());
+    if(roles.GetBitset().none()) {
+      response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+      return response;
+    }
+  }
+  session->ShuttleResponse(modification, Store(response));
+  return response;
+}
+
+HttpResponse AdministrationWebServlet::OnLoadAccountModificationRequestIds(
+    const HttpRequest& request) {
+}
+
+HttpResponse AdministrationWebServlet::
+    OnLoadManagedAccountModificationRequestIds(const HttpRequest& request) {
+}
+
+HttpResponse AdministrationWebServlet::OnLoadEntitlementModification(
+    const HttpRequest& request) {
+}
+
+HttpResponse AdministrationWebServlet::OnSubmitAccountModificationRequest(
+    const HttpRequest& request) {
+}
+
+HttpResponse AdministrationWebServlet::OnLoadAccountModificationStatus(
+    const HttpRequest& request) {
+}
+
+HttpResponse AdministrationWebServlet::OnReviewAccountModificationRequest(
+    const HttpRequest& request) {
+}
+
+HttpResponse AdministrationWebServlet::OnApproveAccountModificationRequest(
+    const HttpRequest& request) {
+}
+
+HttpResponse AdministrationWebServlet::OnRejectAccountModificationRequest(
+    const HttpRequest& request) {
+}
+
+HttpResponse AdministrationWebServlet::OnLoadMessage(
+    const HttpRequest& request) {
+}
+
+HttpResponse AdministrationWebServlet::OnLoadMessageIds(
+    const HttpRequest& request) {
+}
+
+HttpResponse AdministrationWebServlet::OnSendAccountModificationRequestMessage(
+    const HttpRequest& request) {
+}

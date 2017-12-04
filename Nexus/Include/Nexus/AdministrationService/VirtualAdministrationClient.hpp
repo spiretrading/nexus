@@ -34,6 +34,10 @@ namespace AdministrationService {
       virtual AccountRoles LoadAccountRoles(
         const Beam::ServiceLocator::DirectoryEntry& account) = 0;
 
+      virtual AccountRoles LoadAccountRoles(
+        const Beam::ServiceLocator::DirectoryEntry& parent,
+        const Beam::ServiceLocator::DirectoryEntry& child) = 0;
+
       virtual Beam::ServiceLocator::DirectoryEntry LoadTradingGroupEntry(
         const Beam::ServiceLocator::DirectoryEntry& account) = 0;
 
@@ -168,6 +172,10 @@ namespace AdministrationService {
 
       virtual AccountRoles LoadAccountRoles(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
+
+      virtual AccountRoles LoadAccountRoles(
+        const Beam::ServiceLocator::DirectoryEntry& parent,
+        const Beam::ServiceLocator::DirectoryEntry& child) override;
 
       virtual Beam::ServiceLocator::DirectoryEntry LoadTradingGroupEntry(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
@@ -308,6 +316,13 @@ namespace AdministrationService {
   AccountRoles WrapperAdministrationClient<ClientType>::LoadAccountRoles(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_client->LoadAccountRoles(account);
+  }
+
+  template<typename ClientType>
+  AccountRoles WrapperAdministrationClient<ClientType>::LoadAccountRoles(
+      const Beam::ServiceLocator::DirectoryEntry& parent,
+      const Beam::ServiceLocator::DirectoryEntry& child) {
+    return m_client->LoadAccountRoles(parent, child);
   }
 
   template<typename ClientType>
