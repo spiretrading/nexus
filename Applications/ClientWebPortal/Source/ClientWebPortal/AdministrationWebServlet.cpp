@@ -16,6 +16,49 @@ using namespace Nexus::ClientWebPortal;
 using namespace Nexus::RiskService;
 using namespace std;
 
+namespace {
+  bool IsAdministrator(ApplicationServiceClients& serviceClients,
+      const DirectoryEntry& account) {
+    return serviceClients.GetAdministrationClient().LoadAccountRoles(
+      account).Test(AccountRole::ADMINISTRATOR);
+  }
+
+  bool HasReadPermission(ApplicationServiceClients& serviceClients,
+      const DirectoryEntry& parent, const DirectoryEntry& child) {
+    if(parent == child) {
+      return true;
+    }
+    auto roles = serviceClients.GetAdministrationClient().LoadAccountRoles(
+      parent, child);
+    return !roles.GetBitset().none();
+  }
+
+  bool HasRequestPermission(ApplicationServiceClients& serviceClients,
+      const DirectoryEntry& parent, const DirectoryEntry& child) {
+    return HasReadPermission(serviceClients, parent, child);
+  }
+
+  bool HasReviewPermission(ApplicationServiceClients& serviceClients,
+      const DirectoryEntry& parent, const DirectoryEntry& child) {
+    auto roles = serviceClients.GetAdministrationClient().LoadAccountRoles(
+      parent, child);
+    return roles.Test(AccountRole::ADMINISTRATOR) ||
+      roles.Test(AccountRole::MANAGER);
+  }
+
+  bool HasApprovePermission(ApplicationServiceClients& serviceClients,
+      const DirectoryEntry& parent, const DirectoryEntry& child) {
+    auto roles = serviceClients.GetAdministrationClient().LoadAccountRoles(
+      parent, child);
+    return roles.Test(AccountRole::ADMINISTRATOR);
+  }
+
+  bool HasRejectPermission(ApplicationServiceClients& serviceClients,
+      const DirectoryEntry& parent, const DirectoryEntry& child) {
+    return HasReadPermission(serviceClients, parent, child);
+  }
+}
+
 AdministrationWebServlet::AdministrationWebServlet(
     RefType<SessionStore<ClientWebPortalSession>> sessions,
     RefType<ApplicationServiceClients> serviceClients)
@@ -71,6 +114,54 @@ vector<HttpRequestSlot> AdministrationWebServlet::GetSlots() {
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/store_risk_parameters"),
     std::bind(&AdministrationWebServlet::OnStoreRiskParameters, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/load_account_modification_request"),
+    std::bind(&AdministrationWebServlet::OnLoadAccountModificationRequest, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/load_account_modification_request_ids"),
+    std::bind(&AdministrationWebServlet::OnLoadAccountModificationRequestIds,
+    this, std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/load_managed_account_modification_request_ids"),
+    std::bind(
+    &AdministrationWebServlet::OnLoadManagedAccountModificationRequestIds, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/load_entitlement_modification"),
+    std::bind(&AdministrationWebServlet::OnLoadEntitlementModification, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/submit_entitlement_modification_request"),
+    std::bind(&AdministrationWebServlet::OnSubmitEntitlementModificationRequest,
+    this, std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/load_account_modification_status"),
+    std::bind(&AdministrationWebServlet::OnLoadAccountModificationStatus, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/review_account_modification_request"),
+    std::bind(&AdministrationWebServlet::OnReviewAccountModificationRequest,
+    this, std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/approve_account_modification_request"),
+    std::bind(&AdministrationWebServlet::OnApproveAccountModificationRequest,
+    this, std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/reject_account_modification_request"),
+    std::bind(&AdministrationWebServlet::OnRejectAccountModificationRequest,
+    this, std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/load_message"), std::bind(
+    &AdministrationWebServlet::OnLoadMessage, this, std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/load_message_ids"), std::bind(
+    &AdministrationWebServlet::OnLoadMessageIds, this, std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/send_account_modification_request_message"),
+    std::bind(
+    &AdministrationWebServlet::OnSendAccountModificationRequestMessage, this,
     std::placeholders::_1));
   return slots;
 }
@@ -180,13 +271,8 @@ HttpResponse AdministrationWebServlet::OnStoreAccountRoles(
   };
   HttpResponse response;
   auto session = m_sessions->Find(request);
-  if(session == nullptr) {
-    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
-  auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
-    session->GetAccount());
-  if(!roles.Test(AccountRole::ADMINISTRATOR)) {
+  if(session == nullptr ||
+      !IsAdministrator(*m_serviceClients, session->GetAccount())) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
@@ -280,13 +366,8 @@ HttpResponse AdministrationWebServlet::OnStoreAccountIdentity(
   };
   HttpResponse response;
   auto session = m_sessions->Find(request);
-  if(session == nullptr) {
-    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
-  auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
-    session->GetAccount());
-  if(!roles.Test(AccountRole::ADMINISTRATOR)) {
+  if(session == nullptr ||
+      !IsAdministrator(*m_serviceClients, session->GetAccount())) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
@@ -346,13 +427,8 @@ HttpResponse AdministrationWebServlet::OnStoreAccountEntitlements(
   };
   HttpResponse response;
   auto session = m_sessions->Find(request);
-  if(session == nullptr) {
-    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
-  auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
-    session->GetAccount());
-  if(!roles.Test(AccountRole::ADMINISTRATOR)) {
+  if(session == nullptr ||
+      !IsAdministrator(*m_serviceClients, session->GetAccount())) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
@@ -399,13 +475,8 @@ HttpResponse AdministrationWebServlet::OnStoreRiskParameters(
   };
   HttpResponse response;
   auto session = m_sessions->Find(request);
-  if(session == nullptr) {
-    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
-  auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
-    session->GetAccount());
-  if(!roles.Test(AccountRole::ADMINISTRATOR)) {
+  if(session == nullptr ||
+      !IsAdministrator(*m_serviceClients, session->GetAccount())) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
@@ -434,13 +505,10 @@ HttpResponse AdministrationWebServlet::OnLoadAccountModificationRequest(
   auto modification =
     m_serviceClients->GetAdministrationClient().LoadAccountModificationRequest(
     parameters.m_id);
-  if(modification.GetAccount() != session->GetAccount()) {
-    auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
-      session->GetAccount(), modification.GetAccount());
-    if(roles.GetBitset().none()) {
-      response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
-      return response;
-    }
+  if(!HasReadPermission(*m_serviceClients, session->GetAccount(),
+      modification.GetAccount())) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
   }
   session->ShuttleResponse(modification, Store(response));
   return response;
@@ -448,44 +516,335 @@ HttpResponse AdministrationWebServlet::OnLoadAccountModificationRequest(
 
 HttpResponse AdministrationWebServlet::OnLoadAccountModificationRequestIds(
     const HttpRequest& request) {
+  struct Parameters {
+    DirectoryEntry m_account;
+    AccountModificationRequest::Id m_startId;
+    int m_maxCount;
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("account", m_account);
+      shuttle.Shuttle("start_id", m_startId);
+      shuttle.Shuttle("max_count", m_maxCount);
+    }
+  };
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  if(!HasReadPermission(*m_serviceClients, session->GetAccount(),
+      parameters.m_account)) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto requestIds = m_serviceClients->GetAdministrationClient().
+    LoadAccountModificationRequestIds(parameters.m_account,
+    parameters.m_startId, parameters.m_maxCount);
+  session->ShuttleResponse(requestIds, Store(response));
+  return response;
 }
 
 HttpResponse AdministrationWebServlet::
     OnLoadManagedAccountModificationRequestIds(const HttpRequest& request) {
+  struct Parameters {
+    DirectoryEntry m_account;
+    AccountModificationRequest::Id m_startId;
+    int m_maxCount;
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("account", m_account);
+      shuttle.Shuttle("start_id", m_startId);
+      shuttle.Shuttle("max_count", m_maxCount);
+    }
+  };
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  if(!HasReadPermission(*m_serviceClients, session->GetAccount(),
+      parameters.m_account)) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto requestIds = m_serviceClients->GetAdministrationClient().
+    LoadManagedAccountModificationRequestIds(parameters.m_account,
+    parameters.m_startId, parameters.m_maxCount);
+  session->ShuttleResponse(requestIds, Store(response));
+  return response;
 }
 
 HttpResponse AdministrationWebServlet::OnLoadEntitlementModification(
     const HttpRequest& request) {
+  struct Parameters {
+    AccountModificationRequest::Id m_id;
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("id", m_id);
+    }
+  };
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  auto modification =
+    m_serviceClients->GetAdministrationClient().LoadAccountModificationRequest(
+    parameters.m_id);
+  if(!HasReadPermission(*m_serviceClients, session->GetAccount(),
+      modification.GetAccount())) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto entitlement = m_serviceClients->GetAdministrationClient().
+    LoadEntitlementModification(parameters.m_id);
+  session->ShuttleResponse(entitlement, Store(response));
+  return response;
 }
 
-HttpResponse AdministrationWebServlet::OnSubmitAccountModificationRequest(
+HttpResponse AdministrationWebServlet::OnSubmitEntitlementModificationRequest(
     const HttpRequest& request) {
+  struct Parameters {
+    DirectoryEntry m_account;
+    EntitlementModification m_modification;
+    Message m_comment;
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("account", m_account);
+      shuttle.Shuttle("modification", m_modification);
+      shuttle.Shuttle("comment", m_comment);
+    }
+  };
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  if(!HasRequestPermission(*m_serviceClients, session->GetAccount(),
+      parameters.m_account)) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto modification = m_serviceClients->GetAdministrationClient().
+    SubmitAccountModificationRequest(parameters.m_account,
+    session->GetAccount(), parameters.m_modification, parameters.m_comment);
+  session->ShuttleResponse(modification, Store(response));
+  return response;
 }
 
 HttpResponse AdministrationWebServlet::OnLoadAccountModificationStatus(
     const HttpRequest& request) {
+  struct Parameters {
+    AccountModificationRequest::Id m_id;
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("id", m_id);
+    }
+  };
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  auto modification =
+    m_serviceClients->GetAdministrationClient().LoadAccountModificationRequest(
+    parameters.m_id);
+  if(!HasReadPermission(*m_serviceClients, session->GetAccount(),
+      modification.GetAccount())) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto status =
+    m_serviceClients->GetAdministrationClient().LoadAccountModificationStatus(
+    parameters.m_id);
+  session->ShuttleResponse(status, Store(response));
+  return response;
 }
 
 HttpResponse AdministrationWebServlet::OnReviewAccountModificationRequest(
     const HttpRequest& request) {
+  struct Parameters {
+    AccountModificationRequest::Id m_id;
+    Message m_comment;
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("id", m_id);
+      shuttle.Shuttle("comment", m_comment);
+    }
+  };
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  auto modification =
+    m_serviceClients->GetAdministrationClient().LoadAccountModificationRequest(
+    parameters.m_id);
+  if(!HasReviewPermission(*m_serviceClients, session->GetAccount(),
+      modification.GetAccount())) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  m_serviceClients->GetAdministrationClient().ReviewAccountModificationRequest(
+    parameters.m_id, session->GetAccount(), parameters.m_comment);
+  return response;
 }
 
 HttpResponse AdministrationWebServlet::OnApproveAccountModificationRequest(
     const HttpRequest& request) {
+  struct Parameters {
+    AccountModificationRequest::Id m_id;
+    Message m_comment;
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("id", m_id);
+      shuttle.Shuttle("comment", m_comment);
+    }
+  };
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  auto modification =
+    m_serviceClients->GetAdministrationClient().LoadAccountModificationRequest(
+    parameters.m_id);
+  if(!HasApprovePermission(*m_serviceClients, session->GetAccount(),
+      modification.GetAccount())) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  m_serviceClients->GetAdministrationClient().ApproveAccountModificationRequest(
+    parameters.m_id, session->GetAccount(), parameters.m_comment);
+  return response;
 }
 
 HttpResponse AdministrationWebServlet::OnRejectAccountModificationRequest(
     const HttpRequest& request) {
+  struct Parameters {
+    AccountModificationRequest::Id m_id;
+    Message m_comment;
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("id", m_id);
+      shuttle.Shuttle("comment", m_comment);
+    }
+  };
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  auto modification =
+    m_serviceClients->GetAdministrationClient().LoadAccountModificationRequest(
+    parameters.m_id);
+  if(!HasRejectPermission(*m_serviceClients, session->GetAccount(),
+      modification.GetAccount())) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  m_serviceClients->GetAdministrationClient().RejectAccountModificationRequest(
+    parameters.m_id, session->GetAccount(), parameters.m_comment);
+  return response;
 }
 
 HttpResponse AdministrationWebServlet::OnLoadMessage(
     const HttpRequest& request) {
+  struct Parameters {
+    Message::Id m_id;
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("id", m_id);
+    }
+  };
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  auto message = m_serviceClients->GetAdministrationClient().LoadMessage(
+    parameters.m_id);
+  session->ShuttleResponse(message, Store(response));
+  return response;
 }
 
 HttpResponse AdministrationWebServlet::OnLoadMessageIds(
     const HttpRequest& request) {
+  struct Parameters {
+    AccountModificationRequest::Id m_id;
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("id", m_id);
+    }
+  };
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  auto modification =
+    m_serviceClients->GetAdministrationClient().LoadAccountModificationRequest(
+    parameters.m_id);
+  if(!HasReadPermission(*m_serviceClients, session->GetAccount(),
+      modification.GetAccount())) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto messageIds = m_serviceClients->GetAdministrationClient().LoadMessageIds(
+    parameters.m_id);
+  session->ShuttleResponse(messageIds, Store(response));
+  return response;
 }
 
 HttpResponse AdministrationWebServlet::OnSendAccountModificationRequestMessage(
     const HttpRequest& request) {
+  struct Parameters {
+    AccountModificationRequest::Id m_id;
+    Message m_message;
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("id", m_id);
+      shuttle.Shuttle("message", m_message);
+    }
+  };
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  auto modification =
+    m_serviceClients->GetAdministrationClient().LoadAccountModificationRequest(
+    parameters.m_id);
+  if(!HasReadPermission(*m_serviceClients, session->GetAccount(),
+      modification.GetAccount())) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto message = m_serviceClients->GetAdministrationClient().
+    SendAccountModificationRequestMessage(parameters.m_id,
+    parameters.m_message);
+  session->ShuttleResponse(message, Store(response));
+  return response;
 }
