@@ -110,7 +110,8 @@ namespace AdministrationService {
         const EntitlementModification& modification,
         const Message& comment) = 0;
 
-      virtual AccountModificationRequest::Status LoadAccountModificationStatus(
+      virtual AccountModificationRequest::Status
+        LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id) = 0;
 
       virtual void ReviewAccountModificationRequest(
@@ -250,7 +251,8 @@ namespace AdministrationService {
         const EntitlementModification& modification,
         const Message& comment) override;
 
-      virtual AccountModificationRequest::Status LoadAccountModificationStatus(
+      virtual AccountModificationRequest::Status
+        LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id) override;
 
       virtual void ReviewAccountModificationRequest(
@@ -460,8 +462,8 @@ namespace AdministrationService {
 
   template<typename ClientType>
   AccountModificationRequest::Status WrapperAdministrationClient<ClientType>::
-      LoadAccountModificationStatus(AccountModificationRequest::Id id) {
-    return m_client->LoadAccountModificationStatus(id);
+      LoadAccountModificationRequestStatus(AccountModificationRequest::Id id) {
+    return m_client->LoadAccountModificationRequestStatus(id);
   }
 
   template<typename ClientType>

@@ -32,6 +32,9 @@ namespace AdministrationService {
       */
       enum class Status {
 
+        //! No or invalid status.
+        NONE,
+
         //! The request is pending.
         PENDING,
 
@@ -41,8 +44,8 @@ namespace AdministrationService {
         //! The request has been scheduled.
         SCHEDULED,
 
-        //! The request has been approved.
-        APPROVED,
+        //! The request has been granted.
+        GRANTED,
 
         //! The request has been rejected.
         REJECTED

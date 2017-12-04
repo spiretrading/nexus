@@ -137,8 +137,8 @@ vector<HttpRequestSlot> AdministrationWebServlet::GetSlots() {
     std::bind(&AdministrationWebServlet::OnSubmitEntitlementModificationRequest,
     this, std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/administration_service/load_account_modification_status"),
-    std::bind(&AdministrationWebServlet::OnLoadAccountModificationStatus, this,
+    "/api/administration_service/load_account_modification_request_status"),
+    std::bind(&AdministrationWebServlet::OnLoadAccountModificationRequestStatus, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/review_account_modification_request"),
@@ -640,7 +640,7 @@ HttpResponse AdministrationWebServlet::OnSubmitEntitlementModificationRequest(
   return response;
 }
 
-HttpResponse AdministrationWebServlet::OnLoadAccountModificationStatus(
+HttpResponse AdministrationWebServlet::OnLoadAccountModificationRequestStatus(
     const HttpRequest& request) {
   struct Parameters {
     AccountModificationRequest::Id m_id;
@@ -664,9 +664,8 @@ HttpResponse AdministrationWebServlet::OnLoadAccountModificationStatus(
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
-  auto status =
-    m_serviceClients->GetAdministrationClient().LoadAccountModificationStatus(
-    parameters.m_id);
+  auto status = m_serviceClients->GetAdministrationClient().
+    LoadAccountModificationRequestStatus(parameters.m_id);
   session->ShuttleResponse(status, Store(response));
   return response;
 }

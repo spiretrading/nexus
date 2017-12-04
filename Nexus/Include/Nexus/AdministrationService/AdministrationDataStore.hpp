@@ -121,6 +121,43 @@ namespace AdministrationService {
       virtual EntitlementModification LoadEntitlementModification(
         AccountModificationRequest::Id id) = 0;
 
+      //! Stores an EntitlementModification.
+      /*!
+        \param request The modification request.
+        \param modification The details of the modification.
+      */
+      virtual void Store(const AccountModificationRequest& request,
+        const EntitlementModification& modification) = 0;
+
+      //! Stores a Message associated with an account modification request.
+      /*!
+        \param id The id of the request.
+        \param message The Message to store.
+      */
+      virtual void Store(AccountModificationRequest::Id id,
+        const Message& message) = 0;
+
+      //! Loads the status of an AccountModificationRequest.
+      /*!
+        \param id The id of the request.
+        \return The status of the request with the specified <i>id</i>.
+      */
+      virtual AccountModificationRequest::Status
+        LoadAccountModificationRequestStatus(
+        AccountModificationRequest::Id id) = 0;
+
+      //! Stores the status of an AccountModificationRequest.
+      /*!
+        \param id The id of the request.
+        \param status The status of the request.
+      */
+      virtual void Store(AccountModificationRequest::Id id,
+        AccountModificationRequest::Status status) = 0;
+
+      //! Loads the id of the last Message stored, or 0 if there are no stored
+      //! Messages.
+      virtual Message::Id LoadLastMessageId() = 0;
+
       //! Performs an atomic transaction.
       /*!
         \param transaction The transaction to perform.

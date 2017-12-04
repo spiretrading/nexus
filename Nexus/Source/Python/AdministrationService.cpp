@@ -170,9 +170,10 @@ namespace {
         submissionAccount, modification, comment);
     }
 
-    virtual AccountModificationRequest::Status LoadAccountModificationStatus(
+    virtual AccountModificationRequest::Status
+        LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id) override final {
-      return get_override("load_account_modification_status")(id);
+      return get_override("load_account_modification_request_status")(id);
     }
 
     virtual void ReviewAccountModificationRequest(
@@ -310,10 +311,11 @@ void Nexus::Python::ExportAccountModificationRequest() {
     enum_<AccountModificationRequest::Type>("Type")
       .value("ENTITLEMENTS", AccountModificationRequest::Type::ENTITLEMENTS);
     enum_<AccountModificationRequest::Status>("Status")
+      .value("NONE", AccountModificationRequest::Status::NONE)
       .value("PENDING", AccountModificationRequest::Status::PENDING)
       .value("REVIEWED", AccountModificationRequest::Status::REVIEWED)
       .value("SCHEDULED", AccountModificationRequest::Status::SCHEDULED)
-      .value("APPROVED", AccountModificationRequest::Status::APPROVED)
+      .value("GRANTED", AccountModificationRequest::Status::GRANTED)
       .value("REJECTED", AccountModificationRequest::Status::REJECTED);
   }
 }
@@ -372,8 +374,8 @@ void Nexus::Python::ExportAdministrationClient() {
       &VirtualAdministrationClient::LoadEntitlementModification))
     .def("submit_account_modification_request", pure_virtual(
       &VirtualAdministrationClient::SubmitAccountModificationRequest))
-    .def("load_account_modification_status", pure_virtual(
-      &VirtualAdministrationClient::LoadAccountModificationStatus))
+    .def("load_account_modification_request_status", pure_virtual(
+      &VirtualAdministrationClient::LoadAccountModificationRequestStatus))
     .def("review_account_modification_request", pure_virtual(
       &VirtualAdministrationClient::ReviewAccountModificationRequest))
     .def("approve_account_modification_request", pure_virtual(

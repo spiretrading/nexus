@@ -248,7 +248,7 @@ namespace AdministrationService {
         \param id The id of the request.
         \return The status of the request.
       */
-      AccountModificationRequest::Status LoadAccountModificationStatus(
+      AccountModificationRequest::Status LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id);
 
       //! Marks an account modification request as having been reviewed.
@@ -576,17 +576,17 @@ namespace AdministrationService {
       const EntitlementModification& modification, const Message& comment) {
     auto client = m_clientHandler.GetClient();
     return client->template SendRequest<
-      SubmitEntitlementsAccountModificationRequestService>(account,
-      submissionAccount, modification, comment);
+      SubmitEntitlementModificationRequestService>(account, submissionAccount,
+      modification, comment);
   }
 
   template<typename ServiceProtocolClientBuilderType>
   AccountModificationRequest::Status AdministrationClient<
-      ServiceProtocolClientBuilderType>::LoadAccountModificationStatus(
+      ServiceProtocolClientBuilderType>::LoadAccountModificationRequestStatus(
       AccountModificationRequest::Id id) {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadAccountModificationStatusService>(
-      id);
+    return client->template SendRequest<
+      LoadAccountModificationRequestStatusService>(id);
   }
 
   template<typename ServiceProtocolClientBuilderType>

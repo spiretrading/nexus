@@ -110,7 +110,8 @@ namespace AdministrationService {
         const EntitlementModification& modification,
         const Message& comment) override final;
 
-      virtual AccountModificationRequest::Status LoadAccountModificationStatus(
+      virtual AccountModificationRequest::Status
+        LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id) override final;
 
       virtual void ReviewAccountModificationRequest(
@@ -369,10 +370,10 @@ namespace AdministrationService {
 
   template<typename ClientType>
   AccountModificationRequest::Status ToPythonAdministrationClient<ClientType>::
-      LoadAccountModificationStatus(AccountModificationRequest::Id id) {
+      LoadAccountModificationRequestStatus(AccountModificationRequest::Id id) {
     Beam::Python::GilRelease gil;
     boost::lock_guard<Beam::Python::GilRelease> lock{gil};
-    return m_client->LoadAccountModificationStatus(id);
+    return m_client->LoadAccountModificationRequestStatus(id);
   }
 
   template<typename ClientType>

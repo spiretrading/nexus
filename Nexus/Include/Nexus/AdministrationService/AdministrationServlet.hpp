@@ -1,11 +1,13 @@
 #ifndef NEXUS_ADMINISTRATIONSERVLET_HPP
 #define NEXUS_ADMINISTRATIONSERVLET_HPP
+#include <atomic>
 #include <iostream>
 #include <sstream>
 #include <unordered_set>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/range/adaptor/map.hpp>
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
@@ -89,11 +91,16 @@ namespace AdministrationService {
       Beam::ServiceLocator::DirectoryEntry m_tradingGroupsRoot;
       SyncAccountToSubscribers m_riskParametersSubscribers;
       SyncRiskStateEntries m_riskStateEntries;
+      std::atomic_int m_nextModificationRequestId;
+      std::atomic_int m_nextMessageId;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
       AccountRoles LoadAccountRoles(
         const Beam::ServiceLocator::DirectoryEntry& account);
+      AccountRoles LoadAccountRoles(
+        const Beam::ServiceLocator::DirectoryEntry& parent,
+        const Beam::ServiceLocator::DirectoryEntry& child);
       bool CheckAdministrator(
         const Beam::ServiceLocator::DirectoryEntry& account);
       bool CheckReadPermission(
@@ -163,6 +170,13 @@ namespace AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& account,
         AccountModificationRequest::Id startId, int maxCount);
       EntitlementModification OnLoadEntitlementModification(
+        ServiceProtocolClient& client, AccountModificationRequest::Id id);
+      AccountModificationRequest OnSubmitEntitlementModificationRequest(
+        ServiceProtocolClient& client,
+        Beam::ServiceLocator::DirectoryEntry account,
+        Beam::ServiceLocator::DirectoryEntry submissionAccount,
+        const EntitlementModification& modification, Message comment);
+      AccountModificationRequest::Status OnLoadAccountModificationRequestStatus(
         ServiceProtocolClient& client, AccountModificationRequest::Id id);
   };
 
@@ -263,6 +277,13 @@ namespace AdministrationService {
     LoadEntitlementModificationService::AddSlot(Store(slots),
       std::bind(&AdministrationServlet::OnLoadEntitlementModification, this,
       std::placeholders::_1, std::placeholders::_2));
+    SubmitEntitlementModificationRequestService::AddSlot(Store(slots),
+      std::bind(&AdministrationServlet::OnSubmitEntitlementModificationRequest,
+      this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+      std::placeholders::_4, std::placeholders::_5));
+    LoadAccountModificationRequestStatusService::AddSlot(Store(slots),
+      std::bind(&AdministrationServlet::OnLoadAccountModificationRequestStatus,
+      this, std::placeholders::_1, std::placeholders::_2));
   }
 
   template<typename ContainerType, typename ServiceLocatorClientType,
@@ -298,6 +319,13 @@ namespace AdministrationService {
     try {
       m_serviceLocatorClient->Open();
       m_dataStore->Open();
+      auto requestIds = m_dataStore->LoadAccountModificationRequestIds(-1, 1);
+      if(requestIds.empty()) {
+        m_nextModificationRequestId = 0;
+      } else {
+        m_nextModificationRequestId = requestIds.back();
+      }
+      m_nextMessageId = m_dataStore->LoadLastMessageId();
       m_administratorsRoot = Beam::ServiceLocator::LoadOrCreateDirectory(
         *m_serviceLocatorClient, "administrators",
         Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
@@ -367,6 +395,19 @@ namespace AdministrationService {
           }
         }
       }
+    }
+    return roles;
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
+  AccountRoles AdministrationServlet<ContainerType, ServiceLocatorClientType,
+      AdministrationDataStoreType>::LoadAccountRoles(
+      const Beam::ServiceLocator::DirectoryEntry& parent,
+      const Beam::ServiceLocator::DirectoryEntry& child) {
+    AccountRoles roles;
+    if(CheckAdministrator(parent)) {
+      roles.Set(AccountRole::ADMINISTRATOR);
     }
     return roles;
   }
@@ -607,8 +648,8 @@ namespace AdministrationService {
       const std::vector<Beam::ServiceLocator::DirectoryEntry>& entitlements) {
     auto& session = client.GetSession();
     if(!CheckAdministrator(session.GetAccount())) {
-      throw Beam::Services::ServiceRequestException(
-        "Insufficient permissions.");
+      throw Beam::Services::ServiceRequestException{
+        "Insufficient permissions."};
     }
     auto existingEntitlements = LoadEntitlements(account);
     std::unordered_set<Beam::ServiceLocator::DirectoryEntry> entitlementSet(
@@ -679,8 +720,8 @@ namespace AdministrationService {
       const RiskService::RiskParameters& riskParameters) {
     auto& session = request.GetSession();
     if(!CheckAdministrator(session.GetAccount())) {
-      throw Beam::Services::ServiceRequestException(
-        "Insufficient permissions.");
+      throw Beam::Services::ServiceRequestException{
+        "Insufficient permissions."};
     }
     SyncRiskParameterSubscribers* syncSubscribers;
     Beam::Threading::With(m_riskParametersSubscribers,
@@ -708,20 +749,19 @@ namespace AdministrationService {
       OnMonitorRiskStateRequest(ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account) {
     RiskService::RiskState riskState;
-    auto transaction =
-      [&] (RiskStateEntries& riskStateEntries) {
-        auto& riskStateEntry = riskStateEntries[account];
-        riskState = m_dataStore->LoadRiskState(account);
-        if(std::find(riskStateEntry.m_subscribers.begin(),
-            riskStateEntry.m_subscribers.end(), &client) !=
-            riskStateEntry.m_subscribers.end()) {
-          return;
-        }
-        riskStateEntry.m_subscribers.push_back(&client);
-      };
     m_dataStore->WithTransaction(
       [&] {
-        Beam::Threading::With(m_riskStateEntries, transaction);
+        Beam::Threading::With(m_riskStateEntries,
+          [&] (auto& riskStateEntries) {
+            auto& riskStateEntry = riskStateEntries[account];
+            riskState = m_dataStore->LoadRiskState(account);
+            if(std::find(riskStateEntry.m_subscribers.begin(),
+                riskStateEntry.m_subscribers.end(), &client) !=
+                riskStateEntry.m_subscribers.end()) {
+              return;
+            }
+            riskStateEntry.m_subscribers.push_back(&client);
+          });
       });
     return riskState;
   }
@@ -736,27 +776,26 @@ namespace AdministrationService {
       const RiskService::RiskState& riskState) {
     auto& session = request.GetSession();
     if(!CheckAdministrator(session.GetAccount())) {
-      throw Beam::Services::ServiceRequestException(
-        "Insufficient permissions.");
+      throw Beam::Services::ServiceRequestException{
+        "Insufficient permissions."};
     }
-    auto transaction =
-      [&] (RiskStateEntries& riskStateEntries) {
-        auto riskStateEntryIterator = riskStateEntries.find(account);
-        if(riskStateEntryIterator == riskStateEntries.end()) {
-          return;
-        }
-        auto& riskStateEntry = riskStateEntryIterator->second;
-        riskStateEntry.m_riskState = riskState;
-        for(auto& subscriber : riskStateEntry.m_subscribers) {
-          Beam::Services::SendRecordMessage<RiskStateMessage>(*subscriber,
-            account, riskState);
-        }
-      };
     m_dataStore->WithTransaction(
       [&] {
         m_dataStore->Store(account, riskState);
         request.SetResult();
-        Beam::Threading::With(m_riskStateEntries, transaction);
+        Beam::Threading::With(m_riskStateEntries,
+          [&] (auto& riskStateEntries) {
+            auto riskStateEntryIterator = riskStateEntries.find(account);
+            if(riskStateEntryIterator == riskStateEntries.end()) {
+              return;
+            }
+            auto& riskStateEntry = riskStateEntryIterator->second;
+            riskStateEntry.m_riskState = riskState;
+            for(auto& subscriber : riskStateEntry.m_subscribers) {
+              Beam::Services::SendRecordMessage<RiskStateMessage>(*subscriber,
+                account, riskState);
+            }
+          });
       });
   }
 
@@ -776,10 +815,14 @@ namespace AdministrationService {
       OnLoadAccountModificationRequest(ServiceProtocolClient& client,
       AccountModificationRequest::Id id) {
     auto& session = client.GetSession();
-    auto request = m_dataStore->LoadAccountModificationRequest(id);
+    AccountModificationRequest request;
+    m_dataStore->WithTransaction(
+      [&] {
+        request = m_dataStore->LoadAccountModificationRequest(id);
+      });
     if(!CheckReadPermission(session.GetAccount(), request.GetAccount())) {
-      throw Beam::Services::ServiceRequestException(
-        "Insufficient permissions.");
+      throw Beam::Services::ServiceRequestException{
+        "Insufficient permissions."};
     }
     return request;
   }
@@ -793,11 +836,16 @@ namespace AdministrationService {
       AccountModificationRequest::Id startId, int maxCount) {
     auto& session = client.GetSession();
     if(!CheckReadPermission(session.GetAccount(), account)) {
-      throw Beam::Services::ServiceRequestException(
-        "Insufficient permissions.");
+      throw Beam::Services::ServiceRequestException{
+        "Insufficient permissions."};
     }
-    return m_dataStore->LoadAccountModificationRequestIds(account, startId,
-      maxCount);
+    std::vector<AccountModificationRequest::Id> ids;
+    m_dataStore->WithTransaction(
+      [&] {
+        ids = m_dataStore->LoadAccountModificationRequestIds(account, startId,
+          maxCount);
+      });
+    return ids;
   }
 
   template<typename ContainerType, typename ServiceLocatorClientType,
@@ -809,11 +857,17 @@ namespace AdministrationService {
       AccountModificationRequest::Id startId, int maxCount) {
     auto& session = client.GetSession();
     if(!CheckReadPermission(session.GetAccount(), account)) {
-      throw Beam::Services::ServiceRequestException(
-        "Insufficient permissions.");
+      throw Beam::Services::ServiceRequestException{
+        "Insufficient permissions."};
     }
     if(CheckAdministrator(session.GetAccount())) {
-      return m_dataStore->LoadAccountModificationRequestIds(startId, maxCount);
+      std::vector<AccountModificationRequest::Id> ids;
+      m_dataStore->WithTransaction(
+        [&] {
+          ids = m_dataStore->LoadAccountModificationRequestIds(startId,
+            maxCount);
+        });
+      return ids;
     }
     auto tradingGroupEntries = LoadManagedTradingGroups(account);
     std::vector<Beam::ServiceLocator::DirectoryEntry> accounts;
@@ -830,8 +884,12 @@ namespace AdministrationService {
       if(i != 0 && accounts[i] == accounts[i - 1]) {
         continue;
       }
-      auto accountRequestIds = m_dataStore->LoadAccountModificationRequestIds(
-        accounts[i], startId, maxCount);
+      std::vector<AccountModificationRequest::Id> accountRequestIds;
+      m_dataStore->WithTransaction(
+        [&] {
+          accountRequestIds = m_dataStore->LoadAccountModificationRequestIds(
+            accounts[i], startId, maxCount);
+        });
       ids.insert(ids.end(), accountRequestIds.begin(), accountRequestIds.end());
     }
     std::sort(ids.begin(), ids.end());
@@ -848,12 +906,113 @@ namespace AdministrationService {
       OnLoadEntitlementModification(ServiceProtocolClient& client,
       AccountModificationRequest::Id id) {
     auto& session = client.GetSession();
-    auto request = m_dataStore->LoadAccountModificationRequest(id);
+    AccountModificationRequest request;
+    m_dataStore->WithTransaction(
+      [&] {
+        request = m_dataStore->LoadAccountModificationRequest(id);
+      });
     if(!CheckReadPermission(session.GetAccount(), request.GetAccount())) {
-      throw Beam::Services::ServiceRequestException(
-        "Insufficient permissions.");
+      throw Beam::Services::ServiceRequestException{
+        "Insufficient permissions."};
     }
-    return m_dataStore->LoadEntitlementModification(id);
+    EntitlementModification modification;
+    m_dataStore->WithTransaction(
+      [&] {
+        modification = m_dataStore->LoadEntitlementModification(id);
+      });
+    return modification;
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
+  AccountModificationRequest AdministrationServlet<ContainerType,
+      ServiceLocatorClientType, AdministrationDataStoreType>::
+      OnSubmitEntitlementModificationRequest(ServiceProtocolClient& client,
+      Beam::ServiceLocator::DirectoryEntry account,
+      Beam::ServiceLocator::DirectoryEntry submissionAccount,
+      const EntitlementModification& modification, Message comment) {
+    auto& session = client.GetSession();
+    if(account.m_id == -1) {
+      account = session.GetAccount();
+    }
+    if(submissionAccount.m_id == -1) {
+      submissionAccount = session.GetAccount();
+    }
+    if(!CheckReadPermission(session.GetAccount(), submissionAccount)) {
+      throw Beam::Services::ServiceRequestException{
+        "Insufficient permissions."};
+    }
+    auto roles = LoadAccountRoles(submissionAccount, account);
+    if(roles.GetBitset().none()) {
+      throw Beam::Services::ServiceRequestException{
+        "Insufficient permissions."};
+    }
+    auto requestId = ++m_nextModificationRequestId;
+    auto timestamp = boost::posix_time::second_clock::universal_time();
+    AccountModificationRequest request{
+      requestId, AccountModificationRequest::Type::ENTITLEMENTS, account,
+      submissionAccount, timestamp};
+    for(auto& entitlement : modification.GetEntitlements()) {
+      if(entitlement.m_type !=
+          Beam::ServiceLocator::DirectoryEntry::Type::DIRECTORY) {
+        throw Beam::Services::ServiceRequestException{"Invalid entitlement."};
+      }
+      if(std::find_if(m_entitlements.GetEntries().begin(),
+          m_entitlements.GetEntries().end(),
+          [&] (auto& entry) {
+            return entry.m_groupEntry == entitlement;
+          }) == m_entitlements.GetEntries().end()) {
+        throw Beam::Services::ServiceRequestException{"Invalid entitlement."};
+      }
+    }
+    if(comment.GetBodies().size() == 1 && comment.GetBody().m_message.empty()) {
+      comment = Message{-1, {}, {}, {}};
+    } else {
+      comment = Message{++m_nextMessageId, submissionAccount, timestamp,
+        comment.GetBodies()};
+    }
+    m_dataStore->WithTransaction(
+      [&] {
+        m_dataStore->Store(request, modification);
+        if(comment.GetId() != -1) {
+          m_dataStore->Store(request.GetId(), comment);
+        }
+        if(roles.Test(AccountRole::ADMINISTRATOR)) {
+          m_dataStore->Store(request.GetId(),
+            AccountModificationRequest::Status::GRANTED);
+        } else if(roles.Test(AccountRole::MANAGER)) {
+          m_dataStore->Store(request.GetId(),
+            AccountModificationRequest::Status::REVIEWED);
+        } else {
+          m_dataStore->Store(request.GetId(),
+            AccountModificationRequest::Status::PENDING);
+        }
+      });
+    return request;
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
+  AccountModificationRequest::Status AdministrationServlet<ContainerType,
+      ServiceLocatorClientType, AdministrationDataStoreType>::
+      OnLoadAccountModificationRequestStatus(ServiceProtocolClient& client,
+      AccountModificationRequest::Id id) {
+    auto& session = client.GetSession();
+    AccountModificationRequest request;
+    m_dataStore->WithTransaction(
+      [&] {
+        request = m_dataStore->LoadAccountModificationRequest(id);
+      });
+    if(!CheckReadPermission(session.GetAccount(), request.GetAccount())) {
+      throw Beam::Services::ServiceRequestException{
+        "Insufficient permissions."};
+    }
+    AccountModificationRequest::Status status;
+    m_dataStore->WithTransaction(
+      [&] {
+        status = m_dataStore->LoadAccountModificationRequestStatus(id);
+      });
+    return status;
   }
 }
 }

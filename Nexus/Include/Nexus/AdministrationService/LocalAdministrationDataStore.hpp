@@ -64,6 +64,21 @@ namespace AdministrationService {
       virtual EntitlementModification LoadEntitlementModification(
         AccountModificationRequest::Id id) override;
 
+      virtual void Store(const AccountModificationRequest& request,
+        const EntitlementModification& modification) override;
+
+      virtual void Store(AccountModificationRequest::Id id,
+        const Message& message) override;
+
+      virtual AccountModificationRequest::Status
+        LoadAccountModificationRequestStatus(
+        AccountModificationRequest::Id id) override;
+
+      virtual void Store(AccountModificationRequest::Id id,
+        AccountModificationRequest::Status status) override;
+
+      virtual Message::Id LoadLastMessageId() override;
+
       virtual void WithTransaction(
         const std::function<void ()>& transaction) override;
 
@@ -79,20 +94,24 @@ namespace AdministrationService {
         RiskService::RiskParameters> m_riskParameters;
       std::unordered_map<Beam::ServiceLocator::DirectoryEntry,
         RiskService::RiskState> m_riskStates;
-      std::vector<std::unique_ptr<AccountModificationRequest>>
-        m_modificationRequests;
       std::unordered_map<AccountModificationRequest::Id,
-        AccountModificationRequest*> m_idToModificationRequests;
+        AccountModificationRequest> m_idToModificationRequests;
+      std::vector<AccountModificationRequest::Id> m_modificationRequests;
       std::unordered_map<Beam::ServiceLocator::DirectoryEntry,
-        std::vector<AccountModificationRequest*>>
+        std::vector<AccountModificationRequest::Id>>
         m_accountToModificationRequests;
       std::unordered_map<AccountModificationRequest::Id,
         EntitlementModification> m_idToEntitlementModification;
+      std::unordered_map<Message::Id, Message> m_idToMessage;
+      std::unordered_map<AccountModificationRequest::Id,
+        std::vector<Message::Id>> m_requestToMessages;
+      std::unordered_map<AccountModificationRequest::Id,
+        AccountModificationRequest::Status> m_idToRequestStatus;
+      Message::Id m_lastMessageId;
       Beam::IO::OpenState m_openState;
 
-      template<typename Request>
       std::vector<AccountModificationRequest::Id> Filter(
-        const std::vector<Request>& requests,
+        const std::vector<AccountModificationRequest::Id>& requests,
         AccountModificationRequest::Id startId, int maxCount);
   };
 
@@ -195,7 +214,7 @@ namespace AdministrationService {
     if(request == m_idToModificationRequests.end()) {
       return {};
     }
-    return *request->second;
+    return request->second;
   }
 
   inline std::vector<AccountModificationRequest::Id>
@@ -225,6 +244,57 @@ namespace AdministrationService {
     return request->second;
   }
 
+  inline void LocalAdministrationDataStore::Store(
+      const AccountModificationRequest& request,
+      const EntitlementModification& modification) {
+    m_idToModificationRequests.insert(std::make_pair(request.GetId(), request));
+    if(m_modificationRequests.empty() ||
+        request.GetId() > m_modificationRequests.back()) {
+      m_modificationRequests.push_back(request.GetId());
+      m_accountToModificationRequests[request.GetAccount()].push_back(
+        request.GetId());
+    } else {
+      auto insertionPoint = std::lower_bound(m_modificationRequests.begin(),
+        m_modificationRequests.end(), request.GetId());
+      m_modificationRequests.insert(insertionPoint,
+        request.GetId());
+      auto& accountRequests = m_accountToModificationRequests[
+        request.GetAccount()];
+      auto accountInsertion = std::lower_bound(accountRequests.begin(),
+        accountRequests.end(), request.GetId());
+      accountRequests.insert(accountInsertion, request.GetId());
+    }
+    m_idToEntitlementModification.insert(
+      std::make_pair(request.GetId(), modification));
+  }
+
+  inline void LocalAdministrationDataStore::Store(
+      AccountModificationRequest::Id id, const Message& message) {
+    m_idToMessage.insert(std::make_pair(message.GetId(), message));
+    m_requestToMessages[id].push_back(message.GetId());
+    m_lastMessageId = message.GetId();
+  }
+
+  inline AccountModificationRequest::Status
+      LocalAdministrationDataStore::LoadAccountModificationRequestStatus(
+      AccountModificationRequest::Id id) {
+    auto status = m_idToRequestStatus.find(id);
+    if(status == m_idToRequestStatus.end()) {
+      return AccountModificationRequest::Status::PENDING;
+    }
+    return status->second;
+  }
+
+  inline void LocalAdministrationDataStore::Store(
+      AccountModificationRequest::Id id,
+      AccountModificationRequest::Status status) {
+    m_idToRequestStatus[id] = status;
+  }
+
+  inline Message::Id LocalAdministrationDataStore::LoadLastMessageId() {
+    return m_lastMessageId;
+  }
+
   inline void LocalAdministrationDataStore::WithTransaction(
       const std::function<void ()>& transaction) {
     boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
@@ -235,6 +305,7 @@ namespace AdministrationService {
     if(m_openState.SetOpening()) {
       return;
     }
+    m_lastMessageId = 0;
     m_openState.SetOpen();
   }
 
@@ -245,19 +316,19 @@ namespace AdministrationService {
     m_openState.SetClosed();
   }
 
-  template<typename Request>
-  std::vector<AccountModificationRequest::Id>
-      LocalAdministrationDataStore::Filter(const std::vector<Request>& requests,
+  inline std::vector<AccountModificationRequest::Id>
+      LocalAdministrationDataStore::Filter(
+      const std::vector<AccountModificationRequest::Id>& requests,
       AccountModificationRequest::Id startId, int maxCount) {
+    if(requests.empty()) {
+      return {};
+    }
     if(startId == -1) {
       startId = std::numeric_limits<AccountModificationRequest::Id>::max();
     }
     auto lastRequest = std::lower_bound(requests.begin(), requests.end(),
-      startId,
-      [] (auto& lhs, auto rhs) {
-        return lhs->GetId() < rhs;
-      });
-    if(lastRequest != requests.end() && (*lastRequest)->GetId() == startId) {
+      startId);
+    if(lastRequest != requests.end() && *lastRequest == startId) {
       if(lastRequest == requests.begin()) {
         return {};
       }
@@ -266,13 +337,13 @@ namespace AdministrationService {
     std::vector<AccountModificationRequest::Id> ids;
     while(static_cast<int>(ids.size()) < maxCount &&
         lastRequest != requests.begin()) {
-      ids.push_back((*lastRequest)->GetId());
+      ids.push_back(*lastRequest);
       --lastRequest;
     }
     if(static_cast<int>(ids.size()) == maxCount) {
       return ids;
     }
-    ids.push_back((*lastRequest)->GetId());
+    ids.push_back(*lastRequest);
     return ids;
   }
 }

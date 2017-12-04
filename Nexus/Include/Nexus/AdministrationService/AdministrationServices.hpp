@@ -302,7 +302,7 @@ namespace AdministrationService {
       "Nexus.AdministrationServices.LoadEntitlementModificationService",
       EntitlementModification, AccountModificationRequest::Id, id),
 
-    /*! \interface Nexus::AdministrationServices::SubmitEntitlementsAccountModificationRequestService
+    /*! \interface Nexus::AdministrationServices::SubmitEntitlementModificationRequestService
         \brief Submits a request to modify an account's entitlements.
         \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
                account to modify.
@@ -316,13 +316,13 @@ namespace AdministrationService {
                 An object representing the request.
     */
     //! \cond
-    (SubmitEntitlementsAccountModificationRequestService,
-      "Nexus.AdministrationServices.SubmitEntitlementsAccountModificationRequestService",
+    (SubmitEntitlementModificationRequestService,
+      "Nexus.AdministrationServices.SubmitEntitlementModificationRequestService",
       AccountModificationRequest, Beam::ServiceLocator::DirectoryEntry, account,
       Beam::ServiceLocator::DirectoryEntry, submission_account,
       EntitlementModification, modification, Message, comment),
 
-    /*! \interface Nexus::AdministrationServices::LoadAccountModificationStatusService
+    /*! \interface Nexus::AdministrationServices::LoadAccountModificationRequestStatusService
         \brief Loads the status of an account modification request.
         \param id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
                The id of the request.
@@ -330,8 +330,8 @@ namespace AdministrationService {
                 The status of the request.
     */
     //! \cond
-    (LoadAccountModificationStatusService,
-      "Nexus.AdministrationServices.LoadAccountModificationStatusService",
+    (LoadAccountModificationRequestStatusService,
+      "Nexus.AdministrationServices.LoadAccountModificationRequestStatusService",
       AccountModificationRequest::Status, AccountModificationRequest::Id, id),
 
     /*! \interface Nexus::AdministrationServices::ReviewAccountModificationRequestService
