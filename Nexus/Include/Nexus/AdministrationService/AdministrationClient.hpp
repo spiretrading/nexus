@@ -251,16 +251,6 @@ namespace AdministrationService {
       AccountModificationRequest::Status LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id);
 
-      //! Marks an account modification request as having been reviewed.
-      /*!
-        \param id The id of the request.
-        \param account The account that reviewed the request.
-        \param comment The comment to associate with the review.
-      */
-      void ReviewAccountModificationRequest(AccountModificationRequest::Id id,
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        const Message& comment);
-
       //! Approves an account modification request.
       /*!
         \param id The id of the request to approve.
@@ -587,16 +577,6 @@ namespace AdministrationService {
     auto client = m_clientHandler.GetClient();
     return client->template SendRequest<
       LoadAccountModificationRequestStatusService>(id);
-  }
-
-  template<typename ServiceProtocolClientBuilderType>
-  void AdministrationClient<ServiceProtocolClientBuilderType>::
-      ReviewAccountModificationRequest(AccountModificationRequest::Id id,
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      const Message& comment) {
-    auto client = m_clientHandler.GetClient();
-    client->template SendRequest<ReviewAccountModificationRequestService>(id,
-      account, comment);
   }
 
   template<typename ServiceProtocolClientBuilderType>

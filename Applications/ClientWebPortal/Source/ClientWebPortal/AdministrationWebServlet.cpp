@@ -141,10 +141,6 @@ vector<HttpRequestSlot> AdministrationWebServlet::GetSlots() {
     std::bind(&AdministrationWebServlet::OnLoadAccountModificationRequestStatus, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/administration_service/review_account_modification_request"),
-    std::bind(&AdministrationWebServlet::OnReviewAccountModificationRequest,
-    this, std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/approve_account_modification_request"),
     std::bind(&AdministrationWebServlet::OnApproveAccountModificationRequest,
     this, std::placeholders::_1));
@@ -667,37 +663,6 @@ HttpResponse AdministrationWebServlet::OnLoadAccountModificationRequestStatus(
   auto status = m_serviceClients->GetAdministrationClient().
     LoadAccountModificationRequestStatus(parameters.m_id);
   session->ShuttleResponse(status, Store(response));
-  return response;
-}
-
-HttpResponse AdministrationWebServlet::OnReviewAccountModificationRequest(
-    const HttpRequest& request) {
-  struct Parameters {
-    AccountModificationRequest::Id m_id;
-    Message m_comment;
-
-    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
-      shuttle.Shuttle("id", m_id);
-      shuttle.Shuttle("comment", m_comment);
-    }
-  };
-  HttpResponse response;
-  auto session = m_sessions->Find(request);
-  if(session == nullptr) {
-    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
-  auto parameters = session->ShuttleParameters<Parameters>(request);
-  auto modification =
-    m_serviceClients->GetAdministrationClient().LoadAccountModificationRequest(
-    parameters.m_id);
-  if(!HasReviewPermission(*m_serviceClients, session->GetAccount(),
-      modification.GetAccount())) {
-    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
-  m_serviceClients->GetAdministrationClient().ReviewAccountModificationRequest(
-    parameters.m_id, session->GetAccount(), parameters.m_comment);
   return response;
 }
 

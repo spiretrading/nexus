@@ -114,11 +114,6 @@ namespace AdministrationService {
         LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id) = 0;
 
-      virtual void ReviewAccountModificationRequest(
-        AccountModificationRequest::Id id,
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        const Message& comment) = 0;
-
       virtual void ApproveAccountModificationRequest(
         AccountModificationRequest::Id id,
         const Beam::ServiceLocator::DirectoryEntry& account,
@@ -254,11 +249,6 @@ namespace AdministrationService {
       virtual AccountModificationRequest::Status
         LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id) override;
-
-      virtual void ReviewAccountModificationRequest(
-        AccountModificationRequest::Id id,
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        const Message& comment) override;
 
       virtual void ApproveAccountModificationRequest(
         AccountModificationRequest::Id id,
@@ -464,14 +454,6 @@ namespace AdministrationService {
   AccountModificationRequest::Status WrapperAdministrationClient<ClientType>::
       LoadAccountModificationRequestStatus(AccountModificationRequest::Id id) {
     return m_client->LoadAccountModificationRequestStatus(id);
-  }
-
-  template<typename ClientType>
-  void WrapperAdministrationClient<ClientType>::
-      ReviewAccountModificationRequest(AccountModificationRequest::Id id,
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      const Message& comment) {
-    m_client->ReviewAccountModificationRequest(id, account, comment);
   }
 
   template<typename ClientType>

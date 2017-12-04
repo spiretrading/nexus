@@ -176,12 +176,6 @@ namespace {
       return get_override("load_account_modification_request_status")(id);
     }
 
-    virtual void ReviewAccountModificationRequest(
-        AccountModificationRequest::Id id, const DirectoryEntry& account,
-        const AdministrationService::Message& comment) override final {
-      get_override("review_account_modification_request")(id, account, comment);
-    }
-
     virtual void ApproveAccountModificationRequest(
         AccountModificationRequest::Id id, const DirectoryEntry& account,
         const AdministrationService::Message& comment) override final {
@@ -376,8 +370,6 @@ void Nexus::Python::ExportAdministrationClient() {
       &VirtualAdministrationClient::SubmitAccountModificationRequest))
     .def("load_account_modification_request_status", pure_virtual(
       &VirtualAdministrationClient::LoadAccountModificationRequestStatus))
-    .def("review_account_modification_request", pure_virtual(
-      &VirtualAdministrationClient::ReviewAccountModificationRequest))
     .def("approve_account_modification_request", pure_virtual(
       &VirtualAdministrationClient::ApproveAccountModificationRequest))
     .def("reject_account_modification_request", pure_virtual(

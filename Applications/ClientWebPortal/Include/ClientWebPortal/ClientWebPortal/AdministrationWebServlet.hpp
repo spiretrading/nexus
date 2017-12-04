@@ -76,8 +76,6 @@ namespace ClientWebPortal {
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadAccountModificationRequestStatus(
         const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnReviewAccountModificationRequest(
-        const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnApproveAccountModificationRequest(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnRejectAccountModificationRequest(

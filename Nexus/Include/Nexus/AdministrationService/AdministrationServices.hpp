@@ -334,21 +334,6 @@ namespace AdministrationService {
       "Nexus.AdministrationServices.LoadAccountModificationRequestStatusService",
       AccountModificationRequest::Status, AccountModificationRequest::Id, id),
 
-    /*! \interface Nexus::AdministrationServices::ReviewAccountModificationRequestService
-        \brief Marks an account modification request as having been reviewed.
-        \param id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
-               The id of the request.
-        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
-               account that reviewed the request.
-        \param comment <code>Nexus::AdministrationService::Message</code> The
-               comment to associate with the review.
-    */
-    //! \cond
-    (ReviewAccountModificationRequestService,
-      "Nexus.AdministrationServices.ReviewAccountModificationRequestService",
-      void, AccountModificationRequest::Id, id,
-      Beam::ServiceLocator::DirectoryEntry, account, Message, comment),
-
     /*! \interface Nexus::AdministrationServices::ApproveAccountModificationRequestService
         \brief Approves an account modification request.
         \param id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>

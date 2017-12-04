@@ -114,11 +114,6 @@ namespace AdministrationService {
         LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id) override final;
 
-      virtual void ReviewAccountModificationRequest(
-        AccountModificationRequest::Id id,
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        const Message& comment) override final;
-
       virtual void ApproveAccountModificationRequest(
         AccountModificationRequest::Id id,
         const Beam::ServiceLocator::DirectoryEntry& account,
@@ -374,16 +369,6 @@ namespace AdministrationService {
     Beam::Python::GilRelease gil;
     boost::lock_guard<Beam::Python::GilRelease> lock{gil};
     return m_client->LoadAccountModificationRequestStatus(id);
-  }
-
-  template<typename ClientType>
-  void ToPythonAdministrationClient<ClientType>::
-      ReviewAccountModificationRequest(AccountModificationRequest::Id id,
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      const Message& comment) {
-    Beam::Python::GilRelease gil;
-    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
-    m_client->ReviewAccountModificationRequest(id, account, comment);
   }
 
   template<typename ClientType>
