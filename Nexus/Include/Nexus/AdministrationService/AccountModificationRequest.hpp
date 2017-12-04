@@ -38,6 +38,9 @@ namespace AdministrationService {
         //! The request has been reviewed by a manager.
         REVIEWED,
 
+        //! The request has been scheduled.
+        SCHEDULED,
+
         //! The request has been approved.
         APPROVED,
 
