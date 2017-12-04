@@ -23,9 +23,6 @@ class DataTypeConverter {
         object.value = object.value.toData();
       } else if (object.which == DataType.LIST) {
         convertToData.call(this, object.value);
-      } else if (object.which == DataType.TIME_DURATION) {
-        let utcTime = moment('2000-02-02T' + object.value, "YYYY-MM-DDTHH:mm:ss").utc();
-        object.value = utcTime.format('HH:mm:ss');
       } else if (typeof object == 'object' && object.which == null) {
         for (let property in object) {
           convertToData.call(this, object[property]);
@@ -48,10 +45,6 @@ class DataTypeConverter {
         object.value = Security.fromData(object.value);
       } else if (object.which == DataType.LIST) {
         convertFromData.call(this, object.value);
-      } else if (object.which == DataType.TIME_DURATION) {
-        let utcOffset = (new Date().getTimezoneOffset()) * -1;
-        let localTime = moment.utc('2000-02-02T' + object.value, "YYYY-MM-DDTHH:mm:ss").utcOffset(utcOffset);
-        object.value = localTime.format('HH:mm:ss');
       } else if (typeof object == 'object' && object.which == null) {
         for (let property in object) {
           convertFromData.call(this, object[property]);

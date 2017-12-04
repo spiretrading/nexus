@@ -21,7 +21,7 @@ class View extends UpdatableView {
       className += ' mobile';
     }
 
-    if (this.componentModel.length == 0) {
+    if (this.componentModel.subpages.length == 0) {
       className += ' empty';
       $('#top-nav-filler').css('height', '75px');
     } else {
@@ -29,15 +29,16 @@ class View extends UpdatableView {
     }
 
     let menuItems = [];
-    for (let i=0; i<this.componentModel.length; i++) {
+    let subpages = this.componentModel.subpages;
+    for (let i=0; i<subpages.length; i++) {
       let className = 'menu-item';
-      if (this.componentModel[i].isActive){
+      if (this.componentModel.subpages[i].isActive){
         className += ' active';
       }
       menuItems.push(
-        <div className={className} key={i} data-path={this.componentModel[i].path} onClick={this.onMenuClick.bind(this)}>
-          <span className={this.componentModel[i].iconClass}></span>
-          <div>{this.componentModel[i].name}</div>
+        <div className={className} key={i} data-path={subpages[i].path} onClick={this.onMenuClick.bind(this)}>
+          <span className={subpages[i].iconClass}></span>
+          <div>{subpages[i].name}</div>
         </div>
       );
     }

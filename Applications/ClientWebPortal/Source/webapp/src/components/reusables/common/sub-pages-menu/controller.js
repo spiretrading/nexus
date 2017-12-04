@@ -4,7 +4,8 @@ import {AdministrationClient} from 'spire-client';
 
 class Controller {
   constructor(react) {
-    this.componentModel = react.props.model || [];
+    this.componentModel = {};
+    this.componentModel.subpages = react.props.model || [];
     this.view = new View(react, this, this.componentModel);
     this.contextDirectoryEntry = react.props.contextDirectoryEntry;
     this.adminClient = new AdministrationClient();
@@ -33,15 +34,15 @@ class Controller {
   /** @private */
   onPageTransitioned(eventName, path) {
     if (path.indexOf('/profile') >= 0) {
-      this.componentModel = this.getTraderProfilePages(path);
+      this.componentModel.subpages = this.getTraderProfilePages(path);
       this.view.update(this.componentModel);
       EventBus.publish(Event.TopNav.SUBMENU_UPDATED, true);
     } else if (path.indexOf('/group-profile') >= 0) {
-      this.componentModel = this.getGroupProfilePages(path);
+      this.componentModel.subpages = this.getGroupProfilePages(path);
       this.view.update(this.componentModel);
       EventBus.publish(Event.TopNav.SUBMENU_UPDATED, true);
     } else {
-      this.componentModel = [];
+      this.componentModel.subpages = [];
       this.view.update(this.componentModel);
       EventBus.publish(Event.TopNav.SUBMENU_UPDATED, false);
     }
