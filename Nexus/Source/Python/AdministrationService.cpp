@@ -312,6 +312,7 @@ void Nexus::Python::ExportAccountModificationRequest() {
     enum_<AccountModificationRequest::Status>("Status")
       .value("PENDING", AccountModificationRequest::Status::PENDING)
       .value("REVIEWED", AccountModificationRequest::Status::REVIEWED)
+      .value("SCHEDULED", AccountModificationRequest::Status::SCHEDULED)
       .value("APPROVED", AccountModificationRequest::Status::APPROVED)
       .value("REJECTED", AccountModificationRequest::Status::REJECTED);
   }
