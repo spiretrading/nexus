@@ -78,12 +78,12 @@ namespace AdministrationService {
       virtual void Store(AccountModificationRequest::Id id,
         const Message& message) override;
 
-      virtual AccountModificationRequest::Status
+      virtual AccountModificationRequest::Update
         LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id) override;
 
       virtual void Store(AccountModificationRequest::Id id,
-        AccountModificationRequest::Status status) override;
+        const AccountModificationRequest::Update& status) override;
 
       virtual Message::Id LoadLastMessageId() override;
 
@@ -223,7 +223,7 @@ namespace AdministrationService {
   }
 
   template<typename DataStoreType>
-  AccountModificationRequest::Status CachedAdministrationDataStore<
+  AccountModificationRequest::Update CachedAdministrationDataStore<
       DataStoreType>::LoadAccountModificationRequestStatus(
       AccountModificationRequest::Id id) {
     return m_dataStore->LoadAccountModificationRequestStatus(id);
@@ -232,7 +232,7 @@ namespace AdministrationService {
   template<typename DataStoreType>
   void CachedAdministrationDataStore<DataStoreType>::Store(
       AccountModificationRequest::Id id,
-      AccountModificationRequest::Status status) {
+      const AccountModificationRequest::Update& status) {
     m_dataStore->Store(id, status);
   }
 

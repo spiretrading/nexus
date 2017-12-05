@@ -110,17 +110,17 @@ namespace AdministrationService {
         const EntitlementModification& modification,
         const Message& comment) override final;
 
-      virtual AccountModificationRequest::Status
+      virtual AccountModificationRequest::Update
         LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id) override final;
 
-      virtual void ApproveAccountModificationRequest(
-        AccountModificationRequest::Id id,
+      virtual AccountModificationRequest::Update
+        ApproveAccountModificationRequest(AccountModificationRequest::Id id,
         const Beam::ServiceLocator::DirectoryEntry& account,
         const Message& comment) override final;
 
-      virtual void RejectAccountModificationRequest(
-        AccountModificationRequest::Id id,
+      virtual AccountModificationRequest::Update
+        RejectAccountModificationRequest(AccountModificationRequest::Id id,
         const Beam::ServiceLocator::DirectoryEntry& account,
         const Message& comment) override final;
 
@@ -364,7 +364,7 @@ namespace AdministrationService {
   }
 
   template<typename ClientType>
-  AccountModificationRequest::Status ToPythonAdministrationClient<ClientType>::
+  AccountModificationRequest::Update ToPythonAdministrationClient<ClientType>::
       LoadAccountModificationRequestStatus(AccountModificationRequest::Id id) {
     Beam::Python::GilRelease gil;
     boost::lock_guard<Beam::Python::GilRelease> lock{gil};
@@ -372,23 +372,23 @@ namespace AdministrationService {
   }
 
   template<typename ClientType>
-  void ToPythonAdministrationClient<ClientType>::
+  AccountModificationRequest::Update ToPythonAdministrationClient<ClientType>::
       ApproveAccountModificationRequest(AccountModificationRequest::Id id,
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Message& comment) {
     Beam::Python::GilRelease gil;
     boost::lock_guard<Beam::Python::GilRelease> lock{gil};
-    m_client->ApproveAccountModificationRequest(id, account, comment);
+    return m_client->ApproveAccountModificationRequest(id, account, comment);
   }
 
   template<typename ClientType>
-  void ToPythonAdministrationClient<ClientType>::
+  AccountModificationRequest::Update ToPythonAdministrationClient<ClientType>::
       RejectAccountModificationRequest(AccountModificationRequest::Id id,
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Message& comment) {
     Beam::Python::GilRelease gil;
     boost::lock_guard<Beam::Python::GilRelease> lock{gil};
-    m_client->RejectAccountModificationRequest(id, account, comment);
+    return m_client->RejectAccountModificationRequest(id, account, comment);
   }
 
   template<typename ClientType>

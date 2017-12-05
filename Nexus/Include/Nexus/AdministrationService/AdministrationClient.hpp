@@ -246,9 +246,9 @@ namespace AdministrationService {
       //! Loads the status of an account modification request.
       /*!
         \param id The id of the request.
-        \return The status of the request.
+        \return The update representing the current status of the request.
       */
-      AccountModificationRequest::Status LoadAccountModificationRequestStatus(
+      AccountModificationRequest::Update LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id);
 
       //! Approves an account modification request.
@@ -256,8 +256,10 @@ namespace AdministrationService {
         \param id The id of the request to approve.
         \param account The account that approved the request.
         \param comment The comment to associate with the update.
+        \return An object representing the update.
       */
-      void ApproveAccountModificationRequest(AccountModificationRequest::Id id,
+      AccountModificationRequest::Update ApproveAccountModificationRequest(
+        AccountModificationRequest::Id id,
         const Beam::ServiceLocator::DirectoryEntry& account,
         const Message& comment);
 
@@ -266,8 +268,10 @@ namespace AdministrationService {
         \param id The id of the request to reject.
         \param account The account that rejected the request.
         \param comment The comment to associate with the update.
+        \return An object representing the update.
       */
-      void RejectAccountModificationRequest(AccountModificationRequest::Id id,
+      AccountModificationRequest::Update RejectAccountModificationRequest(
+        AccountModificationRequest::Id id,
         const Beam::ServiceLocator::DirectoryEntry& account,
         const Message& comment);
 
@@ -571,7 +575,7 @@ namespace AdministrationService {
   }
 
   template<typename ServiceProtocolClientBuilderType>
-  AccountModificationRequest::Status AdministrationClient<
+  AccountModificationRequest::Update AdministrationClient<
       ServiceProtocolClientBuilderType>::LoadAccountModificationRequestStatus(
       AccountModificationRequest::Id id) {
     auto client = m_clientHandler.GetClient();
@@ -580,23 +584,25 @@ namespace AdministrationService {
   }
 
   template<typename ServiceProtocolClientBuilderType>
-  void AdministrationClient<ServiceProtocolClientBuilderType>::
-      ApproveAccountModificationRequest(AccountModificationRequest::Id id,
+  AccountModificationRequest::Update AdministrationClient<
+      ServiceProtocolClientBuilderType>::ApproveAccountModificationRequest(
+      AccountModificationRequest::Id id,
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Message& comment) {
     auto client = m_clientHandler.GetClient();
-    client->template SendRequest<ApproveAccountModificationRequestService>(id,
-      account, comment);
+    return client->template SendRequest<
+      ApproveAccountModificationRequestService>(id, account, comment);
   }
 
   template<typename ServiceProtocolClientBuilderType>
-  void AdministrationClient<ServiceProtocolClientBuilderType>::
-      RejectAccountModificationRequest(AccountModificationRequest::Id id,
+  AccountModificationRequest::Update AdministrationClient<
+      ServiceProtocolClientBuilderType>::RejectAccountModificationRequest(
+      AccountModificationRequest::Id id,
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Message& comment) {
     auto client = m_clientHandler.GetClient();
-    client->template SendRequest<RejectAccountModificationRequestService>(id,
-      account, comment);
+    return client->template SendRequest<
+      RejectAccountModificationRequestService>(id, account, comment);
   }
 
   template<typename ServiceProtocolClientBuilderType>

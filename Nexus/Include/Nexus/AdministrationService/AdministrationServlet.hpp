@@ -180,13 +180,13 @@ namespace AdministrationService {
         Beam::ServiceLocator::DirectoryEntry account,
         Beam::ServiceLocator::DirectoryEntry submissionAccount,
         const EntitlementModification& modification, Message comment);
-      AccountModificationRequest::Status OnLoadAccountModificationRequestStatus(
+      AccountModificationRequest::Update OnLoadAccountModificationRequestStatus(
         ServiceProtocolClient& client, AccountModificationRequest::Id id);
-      void OnApproveAccountModificationRequest(ServiceProtocolClient& client,
-        AccountModificationRequest::Id id,
+      AccountModificationRequest::Update OnApproveAccountModificationRequest(
+        ServiceProtocolClient& client, AccountModificationRequest::Id id,
         Beam::ServiceLocator::DirectoryEntry account, Message comment);
-      void OnRejectAccountModificationRequest(ServiceProtocolClient& client,
-        AccountModificationRequest::Id id,
+      AccountModificationRequest::Update OnRejectAccountModificationRequest(
+        ServiceProtocolClient& client, AccountModificationRequest::Id id,
         Beam::ServiceLocator::DirectoryEntry account, Message comment);
       Message OnLoadMessage(ServiceProtocolClient& client, Message::Id id);
       std::vector<Message::Id> OnLoadMessageIds(ServiceProtocolClient& client,
@@ -1043,14 +1043,20 @@ namespace AdministrationService {
           m_dataStore->Store(request.GetId(), comment);
         }
         if(roles.Test(AccountRole::ADMINISTRATOR)) {
-          m_dataStore->Store(request.GetId(),
-            AccountModificationRequest::Status::GRANTED);
+          AccountModificationRequest::Update update{
+            AccountModificationRequest::Status::GRANTED,
+            request.GetSubmissionAccount(), 0, timestamp};
+          m_dataStore->Store(request.GetId(), update);
         } else if(roles.Test(AccountRole::MANAGER)) {
-          m_dataStore->Store(request.GetId(),
-            AccountModificationRequest::Status::REVIEWED);
+          AccountModificationRequest::Update update{
+            AccountModificationRequest::Status::REVIEWED,
+            request.GetSubmissionAccount(), 0, timestamp};
+          m_dataStore->Store(request.GetId(), update);
         } else {
-          m_dataStore->Store(request.GetId(),
-            AccountModificationRequest::Status::PENDING);
+          AccountModificationRequest::Update update{
+            AccountModificationRequest::Status::PENDING,
+            request.GetSubmissionAccount(), 0, timestamp};
+          m_dataStore->Store(request.GetId(), update);
         }
       });
     return request;
@@ -1058,7 +1064,7 @@ namespace AdministrationService {
 
   template<typename ContainerType, typename ServiceLocatorClientType,
     typename AdministrationDataStoreType>
-  AccountModificationRequest::Status AdministrationServlet<ContainerType,
+  AccountModificationRequest::Update AdministrationServlet<ContainerType,
       ServiceLocatorClientType, AdministrationDataStoreType>::
       OnLoadAccountModificationRequestStatus(ServiceProtocolClient& client,
       AccountModificationRequest::Id id) {
@@ -1072,7 +1078,7 @@ namespace AdministrationService {
       throw Beam::Services::ServiceRequestException{
         "Insufficient permissions."};
     }
-    AccountModificationRequest::Status status;
+    AccountModificationRequest::Update status;
     m_dataStore->WithTransaction(
       [&] {
         status = m_dataStore->LoadAccountModificationRequestStatus(id);
@@ -1082,9 +1088,10 @@ namespace AdministrationService {
 
   template<typename ContainerType, typename ServiceLocatorClientType,
     typename AdministrationDataStoreType>
-  void AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::OnApproveAccountModificationRequest(
-      ServiceProtocolClient& client, AccountModificationRequest::Id id,
+  AccountModificationRequest::Update AdministrationServlet<ContainerType,
+      ServiceLocatorClientType, AdministrationDataStoreType>::
+      OnApproveAccountModificationRequest(ServiceProtocolClient& client,
+      AccountModificationRequest::Id id,
       Beam::ServiceLocator::DirectoryEntry account, Message comment) {
     auto& session = client.GetSession();
     if(account.m_id == -1) {
@@ -1104,33 +1111,44 @@ namespace AdministrationService {
       throw Beam::Services::ServiceRequestException{
         "Insufficient permissions."};
     }
+    auto timestamp = boost::posix_time::second_clock::universal_time();
     if(comment.GetBodies().size() == 1 && comment.GetBody().m_message.empty()) {
       comment = Message{-1, {}, {}, {}};
     } else {
-      auto timestamp = boost::posix_time::second_clock::universal_time();
       comment = Message{++m_nextMessageId, account, timestamp,
         comment.GetBodies()};
     }
+    AccountModificationRequest::Update update;
     m_dataStore->WithTransaction(
       [&] {
+        update = m_dataStore->LoadAccountModificationRequestStatus(
+          request.GetId());
+        if(IsTerminal(update.m_status)) {
+          throw Beam::Services::ServiceRequestException{
+            "Request can not be updated."};
+        }
         if(comment.GetId() != -1) {
           m_dataStore->Store(request.GetId(), comment);
         }
         if(roles.Test(AccountRole::ADMINISTRATOR)) {
-          m_dataStore->Store(request.GetId(),
-            AccountModificationRequest::Status::GRANTED);
+          update.m_status = AccountModificationRequest::Status::GRANTED;
         } else if(roles.Test(AccountRole::MANAGER)) {
-          m_dataStore->Store(request.GetId(),
-            AccountModificationRequest::Status::REVIEWED);
+          update.m_status = AccountModificationRequest::Status::REVIEWED;
         }
+        update.m_account = account;
+        ++update.m_sequenceNumber;
+        update.m_timestamp = timestamp;
+        m_dataStore->Store(request.GetId(), update);
       });
+    return update;
   }
 
   template<typename ContainerType, typename ServiceLocatorClientType,
     typename AdministrationDataStoreType>
-  void AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::OnRejectAccountModificationRequest(
-      ServiceProtocolClient& client, AccountModificationRequest::Id id,
+  AccountModificationRequest::Update AdministrationServlet<ContainerType,
+      ServiceLocatorClientType, AdministrationDataStoreType>::
+      OnRejectAccountModificationRequest(ServiceProtocolClient& client,
+      AccountModificationRequest::Id id,
       Beam::ServiceLocator::DirectoryEntry account, Message comment) {
     auto& session = client.GetSession();
     if(account.m_id == -1) {
@@ -1150,21 +1168,32 @@ namespace AdministrationService {
       throw Beam::Services::ServiceRequestException{
         "Insufficient permissions."};
     }
+    auto timestamp = boost::posix_time::second_clock::universal_time();
     if(comment.GetBodies().size() == 1 && comment.GetBody().m_message.empty()) {
       comment = Message{-1, {}, {}, {}};
     } else {
-      auto timestamp = boost::posix_time::second_clock::universal_time();
       comment = Message{++m_nextMessageId, account, timestamp,
         comment.GetBodies()};
     }
+    AccountModificationRequest::Update update;
     m_dataStore->WithTransaction(
       [&] {
+        update = m_dataStore->LoadAccountModificationRequestStatus(
+          request.GetId());
+        if(IsTerminal(update.m_status)) {
+          throw Beam::Services::ServiceRequestException{
+            "Request can not be updated."};
+        }
         if(comment.GetId() != -1) {
           m_dataStore->Store(request.GetId(), comment);
         }
-        m_dataStore->Store(request.GetId(),
-          AccountModificationRequest::Status::REJECTED);
+        update.m_status = AccountModificationRequest::Status::REJECTED;
+        update.m_account = account;
+        ++update.m_sequenceNumber;
+        update.m_timestamp = timestamp;
+        m_dataStore->Store(request.GetId(), update);
       });
+    return update;
   }
 
   template<typename ContainerType, typename ServiceLocatorClientType,

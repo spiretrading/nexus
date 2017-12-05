@@ -692,8 +692,10 @@ HttpResponse AdministrationWebServlet::OnApproveAccountModificationRequest(
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
-  m_serviceClients->GetAdministrationClient().ApproveAccountModificationRequest(
-    parameters.m_id, session->GetAccount(), parameters.m_comment);
+  auto update = m_serviceClients->GetAdministrationClient().
+    ApproveAccountModificationRequest(parameters.m_id, session->GetAccount(),
+    parameters.m_comment);
+  session->ShuttleResponse(update, Store(response));
   return response;
 }
 
@@ -723,8 +725,10 @@ HttpResponse AdministrationWebServlet::OnRejectAccountModificationRequest(
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
-  m_serviceClients->GetAdministrationClient().RejectAccountModificationRequest(
-    parameters.m_id, session->GetAccount(), parameters.m_comment);
+  auto update = m_serviceClients->GetAdministrationClient().
+    RejectAccountModificationRequest(parameters.m_id, session->GetAccount(),
+    parameters.m_comment);
+  session->ShuttleResponse(update, Store(response));
   return response;
 }
 

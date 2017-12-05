@@ -140,19 +140,20 @@ namespace AdministrationService {
       //! Loads the status of an AccountModificationRequest.
       /*!
         \param id The id of the request.
-        \return The status of the request with the specified <i>id</i>.
+        \return The update containing the current status of the request with the
+                specified <i>id</i>.
       */
-      virtual AccountModificationRequest::Status
+      virtual AccountModificationRequest::Update
         LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id) = 0;
 
       //! Stores the status of an AccountModificationRequest.
       /*!
         \param id The id of the request.
-        \param status The status of the request.
+        \param status The update containing the current status.
       */
       virtual void Store(AccountModificationRequest::Id id,
-        AccountModificationRequest::Status status) = 0;
+        const AccountModificationRequest::Update& status) = 0;
 
       //! Loads the id of the last Message stored, or 0 if there are no stored
       //! Messages.

@@ -47,6 +47,13 @@ namespace Details {
     mysqlpp::sql_int, id,
     mysqlpp::sql_int_unsigned, entitlement);
 
+  sql_create_5(account_modification_request_status, 5, 0,
+    mysqlpp::sql_int, id,
+    mysqlpp::sql_int, status,
+    mysqlpp::sql_int_unsigned, account,
+    mysqlpp::sql_int, sequence_number,
+    mysqlpp::sql_bigint_unsigned, timestamp);
+
   sql_create_3(administration_messages, 3, 0,
     mysqlpp::sql_int, id,
     mysqlpp::sql_int_unsigned, account,
@@ -109,8 +116,26 @@ namespace Details {
     }
     auto query = databaseConnection.query();
     query << "CREATE TABLE account_modification_request_messages ("
-      "request_id INTEGER PRIMARY KEY NOT NULL,"
-      "message_id INTEGER NOT NULL)";
+      "request_id INTEGER NOT NULL,"
+      "message_id INTEGER NOT NULL,"
+      "INDEX(request_id))";
+    return query.execute();
+  }
+
+  inline bool LoadAccountModificationRequestStatusTable(
+      mysqlpp::Connection& databaseConnection, const std::string& schema) {
+    if(Beam::MySql::TestTable(schema, "account_modification_request_status",
+        databaseConnection)) {
+      return true;
+    }
+    auto query = databaseConnection.query();
+    query << "CREATE TABLE account_modification_request_status ("
+      "id INTEGER NOT NULL,"
+      "status INTEGER NOT NULL,"
+      "account INTEGER UNSIGNED NOT NULL,"
+      "sequence_number INTEGER NOT NULL,"
+      "timestamp BIGINT UNSIGNED NOT NULL,"
+      "INDEX(id))";
     return query.execute();
   }
 
@@ -136,9 +161,10 @@ namespace Details {
     }
     auto query = databaseConnection.query();
     query << "CREATE TABLE administration_message_bodies ("
-      "id INTEGER PRIMARY KEY NOT NULL,"
+      "id INTEGER NOT NULL,"
       "content_type VARCHAR(100),"
-      "message VARCHAR(40000))";
+      "message VARCHAR(40000),"
+      "INDEX(id))";
     return query.execute();
   }
 
@@ -190,6 +216,7 @@ namespace Details {
     return LoadAccountIdentitiesTable(databaseConnection, schema) &&
       LoadAccountModificationRequestsTable(databaseConnection, schema) &&
       LoadAccountModificationRequestMessagesTable(databaseConnection, schema) &&
+      LoadAccountModificationRequestStatusTable(databaseConnection, schema) &&
       LoadAdministrationMessagesTable(databaseConnection, schema) &&
       LoadAdministrationMessageBodiesTable(databaseConnection, schema) &&
       LoadEntitlementModificationsTable(databaseConnection, schema) &&

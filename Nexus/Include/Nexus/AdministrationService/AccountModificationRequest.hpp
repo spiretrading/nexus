@@ -51,6 +51,37 @@ namespace AdministrationService {
         REJECTED
       };
 
+      /*! \struct Update
+          \brief Stores a request status update.
+       */
+      struct Update {
+
+        //! The updated status.
+        Status m_status;
+
+        //! The account that updated the status.
+        Beam::ServiceLocator::DirectoryEntry m_account;
+
+        //! The update sequence number.
+        int m_sequenceNumber;
+
+        //! The timestamp when the update occurred.
+        boost::posix_time::ptime m_timestamp;
+
+        //! Constructs an empty Update.
+        Update() = default;
+
+        //! Constructs an Update.
+        /*!
+          \param status The updated status.
+          \param account The account that updated the status.
+          \param sequenceNumber The update sequence number.
+          \param timestamp The timestamp when the update occurred.
+        */
+        Update(Status status, Beam::ServiceLocator::DirectoryEntry account,
+          int sequenceNumber, boost::posix_time::ptime timestamp);
+      };
+
       //! Constructs an empty request.
       AccountModificationRequest();
 
@@ -90,6 +121,20 @@ namespace AdministrationService {
       Beam::ServiceLocator::DirectoryEntry m_submissionAccount;
       boost::posix_time::ptime m_timestamp;
   };
+
+  //! Returns <code>true</code> iff a status represents a terminal state.
+  inline bool IsTerminal(AccountModificationRequest::Status status) {
+    return status == AccountModificationRequest::Status::GRANTED ||
+      status == AccountModificationRequest::Status::REJECTED;
+  }
+
+  inline AccountModificationRequest::Update::Update(Status status,
+      Beam::ServiceLocator::DirectoryEntry account, int sequenceNumber,
+      boost::posix_time::ptime timestamp)
+      : m_status{status},
+        m_account{std::move(account)},
+        m_sequenceNumber{sequenceNumber},
+        m_timestamp{timestamp} {}
 
   inline AccountModificationRequest::AccountModificationRequest()
       : m_id{-1},
@@ -134,6 +179,20 @@ namespace AdministrationService {
 
 namespace Beam {
 namespace Serialization {
+  template<>
+  struct Shuttle<
+      Nexus::AdministrationService::AccountModificationRequest::Update> {
+    template<typename Shuttler>
+    void operator ()(Shuttler& shuttle,
+        Nexus::AdministrationService::AccountModificationRequest::Update& value,
+        unsigned int version) {
+      shuttle.Shuttle("status", value.m_status);
+      shuttle.Shuttle("account", value.m_account);
+      shuttle.Shuttle("sequence_number", value.m_sequenceNumber);
+      shuttle.Shuttle("timestamp", value.m_timestamp);
+    }
+  };
+
   template<>
   struct Shuttle<Nexus::AdministrationService::AccountModificationRequest> {
     template<typename Shuttler>

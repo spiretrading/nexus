@@ -326,13 +326,13 @@ namespace AdministrationService {
         \brief Loads the status of an account modification request.
         \param id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
                The id of the request.
-        \return <code>Nexus::AdministrationService::AccountModificationRequest::Status</code>
-                The status of the request.
+        \return <code>Nexus::AdministrationService::AccountModificationRequest::Update</code>
+                The update representing the current status of the request.
     */
     //! \cond
     (LoadAccountModificationRequestStatusService,
       "Nexus.AdministrationServices.LoadAccountModificationRequestStatusService",
-      AccountModificationRequest::Status, AccountModificationRequest::Id, id),
+      AccountModificationRequest::Update, AccountModificationRequest::Id, id),
 
     /*! \interface Nexus::AdministrationServices::ApproveAccountModificationRequestService
         \brief Approves an account modification request.
@@ -342,11 +342,13 @@ namespace AdministrationService {
                account that approved the request.
         \param comment <code>Nexus::AdministrationService::Message</code> The
                comment to associate with the approval.
+        \return <code>Nexus::AdministrationService::AccountModificationRequest::Update</code>
+                An object representing the update.
     */
     //! \cond
     (ApproveAccountModificationRequestService,
       "Nexus.AdministrationServices.ApproveAccountModificationRequestService",
-      void, AccountModificationRequest::Id, id,
+      AccountModificationRequest::Update, AccountModificationRequest::Id, id,
       Beam::ServiceLocator::DirectoryEntry, account, Message, comment),
 
     /*! \interface Nexus::AdministrationServices::RejectAccountModificationRequestService
@@ -357,11 +359,13 @@ namespace AdministrationService {
                account that rejected the request.
         \param comment <code>Nexus::AdministrationService::Message</code> The
                comment to associate with the rejection.
+        \return <code>Nexus::AdministrationService::AccountModificationRequest::Update</code>
+                An object representing the update.
     */
     //! \cond
     (RejectAccountModificationRequestService,
       "Nexus.AdministrationServices.RejectAccountModificationRequestService",
-      void, AccountModificationRequest::Id, id,
+      AccountModificationRequest::Update, AccountModificationRequest::Id, id,
       Beam::ServiceLocator::DirectoryEntry, account, Message, comment),
 
     /*! \interface Nexus::AdministrationServices::LoadMessageService

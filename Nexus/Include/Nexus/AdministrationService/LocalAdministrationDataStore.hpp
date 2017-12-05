@@ -70,12 +70,12 @@ namespace AdministrationService {
       virtual void Store(AccountModificationRequest::Id id,
         const Message& message) override;
 
-      virtual AccountModificationRequest::Status
+      virtual AccountModificationRequest::Update
         LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id) override;
 
       virtual void Store(AccountModificationRequest::Id id,
-        AccountModificationRequest::Status status) override;
+        const AccountModificationRequest::Update& status) override;
 
       virtual Message::Id LoadLastMessageId() override;
 
@@ -111,7 +111,7 @@ namespace AdministrationService {
       std::unordered_map<AccountModificationRequest::Id,
         std::vector<Message::Id>> m_requestToMessages;
       std::unordered_map<AccountModificationRequest::Id,
-        AccountModificationRequest::Status> m_idToRequestStatus;
+        AccountModificationRequest::Update> m_idToRequestStatus;
       Message::Id m_lastMessageId;
       Beam::IO::OpenState m_openState;
 
@@ -280,19 +280,19 @@ namespace AdministrationService {
     m_lastMessageId = message.GetId();
   }
 
-  inline AccountModificationRequest::Status
+  inline AccountModificationRequest::Update
       LocalAdministrationDataStore::LoadAccountModificationRequestStatus(
       AccountModificationRequest::Id id) {
     auto status = m_idToRequestStatus.find(id);
     if(status == m_idToRequestStatus.end()) {
-      return AccountModificationRequest::Status::PENDING;
+      return {};
     }
     return status->second;
   }
 
   inline void LocalAdministrationDataStore::Store(
       AccountModificationRequest::Id id,
-      AccountModificationRequest::Status status) {
+      const AccountModificationRequest::Update& status) {
     m_idToRequestStatus[id] = status;
   }
 

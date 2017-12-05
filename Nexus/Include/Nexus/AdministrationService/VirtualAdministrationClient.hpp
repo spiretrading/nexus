@@ -1,5 +1,5 @@
-#ifndef NEXUS_VIRTUALADMINISTRATIONCLIENT_HPP
-#define NEXUS_VIRTUALADMINISTRATIONCLIENT_HPP
+#ifndef NEXUS_VIRTUAL_ADMINISTRATION_CLIENT_HPP
+#define NEXUS_VIRTUAL_ADMINISTRATION_CLIENT_HPP
 #include <memory>
 #include <vector>
 #include <Beam/ServiceLocator/ServiceLocator.hpp>
@@ -110,17 +110,17 @@ namespace AdministrationService {
         const EntitlementModification& modification,
         const Message& comment) = 0;
 
-      virtual AccountModificationRequest::Status
+      virtual AccountModificationRequest::Update
         LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id) = 0;
 
-      virtual void ApproveAccountModificationRequest(
-        AccountModificationRequest::Id id,
+      virtual AccountModificationRequest::Update
+        ApproveAccountModificationRequest(AccountModificationRequest::Id id,
         const Beam::ServiceLocator::DirectoryEntry& account,
         const Message& comment) = 0;
 
-      virtual void RejectAccountModificationRequest(
-        AccountModificationRequest::Id id,
+      virtual AccountModificationRequest::Update
+        RejectAccountModificationRequest(AccountModificationRequest::Id id,
         const Beam::ServiceLocator::DirectoryEntry& account,
         const Message& comment) = 0;
 
@@ -246,17 +246,17 @@ namespace AdministrationService {
         const EntitlementModification& modification,
         const Message& comment) override;
 
-      virtual AccountModificationRequest::Status
+      virtual AccountModificationRequest::Update
         LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id) override;
 
-      virtual void ApproveAccountModificationRequest(
-        AccountModificationRequest::Id id,
+      virtual AccountModificationRequest::Update
+        ApproveAccountModificationRequest(AccountModificationRequest::Id id,
         const Beam::ServiceLocator::DirectoryEntry& account,
         const Message& comment) override;
 
-      virtual void RejectAccountModificationRequest(
-        AccountModificationRequest::Id id,
+      virtual AccountModificationRequest::Update
+        RejectAccountModificationRequest(AccountModificationRequest::Id id,
         const Beam::ServiceLocator::DirectoryEntry& account,
         const Message& comment) override;
 
@@ -451,25 +451,25 @@ namespace AdministrationService {
   }
 
   template<typename ClientType>
-  AccountModificationRequest::Status WrapperAdministrationClient<ClientType>::
+  AccountModificationRequest::Update WrapperAdministrationClient<ClientType>::
       LoadAccountModificationRequestStatus(AccountModificationRequest::Id id) {
     return m_client->LoadAccountModificationRequestStatus(id);
   }
 
   template<typename ClientType>
-  void WrapperAdministrationClient<ClientType>::
+  AccountModificationRequest::Update WrapperAdministrationClient<ClientType>::
       ApproveAccountModificationRequest(AccountModificationRequest::Id id,
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Message& comment) {
-    m_client->ApproveAccountModificationRequest(id, account, comment);
+    return m_client->ApproveAccountModificationRequest(id, account, comment);
   }
 
   template<typename ClientType>
-  void WrapperAdministrationClient<ClientType>::
+  AccountModificationRequest::Update WrapperAdministrationClient<ClientType>::
       RejectAccountModificationRequest(AccountModificationRequest::Id id,
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Message& comment) {
-    m_client->RejectAccountModificationRequest(id, account, comment);
+    return m_client->RejectAccountModificationRequest(id, account, comment);
   }
 
   template<typename ClientType>

@@ -83,12 +83,12 @@ namespace AdministrationService {
       virtual void Store(AccountModificationRequest::Id id,
         const Message& message) override;
 
-      virtual AccountModificationRequest::Status
+      virtual AccountModificationRequest::Update
         LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id) override;
 
       virtual void Store(AccountModificationRequest::Id id,
-        AccountModificationRequest::Status status) override;
+        const AccountModificationRequest::Update& status) override;
 
       virtual Message::Id LoadLastMessageId() override;
 
@@ -467,15 +467,40 @@ namespace AdministrationService {
     }
   }
 
-  inline AccountModificationRequest::Status
+  inline AccountModificationRequest::Update
       MySqlAdministrationDataStore::LoadAccountModificationRequestStatus(
       AccountModificationRequest::Id id) {
-    return {};
+    auto query = m_databaseConnection.query();
+    query << "SELECT * FROM account_modification_request_status WHERE id = " <<
+      id << " ORDER BY sequence_number DESC LIMIT 1";
+    std::vector<Details::account_modification_request_status> rows;
+    query.storein(rows);
+    if(query.errnum() != 0) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
+    }
+    if(rows.empty()) {
+      return {};
+    }
+    auto& row = rows.front();
+    AccountModificationRequest::Update result{
+      static_cast<AccountModificationRequest::Status>(row.status),
+      Beam::ServiceLocator::DirectoryEntry::MakeAccount(row.account),
+      row.sequence_number, Beam::MySql::FromMySqlTimestamp(row.timestamp)};
+    return result;
   }
 
   inline void MySqlAdministrationDataStore::Store(
       AccountModificationRequest::Id id,
-      AccountModificationRequest::Status status) {
+      const AccountModificationRequest::Update& status) {
+    auto query = m_databaseConnection.query();
+    Details::account_modification_request_status row{id,
+      static_cast<int>(status.m_status), status.m_account.m_id,
+      status.m_sequenceNumber,
+      Beam::MySql::ToMySqlTimestamp(status.m_timestamp)};
+    query.insert(row);
+    if(!query.execute()) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
+    }
   }
 
   inline Message::Id MySqlAdministrationDataStore::LoadLastMessageId() {

@@ -170,23 +170,25 @@ namespace {
         submissionAccount, modification, comment);
     }
 
-    virtual AccountModificationRequest::Status
+    virtual AccountModificationRequest::Update
         LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id) override final {
       return get_override("load_account_modification_request_status")(id);
     }
 
-    virtual void ApproveAccountModificationRequest(
-        AccountModificationRequest::Id id, const DirectoryEntry& account,
+    virtual AccountModificationRequest::Update
+        ApproveAccountModificationRequest(AccountModificationRequest::Id id,
+        const DirectoryEntry& account,
         const AdministrationService::Message& comment) override final {
-      get_override("approve_account_modification_request")(id, account,
+      return get_override("approve_account_modification_request")(id, account,
         comment);
     }
 
-    virtual void RejectAccountModificationRequest(
+    virtual AccountModificationRequest::Update RejectAccountModificationRequest(
         AccountModificationRequest::Id id, const DirectoryEntry& account,
         const AdministrationService::Message& comment) override final {
-      get_override("reject_account_modification_request")(id, account, comment);
+      return get_override("reject_account_modification_request")(id, account,
+        comment);
     }
 
     virtual AdministrationService::Message LoadMessage(
@@ -311,6 +313,18 @@ void Nexus::Python::ExportAccountModificationRequest() {
       .value("SCHEDULED", AccountModificationRequest::Status::SCHEDULED)
       .value("GRANTED", AccountModificationRequest::Status::GRANTED)
       .value("REJECTED", AccountModificationRequest::Status::REJECTED);
+    class_<AccountModificationRequest::Update>("Update", init<>())
+      .def(init<AccountModificationRequest::Status, DirectoryEntry, int,
+        boost::posix_time::ptime>())
+      .def_readwrite("status", &AccountModificationRequest::Update::m_status)
+      .def_readwrite("account", &AccountModificationRequest::Update::m_account)
+      .def_readwrite("sequence_number",
+        &AccountModificationRequest::Update::m_sequenceNumber)
+      .add_property("timestamp", make_getter(
+        &AccountModificationRequest::Update::m_timestamp,
+        return_value_policy<return_by_value>()), make_setter(
+        &AccountModificationRequest::Update::m_timestamp,
+        return_value_policy<return_by_value>()));
   }
 }
 
