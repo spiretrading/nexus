@@ -219,7 +219,7 @@ namespace AdministrationService {
   template<typename DataStoreType>
   void CachedAdministrationDataStore<DataStoreType>::Store(
       AccountModificationRequest::Id id, const Message& message) {
-    m_dataStore->Store(request, message);
+    m_dataStore->Store(id, message);
   }
 
   template<typename DataStoreType>

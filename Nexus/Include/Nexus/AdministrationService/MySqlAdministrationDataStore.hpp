@@ -62,6 +62,41 @@ namespace AdministrationService {
       virtual void Store(const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskService::RiskState& riskState) override;
 
+      virtual AccountModificationRequest LoadAccountModificationRequest(
+        AccountModificationRequest::Id id) override;
+
+      virtual std::vector<AccountModificationRequest::Id>
+        LoadAccountModificationRequestIds(
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        AccountModificationRequest::Id startId, int maxCount) override;
+
+      virtual std::vector<AccountModificationRequest::Id>
+        LoadAccountModificationRequestIds(
+        AccountModificationRequest::Id startId, int maxCount) override;
+
+      virtual EntitlementModification LoadEntitlementModification(
+        AccountModificationRequest::Id id) override;
+
+      virtual void Store(const AccountModificationRequest& request,
+        const EntitlementModification& modification) override;
+
+      virtual void Store(AccountModificationRequest::Id id,
+        const Message& message) override;
+
+      virtual AccountModificationRequest::Status
+        LoadAccountModificationRequestStatus(
+        AccountModificationRequest::Id id) override;
+
+      virtual void Store(AccountModificationRequest::Id id,
+        AccountModificationRequest::Status status) override;
+
+      virtual Message::Id LoadLastMessageId() override;
+
+      virtual Message LoadMessage(Message::Id id) override;
+
+      virtual std::vector<Message::Id> LoadMessageIds(
+        AccountModificationRequest::Id id) override;
+
       virtual void WithTransaction(
         const std::function<void ()>& transaction) override;
 
@@ -110,8 +145,8 @@ namespace AdministrationService {
     std::transform(identities.begin(), identities.end(),
       std::back_inserter(results),
       [] (auto& row) {
-        Beam::ServiceLocator::DirectoryEntry account{
-          Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT, row.account, ""};
+        auto account = Beam::ServiceLocator::DirectoryEntry::MakeAccount(
+          row.account);
         AccountIdentity identity;
         identity.m_firstName = row.first_name;
         identity.m_lastName = row.last_name;
@@ -160,11 +195,10 @@ namespace AdministrationService {
       const Beam::ServiceLocator::DirectoryEntry& account,
       const AccountIdentity& identity) {
     auto query = m_databaseConnection.query();
-    Details::SqlInsert::account_identities entryRow{account.m_id,
-      identity.m_firstName, identity.m_lastName, identity.m_emailAddress,
-      identity.m_addressLineOne, identity.m_addressLineTwo,
-      identity.m_addressLineThree, identity.m_city, identity.m_province,
-      identity.m_country, identity.m_userNotes, ""};
+    Details::account_identities entryRow{account.m_id, identity.m_firstName,
+      identity.m_lastName, identity.m_emailAddress, identity.m_addressLineOne,
+      identity.m_addressLineTwo, identity.m_addressLineThree, identity.m_city,
+      identity.m_province, identity.m_country, identity.m_userNotes, ""};
     query.replace(entryRow);
     if(!query.execute()) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
@@ -187,8 +221,8 @@ namespace AdministrationService {
     std::transform(riskParameters.begin(), riskParameters.end(),
       std::back_inserter(results),
       [] (auto& row) {
-        Beam::ServiceLocator::DirectoryEntry account{
-          Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT, row.account, ""};
+        auto account = Beam::ServiceLocator::DirectoryEntry::MakeAccount(
+          row.account);
         RiskService::RiskParameters parameters;
         parameters.m_currency = CurrencyId{row.currency};
         parameters.m_buyingPower = Money::FromRepresentation(row.buying_power);
@@ -231,7 +265,7 @@ namespace AdministrationService {
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskParameters& riskParameters) {
     auto query = m_databaseConnection.query();
-    Details::SqlInsert::risk_parameters entryRow{account.m_id,
+    Details::risk_parameters entryRow{account.m_id,
       riskParameters.m_currency.m_value,
       riskParameters.m_buyingPower.GetRepresentation(),
       riskParameters.m_netLoss.GetRepresentation(),
@@ -260,8 +294,8 @@ namespace AdministrationService {
     std::transform(riskStates.begin(), riskStates.end(),
       std::back_inserter(results),
       [] (auto& row) {
-        Beam::ServiceLocator::DirectoryEntry account{
-          Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT, row.account, ""};
+        auto account = Beam::ServiceLocator::DirectoryEntry::MakeAccount(
+          row.account);
         RiskService::RiskState state{static_cast<RiskService::RiskState::Type>(
           row.state), Beam::MySql::FromDateTime(row.expiry)};
         return std::make_tuple(account, state);
@@ -291,13 +325,221 @@ namespace AdministrationService {
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskState& riskState) {
     auto query = m_databaseConnection.query();
-    Details::SqlInsert::risk_states entryRow{account.m_id,
+    Details::risk_states entryRow{account.m_id,
       static_cast<int>(riskState.m_type),
       Beam::MySql::ToDateTime(riskState.m_expiry)};
     query.replace(entryRow);
     if(!query.execute()) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
     }
+  }
+
+  inline AccountModificationRequest MySqlAdministrationDataStore::
+      LoadAccountModificationRequest(AccountModificationRequest::Id id) {
+    auto query = m_databaseConnection.query();
+    query << "SELECT * FROM account_modification_requests WHERE id = " << id;
+    std::vector<Details::account_modification_requests> rows;
+    query.storein(rows);
+    if(query.errnum() != 0) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
+    }
+    if(rows.empty()) {
+      return {};
+    }
+    auto& row = rows.front();
+    AccountModificationRequest result{row.id,
+      static_cast<AccountModificationRequest::Type>(row.type),
+      Beam::ServiceLocator::DirectoryEntry::MakeAccount(row.account),
+      Beam::ServiceLocator::DirectoryEntry::MakeAccount(row.submission_account),
+      Beam::MySql::FromMySqlTimestamp(row.timestamp)};
+    return result;
+  }
+
+  inline std::vector<AccountModificationRequest::Id>
+      MySqlAdministrationDataStore::LoadAccountModificationRequestIds(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      AccountModificationRequest::Id startId, int maxCount) {
+    if(startId == -1) {
+      startId = std::numeric_limits<AccountModificationRequest::Id>::max();
+    }
+    maxCount = std::min(maxCount, 1000);
+    auto query = m_databaseConnection.query();
+    query << "SELECT id FROM account_modification_requests WHERE id < " <<
+      startId << " AND account = " << account.m_id <<
+      " ORDER BY id DESC LIMIT " << maxCount;
+    query.execute();
+    if(query.errnum() != 0) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
+    }
+    std::vector<AccountModificationRequest::Id> rows;
+    for(auto& row : query.store()) {
+      rows.push_back(row[0]);
+    }
+    return rows;
+  }
+
+  inline std::vector<AccountModificationRequest::Id>
+      MySqlAdministrationDataStore::LoadAccountModificationRequestIds(
+      AccountModificationRequest::Id startId, int maxCount) {
+    if(startId == -1) {
+      startId = std::numeric_limits<AccountModificationRequest::Id>::max();
+    }
+    maxCount = std::min(maxCount, 1000);
+    auto query = m_databaseConnection.query();
+    query << "SELECT id FROM account_modification_requests WHERE id < " <<
+      startId << " ORDER BY id DESC LIMIT " << maxCount;
+    query.execute();
+    if(query.errnum() != 0) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
+    }
+    std::vector<AccountModificationRequest::Id> rows;
+    for(auto& row : query.store()) {
+      rows.push_back(row[0]);
+    }
+    return rows;
+  }
+
+  inline EntitlementModification MySqlAdministrationDataStore::
+      LoadEntitlementModification(AccountModificationRequest::Id id) {
+    auto query = m_databaseConnection.query();
+    query << "SELECT entitlement FROM entitlement_modifications WHERE id = " <<
+      id;
+    query.execute();
+    if(query.errnum() != 0) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
+    }
+    std::vector<Beam::ServiceLocator::DirectoryEntry> rows;
+    for(auto& row : query.store()) {
+      rows.push_back(Beam::ServiceLocator::DirectoryEntry::MakeDirectory(
+        row[0]));
+    }
+    return EntitlementModification{std::move(rows)};
+  }
+
+  inline void MySqlAdministrationDataStore::Store(
+      const AccountModificationRequest& request,
+      const EntitlementModification& modification) {
+    auto query = m_databaseConnection.query();
+    Details::account_modification_requests row{request.GetId(),
+      static_cast<int>(request.GetType()), request.GetAccount().m_id,
+      request.GetSubmissionAccount().m_id,
+      Beam::MySql::ToMySqlTimestamp(request.GetTimestamp())};
+    query.insert(row);
+    if(!query.execute()) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
+    }
+    query.reset();
+    std::vector<Details::entitlement_modifications> entitlements;
+    for(auto& entitlement : modification.GetEntitlements()) {
+      entitlements.emplace_back(request.GetId(), entitlement.m_id);
+    }
+    query.insert(entitlements.begin(), entitlements.end());
+    if(!query.execute()) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
+    }
+  }
+
+  inline void MySqlAdministrationDataStore::Store(
+      AccountModificationRequest::Id id, const Message& message) {
+    auto query = m_databaseConnection.query();
+    Details::administration_messages row{message.GetId(),
+      message.GetAccount().m_id,
+      Beam::MySql::ToMySqlTimestamp(message.GetTimestamp())};
+    query.insert(row);
+    if(!query.execute()) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
+    }
+    query.reset();
+    std::vector<Details::administration_message_bodies> bodies;
+    for(auto& body : message.GetBodies()) {
+      bodies.emplace_back(message.GetId(), body.m_contentType, body.m_message);
+    }
+    query.insert(bodies.begin(), bodies.end());
+    if(!query.execute()) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
+    }
+    query.reset();
+    Details::account_modification_request_messages requestId{
+      id, message.GetId()};
+    query.insert(requestId);
+    if(!query.execute()) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
+    }
+  }
+
+  inline AccountModificationRequest::Status
+      MySqlAdministrationDataStore::LoadAccountModificationRequestStatus(
+      AccountModificationRequest::Id id) {
+    return {};
+  }
+
+  inline void MySqlAdministrationDataStore::Store(
+      AccountModificationRequest::Id id,
+      AccountModificationRequest::Status status) {
+  }
+
+  inline Message::Id MySqlAdministrationDataStore::LoadLastMessageId() {
+    auto query = m_databaseConnection.query();
+    query << "SELECT id FROM administration_messages ORDER BY id DESC LIMIT 1";
+    query.execute();
+    if(query.errnum() != 0) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
+    }
+    auto result = query.store();
+    if(!result) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
+    }
+    if(result.empty()) {
+      return 0;
+    }
+    return result[0][0];
+  }
+
+  inline Message MySqlAdministrationDataStore::LoadMessage(Message::Id id) {
+    auto query = m_databaseConnection.query();
+    query << "SELECT * FROM administration_messages WHERE id = " << id;
+    std::vector<Details::administration_messages> messageRows;
+    query.storein(messageRows);
+    if(query.errnum() != 0) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
+    }
+    if(messageRows.empty()) {
+      return {};
+    }
+    query.reset();
+    query << "SELECT * FROM administration_message_bodies WHERE id = " << id;
+    std::vector<Details::administration_message_bodies> bodyRows;
+    query.storein(bodyRows);
+    if(query.errnum() != 0) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
+    }
+    std::vector<Message::Body> bodies;
+    for(auto& bodyRow : bodyRows) {
+      bodies.push_back(Message::Body{
+        std::move(bodyRow.content_type), std::move(bodyRow.message)});
+    }
+    auto& messageRow = messageRows.front();
+    Message message{id,
+      Beam::ServiceLocator::DirectoryEntry::MakeAccount(messageRow.account),
+      Beam::MySql::FromMySqlTimestamp(messageRow.timestamp),
+      std::move(bodies)};
+    return message;
+  }
+
+  inline std::vector<Message::Id> MySqlAdministrationDataStore::LoadMessageIds(
+      AccountModificationRequest::Id id) {
+    auto query = m_databaseConnection.query();
+    query << "SELECT message_id FROM account_modification_request_messages "
+      "WHERE request_id = " << id << " ORDER BY message_id ASC";
+    query.execute();
+    if(query.errnum() != 0) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
+    }
+    std::vector<Message::Id> rows;
+    for(auto& row : query.store()) {
+      rows.push_back(row[0]);
+    }
+    return rows;
   }
 
   inline void MySqlAdministrationDataStore::WithTransaction(
