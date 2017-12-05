@@ -58,11 +58,11 @@ class App extends Component {
   onSubMenuUpdated(eventName, doesSubMenuExist) {
     let height;
     if (doesSubMenuExist) {
-      height = 'calc(100vh - 125px)';
+      height = 'calc(100vh - 135px)';
     } else if (this.isFullScreen()) {
       height = 'calc(100vh)';
     } else {
-      height = 'calc(100vh - 75px)';
+      height = 'calc(100vh - 85px)';
     }
 
     if (!deviceDetector.isMobile()){

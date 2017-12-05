@@ -29,6 +29,10 @@ class Controller {
     this.view.initialize();
   }
 
+  componentWillUnmount() {
+    this.view.dispose();
+  }
+
   onParameterUpdated(parameterName, value) {
     let parameters = this.componentModel.schema.parameters;
     for (let i=0; i<parameters.length; i++) {

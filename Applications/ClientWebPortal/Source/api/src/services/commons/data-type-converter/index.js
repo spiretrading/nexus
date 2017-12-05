@@ -1,6 +1,7 @@
 import DataType from '../../../definitions/data-type';
 import Money from '../../../definitions/money';
 import Security from '../../../definitions/security';
+import moment from 'moment';
 
 /** Converts data to their respective classes */
 class DataTypeConverter {
