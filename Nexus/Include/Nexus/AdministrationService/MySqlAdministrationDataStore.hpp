@@ -367,12 +367,12 @@ namespace AdministrationService {
     query << "SELECT id FROM account_modification_requests WHERE id < " <<
       startId << " AND account = " << account.m_id <<
       " ORDER BY id DESC LIMIT " << maxCount;
-    query.execute();
-    if(query.errnum() != 0) {
+    auto result = query.store();
+    if(!result) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
     }
     std::vector<AccountModificationRequest::Id> rows;
-    for(auto& row : query.store()) {
+    for(auto& row : result) {
       rows.push_back(row[0]);
     }
     return rows;
@@ -388,12 +388,12 @@ namespace AdministrationService {
     auto query = m_databaseConnection.query();
     query << "SELECT id FROM account_modification_requests WHERE id < " <<
       startId << " ORDER BY id DESC LIMIT " << maxCount;
-    query.execute();
-    if(query.errnum() != 0) {
+    auto result = query.store();
+    if(!result) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
     }
     std::vector<AccountModificationRequest::Id> rows;
-    for(auto& row : query.store()) {
+    for(auto& row : result) {
       rows.push_back(row[0]);
     }
     return rows;
@@ -404,12 +404,12 @@ namespace AdministrationService {
     auto query = m_databaseConnection.query();
     query << "SELECT entitlement FROM entitlement_modifications WHERE id = " <<
       id;
-    query.execute();
-    if(query.errnum() != 0) {
+    auto result = query.store();
+    if(!result) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
     }
     std::vector<Beam::ServiceLocator::DirectoryEntry> rows;
-    for(auto& row : query.store()) {
+    for(auto& row : result) {
       rows.push_back(Beam::ServiceLocator::DirectoryEntry::MakeDirectory(
         row[0]));
     }
@@ -506,10 +506,6 @@ namespace AdministrationService {
   inline Message::Id MySqlAdministrationDataStore::LoadLastMessageId() {
     auto query = m_databaseConnection.query();
     query << "SELECT id FROM administration_messages ORDER BY id DESC LIMIT 1";
-    query.execute();
-    if(query.errnum() != 0) {
-      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
-    }
     auto result = query.store();
     if(!result) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
@@ -556,12 +552,12 @@ namespace AdministrationService {
     auto query = m_databaseConnection.query();
     query << "SELECT message_id FROM account_modification_request_messages "
       "WHERE request_id = " << id << " ORDER BY message_id ASC";
-    query.execute();
-    if(query.errnum() != 0) {
+    auto result = query.store();
+    if(!result) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
     }
     std::vector<Message::Id> rows;
-    for(auto& row : query.store()) {
+    for(auto& row : result) {
       rows.push_back(row[0]);
     }
     return rows;
