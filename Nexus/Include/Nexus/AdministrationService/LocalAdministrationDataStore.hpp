@@ -79,6 +79,11 @@ namespace AdministrationService {
 
       virtual Message::Id LoadLastMessageId() override;
 
+      virtual Message LoadMessage(Message::Id id) override;
+
+      virtual std::vector<Message::Id> LoadMessageIds(
+        AccountModificationRequest::Id id) override;
+
       virtual void WithTransaction(
         const std::function<void ()>& transaction) override;
 
@@ -293,6 +298,23 @@ namespace AdministrationService {
 
   inline Message::Id LocalAdministrationDataStore::LoadLastMessageId() {
     return m_lastMessageId;
+  }
+
+  inline Message LocalAdministrationDataStore::LoadMessage(Message::Id id) {
+    auto message = m_idToMessage.find(id);
+    if(message == m_idToMessage.end()) {
+      return {};
+    }
+    return message->second;
+  }
+
+  inline std::vector<Message::Id> LocalAdministrationDataStore::LoadMessageIds(
+      AccountModificationRequest::Id id) {
+    auto messageIds = m_requestToMessages.find(id);
+    if(messageIds == m_requestToMessages.end()) {
+      return {};
+    }
+    return messageIds->second;
   }
 
   inline void LocalAdministrationDataStore::WithTransaction(

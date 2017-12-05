@@ -158,6 +158,22 @@ namespace AdministrationService {
       //! Messages.
       virtual Message::Id LoadLastMessageId() = 0;
 
+      //! Loads a Message.
+      /*!
+        \param id The id of the Message to load.
+        \return The Message with the specified <i>id</i>.
+      */
+      virtual Message LoadMessage(Message::Id id) = 0;
+
+      //! Loads Message ids belonging to an AccountModificationRequest.
+      /*!
+        \param id The id of the AccountModificationRequest.
+        \return The list of Message ids belonging to the
+                AccountModificationRequest with the specified <i>id</i>.
+      */
+      virtual std::vector<Message::Id> LoadMessageIds(
+        AccountModificationRequest::Id id) = 0;
+
       //! Performs an atomic transaction.
       /*!
         \param transaction The transaction to perform.
