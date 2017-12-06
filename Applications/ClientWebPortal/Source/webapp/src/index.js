@@ -54,12 +54,9 @@ window.clone = (originalObj) => {
 
 // merges two objects. with same property, new object overwrites the original.
 window.overwriteMerge = (originalObj, newObj) => {
-  for (let property in originalObj) {
-    if (newObj[property] !== undefined){
-      originalObj[property] = newObj[property];
-    }
+  for (let property in newObj) {
+    originalObj[property] = newObj[property];
   }
-  $.extend(true, originalObj, newObj);
 };
 
 window.EventBus = eventBus;

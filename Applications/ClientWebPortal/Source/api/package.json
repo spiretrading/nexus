@@ -17,6 +17,7 @@
   "dependencies": {
     "fraction.js": "^4.0.0",
     "hashmap": "^2.0.6",
+    "moment": "^2.19.3",
     "popsicle": "^8.2.0",
     "uuid": "^3.0.1",
     "webstomp-client": "^1.0.6"
