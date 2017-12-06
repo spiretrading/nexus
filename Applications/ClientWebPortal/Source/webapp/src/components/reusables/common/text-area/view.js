@@ -10,31 +10,33 @@ class View extends UpdatableView {
 
   /** @private */
   onChange(event) {
-    let userNotes = event.currentTarget.value.trim();
+    let inputText = event.currentTarget.value.trim();
     if (this.inputTimeout != null) {
       clearTimeout(this.inputTimeout);
     }
 
     this.inputTimeout = setTimeout(() => {
       this.inputTimeout = null;
-      this.controller.onUserNotesChange(userNotes);
+      this.controller.onInputChange(inputText);
     }, Config.INPUT_TIMEOUT_DURATION);
   }
 
   render() {
     let textarea;
     if (this.componentModel.isReadOnly) {
-      textarea = <textarea className="user-notes-input"
-                           defaultValue={this.componentModel.userNotes}
+      textarea = <textarea className="text-area-input"
+                           defaultValue={this.componentModel.text}
+                           placeholder={this.componentModel.placeHolder}
                            readOnly />
     } else {
-      textarea = <textarea className="user-notes-input"
-                           defaultValue={this.componentModel.userNotes}
+      textarea = <textarea className="text-area-input"
+                           defaultValue={this.componentModel.text}
+                           placeholder={this.componentModel.placeHolder}
                            onChange={this.onChange.bind(this)}/>
     }
 
     return (
-        <div id={this.componentModel.componentId} className="user-notes-container">
+        <div id={this.componentModel.componentId} className="text-area-container">
           {textarea}
         </div>
     );

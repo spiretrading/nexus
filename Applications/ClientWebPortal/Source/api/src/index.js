@@ -26,6 +26,7 @@ import exchangeRateTable from './definitions/exchange-rate-table';
 import marketCode from './definitions/market-code';
 import marketDatabase from './definitions/market-database';
 import marketDatabaseEntry from './definitions/market-database-entry';
+import entitlementModification from './definitions/entitlement-modification';
 
 // module export configurations
 export const AdministrationClient = administrationClient;
@@ -54,3 +55,4 @@ export const ExchangeRateTable = exchangeRateTable;
 export const MarketCode = marketCode;
 export const MarketDatabase = marketDatabase;
 export const MarketDatabaseEntry = marketDatabaseEntry;
+export const EntitlementModification = entitlementModification;

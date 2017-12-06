@@ -1,4 +1,4 @@
-import {AdministrationClient, DirectoryEntry} from 'spire-client';
+import {AdministrationClient, DirectoryEntry, EntitlementModification} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
 import definitionsService from 'services/definitions';
@@ -80,7 +80,7 @@ class Controller {
 
   onEntitlementSelected(id) {
     this.view.hideSaveMessage();
-    let groupEntry = this.getGroupEntry(id);
+    let groupEntry = DirectoryEntry.fromData(this.getGroupEntry(id));
     this.componentModel.accountEntitlements.push(groupEntry);
     this.view.update(this.componentModel);
   }
@@ -95,6 +95,10 @@ class Controller {
     this.view.update(this.componentModel);
   }
 
+  onCommentsChange(newComment) {
+    this.componentModel.requestComments = newComment;
+  }
+
   save() {
     let directoryEntry = this.componentModel.directoryEntry;
     this.adminClient.storeAccountEntitlements(directoryEntry, this.componentModel.accountEntitlements)
@@ -104,7 +108,12 @@ class Controller {
 
   submitRequest() {
     let directoryEntry = this.componentModel.directoryEntry;
-    this.adminClient.submitAccountEntitlementsChangeRequest(directoryEntry, this.componentModel.accountEntitlements)
+    let entitlementModification = new EntitlementModification(this.componentModel.accountEntitlements);
+    this.adminClient.submitEntitlementModificationRequest(
+      directoryEntry,
+      entitlementModification,
+      this.componentModel.requestComments || ""
+    )
       .then((requestId) => {
         this.view.showRequestSubmittedMessage(requestId);
       });
