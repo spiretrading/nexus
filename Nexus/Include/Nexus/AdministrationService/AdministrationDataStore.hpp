@@ -182,6 +182,24 @@ namespace AdministrationService {
       virtual void WithTransaction(
         const std::function<void ()>& transaction) = 0;
 
+      //! Performs an atomic transaction.
+      /*!
+        \param transaction The transaction to perform.
+      */
+      template<typename F, typename Enabled =
+        !std::is_same<decltype(std::declval<F&&>()()), void>::value>
+      auto WithTransaction(F&& f) {
+        using Result = decltype(f());
+        Result result;
+        this->WithTransaction(
+          std::function<void ()>{
+            [&] {
+              result = f();
+            }
+          });
+        return result;
+      }
+
       virtual void Open() = 0;
 
       virtual void Close() = 0;

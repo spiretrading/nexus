@@ -91,6 +91,8 @@ namespace AdministrationService {
 
       virtual void Close() override;
 
+      using AdministrationDataStore::WithTransaction;
+
     private:
       mutable Beam::Threading::Mutex m_mutex;
       std::unordered_map<Beam::ServiceLocator::DirectoryEntry, AccountIdentity>

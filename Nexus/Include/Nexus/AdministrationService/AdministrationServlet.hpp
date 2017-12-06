@@ -1,5 +1,5 @@
-#ifndef NEXUS_ADMINISTRATIONSERVLET_HPP
-#define NEXUS_ADMINISTRATIONSERVLET_HPP
+#ifndef NEXUS_ADMINISTRATION_SERVLET_HPP
+#define NEXUS_ADMINISTRATION_SERVLET_HPP
 #include <atomic>
 #include <iostream>
 #include <sstream>
@@ -113,6 +113,10 @@ namespace AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& directory);
       std::vector<Beam::ServiceLocator::DirectoryEntry> LoadEntitlements(
         const Beam::ServiceLocator::DirectoryEntry& account);
+      void GrantEntitlements(
+        const Beam::ServiceLocator::DirectoryEntry& adminAccount,
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        const std::vector<Beam::ServiceLocator::DirectoryEntry>& entitlements);
       bool OnCheckAdministratorRequest(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account);
       AccountRoles OnLoadAccountRolesRequest(ServiceProtocolClient& client,
@@ -575,6 +579,46 @@ namespace AdministrationService {
 
   template<typename ContainerType, typename ServiceLocatorClientType,
     typename AdministrationDataStoreType>
+  void AdministrationServlet<ContainerType, ServiceLocatorClientType,
+      AdministrationDataStoreType>::GrantEntitlements(
+      const Beam::ServiceLocator::DirectoryEntry& adminAccount,
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const std::vector<Beam::ServiceLocator::DirectoryEntry>& entitlements) {
+    auto existingEntitlements = LoadEntitlements(account);
+    std::unordered_set<Beam::ServiceLocator::DirectoryEntry> entitlementSet(
+      entitlements.begin(), entitlements.end());
+    for(auto& entitlement : m_entitlements.GetEntries()) {
+      auto& entry = entitlement.m_groupEntry;
+      if(entitlementSet.find(entry) != entitlementSet.end()) {
+        if(std::find(existingEntitlements.begin(),
+            existingEntitlements.end(), entry) ==
+            existingEntitlements.end()) {
+          m_serviceLocatorClient->Associate(account, entry);
+          std::stringstream ss;
+          ss << boost::posix_time::to_simple_string(
+            boost::posix_time::second_clock::universal_time()) << ": " <<
+            adminAccount.m_name << " grants entitlement \"" <<
+            entitlement.m_name << "\"" << " to " << account.m_name << ".\n";
+          std::cout << ss.str() << std::flush;
+        }
+      } else {
+        if(std::find(existingEntitlements.begin(),
+            existingEntitlements.end(), entry) !=
+            existingEntitlements.end()) {
+          m_serviceLocatorClient->Detach(account, entry);
+          std::stringstream ss;
+          ss << boost::posix_time::to_simple_string(
+            boost::posix_time::second_clock::universal_time()) << ": " <<
+            adminAccount.m_name << " revokes entitlement \"" <<
+            entitlement.m_name << "\"" << " from " << account.m_name << ".\n";
+          std::cout << ss.str() << std::flush;
+        }
+      }
+    }
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
   bool AdministrationServlet<ContainerType, ServiceLocatorClientType,
       AdministrationDataStoreType>::OnCheckAdministratorRequest(
       ServiceProtocolClient& client,
@@ -716,37 +760,7 @@ namespace AdministrationService {
       throw Beam::Services::ServiceRequestException{
         "Insufficient permissions."};
     }
-    auto existingEntitlements = LoadEntitlements(account);
-    std::unordered_set<Beam::ServiceLocator::DirectoryEntry> entitlementSet(
-      entitlements.begin(), entitlements.end());
-    for(auto& entitlement : m_entitlements.GetEntries()) {
-      auto& entry = entitlement.m_groupEntry;
-      if(entitlementSet.find(entry) != entitlementSet.end()) {
-        if(std::find(existingEntitlements.begin(),
-            existingEntitlements.end(), entry) ==
-            existingEntitlements.end()) {
-          m_serviceLocatorClient->Associate(account, entry);
-          std::stringstream ss;
-          ss << boost::posix_time::to_simple_string(
-            boost::posix_time::second_clock::universal_time()) << ": " <<
-            session.GetAccount().m_name << " grants entitlement \"" <<
-            entitlement.m_name << "\"" << " to " << account.m_name << ".\n";
-          std::cout << ss.str() << std::flush;
-        }
-      } else {
-        if(std::find(existingEntitlements.begin(),
-            existingEntitlements.end(), entry) !=
-            existingEntitlements.end()) {
-          m_serviceLocatorClient->Detach(account, entry);
-          std::stringstream ss;
-          ss << boost::posix_time::to_simple_string(
-            boost::posix_time::second_clock::universal_time()) << ": " <<
-            session.GetAccount().m_name << " revokes entitlement \"" <<
-            entitlement.m_name << "\"" << " from " << account.m_name << ".\n";
-          std::cout << ss.str() << std::flush;
-        }
-      }
-    }
+    GrantEntitlements(session.GetAccount(), account, entitlements);
   }
 
   template<typename ContainerType, typename ServiceLocatorClientType,
@@ -1140,6 +1154,18 @@ namespace AdministrationService {
         update.m_timestamp = timestamp;
         m_dataStore->Store(request.GetId(), update);
       });
+    if(update.m_status == AccountModificationRequest::Status::GRANTED) {
+      if(request.GetType() == AccountModificationRequest::Type::ENTITLEMENTS) {
+        EntitlementModification modification;
+        m_dataStore->WithTransaction(
+          [&] {
+            modification = m_dataStore->LoadEntitlementModification(
+              request.GetId());
+          });
+        GrantEntitlements(update.m_account, account,
+          modification.GetEntitlements());
+      }
+    }
     return update;
   }
 
