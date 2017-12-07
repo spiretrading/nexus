@@ -179,20 +179,20 @@ class Admin {
       .catch(this.logErrorAndThrow);
   }
 
-  submitEntitlementModificationRequest(directoryEntry, entitlementModification, comment) {
+  submitEntitlementModificationRequest(directoryEntry, entitlementModification, message) {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/submit_entitlement_modification_request';
     let payload = {
       account: directoryEntry.toData(),
       modification: entitlementModification.toData(),
-      comment: comment
+      comment: message.toData()
     };
 
-    // return httpConnectionManager.send(apiPath, payload, true)
-    //   .catch(this.logErrorAndThrow);
-
-    return new Promise((resolve, reject) => {
-      resolve('EN0042');
-    });
+    return httpConnectionManager.send(apiPath, payload, true)
+      .then(response => {
+        console.debug(response);
+        return 'EN0042';
+      })
+      .catch(this.logErrorAndThrow);
   }
 }
 

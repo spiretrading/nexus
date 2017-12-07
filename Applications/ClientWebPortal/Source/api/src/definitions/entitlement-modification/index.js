@@ -6,15 +6,11 @@ class EntitlementModification {
   }
 
   toData() {
-    return this.entitlements.map((value) => {
-      return value.toData();
-    });
-  }
-
-  toString() {
-    return this.entitlements.map((value) => {
-      return value.toString();
-    });
+    return {
+      entitlements: this.entitlements.map((value) => {
+        return value.toData();
+      })
+    };
   }
 
   clone() {
@@ -25,7 +21,7 @@ class EntitlementModification {
 }
 
 EntitlementModification.fromData = (data) => {
-  return new EntitlementModification(data.map(directoryEntry => {
+  return new EntitlementModification(data.entitlements.map(directoryEntry => {
     return DirectoryEntry.fromData(directoryEntry);
   }));
 };

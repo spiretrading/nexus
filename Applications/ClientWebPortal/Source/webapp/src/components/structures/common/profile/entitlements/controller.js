@@ -1,7 +1,14 @@
-import {AdministrationClient, DirectoryEntry, EntitlementModification} from 'spire-client';
+import {
+  AdministrationClient,
+  DirectoryEntry,
+  EntitlementModification,
+  MessageBody,
+  Message
+} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
 import definitionsService from 'services/definitions';
+import moment from 'moment';
 
 class Controller {
   constructor(componentModel) {
@@ -109,10 +116,12 @@ class Controller {
   submitRequest() {
     let directoryEntry = this.componentModel.directoryEntry;
     let entitlementModification = new EntitlementModification(this.componentModel.accountEntitlements);
+    let messageBody = new MessageBody('text/plain', this.componentModel.requestComments || "");
+    let timestamp = moment.utc().format('YYYYMMDDTHHmmss');
     this.adminClient.submitEntitlementModificationRequest(
       directoryEntry,
       entitlementModification,
-      this.componentModel.requestComments || ""
+      new Message(-1, DirectoryEntry.DEFAULT, timestamp, [messageBody])
     )
       .then((requestId) => {
         this.view.showRequestSubmittedMessage(requestId);
