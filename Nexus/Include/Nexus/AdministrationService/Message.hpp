@@ -70,7 +70,9 @@ namespace AdministrationService {
   };
 
   inline Message::Message()
-      : m_id{-1} {}
+      : m_id{-1} {
+    m_bodies.push_back(Body{"text/plain", ""});
+  }
 
   inline Message::Message(Id id, Beam::ServiceLocator::DirectoryEntry account,
       boost::posix_time::ptime timestamp, std::vector<Body> bodies)

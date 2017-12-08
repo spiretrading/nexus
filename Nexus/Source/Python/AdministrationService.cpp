@@ -7,6 +7,7 @@
 #include <Beam/Python/PythonBindings.hpp>
 #include <Beam/Python/Queues.hpp>
 #include <Beam/Python/UniquePtr.hpp>
+#include <Beam/Python/Vector.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/ServiceLocatorClient.hpp>
@@ -485,6 +486,8 @@ void Nexus::Python::ExportMessage() {
         .def_readwrite("message",
           &AdministrationService::Message::Body::m_message);
   }
+  ExportVector<vector<AdministrationService::Message::Body>>(
+    "VectorMessageBody");
 }
 
 void Nexus::Python::ExportTradingGroup() {
