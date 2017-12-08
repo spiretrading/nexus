@@ -40,4 +40,4 @@ AccountModificationRequest.fromData = (data) => {
   );
 };
 
-export default EntitlementModification;
+export default AccountModificationRequest;

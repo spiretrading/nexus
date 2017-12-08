@@ -123,8 +123,8 @@ class Controller {
       entitlementModification,
       new Message(-1, DirectoryEntry.DEFAULT, timestamp, [messageBody])
     )
-      .then((requestId) => {
-        this.view.showRequestSubmittedMessage(requestId);
+      .then(accountModificationRequest => {
+        this.view.showRequestSubmittedMessage(accountModificationRequest.id);
       });
   }
 }

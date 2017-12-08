@@ -1,23 +1,23 @@
 class MessageBody {
-  constructor(contentType, body) {
+  constructor(contentType, message) {
     this.contentType = contentType;
-    this.body = body;
+    this.message = message;
   }
 
   toData() {
     return {
       content_type: this.contentType,
-      body: this.body
+      message: this.message
     };
   }
 
   clone() {
-    return new MessageBody(this.contentType, this.body);
+    return new MessageBody(this.contentType, this.message);
   }
 }
 
 MessageBody.fromData = (data) => {
-  return new MessageBody(data.content_type, data.body);
+  return new MessageBody(data.content_type, data.message);
 };
 
 export default MessageBody;
