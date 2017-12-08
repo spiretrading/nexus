@@ -55,8 +55,6 @@ class Admin {
       .catch(this.logErrorAndThrow);
 
     function parseResponse(response) {
-      console.debug(response);
-      console.debug(AccountIdentity.fromData(response));
       return AccountIdentity.fromData(response);
     }
   }
