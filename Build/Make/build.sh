@@ -55,3 +55,8 @@ popd
 pushd $directory/../../Applications/ClientWebPortal/Source/webapp/build/make
 ./build.sh $config
 popd
+
+pushd $directory/../../Documents/sphinx
+make clean
+make html
+popd
