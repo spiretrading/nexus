@@ -3,7 +3,7 @@ class Controller {
     this.componentModel = clone(react.props.model);
     this.onChange = react.props.onChange;
 
-    this.onUserNotesChange = this.onUserNotesChange.bind(this);
+    this.onInputChange = this.onInputChange.bind(this);
   }
 
   getView() {
@@ -19,7 +19,7 @@ class Controller {
     this.view.setComponentModel(this.componentModel);
   }
 
-  onUserNotesChange(newNotes) {
+  onInputChange(newNotes) {
     this.onChange(newNotes);
   }
 }

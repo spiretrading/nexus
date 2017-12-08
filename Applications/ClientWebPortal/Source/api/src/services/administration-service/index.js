@@ -2,6 +2,8 @@ import httpConnectionManager from '../commons/http-connection-manager';
 import AccountRoles from '../commons/account-roles';
 import AccountIdentity from './account-identity';
 import RiskParameters from '../risk-service/risk-parameters';
+import DirectoryEntry from '../../definitions/directory-entry';
+import AccountModificationRequest from '../../definitions/account-modification-request';
 
 /** Spire admin client class */
 class Admin {
@@ -126,13 +128,12 @@ class Admin {
     };
 
     return httpConnectionManager.send(apiPath, payload, true)
-      .then(parseResponse)
+      .then(response => {
+        return response.map(value => {
+          return DirectoryEntry.fromData(value);
+        });
+      })
       .catch(this.logErrorAndThrow);
-
-    function parseResponse(response) {
-      let entitlements = response;
-      return entitlements;
-    }
   }
 
   storeAccountEntitlements(directoryEntry, entitlements) {
@@ -174,6 +175,21 @@ class Admin {
     };
 
     return httpConnectionManager.send(apiPath, payload, true)
+      .catch(this.logErrorAndThrow);
+  }
+
+  submitEntitlementModificationRequest(directoryEntry, entitlementModification, message) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/submit_entitlement_modification_request';
+    let payload = {
+      account: directoryEntry.toData(),
+      modification: entitlementModification.toData(),
+      comment: message.toData()
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .then(response => {
+        return AccountModificationRequest.fromData(response);
+      })
       .catch(this.logErrorAndThrow);
   }
 }
