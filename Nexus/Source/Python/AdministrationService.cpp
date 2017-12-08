@@ -7,6 +7,7 @@
 #include <Beam/Python/PythonBindings.hpp>
 #include <Beam/Python/Queues.hpp>
 #include <Beam/Python/UniquePtr.hpp>
+#include <Beam/Python/Vector.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/ServiceLocatorClient.hpp>
@@ -476,15 +477,26 @@ void Nexus::Python::ExportMessage() {
         .add_property("bodies", make_function(
           &AdministrationService::Message::GetBodies,
           return_value_policy<return_by_value>()));
-      class_<AdministrationService::Message::Body>("Body")
+      class_<AdministrationService::Message::Body>("Body", init<>())
+        .def(init<string, string>())
         .def("__copy__", &MakeCopy<AdministrationService::Message::Body>)
         .def("__deepcopy__", &MakeDeepCopy<
           AdministrationService::Message::Body>)
+        .add_static_property("EMPTY", make_function(
+          &AdministrationService::Message::Body::EMPTY,
+          return_value_policy<copy_const_reference>()))
+        .def("make_plain_text",
+          &AdministrationService::Message::Body::MakePlainText)
+        .staticmethod("make_plain_text")
         .def_readwrite("content_type",
           &AdministrationService::Message::Body::m_contentType)
         .def_readwrite("message",
-          &AdministrationService::Message::Body::m_message);
+          &AdministrationService::Message::Body::m_message)
+        .def(self == self)
+        .def(self != self);
   }
+  ExportVector<vector<AdministrationService::Message::Body>>(
+    "VectorMessageBody");
 }
 
 void Nexus::Python::ExportTradingGroup() {

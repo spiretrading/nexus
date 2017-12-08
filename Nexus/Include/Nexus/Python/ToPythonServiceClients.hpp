@@ -6,6 +6,7 @@
 #include <Beam/Python/ToPythonServiceLocatorClient.hpp>
 #include <Beam/Python/ToPythonTimeClient.hpp>
 #include <Beam/Python/ToPythonTimer.hpp>
+#include "Nexus/Python/ToPythonAdministrationClient.hpp"
 #include "Nexus/Python/ToPythonDefinitionsClient.hpp"
 #include "Nexus/Python/ToPythonMarketDataClient.hpp"
 #include "Nexus/Python/ToPythonOrderExecutionClient.hpp"
@@ -62,6 +63,7 @@ namespace Nexus {
     private:
       std::unique_ptr<Client> m_client;
       std::unique_ptr<ServiceLocatorClient> m_serviceLocatorClient;
+      std::unique_ptr<AdministrationClient> m_administrationClient;
       std::unique_ptr<DefinitionsClient> m_definitionsClient;
       std::unique_ptr<MarketDataClient> m_marketDataClient;
       std::unique_ptr<OrderExecutionClient> m_orderExecutionClient;
@@ -96,6 +98,7 @@ namespace Nexus {
     m_orderExecutionClient.reset();
     m_marketDataClient.reset();
     m_definitionsClient.reset();
+    m_administrationClient.reset();
     m_serviceLocatorClient.reset();
     m_client.reset();
   }
@@ -118,7 +121,10 @@ namespace Nexus {
   template<typename ClientType>
   typename ToPythonServiceClients<ClientType>::AdministrationClient&
       ToPythonServiceClients<ClientType>::GetAdministrationClient() {
-    throw std::runtime_error{"Not implemented"};
+    if(m_openState.IsOpen()) {
+      return *m_administrationClient;
+    }
+    BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException{});
   }
 
   template<typename ClientType>
@@ -199,6 +205,11 @@ namespace Nexus {
         Beam::ServiceLocator::MakeVirtualServiceLocatorClient(
         &m_client->GetServiceLocatorClient()));
       m_serviceLocatorClient->Open();
+      m_administrationClient =
+        AdministrationService::MakeToPythonAdministrationClient(
+        AdministrationService::MakeVirtualAdministrationClient(
+        &m_client->GetAdministrationClient()));
+      m_administrationClient->Open();
       m_definitionsClient = DefinitionsService::MakeToPythonDefinitionsClient(
         DefinitionsService::MakeVirtualDefinitionsClient(
         &m_client->GetDefinitionsClient()));
@@ -246,6 +257,9 @@ namespace Nexus {
     }
     if(m_definitionsClient != nullptr) {
       m_definitionsClient->Close();
+    }
+    if(m_administrationClient != nullptr) {
+      m_administrationClient->Close();
     }
     if(m_serviceLocatorClient != nullptr) {
       m_serviceLocatorClient->Close();

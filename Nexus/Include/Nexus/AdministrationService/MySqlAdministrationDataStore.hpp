@@ -428,14 +428,16 @@ namespace AdministrationService {
     if(!query.execute()) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
     }
-    query.reset();
-    std::vector<Details::entitlement_modifications> entitlements;
-    for(auto& entitlement : modification.GetEntitlements()) {
-      entitlements.emplace_back(request.GetId(), entitlement.m_id);
-    }
-    query.insert(entitlements.begin(), entitlements.end());
-    if(!query.execute()) {
-      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
+    if(!modification.GetEntitlements().empty()) {
+      query.reset();
+      std::vector<Details::entitlement_modifications> entitlements;
+      for(auto& entitlement : modification.GetEntitlements()) {
+        entitlements.emplace_back(request.GetId(), entitlement.m_id);
+      }
+      query.insert(entitlements.begin(), entitlements.end());
+      if(!query.execute()) {
+        BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
+      }
     }
   }
 
