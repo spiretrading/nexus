@@ -1,7 +1,14 @@
-import {AdministrationClient, DirectoryEntry} from 'spire-client';
+import {
+  AdministrationClient,
+  DirectoryEntry,
+  EntitlementModification,
+  MessageBody,
+  Message
+} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
 import definitionsService from 'services/definitions';
+import moment from 'moment';
 
 class Controller {
   constructor(componentModel) {
@@ -61,7 +68,7 @@ class Controller {
       this.componentModel.directoryEntry = directoryEntry;
       this.componentModel.roles = responses[1];
       this.componentModel.userName = directoryEntry.name;
-      this.componentModel.isAdmin = userService.isAdmin();
+      this.componentModel.isAdmin = !userService.isAdmin();
       this.view.update(this.componentModel);
 
       EventBus.publish(Event.Profile.VIEWING_CONTEXT_LOADED, {
@@ -80,7 +87,7 @@ class Controller {
 
   onEntitlementSelected(id) {
     this.view.hideSaveMessage();
-    let groupEntry = this.getGroupEntry(id);
+    let groupEntry = DirectoryEntry.fromData(this.getGroupEntry(id));
     this.componentModel.accountEntitlements.push(groupEntry);
     this.view.update(this.componentModel);
   }
@@ -95,11 +102,30 @@ class Controller {
     this.view.update(this.componentModel);
   }
 
+  onCommentsChange(newComment) {
+    this.componentModel.requestComments = newComment;
+  }
+
   save() {
     let directoryEntry = this.componentModel.directoryEntry;
     this.adminClient.storeAccountEntitlements(directoryEntry, this.componentModel.accountEntitlements)
       .then(this.view.showSaveSuccessMessage)
       .catch(this.view.showSaveFailMessage);
+  }
+
+  submitRequest() {
+    let directoryEntry = this.componentModel.directoryEntry;
+    let entitlementModification = new EntitlementModification(this.componentModel.accountEntitlements);
+    let messageBody = new MessageBody('text/plain', this.componentModel.requestComments || "");
+    let timestamp = moment.utc().format('YYYYMMDDTHHmmss');
+    this.adminClient.submitEntitlementModificationRequest(
+      directoryEntry,
+      entitlementModification,
+      new Message(-1, DirectoryEntry.DEFAULT, timestamp, [messageBody])
+    )
+      .then(accountModificationRequest => {
+        this.view.showRequestSubmittedMessage(accountModificationRequest.id);
+      });
   }
 }
 

@@ -1,4 +1,4 @@
-class AccountEntity {
+class AccountIdentity {
   constructor(
     addressLineOne,
     addressLineTwo,
@@ -48,8 +48,8 @@ class AccountEntity {
   }
 }
 
-AccountEntity.fromData = (data) => {
-  let accountEntity = new AccountEntity();
+AccountIdentity.fromData = (data) => {
+  let accountEntity = new AccountIdentity();
   accountEntity.addressLineOne = data.address_line_one;
   accountEntity.addressLineTwo = data.address_line_two;
   accountEntity.addressLineThree = data.address_line_three;
@@ -66,4 +66,4 @@ AccountEntity.fromData = (data) => {
   return accountEntity;
 };
 
-export default AccountEntity;
+export default AccountIdentity;

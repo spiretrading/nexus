@@ -7,6 +7,10 @@ class DirectoryEntry {
     return new DirectoryEntry(0, 1, '*');
   }
 
+  static get DEFAULT() {
+    return new DirectoryEntry(-1, 0, '');
+  }
+
   constructor(id, type, name) {
     this.id = id;
     this.type = type;

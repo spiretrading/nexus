@@ -39,13 +39,11 @@ class View extends UpdatableView {
 
   /** @priavte */
   onCheckClick(event) {
-    if (this.componentModel.isAdmin) {
-      let $panelContainer = $(event.currentTarget).parent().parent();
-      if ($panelContainer.hasClass('selected')) {
-        this.controller.onEntitlementDeselected();
-      } else {
-        this.controller.onEntitlementSelected();
-      }
+    let $panelContainer = $(event.currentTarget).parent().parent();
+    if ($panelContainer.hasClass('selected')) {
+      this.controller.onEntitlementDeselected();
+    } else {
+      this.controller.onEntitlementSelected();
     }
   }
 

@@ -4,10 +4,20 @@ import UpdatableView from 'commons/updatable-view';
 import deviceDetector from 'utils/device-detector';
 import EntitlementPanel from 'components/reusables/common/entitlement-panel';
 import PrimaryButton from 'components/reusables/common/primary-button';
+import modal from 'utils/modal';
+import TextArea from 'components/reusables/common/text-area';
 
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
+
+    this.onSubmitOkClick = this.onSubmitOkClick.bind(this);
+
+    this.commentsModel = {
+      text: "",
+      isReadOnly: false,
+      placeHolder: 'Leave comment here...'
+    };
   }
 
   componentDidUpdate() {
@@ -44,6 +54,11 @@ class View extends UpdatableView {
       });
   }
 
+  showRequestSubmittedMessage(requestId) {
+    $('#entitlements-container .modal .request-id').text(requestId);
+    modal.show($('#entitlements-container .modal'));
+  }
+
   render() {
     let entitlements;
     let className = '';
@@ -54,6 +69,7 @@ class View extends UpdatableView {
     let onEntitlementSelected = this.controller.onEntitlementSelected.bind(this.controller);
     let onEntitlementDeselected = this.controller.onEntitlementDeselected.bind(this.controller);
 
+    let saveBtnModel, submitRequestBtnModel, saveButton, comments, submitOkBtnModel, hr;
     if (this.controller.isModelInitialized()) {
       entitlements = [];
       for (let i=0; i<this.componentModel.entitlements.length; i++) {
@@ -68,8 +84,7 @@ class View extends UpdatableView {
         }
         let model = {
           entitlement: entitlement,
-          isSelected: isSelected,
-          isAdmin: this.componentModel.isAdmin
+          isSelected: isSelected
         };
         entitlements.push(
           <EntitlementPanel key={i}
@@ -78,30 +93,66 @@ class View extends UpdatableView {
                             onDeselected={onEntitlementDeselected}/>
         );
       }
-    }
 
-    let saveBtnModel = {
-      label: 'Save Changes'
-    };
+      saveBtnModel = {
+        label: 'Save Changes'
+      };
 
-    let onSave = this.controller.save.bind(this.controller);
+      submitRequestBtnModel = {
+        label: 'Submit Request'
+      };
 
-    let hr, saveButton;
-    if (this.componentModel.isAdmin) {
+      let onSave = this.controller.save.bind(this.controller);
+      let onSubmitRequest = this.controller.submitRequest.bind(this.controller);
+
+      if (this.componentModel.isAdmin) {
+        saveButton = <PrimaryButton className="save-button" model={saveBtnModel} onClick={onSave}/>;
+      } else {
+        let onCommentsChange = this.controller.onCommentsChange.bind(this.controller);
+        comments =  <div className="comments-wrapper">
+                      <TextArea model={this.commentsModel} onChange={onCommentsChange} />
+                    </div>;
+        saveButton = <PrimaryButton className="save-button" model={submitRequestBtnModel} onClick={onSubmitRequest}/>;
+      }
       hr = <hr />;
-      saveButton = <PrimaryButton className="save-button" model={saveBtnModel} onClick={onSave}/>;
+
+      submitOkBtnModel = {
+        label: 'OK'
+      };
     }
 
     return (
       <div id="entitlements-container" className={className}>
         {entitlements}
         {hr}
+        {comments}
         {saveButton}
         <div className="save-message-wrapper">
           <div className="save-message"></div>
         </div>
+
+        <div id="req-submitted-modal" className="modal fade" tabIndex="-1" role="dialog">
+          <div className="modal-dialog" role="document">
+            <div className="modal-content">
+              <div className="modal-header">
+                <span className="icon-request-approved"/> Request Submitted
+              </div>
+              <div className="modal-body change-picture-wrapper">
+                <div>Request ID</div>
+                <div className="request-id"></div>
+                <div>You will be notified when your<br/>request is processed.</div>
+              </div>
+              <PrimaryButton className="submit-ok-btn" model={submitOkBtnModel} onClick={this.onSubmitOkClick}/>
+            </div>
+          </div>
+        </div>
       </div>
     );
+  }
+
+  /** @private */
+  onSubmitOkClick() {
+    modal.hide($('#req-submitted-modal'));
   }
 }
 
