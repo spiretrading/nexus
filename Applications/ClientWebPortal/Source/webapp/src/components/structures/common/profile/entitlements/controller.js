@@ -68,7 +68,7 @@ class Controller {
       this.componentModel.directoryEntry = directoryEntry;
       this.componentModel.roles = responses[1];
       this.componentModel.userName = directoryEntry.name;
-      this.componentModel.isAdmin = !userService.isAdmin();
+      this.componentModel.isAdmin = userService.isAdmin();
       this.view.update(this.componentModel);
 
       EventBus.publish(Event.Profile.VIEWING_CONTEXT_LOADED, {
@@ -123,8 +123,8 @@ class Controller {
       entitlementModification,
       new Message(-1, DirectoryEntry.DEFAULT, timestamp, [messageBody])
     )
-      .then((requestId) => {
-        this.view.showRequestSubmittedMessage(requestId);
+      .then(accountModificationRequest => {
+        this.view.showRequestSubmittedMessage(accountModificationRequest.id);
       });
   }
 }

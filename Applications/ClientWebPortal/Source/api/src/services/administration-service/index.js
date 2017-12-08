@@ -3,6 +3,7 @@ import AccountRoles from '../commons/account-roles';
 import AccountIdentity from './account-identity';
 import RiskParameters from '../risk-service/risk-parameters';
 import DirectoryEntry from '../../definitions/directory-entry';
+import AccountModificationRequest from '../../definitions/account-modification-request';
 
 /** Spire admin client class */
 class Admin {
@@ -54,8 +55,6 @@ class Admin {
       .catch(this.logErrorAndThrow);
 
     function parseResponse(response) {
-      console.debug(response);
-      console.debug(AccountIdentity.fromData(response));
       return AccountIdentity.fromData(response);
     }
   }
@@ -189,8 +188,7 @@ class Admin {
 
     return httpConnectionManager.send(apiPath, payload, true)
       .then(response => {
-        console.debug(response);
-        return 'EN0042';
+        return AccountModificationRequest.fromData(response);
       })
       .catch(this.logErrorAndThrow);
   }
