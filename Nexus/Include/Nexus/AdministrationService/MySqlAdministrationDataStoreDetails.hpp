@@ -176,8 +176,9 @@ namespace Details {
     }
     auto query = databaseConnection.query();
     query << "CREATE TABLE entitlement_modifications ("
-      "id INTEGER PRIMARY KEY NOT NULL,"
-      "entitlement INTEGER UNSIGNED NOT NULL)";
+      "id INTEGER NOT NULL,"
+      "entitlement INTEGER UNSIGNED NOT NULL,"
+      "INDEX(id))";
     return query.execute();
   }
 
