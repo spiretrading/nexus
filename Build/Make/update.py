@@ -1,10 +1,6 @@
 import argparse
-import distutils
-from distutils import dir_util
 import HTMLParser
-import os
 import re
-import shutil
 import subprocess
 import urllib2
 

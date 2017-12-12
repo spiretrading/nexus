@@ -28,10 +28,10 @@ username=$(egrep -A10 "data_store:" < \
   egrep -o "[^: ]+(.*)")
 password=$(egrep -A10 "data_store:" < \
   ./AdministrationServer/config.yml | \
-  egrep "password:\s*(.*)" | \
+  egrep "password:(\s|\")*([^\"]*)" | \
   head -1 | \
-  egrep -o ":\s*(.*)" | \
-  egrep -o "[^: ]+(.*)")
+  egrep -o ":(\s|\")*([^\"]*)" | \
+  egrep -o "[^:\s\"]+([^\"]*)")
 mysql -h $hostname -u$username -p$password -Dspire < ./reset.sql
 
 for directory in $services; do
