@@ -16,11 +16,11 @@ def user_call(command):
 
 def copy_build(applications, timestamp, name):
   for application in applications:
-    user_call('mkdir -p ./%s/Applications/%s' % (str(timestamp), application))
-    user_call('cp -r ./%s/Applications/%s/Application ./%s/Applications/%s' %
+    user_call('mkdir -p ./%s/%s' % (str(timestamp), application))
+    user_call('cp -r ./%s/Applications/%s/Application/* ./%s/%s' %
       (name, application, str(timestamp), application))
   user_call('mkdir -p ./%s/Libraries' % str(timestamp))
-  user_call('cp -r ./%s/%s/Library/Release ./%s/Libraries' %
+  user_call('cp -r ./%s/%s/Library/Release/*.so ./%s/Libraries' %
     (name, name, str(timestamp)))
 
 def build_repo(repo, path):
@@ -74,17 +74,21 @@ def build_repo(repo, path):
     beam_applications = ['AdminClient', 'RegistryServer', 'ServiceLocator',
       'UidServer']
     copy_build(beam_applications, timestamp, 'Beam')
-    user_call('cp ./Nexus/Applications/*.sh ./%s/Applications' %
-      str(timestamp))
-    user_call('cp ./Nexus/Applications/*.sql ./%s/Applications' %
-      str(timestamp))
-    log_file = open('./%s/build.log' % str(timestamp), 'w')
+    user_call('cp ./Nexus/Applications/*.sh ./%s/' % str(timestamp))
+    user_call('cp ./Nexus/Applications/*.sql ./%s/' % str(timestamp))
+    user_call('mv Nexus Nexus_backup')
+    user_call('mv ./%s Nexus' % str(timestamp))
+    user_call('tar -czf nexus-%s.tar.gz Nexus' % str(timestamp))
+    user_call('touch ./Nexus/build.txt')
+    log_file = open('./Nexus/build.txt', 'w')
     log_file.write(terminal_output)
     log_file.close()
-    user_call('chown $(logname) ./%s/build.log' % str(timestamp))
-    user_call('chgrp $(logname) ./%s/build.log' % str(timestamp))
     destination = os.path.join(path, str(timestamp))
-    user_call('mv %s %s' % (str(timestamp), destination))
+    user_call('mkdir %s' % destination)
+    user_call('mv nexus-%s.tar.gz %s' % (str(timestamp), destination))
+    user_call('mv ./Nexus/build.txt %s' % destination)
+    user_call('rm -rf ./Nexus')
+    user_call('mv Nexus_backup Nexus')
 
 def main():
   parser = argparse.ArgumentParser(
