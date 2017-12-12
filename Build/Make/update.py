@@ -70,6 +70,11 @@ def main():
   output = open(archive, 'wb')
   output.write(response.read())
   output.close()
+  user_call('tar -xzf %s' % archive)
+  python_path = user_call('python -m site --user-site')[0].strip()
+  user_call('cp ./Nexus/Libraries/*.so %s' % python_path)
+  user_call('rm -rf ./Nexus/Libraries/')
+  user_call('rm %s' % archive)
 
 if __name__ == '__main__':
   main()
