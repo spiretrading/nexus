@@ -29,6 +29,8 @@ import marketDatabaseEntry from './definitions/market-database-entry';
 import entitlementModification from './definitions/entitlement-modification';
 import messageBody from './definitions/message-body';
 import message from './definitions/message';
+import accountModificationRequestType from './definitions/account-modification-request-type';
+import accountModificationRequestStatus from './definitions/account-modification-request-status';
 
 // module export configurations
 export const AdministrationClient = administrationClient;
@@ -60,3 +62,5 @@ export const MarketDatabaseEntry = marketDatabaseEntry;
 export const EntitlementModification = entitlementModification;
 export const MessageBody = messageBody;
 export const Message = message;
+export const AccountModificationRequestType = accountModificationRequestType;
+export const AccountModificationRequestStatus = accountModificationRequestStatus;
