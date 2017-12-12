@@ -31,7 +31,7 @@ RequestUpdate.fromData = (data) => {
   return new RequestUpdate(
     data.status,
     DirectoryEntry.fromData(data.account),
-    data.sequenceNumber,
+    data.sequence_number,
     data.timestamp
   );
 };
