@@ -92,6 +92,12 @@ class Controller {
     this.saveLastVisitedPath(path);
   }
 
+  navigateToModificationRequestHistory() {
+    let path = '/modification-request-history';
+    browserHistory.push(path);
+    this.saveLastVisitedPath(path);
+  }
+
   publishSideMenuClosed() {
     EventBus.publish(Event.TopNav.SIDE_MENU_CLOSED);
   }

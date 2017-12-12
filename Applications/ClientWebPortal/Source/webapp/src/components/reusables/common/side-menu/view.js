@@ -24,6 +24,12 @@ class View extends UpdatableView {
   }
 
   /** @private */
+  onModificationRequestsClick() {
+    this.closeMenu();
+    this.controller.navigateToModificationRequestHistory();
+  }
+
+  /** @private */
   onMyProfileClick() {
     this.closeMenu();
     this.controller.navigateToProfileAccount();
@@ -98,6 +104,10 @@ class View extends UpdatableView {
         </div>
         {searchProfilesMenuItem}
         {portfolioMenuItem}
+        <div className="menu-item" onClick={this.onModificationRequestsClick.bind(this)}>
+          <span className="icon-signout"></span>
+          Requests
+        </div>
         <div className="menu-item" onClick={this.onSignOutClick.bind(this)}>
           <span className="icon-signout"></span>
           Sign Out

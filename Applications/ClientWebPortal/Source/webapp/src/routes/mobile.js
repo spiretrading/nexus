@@ -118,6 +118,14 @@ class MobileRoutes extends Routes {
             .then(loadRoute(cb))
             .catch(errorLoading);
         }
+      },
+      {
+        path: 'modification-request-history',
+        getComponent(location, cb) {
+          System.import('../components/structures/common/modification-request-history')
+            .then(loadRoute(cb))
+            .catch(errorLoading);
+        }
       }
     ];
   }
