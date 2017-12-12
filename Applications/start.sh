@@ -31,7 +31,7 @@ password=$(egrep -A10 "data_store:" < \
   egrep "password:(\s|\")*([^\"]*)" | \
   head -1 | \
   egrep -o ":(\s|\")*([^\"]*)" | \
-  egrep -o "[^:\s\"]+([^\"]*)")
+  egrep -o "[^: \"]+(.*)")
 mysql -h $hostname -u$username -p$password -Dspire < ./reset.sql
 
 for directory in $services; do
