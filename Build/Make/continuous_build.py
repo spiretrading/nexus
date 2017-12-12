@@ -1,41 +1,39 @@
 import argparse
 import distutils
 from distutils import dir_util
-import ftplib
 import git
 import os
 import shutil
 import subprocess
 import time
 
-def ftp_upload(ftp, path):
-  for name in os.listdir(path):
-    local_path = os.path.join(path, name)
-    if os.path.isfile(local_path):
-      ftp.storbinary('STOR %s' % name, open(local_path, 'rb'))
-    elif os.path.isdir(local_path):
-      try:
-        ftp.mkd(name)
-      except ftplib.error_perm as e:
-        if not e.args[0].startswith('550'):
-          raise
-      ftp.cwd(name)
-      ftp_upload(ftp, local_path)
-      ftp.cwd('..')
+def call(command):
+  return subprocess.Popen(command, shell=True, executable='/bin/bash',
+    stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 
-def build_repo(repo, name, ftp_site, username, password):
+def user_call(command):
+  return call('sudo -u $(logname) %s' % command)
+
+def copy_build(applications, timestamp, name):
+  for application in applications:
+    user_call('mkdir -p ./%s/Applications/%s' % (str(timestamp), application))
+    user_call('cp -r ./%s/Applications/%s/Application ./%s/Applications/%s' %
+      (name, application, str(timestamp), application))
+  user_call('mkdir -p ./%s/Libraries' % str(timestamp))
+  user_call('cp -r ./%s/%s/Library/Release ./%s/Libraries' %
+    (name, name, str(timestamp)))
+
+def build_repo(repo, path):
   try:
-    shutil.rmtree('./%s' % name)
+    shutil.rmtree('./Nexus')
   except OSError:
     pass
-  repo = git.Repo.clone_from(repo, './%s' % name)
+  user_call('git clone %s Nexus' % repo)
+  repo = git.Repo('./Nexus')
   commits = sorted([commit for commit in repo.iter_commits('master')],
     key = lambda commit: -int(commit.committed_date))
-  ftp = ftplib.FTP(ftp_site)
-  ftp.login(username, password)
-  ftp.cwd('Make/%s' % name)
-  builds = [int(n) for n in ftp.nlst()]
-  ftp.close()
+  builds = [int(d) for d in os.listdir(path) if os.path.isdir(
+    os.path.join(path, d))]
   builds.sort(reverse=True)
   if len(builds) == 0:
     builds.append(int(commits[1].committed_date))
@@ -48,68 +46,58 @@ def build_repo(repo, name, ftp_site, username, password):
       break
   for commit in commits:
     timestamp = int(commit.committed_date)
-    repo.git.checkout(commit.hexsha)
+    user_call('pushd Nexus')
+    user_call('git checkout %s' % commit.hexsha)
+    user_call('popd')
     result = []
-    result.append(subprocess.Popen(['chmod', '-R', 'a+rw', './%s' % name],
-      stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate())
-    result.append(subprocess.Popen('./%s/Build/Make/setup.sh' % name,
-      shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate())
-    os.chdir('./%s/Build/Make/' % name)
-    result.append(subprocess.Popen('./run_cmake.sh', shell=True,
-      stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate())
-    result.append(subprocess.Popen('./build.sh', shell=True,
-      stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate())
+    result.append(call('./Nexus/Build/Make/setup.sh'))
+    os.chdir('./Nexus/Build/Make/')
+    result.append(user_call('./run_cmake.sh'))
+    result.append(user_call('./build.sh'))
     terminal_output = ''
     for output in result:
       terminal_output += output[0] + '\n\n\n\n'
     for output in result:
       terminal_output += output[1] + '\n\n\n\n'
     os.chdir('./../../../')
-    os.makedirs(str(timestamp))
+    user_call('mkdir %s' % str(timestamp))
+    nexus_applications = ['AdministrationServer', 'AsxItchMarketDataFeedClient',
+      'ChartingServer', 'ChiaMarketDataFeedClient', 'ClientWebPortal',
+      'ComplianceServer', 'CseMarketDataFeedClient', 'CtaMarketDataFeedClient',
+      'DefinitionsServer', 'MarketDataClientStressTest',
+      'MarketDataClientTemplate', 'MarketDataRelayServer', 'MarketDataServer',
+      'OrderExecutionBackup', 'OrderExecutionRestore', 'RiskServer',
+      'SimulationMarketDataFeedClient', 'SimulationOrderExecutionServer',
+      'TmxIpMarketDataFeedClient', 'TmxTl1MarketDataFeedClient',
+      'UtpMarketDataFeedClient']
+    copy_build(nexus_applications, timestamp, 'Nexus')
+    beam_applications = ['AdminClient', 'RegistryServer', 'ServiceLocator',
+      'UidServer']
+    copy_build(beam_applications, timestamp, 'Beam')
+    user_call('cp ./Nexus/Applications/*.sh ./%s/Applications' %
+      str(timestamp))
+    user_call('cp ./Nexus/Applications/*.sql ./%s/Applications' %
+      str(timestamp))
     log_file = open('./%s/build.log' % str(timestamp), 'w')
     log_file.write(terminal_output)
     log_file.close()
-    applications = ['AdministrationServer', 'AsxItchMarketDataFeedClient',
-      'ChartingServer', 'ChiaMarketDataFeedClient', 'ClientWebPortal',
-      'ComplianceServer', 'CtaMarketDataFeedClient', 'DefinitionsServer',
-      'MarketDataClientStressTest', 'MarketDataClientTemplate',
-      'MarketDataRelayServer', 'MarketDataServer', 'OrderExecutionBackup',
-      'OrderExecutionRestore', 'RiskServer', 'SimulationMarketDataFeedClient',
-      'SimulationOrderExecutionServer', 'TmxIpMarketDataFeedClient',
-      'TmxTl1MarketDataFeedClient', 'UtpMarketDataFeedClient']
-    for application in applications:
-      dir_util.copy_tree('./%s/Applications/%s/Application' %
-        (name, application), './%s/Applications/%s' %
-        (str(timestamp), application))
-    dir_util.copy_tree('./%s/%s/Library/Release' % (name, name),
-      './%s/Libraries' % str(timestamp))
-    ftp = ftplib.FTP(ftp_site)
-    ftp.login(username, password)
-    ftp.cwd('Make/%s' % name)
-    path = './%s' % str(timestamp)
-    ftp.mkd(os.path.basename(path))
-    ftp.cwd(os.path.basename(path))
-    ftp_upload(ftp, path)
-    shutil.rmtree(path)
+    user_call('chown $(logname) ./%s/build.log' % str(timestamp))
+    user_call('chgrp $(logname) ./%s/build.log' % str(timestamp))
+    destination = os.path.join(path, str(timestamp))
+    user_call('mv %s %s' % (str(timestamp), destination))
 
 def main():
   parser = argparse.ArgumentParser(
     description='v1.0 Copyright (C) 2017 Eidolon Systems Ltd.')
   parser.add_argument('-r', '--repo', type=str, help='Remote repository.',
     required=True)
-  parser.add_argument('-n', '--name', type=str, help='Repository name.',
+  parser.add_argument('-p', '--path', type=str, help='Destination path.',
     required=True)
-  parser.add_argument('-f', '--ftp', type=str, help='FTP address',
-    required=True)
-  parser.add_argument('-u', '--username', type=str, help='Username',
-    default='anonymous')
-  parser.add_argument('-p', '--password', type=str, help='Password',
-    default='')
   parser.add_argument('-t', '--period', type=int, help='Time period.',
     default=600)
   args = parser.parse_args()
   while True:
-    build_repo(args.repo, args.name, args.ftp, args.username, args.password)
+    build_repo(args.repo, args.path)
     time.sleep(args.period)
 
 if __name__ == '__main__':
