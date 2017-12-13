@@ -56,8 +56,6 @@ namespace Accounting {
         const OrderExecutionService::OrderExecutionPublisher&
         orderExecutionPublisher);
 
-      ~PortfolioMonitor();
-
       //! Returns the object publishing updates to the monitored Portfolio.
       const Beam::SnapshotPublisher<UpdateEntry, Portfolio*>&
         GetPublisher() const;
@@ -68,6 +66,7 @@ namespace Accounting {
       OrderExecutionService::ExecutionReportPublisher
         m_executionReportPublisher;
       Beam::ValueSnapshotPublisher<UpdateEntry, Portfolio*> m_publisher;
+      std::unordered_map<Security, BboQuote> m_bboQuotes;
       std::unordered_set<Security> m_securities;
       Beam::RoutineTaskQueue m_tasks;
 
@@ -88,14 +87,9 @@ namespace Accounting {
           marketDataClient)),
         m_executionReportPublisher(orderExecutionPublisher),
         m_publisher(
-          [] (const PortfolioMonitor<PortfolioType,
-              MarketDataClientType>::Portfolio* snapshot,
-              const std::shared_ptr<Beam::QueueWriter<
-              PortfolioMonitor<PortfolioType,
-              MarketDataClientType>::UpdateEntry>>& monitor) {
+          [] (auto snapshot, auto& monitor) {
             ForEachPortfolioEntry(*snapshot,
-              [&] (const PortfolioMonitor<PortfolioType,
-                  MarketDataClientType>::UpdateEntry& update) {
+              [&] (auto& update) {
                 monitor->Push(update);
               });
           }, Beam::SignalHandling::NullSlot(), &*m_portfolio) {
@@ -104,9 +98,6 @@ namespace Accounting {
       std::bind(&PortfolioMonitor::OnExecutionReport, this,
       std::placeholders::_1)));
   }
-
-  template<typename PortfolioType, typename MarketDataClientType>
-  PortfolioMonitor<PortfolioType, MarketDataClientType>::~PortfolioMonitor() {}
 
   template<typename PortfolioType, typename MarketDataClientType>
   const Beam::SnapshotPublisher<typename PortfolioMonitor<PortfolioType,
@@ -155,6 +146,12 @@ namespace Accounting {
       const Security& security, const BboQuote& bbo) {
     m_publisher.With(
       [&] {
+        auto& lastBbo = m_bboQuotes[security];
+        if(lastBbo.m_ask.m_price == bbo.m_ask.m_price &&
+            lastBbo.m_bid.m_price == bbo.m_bid.m_price) {
+          return;
+        }
+        lastBbo = bbo;
         if(bbo.m_ask.m_price == Money::ZERO) {
           if(bbo.m_bid.m_price == Money::ZERO) {
             return;
@@ -176,7 +173,7 @@ namespace Accounting {
       auto& security = executionReport.m_order->GetInfo().m_fields.m_security;
       auto securityIterator = m_securities.find(security);
       if(securityIterator == m_securities.end()) {
-        auto bboQuery = MarketDataService::QueryRealTimeWithSnapshot(security);
+        auto bboQuery = Beam::Queries::BuildCurrentQuery(security);
         m_marketDataClient->QueryBboQuotes(bboQuery,
           m_tasks.GetSlot<BboQuote>(std::bind(&PortfolioMonitor::OnBbo, this,
           security, std::placeholders::_1)));

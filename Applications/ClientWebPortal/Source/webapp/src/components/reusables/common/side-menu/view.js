@@ -6,31 +6,45 @@ import imageResLoader from 'utils/image-res-loader';
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
+
+    this.closeMenu = this.closeMenu.bind(this);
   }
 
-  /** @private */
-  onMenuCloseClick() {
+  closeMenu() {
     $('#side-menu-container').stop().fadeOut({
       duration: 60
     });
+    this.controller.publishSideMenuClosed();
   }
 
   /** @private */
   onSignOutClick() {
+    this.closeMenu();
     this.controller.signOut();
-    this.onMenuCloseClick();
+  }
+
+  /** @private */
+  onModificationRequestsClick() {
+    this.closeMenu();
+    this.controller.navigateToModificationRequestHistory();
   }
 
   /** @private */
   onMyProfileClick() {
-    this.onMenuCloseClick();
-    this.controller.navigateToMyProfileAccount.apply(this.controller);
+    this.closeMenu();
+    this.controller.navigateToProfileAccount();
   }
 
   /** @private */
-  onSearchProfilesClick() {
-    this.onMenuCloseClick();
-    this.controller.navigateToSearchProfiles.apply(this.controller);
+  onAccountsClick() {
+    this.closeMenu();
+    this.controller.navigateToAccounts();
+  }
+
+  /** @private */
+  onPortfolioClick() {
+    this.closeMenu();
+    this.controller.navigateToPortfolio();
   }
 
   initialize() {
@@ -39,6 +53,14 @@ class View extends UpdatableView {
     }).on('mouseleave', () => {
       $('#side-menu-container .close-btn').removeClass('close-btn-hover');
     });
+
+    let sideMenu = document.getElementById('side-menu-container');
+    sideMenu.addEventListener('touchcancel', function(e) {
+      e.preventDefault();
+    }, false);
+    sideMenu.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+    }, false);
   }
 
   dispose() {
@@ -55,32 +77,36 @@ class View extends UpdatableView {
   }
 
   render() {
-    let searchProfilesMenuItem;
+    let searchProfilesMenuItem, portfolioMenuItem;
     if (this.componentModel.isAdmin || this.componentModel.isManager) {
-      searchProfilesMenuItem = <div className="menu-item" onClick={this.onSearchProfilesClick.bind(this)}>
-        <span className="icon-search"></span>
-        Search
-      </div>
+      searchProfilesMenuItem =
+        <div className="menu-item" onClick={this.onAccountsClick.bind(this)}>
+          <span className="icon-search"></span>
+          Accounts
+        </div>
+
+      portfolioMenuItem =
+        <div className="menu-item" onClick={this.onPortfolioClick.bind(this)}>
+          <span className="icon-portfolio"></span>
+          Portfolio
+        </div>
     }
 
     return (
       <div id="side-menu-container">
         <div className="logo">
-          <img src={imageResLoader.getResPath("images/top_logo_inverted.png")}/>
+          <img src={imageResLoader.getResPath("/images/top_logo_inverted.png")}/>
         </div>
-        <span className="icon-burger close-btn" onClick={this.onMenuCloseClick.bind(this)}></span>
+        <span className="icon-burger close-btn" onClick={this.closeMenu.bind(this)}></span>
         <div className="menu-item" onClick={this.onMyProfileClick.bind(this)}>
-          <span className="icon-my_profile"></span>
+          <span className="icon-profile"></span>
           My Profile
         </div>
         {searchProfilesMenuItem}
-        <div className="menu-item">
-          <span className="icon-reports"></span>
-          Reports
-        </div>
-        <div className="menu-item">
-          <span className="icon-portfolio"></span>
-          Portfolio
+        {portfolioMenuItem}
+        <div className="menu-item" onClick={this.onModificationRequestsClick.bind(this)}>
+          <span className="icon-signout"></span>
+          Requests
         </div>
         <div className="menu-item" onClick={this.onSignOutClick.bind(this)}>
           <span className="icon-signout"></span>

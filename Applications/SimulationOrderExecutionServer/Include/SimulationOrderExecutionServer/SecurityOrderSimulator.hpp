@@ -78,8 +78,7 @@ namespace OrderExecutionService {
       Beam::RefType<TimeClient> timeClient)
       : m_timeClient(timeClient.Get()),
         m_bboQuoteQueue(std::make_shared<Beam::StateQueue<BboQuote>>()) {
-    MarketDataService::SecurityMarketDataQuery bboQuery =
-      MarketDataService::QueryRealTimeWithSnapshot(security);
+    auto bboQuery = Beam::Queries::BuildCurrentQuery(security);
     marketDataClient.QueryBboQuotes(bboQuery, m_bboQuoteQueue);
     marketDataClient.QueryBboQuotes(bboQuery, m_tasks.GetSlot<BboQuote>(
       std::bind(&SecurityOrderSimulator::OnBbo, this, std::placeholders::_1)));

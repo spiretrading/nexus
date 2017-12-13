@@ -2,6 +2,7 @@ import React, {PropTypes, Component} from 'react';
 import TopNav from 'components/reusables/common/top-nav';
 import SideMenu from 'components/reusables/common/side-menu';
 import deviceDetector from 'utils/device-detector';
+import {DirectoryEntry} from 'spire-client';
 import './style.scss';
 
 class App extends Component {
@@ -29,8 +30,69 @@ class App extends Component {
     }
   }
 
+  /** @private */
+  onSideMenuOpened() {
+    if (deviceDetector.isMobile()) {
+      $('#menu-grey-screen').fadeIn(Config.FADE_DURATION);
+    }
+  }
+
+  /** @private */
+  onSideMenuClosed() {
+    if (deviceDetector.isMobile()) {
+      $('#menu-grey-screen').fadeOut(Config.FADE_DURATION);
+    }
+  }
+
+  /** @private */
+  isFullScreen() {
+    // initial home login screen
+    if (location.pathname == '/') {
+      return true;
+    }
+
+    return false;
+  }
+
+  /** @private */
+  onSubMenuUpdated(eventName, doesSubMenuExist) {
+    let height;
+    if (doesSubMenuExist) {
+      height = 'calc(100vh - 135px)';
+    } else if (this.isFullScreen()) {
+      height = 'calc(100vh)';
+    } else {
+      height = 'calc(100vh - 85px)';
+    }
+
+    if (!deviceDetector.isMobile()){
+      $('#site-content-container').slimScroll({
+        height: height,
+        opacity: '0.4'
+      });
+    }
+  }
+
   componentDidMount() {
     this.hideIfHome();
+    EventBus.subscribe(Event.TopNav.SIDE_MENU_OPENED, this.onSideMenuOpened.bind(this));
+    EventBus.subscribe(Event.TopNav.SIDE_MENU_CLOSED, this.onSideMenuClosed.bind(this));
+    EventBus.subscribe(Event.TopNav.SUBMENU_UPDATED, this.onSubMenuUpdated.bind(this));
+
+    let greyScreen = document.getElementById('menu-grey-screen');
+    greyScreen.addEventListener('touchcancel', function(e) {
+      e.preventDefault();
+    }, false);
+    greyScreen.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+    }, false);
+
+    greyScreen.addEventListener('click', function(e) {
+      EventBus.publish(Event.TopNav.CLOSE_SIDE_MENU);
+    }, false);
+
+    EventBus.publish(Event.Application.RENDERED);
+    this.publishPageTransitioned();
   }
 
   componentDidUpdate() {
@@ -52,6 +114,7 @@ class App extends Component {
         <div id="top-nav-filler"></div>
         <div id="side-menu-wrapper">
           <SideMenu />
+          <div id="menu-grey-screen"></div>
         </div>
         <div id="site-content-container">
           {this.props.children}

@@ -48,6 +48,6 @@ RecordLuaReactorParameter::RecordLuaReactorParameter(
       m_recordType(recordType) {}
 
 void RecordLuaReactorParameter::Push(lua_State& state) const {
-  PushRecord(state, static_cast<const Reactor<Record>&>(GetReactor()).Eval(),
+  PushRecord(state, static_cast<const Reactor<Record>&>(*GetReactor()).Eval(),
     *m_recordType);
 }

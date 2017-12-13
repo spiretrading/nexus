@@ -197,31 +197,33 @@ namespace Details {
   struct SqlFunctor {
     std::string operator ()(MarketCode market) const {
       std::string index = "market = \"";
-      index += market.GetData();
+      index += Beam::Queries::EscapeSql(market.GetData());
       index += "\"";
       return index;
     };
 
     std::string InsertKey(MarketCode market) const {
-      return "\"" + std::string(market.GetData()) + "\"";
+      return "\"" + Beam::Queries::EscapeSql(market.GetData()) + "\"";
     }
 
     std::string operator ()(const Security& security) const {
-      std::string index = "symbol = \"" + security.GetSymbol() +
+      std::string index = "symbol = \"" +
+        Beam::Queries::EscapeSql(security.GetSymbol()) +
         "\" AND country = " + boost::lexical_cast<std::string>(
         static_cast<int>(security.GetCountry()));
       return index;
     };
 
     std::string InsertKey(const Security& security) const {
-      return "\"" + security.GetSymbol() + "\", " +
+      return "\"" + Beam::Queries::EscapeSql(security.GetSymbol()) + "\", " +
         boost::lexical_cast<std::string>(
         static_cast<int>(security.GetCountry()));
     }
 
     SequencedOrderImbalance operator ()(const order_imbalances& row) const {
       auto orderImbalance = Beam::Queries::MakeSequencedValue(OrderImbalance(
-        Security(row.symbol, std::string(row.symbol_market), row.country),
+        Security(row.symbol, std::string(row.symbol_market),
+        static_cast<CountryCode>(row.country)),
         static_cast<Side>(row.side), row.size,
         Money::FromRepresentation(row.price),
         Beam::MySql::FromMySqlTimestamp(row.timestamp)),

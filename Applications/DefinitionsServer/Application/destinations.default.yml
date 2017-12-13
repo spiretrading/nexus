@@ -18,6 +18,10 @@ destinations:
     markets:
       - XTSE
       - XTSX
+  - id: CSE
+    description: Canadian Securities Exchange
+    markets:
+      - XCNQ
   - id: CX2
     description: Chi-X 2
     markets:
@@ -58,15 +62,49 @@ destinations:
     markets:
       - XTSE
       - XTSX
+  - id: AMEX
+    description: NYSE MKT LLC
+    markets:
+      - XASE
   - id: ARCA
     description: NYSE ARCA
     markets:
+      - ARCX
       - XASE
       - XNAS
       - XNYS
   - id: BATS
     description: BATS Exchange
     markets:
+      - ARCX
+      - XASE
+      - XNAS
+      - XNYS
+  - id: BATY
+    description: BATS Y-Exchange
+    markets:
+      - ARCX
+      - XASE
+      - XNAS
+      - XNYS
+  - id: CBSX
+    description: CBOF Stock Exchange
+    markets:
+      - ARCX
+      - XASE
+      - XNAS
+      - XNYS
+  - id: EDGA
+    description: EDGA Exchange
+    markets:
+      - ARCX
+      - XASE
+      - XNAS
+      - XNYS
+  - id: EDGX
+    description: EDGX Exchange
+    markets:
+      - ARCX
       - XASE
       - XNAS
       - XNYS
@@ -74,20 +112,24 @@ destinations:
     description: New York Stock Exchange
     markets:
       - XASE
-      - XNAS
       - XNYS
   - id: NASDAQ
     description: NASDAQ
     markets:
+      - ARCX
       - XASE
       - XNAS
       - XNYS
 
 preferred_destinations:
+  - market: ARCX
+    destination: NASDAQ
   - market: XASE
-    destination: NYSE
+    destination: NASDAQ
   - market: XASX
     destination: ASXT
+  - market: XCNQ
+    destination: CSE
   - market: XNAS
     destination: NASDAQ
   - market: XNYSE
@@ -101,8 +143,10 @@ manual_order_entry:
   id: MOE
   description: Manual Order Entry
   markets:
+    - ARCX
     - XASE
     - XASX
+    - XCNQ
     - XNAS
     - XNYS
     - XTSE

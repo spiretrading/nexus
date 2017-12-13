@@ -2,12 +2,16 @@
 #include <Beam/Python/BoostPython.hpp>
 #include "Nexus/Python/Accounting.hpp"
 #include "Nexus/Python/AdministrationService.hpp"
+#include "Nexus/Python/Backtester.hpp"
 #include "Nexus/Python/Definitions.hpp"
 #include "Nexus/Python/DefinitionsService.hpp"
 #include "Nexus/Python/FeeHandling.hpp"
 #include "Nexus/Python/MarketDataService.hpp"
 #include "Nexus/Python/OrderExecutionService.hpp"
 #include "Nexus/Python/Queries.hpp"
+#include "Nexus/Python/RiskService.hpp"
+#include "Nexus/Python/ServiceClients.hpp"
+#include "Nexus/Python/Tasks.hpp"
 
 using namespace Nexus;
 using namespace Nexus::Python;
@@ -33,4 +37,8 @@ BOOST_PYTHON_MODULE(nexus) {
   ExportMarketDataService();
   ExportOrderExecutionService();
   ExportQueries();
+  ExportRiskService();
+  ExportServiceClients();
+  ExportBacktester();
+  ExportTasks();
 }

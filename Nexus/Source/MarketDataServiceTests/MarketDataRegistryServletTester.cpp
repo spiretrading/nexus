@@ -5,7 +5,8 @@
 using namespace Beam;
 using namespace Beam::IO;
 using namespace Beam::Queries;
-using namespace Beam::Serialization;
+using namespace Beam::Services;
+using namespace Beam::Services::Tests;
 using namespace Beam::ServiceLocator;
 using namespace Beam::ServiceLocator::Tests;
 using namespace Beam::Threading;
@@ -24,26 +25,31 @@ namespace {
 }
 
 void MarketDataRegistryServletTester::setUp() {
-  m_serviceLocatorInstance.Initialize();
-  m_serviceLocatorInstance->Open();
-  auto servletAccount = m_serviceLocatorInstance->GetRoot().MakeAccount(
+  m_serviceLocatorEnvironment.emplace();
+  m_serviceLocatorEnvironment->Open();
+  auto administrationServiceLocatorClient =
+    m_serviceLocatorEnvironment->BuildClient();
+  administrationServiceLocatorClient->SetCredentials("root", "");
+  auto servletAccount = m_serviceLocatorEnvironment->GetRoot().MakeAccount(
     "servlet", "", DirectoryEntry::GetStarDirectory());
-  auto clientEntry = m_serviceLocatorInstance->GetRoot().MakeAccount("client",
-    "", DirectoryEntry::GetStarDirectory());
+  auto clientEntry = m_serviceLocatorEnvironment->GetRoot().MakeAccount(
+    "client", "", DirectoryEntry::GetStarDirectory());
   auto entitlementsDirectory =
-    m_serviceLocatorInstance->GetRoot().MakeDirectory("entitlements",
+    m_serviceLocatorEnvironment->GetRoot().MakeDirectory("entitlements",
     DirectoryEntry::GetStarDirectory());
-  auto nyseEntitlementGroup = m_serviceLocatorInstance->GetRoot().MakeDirectory(
+  auto nyseEntitlementGroup =
+    m_serviceLocatorEnvironment->GetRoot().MakeDirectory(
     "NYSE", entitlementsDirectory);
   Permissions servletPermissions;
   servletPermissions.Set(Permission::READ);
   servletPermissions.Set(Permission::MOVE);
   servletPermissions.Set(Permission::ADMINISTRATE);
-  m_serviceLocatorInstance->GetRoot().StorePermissions(servletAccount,
+  m_serviceLocatorEnvironment->GetRoot().StorePermissions(servletAccount,
     entitlementsDirectory, servletPermissions);
-  auto tsxEntitlementGroup = m_serviceLocatorInstance->GetRoot().MakeDirectory(
+  auto tsxEntitlementGroup =
+    m_serviceLocatorEnvironment->GetRoot().MakeDirectory(
     "TSX", entitlementsDirectory);
-  m_entitlements.Initialize();
+  m_entitlements.emplace();
   EntitlementDatabase::Entry nyseEntitlement;
   nyseEntitlement.m_name = "NYSE";
   nyseEntitlement.m_groupEntry = nyseEntitlementGroup;
@@ -60,46 +66,49 @@ void MarketDataRegistryServletTester::setUp() {
   EntitlementKey chicTsxKey{DefaultMarkets::TSX(), DefaultMarkets::CHIC()};
   tsxEntitlements.m_applicability[chicTsxKey].Set(MarketDataType::BOOK_QUOTE);
   m_entitlements->Add(tsxEntitlements);
-  m_serviceLocatorInstance->GetRoot().Associate(clientEntry,
+  m_serviceLocatorEnvironment->GetRoot().Associate(clientEntry,
     nyseEntitlementGroup);
-  m_serviceLocatorInstance->GetRoot().Associate(clientEntry,
+  m_serviceLocatorEnvironment->GetRoot().Associate(clientEntry,
     tsxEntitlementGroup);
-  m_serverConnection.Initialize();
-  m_clientProtocol.Initialize(Initialize(string("test"),
-    Ref(*m_serverConnection)), Initialize());
+  auto serverConnection = std::make_shared<TestServerConnection>();
+  m_clientProtocol.emplace(Initialize("test", Ref(*serverConnection)),
+    Initialize());
   Nexus::Queries::RegisterQueryTypes(
     Store(m_clientProtocol->GetSlots().GetRegistry()));
   RegisterMarketDataRegistryServices(Store(m_clientProtocol->GetSlots()));
   RegisterMarketDataRegistryMessages(Store(m_clientProtocol->GetSlots()));
-  m_servletServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
-  m_servletServiceLocatorClient->SetCredentials("servlet", "");
-  m_servletServiceLocatorClient->Open();
-  m_registry.Initialize();
-  m_registryServlet.Initialize(*m_entitlements,
-    Ref(*m_servletServiceLocatorClient), &*m_registry, Initialize());
-  m_servlet.Initialize(&*m_servletServiceLocatorClient, &*m_registryServlet);
-  m_container.Initialize(&*m_servlet, &*m_serverConnection,
-    factory<std::shared_ptr<TriggerTimer>>());
+  auto servletServiceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
+  servletServiceLocatorClient->SetCredentials("servlet", "");
+  servletServiceLocatorClient->Open();
+  m_administrationEnvironment.emplace(
+    std::move(administrationServiceLocatorClient));
+  m_administrationEnvironment->SetEntitlements(*m_entitlements);
+  m_administrationEnvironment->Open();
+  auto marketDataAdministrationClient =
+    m_administrationEnvironment->BuildClient(Ref(*servletServiceLocatorClient));
+  m_registry.emplace();
+  m_registryServlet.emplace(std::move(marketDataAdministrationClient),
+    &*m_registry, Initialize());
+  m_container.emplace(Initialize(std::move(servletServiceLocatorClient),
+    &*m_registryServlet), serverConnection,
+    factory<std::unique_ptr<TriggerTimer>>());
   m_container->Open();
-  m_clientServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
-  m_clientServiceLocatorClient->SetCredentials("client", "");
-  m_clientServiceLocatorClient->Open();
+  auto clientServiceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
+  clientServiceLocatorClient->SetCredentials("client", "");
+  clientServiceLocatorClient->Open();
   m_clientProtocol->Open();
-  SessionAuthenticator<TestServiceLocatorClient> authenticator(
-    Ref(*m_clientServiceLocatorClient));
+  SessionAuthenticator<VirtualServiceLocatorClient> authenticator{
+    Ref(*clientServiceLocatorClient)};
   authenticator(*m_clientProtocol);
 }
 
 void MarketDataRegistryServletTester::tearDown() {
-  m_clientProtocol.Reset();
-  m_clientServiceLocatorClient.reset();
-  m_container.Reset();
-  m_servlet.Reset();
-  m_registryServlet.Reset();
-  m_registry.Reset();
-  m_entitlements.Reset();
-  m_servletServiceLocatorClient.reset();
-  m_serviceLocatorInstance->Close();
+  m_clientProtocol.reset();
+  m_container.reset();
+  m_registryServlet.reset();
+  m_registry.reset();
+  m_entitlements.reset();
+  m_serviceLocatorEnvironment->Close();
 }
 
 void MarketDataRegistryServletTester::TestMarketAndSourceEntitlement() {
@@ -107,8 +116,8 @@ void MarketDataRegistryServletTester::TestMarketAndSourceEntitlement() {
   query.SetIndex(GetTsxTestSecurity());
   query.SetRange(Range::RealTime());
   auto snapshot = m_clientProtocol->SendRequest<QueryBookQuotesService>(query);
-  SecurityBookQuote bookQuote(BookQuote("CHIC", false, DefaultMarkets::CHIC(),
-    Quote(Money::ONE, 100, Side::BID), second_clock::universal_time()),
-    GetTsxTestSecurity());
+  SecurityBookQuote bookQuote{BookQuote{"CHIC", false, DefaultMarkets::CHIC(),
+    Quote{Money::ONE, 100, Side::BID}, second_clock::universal_time()},
+    GetTsxTestSecurity()};
   m_registryServlet->UpdateBookQuote(bookQuote, 1);
 }

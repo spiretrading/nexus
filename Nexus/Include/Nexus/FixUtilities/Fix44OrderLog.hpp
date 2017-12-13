@@ -119,12 +119,13 @@ namespace FixUtilities {
     private:
       struct RecoveredExecutionReport {
         FIX44::ExecutionReport m_message;
-        std::function<void (Beam::Out<OrderExecutionService::ExecutionReport>)>
-          m_callback;
+        std::function<void (const OrderExecutionService::Order&,
+          Beam::Out<OrderExecutionService::ExecutionReport>)> m_callback;
 
         RecoveredExecutionReport(const FIX44::ExecutionReport& message,
           const std::function<
-          void (Beam::Out<OrderExecutionService::ExecutionReport>)>& callback);
+          void (const OrderExecutionService::Order&,
+          Beam::Out<OrderExecutionService::ExecutionReport>)>& callback);
       };
       Beam::Threading::Sync<std::unordered_map<OrderExecutionService::OrderId,
         std::shared_ptr<OrderExecutionService::PrimitiveOrder>>> m_orders;
@@ -154,7 +155,8 @@ namespace FixUtilities {
 
   inline Fix44OrderLog::RecoveredExecutionReport::RecoveredExecutionReport(
       const FIX44::ExecutionReport& message, const std::function<
-      void (Beam::Out<OrderExecutionService::ExecutionReport>)>& callback)
+      void (const OrderExecutionService::Order&,
+      Beam::Out<OrderExecutionService::ExecutionReport>)>& callback)
       : m_message(message),
         m_callback(callback) {}
 
@@ -329,7 +331,8 @@ namespace FixUtilities {
     FIX::OrderQty orderQty(
       static_cast<FIX::QTY>(order->GetFields().m_quantity));
     orderCancelRequest.set(orderQty);
-    f(Beam::Store(orderCancelRequest));
+    f(static_cast<const OrderExecutionService::Order&>(*order),
+      Beam::Store(orderCancelRequest));
     auto sendMessage = false;
     order->With(
       [&] (OrderStatus status,
@@ -361,12 +364,12 @@ namespace FixUtilities {
     // TODO: Turn this into a transaction to avoid possible race condition.
     auto order = FindOrder(*orderId);
     if(order == nullptr) {
-      RecoveredExecutionReport recoveredExecutionReport(message, f);
+      RecoveredExecutionReport recoveredExecutionReport(message, std::move(f));
       m_recoveredExecutionReports.Get(*orderId).PushBack(
         recoveredExecutionReport);
       return;
     }
-    Update(message, timestamp, order, f);
+    Update(message, timestamp, order, std::move(f));
   }
 
   inline std::shared_ptr<OrderExecutionService::PrimitiveOrder>
@@ -458,7 +461,8 @@ namespace FixUtilities {
         updatedReport.m_lastQuantity = lastQuantity;
         updatedReport.m_lastPrice = lastPrice;
         updatedReport.m_text = text.getString();
-        f(Beam::Store(updatedReport));
+        f(static_cast<const OrderExecutionService::Order&>(*order),
+          Beam::Store(updatedReport));
         order->Update(updatedReport);
       });
   }

@@ -1,16 +1,11 @@
 #ifndef NEXUS_BUYINGPOWERCHECKTESTER_HPP
 #define NEXUS_BUYINGPOWERCHECKTESTER_HPP
-#include <Beam/Pointers/DelayPtr.hpp>
-#include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
-#include <Beam/ServiceLocatorTests/ServiceLocatorTestInstance.hpp>
-#include <Beam/Threading/TriggerTimer.hpp>
-#include <Beam/TimeService/IncrementalTimeClient.hpp>
-#include <Beam/UidServiceTests/UidServiceTestInstance.hpp>
+#include <Beam/Queues/Queue.hpp>
+#include <boost/optional/optional.hpp>
 #include <cppunit/extensions/HelperMacros.h>
-#include "Nexus/AdministrationServiceTests/AdministrationServiceTestInstance.hpp"
-#include "Nexus/MarketDataServiceTests/MarketDataServiceTestInstance.hpp"
 #include "Nexus/OrderExecutionService/BuyingPowerCheck.hpp"
-#include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceInstance.hpp"
+#include "Nexus/ServiceClients/TestEnvironment.hpp"
+#include "Nexus/ServiceClients/TestServiceClients.hpp"
 
 namespace Nexus {
 namespace OrderExecutionService {
@@ -22,21 +17,10 @@ namespace Tests {
   class BuyingPowerCheckTester : public CPPUNIT_NS::TestFixture {
     public:
 
-      //! The type of ServiceLocatorClient.
-      using ServiceLocatorClient =
-        Beam::ServiceLocator::VirtualServiceLocatorClient;
-
-      //! The type of AdministrationClient.
-      using AdministrationClient =
-        AdministrationService::VirtualAdministrationClient;
-
-      //! The type of MarketDataClient.
-      using MarketDataClient = MarketDataService::VirtualMarketDataClient;
-
       //! The type of BuyingPowerCheck to test.
       using BuyingPowerCheck = OrderExecutionService::BuyingPowerCheck<
-        std::unique_ptr<AdministrationClient>,
-        std::unique_ptr<MarketDataClient>>;
+        AdministrationService::VirtualAdministrationClient*,
+        MarketDataService::VirtualMarketDataClient*>;
 
       virtual void setUp();
 
@@ -51,25 +35,24 @@ namespace Tests {
       //! Tests a submission that is then rejected.
       void TestSubmissionThenRejection();
 
+      //! Add a filled order for 100 shares at $1.00.
+      //! Submit an order for 100 shares at $2.00.
+      //! Expect the order to be accepted.
+      void TestOrderRecovery();
+
     private:
-      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestInstance>
-        m_serviceLocatorInstance;
-      Beam::DelayPtr<Beam::UidService::Tests::UidServiceTestInstance>
-        m_uidServiceInstance;
-      Beam::DelayPtr<
-        AdministrationService::Tests::AdministrationServiceTestInstance>
-        m_administrationServiceInstance;
-      Beam::DelayPtr<MarketDataService::Tests::MarketDataServiceTestInstance>
-        m_marketDataServiceInstance;
-      std::unique_ptr<ServiceLocatorClient> m_serviceLocatorClient;
-      Beam::DelayPtr<BuyingPowerCheck> m_buyingPowerCheck;
-      Beam::ServiceLocator::DirectoryEntry m_traderAccount;
+      boost::optional<TestEnvironment> m_environment;
+      std::shared_ptr<Beam::Queue<const OrderExecutionService::Order*>>
+        m_orderSubmissions;
+      boost::optional<TestServiceClients> m_serviceClients;
+      boost::optional<BuyingPowerCheck> m_buyingPowerCheck;
       RiskService::RiskParameters m_traderRiskParameters;
 
       CPPUNIT_TEST_SUITE(BuyingPowerCheckTester);
         CPPUNIT_TEST(TestSubmission);
         CPPUNIT_TEST(TestAddWithoutSubmission);
         CPPUNIT_TEST(TestSubmissionThenRejection);
+        CPPUNIT_TEST(TestOrderRecovery);
       BEAM_CPPUNIT_TEST_SUITE_END();
   };
 }

@@ -1,16 +1,11 @@
 #ifndef NEXUS_ADMINISTRATIONSERVLETTESTER_HPP
 #define NEXUS_ADMINISTRATIONSERVLETTESTER_HPP
+#include <boost/optional/optional.hpp>
 #include <cppunit/extensions/HelperMacros.h>
-#include <Beam/IO/LocalClientChannel.hpp>
-#include <Beam/IO/LocalServerConnection.hpp>
-#include <Beam/IO/SharedBuffer.hpp>
-#include <Beam/Pointers/DelayPtr.hpp>
-#include <Beam/Serialization/BinaryReceiver.hpp>
-#include <Beam/Serialization/BinarySender.hpp>
-#include <Beam/ServiceLocatorTests/ServiceLocatorTestInstance.hpp>
+#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
-#include <Beam/Threading/TriggerTimer.hpp>
+#include <Beam/ServicesTests/ServicesTests.hpp>
 #include "Nexus/AdministrationService/AdministrationServlet.hpp"
 #include "Nexus/AdministrationService/LocalAdministrationDataStore.hpp"
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTests.hpp"
@@ -25,30 +20,12 @@ namespace Tests {
   class AdministrationServletTester: public CPPUNIT_NS::TestFixture {
     public:
 
-      //! The type of ServerConnection.
-      using ServerConnection =
-        Beam::IO::LocalServerConnection<Beam::IO::SharedBuffer>;
-
-      //! The type of Channel from the client to the server.
-      using ClientChannel =
-        Beam::IO::LocalClientChannel<Beam::IO::SharedBuffer>;
-
       //! The type of ServiceProtocolServer.
-      using ServletContainer = Beam::Services::ServiceProtocolServletContainer<
+      using ServletContainer =
+        Beam::Services::Tests::TestServiceProtocolServletContainer<
         MetaAdministrationServlet<
         Beam::ServiceLocator::VirtualServiceLocatorClient*,
-        std::shared_ptr<LocalAdministrationDataStore>>,
-        std::shared_ptr<ServerConnection>,
-        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-        Beam::Codecs::NullEncoder,
-        std::shared_ptr<Beam::Threading::TriggerTimer>>;
-
-      //! The type of ServiceProtocol on the client side.
-      using ClientServiceProtocolClient =
-        Beam::Services::ServiceProtocolClient<
-        Beam::Services::MessageProtocol<ClientChannel,
-        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>>,
-        Beam::Threading::TriggerTimer>;
+        std::shared_ptr<LocalAdministrationDataStore>>>;
 
       virtual void setUp();
 
@@ -79,12 +56,13 @@ namespace Tests {
       void TestLoadManagedTradingGroups();
 
     private:
-      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestInstance>
-        m_serviceLocatorInstance;
+      boost::optional<
+        Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment>
+        m_serviceLocatorEnvironment;
       std::shared_ptr<LocalAdministrationDataStore> m_dataStore;
-      std::shared_ptr<ServerConnection> m_serverConnection;
-      Beam::DelayPtr<ServletContainer> m_container;
-      Beam::DelayPtr<ClientServiceProtocolClient> m_clientProtocol;
+      boost::optional<ServletContainer> m_container;
+      boost::optional<Beam::Services::Tests::TestServiceProtocolClient>
+        m_clientProtocol;
 
       Beam::ServiceLocator::DirectoryEntry GetAdministratorsDirectory();
       Beam::ServiceLocator::DirectoryEntry GetServicesDirectory();

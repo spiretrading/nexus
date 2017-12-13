@@ -4,11 +4,11 @@ class Modal {
     this.onModalClosed = null;
   }
 
-  show($element) {
+  show($element, onModalOpened) {
     $element.modal({
       backdrop: 'static',
       keyboard: false
-    }).on('shown.bs.modal', onShown)
+    }).on('shown.bs.modal', onShown.bind(this))
       .on('hidden.bs.modal', onHidden.bind(this))
       .show();
 
@@ -17,14 +17,13 @@ class Modal {
         e.preventDefault();
       });
 
-      $('.modal').on('touchmove', (e) => {
-        e.preventDefault();
-      });
+      if (onModalOpened != null) {
+        onModalOpened();
+      }
     }
 
     function onHidden(event) {
       $('.modal-backdrop').off();
-      $('.modal').off();
 
       if (this.onModalClosed != null) {
         this.onModalClosed();

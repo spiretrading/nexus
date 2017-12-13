@@ -1,5 +1,6 @@
 #ifndef NEXUS_ORDERINFO_HPP
 #define NEXUS_ORDERINFO_HPP
+#include <ostream>
 #include <tuple>
 #include <vector>
 #include <Beam/Serialization/DataShuttle.hpp>
@@ -92,6 +93,12 @@ namespace OrderExecutionService {
   */
   inline bool operator !=(const OrderInfo& lhs, const OrderInfo& rhs) {
     return !(lhs == rhs);
+  }
+
+  inline std::ostream& operator <<(std::ostream& out, const OrderInfo& value) {
+    return out << "(" << value.m_fields << " " << value.m_submissionAccount <<
+      " " << value.m_orderId << " " << value.m_shortingFlag << " " <<
+      value.m_timestamp << ")";
   }
 
   inline OrderInfo::OrderInfo()

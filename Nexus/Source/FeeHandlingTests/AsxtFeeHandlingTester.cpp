@@ -9,6 +9,7 @@
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;
+using namespace boost;
 using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Tests;
@@ -23,25 +24,31 @@ namespace {
     return fields;
   }
 
-  Money AsxtCalculateFee(const AsxtFeeTable& feeTable,
-      const OrderFields& orderFields, const ExecutionReport& executionReport) {
-    return CalculateFee(feeTable, executionReport);
+  AsxtFeeTable BuildFeeTable() {
+    AsxtFeeTable feeTable;
+    feeTable.m_gstRate = 1;
+    feeTable.m_tradeRate = 1;
+    feeTable.m_clearingRateTable[0] = rational<int>{1, 1000};
+    feeTable.m_clearingRateTable[1] = rational<int>{1, 100};
+    feeTable.m_clearingRateTable[2] = rational<int>{1, 10};
+    return feeTable;
+  }
+
+  Money AsxtCalculateProcessingFee(const AsxtFeeTable& feeTable,
+      const ExecutionReport& executionReport) {
+    return CalculateFee(feeTable, executionReport).m_processingFee;
   }
 }
 
 void AsxtFeeHandlingTester::TestZeroQuantity() {
-  AsxtFeeTable feeTable;
-  feeTable.m_gstRate = 1;
-  feeTable.m_tradeRate = 1;
+  auto feeTable = BuildFeeTable();
   TestFeeCalculation(feeTable, Money::ONE, 0, LiquidityFlag::ACTIVE,
-    CalculateFee, Money::ZERO);
+    AsxtCalculateProcessingFee, Money::ZERO);
 }
 
 void AsxtFeeHandlingTester::TestNoGst() {
-  AsxtFeeTable feeTable;
-  feeTable.m_gstRate = 0;
-  feeTable.m_tradeRate = 1;
-  auto expectedFee = 100 * Money::ONE;
+  auto feeTable = BuildFeeTable();
+  auto expectedFee = 100 * feeTable.m_clearingRateTable[2] * Money::ONE;
   TestFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::ACTIVE,
-    CalculateFee, expectedFee);
+    AsxtCalculateProcessingFee, expectedFee);
 }

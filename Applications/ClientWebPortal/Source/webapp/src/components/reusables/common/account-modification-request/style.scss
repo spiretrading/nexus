@@ -1,0 +1,84 @@
+@import "src/styles/variables";
+
+.account-modification-request-container {
+  width: 100%;
+  border: 1px solid $lightGrey;
+  flex: 1;
+  display: flex;
+
+  .left-panel {
+    position: relative;
+    width: 65%;
+
+    &::after {
+      content: '';
+      width: 1px;
+      height: 70%;
+      background: $lightGrey;
+      position: absolute;
+      top: 15%;
+      right: 0;
+    }
+
+    .title {
+      position: absolute;
+      top: 14%;
+      left: 5%;
+    }
+
+    .account {
+      position: absolute;
+      top: 53%;
+      left: 5%;
+    }
+
+    .requester {
+      position: absolute;
+      top: 53%;
+      left: 37%;
+    }
+
+    .request-id {
+      position: absolute;
+      top: 53%;
+      left: 69%;
+    }
+  }
+
+  .legend {
+    font-size: 13px;
+    color: $darkerGrey;
+  }
+
+  .right-panel {
+    width: 35%;
+    position: relative;
+    text-align: right;
+
+    .timestamp {
+      position: absolute;
+      top: 14%;
+      right: 9%;
+    }
+
+    .status {
+      position: absolute;
+      top: 53%;
+      right: 9%;
+
+      .green {
+        color: $green;
+      }
+
+      .red {
+        color: $red;
+      }
+    }
+  }
+}
+
+main.mobile {
+  .account-modification-request-container {
+
+  }
+}

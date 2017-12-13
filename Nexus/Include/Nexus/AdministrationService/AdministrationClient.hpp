@@ -10,9 +10,12 @@
 #include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/AccountRoles.hpp"
+#include "Nexus/AdministrationService/EntitlementModification.hpp"
 #include "Nexus/AdministrationService/AdministrationService.hpp"
 #include "Nexus/AdministrationService/AdministrationServices.hpp"
+#include "Nexus/AdministrationService/Message.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
 
@@ -62,6 +65,17 @@ namespace AdministrationService {
       */
       AccountRoles LoadAccountRoles(
         const Beam::ServiceLocator::DirectoryEntry& account);
+
+      //! Returns the roles one account has over another.
+      /*!
+        \param parent The account whose roles are to be loaded.
+        \param child The account being supervised.
+        \return The roles that the <i>parent</i> account has over the
+                <i>child</i> account.
+      */
+      AccountRoles LoadAccountRoles(
+        const Beam::ServiceLocator::DirectoryEntry& parent,
+        const Beam::ServiceLocator::DirectoryEntry& child);
 
       //! Loads an account's trading group Directory.
       /*!
@@ -173,6 +187,118 @@ namespace AdministrationService {
       void StoreRiskState(const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskService::RiskState& riskState);
 
+      //! Loads an account modification request.
+      /*!
+        \param id The id of the request to load.
+        \return The request with the specified <i>id</i>.
+      */
+      AccountModificationRequest LoadAccountModificationRequest(
+        AccountModificationRequest::Id id);
+
+      //! Given an account, loads the ids of requests to modify that account.
+      /*!
+        \param account The account whose requests are to be loaded.
+        \param startId The id of the first request to load (exclusive) or -1
+               to start with the most recent request.
+        \param maxCount The maximum number of ids to load.
+        \return The list of account modification requests.
+      */
+      std::vector<AccountModificationRequest::Id>
+        LoadAccountModificationRequestIds(
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        AccountModificationRequest::Id startId, int maxCount);
+
+      //! Given an account, loads the ids of requests that the account is
+      //! authorized to manage.
+      /*!
+        \param account The account managing modifications.
+        \param startId The id of the first request to load (exclusive) or -1
+               to start with the most recent request.
+        \param maxCount The maximum number of ids to load.
+        \return The list of account modification requests.
+      */
+      std::vector<AccountModificationRequest::Id>
+        LoadManagedAccountModificationRequestIds(
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        AccountModificationRequest::Id startId, int maxCount);
+
+      //! Loads an entitlement modification.
+      /*!
+        \param id The id of the request to load.
+        \return The entitlement modification with the specified <i>id</i>.
+      */
+      EntitlementModification LoadEntitlementModification(
+        AccountModificationRequest::Id id);
+
+      //! Submits a request to modify an account's entitlements.
+      /*!
+        \param account The account to modify.
+        \param submissionAccount The account submitting the request.
+        \param modification The modification to apply.
+        \param comment The comment to associate with the request.
+        \return An object representing the request.
+      */
+      AccountModificationRequest SubmitAccountModificationRequest(
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
+        const EntitlementModification& modification, const Message& comment);
+
+      //! Loads the status of an account modification request.
+      /*!
+        \param id The id of the request.
+        \return The update representing the current status of the request.
+      */
+      AccountModificationRequest::Update LoadAccountModificationRequestStatus(
+        AccountModificationRequest::Id id);
+
+      //! Approves an account modification request.
+      /*!
+        \param id The id of the request to approve.
+        \param account The account that approved the request.
+        \param comment The comment to associate with the update.
+        \return An object representing the update.
+      */
+      AccountModificationRequest::Update ApproveAccountModificationRequest(
+        AccountModificationRequest::Id id,
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        const Message& comment);
+
+      //! Rejects an account modification request.
+      /*!
+        \param id The id of the request to reject.
+        \param account The account that rejected the request.
+        \param comment The comment to associate with the update.
+        \return An object representing the update.
+      */
+      AccountModificationRequest::Update RejectAccountModificationRequest(
+        AccountModificationRequest::Id id,
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        const Message& comment);
+
+      //! Loads a message.
+      /*!
+        \param id The id of the message.
+        \return The message with the specified <i>id</i>.
+      */
+      Message LoadMessage(Message::Id id);
+
+      //! Loads the list of messages associated with an account modification.
+      /*!
+        \param id The id of the request.
+        \return A list of message ids associated with the request.
+      */
+      std::vector<Message::Id> LoadMessageIds(
+        AccountModificationRequest::Id id);
+
+      //! Appends a message to an account modification request.
+      /*!
+        \param id The id of the request to send the message to.
+        \param message The message to append.
+        \return The appended message.
+      */
+      Message SendAccountModificationRequestMessage(
+        AccountModificationRequest::Id id, const Message& message);
+
       void Open();
 
       void Close();
@@ -242,6 +368,16 @@ namespace AdministrationService {
       LoadAccountRoles(const Beam::ServiceLocator::DirectoryEntry& account) {
     auto client = m_clientHandler.GetClient();
     return client->template SendRequest<LoadAccountRolesService>(account);
+  }
+
+  template<typename ServiceProtocolClientBuilderType>
+  AccountRoles AdministrationClient<
+      ServiceProtocolClientBuilderType>::LoadAccountRoles(
+      const Beam::ServiceLocator::DirectoryEntry& parent,
+      const Beam::ServiceLocator::DirectoryEntry& child) {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<LoadSupervisedAccountRolesService>(
+      parent, child);
   }
 
   template<typename ServiceProtocolClientBuilderType>
@@ -386,6 +522,111 @@ namespace AdministrationService {
       const RiskService::RiskState& riskState) {
     auto client = m_clientHandler.GetClient();
     client->template SendRequest<StoreRiskStateService>(account, riskState);
+  }
+
+  template<typename ServiceProtocolClientBuilderType>
+  AccountModificationRequest AdministrationClient<
+      ServiceProtocolClientBuilderType>::LoadAccountModificationRequest(
+      AccountModificationRequest::Id id) {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<LoadAccountModificationRequestService>(
+      id);
+  }
+
+  template<typename ServiceProtocolClientBuilderType>
+  std::vector<AccountModificationRequest::Id> AdministrationClient<
+      ServiceProtocolClientBuilderType>::LoadAccountModificationRequestIds(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      AccountModificationRequest::Id id, int maxCount) {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<
+      LoadAccountModificationRequestIdsService>(account, id, maxCount);
+  }
+
+  template<typename ServiceProtocolClientBuilderType>
+  std::vector<AccountModificationRequest::Id>
+      AdministrationClient<ServiceProtocolClientBuilderType>::
+      LoadManagedAccountModificationRequestIds(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      AccountModificationRequest::Id id, int maxCount) {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<
+      LoadManagedAccountModificationRequestIdsService>(account, id, maxCount);
+  }
+
+  template<typename ServiceProtocolClientBuilderType>
+  EntitlementModification AdministrationClient<
+      ServiceProtocolClientBuilderType>::LoadEntitlementModification(
+      AccountModificationRequest::Id id) {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<LoadEntitlementModificationService>(id);
+  }
+
+  template<typename ServiceProtocolClientBuilderType>
+  AccountModificationRequest AdministrationClient<
+      ServiceProtocolClientBuilderType>::SubmitAccountModificationRequest(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
+      const EntitlementModification& modification, const Message& comment) {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<
+      SubmitEntitlementModificationRequestService>(account, submissionAccount,
+      modification, comment);
+  }
+
+  template<typename ServiceProtocolClientBuilderType>
+  AccountModificationRequest::Update AdministrationClient<
+      ServiceProtocolClientBuilderType>::LoadAccountModificationRequestStatus(
+      AccountModificationRequest::Id id) {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<
+      LoadAccountModificationRequestStatusService>(id);
+  }
+
+  template<typename ServiceProtocolClientBuilderType>
+  AccountModificationRequest::Update AdministrationClient<
+      ServiceProtocolClientBuilderType>::ApproveAccountModificationRequest(
+      AccountModificationRequest::Id id,
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Message& comment) {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<
+      ApproveAccountModificationRequestService>(id, account, comment);
+  }
+
+  template<typename ServiceProtocolClientBuilderType>
+  AccountModificationRequest::Update AdministrationClient<
+      ServiceProtocolClientBuilderType>::RejectAccountModificationRequest(
+      AccountModificationRequest::Id id,
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Message& comment) {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<
+      RejectAccountModificationRequestService>(id, account, comment);
+  }
+
+  template<typename ServiceProtocolClientBuilderType>
+  Message AdministrationClient<ServiceProtocolClientBuilderType>::LoadMessage(
+      Message::Id id) {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<LoadMessageService>(id);
+  }
+
+  template<typename ServiceProtocolClientBuilderType>
+  std::vector<Message::Id> AdministrationClient<
+      ServiceProtocolClientBuilderType>::LoadMessageIds(
+      AccountModificationRequest::Id id) {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<LoadMessageIdsService>(id);
+  }
+
+  template<typename ServiceProtocolClientBuilderType>
+  Message AdministrationClient<ServiceProtocolClientBuilderType>::
+      SendAccountModificationRequestMessage(AccountModificationRequest::Id id,
+      const Message& message) {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<
+      SendAccountModificationRequestMessageService>(id, message);
   }
 
   template<typename ServiceProtocolClientBuilderType>

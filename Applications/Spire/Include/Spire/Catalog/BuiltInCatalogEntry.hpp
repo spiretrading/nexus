@@ -36,6 +36,7 @@ namespace Spire {
       static const boost::uuids::uuid FILE_PATH_UUID;
       static const boost::uuids::uuid FILE_READER_UUID;
       static const boost::uuids::uuid FILTER_UUID;
+      static const boost::uuids::uuid FIRST_UUID;
       static const boost::uuids::uuid FLOOR_UUID;
       static const boost::uuids::uuid FOLD_UUID;
       static const boost::uuids::uuid GREATER_EQUAL_UUID;
@@ -43,6 +44,7 @@ namespace Spire {
       static const boost::uuids::uuid IF_UUID;
       static const boost::uuids::uuid INTEGER_UUID;
       static const boost::uuids::uuid IS_TERMINAL_UUID;
+      static const boost::uuids::uuid LAST_UUID;
       static const boost::uuids::uuid LESS_EQUAL_UUID;
       static const boost::uuids::uuid LESS_UUID;
       static const boost::uuids::uuid LIMIT_ASK_ORDER_TASK_UUID;
@@ -77,7 +79,6 @@ namespace Spire {
       static const boost::uuids::uuid SIDE_UUID;
       static const boost::uuids::uuid SINGLE_ORDER_TASK_UUID;
       static const boost::uuids::uuid SPAWN_TASK_UUID;
-      static const boost::uuids::uuid STATIC_UUID;
       static const boost::uuids::uuid SUBTRACTION_UUID;
       static const boost::uuids::uuid TASK_STATE_UUID;
       static const boost::uuids::uuid TASK_STATE_MONITOR_UUID;

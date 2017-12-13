@@ -4,7 +4,6 @@
 
 namespace Nexus {
 namespace ClientWebPortal {
-  using ServiceLocatorClient = Beam::ServiceLocator::
 }
 }
 

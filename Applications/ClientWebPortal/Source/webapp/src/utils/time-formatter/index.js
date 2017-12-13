@@ -1,7 +1,10 @@
 class TimeFormatter {
   formatDuration(time) {
-    let colonStrippedTime = time.replace(':', '');
-    colonStrippedTime = colonStrippedTime.replace(';', '');
+    let colonStrippedTime = time.replace(/:/g, '');
+    colonStrippedTime = colonStrippedTime.replace(/;/g, '');
+    if (colonStrippedTime.length > 6) {
+      colonStrippedTime = colonStrippedTime.substring(0, 6);
+    }
     let numZerosNeeded = 6 - colonStrippedTime.length;
     if (numZerosNeeded > 0) {
       for (let i=0; i<numZerosNeeded; i++) {
@@ -9,7 +12,7 @@ class TimeFormatter {
       }
     }
     let formattedTime = colonStrippedTime.replace(/\B(?=(\d{2})+(?!\d))/g, ":");
-    return formattedTime;
+    return formattedTime.substring(0, 8);
   }
 }
 

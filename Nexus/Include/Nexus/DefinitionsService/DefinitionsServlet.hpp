@@ -16,18 +16,12 @@ namespace DefinitionsService {
   /*! \class DefinitionsServlet
       \brief Provides system wide definitions.
       \tparam ContainerType The container instantiating this servlet.
-      \tparam ServiceLocatorClientType The type of ServiceLocatorClient used to
-              manage accounts.
    */
-  template<typename ContainerType, typename ServiceLocatorClientType>
+  template<typename ContainerType>
   class DefinitionsServlet : private boost::noncopyable {
     public:
       using Container = ContainerType;
       using ServiceProtocolClient = typename Container::ServiceProtocolClient;
-
-      //! The type of ServiceLocatorClient used to manage accounts.
-      using ServiceLocatorClient = Beam::GetTryDereferenceType<
-        ServiceLocatorClientType>;
 
       //! Constructs a DefinitionsServlet.
       /*!
@@ -40,16 +34,13 @@ namespace DefinitionsService {
         \param destinationDatabase The DestinationDatabase to disseminate.
         \param exchangeRates The list of ExchangeRates.
         \param complianceRuleSchemas The list of ComplianceRuleSchemas.
-        \param serviceLocatorClient Initializes the ServiceLocatorClient.
       */
-      template<typename ServiceLocatorClientForward>
       DefinitionsServlet(std::string minimumSpireClientVersion,
         std::string timeZoneDatabase, CountryDatabase countryDatabase,
         CurrencyDatabase currencyDatabase, MarketDatabase marketDatabase,
         DestinationDatabase destinationDatabase,
         std::vector<ExchangeRate> exchangeRates,
-        std::vector<Compliance::ComplianceRuleSchema> complianceRuleSchemas,
-        ServiceLocatorClientForward&& serviceLocatorClient);
+        std::vector<Compliance::ComplianceRuleSchema> complianceRuleSchemas);
 
       void RegisterServices(Beam::Out<Beam::Services::ServiceSlots<
         ServiceProtocolClient>> slots);
@@ -67,8 +58,6 @@ namespace DefinitionsService {
       MarketDatabase m_marketDatabase;
       std::vector<ExchangeRate> m_exchangeRates;
       std::vector<Compliance::ComplianceRuleSchema> m_complianceRuleSchemas;
-      Beam::GetOptionalLocalPtr<ServiceLocatorClientType>
-        m_serviceLocatorClient;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
@@ -90,25 +79,21 @@ namespace DefinitionsService {
         ServiceProtocolClient& client, int dummy);
   };
 
-  template<typename ServiceLocatorClientType>
   struct MetaDefinitionsServlet {
     using Session = DefinitionsSession;
     template<typename ContainerType>
     struct apply {
-      using type = DefinitionsServlet<ContainerType, ServiceLocatorClientType>;
+      using type = DefinitionsServlet<ContainerType>;
     };
   };
 
-  template<typename ContainerType, typename ServiceLocatorClientType>
-  template<typename ServiceLocatorClientForward>
-  DefinitionsServlet<ContainerType, ServiceLocatorClientType>::
-      DefinitionsServlet(std::string minimumSpireClientVersion,
-      std::string timeZoneDatabase, CountryDatabase countryDatabase,
-      CurrencyDatabase currencyDatabase, MarketDatabase marketDatabase,
-      DestinationDatabase destinationDatabase,
+  template<typename ContainerType>
+  DefinitionsServlet<ContainerType>::DefinitionsServlet(
+      std::string minimumSpireClientVersion, std::string timeZoneDatabase,
+      CountryDatabase countryDatabase, CurrencyDatabase currencyDatabase,
+      MarketDatabase marketDatabase, DestinationDatabase destinationDatabase,
       std::vector<ExchangeRate> exchangeRates,
-      std::vector<Compliance::ComplianceRuleSchema> complianceRuleSchemas,
-      ServiceLocatorClientForward&& serviceLocatorClient)
+      std::vector<Compliance::ComplianceRuleSchema> complianceRuleSchemas)
       : m_minimumSpireClientVersion{std::move(minimumSpireClientVersion)},
         m_timeZoneDatabase{std::move(timeZoneDatabase)},
         m_countryDatabase{std::move(countryDatabase)},
@@ -116,13 +101,10 @@ namespace DefinitionsService {
         m_marketDatabase{std::move(marketDatabase)},
         m_destinationDatabase{std::move(destinationDatabase)},
         m_exchangeRates{std::move(exchangeRates)},
-        m_complianceRuleSchemas{std::move(complianceRuleSchemas)},
-        m_serviceLocatorClient{std::forward<ServiceLocatorClientForward>(
-          serviceLocatorClient)} {}
+        m_complianceRuleSchemas{std::move(complianceRuleSchemas)} {}
 
-  template<typename ContainerType, typename ServiceLocatorClientType>
-  void DefinitionsServlet<ContainerType, ServiceLocatorClientType>::
-      RegisterServices(
+  template<typename ContainerType>
+  void DefinitionsServlet<ContainerType>::RegisterServices(
       Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     RegisterDefinitionsServices(Store(slots));
     LoadMinimumSpireClientVersionService::AddSlot(Store(slots), std::bind(
@@ -151,76 +133,74 @@ namespace DefinitionsService {
       std::placeholders::_1, std::placeholders::_2));
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType>
-  void DefinitionsServlet<ContainerType, ServiceLocatorClientType>::Open() {
+  template<typename ContainerType>
+  void DefinitionsServlet<ContainerType>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
     m_openState.SetOpen();
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType>
-  void DefinitionsServlet<ContainerType, ServiceLocatorClientType>::Close() {
+  template<typename ContainerType>
+  void DefinitionsServlet<ContainerType>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType>
-  void DefinitionsServlet<ContainerType, ServiceLocatorClientType>::Shutdown() {
+  template<typename ContainerType>
+  void DefinitionsServlet<ContainerType>::Shutdown() {
     m_openState.SetClosed();
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType>
-  std::string DefinitionsServlet<ContainerType, ServiceLocatorClientType>::
+  template<typename ContainerType>
+  std::string DefinitionsServlet<ContainerType>::
       OnLoadMinimumSpireClientVersion(ServiceProtocolClient& client,
       int dummy) {
     return m_minimumSpireClientVersion;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType>
-  CountryDatabase DefinitionsServlet<ContainerType, ServiceLocatorClientType>::
+  template<typename ContainerType>
+  CountryDatabase DefinitionsServlet<ContainerType>::
       OnLoadCountryDatabase(ServiceProtocolClient& client, int dummy) {
     return m_countryDatabase;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType>
-  std::string DefinitionsServlet<ContainerType, ServiceLocatorClientType>::
-      OnLoadTimeZoneDatabase(ServiceProtocolClient& client, int dummy) {
+  template<typename ContainerType>
+  std::string DefinitionsServlet<ContainerType>::OnLoadTimeZoneDatabase(
+      ServiceProtocolClient& client, int dummy) {
     return m_timeZoneDatabase;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType>
-  CurrencyDatabase DefinitionsServlet<ContainerType, ServiceLocatorClientType>::
-      OnLoadCurrencyDatabase(ServiceProtocolClient& client, int dummy) {
+  template<typename ContainerType>
+  CurrencyDatabase DefinitionsServlet<ContainerType>::OnLoadCurrencyDatabase(
+      ServiceProtocolClient& client, int dummy) {
     return m_currencyDatabase;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType>
-  DestinationDatabase DefinitionsServlet<ContainerType,
-      ServiceLocatorClientType>::OnLoadDestinationDatabase(
-      ServiceProtocolClient& client, int dummy) {
+  template<typename ContainerType>
+  DestinationDatabase DefinitionsServlet<ContainerType>::
+      OnLoadDestinationDatabase(ServiceProtocolClient& client, int dummy) {
     return m_destinationDatabase;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType>
-  MarketDatabase DefinitionsServlet<ContainerType, ServiceLocatorClientType>::
-      OnLoadMarketDatabase(ServiceProtocolClient& client, int dummy) {
+  template<typename ContainerType>
+  MarketDatabase DefinitionsServlet<ContainerType>::OnLoadMarketDatabase(
+      ServiceProtocolClient& client, int dummy) {
     return m_marketDatabase;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType>
-  std::vector<ExchangeRate> DefinitionsServlet<ContainerType,
-      ServiceLocatorClientType>::OnLoadExchangeRates(
-      ServiceProtocolClient& client, int dummy) {
+  template<typename ContainerType>
+  std::vector<ExchangeRate> DefinitionsServlet<ContainerType>::
+      OnLoadExchangeRates(ServiceProtocolClient& client, int dummy) {
     return m_exchangeRates;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType>
+  template<typename ContainerType>
   std::vector<Compliance::ComplianceRuleSchema> DefinitionsServlet<
-      ContainerType, ServiceLocatorClientType>::OnLoadComplianceRuleSchemas(
-      ServiceProtocolClient& client, int dummy) {
+      ContainerType>::OnLoadComplianceRuleSchemas(ServiceProtocolClient& client,
+      int dummy) {
     return m_complianceRuleSchemas;
   }
 }

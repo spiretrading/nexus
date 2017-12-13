@@ -53,7 +53,7 @@ namespace {
     MetaMarketDataRegistryServlet<MarketDataRegistry*,
     SessionCachedHistoricalDataStore<
     BufferedHistoricalDataStore<MySqlHistoricalDataStore*>*>,
-    ApplicationServiceLocatorClient::Client>,
+    ApplicationAdministrationClient::Client*>,
     ApplicationServiceLocatorClient::Client*, NativePointerPolicy>,
     TcpServerSocket, BinarySender<SharedBuffer>, NullEncoder,
     std::shared_ptr<LiveTimer>>;
@@ -61,7 +61,7 @@ namespace {
     MarketDataRegistryServlet<RegistryServletContainer, MarketDataRegistry*,
     SessionCachedHistoricalDataStore<
     BufferedHistoricalDataStore<MySqlHistoricalDataStore*>*>,
-    ApplicationServiceLocatorClient::Client>;
+    ApplicationAdministrationClient::Client*>;
   using FeedServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<
     MetaMarketDataFeedServlet<BaseRegistryServlet*>,
@@ -69,12 +69,26 @@ namespace {
     BinarySender<SharedBuffer>, SizeDeclarativeEncoder<ZLibEncoder>,
     std::shared_ptr<LiveTimer>>;
 
+  JsonValue ParseCountries(const YAML::Node& config,
+      const CountryDatabase& countryDatabase) {
+    vector<JsonValue> countries;
+    for(auto& item : config) {
+      auto country = ParseCountryCode(item.to<string>(), countryDatabase);
+      countries.push_back(static_cast<double>(country));
+    }
+    if(countries.empty()) {
+      return JsonNull{};
+    }
+    return countries;
+  }
+
   struct RegistryServerConnectionInitializer {
     string m_serviceName;
     IpAddress m_interface;
     vector<IpAddress> m_addresses;
 
-    void Initialize(const YAML::Node& config);
+    void Initialize(const YAML::Node& config,
+      const CountryDatabase& countryDatabase);
   };
 
   struct FeedServerConnectionInitializer {
@@ -86,7 +100,7 @@ namespace {
   };
 
   void RegistryServerConnectionInitializer::Initialize(
-      const YAML::Node& config) {
+      const YAML::Node& config, const CountryDatabase& countryDatabase) {
     m_serviceName = Extract<string>(config, "service",
       MarketDataService::REGISTRY_SERVICE_NAME);
     m_interface = Extract<IpAddress>(config, "interface");
@@ -159,23 +173,8 @@ int main(int argc, const char** argv) {
     YAML::Parser configParser{configStream};
     configParser.GetNextDocument(config);
   } catch(const YAML::ParserException& e) {
-    cerr << "Invalid YAML at line " << (e.mark.line + 1) << ", " << "column " <<
-      (e.mark.column + 1) << ": " << e.msg << endl;
-    return -1;
-  }
-  RegistryServerConnectionInitializer registryServerConnectionInitializer;
-  try {
-    registryServerConnectionInitializer.Initialize(
-      GetNode(config, "registry_server"));
-  } catch(const std::exception& e) {
-    cerr << "Error parsing section 'registry_server': " << e.what() << endl;
-    return -1;
-  }
-  FeedServerConnectionInitializer feedServerConnectionInitializer;
-  try {
-    feedServerConnectionInitializer.Initialize(GetNode(config, "feed_server"));
-  } catch(const std::exception& e) {
-    cerr << "Error parsing section 'feed_server': " << e.what() << endl;
+    cerr << "Invalid YAML at line " << (e.mark.line + 1) << ", " <<
+      "column " << (e.mark.column + 1) << ": " << e.msg << endl;
     return -1;
   }
   ServiceLocatorClientConfig serviceLocatorClientConfig;
@@ -218,6 +217,33 @@ int main(int argc, const char** argv) {
     cerr << "Unable to connect to the administration service." << endl;
     return -1;
   }
+  RegistryServerConnectionInitializer registryServerConnectionInitializer;
+  try {
+    auto countryDatabase = definitionsClient->LoadCountryDatabase();
+    registryServerConnectionInitializer.Initialize(
+      GetNode(config, "registry_server"), countryDatabase);
+  } catch(const std::exception& e) {
+    cerr << "Error parsing section 'registry_server': " << e.what() << endl;
+    return -1;
+  }
+  FeedServerConnectionInitializer feedServerConnectionInitializer;
+  try {
+    feedServerConnectionInitializer.Initialize(GetNode(config, "feed_server"));
+  } catch(const std::exception& e) {
+    cerr << "Error parsing section 'feed_server': " << e.what() << endl;
+    return -1;
+  }
+  JsonValue countries = JsonNull{};
+  try {
+    auto countriesNode = config.FindValue("countries");
+    if(countriesNode != nullptr) {
+      countries = ParseCountries(*countriesNode,
+        definitionsClient->LoadCountryDatabase());
+    }
+  } catch(const std::exception& e) {
+    cerr << "Error parsing section 'countries': " << e.what() << endl;
+    return -1;
+  }
   MySqlConfig mySqlConfig;
   try {
     mySqlConfig = MySqlConfig::Parse(GetNode(config, "data_store"));
@@ -232,7 +258,6 @@ int main(int argc, const char** argv) {
   MarketDataRegistry marketDataRegistry;
   optional<BaseRegistryServlet> baseRegistryServlet;
   try {
-    auto entitlements = administrationClient->LoadEntitlements();
     PopulateRegistrySecurityInfo(Store(marketDataRegistry),
       definitionsClient->LoadMarketDatabase());
     auto cacheBlockSize = Extract<int>(config, "cache_block_size", 1000);
@@ -242,8 +267,8 @@ int main(int argc, const char** argv) {
       "database_threads", boost::thread::hardware_concurrency()));
     bufferedDataStore.emplace(&historicalDataStore, historicalBufferSize,
       Ref(threadPool));
-    baseRegistryServlet.emplace(entitlements, Ref(*serviceLocatorClient),
-      &marketDataRegistry, Initialize(&*bufferedDataStore, cacheBlockSize));
+    baseRegistryServlet.emplace(&*administrationClient, &marketDataRegistry,
+      Initialize(&*bufferedDataStore, cacheBlockSize));
   } catch(const std::exception& e) {
     cerr << "Error initializing server: " << e.what() << endl;
     return -1;
@@ -263,6 +288,9 @@ int main(int argc, const char** argv) {
     JsonObject registryService;
     registryService["addresses"] =
       ToString(registryServerConnectionInitializer.m_addresses);
+    if(countries != JsonNull{}) {
+      registryService["countries"] = countries;
+    }
     serviceLocatorClient->Register(
       registryServerConnectionInitializer.m_serviceName, registryService);
   } catch(const std::exception& e) {
@@ -284,6 +312,9 @@ int main(int argc, const char** argv) {
     JsonObject feedService;
     feedService["addresses"] =
       ToString(feedServerConnectionInitializer.m_addresses);
+    if(countries != JsonNull{}) {
+      feedService["countries"] = countries;
+    }
     serviceLocatorClient->Register(
       feedServerConnectionInitializer.m_serviceName, feedService);
   } catch(const std::exception& e) {

@@ -3,7 +3,7 @@ import Controller from 'components/structures/common/profile/risk-controls/contr
 import View from './view';
 import uuid from 'uuid';
 
-class ProfileAccount extends Component {
+class ProfileRiskControls extends Component {
   constructor(props) {
     super(props);
   }
@@ -11,6 +11,11 @@ class ProfileAccount extends Component {
   componentWillMount() {
     let componentModel = this.props.model || {};
     componentModel.componentId = uuid.v4();
+    componentModel.directoryEntry = {
+      id: parseInt(this.props.routeParams.id),
+      name: this.props.routeParams.name,
+      type: parseInt(this.props.routeParams.type)
+    };
     this.controller = new Controller(componentModel);
     this.view = new View(this, this.controller, componentModel);
     this.controller.setView(this.view);
@@ -29,4 +34,4 @@ class ProfileAccount extends Component {
   }
 }
 
-export default ProfileAccount;
+export default ProfileRiskControls;

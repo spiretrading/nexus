@@ -2,11 +2,13 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Python/BoostPython.hpp>
-#include <Beam/Python/GilRelease.hpp>
-#include <Beam/Python/ListToVector.hpp>
+#include <Beam/Python/Copy.hpp>
 #include <Beam/Python/PythonBindings.hpp>
+#include <Beam/Python/Vector.hpp>
 #include <Beam/Python/Queries.hpp>
 #include <Beam/Python/Queues.hpp>
+#include <Beam/Python/Ref.hpp>
+#include <Beam/Python/UniquePtr.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/ServiceLocatorClient.hpp>
@@ -25,9 +27,11 @@
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
+#include "Nexus/OrderExecutionService/VirtualOrderExecutionDriver.hpp"
 #include "Nexus/OrderExecutionServiceTests/MockOrderExecutionDriver.hpp"
-#include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceInstance.hpp"
+#include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
+#include "Nexus/Python/ToPythonOrderExecutionClient.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;
@@ -53,45 +57,59 @@ using namespace std;
 namespace {
   using SessionBuilder = AuthenticatedServiceProtocolClientBuilder<
     VirtualServiceLocatorClient, MessageProtocol<
-    std::unique_ptr<TcpSocketChannel>, BinarySender<SharedBuffer>, NullEncoder>,
-    LiveTimer>;
+    std::unique_ptr<TcpSocketChannel>, BinarySender<SharedBuffer>,
+    NullEncoder>, LiveTimer>;
   using Client = OrderExecutionClient<SessionBuilder>;
 
-  class PythonOrderExecutionClient : public WrapperOrderExecutionClient<
-      std::unique_ptr<VirtualOrderExecutionClient>> {
-    public:
-      PythonOrderExecutionClient(
-          std::unique_ptr<VirtualOrderExecutionClient> client)
-          : WrapperOrderExecutionClient<std::unique_ptr<
-              VirtualOrderExecutionClient>>(std::move(client)) {}
+  struct FromPythonOrderExecutionClient : VirtualOrderExecutionClient,
+      wrapper<VirtualOrderExecutionClient> {
+    virtual void QueryOrderRecords(const AccountQuery& query,
+        const std::shared_ptr<QueueWriter<OrderRecord>>& queue) override final {
+      get_override("query_order_records")(query, queue);
+    }
 
-      void QueryOrderRecords(const AccountQuery& query,
-          const std::shared_ptr<PythonQueueWriter>& queue) {
-        WrapperOrderExecutionClient<unique_ptr<VirtualOrderExecutionClient>>::
-          QueryOrderRecords(query, queue->GetSlot<OrderRecord>());
-      }
+    virtual void QueryOrderSubmissions(const AccountQuery& query,
+        const std::shared_ptr<
+        QueueWriter<SequencedOrder>>& queue) override final {
+      get_override("query_sequenced_order_submissions")(query, queue);
+    }
 
-      void QuerySequencedOrderSubmissions(const AccountQuery& query,
-          const std::shared_ptr<PythonQueueWriter>& queue) {
-        WrapperOrderExecutionClient<unique_ptr<VirtualOrderExecutionClient>>::
-          QueryOrderSubmissions(query, queue->GetSlot<SequencedOrder>());
-      }
+    virtual void QueryOrderSubmissions(const AccountQuery& query,
+        const std::shared_ptr<
+        QueueWriter<const Order*>>& queue) override final {
+      get_override("query_order_submissions")(query, queue);
+    }
 
-      void QueryOrderSubmissions(const AccountQuery& query,
-          const std::shared_ptr<PythonQueueWriter>& queue) {
-        WrapperOrderExecutionClient<unique_ptr<VirtualOrderExecutionClient>>::
-          QueryOrderSubmissions(query, queue->GetSlot<const Order*>());
-      }
+    virtual void QueryExecutionReports(const AccountQuery& query,
+        const std::shared_ptr<
+        QueueWriter<ExecutionReport>>& queue) override final {
+      get_override("query_execution_reports")(query, queue);
+    }
 
-      void QueryExecutionReports(const AccountQuery& query,
-          const std::shared_ptr<PythonQueueWriter>& queue) {
-        WrapperOrderExecutionClient<unique_ptr<VirtualOrderExecutionClient>>::
-          QueryExecutionReports(query, queue->GetSlot<ExecutionReport>());
-      }
+    virtual const OrderExecutionPublisher&
+        GetOrderSubmissionPublisher() override final {
+      return *static_cast<const OrderExecutionPublisher*>(
+        get_override("get_order_submission_publisher")());
+    }
+
+    virtual const Order& Submit(const OrderFields& fields) override final {
+      return *static_cast<const Order*>(get_override("submit")(fields));
+    }
+
+    virtual void Cancel(const Order& order) override final {
+      get_override("cancel")(order);
+    }
+
+    virtual void Open() override final {
+      get_override("open")();
+    }
+
+    virtual void Close() override final {
+      get_override("close")();
+    }
   };
 
-  PythonOrderExecutionClient* BuildClient(
-      VirtualServiceLocatorClient& serviceLocatorClient) {
+  auto BuildClient(VirtualServiceLocatorClient& serviceLocatorClient) {
     auto addresses = LocateServiceAddresses(serviceLocatorClient,
       OrderExecutionService::SERVICE_NAME);
     auto delay = false;
@@ -110,48 +128,52 @@ namespace {
         return std::make_unique<LiveTimer>(seconds(10),
           Ref(*GetTimerThreadPool()));
       });
-    auto baseClient = std::make_unique<Client>(sessionBuilder);
-    return new PythonOrderExecutionClient{
-      MakeVirtualOrderExecutionClient(std::move(baseClient))};
+    return MakeToPythonOrderExecutionClient(std::make_unique<Client>(
+      sessionBuilder)).release();
   }
 
-  void PythonQueryDailyOrderSubmissions(const DirectoryEntry& account,
-      const ptime& startTime, const ptime& endTime,
+  auto BuildOrderExecutionServiceTestEnvironment(
       const MarketDatabase& marketDatabase,
-      const boost::local_time::tz_database& timeZoneDatabase,
-      PythonOrderExecutionClient* orderExecutionClient,
-      const std::shared_ptr<PythonQueueWriter>& queue) {
-    QueryDailyOrderSubmissions(account, startTime, endTime, marketDatabase,
-      timeZoneDatabase, static_cast<VirtualOrderExecutionClient&>(
-      *orderExecutionClient), queue->GetSlot<const Order*>());
+      const DestinationDatabase& destinationDatabase,
+      const std::shared_ptr<VirtualServiceLocatorClient>& serviceLocatorClient,
+      const std::shared_ptr<VirtualUidClient>& uidClient,
+      const std::shared_ptr<VirtualAdministrationClient>&
+      administrationClient) {
+    return new OrderExecutionServiceTestEnvironment{marketDatabase,
+      destinationDatabase, serviceLocatorClient, uidClient,
+      administrationClient};
   }
 
-  OrderExecutionServiceTestInstance* BuildOrderExecutionServiceTestInstance(
-      std::auto_ptr<VirtualServiceLocatorClient> serviceLocatorClient,
-      std::auto_ptr<VirtualUidClient> uidClient,
-      std::auto_ptr<VirtualAdministrationClient> administrationClient) {
-    std::shared_ptr<VirtualServiceLocatorClient> serviceLocatorClientWrapper{
-      serviceLocatorClient.release(), [] (VirtualServiceLocatorClient*) {}};
-    std::unique_ptr<VirtualUidClient> uidClientWrapper{uidClient.release()};
-    std::unique_ptr<VirtualAdministrationClient> administrationClientWrapper{
-      administrationClient.release()};
-    return new OrderExecutionServiceTestInstance{serviceLocatorClientWrapper,
-      std::move(uidClientWrapper), std::move(administrationClientWrapper)};
-  }
-
-  PythonOrderExecutionClient* OrderExecutionServiceTestInstanceBuildClient(
-      OrderExecutionServiceTestInstance& instance,
+  std::unique_ptr<VirtualOrderExecutionClient>
+      OrderExecutionServiceTestEnvironmentBuildClient(
+      OrderExecutionServiceTestEnvironment& environment,
       VirtualServiceLocatorClient& serviceLocatorClient) {
-    return new PythonOrderExecutionClient{
-      instance.BuildClient(Ref(serviceLocatorClient))};
+    return MakeToPythonOrderExecutionClient(
+      environment.BuildClient(Ref(serviceLocatorClient)));
   }
 }
 
-void Nexus::Python::ExportAccountQuery() {
-  ExportIndexedQuery<DirectoryEntry>("DirectoryEntryIndexedQuery");
-  class_<AccountQuery, bases<IndexedQuery<DirectoryEntry>, RangedQuery,
-    SnapshotLimitedQuery, InterruptableQuery, FilteredQuery>>(
-    "AccountQuery", init<>());
+BEAM_DEFINE_PYTHON_POINTER_LINKER(Order);
+BEAM_DEFINE_PYTHON_POINTER_LINKER(PrimitiveOrder);
+BEAM_DEFINE_PYTHON_POINTER_LINKER(Publisher<PrimitiveOrder*>);
+BEAM_DEFINE_PYTHON_POINTER_LINKER(
+  SnapshotPublisher<ExecutionReport BOOST_PP_COMMA() vector<ExecutionReport>>);
+BEAM_DEFINE_PYTHON_POINTER_LINKER(
+  SnapshotPublisher<const Order* BOOST_PP_COMMA() vector<const Order*>>);
+BEAM_DEFINE_PYTHON_POINTER_LINKER(
+  SnapshotPublisher<const PrimitiveOrder* BOOST_PP_COMMA()
+  vector<const PrimitiveOrder*>>);
+BEAM_DEFINE_PYTHON_POINTER_LINKER(VirtualOrderExecutionDriver);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(const Order*);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedOrder);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(ExecutionReport);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedExecutionReport);
+
+void Nexus::Python::ExportApplicationOrderExecutionClient() {
+  class_<ToPythonOrderExecutionClient<Client>,
+    bases<VirtualOrderExecutionClient>, boost::noncopyable>(
+    "ApplicationOrderExecutionClient", no_init)
+    .def("__init__", make_constructor(&BuildClient));
 }
 
 void Nexus::Python::ExportExecutionReport() {
@@ -159,6 +181,8 @@ void Nexus::Python::ExportExecutionReport() {
   ExportSnapshotPublisher<ExecutionReport, vector<ExecutionReport>>(
     "ExecutionReportSnapshotPublisher");
   class_<ExecutionReport>("ExecutionReport", init<>())
+    .def("__copy__", &MakeCopy<ExecutionReport>)
+    .def("__deepcopy__", &MakeDeepCopy<ExecutionReport>)
     .def("build_initial_report", &ExecutionReport::BuildInitialReport)
     .staticmethod("build_initial_report")
     .def("build_updated_report", &ExecutionReport::BuildUpdatedReport)
@@ -182,9 +206,10 @@ void Nexus::Python::ExportExecutionReport() {
     .def_readwrite("additional_tags", &ExecutionReport::m_additionalTags)
     .def(self == self)
     .def(self != self);
-  class_<vector<ExecutionReport>>("VectorExecutionReport")
-    .def(vector_indexing_suite<vector<ExecutionReport>>());
-  ExportVector<vector<ExecutionReport>>();
+  ExportSequencedValue<ExecutionReport>("SequencedExecutionReport");
+  ExportQueueSuite<ExecutionReport>("ExecutionReport");
+  ExportQueueSuite<SequencedExecutionReport>("SequencedExecutionReport");
+  ExportVector<vector<ExecutionReport>>("VectorExecutionReport");
 }
 
 void Nexus::Python::ExportMockOrderExecutionDriver() {
@@ -193,16 +218,16 @@ void Nexus::Python::ExportMockOrderExecutionDriver() {
     .def("set_order_status_new_on_submission",
       &MockOrderExecutionDriver::SetOrderStatusNewOnSubmission)
     .def("find_order", &MockOrderExecutionDriver::FindOrder,
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("add_recovery", &MockOrderExecutionDriver::AddRecovery)
     .def("get_publisher", &MockOrderExecutionDriver::GetPublisher,
-      return_value_policy<reference_existing_object>())
+      return_internal_reference<>())
     .def("recover", &MockOrderExecutionDriver::Recover,
-      return_value_policy<reference_existing_object>())
-    .def("submit", &MockOrderExecutionDriver::Submit,
-      return_value_policy<reference_existing_object>())
-    .def("cancel", &MockOrderExecutionDriver::Cancel)
-    .def("update", &MockOrderExecutionDriver::Update)
+      return_internal_reference<>())
+    .def("submit", BlockingFunction(&MockOrderExecutionDriver::Submit,
+      return_internal_reference<>()))
+    .def("cancel", BlockingFunction(&MockOrderExecutionDriver::Cancel))
+    .def("update", BlockingFunction(&MockOrderExecutionDriver::Update))
     .def("open", BlockingFunction(&MockOrderExecutionDriver::Open))
     .def("close", BlockingFunction(&MockOrderExecutionDriver::Close));
 }
@@ -214,36 +239,38 @@ void Nexus::Python::ExportOrder() {
   class_<Order, boost::noncopyable>("Order", no_init)
     .add_property("info", make_function(&Order::GetInfo,
       return_value_policy<copy_const_reference>()))
-    .def("get_publisher", &Order::GetPublisher,
-      return_value_policy<reference_existing_object>());
-  class_<vector<const Order*>>("VectorOrder")
-    .def(vector_indexing_suite<vector<const Order*>>());
+    .def("get_publisher", &Order::GetPublisher, return_internal_reference<>());
+  ExportSequencedValue<const Order*>("SequencedOrder");
+  ExportQueueSuite<const Order*>("Order");
+  ExportQueueSuite<SequencedOrder>("SequencedOrder");
+  ExportVector<vector<const Order*>>("VectorOrder");
 }
 
 void Nexus::Python::ExportOrderExecutionClient() {
-  class_<VirtualOrderExecutionClient, boost::noncopyable>(
-      "VirtualOrderExecutionClient", no_init);
-  class_<PythonOrderExecutionClient, boost::noncopyable,
-      bases<VirtualOrderExecutionClient>>("OrderExecutionClient", no_init)
-    .def("__init__", make_constructor(&BuildClient))
-    .def("query_order_records", &PythonOrderExecutionClient::QueryOrderRecords)
-    .def("query_sequenced_order_submissions",
-      &PythonOrderExecutionClient::QuerySequencedOrderSubmissions)
-    .def("query_order_submissions",
-      &PythonOrderExecutionClient::QueryOrderSubmissions)
-    .def("query_execution_reports",
-      &PythonOrderExecutionClient::QueryExecutionReports)
-    .def("get_order_submission_publisher",
-      &PythonOrderExecutionClient::GetOrderSubmissionPublisher,
-      return_value_policy<reference_existing_object>())
-    .def("submit", BlockingFunction<PythonOrderExecutionClient>(
-      &PythonOrderExecutionClient::Submit,
-      return_value_policy<reference_existing_object>()))
-    .def("cancel", &PythonOrderExecutionClient::Cancel)
-    .def("open", BlockingFunction<PythonOrderExecutionClient>(
-      &PythonOrderExecutionClient::Open))
-    .def("close", BlockingFunction<PythonOrderExecutionClient>(
-      &PythonOrderExecutionClient::Close));
+  class_<FromPythonOrderExecutionClient, boost::noncopyable>(
+    "OrderExecutionClient", no_init)
+    .def("query_order_records",
+      pure_virtual(&VirtualOrderExecutionClient::QueryOrderRecords))
+    .def("query_sequenced_order_submissions", pure_virtual(
+      static_cast<void (VirtualOrderExecutionClient::*)(const AccountQuery&,
+      const std::shared_ptr<QueueWriter<SequencedOrder>>&)>(
+      &VirtualOrderExecutionClient::QueryOrderSubmissions)))
+    .def("query_order_submissions", pure_virtual(
+      static_cast<void (VirtualOrderExecutionClient::*)(const AccountQuery&,
+      const std::shared_ptr<QueueWriter<const Order*>>&)>(
+      &VirtualOrderExecutionClient::QueryOrderSubmissions)))
+    .def("query_execution_reports", pure_virtual(
+      &VirtualOrderExecutionClient::QueryExecutionReports))
+    .def("get_order_submission_publisher", pure_virtual(
+      &VirtualOrderExecutionClient::GetOrderSubmissionPublisher),
+      return_internal_reference<>())
+    .def("submit", pure_virtual(&VirtualOrderExecutionClient::Submit),
+      return_internal_reference<>())
+    .def("cancel", pure_virtual(&VirtualOrderExecutionClient::Cancel))
+    .def("open", pure_virtual(&VirtualOrderExecutionClient::Open))
+    .def("close", pure_virtual(&VirtualOrderExecutionClient::Close));
+  ExportRef<VirtualOrderExecutionClient>("RefOrderExecutionClient");
+  ExportUniquePtr<VirtualOrderExecutionClient>();
 }
 
 void Nexus::Python::ExportOrderExecutionService() {
@@ -253,14 +280,15 @@ void Nexus::Python::ExportOrderExecutionService() {
     borrowed(PyImport_AddModule(nestedName.c_str())))};
   scope().attr("order_execution_service") = nestedModule;
   scope parent = nestedModule;
-  ExportAccountQuery();
   ExportExecutionReport();
   ExportOrder();
   ExportOrderExecutionClient();
+  ExportApplicationOrderExecutionClient();
   ExportOrderFields();
   ExportOrderInfo();
   ExportOrderRecord();
   ExportPrimitiveOrder();
+  ExportBasicQuery<DirectoryEntry>("Account");
   ExportStandardQueries();
   {
     string nestedName = extract<string>(parent.attr("__name__") + ".tests");
@@ -268,44 +296,84 @@ void Nexus::Python::ExportOrderExecutionService() {
       borrowed(PyImport_AddModule(nestedName.c_str())))};
     parent.attr("tests") = nestedModule;
     scope child = nestedModule;
-    ExportOrderExecutionServiceTestInstance();
+    ExportOrderExecutionServiceTestEnvironment();
     ExportMockOrderExecutionDriver();
-    def("cancel_order", &CancelOrder);
-    def("set_order_status", &SetOrderStatus);
-    def("fill_order", static_cast<void (*)(PrimitiveOrder& order, Money price,
-      Quantity quantity, const ptime& timestamp)>(&FillOrder));
-    def("fill_order", static_cast<void (*)(PrimitiveOrder& order,
-      Quantity quantity, const ptime& timestamp)>(&FillOrder));
+    def("cancel_order", BlockingFunction(&CancelOrder));
+    def("set_order_status", BlockingFunction(&SetOrderStatus));
+    def("fill_order", BlockingFunction(
+      static_cast<void (*)(PrimitiveOrder& order, Money price,
+      Quantity quantity, const ptime& timestamp)>(&FillOrder)));
+    def("fill_order", BlockingFunction(
+      static_cast<void (*)(PrimitiveOrder& order,
+      Quantity quantity, const ptime& timestamp)>(&FillOrder)));
+    def("is_pending_cancel", BlockingFunction(&IsPendingCancel));
   }
 }
 
-void Nexus::Python::ExportOrderExecutionServiceTestInstance() {
-  class_<OrderExecutionServiceTestInstance, boost::noncopyable>(
-      "OrderExecutionServiceTestInstance", no_init)
-    .def("__init__", make_constructor(BuildOrderExecutionServiceTestInstance))
-    .def("get_driver", &OrderExecutionServiceTestInstance::GetDriver,
-      return_value_policy<reference_existing_object>())
-    .def("open", BlockingFunction(&OrderExecutionServiceTestInstance::Open))
-    .def("close", BlockingFunction(&OrderExecutionServiceTestInstance::Close))
-    .def("build_client", &OrderExecutionServiceTestInstanceBuildClient,
-      return_value_policy<manage_new_object>());
+void Nexus::Python::ExportOrderExecutionServiceTestEnvironment() {
+  class_<OrderExecutionServiceTestEnvironment, boost::noncopyable>(
+      "OrderExecutionServiceTestEnvironment", no_init)
+    .def("__init__",
+      make_constructor(BuildOrderExecutionServiceTestEnvironment))
+    .def("get_driver", &OrderExecutionServiceTestEnvironment::GetDriver,
+      return_internal_reference<>())
+    .def("open", BlockingFunction(&OrderExecutionServiceTestEnvironment::Open))
+    .def("close", BlockingFunction(
+      &OrderExecutionServiceTestEnvironment::Close))
+    .def("build_client", &OrderExecutionServiceTestEnvironmentBuildClient);
 }
 
 void Nexus::Python::ExportOrderFields() {
   class_<OrderFields>("OrderFields", init<>())
-    .def("build_limit_order", &OrderFields::BuildLimitOrder)
+    .def("__copy__", &MakeCopy<OrderFields>)
+    .def("__deepcopy__", &MakeDeepCopy<OrderFields>)
+    .def("build_limit_order", static_cast<OrderFields (*)(
+      const DirectoryEntry&, const Security&, CurrencyId, Side, const string&,
+      Quantity, Money)>(&OrderFields::BuildLimitOrder))
+    .def("build_limit_order", static_cast<OrderFields (*)(const Security&,
+      CurrencyId, Side, const string&, Quantity, Money)>(
+      &OrderFields::BuildLimitOrder))
+    .def("build_limit_order", static_cast<OrderFields (*)(
+      const DirectoryEntry&, const Security&, Side, const string&, Quantity,
+      Money)>(&OrderFields::BuildLimitOrder))
+    .def("build_limit_order", static_cast<OrderFields (*)(const Security&,
+      Side, const string&, Quantity, Money)>(&OrderFields::BuildLimitOrder))
+    .def("build_limit_order", static_cast<OrderFields (*)(const Security&,
+      CurrencyId, Side, Quantity, Money)>(&OrderFields::BuildLimitOrder))
+    .def("build_limit_order", static_cast<OrderFields (*)(
+      const DirectoryEntry&, const Security&, Side, Quantity, Money)>(
+      &OrderFields::BuildLimitOrder))
+    .def("build_limit_order", static_cast<OrderFields (*)(const Security&,
+      Side, Quantity, Money)>(&OrderFields::BuildLimitOrder))
     .staticmethod("build_limit_order")
-    .def("build_market_order", &OrderFields::BuildMarketOrder)
+    .def("build_market_order", static_cast<OrderFields (*)(
+      const DirectoryEntry&, const Security&, CurrencyId, Side, const string&,
+      Quantity)>(&OrderFields::BuildMarketOrder))
+    .def("build_market_order", static_cast<OrderFields (*)(const Security&,
+      CurrencyId, Side, const string&, Quantity)>(
+      &OrderFields::BuildMarketOrder))
+    .def("build_market_order", static_cast<OrderFields (*)(
+      const DirectoryEntry&, const Security&, Side, const string&, Quantity)>(
+      &OrderFields::BuildMarketOrder))
+    .def("build_market_order", static_cast<OrderFields (*)(const Security&,
+      Side, const string&, Quantity)>(&OrderFields::BuildMarketOrder))
+    .def("build_market_order", static_cast<OrderFields (*)(const Security&,
+      CurrencyId, Side, Quantity)>(&OrderFields::BuildMarketOrder))
+    .def("build_market_order", static_cast<OrderFields (*)(
+      const DirectoryEntry&, const Security&, Side, Quantity)>(
+      &OrderFields::BuildMarketOrder))
+    .def("build_market_order", static_cast<OrderFields (*)(const Security&,
+      Side, Quantity)>(&OrderFields::BuildMarketOrder))
     .staticmethod("build_market_order")
     .def_readwrite("account", &OrderFields::m_account)
     .def_readwrite("security", &OrderFields::m_security)
     .def_readwrite("currency", &OrderFields::m_currency)
     .add_property("type", make_getter(&OrderFields::m_type,
-      return_value_policy<return_by_value>()), make_setter(&OrderFields::m_type,
-      return_value_policy<return_by_value>()))
+      return_value_policy<return_by_value>()), make_setter(
+      &OrderFields::m_type, return_value_policy<return_by_value>()))
     .add_property("side", make_getter(&OrderFields::m_side,
-      return_value_policy<return_by_value>()), make_setter(&OrderFields::m_side,
-      return_value_policy<return_by_value>()))
+      return_value_policy<return_by_value>()), make_setter(
+      &OrderFields::m_side, return_value_policy<return_by_value>()))
     .def_readwrite("destination", &OrderFields::m_destination)
     .def_readwrite("quantity", &OrderFields::m_quantity)
     .def_readwrite("price", &OrderFields::m_price)
@@ -322,6 +390,8 @@ void Nexus::Python::ExportOrderInfo() {
     .def(init<OrderFields, DirectoryEntry, OrderId, bool, ptime>())
     .def(init<OrderFields, OrderId, bool, ptime>())
     .def(init<OrderFields, OrderId, ptime>())
+    .def("__copy__", &MakeCopy<OrderInfo>)
+    .def("__deepcopy__", &MakeDeepCopy<OrderInfo>)
     .def_readwrite("fields", &OrderInfo::m_fields)
     .def_readwrite("submission_account", &OrderInfo::m_submissionAccount)
     .def_readwrite("order_id", &OrderInfo::m_orderId)
@@ -337,6 +407,8 @@ void Nexus::Python::ExportOrderInfo() {
 void Nexus::Python::ExportOrderRecord() {
   class_<OrderRecord>("OrderRecord", init<>())
     .def(init<OrderInfo, vector<ExecutionReport>>())
+    .def("__copy__", &MakeCopy<OrderRecord>)
+    .def("__deepcopy__", &MakeDeepCopy<OrderRecord>)
     .def_readwrite("info", &OrderRecord::m_info)
     .def_readwrite("execution_reports", &OrderRecord::m_executionReports)
     .def(self == self)
@@ -346,19 +418,20 @@ void Nexus::Python::ExportOrderRecord() {
 void Nexus::Python::ExportPrimitiveOrder() {
   ExportPublisher<const PrimitiveOrder*>("ConstPrimitiveOrderPublisher");
   ExportPublisher<PrimitiveOrder*>("PrimitiveOrderPublisher");
-  ExportSnapshotPublisher<const PrimitiveOrder*, vector<const PrimitiveOrder*>>(
-    "PrimitiveOrderSnapshotPublisher");
+  ExportSnapshotPublisher<const PrimitiveOrder*,
+    vector<const PrimitiveOrder*>>("ConstPrimitiveOrderSnapshotPublisher");
   ExportSnapshotPublisher<PrimitiveOrder*, vector<PrimitiveOrder*>>(
-    "ConstPrimitiveOrderSnapshotPublisher");
+    "PrimitiveOrderSnapshotPublisher");
   class_<PrimitiveOrder, bases<Order>, boost::noncopyable>("PrimitiveOrder",
     init<OrderInfo>())
     .def(init<OrderRecord>())
-    .def("update", &PrimitiveOrder::Update);
+    .def("update", BlockingFunction(&PrimitiveOrder::Update));
   def("build_rejected_order", &BuildRejectedOrder);
   def("reject_cancel_request", &RejectCancelRequest);
 }
 
 void Nexus::Python::ExportStandardQueries() {
   def("build_daily_order_submission_query", &BuildDailyOrderSubmissionQuery);
-  def("query_daily_order_submissions", &PythonQueryDailyOrderSubmissions);
+  def("query_daily_order_submissions",
+    &QueryDailyOrderSubmissions<VirtualOrderExecutionClient>);
 }

@@ -11,9 +11,9 @@ CALL %~dp0../../Applications/ChartingServer/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/ChiaMarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/ClientWebPortal/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/ComplianceServer/Build/Windows/build.bat %config%
+CALL %~dp0../../Applications/CseMarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/CtaMarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/DefinitionsServer/Build/Windows/build.bat %config%
-CALL %~dp0../../Applications/EndOfSessionClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/MarketDataClientStressTest/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/MarketDataClientTemplate/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/MarketDataRelayServer/Build/Windows/build.bat %config%

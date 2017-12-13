@@ -9,7 +9,7 @@
 #include <QMessageBox>
 #include <QStatusBar>
 #include <QTableView>
-#include "Nexus/OrderTasks/SingleOrderTask.hpp"
+#include "Nexus/Tasks/SingleOrderTask.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
@@ -39,7 +39,7 @@ using namespace Beam::Tasks;
 using namespace boost;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
-using namespace Nexus::OrderTasks;
+using namespace Nexus::Tasks;
 using namespace Spire;
 using namespace Spire::UI;
 using namespace std;

@@ -2,6 +2,7 @@
 @import "variables";
 @import "icons";
 @import "modal";
+@import "context-menu";
 
 @font-face {
   font-family: 'Roboto';
@@ -28,7 +29,7 @@ main {
 
   &.mobile {
     min-width: 100vw;
-    padding: 0 15px 15px 15px;
+    padding: 0 15px 0 15px;
   }
 }
 
@@ -72,6 +73,10 @@ textarea {
   -moz-appearance: none;
   border-radius: 0;
   overflow-y: auto !important;
+
+  &:focus {
+    border: 1px solid $primaryGradient3 !important;
+  }
 }
 
 button {
@@ -111,7 +116,7 @@ button {
 }
 
 .container-fixed-width {
-  width: 1170px;
+  width: $minSiteWidth;
   margin: 0 auto;
   padding: 0 20px;
 }
@@ -131,4 +136,188 @@ select {
 
 select::-ms-expand {
   display: none;
+}
+
+ul.tagit {
+  border-radius: 0px;
+  padding-left: 15px;
+  padding-bottom: 3px;
+  margin-bottom: 0px;
+
+  li.tagit-new {
+    margin-top: 2px;
+    margin-bottom: 0px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+
+    input {
+      border: 0 !important;
+
+      &:focus {
+        border: 0 !important;
+      }
+    }
+  }
+
+  li.tagit-choice {
+    border: 0px;
+    border-radius: 0px;
+    background: $lighterGrey;
+    margin-top: 2px;
+    margin-bottom: 0px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    padding-right: 20px;
+
+    .tagit-close {
+      font-size: 8px;
+      padding-right: 4px;
+
+      &:hover {
+        text-decoration: none;
+        color: $primaryGradient2;
+      }
+    }
+  }
+}
+
+.ui-state-active,
+.ui-widget-content .ui-state-active,
+.ui-widget-header .ui-state-active,
+a.ui-button:active,
+.ui-button:active,
+.ui-button.ui-state-active:hover {
+  border: 1px solid $primaryGradient3;
+  background: $primaryGradient3;
+  font-weight: normal;
+  color: #ffffff;
+}
+
+input[type=checkbox] {
+  -webkit-appearance: checkbox;
+}
+
+/* Radio button */
+input[type=radio] {
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+  -webkit-appearance:none;
+  width:13px;
+  height:13px;
+  border:1px solid darkgray;
+  border-radius:50%;
+}
+
+input[type=radio]::before {
+  outline: none;
+  content:'';
+  display:block;
+  width:100%;
+  height:100%;
+  margin: 0 auto;
+  border-radius:50%;
+}
+
+input[type=radio]:checked::before {
+  outline: none;
+  background:$primaryGradient1;
+}
+
+input[type=checkbox]:focus, input[type=file]:focus, input[type=radio]:focus {
+  outline: none;
+}
+
+input[type=text] {
+  border: 1px solid $darkGrey;
+  padding: 5px;
+  background: $white;
+
+  &.invalid {
+    border: 1px solid $red;
+  }
+
+  &:focus {
+    border: 1px solid $primaryGradient3 !important;
+  }
+}
+
+input[type=password] {
+  &:focus {
+    border: 1px solid $primaryGradient3 !important;
+  }
+}
+
+label {
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  font-weight: 300;
+}
+
+.no-select {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+// datepicker calendar style overrides
+.ui-datepicker .ui-datepicker-title select.ui-datepicker-year {
+  margin-left: 10px;
+}
+
+.ui-datepicker .ui-datepicker-prev-hover {
+  left: 2px;
+}
+
+.ui-datepicker .ui-datepicker-next-hover {
+  right: 2px;
+}
+
+.ui-datepicker .ui-datepicker-prev-hover,
+.ui-datepicker .ui-datepicker-next-hover {
+  top: 2px;
+  cursor: pointer;
+}
+
+.ui-datepicker .ui-datepicker-prev-hover.ui-state-hover,
+.ui-datepicker .ui-datepicker-next-hover.ui-state-hover {
+  top: 2px;
+  cursor: pointer;
+  border: 0;
+  background: #e9e9e9;
+}
+
+.ui-autocomplete {
+  min-width: 200px;
+  max-height: 270px;
+  overflow-y: auto;   /* prevent horizontal scrollbar */
+  overflow-x: hidden; /* add padding to account for vertical scrollbar */
+  z-index:1000 !important;
+}
+
+@keyframes arrowExpand {
+  0% {
+    color: $primaryGradient3;
+    transform: rotateZ(0deg);
+  }
+  100% {
+    color: $primaryGradient1;
+    transform: rotateZ(90deg);
+  }
+}
+
+@keyframes arrowCollapse {
+  0% {
+    color: $primaryGradient1;
+    transform: rotateZ(90deg);
+  }
+  100% {
+    color: $darkGrey;
+    transform: rotateZ(0deg);
+  }
 }

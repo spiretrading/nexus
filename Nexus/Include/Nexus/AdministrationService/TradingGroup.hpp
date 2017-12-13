@@ -34,9 +34,15 @@ namespace AdministrationService {
       //! Returns the DirectoryEntry representing this TradingGroup.
       const Beam::ServiceLocator::DirectoryEntry& GetEntry() const;
 
+      //! Returns the DirectoryEntry for the managers directory.
+      const Beam::ServiceLocator::DirectoryEntry& GetManagersDirectory() const;
+
       //! Returns the list of managers in the group.
       const std::vector<Beam::ServiceLocator::DirectoryEntry>&
         GetManagers() const;
+
+      //! Returns the DirectoryEntry for the traders directory.
+      const Beam::ServiceLocator::DirectoryEntry& GetTradersDirectory() const;
 
       //! Returns the list of traders in the group.
       const std::vector<Beam::ServiceLocator::DirectoryEntry>&
@@ -71,9 +77,19 @@ namespace AdministrationService {
     return m_entry;
   }
 
+  inline const Beam::ServiceLocator::DirectoryEntry&
+      TradingGroup::GetManagersDirectory() const {
+    return m_managersDirectory;
+  }
+
   inline const std::vector<Beam::ServiceLocator::DirectoryEntry>&
       TradingGroup::GetManagers() const {
     return m_managers;
+  }
+
+  inline const Beam::ServiceLocator::DirectoryEntry&
+      TradingGroup::GetTradersDirectory() const {
+    return m_tradersDirectory;
   }
 
   inline const std::vector<Beam::ServiceLocator::DirectoryEntry>&

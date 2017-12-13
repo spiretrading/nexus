@@ -1,7 +1,6 @@
 #ifndef NEXUS_MARKETDATAMARKETENTRY_HPP
 #define NEXUS_MARKETDATAMARKETENTRY_HPP
-#include <Beam/Queries/Sequence.hpp>
-#include <boost/atomic/atomic.hpp>
+#include <Beam/Queries/Sequencer.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/MarketDataService/MarketDataService.hpp"
@@ -50,25 +49,47 @@ namespace MarketDataService {
 
     private:
       MarketCode m_market;
-      boost::atomic<Beam::Queries::Sequence::Ordinal> m_orderImbalanceSequence;
+      Beam::Queries::Sequencer m_orderImbalanceSequencer;
   };
+
+  //! Returns the InitialSequences for a MarketEntry.
+  /*!
+    \param dataStore The DataStore to load the InitialSequences from.
+    \param market The market to load the InitialSequences for.
+    \return The set of InitialSequences for the specified <i>market</i>.
+  */
+  template<typename DataStore>
+  MarketEntry::InitialSequences LoadInitialSequences(DataStore& dataStore,
+      MarketCode market) {
+    MarketWideDataQuery query;
+    query.SetIndex(market);
+    query.SetRange(Beam::Queries::Range::Total());
+    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Type::TAIL, 1);
+    MarketEntry::InitialSequences initialSequences;
+    auto results = dataStore.LoadOrderImbalances(query);
+    if(results.empty()) {
+      initialSequences.m_nextOrderImbalanceSequence =
+        Beam::Queries::Sequence::First();
+    } else {
+      initialSequences.m_nextOrderImbalanceSequence =
+        Beam::Queries::Increment(results.back().GetSequence());
+    }
+    return initialSequences;
+  }
 
   inline MarketEntry::MarketEntry(MarketCode market,
       const InitialSequences& initialSequences)
-      : m_market(market),
-        m_orderImbalanceSequence(
-          initialSequences.m_nextOrderImbalanceSequence.GetOrdinal()) {}
+      : m_market{market},
+        m_orderImbalanceSequencer{
+          initialSequences.m_nextOrderImbalanceSequence} {}
 
   inline void MarketEntry::Clear(int sourceId) {}
 
   inline boost::optional<SequencedMarketOrderImbalance> MarketEntry::
       PublishOrderImbalance(const OrderImbalance& orderImbalance,
       int sourceId) {
-    auto sequence = ++m_orderImbalanceSequence;
-    auto sequencedOrderImbalance = Beam::Queries::MakeSequencedValue(
-      Beam::Queries::MakeIndexedValue(orderImbalance, m_market),
-      Beam::Queries::Sequence(sequence));
-    return sequencedOrderImbalance;
+    return m_orderImbalanceSequencer.MakeSequencedValue(orderImbalance,
+      m_market);
   }
 }
 }

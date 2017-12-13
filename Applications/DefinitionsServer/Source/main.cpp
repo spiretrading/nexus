@@ -21,6 +21,7 @@
 #include "Nexus/Compliance/OpposingOrderCancellationComplianceRule.hpp"
 #include "Nexus/Compliance/OpposingOrderSubmissionComplianceRule.hpp"
 #include "Nexus/Compliance/OrderCountPerSideComplianceRule.hpp"
+#include "Nexus/Compliance/SubmissionRestrictionPeriodComplianceRule.hpp"
 #include "Nexus/Compliance/SymbolRestrictionComplianceRule.hpp"
 #include "Nexus/DefinitionsService/DefinitionsServlet.hpp"
 
@@ -44,9 +45,9 @@ using namespace TCLAP;
 namespace {
   using DefinitionsServletContainer =
     ServiceProtocolServletContainer<MetaAuthenticationServletAdapter<
-    MetaDefinitionsServlet<ApplicationServiceLocatorClient::Client*>,
-    ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
-    BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
+    MetaDefinitionsServlet, ApplicationServiceLocatorClient::Client*>,
+    TcpServerSocket, BinarySender<SharedBuffer>, NullEncoder,
+    std::shared_ptr<LiveTimer>>;
 
   struct DefinitionsServerConnectionInitializer {
     string m_serviceName;
@@ -138,6 +139,8 @@ int main(int argc, const char** argv) {
   complianceRuleSchemas.push_back(
     BuildOpposingOrderSubmissionComplianceRuleSchema());
   complianceRuleSchemas.push_back(BuildOrderCountPerSideComplianceRuleSchema());
+  complianceRuleSchemas.push_back(
+    BuildSubmissionRestrictionPeriodComplianceRuleSchema());
   complianceRuleSchemas.push_back(BuildSymbolRestrictionComplianceRuleSchema());
   optional<DefinitionsServletContainer> definitionsServer;
   try {
@@ -178,8 +181,7 @@ int main(int argc, const char** argv) {
       Initialize(minimumSpireClientVersion, timeZoneDatabaseBuffer.str(),
         std::move(countryDatabase), std::move(currencyDatabase),
         std::move(marketDatabase), std::move(destinationDatabase),
-        std::move(exchangeRates), std::move(complianceRuleSchemas),
-        serviceLocatorClient.Get())),
+        std::move(exchangeRates), std::move(complianceRuleSchemas))),
       Initialize(definitionsServerConnectionInitializer.m_interface,
       Ref(socketThreadPool)),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10),

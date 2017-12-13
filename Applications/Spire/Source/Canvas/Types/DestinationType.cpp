@@ -5,7 +5,8 @@ using namespace Spire;
 using namespace std;
 
 const DestinationType& DestinationType::GetInstance() {
-  static auto instance = std::shared_ptr<DestinationType>(new DestinationType());
+  static auto instance = std::shared_ptr<DestinationType>(
+    new DestinationType());
   return *instance;
 }
 

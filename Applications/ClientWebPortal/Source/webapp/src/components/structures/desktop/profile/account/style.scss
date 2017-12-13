@@ -12,6 +12,7 @@
   .header{
     color: $primaryGradient1;
     font-weight: bold;
+    margin-bottom: 15px;
   }
 
   .account-information-body {
@@ -38,8 +39,16 @@
     .save-message {
       align-self: center;
       margin-right: 30px;
-      color: $primaryGradient3;
       display: none;
+      font-size: 14px;
+
+      &.red {
+        color: $red;
+      }
+
+      &.purple {
+        color: $primaryGradient3;
+      }
     }
   }
 
@@ -58,6 +67,7 @@
         display: flex;
         flex: 1;
         flex-direction: row-reverse;
+        align-items: center;
 
         .save-password-button {
           width: 171px;
@@ -73,8 +83,15 @@
     }
 
     .message {
-      color: $primaryGradient3;
       display: none;
+
+      &.red {
+        color: $red;
+      }
+
+      &.purple {
+        color: $primaryGradient3;
+      }
     }
   }
 

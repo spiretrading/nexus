@@ -17,6 +17,7 @@
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
+#include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
@@ -72,7 +73,13 @@ namespace {
   }
 
   TmxTl1Configuration ParseConfiguration(const YAML::Node& config,
-      const MarketDatabase& marketDatabase) {
+      const MarketDatabase& marketDatabase, const ptime& currentDate,
+      const local_time::tz_database& timeZones) {
+    auto configTimezone = Extract<string>(config, "time_zone", "Eastern_Time");
+    auto timeZone = timeZones.time_zone_from_region(configTimezone);
+    if(timeZone == nullptr) {
+      BOOST_THROW_EXCEPTION(std::runtime_error{"Time zone not found."});
+    }
     TmxTl1Configuration tmxTl1Config;
     tmxTl1Config.m_isLoggingMessages = Extract<bool>(config, "enable_logging",
       false);
@@ -80,6 +87,7 @@ namespace {
       Extract<string>(config, "market"));
     tmxTl1Config.m_market = market.m_code;
     tmxTl1Config.m_country = market.m_countryCode;
+    tmxTl1Config.m_timeOffset = -GetUtcOffset(currentDate, *timeZone);
     return tmxTl1Config;
   }
 }
@@ -142,17 +150,38 @@ int main(int argc, const char** argv) {
     cerr << "Unable to connect to the definitions service." << endl;
     return -1;
   }
+  unique_ptr<LiveNtpTimeClient> timeClient;
+  try {
+    auto timeServices = serviceLocatorClient->Locate(TimeService::SERVICE_NAME);
+    if(timeServices.empty()) {
+      cerr << "No time services available." << endl;
+      return -1;
+    }
+    auto& timeService = timeServices.front();
+    auto ntpPool = FromString<vector<IpAddress>>(get<string>(
+      timeService.GetProperties().At("addresses")));
+    timeClient = MakeLiveNtpTimeClient(ntpPool, Ref(socketThreadPool),
+      Ref(timerThreadPool));
+  } catch(const  std::exception& e) {
+    cerr << "Unable to initialize NTP client: " << e.what() << endl;
+    return -1;
+  }
+  try {
+    timeClient->Open();
+  } catch(const std::exception&) {
+    cerr << "NTP service unavailable." << endl;
+    return -1;
+  }
   optional<BaseMarketDataFeedClient> baseMarketDataFeedClient;
   try {
-    auto marketDataServices = serviceLocatorClient->Locate(
-      MarketDataService::FEED_SERVICE_NAME);
-    if(marketDataServices.empty()) {
+    auto marketDataService = FindMarketDataFeedService(DefaultCountries::CA(),
+      *serviceLocatorClient);
+    if(!marketDataService.is_initialized()) {
       cerr << "No market data services available." << endl;
       return -1;
     }
-    auto& marketDataService = marketDataServices.front();
     auto marketDataAddresses = FromString<vector<IpAddress>>(
-      get<string>(marketDataService.GetProperties().At("addresses")));
+      get<string>(marketDataService->GetProperties().At("addresses")));
     auto samplingTime = Extract<time_duration>(config, "sampling");
     baseMarketDataFeedClient.emplace(
       Initialize(marketDataAddresses, Ref(socketThreadPool)),
@@ -186,7 +215,9 @@ int main(int argc, const char** argv) {
   TmxTl1Configuration tmxTl1Config;
   try {
     auto marketDatabase = definitionsClient->LoadMarketDatabase();
-    tmxTl1Config = ParseConfiguration(config, marketDatabase);
+    auto timeZones = definitionsClient->LoadTimeZoneDatabase();
+    tmxTl1Config = ParseConfiguration(config, marketDatabase,
+      timeClient->GetTime(), timeZones);
   } catch(const std::exception& e) {
     cerr << "Error initializing TMX TL1 configuration: " << e.what() << endl;
     return -1;

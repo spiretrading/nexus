@@ -195,8 +195,8 @@ namespace Details {
       orderInfo->m_fields.m_account.m_type =
         Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT;
       orderInfo->m_fields.m_account.m_id = row.account;
-      orderInfo->m_fields.m_security = Security(row.symbol, row.market,
-        row.country);
+      orderInfo->m_fields.m_security = Security{row.symbol, row.market,
+        static_cast<CountryCode>(row.country)};
       orderInfo->m_fields.m_currency = CurrencyId{row.currency};
       orderInfo->m_fields.m_type = static_cast<OrderType>(row.type);
       orderInfo->m_fields.m_side = static_cast<Side>(row.side);
@@ -233,8 +233,8 @@ namespace Details {
       orderInfo->m_fields.m_account.m_type =
         Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT;
       orderInfo->m_fields.m_account.m_id = row.account;
-      orderInfo->m_fields.m_security = Security(row.symbol, row.market,
-        row.country);
+      orderInfo->m_fields.m_security = Security{row.symbol, row.market,
+        static_cast<CountryCode>(row.country)};
       orderInfo->m_fields.m_currency = CurrencyId{row.currency};
       orderInfo->m_fields.m_type = static_cast<OrderType>(row.type);
       orderInfo->m_fields.m_side = static_cast<Side>(row.side);

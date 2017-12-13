@@ -1,17 +1,96 @@
-import React from 'react';
 import './style.scss';
-import CommonView from 'components/structures/common/profile/risk-controls/common-view';
-import UserInfoNav from 'components/reusables/common/user-info-nav';
-import DropDownCard from 'components/reusables/mobile/cards/drop-down-card';
-import CurrencyCard from 'components/reusables/common/cards/currency-card';
-import TimeCard from 'components/reusables/common/cards/time-card';
-import PrimaryButton from 'components/reusables/common/primary-button';
+import React from 'react';
 import deviceDetector from 'utils/device-detector';
+import PrimaryButton from 'components/reusables/common/primary-button';
 import definitionsService from 'services/definitions';
+import StepNumberInput from 'components/reusables/common/step-number-input';
+import CommonView from 'components/structures/common/profile/risk-controls/common-view';
 
-class DesktopView extends CommonView {
+class View extends CommonView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
+  }
+
+  /** @private */
+  onMoneyInputKeyUp(event) {
+    let $input = $(event.currentTarget);
+    let input = $input.val();
+    let $error = $('#risk-control-container').find('.' + $input.attr('data-control') + '-error');
+    let validationFailMessage = this.validateInput(input, 2);
+
+    if (validationFailMessage == null) {
+      $input.removeClass('invalid').addClass('valid');
+      $error.text('');
+      if ($input.attr('data-control') == 'buying-power') {
+        this.controller.onBuyingPowerChange(Number(input));
+      } else if ($input.attr('data-control') == 'net-loss') {
+        this.controller.onNetLossChange(Number(input));
+      }
+    } else {
+      $input.removeClass('valid').addClass('invalid');
+      $error.text(validationFailMessage);
+    }
+  }
+
+  /** @private */
+  onTimeInputKeyUp(event) {
+    let $input = $(event.currentTarget);
+    let input = $input.val();
+    let isHour = $input.hasClass('hour');
+    let validationFailMessage = this.validateInput(input, 0, true, isHour);
+
+    if (validationFailMessage == null) {
+      $input.removeClass('invalid').addClass('valid');
+
+      // update the model with new valid value
+      if (input.length == 1) {
+        input = '0' + input;
+      }
+      let currentTime = this.componentModel.riskParameters.transitionTime;
+      let updatedTime;
+      if ($input.hasClass('hour')) {
+        updatedTime = input + currentTime.substring(2);
+      } else if ($input.hasClass('minute')) {
+        updatedTime = currentTime.substring(0, 3) + input + currentTime.substring(5);
+      } else {
+        updatedTime = currentTime.substring(0, 6) + input;
+      }
+      this.componentModel.riskParameters.transitionTime = updatedTime;
+      this.controller.onTransitionTimeChange(updatedTime);
+    } else {
+      $input.removeClass('valid').addClass('invalid');
+    }
+  }
+
+  /** @private */
+  validateInput(input, numDecimalPlaces, isTime, isHour) {
+    let inputNumber = Number(input);
+    if (!$.isNumeric(inputNumber)) {
+      return 'Not a number.';
+    } else if (!this.isValidDecimals(input, numDecimalPlaces) && numDecimalPlaces == 0) {
+      return 'Decimal places are not allowed.';
+    } else if (!this.isValidDecimals(input, numDecimalPlaces)) {
+      return 'Exceeded ' + numDecimalPlaces + ' decimal places.';
+    } else if (isTime && !isHour && inputNumber > 59) {
+      return 'Cannot be more than 59 minutes.';
+    } else if (input == null || input.length == 0) {
+      return 'This field is required.';
+    }
+
+    return null;
+  }
+
+  /** @private */
+  isValidDecimals(input, numDecimalPlaces) {
+    let periodIndex = input.indexOf('.');
+    if (periodIndex == -1) {
+      return true;
+    } else if (periodIndex > -1 && numDecimalPlaces == 0) {
+      return false;
+    } else {
+      let decimalPlaces = input.substring(periodIndex + 1);
+      return decimalPlaces.length <= numDecimalPlaces;
+    }
   }
 
   render() {
@@ -23,76 +102,127 @@ class DesktopView extends CommonView {
       containerClassName = '';
     }
 
-    if (!this.controller.isModelEmpty.apply(this.controller)) {
-      let userInfoNavModel = {
-        userName: this.componentModel.userName,
-        roles: this.componentModel.roles
-      };
+    if (this.controller.isModelInitialized()) {
+      let currencySign = definitionsService.getCurrencySignFromId(this.componentModel.riskParameters.currencyId.value);
+      if (currencySign != '') {
+        currencySign = '(' + currencySign + ')';
+      }
 
-      let currencyModel = {
-        title: 'Currency',
-        value: definitionsService.getCurrencyCode.apply(definitionsService, [this.componentModel.riskParameters.currency]),
-        options: definitionsService.getAllCurrencyCodes.apply(definitionsService),
-        isReadOnly: !this.componentModel.isAdmin
-      };
-
-      let netLossModel = {
-        title: 'Net Loss',
-        value: this.componentModel.riskParameters.netLoss,
-        countryIso: this.componentModel.riskParameters.currency,
-        isReadOnly: !this.componentModel.isAdmin
-      };
-
-      let buyingPowerModel = {
-        title: 'Buying Power',
-        value: this.componentModel.riskParameters.buyingPower,
-        countryIso: this.componentModel.riskParameters.currency,
-        isReadOnly: !this.componentModel.isAdmin
-      };
-
-      let transitionTimeModel = {
-        title: 'Transition Time',
-        value: this.componentModel.riskParameters.transitionTime,
-        isReadOnly: !this.componentModel.isAdmin
-      };
-
-      let onCurrencyChange = this.onCurrencyChange.bind(this);
-      let onNetLossChange = this.controller.onNetLossChange.bind(this.controller);
-      let onBuyingPowerChange = this.controller.onBuyingPowerChange.bind(this.controller);
-      let onTransitionTimeChange = this.controller.onTransitionTimeChange.bind(this.controller);
-      let onSave = this.controller.save.bind(this.controller);
-
+      let onSave = this.onSaveClick.bind(this);
       let saveBtnModel = {
         label: 'Save Changes'
       };
-      let saveButton, horizontalDivider;
+      if (this.componentModel.riskParameters.currencyId.value == 0) {
+        saveBtnModel.isDisabled = true;
+      } else {
+        saveBtnModel.isDisabled = false;
+      }
+
+      let saveButton;
       if (this.componentModel.isAdmin) {
         saveButton = <PrimaryButton className="save-button" model={saveBtnModel} onClick={onSave}/>
-        horizontalDivider = <hr/>
+      }
+
+      let currencies = definitionsService.getAllCurrencies();
+      let options = [];
+      options.push(
+        <option key={-1} value="-1" disabled>Select a currency</option>
+      );
+      for (let i=0; i<currencies.length; i++) {
+        let id = currencies[i].id.value;
+        let code = currencies[i].code;
+        options.push(
+          <option key={i} value={id}>
+            {code}
+          </option>
+        );
+      }
+      let selectedCurrency;
+      if (this.componentModel.riskParameters.currencyId.value == 0) {
+        selectedCurrency = -1;
+      } else {
+        selectedCurrency = this.componentModel.riskParameters.currencyId.value;
+      }
+
+      let timeValues = this.componentModel.riskParameters.transitionTime.split(':');
+
+      let currencyWrapperClass = 'currency-select-wrapper';
+      if (!this.componentModel.isAdmin) {
+        currencyWrapperClass += ' disabled';
       }
 
       content =
         <div>
-          <div className="row">
-            <UserInfoNav model={userInfoNavModel}/>
+          <div className="form-wrapper">
+            <div className="risk-control-label">
+              Currency
+            </div>
+            <div className={currencyWrapperClass}>
+              <select className="currency-select"
+                      defaultValue={selectedCurrency}
+                      onChange={this.onCurrencyChange.bind(this)}
+                      disabled={!this.componentModel.isAdmin}>
+                {options}
+              </select>
+              <span className="icon-arrow-down"/>
+            </div>
+            <div className="risk-control-label">
+              Buying Power <span className="currency-sign">{currencySign}</span>
+            </div>
+            <input type="text" className="buying-power-input money-input"
+                   placeholder="0.00"
+                   data-control="buying-power"
+                   onKeyUp={this.onMoneyInputKeyUp.bind(this)}
+                   defaultValue={this.componentModel.riskParameters.buyingPower.toString()}
+                   readOnly={!this.componentModel.isAdmin}/>
+            <div className="buying-power-error validation-error"></div>
+            <div className="risk-control-label">
+              Net Loss <span className="currency-sign">{currencySign}</span>
+            </div>
+            <input type="text" className="net-loss-input money-input"
+                   placeholder="0.00"
+                   data-control="net-loss"
+                   onKeyUp={this.onMoneyInputKeyUp.bind(this)}
+                   defaultValue={this.componentModel.riskParameters.netLoss.toString()}
+                   readOnly={!this.componentModel.isAdmin}/>
+            <div className="net-loss-error validation-error"></div>
+            <div className="risk-control-label">
+              Transition Time
+            </div>
+            <div className="time-input-wrapper">
+              <div className="hour-input-wrapper input-wrapper">
+                <input type="text" className="hour time-input"
+                       placeholder="00"
+                       maxLength="2"
+                       onKeyUp={this.onTimeInputKeyUp.bind(this)}
+                       defaultValue={timeValues[0]}
+                       readOnly={!this.componentModel.isAdmin}/>
+                <div className="time-input-label">hour</div>
+              </div>
+              <span className="colon">:</span>
+              <div className="minute-input-wrapper input-wrapper">
+                <input type="text" className="minute time-input"
+                       placeholder="00"
+                       maxLength="2"
+                       onKeyUp={this.onTimeInputKeyUp.bind(this)}
+                       defaultValue={timeValues[1]}
+                       readOnly={!this.componentModel.isAdmin}/>
+                <div className="time-input-label">minute</div>
+              </div>
+              <span className="colon">:</span>
+              <div className="second-input-wrapper input-wrapper">
+                <input type="text" className="second time-input"
+                       placeholder="00"
+                       maxLength="2"
+                       onKeyUp={this.onTimeInputKeyUp.bind(this)}
+                       defaultValue={timeValues[2]}
+                       readOnly={!this.componentModel.isAdmin}/>
+                <div className="time-input-label">second</div>
+              </div>
+            </div>
+            {saveButton}
+            <div className="save-message"></div>
           </div>
-          <div className="row cards-wrapper">
-            <div className="card-wrapper">
-              <DropDownCard model={currencyModel} onChange={onCurrencyChange}/>
-            </div>
-            <div className="card-wrapper">
-              <CurrencyCard model={netLossModel} onChange={onNetLossChange}/>
-            </div>
-            <div className="card-wrapper">
-              <CurrencyCard model={buyingPowerModel} onChange={onBuyingPowerChange}/>
-            </div>
-            <div className="card-wrapper last-card">
-              <TimeCard model={transitionTimeModel} onChange={onTransitionTimeChange}/>
-            </div>
-          </div>
-          {horizontalDivider}
-          {saveButton}
-          <div className="save-message"></div>
         </div>
     }
 
@@ -104,4 +234,4 @@ class DesktopView extends CommonView {
   }
 }
 
-export default DesktopView;
+export default View;

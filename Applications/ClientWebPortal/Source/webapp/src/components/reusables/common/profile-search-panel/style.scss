@@ -1,0 +1,142 @@
+@import "src/styles/variables";
+
+.profile-search-panel-container {
+  border: 1px solid $white;
+
+  .header {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    height: 40px;
+    margin-bottom: 10px;
+
+    .icon-expand {
+      height: 16px;
+      font-size: 16px;
+      color: $darkGrey;
+      cursor: pointer;
+      margin-right: 10px;
+      transform: rotate(0deg);
+    }
+
+    .title {
+      flex: 1;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      margin-top: 2px;
+      font-size: 16px;
+      cursor: pointer;
+
+      &:hover {
+        color: $primaryGradient1;
+      }
+    }
+
+    .expanded {
+      color: $primaryGradient1;
+      transform: rotate(90deg);
+      animation: arrowExpand .5s;
+      -webkit-animation-fill-mode: forwards;
+    }
+
+    .collapsed {
+      color: $darkGrey;
+      transform: rotate(-90deg);
+      animation: arrowCollapse .5s;
+      -webkit-animation-fill-mode: forwards;
+    }
+  }
+
+  &.expanded {
+    .header {
+      border-bottom: 1px solid $lightGrey;
+      color: $primaryGradient1;
+    }
+  }
+
+  .content-slide-wrapper {
+    width: 100%;
+    height: 0px;
+    overflow: hidden;
+    padding-left: 0px;
+    padding-right: 0px;
+
+    .trader-row {
+      position: relative;
+      font-size: 16px;
+      height: 0;
+      overflow: hidden;
+      cursor: pointer;
+      padding-top: 4px;
+
+      &.empty {
+        color: $darkerGrey;
+        cursor: auto;
+      }
+
+      &.match {
+        height: 27px;
+      }
+
+      &>span, i {
+        padding-left: 26px;
+      }
+
+      .roles-wrapper {
+        position: absolute;
+        top: 8px;
+        right: 0px;
+        display: flex;
+        padding-right: 10px;
+
+        span {
+          margin-left: 5px;
+          color: $greyedIcon;
+
+          &.active {
+            color: $darkerGrey;
+          }
+        }
+      }
+
+      &:hover:not(.empty) {
+        background: $lighterGrey;
+        color: $primaryGradient1;
+
+        .roles-wrapper {
+          span.active {
+            color: $primaryGradient1;
+          }
+        }
+      }
+    }
+  }
+
+  .matched-string {
+    font-weight: bolder;
+  }
+}
+
+main.mobile {
+  .entitlement-panel-container {
+    .content-slide-wrapper {
+      width: 100%;
+      padding-left: 15px;
+      padding-right: 20px;
+
+      .content-header {
+        position: relative;
+
+        .price {
+          display: inherit;
+          position: absolute;
+          right: 0px;
+          top: 0px;
+          font-weight: normal;
+          color: $black;
+        }
+      }
+    }
+  }
+}

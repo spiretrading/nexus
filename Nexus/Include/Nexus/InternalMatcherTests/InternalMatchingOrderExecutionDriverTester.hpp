@@ -1,18 +1,15 @@
 #ifndef NEXUS_INTERNALMATCHINGORDEREXECUTIONDRIVERTESTER_HPP
 #define NEXUS_INTERNALMATCHINGORDEREXECUTIONDRIVERTESTER_HPP
-#include <Beam/Pointers/DelayPtr.hpp>
-#include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
-#include <Beam/ServiceLocatorTests/ServiceLocatorTestInstance.hpp>
 #include <Beam/Threading/TimerThreadPool.hpp>
-#include <Beam/TimeService/IncrementalTimeClient.hpp>
-#include <Beam/UidServiceTests/UidServiceTestInstance.hpp>
 #include <Beam/Utilities/BeamWorkaround.hpp>
+#include <boost/optional/optional.hpp>
 #include <cppunit/extensions/HelperMacros.h>
 #include "Nexus/InternalMatcher/InternalMatchingOrderExecutionDriver.hpp"
 #include "Nexus/InternalMatcher/NullMatchReportBuilder.hpp"
 #include "Nexus/InternalMatcherTests/InternalMatcherTests.hpp"
-#include "Nexus/MarketDataServiceTests/MarketDataServiceTestInstance.hpp"
-#include "Nexus/OrderExecutionServiceTests/MockOrderExecutionDriver.hpp"
+#include "Nexus/OrderExecutionService/VirtualOrderExecutionDriver.hpp"
+#include "Nexus/ServiceClients/TestEnvironment.hpp"
+#include "Nexus/ServiceClients/TestServiceClients.hpp"
 
 namespace Nexus {
 namespace InternalMatcher {
@@ -25,22 +22,13 @@ namespace Tests {
       public CPPUNIT_NS::TestFixture {
     public:
 
-      //! The type of ServiceLocatorClient.
-      using ServiceLocatorClient =
-        Beam::ServiceLocator::VirtualServiceLocatorClient;
-
-      //! The type of MarketDataClient.
-      using MarketDataClient = MarketDataService::VirtualMarketDataClient;
-
-      //! The type of UidClient.
-      using UidClient = Beam::UidService::VirtualUidClient;
-
       //! The type of driver to test.
       using TestInternalMatchingOrderExecutionDriver =
         InternalMatchingOrderExecutionDriver<NullMatchReportBuilder,
-        std::unique_ptr<MarketDataClient>,
-        Beam::TimeService::IncrementalTimeClient, std::unique_ptr<UidClient>,
-        OrderExecutionService::Tests::MockOrderExecutionDriver*>;
+        MarketDataService::VirtualMarketDataClient*,
+        Beam::TimeService::VirtualTimeClient*,
+        std::unique_ptr<Beam::UidService::VirtualUidClient>,
+        OrderExecutionService::VirtualOrderExecutionDriver*>;
 
       virtual void setUp();
 
@@ -150,28 +138,19 @@ namespace Tests {
         const OrderExecutionService::Order* m_order;
         std::shared_ptr<Beam::Queue<OrderExecutionService::ExecutionReport>>
           m_mockExecutionReportQueue;
-        OrderExecutionService::PrimitiveOrder* m_mockOrder;
+        const OrderExecutionService::Order* m_mockOrder;
         Quantity m_remainingQuantity;
 
         OrderEntry();
       };
-      Beam::DelayPtr<Beam::Threading::TimerThreadPool> m_timerThreadPool;
-      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestInstance>
-        m_serviceLocatorInstance;
-      std::unique_ptr<ServiceLocatorClient> m_serviceLocatorClient;
-      Beam::DelayPtr<MarketDataService::Tests::MarketDataServiceTestInstance>
-        m_marketDataServiceInstance;
-      Beam::DelayPtr<Beam::UidService::Tests::UidServiceTestInstance>
-        m_uidServiceInstance;
-      Beam::DelayPtr<OrderExecutionService::Tests::MockOrderExecutionDriver>
-        m_mockOrderExecutionDriver;
-      std::shared_ptr<Beam::Queue<OrderExecutionService::PrimitiveOrder*>>
+      boost::optional<Beam::Threading::TimerThreadPool> m_timerThreadPool;
+      boost::optional<TestEnvironment> m_environment;
+      boost::optional<TestServiceClients> m_serviceClients;
+      std::unique_ptr<Beam::UidService::VirtualUidClient> m_uidClient;
+      std::shared_ptr<Beam::Queue<const OrderExecutionService::Order*>>
         m_mockDriverMonitor;
-      std::unique_ptr<UidClient> m_uidClient;
-      Beam::DelayPtr<TestInternalMatchingOrderExecutionDriver>
+      boost::optional<TestInternalMatchingOrderExecutionDriver>
         m_orderExecutionDriver;
-      std::unique_ptr<ServiceLocatorClient>
-        m_marketDataFeedServiceLocatorClient;
 
       void SetBbo(Money bid, Money ask);
       OrderEntry Submit(Side side, Money price, Quantity quantity);
@@ -187,7 +166,7 @@ namespace Tests {
       void ExpectActiveInternalMatch(OrderEntry& orderEntry,
         Money expectedPrice, Quantity expectedQuantity, int condition = 0);
       void PullMockOrder(std::shared_ptr<
-        Beam::Queue<OrderExecutionService::PrimitiveOrder*>>& monitor,
+        Beam::Queue<const OrderExecutionService::Order*>>& monitor,
         Beam::Out<OrderEntry> orderEntry);
 
       CPPUNIT_TEST_SUITE(InternalMatchingOrderExecutionDriverTester);

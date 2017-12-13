@@ -1,5 +1,6 @@
 #ifndef NEXUS_MARKETQUOTE_HPP
 #define NEXUS_MARKETQUOTE_HPP
+#include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/Definitions/Market.hpp"
@@ -51,6 +52,12 @@ namespace Nexus {
     */
     bool operator !=(const MarketQuote& rhs) const;
   };
+
+  inline std::ostream& operator <<(std::ostream& out,
+      const MarketQuote& value) {
+    return out << "(" << value.m_market << " " << value.m_bid << " " <<
+      value.m_ask << " " << value.m_timestamp << ")";
+  }
 
   inline MarketQuote::MarketQuote(MarketCode market, const Quote& bid,
       const Quote& ask, const boost::posix_time::ptime& timestamp)

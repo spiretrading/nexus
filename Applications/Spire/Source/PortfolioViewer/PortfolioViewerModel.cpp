@@ -284,7 +284,7 @@ void PortfolioViewerModel::OnRiskPortfolioInventoryUpdate(
   if(m_valuations.find(security) == m_valuations.end()) {
     m_valuations.insert(std::make_pair(security, SecurityValuation(
       entry.m_value.m_position.m_key.m_currency)));
-    auto bboQuery = QueryRealTimeWithSnapshot(security);
+    auto bboQuery = BuildCurrentQuery(security);
     bboQuery.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
     m_userProfile->GetServiceClients().GetMarketDataClient().QueryBboQuotes(
       bboQuery, m_slotHandler->GetSlot<BboQuote>(
@@ -426,6 +426,36 @@ void PortfolioViewerModel::OnRiskPortfolioInventoryUpdate(
           *unrealizedProfitAndLoss, baseCurrency, m_totalCurrency);
       }
       m_totalsUpdatedSignal(m_totals);
+    }
+    if(entry.m_value.m_transactionCount == 0) {
+      if(viewerEntry.m_isDisplayed) {
+        beginRemoveRows(QModelIndex(), viewerEntry.m_displayIndex,
+          viewerEntry.m_displayIndex);
+        for(auto i = row + 1; i < static_cast<int>(m_entries.size()); ++i) {
+          --m_entries[i].m_displayIndex;
+        }
+        --m_displayCount;
+        endRemoveRows();
+      }
+      auto& securityIndicies =
+        m_securityToIndexes[viewerEntry.m_inventory.m_position.m_key.m_index];
+      auto securityIndexIterator = std::find(securityIndicies.begin(),
+        securityIndicies.end(), row);
+      securityIndicies.erase(securityIndexIterator);
+      for(auto& securities : m_securityToIndexes) {
+        for(auto& index : securities.second) {
+          if(index > row) {
+            --index;
+          }
+        }
+      }
+      m_inventoryKeyToIndex.erase(entry.m_key);
+      for(auto& index : m_inventoryKeyToIndex) {
+        if(index.second > row) {
+          --index.second;
+        }
+      }
+      m_entries.erase(m_entries.begin() + row);
     }
   }
 }

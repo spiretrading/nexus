@@ -1,20 +1,12 @@
 #ifndef NEXUS_CHARTINGSERVLETTESTER_HPP
 #define NEXUS_CHARTINGSERVLETTESTER_HPP
+#include <Beam/ServicesTests/TestServices.hpp>
+#include <boost/optional/optional.hpp>
 #include <cppunit/extensions/HelperMacros.h>
-#include <Beam/IO/LocalClientChannel.hpp>
-#include <Beam/IO/LocalServerConnection.hpp>
-#include <Beam/IO/SharedBuffer.hpp>
-#include <Beam/Pointers/DelayPtr.hpp>
-#include <Beam/Serialization/BinaryReceiver.hpp>
-#include <Beam/Serialization/BinarySender.hpp>
-#include <Beam/ServiceLocatorTests/ServiceLocatorTestInstance.hpp>
-#include <Beam/Services/ServiceProtocolClient.hpp>
-#include <Beam/Services/ServiceProtocolServletContainer.hpp>
-#include <Beam/Threading/TriggerTimer.hpp>
-#include "Nexus/AdministrationServiceTests/AdministrationServiceTestInstance.hpp"
 #include "Nexus/ChartingService/ChartingServlet.hpp"
 #include "Nexus/ChartingServiceTests/ChartingServiceTests.hpp"
-#include "Nexus/MarketDataServiceTests/MarketDataServiceTestInstance.hpp"
+#include "Nexus/ServiceClients/TestEnvironment.hpp"
+#include "Nexus/ServiceClients/TestServiceClients.hpp"
 
 namespace Nexus {
 namespace ChartingService {
@@ -26,29 +18,10 @@ namespace Tests {
   class ChartingServletTester: public CPPUNIT_NS::TestFixture {
     public:
 
-      //! The type of ServerConnection.
-      using ServerConnection =
-        Beam::IO::LocalServerConnection<Beam::IO::SharedBuffer>;
-
-      //! The type of Channel from the client to the server.
-      using ClientChannel =
-        Beam::IO::LocalClientChannel<Beam::IO::SharedBuffer>;
-
       //! The type of ServiceProtocolServer.
-      using ServletContainer = Beam::Services::ServiceProtocolServletContainer<
-        MetaChartingServlet<
-        std::unique_ptr<MarketDataService::VirtualMarketDataClient>>,
-        std::shared_ptr<ServerConnection>,
-        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-        Beam::Codecs::NullEncoder,
-        std::shared_ptr<Beam::Threading::TriggerTimer>>;
-
-      //! The type of ServiceProtocol on the client side.
-      using ClientServiceProtocolClient =
-        Beam::Services::ServiceProtocolClient<Beam::Services::MessageProtocol<
-        ClientChannel,
-        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-        Beam::Codecs::NullEncoder>, Beam::Threading::TriggerTimer>;
+      using ServletContainer =
+        Beam::Services::Tests::TestServiceProtocolServletContainer<
+        MetaChartingServlet<MarketDataService::VirtualMarketDataClient*>>;
 
       virtual void setUp();
 
@@ -58,18 +31,11 @@ namespace Tests {
       void TestLoadSecurityTimePriceSeries();
 
     private:
-      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestInstance>
-        m_serviceLocatorInstance;
-      Beam::DelayPtr<
-        AdministrationService::Tests::AdministrationServiceTestInstance>
-        m_administrationInstance;
-      std::unique_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-        m_serviceLocatorClient;
-      Beam::DelayPtr<MarketDataService::Tests::MarketDataServiceTestInstance>
-        m_marketDataServiceInstance;
-      std::shared_ptr<ServerConnection> m_serverConnection;
-      Beam::DelayPtr<ServletContainer> m_container;
-      Beam::DelayPtr<ClientServiceProtocolClient> m_clientProtocol;
+      boost::optional<TestEnvironment> m_environment;
+      boost::optional<TestServiceClients> m_serviceClients;
+      boost::optional<ServletContainer> m_container;
+      boost::optional<Beam::Services::Tests::TestServiceProtocolClient>
+        m_clientProtocol;
 
       CPPUNIT_TEST_SUITE(ChartingServletTester);
         CPPUNIT_TEST(TestLoadSecurityTimePriceSeries);

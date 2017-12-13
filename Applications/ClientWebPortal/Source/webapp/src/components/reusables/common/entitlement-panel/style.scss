@@ -1,0 +1,200 @@
+@import "src/styles/variables";
+
+.entitlement-panel-container {
+  border: 1px solid $white;
+
+  &.selected {
+    .header {
+      .icon-check {
+        color: $green;
+      }
+
+      .price {
+        color: $green;
+      }
+    }
+  }
+
+  &.expanded {
+    .header {
+      .title {
+        color: $primaryGradient1;
+      }
+    }
+  }
+
+  .header {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    height: 40px;
+
+    .icon-check {
+      margin-left: 0px;
+      margin-right: 15px;
+      color: $darkGrey;
+      cursor: pointer;
+    }
+
+    .icon-expand {
+      height: 16px;
+      font-size: 16px;
+      color: $darkGrey;
+      cursor: pointer;
+      margin-right: 15px;
+      transform: rotate(0deg);
+    }
+
+    .title {
+      flex: 1;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .price {
+      margin-right: 0px;
+    }
+
+    .expanded {
+      color: $primaryGradient1;
+      transform: rotate(90deg) !important;
+      animation: arrowExpand .5s;
+      -webkit-animation-fill-mode: forwards;
+
+    }
+
+    .collapsed {
+      color: $darkGrey;
+      transform: rotate(-90deg);
+      animation: arrowCollapse .5s;
+      -webkit-animation-fill-mode: forwards;
+    }
+  }
+
+  &.expanded {
+    .content-slide-wrapper {
+      border-top: 1px solid $lightGrey;
+    }
+  }
+
+  &.collapsed {
+    .content-slide-wrapper {
+      border-top: 1px solid $white;
+    }
+  }
+
+  .content-slide-wrapper {
+    width: 1000px;
+    height: 0px;
+    overflow: hidden;
+    padding-left: 63px;
+    padding-right: 190px;
+
+    .content-wrapper {
+      padding-top: 10px;
+      padding-bottom: 10px;
+
+      .content-header {
+        width: 100%;
+        color: $primaryGradient1;
+        font-weight: bold;
+        margin-bottom: 10px;
+
+        .price {
+          display: none;
+        }
+      }
+    }
+
+    table {
+      width: 100%;
+      text-align: center;
+      margin-bottom: 20px;
+
+      thead {
+        border: 1px solid $lightGrey;
+        height: 30px;
+
+        td {
+          padding: 15px 0;
+        }
+      }
+
+      tbody {
+        border-left: 1px solid $lightGrey;
+        border-right: 1px solid $lightGrey;
+        border-bottom: 1px solid $lightGrey;
+
+        tr {
+          height: 30px;
+
+          &.first-row {
+            td {
+              padding-top: 10px;
+            }
+          }
+
+          &.last-row {
+            td {
+              padding-bottom: 10px;
+            }
+          }
+        }
+
+        td {
+          color: $darkGrey;
+          vertical-align: middle;
+          padding: 10px 0;
+
+          &.market-name {
+            color: $black;
+            padding-top: 2px;
+          }
+
+          .icon-dot {
+            font-size: 14px;
+          }
+
+          .green {
+            color: $green;
+          }
+        }
+      }
+    }
+  }
+}
+
+main.mobile {
+  .entitlement-panel-container {
+    .header {
+      .price {
+        display: none;
+      }
+
+      .icon-check {
+        margin-left: 0;
+      }
+    }
+
+    .content-slide-wrapper {
+      width: 100%;
+      padding-left: 0px;
+      padding-right: 0px;
+
+      .content-header {
+        position: relative;
+
+        .price {
+          display: inherit;
+          position: absolute;
+          right: 0px;
+          top: 0px;
+          font-weight: normal;
+          color: $black;
+        }
+      }
+    }
+  }
+}

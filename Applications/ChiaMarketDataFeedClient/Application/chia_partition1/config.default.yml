@@ -1,15 +1,19 @@
 ---
 service_locator:
-  address: local_interface:20000
-  username: market_data_feed
-  password: admin_password
+  address: $service_locator_address
+  username: $username
+  password: $password
 
 enable_logging: false
 market: CXA
+disseminating_market: CXA
 mpid: CXA
 time_zone: Australian_Eastern_Standard_Time 
 is_time_and_sale: true
 sampling: 100ms
-host: 233.218.133.51:16001
-interface: 192.168.0.120:16001
+host: 233.218.133.1:6001
+interface: $local_interface:6001
+retransmission_host: 202.94.78.7:39001
+retransmission_username: $chia_retransmission_username
+retransmission_password: $chia_retransmission_password
 ...

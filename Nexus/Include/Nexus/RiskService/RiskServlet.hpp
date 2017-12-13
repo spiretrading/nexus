@@ -8,6 +8,7 @@
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/BeamWorkaround.hpp>
 #include <Beam/Utilities/ReportException.hpp>
+#include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/RiskService/RiskService.hpp"
 #include "Nexus/RiskService/RiskServices.hpp"
@@ -91,6 +92,7 @@ namespace RiskService {
       Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
         Beam::ServiceLocator::DirectoryEntry, Beam::Threading::Mutex>
         m_accountToGroup;
+      std::unordered_map<RiskPortfolioKey, Quantity> m_volume;
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 
@@ -221,6 +223,11 @@ namespace RiskService {
   void RiskServlet<ContainerType, AdministrationClientType,
       OrderExecutionClientType, RiskStateMonitorType>::OnInventoryUpdate(
       const RiskPortfolioInventoryEntry& entry) {
+    auto& volume = m_volume[entry.m_key];
+    if(volume == entry.m_value.m_volume) {
+      return;
+    }
+    volume = entry.m_value.m_volume;
     std::vector<InventoryUpdate> inventories;
     InventoryUpdate update;
     update.account = entry.m_key.m_account;

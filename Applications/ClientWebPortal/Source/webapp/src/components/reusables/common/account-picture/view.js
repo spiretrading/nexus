@@ -3,6 +3,7 @@ import React from 'react';
 import UpdatableView from 'commons/updatable-view';
 import ChangePicture from 'components/reusables/common/change-picture';
 import modal from 'utils/modal';
+import Dropdown from 'components/reusables/common/dropdown';
 
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
@@ -21,6 +22,10 @@ class View extends UpdatableView {
     if (isChanged) {
       this.controller.onAccountPictureChange(pictureData);
     }
+  }
+
+  dispose() {
+    modal.hide($('#change-picture-modal'));
   }
 
   render() {
@@ -47,7 +52,7 @@ class View extends UpdatableView {
     if (!this.componentModel.isReadOnly) {
       changeButton =
         <div className="picture-change-btn"  onClick={this.onChangeButtonClick}>
-          <span className="icon-change_image" style={buttonStyle}></span>
+          <span className="icon-change-image" style={buttonStyle}></span>
         </div>
     }
 

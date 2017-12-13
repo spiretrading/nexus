@@ -1,10 +1,12 @@
 #include "Nexus/Python/Definitions.hpp"
 #include <Beam/Python/BoostPython.hpp>
+#include <Beam/Python/Copy.hpp>
 #include <Beam/Python/Enum.hpp>
 #include <Beam/Python/FixedString.hpp>
 #include <Beam/Python/Optional.hpp>
 #include <Beam/Python/PythonBindings.hpp>
 #include <Beam/Python/Queries.hpp>
+#include <Beam/Python/Queues.hpp>
 #include <Beam/Python/Variant.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
@@ -27,11 +29,14 @@
 #include "Nexus/Definitions/OrderType.hpp"
 #include "Nexus/Definitions/Quote.hpp"
 #include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/Definitions/SecurityTechnicals.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/Tag.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
+#include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
+#include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 
 using namespace Beam;
 using namespace Beam::Python;
@@ -42,9 +47,22 @@ using namespace Nexus;
 using namespace Nexus::Python;
 using namespace std;
 
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(BboQuote);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedBboQuote);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(BookQuote);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedBookQuote);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(MarketQuote);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedMarketQuote);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(OrderImbalance);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedOrderImbalance);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(TimeAndSale);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedTimeAndSale);
+
 void Nexus::Python::ExportBboQuote() {
   class_<BboQuote>("BboQuote", init<>())
     .def(init<const Quote&, const Quote&, const ptime&>())
+    .def("__copy__", &MakeCopy<BboQuote>)
+    .def("__deepcopy__", &MakeDeepCopy<BboQuote>)
     .def_readwrite("bid", &BboQuote::m_bid)
     .def_readwrite("ask", &BboQuote::m_ask)
     .add_property("timestamp", make_getter(&BboQuote::m_timestamp,
@@ -53,11 +71,15 @@ void Nexus::Python::ExportBboQuote() {
     .def(self == self)
     .def(self != self);
   ExportSequencedValue<BboQuote>("SequencedBboQuote");
+  ExportQueueSuite<BboQuote>("BboQuote");
+  ExportQueueSuite<SequencedBboQuote>("SequencedBboQuote");
 }
 
 void Nexus::Python::ExportBookQuote() {
   class_<BookQuote>("BookQuote", init<>())
     .def(init<string, bool, MarketCode, const Quote&, const ptime&>())
+    .def("__copy__", &MakeCopy<BookQuote>)
+    .def("__deepcopy__", &MakeDeepCopy<BookQuote>)
     .def_readwrite("mpid", &BookQuote::m_mpid)
     .def_readwrite("is_primary_mpid", &BookQuote::m_isPrimaryMpid)
     .def_readwrite("market", &BookQuote::m_market)
@@ -72,12 +94,17 @@ void Nexus::Python::ExportBookQuote() {
     .def(self != self);
   ExportFixedString<4>();
   ExportSequencedValue<BookQuote>("SequencedBookQuote");
+  ExportQueueSuite<BookQuote>("BookQuote");
+  ExportQueueSuite<SequencedBookQuote>("SequencedBookQuote");
+  def("book_quote_listing_comparator", &BookQuoteListingComparator);
 }
 
 void Nexus::Python::ExportCountry() {
   {
     scope outer =
       class_<CountryDatabase>("CountryDatabase", init<>())
+        .def("__copy__", &MakeCopy<CountryDatabase>)
+        .def("__deepcopy__", &MakeDeepCopy<CountryDatabase>)
         .add_property("entries", make_function(&CountryDatabase::GetEntries,
           return_internal_reference<>()))
         .def("from_code", &CountryDatabase::FromCode,
@@ -91,6 +118,8 @@ void Nexus::Python::ExportCountry() {
         .def("add", &CountryDatabase::Add)
         .def("delete", &CountryDatabase::Delete);
       class_<CountryDatabase::Entry>("Entry")
+        .def("__copy__", &MakeCopy<CountryDatabase::Entry>)
+        .def("__deepcopy__", &MakeDeepCopy<CountryDatabase::Entry>)
         .def_readwrite("code", &CountryDatabase::Entry::m_code)
         .def_readwrite("name", &CountryDatabase::Entry::m_name)
         .def_readwrite("two_letter_code",
@@ -115,6 +144,8 @@ void Nexus::Python::ExportCurrency() {
   {
     scope outer =
       class_<CurrencyDatabase>("CurrencyDatabase", init<>())
+        .def("__copy__", &MakeCopy<CurrencyDatabase>)
+        .def("__deepcopy__", &MakeDeepCopy<CurrencyDatabase>)
         .add_property("entries", make_function(&CurrencyDatabase::GetEntries,
           return_internal_reference<>()))
         .def("from_id", &CurrencyDatabase::FromId,
@@ -148,6 +179,8 @@ void Nexus::Python::ExportDefaultCountries() {
 void Nexus::Python::ExportCurrencyPair() {
   class_<CurrencyPair>("CurrencyPair", init<>())
     .def(init<CurrencyId, CurrencyId>())
+    .def("__copy__", &MakeCopy<CurrencyPair>)
+    .def("__deepcopy__", &MakeDeepCopy<CurrencyPair>)
     .def_readwrite("base", &CurrencyPair::m_base)
     .def_readwrite("counter", &CurrencyPair::m_counter);
   def("parse_currency_pair",
@@ -240,6 +273,8 @@ void Nexus::Python::ExportDestination() {
   {
     scope outer =
       class_<DestinationDatabase>("DestinationDatabase", init<>())
+        .def("__copy__", &MakeCopy<DestinationDatabase>)
+        .def("__deepcopy__", &MakeDeepCopy<DestinationDatabase>)
         .def("from_id", &DestinationDatabase::FromId,
           return_value_policy<copy_const_reference>())
         .def("get_preferred_destination",
@@ -265,6 +300,8 @@ void Nexus::Python::ExportDestination() {
         .def("delete_preferred_destination",
           &DestinationDatabase::DeletePreferredDestination);
       class_<DestinationDatabase::Entry>("Entry")
+        .def("__copy__", &MakeCopy<DestinationDatabase::Entry>)
+        .def("__deepcopy__", &MakeDeepCopy<DestinationDatabase::Entry>)
         .def_readwrite("id", &DestinationDatabase::Entry::m_id)
         .def_readwrite("markets", &DestinationDatabase::Entry::m_markets)
         .def_readwrite("description",
@@ -300,11 +337,14 @@ void Nexus::Python::ExportDefinitions() {
   ExportDefaultDestinations();
   ExportDefaultMarkets();
   ExportSecurityTechnicals();
+  ExportSecurityInfo();
 }
 
 void Nexus::Python::ExportExchangeRate() {
   class_<ExchangeRate>("ExchangeRate", init<>())
     .def(init<const CurrencyPair&, const rational<int>&>())
+    .def("__copy__", &MakeCopy<ExchangeRate>)
+    .def("__deepcopy__", &MakeDeepCopy<ExchangeRate>)
     .def_readwrite("pair", &ExchangeRate::m_pair)
     .def_readwrite("rate", &ExchangeRate::m_rate);
   def("invert", static_cast<ExchangeRate (*)(const ExchangeRate&)>(&Invert));
@@ -322,6 +362,8 @@ void Nexus::Python::ExportMarket() {
   {
     scope outer =
       class_<MarketDatabase>("MarketDatabase", init<>())
+        .def("__copy__", &MakeCopy<MarketDatabase>)
+        .def("__deepcopy__", &MakeDeepCopy<MarketDatabase>)
         .add_property("entries", make_function(
           &MarketDatabase::GetEntries, return_internal_reference<>()))
         .def("from_code", &MarketDatabase::FromCode,
@@ -332,6 +374,8 @@ void Nexus::Python::ExportMarket() {
         .def("add", &MarketDatabase::Add)
         .def("delete", &MarketDatabase::Delete);
       class_<MarketDatabase::Entry>("Entry")
+        .def("__copy__", &MakeCopy<MarketDatabase::Entry>)
+        .def("__deepcopy__", &MakeDeepCopy<MarketDatabase::Entry>)
         .add_property("code", make_getter(&MarketDatabase::Entry::m_code,
           return_value_policy<return_by_value>()),
           make_setter(&MarketDatabase::Entry::m_code,
@@ -351,6 +395,8 @@ void Nexus::Python::ExportMarket() {
 void Nexus::Python::ExportMarketQuote() {
   class_<MarketQuote>("MarketQuote", init<>())
     .def(init<MarketCode, const Quote&, const Quote&, const ptime&>())
+    .def("__copy__", &MakeCopy<MarketQuote>)
+    .def("__deepcopy__", &MakeDeepCopy<MarketQuote>)
     .add_property("market", make_getter(&MarketQuote::m_market,
       return_value_policy<return_by_value>()), make_setter(
       &MarketQuote::m_market, return_value_policy<return_by_value>()))
@@ -361,6 +407,9 @@ void Nexus::Python::ExportMarketQuote() {
       &MarketQuote::m_timestamp, return_value_policy<return_by_value>()))
     .def(self == self)
     .def(self != self);
+  ExportSequencedValue<MarketQuote>("SequencedMarketQuote");
+  ExportQueueSuite<MarketQuote>("MarketQuote");
+  ExportQueueSuite<SequencedMarketQuote>("SequencedMarketQuote");
 }
 
 void Nexus::Python::ExportMoney() {
@@ -403,6 +452,8 @@ void Nexus::Python::ExportMoney() {
 void Nexus::Python::ExportOrderImbalance() {
   class_<OrderImbalance>("OrderImbalance", init<>())
     .def(init<Security, Side, Quantity, Money, const ptime&>())
+    .def("__copy__", &MakeCopy<OrderImbalance>)
+    .def("__deepcopy__", &MakeDeepCopy<OrderImbalance>)
     .def_readwrite("security", &OrderImbalance::m_security)
     .add_property("side", make_getter(&OrderImbalance::m_side,
       return_value_policy<return_by_value>()), make_setter(
@@ -415,6 +466,8 @@ void Nexus::Python::ExportOrderImbalance() {
     .def(self == self)
     .def(self != self);
   ExportSequencedValue<OrderImbalance>("SequencedOrderImbalance");
+  ExportQueueSuite<OrderImbalance>("OrderImbalance");
+  ExportQueueSuite<SequencedOrderImbalance>("SequencedOrderImbalance");
 }
 
 void Nexus::Python::ExportOrderStatus() {
@@ -449,6 +502,8 @@ void Nexus::Python::ExportOrderType() {
 void Nexus::Python::ExportQuote() {
   class_<Quote>("Quote", init<>())
     .def(init<Money, Quantity, Side>())
+    .def("__copy__", &MakeCopy<Quote>)
+    .def("__deepcopy__", &MakeDeepCopy<Quote>)
     .def_readwrite("price", &Quote::m_price)
     .def_readwrite("size", &Quote::m_size)
     .add_property("side", make_getter(&Quote::m_side,
@@ -462,6 +517,8 @@ void Nexus::Python::ExportSecurity() {
   class_<Security>("Security", init<>())
     .def(init<const string&, MarketCode, CountryCode>())
     .def(init<const string&, CountryCode>())
+    .def("__copy__", &MakeCopy<Security>)
+    .def("__deepcopy__", &MakeDeepCopy<Security>)
     .def(self < self)
     .def(self == self)
     .def("__hash__", static_cast<size_t (*)(const Security&)>(hash_value))
@@ -480,8 +537,19 @@ void Nexus::Python::ExportSecurity() {
   ExportFixedString<4>();
 }
 
+void Nexus::Python::ExportSecurityInfo() {
+  class_<SecurityInfo>("SecurityInfo", init<>())
+    .def("__copy__", &MakeCopy<SecurityInfo>)
+    .def("__deepcopy__", &MakeDeepCopy<SecurityInfo>)
+    .def_readwrite("security", &SecurityInfo::m_security)
+    .def_readwrite("name", &SecurityInfo::m_name)
+    .def_readwrite("sector", &SecurityInfo::m_sector);
+}
+
 void Nexus::Python::ExportSecurityTechnicals() {
   class_<SecurityTechnicals>("SecurityTechnicals", init<>())
+    .def("__copy__", &MakeCopy<SecurityTechnicals>)
+    .def("__deepcopy__", &MakeDeepCopy<SecurityTechnicals>)
     .def_readwrite("volume", &SecurityTechnicals::m_volume)
     .def_readwrite("high", &SecurityTechnicals::m_high)
     .def_readwrite("low", &SecurityTechnicals::m_low);
@@ -504,6 +572,8 @@ void Nexus::Python::ExportTag() {
   ExportVariant<Tag::Type>();
   class_<Tag>("Tag", init<>())
     .def(init<int, const Tag::Type&>())
+    .def("__copy__", &MakeCopy<Tag>)
+    .def("__deepcopy__", &MakeDeepCopy<Tag>)
     .add_property("key", &Tag::GetKey)
     .add_property("value", make_function(&Tag::GetValue,
       return_value_policy<copy_const_reference>()))
@@ -518,6 +588,8 @@ void Nexus::Python::ExportTimeAndSale() {
       class_<TimeAndSale>("TimeAndSale", init<>())
         .def(init<const ptime&, Money, Quantity,
           TimeAndSale::Condition, string>())
+        .def("__copy__", &MakeCopy<TimeAndSale>)
+        .def("__deepcopy__", &MakeDeepCopy<TimeAndSale>)
         .add_property("timestamp", make_getter(&TimeAndSale::m_timestamp,
           return_value_policy<return_by_value>()), make_setter(
           &TimeAndSale::m_timestamp, return_value_policy<return_by_value>()))
@@ -530,6 +602,8 @@ void Nexus::Python::ExportTimeAndSale() {
     {
       scope outer =
         class_<TimeAndSale::Condition>("Condition", init<>())
+          .def("__copy__", &MakeCopy<TimeAndSale::Condition>)
+          .def("__deepcopy__", &MakeDeepCopy<TimeAndSale::Condition>)
           .add_property("type", make_getter(&TimeAndSale::Condition::m_type,
             return_value_policy<return_by_value>()), make_setter(
             &TimeAndSale::Condition::m_type,
@@ -546,6 +620,8 @@ void Nexus::Python::ExportTimeAndSale() {
   }
   ExportEnum<TimeAndSale::Condition::Type>();
   ExportSequencedValue<TimeAndSale>("SequencedTimeAndSale");
+  ExportQueueSuite<TimeAndSale>("TimeAndSale");
+  ExportQueueSuite<SequencedTimeAndSale>("SequencedTimeAndSale");
 }
 
 void Nexus::Python::ExportTimeInForce() {
@@ -554,6 +630,8 @@ void Nexus::Python::ExportTimeInForce() {
       class_<TimeInForce>("TimeInForce", init<>())
         .def(init<TimeInForce::Type>())
         .def(init<TimeInForce::Type, const ptime&>())
+        .def("__copy__", &MakeCopy<TimeInForce>)
+        .def("__deepcopy__", &MakeDeepCopy<TimeInForce>)
         .add_property("type", &TimeInForce::GetType)
         .add_property("expiry", make_function(&TimeInForce::GetExpiry,
           return_value_policy<copy_const_reference>()))

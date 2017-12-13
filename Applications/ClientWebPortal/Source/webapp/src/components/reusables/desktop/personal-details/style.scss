@@ -1,7 +1,18 @@
 @import "src/styles/variables";
 
 .personal-details-container {
-  display: flex;
+  table tbody tr {
+    td{
+      padding-bottom: 12px;
+    }
+
+    td:first-of-type {
+      width: 160px;
+      padding-right: 30px;
+      padding-top: 3px;
+      vertical-align: top;
+    }
+  }
 
   .personal-label-row {
     display: flex;
@@ -19,7 +30,6 @@
     position: relative;
     display: flex;
     align-items: center;
-    margin-bottom: 12px;
     outline: none;
     border: 1px solid $white;
     padding-left: 5px;
@@ -43,34 +53,96 @@
       margin-left: -5px;
     }
 
+    .icon {
+      cursor: pointer;
+    }
+
+    .country-dropdown-wrapper {
+      position: relative;
+      left: -5px;
+
+      select {
+        padding-left: 5px;
+        padding-right: 30px;
+        border: 1px solid $white;
+        border-radius: 0;
+        height: 28px;
+      }
+
+      .country-dropdown-arrow {
+        position: absolute;
+        top: 9px;
+        right: 10px;
+        font-size: 12px;
+        color: $darkGrey;
+        opacity: 0;
+      }
+
+      &:hover {
+        select {
+          border: 1px solid $darkGrey;
+          border-radius: 0;
+        }
+
+        .country-dropdown-arrow {
+          opacity: 1;
+        }
+      }
+    }
+
     .edit-icon-wrapper {
       position: absolute;
       top: 5px;
       right: 16px;
-      color: $primaryGradient4;
+      color: $darkGrey;
       opacity: 0;
     }
 
     &.editable:hover {
       input {
-        border: 1px solid $primaryGradient4;
+        border: 1px solid $darkGrey;
       }
 
       textarea {
-        border: 1px solid $primaryGradient4;
+        border: 1px solid $darkGrey;
       }
 
       .edit-icon-wrapper {
         opacity: 1;
       }
     }
+
+    &.editable {
+      input:focus, textarea:focus {
+        border: 1px solid $primaryGradient3;
+      }
+    }
+  }
+
+  .group-tags {
+    margin: 0;
+    width: 100%;
+    padding: 2px 5px 0 5px;
+    border-radius: 0;
+
+    .tagit-choice {
+      margin: 0 5px 2px 0;
+      border-radius: 0;
+      padding: 2px 16px 2px 5px;
+    }
+
+    .tagit-new {
+      margin: 0;
+      padding: 0;
+    }
   }
 
   .details-container {
-    width: 335px;
+    width: 100%;
 
     .icon {
-      margin-right: 10px;
+      font-size: 20px;
+      margin-right: 5px;
       color: $greyedIcon;
 
       &.active {

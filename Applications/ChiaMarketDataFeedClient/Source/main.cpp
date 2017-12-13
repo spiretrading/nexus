@@ -23,8 +23,9 @@
 #include <tclap/CmdLine.h>
 #include "ChiaMarketDataFeedClient/ChiaConfiguration.hpp"
 #include "ChiaMarketDataFeedClient/ChiaMarketDataFeedClient.hpp"
+#include "ChiaMarketDataFeedClient/ChiaMdProtocolClient.hpp"
+#include "ChiaMarketDataFeedClient/ChiaMmdProtocolClient.hpp"
 #include "ChiaMarketDataFeedClient/Version.hpp"
-#include "Nexus/BinarySequenceProtocol/BinarySequenceProtocolClient.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 
@@ -40,7 +41,6 @@ using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::BinarySequenceProtocol;
 using namespace Nexus::DefinitionsService;
 using namespace Nexus::MarketDataService;
 using namespace std;
@@ -52,8 +52,8 @@ namespace {
     SizeDeclarativeEncoder<ZLibEncoder>>, LiveTimer>;
   using ApplicationFeedChannel = WrapperChannel<MulticastSocketChannel*,
     QueuedReader<SharedBuffer, MulticastSocketChannel::Reader*>>;
-  using ApplicationProtocolClient = BinarySequenceProtocolClient<
-    ApplicationFeedChannel*, std::uint32_t>;
+  using ApplicationProtocolClient = ChiaMmdProtocolClient<
+    ApplicationFeedChannel*, TcpSocketChannel>;
   using ApplicationMarketDataFeedClient = ChiaMarketDataFeedClient<
     BaseMarketDataFeedClient*, ApplicationProtocolClient*>;
 
@@ -173,15 +173,14 @@ int main(int argc, const char** argv) {
   }
   optional<BaseMarketDataFeedClient> baseMarketDataFeedClient;
   try {
-    auto marketDataServices = serviceLocatorClient->Locate(
-      MarketDataService::FEED_SERVICE_NAME);
-    if(marketDataServices.empty()) {
+    auto marketDataService = FindMarketDataFeedService(DefaultCountries::AU(),
+      *serviceLocatorClient);
+    if(!marketDataService.is_initialized()) {
       cerr << "No market data services available." << endl;
       return -1;
     }
-    auto& marketDataService = marketDataServices.front();
     auto marketDataAddresses = FromString<vector<IpAddress>>(
-      get<string>(marketDataService.GetProperties().At("addresses")));
+      get<string>(marketDataService->GetProperties().At("addresses")));
     auto samplingTime = Extract<time_duration>(config, "sampling");
     baseMarketDataFeedClient.emplace(
       Initialize(marketDataAddresses, Ref(socketThreadPool)),
@@ -209,9 +208,33 @@ int main(int argc, const char** argv) {
     cerr << "Unable to initialize multicast socket: " << e.what() << endl;
     return -1;
   }
+  optional<IpAddress> retransmissionHost;
+  string retransmissionUsername;
+  string retransmissionPassword;
+  try {
+    if(config.FindValue("retransmission_host") != nullptr) {
+      retransmissionHost = Extract<IpAddress>(config, "retransmission_host");
+      retransmissionUsername = Extract<string>(config,
+        "retransmission_username");
+      retransmissionPassword = Extract<string>(config,
+        "retransmission_password");
+    }
+  } catch(const std::exception& e) {
+    cerr << "Unable to initialize retransmission: " << e.what() << endl;
+    return -1;
+  }
   ApplicationFeedChannel feedChannel{multicastSocketChannel.get_ptr(),
     &multicastSocketChannel->GetReader()};
-  ApplicationProtocolClient protocolClient{&feedChannel};
+  ApplicationProtocolClient protocolClient{&feedChannel, retransmissionUsername,
+    retransmissionPassword,
+    [&] () -> std::unique_ptr<TcpSocketChannel> {
+      if(retransmissionHost.is_initialized()) {
+        return std::make_unique<TcpSocketChannel>(*retransmissionHost,
+          Ref(socketThreadPool));
+      }
+      return nullptr;
+    }
+  };
   optional<ApplicationMarketDataFeedClient> feedClient;
   try {
     auto marketDatabase = definitionsClient->LoadMarketDatabase();

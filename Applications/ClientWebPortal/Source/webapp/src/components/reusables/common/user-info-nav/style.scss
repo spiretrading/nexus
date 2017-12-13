@@ -2,6 +2,8 @@
 
 .user-info-nav-container {
   position: relative;
+  width: 100%;
+  height: 22px;
 
   .info-container {
     position: absolute;
@@ -15,11 +17,27 @@
     }
 
     .icon {
-      margin-left: 10px;
+      vertical-align: middle;
+      margin-left: 5px;
       color: $greyedIcon;
 
       &.active {
         color: $primaryGradient1;
+      }
+    }
+  }
+}
+
+main.mobile {
+  .user-info-nav-container {
+    .info-container {
+      position: absolute;
+      right: 0;
+      top: -9px;
+      text-align: right;
+
+      .user-name {
+        margin-right: 0px;
       }
     }
   }

@@ -1,10 +1,8 @@
 #include "Nexus/InternalMatcherTests/InternalMatchingOrderExecutionDriverTester.hpp"
 #include <Beam/Queues/Queue.hpp>
-#include <boost/functional/value_factory.hpp>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
-#include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 
 using namespace Beam;
 using namespace Beam::Routines;
@@ -21,84 +19,58 @@ using namespace Nexus::OrderExecutionService::Tests;
 using namespace std;
 
 namespace {
-  DirectoryEntry TRADER_A(DirectoryEntry::Type::ACCOUNT, 123, "trader_a");
-  Security TST("TST", DefaultMarkets::NASDAQ(), DefaultCountries::US());
+  DirectoryEntry TRADER_A{DirectoryEntry::Type::ACCOUNT, 123, "trader_a"};
+  Security TST{"TST", DefaultMarkets::NASDAQ(), DefaultCountries::US()};
 
   //! No special condition.
-  const int NONE = 0;
+  const auto NONE = 0;
 
   //! The order being matched was prematurely interrupted.
-  const int INTERRUPTED = 1;
+  const auto INTERRUPTED = 1;
 
   //! The order being matches is part of a multi-internal match.
-  const int MULTIPLE_INTERNAL_MATCHES = 2;
+  const auto MULTIPLE_INTERNAL_MATCHES = 2;
 }
 
 InternalMatchingOrderExecutionDriverTester::OrderEntry::OrderEntry()
-  : m_order(nullptr),
-    m_mockOrder(nullptr),
-    m_remainingQuantity(0) {}
+  : m_order{nullptr},
+    m_mockOrder{nullptr},
+    m_remainingQuantity{0} {}
 
 void InternalMatchingOrderExecutionDriverTester::setUp() {
-  m_timerThreadPool.Initialize();
-  m_serviceLocatorInstance.Initialize();
-  m_serviceLocatorInstance->Open();
-  m_serviceLocatorClient = m_serviceLocatorInstance->BuildClient();
-  m_serviceLocatorClient->SetCredentials("root", "");
-  m_serviceLocatorClient->Open();
-  m_uidServiceInstance.Initialize();
-  m_uidServiceInstance->Open();
-  DirectoryEntry servicesDirectory =
-    m_serviceLocatorInstance->GetRoot().MakeDirectory("services",
-    DirectoryEntry::GetStarDirectory());
-  auto marketDataServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
-  marketDataServiceLocatorClient->SetCredentials("root", "");
-  marketDataServiceLocatorClient->Open();
-  m_marketDataServiceInstance.Initialize(
-    std::move(marketDataServiceLocatorClient));
-  m_marketDataServiceInstance->Open();
-  m_mockOrderExecutionDriver.Initialize();
-  m_mockOrderExecutionDriver->SetOrderStatusNewOnSubmission(true);
-  m_mockDriverMonitor = std::make_shared<Queue<PrimitiveOrder*>>();
-  m_mockOrderExecutionDriver->GetPublisher().Monitor(m_mockDriverMonitor);
-  unique_ptr<MarketDataClient> marketDataClient  =
-    m_marketDataServiceInstance->BuildClient(Ref(*m_serviceLocatorClient));
-  m_uidClient = m_uidServiceInstance->BuildClient();
+  m_timerThreadPool.emplace();
+  m_environment.emplace();
+  m_environment->Open();
+  m_serviceClients.emplace(Ref(*m_environment));
+  m_serviceClients->Open();
+  m_uidClient = m_environment->GetUidEnvironment().BuildClient();
   m_uidClient->Open();
-  m_orderExecutionDriver.Initialize(DirectoryEntry::GetRootAccount(),
-    Initialize(), std::move(marketDataClient), Initialize(),
-    m_uidServiceInstance->BuildClient(), &*m_mockOrderExecutionDriver,
+  m_mockDriverMonitor = std::make_shared<Queue<const Order*>>();
+  m_environment->MonitorOrderSubmissions(m_mockDriverMonitor);
+  m_orderExecutionDriver.emplace(DirectoryEntry::GetRootAccount(),
+    Initialize(), &m_serviceClients->GetMarketDataClient(),
+    &m_serviceClients->GetTimeClient(),
+    m_environment->GetUidEnvironment().BuildClient(),
+    &m_environment->GetOrderExecutionEnvironment().GetDriver(),
     Ref(*m_timerThreadPool));
   m_orderExecutionDriver->Open();
-  m_serviceLocatorInstance->GetRoot().MakeAccount("market_data_feed_service",
-    "", servicesDirectory);
-  m_marketDataFeedServiceLocatorClient =
-    m_serviceLocatorInstance->BuildClient();
-  m_marketDataFeedServiceLocatorClient->SetCredentials(
-    "market_data_feed_service", "");
-  m_marketDataFeedServiceLocatorClient->Open();
 }
 
 void InternalMatchingOrderExecutionDriverTester::tearDown() {
   CPPUNIT_ASSERT(m_mockDriverMonitor->IsEmpty());
-  m_marketDataFeedServiceLocatorClient.reset();
-  m_orderExecutionDriver.Reset();
-  m_uidClient.reset();
+  m_orderExecutionDriver.reset();
   m_mockDriverMonitor.reset();
-  m_mockOrderExecutionDriver.Reset();
-  m_marketDataServiceInstance.Reset();
-  m_uidServiceInstance.Reset();
-  m_serviceLocatorClient.reset();
-  m_serviceLocatorInstance.Reset();
-  m_timerThreadPool.Reset();
+  m_uidClient.reset();
+  m_serviceClients.reset();
+  m_environment.reset();
+  m_timerThreadPool.reset();
 }
 
 void InternalMatchingOrderExecutionDriverTester::
     TestBidAndAskWithoutMatching() {
   SetBbo(Money::ONE, Money::ONE + Money::CENT);
-  OrderEntry bidOrderEntry = Execute(Side::BID, Money::ONE, 100);
-  OrderEntry askOrderEntry = Execute(Side::ASK,
-    Money::ONE + Money::CENT, 100);
+  auto bidOrderEntry = Execute(Side::BID, Money::ONE, 100);
+  auto askOrderEntry = Execute(Side::ASK, Money::ONE + Money::CENT, 100);
   Cancel(askOrderEntry);
   Cancel(bidOrderEntry);
 }
@@ -106,8 +78,8 @@ void InternalMatchingOrderExecutionDriverTester::
 void InternalMatchingOrderExecutionDriverTester::
     TestAddBidAndRemoveAskWithMatching() {
   SetBbo(Money::ONE, Money::ONE + Money::CENT);
-  OrderEntry bidOrderEntry = Execute(Side::BID, Money::ONE, 100);
-  OrderEntry askOrderEntry = Submit(Side::ASK, Money::ONE, 100);
+  auto bidOrderEntry = Execute(Side::BID, Money::ONE, 100);
+  auto askOrderEntry = Submit(Side::ASK, Money::ONE, 100);
   ExpectPassiveInternalMatch(bidOrderEntry, 100);
   ExpectStatus(askOrderEntry.m_executionReportQueue, OrderStatus::NEW);
   ExpectActiveInternalMatch(askOrderEntry, Money::ONE, 100);
@@ -116,10 +88,8 @@ void InternalMatchingOrderExecutionDriverTester::
 void InternalMatchingOrderExecutionDriverTester::
     TestAddAskAndRemoveBidWithMatching() {
   SetBbo(Money::ONE, Money::ONE + Money::CENT);
-  OrderEntry askOrderEntry = Execute(Side::ASK,
-    Money::ONE + Money::CENT, 100);
-  OrderEntry bidOrderEntry = Submit(Side::BID,
-    Money::ONE + Money::CENT, 100);
+  auto askOrderEntry = Execute(Side::ASK, Money::ONE + Money::CENT, 100);
+  auto bidOrderEntry = Submit(Side::BID, Money::ONE + Money::CENT, 100);
   ExpectPassiveInternalMatch(askOrderEntry, 100);
   ExpectStatus(bidOrderEntry.m_executionReportQueue, OrderStatus::NEW);
   ExpectActiveInternalMatch(bidOrderEntry, Money::ONE + Money::CENT, 100);
@@ -128,9 +98,9 @@ void InternalMatchingOrderExecutionDriverTester::
 void InternalMatchingOrderExecutionDriverTester::
     TestAddMultipleBidsAndRemoveAskWithMatching() {
   SetBbo(Money::ONE, Money::ONE + Money::CENT);
-  OrderEntry bidOrderEntryA = Execute(Side::BID, Money::ONE, 100);
-  OrderEntry bidOrderEntryB = Execute(Side::BID, Money::ONE, 100);
-  OrderEntry askOrderEntry = Submit(Side::ASK, Money::ONE, 200);
+  auto bidOrderEntryA = Execute(Side::BID, Money::ONE, 100);
+  auto bidOrderEntryB = Execute(Side::BID, Money::ONE, 100);
+  auto askOrderEntry = Submit(Side::ASK, Money::ONE, 200);
   ExpectPassiveInternalMatch(bidOrderEntryA, 100);
   ExpectPassiveInternalMatch(bidOrderEntryB, 100);
   ExpectStatus(askOrderEntry.m_executionReportQueue, OrderStatus::NEW);
@@ -142,9 +112,8 @@ void InternalMatchingOrderExecutionDriverTester::
 void InternalMatchingOrderExecutionDriverTester::
     TestFarBidAndCrossedAskWithoutMatching() {
   SetBbo(Money::ONE, Money::ONE + Money::CENT);
-  OrderEntry bidOrderEntry = Execute(Side::BID,
-    50 * Money::CENT, 100);
-  OrderEntry askOrderEntry = Execute(Side::ASK, Money::CENT, 100);
+  auto bidOrderEntry = Execute(Side::BID, 50 * Money::CENT, 100);
+  auto askOrderEntry = Execute(Side::ASK, Money::CENT, 100);
   Cancel(askOrderEntry);
   Cancel(bidOrderEntry);
 }
@@ -152,8 +121,8 @@ void InternalMatchingOrderExecutionDriverTester::
 void InternalMatchingOrderExecutionDriverTester::
     TestFarAskAndCrossedBidWithoutMatching() {
   SetBbo(Money::ONE, Money::ONE + Money::CENT);
-  OrderEntry askOrderEntry = Execute(Side::ASK, 2 * Money::ONE, 100);
-  OrderEntry bidOrderEntry = Execute(Side::BID, 4 * Money::ONE, 100);
+  auto askOrderEntry = Execute(Side::ASK, 2 * Money::ONE, 100);
+  auto bidOrderEntry = Execute(Side::BID, 4 * Money::ONE, 100);
   Cancel(bidOrderEntry);
   Cancel(askOrderEntry);
 }
@@ -161,8 +130,8 @@ void InternalMatchingOrderExecutionDriverTester::
 void InternalMatchingOrderExecutionDriverTester::
     TestAddBidAndPartialRemoveAskWithMatching() {
   SetBbo(Money::ONE, Money::ONE + Money::CENT);
-  OrderEntry bidOrderEntry = Execute(Side::BID, Money::ONE, 1000);
-  OrderEntry askOrderEntry = Submit(Side::ASK, Money::ONE, 100);
+  auto bidOrderEntry = Execute(Side::BID, Money::ONE, 1000);
+  auto askOrderEntry = Submit(Side::ASK, Money::ONE, 100);
   ExpectPassiveInternalMatch(bidOrderEntry, 100);
   ExpectStatus(askOrderEntry.m_executionReportQueue, OrderStatus::NEW);
   ExpectActiveInternalMatch(askOrderEntry, Money::ONE, 100);
@@ -172,10 +141,8 @@ void InternalMatchingOrderExecutionDriverTester::
 void InternalMatchingOrderExecutionDriverTester::
     TestAddAskAndPartialRemoveBidWithMatching() {
   SetBbo(Money::ONE, Money::ONE + Money::CENT);
-  OrderEntry askOrderEntry = Execute(Side::ASK,
-    Money::ONE + Money::CENT, 1000);
-  OrderEntry bidOrderEntry = Submit(Side::BID,
-    Money::ONE + Money::CENT, 100);
+  auto askOrderEntry = Execute(Side::ASK, Money::ONE + Money::CENT, 1000);
+  auto bidOrderEntry = Submit(Side::BID, Money::ONE + Money::CENT, 100);
   ExpectPassiveInternalMatch(askOrderEntry, 100);
   ExpectStatus(bidOrderEntry.m_executionReportQueue, OrderStatus::NEW);
   ExpectActiveInternalMatch(bidOrderEntry, Money::ONE + Money::CENT, 100);
@@ -185,8 +152,8 @@ void InternalMatchingOrderExecutionDriverTester::
 void InternalMatchingOrderExecutionDriverTester::
     TestAddBidAndRemoveAskWithMatchingLeftOver() {
   SetBbo(Money::ONE, Money::ONE + Money::CENT);
-  OrderEntry bidOrderEntry = Execute(Side::BID, Money::ONE, 100);
-  OrderEntry askOrderEntry = Submit(Side::ASK, Money::ONE, 1000);
+  auto bidOrderEntry = Execute(Side::BID, Money::ONE, 100);
+  auto askOrderEntry = Submit(Side::ASK, Money::ONE, 1000);
   ExpectPassiveInternalMatch(bidOrderEntry, 100);
   ExpectStatus(askOrderEntry.m_executionReportQueue, OrderStatus::NEW);
   ExpectActiveInternalMatch(askOrderEntry, Money::ONE, 100);
@@ -196,8 +163,8 @@ void InternalMatchingOrderExecutionDriverTester::
 void InternalMatchingOrderExecutionDriverTester::
     TestAddBidAndRemoveAskWithPrematureFill() {
   SetBbo(Money::ONE, Money::ONE + Money::CENT);
-  OrderEntry bidOrderEntry = Execute(Side::BID, Money::ONE, 100);
-  OrderEntry askOrderEntry = Submit(Side::ASK, Money::ONE, 1000);
+  auto bidOrderEntry = Execute(Side::BID, Money::ONE, 100);
+  auto askOrderEntry = Submit(Side::ASK, Money::ONE, 1000);
   ExpectStatus(bidOrderEntry.m_mockExecutionReportQueue,
     OrderStatus::PENDING_CANCEL);
   Fill(bidOrderEntry, Money::ONE, 100);
@@ -209,8 +176,8 @@ void InternalMatchingOrderExecutionDriverTester::
 void InternalMatchingOrderExecutionDriverTester::
     TestAddBidAndRemoveAskWithPrematurePartialFill() {
   SetBbo(Money::ONE, Money::ONE + Money::CENT);
-  OrderEntry bidOrderEntry = Execute(Side::BID, Money::ONE, 1000);
-  OrderEntry askOrderEntry = Submit(Side::ASK, Money::ONE, 100);
+  auto bidOrderEntry = Execute(Side::BID, Money::ONE, 1000);
+  auto askOrderEntry = Submit(Side::ASK, Money::ONE, 100);
   ExpectStatus(bidOrderEntry.m_mockExecutionReportQueue,
     OrderStatus::PENDING_CANCEL);
   Fill(bidOrderEntry, Money::ONE, 100);
@@ -221,15 +188,15 @@ void InternalMatchingOrderExecutionDriverTester::
 }
 
 void InternalMatchingOrderExecutionDriverTester::SetBbo(Money bid, Money ask) {
-  BboQuote bbo(Quote(bid, 100, Side::BID), Quote(ask, 100, Side::ASK),
-    second_clock::universal_time());
-  m_marketDataServiceInstance->SetBbo(TST, bbo);
+  BboQuote bbo{Quote{bid, 100, Side::BID}, Quote{ask, 100, Side::ASK},
+    not_a_date_time};
+  m_environment->Publish(TST, bbo);
 }
 
 InternalMatchingOrderExecutionDriverTester::OrderEntry
     InternalMatchingOrderExecutionDriverTester::Submit(Side side, Money price,
     Quantity quantity) {
-  OrderFields fields = OrderFields::BuildLimitOrder(TRADER_A, TST,
+  auto fields = OrderFields::BuildLimitOrder(TRADER_A, TST,
     DefaultCurrencies::USD(), side, "NASDAQ", quantity, price);
   OrderEntry orderEntry;
   orderEntry.m_fields = fields;
@@ -239,7 +206,8 @@ InternalMatchingOrderExecutionDriverTester::OrderEntry
   orderEntry.m_order = &m_orderExecutionDriver->Submit(orderInfo);
   orderEntry.m_executionReportQueue =
     std::make_shared<Queue<ExecutionReport>>();
-  orderEntry.m_order->GetPublisher().Monitor(orderEntry.m_executionReportQueue);
+  orderEntry.m_order->GetPublisher().Monitor(
+    orderEntry.m_executionReportQueue);
   ExpectStatus(orderEntry.m_executionReportQueue, OrderStatus::PENDING_NEW);
   CPPUNIT_ASSERT(fields == orderEntry.m_order->GetInfo().m_fields);
   return orderEntry;
@@ -247,18 +215,20 @@ InternalMatchingOrderExecutionDriverTester::OrderEntry
 
 void InternalMatchingOrderExecutionDriverTester::Accept(
     OrderEntry& orderEntry) {
-  OrderFields matchedFields = orderEntry.m_order->GetInfo().m_fields;
+  auto matchedFields = orderEntry.m_order->GetInfo().m_fields;
   matchedFields.m_quantity = orderEntry.m_remainingQuantity;
   PullMockOrder(m_mockDriverMonitor, Store(orderEntry));
   CPPUNIT_ASSERT(orderEntry.m_mockOrder->GetInfo().m_fields == matchedFields);
-  ExpectStatus(orderEntry.m_mockExecutionReportQueue, OrderStatus::PENDING_NEW);
+  ExpectStatus(orderEntry.m_mockExecutionReportQueue,
+    OrderStatus::PENDING_NEW);
+  m_environment->AcceptOrder(*orderEntry.m_mockOrder);
   ExpectStatus(orderEntry.m_mockExecutionReportQueue, OrderStatus::NEW);
 }
 
 InternalMatchingOrderExecutionDriverTester::OrderEntry
     InternalMatchingOrderExecutionDriverTester::Execute(Side side,
     Money price, Quantity quantity) {
-  OrderEntry orderEntry = Submit(side, price, quantity);
+  auto orderEntry = Submit(side, price, quantity);
   Accept(orderEntry);
   ExpectStatus(orderEntry.m_executionReportQueue, OrderStatus::NEW);
   return orderEntry;
@@ -266,8 +236,7 @@ InternalMatchingOrderExecutionDriverTester::OrderEntry
 
 void InternalMatchingOrderExecutionDriverTester::Fill(OrderEntry& orderEntry,
     Money price, Quantity quantity) {
-  FillOrder(*orderEntry.m_mockOrder, price, quantity,
-    second_clock::universal_time());
+  m_environment->FillOrder(*orderEntry.m_mockOrder, price, quantity);
   if(orderEntry.m_remainingQuantity > quantity) {
     ExpectStatus(orderEntry.m_mockExecutionReportQueue,
       OrderStatus::PARTIALLY_FILLED);
@@ -287,13 +256,13 @@ void InternalMatchingOrderExecutionDriverTester::Cancel(
   m_orderExecutionDriver->Cancel(session,
     orderEntry.m_order->GetInfo().m_orderId);
   ExpectStatus(orderEntry.m_executionReportQueue, OrderStatus::PENDING_CANCEL);
-  CancelOrder(*orderEntry.m_mockOrder, second_clock::universal_time());
+  m_environment->CancelOrder(*orderEntry.m_mockOrder);
   ExpectStatus(orderEntry.m_executionReportQueue, OrderStatus::CANCELED);
 }
 
 void InternalMatchingOrderExecutionDriverTester::ExpectStatus(
     const std::shared_ptr<Queue<ExecutionReport>>& queue, OrderStatus status) {
-  ExecutionReport report = queue->Top();
+  auto report = queue->Top();
   CPPUNIT_ASSERT(report.m_status == status);
   queue->Pop();
 }
@@ -304,10 +273,10 @@ void InternalMatchingOrderExecutionDriverTester::ExpectPassiveInternalMatch(
     ExpectStatus(orderEntry.m_mockExecutionReportQueue,
       OrderStatus::PENDING_CANCEL);
   }
-  CancelOrder(*orderEntry.m_mockOrder, second_clock::universal_time());
+  m_environment->CancelOrder(*orderEntry.m_mockOrder);
 
   // Check that the passive order was filled.
-  ExecutionReport fillReport = orderEntry.m_executionReportQueue->Top();
+  auto fillReport = orderEntry.m_executionReportQueue->Top();
   orderEntry.m_executionReportQueue->Pop();
   CPPUNIT_ASSERT(fillReport.m_lastPrice ==
     orderEntry.m_order->GetInfo().m_fields.m_price);
@@ -323,9 +292,10 @@ void InternalMatchingOrderExecutionDriverTester::ExpectPassiveInternalMatch(
   // for the remaining amount.
   if(orderEntry.m_remainingQuantity > 0) {
     Accept(orderEntry);
-    OrderFields matchedFields = orderEntry.m_order->GetInfo().m_fields;
+    auto matchedFields = orderEntry.m_order->GetInfo().m_fields;
     matchedFields.m_quantity = orderEntry.m_remainingQuantity;
-    CPPUNIT_ASSERT(orderEntry.m_mockOrder->GetInfo().m_fields == matchedFields);
+    CPPUNIT_ASSERT(orderEntry.m_mockOrder->GetInfo().m_fields ==
+      matchedFields);
   }
 }
 
@@ -334,7 +304,7 @@ void InternalMatchingOrderExecutionDriverTester::ExpectActiveInternalMatch(
     int condition) {
 
   //! Check that the active order was filled.
-  ExecutionReport fillReport = orderEntry.m_executionReportQueue->Top();
+  auto fillReport = orderEntry.m_executionReportQueue->Top();
   orderEntry.m_executionReportQueue->Pop();
   CPPUNIT_ASSERT(fillReport.m_lastPrice == expectedPrice);
   CPPUNIT_ASSERT(fillReport.m_lastQuantity == expectedQuantity);
@@ -350,7 +320,7 @@ void InternalMatchingOrderExecutionDriverTester::ExpectActiveInternalMatch(
 }
 
 void InternalMatchingOrderExecutionDriverTester::PullMockOrder(
-    std::shared_ptr<Queue<PrimitiveOrder*>>& monitor,
+    std::shared_ptr<Queue<const Order*>>& monitor,
     Out<OrderEntry> orderEntry) {
   orderEntry->m_mockOrder = monitor->Top();
   monitor->Pop();

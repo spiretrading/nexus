@@ -33,7 +33,7 @@ class MobileView extends CommonView {
 
     let details;
     if (this.componentModel.isReadOnly) {
-      let countryName = definitionsService.getCountryName.apply(definitionsService, [this.componentModel.country]);
+      let countryName = definitionsService.getCountryName(this.componentModel.country);
 
       details =
         <div className="details-container">
@@ -118,18 +118,12 @@ class MobileView extends CommonView {
             <div className="personal-detail-label">First Name</div>
             <input className="first-name-input" type="text" defaultValue={this.componentModel.firstName}
                    onChange={this.onChange.bind(this)}/>
-            <div className="edit-icon-wrapper">
-              <span className="icon-edit"/>
-            </div>
           </div>
 
           <div className="personal-detail-row editable">
             <div className="personal-detail-label">Last Name</div>
             <input className="last-name-input" type="text" defaultValue={this.componentModel.lastName}
                    onChange={this.onChange.bind(this)}/>
-            <div className="edit-icon-wrapper">
-              <span className="icon-edit"/>
-            </div>
           </div>
 
           <div className="personal-detail-row">
@@ -139,10 +133,10 @@ class MobileView extends CommonView {
 
           <div className="personal-detail-row">
             <div className="personal-detail-label">Role(s)</div>
-            <span title="Trader" className={traderClass}/>
-            <span title="Manager" className={managerClass}/>
-            <span title="Admin" className={adminClass}/>
-            <span title="Service" className={serviceClass}/>
+            <span title="Trader" className={traderClass} onClick={this.onRoleClick.bind(this)}/>
+            <span title="Manager" className={managerClass} onClick={this.onRoleClick.bind(this)}/>
+            <span title="Admin" className={adminClass} onClick={this.onRoleClick.bind(this)}/>
+            <span title="Service" className={serviceClass} onClick={this.onRoleClick.bind(this)}/>
           </div>
 
           <div className="personal-detail-row">
@@ -159,35 +153,23 @@ class MobileView extends CommonView {
             <div className="personal-detail-label">E-mail</div>
             <input className="email-input" type="text" defaultValue={this.componentModel.email}
                    onChange={this.onChange.bind(this)}/>
-            <div className="edit-icon-wrapper">
-              <span className="icon-edit"/>
-            </div>
           </div>
 
           <div className="personal-detail-row editable">
             <div className="personal-detail-label">Address</div>
             <textarea defaultValue="" rows="1" className="address-input"/>
-            <div className="edit-icon-wrapper">
-              <span className="icon-edit"/>
-            </div>
           </div>
 
           <div className="personal-detail-row editable">
             <div className="personal-detail-label">City</div>
             <input className="city-input" type="text" defaultValue={this.componentModel.city}
                    onChange={this.onChange.bind(this)}/>
-            <div className="edit-icon-wrapper">
-              <span className="icon-edit"/>
-            </div>
           </div>
 
           <div className="personal-detail-row editable">
             <div className="personal-detail-label">Province/State</div>
             <input className="province-input" type="text" defaultValue={this.componentModel.province}
                    onChange={this.onChange.bind(this)}/>
-            <div className="edit-icon-wrapper">
-              <span className="icon-edit"/>
-            </div>
           </div>
 
           <div className="personal-detail-row editable">

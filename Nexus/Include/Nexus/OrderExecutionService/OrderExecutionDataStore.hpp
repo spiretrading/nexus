@@ -15,14 +15,6 @@ namespace OrderExecutionService {
    */
   struct OrderExecutionDataStore : Beam::Concept<OrderExecutionDataStore> {
 
-    //! Loads the initial Sequences to use for an account.
-    /*!
-      \param account The account to load the initial Sequences for.
-      \return The initial Sequences to use for the <i>account</i>.
-    */
-    AccountOrderSubmissionEntry::InitialSequences LoadInitialSequences(
-      const Beam::ServiceLocator::DirectoryEntry& account);
-
     //! Executes an Order submission query.
     /*!
       \param query The search query to execute.

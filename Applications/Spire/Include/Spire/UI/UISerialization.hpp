@@ -38,12 +38,14 @@
 #include "Spire/Canvas/StandardNodes/DivisionNode.hpp"
 #include "Spire/Canvas/StandardNodes/EqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/FilterNode.hpp"
+#include "Spire/Canvas/StandardNodes/FirstNode.hpp"
 #include "Spire/Canvas/StandardNodes/FloorNode.hpp"
 #include "Spire/Canvas/StandardNodes/FoldNode.hpp"
 #include "Spire/Canvas/StandardNodes/FoldOperandNode.hpp"
 #include "Spire/Canvas/StandardNodes/GreaterNode.hpp"
 #include "Spire/Canvas/StandardNodes/GreaterOrEqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/IfNode.hpp"
+#include "Spire/Canvas/StandardNodes/LastNode.hpp"
 #include "Spire/Canvas/StandardNodes/LesserNode.hpp"
 #include "Spire/Canvas/StandardNodes/LesserOrEqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/MaxNode.hpp"
@@ -52,7 +54,6 @@
 #include "Spire/Canvas/StandardNodes/NotNode.hpp"
 #include "Spire/Canvas/StandardNodes/RangeNode.hpp"
 #include "Spire/Canvas/StandardNodes/RoundNode.hpp"
-#include "Spire/Canvas/StandardNodes/StaticNode.hpp"
 #include "Spire/Canvas/StandardNodes/SubtractionNode.hpp"
 #include "Spire/Canvas/StandardNodes/TimeRangeParameterNode.hpp"
 #include "Spire/Canvas/StandardNodes/TimerNode.hpp"
@@ -175,12 +176,14 @@ namespace Spire {
     (DivisionNode, "Spire.DivisionNode"),
     (EqualsNode, "Spire.EqualsNode"),
     (FilterNode, "Spire.FilterNode"),
+    (FirstNode, "Spire.FirstNode"),
     (FloorNode, "Spire.FloorNode"),
     (FoldNode, "Spire.FoldNode"),
     (FoldOperandNode, "Spire.FoldOperandNode"),
     (GreaterNode, "Spire.GreaterNode"),
     (GreaterOrEqualsNode, "Spire.GreaterOrEqualsNode"),
     (IfNode, "Spire.IfNode"),
+    (LastNode, "Spire.LastNode"),
     (LesserNode, "Spire.LesserNode"),
     (LesserOrEqualsNode, "Spire.LesserOrEqualsNode"),
     (MaxNode, "Spire.MaxNode"),
@@ -189,7 +192,6 @@ namespace Spire {
     (NotNode, "Spire.NotNode"),
     (RangeNode, "Spire.RangeNode"),
     (RoundNode, "Spire.RoundNode"),
-    (StaticNode, "Spire.StaticNode"),
     (SubtractionNode, "Spire.SubtractionNode"),
     (TimeRangeParameterNode, "Spire.TimeRangeParameterNode"),
     (TimerNode, "Spire.TimerNode"),

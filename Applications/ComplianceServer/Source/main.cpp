@@ -16,6 +16,7 @@
 #include <boost/functional/value_factory.hpp>
 #include <tclap/CmdLine.h>
 #include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
+#include "Nexus/Compliance/CachedComplianceRuleDataStore.hpp"
 #include "Nexus/Compliance/ComplianceServlet.hpp"
 #include "Nexus/Compliance/MySqlComplianceRuleDataStore.hpp"
 #include "ComplianceServer/Version.hpp"
@@ -42,10 +43,10 @@ namespace {
   using ComplianceServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<MetaComplianceServlet<
     ApplicationServiceLocatorClient::Client*,
-    ApplicationAdministrationClient::Client*, MySqlComplianceRuleDataStore*,
-    LiveNtpTimeClient*>, ApplicationServiceLocatorClient::Client*>,
-    TcpServerSocket, BinarySender<SharedBuffer>, NullEncoder,
-    std::shared_ptr<LiveTimer>>;
+    ApplicationAdministrationClient::Client*, CachedComplianceRuleDataStore<
+    MySqlComplianceRuleDataStore*>, LiveNtpTimeClient*>,
+    ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
+    BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
 
   struct ComplianceServerConnectionInitializer {
     string m_serviceName;
@@ -166,8 +167,8 @@ int main(int argc, const char** argv) {
   }
   ComplianceServletContainer complianceServer{
     Initialize(serviceLocatorClient.Get(), Initialize(
-    serviceLocatorClient.Get(), administrationClient.Get(), &dataStore,
-    timeClient.get())),
+    serviceLocatorClient.Get(), administrationClient.Get(),
+    Initialize(&dataStore), timeClient.get())),
     Initialize(complianceServerConnectionInitializer.m_interface,
     Ref(socketThreadPool)), std::bind(factory<std::shared_ptr<LiveTimer>>{},
     seconds{10}, Ref(timerThreadPool))};

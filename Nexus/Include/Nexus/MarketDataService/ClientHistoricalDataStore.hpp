@@ -33,11 +33,6 @@ namespace MarketDataService {
 
       ~ClientHistoricalDataStore();
 
-      MarketEntry::InitialSequences LoadInitialSequences(MarketCode market);
-
-      SecurityEntry::InitialSequences LoadInitialSequences(
-        const Security& security);
-
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query);
 
@@ -91,24 +86,12 @@ namespace MarketDataService {
   template<typename MarketDataClientForward>
   ClientHistoricalDataStore<MarketDataClientType>::ClientHistoricalDataStore(
       MarketDataClientForward&& client)
-      : m_client(std::forward<MarketDataClientForward>(client)) {}
+      : m_client{std::forward<MarketDataClientForward>(client)} {}
 
   template<typename MarketDataClientType>
   ClientHistoricalDataStore<MarketDataClientType>::
       ~ClientHistoricalDataStore() {
     Close();
-  }
-
-  template<typename MarketDataClientType>
-  MarketEntry::InitialSequences ClientHistoricalDataStore<
-      MarketDataClientType>::LoadInitialSequences(MarketCode market) {
-    return Beam::Default();
-  }
-
-  template<typename MarketDataClientType>
-  SecurityEntry::InitialSequences ClientHistoricalDataStore<
-      MarketDataClientType>::LoadInitialSequences(const Security& security) {
-    return Beam::Default();
   }
 
   template<typename MarketDataClientType>
@@ -241,7 +224,7 @@ namespace MarketDataService {
     if(query.GetRange().GetEnd() == Beam::Queries::Sequence::Last()) {
       auto revisedQuery = query;
       revisedQuery.SetRange(query.GetRange().GetStart(),
-        Beam::Queries::Decrement(Beam::Queries::Sequence::Last()));
+        Beam::Queries::Sequence::Present());
       ((*m_client).*f)(revisedQuery, queue);
     } else {
       ((*m_client).*f)(query, queue);

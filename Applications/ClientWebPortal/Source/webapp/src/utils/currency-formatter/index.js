@@ -2,10 +2,27 @@ import numberFormatter from 'utils/number-formatter';
 import definitionsService from 'services/definitions';
 
 class CurrencyFormatter {
-  format(countryIsoNumber, amount) {
-    let sign = definitionsService.getCurrencySign(countryIsoNumber);
-    let number = numberFormatter.formatWithComma(amount);
-    return sign + ' ' + number;
+  constructor() {
+    this.formatByCode = this.formatByCode.bind(this);
+  }
+
+  formatById(countryIsoNumber, amount) {
+    let sign;
+    let number = numberFormatter.formatTwoDecimalsWithComma(amount);
+
+    if (definitionsService.doesCurrencyExist(countryIsoNumber)) {
+      sign = definitionsService.getCurrencySignFromId(countryIsoNumber);
+
+    } else {
+      sign = '';
+    }
+
+    return sign + number;
+  }
+
+  formatByCode(code, amount) {
+    let currencyId = definitionsService.getCurrencyId(code);
+    return this.formatById(currencyId, amount);
   }
 }
 

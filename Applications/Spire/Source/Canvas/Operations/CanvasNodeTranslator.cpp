@@ -4,23 +4,27 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Reactors/AggregateReactor.hpp>
 #include <Beam/Reactors/AlarmReactor.hpp>
+#include <Beam/Reactors/BasicReactor.hpp>
 #include <Beam/Reactors/ChainReactor.hpp>
 #include <Beam/Reactors/ConstantReactor.hpp>
+#include <Beam/Reactors/Expressions.hpp>
 #include <Beam/Reactors/FilterReactor.hpp>
+#include <Beam/Reactors/FirstReactor.hpp>
 #include <Beam/Reactors/FoldReactor.hpp>
+#include <Beam/Reactors/LastReactor.hpp>
 #include <Beam/Reactors/LuaReactor.hpp>
 #include <Beam/Reactors/NativeLuaReactorParameter.hpp>
 #include <Beam/Reactors/NoneReactor.hpp>
 #include <Beam/Reactors/PublisherReactor.hpp>
+#include <Beam/Reactors/QueueReactor.hpp>
 #include <Beam/Reactors/RangeReactor.hpp>
 #include <Beam/Reactors/Reactor.hpp>
 #include <Beam/Reactors/ReactorError.hpp>
-#include <Beam/Reactors/StaticReactor.hpp>
 #include <Beam/Reactors/SwitchReactor.hpp>
 #include <Beam/Reactors/ThrowReactor.hpp>
 #include <Beam/Reactors/TimerReactor.hpp>
-#include <Beam/Reactors/TriggeredReactor.hpp>
 #include <Beam/Tasks/AggregateTask.hpp>
+#include <Beam/Tasks/ChainedTask.hpp>
 #include <Beam/Tasks/IdleTask.hpp>
 #include <Beam/Tasks/ReactorTask.hpp>
 #include <Beam/Tasks/SpawnTask.hpp>
@@ -41,9 +45,9 @@
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
-#include "Nexus/OrderTasks/OrderWrapperTask.hpp"
-#include "Nexus/OrderTasks/SingleOrderTask.hpp"
-#include "Nexus/OrderTasks/SingleRedisplayableOrderTask.hpp"
+#include "Nexus/Tasks/OrderWrapperTask.hpp"
+#include "Nexus/Tasks/SingleOrderTask.hpp"
+#include "Nexus/Tasks/SingleRedisplayableOrderTask.hpp"
 #include "Spire/Canvas/Common/BreadthFirstCanvasNodeIterator.hpp"
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
@@ -86,12 +90,14 @@
 #include "Spire/Canvas/StandardNodes/DivisionNode.hpp"
 #include "Spire/Canvas/StandardNodes/EqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/FilterNode.hpp"
+#include "Spire/Canvas/StandardNodes/FirstNode.hpp"
 #include "Spire/Canvas/StandardNodes/FloorNode.hpp"
 #include "Spire/Canvas/StandardNodes/FoldNode.hpp"
 #include "Spire/Canvas/StandardNodes/FoldOperandNode.hpp"
 #include "Spire/Canvas/StandardNodes/GreaterNode.hpp"
 #include "Spire/Canvas/StandardNodes/GreaterOrEqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/IfNode.hpp"
+#include "Spire/Canvas/StandardNodes/LastNode.hpp"
 #include "Spire/Canvas/StandardNodes/LesserNode.hpp"
 #include "Spire/Canvas/StandardNodes/LesserOrEqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/MathSignatures.hpp"
@@ -101,7 +107,6 @@
 #include "Spire/Canvas/StandardNodes/NotNode.hpp"
 #include "Spire/Canvas/StandardNodes/RangeNode.hpp"
 #include "Spire/Canvas/StandardNodes/RoundNode.hpp"
-#include "Spire/Canvas/StandardNodes/StaticNode.hpp"
 #include "Spire/Canvas/StandardNodes/SubtractionNode.hpp"
 #include "Spire/Canvas/StandardNodes/TimeRangeParameterNode.hpp"
 #include "Spire/Canvas/StandardNodes/TimerNode.hpp"
@@ -154,7 +159,7 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::OrderExecutionService;
-using namespace Nexus::OrderTasks;
+using namespace Nexus::Tasks;
 using namespace Spire;
 using namespace std;
 
@@ -191,6 +196,7 @@ namespace {
       virtual void Visit(const FilePathNode& node);
       virtual void Visit(const FileReaderNode& node);
       virtual void Visit(const FilterNode& node);
+      virtual void Visit(const FirstNode& node);
       virtual void Visit(const FloorNode& node);
       virtual void Visit(const FoldNode& node);
       virtual void Visit(const FoldOperandNode& node);
@@ -199,6 +205,7 @@ namespace {
       virtual void Visit(const IfNode& node);
       virtual void Visit(const IntegerNode& node);
       virtual void Visit(const IsTerminalNode& node);
+      virtual void Visit(const LastNode& node);
       virtual void Visit(const LesserNode& node);
       virtual void Visit(const LesserOrEqualsNode& node);
       virtual void Visit(const LuaScriptNode& node);
@@ -223,7 +230,6 @@ namespace {
       virtual void Visit(const SideNode& node);
       virtual void Visit(const SingleOrderTaskNode& node);
       virtual void Visit(const SpawnNode& node);
-      virtual void Visit(const StaticNode& node);
       virtual void Visit(const SubtractionNode& node);
       virtual void Visit(const TaskStateMonitorNode& node);
       virtual void Visit(const TaskStateNode& node);
@@ -371,7 +377,8 @@ namespace {
     template<typename T>
     static std::shared_ptr<BaseReactor> Template(
         const std::shared_ptr<BaseReactor>& initial,
-        const std::shared_ptr<BaseReactor>& continuation) {
+        const std::shared_ptr<BaseReactor>& continuation,
+        CanvasNodeTranslationContext& context) {
       return MakeChainReactor(std::static_pointer_cast<Reactor<T>>(initial),
         std::static_pointer_cast<Reactor<T>>(continuation));
     }
@@ -465,8 +472,7 @@ namespace {
       auto publisher = std::make_shared<
         ParserPublisher<BasicIStreamReader<ifstream>, Parser>>(path, parser,
         errorPolicy);
-      auto reactor = MakePublisherReactor(std::move(publisher));
-      return reactor;
+      return MakePublisherReactor(std::move(publisher));
     }
 
     template<>
@@ -480,8 +486,7 @@ namespace {
       auto publisher = std::make_shared<
         ParserPublisher<BasicIStreamReader<ifstream>, Parser>>(path, parser,
         errorPolicy);
-      auto reactor = MakePublisherReactor(std::move(publisher));
-      return reactor;
+      return MakePublisherReactor(std::move(publisher));
     }
 
     template<>
@@ -495,8 +500,7 @@ namespace {
       auto publisher = std::make_shared<
         ParserPublisher<BasicIStreamReader<ifstream>, Parser>>(path, parser,
         errorPolicy);
-      auto reactor = MakePublisherReactor(std::move(publisher));
-      return reactor;
+      return MakePublisherReactor(std::move(publisher));
     }
 
     template<>
@@ -511,8 +515,7 @@ namespace {
       auto publisher = std::make_shared<
         ParserPublisher<BasicIStreamReader<ifstream>, Parser>>(path, parser,
         errorPolicy);
-      auto reactor = MakePublisherReactor(std::move(publisher));
-      return reactor;
+      return MakePublisherReactor(std::move(publisher));
     }
 
     template<>
@@ -526,8 +529,7 @@ namespace {
       auto publisher = std::make_shared<
         ParserPublisher<BasicIStreamReader<ifstream>, Parser>>(path, parser,
         errorPolicy);
-      auto reactor = MakePublisherReactor(std::move(publisher));
-      return reactor;
+      return MakePublisherReactor(std::move(publisher));
     }
 
     using SupportedTypes = ValueTypes;
@@ -540,6 +542,16 @@ namespace {
         const std::shared_ptr<BaseReactor>& source) {
       return MakeFilterReactor(filter,
         std::static_pointer_cast<Reactor<T>>(source));
+    }
+
+    using SupportedTypes = ValueTypes;
+  };
+
+  struct FirstTranslator {
+    template<typename T>
+    static std::shared_ptr<BaseReactor> Template(
+        const std::shared_ptr<BaseReactor>& source) {
+      return MakeFirstReactor(std::static_pointer_cast<Reactor<T>>(source));
     }
 
     using SupportedTypes = ValueTypes;
@@ -573,18 +585,29 @@ namespace {
     using SupportedTypes = RoundingNodeSignatures::type;
   };
 
+  struct FoldParameterTranslator {
+    template<typename T>
+    static std::shared_ptr<BaseReactor> Template() {
+      return MakeFoldParameterReactor<T>();
+    }
+
+    using SupportedTypes = ValueTypes;
+  };
+
   struct FoldTranslator {
-    template<typename SourceType, typename CombinerType, typename Unused>
+    template<typename CombinerType, typename SourceType, typename Unused>
     static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& source,
         const std::shared_ptr<BaseReactor>& combiner,
         const std::shared_ptr<BaseReactor>& leftTrigger,
-        const std::shared_ptr<BaseReactor>& rightTrigger) {
+        const std::shared_ptr<BaseReactor>& rightTrigger,
+        const std::shared_ptr<BaseReactor>& source) {
       return MakeFoldReactor(
-        std::static_pointer_cast<Reactor<SourceType>>(source),
         std::static_pointer_cast<Reactor<CombinerType>>(combiner),
-        std::static_pointer_cast<TriggeredReactor<CombinerType>>(leftTrigger),
-        std::static_pointer_cast<TriggeredReactor<SourceType>>(rightTrigger));
+        std::static_pointer_cast<FoldParameterReactor<CombinerType>>(
+          leftTrigger),
+        std::static_pointer_cast<FoldParameterReactor<SourceType>>(
+          rightTrigger),
+        std::static_pointer_cast<Reactor<SourceType>>(source));
     }
 
     using SupportedTypes = FoldSignatures::type;
@@ -654,6 +677,16 @@ namespace {
     }
 
     using SupportedTypes = IfNodeSignatures::type;
+  };
+
+  struct LastTranslator {
+    template<typename T>
+    static std::shared_ptr<BaseReactor> Template(
+        const std::shared_ptr<BaseReactor>& source) {
+      return MakeLastReactor(std::static_pointer_cast<Reactor<T>>(source));
+    }
+
+    using SupportedTypes = ValueTypes;
   };
 
   struct LesserTranslator {
@@ -899,16 +932,6 @@ namespace {
     using SupportedTypes = RoundingNodeSignatures::type;
   };
 
-  struct StaticTranslator {
-    template<typename T>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& source) {
-      return MakeStaticReactor(std::static_pointer_cast<Reactor<T>>(source));
-    }
-
-    using SupportedTypes = ValueTypes;
-  };
-
   struct SubtractionTranslator {
     template<typename T0, typename T1, typename R>
     struct Operation {
@@ -963,8 +986,9 @@ namespace {
 
   struct VariableTranslator {
     template<typename T>
-    static std::shared_ptr<BaseReactor> Template() {
-      return MakeTriggeredReactor<T>();
+    static std::shared_ptr<BaseReactor> Template(
+        CanvasNodeTranslationContext& context) {
+      return MakeBasicReactor<T>(Ref(context.GetReactorMonitor().GetTrigger()));
     }
 
     using SupportedTypes = ValueTypes;
@@ -1044,11 +1068,11 @@ void CanvasNodeTranslationVisitor::Visit(const AlarmNode& node) {
   };
   auto expiry = boost::get<std::shared_ptr<BaseReactor>>(InternalTranslation(
     node.GetChildren().front()));
-  auto reactor = MakeAlarmReactor(timerFactory,
+  auto reactor = MakeAlarmReactor(
     &m_context->GetUserProfile().GetServiceClients().GetTimeClient(),
-    std::static_pointer_cast<Reactor<ptime>>(expiry));
-  m_context->GetReactorMonitor().AddEvent(std::get<1>(reactor));
-  m_translation = std::get<0>(reactor);
+    timerFactory, std::static_pointer_cast<Reactor<ptime>>(expiry));
+  m_context->GetReactorMonitor().Add(reactor);
+  m_translation = reactor;
 }
 
 void CanvasNodeTranslationVisitor::Visit(const BlotterTaskMonitorNode& node) {
@@ -1079,23 +1103,40 @@ void CanvasNodeTranslationVisitor::Visit(const CeilNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const ChainNode& node) {
-  auto previousReactor = boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren().front()));
-  if(node.GetChildren().size() == 1) {
+  if(node.GetType().GetCompatibility(TaskType::GetInstance()) ==
+      CanvasType::Compatibility::EQUAL) {
+    vector<TaskFactory> factories;
+    auto orderExecutionPublisher = MakeAggregateOrderExecutionPublisher();
+    for(auto& child : node.GetChildren()) {
+      if(dynamic_cast<const NoneNode*>(&child) == nullptr) {
+        auto translation = get<TaskTranslation>(InternalTranslation(child));
+        factories.push_back(translation.m_factory);
+        orderExecutionPublisher->Add(*translation.m_publisher);
+      }
+    }
+    TaskTranslation taskTranslation;
+    taskTranslation.m_publisher = orderExecutionPublisher;
+    taskTranslation.m_factory = OrderExecutionPublisherTaskFactory(
+      ChainedTaskFactory(factories), orderExecutionPublisher);
+    m_translation = taskTranslation;
+  } else {
+    auto previousReactor = boost::get<std::shared_ptr<BaseReactor>>(
+      InternalTranslation(node.GetChildren().front()));
+    if(node.GetChildren().size() == 1) {
+      m_translation = previousReactor;
+      return;
+    }
+    auto& nativeType = static_cast<const NativeType&>(node.GetType());
+    for(auto i = std::size_t{1}; i < node.GetChildren().size() - 1; ++i) {
+      auto currentReactor = boost::get<std::shared_ptr<BaseReactor>>(
+        InternalTranslation(node.GetChildren()[i]));
+      auto chainReactor = Instantiate<ChainTranslator>(
+        nativeType.GetNativeType())(previousReactor, currentReactor,
+        *m_context);
+      previousReactor = chainReactor;
+    }
     m_translation = previousReactor;
-    return;
   }
-  auto& nativeType = static_cast<const NativeType&>(node.GetType());
-  for(auto i = std::size_t{1}; i < node.GetChildren().size() - 1; ++i) {
-    auto currentReactor = boost::get<std::shared_ptr<BaseReactor>>(
-      InternalTranslation(node.GetChildren()[i]));
-    auto chainReactor = Instantiate<ChainTranslator>(
-      nativeType.GetNativeType())(previousReactor, currentReactor);
-    m_context->GetReactorMonitor().AddEvent(
-      std::dynamic_pointer_cast<Event>(chainReactor));
-    previousReactor = chainReactor;
-  }
-  m_translation = previousReactor;
 }
 
 void CanvasNodeTranslationVisitor::Visit(const CurrencyNode& node) {
@@ -1135,8 +1176,9 @@ void CanvasNodeTranslationVisitor::Visit(const CustomNode& node) {
     }
     TaskTranslation taskTranslation;
     taskTranslation.m_publisher = baseTranslation.m_publisher;
-    taskTranslation.m_factory = ReactorTaskFactory(baseTranslation.m_factory,
-      properties, Ref(m_context->GetReactorMonitor()));
+    taskTranslation.m_factory = ReactorTaskFactory(
+      Ref(m_context->GetReactorMonitor()), properties,
+      baseTranslation.m_factory);
     m_translation = taskTranslation;
   }
 }
@@ -1179,18 +1221,13 @@ void CanvasNodeTranslationVisitor::Visit(
   auto taskTranslation = boost::get<TaskTranslation>(InternalTranslation(
     node.GetChildren().front()));
   auto orderSubmissionReactor = MakePublisherReactor(
-    taskTranslation.m_publisher.get());
-  auto reactorMonitor = &m_context->GetReactorMonitor();
-  reactorMonitor->AddEvent(orderSubmissionReactor);
+    *taskTranslation.m_publisher);
   auto executionReportReactor = MakeFunctionReactor(
-    [=] (const Order* order) {
-      auto executionReportReactor =
-        MakePublisherReactor(&order->GetPublisher());
-      reactorMonitor->AddEvent(executionReportReactor);
-      return executionReportReactor;
+    [] (const Order* order) {
+      return MakePublisherReactor(order->GetPublisher());
     }, orderSubmissionReactor);
   auto aggregateReactor = MakeAggregateReactor(executionReportReactor);
-  m_translation = MakeFunctionReactor(ExecutionReportToRecordConverter(),
+  m_translation = MakeFunctionReactor(ExecutionReportToRecordConverter{},
     aggregateReactor);
 }
 
@@ -1220,26 +1257,33 @@ void CanvasNodeTranslationVisitor::Visit(const FilterNode& node) {
     source);
 }
 
+void CanvasNodeTranslationVisitor::Visit(const FirstNode& node) {
+  auto reactor = boost::get<std::shared_ptr<BaseReactor>>(
+    InternalTranslation(node.GetChildren().front()));
+  m_translation = Instantiate<FirstTranslator>(
+    static_cast<const NativeType&>(node.GetType()).GetNativeType())(reactor);
+}
+
 void CanvasNodeTranslationVisitor::Visit(const FloorNode& node) {
   m_translation = TranslateFunction<FloorTranslator>(node);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const FoldNode& node) {
-  auto source = boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren().front()));
   auto combiner = boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren().back()));
+    InternalTranslation(node.GetChildren().front()));
   auto leftTrigger = boost::get<std::shared_ptr<BaseReactor>>(
     InternalTranslation(*node.FindLeftOperand()));
   auto rightTrigger = boost::get<std::shared_ptr<BaseReactor>>(
     InternalTranslation(*node.FindRightOperand()));
-  m_translation = Instantiate<FoldTranslator>(source->GetType(),
-    combiner->GetType(), combiner->GetType())(source, combiner, leftTrigger,
-    rightTrigger);
+  auto source = boost::get<std::shared_ptr<BaseReactor>>(
+    InternalTranslation(node.GetChildren().back()));
+  m_translation = Instantiate<FoldTranslator>(combiner->GetType(),
+    source->GetType(), source->GetType())(combiner, leftTrigger, rightTrigger,
+    source);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const FoldOperandNode& node) {
-  m_translation = Instantiate<VariableTranslator>(
+  m_translation = Instantiate<FoldParameterTranslator>(
     static_cast<const NativeType&>(node.GetType()).GetNativeType())();
 }
 
@@ -1264,6 +1308,13 @@ void CanvasNodeTranslationVisitor::Visit(const IsTerminalNode& node) {
     InternalTranslation(node.GetChildren().front()));
   m_translation = MakeFunctionReactor(Beam::Tasks::IsTerminal,
     std::static_pointer_cast<Reactor<Task::State>>(state));
+}
+
+void CanvasNodeTranslationVisitor::Visit(const LastNode& node) {
+  auto reactor = boost::get<std::shared_ptr<BaseReactor>>(
+    InternalTranslation(node.GetChildren().front()));
+  m_translation = Instantiate<LastTranslator>(
+    static_cast<const NativeType&>(node.GetType()).GetNativeType())(reactor);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const LesserNode& node) {
@@ -1347,28 +1398,24 @@ void CanvasNodeTranslationVisitor::Visit(const OrderImbalanceQueryNode& node) {
   auto market = std::static_pointer_cast<Reactor<MarketCode>>(
     boost::get<std::shared_ptr<BaseReactor>>(
     InternalTranslation(node.GetChildren()[0])));
-  auto range = std::static_pointer_cast<Reactor<Range>>(
+  auto range = std::static_pointer_cast<Reactor<Queries::Range>>(
     boost::get<std::shared_ptr<BaseReactor>>(
     InternalTranslation(node.GetChildren()[1])));
   auto marketDataClient =
     &m_context->GetUserProfile().GetServiceClients().GetMarketDataClient();
   auto reactorMonitor = &m_context->GetReactorMonitor();
   auto orderImbalancePublisher = MakeFunctionReactor(
-    [=] (MarketCode market, const Range& range) {
+    [=] (MarketCode market, const Queries::Range& range) {
       MarketWideDataQuery query;
       query.SetIndex(market);
       query.SetRange(range);
       query.SetSnapshotLimit(SnapshotLimit::Unlimited());
       auto queue = std::make_shared<Queue<SequencedOrderImbalance>>();
       marketDataClient->QueryOrderImbalances(query, queue);
-      auto publisher = std::make_shared<QueuePublisher<
-        MultiQueueWriter<SequencedOrderImbalance>>>(std::move(queue));
-      auto reactor = MakePublisherReactor(std::move(publisher));
-      reactorMonitor->AddEvent(reactor);
-      return reactor;
+      return MakeQueueReactor(queue);
     }, std::move(market), std::move(range));
   auto query = MakeSwitchReactor(orderImbalancePublisher);
-  m_translation = MakeFunctionReactor(OrderImbalanceToRecordConverter(), query);
+  m_translation = MakeFunctionReactor(OrderImbalanceToRecordConverter{}, query);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const OrderStatusNode& node) {
@@ -1395,8 +1442,9 @@ void CanvasNodeTranslationVisitor::Visit(const OrderWrapperTaskNode& node) {
   }
   TaskTranslation taskTranslation;
   taskTranslation.m_publisher = orderExecutionPublisher;
-  taskTranslation.m_factory = ReactorTaskFactory(orderWrapperTaskFactory,
-    std::move(properties), Ref(m_context->GetReactorMonitor()));
+  taskTranslation.m_factory = ReactorTaskFactory(
+    Ref(m_context->GetReactorMonitor()), std::move(properties),
+    orderWrapperTaskFactory);
   orderExecutionPublisher->Push(&node.GetOrder());
   m_translation = taskTranslation;
 }
@@ -1424,8 +1472,7 @@ void CanvasNodeTranslationVisitor::Visit(const RangeNode& node) {
     boost::get<std::shared_ptr<BaseReactor>>(
     InternalTranslation(node.GetChildren().back())));
   auto reactor = MakeRangeReactor(lower, upper);
-  m_context->GetReactorMonitor().AddEvent(std::get<1>(reactor));
-  m_translation = std::get<0>(reactor);
+  m_translation = reactor;
 }
 
 void CanvasNodeTranslationVisitor::Visit(const ReferenceNode& node) {
@@ -1438,7 +1485,7 @@ void CanvasNodeTranslationVisitor::Visit(const ReferenceNode& node) {
     if(parent.is_initialized() &&
         dynamic_cast<const SpawnNode*>(&*parent) != nullptr) {
       if(&referent == &parent->GetChildren().front()) {
-        m_translation = Instantiate<StaticTranslator>(
+        m_translation = Instantiate<FirstTranslator>(
           static_cast<const NativeType&>(node.GetType()).GetNativeType())(
           boost::get<std::shared_ptr<BaseReactor>>(m_translation));
       }
@@ -1463,7 +1510,7 @@ void CanvasNodeTranslationVisitor::Visit(const SingleOrderTaskNode& node) {
     std::make_shared<SequencePublisher<const Order*>>();
   SingleOrderTaskFactory<VirtualOrderExecutionClient> singleOrderTaskFactory(
     Ref(m_context->GetUserProfile().GetServiceClients().
-    GetOrderExecutionClient()), Ref(*orderExecutionPublisher),
+    GetOrderExecutionClient()), orderExecutionPublisher,
     m_context->GetExecutingAccount());
   for(const auto& field : node.GetFields()) {
     if(field.m_type->GetCompatibility(IntegerType::GetInstance()) ==
@@ -1509,8 +1556,8 @@ void CanvasNodeTranslationVisitor::Visit(const SingleOrderTaskNode& node) {
   TaskTranslation taskTranslation;
   taskTranslation.m_publisher = orderExecutionPublisher;
   taskTranslation.m_factory = OrderExecutionPublisherTaskFactory(
-    ReactorTaskFactory(singleRedisplayableOrderTaskFactory,
-    std::move(properties), Ref(m_context->GetReactorMonitor())),
+    ReactorTaskFactory(Ref(m_context->GetReactorMonitor()),
+    std::move(properties), singleRedisplayableOrderTaskFactory),
     orderExecutionPublisher);
   m_translation = taskTranslation;
 }
@@ -1521,17 +1568,10 @@ void CanvasNodeTranslationVisitor::Visit(const SpawnNode& node) {
   CanvasNodeTaskFactory taskFactory(Ref(*m_context),
     Ref(node.GetChildren().back()));
   TaskTranslation taskTranslation;
-  taskTranslation.m_factory = SpawnTaskFactory(taskFactory, trigger,
-    Ref(m_context->GetReactorMonitor()));
+  taskTranslation.m_factory = SpawnTaskFactory(
+    Ref(m_context->GetReactorMonitor()), trigger, taskFactory);
   taskTranslation.m_publisher = taskFactory.GetOrderExecutionPublisher();
   m_translation = taskTranslation;
-}
-
-void CanvasNodeTranslationVisitor::Visit(const StaticNode& node) {
-  auto reactor = boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren().front()));
-  m_translation = Instantiate<StaticTranslator>(
-    static_cast<const NativeType&>(node.GetType()).GetNativeType())(reactor);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const SubtractionNode& node) {
@@ -1543,8 +1583,7 @@ void CanvasNodeTranslationVisitor::Visit(const TaskStateMonitorNode& node) {
     InternalTranslation(node.GetChildren().front()));
   auto task =
     translation.m_factory.DynamicCast<IndirectTaskFactory>()->GetTask();
-  auto publisher = MakePublisherReactor(&task->GetPublisher());
-  m_context->GetReactorMonitor().AddEvent(publisher);
+  auto publisher = MakePublisherReactor(task->GetPublisher());
   m_translation = publisher;
 }
 
@@ -1560,28 +1599,24 @@ void CanvasNodeTranslationVisitor::Visit(const TimeAndSaleQueryNode& node) {
   auto security = std::static_pointer_cast<Reactor<Security>>(
     boost::get<std::shared_ptr<BaseReactor>>(
     InternalTranslation(node.GetChildren()[0])));
-  auto range = std::static_pointer_cast<Reactor<Range>>(
+  auto range = std::static_pointer_cast<Reactor<Queries::Range>>(
     boost::get<std::shared_ptr<BaseReactor>>(
     InternalTranslation(node.GetChildren()[1])));
   auto marketDataClient = &m_context->GetUserProfile().GetServiceClients().
     GetMarketDataClient();
   auto reactorMonitor = &m_context->GetReactorMonitor();
   auto timeAndSalePublisher = MakeFunctionReactor(
-    [=] (const Security& security, const Range& range) {
+    [=] (const Security& security, const Queries::Range& range) {
       SecurityMarketDataQuery query;
       query.SetIndex(security);
       query.SetRange(range);
       query.SetSnapshotLimit(SnapshotLimit::Unlimited());
       auto queue = std::make_shared<Queue<SequencedTimeAndSale>>();
       marketDataClient->QueryTimeAndSales(query, queue);
-      auto publisher = std::make_shared<QueuePublisher<
-        MultiQueueWriter<SequencedTimeAndSale>>>(std::move(queue));
-      auto reactor = MakePublisherReactor(std::move(publisher));
-      reactorMonitor->AddEvent(reactor);
-      return reactor;
+      return MakeQueueReactor(queue);
     }, std::move(security), std::move(range));
   auto query = MakeSwitchReactor(timeAndSalePublisher);
-  m_translation = MakeFunctionReactor(TimeAndSaleToRecordConverter(), query);
+  m_translation = MakeFunctionReactor(TimeAndSaleToRecordConverter{}, query);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const TimeInForceNode& node) {
@@ -1610,8 +1645,7 @@ void CanvasNodeTranslationVisitor::Visit(const TimerNode& node) {
     return make_unique<LiveTimer>(interval, Ref(*timerThreadPool));
   };
   auto reactor = MakeTimerReactor<Quantity>(timerFactory, period);
-  m_translation = std::get<0>(reactor);
-  m_context->GetReactorMonitor().AddEvent(std::get<1>(reactor));
+  m_translation = reactor;
 }
 
 void CanvasNodeTranslationVisitor::Visit(const UnequalNode& node) {
@@ -1624,10 +1658,10 @@ void CanvasNodeTranslationVisitor::Visit(const UntilNode& node) {
   auto condition = std::static_pointer_cast<Reactor<bool>>(
     boost::get<std::shared_ptr<BaseReactor>>(
     InternalTranslation(node.GetChildren().front())));
-  m_context->GetReactorMonitor().AddReactor(condition);
+  m_context->GetReactorMonitor().Add(condition);
   TaskTranslation taskTranslation;
-  taskTranslation.m_factory = UntilTaskFactory(taskFactory, condition,
-    Ref(m_context->GetReactorMonitor()));
+  taskTranslation.m_factory = UntilTaskFactory(
+    Ref(m_context->GetReactorMonitor()), condition, taskFactory);
   taskTranslation.m_publisher = taskFactory.GetOrderExecutionPublisher();
   m_translation = taskTranslation;
 }
@@ -1638,10 +1672,10 @@ void CanvasNodeTranslationVisitor::Visit(const WhenNode& node) {
   auto condition = std::static_pointer_cast<Reactor<bool>>(
     boost::get<std::shared_ptr<BaseReactor>>(
     InternalTranslation(node.GetChildren().front())));
-  m_context->GetReactorMonitor().AddReactor(condition);
+  m_context->GetReactorMonitor().Add(condition);
   TaskTranslation taskTranslation;
-  taskTranslation.m_factory = WhenTaskFactory(taskFactory, condition,
-    Ref(m_context->GetReactorMonitor()));
+  taskTranslation.m_factory = WhenTaskFactory(
+    Ref(m_context->GetReactorMonitor()), condition, taskFactory);
   taskTranslation.m_publisher = taskFactory.GetOrderExecutionPublisher();
   m_translation = taskTranslation;
 }

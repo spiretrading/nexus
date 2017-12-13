@@ -4,9 +4,9 @@ red=$(tput setaf 1)
 yellow=$(tput setaf 3)
 cyan=$(tput setaf 6)
 feed_title="TMX IP"
-feed_prefix="feed_"
-feed_suffix="_feed"
-pattern="^feed_(.*)/$"
+feed_prefix="tmxip_"
+feed_suffix="_tmxip"
+pattern="^tmxip_(.*)/$"
 echo
 if [ "$1" = "" ]; then
   echo "Invalid parameters supplied."
@@ -61,7 +61,6 @@ else
         # Target directory is not a valid feed sub-directory.
         echo "${red}[ERROR]${reset} Invalid ${feed_title} feed sub-directory '${var}'."
       fi
-      sleep 2
     done
     echo
   else

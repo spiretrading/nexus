@@ -5,11 +5,22 @@ class UpdatableView {
   constructor(react, controller, componentModel) {
     this.react = react;
     this.controller = controller;
-    this.componentModel = cloneObject(componentModel);
+    this.componentModel = clone(componentModel);
+
+    this.update = this.update.bind(this);
+    this.setComponentModel = this.setComponentModel.bind(this);
   }
 
   update(newComponentModel) {
-    this.componentModel = cloneObject(newComponentModel);
+    if (newComponentModel != null) {
+      if ($.isArray(this.componentModel)) {
+        this.componentModel = newComponentModel.slice();
+      } else if (typeof this.componentModel !== 'object') {
+        this.componentModel = newComponentModel;
+      } else {
+        overwriteMerge(this.componentModel, newComponentModel);
+      }
+    }
     this.react.forceUpdate();
   }
 

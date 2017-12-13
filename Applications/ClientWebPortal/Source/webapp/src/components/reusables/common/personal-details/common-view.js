@@ -6,18 +6,14 @@ class CommonView extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
     this.isLastInputLineBreak = false;
+
+    this.initialize = this.initialize.bind(this);
   }
 
   ignoreNewLineIfNecessary(event) {
     var numLineBreaks = (event.currentTarget.value.match(/\n/g) || []).length;
     if (event.keyCode === 13 && (numLineBreaks === 2 || this.isLastInputLineBreak || this.componentModel.addressLineOne.length === 0)) {
       event.preventDefault();
-    }
-
-    if (event.keyCode === 8 || event.keyCode === 13 || event.key === 46) {
-      setTimeout(() => {
-        this.resizeAddressLabel();
-      }, 0);
     }
 
     if (event.keyCode == 13) {
@@ -32,7 +28,7 @@ class CommonView extends UpdatableView {
     this.onChange();
   }
 
-  /** private */
+  /** @private */
   onChange() {
     this.componentModel.firstName = $('#' + this.componentModel.componentId + ' .first-name-input').val().trim();
     this.componentModel.lastName = $('#' + this.componentModel.componentId + ' .last-name-input').val().trim();
@@ -63,7 +59,24 @@ class CommonView extends UpdatableView {
       }
     }
 
+    // roles
+    this.componentModel.roles.isAdmin = $('#' + this.componentModel.componentId + ' .icon-admin').hasClass('active');
+    this.componentModel.roles.isManager = $('#' + this.componentModel.componentId + ' .icon-manager').hasClass('active');
+    this.componentModel.roles.isTrader = $('#' + this.componentModel.componentId + ' .icon-trader').hasClass('active');
+    this.componentModel.roles.isService = $('#' + this.componentModel.componentId + ' .icon-service').hasClass('active');
+
     this.controller.onPersonalDetailsChange(this.componentModel);
+  }
+
+  /** @private */
+  onRoleClick(e) {
+    let $role = $(e.currentTarget);
+    if ($role.hasClass('active')) {
+      $role.removeClass('active');
+    } else {
+      $role.removeClass('active').addClass('active');
+    }
+    this.onChange();
   }
 
   /** @private */
@@ -90,16 +103,6 @@ class CommonView extends UpdatableView {
       event.initEvent('autosize:update', true, false);
       $addressInput[0].dispatchEvent(event);
     }, 0);
-
-    setTimeout(() => {
-      this.resizeAddressLabel();
-    }, 0);
-  }
-
-  /** @private */
-  resizeAddressLabel() {
-    let height = $('#' + this.componentModel.componentId + ' .address-input').outerHeight();
-    $('#' + this.componentModel.componentId + ' .labels-container .address').outerHeight(height);
   }
 
   initialize() {

@@ -102,7 +102,7 @@ namespace {
         Subscription subscription;
         subscription.m_security = security;
         subscription.m_bboQuotes = std::make_shared<StateQueue<BboQuote>>();
-        client.QueryBboQuotes(QueryRealTimeWithSnapshot(security),
+        client.QueryBboQuotes(BuildCurrentQuery(security),
           subscription.m_bboQuotes);
         subscription.m_bookQuotes = std::make_shared<StateQueue<BookQuote>>();
         QueryRealTimeBookQuotesWithSnapshot(client, security,
@@ -113,7 +113,7 @@ namespace {
           subscription.m_marketQuotes);
         subscription.m_timeAndSales =
           std::make_shared<StateQueue<TimeAndSale>>();
-        client.QueryTimeAndSales(QueryRealTimeWithSnapshot(security),
+        client.QueryTimeAndSales(BuildCurrentQuery(security),
           subscription.m_timeAndSales);
         currentSubscriptions.push_back(subscription);
       }

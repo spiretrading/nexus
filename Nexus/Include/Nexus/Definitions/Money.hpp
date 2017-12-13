@@ -541,14 +541,70 @@ namespace std {
   template<>
   class numeric_limits<Nexus::Money> {
     public:
+      static constexpr bool is_specialized = true;
+      static constexpr bool is_signed = true;
+      static constexpr bool is_integer = false;
+      static constexpr bool is_exact = true;
+      static constexpr bool has_infinity = false;
+      static constexpr bool has_quiet_NaN = false;
+      static constexpr bool has_signaling_NaN = false;
+      static constexpr bool has_denorm = false;
+      static constexpr bool has_denorm_loss = false;
+      static constexpr std::float_round_style round_style =
+        std::round_toward_zero;
+      static constexpr bool is_iec559 = false;
+      static constexpr bool is_bounded = true;
+      static constexpr bool is_modulo =
+        numeric_limits<std::uint64_t>::is_modulo;
+      static constexpr int digits = numeric_limits<std::uint64_t>::digits;
+      static constexpr int digits10 = numeric_limits<std::uint64_t>::digits10;
+      static constexpr int max_digits10 =
+        numeric_limits<std::uint64_t>::max_digits10;
+      static constexpr int radix = numeric_limits<std::uint64_t>::radix;
+      static constexpr int min_exponent = 0;
+      static constexpr int min_exponent10 = 0;
+      static constexpr int max_exponent = 0;
+      static constexpr int max_exponent10 = 0;
+      static constexpr bool traps = true;
+      static constexpr bool tinyness_before = false;
+
       static Nexus::Money min() {
         return Nexus::Money::FromRepresentation(
           std::numeric_limits<std::int64_t>::min());
       }
 
+      static Nexus::Money lowest() {
+        return Nexus::Money::FromRepresentation(
+          std::numeric_limits<std::int64_t>::lowest());
+      }
+
       static Nexus::Money max() {
         return Nexus::Money::FromRepresentation(
           std::numeric_limits<std::int64_t>::max());
+      }
+
+      static Nexus::Money epsilon() {
+        return Nexus::Money::EPSILON;
+      }
+
+      static Nexus::Money round_error() {
+        return Nexus::Money::ONE / 2;
+      }
+
+      static Nexus::Money infinity() {
+        return Nexus::Money::ZERO;
+      }
+
+      static Nexus::Money quiet_NaN() {
+        return Nexus::Money::ZERO;
+      }
+
+      static Nexus::Money signaling_NaN() {
+        return Nexus::Money::ZERO;
+      }
+
+      static Nexus::Money denorm_min() {
+        return Nexus::Money::ZERO;
       }
   };
 }

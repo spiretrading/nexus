@@ -17,8 +17,6 @@
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
-#include <Beam/TimeService/ToLocalTime.hpp>
-#include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
@@ -42,7 +40,6 @@ using namespace Beam::Serialization;
 using namespace Beam::ServiceLocator;
 using namespace Beam::Services;
 using namespace Beam::Threading;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -122,39 +119,16 @@ int main(int argc, const char** argv) {
     cerr << "Unable to connect to the definitions service." << endl;
     return -1;
   }
-  unique_ptr<LiveNtpTimeClient> timeClient;
-  try {
-    auto timeServices = serviceLocatorClient->Locate(TimeService::SERVICE_NAME);
-    if(timeServices.empty()) {
-      cerr << "No time services available." << endl;
-      return -1;
-    }
-    auto& timeService = timeServices.front();
-    auto ntpPool = FromString<vector<IpAddress>>(get<string>(
-      timeService.GetProperties().At("addresses")));
-    timeClient = MakeLiveNtpTimeClient(ntpPool, Ref(socketThreadPool),
-      Ref(timerThreadPool));
-  } catch(const  std::exception& e) {
-    cerr << "Unable to initialize NTP client: " << e.what() << endl;
-    return -1;
-  }
-  try {
-    timeClient->Open();
-  } catch(const std::exception&) {
-    cerr << "NTP service unavailable." << endl;
-    return -1;
-  }
   optional<BaseMarketDataFeedClient> baseMarketDataFeedClient;
   try {
-    auto marketDataServices = serviceLocatorClient->Locate(
-      MarketDataService::FEED_SERVICE_NAME);
-    if(marketDataServices.empty()) {
+    auto marketDataService = FindMarketDataFeedService(DefaultCountries::US(),
+      *serviceLocatorClient);
+    if(!marketDataService.is_initialized()) {
       cerr << "No market data services available." << endl;
       return -1;
     }
-    auto& marketDataService = marketDataServices.front();
     auto marketDataAddresses = FromString<vector<IpAddress>>(
-      get<string>(marketDataService.GetProperties().At("addresses")));
+      get<string>(marketDataService->GetProperties().At("addresses")));
     auto samplingTime = Extract<time_duration>(config, "sampling");
     baseMarketDataFeedClient.emplace(
       Initialize(marketDataAddresses, Ref(socketThreadPool)),
@@ -187,10 +161,10 @@ int main(int argc, const char** argv) {
   ApplicationProtocolClient protocolClient{&feedChannel};
   CtaConfiguration ctaConfig;
   try {
+    auto countryDatabase = definitionsClient->LoadCountryDatabase();
     auto marketDatabase = definitionsClient->LoadMarketDatabase();
-    auto timeZones = definitionsClient->LoadTimeZoneDatabase();
-    ctaConfig = CtaConfiguration::Parse(config, marketDatabase,
-      timeClient->GetTime(), timeZones);
+    ctaConfig = CtaConfiguration::Parse(config, countryDatabase,
+      marketDatabase);
   } catch(const std::exception& e) {
     cerr << "Error initializing CTA configuration: " << e.what() << endl;
     return -1;

@@ -33,9 +33,9 @@ unique_ptr<CanvasNode> Spire::BuildTaskVolumeNode() {
     additionCombiner->GetChildren().back(), make_unique<IntegerNode>());
   unique_ptr<CanvasNode> foldNode = make_unique<FoldNode>();
   foldNode = foldNode->Replace(foldNode->GetChildren().front(),
-    std::move(quantityQuery));
-  foldNode = foldNode->Replace(foldNode->GetChildren().back(),
     std::move(additionCombiner));
+  foldNode = foldNode->Replace(foldNode->GetChildren().back(),
+    std::move(quantityQuery));
   unique_ptr<CanvasNode> chainNode = make_unique<ChainNode>();
   chainNode = chainNode->Replace(chainNode->GetChildren().back(),
     make_unique<IntegerNode>(0));

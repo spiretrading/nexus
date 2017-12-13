@@ -1,9 +1,11 @@
 #include "Nexus/Python/Accounting.hpp"
 #include <Beam/Python/BoostPython.hpp>
 #include <Beam/Python/Collections.hpp>
+#include <Beam/Python/Copy.hpp>
 #include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/Pair.hpp>
 #include <Beam/Python/PythonBindings.hpp>
+#include <Beam/Python/Vector.hpp>
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Accounting/Position.hpp"
 #include "Nexus/Accounting/PositionOrderBook.hpp"
@@ -25,6 +27,8 @@ namespace {
   void ExportKey(const char* name) {
     class_<Accounting::Details::Key<IndexType>>(name, init<>())
       .def(init<const IndexType&, CurrencyId>())
+      .def("__copy__", &MakeCopy<Accounting::Details::Key<IndexType>>)
+      .def("__deepcopy__", &MakeDeepCopy<Accounting::Details::Key<IndexType>>)
       .def_readwrite("index", &Accounting::Details::Key<IndexType>::m_index)
       .def_readwrite("currency",
         &Accounting::Details::Key<IndexType>::m_currency);
@@ -73,8 +77,8 @@ void Nexus::Python::ExportPositionOrderBook() {
           &PositionOrderBook::PositionEntry::m_security)
         .def_readwrite("quantity",
           &PositionOrderBook::PositionEntry::m_quantity);
-      class_<vector<PositionOrderBook::PositionEntry>>("VectorPositionEntry")
-        .def(vector_indexing_suite<vector<PositionOrderBook::PositionEntry>>());
+      ExportVector<vector<PositionOrderBook::PositionEntry>>(
+        "VectorPositionEntry");
   }
 }
 
@@ -83,6 +87,8 @@ void Nexus::Python::ExportPosition() {
     scope outer =
       class_<Position<Security>>("Position", init<>())
         .def(init<const Position<Security>::Key&>())
+        .def("__copy__", &MakeCopy<Position<Security>>)
+        .def("__deepcopy__", &MakeDeepCopy<Position<Security>>)
         .def_readwrite("key", &Position<Security>::m_key)
         .def_readwrite("quantity", &Position<Security>::m_quantity)
         .def_readwrite("cost_basis", &Position<Security>::m_costBasis);
@@ -96,6 +102,8 @@ void Nexus::Python::ExportSecurityInventory() {
   using Inventory = Accounting::Inventory<Position<Security>>;
   class_<Inventory>("SecurityInventory", init<>())
     .def(init<const Position<Security>::Key&>())
+    .def("__copy__", &MakeCopy<Inventory>)
+    .def("__deepcopy__", &MakeDeepCopy<Inventory>)
     .def_readwrite("position", &Inventory::m_position)
     .def_readwrite("gross_profit_and_loss", &Inventory::m_grossProfitAndLoss)
     .def_readwrite("fees", &Inventory::m_fees)
@@ -117,6 +125,10 @@ void Nexus::Python::ExportTrueAverageBookkeeper() {
     "CurrencyInventoryView");
   class_<TrueAverageBookkeeper<Inventory<Position<Security>>>>(
       "TrueAverageBookkeeper", init<>())
+    .def("__copy__", &MakeCopy<TrueAverageBookkeeper<
+      Inventory<Position<Security>>>>)
+    .def("__deepcopy__", &MakeDeepCopy<TrueAverageBookkeeper<
+      Inventory<Position<Security>>>>)
     .def("record_transaction", &TrueAverageBookkeeper<
       Inventory<Position<Security>>>::RecordTransaction)
     .def("get_inventory", &TrueAverageBookkeeper<
@@ -133,6 +145,8 @@ void Nexus::Python::ExportTrueAveragePortfolio() {
   {
     scope outer =
       class_<Portfolio>("TrueAveragePortfolio", init<const MarketDatabase&>())
+        .def("__copy__", &MakeCopy<Portfolio>)
+        .def("__deepcopy__", &MakeDeepCopy<Portfolio>)
         .add_property("bookkeeper", make_function(&Portfolio::GetBookkeeper,
         return_value_policy<copy_const_reference>()))
         .add_property("security_entries", make_function(

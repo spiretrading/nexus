@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import Login from 'components/reusables/common/sign-in';
 import './style.scss';
+import userService from 'services/user';
 
 class Home extends Component {
   constructor(props) {
@@ -8,8 +9,13 @@ class Home extends Component {
   }
 
   componentDidMount() {
+    if (userService.isSignedIn()) {
+      let directoryEntry = userService.getDirectoryEntry();
+      let path = 'profile-account/' + directoryEntry.type + '/' + directoryEntry.id + '/' + directoryEntry.name;
+      window.location.href = Config.HOME_URL + path;
+    }
+
     $('body').css('overflow', 'hidden');
-    EventBus.publish(Event.Application.PAGE_LOADED);
     $('main').css('padding', '0');
   }
 

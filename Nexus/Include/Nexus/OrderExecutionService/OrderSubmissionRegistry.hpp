@@ -1,5 +1,6 @@
 #ifndef NEXUS_ORDERSUBMISSIONREGISTRY_HPP
 #define NEXUS_ORDERSUBMISSIONREGISTRY_HPP
+#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/SynchronizedMap.hpp>
 #include <Beam/Utilities/SynchronizedSet.hpp>
@@ -49,11 +50,13 @@ namespace OrderExecutionService {
 
     private:
       using SyncAccountOrderSubmissionEntry =
-        Beam::Threading::Sync<AccountOrderSubmissionEntry>;
+        Beam::Threading::Sync<AccountOrderSubmissionEntry,
+        Beam::Threading::Mutex>;
       Beam::SynchronizedUnorderedSet<Beam::ServiceLocator::DirectoryEntry>
         m_accounts;
       Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
-        std::shared_ptr<SyncAccountOrderSubmissionEntry>> m_submissionEntries;
+        std::shared_ptr<SyncAccountOrderSubmissionEntry>,
+        Beam::Threading::Mutex> m_submissionEntries;
   };
 
   inline void OrderSubmissionRegistry::AddAccount(
@@ -66,8 +69,6 @@ namespace OrderExecutionService {
       const InitialSequenceLoader& initialSequenceLoader, const F& f) {
     auto entry = m_submissionEntries.GetOrInsert(orderInfo.m_fields.m_account,
       [&] {
-
-        // TODO: Use blocking mutex.
         auto initialSequences = initialSequenceLoader();
         auto account = m_accounts.Get(orderInfo.m_fields.m_account);
         return std::make_shared<SyncAccountOrderSubmissionEntry>(account,
@@ -86,8 +87,6 @@ namespace OrderExecutionService {
       const InitialSequenceLoader& initialSequenceLoader, const F& f) {
     auto entry = m_submissionEntries.GetOrInsert(executionReport.GetIndex(),
       [&] {
-
-        // TODO: Use blocking mutex.
         auto initialSequences = initialSequenceLoader();
         auto account = m_accounts.Get(executionReport.GetIndex());
         return std::make_shared<SyncAccountOrderSubmissionEntry>(account,

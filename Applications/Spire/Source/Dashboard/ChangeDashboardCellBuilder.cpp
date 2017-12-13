@@ -50,7 +50,7 @@ std::unique_ptr<DashboardCell> ChangeDashboardCellBuilder::Build(
         serviceClients.GetTimeClient().GetTime(),
         selfUserProfile->GetMarketDatabase(),
         selfUserProfile->GetTimeZoneDatabase());
-      auto query = QueryRealTimeWithSnapshot(security);
+      auto query = BuildCurrentQuery(security);
       marketDataClient.QueryTimeAndSales(query, baseQueue);
     });
   return std::move(cell);

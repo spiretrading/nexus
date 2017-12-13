@@ -1,18 +1,17 @@
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServletTester.hpp"
-#include <Beam/ServiceLocator/NullAuthenticator.hpp>
 #include <boost/functional/factory.hpp>
-#include <boost/functional/value_factory.hpp>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
+#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
 using namespace Beam::Routines;
 using namespace Beam::Serialization;
 using namespace Beam::ServiceLocator;
 using namespace Beam::ServiceLocator::Tests;
 using namespace Beam::Services;
+using namespace Beam::Services::Tests;
 using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
@@ -23,58 +22,60 @@ using namespace Nexus::Queries;
 using namespace std;
 
 void OrderExecutionServletTester::setUp() {
-  m_serviceLocatorInstance.Initialize();
-  m_serviceLocatorInstance->Open();
-  DirectoryEntry servicesDirectory =
-    m_serviceLocatorInstance->GetRoot().MakeDirectory("services",
+  m_serviceLocatorEnvironment.emplace();
+  m_serviceLocatorEnvironment->Open();
+  auto servicesDirectory =
+    m_serviceLocatorEnvironment->GetRoot().MakeDirectory("services",
     DirectoryEntry::GetStarDirectory());
-  DirectoryEntry administratorsDirectory =
-    m_serviceLocatorInstance->GetRoot().MakeDirectory("administrators",
+  auto administratorsDirectory =
+    m_serviceLocatorEnvironment->GetRoot().MakeDirectory("administrators",
     DirectoryEntry::GetStarDirectory());
-  DirectoryEntry administrationAccount =
-    m_serviceLocatorInstance->GetRoot().MakeAccount("administration_service",
+  auto administrationAccount =
+    m_serviceLocatorEnvironment->GetRoot().MakeAccount(
+    "administration_service", "", servicesDirectory);
+  m_serviceLocatorEnvironment->GetRoot().StorePermissions(
+    administrationAccount, DirectoryEntry::GetStarDirectory(),
+    Permissions(~0));
+  m_serviceLocatorEnvironment->GetRoot().MakeAccount("order_execution_service",
     "", servicesDirectory);
-  m_serviceLocatorInstance->GetRoot().StorePermissions(administrationAccount,
-    DirectoryEntry::GetStarDirectory(), Permissions(~0));
-  m_serviceLocatorInstance->GetRoot().MakeAccount("order_execution_service", "",
-    servicesDirectory);
-  DirectoryEntry clientEntry = m_serviceLocatorInstance->GetRoot().MakeAccount(
+  auto clientEntry = m_serviceLocatorEnvironment->GetRoot().MakeAccount(
     "client", "", DirectoryEntry::GetStarDirectory());
-  m_uidServiceInstance.Initialize();
-  m_uidServiceInstance->Open();
-  std::unique_ptr<ServiceLocatorClient> administationServiceLocatorClient =
-    m_serviceLocatorInstance->BuildClient();
+  m_uidServiceEnvironment.emplace();
+  m_uidServiceEnvironment->Open();
+  auto administationServiceLocatorClient =
+    m_serviceLocatorEnvironment->BuildClient();
   administationServiceLocatorClient->SetCredentials("administration_service",
     "");
   administationServiceLocatorClient->Open();
-  m_administrationServiceInstance.Initialize(
+  m_administrationServiceEnvironment.emplace(
     std::move(administationServiceLocatorClient));
-  m_administrationServiceInstance->Open();
-  m_servletServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
-  m_servletServiceLocatorClient->SetCredentials("order_execution_service", "");
-  m_servletServiceLocatorClient->Open();
-  m_serverConnection.Initialize();
-  m_clientProtocol.Initialize(Initialize(string("test"),
-    Ref(*m_serverConnection)), Initialize());
+  m_administrationServiceEnvironment->Open();
+  std::shared_ptr<VirtualServiceLocatorClient> servletServiceLocatorClient =
+    m_serviceLocatorEnvironment->BuildClient();
+  servletServiceLocatorClient->SetCredentials("order_execution_service", "");
+  servletServiceLocatorClient->Open();
+  auto serverConnection = std::make_shared<TestServerConnection>();
+  m_clientProtocol.emplace(Initialize("test", Ref(*serverConnection)),
+    Initialize());
   RegisterQueryTypes(Store(m_clientProtocol->GetSlots().GetRegistry()));
   RegisterOrderExecutionServices(Store(m_clientProtocol->GetSlots()));
   RegisterOrderExecutionMessages(Store(m_clientProtocol->GetSlots()));
-  m_driver.Initialize();
-  m_dataStore.Initialize();
-  m_servlet.Initialize(boost::posix_time::pos_infin, Initialize(),
-    m_servletServiceLocatorClient.get(), m_uidServiceInstance->BuildClient(),
-    m_administrationServiceInstance->BuildClient(
-    Ref(*m_servletServiceLocatorClient)), &*m_driver, &*m_dataStore);
-  m_container.Initialize(Initialize(&*m_servletServiceLocatorClient,
-    &*m_servlet), &*m_serverConnection,
-    factory<std::shared_ptr<TriggerTimer>>());
+  m_driver = std::make_shared<MockOrderExecutionDriver>();
+  m_dataStore = std::make_shared<LocalOrderExecutionDataStore>();
+  m_container.emplace(Initialize(servletServiceLocatorClient,
+    Initialize(pos_infin, GetDefaultMarketDatabase(),
+    GetDefaultDestinationDatabase(), Initialize(), servletServiceLocatorClient,
+    m_uidServiceEnvironment->BuildClient(),
+    m_administrationServiceEnvironment->BuildClient(
+    Ref(*servletServiceLocatorClient)), m_driver, m_dataStore)),
+    serverConnection, factory<std::unique_ptr<TriggerTimer>>());
   m_container->Open();
-  m_clientServiceLocatorClient = m_serviceLocatorInstance->BuildClient();
+  m_clientServiceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
   m_clientServiceLocatorClient->SetCredentials("client", "");
   m_clientServiceLocatorClient->Open();
   m_clientProtocol->Open();
-  SessionAuthenticator<ServiceLocatorClient> authenticator(
-    Ref(*m_clientServiceLocatorClient));
+  SessionAuthenticator<VirtualServiceLocatorClient> authenticator{
+    Ref(*m_clientServiceLocatorClient)};
   authenticator(*m_clientProtocol);
   m_clientProtocol->SpawnMessageHandler();
   AccountQuery orderSubmissionQuery;
@@ -85,29 +86,25 @@ void OrderExecutionServletTester::setUp() {
 }
 
 void OrderExecutionServletTester::tearDown() {
-  m_clientProtocol.Reset();
+  m_clientProtocol.reset();
   m_clientServiceLocatorClient.reset();
-  m_container.Reset();
-  m_servlet.Reset();
-  m_servletServiceLocatorClient.reset();
-  m_dataStore.Reset();
-  m_driver.Reset();
-  m_serverConnection.Reset();
-  m_administrationServiceInstance.Reset();
-  m_uidServiceInstance.Reset();
-  m_serviceLocatorInstance.Reset();
+  m_container.reset();
+  m_dataStore.reset();
+  m_driver.reset();
+  m_administrationServiceEnvironment.reset();
+  m_uidServiceEnvironment.reset();
+  m_serviceLocatorEnvironment.reset();
 }
 
 void OrderExecutionServletTester::TestNewOrderSingle() {
   auto orderFields = OrderFields::BuildLimitOrder(
     m_clientServiceLocatorClient->GetAccount(),
-    Security("TST", DefaultMarkets::NYSE(), DefaultCountries::US()),
+    Security{"TST", DefaultMarkets::NYSE(), DefaultCountries::US()},
     DefaultCurrencies::USD(), Side::BID, "TEST", 100, Money::CENT);
   ExecutionReport report;
   Async<void> messageAsync;
   AddMessageSlot<OrderUpdateMessage>(Store(m_clientProtocol->GetSlots()),
-    [&] (ClientServiceProtocolClient& client,
-        const ExecutionReport& receivedReport) {
+    [&] (auto& client, auto& receivedReport) {
       report = receivedReport;
       messageAsync.GetEval().SetResult();
     });

@@ -5,8 +5,8 @@
 namespace Nexus {
 namespace Python {
 
-  //! Exports the AccountQuery class.
-  void ExportAccountQuery();
+  //! Exports the ApplicationOrderExecutionClient class.
+  void ExportApplicationOrderExecutionClient();
 
   //! Exports the ExecutionReport struct.
   void ExportExecutionReport();
@@ -23,8 +23,8 @@ namespace Python {
   //! Exports the OrderExecutionService namespace.
   void ExportOrderExecutionService();
 
-  //! Exports the OrderExecutionService::Tests namespace.
-  void ExportOrderExecutionServiceTestInstance();
+  //! Exports the OrderExecutionServiceTestEnvironment class.
+  void ExportOrderExecutionServiceTestEnvironment();
 
   //! Exports the OrderFields struct.
   void ExportOrderFields();

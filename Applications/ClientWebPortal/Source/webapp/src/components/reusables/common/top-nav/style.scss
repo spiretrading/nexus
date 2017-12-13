@@ -5,6 +5,10 @@
   width: 100%;
   height: 100%;
 
+  &.show-bottom-border {
+    border-bottom: 1px solid $lightGrey;
+  }
+
   .menu-btn {
     position: absolute;
     left: 15px;
@@ -32,13 +36,11 @@
     position: absolute;
     left: 60px;
     top: 15px;
-    width: 84px;
+    width: 78px;
     height: 30px;
   }
 
-  .sub-pages-wrapper {
-    position: absolute;
-    right: 0px;
-    top: 0px;
+  & > .header {
+    min-height: 60px;
   }
 }

@@ -5,7 +5,7 @@
 #include <Beam/Utilities/Algorithm.hpp>
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
-#include "Nexus/OrderTasks/OrderWrapperTask.hpp"
+#include "Nexus/Tasks/OrderWrapperTask.hpp"
 #include "Spire/Blotter/BlotterModelUtilities.hpp"
 #include "Spire/Blotter/BlotterTaskMonitor.hpp"
 #include "Spire/Canvas/Common/BreadthFirstCanvasNodeIterator.hpp"
@@ -40,7 +40,7 @@ using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
-using namespace Nexus::OrderTasks;
+using namespace Nexus::Tasks;
 using namespace Spire;
 using namespace std;
 
@@ -98,8 +98,8 @@ BlotterTasksModel::TaskContext::TaskContext(RefType<UserProfile> userProfile,
   CanvasNodeTaskFactory canvasNodeTaskFactory(Ref(m_context), Ref(*m_node));
   m_orderExecutionPublisher =
     canvasNodeTaskFactory.GetOrderExecutionPublisher();
-  m_factory = ReactorMonitorTaskFactory(canvasNodeTaskFactory,
-    Ref(m_context.GetReactorMonitor()));
+  m_factory = ReactorMonitorTaskFactory(Ref(m_context.GetReactorMonitor()),
+    canvasNodeTaskFactory);
   m_task = m_factory->Create();
 }
 

@@ -13,6 +13,11 @@ data_store:
   password: admin_password
   schema: market_data
 
+countries:
+  - AU
+  - CA
+  - US
+
 service_locator:
   address: local_interface:20000
   username: market_data_service

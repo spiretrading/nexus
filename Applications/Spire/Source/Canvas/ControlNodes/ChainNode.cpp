@@ -14,8 +14,8 @@ using namespace Spire;
 using namespace std;
 
 ChainNode::ChainNode() {
-  AddChild("i0", make_unique<NoneNode>(UnionType::GetAnyValueType()));
-  SetType(UnionType::GetAnyValueType());
+  AddChild("i0", make_unique<NoneNode>(UnionType::GetAnyType()));
+  SetType(UnionType::GetAnyType());
   SetText("Chain");
 }
 
@@ -29,7 +29,7 @@ ChainNode::ChainNode(vector<unique_ptr<CanvasNode>> nodes) {
   }
   std::shared_ptr<CanvasType> type;
   if(nodes.empty()) {
-    type = UnionType::GetAnyValueType();
+    type = UnionType::GetAnyType();
   } else {
     type = GetChildren().front().GetType();
   }

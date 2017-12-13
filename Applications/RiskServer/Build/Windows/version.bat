@@ -1,8 +1,9 @@
-cd %~dp0../..
+pushd %~dp0..\..
 mkdir Include
-cd Include
+pushd Include
 mkdir RiskServer
-cd %~dp0
+popd
+popd
 printf "#define RISK_SERVER_VERSION """> %~dp0../../Include/RiskServer/Version.hpp
 git rev-list --count --first-parent HEAD | tr -d "\n\" >> %~dp0../../Include/RiskServer/Version.hpp
 printf """\n" >> %~dp0../../Include/RiskServer/Version.hpp

@@ -5,6 +5,7 @@
 namespace Nexus {
 namespace AdministrationService {
   struct AccountIdentity;
+  class AccountModificationRequest;
   template<typename ServiceProtocolClientBuilderType>
     class AdministrationClient;
   class AdministrationDataStore;
@@ -12,7 +13,10 @@ namespace AdministrationService {
     typename AdministrationDataStoreType> class AdministrationServlet;
   class AdministrationSession;
   class ApplicationAdministrationClient;
+  template<typename DataStoreType> class CachedAdministrationDataStore;
+  class EntitlementModification;
   class LocalAdministrationDataStore;
+  class Message;
   class MySqlAdministrationDataStore;
   class TradingGroup;
   class VirtualAdministrationClient;

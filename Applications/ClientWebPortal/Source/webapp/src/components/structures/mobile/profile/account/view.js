@@ -2,10 +2,9 @@ import './style.scss';
 import React from 'react';
 import PersonalDetails from 'components/reusables/mobile/personal-details';
 import AccountPicture from 'components/reusables/common/account-picture';
-import UserInfoNav from 'components/reusables/common/user-info-nav';
 import moment from 'moment';
 import PrimaryButton from 'components/reusables/common/primary-button';
-import UserNotes from 'components/reusables/common/user-notes';
+import TextArea from 'components/reusables/common/text-area';
 import userService from 'services/user';
 import CommonView from 'components/structures/common/profile/account/common-view';
 
@@ -16,20 +15,14 @@ class MobileView extends CommonView {
 
   render() {
     let content;
-    let userInfoNavModel,
-      lastSignin,
+    let lastSignin,
       personalDetailsModel,
       accountPictureModel,
       saveButtonModel,
       userNotesModel,
       changePasswordButtonModel,
       saveButton;
-    if (!this.controller.isModelEmpty.apply(this.controller)) {
-      userInfoNavModel = {
-        userName: this.componentModel.userName,
-        roles: this.componentModel.roles
-      };
-
+    if (this.controller.isModelInitialized()) {
       personalDetailsModel = JSON.parse(JSON.stringify(this.componentModel));
       personalDetailsModel.id = personalDetailsModel.directoryEntry.id;
       delete personalDetailsModel.directoryEntry;
@@ -38,13 +31,13 @@ class MobileView extends CommonView {
       lastSignin = moment(this.componentModel.lastLoginTime, moment.ISO_8601).toDate().toLocaleString();
 
       accountPictureModel = {
-        picture: this.componentModel.picture,
+        picture: this.componentModel.photoId,
         showLabel: false,
         isReadOnly: !userService.isAdmin()
       };
 
       userNotesModel = {
-        userNotes: this.componentModel.userNotes,
+        text: this.componentModel.userNotes,
         isReadOnly: !userService.isAdmin()
       };
 
@@ -74,9 +67,6 @@ class MobileView extends CommonView {
       content =
         <div>
           <div className="row">
-            <UserInfoNav model={userInfoNavModel}/>
-          </div>
-          <div className="row">
             Last sign-in: {lastSignin}
           </div>
           <div className="header row">
@@ -92,7 +82,7 @@ class MobileView extends CommonView {
             User Notes
           </div>
           <div className="row">
-            <UserNotes model={userNotesModel} onChange={onUserNotesChange}/>
+            <TextArea model={userNotesModel} onChange={onUserNotesChange}/>
           </div>
           {saveButton}
           <hr className="row"/>
@@ -100,10 +90,12 @@ class MobileView extends CommonView {
             Change Password
           </div>
           <div className="change-password-wrapper row">
-            <input className="new-password-input" type="password" placeholder="New Password"/>
-            <input className="confirm-password-input" type="password" placeholder="Confirm New Password"/>
+            <input className="new-password-input" type="password" placeholder="New Password" onInput={this.hideSavePasswordMessage}/>
+            <input className="confirm-password-input" type="password" placeholder="Confirm New Password" onInput={this.hideSavePasswordMessage}/>
             <PrimaryButton className="change-button" model={changePasswordButtonModel} onClick={this.onPasswordChangeClick.bind(this)}/>
-            <div className="message"></div>
+            <div className="message-wrapper">
+              <div className="message"></div>
+            </div>
           </div>
         </div>
     }

@@ -1,7 +1,9 @@
 class Controller {
   constructor(react, componentModel) {
-    this.componentModel = cloneObject(componentModel);
+    this.componentModel = clone(componentModel);
     this.onClick = react.props.onClick;
+
+    this.onButtonClick = this.onButtonClick.bind(this);
   }
 
   getView() {
@@ -14,7 +16,7 @@ class Controller {
 
   componentWillUpdate(model) {
     if (model != null) {
-      $.extend(true, this.componentModel, model);
+      overwriteMerge(this.componentModel, model);
       this.view.setComponentModel(this.componentModel);
     }
   }

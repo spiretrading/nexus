@@ -2,10 +2,9 @@ import './style.scss';
 import React from 'react';
 import PersonalDetails from 'components/reusables/desktop/personal-details';
 import AccountPicture from 'components/reusables/common/account-picture';
-import UserInfoNav from 'components/reusables/common/user-info-nav';
 import moment from 'moment';
 import PrimaryButton from 'components/reusables/common/primary-button';
-import UserNotes from 'components/reusables/common/user-notes';
+import TextArea from 'components/reusables/common/text-area';
 import CommonView from 'components/structures/common/profile/account/common-view';
 
 class DesktopView extends CommonView {
@@ -15,20 +14,14 @@ class DesktopView extends CommonView {
 
   render() {
     let content;
-    let userInfoNavModel,
-      lastSignin,
+    let lastSignin,
       personalDetailsModel,
       accountPictureModel,
       saveButtonModel,
       userNotesModel,
       changePasswordButtonModel,
       saveButton;
-    if (!this.controller.isModelEmpty.apply(this.controller)) {
-      userInfoNavModel = {
-        userName: this.componentModel.directoryEntry.name,
-        roles: this.componentModel.roles
-      };
-
+    if (this.controller.isModelInitialized()) {
       personalDetailsModel = JSON.parse(JSON.stringify(this.componentModel));
       personalDetailsModel.id = personalDetailsModel.directoryEntry.id;
       personalDetailsModel.userName = personalDetailsModel.directoryEntry.name;
@@ -36,6 +29,9 @@ class DesktopView extends CommonView {
       personalDetailsModel.isReadOnly = !this.componentModel.isAdmin;
 
       lastSignin = moment(this.componentModel.lastLoginTime, moment.ISO_8601).toDate().toLocaleString();
+      if (lastSignin === 'Invalid Date') {
+        lastSignin = 'Never';
+      }
 
       accountPictureModel = {
         picture: this.componentModel.photoId,
@@ -44,7 +40,7 @@ class DesktopView extends CommonView {
       };
 
       userNotesModel = {
-        userNotes: this.componentModel.userNotes,
+        text: this.componentModel.userNotes,
         isReadOnly: !this.componentModel.isAdmin
       };
 
@@ -73,9 +69,6 @@ class DesktopView extends CommonView {
       content =
         <div>
           <div className="row">
-            <UserInfoNav model={userInfoNavModel}/>
-          </div>
-          <div className="row">
             Last sign-in: {lastSignin}
           </div>
           <div className="header row">
@@ -93,7 +86,7 @@ class DesktopView extends CommonView {
             User Notes
           </div>
           <div className="row">
-            <UserNotes model={userNotesModel} onChange={onUserNotesChange}/>
+            <TextArea model={userNotesModel} onChange={onUserNotesChange}/>
           </div>
           {saveButton}
           <hr className="row"/>
@@ -102,8 +95,8 @@ class DesktopView extends CommonView {
           </div>
           <div className="change-password-wrapper row">
             <div className="input-row">
-              <input className="new-password-input" type="password" placeholder="New Password"/>
-              <input className="confirm-password-input" type="password" placeholder="Confirm New Password"/>
+              <input className="new-password-input" type="password" placeholder="New Password" onInput={this.hideSavePasswordMessage}/>
+              <input className="confirm-password-input" type="password" placeholder="Confirm New Password" onInput={this.hideSavePasswordMessage}/>
               <div className="save-password-button-wrapper">
                 <PrimaryButton className="save-password-button" model={changePasswordButtonModel} onClick={onPasswordChangeClick}/>
                 <div className="message"></div>

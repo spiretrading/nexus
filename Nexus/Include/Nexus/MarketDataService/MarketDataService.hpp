@@ -8,6 +8,7 @@ namespace MarketDataService {
   template<typename HistoricalDataStoreType> class BufferedHistoricalDataStore;
   template<typename HistoricalDataStoreType> class CachedHistoricalDataStore;
   template<typename MarketExpressionType> class DefaultCurrencyExpression;
+  class DistributedMarketDataClient;
   class EntitlementDatabase;
   struct EntitlementKey;
   class EntitlementSet;
@@ -25,9 +26,11 @@ namespace MarketDataService {
   template<typename MarketDataType> struct MarketDataQueryType;
   class MarketDataRegistry;
   template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename ServiceLocatorClientType>
+    typename HistoricalDataStoreType, typename AdministrationClientType>
     class MarketDataRegistryServlet;
   class MarketDataRegistrySession;
+  template<typename ContainerType, typename MarketDataClientType,
+    typename AdministrationClientType> class MarketDataRelayServlet;
   class MarketEntry;
   template<typename MarketDataClientType, typename MarketExpressionType,
     typename TimeRangeExpressionType> class MarketOrderImbalanceExpression;

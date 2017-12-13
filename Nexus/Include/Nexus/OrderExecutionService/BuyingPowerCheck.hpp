@@ -10,6 +10,7 @@
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include "Nexus/Definitions/Security.hpp"
+#include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheck.hpp"
@@ -124,8 +125,8 @@ namespace OrderExecutionService {
           if(report.m_lastQuantity != 0) {
             auto currency = buyingPowerEntry.m_currencies.Find(report.m_id);
             if(!currency.is_initialized()) {
-              BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
-                "Currency not recognized."));
+              BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
+                "Currency not recognized."});
             }
             report.m_lastPrice = m_exchangeRates.Convert(report.m_lastPrice,
               *currency, riskParameters.m_currency);
@@ -141,8 +142,8 @@ namespace OrderExecutionService {
           convertedPrice = m_exchangeRates.Convert(price, fields.m_currency,
             riskParameters.m_currency);
         } catch(const CurrencyPairNotFoundException&) {
-          BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
-            "Currency not recognized."));
+          BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
+            "Currency not recognized."});
         }
         buyingPowerEntry.m_currencies.Insert(orderInfo.m_orderId,
           fields.m_currency);
@@ -153,8 +154,8 @@ namespace OrderExecutionService {
           report.m_id = orderInfo.m_orderId;
           report.m_status = OrderStatus::REJECTED;
           buyingPowerTracker.Update(report);
-          BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
-            "Order exceeds available buying power."));
+          BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
+            "Order exceeds available buying power."});
         }
       });
   }
@@ -170,6 +171,8 @@ namespace OrderExecutionService {
         if(buyingPowerTracker.HasOrder(order.GetInfo().m_orderId)) {
           return;
         }
+        buyingPowerEntry.m_currencies.Insert(order.GetInfo().m_orderId,
+          order.GetInfo().m_fields.m_currency);
         auto convertedFields = order.GetInfo().m_fields;
         convertedFields.m_currency =
           buyingPowerEntry.m_riskParametersQueue->Top().m_currency;
@@ -181,8 +184,8 @@ namespace OrderExecutionService {
           convertedPrice = m_exchangeRates.Convert(price,
             order.GetInfo().m_fields.m_currency, convertedFields.m_currency);
         } catch(const CurrencyPairNotFoundException&) {
-          BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
-            "Currency not recognized."));
+          BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
+            "Currency not recognized."});
         }
         buyingPowerTracker.Submit(order.GetInfo().m_orderId, convertedFields,
           convertedPrice);
@@ -211,12 +214,18 @@ namespace OrderExecutionService {
       LoadBboQuote(const Security& security) {
     auto publisher = m_bboQuotes.GetOrInsert(security,
       [&] {
-        auto bboQuery = MarketDataService::QueryRealTimeWithSnapshot(security);
         auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
-        m_marketDataClient->QueryBboQuotes(bboQuery, publisher);
+        MarketDataService::QueryRealTimeWithSnapshot(security,
+          *m_marketDataClient, publisher);
         return publisher;
       });
-    return publisher->Top();
+    try {
+      return publisher->Top();
+    } catch(const Beam::PipeBrokenException&) {
+      m_bboQuotes.Erase(security);
+      BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
+        "No BBO quote available."});
+    }
   }
 
   template<typename AdministrationClientType, typename MarketDataClientType>

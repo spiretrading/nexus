@@ -1,6 +1,6 @@
 class Controller {
   constructor(react, componentModel) {
-    this.componentModel = cloneObject(componentModel);
+    this.componentModel = clone(componentModel);
     this.submit = react.props.onSubmit;
   }
 
@@ -18,7 +18,7 @@ class Controller {
 
   componentWillUpdate(model) {
     if (model != null) {
-      $.extend(true, this.componentModel, model);
+      overwriteMerge(this.componentModel, model);
       this.view.setComponentModel(this.componentModel);
     }
   }

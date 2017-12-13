@@ -1,0 +1,87 @@
+class Money {
+  constructor(number) {
+    this.value = Number(number);
+    if (isNaN(this.value)) {
+      throw new Error('Input must be a number.');
+    }
+
+    this.toString = this.toString.bind(this);
+  }
+
+  toNumber() {
+    return this.value / MULTIPLIER;
+  }
+
+  equals(operand) {
+    return this.value === operand.value;
+  }
+
+  compare(operand) {
+    return this.value - operand.value;
+  }
+
+  add(operand) {
+    return new Money(this.value + operand.value);
+  }
+
+  subtract(operand) {
+    return new Money(this.value - operand.value);
+  }
+
+  multiply(operand) {
+    let result = this.value * operand;
+    result = Math.trunc(result);
+    return new Money(result);
+  }
+
+  divide(operand) {
+    let result = this.value / operand;
+    result = Math.trunc(result);
+    return new Money(result);
+  }
+
+  toData() {
+    return this.value;
+  }
+
+  clone() {
+    return Money.fromRepresentation(this.value);
+  }
+
+  toString() {
+    let number = this.toNumber().toString();
+    let dotIndex = number.indexOf('.');
+    if (dotIndex != -1) {
+      if (dotIndex == number.length - 2) {
+        return number + '0';
+      } else {
+        return number;
+      }
+    } else {
+      return number + '.00';
+    }
+  }
+}
+
+Money.fromRepresentation = value => {
+  return new Money(value);
+}
+
+Money.fromNumber = value => {
+  return new Money(value * MULTIPLIER);
+}
+
+const MULTIPLIER = 1000000;
+const ZERO = Money.fromRepresentation(0);
+const ONE = Money.fromRepresentation(MULTIPLIER);
+const CENT = Money.fromRepresentation(MULTIPLIER / 100);
+const BIP = Money.fromRepresentation(MULTIPLIER / 10000);
+const EPSILON = Money.fromRepresentation(1);
+
+Money.ZERO = ZERO;
+Money.ONE = ONE;
+Money.CENT = CENT;
+Money.BIP = BIP;
+Money.EPSILON = EPSILON;
+
+export default Money;
