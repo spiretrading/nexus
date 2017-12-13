@@ -6,6 +6,6 @@ Nexus Administration Web Services
    Loads the trading group represented by a directory entry.
 
   :param directory_entry: The directory entry of the trading group to load.
-  :type directory_entry: beam.service_locator.DirectoryEntry
-  :statuscode 200: :json:object:`nexus.administration_service.TradingGroup`
+  :type directory_entry: :py:class:`beam.service_locator.DirectoryEntry`
+  :statuscode 200: :py:class:`nexus.administration_service.TradingGroup`
     The trading group represented by the directory_entry.
