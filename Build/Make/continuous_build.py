@@ -76,6 +76,7 @@ def build_repo(repo, path):
     copy_build(beam_applications, timestamp, 'Beam')
     user_call('cp ./Nexus/Applications/*.sh ./%s/' % str(timestamp))
     user_call('cp ./Nexus/Applications/*.sql ./%s/' % str(timestamp))
+    user_call('cp ./Nexus/Applications/*.py ./%s/' % str(timestamp))
     user_call('mv Nexus Nexus_backup')
     user_call('mv ./%s Nexus' % str(timestamp))
     user_call('tar -czf nexus-%s.tar.gz Nexus' % str(timestamp))
