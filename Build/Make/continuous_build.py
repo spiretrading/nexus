@@ -22,6 +22,9 @@ def copy_build(applications, timestamp, name):
   user_call('mkdir -p ./%s/Libraries' % str(timestamp))
   user_call('cp -r ./%s/%s/Library/Release/*.so ./%s/Libraries' %
     (name, name, str(timestamp)))
+  user_call('mkdir -p ./%s/Documentation' % str(timestamp))
+  user_call('cp -r ./%s/Documents/sphinx/build/html/* ./%s/Documentation/%s' %
+    (name, str(timestamp), name))
 
 def build_repo(repo, path):
   try:
