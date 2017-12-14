@@ -10,6 +10,7 @@ namespace Nexus {
   struct ChicFeeTable;
   struct ConsolidatedTmxFeeTable;
   struct ConsolidatedUsFeeTable;
+  struct CseFeeTable;
   struct EdgaFeeTable;
   struct EdgxFeeTable;
   struct LynxFeeTable;

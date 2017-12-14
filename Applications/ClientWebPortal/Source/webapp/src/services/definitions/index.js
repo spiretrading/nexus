@@ -23,6 +23,8 @@ class DefService {
     this.currencyDatabase = new CurrencyDatabase();
     this.marketDatabase = new MarketDatabase();
     this.exchangeRateTable = new ExchangeRateTable();
+
+    this.loadExchangeRates = this.loadExchangeRates.bind(this);
   }
 
   /** @private */
@@ -77,7 +79,7 @@ class DefService {
           new MarketCode(response.entries[i].code),
           CountryCode.fromNumber(response.entries[i].country_code),
           response.entries[i].time_zone,
-          CurrencyId.fromNumber(response.entries[i].currency),
+          CurrencyId.fromData(response.entries[i].currency),
           response.entries[i].board_lot,
           response.entries[i].description,
           response.entries[i].display_name
@@ -89,7 +91,7 @@ class DefService {
         new MarketCode('*'),
         CountryCode.fromNumber(65535),
         null,
-        CurrencyId.fromNumber(65535),
+        CurrencyId.fromData(65535),
         null,
         '*',
         '*'
@@ -103,9 +105,9 @@ class DefService {
 
     function onResponse(exchangeRates) {
       for (let i=0; i<exchangeRates.length; i++) {
-        let baseCurrencyId = CurrencyId.fromNumber(exchangeRates[i].pair.base);
+        let baseCurrencyId = CurrencyId.fromData(exchangeRates[i].pair.base);
         let baseCurrencyDatabaseEntry = this.currencyDatabase.fromId(baseCurrencyId);
-        let counterCurrencyId = CurrencyId.fromNumber(exchangeRates[i].pair.counter);
+        let counterCurrencyId = CurrencyId.fromData(exchangeRates[i].pair.counter);
         let counterCurrencyDatabaseEntry = this.currencyDatabase.fromId(counterCurrencyId);
         let pairCurrencyCode = baseCurrencyDatabaseEntry.code + '/' + counterCurrencyDatabaseEntry.code;
         let currencyPair = CurrencyPair.parse(pairCurrencyCode, this.currencyDatabase);
@@ -118,7 +120,7 @@ class DefService {
 
   initialize() {
     let loadCurrenciesAndExchangeRates = this.loadCurrencies()
-      .then(this.loadExchangeRates());
+      .then(this.loadExchangeRates);
 
     return Promise.all([
       this.loadCountries(),
@@ -149,7 +151,7 @@ class DefService {
 
   doesCurrencyExist(id) {
     if (!(id instanceof CurrencyId)) {
-      id = CurrencyId.fromNumber(id);
+      id = CurrencyId.fromData(id);
     }
     return this.currencyDatabase.fromId(id) != null;
   }
@@ -170,7 +172,7 @@ class DefService {
 
   getCurrencyCode(id) {
     if (!(id instanceof CurrencyId)) {
-      id = CurrencyId.fromNumber(id);
+      id = CurrencyId.fromData(id);
     }
     return this.currencyDatabase.fromId(id).code;
   }
@@ -181,7 +183,7 @@ class DefService {
 
   getCurrencySignFromId(id) {
     if (!(id instanceof CurrencyId)) {
-      id = CurrencyId.fromNumber(id);
+      id = CurrencyId.fromData(id);
     }
     let currencyEntry = this.currencyDatabase.fromId(id);
     if (currencyEntry != null){

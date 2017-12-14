@@ -9,8 +9,8 @@
 #include <Beam/Python/Copy.hpp>
 #include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/PythonBindings.hpp>
-#include <Beam/Python/PythonQueueWriter.hpp>
 #include <Beam/Python/Queries.hpp>
+#include <Beam/Python/UniquePtr.hpp>
 #include <Beam/Python/Vector.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
@@ -24,9 +24,8 @@
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
-#include "Nexus/Python/PythonMarketDataClient.hpp"
+#include "Nexus/Python/ToPythonMarketDataClient.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;
@@ -56,8 +55,89 @@ namespace {
     LiveTimer>;
   using Client = MarketDataClient<SessionBuilder>;
 
-  PythonMarketDataClient* BuildClient(
-      VirtualServiceLocatorClient& serviceLocatorClient) {
+  struct FromPythonMarketDataClient : VirtualMarketDataClient,
+      wrapper<VirtualMarketDataClient> {
+    virtual void QueryOrderImbalances(const MarketWideDataQuery& query,
+        const std::shared_ptr<QueueWriter<SequencedOrderImbalance>>& queue)
+        override final {
+      get_override("query_sequenced_order_imbalances")(query, queue);
+    }
+
+    virtual void QueryOrderImbalances(const MarketWideDataQuery& query,
+        const std::shared_ptr<QueueWriter<OrderImbalance>>& queue)
+        override final {
+      get_override("query_order_imbalances")(query, queue);
+    }
+
+    virtual void QueryBboQuotes(const SecurityMarketDataQuery& query,
+        const std::shared_ptr<QueueWriter<SequencedBboQuote>>& queue)
+        override final {
+      get_override("query_sequenced_bbo_quotes")(query, queue);
+    }
+
+    virtual void QueryBboQuotes(const SecurityMarketDataQuery& query,
+        const std::shared_ptr<QueueWriter<BboQuote>>& queue) override final {
+      get_override("query_bbo_quotes")(query, queue);
+    }
+
+    virtual void QueryBookQuotes(const SecurityMarketDataQuery& query,
+        const std::shared_ptr<QueueWriter<SequencedBookQuote>>& queue)
+        override final {
+      get_override("query_sequenced_book_quotes")(query, queue);
+    }
+
+    virtual void QueryBookQuotes(const SecurityMarketDataQuery& query,
+        const std::shared_ptr<QueueWriter<BookQuote>>& queue) override final {
+      get_override("query_book_quotes")(query, queue);
+    }
+
+    virtual void QueryMarketQuotes(const SecurityMarketDataQuery& query,
+        const std::shared_ptr<QueueWriter<SequencedMarketQuote>>& queue)
+        override final {
+      get_override("query_sequenced_market_quotes")(query, queue);
+    }
+
+    virtual void QueryMarketQuotes(const SecurityMarketDataQuery& query,
+        const std::shared_ptr<QueueWriter<MarketQuote>>& queue) override final {
+      get_override("query_market_quotes")(query, queue);
+    }
+
+    virtual void QueryTimeAndSales(const SecurityMarketDataQuery& query,
+        const std::shared_ptr<QueueWriter<SequencedTimeAndSale>>& queue)
+        override final {
+      get_override("query_sequenced_time_and_sales")(query, queue);
+    }
+
+    virtual void QueryTimeAndSales(const SecurityMarketDataQuery& query,
+        const std::shared_ptr<QueueWriter<TimeAndSale>>& queue) override final {
+      get_override("query_time_and_sales")(query, queue);
+    }
+
+    virtual SecuritySnapshot LoadSecuritySnapshot(
+        const Security& security) override final {
+      return get_override("load_security_snapshot")(security);
+    }
+
+    virtual SecurityTechnicals LoadSecurityTechnicals(
+        const Security& security) override final {
+      return get_override("load_security_technicals")(security);
+    }
+
+    virtual std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
+        const std::string& prefix) override final {
+      return get_override("load_security_info_from_prefix")(prefix);
+    }
+
+    virtual void Open() override final {
+      get_override("open")();
+    }
+
+    virtual void Close() override final {
+      get_override("close")();
+    }
+  };
+
+  auto BuildClient(VirtualServiceLocatorClient& serviceLocatorClient) {
     auto addresses = LocateServiceAddresses(serviceLocatorClient,
       MarketDataService::RELAY_SERVICE_NAME);
     auto delay = false;
@@ -76,12 +156,11 @@ namespace {
         return std::make_unique<LiveTimer>(seconds(10),
           Ref(*GetTimerThreadPool()));
       });
-    auto baseClient = std::make_unique<Client>(sessionBuilder);
-    return new PythonMarketDataClient{
-      MakeVirtualMarketDataClient(std::move(baseClient))};
+    return MakeToPythonMarketDataClient(std::make_unique<Client>(
+      sessionBuilder)).release();
   }
 
-  MarketDataServiceTestEnvironment* BuildMarketDataServiceTestEnvironment(
+  auto BuildMarketDataServiceTestEnvironment(
       const std::shared_ptr<VirtualServiceLocatorClient>& serviceLocatorClient,
       const std::shared_ptr<VirtualAdministrationClient>&
       administrationClient) {
@@ -89,56 +168,81 @@ namespace {
       administrationClient};
   }
 
-  PythonMarketDataClient* MarketDataServiceTestEnvironmentBuildClient(
+  std::unique_ptr<VirtualMarketDataClient>
+      MarketDataServiceTestEnvironmentBuildClient(
       MarketDataServiceTestEnvironment& environment,
       VirtualServiceLocatorClient& serviceLocatorClient) {
-    return new PythonMarketDataClient{
-      environment.BuildClient(Ref(serviceLocatorClient))};
+    return MakeToPythonMarketDataClient(
+      environment.BuildClient(Ref(serviceLocatorClient)));
   }
 }
 
-#ifdef _MSC_VER
-namespace boost {
-  template<> inline const volatile PythonMarketDataClient*
-      get_pointer(const volatile PythonMarketDataClient* p) {
-    return p;
-  }
+void Nexus::Python::ExportApplicationMarketDataClient() {
+  class_<ToPythonMarketDataClient<Client>, bases<VirtualMarketDataClient>,
+    boost::noncopyable>("ApplicationMarketDataClient", no_init)
+    .def("__init__", make_constructor(&BuildClient));
 }
-#endif
 
 void Nexus::Python::ExportMarketDataClient() {
-  class_<VirtualMarketDataClient, boost::noncopyable>("VirtualMarketDataClient",
-    no_init);
-  class_<PythonMarketDataClient, boost::noncopyable,
-      bases<VirtualMarketDataClient>>("MarketDataClient", no_init)
-    .def("__init__", make_constructor(&BuildClient))
-    .def("query_order_imbalances",
-      &PythonMarketDataClient::QueryOrderImbalances)
-    .def("query_sequenced_order_imbalances",
-      &PythonMarketDataClient::QuerySequencedOrderImbalances)
-    .def("query_bbo_quotes", &PythonMarketDataClient::QueryBboQuotes)
-    .def("query_sequenced_bbo_quotes",
-      &PythonMarketDataClient::QuerySequencedBboQuotes)
-    .def("query_book_quotes", &PythonMarketDataClient::QueryBookQuotes)
-    .def("query_sequenced_book_quotes",
-      &PythonMarketDataClient::QuerySequencedBookQuotes)
-    .def("query_market_quotes", &PythonMarketDataClient::QueryMarketQuotes)
-    .def("query_sequenced_market_quotes",
-      &PythonMarketDataClient::QuerySequencedMarketQuotes)
-    .def("query_time_and_sales", &PythonMarketDataClient::QueryTimeAndSales)
-    .def("query_sequenced_time_and_sales",
-      &PythonMarketDataClient::QuerySequencedTimeAndSales)
-    .def("load_security_snapshot", BlockingFunction<PythonMarketDataClient>(
-      &PythonMarketDataClient::LoadSecuritySnapshot))
-    .def("load_security_technicals", BlockingFunction<PythonMarketDataClient>(
-      &PythonMarketDataClient::LoadSecurityTechnicals))
-    .def("load_security_info_from_prefix",
-      BlockingFunction<PythonMarketDataClient>(
-      &PythonMarketDataClient::LoadSecurityInfoFromPrefix))
-    .def("open", BlockingFunction<PythonMarketDataClient>(
-      &PythonMarketDataClient::Open))
-    .def("close", BlockingFunction<PythonMarketDataClient>(
-      &PythonMarketDataClient::Close));
+  class_<FromPythonMarketDataClient, boost::noncopyable>("MarketDataClient",
+    no_init)
+    .def("query_sequenced_order_imbalances", pure_virtual(
+      static_cast<void (VirtualMarketDataClient::*)(const MarketWideDataQuery&,
+      const std::shared_ptr<QueueWriter<SequencedOrderImbalance>>&)>(
+      &VirtualMarketDataClient::QueryOrderImbalances)))
+    .def("query_order_imbalances", pure_virtual(
+      static_cast<void (VirtualMarketDataClient::*)(const MarketWideDataQuery&,
+      const std::shared_ptr<QueueWriter<OrderImbalance>>&)>(
+      &VirtualMarketDataClient::QueryOrderImbalances)))
+    .def("query_sequenced_bbo_quotes", pure_virtual(
+      static_cast<void (VirtualMarketDataClient::*)(
+      const SecurityMarketDataQuery&,
+      const std::shared_ptr<QueueWriter<SequencedBboQuote>>&)>(
+      &VirtualMarketDataClient::QueryBboQuotes)))
+    .def("query_bbo_quotes", pure_virtual(
+      static_cast<void (VirtualMarketDataClient::*)(
+      const SecurityMarketDataQuery&,
+      const std::shared_ptr<QueueWriter<BboQuote>>&)>(
+      &VirtualMarketDataClient::QueryBboQuotes)))
+    .def("query_sequenced_book_quotes", pure_virtual(
+      static_cast<void (VirtualMarketDataClient::*)(
+      const SecurityMarketDataQuery&,
+      const std::shared_ptr<QueueWriter<SequencedBookQuote>>&)>(
+      &VirtualMarketDataClient::QueryBookQuotes)))
+    .def("query_book_quotes", pure_virtual(
+      static_cast<void (VirtualMarketDataClient::*)(
+      const SecurityMarketDataQuery&,
+      const std::shared_ptr<QueueWriter<BookQuote>>&)>(
+      &VirtualMarketDataClient::QueryBookQuotes)))
+    .def("query_sequenced_market_quotes", pure_virtual(
+      static_cast<void (VirtualMarketDataClient::*)(
+      const SecurityMarketDataQuery&,
+      const std::shared_ptr<QueueWriter<SequencedMarketQuote>>&)>(
+      &VirtualMarketDataClient::QueryMarketQuotes)))
+    .def("query_market_quotes", pure_virtual(
+      static_cast<void (VirtualMarketDataClient::*)(
+      const SecurityMarketDataQuery&,
+      const std::shared_ptr<QueueWriter<MarketQuote>>&)>(
+      &VirtualMarketDataClient::QueryMarketQuotes)))
+    .def("query_sequenced_time_and_sales", pure_virtual(
+      static_cast<void (VirtualMarketDataClient::*)(
+      const SecurityMarketDataQuery&,
+      const std::shared_ptr<QueueWriter<SequencedTimeAndSale>>&)>(
+      &VirtualMarketDataClient::QueryTimeAndSales)))
+    .def("query_time_and_sales", pure_virtual(
+      static_cast<void (VirtualMarketDataClient::*)(
+      const SecurityMarketDataQuery&,
+      const std::shared_ptr<QueueWriter<TimeAndSale>>&)>(
+      &VirtualMarketDataClient::QueryTimeAndSales)))
+    .def("load_security_snapshot", pure_virtual(
+      &VirtualMarketDataClient::LoadSecuritySnapshot))
+    .def("load_security_technicals", pure_virtual(
+      &VirtualMarketDataClient::LoadSecurityTechnicals))
+    .def("load_security_info_from_prefix", pure_virtual(
+      &VirtualMarketDataClient::LoadSecurityInfoFromPrefix))
+    .def("open", pure_virtual(&VirtualMarketDataClient::Open))
+    .def("close", pure_virtual(&VirtualMarketDataClient::Close));
+  ExportUniquePtr<VirtualMarketDataClient>();
   ExportVector<vector<SecurityInfo>>("VectorSecurityInfo");
 }
 
@@ -150,8 +254,9 @@ void Nexus::Python::ExportMarketDataService() {
   scope().attr("market_data_service") = nestedModule;
   scope parent = nestedModule;
   ExportMarketDataClient();
-  ExportMarketWideDataQuery();
-  ExportSecurityMarketDataQuery();
+  ExportApplicationMarketDataClient();
+  ExportBasicQuery<MarketCode>("MarketWideData");
+  ExportBasicQuery<Security>("SecurityMarketData");
   ExportSecuritySnapshot();
   {
     string nestedName = extract<string>(parent.attr("__name__") + ".tests");
@@ -186,32 +291,7 @@ void Nexus::Python::ExportMarketDataServiceTestEnvironment() {
     .def("publish", BlockingFunction(
       static_cast<void (MarketDataServiceTestEnvironment::*)(const Security&,
       const TimeAndSale&)>(&MarketDataServiceTestEnvironment::Publish)))
-    .def("build_client", &MarketDataServiceTestEnvironmentBuildClient,
-      return_value_policy<manage_new_object>());
-}
-
-void Nexus::Python::ExportMarketWideDataQuery() {
-  ExportIndexedQuery<MarketCode>("MarketWideDataQuery");
-  class_<MarketWideDataQuery, bases<IndexedQuery<MarketCode>, RangedQuery,
-    SnapshotLimitedQuery, InterruptableQuery, FilteredQuery>>(
-    "MarketWideDataQuery", init<>())
-    .def("__copy__", &MakeCopy<MarketWideDataQuery>)
-    .def("__deepcopy__", &MakeDeepCopy<MarketWideDataQuery>);
-  def("build_real_time_with_snapshot_query",
-    static_cast<MarketWideDataQuery (*)(const MarketCode&)>(
-    &BuildRealTimeWithSnapshotQuery));
-}
-
-void Nexus::Python::ExportSecurityMarketDataQuery() {
-  ExportIndexedQuery<Security>("SecurityIndexedQuery");
-  class_<SecurityMarketDataQuery, bases<IndexedQuery<Security>, RangedQuery,
-    SnapshotLimitedQuery, InterruptableQuery, FilteredQuery>>(
-    "SecurityMarketDataQuery", init<>())
-    .def("__copy__", &MakeCopy<SecurityMarketDataQuery>)
-    .def("__deepcopy__", &MakeDeepCopy<SecurityMarketDataQuery>);
-  def("build_real_time_with_snapshot_query",
-    static_cast<SecurityMarketDataQuery (*)(Security)>(
-    &BuildRealTimeWithSnapshotQuery));
+    .def("build_client", &MarketDataServiceTestEnvironmentBuildClient);
 }
 
 void Nexus::Python::ExportSecuritySnapshot() {

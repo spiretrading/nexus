@@ -116,14 +116,16 @@ namespace Details {
     if(!value.is_initialized() || value->size() < 16) {
       return boost::optional<boost::posix_time::ptime>();
     }
-    int y = boost::lexical_cast<int>(value->substr(0, 4));
-    int m = boost::lexical_cast<int>(value->substr(4, 2));
-    int d = boost::lexical_cast<int>(value->substr(6, 2));
-    int hr = boost::lexical_cast<int>(value->substr(8, 2));
-    int mn = boost::lexical_cast<int>(value->substr(10, 2));
-    int sec = boost::lexical_cast<int>(value->substr(12, 2));
-    int mill = boost::lexical_cast<int>(value->substr(14, 2));
-    boost::posix_time::ptime timestamp(boost::gregorian::date(y, m, d),
+    auto y = boost::lexical_cast<int>(value->substr(0, 4));
+    auto m = boost::lexical_cast<int>(value->substr(4, 2));
+    auto d = boost::lexical_cast<int>(value->substr(6, 2));
+    auto hr = boost::lexical_cast<int>(value->substr(8, 2));
+    auto mn = boost::lexical_cast<int>(value->substr(10, 2));
+    auto sec = boost::lexical_cast<int>(value->substr(12, 2));
+    auto mill = boost::lexical_cast<int>(value->substr(14, 2));
+    boost::posix_time::ptime timestamp(
+      boost::gregorian::date(static_cast<unsigned short>(y),
+      static_cast<unsigned short>(m), static_cast<unsigned short>(d)),
       boost::posix_time::hours(hr) + boost::posix_time::minutes(mn) +
       boost::posix_time::seconds(sec) +
       boost::posix_time::milliseconds(10 * mill));

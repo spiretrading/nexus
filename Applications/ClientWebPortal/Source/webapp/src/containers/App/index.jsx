@@ -2,6 +2,7 @@ import React, {PropTypes, Component} from 'react';
 import TopNav from 'components/reusables/common/top-nav';
 import SideMenu from 'components/reusables/common/side-menu';
 import deviceDetector from 'utils/device-detector';
+import {DirectoryEntry} from 'spire-client';
 import './style.scss';
 
 class App extends Component {
@@ -57,11 +58,11 @@ class App extends Component {
   onSubMenuUpdated(eventName, doesSubMenuExist) {
     let height;
     if (doesSubMenuExist) {
-      height = 'calc(100vh - 125px)';
+      height = 'calc(100vh - 135px)';
     } else if (this.isFullScreen()) {
       height = 'calc(100vh)';
     } else {
-      height = 'calc(100vh - 75px)';
+      height = 'calc(100vh - 85px)';
     }
 
     if (!deviceDetector.isMobile()){

@@ -1,5 +1,5 @@
 #include "Spire/Canvas/OrderExecutionNodes/OrderWrapperTaskNode.hpp"
-#include "Nexus/OrderTasks/SingleOrderTask.hpp"
+#include "Nexus/Tasks/SingleOrderTask.hpp"
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
 #include "Spire/Canvas/Operations/CanvasOperationException.hpp"
@@ -18,7 +18,7 @@
 using namespace Beam;
 using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
-using namespace Nexus::OrderTasks;
+using namespace Nexus::Tasks;
 using namespace Spire;
 using namespace std;
 

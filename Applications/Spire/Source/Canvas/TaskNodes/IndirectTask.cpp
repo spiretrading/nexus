@@ -1,5 +1,5 @@
 #include "Spire/Canvas/TaskNodes/IndirectTask.hpp"
-#include <Beam/Reactors/Control.hpp>
+#include <Beam/Reactors/DoReactor.hpp>
 #include <Beam/Reactors/PublisherReactor.hpp>
 #include <Beam/Reactors/ReactorMonitor.hpp>
 #include <boost/throw_exception.hpp>
@@ -12,26 +12,24 @@ using namespace Spire;
 using namespace std;
 
 IndirectTask::IndirectTask(RefType<ReactorMonitor> reactorMonitor)
-    : m_reactorMonitor(reactorMonitor.Get()),
-      m_trigger(*m_reactorMonitor) {}
+    : m_reactorMonitor{reactorMonitor.Get()} {}
 
-void IndirectTask::SetTask(const std::shared_ptr<Task>& task) {
-  m_task = task;
+void IndirectTask::SetTask(std::shared_ptr<Task> task) {
+  m_task = std::move(task);
 }
 
 void IndirectTask::OnExecute() {
   assert(m_task != nullptr);
-  auto publisher = MakePublisherReactor(&m_task->GetPublisher());
+  auto publisher = MakePublisherReactor(m_task->GetPublisher());
   auto taskReactor = Do(m_callbacks.GetCallback(
     std::bind(&IndirectTask::OnTaskUpdate, this, std::placeholders::_1)),
     publisher);
-  m_reactorMonitor->AddEvent(publisher);
-  m_reactorMonitor->AddReactor(taskReactor);
+  m_reactorMonitor->Add(taskReactor);
   m_task->Execute();
 }
 
 void IndirectTask::OnCancel() {
-  m_trigger.Do(
+  m_reactorMonitor->Do(
     [=] {
       if(m_task == nullptr) {
         return;
@@ -50,8 +48,8 @@ void IndirectTask::OnTaskUpdate(const StateEntry& update) {
 }
 
 IndirectTaskFactory::IndirectTaskFactory(RefType<ReactorMonitor> reactorMonitor)
-    : m_taskFactory(std::make_shared<optional<TaskFactory>>()),
-      m_task(std::make_shared<IndirectTask>(Ref(reactorMonitor))) {}
+    : m_taskFactory{std::make_shared<optional<TaskFactory>>()},
+      m_task{std::make_shared<IndirectTask>(Ref(reactorMonitor))} {}
 
 const std::shared_ptr<IndirectTask>& IndirectTaskFactory::GetTask() const {
   return m_task;
@@ -71,5 +69,5 @@ any& IndirectTaskFactory::FindProperty(const string& name) {
   if(m_taskFactory->is_initialized()) {
     return (**m_taskFactory)->FindProperty(name);
   }
-  BOOST_THROW_EXCEPTION(TaskPropertyNotFoundException(name));
+  BOOST_THROW_EXCEPTION(TaskPropertyNotFoundException{name});
 }

@@ -35,12 +35,14 @@
 #include "Spire/Canvas/StandardNodes/DivisionNode.hpp"
 #include "Spire/Canvas/StandardNodes/EqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/FilterNode.hpp"
+#include "Spire/Canvas/StandardNodes/FirstNode.hpp"
 #include "Spire/Canvas/StandardNodes/FloorNode.hpp"
 #include "Spire/Canvas/StandardNodes/FoldNode.hpp"
 #include "Spire/Canvas/StandardNodes/FoldOperandNode.hpp"
 #include "Spire/Canvas/StandardNodes/GreaterNode.hpp"
 #include "Spire/Canvas/StandardNodes/GreaterOrEqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/IfNode.hpp"
+#include "Spire/Canvas/StandardNodes/LastNode.hpp"
 #include "Spire/Canvas/StandardNodes/LesserNode.hpp"
 #include "Spire/Canvas/StandardNodes/LesserOrEqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/MaxNode.hpp"
@@ -49,7 +51,6 @@
 #include "Spire/Canvas/StandardNodes/NotNode.hpp"
 #include "Spire/Canvas/StandardNodes/RangeNode.hpp"
 #include "Spire/Canvas/StandardNodes/RoundNode.hpp"
-#include "Spire/Canvas/StandardNodes/StaticNode.hpp"
 #include "Spire/Canvas/StandardNodes/SubtractionNode.hpp"
 #include "Spire/Canvas/StandardNodes/TimeRangeParameterNode.hpp"
 #include "Spire/Canvas/StandardNodes/TimerNode.hpp"
@@ -186,6 +187,10 @@ void CanvasNodeVisitor::Visit(const FilterNode& node) {
   Visit(static_cast<const SignatureNode&>(node));
 }
 
+void CanvasNodeVisitor::Visit(const FirstNode& node) {
+  Visit(static_cast<const FunctionNode&>(node));
+}
+
 void CanvasNodeVisitor::Visit(const FloorNode& node) {
   Visit(static_cast<const FunctionNode&>(node));
 }
@@ -224,6 +229,10 @@ void CanvasNodeVisitor::Visit(const InteractionsNode& node) {
 
 void CanvasNodeVisitor::Visit(const IsTerminalNode& node) {
   Visit(static_cast<const CanvasNode&>(node));
+}
+
+void CanvasNodeVisitor::Visit(const LastNode& node) {
+  Visit(static_cast<const FunctionNode&>(node));
 }
 
 void CanvasNodeVisitor::Visit(const LesserNode& node) {
@@ -336,10 +345,6 @@ void CanvasNodeVisitor::Visit(const SingleOrderTaskNode& node) {
 
 void CanvasNodeVisitor::Visit(const SpawnNode& node) {
   Visit(static_cast<const SignatureNode&>(node));
-}
-
-void CanvasNodeVisitor::Visit(const StaticNode& node) {
-  Visit(static_cast<const FunctionNode&>(node));
 }
 
 void CanvasNodeVisitor::Visit(const SubtractionNode& node) {

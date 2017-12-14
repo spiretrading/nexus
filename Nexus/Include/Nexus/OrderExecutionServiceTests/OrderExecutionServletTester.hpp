@@ -1,18 +1,11 @@
 #ifndef NEXUS_ORDEREXECUTIONSERVLETTESTER_HPP
 #define NEXUS_ORDEREXECUTIONSERVLETTESTER_HPP
-#include <cppunit/extensions/HelperMacros.h>
-#include <Beam/IO/LocalClientChannel.hpp>
-#include <Beam/IO/LocalServerConnection.hpp>
-#include <Beam/IO/SharedBuffer.hpp>
-#include <Beam/Pointers/DelayPtr.hpp>
-#include <Beam/Serialization/BinaryReceiver.hpp>
-#include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
-#include <Beam/Services/ServiceProtocolClient.hpp>
-#include <Beam/Services/ServiceProtocolServletContainer.hpp>
-#include <Beam/Threading/TriggerTimer.hpp>
+#include <Beam/ServicesTests/ServicesTests.hpp>
 #include <Beam/TimeService/IncrementalTimeClient.hpp>
 #include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
+#include <boost/optional/optional.hpp>
+#include <cppunit/extensions/HelperMacros.h>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionService/LocalOrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionServlet.hpp"
@@ -29,42 +22,15 @@ namespace Tests {
   class OrderExecutionServletTester: public CPPUNIT_NS::TestFixture {
     public:
 
-      //! The type of ServiceLocatorClient used.
-      using ServiceLocatorClient =
-        Beam::ServiceLocator::VirtualServiceLocatorClient;
-
-      //! The type of UidClient used.
-      using UidClient = Beam::UidService::VirtualUidClient;
-
-      //! The type of AdministrationClient used.
-      using AdministrationClient =
-        AdministrationService::VirtualAdministrationClient;
-
-      //! The type of ServerConnection.
-      using ServerConnection =
-        Beam::IO::LocalServerConnection<Beam::IO::SharedBuffer>;
-
-      //! The type of Channel from the client to the server.
-      using ClientChannel =
-        Beam::IO::LocalClientChannel<Beam::IO::SharedBuffer>;
-
-      //! The type of ServiceProtocolServer.
-      using ServletContainer = Beam::Services::ServiceProtocolServletContainer<
-        Beam::ServiceLocator::MetaAuthenticationServletAdapter<
-          MetaOrderExecutionServlet<Beam::TimeService::IncrementalTimeClient,
-          ServiceLocatorClient*, std::unique_ptr<UidClient>,
-          std::unique_ptr<AdministrationClient>, MockOrderExecutionDriver*,
-          LocalOrderExecutionDataStore*>, ServiceLocatorClient*,
-          Beam::NativePointerPolicy>, ServerConnection*,
-        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-        Beam::Codecs::NullEncoder,
-        std::shared_ptr<Beam::Threading::TriggerTimer>>;
-
-      //! The type of ServiceProtocol on the client side.
-      using ClientServiceProtocolClient = Beam::Services::ServiceProtocolClient<
-        Beam::Services::MessageProtocol<ClientChannel,
-        Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-        Beam::Codecs::NullEncoder>, Beam::Threading::TriggerTimer>;
+      //! The type of ServiceProtocolServletContainer.
+      using ServletContainer =
+        Beam::Services::Tests::TestAuthenticatedServiceProtocolServletContainer<
+        MetaOrderExecutionServlet<Beam::TimeService::IncrementalTimeClient,
+        std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>,
+        std::unique_ptr<Beam::UidService::VirtualUidClient>,
+        std::unique_ptr<AdministrationService::VirtualAdministrationClient>,
+        std::shared_ptr<MockOrderExecutionDriver>,
+        std::shared_ptr<LocalOrderExecutionDataStore>>>;
 
       virtual void setUp();
 
@@ -74,21 +40,21 @@ namespace Tests {
       void TestNewOrderSingle();
 
     private:
-      Beam::DelayPtr<Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment>
+      boost::optional<
+        Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment>
         m_serviceLocatorEnvironment;
-      Beam::DelayPtr<Beam::UidService::Tests::UidServiceTestEnvironment>
+      boost::optional<Beam::UidService::Tests::UidServiceTestEnvironment>
         m_uidServiceEnvironment;
-      Beam::DelayPtr<
+      boost::optional<
         AdministrationService::Tests::AdministrationServiceTestEnvironment>
         m_administrationServiceEnvironment;
-      std::unique_ptr<ServiceLocatorClient> m_servletServiceLocatorClient;
-      std::unique_ptr<ServiceLocatorClient> m_clientServiceLocatorClient;
-      Beam::DelayPtr<ServerConnection> m_serverConnection;
-      Beam::DelayPtr<MockOrderExecutionDriver> m_driver;
-      Beam::DelayPtr<LocalOrderExecutionDataStore> m_dataStore;
-      Beam::DelayPtr<ServletContainer::Servlet::Servlet> m_servlet;
-      Beam::DelayPtr<ServletContainer> m_container;
-      Beam::DelayPtr<ClientServiceProtocolClient> m_clientProtocol;
+      std::unique_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
+        m_clientServiceLocatorClient;
+      std::shared_ptr<MockOrderExecutionDriver> m_driver;
+      std::shared_ptr<LocalOrderExecutionDataStore> m_dataStore;
+      boost::optional<ServletContainer> m_container;
+      boost::optional<Beam::Services::Tests::TestServiceProtocolClient>
+        m_clientProtocol;
 
       CPPUNIT_TEST_SUITE(OrderExecutionServletTester);
         CPPUNIT_TEST(TestNewOrderSingle);

@@ -20,24 +20,30 @@ class View extends UpdatableView {
       $contentSlideWrapper.stop().animate({
         height: contentHeight
       });
-      $(event.currentTarget).removeClass('collapsed').addClass('expanded');
+      $(event.currentTarget)
+        .removeClass('collapsed')
+        .addClass('expanded')
+        .parent().parent().removeClass('collapsed')
+        .addClass('expanded');
     } else {
       $contentSlideWrapper.stop().animate({
         height: 0
       });
-      $(event.currentTarget).removeClass('expanded').addClass('collapsed');
+      $(event.currentTarget)
+        .removeClass('expanded')
+        .addClass('collapsed')
+        .parent().parent().removeClass('expanded')
+        .addClass('collapsed');
     }
   }
 
   /** @priavte */
   onCheckClick(event) {
-    if (this.componentModel.isAdmin) {
-      let $panelContainer = $(event.currentTarget).parent().parent();
-      if ($panelContainer.hasClass('selected')) {
-        this.controller.onEntitlementDeselected();
-      } else {
-        this.controller.onEntitlementSelected();
-      }
+    let $panelContainer = $(event.currentTarget).parent().parent();
+    if ($panelContainer.hasClass('selected')) {
+      this.controller.onEntitlementDeselected();
+    } else {
+      this.controller.onEntitlementSelected();
     }
   }
 

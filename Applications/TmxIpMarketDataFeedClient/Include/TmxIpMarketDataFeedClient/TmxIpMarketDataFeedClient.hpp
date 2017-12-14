@@ -1,5 +1,5 @@
-#ifndef NEXUS_TMXIPMARKETDATAFEEDCLIENT_HPP
-#define NEXUS_TMXIPMARKETDATAFEEDCLIENT_HPP
+#ifndef NEXUS_TMX_IP_MARKET_DATA_FEED_CLIENT_HPP
+#define NEXUS_TMX_IP_MARKET_DATA_FEED_CLIENT_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -251,6 +251,12 @@ namespace MarketDataService {
     if(!askVolume.is_initialized()) {
       return;
     }
+    if(m_config.m_market == DefaultMarkets::CSE()) {
+      auto bidExchangeId = message.GetBusinessField<std::string>(247, 0);
+      if(!bidExchangeId.is_initialized() || *bidExchangeId != "CNQ") {
+        return;
+      }
+    }
     Security security(std::move(*symbol), m_config.m_market,
       m_config.m_country);
     Quote bid(*bidPrice, *bidVolume, Side::BID);
@@ -327,16 +333,38 @@ namespace MarketDataService {
     if(!symbol.is_initialized()) {
       return;
     }
-    auto orderNumber = message.GetBusinessField<std::string>(40);
+    auto orderNumber = [&] {
+      if(!m_config.m_isNeoBook) {
+        return message.GetBusinessField<std::string>(40);
+      } else {
+        auto aqnTag = message.GetBusinessField<std::string>(636);
+        if(!aqnTag.is_initialized() || *aqnTag != "AQN") {
+          return message.GetBusinessField<std::string>(40);
+        } else {
+          return message.GetBusinessField<std::string>(196);
+        }
+      }
+    }();
     if(!orderNumber.is_initialized()) {
       return;
     }
-    auto brokerNumber = message.GetBusinessField<std::string>(70);
     std::string mpid;
     bool isPrimaryMpid;
     if(m_config.m_consolidateMpids) {
-      mpid = m_config.m_defaultMpid;
-      isPrimaryMpid = true;
+      if(!m_config.m_isNeoBook) {
+        mpid = m_config.m_defaultMpid;
+        isPrimaryMpid = true;
+      } else {
+        auto mpidField = message.GetBusinessField<std::string>(636);
+        if(!mpidField.is_initialized() || mpidField->empty()) {
+          mpid = m_config.m_defaultMpid;
+          isPrimaryMpid = true;
+        } else {
+          mpid = *mpidField;
+          isPrimaryMpid = false;
+        }
+        isPrimaryMpid = (mpid == "AQL");
+      }
     } else {
       auto mpidField = message.GetBusinessField<std::string>(70);
       if(!mpidField.is_initialized() || mpidField->empty()) {
@@ -370,10 +398,14 @@ namespace MarketDataService {
     if(!timestamp.is_initialized()) {
       return;
     }
+    auto brokerNumber = message.GetBusinessField<std::string>(70);
     auto orderId = GetOrderId(symbol, brokerNumber, *orderNumber);
     Security security(std::move(*symbol), m_config.m_market,
       m_config.m_country);
     *quantity = GetBoardLotPortion(*quantity, *price);
+    if(m_config.m_isNeoBook && !isPrimaryMpid) {
+      m_marketDataFeedClient->DeleteOrder(orderId, *timestamp);
+    }
     m_marketDataFeedClient->AddOrder(security, m_config.m_market, mpid,
       isPrimaryMpid, orderId, *side, *price, *quantity, *timestamp);
   }
@@ -383,7 +415,18 @@ namespace MarketDataService {
   void TmxIpMarketDataFeedClient<MarketDataFeedClientType,
       ServiceAccessClientType, TimeClientType>::HandleCancelledOrder(
       const StampProtocol::StampMessage& message) {
-    auto orderNumber = message.GetBusinessField<std::string>(40);
+    auto orderNumber = [&] {
+      if(!m_config.m_isNeoBook) {
+        return message.GetBusinessField<std::string>(40);
+      } else {
+        auto aqnTag = message.GetBusinessField<std::string>(636);
+        if(!aqnTag.is_initialized() || *aqnTag != "AQN") {
+          return message.GetBusinessField<std::string>(40);
+        } else {
+          return message.GetBusinessField<std::string>(196);
+        }
+      }
+    }();
     if(!orderNumber.is_initialized()) {
       return;
     }
@@ -458,7 +501,18 @@ namespace MarketDataService {
     }
     auto symbol = message.GetBusinessField<std::string>(55);
     auto bidBrokerNumber = message.GetBusinessField<std::string>(70, 0);
-    auto bidOrderNumber = message.GetBusinessField<std::string>(40, 0);
+    auto bidOrderNumber = [&] {
+      if(!m_config.m_isNeoBook) {
+        return message.GetBusinessField<std::string>(40, 0);
+      } else {
+        auto aqnTag = message.GetBusinessField<std::string>(636);
+        if(!aqnTag.is_initialized() || *aqnTag != "AQN") {
+          return message.GetBusinessField<std::string>(40, 0);
+        } else {
+          return message.GetBusinessField<std::string>(196);
+        }
+      }
+    }();
     if(bidOrderNumber.is_initialized()) {
       auto bidOrderId = GetOrderId(symbol, bidBrokerNumber, *bidOrderNumber);
       auto displayVolume = message.GetBusinessField<std::int64_t>(150, 0);
@@ -473,7 +527,18 @@ namespace MarketDataService {
       }
     }
     auto askBrokerNumber = message.GetBusinessField<std::string>(70, 1);
-    auto askOrderNumber = message.GetBusinessField<std::string>(40, 1);
+    auto askOrderNumber = [&] {
+      if(!m_config.m_isNeoBook) {
+        return message.GetBusinessField<std::string>(40, 1);
+      } else {
+        auto aqnTag = message.GetBusinessField<std::string>(636);
+        if(!aqnTag.is_initialized() || *aqnTag != "AQN") {
+          return message.GetBusinessField<std::string>(40, 1);
+        } else {
+          return message.GetBusinessField<std::string>(196);
+        }
+      }
+    }();
     if(askOrderNumber.is_initialized()) {
       auto askOrderId = GetOrderId(symbol, askBrokerNumber, *askOrderNumber);
       auto displayVolume = message.GetBusinessField<std::int64_t>(150, 1);

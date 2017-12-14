@@ -8,7 +8,7 @@ class RiskService {
     this.stompConnectionManager = new StompConnectionManager('risk_service/portfolio');
     this.portfolioMessageHandlers = new HashMap();
 
-    this.unsubscribe = this.unsubscribe.bind(this);
+    this.unsubscribePortfolio = this.unsubscribePortfolio.bind(this);
   }
 
   /** @private */
@@ -30,16 +30,36 @@ class RiskService {
     });
   }
 
-  unsubscribe(subId) {
+  unsubscribePortfolio(subId) {
     this.stompConnectionManager.unsubscribe(subId);
     let portfolioMsgHandler = this.portfolioMessageHandlers.get(subId);
     portfolioMsgHandler.dispose();
     this.portfolioMessageHandlers.remove(subId);
   }
 
-  setFilter(filter) {
+  setPortfolioDataFilter(subId, filter) {
     let destination = Config.BACKEND_API_ROOT_URL + 'risk_service/portfolio/filter';
-    this.stompConnectionManager.send(destination, filter);
+
+    let serializedFilter = {
+      id: subId,
+      groups: [],
+      currencies: [],
+      markets: []
+    };
+
+    for (let i=0; i<filter.groups.length; i++) {
+      serializedFilter.groups.push(filter.groups[i].toData());
+    }
+
+    for (let i=0; i<filter.currencies.length; i++) {
+      serializedFilter.currencies.push(filter.currencies[i].toData());
+    }
+
+    for (let i=0; i<filter.markets.length; i++) {
+      serializedFilter.markets.push(filter.markets[i].toData());
+    }
+
+    this.stompConnectionManager.send(destination, serializedFilter);
   }
 }
 

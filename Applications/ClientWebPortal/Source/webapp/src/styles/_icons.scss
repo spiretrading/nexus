@@ -43,10 +43,13 @@
   content: "\60";
 }
 .icon-single-arrow:before {
-  content: "\5d";
+ content: "\5d";
 }
 .icon-double-arrow:before {
   content: "\5b";
+}
+.icon-group:before {
+  content: "\6c";
 }
 .icon-column:before {
   content: "\2d";
@@ -62,6 +65,15 @@
 }
 .icon-dot:before {
   content: "\37";
+}
+.icon-context:before {
+  content: "\21";
+}
+.icon-cancel-all-orders:before {
+  content: "\40";
+}
+.icon-export:before {
+  content: "\23";
 }
 .icon-edit:before {
   content: "\36";
@@ -108,32 +120,29 @@
 .icon-magnifying-glass:before {
   content: "\72";
 }
-.icon-notification:before {
-  content: "\71";
-}
 .icon-account:before {
   content: "\70";
 }
 .icon-compliance:before {
   content: "\6f";
 }
-.icon-profit-loss:before {
-  content: "\6e";
-}
 .icon-entitlements:before {
   content: "\6d";
-}
-.icon-group:before {
-  content: "\6c";
 }
 .icon-risk-controls:before {
   content: "\6b";
 }
+.icon-profit-loss:before {
+  content: "\6e";
+}
 .icon-burger:before {
   content: "\6a";
 }
+.icon-notification-list:before {
+  content: "\71";
+}
 .icon-portfolio:before {
-  content: "\49";
+  content: "\69";
 }
 .icon-profile:before {
   content: "\68";
@@ -158,4 +167,7 @@
 }
 .icon-trader:before {
   content: "\61";
+}
+.icon-home:before {
+  content: "\2e";
 }

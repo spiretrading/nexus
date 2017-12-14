@@ -1,4 +1,5 @@
 #include "Nexus/ComplianceTests/ComplianceRuleSetTester.hpp"
+#include <boost/functional/factory.hpp>
 #include "Nexus/Compliance/SymbolRestrictionComplianceRule.hpp"
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
@@ -6,6 +7,9 @@
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;
+using namespace Beam::Services;
+using namespace Beam::Services::Tests;
+using namespace boost;
 using namespace Nexus;
 using namespace Nexus::Compliance;
 using namespace Nexus::Compliance::Tests;
@@ -23,32 +27,30 @@ namespace {
 }
 
 void ComplianceRuleSetTester::setUp() {
-  m_serviceLocatorEnvironment.Initialize();
+  m_serviceLocatorEnvironment.emplace();
   m_serviceLocatorEnvironment->Open();
   auto serviceLocatorClient = m_serviceLocatorEnvironment->BuildClient();
   serviceLocatorClient->SetCredentials("root", "");
   serviceLocatorClient->Open();
-  ServiceProtocolClientBuilder builder(
+  auto serverConnection = std::make_shared<TestServerConnection>();
+  TestServiceProtocolClientBuilder builder{
     [=] {
-      return std::make_unique<ServiceProtocolClientBuilder::Channel>(("test"),
-        Ref(*m_serverConnection));
-    },
-    [] {
-      return std::make_unique<ServiceProtocolClientBuilder::Timer>();
-    });
-  m_complianceClient.Initialize(builder);
-  m_complianceRuleSet.Initialize(&*m_complianceClient,
+      return std::make_unique<TestServiceProtocolClientBuilder::Channel>("test",
+        Ref(*serverConnection));
+    }, factory<unique_ptr<TestServiceProtocolClientBuilder::Timer>>()};
+  m_complianceClient.emplace(builder);
+  m_complianceRuleSet.emplace(&*m_complianceClient,
     std::move(serviceLocatorClient),
-    [&] (const ComplianceRuleEntry& entry) {
+    [&] (auto& entry) {
       return std::make_unique<SymbolRestrictionComplianceRule>(
         vector<ComplianceParameter>());
     });
 }
 
 void ComplianceRuleSetTester::tearDown() {
-  m_complianceRuleSet.Reset();
-  m_complianceClient.Reset();
-  m_serviceLocatorEnvironment.Reset();
+  m_complianceRuleSet.reset();
+  m_complianceClient.reset();
+  m_serviceLocatorEnvironment.reset();
 }
 
 void ComplianceRuleSetTester::TestSubmit() {

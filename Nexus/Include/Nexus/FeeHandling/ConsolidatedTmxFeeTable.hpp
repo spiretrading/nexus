@@ -1,5 +1,5 @@
-#ifndef NEXUS_CONSOLIDATEDTMXFEETABLE_HPP
-#define NEXUS_CONSOLIDATEDTMXFEETABLE_HPP
+#ifndef NEXUS_CONSOLIDATED_TMX_FEE_TABLE_HPP
+#define NEXUS_CONSOLIDATED_TMX_FEE_TABLE_HPP
 #include <exception>
 #include <sstream>
 #include <unordered_set>
@@ -10,6 +10,7 @@
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/FeeHandling/ChicFeeTable.hpp"
+#include "Nexus/FeeHandling/CseFeeTable.hpp"
 #include "Nexus/FeeHandling/FeeHandling.hpp"
 #include "Nexus/FeeHandling/LynxFeeTable.hpp"
 #include "Nexus/FeeHandling/MatnFeeTable.hpp"
@@ -66,6 +67,9 @@ namespace Nexus {
 
     //! Fee table used by CHIC.
     ChicFeeTable m_chicFeeTable;
+
+    //! Fee table used by CSE.
+    CseFeeTable m_cseFeeTable;
 
     //! Fee table used by LYNX.
     LynxFeeTable m_lynxFeeTable;
@@ -207,6 +211,12 @@ namespace Nexus {
     } else {
       feeTable.m_chicFeeTable = ParseChicFeeTable(*chicConfig);
     }
+    auto cseConfig = config.FindValue("cse");
+    if(cseConfig == nullptr) {
+      BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for CSE missing."});
+    } else {
+      feeTable.m_cseFeeTable = ParseCseFeeTable(*cseConfig);
+    }
     auto xcx2Config = config.FindValue("xcx2");
     if(xcx2Config == nullptr) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for XCX2 missing."});
@@ -308,6 +318,8 @@ namespace Nexus {
             return ToString(DefaultMarkets::XATS());
           } else if(destination == DefaultDestinations::CHIX()) {
             return ToString(DefaultMarkets::CHIC());
+          } else if(destination == DefaultDestinations::CSE()) {
+            return ToString(DefaultMarkets::CSE());
           } else if(destination == DefaultDestinations::CX2()) {
             return ToString(DefaultMarkets::XCX2());
           } else if(destination == DefaultDestinations::LYNX()) {
@@ -340,6 +352,8 @@ namespace Nexus {
           order.GetInfo().m_fields.m_security);
         return CalculateFee(feeTable.m_chicFeeTable, isEtf, isInterlisted,
           order.GetInfo().m_fields, executionReport);
+      } else if(lastMarket == DefaultMarkets::CSE()) {
+        return CalculateFee(feeTable.m_cseFeeTable, executionReport);
       } else if(lastMarket == DefaultMarkets::XCX2()) {
         return CalculateFee(feeTable.m_xcx2FeeTable, order.GetInfo().m_fields,
           executionReport);

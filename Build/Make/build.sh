@@ -16,10 +16,8 @@ build_function() {
 }
 
 let cores="`grep -c "processor" < /proc/cpuinfo` / 2 + 1"
-if [ $cores -gt 8 ]
-then
-  cores=8
-fi
+let mem="`grep -oP "MemTotal: +\K([[:digit:]]+)(?=.*)" < /proc/meminfo` / 4194304"
+let jobs="$(($cores<$mem?$cores:$mem))"
 
 pushd $directory/../../Nexus/Build/Make
 ./build.sh $config
@@ -34,6 +32,7 @@ applications+="ChartingServer "
 applications+="ChiaMarketDataFeedClient "
 applications+="ClientWebPortal "
 applications+="ComplianceServer "
+applications+="CseMarketDataFeedClient "
 applications+="CtaMarketDataFeedClient "
 applications+="DefinitionsServer "
 applications+="MarketDataClientStressTest "
@@ -48,11 +47,16 @@ applications+="SimulationOrderExecutionServer "
 applications+="TmxIpMarketDataFeedClient "
 applications+="TmxTl1MarketDataFeedClient "
 applications+="UtpMarketDataFeedClient "
-parallel -j$cores --no-notice build_function ::: $applications
+parallel -j$jobs --no-notice build_function ::: $applications
 
 pushd $directory/../../Applications/ClientWebPortal/Source/api/build/make
 ./build.sh $config
 popd
 pushd $directory/../../Applications/ClientWebPortal/Source/webapp/build/make
 ./build.sh $config
+popd
+
+pushd $directory/../../Documents/sphinx
+make clean
+make html
 popd

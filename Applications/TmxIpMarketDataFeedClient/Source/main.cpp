@@ -103,6 +103,7 @@ namespace {
       tmxIpConfig.m_mpidMappings = LoadMpidMappings(*config.FindValue(
         "mpid_mappings"));
     }
+    tmxIpConfig.m_isNeoBook = market.m_code == DefaultMarkets::NEOE();
     return tmxIpConfig;
   }
 }

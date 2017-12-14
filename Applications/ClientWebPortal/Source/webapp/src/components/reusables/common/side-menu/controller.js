@@ -1,5 +1,5 @@
 import userService from 'services/user';
-import {browserHistory} from 'react-router/es6';
+import {browserHistory} from 'react-router';
 import store from 'store';
 import LocalstorageKey from 'commons/localstorage-keys';
 
@@ -88,6 +88,12 @@ class Controller {
 
   navigateToPortfolio() {
     let path = '/portfolio';
+    browserHistory.push(path);
+    this.saveLastVisitedPath(path);
+  }
+
+  navigateToModificationRequestHistory() {
+    let path = '/modification-request-history';
     browserHistory.push(path);
     this.saveLastVisitedPath(path);
   }

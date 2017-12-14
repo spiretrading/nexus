@@ -1,4 +1,5 @@
 import './style.scss';
+import moment from 'moment';
 import React from 'react';
 import UpdatableView from 'commons/updatable-view';
 import Dropdown from 'components/reusables/common/dropdown';
@@ -41,12 +42,14 @@ class View extends UpdatableView {
       $contentSlideWrapper.stop().animate({
         height: contentHeight
       });
-      $(event.currentTarget).removeClass('collapsed').addClass('expanded');
+      $(event.currentTarget).removeClass('collapsed').addClass('expanded')
+        .parent().parent().removeClass('collapsed').addClass('expanded');
     } else {
       $contentSlideWrapper.stop().animate({
         height: 0
       });
-      $(event.currentTarget).removeClass('expanded').addClass('collapsed');
+      $(event.currentTarget).removeClass('expanded').addClass('collapsed')
+        .parent().parent().removeClass('expanded').addClass('collapsed');;
     }
   }
 
@@ -115,11 +118,10 @@ class View extends UpdatableView {
       } else {
         let labelTokens = label.split('.');
         let symbol = labelTokens[0];
-        let market = labelTokens[1];
         let country = definitionsService.getMarket(marketCode).countryCode;
         security = Security.fromData({
           country: country.toNumber(),
-          market: market,
+          market: marketCode,
           symbol: symbol
         });
       }
@@ -195,12 +197,25 @@ class View extends UpdatableView {
       let timeInput = hours + ':' + minutes + ':' + seconds;
       let parameterName = $timeWrapper.attr('data-parameter-name');
 
+      timeInput = this.toUtcTime(timeInput);
       this.controller.onParameterUpdated(parameterName, timeInput);
 
       if ($timeWrapper.hasClass('invalid-input')) {
         this.hideValidationErrorMessage($timeWrapper);
       }
     }
+  }
+
+  /** @private */
+  toUtcTime(timeInput) {
+    timeInput = timeInput.split(':');
+    let localNow = moment();
+    localNow.set({
+      hour: Number(timeInput[0]),
+      minute: Number(timeInput[1]),
+      second: Number(timeInput[2])
+    });
+    return localNow.utc().format('HH:mm:ss');
   }
 
   /** @private */
@@ -281,17 +296,15 @@ class View extends UpdatableView {
 
   /** @private */
   getSymbolsInput(parameterIndex) {
+    let marketDatabase = definitionsService.getMarketDatabase();
     let parameters = this.componentModel.schema.parameters;
     let tags = [];
     for (let j=0; j<parameters[parameterIndex].value.value.length; j++) {
       let security = parameters[parameterIndex].value.value[j].value;
       if (security.symbol.length > 0) {
-        let tagLabel = security.symbol;
-        if (security.market.toCode().length > 0) {
-          tagLabel += '.' + security.market.toCode();
-        }
+        let tagLabel = security.toString(marketDatabase);
         tags.push(
-          <li key={j} data-country-code={security.country} data-symbol={security.symbol}>{tagLabel}</li>
+          <li key={j}>{tagLabel + '|' + security.market.value}</li>
         );
       }
     }
@@ -316,7 +329,9 @@ class View extends UpdatableView {
     let parameters = this.componentModel.schema.parameters;
     let parameterName = parameters[parameterIndex].name.replace(/\\/g, '');
     parameterName = labelFormatter.toCapitalWithSpace(parameterName);
-    let timeValues = parameters[parameterIndex].value.value.split(':');
+    let timeValue = parameters[parameterIndex].value.value;
+    timeValue = this.toLocalTime(timeValue);
+    let timeValues = timeValue.split(':');
     let hour = timeValues[0];
     let minute = timeValues[1];
     let second = timeValues[2];
@@ -351,6 +366,14 @@ class View extends UpdatableView {
       </div>;
 
     return input;
+  }
+
+  /** @private */
+  toLocalTime(time) {
+    let utcDate = moment.utc().format('YYYY-MM-DD');
+    let utcOffset = (new Date().getTimezoneOffset()) * -1;
+    let localTime = moment.utc(utcDate + 'T' + time, "YYYY-MM-DDTHH:mm:ss").utcOffset(utcOffset);
+    return localTime.format('HH:mm:ss');
   }
 
   /** @private */
@@ -424,11 +447,12 @@ class View extends UpdatableView {
                 .then((results) => {
                   let labels = [];
                   for (let i=0; i<results.length; i++) {
-                    let symbol = results[i].security.toString(marketDatabase);
-                    let marketCode = results[i].security.market.toCode();
+                    let securityDisplay = results[i].security.toString(marketDatabase);
+                    let marketCode = results[i].security.market.toData();
+                    let display = securityDisplay + ' (' + results[i].security.symbol + '.' + marketCode + ')';
                     let label = {
-                      label: symbol + ' (' + results[i].name + ')',
-                      value: symbol + '|' + marketCode
+                      label: display,
+                      value: display
                     };
                     labels.push(label);
                     if (sourceLabels.indexOf(label.value) < 0) {
@@ -445,19 +469,44 @@ class View extends UpdatableView {
             if (ui.tagLabel != '*' && !doesExistInSourceLabels(ui.tagLabel)){
               $(this).find('.ui-autocomplete-input').val('');
               return false;
+            } else if (doesExistInTags(ui.tagLabel)) {
+              $('#' + _this.componentModel.componentId + ' .symbols-input .tagit-new input').val('');
+              return false;
             } else {
-              let pipeIndex = ui.tagLabel.indexOf('|');
-              let marketCode = ui.tagLabel.substring(pipeIndex + 1);
-              let tagLabel = ui.tagLabel.substring(0, pipeIndex);
-              let html = ui.tag.html();
-              ui.tag.html(html.replace('|' + marketCode, ''));
+              let openBracketIndex = ui.tagLabel.indexOf('(');
+              let symbolWithMarketCode = ui.tagLabel.substring(openBracketIndex + 1, ui.tagLabel.length - 1);
+              let periodIndex = symbolWithMarketCode.indexOf('.');
+              let marketCode = symbolWithMarketCode.substring(periodIndex + 1);
+              let tagLabel = ui.tagLabel.substring(0, openBracketIndex);
+              let $label = ui.tag.find('.tagit-label');
+              let html = $label.html();
+              html = html.replace(' (' + symbolWithMarketCode + ')', '');
+              $label.html(html);
               ui.tag.attr('data-market-code', marketCode);
             }
+          } else {
+            let $label = ui.tag.find('.tagit-label');
+            let labelText = $label.html();
+            let texts = labelText.split('|');
+            $label.html(texts[0]);
+            let marketCode = texts[1];
+            ui.tag.attr('data-market-code', marketCode);
           }
 
           function doesExistInSourceLabels(label) {
             for (let i=0; i<sourceLabels.length; i++) {
               if (sourceLabels[i] == label) {
+                return true;
+              }
+            }
+            return false;
+          }
+
+          function doesExistInTags(label) {
+            let symbolWithMarketDisplay = label.substring(0, label.indexOf(' '));
+            let existingLabels = $('#' + _this.componentModel.componentId + ' .symbols-input .tagit-label');
+            for (let i=0; i<existingLabels.length; i++) {
+              if (existingLabels[i].innerText == symbolWithMarketDisplay) {
                 return true;
               }
             }
@@ -504,6 +553,13 @@ class View extends UpdatableView {
     }).blur(function() {
       _this.isInputFocused = false;
       $(this).parent().removeClass('p1-solid-border');
+    });
+  }
+
+  dispose() {
+    $('#' + this.componentModel.componentId + ' .symbols-input').each(function(){
+      let $tagContainer = $(this);
+      $tagContainer.tagit('destroy');
     });
   }
 
@@ -581,7 +637,7 @@ class View extends UpdatableView {
         content.push(this.getSymbolsInput(i));
       } else if (schemaParameters[i].value.which == DataType.TIME_DURATION) {
         content.push(this.getPeriodInput(i));
-      } else if (schemaParameters[i].value.which == DataType.INTEGER) {
+      } else if (schemaParameters[i].value.which == DataType.INT64) {
         content.push(this.getIntegerInput(i));
       } else if (schemaParameters[i].value.which == DataType.BOOLEAN) {
         content.push(this.getBooleanInput(i));

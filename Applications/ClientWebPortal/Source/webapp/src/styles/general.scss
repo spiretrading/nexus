@@ -2,6 +2,7 @@
 @import "variables";
 @import "icons";
 @import "modal";
+@import "context-menu";
 
 @font-face {
   font-family: 'Roboto';
@@ -115,7 +116,7 @@ button {
 }
 
 .container-fixed-width {
-  width: 1170px;
+  width: $minSiteWidth;
   margin: 0 auto;
   padding: 0 20px;
 }
@@ -316,7 +317,7 @@ label {
     transform: rotateZ(90deg);
   }
   100% {
-    color: $primaryGradient3;
+    color: $darkGrey;
     transform: rotateZ(0deg);
   }
 }

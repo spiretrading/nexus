@@ -12,6 +12,7 @@
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
 #include "Nexus/Definitions/Currency.hpp"
+#include "Nexus/Definitions/Destination.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderType.hpp"
 #include "Nexus/Definitions/Security.hpp"
@@ -44,7 +45,7 @@ namespace OrderExecutionService {
     Side m_side;
 
     //! The destination to submit the Order to.
-    std::string m_destination;
+    Destination m_destination;
 
     //! The quantity to order.
     Quantity m_quantity;
@@ -73,7 +74,7 @@ namespace OrderExecutionService {
     static OrderFields BuildLimitOrder(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Security& security, CurrencyId currency, Side side,
-      const std::string& destination, Quantity quantity, Money price);
+      const Destination& destination, Quantity quantity, Money price);
 
     //! Builds an OrderFields for a LIMIT order with all mandatory fields
     //! populated.
@@ -87,7 +88,7 @@ namespace OrderExecutionService {
       \param price The price of the Order.
     */
     static OrderFields BuildLimitOrder(const Security& security,
-      CurrencyId currency, Side side, const std::string& destination,
+      CurrencyId currency, Side side, const Destination& destination,
       Quantity quantity, Money price);
 
     //! Builds an OrderFields for a LIMIT order with all mandatory fields
@@ -103,7 +104,7 @@ namespace OrderExecutionService {
     */
     static OrderFields BuildLimitOrder(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const Security& security, Side side, const std::string& destination,
+      const Security& security, Side side, const Destination& destination,
       Quantity quantity, Money price);
 
     //! Builds an OrderFields for a LIMIT order with all mandatory fields
@@ -117,7 +118,7 @@ namespace OrderExecutionService {
       \param price The price of the Order.
     */
     static OrderFields BuildLimitOrder(const Security& security, Side side,
-      const std::string& destination, Quantity quantity, Money price);
+      const Destination& destination, Quantity quantity, Money price);
 
     //! Builds an OrderFields for a LIMIT order with all mandatory fields
     //! populated.
@@ -173,7 +174,7 @@ namespace OrderExecutionService {
     static OrderFields BuildMarketOrder(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Security& security, CurrencyId currency, Side side,
-      const std::string& destination, Quantity quantity);
+      const Destination& destination, Quantity quantity);
 
     //! Builds an OrderFields for a MARKET order with all mandatory fields
     //! populated.
@@ -187,7 +188,7 @@ namespace OrderExecutionService {
       \param price The price of the Order.
     */
     static OrderFields BuildMarketOrder(const Security& security,
-      CurrencyId currency, Side side, const std::string& destination,
+      CurrencyId currency, Side side, const Destination& destination,
       Quantity quantity);
 
     //! Builds an OrderFields for a MARKET order with all mandatory fields
@@ -203,7 +204,7 @@ namespace OrderExecutionService {
     */
     static OrderFields BuildMarketOrder(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const Security& security, Side side, const std::string& destination,
+      const Security& security, Side side, const Destination& destination,
       Quantity quantity);
 
     //! Builds an OrderFields for a MARKET order with all mandatory fields
@@ -217,7 +218,7 @@ namespace OrderExecutionService {
       \param price The price of the Order.
     */
     static OrderFields BuildMarketOrder(const Security& security, Side side,
-      const std::string& destination, Quantity quantity);
+      const Destination& destination, Quantity quantity);
 
     //! Builds an OrderFields for a MARKET order with all mandatory fields
     //! populated.
@@ -319,7 +320,7 @@ namespace OrderExecutionService {
   inline OrderFields OrderFields::BuildLimitOrder(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Security& security, CurrencyId currency, Side side,
-      const std::string& destination, Quantity quantity, Money price) {
+      const Destination& destination, Quantity quantity, Money price) {
     OrderFields fields;
     fields.m_account = account;
     fields.m_security = security;
@@ -334,7 +335,7 @@ namespace OrderExecutionService {
   }
 
   inline OrderFields OrderFields::BuildLimitOrder(const Security& security,
-      CurrencyId currency, Side side, const std::string& destination,
+      CurrencyId currency, Side side, const Destination& destination,
       Quantity quantity, Money price) {
     return BuildLimitOrder(Beam::ServiceLocator::DirectoryEntry{}, security,
       currency, side, destination, quantity, price);
@@ -342,14 +343,14 @@ namespace OrderExecutionService {
 
   inline OrderFields OrderFields::BuildLimitOrder(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const Security& security, Side side,
-      const std::string& destination, Quantity quantity, Money price) {
+      const Security& security, Side side, const Destination& destination,
+      Quantity quantity, Money price) {
     return BuildLimitOrder(account, security, CurrencyId::NONE(), side,
       destination, quantity, price);
   }
 
   inline OrderFields OrderFields::BuildLimitOrder(const Security& security,
-      Side side, const std::string& destination, Quantity quantity,
+      Side side, const Destination& destination, Quantity quantity,
       Money price) {
     return BuildLimitOrder(Beam::ServiceLocator::DirectoryEntry{}, security,
       CurrencyId::NONE(), side, destination, quantity, price);
@@ -377,7 +378,7 @@ namespace OrderExecutionService {
   inline OrderFields OrderFields::BuildMarketOrder(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Security& security, CurrencyId currency, Side side,
-      const std::string& destination, Quantity quantity) {
+      const Destination& destination, Quantity quantity) {
     OrderFields fields;
     fields.m_account = account;
     fields.m_security = security;
@@ -391,7 +392,7 @@ namespace OrderExecutionService {
   }
 
   inline OrderFields OrderFields::BuildMarketOrder(const Security& security,
-      CurrencyId currency, Side side, const std::string& destination,
+      CurrencyId currency, Side side, const Destination& destination,
       Quantity quantity) {
     return BuildMarketOrder(Beam::ServiceLocator::DirectoryEntry{}, security,
       currency, side, destination, quantity);
@@ -399,14 +400,14 @@ namespace OrderExecutionService {
 
   inline OrderFields OrderFields::BuildMarketOrder(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const Security& security, Side side,
-      const std::string& destination, Quantity quantity) {
+      const Security& security, Side side, const Destination& destination,
+      Quantity quantity) {
     return BuildMarketOrder(account, security, CurrencyId::NONE(), side,
       destination, quantity);
   }
 
   inline OrderFields OrderFields::BuildMarketOrder(const Security& security,
-      Side side, const std::string& destination, Quantity quantity) {
+      Side side, const Destination& destination, Quantity quantity) {
     return BuildMarketOrder(Beam::ServiceLocator::DirectoryEntry{}, security,
       CurrencyId::NONE(), side, destination, quantity);
   }

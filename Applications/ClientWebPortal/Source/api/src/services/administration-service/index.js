@@ -2,6 +2,9 @@ import httpConnectionManager from '../commons/http-connection-manager';
 import AccountRoles from '../commons/account-roles';
 import AccountIdentity from './account-identity';
 import RiskParameters from '../risk-service/risk-parameters';
+import DirectoryEntry from '../../definitions/directory-entry';
+import AccountModificationRequest from '../../definitions/account-modification-request';
+import AccModReqUpdate from '../../definitions/account-modification-request-update';
 
 /** Spire admin client class */
 class Admin {
@@ -126,13 +129,12 @@ class Admin {
     };
 
     return httpConnectionManager.send(apiPath, payload, true)
-      .then(parseResponse)
+      .then(response => {
+        return response.map(value => {
+          return DirectoryEntry.fromData(value);
+        });
+      })
       .catch(this.logErrorAndThrow);
-
-    function parseResponse(response) {
-      let entitlements = response;
-      return entitlements;
-    }
   }
 
   storeAccountEntitlements(directoryEntry, entitlements) {
@@ -171,6 +173,59 @@ class Admin {
     let payload = {
       account: directoryEntry.toData(),
       roles: AccountRoles.encode(roles)
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .catch(this.logErrorAndThrow);
+  }
+
+  submitEntitlementModificationRequest(directoryEntry, entitlementModification, message) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/submit_entitlement_modification_request';
+    let payload = {
+      account: directoryEntry.toData(),
+      modification: entitlementModification.toData(),
+      comment: message.toData()
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .then(response => {
+        return AccountModificationRequest.fromData(response);
+      })
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadAccountModificationRequest(id) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_account_modification_request';
+    let payload = {
+      id: id
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .then(response => {
+        return AccountModificationRequest.fromData(response);
+      })
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadAccountModificationStatus(id) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_account_modification_request_status';
+    let payload = {
+      id: id
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .then(response => {
+        return AccModReqUpdate.fromData(response);
+      })
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadManagedAccountModificationRequests(directoryEntry, startId, maxCount) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_managed_account_modification_request_ids';
+    let payload = {
+      account: directoryEntry.toData(),
+      start_id: startId,
+      max_count: maxCount
     };
 
     return httpConnectionManager.send(apiPath, payload, true)

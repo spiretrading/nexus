@@ -58,6 +58,11 @@ class Controller {
       this.componentModel.userName = directoryEntry.name;
       this.componentModel.isAdmin = userService.isAdmin();
       this.view.update(this.componentModel);
+
+      EventBus.publish(Event.Profile.VIEWING_CONTEXT_LOADED, {
+        directoryEntry: this.componentModel.directoryEntry,
+        roles: this.componentModel.roles
+      });
     });
   }
 
@@ -71,7 +76,7 @@ class Controller {
   onCurrencyChange(newCurrencyNumber) {
     this.view.hideSavedMessage();
     EventBus.publish(Event.Profile.RiskControls.CURRENCY_SELECTED);
-    this.componentModel.riskParameters.currencyId = CurrencyId.fromNumber(newCurrencyNumber);
+    this.componentModel.riskParameters.currencyId = CurrencyId.fromData(newCurrencyNumber);
     this.view.update(this.componentModel);
   }
 

@@ -5,7 +5,7 @@ import UpdatableView from 'commons/updatable-view';
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
-    this.traderRowHeight = 27;
+    this.traderRowHeight = 32;
     this.visibleHeight = 0;
     this.shouldExpand = false;
     this.lastSearchString = null;
@@ -35,7 +35,8 @@ class View extends UpdatableView {
       $contentSlideWrapper.stop().animate({
         height: contentHeight
       });
-      $expandIcon.removeClass('collapsed').addClass('expanded');
+      $expandIcon.removeClass('collapsed').addClass('expanded')
+      $('#' + this.componentModel.componentId).removeClass('collapsed').addClass('expanded');
       $('#' + this.componentModel.componentId).find('.trader-row.non-match').stop().animate({
         height: this.traderRowHeight
       });
@@ -44,6 +45,7 @@ class View extends UpdatableView {
         height: this.visibleHeight
       });
       $expandIcon.removeClass('expanded').addClass('collapsed');
+      $('#' + this.componentModel.componentId).removeClass('expanded').addClass('collapsed');
       $('#' + this.componentModel.componentId).find('.trader-row.non-match').stop().animate({
         height: 0
       });

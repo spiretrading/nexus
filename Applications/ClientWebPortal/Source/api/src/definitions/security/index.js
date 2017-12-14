@@ -7,7 +7,9 @@ class Security {
     this.country = country;
     this.market = market;
     this.symbol = symbol;
-
+    this.constructor = {
+      name: 'Security'
+    };
     this.toString = this.toString.bind(this);
   }
 
@@ -21,7 +23,7 @@ class Security {
     } else {
       return {
         country: this.country.toNumber(),
-        market: this.market.toCode(),
+        market: this.market.toData(),
         symbol: this.symbol
       };
     }
@@ -31,7 +33,7 @@ class Security {
     if (this.market.isEmpty() || this.symbol == '') {
       return this.symbol;
     }
-    let marketCode = this.market.toCode();
+    let marketCode = this.market.toData();
     let market = marketDatabase.fromMarketCode(marketCode);
     if (market == null || market.marketCode == '') {
       return this.symbol + '.' + marketCode;

@@ -2,10 +2,9 @@ import './style.scss';
 import React from 'react';
 import PersonalDetails from 'components/reusables/desktop/personal-details';
 import AccountPicture from 'components/reusables/common/account-picture';
-import UserInfoNav from 'components/reusables/common/user-info-nav';
 import moment from 'moment';
 import PrimaryButton from 'components/reusables/common/primary-button';
-import UserNotes from 'components/reusables/common/user-notes';
+import TextArea from 'components/reusables/common/text-area';
 import CommonView from 'components/structures/common/profile/account/common-view';
 
 class DesktopView extends CommonView {
@@ -15,8 +14,7 @@ class DesktopView extends CommonView {
 
   render() {
     let content;
-    let userInfoNavModel,
-      lastSignin,
+    let lastSignin,
       personalDetailsModel,
       accountPictureModel,
       saveButtonModel,
@@ -24,11 +22,6 @@ class DesktopView extends CommonView {
       changePasswordButtonModel,
       saveButton;
     if (this.controller.isModelInitialized()) {
-      userInfoNavModel = {
-        userName: this.componentModel.directoryEntry.name,
-        roles: this.componentModel.roles
-      };
-
       personalDetailsModel = JSON.parse(JSON.stringify(this.componentModel));
       personalDetailsModel.id = personalDetailsModel.directoryEntry.id;
       personalDetailsModel.userName = personalDetailsModel.directoryEntry.name;
@@ -47,7 +40,7 @@ class DesktopView extends CommonView {
       };
 
       userNotesModel = {
-        userNotes: this.componentModel.userNotes,
+        text: this.componentModel.userNotes,
         isReadOnly: !this.componentModel.isAdmin
       };
 
@@ -76,9 +69,6 @@ class DesktopView extends CommonView {
       content =
         <div>
           <div className="row">
-            <UserInfoNav model={userInfoNavModel}/>
-          </div>
-          <div className="row">
             Last sign-in: {lastSignin}
           </div>
           <div className="header row">
@@ -96,7 +86,7 @@ class DesktopView extends CommonView {
             User Notes
           </div>
           <div className="row">
-            <UserNotes model={userNotesModel} onChange={onUserNotesChange}/>
+            <TextArea model={userNotesModel} onChange={onUserNotesChange}/>
           </div>
           {saveButton}
           <hr className="row"/>

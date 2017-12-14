@@ -2,7 +2,7 @@
 #include <QKeyEvent>
 #include <QMessageBox>
 #include "Nexus/Definitions/Security.hpp"
-#include "Nexus/OrderTasks/SingleOrderTask.hpp"
+#include "Nexus/Tasks/SingleOrderTask.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"
@@ -25,7 +25,7 @@
 using namespace Beam;
 using namespace Beam::Tasks;
 using namespace Nexus;
-using namespace Nexus::OrderTasks;
+using namespace Nexus::Tasks;
 using namespace Spire;
 using namespace std;
 

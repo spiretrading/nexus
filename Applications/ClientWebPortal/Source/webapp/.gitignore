@@ -9,3 +9,5 @@ __nogit
 webapp
 dist
 build/output
+.fuse*
+spec/transpiled

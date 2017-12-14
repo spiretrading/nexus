@@ -7,6 +7,7 @@
 #include "Nexus/FeeHandlingTests/ChicFeeHandlingTester.hpp"
 #include "Nexus/FeeHandlingTests/ConsolidatedTmxFeeTableTester.hpp"
 #include "Nexus/FeeHandlingTests/ConsolidatedUsFeeTableTester.hpp"
+#include "Nexus/FeeHandlingTests/CseFeeHandlingTester.hpp"
 #include "Nexus/FeeHandlingTests/LynxFeeHandlingTester.hpp"
 #include "Nexus/FeeHandlingTests/MatnFeeHandlingTester.hpp"
 #include "Nexus/FeeHandlingTests/NeoeFeeHandlingTester.hpp"
@@ -24,6 +25,7 @@ int main() {
   CppUnit::BriefTestProgressListener listener;
   runner.addTest(AsxtFeeHandlingTester::suite());
   runner.addTest(ChicFeeHandlingTester::suite());
+  runner.addTest(CseFeeHandlingTester::suite());
   runner.addTest(LynxFeeHandlingTester::suite());
   runner.addTest(MatnFeeHandlingTester::suite());
   runner.addTest(NeoeFeeHandlingTester::suite());

@@ -1,8 +1,5 @@
 CALL C:/Development/Projects/Beam/Beam/Build/Windows/set_env.bat
 SET NEXUS_INCLUDE_PATH=%~dp0../../Include
-set SQLITE_INCLUDE_PATH=C:/Development/Libraries/sqlite
-set SQLITE_LIBRARY_DEBUG_PATH=C:/Development/Libraries/sqlite/sqlite3.lib
-set SQLITE_LIBRARY_OPTIMIZED_PATH=C:/Development/Libraries/sqlite/sqlite3.lib
 set QUICK_FIX_INCLUDE_PATH=C:/Development/Libraries/quickfix/include
 set QUICK_FIX_LIBRARY_DEBUG_PATH=C:/Development/Libraries/quickfix/lib/debug/quickfix.lib
 set QUICK_FIX_LIBRARY_OPTIMIZED_PATH=C:/Development/Libraries/quickfix/lib/quickfix.lib

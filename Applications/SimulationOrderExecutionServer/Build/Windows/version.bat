@@ -1,8 +1,9 @@
-cd %~dp0../..
+pushd %~dp0..\..
 mkdir Include
-cd Include
+pushd Include
 mkdir SimulationOrderExecutionServer
-cd %~dp0
+popd
+popd
 printf "#define SIMULATION_ORDER_EXECUTION_SERVER_VERSION """> %~dp0../../Include/SimulationOrderExecutionServer/Version.hpp
 git rev-list --count --first-parent HEAD | tr -d "\n\" >> %~dp0../../Include/SimulationOrderExecutionServer/Version.hpp
 printf """\n" >> %~dp0../../Include/SimulationOrderExecutionServer/Version.hpp

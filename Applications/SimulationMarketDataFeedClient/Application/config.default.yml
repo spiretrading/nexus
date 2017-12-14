@@ -9,5 +9,6 @@ bbo_period: 1s
 market_quote_period: 1s
 time_and_sales_period: 1s
 sampling: 100ms
-symbols: [XIU.TSX, RY.TSX, ABX.TSX, SU.TSX, A.TSX, B.TSX, C.TSX]
+symbols: [XIU.TSX, RY.TSX, ABX.TSX, SU.TSX, A.TSX, B.TSX, C.TSX,
+  LHS.CSE, TRST.CSE, AHG.CSE]
 ...

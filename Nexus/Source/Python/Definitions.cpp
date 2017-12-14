@@ -6,6 +6,7 @@
 #include <Beam/Python/Optional.hpp>
 #include <Beam/Python/PythonBindings.hpp>
 #include <Beam/Python/Queries.hpp>
+#include <Beam/Python/Queues.hpp>
 #include <Beam/Python/Variant.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
@@ -35,6 +36,8 @@
 #include "Nexus/Definitions/Tag.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
+#include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
+#include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 
 using namespace Beam;
 using namespace Beam::Python;
@@ -71,6 +74,17 @@ namespace {
   };
 }
 
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(BboQuote);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedBboQuote);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(BookQuote);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedBookQuote);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(MarketQuote);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedMarketQuote);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(OrderImbalance);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedOrderImbalance);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(TimeAndSale);
+BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedTimeAndSale);
+
 void Nexus::Python::ExportBboQuote() {
   class_<BboQuote>("BboQuote", init<>())
     .def(init<const Quote&, const Quote&, const ptime&>())
@@ -84,6 +98,8 @@ void Nexus::Python::ExportBboQuote() {
     .def(self == self)
     .def(self != self);
   ExportSequencedValue<BboQuote>("SequencedBboQuote");
+  ExportQueueSuite<BboQuote>("BboQuote");
+  ExportQueueSuite<SequencedBboQuote>("SequencedBboQuote");
 }
 
 void Nexus::Python::ExportBookQuote() {
@@ -105,6 +121,8 @@ void Nexus::Python::ExportBookQuote() {
     .def(self != self);
   ExportFixedString<4>();
   ExportSequencedValue<BookQuote>("SequencedBookQuote");
+  ExportQueueSuite<BookQuote>("BookQuote");
+  ExportQueueSuite<SequencedBookQuote>("SequencedBookQuote");
   def("book_quote_listing_comparator", &BookQuoteListingComparator);
 }
 
@@ -418,6 +436,9 @@ void Nexus::Python::ExportMarketQuote() {
       &MarketQuote::m_timestamp, return_value_policy<return_by_value>()))
     .def(self == self)
     .def(self != self);
+  ExportSequencedValue<MarketQuote>("SequencedMarketQuote");
+  ExportQueueSuite<MarketQuote>("MarketQuote");
+  ExportQueueSuite<SequencedMarketQuote>("SequencedMarketQuote");
 }
 
 void Nexus::Python::ExportMoney() {
@@ -475,6 +496,8 @@ void Nexus::Python::ExportOrderImbalance() {
     .def(self == self)
     .def(self != self);
   ExportSequencedValue<OrderImbalance>("SequencedOrderImbalance");
+  ExportQueueSuite<OrderImbalance>("OrderImbalance");
+  ExportQueueSuite<SequencedOrderImbalance>("SequencedOrderImbalance");
 }
 
 void Nexus::Python::ExportOrderStatus() {
@@ -705,6 +728,8 @@ void Nexus::Python::ExportTimeAndSale() {
   }
   ExportEnum<TimeAndSale::Condition::Type>();
   ExportSequencedValue<TimeAndSale>("SequencedTimeAndSale");
+  ExportQueueSuite<TimeAndSale>("TimeAndSale");
+  ExportQueueSuite<SequencedTimeAndSale>("SequencedTimeAndSale");
 }
 
 void Nexus::Python::ExportTimeInForce() {

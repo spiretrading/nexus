@@ -5,5 +5,4 @@ using namespace Nexus::Accounting;
 using namespace Nexus::RiskService;
 using namespace Nexus::RiskService::Tests;
 
-void RiskStateTrackerTester::TestOpenPosition() {
-}
+void RiskStateTrackerTester::TestOpenPosition() {}

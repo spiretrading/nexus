@@ -38,22 +38,6 @@ namespace MarketDataService {
   //! Defines the type of query used to receive a Security's market data.
   using SecurityMarketDataQuery = Beam::Queries::BasicQuery<Security>;
 
-  //! Builds a SecurityMarketDataQuery for real time data with a snapshot
-  //! containing the most recent value.
-  /*!
-    \param security The Security to query.
-  */
-  inline SecurityMarketDataQuery BuildRealTimeWithSnapshotQuery(
-      Security security) {
-    SecurityMarketDataQuery query;
-    query.SetIndex(std::move(security));
-    query.SetRange(Beam::Queries::Range::Total());
-    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Type::TAIL, 1);
-    query.SetInterruptionPolicy(
-      Beam::Queries::InterruptionPolicy::IGNORE_CONTINUE);
-    return query;
-  }
-
   //! Submits a query for real time BboQuotes with a snapshot.
   /*!
     \param security The Security to query.
