@@ -43,6 +43,7 @@ class Controller {
       EventBus.publish(Event.TopNav.SUBMENU_UPDATED, true);
     } else {
       this.componentModel.subpages = [];
+      this.componentModel.userInfoModel = null;
       this.view.update(this.componentModel);
       EventBus.publish(Event.TopNav.SUBMENU_UPDATED, false);
     }

@@ -65,6 +65,8 @@ class Controller {
     ).then((responses) => {
       this.componentModel.accountEntitlements = responses[0];
       this.componentModel.entitlements = definitionsService.getEntitlements();
+      console.debug(this.componentModel.accountEntitlements);
+      console.debug(this.componentModel.entitlements);
       this.componentModel.directoryEntry = directoryEntry;
       this.componentModel.roles = responses[1];
       this.componentModel.userName = directoryEntry.name;

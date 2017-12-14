@@ -5,6 +5,7 @@ import RiskParameters from '../risk-service/risk-parameters';
 import DirectoryEntry from '../../definitions/directory-entry';
 import AccountModificationRequest from '../../definitions/account-modification-request';
 import AccModReqUpdate from '../../definitions/account-modification-request-update';
+import EntitlementModification from '../../definitions/entitlement-modification';
 
 /** Spire admin client class */
 class Admin {
@@ -229,6 +230,31 @@ class Admin {
     };
 
     return httpConnectionManager.send(apiPath, payload, true)
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadAccountModificationRequests(directoryEntry, startId, maxCount) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_account_modification_request_ids';
+    let payload = {
+      account: directoryEntry.toData(),
+      start_id: startId,
+      max_count: maxCount
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadEntitlementModification(id) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_entitlement_modification';
+    let payload = {
+      id: id
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .then(response => {
+        return EntitlementModification.fromData(response);
+      })
       .catch(this.logErrorAndThrow);
   }
 }

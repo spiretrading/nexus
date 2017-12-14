@@ -9,7 +9,7 @@ class View extends UpdatableView {
   }
 
   componentDidUpdate() {
-    $('#modification-request-history-container').fadeIn({
+    $('#entitlement-modification-review-container').fadeIn({
       duration: Config.FADE_DURATION
     });
   }
@@ -25,7 +25,7 @@ class View extends UpdatableView {
             <AccModRequest
               request = {this.componentModel.accountModificationRequests[i].request}
               update = {this.componentModel.accountModificationRequests[i].update}
-              onClick = {this.controller.onSelect}
+
             />
           </div>
         );
@@ -33,7 +33,7 @@ class View extends UpdatableView {
       content =
         <div>
           <div className="page-top-header row">
-            Request History
+            Entitlement Request
           </div>
           <div className="requests-wrapper">
             {requestPanels}
@@ -42,7 +42,7 @@ class View extends UpdatableView {
     }
 
     return (
-      <div id="modification-request-history-container">
+      <div id="entitlement-modification-review-container">
         {content}
       </div>
     );
