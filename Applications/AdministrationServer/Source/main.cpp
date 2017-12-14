@@ -194,8 +194,13 @@ int main(int argc, const char** argv) {
     cerr << "Error parsing section 'entitlements': " << e.what() << endl;
     return -1;
   }
+  auto accountSource =
+    [&] (unsigned int id) {
+      return serviceLocatorClient->LoadDirectoryEntry(id);
+    };
   MySqlAdministrationDataStore mySqlDataStore{mySqlConfig.m_address,
-    mySqlConfig.m_schema, mySqlConfig.m_username, mySqlConfig.m_password};
+    mySqlConfig.m_schema, mySqlConfig.m_username, mySqlConfig.m_password,
+    accountSource};
   AdministrationServletContainer administrationServer{
     Initialize(serviceLocatorClient.Get(),
     Initialize(serviceLocatorClient.Get(), entitlements,
