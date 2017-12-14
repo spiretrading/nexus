@@ -595,14 +595,58 @@ namespace std {
   template<>
   class numeric_limits<Nexus::Quantity> {
     public:
-      static Nexus::Quantity infinity() {
-        return Nexus::Quantity::FromRepresentation(
-          numeric_limits<boost::float64_t>::infinity());
-      }
+      static constexpr bool is_specialized = true;
+      static constexpr bool is_signed =
+        numeric_limits<boost::float64_t>::is_signed;
+      static constexpr bool is_integer =
+        numeric_limits<boost::float64_t>::is_integer;
+      static constexpr bool is_exact =
+        numeric_limits<boost::float64_t>::is_exact;
+      static constexpr bool has_infinity =
+        numeric_limits<boost::float64_t>::has_infinity;
+      static constexpr bool has_quiet_NaN =
+        numeric_limits<boost::float64_t>::has_quiet_NaN;
+      static constexpr bool has_signaling_NaN =
+        numeric_limits<boost::float64_t>::has_signaling_NaN;
+      static constexpr bool has_denorm =
+        numeric_limits<boost::float64_t>::has_denorm;
+      static constexpr bool has_denorm_loss =
+        numeric_limits<boost::float64_t>::has_denorm_loss;
+      static constexpr std::float_round_style round_style =
+        numeric_limits<boost::float64_t>::round_style;
+      static constexpr bool is_iec559 =
+        numeric_limits<boost::float64_t>::is_iec559;
+      static constexpr bool is_bounded =
+        numeric_limits<boost::float64_t>::is_bounded;
+      static constexpr bool is_modulo =
+        numeric_limits<boost::float64_t>::is_modulo;
+      static constexpr int digits = numeric_limits<boost::float64_t>::digits;
+      static constexpr int digits10 =
+        numeric_limits<boost::float64_t>::digits10;
+      static constexpr int max_digits10 =
+        numeric_limits<boost::float64_t>::max_digits10;
+      static constexpr int radix = numeric_limits<boost::float64_t>::radix;
+      static constexpr int min_exponent =
+        numeric_limits<boost::float64_t>::min_exponent;
+      static constexpr int min_exponent10 =
+        numeric_limits<boost::float64_t>::min_exponent10;
+      static constexpr int max_exponent =
+        numeric_limits<boost::float64_t>::max_exponent;
+      static constexpr int max_exponent10 =
+        numeric_limits<boost::float64_t>::max_exponent10;
+      static constexpr bool traps =
+        numeric_limits<boost::float64_t>::traps;
+      static constexpr bool tinyness_before =
+        numeric_limits<boost::float64_t>::tinyness_before;
 
       static Nexus::Quantity min() {
         return Nexus::Quantity::FromRepresentation(
           numeric_limits<boost::float64_t>::min());
+      }
+
+      static Nexus::Quantity lowest() {
+        return Nexus::Quantity::FromRepresentation(
+          numeric_limits<boost::float64_t>::lowest());
       }
 
       static Nexus::Quantity max() {
@@ -610,9 +654,34 @@ namespace std {
           numeric_limits<boost::float64_t>::max());
       }
 
+      static Nexus::Quantity epsilon() {
+        return Nexus::Quantity::FromRepresentation(
+          numeric_limits<boost::float64_t>::epsilon());
+      }
+
+      static Nexus::Quantity round_error() {
+        return Nexus::Quantity::FromRepresentation(
+          numeric_limits<boost::float64_t>::round_error());
+      }
+
+      static Nexus::Quantity infinity() {
+        return Nexus::Quantity::FromRepresentation(
+          numeric_limits<boost::float64_t>::infinity());
+      }
+
       static Nexus::Quantity quiet_NaN() {
         return Nexus::Quantity::FromRepresentation(
           numeric_limits<boost::float64_t>::quiet_NaN());
+      }
+
+      static Nexus::Quantity signaling_NaN() {
+        return Nexus::Quantity::FromRepresentation(
+          numeric_limits<boost::float64_t>::signaling_NaN());
+      }
+
+      static Nexus::Quantity denorm_min() {
+        return Nexus::Quantity::FromRepresentation(
+          numeric_limits<boost::float64_t>::denorm_min());
       }
   };
 }
