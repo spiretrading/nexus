@@ -25,7 +25,7 @@ namespace Details {
     void operator ()(const Tag& tag, Beam::Out<Message> message) const {
       if(tag.GetKey() == FIX::FIELD::PegDifference) {
         Money value = boost::get<Money>(tag.GetValue());
-        FIX::PegDifference pegDifference(ToDouble(value));
+        FIX::PegDifference pegDifference(static_cast<double>(value));
         message->set(pegDifference);
       }
     }
