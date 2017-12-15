@@ -446,6 +446,9 @@ namespace AdministrationService {
       AdministrationDataStoreType>::LoadAccountRoles(
       const Beam::ServiceLocator::DirectoryEntry& parent,
       const Beam::ServiceLocator::DirectoryEntry& child) {
+    if(parent == child) {
+      return LoadAccountRoles(child);
+    }
     AccountRoles roles;
     if(CheckAdministrator(parent)) {
       roles.Set(AccountRole::ADMINISTRATOR);

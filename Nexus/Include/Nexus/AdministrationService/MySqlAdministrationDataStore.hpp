@@ -6,6 +6,7 @@
 #include <Beam/MySql/PosixTimeToMySqlDateTime.hpp>
 #include <Beam/Network/IpAddress.hpp>
 #include <Beam/Threading/Mutex.hpp>
+#include <Beam/Utilities/KeyValueCache.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
@@ -22,16 +23,24 @@ namespace AdministrationService {
   class MySqlAdministrationDataStore : public AdministrationDataStore {
     public:
 
+      //! The function used to load DirectoryEntries.
+      using DirectoryEntrySourceFunction = Beam::KeyValueCache<unsigned int,
+        Beam::ServiceLocator::DirectoryEntry,
+        Beam::Threading::Mutex>::SourceFunction;
+
       //! Constructs a MySqlAdministrationDataStore.
       /*!
         \param address The IP address of the MySQL database to connect to.
         \param schema The name of the schema.
         \param username The username to connect as.
         \param password The password associated with the <i>username</i>.
+        \param directoryEntrySourceFunction The function used to load
+               DirectoryEntries.
       */
       MySqlAdministrationDataStore(const Beam::Network::IpAddress& address,
         const std::string& schema, const std::string& username,
-        const std::string& password);
+        const std::string& password,
+        const DirectoryEntrySourceFunction& directoryEntrySourceFunction);
 
       virtual ~MySqlAdministrationDataStore() override;
 
@@ -110,6 +119,8 @@ namespace AdministrationService {
       std::string m_schema;
       std::string m_username;
       std::string m_password;
+      Beam::KeyValueCache<unsigned int, Beam::ServiceLocator::DirectoryEntry,
+        Beam::Threading::Mutex> m_directoryEntries;
       mysqlpp::Connection m_databaseConnection;
       Beam::IO::OpenState m_openState;
 
@@ -118,11 +129,13 @@ namespace AdministrationService {
 
   inline MySqlAdministrationDataStore::MySqlAdministrationDataStore(
       const Beam::Network::IpAddress& address, const std::string& schema,
-      const std::string& username, const std::string& password)
+      const std::string& username, const std::string& password,
+      const DirectoryEntrySourceFunction& directoryEntrySourceFunction)
       : m_address{address},
         m_schema{schema},
         m_username{username},
         m_password{password},
+        m_directoryEntries{directoryEntrySourceFunction},
         m_databaseConnection{false} {}
 
   inline MySqlAdministrationDataStore::~MySqlAdministrationDataStore() {
@@ -352,8 +365,8 @@ namespace AdministrationService {
     auto& row = rows.front();
     AccountModificationRequest result{row.id,
       static_cast<AccountModificationRequest::Type>(row.type),
-      Beam::ServiceLocator::DirectoryEntry::MakeAccount(row.account),
-      Beam::ServiceLocator::DirectoryEntry::MakeAccount(row.submission_account),
+      m_directoryEntries.Load(row.account),
+      m_directoryEntries.Load(row.submission_account),
       Beam::MySql::FromMySqlTimestamp(row.timestamp)};
     return result;
   }
@@ -413,8 +426,7 @@ namespace AdministrationService {
     }
     std::vector<Beam::ServiceLocator::DirectoryEntry> rows;
     for(auto& row : result) {
-      rows.push_back(Beam::ServiceLocator::DirectoryEntry::MakeDirectory(
-        row[0]));
+      rows.push_back(m_directoryEntries.Load(row[0]));
     }
     return EntitlementModification{std::move(rows)};
   }
@@ -489,8 +501,8 @@ namespace AdministrationService {
     auto& row = rows.front();
     AccountModificationRequest::Update result{
       static_cast<AccountModificationRequest::Status>(row.status),
-      Beam::ServiceLocator::DirectoryEntry::MakeAccount(row.account),
-      row.sequence_number, Beam::MySql::FromMySqlTimestamp(row.timestamp)};
+      m_directoryEntries.Load(row.account), row.sequence_number,
+      Beam::MySql::FromMySqlTimestamp(row.timestamp)};
     return result;
   }
 
@@ -541,14 +553,12 @@ namespace AdministrationService {
     }
     std::vector<Message::Body> bodies;
     for(auto& bodyRow : bodyRows) {
-      bodies.push_back(Message::Body{
-        std::move(bodyRow.content_type), std::move(bodyRow.message)});
+      bodies.push_back(Message::Body{std::move(bodyRow.content_type),
+        std::move(bodyRow.message)});
     }
     auto& messageRow = messageRows.front();
-    Message message{id,
-      Beam::ServiceLocator::DirectoryEntry::MakeAccount(messageRow.account),
-      Beam::MySql::FromMySqlTimestamp(messageRow.timestamp),
-      std::move(bodies)};
+    Message message{id, m_directoryEntries.Load(messageRow.account),
+      Beam::MySql::FromMySqlTimestamp(messageRow.timestamp), std::move(bodies)};
     return message;
   }
 
