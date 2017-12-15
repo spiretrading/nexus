@@ -312,6 +312,9 @@ namespace Details {
   inline std::string Money::ToString() const {
     auto fraction = m_value - Floor(m_value, 0);
     auto s = Beam::ToString(m_value);
+    if(fraction == 0) {
+      return s + ".00";
+    }
     if(s.size() > 1 && *(s.end() - 1) == '.') {
       return s + "00";
     } else if(s.size() > 2 && *(s.end() - 2) == '.') {

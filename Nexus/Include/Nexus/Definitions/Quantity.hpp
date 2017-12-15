@@ -211,9 +211,15 @@ namespace Nexus {
   };
 
   inline std::ostream& operator <<(std::ostream& out, Quantity value) {
+    auto unscaledValue = value.m_value / Quantity::MULTIPLIER;
+    boost::float64_t integerPart;
+    auto fraction = std::modf(unscaledValue, &integerPart);
+    if(fraction == 0) {
+      return out << static_cast<std::int64_t>(integerPart);
+    }
     boost::io::ios_flags_saver ifs{out};
     out << std::fixed;
-    out << (value.m_value / Quantity::MULTIPLIER);
+    out << unscaledValue;
     return out;
   }
 
