@@ -72,12 +72,6 @@ namespace MarketDataService {
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
-      char ParseChar(Beam::Out<const char*> cursor);
-      std::int64_t ParseNumeric(int length, Beam::Out<const char*> cursor);
-      std::string ParseAlphanumeric(int length,
-        Beam::Out<const char*> cursor);
-      Side ParseSide(Beam::Out<const char*> cursor);
-      Money ParsePrice(bool isLongForm, Beam::Out<const char*> cursor);
       boost::posix_time::ptime ParseTimestamp(
         boost::posix_time::time_duration timestamp);
       void HandleAddOrderMessage(bool isLongForm, const ChiaMessage& message);
@@ -150,103 +144,6 @@ namespace MarketDataService {
   }
 
   template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  char ChiaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      ParseChar(Beam::Out<const char*> cursor) {
-    auto value = **cursor;
-    ++*cursor;
-    return value;
-  }
-
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  std::int64_t ChiaMarketDataFeedClient<MarketDataFeedClientType,
-      ProtocolClientType>::ParseNumeric(int length,
-      Beam::Out<const char*> cursor) {
-    while(**cursor == ' ' && length > 0) {
-      ++*cursor;
-      --length;
-    }
-    std::int64_t value = 0;
-    while(length > 0) {
-      value = value * 10 + (**cursor - '0');
-      --length;
-      ++*cursor;
-    }
-    return value;
-  }
-
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  std::string ChiaMarketDataFeedClient<MarketDataFeedClientType,
-      ProtocolClientType>::ParseAlphanumeric(int length,
-      Beam::Out<const char*> cursor) {
-    std::string value;
-    for(auto i = 0; i < length; ++i) {
-      if((*cursor)[i] == ' ') {
-        break;
-      }
-      value += (*cursor)[i];
-    }
-    *cursor += length;
-    return value;
-  }
-
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  Side ChiaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      ParseSide(Beam::Out<const char*> cursor) {
-    auto value = ParseChar(Beam::Store(cursor));
-    auto side =
-      [&] {
-        if(value == 'B') {
-          return Side::BID;
-        } else if(value == 'S') {
-          return Side::ASK;
-        }
-        return Side::NONE;
-      }();
-    return side;
-  }
-
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  Money ChiaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      ParsePrice(bool isLongForm, Beam::Out<const char*> cursor) {
-    auto PowerOfTen =
-      [] (std::uint16_t exponent) {
-        std::uint64_t result = 1;
-        for(auto i = std::uint16_t{0}; i < exponent; ++i) {
-          result *= 10;
-        }
-        return result;
-      };
-    auto value = 0;
-    auto length =
-      [&] {
-        if(isLongForm) {
-          return 19;
-        }
-        return 10;
-      }();
-    auto remainingLength = length;
-    while(**cursor == ' ' && remainingLength > 0) {
-      ++*cursor;
-      --remainingLength;
-    }
-    while(remainingLength > 0) {
-      value = 10 * value + (**cursor - '0');
-      ++*cursor;
-      --remainingLength;
-    }
-    auto decimalPlaces =
-      [&] {
-        if(isLongForm) {
-          return 7;
-        }
-        return 4;
-      }();
-    auto multiplier = Quantity{1} / PowerOfTen(decimalPlaces);
-    auto price = Money{multiplier * value};
-    return price;
-  }
-
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
   boost::posix_time::ptime ChiaMarketDataFeedClient<MarketDataFeedClientType,
       ProtocolClientType>::ParseTimestamp(
       boost::posix_time::time_duration timestamp) {
@@ -258,19 +155,19 @@ namespace MarketDataService {
       HandleAddOrderMessage(bool isLongForm, const ChiaMessage& message) {
     auto cursor = message.m_data;
     auto orderReference = boost::lexical_cast<std::string>(
-      ParseNumeric(9, Beam::Store(cursor)));
-    auto side = ParseSide(Beam::Store(cursor));
+      ChiaMessage::ParseNumeric(9, Beam::Store(cursor)));
+    auto side = ChiaMessage::ParseSide(Beam::Store(cursor));
     auto shares =
       [&] {
         if(isLongForm) {
-          return ParseNumeric(10, Beam::Store(cursor));
+          return ChiaMessage::ParseNumeric(10, Beam::Store(cursor));
         } else {
-          return ParseNumeric(6, Beam::Store(cursor));
+          return ChiaMessage::ParseNumeric(6, Beam::Store(cursor));
         }
       }();
-    auto symbol = ParseAlphanumeric(6, Beam::Store(cursor));
-    auto price = ParsePrice(isLongForm, Beam::Store(cursor));
-    auto display = ParseChar(Beam::Store(cursor));
+    auto symbol = ChiaMessage::ParseAlphanumeric(6, Beam::Store(cursor));
+    auto price = ChiaMessage::ParsePrice(isLongForm, Beam::Store(cursor));
+    auto display = ChiaMessage::ParseChar(Beam::Store(cursor));
     if(display != 'Y') {
       return;
     }
@@ -294,18 +191,18 @@ namespace MarketDataService {
       HandleOrderExecutionMessage(bool isLongForm, const ChiaMessage& message) {
     auto cursor = message.m_data;
     auto orderReference = boost::lexical_cast<std::string>(
-      ParseNumeric(9, Beam::Store(cursor)));
+      ChiaMessage::ParseNumeric(9, Beam::Store(cursor)));
     auto shares =
       [&] {
         if(isLongForm) {
-          return ParseNumeric(10, Beam::Store(cursor));
+          return ChiaMessage::ParseNumeric(10, Beam::Store(cursor));
         } else {
-          return ParseNumeric(6, Beam::Store(cursor));
+          return ChiaMessage::ParseNumeric(6, Beam::Store(cursor));
         }
       }();
-    auto tradeReference = ParseNumeric(9, Beam::Store(cursor));
+    auto tradeReference = ChiaMessage::ParseNumeric(9, Beam::Store(cursor));
     auto contraOrderReference = boost::lexical_cast<std::string>(
-      ParseNumeric(9, Beam::Store(cursor)));
+      ChiaMessage::ParseNumeric(9, Beam::Store(cursor)));
     auto timestamp = ParseTimestamp(message.m_timestamp);
     m_marketDataFeedClient->OffsetOrderSize(orderReference, -shares, timestamp);
     if(m_config.m_isTimeAndSaleFeed) {
@@ -333,7 +230,7 @@ namespace MarketDataService {
       HandleOrderCancelMessage(bool isLongForm, const ChiaMessage& message) {
     auto cursor = message.m_data;
     auto orderReference = boost::lexical_cast<std::string>(
-      ParseNumeric(9, Beam::Store(cursor)));
+      ChiaMessage::ParseNumeric(9, Beam::Store(cursor)));
     auto timestamp = ParseTimestamp(message.m_timestamp);
     m_marketDataFeedClient->DeleteOrder(orderReference, timestamp);
     if(m_config.m_isLoggingMessages) {
@@ -348,23 +245,23 @@ namespace MarketDataService {
       HandleTradeMessage(bool isLongForm, const ChiaMessage& message) {
     auto cursor = message.m_data;
     auto orderReference = boost::lexical_cast<std::string>(
-      ParseNumeric(9, Beam::Store(cursor)));
-    auto sideIndicator = ParseChar(Beam::Store(cursor));
+      ChiaMessage::ParseNumeric(9, Beam::Store(cursor)));
+    auto sideIndicator = ChiaMessage::ParseChar(Beam::Store(cursor));
     auto shares =
       [&] {
         if(isLongForm) {
-          return ParseNumeric(10, Beam::Store(cursor));
+          return ChiaMessage::ParseNumeric(10, Beam::Store(cursor));
         } else {
-          return ParseNumeric(6, Beam::Store(cursor));
+          return ChiaMessage::ParseNumeric(6, Beam::Store(cursor));
         }
       }();
-    auto symbol = ParseAlphanumeric(6, Beam::Store(cursor));
-    auto price = ParsePrice(isLongForm, Beam::Store(cursor));
+    auto symbol = ChiaMessage::ParseAlphanumeric(6, Beam::Store(cursor));
+    auto price = ChiaMessage::ParsePrice(isLongForm, Beam::Store(cursor));
     auto tradeReference = boost::lexical_cast<std::string>(
-      ParseNumeric(9, Beam::Store(cursor)));
+      ChiaMessage::ParseNumeric(9, Beam::Store(cursor)));
     auto contraOrderReference = boost::lexical_cast<std::string>(
-      ParseNumeric(9, Beam::Store(cursor)));
-    auto tradeType = ParseChar(Beam::Store(cursor));
+      ChiaMessage::ParseNumeric(9, Beam::Store(cursor)));
+    auto tradeType = ChiaMessage::ParseChar(Beam::Store(cursor));
     auto timestamp = ParseTimestamp(message.m_timestamp);
     Security security(symbol, m_config.m_primaryMarket, m_config.m_country);
     TimeAndSale::Condition condition;
@@ -406,24 +303,10 @@ namespace MarketDataService {
   template<typename MarketDataFeedClientType, typename ProtocolClientType>
   void ChiaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
       ReadLoop() {
-    std::uint32_t lastSequenceNumber = -1;
     while(true) {
       try {
-        std::uint32_t sequenceNumber;
-        auto protocolMessage =
-          m_protocolClient->Read(Beam::Store(sequenceNumber));
-        if(lastSequenceNumber != -1 && sequenceNumber <= lastSequenceNumber) {
-          continue;
-        }
-        if(lastSequenceNumber != -1 &&
-            sequenceNumber > lastSequenceNumber + 1) {
-          std::cout << "Packets dropped: " << (lastSequenceNumber + 1) <<
-            " - " << (sequenceNumber - 1) << std::endl;
-        }
-        auto message = ChiaMessage::Parse(protocolMessage.m_data,
-          protocolMessage.m_length);
+        auto message = m_protocolClient->Read();
         Dispatch(message);
-        lastSequenceNumber = sequenceNumber;
       } catch(const Beam::IO::EndOfFileException&) {
         break;
       }
