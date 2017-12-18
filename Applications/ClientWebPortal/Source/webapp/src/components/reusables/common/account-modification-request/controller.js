@@ -19,7 +19,8 @@ class Controller {
       this.componentModel.request.id,
       this.componentModel.request.requestType,
       this.componentModel.request.submissionAccount,
-      this.componentModel.request.account
+      this.componentModel.request.account,
+      this.componentModel.update.status
     );
   }
 }

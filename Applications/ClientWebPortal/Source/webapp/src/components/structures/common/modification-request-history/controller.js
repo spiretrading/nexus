@@ -63,9 +63,6 @@ class Controller {
     ]).then(results => {
       let requests = [];
       for (let i=0; i<ids.length; i++) {
-        //TODO: temporary code to be removed
-        results[1][i].status = 1; // temporarily setting status to PENDING
-
         requests.push({
           request: results[0][i],
           update: results[1][i]
@@ -97,14 +94,15 @@ class Controller {
     return this.requiredDataLoaded;
   }
 
-  onSelect(id, requestType, requesterAccount, changeAccount) {
+  onSelect(id, requestType, requesterAccount, changeAccount, requestStatus) {
     if (requestType == AccountModificationRequestType.ENTITLEMENTS) {
       browserHistory.push({
         pathname: '/entitlement-modification-review',
         state: {
           id: id,
           requesterAccount: requesterAccount,
-          changeAccount: changeAccount
+          changeAccount: changeAccount,
+          requestStatus: requestStatus
         }
       });
     }

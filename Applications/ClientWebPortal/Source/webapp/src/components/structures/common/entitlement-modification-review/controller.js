@@ -1,10 +1,15 @@
 import {
-  AdministrationClient
+  AdministrationClient,
+  DirectoryEntry,
+  MessageBody,
+  Message
 } from 'spire-client'
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
 import definitionsService from 'services/definitions';
 import HashMap from 'hashmap';
+import moment from 'moment';
+import {browserHistory} from 'react-router';
 
 class Controller {
   constructor(componentModel) {
@@ -12,7 +17,10 @@ class Controller {
     this.adminClient = new AdministrationClient();
     this.requiredDataLoaded = false;
 
-    // this.loadModificationRequests = this.loadModificationRequests.bind(this);
+    this.onCommentsInput = this.onCommentsInput.bind(this);
+    this.approveRequest = this.approveRequest.bind(this);
+    this.rejectRequest = this.rejectRequest.bind(this);
+    this.navigateBack = this.navigateBack.bind(this);
   }
 
   getView() {
@@ -33,7 +41,17 @@ class Controller {
       Config.WHOLE_PAGE_PRELOADER_HEIGHT
     ).then(responses => {
       this.componentModel.changes = this.diffEntitlements(responses[0], responses[1].entitlements);
-      this.componentModel.entitlements = definitionsService.getEntitlements();
+
+      let entitlements = definitionsService.getEntitlements();
+      this.componentModel.entitlements = new HashMap();
+      for (let i=0; i<entitlements.length; i++) {
+        this.componentModel.entitlements.set(
+          entitlements[i].group_entry.id,
+          entitlements[i]
+        );
+      }
+
+      this.componentModel.comments = responses[2];
       this.requiredDataLoaded = true;
       this.view.update(this.componentModel);
     });
@@ -41,6 +59,36 @@ class Controller {
 
   isRequiredDataLoaded() {
     return this.requiredDataLoaded;
+  }
+
+  onCommentsInput(comments) {
+    this.componentModel.newComments = comments;
+  }
+
+  approveRequest() {
+    let messageBody = new MessageBody('text/plain', this.componentModel.newComments || "");
+    let timestamp = moment.utc().format('YYYYMMDDTHHmmss');
+    this.adminClient.approveAccountModificationRequest(
+      this.componentModel.modificationId,
+      new Message(-1, DirectoryEntry.DEFAULT, timestamp, [messageBody])
+    ).then(() => {
+      browserHistory.push('/modification-request-history');
+    });
+  }
+
+  rejectRequest() {
+    let messageBody = new MessageBody('text/plain', this.componentModel.newComments || "");
+    let timestamp = moment.utc().format('YYYYMMDDTHHmmss');
+    this.adminClient.rejectAccountModificationRequest(
+      this.componentModel.modificationId,
+      new Message(-1, DirectoryEntry.DEFAULT, timestamp, [messageBody])
+    ).then(() => {
+      browserHistory.push('/modification-request-history');
+    });
+  }
+
+  navigateBack() {
+    browserHistory.goBack();
   }
 
   /** @private */
@@ -51,10 +99,21 @@ class Controller {
     let loadEntitlementModification = this.adminClient.loadEntitlementModification(
       this.componentModel.modificationId
     );
+    let loadComments = this.adminClient.loadMessageIds(this.componentModel.modificationId)
+      .then(messageIds => {
+        let loadMessages = [];
+        for (let i=0; i<messageIds.length; i++) {
+          loadMessages.push(
+            this.adminClient.loadMessage(messageIds[i])
+          );
+        }
+        return Promise.all(loadMessages);
+      });
 
     return Promise.all([
       loadAccountEntitlements,
-      loadEntitlementModification
+      loadEntitlementModification,
+      loadComments
     ]);
   }
 
@@ -91,6 +150,8 @@ class Controller {
         });
       }
     }
+
+    return changes;
   }
 }
 

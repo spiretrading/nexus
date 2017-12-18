@@ -257,6 +257,54 @@ class Admin {
       })
       .catch(this.logErrorAndThrow);
   }
+
+  loadMessageIds(requestId) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_message_ids';
+    let payload = {
+      id: requestId
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadMessage(messageId) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_message';
+    let payload = {
+      id: messageId
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .catch(this.logErrorAndThrow);
+  }
+
+  approveAccountModificationRequest(requestId, message) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/approve_account_modification_request';
+    let payload = {
+      id: requestId,
+      comment: message.toData()
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .then(response => {
+        return AccModReqUpdate.fromData(response);
+      })
+      .catch(this.logErrorAndThrow);
+  }
+
+  rejectAccountModificationRequest(requestId, message) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/reject_account_modification_request';
+    let payload = {
+      id: requestId,
+      comment: message.toData()
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .then(response => {
+        return AccModReqUpdate.fromData(response);
+      })
+      .catch(this.logErrorAndThrow);
+  }
 }
 
 export default Admin;
