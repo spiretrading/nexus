@@ -6,6 +6,7 @@ import DirectoryEntry from '../../definitions/directory-entry';
 import AccountModificationRequest from '../../definitions/account-modification-request';
 import AccModReqUpdate from '../../definitions/account-modification-request-update';
 import EntitlementModification from '../../definitions/entitlement-modification';
+import Message from '../../definitions/message';
 
 /** Spire admin client class */
 class Admin {
@@ -233,7 +234,7 @@ class Admin {
       .catch(this.logErrorAndThrow);
   }
 
-  loadAccountModificationRequests(directoryEntry, startId, maxCount) {
+  loadAccountModificationRequestIds(directoryEntry, startId, maxCount) {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_account_modification_request_ids';
     let payload = {
       account: directoryEntry.toData(),
@@ -275,6 +276,9 @@ class Admin {
     };
 
     return httpConnectionManager.send(apiPath, payload, true)
+      .then(response => {
+        return Message.fromData(response);
+      })
       .catch(this.logErrorAndThrow);
   }
 

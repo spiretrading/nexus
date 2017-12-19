@@ -32,7 +32,7 @@ class Controller {
     if (userService.isAdmin() || userService.isManager()) {
       loadRequestIds = this.adminClient.loadManagedAccountModificationRequests(directoryEntry, -1, 10);
     } else {
-      loadRequestIds = this.adminClient.loadAccountModificationRequests(directoryEntry, -1, 10);
+      loadRequestIds = this.adminClient.loadAccountModificationRequestIds(directoryEntry, -1, 10);
     }
 
     loadRequestIds = loadRequestIds.then(this.loadModificationRequests);
