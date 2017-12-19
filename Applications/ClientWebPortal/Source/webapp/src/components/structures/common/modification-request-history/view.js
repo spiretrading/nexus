@@ -24,7 +24,9 @@ class View extends UpdatableView {
           <div key={i} className="request-wrapper">
             <AccModRequest
               request = {this.componentModel.accountModificationRequests[i].request}
-              update = {this.componentModel.accountModificationRequests[i].update} />
+              update = {this.componentModel.accountModificationRequests[i].update}
+              onClick = {this.controller.onSelect}
+            />
           </div>
         );
       }

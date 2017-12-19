@@ -73,6 +73,22 @@
     }
   }
 
+  &.green-panel {
+    .header {
+      padding-left: 20px;
+      padding-right: 20px;
+      background: $lightGreen;
+    }
+  }
+
+  &.red-panel {
+    .header {
+      padding-left: 20px;
+      padding-right: 20px;
+      background: $lightRed;
+    }
+  }
+
   &.expanded {
     .content-slide-wrapper {
       border-top: 1px solid $lightGrey;
