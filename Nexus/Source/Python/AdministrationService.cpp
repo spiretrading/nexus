@@ -61,8 +61,23 @@ namespace {
     }
 
     virtual std::vector<Beam::ServiceLocator::DirectoryEntry>
-        LoadAccountsByRoles(AccountRoles roles) {
+        LoadAccountsByRoles(AccountRoles roles) override final {
       return get_override("load_accounts_by_roles")(roles);
+    }
+
+    virtual Beam::ServiceLocator::DirectoryEntry
+        LoadAdministratorsRootEntry() override final {
+      return get_override("load_administrators_root_entry")();
+    }
+
+    virtual Beam::ServiceLocator::DirectoryEntry
+        LoadServicesRootEntry() override final {
+      return get_override("load_services_root_entry")();
+    }
+
+    virtual Beam::ServiceLocator::DirectoryEntry
+        LoadTradingGroupsRootEntry() override final {
+      return get_override("load_trading_groups_root_entry")();
     }
 
     virtual bool CheckAdministrator(
@@ -346,6 +361,12 @@ void Nexus::Python::ExportAdministrationClient() {
       pure_virtual(&VirtualAdministrationClient::LoadOrganizationName))
     .def("load_accounts_by_roles",
       pure_virtual(&VirtualAdministrationClient::LoadAccountsByRoles))
+    .def("load_administrators_root_entry",
+      pure_virtual(&VirtualAdministrationClient::LoadAdministratorsRootEntry))
+    .def("load_services_root_entry",
+      pure_virtual(&VirtualAdministrationClient::LoadServicesRootEntry))
+    .def("load_trading_groups_root_entry",
+      pure_virtual(&VirtualAdministrationClient::LoadTradingGroupsRootEntry))
     .def("check_administrator",
       pure_virtual(&VirtualAdministrationClient::CheckAdministrator))
     .def("load_account_roles", pure_virtual(

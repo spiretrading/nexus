@@ -44,6 +44,42 @@ namespace AdministrationService {
       std::vector<Beam::ServiceLocator::DirectoryEntry>, AccountRoles, roles),
     //! \endcond
 
+    /*! \interface Nexus::AdministrationServices::LoadAdministratorsRootEntryService
+        \brief Loads the DirectoryEntry containing all administrators.
+        \param dummy <code>int</code> Unused.
+        \return <code>Beam::ServiceLocator::DirectoryEntry</code> The
+                DirectoryEntry containing all administrators.
+    */
+    //! \cond
+    (LoadAdministratorsRootEntryService,
+      "Nexus.AdministrationServices.LoadAdministratorsRootEntryService",
+      Beam::ServiceLocator::DirectoryEntry, int, dummy),
+    //! \endcond
+
+    /*! \interface Nexus::AdministrationServices::LoadServicesRootEntryService
+        \brief Loads the DirectoryEntry containing all service accounts.
+        \param dummy <code>int</code> Unused.
+        \return <code>Beam::ServiceLocator::DirectoryEntry</code> The
+                DirectoryEntry containing all service accounts.
+    */
+    //! \cond
+    (LoadServicesRootEntryService,
+      "Nexus.AdministrationServices.LoadServicesRootEntryService",
+      Beam::ServiceLocator::DirectoryEntry, int, dummy),
+    //! \endcond
+
+    /*! \interface Nexus::AdministrationServices::LoadTradingGroupsRootEntryService
+        \brief Loads the DirectoryEntry containing all trading groups.
+        \param dummy <code>int</code> Unused.
+        \return <code>Beam::ServiceLocator::DirectoryEntry</code> The
+                DirectoryEntry containing all trading groups.
+    */
+    //! \cond
+    (LoadTradingGroupsRootEntryService,
+      "Nexus.AdministrationServices.LoadTradingGroupsRootEntryService",
+      Beam::ServiceLocator::DirectoryEntry, int, dummy),
+    //! \endcond
+
     /*! \interface Nexus::AdministrationServices::CheckAdministratorService
         \brief Tests if an account is an administrator.
         \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The

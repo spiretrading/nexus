@@ -32,6 +32,15 @@ namespace AdministrationService {
       virtual std::vector<Beam::ServiceLocator::DirectoryEntry>
         LoadAccountsByRoles(AccountRoles roles) override final;
 
+      virtual Beam::ServiceLocator::DirectoryEntry
+        LoadAdministratorsRootEntry() override final;
+
+      virtual Beam::ServiceLocator::DirectoryEntry
+        LoadServicesRootEntry() override final;
+
+      virtual Beam::ServiceLocator::DirectoryEntry
+        LoadTradingGroupsRootEntry() override final;
+
       virtual bool CheckAdministrator(
         const Beam::ServiceLocator::DirectoryEntry& account) override final;
 
@@ -186,6 +195,30 @@ namespace AdministrationService {
     Beam::Python::GilRelease gil;
     boost::lock_guard<Beam::Python::GilRelease> lock{gil};
     return m_client->LoadAccountsByRoles(roles);
+  }
+
+  template<typename ClientType>
+  Beam::ServiceLocator::DirectoryEntry ToPythonAdministrationClient<
+      ClientType>::LoadAdministratorsRootEntry() {
+    Beam::Python::GilRelease gil;
+    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    return m_client->LoadAdministratorsRootEntry();
+  }
+
+  template<typename ClientType>
+  Beam::ServiceLocator::DirectoryEntry ToPythonAdministrationClient<
+      ClientType>::LoadServicesRootEntry() {
+    Beam::Python::GilRelease gil;
+    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    return m_client->LoadServicesRootEntry();
+  }
+
+  template<typename ClientType>
+  Beam::ServiceLocator::DirectoryEntry ToPythonAdministrationClient<
+      ClientType>::LoadTradingGroupsRootEntry() {
+    Beam::Python::GilRelease gil;
+    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    return m_client->LoadTradingGroupsRootEntry();
   }
 
   template<typename ClientType>

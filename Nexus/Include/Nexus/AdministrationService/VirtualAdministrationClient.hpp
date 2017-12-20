@@ -33,6 +33,14 @@ namespace AdministrationService {
       virtual std::vector<Beam::ServiceLocator::DirectoryEntry>
         LoadAccountsByRoles(AccountRoles roles) = 0;
 
+      virtual Beam::ServiceLocator::DirectoryEntry
+        LoadAdministratorsRootEntry() = 0;
+
+      virtual Beam::ServiceLocator::DirectoryEntry LoadServicesRootEntry() = 0;
+
+      virtual Beam::ServiceLocator::DirectoryEntry
+        LoadTradingGroupsRootEntry() = 0;
+
       virtual bool CheckAdministrator(
         const Beam::ServiceLocator::DirectoryEntry& account) = 0;
 
@@ -172,6 +180,15 @@ namespace AdministrationService {
 
       virtual std::vector<Beam::ServiceLocator::DirectoryEntry>
         LoadAccountsByRoles(AccountRoles roles) override;
+
+      virtual Beam::ServiceLocator::DirectoryEntry
+        LoadAdministratorsRootEntry() override;
+
+      virtual Beam::ServiceLocator::DirectoryEntry
+        LoadServicesRootEntry() override;
+
+      virtual Beam::ServiceLocator::DirectoryEntry
+        LoadTradingGroupsRootEntry() override;
 
       virtual bool CheckAdministrator(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
@@ -318,6 +335,24 @@ namespace AdministrationService {
       WrapperAdministrationClient<ClientType>::LoadAccountsByRoles(
       AccountRoles roles) {
     return m_client->LoadAccountsByRoles(roles);
+  }
+
+  template<typename ClientType>
+  Beam::ServiceLocator::DirectoryEntry WrapperAdministrationClient<ClientType>::
+      LoadAdministratorsRootEntry() {
+    return m_client->LoadAdministratorsRootEntry();
+  }
+
+  template<typename ClientType>
+  Beam::ServiceLocator::DirectoryEntry WrapperAdministrationClient<ClientType>::
+      LoadServicesRootEntry() {
+    return m_client->LoadServicesRootEntry();
+  }
+
+  template<typename ClientType>
+  Beam::ServiceLocator::DirectoryEntry WrapperAdministrationClient<ClientType>::
+      LoadTradingGroupsRootEntry() {
+    return m_client->LoadTradingGroupsRootEntry();
   }
 
   template<typename ClientType>

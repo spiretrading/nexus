@@ -124,6 +124,12 @@ namespace AdministrationService {
         int dummy);
       std::vector<Beam::ServiceLocator::DirectoryEntry> OnLoadAccountsByRoles(
         ServiceProtocolClient& client, AccountRoles roles);
+      Beam::ServiceLocator::DirectoryEntry OnLoadAdministratorsRootEntry(
+        ServiceProtocolClient& client, int dummy);
+      Beam::ServiceLocator::DirectoryEntry OnLoadServicesRootEntry(
+        ServiceProtocolClient& client, int dummy);
+      Beam::ServiceLocator::DirectoryEntry OnLoadTradingGroupsRootEntry(
+        ServiceProtocolClient& client, int dummy);
       bool OnCheckAdministratorRequest(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account);
       AccountRoles OnLoadAccountRolesRequest(ServiceProtocolClient& client,
@@ -247,6 +253,15 @@ namespace AdministrationService {
       std::placeholders::_1, std::placeholders::_2));
     LoadAccountsByRolesService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnLoadAccountsByRoles, this,
+      std::placeholders::_1, std::placeholders::_2));
+    LoadAdministratorsRootEntryService::AddSlot(Store(slots), std::bind(
+      &AdministrationServlet::OnLoadAdministratorsRootEntry, this,
+      std::placeholders::_1, std::placeholders::_2));
+    LoadServicesRootEntryService::AddSlot(Store(slots), std::bind(
+      &AdministrationServlet::OnLoadServicesRootEntry, this,
+      std::placeholders::_1, std::placeholders::_2));
+    LoadTradingGroupsRootEntryService::AddSlot(Store(slots), std::bind(
+      &AdministrationServlet::OnLoadTradingGroupsRootEntry, this,
       std::placeholders::_1, std::placeholders::_2));
     CheckAdministratorService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnCheckAdministratorRequest, this,
@@ -673,6 +688,30 @@ namespace AdministrationService {
       }
     }
     return accounts;
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
+  Beam::ServiceLocator::DirectoryEntry AdministrationServlet<ContainerType,
+      ServiceLocatorClientType, AdministrationDataStoreType>::
+      OnLoadAdministratorsRootEntry(ServiceProtocolClient& client, int dummy) {
+    return m_administratorsRoot;
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
+  Beam::ServiceLocator::DirectoryEntry AdministrationServlet<ContainerType,
+      ServiceLocatorClientType, AdministrationDataStoreType>::
+      OnLoadServicesRootEntry(ServiceProtocolClient& client, int dummy) {
+    return m_servicesRoot;
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
+  Beam::ServiceLocator::DirectoryEntry AdministrationServlet<ContainerType,
+      ServiceLocatorClientType, AdministrationDataStoreType>::
+      OnLoadTradingGroupsRootEntry(ServiceProtocolClient& client, int dummy) {
+    return m_tradingGroupsRoot;
   }
 
   template<typename ContainerType, typename ServiceLocatorClientType,

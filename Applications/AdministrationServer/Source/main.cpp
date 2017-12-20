@@ -186,6 +186,8 @@ int main(int argc, const char** argv) {
     cerr << "Unable to connect to the definitions service." << endl;
     return -1;
   }
+  auto organizationName = Extract<string>(config, "organization",
+    "Spire Trading Inc.");
   EntitlementDatabase entitlements;
   try {
     entitlements = ParseEntitlements(GetNode(config, "entitlements"),
@@ -203,7 +205,7 @@ int main(int argc, const char** argv) {
     accountSource};
   AdministrationServletContainer administrationServer{
     Initialize(serviceLocatorClient.Get(),
-    Initialize(serviceLocatorClient.Get(), entitlements,
+    Initialize(serviceLocatorClient.Get(), organizationName, entitlements,
     Initialize(&mySqlDataStore))),
     Initialize(administrationServerConnectionInitializer.m_interface,
     Ref(socketThreadPool)),
