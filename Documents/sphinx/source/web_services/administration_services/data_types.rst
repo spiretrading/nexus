@@ -3,6 +3,36 @@ Nexus Administration Web Services Data Types
 
 .. py:currentmodule:: nexus.administration_service
 
+.. py:class:: AccountRole
+
+    Enumerates an account's roles.
+
+    .. py:data:: NONE=0
+
+      The account has no role.
+
+    .. py:data:: TRADER=1
+
+      The account has permission to trade.
+
+    .. py:data:: MANAGER=2
+
+      The account is a trading group manager.
+
+    .. py:data:: SERVICE=3
+
+      The account provides an API service.
+
+    .. py:data:: ADMINISTRATOR=4
+
+      The account is an administrator.
+
+.. py:class:: AccountRoles
+
+    Stores a bitset containing all of an account's roles.
+
+    Refer to: :py:class:`AccountRole`
+
 .. py:class:: AccountModificationRequest
 
     Stores a request to modify an account.

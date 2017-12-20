@@ -17,6 +17,27 @@ Nexus Administration Web Services
     :statuscode 200: :py:class:`beam.service_locator.DirectoryEntry[] <beam.service_locator.DirectoryEntry>`
       The list of directory entries of accounts that match the specified roles.
 
+.. http:post:: /api/administration_service/load_administrators_root_entry
+
+    Loads the directory entry containing all administrators.
+
+    :statuscode 200: :py:class:`beam.service_locator.DirectoryEntry`
+      The directory entry containing all administrators.
+
+.. http:post:: /api/administration_service/load_services_root_entry
+
+    Loads the directory entry containing all service accounts.
+
+    :statuscode 200: :py:class:`beam.service_locator.DirectoryEntry`
+      The directory entry containing all service accounts.
+
+.. http:post:: /api/administration_service/load_trading_groups_root_entry
+
+    Loads the directory entry containing all trading groups.
+
+    :statuscode 200: :py:class:`beam.service_locator.DirectoryEntry`
+      The directory entry containing all trading groups.
+
 .. http:post:: /api/administration_service/load_trading_group
 
     Loads the trading group represented by a directory entry.
