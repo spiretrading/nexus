@@ -50,6 +50,30 @@ namespace AdministrationService {
 
       ~AdministrationClient();
 
+      //! Returns the name of the organization.
+      /*!
+        \return The name of the organization.
+      */
+      std::string LoadOrganizationName();
+
+      //! Loads the list of accounts that match a set of roles.
+      /*!
+        \param roles The roles to match.
+        \return The list of directory entries of accounts that match the
+                specified roles.
+      */
+      std::vector<Beam::ServiceLocator::DirectoryEntry> LoadAccountsByRoles(
+        AccountRoles roles);
+
+      //! Loads the DirectoryEntry containing all administrators.
+      Beam::ServiceLocator::DirectoryEntry LoadAdministratorsRootEntry();
+
+      //! Loads the DirectoryEntry containing all service accounts.
+      Beam::ServiceLocator::DirectoryEntry LoadServicesRootEntry();
+
+      //! Loads the DirectoryEntry containing all trading groups.
+      Beam::ServiceLocator::DirectoryEntry LoadTradingGroupsRootEntry();
+
       //! Returns <code>true</code> iff an account is an administrator.
       /*!
         \param account The account to test.
@@ -354,6 +378,42 @@ namespace AdministrationService {
   AdministrationClient<ServiceProtocolClientBuilderType>::
       ~AdministrationClient() {
     Close();
+  }
+
+  template<typename ServiceProtocolClientBuilderType>
+  std::string AdministrationClient<ServiceProtocolClientBuilderType>::
+      LoadOrganizationName() {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<LoadOrganizationNameService>(0);
+  }
+
+  template<typename ServiceProtocolClientBuilderType>
+  std::vector<Beam::ServiceLocator::DirectoryEntry>
+      AdministrationClient<ServiceProtocolClientBuilderType>::
+      LoadAccountsByRoles(AccountRoles roles) {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<LoadAccountsByRolesService>(roles);
+  }
+
+  template<typename ServiceProtocolClientBuilderType>
+  Beam::ServiceLocator::DirectoryEntry AdministrationClient<
+      ServiceProtocolClientBuilderType>::LoadAdministratorsRootEntry() {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<LoadAdministratorsRootEntryService>(0);
+  }
+
+  template<typename ServiceProtocolClientBuilderType>
+  Beam::ServiceLocator::DirectoryEntry AdministrationClient<
+      ServiceProtocolClientBuilderType>::LoadServicesRootEntry() {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<LoadServicesRootEntryService>(0);
+  }
+
+  template<typename ServiceProtocolClientBuilderType>
+  Beam::ServiceLocator::DirectoryEntry AdministrationClient<
+      ServiceProtocolClientBuilderType>::LoadTradingGroupsRootEntry() {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<LoadTradingGroupsRootEntryService>(0);
   }
 
   template<typename ServiceProtocolClientBuilderType>
