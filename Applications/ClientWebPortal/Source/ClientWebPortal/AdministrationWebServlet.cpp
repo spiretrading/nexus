@@ -186,6 +186,44 @@ void AdministrationWebServlet::Shutdown() {
   m_openState.SetClosed();
 }
 
+HttpResponse AdministrationWebServlet::OnLoadOrganizationName(
+    const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto organizationName =
+    m_serviceClients->GetAdministrationClient().LoadOrganizationName();
+  session->ShuttleResponse(organizationName, Store(response));
+  return response;
+}
+
+HttpResponse AdministrationWebServlet::OnLoadAccountsByRoles(
+    const HttpRequest& request) {
+  struct Parameters {
+    AccountRoles m_roles;
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("roles", m_roles);
+    }
+  };
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr ||
+      !IsAdministrator(*m_serviceClients, session->GetAccount())) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  auto accounts =
+    m_serviceClients->GetAdministrationClient().LoadAccountsByRoles(
+    parameters.m_roles);
+  session->ShuttleResponse(accounts, Store(response));
+  return response;
+}
+
 HttpResponse AdministrationWebServlet::OnLoadTradingGroup(
     const HttpRequest& request) {
   struct Parameters {

@@ -28,6 +28,11 @@ namespace AdministrationService {
     public:
       virtual ~VirtualAdministrationClient() = default;
 
+      virtual std::string LoadOrganizationName() = 0;
+
+      virtual std::vector<Beam::ServiceLocator::DirectoryEntry>
+        LoadAccountsByRoles(AccountRoles roles) = 0;
+
       virtual bool CheckAdministrator(
         const Beam::ServiceLocator::DirectoryEntry& account) = 0;
 
@@ -163,6 +168,11 @@ namespace AdministrationService {
 
       virtual ~WrapperAdministrationClient();
 
+      virtual std::string LoadOrganizationName() override;
+
+      virtual std::vector<Beam::ServiceLocator::DirectoryEntry>
+        LoadAccountsByRoles(AccountRoles roles) override;
+
       virtual bool CheckAdministrator(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
 
@@ -296,6 +306,18 @@ namespace AdministrationService {
   template<typename ClientType>
   WrapperAdministrationClient<ClientType>::~WrapperAdministrationClient() {
     Close();
+  }
+
+  template<typename ClientType>
+  std::string WrapperAdministrationClient<ClientType>::LoadOrganizationName() {
+    return m_client->LoadOrganizationName();
+  }
+
+  template<typename ClientType>
+  std::vector<Beam::ServiceLocator::DirectoryEntry>
+      WrapperAdministrationClient<ClientType>::LoadAccountsByRoles(
+      AccountRoles roles) {
+    return m_client->LoadAccountsByRoles(roles);
   }
 
   template<typename ClientType>

@@ -49,12 +49,14 @@ namespace AdministrationService {
       //! Constructs an AdministrationServlet.
       /*!
         \param serviceLocatorClient Initializes the ServiceLocatorClient.
+        \param organizationName The name of the organization.
         \param entitlements The list of available entitlements.
         \param dataStore Initializes the AdministrationDataStore.
       */
       template<typename ServiceLocatorClientForward,
         typename AdministrationDataStoreForward>
       AdministrationServlet(ServiceLocatorClientForward&& serviceLocatorClient,
+        std::string organizationName,
         const MarketDataService::EntitlementDatabase& entitlements,
         AdministrationDataStoreForward&& dataStore);
 
@@ -84,6 +86,7 @@ namespace AdministrationService {
         Beam::Threading::Sync<AccountToRiskSubscribers>;
       Beam::GetOptionalLocalPtr<ServiceLocatorClientType>
         m_serviceLocatorClient;
+      std::string m_organizationName;
       MarketDataService::EntitlementDatabase m_entitlements;
       Beam::GetOptionalLocalPtr<AdministrationDataStoreType> m_dataStore;
       Beam::ServiceLocator::DirectoryEntry m_administratorsRoot;
@@ -117,6 +120,10 @@ namespace AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& adminAccount,
         const Beam::ServiceLocator::DirectoryEntry& account,
         const std::vector<Beam::ServiceLocator::DirectoryEntry>& entitlements);
+      std::string OnLoadOrganizationName(ServiceProtocolClient& client,
+        int dummy);
+      std::vector<Beam::ServiceLocator::DirectoryEntry> OnLoadAccountsByRoles(
+        ServiceProtocolClient& client, AccountRoles roles);
       bool OnCheckAdministratorRequest(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account);
       AccountRoles OnLoadAccountRolesRequest(ServiceProtocolClient& client,
@@ -218,13 +225,14 @@ namespace AdministrationService {
   AdministrationServlet<ContainerType, ServiceLocatorClientType,
       AdministrationDataStoreType>::AdministrationServlet(
       ServiceLocatorClientForward&& serviceLocatorClient,
+      std::string organizationName,
       const MarketDataService::EntitlementDatabase& entitlements,
       AdministrationDataStoreForward&& dataStore)
-      : m_serviceLocatorClient(std::forward<ServiceLocatorClientForward>(
-          serviceLocatorClient)),
-        m_entitlements(entitlements),
-        m_dataStore(std::forward<AdministrationDataStoreForward>(
-          dataStore)) {}
+      : m_serviceLocatorClient{std::forward<ServiceLocatorClientForward>(
+          serviceLocatorClient)},
+        m_organizationName{std::move(organizationName)},
+        m_entitlements{entitlements},
+        m_dataStore{std::forward<AdministrationDataStoreForward>(dataStore)} {}
 
   template<typename ContainerType, typename ServiceLocatorClientType,
     typename AdministrationDataStoreType>
@@ -234,6 +242,12 @@ namespace AdministrationService {
       slots) {
     RegisterAdministrationServices(Store(slots));
     RegisterAdministrationMessages(Store(slots));
+    LoadOrganizationNameService::AddSlot(Store(slots), std::bind(
+      &AdministrationServlet::OnLoadOrganizationName, this,
+      std::placeholders::_1, std::placeholders::_2));
+    LoadAccountsByRolesService::AddSlot(Store(slots), std::bind(
+      &AdministrationServlet::OnLoadAccountsByRoles, this,
+      std::placeholders::_1, std::placeholders::_2));
     CheckAdministratorService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnCheckAdministratorRequest, this,
       std::placeholders::_1, std::placeholders::_2));
@@ -618,6 +632,47 @@ namespace AdministrationService {
         }
       }
     }
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
+  std::string AdministrationServlet<ContainerType, ServiceLocatorClientType,
+      AdministrationDataStoreType>::OnLoadOrganizationName(
+      ServiceProtocolClient& client, int dummy) {
+    return m_organizationName;
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
+  std::vector<Beam::ServiceLocator::DirectoryEntry>
+      AdministrationServlet<ContainerType, ServiceLocatorClientType,
+      AdministrationDataStoreType>::OnLoadAccountsByRoles(
+      ServiceProtocolClient& client, AccountRoles roles) {
+    auto& session = client.GetSession();
+    std::vector<Beam::ServiceLocator::DirectoryEntry> accounts;
+    if(CheckAdministrator(session.GetAccount())) {
+      if(roles.Test(AccountRole::ADMINISTRATOR)) {
+        auto administrators = m_serviceLocatorClient->LoadChildren(
+          m_administratorsRoot);
+        for(auto& administrator : administrators) {
+          if(administrator.m_type ==
+              Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT) {
+            accounts.push_back(std::move(administrator));
+          }
+        }
+      }
+      if(roles.Test(AccountRole::SERVICE)) {
+        auto serviceAccounts = m_serviceLocatorClient->LoadChildren(
+          m_servicesRoot);
+        for(auto& serviceAccount : serviceAccounts) {
+          if(serviceAccount.m_type ==
+              Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT) {
+            accounts.push_back(std::move(serviceAccount));
+          }
+        }
+      }
+    }
+    return accounts;
   }
 
   template<typename ContainerType, typename ServiceLocatorClientType,

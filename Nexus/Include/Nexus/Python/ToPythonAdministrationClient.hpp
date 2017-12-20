@@ -27,6 +27,11 @@ namespace AdministrationService {
 
       virtual ~ToPythonAdministrationClient() override final;
 
+      virtual std::string LoadOrganizationName() override final;
+
+      virtual std::vector<Beam::ServiceLocator::DirectoryEntry>
+        LoadAccountsByRoles(AccountRoles roles) override final;
+
       virtual bool CheckAdministrator(
         const Beam::ServiceLocator::DirectoryEntry& account) override final;
 
@@ -165,6 +170,22 @@ namespace AdministrationService {
     boost::lock_guard<Beam::Python::GilRelease> lock{gil};
     Close();
     m_client.reset();
+  }
+
+  template<typename ClientType>
+  std::string ToPythonAdministrationClient<ClientType>::LoadOrganizationName() {
+    Beam::Python::GilRelease gil;
+    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    return m_client->LoadOrganizationName();
+  }
+
+  template<typename ClientType>
+  std::vector<Beam::ServiceLocator::DirectoryEntry>
+      ToPythonAdministrationClient<ClientType>::LoadAccountsByRoles(
+      AccountRoles roles) {
+    Beam::Python::GilRelease gil;
+    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    return m_client->LoadAccountsByRoles(roles);
   }
 
   template<typename ClientType>

@@ -41,6 +41,10 @@ namespace ClientWebPortal {
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
+      Beam::WebServices::HttpResponse OnLoadOrganizationName(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadAccountsByRoles(
+        const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadTradingGroup(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadManagedTradingGroups(

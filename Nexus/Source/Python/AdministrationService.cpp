@@ -55,6 +55,16 @@ namespace {
 
   struct FromPythonAdministrationClient : VirtualAdministrationClient,
       wrapper<VirtualAdministrationClient> {
+
+    virtual std::string LoadOrganizationName() override final {
+      return get_override("load_organization_name")();
+    }
+
+    virtual std::vector<Beam::ServiceLocator::DirectoryEntry>
+        LoadAccountsByRoles(AccountRoles roles) {
+      return get_override("load_accounts_by_roles")(roles);
+    }
+
     virtual bool CheckAdministrator(
         const DirectoryEntry& account) override final {
       return get_override("check_administrator")(account);
@@ -332,6 +342,10 @@ void Nexus::Python::ExportAccountModificationRequest() {
 void Nexus::Python::ExportAdministrationClient() {
   class_<FromPythonAdministrationClient, boost::noncopyable>(
     "AdministrationClient", no_init)
+    .def("load_organization_name",
+      pure_virtual(&VirtualAdministrationClient::LoadOrganizationName))
+    .def("load_accounts_by_roles",
+      pure_virtual(&VirtualAdministrationClient::LoadAccountsByRoles))
     .def("check_administrator",
       pure_virtual(&VirtualAdministrationClient::CheckAdministrator))
     .def("load_account_roles", pure_virtual(

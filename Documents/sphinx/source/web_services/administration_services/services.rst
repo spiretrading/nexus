@@ -1,6 +1,22 @@
 Nexus Administration Web Services
 =================================
 
+.. http:post:: /api/administration_service/load_organization_name
+
+    Loads the name of the organization.
+
+    :statuscode 200: :py:class:`string`
+      The name of the organization using this instance.
+
+.. http:post:: /api/administration_service/load_accounts_by_roles
+
+    Loads the list of accounts that match a set of roles.
+
+    :param roles: The roles to match.
+    :type roles: :py:class:`nexus.administration_service.AccountRoles`
+    :statuscode 200: :py:class:`beam.service_locator.DirectoryEntry[] <beam.service_locator.DirectoryEntry>`
+      The list of directory entries of accounts that match the specified roles.
+
 .. http:post:: /api/administration_service/load_trading_group
 
     Loads the trading group represented by a directory entry.
