@@ -25,53 +25,20 @@ class Controller {
     this.view = view;
   }
 
-  /** @private */
-  getRequiredData() {
-    let directoryEntry = userService.getDirectoryEntry();
-    let loadRequestIds;
-    if (userService.isAdmin() || userService.isManager()) {
-      loadRequestIds = this.adminClient.loadManagedAccountModificationRequests(directoryEntry, -1, 10);
-    } else {
-      loadRequestIds = this.adminClient.loadAccountModificationRequestIds(directoryEntry, -1, 10);
-    }
-
-    loadRequestIds = loadRequestIds.then(this.loadModificationRequests);
-
-    return Promise.all([loadRequestIds]);
+  loadMyAccountRequests() {
+    this.getLoadMyAccountRequestsPromise()
+      .then(requests => {
+        this.componentModel.accountModificationRequests = requests;
+        this.view.update(this.componentModel);
+      });
   }
 
-  /** @private */
-  loadModificationRequests(ids) {
-    let resolve;
-    let loadPromise = new Promise((res, rej) => {
-      resolve = res;
-    });
-
-    let loadRequests = [];
-    let loadStatus = [];
-    for (let i=0; i<ids.length; i++) {
-      loadRequests.push(this.adminClient.loadAccountModificationRequest(ids[i]));
-      loadStatus.push(this.adminClient.loadAccountModificationStatus(ids[i]));
-    }
-
-    let allRequests = Promise.all(loadRequests);
-    let allStatus = Promise.all(loadStatus);
-
-    Promise.all([
-      allRequests,
-      allStatus
-    ]).then(results => {
-      let requests = [];
-      for (let i=0; i<ids.length; i++) {
-        requests.push({
-          request: results[0][i],
-          update: results[1][i]
-        });
-      }
-      resolve(requests);
-    });
-
-    return loadPromise;
+  loadManagedAccountModificationRequests() {
+    this.getLoadManagedAccountRequestsPromise()
+      .then(requests => {
+        this.componentModel.accountModificationRequests = requests;
+        this.view.update(this.componentModel);
+      });
   }
 
   componentDidMount() {
@@ -106,6 +73,59 @@ class Controller {
         }
       });
     }
+  }
+
+  /** @private */
+  getRequiredData() {
+    return Promise.all([this.getLoadMyAccountRequestsPromise()]);
+  }
+
+  /** @private */
+  getLoadMyAccountRequestsPromise() {
+    let directoryEntry = userService.getDirectoryEntry();
+    return this.adminClient.loadAccountModificationRequestIds(directoryEntry, -1, 10)
+      .then(this.loadModificationRequests);
+  }
+
+  /** @private */
+  getLoadManagedAccountRequestsPromise() {
+    let directoryEntry = userService.getDirectoryEntry();
+    return this.adminClient.loadManagedAccountModificationRequests(directoryEntry, -1, 10)
+      .then(this.loadModificationRequests);
+  }
+
+  /** @private */
+  loadModificationRequests(ids) {
+    let resolve;
+    let loadPromise = new Promise((res, rej) => {
+      resolve = res;
+    });
+
+    let loadRequests = [];
+    let loadStatus = [];
+    for (let i=0; i<ids.length; i++) {
+      loadRequests.push(this.adminClient.loadAccountModificationRequest(ids[i]));
+      loadStatus.push(this.adminClient.loadAccountModificationStatus(ids[i]));
+    }
+
+    let allRequests = Promise.all(loadRequests);
+    let allStatus = Promise.all(loadStatus);
+
+    Promise.all([
+      allRequests,
+      allStatus
+    ]).then(results => {
+      let requests = [];
+      for (let i=0; i<ids.length; i++) {
+        requests.push({
+          request: results[0][i],
+          update: results[1][i]
+        });
+      }
+      resolve(requests);
+    });
+
+    return loadPromise;
   }
 }
 
