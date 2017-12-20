@@ -77,14 +77,17 @@ class View extends UpdatableView {
   }
 
   render() {
-    let searchProfilesMenuItem, portfolioMenuItem;
-    if (this.componentModel.isAdmin || this.componentModel.isManager) {
+    let searchProfilesMenuItem;
+    if (this.componentModel.isAdmin) {
       searchProfilesMenuItem =
         <div className="menu-item" onClick={this.onAccountsClick.bind(this)}>
           <span className="icon-search"></span>
           Accounts
         </div>
+    }
 
+    let portfolioMenuItem;
+    if (this.componentModel.isAdmin || this.componentModel.isManager) {
       portfolioMenuItem =
         <div className="menu-item" onClick={this.onPortfolioClick.bind(this)}>
           <span className="icon-portfolio"></span>
