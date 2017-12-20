@@ -2,26 +2,24 @@
 
 .account-modification-request-container {
   width: 100%;
-  border: 1px solid $lightGrey;
+  border-top: 1px solid $lightGrey;
   flex: 1;
   display: flex;
+  cursor: pointer;
+  padding-top: 5px;
+  padding-bottom: 5px;
+
+  &:hover {
+    background: $lighterGrey;
+  }
 
   .left-panel {
     position: relative;
     width: 65%;
 
-    &::after {
-      content: '';
-      width: 1px;
-      height: 70%;
-      background: $lightGrey;
-      position: absolute;
-      top: 15%;
-      right: 0;
-    }
-
     .title {
       position: absolute;
+      font-weight: bold;
       top: 14%;
       left: 5%;
     }

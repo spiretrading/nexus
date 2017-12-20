@@ -1,9 +1,11 @@
 import {
-  AdministrationClient
+  AdministrationClient,
+  AccountModificationRequestType
 } from 'spire-client'
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
 import definitionsService from 'services/definitions';
+import {browserHistory} from 'react-router';
 
 class Controller {
   constructor(componentModel) {
@@ -12,6 +14,7 @@ class Controller {
     this.requiredDataLoaded = false;
 
     this.loadModificationRequests = this.loadModificationRequests.bind(this);
+    this.onSelect = this.onSelect.bind(this);
   }
 
   getView() {
@@ -29,7 +32,7 @@ class Controller {
     if (userService.isAdmin() || userService.isManager()) {
       loadRequestIds = this.adminClient.loadManagedAccountModificationRequests(directoryEntry, -1, 10);
     } else {
-      loadRequestIds = this.adminClient.loadAccountModificationRequests();
+      loadRequestIds = this.adminClient.loadAccountModificationRequestIds(directoryEntry, -1, 10);
     }
 
     loadRequestIds = loadRequestIds.then(this.loadModificationRequests);
@@ -89,6 +92,20 @@ class Controller {
 
   isRequiredDataLoaded() {
     return this.requiredDataLoaded;
+  }
+
+  onSelect(id, requestType, requesterAccount, changeAccount, requestStatus) {
+    if (requestType == AccountModificationRequestType.ENTITLEMENTS) {
+      browserHistory.push({
+        pathname: '/entitlement-modification-review',
+        state: {
+          id: id,
+          requesterAccount: requesterAccount,
+          changeAccount: changeAccount,
+          requestStatus: requestStatus
+        }
+      });
+    }
   }
 }
 

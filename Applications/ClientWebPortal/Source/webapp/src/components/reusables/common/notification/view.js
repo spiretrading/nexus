@@ -86,7 +86,7 @@ class View extends UpdatableView {
   }
 
   render() {
-    let iconClass = 'icon-notification';
+    let iconClass = 'icon-notifications';
     let countLabelClass = 'count-label-wrapper';
     let buttonAreaClass = 'button-area';
     if (this.componentModel.numUnchecked > 0) {
