@@ -1,5 +1,7 @@
 @import "src/styles/variables";
 
+$desktopWidth: 600px;
+
 #modification-request-history-container {
   font-size: 16px;
   position: relative;
@@ -13,7 +15,7 @@
   }
 
   .requests-wrapper {
-    width: 600px;
+    width: $desktopWidth;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
@@ -23,6 +25,61 @@
       min-height: 120px;
       display: flex;
       flex-direction: column;
+    }
+  }
+
+  .filters-wrapper {
+    width: $desktopWidth;
+    margin: 0 auto;
+    display: flex;
+    margin-bottom: 20px;
+
+    .status-filter-wrapper {
+      width: 60%;
+      font-size: 13px;
+      display: flex;
+      padding-left: 18px;
+
+      .select-wrapper {
+        margin-left: 10px;
+        position: relative;
+        top: -2px;
+
+        select {
+          border: 1px solid $darkGrey;
+          border-radius: 0;
+          background: $lighterGrey;
+          padding: 2px 5px;
+          padding-right: 20px;
+        }
+
+        span {
+          position: absolute;
+          top: 8px;
+          right: 5px;
+          font-size: 10px;
+          cursor: pointer;
+        }
+      }
+    }
+
+    .account-filter-wrapper {
+      flex: 1;
+      display: flex;
+      font-size: 13px;
+
+      .my-account {
+        margin-right: 39px;
+      }
+
+      .menu-item {
+        cursor: pointer;
+        color: $darkGrey;
+
+        &.selected {
+          color: $primaryGradient1;
+        }
+      }
     }
   }
 }
