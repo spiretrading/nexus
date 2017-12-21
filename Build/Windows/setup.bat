@@ -24,6 +24,7 @@ if exist qt-5.5.0 goto end_qt_setup
     gzip -d -c qt-everywhere-opensource-src-5.5.0.tar.gz | tar -x
     mv qt-everywhere-opensource-src-5.5.0 qt-5.5.0
     pushd qt-5.5.0
+    touch ./qtbase/.gitignore
     echo y >> accept
     start /wait cmd.exe @cmd /k "configure -opensource -static -make libs -make tools -opengl desktop -no-icu -qt-zlib -mp < accept & exit"
     set CL=/MP
