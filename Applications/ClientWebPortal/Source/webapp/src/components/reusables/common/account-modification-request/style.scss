@@ -6,7 +6,7 @@
   flex: 1;
   display: flex;
   cursor: pointer;
-  padding-top: 5px;
+  padding-top: 2px;
   padding-bottom: 5px;
 
   &:hover {
@@ -19,7 +19,6 @@
 
     .title {
       position: absolute;
-      font-weight: bold;
       top: 14%;
       left: 5%;
     }
