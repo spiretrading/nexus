@@ -12,16 +12,16 @@ if exist quickfix goto end_quick_fix_setup
     mv Utility.cpp.new Utility.cpp
     popd
     pushd quickfix
-    msbuild quickfix_vs12.sln /p:PlatformToolset=v140 /p:configuration=Debug /p:UseEnv=true
-    msbuild quickfix_vs12.sln /p:PlatformToolset=v140 /p:configuration=Release /p:UseEnv=true
+    msbuild quickfix_vs12.sln /p:PlatformToolset=v141 /p:configuration=Debug /p:UseEnv=true
+    msbuild quickfix_vs12.sln /p:PlatformToolset=v141 /p:configuration=Release /p:UseEnv=true
     popd
     rm quickfix-1.14.3.zip
 :end_quick_fix_setup
 
 if exist qt-5.5.0 goto end_qt_setup
-  wget --no-check-certificate https://download.qt.io/archive/qt/5.5/5.5.0/single/qt-everywhere-opensource-src-5.5.0.zip
-  if not exist qt-everywhere-opensource-src-5.5.0.zip goto end_qt_setup
-    unzip qt-everywhere-opensource-src-5.5.0.zip
+  wget --no-check-certificate http://download.qt.io/archive/qt/5.5/5.5.0/single/qt-everywhere-opensource-src-5.5.0.tar.gz
+  if not exist qt-everywhere-opensource-src-5.5.0.tar.gz goto end_qt_setup
+    gzip -d -c qt-everywhere-opensource-src-5.5.0.tar.gz | tar -x
     mv qt-everywhere-opensource-src-5.5.0 qt-5.5.0
     pushd qt-5.5.0
     echo y >> accept
@@ -30,7 +30,7 @@ if exist qt-5.5.0 goto end_qt_setup
     nmake
     rm accept
     popd
-    rm qt-everywhere-opensource-src-5.5.0.zip
+    rm qt-everywhere-opensource-src-5.5.0.tar.gz
 :end_qt_setup
 
 CALL %~dp0../../Applications/ClientWebPortal/Build/Windows/setup.bat
