@@ -1,4 +1,5 @@
 #include "Spire/Canvas/Types/MoneyType.hpp"
+#include "Nexus/Definitions/Money.hpp"
 #include "Spire/Canvas/Types/CanvasTypeVisitor.hpp"
 
 using namespace Spire;
