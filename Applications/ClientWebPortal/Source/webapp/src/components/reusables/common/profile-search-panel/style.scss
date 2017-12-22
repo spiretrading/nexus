@@ -79,6 +79,10 @@
         height: 27px;
       }
 
+      &.non-match {
+        padding: 0;
+      }
+
       &>span, i {
         padding-left: 26px;
       }

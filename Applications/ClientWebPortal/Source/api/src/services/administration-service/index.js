@@ -1,5 +1,5 @@
 import httpConnectionManager from '../commons/http-connection-manager';
-import AccountRoles from '../commons/account-roles';
+import AccountRoles from '../../definitions/account-roles';
 import AccountIdentity from './account-identity';
 import RiskParameters from '../risk-service/risk-parameters';
 import DirectoryEntry from '../../definitions/directory-entry';
@@ -307,6 +307,30 @@ class Admin {
       .then(response => {
         return AccModReqUpdate.fromData(response);
       })
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadOrganizationName() {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_organization_name';
+
+    return httpConnectionManager.send(apiPath, null, true)
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadTradingGroupsRootEntry() {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_trading_groups_root_entry';
+
+    return httpConnectionManager.send(apiPath, null, true)
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadAccountsByRoles(accountRoles) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_accounts_by_roles';
+    let payload = {
+      roles: accountRoles.toData()
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
       .catch(this.logErrorAndThrow);
   }
 }

@@ -8,6 +8,10 @@ class AccountRoles {
     this.isService = isService;
     this.isAdmin = isAdmin;
   }
+
+  toData() {
+    return AccountRoles.encode(this);
+  }
 }
 
 AccountRoles.parse = accountRoleNumber => {
