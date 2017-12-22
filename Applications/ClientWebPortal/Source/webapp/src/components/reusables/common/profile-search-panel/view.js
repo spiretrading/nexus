@@ -67,6 +67,7 @@ class View extends UpdatableView {
       let $component = $('#' + this.componentModel.componentId);
       $component.find('.trader-row').removeAttr('style');
       $component.find('.icon-expand').removeClass('collapsed').removeClass('expanded');
+      $component.removeClass('collapsed').removeClass('expanded');
       if ($component.find('.trader-row.match').size() >= 1 ||
         isGroupNameMatch.call(this, this.componentModel.searchString)) {
         $component.css('display', 'inherit');

@@ -1,8 +1,15 @@
-import {AdministrationClient, ServiceLocatorClient, DirectoryEntry} from 'spire-client';
+import {
+  AdministrationClient,
+  ServiceLocatorClient,
+  DirectoryEntry,
+  AccountRoles
+} from 'spire-client';
 import userService from 'services/user';
 import preloaderTimer from 'utils/preloader-timer';
 import HashMap from 'hashmap';
 import {browserHistory} from 'react-router';
+
+const ORGANIZATION_GROUP = 'organization';
 
 class Controller {
   constructor(componentModel) {
@@ -33,9 +40,13 @@ class Controller {
   getRequiredData() {
     let directoryEntry = this.componentModel.directoryEntry;
     let loadManagedTradingGroups = this.adminClient.loadManagedTradingGroups(directoryEntry);
+    let loadOrganizationName = this.adminClient.loadOrganizationName();
+    let loadTradingGroupsRootEntry = this.adminClient.loadTradingGroupsRootEntry();
 
     return Promise.all([
-      loadManagedTradingGroups
+      loadManagedTradingGroups,
+      loadTradingGroupsRootEntry,
+      loadOrganizationName
     ]);
   }
 
@@ -57,10 +68,17 @@ class Controller {
         if (a.name.toLowerCase() > b.name.toLowerCase()) return 1;
         return 0;
       });
+
+      // insert special global organization entry
+      responses[1].name = responses[2];
+      responses[1].id = ORGANIZATION_GROUP;
+      this.componentModel.groupedAccounts.unshift(responses[1]);
+
       for (let i=0; i<this.componentModel.groupedAccounts.length; i++) {
         this.componentModel.groupedAccounts[i].isLoaded = false;
       }
       this.componentModel.searchString = '';
+
       this.view.update(this.componentModel);
     });
   }
@@ -139,46 +157,72 @@ class Controller {
 
   loadGroupAccounts(groupId) {
     let group = this.findGroupDirectoryEntry(groupId);
-    let groupDirectoryEntry = new DirectoryEntry(
-      group.id,
-      group.type,
-      group.name
-    );
-    this.adminClient.loadTradingGroup(groupDirectoryEntry)
-      .then((accounts) => {
-        group.isLoaded = true;
-        group.accounts = accounts;
-        let traders = accounts.traders;
-        let requestedRoles = new HashMap();
-        let loadRolesPromises = [];
-        for (let i=0; i<traders.length; i++) {
-          let traderDirectoryEntry = traders[i];
-          traderDirectoryEntry = new DirectoryEntry(
-            traderDirectoryEntry.id,
-            traderDirectoryEntry.type,
-            traderDirectoryEntry.name
-          );
-          this.accountDirectoryEntries.set(traderDirectoryEntry.id, traderDirectoryEntry);
-          if (!requestedRoles.has(traderDirectoryEntry.id)) {
-            loadRolesPromises.push(this.adminClient.loadAccountRoles(traderDirectoryEntry));
-            requestedRoles.set(traderDirectoryEntry.id, true);
-          }
-        }
-        return Promise.all(loadRolesPromises);
-      })
-      .then((roles) => {
-        let rolesMap = new HashMap();
-        for (let i=0; i<roles.length; i++) {
-          rolesMap.set(roles[i].id, roles[i]);
-        }
 
-        let groupTraders = group.accounts.traders;
-        for (let i=0; i<groupTraders.length; i++) {
-          groupTraders[i].roles = rolesMap.get(groupTraders[i].id);
-        }
+    if (groupId == ORGANIZATION_GROUP) {
+      let adminOrServiceRole = new AccountRoles(false, false, true, true);
+      this.adminClient.loadAccountsByRoles(adminOrServiceRole)
+        .then(accounts => {
+          let group = this.findGroupDirectoryEntry(groupId);
+          group.accounts = {
+            traders: accounts
+          };
+          return Promise.all(this.getLoadRolesPromises(accounts));
+        })
+        .then(roles => {
+          this.assignLoadedRolesToTraders(roles, group.accounts.traders);
+          group.isLoaded = true;
+          this.view.update(this.componentModel);
+        });
+    } else {
+      let groupDirectoryEntry = new DirectoryEntry(
+        group.id,
+        group.type,
+        group.name
+      );
+      this.adminClient.loadTradingGroup(groupDirectoryEntry)
+        .then((accounts) => {
+          group.accounts = accounts;
+          let traders = accounts.traders;
+          return Promise.all(this.getLoadRolesPromises(traders));
+        })
+        .then((roles) => {
+          this.assignLoadedRolesToTraders(roles, group.accounts.traders);
+          group.isLoaded = true;
+          this.view.update(this.componentModel);
+        });
+    }
+  }
 
-        this.view.update(this.componentModel);
-      });
+  /** @private */
+  getLoadRolesPromises(traders) {
+    let requestedRoles = new HashMap();
+    let loadRolesPromises = [];
+    for (let i=0; i<traders.length; i++) {
+      let traderDirectoryEntry = traders[i];
+      traderDirectoryEntry = new DirectoryEntry(
+        traderDirectoryEntry.id,
+        traderDirectoryEntry.type,
+        traderDirectoryEntry.name
+      );
+      this.accountDirectoryEntries.set(traderDirectoryEntry.id, traderDirectoryEntry);
+      if (!requestedRoles.has(traderDirectoryEntry.id)) {
+        loadRolesPromises.push(this.adminClient.loadAccountRoles(traderDirectoryEntry));
+        requestedRoles.set(traderDirectoryEntry.id, true);
+      }
+    }
+
+    return loadRolesPromises;
+  }
+
+  /** @private */
+  assignLoadedRolesToTraders(roles, groupTraders) {
+    let rolesMap = new HashMap();
+    for (let i=0; i<roles.length; i++) {
+      rolesMap.set(roles[i].id, roles[i]);
+    }
+    for (let i=0; i<groupTraders.length; i++) {
+      groupTraders[i].roles = rolesMap.get(groupTraders[i].id);
+    }
   }
 
   /** @private */
