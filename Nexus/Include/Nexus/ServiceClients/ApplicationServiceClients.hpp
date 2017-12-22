@@ -6,6 +6,7 @@
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
 #include "Nexus/ChartingService/ApplicationDefinitions.hpp"
@@ -131,6 +132,7 @@ namespace Nexus {
       const std::string& password,
       Beam::RefType<Beam::Network::SocketThreadPool> socketThreadPool,
       Beam::RefType<Beam::Threading::TimerThreadPool> timerThreadPool)
+BEAM_SUPPRESS_THIS_INITIALIZER()
       : m_address{address},
         m_username{username},
         m_password{password},
@@ -231,6 +233,7 @@ namespace Nexus {
             }
           }
         } {}
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
   inline ApplicationServiceClients::~ApplicationServiceClients() {
     Close();
