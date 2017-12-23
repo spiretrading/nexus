@@ -109,6 +109,12 @@ HttpResponse ServiceLocatorWebServlet::OnLogin(const HttpRequest& request) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
+  auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
+    account);
+  if(!roles.Test(AccountRole::ADMINISTRATOR)) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
   session->ShuttleResponse(account, Store(response));
   session->SetAccount(account);
   return response;
