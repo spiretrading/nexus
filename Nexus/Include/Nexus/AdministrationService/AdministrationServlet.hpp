@@ -682,7 +682,10 @@ namespace AdministrationService {
         for(auto& serviceAccount : serviceAccounts) {
           if(serviceAccount.m_type ==
               Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT) {
-            accounts.push_back(std::move(serviceAccount));
+            if(std::find(accounts.begin(), accounts.end(), serviceAccount) ==
+                accounts.end()) {
+              accounts.push_back(std::move(serviceAccount));
+            }
           }
         }
       }
