@@ -68,7 +68,7 @@
       height: 0;
       overflow: hidden;
       cursor: pointer;
-      padding-top: 4px;
+      padding-top: 4px !important;
 
       &.empty {
         color: $darkerGrey;

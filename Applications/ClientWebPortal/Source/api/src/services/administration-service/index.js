@@ -321,6 +321,9 @@ class Admin {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_trading_groups_root_entry';
 
     return httpConnectionManager.send(apiPath, null, true)
+      .then(response => {
+        return DirectoryEntry.fromData(response);
+      })
       .catch(this.logErrorAndThrow);
   }
 

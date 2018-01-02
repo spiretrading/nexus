@@ -30,6 +30,7 @@ class View extends UpdatableView {
       let numTraders = 0;
       let numManagers = 0;
       let numAdmins = 0;
+      let numServices = 0;
       for (let i=0; i<this.componentModel.members.length; i++) {
         let member = this.componentModel.members[i];
         if (member.roles.isTrader) {
@@ -41,12 +42,15 @@ class View extends UpdatableView {
         if (member.roles.isAdmin) {
           numAdmins++;
         }
+        if (member.roles.isService) {
+          numServices++;
+        }
 
         let defaultClass = 'icon icon-';
         let traderClass = defaultClass + 'trader';
         let managerClass = defaultClass + 'manager';
         let adminClass = defaultClass + 'admin';
-        let serviceClass = defaultClass + 'server';
+        let serviceClass = defaultClass + 'service';
 
         if (member.roles.isTrader) {
           traderClass += ' active';
@@ -106,6 +110,10 @@ class View extends UpdatableView {
                   <tr>
                     <td className="stats-label">Total Admins</td>
                     <td>{numAdmins}</td>
+                  </tr>
+                  <tr>
+                    <td className="stats-label">Total Services</td>
+                    <td>{numServices}</td>
                   </tr>
                 </tbody>
               </table>
