@@ -1,7 +1,13 @@
-import {AdministrationClient, DirectoryEntry} from 'spire-client';
+import {
+  AdministrationClient, 
+  DirectoryEntry,
+  AccountRoles
+} from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import HashMap from 'hashmap';
 import {browserHistory} from 'react-router';
+
+const TRADING_GROUPS_NAME = 'trading_groups';
 
 class Controller {
   constructor(componentModel) {
@@ -42,11 +48,27 @@ class Controller {
 
   /** @private */
   getRequiredData() {
+    let promiseResolve;
+    let promise = new Promise((resolve, reject) => {
+      promiseResolve = resolve;
+    });
+
     let traders;
     let directoryEntry = this.componentModel.directoryEntry;
-    let loadAccountRoles = this.adminClient.loadTradingGroup(directoryEntry)
+    let loadAccountRoles;
+    if (directoryEntry.name == TRADING_GROUPS_NAME) {
+      let adminOrServiceRole = new AccountRoles(false, false, true, true);
+      loadAccountRoles = this.adminClient.loadAccountsByRoles(adminOrServiceRole);
+    } else {
+      loadAccountRoles = this.adminClient.loadTradingGroup(directoryEntry);
+    }
+    loadAccountRoles
       .then((accounts) => {
-        traders = accounts.traders;
+        if (directoryEntry.name == TRADING_GROUPS_NAME) {
+          traders = accounts;
+        } else {
+          traders = accounts.traders;
+        }
         let requestedRoles = new HashMap();
         let loadRolesPromises = [];
         for (let i=0; i<traders.length; i++) {
@@ -73,21 +95,20 @@ class Controller {
           traders[i].roles = rolesMap.get(traders[i].id);
         }
 
-        return traders;
+        promiseResolve(traders);
       });
 
-    return Promise.all([
-      loadAccountRoles
-    ]);
+    return promise;
   }
 
   componentDidMount() {
     let directoryEntry = this.componentModel.directoryEntry;
     let requiredDataFetchPromise = this.getRequiredData();
 
-    preloaderTimer.start(requiredDataFetchPromise, null, Config.WHOLE_PAGE_PRELOADER_WIDTH, Config.WHOLE_PAGE_PRELOADER_HEIGHT).then((responses) => {
+    preloaderTimer.start(requiredDataFetchPromise, null, Config.WHOLE_PAGE_PRELOADER_WIDTH, Config.WHOLE_PAGE_PRELOADER_HEIGHT)
+    .then(accounts => {
       this.componentModel.groupName = directoryEntry.name;
-      this.componentModel.members = responses[0];
+      this.componentModel.members = accounts;
       this.view.update(this.componentModel);
     });
   }
