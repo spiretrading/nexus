@@ -47,9 +47,14 @@ class ExchangeRateTable {
   }
 
   convert(amount, baseCurrencyId, counterCurrencyId) {
-    let currencyPair = new CurrencyPair(baseCurrencyId, counterCurrencyId);
-    let rate = this.find(currencyPair);
-    return ExchangeRate.convert(amount, rate);
+    if (baseCurrencyId.equals(counterCurrencyId)) {
+      let rate = ExchangeRate.getIdentical();
+      return ExchangeRate.convert(amount, rate);
+    } else {
+      let currencyPair = new CurrencyPair(baseCurrencyId, counterCurrencyId);
+      let rate = this.find(currencyPair);
+      return ExchangeRate.convert(amount, rate);
+    }
   }
 }
 
