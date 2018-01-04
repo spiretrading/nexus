@@ -3,6 +3,7 @@ import IndexedModel from 'utils/table-models/indexed-model';
 import HashMap from 'hashmap';
 import SignalManager from 'utils/signal-manager';
 import DataChangeType from 'utils/table-models/model/data-change-type';
+import definitionsService from 'services/definitions';
 import { Money } from 'spire-client';
 
 const KEY_INDICES = [0, 1, 10];
@@ -39,6 +40,7 @@ export default class extends Model {
     this.dataChangeSubId = this.indexedModel.addDataChangeListener(this.onDataChange);
     this.onDataReceived = this.onDataReceived.bind(this);
     this.accountTotals = new HashMap();
+    this.exchangeRateTable = definitionsService.getExchangeRateTable();
 
     this.riskServiceClient.subscribePortfolio(this.onDataReceived)
       .then(subscriptionId => {
@@ -283,14 +285,10 @@ export default class extends Model {
 
   /** @private */
   convertCurrencies(fromCurrencyId, toCurrencyId, amount) {
-    if (fromCurrencyId.toNumber() != toCurrencyId.toNumber()) {
-      return this.exchangeRateTable.convert(
-        amount,
-        fromCurrencyId,
-        toCurrencyId
-      );
-    } else {
-      return amount;
-    }
+    return this.exchangeRateTable.convert(
+      amount,
+      fromCurrencyId,
+      toCurrencyId
+    );
   }
 }
