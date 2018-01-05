@@ -4,7 +4,7 @@ directory=$(dirname $(readlink -f $0))
 pushd $directory/
 pushd $directory/../..
 echo $config
-if [ "$config" = "Clean" ]
+if [ "$config" = "clean" ]
 then
   rm -rf dist
 else
