@@ -132,7 +132,7 @@ export default class extends Model {
         } else {
           delta = newValue - lastValue;
         }
-      }      
+      }
       this.addToTotals(rowIndex, i, delta);
     }
 

@@ -34,13 +34,17 @@ export default class {
     payload.inventory.position.key.currency = CurrencyId.fromData(payload.inventory.position.key.currency);
 
     payload.inventory.position.cost_basis = Money.fromRepresentation(payload.inventory.position.cost_basis);
+    payload.inventory.position.cost_basis = payload.inventory.position.cost_basis || Money.fromNumber(0);
 
     payload.inventory.gross_profit_and_loss = Money.fromRepresentation(payload.inventory.gross_profit_and_loss);
+    payload.inventory.gross_profit_and_loss = payload.inventory.gross_profit_and_loss || Money.fromNumber(0);
 
     payload.inventory.fees = Money.fromRepresentation(payload.inventory.fees);
+    payload.inventory.fees = payload.inventory.fees || Money.fromNumber(0);
 
     if (payload.unrealized_profit_and_loss.is_initialized) {
       payload.unrealized_profit_and_loss.value = Money.fromRepresentation(payload.unrealized_profit_and_loss.value);
+      payload.unrealized_profit_and_loss.value = payload.unrealized_profit_and_loss.value || Money.fromNumber(0);
     }
 
     delete payload.__version;
