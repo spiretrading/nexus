@@ -98,10 +98,8 @@ export default class extends Model {
     for (let i=0; i<data.length; i++) {
       let rowData = this.toRowData(data[i]);
       if (data[i].inventory.transaction_count == 0) {
-        // debugger;
         this.indexedModel.removeRow(rowData);
       } else {
-        // debugger;
         this.indexedModel.update(rowData);
       }
     }
