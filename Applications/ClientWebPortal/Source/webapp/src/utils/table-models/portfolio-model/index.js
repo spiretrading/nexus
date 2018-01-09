@@ -113,7 +113,7 @@ export default class extends Model {
     // security
     rowData.push(data.inventory.position.key.index);
     // quantity
-    rowData.push(data.inventory.position.quantity);
+    rowData.push(data.inventory.position.quantity || 0);
     // side
     if (data.inventory.position.quantity > 0) {
       rowData.push('Long');
@@ -123,7 +123,7 @@ export default class extends Model {
       rowData.push('Flat');
     }
     // average price
-    let averagePrice = null;
+    let averagePrice = Money.fromNumber(0);
     if (data.inventory.position.quantity != 0) {
       let costBasis = data.inventory.position.cost_basis;
       let quantity = data.inventory.position.quantity;
@@ -134,8 +134,8 @@ export default class extends Model {
     }
     rowData.push(averagePrice);
     // totalPnL, unrealizedPnL, realizedPnL
-    let totalPnL = null;
-    let unrealizedPnL = null;
+    let totalPnL = Money.fromNumber(0);
+    let unrealizedPnL = Money.fromNumber(0);
     let grossPnL = data.inventory.gross_profit_and_loss;
     let fees = data.inventory.fees;
     if (data.unrealized_profit_and_loss.is_initialized) {

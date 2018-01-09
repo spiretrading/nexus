@@ -13,7 +13,7 @@ export default class {
 
     let result;
     if (a instanceof DirectoryEntry && b instanceof DirectoryEntry) {
-      result = a.compare(b);
+      result = a.name.localeCompare(b.name);
     } else if (a instanceof Security && b instanceof Security) {
       let stringA = a.toString(definitionsService.getMarketDatabase());
       let stringB = b.toString(definitionsService.getMarketDatabase());
