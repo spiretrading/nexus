@@ -98,8 +98,10 @@ export default class extends Model {
     for (let i=0; i<data.length; i++) {
       let rowData = this.toRowData(data[i]);
       if (data[i].inventory.transaction_count == 0) {
+        // debugger;
         this.indexedModel.removeRow(rowData);
       } else {
+        // debugger;
         this.indexedModel.update(rowData);
       }
     }
@@ -174,9 +176,9 @@ export default class extends Model {
   handleDataAdd(payload) {
     let rowIndex = payload;
     let account = this.indexedModel.getValueAt(0, rowIndex);
-    let totalPnL = this.indexedModel.getValueAt(5, rowIndex);
-    let unrealizedPnL = this.indexedModel.getValueAt(6, rowIndex);
-    let fees = this.indexedModel.getValueAt(8, rowIndex);
+    let totalPnL = this.indexedModel.getValueAt(5, rowIndex) || Money.fromNumber(0);
+    let unrealizedPnL = this.indexedModel.getValueAt(6, rowIndex) || Money.fromNumber(0);
+    let fees = this.indexedModel.getValueAt(8, rowIndex) || Money.fromNumber(0);
     let currencyId = this.indexedModel.getValueAt(10, rowIndex);
 
     if (!this.accountTotals.has(account.id)) {
