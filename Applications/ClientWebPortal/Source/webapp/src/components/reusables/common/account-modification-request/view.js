@@ -38,7 +38,7 @@ class View extends UpdatableView {
 
     let status = this.componentModel.update.status;
     if (status == AccountModificationRequestStatus.PENDING) {
-      status = <span>Pending</span>;
+      status = <span className="yellow">Pending</span>;
     } else if (status == AccountModificationRequestStatus.SCHEDULED || status == AccountModificationRequestStatus.GRANTED) {
       status = <span className="green">Approved</span>;
     } else if (status == AccountModificationRequestStatus.REJECTED) {
@@ -51,25 +51,15 @@ class View extends UpdatableView {
             <div className="title">
               {title}
             </div>
-            <div className="account">
-              <div className="legend">Account</div>
-              {account}
-            </div>
-            <div className="requester">
-              <div className="legend">Requested by</div>
-              {requestedBy}
-            </div>
-            <div className="request-id">
-              <div className="legend">Requested ID</div>
-              {requestId}
+            <div className="description">
+              {requestId} | Account: {account}
             </div>
           </div>
           <div className="right-panel">
-            <div className="timestamp">{timestamp}</div>
             <div className="status">
-              <div className="legend">Status</div>
               {status}
             </div>
+            <div className="timestamp">{timestamp}</div>
           </div>
         </div>
     );
