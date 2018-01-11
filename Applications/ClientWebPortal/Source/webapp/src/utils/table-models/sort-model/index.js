@@ -242,21 +242,7 @@ export default class extends Model {
 
   /** @private */
   compareValues(a, b, isAsc) {
-    // console.debug('============= comparing values');
-    // console.debug('a:');
-    // console.debug(a);
-    // console.debug('b:');
-    // console.debug(b);
     let result = this.valueComparer.compare(a, b);
-
-    // if (result > 0) {
-    //   console.debug('A is bigger than B');
-    // } else if (result < 0) {
-    //   console.debug('B is bigger than A');
-    // } else {
-    //   console.debug('A and B are equal');
-    // }
-
     if (isAsc) {
       return result;
     } else {
