@@ -1,5 +1,6 @@
 #include "Spire/Canvas/Types/RecordType.hpp"
 #include <Beam/Utilities/Algorithm.hpp>
+#include "Spire/Canvas/Records/Record.hpp"
 #include "Spire/Canvas/Types/CanvasTypeVisitor.hpp"
 
 using namespace Beam;

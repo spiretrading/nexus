@@ -1,4 +1,5 @@
 #include "Spire/Canvas/Types/TimeInForceType.hpp"
+#include "Nexus/Definitions/TimeInForce.hpp"
 #include "Spire/Canvas/Types/CanvasTypeVisitor.hpp"
 
 using namespace Spire;

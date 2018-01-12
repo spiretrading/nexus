@@ -10,10 +10,17 @@ import moment from 'moment';
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
+
+    this.onPanelClick = this.onPanelClick.bind(this);
+  }
+
+  /** @private */
+  onPanelClick() {
+    this.controller.onClick();
   }
 
   render() {
-    let containerClass = 'account-modification-request-container ';
+    let containerClass = 'account-modification-request-container no-select ';
     containerClass += this.componentModel.className;
 
     let title;
@@ -39,7 +46,7 @@ class View extends UpdatableView {
     }
 
     return (
-        <div id={this.componentModel.componentId} className={containerClass}>
+        <div id={this.componentModel.componentId} className={containerClass} onClick={this.onPanelClick}>
           <div className="left-panel">
             <div className="title">
               {title}

@@ -126,6 +126,14 @@ class DesktopRoutes extends Routes {
             .then(loadRoute(cb))
             .catch(errorLoading);
         }
+      },
+      {
+        path: 'entitlement-modification-review',
+        getComponent(location, cb) {
+          System.import('../components/structures/common/entitlement-modification-review')
+            .then(loadRoute(cb))
+            .catch(errorLoading);
+        }
       }
     ];
   }

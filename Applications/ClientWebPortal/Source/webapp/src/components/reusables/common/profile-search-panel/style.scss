@@ -68,7 +68,7 @@
       height: 0;
       overflow: hidden;
       cursor: pointer;
-      padding-top: 4px;
+      padding-top: 4px !important;
 
       &.empty {
         color: $darkerGrey;
@@ -77,6 +77,10 @@
 
       &.match {
         height: 27px;
+      }
+
+      &.non-match {
+        padding: 0;
       }
 
       &>span, i {

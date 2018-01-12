@@ -72,6 +72,26 @@ AdministrationWebServlet::~AdministrationWebServlet() {
 vector<HttpRequestSlot> AdministrationWebServlet::GetSlots() {
   vector<HttpRequestSlot> slots;
   slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/load_organization_name"),
+    std::bind(&AdministrationWebServlet::OnLoadOrganizationName, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/load_accounts_by_roles"),
+    std::bind(&AdministrationWebServlet::OnLoadAccountsByRoles, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/load_administrators_root_entry"),
+    std::bind(&AdministrationWebServlet::OnLoadAdministratorsRootEntry, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/load_services_root_entry"),
+    std::bind(&AdministrationWebServlet::OnLoadServicesRootEntry, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/load_trading_groups_root_entry"),
+    std::bind(&AdministrationWebServlet::OnLoadTradingGroupsRootEntry, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_trading_group"),
     std::bind(&AdministrationWebServlet::OnLoadTradingGroup, this,
     std::placeholders::_1));
@@ -184,6 +204,86 @@ void AdministrationWebServlet::Close() {
 
 void AdministrationWebServlet::Shutdown() {
   m_openState.SetClosed();
+}
+
+HttpResponse AdministrationWebServlet::OnLoadOrganizationName(
+    const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto organizationName =
+    m_serviceClients->GetAdministrationClient().LoadOrganizationName();
+  session->ShuttleResponse(organizationName, Store(response));
+  return response;
+}
+
+HttpResponse AdministrationWebServlet::OnLoadAccountsByRoles(
+    const HttpRequest& request) {
+  struct Parameters {
+    AccountRoles m_roles;
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("roles", m_roles);
+    }
+  };
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr ||
+      !IsAdministrator(*m_serviceClients, session->GetAccount())) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  auto accounts =
+    m_serviceClients->GetAdministrationClient().LoadAccountsByRoles(
+    parameters.m_roles);
+  session->ShuttleResponse(accounts, Store(response));
+  return response;
+}
+
+HttpResponse AdministrationWebServlet::OnLoadAdministratorsRootEntry(
+    const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto root =
+    m_serviceClients->GetAdministrationClient().LoadAdministratorsRootEntry();
+  session->ShuttleResponse(root, Store(response));
+  return response;
+}
+
+HttpResponse AdministrationWebServlet::OnLoadServicesRootEntry(
+    const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto root =
+    m_serviceClients->GetAdministrationClient().LoadServicesRootEntry();
+  session->ShuttleResponse(root, Store(response));
+  return response;
+}
+
+HttpResponse AdministrationWebServlet::OnLoadTradingGroupsRootEntry(
+    const HttpRequest& request) {
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto root =
+    m_serviceClients->GetAdministrationClient().LoadTradingGroupsRootEntry();
+  session->ShuttleResponse(root, Store(response));
+  return response;
 }
 
 HttpResponse AdministrationWebServlet::OnLoadTradingGroup(

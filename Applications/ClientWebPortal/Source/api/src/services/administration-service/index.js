@@ -1,10 +1,12 @@
 import httpConnectionManager from '../commons/http-connection-manager';
-import AccountRoles from '../commons/account-roles';
+import AccountRoles from '../../definitions/account-roles';
 import AccountIdentity from './account-identity';
 import RiskParameters from '../risk-service/risk-parameters';
 import DirectoryEntry from '../../definitions/directory-entry';
 import AccountModificationRequest from '../../definitions/account-modification-request';
 import AccModReqUpdate from '../../definitions/account-modification-request-update';
+import EntitlementModification from '../../definitions/entitlement-modification';
+import Message from '../../definitions/message';
 
 /** Spire admin client class */
 class Admin {
@@ -226,6 +228,109 @@ class Admin {
       account: directoryEntry.toData(),
       start_id: startId,
       max_count: maxCount
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadAccountModificationRequestIds(directoryEntry, startId, maxCount) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_account_modification_request_ids';
+    let payload = {
+      account: directoryEntry.toData(),
+      start_id: startId,
+      max_count: maxCount
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadEntitlementModification(id) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_entitlement_modification';
+    let payload = {
+      id: id
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .then(response => {
+        return EntitlementModification.fromData(response);
+      })
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadMessageIds(requestId) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_message_ids';
+    let payload = {
+      id: requestId
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadMessage(messageId) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_message';
+    let payload = {
+      id: messageId
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .then(response => {
+        return Message.fromData(response);
+      })
+      .catch(this.logErrorAndThrow);
+  }
+
+  approveAccountModificationRequest(requestId, message) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/approve_account_modification_request';
+    let payload = {
+      id: requestId,
+      comment: message.toData()
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .then(response => {
+        return AccModReqUpdate.fromData(response);
+      })
+      .catch(this.logErrorAndThrow);
+  }
+
+  rejectAccountModificationRequest(requestId, message) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/reject_account_modification_request';
+    let payload = {
+      id: requestId,
+      comment: message.toData()
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .then(response => {
+        return AccModReqUpdate.fromData(response);
+      })
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadOrganizationName() {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_organization_name';
+
+    return httpConnectionManager.send(apiPath, null, true)
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadTradingGroupsRootEntry() {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_trading_groups_root_entry';
+
+    return httpConnectionManager.send(apiPath, null, true)
+      .then(response => {
+        return DirectoryEntry.fromData(response);
+      })
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadAccountsByRoles(accountRoles) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_accounts_by_roles';
+    let payload = {
+      roles: accountRoles.toData()
     };
 
     return httpConnectionManager.send(apiPath, payload, true)

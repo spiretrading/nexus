@@ -39,11 +39,13 @@ class View extends UpdatableView {
 
   /** @priavte */
   onCheckClick(event) {
-    let $panelContainer = $(event.currentTarget).parent().parent();
-    if ($panelContainer.hasClass('selected')) {
-      this.controller.onEntitlementDeselected();
-    } else {
-      this.controller.onEntitlementSelected();
+    if (!this.componentModel.isReadOnly) {
+      let $panelContainer = $(event.currentTarget).parent().parent();
+      if ($panelContainer.hasClass('selected')) {
+        this.controller.onEntitlementDeselected();
+      } else {
+        this.controller.onEntitlementSelected();
+      }
     }
   }
 
@@ -130,6 +132,11 @@ class View extends UpdatableView {
     let componentContainerClassName = 'entitlement-panel-container';
     if (this.componentModel.isSelected) {
       componentContainerClassName += ' selected';
+    }
+    if (this.componentModel.isGreen) {
+      componentContainerClassName += ' green-panel';
+    } else if (this.componentModel.isRed) {
+      componentContainerClassName += ' red-panel';
     }
 
     return (

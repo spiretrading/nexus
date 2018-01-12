@@ -1,6 +1,6 @@
 import httpConnectionManager from '../commons/http-connection-manager';
 import ResultCodes from './result-codes';
-import AccountRoles from '../commons/account-roles';
+import AccountRoles from '../../definitions/account-roles';
 import DirectoryEntry from '../../definitions/directory-entry';
 const ResultCode = ResultCodes;
 

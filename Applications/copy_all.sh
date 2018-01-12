@@ -25,6 +25,7 @@ for application in $nexus_applications; do
   popd
 done
 
+python_directory=$(python -m site --user-site)
 cp -R /home/developers/Nexus/Applications/ClientWebPortal/Application/webapp ./ClientWebPortal
-sudo cp /home/developers/Beam/Beam/Library/Release/beam.so /usr/local/lib/python2.7/dist-packages
-sudo cp /home/developers/Nexus/Nexus/Library/Release/nexus.so /usr/local/lib/python2.7/dist-packages
+cp /home/developers/Beam/Beam/Library/Release/beam.so $python_directory
+cp /home/developers/Nexus/Nexus/Library/Release/nexus.so $python_directory

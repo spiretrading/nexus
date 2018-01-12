@@ -23,7 +23,7 @@ void AdministrationServletTester::setUp() {
   RegisterAdministrationServices(Store(m_clientProtocol->GetSlots()));
   RegisterAdministrationMessages(Store(m_clientProtocol->GetSlots()));
   m_container.emplace(Initialize(&m_serviceLocatorEnvironment->GetRoot(),
-    EntitlementDatabase(), m_dataStore), std::move(serverConnection),
+    "", EntitlementDatabase(), m_dataStore), std::move(serverConnection),
     factory<std::unique_ptr<TriggerTimer>>());
   m_container->Open();
   m_clientProtocol->Open();

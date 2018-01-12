@@ -12,14 +12,14 @@
   }
 
   .header {
-    margin: 0 250px;
+    margin: 0 200px;
     font-weight: bold;
     margin-bottom: 20px;
     color: $primaryGradient1;
   }
 
   .body {
-    margin: 0 250px;
+    margin: 0 200px;
     display: flex;
 
     .traders {
@@ -99,6 +99,7 @@ main.mobile {
       width: 100%;
       margin: 0;
       flex-direction: column-reverse;
+      margin-bottom: 30px;
 
       .traders {
         width: 100%;
@@ -106,7 +107,7 @@ main.mobile {
 
       .stats {
         width: 100%;
-        height: 160px;
+        height: 195px;
 
         table {
           margin: 0;
