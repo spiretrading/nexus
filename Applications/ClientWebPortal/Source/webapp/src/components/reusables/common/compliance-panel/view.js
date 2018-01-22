@@ -9,20 +9,35 @@ import inputValidator from 'utils/input-validator';
 import deviceDetector from 'utils/device-detector';
 import labelFormatter from 'utils/label-formatter';
 import {DataType, Security} from 'spire-client';
+import PrimaryButton from 'components/reusables/common/primary-button';
+import modal from 'utils/modal';
+import SymbolsModel from './symbols-model';
+import HashMap from 'hashmap';
 
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
     this.isInitialized = false;
     this.isInputFocused = false;
+    this.symbolsModel = new SymbolsModel();
 
-    this.onSymbolsChange = this.onSymbolsChange.bind(this);
+    this.onSymbolsInputClick = this.onSymbolsInputClick.bind(this);
     this.getCurrencyInput = this.getCurrencyInput.bind(this);
     this.getMoneyInput = this.getMoneyInput.bind(this);
     this.getSymbolsInput = this.getSymbolsInput.bind(this);
     this.getPeriodInput = this.getPeriodInput.bind(this);
     this.getIntegerInput = this.getIntegerInput.bind(this);
     this.getBooleanInput = this.getBooleanInput.bind(this);
+    this.onModalCloseClick = this.onModalCloseClick.bind(this);
+    this.onSymbolsModalItemClick = this.onSymbolsModalItemClick.bind(this);
+    this.onKeyDownCheckSelectionModifiers = this.onKeyDownCheckSelectionModifiers.bind(this);
+    this.onKeyUpCheckSelectionModifiers = this.onKeyUpCheckSelectionModifiers.bind(this);
+    this.onSymbolsModalSaveClick = this.onSymbolsModalSaveClick.bind(this);
+    this.onSymbolsInput = this.onSymbolsInput.bind(this);
+    this.onDocumentMouseUp = this.onDocumentMouseUp.bind(this);
+    this.onSymbolsSearchResultClick = this.onSymbolsSearchResultClick.bind(this);
+    this.onAddSymbolClick = this.onAddSymbolClick.bind(this);
+    this.onRemoveSymbolClick = this.onRemoveSymbolClick.bind(this);
   }
 
   /** @private */
@@ -106,34 +121,9 @@ class View extends UpdatableView {
   }
 
   /** @private */
-  onSymbolsChange() {
-    let securities = [];
-    let $tagsUl = $('#' + this.componentModel.componentId + ' ul.symbols-input');
-    $tagsUl.find('.tagit-label').each(function() {
-      let marketCode = $(this).parent().attr('data-market-code');
-      let label = $(this).text();
-      let security;
-      if (Security.isWildCard(label)) {
-        security = Security.getWildCard();
-      } else {
-        let labelTokens = label.split('.');
-        let symbol = labelTokens[0];
-        let country = definitionsService.getMarket(marketCode).countryCode;
-        security = Security.fromData({
-          country: country.toNumber(),
-          market: marketCode,
-          symbol: symbol
-        });
-      }
-
-      let securityDefinition = {
-        value: security,
-        which: 8
-      };
-      securities.push(securityDefinition);
-    });
-    let parameterName = $tagsUl.attr('data-parameter-name');
-    this.controller.onParameterUpdated(parameterName, securities);
+  onSymbolsInputClick(e) {
+    let parameterIndex = $(e.currentTarget).attr('data-parameter-name');
+    this.openSymbolsModal();
   }
 
   /** @private */
@@ -298,16 +288,16 @@ class View extends UpdatableView {
   getSymbolsInput(parameterIndex) {
     let marketDatabase = definitionsService.getMarketDatabase();
     let parameters = this.componentModel.schema.parameters;
-    let tags = [];
-    for (let j=0; j<parameters[parameterIndex].value.value.length; j++) {
-      let security = parameters[parameterIndex].value.value[j].value;
+    let symbols = '';
+    let sortedSymbols = this.getSortedSymbols(parameters[parameterIndex].value.value);
+    for (let j=0; j<sortedSymbols.length; j++) {
+      let security = sortedSymbols[j].value;
       if (security.symbol.length > 0) {
-        let tagLabel = security.toString(marketDatabase);
-        tags.push(
-          <li key={j}>{tagLabel + '|' + security.market.value}</li>
-        );
+        let symbolLabel = security.toString(marketDatabase);
+        symbols += symbolLabel + ', ';
       }
     }
+    symbols = symbols.substring(0, symbols.length - 2);
     let parameterName = parameters[parameterIndex].name.replace(/\\/g, '');
     parameterName = labelFormatter.toCapitalWithSpace(parameterName);
 
@@ -315,13 +305,29 @@ class View extends UpdatableView {
       <div className="entry-wrapper" key={parameterIndex}>
         <div className="name">{parameterName}</div>
         <div className="value">
-          <ul className="symbols-input" data-parameter-name={parameters[parameterIndex].name}>
-            {tags}
-          </ul>
+          <input type="text"
+            className="symbols-input"
+            value={symbols}
+            readOnly
+            onClick={this.onSymbolsInputClick}
+            data-parameter-name={parameters[parameterIndex].name}
+          />
         </div>
       </div>;
 
     return input;
+  }
+
+  /** @private */
+  getSortedSymbols(originalSymbols) {
+    let marketDatabase = definitionsService.getMarketDatabase();
+    let sorted = originalSymbols.slice();
+    sorted.sort((a,b) => {
+      let securityA = a.value;
+      let securityB = b.value;
+      return securityA.toString(marketDatabase).localeCompare(securityB.toString(marketDatabase));
+    });
+    return sorted;
   }
 
   /** @private */
@@ -426,110 +432,21 @@ class View extends UpdatableView {
     inputValidator.onlyNumbers($('#' + this.componentModel.componentId + ' .buying-power-input'));
     inputValidator.onlyNumbers($('#' + this.componentModel.componentId + ' .time-input-wrapper input.numeric'));
 
+    $(document).keydown(this.onKeyDownCheckSelectionModifiers)
+      .keyup(this.onKeyUpCheckSelectionModifiers);
+
     var _this = this;
-    $('#' + this.componentModel.componentId + ' .symbols-input').each(function(){
-      let $tagContainer = $(this);
-      let sourceLabels = [];
-      $tagContainer.tagit({
-        autocomplete: {
-          delay: 0,
-          minLength: 1,
-          source: function(request, response) {
-            if (_this.symbolsTimeout != null) {
-              clearTimeout(_this.symbolsTimeout);
-            }
-
-            let marketDatabase = definitionsService.getMarketDatabase();
-            _this.symbolsTimeout = setTimeout(() => {
-              _this.symbolsTimeout = null;
-              let input = $('#' + _this.componentModel.componentId + ' .ui-autocomplete-input').val().trim();
-              _this.controller.searchSymbols(input)
-                .then((results) => {
-                  let labels = [];
-                  for (let i=0; i<results.length; i++) {
-                    let securityDisplay = results[i].security.toString(marketDatabase);
-                    let marketCode = results[i].security.market.toData();
-                    let display = securityDisplay + ' (' + results[i].security.symbol + '.' + marketCode + ')';
-                    let label = {
-                      label: display,
-                      value: display
-                    };
-                    labels.push(label);
-                    if (sourceLabels.indexOf(label.value) < 0) {
-                      sourceLabels.push(label.value);
-                    }
-                  }
-                  response(labels);
-                });
-            }, Config.INPUT_TIMEOUT_DURATION);
-          }
-        },
-        beforeTagAdded: function(event, ui) {
-          if (_this.isInitialized) {
-            if (ui.tagLabel != '*' && !doesExistInSourceLabels(ui.tagLabel)){
-              $(this).find('.ui-autocomplete-input').val('');
-              return false;
-            } else if (doesExistInTags(ui.tagLabel)) {
-              $('#' + _this.componentModel.componentId + ' .symbols-input .tagit-new input').val('');
-              return false;
-            } else {
-              let openBracketIndex = ui.tagLabel.indexOf('(');
-              let symbolWithMarketCode = ui.tagLabel.substring(openBracketIndex + 1, ui.tagLabel.length - 1);
-              let periodIndex = symbolWithMarketCode.indexOf('.');
-              let marketCode = symbolWithMarketCode.substring(periodIndex + 1);
-              let tagLabel = ui.tagLabel.substring(0, openBracketIndex);
-              let $label = ui.tag.find('.tagit-label');
-              let html = $label.html();
-              html = html.replace(' (' + symbolWithMarketCode + ')', '');
-              $label.html(html);
-              ui.tag.attr('data-market-code', marketCode);
-            }
-          } else {
-            let $label = ui.tag.find('.tagit-label');
-            let labelText = $label.html();
-            let texts = labelText.split('|');
-            $label.html(texts[0]);
-            let marketCode = texts[1];
-            ui.tag.attr('data-market-code', marketCode);
-          }
-
-          function doesExistInSourceLabels(label) {
-            for (let i=0; i<sourceLabels.length; i++) {
-              if (sourceLabels[i] == label) {
-                return true;
-              }
-            }
-            return false;
-          }
-
-          function doesExistInTags(label) {
-            let symbolWithMarketDisplay = label.substring(0, label.indexOf(' '));
-            let existingLabels = $('#' + _this.componentModel.componentId + ' .symbols-input .tagit-label');
-            for (let i=0; i<existingLabels.length; i++) {
-              if (existingLabels[i].innerText == symbolWithMarketDisplay) {
-                return true;
-              }
-            }
-            return false;
-          }
-        },
-        afterTagAdded: (event, ui) => {
-          if (_this.isInitialized) {
-            _this.adjustContentSlideWrapperHeight();
-            _this.onSymbolsChange();
-          } else {
-            $(event.currentTarget).parent().parent().find('.content-slide-wrapper').height(0);
-          }
-        },
-        afterTagRemoved: (event, ui) => {
-          _this.adjustContentSlideWrapperHeight();
-          _this.onSymbolsChange();
-          return false;
-        },
-        allowDuplicates: false,
-        readOnly: !_this.componentModel.isAdmin
+    let $symbolsList = $('#' + this.componentModel.componentId + ' .symbols-modal .symbols-list');
+    if ($symbolsList[0] != null) {
+      let height = $symbolsList.height();
+      let scrollHeight = $symbolsList.get(0).scrollHeight;
+      $symbolsList.bind('mousewheel', function(e, d) {
+        e.stopPropagation();
       });
-    });
+      $('#' + this.componentModel.componentId + ' .symbols-modal .autocomplete-wrapper').bind('mousewheel', function(e) {
+        e.stopPropagation();
+      });
+    }
 
     this.isInitialized = true;
 
@@ -557,10 +474,305 @@ class View extends UpdatableView {
   }
 
   dispose() {
-    $('#' + this.componentModel.componentId + ' .symbols-input').each(function(){
-      let $tagContainer = $(this);
-      $tagContainer.tagit('destroy');
+    $(document).unbind('keydown', this.onKeyDownCheckSelectionModifiers)
+      .unbind('keyup', this.onKeyUpCheckSelectionModifiers);
+    $(document).unbind('mouseup', this.onDocumentMouseUp);
+  }
+
+  /** @private */
+  onDocumentMouseUp(e) {
+    let $autocompleteWrapper = $('#' + this.componentModel.componentId + ' .autocomplete-wrapper');
+    let $parent = $(e.target).parent();
+    if ($autocompleteWrapper[0] !== $parent[0]) {
+      this.closeSymbolsSearchResults();
+    }
+  }
+
+  /** @private */
+  closeSymbolsSearchResults() {
+    this.symbolsSearchResults = null;
+    this.update();
+  }
+
+  /** @private */
+  onSymbolsModalItemClick(e) {
+    let $row = $(e.currentTarget);
+    let clickedRowIndex = Number($row.attr('data-row-index'));
+
+    if (!this.isCntrlPressed && !this.isShiftPressed) {
+      // when no modifiers are pressed
+      this.activeRowIndex = clickedRowIndex;
+      this.symbolsModel.clearSelectedRows();
+      this.symbolsModel.setSelectedRow(clickedRowIndex, false);
+    } else if (this.isCntrlPressed && !this.isShiftPressed) {
+      // when only the control modifier is pressed
+      this.activeRowIndex = clickedRowIndex;
+      if (this.symbolsModel.isRowSelectedControlModified(clickedRowIndex)) {
+       this.symbolsModel.removeRowSelection(clickedRowIndex);
+      } else {
+        this.symbolsModel.setSelectedRow(clickedRowIndex, true);
+
+        // set all existing selected rows with control modifier applied
+        this.symbolsModel.setAllSelectedRowsControlModified();
+      }
+    } else {
+      // when shift modifier is pressed
+      let $allRows = $row.parent().children();
+      let parameters = this.componentModel.schema.parameters;
+      let rowCounter = parameters[this.symbolsParametersIndex].value.value.length;
+      let pivotRowsMetCounter = 0;
+
+      // unselect the selected rows not chosen by control modifier
+      this.symbolsModel.removeNonControlModifiedSelectedRows();
+
+      for (let i=0; i<rowCounter; i++) {
+        if (this.activeRowIndex == null) {
+          this.activeRowIndex = clickedRowIndex;
+        }
+
+        let $currentRow = $(this);
+        let currentRowIndex = i;
+        if (currentRowIndex === this.activeRowIndex || currentRowIndex === clickedRowIndex) {
+          pivotRowsMetCounter++;
+        }
+
+        if (pivotRowsMetCounter > 0 && pivotRowsMetCounter <= 2) {
+          this.symbolsModel.setSelectedRow(currentRowIndex, false);
+
+          if (pivotRowsMetCounter == 2) {
+            pivotRowsMetCounter++;
+          }
+        }
+      }
+    }
+    this.update();
+  }
+
+  /** @private */
+  getSymbolsModal(parameterIndex) {
+    this.symbolsParametersIndex = parameterIndex;
+    let symbols = [];
+    let marketDatabase = definitionsService.getMarketDatabase();
+    let parameters = this.componentModel.schema.parameters;
+    let sortedSymbols = this.getSortedSymbols(parameters[parameterIndex].value.value);
+    let selectedRows = this.symbolsModel.getSelectedRows();
+    for (let j=0; j<sortedSymbols.length; j++) {
+      let security = sortedSymbols[j].value;
+      if (security.symbol.length > 0) {
+        let className = 'no-select';
+        if (selectedRows.includes(j)) {
+          className += ' selected';
+        }
+        symbols.push(
+          <li key={j}
+            className={className}
+            onClick={this.onSymbolsModalItemClick}
+            data-row-index={j}
+            data-market-code={security.market.value}
+            data-security-symbol={security.symbol}
+          >
+              {security.toString(marketDatabase)}
+          </li>
+        );
+      }
+    }
+
+    let searchResultsClassName = 'autocomplete-wrapper';
+    let searchResults;
+    if (this.symbolsSearchResults == null) {
+      searchResultsClassName += ' hidden';
+    } else {
+      searchResults = [];
+      for (let i=0; i<this.symbolsSearchResults.length; i++) {
+        searchResults.push(
+          <li key={i} onClick={this.onSymbolsSearchResultClick}>
+            {this.symbolsSearchResults[i].security.toString(marketDatabase)}
+          </li>
+        );
+      }
+    }
+
+    return  <div className="modal fade symbols-modal" tabIndex="-1" role="dialog">
+              <div className="modal-dialog" role="document">
+                <div className="modal-content">
+                  <div className="modal-header">
+                    Edit Symbols
+                    <span className="icon-close" onClick={this.onModalCloseClick}></span>
+                  </div>
+                  <div className="modal-body">
+                    <div className="symbol-input-container">
+                      <input
+                        className="symbol-input"
+                        placeholder="Type symbol here..."
+                        onInput={this.onSymbolsInput}
+                      />
+                      <ul className={searchResultsClassName}>
+                        {searchResults}
+                      </ul>
+                    </div>
+                    <div className="action-buttons-container">
+                      <div className="Remove" onClick={this.onRemoveSymbolClick}>Remove</div>
+                      <div className="import">Import</div>
+                      <div className="add" onClick={this.onAddSymbolClick}>Add</div>
+                    </div>
+                    <ul className="symbols-list" data-parameter-name={parameters[parameterIndex].name}>
+                      {symbols}
+                    </ul>
+                    <div className="buttons">
+                      <PrimaryButton 
+                        className="save-changes-button button" 
+                        model={{label: 'Save Changes'}}
+                        onClick={this.onSymbolsModalSaveClick}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>;
+  }
+
+  /** @private */
+  onAddSymbolClick() {
+    let $symbolInput = $('#' + this.componentModel.componentId + ' .symbols-modal .symbol-input');
+    let securityDisplay = $symbolInput.val().trim();
+    let doesExist = $("#" + this.componentModel.componentId + " .symbols-modal li:contains('" + securityDisplay + "')").length > 0;
+    if (!doesExist) {
+      let marketDatabase = definitionsService.getMarketDatabase();
+      let security = Security.fromDisplay(securityDisplay, marketDatabase);
+      this.componentModel.schema.parameters[this.symbolsParametersIndex].value.value.push({
+        value: security
+      });
+      $symbolInput.val('');
+      this.update();
+    }
+  }
+
+  /** @private */
+  onRemoveSymbolClick() {
+    let selectedIndices = this.symbolsModel.getSelectedRows();
+    let selectedSecurityDisplays = new HashMap();
+    let symbolsElements = $("#" + this.componentModel.componentId + " .symbols-modal li");
+    for (let i=0; i<selectedIndices.length; i++) {
+      let $selectedElement = $(symbolsElements.get(selectedIndices[i]));
+      selectedSecurityDisplays.set($selectedElement.text(), true);
+    }
+    let securities = this.componentModel.schema.parameters[this.symbolsParametersIndex].value.value;
+    let marketDatabase = definitionsService.getMarketDatabase();
+    let filtered = securities.filter(security => {
+      let securityDisplay = security.value.toString(marketDatabase);
+      if (selectedSecurityDisplays.has(securityDisplay)) {
+        return false;
+      } else {
+        return true;
+      }
     });
+    this.componentModel.schema.parameters[this.symbolsParametersIndex].value.value = filtered;
+    this.symbolsModel.clearSelectedRows();
+    this.update();
+  }
+
+  /** @private */
+  onSymbolsSearchResultClick(e) {
+    let securityDisplay = $(e.currentTarget).text().trim();
+    $('#' + this.componentModel.componentId + ' .symbols-modal .symbol-input').val(securityDisplay);
+    this.closeSymbolsSearchResults();
+  }
+
+  /** @private */
+  onSymbolsInput(e) {
+    if (this.symbolsInputTimeout != null) {
+      clearTimeout(this.symbolsInputTimeout);
+    }
+
+    let inputElement = e.currentTarget;
+    let marketDatabase = definitionsService.getMarketDatabase();
+    this.symbolsInputTimeout = setTimeout(() => {
+      this.symbolsInputTimeout = null;
+      let input = $(inputElement).val().trim();
+      if (input.length > 0) {
+        this.controller.searchSymbols(input)
+          .then((results) => {
+            if (results.length > 0) {
+              this.symbolsSearchResults = results;
+            }
+            this.update();
+          });
+      } else {
+        this.symbolsSearchResults = null;
+        this.update();
+      }
+    }, Config.INPUT_TIMEOUT_DURATION);
+  }
+
+  /** @private */
+  onSymbolsModalSaveClick() {
+    let securities = [];
+    let $symbols = $('#' + this.componentModel.componentId + ' .symbols-list li');
+    $symbols.each(function() {
+      let marketCode = $(this).attr('data-market-code');
+      let securitySymbol = $(this).attr('data-security-symbol');
+      let label = $(this).text();
+      let security;
+      if (Security.isWildCard(label)) {
+        security = Security.getWildCard();
+      } else {
+        let labelTokens = label.split('.');
+        let symbol = labelTokens[0];
+        let country = definitionsService.getMarket(marketCode).countryCode;
+        security = Security.fromData({
+          country: country.toNumber(),
+          market: marketCode,
+          symbol: securitySymbol
+        });
+      }
+      let securityDefinition = {
+        value: security,
+        which: 8
+      };
+      securities.push(securityDefinition);
+    });
+    let parameterName = $('#' + this.componentModel.componentId + ' .symbols-list').attr('data-parameter-name');
+    this.controller.onParameterUpdated(parameterName, securities);
+    this.symbolsModel.clearSelectedRows();
+    $('#' + this.componentModel.componentId + ' .symbol-input').val('');
+    this.update();
+    this.closeSymbolsModal();
+  }
+
+  /** @private */
+  onKeyDownCheckSelectionModifiers(event) {
+    let isMac = navigator.platform.toUpperCase().indexOf('MAC')>=0;
+    if((!isMac && event.which == '17') || (isMac && event.which == '91')) {
+      this.isCntrlPressed = true;
+    } else if (event.which == '16') {
+      this.isShiftPressed = true;
+    }
+  }
+
+  /** @private */
+  onKeyUpCheckSelectionModifiers(event) {
+    let isMac = navigator.platform.toUpperCase().indexOf('MAC')>=0;
+    if((!isMac && event.which == '17') || (isMac && event.which == '91')) {
+      this.isCntrlPressed = false;
+    } else if (event.which == '16') {
+      this.isShiftPressed = false;
+    }
+  }
+
+  /** @private */
+  openSymbolsModal() {
+    modal.show($('#' + this.componentModel.componentId + ' .symbols-modal'));
+    $(document).mouseup(this.onDocumentMouseUp);
+  }
+
+  /** @private */
+  closeSymbolsModal() {
+    modal.hide($('#' + this.componentModel.componentId + ' .symbols-modal'));
+    $(document).unbind('mouseup', this.onDocumentMouseUp);
+  }
+
+  onModalCloseClick() {
+    modal.hide($('#' + this.componentModel.componentId + ' .symbols-modal'));
   }
 
   render() {
@@ -625,6 +837,7 @@ class View extends UpdatableView {
 
     let onStatusChange = this.onStatusChange.bind(this);
     let content = [];
+    let symbolsModal = null;
     let parameters = this.componentModel.schema.parameters;
     let schema = definitionsService.getComplianceRuleScehma(this.componentModel.schema.name);
     let schemaParameters = schema.parameters;
@@ -635,6 +848,7 @@ class View extends UpdatableView {
         content.push(this.getMoneyInput(i));
       } else if (schemaParameters[i].value.which == DataType.LIST && schemaParameters[i].value.value[0].which == DataType.SECURITY) {
         content.push(this.getSymbolsInput(i));
+        symbolsModal = this.getSymbolsModal(i);
       } else if (schemaParameters[i].value.which == DataType.TIME_DURATION) {
         content.push(this.getPeriodInput(i));
       } else if (schemaParameters[i].value.which == DataType.INT64) {
@@ -676,6 +890,7 @@ class View extends UpdatableView {
             </div>
           </div>
         </div>
+        {symbolsModal}
       </div>
     );
   }
