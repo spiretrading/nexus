@@ -38,6 +38,8 @@ class View extends UpdatableView {
     this.onSymbolsSearchResultClick = this.onSymbolsSearchResultClick.bind(this);
     this.onAddSymbolClick = this.onAddSymbolClick.bind(this);
     this.onRemoveSymbolClick = this.onRemoveSymbolClick.bind(this);
+    this.onImportSymbolsClick = this.onImportSymbolsClick.bind(this);
+    this.onImportSymbolsFileSelect = this.onImportSymbolsFileSelect.bind(this);
   }
 
   /** @private */
@@ -612,7 +614,8 @@ class View extends UpdatableView {
                     </div>
                     <div className="action-buttons-container">
                       <div className="Remove" onClick={this.onRemoveSymbolClick}>Remove</div>
-                      <div className="import">Import</div>
+                      <div className="import" onClick={this.onImportSymbolsClick}>Import</div>
+                      <input type="file" className="import-input"/>
                       <div className="add" onClick={this.onAddSymbolClick}>Add</div>
                     </div>
                     <ul className="symbols-list" data-parameter-name={parameters[parameterIndex].name}>
@@ -635,15 +638,23 @@ class View extends UpdatableView {
   onAddSymbolClick() {
     let $symbolInput = $('#' + this.componentModel.componentId + ' .symbols-modal .symbol-input');
     let securityDisplay = $symbolInput.val().trim();
-    let doesExist = $("#" + this.componentModel.componentId + " .symbols-modal li:contains('" + securityDisplay + "')").length > 0;
+    this.addNonExistentSymbol(securityDisplay);
+    this.update();
+    $symbolInput.val('');
+  }
+
+  /** @private */
+  addNonExistentSymbol(securityDisplay) {
+    let $includingElements = $("#" + this.componentModel.componentId + " .symbols-modal li:contains('" + securityDisplay + "')");
+    let doesExist = $includingElements.filter(function() {
+      return $(this).text() === securityDisplay;
+    }).length > 0;
     if (!doesExist) {
       let marketDatabase = definitionsService.getMarketDatabase();
       let security = Security.fromDisplay(securityDisplay, marketDatabase);
       this.componentModel.schema.parameters[this.symbolsParametersIndex].value.value.push({
         value: security
       });
-      $symbolInput.val('');
-      this.update();
     }
   }
 
@@ -669,6 +680,34 @@ class View extends UpdatableView {
     this.componentModel.schema.parameters[this.symbolsParametersIndex].value.value = filtered;
     this.symbolsModel.clearSelectedRows();
     this.update();
+  }
+
+  /** @private */
+  onImportSymbolsClick() {
+    $('#' + this.componentModel.componentId + ' .symbols-modal .import-input')
+      .change(this.onImportSymbolsFileSelect)
+      .trigger('click');
+  }
+
+  /** @private */
+  onImportSymbolsFileSelect(e) {
+    $('#' + this.componentModel.componentId + ' .symbols-modal .import-input')
+      .unbind('change', this.onImportSymbolsFileSelect);
+    let selectedFile = e.currentTarget.files[0];
+    if (selectedFile) {
+      let reader = new FileReader();
+      reader.readAsText(selectedFile, 'UTF-8');
+      reader.onload = (e) => {
+        let fileContent = e.target.result;
+        let symbols = fileContent.split(/\r?\n/);
+        for (let i=0; i<symbols.length; i++) {
+          if (symbols[i].trim().length > 0) {
+            this.addNonExistentSymbol(symbols[i]);
+          }
+        }
+        this.update();
+      };
+    }
   }
 
   /** @private */
