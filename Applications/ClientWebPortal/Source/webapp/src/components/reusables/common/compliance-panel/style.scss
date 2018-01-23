@@ -28,7 +28,8 @@ $modalSidePadding: 15px;
       text-overflow: ellipsis;
       white-space: nowrap;
       overflow: hidden;
-      margin-top: 2px;
+      margin-top: -3px;
+      margin-bottom: 5px;
     }
 
     .status-dropdown {
@@ -208,6 +209,10 @@ $modalSidePadding: 15px;
         .symbol-input {
           width: 100%;
           border: 1px solid $darkGrey;
+
+          &:focus {
+            border: 1px solid $primaryGradient3;
+          }
         }
 
         .autocomplete-wrapper {
@@ -251,6 +256,10 @@ $modalSidePadding: 15px;
           &:hover {
             color: $primaryGradient1;
           }
+        }
+
+        .import-input {
+          display: none;
         }
       }
 
