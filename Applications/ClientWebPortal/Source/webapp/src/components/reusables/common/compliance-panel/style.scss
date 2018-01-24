@@ -29,7 +29,6 @@ $modalSidePadding: 15px;
       white-space: nowrap;
       overflow: hidden;
       margin-top: -3px;
-      margin-bottom: 5px;
     }
 
     .status-dropdown {
@@ -174,6 +173,10 @@ $modalSidePadding: 15px;
             width: 130px;
             padding: 10px 0px;
           }
+
+          .currency-value {
+            width: 246px;
+          }
         }
       }
     }
@@ -299,25 +302,32 @@ $modalSidePadding: 15px;
 main.mobile {
   .compliance-panel-container {
     .header {
-      height: 80px;
+      height: 75px;
       display: block;
 
       .title-wrapper {
         display: flex;
+        margin-bottom: 5px;
 
         .title {
           display: inline-block;
+          margin-bottom: 5px;
         }
 
         .status-dropdown.dropdown-container {
           margin-left: 40px;
         }
       }
+
+      &.expanded {
+        border-bottom: 1px solid $lightGrey;
+      }
     }
 
     .content-slide-wrapper {
       width: 100%;
       padding-left: 0;
+      margin-bottom: 10px;
 
       .content-wrapper {
         .content-header {
