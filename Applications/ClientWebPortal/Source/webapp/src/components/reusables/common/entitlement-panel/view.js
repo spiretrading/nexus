@@ -88,6 +88,7 @@ class View extends UpdatableView {
     }
 
     let markets = [];
+    let marketDatabase = definitionsService.getMarketDatabase();
     for (let i=0; i<this.componentModel.entitlement.applicability.length; i++) {
       let applicability = this.componentModel.entitlement.applicability[i];
       let provisions = applicability[1];
@@ -113,9 +114,10 @@ class View extends UpdatableView {
         trClassName += ' last-row';
       }
 
+      let marketDatabaseEntry = marketDatabase.fromMarketCode(applicability[0].source);
       markets.push(
         <tr key={i} className={trClassName}>
-          <td className="market-name">{applicability[0].source}</td>
+          <td className="market-name">{marketDatabaseEntry.displayName}</td>
           <td><span className={bboClassName}></span></td>
           <td><span className={marketQuotesClassName}></span></td>
           <td><span className={bookQuotesClassName}></span></td>
