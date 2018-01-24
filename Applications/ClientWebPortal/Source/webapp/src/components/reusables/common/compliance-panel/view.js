@@ -34,7 +34,7 @@ class View extends UpdatableView {
     this.onKeyUpCheckSelectionModifiers = this.onKeyUpCheckSelectionModifiers.bind(this);
     this.onSymbolsModalSaveClick = this.onSymbolsModalSaveClick.bind(this);
     this.onSymbolsInput = this.onSymbolsInput.bind(this);
-    this.onDocumentMouseUp = this.onDocumentMouseUp.bind(this);
+    this.onSymbolsModalMouseClick = this.onSymbolsModalMouseClick.bind(this);
     this.onSymbolsSearchResultClick = this.onSymbolsSearchResultClick.bind(this);
     this.onAddSymbolClick = this.onAddSymbolClick.bind(this);
     this.onRemoveSymbolClick = this.onRemoveSymbolClick.bind(this);
@@ -478,15 +478,21 @@ class View extends UpdatableView {
   dispose() {
     $(document).unbind('keydown', this.onKeyDownCheckSelectionModifiers)
       .unbind('keyup', this.onKeyUpCheckSelectionModifiers);
-    $(document).unbind('mouseup', this.onDocumentMouseUp);
+    $(document).unbind('mouseup', this.onSymbolsModalMouseClick);
   }
 
   /** @private */
-  onDocumentMouseUp(e) {
+  onSymbolsModalMouseClick(e) {
     let $autocompleteWrapper = $('#' + this.componentModel.componentId + ' .autocomplete-wrapper');
     let $parent = $(e.target).parent();
     if ($autocompleteWrapper[0] !== $parent[0]) {
       this.closeSymbolsSearchResults();
+    }
+    
+    let $symbolsList = $('#' + this.componentModel.componentId + ' .symbols-list');
+    if ($symbolsList[0] !== $parent[0]) {
+      this.symbolsModel.clearSelectedRows();
+      this.update();
     }
   }
 
@@ -801,13 +807,13 @@ class View extends UpdatableView {
   /** @private */
   openSymbolsModal() {
     modal.show($('#' + this.componentModel.componentId + ' .symbols-modal'));
-    $(document).mouseup(this.onDocumentMouseUp);
+    $(document).mouseup(this.onSymbolsModalMouseClick);
   }
 
   /** @private */
   closeSymbolsModal() {
     modal.hide($('#' + this.componentModel.componentId + ' .symbols-modal'));
-    $(document).unbind('mouseup', this.onDocumentMouseUp);
+    $(document).unbind('mouseup', this.onSymbolsModalMouseClick);
   }
 
   onModalCloseClick() {
