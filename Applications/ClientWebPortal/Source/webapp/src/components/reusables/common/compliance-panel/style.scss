@@ -28,7 +28,6 @@ $modalSidePadding: 15px;
       text-overflow: ellipsis;
       white-space: nowrap;
       overflow: hidden;
-      margin-top: -3px;
     }
 
     .status-dropdown {
@@ -312,6 +311,7 @@ main.mobile {
         .title {
           display: inline-block;
           margin-bottom: 5px;
+          margin-top: -3px;
         }
 
         .status-dropdown.dropdown-container {
