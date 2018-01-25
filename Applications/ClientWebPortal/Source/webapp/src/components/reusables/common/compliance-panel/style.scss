@@ -60,7 +60,6 @@ $modalSidePadding: 15px;
   }
 
   .value {
-    width: 100%;
     padding-top: 5px;
 
     select {
@@ -345,6 +344,10 @@ main.mobile {
           }
         }
       }
+    }
+
+    .value {
+      width: 100%;
     }
   }
 }
