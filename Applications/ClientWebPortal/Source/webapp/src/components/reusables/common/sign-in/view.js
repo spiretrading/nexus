@@ -92,7 +92,7 @@ class View extends UpdatableView {
     let message;
     if (this.isSignInAttempted && !this.componentModel.isWaiting) {
       if (this.componentModel.signInResultCode == ResultCode.FAIL) {
-        message = 'Invalid username or password.';
+        message = 'Incorrect username or password.';
       }
     }
 
