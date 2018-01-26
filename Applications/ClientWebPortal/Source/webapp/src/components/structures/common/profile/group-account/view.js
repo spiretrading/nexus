@@ -82,9 +82,6 @@ class View extends UpdatableView {
 
       content =
         <div>
-          <div className="user-info">
-            {this.componentModel.groupName}
-          </div>
           <div className="header">
             Group Information
           </div>
