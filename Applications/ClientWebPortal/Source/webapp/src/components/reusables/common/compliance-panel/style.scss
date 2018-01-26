@@ -71,30 +71,35 @@ $modalSidePadding: 15px;
     .symbols-input {
       width: $inputWidth;
       cursor: pointer;
+      padding-left: 16px;
     }
 
     .money-input {
       width: $inputWidth;
       border: 1px solid $darkGrey;
       padding-left: 15px;
-      padding-top: 4px;
+      padding-top: 3px;
       padding-bottom: 2px;
-      margin-top: 1px;
+      margin-top: -1px;
+      height: 34px;
     }
 
     .count-input {
       width: $inputWidth;
       border: 1px solid $darkGrey;
       padding-left: 15px;
-      padding-top: 4px;
+      padding-top: 3px;
       padding-bottom: 2px;
-      margin-top: 1px;
+      margin-top: -1px;
+      height: 34px;
     }
 
     .time-input-wrapper {
       border: 1px solid $darkGrey;
       padding-left: 10px;
       width: $inputWidth;
+      height: 34px;
+      padding-top: 2px;
 
       input {
         padding-top: 4px;
