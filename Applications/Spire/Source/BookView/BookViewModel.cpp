@@ -429,14 +429,16 @@ void BookViewModel::OnUpdateTimer() {
   auto startCount = m_bookQuotes.size();
   HandleTasks(m_slotHandler);
   auto endCount = m_bookQuotes.size();
+  m_maxRow = std::min(m_maxRow, static_cast<int>(startCount) - 1);
+  m_minRow = std::min(m_minRow, m_maxRow);
   if(m_maxRow != -1) {
     dataChanged(index(m_minRow, 0), index(m_maxRow, COLUMN_COUNT - 1));
   }
   if(startCount < endCount) {
-    beginInsertRows(QModelIndex{}, startCount, endCount - startCount);
+    beginInsertRows(QModelIndex{}, startCount, endCount - 1);
     endInsertRows();
   } else if(startCount > endCount) {
-    beginRemoveRows(QModelIndex{}, startCount - 1, startCount - endCount);
+    beginRemoveRows(QModelIndex{}, endCount - 1, startCount - 1);
     endRemoveRows();
   }
 }
