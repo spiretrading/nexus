@@ -228,6 +228,8 @@ void BookViewModel::HighlightQuote(const BookQuote& quote) {
 }
 
 void BookViewModel::AddQuote(const BookQuote& quote, int quoteIndex) {
+  m_minRow = std::min(m_minRow, quoteIndex);
+  m_maxRow = std::max(m_maxRow, quoteIndex);
   if(m_quoteLevels.empty()) {
     m_quoteLevels.push_back(0);
   } else if(quoteIndex > 0 &&
@@ -255,6 +257,8 @@ void BookViewModel::AddQuote(const BookQuote& quote, int quoteIndex) {
 }
 
 void BookViewModel::RemoveQuote(const BookQuote& quote, int quoteIndex) {
+  m_minRow = std::min(m_minRow, quoteIndex);
+  m_maxRow = std::max(m_maxRow, quoteIndex);
   if(m_quoteLevels.size() == 1) {
     m_quoteLevels.clear();
   } else if(quoteIndex == m_bookQuotes.size()) {
@@ -420,19 +424,20 @@ void BookViewModel::OnMarketQuoteInterruption(const std::exception_ptr& e) {
 }
 
 void BookViewModel::OnUpdateTimer() {
+  m_minRow = m_bookQuotes.size();
+  m_maxRow = -1;
   auto startCount = m_bookQuotes.size();
   HandleTasks(m_slotHandler);
   auto endCount = m_bookQuotes.size();
+  if(m_maxRow != -1) {
+    dataChanged(index(m_minRow, 0), index(m_maxRow, COLUMN_COUNT - 1));
+  }
   if(startCount < endCount) {
-    dataChanged(index(0, 0), index(endCount - 1, COLUMN_COUNT - 1));
     beginInsertRows(QModelIndex{}, startCount, endCount - startCount);
     endInsertRows();
   } else if(startCount > endCount) {
     beginRemoveRows(QModelIndex{}, startCount - 1, startCount - endCount);
     endRemoveRows();
-  }
-  if(endCount != 0) {
-    dataChanged(index(0, 0), index(endCount - 1, COLUMN_COUNT - 1));
   }
 }
 
