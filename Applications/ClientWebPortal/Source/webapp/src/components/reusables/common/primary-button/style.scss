@@ -1,9 +1,8 @@
 @import "src/styles/variables";
 
 .primary-button-container {
-  background: $white;
-  border: 1px solid $primaryGradient1;
-  color: $primaryGradient1;
+  background: $lightGrey;
+  color: $darkerGrey;
   padding: 5px 0;
   display: inline-block;
   user-select: none;

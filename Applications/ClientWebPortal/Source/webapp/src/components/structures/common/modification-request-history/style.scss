@@ -1,18 +1,12 @@
 @import "src/styles/variables";
 
-$desktopWidth: 600px;
+$desktopWidth: 700px;
 
 #modification-request-history-container {
   font-size: 16px;
   position: relative;
   display: none;
-
-  .page-top-header {
-    text-align: center;
-    font-size: 20px;
-    margin-top: 10px;
-    margin-bottom: 25px;
-  }
+  margin-top: 10px;
 
   .requests-wrapper {
     width: $desktopWidth;
@@ -22,7 +16,7 @@ $desktopWidth: 600px;
 
     .request-wrapper {
       width: 100%;
-      min-height: 120px;
+      min-height: 90px;
       display: flex;
       flex-direction: column;
     }
@@ -63,10 +57,34 @@ $desktopWidth: 600px;
       }
     }
 
+    .status-filter-wrapper {
+      display: flex;
+      justify-content: flex-end;
+
+      div {
+        padding-right: 20px;
+
+        span {
+          position: relative;
+          top: 1px;
+          margin-right: 3px;
+          color: $darkGrey;
+          cursor: pointer;
+        }
+
+        &.selected {
+          span {
+            color: $green;
+          }
+        }
+      }
+    }
+
     .account-filter-wrapper {
       flex: 1;
       display: flex;
       font-size: 13px;
+      padding-left: 20px;
 
       .my-account {
         margin-right: 39px;
@@ -74,7 +92,7 @@ $desktopWidth: 600px;
 
       .menu-item {
         cursor: pointer;
-        color: $darkGrey;
+        color: $darkerGrey;
 
         &.selected {
           color: $primaryGradient1;

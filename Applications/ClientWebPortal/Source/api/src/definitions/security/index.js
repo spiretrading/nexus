@@ -53,6 +53,27 @@ Security.fromData = data => {
   return new Security(country, market, data.symbol);
 };
 
+Security.fromDisplay = (displayLabel, marketDatabase) => {
+  let separatorIndex = displayLabel.lastIndexOf('.');
+  if (separatorIndex == -1) {
+    return new Security();
+  }
+  let marketDisplay = displayLabel.substring(separatorIndex + 1);
+  let marketDatabaseEntry = marketDatabase.fromDisplayName(marketDisplay);
+  if (marketDatabaseEntry == null) {
+    marketDatabaseEntry = marketDatabase.fromMarketCode(marketDisplay);
+  }
+  if (marketDatabaseEntry == null) {
+    return new Security();
+  } else {
+    return Security.fromData({
+      country: marketDatabaseEntry.countryCode.value,
+      market: marketDatabaseEntry.marketCode.value,
+      symbol: displayLabel.substring(0, separatorIndex)
+    });
+  }
+};
+
 Security.getWildCard = () => {
   let country = new CountryCode(CountryCode.NONE);
   let market = new MarketCode(SecuritySet.MARKET_CODE_WILD_CARD);

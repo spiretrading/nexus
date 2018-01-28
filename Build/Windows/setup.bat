@@ -25,7 +25,7 @@ if exist qt-5.10.0 goto end_qt_setup
     git checkout v5.10.0
     perl init-repository --module-subset=default,-qtwebkit,-qtwebkit-examples,-qtwebengine
     echo y >> accept
-    start /wait cmd.exe @cmd /k "configure -opensource -static -make libs -make tools -opengl desktop -no-icu -qt-zlib -mp < accept & exit"
+    call configure -opensource -static -make libs -make tools -opengl desktop -no-icu -qt-zlib -mp < accept
     set CL=/MP
     nmake
     rm accept

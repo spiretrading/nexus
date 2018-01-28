@@ -6,7 +6,8 @@
   border-bottom: 1px solid $lightGrey;
   justify-content: center;
   background: white;
-  z-index: -1;
+  z-index: 1;
+  position: relative;
 
   &.empty {
     height: 0px;
@@ -58,6 +59,23 @@
   }
 
   &.mobile {
+    .user-name-wrapper {
+      position: absolute;
+      top: 51px;
+      left: 0px;
+      background: $white;
+      z-index: 1;
+      width: 100%;
+      border-bottom: 1px solid $lightGrey;
+      height: 30px;
+      font-size: 14px;
+      padding-top: 5px;
+      padding-right: 20px;
+      font-weight: bold;
+      color: $primaryGradient1;
+      text-align: right;
+    }
+
     .menu-item {
       margin-right: 20px;
 

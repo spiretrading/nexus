@@ -70,6 +70,7 @@ class Controller {
       });
 
       // insert special global organization entry
+      this.originalOrganizationDirectoryEntry = responses[1].clone();
       responses[1].name = responses[2];
       responses[1].id = ORGANIZATION_GROUP;
       this.componentModel.groupedAccounts.unshift(responses[1]);
@@ -144,7 +145,12 @@ class Controller {
   }
 
   navigateToGroupProfile(groupId) {
-    let directoryEntry = this.findGroupDirectoryEntry(groupId);
+    let directoryEntry;
+    if (groupId === ORGANIZATION_GROUP) {
+      directoryEntry = this.originalOrganizationDirectoryEntry;
+    } else {
+      directoryEntry = this.findGroupDirectoryEntry(groupId);
+    }
     browserHistory.push('/group-profile-account/' +
       directoryEntry.type +
       '/' + directoryEntry.id +

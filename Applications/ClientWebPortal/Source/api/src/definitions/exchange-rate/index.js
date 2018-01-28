@@ -23,4 +23,8 @@ ExchangeRate.convert = (amount, exchangeRate) => {
   return amount.multiply(exchangeRate.rate);
 };
 
+ExchangeRate.getIdentical = () => {
+  return new ExchangeRate(null, 1);
+}
+
 export default ExchangeRate;

@@ -17,6 +17,7 @@ class View extends UpdatableView {
 
   render() {
     let className = 'sub-pages-container';
+    let userName;
     if (deviceDetector.isMobile()){
       className += ' mobile';
     }
@@ -25,7 +26,17 @@ class View extends UpdatableView {
       className += ' empty';
       $('#top-nav-filler').css('height', '75px');
     } else {
-      $('#top-nav-filler').css('height', '135px');
+      if (deviceDetector.isMobile()) {
+        $('#top-nav-filler').css('height', '165px');
+      } else {
+        $('#top-nav-filler').css('height', '135px');
+      }      
+
+      if (deviceDetector.isMobile() && this.componentModel.userInfoModel != null) {
+        userName =  <div className="user-name-wrapper">
+                      {this.componentModel.userInfoModel.userName}
+                    </div>
+      }
     }
 
     let menuItems = [];
@@ -56,6 +67,7 @@ class View extends UpdatableView {
             {menuItems}
             {userInfo}
           </div>
+          {userName}
         </div>
     );
   }

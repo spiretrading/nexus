@@ -30,16 +30,15 @@ class View extends UpdatableView {
       }
     }
 
-    let lineBreak;
-    if (deviceDetector.isMobile()) {
-      lineBreak = <br/>;
+    let lineBreak, userName;
+    if (!deviceDetector.isMobile()) {
+      userName = <span className="user-name">{this.componentModel.userName}</span>;
     }
 
     return (
         <div className="user-info-nav-container">
           <div className="info-container">
-            <span className="user-name">{this.componentModel.userName}</span>
-            {lineBreak}
+            {userName}
             <span title="Trader" className={traderClass}></span>
             <span title="Manager" className={managerClass}></span>
             <span title="Admin" className={adminClass}></span>

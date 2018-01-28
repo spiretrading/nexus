@@ -93,7 +93,7 @@ class View extends UpdatableView {
                   <div className="total-label">Fees</div>
                   <div className="total-value">{fees}</div>
                   <div className="total-label">Volume</div>
-                  <div className="total-value">{fees}</div>
+                  <div className="total-value">{volumes}</div>
                   <div className="total-label">Trades</div>
                   <div className="total-value">{trades}</div>
                   <div className="menu">

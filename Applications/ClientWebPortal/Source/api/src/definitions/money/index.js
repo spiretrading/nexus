@@ -36,7 +36,7 @@ class Money {
 
   divide(operand) {
     let result = this.value / operand;
-    result = Math.trunc(result);
+    result = Math.trunc(result / Money.BIP) * Money.BIP;
     return new Money(result);
   }
 

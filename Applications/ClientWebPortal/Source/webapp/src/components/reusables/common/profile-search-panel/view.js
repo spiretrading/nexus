@@ -151,7 +151,9 @@ class View extends UpdatableView {
           <div key={i} className={traderRowClassName}
                onClick={onTraderClick}
                data-traderId={groupTraders[i].id}>
-            <span className="matched-string">{matchedString}</span>{nonMatchedString}
+            <div className="account-label">
+              <span className="matched-string">{matchedString}</span>{nonMatchedString}
+            </div>            
             <div className="roles-wrapper">
               <span title="Trader" className={traderClass}></span>
               <span title="Manager" className={managerClass}></span>

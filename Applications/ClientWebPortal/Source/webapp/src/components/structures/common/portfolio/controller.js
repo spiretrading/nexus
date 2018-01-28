@@ -76,7 +76,7 @@ class Controller {
       this.sortModel = new SortModel(this.viewModel, this.columnSortOrders);
       this.filterSubsetModel = new SubsetModel(this.sortModel, []);
 
-      this.totalsSubsetModel = new SubsetModel(this.portfolioModel, [0, 1, 3, 13, 14, 15]);
+      this.totalsSubsetModel = new SubsetModel(this.portfolioModel, [0, 1, 3]);
       this.totalsTranslationModel = new TranslationModel(this.totalsSubsetModel, null, [7, 0, 1, 2, 3, 4, 5, 6, 8, 9]);
       this.totalsSumModel = new SumModel(this.totalsTranslationModel, baseCurrencyId);
 

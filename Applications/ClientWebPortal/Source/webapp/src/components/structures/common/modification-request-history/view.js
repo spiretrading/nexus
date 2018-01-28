@@ -4,7 +4,6 @@ import UpdatableView from 'commons/updatable-view';
 import AccModRequest from 'components/reusables/common/account-modification-request';
 import { AccountModificationRequestStatus } from 'spire-client';
 
-const FILTER_ALL = 'all';
 const FILTER_PENDING = 'pending';
 const FILTER_APPROVED = 'approved';
 const FILTER_REJECTED = 'rejected';
@@ -18,7 +17,10 @@ class View extends UpdatableView {
     this.onManagedAccountsClick = this.onManagedAccountsClick.bind(this);
 
     this.isMyAccounts = true;
-    this.filterStatus = FILTER_ALL;
+    this.filterStatus = {};
+    this.filterStatus[FILTER_PENDING] = true;
+    this.filterStatus[FILTER_APPROVED] = true;
+    this.filterStatus[FILTER_REJECTED] = true;
   }
 
   componentDidUpdate() {
@@ -29,7 +31,14 @@ class View extends UpdatableView {
 
   /** @private */
   onStatusFilterChange(e) {
-    this.filterStatus = $(e.currentTarget).val();
+    let $wrapper = $(e.currentTarget).parent();
+    if ($wrapper.hasClass('selected')) {
+      $wrapper.removeClass('selected');
+      this.filterStatus[$wrapper.attr('data-filter')] = false;
+    } else {
+      $wrapper.removeClass('selected').addClass('selected');
+      this.filterStatus[$wrapper.attr('data-filter')] = true;
+    }
     this.update();
   }
 
@@ -49,19 +58,19 @@ class View extends UpdatableView {
 
   /** @private */
   shouldBeIncluded(requestStatus) {
-    if (this.filterStatus == FILTER_ALL) {
-      return true;
-    } else if (this.filterStatus == FILTER_PENDING) {
+    if (this.filterStatus[FILTER_PENDING]) {
       if (requestStatus == AccountModificationRequestStatus.PENDING ||
           requestStatus == AccountModificationRequestStatus.REVIEWED) {
         return true;
       }
-    } else if (this.filterStatus == FILTER_APPROVED) {
+    }
+    if (this.filterStatus[FILTER_APPROVED]) {
       if (requestStatus == AccountModificationRequestStatus.SCHEDULED ||
           requestStatus == AccountModificationRequestStatus.GRANTED) {
         return true;
       }
-    } else if (this.filterStatus == FILTER_REJECTED) {
+    }
+    if (this.filterStatus[FILTER_REJECTED]) {
       if (requestStatus == AccountModificationRequestStatus.REJECTED) {
         return true;
       }
@@ -100,30 +109,24 @@ class View extends UpdatableView {
 
       content =
         <div>
-          <div className="page-top-header row">
-            Request History
-          </div>
           <div className="filters-wrapper">
-            <div className="status-filter-wrapper">
-              <div>
-                Filter Status by
-              </div>
-              <div className="select-wrapper">
-                <select className="status-filter-input" defaultValue={'all'} onChange={this.onStatusFilterChange}>
-                  <option value={FILTER_ALL}>All</option>
-                  <option value={FILTER_PENDING}>Pending</option>
-                  <option value={FILTER_APPROVED}>Approved</option>
-                  <option value={FILTER_REJECTED}>Rejected</option>
-                </select>
-                <span className="icon-arrow-down"/>
-              </div>
-            </div>
             <div className="account-filter-wrapper">
               <div className={myAccountsClass} onClick={this.onMyAccountsClick}>
-                My Accounts
+                My Account
               </div>
               <div className={managedAccountsClass} onClick={this.onManagedAccountsClick}>
                 Managed Accounts
+              </div>
+            </div>
+            <div className="status-filter-wrapper">
+              <div className="selected" data-filter={FILTER_PENDING}>
+                <span className="icon-check" onClick={this.onStatusFilterChange} /> Pending
+              </div>
+              <div className="selected" data-filter={FILTER_APPROVED}>
+                <span className="icon-check" onClick={this.onStatusFilterChange} /> Approved
+              </div>
+              <div className="selected" data-filter={FILTER_REJECTED}>
+                <span className="icon-check" onClick={this.onStatusFilterChange} /> Rejected
               </div>
             </div>
           </div>
