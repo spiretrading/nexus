@@ -1,0 +1,67 @@
+@import "src/styles/variables";
+
+.account-modification-request-container {
+  position: relative;
+  width: 100%;
+  border-top: 1px solid $lightGrey;
+  cursor: pointer;
+  height: 107px;
+
+  &:hover {
+    background: $lighterGrey;
+  }
+
+  .title {
+    position: absolute;
+    top: 15px;
+    left: 20px;
+    font-size: 16px;
+  }
+
+  .status {
+    position: absolute;
+    top: 14px;
+    right: 20px;
+    font-size: 16px;
+
+    .green {
+      color: $green;
+    }
+
+    .red {
+      color: $red;
+    }
+
+    .yellow {
+      color: $yellow;
+    }
+  }
+
+  .id {
+    position: absolute;
+    top: 43px;
+    left: 20px;
+    font-size: 15px;
+  }
+
+  .account {
+    position: absolute;
+    top: 69px;
+    left: 20px;
+    font-size: 15px;
+  }
+
+  .datestamp {
+    position: absolute;
+    top: 43px;
+    right: 20px;
+    font-size: 15px;
+  }
+
+  .timestamp {
+    position: absolute;
+    top: 69px;
+    right: 20px;
+    font-size: 15px;
+  }
+}
