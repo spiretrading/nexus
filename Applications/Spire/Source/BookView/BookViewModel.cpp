@@ -69,23 +69,25 @@ BookViewModel::~BookViewModel() {}
 
 void BookViewModel::SetProperties(const BookViewProperties& properties) {
   m_properties = properties;
-  for(auto i = m_orderQuantities.begin(); i != m_orderQuantities.end(); ++i) {
-    Quote quote(i->first.m_price, 0, m_side);
-    BookQuote bookQuote("@" + i->first.m_destination, false, MarketCode(),
-      quote, m_userProfile->GetServiceClients().GetTimeClient().GetTime());
+  for(auto& orderQuantity : m_orderQuantities) {
+    Quote quote(orderQuantity.first.m_price, 0, m_side);
+    BookQuote bookQuote("@" + orderQuantity.first.m_destination, false,
+      MarketCode(), quote,
+      m_userProfile->GetServiceClients().GetTimeClient().GetTime());
     OnBookQuote(bookQuote);
   }
   if(m_properties.GetOrderHighlight() != BookViewProperties::HIDE_ORDERS) {
-    for(auto i = m_orderQuantities.begin(); i != m_orderQuantities.end(); ++i) {
-      Quote quote(i->first.m_price, i->second, m_side);
-      BookQuote bookQuote("@" + i->first.m_destination, false, MarketCode(),
-        quote, m_userProfile->GetServiceClients().GetTimeClient().GetTime());
+    for(auto& orderQuantity : m_orderQuantities) {
+      Quote quote(orderQuantity.first.m_price, orderQuantity.second, m_side);
+      BookQuote bookQuote("@" + orderQuantity.first.m_destination, false,
+        MarketCode(), quote,
+        m_userProfile->GetServiceClients().GetTimeClient().GetTime());
       OnBookQuote(bookQuote);
     }
   }
   if(!m_bookQuotes.empty()) {
-    Q_EMIT dataChanged(index(0, 0), index(
-      static_cast<int>(m_bookQuotes.size()) - 1, COLUMN_COUNT - 1));
+    dataChanged(index(0, 0), index(static_cast<int>(m_bookQuotes.size()) - 1,
+      COLUMN_COUNT - 1));
   }
 }
 
@@ -101,7 +103,7 @@ QVariant BookViewModel::data(const QModelIndex& index, int role) const {
   if(!index.isValid()) {
     return QVariant();
   }
-  const BookQuote& quote = m_bookQuotes[index.row()];
+  auto& quote = m_bookQuotes[index.row()];
   if(role == Qt::TextAlignmentRole) {
     if(index.column() == MPID_COLUMN) {
       return static_cast<int>(Qt::AlignLeft | Qt::AlignVCenter);
@@ -111,7 +113,7 @@ QVariant BookViewModel::data(const QModelIndex& index, int role) const {
     return static_cast<int>(Qt::AlignHCenter | Qt::AlignVCenter);
   } else if(role == Qt::FontRole) {
     if(index.column() == MPID_COLUMN) {
-      QFont font = m_properties.GetBookQuoteFont();
+      auto font = m_properties.GetBookQuoteFont();
       font.setBold(true);
       return font;
     }
@@ -121,12 +123,11 @@ QVariant BookViewModel::data(const QModelIndex& index, int role) const {
         BookViewProperties::HIGHLIGHT_ORDERS) {
       return m_properties.GetOrderHighlightColor();
     }
-    optional<const BookViewProperties::MarketHighlight&> highlight =
-      m_properties.GetMarketHighlight(quote.m_market);
+    auto highlight = m_properties.GetMarketHighlight(quote.m_market);
     if(highlight.is_initialized() && TestHighlight(*highlight, quote)) {
       return highlight->m_color;
     }
-    int level = m_quoteLevels[index.row()];
+    auto level = m_quoteLevels[index.row()];
     if(level < static_cast<int>(
         m_properties.GetBookQuoteBackgroundColors().size())) {
       return m_properties.GetBookQuoteBackgroundColors()[level];
@@ -176,7 +177,7 @@ bool BookViewModel::TestHighlight(
   if(topLevelIterator == m_topLevels.end()) {
     return false;
   }
-  const BookQuote& topQuote = topLevelIterator->second;
+  auto& topQuote = topLevelIterator->second;
   return topQuote.m_mpid == quote.m_mpid && topQuote.m_quote.m_price ==
     quote.m_quote.m_price;
 }
@@ -188,11 +189,11 @@ void BookViewModel::HighlightQuote(const BookQuote& quote) {
       m_topLevels.insert(make_pair(quote.m_market, quote));
     }
   } else {
-    BookQuote& topQuote = topQuoteIterator->second;
+    auto& topQuote = topQuoteIterator->second;
     if(quote.m_quote.m_size == 0 && quote.m_mpid == topQuote.m_mpid &&
         quote.m_quote.m_price == topQuote.m_quote.m_price) {
-      int newTopQuoteIndex = -1;
-      int previousTopQuoteIndex = -1;
+      auto newTopQuoteIndex = -1;
+      auto previousTopQuoteIndex = -1;
       auto i = m_bookQuotes.begin();
       while(i != m_bookQuotes.end() && (newTopQuoteIndex == -1 ||
           previousTopQuoteIndex == -1)) {
@@ -209,14 +210,8 @@ void BookViewModel::HighlightQuote(const BookQuote& quote) {
       }
       if(newTopQuoteIndex != -1) {
         topQuote = m_bookQuotes[newTopQuoteIndex];
-        Q_EMIT dataChanged(index(newTopQuoteIndex, 0),
-          index(newTopQuoteIndex, COLUMN_COUNT - 1));
       } else {
         m_topLevels.erase(quote.m_market);
-      }
-      if(previousTopQuoteIndex != -1) {
-        Q_EMIT dataChanged(index(previousTopQuoteIndex, 0),
-          index(previousTopQuoteIndex, COLUMN_COUNT - 1));
       }
     } else if(quote.m_quote.m_size != 0 &&
         (-GetDirection(m_side) * quote.m_quote.m_price <
@@ -225,30 +220,26 @@ void BookViewModel::HighlightQuote(const BookQuote& quote) {
         quote.m_isPrimaryMpid && !topQuote.m_isPrimaryMpid)) {
       auto bookQuoteIterator = std::find(m_bookQuotes.begin(),
         m_bookQuotes.end(), topQuote);
-      int topQuoteIndex = static_cast<int>(std::distance(m_bookQuotes.begin(),
+      auto topQuoteIndex = static_cast<int>(std::distance(m_bookQuotes.begin(),
         bookQuoteIterator));
       topQuote = quote;
-      Q_EMIT dataChanged(index(topQuoteIndex, 0),
-        index(topQuoteIndex, COLUMN_COUNT - 1));
     }
   }
 }
 
 void BookViewModel::AddQuote(const BookQuote& quote, int quoteIndex) {
-  beginInsertRows(QModelIndex(), quoteIndex, quoteIndex);
+  m_minRow = std::min(m_minRow, quoteIndex);
+  m_maxRow = std::max(m_maxRow, quoteIndex);
   if(m_quoteLevels.empty()) {
     m_quoteLevels.push_back(0);
-    endInsertRows();
   } else if(quoteIndex > 0 &&
       quote.m_quote.m_price == m_bookQuotes[quoteIndex - 1].m_quote.m_price) {
-    int nextLevel = m_quoteLevels[quoteIndex - 1];
+    auto nextLevel = m_quoteLevels[quoteIndex - 1];
     m_quoteLevels.insert(m_quoteLevels.begin() + quoteIndex, nextLevel);
-    endInsertRows();
   } else if(quoteIndex < static_cast<int>(m_bookQuotes.size()) - 1 &&
       quote.m_quote.m_price == m_bookQuotes[quoteIndex + 1].m_quote.m_price) {
-    int nextLevel = m_quoteLevels[quoteIndex];
+    auto nextLevel = m_quoteLevels[quoteIndex];
     m_quoteLevels.insert(m_quoteLevels.begin() + quoteIndex, nextLevel);
-    endInsertRows();
   } else {
     int level;
     if(quoteIndex == 0) {
@@ -261,63 +252,48 @@ void BookViewModel::AddQuote(const BookQuote& quote, int quoteIndex) {
         i != m_quoteLevels.end(); ++i) {
       ++(*i);
     }
-    int lastRow = static_cast<int>(m_quoteLevels.size() - 1);
-    endInsertRows();
-    Q_EMIT dataChanged(index(quoteIndex, 0), index(lastRow, COLUMN_COUNT - 1));
+    auto lastRow = static_cast<int>(m_quoteLevels.size() - 1);
   }
 }
 
 void BookViewModel::RemoveQuote(const BookQuote& quote, int quoteIndex) {
-  beginRemoveRows(QModelIndex(), quoteIndex, quoteIndex);
+  m_minRow = std::min(m_minRow, quoteIndex);
+  m_maxRow = std::max(m_maxRow, quoteIndex);
   if(m_quoteLevels.size() == 1) {
     m_quoteLevels.clear();
-    endRemoveRows();
   } else if(quoteIndex == m_bookQuotes.size()) {
     m_quoteLevels.pop_back();
-    endRemoveRows();
   } else if(quoteIndex > 0 &&
       quote.m_quote.m_price == m_bookQuotes[quoteIndex - 1].m_quote.m_price ||
       quote.m_quote.m_price == m_bookQuotes[quoteIndex].m_quote.m_price) {
     m_quoteLevels.erase(m_quoteLevels.begin() + quoteIndex);
-    endRemoveRows();
   } else {
     for(auto i = m_quoteLevels.begin() + quoteIndex;
         i != m_quoteLevels.end(); ++i) {
       --(*i);
     }
     m_quoteLevels.erase(m_quoteLevels.begin() + quoteIndex);
-    int lastRow = static_cast<int>(m_quoteLevels.size() - 1);
-    endRemoveRows();
-    Q_EMIT dataChanged(index(quoteIndex, 0), index(lastRow, COLUMN_COUNT - 1));
+    auto lastRow = static_cast<int>(m_quoteLevels.size() - 1);
   }
 }
 
 void BookViewModel::OnMarketQuote(const MarketQuote& quote) {
-  MarketQuote& previousMarketQuote = m_marketQuotes[quote.m_market];
-  string mpid = m_userProfile->GetMarketDatabase().FromCode(
+  auto& previousMarketQuote = m_marketQuotes[quote.m_market];
+  auto mpid = m_userProfile->GetMarketDatabase().FromCode(
     quote.m_market).m_displayName;
   if(!previousMarketQuote.m_market.IsEmpty()) {
-    BookQuotePair previousBookQuotes = ToBookQuotePair(previousMarketQuote);
-    BookQuote* previousBookQuote;
-    if(m_side == Side::ASK) {
-      previousBookQuote = &previousBookQuotes.m_ask;
-    } else {
-      previousBookQuote = &previousBookQuotes.m_bid;
-    }
-    previousBookQuote->m_quote.m_size = 0;
-    previousBookQuote->m_mpid = mpid;
-    OnBookQuote(*previousBookQuote);
+    auto previousBookQuotes = ToBookQuotePair(previousMarketQuote);
+    auto& previousBookQuote = Pick(m_side, previousBookQuotes.m_ask,
+      previousBookQuotes.m_bid);
+    previousBookQuote.m_quote.m_size = 0;
+    previousBookQuote.m_mpid = mpid;
+    OnBookQuote(previousBookQuote);
   }
-  BookQuotePair bookQuotes = ToBookQuotePair(quote);
-  BookQuote* bookQuote;
-  if(m_side == Side::ASK) {
-    bookQuote = &bookQuotes.m_ask;
-  } else {
-    bookQuote = &bookQuotes.m_bid;
-  }
+  auto bookQuotes = ToBookQuotePair(quote);
+  auto& bookQuote = Pick(m_side, bookQuotes.m_ask, bookQuotes.m_bid);
   previousMarketQuote = quote;
-  bookQuote->m_mpid = mpid;
-  OnBookQuote(*bookQuote);
+  bookQuote.m_mpid = mpid;
+  OnBookQuote(bookQuote);
 }
 
 void BookViewModel::OnBookQuote(const BookQuote& quote) {
@@ -333,7 +309,7 @@ void BookViewModel::OnBookQuote(const BookQuote& quote) {
       -rhs.m_quote.m_size, rhs.m_timestamp, rhs.m_mpid);
   };
   auto quoteLocation = find_if(m_bookQuotes.begin(), m_bookQuotes.end(),
-    [&] (const BookQuote& entry) {
+    [&] (const auto& entry) {
       return entry.m_quote.m_price == quote.m_quote.m_price &&
         entry.m_mpid == quote.m_mpid;
     });
@@ -346,7 +322,7 @@ void BookViewModel::OnBookQuote(const BookQuote& quote) {
     }
     return;
   }
-  int quoteIndex = distance(m_bookQuotes.begin(), quoteLocation);
+  auto quoteIndex = distance(m_bookQuotes.begin(), quoteLocation);
   m_bookQuotes.erase(quoteLocation);
   RemoveQuote(quote, quoteIndex);
   if(quote.m_quote.m_size != 0) {
@@ -377,7 +353,7 @@ void BookViewModel::OnExecutionReport(const Order* order,
   if(executionReport.m_status == OrderStatus::PENDING_NEW) {
     m_remainingOrderQuantities.insert(
       make_pair(order, order->GetInfo().m_fields.m_quantity));
-    Quantity& quantity = m_orderQuantities[key];
+    auto& quantity = m_orderQuantities[key];
     quantity += order->GetInfo().m_fields.m_quantity;
     if(m_properties.GetOrderHighlight() != BookViewProperties::HIDE_ORDERS) {
       Quote quote(key.m_price, quantity, m_side);
@@ -391,7 +367,7 @@ void BookViewModel::OnExecutionReport(const Order* order,
     if(quantityIterator == m_orderQuantities.end()) {
       return;
     }
-    Quantity& quantity = quantityIterator->second;
+    auto& quantity = quantityIterator->second;
     if(IsTerminal(executionReport.m_status)) {
       quantity -= m_remainingOrderQuantities[order];
     } else {
@@ -408,17 +384,17 @@ void BookViewModel::OnExecutionReport(const Order* order,
 }
 
 void BookViewModel::OnBookQuoteInterruption(const std::exception_ptr& e) {
-  vector<BookQuote> bookQuotes = m_bookQuotes;
+  auto bookQuotes = m_bookQuotes;
   unordered_set<string> marketQuoteMpids;
-  for(const MarketCode& marketCode : m_marketQuotes | adaptors::map_keys) {
-    string mpid = m_userProfile->GetMarketDatabase().FromCode(
+  for(auto& marketCode : m_marketQuotes | adaptors::map_keys) {
+    auto mpid = m_userProfile->GetMarketDatabase().FromCode(
       marketCode).m_displayName;
     marketQuoteMpids.insert(mpid);
   }
-  for(const BookQuote& bookQuote : bookQuotes) {
+  for(auto& bookQuote : bookQuotes) {
     if(!bookQuote.m_mpid.empty() && bookQuote.m_mpid[0] != '@' &&
         marketQuoteMpids.find(bookQuote.m_mpid) == marketQuoteMpids.end()) {
-      BookQuote clearQuote = bookQuote;
+      auto clearQuote = bookQuote;
       clearQuote.m_quote.m_size = 0;
       OnBookQuote(clearQuote);
     }
@@ -432,9 +408,9 @@ void BookViewModel::OnBookQuoteInterruption(const std::exception_ptr& e) {
 }
 
 void BookViewModel::OnMarketQuoteInterruption(const std::exception_ptr& e) {
-  unordered_map<MarketCode, MarketQuote> marketQuotes = m_marketQuotes;
-  for(const MarketQuote& marketQuote : marketQuotes | adaptors::map_values) {
-    MarketQuote clearQuote = marketQuote;
+  auto marketQuotes = m_marketQuotes;
+  for(auto& marketQuote : marketQuotes | adaptors::map_values) {
+    auto clearQuote = marketQuote;
     clearQuote.m_ask.m_size = 0;
     clearQuote.m_bid.m_size = 0;
     OnMarketQuote(clearQuote);
@@ -448,7 +424,23 @@ void BookViewModel::OnMarketQuoteInterruption(const std::exception_ptr& e) {
 }
 
 void BookViewModel::OnUpdateTimer() {
+  m_minRow = m_bookQuotes.size();
+  m_maxRow = -1;
+  auto startCount = m_bookQuotes.size();
   HandleTasks(m_slotHandler);
+  auto endCount = m_bookQuotes.size();
+  m_maxRow = std::min(m_maxRow, static_cast<int>(startCount) - 1);
+  m_minRow = std::min(m_minRow, m_maxRow);
+  if(m_maxRow != -1) {
+    dataChanged(index(m_minRow, 0), index(m_maxRow, COLUMN_COUNT - 1));
+  }
+  if(startCount < endCount) {
+    beginInsertRows(QModelIndex{}, startCount, endCount - 1);
+    endInsertRows();
+  } else if(startCount > endCount) {
+    beginRemoveRows(QModelIndex{}, endCount - 1, startCount - 1);
+    endRemoveRows();
+  }
 }
 
 bool BookViewModel::OrderKey::operator <(const OrderKey& value) const {
