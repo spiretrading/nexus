@@ -23,6 +23,7 @@ ca_equities:
   per_order_cap: 0.10
   etf_path: "./tsx_etfs.yml"
   interlisted_path: "./tsx_interlisted.yml"
+  nex_path: "./nex_listed.yml"
 
   # Alpha fees based on http://www.tsx.com/trading/alpha/fee-schedule
   # Fees for notes and debentures are not supported.
