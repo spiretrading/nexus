@@ -17,6 +17,7 @@ namespace Nexus {
   enum class LiquidityFlag;
   struct MatnFeeTable;
   struct NeoeFeeTable;
+  struct NexFeeTable;
   struct NsdqFeeTable;
   struct NyseFeeTable;
   struct OmgaFeeTable;
