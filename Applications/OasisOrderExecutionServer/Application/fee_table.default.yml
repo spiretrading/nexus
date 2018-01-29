@@ -146,6 +146,12 @@ ca_equities:
       [[-0.0011, 0.0014],
        [-0.0015, 0.0018]]
 
+  # NEX fees based on http://www.tsx.com/trading/tsx-venture-exchange/fee-schedule
+  nex:
+
+    # Active and passive fee.
+    fee: 0.0004
+
   # Omega ATS fees based on http://omegaats.com/fees/
   # Fees for notes and debentures are not supported.
   # Table is structured as:
