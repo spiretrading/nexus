@@ -1,8 +1,9 @@
 import './style.scss';
 import React from 'react';
 import UpdatableView from 'commons/updatable-view';
-import AccModRequest from 'components/reusables/common/account-modification-request';
+import AccModRequest from 'components/reusables/mobile/account-modification-request';
 import { AccountModificationRequestStatus } from 'spire-client';
+import modal from 'utils/modal';
 
 const FILTER_PENDING = 'pending';
 const FILTER_APPROVED = 'approved';
@@ -15,6 +16,7 @@ class View extends UpdatableView {
     this.onStatusFilterChange = this.onStatusFilterChange.bind(this);
     this.onMyAccountsClick = this.onMyAccountsClick.bind(this);
     this.onManagedAccountsClick = this.onManagedAccountsClick.bind(this);
+    this.onFilterClick = this.onFilterClick.bind(this);
 
     this.isMyAccounts = true;
     this.filterStatus = {};
@@ -79,6 +81,16 @@ class View extends UpdatableView {
     return false;
   }
 
+  /** @private */
+  onFilterClick() {
+    modal.show($('#filters-modal'));
+  }
+
+  /** @private */
+  onModalCloseClick() {
+    modal.hide($('#filters-modal'));
+  }
+
   render() {
     let content;
 
@@ -99,6 +111,11 @@ class View extends UpdatableView {
         }
       }
 
+      let filtersWrapperClass = "filters-wrapper";
+      if (requestPanels.length === 0) {
+        filtersWrapperClass += ' no-items';
+      }
+
       let myAccountsClass = 'menu-item no-select my-account';
       let managedAccountsClass = 'menu-item no-select managed-accounts';
       if (this.isMyAccounts) {
@@ -109,7 +126,7 @@ class View extends UpdatableView {
 
       content =
         <div>
-          <div className="filters-wrapper">
+          <div className={filtersWrapperClass}>
             <div className="account-filter-wrapper">
               <div className={myAccountsClass} onClick={this.onMyAccountsClick}>
                 My Account
@@ -117,21 +134,36 @@ class View extends UpdatableView {
               <div className={managedAccountsClass} onClick={this.onManagedAccountsClick}>
                 Managed Accounts
               </div>
-            </div>
-            <div className="status-filter-wrapper">
-              <div className="selected" data-filter={FILTER_PENDING}>
-                <span className="icon-check" onClick={this.onStatusFilterChange} /> Pending
-              </div>
-              <div className="selected" data-filter={FILTER_APPROVED}>
-                <span className="icon-check" onClick={this.onStatusFilterChange} /> Approved
-              </div>
-              <div className="selected" data-filter={FILTER_REJECTED}>
-                <span className="icon-check" onClick={this.onStatusFilterChange} /> Rejected
-              </div>
+              <span className="icon-filter" onClick={this.onFilterClick}></span>
             </div>
           </div>
           <div className="requests-wrapper">
             {requestPanels}
+          </div>
+
+          <div id="filters-modal" className="modal fade" tabIndex="-1" role="dialog">
+            <div className="modal-dialog" role="document">
+              <div className="modal-content">
+                <div className="modal-header">
+                  Filters
+                  <span className="icon-close" onClick={this.onModalCloseClick}></span>
+                </div>
+                <div className="modal-body">
+                  <div className="selected menu-item" data-filter={FILTER_PENDING}>
+                    <span className="icon-check" onClick={this.onStatusFilterChange} />
+                    <span className="text-label">Pending</span>
+                  </div>
+                  <div className="selected menu-item" data-filter={FILTER_APPROVED}>
+                    <span className="icon-check" onClick={this.onStatusFilterChange} />
+                    <span className="text-label">Approved</span>
+                  </div>
+                  <div className="selected menu-item" data-filter={FILTER_REJECTED}>
+                    <span className="icon-check" onClick={this.onStatusFilterChange} />
+                    <span className="text-label">Rejected</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>;
     }

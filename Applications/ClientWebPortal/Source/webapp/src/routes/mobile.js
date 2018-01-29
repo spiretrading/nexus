@@ -122,7 +122,7 @@ class MobileRoutes extends Routes {
       {
         path: 'modification-request-history',
         getComponent(location, cb) {
-          System.import('../components/structures/common/modification-request-history')
+          System.import('../components/structures/mobile/modification-request-history')
             .then(loadRoute(cb))
             .catch(errorLoading);
         }
