@@ -108,7 +108,7 @@ class View extends UpdatableView {
         {searchProfilesMenuItem}
         {portfolioMenuItem}
         <div className="menu-item" onClick={this.onModificationRequestsClick.bind(this)}>
-          <span className="icon-signout"></span>
+          <span className="icon-request-history"></span>
           Requests
         </div>
         <div className="menu-item" onClick={this.onSignOutClick.bind(this)}>

@@ -1,7 +1,7 @@
 import './style.scss';
 import React from 'react';
 import UpdatableView from 'commons/updatable-view';
-import AccModRequest from 'components/reusables/common/account-modification-request';
+import AccModRequest from 'components/reusables/desktop/account-modification-request';
 import EntitlementPanel from 'components/reusables/common/entitlement-panel';
 import TextArea from 'components/reusables/common/text-area';
 import PrimaryButton from 'components/reusables/common/primary-button';

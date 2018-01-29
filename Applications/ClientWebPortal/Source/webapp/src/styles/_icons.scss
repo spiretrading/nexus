@@ -24,6 +24,9 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-filter:before {
+  content: "\22";
+}
 .icon-arrow-icon-up:before {
   content: "\27";
 }
@@ -43,7 +46,7 @@
   content: "\60";
 }
 .icon-single-arrow:before {
- content: "\5d";
+  content: "\5d";
 }
 .icon-double-arrow:before {
   content: "\5b";
@@ -135,6 +138,9 @@
 .icon-profit-loss:before {
   content: "\6e";
 }
+.icon-reports:before {
+  content: "\67";
+}
 .icon-burger:before {
   content: "\6a";
 }
@@ -147,8 +153,8 @@
 .icon-profile:before {
   content: "\68";
 }
-.icon-reports:before {
-  content: "\67";
+.icon-request-history:before {
+  content: "\24";
 }
 .icon-search:before {
   content: "\66";

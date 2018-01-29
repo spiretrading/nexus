@@ -1,5 +1,5 @@
 import {Component} from 'react';
-import Controller from './controller';
+import Controller from 'components/reusables/common/account-modification-request/controller';
 import View from './view';
 import uuid from 'uuid';
 
