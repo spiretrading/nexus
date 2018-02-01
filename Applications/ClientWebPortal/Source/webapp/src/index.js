@@ -6,6 +6,8 @@ import {Router, browserHistory} from 'react-router';
 import rootRoute from 'routes/';
 import 'jquery-ui';
 import 'jquery-ui-css';
+import 'jquery-tagit';
+import 'jquery-tagit-css';
 import 'jquery-slimscroll';
 import 'jquery-ellipsis';
 import 'jquery-ellipsis-css';
