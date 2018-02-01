@@ -627,10 +627,10 @@ class View extends UpdatableView {
                     <ul className="symbols-list" data-parameter-name={parameters[parameterIndex].name}>
                       {symbols}
                     </ul>
-                    <div className="buttons">
+                    <div className="buttons-wrapper">
                       <PrimaryButton 
-                        className="save-changes-button button" 
-                        model={{label: 'Save Changes'}}
+                        className="save-changes-button button single-button" 
+                        model={{label: 'Submit'}}
                         onClick={this.onSymbolsModalSaveClick}
                       />
                     </div>

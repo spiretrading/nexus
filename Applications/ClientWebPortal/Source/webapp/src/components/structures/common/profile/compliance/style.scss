@@ -88,20 +88,21 @@
 
         .modal-header {
           padding:15px 15px 0 15px;
+
+          .icon-close {
+            top: 15px;
+            right: 15px;
+          }
         }
       }
     }
 
-    .buttons {
+    .buttons-wrapper {
       padding: 15px;
 
       .button {
-        width: 127px;
+        width: 100%;
       }
-    }
-
-    .new-rule-select-button {
-      margin-right: 15px;
     }
 
     .rule-types {
@@ -165,12 +166,12 @@ main.mobile {
               }
             }
 
-            .buttons {
-              display: flex;
-
-              .button {
-                flex: 1;
-              }
+            .divider {
+              width: auto;
+              margin-top: 10px;
+              margin-bottom: 15px;
+              margin-left: 15px;
+              margin-right: 15px;
             }
           }
         }

@@ -127,14 +127,16 @@ class View extends UpdatableView {
       content =
         <div>
           <div className={filtersWrapperClass}>
-            <div className="account-filter-wrapper">
-              <div className={myAccountsClass} onClick={this.onMyAccountsClick}>
-                My Account
+            <div className="content-wrapper">
+              <div className="account-filter-wrapper">
+                <div className={myAccountsClass} onClick={this.onMyAccountsClick}>
+                  My Account
+                </div>
+                <div className={managedAccountsClass} onClick={this.onManagedAccountsClick}>
+                  Managed Accounts
+                </div>
+                <span className="icon-filter" onClick={this.onFilterClick}></span>
               </div>
-              <div className={managedAccountsClass} onClick={this.onManagedAccountsClick}>
-                Managed Accounts
-              </div>
-              <span className="icon-filter" onClick={this.onFilterClick}></span>
             </div>
           </div>
           <div className="requests-wrapper">

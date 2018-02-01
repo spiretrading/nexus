@@ -60,11 +60,18 @@
   }
 
   .buttons-container {
+    display: flex;
     flex: 1;
+    align-items: center;
 
     .button {
-      width: 100%;
+      flex: 1;
+      min-width: 100px;
       margin-bottom: 15px;
+
+      &.browse-button {
+        margin-right: 15px;
+      }
     }
   }
 

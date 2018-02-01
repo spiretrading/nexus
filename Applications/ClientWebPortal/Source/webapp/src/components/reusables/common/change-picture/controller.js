@@ -23,10 +23,6 @@ class Controller {
     }
   }
 
-  cancel(onCancelled) {
-    this.submit(false, null, onCancelled);
-  }
-
   save(newPictureData) {
     if (newPictureData === '') {
       this.submit(false, null);

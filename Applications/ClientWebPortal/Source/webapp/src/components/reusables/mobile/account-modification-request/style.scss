@@ -3,7 +3,6 @@
 .account-modification-request-container {
   position: relative;
   width: 100%;
-  border-top: 1px solid $lightGrey;
   cursor: pointer;
   height: 107px;
 
@@ -14,14 +13,14 @@
   .title {
     position: absolute;
     top: 15px;
-    left: 20px;
+    left: 0px;
     font-size: 16px;
   }
 
   .status {
     position: absolute;
     top: 14px;
-    right: 20px;
+    right: 0px;
     font-size: 16px;
 
     .green {
@@ -40,28 +39,28 @@
   .id {
     position: absolute;
     top: 43px;
-    left: 20px;
+    left: 0px;
     font-size: 15px;
   }
 
   .account {
     position: absolute;
     top: 69px;
-    left: 20px;
+    left: 0px;
     font-size: 15px;
   }
 
   .datestamp {
     position: absolute;
     top: 43px;
-    right: 20px;
+    right: 0px;
     font-size: 15px;
   }
 
   .timestamp {
     position: absolute;
     top: 69px;
-    right: 20px;
+    right: 0px;
     font-size: 15px;
   }
 }
