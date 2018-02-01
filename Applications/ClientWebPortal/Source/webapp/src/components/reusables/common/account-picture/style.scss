@@ -69,6 +69,11 @@
   #change-picture-modal {
     .modal-dialog {
       width: 510px;
+
+      .icon-close {
+        top: 0px;
+        right: 0px;
+      }
     }
   }
 }
