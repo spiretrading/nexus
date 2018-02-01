@@ -66,26 +66,8 @@
 #new-group-modal {
   width: 100%;
 
-  .modal-header {
-    margin-bottom: 10px;
-  }
-
   .name-input {
     width: 100%;
     border: 1px solid $darkGrey;
-  }
-
-  .buttons-wrapper {
-    display: flex;
-    margin-top: 20px;
-
-    .create-button {
-      width: calc(100% - 8px);
-      margin-right: 16px;
-    }
-
-    .cancel-button {
-      width: calc(100% - 8px);
-    }
   }
 }

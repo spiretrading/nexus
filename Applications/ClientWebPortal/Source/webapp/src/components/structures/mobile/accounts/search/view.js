@@ -75,18 +75,18 @@ class View extends CommonView {
               <div className="modal-content">
                 <div className="modal-header">
                   Create Group
+                  <span className="icon-close" onClick={this.onNewGroupCancelClick}></span>
                 </div>
-                <div className="modal-body change-picture-wrapper">
+                <div className="modal-body">
                   <input type="text" defaultValue="" className="name-input" onKeyPress={this.onGroupNamePress.bind(this)}/>
+                  <div className="divider"></div>
                   <div className='buttons-wrapper'>
                     <PrimaryButton model={newGroupCreateBtnModel}
-                                   className="create-button"
+                                   className="create-button single-button"
                                    onClick={this.onNewGroupCreateClick.bind(this)}/>
-                    <PrimaryButton model={newGroupCancelBtnModel}
-                                   className="cancel-button"
-                                   onClick={this.onNewGroupCancelClick.bind(this)}/>
                   </div>
                 </div>
+                <div className="modal-bottom"></div>
               </div>
             </div>
           </div>

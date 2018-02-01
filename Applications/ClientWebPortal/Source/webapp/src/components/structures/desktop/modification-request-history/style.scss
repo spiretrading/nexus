@@ -6,27 +6,44 @@ $desktopWidth: 700px;
   font-size: 16px;
   position: relative;
   display: none;
-  margin-top: 10px;
+  position: relative;
+  top: -14px;
 
   .requests-wrapper {
     width: $desktopWidth;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
+    padding-top: 63px;
 
     .request-wrapper {
       width: 100%;
       min-height: 90px;
       display: flex;
       flex-direction: column;
+
+      &:not(:first-child) {
+        border-top: 1px solid $lightGrey;
+      }
     }
   }
 
   .filters-wrapper {
-    width: $desktopWidth;
+    width: 100vw;
     margin: 0 auto;
-    display: flex;
-    margin-bottom: 20px;
+    padding-top: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid $lightGrey;
+    position: fixed;
+    background: $white;
+    z-index: 1;
+
+    .content-wrapper {
+      width: $desktopWidth;
+      height: 100%;
+      margin: 0 auto;
+      display: flex;
+    }
 
     .status-filter-wrapper {
       width: 60%;

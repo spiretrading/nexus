@@ -198,8 +198,9 @@ $modalSidePadding: 15px;
       }
     }
 
-    .buttons {
+    .buttons-wrapper {
       padding: $modalSidePadding;
+      padding-top: 30px;
 
       .button {
         width: 100%;
@@ -347,6 +348,15 @@ main.mobile {
               padding-bottom: 0px;
             }
           }
+        }
+      }
+    }
+
+    .modal {
+      .modal-header {
+        .icon-close {
+          top: 15px;
+          right: 15px;
         }
       }
     }
