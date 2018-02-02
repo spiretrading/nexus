@@ -78,14 +78,15 @@
 
   .buttons-wrapper {
     margin-top: 20px;
+    display: flex;
 
     .create-button {
-      width: 120px;
+      flex: 1;
       margin-right: 10px;
     }
 
     .cancel-button {
-      width: 120px;
+      flex: 1;
     }
   }
 }
