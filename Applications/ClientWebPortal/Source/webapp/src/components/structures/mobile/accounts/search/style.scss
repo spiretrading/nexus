@@ -35,7 +35,6 @@
       flex: 1;
       padding: 15px 0 0 0;
       height: calc(100vh - 60px);
-      over-flow: auto;
 
       .search-input-wrapper {
         position: relative;
@@ -54,7 +53,7 @@
         .icon-magnifying-glass {
           position: absolute;
           right: 8px;
-          top: 8px;
+          top: 10px;
           color: $darkGrey;
           cursor: pointer;
         }

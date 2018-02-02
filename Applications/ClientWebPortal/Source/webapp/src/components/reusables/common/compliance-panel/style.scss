@@ -1,7 +1,7 @@
 @import "src/styles/variables";
+@import "src/styles/modal";
 
 $inputWidth: 246px;
-$modalSidePadding: 15px;
 
 .compliance-panel-container {
   border: 1px solid $white;
@@ -193,13 +193,13 @@ $modalSidePadding: 15px;
         padding: 0;
 
         .modal-header {
-          padding:15px $modalSidePadding 0 $modalSidePadding;
+          padding: $mobileModalPadding $mobileModalPadding 0 $mobileModalPadding;
         }
       }
     }
 
     .buttons-wrapper {
-      padding: $modalSidePadding;
+      padding: $mobileModalPadding;
       padding-top: 30px;
 
       .button {
@@ -210,7 +210,7 @@ $modalSidePadding: 15px;
     .modal-body {
       .symbol-input-container {
         position: relative;
-        padding: 0 $modalSidePadding;
+        padding: 0 $mobileModalPadding;
         margin-bottom: 10px;
 
         .symbol-input {
@@ -256,7 +256,7 @@ $modalSidePadding: 15px;
 
         div {
           cursor: pointer;
-          margin-right: $modalSidePadding;
+          margin-right: $mobileModalPadding;
           color: $darkerGrey;
           font-size: 16px;
 
@@ -273,7 +273,7 @@ $modalSidePadding: 15px;
       .symbols-list {
         overflow: auto;
         height: 240px;
-        margin: 0 $modalSidePadding;
+        margin: 0 $mobileModalPadding;
         list-style-type: none;
         padding: 0;
         border: 1px solid $darkGrey;
@@ -297,7 +297,7 @@ $modalSidePadding: 15px;
     }
 
     .save-changes-button {
-      margin-right: $modalSidePadding;
+      margin-right: $mobileModalPadding;
     }
   }
 
@@ -355,8 +355,8 @@ main.mobile {
     .modal {
       .modal-header {
         .icon-close {
-          top: 15px;
-          right: 15px;
+          top: $mobileModalPadding;
+          right: $mobileModalPadding;
         }
       }
     }

@@ -1,4 +1,5 @@
 @import "src/styles/variables";
+@import "src/styles/modal";
 
 #compliance-container {
   font-size: 16px;
@@ -87,18 +88,18 @@
         padding: 0;
 
         .modal-header {
-          padding:15px 15px 0 15px;
+          padding:$mobileModalPadding $mobileModalPadding 0 $mobileModalPadding;
 
           .icon-close {
-            top: 15px;
-            right: 15px;
+            top: $mobileModalPadding;
+            right: $mobileModalPadding;
           }
         }
       }
     }
 
     .buttons-wrapper {
-      padding: 15px;
+      padding: $mobileModalPadding;
 
       .button {
         width: 100%;
@@ -113,7 +114,7 @@
         overflow-y: auto;
 
         li {
-          padding: 7px 15px;
+          padding: 7px $mobileModalPadding;
           cursor: pointer;
 
           &:hover {
