@@ -182,7 +182,7 @@ class MobileView extends CommonView {
     }
 
     return (
-        <div id={this.componentModel.componentId} className="personal-details-container">
+        <div id={this.componentModel.componentId} className={this.containerClass}>
           {details}
         </div>
     );

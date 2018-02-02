@@ -6,6 +6,10 @@ class CommonView extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
     this.isLastInputLineBreak = false;
+    this.containerClass = 'personal-details-container';
+    if (this.componentModel.isReadOnly) {
+      this.containerClass += ' readonly-view';
+    }
 
     this.initialize = this.initialize.bind(this);
   }
@@ -70,13 +74,15 @@ class CommonView extends UpdatableView {
 
   /** @private */
   onRoleClick(e) {
-    let $role = $(e.currentTarget);
-    if ($role.hasClass('active')) {
-      $role.removeClass('active');
-    } else {
-      $role.removeClass('active').addClass('active');
+    if (!this.componentModel.isReadOnly) {
+      let $role = $(e.currentTarget);
+      if ($role.hasClass('active')) {
+        $role.removeClass('active');
+      } else {
+        $role.removeClass('active').addClass('active');
+      }
+      this.onChange();
     }
-    this.onChange();
   }
 
   /** @private */
