@@ -196,6 +196,19 @@ namespace {
         submissionAccount, modification, comment);
     }
 
+    virtual RiskModification LoadRiskModification(
+        AccountModificationRequest::Id id) override final {
+      return get_override("load_risk_modification")(id);
+    }
+
+    virtual AccountModificationRequest SubmitAccountModificationRequest(
+        const DirectoryEntry& account, const DirectoryEntry& submissionAccount,
+        const RiskModification& modification,
+        const AdministrationService::Message& comment) override final {
+      return get_override("submit_account_modification_request")(account,
+        submissionAccount, modification, comment);
+    }
+
     virtual AccountModificationRequest::Update
         LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id) override final {
@@ -416,8 +429,18 @@ void Nexus::Python::ExportAdministrationClient() {
       &VirtualAdministrationClient::LoadManagedAccountModificationRequestIds))
     .def("load_entitlement_modification", pure_virtual(
       &VirtualAdministrationClient::LoadEntitlementModification))
-    .def("submit_account_modification_request", pure_virtual(
-      &VirtualAdministrationClient::SubmitAccountModificationRequest))
+    .def("submit_account_modification_request", pure_virtual(static_cast<
+      AccountModificationRequest (VirtualAdministrationClient::*)(
+      const DirectoryEntry&, const DirectoryEntry&,
+      const EntitlementModification&, const AdministrationService::Message&)>(
+      &VirtualAdministrationClient::SubmitAccountModificationRequest)))
+    .def("load_risk_modification", pure_virtual(
+      &VirtualAdministrationClient::LoadRiskModification))
+    .def("submit_account_modification_request", pure_virtual(static_cast<
+      AccountModificationRequest (VirtualAdministrationClient::*)(
+      const DirectoryEntry&, const DirectoryEntry&, const RiskModification&,
+      const AdministrationService::Message&)>(
+      &VirtualAdministrationClient::SubmitAccountModificationRequest)))
     .def("load_account_modification_request_status", pure_virtual(
       &VirtualAdministrationClient::LoadAccountModificationRequestStatus))
     .def("approve_account_modification_request", pure_virtual(

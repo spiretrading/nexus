@@ -17,6 +17,7 @@
 #include "Nexus/AdministrationService/AdministrationSession.hpp"
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
 #include "Nexus/AdministrationService/Message.hpp"
+#include "Nexus/AdministrationService/RiskModification.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
 
@@ -120,6 +121,16 @@ namespace AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& adminAccount,
         const Beam::ServiceLocator::DirectoryEntry& account,
         const std::vector<Beam::ServiceLocator::DirectoryEntry>& entitlements);
+      void EnsureModificationReadPermission(
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        AccountModificationRequest::Id id);
+      AccountModificationRequest MakeModificationRequest(
+        const Beam::ServiceLocator::DirectoryEntry& sessionAccount,
+        const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        const AccountRoles& roles, AccountModificationRequest::Type type);
+      void StoreModificationRequest(const AccountModificationRequest& request,
+        const Message& comment, const AccountRoles& roles);
       std::string OnLoadOrganizationName(ServiceProtocolClient& client,
         int dummy);
       std::vector<Beam::ServiceLocator::DirectoryEntry> OnLoadAccountsByRoles(
@@ -197,6 +208,13 @@ namespace AdministrationService {
         Beam::ServiceLocator::DirectoryEntry account,
         Beam::ServiceLocator::DirectoryEntry submissionAccount,
         const EntitlementModification& modification, Message comment);
+      RiskModification OnLoadRiskModification(ServiceProtocolClient& client,
+        AccountModificationRequest::Id id);
+      AccountModificationRequest OnSubmitRiskModificationRequest(
+        ServiceProtocolClient& client,
+        Beam::ServiceLocator::DirectoryEntry account,
+        Beam::ServiceLocator::DirectoryEntry submissionAccount,
+        const RiskModification& modification, Message comment);
       AccountModificationRequest::Update OnLoadAccountModificationRequestStatus(
         ServiceProtocolClient& client, AccountModificationRequest::Id id);
       AccountModificationRequest::Update OnApproveAccountModificationRequest(
@@ -331,6 +349,13 @@ namespace AdministrationService {
       std::placeholders::_1, std::placeholders::_2));
     SubmitEntitlementModificationRequestService::AddSlot(Store(slots),
       std::bind(&AdministrationServlet::OnSubmitEntitlementModificationRequest,
+      this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+      std::placeholders::_4, std::placeholders::_5));
+    LoadRiskModificationService::AddSlot(Store(slots),
+      std::bind(&AdministrationServlet::OnLoadRiskModification, this,
+      std::placeholders::_1, std::placeholders::_2));
+    SubmitRiskModificationRequestService::AddSlot(Store(slots),
+      std::bind(&AdministrationServlet::OnSubmitRiskModificationRequest,
       this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
       std::placeholders::_4, std::placeholders::_5));
     LoadAccountModificationRequestStatusService::AddSlot(Store(slots),
@@ -646,6 +671,74 @@ namespace AdministrationService {
           std::cout << ss.str() << std::flush;
         }
       }
+    }
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
+  void AdministrationServlet<ContainerType, ServiceLocatorClientType,
+      AdministrationDataStoreType>::EnsureModificationReadPermission(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      AccountModificationRequest::Id id) {
+    AccountModificationRequest request;
+    m_dataStore->WithTransaction(
+      [&] {
+        request = m_dataStore->LoadAccountModificationRequest(id);
+      });
+    if(!CheckReadPermission(account, request.GetAccount())) {
+      throw Beam::Services::ServiceRequestException{
+        "Insufficient permissions."};
+    }
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
+  AccountModificationRequest AdministrationServlet<ContainerType,
+      ServiceLocatorClientType, AdministrationDataStoreType>::
+      MakeModificationRequest(
+      const Beam::ServiceLocator::DirectoryEntry& sessionAccount,
+      const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const AccountRoles& roles, AccountModificationRequest::Type type) {
+    if(!CheckReadPermission(sessionAccount, submissionAccount)) {
+      throw Beam::Services::ServiceRequestException{
+        "Insufficient permissions."};
+    }
+    if(roles.GetBitset().none()) {
+      throw Beam::Services::ServiceRequestException{
+        "Insufficient permissions."};
+    }
+    auto requestId = ++m_nextModificationRequestId;
+    auto timestamp = boost::posix_time::second_clock::universal_time();
+    return {requestId, type, account, submissionAccount, timestamp};
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
+  void AdministrationServlet<ContainerType, ServiceLocatorClientType,
+      AdministrationDataStoreType>::StoreModificationRequest(
+      const AccountModificationRequest& request, const Message& comment,
+      const AccountRoles& roles) {
+    if(comment.GetBodies().size() > 1 || !comment.GetBody().m_message.empty()) {
+      auto message = Message{++m_nextMessageId, request.GetSubmissionAccount(),
+        request.GetTimestamp(), comment.GetBodies()};
+      m_dataStore->Store(request.GetId(), message);
+    }
+    if(roles.Test(AccountRole::ADMINISTRATOR)) {
+      AccountModificationRequest::Update update{
+        AccountModificationRequest::Status::GRANTED,
+        request.GetSubmissionAccount(), 0, request.GetTimestamp()};
+      m_dataStore->Store(request.GetId(), update);
+    } else if(roles.Test(AccountRole::MANAGER)) {
+      AccountModificationRequest::Update update{
+        AccountModificationRequest::Status::REVIEWED,
+        request.GetSubmissionAccount(), 0, request.GetTimestamp()};
+      m_dataStore->Store(request.GetId(), update);
+    } else {
+      AccountModificationRequest::Update update{
+        AccountModificationRequest::Status::PENDING,
+        request.GetSubmissionAccount(), 0, request.GetTimestamp()};
+      m_dataStore->Store(request.GetId(), update);
     }
   }
 
@@ -1085,15 +1178,7 @@ namespace AdministrationService {
       OnLoadEntitlementModification(ServiceProtocolClient& client,
       AccountModificationRequest::Id id) {
     auto& session = client.GetSession();
-    AccountModificationRequest request;
-    m_dataStore->WithTransaction(
-      [&] {
-        request = m_dataStore->LoadAccountModificationRequest(id);
-      });
-    if(!CheckReadPermission(session.GetAccount(), request.GetAccount())) {
-      throw Beam::Services::ServiceRequestException{
-        "Insufficient permissions."};
-    }
+    EnsureModificationReadPermission(session.GetAccount(), id);
     EntitlementModification modification;
     m_dataStore->WithTransaction(
       [&] {
@@ -1117,20 +1202,10 @@ namespace AdministrationService {
     if(submissionAccount.m_id == -1) {
       submissionAccount = session.GetAccount();
     }
-    if(!CheckReadPermission(session.GetAccount(), submissionAccount)) {
-      throw Beam::Services::ServiceRequestException{
-        "Insufficient permissions."};
-    }
     auto roles = LoadAccountRoles(submissionAccount, account);
-    if(roles.GetBitset().none()) {
-      throw Beam::Services::ServiceRequestException{
-        "Insufficient permissions."};
-    }
-    auto requestId = ++m_nextModificationRequestId;
-    auto timestamp = boost::posix_time::second_clock::universal_time();
-    AccountModificationRequest request{
-      requestId, AccountModificationRequest::Type::ENTITLEMENTS, account,
-      submissionAccount, timestamp};
+    auto request = MakeModificationRequest(session.GetAccount(),
+      submissionAccount, account, roles,
+      AccountModificationRequest::Type::ENTITLEMENTS);
     for(auto& entitlement : modification.GetEntitlements()) {
       if(entitlement.m_type !=
           Beam::ServiceLocator::DirectoryEntry::Type::DIRECTORY) {
@@ -1144,34 +1219,53 @@ namespace AdministrationService {
         throw Beam::Services::ServiceRequestException{"Invalid entitlement."};
       }
     }
-    if(comment.GetBodies().size() == 1 && comment.GetBody().m_message.empty()) {
-      comment = Message{-1, {}, {}, {}};
-    } else {
-      comment = Message{++m_nextMessageId, submissionAccount, timestamp,
-        comment.GetBodies()};
-    }
     m_dataStore->WithTransaction(
       [&] {
         m_dataStore->Store(request, modification);
-        if(comment.GetId() != -1) {
-          m_dataStore->Store(request.GetId(), comment);
-        }
-        if(roles.Test(AccountRole::ADMINISTRATOR)) {
-          AccountModificationRequest::Update update{
-            AccountModificationRequest::Status::GRANTED,
-            request.GetSubmissionAccount(), 0, timestamp};
-          m_dataStore->Store(request.GetId(), update);
-        } else if(roles.Test(AccountRole::MANAGER)) {
-          AccountModificationRequest::Update update{
-            AccountModificationRequest::Status::REVIEWED,
-            request.GetSubmissionAccount(), 0, timestamp};
-          m_dataStore->Store(request.GetId(), update);
-        } else {
-          AccountModificationRequest::Update update{
-            AccountModificationRequest::Status::PENDING,
-            request.GetSubmissionAccount(), 0, timestamp};
-          m_dataStore->Store(request.GetId(), update);
-        }
+        StoreModificationRequest(request, comment, roles);
+      });
+    return request;
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
+  RiskModification AdministrationServlet<ContainerType,
+      ServiceLocatorClientType, AdministrationDataStoreType>::
+      OnLoadRiskModification(ServiceProtocolClient& client,
+      AccountModificationRequest::Id id) {
+    auto& session = client.GetSession();
+    EnsureModificationReadPermission(session.GetAccount(), id);
+    RiskModification modification;
+    m_dataStore->WithTransaction(
+      [&] {
+        modification = m_dataStore->LoadRiskModification(id);
+      });
+    return modification;
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
+  AccountModificationRequest AdministrationServlet<ContainerType,
+      ServiceLocatorClientType, AdministrationDataStoreType>::
+      OnSubmitRiskModificationRequest(ServiceProtocolClient& client,
+      Beam::ServiceLocator::DirectoryEntry account,
+      Beam::ServiceLocator::DirectoryEntry submissionAccount,
+      const RiskModification& modification, Message comment) {
+    auto& session = client.GetSession();
+    if(account.m_id == -1) {
+      account = session.GetAccount();
+    }
+    if(submissionAccount.m_id == -1) {
+      submissionAccount = session.GetAccount();
+    }
+    auto roles = LoadAccountRoles(submissionAccount, account);
+    auto request = MakeModificationRequest(session.GetAccount(),
+      submissionAccount, account, roles,
+      AccountModificationRequest::Type::RISK);
+    m_dataStore->WithTransaction(
+      [&] {
+        m_dataStore->Store(request, modification);
+        StoreModificationRequest(request, comment, roles);
       });
     return request;
   }

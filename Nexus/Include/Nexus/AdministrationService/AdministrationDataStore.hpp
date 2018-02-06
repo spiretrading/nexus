@@ -7,6 +7,7 @@
 #include "Nexus/AdministrationService/AdministrationService.hpp"
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
 #include "Nexus/AdministrationService/Message.hpp"
+#include "Nexus/AdministrationService/RiskModification.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
 
 namespace Nexus {
@@ -128,6 +129,22 @@ namespace AdministrationService {
       */
       virtual void Store(const AccountModificationRequest& request,
         const EntitlementModification& modification) = 0;
+
+      //! Loads a RiskModification.
+      /*!
+        \param id The id of the request to load.
+        \return The RiskModification with the specified <i>id</i>.
+      */
+      virtual RiskModification LoadRiskModification(
+        AccountModificationRequest::Id id) = 0;
+
+      //! Stores a RiskModification.
+      /*!
+        \param request The modification request.
+        \param modification The details of the modification.
+      */
+      virtual void Store(const AccountModificationRequest& request,
+        const RiskModification& modification) = 0;
 
       //! Stores a Message associated with an account modification request.
       /*!

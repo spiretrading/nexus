@@ -1,6 +1,8 @@
 #ifndef NEXUS_ADMINISTRATION_SERVICE_ENTITLEMENT_MODIFICATION_HPP
 #define NEXUS_ADMINISTRATION_SERVICE_ENTITLEMENT_MODIFICATION_HPP
 #include <vector>
+#include <Beam/Serialization/DataShuttle.hpp>
+#include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/AdministrationService/AdministrationService.hpp"
 

@@ -75,6 +75,12 @@ namespace AdministrationService {
       virtual void Store(const AccountModificationRequest& request,
         const EntitlementModification& modification) override;
 
+      virtual RiskModification LoadRiskModification(
+        AccountModificationRequest::Id id) override;
+
+      virtual void Store(const AccountModificationRequest& request,
+        const RiskModification& modification) override;
+
       virtual void Store(AccountModificationRequest::Id id,
         const Message& message) override;
 
@@ -213,6 +219,19 @@ namespace AdministrationService {
   void CachedAdministrationDataStore<DataStoreType>::Store(
       const AccountModificationRequest& request,
       const EntitlementModification& modification) {
+    m_dataStore->Store(request, modification);
+  }
+
+  template<typename DataStoreType>
+  RiskModification CachedAdministrationDataStore<DataStoreType>::
+      LoadRiskModification(AccountModificationRequest::Id id) {
+    return m_dataStore->LoadRiskModification(id);
+  }
+
+  template<typename DataStoreType>
+  void CachedAdministrationDataStore<DataStoreType>::Store(
+      const AccountModificationRequest& request,
+      const RiskModification& modification) {
     m_dataStore->Store(request, modification);
   }
 

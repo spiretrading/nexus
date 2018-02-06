@@ -24,7 +24,10 @@ namespace AdministrationService {
       enum class Type {
 
         //! Modify an account's market data entitlements.
-        ENTITLEMENTS
+        ENTITLEMENTS,
+
+        //! Modify an account's risk parameters.
+        RISK
       };
 
       /*! \enum Status

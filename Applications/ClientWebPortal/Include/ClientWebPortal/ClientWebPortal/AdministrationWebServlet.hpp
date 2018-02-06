@@ -84,6 +84,10 @@ namespace ClientWebPortal {
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnSubmitEntitlementModificationRequest(
         const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadRiskModification(
+        const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnSubmitRiskModificationRequest(
+        const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadAccountModificationRequestStatus(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnApproveAccountModificationRequest(

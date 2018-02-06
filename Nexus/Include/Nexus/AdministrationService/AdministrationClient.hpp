@@ -1,5 +1,5 @@
-#ifndef NEXUS_ADMINISTRATIONCLIENT_HPP
-#define NEXUS_ADMINISTRATIONCLIENT_HPP
+#ifndef NEXUS_ADMINISTRATION_CLIENT_HPP
+#define NEXUS_ADMINISTRATION_CLIENT_HPP
 #include <vector>
 #include <Beam/IO/Connection.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -16,6 +16,7 @@
 #include "Nexus/AdministrationService/AdministrationService.hpp"
 #include "Nexus/AdministrationService/AdministrationServices.hpp"
 #include "Nexus/AdministrationService/Message.hpp"
+#include "Nexus/AdministrationService/RiskModification.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
 
@@ -266,6 +267,26 @@ namespace AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& account,
         const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
         const EntitlementModification& modification, const Message& comment);
+
+      //! Loads a risk modification.
+      /*!
+        \param id The id of the request to load.
+        \return The risk modification with the specified <i>id</i>.
+      */
+      RiskModification LoadRiskModification(AccountModificationRequest::Id id);
+
+      //! Submits a request to modify an account's risk parameters.
+      /*!
+        \param account The account to modify.
+        \param submissionAccount The account submitting the request.
+        \param modification The modification to apply.
+        \param comment The comment to associate with the request.
+        \return An object representing the request.
+      */
+      AccountModificationRequest SubmitAccountModificationRequest(
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
+        const RiskModification& modification, const Message& comment);
 
       //! Loads the status of an account modification request.
       /*!
@@ -632,6 +653,24 @@ namespace AdministrationService {
     return client->template SendRequest<
       SubmitEntitlementModificationRequestService>(account, submissionAccount,
       modification, comment);
+  }
+
+  template<typename ServiceProtocolClientBuilderType>
+  RiskModification AdministrationClient<ServiceProtocolClientBuilderType>::
+      LoadRiskModification(AccountModificationRequest::Id id) {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<LoadRiskModificationService>(id);
+  }
+
+  template<typename ServiceProtocolClientBuilderType>
+  AccountModificationRequest AdministrationClient<
+      ServiceProtocolClientBuilderType>::SubmitAccountModificationRequest(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
+      const RiskModification& modification, const Message& comment) {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<SubmitRiskModificationRequestService>(
+      account, submissionAccount, modification, comment);
   }
 
   template<typename ServiceProtocolClientBuilderType>
