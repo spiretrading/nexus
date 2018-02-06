@@ -1,7 +1,7 @@
 import Model from 'utils/table-models/model';
 import ViewModel from 'utils/table-models/view-model';
 import ViewData from 'utils/table-models/view-model/view-data';
-import { Security, DirectoryEntry, Money } from 'spire-client';
+import { Security, DirectoryEntry, Money, CurrencyId } from 'spire-client';
 import definitionsService from 'services/definitions';
 import currencyFormatter from 'utils/currency-formatter';
 import DataChangeType from 'utils/table-models/model/data-change-type';
@@ -35,6 +35,8 @@ export default class extends ViewModel {
       return value.name;
     } else if (value instanceof Money) {
       return currencyFormatter.formatById(currencyId.toNumber(), value.toNumber());
+    } else if (value instanceof CurrencyId) {
+      return definitionsService.getCurrencyCode(value);
     } else {
       return super.getDisplay(value);
     }
