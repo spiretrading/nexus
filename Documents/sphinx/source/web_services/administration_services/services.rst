@@ -113,7 +113,7 @@ Nexus Administration Web Services
 
     :param id: The id of the modification to load.
     :type id: number
-    :statuscode 200: :py:class:`nexus.administration_service.RiskModifcation`
+    :statuscode 200: :py:class:`nexus.administration_service.RiskModification`
       The risk modification with the specified id.
 
 .. http:post:: /api/administration_service/submit_risk_modification_request
