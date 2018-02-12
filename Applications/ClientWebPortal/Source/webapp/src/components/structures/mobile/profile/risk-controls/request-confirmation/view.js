@@ -45,12 +45,8 @@ class View extends CommonView {
                   </div>
                   <div className="account-details">
                     <div className="details-row">
-                      Account: <span>{this.componentModel.account.name}</span>
-                    </div>
-                    <div className="details-row">
-                      Requested by: <span>{this.componentModel.requesterAccount.name}</span>
-                    </div>
-                    <div className="details-row">
+                      Account: <span>{this.componentModel.account.name}</span><br/>
+                      Requested by: <span>{this.componentModel.requesterAccount.name}</span><br/>
                       Request ID: <span>{this.componentModel.modificationId}</span>
                     </div>
                   </div>
