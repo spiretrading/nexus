@@ -53,11 +53,17 @@ $desktopWidth: 1000px;
 
   .comments-wrapper {
     margin: 0 auto;
-    margin-bottom: 30px;
+    margin-bottom: 10px;
     width: $desktopWidth;
 
-    .author {
-      font-weight: bold;
+    .comment-wrapper {
+      margin-bottom: 20px;
+      width: 100%;
+      
+      .author {
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
     }
   }
 

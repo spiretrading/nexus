@@ -8,6 +8,14 @@ class Money {
     this.toString = this.toString.bind(this);
   }
 
+  static fromRepresentation(value) {
+    return new Money(value);
+  }
+
+  static fromNumber(number) {
+    return new Money(number * MULTIPLIER);
+  }
+
   toNumber() {
     return this.value / MULTIPLIER;
   }
@@ -61,14 +69,6 @@ class Money {
       return number + '.00';
     }
   }
-}
-
-Money.fromRepresentation = value => {
-  return new Money(value);
-}
-
-Money.fromNumber = value => {
-  return new Money(value * MULTIPLIER);
 }
 
 const MULTIPLIER = 1000000;
