@@ -85,6 +85,15 @@ class MobileRoutes extends Routes {
         }
       },
       {
+        path: 'risk-controls-request-confirmation/:id',
+        getComponent(location, cb) {
+          System.import('../components/structures/mobile/profile/routes')
+            .then((module) => { return { default: module.riskControlsRequestConfirmation } })
+            .then(loadRoute(cb))
+            .catch(errorLoading);
+        }
+      },
+      {
         path: 'profile-performance/:type/:id/:name',
         getComponent(location, cb) {
           System.import('../components/structures/mobile/profile/routes')

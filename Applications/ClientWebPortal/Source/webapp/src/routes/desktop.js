@@ -67,6 +67,15 @@ class DesktopRoutes extends Routes {
         }
       },
       {
+        path: 'risk-controls-request-confirmation/:id',
+        getComponent(location, cb) {
+          System.import('../components/structures/desktop/profile/routes')
+            .then((module) => { return { default: module.riskControlsRequestConfirmation } })
+            .then(loadRoute(cb))
+            .catch(errorLoading);
+        }
+      },
+      {
         path: 'profile-entitlements/:type/:id/:name',
         getComponent(location, cb) {
           System.import('../components/structures/desktop/profile/routes')
