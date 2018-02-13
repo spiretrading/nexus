@@ -121,6 +121,9 @@ namespace AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& adminAccount,
         const Beam::ServiceLocator::DirectoryEntry& account,
         const std::vector<Beam::ServiceLocator::DirectoryEntry>& entitlements);
+      void UpdateRiskParameters(
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        const RiskService::RiskParameters& parameters);
       void EnsureModificationReadPermission(
         const Beam::ServiceLocator::DirectoryEntry& account,
         AccountModificationRequest::Id id);
@@ -176,10 +179,9 @@ namespace AdministrationService {
       RiskService::RiskParameters OnMonitorRiskParametersRequest(
         ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account);
-      void OnStoreRiskParametersRequest(Beam::Services::RequestToken<
-        ServiceProtocolClient, StoreRiskParametersService>& request,
+      void OnStoreRiskParametersRequest(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskParameters& riskParameters);
+        const RiskService::RiskParameters& parameters);
       RiskService::RiskState OnMonitorRiskStateRequest(
         ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account);
@@ -320,7 +322,7 @@ namespace AdministrationService {
     MonitorRiskParametersService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnMonitorRiskParametersRequest, this,
       std::placeholders::_1, std::placeholders::_2));
-    StoreRiskParametersService::AddRequestSlot(Store(slots), std::bind(
+    StoreRiskParametersService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnStoreRiskParametersRequest, this,
       std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     MonitorRiskStateService::AddSlot(Store(slots), std::bind(
@@ -677,6 +679,29 @@ namespace AdministrationService {
   template<typename ContainerType, typename ServiceLocatorClientType,
     typename AdministrationDataStoreType>
   void AdministrationServlet<ContainerType, ServiceLocatorClientType,
+      AdministrationDataStoreType>::UpdateRiskParameters(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const RiskService::RiskParameters& parameters) {
+    auto& subscribers = Beam::Threading::With(m_riskParametersSubscribers,
+      [&] (auto& accountToSubscribers) -> decltype(auto) {
+        return accountToSubscribers[account];
+      });
+    m_dataStore->WithTransaction(
+      [&] {
+        m_dataStore->Store(account, parameters);
+        Beam::Threading::With(subscribers,
+          [&] (auto& subscribers) {
+            for(auto& subscriber : subscribers) {
+              Beam::Services::SendRecordMessage<RiskParametersMessage>(
+                *subscriber, account, parameters);
+            }
+          });
+      });
+  }
+
+  template<typename ContainerType, typename ServiceLocatorClientType,
+    typename AdministrationDataStoreType>
+  void AdministrationServlet<ContainerType, ServiceLocatorClientType,
       AdministrationDataStoreType>::EnsureModificationReadPermission(
       const Beam::ServiceLocator::DirectoryEntry& account,
       AccountModificationRequest::Id id) {
@@ -986,32 +1011,15 @@ namespace AdministrationService {
     typename AdministrationDataStoreType>
   void AdministrationServlet<ContainerType, ServiceLocatorClientType,
       AdministrationDataStoreType>::OnStoreRiskParametersRequest(
-      Beam::Services::RequestToken<ServiceProtocolClient,
-      StoreRiskParametersService>& request,
+      ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskParameters& riskParameters) {
-    auto& session = request.GetSession();
+      const RiskService::RiskParameters& parameters) {
+    auto& session = client.GetSession();
     if(!CheckAdministrator(session.GetAccount())) {
       throw Beam::Services::ServiceRequestException{
         "Insufficient permissions."};
     }
-    SyncRiskParameterSubscribers* syncSubscribers;
-    Beam::Threading::With(m_riskParametersSubscribers,
-      [&] (AccountToRiskSubscribers& accountToSubscribers) {
-        syncSubscribers = &(accountToSubscribers[account]);
-      });
-    m_dataStore->WithTransaction(
-      [&] {
-        m_dataStore->Store(account, riskParameters);
-        request.SetResult();
-        Beam::Threading::With(*syncSubscribers,
-          [&] (RiskParameterSubscribers& subscribers) {
-            for(auto& subscriber : subscribers) {
-              Beam::Services::SendRecordMessage<RiskParametersMessage>(
-                *subscriber, account, riskParameters);
-            }
-          });
-      });
+    UpdateRiskParameters(account, parameters);
   }
 
   template<typename ContainerType, typename ServiceLocatorClientType,
@@ -1224,6 +1232,10 @@ namespace AdministrationService {
         m_dataStore->Store(request, modification);
         StoreModificationRequest(request, comment, roles);
       });
+    if(roles.Test(AccountRole::ADMINISTRATOR)) {
+      GrantEntitlements(request.GetSubmissionAccount(),
+        request.GetAccount(), modification.GetEntitlements());
+    }
     return request;
   }
 
@@ -1267,6 +1279,9 @@ namespace AdministrationService {
         m_dataStore->Store(request, modification);
         StoreModificationRequest(request, comment, roles);
       });
+    if(roles.Test(AccountRole::ADMINISTRATOR)) {
+      UpdateRiskParameters(request.GetAccount(), modification.GetParameters());
+    }
     return request;
   }
 
@@ -1358,6 +1373,14 @@ namespace AdministrationService {
           });
         GrantEntitlements(update.m_account, account,
           modification.GetEntitlements());
+      } else if(request.GetType() == AccountModificationRequest::Type::RISK) {
+        RiskModification modification;
+        m_dataStore->WithTransaction(
+          [&] {
+            modification = m_dataStore->LoadRiskModification(request.GetId());
+          });
+        UpdateRiskParameters(request.GetAccount(),
+          modification.GetParameters());
       }
     }
     return update;
