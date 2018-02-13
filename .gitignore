@@ -20,6 +20,9 @@ Version.hpp
 
 ## Ignore CMake files
 
+*.dir
+*.tlog
+*.lastbuildstate
 CMakeCache.txt
 CMakeFiles
 CMakeScripts
