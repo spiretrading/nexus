@@ -107,6 +107,13 @@ class View extends UpdatableView {
         managedAccountsClass += ' selected';
       }
 
+      let managedAccountsBtn;
+      if (this.componentModel.isAuthority) {
+        managedAccountsBtn =  <div className={managedAccountsClass} onClick={this.onManagedAccountsClick}>
+                                Managed Accounts
+                              </div>
+      }
+
       content =
         <div>
           <div className="filters-wrapper">
@@ -115,9 +122,7 @@ class View extends UpdatableView {
                 <div className={myAccountsClass} onClick={this.onMyAccountsClick}>
                   My Account
                 </div>
-                <div className={managedAccountsClass} onClick={this.onManagedAccountsClick}>
-                  Managed Accounts
-                </div>
+                {managedAccountsBtn}
               </div>
               <div className="status-filter-wrapper">
                 <div className="selected" data-filter={FILTER_PENDING}>

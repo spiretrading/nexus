@@ -14,6 +14,12 @@ class Controller {
     this.view = view;
   }
 
+  componentWillUpdate(nextProps) {
+    this.componentModel.request = nextProps.request;
+    this.componentModel.update = nextProps.update;
+    this.view.setComponentModel(this.componentModel);
+  }
+
   onClick() {
     this.onRequestClick(
       this.componentModel.request.id,
