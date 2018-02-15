@@ -94,6 +94,14 @@ class MobileRoutes extends Routes {
         }
       },
       {
+        path: 'risk-controls-modification-review',
+        getComponent(location, cb) {
+          System.import('../components/structures/mobile/risk-controls-modification-review')
+            .then(loadRoute(cb))
+            .catch(errorLoading);
+        }
+      },
+      {
         path: 'profile-performance/:type/:id/:name',
         getComponent(location, cb) {
           System.import('../components/structures/mobile/profile/routes')
@@ -132,6 +140,14 @@ class MobileRoutes extends Routes {
         path: 'modification-request-history',
         getComponent(location, cb) {
           System.import('../components/structures/mobile/modification-request-history')
+            .then(loadRoute(cb))
+            .catch(errorLoading);
+        }
+      },
+      {
+        path: 'entitlement-modification-review',
+        getComponent(location, cb) {
+          System.import('../components/structures/common/entitlement-modification-review')
             .then(loadRoute(cb))
             .catch(errorLoading);
         }

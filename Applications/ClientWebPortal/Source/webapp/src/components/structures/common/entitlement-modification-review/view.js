@@ -79,7 +79,7 @@ class View extends UpdatableView {
 
       let onCommentsInput = this.controller.onCommentsInput;
       let footer;
-      if (this.componentModel.requestStatus == AccountModificationRequestStatus.PENDING) {
+      if (this.componentModel.requestStatus == AccountModificationRequestStatus.PENDING && this.componentModel.isAuthority) {
         footer =  <div className="footer-wrapper">
                     <div className="new-comments-wrapper">
                       <TextArea model={commentsInputModel} onChange={onCommentsInput}/>

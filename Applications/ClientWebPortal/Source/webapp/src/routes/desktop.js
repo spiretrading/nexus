@@ -76,6 +76,14 @@ class DesktopRoutes extends Routes {
         }
       },
       {
+        path: 'risk-controls-modification-review',
+        getComponent(location, cb) {
+          System.import('../components/structures/desktop/risk-controls-modification-review')
+            .then(loadRoute(cb))
+            .catch(errorLoading);
+        }
+      },
+      {
         path: 'profile-entitlements/:type/:id/:name',
         getComponent(location, cb) {
           System.import('../components/structures/desktop/profile/routes')
