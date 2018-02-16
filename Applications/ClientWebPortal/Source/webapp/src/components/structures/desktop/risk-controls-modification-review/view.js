@@ -19,6 +19,18 @@ class View extends CommonView {
   render() {
     let content;
     if (this.controller.isModelInitialized()) {
+      let statusMessage;
+      if (this.componentModel.requestStatus == AccountModificationRequestStatus.SCHEDULED ||
+          this.componentModel.requestStatus == AccountModificationRequestStatus.GRANTED) {
+        statusMessage = <div className="status-message-wrapper approved">
+                          <span className="icon-request-approved"/> APPROVED
+                        </div>
+      } else if (this.componentModel.requestStatus == AccountModificationRequestStatus.REJECTED) {
+        statusMessage = <div className="status-message-wrapper rejected">
+                          <span className="icon-request-rejected"/> REJECTED
+                        </div>
+      }
+
       let original = this.componentModel.originalRiskParams;
       let change = this.componentModel.riskModification.parameters;
       let comments = [];
@@ -43,8 +55,8 @@ class View extends CommonView {
       }
 
       let footer;
-      if ((userService.isManager() && this.componentModel.status == AccountModificationRequestStatus.PENDING) || 
-        (userService.isAdmin() && (this.componentModel.status == AccountModificationRequestStatus.PENDING || this.componentModel.status == AccountModificationRequestStatus.REVIEWED)))
+      if ((userService.isManager() && this.componentModel.requestStatus == AccountModificationRequestStatus.PENDING) || 
+        (userService.isAdmin() && (this.componentModel.requestStatus == AccountModificationRequestStatus.PENDING || this.componentModel.requestStatus == AccountModificationRequestStatus.REVIEWED)))
       {
         let commentsInputModel = {
           text: "",
@@ -76,6 +88,7 @@ class View extends CommonView {
                   <div className="title-wrapper">
                     Risk Controls Request
                   </div>
+                  {statusMessage}
                   <div className="account-details">
                     <div className="account">
                       Account: {this.componentModel.account.name}

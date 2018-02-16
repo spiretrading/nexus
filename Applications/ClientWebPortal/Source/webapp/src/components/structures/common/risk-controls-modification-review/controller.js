@@ -16,6 +16,9 @@ class Controller {
     this.onOkClick = this.onOkClick.bind(this);
     this.approveRequest = this.approveRequest.bind(this);
     this.rejectRequest = this.rejectRequest.bind(this);
+    this.onCommentsInput = this.onCommentsInput.bind(this);
+    this.approveRequest = this.approveRequest.bind(this);
+    this.rejectRequest = this.rejectRequest.bind(this);
   }
 
   getView() {
@@ -77,7 +80,7 @@ class Controller {
       this.componentModel.requesterAccount = results[1].submissionAccount;
       this.componentModel.originalRiskParams = results[2];
       this.componentModel.comments = results[3];
-      this.componentModel.status = results[4].status;
+      this.componentModel.requestStatus = results[4].status;
       this.view.update(this.componentModel);
     });
   }

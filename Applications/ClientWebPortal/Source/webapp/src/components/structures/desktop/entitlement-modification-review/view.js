@@ -26,11 +26,11 @@ class View extends UpdatableView {
       if (this.componentModel.requestStatus == AccountModificationRequestStatus.SCHEDULED ||
           this.componentModel.requestStatus == AccountModificationRequestStatus.GRANTED) {
         statusMessage = <div className="status-message-wrapper approved">
-                          <span className="icon-request-approved"/> Request Approved
+                          <span className="icon-request-approved"/> APPROVED
                         </div>
       } else if (this.componentModel.requestStatus == AccountModificationRequestStatus.REJECTED) {
         statusMessage = <div className="status-message-wrapper rejected">
-                          <span className="icon-request-rejected"/> Request Rejected
+                          <span className="icon-request-rejected"/> REJECTED
                         </div>
       }
 
@@ -104,6 +104,7 @@ class View extends UpdatableView {
           <div className="page-top-header row">
             Entitlement Request
           </div>
+          {statusMessage}
           <div className="info">
             <div className="account cell">
               Account: <span>{this.componentModel.changeAccount.name}</span>
@@ -115,7 +116,6 @@ class View extends UpdatableView {
               Request ID: <span>{this.componentModel.modificationId}</span>
             </div>
           </div>
-          {statusMessage}
           <div className="entitlement-panels-wrapper">
             {entitlementPanels}
           </div>

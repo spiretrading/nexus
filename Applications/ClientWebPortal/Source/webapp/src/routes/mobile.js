@@ -147,7 +147,7 @@ class MobileRoutes extends Routes {
       {
         path: 'entitlement-modification-review',
         getComponent(location, cb) {
-          System.import('../components/structures/common/entitlement-modification-review')
+          System.import('../components/structures/mobile/entitlement-modification-review')
             .then(loadRoute(cb))
             .catch(errorLoading);
         }
