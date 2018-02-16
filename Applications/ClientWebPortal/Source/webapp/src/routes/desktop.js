@@ -147,7 +147,7 @@ class DesktopRoutes extends Routes {
       {
         path: 'entitlement-modification-review',
         getComponent(location, cb) {
-          System.import('../components/structures/common/entitlement-modification-review')
+          System.import('../components/structures/desktop/entitlement-modification-review')
             .then(loadRoute(cb))
             .catch(errorLoading);
         }
