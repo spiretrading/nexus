@@ -1,5 +1,5 @@
-#ifndef NEXUS_SIMULATIONMARKETDATAFEEDCLIENT_HPP
-#define NEXUS_SIMULATIONMARKETDATAFEEDCLIENT_HPP
+#ifndef NEXUS_SIMULATION_MARKET_DATA_FEED_CLIENT_HPP
+#define NEXUS_SIMULATION_MARKET_DATA_FEED_CLIENT_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
@@ -35,23 +35,22 @@ namespace Nexus {
 
       //! The type of MarketDataFeedClient connected to the
       //! MarketDataFeedServer.
-      typedef typename Beam::TryDereferenceType<
-        MarketDataFeedClientType>::type MarketDataFeedClient;
+      using MarketDataFeedClient = Beam::GetTryDereferenceType<
+        MarketDataFeedClientType>;
 
       //! The type of TimeClient used for timestamps.
-      typedef typename Beam::TryDereferenceType<TimeClientType>::type
-        TimeClient;
+      using TimeClient = Beam::GetTryDereferenceType<TimeClientType>;
 
       //! Controls the frequency of BboQuote updates.
-      typedef typename Beam::TryDereferenceType<BboTimerType>::type BboTimer;
+      using BboTimer = Beam::GetTryDereferenceType<BboTimerType>;
 
       //! Controls the frequency of MarketQuote updates.
-      typedef typename Beam::TryDereferenceType<MarketQuoteTimerType>::type
-        MarketQuoteTimer;
+      using MarketQuoteTimer = Beam::GetTryDereferenceType<
+        MarketQuoteTimerType>;
 
       //! Controls the frequency of TimeAndSale prints.
-      typedef typename Beam::TryDereferenceType<TimeAndSaleTimerType>::type
-        TimeAndSaleTimer;
+      using TimeAndSaleTimer = Beam::GetTryDereferenceType<
+        TimeAndSaleTimerType>;
 
       //! Constructs a SimulationMarketDataFeedClient.
       /*!
@@ -85,14 +84,11 @@ namespace Nexus {
     private:
       std::vector<MarketDataService::SecuritySnapshot> m_securities;
       MarketDatabase m_marketDatabase;
-      typename Beam::OptionalLocalPtr<MarketDataFeedClientType>::type
-        m_feedClient;
-      typename Beam::OptionalLocalPtr<TimeClientType>::type m_timeClient;
-      typename Beam::OptionalLocalPtr<BboTimerType>::type m_bboTimer;
-      typename Beam::OptionalLocalPtr<MarketQuoteTimerType>::type
-        m_marketQuoteTimer;
-      typename Beam::OptionalLocalPtr<TimeAndSaleTimerType>::type
-        m_timeAndSaleTimer;
+      Beam::GetOptionalLocalPtr<MarketDataFeedClientType> m_feedClient;
+      Beam::GetOptionalLocalPtr<TimeClientType> m_timeClient;
+      Beam::GetOptionalLocalPtr<BboTimerType> m_bboTimer;
+      Beam::GetOptionalLocalPtr<MarketQuoteTimerType> m_marketQuoteTimer;
+      Beam::GetOptionalLocalPtr<TimeAndSaleTimerType> m_timeAndSaleTimer;
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_callbacks;
 
@@ -127,8 +123,8 @@ namespace Nexus {
           marketQuoteTimer)),
         m_timeAndSaleTimer(std::forward<TimeAndSaleTimerForward>(
           timeAndSaleTimer)) {
-    for(const auto& security : securities) {
-      m_securities.push_back(MarketDataService::SecuritySnapshot());
+    for(auto& security : securities) {
+      m_securities.emplace_back();
       auto& snapshot = m_securities.back();
       snapshot.m_security = security;
     }
@@ -162,8 +158,8 @@ namespace Nexus {
         snapshot.m_bboQuote->m_ask.m_price =
           snapshot.m_bboQuote->m_bid.m_price + Money::CENT;
         snapshot.m_bboQuote->m_timestamp = m_timeClient->GetTime();
-        std::vector<MarketDatabase::Entry> markets =
-          m_marketDatabase.FromCountry(snapshot.m_security.GetCountry());
+        auto markets = m_marketDatabase.FromCountry(
+          snapshot.m_security.GetCountry());
         for(const auto& market : markets) {
           MarketQuote quote(market.m_code, Quote(Money::CENT, 100, Side::BID),
             Quote(2 * Money::CENT, 100, Side::ASK), m_timeClient->GetTime());
