@@ -71,10 +71,6 @@
 #new-group-modal {
   width: 280px;
 
-  .modal-header {
-    margin-bottom: 10px;
-  }
-
   .name-input {
     width: 100%;
     border: 1px solid $darkGrey;
@@ -82,14 +78,15 @@
 
   .buttons-wrapper {
     margin-top: 20px;
+    display: flex;
 
     .create-button {
-      width: 120px;
+      flex: 1;
       margin-right: 10px;
     }
 
     .cancel-button {
-      width: 120px;
+      flex: 1;
     }
   }
 }

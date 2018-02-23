@@ -3,7 +3,6 @@
 .account-modification-request-container {
   position: relative;
   width: 100%;
-  border-top: 1px solid $lightGrey;
   flex: 1;
   display: flex;
   cursor: pointer;
@@ -68,11 +67,5 @@
         color: $yellow;
       }
     }
-  }
-}
-
-main.mobile {
-  .account-modification-request-container {
-
   }
 }

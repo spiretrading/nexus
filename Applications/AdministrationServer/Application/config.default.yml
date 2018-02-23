@@ -163,6 +163,14 @@ entitlements:
       - market: XTSX
         source: NEOE
         messages: [TAS, BOOK]
+  - name: Aequitas NEO (CSE)
+    price: 0.00
+    currency: CAD
+    group: neoe_cse
+    applicability:
+      - market: XCNQ
+        source: NEOE
+        messages: [TAS, BOOK]
   - name: Pure
     price: 0.00
     currency: CAD

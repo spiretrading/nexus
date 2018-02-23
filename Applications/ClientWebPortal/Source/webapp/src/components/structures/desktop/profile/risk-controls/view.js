@@ -45,7 +45,7 @@ class View extends CommonView {
   }
 
   render() {
-    let content;
+    let content, footer;
     let containerClassName;
     if (!deviceDetector.isMobile()) {
       containerClassName = 'container-fixed-width';
@@ -69,9 +69,11 @@ class View extends CommonView {
         saveBtnModel.isDisabled = false;
       }
 
-      let saveButton;
+      let button;
       if (this.componentModel.isAdmin) {
-        saveButton = <PrimaryButton className="save-button" model={saveBtnModel} onClick={onSave}/>
+        button = <PrimaryButton className="save-button" model={saveBtnModel} onClick={onSave}/>
+      } else {
+        footer =  this.getFooter();
       }
 
       let currencies = definitionsService.getAllCurrencies();
@@ -103,7 +105,7 @@ class View extends CommonView {
         min: 0,
         defaultValue: this.componentModel.riskParameters.buyingPower.toString(),
         isRequired: true,
-        isDisabled: !this.componentModel.isAdmin,
+        isDisabled: false,
         hideArrows: true
       };
 
@@ -115,7 +117,7 @@ class View extends CommonView {
         min: 0,
         defaultValue: this.componentModel.riskParameters.netLoss.toString(),
         isRequired: true,
-        isDisabled: !this.componentModel.isAdmin,
+        isDisabled: false,
         hideArrows: true
       };
 
@@ -131,7 +133,7 @@ class View extends CommonView {
         maxLength: 2,
         defaultValue: timeValues[0],
         isRequired: true,
-        isDisabled: !this.componentModel.isAdmin
+        isDisabled: false
       };
 
       let minInputModel = {
@@ -144,7 +146,7 @@ class View extends CommonView {
         maxLength: 2,
         defaultValue: timeValues[1],
         isRequired: true,
-        isDisabled: !this.componentModel.isAdmin
+        isDisabled: false
       };
 
       let secInputModel = {
@@ -157,14 +159,10 @@ class View extends CommonView {
         maxLength: 2,
         defaultValue: timeValues[2],
         isRequired: true,
-        isDisabled: !this.componentModel.isAdmin
+        isDisabled: false
       };
 
       let currencyWrapperClass = 'currency-select-wrapper';
-      if (!this.componentModel.isAdmin) {
-        currencyWrapperClass += ' disabled';
-      }
-
       content =
         <div>
           <div className="form-wrapper">
@@ -175,7 +173,7 @@ class View extends CommonView {
               <select className="currency-select"
                       defaultValue={selectedCurrency}
                       onChange={this.onCurrencyChange.bind(this)}
-                      disabled={!this.componentModel.isAdmin}>
+                      disabled={false}>
                 {options}
               </select>
               <span className="icon-arrow-down"/>
@@ -216,7 +214,7 @@ class View extends CommonView {
                 <div className="time-input-label">second</div>
               </div>
             </div>
-            {saveButton}
+            {button}
             <div className="save-message"></div>
           </div>
         </div>
@@ -225,6 +223,7 @@ class View extends CommonView {
     return (
       <div id="risk-control-container" className={containerClassName}>
         {content}
+        {footer}
       </div>
     );
   }

@@ -94,9 +94,10 @@ class View extends UpdatableView {
 
   /** @private */
   onMouseUp(e) {
-    let $viewingRegion = $('#' + this.componentId + ' .viewing-region');
-    let wasTableClicked = $.contains($viewingRegion[0], e.target);
+    let $container = $('#' + this.componentId);
+    let wasTableClicked = $.contains($container[0], e.target);
     if (!wasTableClicked) {
+      this.activeRowIndex = null;
       this.tableModel.clearSelectedRows();
       this.update();
     }

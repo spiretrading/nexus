@@ -8,6 +8,13 @@ import Dropdown from 'components/reusables/common/dropdown';
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
+
+    this.onCloseChangePicClick = this.onCloseChangePicClick.bind(this);
+
+    this.changePictureModel = {
+      picture: this.componentModel.picture,
+      shouldDispose: false
+    };
   }
 
   /** @private */
@@ -22,6 +29,13 @@ class View extends UpdatableView {
     if (isChanged) {
       this.controller.onAccountPictureChange(pictureData);
     }
+  }
+
+  /** @private */
+  onCloseChangePicClick() {
+    modal.hide($('#change-picture-modal'));
+    this.changePictureModel.shouldDispose = true;
+    this.update();
   }
 
   dispose() {
@@ -66,10 +80,6 @@ class View extends UpdatableView {
       picture = <img src={this.componentModel.picture}/>
     }
 
-    let changePictureModel = {
-      picture: this.componentModel.picture
-    };
-
     let onChangePictureSubmit = this.onChangePictureSubmit.bind(this);
 
     return (
@@ -85,9 +95,10 @@ class View extends UpdatableView {
               <div className="modal-content">
                 <div className="modal-header">
                   Change Picture
+                  <span className="icon-close" onClick={this.onCloseChangePicClick}></span>
                 </div>
                 <div className="modal-body change-picture-wrapper">
-                  <ChangePicture model={changePictureModel} onSubmit={onChangePictureSubmit}/>
+                  <ChangePicture model={this.changePictureModel} onSubmit={onChangePictureSubmit}/>
                 </div>
               </div>
             </div>

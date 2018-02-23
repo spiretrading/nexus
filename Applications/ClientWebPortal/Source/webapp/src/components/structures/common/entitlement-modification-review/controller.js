@@ -41,6 +41,7 @@ class Controller {
       Config.WHOLE_PAGE_PRELOADER_HEIGHT
     ).then(responses => {
       this.componentModel.changes = this.diffEntitlements(responses[0], responses[1].entitlements);
+      this.componentModel.isAuthority = userService.isManager() || userService.isAdmin();
 
       let entitlements = definitionsService.getEntitlements();
       this.componentModel.entitlements = new HashMap();

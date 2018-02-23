@@ -32,6 +32,7 @@ import message from './definitions/message';
 import accountModificationRequestType from './definitions/account-modification-request-type';
 import accountModificationRequestStatus from './definitions/account-modification-request-status';
 import accountRoles from './definitions/account-roles';
+import riskModification from './definitions/risk-modification';
 
 // module export configurations
 export const AdministrationClient = administrationClient;
@@ -66,3 +67,4 @@ export const Message = message;
 export const AccountModificationRequestType = accountModificationRequestType;
 export const AccountModificationRequestStatus = accountModificationRequestStatus;
 export const AccountRoles = accountRoles;
+export const RiskModification = riskModification;

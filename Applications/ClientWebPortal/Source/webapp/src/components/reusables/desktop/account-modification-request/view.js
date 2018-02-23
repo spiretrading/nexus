@@ -1,49 +1,21 @@
 import './style.scss';
 import React from 'react';
-import UpdatableView from 'commons/updatable-view';
-import {
-  AccountModificationRequestType,
-  AccountModificationRequestStatus
-} from 'spire-client';
-import moment from 'moment';
+import CommonView from 'components/reusables/common/account-modification-request/common-view';
 
-class View extends UpdatableView {
+export default class View extends CommonView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
-
-    this.onPanelClick = this.onPanelClick.bind(this);
-  }
-
-  /** @private */
-  onPanelClick() {
-    this.controller.onClick();
   }
 
   render() {
     let containerClass = 'account-modification-request-container no-select ';
     containerClass += this.componentModel.className;
-
-    let title;
-    if (this.componentModel.request.requestType == AccountModificationRequestType.ENTITLEMENTS) {
-      title = 'Entitlements Request';
-    }
-
+    let title = this.getTitle(this.componentModel.request.requestType);
     let account = this.componentModel.request.account.name;
     let requestedBy = this.componentModel.request.submissionAccount.name;
     let requestId = this.componentModel.request.id;
-    let timestamp = moment.utc(this.componentModel.request.timestamp, 'YYYYMMDDTHHmmss');
-    let utcOffset = (new Date().getTimezoneOffset()) * -1;
-    timestamp = timestamp.utcOffset(utcOffset);
-    timestamp = timestamp.format('DD/MM/YYYY | HH:mm');
-
-    let status = this.componentModel.update.status;
-    if (status == AccountModificationRequestStatus.PENDING) {
-      status = <span className="yellow">Pending</span>;
-    } else if (status == AccountModificationRequestStatus.SCHEDULED || status == AccountModificationRequestStatus.GRANTED) {
-      status = <span className="green">Approved</span>;
-    } else if (status == AccountModificationRequestStatus.REJECTED) {
-      status = <span className="red">Rejected</span>;
-    }
+    let dateTimestamp = this.getDateTimestamp(this.componentModel.request.timestamp).dateTimestamp;
+    let status = this.getStatus(this.componentModel.update.status);
 
     return (
         <div id={this.componentModel.componentId} className={containerClass} onClick={this.onPanelClick}>
@@ -59,11 +31,9 @@ class View extends UpdatableView {
             <div className="status">
               {status}
             </div>
-            <div className="timestamp">{timestamp}</div>
+            <div className="timestamp">{dateTimestamp}</div>
           </div>
         </div>
     );
   }
 }
-
-export default View;

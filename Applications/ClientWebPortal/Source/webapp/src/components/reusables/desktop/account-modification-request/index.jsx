@@ -8,6 +8,10 @@ export default class extends Component {
     super(props);
   }
 
+  componentWillUpdate(nextProps) {
+    this.controller.componentWillUpdate(nextProps);
+  }
+
   componentWillMount() {
     let componentModel = {};
     componentModel.componentId = uuid.v4();

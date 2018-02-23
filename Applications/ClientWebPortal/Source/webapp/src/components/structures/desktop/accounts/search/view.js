@@ -76,7 +76,7 @@ class View extends CommonView {
                 <div className="modal-header">
                   Create Group
                 </div>
-                <div className="modal-body change-picture-wrapper">
+                <div className="modal-body">
                   <input type="text" defaultValue="" className="name-input" onKeyPress={this.onGroupNamePress.bind(this)}/>
                   <div className='buttons-wrapper'>
                     <PrimaryButton model={newGroupCreateBtnModel}

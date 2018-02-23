@@ -9,20 +9,14 @@ import 'components/../../node_modules/croppie/croppie.css';
 class View extends UpdatableView {
   constructor(react, controller, componentModel) {
     super(react, controller, componentModel);
+
+    this.onSaveClick = this.onSaveClick.bind(this);
+    this.onBrowseClick = this.onBrowseClick.bind(this);
+    this.destroyCroopper = this.destroyCroopper.bind(this);
+
     this.cropper = {
       instance: null
     };
-  }
-
-  /** @private */
-  onCancelClick() {
-    this.controller.cancel(onCancelled.bind(this));
-
-    function onCancelled() {
-      $('#' + this.componentModel.componentId + ' .file-input').val('');
-      this.destroyCroopper();
-      this.renderStaticPicture();
-    }
   }
 
   /** @private */
@@ -40,7 +34,7 @@ class View extends UpdatableView {
   /** @private */
   destroyCroopper() {
     if (this.cropper.instance != null) {
-      this.cropper.instance.destroy();
+      $('#' + this.componentModel.componentId + ' .croppie-container').empty();
       this.cropper.instance = null;
     }
   }
@@ -52,11 +46,11 @@ class View extends UpdatableView {
 
   /** @private */
   initializeCrop() {
-    var componentId = this.componentId;
+    var componentId = this.componentModel.componentId;
     var cropper = this.cropper;
-    if (this.files && this.files[0]) {
+    if (this.files) {
       if (cropper.instance != null) {
-        cropper.instance.destroy();
+        this.destroyCroopper();
       }
 
       var fileReader= new FileReader();
@@ -79,7 +73,7 @@ class View extends UpdatableView {
           url: event.target.result
         });
       };
-      fileReader.readAsDataURL( this.files[0] );
+      fileReader.readAsDataURL( this.files );
     }
   }
 
@@ -102,21 +96,22 @@ class View extends UpdatableView {
     var componentId = this.componentModel.componentId;
     var cropper = this.cropper;
     var initializeCrop = this.initializeCrop;
-    $('#' + componentId + ' .file-input')[0].addEventListener('change', onFileSelect, false);
-
-    function onFileSelect() {
+    $('#' + componentId + ' .file-input')[0].addEventListener('change', (e) => {
       if ($('#' + componentId + ' .file-input').val() != '') {
-        let context = this;
-        context.componentId = componentId;
-        context.cropper = cropper;
-        initializeCrop.call(context);
+        this.files = e.currentTarget.files[0];
+        this.initializeCrop();
       }
-    }
+    }, false);
 
     this.renderStaticPicture();
   }
 
   componentDidUpdate() {
+    if (this.componentModel.shouldDispose) {
+      $('#' + this.componentModel.componentId + ' .file-input').val('');
+      this.destroyCroopper();
+    }
+
     this.renderStaticPicture();
   }
 
@@ -133,17 +128,12 @@ class View extends UpdatableView {
       label: 'Cancel'
     };
 
-    let onCancelClick = this.onCancelClick.bind(this);
-    let onSaveClick = this.onSaveClick.bind(this);
-    let onBrowseClick = this.onBrowseClick.bind(this);
-
     return (
         <div id={this.componentModel.componentId} className="change-picture-container">
           <div className="edit-picture-container"></div>
           <div className="buttons-container">
-            <PrimaryButton className="button" model={choosePictureBtnModel} onClick={onBrowseClick}/>
-            <PrimaryButton className="button" model={saveBtnModel} onClick={onSaveClick}/>
-            <PrimaryButton className="button" model={cancelBtnModel} onClick={onCancelClick}/>
+            <PrimaryButton className="button browse-button" model={choosePictureBtnModel} onClick={this.onBrowseClick}/>
+            <PrimaryButton className="button" model={saveBtnModel} onClick={this.onSaveClick}/>
           </div>
           <input type="file" className="file-input"/>
         </div>

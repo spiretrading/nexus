@@ -18,6 +18,7 @@ namespace AdministrationService {
   class LocalAdministrationDataStore;
   class Message;
   class MySqlAdministrationDataStore;
+  class RiskModification;
   class TradingGroup;
   class VirtualAdministrationClient;
   template<typename ClientType> class WrapperAdministrationClient;

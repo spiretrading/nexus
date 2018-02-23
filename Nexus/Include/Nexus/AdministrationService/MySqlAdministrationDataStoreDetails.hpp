@@ -47,6 +47,16 @@ namespace Details {
     mysqlpp::sql_int, id,
     mysqlpp::sql_int_unsigned, entitlement);
 
+  sql_create_8(risk_modifications, 8, 0,
+    mysqlpp::sql_int, id,
+    mysqlpp::sql_int_unsigned, account,
+    mysqlpp::sql_int, currency,
+    mysqlpp::sql_bigint, buying_power,
+    mysqlpp::sql_bigint, net_loss,
+    mysqlpp::sql_int, allowed_state,
+    mysqlpp::sql_int, loss_from_top,
+    mysqlpp::sql_int, transition_time);
+
   sql_create_5(account_modification_request_status, 5, 0,
     mysqlpp::sql_int, id,
     mysqlpp::sql_int, status,
@@ -182,6 +192,25 @@ namespace Details {
     return query.execute();
   }
 
+  inline bool LoadRiskModificationsTable(
+      mysqlpp::Connection& databaseConnection, const std::string& schema) {
+    if(Beam::MySql::TestTable(schema, "risk_modifications",
+        databaseConnection)) {
+      return true;
+    }
+    auto query = databaseConnection.query();
+    query << "CREATE TABLE risk_modifications ("
+      "id INTEGER PRIMARY KEY NOT NULL,"
+      "account INTEGER UNSIGNED NOT NULL,"
+      "currency INTEGER NOT NULL,"
+      "buying_power BIGINT NOT NULL,"
+      "net_loss BIGINT NOT NULL,"
+      "allowed_state INTEGER NOT NULL,"
+      "loss_from_top INTEGER NOT NULL,"
+      "transition_time INTEGER NOT NULL)";
+    return query.execute();
+  }
+
   inline bool LoadRiskParametersTable(mysqlpp::Connection& databaseConnection,
       const std::string& schema) {
     if(Beam::MySql::TestTable(schema, "risk_parameters", databaseConnection)) {
@@ -221,6 +250,7 @@ namespace Details {
       LoadAdministrationMessagesTable(databaseConnection, schema) &&
       LoadAdministrationMessageBodiesTable(databaseConnection, schema) &&
       LoadEntitlementModificationsTable(databaseConnection, schema) &&
+      LoadRiskModificationsTable(databaseConnection, schema) &&
       LoadRiskParametersTable(databaseConnection, schema) &&
       LoadRiskStatesTable(databaseConnection, schema);
   }

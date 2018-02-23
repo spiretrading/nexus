@@ -107,26 +107,33 @@ class View extends UpdatableView {
         managedAccountsClass += ' selected';
       }
 
+      let managedAccountsBtn;
+      if (this.componentModel.isAuthority) {
+        managedAccountsBtn =  <div className={managedAccountsClass} onClick={this.onManagedAccountsClick}>
+                                Managed Accounts
+                              </div>
+      }
+
       content =
         <div>
           <div className="filters-wrapper">
-            <div className="account-filter-wrapper">
-              <div className={myAccountsClass} onClick={this.onMyAccountsClick}>
-                My Account
+            <div className="content-wrapper">
+              <div className="account-filter-wrapper">
+                <div className={myAccountsClass} onClick={this.onMyAccountsClick}>
+                  My Account
+                </div>
+                {managedAccountsBtn}
               </div>
-              <div className={managedAccountsClass} onClick={this.onManagedAccountsClick}>
-                Managed Accounts
-              </div>
-            </div>
-            <div className="status-filter-wrapper">
-              <div className="selected" data-filter={FILTER_PENDING}>
-                <span className="icon-check" onClick={this.onStatusFilterChange} /> Pending
-              </div>
-              <div className="selected" data-filter={FILTER_APPROVED}>
-                <span className="icon-check" onClick={this.onStatusFilterChange} /> Approved
-              </div>
-              <div className="selected" data-filter={FILTER_REJECTED}>
-                <span className="icon-check" onClick={this.onStatusFilterChange} /> Rejected
+              <div className="status-filter-wrapper">
+                <div className="selected" data-filter={FILTER_PENDING}>
+                  <span className="icon-check" onClick={this.onStatusFilterChange} /> Pending
+                </div>
+                <div className="selected" data-filter={FILTER_APPROVED}>
+                  <span className="icon-check" onClick={this.onStatusFilterChange} /> Approved
+                </div>
+                <div className="selected" data-filter={FILTER_REJECTED}>
+                  <span className="icon-check" onClick={this.onStatusFilterChange} /> Rejected
+                </div>
               </div>
             </div>
           </div>

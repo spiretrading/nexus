@@ -13,6 +13,7 @@
 #include "Nexus/AdministrationService/AdministrationService.hpp"
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
 #include "Nexus/AdministrationService/Message.hpp"
+#include "Nexus/AdministrationService/RiskModification.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
@@ -122,6 +123,14 @@ namespace AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
         const EntitlementModification& modification,
         const Message& comment) = 0;
+
+      virtual RiskModification LoadRiskModification(
+        AccountModificationRequest::Id id) = 0;
+
+      virtual AccountModificationRequest SubmitAccountModificationRequest(
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
+        const RiskModification& modification, const Message& comment) = 0;
 
       virtual AccountModificationRequest::Update
         LoadAccountModificationRequestStatus(
@@ -272,6 +281,14 @@ namespace AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
         const EntitlementModification& modification,
         const Message& comment) override;
+
+      virtual RiskModification LoadRiskModification(
+        AccountModificationRequest::Id id) override;
+
+      virtual AccountModificationRequest SubmitAccountModificationRequest(
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
+        const RiskModification& modification, const Message& comment) override;
 
       virtual AccountModificationRequest::Update
         LoadAccountModificationRequestStatus(
@@ -503,6 +520,22 @@ namespace AdministrationService {
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
       const EntitlementModification& modification, const Message& comment) {
+    return m_client->SubmitAccountModificationRequest(account,
+      submissionAccount, modification, comment);
+  }
+
+  template<typename ClientType>
+  RiskModification WrapperAdministrationClient<ClientType>::
+      LoadRiskModification(AccountModificationRequest::Id id) {
+    return m_client->LoadRiskModification(id);
+  }
+
+  template<typename ClientType>
+  AccountModificationRequest WrapperAdministrationClient<ClientType>::
+      SubmitAccountModificationRequest(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
+      const RiskModification& modification, const Message& comment) {
     return m_client->SubmitAccountModificationRequest(account,
       submissionAccount, modification, comment);
   }

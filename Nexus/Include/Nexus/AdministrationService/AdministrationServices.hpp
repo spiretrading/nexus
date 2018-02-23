@@ -1,5 +1,5 @@
-#ifndef NEXUS_ADMINISTRATIONSERVICES_HPP
-#define NEXUS_ADMINISTRATIONSERVICES_HPP
+#ifndef NEXUS_ADMINISTRATION_SERVICES_HPP
+#define NEXUS_ADMINISTRATION_SERVICES_HPP
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Services/RecordMessage.hpp>
@@ -10,6 +10,7 @@
 #include "Nexus/AdministrationService/AdministrationService.hpp"
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
 #include "Nexus/AdministrationService/Message.hpp"
+#include "Nexus/AdministrationService/RiskModification.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
@@ -383,6 +384,38 @@ namespace AdministrationService {
       AccountModificationRequest, Beam::ServiceLocator::DirectoryEntry, account,
       Beam::ServiceLocator::DirectoryEntry, submission_account,
       EntitlementModification, modification, Message, comment),
+
+    /*! \interface Nexus::AdministrationServices::LoadRiskModificationService
+        \brief Loads a risk modification.
+        \param id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
+               The id of the modification to load.
+        \return <code>Nexus::AdministrationService::RiskModification</code>
+                The risk modification with the specified <i>id</i>.
+    */
+    //! \cond
+    (LoadRiskModificationService,
+      "Nexus.AdministrationServices.LoadRiskModificationService",
+      RiskModification, AccountModificationRequest::Id, id),
+
+    /*! \interface Nexus::AdministrationServices::SubmitRiskModificationRequestService
+        \brief Submits a request to modify an account's risk parameters.
+        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
+               account to modify.
+        \param submission_account <code>Beam::ServiceLocator::DirectoryEntry</code>
+               The account submitting the request.
+        \param modification <code>Nexus::AdministrationService::RiskModification</code>
+               The modification to apply.
+        \param comment <code>Nexus::AdministrationService::Message</code> The
+               comment to associate with the request.
+        \return <code>Nexus::AdministrationService::AccountModificationRequest</code>
+                An object representing the request.
+    */
+    //! \cond
+    (SubmitRiskModificationRequestService,
+      "Nexus.AdministrationServices.SubmitRiskModificationRequestService",
+      AccountModificationRequest, Beam::ServiceLocator::DirectoryEntry, account,
+      Beam::ServiceLocator::DirectoryEntry, submission_account,
+      RiskModification, modification, Message, comment),
 
     /*! \interface Nexus::AdministrationServices::LoadAccountModificationRequestStatusService
         \brief Loads the status of an account modification request.

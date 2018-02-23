@@ -2,6 +2,7 @@ import httpConnectionManager from '../commons/http-connection-manager';
 import AccountRoles from '../../definitions/account-roles';
 import AccountIdentity from './account-identity';
 import RiskParameters from '../risk-service/risk-parameters';
+import RiskModification from '../../definitions/risk-modification';
 import DirectoryEntry from '../../definitions/directory-entry';
 import AccountModificationRequest from '../../definitions/account-modification-request';
 import AccModReqUpdate from '../../definitions/account-modification-request-update';
@@ -181,12 +182,27 @@ class Admin {
       .catch(this.logErrorAndThrow);
   }
 
-  submitEntitlementModificationRequest(directoryEntry, entitlementModification, message) {
+  submitEntitlementModificationRequest(directoryEntry, entitlementModification, comment) {
     let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/submit_entitlement_modification_request';
     let payload = {
       account: directoryEntry.toData(),
       modification: entitlementModification.toData(),
-      comment: message.toData()
+      comment: comment.toData()
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .then(response => {
+        return AccountModificationRequest.fromData(response);
+      })
+      .catch(this.logErrorAndThrow);
+  }
+
+  submitRiskModificationRequest(directoryEntry, riskModification, comment) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/submit_risk_modification_request';
+    let payload = {
+      account: directoryEntry.toData(),
+      modification: riskModification.toData(),
+      comment: comment.toData()
     };
 
     return httpConnectionManager.send(apiPath, payload, true)
@@ -255,6 +271,19 @@ class Admin {
     return httpConnectionManager.send(apiPath, payload, true)
       .then(response => {
         return EntitlementModification.fromData(response);
+      })
+      .catch(this.logErrorAndThrow);
+  }
+
+  loadRiskModification(id) {
+    let apiPath = Config.BACKEND_API_ROOT_URL + 'administration_service/load_risk_modification';
+    let payload = {
+      id: id
+    };
+
+    return httpConnectionManager.send(apiPath, payload, true)
+      .then(response => {
+        return RiskModification.fromData(response);
       })
       .catch(this.logErrorAndThrow);
   }

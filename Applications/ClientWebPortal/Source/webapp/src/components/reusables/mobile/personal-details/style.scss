@@ -4,6 +4,14 @@ main.mobile {
   .personal-details-container {
     display: flex;
 
+    &.readonly-view {
+      .personal-detail-row {
+        input:focus, textarea:focus {
+          border: 1px solid $white !important;
+        }
+      }
+    }
+
     .personal-label-row {
       display: flex;
       margin-bottom: 12px;

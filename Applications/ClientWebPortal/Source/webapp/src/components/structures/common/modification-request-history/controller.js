@@ -53,6 +53,7 @@ class Controller {
     ).then(responses => {
       this.componentModel.accountModificationRequests = responses[0];
       this.requiredDataLoaded = true;
+      this.componentModel.isAuthority = userService.isManager() || userService.isAdmin();
       this.view.update(this.componentModel);
     });
   }
@@ -70,6 +71,13 @@ class Controller {
           requesterAccount: requesterAccount,
           changeAccount: changeAccount,
           requestStatus: requestStatus
+        }
+      });
+    } else if (requestType == AccountModificationRequestType.RISK_CONTROLS) {
+      browserHistory.push({
+        pathname: '/risk-controls-modification-review',
+        state: {
+          id: id
         }
       });
     }

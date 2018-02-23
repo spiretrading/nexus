@@ -1,5 +1,5 @@
 import {Component} from 'react';
-import Controller from './controller';
+import Controller from 'components/structures/common/entitlement-modification-review/controller';
 import View from './view';
 import uuid from 'uuid';
 

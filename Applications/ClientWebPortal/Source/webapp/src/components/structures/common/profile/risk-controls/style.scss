@@ -68,4 +68,20 @@
       color: $primaryGradient3;
     }
   }
+
+  .footer-wrapper {
+    hr {
+      margin: 30px 0px;
+    }
+
+    .button-wrapper {
+      display: flex;
+      align-items: center;
+
+      .submit-button {
+        margin: 40px auto;
+        width: 200px;
+      }
+    }
+  }
 }

@@ -1,9 +1,5 @@
 @import "src/styles/variables";
 
-main.mobile {
-  padding: 0;
-}
-
 #modification-request-history-container {
   font-size: 16px;
   position: relative;
@@ -15,30 +11,42 @@ main.mobile {
     margin: 0 auto;
     display: flex;
     flex-direction: column;
+    padding-top: 40px;
 
     .request-wrapper {
       width: 100%;
       min-height: 90px;
       display: flex;
       flex-direction: column;
+
+      &:not(:first-child) {
+        border-top: 1px solid $lightGrey;
+      }
     }
   }
 
   .filters-wrapper {
+    position: fixed;
+    z-index: 1;
     width: 100%;
-    margin: 0 auto;
-    display: flex;
-    padding-bottom: 20px;
+    left: 0px;
 
-    &.no-items {
+    .content-wrapper {
+      width: 100%;
+      display: flex;
+      padding-top: 20px;
+      padding-bottom: 20px;
       border-bottom: 1px solid $lightGrey;
+      background: $white;
+      position: relative;
+      top: -24px;
     }
 
     .account-filter-wrapper {
       flex: 1;
       display: flex;
       font-size: 13px;
-      padding-left: 20px;
+      padding-left: 15px;
       position: relative;
 
       .my-account {
@@ -58,19 +66,9 @@ main.mobile {
         color: $primaryGradient1;
         position: absolute;
         top: 0px;
-        right: 20px;  
+        right: 15px;  
         font-size: 20px;
       }
-    }
-  }
-
-  .modal-header {
-    .icon-close {
-      position: absolute;
-      top: 0px;
-      right: 0px;
-      font-size: 18px;
-      color: $darkGrey;
     }
   }
 

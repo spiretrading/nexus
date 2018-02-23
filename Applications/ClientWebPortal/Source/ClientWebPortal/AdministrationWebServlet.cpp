@@ -157,6 +157,14 @@ vector<HttpRequestSlot> AdministrationWebServlet::GetSlots() {
     std::bind(&AdministrationWebServlet::OnSubmitEntitlementModificationRequest,
     this, std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/load_risk_modification"),
+    std::bind(&AdministrationWebServlet::OnLoadRiskModification, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/submit_risk_modification_request"),
+    std::bind(&AdministrationWebServlet::OnSubmitRiskModificationRequest,
+    this, std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_account_modification_request_status"),
     std::bind(&AdministrationWebServlet::OnLoadAccountModificationRequestStatus, this,
     std::placeholders::_1));
@@ -709,6 +717,69 @@ HttpResponse AdministrationWebServlet::OnSubmitEntitlementModificationRequest(
   struct Parameters {
     DirectoryEntry m_account;
     EntitlementModification m_modification;
+    Message m_comment;
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("account", m_account);
+      shuttle.Shuttle("modification", m_modification);
+      shuttle.Shuttle("comment", m_comment);
+    }
+  };
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  if(!HasRequestPermission(*m_serviceClients, session->GetAccount(),
+      parameters.m_account)) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto modification = m_serviceClients->GetAdministrationClient().
+    SubmitAccountModificationRequest(parameters.m_account,
+    session->GetAccount(), parameters.m_modification, parameters.m_comment);
+  session->ShuttleResponse(modification, Store(response));
+  return response;
+}
+
+HttpResponse AdministrationWebServlet::OnLoadRiskModification(
+    const HttpRequest& request) {
+  struct Parameters {
+    AccountModificationRequest::Id m_id;
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("id", m_id);
+    }
+  };
+  HttpResponse response;
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  auto modificationRequest =
+    m_serviceClients->GetAdministrationClient().LoadAccountModificationRequest(
+    parameters.m_id);
+  if(!HasReadPermission(*m_serviceClients, session->GetAccount(),
+      modificationRequest.GetAccount())) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto riskModification =
+    m_serviceClients->GetAdministrationClient().LoadRiskModification(
+    parameters.m_id);
+  session->ShuttleResponse(riskModification, Store(response));
+  return response;
+}
+
+HttpResponse AdministrationWebServlet::OnSubmitRiskModificationRequest(
+    const HttpRequest& request) {
+  struct Parameters {
+    DirectoryEntry m_account;
+    RiskModification m_modification;
     Message m_comment;
 
     void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {

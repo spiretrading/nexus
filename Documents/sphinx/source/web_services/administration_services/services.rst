@@ -107,6 +107,28 @@ Nexus Administration Web Services
     :statuscode 200: :py:class:`nexus.administration_service.AccountModificationRequest`
       An object representing the request.
 
+.. http:post:: /api/administration_service/load_risk_modification
+
+    Loads a risk modification.
+
+    :param id: The id of the modification to load.
+    :type id: number
+    :statuscode 200: :py:class:`nexus.administration_service.RiskModification`
+      The risk modification with the specified id.
+
+.. http:post:: /api/administration_service/submit_risk_modification_request
+
+    Submits a request to modify an account's risk parameters.
+
+    :param account: The account to modify.
+    :type account: :py:class:`beam.service_locator.DirectoryEntry`
+    :param modification: The modification to apply.
+    :type modification: :py:class:`nexus.administration_service.RiskModification`
+    :param comment: The comment to associate with the request.
+    :type comment: :py:class:`nexus.administration_service.Message`
+    :statuscode 200: :py:class:`nexus.administration_service.AccountModificationRequest`
+      An object representing the request.
+
 .. http:post:: /api/administration_service/load_account_modification_request_status
 
     Loads the status of an account modification request.

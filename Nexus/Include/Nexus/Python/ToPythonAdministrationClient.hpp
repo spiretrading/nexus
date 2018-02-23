@@ -124,6 +124,15 @@ namespace AdministrationService {
         const EntitlementModification& modification,
         const Message& comment) override final;
 
+      virtual RiskModification LoadRiskModification(
+        AccountModificationRequest::Id id) override final;
+
+      virtual AccountModificationRequest SubmitAccountModificationRequest(
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
+        const RiskModification& modification,
+        const Message& comment) override final;
+
       virtual AccountModificationRequest::Update
         LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id) override final;
@@ -411,6 +420,26 @@ namespace AdministrationService {
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
       const EntitlementModification& modification, const Message& comment) {
+    Beam::Python::GilRelease gil;
+    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    return m_client->SubmitAccountModificationRequest(account,
+      submissionAccount, modification, comment);
+  }
+
+  template<typename ClientType>
+  RiskModification ToPythonAdministrationClient<ClientType>::
+      LoadRiskModification(AccountModificationRequest::Id id) {
+    Beam::Python::GilRelease gil;
+    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    return m_client->LoadRiskModification(id);
+  }
+
+  template<typename ClientType>
+  AccountModificationRequest ToPythonAdministrationClient<ClientType>::
+      SubmitAccountModificationRequest(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
+      const RiskModification& modification, const Message& comment) {
     Beam::Python::GilRelease gil;
     boost::lock_guard<Beam::Python::GilRelease> lock{gil};
     return m_client->SubmitAccountModificationRequest(account,

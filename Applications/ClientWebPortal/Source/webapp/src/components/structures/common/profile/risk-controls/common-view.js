@@ -2,6 +2,8 @@ import './style.scss';
 import React from 'react';
 import UpdatableView from 'commons/updatable-view';
 import definitionsService from 'services/definitions';
+import TextArea from 'components/reusables/common/text-area';
+import PrimaryButton from 'components/reusables/common/primary-button';
 
 class CommonView extends UpdatableView {
   constructor(react, controller, componentModel) {
@@ -73,6 +75,26 @@ class CommonView extends UpdatableView {
     } else {
       this.showSaveFailedMessage('Failed due to invalid input(s)');
     }
+  }
+
+  getFooter() {
+    let commentsModel = {
+      text: "",
+      isReadOnly: false,
+      placeHolder: 'Leave comment here...'
+    };
+    let buttonModel = {
+      label: 'Submit Request'
+    };
+    return  <div className="footer-wrapper">
+              <hr />
+              <div className="comments-wrapper">
+                <TextArea model={commentsModel} onChange={this.controller.onCommentsChange}/>
+                <div className="button-wrapper">
+                  <PrimaryButton className="submit-button" model={buttonModel} onClick={this.controller.submitModificationRequest}/>
+                </div>
+              </div>
+            </div>
   }
 }
 

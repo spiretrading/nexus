@@ -60,11 +60,19 @@
   }
 
   .buttons-container {
+    display: flex;
+    flex-direction: column;
     flex: 1;
+    justify-content: center;
 
     .button {
-      width: 100%;
-      margin-bottom: 15px;
+      flex: 1;
+      max-height: 35px;
+      min-width: 100%;
+
+      &.browse-button {
+        margin-bottom: 15px;
+      }
     }
   }
 
@@ -87,5 +95,21 @@ main.mobile {
         display: none;
       }
     }
+
+    .buttons-container {
+      flex-direction: row;
+
+      .button {
+        flex: 1;
+        min-width: 100px;
+        margin-bottom: 15px;
+  
+        &.browse-button {
+          margin-right: 15px;
+        }
+      }
+    }
+
+    
   }
 }
