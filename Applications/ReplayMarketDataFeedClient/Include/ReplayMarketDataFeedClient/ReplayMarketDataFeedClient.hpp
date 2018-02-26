@@ -32,7 +32,7 @@ namespace Details {
 
   const boost::posix_time::ptime& GetTimestamp(
       const MarketDataService::MarketDataFeedMessage& message) {
-    auto visitor = [] (const auto& value) {
+    auto visitor = [] (const auto& value) -> decltype(auto) {
       return value->m_timestamp;
     };
     return boost::apply_visitor(visitor, message);
