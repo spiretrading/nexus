@@ -20,6 +20,7 @@ CALL %~dp0../../Applications/MarketDataRelayServer/Build/Windows/build.bat %conf
 CALL %~dp0../../Applications/MarketDataServer/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/OrderExecutionBackup/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/OrderExecutionRestore/Build/Windows/build.bat %config%
+CALL %~dp0../../Applications/ReplayMarketDataFeedClient/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/RiskServer/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/SimulationMarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/SimulationOrderExecutionServer/Build/Windows/build.bat %config%

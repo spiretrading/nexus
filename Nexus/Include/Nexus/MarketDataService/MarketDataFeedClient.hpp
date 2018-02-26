@@ -1,6 +1,5 @@
-#ifndef NEXUS_MARKETDATAFEEDCLIENT_HPP
-#define NEXUS_MARKETDATAFEEDCLIENT_HPP
-#include <array>
+#ifndef NEXUS_MARKET_DATA_FEED_CLIENT_HPP
+#define NEXUS_MARKET_DATA_FEED_CLIENT_HPP
 #include <vector>
 #include <Beam/IO/Connection.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -45,12 +44,12 @@ namespace MarketDataService {
       using HeartbeatTimer = Beam::GetTryDereferenceType<HeartbeatTimerType>;
 
       //! The type of ServiceProtocol to use.
-      typedef Beam::Services::ServiceProtocolClient<MessageProtocolType,
-        HeartbeatTimerType> ServiceProtocolClient;
+      using ServiceProtocolClient = Beam::Services::ServiceProtocolClient<
+        MessageProtocolType, HeartbeatTimerType>;
 
       //! The type of Authenticator to use.
-      typedef typename Beam::ServiceLocator::Authenticator<
-        ServiceProtocolClient>::type Authenticator;
+      using Authenticator = typename Beam::ServiceLocator::Authenticator<
+        ServiceProtocolClient>::type;
 
       //! Constructs a MarketDataFeedClient.
       /*!

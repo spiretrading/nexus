@@ -1,5 +1,6 @@
 #ifndef NEXUS_SECURITY_HPP
 #define NEXUS_SECURITY_HPP
+#include <istream>
 #include <ostream>
 #include <string>
 #include <Beam/Serialization/DataShuttle.hpp>
@@ -128,6 +129,13 @@ namespace Nexus {
 
   inline std::ostream& operator <<(std::ostream& out, const Security& value) {
     return out << ToString(value);
+  }
+
+  inline std::istream& operator >>(std::istream& in, Security& value) {
+    std::string s;
+    in >> s;
+    value = ParseSecurity(s);
+    return in;
   }
 
   inline std::size_t hash_value(const Security& security) {
