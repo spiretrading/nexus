@@ -206,7 +206,6 @@ namespace Details {
       boost::apply_visitor(visitor, m_messages.front());
       m_messages.pop_front();
     }
-    std::cout << m_referenceTimestamp << std::endl;
     m_lastTimestamp = timestamp;
     m_timer->Start();
   }
