@@ -16,6 +16,7 @@
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/lexical_cast.hpp>
 #include <tclap/CmdLine.h>
+#include "Nexus/MarketDataService/MarketDataClientUtilities.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
 #include "ReplayMarketDataFeedClient/ReplayMarketDataFeedClient.hpp"
@@ -84,6 +85,54 @@ namespace {
     auto lhsTimestamp = boost::apply_visitor(visitor, lhs);
     auto rhsTimestamp = boost::apply_visitor(visitor, rhs);
     return lhsTimestamp < rhsTimestamp;
+  }
+
+  template<typename MarketDataType>
+  void BuildReplayClients(const ReplayConfig& replayConfig, int partitions,
+      const std::vector<IpAddress>& marketDataAddresses,
+      ApplicationServiceClients& sourceServiceClients,
+      ApplicationServiceClients& targetServiceClients,
+      RefType<SocketThreadPool> socketThreadPool,
+      RefType<TimerThreadPool> timerThreadPool,
+      std::vector<std::unique_ptr<ApplicationMarketDataFeedClient>>&
+      replayClients) {
+    deque<MarketDataFeedMessage> data;
+    auto securitiesPerPartition = replayConfig.m_securities.size() / partitions;
+    for(std::size_t i = 0; i <= replayConfig.m_securities.size(); ++i) {
+      if(i != 0 && i % securitiesPerPartition == 0) {
+        std::sort(data.begin(), data.end(), MarketDataComparator);
+        auto replayClient = std::make_unique<ApplicationMarketDataFeedClient>(
+          Initialize(Initialize(marketDataAddresses, Ref(socketThreadPool)),
+          SessionAuthenticator<ApplicationServiceLocatorClient::Client>(
+          Ref(targetServiceClients.GetServiceLocatorClient())),
+          Initialize(replayConfig.m_sampling, Ref(timerThreadPool)),
+          Initialize(seconds(10), Ref(timerThreadPool))),
+          &targetServiceClients.GetTimeClient(),
+          targetServiceClients.BuildTimer(replayConfig.m_sampling),
+          replayConfig.m_startTime, std::move(data));
+        replayClients.push_back(std::move(replayClient));
+        data.clear();
+        if(i == replayConfig.m_securities.size()) {
+          break;
+        }
+      }
+      auto& security = replayConfig.m_securities[i];
+      auto query = SecurityMarketDataQuery();
+      query.SetIndex(security);
+      query.SetRange(replayConfig.m_startTime, replayConfig.m_endTime);
+      query.SetSnapshotLimit(SnapshotLimit::Unlimited());
+      auto queue = std::make_shared<Queue<MarketDataType>>();
+      QueryMarketDataClient(sourceServiceClients.GetMarketDataClient(), query,
+        queue);
+      vector<MarketDataType> marketData;
+      FlushQueue(queue, std::back_inserter(marketData));
+      std::transform(marketData.begin(), marketData.end(),
+        std::back_inserter(data),
+        [&] (auto& marketData) {
+          return MarketDataFeedMessage(IndexedValue<MarketDataType, Security>(
+            std::move(marketData), security));
+        });
+    }
   }
 }
 
@@ -170,42 +219,17 @@ int main(int argc, const char** argv) {
     return -1;
   }
   std::vector<std::unique_ptr<ApplicationMarketDataFeedClient>> replayClients;
-  deque<MarketDataFeedMessage> data;
-  auto securitiesPerBbo = replayConfig.m_securities.size() /
-    replayConfig.m_bboPartitions;
-  for(std::size_t i = 0; i <= replayConfig.m_securities.size(); ++i) {
-    if(i != 0 && i % securitiesPerBbo == 0) {
-      std::sort(data.begin(), data.end(), MarketDataComparator);
-      auto replayClient = std::make_unique<ApplicationMarketDataFeedClient>(
-        Initialize(Initialize(marketDataAddresses, Ref(socketThreadPool)),
-        SessionAuthenticator<ApplicationServiceLocatorClient::Client>(
-        Ref(targetServiceClients.GetServiceLocatorClient())),
-        Initialize(replayConfig.m_sampling, Ref(timerThreadPool)),
-        Initialize(seconds(10), Ref(timerThreadPool))),
-        &targetServiceClients.GetTimeClient(),
-        targetServiceClients.BuildTimer(replayConfig.m_sampling),
-        std::move(data));
-      replayClients.push_back(std::move(replayClient));
-      data.clear();
-      if(i == replayConfig.m_securities.size()) {
-        break;
-      }
-    }
-    auto& security = replayConfig.m_securities[i];
-    auto query = SecurityMarketDataQuery();
-    query.SetIndex(security);
-    query.SetRange(replayConfig.m_startTime, replayConfig.m_endTime);
-    query.SetSnapshotLimit(SnapshotLimit::Unlimited());
-    auto bboQueue = std::make_shared<Queue<BboQuote>>();
-    sourceServiceClients.GetMarketDataClient().QueryBboQuotes(query, bboQueue);
-    vector<BboQuote> bboQuotes;
-    FlushQueue(bboQueue, std::back_inserter(bboQuotes));
-    std::transform(bboQuotes.begin(), bboQuotes.end(), std::back_inserter(data),
-      [&] (auto& bboQuote) {
-        return MarketDataFeedMessage(
-          SecurityBboQuote(std::move(bboQuote), security));
-      });
-  }
+  BuildReplayClients<BboQuote>(replayConfig, replayConfig.m_bboPartitions,
+    marketDataAddresses, sourceServiceClients, targetServiceClients,
+    Ref(socketThreadPool), Ref(timerThreadPool), replayClients);
+  BuildReplayClients<TimeAndSale>(replayConfig,
+    replayConfig.m_timeAndSalePartitions, marketDataAddresses,
+    sourceServiceClients, targetServiceClients, Ref(socketThreadPool),
+    Ref(timerThreadPool), replayClients);
+  BuildReplayClients<BookQuote>(replayConfig,
+    replayConfig.m_bookQuotePartitions, marketDataAddresses,
+    sourceServiceClients, targetServiceClients, Ref(socketThreadPool),
+    Ref(timerThreadPool), replayClients);
   for(auto& replayClient : replayClients) {
     try {
       replayClient->Open();

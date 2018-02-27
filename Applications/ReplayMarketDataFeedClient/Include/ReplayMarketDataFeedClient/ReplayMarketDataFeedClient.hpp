@@ -19,6 +19,10 @@ namespace Details {
       return message.GetIndex();
     }
 
+    const Security& operator ()(const SecurityTimeAndSale& message) const {
+      return message.GetIndex();
+    }
+
     template<typename T>
     const Security& operator ()(const T& message) const {
       throw std::runtime_error("Invalid message.");
@@ -67,6 +71,7 @@ namespace Details {
         \param marketDataFeedClient Initializes the MarketDataFeedClient.
         \param timeClient Initializes the TimeClient.
         \param timer Initializes the Timer.
+        \param startTime The start of the time to replay messages.
         \param messages The messages to replay.
       */
       template<typename MarketDataFeedClientForward, typename TimeClientForward,
@@ -74,6 +79,7 @@ namespace Details {
       ReplayMarketDataFeedClient(
         MarketDataFeedClientForward&& marketDataFeedClient,
         TimeClientForward&& timeClient, TimerForward&& timer,
+        const boost::posix_time::ptime& startTime,
         std::deque<MarketDataService::MarketDataFeedMessage> messages);
 
       ~ReplayMarketDataFeedClient();
@@ -88,6 +94,7 @@ namespace Details {
       Beam::GetOptionalLocalPtr<TimerType> m_timer;
       boost::posix_time::ptime m_lastTimestamp;
       boost::posix_time::ptime m_referenceTimestamp;
+      boost::posix_time::ptime m_startTime;
       std::deque<MarketDataService::MarketDataFeedMessage> m_messages;
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_callbacks;
@@ -104,11 +111,13 @@ namespace Details {
       TimerType>::ReplayMarketDataFeedClient(
       MarketDataFeedClientForward&& marketDataFeedClient,
       TimeClientForward&& timeClient, TimerForward&& timer,
+      const boost::posix_time::ptime& startTime,
       std::deque<MarketDataService::MarketDataFeedMessage> messages)
       : m_feedClient(std::forward<MarketDataFeedClientForward>(
           marketDataFeedClient)),
         m_timeClient(std::forward<TimeClientForward>(timeClient)),
         m_timer(std::forward<TimerForward>(timer)),
+        m_startTime(startTime),
         m_messages(std::move(messages)) {}
 
   template<typename MarketDataFeedClientType, typename TimeClientType,
@@ -126,14 +135,14 @@ namespace Details {
       return;
     }
     try {
+      m_lastTimestamp = m_timeClient->GetTime();
+      m_referenceTimestamp = m_startTime;
       m_feedClient->Open();
       m_timeClient->Open();
       m_timer->GetPublisher().Monitor(
         m_callbacks.GetSlot<Beam::Threading::Timer::Result>(
         std::bind(&ReplayMarketDataFeedClient::OnTimerExpired, this,
         std::placeholders::_1)));
-      m_lastTimestamp = m_timeClient->GetTime();
-      m_referenceTimestamp = Details::GetTimestamp(m_messages.front());
       m_timer->Start();
     } catch(std::exception&) {
       m_openState.SetOpenFailure();
@@ -171,16 +180,24 @@ namespace Details {
     m_referenceTimestamp += delta;
     auto visitor = Beam::MakeVariantLambdaVisitor<void>(
       [&] (const SecurityBboQuote& bboQuote) {
-        auto quote = *bboQuote;
-        quote.m_timestamp = timestamp;
-        m_feedClient->PublishBboQuote(SecurityBboQuote(quote,
+        auto value = *bboQuote;
+        value.m_timestamp = timestamp;
+        m_feedClient->PublishBboQuote(SecurityBboQuote(std::move(value),
           bboQuote.GetIndex()));
       },
       [&] (const SecurityMarketQuote& marketQuote) {
       },
       [&] (const SecurityBookQuote& bookQuote) {
+        auto value = *bookQuote;
+        value.m_timestamp = timestamp;
+        m_feedClient->SetBookQuote(SecurityBookQuote(std::move(value),
+          bookQuote.GetIndex()));
       },
       [&] (const SecurityTimeAndSale& timeAndSale) {
+        auto value = *timeAndSale;
+        value.m_timestamp = timestamp;
+        m_feedClient->PublishTimeAndSale(SecurityTimeAndSale(std::move(value),
+          timeAndSale.GetIndex()));
       },
       [&] (const MarketOrderImbalance& orderImbalance) {
       });
