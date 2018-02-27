@@ -30,9 +30,9 @@ namespace Details {
     return boost::apply_visitor(SecurityVisitor(), message);
   }
 
-  const boost::posix_time::ptime& GetTimestamp(
+  boost::posix_time::ptime GetTimestamp(
       const MarketDataService::MarketDataFeedMessage& message) {
-    auto visitor = [] (const auto& value) -> decltype(auto) {
+    auto visitor = [] (const auto& value) {
       return value->m_timestamp;
     };
     return boost::apply_visitor(visitor, message);
@@ -171,9 +171,10 @@ namespace Details {
     m_referenceTimestamp += delta;
     auto visitor = Beam::MakeVariantLambdaVisitor<void>(
       [&] (const SecurityBboQuote& bboQuote) {
-        std::cout << bboQuote.GetIndex() << " " <<
-          bboQuote->m_bid.m_price << " " <<
-          bboQuote->m_ask.m_price << std::endl;
+        auto quote = *bboQuote;
+        quote.m_timestamp = timestamp;
+        m_feedClient->PublishBboQuote(SecurityBboQuote(quote,
+          bboQuote.GetIndex()));
       },
       [&] (const SecurityMarketQuote& marketQuote) {
       },
@@ -188,7 +189,7 @@ namespace Details {
       boost::apply_visitor(visitor, m_messages.front());
       m_messages.pop_front();
     }
-    std::cout << delta << std::endl;
+    std::cout << m_referenceTimestamp << std::endl;
     m_lastTimestamp = timestamp;
     m_timer->Start();
   }

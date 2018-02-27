@@ -173,9 +173,8 @@ int main(int argc, const char** argv) {
   deque<MarketDataFeedMessage> data;
   auto securitiesPerBbo = replayConfig.m_securities.size() /
     replayConfig.m_bboPartitions;
-  for(std::size_t i = 0; i < replayConfig.m_securities.size(); ++i) {
-    auto& security = replayConfig.m_securities[i];
-    if(i % securitiesPerBbo == 0) {
+  for(std::size_t i = 0; i <= replayConfig.m_securities.size(); ++i) {
+    if(i != 0 && i % securitiesPerBbo == 0) {
       std::sort(data.begin(), data.end(), MarketDataComparator);
       auto replayClient = std::make_unique<ApplicationMarketDataFeedClient>(
         Initialize(Initialize(marketDataAddresses, Ref(socketThreadPool)),
@@ -187,7 +186,12 @@ int main(int argc, const char** argv) {
         targetServiceClients.BuildTimer(replayConfig.m_sampling),
         std::move(data));
       replayClients.push_back(std::move(replayClient));
+      data.clear();
+      if(i == replayConfig.m_securities.size()) {
+        break;
+      }
     }
+    auto& security = replayConfig.m_securities[i];
     auto query = SecurityMarketDataQuery();
     query.SetIndex(security);
     query.SetRange(replayConfig.m_startTime, replayConfig.m_endTime);
