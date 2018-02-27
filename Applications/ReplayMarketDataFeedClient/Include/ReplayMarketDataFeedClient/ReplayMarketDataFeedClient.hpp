@@ -188,10 +188,15 @@ namespace Details {
       [&] (const SecurityMarketQuote& marketQuote) {
       },
       [&] (const SecurityBookQuote& bookQuote) {
-        auto value = *bookQuote;
-        value.m_timestamp = timestamp;
-        m_feedClient->SetBookQuote(SecurityBookQuote(std::move(value),
-          bookQuote.GetIndex()));
+        auto id = (bookQuote.GetIndex().GetSymbol() + "-") +
+          bookQuote.GetIndex().GetMarket().GetData() + "-" +
+          bookQuote->m_mpid + "-" + ToString(bookQuote->m_quote.m_side) + "-" +
+          bookQuote->m_quote.m_price.ToString();
+        m_feedClient->DeleteOrder(id, timestamp);
+        m_feedClient->AddOrder(bookQuote.GetIndex(), bookQuote->m_market,
+          bookQuote->m_mpid, bookQuote->m_isPrimaryMpid, id,
+          bookQuote->m_quote.m_side, bookQuote->m_quote.m_price,
+          bookQuote->m_quote.m_size, timestamp);
       },
       [&] (const SecurityTimeAndSale& timeAndSale) {
         auto value = *timeAndSale;
