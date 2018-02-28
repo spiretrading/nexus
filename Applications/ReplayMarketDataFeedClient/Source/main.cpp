@@ -117,6 +117,7 @@ namespace {
         }
       }
       auto& security = replayConfig.m_securities[i];
+      std::cout << security << std::endl;
       auto query = SecurityMarketDataQuery();
       query.SetIndex(security);
       query.SetRange(replayConfig.m_startTime, replayConfig.m_endTime);
