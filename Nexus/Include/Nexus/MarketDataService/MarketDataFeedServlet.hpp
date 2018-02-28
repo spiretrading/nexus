@@ -1,5 +1,6 @@
 #ifndef NEXUS_MARKETDATAFEEDSERVLET_HPP
 #define NEXUS_MARKETDATAFEEDSERVLET_HPP
+#include <atomic>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Services/ServiceProtocolServlet.hpp>
@@ -22,10 +23,10 @@ namespace MarketDataService {
     public:
 
       //! The registry storing all market data originating from this servlet.
-      typedef typename Beam::TryDereferenceType<MarketDataRegistryType>::type
-        MarketDataRegistry;
-      typedef ContainerType Container;
-      typedef typename Container::ServiceProtocolClient ServiceProtocolClient;
+      using MarketDataRegistry = Beam::GetTryDereferenceType<
+        MarketDataRegistryType>;
+      using Container = ContainerType;
+      using ServiceProtocolClient = typename Container::ServiceProtocolClient;
 
       //! Constructs a MarketDataFeedServlet.
       /*!
@@ -47,8 +48,8 @@ namespace MarketDataService {
       void Close();
 
     private:
-      typename Beam::OptionalLocalPtr<MarketDataRegistryType>::type m_registry;
-      int m_nextSourceId;
+      Beam::GetOptionalLocalPtr<MarketDataRegistryType> m_registry;
+      std::atomic_int m_nextSourceId;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
@@ -66,10 +67,10 @@ namespace MarketDataService {
 
   template<typename MarketDataRegistryType>
   struct MetaMarketDataFeedServlet {
-    typedef MarketDataFeedSession Session;
+    using Session = MarketDataFeedSession;
     template<typename ContainerType>
     struct apply {
-      typedef MarketDataFeedServlet<ContainerType, MarketDataRegistryType> type;
+      using type = MarketDataFeedServlet<ContainerType, MarketDataRegistryType>;
     };
   };
 
@@ -100,15 +101,14 @@ namespace MarketDataService {
   template<typename ContainerType, typename MarketDataRegistryType>
   void MarketDataFeedServlet<ContainerType, MarketDataRegistryType>::
       HandleClientAccepted(ServiceProtocolClient& client) {
-    MarketDataFeedSession& session = client.GetSession();
-    session.m_sourceId = m_nextSourceId;
-    ++m_nextSourceId;
+    auto& session = client.GetSession();
+    session.m_sourceId = ++m_nextSourceId;
   }
 
   template<typename ContainerType, typename MarketDataRegistryType>
   void MarketDataFeedServlet<ContainerType, MarketDataRegistryType>::
       HandleClientClosed(ServiceProtocolClient& client) {
-    MarketDataFeedSession& session = client.GetSession();
+    auto& session = client.GetSession();
     m_registry->Clear(session.m_sourceId);
   }
 
@@ -150,7 +150,7 @@ namespace MarketDataService {
   void MarketDataFeedServlet<ContainerType, MarketDataRegistryType>::
       OnSendMarketDataFeedMessages(ServiceProtocolClient& client,
       const std::vector<MarketDataFeedMessage>& messages) {
-    int sourceId = client.GetSession().m_sourceId;
+    auto sourceId = client.GetSession().m_sourceId;
     auto visitor = Beam::MakeVariantLambdaVisitor<void>(
       [&] (const SecurityBboQuote& bboQuote) {
         m_registry->PublishBboQuote(bboQuote, sourceId);
@@ -167,7 +167,7 @@ namespace MarketDataService {
       [&] (const MarketOrderImbalance& orderImbalance) {
         m_registry->PublishOrderImbalance(orderImbalance, sourceId);
       });
-    for(const MarketDataFeedMessage& message : messages) {
+    for(auto& message : messages) {
       try {
         boost::apply_visitor(visitor, message);
       } catch(...) {

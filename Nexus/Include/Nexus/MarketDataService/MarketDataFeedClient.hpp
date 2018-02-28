@@ -1,6 +1,5 @@
-#ifndef NEXUS_MARKETDATAFEEDCLIENT_HPP
-#define NEXUS_MARKETDATAFEEDCLIENT_HPP
-#include <array>
+#ifndef NEXUS_MARKET_DATA_FEED_CLIENT_HPP
+#define NEXUS_MARKET_DATA_FEED_CLIENT_HPP
 #include <vector>
 #include <Beam/IO/Connection.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -45,12 +44,12 @@ namespace MarketDataService {
       using HeartbeatTimer = Beam::GetTryDereferenceType<HeartbeatTimerType>;
 
       //! The type of ServiceProtocol to use.
-      typedef Beam::Services::ServiceProtocolClient<MessageProtocolType,
-        HeartbeatTimerType> ServiceProtocolClient;
+      using ServiceProtocolClient = Beam::Services::ServiceProtocolClient<
+        MessageProtocolType, HeartbeatTimerType>;
 
       //! The type of Authenticator to use.
-      typedef typename Beam::ServiceLocator::Authenticator<
-        ServiceProtocolClient>::type Authenticator;
+      using Authenticator = typename Beam::ServiceLocator::Authenticator<
+        ServiceProtocolClient>::type;
 
       //! Constructs a MarketDataFeedClient.
       /*!
@@ -518,29 +517,31 @@ namespace MarketDataService {
     }
     for(const auto& quoteUpdate : quoteUpdates) {
       const auto& security = quoteUpdate.first;
-      const auto& updates = quoteUpdate.second;
+      auto& updates = quoteUpdate.second;
       if(updates.m_bboQuote.is_initialized()) {
-        messages.push_back(*updates.m_bboQuote);
+        messages.push_back(std::move(*updates.m_bboQuote));
       }
       std::transform(updates.m_marketQuotes.begin(),
         updates.m_marketQuotes.end(), std::back_inserter(messages),
-        [] (const std::pair<MarketCode, SecurityMarketQuote>& quote) {
-          return quote.second;
+        [] (auto& quote) -> decltype(auto) {
+          return std::move(quote.second);
         });
-      std::copy_if(updates.m_askBook.begin(), updates.m_askBook.end(),
+      std::copy_if(std::make_move_iterator(updates.m_askBook.begin()),
+        std::make_move_iterator(updates.m_askBook.end()),
         std::back_inserter(messages),
-        [] (const SecurityBookQuote& quote) {
+        [] (auto& quote) {
           return quote->m_quote.m_size != 0;
         });
-      std::copy_if(updates.m_bidBook.begin(), updates.m_bidBook.end(),
+      std::copy_if(std::make_move_iterator(updates.m_bidBook.begin()),
+        std::make_move_iterator(updates.m_bidBook.end()),
         std::back_inserter(messages),
-        [] (const SecurityBookQuote& quote) {
+        [] (auto& quote) {
           return quote->m_quote.m_size != 0;
         });
-      std::copy(updates.m_timeAndSales.begin(), updates.m_timeAndSales.end(),
+      std::move(updates.m_timeAndSales.begin(), updates.m_timeAndSales.end(),
         std::back_inserter(messages));
     }
-    std::copy(orderImbalances.begin(), orderImbalances.end(),
+    std::move(orderImbalances.begin(), orderImbalances.end(),
       std::back_inserter(messages));
     if(!messages.empty()) {
       Beam::Services::SendRecordMessage<SendMarketDataFeedMessages>(m_client,
