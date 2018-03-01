@@ -1,8 +1,8 @@
 import DirectoryEntry from '../directory-entry';
 
 class EntitlementModification {
-  constructor(directoryEntries) {
-    this.entitlements = directoryEntries;
+  constructor(entitlementDirectoryEntries) {
+    this.entitlements = entitlementDirectoryEntries;
   }
 
   toData() {

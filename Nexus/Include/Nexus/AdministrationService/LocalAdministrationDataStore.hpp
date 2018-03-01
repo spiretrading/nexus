@@ -67,6 +67,12 @@ namespace AdministrationService {
       virtual void Store(const AccountModificationRequest& request,
         const EntitlementModification& modification) override;
 
+      virtual RiskModification LoadRiskModification(
+        AccountModificationRequest::Id id) override;
+
+      virtual void Store(const AccountModificationRequest& request,
+        const RiskModification& modification) override;
+
       virtual void Store(AccountModificationRequest::Id id,
         const Message& message) override;
 
@@ -109,6 +115,8 @@ namespace AdministrationService {
         m_accountToModificationRequests;
       std::unordered_map<AccountModificationRequest::Id,
         EntitlementModification> m_idToEntitlementModification;
+      std::unordered_map<AccountModificationRequest::Id,
+        RiskModification> m_idToRiskModification;
       std::unordered_map<Message::Id, Message> m_idToMessage;
       std::unordered_map<AccountModificationRequest::Id,
         std::vector<Message::Id>> m_requestToMessages;
@@ -120,6 +128,7 @@ namespace AdministrationService {
       std::vector<AccountModificationRequest::Id> Filter(
         const std::vector<AccountModificationRequest::Id>& requests,
         AccountModificationRequest::Id startId, int maxCount);
+      void Store(const AccountModificationRequest& request);
   };
 
   inline LocalAdministrationDataStore::~LocalAdministrationDataStore() {
@@ -254,25 +263,26 @@ namespace AdministrationService {
   inline void LocalAdministrationDataStore::Store(
       const AccountModificationRequest& request,
       const EntitlementModification& modification) {
-    m_idToModificationRequests.insert(std::make_pair(request.GetId(), request));
-    if(m_modificationRequests.empty() ||
-        request.GetId() > m_modificationRequests.back()) {
-      m_modificationRequests.push_back(request.GetId());
-      m_accountToModificationRequests[request.GetAccount()].push_back(
-        request.GetId());
-    } else {
-      auto insertionPoint = std::lower_bound(m_modificationRequests.begin(),
-        m_modificationRequests.end(), request.GetId());
-      m_modificationRequests.insert(insertionPoint,
-        request.GetId());
-      auto& accountRequests = m_accountToModificationRequests[
-        request.GetAccount()];
-      auto accountInsertion = std::lower_bound(accountRequests.begin(),
-        accountRequests.end(), request.GetId());
-      accountRequests.insert(accountInsertion, request.GetId());
-    }
+    Store(request);
     m_idToEntitlementModification.insert(
       std::make_pair(request.GetId(), modification));
+  }
+
+  inline RiskModification LocalAdministrationDataStore::LoadRiskModification(
+      AccountModificationRequest::Id id) {
+    auto request = m_idToRiskModification.find(id);
+    if(request == m_idToRiskModification.end()) {
+      return {};
+    }
+    return request->second;
+  }
+
+  inline void LocalAdministrationDataStore::Store(
+      const AccountModificationRequest& request,
+      const RiskModification& modification) {
+    Store(request);
+    m_idToRiskModification.insert(std::make_pair(request.GetId(),
+      modification));
   }
 
   inline void LocalAdministrationDataStore::Store(
@@ -369,6 +379,27 @@ namespace AdministrationService {
     }
     ids.push_back(*lastRequest);
     return ids;
+  }
+
+  inline void LocalAdministrationDataStore::Store(
+      const AccountModificationRequest& request) {
+    m_idToModificationRequests.insert(std::make_pair(request.GetId(), request));
+    if(m_modificationRequests.empty() ||
+        request.GetId() > m_modificationRequests.back()) {
+      m_modificationRequests.push_back(request.GetId());
+      m_accountToModificationRequests[request.GetAccount()].push_back(
+        request.GetId());
+    } else {
+      auto insertionPoint = std::lower_bound(m_modificationRequests.begin(),
+        m_modificationRequests.end(), request.GetId());
+      m_modificationRequests.insert(insertionPoint,
+        request.GetId());
+      auto& accountRequests = m_accountToModificationRequests[
+        request.GetAccount()];
+      auto accountInsertion = std::lower_bound(accountRequests.begin(),
+        accountRequests.end(), request.GetId());
+      accountRequests.insert(accountInsertion, request.GetId());
+    }
   }
 }
 }

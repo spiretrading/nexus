@@ -70,6 +70,10 @@ Nexus Administration Web Services Data Types
 
       Modify an account's market data entitlements.
 
+    .. py:data:: RISK=1
+
+      Modify an account's risk parameters.
+
   .. py:class:: Status
 
       Lists the status of a request.
@@ -168,6 +172,15 @@ Nexus Administration Web Services Data Types
 
       `string`
       The contents of the message.
+
+.. py:class:: RiskModification
+
+    Stores a request to update an account's risk parameters.
+
+  .. py:attribute:: parameters
+
+      :py:class:`nexus.risk_service.RiskParameters`
+      The risk parameters being requested.
 
 .. py:class:: TradingGroup
 

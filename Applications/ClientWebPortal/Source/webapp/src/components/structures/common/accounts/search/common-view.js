@@ -7,6 +7,7 @@ class CommonView extends UpdatableView {
     super(react, controller, componentModel);
 
     this.dispose = this.dispose.bind(this);
+    this.onNewGroupCancelClick = this.onNewGroupCancelClick.bind(this);
   }
 
   componentDidUpdate() {

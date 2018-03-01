@@ -15,6 +15,7 @@ class View extends UpdatableView {
     super(react, controller, componentModel);
 
     this.showSaveSuccessMessage = this.showSaveSuccessMessage.bind(this);
+    this.onAddRuleCloseClick = this.onAddRuleCloseClick.bind(this);
   }
 
   componentDidUpdate() {
@@ -114,6 +115,11 @@ class View extends UpdatableView {
     }
   }
 
+  /** @private */
+  onAddRuleCloseClick() {
+    modal.hide($('#add-rule-modal'));
+  }
+
   render() {
     let content;
 
@@ -179,6 +185,7 @@ class View extends UpdatableView {
             <div className="modal-content">
               <div className="modal-header">
                 Add new rule
+                <span className="icon-close" onClick={this.onAddRuleCloseClick}></span>
               </div>
               <div className="modal-body">
                 <div className="rule-types">
@@ -186,9 +193,9 @@ class View extends UpdatableView {
                     {ruleTypes}
                   </ul>
                 </div>
-                <div className="buttons">
-                  <PrimaryButton className="new-rule-select-button button" model={newRuleSelectBtnModel} onClick={onNewRuleSelectBtnClick}/>
-                  <PrimaryButton className="new-rule-cancel-button button" model={newRuleCancelBtnModel} onClick={onNewRuleCancelBtnClick}/>
+                <div className="divider"></div>
+                <div className="buttons-wrapper">
+                  <PrimaryButton className="new-rule-select-button button single-button" model={newRuleSelectBtnModel} onClick={onNewRuleSelectBtnClick}/>
                 </div>
               </div>
             </div>

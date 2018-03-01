@@ -1,6 +1,14 @@
 @import "src/styles/variables";
 
 .personal-details-container {
+  &.readonly-view {
+    .personal-detail-row {
+      input:focus, textarea:focus {
+        border: 1px solid $white !important;
+      }
+    }
+  }
+
   table tbody tr {
     td{
       padding-bottom: 12px;

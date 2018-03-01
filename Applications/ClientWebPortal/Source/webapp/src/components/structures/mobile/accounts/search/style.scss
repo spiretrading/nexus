@@ -35,7 +35,6 @@
       flex: 1;
       padding: 15px 0 0 0;
       height: calc(100vh - 60px);
-      over-flow: auto;
 
       .search-input-wrapper {
         position: relative;
@@ -43,14 +42,18 @@
 
         .search-input {
           width: 100%;
-          height: 30px;
+          height: 34px;
           border: 1px solid $darkGrey;
+
+          &:focus {
+            border: 1px solid $primaryGradient3;
+          }
         }
 
         .icon-magnifying-glass {
           position: absolute;
           right: 8px;
-          top: 8px;
+          top: 10px;
           color: $darkGrey;
           cursor: pointer;
         }
@@ -62,26 +65,8 @@
 #new-group-modal {
   width: 100%;
 
-  .modal-header {
-    margin-bottom: 10px;
-  }
-
   .name-input {
     width: 100%;
     border: 1px solid $darkGrey;
-  }
-
-  .buttons-wrapper {
-    display: flex;
-    margin-top: 20px;
-
-    .create-button {
-      width: calc(100% - 8px);
-      margin-right: 16px;
-    }
-
-    .cancel-button {
-      width: calc(100% - 8px);
-    }
   }
 }

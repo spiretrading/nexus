@@ -67,6 +67,23 @@ class DesktopRoutes extends Routes {
         }
       },
       {
+        path: 'risk-controls-request-confirmation/:id',
+        getComponent(location, cb) {
+          System.import('../components/structures/desktop/profile/routes')
+            .then((module) => { return { default: module.riskControlsRequestConfirmation } })
+            .then(loadRoute(cb))
+            .catch(errorLoading);
+        }
+      },
+      {
+        path: 'risk-controls-modification-review',
+        getComponent(location, cb) {
+          System.import('../components/structures/desktop/risk-controls-modification-review')
+            .then(loadRoute(cb))
+            .catch(errorLoading);
+        }
+      },
+      {
         path: 'profile-entitlements/:type/:id/:name',
         getComponent(location, cb) {
           System.import('../components/structures/desktop/profile/routes')
@@ -122,7 +139,7 @@ class DesktopRoutes extends Routes {
       {
         path: 'modification-request-history',
         getComponent(location, cb) {
-          System.import('../components/structures/common/modification-request-history')
+          System.import('../components/structures/desktop/modification-request-history')
             .then(loadRoute(cb))
             .catch(errorLoading);
         }
@@ -130,7 +147,7 @@ class DesktopRoutes extends Routes {
       {
         path: 'entitlement-modification-review',
         getComponent(location, cb) {
-          System.import('../components/structures/common/entitlement-modification-review')
+          System.import('../components/structures/desktop/entitlement-modification-review')
             .then(loadRoute(cb))
             .catch(errorLoading);
         }

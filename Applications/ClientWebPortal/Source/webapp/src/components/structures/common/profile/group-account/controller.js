@@ -110,6 +110,11 @@ class Controller {
       this.componentModel.groupName = directoryEntry.name;
       this.componentModel.members = accounts;
       this.view.update(this.componentModel);
+
+      EventBus.publish(Event.Profile.VIEWING_CONTEXT_LOADED, {
+        directoryEntry: directoryEntry,
+        roles: accounts.roles
+      });
     });
   }
 

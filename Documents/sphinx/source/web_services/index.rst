@@ -6,3 +6,4 @@ Nexus Web Services
    :caption: Contents:
 
    administration_services/index
+   risk_services/index

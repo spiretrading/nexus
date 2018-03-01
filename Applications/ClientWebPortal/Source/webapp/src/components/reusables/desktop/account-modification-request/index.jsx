@@ -1,11 +1,15 @@
 import {Component} from 'react';
-import Controller from './controller';
+import Controller from 'components/reusables/common/account-modification-request/controller';
 import View from './view';
 import uuid from 'uuid';
 
 export default class extends Component {
   constructor(props) {
     super(props);
+  }
+
+  componentWillUpdate(nextProps) {
+    this.controller.componentWillUpdate(nextProps);
   }
 
   componentWillMount() {

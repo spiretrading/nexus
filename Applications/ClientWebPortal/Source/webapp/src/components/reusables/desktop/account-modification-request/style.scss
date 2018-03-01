@@ -1,8 +1,8 @@
 @import "src/styles/variables";
 
 .account-modification-request-container {
+  position: relative;
   width: 100%;
-  border-top: 1px solid $lightGrey;
   flex: 1;
   display: flex;
   cursor: pointer;
@@ -15,30 +15,20 @@
 
   .left-panel {
     position: relative;
-    width: 65%;
+    flex: 1;
 
     .title {
       position: absolute;
-      top: 14%;
-      left: 5%;
+      top: 14px;
+      left: 20px;
+      font-size: 16px;
     }
 
-    .account {
+    .description {
       position: absolute;
-      top: 53%;
-      left: 5%;
-    }
-
-    .requester {
-      position: absolute;
-      top: 53%;
-      left: 37%;
-    }
-
-    .request-id {
-      position: absolute;
-      top: 53%;
-      left: 69%;
+      bottom: 14px;
+      left: 20px;
+      font-size: 14px;
     }
   }
 
@@ -48,20 +38,22 @@
   }
 
   .right-panel {
-    width: 35%;
+    flex: 1;
     position: relative;
     text-align: right;
 
     .timestamp {
       position: absolute;
-      top: 14%;
-      right: 9%;
+      bottom: 14px;
+      right: 20px;
+      font-size: 14px;
     }
 
     .status {
       position: absolute;
-      top: 53%;
-      right: 9%;
+      top: 14px;
+      right: 20px;
+      font-size: 16px;
 
       .green {
         color: $green;
@@ -70,12 +62,10 @@
       .red {
         color: $red;
       }
+
+      .yellow {
+        color: $yellow;
+      }
     }
-  }
-}
-
-main.mobile {
-  .account-modification-request-container {
-
   }
 }

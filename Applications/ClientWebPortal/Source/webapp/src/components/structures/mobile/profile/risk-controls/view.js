@@ -94,7 +94,7 @@ class View extends CommonView {
   }
 
   render() {
-    let content;
+    let content, footer;
     let containerClassName;
     if (!deviceDetector.isMobile()) {
       containerClassName = 'container-fixed-width';
@@ -121,6 +121,8 @@ class View extends CommonView {
       let saveButton;
       if (this.componentModel.isAdmin) {
         saveButton = <PrimaryButton className="save-button" model={saveBtnModel} onClick={onSave}/>
+      } else {
+        footer = this.getFooter();
       }
 
       let currencies = definitionsService.getAllCurrencies();
@@ -147,9 +149,6 @@ class View extends CommonView {
       let timeValues = this.componentModel.riskParameters.transitionTime.split(':');
 
       let currencyWrapperClass = 'currency-select-wrapper';
-      if (!this.componentModel.isAdmin) {
-        currencyWrapperClass += ' disabled';
-      }
 
       content =
         <div>
@@ -160,8 +159,7 @@ class View extends CommonView {
             <div className={currencyWrapperClass}>
               <select className="currency-select"
                       defaultValue={selectedCurrency}
-                      onChange={this.onCurrencyChange.bind(this)}
-                      disabled={!this.componentModel.isAdmin}>
+                      onChange={this.onCurrencyChange.bind(this)}>
                 {options}
               </select>
               <span className="icon-arrow-down"/>
@@ -173,8 +171,7 @@ class View extends CommonView {
                    placeholder="0.00"
                    data-control="buying-power"
                    onKeyUp={this.onMoneyInputKeyUp.bind(this)}
-                   defaultValue={this.componentModel.riskParameters.buyingPower.toString()}
-                   readOnly={!this.componentModel.isAdmin}/>
+                   defaultValue={this.componentModel.riskParameters.buyingPower.toString()}/>
             <div className="buying-power-error validation-error"></div>
             <div className="risk-control-label">
               Net Loss <span className="currency-sign">{currencySign}</span>
@@ -183,8 +180,7 @@ class View extends CommonView {
                    placeholder="0.00"
                    data-control="net-loss"
                    onKeyUp={this.onMoneyInputKeyUp.bind(this)}
-                   defaultValue={this.componentModel.riskParameters.netLoss.toString()}
-                   readOnly={!this.componentModel.isAdmin}/>
+                   defaultValue={this.componentModel.riskParameters.netLoss.toString()}/>
             <div className="net-loss-error validation-error"></div>
             <div className="risk-control-label">
               Transition Time
@@ -195,8 +191,7 @@ class View extends CommonView {
                        placeholder="00"
                        maxLength="2"
                        onKeyUp={this.onTimeInputKeyUp.bind(this)}
-                       defaultValue={timeValues[0]}
-                       readOnly={!this.componentModel.isAdmin}/>
+                       defaultValue={timeValues[0]}/>
                 <div className="time-input-label">hour</div>
               </div>
               <span className="colon">:</span>
@@ -205,8 +200,7 @@ class View extends CommonView {
                        placeholder="00"
                        maxLength="2"
                        onKeyUp={this.onTimeInputKeyUp.bind(this)}
-                       defaultValue={timeValues[1]}
-                       readOnly={!this.componentModel.isAdmin}/>
+                       defaultValue={timeValues[1]}/>
                 <div className="time-input-label">minute</div>
               </div>
               <span className="colon">:</span>
@@ -215,8 +209,7 @@ class View extends CommonView {
                        placeholder="00"
                        maxLength="2"
                        onKeyUp={this.onTimeInputKeyUp.bind(this)}
-                       defaultValue={timeValues[2]}
-                       readOnly={!this.componentModel.isAdmin}/>
+                       defaultValue={timeValues[2]}/>
                 <div className="time-input-label">second</div>
               </div>
             </div>
@@ -229,6 +222,7 @@ class View extends CommonView {
     return (
       <div id="risk-control-container" className={containerClassName}>
         {content}
+        {footer}
       </div>
     );
   }

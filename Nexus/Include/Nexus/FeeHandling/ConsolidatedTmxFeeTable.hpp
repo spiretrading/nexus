@@ -15,6 +15,7 @@
 #include "Nexus/FeeHandling/LynxFeeTable.hpp"
 #include "Nexus/FeeHandling/MatnFeeTable.hpp"
 #include "Nexus/FeeHandling/NeoeFeeTable.hpp"
+#include "Nexus/FeeHandling/NexFeeTable.hpp"
 #include "Nexus/FeeHandling/OmgaFeeTable.hpp"
 #include "Nexus/FeeHandling/PureFeeTable.hpp"
 #include "Nexus/FeeHandling/TsxFeeTable.hpp"
@@ -80,6 +81,9 @@ namespace Nexus {
     //! Fee table used by NEOE.
     NeoeFeeTable m_neoeFeeTable;
 
+    //! Fee table used by NEX.
+    NexFeeTable m_nexFeeTable;
+
     //! Fee table used by OMGA.
     OmgaFeeTable m_omgaFeeTable;
 
@@ -103,6 +107,9 @@ namespace Nexus {
 
     //! The set of interlisted Securities.
     std::unordered_set<Security> m_interlisted;
+
+    //! The set of NEX listed Securities.
+    std::unordered_set<Security> m_nexListed;
   };
 
   //! Parses the set of symbols from a YAML config.
@@ -183,6 +190,37 @@ namespace Nexus {
     return ParseSecuritySet(*symbols, marketDatabase);
   }
 
+  //! Parses the set of NEX listed symbols.
+  /*!
+    \param path The path to the YAML file to parse.
+    \param marketDatabase The MarketDatabase used to parse the symbols.
+    \return The set of NEX listed symbols.
+  */
+  inline std::unordered_set<Security> ParseNexListedSecurities(
+      const std::string& path, const MarketDatabase& marketDatabase) {
+    std::ifstream configStream{path.c_str()};
+    if(!configStream.good()) {
+      BOOST_THROW_EXCEPTION(std::runtime_error{
+        "NEX listed file not found: \"" + path + "\""});
+    }
+    YAML::Node config;
+    try {
+      YAML::Parser configParser(configStream);
+      configParser.GetNextDocument(config);
+    } catch(YAML::ParserException& e) {
+      std::stringstream message;
+      message << "Invalid YAML at line " << (e.mark.line + 1) << ", " <<
+        "column " << (e.mark.column + 1) << ": " << e.msg << std::endl;
+      BOOST_THROW_EXCEPTION(std::runtime_error{message.str()});
+    }
+    auto symbols = config.FindValue("symbols");
+    if(symbols == nullptr) {
+      BOOST_THROW_EXCEPTION(std::runtime_error{
+        "Interlisted symbols not found."});
+    }
+    return ParseSecuritySet(*symbols, marketDatabase);
+  }
+
   //! Parses a ConsolidatedTmxFeeTable from a YAML configuration.
   /*!
     \param config The configuration to parse the ConsolidatedTmxFeeTable from.
@@ -241,6 +279,12 @@ namespace Nexus {
     } else {
       feeTable.m_neoeFeeTable = ParseNeoeFeeTable(*neoeConfig);
     }
+    auto nexConfig = config.FindValue("nex");
+    if(nexConfig == nullptr) {
+      BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for NEX missing."});
+    } else {
+      feeTable.m_nexFeeTable = ParseNexFeeTable(*nexConfig);
+    }
     auto omgaConfig = config.FindValue("omga");
     if(omgaConfig == nullptr) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for OMGA missing."});
@@ -271,6 +315,8 @@ namespace Nexus {
       "interlisted_path");
     feeTable.m_interlisted = ParseTmxInterlistedSecurities(interlistedPath,
       marketDatabase);
+    auto nexPath = Beam::Extract<std::string>(config, "nex_path");
+    feeTable.m_nexListed = ParseNexListedSecurities(nexPath, marketDatabase);
     return feeTable;
   }
 
@@ -385,6 +431,10 @@ namespace Nexus {
           order.GetInfo().m_fields.m_security, executionReport);
       } else if(lastMarket == DefaultMarkets::TSX() ||
           lastMarket == DefaultMarkets::TSXV()) {
+        if(lastMarket == DefaultMarkets::TSXV() && feeTable.m_nexListed.count(
+            order.GetInfo().m_fields.m_security) != 0) {
+          return CalculateFee(feeTable.m_nexFeeTable, executionReport);
+        }
         auto classification = [&] {
           if(Beam::Contains(feeTable.m_etfs,
               order.GetInfo().m_fields.m_security)) {

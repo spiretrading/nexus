@@ -35,6 +35,7 @@ class View extends UpdatableView {
     this.onColumnHeaderMouseDown = this.onColumnHeaderMouseDown.bind(this);
     this.onColumnHeaderMouseUp = this.onColumnHeaderMouseUp.bind(this);
     this.onColumnHeaderMouseLeave = this.onColumnHeaderMouseLeave.bind(this);
+    this.onMouseUp = this.onMouseUp.bind(this);
   }
 
   setTableModel(tableModel) {
@@ -87,6 +88,19 @@ class View extends UpdatableView {
       .mousedown(this.onColumnHeaderMouseDown)
       .mouseup(this.onColumnHeaderMouseUp)
       .mouseleave(this.onColumnHeaderMouseLeave);
+    
+    $(document).mouseup(this.onMouseUp);
+  }
+
+  /** @private */
+  onMouseUp(e) {
+    let $container = $('#' + this.componentId);
+    let wasTableClicked = $.contains($container[0], e.target);
+    if (!wasTableClicked) {
+      this.activeRowIndex = null;
+      this.tableModel.clearSelectedRows();
+      this.update();
+    }
   }
 
   /** @private */
@@ -321,6 +335,7 @@ class View extends UpdatableView {
 
     $('#' + this.componentId + ' .context-menu-list').remove();
     $('#' + this.componentId + ' .column-headers tr').unbind('mousemove');
+    $(document).unbind('mouseup', this.onMouseUp);
   }
 
   /** @private */
@@ -522,7 +537,6 @@ class View extends UpdatableView {
         this.setViewingRegionDimensions();
         this.isViewingRegionDimensionsSet = true;
       }
-      // this.initialize();
       this.isInitialized = true;
     }
 

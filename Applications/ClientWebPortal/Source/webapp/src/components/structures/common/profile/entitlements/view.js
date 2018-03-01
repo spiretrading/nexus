@@ -137,7 +137,7 @@ class View extends UpdatableView {
               <div className="modal-header">
                 <span className="icon-request-approved"/> Request Submitted
               </div>
-              <div className="modal-body change-picture-wrapper">
+              <div className="modal-body">
                 <div>Request ID</div>
                 <div className="request-id"></div>
                 <div>You will be notified when your<br/>request is processed.</div>

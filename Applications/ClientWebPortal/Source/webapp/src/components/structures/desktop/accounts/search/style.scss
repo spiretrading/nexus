@@ -15,11 +15,13 @@
         width: 120px;
         margin-bottom: 15px;
         margin-right: 20px;
+        height: 34px;
       }
 
       .new-group-btn {
         width: 120px;
         margin-bottom: 30px;
+        height: 34px;
       }
 
       .count-label-wrapper {
@@ -45,10 +47,13 @@
 
         .search-input {
           width: 100%;
-          height: 30px;
+          height: 34px;
           border: 1px solid $darkGrey;
-          margin-top: 1px;
           margin-bottom: 1px;
+
+          &:focus {
+            border: 1px solid $primaryGradient3;
+          }
         }
 
         .icon-magnifying-glass {
@@ -66,10 +71,6 @@
 #new-group-modal {
   width: 280px;
 
-  .modal-header {
-    margin-bottom: 10px;
-  }
-
   .name-input {
     width: 100%;
     border: 1px solid $darkGrey;
@@ -77,14 +78,15 @@
 
   .buttons-wrapper {
     margin-top: 20px;
+    display: flex;
 
     .create-button {
-      width: 120px;
+      flex: 1;
       margin-right: 10px;
     }
 
     .cancel-button {
-      width: 120px;
+      flex: 1;
     }
   }
 }

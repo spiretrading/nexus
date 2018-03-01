@@ -1,9 +1,11 @@
 @import "src/styles/variables";
+@import "src/styles/modal";
 
 #compliance-container {
   font-size: 16px;
   position: relative;
   display: none;
+  padding-bottom: 30px;
 
   .row {
     margin: 0 0 30px 0;
@@ -86,21 +88,22 @@
         padding: 0;
 
         .modal-header {
-          padding:15px 15px 0 15px;
+          padding:$mobileModalPadding $mobileModalPadding 0 $mobileModalPadding;
+
+          .icon-close {
+            top: $mobileModalPadding;
+            right: $mobileModalPadding;
+          }
         }
       }
     }
 
-    .buttons {
-      padding: 15px;
+    .buttons-wrapper {
+      padding: $mobileModalPadding;
 
       .button {
-        width: 127px;
+        width: 100%;
       }
-    }
-
-    .new-rule-select-button {
-      margin-right: 15px;
     }
 
     .rule-types {
@@ -111,7 +114,7 @@
         overflow-y: auto;
 
         li {
-          padding: 7px 15px;
+          padding: 7px $mobileModalPadding;
           cursor: pointer;
 
           &:hover {
@@ -164,12 +167,12 @@ main.mobile {
               }
             }
 
-            .buttons {
-              display: flex;
-
-              .button {
-                flex: 1;
-              }
+            .divider {
+              width: auto;
+              margin-top: 10px;
+              margin-bottom: 15px;
+              margin-left: 15px;
+              margin-right: 15px;
             }
           }
         }

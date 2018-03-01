@@ -89,6 +89,12 @@ namespace AdministrationService {
       virtual void Store(const AccountModificationRequest& request,
         const EntitlementModification& modification) override;
 
+      virtual RiskModification LoadRiskModification(
+        AccountModificationRequest::Id id) override;
+
+      virtual void Store(const AccountModificationRequest& request,
+        const RiskModification& modification) override;
+
       virtual void Store(AccountModificationRequest::Id id,
         const Message& message) override;
 
@@ -453,6 +459,58 @@ namespace AdministrationService {
       if(!query.execute()) {
         BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
       }
+    }
+  }
+
+  inline RiskModification MySqlAdministrationDataStore::LoadRiskModification(
+      AccountModificationRequest::Id id) {
+    auto query = m_databaseConnection.query();
+    query << "SELECT * FROM risk_modifications WHERE id = " << id;
+    std::vector<Details::risk_modifications> riskModifications;
+    query.storein(riskModifications);
+    if(query.errnum() != 0) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
+    }
+    RiskService::RiskParameters riskParameters;
+    if(riskModifications.empty()) {
+      return riskParameters;
+    }
+    auto& row = riskModifications.front();
+    riskParameters.m_currency = CurrencyId{row.currency};
+    riskParameters.m_buyingPower = Money::FromRepresentation(row.buying_power);
+    riskParameters.m_allowedState = static_cast<RiskService::RiskState::Type>(
+      row.allowed_state);
+    riskParameters.m_netLoss = Money::FromRepresentation(row.net_loss);
+    riskParameters.m_lossFromTop = row.loss_from_top;
+    riskParameters.m_transitionTime =
+      boost::posix_time::seconds(row.transition_time);
+    return {riskParameters};
+  }
+
+  inline void MySqlAdministrationDataStore::Store(
+      const AccountModificationRequest& request,
+      const RiskModification& modification) {
+    auto query = m_databaseConnection.query();
+    Details::account_modification_requests row{request.GetId(),
+      static_cast<int>(request.GetType()), request.GetAccount().m_id,
+      request.GetSubmissionAccount().m_id,
+      Beam::MySql::ToMySqlTimestamp(request.GetTimestamp())};
+    query.insert(row);
+    if(!query.execute()) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
+    }
+    query.reset();
+    Details::risk_modifications riskModifications{request.GetId(),
+      request.GetAccount().m_id,
+      modification.GetParameters().m_currency.m_value,
+      modification.GetParameters().m_buyingPower.GetRepresentation(),
+      modification.GetParameters().m_netLoss.GetRepresentation(),
+      static_cast<int>(modification.GetParameters().m_allowedState.m_type),
+      modification.GetParameters().m_lossFromTop, static_cast<int>(
+      modification.GetParameters().m_transitionTime.total_seconds())};
+    query.insert(riskModifications);
+    if(!query.execute()) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
     }
   }
 

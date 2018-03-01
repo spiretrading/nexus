@@ -3,6 +3,7 @@ import IndexedModel from 'utils/table-models/indexed-model';
 import HashMap from 'hashmap';
 import SignalManager from 'utils/signal-manager';
 import DataChangeType from 'utils/table-models/model/data-change-type';
+import definitionsService from 'services/definitions';
 import { Money } from 'spire-client';
 
 const KEY_INDICES = [0, 1, 10];
@@ -39,6 +40,7 @@ export default class extends Model {
     this.dataChangeSubId = this.indexedModel.addDataChangeListener(this.onDataChange);
     this.onDataReceived = this.onDataReceived.bind(this);
     this.accountTotals = new HashMap();
+    this.exchangeRateTable = definitionsService.getExchangeRateTable();
 
     this.riskServiceClient.subscribePortfolio(this.onDataReceived)
       .then(subscriptionId => {
@@ -111,7 +113,7 @@ export default class extends Model {
     // security
     rowData.push(data.inventory.position.key.index);
     // quantity
-    rowData.push(data.inventory.position.quantity);
+    rowData.push(data.inventory.position.quantity || 0);
     // side
     if (data.inventory.position.quantity > 0) {
       rowData.push('Long');
@@ -121,7 +123,7 @@ export default class extends Model {
       rowData.push('Flat');
     }
     // average price
-    let averagePrice = null;
+    let averagePrice = Money.fromNumber(0);
     if (data.inventory.position.quantity != 0) {
       let costBasis = data.inventory.position.cost_basis;
       let quantity = data.inventory.position.quantity;
@@ -132,8 +134,8 @@ export default class extends Model {
     }
     rowData.push(averagePrice);
     // totalPnL, unrealizedPnL, realizedPnL
-    let totalPnL = null;
-    let unrealizedPnL = null;
+    let totalPnL = Money.fromNumber(0);
+    let unrealizedPnL = Money.fromNumber(0);
     let grossPnL = data.inventory.gross_profit_and_loss;
     let fees = data.inventory.fees;
     if (data.unrealized_profit_and_loss.is_initialized) {
@@ -172,9 +174,9 @@ export default class extends Model {
   handleDataAdd(payload) {
     let rowIndex = payload;
     let account = this.indexedModel.getValueAt(0, rowIndex);
-    let totalPnL = this.indexedModel.getValueAt(5, rowIndex);
-    let unrealizedPnL = this.indexedModel.getValueAt(6, rowIndex);
-    let fees = this.indexedModel.getValueAt(8, rowIndex);
+    let totalPnL = this.indexedModel.getValueAt(5, rowIndex) || Money.fromNumber(0);
+    let unrealizedPnL = this.indexedModel.getValueAt(6, rowIndex) || Money.fromNumber(0);
+    let fees = this.indexedModel.getValueAt(8, rowIndex) || Money.fromNumber(0);
     let currencyId = this.indexedModel.getValueAt(10, rowIndex);
 
     if (!this.accountTotals.has(account.id)) {
@@ -283,14 +285,10 @@ export default class extends Model {
 
   /** @private */
   convertCurrencies(fromCurrencyId, toCurrencyId, amount) {
-    if (fromCurrencyId.toNumber() != toCurrencyId.toNumber()) {
-      return this.exchangeRateTable.convert(
-        amount,
-        fromCurrencyId,
-        toCurrencyId
-      );
-    } else {
-      return amount;
-    }
+    return this.exchangeRateTable.convert(
+      amount,
+      fromCurrencyId,
+      toCurrencyId
+    );
   }
 }

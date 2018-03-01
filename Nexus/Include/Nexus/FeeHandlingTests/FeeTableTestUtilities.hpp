@@ -10,6 +10,7 @@
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Money.hpp"
+#include "Nexus/FeeHandling/LiquidityFlag.hpp"
 #include "Nexus/FeeHandlingTests/FeeHandlingTests.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"

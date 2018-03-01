@@ -8,6 +8,10 @@ class CurrencyId {
     }
   }
 
+  static fromData(number) {
+    return new CurrencyId(number);
+  }
+
   equals(operand) {
     return this.value === operand.value;
   }
@@ -28,9 +32,5 @@ class CurrencyId {
     return CurrencyId.fromData(this.value);
   }
 }
-
-CurrencyId.fromData = (number) => {
-  return new CurrencyId(number);
-};
 
 export default CurrencyId;

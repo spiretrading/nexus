@@ -2,10 +2,15 @@ import {
   AdministrationClient,
   DirectoryEntry,
   CurrencyId,
-  Money
+  Money,
+  MessageBody,
+  Message,
+  RiskModification
 } from 'spire-client';
 import preloaderTimer from 'utils/preloader-timer';
 import userService from 'services/user';
+import moment from 'moment';
+import {browserHistory} from 'react-router';
 
 class Controller {
   constructor(componentModel) {
@@ -20,6 +25,8 @@ class Controller {
     this.onCurrencyChange = this.onCurrencyChange.bind(this);
     this.save = this.save.bind(this);
     this.onTransitionTimeChange = this.onTransitionTimeChange.bind(this);
+    this.onCommentsChange = this.onCommentsChange.bind(this);
+    this.submitModificationRequest = this.submitModificationRequest.bind(this);
   }
 
   getView() {
@@ -53,6 +60,7 @@ class Controller {
       Config.WHOLE_PAGE_PRELOADER_HEIGHT
     ).then((responses) => {
       this.componentModel.riskParameters = responses[0];
+      this.originalRiskParameters = this.componentModel.riskParameters.clone();
       this.componentModel.directoryEntry = directoryEntry;
       this.componentModel.roles = responses[1];
       this.componentModel.userName = directoryEntry.name;
@@ -95,6 +103,10 @@ class Controller {
     this.componentModel.riskParameters.transitionTime = newTime;
   }
 
+  onCommentsChange(newComment) {
+    this.componentModel.requestComments = newComment;
+  }
+
   save() {
     if (this.componentModel.riskParameters.currency != 0) {
       let riskParameters = this.componentModel.riskParameters;
@@ -112,6 +124,28 @@ class Controller {
 
     function onFailed() {
       this.view.showSaveFailedMessage('Failed');
+    }
+  }
+
+  submitModificationRequest() {
+    if (this.componentModel.riskParameters.currency != 0) {
+      let directoryEntry = this.componentModel.directoryEntry;
+      let riskParameters = this.componentModel.riskParameters;
+      let messageBody = new MessageBody('text/plain', this.componentModel.requestComments || "");
+      let timestamp = moment.utc().format('YYYYMMDDTHHmmss');
+      this.adminClient.submitRiskModificationRequest(
+        directoryEntry,
+        new RiskModification(riskParameters),
+        new Message(-1, DirectoryEntry.DEFAULT, timestamp, [messageBody])
+      )
+        .then(accountModificationRequest => {
+          browserHistory.push({
+            pathname: '/risk-controls-request-confirmation/' + accountModificationRequest.id,
+            state: {
+              isFromApp: true
+            }
+          });
+        });
     }
   }
 }
