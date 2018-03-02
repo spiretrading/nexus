@@ -22,3 +22,7 @@ void QuantityTester::TestAssignment() {
   q = 100;
   CPPUNIT_ASSERT(q == 100);
 }
+
+void QuantityTester::TestModulus() {
+  CPPUNIT_ASSERT(Quantity{1} % Quantity{5} == Quantity{1});
+}

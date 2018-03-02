@@ -307,7 +307,7 @@ namespace Nexus {
     \return <i>lhs</i> % <i>rhs</i>
   */
   inline Quantity operator %(Quantity lhs, Quantity rhs) {
-    return Quantity{std::fmod(lhs.m_value, rhs.m_value)};
+    return Quantity::FromRepresentation(std::fmod(lhs.m_value, rhs.m_value));
   }
 
   //! Returns the absolute value.

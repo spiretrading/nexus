@@ -21,11 +21,15 @@ namespace Tests {
       //! Tests assigning to a Quantity.
       void TestAssignment();
 
+      //! Tests the modulus operator.
+      void TestModulus();
+
     private:
       CPPUNIT_TEST_SUITE(QuantityTester);
         CPPUNIT_TEST(TestToString);
         CPPUNIT_TEST(TestFromString);
         CPPUNIT_TEST(TestAssignment);
+        CPPUNIT_TEST(TestModulus);
       CPPUNIT_TEST_SUITE_END();
   };
 }
