@@ -1,9 +1,9 @@
-CALL C:/Development/Projects/Beam/Beam/Build/Windows/set_env.bat
+CALL %~dp0../../../../Beam/Beam/Build/Windows/set_env.bat
 SET NEXUS_INCLUDE_PATH=%~dp0../../Include
-set QUICK_FIX_INCLUDE_PATH=C:/Development/Libraries/quickfix/include
-set QUICK_FIX_LIBRARY_DEBUG_PATH=C:/Development/Libraries/quickfix/lib/debug/quickfix.lib
-set QUICK_FIX_LIBRARY_OPTIMIZED_PATH=C:/Development/Libraries/quickfix/lib/quickfix.lib
-set QTDIR=C:/Development/Libraries/qt-5.10.0
+set QUICK_FIX_INCLUDE_PATH=%~dp0../../../../quickfix/include
+set QUICK_FIX_LIBRARY_DEBUG_PATH=%~dp0../../../../quickfix/lib/debug/quickfix.lib
+set QUICK_FIX_LIBRARY_OPTIMIZED_PATH=%~dp0../../../../quickfix/lib/quickfix.lib
+set QTDIR=%~dp0../../../../qt-5.10.0
 set QT_INCLUDE_PATH=%QTDIR%/qtbase/include
 set QT_CORE_INCLUDE_PATH=%QT_INCLUDE_PATH%/QtCore
 set QT_GUI_INCLUDE_PATH=%QT_INCLUDE_PATH%/QtGui
