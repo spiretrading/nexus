@@ -1,6 +1,7 @@
 #include "spire/login/login_controller.hpp"
 #include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include "spire/version.hpp"
 #include "spire/login/login_window.hpp"
 #include "spire/spire/qt_promise.hpp"
 
@@ -23,7 +24,7 @@ unique_ptr<VirtualServiceClients>& login_controller::get_service_clients() {
 }
 
 void login_controller::open() {
-  m_login_window = std::make_unique<login_window>();
+  m_login_window = std::make_unique<login_window>(SPIRE_VERSION);
   m_login_window->connect_login_signal(
     [=] (auto&& p1, auto&& p2) {on_login(p1, p2);});
   m_login_window->connect_cancel_signal([=] () {on_cancel();});

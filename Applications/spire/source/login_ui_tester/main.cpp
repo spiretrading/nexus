@@ -1,4 +1,5 @@
 #include <QApplication>
+#include "spire/version.hpp"
 #include "spire/login/login_window.hpp"
 #include "spire/spire/resources.hpp"
 
@@ -9,7 +10,7 @@ int main(int argc, char** argv) {
   application->setOrganizationName(QObject::tr("Eidolon Systems Ltd"));
   application->setApplicationName(QObject::tr("Login UI Tester"));
   initialize_resources();
-  login_window window;
+  login_window window(SPIRE_VERSION);
   window.show();
   application->exec();
 }

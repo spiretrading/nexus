@@ -1,8 +1,14 @@
 #ifndef SPIRE_LOGIN_WINDOW_HPP
 #define SPIRE_LOGIN_WINDOW_HPP
+#include <string>
 #include <boost/signals2/connection.hpp>
+#include <QLabel>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QtSvg/QSvgWidget>
 #include <QWidget>
 #include "spire/login/login.hpp"
+#include "spire/ui/flat_button.hpp"
 
 namespace spire {
 
@@ -18,6 +24,9 @@ namespace spire {
 
         //! The user is in the process of logging in.
         LOGGING_IN,
+
+        //! The user requested to cancel.
+        CANCELLING,
 
         //! The login attempt used incorrect credentials.
         INCORRECT_CREDENTIALS,
@@ -38,7 +47,7 @@ namespace spire {
       using cancel_signal = signal<void ()>;
 
       //! Constructs a login window in the NONE state.
-      login_window(QWidget* parent = nullptr);
+      login_window(const std::string& version, QWidget* parent = nullptr);
 
       //! Sets the state to display to the user.
       void set_state(state state);
@@ -54,6 +63,12 @@ namespace spire {
     private:
       mutable login_signal m_login_signal;
       mutable cancel_signal m_cancel_signal;
+      QSvgWidget* m_logo_widget;
+      QLabel* m_status_label;
+      QLineEdit* m_username_lineedit;
+      QLineEdit* m_password_lineedit;
+      spire::flat_button* m_submit_button;
+      spire::flat_button* m_exit_button;
   };
 }
 
