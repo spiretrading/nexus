@@ -1,31 +1,28 @@
 find_package(Qt5Widgets REQUIRED)
 
-file(GLOB source_files ./../../../source/spire/*.cpp)
+file(GLOB source_files ./../../../source/scratch/*.cpp)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 if(WIN32)
-  file(GLOB resource_files ./../../../source/spire/*.rc)
   set(app_type WIN32)
 elseif(APPLE)
   set(app_type MACOSX_BUNDLE)
-else()
-  set(resource_files "")
 endif()
 
-add_executable(spire ${app_type} ${source_files} ${resource_files})
+add_executable(scratch ${app_type} ${source_files})
 
 if(UNIX)
-  target_link_libraries(spire
+  target_link_libraries(scratch
     debug $ENV{QT_XCB_PLATFORM_LIBRARY_DEBUG_PATH}
     optimized $ENV{QT_XCB_PLATFORM_LIBRARY_OPTIMIZED_PATH}
     debug $ENV{QT_XCB_PLUGIN_LIBRARY_DEBUG_PATH}
     optimized $ENV{QT_XCB_PLUGIN_LIBRARY_OPTIMIZED_PATH})
   if(EXISTS $ENV{QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_DEBUG_PATH})
-    target_link_libraries(spire
+    target_link_libraries(scratch
       debug $ENV{QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_DEBUG_PATH}
       optimized $ENV{QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_OPTIMIZED_PATH})
   endif()
-  target_link_libraries(spire
+  target_link_libraries(scratch
     debug $ENV{QT_SERVICE_SUPPORT_LIBRARY_DEBUG_PATH}
     optimized $ENV{QT_SERVICE_SUPPORT_LIBRARY_OPTIMIZED_PATH}
     debug $ENV{QT_THEME_LIBRARY_DEBUG_PATH}
@@ -36,7 +33,7 @@ if(UNIX)
     optimized $ENV{QT_XML_LIBRARY_OPTIMIZED_PATH})
 endif()
 
-target_link_libraries(spire resources login common
+target_link_libraries(scratch resources login common
   debug $ENV{CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized $ENV{CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{OPEN_SSL_LIBRARY_DEBUG_PATH}
@@ -69,7 +66,7 @@ target_link_libraries(spire resources login common
   optimized $ENV{ZLIB_LIBRARY_OPTIMIZED_PATH})
 
 if(WIN32)
-  target_link_libraries(spire
+  target_link_libraries(scratch
     debug $ENV{QT_THEME_LIBRARY_DEBUG_PATH}
     optimized $ENV{QT_THEME_LIBRARY_OPTIMIZED_PATH}
     debug $ENV{QT_FREETYPE_LIBRARY_DEBUG_PATH}
@@ -83,7 +80,7 @@ if(WIN32)
 endif()
 
 if(UNIX)
-  target_link_libraries(spire
+  target_link_libraries(scratch
     debug $ENV{QT_EDID_LIBRARY_DEBUG_PATH}
     optimized $ENV{QT_EDID_LIBRARY_OPTIMIZED_PATH}
     debug $ENV{QT_XCB_LIBRARY_DEBUG_PATH}
@@ -92,4 +89,4 @@ if(UNIX)
     X11 X11-xcb xcb Xi xkbcommon xkbcommon-x11 Xrender)
 endif()
 
-install(TARGETS spire DESTINATION $ENV{INSTALL_DIRECTORY})
+install(TARGETS scratch DESTINATION $ENV{TEST_INSTALL_DIRECTORY})
