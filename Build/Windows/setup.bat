@@ -54,7 +54,8 @@ if exist qt-5.10.0 goto end_qt_setup
   if not exist qt-5.10.0 goto end_qt_setup
     pushd qt-5.10.0
     git checkout v5.10.0
-    perl init-repository --module-subset=default
+    perl init-repository ^
+      --module-subset=default,-qtwebkit,-qtwebkit-examples,-qtwebengine,-qtwebchannel,-qtwebglplugin,-qtwebsockets,-qtwebview,-qtspeech
     call configure -opensource -static -mp -make libs -make tools ^
       -nomake examples -nomake tests -opengl desktop -no-icu -qt-freetype ^
       -qt-harfbuzz -qt-libpng -qt-pcre -qt-zlib -confirm-license
