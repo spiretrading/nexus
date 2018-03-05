@@ -33,7 +33,7 @@ if(UNIX)
     optimized $ENV{QT_XML_LIBRARY_OPTIMIZED_PATH})
 endif()
 
-target_link_libraries(scratch resources login common
+target_link_libraries(scratch resources login common ui
   debug $ENV{CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized $ENV{CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{OPEN_SSL_LIBRARY_DEBUG_PATH}
