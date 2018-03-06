@@ -1,7 +1,13 @@
 ---
-data_store:
-  address: local_interface:3306
-  username: spireadmin
-  password: admin_password
+order_data_store:
   schema: spire
+  address: 127.0.0.1
+  username: spireadmin
+  password: 1234
+
+compliance_data_store:
+  schema: spire
+  address: 127.0.0.1
+  username: spireadmin
+  password: 1234
 ...
