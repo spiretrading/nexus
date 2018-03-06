@@ -30,3 +30,7 @@ void flat_button::mouseReleaseEvent(QMouseEvent* event) {
     m_clicked_signal();
   }
 }
+
+void flat_button::set_text(const QString& text) {
+  m_label->setText(text);
+}

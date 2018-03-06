@@ -18,7 +18,7 @@ namespace spire {
         boost::signals2::keywords::mutex_type<
         boost::signals2::dummy_mutex>>::type;
 
-      //! Constructs the FlatButton.
+      //! Constructs the flat_button.
       /*!
         \param label The label text.
         \param parent The parent widget to the flat_button.
@@ -28,6 +28,12 @@ namespace spire {
       //! Connects a slot to the clicked signal.
       boost::signals2::connection connect_clicked_signal(
         const clicked_signal::slot_type& slot) const;
+
+      //! Sets the flat_button's text.
+      /*!
+        \param text The text to set.
+      */
+      void set_text(const QString& text);
 
     protected:
 

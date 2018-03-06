@@ -2,6 +2,7 @@
 #define SPIRE_LOGIN_WINDOW_HPP
 #include <string>
 #include <boost/signals2/connection.hpp>
+#include <QEvent>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
@@ -9,6 +10,7 @@
 #include <QWidget>
 #include "spire/login/login.hpp"
 #include "spire/ui/flat_button.hpp"
+#include "spire/ui/icon_button.hpp"
 
 namespace spire {
 
@@ -60,15 +62,22 @@ namespace spire {
       boost::signals2::connection connect_cancel_signal(
         const cancel_signal::slot_type& slot) const;
 
+    protected:
+      virtual bool eventFilter(QObject* object, QEvent* event) override;
+
     private:
+      state m_state;
       mutable login_signal m_login_signal;
       mutable cancel_signal m_cancel_signal;
       QSvgWidget* m_logo_widget;
       QLabel* m_status_label;
       QLineEdit* m_username_lineedit;
       QLineEdit* m_password_lineedit;
-      spire::flat_button* m_submit_button;
-      spire::flat_button* m_exit_button;
+      spire::flat_button* m_sign_in_button;
+      spire::icon_button* m_exit_button;
+
+      void reset_form();
+      void on_button_click();
   };
 }
 
