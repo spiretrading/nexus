@@ -30,10 +30,12 @@ sql_create_2(entry_rows, 2, 0,
   mysqlpp::sql_blob, schema_parameters);
 
 struct ClassicQuantity {
+  std::int64_t m_original;
   Quantity m_value;
 };
 
 struct ClassicMoney {
+  double m_original;
   Money m_value;
 };
 
@@ -51,6 +53,7 @@ namespace Serialization {
         ClassicQuantity& value) const {
       std::int64_t v;
       shuttle.Shuttle(name, v);
+      value.m_original = v;
       value.m_value = Quantity{v};
     }
   };
@@ -64,6 +67,7 @@ namespace Serialization {
       shuttle.Shuttle(name, v);
       auto conversion = Quantity{v};
       conversion /= Quantity::MULTIPLIER;
+      value.m_original = static_cast<double>(v) / Quantity::MULTIPLIER;
       value.m_value = Money{conversion};
     }
   };
@@ -121,12 +125,14 @@ namespace {
     vector<Tag>* m_tags;
 
     void operator ()(ClassicQuantity value) const {
-      std::cout << "Quantity: " << value.m_value << std::endl;
+      std::cout << "\tQuantity: " << value.m_original << " " << value.m_value <<
+        std::endl;
       m_tags->emplace_back(index, value.m_value);
     }
 
     void operator ()(ClassicMoney value) const {
-      std::cout << "Money: " << value.m_value << std::endl;
+      std::cout << "\tMoney: " << value.m_original << " " << value.m_value <<
+        std::endl;
       m_tags->emplace_back(index, value.m_value);
     }
 
@@ -140,12 +146,14 @@ namespace {
     std::vector<ComplianceValue>* values;
 
     void operator ()(ClassicQuantity value) const {
-      std::cout << "Quantity: " << value.m_value << std::endl;
+      std::cout << "\tQuantity: " << value.m_original << " " << value.m_value <<
+        std::endl;
       values->emplace_back(value.m_value);
     }
 
     void operator ()(ClassicMoney value) const {
-      std::cout << "Money: " << value.m_value << std::endl;
+      std::cout << "\tMoney: " << value.m_original << " " << value.m_value <<
+        std::endl;
       values->emplace_back(value.m_value);
     }
 
@@ -165,12 +173,14 @@ namespace {
     vector<ComplianceParameter>* m_parameters;
 
     void operator ()(ClassicQuantity value) const {
-      std::cout << "Quantity: " << value.m_value << std::endl;
+      std::cout << "\tQuantity: " << value.m_original << " " << value.m_value <<
+        std::endl;
       m_parameters->emplace_back(m_name, value.m_value);
     }
 
     void operator ()(ClassicMoney value) const {
-      std::cout << "Money: " << value.m_value << std::endl;
+      std::cout << "\tMoney: " << value.m_original << " " << value.m_value <<
+        std::endl;
       m_parameters->emplace_back(m_name, value.m_value);
     }
 
@@ -223,6 +233,7 @@ namespace {
         for(auto& row : rows) {
           auto query = connection.query();
           id = row.order_id + 1;
+          std::cout << "Order: " << (id - 1) << std::endl;
           if(!row.additional_fields.empty()) {
             Beam::Serialization::BinaryReceiver<
               Beam::IO::SharedBuffer> receiver;
@@ -297,6 +308,7 @@ namespace {
         for(auto& row : rows) {
           auto query = connection.query();
           id = row.entry_id + 1;
+          std::cout << "Compliance: " << (id - 1) << std::endl;
           Beam::Serialization::BinaryReceiver<Beam::IO::SharedBuffer> receiver;
           Beam::IO::SharedBuffer buffer{row.schema_parameters.data(),
             row.schema_parameters.size()};
