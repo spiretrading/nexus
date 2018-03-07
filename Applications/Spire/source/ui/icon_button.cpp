@@ -1,5 +1,6 @@
 #include "spire/ui/icon_button.hpp"
 #include <QHBoxLayout>
+#include <QMouseEvent>
 #include <QSize>
 
 using namespace boost;
@@ -9,6 +10,7 @@ using namespace spire;
 icon_button::icon_button(const QImage& default_icon, const QImage& hover_icon,
     QWidget* parent)
     : QWidget(parent) {
+  m_clickable = true;
   auto layout = new QHBoxLayout(this);
   layout->setMargin(0);
   m_label = new QLabel(this);
@@ -33,4 +35,14 @@ void icon_button::enterEvent(QEvent* event) {
 
 void icon_button::leaveEvent(QEvent* event) {
   m_label->setPixmap(QPixmap::fromImage(m_default_icon));
+}
+
+void icon_button::mouseReleaseEvent(QMouseEvent* event) {
+  if(event->button() == Qt::LeftButton && m_clickable) {
+    m_clicked_signal();
+  }
+}
+
+void icon_button::set_clickable(bool clickable) {
+  m_clickable = clickable;
 }

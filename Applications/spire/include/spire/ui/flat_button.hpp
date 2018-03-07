@@ -35,6 +35,12 @@ namespace spire {
       */
       void set_text(const QString& text);
 
+      //! Sets whether the button can have its m_clicked_signal activated or not.
+      /*!
+        \param clickable Whether the button is clickable (true) or not (false).
+      */
+      void set_clickable(bool clickable);
+
     protected:
 
       virtual void changeEvent(QEvent* event) override;
@@ -44,6 +50,7 @@ namespace spire {
     private:
       QLabel* m_label;
       mutable clicked_signal m_clicked_signal;
+      bool m_clickable;
   };
 }
 

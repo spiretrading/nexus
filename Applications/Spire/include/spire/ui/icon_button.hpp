@@ -32,6 +32,12 @@ namespace spire {
       boost::signals2::connection connect_clicked_signal(
         const clicked_signal::slot_type& slot) const;
 
+      //! Sets whether the button can have its m_clicked_signal activated or not.
+      /*!
+        \param clickable Whether the button is clickable (true) or not (false).
+      */
+      void set_clickable(bool clickable);
+
     protected:
 
       virtual void resizeEvent(QResizeEvent* event);
@@ -40,11 +46,14 @@ namespace spire {
 
       virtual void leaveEvent(QEvent* event);
 
+      virtual void mouseReleaseEvent(QMouseEvent* event) override;
+
     private:
       mutable clicked_signal m_clicked_signal;
       QLabel* m_label;
       QImage m_default_icon;
       QImage m_hover_icon;
+      bool m_clickable;
   };
 }
 

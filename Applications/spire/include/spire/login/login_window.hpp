@@ -5,6 +5,8 @@
 #include <QEvent>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMouseEvent>
+#include <QPoint>
 #include <QPushButton>
 #include <QtSvg/QSvgWidget>
 #include <QWidget>
@@ -65,19 +67,31 @@ namespace spire {
     protected:
       virtual bool eventFilter(QObject* object, QEvent* event) override;
 
+      virtual void mouseMoveEvent(QMouseEvent* event) override;
+
+      virtual void mousePressEvent(QMouseEvent* event) override;
+
+      virtual void mouseReleaseEvent(QMouseEvent* event) override;
+
     private:
-      state m_state;
       mutable login_signal m_login_signal;
       mutable cancel_signal m_cancel_signal;
+      state m_state;
       QSvgWidget* m_logo_widget;
       QLabel* m_status_label;
       QLineEdit* m_username_lineedit;
       QLineEdit* m_password_lineedit;
       spire::flat_button* m_sign_in_button;
       spire::icon_button* m_exit_button;
+      bool m_is_dragging;
+      QPoint m_last_pos;
 
-      void reset_form();
+      void reset_widget();
+      void reset_visuals();
       void on_button_click();
+      void inputs_updated();
+      void enable_button();
+      void disable_button();
   };
 }
 

@@ -13,7 +13,8 @@ using namespace boost::signals2;
 using namespace spire;
 
 login_window::login_window(const std::string& version, QWidget* parent)
-    : QWidget(parent) {
+    : QWidget(parent),
+      m_is_dragging(false) {
   setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
   setFixedSize(scale(384, 346));
   setFocus();
@@ -38,6 +39,7 @@ login_window::login_window(const std::string& version, QWidget* parent)
   hover_icon.fill(QColor(0, 0, 0, 0));
   renderer->render(&p2, draw_rect);
   m_exit_button = new icon_button(default_icon, hover_icon, this);
+  m_exit_button->connect_clicked_signal([&] {close();});
   m_exit_button->setFixedSize(scale(32, 26));
   m_exit_button->setStyleSheet(":hover { background-color: #401D8B; }");
   title_bar_layout->addWidget(m_exit_button);
@@ -62,6 +64,7 @@ login_window::login_window(const std::string& version, QWidget* parent)
   layout->addWidget(m_status_label);
   layout->addStretch(20);
   m_username_lineedit = new QLineEdit(this);
+  connect(m_username_lineedit, &QLineEdit::textEdited, [&] { inputs_updated(); });
   m_username_lineedit->installEventFilter(this);
   m_username_lineedit->setPlaceholderText(tr("Username"));
   m_username_lineedit->setFixedHeight(scale_height(30));
@@ -76,6 +79,7 @@ login_window::login_window(const std::string& version, QWidget* parent)
   layout->addWidget(m_username_lineedit);
   layout->addStretch(15);
   m_password_lineedit = new QLineEdit(this);
+  connect(m_password_lineedit, &QLineEdit::textEdited, [&] { inputs_updated(); });
   m_password_lineedit->installEventFilter(this);
   m_password_lineedit->setEchoMode(QLineEdit::Password);
   m_password_lineedit->setPlaceholderText(tr("Password"));
@@ -103,48 +107,43 @@ login_window::login_window(const std::string& version, QWidget* parent)
   button_layout->addWidget(build_label);
   m_sign_in_button = new flat_button(tr("Sign In"), this);
   m_sign_in_button->connect_clicked_signal([=] {on_button_click();});
-  m_sign_in_button->setStyleSheet(QString(
-    R"(QLabel {
-         background-color: #684BC7;
-         border: 1px solid #8D78EC;
-         color: white;
-         font-family: Roboto;
-         font-size: %1px;
-         font-weight: bold;
-         qproperty-alignment: AlignCenter;
-       }
-
-       :hover {
-         background-color: #8D78EC;
-       })").arg(scale_height(14)));
   m_sign_in_button->setFixedSize(scale(120, 30));
+  disable_button();
   button_layout->addWidget(m_sign_in_button);
   button_layout->addStretch(52);
   layout->addLayout(button_layout);
   layout->addStretch(48);
   set_state(state::NONE);
+  setFocus();
 }
 
 void login_window::set_state(state state) {
   switch(state) {
     case state::NONE: {
-      reset_form();
+      reset_widget();
+      m_state = state;
       break;
     }
     case state::LOGGING_IN: {
       m_status_label->setText("");
       m_sign_in_button->set_text("Cancel");
+      m_logo_widget->load(QString(":/icons/login-preloader.svg"));
+      m_state = state;
       break;
     }
     case state::CANCELLING: {
-      set_state(state::NONE);
+      reset_widget();
+      state = state::NONE;
       break;
     }
     case state::INCORRECT_CREDENTIALS: {
       m_status_label->setText("Incorrect username or password.");
+      reset_visuals();
       break;
     }
     case state::SERVER_UNAVAILABLE: {
+      m_status_label->setText("Server is unavailable.");
+      reset_visuals();
       break;
     }
   }
@@ -180,24 +179,93 @@ bool login_window::eventFilter(QObject* object, QEvent* event) {
   return QWidget::eventFilter(object, event);
 }
 
-void login_window::reset_form() {
+void login_window::mouseMoveEvent(QMouseEvent* event) {
+  if(!m_is_dragging) {
+    return;
+  }
+  auto delta = event->globalPos();
+  delta -= m_last_pos;
+  auto window_pos = pos();
+  window_pos += delta;
+  m_last_pos = event->globalPos();
+  move(window_pos);
+}
+
+void login_window::mousePressEvent(QMouseEvent* event) {
+  if(m_is_dragging || event->button() != Qt::LeftButton) {
+    return;
+  }
+  m_is_dragging = true;
+  m_last_pos = event->globalPos();
+}
+
+void login_window::mouseReleaseEvent(QMouseEvent* event) {
+  if(event->button() != Qt::LeftButton) {
+    return;
+  }
+  m_is_dragging = false;
+}
+
+void login_window::reset_widget() {
   m_status_label->setText("");
-  m_username_lineedit->setText("");
-  m_password_lineedit->setText("");
+  reset_visuals();
+}
+
+void login_window::reset_visuals() {
   m_sign_in_button->set_text("Sign In");
-  m_username_lineedit->setFocus();
+  m_logo_widget->load(QString(":/icons/logo.svg"));
+  setFocus();
 }
 
 void login_window::on_button_click() {
-  if(m_state == state::NONE) {
+  if(m_state != state::LOGGING_IN) {
     if (m_username_lineedit->text() == "" || m_password_lineedit->text() == "") {
       set_state(state::INCORRECT_CREDENTIALS);
     } else {
-      // if incorrect credentials are entered first, then this is never reached
-      // because the state is INCORRECT_CREDENTIALS, not NONE
+      m_login_signal(m_username_lineedit->text().toStdString(),
+        m_password_lineedit->text().toStdString());
       set_state(state::LOGGING_IN);
     }
-  } else if(m_state == state::LOGGING_IN) {
+  } else {
+    m_cancel_signal();
     set_state(state::CANCELLING);
   }
+}
+
+void login_window::inputs_updated() {
+  if(m_username_lineedit->text() != "") {
+    enable_button();
+  } else {
+    disable_button();
+  }
+}
+
+void login_window::enable_button() {
+  m_sign_in_button->set_clickable(true);
+  m_sign_in_button->setStyleSheet(QString(
+    R"(QLabel {
+         background-color: #684BC7;
+         border: 1px solid #8D78EC;
+         color: white;
+         font-family: Roboto;
+         font-size: %1px;
+         font-weight: bold;
+         qproperty-alignment: AlignCenter;
+       }
+
+       :hover {
+         background-color: #8D78EC;
+       })").arg(scale_height(14)));
+}
+
+void login_window::disable_button() {
+  m_sign_in_button->set_clickable(false);
+  m_sign_in_button->setStyleSheet(QString(
+    R"(background-color: #4B23A0;
+       border: 1px solid #8D78EC;
+       color: #8D78EC;
+       font-family: Roboto;
+       font-size: %1px;
+       font-weight: bold;
+       qproperty-alignment: AlignCenter;)").arg(scale_height(14)));
 }

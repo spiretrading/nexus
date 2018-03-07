@@ -8,6 +8,7 @@ using namespace spire;
 
 flat_button::flat_button(const QString& label, QWidget* parent)
     : QWidget(parent) {
+  m_clickable = true;
   m_label = new QLabel(label, this);
   auto layout = new QHBoxLayout(this);
   layout->setMargin(0);
@@ -26,11 +27,15 @@ void flat_button::changeEvent(QEvent* event) {
 }
 
 void flat_button::mouseReleaseEvent(QMouseEvent* event) {
-  if(event->button() == Qt::LeftButton) {
+  if(event->button() == Qt::LeftButton && m_clickable) {
     m_clicked_signal();
   }
 }
 
 void flat_button::set_text(const QString& text) {
   m_label->setText(text);
+}
+
+void flat_button::set_clickable(bool clickable) {
+  m_clickable = clickable;
 }
