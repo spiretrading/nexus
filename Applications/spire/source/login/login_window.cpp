@@ -288,6 +288,7 @@ void login_window::disable_button() {
   m_sign_in_button->set_clickable(false);
   m_sign_in_button->setStyleSheet(QString(
     R"(background-color: #4B23A0;
+       border: 1px solid #684BC7;
        color: #8D78EC;
        font-family: Roboto;
        font-size: %1px;
