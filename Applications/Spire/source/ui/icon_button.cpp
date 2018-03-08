@@ -37,6 +37,10 @@ void icon_button::leaveEvent(QEvent* event) {
   m_label->setPixmap(QPixmap::fromImage(m_default_icon));
 }
 
+void icon_button::mousePressEvent(QMouseEvent* event) {
+  event->accept();
+}
+
 void icon_button::mouseReleaseEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton && m_clickable) {
     m_clicked_signal();

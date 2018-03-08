@@ -63,36 +63,59 @@ login_window::login_window(const std::string& version, QWidget* parent)
        qproperty-alignment: AlignCenter;)").arg(scale_height(12)));
   layout->addWidget(m_status_label);
   layout->addStretch(20);
+  auto username_layout = new QHBoxLayout();
+  username_layout->setMargin(0);
+  username_layout->setSpacing(0);
+  username_layout->addStretch(1);
   m_username_lineedit = new QLineEdit(this);
   connect(m_username_lineedit, &QLineEdit::textEdited, [&] { inputs_updated(); });
   m_username_lineedit->installEventFilter(this);
   m_username_lineedit->setPlaceholderText(tr("Username"));
-  m_username_lineedit->setFixedHeight(scale_height(30));
+  m_username_lineedit->setFixedSize(scale(280, 30));
   m_username_lineedit->setStyleSheet(QString(
     R"(background-color: white;
        border: 0px;
        font-family: Roboto;
-       font-size: %3px;
-       margin: 0px %1px 0px %1px;
-       padding-left: %2px;)")
-    .arg(scale_width(52)).arg(scale_width(10)).arg(scale_height(14)));
-  layout->addWidget(m_username_lineedit);
+       font-size: %2px;
+       padding-left: %1px;)")
+    .arg(scale_width(10)).arg(scale_height(14)));
+  username_layout->addWidget(m_username_lineedit);
+  username_layout->addStretch(1);
+  layout->addLayout(username_layout);
   layout->addStretch(15);
+  auto password_layout = new QHBoxLayout();
+  password_layout->setMargin(0);
+  password_layout->setSpacing(0);
+  password_layout->addStretch(1);
   m_password_lineedit = new QLineEdit(this);
   connect(m_password_lineedit, &QLineEdit::textEdited, [&] { inputs_updated(); });
+  connect(m_password_lineedit, &QLineEdit::textEdited, [&] {
+    password_input_changed(); });
   m_password_lineedit->installEventFilter(this);
   m_password_lineedit->setEchoMode(QLineEdit::Password);
   m_password_lineedit->setPlaceholderText(tr("Password"));
-  m_password_lineedit->setFixedHeight(scale_height(30));
+  m_password_lineedit->setFixedSize(scale(246, 30));
   m_password_lineedit->setStyleSheet(QString(
     R"(background-color: white;
        border: 0px;
        font-family: Roboto;
-       font-size: %3px;
-       margin: 0px %1px 0px %1px;
-       padding-left: %2px;)")
-    .arg(scale_width(52)).arg(scale_width(10)).arg(scale_height(14)));
-  layout->addWidget(m_password_lineedit);
+       font-size: %2px;
+       padding-left: %1px;)")
+    .arg(scale_width(10)).arg(scale_height(14)));
+  password_layout->addWidget(m_password_lineedit);
+  auto ch_outer_widget = new QWidget(this);
+  ch_outer_widget->setContentsMargins(scale_width(2), scale_height(2),
+    scale_width(2), scale_height(2));
+  ch_outer_widget->setFixedSize(scale(34, 30));
+  ch_outer_widget->setStyleSheet("background-color: white;");
+  auto ch_layout = new QHBoxLayout(ch_outer_widget);
+  ch_layout->setMargin(0);
+  ch_layout->addWidget(ch_outer_widget);
+  m_chroma_hash_widget = new chroma_hash_widget(this);
+  ch_layout->addWidget(m_chroma_hash_widget);
+  password_layout->addWidget(ch_outer_widget);
+  password_layout->addStretch(1);
+  layout->addLayout(password_layout);
   layout->addStretch(30);
   auto button_layout = new QHBoxLayout();
   button_layout->setMargin(0);
@@ -240,13 +263,16 @@ void login_window::inputs_updated() {
   }
 }
 
+void login_window::password_input_changed() {
+  m_chroma_hash_widget->set_text(m_password_lineedit->text());
+}
+
 void login_window::enable_button() {
   m_sign_in_button->set_clickable(true);
   m_sign_in_button->setStyleSheet(QString(
     R"(QLabel {
          background-color: #684BC7;
-         border: 1px solid #8D78EC;
-         color: white;
+         color: #E2E0FF;
          font-family: Roboto;
          font-size: %1px;
          font-weight: bold;
@@ -262,7 +288,6 @@ void login_window::disable_button() {
   m_sign_in_button->set_clickable(false);
   m_sign_in_button->setStyleSheet(QString(
     R"(background-color: #4B23A0;
-       border: 1px solid #8D78EC;
        color: #8D78EC;
        font-family: Roboto;
        font-size: %1px;

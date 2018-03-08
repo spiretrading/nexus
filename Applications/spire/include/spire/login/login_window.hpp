@@ -11,6 +11,7 @@
 #include <QtSvg/QSvgWidget>
 #include <QWidget>
 #include "spire/login/login.hpp"
+#include "spire/login/chroma_hash_widget.hpp"
 #include "spire/ui/flat_button.hpp"
 #include "spire/ui/icon_button.hpp"
 
@@ -85,11 +86,13 @@ namespace spire {
       spire::icon_button* m_exit_button;
       bool m_is_dragging;
       QPoint m_last_pos;
+      spire::chroma_hash_widget* m_chroma_hash_widget;
 
       void reset_widget();
       void reset_visuals();
       void on_button_click();
       void inputs_updated();
+      void password_input_changed();
       void enable_button();
       void disable_button();
   };

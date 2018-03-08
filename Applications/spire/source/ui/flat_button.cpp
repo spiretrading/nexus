@@ -26,6 +26,10 @@ void flat_button::changeEvent(QEvent* event) {
   }
 }
 
+void flat_button::mousePressEvent(QMouseEvent* event) {
+  event->accept();
+}
+
 void flat_button::mouseReleaseEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton && m_clickable) {
     m_clicked_signal();

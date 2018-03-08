@@ -43,9 +43,11 @@ namespace spire {
 
     protected:
 
-      virtual void changeEvent(QEvent* event) override;
+      void changeEvent(QEvent* event) override;
 
-      virtual void mouseReleaseEvent(QMouseEvent* event) override;
+      void mousePressEvent(QMouseEvent* event) override;
+
+      void mouseReleaseEvent(QMouseEvent* event) override;
 
     private:
       QLabel* m_label;

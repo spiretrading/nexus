@@ -40,13 +40,15 @@ namespace spire {
 
     protected:
 
-      virtual void resizeEvent(QResizeEvent* event);
+      void resizeEvent(QResizeEvent* event) override;
 
-      virtual void enterEvent(QEvent* event);
+      void enterEvent(QEvent* event) override;
 
-      virtual void leaveEvent(QEvent* event);
+      void leaveEvent(QEvent* event) override;
 
-      virtual void mouseReleaseEvent(QMouseEvent* event) override;
+      void mousePressEvent(QMouseEvent* event) override;
+
+      void mouseReleaseEvent(QMouseEvent* event) override;
 
     private:
       mutable clicked_signal m_clicked_signal;
