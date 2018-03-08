@@ -26,9 +26,6 @@ namespace spire {
       QPushButton* m_reject_button;
       QPushButton* m_server_unavailable_button;
       login_window* m_login_window;
-      bool m_buttons_on;
-
-      void buttons_on(bool on);
   };
 }
 

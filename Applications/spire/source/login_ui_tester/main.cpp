@@ -14,6 +14,10 @@ int main(int argc, char** argv) {
   login_window window(SPIRE_VERSION);
   window.show();
   login_ui_tester tester(&window);
+  tester.setGeometry(window.pos().x(),
+    window.pos().y() + window.height() + 100, 0, 0);
+  window.installEventFilter(&tester);
+  tester.setAttribute(Qt::WA_ShowWithoutActivating);
   tester.show();
   application->exec();
 }

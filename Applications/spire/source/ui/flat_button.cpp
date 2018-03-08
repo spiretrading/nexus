@@ -13,6 +13,7 @@ flat_button::flat_button(const QString& label, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setMargin(0);
   layout->addWidget(m_label);
+  setFocusPolicy(Qt::StrongFocus);
 }
 
 connection flat_button::connect_clicked_signal(

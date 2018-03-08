@@ -130,14 +130,16 @@ login_window::login_window(const std::string& version, QWidget* parent)
   button_layout->addWidget(build_label);
   m_sign_in_button = new flat_button(tr("Sign In"), this);
   m_sign_in_button->connect_clicked_signal([=] {on_button_click();});
+  m_sign_in_button->installEventFilter(this);
   m_sign_in_button->setFixedSize(scale(120, 30));
   disable_button();
   button_layout->addWidget(m_sign_in_button);
   button_layout->addStretch(52);
   layout->addLayout(button_layout);
   layout->addStretch(48);
+  setTabOrder(m_username_lineedit, m_password_lineedit);
+  setTabOrder(m_password_lineedit, m_sign_in_button);
   set_state(state::NONE);
-  setFocus();
 }
 
 void login_window::set_state(state state) {
@@ -191,6 +193,11 @@ bool login_window::eventFilter(QObject* object, QEvent* event) {
     if(m_password_lineedit == object) {
       m_password_lineedit->setPlaceholderText("");
     }
+    if(m_sign_in_button == object) {
+      if(m_username_lineedit->text() != "") {
+        button_focused();
+      }
+    }
   } else if(event->type() == QEvent::FocusOut) {
     if(m_username_lineedit == object) {
       m_username_lineedit->setPlaceholderText(tr("Username"));
@@ -198,8 +205,26 @@ bool login_window::eventFilter(QObject* object, QEvent* event) {
     if(m_password_lineedit == object) {
       m_password_lineedit->setPlaceholderText(tr("Password"));
     }
+    if(m_sign_in_button == object) {
+      if(m_username_lineedit->text() != "") {
+        enable_button();
+      } else {
+        disable_button();
+      }
+    }
   }
   return QWidget::eventFilter(object, event);
+}
+
+void login_window::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Escape) {
+    close();
+  } else if(m_password_lineedit->hasFocus()) {
+    return;
+  } else if(!m_username_lineedit->hasFocus()) {
+    m_username_lineedit->setText(event->text());
+    m_username_lineedit->setFocus();
+  }
 }
 
 void login_window::mouseMoveEvent(QMouseEvent* event) {
@@ -294,4 +319,9 @@ void login_window::disable_button() {
        font-size: %1px;
        font-weight: bold;
        qproperty-alignment: AlignCenter;)").arg(scale_height(14)));
+}
+
+void login_window::button_focused() {
+  m_sign_in_button->setStyleSheet(
+    m_sign_in_button->styleSheet() + "QLabel { border: 1px solid #8D78EC; } ");
 }

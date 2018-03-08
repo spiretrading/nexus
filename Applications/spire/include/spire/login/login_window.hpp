@@ -3,6 +3,7 @@
 #include <string>
 #include <boost/signals2/connection.hpp>
 #include <QEvent>
+#include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMouseEvent>
@@ -66,13 +67,15 @@ namespace spire {
         const cancel_signal::slot_type& slot) const;
 
     protected:
-      virtual bool eventFilter(QObject* object, QEvent* event) override;
+      bool eventFilter(QObject* object, QEvent* event) override;
 
-      virtual void mouseMoveEvent(QMouseEvent* event) override;
+      void keyPressEvent(QKeyEvent* event);
 
-      virtual void mousePressEvent(QMouseEvent* event) override;
+      void mouseMoveEvent(QMouseEvent* event) override;
 
-      virtual void mouseReleaseEvent(QMouseEvent* event) override;
+      void mousePressEvent(QMouseEvent* event) override;
+
+      void mouseReleaseEvent(QMouseEvent* event) override;
 
     private:
       mutable login_signal m_login_signal;
@@ -95,6 +98,7 @@ namespace spire {
       void password_input_changed();
       void enable_button();
       void disable_button();
+      void button_focused();
   };
 }
 
