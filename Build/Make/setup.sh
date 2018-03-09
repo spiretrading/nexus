@@ -1,7 +1,7 @@
 #!/bin/bash
 let cores="`grep -c "processor" < /proc/cpuinfo`"
 directory=$(dirname $(readlink -f $0))
-username=$(logname 2>/dev/null || echo ${SUDO_USER:-${USER}})
+username=$(echo ${SUDO_USER:-${USER}})
 
 expected_commit="663013de733972e50139a24c98d29e9dfb7d2660"
 if [ ! -d "Beam" ]; then
