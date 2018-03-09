@@ -48,9 +48,6 @@ void spire_controller::open() {
   m_login_controller->open();
 }
 
-void spire_controller::close() {
-}
-
 optional<IpAddress> spire_controller::load_ip_address() {
   auto application_path = QStandardPaths::writableLocation(
     QStandardPaths::DataLocation);
@@ -98,4 +95,5 @@ void spire_controller::on_login() {
   m_toolbar_controller = std::make_unique<toolbar_controller>(
     *m_service_clients);
   m_toolbar_controller->open();
+  m_state = state::TOOLBAR;
 }

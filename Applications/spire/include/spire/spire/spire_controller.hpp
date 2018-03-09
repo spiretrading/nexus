@@ -25,13 +25,11 @@ namespace spire {
       //! Begins running the application.
       void open();
 
-      //! Terminates the application.
-      void close();
-
     private:
       enum class state {
         NONE,
         LOGIN,
+        TOOLBAR
       };
       state m_state;
       std::unique_ptr<Beam::Network::SocketThreadPool> m_socket_thread_pool;

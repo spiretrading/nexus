@@ -14,5 +14,4 @@ int main(int argc, char** argv) {
   spire_controller controller;
   controller.open();
   application->exec();
-  controller.close();
 }
