@@ -97,7 +97,6 @@ namespace spire {
       void password_input_changed();
       void enable_button();
       void disable_button();
-      void disable_button_hover();
       void button_focused();
   };
 }

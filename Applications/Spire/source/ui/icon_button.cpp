@@ -54,5 +54,19 @@ void icon_button::set_clickable(bool clickable) {
 }
 
 void icon_button::swap_icons() {
-  
+  if(m_is_default) {
+    m_label->setPixmap(QPixmap::fromImage(m_default_icon));
+  } else {
+    m_label->setPixmap(QPixmap::fromImage(m_hover_icon));
+  }
+  m_is_default = !m_is_default;
+}
+
+void icon_button::set_icon(bool is_default) {
+  if(is_default) {
+    m_label->setPixmap(QPixmap::fromImage(m_default_icon));
+  } else {
+    m_label->setPixmap(QPixmap::fromImage(m_hover_icon));
+  }
+  m_is_default = is_default;
 }

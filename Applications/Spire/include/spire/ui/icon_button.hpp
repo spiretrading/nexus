@@ -38,8 +38,15 @@ namespace spire {
       */
       void set_clickable(bool clickable);
 
-      //! Manually switches the button's icons.
+      //! Switches the button's icons.
       void swap_icons();
+
+      //! Sets the button's icon.
+      /*!
+        \param is_default True to set the icon to default, false to set it to
+                          the hover icon.
+      */
+      void set_icon(bool is_default);
 
     protected:
 
@@ -59,6 +66,7 @@ namespace spire {
       QImage m_default_icon;
       QImage m_hover_icon;
       bool m_clickable;
+      bool m_is_default;
   };
 }
 

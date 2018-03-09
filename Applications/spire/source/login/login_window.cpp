@@ -1,5 +1,4 @@
 #include "spire/login/login_window.hpp"
-#include <QDebug>
 #include <QHBoxLayout>
 #include <QImage>
 #include <QMovie>
@@ -53,12 +52,9 @@ login_window::login_window(const std::string& version, QWidget* parent)
   logo_layout->setSpacing(0);
   logo_layout->addStretch(1);
   m_logo_widget = new QLabel(this);
-  m_logo_widget->setStyleSheet("background-color: red");
   m_logo_widget->setFixedSize(scale(134, 50));
-  auto logo = new QMovie(":/icons/animated-logo.gif");
+  auto logo = new QMovie(":/icons/logo.gif");
   logo->setScaledSize(m_logo_widget->size());
-  qDebug() << "Is valid: " << logo->isValid();
-  //logo->setFileName(QString("://icons/animated-logo.gif"));
   m_logo_widget->setMovie(logo);
   logo->start();
   logo_layout->addWidget(m_logo_widget);
@@ -222,18 +218,6 @@ bool login_window::eventFilter(QObject* object, QEvent* event) {
         disable_button();
       }
     }
-  } else if(event->type() == QEvent::MouseMove) {
-    if(m_sign_in_button == object && m_username_lineedit->text() != "") {
-      if(!rect().contains(static_cast<QMouseEvent*>(event)->
-          localPos().toPoint())) {
-        disable_button_hover();
-      }
-    } else if(m_exit_button == object) {
-      if(!rect().contains(static_cast<QMouseEvent*>(event)->
-          localPos().toPoint())) {
-        m_exit_button->
-      }
-    }
   } else if(event->type() == QEvent::Enter) {
     if(m_sign_in_button == object && m_username_lineedit->text() != "") {
       enable_button();
@@ -288,6 +272,7 @@ void login_window::reset_widget() {
 void login_window::reset_visuals() {
   m_sign_in_button->set_text("Sign In");
   m_logo_widget->movie()->stop();
+  m_logo_widget->movie()->jumpToFrame(0);
   setFocus();
 }
 
@@ -345,18 +330,6 @@ void login_window::disable_button() {
        font-size: %1px;
        font-weight: bold;
        qproperty-alignment: AlignCenter;)").arg(scale_height(14)));
-}
-
-void login_window::disable_button_hover() {
-  m_sign_in_button->setStyleSheet(QString(
-    R"(QLabel {
-         background-color: #684BC7;
-         color: #E2E0FF;
-         font-family: Roboto;
-         font-size: %1px;
-         font-weight: bold;
-         qproperty-alignment: AlignCenter;
-       })").arg(scale_height(14)));
 }
 
 void login_window::button_focused() {

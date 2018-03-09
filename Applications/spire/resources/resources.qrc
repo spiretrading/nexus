@@ -20,8 +20,6 @@
         <file>fonts/Roboto/Roboto-ThinItalic.ttf</file>
         <file>icons/close-purple.svg</file>
         <file>icons/close-red.svg</file>
-        <file>icons/animated-logo.gif</file>
-        <file>icons/animated-logo@2x.gif</file>
-        <file>icons/animated-logo@4x.gif</file>
+        <file>icons/logo.gif</file>
     </qresource>
 </RCC>
