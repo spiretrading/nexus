@@ -5,6 +5,7 @@
 #include <QtPlugin>
 
 #ifdef _MSC_VER
+  Q_IMPORT_PLUGIN(QGifPlugin);
   Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)
 #elif __linux__
   Q_IMPORT_PLUGIN(QXcbIntegrationPlugin)
