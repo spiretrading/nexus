@@ -10,6 +10,7 @@
 #include <QMessageBox>
 #include <QStandardPaths>
 #include "spire/login/login_controller.hpp"
+#include "spire/toolbar/toolbar_controller.hpp"
 
 using namespace Beam;
 using namespace Beam::Network;
@@ -92,5 +93,9 @@ optional<IpAddress> spire_controller::load_ip_address() {
 }
 
 void spire_controller::on_login() {
+  m_service_clients = std::move(m_login_controller->get_service_clients());
   m_login_controller.reset();
+  m_toolbar_controller = std::make_unique<toolbar_controller>(
+    *m_service_clients);
+  m_toolbar_controller->open();
 }
