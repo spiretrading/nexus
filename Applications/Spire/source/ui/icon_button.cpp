@@ -43,10 +43,16 @@ void icon_button::mousePressEvent(QMouseEvent* event) {
 
 void icon_button::mouseReleaseEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton && m_clickable) {
-    m_clicked_signal();
+    if(rect().contains(event->localPos().toPoint())) {
+      m_clicked_signal();
+    }
   }
 }
 
 void icon_button::set_clickable(bool clickable) {
   m_clickable = clickable;
+}
+
+void icon_button::swap_icons() {
+  
 }

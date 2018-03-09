@@ -38,6 +38,9 @@ namespace spire {
       */
       void set_clickable(bool clickable);
 
+      //! Manually switches the button's icons.
+      void swap_icons();
+
     protected:
 
       void resizeEvent(QResizeEvent* event) override;

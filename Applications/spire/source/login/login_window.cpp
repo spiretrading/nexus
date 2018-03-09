@@ -1,6 +1,8 @@
 #include "spire/login/login_window.hpp"
+#include <QDebug>
 #include <QHBoxLayout>
 #include <QImage>
+#include <QMovie>
 #include <QPainter>
 #include <QPixmap>
 #include <QSize>
@@ -39,6 +41,7 @@ login_window::login_window(const std::string& version, QWidget* parent)
   hover_icon.fill(QColor(0, 0, 0, 0));
   renderer->render(&p2, draw_rect);
   m_exit_button = new icon_button(default_icon, hover_icon, this);
+  m_exit_button->installEventFilter(this);
   m_exit_button->connect_clicked_signal([&] {close();});
   m_exit_button->setFixedSize(scale(32, 26));
   m_exit_button->setStyleSheet(":hover { background-color: #401D8B; }");
@@ -49,8 +52,15 @@ login_window::login_window(const std::string& version, QWidget* parent)
   logo_layout->setMargin(0);
   logo_layout->setSpacing(0);
   logo_layout->addStretch(1);
-  m_logo_widget = new QSvgWidget(":/icons/logo.svg", this);
+  m_logo_widget = new QLabel(this);
+  m_logo_widget->setStyleSheet("background-color: red");
   m_logo_widget->setFixedSize(scale(134, 50));
+  auto logo = new QMovie(":/icons/animated-logo.gif");
+  logo->setScaledSize(m_logo_widget->size());
+  qDebug() << "Is valid: " << logo->isValid();
+  //logo->setFileName(QString("://icons/animated-logo.gif"));
+  m_logo_widget->setMovie(logo);
+  logo->start();
   logo_layout->addWidget(m_logo_widget);
   logo_layout->addStretch(1);
   layout->addLayout(logo_layout);
@@ -152,7 +162,7 @@ void login_window::set_state(state state) {
     case state::LOGGING_IN: {
       m_status_label->setText("");
       m_sign_in_button->set_text("Cancel");
-      m_logo_widget->load(QString(":/icons/login-preloader.svg"));
+      m_logo_widget->movie()->start();
       m_state = state;
       break;
     }
@@ -212,6 +222,22 @@ bool login_window::eventFilter(QObject* object, QEvent* event) {
         disable_button();
       }
     }
+  } else if(event->type() == QEvent::MouseMove) {
+    if(m_sign_in_button == object && m_username_lineedit->text() != "") {
+      if(!rect().contains(static_cast<QMouseEvent*>(event)->
+          localPos().toPoint())) {
+        disable_button_hover();
+      }
+    } else if(m_exit_button == object) {
+      if(!rect().contains(static_cast<QMouseEvent*>(event)->
+          localPos().toPoint())) {
+        m_exit_button->
+      }
+    }
+  } else if(event->type() == QEvent::Enter) {
+    if(m_sign_in_button == object && m_username_lineedit->text() != "") {
+      enable_button();
+    }
   }
   return QWidget::eventFilter(object, event);
 }
@@ -261,7 +287,7 @@ void login_window::reset_widget() {
 
 void login_window::reset_visuals() {
   m_sign_in_button->set_text("Sign In");
-  m_logo_widget->load(QString(":/icons/logo.svg"));
+  m_logo_widget->movie()->stop();
   setFocus();
 }
 
@@ -319,6 +345,18 @@ void login_window::disable_button() {
        font-size: %1px;
        font-weight: bold;
        qproperty-alignment: AlignCenter;)").arg(scale_height(14)));
+}
+
+void login_window::disable_button_hover() {
+  m_sign_in_button->setStyleSheet(QString(
+    R"(QLabel {
+         background-color: #684BC7;
+         color: #E2E0FF;
+         font-family: Roboto;
+         font-size: %1px;
+         font-weight: bold;
+         qproperty-alignment: AlignCenter;
+       })").arg(scale_height(14)));
 }
 
 void login_window::button_focused() {

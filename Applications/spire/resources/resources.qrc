@@ -18,9 +18,10 @@
         <file>fonts/Roboto/Roboto-Regular.ttf</file>
         <file>fonts/Roboto/Roboto-Thin.ttf</file>
         <file>fonts/Roboto/Roboto-ThinItalic.ttf</file>
-        <file>icons/logo.svg</file>
         <file>icons/close-purple.svg</file>
         <file>icons/close-red.svg</file>
-        <file>icons/login-preloader.svg</file>
+        <file>icons/animated-logo.gif</file>
+        <file>icons/animated-logo@2x.gif</file>
+        <file>icons/animated-logo@4x.gif</file>
     </qresource>
 </RCC>

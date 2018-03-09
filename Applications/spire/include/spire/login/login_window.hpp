@@ -9,7 +9,6 @@
 #include <QMouseEvent>
 #include <QPoint>
 #include <QPushButton>
-#include <QtSvg/QSvgWidget>
 #include <QWidget>
 #include "spire/login/login.hpp"
 #include "spire/login/chroma_hash_widget.hpp"
@@ -81,7 +80,7 @@ namespace spire {
       mutable login_signal m_login_signal;
       mutable cancel_signal m_cancel_signal;
       state m_state;
-      QSvgWidget* m_logo_widget;
+      QLabel* m_logo_widget;
       QLabel* m_status_label;
       QLineEdit* m_username_lineedit;
       QLineEdit* m_password_lineedit;
@@ -98,6 +97,7 @@ namespace spire {
       void password_input_changed();
       void enable_button();
       void disable_button();
+      void disable_button_hover();
       void button_focused();
   };
 }

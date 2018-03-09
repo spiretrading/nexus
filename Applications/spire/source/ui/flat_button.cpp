@@ -1,6 +1,7 @@
 #include "spire/ui/flat_button.hpp"
 #include <QHBoxLayout>
 #include <QMouseEvent>
+#include <QPointF>
 
 using namespace boost;
 using namespace boost::signals2;
@@ -33,7 +34,9 @@ void flat_button::mousePressEvent(QMouseEvent* event) {
 
 void flat_button::mouseReleaseEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton && m_clickable) {
-    m_clicked_signal();
+    if(rect().contains(event->localPos().toPoint())) {
+      m_clicked_signal();
+    }
   }
 }
 
