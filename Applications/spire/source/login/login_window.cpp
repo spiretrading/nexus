@@ -116,7 +116,6 @@ login_window::login_window(const std::string& version, QWidget* parent)
   ch_outer_widget->setStyleSheet("background-color: white;");
   auto ch_layout = new QHBoxLayout(ch_outer_widget);
   ch_layout->setMargin(0);
-  ch_layout->addWidget(ch_outer_widget);
   m_chroma_hash_widget = new chroma_hash_widget(this);
   ch_layout->addWidget(m_chroma_hash_widget);
   password_layout->addWidget(ch_outer_widget);
@@ -135,7 +134,7 @@ login_window::login_window(const std::string& version, QWidget* parent)
   build_label->setFixedSize(scale(160, 30));
   button_layout->addWidget(build_label);
   m_sign_in_button = new flat_button(tr("Sign In"), this);
-  m_sign_in_button->connect_clicked_signal([=] {on_button_click();});
+  m_sign_in_button->connect_clicked_signal([=] {try_login();});
   m_sign_in_button->installEventFilter(this);
   m_sign_in_button->setFixedSize(scale(120, 30));
   disable_button();
@@ -219,8 +218,10 @@ bool login_window::eventFilter(QObject* object, QEvent* event) {
       }
     }
   } else if(event->type() == QEvent::Enter) {
-    if(m_sign_in_button == object && m_username_lineedit->text() != "") {
-      enable_button();
+    if(m_sign_in_button == object) {
+      if(m_username_lineedit->text() != "") {
+        enable_button();
+      }
     }
   }
   return QWidget::eventFilter(object, event);
@@ -229,6 +230,12 @@ bool login_window::eventFilter(QObject* object, QEvent* event) {
 void login_window::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
     close();
+  } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
+    if(!m_username_lineedit->hasFocus()) {
+      if(m_username_lineedit->text() != "") {
+        try_login();
+      }
+    }
   } else if(m_password_lineedit->hasFocus()) {
     return;
   } else if(!m_username_lineedit->hasFocus()) {
@@ -273,12 +280,11 @@ void login_window::reset_visuals() {
   m_sign_in_button->set_text("Sign In");
   m_logo_widget->movie()->stop();
   m_logo_widget->movie()->jumpToFrame(0);
-  setFocus();
 }
 
-void login_window::on_button_click() {
+void login_window::try_login() {
   if(m_state != state::LOGGING_IN) {
-    if (m_username_lineedit->text() == "" || m_password_lineedit->text() == "") {
+    if (m_username_lineedit->text() == "") {
       set_state(state::INCORRECT_CREDENTIALS);
     } else {
       m_login_signal(m_username_lineedit->text().toStdString(),

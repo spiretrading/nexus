@@ -92,7 +92,7 @@ namespace spire {
 
       void reset_widget();
       void reset_visuals();
-      void on_button_click();
+      void try_login();
       void inputs_updated();
       void password_input_changed();
       void enable_button();
