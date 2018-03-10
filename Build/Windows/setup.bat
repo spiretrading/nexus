@@ -55,9 +55,9 @@ if exist qt-5.10.0 goto end_qt_setup
     pushd qt-5.10.0
     git checkout v5.10.0
     perl init-repository ^
-      --module-subset=default,-qtwebkit,-qtwebkit-examples,-qtwebengine,-qtwebchannel,-qtwebglplugin,-qtwebsockets,-qtwebview,-qtspeech
+      --module-subset=default,-qtgamepad,-qtmultimedia,-qtspeech,-qtvirualkeyboard,-qtwebchannel,-qtwebengine,-qtwebglplugin,-qtwebkit,-qtwebkit-examples,-qtwebsockets,-qtwebview
     call configure -opensource -static -mp -make libs -make tools ^
-      -nomake examples -nomake tests -opengl desktop -no-icu -qt-freetype ^
+      -nomake examples -nomake tests -gif -opengl desktop -no-icu -qt-freetype ^
       -qt-harfbuzz -qt-libpng -qt-pcre -qt-zlib -confirm-license
     set CL=/MP
     nmake
