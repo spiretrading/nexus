@@ -25,7 +25,9 @@ unique_ptr<VirtualServiceClients>& login_controller::get_service_clients() {
 void login_controller::open() {
   m_login_window = std::make_unique<login_window>();
   m_login_window->connect_login_signal(
-    [=] (auto&& p1, auto&& p2) {on_login(p1, p2);});
+
+    // TODO: GCC workaround.
+    [=] (auto&& p1, auto&& p2) {this->on_login(p1, p2);});
   m_login_window->connect_cancel_signal([=] () {on_cancel();});
   m_login_window->show();
 }
@@ -43,7 +45,9 @@ void login_controller::on_login(const string& username,
       service_clients->Open();
       return std::move(service_clients);
     },
-    [=] (auto&& result) {on_login_promise(std::move(result));});
+
+    // TODO: GCC workaround.
+    [=] (auto&& result) {this->on_login_promise(std::move(result));});
 }
 
 void login_controller::on_cancel() {
