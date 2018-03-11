@@ -1,0 +1,99 @@
+find_package(Qt5Widgets REQUIRED)
+
+file(GLOB header_files ./../../../include/spire/time_and_sales_ui_tester/*.hpp)
+file(GLOB source_files ./../../../source/time_and_sales_ui_tester/*.cpp)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+if(WIN32)
+  set(app_type WIN32)
+elseif(APPLE)
+  set(app_type MACOSX_BUNDLE)
+endif()
+
+add_executable(time_and_sales_ui_tester ${app_type} ${header_files}
+  ${source_files})
+set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
+
+if(UNIX)
+  target_link_libraries(time_and_sales_ui_tester
+    debug $ENV{QT_XCB_PLATFORM_LIBRARY_DEBUG_PATH}
+    optimized $ENV{QT_XCB_PLATFORM_LIBRARY_OPTIMIZED_PATH}
+    debug $ENV{QT_XCB_PLUGIN_LIBRARY_DEBUG_PATH}
+    optimized $ENV{QT_XCB_PLUGIN_LIBRARY_OPTIMIZED_PATH})
+  if(EXISTS $ENV{QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_DEBUG_PATH})
+    target_link_libraries(time_and_sales_ui_tester
+      debug $ENV{QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_DEBUG_PATH}
+      optimized $ENV{QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_OPTIMIZED_PATH})
+  endif()
+  target_link_libraries(time_and_sales_ui_tester
+    debug $ENV{QT_SERVICE_SUPPORT_LIBRARY_DEBUG_PATH}
+    optimized $ENV{QT_SERVICE_SUPPORT_LIBRARY_OPTIMIZED_PATH}
+    debug $ENV{QT_THEME_LIBRARY_DEBUG_PATH}
+    optimized $ENV{QT_THEME_LIBRARY_OPTIMIZED_PATH}
+    debug $ENV{QT_DBUS_LIBRARY_DEBUG_PATH}
+    optimized $ENV{QT_DBUS_LIBRARY_OPTIMIZED_PATH}
+    debug $ENV{QT_XML_LIBRARY_DEBUG_PATH}
+    optimized $ENV{QT_XML_LIBRARY_OPTIMIZED_PATH})
+endif()
+
+target_link_libraries(time_and_sales_ui_tester resources time_and_sales common
+  ui
+  debug $ENV{CRYPTOPP_LIBRARY_DEBUG_PATH}
+  optimized $ENV{CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{OPEN_SSL_LIBRARY_DEBUG_PATH}
+  optimized $ENV{OPEN_SSL_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{OPEN_SSL_BASE_LIBRARY_DEBUG_PATH}
+  optimized $ENV{OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{YAML_LIBRARY_DEBUG_PATH}
+  optimized $ENV{YAML_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{QT_SVG_LIBRARY_DEBUG_PATH}
+  optimized $ENV{QT_SVG_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{QT_WIDGETS_LIBRARY_DEBUG_PATH}
+  optimized $ENV{QT_WIDGETS_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{QT_FONT_LIBRARY_DEBUG_PATH}
+  optimized $ENV{QT_FONT_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{QT_GUI_LIBRARY_DEBUG_PATH}
+  optimized $ENV{QT_GUI_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{QT_PNG_LIBRARY_DEBUG_PATH}
+  optimized $ENV{QT_PNG_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{QT_EVENT_LIBRARY_DEBUG_PATH}
+  optimized $ENV{QT_EVENT_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{QT_ACCESS_LIBRARY_DEBUG_PATH}
+  optimized $ENV{QT_ACCESS_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{QT_HBNG_LIBRARY_DEBUG_PATH}
+  optimized $ENV{QT_HBNG_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{QT_CORE_LIBRARY_DEBUG_PATH}
+  optimized $ENV{QT_CORE_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{QT_PCRE_LIBRARY_DEBUG_PATH}
+  optimized $ENV{QT_PCRE_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{YAML_LIBRARY_DEBUG_PATH}
+  optimized $ENV{YAML_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{ZLIB_LIBRARY_DEBUG_PATH}
+  optimized $ENV{ZLIB_LIBRARY_OPTIMIZED_PATH})
+
+if(WIN32)
+  target_link_libraries(time_and_sales_ui_tester
+    debug $ENV{QT_THEME_LIBRARY_DEBUG_PATH}
+    optimized $ENV{QT_THEME_LIBRARY_OPTIMIZED_PATH}
+    debug $ENV{QT_FREETYPE_LIBRARY_DEBUG_PATH}
+    optimized $ENV{QT_FREETYPE_LIBRARY_OPTIMIZED_PATH}
+    debug $ENV{QT_MAIN_LIBRARY_DEBUG_PATH}
+    optimized $ENV{QT_MAIN_LIBRARY_OPTIMIZED_PATH}
+    debug $ENV{QT_WINDOWS_LIBRARY_DEBUG_PATH}
+    optimized $ENV{QT_WINDOWS_LIBRARY_OPTIMIZED_PATH}
+    imm32.lib winmm.lib ws2_32.lib opengl32.lib version.lib netapi32.lib
+    userenv.lib dwmapi.lib)
+endif()
+
+if(UNIX)
+  target_link_libraries(time_and_sales_ui_tester
+    debug $ENV{QT_EDID_LIBRARY_DEBUG_PATH}
+    optimized $ENV{QT_EDID_LIBRARY_OPTIMIZED_PATH}
+    debug $ENV{QT_XCB_LIBRARY_DEBUG_PATH}
+    optimized $ENV{QT_XCB_LIBRARY_OPTIMIZED_PATH}
+    dbus-1 dl fontconfig freetype glib-2.0 ICE double-conversion pthread rt SM
+    X11 X11-xcb xcb Xi xkbcommon xkbcommon-x11 Xrender)
+endif()
+
+install(TARGETS time_and_sales_ui_tester DESTINATION
+  $ENV{TEST_INSTALL_DIRECTORY})
