@@ -160,6 +160,7 @@ void Nexus::Python::ExportCompliance() {
 
 void Nexus::Python::ExportComplianceParameter() {
   ExportVariant<ComplianceValue>();
+  ExportVector<vector<ComplianceValue>>("VectorComplianceValue");
   class_<ComplianceParameter>("ComplianceParameter", init<>())
     .def(init<std::string, ComplianceValue>())
     .def_readwrite("name", &ComplianceParameter::m_name)
