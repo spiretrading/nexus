@@ -5,9 +5,9 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace spire;
 
-login_ui_tester::login_ui_tester(login_window* window, QWidget* parent)
+login_ui_tester::login_ui_tester(spire::window* login_window, QWidget* parent)
     : QWidget(parent) {
-  m_login_window = window;
+  m_login_window = login_window;
   setFixedSize(480, 270);
   auto layout = new QVBoxLayout(this);
   m_accept_button = new QPushButton("Accept Account", this);
@@ -33,11 +33,14 @@ login_ui_tester::login_ui_tester(login_window* window, QWidget* parent)
 bool login_ui_tester::eventFilter(QObject* obj, QEvent* event) {
   if(event->type() == QEvent::MouseButtonRelease && event->type() != QEvent::Move) {
     if(obj == m_accept_button) {
-      m_login_window->set_state(login_window::state::NONE);
+      static_cast<login_window*>(m_login_window->get_window())->
+        set_state(login_window::state::NONE);
     } else if(obj == m_reject_button) {
-      m_login_window->set_state(login_window::state::INCORRECT_CREDENTIALS);
+      static_cast<login_window*>(m_login_window->get_window())->
+        set_state(login_window::state::INCORRECT_CREDENTIALS);
     } else if(obj == m_server_unavailable_button) {
-      m_login_window->set_state(login_window::state::SERVER_UNAVAILABLE);
+      static_cast<login_window*>(m_login_window->get_window())->
+        set_state(login_window::state::SERVER_UNAVAILABLE);
     }
   }
   if(obj == m_login_window && event->type() == QEvent::Close) {

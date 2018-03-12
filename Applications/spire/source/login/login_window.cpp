@@ -19,7 +19,7 @@ login_window::login_window(const std::string& version, QWidget* parent)
   setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
   setFixedSize(scale(384, 346));
   setFocus();
-  setStyleSheet("background-color: #4B23A0");
+  setStyleSheet("background-color: #4B23A0;");
   auto layout = new QVBoxLayout(this);
   layout->setMargin(0);
   layout->setSpacing(0);
@@ -39,9 +39,9 @@ login_window::login_window(const std::string& version, QWidget* parent)
   QPainter p2(&hover_icon);
   hover_icon.fill(QColor(0, 0, 0, 0));
   renderer->render(&p2, draw_rect);
-  m_exit_button = new icon_button(default_icon, hover_icon, this);
+  m_exit_button = new icon_button(default_icon, hover_icon, parent);
   m_exit_button->installEventFilter(this);
-  m_exit_button->connect_clicked_signal([&] {close();});
+  m_exit_button->connect_clicked_signal([&] {window()->close();});
   m_exit_button->setFixedSize(scale(32, 26));
   m_exit_button->setStyleSheet(":hover { background-color: #401D8B; }");
   title_bar_layout->addWidget(m_exit_button);
@@ -51,7 +51,7 @@ login_window::login_window(const std::string& version, QWidget* parent)
   logo_layout->setMargin(0);
   logo_layout->setSpacing(0);
   logo_layout->addStretch(1);
-  m_logo_widget = new QLabel(this);
+  m_logo_widget = new QLabel(parent);
   m_logo_widget->setFixedSize(scale(134, 50));
   auto logo = new QMovie(":/icons/logo.gif");
   logo->setScaledSize(m_logo_widget->size());
@@ -229,7 +229,7 @@ bool login_window::eventFilter(QObject* object, QEvent* event) {
 
 void login_window::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
-    close();
+    window()->close();
   } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
     if(!m_username_lineedit->hasFocus()) {
       if(m_username_lineedit->text() != "") {
@@ -250,10 +250,10 @@ void login_window::mouseMoveEvent(QMouseEvent* event) {
   }
   auto delta = event->globalPos();
   delta -= m_last_pos;
-  auto window_pos = pos();
+  auto window_pos = window()->pos();
   window_pos += delta;
   m_last_pos = event->globalPos();
-  move(window_pos);
+  window()->move(window_pos);
 }
 
 void login_window::mousePressEvent(QMouseEvent* event) {

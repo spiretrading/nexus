@@ -4,6 +4,7 @@
 #include <QPushButton>
 #include <QWidget>
 #include "spire/login/login_window.hpp"
+#include "spire/ui/window.hpp"
 
 namespace spire {
 
@@ -15,8 +16,9 @@ namespace spire {
     //! Constructs the login_ui_tester.
     /*!
       \param window The login_window that this widget will interact with.
+      \param frame The top-
     */
-    login_ui_tester(spire::login_window* window, QWidget* parent = nullptr);
+    login_ui_tester(spire::window* login_window, QWidget* parent = nullptr);
 
     protected:
       bool eventFilter(QObject* obj, QEvent* event);
@@ -25,7 +27,7 @@ namespace spire {
       QPushButton* m_accept_button;
       QPushButton* m_reject_button;
       QPushButton* m_server_unavailable_button;
-      login_window* m_login_window;
+      spire::window* m_login_window;
   };
 }
 
