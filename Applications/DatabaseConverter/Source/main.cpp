@@ -257,7 +257,8 @@ namespace {
               mysqlpp::sql_blob updated_row(updateBuffer.GetData(),
                 updateBuffer.GetSize());
               query << "UPDATE submissions SET additional_fields = " <<
-                updated_row << " WHERE order_id = " << row.order_id;
+                mysqlpp::quote << updated_row << " WHERE order_id = " <<
+                row.order_id;
             } catch(const Beam::Serialization::SerializationException&) {
               BOOST_THROW_EXCEPTION(OrderExecutionDataStoreException(
                 "Unable to load additional fields."));
@@ -330,8 +331,8 @@ namespace {
             mysqlpp::sql_blob updated_row(updateBuffer.GetData(),
               updateBuffer.GetSize());
             query << "UPDATE compliance_rule_entries SET "
-              "schema_parameters = " << updated_row << " WHERE entry_id = " <<
-              row.entry_id;
+              "schema_parameters = " << mysqlpp::quote << updated_row <<
+              " WHERE entry_id = " << row.entry_id;
           } catch(const Beam::Serialization::SerializationException&) {
             BOOST_THROW_EXCEPTION(OrderExecutionDataStoreException(
               "Unable to load additional fields."));
