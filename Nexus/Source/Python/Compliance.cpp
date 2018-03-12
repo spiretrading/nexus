@@ -186,6 +186,7 @@ void Nexus::Python::ExportComplianceRuleEntry() {
       return_value_policy<copy_const_reference>()))
     .def(self == self)
     .def(self != self);
+  ExportVector<vector<ComplianceRuleEntry>>("VectorComplianceRuleEntry");
 }
 
 void Nexus::Python::ExportComplianceRuleSchema() {
@@ -198,6 +199,7 @@ void Nexus::Python::ExportComplianceRuleSchema() {
       return_value_policy<return_by_value>()))
     .def(self == self)
     .def(self != self);
+  ExportVector<vector<ComplianceRuleSchema>>("VectorComplianceRuleSchema");
 }
 
 void Nexus::Python::ExportComplianceRuleViolationRecord() {
