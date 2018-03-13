@@ -1,9 +1,9 @@
 #include "spire/login/login_controller.hpp"
 #include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
-#include "spire/version.hpp"
 #include "spire/login/login_window.hpp"
 #include "spire/spire/qt_promise.hpp"
+#include "spire/version.hpp"
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;

@@ -6,7 +6,8 @@ using namespace Beam;
 using namespace Beam::ServiceLocator;
 using namespace spire;
 
-chroma_hash_widget::chroma_hash_widget(QWidget* parent) {
+chroma_hash_widget::chroma_hash_widget(QWidget* parent)
+    : QWidget(parent) {
   auto layout = new QHBoxLayout(this);
   layout->setMargin(0);
   layout->setSpacing(0);

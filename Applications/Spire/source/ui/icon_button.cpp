@@ -9,8 +9,8 @@ using namespace spire;
 
 icon_button::icon_button(const QImage& default_icon, const QImage& hover_icon,
     QWidget* parent)
-    : QWidget(parent) {
-  m_clickable = true;
+    : QWidget(parent),
+      m_clickable(true) {
   auto layout = new QHBoxLayout(this);
   layout->setMargin(0);
   m_label = new QLabel(this);
@@ -23,10 +23,6 @@ icon_button::icon_button(const QImage& default_icon, const QImage& hover_icon,
 connection icon_button::connect_clicked_signal(
     const clicked_signal::slot_type& slot) const {
   return m_clicked_signal.connect(slot);
-}
-
-void icon_button::resizeEvent(QResizeEvent* event) {
-
 }
 
 void icon_button::enterEvent(QEvent* event) {

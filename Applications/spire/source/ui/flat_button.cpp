@@ -8,8 +8,8 @@ using namespace boost::signals2;
 using namespace spire;
 
 flat_button::flat_button(const QString& label, QWidget* parent)
-    : QWidget(parent) {
-  m_clickable = true;
+    : QWidget(parent),
+      m_clickable(true) {
   m_label = new QLabel(label, this);
   auto layout = new QHBoxLayout(this);
   layout->setMargin(0);

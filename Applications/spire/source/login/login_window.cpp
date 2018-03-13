@@ -3,11 +3,13 @@
 #include <QImage>
 #include <QMovie>
 #include <QPainter>
-#include <QPixmap>
 #include <QSize>
 #include <QtSvg/QSvgRenderer>
 #include <QVBoxlayout>
+#include "spire/login/chroma_hash_widget.hpp"
 #include "spire/spire/dimensions.hpp"
+#include "spire/ui/flat_button.hpp"
+#include "spire/ui/icon_button.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -72,19 +74,19 @@ login_window::login_window(const std::string& version, QWidget* parent)
   username_layout->setMargin(0);
   username_layout->setSpacing(0);
   username_layout->addStretch(1);
-  m_username_lineedit = new QLineEdit(this);
-  connect(m_username_lineedit, &QLineEdit::textEdited, [&] { inputs_updated(); });
-  m_username_lineedit->installEventFilter(this);
-  m_username_lineedit->setPlaceholderText(tr("Username"));
-  m_username_lineedit->setFixedSize(scale(280, 30));
-  m_username_lineedit->setStyleSheet(QString(
+  m_username_line_edit = new QLineEdit(this);
+  connect(m_username_line_edit, &QLineEdit::textEdited, [&] { inputs_updated(); });
+  m_username_line_edit->installEventFilter(this);
+  m_username_line_edit->setPlaceholderText(tr("Username"));
+  m_username_line_edit->setFixedSize(scale(280, 30));
+  m_username_line_edit->setStyleSheet(QString(
     R"(background-color: white;
        border: 0px;
        font-family: Roboto;
        font-size: %2px;
        padding-left: %1px;)")
     .arg(scale_width(10)).arg(scale_height(14)));
-  username_layout->addWidget(m_username_lineedit);
+  username_layout->addWidget(m_username_line_edit);
   username_layout->addStretch(1);
   layout->addLayout(username_layout);
   layout->addStretch(15);
@@ -92,22 +94,22 @@ login_window::login_window(const std::string& version, QWidget* parent)
   password_layout->setMargin(0);
   password_layout->setSpacing(0);
   password_layout->addStretch(1);
-  m_password_lineedit = new QLineEdit(this);
-  connect(m_password_lineedit, &QLineEdit::textEdited, [&] { inputs_updated(); });
-  connect(m_password_lineedit, &QLineEdit::textEdited, [&] {
+  m_password_line_edit = new QLineEdit(this);
+  connect(m_password_line_edit, &QLineEdit::textEdited, [&] { inputs_updated(); });
+  connect(m_password_line_edit, &QLineEdit::textEdited, [&] {
     password_input_changed(); });
-  m_password_lineedit->installEventFilter(this);
-  m_password_lineedit->setEchoMode(QLineEdit::Password);
-  m_password_lineedit->setPlaceholderText(tr("Password"));
-  m_password_lineedit->setFixedSize(scale(246, 30));
-  m_password_lineedit->setStyleSheet(QString(
+  m_password_line_edit->installEventFilter(this);
+  m_password_line_edit->setEchoMode(QLineEdit::Password);
+  m_password_line_edit->setPlaceholderText(tr("Password"));
+  m_password_line_edit->setFixedSize(scale(246, 30));
+  m_password_line_edit->setStyleSheet(QString(
     R"(background-color: white;
        border: 0px;
        font-family: Roboto;
        font-size: %2px;
        padding-left: %1px;)")
     .arg(scale_width(10)).arg(scale_height(14)));
-  password_layout->addWidget(m_password_lineedit);
+  password_layout->addWidget(m_password_line_edit);
   auto ch_outer_widget = new QWidget(this);
   ch_outer_widget->setContentsMargins(scale_width(2), scale_height(2),
     scale_width(2), scale_height(2));
@@ -141,8 +143,8 @@ login_window::login_window(const std::string& version, QWidget* parent)
   button_layout->addStretch(52);
   layout->addLayout(button_layout);
   layout->addStretch(48);
-  setTabOrder(m_username_lineedit, m_password_lineedit);
-  setTabOrder(m_password_lineedit, m_sign_in_button);
+  setTabOrder(m_username_line_edit, m_password_line_edit);
+  setTabOrder(m_password_line_edit, m_sign_in_button);
   set_state(state::NONE);
 }
 
@@ -153,10 +155,10 @@ void login_window::set_state(state state) {
       break;
     }
     case state::LOGGING_IN: {
-      m_username_lineedit->setEnabled(false);
-      m_password_lineedit->setEnabled(false);
+      m_username_line_edit->setEnabled(false);
+      m_password_line_edit->setEnabled(false);
       m_status_label->setText("");
-      m_sign_in_button->set_text("Cancel");
+      m_sign_in_button->set_text(tr("Cancel"));
       m_logo_widget->movie()->start();
       break;
     }
@@ -166,12 +168,12 @@ void login_window::set_state(state state) {
       break;
     }
     case state::INCORRECT_CREDENTIALS: {
-      m_status_label->setText("Incorrect username or password.");
+      m_status_label->setText(tr("Incorrect username or password."));
       reset_visuals();
       break;
     }
     case state::SERVER_UNAVAILABLE: {
-      m_status_label->setText("Server is unavailable.");
+      m_status_label->setText(tr("Server is unavailable."));
       reset_visuals();
       break;
     }
@@ -189,51 +191,51 @@ connection login_window::connect_cancel_signal(
   return m_cancel_signal.connect(slot);
 }
 
-bool login_window::eventFilter(QObject* object, QEvent* event) {
+bool login_window::eventFilter(QObject* receiver, QEvent* event) {
   if(event->type() == QEvent::FocusIn) {
-    if(m_username_lineedit == object) {
-      m_username_lineedit->setPlaceholderText("");
+    if(m_username_line_edit == receiver) {
+      m_username_line_edit->setPlaceholderText("");
     }
-    if(m_password_lineedit == object) {
-      m_password_lineedit->setPlaceholderText("");
+    if(m_password_line_edit == receiver) {
+      m_password_line_edit->setPlaceholderText("");
     }
-    if(m_sign_in_button == object) {
-      if(m_username_lineedit->text() != "") {
+    if(m_sign_in_button == receiver) {
+      if(!m_username_line_edit->text().isEmpty()) {
         button_focused();
       }
     }
   } else if(event->type() == QEvent::FocusOut) {
-    if(m_username_lineedit == object) {
-      m_username_lineedit->setPlaceholderText(tr("Username"));
+    if(m_username_line_edit == receiver) {
+      m_username_line_edit->setPlaceholderText(tr("Username"));
     }
-    if(m_password_lineedit == object) {
-      m_password_lineedit->setPlaceholderText(tr("Password"));
+    if(m_password_line_edit == receiver) {
+      m_password_line_edit->setPlaceholderText(tr("Password"));
     }
-    if(m_sign_in_button == object) {
-      if(m_username_lineedit->text() != "") {
+    if(m_sign_in_button == receiver) {
+      if(!m_username_line_edit->text().isEmpty()) {
         enable_button();
       } else {
         disable_button();
       }
     }
   }
-  return QWidget::eventFilter(object, event);
+  return QWidget::eventFilter(receiver, event);
 }
 
 void login_window::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
     window()->close();
   } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
-    if(!m_username_lineedit->hasFocus()) {
-      if(m_username_lineedit->text() != "") {
+    if(!m_username_line_edit->hasFocus()) {
+      if(!m_username_line_edit->text().isEmpty()) {
         try_login();
       }
     }
-  } else if(m_password_lineedit->hasFocus()) {
+  } else if(m_password_line_edit->hasFocus()) {
     return;
-  } else if(!m_username_lineedit->hasFocus() && m_username_lineedit->text() == "") {
-    m_username_lineedit->setText(event->text());
-    m_username_lineedit->setFocus();
+  } else if(!m_username_line_edit->hasFocus() && m_username_line_edit->text().isEmpty()) {
+    m_username_line_edit->setText(event->text());
+    m_username_line_edit->setFocus();
   }
 }
 
@@ -270,21 +272,21 @@ void login_window::reset_all() {
 }
 
 void login_window::reset_visuals() {
-  m_username_lineedit->setEnabled(true);
-  m_password_lineedit->setEnabled(true);
+  m_username_line_edit->setEnabled(true);
+  m_password_line_edit->setEnabled(true);
   m_sign_in_button->setFocus();
-  m_sign_in_button->set_text("Sign In");
+  m_sign_in_button->set_text(tr("Sign In"));
   m_logo_widget->movie()->stop();
   m_logo_widget->movie()->jumpToFrame(0);
 }
 
 void login_window::try_login() {
   if(m_state != state::LOGGING_IN) {
-    if (m_username_lineedit->text() == "") {
+    if(m_username_line_edit->text().isEmpty()) {
       set_state(state::INCORRECT_CREDENTIALS);
     } else {
-      m_login_signal(m_username_lineedit->text().toStdString(),
-        m_password_lineedit->text().toStdString());
+      m_login_signal(m_username_line_edit->text().toStdString(),
+        m_password_line_edit->text().toStdString());
       set_state(state::LOGGING_IN);
     }
   } else {
@@ -294,7 +296,7 @@ void login_window::try_login() {
 }
 
 void login_window::inputs_updated() {
-  if(m_username_lineedit->text() != "") {
+  if(!m_username_line_edit->text().isEmpty()) {
     enable_button();
   } else {
     disable_button();
@@ -302,7 +304,7 @@ void login_window::inputs_updated() {
 }
 
 void login_window::password_input_changed() {
-  m_chroma_hash_widget->set_text(m_password_lineedit->text());
+  m_chroma_hash_widget->set_text(m_password_line_edit->text());
 }
 
 void login_window::enable_button() {

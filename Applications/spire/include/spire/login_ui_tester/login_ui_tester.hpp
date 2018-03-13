@@ -3,8 +3,8 @@
 #include <QEvent>
 #include <QPushButton>
 #include <QWidget>
-#include "spire/login/login_window.hpp"
-#include "spire/ui/window.hpp"
+#include "spire/login/login.hpp"
+#include "spire/ui/ui.hpp"
 
 namespace spire {
 
@@ -21,7 +21,7 @@ namespace spire {
     login_ui_tester(spire::window* login_window, QWidget* parent = nullptr);
 
     protected:
-      bool eventFilter(QObject* obj, QEvent* event);
+      bool eventFilter(QObject* receiver, QEvent* event);
 
     private:
       QPushButton* m_accept_button;

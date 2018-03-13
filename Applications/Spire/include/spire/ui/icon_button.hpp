@@ -49,7 +49,6 @@ namespace spire {
       void set_icon(bool is_default);
 
     protected:
-      void resizeEvent(QResizeEvent* event) override;
       void enterEvent(QEvent* event) override;
       void leaveEvent(QEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;

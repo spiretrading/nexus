@@ -11,9 +11,7 @@
 #include <QPushButton>
 #include <QWidget>
 #include "spire/login/login.hpp"
-#include "spire/login/chroma_hash_widget.hpp"
-#include "spire/ui/flat_button.hpp"
-#include "spire/ui/icon_button.hpp"
+#include "spire/ui/ui.hpp"
 
 namespace spire {
 
@@ -66,7 +64,7 @@ namespace spire {
         const cancel_signal::slot_type& slot) const;
 
     protected:
-      bool eventFilter(QObject* object, QEvent* event) override;
+      bool eventFilter(QObject* receiver, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event);
       void mouseMoveEvent(QMouseEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
@@ -78,13 +76,13 @@ namespace spire {
       state m_state;
       QLabel* m_logo_widget;
       QLabel* m_status_label;
-      QLineEdit* m_username_lineedit;
-      QLineEdit* m_password_lineedit;
-      spire::flat_button* m_sign_in_button;
-      spire::icon_button* m_exit_button;
+      QLineEdit* m_username_line_edit;
+      QLineEdit* m_password_line_edit;
+      flat_button* m_sign_in_button;
+      icon_button* m_exit_button;
       bool m_is_dragging;
       QPoint m_last_pos;
-      spire::chroma_hash_widget* m_chroma_hash_widget;
+      chroma_hash_widget* m_chroma_hash_widget;
 
       void reset_all();
       void reset_visuals();

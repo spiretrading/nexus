@@ -1,9 +1,9 @@
 #include <QApplication>
-#include "spire/version.hpp"
 #include "spire/login_ui_tester/login_ui_tester.hpp"
 #include "spire/login/login_window.hpp"
 #include "spire/spire/resources.hpp"
 #include "spire/ui/window.hpp"
+#include "spire/version.hpp"
 
 using namespace spire;
 
@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
   application->setApplicationName(QObject::tr("Login UI Tester"));
   initialize_resources();
   auto login = new login_window(SPIRE_VERSION);
-  spire::window frame(login, "#321471");
+  spire::window frame(login, QColor("#321471"));
   frame.show();
   login_ui_tester tester(&frame);
   tester.setGeometry(frame.pos().x(),
