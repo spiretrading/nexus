@@ -12,8 +12,8 @@ int main(int argc, char** argv) {
   application->setOrganizationName(QObject::tr("Eidolon Systems Ltd"));
   application->setApplicationName(QObject::tr("Login UI Tester"));
   initialize_resources();
-  login_window window(SPIRE_VERSION);
-  spire::window frame(&window, "#A0A0A0", nullptr);
+  auto login = new login_window(SPIRE_VERSION);
+  spire::window frame(login, "#321471");
   frame.show();
   login_ui_tester tester(&frame);
   tester.setGeometry(frame.pos().x(),
