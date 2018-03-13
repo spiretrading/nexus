@@ -67,13 +67,9 @@ namespace spire {
 
     protected:
       bool eventFilter(QObject* object, QEvent* event) override;
-
       void keyPressEvent(QKeyEvent* event);
-
       void mouseMoveEvent(QMouseEvent* event) override;
-
       void mousePressEvent(QMouseEvent* event) override;
-
       void mouseReleaseEvent(QMouseEvent* event) override;
 
     private:
@@ -90,7 +86,7 @@ namespace spire {
       QPoint m_last_pos;
       spire::chroma_hash_widget* m_chroma_hash_widget;
 
-      void reset_widget();
+      void reset_all();
       void reset_visuals();
       void try_login();
       void inputs_updated();

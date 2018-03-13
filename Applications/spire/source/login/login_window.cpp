@@ -18,7 +18,6 @@ login_window::login_window(const std::string& version, QWidget* parent)
       m_is_dragging(false) {
   setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
   setFixedSize(scale(384, 346));
-  setFocus();
   setStyleSheet("background-color: #4B23A0;");
   auto layout = new QVBoxLayout(this);
   layout->setMargin(0);
@@ -150,19 +149,19 @@ login_window::login_window(const std::string& version, QWidget* parent)
 void login_window::set_state(state state) {
   switch(state) {
     case state::NONE: {
-      reset_widget();
-      m_state = state;
+      reset_all();
       break;
     }
     case state::LOGGING_IN: {
+      m_username_lineedit->setEnabled(false);
+      m_password_lineedit->setEnabled(false);
       m_status_label->setText("");
       m_sign_in_button->set_text("Cancel");
       m_logo_widget->movie()->start();
-      m_state = state;
       break;
     }
     case state::CANCELLING: {
-      reset_widget();
+      reset_all();
       state = state::NONE;
       break;
     }
@@ -217,12 +216,6 @@ bool login_window::eventFilter(QObject* object, QEvent* event) {
         disable_button();
       }
     }
-  } else if(event->type() == QEvent::Enter) {
-    if(m_sign_in_button == object) {
-      if(m_username_lineedit->text() != "") {
-        enable_button();
-      }
-    }
   }
   return QWidget::eventFilter(object, event);
 }
@@ -238,7 +231,7 @@ void login_window::keyPressEvent(QKeyEvent* event) {
     }
   } else if(m_password_lineedit->hasFocus()) {
     return;
-  } else if(!m_username_lineedit->hasFocus()) {
+  } else if(!m_username_lineedit->hasFocus() && m_username_lineedit->text() == "") {
     m_username_lineedit->setText(event->text());
     m_username_lineedit->setFocus();
   }
@@ -271,12 +264,15 @@ void login_window::mouseReleaseEvent(QMouseEvent* event) {
   m_is_dragging = false;
 }
 
-void login_window::reset_widget() {
+void login_window::reset_all() {
   m_status_label->setText("");
   reset_visuals();
 }
 
 void login_window::reset_visuals() {
+  m_username_lineedit->setEnabled(true);
+  m_password_lineedit->setEnabled(true);
+  m_sign_in_button->setFocus();
   m_sign_in_button->set_text("Sign In");
   m_logo_widget->movie()->stop();
   m_logo_widget->movie()->jumpToFrame(0);
@@ -330,7 +326,6 @@ void login_window::disable_button() {
   m_sign_in_button->set_clickable(false);
   m_sign_in_button->setStyleSheet(QString(
     R"(background-color: #4B23A0;
-       border: 1px solid #684BC7;
        color: #8D78EC;
        font-family: Roboto;
        font-size: %1px;
@@ -340,5 +335,5 @@ void login_window::disable_button() {
 
 void login_window::button_focused() {
   m_sign_in_button->setStyleSheet(
-    m_sign_in_button->styleSheet() + "QLabel { border: 1px solid #8D78EC; } ");
+    m_sign_in_button->styleSheet() + "QLabel { border: 1px solid #8D78EC; }");
 }

@@ -42,11 +42,8 @@ namespace spire {
       void set_clickable(bool clickable);
 
     protected:
-
       void changeEvent(QEvent* event) override;
-
       void mousePressEvent(QMouseEvent* event) override;
-
       void mouseReleaseEvent(QMouseEvent* event) override;
 
     private:

@@ -25,10 +25,10 @@ window::window(QWidget* widget, QWidget* parent)
   inner_layout->addWidget(widget);
   widget->setParent(m_border_widget);
   auto drop_shadow = new QGraphicsDropShadowEffect(this);
-  drop_shadow->setBlurRadius(25);
+  drop_shadow->setBlurRadius(scale_height(12.5));
   drop_shadow->setXOffset(0);
   drop_shadow->setYOffset(0);
-  drop_shadow->setColor(QColor(0, 0, 0, 70));
+  drop_shadow->setColor(QColor(0, 0, 0, 100));
   m_border_widget->setGraphicsEffect(drop_shadow);
   auto ss = widget->styleSheet();
   set_stylesheet("#C8C8C8");
