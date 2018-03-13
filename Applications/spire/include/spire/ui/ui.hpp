@@ -4,6 +4,8 @@
 
 namespace spire {
   class flat_button;
+  class icon_button;
+  class window;
 }
 
 #endif

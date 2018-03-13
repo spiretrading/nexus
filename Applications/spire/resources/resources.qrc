@@ -18,5 +18,8 @@
         <file>fonts/Roboto/Roboto-Regular.ttf</file>
         <file>fonts/Roboto/Roboto-Thin.ttf</file>
         <file>fonts/Roboto/Roboto-ThinItalic.ttf</file>
+        <file>icons/close-purple.svg</file>
+        <file>icons/close-red.svg</file>
+        <file>icons/logo.gif</file>
     </qresource>
 </RCC>

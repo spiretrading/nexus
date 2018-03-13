@@ -44,6 +44,8 @@ target_link_libraries(login_ui_tester login common resources ui
   optimized $ENV{OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{YAML_LIBRARY_DEBUG_PATH}
   optimized $ENV{YAML_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{QT_GIF_LIBRARY_DEBUG_PATH}
+  optimized $ENV{QT_GIF_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{QT_SVG_LIBRARY_DEBUG_PATH}
   optimized $ENV{QT_SVG_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{QT_WIDGETS_LIBRARY_DEBUG_PATH}

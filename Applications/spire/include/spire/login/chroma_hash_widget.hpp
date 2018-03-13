@@ -21,6 +21,7 @@ namespace spire {
     private:
       static constexpr auto COMPONENTS = 3;
       std::array<QColor, COMPONENTS> m_colors;
+      std::array<QWidget*, COMPONENTS> m_color_widgets;
   };
 }
 

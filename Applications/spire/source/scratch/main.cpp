@@ -1,4 +1,9 @@
 #include <QApplication>
+#include <QFrame>
+#include <QGraphicsDropShadowEffect>
+#include <QVBoxLayout>
+#include <QLabel>
+#include <QMovie>
 #include "spire/spire/resources.hpp"
 
 using namespace spire;
