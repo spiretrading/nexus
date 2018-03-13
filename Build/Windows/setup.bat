@@ -1,6 +1,6 @@
 SETLOCAL
 
-SET expected_commit="663013de733972e50139a24c98d29e9dfb7d2660"
+SET expected_commit="8bff5d437220484932e838a29653eb280614f5bf"
 if exist Beam goto end_beam_setup
   git clone https://www.github.com/eidolonsystems/beam.git Beam
   pushd Beam
@@ -55,9 +55,9 @@ if exist qt-5.10.0 goto end_qt_setup
     pushd qt-5.10.0
     git checkout v5.10.0
     perl init-repository ^
-      --module-subset=default,-qtwebkit,-qtwebkit-examples,-qtwebengine,-qtwebchannel,-qtwebglplugin,-qtwebsockets,-qtwebview,-qtspeech
+      --module-subset=default,-qtgamepad,-qtmultimedia,-qtspeech,-qtvirualkeyboard,-qtwebchannel,-qtwebengine,-qtwebglplugin,-qtwebkit,-qtwebkit-examples,-qtwebsockets,-qtwebview
     call configure -opensource -static -mp -make libs -make tools ^
-      -nomake examples -nomake tests -opengl desktop -no-icu -qt-freetype ^
+      -nomake examples -nomake tests -gif -opengl desktop -no-icu -qt-freetype ^
       -qt-harfbuzz -qt-libpng -qt-pcre -qt-zlib -confirm-license
     set CL=/MP
     nmake

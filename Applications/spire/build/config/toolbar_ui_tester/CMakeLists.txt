@@ -1,31 +1,30 @@
 find_package(Qt5Widgets REQUIRED)
 
-file(GLOB source_files ./../../../source/spire/*.cpp)
+file(GLOB header_files ./../../../include/spire/toolbar_ui_tester/*.hpp)
+file(GLOB source_files ./../../../source/toolbar_ui_tester/*.cpp)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 if(WIN32)
-  file(GLOB resource_files ./../../../source/spire/*.rc)
   set(app_type WIN32)
 elseif(APPLE)
   set(app_type MACOSX_BUNDLE)
-else()
-  set(resource_files "")
 endif()
 
-add_executable(spire ${app_type} ${source_files} ${resource_files})
+add_executable(toolbar_ui_tester ${app_type} ${header_files} ${source_files})
+set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 
 if(UNIX)
-  target_link_libraries(spire
+  target_link_libraries(toolbar_ui_tester
     debug $ENV{QT_XCB_PLATFORM_LIBRARY_DEBUG_PATH}
     optimized $ENV{QT_XCB_PLATFORM_LIBRARY_OPTIMIZED_PATH}
     debug $ENV{QT_XCB_PLUGIN_LIBRARY_DEBUG_PATH}
     optimized $ENV{QT_XCB_PLUGIN_LIBRARY_OPTIMIZED_PATH})
   if(EXISTS $ENV{QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_DEBUG_PATH})
-    target_link_libraries(spire
+    target_link_libraries(toolbar_ui_tester
       debug $ENV{QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_DEBUG_PATH}
       optimized $ENV{QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_OPTIMIZED_PATH})
   endif()
-  target_link_libraries(spire
+  target_link_libraries(toolbar_ui_tester
     debug $ENV{QT_SERVICE_SUPPORT_LIBRARY_DEBUG_PATH}
     optimized $ENV{QT_SERVICE_SUPPORT_LIBRARY_OPTIMIZED_PATH}
     debug $ENV{QT_THEME_LIBRARY_DEBUG_PATH}
@@ -36,7 +35,7 @@ if(UNIX)
     optimized $ENV{QT_XML_LIBRARY_OPTIMIZED_PATH})
 endif()
 
-target_link_libraries(spire common toolbar login common resources ui
+target_link_libraries(toolbar_ui_tester toolbar common resources ui
   debug $ENV{CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized $ENV{CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{OPEN_SSL_LIBRARY_DEBUG_PATH}
@@ -45,8 +44,6 @@ target_link_libraries(spire common toolbar login common resources ui
   optimized $ENV{OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{YAML_LIBRARY_DEBUG_PATH}
   optimized $ENV{YAML_LIBRARY_OPTIMIZED_PATH}
-  debug $ENV{QT_GIF_LIBRARY_DEBUG_PATH}
-  optimized $ENV{QT_GIF_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{QT_SVG_LIBRARY_DEBUG_PATH}
   optimized $ENV{QT_SVG_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{QT_WIDGETS_LIBRARY_DEBUG_PATH}
@@ -73,7 +70,7 @@ target_link_libraries(spire common toolbar login common resources ui
   optimized $ENV{ZLIB_LIBRARY_OPTIMIZED_PATH})
 
 if(WIN32)
-  target_link_libraries(spire
+  target_link_libraries(toolbar_ui_tester
     debug $ENV{QT_THEME_LIBRARY_DEBUG_PATH}
     optimized $ENV{QT_THEME_LIBRARY_OPTIMIZED_PATH}
     debug $ENV{QT_FREETYPE_LIBRARY_DEBUG_PATH}
@@ -87,7 +84,7 @@ if(WIN32)
 endif()
 
 if(UNIX)
-  target_link_libraries(spire
+  target_link_libraries(toolbar_ui_tester
     debug $ENV{BOOST_CHRONO_LIBRARY_DEBUG_PATH}
     optimized $ENV{BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
     debug $ENV{BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
@@ -114,4 +111,4 @@ if(UNIX)
     X11 X11-xcb xcb Xi xkbcommon xkbcommon-x11 Xrender)
 endif()
 
-install(TARGETS spire DESTINATION $ENV{INSTALL_DIRECTORY})
+install(TARGETS toolbar_ui_tester DESTINATION $ENV{TEST_INSTALL_DIRECTORY})

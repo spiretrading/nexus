@@ -35,7 +35,7 @@ if(UNIX)
     optimized $ENV{QT_XML_LIBRARY_OPTIMIZED_PATH})
 endif()
 
-target_link_libraries(login_ui_tester resources login common ui
+target_link_libraries(login_ui_tester login common resources ui
   debug $ENV{CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized $ENV{CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{OPEN_SSL_LIBRARY_DEBUG_PATH}
@@ -87,8 +87,26 @@ endif()
 
 if(UNIX)
   target_link_libraries(login_ui_tester
+    debug $ENV{BOOST_CHRONO_LIBRARY_DEBUG_PATH}
+    optimized $ENV{BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
+    debug $ENV{BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
+    optimized $ENV{BOOST_CONTEXT_LIBRARY_OPTIMIZED_PATH}
+    debug $ENV{BOOST_DATE_TIME_LIBRARY_DEBUG_PATH}
+    optimized $ENV{BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
+    debug $ENV{BOOST_FILE_SYSTEM_LIBRARY_DEBUG_PATH}
+    optimized $ENV{BOOST_FILE_SYSTEM_LIBRARY_OPTIMIZED_PATH}
+    debug $ENV{BOOST_REGEX_LIBRARY_DEBUG_PATH}
+    optimized $ENV{BOOST_REGEX_LIBRARY_OPTIMIZED_PATH}
+    debug $ENV{BOOST_THREAD_LIBRARY_DEBUG_PATH}
+    optimized $ENV{BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
+    debug $ENV{BOOST_SYSTEM_LIBRARY_DEBUG_PATH}
+    optimized $ENV{BOOST_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     debug $ENV{QT_EDID_LIBRARY_DEBUG_PATH}
     optimized $ENV{QT_EDID_LIBRARY_OPTIMIZED_PATH}
+    debug $ENV{QT_XCB_PLATFORM_LIBRARY_DEBUG_PATH}
+    optimized $ENV{QT_XCB_PLATFORM_LIBRARY_OPTIMIZED_PATH}
+    debug $ENV{QT_XCB_PLUGIN_LIBRARY_DEBUG_PATH}
+    optimized $ENV{QT_XCB_PLUGIN_LIBRARY_OPTIMIZED_PATH}
     debug $ENV{QT_XCB_LIBRARY_DEBUG_PATH}
     optimized $ENV{QT_XCB_LIBRARY_OPTIMIZED_PATH}
     dbus-1 dl fontconfig freetype glib-2.0 ICE double-conversion pthread rt SM

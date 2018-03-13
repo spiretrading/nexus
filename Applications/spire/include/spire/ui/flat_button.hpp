@@ -1,11 +1,8 @@
 #ifndef SPIRE_FLAT_BUTTON_HPP
 #define SPIRE_FLAT_BUTTON_HPP
-#include <boost/signals2/connection.hpp>
-#include <boost/signals2/dummy_mutex.hpp>
-#include <boost/signals2/signal_type.hpp>
-#include <QFont>
 #include <QLabel>
 #include <QWidget>
+#include "spire/spire/spire.hpp"
 
 namespace spire {
 
@@ -14,9 +11,7 @@ namespace spire {
     public:
 
       //! Signals that the button was clicked.
-      using clicked_signal = boost::signals2::signal_type<void (),
-        boost::signals2::keywords::mutex_type<
-        boost::signals2::dummy_mutex>>::type;
+      using clicked_signal = signal<void ()>;
 
       //! Constructs the flat_button.
       /*!
@@ -24,10 +19,6 @@ namespace spire {
         \param parent The parent widget to the flat_button.
       */
       flat_button(const QString& label, QWidget* parent = nullptr);
-
-      //! Connects a slot to the clicked signal.
-      boost::signals2::connection connect_clicked_signal(
-        const clicked_signal::slot_type& slot) const;
 
       //! Sets the flat_button's text.
       /*!
@@ -40,6 +31,10 @@ namespace spire {
         \param clickable Whether the button is clickable (true) or not (false).
       */
       void set_clickable(bool clickable);
+
+      //! Connects a slot to the clicked signal.
+      boost::signals2::connection connect_clicked_signal(
+        const clicked_signal::slot_type& slot) const;
 
     protected:
       void changeEvent(QEvent* event) override;
