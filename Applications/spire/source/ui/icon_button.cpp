@@ -1,7 +1,11 @@
 #include "spire/ui/icon_button.hpp"
+#include <QColor>
 #include <QHBoxLayout>
 #include <QMouseEvent>
+#include <QPainter>
 #include <QSize>
+#include <QtSvg/QSvgRenderer>
+#include "spire/spire/dimensions.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -16,6 +20,29 @@ icon_button::icon_button(const QImage& default_icon, const QImage& hover_icon,
   m_label = new QLabel(this);
   m_default_icon = default_icon;
   m_hover_icon = hover_icon;
+  m_label->setPixmap(QPixmap::fromImage(m_default_icon));
+  layout->addWidget(m_label);
+}
+
+icon_button::icon_button(const QString& default_icon, const QString& hover_icon,
+    int width, int height, QWidget* parent)
+    : QWidget(parent),
+      m_clickable(true) {
+  auto layout = new QHBoxLayout(this);
+  layout->setMargin(0);
+  m_label = new QLabel(this);
+  auto renderer = new QSvgRenderer(default_icon, this);
+  auto default_image = QImage(scale(width, height), QImage::Format_ARGB32);
+  default_image.fill(QColor(0, 0, 0, 0));
+  QPainter p1(&default_image);
+  renderer->render(&p1);
+  m_default_icon = default_image;
+  renderer->load(hover_icon);
+  auto hover_image = QImage(scale(width, height), QImage::Format_ARGB32);
+  hover_image.fill(QColor(0, 0, 0, 0));
+  QPainter p2(&hover_image);
+  renderer->render(&p2);
+  m_hover_icon = hover_image;
   m_label->setPixmap(QPixmap::fromImage(m_default_icon));
   layout->addWidget(m_label);
 }

@@ -78,14 +78,9 @@ toolbar_window::toolbar_window(QWidget* parent)
   button_layout->setContentsMargins(scale_width(8), scale_height(5), scale_width(8), scale_height(8));
   button_layout->setSpacing(0);
   input_layout->addLayout(button_layout);
-  QPushButton* buttons[9];
-  for(auto i = 0; i < 9; i++) {
-    buttons[i] = new QPushButton("o", this);
-    buttons[i]->setFlat(true);
-    buttons[i]->setStyleSheet("color: #513321;");
-    buttons[i]->setFixedSize(scale(20, 20));
-    button_layout->addWidget(buttons[i]);
-  }
+  auto test = new icon_button(":/icons/order-imbalances-purple.svg",
+    ":/icons/order-imbalances-light-purple.svg", 20, 20, this);
+  button_layout->addWidget(test);
 }
 
 connection toolbar_window::connect_closed_signal(

@@ -5,6 +5,7 @@
 #include <boost/signals2/signal_type.hpp>
 #include <QImage>
 #include <QLabel>
+#include <QString>
 #include <QWidget>
 
 namespace spire {
@@ -27,6 +28,16 @@ namespace spire {
       */
       icon_button(const QImage& default_icon, const QImage& hover_icon,
         QWidget* parent = nullptr);
+
+      //! Constructs an icon_button with a default icon and a hover icon. The
+      //  icons are scaled to cover the whole button.
+      /*!
+        \param default_icon The icon shown when the button is not hovered.
+        \param hover_icon The icon shown when the button is hovered.
+        \param parent The parent QWidget to the icon_button.
+      */
+      icon_button(const QString& default_icon, const QString& hover_icon,
+        int width, int height, QWidget* parent = nullptr);
 
       //! Connects a slot to the clicked signal.
       boost::signals2::connection connect_clicked_signal(
