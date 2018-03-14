@@ -5,7 +5,7 @@
 #include <QPainter>
 #include <QSize>
 #include <QtSvg/QSvgRenderer>
-#include <QVBoxlayout>
+#include <QVBoxLayout>
 #include "spire/login/chroma_hash_widget.hpp"
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/flat_button.hpp"
@@ -148,8 +148,8 @@ login_window::login_window(const std::string& version, QWidget* parent)
   set_state(state::NONE);
 }
 
-void login_window::set_state(state state) {
-  switch(state) {
+void login_window::set_state(state s) {
+  switch(s) {
     case state::NONE: {
       reset_all();
       break;
@@ -164,7 +164,7 @@ void login_window::set_state(state state) {
     }
     case state::CANCELLING: {
       reset_all();
-      state = state::NONE;
+      s = state::NONE;
       break;
     }
     case state::INCORRECT_CREDENTIALS: {
@@ -178,7 +178,7 @@ void login_window::set_state(state state) {
       break;
     }
   }
-  m_state = state;
+  m_state = s;
 }
 
 connection login_window::connect_login_signal(

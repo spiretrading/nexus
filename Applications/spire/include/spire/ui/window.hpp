@@ -11,20 +11,18 @@ namespace spire {
 
       //! Constructs a spire_window.
       /*!
-        \param window The window that will have the window style applied
-                      to it.
+        \param w The window that will have the window style applied to it.
         \param parent The parent widget to the window.
       */
-      window(QWidget* window, QWidget* parent = nullptr);
+      window(QWidget* w, QWidget* parent = nullptr);
 
       //! Constructs a window with a specific border color.
       /*!
-        param window The window that will have the window style applied
-                     to it.
+        param w The window that will have the window style applied to it.
         \param border_color The color of the border.
         \param parent The parent widget to the window.
       */
-      window(QWidget* window, const QColor& border_color,
+      window(QWidget* w, const QColor& border_color,
         QWidget* parent = nullptr);
 
       //! Returns the frame's interior window.
