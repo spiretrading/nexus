@@ -16,6 +16,8 @@ set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 
 if(UNIX)
   target_link_libraries(time_and_sales_ui_tester
+    debug $ENV{QT_GIF_LIBRARY_DEBUG_PATH}
+    optimized $ENV{QT_GIF_LIBRARY_OPTIMIZED_PATH}
     debug $ENV{QT_XCB_PLATFORM_LIBRARY_DEBUG_PATH}
     optimized $ENV{QT_XCB_PLATFORM_LIBRARY_OPTIMIZED_PATH}
     debug $ENV{QT_XCB_PLUGIN_LIBRARY_DEBUG_PATH}
@@ -46,6 +48,8 @@ target_link_libraries(time_and_sales_ui_tester time_and_sales common resources
   optimized $ENV{OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{YAML_LIBRARY_DEBUG_PATH}
   optimized $ENV{YAML_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{QT_GIF_LIBRARY_DEBUG_PATH}
+  optimized $ENV{QT_GIF_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{QT_SVG_LIBRARY_DEBUG_PATH}
   optimized $ENV{QT_SVG_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{QT_WIDGETS_LIBRARY_DEBUG_PATH}

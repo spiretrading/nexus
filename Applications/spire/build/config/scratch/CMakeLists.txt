@@ -13,6 +13,8 @@ add_executable(scratch ${app_type} ${source_files})
 
 if(UNIX)
   target_link_libraries(scratch
+    debug $ENV{QT_GIF_LIBRARY_DEBUG_PATH}
+    optimized $ENV{QT_GIF_LIBRARY_OPTIMIZED_PATH}
     debug $ENV{QT_XCB_PLATFORM_LIBRARY_DEBUG_PATH}
     optimized $ENV{QT_XCB_PLATFORM_LIBRARY_OPTIMIZED_PATH}
     debug $ENV{QT_XCB_PLUGIN_LIBRARY_DEBUG_PATH}

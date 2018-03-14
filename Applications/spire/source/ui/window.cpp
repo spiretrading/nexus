@@ -7,13 +7,12 @@
 
 using namespace spire;
 
-window::window(QWidget* window, QWidget* parent)
-    : window(window, QColor("#C8C8C8"), parent) {}
+window::window(QWidget* w, QWidget* parent)
+    : window(w, QColor("#C8C8C8"), parent) {}
 
-window::window(QWidget* window, const QColor& border_color,
-    QWidget* parent)
+window::window(QWidget* w, const QColor& border_color, QWidget* parent)
     : QWidget(parent),
-      m_window(window) {
+      m_window(w) {
   setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
   setAttribute(Qt::WA_TranslucentBackground);
   setFixedSize(m_window->width() + scale_width(24),
