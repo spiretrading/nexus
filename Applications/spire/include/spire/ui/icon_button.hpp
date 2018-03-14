@@ -5,6 +5,7 @@
 #include <boost/signals2/signal_type.hpp>
 #include <QImage>
 #include <QLabel>
+#include <QRectF>
 #include <QString>
 #include <QWidget>
 
@@ -18,26 +19,32 @@ namespace spire {
         boost::signals2::keywords::mutex_type<
         boost::signals2::dummy_mutex>>::type;
 
-      //! Constructs an icon_button with a default icon and a hover icon.
-      /*!
-        \param default_icon The icon shown when the button is not hovered.
-                 Should be pre-scaled before being passed in.
-        \param hover_icon The icon shown when the button is hovered.
-                 Should
-        \param parent The parent QWidget to the icon_button.
-      */
-      icon_button(const QImage& default_icon, const QImage& hover_icon,
-        QWidget* parent = nullptr);
-
       //! Constructs an icon_button with a default icon and a hover icon. The
       //  icons are scaled to cover the whole button.
       /*!
         \param default_icon The icon shown when the button is not hovered.
         \param hover_icon The icon shown when the button is hovered.
+        \param width The width of the icon_button.
+        \param height The height of the icon_button.
         \param parent The parent QWidget to the icon_button.
       */
       icon_button(const QString& default_icon, const QString& hover_icon,
         int width, int height, QWidget* parent = nullptr);
+
+      //! Constructs an icon_button with a default icon and a hover icon. The
+      //  icons are scaled and drawn according to the draw rect.
+      /*!
+        \param default_icon The icon shown when the button is not hovered.
+        \param hover_icon The icon shown when the button is hovered.
+        \param width The width of the icon_button.
+        \param height The height of the icon_button.
+        \param draw_rect The position and size of the image within the
+                         icon_button.
+        \param parent The parent QWidget to the icon_button.
+      */
+      icon_button(const QString& default_icon, const QString& hover_icon,
+        int width, int height, const QRectF& draw_rect,
+        QWidget* parent = nullptr);
 
       //! Connects a slot to the clicked signal.
       boost::signals2::connection connect_clicked_signal(

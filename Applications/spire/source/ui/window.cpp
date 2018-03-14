@@ -8,7 +8,7 @@
 using namespace spire;
 
 window::window(QWidget* w, QWidget* parent)
-    : window(w, QColor("#C8C8C8"), parent) {}
+    : window(w, QColor("#A0A0A0"), parent) {}
 
 window::window(QWidget* w, const QColor& border_color, QWidget* parent)
     : QWidget(parent),

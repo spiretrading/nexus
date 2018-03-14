@@ -1,6 +1,7 @@
 #include <QApplication>
-#include "spire/toolbar/toolbar_window.hpp"
 #include "spire/spire/resources.hpp"
+#include "spire/toolbar/toolbar_window.hpp"
+#include "spire/ui/window.hpp"
 
 using namespace spire;
 
@@ -10,6 +11,7 @@ int main(int argc, char** argv) {
   application->setApplicationName(QObject::tr("Toolbar UI Tester"));
   initialize_resources();
   toolbar_window window;
-  window.show();
+  spire::window frame(&window);
+  frame.show();
   application->exec();
 }
