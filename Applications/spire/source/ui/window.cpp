@@ -1,6 +1,5 @@
 #include "spire/ui/window.hpp"
 #include <QColor>
-#include <QDebug>
 #include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
 #include "spire/spire/dimensions.hpp"
