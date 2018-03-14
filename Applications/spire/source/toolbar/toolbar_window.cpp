@@ -21,7 +21,6 @@ toolbar_window::toolbar_window(QWidget* parent)
   auto layout = new QVBoxLayout(this);
   layout->setMargin(0);
   layout->setSpacing(0);
-
   auto title_bar_layout = new QHBoxLayout();
   title_bar_layout->setMargin(0);
   title_bar_layout->setSpacing(0);
@@ -41,9 +40,6 @@ toolbar_window::toolbar_window(QWidget* parent)
   close_button->setStyleSheet("qproperty-alignment: AlignCenter;");
   close_button->setFixedSize(scale(32, 26));
   title_bar_layout->addWidget(close_button);
-  
-
-
   auto input_layout = new QVBoxLayout();
   input_layout->setMargin(0);
   input_layout->setSpacing(0);
@@ -75,12 +71,38 @@ toolbar_window::toolbar_window(QWidget* parent)
   recently_closed_combobox->addItem("WMT.NYSE");
   combobox_layout->addWidget(recently_closed_combobox);
   auto button_layout = new QHBoxLayout();
-  button_layout->setContentsMargins(scale_width(8), scale_height(5), scale_width(8), scale_height(8));
-  button_layout->setSpacing(0);
+  button_layout->setContentsMargins(scale_width(8), scale_height(5),
+    scale_width(8), scale_height(8));
+  button_layout->setSpacing(scale_width(14));
   input_layout->addLayout(button_layout);
-  auto test = new icon_button(":/icons/order-imbalances-purple.svg",
-    ":/icons/order-imbalances-light-purple.svg", 20, 20, this);
-  button_layout->addWidget(test);
+  m_account_button = new icon_button(":/icons/account-light-purple.svg",
+    ":/icons/account-purple.svg", 20, 20, this);
+  button_layout->addWidget(m_account_button);
+  m_key_bindings_button = new icon_button(":/icons/key-bindings-light-purple.svg",
+    ":/icons/key-bindings-purple.svg", 20, 20, this);
+  button_layout->addWidget(m_key_bindings_button);
+  m_canvas_button = new icon_button(":/icons/canvas-light-purple.svg",
+    ":/icons/canvas-purple.svg", 20, 20, this);
+  button_layout->addWidget(m_canvas_button);
+  m_bookview_button = new icon_button(":/icons/bookview-light-purple.svg",
+    ":/icons/bookview-purple.svg", 20, 20, this);
+  button_layout->addWidget(m_bookview_button);
+  m_time_sale_button = new icon_button(":/icons/time-sale-light-purple.svg",
+    ":/icons/time-sale-purple.svg", 20, 20, this);
+  button_layout->addWidget(m_time_sale_button);
+  m_chart_button = new icon_button(":/icons/chart-light-purple.svg",
+    ":/icons/chart-purple.svg", 20, 20, this);
+  button_layout->addWidget(m_chart_button);
+  m_dashboard_button = new icon_button(":/icons/dashboard-light-purple.svg",
+    ":/icons/dashboard-purple.svg", 20, 20, this);
+  button_layout->addWidget(m_dashboard_button);
+  m_order_imbalances_button = new icon_button(
+    ":/icons/order-imbalances-light-purple.svg",
+    ":/icons/order-imbalances-purple.svg", 20, 20, this);
+  button_layout->addWidget(m_order_imbalances_button);
+  m_blotter_button = new icon_button(":/icons/blotter-light-purple.svg",
+    ":/icons/blotter-purple.svg", 20, 20, this);
+  button_layout->addWidget(m_blotter_button);
 }
 
 connection toolbar_window::connect_closed_signal(
