@@ -12,11 +12,15 @@ namespace spire {
       //! Signals that this window has closed.
       using closed_signal = signal<void ()>;
 
-      ~toolbar_window();
-
       //! Connects a slot to the closed signal.
       boost::signals2::connection connect_closed_signal(
         const closed_signal::slot_type& slot) const;
+
+      // Constructs a toolbar_window.
+      /*!
+        \param parent The parent widget to toolbar_window.
+      */
+      toolbar_window(QWidget* parent = nullptr);
 
     protected:
       void closeEvent(QCloseEvent* event) override;
