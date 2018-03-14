@@ -3,11 +3,10 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QObject>
-#include <QPushButton>
 #include <QString>
 #include <QVBoxlayout>
-
 #include "spire/spire/dimensions.hpp"
+#include "spire/ui/icon_button.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

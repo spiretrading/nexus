@@ -21,5 +21,36 @@
         <file>icons/close-purple.svg</file>
         <file>icons/close-red.svg</file>
         <file>icons/logo.gif</file>
+        <file>icons/account-light-purple.svg</file>
+        <file>icons/account-purple.svg</file>
+        <file>icons/arrow-down.svg</file>
+        <file>icons/blotter-black.svg</file>
+        <file>icons/blotter-light-purple.svg</file>
+        <file>icons/blotter-purple.svg</file>
+        <file>icons/bookview-black.svg</file>
+        <file>icons/bookview-light-purple.svg</file>
+        <file>icons/bookview-purple.svg</file>
+        <file>icons/canvas-black.svg</file>
+        <file>icons/canvas-light-purple.svg</file>
+        <file>icons/canvas-purple.svg</file>
+        <file>icons/chart-black.svg</file>
+        <file>icons/chart-light-purple.svg</file>
+        <file>icons/chart-purple.svg</file>
+        <file>icons/close-grey.svg</file>
+        <file>icons/dashboard-black.svg</file>
+        <file>icons/dashboard-light-purple.svg</file>
+        <file>icons/dashboard-purple.svg</file>
+        <file>icons/key-bindings-black.svg</file>
+        <file>icons/key-bindings-light-purple.svg</file>
+        <file>icons/key-bindings-purple.svg</file>
+        <file>icons/minimize-black.svg</file>
+        <file>icons/minimize-grey.svg</file>
+        <file>icons/order-imbalances-black.svg</file>
+        <file>icons/order-imbalances-light-purple.svg</file>
+        <file>icons/order-imbalances-purple.svg</file>
+        <file>icons/spire-icon.svg</file>
+        <file>icons/time-sale-black.svg</file>
+        <file>icons/time-sale-light-purple.svg</file>
+        <file>icons/time-sale-purple.svg</file>
     </qresource>
 </RCC>

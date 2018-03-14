@@ -2,6 +2,7 @@
 #define SPIRE_TOOLBAR_WINDOW_HPP
 #include <QWidget>
 #include "spire/toolbar/toolbar.hpp"
+#include "spire/ui/ui.hpp"
 
 namespace spire {
 
@@ -27,6 +28,16 @@ namespace spire {
 
     private:
       mutable closed_signal m_closed_signal;
+
+      icon_button* m_account_button;
+      icon_button* m_key_bindings_button;
+      icon_button* m_canvas_button;
+      icon_button* m_bookview_button;
+      icon_button* m_time_sale_button;
+      icon_button* m_chart_button;
+      icon_button* m_dashboard_button;
+      icon_button* m_order_imbalances_button;
+      icon_button* m_blotter_button;
   };
 }
 
