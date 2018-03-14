@@ -5,7 +5,6 @@
 #include <QPainter>
 #include <QSize>
 #include <QtSvg/QSvgRenderer>
-#include "spire/spire/dimensions.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

@@ -87,11 +87,11 @@ namespace spire {
       void reset_all();
       void reset_visuals();
       void try_login();
-      void inputs_updated();
-      void password_input_changed();
       void enable_button();
       void disable_button();
       void button_focused();
+      void on_input_updated();
+      void on_password_updated();
   };
 }
 

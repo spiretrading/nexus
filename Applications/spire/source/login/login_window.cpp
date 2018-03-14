@@ -66,7 +66,8 @@ login_window::login_window(const std::string& version, QWidget* parent)
   username_layout->setSpacing(0);
   username_layout->addStretch(1);
   m_username_line_edit = new QLineEdit(this);
-  connect(m_username_line_edit, &QLineEdit::textEdited, [&] { inputs_updated(); });
+  connect(m_username_line_edit, &QLineEdit::textEdited,
+    [&] {on_input_updated();});
   m_username_line_edit->installEventFilter(this);
   m_username_line_edit->setPlaceholderText(tr("Username"));
   m_username_line_edit->setFixedSize(scale(280, 30));
@@ -86,9 +87,10 @@ login_window::login_window(const std::string& version, QWidget* parent)
   password_layout->setSpacing(0);
   password_layout->addStretch(1);
   m_password_line_edit = new QLineEdit(this);
-  connect(m_password_line_edit, &QLineEdit::textEdited, [&] { inputs_updated(); });
-  connect(m_password_line_edit, &QLineEdit::textEdited, [&] {
-    password_input_changed(); });
+  connect(m_password_line_edit, &QLineEdit::textEdited,
+    [&] {on_input_updated();});
+  connect(m_password_line_edit, &QLineEdit::textEdited,
+    [&] {on_password_updated();});
   m_password_line_edit->installEventFilter(this);
   m_password_line_edit->setEchoMode(QLineEdit::Password);
   m_password_line_edit->setPlaceholderText(tr("Password"));
@@ -224,7 +226,8 @@ void login_window::keyPressEvent(QKeyEvent* event) {
     }
   } else if(m_password_line_edit->hasFocus()) {
     return;
-  } else if(!m_username_line_edit->hasFocus() && m_username_line_edit->text().isEmpty()) {
+  } else if(!m_username_line_edit->hasFocus() &&
+      m_username_line_edit->text().isEmpty()) {
     m_username_line_edit->setText(event->text());
     m_username_line_edit->setFocus();
   }
@@ -286,18 +289,6 @@ void login_window::try_login() {
   }
 }
 
-void login_window::inputs_updated() {
-  if(!m_username_line_edit->text().isEmpty()) {
-    enable_button();
-  } else {
-    disable_button();
-  }
-}
-
-void login_window::password_input_changed() {
-  m_chroma_hash_widget->set_text(m_password_line_edit->text());
-}
-
 void login_window::enable_button() {
   m_sign_in_button->set_clickable(true);
   m_sign_in_button->setStyleSheet(QString(
@@ -328,5 +319,20 @@ void login_window::disable_button() {
 
 void login_window::button_focused() {
   m_sign_in_button->setStyleSheet(
-    m_sign_in_button->styleSheet() + "QLabel { border: 1px solid #8D78EC; }");
+    m_sign_in_button->styleSheet() +
+    R"(QLabel {
+         border: 1px solid #8D78EC;
+       })");
+}
+
+void login_window::on_input_updated() {
+  if(!m_username_line_edit->text().isEmpty()) {
+    enable_button();
+  } else {
+    disable_button();
+  }
+}
+
+void login_window::on_password_updated() {
+  m_chroma_hash_widget->set_text(m_password_line_edit->text());
 }
