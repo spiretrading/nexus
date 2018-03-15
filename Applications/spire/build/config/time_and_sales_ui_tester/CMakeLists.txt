@@ -50,6 +50,8 @@ target_link_libraries(time_and_sales_ui_tester time_and_sales common resources
   optimized $ENV{YAML_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{QT_GIF_LIBRARY_DEBUG_PATH}
   optimized $ENV{QT_GIF_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{QT_SVG_ICON_PLUGIN_LIBRARY_DEBUG_PATH}
+  optimized $ENV{QT_SVG_ICON_PLUGIN_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{QT_SVG_LIBRARY_DEBUG_PATH}
   optimized $ENV{QT_SVG_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{QT_WIDGETS_LIBRARY_DEBUG_PATH}

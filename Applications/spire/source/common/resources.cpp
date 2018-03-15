@@ -11,6 +11,7 @@
 #endif
 
 Q_IMPORT_PLUGIN(QGifPlugin);
+Q_IMPORT_PLUGIN(QSvgIconPlugin);
 
 void local_resources() {
   Q_INIT_RESOURCE(resources);
