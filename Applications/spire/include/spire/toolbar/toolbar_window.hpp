@@ -1,7 +1,8 @@
 #ifndef SPIRE_TOOLBAR_WINDOW_HPP
 #define SPIRE_TOOLBAR_WINDOW_HPP
-#include <QComboBox>
+#include <QPushButton>
 #include <QWidget>
+#include <QWidgetAction>
 #include "spire/toolbar/recently_closed_model.hpp"
 #include "spire/toolbar/toolbar.hpp"
 #include "spire/ui/ui.hpp"
@@ -43,12 +44,15 @@ namespace spire {
 
       icon_button* m_minimize_button;
       icon_button* m_close_button;
-      QComboBox* m_window_manager_combobox;
-      QComboBox* m_recently_closed_combobox;
+      QWidgetAction* m_minimize_action;
+      QWidgetAction* m_restore_action;
+      QWidgetAction* m_import_export_action;
+      QPushButton* m_window_manager_button;
+      QPushButton* m_recently_closed_button;
       icon_button* m_account_button;
       icon_button* m_key_bindings_button;
       icon_button* m_canvas_button;
-      icon_button* m_bookview_button;
+      icon_button* m_book_view_button;
       icon_button* m_time_sale_button;
       icon_button* m_chart_button;
       icon_button* m_dashboard_button;
