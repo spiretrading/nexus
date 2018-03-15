@@ -1,0 +1,35 @@
+#ifndef SPIRE_SECURITY_INPUT_WIDGET_HPP
+#define SPIRE_SECURITY_INPUT_WIDGET_HPP
+#include <QWidget>
+#include "Nexus/Definitions/Security.hpp"
+#include "spire/security_input/security_input.hpp"
+
+namespace spire {
+
+  //! \brief Displays a input/search box for securities.
+  class security_input_box : public QWidget {
+    public:
+
+      //! Signals that editing has completed.
+      /*!
+        \param s The security that was input.
+      */
+      using commit_signal = signal<void (const Nexus::Security& s)>;
+
+      //! Constructs a blank security input box.
+      /*!
+        \param model The model to query for securities.
+      */
+      security_input_box(security_input_model& model);
+
+      //! Connects a slot to the commit signal.
+      boost::signals2::connection connect_commit_signal(
+        const commit_signal::slot_type& slot) const;
+
+    private:
+      mutable commit_signal m_commit_signal;
+      security_input_model* m_model;
+  };
+}
+
+#endif
