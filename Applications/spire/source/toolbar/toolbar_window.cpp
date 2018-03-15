@@ -1,5 +1,4 @@
 #include "spire/toolbar/toolbar_window.hpp"
-#include <QComboBox>
 #include <QGraphicsDropshadowEffect>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -65,19 +64,18 @@ toolbar_window::toolbar_window(QWidget* parent)
     scale_width(8), scale_height(5));
   combobox_layout->setSpacing(0);
   input_layout->addLayout(combobox_layout);
-  auto window_manager_combobox = new QComboBox(this);
+  m_window_manager_combobox = new QComboBox(this);
+  m_window_manager_combobox->installEventFilter(this);
   //auto drop_shadow = new QGraphicsDropShadowEffect(this);
   //drop_shadow->setBlurRadius(scale_height(12));
   //drop_shadow->setXOffset(0);
   //drop_shadow->setYOffset(0);
   //drop_shadow->setColor(QColor(0, 0, 0, 100));
   //window_manager_combobox->setGraphicsEffect(drop_shadow);
-  window_manager_combobox->setFixedSize(scale(138, 26));
-  // this is required for getting individual QAbstractItemView items to work
-  // in CSS
+  m_window_manager_combobox->setFixedSize(scale(138, 26));
   auto item_delegate = new QStyledItemDelegate(this);
-  window_manager_combobox->setItemDelegate(item_delegate);
-  window_manager_combobox->setStyleSheet(QString(R"(
+  m_window_manager_combobox->setItemDelegate(item_delegate);
+  m_window_manager_combobox->setStyleSheet(QString(R"(
     QComboBox {
       background-color: white;
       border: 1px solid #C8C8C8;
@@ -90,45 +88,39 @@ toolbar_window::toolbar_window(QWidget* parent)
       border: 1px solid #4B23A0;
     }
 
-    QComboBox:down-arrow {
-      image: url(:/icons/arrow-down.svg);
+    QComboBox::drop-down {
+      border: none;
     }
 
-    QComboBox:drop-down {
-      border: none;
+    QComboBox::down-arrow {
+      image: url(":/icons/arrow-down.svg");
+      margin-right: %5px;
+      height: %6px;
+      width: %4px;
     }
 
     QComboBox QAbstractItemView {
       border-top: 1px solid #4B23A0;
-      /*
-
-
-        Removes the outline around the items
-
-
-      */
       outline: 0px;
     }
 
     QComboBox QAbstractItemView::item {
-      /* The background is required for the padding to work. I have no idea
-         why. */
       background: rgba(0, 0, 0, 0);
       height: %3px;
       padding-left: %4px;
     }
 
-    /* :hover doesn't work, but :selected does for a hover effect. */
     QComboBox QAbstractItemView::item:selected {
-      background-color: aqua;
+      background-color: #F2F2FF;
+      color: black;
     })")
     .arg(scale_height(12)).arg(scale_width(8)).arg(scale_height(20))
-    .arg(scale_width(6)));
-  window_manager_combobox->addItem(tr("Window Manager"));
-  window_manager_combobox->addItem(tr("Minimize All"));
-  window_manager_combobox->addItem(tr("Restore All"));
-  window_manager_combobox->addItem(tr("Import/Export Settings"));
-  combobox_layout->addWidget(window_manager_combobox);
+    .arg(scale_width(6)).arg(scale_width(8)).arg(scale_height(4)));
+  m_window_manager_combobox->addItem(tr("Window Manager"));
+  m_window_manager_combobox->addItem(tr("Minimize All"));
+  m_window_manager_combobox->addItem(tr("Restore All"));
+  m_window_manager_combobox->addItem(tr("Import/Export Settings"));
+  combobox_layout->addWidget(m_window_manager_combobox);
   combobox_layout->addStretch(1);
   auto recently_closed_combobox = new QComboBox(this);
   recently_closed_combobox->setFixedSize(scale(138, 26));
@@ -147,32 +139,42 @@ toolbar_window::toolbar_window(QWidget* parent)
   button_layout->setSpacing(scale_width(14));
   input_layout->addLayout(button_layout);
   m_account_button = new icon_button(":/icons/account-light-purple.svg",
-    ":/icons/account-purple.svg", 20, 20, this);
+    ":/icons/account-purple.svg", scale_width(20), scale_height(20), this);
+  m_account_button->setToolTip(tr("Account"));
   button_layout->addWidget(m_account_button);
   m_key_bindings_button = new icon_button(":/icons/key-bindings-light-purple.svg",
-    ":/icons/key-bindings-purple.svg", 20, 20, this);
+    ":/icons/key-bindings-purple.svg", scale_width(20), scale_height(20), this);
+  m_key_bindings_button->setToolTip(tr("Key Bindings"));
   button_layout->addWidget(m_key_bindings_button);
   m_canvas_button = new icon_button(":/icons/canvas-light-purple.svg",
-    ":/icons/canvas-purple.svg", 20, 20, this);
+    ":/icons/canvas-purple.svg", scale_width(20), scale_height(20), this);
+  m_canvas_button->setToolTip(tr("Canvas"));
   button_layout->addWidget(m_canvas_button);
   m_bookview_button = new icon_button(":/icons/bookview-light-purple.svg",
-    ":/icons/bookview-purple.svg", 20, 20, this);
+    ":/icons/bookview-purple.svg", scale_width(20), scale_height(20), this);
+  m_bookview_button->setToolTip(tr("Bookview"));
   button_layout->addWidget(m_bookview_button);
   m_time_sale_button = new icon_button(":/icons/time-sale-light-purple.svg",
-    ":/icons/time-sale-purple.svg", 20, 20, this);
+    ":/icons/time-sale-purple.svg", scale_width(20), scale_height(20), this);
+  m_time_sale_button->setToolTip(tr("Time and Sale"));
   button_layout->addWidget(m_time_sale_button);
   m_chart_button = new icon_button(":/icons/chart-light-purple.svg",
-    ":/icons/chart-purple.svg", 20, 20, this);
+    ":/icons/chart-purple.svg", scale_width(20), scale_height(20), this);
+  m_chart_button->setToolTip(tr("Chart"));
   button_layout->addWidget(m_chart_button);
   m_dashboard_button = new icon_button(":/icons/dashboard-light-purple.svg",
-    ":/icons/dashboard-purple.svg", 20, 20, this);
+    ":/icons/dashboard-purple.svg", scale_width(20), scale_height(20), this);
+  m_dashboard_button->setToolTip(tr("Dashboard"));
   button_layout->addWidget(m_dashboard_button);
   m_order_imbalances_button = new icon_button(
     ":/icons/order-imbalances-light-purple.svg",
-    ":/icons/order-imbalances-purple.svg", 20, 20, this);
+    ":/icons/order-imbalances-purple.svg", scale_width(20), scale_height(20),
+    this);
+  m_order_imbalances_button->setToolTip(tr("Order Imbalances"));
   button_layout->addWidget(m_order_imbalances_button);
   m_blotter_button = new icon_button(":/icons/blotter-light-purple.svg",
-    ":/icons/blotter-purple.svg", 20, 20, this);
+    ":/icons/blotter-purple.svg", scale_width(20), scale_height(20), this);
+  m_blotter_button->setToolTip(tr("Blotter"));
   button_layout->addWidget(m_blotter_button);
 }
 
@@ -188,4 +190,8 @@ connection toolbar_window::connect_reopen_signal(
 
 void toolbar_window::closeEvent(QCloseEvent* event) {
   m_closed_signal();
+}
+
+bool toolbar_window::eventFilter(QObject* watched, QEvent* event) {
+  
 }

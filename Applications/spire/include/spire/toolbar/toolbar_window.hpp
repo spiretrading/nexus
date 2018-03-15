@@ -1,5 +1,6 @@
 #ifndef SPIRE_TOOLBAR_WINDOW_HPP
 #define SPIRE_TOOLBAR_WINDOW_HPP
+#include <QComboBox>
 #include <QWidget>
 #include "spire/toolbar/recently_closed_model.hpp"
 #include "spire/toolbar/toolbar.hpp"
@@ -34,6 +35,7 @@ namespace spire {
 
     protected:
       void closeEvent(QCloseEvent* event) override;
+      bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
       mutable closed_signal m_closed_signal;
@@ -41,6 +43,8 @@ namespace spire {
 
       icon_button* m_minimize_button;
       icon_button* m_close_button;
+      QComboBox* m_window_manager_combobox;
+      QComboBox* m_recently_closed_combobox;
       icon_button* m_account_button;
       icon_button* m_key_bindings_button;
       icon_button* m_canvas_button;
