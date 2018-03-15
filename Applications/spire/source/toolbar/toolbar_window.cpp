@@ -44,7 +44,7 @@ toolbar_window::toolbar_window(QWidget* parent)
   title_bar_layout->addWidget(title_bar_logo);
   auto username_label = new QLabel(tr("Spire - Signed in as Username"));
   username_label->setStyleSheet(QString(
-    R"(font-family: Roboto
+    R"(font-family: Roboto;
        font-size: %1px;)").arg(scale_height(12)));
   username_label->setFixedSize(scale(218, 26));
   title_bar_layout->addWidget(username_label);
@@ -67,158 +67,18 @@ toolbar_window::toolbar_window(QWidget* parent)
     scale_width(8), scale_height(5));
   combobox_layout->setSpacing(0);
   input_layout->addLayout(combobox_layout);
-  m_window_manager_button = new QPushButton(tr("Window Manager"), this);
+  m_window_manager_button = new toolbar_menu(tr("Window Manager"), this);
   m_window_manager_button->setFixedSize(scale(138, 26));
-  m_window_manager_button->setStyleSheet(QString(R"(
-    QPushButton {
-      background-color: white;
-      border: 1px solid #C8C8C8;
-      font-family: Roboto;
-      font-size: %1px;
-      padding-left: %5px;
-      text-align: left;
-    }
-
-    QPushButton:hover {
-      border: 1px solid #4B23A0;
-    }
-
-    QPushButton::menu-indicator {
-      image: url(":/icons/arrow-down.svg");
-      height: %3px;
-      padding-bottom: %6px;
-      padding-right: %2px;
-      width: %4px;
-    })")
-    .arg(scale_height(12)).arg(scale_width(8)).arg(scale_height(4))
-    .arg(scale_width(6)).arg(scale_width(8)).arg(scale_height(10)));
-  m_minimize_action = new QWidgetAction(this);
-  m_minimize_action->setText(tr("Minimize All"));
-  m_restore_action = new QWidgetAction(this);
-  m_restore_action->setText(tr("Restore All"));
-  m_import_export_action = new QWidgetAction(this);
-  m_import_export_action->setText(tr("Import/Export Settings"));
-  auto window_menu = new QMenu(this);
-  window_menu->addAction(m_minimize_action);
-  window_menu->addAction(m_restore_action);
-  window_menu->addAction(m_import_export_action);
-  m_window_manager_button->setMenu(window_menu);
-  window_menu->setFixedWidth(scale_width(138));
-  window_menu->setStyleSheet(QString(R"(
-    QMenu {
-      background-color: white;
-      border-left: 1px solid #A0A0A0;
-      border-right: 1px solid #A0A0A0;
-      border-bottom: 1px solid #A0A0A0;
-      font-family: Roboto;
-      font-size: %1px;
-    }
-
-    QMenu::item {
-      height: %3px;
-      padding-left: %2px;
-    }
-
-    QMenu::item:selected {
-      background-color: #F2F2FF;
-    }
-  )").arg(scale_height(12)).arg(scale_width(8)).arg(scale_height(20)));
-  //window_menu->setWindowFlag(Qt::NoDropShadowWindowHint);
-  auto drop_shadow = new QGraphicsDropShadowEffect(this);
-  drop_shadow->setBlurRadius(scale_height(120));
-  drop_shadow->setXOffset(0);
-  drop_shadow->setYOffset(0);
-  drop_shadow->setColor(QColor(0, 0, 0, 100));
-  drop_shadow->setColor(QColor(255, 0, 0, 255));
-  window_menu->setGraphicsEffect(drop_shadow);
+  m_window_manager_button->add_item(tr("Minimize All"));
   combobox_layout->addWidget(m_window_manager_button);
   combobox_layout->addStretch(1);
-  m_recently_closed_button = new QPushButton(tr("Recently Closed"), this);
+  m_recently_closed_button = new toolbar_menu(tr("Recently Closed"), this);
   m_recently_closed_button->setFixedSize(scale(138, 26));
-  m_recently_closed_button->setStyleSheet(QString(R"(
-    QPushButton {
-      background-color: white;
-      border: 1px solid #C8C8C8;
-      font-family: Roboto;
-      font-size: %1px;
-      padding-left: %5px;
-      text-align: left;
-    }
-
-    QPushButton:hover {
-      border: 1px solid #4B23A0;
-    }
-
-    QPushButton::menu-indicator {
-      image: url(":/icons/arrow-down.svg");
-      height: %3px;
-      padding-bottom: %6px;
-      padding-right: %2px;
-      width: %4px;
-    })")
-    .arg(scale_height(12)).arg(scale_width(8)).arg(scale_height(4))
-    .arg(scale_width(6)).arg(scale_width(8)).arg(scale_height(10)));
-  // ******************************
-  // This is going to be refactored into a generic Spire drop-down box,
-  // so the stylesheets were copied and pasted from the window manager
-  // *******************************
-  auto a1 = new QWidgetAction(this);
-  a1->setText(tr("Book View"));
-  a1->setIcon(QIcon(":/icons/bookview-black.svg"));
-  a1->setIconVisibleInMenu(true);
-  auto a2 = new QWidgetAction(this);
-  a2->setText(tr("Book View"));
-  a2->setIcon(QIcon(":/icons/bookview-black.svg"));
-  a2->setIconVisibleInMenu(true);
-  auto a3 = new QWidgetAction(this);
-  a3->setText(tr("Time and Sale"));
-  a3->setIcon(QIcon(":/icons/time-sale-black.svg"));
-  a3->setIconVisibleInMenu(true);
-  auto a4 = new QWidgetAction(this);
-  a4->setText(tr("Time and Sale"));
-  a4->setIcon(QIcon(":/icons/time-sale-black.svg"));
-  a4->setIconVisibleInMenu(true);
-  auto a5 = new QWidgetAction(this);
-  a5->setText(tr("Time and Sale"));
-  a5->setIcon(QIcon(":/icons/time-sale-black.svg"));
-  a5->setIconVisibleInMenu(true);
-  auto a6 = new QWidgetAction(this);
-  a6->setText(tr("Time and Sale"));
-  a6->setIcon(QIcon(":/icons/time-sale-black.svg"));
-  a6->setIconVisibleInMenu(true);
-  auto a7 = new QWidgetAction(this);
-  a7->setText(tr("Time and Sale"));
-  a7->setIcon(QIcon(":/icons/time-sale-black.svg"));
-  a7->setIconVisibleInMenu(true);
-  auto recently_closed_menu = new QMenu(this);
-  recently_closed_menu->addAction(a1);
-  recently_closed_menu->addAction(a2);
-  recently_closed_menu->addAction(a3);
-  recently_closed_menu->addAction(a4);
-  recently_closed_menu->addAction(a5);
-  recently_closed_menu->addAction(a6);
-  recently_closed_menu->addAction(a7);
-  m_recently_closed_button->setMenu(recently_closed_menu);
-  recently_closed_menu->setFixedWidth(scale_width(138));
-  recently_closed_menu->setStyleSheet(QString(R"(
-    QMenu {
-      background-color: white;
-      border-left: 1px solid #A0A0A0;
-      border-right: 1px solid #A0A0A0;
-      border-bottom: 1px solid #A0A0A0;
-      font-family: Roboto;
-      font-size: %1px;
-    }
-
-    QMenu::item {
-      height: %3px;
-      padding-left: %2px;
-    }
-
-    QMenu::item:selected {
-      background-color: #F2F2FF;
-    }
-  )").arg(scale_height(12)).arg(scale_width(26)).arg(scale_height(20)));
+  m_recently_closed_button->add_item("Book View", ":/icons/bookview-black.svg");
+  m_recently_closed_button->add_item("Book View", ":/icons/bookview-black.svg");
+  m_recently_closed_button->add_item("Book View", ":/icons/bookview-black.svg");
+  m_recently_closed_button->add_item("Book View", ":/icons/bookview-black.svg");
+  m_recently_closed_button->add_item("Book View", ":/icons/bookview-black.svg");
   combobox_layout->addWidget(m_recently_closed_button);
   auto button_layout = new QHBoxLayout();
   button_layout->setContentsMargins(scale_width(8), scale_height(5),

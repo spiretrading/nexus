@@ -5,6 +5,7 @@
 #include <QWidgetAction>
 #include "spire/toolbar/recently_closed_model.hpp"
 #include "spire/toolbar/toolbar.hpp"
+#include "spire/toolbar/toolbar_menu.hpp"
 #include "spire/ui/ui.hpp"
 
 namespace spire {
@@ -44,11 +45,8 @@ namespace spire {
 
       icon_button* m_minimize_button;
       icon_button* m_close_button;
-      QWidgetAction* m_minimize_action;
-      QWidgetAction* m_restore_action;
-      QWidgetAction* m_import_export_action;
-      QPushButton* m_window_manager_button;
-      QPushButton* m_recently_closed_button;
+      toolbar_menu* m_window_manager_button;
+      toolbar_menu* m_recently_closed_button;
       icon_button* m_account_button;
       icon_button* m_key_bindings_button;
       icon_button* m_canvas_button;
