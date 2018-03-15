@@ -6,7 +6,7 @@ namespace spire {
   class local_security_input_model;
   class security_input_model;
   class security_input_box;
-  class security_input_window;
+  class security_input_dialog;
 }
 
 #endif

@@ -1,7 +1,7 @@
 #include <QApplication>
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "spire/security_input/local_security_input_model.hpp"
-#include "spire/security_input/security_input_window.hpp"
+#include "spire/security_input/security_input_dialog.hpp"
 #include "spire/spire/resources.hpp"
 
 using namespace Nexus;
@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
   model.add(SecurityInfo(
     Security("MSFT", DefaultMarkets::NASDAQ(), DefaultCountries::US()),
     "Microsoft Corp", "Software"));
-  security_input_window window(model);
-  window.show();
+  security_input_dialog dialog(model);
+  dialog.show();
   application->exec();
 }
