@@ -1,5 +1,6 @@
 #ifndef SPIRE_TOOLBAR_WINDOW_HPP
 #define SPIRE_TOOLBAR_WINDOW_HPP
+#include <QPoint>
 #include <QPushButton>
 #include <QWidget>
 #include <QWidgetAction>
@@ -23,9 +24,11 @@ namespace spire {
 
       // Constructs a toolbar_window.
       /*!
+        \param model The model used to populate the Recently Closed toolbar_menu.
         \param parent The parent widget to toolbar_window.
       */
-      toolbar_window(QWidget* parent = nullptr);
+      toolbar_window(spire::recently_closed_model* model,
+        QWidget* parent = nullptr);
 
       //! Connects a slot to the closed signal.
       boost::signals2::connection connect_closed_signal(
@@ -37,12 +40,17 @@ namespace spire {
 
     protected:
       void closeEvent(QCloseEvent* event) override;
-      bool eventFilter(QObject* watched, QEvent* event) override;
+      void mouseMoveEvent(QMouseEvent* event) override;
+      void mousePressEvent(QMouseEvent* event) override;
+      void mouseReleaseEvent(QMouseEvent* event) override;
 
     private:
       mutable closed_signal m_closed_signal;
       mutable reopen_signal m_reopen_signal;
 
+      spire::recently_closed_model* m_recently_closed_model;
+      bool m_is_dragging;
+      QPoint m_last_pos;
       icon_button* m_minimize_button;
       icon_button* m_close_button;
       toolbar_menu* m_window_manager_button;

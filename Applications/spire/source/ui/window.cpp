@@ -2,6 +2,7 @@
 #include <QColor>
 #include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
+#include <windows.h>
 #include "spire/spire/dimensions.hpp"
 
 using namespace spire;

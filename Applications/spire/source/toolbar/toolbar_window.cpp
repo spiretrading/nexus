@@ -18,9 +18,10 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace spire;
 
-toolbar_window::toolbar_window(QWidget* parent)
-    : QWidget(parent) {
-  setWindowFlag(Qt::FramelessWindowHint);
+toolbar_window::toolbar_window(recently_closed_model* model, QWidget* parent)
+    : QWidget(parent),
+      m_recently_closed_model(model),
+      m_is_dragging(false) {
   setContentsMargins(0, 0, 0, 0);
   setFixedSize(scale(308, 98));
   setStyleSheet("background-color: #F5F5F5;");
@@ -52,11 +53,13 @@ toolbar_window::toolbar_window(QWidget* parent)
     ":/icons/minimize-black.svg", scale_width(32), scale_height(26),
     QRectF(scale_width(11), scale_height(12), scale_width(10), scale_height(2)),
     this);
+  m_minimize_button->connect_clicked_signal([&] { window()->showMinimized(); });
   title_bar_layout->addWidget(m_minimize_button);
   m_close_button = new icon_button(":/icons/close-grey.svg",
     ":/icons/close-red.svg", scale_width(32), scale_height(26),
     QRectF(scale_width(11), scale_height(8), scale_width(10), scale_height(10)),
     this);
+  m_close_button->connect_clicked_signal([&] { window()->close(); });
   title_bar_layout->addWidget(m_close_button);
   auto input_layout = new QVBoxLayout();
   input_layout->setMargin(0);
@@ -70,15 +73,12 @@ toolbar_window::toolbar_window(QWidget* parent)
   m_window_manager_button = new toolbar_menu(tr("Window Manager"), this);
   m_window_manager_button->setFixedSize(scale(138, 26));
   m_window_manager_button->add_item(tr("Minimize All"));
+  m_window_manager_button->add_item(tr("Restore All"));
+  m_window_manager_button->add_item(tr("Import/Export Settings"));
   combobox_layout->addWidget(m_window_manager_button);
   combobox_layout->addStretch(1);
   m_recently_closed_button = new toolbar_menu(tr("Recently Closed"), this);
   m_recently_closed_button->setFixedSize(scale(138, 26));
-  m_recently_closed_button->add_item("Book View", ":/icons/bookview-black.svg");
-  m_recently_closed_button->add_item("Book View", ":/icons/bookview-black.svg");
-  m_recently_closed_button->add_item("Book View", ":/icons/bookview-black.svg");
-  m_recently_closed_button->add_item("Book View", ":/icons/bookview-black.svg");
-  m_recently_closed_button->add_item("Book View", ":/icons/bookview-black.svg");
   combobox_layout->addWidget(m_recently_closed_button);
   auto button_layout = new QHBoxLayout();
   button_layout->setContentsMargins(scale_width(8), scale_height(5),
@@ -139,6 +139,29 @@ void toolbar_window::closeEvent(QCloseEvent* event) {
   m_closed_signal();
 }
 
-bool toolbar_window::eventFilter(QObject* watched, QEvent* event) {
-  return QWidget::eventFilter(watched, event);
+void toolbar_window::mouseMoveEvent(QMouseEvent* event) {
+  if(!m_is_dragging) {
+    return;
+  }
+  auto delta = event->globalPos();
+  delta -= m_last_pos;
+  auto window_pos = window()->pos();
+  window_pos += delta;
+  m_last_pos = event->globalPos();
+  window()->move(window_pos);
+}
+
+void toolbar_window::mousePressEvent(QMouseEvent* event) {
+  if(m_is_dragging || event->button() != Qt::LeftButton) {
+    return;
+  }
+  m_is_dragging = true;
+  m_last_pos = event->globalPos();
+}
+
+void toolbar_window::mouseReleaseEvent(QMouseEvent* event) {
+  if(event->button() != Qt::LeftButton) {
+    return;
+  }
+  m_is_dragging = false;
 }
