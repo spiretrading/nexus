@@ -11,14 +11,14 @@ namespace spire {
   class toolbar_ui_tester : public QWidget {
     public:
 
-      toolbar_ui_tester(spire::recently_closed_model* model,
+      toolbar_ui_tester(recently_closed_model& model,
         QWidget* parent = nullptr);
 
     protected:
       bool eventFilter(QObject* receiver, QEvent* event);
 
     private:
-      spire::recently_closed_model* m_recently_closed_model;
+      recently_closed_model* m_recently_closed_model;
       QPushButton* m_add_button;
       QLineEdit* m_text_line_edit;
       QRadioButton* m_book_view_radio;

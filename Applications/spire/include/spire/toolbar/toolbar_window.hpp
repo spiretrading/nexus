@@ -27,7 +27,7 @@ namespace spire {
         \param model The model used to populate the Recently Closed toolbar_menu.
         \param parent The parent widget to toolbar_window.
       */
-      toolbar_window(spire::recently_closed_model* model,
+      toolbar_window(recently_closed_model& model,
         QWidget* parent = nullptr);
 
       //! Connects a slot to the closed signal.
@@ -48,7 +48,7 @@ namespace spire {
       mutable closed_signal m_closed_signal;
       mutable reopen_signal m_reopen_signal;
 
-      spire::recently_closed_model* m_recently_closed_model;
+      recently_closed_model* m_model;
       bool m_is_dragging;
       QPoint m_last_pos;
       icon_button* m_minimize_button;
@@ -64,6 +64,8 @@ namespace spire {
       icon_button* m_dashboard_button;
       icon_button* m_order_imbalances_button;
       icon_button* m_blotter_button;
+
+      void entry_added(const recently_closed_model::entry& e);
   };
 }
 

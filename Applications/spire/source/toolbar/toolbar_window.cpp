@@ -18,10 +18,11 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace spire;
 
-toolbar_window::toolbar_window(recently_closed_model* model, QWidget* parent)
+toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
     : QWidget(parent),
-      m_recently_closed_model(model),
+      m_model(&model),
       m_is_dragging(false) {
+  m_model->connect_entry_added_signal([&] (auto& e) { entry_added(e); });
   setContentsMargins(0, 0, 0, 0);
   setFixedSize(scale(308, 98));
   setStyleSheet("background-color: #F5F5F5;");
@@ -72,12 +73,13 @@ toolbar_window::toolbar_window(recently_closed_model* model, QWidget* parent)
   input_layout->addLayout(combobox_layout);
   m_window_manager_button = new toolbar_menu(tr("Window Manager"), this);
   m_window_manager_button->setFixedSize(scale(138, 26));
-  m_window_manager_button->add_item(tr("Minimize All"));
-  m_window_manager_button->add_item(tr("Restore All"));
-  m_window_manager_button->add_item(tr("Import/Export Settings"));
+  m_window_manager_button->add(tr("Minimize All"));
+  m_window_manager_button->add(tr("Restore All"));
+  m_window_manager_button->add(tr("Import/Export Settings"));
   combobox_layout->addWidget(m_window_manager_button);
   combobox_layout->addStretch(1);
   m_recently_closed_button = new toolbar_menu(tr("Recently Closed"), this);
+  m_recently_closed_button->connect_item_selected_signal([&] (auto index) { /*m_model->remove(index)*/ });
   m_recently_closed_button->setFixedSize(scale(138, 26));
   combobox_layout->addWidget(m_recently_closed_button);
   auto button_layout = new QHBoxLayout();
@@ -164,4 +166,19 @@ void toolbar_window::mouseReleaseEvent(QMouseEvent* event) {
     return;
   }
   m_is_dragging = false;
+}
+
+void toolbar_window::entry_added(const recently_closed_model::entry& e) {
+  switch(e.m_type) {
+    case recently_closed_model::type::BOOK_VIEW: {
+      m_recently_closed_button->add(e.m_identifier.c_str(),
+        ":/icons/bookview-black.svg");
+      break;
+    }
+    case recently_closed_model::type::TIME_AND_SALE: {
+      m_recently_closed_button->add(e.m_identifier.c_str(),
+        ":/icons/time-sale-black.svg");
+      break;
+    }
+  }
 }

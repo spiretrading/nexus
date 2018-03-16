@@ -8,32 +8,34 @@
 #include <QWidgetAction>
 #include "spire/spire/dimensions.hpp"
 
+
+
+
+#include <QDebug>
+
 using namespace spire;
 
 toolbar_menu::toolbar_menu(const QString& title, QWidget* parent)
     : QPushButton(title, parent),
       m_items(new QMenu(this)),
-      m_default_style(true) {
+      m_default_style(true),
+      m_item_count(0) {
   setMenu(m_items);
   set_stylesheet(scale_width(8));
-  //m_items->setWindowFlag(Qt::NoDropShadowWindowHint);
-  //auto drop_shadow = new QGraphicsDropShadowEffect(this);
-  //drop_shadow->setBlurRadius(scale_height(120));
-  //drop_shadow->setXOffset(0);
-  //drop_shadow->setYOffset(0);
-  //drop_shadow->setColor(QColor(0, 0, 0, 100));
-  //drop_shadow->setColor(QColor(255, 0, 0, 255));
-  //m_items->setGraphicsEffect(drop_shadow);
 }
 
-void toolbar_menu::add_item(const QString& text) {
+void toolbar_menu::add(const QString& text) {
   auto action = new QWidgetAction(this);
   action->setText(text);
   m_items->addAction(action);
+  m_action_to_index[action] = m_item_count;
+  ++m_item_count;
+  
 }
 
-void toolbar_menu::add_item(const QString& text, const QString& icon) {
+void toolbar_menu::add(const QString& text, const QString& icon) {
   auto action = new QWidgetAction(this);
+  connect(action, &QWidgetAction::triggered, [&] { on_triggered(action); });
   action->setText(text);
   auto renderer = new QSvgRenderer(icon, this);
   auto file = QImage(scale_width(15), scale_height(15), QImage::Format_ARGB32);
@@ -53,6 +55,21 @@ void toolbar_menu::add_item(const QString& text, const QString& icon) {
     set_stylesheet(scale_width(26));
   }
 }
+
+boost::signals2::connection toolbar_menu::connect_item_selected_signal(
+    const item_selected_signal::slot_type& slot) const {
+  return m_item_selected_signal.connect(slot);
+}
+
+//bool toolbar_menu::eventFilter(QObject* watched, QEvent* event) {
+//  if(event->type() == QEvent::) {
+//    // ***********************************************
+//    // is it safe to assume the object is a QAction?
+//    // ***********************************************
+//    on_triggered(static_cast<QAction*>(watched));
+//  }
+//  return QPushButton::eventFilter(watched, event);
+//}
 
 void toolbar_menu::resizeEvent(QResizeEvent* event) {
   m_items->setFixedWidth(size().width());
@@ -102,4 +119,12 @@ void toolbar_menu::set_stylesheet(int padding_left) {
     QMenu::item:selected {
       background-color: #F2F2FF;
     })").arg(scale_height(12)).arg(padding_left).arg(scale_height(20)));
+}
+
+void toolbar_menu::on_triggered(QAction* action) {
+  auto index = m_action_to_index[action];
+  qDebug() << m_items->actions().size();
+  m_items->removeAction(action);
+  qDebug() << m_items->actions().size();
+  m_item_selected_signal(index);
 }

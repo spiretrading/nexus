@@ -7,10 +7,10 @@
 
 using namespace spire;
 
-toolbar_ui_tester::toolbar_ui_tester(recently_closed_model* model,
+toolbar_ui_tester::toolbar_ui_tester(recently_closed_model& model,
     QWidget* parent)
     : QWidget(parent),
-      m_recently_closed_model(model) {
+      m_recently_closed_model(&model) {
   setFixedSize(scale(480, 100));
   auto layout = new QVBoxLayout(this);
   auto radio_layout = new QHBoxLayout();

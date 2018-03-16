@@ -12,11 +12,11 @@ int main(int argc, char** argv) {
   application->setOrganizationName(QObject::tr("Eidolon Systems Ltd"));
   application->setApplicationName(QObject::tr("Toolbar UI Tester"));
   initialize_resources();
-  auto window = new toolbar_window();
+  recently_closed_model model;
+  auto window = new toolbar_window(model);
   spire::window frame(window);
   frame.show();
-  recently_closed_model model;
-  toolbar_ui_tester tester(&model);
+  toolbar_ui_tester tester(model);
   tester.setGeometry(frame.pos().x(),
     frame.pos().y() + frame.height() + 100, 0, 0);
   frame.installEventFilter(&tester);
