@@ -159,23 +159,14 @@ namespace MarketDataService {
 
   inline Money ChiaMessage::ParsePrice(bool isLongForm,
       Beam::Out<const char*> cursor) {
-    auto PowerOfTen =
-      [] (std::uint16_t exponent) {
-        std::uint64_t result = 1;
-        for(auto i = std::uint16_t{0}; i < exponent; ++i) {
-          result *= 10;
-        }
-        return result;
-      };
     auto value = 0;
-    auto length =
+    auto remainingLength =
       [&] {
         if(isLongForm) {
           return 19;
         }
         return 10;
       }();
-    auto remainingLength = length;
     while(**cursor == ' ' && remainingLength > 0) {
       ++*cursor;
       --remainingLength;
@@ -185,15 +176,14 @@ namespace MarketDataService {
       ++*cursor;
       --remainingLength;
     }
-    auto decimalPlaces =
+    auto multiplier =
       [&] {
         if(isLongForm) {
-          return 7;
+          return 10000000;
         }
-        return 4;
+        return 10000;
       }();
-    auto multiplier = PowerOfTen(Money::DECIMAL_PLACES - decimalPlaces);
-    auto price = Money::FromRepresentation(value * multiplier);
+    auto price = value * (Money::ONE / multiplier);
     return price;
   }
 }

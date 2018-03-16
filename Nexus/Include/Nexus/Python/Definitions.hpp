@@ -62,6 +62,9 @@ namespace Python {
   //! Exports the OrderType enum.
   void ExportOrderType();
 
+  //! Exports the Quantity class.
+  void ExportQuantity();
+
   //! Exports the Quote class.
   void ExportQuote();
 

@@ -1,8 +1,3 @@
-pushd C:\
-If(-Not (Test-Path C:\Development)) {
-  mkdir Development
-}
-pushd Development
 $program_files_x86_path = (Get-Item -LiteralPath "C:\Progra~1").FullName
 $program_files_path = (Get-Item -LiteralPath "C:\Progra~2").FullName
 If($program_files_x86_path -eq "C:\Program Files") {
@@ -73,36 +68,4 @@ foreach {
     $v = $_.split("="); set-item -force -path "ENV:\$($v[0])"  -value "$($v[1])"
   }
 }
-popd
-If(-Not (Test-Path C:\Development\Projects)) {
-  mkdir Projects
-}
-pushd Projects
-If(-Not (Test-Path C:\Development\Projects\Beam)) {
-  git clone http://www.github.com/eidolonsystems/beam.git Beam
-}
-popd
-If(-Not (Test-Path C:\Development\Libraries)) {
-  mkdir Libraries
-}
-pushd Libraries
-..\Projects\Beam\Build\Windows\setup.bat
-pushd ..\Projects\Beam\Build\Windows
-.\run_cmake.bat
-.\build.bat
-popd
-popd
-pushd Projects
-If(-Not (Test-Path C:\Development\Projects\Nexus)) {
-  git clone http://www.github.com/eidolonsystems/nexus.git Nexus
-}
-popd
-pushd Libraries
-..\Projects\Nexus\Build\Windows\setup.bat
-pushd ..\Projects\Nexus\Build\Windows
-.\run_cmake.bat
-.\build.bat
-popd
-popd
-popd
 popd

@@ -12,8 +12,8 @@
 
 namespace Nexus {
 namespace ChartingService {
-  typedef Beam::Queries::QueryResult<Queries::SequencedQueryVariant>
-    SecurityChartingQueryResult;
+  using SecurityChartingQueryResult = Beam::Queries::QueryResult<
+    Queries::SequencedQueryVariant>;
   BEAM_DEFINE_RECORD(TimePriceQueryResult, Beam::Queries::Sequence, start,
     Beam::Queries::Sequence, end, TechnicalAnalysis::TimePriceSeries, series);
 }

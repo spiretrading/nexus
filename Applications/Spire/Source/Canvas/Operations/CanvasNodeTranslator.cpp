@@ -307,6 +307,13 @@ namespace {
     };
 
     template<>
+    struct Operation<Nexus::Quantity, Nexus::Quantity> {
+      Nexus::Quantity operator ()(const Nexus::Quantity& arg) const {
+        return Nexus::Abs(arg);
+      }
+    };
+
+    template<>
     struct Operation<Nexus::Money, Nexus::Money> {
       Nexus::Money operator ()(const Nexus::Money& arg) const {
         return Nexus::Abs(arg);
@@ -332,6 +339,20 @@ namespace {
       }
     };
 
+    template<>
+    struct Operation<double, Quantity, double> {
+      double operator()(const double& left, const Quantity& right) const {
+        return static_cast<double>(left + right);
+      }
+    };
+
+    template<>
+    struct Operation<Quantity, double, double> {
+      double operator()(const Quantity& left, const double& right) const {
+        return static_cast<double>(left + right);
+      }
+    };
+
     template<typename T0, typename T1, typename R>
     static std::shared_ptr<BaseReactor> Template(
         const std::shared_ptr<BaseReactor>& left,
@@ -354,9 +375,17 @@ namespace {
     };
 
     template<>
+    struct Operation<Quantity, Quantity, Quantity> {
+      Quantity operator ()(const Quantity& value,
+          const Quantity& places) const {
+        return Nexus::Ceil(value, static_cast<int>(places));
+      }
+    };
+
+    template<>
     struct Operation<Money, Quantity, Money> {
       Money operator ()(const Money& value, const Quantity& places) const {
-        return Nexus::Ceil(value, places);
+        return Nexus::Ceil(value, static_cast<int>(places));
       }
     };
 
@@ -405,6 +434,28 @@ namespace {
           BOOST_THROW_EXCEPTION(ReactorError("Division by 0."));
         }
         return left / right;
+      }
+    };
+
+    template<>
+    struct Operation<double, Quantity, double> {
+      double operator()(const double& left, const Quantity& right) const {
+        return static_cast<double>(left / right);
+      }
+    };
+
+    template<>
+    struct Operation<Quantity, double, double> {
+      double operator()(const Quantity& left, const double& right) const {
+        return static_cast<double>(left / right);
+      }
+    };
+
+    template<>
+    struct Operation<time_duration, Quantity, time_duration> {
+      time_duration operator()(const time_duration& left,
+          const Quantity& right) const {
+        return left / static_cast<int>(right);
       }
     };
 
@@ -566,9 +617,17 @@ namespace {
     };
 
     template<>
+    struct Operation<Quantity, Quantity, Quantity> {
+      Quantity operator ()(const Quantity& value,
+          const Quantity& places) const {
+        return Nexus::Floor(value, static_cast<int>(places));
+      }
+    };
+
+    template<>
     struct Operation<Money, Quantity, Money> {
       Money operator ()(const Money& value, const Quantity& places) const {
-        return Nexus::Floor(value, places);
+        return Nexus::Floor(value, static_cast<int>(places));
       }
     };
 
@@ -820,6 +879,13 @@ namespace {
     };
 
     template<>
+    struct Operation<Quantity, Money, Money> {
+      Money operator()(const Quantity& left, const Money& right) const {
+        return left * right;
+      }
+    };
+
+    template<>
     struct Operation<Money, double, Money> {
       Money operator()(const Money& left, const double& right) const {
         return right * left;
@@ -830,7 +896,29 @@ namespace {
     struct Operation<Quantity, time_duration, time_duration> {
       time_duration operator()(const Quantity& left,
           const time_duration& right) const {
-        return right * left;
+        return right * static_cast<int>(left);
+      }
+    };
+
+    template<>
+    struct Operation<time_duration, Quantity, time_duration> {
+      time_duration operator()(const time_duration& left,
+          const Quantity& right) const {
+        return left * static_cast<int>(right);
+      }
+    };
+
+    template<>
+    struct Operation<double, Quantity, double> {
+      double operator()(const double& left, const Quantity& right) const {
+        return static_cast<double>(left * right);
+      }
+    };
+
+    template<>
+    struct Operation<Quantity, double, double> {
+      double operator()(const Quantity& left, const double& right) const {
+        return static_cast<double>(right * left);
       }
     };
 
@@ -913,9 +1001,17 @@ namespace {
     };
 
     template<>
+    struct Operation<Quantity, Quantity, Quantity> {
+      Quantity operator ()(const Quantity& value,
+          const Quantity& places) const {
+        return Nexus::Round(value, static_cast<int>(places));
+      }
+    };
+
+    template<>
     struct Operation<Money, Quantity, Money> {
       Money operator()(const Money& value, const Quantity& places) const {
-        return Nexus::Round(value, places);
+        return Nexus::Round(value, static_cast<int>(places));
       }
     };
 
@@ -937,6 +1033,20 @@ namespace {
     struct Operation {
       R operator()(const T0& left, const T1& right) const {
         return left - right;
+      }
+    };
+
+    template<>
+    struct Operation<double, Quantity, double> {
+      double operator()(const double& left, const Quantity& right) const {
+        return static_cast<double>(left - right);
+      }
+    };
+
+    template<>
+    struct Operation<Quantity, double, double> {
+      double operator()(const Quantity& left, const double& right) const {
+        return static_cast<double>(left - right);
       }
     };
 

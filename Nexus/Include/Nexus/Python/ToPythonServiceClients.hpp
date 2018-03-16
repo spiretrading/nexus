@@ -7,6 +7,7 @@
 #include <Beam/Python/ToPythonTimeClient.hpp>
 #include <Beam/Python/ToPythonTimer.hpp>
 #include "Nexus/Python/ToPythonAdministrationClient.hpp"
+#include "Nexus/Python/ToPythonComplianceClient.hpp"
 #include "Nexus/Python/ToPythonDefinitionsClient.hpp"
 #include "Nexus/Python/ToPythonMarketDataClient.hpp"
 #include "Nexus/Python/ToPythonOrderExecutionClient.hpp"
@@ -66,6 +67,7 @@ namespace Nexus {
       std::unique_ptr<AdministrationClient> m_administrationClient;
       std::unique_ptr<DefinitionsClient> m_definitionsClient;
       std::unique_ptr<MarketDataClient> m_marketDataClient;
+      std::unique_ptr<ComplianceClient> m_complianceClient;
       std::unique_ptr<OrderExecutionClient> m_orderExecutionClient;
       std::unique_ptr<TimeClient> m_timeClient;
       Beam::IO::OpenState m_openState;
@@ -96,6 +98,7 @@ namespace Nexus {
     Close();
     m_timeClient.reset();
     m_orderExecutionClient.reset();
+    m_complianceClient.reset();
     m_marketDataClient.reset();
     m_definitionsClient.reset();
     m_administrationClient.reset();
@@ -154,7 +157,10 @@ namespace Nexus {
   template<typename ClientType>
   typename ToPythonServiceClients<ClientType>::ComplianceClient&
       ToPythonServiceClients<ClientType>::GetComplianceClient() {
-    throw std::runtime_error{"Not implemented"};
+    if(m_openState.IsOpen()) {
+      return *m_complianceClient;
+    }
+    BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException{});
   }
 
   template<typename ClientType>
@@ -218,6 +224,10 @@ namespace Nexus {
         MarketDataService::MakeVirtualMarketDataClient(
         &m_client->GetMarketDataClient()));
       m_marketDataClient->Open();
+      m_complianceClient = Compliance::MakeToPythonComplianceClient(
+        Compliance::MakeVirtualComplianceClient(
+        &m_client->GetComplianceClient()));
+      m_complianceClient->Open();
       m_orderExecutionClient =
         OrderExecutionService::MakeToPythonOrderExecutionClient(
         OrderExecutionService::MakeVirtualOrderExecutionClient(
@@ -251,6 +261,9 @@ namespace Nexus {
     }
     if(m_orderExecutionClient != nullptr) {
       m_orderExecutionClient->Close();
+    }
+    if(m_complianceClient != nullptr) {
+      m_complianceClient->Close();
     }
     if(m_marketDataClient != nullptr) {
       m_marketDataClient->Close();

@@ -364,9 +364,8 @@ namespace MarketDataService {
         return result;
       };
     auto value = ParseInt32(Beam::Store(cursor));
-    auto multiplier = PowerOfTen(
-      Money::DECIMAL_PLACES - directory.m_priceDecimalPlaces - 2);
-    auto price = Money::FromRepresentation(value * multiplier);
+    auto multiplier = Quantity{1} / PowerOfTen(directory.m_priceDecimalPlaces);
+    auto price = Money{multiplier * value};
     return price;
   }
 

@@ -4,6 +4,37 @@
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 
 namespace Spire {
+namespace Details {
+  template<typename Shuttler>
+  void Shuttle(Shuttler& shuttle, Nexus::Quantity& value) {
+    if(Beam::Serialization::IsReceiver<Shuttler>::value) {
+      std::int64_t v;
+      shuttle.Shuttle("value", v);
+      value = v;
+    } else {
+      std::int64_t v = static_cast<std::int64_t>(value);
+      shuttle.Shuttle("value", v);
+    }
+  }
+
+  template<typename Shuttler>
+  void Shuttle(Shuttler& shuttle, Nexus::Money& value) {
+    if(Beam::Serialization::IsReceiver<Shuttler>::value) {
+      std::int64_t v;
+      shuttle.Shuttle("value", v);
+      value = Nexus::Money{Nexus::Quantity{v} / Nexus::Quantity::MULTIPLIER};
+    } else {
+      std::int64_t v = static_cast<std::int64_t>(
+        static_cast<Nexus::Quantity>(value) * Nexus::Quantity::MULTIPLIER);
+      shuttle.Shuttle("value", v);
+    }
+  }
+
+  template<typename Shuttler, typename T>
+  void Shuttle(Shuttler& shuttle, T& value) {
+    shuttle.Shuttle("value", value);
+  }
+}
 
   /*! \class BaseValueNode
       \brief Base class for a ValueNode.
@@ -80,7 +111,7 @@ namespace Spire {
   template<typename Shuttler>
   void ValueNode<T>::Shuttle(Shuttler& shuttle, unsigned int version) {
     CanvasNode::Shuttle(shuttle, version);
-    shuttle.Shuttle("value", m_value);
+    Details::Shuttle(shuttle, m_value);
   }
 }
 

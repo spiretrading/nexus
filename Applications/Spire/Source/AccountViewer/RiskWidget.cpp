@@ -67,12 +67,12 @@ void RiskWidget::SetModel(const std::shared_ptr<RiskModel>& model) {
   }
   m_ui->m_buyingPowerInput->setPrefix(QString::fromStdString(currency.m_sign));
   m_ui->m_buyingPowerInput->setValue(
-    ToDouble(m_model->GetRiskParameters().m_buyingPower));
+    static_cast<double>(m_model->GetRiskParameters().m_buyingPower));
   m_ui->m_buyingPowerInput->setSuffix(QString::fromStdString(
     string{" "} + currency.m_code.GetData()));
   m_ui->m_netLossInput->setPrefix(QString::fromStdString(currency.m_sign));
   m_ui->m_netLossInput->setValue(
-    ToDouble(m_model->GetRiskParameters().m_netLoss));
+    static_cast<double>(m_model->GetRiskParameters().m_netLoss));
   m_ui->m_netLossInput->setSuffix(QString::fromStdString(
     string{" "} + currency.m_code.GetData()));
   QTime timeDisplay(0, 0, 0, 0);
@@ -86,13 +86,13 @@ void RiskWidget::Commit() {
     m_ui->m_currencyInput->currentText().toStdString());
   m_model->GetRiskParameters().m_currency = currency.m_id;
   m_model->GetRiskParameters().m_buyingPower =
-    Money::FromValue(m_ui->m_buyingPowerInput->value());
+    Money{Quantity{m_ui->m_buyingPowerInput->value()}};
   m_model->GetRiskParameters().m_netLoss =
-    Money::FromValue(m_ui->m_netLossInput->value());
+    Money{Quantity{m_ui->m_netLossInput->value()}};
 
   // TODO
   m_model->GetRiskParameters().m_lossFromTop = 1.0;
-  QTime transitionTime = m_ui->m_transitionTimeInput->time();
+  auto transitionTime = m_ui->m_transitionTimeInput->time();
   m_model->GetRiskParameters().m_transitionTime = hours(transitionTime.hour()) +
     minutes(transitionTime.minute()) + seconds(transitionTime.second()) +
     milliseconds(transitionTime.msec());

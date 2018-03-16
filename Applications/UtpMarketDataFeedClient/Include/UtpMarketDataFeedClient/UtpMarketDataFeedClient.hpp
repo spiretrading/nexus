@@ -146,8 +146,9 @@ namespace MarketDataService {
   template<typename MarketDataFeedClientType, typename ProtocolClientType>
   Money UtpMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
       ParseMoneyLong(Beam::Out<const char*> cursor) {
+    auto multiplier = Quantity{1} / 1000000;
     auto value = ParseNumeric<std::uint64_t>(Beam::Store(cursor));
-    return Money::FromRepresentation(value);
+    return Money{multiplier * value};
   }
 
   template<typename MarketDataFeedClientType, typename ProtocolClientType>

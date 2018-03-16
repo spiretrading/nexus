@@ -6,7 +6,7 @@ then
 else
   so_ext="so"
 fi
-pushd /home/developers/Beam/Beam/Build/Make
+pushd $nexus_local_path/../../../../Beam/Beam/Build/Make
 . ./set_env.sh
 popd
 export PATH=/usr/local/Qt-5.5.0/bin:$PATH

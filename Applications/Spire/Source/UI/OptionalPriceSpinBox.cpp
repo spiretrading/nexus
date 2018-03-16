@@ -52,7 +52,7 @@ Money OptionalPriceSpinBox::GetValue() const {
 }
 
 void OptionalPriceSpinBox::SetValue(Money value) {
-  setValue(value.GetRepresentation() / static_cast<double>(Money::MULTIPLIER));
+  setValue(static_cast<double>(static_cast<Quantity>(value)));
 }
 
 void OptionalPriceSpinBox::keyPressEvent(QKeyEvent* event) {
@@ -90,8 +90,7 @@ void OptionalPriceSpinBox::AdjustIncrement(KeyModifiers modifier) {
   }
   auto priceIncrement = m_userProfile->GetInteractionProperties().Get(
     *m_security).m_priceIncrements[static_cast<int>(modifier)];
-  auto increment = priceIncrement.GetRepresentation() /
-    static_cast<double>(Money::MULTIPLIER);
+  auto increment = static_cast<double>(static_cast<Quantity>(priceIncrement));
   if(increment != singleStep()) {
     setSingleStep(increment);
   }

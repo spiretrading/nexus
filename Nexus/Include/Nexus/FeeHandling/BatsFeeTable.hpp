@@ -70,8 +70,7 @@ namespace Nexus {
       return fee *
         (executionReport.m_lastQuantity * executionReport.m_lastPrice);
     } else {
-      return (static_cast<int>(executionReport.m_lastQuantity) * fee) *
-        Money::ONE;
+      return (fee * executionReport.m_lastQuantity) * Money::ONE;
     }
   }
 }

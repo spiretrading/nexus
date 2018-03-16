@@ -91,7 +91,7 @@ QVariant TimeAndSalesModel::data(const QModelIndex& index, int role) const {
     } else if(index.column() == PRICE_COLUMN) {
       return QVariant::fromValue(timeAndSale.m_price);
     } else if(index.column() == SIZE_COLUMN) {
-      return timeAndSale.m_size;
+      return QVariant::fromValue(timeAndSale.m_size);
     } else if(index.column() == MARKET_COLUMN) {
       return QString::fromStdString(timeAndSale.m_marketCenter);
     } else if(index.column() == CONDITION_COLUMN) {

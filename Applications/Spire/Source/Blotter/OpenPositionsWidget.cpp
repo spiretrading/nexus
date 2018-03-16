@@ -31,7 +31,7 @@ namespace {
       GetOpposite(GetSide(position.m_inventory.m_position)),
       userProfile.GetDestinationDatabase().GetPreferredDestination(
       position.m_key.m_index.GetMarket()).m_id,
-      abs(position.m_inventory.m_position.m_quantity));
+      Abs(position.m_inventory.m_position.m_quantity));
     unique_ptr<SingleOrderTaskNode> orderNode =
       BuildOrderTaskNodeFromOrderFields(orderFields, userProfile);
     const BlotterTasksModel::TaskEntry& entry =

@@ -1,6 +1,6 @@
 #ifndef SPIRE_INTEGERTYPE_HPP
 #define SPIRE_INTEGERTYPE_HPP
-#include "Nexus/Definitions/Definitions.hpp"
+#include "Nexus/Definitions/Quantity.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Types/NativeType.hpp"
 
@@ -13,7 +13,7 @@ namespace Spire {
     public:
 
       //! Defines the native type being represented.
-      typedef Nexus::Quantity Type;
+      using Type = Nexus::Quantity;
 
       //! Returns an instance of this type.
       static const IntegerType& GetInstance();

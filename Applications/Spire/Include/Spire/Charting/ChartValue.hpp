@@ -7,6 +7,7 @@
 #include <boost/date_time/posix_time/ptime.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Money.hpp"
+#include "Nexus/Definitions/Quantity.hpp"
 #include "Spire/Charting/Charting.hpp"
 
 namespace Spire {
@@ -17,14 +18,8 @@ namespace Spire {
   class ChartValue {
     public:
 
-      //! Builds a ChartValue from its internal representation.
-      /*!
-        \param value The internal representation of the ChartValue.
-      */
-      static ChartValue FromRepresentation(std::int64_t value);
-
       //! Constructs a value of 0.
-      ChartValue();
+      ChartValue() = default;
 
       //! Constructs a ChartValue from a Money instance.
       /*!
@@ -40,13 +35,13 @@ namespace Spire {
 
       //! Constructs a ChartValue from a date/time.
       /*!
-        \param value.
+        \param value The value to represent.
       */
       explicit ChartValue(const boost::posix_time::ptime& value);
 
       //! Constructs a ChartValue from a time duration.
       /*!
-        \param value.
+        \param value The value to represent.
       */
       explicit ChartValue(const boost::posix_time::time_duration& value);
 
@@ -169,11 +164,8 @@ namespace Spire {
       //! Returns the time_duration value represented by this value.
       boost::posix_time::time_duration ToTimeDuration() const;
 
-      //! Returns the internal representation of this ChartValue.
-      std::int64_t GetRepresentation() const;
-
     private:
-      std::int64_t m_value;
+      Nexus::Quantity m_value;
   };
 
   //! Multiplies a ChartValue by a scalar quantity.
@@ -184,8 +176,7 @@ namespace Spire {
   */
   template<typename T>
   ChartValue operator *(T lhs, ChartValue rhs) {
-    return ChartValue::FromRepresentation(
-      static_cast<std::int64_t>(lhs * rhs.GetRepresentation()));
+    return ChartValue{lhs * rhs.ToQuantity()};
   }
 
   //! Divides a ChartValue by a scalar quantity.
@@ -196,8 +187,7 @@ namespace Spire {
   */
   template<typename T>
   ChartValue operator /(ChartValue lhs, T rhs) {
-    return ChartValue::FromRepresentation(
-      static_cast<std::int64_t>(lhs.GetRepresentation() / rhs));
+    return ChartValue{lhs.ToQuantity() / rhs};
   }
 
   template<typename T>
@@ -223,7 +213,7 @@ namespace Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, const char* name,
         Spire::ChartValue value) const {
-      shuttle.Send(name, value.GetRepresentation());
+      shuttle.Send(name, value.ToQuantity());
     }
   };
 
@@ -232,9 +222,9 @@ namespace Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, const char* name,
         Spire::ChartValue& value) const {
-      std::int64_t representation;
+      Nexus::Quantity representation;
       shuttle.Shuttle(name, representation);
-      value = Spire::ChartValue::FromRepresentation(representation);
+      value = Spire::ChartValue{representation};
     }
   };
 }
@@ -244,7 +234,7 @@ namespace std {
   template <>
   struct hash<Spire::ChartValue> {
     size_t operator()(Spire::ChartValue value) const {
-      return static_cast<size_t>(value.GetRepresentation());
+      return static_cast<size_t>(value.ToQuantity());
     }
   };
 };

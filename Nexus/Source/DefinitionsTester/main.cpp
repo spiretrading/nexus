@@ -4,6 +4,7 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TestRunner.h>
 #include "Nexus/DefinitionsTests/MoneyTester.hpp"
+#include "Nexus/DefinitionsTests/QuantityTester.hpp"
 #include "Nexus/DefinitionsTests/RegionTester.hpp"
 #include "Nexus/DefinitionsTests/RegionMapTester.hpp"
 #include "Nexus/DefinitionsTests/SecuritySetTester.hpp"
@@ -15,6 +16,7 @@ int main() {
   CPPUNIT_NS::TextUi::TestRunner runner;
   CppUnit::BriefTestProgressListener listener;
   runner.addTest(MoneyTester::suite());
+  runner.addTest(QuantityTester::suite());
   runner.addTest(RegionTester::suite());
   runner.addTest(RegionMapTester::suite());
   runner.addTest(TimeZoneTester::suite());

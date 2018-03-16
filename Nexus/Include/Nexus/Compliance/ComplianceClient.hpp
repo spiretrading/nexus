@@ -7,6 +7,7 @@
 #include <Beam/Threading/CallOnce.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/SynchronizedMap.hpp>
+#include <boost/functional/factory.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceServices.hpp"

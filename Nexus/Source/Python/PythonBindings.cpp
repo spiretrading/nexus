@@ -3,6 +3,7 @@
 #include "Nexus/Python/Accounting.hpp"
 #include "Nexus/Python/AdministrationService.hpp"
 #include "Nexus/Python/Backtester.hpp"
+#include "Nexus/Python/Compliance.hpp"
 #include "Nexus/Python/Definitions.hpp"
 #include "Nexus/Python/DefinitionsService.hpp"
 #include "Nexus/Python/FeeHandling.hpp"
@@ -31,6 +32,7 @@ BOOST_PYTHON_MODULE(nexus) {
   atexit.attr("register")(finalize);
   ExportAccounting();
   ExportAdministrationService();
+  ExportCompliance();
   ExportDefinitions();
   ExportDefinitionsService();
   ExportFeeHandling();

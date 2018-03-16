@@ -135,9 +135,10 @@ void InteractionsWidget::Update() {
   m_priceModifierIndex = m_ui->m_priceIncrementModifierComboBox->currentIndex();
   const RegionEntry& region = m_regions.at(m_regionIndex);
   const InteractionsProperties& properties = m_properties.Get(region.m_region);
-  m_ui->m_defaultQuantitySpinBox->setValue(properties.m_defaultQuantity);
+  m_ui->m_defaultQuantitySpinBox->setValue(
+    static_cast<int>(properties.m_defaultQuantity));
   m_ui->m_quantityIncrementSpinBox->setValue(
-    properties.m_quantityIncrements[m_quantityModifierIndex]);
+    static_cast<int>(properties.m_quantityIncrements[m_quantityModifierIndex]));
   m_ui->m_priceIncrementSpinBox->SetValue(
     properties.m_priceIncrements[m_priceModifierIndex]);
   m_ui->m_cancelOnFillCheckBox->setChecked(properties.m_cancelOnFill);

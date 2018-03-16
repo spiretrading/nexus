@@ -299,7 +299,8 @@ namespace FixUtilities {
     if(orderInfo.m_fields.m_type == OrderType::LIMIT ||
         (orderInfo.m_fields.m_type == OrderType::PEGGED &&
         orderInfo.m_fields.m_price != Money::ZERO)) {
-      newOrderSingle.set(FIX::Price(ToDouble(orderInfo.m_fields.m_price)));
+      newOrderSingle.set(FIX::Price(static_cast<double>(
+        orderInfo.m_fields.m_price)));
     }
     AddAdditionalTags(orderInfo.m_fields.m_additionalFields,
       Beam::Store(newOrderSingle));

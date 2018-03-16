@@ -38,11 +38,9 @@ namespace Compliance {
 
     private:
       SecuritySet m_securities;
-      Quantity m_count;
-      Beam::SynchronizedUnorderedMap<Security, boost::atomic<Quantity>>
-        m_askCounts;
-      Beam::SynchronizedUnorderedMap<Security, boost::atomic<Quantity>>
-        m_bidCounts;
+      int m_count;
+      Beam::SynchronizedUnorderedMap<Security, boost::atomic_int> m_askCounts;
+      Beam::SynchronizedUnorderedMap<Security, boost::atomic_int> m_bidCounts;
       Beam::RoutineTaskQueue m_tasks;
 
       void OnExecutionReport(const Security& security, Side side,
@@ -71,7 +69,7 @@ namespace Compliance {
           m_securities.Add(std::move(boost::get<Security>(security)));
         }
       } else if(parameter.m_name == "count") {
-        m_count = boost::get<Quantity>(parameter.m_value);
+        m_count = static_cast<int>(boost::get<Quantity>(parameter.m_value));
       }
     }
   }

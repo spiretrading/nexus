@@ -60,7 +60,7 @@ Money MoneySpinBox::GetValue() const {
 }
 
 void MoneySpinBox::SetValue(Money value) {
-  setValue(value.GetRepresentation() / static_cast<double>(Money::MULTIPLIER));
+  setValue(static_cast<double>(static_cast<Quantity>(value)));
 }
 
 void MoneySpinBox::keyPressEvent(QKeyEvent* event) {
@@ -82,8 +82,7 @@ void MoneySpinBox::AdjustIncrement(KeyModifiers modifier) {
   }
   auto priceIncrement = m_userProfile->GetInteractionProperties().Get(
     *m_security).m_priceIncrements[static_cast<int>(modifier)];
-  auto increment = priceIncrement.GetRepresentation() /
-    static_cast<double>(Money::MULTIPLIER);
+  auto increment = static_cast<double>(static_cast<Quantity>(priceIncrement));
   if(increment != singleStep()) {
     setSingleStep(increment);
   }

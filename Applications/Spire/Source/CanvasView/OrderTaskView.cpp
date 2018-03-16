@@ -155,7 +155,8 @@ unique_ptr<CanvasNode> OrderTaskView::InitializeTaskNode(
                 *m_state->m_security).m_defaultQuantity;
             }
           }();
-          builder.Replace(*quantityNode, quantityValueNode->SetValue(quantity));
+          builder.Replace(*quantityNode, quantityValueNode->SetValue(
+            static_cast<int>(quantity)));
         }
       }
       taskNode = builder.Build();
