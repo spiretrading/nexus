@@ -1,6 +1,8 @@
 #ifndef SPIRE_TOOLBAR_WINDOW_HPP
 #define SPIRE_TOOLBAR_WINDOW_HPP
 #include <vector>
+#include <QKeyEvent>
+#include <QMouseEvent>
 #include <QPoint>
 #include <QPushButton>
 #include <QWidget>
@@ -41,6 +43,7 @@ namespace spire {
 
     protected:
       void closeEvent(QCloseEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
       void mouseMoveEvent(QMouseEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;

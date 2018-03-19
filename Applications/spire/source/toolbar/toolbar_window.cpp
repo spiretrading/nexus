@@ -57,6 +57,7 @@ toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
     QRectF(scale_width(11), scale_height(12),
            scale_width(10), scale_height(2)),
     this);
+  m_minimize_button->setStyleSheet(":hover { background-color: #EBEBEB; }");
   m_minimize_button->connect_clicked_signal(
     [&] { window()->showMinimized(); });
   title_bar_layout->addWidget(m_minimize_button);
@@ -65,6 +66,7 @@ toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
     QRectF(scale_width(11), scale_height(8),
            scale_width(10),scale_height(10)),
     this);
+  m_close_button->setStyleSheet(":hover { background-color: #EBEBEB; }");
   m_close_button->connect_clicked_signal([&] { window()->close(); });
   title_bar_layout->addWidget(m_close_button);
   auto input_layout = new QVBoxLayout();
@@ -102,40 +104,46 @@ toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
     ":/icons/key-bindings-light-purple.svg",
     ":/icons/key-bindings-purple.svg", scale_width(20),
     scale_height(20), this);
+  m_key_bindings_button->set_focusable(true);
   m_key_bindings_button->setToolTip(tr("Key Bindings"));
   button_layout->addWidget(m_key_bindings_button);
   m_canvas_button = new icon_button(":/icons/canvas-light-purple.svg",
     ":/icons/canvas-purple.svg", scale_width(20), scale_height(20), this);
+  m_canvas_button->set_focusable(true);
   m_canvas_button->setToolTip(tr("Canvas"));
   button_layout->addWidget(m_canvas_button);
   m_book_view_button = new icon_button(":/icons/bookview-light-purple.svg",
     ":/icons/bookview-purple.svg", scale_width(20), scale_height(20), this);
+  m_book_view_button->set_focusable(true);
   m_book_view_button->setToolTip(tr("Bookview"));
   button_layout->addWidget(m_book_view_button);
   m_time_sale_button = new icon_button(":/icons/time-sale-light-purple.svg",
     ":/icons/time-sale-purple.svg", scale_width(20), scale_height(20), this);
+  m_time_sale_button->set_focusable(true);
   m_time_sale_button->setToolTip(tr("Time and Sale"));
   button_layout->addWidget(m_time_sale_button);
   m_chart_button = new icon_button(":/icons/chart-light-purple.svg",
     ":/icons/chart-purple.svg", scale_width(20), scale_height(20), this);
+  m_chart_button->set_focusable(true);
   m_chart_button->setToolTip(tr("Chart"));
   button_layout->addWidget(m_chart_button);
   m_dashboard_button = new icon_button(":/icons/dashboard-light-purple.svg",
     ":/icons/dashboard-purple.svg", scale_width(20), scale_height(20), this);
+  m_dashboard_button->set_focusable(true);
   m_dashboard_button->setToolTip(tr("Dashboard"));
   button_layout->addWidget(m_dashboard_button);
   m_order_imbalances_button = new icon_button(
     ":/icons/order-imbalances-light-purple.svg",
     ":/icons/order-imbalances-purple.svg", scale_width(20), scale_height(20),
     this);
+  m_order_imbalances_button->set_focusable(true);
   m_order_imbalances_button->setToolTip(tr("Order Imbalances"));
   button_layout->addWidget(m_order_imbalances_button);
   m_blotter_button = new icon_button(":/icons/blotter-light-purple.svg",
     ":/icons/blotter-purple.svg", scale_width(20), scale_height(20), this);
+  m_blotter_button->set_focusable(true);
   m_blotter_button->setToolTip(tr("Blotter"));
   button_layout->addWidget(m_blotter_button);
-  //setTabOrder(m_window_manager_button, m_recently_closed_button);
-  //setTabOrder(m_recently_closed_button, m_account_button);
 }
 
 connection toolbar_window::connect_closed_signal(
@@ -150,6 +158,21 @@ connection toolbar_window::connect_reopen_signal(
 
 void toolbar_window::closeEvent(QCloseEvent* event) {
   m_closed_signal();
+}
+
+void toolbar_window::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
+    if(m_window_manager_button->hasFocus()) {
+      m_window_manager_button->showMenu();
+    } else if(m_recently_closed_button->hasFocus()) {
+      m_recently_closed_button->showMenu();
+      m_recently_closed_button->menu()->setFocus();
+    }
+  } else if(event->key() == Qt::Key_Left) {
+    focusPreviousChild();
+  } else if(event->key() == Qt::Key_Right) {
+    focusNextChild();
+  }
 }
 
 void toolbar_window::mouseMoveEvent(QMouseEvent* event) {
@@ -170,6 +193,7 @@ void toolbar_window::mousePressEvent(QMouseEvent* event) {
   }
   m_is_dragging = true;
   m_last_pos = event->globalPos();
+  setFocus();
 }
 
 void toolbar_window::mouseReleaseEvent(QMouseEvent* event) {

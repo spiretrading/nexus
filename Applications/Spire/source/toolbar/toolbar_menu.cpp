@@ -5,7 +5,6 @@
 #include <QPixmap>
 #include <QPoint>
 #include <QtSvg/QSvgRenderer>
-#include <QWidgetAction>
 #include "spire/spire/dimensions.hpp"
 
 using namespace boost;
@@ -19,31 +18,40 @@ toolbar_menu::toolbar_menu(const QString& title, QWidget* parent)
   setMenu(m_items);
   connect(m_items, &QMenu::triggered, this, &toolbar_menu::on_triggered);
   set_stylesheet(scale_width(8));
+  m_empty_item = new QWidgetAction(this);
+  m_empty_item->setText(tr("Empty"));
+  m_empty_item->setEnabled(false);
+  m_action_to_index[m_empty_item] = 0;
+  m_items->addAction(m_empty_item);
 }
 
 void toolbar_menu::add(const QString& text) {
   auto action = new QWidgetAction(this);
   action->setText(text);
+  check_empty();
   m_items->addAction(action);
   auto size = m_action_to_index.size();
   m_action_to_index[action] = size;
 }
 
-void toolbar_menu::add(const QString& text, const QString& icon) {
-  auto action = new QWidgetAction(this);
-  action->setText(text);
-  auto renderer = new QSvgRenderer(icon, this);
-  auto file = QImage(scale_width(15), scale_height(15), QImage::Format_ARGB32);
-  QPainter painter(&file);
-  renderer->render(&painter);
+void toolbar_menu::add(const QString& text, const QString& icon_path) {
+  auto renderer = new QSvgRenderer(icon_path, this);
+  auto icon = QImage(scale_width(10), scale_height(10), QImage::Format_ARGB32);
+  icon.fill(QColor(0, 0, 0, 0));
+  QPainter icon_painter(&icon);
+  renderer->render(&icon_painter);
+  icon_painter.end();
   auto background = QImage(scale_width(26), scale_height(20),
     QImage::Format_ARGB32);
   background.fill(QColor(0, 0, 0, 0));
-  QPainter painter2(&background);
-  painter2.drawImage(QPoint(scale_width(12), scale_width(2)), file);
-  painter2.end();
+  QPainter background_painter(&background);
+  background_painter.drawImage(QPoint(scale_width(8), scale_height(5)), icon);
+  background_painter.end();
+  auto action = new QWidgetAction(this);
+  action->setText(text);
   action->setIcon(QPixmap::fromImage(background));
   action->setIconVisibleInMenu(true);
+  check_empty();
   m_items->addAction(action);
   auto size = m_action_to_index.size();
   m_action_to_index[action] = size;
@@ -70,6 +78,10 @@ void toolbar_menu::remove(int index) {
       --item.second;
     }
   }
+  if(m_action_to_index.size() == 0) {
+    m_action_to_index[m_empty_item] = 0;
+    m_items->addAction(m_empty_item);
+  }
 }
 
 connection toolbar_menu::connect_item_selected_signal(
@@ -77,8 +89,22 @@ connection toolbar_menu::connect_item_selected_signal(
   return m_item_selected_signal.connect(slot);
 }
 
+void toolbar_menu::mouseReleaseEvent(QMouseEvent* event) {
+  if(m_action_to_index.find(m_empty_item) != m_action_to_index.end()) {
+    window()->setFocus();
+    setFocus();
+  }
+}
+
 void toolbar_menu::resizeEvent(QResizeEvent* event) {
   m_items->setFixedWidth(size().width());
+}
+
+void toolbar_menu::check_empty() {
+  if(m_action_to_index.find(m_empty_item) != m_action_to_index.end()) {
+    m_action_to_index.erase(m_empty_item);
+    m_items->removeAction(m_empty_item);
+  }
 }
 
 void toolbar_menu::set_stylesheet(int padding_left) {
@@ -92,8 +118,9 @@ void toolbar_menu::set_stylesheet(int padding_left) {
       text-align: left;
     }
 
-    QPushButton:hover {
+    QPushButton:focus, QPushButton:hover {
       border: 1px solid #4B23A0;
+      outline: none;
     }
 
     QPushButton::menu-indicator {
@@ -124,6 +151,11 @@ void toolbar_menu::set_stylesheet(int padding_left) {
 
     QMenu::item:selected {
       background-color: #F2F2FF;
+    }
+
+    QMenu::item:disabled {
+      color: #8C8C8C;
+      font-style: italic;
     })").arg(scale_height(12)).arg(padding_left).arg(scale_height(20)));
 }
 

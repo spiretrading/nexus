@@ -5,6 +5,7 @@
 #include <QPushButton>
 #include <QResizeEvent>
 #include <QString>
+#include <QWidgetAction>
 #include "spire/toolbar/toolbar.hpp"
 
 namespace spire {
@@ -31,9 +32,9 @@ namespace spire {
       //! Adds an item to the menu with an icon.
       /*!
         \param text The text string for the item.
-        \param icon Resource path or absolute path to the icon.
+        \param icon_path Resource path or absolute path to the icon.
       */
-      void add(const QString& text, const QString& icon);
+      void add(const QString& text, const QString& icon_path);
 
       void remove(int index);
 
@@ -41,14 +42,17 @@ namespace spire {
         const item_selected_signal::slot_type& slot) const;
 
     protected:
-      void resizeEvent(QResizeEvent* event);
+      void mouseReleaseEvent(QMouseEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
 
     private:
       mutable item_selected_signal m_item_selected_signal;
       QMenu* m_items;
+      QWidgetAction* m_empty_item;
       std::unordered_map<QAction*, int> m_action_to_index;
       bool m_default_style;
 
+      void check_empty();
       void set_stylesheet(int padding_left);
       void on_triggered(QAction* action);
   };
