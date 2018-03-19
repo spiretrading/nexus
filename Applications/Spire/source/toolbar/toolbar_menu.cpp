@@ -8,19 +8,16 @@
 #include <QWidgetAction>
 #include "spire/spire/dimensions.hpp"
 
-
-
-
-#include <QDebug>
-
+using namespace boost;
+using namespace boost::signals2;
 using namespace spire;
 
 toolbar_menu::toolbar_menu(const QString& title, QWidget* parent)
     : QPushButton(title, parent),
       m_items(new QMenu(this)),
-      m_default_style(true),
-      m_item_count(0) {
+      m_default_style(true) {
   setMenu(m_items);
+  connect(m_items, &QMenu::triggered, this, &toolbar_menu::on_triggered);
   set_stylesheet(scale_width(8));
 }
 
@@ -28,14 +25,12 @@ void toolbar_menu::add(const QString& text) {
   auto action = new QWidgetAction(this);
   action->setText(text);
   m_items->addAction(action);
-  m_action_to_index[action] = m_item_count;
-  ++m_item_count;
-  
+  auto size = m_action_to_index.size();
+  m_action_to_index[action] = size;
 }
 
 void toolbar_menu::add(const QString& text, const QString& icon) {
   auto action = new QWidgetAction(this);
-  connect(action, &QWidgetAction::triggered, [&] { on_triggered(action); });
   action->setText(text);
   auto renderer = new QSvgRenderer(icon, this);
   auto file = QImage(scale_width(15), scale_height(15), QImage::Format_ARGB32);
@@ -50,26 +45,37 @@ void toolbar_menu::add(const QString& text, const QString& icon) {
   action->setIcon(QPixmap::fromImage(background));
   action->setIconVisibleInMenu(true);
   m_items->addAction(action);
+  auto size = m_action_to_index.size();
+  m_action_to_index[action] = size;
   if(m_default_style) {
     m_default_style = false;
     set_stylesheet(scale_width(26));
   }
 }
 
-boost::signals2::connection toolbar_menu::connect_item_selected_signal(
+void toolbar_menu::remove(int index) {
+  auto action = [&] () -> QAction* {
+    for(auto& item : m_action_to_index) {
+      if(item.second == index) {
+        return item.first;
+      }
+    }
+    return nullptr;
+  }();
+  m_items->removeAction(action);
+  m_action_to_index.erase(action);
+  delete action;
+  for(auto& item : m_action_to_index) {
+    if(item.second > index) {
+      --item.second;
+    }
+  }
+}
+
+connection toolbar_menu::connect_item_selected_signal(
     const item_selected_signal::slot_type& slot) const {
   return m_item_selected_signal.connect(slot);
 }
-
-//bool toolbar_menu::eventFilter(QObject* watched, QEvent* event) {
-//  if(event->type() == QEvent::) {
-//    // ***********************************************
-//    // is it safe to assume the object is a QAction?
-//    // ***********************************************
-//    on_triggered(static_cast<QAction*>(watched));
-//  }
-//  return QPushButton::eventFilter(watched, event);
-//}
 
 void toolbar_menu::resizeEvent(QResizeEvent* event) {
   m_items->setFixedWidth(size().width());
@@ -123,8 +129,5 @@ void toolbar_menu::set_stylesheet(int padding_left) {
 
 void toolbar_menu::on_triggered(QAction* action) {
   auto index = m_action_to_index[action];
-  qDebug() << m_items->actions().size();
-  m_items->removeAction(action);
-  qDebug() << m_items->actions().size();
   m_item_selected_signal(index);
 }

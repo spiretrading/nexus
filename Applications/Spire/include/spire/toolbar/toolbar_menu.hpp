@@ -46,7 +46,6 @@ namespace spire {
     private:
       mutable item_selected_signal m_item_selected_signal;
       QMenu* m_items;
-      int m_item_count;
       std::unordered_map<QAction*, int> m_action_to_index;
       bool m_default_style;
 

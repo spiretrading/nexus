@@ -18,7 +18,9 @@ icon_button::icon_button(const QString& default_icon, const QString& hover_icon,
 icon_button::icon_button(const QString& default_icon, const QString& hover_icon,
     int width, int height, const QRectF& draw_rect, QWidget* parent)
     : QWidget(parent),
-      m_clickable(true) {
+      m_clickable(true),
+      m_focusable(false) {
+  setFocusPolicy(Qt::ClickFocus);
   auto layout = new QHBoxLayout(this);
   layout->setMargin(0);
   m_label = new QLabel(this);
@@ -45,6 +47,34 @@ connection icon_button::connect_clicked_signal(
 
 void icon_button::enterEvent(QEvent* event) {
   m_label->setPixmap(QPixmap::fromImage(m_hover_icon));
+}
+
+void icon_button::set_icon(bool is_default) {
+  if(is_default) {
+    m_label->setPixmap(QPixmap::fromImage(m_default_icon));
+  } else {
+    m_label->setPixmap(QPixmap::fromImage(m_hover_icon));
+  }
+  m_is_default = is_default;
+}
+
+void icon_button::set_focusable(bool focusable) {
+  m_focusable = focusable;
+  if(m_focusable) {
+    setFocusPolicy(Qt::TabFocus);
+  }
+}
+
+void icon_button::focusInEvent(QFocusEvent* event) {
+  if(m_focusable) {
+    m_label->setPixmap(QPixmap::fromImage(m_hover_icon));
+  }
+}
+
+void icon_button::focusOutEvent(QFocusEvent* event) {
+  if(m_focusable) {
+    m_label->setPixmap(QPixmap::fromImage(m_default_icon));
+  }
 }
 
 void icon_button::leaveEvent(QEvent* event) {
@@ -74,13 +104,4 @@ void icon_button::swap_icons() {
     m_label->setPixmap(QPixmap::fromImage(m_hover_icon));
   }
   m_is_default = !m_is_default;
-}
-
-void icon_button::set_icon(bool is_default) {
-  if(is_default) {
-    m_label->setPixmap(QPixmap::fromImage(m_default_icon));
-  } else {
-    m_label->setPixmap(QPixmap::fromImage(m_hover_icon));
-  }
-  m_is_default = is_default;
 }

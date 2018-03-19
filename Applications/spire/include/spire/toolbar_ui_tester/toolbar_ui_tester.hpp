@@ -5,13 +5,15 @@
 #include <QRadioButton>
 #include <QWidget>
 #include "spire/toolbar/toolbar.hpp"
+#include "spire/toolbar/recently_closed_model.hpp"
 
 namespace spire {
   
   class toolbar_ui_tester : public QWidget {
     public:
 
-      toolbar_ui_tester(recently_closed_model& model,
+      toolbar_ui_tester(toolbar_window* window,
+        recently_closed_model& model,
         QWidget* parent = nullptr);
 
     protected:
@@ -25,6 +27,7 @@ namespace spire {
       QRadioButton* m_time_sale_radio;
 
       void add_item();
+      void remove_item(const recently_closed_model::entry& e);
   };
 }
 

@@ -1,5 +1,6 @@
 #ifndef SPIRE_TOOLBAR_WINDOW_HPP
 #define SPIRE_TOOLBAR_WINDOW_HPP
+#include <vector>
 #include <QPoint>
 #include <QPushButton>
 #include <QWidget>
@@ -49,6 +50,7 @@ namespace spire {
       mutable reopen_signal m_reopen_signal;
 
       recently_closed_model* m_model;
+      std::vector<recently_closed_model::entry> m_entries;
       bool m_is_dragging;
       QPoint m_last_pos;
       icon_button* m_minimize_button;
@@ -66,6 +68,8 @@ namespace spire {
       icon_button* m_blotter_button;
 
       void entry_added(const recently_closed_model::entry& e);
+      void entry_removed(const recently_closed_model::entry& e);
+      void on_item_selected(int index);
   };
 }
 

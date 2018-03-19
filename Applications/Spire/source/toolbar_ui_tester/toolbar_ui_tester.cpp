@@ -2,12 +2,14 @@
 #include <QEvent>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
-#include "spire/spire//dimensions.hpp"
-#include "spire/toolbar/recently_closed_model.hpp"
+#include "spire/spire/dimensions.hpp"
+
+#include "spire/toolbar/toolbar_window.hpp"
 
 using namespace spire;
 
-toolbar_ui_tester::toolbar_ui_tester(recently_closed_model& model,
+toolbar_ui_tester::toolbar_ui_tester(toolbar_window* window,
+    recently_closed_model& model,
     QWidget* parent)
     : QWidget(parent),
       m_recently_closed_model(&model) {
@@ -27,7 +29,16 @@ toolbar_ui_tester::toolbar_ui_tester(recently_closed_model& model,
   m_add_button = new QPushButton("Add", this);
   m_add_button->setStyleSheet("background-color: #33FF33;");
   layout->addWidget(m_add_button);
-  connect(m_add_button, &QPushButton::clicked, [&] { add_item(); });
+  connect(m_add_button, &QPushButton::clicked, this,
+    &toolbar_ui_tester::add_item);
+  window->connect_reopen_signal([&] (auto& e) { remove_item(e); });
+}
+
+bool toolbar_ui_tester::eventFilter(QObject* receiver, QEvent* event) {
+  if(event->type() == QEvent::Close) {
+    close();
+  }
+  return QWidget::eventFilter(receiver, event);
 }
 
 void toolbar_ui_tester::add_item() {
@@ -42,9 +53,6 @@ void toolbar_ui_tester::add_item() {
   }
 }
 
-bool toolbar_ui_tester::eventFilter(QObject* receiver, QEvent* event) {
-  if(event->type() == QEvent::Close) {
-    close();
-  }
-  return QWidget::eventFilter(receiver, event);
+void toolbar_ui_tester::remove_item(const recently_closed_model::entry& e) {
+  m_recently_closed_model->remove(e);
 }

@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
   auto window = new toolbar_window(model);
   spire::window frame(window);
   frame.show();
-  toolbar_ui_tester tester(model);
+  toolbar_ui_tester tester(window, model);
   tester.setGeometry(frame.pos().x(),
     frame.pos().y() + frame.height() + 100, 0, 0);
   frame.installEventFilter(&tester);

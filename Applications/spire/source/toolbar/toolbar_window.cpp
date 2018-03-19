@@ -14,6 +14,7 @@
 #include "spire/ui/icon_button.hpp"
 #include "spire/ui/window.hpp"
 
+using std::vector;
 using namespace boost;
 using namespace boost::signals2;
 using namespace spire;
@@ -23,6 +24,7 @@ toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
       m_model(&model),
       m_is_dragging(false) {
   m_model->connect_entry_added_signal([&] (auto& e) { entry_added(e); });
+  m_model->connect_entry_removed_signal([&] (auto e) { entry_removed(e); });
   setContentsMargins(0, 0, 0, 0);
   setFixedSize(scale(308, 98));
   setStyleSheet("background-color: #F5F5F5;");
@@ -52,13 +54,16 @@ toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
   title_bar_layout->addWidget(username_label);
   m_minimize_button = new icon_button(":/icons/minimize-grey.svg",
     ":/icons/minimize-black.svg", scale_width(32), scale_height(26),
-    QRectF(scale_width(11), scale_height(12), scale_width(10), scale_height(2)),
+    QRectF(scale_width(11), scale_height(12),
+           scale_width(10), scale_height(2)),
     this);
-  m_minimize_button->connect_clicked_signal([&] { window()->showMinimized(); });
+  m_minimize_button->connect_clicked_signal(
+    [&] { window()->showMinimized(); });
   title_bar_layout->addWidget(m_minimize_button);
   m_close_button = new icon_button(":/icons/close-grey.svg",
     ":/icons/close-red.svg", scale_width(32), scale_height(26),
-    QRectF(scale_width(11), scale_height(8), scale_width(10), scale_height(10)),
+    QRectF(scale_width(11), scale_height(8),
+           scale_width(10),scale_height(10)),
     this);
   m_close_button->connect_clicked_signal([&] { window()->close(); });
   title_bar_layout->addWidget(m_close_button);
@@ -79,7 +84,8 @@ toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
   combobox_layout->addWidget(m_window_manager_button);
   combobox_layout->addStretch(1);
   m_recently_closed_button = new toolbar_menu(tr("Recently Closed"), this);
-  m_recently_closed_button->connect_item_selected_signal([&] (auto index) { /*m_model->remove(index)*/ });
+  m_recently_closed_button->connect_item_selected_signal(
+    [&] (auto index) { on_item_selected(index); });
   m_recently_closed_button->setFixedSize(scale(138, 26));
   combobox_layout->addWidget(m_recently_closed_button);
   auto button_layout = new QHBoxLayout();
@@ -89,10 +95,13 @@ toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
   input_layout->addLayout(button_layout);
   m_account_button = new icon_button(":/icons/account-light-purple.svg",
     ":/icons/account-purple.svg", scale_width(20), scale_height(20), this);
+  m_account_button->set_focusable(true);
   m_account_button->setToolTip(tr("Account"));
   button_layout->addWidget(m_account_button);
-  m_key_bindings_button = new icon_button(":/icons/key-bindings-light-purple.svg",
-    ":/icons/key-bindings-purple.svg", scale_width(20), scale_height(20), this);
+  m_key_bindings_button = new icon_button(
+    ":/icons/key-bindings-light-purple.svg",
+    ":/icons/key-bindings-purple.svg", scale_width(20),
+    scale_height(20), this);
   m_key_bindings_button->setToolTip(tr("Key Bindings"));
   button_layout->addWidget(m_key_bindings_button);
   m_canvas_button = new icon_button(":/icons/canvas-light-purple.svg",
@@ -125,6 +134,8 @@ toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
     ":/icons/blotter-purple.svg", scale_width(20), scale_height(20), this);
   m_blotter_button->setToolTip(tr("Blotter"));
   button_layout->addWidget(m_blotter_button);
+  //setTabOrder(m_window_manager_button, m_recently_closed_button);
+  //setTabOrder(m_recently_closed_button, m_account_button);
 }
 
 connection toolbar_window::connect_closed_signal(
@@ -169,6 +180,7 @@ void toolbar_window::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void toolbar_window::entry_added(const recently_closed_model::entry& e) {
+  m_entries.push_back(e);
   switch(e.m_type) {
     case recently_closed_model::type::BOOK_VIEW: {
       m_recently_closed_button->add(e.m_identifier.c_str(),
@@ -181,4 +193,17 @@ void toolbar_window::entry_added(const recently_closed_model::entry& e) {
       break;
     }
   }
+}
+
+void toolbar_window::entry_removed(const recently_closed_model::entry& e) {
+  for(auto i = 0; i < static_cast<int>(m_entries.size()); ++i) {
+    if(m_entries[i].m_id == e.m_id) {
+      m_entries.erase(m_entries.begin() + i);
+      m_recently_closed_button->remove(i);
+    }
+  }
+}
+
+void toolbar_window::on_item_selected(int index) {
+  m_reopen_signal(m_entries[index]);
 }

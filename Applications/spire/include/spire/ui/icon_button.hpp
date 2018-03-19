@@ -3,6 +3,7 @@
 #include <boost/signals2/connection.hpp>
 #include <boost/signals2/dummy_mutex.hpp>
 #include <boost/signals2/signal_type.hpp>
+#include <QFocusEvent>
 #include <QImage>
 #include <QLabel>
 #include <QRectF>
@@ -66,8 +67,17 @@ namespace spire {
       */
       void set_icon(bool is_default);
 
+      //! Sets if the button can be focused by the keyboard.
+      /*!
+        \param focusable True if the button takes keyboard focus, false
+                         otherwise.
+      */
+      void set_focusable(bool focusable);
+
     protected:
       void enterEvent(QEvent* event) override;
+      void focusInEvent(QFocusEvent* event) override;
+      void focusOutEvent(QFocusEvent* event) override;
       void leaveEvent(QEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
@@ -78,6 +88,7 @@ namespace spire {
       QImage m_default_icon;
       QImage m_hover_icon;
       bool m_clickable;
+      bool m_focusable;
       bool m_is_default;
   };
 }
