@@ -4,6 +4,7 @@
 #include <QPainter>
 #include <QPixmap>
 #include <QPoint>
+#include <QStyle>
 #include <QtSvg/QSvgRenderer>
 #include "spire/spire/dimensions.hpp"
 
@@ -16,19 +17,23 @@ toolbar_menu::toolbar_menu(const QString& title, QWidget* parent)
       m_items(new QMenu(this)),
       m_default_style(true) {
   setMenu(m_items);
+  m_items->installEventFilter(this);
   connect(m_items, &QMenu::triggered, this, &toolbar_menu::on_triggered);
-  set_stylesheet(scale_width(8));
   m_empty_item = new QWidgetAction(this);
   m_empty_item->setText(tr("Empty"));
-  m_empty_item->setEnabled(false);
   m_action_to_index[m_empty_item] = 0;
   m_items->addAction(m_empty_item);
+  set_stylesheet(0);
 }
 
 void toolbar_menu::add(const QString& text) {
   auto action = new QWidgetAction(this);
   action->setText(text);
-  check_empty();
+  remove_empty_item();
+  if(m_default_style) {
+    m_default_style = false;
+    set_default_menu_stylesheet(scale_width(8));
+  }
   m_items->addAction(action);
   auto size = m_action_to_index.size();
   m_action_to_index[action] = size;
@@ -51,14 +56,14 @@ void toolbar_menu::add(const QString& text, const QString& icon_path) {
   action->setText(text);
   action->setIcon(QPixmap::fromImage(background));
   action->setIconVisibleInMenu(true);
-  check_empty();
+  remove_empty_item();
+  if(m_default_style) {
+    m_default_style = false;
+    set_default_menu_stylesheet(scale_width(26));
+  }
   m_items->addAction(action);
   auto size = m_action_to_index.size();
   m_action_to_index[action] = size;
-  if(m_default_style) {
-    m_default_style = false;
-    set_stylesheet(scale_width(26));
-  }
 }
 
 void toolbar_menu::remove(int index) {
@@ -81,6 +86,8 @@ void toolbar_menu::remove(int index) {
   if(m_action_to_index.size() == 0) {
     m_action_to_index[m_empty_item] = 0;
     m_items->addAction(m_empty_item);
+    set_empty_menu_stylesheet();
+    m_default_style = true;
   }
 }
 
@@ -89,18 +96,11 @@ connection toolbar_menu::connect_item_selected_signal(
   return m_item_selected_signal.connect(slot);
 }
 
-void toolbar_menu::mouseReleaseEvent(QMouseEvent* event) {
-  if(m_action_to_index.find(m_empty_item) != m_action_to_index.end()) {
-    window()->setFocus();
-    setFocus();
-  }
-}
-
 void toolbar_menu::resizeEvent(QResizeEvent* event) {
   m_items->setFixedWidth(size().width());
 }
 
-void toolbar_menu::check_empty() {
+void toolbar_menu::remove_empty_item() {
   if(m_action_to_index.find(m_empty_item) != m_action_to_index.end()) {
     m_action_to_index.erase(m_empty_item);
     m_items->removeAction(m_empty_item);
@@ -133,33 +133,55 @@ void toolbar_menu::set_stylesheet(int padding_left) {
     .arg(scale_height(12)).arg(scale_width(8)).arg(scale_height(4))
     .arg(scale_width(6)).arg(scale_width(8)).arg(scale_height(10)));
 
+  set_empty_menu_stylesheet();
+}
+
+void toolbar_menu::set_empty_menu_stylesheet() {
   m_items->setStyleSheet(QString(R"(
-    QMenu {
-      background-color: white;
-      border-left: 1px solid #A0A0A0;
-      border-right: 1px solid #A0A0A0;
-      border-bottom: 1px solid #A0A0A0;
-      font-family: Roboto;
-      font-size: %1px;
-      padding: 0px;
-    }
+  QMenu {
+    background-color: white;
+    border-left: 1px solid #A0A0A0;
+    border-right: 1px solid #A0A0A0;
+    border-bottom: 1px solid #A0A0A0;
+    font-family: Roboto;
+    font-size: %1px;
+    padding: 0px;
+  }
 
-    QMenu::item {
-      height: %3px;
-      padding-left: %2px;
-    }
+  QMenu::item {
+    color: #8C8C8C;
+    font-style: italic;
+    height: %2px;
+    padding-left: %3px;
+  })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_width(8)));
+}
 
-    QMenu::item:selected {
-      background-color: #F2F2FF;
-    }
+void toolbar_menu::set_default_menu_stylesheet(int padding_left) {
+  m_items->setStyleSheet(QString(R"(
+  QMenu {
+    background-color: white;
+    border-left: 1px solid #A0A0A0;
+    border-right: 1px solid #A0A0A0;
+    border-bottom: 1px solid #A0A0A0;
+    font-family: Roboto;
+    font-size: %1px;
+    padding: 0px;
+  }
 
-    QMenu::item:disabled {
-      color: #8C8C8C;
-      font-style: italic;
-    })").arg(scale_height(12)).arg(padding_left).arg(scale_height(20)));
+  QMenu::item {
+    height: %3px;
+    padding-left: %2px;
+  }
+
+  QMenu::item:selected {
+    background-color: #F2F2FF;
+  })").arg(scale_height(12)).arg(padding_left).arg(scale_height(20)));
 }
 
 void toolbar_menu::on_triggered(QAction* action) {
+  if(action == m_empty_item) {
+    return;
+  }
   auto index = m_action_to_index[action];
   m_item_selected_signal(index);
 }

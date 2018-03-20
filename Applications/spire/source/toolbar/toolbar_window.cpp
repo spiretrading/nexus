@@ -3,7 +3,6 @@
 #include <QEvent>
 #include <QGraphicsDropshadowEffect>
 #include <QHBoxLayout>
-#include <QLabel>
 #include <QMenu>
 #include <QPainter>
 #include <QString>
@@ -36,22 +35,28 @@ toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
   title_bar_layout->setSpacing(0);
   layout->addLayout(title_bar_layout);
   auto renderer = new QSvgRenderer(QString(":/icons/spire-icon.svg"), this);
-  auto spire_icon = QImage(scale(26, 26), QImage::Format_ARGB32);
-  spire_icon.fill(QColor(0, 0, 0, 0));
-  QPainter p1(&spire_icon);
+  auto default_spire_icon = QImage(scale(26, 26), QImage::Format_ARGB32);
+  default_spire_icon.fill(QColor(0, 0, 0, 0));
+  QPainter default_icon_painter(&default_spire_icon);
   auto icon_rect = QRectF(scale_width(8), scale_height(8), scale_width(10),
     scale_height(10));
-  renderer->render(&p1, icon_rect);
-  auto title_bar_logo = new QLabel(this);
-  title_bar_logo->setFixedSize(scale(26, 26));
-  title_bar_logo->setPixmap(QPixmap::fromImage(spire_icon));
-  title_bar_layout->addWidget(title_bar_logo);
-  auto username_label = new QLabel(tr("Spire - Signed in as Username"));
-  username_label->setStyleSheet(QString(
+  renderer->render(&default_icon_painter, icon_rect);
+  m_default_window_icon = QPixmap::fromImage(default_spire_icon);
+  auto unfocused_spire_icon = QImage(scale(26, 26), QImage::Format_ARGB32);
+  QPainter unfocused_icon_painter(&unfocused_spire_icon);
+  unfocused_icon_painter.setOpacity(0.4);
+  renderer->render(&unfocused_icon_painter, icon_rect);
+  m_unfocused_window_icon = QPixmap::fromImage(unfocused_spire_icon);
+  m_window_icon_label = new QLabel(this);
+  m_window_icon_label->setFixedSize(scale(26, 26));
+  m_window_icon_label->setPixmap(m_default_window_icon);
+  title_bar_layout->addWidget(m_window_icon_label);
+  m_username_label = new QLabel(tr("Spire - Signed in as Username"));
+  m_username_label->setStyleSheet(QString(
     R"(font-family: Roboto;
        font-size: %1px;)").arg(scale_height(12)));
-  username_label->setFixedSize(scale(218, 26));
-  title_bar_layout->addWidget(username_label);
+  m_username_label->setFixedSize(scale(218, 26));
+  title_bar_layout->addWidget(m_username_label);
   m_minimize_button = new icon_button(":/icons/minimize-grey.svg",
     ":/icons/minimize-black.svg", scale_width(32), scale_height(26),
     QRectF(scale_width(11), scale_height(12),
@@ -154,6 +159,20 @@ connection toolbar_window::connect_closed_signal(
 connection toolbar_window::connect_reopen_signal(
     const reopen_signal::slot_type& slot) const {
   return m_reopen_signal.connect(slot);
+}
+
+bool toolbar_window::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::WindowActivate && watched == window()) {
+    m_username_label->setStyleSheet(QString(
+      R"(font-family: Roboto;
+         font-size: %1px;)").arg(scale_height(12)));
+    m_window_icon_label->setPixmap(m_default_window_icon);
+  } else if(event->type() == QEvent::WindowDeactivate && watched == window()) {
+   m_username_label->setStyleSheet(m_username_label->styleSheet() +
+      "color: rgba(0, 0, 0, 102);");
+    m_window_icon_label->setPixmap(m_unfocused_window_icon);
+  }
+  return QWidget::eventFilter(watched, event);
 }
 
 void toolbar_window::closeEvent(QCloseEvent* event) {

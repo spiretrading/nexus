@@ -19,6 +19,7 @@ int main(int argc, char** argv) {
   toolbar_ui_tester tester(window, model);
   tester.setGeometry(frame.pos().x(),
     frame.pos().y() + frame.height() + 100, 0, 0);
+  frame.installEventFilter(window);
   frame.installEventFilter(&tester);
   tester.setAttribute(Qt::WA_ShowWithoutActivating);
   tester.show();

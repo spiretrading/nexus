@@ -1,8 +1,12 @@
 #ifndef SPIRE_TOOLBAR_WINDOW_HPP
 #define SPIRE_TOOLBAR_WINDOW_HPP
 #include <vector>
+#include <QEvent>
+#include <QFocusEvent>
 #include <QKeyEvent>
+#include <QLabel>
 #include <QMouseEvent>
+#include <QPixmap>
 #include <QPoint>
 #include <QPushButton>
 #include <QWidget>
@@ -43,6 +47,7 @@ namespace spire {
 
     protected:
       void closeEvent(QCloseEvent* event) override;
+      bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void mouseMoveEvent(QMouseEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
@@ -56,6 +61,10 @@ namespace spire {
       std::vector<recently_closed_model::entry> m_entries;
       bool m_is_dragging;
       QPoint m_last_pos;
+      QPixmap m_default_window_icon;
+      QPixmap m_unfocused_window_icon;
+      QLabel* m_window_icon_label;
+      QLabel* m_username_label;
       icon_button* m_minimize_button;
       icon_button* m_close_button;
       toolbar_menu* m_window_manager_button;
