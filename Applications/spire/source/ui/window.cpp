@@ -37,6 +37,9 @@ window::window(QWidget* w, const QColor& border_color, QWidget* parent)
   set_border_color(border_color);
   m_window->setGraphicsEffect(nullptr);
   m_window->setStyleSheet(ss + "border: 0px solid white;");
+  /* hack to make initial focus work in toolbar_window until this gets
+     refactored */
+  setFocus();
 }
 
 QWidget* window::get_window() {

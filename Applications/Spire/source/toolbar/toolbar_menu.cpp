@@ -16,6 +16,7 @@ toolbar_menu::toolbar_menu(const QString& title, QWidget* parent)
       m_items(new QMenu(this)),
       m_default_style(true) {
   setMenu(m_items);
+  setIconSize(QSize(500, 500));
   m_items->installEventFilter(this);
   connect(m_items, &QMenu::triggered, this, &toolbar_menu::on_triggered);
   m_empty_item = new QWidgetAction(this);
@@ -55,7 +56,8 @@ void toolbar_menu::add(const QString& text, const QString& icon_path) {
     background_painter.drawImage(
       QPoint(scale_width(8), scale_height(5)), icon);
     background_painter.end();
-    m_filepath_to_pixmap[icon_path.toStdString()] = QPixmap::fromImage(background);
+    m_filepath_to_pixmap[icon_path.toStdString()] =
+      QPixmap::fromImage(background);
   }
   auto action = new QWidgetAction(this);
   action->setText(text);
@@ -99,6 +101,14 @@ void toolbar_menu::remove(int index) {
 connection toolbar_menu::connect_item_selected_signal(
     const item_selected_signal::slot_type& slot) const {
   return m_item_selected_signal.connect(slot);
+}
+
+void toolbar_menu::leaveEvent(QEvent* event) {
+  if(hasFocus()) {
+    
+  } else {
+
+  }
 }
 
 void toolbar_menu::resizeEvent(QResizeEvent* event) {

@@ -2,6 +2,7 @@
 #define SPIRE_TOOLBAR_MENU_HPP
 #include <string>
 #include <unordered_map>
+#include <QEvent>
 #include <QMenu>
 #include <QPixmap>
 #include <QPushButton>
@@ -44,6 +45,7 @@ namespace spire {
         const item_selected_signal::slot_type& slot) const;
 
     protected:
+      void leaveEvent(QEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
