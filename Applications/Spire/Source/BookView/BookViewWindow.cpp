@@ -499,7 +499,7 @@ void BookViewWindow::OnLowUpdate(Money low) {
 }
 
 void BookViewWindow::OnVolumeUpdate(Quantity volume) {
-  m_ui->m_volumeValue->SetValue(QVariant::fromValue(volume));
+  m_ui->m_volumeValue->SetValue(static_cast<int>(volume));
 }
 
 void BookViewWindow::OnTaskState(
