@@ -52,5 +52,7 @@
         <file>icons/time-sale-black.svg</file>
         <file>icons/time-sale-light-purple.svg</file>
         <file>icons/time-sale-purple.svg</file>
+        <file>icons/maximize-black.svg</file>
+        <file>icons/maximize-grey.svg</file>
     </qresource>
 </RCC>

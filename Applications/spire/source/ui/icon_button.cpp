@@ -13,10 +13,10 @@ using namespace spire;
 icon_button::icon_button(const QString& default_icon, const QString& hover_icon,
     int width, int height, QWidget* parent)
     : icon_button(default_icon, hover_icon, width, height,
-                  QRectF(0, 0, width, height), parent) {}
+                  QRect(0, 0, width, height), parent) {}
 
 icon_button::icon_button(const QString& default_icon, const QString& hover_icon,
-    int width, int height, const QRectF& draw_rect, QWidget* parent)
+    int width, int height, const QRect& draw_rect, QWidget* parent)
     : QWidget(parent),
       m_clickable(true),
       m_focusable(false) {

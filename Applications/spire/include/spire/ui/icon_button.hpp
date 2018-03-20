@@ -6,7 +6,7 @@
 #include <QFocusEvent>
 #include <QImage>
 #include <QLabel>
-#include <QRectF>
+#include <QRect>
 #include <QString>
 #include <QWidget>
 
@@ -44,7 +44,7 @@ namespace spire {
         \param parent The parent QWidget to the icon_button.
       */
       icon_button(const QString& default_icon, const QString& hover_icon,
-        int width, int height, const QRectF& draw_rect,
+        int width, int height, const QRect& draw_rect,
         QWidget* parent = nullptr);
 
       //! Connects a slot to the clicked signal.

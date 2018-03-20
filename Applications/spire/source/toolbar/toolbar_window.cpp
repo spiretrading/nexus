@@ -59,7 +59,7 @@ toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
   title_bar_layout->addWidget(m_username_label);
   m_minimize_button = new icon_button(":/icons/minimize-grey.svg",
     ":/icons/minimize-black.svg", scale_width(32), scale_height(26),
-    QRectF(scale_width(11), scale_height(12),
+    QRect(scale_width(11), scale_height(12),
            scale_width(10), scale_height(2)),
     this);
   m_minimize_button->setStyleSheet(":hover { background-color: #EBEBEB; }");

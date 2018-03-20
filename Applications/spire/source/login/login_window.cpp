@@ -30,7 +30,7 @@ login_window::login_window(const std::string& version, QWidget* parent)
   title_bar_layout->addStretch(1);
   m_exit_button = new icon_button(":/icons/close-purple.svg",
     ":/icons/close-red.svg", scale_width(32), scale_height(26),
-    QRectF(scale_width(11), scale_height(8), scale_width(10), scale_height(10)),
+    QRect(scale_width(11), scale_height(8), scale_width(10), scale_height(10)),
     this);
   m_exit_button->installEventFilter(this);
   m_exit_button->connect_clicked_signal([&] {window()->close();});
