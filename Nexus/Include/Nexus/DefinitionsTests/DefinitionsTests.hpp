@@ -4,6 +4,7 @@
 namespace Nexus {
 namespace Tests {
   class MoneyTester;
+  class QuantityTester;
   class RegionMapTester;
   class RegionTester;
   class SecuritySetTester;

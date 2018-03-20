@@ -80,8 +80,7 @@ namespace Queries {
       GetQuery() = boost::lexical_cast<std::string>(
         value->GetValue<Quantity>());
     } else if(value->GetType()->GetNativeType() == typeid(Money)) {
-      GetQuery() = boost::lexical_cast<std::string>(
-        value->GetValue<Money>().GetRepresentation());
+      GetQuery() = boost::lexical_cast<std::string>(value->GetValue<Money>());
     } else {
       Beam::Queries::SqlTranslator::Visit(expression);
     }

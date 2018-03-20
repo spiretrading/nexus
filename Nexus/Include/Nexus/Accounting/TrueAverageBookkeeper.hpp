@@ -65,16 +65,16 @@ namespace Accounting {
     auto& entry = entryIterator->second;
     auto& total = InternalGetTotal(currency);
     entry.m_fees += fees;
-    entry.m_volume += std::abs(quantity);
+    entry.m_volume += Abs(quantity);
     ++entry.m_transactionCount;
     total.m_fees += fees;
-    total.m_volume += std::abs(quantity);
+    total.m_volume += Abs(quantity);
     ++total.m_transactionCount;
     if(quantity == 0) {
       return;
     }
     auto price = Abs(costBasis / quantity);
-    auto remainingQuantity = std::abs(quantity);
+    auto remainingQuantity = Abs(quantity);
     Quantity direction;
     if(quantity < 0) {
       direction = -1;
@@ -82,13 +82,13 @@ namespace Accounting {
       direction = 1;
     }
     total.m_grossProfitAndLoss -= entry.m_grossProfitAndLoss;
-    total.m_position.m_quantity -= std::abs(entry.m_position.m_quantity);
+    total.m_position.m_quantity -= Abs(entry.m_position.m_quantity);
     total.m_position.m_costBasis -= Abs(entry.m_position.m_costBasis);
     if((entry.m_position.m_quantity > 0 && quantity < 0) ||
         (entry.m_position.m_quantity < 0 && quantity > 0)) {
       auto averagePrice = GetAveragePrice(entry.m_position);
       auto transactionReduction = std::min(remainingQuantity,
-        std::abs(entry.m_position.m_quantity));
+        Abs(entry.m_position.m_quantity));
       auto grossDelta = -direction * transactionReduction *
         (price - averagePrice);
       auto quantityDelta = direction * transactionReduction;
@@ -99,7 +99,7 @@ namespace Accounting {
       remainingQuantity -= transactionReduction;
       if(remainingQuantity == 0) {
         total.m_grossProfitAndLoss += entry.m_grossProfitAndLoss;
-        total.m_position.m_quantity += std::abs(entry.m_position.m_quantity);
+        total.m_position.m_quantity += Abs(entry.m_position.m_quantity);
         total.m_position.m_costBasis += Abs(entry.m_position.m_costBasis);
         return;
       }
@@ -109,7 +109,7 @@ namespace Accounting {
     entry.m_position.m_quantity += quantityDelta;
     entry.m_position.m_costBasis += costBasisDelta;
     total.m_grossProfitAndLoss += entry.m_grossProfitAndLoss;
-    total.m_position.m_quantity += std::abs(entry.m_position.m_quantity);
+    total.m_position.m_quantity += Abs(entry.m_position.m_quantity);
     total.m_position.m_costBasis += Abs(entry.m_position.m_costBasis);
   }
 

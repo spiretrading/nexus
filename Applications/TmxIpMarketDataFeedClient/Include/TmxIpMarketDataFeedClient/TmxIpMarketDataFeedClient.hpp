@@ -67,8 +67,10 @@ namespace MarketDataService {
       Beam::Routines::RoutineHandler m_readLoopRoutine;
       Beam::IO::OpenState m_openState;
 
-      static Quantity GetBoardLotPortion(Quantity quantity, Money price);
-      static Quantity RoundToBoardLotPortion(Quantity quantity, Money price);
+      static std::int64_t GetBoardLotPortion(std::int64_t quantity,
+        Money price);
+      static std::int64_t RoundToBoardLotPortion(std::int64_t quantity,
+        Money price);
       void Shutdown();
       boost::optional<boost::posix_time::ptime> GetTimestamp(
         const StampProtocol::StampMessage& message, int index);
@@ -149,9 +151,9 @@ namespace MarketDataService {
 
   template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
     typename TimeClientType>
-  Quantity TmxIpMarketDataFeedClient<MarketDataFeedClientType,
+  std::int64_t TmxIpMarketDataFeedClient<MarketDataFeedClientType,
       ServiceAccessClientType, TimeClientType>::GetBoardLotPortion(
-      Quantity quantity, Money price) {
+      std::int64_t quantity, Money price) {
     if(price < 10 * Money::CENT) {
       return quantity - (quantity % 1000);
     } else if(price < 99 * Money::CENT) {
@@ -163,9 +165,9 @@ namespace MarketDataService {
 
   template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
     typename TimeClientType>
-  Quantity TmxIpMarketDataFeedClient<MarketDataFeedClientType,
+  std::int64_t TmxIpMarketDataFeedClient<MarketDataFeedClientType,
       ServiceAccessClientType, TimeClientType>::RoundToBoardLotPortion(
-      Quantity quantity, Money price) {
+      std::int64_t quantity, Money price) {
     if(price < 10 * Money::CENT) {
       return quantity + 1000 - (quantity % 1000);
     } else if(price < 99 * Money::CENT) {
@@ -237,7 +239,7 @@ namespace MarketDataService {
     if(!bidPrice.is_initialized()) {
       return;
     }
-    auto bidVolume = message.GetBusinessField<Quantity>(64, 0);
+    auto bidVolume = message.GetBusinessField<std::int64_t>(64, 0);
     if(!bidVolume.is_initialized()) {
       return;
     }
@@ -245,7 +247,7 @@ namespace MarketDataService {
     if(!askPrice.is_initialized()) {
       return;
     }
-    auto askVolume = message.GetBusinessField<Quantity>(64, 1);
+    auto askVolume = message.GetBusinessField<std::int64_t>(64, 1);
     if(!askVolume.is_initialized()) {
       return;
     }
@@ -288,7 +290,7 @@ namespace MarketDataService {
     if(!price.is_initialized()) {
       return;
     }
-    auto volume = message.GetBusinessField<Quantity>(64);
+    auto volume = message.GetBusinessField<std::int64_t>(64);
     if(!volume.is_initialized()) {
       return;
     }
@@ -384,7 +386,7 @@ namespace MarketDataService {
     if(!price.is_initialized()) {
       return;
     }
-    auto quantity = message.GetBusinessField<Quantity>(64);
+    auto quantity = message.GetBusinessField<std::int64_t>(64);
     if(!quantity.is_initialized()) {
       return;
     }
@@ -489,7 +491,7 @@ namespace MarketDataService {
     if(!timestamp.is_initialized()) {
       return;
     }
-    auto volume = message.GetBusinessField<Quantity>(64);
+    auto volume = message.GetBusinessField<std::int64_t>(64);
     if(!volume.is_initialized()) {
       return;
     }
@@ -513,7 +515,7 @@ namespace MarketDataService {
     }();
     if(bidOrderNumber.is_initialized()) {
       auto bidOrderId = GetOrderId(symbol, bidBrokerNumber, *bidOrderNumber);
-      auto displayVolume = message.GetBusinessField<Quantity>(150, 0);
+      auto displayVolume = message.GetBusinessField<std::int64_t>(150, 0);
       if(displayVolume.is_initialized()) {
         *displayVolume = GetBoardLotPortion(*displayVolume, *price);
         m_marketDataFeedClient->ModifyOrderSize(bidOrderId, *displayVolume,
@@ -539,7 +541,7 @@ namespace MarketDataService {
     }();
     if(askOrderNumber.is_initialized()) {
       auto askOrderId = GetOrderId(symbol, askBrokerNumber, *askOrderNumber);
-      auto displayVolume = message.GetBusinessField<Quantity>(150, 1);
+      auto displayVolume = message.GetBusinessField<std::int64_t>(150, 1);
       if(displayVolume.is_initialized()) {
         *displayVolume = GetBoardLotPortion(*displayVolume, *price);
         m_marketDataFeedClient->ModifyOrderSize(askOrderId, *displayVolume,
@@ -573,7 +575,7 @@ namespace MarketDataService {
     if(!imbalanceSide.is_initialized() || *imbalanceSide == Side::NONE) {
       return;
     }
-    auto imbalanceVolume = message.GetBusinessField<Quantity>(493);
+    auto imbalanceVolume = message.GetBusinessField<std::int64_t>(493);
     if(!imbalanceVolume.is_initialized()) {
       return;
     }
