@@ -1,7 +1,9 @@
 #ifndef SPIRE_TOOLBAR_MENU_HPP
 #define SPIRE_TOOLBAR_MENU_HPP
+#include <string>
 #include <unordered_map>
 #include <QMenu>
+#include <QPixmap>
 #include <QPushButton>
 #include <QResizeEvent>
 #include <QString>
@@ -49,6 +51,7 @@ namespace spire {
       QMenu* m_items;
       QWidgetAction* m_empty_item;
       std::unordered_map<QAction*, int> m_action_to_index;
+      std::unordered_map<std::string, QPixmap> m_filepath_to_pixmap;
       bool m_default_style;
 
       void remove_empty_item();
