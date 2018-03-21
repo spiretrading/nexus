@@ -51,6 +51,12 @@ namespace spire {
       boost::signals2::connection connect_clicked_signal(
         const clicked_signal::slot_type& slot) const;
 
+      //! Activates or deactivates the hover effect.
+      /*!
+        \param active The hover effect is activated if true.
+      */
+      void hover_active(bool active);
+
       //! Sets whether the button can have its m_clicked_signal activated or not.
       /*!
         \param clickable Whether the button is clickable (true) or not (false).
@@ -89,6 +95,7 @@ namespace spire {
       QImage m_hover_icon;
       bool m_clickable;
       bool m_focusable;
+      bool m_hover_active;
       bool m_is_default;
   };
 }

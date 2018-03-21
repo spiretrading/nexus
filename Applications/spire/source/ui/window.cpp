@@ -48,5 +48,5 @@ QWidget* window::get_window() {
 
 void window::set_border_color(const QColor& color) {
   m_border_widget->setStyleSheet(QString(
-    "border: 1px solid %1;").arg(color.name()));
+    "border: 1px solid red;").arg(color.name()));
 }
