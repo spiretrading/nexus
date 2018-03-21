@@ -170,7 +170,7 @@ window::window(QWidget*child, bool minimize, bool maximize,
     }
     :hover { background-color: #EBEBEB; })");
   title_layout->addWidget(m_close_button);
-  auto content_layout = new QHBoxLayout();  
+  auto content_layout = new QHBoxLayout();
   content_layout->setMargin(0);
   inner_layout->addLayout(content_layout);
   content_layout->addWidget(m_child);
@@ -183,14 +183,21 @@ QWidget* window::get_window() {
 
 void window::changeEvent(QEvent* event) {
   if(event->type() == QEvent::WindowStateChange) {
-    if(windowState() | Qt::WindowMaximized) {
+    if(windowState() & Qt::WindowMaximized) {
       layout()->setMargin(0);
-      m_border_widget->setGraphicsEffect(m_drop_shadow);
       setGeometry(QApplication::desktop()->availableGeometry());
-    } else if(windowState() & Qt::WindowMaximized) {
-      layout()->setMargin(10);
-      m_border_widget->setGraphicsEffect(nullptr);
-    }
+    } //else if(windowState() & Qt::WindowMaximized) {
+     // layout()->setMargin(10);
+     // setGeometry(100, 100, 300, 300);
+   // }
+  }
+}
+
+void window::maximize_button_pressed() {
+  if(windowState() & Qt::WindowMaximized) {
+    showNormal();
+  } else {
+    showMaximized();
   }
 }
 
@@ -236,14 +243,6 @@ void window::mouseReleaseEvent(QMouseEvent* event) {
     return;
   }
   m_is_dragging = false;
-}
-
-void window::maximize_button_pressed() {
-  if(windowState() & Qt::WindowMaximized) {
-    showNormal();
-  } else {
-    showMaximized();
-  }
 }
 
 void window::set_border(const QColor& color) {
