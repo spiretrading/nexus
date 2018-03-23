@@ -16,6 +16,9 @@ namespace spire {
 
     protected:
       void mouseDoubleClickEvent(QMouseEvent* event);
+      void mouseMoveEvent(QMouseEvent* event) override;
+      void mousePressEvent(QMouseEvent* event) override;
+      void mouseReleaseEvent(QMouseEvent* event) override;
 
     private:
       icon_button* m_icon;
@@ -25,6 +28,8 @@ namespace spire {
       icon_button* m_restore_button;
       icon_button* m_close_button;
       QRect m_previous_geometry;
+      bool m_is_dragging;
+      QPoint m_last_mouse_pos;
 
       void on_window_title_change();
       void on_minimize_button_press();

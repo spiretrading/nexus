@@ -5,21 +5,12 @@
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/icon_button.hpp"
 
-
-
-
-
-
-#include <QDebug>
-
-
-
-
 using namespace spire;
 
 title_bar::title_bar(const QString& icon, const QString& unfocused_icon,
     QWidget* parent)
-    : QWidget(parent) {
+    : QWidget(parent),
+      m_is_dragging(false) {
   connect(window(), &QWidget::windowTitleChanged,
     [=] { on_window_title_change(); });
   setFixedHeight(scale_height(26));
@@ -44,9 +35,8 @@ title_bar::title_bar(const QString& icon, const QString& unfocused_icon,
   m_minimize_button->connect_clicked_signal(
     [=] { on_minimize_button_press(); });
   m_minimize_button->setFixedWidth(scale_width(32));
-  m_minimize_button->setStyleSheet(R"(
-    QWidget { background-color: #F5F5F5; }
-    :hover { background-color: #EBEBEB; })");
+  m_minimize_button->set_default_style("background-color: #F5F5F5;");
+  m_minimize_button->set_hover_style("background-color: #EBEBEB;");  
   layout->addWidget(m_minimize_button);
   m_maximize_button = new icon_button(":/icons/maximize-grey.svg",
     ":/icons/maximize-black.svg", scale_width(32), scale_height(26),
@@ -55,9 +45,8 @@ title_bar::title_bar(const QString& icon, const QString& unfocused_icon,
   m_maximize_button->connect_clicked_signal(
     [=] { on_maximize_button_press(); });
   m_maximize_button->setFixedWidth(scale_width(32));
-  m_maximize_button->setStyleSheet(R"(
-    QWidget { background-color: #F5F5F5; }
-    :hover { background-color: #EBEBEB; })");
+  m_maximize_button->set_default_style("background-color: #F5F5F5;");
+  m_maximize_button->set_hover_style("background-color: #EBEBEB;");
   layout->addWidget(m_maximize_button);
   m_restore_button = new icon_button(":/icons/unmaximize-grey.svg",
     ":/icons/unmaximize-black.svg", scale_width(32), scale_height(26),
@@ -66,9 +55,8 @@ title_bar::title_bar(const QString& icon, const QString& unfocused_icon,
   m_restore_button->connect_clicked_signal([=] { on_restore_button_press(); });
   m_restore_button->setVisible(false);
   m_restore_button->setFixedWidth(scale_width(32));
-  m_restore_button->setStyleSheet(R"(
-    QWidget { background-color: #F5F5F5; }
-    :hover { background-color: #EBEBEB; })");
+  m_restore_button->set_default_style("background-color: #F5F5F5;");
+  m_restore_button->set_hover_style("background-color: #EBEBEB;");
   layout->addWidget(m_restore_button);
   m_close_button = new icon_button(":/icons/close-grey.svg",
     ":/icons/close-red.svg", scale_width(32), scale_height(26),
@@ -76,9 +64,8 @@ title_bar::title_bar(const QString& icon, const QString& unfocused_icon,
     this);
   m_close_button->connect_clicked_signal([=] { on_close_button_press(); });
   m_close_button->setFixedWidth(scale_width(32));
-  m_close_button->setStyleSheet(R"(
-    QWidget { background-color: #F5F5F5;}
-    :hover { background-color: #EBEBEB; })");
+  m_close_button->set_default_style("background-color: #F5F5F5;");
+  m_close_button->set_hover_style("background-color: #EBEBEB;");
   layout->addWidget(m_close_button);
 }
 
@@ -89,6 +76,33 @@ void title_bar::mouseDoubleClickEvent(QMouseEvent* event) {
   } else {
     on_maximize_button_press();
   }
+}
+
+void title_bar::mouseMoveEvent(QMouseEvent* event) {
+  if(!m_is_dragging) {
+    return;
+  }
+  auto delta = event->globalPos();
+  delta -= m_last_mouse_pos;
+  auto window_pos = window()->pos();
+  window_pos += delta;
+  m_last_mouse_pos = event->globalPos();
+  window()->move(window_pos);
+}
+
+void title_bar::mousePressEvent(QMouseEvent* event)  {
+  if(m_is_dragging || event->button() != Qt::LeftButton) {
+    return;
+  }
+  m_is_dragging = true;
+  m_last_mouse_pos = event->globalPos();
+}
+
+void title_bar::mouseReleaseEvent(QMouseEvent* event) {
+  if(event->button() != Qt::LeftButton) {
+    return;
+  }
+  m_is_dragging = false;
 }
 
 void title_bar::on_window_title_change() {
@@ -105,10 +119,8 @@ void title_bar::on_maximize_button_press() {
     QApplication::desktop()->screenNumber(this)));
   m_maximize_button->setVisible(false);
   m_restore_button->setVisible(true);
-  //auto e = new QEvent(QEvent::Leave);
-  //QCoreApplication::postEvent(m_maximize_button, e);
-  //e = new QEvent(QEvent::Leave);
-  //QCoreApplication::postEvent(m_restore_button, e);
+  auto e = new QEvent(QEvent::Leave);
+  QCoreApplication::postEvent(m_maximize_button, e);
 }
 
 void title_bar::on_restore_button_press() {
@@ -117,10 +129,8 @@ void title_bar::on_restore_button_press() {
   window()->setGeometry(m_previous_geometry);
   m_maximize_button->setVisible(true);
   m_restore_button->setVisible(false);
-  //auto e = new QEvent(QEvent::Leave);
-  //QCoreApplication::postEvent(m_maximize_button, e);
-  //e = new QEvent(QEvent::Leave);
-  //QCoreApplication::postEvent(m_restore_button, e);
+  auto e = new QEvent(QEvent::Leave);
+  QCoreApplication::postEvent(m_restore_button, e);
 }
 
 void title_bar::on_close_button_press() {

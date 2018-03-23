@@ -51,6 +51,18 @@ namespace spire {
       boost::signals2::connection connect_clicked_signal(
         const clicked_signal::slot_type& slot) const;
 
+      //! Sets the default stylesheet for the button.
+      /*!
+        \param stylesheet The default stylesheet.
+      */
+      void set_default_style(const QString& stylesheet);
+
+      //! Sets the stylesheet for when the button is hovered.
+      /*!
+        \param stylesheet The hover stylesheet.
+      */
+      void set_hover_style(const QString& stylesheet);
+
       //! Activates or deactivates the hover effect.
       /*!
         \param active The hover effect is activated if true.
@@ -93,6 +105,8 @@ namespace spire {
       QLabel* m_label;
       QImage m_default_icon;
       QImage m_hover_icon;
+      QString m_default_stylesheet;
+      QString m_hover_stylesheet;
       bool m_clickable;
       bool m_focusable;
       bool m_hover_active;

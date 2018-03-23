@@ -46,26 +46,38 @@ connection icon_button::connect_clicked_signal(
   return m_clicked_signal.connect(slot);
 }
 
+void icon_button::set_default_style(const QString& stylesheet) {
+  m_default_stylesheet = stylesheet;
+}
+
+void icon_button::set_hover_style(const QString& stylesheet) {
+  m_hover_stylesheet = stylesheet;
+}
+
 void icon_button::enterEvent(QEvent* event) {
   if(m_hover_active) {
+    setStyleSheet(m_hover_stylesheet);
     m_label->setPixmap(QPixmap::fromImage(m_hover_icon));
   }
 }
 
 void icon_button::focusInEvent(QFocusEvent* event) {
   if(m_focusable) {
+    setStyleSheet(m_hover_stylesheet);
     m_label->setPixmap(QPixmap::fromImage(m_hover_icon));
   }
 }
 
 void icon_button::focusOutEvent(QFocusEvent* event) {
   if(m_focusable) {
+    setStyleSheet(m_default_stylesheet);
     m_label->setPixmap(QPixmap::fromImage(m_default_icon));
   }
 }
 
 void icon_button::leaveEvent(QEvent* event) {
   if(m_hover_active) {
+    setStyleSheet(m_default_stylesheet);
     m_label->setPixmap(QPixmap::fromImage(m_default_icon));
   }
 }
