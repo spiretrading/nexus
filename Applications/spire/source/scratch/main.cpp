@@ -14,10 +14,12 @@
 #include <QPoint>
 #include <QSize>
 #include <QDesktopWidget>
+#include <QMainWindow>
 #include <QGraphicsDropShadowEffect>
 #include "spire/spire/resources.hpp"
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/icon_button.hpp"
+#include "spire/ui/title_bar.hpp"
 
 using namespace spire;
 
@@ -40,9 +42,10 @@ class window : public QWidget {
   private:
     QWidget* m_frame_widget;
     QWidget* m_content;
+    title_bar* m_title_bar;
 };
 
-window::window(QWidget* content, QWidget* parent)
+::window::window(QWidget* content, QWidget* parent)
     : QWidget(parent),
       m_content(content) {
   setWindowFlags(Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);
@@ -52,32 +55,27 @@ window::window(QWidget* content, QWidget* parent)
   setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint);
 #endif
   setAttribute(Qt::WA_TranslucentBackground);
-
-  setWindowState(Qt::WindowMaximized);
   auto layout = new QHBoxLayout(this);
   layout->setMargin(0);
-
   auto drop_shadow = new QGraphicsDropShadowEffect(this);
   drop_shadow->setBlurRadius(50);
   drop_shadow->setXOffset(0);
   drop_shadow->setYOffset(0);
   drop_shadow->setColor(QColor(255, 0, 0));
   setGraphicsEffect(drop_shadow);
-
   m_frame_widget = new QWidget(this);
-  m_frame_widget->setStyleSheet("background-color: aqua;");
   m_frame_widget->setGraphicsEffect(drop_shadow);
   layout->addWidget(m_frame_widget);
-
-  auto frame_layout = new QHBoxLayout(m_frame_widget);
-  auto button = new QPushButton("Button", this);
-  button->setStyleSheet("background-color: green;");
-  frame_layout->addWidget(button);
-
-  // TODO: make the title bar a widget, not just a layout
+  auto frame_layout = new QVBoxLayout(m_frame_widget);
+  frame_layout->setMargin(0);
+  frame_layout->setSpacing(0);
+  m_title_bar = new title_bar(":/icons/spire-icon.svg",
+    ":/icons/time-sale-purple.svg", this);
+  frame_layout->addWidget(m_title_bar);
+  frame_layout->addWidget(m_content);
 }
 
-void window::changeEvent(QEvent* event) {
+void ::window::changeEvent(QEvent* event) {
   
 }
 
@@ -96,7 +94,16 @@ class test_window : public QWidget {
 
 test_window::test_window(QWidget* parent)
     : QWidget(parent) {
-  
+  setFixedSize(600, 480);
+  setStyleSheet("background-color: aqua");
+  auto layout = new QHBoxLayout(this);
+  auto button = new QPushButton("Button", this);
+  layout->addWidget(button);
+  window()->setWindowTitle("Test Title");
+  static auto num = 0;
+  connect(button, &QPushButton::clicked, [=] {
+    window()->setWindowTitle(window()->windowTitle() + QString("%1").arg(++num));
+  });
 }
 
 // ***************************************************************
@@ -117,7 +124,7 @@ int main(int argc, char** argv) {
 
   auto content = new test_window();
 
-  window frame(content);
+  ::window frame(content);
   frame.show();
 
 
