@@ -94,7 +94,7 @@ class test_window : public QWidget {
 
 test_window::test_window(QWidget* parent)
     : QWidget(parent) {
-  setFixedSize(600, 480);
+  setBaseSize(600, 480);
   setStyleSheet("background-color: aqua");
   auto layout = new QHBoxLayout(this);
   auto button = new QPushButton("Button", this);
