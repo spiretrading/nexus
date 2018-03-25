@@ -1,5 +1,4 @@
 #include "spire/ui/icon_button.hpp"
-#include <QColor>
 #include <QHBoxLayout>
 #include <QMouseEvent>
 
