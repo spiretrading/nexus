@@ -1,55 +1,35 @@
 #ifndef SPIRE_ICON_BUTTON_HPP
 #define SPIRE_ICON_BUTTON_HPP
-#include <boost/signals2/connection.hpp>
-#include <boost/signals2/dummy_mutex.hpp>
-#include <boost/signals2/signal_type.hpp>
-#include <QFocusEvent>
 #include <QImage>
 #include <QLabel>
-#include <QRect>
 #include <QString>
 #include <QWidget>
+#include "spire/ui/ui.hpp"
 
 namespace spire {
 
+  //! Displays a button using an icon.
   class icon_button : public QWidget {
     public:
 
       //! Signal type for the clicked signal.
-      using clicked_signal = boost::signals2::signal_type<void (),
-        boost::signals2::keywords::mutex_type<
-        boost::signals2::dummy_mutex>>::type;
+      using clicked_signal = signal<void ()>;
 
-      //! Constructs an icon_button with a default icon and a hover icon. The
-      //  icons are scaled to cover the whole button.
+      //! Constructs an icon_button.
+      /*!
+        \param icon The icon to show.
+        \param parent The parent QWidget to the icon_button.
+      */
+      icon_button(QImage icon, QWidget* parent = nullptr);
+
+      //! Constructs an icon_button with a default icon and a hover icon.
       /*!
         \param default_icon The icon shown when the button is not hovered.
         \param hover_icon The icon shown when the button is hovered.
-        \param width The width of the icon_button.
-        \param height The height of the icon_button.
         \param parent The parent QWidget to the icon_button.
       */
-      icon_button(const QString& default_icon, const QString& hover_icon,
-        int width, int height, QWidget* parent = nullptr);
-
-      //! Constructs an icon_button with a default icon and a hover icon. The
-      //  icons are scaled and drawn according to the draw rect.
-      /*!
-        \param default_icon The icon shown when the button is not hovered.
-        \param hover_icon The icon shown when the button is hovered.
-        \param width The width of the icon_button.
-        \param height The height of the icon_button.
-        \param draw_rect The position and size of the image within the
-                         icon_button.
-        \param parent The parent QWidget to the icon_button.
-      */
-      icon_button(const QString& default_icon, const QString& hover_icon,
-        int width, int height, const QRect& draw_rect,
+      icon_button(QImage default_icon, QImage hover_icon,
         QWidget* parent = nullptr);
-
-      //! Connects a slot to the clicked signal.
-      boost::signals2::connection connect_clicked_signal(
-        const clicked_signal::slot_type& slot) const;
 
       //! Sets the default stylesheet for the button.
       /*!
@@ -63,34 +43,9 @@ namespace spire {
       */
       void set_hover_style(const QString& stylesheet);
 
-      //! Activates or deactivates the hover effect.
-      /*!
-        \param active The hover effect is activated if true.
-      */
-      void hover_active(bool active);
-
-      //! Sets whether the button can have its m_clicked_signal activated or not.
-      /*!
-        \param clickable Whether the button is clickable (true) or not (false).
-      */
-      void set_clickable(bool clickable);
-
-      //! Switches the button's icons.
-      void swap_icons();
-
-      //! Sets the button's icon.
-      /*!
-        \param is_default True to set the icon to default, false to set it to
-                          the hover icon.
-      */
-      void set_icon(bool is_default);
-
-      //! Sets if the button can be focused by the keyboard.
-      /*!
-        \param focusable True if the button takes keyboard focus, false
-                         otherwise.
-      */
-      void set_focusable(bool focusable);
+      //! Connects a slot to the clicked signal.
+      boost::signals2::connection connect_clicked_signal(
+        const clicked_signal::slot_type& slot) const;
 
     protected:
       void enterEvent(QEvent* event) override;
@@ -107,10 +62,6 @@ namespace spire {
       QImage m_hover_icon;
       QString m_default_stylesheet;
       QString m_hover_stylesheet;
-      bool m_clickable;
-      bool m_focusable;
-      bool m_hover_active;
-      bool m_is_default;
   };
 }
 

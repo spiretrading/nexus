@@ -1,77 +1,81 @@
 #include "spire/ui/title_bar.hpp"
-#include <QApplication>
-#include <QDesktopWidget>
 #include <QHBoxLayout>
+#include <QMouseEvent>
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/icon_button.hpp"
 
 using namespace spire;
 
-title_bar::title_bar(const QString& icon, const QString& unfocused_icon,
+title_bar::title_bar(const QImage& icon, QWidget* parent)
+    : title_bar(icon, icon, parent) {}
+
+title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
     QWidget* parent)
     : QWidget(parent),
       m_is_dragging(false) {
-  connect(window(), &QWidget::windowTitleChanged,
-    [=] { on_window_title_change(); });
   setFixedHeight(scale_height(26));
   setStyleSheet("background-color: #F5F5F5;");
   auto layout = new QHBoxLayout(this);
   layout->setMargin(0);
   layout->setSpacing(0);
-  m_icon = new icon_button(icon, unfocused_icon,
-    scale_width(26), scale_height(26),
-    QRect(scale_width(8), scale_height(8), scale_width(10), scale_height(10)),
-    this);
-  m_icon->setFixedWidth(scale_width(26));
-  m_icon->hover_active(false);
+  auto icon_size = QSize(scale_width(26), scale_height(26));
+  m_icon = new icon_button(icon.scaled(icon_size),
+    unfocused_icon.scaled(icon_size), this);
+  m_icon->setFocusPolicy(Qt::FocusPolicy::NoFocus);
+  m_icon->setEnabled(false);
   layout->addWidget(m_icon);
-  m_title_label = new QLabel(tr("Title Text"), this);
+  m_title_label = new QLabel("", this);
   m_title_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layout->addWidget(m_title_label);
-  m_minimize_button = new icon_button(":/icons/minimize-grey.svg",
-    ":/icons/minimize-black.svg", scale_width(32), scale_height(26),
-    QRect(scale_width(11), scale_height(12), scale_width(10), scale_height(2)),
+  auto button_size = scale(32, 26);
+  auto minimize_box = QRect(translate(11, 12), scale(10, 2));
+  m_minimize_button = new icon_button(
+    imageFromSvg(":/icons/minimize-grey.svg", button_size, minimize_box),
+    imageFromSvg(":/icons/minimize-black.svg", button_size, minimize_box),
     this);
-  m_minimize_button->connect_clicked_signal(
-    [=] { on_minimize_button_press(); });
-  m_minimize_button->setFixedWidth(scale_width(32));
+  m_minimize_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_minimize_button->set_default_style("background-color: #F5F5F5;");
   m_minimize_button->set_hover_style("background-color: #EBEBEB;");  
+  m_minimize_button->connect_clicked_signal(
+    [=] { on_minimize_button_press(); });
   layout->addWidget(m_minimize_button);
-  m_maximize_button = new icon_button(":/icons/maximize-grey.svg",
-    ":/icons/maximize-black.svg", scale_width(32), scale_height(26),
-    QRect(scale_width(11), scale_height(8), scale_width(10), scale_height(10)),
+  auto maximize_box = QRect(translate(11, 8), scale(10, 10));
+  m_maximize_button = new icon_button(
+    imageFromSvg(":/icons/maximize-grey.svg", button_size, maximize_box),
+    imageFromSvg(":/icons/maximize-black.svg", button_size, maximize_box),
     this);
-  m_maximize_button->connect_clicked_signal(
-    [=] { on_maximize_button_press(); });
-  m_maximize_button->setFixedWidth(scale_width(32));
+  m_maximize_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_maximize_button->set_default_style("background-color: #F5F5F5;");
   m_maximize_button->set_hover_style("background-color: #EBEBEB;");
+  m_maximize_button->connect_clicked_signal(
+    [=] { on_maximize_button_press(); });
   layout->addWidget(m_maximize_button);
-  m_restore_button = new icon_button(":/icons/unmaximize-grey.svg",
-    ":/icons/unmaximize-black.svg", scale_width(32), scale_height(26),
-    QRect(scale_width(11), scale_height(8), scale_width(10), scale_height(10)),
+  auto restore_box = QRect(translate(11, 8), scale(10, 10));
+  m_restore_button = new icon_button(
+    imageFromSvg(":/icons/unmaximize-grey.svg", button_size, restore_box),
+    imageFromSvg(":/icons/unmaximize-black.svg", button_size, restore_box),
     this);
-  m_restore_button->connect_clicked_signal([=] { on_restore_button_press(); });
+  m_restore_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_restore_button->setVisible(false);
-  m_restore_button->setFixedWidth(scale_width(32));
   m_restore_button->set_default_style("background-color: #F5F5F5;");
   m_restore_button->set_hover_style("background-color: #EBEBEB;");
+  m_restore_button->connect_clicked_signal([=] { on_restore_button_press(); });
   layout->addWidget(m_restore_button);
-  m_close_button = new icon_button(":/icons/close-grey.svg",
-    ":/icons/close-red.svg", scale_width(32), scale_height(26),
-    QRect(scale_width(11), scale_height(8), scale_width(10), scale_height(10)),
-    this);
-  m_close_button->connect_clicked_signal([=] { on_close_button_press(); });
-  m_close_button->setFixedWidth(scale_width(32));
+  auto close_box = QRect(translate(11, 8), scale(10, 10));
+  m_close_button = new icon_button(
+    imageFromSvg(":/icons/close-grey.svg", button_size, close_box),
+    imageFromSvg(":/icons/close-red.svg", button_size, close_box), this);
+  m_close_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_close_button->set_default_style("background-color: #F5F5F5;");
   m_close_button->set_hover_style("background-color: #EBEBEB;");
+  m_close_button->connect_clicked_signal([=] { on_close_button_press(); });
   layout->addWidget(m_close_button);
+  connect(window(), &QWidget::windowTitleChanged,
+    [=] (auto&& title) { on_window_title_change(title); });
 }
 
 void title_bar::mouseDoubleClickEvent(QMouseEvent* event) {
-  if(window()->geometry() == QApplication::desktop()->availableGeometry(
-      QApplication::desktop()->screenNumber(this))) {
+  if(window()->windowState().testFlag(Qt::WindowMaximized)) {
     on_restore_button_press();
   } else {
     on_maximize_button_press();
@@ -91,7 +95,8 @@ void title_bar::mouseMoveEvent(QMouseEvent* event) {
 }
 
 void title_bar::mousePressEvent(QMouseEvent* event)  {
-  if(m_is_dragging || event->button() != Qt::LeftButton) {
+  if(m_is_dragging || event->button() != Qt::LeftButton ||
+      window()->windowState().testFlag(Qt::WindowMaximized)) {
     return;
   }
   m_is_dragging = true;
@@ -105,32 +110,24 @@ void title_bar::mouseReleaseEvent(QMouseEvent* event) {
   m_is_dragging = false;
 }
 
-void title_bar::on_window_title_change() {
-  m_title_label->setText(window()->windowTitle());
+void title_bar::on_window_title_change(const QString& title) {
+  m_title_label->setText(title);
 }
 
 void title_bar::on_minimize_button_press() {
-  window()->setWindowState(Qt::WindowMinimized);
+  window()->showMinimized();
 }
 
 void title_bar::on_maximize_button_press() {
-  m_previous_geometry = window()->geometry();
-  window()->setGeometry(QApplication::desktop()->availableGeometry(
-    QApplication::desktop()->screenNumber(this)));
   m_maximize_button->setVisible(false);
   m_restore_button->setVisible(true);
-  auto e = new QEvent(QEvent::Leave);
-  QCoreApplication::postEvent(m_maximize_button, e);
+  window()->showMaximized();
 }
 
 void title_bar::on_restore_button_press() {
-  // TODO: assign some initial value to m_previous_geometry in the constructor,
-  //       just in case a window starts out maximized
-  window()->setGeometry(m_previous_geometry);
   m_maximize_button->setVisible(true);
   m_restore_button->setVisible(false);
-  auto e = new QEvent(QEvent::Leave);
-  QCoreApplication::postEvent(m_restore_button, e);
+  window()->showNormal();
 }
 
 void title_bar::on_close_button_press() {

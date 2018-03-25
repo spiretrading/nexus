@@ -13,7 +13,6 @@
 #include "spire/ui/icon_button.hpp"
 #include "spire/ui/window.hpp"
 
-using std::vector;
 using namespace boost;
 using namespace boost::signals2;
 using namespace spire;
@@ -22,8 +21,8 @@ toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
     : QWidget(parent),
       m_model(&model),
       m_is_dragging(false) {
-  m_model->connect_entry_added_signal([&] (auto& e) { entry_added(e); });
-  m_model->connect_entry_removed_signal([&] (auto e) { entry_removed(e); });
+  m_model->connect_entry_added_signal([=] (auto& e) { entry_added(e); });
+  m_model->connect_entry_removed_signal([=] (auto e) { entry_removed(e); });
   setContentsMargins(0, 0, 0, 0);
   setFixedSize(scale(308, 98));
   setStyleSheet("background-color: #F5F5F5;");
@@ -38,7 +37,7 @@ toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
   auto default_spire_icon = QImage(scale(26, 26), QImage::Format_ARGB32);
   default_spire_icon.fill(QColor(0, 0, 0, 0));
   QPainter default_icon_painter(&default_spire_icon);
-  auto icon_rect = QRectF(scale_width(8), scale_height(8), scale_width(10),
+  auto icon_rect = QRect(scale_width(8), scale_height(8), scale_width(10),
     scale_height(10));
   renderer->render(&default_icon_painter, icon_rect);
   m_default_window_icon = QPixmap::fromImage(default_spire_icon);
@@ -57,96 +56,96 @@ toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
        font-size: %1px;)").arg(scale_height(12)));
   m_username_label->setFixedSize(scale(218, 26));
   title_bar_layout->addWidget(m_username_label);
-  m_minimize_button = new icon_button(":/icons/minimize-grey.svg",
-    ":/icons/minimize-black.svg", scale_width(32), scale_height(26),
-    QRect(scale_width(11), scale_height(12),
-           scale_width(10), scale_height(2)),
+  auto button_size = scale(32, 26);
+  auto minimize_box = QRect(translate(11, 12), scale(10, 2));
+  m_minimize_button = new icon_button(
+    imageFromSvg(":/icons/minimize-grey.svg", button_size, minimize_box),
+    imageFromSvg(":/icons/minimize-black.svg", button_size, minimize_box),
     this);
   m_minimize_button->setStyleSheet(":hover { background-color: #EBEBEB; }");
-  m_minimize_button->connect_clicked_signal(
-    [&] { window()->showMinimized(); });
+  m_minimize_button->setFocusPolicy(Qt::FocusPolicy::ClickFocus);
+  m_minimize_button->connect_clicked_signal([=] { window()->showMinimized(); });
   title_bar_layout->addWidget(m_minimize_button);
-  m_close_button = new icon_button(":/icons/close-grey.svg",
-    ":/icons/close-red.svg", scale_width(32), scale_height(26),
-    QRectF(scale_width(11), scale_height(8),
-           scale_width(10),scale_height(10)),
-    this);
+  auto close_box = QRect(translate(11, 8), scale(10, 10));
+  m_close_button = new icon_button(
+    imageFromSvg(":/icons/close-grey.svg", button_size, close_box),
+    imageFromSvg(":/icons/close-red.svg", button_size, close_box), this);
   m_close_button->setStyleSheet(":hover { background-color: #EBEBEB; }");
-  m_close_button->connect_clicked_signal([&] { window()->close(); });
+  m_close_button->setFocusPolicy(Qt::FocusPolicy::ClickFocus);
+  m_close_button->connect_clicked_signal([=] { window()->close(); });
   title_bar_layout->addWidget(m_close_button);
   auto input_layout = new QVBoxLayout();
   input_layout->setMargin(0);
   input_layout->setSpacing(0);
   layout->addLayout(input_layout);
-  auto combobox_layout = new QHBoxLayout();
-  combobox_layout->setContentsMargins(scale_width(8), scale_height(8),
+  auto combo_box_layout = new QHBoxLayout();
+  combo_box_layout->setContentsMargins(scale_width(8), scale_height(8),
     scale_width(8), scale_height(5));
-  combobox_layout->setSpacing(0);
-  input_layout->addLayout(combobox_layout);
+  combo_box_layout->setSpacing(0);
+  input_layout->addLayout(combo_box_layout);
   m_window_manager_button = new toolbar_menu(tr("Window Manager"), this);
   m_window_manager_button->setFixedSize(scale(138, 26));
   m_window_manager_button->add(tr("Minimize All"));
   m_window_manager_button->add(tr("Restore All"));
   m_window_manager_button->add(tr("Import/Export Settings"));
-  combobox_layout->addWidget(m_window_manager_button);
-  combobox_layout->addStretch(1);
+  combo_box_layout->addWidget(m_window_manager_button);
+  combo_box_layout->addStretch(1);
   m_recently_closed_button = new toolbar_menu(tr("Recently Closed"), this);
   m_recently_closed_button->connect_item_selected_signal(
-    [&] (auto index) { on_item_selected(index); });
+    [=] (auto index) { on_item_selected(index); });
   m_recently_closed_button->setFixedSize(scale(138, 26));
-  combobox_layout->addWidget(m_recently_closed_button);
+  combo_box_layout->addWidget(m_recently_closed_button);
   auto button_layout = new QHBoxLayout();
   button_layout->setContentsMargins(scale_width(8), scale_height(5),
     scale_width(8), scale_height(8));
   button_layout->setSpacing(scale_width(14));
   input_layout->addLayout(button_layout);
-  m_account_button = new icon_button(":/icons/account-light-purple.svg",
-    ":/icons/account-purple.svg", scale_width(20), scale_height(20), this);
-  m_account_button->set_focusable(true);
+  auto window_button_size = scale(20, 20);
+  m_account_button = new icon_button(
+    imageFromSvg(":/icons/account-light-purple.svg", window_button_size),
+    imageFromSvg(":/icons/account-purple.svg", window_button_size), this);
   m_account_button->setToolTip(tr("Account"));
   button_layout->addWidget(m_account_button);
   m_key_bindings_button = new icon_button(
-    ":/icons/key-bindings-light-purple.svg",
-    ":/icons/key-bindings-purple.svg", scale_width(20),
-    scale_height(20), this);
-  m_key_bindings_button->set_focusable(true);
+    imageFromSvg(":/icons/key-bindings-light-purple.svg", window_button_size),
+    imageFromSvg(":/icons/key-bindings-purple.svg", window_button_size), this);
   m_key_bindings_button->setToolTip(tr("Key Bindings"));
   button_layout->addWidget(m_key_bindings_button);
-  m_canvas_button = new icon_button(":/icons/canvas-light-purple.svg",
-    ":/icons/canvas-purple.svg", scale_width(20), scale_height(20), this);
-  m_canvas_button->set_focusable(true);
+  m_canvas_button = new icon_button(
+    imageFromSvg(":/icons/canvas-light-purple.svg", window_button_size),
+    imageFromSvg(":/icons/canvas-purple.svg", window_button_size), this);
   m_canvas_button->setToolTip(tr("Canvas"));
   button_layout->addWidget(m_canvas_button);
-  m_book_view_button = new icon_button(":/icons/bookview-light-purple.svg",
-    ":/icons/bookview-purple.svg", scale_width(20), scale_height(20), this);
-  m_book_view_button->set_focusable(true);
-  m_book_view_button->setToolTip(tr("Bookview"));
+  m_book_view_button = new icon_button(
+    imageFromSvg(":/icons/bookview-light-purple.svg", window_button_size),
+    imageFromSvg(":/icons/bookview-purple.svg", window_button_size), this);
+  m_book_view_button->setToolTip(tr("Book View"));
   button_layout->addWidget(m_book_view_button);
-  m_time_sale_button = new icon_button(":/icons/time-sale-light-purple.svg",
-    ":/icons/time-sale-purple.svg", scale_width(20), scale_height(20), this);
-  m_time_sale_button->set_focusable(true);
+  m_time_sale_button = new icon_button(
+    imageFromSvg(":/icons/time-sale-light-purple.svg", window_button_size),
+    imageFromSvg(":/icons/time-sale-purple.svg", window_button_size), this);
   m_time_sale_button->setToolTip(tr("Time and Sale"));
   button_layout->addWidget(m_time_sale_button);
-  m_chart_button = new icon_button(":/icons/chart-light-purple.svg",
-    ":/icons/chart-purple.svg", scale_width(20), scale_height(20), this);
-  m_chart_button->set_focusable(true);
+  m_chart_button = new icon_button(
+    imageFromSvg(":/icons/chart-light-purple.svg", window_button_size),
+    imageFromSvg(":/icons/chart-purple.svg", window_button_size), this);
   m_chart_button->setToolTip(tr("Chart"));
   button_layout->addWidget(m_chart_button);
-  m_dashboard_button = new icon_button(":/icons/dashboard-light-purple.svg",
-    ":/icons/dashboard-purple.svg", scale_width(20), scale_height(20), this);
-  m_dashboard_button->set_focusable(true);
+  m_dashboard_button = new icon_button(
+    imageFromSvg(":/icons/dashboard-light-purple.svg", window_button_size),
+    imageFromSvg(":/icons/dashboard-purple.svg", window_button_size), this);
   m_dashboard_button->setToolTip(tr("Dashboard"));
   button_layout->addWidget(m_dashboard_button);
   m_order_imbalances_button = new icon_button(
-    ":/icons/order-imbalances-light-purple.svg",
-    ":/icons/order-imbalances-purple.svg", scale_width(20), scale_height(20),
+    imageFromSvg(":/icons/order-imbalances-light-purple.svg",
+      window_button_size),
+    imageFromSvg(":/icons/order-imbalances-purple.svg", window_button_size),
     this);
-  m_order_imbalances_button->set_focusable(true);
   m_order_imbalances_button->setToolTip(tr("Order Imbalances"));
   button_layout->addWidget(m_order_imbalances_button);
-  m_blotter_button = new icon_button(":/icons/blotter-light-purple.svg",
-    ":/icons/blotter-purple.svg", scale_width(20), scale_height(20), this);
-  m_blotter_button->set_focusable(true);
+  m_blotter_button = new icon_button(
+    imageFromSvg(":/icons/blotter-light-purple.svg", window_button_size),
+    imageFromSvg(":/icons/blotter-purple.svg", window_button_size), this);
   m_blotter_button->setToolTip(tr("Blotter"));
   button_layout->addWidget(m_blotter_button);
 }

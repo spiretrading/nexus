@@ -69,8 +69,11 @@ class window : public QWidget {
   auto frame_layout = new QVBoxLayout(m_frame_widget);
   frame_layout->setMargin(0);
   frame_layout->setSpacing(0);
-  m_title_bar = new title_bar(":/icons/spire-icon.svg",
-    ":/icons/time-sale-purple.svg", this);
+  auto icon_size = scale(26, 26);
+  auto icon_box = QRect(translate(8, 8), scale(10, 10));
+  m_title_bar = new title_bar(
+    imageFromSvg(":/icons/spire-icon.svg", icon_size, icon_box),
+    imageFromSvg(":/icons/time-sale-purple.svg", icon_size, icon_box), this);
   frame_layout->addWidget(m_title_bar);
   frame_layout->addWidget(m_content);
 }

@@ -28,13 +28,13 @@ login_window::login_window(const std::string& version, QWidget* parent)
   title_bar_layout->setMargin(0);
   title_bar_layout->setSpacing(0);
   title_bar_layout->addStretch(1);
-  m_exit_button = new icon_button(":/icons/close-purple.svg",
-    ":/icons/close-red.svg", scale_width(32), scale_height(26),
-    QRect(scale_width(11), scale_height(8), scale_width(10), scale_height(10)),
-    this);
+  auto button_size = scale(32, 26);
+  auto button_box = QRect(translate(11, 8), scale(10, 10));
+  m_exit_button = new icon_button(
+    imageFromSvg(":/icons/close-purple.svg", button_size, button_box),
+    imageFromSvg(":/icons/close-red.svg", button_size, button_box), this);
   m_exit_button->installEventFilter(this);
-  m_exit_button->connect_clicked_signal([&] {window()->close();});
-  m_exit_button->setFixedSize(scale(32, 26));
+  m_exit_button->connect_clicked_signal([&] { window()->close(); });
   m_exit_button->setStyleSheet(":hover { background-color: #401D8B; }");
   title_bar_layout->addWidget(m_exit_button);
   layout->addLayout(title_bar_layout);

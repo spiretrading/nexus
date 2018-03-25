@@ -11,9 +11,8 @@ window::window(QWidget* w, QWidget* parent)
     : window(w, QColor("#A0A0A0"), parent) {}
 
 window::window(QWidget* w, const QColor& border_color, QWidget* parent)
-    : QWidget(parent),
+    : QWidget(parent, Qt::Window | Qt::FramelessWindowHint),
       m_window(w) {
-  setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
   setAttribute(Qt::WA_TranslucentBackground);
   setFixedSize(m_window->width() + scale_width(24),
     m_window->height() + scale_height(24));
