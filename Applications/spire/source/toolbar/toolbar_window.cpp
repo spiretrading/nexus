@@ -17,12 +17,13 @@ using namespace spire;
 toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
     : QWidget(parent),
       m_model(&model) {
-  setContentsMargins(0, 0, 0, 0);
-  setFixedSize(scale(308, 98));
   m_body = new QWidget(this);
+  m_body->setFixedSize(scale(308, 72));
   auto window_layout = new QHBoxLayout(this);
   window_layout->setMargin(0);
   m_window = new spire::window(m_body, this);
+  m_window->set_icon(imageFromSvg(":/icons/spire-icon.svg", scale(26, 26),
+    QRect(translate(8, 8), scale(10, 10))));
   window_layout->addWidget(m_window);
   m_body->setStyleSheet("background-color: #F5F5F5;");
   auto layout = new QVBoxLayout(m_body);

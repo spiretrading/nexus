@@ -21,10 +21,12 @@ namespace {
 }
 
 window::window(QWidget* body, QWidget* parent)
-    : QWidget(parent, Qt::Window | Qt::FramelessWindowHint |
-        Qt::WindowSystemMenuHint | Qt::WindowMinimizeButtonHint),
+    : QWidget(parent),
       m_body(body) {
-  setAttribute(Qt::WA_TranslucentBackground);
+  this->::QWidget::window()->setWindowFlags(Qt::Window |
+    Qt::FramelessWindowHint | Qt::WindowSystemMenuHint |
+    Qt::WindowMinimizeButtonHint);
+  this->::QWidget::window()->setAttribute(Qt::WA_TranslucentBackground);
   resize(m_body->width() + scale_width(24),
     m_body->height() + scale_height(24));
   auto layout = new QVBoxLayout(this);

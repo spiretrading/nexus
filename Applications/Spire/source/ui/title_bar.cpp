@@ -31,6 +31,9 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   layout->addWidget(m_icon);
   m_title_label = new QLabel("", this);
   m_title_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_title_label->setStyleSheet(QString(
+    R"(font-family: Roboto;
+       font-size: %1px;)").arg(scale_height(12)));
   layout->addWidget(m_title_label);
   auto button_size = scale(32, 26);
   auto minimize_box = QRect(translate(11, 12), scale(10, 2));
