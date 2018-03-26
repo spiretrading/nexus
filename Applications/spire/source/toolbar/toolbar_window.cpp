@@ -33,7 +33,8 @@ toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
   title_bar_layout->setMargin(0);
   title_bar_layout->setSpacing(0);
   layout->addLayout(title_bar_layout);
-  window()->setWindowTitle(tr("Spire - Signed in as ") + QString("Username"));
+  window()->setWindowTitle(tr("Spire - Signed in as ") +
+    QString("Super_Long_Username_Example"));
   auto input_layout = new QVBoxLayout();
   input_layout->setMargin(0);
   input_layout->setSpacing(0);
