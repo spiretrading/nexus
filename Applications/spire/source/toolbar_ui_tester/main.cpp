@@ -14,13 +14,10 @@ int main(int argc, char** argv) {
   initialize_resources();
   recently_closed_model model;
   auto window = new toolbar_window(model);
-  spire::window frame(window);
-  frame.show();
+  window->show();
   toolbar_ui_tester tester(window, model);
-  tester.setGeometry(frame.pos().x(),
-    frame.pos().y() + frame.height() + 100, 0, 0);
-  frame.installEventFilter(window);
-  frame.installEventFilter(&tester);
+  tester.setGeometry(window->pos().x(),
+    window->pos().y() + window->height() + 100, 0, 0);
   tester.setAttribute(Qt::WA_ShowWithoutActivating);
   tester.show();
   application->exec();

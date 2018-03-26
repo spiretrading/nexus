@@ -47,26 +47,15 @@ namespace spire {
 
     protected:
       void closeEvent(QCloseEvent* event) override;
-      bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
-      void mouseMoveEvent(QMouseEvent* event) override;
-      void mousePressEvent(QMouseEvent* event) override;
-      void mouseReleaseEvent(QMouseEvent* event) override;
 
     private:
       mutable closed_signal m_closed_signal;
       mutable reopen_signal m_reopen_signal;
-
       recently_closed_model* m_model;
       std::vector<recently_closed_model::entry> m_entries;
-      bool m_is_dragging;
-      QPoint m_last_pos;
-      QPixmap m_default_window_icon;
-      QPixmap m_unfocused_window_icon;
-      QLabel* m_window_icon_label;
-      QLabel* m_username_label;
-      icon_button* m_minimize_button;
-      icon_button* m_close_button;
+      spire::window* m_window;
+      QWidget* m_body;
       toolbar_menu* m_window_manager_button;
       toolbar_menu* m_recently_closed_button;
       icon_button* m_account_button;
