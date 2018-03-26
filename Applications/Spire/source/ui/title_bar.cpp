@@ -1,5 +1,4 @@
 #include "spire/ui/title_bar.hpp"
-#include <QDebug>
 #include <QHBoxLayout>
 #include <QMouseEvent>
 #include "spire/spire/dimensions.hpp"
@@ -45,7 +44,7 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   m_title_label = new QLabel("", this);
   m_title_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_title_label->setStyleSheet(QString(
-    R"(background-color: red; font-family: Roboto;
+    R"(font-family: Roboto;
        font-size: %1px;)").arg(scale_height(12)));
   layout->addWidget(m_title_label);
   auto button_size = scale(32, 26);
@@ -172,12 +171,14 @@ void title_bar::mouseReleaseEvent(QMouseEvent* event) {
   m_is_dragging = false;
 }
 
+void title_bar::resizeEvent(QResizeEvent* event) {
+  on_window_title_change(window()->windowTitle());
+}
+
 void title_bar::on_window_title_change(const QString& title) {
-  m_title_label->setText(title);
   QFontMetrics metrics(m_title_label->font());
-  qDebug() << m_title_label->width();
-  auto shortened_text = metrics.elidedText(m_title_label->text(),
-    Qt::ElideRight, m_title_label->sizeHint().width());
+  auto shortened_text = metrics.elidedText(title,
+    Qt::ElideRight, m_title_label->width());
   m_title_label->setText(shortened_text);
 }
 
