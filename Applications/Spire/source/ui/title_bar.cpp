@@ -4,6 +4,13 @@
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/icon_button.hpp"
 
+
+
+
+#include <QDebug>
+
+
+
 using namespace boost;
 using namespace boost::signals2;
 using namespace spire;
@@ -32,7 +39,7 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   m_title_label = new QLabel("", this);
   m_title_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_title_label->setStyleSheet(QString(
-    R"(font-family: Roboto;
+    R"(background-color: red; font-family: Roboto;
        font-size: %1px;)").arg(scale_height(12)));
   layout->addWidget(m_title_label);
   auto button_size = scale(32, 26);
@@ -43,7 +50,7 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
     this);
   m_minimize_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_minimize_button->set_default_style("background-color: #F5F5F5;");
-  m_minimize_button->set_hover_style("background-color: #EBEBEB;");  
+  m_minimize_button->set_hover_style("background-color: #EBEBEB;");
   m_minimize_button->connect_clicked_signal(
     [=] { on_minimize_button_press(); });
   layout->addWidget(m_minimize_button);
@@ -96,6 +103,15 @@ connection title_bar::connect_maximize_signal(
   return m_maximize_signal.connect(slot);
 }
 
+void title_bar::changeEvent(QEvent* event) {
+  if(event->type() == QEvent::ParentAboutToChange) {
+    disconnect(window(), 0, this, 0);
+  } else if(event->type() == QEvent::ParentChange) {
+    connect(window(), &QWidget::windowTitleChanged,
+      [=] (auto&& title) { on_window_title_change(title); });
+  }
+}
+
 void title_bar::mouseDoubleClickEvent(QMouseEvent* event) {
   if(window()->windowState().testFlag(Qt::WindowMaximized)) {
     on_restore_button_press();
@@ -134,6 +150,11 @@ void title_bar::mouseReleaseEvent(QMouseEvent* event) {
 
 void title_bar::on_window_title_change(const QString& title) {
   m_title_label->setText(title);
+  QFontMetrics metrics(m_title_label->font());
+  qDebug() << m_title_label->width();
+  auto shortened_text = metrics.elidedText(m_title_label->text(),
+    Qt::ElideRight, m_title_label->width());
+  m_title_label->setText(shortened_text);
 }
 
 void title_bar::on_minimize_button_press() {

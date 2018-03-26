@@ -15,7 +15,7 @@ namespace {
     drop_shadow->setBlurRadius(scale_width(12));
     drop_shadow->setXOffset(0);
     drop_shadow->setYOffset(0);
-    drop_shadow->setColor(QColor(255, 0, 0));
+    drop_shadow->setColor(QColor(0, 0, 0, 100));
     return drop_shadow;
   }
 }
