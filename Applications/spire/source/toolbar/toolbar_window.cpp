@@ -22,7 +22,9 @@ toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
   auto window_layout = new QHBoxLayout(this);
   window_layout->setMargin(0);
   m_window = new spire::window(m_body, this);
-  m_window->set_icon(imageFromSvg(":/icons/spire-icon.svg", scale(26, 26),
+  m_window->set_icon(imageFromSvg(":/icons/spire-icon-black.svg", scale(26, 26),
+    QRect(translate(8, 8), scale(10, 10))),
+    imageFromSvg(":/icons/spire-icon-grey.svg", scale(26, 26),
     QRect(translate(8, 8), scale(10, 10))));
   window_layout->addWidget(m_window);
   m_body->setStyleSheet("background-color: #F5F5F5;");

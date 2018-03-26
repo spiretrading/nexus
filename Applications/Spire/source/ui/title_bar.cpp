@@ -1,4 +1,6 @@
 #include "spire/ui/title_bar.hpp"
+#include <QApplication>
+#include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QMouseEvent>
 #include "spire/spire/dimensions.hpp"
@@ -30,22 +32,22 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   layout->setMargin(0);
   layout->setSpacing(0);
   if(icon.isNull()) {
-    m_icon = new icon_button(QImage(ICON_SIZE(), QImage::Format::Format_ARGB32),
-      this);
+    m_default_icon = QImage(ICON_SIZE(), QImage::Format::Format_ARGB32);
+    m_icon = new icon_button(m_default_icon, this);
   } else if(unfocused_icon.isNull()) {
-    m_icon = new icon_button(icon.scaled(ICON_SIZE()), this);
+    m_default_icon = icon.scaled(ICON_SIZE());
+    m_icon = new icon_button(m_default_icon, this);
   } else {
-    m_icon = new icon_button(icon.scaled(ICON_SIZE()),
-      unfocused_icon.scaled(ICON_SIZE()), this);
+    m_default_icon = icon.scaled(ICON_SIZE());
+    m_unfocused_icon = unfocused_icon.scaled(ICON_SIZE());
+    m_icon = new icon_button(m_default_icon, m_unfocused_icon, this);
   }
   m_icon->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_icon->setEnabled(false);
   layout->addWidget(m_icon);
   m_title_label = new QLabel("", this);
   m_title_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_title_label->setStyleSheet(QString(
-    R"(font-family: Roboto;
-       font-size: %1px;)").arg(scale_height(12)));
+  set_title_text_stylesheet(QColor("#000000"));
   layout->addWidget(m_title_label);
   auto button_size = scale(32, 26);
   auto minimize_box = QRect(translate(11, 12), scale(10, 2));
@@ -102,23 +104,30 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
 
 void title_bar::set_icon(const QImage& icon) {
   if(icon.isNull()) {
-    set_icon(QImage(ICON_SIZE(), QImage::Format::Format_ARGB32));
+    m_default_icon = QImage(ICON_SIZE(), QImage::Format::Format_ARGB32);
+    set_icon(m_default_icon);
     return;
   }
-  m_icon->set_icon(icon.scaled(ICON_SIZE()));
+  m_default_icon = icon.scaled(ICON_SIZE());
+  m_icon->set_icon(m_default_icon);
 }
 
 void title_bar::set_icon(const QImage& icon, const QImage& unfocused_icon) {
   if(icon.isNull()) {
-    set_icon(QImage(ICON_SIZE(), QImage::Format::Format_ARGB32), unfocused_icon);
+    m_default_icon = QImage(ICON_SIZE(), QImage::Format::Format_ARGB32);
+    m_unfocused_icon = unfocused_icon;
+    set_icon(m_default_icon, m_unfocused_icon);
     return;
   }
   if(unfocused_icon.isNull()) {
-    set_icon(icon, QImage(ICON_SIZE(), QImage::Format::Format_ARGB32));
+    m_default_icon = icon;
+    m_unfocused_icon = QImage(ICON_SIZE(), QImage::Format::Format_ARGB32);
+    set_icon(m_default_icon, m_unfocused_icon);
     return;
   }
-  m_icon->set_icon(icon.scaled(ICON_SIZE()),
-    unfocused_icon.scaled(ICON_SIZE()));
+  m_default_icon = icon.scaled(ICON_SIZE());
+  m_unfocused_icon = unfocused_icon.scaled(ICON_SIZE());
+  m_icon->set_icon(m_default_icon, m_unfocused_icon);
 }
 
 connection title_bar::connect_maximize_signal(
@@ -126,13 +135,17 @@ connection title_bar::connect_maximize_signal(
   return m_maximize_signal.connect(slot);
 }
 
-void title_bar::changeEvent(QEvent* event) {
-  if(event->type() == QEvent::ParentAboutToChange) {
-    disconnect(window(), 0, this, 0);
-  } else if(event->type() == QEvent::ParentChange) {
-    connect(window(), &QWidget::windowTitleChanged,
-      [=] (auto&& title) { on_window_title_change(title); });
+bool title_bar::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == this->parent()) {
+    if(event->type() == QEvent::WindowDeactivate) {
+      set_title_text_stylesheet(QColor("#A0A0A0"));
+      m_icon->set_icon(m_unfocused_icon);
+    } else if(event->type() == QEvent::WindowActivate) {
+      set_title_text_stylesheet(QColor("#000000"));
+      m_icon->set_icon(m_default_icon);
+    }
   }
+  return QWidget::eventFilter(watched, event);
 }
 
 void title_bar::mouseDoubleClickEvent(QMouseEvent* event) {
@@ -201,4 +214,11 @@ void title_bar::on_restore_button_press() {
 
 void title_bar::on_close_button_press() {
   window()->close();
+}
+
+void title_bar::set_title_text_stylesheet(const QColor& font_color) {
+  m_title_label->setStyleSheet(QString(
+    R"(color: %2;
+       font-family: Roboto;
+       font-size: %1px;)").arg(scale_height(12)).arg(font_color.name()));
 }

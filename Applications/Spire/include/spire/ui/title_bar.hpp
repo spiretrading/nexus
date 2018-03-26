@@ -53,7 +53,7 @@ namespace spire {
         const maximize_signal::slot_type& slot) const;
 
     protected:
-      void changeEvent(QEvent* event) override;
+      bool eventFilter(QObject* watched, QEvent* event) override;
       void mouseDoubleClickEvent(QMouseEvent* event) override;
       void mouseMoveEvent(QMouseEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
@@ -63,6 +63,8 @@ namespace spire {
     private:
       mutable maximize_signal m_maximize_signal;
       icon_button* m_icon;
+      QImage m_default_icon;
+      QImage m_unfocused_icon;
       QLabel* m_title_label;
       icon_button* m_minimize_button;
       icon_button* m_maximize_button;
@@ -72,10 +74,12 @@ namespace spire {
       QPoint m_last_mouse_pos;
 
       void on_window_title_change(const QString& title);
+      void on_window_focus_changed(QWindow* focused_window);
       void on_minimize_button_press();
       void on_maximize_button_press();
       void on_restore_button_press();
       void on_close_button_press();
+      void set_title_text_stylesheet(const QColor& font_color);
   };
 }
 

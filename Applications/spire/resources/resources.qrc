@@ -48,7 +48,6 @@
         <file>icons/order-imbalances-black.svg</file>
         <file>icons/order-imbalances-light-purple.svg</file>
         <file>icons/order-imbalances-purple.svg</file>
-        <file>icons/spire-icon.svg</file>
         <file>icons/time-sale-black.svg</file>
         <file>icons/time-sale-light-purple.svg</file>
         <file>icons/time-sale-purple.svg</file>
@@ -60,5 +59,7 @@
         <file>icons/unmaximize-black.svg</file>
         <file>icons/unmaximize-darker-grey.svg</file>
         <file>icons/unmaximize-grey.svg</file>
+        <file>icons/spire-icon-black.svg</file>
+        <file>icons/spire-icon-grey.svg</file>
     </qresource>
 </RCC>

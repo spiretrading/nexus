@@ -38,6 +38,7 @@ window::window(QWidget* body, QWidget* parent)
   layout->addWidget(m_title_bar);
   layout->addWidget(m_body);
   m_title_bar->connect_maximize_signal([=] { on_maximize(); });
+  installEventFilter(m_title_bar);
 }
 
 QWidget* window::get_body() {
