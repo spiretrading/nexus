@@ -53,6 +53,7 @@ namespace spire {
         const maximize_signal::slot_type& slot) const;
 
     protected:
+      void changeEvent(QEvent* event) override;
       void mouseDoubleClickEvent(QMouseEvent* event) override;
       void mouseMoveEvent(QMouseEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
