@@ -35,7 +35,7 @@ login_ui_tester::login_ui_tester(spire::window* login_window, QWidget* parent)
 
 bool login_ui_tester::eventFilter(QObject* receiver, QEvent* event) {
   if(event->type() == QEvent::MouseButtonRelease && event->type() != QEvent::Move) {
-    auto& window = static_cast<login_window&>(*m_login_window->get_window());
+    auto& window = static_cast<login_window&>(*m_login_window->get_body());
     if(receiver == m_accept_button) {
       window.set_state(login_window::state::NONE);
     } else if(receiver == m_reject_button) {
