@@ -6,6 +6,9 @@
 
 using namespace spire;
 
+title_bar::title_bar(QWidget* parent)
+    : title_bar(QImage(), parent) {}
+
 title_bar::title_bar(const QImage& icon, QWidget* parent)
     : title_bar(icon, icon, parent) {}
 
@@ -72,6 +75,15 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   layout->addWidget(m_close_button);
   connect(window(), &QWidget::windowTitleChanged,
     [=] (auto&& title) { on_window_title_change(title); });
+}
+
+void title_bar::set_icon(const QImage& icon) {
+  m_icon->set_icon(icon.scaled(m_icon->get_icon().size()));
+}
+
+void title_bar::set_icon(const QImage& icon, const QImage& unfocused_icon) {
+  m_icon->set_icon(icon.scaled(m_icon->get_icon().size()),
+    unfocused_icon.scaled(m_icon->get_icon().size()));
 }
 
 void title_bar::mouseDoubleClickEvent(QMouseEvent* event) {

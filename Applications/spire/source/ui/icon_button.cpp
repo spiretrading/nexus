@@ -9,16 +9,15 @@ using namespace spire;
 icon_button::icon_button(QImage icon, QWidget* parent)
     : icon_button(icon, icon, parent) {}
 
-icon_button::icon_button(QImage default_icon, QImage hover_icon,
-    QWidget* parent)
+icon_button::icon_button(QImage icon, QImage hover_icon, QWidget* parent)
     : QWidget(parent),
-      m_default_icon(std::move(default_icon)),
+      m_icon(std::move(icon)),
       m_hover_icon(std::move(hover_icon)) {
   setFocusPolicy(Qt::StrongFocus);
   auto layout = new QHBoxLayout(this);
   layout->setMargin(0);
   m_label = new QLabel(this);
-  m_label->setPixmap(QPixmap::fromImage(m_default_icon));
+  m_label->setPixmap(QPixmap::fromImage(m_icon));
   layout->addWidget(m_label);
 }
 
@@ -28,6 +27,26 @@ void icon_button::set_default_style(const QString& stylesheet) {
 
 void icon_button::set_hover_style(const QString& stylesheet) {
   m_hover_stylesheet = stylesheet;
+}
+
+const QImage& icon_button::get_icon() const {
+  return m_icon;
+}
+
+void icon_button::set_icon(QImage icon) {
+  set_icon(icon, icon);
+}
+
+void icon_button::set_icon(QImage icon, QImage hover_icon) {
+  m_icon = std::move(icon);
+  m_hover_icon = std::move(hover_icon);
+  if(hasFocus()) {
+    setStyleSheet(m_hover_stylesheet);
+    m_label->setPixmap(QPixmap::fromImage(m_hover_icon));
+  } else {
+    setStyleSheet(m_default_stylesheet);
+    m_label->setPixmap(QPixmap::fromImage(m_icon));
+  }
 }
 
 connection icon_button::connect_clicked_signal(
@@ -52,13 +71,13 @@ void icon_button::focusInEvent(QFocusEvent* event) {
 void icon_button::focusOutEvent(QFocusEvent* event) {
   if(focusPolicy() & Qt::TabFocus) {
     setStyleSheet(m_default_stylesheet);
-    m_label->setPixmap(QPixmap::fromImage(m_default_icon));
+    m_label->setPixmap(QPixmap::fromImage(m_icon));
   }
 }
 
 void icon_button::leaveEvent(QEvent* event) {
   setStyleSheet(m_default_stylesheet);
-  m_label->setPixmap(QPixmap::fromImage(m_default_icon));
+  m_label->setPixmap(QPixmap::fromImage(m_icon));
 }
 
 void icon_button::mousePressEvent(QMouseEvent* event) {

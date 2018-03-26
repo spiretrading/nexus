@@ -12,6 +12,12 @@ namespace spire {
 
       //! Constructs a title bar.
       /*!
+        \param parent The parent widget.
+      */
+      title_bar(QWidget* parent = nullptr);
+
+      //! Constructs a title bar.
+      /*!
         \param icon The window icon to display at the top-left corner.
         \param parent The parent widget.
       */
@@ -25,6 +31,19 @@ namespace spire {
       */
       title_bar(const QImage& icon, const QImage& unfocused_icon,
         QWidget* parent = nullptr);
+
+      //! Sets the icon to display.
+      /*!
+        \param icon The icon to display when the window has focus.
+      */
+      void set_icon(const QImage& icon);
+
+      //! Sets the icon to display.
+      /*!
+        \param icon The icon to display when the window has focus.
+        \param icon The icon to display when the window lacks focus.
+      */
+      void set_icon(const QImage& icon, const QImage& unfocused_icon);
 
     protected:
       void mouseDoubleClickEvent(QMouseEvent* event) override;
