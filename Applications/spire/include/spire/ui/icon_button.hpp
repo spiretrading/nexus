@@ -1,7 +1,6 @@
 #ifndef SPIRE_ICON_BUTTON_HPP
 #define SPIRE_ICON_BUTTON_HPP
 #include <QImage>
-#include <QLabel>
 #include <QString>
 #include <QWidget>
 #include "spire/ui/ui.hpp"
@@ -62,14 +61,18 @@ namespace spire {
       void leaveEvent(QEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
+      void paintEvent(QPaintEvent* event) override;
 
     private:
       mutable clicked_signal m_clicked_signal;
-      QLabel* m_label;
+      bool m_is_hovered;
       QImage m_icon;
       QImage m_hover_icon;
       QString m_default_stylesheet;
       QString m_hover_stylesheet;
+
+      void show_icon();
+      void show_hover_icon();
   };
 }
 

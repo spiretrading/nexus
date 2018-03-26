@@ -13,11 +13,10 @@ int main(int argc, char** argv) {
   application->setApplicationName(QObject::tr("Toolbar UI Tester"));
   initialize_resources();
   recently_closed_model model;
-  auto window = new toolbar_window(model);
-  window->show();
-  toolbar_ui_tester tester(window, model);
-  tester.setGeometry(window->pos().x(),
-    window->pos().y() + window->height() + 100, 0, 0);
+  toolbar_window tw(model);
+  tw.show();
+  toolbar_ui_tester tester(&tw, model);
+  tester.setGeometry(tw.pos().x(), tw.pos().y() + tw.height() + 100, 0, 0);
   tester.setAttribute(Qt::WA_ShowWithoutActivating);
   tester.show();
   application->exec();
