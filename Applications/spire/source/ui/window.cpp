@@ -23,9 +23,9 @@ namespace {
 window::window(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body) {
-  this->::QWidget::window()->setWindowFlags(Qt::Window |
-    Qt::FramelessWindowHint | Qt::WindowSystemMenuHint |
-    Qt::WindowMinimizeButtonHint);
+  this->::QWidget::window()->setWindowFlags(
+    this->::QWidget::window()->windowFlags() | Qt::Window |
+    Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);
   this->::QWidget::window()->setAttribute(Qt::WA_TranslucentBackground);
   resize(m_body->width() + scale_width(24),
     m_body->height() + scale_height(24));

@@ -1,16 +1,7 @@
 #ifndef SPIRE_TOOLBAR_WINDOW_HPP
 #define SPIRE_TOOLBAR_WINDOW_HPP
 #include <vector>
-#include <QEvent>
-#include <QFocusEvent>
-#include <QKeyEvent>
-#include <QLabel>
-#include <QMouseEvent>
-#include <QPixmap>
-#include <QPoint>
-#include <QPushButton>
 #include <QWidget>
-#include <QWidgetAction>
 #include "spire/toolbar/recently_closed_model.hpp"
 #include "spire/toolbar/toolbar.hpp"
 #include "spire/toolbar/toolbar_menu.hpp"

@@ -1,6 +1,7 @@
 #include "spire/ui/icon_button.hpp"
 #include <QHBoxLayout>
 #include <QMouseEvent>
+#include <QPainter>
 
 using namespace boost;
 using namespace boost::signals2;
@@ -11,14 +12,14 @@ icon_button::icon_button(QImage icon, QWidget* parent)
 
 icon_button::icon_button(QImage icon, QImage hover_icon, QWidget* parent)
     : QWidget(parent),
+      m_is_hovered(false),
       m_icon(std::move(icon)),
       m_hover_icon(std::move(hover_icon)) {
   setFocusPolicy(Qt::StrongFocus);
   auto layout = new QHBoxLayout(this);
   layout->setMargin(0);
-  m_label = new QLabel(this);
-  m_label->setPixmap(QPixmap::fromImage(m_icon));
-  layout->addWidget(m_label);
+  setFixedSize(m_icon.size());
+  show_icon();
 }
 
 void icon_button::set_default_style(const QString& stylesheet) {
@@ -40,12 +41,11 @@ void icon_button::set_icon(QImage icon) {
 void icon_button::set_icon(QImage icon, QImage hover_icon) {
   m_icon = std::move(icon);
   m_hover_icon = std::move(hover_icon);
+  setFixedSize(m_icon.size());
   if(hasFocus()) {
-    setStyleSheet(m_hover_stylesheet);
-    m_label->setPixmap(QPixmap::fromImage(m_hover_icon));
+    show_hover_icon();
   } else {
-    setStyleSheet(m_default_stylesheet);
-    m_label->setPixmap(QPixmap::fromImage(m_icon));
+    show_icon();
   }
 }
 
@@ -56,28 +56,24 @@ connection icon_button::connect_clicked_signal(
 
 void icon_button::enterEvent(QEvent* event) {
   if(isEnabled()) {
-    setStyleSheet(m_hover_stylesheet);
-    m_label->setPixmap(QPixmap::fromImage(m_hover_icon));
+    show_hover_icon();
   }
 }
 
 void icon_button::focusInEvent(QFocusEvent* event) {
   if(focusPolicy() & Qt::TabFocus) {
-    setStyleSheet(m_hover_stylesheet);
-    m_label->setPixmap(QPixmap::fromImage(m_hover_icon));
+    show_hover_icon();
   }
 }
 
 void icon_button::focusOutEvent(QFocusEvent* event) {
   if(focusPolicy() & Qt::TabFocus) {
-    setStyleSheet(m_default_stylesheet);
-    m_label->setPixmap(QPixmap::fromImage(m_icon));
+    show_icon();
   }
 }
 
 void icon_button::leaveEvent(QEvent* event) {
-  setStyleSheet(m_default_stylesheet);
-  m_label->setPixmap(QPixmap::fromImage(m_icon));
+  show_icon();
 }
 
 void icon_button::mousePressEvent(QMouseEvent* event) {
@@ -93,4 +89,25 @@ void icon_button::mouseReleaseEvent(QMouseEvent* event) {
       m_clicked_signal();
     }
   }
+}
+
+void icon_button::paintEvent(QPaintEvent* event) {
+  QPainter painter(this);
+  if(m_is_hovered) {
+    painter.drawImage(0, 0, m_hover_icon);
+  } else {
+    painter.drawImage(0, 0, m_icon);
+  }
+}
+
+void icon_button::show_icon() {
+  setStyleSheet(m_default_stylesheet);
+  m_is_hovered = false;
+  update();
+}
+
+void icon_button::show_hover_icon() {
+  setStyleSheet(m_hover_stylesheet);
+  m_is_hovered = true;
+  update();
 }

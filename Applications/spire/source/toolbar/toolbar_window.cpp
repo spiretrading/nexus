@@ -1,10 +1,7 @@
 #include "spire/toolbar/toolbar_window.hpp"
-#include <QAction>
 #include <QEvent>
 #include <QHBoxLayout>
-#include <QMenu>
 #include <QString>
-#include <QStyledItemDelegate>
 #include <QVBoxlayout>
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/icon_button.hpp"
@@ -17,6 +14,9 @@ using namespace spire;
 toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
     : QWidget(parent),
       m_model(&model) {
+  setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint |
+    Qt::WindowCloseButtonHint);
+  setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
   m_body = new QWidget(this);
   m_body->setFixedSize(scale(308, 72));
   auto window_layout = new QHBoxLayout(this);

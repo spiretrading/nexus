@@ -8,6 +8,12 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace spire;
 
+namespace {
+  auto ICON_SIZE() {
+    return scale(26, 26);
+  }
+}
+
 title_bar::title_bar(QWidget* parent)
     : title_bar(QImage(), parent) {}
 
@@ -23,9 +29,15 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   auto layout = new QHBoxLayout(this);
   layout->setMargin(0);
   layout->setSpacing(0);
-  auto icon_size = QSize(scale_width(26), scale_height(26));
-  m_icon = new icon_button(icon.scaled(icon_size),
-    unfocused_icon.scaled(icon_size), this);
+  if(icon.isNull()) {
+    m_icon = new icon_button(QImage(ICON_SIZE(), QImage::Format::Format_ARGB32),
+      this);
+  } else if(unfocused_icon.isNull()) {
+    m_icon = new icon_button(icon.scaled(ICON_SIZE()), this);
+  } else {
+    m_icon = new icon_button(icon.scaled(ICON_SIZE()),
+      unfocused_icon.scaled(ICON_SIZE()), this);
+  }
   m_icon->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_icon->setEnabled(false);
   layout->addWidget(m_icon);
@@ -44,6 +56,8 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   m_minimize_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_minimize_button->set_default_style("background-color: #F5F5F5;");
   m_minimize_button->set_hover_style("background-color: #EBEBEB;");  
+  m_minimize_button->setVisible(
+    window()->windowFlags().testFlag(Qt::WindowMinimizeButtonHint));
   m_minimize_button->connect_clicked_signal(
     [=] { on_minimize_button_press(); });
   layout->addWidget(m_minimize_button);
@@ -55,6 +69,8 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   m_maximize_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_maximize_button->set_default_style("background-color: #F5F5F5;");
   m_maximize_button->set_hover_style("background-color: #EBEBEB;");
+  m_maximize_button->setVisible(
+    window()->windowFlags().testFlag(Qt::WindowMaximizeButtonHint));
   m_maximize_button->connect_clicked_signal(
     [=] { on_maximize_button_press(); });
   layout->addWidget(m_maximize_button);
@@ -64,10 +80,10 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
     imageFromSvg(":/icons/unmaximize-black.svg", button_size, restore_box),
     this);
   m_restore_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
-  m_restore_button->setVisible(false);
   m_restore_button->set_default_style("background-color: #F5F5F5;");
   m_restore_button->set_hover_style("background-color: #EBEBEB;");
   m_restore_button->connect_clicked_signal([=] { on_restore_button_press(); });
+  m_restore_button->hide();
   layout->addWidget(m_restore_button);
   auto close_box = QRect(translate(11, 8), scale(10, 10));
   m_close_button = new icon_button(
@@ -76,6 +92,8 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   m_close_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_close_button->set_default_style("background-color: #F5F5F5;");
   m_close_button->set_hover_style("background-color: #EBEBEB;");
+  m_close_button->setVisible(
+    window()->windowFlags().testFlag(Qt::WindowCloseButtonHint));
   m_close_button->connect_clicked_signal([=] { on_close_button_press(); });
   layout->addWidget(m_close_button);
   connect(window(), &QWidget::windowTitleChanged,
@@ -83,12 +101,24 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
 }
 
 void title_bar::set_icon(const QImage& icon) {
-  m_icon->set_icon(icon.scaled(m_icon->get_icon().size()));
+  if(icon.isNull()) {
+    set_icon(QImage(ICON_SIZE(), QImage::Format::Format_ARGB32));
+    return;
+  }
+  m_icon->set_icon(icon.scaled(ICON_SIZE()));
 }
 
 void title_bar::set_icon(const QImage& icon, const QImage& unfocused_icon) {
-  m_icon->set_icon(icon.scaled(m_icon->get_icon().size()),
-    unfocused_icon.scaled(m_icon->get_icon().size()));
+  if(icon.isNull()) {
+    set_icon(QImage(ICON_SIZE(), QImage::Format::Format_ARGB32), unfocused_icon);
+    return;
+  }
+  if(unfocused_icon.isNull()) {
+    set_icon(icon, QImage(ICON_SIZE(), QImage::Format::Format_ARGB32));
+    return;
+  }
+  m_icon->set_icon(icon.scaled(ICON_SIZE()),
+    unfocused_icon.scaled(ICON_SIZE()));
 }
 
 connection title_bar::connect_maximize_signal(
