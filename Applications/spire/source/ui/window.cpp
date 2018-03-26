@@ -15,7 +15,7 @@ window::window(QWidget* body, QWidget* parent)
   setAttribute(Qt::WA_TranslucentBackground);
   resize(m_body->width() + scale_width(24),
     m_body->height() + scale_height(24));
-  auto drop_shadow = new QGraphicsDropShadowEffect();
+  auto drop_shadow = new QGraphicsDropShadowEffect(this);
   drop_shadow->setBlurRadius(scale_width(12));
   drop_shadow->setXOffset(0);
   drop_shadow->setYOffset(0);
