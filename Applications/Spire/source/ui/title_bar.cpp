@@ -4,6 +4,8 @@
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/icon_button.hpp"
 
+using namespace boost;
+using namespace boost::signals2;
 using namespace spire;
 
 title_bar::title_bar(QWidget* parent)
@@ -86,6 +88,11 @@ void title_bar::set_icon(const QImage& icon, const QImage& unfocused_icon) {
     unfocused_icon.scaled(m_icon->get_icon().size()));
 }
 
+connection title_bar::connect_maximize_signal(
+    const maximize_signal::slot_type& slot) const {
+  return m_maximize_signal.connect(slot);
+}
+
 void title_bar::mouseDoubleClickEvent(QMouseEvent* event) {
   if(window()->windowState().testFlag(Qt::WindowMaximized)) {
     on_restore_button_press();
@@ -131,6 +138,7 @@ void title_bar::on_minimize_button_press() {
 }
 
 void title_bar::on_maximize_button_press() {
+  m_maximize_signal();
   m_maximize_button->setVisible(false);
   m_restore_button->setVisible(true);
   window()->showMaximized();

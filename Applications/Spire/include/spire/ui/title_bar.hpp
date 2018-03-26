@@ -10,6 +10,9 @@ namespace spire {
   class title_bar : public QWidget {
     public:
 
+      //! Signals the maximize action is about to be performed.
+      using maximize_signal = signal<void ()>;
+
       //! Constructs a title bar.
       /*!
         \param parent The parent widget.
@@ -45,6 +48,10 @@ namespace spire {
       */
       void set_icon(const QImage& icon, const QImage& unfocused_icon);
 
+      //! Connects a slot to the maximize signal.
+      boost::signals2::connection connect_maximize_signal(
+        const maximize_signal::slot_type& slot) const;
+
     protected:
       void mouseDoubleClickEvent(QMouseEvent* event) override;
       void mouseMoveEvent(QMouseEvent* event) override;
@@ -52,6 +59,7 @@ namespace spire {
       void mouseReleaseEvent(QMouseEvent* event) override;
 
     private:
+      mutable maximize_signal m_maximize_signal;
       icon_button* m_icon;
       QLabel* m_title_label;
       icon_button* m_minimize_button;

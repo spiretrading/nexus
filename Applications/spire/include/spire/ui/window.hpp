@@ -40,6 +40,8 @@ namespace spire {
       QWidget* m_frame;
       QWidget* m_body;
       title_bar* m_title_bar;
+
+      void on_maximize();
   };
 }
 
