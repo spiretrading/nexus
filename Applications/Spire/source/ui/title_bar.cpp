@@ -196,24 +196,32 @@ void title_bar::on_window_title_change(const QString& title) {
 }
 
 void title_bar::on_minimize_button_press() {
-  window()->showMinimized();
+  if(m_minimize_button->isVisible()) {
+    window()->showMinimized();
+  }
 }
 
 void title_bar::on_maximize_button_press() {
-  m_maximize_signal();
-  m_maximize_button->setVisible(false);
-  m_restore_button->setVisible(true);
-  window()->showMaximized();
+  if(m_maximize_button->isVisible()) {
+    m_maximize_signal();
+    m_maximize_button->setVisible(false);
+    m_restore_button->setVisible(true);
+    window()->showMaximized();
+  }
 }
 
 void title_bar::on_restore_button_press() {
-  m_maximize_button->setVisible(true);
-  m_restore_button->setVisible(false);
-  window()->showNormal();
+  if(m_restore_button->isVisible()) {
+    m_maximize_button->setVisible(true);
+    m_restore_button->setVisible(false);
+    window()->showNormal();
+  }
 }
 
 void title_bar::on_close_button_press() {
-  window()->close();
+  if(m_close_button->isVisible()) {
+    window()->close();
+  }
 }
 
 void title_bar::set_title_text_stylesheet(const QColor& font_color) {
