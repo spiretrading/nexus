@@ -1,5 +1,6 @@
 #ifndef SPIRE_ICON_BUTTON_HPP
 #define SPIRE_ICON_BUTTON_HPP
+#include <QAbstractButton>
 #include <QImage>
 #include <QString>
 #include <QWidget>
@@ -8,7 +9,7 @@
 namespace spire {
 
   //! Displays a button using an icon.
-  class icon_button : public QWidget {
+  class icon_button : public QAbstractButton {
     public:
 
       //! Signal type for the clicked signal.

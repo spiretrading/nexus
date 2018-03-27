@@ -11,7 +11,7 @@ icon_button::icon_button(QImage icon, QWidget* parent)
     : icon_button(icon, icon, parent) {}
 
 icon_button::icon_button(QImage icon, QImage hover_icon, QWidget* parent)
-    : QWidget(parent),
+    : QAbstractButton(parent),
       m_is_hovered(false),
       m_icon(std::move(icon)),
       m_hover_icon(std::move(hover_icon)) {
