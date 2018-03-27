@@ -16,8 +16,6 @@ int main(int argc, char** argv) {
   toolbar_window tw(model);
   tw.show();
   toolbar_ui_tester tester(&tw, model);
-  tester.setGeometry(tw.pos().x(), tw.pos().y() + tw.height() + 100, 0, 0);
-  tester.setAttribute(Qt::WA_ShowWithoutActivating);
   tester.show();
   application->exec();
 }

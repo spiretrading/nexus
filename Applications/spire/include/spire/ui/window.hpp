@@ -34,13 +34,15 @@ namespace spire {
       QWidget* get_body();
 
     protected:
-      void changeEvent(QEvent* event);
+      void changeEvent(QEvent* event) override;
+      bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
-      QWidget* m_frame;
+      QWidget* m_border;
       QWidget* m_body;
       title_bar* m_title_bar;
 
+      void set_border_stylesheet(const QColor& color);
       void on_maximize();
   };
 }

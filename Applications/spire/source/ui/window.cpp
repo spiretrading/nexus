@@ -1,5 +1,4 @@
 #include "spire/ui/window.hpp"
-#include <QColor>
 #include <QEvent>
 #include <QGraphicsDropShadowEffect>
 #include <QVBoxLayout>
@@ -27,18 +26,26 @@ window::window(QWidget* body, QWidget* parent)
     this->::QWidget::window()->windowFlags() | Qt::Window |
     Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);
   this->::QWidget::window()->setAttribute(Qt::WA_TranslucentBackground);
-  resize(m_body->width() + scale_width(24),
-    m_body->height() + scale_height(24));
-  auto layout = new QVBoxLayout(this);
-  layout->setSpacing(0);
+  resize(m_body->width() + scale_width(25),
+    m_body->height() + scale_height(25));
   auto drop_shadow = make_drop_shadow_effect(this);
-  layout->setMargin(drop_shadow->blurRadius());
   setGraphicsEffect(drop_shadow);
-  m_title_bar = new title_bar(this);
-  layout->addWidget(m_title_bar);
-  layout->addWidget(m_body);
+  auto layout = new QVBoxLayout(this);
+  layout->setMargin(drop_shadow->blurRadius());
+  layout->setSpacing(0);
+  m_border = new QWidget(this);
+  m_border->setObjectName("window_border");
+  m_border->resize(m_body->size() + scale(1, 1));
+  set_border_stylesheet("#A0A0A0");
+  layout->addWidget(m_border);
+  auto border_layout = new QVBoxLayout(m_border);
+  border_layout->setMargin(scale_width(1));
+  border_layout->setSpacing(0);
+  m_title_bar = new title_bar(m_border);
+  border_layout->addWidget(m_title_bar);
+  border_layout->addWidget(m_body);
   m_title_bar->connect_maximize_signal([=] { on_maximize(); });
-  installEventFilter(m_title_bar);
+  this->::QWidget::window()->installEventFilter(this);
 }
 
 QWidget* window::get_body() {
@@ -74,6 +81,24 @@ void window::changeEvent(QEvent* event) {
     }
   }
   QWidget::changeEvent(event);
+}
+
+bool window::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == this->::QWidget::window()) {
+    if(event->type() == QEvent::WindowActivate) {
+      set_border_stylesheet("#A0A0A0");
+    } else if(event->type() == QEvent::WindowDeactivate) {
+      set_border_stylesheet("#C8C8C8");
+    }
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
+void window::set_border_stylesheet(const QColor& color) {
+  m_border->setStyleSheet(QString(R"(
+    #window_border {
+                    border: %1px solid %3 %2px solid %3;
+    })").arg(scale_height(1)).arg(scale_width(1)).arg(color.name()));
 }
 
 void window::on_maximize() {

@@ -4,10 +4,8 @@
 #include <unordered_map>
 #include <QEvent>
 #include <QMenu>
-#include <QPixmap>
 #include <QPushButton>
 #include <QResizeEvent>
-#include <QString>
 #include <QWidgetAction>
 #include "spire/toolbar/toolbar.hpp"
 
@@ -35,9 +33,9 @@ namespace spire {
       //! Adds an item to the menu with an icon.
       /*!
         \param text The text string for the item.
-        \param icon_path Resource path or absolute path to the icon.
+        \param icon Image for the icon.
       */
-      void add(const QString& text, const QString& icon_path);
+      void add(const QString& text, const QImage& icon);
 
       void remove(int index);
 
@@ -53,7 +51,6 @@ namespace spire {
       QMenu* m_items;
       QWidgetAction* m_empty_item;
       std::unordered_map<QAction*, int> m_action_to_index;
-      std::unordered_map<std::string, QPixmap> m_filepath_to_pixmap;
       bool m_default_style;
 
       void remove_empty_item();

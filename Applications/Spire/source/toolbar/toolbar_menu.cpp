@@ -1,11 +1,7 @@
 #include "spire/toolbar/toolbar_menu.hpp"
 #include <QColor>
-#include <QImage>
-#include <QPainter>
-#include <QPoint>
-#include <QStyle>
-#include <QtSvg/QSvgRenderer>
 #include "spire/spire/dimensions.hpp"
+#include "spire/ui/ui.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -39,29 +35,10 @@ void toolbar_menu::add(const QString& text) {
   m_action_to_index[action] = size;
 }
 
-void toolbar_menu::add(const QString& text, const QString& icon_path) {
-  if(m_filepath_to_pixmap.find(icon_path.toStdString()) ==
-      m_filepath_to_pixmap.end()) {
-    auto renderer = new QSvgRenderer(icon_path, this);
-    auto icon = QImage(scale_width(10), scale_height(10),
-      QImage::Format_ARGB32);
-    icon.fill(QColor(0, 0, 0, 0));
-    QPainter icon_painter(&icon);
-    renderer->render(&icon_painter);
-    icon_painter.end();
-    auto background = QImage(scale_width(26), scale_height(20),
-      QImage::Format_ARGB32);
-    background.fill(QColor(0, 0, 0, 0));
-    QPainter background_painter(&background);
-    background_painter.drawImage(
-      QPoint(scale_width(8), scale_height(5)), icon);
-    background_painter.end();
-    m_filepath_to_pixmap[icon_path.toStdString()] =
-      QPixmap::fromImage(background);
-  }
+void toolbar_menu::add(const QString& text, const QImage& icon) {
   auto action = new QWidgetAction(this);
   action->setText(text);
-  action->setIcon(m_filepath_to_pixmap[icon_path.toStdString()]);
+  action->setIcon(QPixmap::fromImage(icon));
   action->setIconVisibleInMenu(true);
   remove_empty_item();
   if(m_default_style) {

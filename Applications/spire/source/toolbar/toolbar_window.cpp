@@ -145,16 +145,20 @@ void toolbar_window::keyPressEvent(QKeyEvent* event) {
 }
 
 void toolbar_window::entry_added(const recently_closed_model::entry& e) {
+  auto icon_size = scale(26, 20);
+  auto icon_rect = QRect(translate(8, 5), scale(10, 10));
   m_entries.push_back(e);
   switch(e.m_type) {
     case recently_closed_model::type::BOOK_VIEW: {
       m_recently_closed_button->add(e.m_identifier.c_str(),
-        ":/icons/bookview-black.svg");
+        imageFromSvg(QString(":/icons/bookview-black.svg"), icon_size,
+          icon_rect));
       break;
     }
     case recently_closed_model::type::TIME_AND_SALE: {
       m_recently_closed_button->add(e.m_identifier.c_str(),
-        ":/icons/time-sale-black.svg");
+        imageFromSvg(QString(":/icons/time-sale-black.svg"), icon_size,
+          icon_rect));
       break;
     }
   }

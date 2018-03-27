@@ -3,7 +3,6 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include "spire/spire/dimensions.hpp"
-
 #include "spire/toolbar/toolbar_window.hpp"
 
 using namespace spire;
@@ -13,6 +12,9 @@ toolbar_ui_tester::toolbar_ui_tester(toolbar_window* window,
     QWidget* parent)
     : QWidget(parent),
       m_recently_closed_model(&model) {
+  setGeometry(window->pos().x(), window->pos().y() + window->height() + 100, 0,
+    0);
+  setAttribute(Qt::WA_ShowWithoutActivating);
   setFixedSize(scale(480, 100));
   auto layout = new QVBoxLayout(this);
   auto radio_layout = new QHBoxLayout();
@@ -32,6 +34,7 @@ toolbar_ui_tester::toolbar_ui_tester(toolbar_window* window,
   connect(m_add_button, &QPushButton::clicked, this,
     &toolbar_ui_tester::add_item);
   window->connect_reopen_signal([&] (auto& e) { remove_item(e); });
+  window->installEventFilter(this);
 }
 
 bool toolbar_ui_tester::eventFilter(QObject* receiver, QEvent* event) {

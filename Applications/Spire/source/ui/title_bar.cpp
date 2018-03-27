@@ -100,6 +100,7 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   layout->addWidget(m_close_button);
   connect(window(), &QWidget::windowTitleChanged,
     [=] (auto&& title) { on_window_title_change(title); });
+  window()->installEventFilter(this);
 }
 
 void title_bar::set_icon(const QImage& icon) {
@@ -136,7 +137,7 @@ connection title_bar::connect_maximize_signal(
 }
 
 bool title_bar::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == this->parent()) {
+  if(watched == window()) {
     if(event->type() == QEvent::WindowDeactivate) {
       set_title_text_stylesheet(QColor("#A0A0A0"));
       m_icon->set_icon(m_unfocused_icon);
