@@ -4,6 +4,7 @@
 #include <ostream>
 #include <Beam/Collections/Enum.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
+#include "Nexus/Definitions/Quantity.hpp"
 
 namespace Nexus {
 

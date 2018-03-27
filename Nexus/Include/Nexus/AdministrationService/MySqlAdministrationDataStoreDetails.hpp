@@ -25,8 +25,8 @@ namespace Details {
   sql_create_7(risk_parameters, 7, 0,
     mysqlpp::sql_int_unsigned, account,
     mysqlpp::sql_int, currency,
-    mysqlpp::sql_bigint, buying_power,
-    mysqlpp::sql_bigint, net_loss,
+    mysqlpp::sql_double, buying_power,
+    mysqlpp::sql_double, net_loss,
     mysqlpp::sql_int, allowed_state,
     mysqlpp::sql_int, loss_from_top,
     mysqlpp::sql_int, transition_time);
@@ -51,8 +51,8 @@ namespace Details {
     mysqlpp::sql_int, id,
     mysqlpp::sql_int_unsigned, account,
     mysqlpp::sql_int, currency,
-    mysqlpp::sql_bigint, buying_power,
-    mysqlpp::sql_bigint, net_loss,
+    mysqlpp::sql_double, buying_power,
+    mysqlpp::sql_double, net_loss,
     mysqlpp::sql_int, allowed_state,
     mysqlpp::sql_int, loss_from_top,
     mysqlpp::sql_int, transition_time);
@@ -203,8 +203,8 @@ namespace Details {
       "id INTEGER PRIMARY KEY NOT NULL,"
       "account INTEGER UNSIGNED NOT NULL,"
       "currency INTEGER NOT NULL,"
-      "buying_power BIGINT NOT NULL,"
-      "net_loss BIGINT NOT NULL,"
+      "buying_power DOUBLE NOT NULL,"
+      "net_loss DOUBLE NOT NULL,"
       "allowed_state INTEGER NOT NULL,"
       "loss_from_top INTEGER NOT NULL,"
       "transition_time INTEGER NOT NULL)";
@@ -220,8 +220,8 @@ namespace Details {
     query << "CREATE TABLE risk_parameters ("
       "account INTEGER UNSIGNED PRIMARY KEY NOT NULL,"
       "currency INTEGER NOT NULL,"
-      "buying_power BIGINT NOT NULL,"
-      "net_loss BIGINT NOT NULL,"
+      "buying_power DOUBLE NOT NULL,"
+      "net_loss DOUBLE NOT NULL,"
       "allowed_state INTEGER NOT NULL,"
       "loss_from_top INTEGER NOT NULL,"
       "transition_time INTEGER NOT NULL)";

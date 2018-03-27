@@ -28,6 +28,13 @@ namespace Details {
       entry.m_sign = "$";
       database.Add(entry);
     }
+    {
+      CurrencyDatabase::Entry entry;
+      entry.m_id = CurrencyId{1001};
+      entry.m_code = "XBT";
+      entry.m_sign = "B";
+      database.Add(entry);
+    }
     return database;
   }
 }
@@ -41,20 +48,22 @@ namespace Details {
 
   namespace DefaultCurrencies {
     inline CurrencyId AUD() {
-      static CurrencyId value = GetDefaultCurrencyDatabase().FromCode(
-        "AUD").m_id;
+      static auto value = GetDefaultCurrencyDatabase().FromCode("AUD").m_id;
       return value;
     }
 
     inline CurrencyId CAD() {
-      static CurrencyId value = GetDefaultCurrencyDatabase().FromCode(
-        "CAD").m_id;
+      static auto value = GetDefaultCurrencyDatabase().FromCode("CAD").m_id;
       return value;
     }
 
     inline CurrencyId USD() {
-      static CurrencyId value = GetDefaultCurrencyDatabase().FromCode(
-        "USD").m_id;
+      static auto value = GetDefaultCurrencyDatabase().FromCode("USD").m_id;
+      return value;
+    }
+
+    inline CurrencyId XBT() {
+      static auto value = GetDefaultCurrencyDatabase().FromCode("XBT").m_id;
       return value;
     }
   }

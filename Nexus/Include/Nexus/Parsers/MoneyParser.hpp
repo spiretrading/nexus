@@ -26,7 +26,7 @@ namespace Nexus {
     if(!Beam::Parsers::DecimalParser<double>().Read(source, rawValue)) {
       return false;
     }
-    value = Money::FromValue(rawValue);
+    value = Money{Quantity{rawValue}};
     return true;
   }
 
