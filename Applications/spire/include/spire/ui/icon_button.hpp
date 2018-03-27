@@ -30,6 +30,17 @@ namespace spire {
       */
       icon_button(QImage icon, QImage hover_icon, QWidget* parent = nullptr);
 
+      //! Constructs an icon_button with a default icon, hover icon, and
+      //!  blur icon.
+      /*!
+        \param icon The icon shown when the button is not hovered.
+        \param hover_icon The icon shown when the button is hovered.
+        \param blur_icon The icon shown when the window lacks focus.
+        \param parent The parent QWidget to the icon_button.
+      */
+      icon_button(QImage icon, QImage hover_icon, QImage blur_icon,
+        QWidget* parent = nullptr);
+
       //! Sets the default stylesheet for the button.
       /*!
         \param stylesheet The default stylesheet.
@@ -51,6 +62,9 @@ namespace spire {
       //! Sets the icons to display.
       void set_icon(QImage icon, QImage hover_icon);
 
+      //! Sets the icons to display.
+      void set_icon(QImage icon, QImage hover_icon, QImage blur_icon);
+
       //! Connects a slot to the clicked signal.
       boost::signals2::connection connect_clicked_signal(
         const clicked_signal::slot_type& slot) const;
@@ -63,17 +77,27 @@ namespace spire {
       void mousePressEvent(QMouseEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
+      bool event(QEvent* event) override;
 
     private:
+      enum class state {
+        NORMAL,
+        HOVERED,
+        BLURRED,
+        HOVER_BLURRED
+      };
       mutable clicked_signal m_clicked_signal;
-      bool m_is_hovered;
+      state m_state;
       QImage m_icon;
       QImage m_hover_icon;
+      QImage m_blur_icon;
       QString m_default_stylesheet;
       QString m_hover_stylesheet;
 
-      void show_icon();
-      void show_hover_icon();
+      void show_normal();
+      void show_hovered();
+      void show_blurred();
+      void show_hover_blurred();
   };
 }
 
