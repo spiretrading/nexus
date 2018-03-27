@@ -43,7 +43,6 @@ namespace spire {
         const item_selected_signal::slot_type& slot) const;
 
     protected:
-      void leaveEvent(QEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
@@ -51,10 +50,9 @@ namespace spire {
       QMenu* m_items;
       QWidgetAction* m_empty_item;
       std::unordered_map<QAction*, int> m_action_to_index;
-      bool m_default_style;
+      bool m_empty_style;
 
       void remove_empty_item();
-      void set_stylesheet(int padding_left);
       void set_empty_menu_stylesheet();
       void set_default_menu_stylesheet(int padding_left);
       void on_triggered(QAction* action);

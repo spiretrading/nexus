@@ -10,24 +10,45 @@ using namespace spire;
 toolbar_menu::toolbar_menu(const QString& title, QWidget* parent)
     : QPushButton(title, parent),
       m_items(new QMenu(this)),
-      m_default_style(true) {
+      m_empty_style(true) {
   setMenu(m_items);
-  setIconSize(QSize(500, 500));
-  m_items->installEventFilter(this);
   connect(m_items, &QMenu::triggered, this, &toolbar_menu::on_triggered);
   m_empty_item = new QWidgetAction(this);
   m_empty_item->setText(tr("Empty"));
   m_action_to_index[m_empty_item] = 0;
   m_items->addAction(m_empty_item);
-  set_stylesheet(0);
+    setStyleSheet(QString(R"(
+    QPushButton {
+      background-color: white;
+      border: 1px solid #C8C8C8;
+      font-family: Roboto;
+      font-size: %1px;
+      padding-left: %5px;
+      text-align: left;
+    }
+    QPushButton:focus, QPushButton:hover {
+      border: 1px solid #4B23A0;
+      outline: none;
+    }
+    QPushButton::menu-indicator {
+      image: url(":/icons/arrow-down.svg");
+      height: %3px;
+      padding-bottom: %6px;
+      padding-right: %2px;
+      width: %4px;
+    })")
+    .arg(scale_height(12)).arg(scale_width(8)).arg(scale_height(4))
+    .arg(scale_width(6)).arg(scale_width(8)).arg(scale_height(10)));
+
+  set_empty_menu_stylesheet();
 }
 
 void toolbar_menu::add(const QString& text) {
   auto action = new QWidgetAction(this);
   action->setText(text);
   remove_empty_item();
-  if(m_default_style) {
-    m_default_style = false;
+  if(m_empty_style) {
+    m_empty_style = false;
     set_default_menu_stylesheet(scale_width(8));
   }
   m_items->addAction(action);
@@ -41,8 +62,8 @@ void toolbar_menu::add(const QString& text, const QImage& icon) {
   action->setIcon(QPixmap::fromImage(icon));
   action->setIconVisibleInMenu(true);
   remove_empty_item();
-  if(m_default_style) {
-    m_default_style = false;
+  if(m_empty_style) {
+    m_empty_style = false;
     set_default_menu_stylesheet(scale_width(26));
   }
   m_items->addAction(action);
@@ -71,21 +92,13 @@ void toolbar_menu::remove(int index) {
     m_action_to_index[m_empty_item] = 0;
     m_items->addAction(m_empty_item);
     set_empty_menu_stylesheet();
-    m_default_style = true;
+    m_empty_style = true;
   }
 }
 
 connection toolbar_menu::connect_item_selected_signal(
     const item_selected_signal::slot_type& slot) const {
   return m_item_selected_signal.connect(slot);
-}
-
-void toolbar_menu::leaveEvent(QEvent* event) {
-  if(hasFocus()) {
-    
-  } else {
-
-  }
 }
 
 void toolbar_menu::resizeEvent(QResizeEvent* event) {
@@ -97,33 +110,6 @@ void toolbar_menu::remove_empty_item() {
     m_action_to_index.erase(m_empty_item);
     m_items->removeAction(m_empty_item);
   }
-}
-
-void toolbar_menu::set_stylesheet(int padding_left) {
-  setStyleSheet(QString(R"(
-    QPushButton {
-      background-color: white;
-      border: 1px solid #C8C8C8;
-      font-family: Roboto;
-      font-size: %1px;
-      padding-left: %5px;
-      text-align: left;
-    }
-    QPushButton:focus, QPushButton:hover {
-      border: 1px solid #4B23A0;
-      outline: none;
-    }
-    QPushButton::menu-indicator {
-      image: url(":/icons/arrow-down.svg");
-      height: %3px;
-      padding-bottom: %6px;
-      padding-right: %2px;
-      width: %4px;
-    })")
-    .arg(scale_height(12)).arg(scale_width(8)).arg(scale_height(4))
-    .arg(scale_width(6)).arg(scale_width(8)).arg(scale_height(10)));
-
-  set_empty_menu_stylesheet();
 }
 
 void toolbar_menu::set_empty_menu_stylesheet() {
