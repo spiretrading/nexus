@@ -1,7 +1,5 @@
 #include "spire/toolbar/toolbar_window.hpp"
-#include <QEvent>
 #include <QHBoxLayout>
-#include <QString>
 #include <QVBoxlayout>
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/icon_button.hpp"

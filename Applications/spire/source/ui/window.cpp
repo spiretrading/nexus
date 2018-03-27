@@ -1,5 +1,4 @@
 #include "spire/ui/window.hpp"
-#include <QEvent>
 #include <QGraphicsDropShadowEffect>
 #include <QVBoxLayout>
 #include <QWindowStateChangeEvent>

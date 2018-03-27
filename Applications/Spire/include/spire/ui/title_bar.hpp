@@ -74,7 +74,6 @@ namespace spire {
       QPoint m_last_mouse_pos;
 
       void on_window_title_change(const QString& title);
-      void on_window_focus_changed(QWindow* focused_window);
       void on_minimize_button_press();
       void on_maximize_button_press();
       void on_restore_button_press();
