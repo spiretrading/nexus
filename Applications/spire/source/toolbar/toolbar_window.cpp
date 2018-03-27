@@ -1,6 +1,6 @@
 #include "spire/toolbar/toolbar_window.hpp"
 #include <QHBoxLayout>
-#include <QVBoxlayout>
+#include <QVBoxLayout>
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/icon_button.hpp"
 #include "spire/ui/window.hpp"
@@ -52,8 +52,10 @@ toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
   combo_box_layout->addWidget(m_window_manager_button);
   combo_box_layout->addStretch(1);
   m_recently_closed_button = new toolbar_menu(tr("Recently Closed"), m_body);
+
+  // TODO: GCC workaround
   m_recently_closed_button->connect_item_selected_signal(
-    [=] (auto index) { on_item_selected(index); });
+    [=] (auto index) { this->on_item_selected(index); });
   m_recently_closed_button->setFixedSize(scale(138, 26));
   combo_box_layout->addWidget(m_recently_closed_button);
   auto button_layout = new QHBoxLayout();
@@ -110,8 +112,12 @@ toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
     imageFromSvg(":/icons/blotter-purple.svg", window_button_size), m_body);
   m_blotter_button->setToolTip(tr("Blotter"));
   button_layout->addWidget(m_blotter_button);
-  m_model->connect_entry_added_signal([=] (auto& e) { entry_added(e); });
-  m_model->connect_entry_removed_signal([=] (auto e) { entry_removed(e); });
+
+  // TODO: GCC workaround
+  m_model->connect_entry_added_signal(
+    [=] (auto& e) { this->entry_added(e); });
+  m_model->connect_entry_removed_signal(
+    [=] (auto e) { this->entry_removed(e); });
 }
 
 connection toolbar_window::connect_closed_signal(
