@@ -2,36 +2,48 @@
 #define SPIRE_WINDOW_HPP
 #include <QColor>
 #include <QWidget>
+#include "spire/ui/ui.hpp"
 
 namespace spire {
 
-  //! Base class for Spire windows that need a drop shadow and border.
+  //! A customized window container for top-level windows.
   class window : public QWidget {
     public:
 
-      //! Constructs a spire_window.
+      //! Constructs a window.
       /*!
-        \param w The window that will have the window style applied to it.
+        \param body The widget displayed within the window.
         \param parent The parent widget to the window.
       */
-      window(QWidget* w, QWidget* parent = nullptr);
+      window(QWidget* body, QWidget* parent = nullptr);
 
-      //! Constructs a window with a specific border color.
+      //! Sets the icon to display.
       /*!
-        param w The window that will have the window style applied to it.
-        \param border_color The color of the border.
-        \param parent The parent widget to the window.
+        \param icon The icon to display when the window has focus.
       */
-      window(QWidget* w, const QColor& border_color,
-        QWidget* parent = nullptr);
+      void set_icon(const QImage& icon);
 
-      //! Returns the frame's interior window.
-      QWidget* get_window();
+      //! Sets the icon to display.
+      /*!
+        \param icon The icon to display when the window has focus.
+        \param icon The icon to display when the window lacks focus.
+      */
+      void set_icon(const QImage& icon, const QImage& unfocused_icon);
+
+      //! Returns the body.
+      QWidget* get_body();
+
+    protected:
+      void changeEvent(QEvent* event) override;
+      bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
-      QWidget* m_window;
-      QWidget* m_border_widget;
-      void set_border_color(const QColor& color);
+      QWidget* m_border;
+      QWidget* m_body;
+      title_bar* m_title_bar;
+
+      void set_border_stylesheet(const QColor& color);
+      void on_maximize();
   };
 }
 

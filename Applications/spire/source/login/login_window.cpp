@@ -1,4 +1,5 @@
 #include "spire/login/login_window.hpp"
+#include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
 #include <QImage>
 #include <QMovie>
@@ -16,35 +17,41 @@ using namespace boost::signals2;
 using namespace spire;
 
 login_window::login_window(const std::string& version, QWidget* parent)
-    : QWidget(parent),
+    : QWidget(parent, Qt::Window | Qt::FramelessWindowHint),
       m_is_dragging(false) {
-  setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
-  setFixedSize(scale(384, 346));
-  setStyleSheet("background-color: #4B23A0;");
-  auto layout = new QVBoxLayout(this);
+  setAttribute(Qt::WA_TranslucentBackground);
+  setFixedSize(scale(396, 358));
+  auto drop_shadow = new QGraphicsDropShadowEffect(this);
+  drop_shadow->setBlurRadius(scale_width(12));
+  drop_shadow->setXOffset(0);
+  drop_shadow->setYOffset(0);
+  drop_shadow->setColor(QColor(0, 0, 0, 100));
+  setGraphicsEffect(drop_shadow);
+  auto shadow_layout = new QVBoxLayout(this);
+  shadow_layout->setMargin(drop_shadow->blurRadius());
+  m_body = new QWidget(this);
+  m_body->setObjectName("login_window");
+  m_body->setStyleSheet(R"(
+    #login_window {
+      background-color: #4B23A0;
+      border: 1px solid #321471;
+    })");
+  auto layout = new QVBoxLayout(m_body);
   layout->setMargin(0);
   layout->setSpacing(0);
-  auto title_bar_layout = new QHBoxLayout();
+  auto title_bar_layout = new QHBoxLayout(m_body);
   title_bar_layout->setMargin(0);
   title_bar_layout->setSpacing(0);
   title_bar_layout->addStretch(1);
-  auto renderer = new QSvgRenderer(QString(":/icons/close-purple.svg"), this);
-  auto default_icon = QImage(scale(32, 26), QImage::Format_ARGB32);
-  QPainter p1(&default_icon);
-  auto draw_rect = QRectF(scale_width(11), scale_height(8), scale_width(10),
-    scale_height(10));
-  default_icon.fill(QColor(0, 0, 0, 0));
-  renderer->render(&p1, draw_rect);
-  renderer->load(QString(":/icons/close-red.svg"));
-  auto hover_icon = QImage(scale(32, 26), QImage::Format_ARGB32);
-  QPainter p2(&hover_icon);
-  hover_icon.fill(QColor(0, 0, 0, 0));
-  renderer->render(&p2, draw_rect);
-  m_exit_button = new icon_button(default_icon, hover_icon, parent);
+  auto button_size = scale(32, 26);
+  auto button_box = QRect(translate(11, 8), scale(10, 10));
+  m_exit_button = new icon_button(
+    imageFromSvg(":/icons/close-purple.svg", button_size, button_box),
+    imageFromSvg(":/icons/close-red.svg", button_size, button_box), m_body);
+  m_exit_button->setFocusPolicy(Qt::NoFocus);
   m_exit_button->installEventFilter(this);
-  m_exit_button->connect_clicked_signal([&] {window()->close();});
-  m_exit_button->setFixedSize(scale(32, 26));
-  m_exit_button->setStyleSheet(":hover { background-color: #401D8B; }");
+  m_exit_button->connect_clicked_signal([&] { window()->close(); });
+  m_exit_button->set_hover_style("background-color: #401D8B;");
   title_bar_layout->addWidget(m_exit_button);
   layout->addLayout(title_bar_layout);
   layout->addStretch(30);
@@ -145,6 +152,7 @@ login_window::login_window(const std::string& version, QWidget* parent)
   button_layout->addStretch(52);
   layout->addLayout(button_layout);
   layout->addStretch(48);
+  shadow_layout->addWidget(m_body);
   setTabOrder(m_username_line_edit, m_password_line_edit);
   setTabOrder(m_password_line_edit, m_sign_in_button);
   set_state(state::NONE);
@@ -300,6 +308,7 @@ void login_window::try_login() {
 
 void login_window::enable_button() {
   m_sign_in_button->set_clickable(true);
+  m_sign_in_button->setFocusPolicy(Qt::StrongFocus);
   m_sign_in_button->setStyleSheet(QString(
     R"(QLabel {
          background-color: #684BC7;
@@ -317,6 +326,7 @@ void login_window::enable_button() {
 
 void login_window::disable_button() {
   m_sign_in_button->set_clickable(false);
+  m_sign_in_button->setFocusPolicy(Qt::NoFocus);
   m_sign_in_button->setStyleSheet(QString(
     R"(background-color: #4B23A0;
        color: #8D78EC;

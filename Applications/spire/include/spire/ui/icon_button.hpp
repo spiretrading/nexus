@@ -1,66 +1,103 @@
 #ifndef SPIRE_ICON_BUTTON_HPP
 #define SPIRE_ICON_BUTTON_HPP
-#include <boost/signals2/connection.hpp>
-#include <boost/signals2/dummy_mutex.hpp>
-#include <boost/signals2/signal_type.hpp>
+#include <QAbstractButton>
 #include <QImage>
-#include <QLabel>
+#include <QString>
 #include <QWidget>
+#include "spire/ui/ui.hpp"
 
 namespace spire {
 
-  class icon_button : public QWidget {
+  //! Displays a button using an icon.
+  class icon_button : public QAbstractButton {
     public:
 
       //! Signal type for the clicked signal.
-      using clicked_signal = boost::signals2::signal_type<void (),
-        boost::signals2::keywords::mutex_type<
-        boost::signals2::dummy_mutex>>::type;
+      using clicked_signal = signal<void ()>;
+
+      //! Constructs an icon_button.
+      /*!
+        \param icon The icon to show.
+        \param parent The parent QWidget to the icon_button.
+      */
+      icon_button(QImage icon, QWidget* parent = nullptr);
 
       //! Constructs an icon_button with a default icon and a hover icon.
       /*!
-        \param default_icon The icon shown when the button is not hovered.
-                 Should be pre-scaled before being passed in.
+        \param icon The icon shown when the button is not hovered.
         \param hover_icon The icon shown when the button is hovered.
-                 Should
         \param parent The parent QWidget to the icon_button.
       */
-      icon_button(const QImage& default_icon, const QImage& hover_icon,
+      icon_button(QImage icon, QImage hover_icon, QWidget* parent = nullptr);
+
+      //! Constructs an icon_button with a default icon, hover icon, and
+      //!  blur icon.
+      /*!
+        \param icon The icon shown when the button is not hovered.
+        \param hover_icon The icon shown when the button is hovered.
+        \param blur_icon The icon shown when the window lacks focus.
+        \param parent The parent QWidget to the icon_button.
+      */
+      icon_button(QImage icon, QImage hover_icon, QImage blur_icon,
         QWidget* parent = nullptr);
+
+      //! Sets the default stylesheet for the button.
+      /*!
+        \param stylesheet The default stylesheet.
+      */
+      void set_default_style(const QString& stylesheet);
+
+      //! Sets the stylesheet for when the button is hovered.
+      /*!
+        \param stylesheet The hover stylesheet.
+      */
+      void set_hover_style(const QString& stylesheet);
+
+      //! Returns the icon displayed.
+      const QImage& get_icon() const;
+
+      //! Sets the icon to display.
+      void set_icon(QImage icon);
+
+      //! Sets the icons to display.
+      void set_icon(QImage icon, QImage hover_icon);
+
+      //! Sets the icons to display.
+      void set_icon(QImage icon, QImage hover_icon, QImage blur_icon);
 
       //! Connects a slot to the clicked signal.
       boost::signals2::connection connect_clicked_signal(
         const clicked_signal::slot_type& slot) const;
 
-      //! Sets whether the button can have its m_clicked_signal activated or not.
-      /*!
-        \param clickable Whether the button is clickable (true) or not (false).
-      */
-      void set_clickable(bool clickable);
-
-      //! Switches the button's icons.
-      void swap_icons();
-
-      //! Sets the button's icon.
-      /*!
-        \param is_default True to set the icon to default, false to set it to
-                          the hover icon.
-      */
-      void set_icon(bool is_default);
-
     protected:
       void enterEvent(QEvent* event) override;
+      void focusInEvent(QFocusEvent* event) override;
+      void focusOutEvent(QFocusEvent* event) override;
       void leaveEvent(QEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
+      void paintEvent(QPaintEvent* event) override;
+      bool event(QEvent* event) override;
 
     private:
+      enum class state {
+        NORMAL,
+        HOVERED,
+        BLURRED,
+        HOVER_BLURRED
+      };
       mutable clicked_signal m_clicked_signal;
-      QLabel* m_label;
-      QImage m_default_icon;
+      state m_state;
+      QImage m_icon;
       QImage m_hover_icon;
-      bool m_clickable;
-      bool m_is_default;
+      QImage m_blur_icon;
+      QString m_default_stylesheet;
+      QString m_hover_stylesheet;
+
+      void show_normal();
+      void show_hovered();
+      void show_blurred();
+      void show_hover_blurred();
   };
 }
 

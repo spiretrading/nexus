@@ -3,6 +3,7 @@
 #include <memory>
 #include <boost/noncopyable.hpp>
 #include "Nexus/ServiceClients/ServiceClients.hpp"
+#include "spire/toolbar/recently_closed_model.hpp"
 #include "spire/toolbar/toolbar.hpp"
 
 namespace spire {
@@ -32,6 +33,7 @@ namespace spire {
     private:
       mutable closed_signal m_closed_signal;
       Nexus::VirtualServiceClients* m_service_clients;
+      recently_closed_model m_model;
       std::unique_ptr<toolbar_window> m_toolbar_window;
 
       void on_closed();

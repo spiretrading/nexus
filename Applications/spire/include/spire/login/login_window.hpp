@@ -65,7 +65,7 @@ namespace spire {
 
     protected:
       bool eventFilter(QObject* receiver, QEvent* event) override;
-      void keyPressEvent(QKeyEvent* event);
+      void keyPressEvent(QKeyEvent* event) override;
       void mouseMoveEvent(QMouseEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
@@ -74,6 +74,7 @@ namespace spire {
       mutable login_signal m_login_signal;
       mutable cancel_signal m_cancel_signal;
       state m_state;
+      QWidget* m_body;
       QLabel* m_logo_widget;
       QLabel* m_status_label;
       QLineEdit* m_username_line_edit;

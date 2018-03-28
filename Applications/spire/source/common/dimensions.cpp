@@ -21,3 +21,11 @@ QSize spire::scale(int width, int height) noexcept {
 QSize spire::scale(const QSize& size) noexcept {
   return scale(size.width(), size.height());
 }
+
+QPoint spire::translate(int x, int y) noexcept {
+  return QPoint(scale_width(x), scale_height(y));
+}
+
+QPoint spire::translate(const QPoint& p) noexcept {
+  return translate(p.x(), p.y());
+}
