@@ -61,5 +61,9 @@
         <file>icons/unmaximize-grey.svg</file>
         <file>icons/spire-icon-black.svg</file>
         <file>icons/spire-icon-grey.svg</file>
+        <file>icons/australia.png</file>
+        <file>icons/canada.png</file>
+        <file>icons/search.svg</file>
+        <file>icons/usa.png</file>
     </qresource>
 </RCC>
