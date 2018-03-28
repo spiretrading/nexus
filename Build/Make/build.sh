@@ -50,13 +50,15 @@ applications+="TmxTl1MarketDataFeedClient "
 applications+="UtpMarketDataFeedClient "
 parallel -j$jobs --no-notice build_function ::: $applications
 
+pushd $directory/../../Applications/spire/build/posix
+./build.sh $config
+popd
 pushd $directory/../../Applications/ClientWebPortal/Source/api/build/make
 ./build.sh $config
 popd
 pushd $directory/../../Applications/ClientWebPortal/Source/webapp/build/make
 ./build.sh $config
 popd
-
 pushd $directory/../../Documents/sphinx
 make clean
 make html
