@@ -18,7 +18,7 @@ namespace spire {
       //! Signals that a menu item was selected.
       /*!
         \param index The index of the menu item.
-       */
+      */
       using item_selected_signal = signal<void (int index)>;
 
       //! Constructs an empty toolbar_menu.
