@@ -1,5 +1,4 @@
 #include "spire/toolbar/toolbar_menu.hpp"
-#include <QColor>
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/ui.hpp"
 
@@ -17,7 +16,7 @@ toolbar_menu::toolbar_menu(const QString& title, QWidget* parent)
   m_empty_item->setText(tr("Empty"));
   m_action_to_index[m_empty_item] = 0;
   m_items->addAction(m_empty_item);
-    setStyleSheet(QString(R"(
+  setStyleSheet(QString(R"(
     QPushButton {
       background-color: white;
       border: 1px solid #C8C8C8;
@@ -31,15 +30,14 @@ toolbar_menu::toolbar_menu(const QString& title, QWidget* parent)
       outline: none;
     }
     QPushButton::menu-indicator {
-      image: url(":/icons/arrow-down.svg");
       height: %3px;
+      image: url(":/icons/arrow-down.svg");
       padding-bottom: %6px;
       padding-right: %2px;
       width: %4px;
     })")
     .arg(scale_height(12)).arg(scale_width(8)).arg(scale_height(4))
     .arg(scale_width(6)).arg(scale_width(8)).arg(scale_height(10)));
-
   set_empty_menu_stylesheet();
 }
 
@@ -52,8 +50,7 @@ void toolbar_menu::add(const QString& text) {
     set_default_menu_stylesheet(scale_width(8));
   }
   m_items->addAction(action);
-  auto size = m_action_to_index.size();
-  m_action_to_index[action] = size;
+  m_action_to_index[action] = m_action_to_index.size();
 }
 
 void toolbar_menu::add(const QString& text, const QImage& icon) {
@@ -67,8 +64,7 @@ void toolbar_menu::add(const QString& text, const QImage& icon) {
     set_default_menu_stylesheet(scale_width(26));
   }
   m_items->addAction(action);
-  auto size = m_action_to_index.size();
-  m_action_to_index[action] = size;
+  m_action_to_index[action] = m_action_to_index.size();
 }
 
 void toolbar_menu::remove(int index) {
@@ -115,39 +111,39 @@ void toolbar_menu::remove_empty_item() {
 void toolbar_menu::set_empty_menu_stylesheet() {
   m_items->setStyleSheet(QString(R"(
   QMenu {
-    background-color: white;
-    border-left: 1px solid #A0A0A0;
-    border-right: 1px solid #A0A0A0;
-    border-bottom: 1px solid #A0A0A0;
-    font-family: Roboto;
-    font-size: %1px;
-    padding: 0px;
+         background-color: white;
+         border-left: 1px solid #A0A0A0;
+         border-right: 1px solid #A0A0A0;
+         border-bottom: 1px solid #A0A0A0;
+         font-family: Roboto;
+         font-size: %1px;
+         padding: 0px;
   }
   QMenu::item {
-    color: #8C8C8C;
-    font-style: italic;
-    height: %2px;
-    padding-left: %3px;
+               color: #8C8C8C;
+               font-style: italic;
+               height: %2px;
+               padding-left: %3px;
   })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_width(8)));
 }
 
 void toolbar_menu::set_default_menu_stylesheet(int padding_left) {
   m_items->setStyleSheet(QString(R"(
   QMenu {
-    background-color: white;
-    border-left: 1px solid #A0A0A0;
-    border-right: 1px solid #A0A0A0;
-    border-bottom: 1px solid #A0A0A0;
-    font-family: Roboto;
-    font-size: %1px;
-    padding: 0px;
+         background-color: white;
+         border-left: 1px solid #A0A0A0;
+         border-right: 1px solid #A0A0A0;
+         border-bottom: 1px solid #A0A0A0;
+         font-family: Roboto;
+         font-size: %1px;
+         padding: 0px;
   }
   QMenu::item {
-    height: %3px;
-    padding-left: %2px;
+               height: %3px;
+               padding-left: %2px;
   }
   QMenu::item:selected {
-    background-color: #F2F2FF;
+                        background-color: #F2F2FF;
   })").arg(scale_height(12)).arg(padding_left).arg(scale_height(20)));
 }
 

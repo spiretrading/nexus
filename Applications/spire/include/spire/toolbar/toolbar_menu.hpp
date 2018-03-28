@@ -15,6 +15,10 @@ namespace spire {
   class toolbar_menu : public QPushButton {
     public:
 
+      //! Signals that a menu item was selected.
+      /*!
+        \param index The index of the menu item.
+       */
       using item_selected_signal = signal<void (int index)>;
 
       //! Constructs an empty toolbar_menu.
@@ -24,7 +28,7 @@ namespace spire {
       */
       toolbar_menu(const QString& title, QWidget* parent = nullptr);
 
-      //! Constructs an empty toolbar_menu.
+      //! Adds a text item to the menu.
       /*!
         \param text The text string for the item.
       */
@@ -37,8 +41,13 @@ namespace spire {
       */
       void add(const QString& text, const QImage& icon);
 
+      //! Removes an item from the menu.
+      /*!
+        \param index The index of the item to remove.
+      */
       void remove(int index);
 
+      //! Connects a slot to the item selected signal.
       boost::signals2::connection connect_item_selected_signal(
         const item_selected_signal::slot_type& slot) const;
 
