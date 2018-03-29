@@ -1,5 +1,8 @@
 #ifndef SPIRE_SECURITY_INPUT_WIDGET_HPP
 #define SPIRE_SECURITY_INPUT_WIDGET_HPP
+#include <QLabel>
+#include <QLineEdit>
+#include <QScrollArea>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/security_input/security_input.hpp"
@@ -29,6 +32,10 @@ namespace spire {
     private:
       mutable commit_signal m_commit_signal;
       security_input_model* m_model;
+
+      QLineEdit* m_security_line_edit;
+      QLabel* m_icon_label;
+      security_info_list_view* m_securities;
   };
 }
 

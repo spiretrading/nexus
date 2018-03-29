@@ -3,6 +3,7 @@
 #include <QDialog>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/security_input/security_input.hpp"
+#include "spire/security_input/security_input_box.hpp"
 
 namespace spire {
 
@@ -21,6 +22,7 @@ namespace spire {
 
     private:
       Nexus::Security m_security;
+      security_input_box* m_security_input_box;
   };
 }
 
