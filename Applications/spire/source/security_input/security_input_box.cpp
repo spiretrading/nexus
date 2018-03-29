@@ -57,9 +57,11 @@ void security_input_box::on_text_changed() {
     m_securities->set_list(m_model->autocomplete(
       m_security_line_edit->text().toStdString()));
     auto pos = mapToGlobal(m_security_line_edit->geometry().topLeft());
-    m_securities->move(pos.x(), pos.y() + m_security_line_edit->height());
+    // the - scale_width(1) statement offsets the margin that input_box has
+    // for the border
+    m_securities->move(pos.x() - scale_width(1), pos.y() + m_security_line_edit->height());
     m_securities->setVisible(true);
-    // fixes a bug where if the input_box takes back focus the dropdown
+    // fixes the bahvior where if the input_box takes back focus the dropdown
     // list gets drawn under it, instead of over it.
     m_securities->raise();
   } else {
