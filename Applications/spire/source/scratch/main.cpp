@@ -6,6 +6,7 @@
 #include <QListWidget>
 #include <QListWidgetItem>
 #include <QPushButton>
+#include <QResizeEvent>
 #include <QScrollArea>
 #include <QScrollBar>
 #include <QVBoxLayout>
@@ -57,13 +58,18 @@ security_info_widget::security_info_widget(const QString& security_name,
       Qt::SmoothTransformation)));
   top_line_layout->addWidget(m_icon_label);
   layout->addLayout(top_line_layout);
-  m_company_name_label = new QLabel(company_name, this);
+  m_company_name_label = new QLabel(this);
+  m_company_name_label->setFixedWidth(scale_width(136));
   m_company_name_label->setStyleSheet(R"(
     background-color: transparent;
     color: #8C8C8C;
     font-family: Roboto;
     font-size: 18px;
   )");
+  QFontMetrics metrics(m_company_name_label->font());
+  auto shortened_text = metrics.elidedText(company_name,
+    Qt::ElideRight, m_company_name_label->width());
+  m_company_name_label->setText(shortened_text);
   layout->addWidget(m_company_name_label);
 }
 
@@ -76,19 +82,22 @@ int main(int argc, char** argv) {
   auto window = new QWidget();
   auto layout = new QHBoxLayout(window);
   layout->setMargin(25);
+  
+  
+  
+  
+  
   auto search_widget = new QWidget(window);
   search_widget->setStyleSheet("border: 1px solid #4B23A0;");
   search_widget->setFixedSize(scale(180, 30));
   layout->addWidget(search_widget);
   auto line_edit = new QLineEdit(search_widget);
   line_edit->setStyleSheet(R"(
-    QLineEdit {
-      background-color: white;
+    QLineEdit       background-color: white;
       border: none;
       font-family: Roboto;
       font-size: 18px;
-      padding: 13px 0px 13px 12px;
-    })");
+      padding: 13px 0px 13px 12px;)");
   auto label = new QLabel(window);
   label->setPixmap(QPixmap::fromImage(imageFromSvg(":/icons/search.svg", scale(10, 10))));
   label->setStyleSheet(R"(
@@ -105,48 +114,6 @@ int main(int argc, char** argv) {
 
   window->show();
 
-  //auto results_widget = new QListWidget();
-  ////auto results_layout = new QVBoxLayout(results_widget);
-  ////results_layout->setMargin(0);
-  ////results_layout->setSpacing(0);
-  //results_widget->setSizeAdjustPolicy(QListWidget::AdjustToContents);
-  //results_widget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  //results_widget->setObjectName("results_widget");
-  //results_widget->setFixedSize(search_widget->width(), scale_height(200));
-  //results_widget->setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
-  //results_widget->setStyleSheet(R"(
-  //  #results_widget {
-  //    border-left: 1px solid red;
-  //    border-top: none;
-  //    border-right: 1px solid red;
-  //    border-bottom 1px solid red;
-  //    outline: 0;
-  //  }
-
-  //  #results_widget::item:selected {
-  //    background-color: transparent;
-  //  }
-
-  //  QScrollBar::sub-line:vertical {
-  //    border: none;
-  //    background: none;
-  //  }
-
-  //  QScrollBar::add-line:vertical {
-  //    border: none;
-  //    background: none;
-  //  })");
-
-  //for(int i = 0; i < 10; ++i) {
-  //  auto item = new QListWidgetItem(results_widget);
-  //  //item->setFix
-  //  auto test = new security_info_widget("KEN.TSX",
-  //  "KenCorp", ":/icons/canada.png");
-  //  test->setFixedSize(scale(166, 400));
-  //  //results_layout->addWidget(test);
-  //  results_widget->setItemWidget(item, test);
-  //}
-
   auto results_widget = new QWidget();
   results_widget->setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
   results_widget->setFixedSize(search_widget->width(), scale_height(200));
@@ -158,47 +125,8 @@ int main(int argc, char** argv) {
 
   auto inner_results_widget = new QWidget(results_widget);
   inner_results_widget->setStyleSheet("background-color: white");
-  //inner_results_widget->setObjectName("temp_name");
-  //inner_results_widget->setStyleSheet(R"(
-  //  #temp_name {
-  //    background-color: #FFFFFF;
-  //    border-bottom: 1px solid #A0A0A0;
-  //    border-left: 1px solid #A0A0A0;
-  //    border-right: 1px solid #A0A0A0;
-  //    border-top: none;
-  //  })");
   auto scroller = new QScrollArea(results_widget);
-  scroller->setObjectName("temp_name");
-  scroller->setFrameShape(QFrame::NoFrame);
-  scroller->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  scroller->setStyleSheet(R"(
-    #temp_name {
-      background-color: #FFFFFF;
-      border-bottom: 1px solid #A0A0A0;
-      border-left: 1px solid #A0A0A0;
-      border-right: 1px solid #A0A0A0;
-      border-top: none;
-    }
-    
-    QScrollBar {
-      background-color: #FFFFFF;
-      border: none;
-      width: 18px;
-    }
-
-    QScrollBar::handle:vertical {
-      background-color: #EBEBEB;
-    }
-
-    QScrollBar::sub-line:vertical {
-      border: none;
-      background: none;
-    }
-
-    QScrollBar::add-line:vertical {
-      border: none;
-      background: none;
-    })");
+  
   results_layout->addWidget(scroller);
 
   auto inner_results_layout = new QVBoxLayout(inner_results_widget);
@@ -207,7 +135,7 @@ int main(int argc, char** argv) {
 
   for(int i = 0; i < 10; ++i) {
     auto test = new security_info_widget("KEN.TSX",
-    QString("KenCorp%1").arg(i), ":/icons/canada.png");
+    QString("KenCorp%1, The best company there ever was and ever will be.").arg(i), ":/icons/canada.png");
     test->setFixedSize(scale(166, 40));
     test->setStyleSheet(":hover { background-color: #F2F2FF; }");
     inner_results_layout->addWidget(test);

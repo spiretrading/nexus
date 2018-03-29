@@ -1,6 +1,7 @@
 #ifndef SPIRE_SECURITY_INPUT_DIALOG_HPP
 #define SPIRE_SECURITY_INPUT_DIALOG_HPP
 #include <QDialog>
+#include <QPoint>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/security_input/security_input.hpp"
 #include "spire/security_input/security_input_box.hpp"
@@ -21,8 +22,15 @@ namespace spire {
       const Nexus::Security& get_security() const noexcept;
 
     private:
+      void mouseMoveEvent(QMouseEvent* event) override;
+      void mousePressEvent(QMouseEvent* event) override;
+      void mouseReleaseEvent(QMouseEvent* event) override;
+
+    private:
       Nexus::Security m_security;
       security_input_box* m_security_input_box;
+      bool m_is_dragging;
+      QPoint m_last_mouse_pos;
   };
 }
 

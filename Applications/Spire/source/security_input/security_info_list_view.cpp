@@ -1,4 +1,5 @@
 #include "spire/security_input/security_info_list_view.hpp"
+#include <QFocusEvent>
 #include <QVBoxLayout>
 #include "Nexus/Definitions/Country.hpp"
 #include "spire/security_input/security_info_widget.hpp"
@@ -10,6 +11,8 @@ using namespace spire;
 security_info_list_view::security_info_list_view(QWidget* parent)
     : QScrollArea(parent) {
   setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
+  setAttribute(Qt::WA_ShowWithoutActivating);
+  //setWindowModality(Qt::NonModal);
   setFixedSize(scale(180, 200));
   setWidgetResizable(true);
   setObjectName("security_info_list_view_scrollbar");

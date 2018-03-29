@@ -32,10 +32,11 @@ namespace spire {
     private:
       mutable commit_signal m_commit_signal;
       security_input_model* m_model;
-
       QLineEdit* m_security_line_edit;
       QLabel* m_icon_label;
       security_info_list_view* m_securities;
+
+      void on_text_changed();
   };
 }
 

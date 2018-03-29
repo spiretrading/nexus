@@ -10,11 +10,6 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace spire;
 
-
-#include <QDebug>
-
-
-
 security_input_box::security_input_box(security_input_model& model)
     : m_model(&model) {
   setFixedSize(scale(180, 30));
@@ -29,7 +24,8 @@ security_input_box::security_input_box(security_input_model& model)
   layout->setMargin(scale_width(1));
   layout->setSpacing(0);
   m_security_line_edit = new QLineEdit(this);
-  m_security_line_edit->installEventFilter(this);
+  connect(m_security_line_edit, &QLineEdit::textChanged,
+    [=] { on_text_changed(); });
   m_security_line_edit->setStyleSheet(QString(R"(
     background-color: #FFFFFF;
     border: none;
@@ -48,15 +44,25 @@ security_input_box::security_input_box(security_input_model& model)
     .arg(scale_height(9)).arg(scale_width(8)));
   layout->addWidget(m_icon_label);
   m_securities = new security_info_list_view();
-  auto pos = this->mapToGlobal(m_security_line_edit->geometry().topLeft());
-  qDebug() << pos.x();
-  qDebug() << pos.y();
-  m_securities->move(pos.x(), pos.y() + m_security_line_edit->height());
-  m_securities->show();
-  m_securities->set_list(m_model->autocomplete("ma"));
+  m_securities->setVisible(false);
 }
 
 connection security_input_box::connect_commit_signal(
     const commit_signal::slot_type& slot) const {
   return m_commit_signal.connect(slot);
+}
+
+void security_input_box::on_text_changed() {
+  if(!m_security_line_edit->text().isEmpty()) {
+    m_securities->set_list(m_model->autocomplete(
+      m_security_line_edit->text().toStdString()));
+    auto pos = mapToGlobal(m_security_line_edit->geometry().topLeft());
+    m_securities->move(pos.x(), pos.y() + m_security_line_edit->height());
+    m_securities->setVisible(true);
+    // fixes a bug where if the input_box takes back focus the dropdown
+    // list gets drawn under it, instead of over it.
+    m_securities->raise();
+  } else {
+    m_securities->setVisible(false);
+  }
 }
