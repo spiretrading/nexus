@@ -18,7 +18,7 @@ namespace spire {
       \param window The login_window that this widget will interact with.
       \param frame The top-
     */
-    login_ui_tester(spire::window* login_window, QWidget* parent = nullptr);
+    login_ui_tester(spire::login_window* login, QWidget* parent = nullptr);
 
     protected:
       bool eventFilter(QObject* receiver, QEvent* event);
@@ -27,7 +27,7 @@ namespace spire {
       QPushButton* m_accept_button;
       QPushButton* m_reject_button;
       QPushButton* m_server_unavailable_button;
-      spire::window* m_login_window;
+      login_window* m_login_window;
   };
 }
 

@@ -16,7 +16,7 @@ void toolbar_controller::open() {
   if(m_toolbar_window != nullptr) {
     return;
   }
-  m_toolbar_window = std::make_unique<toolbar_window>();
+  m_toolbar_window = std::make_unique<toolbar_window>(m_model);
   m_toolbar_window->connect_closed_signal([=] {on_closed();});
   m_toolbar_window->show();
 }

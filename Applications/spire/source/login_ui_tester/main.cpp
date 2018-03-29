@@ -12,13 +12,12 @@ int main(int argc, char** argv) {
   application->setOrganizationName(QObject::tr("Eidolon Systems Ltd"));
   application->setApplicationName(QObject::tr("Login UI Tester"));
   initialize_resources();
-  auto login = new login_window(SPIRE_VERSION);
-  spire::window frame(login, QColor("#321471"));
-  frame.show();
-  login_ui_tester tester(&frame);
-  tester.setGeometry(frame.pos().x(),
-    frame.pos().y() + frame.height() + 100, 0, 0);
-  frame.installEventFilter(&tester);
+  login_window login(SPIRE_VERSION);
+  login.show();
+  login_ui_tester tester(&login);
+  login.installEventFilter(&tester);
+  tester.setGeometry(login.pos().x(),
+    login.pos().y() + login.height() + 100, 0, 0);
   tester.setAttribute(Qt::WA_ShowWithoutActivating);
   tester.show();
   application->exec();

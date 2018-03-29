@@ -39,7 +39,7 @@ if(UNIX)
 endif()
 
 target_link_libraries(time_and_sales_ui_tester time_and_sales common resources
-  ui
+  ui common
   debug $ENV{CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized $ENV{CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{OPEN_SSL_LIBRARY_DEBUG_PATH}

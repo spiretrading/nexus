@@ -1,5 +1,6 @@
 #ifndef SPIRE_DIMENSIONS_HPP
 #define SPIRE_DIMENSIONS_HPP
+#include <QPoint>
 #include <QSize>
 #include "spire/spire/spire.hpp"
 
@@ -36,6 +37,21 @@ namespace spire {
     \return The scaled size.
   */
   QSize scale(const QSize& size) noexcept;
+
+  //! Translates a point at 96 DPI to the system's current DPI.
+  /*!
+    \param x The x-coordinate to translate.
+    \param y The y-coordinate to translate.
+    \return The translated position.
+  */
+  QPoint translate(int x, int y) noexcept;
+
+  //! Translates a point at 96 DPI to the system's current DPI.
+  /*!
+    \param point The point to translate.
+    \return The translated point.
+  */
+  QPoint translate(const QPoint& p) noexcept;
 }
 
 #endif
