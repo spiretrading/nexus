@@ -5,6 +5,15 @@
 #include "spire/spire/dimensions.hpp"
 #include "spire/security_input/security_info_list_view.hpp"
 
+
+
+
+#include <QDebug>
+
+
+
+
+
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
@@ -13,6 +22,7 @@ using namespace spire;
 security_input_dialog::security_input_dialog(security_input_model& model)
     : m_is_dragging(false) {
   setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
+  setWindowModality(Qt::WindowModal);
   setFixedSize(scale(196, 68));
   setContentsMargins(scale_width(8), scale_height(6), scale_width(8),
     scale_height(8));
@@ -74,5 +84,5 @@ void security_input_dialog::mouseReleaseEvent(QMouseEvent* event) {
 
 void security_input_dialog::set_security(const Security& security) {
   m_security = security;
-  //accept();
+  accept();
 }

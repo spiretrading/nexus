@@ -2,6 +2,7 @@
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "spire/security_input/local_security_input_model.hpp"
 #include "spire/security_input/security_input_dialog.hpp"
+#include "spire/security_input_ui_tester/security_input_tester.hpp"
 #include "spire/spire/resources.hpp"
 
 using namespace Nexus;
@@ -35,6 +36,11 @@ int main(int argc, char** argv) {
     Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
     "Morgan Stanley", "Finance"));
   security_input_dialog dialog(model);
-  dialog.show();
+  dialog.exec();
+  security_input_tester tester;
+  tester.setGeometry(dialog.pos().x(),
+    dialog.pos().y() + dialog.height() + 100, 0, 0);
+  tester.setAttribute(Qt::WA_ShowWithoutActivating);
+  tester.show();
   application->exec();
 }

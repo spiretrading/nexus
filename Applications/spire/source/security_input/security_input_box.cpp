@@ -24,6 +24,8 @@ security_input_box::security_input_box(security_input_model& model)
   layout->setMargin(scale_width(1));
   layout->setSpacing(0);
   m_security_line_edit = new QLineEdit(this);
+  connect(m_security_line_edit, &QLineEdit::returnPressed,
+    [=] { enter_pressed(); });
   connect(m_security_line_edit, &QLineEdit::textChanged,
     [=] { on_text_changed(); });
   m_security_line_edit->setStyleSheet(QString(R"(
@@ -55,7 +57,9 @@ connection security_input_box::connect_commit_signal(
 }
 
 void security_input_box::security_clicked(const Security& security) {
-  m_commit_signal(security);
+  m_selected_security = security;
+  m_security_line_edit->setText(QString::fromStdString(security.GetSymbol()) +
+    "." + QString::fromStdString(security.GetMarket().GetData()));
 }
 
 void security_input_box::on_text_changed() {
@@ -75,4 +79,8 @@ void security_input_box::on_text_changed() {
   } else {
     m_securities->setVisible(false);
   }
+}
+
+void security_input_box::enter_pressed() {
+  m_commit_signal(m_selected_security);
 }
