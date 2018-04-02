@@ -73,4 +73,10 @@ void security_info_list_view::set_list(const std::vector<SecurityInfo>& list) {
       QString::fromStdString(security.m_name), icon_path, this);
     m_list_widget->layout()->addWidget(security_widget);
   }
+  if(list.size() > 5) {
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+  } else {
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  }
+  resize(widget()->width(), list.size() * scale_height(40));
 }
