@@ -18,12 +18,12 @@ security_info_widget::security_info_widget(const QString& security_name,
   top_line_layout->setMargin(0);
   top_line_layout->setSpacing(0);
   m_security_name_label = new QLabel(security_name, this);
-  m_security_name_label->setStyleSheet(R"(
+  m_security_name_label->setStyleSheet(QString(R"(
     background-color: transparent;
     color: #333333;
     font-family: Roboto;
-    font-size: 18px;
-  )");
+    font-size: %1px;
+  )").arg(scale_height(12)));
   top_line_layout->addWidget(m_security_name_label);
   m_icon_label = new QLabel(this);
   m_icon_label->setFixedSize(scale(14, 14));
@@ -36,12 +36,12 @@ security_info_widget::security_info_widget(const QString& security_name,
   layout->addLayout(top_line_layout);
   m_company_name_label = new QLabel(company_name, this);
   m_company_name_label->setFixedWidth(scale_width(136));
-  m_company_name_label->setStyleSheet(R"(
+  m_company_name_label->setStyleSheet(QString(R"(
     background-color: transparent;
     color: #8C8C8C;
     font-family: Roboto;
-    font-size: 18px;
-  )");
+    font-size: %1px;
+  )").arg(scale_height(10)));
   //QFontMetrics metrics(m_company_name_label->font());
   //auto shortened_text = metrics.elidedText(company_name,
   //  Qt::ElideRight, m_company_name_label->width());
