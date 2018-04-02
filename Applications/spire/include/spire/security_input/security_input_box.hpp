@@ -36,6 +36,7 @@ namespace spire {
       QLabel* m_icon_label;
       security_info_list_view* m_securities;
 
+      void security_clicked(const Nexus::Security& security);
       void on_text_changed();
   };
 }

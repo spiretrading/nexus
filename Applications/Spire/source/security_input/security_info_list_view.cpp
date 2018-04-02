@@ -10,7 +10,8 @@
 #include <QDebug>
 
 
-
+using namespace boost;
+using namespace boost::signals2;
 using namespace Nexus;
 using namespace spire;
 
@@ -85,7 +86,11 @@ void security_info_list_view::set_list(const std::vector<SecurityInfo>& list) {
   resize(widget()->width(), list.size() * scale_height(40));
 }
 
+connection security_info_list_view::connect_clicked_signal(
+    const clicked_signal::slot_type& slot) const {
+  return m_clicked_signal.connect(slot);
+}
+
 void security_info_list_view::security_clicked(const Nexus::Security& security) {
-  qDebug() << "Security was:";
-  qDebug() << QString::fromStdString(security.GetSymbol());
+  m_clicked_signal(security);
 }

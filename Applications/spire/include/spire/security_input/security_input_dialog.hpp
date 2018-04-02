@@ -31,6 +31,8 @@ namespace spire {
       security_input_box* m_security_input_box;
       bool m_is_dragging;
       QPoint m_last_mouse_pos;
+
+      void set_security(const Nexus::Security& security);
   };
 }
 

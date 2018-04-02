@@ -44,12 +44,18 @@ security_input_box::security_input_box(security_input_model& model)
     .arg(scale_height(9)).arg(scale_width(8)));
   layout->addWidget(m_icon_label);
   m_securities = new security_info_list_view();
+  m_securities->connect_clicked_signal(
+    [&] (const Security& s) { security_clicked(s); });
   m_securities->setVisible(false);
 }
 
 connection security_input_box::connect_commit_signal(
     const commit_signal::slot_type& slot) const {
   return m_commit_signal.connect(slot);
+}
+
+void security_input_box::security_clicked(const Security& security) {
+  m_commit_signal(security);
 }
 
 void security_input_box::on_text_changed() {

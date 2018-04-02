@@ -31,6 +31,8 @@ security_input_dialog::security_input_dialog(security_input_model& model)
   )").arg(scale_height(12)));
   layout->addWidget(text_label);
   m_security_input_box = new security_input_box(model);
+  m_security_input_box->connect_commit_signal(
+    [&] (const Security& s) { set_security(s); });
   layout->addWidget(m_security_input_box);
 }
 
@@ -64,4 +66,9 @@ void security_input_dialog::mouseReleaseEvent(QMouseEvent* event) {
     return;
   }
   m_is_dragging = false;
+}
+
+void security_input_dialog::set_security(const Security& security) {
+  m_security = security;
+  //accept();
 }

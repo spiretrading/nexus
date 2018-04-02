@@ -4,6 +4,7 @@
 #include <QScrollArea>
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
+#include "spire/spire/spire.hpp"
 
 namespace spire {
 
@@ -11,6 +12,12 @@ namespace spire {
   //! name.
   class security_info_list_view : public QScrollArea {
     public:
+
+      //! Signals that this item was selected;
+      /*!
+        \param s The security that this widget represents.
+      */
+      using clicked_signal = signal<void (const Nexus::Security& s)>;
 
       //! Constructs a security_info_list_view with an empty list.
       /*!
@@ -24,7 +31,12 @@ namespace spire {
       */
       void set_list(const std::vector<Nexus::SecurityInfo>& list);
 
+      //! Connects a slot to the commit signal.
+      boost::signals2::connection connect_clicked_signal(
+        const clicked_signal::slot_type& slot) const;
+
     private:
+      mutable clicked_signal m_clicked_signal;
       QWidget* m_list_widget;
 
       void security_clicked(const Nexus::Security& security);
