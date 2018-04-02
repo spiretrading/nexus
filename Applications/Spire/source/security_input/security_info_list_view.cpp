@@ -5,12 +5,18 @@
 #include "spire/security_input/security_info_widget.hpp"
 #include "spire/spire/dimensions.hpp"
 
+
+
+#include <QDebug>
+
+
+
 using namespace Nexus;
 using namespace spire;
 
 security_info_list_view::security_info_list_view(QWidget* parent)
     : QScrollArea(parent) {
-  setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
+  setWindowFlags(Qt::Window | Qt::FramelessWindowHint | Qt::Tool);
   setAttribute(Qt::WA_ShowWithoutActivating);
   setFixedWidth(scale_width(180));
   setMaximumHeight(scale_height(200));
@@ -67,10 +73,8 @@ void security_info_list_view::set_list(const std::vector<SecurityInfo>& list) {
     } else if(security.m_security.GetCountry() == DefaultCountries::US()) {
       icon_path = ":/icons/usa.png";
     }
-    auto security_widget = new security_info_widget(
-      QString::fromStdString(security.m_security.GetSymbol()) + "."
-        + QString(security.m_security.GetMarket().GetData()),
-      QString::fromStdString(security.m_name), icon_path, this);
+    auto security_widget = new security_info_widget(security, icon_path, this);
+    security_widget->connect_clicked_signal([this](const Security& s){ security_clicked(s); });
     m_list_widget->layout()->addWidget(security_widget);
   }
   if(list.size() > 5) {
@@ -79,4 +83,9 @@ void security_info_list_view::set_list(const std::vector<SecurityInfo>& list) {
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   }
   resize(widget()->width(), list.size() * scale_height(40));
+}
+
+void security_info_list_view::security_clicked(const Nexus::Security& security) {
+  qDebug() << "Security was:";
+  qDebug() << QString::fromStdString(security.GetSymbol());
 }

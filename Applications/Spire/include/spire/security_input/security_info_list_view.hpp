@@ -2,6 +2,7 @@
 #define SPIRE_SECURITY_INFO_LIST_VIEW
 #include <vector>
 #include <QScrollArea>
+#include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
 
 namespace spire {
@@ -23,11 +24,10 @@ namespace spire {
       */
       void set_list(const std::vector<Nexus::SecurityInfo>& list);
 
-      //! Returns the number of items in the list.
-      int num_items();
-
     private:
       QWidget* m_list_widget;
+
+      void security_clicked(const Nexus::Security& security);
   };
 }
 
