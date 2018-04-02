@@ -12,8 +12,8 @@ security_info_list_view::security_info_list_view(QWidget* parent)
     : QScrollArea(parent) {
   setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
   setAttribute(Qt::WA_ShowWithoutActivating);
-  //setWindowModality(Qt::NonModal);
-  setFixedSize(scale(180, 200));
+  setFixedWidth(scale_width(180));
+  setMaximumHeight(scale_height(200));
   setWidgetResizable(true);
   setObjectName("security_info_list_view_scrollbar");
   setFrameShape(QFrame::NoFrame);

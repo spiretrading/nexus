@@ -23,6 +23,9 @@ namespace spire {
       */
       void set_list(const std::vector<Nexus::SecurityInfo>& list);
 
+      //! Returns the number of items in the list.
+      int num_items();
+
     private:
       QWidget* m_list_widget;
   };

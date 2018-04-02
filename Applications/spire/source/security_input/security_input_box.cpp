@@ -54,16 +54,21 @@ connection security_input_box::connect_commit_signal(
 
 void security_input_box::on_text_changed() {
   if(!m_security_line_edit->text().isEmpty()) {
-    m_securities->set_list(m_model->autocomplete(
-      m_security_line_edit->text().toStdString()));
-    auto pos = mapToGlobal(m_security_line_edit->geometry().topLeft());
-    // the - scale_width(1) statement offsets the margin that input_box has
-    // for the border
-    m_securities->move(pos.x() - scale_width(1), pos.y() + m_security_line_edit->height());
-    m_securities->setVisible(true);
-    // fixes the bahvior where if the input_box takes back focus the dropdown
-    // list gets drawn under it, instead of over it.
-    m_securities->raise();
+    auto list = m_model->autocomplete(
+      m_security_line_edit->text().toStdString());
+    m_securities->set_list(list);
+    if(list.size() > 0) {
+      auto pos = mapToGlobal(m_security_line_edit->geometry().topLeft());
+      // the - scale_width(1) statement offsets the margin that input_box has
+      // for the border
+      m_securities->move(pos.x() - scale_width(1), pos.y() + m_security_line_edit->height());
+      m_securities->setVisible(true);
+      // fixes the bahvior where if the input_box takes back focus the dropdown
+      // list gets drawn under it, instead of over it.
+      m_securities->raise();
+    } else {
+      m_securities->setVisible(false);
+    }
   } else {
     m_securities->setVisible(false);
   }
