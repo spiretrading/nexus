@@ -5,15 +5,6 @@
 #include "spire/spire/dimensions.hpp"
 #include "spire/security_input/security_info_list_view.hpp"
 
-
-
-
-#include <QDebug>
-
-
-
-
-
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
@@ -26,9 +17,12 @@ security_input_dialog::security_input_dialog(security_input_model& model)
   setFixedSize(scale(196, 68));
   setContentsMargins(scale_width(8), scale_height(6), scale_width(8),
     scale_height(8));
+  setObjectName("security_input_dialog");
   setStyleSheet(QString(R"(
-    background-color: #F5F5F5;
-    border: %1px solid #A0A0A0;
+    #security_input_dialog {
+      background-color: #F5F5F5;
+      border: %1px solid #A0A0A0;
+    }
   )").arg(scale_width(1)));
   auto layout = new QVBoxLayout(this);
   layout->setMargin(0);
@@ -40,7 +34,7 @@ security_input_dialog::security_input_dialog(security_input_model& model)
     font-size: %1px;
   )").arg(scale_height(12)));
   layout->addWidget(text_label);
-  m_security_input_box = new security_input_box(model);
+  m_security_input_box = new security_input_box(model, this);
   m_security_input_box->connect_commit_signal(
     [&] (const Security& s) { set_security(s); });
   layout->addWidget(m_security_input_box);

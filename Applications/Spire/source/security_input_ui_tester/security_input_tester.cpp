@@ -7,7 +7,7 @@ using namespace spire;
 security_input_tester::security_input_tester(QWidget* parent)
     : QListWidget(parent) {
   setFixedSize(scale(100, 250));
-  add_security(Security("MG", DefaultMarkets::TSX(), DefaultCountries::CA()));
+  run_dialog();
 }
 
 void security_input_tester::add_security(const Security& security) {

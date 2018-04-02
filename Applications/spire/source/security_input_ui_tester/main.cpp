@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
   security_input_tester tester;
   tester.setGeometry(dialog.pos().x(),
     dialog.pos().y() + dialog.height() + 100, 0, 0);
-  tester.setAttribute(Qt::WA_ShowWithoutActivating);
+  tester.add_security(dialog.get_security());
   tester.show();
   application->exec();
 }

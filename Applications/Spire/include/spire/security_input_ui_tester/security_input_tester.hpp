@@ -17,6 +17,9 @@ namespace spire {
         \param security The security to add.
       */
       void add_security(const Nexus::Security& security);
+
+    private:
+      void run_dialog();
   };
 }
 

@@ -1,4 +1,5 @@
 #include "spire/security_input/security_input_box.hpp"
+#include <QEvent>
 #include <QHBoxLayout>
 #include "spire/security_input/local_security_input_model.hpp"
 #include "spire/security_input/security_info_list_view.hpp"
@@ -10,11 +11,14 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace spire;
 
-security_input_box::security_input_box(security_input_model& model)
-    : m_model(&model) {
+security_input_box::security_input_box(security_input_model& model,
+    QWidget* parent)
+    : QWidget(parent),
+      m_model(&model) {
   setFixedSize(scale(180, 30));
+  setObjectName("security_input_box_line_edit");
   setStyleSheet(QString(R"(
-    QWidget {
+    #security_input_box_line_edit {
       border: %1px solid #C8C8C8;
     }
     :hover {
@@ -24,6 +28,7 @@ security_input_box::security_input_box(security_input_model& model)
   layout->setMargin(scale_width(1));
   layout->setSpacing(0);
   m_security_line_edit = new QLineEdit(this);
+  m_security_line_edit->installEventFilter(this);
   connect(m_security_line_edit, &QLineEdit::returnPressed,
     [=] { enter_pressed(); });
   connect(m_security_line_edit, &QLineEdit::textChanged,
@@ -45,15 +50,46 @@ security_input_box::security_input_box(security_input_model& model)
     padding: %1px %2px %1px 0px;)")
     .arg(scale_height(9)).arg(scale_width(8)));
   layout->addWidget(m_icon_label);
-  m_securities = new security_info_list_view();
+  m_securities = new security_info_list_view(this);
   m_securities->connect_clicked_signal(
     [&] (const Security& s) { security_clicked(s); });
   m_securities->setVisible(false);
+  this->parent()->installEventFilter(this);
 }
 
 connection security_input_box::connect_commit_signal(
     const commit_signal::slot_type& slot) const {
   return m_commit_signal.connect(slot);
+}
+
+bool security_input_box::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == m_security_line_edit) {
+    if(event->type() == QEvent::FocusIn) {
+      setStyleSheet(QString(R"(
+        #security_input_box_line_edit {
+          border: %1px solid #4b23A0;
+        }
+        #security_input_box_line_edit:hover {
+          border: %1px solid #4b23A0;
+        })").arg(scale_width(1)));
+    } else if(event->type() == QEvent::FocusOut) {
+      setStyleSheet(QString(R"(
+        #security_input_box_line_edit {
+          border: %1px solid #C8C8C8;
+        }
+        #security_input_box_line_edit:hover {
+          border: %1px solid #4b23A0;
+        })").arg(scale_width(1)));
+    }
+  }
+  if(watched == parent()) {
+    if(event->type() == QEvent::Move) {
+      auto pos = mapToGlobal(m_security_line_edit->geometry().topLeft());
+      m_securities->move(pos.x() - scale_width(1), pos.y() +
+        m_security_line_edit->height() + scale_height(1));
+    }
+  }
+  return QWidget::eventFilter(watched, event);
 }
 
 void security_input_box::security_clicked(const Security& security) {

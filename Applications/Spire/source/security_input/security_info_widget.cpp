@@ -49,10 +49,11 @@ security_info_widget::security_info_widget(const SecurityInfo& security_info,
     font-family: Roboto;
     font-size: %1px;
   )").arg(scale_height(10)));
-  //QFontMetrics metrics(m_company_name_label->font());
-  //auto shortened_text = metrics.elidedText(company_name,
-  //  Qt::ElideRight, m_company_name_label->width());
-  //m_company_name_label->setText(shortened_text);
+  QFontMetrics metrics(m_company_name_label->font());
+  auto shortened_text = metrics.elidedText(
+    QString::fromStdString(security_info.m_name), Qt::ElideRight,
+    m_company_name_label->width());
+  m_company_name_label->setText(shortened_text);
   layout->addWidget(m_company_name_label);
 }
 

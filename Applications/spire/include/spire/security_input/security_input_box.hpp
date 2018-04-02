@@ -22,12 +22,17 @@ namespace spire {
       //! Constructs a blank security input box.
       /*!
         \param model The model to query for securities.
+        \param parent The parent to this widget.
       */
-      security_input_box(security_input_model& model);
+      security_input_box(security_input_model& model,
+        QWidget* parent = nullptr);
 
       //! Connects a slot to the commit signal.
       boost::signals2::connection connect_commit_signal(
         const commit_signal::slot_type& slot) const;
+
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
       mutable commit_signal m_commit_signal;
