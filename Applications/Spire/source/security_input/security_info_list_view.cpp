@@ -5,11 +5,6 @@
 #include "spire/security_input/security_info_widget.hpp"
 #include "spire/spire/dimensions.hpp"
 
-
-
-#include <QDebug>
-
-
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
@@ -75,7 +70,8 @@ void security_info_list_view::set_list(const std::vector<SecurityInfo>& list) {
       icon_path = ":/icons/usa.png";
     }
     auto security_widget = new security_info_widget(security, icon_path, this);
-    security_widget->connect_clicked_signal([this](const Security& s){ security_clicked(s); });
+    security_widget->connect_clicked_signal(
+      [&] (const Security& s) { security_clicked(s); });
     m_list_widget->layout()->addWidget(security_widget);
   }
   if(list.size() > 5) {
@@ -91,6 +87,7 @@ connection security_info_list_view::connect_clicked_signal(
   return m_clicked_signal.connect(slot);
 }
 
-void security_info_list_view::security_clicked(const Nexus::Security& security) {
+void security_info_list_view::security_clicked(
+    const Nexus::Security& security) {
   m_clicked_signal(security);
 }

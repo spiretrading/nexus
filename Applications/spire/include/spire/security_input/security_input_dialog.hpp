@@ -22,6 +22,7 @@ namespace spire {
       const Nexus::Security& get_security() const noexcept;
 
     private:
+      void closeEvent(QCloseEvent* event) override;
       void mouseMoveEvent(QMouseEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;

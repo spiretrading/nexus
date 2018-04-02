@@ -40,6 +40,10 @@ const Security& security_input_dialog::get_security() const noexcept {
   return m_security;
 }
 
+void security_input_dialog::closeEvent(QCloseEvent* event) {
+  reject();
+}
+
 void security_input_dialog::mouseMoveEvent(QMouseEvent* event) {
   if(!m_is_dragging) {
     return;

@@ -34,7 +34,7 @@ namespace spire {
         const clicked_signal::slot_type& slot) const;
 
     protected:
-      void mouseReleaseEvent(QMouseEvent* event);
+      void mouseReleaseEvent(QMouseEvent* event) override;
 
     private:
       mutable clicked_signal m_clicked_signal;
