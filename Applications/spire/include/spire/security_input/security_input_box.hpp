@@ -40,9 +40,8 @@ namespace spire {
       QLineEdit* m_security_line_edit;
       QLabel* m_icon_label;
       security_info_list_view* m_securities;
-      Nexus::Security m_selected_security;
 
-      void security_clicked(const Nexus::Security& security);
+      void security_selected(const Nexus::Security& security);
       void on_text_changed();
       void enter_pressed();
   };

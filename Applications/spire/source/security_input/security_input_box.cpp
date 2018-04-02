@@ -52,7 +52,7 @@ security_input_box::security_input_box(security_input_model& model,
   layout->addWidget(m_icon_label);
   m_securities = new security_info_list_view(this);
   m_securities->connect_clicked_signal(
-    [&] (const Security& s) { security_clicked(s); });
+    [&] (const Security& s) { security_selected(s); });
   m_securities->setVisible(false);
   this->parent()->installEventFilter(this);
 }
@@ -92,8 +92,7 @@ bool security_input_box::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-void security_input_box::security_clicked(const Security& security) {
-  m_selected_security = security;
+void security_input_box::security_selected(const Security& security) {
   m_security_line_edit->setText(QString::fromStdString(security.GetSymbol()) +
     "." + QString::fromStdString(security.GetMarket().GetData()));
 }
@@ -118,5 +117,6 @@ void security_input_box::on_text_changed() {
 }
 
 void security_input_box::enter_pressed() {
-  m_commit_signal(m_selected_security);
+  m_commit_signal(Security(ParseSecurity(
+    QString(m_security_line_edit->text()).toStdString())));
 }
