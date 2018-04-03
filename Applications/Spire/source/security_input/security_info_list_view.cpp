@@ -1,17 +1,33 @@
 #include "spire/security_input/security_info_list_view.hpp"
+#include <QEvent>
 #include <QFocusEvent>
 #include <QVBoxLayout>
 #include "Nexus/Definitions/Country.hpp"
 #include "spire/security_input/security_info_widget.hpp"
 #include "spire/spire/dimensions.hpp"
 
+
+
+
+
+#include <QDebug>
+#include <QCoreApplication>
+
+
+
+
+
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace spire;
 
-security_info_list_view::security_info_list_view(QWidget* parent)
-    : QScrollArea(parent) {
+security_info_list_view::security_info_list_view(QWidget* key_widget,
+    QWidget* parent)
+    : QScrollArea(parent),
+      m_key_widget(key_widget),
+      m_current_index(-1),
+      m_hover_index(-1) {
   setWindowFlags(Qt::Window | Qt::FramelessWindowHint | Qt::Tool);
   setAttribute(Qt::WA_ShowWithoutActivating);
   setFixedWidth(scale_width(180));
@@ -54,6 +70,7 @@ security_info_list_view::security_info_list_view(QWidget* parent)
   layout->setSpacing(0);
   m_list_widget->setStyleSheet("background-color: #FFFFFF;");
   setWidget(m_list_widget);
+  m_key_widget->installEventFilter(this);
 }
 
 void security_info_list_view::set_list(const std::vector<SecurityInfo>& list) {
@@ -62,16 +79,14 @@ void security_info_list_view::set_list(const std::vector<SecurityInfo>& list) {
     delete item->widget();
     delete item;
   }
-  for(auto security : list) {
-    QString icon_path;
-    if(security.m_security.GetCountry() == DefaultCountries::CA()) {
-      icon_path = ":/icons/canada.png";
-    } else if(security.m_security.GetCountry() == DefaultCountries::US()) {
-      icon_path = ":/icons/usa.png";
-    }
+  for(auto& security : list) {
+    auto icon_path = QString(":/icons/%1.png").arg(
+      security.m_security.GetCountry());
     auto security_widget = new security_info_widget(security, icon_path, this);
-    security_widget->connect_clicked_signal(
-      [&] (const Security& s) { security_clicked(s); });
+    security_widget->connect_commit_signal(
+      [=] (const Security& s) { commit(s); });
+    security_widget->connect_hovered_signal(
+      [=] (QWidget* w) { update_hover_index(w); });
     m_list_widget->layout()->addWidget(security_widget);
   }
   if(list.size() > 5) {
@@ -80,14 +95,90 @@ void security_info_list_view::set_list(const std::vector<SecurityInfo>& list) {
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   }
   resize(widget()->width(), list.size() * scale_height(40));
+  m_current_index = -1;
 }
 
 connection security_info_list_view::connect_clicked_signal(
-    const clicked_signal::slot_type& slot) const {
-  return m_clicked_signal.connect(slot);
+    const selected_signal::slot_type& slot) const {
+  return m_commit_signal.connect(slot);
 }
 
-void security_info_list_view::security_clicked(
+connection security_info_list_view::connect_highlighted_signal(
+    const selected_signal::slot_type& slot) const {
+  return m_highlighted_signal.connect(slot);
+}
+
+bool security_info_list_view::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == m_key_widget) {
+    if(event->type() == QEvent::KeyPress) {
+      auto e = static_cast<QKeyEvent*>(event);
+      if(e->key() == Qt::Key_Down) {
+        highlight_next_item();
+        return true;
+      } else if(e->key() == Qt::Key_Up) {
+        highlight_previous_item();
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+void security_info_list_view::highlight_next_item() {
+  if(m_list_widget->layout()->itemAt(m_current_index + 1) != nullptr) {
+    if(m_list_widget->layout()->itemAt(m_current_index) != nullptr) {
+      //m_list_widget->layout()->itemAt(m_current_index)->widget()->clearFocus();
+      QCoreApplication::postEvent(
+        m_list_widget->layout()->itemAt(m_current_index)->widget(),
+        new QFocusEvent(QEvent::FocusOut));
+    }
+    //m_list_widget->layout()->itemAt(++m_current_index)->widget()->setFocus();
+    QCoreApplication::postEvent(
+      m_list_widget->layout()->itemAt(++m_current_index)->widget(),
+      new QFocusEvent(QEvent::FocusIn));
+    auto security = static_cast<security_info_widget*>(
+      m_list_widget->layout()->itemAt(m_current_index)->widget())->
+        get_security();
+    m_highlighted_signal(security);
+    if(m_current_index > 4) {
+      ensureWidgetVisible(
+        m_list_widget->layout()->itemAt(m_current_index)->widget(), 0, 0);
+    }
+  }
+}
+
+void security_info_list_view::highlight_previous_item() {
+  if(m_list_widget->layout()->itemAt(m_current_index - 1) != nullptr) {
+    //m_list_widget->layout()->itemAt(m_current_index)->widget()->clearFocus();
+    QCoreApplication::postEvent(
+      m_list_widget->layout()->itemAt(m_current_index)->widget(),
+      new QFocusEvent(QEvent::FocusOut));
+    //m_list_widget->layout()->itemAt(++m_current_index)->widget()->setFocus();
+    QCoreApplication::postEvent(
+      m_list_widget->layout()->itemAt(--m_current_index)->widget(),
+      new QFocusEvent(QEvent::FocusIn));
+    auto security = static_cast<security_info_widget*>(
+      m_list_widget->layout()->itemAt(m_current_index)->widget())->
+        get_security();
+    m_highlighted_signal(security);
+    if(m_current_index < 4) {
+      ensureWidgetVisible(
+        m_list_widget->layout()->itemAt(m_current_index)->widget(), 0, 0);
+    }
+  }
+}
+
+void security_info_list_view::commit(
     const Nexus::Security& security) {
-  m_clicked_signal(security);
+  m_commit_signal(security);
+}
+
+void security_info_list_view::update_hover_index(QWidget* widget) {
+  m_hover_index = m_list_widget->layout()->indexOf(widget);
+  if(m_current_index != -1) {
+    QCoreApplication::postEvent(
+      m_list_widget->layout()->itemAt(m_current_index)->widget(),
+      new QFocusEvent(QEvent::FocusOut));
+  }
+  m_current_index = m_hover_index;
 }

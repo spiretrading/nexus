@@ -13,17 +13,19 @@ namespace spire {
   class security_info_list_view : public QScrollArea {
     public:
 
-      //! Signals that this item was selected;
+      //! Signals that an item was selected.
       /*!
-        \param s The security that this widget represents.
+        \param s The security that the selected widget represents.
       */
-      using clicked_signal = signal<void (const Nexus::Security& s)>;
+      using selected_signal = signal<void (const Nexus::Security& s)>;
 
       //! Constructs a security_info_list_view with an empty list.
       /*!
+        \param key_widget Widget that security_info_listview will receive
+               key events from.
         \param parent The parent to the security_info_list_view.
       */
-      security_info_list_view(QWidget* parent = nullptr);
+      security_info_list_view(QWidget* key_widget, QWidget* parent = nullptr);
 
       //! Sets the displayed list.
       /*!
@@ -31,15 +33,32 @@ namespace spire {
       */
       void set_list(const std::vector<Nexus::SecurityInfo>& list);
 
-      //! Connects a slot to the commit signal.
+      //! Highlights the first/next item in the list.
+      void highlight_next_item();
+
+      //! Highlights the last/previous item in the list.
+      void highlight_previous_item();
+
+      //! Connects a slot to the clicked signal.
       boost::signals2::connection connect_clicked_signal(
-        const clicked_signal::slot_type& slot) const;
+        const selected_signal::slot_type& slot) const;
+
+      boost::signals2::connection connect_highlighted_signal(
+        const selected_signal::slot_type& slot) const;
+
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
-      mutable clicked_signal m_clicked_signal;
+      mutable selected_signal m_commit_signal;
+      mutable selected_signal m_highlighted_signal;
       QWidget* m_list_widget;
+      QWidget* m_key_widget;
+      int m_current_index;
+      int m_hover_index;
 
-      void security_clicked(const Nexus::Security& security);
+      void commit(const Nexus::Security& security);
+      void update_hover_index(QWidget* widget);
   };
 }
 

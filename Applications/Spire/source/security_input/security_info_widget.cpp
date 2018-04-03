@@ -1,4 +1,5 @@
 #include "spire/security_input/security_info_widget.hpp"
+#include <QFocusEvent>
 #include <QHBoxLayout>
 #include <QMouseEvent>
 #include <QVBoxLayout>
@@ -14,17 +15,17 @@ security_info_widget::security_info_widget(const SecurityInfo& security_info,
     : QWidget(parent),
       m_security(security_info.m_security) {
   setFixedSize(scale(166, 40));
+  setFocusPolicy(Qt::StrongFocus);
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins(scale_width(8), scale_height(6), scale_width(8),
     scale_height(6));
   layout->setSpacing(scale_height(3));
-  setStyleSheet(":hover { background-color: #F2F2FF; }");
+  //setStyleSheet(":hover { background-color: #F2F2FF; }");
   auto top_line_layout = new QHBoxLayout();
   top_line_layout->setMargin(0);
   top_line_layout->setSpacing(0);
   m_security_name_label = new QLabel(QString::fromStdString(
-    m_security.GetSymbol()) + "."
-      + QString(m_security.GetMarket().GetData()), this);
+    Nexus::ToString(m_security)), this);
   m_security_name_label->setStyleSheet(QString(R"(
     background-color: transparent;
     color: #333333;
@@ -58,10 +59,41 @@ security_info_widget::security_info_widget(const SecurityInfo& security_info,
 }
 
 void security_info_widget::mouseReleaseEvent(QMouseEvent* event) {
-  m_clicked_signal(m_security);
+  // focusInEvent is fired when the mouse is clicked, so it might work
+  // to use both up/down keys and mouse clicks to set the current text in
+  // the line edit
+  m_commit_signal(m_security);
 }
 
-connection security_info_widget::connect_clicked_signal(
-    const clicked_signal::slot_type& slot) const {
-  return m_clicked_signal.connect(slot);
+void security_info_widget::enterEvent(QEvent* event) {
+  setStyleSheet("background-color: #F2F2FF;");
+  m_hovered_signal(this);
+}
+
+void security_info_widget::leaveEvent(QEvent* event) {
+  setStyleSheet("background-color: transparent;");
+}
+
+void security_info_widget::focusInEvent(QFocusEvent* event) {
+  setStyleSheet("background-color: #F2F2FF;");
+  // The program crashes if I call this
+  //m_commit_signal(m_security);
+}
+
+void security_info_widget::focusOutEvent(QFocusEvent* event) {
+  setStyleSheet("background-color: transparent;");
+}
+
+connection security_info_widget::connect_commit_signal(
+    const commit_signal::slot_type& slot) const {
+  return m_commit_signal.connect(slot);
+}
+
+connection security_info_widget::connect_hovered_signal(
+    const hovered_signal::slot_type& slot) const {
+  return m_hovered_signal.connect(slot);
+}
+
+Security security_info_widget::get_security() {
+  return m_security;
 }

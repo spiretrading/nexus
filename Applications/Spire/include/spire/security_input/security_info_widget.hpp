@@ -16,7 +16,13 @@ namespace spire {
       /*!
         \param s The security that this widget represents.
       */
-      using clicked_signal = signal<void (const Nexus::Security& s)>;
+      using commit_signal = signal<void (const Nexus::Security& s)>;
+
+      //! Signals that this item was hovered by the mouse.
+      /*!
+        \param widget This, the widget that was hovered.
+      */
+      using hovered_signal = signal<void (QWidget* widget)>;
 
       //! Constructs a security_info_widget.
       /*!
@@ -30,14 +36,25 @@ namespace spire {
         const QString& icon_path, QWidget* parent = nullptr);
 
       //! Connects a slot to the commit signal.
-      boost::signals2::connection connect_clicked_signal(
-        const clicked_signal::slot_type& slot) const;
+      boost::signals2::connection connect_commit_signal(
+        const commit_signal::slot_type& slot) const;
+
+      //! Connects a slot to the hovered signal.
+      boost::signals2::connection connect_hovered_signal(
+        const hovered_signal::slot_type& slot) const;
+
+      Nexus::Security get_security();
 
     protected:
       void mouseReleaseEvent(QMouseEvent* event) override;
+      void enterEvent(QEvent* event) override;
+      void leaveEvent(QEvent* event) override;
+      void focusInEvent(QFocusEvent* event) override;
+      void focusOutEvent(QFocusEvent* event) override;
 
     private:
-      mutable clicked_signal m_clicked_signal;
+      mutable commit_signal m_commit_signal;
+      mutable hovered_signal m_hovered_signal;
       Nexus::Security m_security;
       QLabel* m_security_name_label;
       QLabel* m_company_name_label;

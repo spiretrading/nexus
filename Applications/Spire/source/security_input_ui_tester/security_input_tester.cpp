@@ -31,6 +31,7 @@ security_input_tester::security_input_tester(QWidget* parent)
     Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
     "Morgan Stanley", "Finance"));
   m_dialog = new security_input_dialog(m_model);
+  connect(m_dialog, &QDialog::rejected, [=] { close(); });
   connect(m_dialog, &QDialog::accepted, [=] { run_dialog(); });
   run_dialog();
   clear();
@@ -42,8 +43,7 @@ security_input_tester::~security_input_tester() {
 }
 
 void security_input_tester::add_security(const Security& security) {
-  addItem(QString::fromStdString(security.GetSymbol()) + "." +
-    QString(security.GetMarket().GetData()));
+  addItem(QString::fromStdString(Nexus::ToString(security)));
 }
 
 void security_input_tester::closeEvent(QCloseEvent* event) {

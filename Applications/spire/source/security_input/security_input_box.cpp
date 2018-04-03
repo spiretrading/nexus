@@ -1,6 +1,7 @@
 #include "spire/security_input/security_input_box.hpp"
 #include <QEvent>
 #include <QHBoxLayout>
+#include <QKeyEvent>
 #include "spire/security_input/local_security_input_model.hpp"
 #include "spire/security_input/security_info_list_view.hpp"
 #include "spire/spire/dimensions.hpp"
@@ -31,8 +32,6 @@ security_input_box::security_input_box(security_input_model& model,
   m_security_line_edit->installEventFilter(this);
   connect(m_security_line_edit, &QLineEdit::returnPressed,
     [=] { enter_pressed(); });
-  connect(m_security_line_edit, &QLineEdit::textChanged,
-    [=] { on_text_changed(); });
   m_security_line_edit->setStyleSheet(QString(R"(
     background-color: #FFFFFF;
     border: none;
@@ -50,9 +49,11 @@ security_input_box::security_input_box(security_input_model& model,
     padding: %1px %2px %1px 0px;)")
     .arg(scale_height(9)).arg(scale_width(8)));
   layout->addWidget(m_icon_label);
-  m_securities = new security_info_list_view(this);
+  m_securities = new security_info_list_view(m_security_line_edit, this);
   m_securities->connect_clicked_signal(
-    [&] (const Security& s) { security_selected(s); });
+    [=] (const Security& s) { security_selected(s); });
+  m_securities->connect_highlighted_signal(
+    [=] (const Security& s) { security_highlighted(s); });
   m_securities->setVisible(false);
   this->parent()->installEventFilter(this);
 }
@@ -64,6 +65,16 @@ connection security_input_box::connect_commit_signal(
 
 bool security_input_box::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_security_line_edit) {
+    if(event->type() == QEvent::KeyPress) {
+      auto e = static_cast<QKeyEvent*>(event);
+      if(e->key() == Qt::Key_Down) {
+        m_securities->highlight_next_item();
+      } else if(e->key() == Qt::Key_Up) {
+        m_securities->highlight_previous_item();
+      } else  {
+        update_autocomplete();
+      }
+    }
     if(event->type() == QEvent::FocusIn) {
       setStyleSheet(QString(R"(
         #security_input_box_line_edit {
@@ -93,11 +104,17 @@ bool security_input_box::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void security_input_box::security_selected(const Security& security) {
-  m_security_line_edit->setText(QString::fromStdString(security.GetSymbol()) +
-    "." + QString::fromStdString(security.GetMarket().GetData()));
+  m_security_line_edit->setText(QString::fromStdString(
+    Nexus::ToString(security)));
+  m_securities->setVisible(false);
 }
 
-void security_input_box::on_text_changed() {
+void security_input_box::security_highlighted(const Security& security) {
+  m_security_line_edit->setText(QString::fromStdString(
+    Nexus::ToString(security)));
+}
+
+void security_input_box::update_autocomplete() {
   if(!m_security_line_edit->text().isEmpty()) {
     auto list = m_model->autocomplete(
       m_security_line_edit->text().toStdString());

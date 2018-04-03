@@ -1,5 +1,6 @@
 #ifndef SPIRE_SECURITY_INPUT_WIDGET_HPP
 #define SPIRE_SECURITY_INPUT_WIDGET_HPP
+#include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
 #include <QScrollArea>
@@ -42,7 +43,8 @@ namespace spire {
       security_info_list_view* m_securities;
 
       void security_selected(const Nexus::Security& security);
-      void on_text_changed();
+      void security_highlighted(const Nexus::Security& security);
+      void update_autocomplete();
       void enter_pressed();
   };
 }
