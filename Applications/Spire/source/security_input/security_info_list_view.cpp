@@ -124,6 +124,11 @@ bool security_info_list_view::eventFilter(QObject* watched, QEvent* event) {
   return false;
 }
 
+void security_info_list_view::leaveEvent(QEvent* event) {
+  m_current_index = -1;
+  m_hover_index = -1;
+}
+
 void security_info_list_view::highlight_next_item() {
   if(m_list_widget->layout()->itemAt(m_current_index + 1) != nullptr) {
     if(m_list_widget->layout()->itemAt(m_current_index) != nullptr) {

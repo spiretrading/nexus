@@ -23,12 +23,11 @@ namespace spire {
 
     private:
       void closeEvent(QCloseEvent* event) override;
-      void mouseMoveEvent(QMouseEvent* event) override;
-      void mousePressEvent(QMouseEvent* event) override;
-      void mouseReleaseEvent(QMouseEvent* event) override;
+      bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
       Nexus::Security m_security;
+      QWidget* m_dialog;
       security_input_box* m_security_input_box;
       bool m_is_dragging;
       QPoint m_last_mouse_pos;

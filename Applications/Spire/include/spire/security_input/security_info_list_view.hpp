@@ -48,6 +48,7 @@ namespace spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void leaveEvent(QEvent* event) override;
 
     private:
       mutable selected_signal m_commit_signal;

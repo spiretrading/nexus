@@ -57,7 +57,7 @@ security_input_box::security_input_box(security_input_model& model,
   m_securities->connect_highlighted_signal(
     [=] (const Security& s) { security_highlighted(s); });
   m_securities->setVisible(false);
-  this->parent()->installEventFilter(this);
+  window()->installEventFilter(this);
 }
 
 connection security_input_box::connect_commit_signal(
@@ -93,7 +93,7 @@ bool security_input_box::eventFilter(QObject* watched, QEvent* event) {
         })").arg(scale_width(1)));
     }
   }
-  if(watched == parent()) {
+  if(watched == window()) {
     if(event->type() == QEvent::Move) {
       auto pos = mapToGlobal(m_security_line_edit->geometry().topLeft());
       m_securities->move(pos.x() - scale_width(1), pos.y() +
@@ -106,6 +106,7 @@ bool security_input_box::eventFilter(QObject* watched, QEvent* event) {
 void security_input_box::security_selected(const Security& security) {
   m_security_line_edit->setText(QString::fromStdString(
     Nexus::ToString(security)));
+  //m_security_line_edit->repaint();
   m_securities->setVisible(false);
 }
 
