@@ -32,6 +32,8 @@ security_input_box::security_input_box(security_input_model& model,
   m_security_line_edit->installEventFilter(this);
   connect(m_security_line_edit, &QLineEdit::returnPressed,
     [=] { enter_pressed(); });
+  connect(m_security_line_edit, &QLineEdit::textEdited,
+    [=] { on_text_edited(); });
   m_security_line_edit->setStyleSheet(QString(R"(
     background-color: #FFFFFF;
     border: none;
@@ -71,8 +73,6 @@ bool security_input_box::eventFilter(QObject* watched, QEvent* event) {
         m_securities->highlight_next_item();
       } else if(e->key() == Qt::Key_Up) {
         m_securities->highlight_previous_item();
-      } else  {
-        update_autocomplete();
       }
     }
     if(event->type() == QEvent::FocusIn) {
@@ -114,7 +114,7 @@ void security_input_box::security_highlighted(const Security& security) {
     Nexus::ToString(security)));
 }
 
-void security_input_box::update_autocomplete() {
+void security_input_box::on_text_edited() {
   if(!m_security_line_edit->text().isEmpty()) {
     auto list = m_model->autocomplete(
       m_security_line_edit->text().toStdString());

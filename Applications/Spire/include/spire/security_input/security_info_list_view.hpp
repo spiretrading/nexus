@@ -54,6 +54,7 @@ namespace spire {
       mutable selected_signal m_highlighted_signal;
       QWidget* m_list_widget;
       QWidget* m_key_widget;
+      static const int M_MAX_VISIBLE_ITEMS = 5;
       int m_current_index;
       int m_hover_index;
 

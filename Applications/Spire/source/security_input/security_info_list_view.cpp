@@ -140,7 +140,7 @@ void security_info_list_view::highlight_next_item() {
       m_list_widget->layout()->itemAt(m_current_index)->widget())->
         get_security();
     m_highlighted_signal(security);
-    if(m_current_index > 4) {
+    if(m_current_index > M_MAX_VISIBLE_ITEMS - 1) {
       ensureWidgetVisible(
         m_list_widget->layout()->itemAt(m_current_index)->widget(), 0, 0);
     }
@@ -161,7 +161,7 @@ void security_info_list_view::highlight_previous_item() {
       m_list_widget->layout()->itemAt(m_current_index)->widget())->
         get_security();
     m_highlighted_signal(security);
-    if(m_current_index < 4) {
+    if(m_current_index < M_MAX_VISIBLE_ITEMS - 1) {
       ensureWidgetVisible(
         m_list_widget->layout()->itemAt(m_current_index)->widget(), 0, 0);
     }

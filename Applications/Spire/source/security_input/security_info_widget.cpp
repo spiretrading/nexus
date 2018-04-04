@@ -5,6 +5,18 @@
 #include <QVBoxLayout>
 #include "spire/spire/dimensions.hpp"
 
+
+
+
+
+
+#include <QDebug>
+
+
+
+
+
+
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
@@ -56,6 +68,7 @@ security_info_widget::security_info_widget(const SecurityInfo& security_info,
     m_company_name_label->width());
   m_company_name_label->setText(shortened_text);
   layout->addWidget(m_company_name_label);
+  setMouseTracking(true);
 }
 
 void security_info_widget::mouseReleaseEvent(QMouseEvent* event) {
@@ -68,10 +81,16 @@ void security_info_widget::mouseReleaseEvent(QMouseEvent* event) {
 void security_info_widget::enterEvent(QEvent* event) {
   setStyleSheet("background-color: #F2F2FF;");
   m_hovered_signal(this);
+  qDebug() << "Enter";
+  repaint();
+  update();
 }
-
+//
 void security_info_widget::leaveEvent(QEvent* event) {
   setStyleSheet("background-color: transparent;");
+  qDebug() << "Leave";
+  repaint();
+  update();
 }
 
 void security_info_widget::focusInEvent(QFocusEvent* event) {

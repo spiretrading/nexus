@@ -44,7 +44,7 @@ namespace spire {
 
       void security_selected(const Nexus::Security& security);
       void security_highlighted(const Nexus::Security& security);
-      void update_autocomplete();
+      void on_text_edited();
       void enter_pressed();
   };
 }
