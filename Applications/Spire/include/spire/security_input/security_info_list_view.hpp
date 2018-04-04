@@ -10,7 +10,7 @@ namespace spire {
 
   //! \brief Displays a list of securities with symbol, exchange, and company
   //! name.
-  class security_info_list_view : public QScrollArea {
+  class security_info_list_view : public QWidget {
     public:
 
       //! Signals that an item was selected.
@@ -53,6 +53,7 @@ namespace spire {
     private:
       mutable selected_signal m_commit_signal;
       mutable selected_signal m_highlighted_signal;
+      QScrollArea* m_scroll_area;
       QWidget* m_list_widget;
       QWidget* m_key_widget;
       static const int M_MAX_VISIBLE_ITEMS = 5;

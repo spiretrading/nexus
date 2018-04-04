@@ -26,7 +26,8 @@ security_info_widget::security_info_widget(const SecurityInfo& security_info,
     const QString& icon_path, QWidget* parent)
     : QWidget(parent),
       m_security(security_info.m_security) {
-  setFixedSize(scale(166, 40));
+  setFixedHeight(scale_height(40));
+  setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   setFocusPolicy(Qt::StrongFocus);
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins(scale_width(8), scale_height(6), scale_width(8),

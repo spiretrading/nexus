@@ -116,21 +116,17 @@ void security_input_box::security_highlighted(const Security& security) {
 }
 
 void security_input_box::on_text_edited() {
-  if(!m_security_line_edit->text().isEmpty()) {
-    auto list = m_model->autocomplete(
-      m_security_line_edit->text().toStdString());
-    m_securities->set_list(list);
-    if(list.size() > 0) {
-      auto pos = mapToGlobal(m_security_line_edit->geometry().topLeft());
-      m_securities->move(pos.x() - scale_width(1), pos.y() +
-        m_security_line_edit->height() + scale_height(1));
-      m_securities->setVisible(true);
-      m_securities->raise();
-    } else {
-      m_securities->setVisible(false);
-    }
+  auto recommendations = m_model->autocomplete(
+    m_security_line_edit->text().toStdString());
+  m_securities->set_list(recommendations);
+  if(recommendations.empty()) {
+    m_securities->hide();
   } else {
-    m_securities->setVisible(false);
+    auto pos = mapToGlobal(m_security_line_edit->geometry().topLeft());
+    m_securities->move(pos.x() - scale_width(1), pos.y() +
+      m_security_line_edit->height() + scale_height(1));
+    m_securities->setVisible(true);
+    m_securities->raise();
   }
 }
 
