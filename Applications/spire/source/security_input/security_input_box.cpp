@@ -38,8 +38,8 @@ security_input_box::security_input_box(security_input_model& model,
     border: none;
     font-family: Roboto;
     font-size: %1px;
-    padding-left: %2px;)")
-    .arg(scale_height(12)).arg(scale_width(8)));
+    padding: %2px 0px %2px %3px;)")
+    .arg(scale_height(12)).arg(scale_height(6)).arg(scale_width(8)));
   layout->addWidget(m_security_line_edit);
   m_icon_label = new QLabel(this);
   m_icon_label->setPixmap(QPixmap::fromImage(imageFromSvg(":/icons/search.svg",
