@@ -1,5 +1,4 @@
 #include "spire/security_input/security_input_box.hpp"
-#include <QEvent>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include "spire/security_input/local_security_input_model.hpp"
@@ -16,7 +15,7 @@ security_input_box::security_input_box(security_input_model& model,
     QWidget* parent)
     : QWidget(parent),
       m_model(&model) {
-  setFixedSize(scale(180, 30));
+  setFixedHeight(scale_height(30));
   setObjectName("security_input_box_line_edit");
   setStyleSheet(QString(R"(
     #security_input_box_line_edit {
@@ -52,6 +51,7 @@ security_input_box::security_input_box(security_input_model& model,
     .arg(scale_height(9)).arg(scale_width(8)));
   layout->addWidget(m_icon_label);
   m_securities = new security_info_list_view(m_security_line_edit, this);
+  m_securities->setFixedWidth(width());
   m_securities->connect_clicked_signal(
     [=] (const Security& s) { security_selected(s); });
   m_securities->connect_highlighted_signal(
@@ -103,10 +103,13 @@ bool security_input_box::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
+void security_input_box::resizeEvent(QResizeEvent* event) {
+  m_securities->setFixedWidth(width());
+}
+
 void security_input_box::security_selected(const Security& security) {
   m_security_line_edit->setText(QString::fromStdString(
     Nexus::ToString(security)));
-  //m_security_line_edit->repaint();
   m_securities->setVisible(false);
 }
 
@@ -131,6 +134,5 @@ void security_input_box::on_text_edited() {
 }
 
 void security_input_box::enter_pressed() {
-  m_commit_signal(Security(ParseSecurity(
-    QString(m_security_line_edit->text()).toStdString())));
+  m_commit_signal(ParseSecurity(m_security_line_edit->text().toStdString()));
 }

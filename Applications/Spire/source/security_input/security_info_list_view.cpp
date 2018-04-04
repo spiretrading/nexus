@@ -1,22 +1,12 @@
 #include "spire/security_input/security_info_list_view.hpp"
-#include <QEvent>
+#include <QCoreApplication>
+#include <QDebug>
 #include <QFocusEvent>
 #include <QGraphicsDropShadowEffect>
+#include <QKeyEvent>
 #include <QVBoxLayout>
-#include "Nexus/Definitions/Country.hpp"
 #include "spire/security_input/security_info_widget.hpp"
 #include "spire/spire/dimensions.hpp"
-
-
-
-
-
-#include <QDebug>
-#include <QCoreApplication>
-
-
-
-
 
 using namespace boost;
 using namespace boost::signals2;
@@ -24,6 +14,8 @@ using namespace Nexus;
 using namespace spire;
 
 namespace {
+  const auto MAX_VISIBLE_ITEMS = 5;
+
   auto make_drop_shadow_effect(QWidget* w) {
     auto drop_shadow = new QGraphicsDropShadowEffect(w);
     drop_shadow->setBlurRadius(scale_width(12));
@@ -36,23 +28,17 @@ namespace {
 
 security_info_list_view::security_info_list_view(QWidget* key_widget,
     QWidget* parent)
-    : QWidget(parent),
+    : QWidget(parent, Qt::FramelessWindowHint | Qt::Tool),
       m_key_widget(key_widget),
       m_current_index(-1),
       m_hover_index(-1) {
-  setWindowFlags(Qt::Window | Qt::FramelessWindowHint | Qt::Tool);
   setAttribute(Qt::WA_ShowWithoutActivating);
   setAttribute(Qt::WA_TranslucentBackground);
-  parent->installEventFilter(this);
-  auto top_layout = new QVBoxLayout(this);
-  top_layout->setMargin(0);
-  top_layout->setSpacing(0);
+  auto layout = new QVBoxLayout(this);
+  layout->setMargin(0);
+  layout->setSpacing(0);
   m_scroll_area = new QScrollArea(this);
-  m_scroll_area->setMaximumHeight(scale_height(200));
   m_scroll_area->setGraphicsEffect(make_drop_shadow_effect(m_scroll_area));
-//  auto shadow_size = static_cast<QGraphicsDropShadowEffect*>(
-//    m_scroll_area->graphicsEffect())->blurRadius();
-//  setFixedWidth(m_scroll_area->width() + shadow_size);
   m_scroll_area->setWidgetResizable(true);
   m_scroll_area->setObjectName("security_info_list_view_scrollbar");
   m_scroll_area->setFrameShape(QFrame::NoFrame);
@@ -86,14 +72,13 @@ security_info_list_view::security_info_list_view(QWidget* key_widget,
       border: none;
       background: none;
     })").arg(scale_height(12)));
-  top_layout->addWidget(m_scroll_area);
+  layout->addWidget(m_scroll_area);
   m_list_widget = new QWidget(m_scroll_area);
   auto list_layout = new QVBoxLayout(m_list_widget);
   list_layout->setMargin(0);
   list_layout->setSpacing(0);
   m_list_widget->setStyleSheet("background-color: #FFFFFF;");
   m_scroll_area->setWidget(m_list_widget);
-  m_key_widget->installEventFilter(m_scroll_area);
 }
 
 void security_info_list_view::set_list(const std::vector<SecurityInfo>& list) {
@@ -104,13 +89,19 @@ void security_info_list_view::set_list(const std::vector<SecurityInfo>& list) {
   for(auto& security : list) {
     auto icon_path = QString(":/icons/%1.png").arg(
       security.m_security.GetCountry());
-    auto security_widget = new security_info_widget(security, icon_path, this);
-    security_widget->connect_commit_signal([=] (auto& s) { commit(s); });
-    security_widget->connect_hovered_signal([=] (auto w) { update_hover_index(w); });
+    auto security_widget = new security_info_widget(security, this);
+    security_widget->connect_commit_signal(
+      [=] { commit(security.m_security); });
     m_list_widget->layout()->addWidget(security_widget);
   }
-  //resize(m_scroll_area->widget()->width(), list.size() * scale_height(40));
   m_current_index = -1;
+  if(m_list_widget->layout()->count() == 0) {
+    return;
+  }
+  auto item_height = m_list_widget->layout()->itemAt(0)->widget()->height();
+  auto h = std::min(MAX_VISIBLE_ITEMS, m_list_widget->layout()->count()) *
+    item_height;
+  setFixedHeight(h);
 }
 
 connection security_info_list_view::connect_clicked_signal(
@@ -123,95 +114,62 @@ connection security_info_list_view::connect_highlighted_signal(
   return m_highlighted_signal.connect(slot);
 }
 
-bool security_info_list_view::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_key_widget) {
-    if(event->type() == QEvent::KeyPress) {
-      auto e = static_cast<QKeyEvent*>(event);
-      if(e->key() == Qt::Key_Down) {
-        highlight_next_item();
-        return true;
-      } else if(e->key() == Qt::Key_Up) {
-        highlight_previous_item();
-        return true;
-      }
-    }
-  }
-  if(watched == parent()) {
-    if(event->type() == QEvent::Resize) {
-      setFixedWidth(static_cast<QWidget*>(parent())->width());
-    }
-  }
-  //if(watched == m_scroll_area) {
-  //  if(event->type() == QEvent::Resize) {
-  //    auto shadow_size = static_cast<QGraphicsDropShadowEffect*>(
-  //      m_scroll_area->graphicsEffect())->blurRadius();
-  //    setFixedSize(m_scroll_area->width() + shadow_size,
-  //      m_list_widget->height() + shadow_size);
-  //  }
-  //}
-  return false;
-}
-
 void security_info_list_view::leaveEvent(QEvent* event) {
   m_current_index = -1;
   m_hover_index = -1;
 }
 
 void security_info_list_view::highlight_next_item() {
-  if(m_list_widget->layout()->itemAt(m_current_index + 1) != nullptr) {
-    if(m_list_widget->layout()->itemAt(m_current_index) != nullptr) {
-      //m_list_widget->layout()->itemAt(m_current_index)->widget()->clearFocus();
-      QCoreApplication::postEvent(
-        m_list_widget->layout()->itemAt(m_current_index)->widget(),
-        new QFocusEvent(QEvent::FocusOut));
-    }
-    //m_list_widget->layout()->itemAt(++m_current_index)->widget()->setFocus();
-    QCoreApplication::postEvent(
-      m_list_widget->layout()->itemAt(++m_current_index)->widget(),
-      new QFocusEvent(QEvent::FocusIn));
-    auto security = static_cast<security_info_widget*>(
-      m_list_widget->layout()->itemAt(m_current_index)->widget())->
-        get_security();
-    m_highlighted_signal(security);
-    if(m_current_index > M_MAX_VISIBLE_ITEMS - 1) {
-      m_scroll_area->ensureWidgetVisible(
-        m_list_widget->layout()->itemAt(m_current_index)->widget(), 0, 0);
-    }
+  if(m_current_index >= m_list_widget->layout()->count() - 1) {
+    return;
   }
+  auto previous_widget = [&] () -> security_info_widget* {
+    if(m_current_index == -1) {
+      return nullptr;
+    }
+    return static_cast<security_info_widget*>(m_list_widget->layout()->itemAt(
+      m_current_index)->widget());
+  }();
+  ++m_current_index;
+  auto current_widget = static_cast<security_info_widget*>(
+    m_list_widget->layout()->itemAt(m_current_index)->widget());
+  update_highlight(previous_widget, current_widget);
 }
 
 void security_info_list_view::highlight_previous_item() {
-  if(m_list_widget->layout()->itemAt(m_current_index - 1) != nullptr) {
-    //m_list_widget->layout()->itemAt(m_current_index)->widget()->clearFocus();
-    QCoreApplication::postEvent(
-      m_list_widget->layout()->itemAt(m_current_index)->widget(),
-      new QFocusEvent(QEvent::FocusOut));
-    //m_list_widget->layout()->itemAt(++m_current_index)->widget()->setFocus();
-    QCoreApplication::postEvent(
-      m_list_widget->layout()->itemAt(--m_current_index)->widget(),
-      new QFocusEvent(QEvent::FocusIn));
-    auto security = static_cast<security_info_widget*>(
-      m_list_widget->layout()->itemAt(m_current_index)->widget())->
-        get_security();
-    m_highlighted_signal(security);
-    if(m_current_index < M_MAX_VISIBLE_ITEMS - 1) {
-      m_scroll_area->ensureWidgetVisible(
-        m_list_widget->layout()->itemAt(m_current_index)->widget(), 0, 0);
-    }
+  if(m_current_index <= 0) {
+    return;
   }
+  auto previous_widget = static_cast<security_info_widget*>(
+    m_list_widget->layout()->itemAt(m_current_index)->widget());
+  --m_current_index;
+  auto current_widget = static_cast<security_info_widget*>(
+    m_list_widget->layout()->itemAt(m_current_index)->widget());
+  update_highlight(previous_widget, current_widget);
 }
 
-void security_info_list_view::commit(
-    const Nexus::Security& security) {
+void security_info_list_view::commit(const Security& security) {
   m_commit_signal(security);
 }
 
 void security_info_list_view::update_hover_index(QWidget* widget) {
   m_hover_index = m_list_widget->layout()->indexOf(widget);
   if(m_current_index != -1) {
-    QCoreApplication::postEvent(
-      m_list_widget->layout()->itemAt(m_current_index)->widget(),
-      new QFocusEvent(QEvent::FocusOut));
+    QCoreApplication::postEvent(m_list_widget->layout()->itemAt(
+      m_current_index)->widget(), new QFocusEvent(QEvent::FocusOut));
   }
   m_current_index = m_hover_index;
+}
+
+void security_info_list_view::update_highlight(security_info_widget* previous,
+    security_info_widget* current) {
+  if(previous != nullptr) {
+    QCoreApplication::postEvent(previous, new QFocusEvent(QEvent::FocusOut));
+  }
+  if(current != nullptr) {
+    QCoreApplication::postEvent(current, new QFocusEvent(QEvent::FocusIn));
+    auto& security = current->get_info().m_security;
+    m_highlighted_signal(security);
+    m_scroll_area->ensureWidgetVisible(current, 0, 0);
+  }
 }

@@ -17,6 +17,9 @@ void local_security_input_model::add(SecurityInfo security) {
 
 std::vector<SecurityInfo> local_security_input_model::autocomplete(
     const std::string& query) {
+  if(query.empty()) {
+    return {};
+  }
   static const auto MAX_MATCH_COUNT = 8;
   std::unordered_set<SecurityInfo> matches;
   auto uppercasePrefix = boost::to_upper_copy(query);

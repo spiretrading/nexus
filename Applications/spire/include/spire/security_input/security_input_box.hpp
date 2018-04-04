@@ -1,9 +1,7 @@
 #ifndef SPIRE_SECURITY_INPUT_WIDGET_HPP
 #define SPIRE_SECURITY_INPUT_WIDGET_HPP
-#include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
-#include <QScrollArea>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/security_input/security_input.hpp"
@@ -34,6 +32,7 @@ namespace spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
 
     private:
       mutable commit_signal m_commit_signal;

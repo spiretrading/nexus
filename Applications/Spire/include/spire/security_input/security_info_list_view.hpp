@@ -2,14 +2,12 @@
 #define SPIRE_SECURITY_INFO_LIST_VIEW
 #include <vector>
 #include <QScrollArea>
-#include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
-#include "spire/spire/spire.hpp"
+#include "spire/security_input/security_input.hpp"
 
 namespace spire {
 
-  //! \brief Displays a list of securities with symbol, exchange, and company
-  //! name.
+  //! Displays a list of securities with symbol, exchange, and company name.
   class security_info_list_view : public QWidget {
     public:
 
@@ -47,7 +45,6 @@ namespace spire {
         const selected_signal::slot_type& slot) const;
 
     protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
       void leaveEvent(QEvent* event) override;
 
     private:
@@ -56,12 +53,13 @@ namespace spire {
       QScrollArea* m_scroll_area;
       QWidget* m_list_widget;
       QWidget* m_key_widget;
-      static const int M_MAX_VISIBLE_ITEMS = 5;
       int m_current_index;
       int m_hover_index;
 
       void commit(const Nexus::Security& security);
       void update_hover_index(QWidget* widget);
+      void update_highlight(security_info_widget* previous,
+        security_info_widget* current);
   };
 }
 

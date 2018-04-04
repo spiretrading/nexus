@@ -3,62 +3,48 @@
 #include <QLabel>
 #include <QWidget>
 #include "Nexus/Definitions/SecurityInfo.hpp"
-#include "spire/spire/spire.hpp"
+#include "spire/security_input/security_input.hpp"
 
 namespace spire {
 
-  //! \brief A convenience widget to display symbol, exchange, and company
-  //! name.
+  //! A convenience widget to display a security's name and ticker symbol.
   class security_info_widget : public QWidget {
     public:
 
-      //! Signals that this item was selected;
-      /*!
-        \param s The security that this widget represents.
-      */
-      using commit_signal = signal<void (const Nexus::Security& s)>;
-
-      //! Signals that this item was hovered by the mouse.
-      /*!
-        \param widget This, the widget that was hovered.
-      */
-      using hovered_signal = signal<void (QWidget* widget)>;
+      //! Signals that the security represented by this widget should be
+      //! committed.
+      using commit_signal = signal<void ()>;
 
       //! Constructs a security_info_widget.
       /*!
-        \param security The security this widget is representing.
-        \param security_name Security name with exchange.
-        \param company_name Full company name.
-        \param icon_path Path to flag icon to display.
+        \param info SecurityInfo to display.
         \param parent Parent to this widget.
       */
-      security_info_widget(const Nexus::SecurityInfo& security_info,
-        const QString& icon_path, QWidget* parent = nullptr);
+      security_info_widget(Nexus::SecurityInfo info, QWidget* parent = nullptr);
+
+      //! Returns the security info represented.
+      const Nexus::SecurityInfo& get_info() const;
 
       //! Connects a slot to the commit signal.
       boost::signals2::connection connect_commit_signal(
         const commit_signal::slot_type& slot) const;
 
-      //! Connects a slot to the hovered signal.
-      boost::signals2::connection connect_hovered_signal(
-        const hovered_signal::slot_type& slot) const;
-
-      Nexus::Security get_security();
-
     protected:
-      void mouseReleaseEvent(QMouseEvent* event) override;
       void enterEvent(QEvent* event) override;
-      void leaveEvent(QEvent* event) override;
       void focusInEvent(QFocusEvent* event) override;
       void focusOutEvent(QFocusEvent* event) override;
+      void leaveEvent(QEvent* event) override;
+      void mouseReleaseEvent(QMouseEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
 
     private:
       mutable commit_signal m_commit_signal;
-      mutable hovered_signal m_hovered_signal;
-      Nexus::Security m_security;
+      Nexus::SecurityInfo m_info;
       QLabel* m_security_name_label;
       QLabel* m_company_name_label;
       QLabel* m_icon_label;
+
+      void display_company_name();
   };
 }
 
