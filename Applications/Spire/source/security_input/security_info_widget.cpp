@@ -11,10 +11,11 @@ using namespace spire;
 
 security_info_widget::security_info_widget(SecurityInfo info, QWidget* parent)
     : QWidget(parent),
-      m_info(std::move(info)) {
+      m_info(std::move(info)),
+      m_is_highlighted(false) {
   setFixedHeight(scale_height(40));
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  setFocusPolicy(Qt::StrongFocus);
+  setFocusPolicy(Qt::NoFocus);
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins(scale_width(8), scale_height(6), scale_width(8),
     scale_height(6));
@@ -58,25 +59,40 @@ const SecurityInfo& security_info_widget::get_info() const {
   return m_info;
 }
 
+void security_info_widget::set_highlighted() {
+  if(m_is_highlighted) {
+    return;
+  }
+  setStyleSheet("background-color: #F2F2FF;");
+  m_is_highlighted = true;
+  m_highlighted_signal(true);
+}
+
+void security_info_widget::remove_highlight() {
+  if(!m_is_highlighted) {
+    return;
+  }
+  setStyleSheet("background-color: transparent;");
+  m_is_highlighted = false;
+  m_highlighted_signal(false);
+}
+
+connection security_info_widget::connect_highlighted_signal(
+    const highlighted_signal::slot_type& slot) const {
+  return m_highlighted_signal.connect(slot);
+}
+
 connection security_info_widget::connect_commit_signal(
     const commit_signal::slot_type& slot) const {
   return m_commit_signal.connect(slot);
 }
 
 void security_info_widget::enterEvent(QEvent* event) {
-  setStyleSheet("background-color: #F2F2FF;");
-}
-
-void security_info_widget::focusInEvent(QFocusEvent* event) {
-  setStyleSheet("background-color: #F2F2FF;");
-}
-
-void security_info_widget::focusOutEvent(QFocusEvent* event) {
-  setStyleSheet("background-color: transparent;");
+  set_highlighted();
 }
 
 void security_info_widget::leaveEvent(QEvent* event) {
-  setStyleSheet("background-color: transparent;");
+  remove_highlight();
 }
 
 void security_info_widget::mouseReleaseEvent(QMouseEvent* event) {

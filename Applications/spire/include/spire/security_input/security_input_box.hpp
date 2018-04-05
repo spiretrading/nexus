@@ -8,7 +8,7 @@
 
 namespace spire {
 
-  //! \brief Displays a input/search box for securities.
+  //! Displays a input/search box for securities.
   class security_input_box : public QWidget {
     public:
 
@@ -41,10 +41,10 @@ namespace spire {
       QLabel* m_icon_label;
       security_info_list_view* m_securities;
 
-      void security_selected(const Nexus::Security& security);
-      void security_highlighted(const Nexus::Security& security);
       void on_text_edited();
       void enter_pressed();
+      void on_activated(const Nexus::Security& security);
+      void on_commit(const Nexus::Security& security);
   };
 }
 

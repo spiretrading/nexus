@@ -1,6 +1,7 @@
 #include "spire/security_input_ui_tester/security_input_tester.hpp"
-#include <thread>
+#include <QTimer>
 #include "Nexus/Definitions/SecurityInfo.hpp"
+#include "spire/security_input/security_input_dialog.hpp"
 #include "spire/spire/dimensions.hpp"
 
 using namespace Nexus;
@@ -30,27 +31,32 @@ security_input_tester::security_input_tester(QWidget* parent)
   m_model.add(SecurityInfo(
     Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
     "Morgan Stanley", "Finance"));
-  m_dialog = new security_input_dialog(m_model);
-  connect(m_dialog, &QDialog::rejected, [=] { close(); });
-  connect(m_dialog, &QDialog::accepted, [=] { run_dialog(); });
-  run_dialog();
-  clear();
-  setGeometry(m_dialog->pos().x() + width() * 2, m_dialog->pos().y(), 0, 0);
-}
-
-security_input_tester::~security_input_tester() {
-  delete m_dialog;
-}
-
-void security_input_tester::add_security(const Security& security) {
-  addItem(QString::fromStdString(Nexus::ToString(security)));
 }
 
 void security_input_tester::closeEvent(QCloseEvent* event) {
   m_dialog->close();
 }
 
-void security_input_tester::run_dialog() {
-  m_dialog->show();
-  add_security(m_dialog->get_security());
+void security_input_tester::showEvent(QShowEvent* event) {
+  QTimer::singleShot(0, this,
+    [=] {
+      auto positioned = false;
+      while(true) {
+        m_dialog = new security_input_dialog(m_model);
+        if(!positioned) {
+          m_dialog->show();
+          move(m_dialog->geometry().topRight().x(),
+            m_dialog->geometry().topRight().y());
+          positioned = true;
+        }
+        if(m_dialog->exec() == QDialog::Accepted) {
+          addItem(QString::fromStdString(
+            Nexus::ToString(m_dialog->get_security())));
+        } else {
+          break;
+        }
+        delete m_dialog;
+      }
+      close();
+    });
 }

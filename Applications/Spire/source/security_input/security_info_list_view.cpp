@@ -1,9 +1,6 @@
 #include "spire/security_input/security_info_list_view.hpp"
 #include <QCoreApplication>
-#include <QDebug>
-#include <QFocusEvent>
 #include <QGraphicsDropShadowEffect>
-#include <QKeyEvent>
 #include <QVBoxLayout>
 #include "spire/security_input/security_info_widget.hpp"
 #include "spire/spire/dimensions.hpp"
@@ -26,12 +23,10 @@ namespace {
   }
 }
 
-security_info_list_view::security_info_list_view(QWidget* key_widget,
-    QWidget* parent)
+security_info_list_view::security_info_list_view(QWidget* parent)
     : QWidget(parent, Qt::FramelessWindowHint | Qt::Tool),
-      m_key_widget(key_widget),
-      m_current_index(-1),
-      m_hover_index(-1) {
+      m_highlighted_index(-1),
+      m_active_index(-1) {
   setAttribute(Qt::WA_ShowWithoutActivating);
   setAttribute(Qt::WA_TranslucentBackground);
   auto layout = new QVBoxLayout(this);
@@ -86,16 +81,21 @@ void security_info_list_view::set_list(const std::vector<SecurityInfo>& list) {
     delete item->widget();
     delete item;
   }
-  for(auto& security : list) {
+  m_highlighted_index = -1;
+  m_active_index = -1;
+  for(int i = 0; i != list.size(); ++i) {
+    auto& security = list[i];
     auto icon_path = QString(":/icons/%1.png").arg(
       security.m_security.GetCountry());
     auto security_widget = new security_info_widget(security, this);
+    security_widget->connect_highlighted_signal(
+      [=] (auto value) { on_highlight(i, value); });
     security_widget->connect_commit_signal(
-      [=] { commit(security.m_security); });
+      [=] { on_commit(security.m_security); });
     m_list_widget->layout()->addWidget(security_widget);
   }
-  m_current_index = -1;
   if(m_list_widget->layout()->count() == 0) {
+    setFixedHeight(0);
     return;
   }
   auto item_height = m_list_widget->layout()->itemAt(0)->widget()->height();
@@ -104,72 +104,77 @@ void security_info_list_view::set_list(const std::vector<SecurityInfo>& list) {
   setFixedHeight(h);
 }
 
-connection security_info_list_view::connect_clicked_signal(
-    const selected_signal::slot_type& slot) const {
+void security_info_list_view::activate_next() {
+  if(m_active_index == -1) {
+    update_active(m_highlighted_index + 1);
+  } else {
+    update_active(m_active_index + 1);
+  }
+}
+
+void security_info_list_view::activate_previous() {
+  if(m_active_index == 0) {
+    return;
+  } else if(m_active_index == -1) {
+    update_active(m_highlighted_index - 1);
+  } else {
+    update_active(m_active_index - 1);
+  }
+}
+
+connection security_info_list_view::connect_activate_signal(
+    const activate_signal::slot_type& slot) const {
+  return m_activate_signal.connect(slot);
+}
+
+connection security_info_list_view::connect_commit_signal(
+    const commit_signal::slot_type& slot) const {
   return m_commit_signal.connect(slot);
 }
 
-connection security_info_list_view::connect_highlighted_signal(
-    const selected_signal::slot_type& slot) const {
-  return m_highlighted_signal.connect(slot);
-}
-
-void security_info_list_view::leaveEvent(QEvent* event) {
-  m_current_index = -1;
-  m_hover_index = -1;
-}
-
-void security_info_list_view::highlight_next_item() {
-  if(m_current_index >= m_list_widget->layout()->count() - 1) {
+void security_info_list_view::update_active(int active_index) {
+  if(active_index == m_active_index || active_index < -1 ||
+      active_index >= m_list_widget->layout()->count()) {
     return;
   }
-  auto previous_widget = [&] () -> security_info_widget* {
-    if(m_current_index == -1) {
-      return nullptr;
+  if(m_highlighted_index != -1) {
+    auto highlighted_widget = static_cast<security_info_widget*>(
+      m_list_widget->layout()->itemAt(m_highlighted_index)->widget());
+    highlighted_widget->remove_highlight();
+  }
+  if(m_active_index != -1) {
+    auto active_widget = static_cast<security_info_widget*>(
+      m_list_widget->layout()->itemAt(m_active_index)->widget());
+    active_widget->remove_highlight();
+  };
+  m_active_index = active_index;
+  if(m_active_index == -1) {
+    return;
+  }
+  auto active_widget = static_cast<security_info_widget*>(
+    m_list_widget->layout()->itemAt(m_active_index)->widget());
+  active_widget->set_highlighted();
+  m_scroll_area->ensureWidgetVisible(active_widget, 0, 0);
+  m_activate_signal(active_widget->get_info().m_security);
+}
+
+void security_info_list_view::on_highlight(int index, bool is_highlighted) {
+  if(is_highlighted) {
+    if(m_active_index != -1 && m_active_index != index) {
+      auto active_widget = static_cast<security_info_widget*>(
+        m_list_widget->layout()->itemAt(m_active_index)->widget());
+      active_widget->remove_highlight();
+      m_active_index = -1;
     }
-    return static_cast<security_info_widget*>(m_list_widget->layout()->itemAt(
-      m_current_index)->widget());
-  }();
-  ++m_current_index;
-  auto current_widget = static_cast<security_info_widget*>(
-    m_list_widget->layout()->itemAt(m_current_index)->widget());
-  update_highlight(previous_widget, current_widget);
-}
-
-void security_info_list_view::highlight_previous_item() {
-  if(m_current_index <= 0) {
-    return;
+    m_highlighted_index = index;
+    auto highlighted_widget = static_cast<security_info_widget*>(
+      m_list_widget->layout()->itemAt(m_highlighted_index)->widget());
+    highlighted_widget->set_highlighted();
+  } else {
+    m_highlighted_index = m_active_index;
   }
-  auto previous_widget = static_cast<security_info_widget*>(
-    m_list_widget->layout()->itemAt(m_current_index)->widget());
-  --m_current_index;
-  auto current_widget = static_cast<security_info_widget*>(
-    m_list_widget->layout()->itemAt(m_current_index)->widget());
-  update_highlight(previous_widget, current_widget);
 }
 
-void security_info_list_view::commit(const Security& security) {
+void security_info_list_view::on_commit(const Security& security) {
   m_commit_signal(security);
-}
-
-void security_info_list_view::update_hover_index(QWidget* widget) {
-  m_hover_index = m_list_widget->layout()->indexOf(widget);
-  if(m_current_index != -1) {
-    QCoreApplication::postEvent(m_list_widget->layout()->itemAt(
-      m_current_index)->widget(), new QFocusEvent(QEvent::FocusOut));
-  }
-  m_current_index = m_hover_index;
-}
-
-void security_info_list_view::update_highlight(security_info_widget* previous,
-    security_info_widget* current) {
-  if(previous != nullptr) {
-    QCoreApplication::postEvent(previous, new QFocusEvent(QEvent::FocusOut));
-  }
-  if(current != nullptr) {
-    QCoreApplication::postEvent(current, new QFocusEvent(QEvent::FocusIn));
-    auto& security = current->get_info().m_security;
-    m_highlighted_signal(security);
-    m_scroll_area->ensureWidgetVisible(current, 0, 0);
-  }
 }

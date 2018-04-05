@@ -50,12 +50,10 @@ security_input_box::security_input_box(security_input_model& model,
     padding: %1px %2px %1px 0px;)")
     .arg(scale_height(9)).arg(scale_width(8)));
   layout->addWidget(m_icon_label);
-  m_securities = new security_info_list_view(m_security_line_edit, this);
+  m_securities = new security_info_list_view(this);
   m_securities->setFixedWidth(width());
-  m_securities->connect_clicked_signal(
-    [=] (const Security& s) { security_selected(s); });
-  m_securities->connect_highlighted_signal(
-    [=] (const Security& s) { security_highlighted(s); });
+  m_securities->connect_activate_signal([=] (auto& s) { on_activated(s); });
+  m_securities->connect_commit_signal([=] (auto& s) { on_commit(s); });
   m_securities->setVisible(false);
   window()->installEventFilter(this);
 }
@@ -70,9 +68,9 @@ bool security_input_box::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::KeyPress) {
       auto e = static_cast<QKeyEvent*>(event);
       if(e->key() == Qt::Key_Down) {
-        m_securities->highlight_next_item();
+        m_securities->activate_next();
       } else if(e->key() == Qt::Key_Up) {
-        m_securities->highlight_previous_item();
+        m_securities->activate_previous();
       }
     }
     if(event->type() == QEvent::FocusIn) {
@@ -107,17 +105,6 @@ void security_input_box::resizeEvent(QResizeEvent* event) {
   m_securities->setFixedWidth(width());
 }
 
-void security_input_box::security_selected(const Security& security) {
-  m_security_line_edit->setText(QString::fromStdString(
-    Nexus::ToString(security)));
-  m_securities->setVisible(false);
-}
-
-void security_input_box::security_highlighted(const Security& security) {
-  m_security_line_edit->setText(QString::fromStdString(
-    Nexus::ToString(security)));
-}
-
 void security_input_box::on_text_edited() {
   auto recommendations = m_model->autocomplete(
     m_security_line_edit->text().toStdString());
@@ -134,5 +121,16 @@ void security_input_box::on_text_edited() {
 }
 
 void security_input_box::enter_pressed() {
-  m_commit_signal(ParseSecurity(m_security_line_edit->text().toStdString()));
+  m_commit_signal(ParseSecurity(
+    m_security_line_edit->text().toUpper().toStdString()));
+}
+
+void security_input_box::on_activated(const Security& security) {
+  m_security_line_edit->setText(QString::fromStdString(
+    Nexus::ToString(security)));
+}
+
+void security_input_box::on_commit(const Security& security) {
+  m_security_line_edit->setText(QString::fromStdString(
+    Nexus::ToString(security)));
 }

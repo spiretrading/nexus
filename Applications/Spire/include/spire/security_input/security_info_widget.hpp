@@ -11,8 +11,13 @@ namespace spire {
   class security_info_widget : public QWidget {
     public:
 
-      //! Signals that the security represented by this widget should be
-      //! committed.
+      //! Signals whether the represented security is highlighted.
+      /*!
+        \param value true iff the security is highlighted.
+      */
+      using highlighted_signal = signal<void (bool value)>;
+
+      //! Signals that the represented security should be committed.
       using commit_signal = signal<void ()>;
 
       //! Constructs a security_info_widget.
@@ -25,21 +30,31 @@ namespace spire {
       //! Returns the security info represented.
       const Nexus::SecurityInfo& get_info() const;
 
+      //! Highlights this entry.
+      void set_highlighted();
+
+      //! Removes the highlight.
+      void remove_highlight();
+
+      //! Connects a slot to the highlighted signal.
+      boost::signals2::connection connect_highlighted_signal(
+        const highlighted_signal::slot_type& slot) const;
+
       //! Connects a slot to the commit signal.
       boost::signals2::connection connect_commit_signal(
         const commit_signal::slot_type& slot) const;
 
     protected:
       void enterEvent(QEvent* event) override;
-      void focusInEvent(QFocusEvent* event) override;
-      void focusOutEvent(QFocusEvent* event) override;
       void leaveEvent(QEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
+      mutable highlighted_signal m_highlighted_signal;
       mutable commit_signal m_commit_signal;
       Nexus::SecurityInfo m_info;
+      bool m_is_highlighted;
       QLabel* m_security_name_label;
       QLabel* m_company_name_label;
       QLabel* m_icon_label;

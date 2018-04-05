@@ -11,55 +11,53 @@ namespace spire {
   class security_info_list_view : public QWidget {
     public:
 
-      //! Signals that an item was selected.
+      //! Signals a security was activated.
       /*!
-        \param s The security that the selected widget represents.
+        \param s The activated security.
       */
-      using selected_signal = signal<void (const Nexus::Security& s)>;
+      using activate_signal = signal<void (const Nexus::Security& s)>;
 
-      //! Constructs a security_info_list_view with an empty list.
+      //! Signals a security was committed.
       /*!
-        \param key_widget Widget that security_info_listview will receive
-               key events from.
-        \param parent The parent to the security_info_list_view.
+        \param s The committed security.
       */
-      security_info_list_view(QWidget* key_widget, QWidget* parent = nullptr);
+      using commit_signal = signal<void (const Nexus::Security& s)>;
 
-      //! Sets the displayed list.
+      //! Constructs a security info list view with an empty list.
       /*!
-        \param list The list of securities to display.
+        \param parent The parent widget.
       */
+      security_info_list_view(QWidget* parent = nullptr);
+
+      //! Sets the list of securities to display.
       void set_list(const std::vector<Nexus::SecurityInfo>& list);
 
-      //! Highlights the first/next item in the list.
-      void highlight_next_item();
+      //! Activates the next item in the list.
+      void activate_next();
 
-      //! Highlights the last/previous item in the list.
-      void highlight_previous_item();
+      //! Activates the previous item in the list.
+      void activate_previous();
 
-      //! Connects a slot to the clicked signal.
-      boost::signals2::connection connect_clicked_signal(
-        const selected_signal::slot_type& slot) const;
+      //! Connects a slot to the activate signal.
+      boost::signals2::connection connect_activate_signal(
+        const commit_signal::slot_type& slot) const;
 
-      boost::signals2::connection connect_highlighted_signal(
-        const selected_signal::slot_type& slot) const;
-
-    protected:
-      void leaveEvent(QEvent* event) override;
+      //! Connects a slot to the commit signal.
+      boost::signals2::connection connect_commit_signal(
+        const commit_signal::slot_type& slot) const;
 
     private:
-      mutable selected_signal m_commit_signal;
-      mutable selected_signal m_highlighted_signal;
+      mutable commit_signal m_activate_signal;
+      mutable commit_signal m_commit_signal;
       QScrollArea* m_scroll_area;
       QWidget* m_list_widget;
       QWidget* m_key_widget;
-      int m_current_index;
-      int m_hover_index;
+      int m_highlighted_index;
+      int m_active_index;
 
-      void commit(const Nexus::Security& security);
-      void update_hover_index(QWidget* widget);
-      void update_highlight(security_info_widget* previous,
-        security_info_widget* current);
+      void update_active(int active_index);
+      void on_highlight(int index, bool is_highlighted);
+      void on_commit(const Nexus::Security& security);
   };
 }
 

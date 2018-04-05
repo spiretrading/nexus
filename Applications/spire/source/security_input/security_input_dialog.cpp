@@ -22,9 +22,10 @@ namespace {
   }
 }
 
-security_input_dialog::security_input_dialog(security_input_model& model)
-    : m_is_dragging(false) {
-  setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
+security_input_dialog::security_input_dialog(security_input_model& model,
+    QWidget* parent)
+    : QDialog(parent, Qt::Window | Qt::FramelessWindowHint),
+      m_is_dragging(false) {
   setAttribute(Qt::WA_TranslucentBackground);
   setWindowModality(Qt::WindowModal);
   setGraphicsEffect(make_drop_shadow_effect(this));
