@@ -21,7 +21,7 @@ security_info_widget::security_info_widget(SecurityInfo info, QWidget* parent)
     scale_height(6));
   layout->setSpacing(scale_height(3));
   auto top_line_layout = new QHBoxLayout();
-  top_line_layout->setMargin(0);
+  top_line_layout->setContentsMargins({});
   top_line_layout->setSpacing(0);
   m_security_name_label = new QLabel(QString::fromStdString(
     Nexus::ToString(m_info.m_security)), this);

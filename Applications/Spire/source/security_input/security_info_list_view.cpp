@@ -1,6 +1,7 @@
 #include "spire/security_input/security_info_list_view.hpp"
-#include <QCoreApplication>
 #include <QGraphicsDropShadowEffect>
+#include <QMoveEvent>
+#include <QResizeEvent>
 #include <QVBoxLayout>
 #include "spire/security_input/security_info_widget.hpp"
 #include "spire/spire/dimensions.hpp"
@@ -18,7 +19,7 @@ namespace {
     drop_shadow->setBlurRadius(scale_width(12));
     drop_shadow->setXOffset(0);
     drop_shadow->setYOffset(0);
-    drop_shadow->setColor(QColor(0, 0, 0, 100));
+    drop_shadow->setColor(QColor(255, 0, 0, 200));
     return drop_shadow;
   }
 }
@@ -29,23 +30,28 @@ security_info_list_view::security_info_list_view(QWidget* parent)
       m_active_index(-1) {
   setAttribute(Qt::WA_ShowWithoutActivating);
   setAttribute(Qt::WA_TranslucentBackground);
+  //installEventFilter(this);
+  //setContentsMargins(0, 0, 18, 18);
   auto layout = new QVBoxLayout(this);
-  layout->setMargin(0);
+  layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+  //layout->setContentsMargins(0, 0, 18, 18);
+  layout->setContentsMargins({});
   layout->setSpacing(0);
   m_scroll_area = new QScrollArea(this);
   m_scroll_area->setGraphicsEffect(make_drop_shadow_effect(m_scroll_area));
   m_scroll_area->setWidgetResizable(true);
-  m_scroll_area->setObjectName("security_info_list_view_scrollbar");
+  m_scroll_area->setObjectName("security_info_list_view_scrollarea");
   m_scroll_area->setFrameShape(QFrame::NoFrame);
   m_scroll_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_scroll_area->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
   m_scroll_area->setStyleSheet(QString(R"(
-    #security_info_list_view_scrollbar {
+    #security_info_list_view_scrollarea {
       background-color: #FFFFFF;
       border-bottom: 1px solid #A0A0A0;
       border-left: 1px solid #A0A0A0;
       border-right: 1px solid #A0A0A0;
       border-top: none;
+      margin: 0px %1px %1px 0px;
     }
     
     QScrollBar {
@@ -70,7 +76,7 @@ security_info_list_view::security_info_list_view(QWidget* parent)
   layout->addWidget(m_scroll_area);
   m_list_widget = new QWidget(m_scroll_area);
   auto list_layout = new QVBoxLayout(m_list_widget);
-  list_layout->setMargin(0);
+  list_layout->setContentsMargins({});
   list_layout->setSpacing(0);
   m_list_widget->setStyleSheet("background-color: #FFFFFF;");
   m_scroll_area->setWidget(m_list_widget);
@@ -130,6 +136,28 @@ connection security_info_list_view::connect_activate_signal(
 connection security_info_list_view::connect_commit_signal(
     const commit_signal::slot_type& slot) const {
   return m_commit_signal.connect(slot);
+}
+
+bool security_info_list_view::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == this) {
+    if(event->type() == QEvent::Resize) {
+      event->accept();
+      return true;
+    }
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
+void security_info_list_view::moveEvent(QMoveEvent* event) {
+
+}
+
+void security_info_list_view::resizeEvent(QResizeEvent* event) {
+  m_scroll_area->setFixedWidth(event->size().width());
+  auto shadow_size = static_cast<QGraphicsDropShadowEffect*>(
+    m_scroll_area->graphicsEffect())->blurRadius();
+  setFixedSize(event->size().width() + shadow_size,
+    event->size().height() + shadow_size);
 }
 
 void security_info_list_view::update_active(int active_index) {

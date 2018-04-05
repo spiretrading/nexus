@@ -22,7 +22,7 @@ icon_button::icon_button(QImage icon, QImage hover_icon, QImage blur_icon,
       m_blur_icon(std::move(blur_icon)) {
   setFocusPolicy(Qt::StrongFocus);
   auto layout = new QHBoxLayout(this);
-  layout->setMargin(0);
+  layout->setContentsMargins({});
   setFixedSize(m_icon.size());
   show_normal();
 }

@@ -70,9 +70,9 @@ void window::changeEvent(QEvent* event) {
     }
     if(windowState().testFlag(Qt::WindowMinimized)) {
       setGraphicsEffect(nullptr);
-      layout()->setMargin(0);
+      layout()->setContentsMargins({});
     } else if(windowState().testFlag(Qt::WindowMaximized)) {
-      layout()->setMargin(0);
+      layout()->setContentsMargins({});
     } else if(layout()->margin() == 0) {
       auto effect = static_cast<const QGraphicsDropShadowEffect*>(
         graphicsEffect());
@@ -102,6 +102,6 @@ void window::set_border_stylesheet(const QColor& color) {
 
 void window::on_maximize() {
   setGraphicsEffect(nullptr);
-  layout()->setMargin(0);
+  layout()->setContentsMargins({});
   repaint();
 }

@@ -39,7 +39,7 @@ security_info_widget::security_info_widget(const QString& security_name,
     scale_height(6));
   layout->setSpacing(scale_height(3));
   auto top_line_layout = new QHBoxLayout();
-  top_line_layout->setMargin(0);
+  top_line_layout->setContentsMargins({});
   top_line_layout->setSpacing(0);
   m_security_name_label = new QLabel(security_name, this);
   m_security_name_label->setStyleSheet(R"(
@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
   results_widget->setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
   results_widget->setFixedSize(search_widget->width(), scale_height(200));
   auto results_layout = new QHBoxLayout(results_widget);
-  results_layout->setMargin(0);
+  results_layout->setContentsMargins({});
   results_layout->setSpacing(0);
 
 
@@ -130,7 +130,7 @@ int main(int argc, char** argv) {
   results_layout->addWidget(scroller);
 
   auto inner_results_layout = new QVBoxLayout(inner_results_widget);
-  inner_results_layout->setMargin(0);
+  inner_results_layout->setContentsMargins({});
   inner_results_layout->setSpacing(0);
 
   for(int i = 0; i < 10; ++i) {

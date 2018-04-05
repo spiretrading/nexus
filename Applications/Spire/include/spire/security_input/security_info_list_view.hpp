@@ -46,6 +46,11 @@ namespace spire {
       boost::signals2::connection connect_commit_signal(
         const commit_signal::slot_type& slot) const;
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+      void moveEvent(QMoveEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
+
     private:
       mutable commit_signal m_activate_signal;
       mutable commit_signal m_commit_signal;

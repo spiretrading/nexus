@@ -48,7 +48,7 @@ security_input_dialog::security_input_dialog(security_input_model& model,
     }
   )").arg(scale_width(1)));
   auto dialog_layout = new QVBoxLayout(m_dialog);
-  dialog_layout->setMargin(0);
+  dialog_layout->setContentsMargins({});
   dialog_layout->setSpacing(scale_height(10));
   auto text_label = new QLabel(tr("Security"), this);
   text_label->setStyleSheet(QString(R"(

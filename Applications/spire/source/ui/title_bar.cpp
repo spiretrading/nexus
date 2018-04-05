@@ -27,7 +27,7 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   setFixedHeight(scale_height(26));
   setStyleSheet("background-color: #F5F5F5;");
   auto layout = new QHBoxLayout(this);
-  layout->setMargin(0);
+  layout->setContentsMargins({});
   layout->setSpacing(0);
   if(icon.isNull()) {
     m_default_icon = QImage(ICON_SIZE(), QImage::Format::Format_ARGB32);

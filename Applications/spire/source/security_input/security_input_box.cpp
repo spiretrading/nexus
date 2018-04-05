@@ -95,7 +95,7 @@ bool security_input_box::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::Move) {
       auto pos = mapToGlobal(m_security_line_edit->geometry().topLeft());
       m_securities->move(pos.x() - scale_width(1), pos.y() +
-        m_security_line_edit->height() + scale_height(1));
+        m_security_line_edit->height() + scale_width(1));
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -114,7 +114,7 @@ void security_input_box::on_text_edited() {
   } else {
     auto pos = mapToGlobal(m_security_line_edit->geometry().topLeft());
     m_securities->move(pos.x() - scale_width(1), pos.y() +
-      m_security_line_edit->height() + scale_height(1));
+      m_security_line_edit->height() + scale_width(1));
     m_securities->setVisible(true);
     m_securities->raise();
   }
