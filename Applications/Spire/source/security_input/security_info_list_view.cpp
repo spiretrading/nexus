@@ -101,7 +101,7 @@ void security_info_list_view::set_list(const std::vector<SecurityInfo>& list) {
   auto item_height = m_list_widget->layout()->itemAt(0)->widget()->height();
   auto h = std::min(MAX_VISIBLE_ITEMS, m_list_widget->layout()->count()) *
     item_height;
-  setFixedHeight(h);
+  setFixedHeight(h + scale_width(1));
 }
 
 void security_info_list_view::activate_next() {
