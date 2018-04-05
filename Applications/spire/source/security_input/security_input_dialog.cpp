@@ -59,7 +59,7 @@ security_input_dialog::security_input_dialog(security_input_model& model,
   dialog_layout->addWidget(text_label);
   m_security_input_box = new security_input_box(model, this);
   m_security_input_box->connect_commit_signal(
-    [&] (const Security& s) { set_security(s); });
+    [=] (const Security& s) { set_security(s); });
   dialog_layout->addWidget(m_security_input_box);
   layout->addWidget(m_dialog);
 }
