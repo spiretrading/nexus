@@ -249,7 +249,7 @@ GRANT SELECT ON market_data.* TO 'spireuser'@'%' IDENTIFIED BY '$mysql_password'
 exit
 "
 
-sudo -u $(logname) mysql -uroot -p$mysql_password <<< "$mysql_input"
+mysql -uroot -p$mysql_password <<< "$mysql_input"
 
 # Modify the network parameters.
 if [[ $(egrep "root soft core" < /etc/security/limits.conf | wc -c) -eq 0 ]]; then
