@@ -48,9 +48,9 @@ security_info_list_view::security_info_list_view(QWidget* parent)
   m_scroll_area->setStyleSheet(QString(R"(
     #security_info_list_view_scrollarea {
       background-color: #FFFFFF;
-      border-bottom: 1px solid #A0A0A0;
-      border-left: 1px solid #A0A0A0;
-      border-right: 1px solid #A0A0A0;
+      border-bottom: %2px solid #A0A0A0;
+      border-left: %2px solid #A0A0A0;
+      border-right: %2px solid #A0A0A0;
       border-top: none;
       margin: 0px %1px %1px 0px;
     }
@@ -73,7 +73,7 @@ security_info_list_view::security_info_list_view(QWidget* parent)
     QScrollBar::add-line:vertical {
       border: none;
       background: none;
-    })").arg(scale_height(12)));
+    })").arg(scale_height(12)).arg(scale_width(1)));
   layout->addWidget(m_scroll_area);
   m_list_widget = new QWidget(m_scroll_area);
   auto list_layout = new QVBoxLayout(m_list_widget);
