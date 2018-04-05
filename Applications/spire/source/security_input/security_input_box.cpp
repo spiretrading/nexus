@@ -16,9 +16,9 @@ security_input_box::security_input_box(security_input_model& model,
     : QWidget(parent),
       m_model(&model) {
   setFixedHeight(scale_height(30));
-  setObjectName("security_input_box_line_edit");
+  setObjectName("security_input_box");
   setStyleSheet(QString(R"(
-    #security_input_box_line_edit {
+    #security_input_box {
       border: %1px solid #C8C8C8;
     }
     :hover {
@@ -51,7 +51,6 @@ security_input_box::security_input_box(security_input_model& model,
     .arg(scale_height(9)).arg(scale_width(8)));
   layout->addWidget(m_icon_label);
   m_securities = new security_info_list_view(this);
-  m_securities->setFixedWidth(width());
   m_securities->connect_activate_signal([=] (auto& s) { on_activated(s); });
   m_securities->connect_commit_signal([=] (auto& s) { on_commit(s); });
   m_securities->setVisible(false);
@@ -75,34 +74,36 @@ bool security_input_box::eventFilter(QObject* watched, QEvent* event) {
     }
     if(event->type() == QEvent::FocusIn) {
       setStyleSheet(QString(R"(
-        #security_input_box_line_edit {
+        #security_input_box {
           border: %1px solid #4b23A0;
         }
-        #security_input_box_line_edit:hover {
+        #security_input_box:hover {
           border: %1px solid #4b23A0;
         })").arg(scale_width(1)));
     } else if(event->type() == QEvent::FocusOut) {
       setStyleSheet(QString(R"(
-        #security_input_box_line_edit {
+        #security_input_box {
           border: %1px solid #C8C8C8;
         }
-        #security_input_box_line_edit:hover {
+        #security_input_box:hover {
           border: %1px solid #4b23A0;
         })").arg(scale_width(1)));
     }
   }
   if(watched == window()) {
     if(event->type() == QEvent::Move) {
-      auto pos = mapToGlobal(m_security_line_edit->geometry().topLeft());
-      m_securities->move(pos.x() - scale_width(1), pos.y() +
-        m_security_line_edit->height() + scale_width(1));
+      move_line_edit();
     }
   }
   return QWidget::eventFilter(watched, event);
 }
 
 void security_input_box::resizeEvent(QResizeEvent* event) {
-  m_securities->setFixedWidth(width());
+  m_securities->set_width(width());
+}
+
+void security_input_box::showEvent(QShowEvent* event) {
+  m_securities->set_width(width());
 }
 
 void security_input_box::on_text_edited() {
@@ -112,12 +113,16 @@ void security_input_box::on_text_edited() {
   if(recommendations.empty()) {
     m_securities->hide();
   } else {
-    auto pos = mapToGlobal(m_security_line_edit->geometry().topLeft());
-    m_securities->move(pos.x() - scale_width(1), pos.y() +
-      m_security_line_edit->height() + scale_width(1));
+    move_line_edit();
     m_securities->setVisible(true);
     m_securities->raise();
   }
+}
+
+void security_input_box::move_line_edit() {
+  auto x_pos = static_cast<QWidget*>(parent())->mapToGlobal(geometry().bottomLeft()).x();
+  auto y_pos = static_cast<QWidget*>(parent())->mapToGlobal(frameGeometry().bottomLeft()).y();
+  m_securities->move(x_pos, y_pos + 1);
 }
 
 void security_input_box::enter_pressed() {

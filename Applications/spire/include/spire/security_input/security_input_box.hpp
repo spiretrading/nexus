@@ -33,6 +33,7 @@ namespace spire {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
       mutable commit_signal m_commit_signal;
@@ -42,6 +43,7 @@ namespace spire {
       security_info_list_view* m_securities;
 
       void on_text_edited();
+      void move_line_edit();
       void enter_pressed();
       void on_activated(const Nexus::Security& security);
       void on_commit(const Nexus::Security& security);

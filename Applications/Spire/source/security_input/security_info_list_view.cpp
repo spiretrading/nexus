@@ -13,14 +13,19 @@ using namespace spire;
 
 namespace {
   const auto MAX_VISIBLE_ITEMS = 5;
+  const auto SHADOW_WIDTH = 12;
 
   auto make_drop_shadow_effect(QWidget* w) {
     auto drop_shadow = new QGraphicsDropShadowEffect(w);
-    drop_shadow->setBlurRadius(scale_width(12));
+    drop_shadow->setBlurRadius(scale_width(SHADOW_WIDTH));
     drop_shadow->setXOffset(0);
     drop_shadow->setYOffset(0);
-    drop_shadow->setColor(QColor(255, 0, 0, 200));
+    drop_shadow->setColor(QColor(0, 0, 0, 100));
     return drop_shadow;
+  }
+
+  int get_shadow_width() {
+    return scale_width(SHADOW_WIDTH);
   }
 }
 
@@ -30,11 +35,7 @@ security_info_list_view::security_info_list_view(QWidget* parent)
       m_active_index(-1) {
   setAttribute(Qt::WA_ShowWithoutActivating);
   setAttribute(Qt::WA_TranslucentBackground);
-  //installEventFilter(this);
-  //setContentsMargins(0, 0, 18, 18);
   auto layout = new QVBoxLayout(this);
-  layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-  //layout->setContentsMargins(0, 0, 18, 18);
   layout->setContentsMargins({});
   layout->setSpacing(0);
   m_scroll_area = new QScrollArea(this);
@@ -107,7 +108,7 @@ void security_info_list_view::set_list(const std::vector<SecurityInfo>& list) {
   auto item_height = m_list_widget->layout()->itemAt(0)->widget()->height();
   auto h = std::min(MAX_VISIBLE_ITEMS, m_list_widget->layout()->count()) *
     item_height;
-  setFixedHeight(h + scale_width(1));
+  setFixedHeight(h + scale_width(1) + get_shadow_width());
 }
 
 void security_info_list_view::activate_next() {
@@ -128,6 +129,10 @@ void security_info_list_view::activate_previous() {
   }
 }
 
+void security_info_list_view::set_width(int width) {
+  setFixedWidth(width + get_shadow_width());
+}
+
 connection security_info_list_view::connect_activate_signal(
     const activate_signal::slot_type& slot) const {
   return m_activate_signal.connect(slot);
@@ -136,28 +141,6 @@ connection security_info_list_view::connect_activate_signal(
 connection security_info_list_view::connect_commit_signal(
     const commit_signal::slot_type& slot) const {
   return m_commit_signal.connect(slot);
-}
-
-bool security_info_list_view::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == this) {
-    if(event->type() == QEvent::Resize) {
-      event->accept();
-      return true;
-    }
-  }
-  return QWidget::eventFilter(watched, event);
-}
-
-void security_info_list_view::moveEvent(QMoveEvent* event) {
-
-}
-
-void security_info_list_view::resizeEvent(QResizeEvent* event) {
-  m_scroll_area->setFixedWidth(event->size().width());
-  auto shadow_size = static_cast<QGraphicsDropShadowEffect*>(
-    m_scroll_area->graphicsEffect())->blurRadius();
-  setFixedSize(event->size().width() + shadow_size,
-    event->size().height() + shadow_size);
 }
 
 void security_info_list_view::update_active(int active_index) {

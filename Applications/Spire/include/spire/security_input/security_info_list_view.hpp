@@ -38,6 +38,9 @@ namespace spire {
       //! Activates the previous item in the list.
       void activate_previous();
 
+      //! Sets the width of the list view, with an offset for the drop shadow.
+      void set_width(int width);
+
       //! Connects a slot to the activate signal.
       boost::signals2::connection connect_activate_signal(
         const commit_signal::slot_type& slot) const;
@@ -46,13 +49,8 @@ namespace spire {
       boost::signals2::connection connect_commit_signal(
         const commit_signal::slot_type& slot) const;
 
-    protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
-      void moveEvent(QMoveEvent* event) override;
-      void resizeEvent(QResizeEvent* event) override;
-
     private:
-      mutable commit_signal m_activate_signal;
+      mutable activate_signal m_activate_signal;
       mutable commit_signal m_commit_signal;
       QScrollArea* m_scroll_area;
       QWidget* m_list_widget;
