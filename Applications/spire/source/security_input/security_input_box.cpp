@@ -131,6 +131,5 @@ void security_input_box::on_activated(const Security& security) {
 }
 
 void security_input_box::on_commit(const Security& security) {
-  m_security_line_edit->setText(QString::fromStdString(
-    Nexus::ToString(security)));
+  m_commit_signal(security);
 }
