@@ -12,6 +12,7 @@ drop_shadow::drop_shadow(const QMargins& margins, QWidget* parent)
   setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_ShowWithoutActivating);
+  setBackgroundRole(QPalette::NoRole);
   m_inner_widget = new QWidget(this);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(margins);
@@ -23,7 +24,7 @@ drop_shadow::drop_shadow(const QMargins& margins, QWidget* parent)
   drop_shadow->setYOffset(0);
   drop_shadow->setColor(QColor(255, 0, 0, 200));
   m_inner_widget->setGraphicsEffect(drop_shadow);
-  //m_inner_widget->setAttribute(Qt::WA_TranslucentBackground);
+  m_inner_widget->setStyleSheet("background-color: rgba(0, 0, 0, 100);");
   parent->installEventFilter(this);
 }
 
@@ -52,6 +53,10 @@ bool drop_shadow::eventFilter(QObject* watched, QEvent* event) {
     }
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void drop_shadow::paintEvent(QPaintEvent* event) {
+  //QWidget::paintEvent(event);
 }
 
 void drop_shadow::move_to_parent() {
