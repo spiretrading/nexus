@@ -1,11 +1,12 @@
 #include "spire/ui/drop_shadow.hpp"
 #include <QEvent>
+#include <QLinearGradient>
 #include <QPainter>
 
 using namespace spire;
 
 namespace {
-  const auto shadow_size = QSize(100, 100);
+  const auto shadow_size = QSize(20, 20);
 }
 
 drop_shadow::drop_shadow(QWidget* parent)
@@ -43,10 +44,26 @@ void drop_shadow::paintEvent(QPaintEvent* event) {
     m_is_visible = true;
   }
   QPainter painter(this);
-  painter.fillRect(QRect(QPoint(0, 0), QSize(width(), shadow_size.height())),
-    Qt::red);
+  // maybe make this a member
+  auto parent_size = static_cast<QWidget*>(parent())->size();
+
+  QRect rect(QPoint(shadow_size.width(), 0),
+      QSize(parent_size.width(), shadow_size.height()));
+  // The change from full red to transparent looks kind of sudden, can either
+  // add more stops in the gradient or use a less intense shade of red, e.g.,
+  // QColor(125, 0, 0, 100)
+  QLinearGradient gradient(rect.left(), rect.bottom(), rect.left(), rect.top());
+  gradient.setColorAt(0, QColor(255, 0, 0, 100)); // alpha 100/255, roughly 40%
+  gradient.setColorAt(1, Qt::transparent);
+  painter.fillRect(rect, gradient);
   painter.fillRect(QRect(QPoint(0, shadow_size.height()),
-    QSize(shadow_size.width(), height() - 2 * shadow_size.height())), Qt::red);
+    QSize(shadow_size.width(), parent_size.height())), Qt::red);
+  painter.fillRect(QRect(
+    QPoint(shadow_size.width(), shadow_size.height() + parent_size.height()),
+    QSize(parent_size.width(), shadow_size.height())), Qt::red);
+  painter.fillRect(QRect(
+    QPoint(parent_size.width() + shadow_size.width(), shadow_size.height()),
+    QSize(shadow_size.width(), parent_size.height())), Qt::red);
   QWidget::paintEvent(event);
 }
 

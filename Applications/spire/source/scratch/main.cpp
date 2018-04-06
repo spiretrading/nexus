@@ -14,7 +14,9 @@ class test_window : public QWidget {
   public:
     test_window(QWidget* parent = nullptr)
         : QWidget(parent) {
-      setWindowFlags(Qt::Window | Qt::NoDropShadowWindowHint);
+      // The window title bar and drop shadow was the reason for the margins,
+      // so remove it
+      setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
       setBaseSize(600, 480);
       auto ds = new drop_shadow(this);
       setStyleSheet("background-color: aqua;");
