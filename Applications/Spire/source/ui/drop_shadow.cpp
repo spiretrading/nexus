@@ -1,68 +1,58 @@
 #include "spire/ui/drop_shadow.hpp"
 #include <QEvent>
-#include <QGraphicsDropShadowEffect>
-#include <QHBoxLayout>
+#include <QPainter>
 
 using namespace spire;
 
-drop_shadow::drop_shadow(const QMargins& margins, QWidget* parent)
-    : QWidget(parent),
-      m_margins(margins),
-      m_is_shown(false) {
-  setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
+namespace {
+  const auto shadow_size = QSize(100, 100);
+}
+
+drop_shadow::drop_shadow(QWidget* parent)
+    : QWidget(parent, Qt::Window | Qt::FramelessWindowHint),
+      m_is_visible(false) {
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_ShowWithoutActivating);
-  setBackgroundRole(QPalette::NoRole);
-  m_inner_widget = new QWidget(this);
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins(margins);
-  layout->setSpacing(0);
-  layout->addWidget(m_inner_widget);
-  auto drop_shadow = new QGraphicsDropShadowEffect(this);
-  drop_shadow->setBlurRadius(120);
-  drop_shadow->setXOffset(0);
-  drop_shadow->setYOffset(0);
-  drop_shadow->setColor(QColor(255, 0, 0, 200));
-  m_inner_widget->setGraphicsEffect(drop_shadow);
-  m_inner_widget->setStyleSheet("background-color: rgba(0, 0, 0, 100);");
   parent->installEventFilter(this);
 }
 
 bool drop_shadow::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == parent()) {
-    if(event->type() == QEvent::Move) {
-      move_to_parent();
-    }
-    if(event->type() == QEvent::Resize) {
-      // TODO: resize relative to frame size
-      auto parent_size = static_cast<QWidget*>(parent())->size();
-      resize(
-        parent_size.width() + m_margins.left() + m_margins.right(),
-        parent_size.height() + m_margins.top() + m_margins.bottom());
-    }
-    if(event->type() == QEvent::Paint) {
-      if(!m_is_shown) {
-        move_to_parent();
-        show();
-        m_is_shown = true;
-      }
-    }
-    if(event->type() == QEvent::WindowDeactivate) {
-      m_is_shown = false;
-      hide();
-    }
+  if(event->type() == QEvent::Move) {
+    follow_parent();
+  } else if(event->type() == QEvent::Resize) {
+    auto parent_size = static_cast<QWidget*>(
+      parent())->window()->frameGeometry().size();
+    resize(parent_size.width() + 2 * shadow_size.width(),
+      parent_size.height() + 2 * shadow_size.height());
+    follow_parent();
+  } else if(event->type() == QEvent::Show) {
+    show();
+  } else if(event->type() == QEvent::Hide) {
+    hide();
   }
   return QWidget::eventFilter(watched, event);
 }
 
-void drop_shadow::paintEvent(QPaintEvent* event) {
-  //QWidget::paintEvent(event);
+void drop_shadow::hideEvent(QHideEvent* event) {
+  m_is_visible = false;
 }
 
-void drop_shadow::move_to_parent() {
+void drop_shadow::paintEvent(QPaintEvent* event) {
+  if(!m_is_visible) {
+    follow_parent();
+    m_is_visible = true;
+  }
+  QPainter painter(this);
+  painter.fillRect(QRect(QPoint(0, 0), QSize(width(), shadow_size.height())),
+    Qt::red);
+  painter.fillRect(QRect(QPoint(0, shadow_size.height()),
+    QSize(shadow_size.width(), height() - 2 * shadow_size.height())), Qt::red);
+  QWidget::paintEvent(event);
+}
+
+void drop_shadow::follow_parent() {
   auto parent_widget = static_cast<QWidget*>(parent());
-  auto top_left = parent_widget->mapToGlobal(QPoint(0, 0));
-  auto x_pos = top_left.x();
-  auto y_pos = top_left.y();
-  move(x_pos - m_margins.left(), y_pos - m_margins.top());
+  auto top_left = parent_widget->window()->frameGeometry().topLeft();
+  move(top_left.x() - shadow_size.width(),
+    top_left.y() - shadow_size.height());
 }

@@ -16,7 +16,7 @@ class test_window : public QWidget {
         : QWidget(parent) {
       setWindowFlags(Qt::Window | Qt::NoDropShadowWindowHint);
       setBaseSize(600, 480);
-      auto ds = new drop_shadow(QMargins(0, 0, 0, 100), this);
+      auto ds = new drop_shadow(this);
       setStyleSheet("background-color: aqua;");
       auto layout = new QHBoxLayout(this);
       layout->setContentsMargins(50, 50, 50, 50);
