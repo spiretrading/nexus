@@ -19,7 +19,7 @@ class test_window : public QWidget {
       setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
       setBaseSize(600, 480);
       auto ds = new drop_shadow(this);
-      setStyleSheet("background-color: aqua;");
+      setStyleSheet("background-color: aqua; border: 1px solid #321471;");
       auto layout = new QHBoxLayout(this);
       layout->setContentsMargins(50, 50, 50, 50);
       auto widget = new QWidget(this);
