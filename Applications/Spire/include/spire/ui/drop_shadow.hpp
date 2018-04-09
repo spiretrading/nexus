@@ -12,8 +12,9 @@ namespace spire {
       //! Constructs a drop shadow.
       /*!
         \param parent The parent to add the drop shadow to.
+        \param has_top true if the top gradient is drawn.
       */
-      drop_shadow(QWidget* parent);
+      drop_shadow(QWidget* parent, bool has_top = true);
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
@@ -21,6 +22,7 @@ namespace spire {
       void paintEvent(QPaintEvent* event) override;
 
     private:
+      bool m_has_top;
       bool m_is_visible;
 
       void follow_parent();
