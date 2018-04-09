@@ -12,6 +12,12 @@ namespace spire {
       //! Constructs a drop shadow.
       /*!
         \param parent The parent to add the drop shadow to.
+      */
+      drop_shadow(QWidget* parent);
+
+      //! Constructs a drop shadow.
+      /*!
+        \param parent The parent to add the drop shadow to.
         \param has_top true if the top gradient is drawn.
       */
       drop_shadow(QWidget* parent, bool has_top = true);

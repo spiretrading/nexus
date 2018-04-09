@@ -27,6 +27,8 @@ namespace {
     QGradientStop(1, Qt::transparent)});
 }
 
+drop_shadow::drop_shadow(QWidget* parent) : drop_shadow(parent, true) {}
+
 drop_shadow::drop_shadow(QWidget* parent, bool has_top)
     : QWidget(parent, Qt::Window | Qt::FramelessWindowHint),
       m_has_top(has_top),
