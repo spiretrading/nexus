@@ -11,6 +11,20 @@ namespace {
   auto shadow_size() {
     return scale(14, 14);
   }
+  QGradientStops top_stops = QGradientStops({
+    QGradientStop(0.0, QColor(0, 0, 0, 43)),
+    QGradientStop(0.05, QColor(0, 0, 0, 15)),
+    QGradientStop(0.1, QColor(0, 0, 0, 8)),
+    QGradientStop(0.20, QColor(0, 0, 0, 4)),
+    QGradientStop(0.50, QColor(0, 0, 0, 1)),
+    QGradientStop(1, Qt::transparent)});
+  QGradientStops bottom_stops = QGradientStops({
+    QGradientStop(0.0, QColor(0, 0, 0, 43)),
+    QGradientStop(0.10, QColor(0, 0, 0, 15)),
+    QGradientStop(0.16, QColor(0, 0, 0, 8)),
+    QGradientStop(0.24, QColor(0, 0, 0, 4)),
+    QGradientStop(0.50, QColor(0, 0, 0, 1)),
+    QGradientStop(1, Qt::transparent)});
 }
 
 drop_shadow::drop_shadow(QWidget* parent)
@@ -48,50 +62,43 @@ void drop_shadow::paintEvent(QPaintEvent* event) {
     m_is_visible = true;
   }
   QPainter painter(this);
-  auto parent_size = static_cast<QWidget*>(parent())->size();
+  auto parent_size = static_cast<QWidget*>(parent())->frameGeometry().size();
   QRect top_rect(QPoint(shadow_size().width(), 0),
-      QSize(parent_size.width(), shadow_size().height()));
-  QGradientStops stops = QGradientStops({
-    QGradientStop(0.0, QColor(0, 0, 0, 43)),
-    QGradientStop(0.05, QColor(0, 0, 0, 15)),
-    QGradientStop(0.1, QColor(0, 0, 0, 8)),
-    QGradientStop(0.20, QColor(0, 0, 0, 4)),
-    QGradientStop(0.50, QColor(0, 0, 0, 1)),
-    QGradientStop(1, Qt::transparent)});
+    QSize(parent_size.width(), shadow_size().height()));
   QLinearGradient top_gradient(top_rect.left(), top_rect.bottom(),
     top_rect.left(), top_rect.top());
-  top_gradient.setStops(stops);
+  top_gradient.setStops(top_stops);
   painter.fillRect(top_rect, top_gradient);
   QRect right_rect(QPoint(
-        shadow_size().width() + parent_size.width(), shadow_size().height()),
-      QSize(shadow_size().width(), parent_size.height()));
+    shadow_size().width() + parent_size.width(), shadow_size().height()),
+    QSize(shadow_size().width(), parent_size.height()));
   QLinearGradient right_gradient(right_rect.x(), right_rect.y(),
     right_rect.x() + right_rect.width(), right_rect.y());
-  right_gradient.setStops(stops);
+  right_gradient.setStops(bottom_stops);
   painter.fillRect(right_rect, right_gradient);
   QRect bottom_rect(QPoint(
-        shadow_size().width(), shadow_size().height() + parent_size.height()),
-      QSize(parent_size.width(), shadow_size().height()));
+    shadow_size().width(), shadow_size().height() + parent_size.height()),
+    QSize(parent_size.width(), shadow_size().height()));
   QLinearGradient bottom_gradient(bottom_rect.x(), bottom_rect.y(),
     bottom_rect.x(), bottom_rect.bottom());
-  bottom_gradient.setStops(stops);
+  bottom_gradient.setStops(bottom_stops);
   painter.fillRect(bottom_rect, bottom_gradient);
   QRect left_rect(QPoint(0, shadow_size().height()),
-      QSize(shadow_size().width(), parent_size.height()));
+    QSize(shadow_size().width(), parent_size.height()));
   QLinearGradient left_gradient(left_rect.right(), left_rect.y(),
     left_rect.x(), left_rect.y());
-  left_gradient.setStops(stops);
+  left_gradient.setStops(top_stops);
   painter.fillRect(left_rect, left_gradient);
   QRadialGradient top_left_corner(shadow_size().width(),
     shadow_size().height(), shadow_size().width(), shadow_size().width(),
     shadow_size().height());
-  top_left_corner.setStops(stops);
+  top_left_corner.setStops(top_stops);
   painter.fillRect(0, 0, shadow_size().width(), shadow_size().height(),
     top_left_corner);
   QRadialGradient top_right_corner(parent_size.width() + shadow_size().width(),
-    shadow_size().height(), shadow_size().width(), parent_size.width() + shadow_size().width(),
-    shadow_size().height());
-  top_right_corner.setStops(stops);
+    shadow_size().height(), shadow_size().width(),
+    parent_size.width() + shadow_size().width(), shadow_size().height());
+  top_right_corner.setStops(top_stops);
   painter.fillRect(parent_size.width() + shadow_size().width(), 0,
     shadow_size().width(), shadow_size().height(), top_right_corner);
   QRadialGradient bottom_right_corner(
@@ -99,14 +106,14 @@ void drop_shadow::paintEvent(QPaintEvent* event) {
     parent_size.height() + shadow_size().height(), shadow_size().width(),
     parent_size.width() + shadow_size().width(),
     parent_size.height() + shadow_size().height());
-  bottom_right_corner.setStops(stops);
+  bottom_right_corner.setStops(top_stops);
   painter.fillRect(parent_size.width() + shadow_size().width(),
     parent_size.height() + shadow_size().height(), shadow_size().width(),
     shadow_size().height(), bottom_right_corner);
   QRadialGradient bottom_left_corner(shadow_size().width(),
     parent_size.height() + shadow_size().height(), shadow_size().width(),
     shadow_size().width(), parent_size.height() + shadow_size().height());
-  bottom_left_corner.setStops(stops);
+  bottom_left_corner.setStops(top_stops);
   painter.fillRect(0, parent_size.height() + shadow_size().height(),
     shadow_size().width(), shadow_size().height(), bottom_left_corner);
   QWidget::paintEvent(event);
