@@ -7,6 +7,7 @@ using namespace spire;
 
 namespace {
   const auto shadow_size = QSize(20, 20);
+  const auto gradient_color = QColor(0, 0, 0, 100);
 }
 
 drop_shadow::drop_shadow(QWidget* parent)
@@ -44,26 +45,37 @@ void drop_shadow::paintEvent(QPaintEvent* event) {
     m_is_visible = true;
   }
   QPainter painter(this);
-  // maybe make this a member
   auto parent_size = static_cast<QWidget*>(parent())->size();
-
-  QRect rect(QPoint(shadow_size.width(), 0),
+  QRect top_rect(QPoint(shadow_size.width(), 0),
       QSize(parent_size.width(), shadow_size.height()));
-  // The change from full red to transparent looks kind of sudden, can either
-  // add more stops in the gradient or use a less intense shade of red, e.g.,
-  // QColor(125, 0, 0, 100)
-  QLinearGradient gradient(rect.left(), rect.bottom(), rect.left(), rect.top());
-  gradient.setColorAt(0, QColor(255, 0, 0, 100)); // alpha 100/255, roughly 40%
-  gradient.setColorAt(1, Qt::transparent);
-  painter.fillRect(rect, gradient);
-  painter.fillRect(QRect(QPoint(0, shadow_size.height()),
-    QSize(shadow_size.width(), parent_size.height())), Qt::red);
-  painter.fillRect(QRect(
-    QPoint(shadow_size.width(), shadow_size.height() + parent_size.height()),
-    QSize(parent_size.width(), shadow_size.height())), Qt::red);
-  painter.fillRect(QRect(
-    QPoint(parent_size.width() + shadow_size.width(), shadow_size.height()),
-    QSize(shadow_size.width(), parent_size.height())), Qt::red);
+  QLinearGradient top_gradient(top_rect.left(), top_rect.bottom(),
+    top_rect.left(), top_rect.top());
+  top_gradient.setColorAt(0, gradient_color);
+  top_gradient.setColorAt(1, Qt::transparent);
+  painter.fillRect(top_rect, top_gradient);
+  QRect right_rect(QPoint(
+        shadow_size.width() + parent_size.width(), shadow_size.height()),
+      QSize(shadow_size.width(), parent_size.height()));
+  QLinearGradient right_gradient(right_rect.x(), right_rect.y(),
+    right_rect.x() + right_rect.width(), right_rect.y());
+  right_gradient.setColorAt(0, gradient_color);
+  right_gradient.setColorAt(1, Qt::transparent);
+  painter.fillRect(right_rect, right_gradient);
+  QRect bottom_rect(QPoint(
+        shadow_size.width(), shadow_size.height() + parent_size.height()),
+      QSize(parent_size.width(), shadow_size.height()));
+  QLinearGradient bottom_gradient(bottom_rect.x(), bottom_rect.y(),
+    bottom_rect.x(), bottom_rect.bottom());
+  bottom_gradient.setColorAt(0, gradient_color);
+  bottom_gradient.setColorAt(1, Qt::transparent);
+  painter.fillRect(bottom_rect, bottom_gradient);
+  QRect left_rect(QPoint(0, shadow_size.height()),
+      QSize(shadow_size.width(), parent_size.height()));
+  QLinearGradient left_gradient(left_rect.right(), left_rect.y(),
+    left_rect.x(), left_rect.y());
+  left_gradient.setColorAt(0, gradient_color);
+  left_gradient.setColorAt(1, Qt::transparent);
+  painter.fillRect(left_rect, left_gradient);
   QWidget::paintEvent(event);
 }
 
