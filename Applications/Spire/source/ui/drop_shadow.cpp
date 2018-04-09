@@ -131,6 +131,6 @@ void drop_shadow::paintEvent(QPaintEvent* event) {
 void drop_shadow::follow_parent() {
   auto parent_widget = static_cast<QWidget*>(parent());
   auto top_left = parent_widget->window()->frameGeometry().topLeft();
-  move(top_left.x() - shadow_size().width(),
-    top_left.y() - shadow_size().height());
+  move(top_left.x() - SHADOW_SIZE().width(),
+    top_left.y() - SHADOW_SIZE().height());
 }
