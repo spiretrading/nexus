@@ -34,7 +34,6 @@ namespace spire {
       QWidget* get_body();
 
     protected:
-      void changeEvent(QEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
