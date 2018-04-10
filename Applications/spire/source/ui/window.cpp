@@ -1,6 +1,6 @@
 #include "spire/ui/window.hpp"
 #include <QVBoxLayout>
-#include <QWindowStateChangeEvent>
+#include <QEvent>
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/drop_shadow.hpp"
 #include "spire/ui/title_bar.hpp"
