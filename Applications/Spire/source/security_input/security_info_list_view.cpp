@@ -24,13 +24,13 @@ security_info_list_view::security_info_list_view(QWidget* parent)
   layout->setSpacing(0);
   m_scroll_area = new QScrollArea(this);
   m_scroll_area->setWidgetResizable(true);
-  m_scroll_area->setObjectName("security_info_list_view_scrollarea");
+  m_scroll_area->setObjectName("security_info_list_view_scroll_area");
   m_scroll_area->setFrameShape(QFrame::NoFrame);
   m_scroll_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_scroll_area->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
   auto shadow = new drop_shadow(false, this);
   m_scroll_area->setStyleSheet(QString(R"(
-    #security_info_list_view_scrollarea {
+    #security_info_list_view_scroll_area {
       background-color: #FFFFFF;
       border-bottom: %2px solid #A0A0A0;
       border-left: %2px solid #A0A0A0;
@@ -49,13 +49,13 @@ security_info_list_view::security_info_list_view(QWidget* parent)
     }
 
     QScrollBar::sub-line:vertical {
-      border: none;
       background: none;
+      border: none;
     }
 
     QScrollBar::add-line:vertical {
-      border: none;
       background: none;
+      border: none;
     })").arg(scale_height(12)).arg(scale_width(1)));
   layout->addWidget(m_scroll_area);
   m_list_widget = new QWidget(m_scroll_area);

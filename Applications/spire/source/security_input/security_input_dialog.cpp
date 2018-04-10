@@ -2,8 +2,8 @@
 #include <QLabel>
 #include <QMouseEvent>
 #include <QVBoxLayout>
-#include "spire/spire/dimensions.hpp"
 #include "spire/security_input/security_info_list_view.hpp"
+#include "spire/spire/dimensions.hpp"
 #include "spire/ui/drop_shadow.hpp"
 
 using namespace boost;
