@@ -104,11 +104,11 @@ bool security_input_box::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void security_input_box::resizeEvent(QResizeEvent* event) {
-  m_securities->set_width(width());
+  m_securities->setFixedWidth(width());
 }
 
 void security_input_box::showEvent(QShowEvent* event) {
-  m_securities->set_width(width());
+  m_securities->setFixedWidth(width());
 }
 
 void security_input_box::on_text_edited() {

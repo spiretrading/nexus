@@ -1,10 +1,10 @@
 #include "spire/security_input/security_info_list_view.hpp"
-#include <QGraphicsDropShadowEffect>
 #include <QMoveEvent>
 #include <QResizeEvent>
 #include <QVBoxLayout>
 #include "spire/security_input/security_info_widget.hpp"
 #include "spire/spire/dimensions.hpp"
+#include "spire/ui/drop_shadow.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -13,20 +13,6 @@ using namespace spire;
 
 namespace {
   const auto MAX_VISIBLE_ITEMS = 5;
-  const auto SHADOW_WIDTH = 12;
-
-  auto make_drop_shadow_effect(QWidget* w) {
-    auto drop_shadow = new QGraphicsDropShadowEffect(w);
-    drop_shadow->setBlurRadius(scale_width(SHADOW_WIDTH));
-    drop_shadow->setXOffset(0);
-    drop_shadow->setYOffset(0);
-    drop_shadow->setColor(QColor(0, 0, 0, 100));
-    return drop_shadow;
-  }
-
-  int get_shadow_width() {
-    return scale_width(SHADOW_WIDTH);
-  }
 }
 
 security_info_list_view::security_info_list_view(QWidget* parent)
@@ -39,12 +25,12 @@ security_info_list_view::security_info_list_view(QWidget* parent)
   layout->setContentsMargins({});
   layout->setSpacing(0);
   m_scroll_area = new QScrollArea(this);
-  m_scroll_area->setGraphicsEffect(make_drop_shadow_effect(m_scroll_area));
   m_scroll_area->setWidgetResizable(true);
   m_scroll_area->setObjectName("security_info_list_view_scrollarea");
   m_scroll_area->setFrameShape(QFrame::NoFrame);
   m_scroll_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_scroll_area->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+  auto shadow = new drop_shadow(false, this);
   m_scroll_area->setStyleSheet(QString(R"(
     #security_info_list_view_scrollarea {
       background-color: #FFFFFF;
@@ -52,7 +38,6 @@ security_info_list_view::security_info_list_view(QWidget* parent)
       border-left: %2px solid #A0A0A0;
       border-right: %2px solid #A0A0A0;
       border-top: none;
-      margin: 0px %1px %1px 0px;
     }
     
     QScrollBar {
@@ -108,7 +93,7 @@ void security_info_list_view::set_list(const std::vector<SecurityInfo>& list) {
   auto item_height = m_list_widget->layout()->itemAt(0)->widget()->height();
   auto h = std::min(MAX_VISIBLE_ITEMS, m_list_widget->layout()->count()) *
     item_height;
-  setFixedHeight(h + scale_width(1) + get_shadow_width());
+  setFixedHeight(h + scale_width(1));
 }
 
 void security_info_list_view::activate_next() {
@@ -127,10 +112,6 @@ void security_info_list_view::activate_previous() {
   } else {
     update_active(m_active_index - 1);
   }
-}
-
-void security_info_list_view::set_width(int width) {
-  setFixedWidth(width + get_shadow_width());
 }
 
 connection security_info_list_view::connect_activate_signal(

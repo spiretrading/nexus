@@ -38,9 +38,6 @@ namespace spire {
       //! Activates the previous item in the list.
       void activate_previous();
 
-      //! Sets the width of the list view, with an offset for the drop shadow.
-      void set_width(int width);
-
       //! Connects a slot to the activate signal.
       boost::signals2::connection connect_activate_signal(
         const commit_signal::slot_type& slot) const;
