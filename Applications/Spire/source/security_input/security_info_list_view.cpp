@@ -97,7 +97,9 @@ void security_info_list_view::set_list(const std::vector<SecurityInfo>& list) {
 }
 
 void security_info_list_view::activate_next() {
-  if(m_active_index == -1) {
+  if(m_list_widget->layout()->count() == 1) {
+    update_active(0);
+  } else if(m_active_index == -1) {
     update_active(m_highlighted_index + 1);
   } else {
     update_active(m_active_index + 1);

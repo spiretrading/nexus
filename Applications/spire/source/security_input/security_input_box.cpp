@@ -73,7 +73,6 @@ bool security_input_box::eventFilter(QObject* watched, QEvent* event) {
       }
     }
     if(event->type() == QEvent::FocusIn) {
-      repaint();
       setStyleSheet(QString(R"(
         #security_input_box {
           border: %1px solid #4b23A0;
@@ -82,7 +81,6 @@ bool security_input_box::eventFilter(QObject* watched, QEvent* event) {
           border: %1px solid #4b23A0;
         })").arg(scale_width(1)));
     } else if(event->type() == QEvent::FocusOut) {
-      repaint();
       setStyleSheet(QString(R"(
         #security_input_box {
           border: %1px solid #C8C8C8;
