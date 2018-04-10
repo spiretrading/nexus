@@ -1,22 +1,11 @@
 #include "spire/ui/window.hpp"
-#include <QGraphicsDropShadowEffect>
+#include <QEvent>
 #include <QVBoxLayout>
-#include <QWindowStateChangeEvent>
 #include "spire/spire/dimensions.hpp"
+#include "spire/ui/drop_shadow.hpp"
 #include "spire/ui/title_bar.hpp"
 
 using namespace spire;
-
-namespace {
-  auto make_drop_shadow_effect(window* w) {
-    auto drop_shadow = new QGraphicsDropShadowEffect(w);
-    drop_shadow->setBlurRadius(scale_width(12));
-    drop_shadow->setXOffset(0);
-    drop_shadow->setYOffset(0);
-    drop_shadow->setColor(QColor(0, 0, 0, 100));
-    return drop_shadow;
-  }
-}
 
 window::window(QWidget* body, QWidget* parent)
     : QWidget(parent),
@@ -25,12 +14,11 @@ window::window(QWidget* body, QWidget* parent)
     this->::QWidget::window()->windowFlags() | Qt::Window |
     Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);
   this->::QWidget::window()->setAttribute(Qt::WA_TranslucentBackground);
+  auto shadow = new drop_shadow(this);
   resize(m_body->width() + scale_width(25),
     m_body->height() + scale_height(25));
-  auto drop_shadow = make_drop_shadow_effect(this);
-  setGraphicsEffect(drop_shadow);
   auto layout = new QVBoxLayout(this);
-  layout->setMargin(drop_shadow->blurRadius());
+  layout->setContentsMargins({});
   layout->setSpacing(0);
   m_border = new QWidget(this);
   m_border->setObjectName("window_border");
@@ -57,29 +45,6 @@ void window::set_icon(const QImage& icon) {
 
 void window::set_icon(const QImage& icon, const QImage& unfocused_icon) {
   m_title_bar->set_icon(icon, unfocused_icon);
-}
-
-void window::changeEvent(QEvent* event) {
-  if(event->type() == QEvent::WindowStateChange) {
-    auto& changeEvent = *static_cast<QWindowStateChangeEvent*>(event);
-    if(!windowState().testFlag(Qt::WindowMinimized) &&
-        graphicsEffect() == nullptr) {
-      auto drop_shadow = make_drop_shadow_effect(this);
-      layout()->setMargin(drop_shadow->blurRadius());
-      setGraphicsEffect(drop_shadow);
-    }
-    if(windowState().testFlag(Qt::WindowMinimized)) {
-      setGraphicsEffect(nullptr);
-      layout()->setContentsMargins({});
-    } else if(windowState().testFlag(Qt::WindowMaximized)) {
-      layout()->setContentsMargins({});
-    } else if(layout()->margin() == 0) {
-      auto effect = static_cast<const QGraphicsDropShadowEffect*>(
-        graphicsEffect());
-      layout()->setMargin(effect->blurRadius());
-    }
-  }
-  QWidget::changeEvent(event);
 }
 
 bool window::eventFilter(QObject* watched, QEvent* event) {

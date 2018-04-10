@@ -9,6 +9,7 @@
 #include <QVBoxLayout>
 #include "spire/login/chroma_hash_widget.hpp"
 #include "spire/spire/dimensions.hpp"
+#include "spire/ui/drop_shadow.hpp"
 #include "spire/ui/flat_button.hpp"
 #include "spire/ui/icon_button.hpp"
 
@@ -21,24 +22,20 @@ login_window::login_window(const std::string& version, QWidget* parent)
       m_is_dragging(false) {
   setAttribute(Qt::WA_TranslucentBackground);
   setFixedSize(scale(396, 358));
-  auto drop_shadow = new QGraphicsDropShadowEffect(this);
-  drop_shadow->setBlurRadius(scale_width(12));
-  drop_shadow->setXOffset(0);
-  drop_shadow->setYOffset(0);
-  drop_shadow->setColor(QColor(0, 0, 0, 100));
-  setGraphicsEffect(drop_shadow);
-  auto shadow_layout = new QVBoxLayout(this);
-  shadow_layout->setMargin(drop_shadow->blurRadius());
+  auto body_layout = new QVBoxLayout(this);
+  body_layout->setMargin(0);
+  body_layout->setSpacing(0);
   m_body = new QWidget(this);
   m_body->setObjectName("login_window");
+  auto shadow = new drop_shadow(this);
   m_body->setStyleSheet(R"(
     #login_window {
       background-color: #4B23A0;
       border: 1px solid #321471;
     })");
-  auto layout = new QVBoxLayout(m_body);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
+  auto content_layout = new QVBoxLayout(m_body);
+  content_layout->setContentsMargins({});
+  content_layout->setSpacing(0);
   auto title_bar_layout = new QHBoxLayout(m_body);
   title_bar_layout->setContentsMargins({});
   title_bar_layout->setSpacing(0);
@@ -53,8 +50,8 @@ login_window::login_window(const std::string& version, QWidget* parent)
   m_exit_button->connect_clicked_signal([&] { window()->close(); });
   m_exit_button->set_hover_style("background-color: #401D8B;");
   title_bar_layout->addWidget(m_exit_button);
-  layout->addLayout(title_bar_layout);
-  layout->addStretch(30);
+  content_layout->addLayout(title_bar_layout);
+  content_layout->addStretch(30);
   auto logo_layout = new QHBoxLayout();
   logo_layout->setContentsMargins({});
   logo_layout->setSpacing(0);
@@ -67,16 +64,16 @@ login_window::login_window(const std::string& version, QWidget* parent)
   logo->start();
   logo_layout->addWidget(m_logo_widget);
   logo_layout->addStretch(1);
-  layout->addLayout(logo_layout);
-  layout->addStretch(23);
+  content_layout->addLayout(logo_layout);
+  content_layout->addStretch(23);
   m_status_label = new QLabel(this);
   m_status_label->setStyleSheet(QString(
     R"(color: #FAEB96;
        font-family: Roboto;
        font-size: %1px;
        qproperty-alignment: AlignCenter;)").arg(scale_height(12)));
-  layout->addWidget(m_status_label);
-  layout->addStretch(20);
+  content_layout->addWidget(m_status_label);
+  content_layout->addStretch(20);
   auto username_layout = new QHBoxLayout();
   username_layout->setContentsMargins({});
   username_layout->setSpacing(0);
@@ -96,8 +93,8 @@ login_window::login_window(const std::string& version, QWidget* parent)
     .arg(scale_width(10)).arg(scale_height(14)));
   username_layout->addWidget(m_username_line_edit);
   username_layout->addStretch(1);
-  layout->addLayout(username_layout);
-  layout->addStretch(15);
+  content_layout->addLayout(username_layout);
+  content_layout->addStretch(15);
   auto password_layout = new QHBoxLayout();
   password_layout->setContentsMargins({});
   password_layout->setSpacing(0);
@@ -130,8 +127,8 @@ login_window::login_window(const std::string& version, QWidget* parent)
   ch_layout->addWidget(m_chroma_hash_widget);
   password_layout->addWidget(ch_outer_widget);
   password_layout->addStretch(1);
-  layout->addLayout(password_layout);
-  layout->addStretch(30);
+  content_layout->addLayout(password_layout);
+  content_layout->addStretch(30);
   auto button_layout = new QHBoxLayout();
   button_layout->setContentsMargins({});
   button_layout->setSpacing(0);
@@ -150,9 +147,9 @@ login_window::login_window(const std::string& version, QWidget* parent)
   disable_button();
   button_layout->addWidget(m_sign_in_button);
   button_layout->addStretch(52);
-  layout->addLayout(button_layout);
-  layout->addStretch(48);
-  shadow_layout->addWidget(m_body);
+  content_layout->addLayout(button_layout);
+  content_layout->addStretch(48);
+  body_layout->addWidget(m_body);
   setTabOrder(m_username_line_edit, m_password_line_edit);
   setTabOrder(m_password_line_edit, m_sign_in_button);
   set_state(state::NONE);
