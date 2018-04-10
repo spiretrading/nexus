@@ -9,7 +9,7 @@ using namespace spire;
 chroma_hash_widget::chroma_hash_widget(QWidget* parent)
     : QWidget(parent) {
   auto layout = new QHBoxLayout(this);
-  layout->setMargin(0);
+  layout->setContentsMargins({});
   layout->setSpacing(0);
   for(auto i = 0; i < static_cast<int>(m_color_widgets.size()); ++i) {
     m_color_widgets[i] = new QWidget(this);

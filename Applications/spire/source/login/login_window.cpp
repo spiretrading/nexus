@@ -34,10 +34,10 @@ login_window::login_window(const std::string& version, QWidget* parent)
       border: 1px solid #321471;
     })");
   auto content_layout = new QVBoxLayout(m_body);
-  content_layout->setMargin(0);
+  content_layout->setContentsMargins({});
   content_layout->setSpacing(0);
   auto title_bar_layout = new QHBoxLayout(m_body);
-  title_bar_layout->setMargin(0);
+  title_bar_layout->setContentsMargins({});
   title_bar_layout->setSpacing(0);
   title_bar_layout->addStretch(1);
   auto button_size = scale(32, 26);
@@ -53,7 +53,7 @@ login_window::login_window(const std::string& version, QWidget* parent)
   content_layout->addLayout(title_bar_layout);
   content_layout->addStretch(30);
   auto logo_layout = new QHBoxLayout();
-  logo_layout->setMargin(0);
+  logo_layout->setContentsMargins({});
   logo_layout->setSpacing(0);
   logo_layout->addStretch(1);
   m_logo_widget = new QLabel(parent);
@@ -75,7 +75,7 @@ login_window::login_window(const std::string& version, QWidget* parent)
   content_layout->addWidget(m_status_label);
   content_layout->addStretch(20);
   auto username_layout = new QHBoxLayout();
-  username_layout->setMargin(0);
+  username_layout->setContentsMargins({});
   username_layout->setSpacing(0);
   username_layout->addStretch(1);
   m_username_line_edit = new QLineEdit(this);
@@ -96,7 +96,7 @@ login_window::login_window(const std::string& version, QWidget* parent)
   content_layout->addLayout(username_layout);
   content_layout->addStretch(15);
   auto password_layout = new QHBoxLayout();
-  password_layout->setMargin(0);
+  password_layout->setContentsMargins({});
   password_layout->setSpacing(0);
   password_layout->addStretch(1);
   m_password_line_edit = new QLineEdit(this);
@@ -122,7 +122,7 @@ login_window::login_window(const std::string& version, QWidget* parent)
   ch_outer_widget->setFixedSize(scale(34, 30));
   ch_outer_widget->setStyleSheet("background-color: white;");
   auto ch_layout = new QHBoxLayout(ch_outer_widget);
-  ch_layout->setMargin(0);
+  ch_layout->setContentsMargins({});
   m_chroma_hash_widget = new chroma_hash_widget(this);
   ch_layout->addWidget(m_chroma_hash_widget);
   password_layout->addWidget(ch_outer_widget);
@@ -130,7 +130,7 @@ login_window::login_window(const std::string& version, QWidget* parent)
   content_layout->addLayout(password_layout);
   content_layout->addStretch(30);
   auto button_layout = new QHBoxLayout();
-  button_layout->setMargin(0);
+  button_layout->setContentsMargins({});
   button_layout->setSpacing(0);
   button_layout->addStretch(52);
   auto build_label = new QLabel(QString(tr("Build ")) + version.c_str(), this);

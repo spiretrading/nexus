@@ -18,7 +18,7 @@ toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
   m_body = new QWidget(this);
   m_body->setFixedSize(scale(308, 72));
   auto window_layout = new QHBoxLayout(this);
-  window_layout->setMargin(0);
+  window_layout->setContentsMargins({});
   m_window = new spire::window(m_body, this);
   m_window->set_icon(imageFromSvg(":/icons/spire-icon-black.svg", scale(26, 26),
     QRect(translate(8, 8), scale(10, 10))),
@@ -27,16 +27,16 @@ toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
   window_layout->addWidget(m_window);
   m_body->setStyleSheet("background-color: #F5F5F5;");
   auto layout = new QVBoxLayout(m_body);
-  layout->setMargin(0);
+  layout->setContentsMargins({});
   layout->setSpacing(0);
   auto title_bar_layout = new QHBoxLayout();
-  title_bar_layout->setMargin(0);
+  title_bar_layout->setContentsMargins({});
   title_bar_layout->setSpacing(0);
   layout->addLayout(title_bar_layout);
   window()->setWindowTitle(tr("Spire - Signed in as ") +
     QString("Super_Long_Username_Example"));
   auto input_layout = new QVBoxLayout();
-  input_layout->setMargin(0);
+  input_layout->setContentsMargins({});
   input_layout->setSpacing(0);
   layout->addLayout(input_layout);
   auto combo_box_layout = new QHBoxLayout();

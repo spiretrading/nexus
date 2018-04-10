@@ -67,6 +67,6 @@ void window::set_border_stylesheet(const QColor& color) {
 
 void window::on_maximize() {
   setGraphicsEffect(nullptr);
-  layout()->setMargin(0);
+  layout()->setContentsMargins({});
   repaint();
 }
