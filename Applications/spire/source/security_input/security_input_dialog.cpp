@@ -51,15 +51,14 @@ void security_input_dialog::closeEvent(QCloseEvent* event) {
 }
 
 void security_input_dialog::mouseMoveEvent(QMouseEvent* event) {
-  auto e = static_cast<QMouseEvent*>(event);
   if(!m_is_dragging) {
     return;
   }
-  auto delta = e->globalPos();
+  auto delta = event->globalPos();
   delta -= m_last_mouse_pos;
   auto window_pos = window()->pos();
   window_pos += delta;
-  m_last_mouse_pos = e->globalPos();
+  m_last_mouse_pos = event->globalPos();
   window()->move(window_pos);
 }
 
@@ -72,8 +71,7 @@ void security_input_dialog::mousePressEvent(QMouseEvent* event) {
 }
 
 void security_input_dialog::mouseReleaseEvent(QMouseEvent* event) {
-  auto e = static_cast<QMouseEvent*>(event);
-  if(e->button() != Qt::LeftButton) {
+  if(event->button() != Qt::LeftButton) {
     return;
   }
   m_is_dragging = false;

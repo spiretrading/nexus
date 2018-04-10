@@ -1,6 +1,4 @@
 #include "spire/security_input/security_info_list_view.hpp"
-#include <QMoveEvent>
-#include <QResizeEvent>
 #include <QVBoxLayout>
 #include "spire/security_input/security_info_widget.hpp"
 #include "spire/spire/dimensions.hpp"

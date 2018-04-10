@@ -123,8 +123,10 @@ void security_input_box::on_text_edited() {
 }
 
 void security_input_box::move_line_edit() {
-  auto x_pos = static_cast<QWidget*>(parent())->mapToGlobal(geometry().bottomLeft()).x();
-  auto y_pos = static_cast<QWidget*>(parent())->mapToGlobal(frameGeometry().bottomLeft()).y();
+  auto x_pos = static_cast<QWidget*>(parent())->mapToGlobal(
+    geometry().bottomLeft()).x();
+  auto y_pos = static_cast<QWidget*>(parent())->mapToGlobal(
+    frameGeometry().bottomLeft()).y();
   m_securities->move(x_pos, y_pos + 1);
 }
 

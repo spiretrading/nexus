@@ -1,6 +1,5 @@
 #include "spire/security_input/security_info_widget.hpp"
 #include <QHBoxLayout>
-#include <QMouseEvent>
 #include <QVBoxLayout>
 #include "spire/spire/dimensions.hpp"
 
