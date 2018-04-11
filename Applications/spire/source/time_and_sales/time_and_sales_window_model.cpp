@@ -1,5 +1,6 @@
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
 
+using namespace Nexus;
 using namespace spire;
 
 time_and_sales_window_model::time_and_sales_window_model(
@@ -7,6 +8,10 @@ time_and_sales_window_model::time_and_sales_window_model(
     const time_and_sales_properties& properties)
     : m_model(std::move(model)) {
   set_properties(properties);
+}
+
+const Security& time_and_sales_window_model::get_security() const {
+  return m_model->get_security();
 }
 
 void time_and_sales_window_model::set_properties(

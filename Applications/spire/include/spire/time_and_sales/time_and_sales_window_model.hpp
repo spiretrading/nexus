@@ -19,6 +19,9 @@ namespace spire {
       time_and_sales_window_model(std::shared_ptr<time_and_sales_model> model,
         const time_and_sales_properties& properties);
 
+      //! Returns the security being displayed.
+      const Nexus::Security& get_security() const;
+
       //! Sets the display properties.
       void set_properties(const time_and_sales_properties& properties);
 

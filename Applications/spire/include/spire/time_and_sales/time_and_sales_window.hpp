@@ -6,6 +6,7 @@
 #include "spire/time_and_sales/time_and_sales.hpp"
 #include "spire/time_and_sales/time_and_sales_properties.hpp"
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
+#include "spire/ui/security_stack.hpp"
 
 namespace spire {
 
@@ -40,6 +41,7 @@ namespace spire {
       mutable change_security_signal m_change_security_signal;
       time_and_sales_properties m_properties;
       boost::optional<time_and_sales_window_model> m_model;
+      security_stack m_securities;
   };
 }
 
