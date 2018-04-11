@@ -1,6 +1,8 @@
 #ifndef SPIRE_TIME_AND_SALES_MODEL_HPP
 #define SPIRE_TIME_AND_SALES_MODEL_HPP
+#include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "spire/time_and_sales/time_and_sales.hpp"
+#include "spire/time_and_sales/time_and_sales_properties.hpp"
 
 namespace spire {
 
@@ -8,49 +10,48 @@ namespace spire {
   class time_and_sales_model {
     public:
 
-      //! The position of a time and sale print relative to the BBO price.
-      enum class price_range {
+      //! Stores a single time and sale entry.
+      struct entry {
 
-        //! The BBO price was not known.
-        UNKNOWN,
+        //! The time and sale.
+        Nexus::SequencedTimeAndSale m_time_and_sale;
 
-        //! The time and sale price was greater than the BBO ask.
-        ABOVE_ASK,
-
-        //! The time and sale price was equal to the BBO ask.
-        AT_ASK,
-
-        //! The time and sale price is inbetween the BBO.
-        INSIDE,
-
-        //! The time and sale price is equal to the BBO bid.
-        AT_BID,
-
-        //! The time and sale price is less than the BBO bid.
-        BELOW_BID,
+        //! The price range the entry belongs to.
+        time_and_sales_properties::price_range m_price_range;
       };
 
-      //! The available columns to display.
-      enum class columns {
+      //! Signals a new time and sale.
+      /*!
+        \param e The new time and sale.
+      */
+      using time_and_sale_signal = signal<void (const entry& e)>;
 
-        //! The time column.
-        TIME_COLUMN,
+      //! Signals a change in the volume.
+      /*!
+        \param v The updated volume.
+      */
+      using volume_signal = signal<void (Nexus::Quantity v)>;
 
-        //! The price column.
-        PRICE_COLUMN,
+      virtual ~time_and_sales_model() = default;
 
-        //! The size column.
-        SIZE_COLUMN,
+      //! Returns the security being modelled.
+      virtual const Nexus::Security& get_security() const = 0;
 
-        //! The market column.
-        MARKET_COLUMN,
+      //! Returns the current volume.
+      virtual Nexus::Quantity get_volume() const = 0;
 
-        //! The sales condition column.
-        CONDITION_COLUMN,
-      };
+      //! Connects a slot to the time and sale signal.
+      virtual boost::signals2::connection connect_time_and_sale_signal(
+        const time_and_sale_signal::slot_type& slot) const = 0;
 
-      //! The number of columns in this model.
-      static const auto COLUMN_COUNT = 5;
+      //! Connects a slot to the volume signal.
+      virtual boost::signals2::connection connect_volume_signal(
+        const volume_signal::slot_type& slot) const = 0;
+
+    protected:
+
+      //! Constructs a time and sales model.
+      time_and_sales_model() = default;
   };
 }
 
