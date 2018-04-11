@@ -27,6 +27,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     QRect(translate(8, 8), scale(10, 10))),
     imageFromSvg(":/icons/time-sale-grey.svg", scale(26, 26),
     QRect(translate(8, 8), scale(10, 10))));
+  this->window()->setWindowTitle(tr("Properties"));
   window_layout->addWidget(window);
   m_body->setStyleSheet("background-color: #F5F5F5;");
   auto layout = new QVBoxLayout(m_body);
@@ -95,7 +96,13 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   show_grid_checkbox->setFixedSize(scale(80, 16));
   auto generic_checkbox_style = QString(R"(
     QCheckBox {
+      color: black;
+      font-family: Roboto;
+      font-size: %6px;
       spacing: %1px;
+    }
+
+    QCheckBox::indicator {
       height: %2px;
       width: %3px;
     }
@@ -106,8 +113,8 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
 
     QCheckBox::indicator:hover {
       border: %4px solid #4B23A0 %5px solid #4B23A0;
-    })").arg(scale_width(4)).arg(scale_height(16)).arg(scale_width(16))
-        .arg(scale_height(1)).arg(scale_width(1));
+    })").arg(scale_width(4)).arg(scale_height(15)).arg(scale_width(15))
+        .arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12));
   show_grid_checkbox->setStyleSheet(generic_checkbox_style);
   color_settings_layout->addWidget(show_grid_checkbox);
   style_layout->addLayout(color_settings_layout);
@@ -146,7 +153,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   auto column_settings_layout = new QVBoxLayout();
   column_settings_layout->setContentsMargins(0, scale_height(20), 0,
     scale_height(20));
-  column_settings_layout->setSpacing(scale_height(10));
+  column_settings_layout->setSpacing(scale_width(10));
   auto column_label = new QLabel(tr("Column"), this);
   column_label->setFixedHeight(scale_height(14));
   column_label->setStyleSheet(section_label_style);
