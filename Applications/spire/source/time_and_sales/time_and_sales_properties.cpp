@@ -4,8 +4,9 @@ using namespace spire;
 
 time_and_sales_properties::time_and_sales_properties() {
   set_text_color(time_and_sales_model::price_range::UNKNOWN,
+    QColor(0, 0, 0));
+  set_band_color(time_and_sales_model::price_range::UNKNOWN,
     QColor(243, 243, 243));
-  set_band_color(time_and_sales_model::price_range::UNKNOWN, QColor(0, 0, 0));
   set_text_color(time_and_sales_model::price_range::ABOVE_ASK,
     QColor(196, 250, 194));
   set_band_color(time_and_sales_model::price_range::ABOVE_ASK,
