@@ -13,6 +13,12 @@ namespace spire {
       //! Signals that the button was clicked.
       using clicked_signal = signal<void ()>;
 
+      //! Constructs a flat_button without text.
+      /*!
+        \param parent The parent widget to the flat_button.
+      */
+      flat_button(QWidget* parent = nullptr);
+
       //! Constructs the flat_button.
       /*!
         \param label The label text.

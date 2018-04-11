@@ -7,6 +7,9 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace spire;
 
+flat_button::flat_button(QWidget* parent)
+  : flat_button("", parent) {}
+
 flat_button::flat_button(const QString& label, QWidget* parent)
     : QWidget(parent),
       m_clickable(true) {
