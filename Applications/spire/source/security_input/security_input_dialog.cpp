@@ -12,8 +12,8 @@ using namespace Nexus;
 using namespace spire;
 
 security_input_dialog::security_input_dialog(security_input_model& model,
-    QWidget* parent)
-    : QDialog(parent, Qt::Window | Qt::FramelessWindowHint),
+    QWidget* parent, Qt::WindowFlags flags)
+    : QDialog(parent, Qt::Window | Qt::FramelessWindowHint | flags),
       m_is_dragging(false) {
   setWindowModality(Qt::WindowModal);
   auto shadow = new drop_shadow(this);

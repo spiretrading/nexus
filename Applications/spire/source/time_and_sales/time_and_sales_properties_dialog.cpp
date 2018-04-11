@@ -1,4 +1,5 @@
 #include "spire/time_and_sales/time_and_sales_properties_dialog.hpp"
+#include "spire/spire/dimensions.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -9,6 +10,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_properties(properties) {
+  setFixedSize(scale(0, 0));
 }
 
 const time_and_sales_properties&
