@@ -1,5 +1,12 @@
 #include "spire/time_and_sales/time_and_sales_properties_dialog.hpp"
+#include <QCheckBox>
+#include <QHBoxLayout>
+#include <QListWidget>
+#include <QPushButton>
+#include <QVBoxLayout>
 #include "spire/spire/dimensions.hpp"
+#include "spire/time_and_sales/time_and_sales_model.hpp"
+#include "spire/ui/window.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -8,9 +15,215 @@ using namespace spire;
 time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     const time_and_sales_properties& properties, QWidget* parent,
     Qt::WindowFlags flags)
-    : QDialog(parent, flags),
+    : QDialog(parent, flags | Qt::Window | Qt::FramelessWindowHint |
+        Qt::WindowCloseButtonHint),
       m_properties(properties) {
-  setFixedSize(scale(0, 0));
+  m_body = new QWidget(this);
+  m_body->setFixedSize(scale(492, 312));
+  auto window_layout = new QHBoxLayout(this);
+  window_layout->setContentsMargins({});
+  auto window = new spire::window(m_body, this);
+  window->set_icon(imageFromSvg(":/icons/time-sale-black.svg", scale(26, 26),
+    QRect(translate(8, 8), scale(10, 10))),
+    imageFromSvg(":/icons/time-sale-grey.svg", scale(26, 26),
+    QRect(translate(8, 8), scale(10, 10))));
+  window_layout->addWidget(window);
+  m_body->setStyleSheet("background-color: #F5F5F5;");
+  auto layout = new QVBoxLayout(m_body);
+  layout->setContentsMargins(scale_width(8), scale_height(10), scale_width(8),
+    scale_height(8));
+  layout->setSpacing(0);
+  auto style_layout = new QHBoxLayout();
+  style_layout->setContentsMargins({});
+  style_layout->setSpacing(0);
+  auto band_list_layout = new QVBoxLayout();
+  band_list_layout->setContentsMargins({});
+  band_list_layout->setSpacing(scale_height(10));
+  auto section_label_style = QString(R"(
+    color: #4B23A0;
+    font-family: Roboto;
+    font-size: %1px;
+    font-weight: bold;)").arg(scale_height(12));
+  auto band_appearance_label = new QLabel(tr("Band Appearance"), this);
+  band_appearance_label->setFixedHeight(scale_height(14));
+  band_appearance_label->setStyleSheet(section_label_style);
+  band_list_layout->addWidget(band_appearance_label);
+  auto band_list = new QListWidget(this);
+  band_list->setFixedSize(scale(140, 120));
+  band_list->addItem(tr("Bid/Ask Unknown"));
+  band_list->addItem(tr("Trade Above Ask"));
+  band_list->addItem(tr("Trade At Ask"));
+  band_list->addItem(tr("Trade Inside"));
+  band_list->addItem(tr("Trade At Bid"));
+  band_list->addItem(tr("Trade Below Bid"));
+  band_list->setStyleSheet(R"(
+    )");
+  band_list_layout->addWidget(band_list);
+  style_layout->addLayout(band_list_layout);
+  style_layout->addStretch(10);
+  auto color_settings_layout = new QVBoxLayout();
+  color_settings_layout->setContentsMargins({});
+  color_settings_layout->setSpacing(0);
+  color_settings_layout->addStretch(24);
+  auto text_color_label = new QLabel(tr("Text Color"), this);
+  text_color_label->setFixedSize(80, 14);
+  auto generic_text_style = QString(R"(
+    color: black;
+    font-family: Roboto;
+    font-size: %1px;)").arg(scale_height(12));
+  text_color_label->setStyleSheet(generic_text_style);
+  color_settings_layout->addWidget(text_color_label);
+  color_settings_layout->addStretch(4);
+  auto text_color_button = new flat_button(this);
+  text_color_button->setFixedSize(scale(80, 20));
+  set_color_button_stylesheet(text_color_button,
+    m_properties.get_text_color(time_and_sales_model::price_range::UNKNOWN));
+  color_settings_layout->addWidget(text_color_button);
+  color_settings_layout->addStretch(10);
+  auto band_color_label = new QLabel(tr("Band Color"), this);
+  band_color_label->setFixedSize(scale(80, 14));
+  band_color_label->setStyleSheet(generic_text_style);
+  color_settings_layout->addWidget(band_color_label);
+  color_settings_layout->addStretch(4);
+  auto band_color_button = new flat_button(this);
+  band_color_button->setFixedSize(scale(80, 20));
+  set_color_button_stylesheet(band_color_button, m_properties.get_band_color(
+    time_and_sales_model::price_range::UNKNOWN));
+  color_settings_layout->addWidget(band_color_button);
+  color_settings_layout->addStretch(18);
+  auto show_grid_checkbox = new QCheckBox(tr("Show Grid"), this);
+  show_grid_checkbox->setFixedSize(scale(80, 16));
+  auto generic_checkbox_style = QString(R"(
+    QCheckBox {
+      spacing: %1px;
+      height: %2px;
+      width: %3px;
+    }
+
+    QCheckBox::indicator:unchecked {
+      border: %4px solid #C8C8C8 %5px solid #C8C8C8;
+    }
+
+    QCheckBox::indicator:hover {
+      border: %4px solid #4B23A0 %5px solid #4B23A0;
+    })").arg(scale_width(4)).arg(scale_height(16)).arg(scale_width(16))
+        .arg(scale_height(1)).arg(scale_width(1));
+  show_grid_checkbox->setStyleSheet(generic_checkbox_style);
+  color_settings_layout->addWidget(show_grid_checkbox);
+  style_layout->addLayout(color_settings_layout);
+  style_layout->addStretch(40);
+  auto font_layout = new QVBoxLayout();
+  font_layout->setContentsMargins({});
+  font_layout->setSpacing(scale_height(10));
+  auto font_label = new QLabel(tr("Font"), this);
+  font_label->setFixedSize(scale(120, 14));
+  font_label->setStyleSheet(section_label_style);
+  font_layout->addWidget(font_label);
+  m_font_preview_label = new QLabel(tr("Aa Bb Cc\n0123"), this);
+  m_font_preview_label->setFixedSize(scale(120, 84));
+  set_font_preview_stylesheet();
+  font_layout->addWidget(m_font_preview_label);
+  auto edit_font_button = new flat_button(tr("Edit Font"), this);
+  edit_font_button->setFixedSize(scale(120, 26));
+  auto generic_button_style = QString(R"(
+    QWidget {
+      background-color: #EBEBEB;
+      color: black;
+      font-family: Roboto;
+      font-size: %1px;
+      qproperty-alignment: AlignCenter;
+    }
+
+    QWidget:hover {
+      background-color: #4B23A0;
+      color: white;
+    })").arg(scale_height(12));
+  edit_font_button->setStyleSheet(generic_button_style);
+  font_layout->addWidget(edit_font_button);
+  style_layout->addLayout(font_layout);
+  style_layout->addStretch(86);
+  layout->addLayout(style_layout);
+  auto column_settings_layout = new QVBoxLayout();
+  column_settings_layout->setContentsMargins(0, scale_height(20), 0,
+    scale_height(20));
+  column_settings_layout->setSpacing(scale_height(10));
+  auto column_label = new QLabel(tr("Column"), this);
+  column_label->setFixedHeight(scale_height(14));
+  column_label->setStyleSheet(section_label_style);
+  column_settings_layout->addWidget(column_label);
+  auto column_checkbox_layout = new QHBoxLayout();
+  column_checkbox_layout->setContentsMargins({});
+  column_checkbox_layout->setSpacing(scale_width(20));
+  auto time_checkbox = new QCheckBox(tr("Time"), this);
+  time_checkbox->setStyleSheet(generic_checkbox_style);
+  column_checkbox_layout->addWidget(time_checkbox);
+  auto price_checkbox = new QCheckBox(tr("Price"), this);
+  price_checkbox->setStyleSheet(generic_checkbox_style);
+  column_checkbox_layout->addWidget(price_checkbox);
+  auto market_checkbox = new QCheckBox(tr("Market"), this);
+  market_checkbox->setStyleSheet(generic_checkbox_style);
+  column_checkbox_layout->addWidget(market_checkbox);
+  auto size_checkbox = new QCheckBox(tr("Size"), this);
+  size_checkbox->setStyleSheet(generic_checkbox_style);
+  column_checkbox_layout->addWidget(size_checkbox);
+  auto condition_checkbox = new QCheckBox(tr("Condition"), this);
+  condition_checkbox->setStyleSheet(generic_checkbox_style);
+  column_checkbox_layout->addWidget(condition_checkbox);
+  column_checkbox_layout->addStretch(1);
+  column_settings_layout->addLayout(column_checkbox_layout);
+  layout->addLayout(column_settings_layout);
+  auto buttons_layout = new QHBoxLayout();
+  buttons_layout->setContentsMargins(0, scale_height(10), 0, 0);
+  buttons_layout->setSpacing(0);
+  auto buttons_layout_1 = new QVBoxLayout();
+  buttons_layout_1->setContentsMargins({});
+  buttons_layout_1->setSpacing(scale_height(8));
+  auto save_as_default_button = new flat_button(tr("Save As Default"), this);
+  save_as_default_button->setFixedSize(scale(100, 26));
+  save_as_default_button->setStyleSheet(generic_button_style);
+  buttons_layout_1->addWidget(save_as_default_button);
+  auto load_default_button = new flat_button(tr("Load Default"), this);
+  load_default_button->setFixedSize(scale(100, 26));
+  load_default_button->setStyleSheet(generic_button_style);
+  buttons_layout_1->addWidget(load_default_button);
+  buttons_layout->addLayout(buttons_layout_1);
+  buttons_layout->addStretch(8);
+  auto buttons_layout_2 = new QVBoxLayout();
+  buttons_layout_2->setContentsMargins({});
+  buttons_layout_2->setSpacing(0);
+  buttons_layout_2->addStretch(1);
+  auto reset_default_button = new flat_button(tr("Reset Default"), this);
+  reset_default_button->setFixedSize(scale(100, 26));
+  reset_default_button->setStyleSheet(generic_button_style);
+  buttons_layout_2->addWidget(reset_default_button);
+  buttons_layout->addLayout(buttons_layout_2);
+  buttons_layout->addStretch(60);
+  auto buttons_layout_3 = new QVBoxLayout();
+  buttons_layout_3->setContentsMargins({});
+  buttons_layout_3->setSpacing(scale_height(8));
+  auto apply_to_all_button = new flat_button(tr("Apply To All"), this);
+  apply_to_all_button->setFixedSize(scale(100, 26));
+  apply_to_all_button->setStyleSheet(generic_button_style);
+  buttons_layout_3->addWidget(apply_to_all_button);
+  auto cancel_button = new flat_button(tr("Cancel"), this);
+  cancel_button->setFixedSize(scale(100, 26));
+  cancel_button->setStyleSheet(generic_button_style);
+  buttons_layout_3->addWidget(cancel_button);
+  buttons_layout->addLayout(buttons_layout_3);
+  buttons_layout->addStretch(8);
+  auto buttons_layout_4 = new QVBoxLayout();
+  buttons_layout_4->setContentsMargins({});
+  buttons_layout_4->setSpacing(scale_height(8));
+  auto apply_button = new flat_button(tr("Apply"), this);
+  apply_button->setFixedSize(scale(100, 26));
+  apply_button->setStyleSheet(generic_button_style);
+  buttons_layout_4->addWidget(apply_button);
+  auto ok_button = new flat_button(tr("OK"), this);
+  ok_button->setFixedSize(scale(100, 26));
+  ok_button->setStyleSheet(generic_button_style);
+  buttons_layout_4->addWidget(ok_button);
+  buttons_layout->addLayout(buttons_layout_4);
+  layout->addLayout(buttons_layout);
 }
 
 const time_and_sales_properties&
@@ -31,4 +244,31 @@ connection time_and_sales_properties_dialog::connect_apply_all_signal(
 connection time_and_sales_properties_dialog::connect_save_default_signal(
     const save_default_signal::slot_type& slot) const {
   return m_save_default_signal.connect(slot);
+}
+
+void time_and_sales_properties_dialog::set_color_button_stylesheet(
+    flat_button* button, const QColor& color) {
+  button->setStyleSheet(QString(R"(
+    QWidget {
+      background-color: %1;
+      border: %2 solid #C8C8C8 %3 solid #C8C8C8;
+    }
+
+    QWidget:hover {
+      border: %4 solid #4B23A0 %5 solid #4B23A0;
+    })").arg(color.name()).arg(scale_height(1)).arg(scale_width(1))
+        .arg(scale_height(1)).arg(scale_width(1)));
+}
+
+void time_and_sales_properties_dialog::set_font_preview_stylesheet() {
+  m_font_preview_label->setStyleSheet(QString(R"(
+    border: %1px solid #C8C8C8 %2px solid #C8C8C8;
+    color: black;
+    font-family: %3;
+    font-size: %4pt;
+    font-weight: %5;
+    qproperty-alignment: AlignCenter;)")
+    .arg(scale_height(1)).arg(scale_width(1))
+    .arg(m_properties.m_font.family()).arg(m_properties.m_font.pointSize())
+    .arg(m_properties.m_font.weight()));
 }
