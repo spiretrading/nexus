@@ -65,5 +65,6 @@
         <file>icons/36.png</file>
         <file>icons/124.png</file>
         <file>icons/840.png</file>
+        <file>icons/time-sale-grey.svg</file>
     </qresource>
 </RCC>
