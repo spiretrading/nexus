@@ -61,7 +61,7 @@ optional<IpAddress> spire_controller::load_ip_address() {
     config_file <<
       "---\n"
       "address: 127.0.0.1:20000\n"
-      "...";
+      "...\n";
   }
   YAML::Node config;
   try {

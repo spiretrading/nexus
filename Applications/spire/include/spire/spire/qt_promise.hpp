@@ -9,8 +9,8 @@
 
 namespace spire {
 
-  //! \brief Performs an asyncronous computation and signals the result within
-  //!        a Qt-thread in a thread-safe manner.
+  //! Performs an asyncronous computation and signals the result within a
+  //! Qt-thread in a thread-safe manner.
   class qt_promise : private boost::noncopyable {
     public:
 

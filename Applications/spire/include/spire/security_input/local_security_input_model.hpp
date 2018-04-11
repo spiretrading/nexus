@@ -6,7 +6,7 @@
 
 namespace spire {
 
-  //! \brief Implements the security input model using a local database.
+  //! Implements the security input model using a local database.
   class local_security_input_model : public security_input_model {
     public:
 

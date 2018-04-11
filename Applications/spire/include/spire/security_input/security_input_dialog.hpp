@@ -8,7 +8,7 @@
 
 namespace spire {
 
-  //! \brief Displays a security input box within a dialog window.
+  //! Displays a security input box within a dialog window.
   class security_input_dialog : public QDialog {
     public:
 

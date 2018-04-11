@@ -11,7 +11,7 @@
 
 namespace spire {
 
-  //! \brief Provides a drop-down menu with a title.
+  //! Provides a drop-down menu with a title.
   class toolbar_menu : public QPushButton {
     public:
 

@@ -8,7 +8,7 @@
 
 namespace spire {
 
-  //! \brief Displays chroma hash.
+  //! Displays chroma hash.
   class chroma_hash_widget : public QWidget {
     public:
 

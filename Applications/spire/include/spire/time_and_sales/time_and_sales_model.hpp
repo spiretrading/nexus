@@ -1,5 +1,6 @@
 #ifndef SPIRE_TIME_AND_SALES_MODEL_HPP
 #define SPIRE_TIME_AND_SALES_MODEL_HPP
+#include <boost/noncopyable.hpp>
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "spire/time_and_sales/time_and_sales.hpp"
 #include "spire/time_and_sales/time_and_sales_properties.hpp"
@@ -7,7 +8,7 @@
 namespace spire {
 
   //! Models the time and sales for a single security.
-  class time_and_sales_model {
+  class time_and_sales_model : private boost::noncopyable {
     public:
 
       //! Stores a single time and sale entry.

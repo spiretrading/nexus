@@ -7,17 +7,17 @@
 
 namespace spire {
 
-  //! \brief Models the recently closed windows that can be re-opened.
+  //! Models the recently closed windows that can be re-opened.
   class recently_closed_model : private boost::noncopyable {
     public:
 
-      //! \brief The types of windows that can be re-opened.
+      //! The types of windows that can be re-opened.
       enum class type {
         BOOK_VIEW,
         TIME_AND_SALE
       };
 
-      //! \brief Stores the details of a single recently closed window.
+      //! Stores the details of a single recently closed window.
       struct entry {
 
         //! The entry's unique id.

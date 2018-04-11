@@ -15,7 +15,7 @@
 
 namespace spire {
 
-  //! \brief Displays the login window.
+  //! Displays the login window.
   class login_window : public QWidget {
     public:
 
