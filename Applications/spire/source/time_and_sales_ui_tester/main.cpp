@@ -1,5 +1,5 @@
 #include <QApplication>
-#include "spire/time_and_sales/time_and_sales_window.hpp"
+#include "spire/time_and_sales/time_and_sales_properties_dialog.hpp"
 #include "spire/spire/resources.hpp"
 
 using namespace spire;
@@ -9,7 +9,7 @@ int main(int argc, char** argv) {
   application->setOrganizationName(QObject::tr("Eidolon Systems Ltd"));
   application->setApplicationName(QObject::tr("Time and Sales UI Tester"));
   initialize_resources();
-  time_and_sales_window window;
-  window.show();
+  time_and_sales_properties_dialog dialog((time_and_sales_properties()));
+  dialog.show();
   application->exec();
 }

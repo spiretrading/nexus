@@ -3,8 +3,9 @@
 #include "spire/spire/spire.hpp"
 
 namespace spire {
+  class time_and_sales_model;
   struct time_and_sales_properties;
-  class time_and_sales_properties_window;
+  class time_and_sales_properties_dialog;
   class time_and_sales_window;
 }
 
