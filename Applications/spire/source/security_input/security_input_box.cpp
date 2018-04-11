@@ -29,8 +29,10 @@ security_input_box::security_input_box(security_input_model& model,
   layout->setSpacing(0);
   m_security_line_edit = new QLineEdit(this);
   m_security_line_edit->installEventFilter(this);
+
+  // GCC workaround.
   connect(m_security_line_edit, &QLineEdit::returnPressed,
-    [=] { enter_pressed(); });
+    [=] { this->enter_pressed(); });
   connect(m_security_line_edit, &QLineEdit::textEdited,
     [=] { on_text_edited(); });
   m_security_line_edit->setStyleSheet(QString(R"(
@@ -51,8 +53,13 @@ security_input_box::security_input_box(security_input_model& model,
     .arg(scale_height(9)).arg(scale_width(8)));
   layout->addWidget(m_icon_label);
   m_securities = new security_info_list_view(this);
-  m_securities->connect_activate_signal([=] (auto& s) { on_activated(s); });
-  m_securities->connect_commit_signal([=] (auto& s) { on_commit(s); });
+
+  // GCC workaround.
+  m_securities->connect_activate_signal(
+    [=] (auto& s) { this->on_activated(s); });
+
+  // GCC workaround.
+  m_securities->connect_commit_signal([=] (auto& s) { this->on_commit(s); });
   m_securities->setVisible(false);
   window()->installEventFilter(this);
 }
