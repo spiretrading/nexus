@@ -3,18 +3,18 @@
 using namespace spire;
 
 time_and_sales_properties::time_and_sales_properties() {
-  set_text_color(price_range::UNKNOWN, QColor(243, 243, 243));
-  set_band_color(price_range::UNKNOWN, QColor(0, 0, 0));
-  set_text_color(price_range::ABOVE_ASK, QColor(196, 250, 194));
-  set_band_color(price_range::ABOVE_ASK, QColor(0, 119, 53));
-  set_text_color(price_range::AT_ASK, QColor(196, 250, 194));
-  set_band_color(price_range::AT_ASK, QColor(0, 119, 53));
-  set_text_color(price_range::INSIDE, QColor(243, 243, 243));
-  set_band_color(price_range::INSIDE, QColor(0, 0, 0));
-  set_text_color(price_range::AT_BID, QColor(225, 220, 220));
-  set_band_color(price_range::AT_BID, QColor(192, 0, 0));
-  set_text_color(price_range::BELOW_BID, QColor(225, 220, 220));
-  set_band_color(price_range::BELOW_BID, QColor(192, 0, 0));
+  set_text_color(price_range::UNKNOWN, QColor(0, 0, 0));
+  set_band_color(price_range::UNKNOWN, QColor(235, 235, 235));
+  set_text_color(price_range::ABOVE_ASK, QColor(0, 0, 0));
+  set_band_color(price_range::ABOVE_ASK, QColor(154, 255, 150));
+  set_text_color(price_range::AT_ASK, QColor(0, 0, 0));
+  set_band_color(price_range::AT_ASK, QColor(154, 255, 150));
+  set_text_color(price_range::INSIDE, QColor(0, 0, 0));
+  set_band_color(price_range::INSIDE, QColor(255, 255, 255));
+  set_text_color(price_range::AT_BID, QColor(0, 0, 0));
+  set_band_color(price_range::AT_BID, QColor(234, 135, 99));
+  set_text_color(price_range::BELOW_BID, QColor(0, 0, 0));
+  set_band_color(price_range::BELOW_BID, QColor(234, 135, 99));
   m_show_columns.fill(true);
   set_show_column(columns::TIME_COLUMN, false);
   set_show_column(columns::CONDITION_COLUMN, false);
