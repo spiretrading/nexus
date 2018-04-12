@@ -141,11 +141,6 @@ void title_bar::set_icon(const QImage& icon, const QImage& unfocused_icon) {
   m_icon->set_icon(m_default_icon, m_unfocused_icon);
 }
 
-connection title_bar::connect_maximize_signal(
-    const maximize_signal::slot_type& slot) const {
-  return m_maximize_signal.connect(slot);
-}
-
 bool title_bar::eventFilter(QObject* watched, QEvent* event) {
   if(watched == window()) {
     if(event->type() == QEvent::WindowDeactivate) {
@@ -214,7 +209,6 @@ void title_bar::on_minimize_button_press() {
 
 void title_bar::on_maximize_button_press() {
   if(m_maximize_button->isVisible()) {
-    m_maximize_signal();
     m_maximize_button->setVisible(false);
     m_restore_button->setVisible(true);
     window()->showMaximized();

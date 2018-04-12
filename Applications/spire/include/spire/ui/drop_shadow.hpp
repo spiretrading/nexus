@@ -28,6 +28,7 @@ namespace spire {
       void paintEvent(QPaintEvent* event) override;
 
     private:
+      QWidget* m_parent;
       bool m_has_top;
       bool m_is_visible;
 

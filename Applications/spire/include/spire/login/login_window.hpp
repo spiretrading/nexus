@@ -52,6 +52,8 @@ namespace spire {
       //! Constructs a login window in the NONE state.
       login_window(const std::string& version, QWidget* parent = nullptr);
 
+      ~login_window();
+
       //! Sets the state to display to the user.
       void set_state(state state);
 
@@ -74,6 +76,7 @@ namespace spire {
       mutable login_signal m_login_signal;
       mutable cancel_signal m_cancel_signal;
       state m_state;
+      std::unique_ptr<drop_shadow> m_shadow;
       QWidget* m_body;
       QLabel* m_logo_widget;
       QLabel* m_status_label;

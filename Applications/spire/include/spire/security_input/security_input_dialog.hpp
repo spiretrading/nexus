@@ -5,6 +5,7 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/security_input/security_input.hpp"
 #include "spire/security_input/security_input_box.hpp"
+#include "spire/ui/ui.hpp"
 
 namespace spire {
 
@@ -31,6 +32,7 @@ namespace spire {
 
     private:
       Nexus::Security m_security;
+      std::unique_ptr<drop_shadow> m_shadow;
       security_input_box* m_security_input_box;
       bool m_is_dragging;
       QPoint m_last_mouse_pos;

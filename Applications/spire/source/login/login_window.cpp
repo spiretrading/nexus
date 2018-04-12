@@ -1,11 +1,6 @@
 #include "spire/login/login_window.hpp"
-#include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
-#include <QImage>
 #include <QMovie>
-#include <QPainter>
-#include <QSize>
-#include <QtSvg/QSvgRenderer>
 #include <QVBoxLayout>
 #include "spire/login/chroma_hash_widget.hpp"
 #include "spire/spire/dimensions.hpp"
@@ -22,12 +17,12 @@ login_window::login_window(const std::string& version, QWidget* parent)
       m_is_dragging(false) {
   setAttribute(Qt::WA_TranslucentBackground);
   setFixedSize(scale(396, 358));
+  m_shadow = std::make_unique<drop_shadow>(this);
   auto body_layout = new QVBoxLayout(this);
   body_layout->setMargin(0);
   body_layout->setSpacing(0);
   m_body = new QWidget(this);
   m_body->setObjectName("login_window");
-  auto shadow = new drop_shadow(this);
   m_body->setStyleSheet(R"(
     #login_window {
       background-color: #4B23A0;
@@ -154,6 +149,8 @@ login_window::login_window(const std::string& version, QWidget* parent)
   setTabOrder(m_password_line_edit, m_sign_in_button);
   set_state(state::NONE);
 }
+
+login_window::~login_window() = default;
 
 void login_window::set_state(state s) {
   switch(s) {

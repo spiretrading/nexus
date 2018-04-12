@@ -14,7 +14,7 @@ window::window(QWidget* body, QWidget* parent)
     this->::QWidget::window()->windowFlags() | Qt::Window |
     Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);
   this->::QWidget::window()->setAttribute(Qt::WA_TranslucentBackground);
-  auto shadow = new drop_shadow(this);
+  m_shadow = std::make_unique<drop_shadow>(this);
   resize(m_body->width() + scale_width(25),
     m_body->height() + scale_height(25));
   auto layout = new QVBoxLayout(this);
@@ -31,12 +31,7 @@ window::window(QWidget* body, QWidget* parent)
   m_title_bar = new title_bar(m_border);
   border_layout->addWidget(m_title_bar);
   border_layout->addWidget(m_body);
-  m_title_bar->connect_maximize_signal([=] { on_maximize(); });
   this->::QWidget::window()->installEventFilter(this);
-}
-
-QWidget* window::get_body() {
-  return m_body;
 }
 
 void window::set_icon(const QImage& icon) {
@@ -48,12 +43,10 @@ void window::set_icon(const QImage& icon, const QImage& unfocused_icon) {
 }
 
 bool window::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == this->::QWidget::window()) {
-    if(event->type() == QEvent::WindowActivate) {
-      set_border_stylesheet("#A0A0A0");
-    } else if(event->type() == QEvent::WindowDeactivate) {
-      set_border_stylesheet("#C8C8C8");
-    }
+  if(event->type() == QEvent::WindowActivate) {
+    set_border_stylesheet("#A0A0A0");
+  } else if(event->type() == QEvent::WindowDeactivate) {
+    set_border_stylesheet("#C8C8C8");
   }
   return QWidget::eventFilter(watched, event);
 }
@@ -61,12 +54,6 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
 void window::set_border_stylesheet(const QColor& color) {
   m_border->setStyleSheet(QString(R"(
     #window_border {
-                    border: %1px solid %3 %2px solid %3;
+      border: %1px solid %3 %2px solid %3;
     })").arg(scale_height(1)).arg(scale_width(1)).arg(color.name()));
-}
-
-void window::on_maximize() {
-  setGraphicsEffect(nullptr);
-  layout()->setContentsMargins({});
-  repaint();
 }

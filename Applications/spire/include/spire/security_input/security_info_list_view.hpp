@@ -4,6 +4,7 @@
 #include <QScrollArea>
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "spire/security_input/security_input.hpp"
+#include "spire/ui/ui.hpp"
 
 namespace spire {
 
@@ -49,6 +50,7 @@ namespace spire {
     private:
       mutable activate_signal m_activate_signal;
       mutable commit_signal m_commit_signal;
+      std::unique_ptr<drop_shadow> m_shadow;
       QScrollArea* m_scroll_area;
       QWidget* m_list_widget;
       QWidget* m_key_widget;
