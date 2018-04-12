@@ -2,6 +2,7 @@
 #define SPIRE_TIME_AND_SALES_PROPERTIES_DIALOG_HPP
 #include <QDialog>
 #include <QLabel>
+#include <QListWidget>
 #include "spire/time_and_sales/time_and_sales.hpp"
 #include "spire/time_and_sales/time_and_sales_properties.hpp"
 #include "spire/ui/flat_button.hpp"
@@ -55,8 +56,10 @@ namespace spire {
       mutable save_default_signal m_save_default_signal;
       time_and_sales_properties m_properties;
       QWidget* m_body;
+      QListWidget* m_band_list;
       QLabel* m_font_preview_label;
 
+      void set_band_list_stylesheet();
       void set_color_button_stylesheet(flat_button* button,
         const QColor& color);
       void set_font_preview_stylesheet();

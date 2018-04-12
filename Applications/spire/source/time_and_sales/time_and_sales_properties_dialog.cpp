@@ -1,7 +1,7 @@
 #include "spire/time_and_sales/time_and_sales_properties_dialog.hpp"
 #include <QCheckBox>
 #include <QHBoxLayout>
-#include <QListWidget>
+#include <QListWidgetItem>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include "spire/spire/dimensions.hpp"
@@ -49,17 +49,43 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   band_appearance_label->setFixedHeight(scale_height(14));
   band_appearance_label->setStyleSheet(section_label_style);
   band_list_layout->addWidget(band_appearance_label);
-  auto band_list = new QListWidget(this);
-  band_list->setFixedSize(scale(140, 120));
-  band_list->addItem(tr("Bid/Ask Unknown"));
-  band_list->addItem(tr("Trade Above Ask"));
-  band_list->addItem(tr("Trade At Ask"));
-  band_list->addItem(tr("Trade Inside"));
-  band_list->addItem(tr("Trade At Bid"));
-  band_list->addItem(tr("Trade Below Bid"));
-  band_list->setStyleSheet(R"(
-    )");
-  band_list_layout->addWidget(band_list);
+  m_band_list = new QListWidget(this);
+  m_band_list->setFixedSize(scale(140, 120));
+  auto band_unknown_item = new QListWidgetItem(m_band_list);
+  auto band_unknown = new QLabel(tr("Bid/Ask Unknown"), m_band_list);
+  band_unknown->setFixedSize(50, 10);
+  band_unknown->setObjectName("ts_properties_band_unknown");
+  m_band_list->addItem(band_unknown_item);
+  m_band_list->setItemWidget(band_unknown_item, band_unknown);
+  m_band_list->addItem(tr("Trade Above Ask"));
+  m_band_list->addItem(tr("Trade At Ask"));
+  m_band_list->addItem(tr("Trade Inside"));
+  m_band_list->addItem(tr("Trade At Bid"));
+  m_band_list->addItem(tr("Trade Below Bid"));
+  m_band_list->setStyleSheet(QString(R"(
+    QListWidget {
+      border: %1px solid #C8C8C8 %2px solid #C8C8C8;
+      padding: %3px %4px 0px %4px;
+      outline: none;
+    }
+
+    /* items need a background color for padding to work */
+    QListWidget::item {
+      color: black;
+      font-family: Roboto;
+      font-size: %5px;
+      height: %6px;
+      padding-left: %7px;
+    }
+
+    QListWidget::item:focus {
+      border: %1px solid #191919 %2px solid #191919;
+      padding-left: %8px;
+    })").arg(scale_height(1)).arg(scale_width(1))
+        .arg(scale_height(4)).arg(scale_width(4))
+        .arg(scale_height(11)).arg(scale_height(16))
+        .arg(scale_width(8)).arg(scale_width(8) - scale_width(1)));
+  band_list_layout->addWidget(m_band_list);
   style_layout->addLayout(band_list_layout);
   style_layout->addStretch(10);
   auto color_settings_layout = new QVBoxLayout();
@@ -78,7 +104,8 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   auto text_color_button = new flat_button(this);
   text_color_button->setFixedSize(scale(80, 20));
   set_color_button_stylesheet(text_color_button,
-    m_properties.get_text_color(time_and_sales_model::price_range::UNKNOWN));
+    m_properties.get_text_color(
+    time_and_sales_properties::price_range::UNKNOWN));
   color_settings_layout->addWidget(text_color_button);
   color_settings_layout->addStretch(10);
   auto band_color_label = new QLabel(tr("Band Color"), this);
@@ -89,7 +116,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   auto band_color_button = new flat_button(this);
   band_color_button->setFixedSize(scale(80, 20));
   set_color_button_stylesheet(band_color_button, m_properties.get_band_color(
-    time_and_sales_model::price_range::UNKNOWN));
+    time_and_sales_properties::price_range::UNKNOWN));
   color_settings_layout->addWidget(band_color_button);
   color_settings_layout->addStretch(18);
   auto show_grid_checkbox = new QCheckBox(tr("Show Grid"), this);
@@ -105,6 +132,11 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     QCheckBox::indicator {
       height: %2px;
       width: %3px;
+    }
+
+    QCheckBox::indicator:checked {
+      border: %4px solid #C8C8C8 %5px solid #C8C8C8;
+      image: url(:/icons/check.svg);
     }
 
     QCheckBox::indicator:unchecked {
@@ -251,6 +283,10 @@ connection time_and_sales_properties_dialog::connect_apply_all_signal(
 connection time_and_sales_properties_dialog::connect_save_default_signal(
     const save_default_signal::slot_type& slot) const {
   return m_save_default_signal.connect(slot);
+}
+
+void time_and_sales_properties_dialog::set_band_list_stylesheet() {
+
 }
 
 void time_and_sales_properties_dialog::set_color_button_stylesheet(
