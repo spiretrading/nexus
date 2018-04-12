@@ -1,5 +1,6 @@
 #ifndef SPIRE_TIME_AND_SALES_PROPERTIES_DIALOG_HPP
 #define SPIRE_TIME_AND_SALES_PROPERTIES_DIALOG_HPP
+#include <QCheckBox>
 #include <QDialog>
 #include <QLabel>
 #include <QListWidget>
@@ -57,14 +58,25 @@ namespace spire {
       time_and_sales_properties m_properties;
       QWidget* m_body;
       QListWidget* m_band_list;
+      flat_button* m_band_color_button;
+      flat_button* m_text_color_button;
       QLabel* m_font_preview_label;
+      QCheckBox* m_show_grid_checkbox;
+      QCheckBox* m_time_checkbox;
+      QCheckBox* m_price_checkbox;
+      QCheckBox* m_market_checkbox;
+      QCheckBox* m_size_checkbox;
+      QCheckBox* m_condition_checkbox;
 
-      void set_band_list_stylesheet();
+      void set_band_color();
+      void set_font();
+      void set_font_preview_stylesheet();
       void set_color_button_stylesheet(flat_button* button,
         const QColor& color);
       void set_color_settings_stylesheet(int band_index);
       void set_font_preview_stylesheet();
       void set_properties(const time_and_sales_properties& properties);
+      void set_text_color();
   };
 }
 

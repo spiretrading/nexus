@@ -1,5 +1,6 @@
 #include "spire/time_and_sales/time_and_sales_properties_dialog.hpp"
 #include <QCheckBox>
+#include <QColorDialog>
 #include <QHBoxLayout>
 #include <QListWidgetItem>
 #include <QPushButton>
@@ -7,14 +8,6 @@
 #include "spire/spire/dimensions.hpp"
 #include "spire/time_and_sales/time_and_sales_model.hpp"
 #include "spire/ui/window.hpp"
-
-
-
-#include <QDebug>
-
-
-
-
 
 using namespace boost;
 using namespace boost::signals2;
@@ -57,6 +50,8 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   band_appearance_label->setStyleSheet(section_label_style);
   band_list_layout->addWidget(band_appearance_label);
   m_band_list = new QListWidget(this);
+  connect(m_band_list, &QListWidget::currentRowChanged,
+    [=] (auto index) { set_color_settings_stylesheet(index); });
   m_band_list->setFixedSize(scale(140, 120));
   auto band_unknown_item = new QListWidgetItem(tr("Bid/Ask Unknown"),
     m_band_list);
@@ -83,8 +78,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
       height: %6px;
     })").arg(scale_height(1)).arg(scale_width(1))
         .arg(scale_height(4)).arg(scale_width(4))
-        .arg(scale_height(11)).arg(scale_height(16))
-        .arg(scale_width(8)).arg(scale_width(8) - scale_width(1)));
+        .arg(scale_height(11)).arg(scale_height(16)));
   band_list_layout->addWidget(m_band_list);
   style_layout->addLayout(band_list_layout);
   style_layout->addStretch(10);
@@ -101,31 +95,36 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   text_color_label->setStyleSheet(generic_text_style);
   color_settings_layout->addWidget(text_color_label);
   color_settings_layout->addStretch(4);
-  auto text_color_button = new flat_button(this);
-  text_color_button->setFixedSize(scale(80, 20));
-  set_color_button_stylesheet(text_color_button,
+  m_text_color_button = new flat_button(this);
+  m_text_color_button->connect_clicked_signal(
+    [=] { set_text_color(); });
+  m_text_color_button->setFixedSize(scale(80, 20));
+  set_color_button_stylesheet(m_text_color_button,
     properties.get_text_color(
     time_and_sales_properties::price_range::UNKNOWN));
-  color_settings_layout->addWidget(text_color_button);
+  color_settings_layout->addWidget(m_text_color_button);
   color_settings_layout->addStretch(10);
   auto band_color_label = new QLabel(tr("Band Color"), this);
   band_color_label->setFixedSize(scale(80, 14));
   band_color_label->setStyleSheet(generic_text_style);
   color_settings_layout->addWidget(band_color_label);
   color_settings_layout->addStretch(4);
-  auto band_color_button = new flat_button(this);
-  band_color_button->setFixedSize(scale(80, 20));
-  set_color_button_stylesheet(band_color_button, properties.get_band_color(
+  m_band_color_button = new flat_button(this);
+  m_band_color_button->connect_clicked_signal(
+    [=] { set_band_color(); });
+  m_band_color_button->setFixedSize(scale(80, 20));
+  set_color_button_stylesheet(m_band_color_button, properties.get_band_color(
     time_and_sales_properties::price_range::UNKNOWN));
-  color_settings_layout->addWidget(band_color_button);
+  color_settings_layout->addWidget(m_band_color_button);
   color_settings_layout->addStretch(18);
-  auto show_grid_checkbox = new QCheckBox(tr("Show Grid"), this);
-  show_grid_checkbox->setFixedSize(scale(80, 16));
+  m_show_grid_checkbox = new QCheckBox(tr("Show Grid"), this);
+  m_show_grid_checkbox->setFixedSize(scale(80, 16));
   auto generic_checkbox_style = QString(R"(
     QCheckBox {
       color: black;
       font-family: Roboto;
       font-size: %6px;
+      outline: none;
       spacing: %1px;
     }
 
@@ -147,8 +146,8 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
       border: %4px solid #4B23A0 %5px solid #4B23A0;
     })").arg(scale_width(4)).arg(scale_height(15)).arg(scale_width(15))
         .arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12));
-  show_grid_checkbox->setStyleSheet(generic_checkbox_style);
-  color_settings_layout->addWidget(show_grid_checkbox);
+  m_show_grid_checkbox->setStyleSheet(generic_checkbox_style);
+  color_settings_layout->addWidget(m_show_grid_checkbox);
   style_layout->addLayout(color_settings_layout);
   style_layout->addStretch(40);
   auto font_layout = new QVBoxLayout();
@@ -193,21 +192,21 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   auto column_checkbox_layout = new QHBoxLayout();
   column_checkbox_layout->setContentsMargins({});
   column_checkbox_layout->setSpacing(scale_width(20));
-  auto time_checkbox = new QCheckBox(tr("Time"), this);
-  time_checkbox->setStyleSheet(generic_checkbox_style);
-  column_checkbox_layout->addWidget(time_checkbox);
-  auto price_checkbox = new QCheckBox(tr("Price"), this);
-  price_checkbox->setStyleSheet(generic_checkbox_style);
-  column_checkbox_layout->addWidget(price_checkbox);
-  auto market_checkbox = new QCheckBox(tr("Market"), this);
-  market_checkbox->setStyleSheet(generic_checkbox_style);
-  column_checkbox_layout->addWidget(market_checkbox);
-  auto size_checkbox = new QCheckBox(tr("Size"), this);
-  size_checkbox->setStyleSheet(generic_checkbox_style);
-  column_checkbox_layout->addWidget(size_checkbox);
-  auto condition_checkbox = new QCheckBox(tr("Condition"), this);
-  condition_checkbox->setStyleSheet(generic_checkbox_style);
-  column_checkbox_layout->addWidget(condition_checkbox);
+  m_time_checkbox = new QCheckBox(tr("Time"), this);
+  m_time_checkbox->setStyleSheet(generic_checkbox_style);
+  column_checkbox_layout->addWidget(m_time_checkbox);
+  m_price_checkbox = new QCheckBox(tr("Price"), this);
+  m_price_checkbox->setStyleSheet(generic_checkbox_style);
+  column_checkbox_layout->addWidget(m_price_checkbox);
+  m_market_checkbox = new QCheckBox(tr("Market"), this);
+  m_market_checkbox->setStyleSheet(generic_checkbox_style);
+  column_checkbox_layout->addWidget(m_market_checkbox);
+  m_size_checkbox = new QCheckBox(tr("Size"), this);
+  m_size_checkbox->setStyleSheet(generic_checkbox_style);
+  column_checkbox_layout->addWidget(m_size_checkbox);
+  m_condition_checkbox = new QCheckBox(tr("Condition"), this);
+  m_condition_checkbox->setStyleSheet(generic_checkbox_style);
+  column_checkbox_layout->addWidget(m_condition_checkbox);
   column_checkbox_layout->addStretch(1);
   column_settings_layout->addLayout(column_checkbox_layout);
   layout->addLayout(column_settings_layout);
@@ -233,6 +232,8 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   buttons_layout_2->addStretch(1);
   auto reset_default_button = new flat_button(tr("Reset Default"), this);
   reset_default_button->setFixedSize(scale(100, 26));
+  reset_default_button->connect_clicked_signal(
+    [=] { set_properties(time_and_sales_properties()); });
   reset_default_button->setStyleSheet(generic_button_style);
   buttons_layout_2->addWidget(reset_default_button);
   buttons_layout->addLayout(buttons_layout_2);
@@ -241,6 +242,8 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   buttons_layout_3->setContentsMargins({});
   buttons_layout_3->setSpacing(scale_height(8));
   auto apply_to_all_button = new flat_button(tr("Apply To All"), this);
+  apply_to_all_button->connect_clicked_signal(
+    [=] { m_apply_all_signal(m_properties); });
   apply_to_all_button->setFixedSize(scale(100, 26));
   apply_to_all_button->setStyleSheet(generic_button_style);
   buttons_layout_3->addWidget(apply_to_all_button);
@@ -254,6 +257,8 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   buttons_layout_4->setContentsMargins({});
   buttons_layout_4->setSpacing(scale_height(8));
   auto apply_button = new flat_button(tr("Apply"), this);
+  apply_button->connect_clicked_signal(
+    [=] { m_apply_signal(m_properties); });
   apply_button->setFixedSize(scale(100, 26));
   apply_button->setStyleSheet(generic_button_style);
   buttons_layout_4->addWidget(apply_button);
@@ -286,8 +291,31 @@ connection time_and_sales_properties_dialog::connect_save_default_signal(
   return m_save_default_signal.connect(slot);
 }
 
-void time_and_sales_properties_dialog::set_band_list_stylesheet() {
+void time_and_sales_properties_dialog::set_band_color() {
+  auto color = QColorDialog::getColor(Qt::white);
+  auto index = m_band_list->currentIndex().row();
+  auto band = static_cast<time_and_sales_properties::price_range>(index);
+  m_properties.set_band_color(band, color);
+  m_band_list->item(index)->setData(Qt::BackgroundRole, color);
+  set_color_button_stylesheet(m_band_color_button, color);
+}
 
+void time_and_sales_properties_dialog::set_font() {
+
+}
+
+void time_and_sales_properties_dialog::set_font_preview_stylesheet() {
+
+}
+
+void time_and_sales_properties_dialog::set_text_color() {
+  auto color = QColorDialog::getColor(Qt::white);
+  auto index = m_band_list->currentIndex().row();
+  auto band = static_cast<time_and_sales_properties::price_range>(index);
+  m_properties.set_text_color(band, color);
+  m_band_list->item(index)->setData(Qt::FontRole, color);
+  set_color_button_stylesheet(m_text_color_button, color);
+  set_properties(m_properties);
 }
 
 void time_and_sales_properties_dialog::set_color_button_stylesheet(
@@ -306,7 +334,11 @@ void time_and_sales_properties_dialog::set_color_button_stylesheet(
 
 void time_and_sales_properties_dialog::set_color_settings_stylesheet(
     int band_index) {
-  
+  auto i = static_cast<time_and_sales_properties::price_range>(band_index);
+  set_color_button_stylesheet(m_band_color_button,
+    m_properties.get_band_color(i));
+  set_color_button_stylesheet(m_text_color_button,
+    m_properties.get_text_color(i));
 }
 
 void time_and_sales_properties_dialog::set_font_preview_stylesheet() {
@@ -355,4 +387,15 @@ void time_and_sales_properties_dialog::set_properties(
     time_and_sales_properties::price_range::BELOW_BID));
   below_bid_item->setData(Qt::FontRole, m_properties.get_band_color(
     time_and_sales_properties::price_range::BELOW_BID));
+  m_show_grid_checkbox->setChecked(m_properties.m_show_grid);
+  m_time_checkbox->setChecked(m_properties.get_show_column(
+    time_and_sales_properties::columns::TIME_COLUMN));
+  m_price_checkbox->setChecked(m_properties.get_show_column(
+    time_and_sales_properties::columns::PRICE_COLUMN));
+  m_market_checkbox->setChecked(m_properties.get_show_column(
+    time_and_sales_properties::columns::MARKET_COLUMN));
+  m_size_checkbox->setChecked(m_properties.get_show_column(
+    time_and_sales_properties::columns::SIZE_COLUMN));
+  m_condition_checkbox->setChecked(m_properties.get_show_column(
+    time_and_sales_properties::columns::CONDITION_COLUMN));
 }
