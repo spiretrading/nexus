@@ -62,7 +62,9 @@ namespace spire {
       void set_band_list_stylesheet();
       void set_color_button_stylesheet(flat_button* button,
         const QColor& color);
+      void set_color_settings_stylesheet(int band_index);
       void set_font_preview_stylesheet();
+      void set_properties(const time_and_sales_properties& properties);
   };
 }
 

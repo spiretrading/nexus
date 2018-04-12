@@ -8,6 +8,14 @@
 #include "spire/time_and_sales/time_and_sales_model.hpp"
 #include "spire/ui/window.hpp"
 
+
+
+#include <QDebug>
+
+
+
+
+
 using namespace boost;
 using namespace boost::signals2;
 using namespace spire;
@@ -16,8 +24,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     const time_and_sales_properties& properties, QWidget* parent,
     Qt::WindowFlags flags)
     : QDialog(parent, flags | Qt::Window | Qt::FramelessWindowHint |
-        Qt::WindowCloseButtonHint),
-      m_properties(properties) {
+        Qt::WindowCloseButtonHint) {
   m_body = new QWidget(this);
   m_body->setFixedSize(scale(492, 312));
   auto window_layout = new QHBoxLayout(this);
@@ -51,17 +58,18 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   band_list_layout->addWidget(band_appearance_label);
   m_band_list = new QListWidget(this);
   m_band_list->setFixedSize(scale(140, 120));
-  auto band_unknown_item = new QListWidgetItem(m_band_list);
-  auto band_unknown = new QLabel(tr("Bid/Ask Unknown"), m_band_list);
-  band_unknown->setFixedSize(50, 10);
-  band_unknown->setObjectName("ts_properties_band_unknown");
-  m_band_list->addItem(band_unknown_item);
-  m_band_list->setItemWidget(band_unknown_item, band_unknown);
-  m_band_list->addItem(tr("Trade Above Ask"));
-  m_band_list->addItem(tr("Trade At Ask"));
-  m_band_list->addItem(tr("Trade Inside"));
-  m_band_list->addItem(tr("Trade At Bid"));
-  m_band_list->addItem(tr("Trade Below Bid"));
+  auto band_unknown_item = new QListWidgetItem(tr("Bid/Ask Unknown"),
+    m_band_list);
+  auto above_ask_item = new QListWidgetItem(tr("Trade Above Ask"),
+    m_band_list);
+  auto at_ask_item = new QListWidgetItem(tr("Trade At Ask"),
+    m_band_list);
+  auto inside_item = new QListWidgetItem(tr("Trade Inside"),
+    m_band_list);
+  auto at_bid_item = new QListWidgetItem(tr("Trade At Bid"),
+    m_band_list);
+  auto below_bid_item = new QListWidgetItem(tr("Trade Below Bid"),
+    m_band_list);
   m_band_list->setStyleSheet(QString(R"(
     QListWidget {
       border: %1px solid #C8C8C8 %2px solid #C8C8C8;
@@ -69,18 +77,10 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
       outline: none;
     }
 
-    /* items need a background color for padding to work */
     QListWidget::item {
-      color: black;
       font-family: Roboto;
       font-size: %5px;
       height: %6px;
-      padding-left: %7px;
-    }
-
-    QListWidget::item:focus {
-      border: %1px solid #191919 %2px solid #191919;
-      padding-left: %8px;
     })").arg(scale_height(1)).arg(scale_width(1))
         .arg(scale_height(4)).arg(scale_width(4))
         .arg(scale_height(11)).arg(scale_height(16))
@@ -104,7 +104,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   auto text_color_button = new flat_button(this);
   text_color_button->setFixedSize(scale(80, 20));
   set_color_button_stylesheet(text_color_button,
-    m_properties.get_text_color(
+    properties.get_text_color(
     time_and_sales_properties::price_range::UNKNOWN));
   color_settings_layout->addWidget(text_color_button);
   color_settings_layout->addStretch(10);
@@ -115,7 +115,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   color_settings_layout->addStretch(4);
   auto band_color_button = new flat_button(this);
   band_color_button->setFixedSize(scale(80, 20));
-  set_color_button_stylesheet(band_color_button, m_properties.get_band_color(
+  set_color_button_stylesheet(band_color_button, properties.get_band_color(
     time_and_sales_properties::price_range::UNKNOWN));
   color_settings_layout->addWidget(band_color_button);
   color_settings_layout->addStretch(18);
@@ -263,6 +263,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   buttons_layout_4->addWidget(ok_button);
   buttons_layout->addLayout(buttons_layout_4);
   layout->addLayout(buttons_layout);
+  set_properties(properties);
 }
 
 const time_and_sales_properties&
@@ -303,6 +304,11 @@ void time_and_sales_properties_dialog::set_color_button_stylesheet(
         .arg(scale_height(1)).arg(scale_width(1)));
 }
 
+void time_and_sales_properties_dialog::set_color_settings_stylesheet(
+    int band_index) {
+  
+}
+
 void time_and_sales_properties_dialog::set_font_preview_stylesheet() {
   m_font_preview_label->setStyleSheet(QString(R"(
     border: %1px solid #C8C8C8 %2px solid #C8C8C8;
@@ -314,4 +320,39 @@ void time_and_sales_properties_dialog::set_font_preview_stylesheet() {
     .arg(scale_height(1)).arg(scale_width(1))
     .arg(m_properties.m_font.family()).arg(m_properties.m_font.pointSize())
     .arg(m_properties.m_font.weight()));
+}
+
+void time_and_sales_properties_dialog::set_properties(
+    const time_and_sales_properties& properties) {
+  m_properties = properties;
+  auto unknown_item = m_band_list->item(0);
+  unknown_item->setData(Qt::BackgroundRole, m_properties.get_band_color(
+    time_and_sales_properties::price_range::UNKNOWN));
+  unknown_item->setData(Qt::FontRole, m_properties.get_band_color(
+    time_and_sales_properties::price_range::UNKNOWN));
+  auto above_ask_item = m_band_list->item(1);
+  above_ask_item->setData(Qt::BackgroundRole, m_properties.get_band_color(
+    time_and_sales_properties::price_range::ABOVE_ASK));
+  above_ask_item->setData(Qt::FontRole, m_properties.get_band_color(
+    time_and_sales_properties::price_range::ABOVE_ASK));
+  auto at_ask_item = m_band_list->item(2);
+  at_ask_item->setData(Qt::BackgroundRole, m_properties.get_band_color(
+    time_and_sales_properties::price_range::AT_ASK));
+  at_ask_item->setData(Qt::FontRole, m_properties.get_band_color(
+    time_and_sales_properties::price_range::AT_ASK));
+  auto inside_item = m_band_list->item(3);
+  inside_item->setData(Qt::BackgroundRole, m_properties.get_band_color(
+    time_and_sales_properties::price_range::INSIDE));
+  inside_item->setData(Qt::FontRole, m_properties.get_band_color(
+    time_and_sales_properties::price_range::INSIDE));
+  auto at_bid_item = m_band_list->item(4);
+  at_bid_item->setData(Qt::BackgroundRole, m_properties.get_band_color(
+    time_and_sales_properties::price_range::AT_BID));
+  at_bid_item->setData(Qt::FontRole, m_properties.get_band_color(
+    time_and_sales_properties::price_range::AT_BID));
+  auto below_bid_item = m_band_list->item(5);
+  below_bid_item->setData(Qt::BackgroundRole, m_properties.get_band_color(
+    time_and_sales_properties::price_range::BELOW_BID));
+  below_bid_item->setData(Qt::FontRole, m_properties.get_band_color(
+    time_and_sales_properties::price_range::BELOW_BID));
 }
