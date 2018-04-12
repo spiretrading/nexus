@@ -1,6 +1,7 @@
 #include "spire/time_and_sales/time_and_sales_properties_dialog.hpp"
 #include <QCheckBox>
 #include <QColorDialog>
+#include <QFontDialog>
 #include <QHBoxLayout>
 #include <QListWidgetItem>
 #include <QPushButton>
@@ -67,6 +68,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     m_band_list);
   m_band_list->setStyleSheet(QString(R"(
     QListWidget {
+      background-color: white;
       border: %1px solid #C8C8C8 %2px solid #C8C8C8;
       padding: %3px %4px 0px %4px;
       outline: none;
@@ -162,6 +164,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   set_font_preview_stylesheet();
   font_layout->addWidget(m_font_preview_label);
   auto edit_font_button = new flat_button(tr("Edit Font"), this);
+  edit_font_button->connect_clicked_signal([=] { set_font(); });
   edit_font_button->setFixedSize(scale(120, 26));
   auto generic_button_style = QString(R"(
     QWidget {
@@ -301,11 +304,12 @@ void time_and_sales_properties_dialog::set_band_color() {
 }
 
 void time_and_sales_properties_dialog::set_font() {
-
-}
-
-void time_and_sales_properties_dialog::set_font_preview_stylesheet() {
-
+  bool ok = false;
+  auto font = QFontDialog::getFont(&ok, m_properties.m_font);
+  if(ok) {
+    // TODO: set m_properties font to the new font
+    set_font_preview_stylesheet();
+  }
 }
 
 void time_and_sales_properties_dialog::set_text_color() {
@@ -343,6 +347,7 @@ void time_and_sales_properties_dialog::set_color_settings_stylesheet(
 
 void time_and_sales_properties_dialog::set_font_preview_stylesheet() {
   m_font_preview_label->setStyleSheet(QString(R"(
+    background-color: white;
     border: %1px solid #C8C8C8 %2px solid #C8C8C8;
     color: black;
     font-family: %3;

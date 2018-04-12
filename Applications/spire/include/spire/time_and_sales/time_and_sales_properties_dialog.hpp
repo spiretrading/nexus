@@ -69,11 +69,10 @@ namespace spire {
       QCheckBox* m_condition_checkbox;
 
       void set_band_color();
-      void set_font();
-      void set_font_preview_stylesheet();
       void set_color_button_stylesheet(flat_button* button,
         const QColor& color);
       void set_color_settings_stylesheet(int band_index);
+      void set_font();
       void set_font_preview_stylesheet();
       void set_properties(const time_and_sales_properties& properties);
       void set_text_color();
