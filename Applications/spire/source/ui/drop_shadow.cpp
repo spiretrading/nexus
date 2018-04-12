@@ -33,7 +33,7 @@ drop_shadow::drop_shadow(QWidget* parent)
     : drop_shadow(true, parent) {}
 
 drop_shadow::drop_shadow(bool has_top, QWidget* parent)
-    : QWidget(nullptr, Qt::Window | Qt::FramelessWindowHint),
+    : QWidget(nullptr, Qt::Window | Qt::FramelessWindowHint | Qt::Tool),
       m_parent(parent),
       m_has_top(has_top),
       m_is_visible(false) {
