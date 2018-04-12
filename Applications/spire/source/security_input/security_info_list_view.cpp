@@ -19,6 +19,7 @@ security_info_list_view::security_info_list_view(QWidget* parent)
       m_active_index(-1) {
   setAttribute(Qt::WA_ShowWithoutActivating);
   setAttribute(Qt::WA_TranslucentBackground);
+  m_shadow = std::make_unique<drop_shadow>(false, this);
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
@@ -28,7 +29,6 @@ security_info_list_view::security_info_list_view(QWidget* parent)
   m_scroll_area->setFrameShape(QFrame::NoFrame);
   m_scroll_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_scroll_area->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-  auto shadow = new drop_shadow(false, this);
   m_scroll_area->setStyleSheet(QString(R"(
     #security_info_list_view_scroll_area {
       background-color: #FFFFFF;

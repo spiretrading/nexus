@@ -10,7 +10,7 @@
 
 namespace spire {
 
-  //! \brief Allows the user to login to Spire.
+  //! Allows the user to login to Spire.
   class login_controller : private boost::noncopyable {
     public:
 

@@ -5,6 +5,8 @@
 #include "spire/toolbar_ui_tester/toolbar_ui_tester.hpp"
 #include "spire/ui/window.hpp"
 
+using namespace Beam;
+using namespace Beam::ServiceLocator;
 using namespace spire;
 
 int main(int argc, char** argv) {
@@ -13,7 +15,8 @@ int main(int argc, char** argv) {
   application->setApplicationName(QObject::tr("Toolbar UI Tester"));
   initialize_resources();
   recently_closed_model model;
-  toolbar_window tw(model);
+  auto account = DirectoryEntry::MakeAccount(1, "demo_account");
+  toolbar_window tw(model, account);
   tw.show();
   toolbar_ui_tester tester(&tw, model);
   tester.show();

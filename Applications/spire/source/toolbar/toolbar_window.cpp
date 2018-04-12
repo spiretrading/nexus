@@ -5,11 +5,14 @@
 #include "spire/ui/icon_button.hpp"
 #include "spire/ui/window.hpp"
 
+using namespace Beam;
+using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::signals2;
 using namespace spire;
 
-toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
+toolbar_window::toolbar_window(recently_closed_model& model,
+    const DirectoryEntry& account, QWidget* parent)
     : QWidget(parent),
       m_model(&model) {
   setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint |
@@ -34,7 +37,7 @@ toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
   title_bar_layout->setSpacing(0);
   layout->addLayout(title_bar_layout);
   window()->setWindowTitle(tr("Spire - Signed in as ") +
-    QString("Super_Long_Username_Example"));
+    QString::fromStdString(account.m_name));
   auto input_layout = new QVBoxLayout();
   input_layout->setContentsMargins({});
   input_layout->setSpacing(0);
@@ -85,11 +88,13 @@ toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
     imageFromSvg(":/icons/bookview-purple.svg", window_button_size), m_body);
   m_book_view_button->setToolTip(tr("Book View"));
   button_layout->addWidget(m_book_view_button);
-  m_time_sale_button = new icon_button(
+  m_time_and_sales_button = new icon_button(
     imageFromSvg(":/icons/time-sale-light-purple.svg", window_button_size),
     imageFromSvg(":/icons/time-sale-purple.svg", window_button_size), m_body);
-  m_time_sale_button->setToolTip(tr("Time and Sale"));
-  button_layout->addWidget(m_time_sale_button);
+  m_time_and_sales_button->setToolTip(tr("Time and Sales"));
+  m_time_and_sales_button->connect_clicked_signal(
+    [=] { on_open_window(recently_closed_model::type::TIME_AND_SALE); });
+  button_layout->addWidget(m_time_and_sales_button);
   m_chart_button = new icon_button(
     imageFromSvg(":/icons/chart-light-purple.svg", window_button_size),
     imageFromSvg(":/icons/chart-purple.svg", window_button_size), m_body);
@@ -118,6 +123,11 @@ toolbar_window::toolbar_window(recently_closed_model& model, QWidget* parent)
     [=] (auto& e) { this->entry_added(e); });
   m_model->connect_entry_removed_signal(
     [=] (auto e) { this->entry_removed(e); });
+}
+
+connection toolbar_window::connect_open_signal(
+    const open_signal::slot_type& slot) const {
+  return m_open_signal.connect(slot);
 }
 
 connection toolbar_window::connect_closed_signal(
@@ -179,4 +189,8 @@ void toolbar_window::entry_removed(const recently_closed_model::entry& e) {
 
 void toolbar_window::on_item_selected(int index) {
   m_reopen_signal(m_entries[index]);
+}
+
+void toolbar_window::on_open_window(recently_closed_model::type w) {
+  m_open_signal(w);
 }

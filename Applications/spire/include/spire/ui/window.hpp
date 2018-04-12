@@ -30,19 +30,16 @@ namespace spire {
       */
       void set_icon(const QImage& icon, const QImage& unfocused_icon);
 
-      //! Returns the body.
-      QWidget* get_body();
-
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
+      std::unique_ptr<drop_shadow> m_shadow;
       QWidget* m_border;
       QWidget* m_body;
       title_bar* m_title_bar;
 
       void set_border_stylesheet(const QColor& color);
-      void on_maximize();
   };
 }
 

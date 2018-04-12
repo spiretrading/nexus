@@ -8,7 +8,7 @@
 
 namespace spire {
 
-  //! \brief Represents a searchable database of available securities.
+  //! Represents a searchable database of available securities.
   class security_input_model : private boost::noncopyable {
     public:
       virtual ~security_input_model() = default;

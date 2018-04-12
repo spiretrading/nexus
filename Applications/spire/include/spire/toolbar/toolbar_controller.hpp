@@ -8,7 +8,7 @@
 
 namespace spire {
 
-  //! \brief Launches the main application windows.
+  //! Launches the main application windows.
   class toolbar_controller : private boost::noncopyable {
     public:
 
@@ -31,11 +31,15 @@ namespace spire {
         const closed_signal::slot_type& slot) const;
 
     private:
+      struct base_controller;
+      template<typename> struct controller;
       mutable closed_signal m_closed_signal;
       Nexus::VirtualServiceClients* m_service_clients;
       recently_closed_model m_model;
       std::unique_ptr<toolbar_window> m_toolbar_window;
+      std::vector<std::unique_ptr<base_controller>> m_controllers;
 
+      void on_open_window(recently_closed_model::type w);
       void on_closed();
   };
 }

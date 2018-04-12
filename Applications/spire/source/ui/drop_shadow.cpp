@@ -29,23 +29,24 @@ namespace {
     QGradientStop(1, Qt::transparent)});
 }
 
-drop_shadow::drop_shadow(QWidget* parent) : drop_shadow(true, parent) {}
+drop_shadow::drop_shadow(QWidget* parent)
+    : drop_shadow(true, parent) {}
 
 drop_shadow::drop_shadow(bool has_top, QWidget* parent)
-    : QWidget(parent, Qt::Window | Qt::FramelessWindowHint),
+    : QWidget(nullptr, Qt::Window | Qt::FramelessWindowHint),
+      m_parent(parent),
       m_has_top(has_top),
       m_is_visible(false) {
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_ShowWithoutActivating);
-  parent->window()->installEventFilter(this);
+  m_parent->window()->installEventFilter(this);
 }
 
 bool drop_shadow::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::Move) {
     follow_parent();
   } else if(event->type() == QEvent::Resize) {
-    auto parent_size = static_cast<QWidget*>(
-      parent())->window()->frameGeometry().size();
+    auto parent_size = m_parent->window()->frameGeometry().size();
     resize(parent_size.width() + 2 * SHADOW_SIZE().width(),
       parent_size.height() + 2 * SHADOW_SIZE().height());
     follow_parent();
@@ -67,7 +68,7 @@ void drop_shadow::paintEvent(QPaintEvent* event) {
     m_is_visible = true;
   }
   QPainter painter(this);
-  auto parent_size = static_cast<QWidget*>(parent())->frameGeometry().size();
+  auto parent_size = m_parent->frameGeometry().size();
   const auto SHADOW_SIZE = ::SHADOW_SIZE();
   if(m_has_top) {
     QRect top_rect(QPoint(SHADOW_SIZE.width(), 0),
@@ -129,8 +130,7 @@ void drop_shadow::paintEvent(QPaintEvent* event) {
 }
 
 void drop_shadow::follow_parent() {
-  auto parent_widget = static_cast<QWidget*>(parent());
-  auto top_left = parent_widget->window()->frameGeometry().topLeft();
+  auto top_left = m_parent->window()->frameGeometry().topLeft();
   move(top_left.x() - SHADOW_SIZE().width(),
     top_left.y() - SHADOW_SIZE().height());
 }

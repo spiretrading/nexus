@@ -12,7 +12,7 @@
 
 namespace spire {
 
-  //! \brief Controller for the application as a whole.
+  //! Controller for the application as a whole.
   class spire_controller : private boost::noncopyable {
     public:
 

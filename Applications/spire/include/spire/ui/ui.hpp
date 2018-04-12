@@ -9,6 +9,7 @@ namespace spire {
   class drop_shadow;
   class flat_button;
   class icon_button;
+  class security_stack;
   class title_bar;
   class window;
 
