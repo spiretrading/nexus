@@ -6,7 +6,7 @@
 #include <QListWidget>
 #include "spire/time_and_sales/time_and_sales.hpp"
 #include "spire/time_and_sales/time_and_sales_properties.hpp"
-#include "spire/ui/flat_button.hpp"
+#include "spire/ui/ui.hpp"
 
 namespace spire {
 
@@ -61,12 +61,12 @@ namespace spire {
       flat_button* m_band_color_button;
       flat_button* m_text_color_button;
       QLabel* m_font_preview_label;
-      QCheckBox* m_show_grid_check_box;
-      QCheckBox* m_time_check_box;
-      QCheckBox* m_price_check_box;
-      QCheckBox* m_market_check_box;
-      QCheckBox* m_size_check_box;
-      QCheckBox* m_condition_check_box;
+      check_box* m_show_grid_check_box;
+      check_box* m_time_check_box;
+      check_box* m_price_check_box;
+      check_box* m_market_check_box;
+      check_box* m_size_check_box;
+      check_box* m_condition_check_box;
 
       void set_band_color();
       void set_color_button_stylesheet(flat_button* button,
