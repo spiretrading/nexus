@@ -10,6 +10,15 @@
 #include "spire/time_and_sales/time_and_sales_model.hpp"
 #include "spire/ui/window.hpp"
 
+
+
+
+
+#include <QDebug>
+
+
+
+
 using namespace boost;
 using namespace boost::signals2;
 using namespace spire;
@@ -119,9 +128,9 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     time_and_sales_properties::price_range::UNKNOWN));
   color_settings_layout->addWidget(m_band_color_button);
   color_settings_layout->addStretch(18);
-  m_show_grid_checkbox = new QCheckBox(tr("Show Grid"), this);
-  m_show_grid_checkbox->setFixedSize(scale(80, 16));
-  auto generic_checkbox_style = QString(R"(
+  m_show_grid_check_box = new QCheckBox(tr("Show Grid"), this);
+  m_show_grid_check_box->setFixedSize(scale(80, 16));
+  auto generic_check_box_style = QString(R"(
     QCheckBox {
       color: black;
       font-family: Roboto;
@@ -148,8 +157,8 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
       border: %4px solid #4B23A0 %5px solid #4B23A0;
     })").arg(scale_width(4)).arg(scale_height(15)).arg(scale_width(15))
         .arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12));
-  m_show_grid_checkbox->setStyleSheet(generic_checkbox_style);
-  color_settings_layout->addWidget(m_show_grid_checkbox);
+  m_show_grid_check_box->setStyleSheet(generic_check_box_style);
+  color_settings_layout->addWidget(m_show_grid_check_box);
   style_layout->addLayout(color_settings_layout);
   style_layout->addStretch(40);
   auto font_layout = new QVBoxLayout();
@@ -161,7 +170,12 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   font_layout->addWidget(font_label);
   m_font_preview_label = new QLabel(tr("Aa Bb Cc\n0123"), this);
   m_font_preview_label->setFixedSize(scale(120, 84));
-  set_font_preview_stylesheet();
+  m_font_preview_label->setFont(properties.m_font);
+  m_font_preview_label->setAlignment(Qt::AlignCenter);
+  m_font_preview_label->setStyleSheet(QString(R"(
+    background-color: white;
+    border: %1px solid #C8C8C8 %2px solid #C8C8C8;
+    )").arg(scale_height(1)).arg(scale_width(1)));
   font_layout->addWidget(m_font_preview_label);
   auto edit_font_button = new flat_button(tr("Edit Font"), this);
   edit_font_button->connect_clicked_signal([=] { set_font(); });
@@ -192,26 +206,26 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   column_label->setFixedHeight(scale_height(14));
   column_label->setStyleSheet(section_label_style);
   column_settings_layout->addWidget(column_label);
-  auto column_checkbox_layout = new QHBoxLayout();
-  column_checkbox_layout->setContentsMargins({});
-  column_checkbox_layout->setSpacing(scale_width(20));
-  m_time_checkbox = new QCheckBox(tr("Time"), this);
-  m_time_checkbox->setStyleSheet(generic_checkbox_style);
-  column_checkbox_layout->addWidget(m_time_checkbox);
-  m_price_checkbox = new QCheckBox(tr("Price"), this);
-  m_price_checkbox->setStyleSheet(generic_checkbox_style);
-  column_checkbox_layout->addWidget(m_price_checkbox);
-  m_market_checkbox = new QCheckBox(tr("Market"), this);
-  m_market_checkbox->setStyleSheet(generic_checkbox_style);
-  column_checkbox_layout->addWidget(m_market_checkbox);
-  m_size_checkbox = new QCheckBox(tr("Size"), this);
-  m_size_checkbox->setStyleSheet(generic_checkbox_style);
-  column_checkbox_layout->addWidget(m_size_checkbox);
-  m_condition_checkbox = new QCheckBox(tr("Condition"), this);
-  m_condition_checkbox->setStyleSheet(generic_checkbox_style);
-  column_checkbox_layout->addWidget(m_condition_checkbox);
-  column_checkbox_layout->addStretch(1);
-  column_settings_layout->addLayout(column_checkbox_layout);
+  auto column_check_box_layout = new QHBoxLayout();
+  column_check_box_layout->setContentsMargins({});
+  column_check_box_layout->setSpacing(scale_width(20));
+  m_time_check_box = new QCheckBox(tr("Time"), this);
+  m_time_check_box->setStyleSheet(generic_check_box_style);
+  column_check_box_layout->addWidget(m_time_check_box);
+  m_price_check_box = new QCheckBox(tr("Price"), this);
+  m_price_check_box->setStyleSheet(generic_check_box_style);
+  column_check_box_layout->addWidget(m_price_check_box);
+  m_market_check_box = new QCheckBox(tr("Market"), this);
+  m_market_check_box->setStyleSheet(generic_check_box_style);
+  column_check_box_layout->addWidget(m_market_check_box);
+  m_size_check_box = new QCheckBox(tr("Size"), this);
+  m_size_check_box->setStyleSheet(generic_check_box_style);
+  column_check_box_layout->addWidget(m_size_check_box);
+  m_condition_check_box = new QCheckBox(tr("Condition"), this);
+  m_condition_check_box->setStyleSheet(generic_check_box_style);
+  column_check_box_layout->addWidget(m_condition_check_box);
+  column_check_box_layout->addStretch(1);
+  column_settings_layout->addLayout(column_check_box_layout);
   layout->addLayout(column_settings_layout);
   auto buttons_layout = new QHBoxLayout();
   buttons_layout->setContentsMargins(0, scale_height(10), 0, 0);
@@ -251,6 +265,8 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   apply_to_all_button->setStyleSheet(generic_button_style);
   buttons_layout_3->addWidget(apply_to_all_button);
   auto cancel_button = new flat_button(tr("Cancel"), this);
+  cancel_button->connect_clicked_signal(
+    [=] { reject(); });
   cancel_button->setFixedSize(scale(100, 26));
   cancel_button->setStyleSheet(generic_button_style);
   buttons_layout_3->addWidget(cancel_button);
@@ -266,6 +282,8 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   apply_button->setStyleSheet(generic_button_style);
   buttons_layout_4->addWidget(apply_button);
   auto ok_button = new flat_button(tr("OK"), this);
+  ok_button->connect_clicked_signal(
+    [=] { accept(); });
   ok_button->setFixedSize(scale(100, 26));
   ok_button->setStyleSheet(generic_button_style);
   buttons_layout_4->addWidget(ok_button);
@@ -307,8 +325,8 @@ void time_and_sales_properties_dialog::set_font() {
   bool ok = false;
   auto font = QFontDialog::getFont(&ok, m_properties.m_font);
   if(ok) {
-    // TODO: set m_properties font to the new font
-    set_font_preview_stylesheet();
+    m_font_preview_label->setFont(font);
+    m_properties.m_font = font;
   }
 }
 
@@ -345,20 +363,6 @@ void time_and_sales_properties_dialog::set_color_settings_stylesheet(
     m_properties.get_text_color(i));
 }
 
-void time_and_sales_properties_dialog::set_font_preview_stylesheet() {
-  m_font_preview_label->setStyleSheet(QString(R"(
-    background-color: white;
-    border: %1px solid #C8C8C8 %2px solid #C8C8C8;
-    color: black;
-    font-family: %3;
-    font-size: %4pt;
-    font-weight: %5;
-    qproperty-alignment: AlignCenter;)")
-    .arg(scale_height(1)).arg(scale_width(1))
-    .arg(m_properties.m_font.family()).arg(m_properties.m_font.pointSize())
-    .arg(m_properties.m_font.weight()));
-}
-
 void time_and_sales_properties_dialog::set_properties(
     const time_and_sales_properties& properties) {
   m_properties = properties;
@@ -392,15 +396,16 @@ void time_and_sales_properties_dialog::set_properties(
     time_and_sales_properties::price_range::BELOW_BID));
   below_bid_item->setData(Qt::FontRole, m_properties.get_band_color(
     time_and_sales_properties::price_range::BELOW_BID));
-  m_show_grid_checkbox->setChecked(m_properties.m_show_grid);
-  m_time_checkbox->setChecked(m_properties.get_show_column(
+  m_show_grid_check_box->setChecked(m_properties.m_show_grid);
+  m_font_preview_label->setFont(m_properties.m_font);
+  m_time_check_box->setChecked(m_properties.get_show_column(
     time_and_sales_properties::columns::TIME_COLUMN));
-  m_price_checkbox->setChecked(m_properties.get_show_column(
+  m_price_check_box->setChecked(m_properties.get_show_column(
     time_and_sales_properties::columns::PRICE_COLUMN));
-  m_market_checkbox->setChecked(m_properties.get_show_column(
+  m_market_check_box->setChecked(m_properties.get_show_column(
     time_and_sales_properties::columns::MARKET_COLUMN));
-  m_size_checkbox->setChecked(m_properties.get_show_column(
+  m_size_check_box->setChecked(m_properties.get_show_column(
     time_and_sales_properties::columns::SIZE_COLUMN));
-  m_condition_checkbox->setChecked(m_properties.get_show_column(
+  m_condition_check_box->setChecked(m_properties.get_show_column(
     time_and_sales_properties::columns::CONDITION_COLUMN));
 }

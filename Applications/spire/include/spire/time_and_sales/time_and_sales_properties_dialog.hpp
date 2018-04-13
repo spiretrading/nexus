@@ -61,19 +61,18 @@ namespace spire {
       flat_button* m_band_color_button;
       flat_button* m_text_color_button;
       QLabel* m_font_preview_label;
-      QCheckBox* m_show_grid_checkbox;
-      QCheckBox* m_time_checkbox;
-      QCheckBox* m_price_checkbox;
-      QCheckBox* m_market_checkbox;
-      QCheckBox* m_size_checkbox;
-      QCheckBox* m_condition_checkbox;
+      QCheckBox* m_show_grid_check_box;
+      QCheckBox* m_time_check_box;
+      QCheckBox* m_price_check_box;
+      QCheckBox* m_market_check_box;
+      QCheckBox* m_size_check_box;
+      QCheckBox* m_condition_check_box;
 
       void set_band_color();
       void set_color_button_stylesheet(flat_button* button,
         const QColor& color);
       void set_color_settings_stylesheet(int band_index);
       void set_font();
-      void set_font_preview_stylesheet();
       void set_properties(const time_and_sales_properties& properties);
       void set_text_color();
   };
