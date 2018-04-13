@@ -87,7 +87,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   style_layout->addLayout(band_list_layout);
   style_layout->addStretch(10);
   auto color_settings_layout = new QVBoxLayout();
-  color_settings_layout->setContentsMargins({});
+  color_settings_layout->setContentsMargins(0, 0, 0, scale_height(1));
   color_settings_layout->setSpacing(0);
   color_settings_layout->addStretch(24);
   auto text_color_label = new QLabel(tr("Text Color"), this);
