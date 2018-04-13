@@ -133,6 +133,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     }
 
     QCheckBox::indicator {
+      background-color: white;
       border: %4px solid #C8C8C8 %5px solid #C8C8C8;
       height: %2px;
       width: %3px;
@@ -277,6 +278,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   buttons_layout_4->setContentsMargins({});
   buttons_layout_4->setSpacing(scale_height(8));
   auto apply_button = new flat_button(tr("Apply"), this);
+  setTabOrder(apply_to_all_button, apply_button);
   apply_button->connect_clicked_signal(
     [=] { m_apply_signal(m_properties); });
   apply_button->setFixedSize(scale(100, 26));

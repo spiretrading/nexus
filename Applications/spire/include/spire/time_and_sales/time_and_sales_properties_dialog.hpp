@@ -51,6 +51,8 @@ namespace spire {
       boost::signals2::connection connect_save_default_signal(
         const save_default_signal::slot_type& slot) const;
 
+    protected:
+
     private:
       mutable apply_signal m_apply_signal;
       mutable apply_all_signal m_apply_all_signal;

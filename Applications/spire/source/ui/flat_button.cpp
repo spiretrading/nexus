@@ -97,7 +97,7 @@ void flat_button::set_disabled_stylesheet() {
 }
 
 void flat_button::set_focused_stylesheet() {
-  setStyleSheet(m_default_style + m_focused_style);
+  setStyleSheet(m_default_style + m_hover_style + m_focused_style);
 }
 
 void flat_button::set_hover_stylesheet() {
