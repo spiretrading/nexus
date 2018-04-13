@@ -174,20 +174,17 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   auto edit_font_button = new flat_button(tr("Edit Font"), this);
   edit_font_button->connect_clicked_signal([=] { set_font(); });
   edit_font_button->setFixedSize(scale(120, 26));
-  auto generic_button_style = QString(R"(
-    QWidget {
+  auto generic_button_default_style = QString(R"(
       background-color: #EBEBEB;
       color: black;
       font-family: Roboto;
       font-size: %1px;
-      qproperty-alignment: AlignCenter;
-    }
-
-    QWidget:hover {
-      background-color: #4B23A0;
-      color: white;
-    })").arg(scale_height(12));
-  edit_font_button->setStyleSheet(generic_button_style);
+      qproperty-alignment: AlignCenter;)").arg(scale_height(12));
+  auto generic_button_hover_style = QString(R"(
+    background-color: #4B23A0;
+    color: white;)");
+  edit_font_button->set_stylesheet(generic_button_default_style,
+    generic_button_hover_style, generic_button_hover_style, "");
   font_layout->addWidget(edit_font_button);
   style_layout->addLayout(font_layout);
   style_layout->addStretch(86);
@@ -234,11 +231,13 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   buttons_layout_1->setSpacing(scale_height(8));
   auto save_as_default_button = new flat_button(tr("Save As Default"), this);
   save_as_default_button->setFixedSize(scale(100, 26));
-  save_as_default_button->setStyleSheet(generic_button_style);
+  save_as_default_button->set_stylesheet(generic_button_default_style,
+    generic_button_hover_style, generic_button_hover_style, "");
   buttons_layout_1->addWidget(save_as_default_button);
   auto load_default_button = new flat_button(tr("Load Default"), this);
   load_default_button->setFixedSize(scale(100, 26));
-  load_default_button->setStyleSheet(generic_button_style);
+  load_default_button->set_stylesheet(generic_button_default_style,
+    generic_button_hover_style, generic_button_hover_style, "");
   buttons_layout_1->addWidget(load_default_button);
   buttons_layout->addLayout(buttons_layout_1);
   buttons_layout->addStretch(8);
@@ -250,7 +249,8 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   reset_default_button->setFixedSize(scale(100, 26));
   reset_default_button->connect_clicked_signal(
     [&] { m_properties = time_and_sales_properties(); });
-  reset_default_button->setStyleSheet(generic_button_style);
+  reset_default_button->set_stylesheet(generic_button_default_style,
+    generic_button_hover_style, generic_button_hover_style, "");
   buttons_layout_2->addWidget(reset_default_button);
   buttons_layout->addLayout(buttons_layout_2);
   buttons_layout->addStretch(60);
@@ -261,13 +261,15 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   apply_to_all_button->connect_clicked_signal(
     [=] { m_apply_all_signal(m_properties); });
   apply_to_all_button->setFixedSize(scale(100, 26));
-  apply_to_all_button->setStyleSheet(generic_button_style);
+  apply_to_all_button->set_stylesheet(generic_button_default_style,
+    generic_button_hover_style, generic_button_hover_style, "");
   buttons_layout_3->addWidget(apply_to_all_button);
   auto cancel_button = new flat_button(tr("Cancel"), this);
   cancel_button->connect_clicked_signal(
     [=] { reject(); });
   cancel_button->setFixedSize(scale(100, 26));
-  cancel_button->setStyleSheet(generic_button_style);
+  cancel_button->set_stylesheet(generic_button_default_style,
+    generic_button_hover_style, generic_button_hover_style, "");
   buttons_layout_3->addWidget(cancel_button);
   buttons_layout->addLayout(buttons_layout_3);
   buttons_layout->addStretch(8);
@@ -278,13 +280,15 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   apply_button->connect_clicked_signal(
     [=] { m_apply_signal(m_properties); });
   apply_button->setFixedSize(scale(100, 26));
-  apply_button->setStyleSheet(generic_button_style);
+  apply_button->set_stylesheet(generic_button_default_style,
+    generic_button_hover_style, generic_button_hover_style, "");
   buttons_layout_4->addWidget(apply_button);
   auto ok_button = new flat_button(tr("OK"), this);
   ok_button->connect_clicked_signal(
     [=] { accept(); });
   ok_button->setFixedSize(scale(100, 26));
-  ok_button->setStyleSheet(generic_button_style);
+  ok_button->set_stylesheet(generic_button_default_style,
+    generic_button_hover_style, generic_button_hover_style, "");
   buttons_layout_4->addWidget(ok_button);
   buttons_layout->addLayout(buttons_layout_4);
   layout->addLayout(buttons_layout);
@@ -313,11 +317,13 @@ connection time_and_sales_properties_dialog::connect_save_default_signal(
 
 void time_and_sales_properties_dialog::set_band_color() {
   auto color = QColorDialog::getColor(Qt::white);
-  auto index = m_band_list->currentIndex().row();
-  auto band = static_cast<time_and_sales_properties::price_range>(index);
-  m_properties.set_band_color(band, color);
-  m_band_list->item(index)->setData(Qt::BackgroundRole, color);
-  set_color_button_stylesheet(m_band_color_button, color);
+  if(color.isValid()) {
+    auto index = m_band_list->currentIndex().row();
+    auto band = static_cast<time_and_sales_properties::price_range>(index);
+    m_properties.set_band_color(band, color);
+    m_band_list->item(index)->setData(Qt::BackgroundRole, color);
+    set_color_button_stylesheet(m_band_color_button, color);
+  }
 }
 
 void time_and_sales_properties_dialog::set_font() {
@@ -341,16 +347,14 @@ void time_and_sales_properties_dialog::set_text_color() {
 
 void time_and_sales_properties_dialog::set_color_button_stylesheet(
     flat_button* button, const QColor& color) {
-  button->setStyleSheet(QString(R"(
-    QWidget {
+  button->set_stylesheet(QString(R"(
       background-color: %1;
-      border: %2 solid #C8C8C8 %3 solid #C8C8C8;
-    }
-
-    QWidget:hover {
-      border: %4 solid #4B23A0 %5 solid #4B23A0;
-    })").arg(color.name()).arg(scale_height(1)).arg(scale_width(1))
-        .arg(scale_height(1)).arg(scale_width(1)));
+      border: %2 solid #C8C8C8 %3 solid #C8C8C8;)")
+      .arg(color.name()).arg(scale_height(1)).arg(scale_width(1)),
+      QString(R"(border: %4 solid #4B23A0 %5 solid #4B23A0;)")
+        .arg(scale_height(1)).arg(scale_width(1)),
+      QString(R"(border: %4 solid #4B23A0 %5 solid #4B23A0;)")
+        .arg(scale_height(1)).arg(scale_width(1)), "");
 }
 
 void time_and_sales_properties_dialog::set_color_settings_stylesheet(

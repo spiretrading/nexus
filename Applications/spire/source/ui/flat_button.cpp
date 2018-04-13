@@ -1,5 +1,6 @@
 #include "spire/ui/flat_button.hpp"
 #include <QHBoxLayout>
+#include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPointF>
 
@@ -20,6 +21,20 @@ flat_button::flat_button(const QString& label, QWidget* parent)
   setFocusPolicy(Qt::StrongFocus);
 }
 
+void flat_button::set_text(const QString& text) {
+  m_label->setText(text);
+}
+
+void flat_button::set_stylesheet(const QString& default_style,
+    const QString& hover_style, const QString& focused_style,
+    const QString& disabled_style) {
+  m_default_style = QString("QLabel { %1 }").arg(default_style);
+  m_hover_style = QString("QLabel:hover { %1 }").arg(hover_style);
+  m_focused_style = QString("QLabel { %1 }").arg(focused_style);
+  m_disabled_style = QString("QLabel { %1 }").arg(disabled_style);
+  set_hover_stylesheet();
+}
+
 connection flat_button::connect_clicked_signal(
     const clicked_signal::slot_type& slot) const {
   return m_clicked_signal.connect(slot);
@@ -28,6 +43,28 @@ connection flat_button::connect_clicked_signal(
 void flat_button::changeEvent(QEvent* event) {
   if(event->type() == QEvent::FontChange) {
     m_label->setFont(font());
+  } else if(event->type() == QEvent::EnabledChange) {
+    if(!isEnabled()) {
+      disable_button();
+    } else {
+      enable_button();
+    }
+  }
+}
+
+void flat_button::focusInEvent(QFocusEvent* event) {
+  set_focused_stylesheet();
+}
+
+void flat_button::focusOutEvent(QFocusEvent* event) {
+  set_hover_stylesheet();
+}
+
+void flat_button::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
+    if(m_clickable) {
+      m_clicked_signal();
+    }
   }
 }
 
@@ -43,10 +80,26 @@ void flat_button::mouseReleaseEvent(QMouseEvent* event) {
   }
 }
 
-void flat_button::set_text(const QString& text) {
-  m_label->setText(text);
+void flat_button::disable_button() {
+  m_clickable = false;
+  setFocusPolicy(Qt::NoFocus);
+  set_disabled_stylesheet();
 }
 
-void flat_button::set_clickable(bool clickable) {
-  m_clickable = clickable;
+void flat_button::enable_button() {
+  m_clickable = true;
+  setFocusPolicy(Qt::StrongFocus);
+  set_hover_stylesheet();
+}
+
+void flat_button::set_disabled_stylesheet() {
+  setStyleSheet(m_disabled_style);
+}
+
+void flat_button::set_focused_stylesheet() {
+  setStyleSheet(m_default_style + m_focused_style);
+}
+
+void flat_button::set_hover_stylesheet() {
+  setStyleSheet(m_default_style + m_hover_style);
 }
