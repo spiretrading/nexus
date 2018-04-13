@@ -139,7 +139,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     }
 
     QCheckBox::indicator:checked {
-      image: url(:/icons/check.svg);
+      image: url(:/icons/check-with-box.svg);
     })").arg(scale_width(4)).arg(scale_height(15)).arg(scale_width(15))
         .arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12));
   auto check_box_hover_style = QString(R"(
@@ -236,7 +236,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   save_as_default_button->setFixedSize(scale(100, 26));
   save_as_default_button->setStyleSheet(generic_button_style);
   buttons_layout_1->addWidget(save_as_default_button);
-  auto load_default_button = new flat_button(tr("Load Saved Default"), this);
+  auto load_default_button = new flat_button(tr("Load Default"), this);
   load_default_button->setFixedSize(scale(100, 26));
   load_default_button->setStyleSheet(generic_button_style);
   buttons_layout_1->addWidget(load_default_button);

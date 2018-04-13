@@ -67,5 +67,6 @@
         <file>icons/840.png</file>
         <file>icons/time-sale-grey.svg</file>
         <file>icons/check.svg</file>
+        <file>icons/check-with-box.svg</file>
     </qresource>
 </RCC>
