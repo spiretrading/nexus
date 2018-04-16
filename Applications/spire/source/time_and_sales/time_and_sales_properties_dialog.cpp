@@ -321,9 +321,12 @@ void time_and_sales_properties_dialog::set_band_color() {
     auto index = m_band_list->currentIndex().row();
     auto band = static_cast<time_and_sales_properties::price_range>(index);
     m_properties.set_band_color(band, color);
-    m_band_list->item(index)->setData(Qt::BackgroundRole, color);
+    m_band_list->item(index)->setBackground(color);
     set_color_button_stylesheet(m_band_color_button, color);
   }
+  // Works with BOTH update and repaint, but not with only one or the other
+  m_band_list->update();
+  m_band_list->repaint();
 }
 
 void time_and_sales_properties_dialog::set_font() {
@@ -340,7 +343,7 @@ void time_and_sales_properties_dialog::set_text_color() {
   auto index = m_band_list->currentIndex().row();
   auto band = static_cast<time_and_sales_properties::price_range>(index);
   m_properties.set_text_color(band, color);
-  m_band_list->item(index)->setData(Qt::FontRole, color);
+  m_band_list->item(index)->setForeground(color);
   set_color_button_stylesheet(m_text_color_button, color);
 }
 
@@ -369,34 +372,34 @@ void time_and_sales_properties_dialog::set_properties(
     const time_and_sales_properties& properties) {
   m_properties = properties;
   auto unknown_item = m_band_list->item(0);
-  unknown_item->setData(Qt::BackgroundRole, m_properties.get_band_color(
+  unknown_item->setBackground(m_properties.get_band_color(
     time_and_sales_properties::price_range::UNKNOWN));
-  unknown_item->setData(Qt::FontRole, m_properties.get_band_color(
+  unknown_item->setForeground(m_properties.get_band_color(
     time_and_sales_properties::price_range::UNKNOWN));
   auto above_ask_item = m_band_list->item(1);
-  above_ask_item->setData(Qt::BackgroundRole, m_properties.get_band_color(
+  above_ask_item->setBackground(m_properties.get_band_color(
     time_and_sales_properties::price_range::ABOVE_ASK));
-  above_ask_item->setData(Qt::FontRole, m_properties.get_band_color(
+  above_ask_item->setForeground(m_properties.get_band_color(
     time_and_sales_properties::price_range::ABOVE_ASK));
   auto at_ask_item = m_band_list->item(2);
-  at_ask_item->setData(Qt::BackgroundRole, m_properties.get_band_color(
+  at_ask_item->setBackground(m_properties.get_band_color(
     time_and_sales_properties::price_range::AT_ASK));
-  at_ask_item->setData(Qt::FontRole, m_properties.get_band_color(
+  at_ask_item->setForeground(m_properties.get_band_color(
     time_and_sales_properties::price_range::AT_ASK));
   auto inside_item = m_band_list->item(3);
-  inside_item->setData(Qt::BackgroundRole, m_properties.get_band_color(
+  inside_item->setBackground(m_properties.get_band_color(
     time_and_sales_properties::price_range::INSIDE));
-  inside_item->setData(Qt::FontRole, m_properties.get_band_color(
+  inside_item->setForeground(m_properties.get_band_color(
     time_and_sales_properties::price_range::INSIDE));
   auto at_bid_item = m_band_list->item(4);
-  at_bid_item->setData(Qt::BackgroundRole, m_properties.get_band_color(
+  at_bid_item->setBackground(m_properties.get_band_color(
     time_and_sales_properties::price_range::AT_BID));
-  at_bid_item->setData(Qt::FontRole, m_properties.get_band_color(
+  at_bid_item->setForeground(m_properties.get_band_color(
     time_and_sales_properties::price_range::AT_BID));
   auto below_bid_item = m_band_list->item(5);
-  below_bid_item->setData(Qt::BackgroundRole, m_properties.get_band_color(
+  below_bid_item->setBackground(m_properties.get_band_color(
     time_and_sales_properties::price_range::BELOW_BID));
-  below_bid_item->setData(Qt::FontRole, m_properties.get_band_color(
+  below_bid_item->setForeground(m_properties.get_band_color(
     time_and_sales_properties::price_range::BELOW_BID));
   set_color_settings_stylesheet(m_band_list->currentRow());
   m_show_grid_check_box->setChecked(m_properties.m_show_grid);
