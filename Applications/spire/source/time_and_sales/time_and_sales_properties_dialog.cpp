@@ -342,7 +342,6 @@ void time_and_sales_properties_dialog::set_text_color() {
   m_properties.set_text_color(band, color);
   m_band_list->item(index)->setData(Qt::FontRole, color);
   set_color_button_stylesheet(m_text_color_button, color);
-  set_properties(m_properties);
 }
 
 void time_and_sales_properties_dialog::set_color_button_stylesheet(
