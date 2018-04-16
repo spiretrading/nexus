@@ -87,6 +87,8 @@ void flat_button::mousePressEvent(QMouseEvent* event) {
 
 void flat_button::mouseReleaseEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton && m_clickable) {
+    set_hover_stylesheet();
+    m_last_focus_reason = Qt::MouseFocusReason;
     if(rect().contains(event->localPos().toPoint())) {
       m_clicked_signal();
     }

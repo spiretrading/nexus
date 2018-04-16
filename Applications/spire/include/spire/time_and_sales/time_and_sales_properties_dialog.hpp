@@ -52,6 +52,7 @@ namespace spire {
         const save_default_signal::slot_type& slot) const;
 
     protected:
+      void mousePressEvent(QMouseEvent* event) override;
 
     private:
       mutable apply_signal m_apply_signal;

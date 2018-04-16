@@ -1,5 +1,6 @@
 #include "spire/ui/check_box.hpp"
 #include <QFocusEvent>
+#include <QMouseEvent>
 
 using namespace spire;
 
@@ -40,6 +41,14 @@ void check_box::focusInEvent(QFocusEvent* event)  {
 
 void check_box::focusOutEvent(QFocusEvent* event) {
   set_hover_stylesheet();
+}
+
+void check_box::mouseReleaseEvent(QMouseEvent* event) {
+  if(event->button() == Qt::LeftButton) {
+    set_hover_stylesheet();
+    m_last_focus_reason = Qt::MouseFocusReason;
+  }
+  QCheckBox::mouseReleaseEvent(event);
 }
 
 void check_box::set_hover_stylesheet() {

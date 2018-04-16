@@ -28,6 +28,7 @@ namespace spire {
     protected:
       void focusInEvent(QFocusEvent* event) override;
       void focusOutEvent(QFocusEvent* event) override;
+      void mouseReleaseEvent(QMouseEvent* event) override;
 
     private:
       QString m_text_style;
