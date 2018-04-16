@@ -22,8 +22,7 @@ void check_box::set_stylesheet(const QString& text_style,
 }
 
 void check_box::focusInEvent(QFocusEvent* event)  {
-  if(event->reason() == Qt::TabFocusReason ||
-      event->reason() == Qt::BacktabFocusReason) {
+  if(event->reason() != Qt::MouseFocusReason) {
     set_focused_stylesheet();
   }
 }

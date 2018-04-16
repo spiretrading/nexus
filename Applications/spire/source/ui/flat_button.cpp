@@ -53,8 +53,7 @@ void flat_button::changeEvent(QEvent* event) {
 }
 
 void flat_button::focusInEvent(QFocusEvent* event) {
-  if(event->reason() == Qt::TabFocusReason ||
-      event->reason() == Qt::BacktabFocusReason) {
+  if(event->reason() != Qt::MouseFocusReason) {
     set_focused_stylesheet();
   }
 }
