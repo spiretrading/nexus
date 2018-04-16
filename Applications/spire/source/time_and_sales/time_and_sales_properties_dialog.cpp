@@ -177,8 +177,11 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   auto generic_button_hover_style = QString(R"(
     background-color: #4B23A0;
     color: white;)");
+  auto generic_button_focused_style = QString(R"(
+    border: %1px solid #4B23A0 %2px solid #4B23A0;)")
+    .arg(scale_height(1)).arg(scale_width(1));
   edit_font_button->set_stylesheet(generic_button_default_style,
-    generic_button_hover_style, generic_button_hover_style, "");
+    generic_button_hover_style, generic_button_focused_style, "");
   font_layout->addWidget(edit_font_button);
   style_layout->addLayout(font_layout);
   style_layout->addStretch(86);
@@ -231,12 +234,12 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   auto save_as_default_button = new flat_button(tr("Save As Default"), this);
   save_as_default_button->setFixedSize(scale(100, 26));
   save_as_default_button->set_stylesheet(generic_button_default_style,
-    generic_button_hover_style, generic_button_hover_style, "");
+    generic_button_hover_style, generic_button_focused_style, "");
   buttons_layout_1->addWidget(save_as_default_button);
   auto load_default_button = new flat_button(tr("Load Default"), this);
   load_default_button->setFixedSize(scale(100, 26));
   load_default_button->set_stylesheet(generic_button_default_style,
-    generic_button_hover_style, generic_button_hover_style, "");
+    generic_button_hover_style, generic_button_focused_style, "");
   buttons_layout_1->addWidget(load_default_button);
   buttons_layout->addLayout(buttons_layout_1);
   buttons_layout->addStretch(8);
@@ -249,7 +252,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   reset_default_button->connect_clicked_signal(
     [&] { m_properties = time_and_sales_properties(); });
   reset_default_button->set_stylesheet(generic_button_default_style,
-    generic_button_hover_style, generic_button_hover_style, "");
+    generic_button_hover_style, generic_button_focused_style, "");
   buttons_layout_2->addWidget(reset_default_button);
   buttons_layout->addLayout(buttons_layout_2);
   buttons_layout->addStretch(60);
@@ -261,14 +264,14 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     [=] { m_apply_all_signal(m_properties); });
   apply_to_all_button->setFixedSize(scale(100, 26));
   apply_to_all_button->set_stylesheet(generic_button_default_style,
-    generic_button_hover_style, generic_button_hover_style, "");
+    generic_button_hover_style, generic_button_focused_style, "");
   buttons_layout_3->addWidget(apply_to_all_button);
   auto cancel_button = new flat_button(tr("Cancel"), this);
   cancel_button->connect_clicked_signal(
     [=] { reject(); });
   cancel_button->setFixedSize(scale(100, 26));
   cancel_button->set_stylesheet(generic_button_default_style,
-    generic_button_hover_style, generic_button_hover_style, "");
+    generic_button_hover_style, generic_button_focused_style, "");
   buttons_layout_3->addWidget(cancel_button);
   buttons_layout->addLayout(buttons_layout_3);
   buttons_layout->addStretch(8);
@@ -281,14 +284,14 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     [=] { m_apply_signal(m_properties); });
   apply_button->setFixedSize(scale(100, 26));
   apply_button->set_stylesheet(generic_button_default_style,
-    generic_button_hover_style, generic_button_hover_style, "");
+    generic_button_hover_style, generic_button_focused_style, "");
   buttons_layout_4->addWidget(apply_button);
   auto ok_button = new flat_button(tr("OK"), this);
   ok_button->connect_clicked_signal(
     [=] { accept(); });
   ok_button->setFixedSize(scale(100, 26));
   ok_button->set_stylesheet(generic_button_default_style,
-    generic_button_hover_style, generic_button_hover_style, "");
+    generic_button_hover_style, generic_button_focused_style, "");
   buttons_layout_4->addWidget(ok_button);
   buttons_layout->addLayout(buttons_layout_4);
   layout->addLayout(buttons_layout);

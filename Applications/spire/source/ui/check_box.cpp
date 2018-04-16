@@ -4,7 +4,8 @@
 using namespace spire;
 
 check_box::check_box(const QString& text, QWidget* parent)
-  : QCheckBox(text, parent) {}
+  : QCheckBox(text, parent),
+    m_last_focus_reason(Qt::MouseFocusReason) {}
 
 void check_box::set_stylesheet(const QString& text_style,
     const QString& indicator_style, const QString& checked_style,
@@ -22,9 +23,19 @@ void check_box::set_stylesheet(const QString& text_style,
 }
 
 void check_box::focusInEvent(QFocusEvent* event)  {
-  if(event->reason() != Qt::MouseFocusReason) {
+  if(event->reason() == Qt::ActiveWindowFocusReason) {
+    if(m_last_focus_reason == Qt::MouseFocusReason) {
+      set_hover_stylesheet();
+    } else {
+      set_focused_stylesheet();
+    }
+    return;
+  } else if(event->reason() != Qt::MouseFocusReason) {
     set_focused_stylesheet();
+  } else {
+    set_hover_stylesheet();
   }
+  m_last_focus_reason = event->reason();
 }
 
 void check_box::focusOutEvent(QFocusEvent* event) {

@@ -13,7 +13,8 @@ flat_button::flat_button(QWidget* parent)
 
 flat_button::flat_button(const QString& label, QWidget* parent)
     : QWidget(parent),
-      m_clickable(true) {
+      m_clickable(true),
+      m_last_focus_reason(Qt::MouseFocusReason) {
   m_label = new QLabel(label, this);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
@@ -53,9 +54,19 @@ void flat_button::changeEvent(QEvent* event) {
 }
 
 void flat_button::focusInEvent(QFocusEvent* event) {
-  if(event->reason() != Qt::MouseFocusReason) {
+  if(event->reason() == Qt::ActiveWindowFocusReason) {
+    if(m_last_focus_reason == Qt::MouseFocusReason) {
+      set_hover_stylesheet();
+    } else {
+      set_focused_stylesheet();
+    }
+    return;
+  } else if(event->reason() != Qt::MouseFocusReason) {
     set_focused_stylesheet();
+  } else {
+    set_hover_stylesheet();
   }
+  m_last_focus_reason = event->reason();
 }
 
 void flat_button::focusOutEvent(QFocusEvent* event) {

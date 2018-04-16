@@ -35,6 +35,7 @@ namespace spire {
       QString m_checked_style;
       QString m_hover_style;
       QString m_focused_style;
+      Qt::FocusReason m_last_focus_reason;
 
       void set_hover_stylesheet();
       void set_focused_stylesheet();

@@ -66,6 +66,7 @@ namespace spire {
       QString m_hover_style;
       QString m_focused_style;
       QString m_disabled_style;
+      Qt::FocusReason m_last_focus_reason;
 
       void disable_button();
       void enable_button();
