@@ -123,36 +123,28 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   color_settings_layout->addStretch(18);
   m_show_grid_check_box = new check_box(tr("Show Grid"), this);
   m_show_grid_check_box->setFixedSize(scale(80, 16));
-  auto check_box_default_style = QString(R"(
-    QCheckBox {
+  auto check_box_text_style = QString(R"(
       color: black;
       font-family: Roboto;
-      font-size: %6px;
-      padding: %4px 0px;
+      font-size: %1px;
+      padding: %2px 0px;
       outline: none;
-      spacing: %1px;
-    }
-
-    QCheckBox::indicator {
+      spacing: %3px;)")
+    .arg(scale_height(12)).arg(scale_height(1)).arg(scale_width(4));
+  auto check_box_indicator_style = QString(R"(
       background-color: white;
-      border: %4px solid #C8C8C8 %5px solid #C8C8C8;
-      height: %2px;
-      width: %3px;
-    }
-
-    QCheckBox::indicator:checked {
-      image: url(:/icons/check-with-box.svg);
-    })").arg(scale_width(4)).arg(scale_height(15)).arg(scale_width(15))
-        .arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12));
+      border: %1px solid #C8C8C8 %2px solid #C8C8C8;
+      height: %3px;
+      width: %4px;)").arg(scale_height(1))
+      .arg(scale_width(1)).arg(scale_height(15)).arg(scale_width(15));
+  auto check_box_checked_style = QString(R"(
+      image: url(:/icons/check-with-box.svg);)");
   auto check_box_hover_style = QString(R"(
-    QCheckBox::indicator:hover {
-      border: %1px solid #4B23A0 %2px solid #4B23A0;
-    })").arg(scale_height(1)).arg(scale_width(1));
-  auto check_box_focused_style = QString(R"(
-    QCheckBox::indicator {
-      border-color: #4B23A0;
-    })");
-  m_show_grid_check_box->set_stylesheet(check_box_default_style,
+      border: %1px solid #4B23A0 %2px solid #4B23A0;)")
+      .arg(scale_height(1)).arg(scale_width(1));
+  auto check_box_focused_style = QString(R"(border-color: #4B23A0;)");
+  m_show_grid_check_box->set_stylesheet(check_box_text_style,
+    check_box_indicator_style, check_box_checked_style,
     check_box_hover_style, check_box_focused_style);
   color_settings_layout->addWidget(m_show_grid_check_box);
   style_layout->addLayout(color_settings_layout);
@@ -203,23 +195,28 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   column_check_box_layout->setContentsMargins({});
   column_check_box_layout->setSpacing(scale_width(20));
   m_time_check_box = new check_box(tr("Time"), this);
-  m_time_check_box->set_stylesheet(check_box_default_style,
+  m_time_check_box->set_stylesheet(check_box_text_style,
+    check_box_indicator_style, check_box_checked_style,
     check_box_hover_style, check_box_focused_style);
   column_check_box_layout->addWidget(m_time_check_box);
   m_price_check_box = new check_box(tr("Price"), this);
-  m_price_check_box->set_stylesheet(check_box_default_style,
+  m_price_check_box->set_stylesheet(check_box_text_style,
+    check_box_indicator_style, check_box_checked_style,
     check_box_hover_style, check_box_focused_style);
   column_check_box_layout->addWidget(m_price_check_box);
   m_market_check_box = new check_box(tr("Market"), this);
-  m_market_check_box->set_stylesheet(check_box_default_style,
+  m_market_check_box->set_stylesheet(check_box_text_style,
+    check_box_indicator_style, check_box_checked_style,
     check_box_hover_style, check_box_focused_style);
   column_check_box_layout->addWidget(m_market_check_box);
   m_size_check_box = new check_box(tr("Size"), this);
-  m_size_check_box->set_stylesheet(check_box_default_style,
+  m_size_check_box->set_stylesheet(check_box_text_style,
+    check_box_indicator_style, check_box_checked_style,
     check_box_hover_style, check_box_focused_style);
   column_check_box_layout->addWidget(m_size_check_box);
   m_condition_check_box = new check_box(tr("Condition"), this);
-  m_condition_check_box->set_stylesheet(check_box_default_style,
+  m_condition_check_box->set_stylesheet(check_box_text_style,
+    check_box_indicator_style, check_box_checked_style,
     check_box_hover_style, check_box_focused_style);
   column_check_box_layout->addWidget(m_condition_check_box);
   column_check_box_layout->addStretch(1);
