@@ -324,7 +324,9 @@ void time_and_sales_properties_dialog::set_band_color() {
     m_band_list->item(index)->setBackground(color);
     set_color_button_stylesheet(m_band_color_button, color);
   }
-  // Works with BOTH update and repaint, but not with only one or the other
+  // Works with BOTH update and repaint, but not with only one or the other,
+  // and only when the first item is originally selected, not when another item
+  // is selected
   m_band_list->update();
   m_band_list->repaint();
 }
