@@ -14,7 +14,7 @@ flat_button::flat_button(QWidget* parent)
 flat_button::flat_button(const QString& label, QWidget* parent)
     : QWidget(parent),
       m_clickable(true),
-      m_last_focus_reason(Qt::MouseFocusReason) {
+      m_last_focus_reason(Qt::TabFocusReason) {
   m_label = new QLabel(label, this);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});

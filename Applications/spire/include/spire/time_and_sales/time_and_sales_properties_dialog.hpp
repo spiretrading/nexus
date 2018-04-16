@@ -61,6 +61,7 @@ namespace spire {
       time_and_sales_properties m_properties;
       QWidget* m_body;
       QListWidget* m_band_list;
+      QString m_band_list_stylesheet;
       flat_button* m_band_color_button;
       flat_button* m_text_color_button;
       QLabel* m_font_preview_label;
@@ -78,6 +79,7 @@ namespace spire {
       void set_font();
       void set_properties(const time_and_sales_properties& properties);
       void set_text_color();
+      void update_colors(int band_index);
   };
 }
 

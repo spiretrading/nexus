@@ -53,8 +53,12 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   band_appearance_label->setStyleSheet(section_label_style);
   band_list_layout->addWidget(band_appearance_label);
   m_band_list = new QListWidget(this);
+  m_band_list->setSelectionMode(
+    QAbstractItemView::SelectionMode::SingleSelection);
+  m_band_list->setSelectionBehavior(
+    QAbstractItemView::SelectionBehavior::SelectRows);
   connect(m_band_list, &QListWidget::currentRowChanged,
-    [=] (auto index) { set_color_settings_stylesheet(index); });
+    [=] (auto index) { update_colors(index); });
   m_band_list->setFixedSize(scale(140, 120));
   auto band_unknown_item = new QListWidgetItem(tr("Bid/Ask Unknown"),
     m_band_list);
@@ -68,21 +72,23 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     m_band_list);
   auto below_bid_item = new QListWidgetItem(tr("Trade Below Bid"),
     m_band_list);
-  m_band_list->setStyleSheet(QString(R"(
+  m_band_list_stylesheet = QString(R"(
     QListWidget {
       background-color: white;
       border: %1px solid #C8C8C8 %2px solid #C8C8C8;
-      padding: %3px %4px 0px %4px;
       outline: none;
+      padding: %3px %4px 0px %4px;
     }
 
     QListWidget::item {
       font-family: Roboto;
       font-size: %5px;
       height: %6px;
+      outline-color: white;
     })").arg(scale_height(1)).arg(scale_width(1))
         .arg(scale_height(4)).arg(scale_width(4))
-        .arg(scale_height(11)).arg(scale_height(16)));
+        .arg(scale_height(11)).arg(scale_height(16));
+  m_band_list->setItemSelected(band_unknown_item, true);
   band_list_layout->addWidget(m_band_list);
   style_layout->addLayout(band_list_layout);
   style_layout->addStretch(10);
@@ -329,7 +335,7 @@ void time_and_sales_properties_dialog::set_band_color() {
     auto band = static_cast<time_and_sales_properties::price_range>(index);
     m_properties.set_band_color(band, color);
     m_band_list->item(index)->setBackground(color);
-    set_color_button_stylesheet(m_band_color_button, color);
+    update_colors(index);
   }
 }
 
@@ -348,19 +354,19 @@ void time_and_sales_properties_dialog::set_text_color() {
   auto band = static_cast<time_and_sales_properties::price_range>(index);
   m_properties.set_text_color(band, color);
   m_band_list->item(index)->setForeground(color);
-  set_color_button_stylesheet(m_text_color_button, color);
+  update_colors(index);
 }
 
 void time_and_sales_properties_dialog::set_color_button_stylesheet(
     flat_button* button, const QColor& color) {
   button->set_stylesheet(QString(R"(
-      background-color: %1;
-      border: %2 solid #C8C8C8 %3 solid #C8C8C8;)")
-      .arg(color.name()).arg(scale_height(1)).arg(scale_width(1)),
-      QString(R"(border: %4 solid #4B23A0 %5 solid #4B23A0;)")
-        .arg(scale_height(1)).arg(scale_width(1)),
-      QString(R"(border: %4 solid #4B23A0 %5 solid #4B23A0;)")
-        .arg(scale_height(1)).arg(scale_width(1)), "");
+    background-color: %1;
+    border: %2 solid #C8C8C8 %3 solid #C8C8C8;)")
+    .arg(color.name()).arg(scale_height(1)).arg(scale_width(1)),
+    QString(R"(border: %4 solid #4B23A0 %5 solid #4B23A0;)")
+      .arg(scale_height(1)).arg(scale_width(1)),
+    QString(R"(border: %4 solid #4B23A0 %5 solid #4B23A0;)")
+      .arg(scale_height(1)).arg(scale_width(1)), "");
 }
 
 void time_and_sales_properties_dialog::set_color_settings_stylesheet(
@@ -378,32 +384,32 @@ void time_and_sales_properties_dialog::set_properties(
   auto unknown_item = m_band_list->item(0);
   unknown_item->setBackground(m_properties.get_band_color(
     time_and_sales_properties::price_range::UNKNOWN));
-  unknown_item->setForeground(m_properties.get_band_color(
+  unknown_item->setForeground(m_properties.get_text_color(
     time_and_sales_properties::price_range::UNKNOWN));
   auto above_ask_item = m_band_list->item(1);
   above_ask_item->setBackground(m_properties.get_band_color(
     time_and_sales_properties::price_range::ABOVE_ASK));
-  above_ask_item->setForeground(m_properties.get_band_color(
+  above_ask_item->setForeground(m_properties.get_text_color(
     time_and_sales_properties::price_range::ABOVE_ASK));
   auto at_ask_item = m_band_list->item(2);
   at_ask_item->setBackground(m_properties.get_band_color(
     time_and_sales_properties::price_range::AT_ASK));
-  at_ask_item->setForeground(m_properties.get_band_color(
+  at_ask_item->setForeground(m_properties.get_text_color(
     time_and_sales_properties::price_range::AT_ASK));
   auto inside_item = m_band_list->item(3);
   inside_item->setBackground(m_properties.get_band_color(
     time_and_sales_properties::price_range::INSIDE));
-  inside_item->setForeground(m_properties.get_band_color(
+  inside_item->setForeground(m_properties.get_text_color(
     time_and_sales_properties::price_range::INSIDE));
   auto at_bid_item = m_band_list->item(4);
   at_bid_item->setBackground(m_properties.get_band_color(
     time_and_sales_properties::price_range::AT_BID));
-  at_bid_item->setForeground(m_properties.get_band_color(
+  at_bid_item->setForeground(m_properties.get_text_color(
     time_and_sales_properties::price_range::AT_BID));
   auto below_bid_item = m_band_list->item(5);
   below_bid_item->setBackground(m_properties.get_band_color(
     time_and_sales_properties::price_range::BELOW_BID));
-  below_bid_item->setForeground(m_properties.get_band_color(
+  below_bid_item->setForeground(m_properties.get_text_color(
     time_and_sales_properties::price_range::BELOW_BID));
   set_color_settings_stylesheet(m_band_list->currentRow());
   m_show_grid_check_box->setChecked(m_properties.m_show_grid);
@@ -418,4 +424,18 @@ void time_and_sales_properties_dialog::set_properties(
     time_and_sales_properties::columns::SIZE_COLUMN));
   m_condition_check_box->setChecked(m_properties.get_show_column(
     time_and_sales_properties::columns::CONDITION_COLUMN));
+}
+
+void time_and_sales_properties_dialog::update_colors(int band_index) {
+  set_color_settings_stylesheet(band_index);
+  auto i = static_cast<time_and_sales_properties::price_range>(band_index);
+  auto selected_stylesheet = QString(R"(
+    QListWidget::item:selected {
+      background-color: %3;
+      border: %1px solid #4B23A0 %2px solid #4B23A0;
+      color: %4;
+    })").arg(scale_height(1)).arg(scale_width(1))
+    .arg(m_properties.get_band_color(i).name())
+    .arg(m_properties.get_text_color(i).name());
+  m_band_list->setStyleSheet(m_band_list_stylesheet + selected_stylesheet);
 }
