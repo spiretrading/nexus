@@ -33,8 +33,8 @@ namespace spire {
       void set_text(const QString& text);
 
       //! Sets the flat_button's stylesheet. Note that these styles are
-      //! appended verbatim, so they should be wrapped in the appropriate
-      //! selectors before being passed in.
+      //! wrapped in the appropriate CSS selectors, so only the properties
+      //! need to be specified.
       /*!
         \param default_style The text, background, and border style when
                the flat_button isn't hovered or focused.
