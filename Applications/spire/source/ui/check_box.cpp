@@ -1,4 +1,5 @@
 #include "spire/ui/check_box.hpp"
+#include <QFocusEvent>
 
 using namespace spire;
 
@@ -14,7 +15,10 @@ void check_box::set_stylesheet(const QString& default_style,
 }
 
 void check_box::focusInEvent(QFocusEvent* event)  {
-  set_focused_stylesheet();
+  if(event->reason() == Qt::TabFocusReason ||
+      event->reason() == Qt::BacktabFocusReason) {
+    set_focused_stylesheet();
+  }
 }
 
 void check_box::focusOutEvent(QFocusEvent* event) {

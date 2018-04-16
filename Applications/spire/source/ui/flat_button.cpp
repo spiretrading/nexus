@@ -53,7 +53,9 @@ void flat_button::changeEvent(QEvent* event) {
 }
 
 void flat_button::focusInEvent(QFocusEvent* event) {
-  set_focused_stylesheet();
+  if(event->reason() != Qt::MouseFocusReason) {
+    set_focused_stylesheet();
+  }
 }
 
 void flat_button::focusOutEvent(QFocusEvent* event) {
