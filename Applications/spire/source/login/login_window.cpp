@@ -31,7 +31,7 @@ login_window::login_window(const std::string& version, QWidget* parent)
   auto content_layout = new QVBoxLayout(m_body);
   content_layout->setContentsMargins({});
   content_layout->setSpacing(0);
-  auto title_bar_layout = new QHBoxLayout(m_body);
+  auto title_bar_layout = new QHBoxLayout();
   title_bar_layout->setContentsMargins({});
   title_bar_layout->setSpacing(0);
   title_bar_layout->addStretch(1);
@@ -42,7 +42,7 @@ login_window::login_window(const std::string& version, QWidget* parent)
     imageFromSvg(":/icons/close-red.svg", button_size, button_box), m_body);
   m_exit_button->setFocusPolicy(Qt::NoFocus);
   m_exit_button->installEventFilter(this);
-  m_exit_button->connect_clicked_signal([&] { window()->close(); });
+  m_exit_button->connect_clicked_signal([=] { window()->close(); });
   m_exit_button->set_hover_style("background-color: #401D8B;");
   title_bar_layout->addWidget(m_exit_button);
   content_layout->addLayout(title_bar_layout);
