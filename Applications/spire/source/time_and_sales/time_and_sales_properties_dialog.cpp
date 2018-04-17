@@ -47,7 +47,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     color: #4B23A0;
     font-family: Roboto;
     font-size: %1px;
-    font-weight: bold;)").arg(scale_height(12));
+    font-weight: 550;)").arg(scale_height(12));
   auto band_appearance_label = new QLabel(tr("Band Appearance"), this);
   band_appearance_label->setFixedHeight(scale_height(14));
   band_appearance_label->setStyleSheet(section_label_style);
