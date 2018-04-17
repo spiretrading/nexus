@@ -6,6 +6,7 @@
 #include "spire/spire/spire.hpp"
 
 namespace spire {
+  class check_box;
   class drop_shadow;
   class flat_button;
   class icon_button;

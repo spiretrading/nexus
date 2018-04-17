@@ -66,7 +66,6 @@ namespace spire {
         const cancel_signal::slot_type& slot) const;
 
     protected:
-      bool eventFilter(QObject* receiver, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void mouseMoveEvent(QMouseEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
@@ -91,9 +90,6 @@ namespace spire {
       void reset_all();
       void reset_visuals();
       void try_login();
-      void enable_button();
-      void disable_button();
-      void button_focused();
       void on_input_updated();
       void on_password_updated();
   };

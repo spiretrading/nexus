@@ -13,6 +13,12 @@ namespace spire {
       //! Signals that the button was clicked.
       using clicked_signal = signal<void ()>;
 
+      //! Constructs a flat_button without text.
+      /*!
+        \param parent The parent widget to the flat_button.
+      */
+      flat_button(QWidget* parent = nullptr);
+
       //! Constructs the flat_button.
       /*!
         \param label The label text.
@@ -26,11 +32,19 @@ namespace spire {
       */
       void set_text(const QString& text);
 
-      //! Sets whether the button can have its m_clicked_signal activated or not.
+      //! Sets the flat_button's stylesheet. Note that these styles are
+      //! wrapped in the appropriate CSS selectors, so only the properties
+      //! need to be specified.
       /*!
-        \param clickable Whether the button is clickable (true) or not (false).
+        \param default_style The text, background, and border style when
+               the flat_button isn't hovered or focused.
+        \param hover_style The style when the flat_button is hovered.
+        \param focused_style The style when the flat_button is focused.
+        \param disabled_style The style when the flat_button is disabled.
       */
-      void set_clickable(bool clickable);
+      void set_stylesheet(const QString& default_style,
+        const QString& hover_style, const QString& focused_style,
+        const QString& disabled_style);
 
       //! Connects a slot to the clicked signal.
       boost::signals2::connection connect_clicked_signal(
@@ -38,6 +52,9 @@ namespace spire {
 
     protected:
       void changeEvent(QEvent* event) override;
+      void focusInEvent(QFocusEvent* event) override;
+      void focusOutEvent(QFocusEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
 
@@ -45,6 +62,17 @@ namespace spire {
       QLabel* m_label;
       mutable clicked_signal m_clicked_signal;
       bool m_clickable;
+      QString m_default_style;
+      QString m_hover_style;
+      QString m_focused_style;
+      QString m_disabled_style;
+      Qt::FocusReason m_last_focus_reason;
+
+      void disable_button();
+      void enable_button();
+      void set_disabled_stylesheet();
+      void set_focused_stylesheet();
+      void set_hover_stylesheet();
   };
 }
 

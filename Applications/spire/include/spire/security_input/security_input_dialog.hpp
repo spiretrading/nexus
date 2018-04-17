@@ -17,9 +17,10 @@ namespace spire {
       /*!
         \param model The model to query for securities.
         \param parent The parent widget.
+        \param flags Qt flags passed to the parent widget.
       */
       security_input_dialog(security_input_model& model,
-        QWidget* parent = nullptr);
+        QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
 
       //! Returns the security that was input.
       const Nexus::Security& get_security() const noexcept;
