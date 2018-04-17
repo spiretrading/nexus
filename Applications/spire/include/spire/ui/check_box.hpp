@@ -9,6 +9,10 @@ namespace spire {
     public:
 
       //! Constructs a check_box
+      /*!
+        \param text The text to display next to the check box.
+        \param parent The parent to this widget.
+      */
       check_box(const QString& text, QWidget* parent = nullptr);
 
       //! Sets the check_box's stylesheet. Note that these styles are
