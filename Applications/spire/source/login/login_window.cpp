@@ -31,7 +31,7 @@ login_window::login_window(const std::string& version, QWidget* parent)
   auto content_layout = new QVBoxLayout(m_body);
   content_layout->setContentsMargins({});
   content_layout->setSpacing(0);
-  auto title_bar_layout = new QHBoxLayout(m_body);
+  auto title_bar_layout = new QHBoxLayout();
   title_bar_layout->setContentsMargins({});
   title_bar_layout->setSpacing(0);
   title_bar_layout->addStretch(1);
