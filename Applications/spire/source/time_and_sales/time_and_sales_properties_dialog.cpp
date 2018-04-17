@@ -62,16 +62,22 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   m_band_list->setFixedSize(scale(140, 120));
   auto band_unknown_item = new QListWidgetItem(tr("Bid/Ask Unknown"),
     m_band_list);
+  band_unknown_item->setTextAlignment(Qt::AlignCenter);
   auto above_ask_item = new QListWidgetItem(tr("Trade Above Ask"),
     m_band_list);
+  above_ask_item->setTextAlignment(Qt::AlignCenter);
   auto at_ask_item = new QListWidgetItem(tr("Trade At Ask"),
     m_band_list);
+  at_ask_item->setTextAlignment(Qt::AlignCenter);
   auto inside_item = new QListWidgetItem(tr("Trade Inside"),
     m_band_list);
+  inside_item->setTextAlignment(Qt::AlignCenter);
   auto at_bid_item = new QListWidgetItem(tr("Trade At Bid"),
     m_band_list);
+  at_bid_item->setTextAlignment(Qt::AlignCenter);
   auto below_bid_item = new QListWidgetItem(tr("Trade Below Bid"),
     m_band_list);
+  below_bid_item->setTextAlignment(Qt::AlignCenter);
   m_band_list_stylesheet = QString(R"(
     QListWidget {
       background-color: white;
