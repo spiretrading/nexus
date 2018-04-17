@@ -76,7 +76,6 @@ namespace spire {
       mutable cancel_signal m_cancel_signal;
       state m_state;
       std::unique_ptr<drop_shadow> m_shadow;
-      QWidget* m_body;
       QLabel* m_logo_widget;
       QLabel* m_status_label;
       QLineEdit* m_username_line_edit;

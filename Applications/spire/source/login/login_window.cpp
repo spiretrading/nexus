@@ -15,22 +15,17 @@ using namespace spire;
 login_window::login_window(const std::string& version, QWidget* parent)
     : QWidget(parent, Qt::Window | Qt::FramelessWindowHint),
       m_is_dragging(false) {
-  setAttribute(Qt::WA_TranslucentBackground);
   setFixedSize(scale(396, 358));
   m_shadow = std::make_unique<drop_shadow>(this);
-  auto body_layout = new QVBoxLayout(this);
-  body_layout->setMargin(0);
-  body_layout->setSpacing(0);
-  m_body = new QWidget(this);
-  m_body->setObjectName("login_window");
-  m_body->setStyleSheet(R"(
+  setObjectName("login_window");
+  setStyleSheet(R"(
     #login_window {
       background-color: #4B23A0;
       border: 1px solid #321471;
     })");
-  auto content_layout = new QVBoxLayout(m_body);
-  content_layout->setContentsMargins({});
-  content_layout->setSpacing(0);
+  auto body_layout = new QVBoxLayout(this);
+  body_layout->setContentsMargins({});
+  body_layout->setSpacing(0);
   auto title_bar_layout = new QHBoxLayout();
   title_bar_layout->setContentsMargins({});
   title_bar_layout->setSpacing(0);
@@ -39,27 +34,36 @@ login_window::login_window(const std::string& version, QWidget* parent)
   auto button_box = QRect(translate(11, 8), scale(10, 10));
   m_exit_button = new icon_button(
     imageFromSvg(":/icons/close-purple.svg", button_size, button_box),
-    imageFromSvg(":/icons/close-red.svg", button_size, button_box), m_body);
+    imageFromSvg(":/icons/close-red.svg", button_size, button_box), this);
   m_exit_button->setFocusPolicy(Qt::NoFocus);
   m_exit_button->installEventFilter(this);
   m_exit_button->connect_clicked_signal([=] { window()->close(); });
   m_exit_button->set_hover_style("background-color: #401D8B;");
   title_bar_layout->addWidget(m_exit_button);
-  content_layout->addLayout(title_bar_layout);
+  body_layout->addLayout(title_bar_layout);
+  body_layout->setStretchFactor(title_bar_layout, 26);
+  auto padding_layout = new QHBoxLayout();
+  padding_layout->addStretch(52);
+  auto content_layout = new QVBoxLayout();
+  content_layout->setContentsMargins({});
+  content_layout->setSpacing(0);
   content_layout->addStretch(30);
   auto logo_layout = new QHBoxLayout();
   logo_layout->setContentsMargins({});
   logo_layout->setSpacing(0);
-  logo_layout->addStretch(1);
+  logo_layout->addStretch(73);
   m_logo_widget = new QLabel(parent);
-  m_logo_widget->setFixedSize(scale(134, 50));
+  m_logo_widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto logo = new QMovie(":/icons/logo.gif");
   logo->setScaledSize(m_logo_widget->size());
   m_logo_widget->setMovie(logo);
   logo->start();
+  logo_layout->setStretchFactor(m_logo_widget, 1);
   logo_layout->addWidget(m_logo_widget);
-  logo_layout->addStretch(1);
+  logo_layout->setStretchFactor(m_logo_widget, 134);
+  logo_layout->addStretch(73);
   content_layout->addLayout(logo_layout);
+  content_layout->setStretchFactor(logo_layout, 50);
   content_layout->addStretch(23);
   m_status_label = new QLabel(this);
   m_status_label->setStyleSheet(QString(
@@ -68,17 +72,15 @@ login_window::login_window(const std::string& version, QWidget* parent)
        font-size: %1px;
        qproperty-alignment: AlignCenter;)").arg(scale_height(12)));
   content_layout->addWidget(m_status_label);
+  content_layout->setStretchFactor(m_status_label, 14);
   content_layout->addStretch(20);
-  auto username_layout = new QHBoxLayout();
-  username_layout->setContentsMargins({});
-  username_layout->setSpacing(0);
-  username_layout->addStretch(1);
   m_username_line_edit = new QLineEdit(this);
   connect(m_username_line_edit, &QLineEdit::textEdited,
     [=] {on_input_updated();});
   m_username_line_edit->installEventFilter(this);
   m_username_line_edit->setPlaceholderText(tr("Username"));
-  m_username_line_edit->setFixedSize(scale(280, 30));
+  m_username_line_edit->setSizePolicy(QSizePolicy::Expanding,
+    QSizePolicy::Expanding);
   m_username_line_edit->setStyleSheet(QString(
     R"(background-color: white;
        border: 0px;
@@ -86,14 +88,12 @@ login_window::login_window(const std::string& version, QWidget* parent)
        font-size: %2px;
        padding-left: %1px;)")
     .arg(scale_width(10)).arg(scale_height(14)));
-  username_layout->addWidget(m_username_line_edit);
-  username_layout->addStretch(1);
-  content_layout->addLayout(username_layout);
+  content_layout->addWidget(m_username_line_edit);
+  content_layout->setStretchFactor(m_username_line_edit, 30);
   content_layout->addStretch(15);
   auto password_layout = new QHBoxLayout();
   password_layout->setContentsMargins({});
   password_layout->setSpacing(0);
-  password_layout->addStretch(1);
   m_password_line_edit = new QLineEdit(this);
   connect(m_password_line_edit, &QLineEdit::textEdited,
     [=] {on_input_updated();});
@@ -102,7 +102,8 @@ login_window::login_window(const std::string& version, QWidget* parent)
   m_password_line_edit->installEventFilter(this);
   m_password_line_edit->setEchoMode(QLineEdit::Password);
   m_password_line_edit->setPlaceholderText(tr("Password"));
-  m_password_line_edit->setFixedSize(scale(246, 30));
+  m_password_line_edit->setSizePolicy(QSizePolicy::Expanding,
+    QSizePolicy::Expanding);
   m_password_line_edit->setStyleSheet(QString(
     R"(background-color: white;
        border: 0px;
@@ -111,34 +112,40 @@ login_window::login_window(const std::string& version, QWidget* parent)
        padding-left: %1px;)")
     .arg(scale_width(10)).arg(scale_height(14)));
   password_layout->addWidget(m_password_line_edit);
+  password_layout->setStretchFactor(m_password_line_edit, 246);
   auto ch_outer_widget = new QWidget(this);
   ch_outer_widget->setContentsMargins(scale_width(2), scale_height(2),
     scale_width(2), scale_height(2));
-  ch_outer_widget->setFixedSize(scale(34, 30));
+  ch_outer_widget->setSizePolicy(QSizePolicy::Expanding,
+    QSizePolicy::Expanding);
   ch_outer_widget->setStyleSheet("background-color: white;");
   auto ch_layout = new QHBoxLayout(ch_outer_widget);
   ch_layout->setContentsMargins({});
   m_chroma_hash_widget = new chroma_hash_widget(this);
   ch_layout->addWidget(m_chroma_hash_widget);
   password_layout->addWidget(ch_outer_widget);
+  password_layout->setStretchFactor(ch_outer_widget, 34);
   password_layout->addStretch(1);
   content_layout->addLayout(password_layout);
+  content_layout->setStretchFactor(password_layout, 30);
   content_layout->addStretch(30);
   auto button_layout = new QHBoxLayout();
   button_layout->setContentsMargins({});
   button_layout->setSpacing(0);
-  button_layout->addStretch(52);
   auto build_label = new QLabel(QString(tr("Build ")) + version.c_str(), this);
   build_label->setStyleSheet(QString(
     R"(color: white;
        font-family: Roboto;
        font-size: %1px;)").arg(scale_height(12)));
-  build_label->setFixedSize(scale(160, 30));
+  build_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   button_layout->addWidget(build_label);
+  button_layout->setStretchFactor(build_label, 57);
+  button_layout->addStretch(103);
   m_sign_in_button = new flat_button(tr("Sign In"), this);
   m_sign_in_button->connect_clicked_signal([=] {try_login();});
   m_sign_in_button->installEventFilter(this);
-  m_sign_in_button->setFixedSize(scale(120, 30));
+  m_sign_in_button->setSizePolicy(QSizePolicy::Expanding,
+    QSizePolicy::Expanding);
   auto sign_in_default_style = QString(R"(
     background-color: #684BC7;
     color: #E2E0FF;
@@ -161,10 +168,15 @@ login_window::login_window(const std::string& version, QWidget* parent)
     sign_in_focused_style, sign_in_disabled_style);
   m_sign_in_button->setDisabled(true);
   button_layout->addWidget(m_sign_in_button);
-  button_layout->addStretch(52);
+  button_layout->setStretchFactor(m_sign_in_button, 120);
   content_layout->addLayout(button_layout);
+  content_layout->setStretchFactor(button_layout, 30);
   content_layout->addStretch(48);
-  body_layout->addWidget(m_body);
+  padding_layout->addLayout(content_layout);
+  padding_layout->setStretchFactor(content_layout, 280);
+  padding_layout->addStretch(52);
+  body_layout->addLayout(padding_layout);
+  body_layout->setStretchFactor(padding_layout, 320);
   setTabOrder(m_username_line_edit, m_password_line_edit);
   setTabOrder(m_password_line_edit, m_sign_in_button);
   set_state(state::NONE);
