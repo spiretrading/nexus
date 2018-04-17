@@ -134,8 +134,8 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
       font-family: Roboto;
       font-size: %1px;
       outline: none;
-      spacing: %3px;)")
-    .arg(scale_height(12)).arg(scale_height(1)).arg(scale_width(4));
+      spacing: %2px;)")
+    .arg(scale_height(12)).arg(scale_width(4));
   auto check_box_indicator_style = QString(R"(
       background-color: white;
       border: %1px solid #C8C8C8 %2px solid #C8C8C8;
