@@ -1,5 +1,4 @@
 #include "spire/time_and_sales/time_and_sales_properties_dialog.hpp"
-#include <QCheckBox>
 #include <QColorDialog>
 #include <QFontDialog>
 #include <QHBoxLayout>
@@ -90,7 +89,6 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
       font-family: Roboto;
       font-size: %5px;
       height: %6px;
-      outline-color: white;
     })").arg(scale_height(1)).arg(scale_width(1))
         .arg(scale_height(4)).arg(scale_width(4))
         .arg(scale_height(11)).arg(scale_height(16));
@@ -136,23 +134,23 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   m_show_grid_check_box = new check_box(tr("Show Grid"), this);
   m_show_grid_check_box->setFixedSize(scale(80, 17));
   auto check_box_text_style = QString(R"(
-      color: black;
-      font-family: Roboto;
-      font-size: %1px;
-      outline: none;
-      spacing: %2px;)")
+    color: black;
+    font-family: Roboto;
+    font-size: %1px;
+    outline: none;
+    spacing: %2px;)")
     .arg(scale_height(12)).arg(scale_width(4));
   auto check_box_indicator_style = QString(R"(
-      background-color: white;
-      border: %1px solid #C8C8C8 %2px solid #C8C8C8;
-      height: %3px;
-      width: %4px;)").arg(scale_height(1))
-      .arg(scale_width(1)).arg(scale_height(15)).arg(scale_width(15));
+    background-color: white;
+    border: %1px solid #C8C8C8 %2px solid #C8C8C8;
+    height: %3px;
+    width: %4px;)").arg(scale_height(1))
+    .arg(scale_width(1)).arg(scale_height(15)).arg(scale_width(15));
   auto check_box_checked_style = QString(R"(
-      image: url(:/icons/check-with-box.svg);)");
+    image: url(:/icons/check-with-box.svg);)");
   auto check_box_hover_style = QString(R"(
-      border: %1px solid #4B23A0 %2px solid #4B23A0;)")
-      .arg(scale_height(1)).arg(scale_width(1));
+    border: %1px solid #4B23A0 %2px solid #4B23A0;)")
+    .arg(scale_height(1)).arg(scale_width(1));
   auto check_box_focused_style = QString(R"(border-color: #4B23A0;)");
   m_show_grid_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style,
@@ -180,11 +178,11 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   edit_font_button->connect_clicked_signal([=] { set_font(); });
   edit_font_button->setFixedSize(scale(120, 26));
   auto generic_button_default_style = QString(R"(
-      background-color: #EBEBEB;
-      color: black;
-      font-family: Roboto;
-      font-size: %1px;
-      qproperty-alignment: AlignCenter;)").arg(scale_height(12));
+    background-color: #EBEBEB;
+    color: black;
+    font-family: Roboto;
+    font-size: %1px;
+    qproperty-alignment: AlignCenter;)").arg(scale_height(12));
   auto generic_button_hover_style = QString(R"(
     background-color: #4B23A0;
     color: white;)");
@@ -243,6 +241,8 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   buttons_layout_1->setContentsMargins({});
   buttons_layout_1->setSpacing(scale_height(8));
   auto save_as_default_button = new flat_button(tr("Save As Default"), this);
+  save_as_default_button->connect_clicked_signal(
+    [=] { m_save_default_signal(m_properties); });
   save_as_default_button->setFixedSize(scale(100, 26));
   save_as_default_button->set_stylesheet(generic_button_default_style,
     generic_button_hover_style, generic_button_focused_style, "");
@@ -261,7 +261,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   auto reset_default_button = new flat_button(tr("Reset Default"), this);
   reset_default_button->setFixedSize(scale(100, 26));
   reset_default_button->connect_clicked_signal(
-    [&] { m_properties = time_and_sales_properties(); });
+    [=] { m_save_default_signal(time_and_sales_properties()); });
   reset_default_button->set_stylesheet(generic_button_default_style,
     generic_button_hover_style, generic_button_focused_style, "");
   buttons_layout_2->addWidget(reset_default_button);
