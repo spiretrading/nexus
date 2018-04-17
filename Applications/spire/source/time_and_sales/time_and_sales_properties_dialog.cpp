@@ -128,12 +128,11 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   color_settings_layout->addWidget(m_band_color_button);
   color_settings_layout->addStretch(18);
   m_show_grid_check_box = new check_box(tr("Show Grid"), this);
-  m_show_grid_check_box->setFixedSize(scale(80, 16));
+  m_show_grid_check_box->setFixedSize(scale(80, 17));
   auto check_box_text_style = QString(R"(
       color: black;
       font-family: Roboto;
       font-size: %1px;
-      padding: %2px 0px;
       outline: none;
       spacing: %3px;)")
     .arg(scale_height(12)).arg(scale_height(1)).arg(scale_width(4));
