@@ -6,7 +6,7 @@ using namespace spire;
 
 check_box::check_box(const QString& text, QWidget* parent)
   : QCheckBox(text, parent),
-    m_last_focus_reason(Qt::TabFocusReason) {}
+    m_last_focus_reason(Qt::MouseFocusReason) {}
 
 void check_box::set_stylesheet(const QString& text_style,
     const QString& indicator_style, const QString& checked_style,
@@ -20,7 +20,11 @@ void check_box::set_stylesheet(const QString& text_style,
     .arg(hover_style);
   m_focused_style = QString("QCheckBox::indicator { %1 }")
     .arg(focused_style);
-  set_hover_stylesheet();
+  if(m_last_focus_reason == Qt::MouseFocusReason) {
+    set_hover_stylesheet();
+  } else {
+    set_focused_stylesheet();
+  }
 }
 
 void check_box::focusInEvent(QFocusEvent* event)  {
