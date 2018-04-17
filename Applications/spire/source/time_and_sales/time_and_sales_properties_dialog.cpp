@@ -328,10 +328,11 @@ void time_and_sales_properties_dialog::mousePressEvent(QMouseEvent* event) {
 }
 
 void time_and_sales_properties_dialog::set_band_color() {
-  auto color = QColorDialog::getColor(Qt::white);
+  auto index = m_band_list->currentIndex().row();
+  auto band = static_cast<time_and_sales_properties::price_range>(index);
+  auto current_color = m_properties.get_band_color(band);
+  auto color = QColorDialog::getColor(current_color);
   if(color.isValid()) {
-    auto index = m_band_list->currentIndex().row();
-    auto band = static_cast<time_and_sales_properties::price_range>(index);
     m_properties.set_band_color(band, color);
     m_band_list->item(index)->setBackground(color);
     update_colors(index);
@@ -348,12 +349,15 @@ void time_and_sales_properties_dialog::set_font() {
 }
 
 void time_and_sales_properties_dialog::set_text_color() {
-  auto color = QColorDialog::getColor(Qt::white);
   auto index = m_band_list->currentIndex().row();
   auto band = static_cast<time_and_sales_properties::price_range>(index);
-  m_properties.set_text_color(band, color);
-  m_band_list->item(index)->setForeground(color);
-  update_colors(index);
+  auto current_color = m_properties.get_text_color(band);
+  auto color = QColorDialog::getColor(current_color);
+  if(color.isValid()) {
+    m_properties.set_text_color(band, color);
+    m_band_list->item(index)->setForeground(color);
+    update_colors(index);
+  }
 }
 
 void time_and_sales_properties_dialog::set_color_button_stylesheet(
