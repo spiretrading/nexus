@@ -32,6 +32,7 @@ toolbar_window::toolbar_window(recently_closed_model& model,
   auto layout = new QVBoxLayout(m_body);
   layout->setContentsMargins({});
   layout->setSpacing(0);
+  layout->addStretch(8);
   window()->setWindowTitle(tr("Spire - Signed in as ") +
     QString::fromStdString(account.m_name));
   auto combo_box_layout = new QHBoxLayout();
@@ -39,8 +40,11 @@ toolbar_window::toolbar_window(recently_closed_model& model,
   combo_box_layout->setSpacing(0);
   layout->addLayout(combo_box_layout);
   layout->setStretchFactor(combo_box_layout, 26);
+  layout->addStretch(10);
   combo_box_layout->addStretch(8);
   m_window_manager_button = new toolbar_menu(tr("Window Manager"), m_body);
+  m_window_manager_button->setSizePolicy(QSizePolicy::Expanding,
+    QSizePolicy::Expanding);
   m_window_manager_button->add(tr("Minimize All"));
   m_window_manager_button->add(tr("Restore All"));
   m_window_manager_button->add(tr("Import/Export Settings"));
@@ -48,6 +52,8 @@ toolbar_window::toolbar_window(recently_closed_model& model,
   combo_box_layout->setStretchFactor(m_window_manager_button, 138);
   combo_box_layout->addStretch(16);
   m_recently_closed_button = new toolbar_menu(tr("Recently Closed"), m_body);
+  m_recently_closed_button->setSizePolicy(QSizePolicy::Expanding,
+    QSizePolicy::Expanding);
 
   // TODO: GCC workaround
   m_recently_closed_button->connect_item_selected_signal(
@@ -110,6 +116,8 @@ toolbar_window::toolbar_window(recently_closed_model& model,
   m_blotter_button->setToolTip(tr("Blotter"));
   button_layout->addWidget(m_blotter_button);
   layout->addLayout(button_layout);
+  layout->setStretchFactor(button_layout, 20);
+  layout->addStretch(8);
 
   // TODO: GCC workaround
   m_model->connect_entry_added_signal(
