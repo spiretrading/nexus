@@ -48,14 +48,11 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     font-size: %1px;
     font-weight: 550;)").arg(scale_height(12));
   auto band_appearance_label = new QLabel(tr("Band Appearance"), this);
-  band_appearance_label->setSizePolicy(QSizePolicy::Expanding,
-    QSizePolicy::Expanding);
   band_appearance_label->setStyleSheet(section_label_style);
   band_list_layout->addWidget(band_appearance_label);
   band_list_layout->setStretchFactor(band_appearance_label, 14);
   band_list_layout->addStretch(10);
   m_band_list = new QListWidget(this);
-  m_band_list->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_band_list->setSelectionMode(
     QAbstractItemView::SelectionMode::SingleSelection);
   m_band_list->setSelectionBehavior(
@@ -170,9 +167,11 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   auto font_label = new QLabel(tr("Font"), this);
   font_label->setStyleSheet(section_label_style);
   font_layout->addWidget(font_label);
-  font_layout->addStretch(10);
   font_layout->setStretchFactor(font_label, 14);
+  font_layout->addStretch(10);
   m_font_preview_label = new QLabel(tr("Aa Bb Cc\n0123"), this);
+  m_font_preview_label->setSizePolicy(QSizePolicy::Ignored,
+    QSizePolicy::Ignored);
   m_font_preview_label->setFont(properties.m_font);
   m_font_preview_label->setAlignment(Qt::AlignCenter);
   m_font_preview_label->setStyleSheet(QString(R"(
