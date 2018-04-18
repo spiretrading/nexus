@@ -331,7 +331,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   buttons_layout->addLayout(buttons_layout_4);
   buttons_layout->setStretchFactor(buttons_layout_4, 100);
   layout->addLayout(buttons_layout);
-  layout->setStretchFactor(buttons_layout, 78);
+  layout->setStretchFactor(buttons_layout, 60);
   set_properties(properties);
 }
 
