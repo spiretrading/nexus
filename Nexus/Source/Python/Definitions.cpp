@@ -51,8 +51,7 @@ using namespace std;
 namespace {
   struct QuantityFromPythonConverter {
     static void* convertible(PyObject* object) {
-      if(PyInt_Check(object) || PyLong_Check(object) ||
-          PyFloat_Check(object)) {
+      if(PyLong_Check(object) || PyFloat_Check(object)) {
         return object;
       }
       return nullptr;
@@ -62,9 +61,7 @@ namespace {
         boost::python::converter::rvalue_from_python_stage1_data* data) {
       auto storage = reinterpret_cast<converter::rvalue_from_python_storage<
           Quantity>*>(data)->storage.bytes;
-      if(PyInt_Check(object)) {
-        new(storage) Quantity{PyInt_AS_LONG(object)};
-      } else if(PyLong_Check(object)) {
+      if(PyLong_Check(object)) {
         new(storage) Quantity{PyLong_AsLong(object)};
       } else {
         new(storage) Quantity{PyFloat_AS_DOUBLE(object)};
