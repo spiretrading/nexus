@@ -35,28 +35,29 @@ toolbar_window::toolbar_window(recently_closed_model& model,
   window()->setWindowTitle(tr("Spire - Signed in as ") +
     QString::fromStdString(account.m_name));
   auto combo_box_layout = new QHBoxLayout();
-  combo_box_layout->setContentsMargins(scale_width(8), scale_height(8),
-    scale_width(8), scale_height(5));
+  combo_box_layout->setContentsMargins({});
   combo_box_layout->setSpacing(0);
   layout->addLayout(combo_box_layout);
+  layout->setStretchFactor(combo_box_layout, 26);
+  combo_box_layout->addStretch(8);
   m_window_manager_button = new toolbar_menu(tr("Window Manager"), m_body);
-  m_window_manager_button->setFixedSize(scale(138, 26));
   m_window_manager_button->add(tr("Minimize All"));
   m_window_manager_button->add(tr("Restore All"));
   m_window_manager_button->add(tr("Import/Export Settings"));
   combo_box_layout->addWidget(m_window_manager_button);
-  combo_box_layout->addStretch(1);
+  combo_box_layout->setStretchFactor(m_window_manager_button, 138);
+  combo_box_layout->addStretch(16);
   m_recently_closed_button = new toolbar_menu(tr("Recently Closed"), m_body);
 
   // TODO: GCC workaround
   m_recently_closed_button->connect_item_selected_signal(
     [=] (auto index) { this->on_item_selected(index); });
-  m_recently_closed_button->setFixedSize(scale(138, 26));
   combo_box_layout->addWidget(m_recently_closed_button);
+  combo_box_layout->setStretchFactor(m_recently_closed_button, 138);
+  combo_box_layout->addStretch(8);
   auto button_layout = new QHBoxLayout();
-  button_layout->setContentsMargins(scale_width(8), scale_height(5),
-    scale_width(8), scale_height(8));
-  button_layout->setSpacing(scale_width(14));
+  button_layout->setContentsMargins({});
+  button_layout->setSpacing(0);
   auto window_button_size = scale(20, 20);
   m_account_button = new icon_button(
     imageFromSvg(":/icons/account-light-purple.svg", window_button_size),
