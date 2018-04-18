@@ -56,7 +56,7 @@ def execute_report(account, start_date, end_date, fee_table, service_clients):
           calculated_fee.commission) != \
          (execution_report.execution_fee, execution_report.processing_fee,
           execution_report.commission):
-        print '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' % \
+        print('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' %
           (order.info.order_id, execution_report.sequence,
           order.info.fields.security.symbol, order.info.fields.security.market,
           order.info.fields.side, execution_report.last_price,
@@ -64,7 +64,7 @@ def execute_report(account, start_date, end_date, fee_table, service_clients):
           execution_report.liquidity_flag, execution_report.execution_fee,
           execution_report.processing_fee, execution_report.commission,
           calculated_fee.execution_fee, calculated_fee.processing_fee,
-          calculated_fee.commission)
+          calculated_fee.commission))
         sys.stdout.flush()
 
 def load_fee_table(config, market_database):

@@ -58,7 +58,7 @@ def main():
       'order_id = %s AND sequence = %s;' % \
       (execution_fee.representation, processing_fee.representation,
        commission.representation, order_id, sequence)
-    print query
+    print(query)
 
 if __name__ == '__main__':
   main()
