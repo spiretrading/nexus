@@ -20,7 +20,7 @@ security_input_dialog::security_input_dialog(security_input_model& model,
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins(scale_width(8), scale_height(6), scale_width(8),
     scale_height(8));
-  layout->setSpacing(scale_height(10));
+  layout->setSpacing(0);
   setFixedSize(scale(196, 68));
   setObjectName("security_input_dialog");
   setStyleSheet(QString(R"(
@@ -36,10 +36,13 @@ security_input_dialog::security_input_dialog(security_input_model& model,
     font-size: %1px;
   )").arg(scale_height(12)));
   layout->addWidget(text_label);
+  layout->setStretchFactor(text_label, 14);
+  layout->addStretch(10);
   m_security_input_box = new security_input_box(model, this);
   m_security_input_box->connect_commit_signal(
     [=] (const Security& s) { set_security(s); });
   layout->addWidget(m_security_input_box);
+  layout->setStretchFactor(m_security_input_box, 30);
 }
 
 const Security& security_input_dialog::get_security() const noexcept {
