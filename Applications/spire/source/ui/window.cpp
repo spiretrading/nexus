@@ -48,6 +48,8 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
     set_border_stylesheet("#A0A0A0");
   } else if(event->type() == QEvent::WindowDeactivate) {
     set_border_stylesheet("#C8C8C8");
+  } else if(event->type() == QEvent::Resize) {
+    this->::QWidget::window()->resize(m_body->width(), m_body->height());
   }
   return QWidget::eventFilter(watched, event);
 }
