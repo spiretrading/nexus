@@ -81,13 +81,13 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     QListWidget {
       background-color: white;
       border: %1px solid #C8C8C8 %2px solid #C8C8C8;
+      font-family: Roboto;
+      font-size: %5px;
       outline: none;
       padding: %3px %4px 0px %4px;
     }
 
     QListWidget::item {
-      font-family: Roboto;
-      font-size: %5px;
       height: %6px;
     })").arg(scale_height(1)).arg(scale_width(1))
         .arg(scale_height(4)).arg(scale_width(4))

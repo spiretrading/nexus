@@ -17,6 +17,7 @@ window::window(QWidget* body, QWidget* parent)
   m_shadow = std::make_unique<drop_shadow>(this);
   resize(m_body->width() + scale_width(25),
     m_body->height() + scale_height(25));
+  setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
