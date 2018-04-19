@@ -172,12 +172,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   m_font_preview_label = new QLabel(tr("Aa Bb Cc\n0123"), this);
   m_font_preview_label->setSizePolicy(QSizePolicy::Ignored,
     QSizePolicy::Ignored);
-  m_font_preview_label->setFont(properties.m_font);
   m_font_preview_label->setAlignment(Qt::AlignCenter);
-  m_font_preview_label->setStyleSheet(QString(R"(
-    background-color: white;
-    border: %1px solid #C8C8C8 %2px solid #C8C8C8;
-    )").arg(scale_height(1)).arg(scale_width(1)));
   font_layout->addWidget(m_font_preview_label);
   font_layout->setStretchFactor(m_font_preview_label, 84);
   font_layout->addStretch(10);
@@ -376,6 +371,7 @@ void time_and_sales_properties_dialog::set_font() {
   if(ok) {
     m_font_preview_label->setFont(font);
     m_properties.m_font = font;
+    update_font_preview_stylesheet();
   }
 }
 
@@ -448,6 +444,7 @@ void time_and_sales_properties_dialog::set_properties(
   set_color_settings_stylesheet(m_band_list->currentRow());
   m_show_grid_check_box->setChecked(m_properties.m_show_grid);
   m_font_preview_label->setFont(m_properties.m_font);
+  update_font_preview_stylesheet();
   m_time_check_box->setChecked(m_properties.get_show_column(
     time_and_sales_properties::columns::TIME_COLUMN));
   m_price_check_box->setChecked(m_properties.get_show_column(
@@ -472,4 +469,14 @@ void time_and_sales_properties_dialog::update_colors(int band_index) {
     .arg(m_properties.get_band_color(i).name())
     .arg(m_properties.get_text_color(i).name());
   m_band_list->setStyleSheet(m_band_list_stylesheet + selected_stylesheet);
+}
+
+void time_and_sales_properties_dialog::update_font_preview_stylesheet() {
+  auto font_metrics = QFontMetrics(m_properties.m_font);
+  auto font_height = font_metrics.size(0, "Test").height();
+  m_font_preview_label->setStyleSheet(QString(R"(
+    background-color: white;
+    border: %1px solid #C8C8C8 %2px solid #C8C8C8;
+    font-size: %3px;
+    )").arg(scale_height(1)).arg(scale_width(1)).arg(font_height));
 }
