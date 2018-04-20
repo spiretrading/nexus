@@ -15,7 +15,6 @@ security_input_box::security_input_box(security_input_model& model,
     QWidget* parent)
     : QWidget(parent),
       m_model(&model) {
-  setFixedHeight(scale_height(30));
   setObjectName("security_input_box");
   setStyleSheet(QString(R"(
     #security_input_box {

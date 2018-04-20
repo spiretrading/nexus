@@ -16,6 +16,7 @@ flat_button::flat_button(const QString& label, QWidget* parent)
       m_clickable(true),
       m_last_focus_reason(Qt::MouseFocusReason) {
   m_label = new QLabel(label, this);
+  m_label->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(m_label);

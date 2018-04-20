@@ -1,5 +1,6 @@
 #include "spire/ui/window.hpp"
 #include <QEvent>
+#include <QResizeEvent>
 #include <QVBoxLayout>
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/drop_shadow.hpp"
@@ -17,6 +18,7 @@ window::window(QWidget* body, QWidget* parent)
   m_shadow = std::make_unique<drop_shadow>(this);
   resize(m_body->width() + scale_width(25),
     m_body->height() + scale_height(25));
+  setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
@@ -45,8 +47,14 @@ void window::set_icon(const QImage& icon, const QImage& unfocused_icon) {
 bool window::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::WindowActivate) {
     set_border_stylesheet("#A0A0A0");
+    m_shadow->raise();
   } else if(event->type() == QEvent::WindowDeactivate) {
     set_border_stylesheet("#C8C8C8");
+  } else if(event->type() == QEvent::Resize) {
+    auto e = static_cast<QResizeEvent*>(event);
+    if(e->size().height() > height()) {
+      this->::QWidget::window()->resize(size());
+    }
   }
   return QWidget::eventFilter(watched, event);
 }
