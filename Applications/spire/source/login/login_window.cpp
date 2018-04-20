@@ -70,8 +70,8 @@ login_window::login_window(const std::string& version, QWidget* parent)
   content_layout->addStretch(23);
   m_status_label = new QLabel(this);
   m_status_label->setStyleSheet(QString(
-    R"(color: #faeb96;
-       font-family: roboto;
+    R"(color: #FAEB96;
+       font-family: Roboto;
        font-size: %1px;
        qproperty-alignment: AlignCenter;)").arg(scale_height(12)));
   content_layout->addWidget(m_status_label);
@@ -81,13 +81,13 @@ login_window::login_window(const std::string& version, QWidget* parent)
   connect(m_username_line_edit, &QLineEdit::textEdited,
     [=] {on_input_updated();});
   m_username_line_edit->installEventFilter(this);
-  m_username_line_edit->setPlaceholderText(tr("username"));
+  m_username_line_edit->setPlaceholderText(tr("Username"));
   m_username_line_edit->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
   m_username_line_edit->setStyleSheet(QString(
     R"(background-color: white;
        border: 0px;
-       font-family: roboto;
+       font-family: Roboto;
        font-size: %2px;
        padding-left: %1px;)")
     .arg(scale_width(10)).arg(scale_height(14)));
@@ -104,13 +104,13 @@ login_window::login_window(const std::string& version, QWidget* parent)
     [=] {on_password_updated();});
   m_password_line_edit->installEventFilter(this);
   m_password_line_edit->setEchoMode(QLineEdit::Password);
-  m_password_line_edit->setPlaceholderText(tr("password"));
+  m_password_line_edit->setPlaceholderText(tr("Password"));
   m_password_line_edit->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
   m_password_line_edit->setStyleSheet(QString(
     R"(background-color: white;
        border: 0px;
-       font-family: roboto;
+       font-family: Roboto;
        font-size: %2px;
        padding-left: %1px;)")
     .arg(scale_width(10)).arg(scale_height(14)));
@@ -136,34 +136,34 @@ login_window::login_window(const std::string& version, QWidget* parent)
   auto button_layout = new QHBoxLayout();
   button_layout->setContentsMargins({});
   button_layout->setSpacing(0);
-  auto build_label = new QLabel(QString(tr("build ")) + version.c_str(), this);
+  auto build_label = new QLabel(QString(tr("Build ")) + version.c_str(), this);
   build_label->setStyleSheet(QString(
     R"(color: white;
-       font-family: roboto;
+       font-family: Roboto;
        font-size: %1px;)").arg(scale_height(12)));
   build_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   button_layout->addWidget(build_label);
   button_layout->setStretchFactor(build_label, 57);
   button_layout->addStretch(103);
-  m_sign_in_button = new flat_button(tr("sign in"), this);
+  m_sign_in_button = new flat_button(tr("Sign In"), this);
   m_sign_in_button->connect_clicked_signal([=] {try_login();});
   m_sign_in_button->installEventFilter(this);
   m_sign_in_button->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
   auto sign_in_default_style = QString(R"(
-    background-color: #684bc7;
-    color: #e2e0ff;
-    font-family: roboto;
+    background-color: #684BC7;
+    color: #E2E0FF;
+    font-family: Roboto;
     font-size: %1px;
     font-weight: bold;
     qproperty-alignment: AlignCenter;)").arg(scale_height(14));
-  auto sign_in_hover_style = QString("background-color: #8d78ec;");
-  auto sign_in_focused_style = QString("border: 1px solid #8d78ec;");
+  auto sign_in_hover_style = QString("background-color: #8D78EC;");
+  auto sign_in_focused_style = QString("border: 1px solid #8D78EC;");
   auto sign_in_disabled_style = QString(R"(
-    background-color: #4b23a0;
-    border: %2px solid #684bc7;
-    color: #8d78ec;
-    font-family: roboto;
+    background-color: #4B23A0;
+    border: %2px solid #684BC7;
+    color: #8D78EC;
+    font-family: Roboto;
     font-size: %1px;
     font-weight: bold;
     qproperty-alignment: AlignCenter;)")
