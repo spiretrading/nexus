@@ -47,6 +47,7 @@ void window::set_icon(const QImage& icon, const QImage& unfocused_icon) {
 bool window::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::WindowActivate) {
     set_border_stylesheet("#A0A0A0");
+    m_shadow->raise();
   } else if(event->type() == QEvent::WindowDeactivate) {
     set_border_stylesheet("#C8C8C8");
   } else if(event->type() == QEvent::Resize) {
