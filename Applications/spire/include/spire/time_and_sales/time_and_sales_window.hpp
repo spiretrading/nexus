@@ -1,6 +1,7 @@
 #ifndef SPIRE_TIME_AND_SALES_WINDOW_HPP
 #define SPIRE_TIME_AND_SALES_WINDOW_HPP
 #include <boost/optional.hpp>
+#include <QLabel>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/time_and_sales/time_and_sales.hpp"
@@ -46,6 +47,7 @@ namespace spire {
 
     protected:
       void closeEvent(QCloseEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
 
     private:
       mutable change_security_signal m_change_security_signal;
@@ -53,6 +55,10 @@ namespace spire {
       time_and_sales_properties m_properties;
       boost::optional<time_and_sales_window_model> m_model;
       security_stack m_securities;
+      Nexus::Security m_current_security;
+
+      // remove this, for testing only
+      QLabel* m_current_label;
   };
 }
 
