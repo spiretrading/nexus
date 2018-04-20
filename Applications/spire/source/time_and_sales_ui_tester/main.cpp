@@ -9,7 +9,5 @@ int main(int argc, char** argv) {
   application->setOrganizationName(QObject::tr("Eidolon Systems Ltd"));
   application->setApplicationName(QObject::tr("Time and Sales UI Tester"));
   initialize_resources();
-  time_and_sales_properties_dialog dialog((time_and_sales_properties()));
-  dialog.show();
   application->exec();
 }
