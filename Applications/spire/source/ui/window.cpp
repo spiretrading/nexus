@@ -1,5 +1,6 @@
 #include "spire/ui/window.hpp"
 #include <QEvent>
+#include <QResizeEvent>
 #include <QVBoxLayout>
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/drop_shadow.hpp"
@@ -49,7 +50,10 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
   } else if(event->type() == QEvent::WindowDeactivate) {
     set_border_stylesheet("#C8C8C8");
   } else if(event->type() == QEvent::Resize) {
-    this->::QWidget::window()->resize(m_body->width(), m_body->height());
+    auto e = static_cast<QResizeEvent*>(event);
+    if(e->size().height() > height()) {
+      this->::QWidget::window()->resize(size());
+    }
   }
   return QWidget::eventFilter(watched, event);
 }
