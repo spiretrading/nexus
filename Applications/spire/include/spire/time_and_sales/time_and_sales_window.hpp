@@ -4,6 +4,7 @@
 #include <QLabel>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
+#include "spire/security_input/local_security_input_model.hpp"
 #include "spire/time_and_sales/time_and_sales.hpp"
 #include "spire/time_and_sales/time_and_sales_properties.hpp"
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
@@ -57,8 +58,11 @@ namespace spire {
       security_stack m_securities;
       Nexus::Security m_current_security;
 
+      void update_current(const Nexus::Security& s);
+
       // remove this, for testing only
       QLabel* m_current_label;
+      local_security_input_model m_security_model;
   };
 }
 

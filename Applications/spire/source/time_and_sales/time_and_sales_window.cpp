@@ -2,6 +2,8 @@
 #include <QKeyEvent>
 #include <QVBoxLayout>
 #include "spire/time_and_sales/empty_time_and_sales_model.hpp"
+#include "spire/security_input/security_input_dialog.hpp"
+#include "spire/security_input/local_security_input_model.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -13,17 +15,38 @@ time_and_sales_window::time_and_sales_window(
     : QWidget(parent) {
   set_properties(properties);
   set_model(std::make_shared<empty_time_and_sales_model>(Security()));
-
+  setWindowTitle(tr("New Window"));
 
   // TODO: remove this, for testing only
   setFixedSize(400, 400);
   auto layout = new QVBoxLayout(this);
-  m_current_security = ParseSecurity("TEST.TSX");
   m_current_label = new QLabel(
     QString::fromStdString(ToString(m_current_security)), this);
   m_securities.push(ParseSecurity("MRU.TSX"));
   m_securities.push(ParseSecurity("MG.TSX"));
   m_securities.push(ParseSecurity("MON.NYSE"));
+  m_security_model.add(SecurityInfo(
+    Security("MSFT", DefaultMarkets::NASDAQ(), DefaultCountries::US()),
+    "Microsoft Corp", "Software"));
+  m_security_model.add(SecurityInfo(
+    Security("MG", DefaultMarkets::TSX(), DefaultCountries::CA()),
+    "Magna International Inc.", "Automotive, probably"));
+  m_security_model.add(SecurityInfo(
+    Security("MFC", DefaultMarkets::TSX(), DefaultCountries::CA()),
+    "Manulife Financial Corporation", "Finance"));
+  m_security_model.add(SecurityInfo(
+    Security("MX", DefaultMarkets::TSX(), DefaultCountries::CA()),
+    "Methanex Corporation", ""));
+  m_security_model.add(SecurityInfo(
+    Security("MRU", DefaultMarkets::TSX(), DefaultCountries::CA()),
+    "Metro Inc.", ""));
+  m_security_model.add(SecurityInfo(
+    Security("MON", DefaultMarkets::NYSE(), DefaultCountries::US()),
+    "Monsanto Co.", ""));
+  m_security_model.add(SecurityInfo(
+    Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
+    "Morgan Stanley", "Finance"));
+  update_current(ParseSecurity("TEST.TSX"));
 }
 
 void time_and_sales_window::set_model(
@@ -51,16 +74,30 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_PageUp) {
     auto s = m_securities.push_front(m_current_security);
     if(s != Security()) {
-      m_current_security = s;
-      m_change_security_signal(s);
-      m_current_label->setText(QString::fromStdString(ToString(s)));
+      update_current(s);
     }
+    return;
   } else if(event->key() == Qt::Key_PageDown) {
     auto s = m_securities.push_back(m_current_security);
     if(s != Security()) {
-      m_current_security = s;
-      m_change_security_signal(s);
-      m_current_label->setText(QString::fromStdString(ToString(s)));
+      update_current(s);
+    }
+    return;
+  }
+  auto pressed_key = event->text();
+  if(pressed_key[0].isLetterOrNumber()) {
+    auto dialog = new security_input_dialog(m_security_model, pressed_key,
+      this);
+    if(dialog->exec() == QDialog::Accepted) {
+      m_securities.push(m_current_security);
+      update_current(dialog->get_security());
     }
   }
+}
+
+void time_and_sales_window::update_current(const Security& s) {
+  m_current_security = s;
+  m_change_security_signal(s);
+  m_current_label->setText(QString::fromStdString(ToString(s)));
+  setWindowTitle(QString::fromStdString(ToString(s)));
 }
