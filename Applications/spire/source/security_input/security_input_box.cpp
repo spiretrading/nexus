@@ -114,6 +114,10 @@ bool security_input_box::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
+void security_input_box::hideEvent(QHideEvent* event) {
+  m_securities->close();
+}
+
 void security_input_box::resizeEvent(QResizeEvent* event) {
   m_securities->setFixedWidth(width());
 }

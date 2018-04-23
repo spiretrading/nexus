@@ -91,6 +91,7 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
     if(dialog->exec() == QDialog::Accepted) {
       m_securities.push(m_current_security);
       set_current(dialog->get_security());
+      activateWindow();
     }
   }
 }
