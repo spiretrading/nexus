@@ -46,7 +46,6 @@ security_input_box::security_input_box(security_input_model& model,
     padding: %2px 0px %2px %3px;)")
     .arg(scale_height(12)).arg(scale_height(6)).arg(scale_width(8)));
   layout->addWidget(m_security_line_edit);
-  m_security_line_edit->setText(initial_text);
   m_icon_label = new QLabel(this);
   m_icon_label->setPixmap(QPixmap::fromImage(imageFromSvg(":/icons/search.svg",
     scale(10, 10))));
@@ -66,6 +65,9 @@ security_input_box::security_input_box(security_input_model& model,
   m_securities->connect_commit_signal([=] (auto& s) { this->on_commit(s); });
   m_securities->setVisible(false);
   window()->installEventFilter(this);
+
+  m_security_line_edit->setText(initial_text);
+  on_text_edited();
 }
 
 connection security_input_box::connect_commit_signal(
