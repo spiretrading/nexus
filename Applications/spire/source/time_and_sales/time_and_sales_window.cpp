@@ -43,19 +43,19 @@ void time_and_sales_window::closeEvent(QCloseEvent* event) {
 
 void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_PageUp) {
-    auto s = m_securities.push_front(m_current_security);
-    if(s != Security()) {
-      set_current(s);
-    } else {
-      setWindowTitle(tr("Time and Sales"));
+    if(m_current_security != Security()) {
+      auto s = m_securities.push_front(m_current_security);
+      if(s != Security()) {
+        set_current(s);
+      }
     }
     return;
   } else if(event->key() == Qt::Key_PageDown) {
-    auto s = m_securities.push_back(m_current_security);
-    if(s != Security()) {
-      set_current(s);
-    } else {
-      setWindowTitle(tr("Time and Sales"));
+    if(m_current_security != Security()) {
+      auto s = m_securities.push_back(m_current_security);
+      if(s != Security()) {
+        set_current(s);
+      }
     }
     return;
   }
@@ -63,7 +63,8 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
   if(pressed_key[0].isLetterOrNumber()) {
     auto dialog = new security_input_dialog(*m_input_model, pressed_key, this);
     if(dialog->exec() == QDialog::Accepted) {
-      if(dialog->get_security() != Security()) {
+      auto s = dialog->get_security();
+      if(s != Security() && s != m_current_security) {
         m_securities.push(m_current_security);
         set_current(dialog->get_security());
         activateWindow();
