@@ -89,9 +89,11 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
     auto dialog = new security_input_dialog(m_security_model, pressed_key,
       this);
     if(dialog->exec() == QDialog::Accepted) {
-      m_securities.push(m_current_security);
-      set_current(dialog->get_security());
-      activateWindow();
+      if(dialog->get_security() != Security()) {
+        m_securities.push(m_current_security);
+        set_current(dialog->get_security());
+        activateWindow();
+      }
     }
   }
 }
@@ -100,6 +102,5 @@ void time_and_sales_window::set_current(const Security& s) {
   m_current_security = s;
   m_change_security_signal(s);
   m_current_label->setText(QString::fromStdString(ToString(s)));
-  set_model(std::make_shared<empty_time_and_sales_model>(s));
   setWindowTitle(QString::fromStdString(ToString(s)));
 }
