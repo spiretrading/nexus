@@ -74,6 +74,9 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
 }
 
 void time_and_sales_window::set_current(const Security& s) {
+  if(s == m_current_security) {
+    return;
+  }
   m_current_security = s;
   m_change_security_signal(s);
   setWindowTitle(QString::fromStdString(ToString(s)) +
