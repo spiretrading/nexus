@@ -13,6 +13,10 @@ using namespace spire;
 
 security_input_box::security_input_box(security_input_model& model,
     QWidget* parent)
+    : security_input_box(model, "", parent) {}
+
+security_input_box::security_input_box(security_input_model& model,
+    const QString& initial_text, QWidget* parent)
     : QWidget(parent),
       m_model(&model) {
   setObjectName("security_input_box");
@@ -61,6 +65,8 @@ security_input_box::security_input_box(security_input_model& model,
   m_securities->connect_commit_signal([=] (auto& s) { this->on_commit(s); });
   m_securities->setVisible(false);
   window()->installEventFilter(this);
+  m_security_line_edit->setText(initial_text);
+  on_text_edited();
 }
 
 connection security_input_box::connect_commit_signal(
@@ -105,6 +111,10 @@ bool security_input_box::eventFilter(QObject* watched, QEvent* event) {
     }
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void security_input_box::hideEvent(QHideEvent* event) {
+  m_securities->close();
 }
 
 void security_input_box::resizeEvent(QResizeEvent* event) {

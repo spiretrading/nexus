@@ -1,4 +1,5 @@
 #include "spire/time_and_sales/time_and_sales_controller.hpp"
+#include "spire/security_input/local_security_input_model.hpp"
 #include "spire/time_and_sales/empty_time_and_sales_model.hpp"
 #include "spire/time_and_sales/time_and_sales_window.hpp"
 
@@ -9,7 +10,8 @@ using namespace spire;
 
 time_and_sales_controller::time_and_sales_controller(
     VirtualServiceClients& service_clients)
-    : m_service_clients(&service_clients) {}
+    : m_service_clients(&service_clients),
+      m_input_model(std::make_unique<local_security_input_model>()) {}
 
 time_and_sales_controller::~time_and_sales_controller() = default;
 
@@ -18,7 +20,7 @@ void time_and_sales_controller::open() {
     return;
   }
   m_window = std::make_unique<time_and_sales_window>(
-    time_and_sales_properties());
+    time_and_sales_properties(), *m_input_model);
   m_window->connect_closed_signal([=] { on_closed(); });
   m_window->show();
 }

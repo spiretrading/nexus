@@ -13,6 +13,10 @@ using namespace spire;
 
 security_input_dialog::security_input_dialog(security_input_model& model,
     QWidget* parent, Qt::WindowFlags flags)
+    : security_input_dialog(model, "", parent, flags) {}
+
+security_input_dialog::security_input_dialog(security_input_model& model,
+    const QString& initial_text, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, Qt::Window | Qt::FramelessWindowHint | flags),
       m_is_dragging(false) {
   setWindowModality(Qt::WindowModal);
@@ -38,12 +42,14 @@ security_input_dialog::security_input_dialog(security_input_model& model,
   layout->addWidget(text_label);
   layout->setStretchFactor(text_label, 14);
   layout->addStretch(10);
-  m_security_input_box = new security_input_box(model, this);
+  m_security_input_box = new security_input_box(model, initial_text, this);
   m_security_input_box->connect_commit_signal(
     [=] (const Security& s) { set_security(s); });
   layout->addWidget(m_security_input_box);
   layout->setStretchFactor(m_security_input_box, 30);
 }
+
+security_input_dialog::~security_input_dialog() = default;
 
 const Security& security_input_dialog::get_security() const noexcept {
   return m_security;
