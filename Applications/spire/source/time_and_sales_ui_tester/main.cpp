@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
     Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
     "Morgan Stanley", "Finance"));
   auto test_window = new time_and_sales_window(time_and_sales_properties(),
-    &model);
+    model);
   test_window->show();
   application->exec();
 }

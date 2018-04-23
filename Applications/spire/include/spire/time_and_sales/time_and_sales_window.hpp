@@ -32,7 +32,7 @@ namespace spire {
         \param parent The parent widget.
       */
       time_and_sales_window(const time_and_sales_properties& properties,
-        security_input_model* model, QWidget* parent = nullptr);
+        security_input_model& model, QWidget* parent = nullptr);
 
       //! Sets the model to display.
       void set_model(std::shared_ptr<time_and_sales_model> model);
@@ -55,7 +55,7 @@ namespace spire {
       mutable change_security_signal m_change_security_signal;
       mutable closed_signal m_closed_signal;
       time_and_sales_properties m_properties;
-      security_input_model* m_security_input_model;
+      security_input_model* m_input_model;
       boost::optional<time_and_sales_window_model> m_model;
       security_stack m_securities;
       Nexus::Security m_current_security;

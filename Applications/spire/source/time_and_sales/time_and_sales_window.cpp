@@ -12,9 +12,9 @@ using namespace spire;
 
 time_and_sales_window::time_and_sales_window(
     const time_and_sales_properties& properties, 
-    security_input_model* model, QWidget* parent)
+    security_input_model& input_model, QWidget* parent)
     : QWidget(parent),
-      m_security_input_model(model) {
+      m_input_model(&input_model) {
   set_properties(properties);
   set_model(std::make_shared<empty_time_and_sales_model>(Security()));
   setWindowTitle(tr("New Window"));
@@ -57,8 +57,7 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
   }
   auto pressed_key = event->text();
   if(pressed_key[0].isLetterOrNumber()) {
-    auto dialog = new security_input_dialog(*m_security_input_model,
-      pressed_key, this);
+    auto dialog = new security_input_dialog(*m_input_model, pressed_key, this);
     if(dialog->exec() == QDialog::Accepted) {
       if(dialog->get_security() != Security()) {
         m_securities.push(m_current_security);
