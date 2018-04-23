@@ -4,7 +4,7 @@
 #include <QLabel>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
-#include "spire/security_input/local_security_input_model.hpp"
+#include "spire/security_input/security_input.hpp"
 #include "spire/time_and_sales/time_and_sales.hpp"
 #include "spire/time_and_sales/time_and_sales_properties.hpp"
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
@@ -28,10 +28,11 @@ namespace spire {
       //! Constructs a time and sales window.
       /*!
         \param properties The display properties.
+        \param model The security_input_model to use for autocomplete.
         \param parent The parent widget.
       */
       time_and_sales_window(const time_and_sales_properties& properties,
-        QWidget* parent = nullptr);
+        security_input_model* model, QWidget* parent = nullptr);
 
       //! Sets the model to display.
       void set_model(std::shared_ptr<time_and_sales_model> model);
@@ -54,15 +55,12 @@ namespace spire {
       mutable change_security_signal m_change_security_signal;
       mutable closed_signal m_closed_signal;
       time_and_sales_properties m_properties;
+      security_input_model* m_security_input_model;
       boost::optional<time_and_sales_window_model> m_model;
       security_stack m_securities;
       Nexus::Security m_current_security;
 
       void set_current(const Nexus::Security& s);
-
-      // remove this, for testing only
-      QLabel* m_current_label;
-      local_security_input_model m_security_model;
   };
 }
 
