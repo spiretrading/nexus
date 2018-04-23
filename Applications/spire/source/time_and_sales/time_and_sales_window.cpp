@@ -46,7 +46,7 @@ time_and_sales_window::time_and_sales_window(
   m_security_model.add(SecurityInfo(
     Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
     "Morgan Stanley", "Finance"));
-  update_current(ParseSecurity("TEST.TSX"));
+  set_current(ParseSecurity("TEST.TSX"));
 }
 
 void time_and_sales_window::set_model(
@@ -74,13 +74,13 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_PageUp) {
     auto s = m_securities.push_front(m_current_security);
     if(s != Security()) {
-      update_current(s);
+      set_current(s);
     }
     return;
   } else if(event->key() == Qt::Key_PageDown) {
     auto s = m_securities.push_back(m_current_security);
     if(s != Security()) {
-      update_current(s);
+      set_current(s);
     }
     return;
   }
@@ -90,14 +90,15 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
       this);
     if(dialog->exec() == QDialog::Accepted) {
       m_securities.push(m_current_security);
-      update_current(dialog->get_security());
+      set_current(dialog->get_security());
     }
   }
 }
 
-void time_and_sales_window::update_current(const Security& s) {
+void time_and_sales_window::set_current(const Security& s) {
   m_current_security = s;
   m_change_security_signal(s);
   m_current_label->setText(QString::fromStdString(ToString(s)));
+  set_model(std::make_shared<time_and_sales_model>(s));
   setWindowTitle(QString::fromStdString(ToString(s)));
 }

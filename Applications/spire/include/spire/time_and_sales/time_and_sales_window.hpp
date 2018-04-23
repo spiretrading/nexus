@@ -58,7 +58,7 @@ namespace spire {
       security_stack m_securities;
       Nexus::Security m_current_security;
 
-      void update_current(const Nexus::Security& s);
+      void set_current(const Nexus::Security& s);
 
       // remove this, for testing only
       QLabel* m_current_label;
