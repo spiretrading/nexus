@@ -28,11 +28,11 @@ namespace spire {
       //! Constructs a time and sales window.
       /*!
         \param properties The display properties.
-        \param model The security_input_model to use for autocomplete.
+        \param input_model The security_input_model to use for autocomplete.
         \param parent The parent widget.
       */
       time_and_sales_window(const time_and_sales_properties& properties,
-        security_input_model& model, QWidget* parent = nullptr);
+        security_input_model& input_model, QWidget* parent = nullptr);
 
       //! Sets the model to display.
       void set_model(std::shared_ptr<time_and_sales_model> model);

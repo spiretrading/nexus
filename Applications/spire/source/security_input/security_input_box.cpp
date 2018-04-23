@@ -65,7 +65,6 @@ security_input_box::security_input_box(security_input_model& model,
   m_securities->connect_commit_signal([=] (auto& s) { this->on_commit(s); });
   m_securities->setVisible(false);
   window()->installEventFilter(this);
-
   m_security_line_edit->setText(initial_text);
   on_text_edited();
 }
