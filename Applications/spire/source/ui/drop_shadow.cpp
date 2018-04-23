@@ -39,6 +39,7 @@ drop_shadow::drop_shadow(bool has_top, QWidget* parent)
       m_is_visible(false) {
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_ShowWithoutActivating);
+  setMouseTracking(true);
   m_parent->window()->installEventFilter(this);
 }
 

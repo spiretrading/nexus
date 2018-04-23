@@ -32,6 +32,7 @@ namespace spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void mouseMoveEvent(QMouseEvent* event) override;
 
     private:
       std::unique_ptr<drop_shadow> m_shadow;

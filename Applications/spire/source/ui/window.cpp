@@ -6,6 +6,14 @@
 #include "spire/ui/drop_shadow.hpp"
 #include "spire/ui/title_bar.hpp"
 
+
+
+
+#include <QDebug>
+
+
+
+
 using namespace spire;
 
 window::window(QWidget* body, QWidget* parent)
@@ -34,6 +42,8 @@ window::window(QWidget* body, QWidget* parent)
   border_layout->addWidget(m_title_bar);
   border_layout->addWidget(m_body);
   this->::QWidget::window()->installEventFilter(this);
+  m_shadow->installEventFilter(this);
+  setMouseTracking(true);
 }
 
 void window::set_icon(const QImage& icon) {
@@ -45,18 +55,29 @@ void window::set_icon(const QImage& icon, const QImage& unfocused_icon) {
 }
 
 bool window::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::WindowActivate) {
-    set_border_stylesheet("#A0A0A0");
-    m_shadow->raise();
-  } else if(event->type() == QEvent::WindowDeactivate) {
-    set_border_stylesheet("#C8C8C8");
-  } else if(event->type() == QEvent::Resize) {
-    auto e = static_cast<QResizeEvent*>(event);
-    if(e->size().height() > height()) {
-      this->::QWidget::window()->resize(size());
+  if(watched == this->::QWidget::window()) {
+    if(event->type() == QEvent::WindowActivate) {
+      set_border_stylesheet("#A0A0A0");
+      m_shadow->raise();
+    } else if(event->type() == QEvent::WindowDeactivate) {
+      set_border_stylesheet("#C8C8C8");
+    } else if(event->type() == QEvent::Resize) {
+      auto e = static_cast<QResizeEvent*>(event);
+      if(e->size().height() > height()) {
+        this->::QWidget::window()->resize(size());
+      }
+    }
+  } else if(watched == m_shadow.get()) {
+    if(event->type() == QEvent::MouseMove) {
+      auto pos = static_cast<QMouseEvent*>(event)->pos();
+      //qDebug() << pos;
     }
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void window::mouseMoveEvent(QMouseEvent* event) {
+  qDebug() << event->pos();
 }
 
 void window::set_border_stylesheet(const QColor& color) {
