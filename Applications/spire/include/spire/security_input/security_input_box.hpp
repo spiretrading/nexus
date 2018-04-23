@@ -26,6 +26,15 @@ namespace spire {
       security_input_box(security_input_model& model,
         QWidget* parent = nullptr);
 
+      //! Constructs a security input box with an initial text value.
+      /*!
+        \param model The model to query for securities.
+        \param initial_text The initial text to display in the line edit.
+        \param parent The parent to this widget.
+      */
+      security_input_box(security_input_model& model,
+        const QString& initial_text, QWidget* parent = nullptr);
+
       //! Connects a slot to the commit signal.
       boost::signals2::connection connect_commit_signal(
         const commit_signal::slot_type& slot) const;
