@@ -3,6 +3,7 @@
 #include <memory>
 #include <boost/noncopyable.hpp>
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include "spire/security_input/security_input.hpp"
 #include "spire/time_and_sales/time_and_sales.hpp"
 
 namespace spire {
@@ -32,6 +33,7 @@ namespace spire {
     private:
       mutable closed_signal m_closed_signal;
       Nexus::VirtualServiceClients* m_service_clients;
+      std::unique_ptr<security_input_model> m_input_model;
       std::unique_ptr<time_and_sales_window> m_window;
 
       void on_change_security(const Nexus::Security& s);

@@ -37,7 +37,10 @@ void toolbar_controller::open() {
   }
   m_toolbar_window = std::make_unique<toolbar_window>(m_model,
     m_service_clients->GetServiceLocatorClient().GetAccount());
-  m_toolbar_window->connect_open_signal([=] (auto w) { on_open_window(w); });
+
+  // GCC workaround
+  m_toolbar_window->connect_open_signal(
+    [=] (auto w) { this->on_open_window(w); });
   m_toolbar_window->connect_closed_signal([=] { on_closed(); });
   m_toolbar_window->show();
 }
