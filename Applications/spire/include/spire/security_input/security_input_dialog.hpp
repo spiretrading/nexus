@@ -32,6 +32,8 @@ namespace spire {
       security_input_dialog(security_input_model& model, const QString& text,
         QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
 
+      ~security_input_dialog();
+
       //! Returns the security that was input.
       const Nexus::Security& get_security() const noexcept;
 

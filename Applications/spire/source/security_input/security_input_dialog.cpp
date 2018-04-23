@@ -49,6 +49,8 @@ security_input_dialog::security_input_dialog(security_input_model& model,
   layout->setStretchFactor(m_security_input_box, 30);
 }
 
+security_input_dialog::~security_input_dialog() = default;
+
 const Security& security_input_dialog::get_security() const noexcept {
   return m_security;
 }
