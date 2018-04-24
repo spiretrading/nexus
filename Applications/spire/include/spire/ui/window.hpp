@@ -1,5 +1,6 @@
 #ifndef SPIRE_WINDOW_HPP
 #define SPIRE_WINDOW_HPP
+#include <vector>
 #include <QColor>
 #include <QWidget>
 #include "spire/ui/ui.hpp"
@@ -32,13 +33,13 @@ namespace spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
-      void mouseMoveEvent(QMouseEvent* event) override;
 
     private:
       std::unique_ptr<drop_shadow> m_shadow;
       QWidget* m_border;
       QWidget* m_body;
       title_bar* m_title_bar;
+      std::vector<QRect> m_resize_rects;
 
       void set_border_stylesheet(const QColor& color);
   };

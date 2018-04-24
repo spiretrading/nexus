@@ -1,18 +1,10 @@
-#include "spire/ui/window.hpp"
+#include "spire/ui/window.hpp" 
 #include <QEvent>
 #include <QResizeEvent>
 #include <QVBoxLayout>
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/drop_shadow.hpp"
 #include "spire/ui/title_bar.hpp"
-
-
-
-
-#include <QDebug>
-
-
-
 
 using namespace spire;
 
@@ -24,8 +16,7 @@ window::window(QWidget* body, QWidget* parent)
     Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);
   this->::QWidget::window()->setAttribute(Qt::WA_TranslucentBackground);
   m_shadow = std::make_unique<drop_shadow>(this);
-  resize(m_body->width() + scale_width(25),
-    m_body->height() + scale_height(25));
+  resize(m_body->width(), m_body->height());
   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
@@ -42,8 +33,12 @@ window::window(QWidget* body, QWidget* parent)
   border_layout->addWidget(m_title_bar);
   border_layout->addWidget(m_body);
   this->::QWidget::window()->installEventFilter(this);
-  m_shadow->installEventFilter(this);
-  setMouseTracking(true);
+  //m_shadow->setMouseTracking(true);
+  //m_shadow->installEventFilter(this);
+  m_border->setMouseTracking(true);
+  m_border->installEventFilter(this);
+  m_body->setMouseTracking(true);
+  m_body->installEventFilter(this);
 }
 
 void window::set_icon(const QImage& icon) {
@@ -67,17 +62,13 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
         this->::QWidget::window()->resize(size());
       }
     }
-  } else if(watched == m_shadow.get()) {
+  } else if(watched == m_body || watched == m_shadow.get() ||
+      watched == m_border) {
     if(event->type() == QEvent::MouseMove) {
-      auto pos = static_cast<QMouseEvent*>(event)->pos();
-      //qDebug() << pos;
+      
     }
   }
   return QWidget::eventFilter(watched, event);
-}
-
-void window::mouseMoveEvent(QMouseEvent* event) {
-  qDebug() << event->pos();
 }
 
 void window::set_border_stylesheet(const QColor& color) {
