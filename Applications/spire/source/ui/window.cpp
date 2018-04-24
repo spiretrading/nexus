@@ -6,22 +6,36 @@
 #include "spire/ui/drop_shadow.hpp"
 #include "spire/ui/title_bar.hpp"
 
+
+#include <QApplication>
+#include <QPainter>
+#include <QDebug>
+#include <QTimer>
+
+
+
+
 using namespace spire;
 
 window::window(QWidget* body, QWidget* parent)
     : QWidget(parent),
-      m_body(body) {
+      m_body(body),
+      m_first_show(true) {
   this->::QWidget::window()->setWindowFlags(
     this->::QWidget::window()->windowFlags() | Qt::Window |
     Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);
   this->::QWidget::window()->setAttribute(Qt::WA_TranslucentBackground);
   m_shadow = std::make_unique<drop_shadow>(this);
+  m_shadow->setMouseTracking(true);
+  m_shadow->installEventFilter(this);
   resize(m_body->width(), m_body->height());
   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
   m_border = new QWidget(this);
+  m_border->setMouseTracking(true);
+  m_border->installEventFilter(this);
   m_border->setObjectName("window_border");
   m_border->resize(m_body->size() + scale(1, 1));
   set_border_stylesheet("#A0A0A0");
@@ -31,14 +45,11 @@ window::window(QWidget* body, QWidget* parent)
   border_layout->setSpacing(0);
   m_title_bar = new title_bar(m_border);
   border_layout->addWidget(m_title_bar);
-  border_layout->addWidget(m_body);
+  border_layout->addWidget(m_body, 1);
   this->::QWidget::window()->installEventFilter(this);
-  //m_shadow->setMouseTracking(true);
-  //m_shadow->installEventFilter(this);
-  m_border->setMouseTracking(true);
-  m_border->installEventFilter(this);
-  m_body->setMouseTracking(true);
-  m_body->installEventFilter(this);
+  // will need to be called every time the window is moved or resized
+  calculate_resize_rects();
+  qApp->setOverrideCursor(QCursor(Qt::ArrowCursor));
 }
 
 void window::set_icon(const QImage& icon) {
@@ -62,13 +73,54 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
         this->::QWidget::window()->resize(size());
       }
     }
-  } else if(watched == m_body || watched == m_shadow.get() ||
-      watched == m_border) {
+  } else if(watched == m_shadow.get() || watched == m_border) {
     if(event->type() == QEvent::MouseMove) {
-      
+      auto pos = mapFromGlobal(QCursor::pos());
+      auto cursor = qApp->overrideCursor()->shape();
+      if(m_bottom_right_rect.contains(pos) || m_top_left_rect.contains(pos)) {
+        cursor = Qt::SizeFDiagCursor;
+      } else if(m_bottom_rect.contains(pos) || m_top_rect.contains(pos)) {
+        cursor = Qt::SizeVerCursor;
+      } else if(m_top_right_rect.contains(pos) ||
+          m_bottom_left_rect.contains(pos)) {
+        cursor = Qt::SizeBDiagCursor;
+      } else if(m_right_rect.contains(pos) || m_left_rect.contains(pos)) {
+        cursor = Qt::SizeHorCursor;
+      } else {
+        cursor = Qt::ArrowCursor;
+      }
+      if(cursor != qApp->overrideCursor()->shape()) {
+        qApp->restoreOverrideCursor();
+        qApp->setOverrideCursor(QCursor(cursor));
+      }
     }
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void window::calculate_resize_rects() {
+  auto padding_size = scale(6, 6);
+  // these need to be completely recalculated, and maybe from a global position,
+  // otherwise they might always be related to the window's position
+  m_top_left_rect = QRect(0, 0, padding_size.width(), padding_size.height());
+  m_top_rect = QRect(padding_size.width(), 0,
+    width() - (padding_size.width() * 2), padding_size.height());
+  m_top_right_rect = QRect(width() - padding_size.width(), 0,
+    padding_size.width(), padding_size.height());
+  m_right_rect = QRect(width() - padding_size.width(), padding_size.height(),
+    padding_size.width(), (height() + m_title_bar->height())
+    - (padding_size.height() * 2));
+  m_bottom_right_rect = QRect(width() - padding_size.width(),
+    (height() + m_title_bar->height()) - padding_size.height(),
+    padding_size.width(), padding_size.height());
+  m_bottom_rect = QRect(padding_size.width(),
+    (height() + m_title_bar->height()) - padding_size.height(),
+    width() - (padding_size.width() * 2), padding_size.height());
+  m_bottom_left_rect = QRect(0,
+    (height() + m_title_bar->height()) - padding_size.height(),
+    padding_size.width(), padding_size.height());
+  m_left_rect = QRect(0, padding_size.height(), padding_size.width(),
+    (height() + m_title_bar->height()) - (padding_size.height() * 2));
 }
 
 void window::set_border_stylesheet(const QColor& color) {

@@ -39,8 +39,17 @@ namespace spire {
       QWidget* m_border;
       QWidget* m_body;
       title_bar* m_title_bar;
-      std::vector<QRect> m_resize_rects;
+      QRect m_top_left_rect;
+      QRect m_top_rect;
+      QRect m_top_right_rect;
+      QRect m_right_rect;
+      QRect m_bottom_right_rect;
+      QRect m_bottom_rect;
+      QRect m_bottom_left_rect;
+      QRect m_left_rect;
+      bool m_first_show;
 
+      void calculate_resize_rects();
       void set_border_stylesheet(const QColor& color);
   };
 }

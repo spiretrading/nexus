@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QHBoxLayout>
+#include <QLabel>
 #include <QWidget>
 #include "spire/spire/dimensions.hpp"
 #include "spire/spire/resources.hpp"
@@ -23,7 +24,10 @@ class test_window : public QWidget {
         QRect(translate(8, 8), scale(10, 10))),
         imageFromSvg(":/icons/spire-icon-grey.svg", scale(26, 26),
         QRect(translate(8, 8), scale(10, 10))));
-      window_layout->addWidget(window);
+      window_layout->addWidget(window, 1);
+      auto layout = new QHBoxLayout(body);
+      auto label = new QLabel("test label", body);
+      layout->addWidget(label, 1);
     }
 };
 
