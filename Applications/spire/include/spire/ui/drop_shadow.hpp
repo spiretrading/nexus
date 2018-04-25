@@ -23,9 +23,11 @@ namespace spire {
       drop_shadow(bool has_top, QWidget* parent);
 
     protected:
+      bool event(QEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
       void hideEvent(QHideEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
       QWidget* m_parent;
