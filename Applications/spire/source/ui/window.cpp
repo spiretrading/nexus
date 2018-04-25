@@ -11,8 +11,7 @@ using namespace spire;
 
 window::window(QWidget* body, QWidget* parent)
     : QWidget(parent),
-      m_body(body),
-      m_first_show(true) {
+      m_body(body) {
   this->::QWidget::window()->setWindowFlags(
     this->::QWidget::window()->windowFlags() | Qt::Window |
     Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);
@@ -21,7 +20,6 @@ window::window(QWidget* body, QWidget* parent)
   m_shadow->setMouseTracking(true);
   m_shadow->installEventFilter(this);
   resize(m_body->width(), m_body->height());
-  setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
@@ -39,7 +37,6 @@ window::window(QWidget* body, QWidget* parent)
   border_layout->addWidget(m_title_bar);
   border_layout->addWidget(m_body, 1);
   this->::QWidget::window()->installEventFilter(this);
-  calculate_resize_rects();
   qApp->setOverrideCursor(QCursor(Qt::ArrowCursor));
 }
 
@@ -63,55 +60,20 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
       if(e->size().height() > height()) {
         this->::QWidget::window()->resize(size());
       }
+      if(m_resize_boxes.is_initialized()) {
+        update_resize_boxes();
+      }
+    } else if(event->type() == QEvent::Move) {
+      if(m_resize_boxes.is_initialized()) {
+        update_resize_boxes();
+      }
     }
   } else if(watched == m_shadow.get() || watched == m_border) {
     if(event->type() == QEvent::MouseMove) {
-      auto pos = m_border->mapFromGlobal(QCursor::pos());
-      auto cursor = qApp->overrideCursor()->shape();
-      if(m_bottom_right_rect.contains(pos) || m_top_left_rect.contains(pos)) {
-        cursor = Qt::SizeFDiagCursor;
-      } else if(m_bottom_rect.contains(pos) || m_top_rect.contains(pos)) {
-        cursor = Qt::SizeVerCursor;
-      } else if(m_top_right_rect.contains(pos) ||
-          m_bottom_left_rect.contains(pos)) {
-        cursor = Qt::SizeBDiagCursor;
-      } else if(m_right_rect.contains(pos) || m_left_rect.contains(pos)) {
-        cursor = Qt::SizeHorCursor;
-      } else {
-        cursor = Qt::ArrowCursor;
-      }
-      if(cursor != qApp->overrideCursor()->shape()) {
-        qApp->restoreOverrideCursor();
-        qApp->setOverrideCursor(QCursor(cursor));
-      }
+      update_resize_cursor();
     }
   }
   return QWidget::eventFilter(watched, event);
-}
-
-void window::calculate_resize_rects() {
-  auto padding_size = scale(9, 9);
-  auto border = m_border->geometry();
-  m_top_left_rect = QRect(border.topLeft().x() - padding_size.width(),
-    border.topLeft().y() - padding_size.height(),
-    padding_size.width(), padding_size.height());
-  m_top_rect = QRect(border.x(), border.y() - padding_size.height(),
-    border.width(), padding_size.height());
-  m_top_right_rect = QRect(border.width(), border.y() - padding_size.height(),
-    padding_size.width(), padding_size.height());
-  m_right_rect = QRect(border.width() + scale_height(1), border.y(),
-    padding_size.width(), border.height() + m_title_bar->height());
-  m_bottom_right_rect = QRect(border.width(),
-    border.height() + m_title_bar->height(),
-    padding_size.width(), padding_size.height());
-  m_bottom_rect = QRect(border.x(), border.height() + m_title_bar->height() +
-    scale_height(1),
-    border.width(), padding_size.height());
-  m_bottom_left_rect = QRect(border.x() - padding_size.width(),
-    border.height() + m_title_bar->height(),
-    padding_size.width(), padding_size.height());
-  m_left_rect = QRect(border.x() - padding_size.width(), border.y(),
-    padding_size.width(), border.height() + m_title_bar->height());
 }
 
 void window::set_border_stylesheet(const QColor& color) {
@@ -119,4 +81,74 @@ void window::set_border_stylesheet(const QColor& color) {
     #window_border {
       border: %1px solid %3 %2px solid %3;
     })").arg(scale_height(1)).arg(scale_width(1)).arg(color.name()));
+}
+
+void window::update_resize_boxes() {
+  auto padding_size = scale(9, 9);
+  auto top_left = mapToGlobal(geometry().topLeft());
+  if(!m_resize_boxes.is_initialized()) {
+    m_resize_boxes.emplace();
+  }
+  m_resize_boxes->m_top_left = QRect(top_left.x() - padding_size.width(),
+    top_left.y() - padding_size.height(), padding_size.width(),
+    padding_size.height());
+  m_resize_boxes->m_top = QRect(top_left.x(),
+    top_left.y() - padding_size.height(), width(), padding_size.height());
+  m_resize_boxes->m_top_right = QRect(top_left.x() + width(),
+    top_left.y() - padding_size.height(),
+    padding_size.width(), padding_size.height());
+  m_resize_boxes->m_right = QRect(top_left.x() + width(), top_left.y(),
+    padding_size.width(), top_left.y() + height());
+  m_resize_boxes->m_bottom_right = QRect(top_left.x() + width(),
+    top_left.y() + height(), padding_size.width(), padding_size.height());
+  m_resize_boxes->m_bottom = QRect(top_left.x(), top_left.y() + height(),
+    width(), padding_size.height());
+  m_resize_boxes->m_bottom_left = QRect(top_left.x() - padding_size.width(),
+    top_left.y() + height(), padding_size.width(), padding_size.height());
+  m_resize_boxes->m_left = QRect(top_left.x() - padding_size.width(),
+    top_left.y(), padding_size.width(), top_left.y() + height());
+}
+
+void window::update_resize_cursor() {
+  if(!m_resize_boxes.is_initialized()) {
+    update_resize_boxes();
+  }
+  auto pos = QCursor::pos();
+  auto cursor = qApp->overrideCursor()->shape();
+  bool is_default_cursor = true;
+  if(m_body->sizePolicy().horizontalPolicy() != QSizePolicy::Fixed) {
+    if(m_resize_boxes->m_right.contains(pos) ||
+        m_resize_boxes->m_left.contains(pos)) {
+      cursor = Qt::SizeHorCursor;
+      is_default_cursor = false;
+    }
+  }
+  if(m_body->sizePolicy().verticalPolicy() != QSizePolicy::Fixed) {
+    if(m_resize_boxes->m_bottom.contains(pos) ||
+        m_resize_boxes->m_top.contains(pos)) {
+      cursor = Qt::SizeVerCursor;
+      is_default_cursor = false;
+      resize(size().width(), size().height() + 1);
+      this->::QWidget::window()->resize(this->::QWidget::window()->size().width(), this->::QWidget::window()->size().height() + 1);
+    }
+  }
+  if(m_body->sizePolicy().verticalPolicy() != QSizePolicy::Fixed &&
+      m_body->sizePolicy().horizontalPolicy() != QSizePolicy::Fixed) {
+    if(m_resize_boxes->m_bottom_right.contains(pos) ||
+        m_resize_boxes->m_top_left.contains(pos)) {
+      cursor = Qt::SizeFDiagCursor;
+      is_default_cursor = false;
+    } else if(m_resize_boxes->m_top_right.contains(pos) ||
+        m_resize_boxes->m_bottom_left.contains(pos)) {
+      cursor = Qt::SizeBDiagCursor;
+      is_default_cursor = false;
+    }
+  }
+  if(is_default_cursor) {
+    cursor = Qt::ArrowCursor;
+  }
+  if(cursor != qApp->overrideCursor()->shape()) {
+    qApp->restoreOverrideCursor();
+    qApp->setOverrideCursor(QCursor(cursor));
+  }
 }
