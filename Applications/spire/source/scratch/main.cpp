@@ -16,7 +16,10 @@ class test_window : public QWidget {
             Qt::WindowCloseButtonHint) {
       auto body = new QWidget(this);
       body->setStyleSheet("background-color: blue;");
-      body->setFixedSize(scale(400, 400));
+      body->resize(scale(400, 400));
+      // setting a fixed size apparently doesn't implicitly set the size
+      // policy
+      body->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
       auto window_layout = new QHBoxLayout(this);
       window_layout->setContentsMargins({});
       auto window = new spire::window(body, this);
