@@ -1,19 +1,11 @@
-#include "spire/ui/window.hpp" 
+#include "spire/ui/window.hpp"
+#include <QApplication>
 #include <QEvent>
 #include <QResizeEvent>
 #include <QVBoxLayout>
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/drop_shadow.hpp"
 #include "spire/ui/title_bar.hpp"
-
-
-#include <QApplication>
-#include <QPainter>
-#include <QDebug>
-#include <QTimer>
-
-
-
 
 using namespace spire;
 
@@ -47,7 +39,6 @@ window::window(QWidget* body, QWidget* parent)
   border_layout->addWidget(m_title_bar);
   border_layout->addWidget(m_body, 1);
   this->::QWidget::window()->installEventFilter(this);
-  // will need to be called every time the window is moved or resized
   calculate_resize_rects();
   qApp->setOverrideCursor(QCursor(Qt::ArrowCursor));
 }
@@ -75,7 +66,7 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(watched == m_shadow.get() || watched == m_border) {
     if(event->type() == QEvent::MouseMove) {
-      auto pos = mapFromGlobal(QCursor::pos());
+      auto pos = m_border->mapFromGlobal(QCursor::pos());
       auto cursor = qApp->overrideCursor()->shape();
       if(m_bottom_right_rect.contains(pos) || m_top_left_rect.contains(pos)) {
         cursor = Qt::SizeFDiagCursor;
@@ -99,28 +90,27 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void window::calculate_resize_rects() {
-  auto padding_size = scale(6, 6);
-  // these need to be completely recalculated, and maybe from a global position,
-  // otherwise they might always be related to the window's position
-  m_top_left_rect = QRect(0, 0, padding_size.width(), padding_size.height());
-  m_top_rect = QRect(padding_size.width(), 0,
-    width() - (padding_size.width() * 2), padding_size.height());
-  m_top_right_rect = QRect(width() - padding_size.width(), 0,
+  auto padding_size = scale(9, 9);
+  auto border = m_border->geometry();
+  m_top_left_rect = QRect(border.topLeft().x() - padding_size.width(),
+    border.topLeft().y() - padding_size.height(),
     padding_size.width(), padding_size.height());
-  m_right_rect = QRect(width() - padding_size.width(), padding_size.height(),
-    padding_size.width(), (height() + m_title_bar->height())
-    - (padding_size.height() * 2));
-  m_bottom_right_rect = QRect(width() - padding_size.width(),
-    (height() + m_title_bar->height()) - padding_size.height(),
+  m_top_rect = QRect(border.x(), border.y() - padding_size.height(),
+    border.width(), padding_size.height());
+  m_top_right_rect = QRect(border.width(), border.y() - padding_size.height(),
     padding_size.width(), padding_size.height());
-  m_bottom_rect = QRect(padding_size.width(),
-    (height() + m_title_bar->height()) - padding_size.height(),
-    width() - (padding_size.width() * 2), padding_size.height());
-  m_bottom_left_rect = QRect(0,
-    (height() + m_title_bar->height()) - padding_size.height(),
+  m_right_rect = QRect(border.width(), border.y(),
+    padding_size.width(), border.height() + m_title_bar->height());
+  m_bottom_right_rect = QRect(border.width(),
+    border.height() + m_title_bar->height(),
     padding_size.width(), padding_size.height());
-  m_left_rect = QRect(0, padding_size.height(), padding_size.width(),
-    (height() + m_title_bar->height()) - (padding_size.height() * 2));
+  m_bottom_rect = QRect(border.x(), border.height() + m_title_bar->height(),
+    border.width(), padding_size.height());
+  m_bottom_left_rect = QRect(border.x() - padding_size.width(),
+    border.height() + m_title_bar->height(),
+    padding_size.width(), padding_size.height());
+  m_left_rect = QRect(border.x() - padding_size.width(), border.y(),
+    padding_size.width(), border.height() + m_title_bar->height());
 }
 
 void window::set_border_stylesheet(const QColor& color) {
