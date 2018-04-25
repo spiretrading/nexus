@@ -99,12 +99,13 @@ void window::calculate_resize_rects() {
     border.width(), padding_size.height());
   m_top_right_rect = QRect(border.width(), border.y() - padding_size.height(),
     padding_size.width(), padding_size.height());
-  m_right_rect = QRect(border.width(), border.y(),
+  m_right_rect = QRect(border.width() + scale_height(1), border.y(),
     padding_size.width(), border.height() + m_title_bar->height());
   m_bottom_right_rect = QRect(border.width(),
     border.height() + m_title_bar->height(),
     padding_size.width(), padding_size.height());
-  m_bottom_rect = QRect(border.x(), border.height() + m_title_bar->height(),
+  m_bottom_rect = QRect(border.x(), border.height() + m_title_bar->height() +
+    scale_height(1),
     border.width(), padding_size.height());
   m_bottom_left_rect = QRect(border.x() - padding_size.width(),
     border.height() + m_title_bar->height(),
