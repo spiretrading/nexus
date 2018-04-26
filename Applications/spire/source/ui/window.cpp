@@ -18,7 +18,8 @@ using namespace spire;
 
 window::window(QWidget* body, QWidget* parent)
     : QWidget(parent),
-      m_body(body) {
+      m_body(body),
+      m_is_resizing(false) {
   this->::QWidget::window()->setWindowFlags(
     this->::QWidget::window()->windowFlags() | Qt::Window |
     Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);
@@ -77,6 +78,17 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(watched == m_shadow.get() || watched == m_border) {
     if(event->type() == QEvent::MouseMove) {
+      if(m_is_resizing) {
+        handle_resize();
+      } else {
+        update_resize_cursor();
+      }
+    } else if(event->type() == QEvent::MouseButtonPress) {
+      if(m_current_active_rect != active_resize_rect::NONE) {
+        m_is_resizing = true;
+      }
+    } else if(event->type() == QEvent::MouseButtonRelease) {
+      m_is_resizing = false;
       update_resize_cursor();
     }
   }
@@ -87,21 +99,20 @@ void window::handle_resize() {
   auto mouse_button = qApp->mouseButtons();
   auto resize_direction = QPoint();
   auto move_direction = QPoint();
-  auto current_mouse_pos = QCursor::pos();
-  auto mouse_pos_delta = m_last_mouse_pos - current_mouse_pos;
+  auto window_geometry = QWidget::window()->geometry();
+  auto pos_difference = window_geometry.topLeft() - QCursor::pos();
   if(mouse_button == Qt::LeftButton) {
     if(m_current_active_rect == active_resize_rect::TOP) {
-      if(mouse_pos_delta.y() > 0) {
-        resize_direction.setY(mouse_pos_delta.y());
-        move_direction.setY(-mouse_pos_delta.y());
-      } else if(mouse_pos_delta.y() < 0) {
-        resize_direction.setY(mouse_pos_delta.y());
-        move_direction.setY(-mouse_pos_delta.y());
-      }
+      
     } else if(m_current_active_rect == active_resize_rect::TOP_RIGHT) {
-    
+      
     } else if(m_current_active_rect == active_resize_rect::RIGHT) {
-    
+      auto difference =  QCursor::pos() -
+        QWidget::window()->geometry().topRight();
+      resize(size().width() + difference.x(), size().height());
+      QWidget::window()->resize(
+        QWidget::window()->size().width() + difference.x(),
+        QWidget::window()->size().height());
     } else if(m_current_active_rect == active_resize_rect::BOTTOM_RIGHT) {
     
     } else if(m_current_active_rect == active_resize_rect::BOTTOM) {
@@ -114,19 +125,9 @@ void window::handle_resize() {
     
     }
   }
-  if(!resize_direction.isNull()) {
-    resize(size().width() + resize_direction.x(),
-      size().height() + resize_direction.y());
-    QWidget::window()->resize(
-      QWidget::window()->size().width() + resize_direction.x(),
-      QWidget::window()->size().height() + resize_direction.y());
-    if(!move_direction.isNull()) {
-      QWidget::window()->move(
-        QWidget::window()->pos().x() + move_direction.x(),
-        QWidget::window()->pos().y() + move_direction.y());
-    }
-  }
-  m_last_mouse_pos = QCursor::pos();
+  //QWidget::window()->move(
+  //  QWidget::window()->pos().x() + (std::abs(mouse_pos_delta.x()) * move_direction.x()),
+  //  QWidget::window()->pos().y() + (std::abs(mouse_pos_delta.y()) * move_direction.y()));
 }
 
 void window::set_border_stylesheet(const QColor& color) {

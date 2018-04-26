@@ -64,6 +64,7 @@ namespace spire {
       title_bar* m_title_bar;
       boost::optional<resize_boxes> m_resize_boxes;
       QPoint m_last_mouse_pos;
+      bool m_is_resizing;
 
       void handle_resize();
       void set_border_stylesheet(const QColor& color);

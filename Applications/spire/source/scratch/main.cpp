@@ -19,7 +19,7 @@ class test_window : public QWidget {
       body->resize(scale(400, 400));
       // setting a fixed size apparently doesn't implicitly set the size
       // policy
-      body->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
+      body->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
       auto window_layout = new QHBoxLayout(this);
       window_layout->setContentsMargins({});
       auto window = new spire::window(body, this);
