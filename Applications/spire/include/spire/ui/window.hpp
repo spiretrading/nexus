@@ -36,6 +36,18 @@ namespace spire {
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
+      enum class active_resize_rect {
+        TOP_LEFT,
+        TOP,
+        TOP_RIGHT,
+        RIGHT,
+        BOTTOM_RIGHT,
+        BOTTOM,
+        BOTTOM_LEFT,
+        LEFT,
+        NONE
+      };
+      active_resize_rect m_current_active_rect;
       struct resize_boxes {
         QRect m_top_left;
         QRect m_top;
@@ -51,7 +63,9 @@ namespace spire {
       QWidget* m_body;
       title_bar* m_title_bar;
       boost::optional<resize_boxes> m_resize_boxes;
+      QPoint m_last_mouse_pos;
 
+      void handle_resize();
       void set_border_stylesheet(const QColor& color);
       void update_resize_boxes();
       void update_resize_cursor();
