@@ -97,15 +97,28 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
 
 void window::handle_resize() {
   auto mouse_button = qApp->mouseButtons();
-  auto resize_direction = QPoint();
-  auto move_direction = QPoint();
-  auto window_geometry = QWidget::window()->geometry();
-  auto pos_difference = window_geometry.topLeft() - QCursor::pos();
   if(mouse_button == Qt::LeftButton) {
     if(m_current_active_rect == active_resize_rect::TOP) {
-      
+      auto difference = QCursor::pos() -
+        QWidget::window()->geometry().topLeft();
+      QWidget::window()->resize(
+        QWidget::window()->size().width(),
+        QWidget::window()->size().height() - difference.y());
+      resize(size().width(), size().height() - difference.y());
+      QWidget::window()->move(
+        QWidget::window()->pos().x(),
+        QWidget::window()->pos().y() + difference.y());
     } else if(m_current_active_rect == active_resize_rect::TOP_RIGHT) {
-      
+      auto difference = QCursor::pos() -
+        QWidget::window()->geometry().topRight();
+      QWidget::window()->resize(
+        QWidget::window()->size().width() + difference.x(),
+        QWidget::window()->size().height() - difference.y());
+      resize(size().width() + difference.x(),
+        size().height() - difference.y());
+      QWidget::window()->move(
+          QWidget::window()->pos().x(),
+          QWidget::window()->pos().y() + difference.y());
     } else if(m_current_active_rect == active_resize_rect::RIGHT) {
       auto difference =  QCursor::pos() -
         QWidget::window()->geometry().topRight();
@@ -114,20 +127,55 @@ void window::handle_resize() {
         QWidget::window()->size().width() + difference.x(),
         QWidget::window()->size().height());
     } else if(m_current_active_rect == active_resize_rect::BOTTOM_RIGHT) {
-    
+      auto difference = QCursor::pos() -
+        QWidget::window()->geometry().bottomRight();
+      QWidget::window()->resize(
+        QWidget::window()->size().width() + difference.x(),
+        QWidget::window()->size().height() + difference.y());
+      resize(size().width() + difference.x(),
+        size().height() + difference.y());
     } else if(m_current_active_rect == active_resize_rect::BOTTOM) {
-    
+      auto difference = QCursor::pos() -
+        QWidget::window()->geometry().bottomLeft();
+      QWidget::window()->resize(
+        QWidget::window()->size().width(),
+        QWidget::window()->size().height() + difference.y());
+      resize(size().width(), size().height() + difference.y());
     } else if(m_current_active_rect == active_resize_rect::BOTTOM_LEFT) {
-    
+      auto difference = QCursor::pos() -
+        QWidget::window()->geometry().bottomLeft();
+      QWidget::window()->resize(
+        QWidget::window()->size().width() - difference.x(),
+        QWidget::window()->size().height() + difference.y());
+      resize(size().width() - difference.x(),
+        size().height() + difference.y());
+      QWidget::window()->move(
+          QWidget::window()->pos().x() + difference.x(),
+          QWidget::window()->pos().y());
     } else if(m_current_active_rect == active_resize_rect::LEFT) {
-    
+      auto difference = QCursor::pos() -
+        QWidget::window()->geometry().topLeft();
+      QWidget::window()->resize(
+        QWidget::window()->size().width() - difference.x(),
+        QWidget::window()->size().height());
+      resize(size().width() - difference.x(),
+        size().height());
+      QWidget::window()->move(
+          QWidget::window()->pos().x() + difference.x(),
+          QWidget::window()->pos().y());
     } else if(m_current_active_rect == active_resize_rect::TOP_LEFT) {
-    
+      auto difference = QCursor::pos() -
+        QWidget::window()->geometry().topLeft();
+      QWidget::window()->resize(
+        QWidget::window()->size().width() - difference.x(),
+        QWidget::window()->size().height() - difference.y());
+      resize(size().width() - difference.x(),
+        size().height() - difference.y());
+      QWidget::window()->move(
+        QWidget::window()->pos().x() + difference.x(),
+        QWidget::window()->pos().y() + difference.y());
     }
   }
-  //QWidget::window()->move(
-  //  QWidget::window()->pos().x() + (std::abs(mouse_pos_delta.x()) * move_direction.x()),
-  //  QWidget::window()->pos().y() + (std::abs(mouse_pos_delta.y()) * move_direction.y()));
 }
 
 void window::set_border_stylesheet(const QColor& color) {
