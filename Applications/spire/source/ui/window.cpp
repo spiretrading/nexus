@@ -7,13 +7,6 @@
 #include "spire/ui/drop_shadow.hpp"
 #include "spire/ui/title_bar.hpp"
 
-
-
-#include <QDebug>
-
-
-
-
 using namespace spire;
 
 window::window(QWidget* body, QWidget* parent)
@@ -259,8 +252,6 @@ void window::update_resize_cursor() {
   if(m_current_active_rect == active_resize_rect::NONE) {
     cursor = Qt::ArrowCursor;
   }
-  if(cursor != qApp->overrideCursor()->shape()) {
-    qApp->restoreOverrideCursor();
-    qApp->setOverrideCursor(QCursor(cursor));
-  }
+  qApp->restoreOverrideCursor();
+  qApp->setOverrideCursor(QCursor(cursor));
 }
