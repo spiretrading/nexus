@@ -46,9 +46,9 @@ drop_shadow::drop_shadow(bool has_top, QWidget* parent)
 }
 
 bool drop_shadow::event(QEvent* event) {
-  //if(event->type() == QEvent::WindowActivate) {
-  //  m_parent->activateWindow();
-  //}
+  if(event->type() == QEvent::WindowActivate) {
+    m_parent->activateWindow();
+  }
   return QWidget::event(event);
 }
 

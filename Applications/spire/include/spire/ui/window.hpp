@@ -65,6 +65,7 @@ namespace spire {
       boost::optional<resize_boxes> m_resize_boxes;
       QPoint m_last_mouse_pos;
       bool m_is_resizing;
+      bool m_hovered;
 
       void handle_resize();
       void set_border_stylesheet(const QColor& color);
