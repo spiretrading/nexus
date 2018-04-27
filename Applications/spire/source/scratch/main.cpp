@@ -15,7 +15,7 @@ class test_window : public QWidget {
             Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint |
             Qt::WindowCloseButtonHint) {
       auto body = new QWidget(this);
-      body->setStyleSheet("background-color: blue;");
+      body->setStyleSheet("background-color: #4B23A0;");
       body->resize(scale(400, 400));
       // setting a fixed size apparently doesn't implicitly set the size
       // policy

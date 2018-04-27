@@ -139,12 +139,11 @@ void window::handle_resize() {
       QWidget::window()->size().width() - difference.x(),
       QWidget::window()->size().height() + difference.y());
   } else if(m_current_active_rect == active_resize_rect::LEFT) {
-    auto difference = QCursor::pos() -
-      QWidget::window()->geometry().topLeft();
-    QWidget::window()->setGeometry(
-      QWidget::window()->pos().x() + difference.x(),
-      QWidget::window()->pos().y(),
-      QWidget::window()->size().width() - difference.x(),
+    auto width = QWidget::window()->geometry().right() - QCursor::pos().x();
+    auto mouse_delta = QWidget::window()->geometry().left() -
+      QCursor::pos().x();
+    QWidget::window()->setGeometry(QCursor::pos().x() + mouse_delta,
+      QWidget::window()->pos().y(), width,
       QWidget::window()->size().height());
   } else if(m_current_active_rect == active_resize_rect::TOP_LEFT) {
     auto difference = QCursor::pos() -
