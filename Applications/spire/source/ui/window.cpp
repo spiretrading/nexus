@@ -1,5 +1,6 @@
 #include "spire/ui/window.hpp"
 #include <QApplication>
+#include <QDebug>
 #include <QEvent>
 #include <QResizeEvent>
 #include <QVBoxLayout>
@@ -96,64 +97,27 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void window::handle_resize() {
-  if(m_current_active_rect == active_resize_rect::TOP) {
-    auto difference = QCursor::pos() -
-      QWidget::window()->geometry().topLeft();
-    QWidget::window()->setGeometry(
-      QWidget::window()->pos().x(),
-      QWidget::window()->pos().y() + difference.y(),
-      QWidget::window()->size().width(),
-      QWidget::window()->size().height() - difference.y());
-  } else if(m_current_active_rect == active_resize_rect::TOP_RIGHT) {
-    auto difference = QCursor::pos() -
-      QWidget::window()->geometry().topRight();
-    QWidget::window()->setGeometry(
-      QWidget::window()->pos().x(),
-      QWidget::window()->pos().y() + difference.y(),
-      QWidget::window()->size().width() + difference.x(),
-      QWidget::window()->size().height() - difference.y());
-  } else if(m_current_active_rect == active_resize_rect::RIGHT) {
-    auto difference =  QCursor::pos() -
-      QWidget::window()->geometry().topRight();
-    QWidget::window()->resize(
-      QWidget::window()->size().width() + difference.x(),
-      QWidget::window()->size().height());
-  } else if(m_current_active_rect == active_resize_rect::BOTTOM_RIGHT) {
-    auto difference = QCursor::pos() -
-      QWidget::window()->geometry().bottomRight();
-    QWidget::window()->resize(
-      QWidget::window()->size().width() + difference.x(),
-      QWidget::window()->size().height() + difference.y());
-  } else if(m_current_active_rect == active_resize_rect::BOTTOM) {
-    auto difference = QCursor::pos() -
-      QWidget::window()->geometry().bottomLeft();
-    QWidget::window()->resize(
-      QWidget::window()->size().width(),
-      QWidget::window()->size().height() + difference.y());
-  } else if(m_current_active_rect == active_resize_rect::BOTTOM_LEFT) {
-    auto difference = QCursor::pos() -
-      QWidget::window()->geometry().bottomLeft();
-    QWidget::window()->setGeometry(
-      QWidget::window()->pos().x() + difference.x(),
-      QWidget::window()->pos().y(),
-      QWidget::window()->size().width() - difference.x(),
-      QWidget::window()->size().height() + difference.y());
-  } else if(m_current_active_rect == active_resize_rect::LEFT) {
-    auto width = QWidget::window()->geometry().right() - QCursor::pos().x();
-    auto mouse_delta = QWidget::window()->geometry().left() -
-      QCursor::pos().x();
-    QWidget::window()->setGeometry(QCursor::pos().x() + mouse_delta,
-      QWidget::window()->pos().y(), width,
-      QWidget::window()->size().height());
-  } else if(m_current_active_rect == active_resize_rect::TOP_LEFT) {
-    auto difference = QCursor::pos() -
-      QWidget::window()->geometry().topLeft();
-    QWidget::window()->setGeometry(
-      QWidget::window()->pos().x() + difference.x(),
-      QWidget::window()->pos().y() + difference.y(),
-      QWidget::window()->size().width() - difference.x(),
-      QWidget::window()->size().height() - difference.y());
+  auto g = QWidget::window()->geometry();
+  auto p = QCursor::pos();
+  if(m_current_active_rect == active_resize_rect::TOP ||
+      m_current_active_rect == active_resize_rect::TOP_LEFT ||
+      m_current_active_rect == active_resize_rect::TOP_RIGHT) {
+    g.setY(p.y());
+  } else if(m_current_active_rect == active_resize_rect::BOTTOM ||
+      m_current_active_rect == active_resize_rect::BOTTOM_LEFT ||
+      m_current_active_rect == active_resize_rect::BOTTOM_RIGHT) {
+    g.setBottom(p.y());
   }
+  if(m_current_active_rect == active_resize_rect::LEFT ||
+      m_current_active_rect == active_resize_rect::TOP_LEFT ||
+      m_current_active_rect == active_resize_rect::BOTTOM_LEFT) {
+    g.setX(p.x());
+  } else if(m_current_active_rect == active_resize_rect::RIGHT ||
+      m_current_active_rect == active_resize_rect::TOP_RIGHT ||
+      m_current_active_rect == active_resize_rect::BOTTOM_RIGHT) {
+    g.setRight(p.x());
+  }
+  QWidget::window()->setGeometry(g);
 }
 
 void window::set_border_stylesheet(const QColor& color) {
