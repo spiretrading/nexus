@@ -1,11 +1,8 @@
 #include "spire/ui/drop_shadow.hpp"
-#include <qt_windows.h>
 #include <QEvent>
 #include <QLinearGradient>
 #include <QPainter>
 #include <QRadialGradient>
-#include <QTimer>
-#include <QDebug>
 #include "spire/spire/dimensions.hpp"
 
 using namespace spire;
@@ -137,15 +134,6 @@ void drop_shadow::paintEvent(QPaintEvent* event) {
   painter.fillRect(0, parent_size.height() + SHADOW_SIZE.height(),
     SHADOW_SIZE.width(), SHADOW_SIZE.height(), bottom_left_corner);
   QWidget::paintEvent(event);
-}
-
-void drop_shadow::showEvent(QShowEvent* event) {
-    //QWidget::showEvent(event);
-    //QTimer::singleShot(1000, [=] {
-    //  qDebug() << "yes";
-    //auto handle = reinterpret_cast<HWND>(effectiveWinId());
-    //SetWindowLong(handle, GWL_EXSTYLE, GetWindowLong(handle, GWL_EXSTYLE)
-    //  | WS_EX_NOACTIVATE);});
 }
 
 void drop_shadow::follow_parent() {
