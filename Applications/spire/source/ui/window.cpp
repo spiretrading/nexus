@@ -99,23 +99,34 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
 void window::handle_resize() {
   auto g = QWidget::window()->geometry();
   auto p = QCursor::pos();
+  auto container_delta = g.size() - m_body->size();
+  auto max_size = m_body->maximumSize() + container_delta;
+  auto min_size = m_body->minimumSize() + container_delta;
   if(m_current_active_rect == active_resize_rect::TOP ||
       m_current_active_rect == active_resize_rect::TOP_LEFT ||
       m_current_active_rect == active_resize_rect::TOP_RIGHT) {
-    g.setY(p.y());
+    auto min_y = g.bottom() - max_size.height() + 1;
+    auto max_y = g.bottom() - min_size.height() + 1;
+    g.setY(std::max(min_y, std::min(max_y, p.y())));
   } else if(m_current_active_rect == active_resize_rect::BOTTOM ||
       m_current_active_rect == active_resize_rect::BOTTOM_LEFT ||
       m_current_active_rect == active_resize_rect::BOTTOM_RIGHT) {
-    g.setBottom(p.y());
+    auto min_y = g.top() + min_size.height() - 1;
+    auto max_y = g.top() + max_size.height() - 1;
+    g.setBottom(std::max(min_y, std::min(max_y, p.y())));
   }
   if(m_current_active_rect == active_resize_rect::LEFT ||
       m_current_active_rect == active_resize_rect::TOP_LEFT ||
       m_current_active_rect == active_resize_rect::BOTTOM_LEFT) {
-    g.setX(p.x());
+    auto min_x = g.right() - max_size.width() + 1;
+    auto max_x = g.right() - min_size.width() + 1;
+    g.setX(std::max(min_x, std::max(max_x, p.x())));
   } else if(m_current_active_rect == active_resize_rect::RIGHT ||
       m_current_active_rect == active_resize_rect::TOP_RIGHT ||
       m_current_active_rect == active_resize_rect::BOTTOM_RIGHT) {
-    g.setRight(p.x());
+    auto min_x = g.x() + min_size.width();
+    auto max_x = g.x() + max_size.width();
+    g.setRight(std::max(min_x, std::min(max_x, p.x())));
   }
   QWidget::window()->setGeometry(g);
 }

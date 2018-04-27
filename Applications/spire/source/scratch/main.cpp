@@ -19,6 +19,8 @@ class test_window : public QWidget {
       body->resize(scale(400, 400));
       // setting a fixed size apparently doesn't implicitly set the size
       // policy
+      body->setMinimumSize(scale(200, 200));
+      body->setMaximumSize(scale(500, 500));
       body->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
       auto window_layout = new QHBoxLayout(this);
       window_layout->setContentsMargins({});
@@ -29,7 +31,7 @@ class test_window : public QWidget {
         QRect(translate(8, 8), scale(10, 10))));
       window_layout->addWidget(window, 1);
       auto layout = new QHBoxLayout(body);
-      auto label = new QLabel("test label", body);
+      auto label = new QLabel("test label", body); 
       layout->addWidget(label, 1);
     }
 };
