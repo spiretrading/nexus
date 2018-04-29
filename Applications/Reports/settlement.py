@@ -14,7 +14,7 @@ def execute_report(start_date, end_date, currency_database, market_database,
   trading_group_entries = administration_client.load_managed_trading_groups(
     service_locator_client.account)
   for trading_group_entry in trading_group_entries:
-    print trading_group_entry.name
+    print(trading_group_entry.name)
     group_profit_and_loss = defaultdict(lambda: nexus.Money.ZERO)
     trading_group = administration_client.load_trading_group(
       trading_group_entry)
@@ -34,23 +34,23 @@ def execute_report(start_date, end_date, currency_database, market_database,
           account_volumes[order.info.fields.currency.value] += \
             execution_report.last_quantity
       if sum(account_volumes.itervalues()) > 0:
-        print '\t%s' % trader.name
+        print('\t%s' % trader.name)
         for currency_value in account_volumes.iterkeys():
           currency = nexus.CurrencyId(currency_value)
           account_totals = account_portfolio.bookkeeper.get_total(currency)
           net_profit_and_loss = nexus.accounting.get_realized_profit_and_loss(
             account_totals)
           group_profit_and_loss[currency.value] += net_profit_and_loss
-          print '\t\tCurrency: %s' % currency_database.from_id(currency).code
-          print '\t\t\tVolume: %s' % account_volumes[currency.value]
-          print '\t\t\tP/L: %s\n' % net_profit_and_loss
+          print('\t\tCurrency: %s' % currency_database.from_id(currency).code)
+          print('\t\t\tVolume: %s' % account_volumes[currency.value])
+          print('\t\t\tP/L: %s\n' % net_profit_and_loss)
     if len(group_profit_and_loss) > 0:
-      print '\tTotals'
+      print('\tTotals')
       for currency_value in group_profit_and_loss.iterkeys():
         currency = nexus.CurrencyId(currency_value)
-        print '\t\t%s: %s' % (currency_database.from_id(currency).code,
-          group_profit_and_loss[currency.value])
-      print ''
+        print('\t\t%s: %s' % (currency_database.from_id(currency).code,
+          group_profit_and_loss[currency.value]))
+      print('')
 
 def parse_date(source):
   try:

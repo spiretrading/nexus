@@ -2,7 +2,7 @@
 let cores="`grep -c "processor" < /proc/cpuinfo`"
 directory=$(dirname $(readlink -f $0))
 
-expected_commit="39cde4710261bcffcc6cc04c925ca251dddb047d"
+expected_commit="bc42cc3eebb5b59325e6260a13593c9583e85c2a"
 if [ ! -d "Beam" ]; then
   sudo -u $(logname) git clone https://www.github.com/eidolonsystems/beam.git Beam
   pushd Beam
@@ -44,6 +44,10 @@ if [ ! -d "quickfix-v.1.14.4" ]; then
     rm v.1.14.4.zip
   fi
 fi
+
+sudo -u $(logname) pip3 install argparse
+sudo -u $(logname) pip3 install HTMLParser
+sudo -u $(logname) pip3 install GitPython
 
 pushd $directory/../../Applications/ClientWebPortal/Build/Make
 ./setup.sh

@@ -33,7 +33,7 @@ mkdir developers
 chgrp developers developers
 chmod g+rwx ./developers
 apt-get update
-apt-get install parallel gcc g++ gdb git cmake zip make mysql-server ruby python python-dev python-pip libtool m4 automake libxml2 libxml2-dev libreadline6-dev libncurses5-dev vim nodejs npm <<< Y
+apt-get install parallel gcc g++ gdb git cmake zip make mysql-server ruby python3 python3-dev python3-pip libtool m4 automake libxml2 libxml2-dev libreadline6-dev libncurses5-dev vim nodejs npm <<< Y
 npm install -g n
 n 9.2.0
 ln -sf /usr/local/n/versions/node/9.2.0/bin/node /usr/bin/nodejs
@@ -249,7 +249,7 @@ GRANT SELECT ON market_data.* TO 'spireuser'@'%' IDENTIFIED BY '$mysql_password'
 exit
 "
 
-sudo -u $(logname) mysql -uroot -p$mysql_password <<< "$mysql_input"
+mysql -uroot -p$mysql_password <<< "$mysql_input"
 
 # Modify the network parameters.
 if [[ $(egrep "root soft core" < /etc/security/limits.conf | wc -c) -eq 0 ]]; then
@@ -337,6 +337,7 @@ cd ..
 
 sudo -u $(logname) cp /home/developers/Nexus/Applications/*.sh .
 sudo -u $(logname) cp /home/developers/Nexus/Applications/*.sql .
-cp /home/developers/Beam/Beam/Library/Release/beam.so /usr/local/lib/python2.7/dist-packages/
-cp /home/developers/Nexus/Nexus/Library/Release/nexus.so /usr/local/lib/python2.7/dist-packages/
+python_directory=$(sudo -u $(logname) python3 -m site --user-site)
+cp /home/developers/Beam/Beam/Library/Release/beam.so $python_directory
+cp /home/developers/Nexus/Nexus/Library/Release/nexus.so $python_directory
 ldconfig

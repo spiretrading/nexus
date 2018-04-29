@@ -40,19 +40,19 @@ def execute_report(start_date, end_date, security, market, account,
 
 def output_order_log(orders):
   for order in orders:
-    print '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' % (order.info.timestamp,
+    print('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' % (order.info.timestamp,
       order.info.fields.account.name, order.info.order_id,
       order.info.fields.security.symbol, order.info.fields.type,
       order.info.fields.side, order.info.fields.destination,
       order.info.fields.quantity, order.info.fields.price,
-      order.info.fields.time_in_force.type)
+      order.info.fields.time_in_force.type))
 
 def output_activity_log(activity_log):
   for report in activity_log:
-    print '%s,%s,%s,%s,%s,%s,%s,%s,%s' % (report[1].timestamp, report[1].id,
+    print('%s,%s,%s,%s,%s,%s,%s,%s,%s' % (report[1].timestamp, report[1].id,
       report[0].side, report[0].security.symbol, report[1].status,
       report[1].last_quantity, report[1].last_price, report[1].last_market,
-      report[1].liquidity_flag)
+      report[1].liquidity_flag))
 
 def parse_date(source):
   try:
