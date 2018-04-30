@@ -175,9 +175,13 @@ void title_bar::mouseMoveEvent(QMouseEvent* event) {
 }
 
 void title_bar::mousePressEvent(QMouseEvent* event)  {
-  if(m_is_dragging || event->button() != Qt::LeftButton ||
-      window()->windowState().testFlag(Qt::WindowMaximized)) {
+  if(m_is_dragging || event->button() != Qt::LeftButton) {
     return;
+  }
+  if(window()->windowState().testFlag(Qt::WindowMaximized)) {
+    on_restore_button_press();
+    window()->move(event->globalX() - (window()->width() / 2),
+      event->globalY() - (height() / 2));
   }
   m_is_dragging = true;
   m_last_mouse_pos = event->globalPos();
