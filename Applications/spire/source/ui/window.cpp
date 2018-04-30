@@ -120,12 +120,12 @@ void window::handle_resize() {
       m_current_active_rect == active_resize_rect::BOTTOM_LEFT) {
     auto min_x = g.right() - max_size.width() + 1;
     auto max_x = g.right() - min_size.width() + 1;
-    g.setX(std::max(min_x, std::max(max_x, p.x())));
+    g.setX(std::min(max_x, std::max(min_x, p.x())));
   } else if(m_current_active_rect == active_resize_rect::RIGHT ||
       m_current_active_rect == active_resize_rect::TOP_RIGHT ||
       m_current_active_rect == active_resize_rect::BOTTOM_RIGHT) {
-    auto min_x = g.x() + min_size.width();
-    auto max_x = g.x() + max_size.width();
+    auto min_x = g.x() + min_size.width() - 1;
+    auto max_x = g.x() + max_size.width() - 1;
     g.setRight(std::max(min_x, std::min(max_x, p.x())));
   }
   QWidget::window()->setGeometry(g);
