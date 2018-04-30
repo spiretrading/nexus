@@ -13,6 +13,7 @@ using namespace spire;
 window::window(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body),
+      m_maximum_body_size(m_body->maximumSize()),
       m_is_resizing(false),
       m_hovered(false) {
   this->::QWidget::window()->setWindowFlags(
@@ -69,6 +70,14 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::Move) {
       if(m_resize_boxes.is_initialized()) {
         update_resize_boxes();
+      }
+    } else if(event->type() == QEvent::WindowStateChange) {
+      auto e = static_cast<QWindowStateChangeEvent*>(event);
+      qDebug() << e->oldState();
+      if(e->oldState() & Qt::WindowMaximized) {
+        m_body->setMaximumSize(m_maximum_body_size);
+      } else {
+        m_body->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
       }
     }
   } else if(watched == m_shadow.get()) {

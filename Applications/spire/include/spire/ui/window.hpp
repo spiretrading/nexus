@@ -61,6 +61,7 @@ namespace spire {
       std::unique_ptr<drop_shadow> m_shadow;
       QWidget* m_border;
       QWidget* m_body;
+      QSize m_maximum_body_size;
       title_bar* m_title_bar;
       boost::optional<resize_boxes> m_resize_boxes;
       QPoint m_last_mouse_pos;
