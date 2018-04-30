@@ -1,6 +1,4 @@
 #include "spire/ui/window.hpp"
-#include <QApplication>
-#include <QDebug>
 #include <QEvent>
 #include <QResizeEvent>
 #include <QVBoxLayout>
@@ -39,9 +37,8 @@ window::window(QWidget* body, QWidget* parent)
   border_layout->setSpacing(0);
   m_title_bar = new title_bar(m_border);
   border_layout->addWidget(m_title_bar);
-  border_layout->addWidget(m_body, 1);
+  border_layout->addWidget(m_body);
   this->::QWidget::window()->installEventFilter(this);
-  qApp->setOverrideCursor(QCursor(Qt::ArrowCursor));
 }
 
 void window::set_icon(const QImage& icon) {
@@ -73,7 +70,6 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
       }
     } else if(event->type() == QEvent::WindowStateChange) {
       auto e = static_cast<QWindowStateChangeEvent*>(event);
-      qDebug() << e->oldState();
       if(e->oldState() & Qt::WindowMaximized) {
         m_body->setMaximumSize(m_maximum_body_size);
       } else {
@@ -178,7 +174,7 @@ void window::update_resize_cursor() {
     update_resize_boxes();
   }
   auto pos = QCursor::pos();
-  auto cursor = qApp->overrideCursor()->shape();
+  auto cursor = m_shadow->cursor().shape();
   m_current_active_rect = active_resize_rect::NONE;
   if(m_body->sizePolicy().horizontalPolicy() != QSizePolicy::Fixed) {
     if(m_resize_boxes->m_right.contains(pos)) {
@@ -217,6 +213,5 @@ void window::update_resize_cursor() {
   if(m_current_active_rect == active_resize_rect::NONE) {
     cursor = Qt::ArrowCursor;
   }
-  qApp->restoreOverrideCursor();
-  qApp->setOverrideCursor(QCursor(cursor));
+  m_shadow->setCursor(cursor);
 }
