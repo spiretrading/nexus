@@ -71,7 +71,8 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::WindowStateChange) {
       auto e = static_cast<QWindowStateChangeEvent*>(event);
       if(e->oldState() & Qt::WindowMaximized ||
-          e->oldState() & Qt::WindowMinimized) {
+          e->oldState() & Qt::WindowMinimized &&
+          e->oldState() & Qt::WindowMaximized) {
         m_body->setMaximumSize(m_maximum_body_size);
       } else {
         m_body->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
