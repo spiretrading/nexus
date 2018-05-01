@@ -1,4 +1,5 @@
 #include "spire/ui/drop_shadow.hpp"
+#include <QDebug>
 #include <QEvent>
 #include <QLinearGradient>
 #include <QPainter>
@@ -40,6 +41,8 @@ drop_shadow::drop_shadow(bool has_top, QWidget* parent)
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_ShowWithoutActivating);
   m_parent->window()->installEventFilter(this);
+  connect(&timer, &QTimer::timeout, [=] { resize_now(); });
+  timer.start(200);
 }
 
 bool drop_shadow::eventFilter(QObject* watched, QEvent* event) {
@@ -47,8 +50,8 @@ bool drop_shadow::eventFilter(QObject* watched, QEvent* event) {
     follow_parent();
   } else if(event->type() == QEvent::Resize) {
     auto parent_size = m_parent->window()->frameGeometry().size();
-    resize(parent_size.width() + 2 * SHADOW_SIZE().width(),
-      parent_size.height() + 2 * SHADOW_SIZE().height());
+    resize(parent_size.width() + 2 * SHADOW_SIZE().width() - 20,
+    parent_size.height() + 2 * SHADOW_SIZE().height() - 20);
     follow_parent();
   } else if(event->type() == QEvent::Show) {
     show();
@@ -133,4 +136,10 @@ void drop_shadow::follow_parent() {
   auto top_left = m_parent->window()->frameGeometry().topLeft();
   move(top_left.x() - SHADOW_SIZE().width(),
     top_left.y() - SHADOW_SIZE().height());
+}
+
+void drop_shadow::resize_now() {
+  auto parent_size = m_parent->window()->frameGeometry().size();
+  resize(parent_size.width() + 2 * SHADOW_SIZE().width(),
+    parent_size.height() + 2 * SHADOW_SIZE().height());
 }
