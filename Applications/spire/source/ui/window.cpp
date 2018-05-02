@@ -1,5 +1,6 @@
 #include "spire/ui/window.hpp"
-#include <QEvent>
+#include <QApplication>
+#include <QDesktopWidget>
 #include <QResizeEvent>
 #include <QVBoxLayout>
 #include "spire/spire/dimensions.hpp"
@@ -75,6 +76,10 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
         m_body->setMaximumSize(m_maximum_body_size);
       } else {
         m_body->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+      }
+      if(QWidget::window()->windowState().testFlag(Qt::WindowMaximized)) {
+        QWidget::window()->setGeometry(
+          QApplication::desktop()->availableGeometry(QWidget::window()));
       }
     }
   } else if(watched == m_shadow.get()) {
