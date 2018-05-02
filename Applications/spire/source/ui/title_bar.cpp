@@ -1,4 +1,6 @@
 #include "spire/ui/title_bar.hpp"
+#include <QApplication>
+#include <QDesktopWidget>
 #include <QHBoxLayout>
 #include <QMouseEvent>
 #include "spire/spire/dimensions.hpp"
@@ -175,9 +177,21 @@ void title_bar::mouseMoveEvent(QMouseEvent* event) {
 }
 
 void title_bar::mousePressEvent(QMouseEvent* event)  {
-  if(m_is_dragging || event->button() != Qt::LeftButton ||
-      window()->windowState().testFlag(Qt::WindowMaximized)) {
+  if(m_is_dragging || event->button() != Qt::LeftButton) {
     return;
+  }
+  if(window()->windowState().testFlag(Qt::WindowMaximized)) {
+    on_restore_button_press();
+    auto mouse_screen_pos = QApplication::desktop()->screenGeometry(
+      event->globalPos());
+    auto mouse_screen_x = event->globalPos().x() - mouse_screen_pos.left();
+    auto new_pos = QPoint(event->globalX() - (window()->width() / 2), 0);
+    if(mouse_screen_x - width() < 0) {
+      new_pos.setX(mouse_screen_pos.left());
+    } else if(mouse_screen_x + width() > mouse_screen_pos.width()) {
+      new_pos.setX(mouse_screen_pos.right() - width());
+    }
+    window()->move(new_pos);
   }
   m_is_dragging = true;
   m_last_mouse_pos = event->globalPos();

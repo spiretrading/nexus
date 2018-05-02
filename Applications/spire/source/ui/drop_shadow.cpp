@@ -45,6 +45,13 @@ drop_shadow::drop_shadow(bool has_top, QWidget* parent)
   timer.start(200);
 }
 
+bool drop_shadow::event(QEvent* event) {
+  if(event->type() == QEvent::WindowActivate) {
+    m_parent->activateWindow();
+  }
+  return QWidget::event(event);
+}
+
 bool drop_shadow::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::Move) {
     follow_parent();
