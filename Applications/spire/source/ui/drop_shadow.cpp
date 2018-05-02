@@ -41,8 +41,8 @@ drop_shadow::drop_shadow(bool has_top, QWidget* parent)
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_ShowWithoutActivating);
   m_parent->window()->installEventFilter(this);
-  connect(&timer, &QTimer::timeout, [=] { resize_now(); });
-  timer.start(200);
+  m_resize_timer.setTimerType(Qt::CoarseTimer);
+  connect(&m_resize_timer, &QTimer::timeout, [=] { resize_to_parent(); });
 }
 
 bool drop_shadow::event(QEvent* event) {
@@ -57,6 +57,7 @@ bool drop_shadow::eventFilter(QObject* watched, QEvent* event) {
     follow_parent();
   } else if(event->type() == QEvent::Resize) {
     auto parent_size = m_parent->window()->frameGeometry().size();
+    m_resize_timer.start(200);
     resize(parent_size.width() + 2 * SHADOW_SIZE().width() - 20,
     parent_size.height() + 2 * SHADOW_SIZE().height() - 20);
     follow_parent();
@@ -145,7 +146,11 @@ void drop_shadow::follow_parent() {
     top_left.y() - SHADOW_SIZE().height());
 }
 
-void drop_shadow::resize_now() {
+void drop_shadow::resize_to_parent() {
+  static auto num = 0;
+  qDebug() << "Resize to parent call " << num;
+  num++;
+  m_resize_timer.stop();
   auto parent_size = m_parent->window()->frameGeometry().size();
   resize(parent_size.width() + 2 * SHADOW_SIZE().width(),
     parent_size.height() + 2 * SHADOW_SIZE().height());

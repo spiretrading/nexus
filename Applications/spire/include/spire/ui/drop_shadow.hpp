@@ -33,10 +33,10 @@ namespace spire {
       QWidget* m_parent;
       bool m_has_top;
       bool m_is_visible;
-      QTimer timer;
+      QTimer m_resize_timer;
 
       void follow_parent();
-      void resize_now();
+      void resize_to_parent();
   };
 }
 
