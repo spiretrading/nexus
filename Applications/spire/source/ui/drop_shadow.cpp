@@ -58,8 +58,8 @@ bool drop_shadow::eventFilter(QObject* watched, QEvent* event) {
   } else if(event->type() == QEvent::Resize) {
     auto parent_size = m_parent->window()->frameGeometry().size();
     m_resize_timer.start(200);
-    resize(parent_size.width() + 2 * SHADOW_SIZE().width() - 20,
-    parent_size.height() + 2 * SHADOW_SIZE().height() - 20);
+    resize(parent_size.width() + 2 * SHADOW_SIZE().width() - scale_width(14),
+    parent_size.height() + 2 * SHADOW_SIZE().height() - scale_height(14));
     follow_parent();
   } else if(event->type() == QEvent::Show) {
     show();
@@ -147,9 +147,6 @@ void drop_shadow::follow_parent() {
 }
 
 void drop_shadow::resize_to_parent() {
-  static auto num = 0;
-  qDebug() << "Resize to parent call " << num;
-  num++;
   m_resize_timer.stop();
   auto parent_size = m_parent->window()->frameGeometry().size();
   resize(parent_size.width() + 2 * SHADOW_SIZE().width(),
