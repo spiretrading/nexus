@@ -56,6 +56,10 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::WindowActivate) {
       set_border_stylesheet("#A0A0A0");
       m_shadow->raise();
+      if(QWidget::window()->windowState().testFlag(Qt::WindowMinimized)) {
+        qDebug() << "crisis averted.";
+        QWidget::window()->setWindowState(Qt::WindowMaximized);
+      }
     } else if(event->type() == QEvent::WindowDeactivate) {
       set_border_stylesheet("#C8C8C8");
     } else if(event->type() == QEvent::Resize) {
