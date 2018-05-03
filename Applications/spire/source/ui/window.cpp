@@ -1,6 +1,5 @@
 #include "spire/ui/window.hpp"
 #include <QApplication>
-#include <QDebug>
 #include <QDesktopWidget>
 #include <QResizeEvent>
 #include <QVBoxLayout>
@@ -57,7 +56,6 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
       set_border_stylesheet("#A0A0A0");
       m_shadow->raise();
       if(QWidget::window()->windowState().testFlag(Qt::WindowMinimized)) {
-        qDebug() << "crisis averted.";
         QWidget::window()->setWindowState(Qt::WindowMaximized);
       }
     } else if(event->type() == QEvent::WindowDeactivate) {
@@ -75,11 +73,6 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
         update_resize_boxes();
       }
     } else if(event->type() == QEvent::WindowStateChange) {
-      static auto num = 0;
-      ++num;
-      qDebug() << "#" << num << ",  " <<
-        static_cast<QWindowStateChangeEvent*>(event)->oldState() <<
-        "    new state: " << QWidget::window()->windowState();
       if(QWidget::window()->windowState().testFlag(Qt::WindowNoState)) {
         m_body->setMaximumSize(m_maximum_body_size);
       } else if(!QWidget::window()->

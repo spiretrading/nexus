@@ -64,6 +64,7 @@ namespace spire {
       icon_button* m_close_button;
       bool m_is_dragging;
       QPoint m_last_mouse_pos;
+      QRect m_window_restore_geometry;
 
       void on_window_title_change(const QString& title);
       void on_minimize_button_press();

@@ -151,6 +151,10 @@ bool title_bar::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::WindowActivate) {
       set_title_text_stylesheet(QColor("#000000"));
       m_icon->set_icon(m_default_icon);
+    } else if(event->type() == QEvent::WindowStateChange) {
+      if(window()->windowState().testFlag(Qt::WindowMaximized)) {
+        m_window_restore_geometry = window()->normalGeometry();
+      }
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -170,6 +174,7 @@ void title_bar::mouseMoveEvent(QMouseEvent* event) {
   }
   if(window()->windowState().testFlag(Qt::WindowMaximized)) {
     on_restore_button_press();
+    window()->setGeometry(m_window_restore_geometry);
     auto mouse_screen_pos = QApplication::desktop()->screenGeometry(
       event->globalPos());
     auto mouse_screen_x = event->globalPos().x() - mouse_screen_pos.left();
