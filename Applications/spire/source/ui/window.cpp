@@ -70,14 +70,11 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
         update_resize_boxes();
       }
     } else if(event->type() == QEvent::WindowStateChange) {
-      auto e = static_cast<QWindowStateChangeEvent*>(event);
-      if(e->oldState() & Qt::WindowMaximized ||
-          e->oldState() & Qt::WindowMinimized) {
+      if(QWidget::window()->windowState().testFlag(Qt::WindowNoState)) {
         m_body->setMaximumSize(m_maximum_body_size);
-      } else {
+      } else if(!QWidget::window()->
+          windowState().testFlag(Qt::WindowMinimized)) {
         m_body->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
-      }
-      if(QWidget::window()->windowState().testFlag(Qt::WindowMaximized)) {
         QWidget::window()->setGeometry(
           QApplication::desktop()->availableGeometry(QWidget::window()));
       }
