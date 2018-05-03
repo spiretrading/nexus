@@ -168,18 +168,6 @@ void title_bar::mouseMoveEvent(QMouseEvent* event) {
   if(!m_is_dragging) {
     return;
   }
-  auto delta = event->globalPos();
-  delta -= m_last_mouse_pos;
-  auto window_pos = window()->pos();
-  window_pos += delta;
-  m_last_mouse_pos = event->globalPos();
-  window()->move(window_pos);
-}
-
-void title_bar::mousePressEvent(QMouseEvent* event)  {
-  if(m_is_dragging || event->button() != Qt::LeftButton) {
-    return;
-  }
   if(window()->windowState().testFlag(Qt::WindowMaximized)) {
     on_restore_button_press();
     auto mouse_screen_pos = QApplication::desktop()->screenGeometry(
@@ -192,6 +180,18 @@ void title_bar::mousePressEvent(QMouseEvent* event)  {
       new_pos.setX(mouse_screen_pos.right() - width());
     }
     window()->move(new_pos);
+  }
+  auto delta = event->globalPos();
+  delta -= m_last_mouse_pos;
+  auto window_pos = window()->pos();
+  window_pos += delta;
+  m_last_mouse_pos = event->globalPos();
+  window()->move(window_pos);
+}
+
+void title_bar::mousePressEvent(QMouseEvent* event)  {
+  if(m_is_dragging || event->button() != Qt::LeftButton) {
+    return;
   }
   m_is_dragging = true;
   m_last_mouse_pos = event->globalPos();
