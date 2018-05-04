@@ -174,6 +174,10 @@ void title_bar::mouseMoveEvent(QMouseEvent* event) {
   }
   if(window()->windowState().testFlag(Qt::WindowMaximized)) {
     on_restore_button_press();
+    // when setGeometry is disabled in window's state change filter,
+    // this call fixes the issue where the window can be resized to an
+    // arbitrary size
+    //window()->setWindowState(Qt::WindowNoState);
     window()->setGeometry(m_window_restore_geometry);
     auto mouse_screen_pos = QApplication::desktop()->screenGeometry(
       event->globalPos());
