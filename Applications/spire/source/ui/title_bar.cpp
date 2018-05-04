@@ -54,11 +54,9 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   auto button_size = scale(32, 26);
   auto minimize_box = QRect(translate(11, 12), scale(10, 2));
   m_minimize_button = new icon_button(
-    imageFromSvg(":/icons/minimize-darker-grey.svg",
-      button_size, minimize_box),
+    imageFromSvg(":/icons/minimize-darker-grey.svg", button_size, minimize_box),
     imageFromSvg(":/icons/minimize-black.svg", button_size, minimize_box),
-    imageFromSvg(":/icons/minimize-grey.svg", button_size, minimize_box),
-    this);
+    imageFromSvg(":/icons/minimize-grey.svg", button_size, minimize_box), this);
   m_minimize_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_minimize_button->set_default_style("background-color: #F5F5F5;");
   m_minimize_button->set_hover_style("background-color: #EBEBEB;");
@@ -69,11 +67,9 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   layout->addWidget(m_minimize_button);
   auto maximize_box = QRect(translate(11, 8), scale(10, 10));
   m_maximize_button = new icon_button(
-    imageFromSvg(":/icons/maximize-darker-grey.svg", button_size,
-      maximize_box),
+    imageFromSvg(":/icons/maximize-darker-grey.svg", button_size, maximize_box),
     imageFromSvg(":/icons/maximize-black.svg", button_size, maximize_box),
-    imageFromSvg(":/icons/maximize-grey.svg", button_size, maximize_box),
-    this);
+    imageFromSvg(":/icons/maximize-grey.svg", button_size, maximize_box), this);
   m_maximize_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_maximize_button->set_default_style("background-color: #F5F5F5;");
   m_maximize_button->set_hover_style("background-color: #EBEBEB;");
