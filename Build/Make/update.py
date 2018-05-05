@@ -50,14 +50,14 @@ def main():
   parser = DirectoryHTMLParser()
   parser.feed(response.read())
   if parser.link is None:
-    print 'Build not found.'
+    print('Build not found.')
     return
   build_version = parser.link
   response = urllib2.urlopen('%s/Nexus/Make/%s' % (args.site, build_version))
   parser = FileHTMLParser()
   parser.feed(response.read())
   if parser.link is None:
-    print 'Archive not found.'
+    print('Archive not found.')
     return
   archive = parser.link
   response = urllib2.urlopen('%s/Nexus/Make/%s/%s' %

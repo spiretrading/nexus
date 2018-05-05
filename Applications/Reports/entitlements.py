@@ -19,9 +19,10 @@ class MonthlyReport:
           self.added_entitlements[entitlement].remove(account)
 
   def print_report(self):
-    print self.date
+    print(self.date)
     for entitlement in self.added_entitlements:
-      print '\t%s %s' % (entitlement, len(self.added_entitlements[entitlement]))
+      print('\t%s %s' %
+        (entitlement, len(self.added_entitlements[entitlement])))
 
   def grant(self, account, entitlement):
     if entitlement not in self.added_entitlements:

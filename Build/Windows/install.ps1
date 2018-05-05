@@ -7,6 +7,7 @@ If($program_files_x86_path -eq "C:\Program Files") {
   $program_files_x86_path = "C:\Progra~1"
   $program_files_path = "C:\Progra~2"
 }
+[Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
 If((Get-Command "grep.exe" -ErrorAction SilentlyContinue) -eq $null) {
   Invoke-WebRequest -UseBasicParsing -Uri https://github.com/bmatzelle/gow/releases/download/v0.8.0/Gow-0.8.0.exe -UserAgent [Microsoft.PowerShell.Commands.PSUserAgent]::FireFox -OutFile Gow-0.8.0.exe
   .\Gow-0.8.0.exe /S | Out-Null
@@ -34,13 +35,9 @@ If((Get-Command "cmake.exe" -ErrorAction SilentlyContinue) -eq $null) {
   rm .\cmake-3.8.0-win64-x64.msi -Force
 }
 If((Get-Command "python.exe" -ErrorAction SilentlyContinue) -eq $null) {
-  Invoke-WebRequest -UseBasicParsing -Uri https://www.python.org/ftp/python/2.7.13/python-2.7.13.msi -OutFile python-2.7.13.msi
-  msiexec /quiet /i python-2.7.13.msi TARGETDIR="$program_files_x86_path\Python27" | Out-Null
-  $old_path = (Get-ItemProperty -Path "Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment" -Name PATH).path
-  $new_path = "$old_path;C:\Program Files (x86)\Python27"
-  Set-ItemProperty -Path "Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment" -Name PATH –Value $new_path
-  $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-  rm python-2.7.13.msi -Force
+  Invoke-WebRequest -UseBasicParsing -Uri https://www.python.org/ftp/python/3.6.5/python-3.6.5.exe -OutFile python-3.6.5.exe
+  ./python-3.6.5.exe /quiet /passive PrependPath=1 | Out-Null
+  rm python-3.6.5.exe -Force
 }
 If((Get-Command "perl.exe" -ErrorAction SilentlyContinue) -eq $null) {
   Invoke-WebRequest -UseBasicParsing -Uri http://www.strawberryperl.com/download/5.24.1.1/strawberry-perl-5.24.1.1-64bit.msi -OutFile strawberry-perl-5.24.1.1-64bit.msi
