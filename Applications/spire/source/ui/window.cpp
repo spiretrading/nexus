@@ -36,7 +36,7 @@ window::window(QWidget* body, QWidget* parent)
   auto border_layout = new QVBoxLayout(m_border);
   border_layout->setMargin(scale_width(1));
   border_layout->setSpacing(0);
-  m_title_bar = new title_bar(m_border);
+  m_title_bar = new title_bar(m_body, m_border);
   border_layout->addWidget(m_title_bar);
   border_layout->addWidget(m_body);
   this->::QWidget::window()->installEventFilter(this);

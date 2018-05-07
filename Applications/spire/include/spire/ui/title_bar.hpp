@@ -12,25 +12,31 @@ namespace spire {
 
       //! Constructs a title bar.
       /*!
+        \param body The body content widget. Used to determine maximum size
+                    when changing the window state.
         \param parent The parent widget.
       */
-      title_bar(QWidget* parent = nullptr);
+      title_bar(QWidget* body, QWidget* parent = nullptr);
 
       //! Constructs a title bar.
       /*!
         \param icon The window icon to display at the top-left corner.
+        \param body The body content widget. Used to determine maximum size
+                    when changing the window state.
         \param parent The parent widget.
       */
-      title_bar(const QImage& icon, QWidget* parent = nullptr);
+      title_bar(const QImage& icon, QWidget* body, QWidget* parent = nullptr);
 
       //! Constructs a title bar.
       /*!
         \param icon The window icon to display at the top-left corner.
         \param unfocused_icon The icon to display when the window lacks focus.
+        \param body The body content widget. Used to determine maximum size
+                    when changing the window state.
         \param parent The parent widget.
       */
       title_bar(const QImage& icon, const QImage& unfocused_icon,
-        QWidget* parent = nullptr);
+        QWidget* body, QWidget* parent = nullptr);
 
       //! Sets the icon to display.
       /*!
@@ -64,6 +70,7 @@ namespace spire {
       icon_button* m_close_button;
       bool m_is_dragging;
       QPoint m_last_mouse_pos;
+      QWidget* m_body;
       QRect m_window_restore_geometry;
       QPoint m_window_restore_pos;
       QSize m_max_body_size;

@@ -17,15 +17,16 @@ namespace {
   }
 }
 
-title_bar::title_bar(QWidget* parent)
-    : title_bar(QImage(), parent) {}
+title_bar::title_bar(QWidget* body, QWidget* parent)
+    : title_bar(QImage(), body, parent) {}
 
-title_bar::title_bar(const QImage& icon, QWidget* parent)
-    : title_bar(icon, icon, parent) {}
+title_bar::title_bar(const QImage& icon, QWidget* body, QWidget* parent)
+    : title_bar(icon, icon, body, parent) {}
 
 title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
-    QWidget* parent)
+    QWidget* body, QWidget* parent)
     : QWidget(parent),
+      m_body(body),
       m_is_dragging(false),
       m_window_maximized(false) {
   setFixedHeight(scale_height(26));
@@ -232,8 +233,8 @@ void title_bar::on_maximize_button_press() {
     auto wind = static_cast<spire::window*>(parent()->parent());
     m_window_restore_geometry = wind->geometry();
     m_window_restore_pos = window()->pos();
-    m_max_body_size = wind->m_body->maximumSize();
-    wind->m_body->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+    m_max_body_size = m_body->maximumSize();
+    m_body->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
     window()->setGeometry(
       QApplication::desktop()->availableGeometry(window()));
   }
@@ -245,7 +246,7 @@ void title_bar::on_restore_button_press() {
     m_maximize_button->setVisible(true);
     m_restore_button->setVisible(false);
     auto wind = static_cast<spire::window*>(parent()->parent());
-    wind->m_body->setMaximumSize(m_max_body_size);
+    m_body->setMaximumSize(m_max_body_size);
     window()->setGeometry(m_window_restore_geometry);
     window()->move(m_window_restore_pos);
   }
