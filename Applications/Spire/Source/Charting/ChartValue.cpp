@@ -88,7 +88,7 @@ ChartValue ChartValue::operator -() const {
 
 ptime ChartValue::ToDateTime() const {
   static const ptime BASE(date(1970, Jan, 1), seconds(0));
-  return BASE + milliseconds(static_cast<int>(m_value));
+  return BASE + milliseconds(static_cast<std::int64_t>(m_value));
 }
 
 Money ChartValue::ToMoney() const {
@@ -100,5 +100,5 @@ Quantity ChartValue::ToQuantity() const {
 }
 
 time_duration ChartValue::ToTimeDuration() const {
-  return milliseconds(static_cast<int>(m_value));
+  return milliseconds(static_cast<std::int64_t>(m_value));
 }
