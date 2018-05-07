@@ -5,6 +5,7 @@
 #include <QMouseEvent>
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/icon_button.hpp"
+#include "spire/ui/window.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -25,7 +26,8 @@ title_bar::title_bar(const QImage& icon, QWidget* parent)
 title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
     QWidget* parent)
     : QWidget(parent),
-      m_is_dragging(false) {
+      m_is_dragging(false),
+      m_window_maximized(false) {
   setFixedHeight(scale_height(26));
   setStyleSheet("background-color: #F5F5F5;");
   auto layout = new QHBoxLayout(this);
@@ -151,17 +153,13 @@ bool title_bar::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::WindowActivate) {
       set_title_text_stylesheet(QColor("#000000"));
       m_icon->set_icon(m_default_icon);
-    } else if(event->type() == QEvent::WindowStateChange) {
-      if(window()->windowState().testFlag(Qt::WindowMaximized)) {
-        m_window_restore_geometry = window()->normalGeometry();
-      }
     }
   }
   return QWidget::eventFilter(watched, event);
 }
 
 void title_bar::mouseDoubleClickEvent(QMouseEvent* event) {
-  if(window()->windowState().testFlag(Qt::WindowMaximized)) {
+  if(m_window_maximized) {
     on_restore_button_press();
   } else {
     on_maximize_button_press();
@@ -172,12 +170,8 @@ void title_bar::mouseMoveEvent(QMouseEvent* event) {
   if(!m_is_dragging) {
     return;
   }
-  if(window()->windowState().testFlag(Qt::WindowMaximized)) {
+  if(m_window_maximized) {
     on_restore_button_press();
-    // when setGeometry is disabled in window's state change filter,
-    // this call fixes the issue where the window can be resized to an
-    // arbitrary size
-    //window()->setWindowState(Qt::WindowNoState);
     window()->setGeometry(m_window_restore_geometry);
     auto mouse_screen_pos = QApplication::desktop()->screenGeometry(
       event->globalPos());
@@ -232,17 +226,28 @@ void title_bar::on_minimize_button_press() {
 
 void title_bar::on_maximize_button_press() {
   if(m_maximize_button->isVisible()) {
+    m_window_maximized = true;
     m_maximize_button->setVisible(false);
     m_restore_button->setVisible(true);
-    window()->showMaximized();
+    auto wind = static_cast<spire::window*>(parent()->parent());
+    m_window_restore_geometry = wind->geometry();
+    m_window_restore_pos = window()->pos();
+    m_max_body_size = wind->m_body->maximumSize();
+    wind->m_body->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+    window()->setGeometry(
+      QApplication::desktop()->availableGeometry(window()));
   }
 }
 
 void title_bar::on_restore_button_press() {
   if(m_restore_button->isVisible()) {
+    m_window_maximized = false;
     m_maximize_button->setVisible(true);
     m_restore_button->setVisible(false);
-    window()->showNormal();
+    auto wind = static_cast<spire::window*>(parent()->parent());
+    wind->m_body->setMaximumSize(m_max_body_size);
+    window()->move(m_window_restore_pos);
+    window()->setGeometry(m_window_restore_geometry);
   }
 }
 

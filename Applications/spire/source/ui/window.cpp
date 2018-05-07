@@ -72,15 +72,6 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
       if(m_resize_boxes.is_initialized()) {
         update_resize_boxes();
       }
-    } else if(event->type() == QEvent::WindowStateChange) {
-      if(QWidget::window()->windowState().testFlag(Qt::WindowNoState)) {
-        m_body->setMaximumSize(m_maximum_body_size);
-      } else if(!QWidget::window()->
-          windowState().testFlag(Qt::WindowMinimized)) {
-        m_body->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
-        QWidget::window()->setGeometry(
-          QApplication::desktop()->availableGeometry(QWidget::window()));
-      }
     }
   } else if(watched == m_shadow.get()) {
     if(event->type() == QEvent::MouseMove) {
