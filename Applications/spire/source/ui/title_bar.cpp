@@ -3,6 +3,7 @@
 #include <QDesktopWidget>
 #include <QHBoxLayout>
 #include <QMouseEvent>
+#include <qt_windows.h>
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/icon_button.hpp"
 #include "spire/ui/window.hpp"
@@ -116,6 +117,12 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   connect(window(), &QWidget::windowTitleChanged,
     [=] (auto&& title) { this->on_window_title_change(title); });
   window()->installEventFilter(this);
+
+  auto system_menu = GetSystemMenu(
+    reinterpret_cast<HWND>(window()->winId()), FALSE);
+  if(system_menu) {
+    AppendMenu(system_menu, MF_STRING, 1, "Test");
+  }
 }
 
 void title_bar::set_icon(const QImage& icon) {
@@ -233,8 +240,7 @@ void title_bar::on_maximize_button_press() {
     m_window_maximized = true;
     m_maximize_button->setVisible(false);
     m_restore_button->setVisible(true);
-    auto wind = static_cast<spire::window*>(parent()->parent());
-    m_window_restore_geometry = wind->geometry();
+    m_window_restore_geometry = window()->geometry();
     m_window_restore_pos = window()->pos();
     m_max_body_size = m_body->maximumSize();
     m_body->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
@@ -248,7 +254,6 @@ void title_bar::on_restore_button_press() {
     m_window_maximized = false;
     m_maximize_button->setVisible(true);
     m_restore_button->setVisible(false);
-    auto wind = static_cast<spire::window*>(parent()->parent());
     m_body->setMaximumSize(m_max_body_size);
     window()->setGeometry(m_window_restore_geometry);
     window()->move(m_window_restore_pos);
