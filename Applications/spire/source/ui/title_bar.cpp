@@ -246,8 +246,8 @@ void title_bar::on_restore_button_press() {
     m_restore_button->setVisible(false);
     auto wind = static_cast<spire::window*>(parent()->parent());
     wind->m_body->setMaximumSize(m_max_body_size);
-    window()->move(m_window_restore_pos);
     window()->setGeometry(m_window_restore_geometry);
+    window()->move(m_window_restore_pos);
   }
 }
 
