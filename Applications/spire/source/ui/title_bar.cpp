@@ -205,7 +205,10 @@ void title_bar::mouseReleaseEvent(QMouseEvent* event) {
   if(event->button() != Qt::LeftButton) {
     return;
   }
-  m_is_dragging = false;
+  if(m_is_dragging) {
+    m_window_restore_pos = window()->pos();
+    m_is_dragging = false;
+  }
 }
 
 void title_bar::resizeEvent(QResizeEvent* event) {
