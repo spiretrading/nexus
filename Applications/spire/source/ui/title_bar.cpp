@@ -118,6 +118,17 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
     [=] (auto&& title) { this->on_window_title_change(title); });
   window()->installEventFilter(this);
   qApp->installNativeEventFilter(this);
+  auto system_menu = GetSystemMenu(
+    reinterpret_cast<HWND>(window()->winId()), FALSE);
+  MENUITEMINFO info = { sizeof(MENUITEMINFO) };
+  TCHAR name[256] = TEXT("Cannot move");
+  info.fMask = MIIM_TYPE;
+  info.dwTypeData = name;
+  info.cch = sizeof(name) / sizeof(TCHAR);
+  GetMenuItemInfo(system_menu, SC_MAXIMIZE, FALSE, &info);
+  // MF_GRAYED appears to be redundant when using MF_DISABLED
+  ModifyMenu(system_menu, SC_MAXIMIZE, MF_BYCOMMAND | MF_DISABLED, 0,
+    info.dwTypeData);
 }
 
 void title_bar::set_icon(const QImage& icon) {
