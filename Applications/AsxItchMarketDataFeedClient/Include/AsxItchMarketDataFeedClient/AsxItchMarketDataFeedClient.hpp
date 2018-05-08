@@ -357,15 +357,14 @@ namespace MarketDataService {
       const OrderBookDirectory& directory, Beam::Out<const char*> cursor) {
     auto PowerOfTen =
       [] (std::uint16_t exponent) {
-        std::uint64_t result = 1;
+        Quantity result = 1;
         for(auto i = std::uint16_t{0}; i < exponent; ++i) {
           result *= 10;
         }
         return result;
       };
-    auto value = ParseInt32(Beam::Store(cursor));
-    auto multiplier = Quantity{1} / PowerOfTen(directory.m_priceDecimalPlaces);
-    auto price = Money{multiplier * value};
+    auto price = Money{ParseInt32(Beam::Store(cursor)) /
+      (100 * PowerOfTen(directory.m_priceDecimalPlaces))};
     return price;
   }
 
