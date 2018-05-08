@@ -143,7 +143,7 @@ QVariant BookViewModel::data(const QModelIndex& index, int role) const {
       return QVariant::fromValue(quote.m_quote.m_price);
     } else if(index.column() == SIZE_COLUMN) {
       return QVariant::fromValue(
-        std::max<Quantity>(1, quote.m_quote.m_size / m_boardLot));
+        Floor(std::max<Quantity>(1, quote.m_quote.m_size / m_boardLot), 0));
     } else if(index.column() == MPID_COLUMN) {
       return QString::fromStdString(quote.m_mpid);
     }
