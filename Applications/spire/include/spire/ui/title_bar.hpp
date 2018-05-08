@@ -1,5 +1,6 @@
 #ifndef SPIRE_TITLE_BAR_HPP
 #define SPIRE_TITLE_BAR_HPP
+#include <QAbstractNativeEventFilter>
 #include <QLabel>
 #include <QWidget>
 #include "spire/ui/ui.hpp"
@@ -7,7 +8,7 @@
 namespace spire {
 
   //! Displays a window's title bar.
-  class title_bar : public QWidget {
+  class title_bar : public QWidget, public QAbstractNativeEventFilter {
     public:
 
       //! Constructs a title bar.
@@ -50,6 +51,9 @@ namespace spire {
         \param icon The icon to display when the window lacks focus.
       */
       void set_icon(const QImage& icon, const QImage& unfocused_icon);
+
+      bool nativeEventFilter(const QByteArray& event_type, void* message,
+        long* result) override;
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;

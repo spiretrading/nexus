@@ -117,12 +117,7 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   connect(window(), &QWidget::windowTitleChanged,
     [=] (auto&& title) { this->on_window_title_change(title); });
   window()->installEventFilter(this);
-
-  auto system_menu = GetSystemMenu(
-    reinterpret_cast<HWND>(window()->winId()), FALSE);
-  if(system_menu) {
-    AppendMenu(system_menu, MF_STRING, 1, "Test");
-  }
+  qApp->installNativeEventFilter(this);
 }
 
 void title_bar::set_icon(const QImage& icon) {
@@ -151,6 +146,27 @@ void title_bar::set_icon(const QImage& icon, const QImage& unfocused_icon) {
   m_default_icon = icon.scaled(ICON_SIZE());
   m_unfocused_icon = unfocused_icon.scaled(ICON_SIZE());
   m_icon->set_icon(m_default_icon, m_unfocused_icon);
+}
+
+bool title_bar::nativeEventFilter(const QByteArray& event_type, void* message,
+    long* result) {
+#ifdef Q_OS_WIN
+  if(event_type == "windows_generic_MSG") {
+    auto msg = static_cast<MSG*>(message);
+    if(msg->message == WM_SYSCOMMAND &&
+        reinterpret_cast<HWND>(window()->winId()) == msg->hwnd) {
+      if(msg->wParam == SC_MAXIMIZE) {
+        on_maximize_button_press();
+        return true;
+      } else if(msg->wParam == SC_RESTORE && !window()->windowState().testFlag(
+          Qt::WindowMinimized)) {
+        on_restore_button_press();
+        return true;
+      }
+    }
+  }
+#endif
+  return false;
 }
 
 bool title_bar::eventFilter(QObject* watched, QEvent* event) {
@@ -246,6 +262,10 @@ void title_bar::on_maximize_button_press() {
     m_body->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
     window()->setGeometry(
       QApplication::desktop()->availableGeometry(window()));
+#ifdef Q_OS_WIN
+    // disable maximize button in windows menu
+    // enable minimize button in windows menu
+#endif
   }
 }
 
@@ -257,6 +277,10 @@ void title_bar::on_restore_button_press() {
     m_body->setMaximumSize(m_max_body_size);
     window()->setGeometry(m_window_restore_geometry);
     window()->move(m_window_restore_pos);
+#ifdef Q_OS_WIN
+    // disable restore button in windows menu
+    // enable maximize button in windows menu
+#endif
   }
 }
 
