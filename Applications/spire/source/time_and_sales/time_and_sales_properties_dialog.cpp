@@ -57,10 +57,8 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     QAbstractItemView::SelectionMode::SingleSelection);
   m_band_list->setSelectionBehavior(
     QAbstractItemView::SelectionBehavior::SelectRows);
-
-  // TODO: GCC workaround.
   connect(m_band_list, &QListWidget::currentRowChanged,
-    [=] (auto index) { this->update_colors(index); });
+    [=] (auto index) {update_colors(index);});
   auto band_unknown_item = new QListWidgetItem(tr("Bid/Ask Unknown"),
     m_band_list);
   band_unknown_item->setTextAlignment(Qt::AlignCenter);

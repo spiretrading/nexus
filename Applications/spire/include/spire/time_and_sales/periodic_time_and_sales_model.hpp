@@ -1,5 +1,6 @@
 #ifndef SPIRE_PERIODIC_TIME_AND_SALES_MODEL_HPP
 #define SPIRE_PERIODIC_TIME_AND_SALES_MODEL_HPP
+#include <QTimer>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include "spire/time_and_sales/time_and_sales.hpp"
 #include "spire/time_and_sales/time_and_sales_model.hpp"
@@ -7,7 +8,8 @@
 namespace spire {
 
   //! Implements a time and sales model that periodically emits new values.
-  class periodic_time_and_sales_model : public time_and_sales_model {
+  class periodic_time_and_sales_model final : public time_and_sales_model,
+      public QObject {
     public:
 
       //! Constructs an empty model.
@@ -16,11 +18,11 @@ namespace spire {
       */
       periodic_time_and_sales_model(Nexus::Security s);
 
-      //! Returns the time and sale used to produce new values.
-      const Nexus::TimeAndSale& get_time_and_sale() const;
+      //! Returns the price of new time and sales.
+      Nexus::Money get_price() const;
 
-      //! Sets the time and sale used to produce new values.
-      void set_time_and_sale(Nexus::TimeAndSale t);
+      //! Sets the price of new time and sales.
+      void set_price(Nexus::Money price);
 
       //! Returns the price range used to emit time and sales.
       time_and_sales_properties::price_range get_price_range() const;
@@ -38,6 +40,9 @@ namespace spire {
 
       Nexus::Quantity get_volume() const override;
 
+      qt_promise<std::vector<entry>> load_snapshot(Beam::Queries::Sequence last,
+        int count) override;
+
       boost::signals2::connection connect_time_and_sale_signal(
         const time_and_sale_signal::slot_type& slot) const override;
 
@@ -48,9 +53,14 @@ namespace spire {
       mutable time_and_sale_signal m_time_and_sale_signal;
       mutable volume_signal m_volume_signal;
       Nexus::Security m_security;
-      Nexus::TimeAndSale m_time_and_sale;
+      Nexus::Money m_price;
       time_and_sales_properties::price_range m_price_range;
       boost::posix_time::time_duration m_period;
+      Nexus::Quantity m_volume;
+      std::vector<entry> m_entries;
+      QTimer m_timer;
+
+      void on_timeout();
   };
 }
 

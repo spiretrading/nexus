@@ -54,10 +54,8 @@ toolbar_window::toolbar_window(recently_closed_model& model,
   m_recently_closed_button = new toolbar_menu(tr("Recently Closed"), m_body);
   m_recently_closed_button->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
-
-  // TODO: GCC workaround
   m_recently_closed_button->connect_item_selected_signal(
-    [=] (auto index) { this->on_item_selected(index); });
+    [=] (auto index) {on_item_selected(index);});
   combo_box_layout->addWidget(m_recently_closed_button);
   combo_box_layout->setStretchFactor(m_recently_closed_button, 138);
   combo_box_layout->addStretch(8);
@@ -118,12 +116,8 @@ toolbar_window::toolbar_window(recently_closed_model& model,
   layout->addLayout(button_layout);
   layout->setStretchFactor(button_layout, 20);
   layout->addStretch(8);
-
-  // TODO: GCC workaround
-  m_model->connect_entry_added_signal(
-    [=] (auto& e) { this->entry_added(e); });
-  m_model->connect_entry_removed_signal(
-    [=] (auto e) { this->entry_removed(e); });
+  m_model->connect_entry_added_signal([=] (auto& e) {entry_added(e);});
+  m_model->connect_entry_removed_signal([=] (auto e) {entry_removed(e);});
 }
 
 connection toolbar_window::connect_open_signal(

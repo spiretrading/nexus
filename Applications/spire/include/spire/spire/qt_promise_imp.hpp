@@ -28,7 +28,7 @@ namespace details {
   };
 
   template<typename Executor>
-  class qt_promise_imp :
+  class qt_promise_imp final :
       public base_qt_promise_imp<std::result_of_t<Executor()>> {
     public:
       using super = base_qt_promise_imp<std::result_of_t<Executor()>>;
@@ -38,17 +38,16 @@ namespace details {
       template<typename ExecutorForward>
       qt_promise_imp(ExecutorForward&& executor);
 
-      ~qt_promise_imp() final override;
+      ~qt_promise_imp() override;
 
       void bind(std::shared_ptr<void> self);
 
-      void then(continuation_type continuation)
-        final override;
+      void then(continuation_type continuation) override;
 
-      void disconnect() final override;
+      void disconnect() override;
 
     protected:
-      bool event(QEvent* event) final override;
+      bool event(QEvent* event) override;
 
     private:
       bool m_is_disconnected;

@@ -7,7 +7,7 @@
 namespace spire {
 
   //! Implements the security input model using a local database.
-  class local_security_input_model : public security_input_model {
+  class local_security_input_model final : public security_input_model {
     public:
 
       //! Constructs an empty local security input model.
@@ -20,7 +20,7 @@ namespace spire {
       void add(Nexus::SecurityInfo security);
 
       std::vector<Nexus::SecurityInfo> autocomplete(
-        const std::string& query) override final;
+        const std::string& query) override;
 
     private:
       rtv::Trie<char, Nexus::SecurityInfo> m_securities;

@@ -6,7 +6,7 @@
 namespace spire {
 
   //! Implements a time and sales model with no entries and no updates.
-  class empty_time_and_sales_model : public time_and_sales_model {
+  class empty_time_and_sales_model final : public time_and_sales_model {
     public:
 
       //! Constructs an empty model.

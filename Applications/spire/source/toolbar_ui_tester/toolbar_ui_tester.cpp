@@ -33,9 +33,7 @@ toolbar_ui_tester::toolbar_ui_tester(toolbar_window* window,
   layout->addWidget(m_add_button);
   connect(m_add_button, &QPushButton::clicked, this,
     &toolbar_ui_tester::add_item);
-
-  // TODO: GCC workaround
-  window->connect_reopen_signal([&] (auto& e) { this->remove_item(e); });
+  window->connect_reopen_signal([&] (auto& e) {remove_item(e);});
   window->installEventFilter(this);
 }
 

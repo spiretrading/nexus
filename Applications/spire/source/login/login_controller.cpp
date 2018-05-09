@@ -26,9 +26,7 @@ unique_ptr<VirtualServiceClients>& login_controller::get_service_clients() {
 void login_controller::open() {
   m_login_window = std::make_unique<login_window>(SPIRE_VERSION);
   m_login_window->connect_login_signal(
-
-    // TODO: GCC workaround.
-    [=] (auto&& p1, auto&& p2) {this->on_login(p1, p2);});
+    [=] (auto&& p1, auto&& p2) {on_login(p1, p2);});
   m_login_window->connect_cancel_signal([=] () {on_cancel();});
   m_login_window->show();
 }

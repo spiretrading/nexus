@@ -106,10 +106,8 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
     window()->windowFlags().testFlag(Qt::WindowCloseButtonHint));
   m_close_button->connect_clicked_signal([=] { on_close_button_press(); });
   layout->addWidget(m_close_button);
-
-  // TODO: GCC workaround
   connect(window(), &QWidget::windowTitleChanged,
-    [=] (auto&& title) { this->on_window_title_change(title); });
+    [=] (auto& title) {on_window_title_change(title);});
   window()->installEventFilter(this);
 }
 
