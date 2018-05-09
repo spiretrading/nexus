@@ -4,7 +4,7 @@
 #include <boost/signals2/signal_type.hpp>
 
 namespace spire {
-  class qt_promise;
+  template<typename T> class qt_promise;
   class spire_controller;
 
   //! Defines the common type of boost signal used throughout Spire.

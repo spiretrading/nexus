@@ -2,6 +2,7 @@
 #define SPIRE_TIME_AND_SALES_MODEL_HPP
 #include <boost/noncopyable.hpp>
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
+#include "spire/spire/qt_promise.hpp"
 #include "spire/time_and_sales/time_and_sales.hpp"
 #include "spire/time_and_sales/time_and_sales_properties.hpp"
 
@@ -35,11 +36,24 @@ namespace spire {
 
       virtual ~time_and_sales_model() = default;
 
-      //! Returns the security being modelled.
+      //! Returns the security being modeled.
       virtual const Nexus::Security& get_security() const = 0;
 
       //! Returns the current volume.
       virtual Nexus::Quantity get_volume() const = 0;
+
+      //! Loads a snapshot of values to display.
+      /*!
+        \param last The sequence number of the last entry to load,
+               (use Beam::Queries::Sequence::Last() to load the most recent
+               value).
+        \param count The number of values to load.
+        \return A list of time and sales no greater than <i>count</i> items
+                where the last item's sequence number is no greater than
+                <i>last</i>.
+      */
+      virtual qt_promise<std::vector<entry>> load_snapshot(
+        Beam::Queries::Sequence last, int count) = 0;
 
       //! Connects a slot to the time and sale signal.
       virtual boost::signals2::connection connect_time_and_sale_signal(

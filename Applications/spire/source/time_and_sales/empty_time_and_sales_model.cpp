@@ -1,5 +1,7 @@
 #include "spire/time_and_sales/empty_time_and_sales_model.hpp"
 
+using namespace Beam;
+using namespace Beam::Queries;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
@@ -14,6 +16,14 @@ const Nexus::Security& empty_time_and_sales_model::get_security() const {
 
 Quantity empty_time_and_sales_model::get_volume() const {
   return 0;
+}
+
+qt_promise<std::vector<time_and_sales_model::entry>>
+    empty_time_and_sales_model::load_snapshot(Beam::Queries::Sequence last,
+    int count) {
+  return make_qt_promise([] {
+    return std::vector<time_and_sales_model::entry>();
+  });
 }
 
 connection empty_time_and_sales_model::connect_time_and_sale_signal(

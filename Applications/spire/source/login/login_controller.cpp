@@ -41,14 +41,13 @@ connection login_controller::connect_logged_in_signal(
 void login_controller::on_login(const string& username,
     const string& password) {
   auto service_clients = m_service_clients_factory(username, password);
-  m_login_promise = qt_promise(
+  m_login_promise = make_qt_promise(
     [=, service_clients = std::move(service_clients)] () mutable {
       service_clients->Open();
       return std::move(service_clients);
-    },
-
-    // TODO: GCC workaround.
-    [=] (auto&& result) {this->on_login_promise(std::move(result));});
+    });
+  m_login_promise.then(
+    [=] (auto&& result) {on_login_promise(std::move(result));});
 }
 
 void login_controller::on_cancel() {

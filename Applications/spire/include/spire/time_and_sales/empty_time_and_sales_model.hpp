@@ -19,6 +19,9 @@ namespace spire {
 
       Nexus::Quantity get_volume() const override;
 
+      qt_promise<std::vector<entry>> load_snapshot(Beam::Queries::Sequence last,
+        int count) override;
+
       boost::signals2::connection connect_time_and_sale_signal(
         const time_and_sale_signal::slot_type& slot) const override;
 
