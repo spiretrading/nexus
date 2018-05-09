@@ -3,7 +3,9 @@
 #include <QDesktopWidget>
 #include <QHBoxLayout>
 #include <QMouseEvent>
+#ifdef Q_OS_WIN
 #include <qt_windows.h>
+#endif
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/icon_button.hpp"
 #include "spire/ui/window.hpp"
@@ -117,18 +119,9 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   connect(window(), &QWidget::windowTitleChanged,
     [=] (auto&& title) { this->on_window_title_change(title); });
   window()->installEventFilter(this);
+#ifdef Q_OS_WIN
   qApp->installNativeEventFilter(this);
-  auto system_menu = GetSystemMenu(
-    reinterpret_cast<HWND>(window()->winId()), FALSE);
-  MENUITEMINFO info = { sizeof(MENUITEMINFO) };
-  TCHAR name[256] = TEXT("Cannot move");
-  info.fMask = MIIM_TYPE;
-  info.dwTypeData = name;
-  info.cch = sizeof(name) / sizeof(TCHAR);
-  GetMenuItemInfo(system_menu, SC_MAXIMIZE, FALSE, &info);
-  // MF_GRAYED appears to be redundant when using MF_DISABLED
-  ModifyMenu(system_menu, SC_MAXIMIZE, MF_BYCOMMAND | MF_DISABLED, 0,
-    info.dwTypeData);
+#endif
 }
 
 void title_bar::set_icon(const QImage& icon) {
@@ -162,18 +155,16 @@ void title_bar::set_icon(const QImage& icon, const QImage& unfocused_icon) {
 bool title_bar::nativeEventFilter(const QByteArray& event_type, void* message,
     long* result) {
 #ifdef Q_OS_WIN
-  if(event_type == "windows_generic_MSG") {
-    auto msg = static_cast<MSG*>(message);
-    if(msg->message == WM_SYSCOMMAND &&
-        reinterpret_cast<HWND>(window()->winId()) == msg->hwnd) {
-      if(msg->wParam == SC_MAXIMIZE) {
-        on_maximize_button_press();
-        return true;
-      } else if(msg->wParam == SC_RESTORE && !window()->windowState().testFlag(
-          Qt::WindowMinimized)) {
-        on_restore_button_press();
-        return true;
-      }
+  auto msg = static_cast<MSG*>(message);
+  if(msg->message == WM_SYSCOMMAND &&
+      reinterpret_cast<HWND>(window()->winId()) == msg->hwnd) {
+    if(msg->wParam == SC_MAXIMIZE) {
+      on_maximize_button_press();
+      return true;
+    } else if(msg->wParam == SC_RESTORE && !window()->windowState().testFlag(
+        Qt::WindowMinimized)) {
+      on_restore_button_press();
+      return true;
     }
   }
 #endif
@@ -274,8 +265,11 @@ void title_bar::on_maximize_button_press() {
     window()->setGeometry(
       QApplication::desktop()->availableGeometry(window()));
 #ifdef Q_OS_WIN
-    // disable maximize button in windows menu
-    // enable minimize button in windows menu
+    window()->setWindowFlag(Qt::WindowMaximizeButtonHint, false);
+    window()->show();
+    HMENU system_menu = GetSystemMenu(
+      reinterpret_cast<HWND>(window()->winId()), FALSE);
+    EnableMenuItem(system_menu, SC_RESTORE, MF_BYCOMMAND | MF_ENABLED);
 #endif
   }
 }
@@ -289,8 +283,11 @@ void title_bar::on_restore_button_press() {
     window()->setGeometry(m_window_restore_geometry);
     window()->move(m_window_restore_pos);
 #ifdef Q_OS_WIN
-    // disable restore button in windows menu
-    // enable maximize button in windows menu
+    auto system_menu = GetSystemMenu(
+      reinterpret_cast<HWND>(window()->winId()), FALSE);
+    EnableMenuItem(system_menu, SC_RESTORE, MF_BYCOMMAND | MF_DISABLED);
+    window()->setWindowFlag(Qt::WindowMaximizeButtonHint);
+    window()->show();
 #endif
   }
 }
