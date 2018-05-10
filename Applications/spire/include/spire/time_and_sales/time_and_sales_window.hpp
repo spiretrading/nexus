@@ -59,6 +59,7 @@ namespace spire {
       boost::optional<time_and_sales_window_model> m_model;
       security_stack m_securities;
       Nexus::Security m_current_security;
+      QWidget* m_body;
 
       void set_current(const Nexus::Security& s);
   };

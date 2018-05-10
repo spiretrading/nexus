@@ -4,6 +4,8 @@
 #include "spire/security_input/security_input_dialog.hpp"
 #include "spire/security_input/security_input_model.hpp"
 #include "spire/time_and_sales/empty_time_and_sales_model.hpp"
+#include "spire/spire/dimensions.hpp"
+#include "spire/ui/window.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -17,7 +19,19 @@ time_and_sales_window::time_and_sales_window(
       m_input_model(&input_model) {
   set_properties(properties);
   set_model(std::make_shared<empty_time_and_sales_model>(Security()));
+  m_body = new QWidget(this);
+  m_body->setMinimumSize(scale(148, 200));
+  resize(scale_width(182), scale_height(452));
+  m_body->setStyleSheet("background-color: #FFFFFF;");
+  auto window_layout = new QHBoxLayout(this);
+  window_layout->setContentsMargins({});
+  auto window = new spire::window(m_body, this);
   setWindowTitle(tr("Time and Sales"));
+  window->set_icon(imageFromSvg(":/icons/time-sale-black.svg", scale(26, 26),
+    QRect(translate(8, 8), scale(10, 10))),
+    imageFromSvg(":/icons/time-sale-grey.svg", scale(26, 26),
+    QRect(translate(8, 8), scale(10, 10))));
+  window_layout->addWidget(window);
 }
 
 void time_and_sales_window::set_model(
