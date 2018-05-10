@@ -20,6 +20,7 @@ toolbar_window::toolbar_window(recently_closed_model& model,
   setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
   m_body = new QWidget(this);
   m_body->setFixedSize(scale(308, 72));
+  m_body->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   auto window_layout = new QHBoxLayout(this);
   window_layout->setContentsMargins({});
   m_window = new spire::window(m_body, this);

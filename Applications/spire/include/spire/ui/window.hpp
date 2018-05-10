@@ -1,5 +1,7 @@
 #ifndef SPIRE_WINDOW_HPP
 #define SPIRE_WINDOW_HPP
+#include <vector>
+#include <boost/optional.hpp>
 #include <QColor>
 #include <QWidget>
 #include "spire/ui/ui.hpp"
@@ -34,12 +36,42 @@ namespace spire {
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
+      enum class active_resize_rect {
+        TOP_LEFT,
+        TOP,
+        TOP_RIGHT,
+        RIGHT,
+        BOTTOM_RIGHT,
+        BOTTOM,
+        BOTTOM_LEFT,
+        LEFT,
+        NONE
+      };
+      active_resize_rect m_current_active_rect;
+      struct resize_boxes {
+        QRect m_top_left;
+        QRect m_top;
+        QRect m_top_right;
+        QRect m_right;
+        QRect m_bottom_right;
+        QRect m_bottom;
+        QRect m_bottom_left;
+        QRect m_left;
+      };
       std::unique_ptr<drop_shadow> m_shadow;
       QWidget* m_border;
       QWidget* m_body;
+      QSize m_maximum_body_size;
       title_bar* m_title_bar;
+      boost::optional<resize_boxes> m_resize_boxes;
+      QPoint m_last_mouse_pos;
+      bool m_is_resizing;
+      bool m_hovered;
 
+      void handle_resize();
       void set_border_stylesheet(const QColor& color);
+      void update_resize_boxes();
+      void update_resize_cursor();
   };
 }
 
