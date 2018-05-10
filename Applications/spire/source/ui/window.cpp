@@ -36,7 +36,7 @@ window::window(QWidget* body, QWidget* parent)
   auto border_layout = new QVBoxLayout(m_border);
   border_layout->setMargin(scale_width(1));
   border_layout->setSpacing(0);
-  m_title_bar = new title_bar(m_border);
+  m_title_bar = new title_bar(m_body, m_border);
   border_layout->addWidget(m_title_bar);
   border_layout->addWidget(m_body);
   this->::QWidget::window()->installEventFilter(this);
@@ -55,6 +55,9 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::WindowActivate) {
       set_border_stylesheet("#A0A0A0");
       m_shadow->raise();
+      if(QWidget::window()->windowState().testFlag(Qt::WindowMinimized)) {
+        QWidget::window()->setWindowState(Qt::WindowMaximized);
+      }
     } else if(event->type() == QEvent::WindowDeactivate) {
       set_border_stylesheet("#C8C8C8");
     } else if(event->type() == QEvent::Resize) {
@@ -68,15 +71,6 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::Move) {
       if(m_resize_boxes.is_initialized()) {
         update_resize_boxes();
-      }
-    } else if(event->type() == QEvent::WindowStateChange) {
-      if(QWidget::window()->windowState().testFlag(Qt::WindowNoState)) {
-        m_body->setMaximumSize(m_maximum_body_size);
-      } else if(!QWidget::window()->
-          windowState().testFlag(Qt::WindowMinimized)) {
-        m_body->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
-        QWidget::window()->setGeometry(
-          QApplication::desktop()->availableGeometry(QWidget::window()));
       }
     }
   } else if(watched == m_shadow.get()) {
