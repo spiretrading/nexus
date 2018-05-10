@@ -3,8 +3,12 @@
 #include <QDesktopWidget>
 #include <QHBoxLayout>
 #include <QMouseEvent>
+#ifdef Q_OS_WIN
+#include <qt_windows.h>
+#endif
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/icon_button.hpp"
+#include "spire/ui/window.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -16,16 +20,18 @@ namespace {
   }
 }
 
-title_bar::title_bar(QWidget* parent)
-    : title_bar(QImage(), parent) {}
+title_bar::title_bar(QWidget* body, QWidget* parent)
+    : title_bar(QImage(), body, parent) {}
 
-title_bar::title_bar(const QImage& icon, QWidget* parent)
-    : title_bar(icon, icon, parent) {}
+title_bar::title_bar(const QImage& icon, QWidget* body, QWidget* parent)
+    : title_bar(icon, icon, body, parent) {}
 
 title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
-    QWidget* parent)
+    QWidget* body, QWidget* parent)
     : QWidget(parent),
-      m_is_dragging(false) {
+      m_body(body),
+      m_is_dragging(false),
+      m_window_maximized(false) {
   setFixedHeight(scale_height(26));
   setStyleSheet("background-color: #F5F5F5;");
   auto layout = new QHBoxLayout(this);
@@ -109,6 +115,9 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   connect(window(), &QWidget::windowTitleChanged,
     [=] (auto&& title) { this->on_window_title_change(title); });
   window()->installEventFilter(this);
+#ifdef Q_OS_WIN
+  qApp->installNativeEventFilter(this);
+#endif
 }
 
 void title_bar::set_icon(const QImage& icon) {
@@ -139,6 +148,25 @@ void title_bar::set_icon(const QImage& icon, const QImage& unfocused_icon) {
   m_icon->set_icon(m_default_icon, m_unfocused_icon);
 }
 
+bool title_bar::nativeEventFilter(const QByteArray& event_type, void* message,
+    long* result) {
+#ifdef Q_OS_WIN
+  auto msg = static_cast<MSG*>(message);
+  if(msg->message == WM_SYSCOMMAND &&
+      reinterpret_cast<HWND>(window()->winId()) == msg->hwnd) {
+    if(msg->wParam == SC_MAXIMIZE) {
+      on_maximize_button_press();
+      return true;
+    } else if(msg->wParam == SC_RESTORE && !window()->windowState().testFlag(
+        Qt::WindowMinimized)) {
+      on_restore_button_press();
+      return true;
+    }
+  }
+#endif
+  return false;
+}
+
 bool title_bar::eventFilter(QObject* watched, QEvent* event) {
   if(watched == window()) {
     if(event->type() == QEvent::WindowDeactivate) {
@@ -153,7 +181,7 @@ bool title_bar::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void title_bar::mouseDoubleClickEvent(QMouseEvent* event) {
-  if(window()->windowState().testFlag(Qt::WindowMaximized)) {
+  if(m_window_maximized) {
     on_restore_button_press();
   } else {
     on_maximize_button_press();
@@ -164,8 +192,9 @@ void title_bar::mouseMoveEvent(QMouseEvent* event) {
   if(!m_is_dragging) {
     return;
   }
-  if(window()->windowState().testFlag(Qt::WindowMaximized)) {
+  if(m_window_maximized) {
     on_restore_button_press();
+    window()->setGeometry(m_window_restore_geometry);
     auto mouse_screen_pos = QApplication::desktop()->screenGeometry(
       event->globalPos());
     auto mouse_screen_x = event->globalPos().x() - mouse_screen_pos.left();
@@ -197,7 +226,10 @@ void title_bar::mouseReleaseEvent(QMouseEvent* event) {
   if(event->button() != Qt::LeftButton) {
     return;
   }
-  m_is_dragging = false;
+  if(m_is_dragging) {
+    m_window_restore_pos = window()->pos();
+    m_is_dragging = false;
+  }
 }
 
 void title_bar::resizeEvent(QResizeEvent* event) {
@@ -219,17 +251,34 @@ void title_bar::on_minimize_button_press() {
 
 void title_bar::on_maximize_button_press() {
   if(m_maximize_button->isVisible()) {
+    m_window_maximized = true;
     m_maximize_button->setVisible(false);
     m_restore_button->setVisible(true);
-    window()->showMaximized();
+    m_window_restore_geometry = window()->geometry();
+    m_window_restore_pos = window()->pos();
+    m_max_body_size = m_body->maximumSize();
+    m_body->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+    window()->setGeometry(
+      QApplication::desktop()->availableGeometry(window()));
+#ifdef Q_OS_WIN
+    window()->setWindowFlag(Qt::WindowMaximizeButtonHint, false);
+    window()->show();
+#endif
   }
 }
 
 void title_bar::on_restore_button_press() {
   if(m_restore_button->isVisible()) {
+    m_window_maximized = false;
     m_maximize_button->setVisible(true);
     m_restore_button->setVisible(false);
-    window()->showNormal();
+    m_body->setMaximumSize(m_max_body_size);
+    window()->setGeometry(m_window_restore_geometry);
+    window()->move(m_window_restore_pos);
+#ifdef Q_OS_WIN
+    window()->setWindowFlag(Qt::WindowMaximizeButtonHint);
+    window()->show();
+#endif
   }
 }
 
