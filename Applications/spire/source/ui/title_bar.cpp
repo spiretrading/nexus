@@ -267,9 +267,6 @@ void title_bar::on_maximize_button_press() {
 #ifdef Q_OS_WIN
     window()->setWindowFlag(Qt::WindowMaximizeButtonHint, false);
     window()->show();
-    HMENU system_menu = GetSystemMenu(
-      reinterpret_cast<HWND>(window()->winId()), FALSE);
-    EnableMenuItem(system_menu, SC_RESTORE, MF_BYCOMMAND | MF_ENABLED);
 #endif
   }
 }
@@ -283,9 +280,6 @@ void title_bar::on_restore_button_press() {
     window()->setGeometry(m_window_restore_geometry);
     window()->move(m_window_restore_pos);
 #ifdef Q_OS_WIN
-    auto system_menu = GetSystemMenu(
-      reinterpret_cast<HWND>(window()->winId()), FALSE);
-    EnableMenuItem(system_menu, SC_RESTORE, MF_BYCOMMAND | MF_DISABLED);
     window()->setWindowFlag(Qt::WindowMaximizeButtonHint);
     window()->show();
 #endif
