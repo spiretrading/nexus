@@ -4,7 +4,7 @@
 #include <QHBoxLayout>
 #include <QMouseEvent>
 #ifdef Q_OS_WIN
-#include <qt_windows.h>
+  #include <qt_windows.h>
 #endif
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/icon_button.hpp"
@@ -29,8 +29,8 @@ title_bar::title_bar(const QImage& icon, QWidget* body, QWidget* parent)
 title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
     QWidget* body, QWidget* parent)
     : QWidget(parent),
-      m_body(body),
       m_is_dragging(false),
+      m_body(body),
       m_window_maximized(false) {
   setFixedHeight(scale_height(26));
   setStyleSheet("background-color: #F5F5F5;");
