@@ -21,6 +21,7 @@ time_and_sales_window::time_and_sales_window(
   set_model(std::make_shared<empty_time_and_sales_model>(Security()));
   m_body = new QWidget(this);
   m_body->setMinimumSize(scale(148, 200));
+  window()->resize(scale_width(182), scale_height(452));
   m_body->setStyleSheet("background-color: #FFFFFF;");
   auto window_layout = new QHBoxLayout(this);
   window_layout->setContentsMargins({});
