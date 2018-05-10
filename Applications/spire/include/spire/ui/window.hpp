@@ -32,8 +32,6 @@ namespace spire {
       */
       void set_icon(const QImage& icon, const QImage& unfocused_icon);
 
-      QWidget* m_body;
-
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
 
@@ -62,6 +60,7 @@ namespace spire {
       };
       std::unique_ptr<drop_shadow> m_shadow;
       QWidget* m_border;
+      QWidget* m_body;
       QSize m_maximum_body_size;
       title_bar* m_title_bar;
       boost::optional<resize_boxes> m_resize_boxes;
