@@ -2,10 +2,12 @@
 #define SPIRE_TIME_AND_SALES_WINDOW_HPP
 #include <boost/optional.hpp>
 #include <QLabel>
+#include <QTableView>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/security_input/security_input.hpp"
 #include "spire/time_and_sales/time_and_sales.hpp"
+#include "spire/time_and_sales/time_and_sales_model.hpp"
 #include "spire/time_and_sales/time_and_sales_properties.hpp"
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
 #include "spire/ui/security_stack.hpp"
@@ -60,8 +62,13 @@ namespace spire {
       security_stack m_securities;
       Nexus::Security m_current_security;
       QWidget* m_body;
+      QTableView* m_table;
+      QLabel* m_volume_label;
 
       void set_current(const Nexus::Security& s);
+      void update_model(const Nexus::Security& s);
+      void update_row(const time_and_sales_model::entry& entry);
+      void update_volume(const Nexus::Quantity& volume);
   };
 }
 
