@@ -11,6 +11,7 @@
 #include "spire/time_and_sales/time_and_sales_properties.hpp"
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
 #include "spire/ui/security_stack.hpp"
+#include "spire/ui/custom_qt_variants.hpp"
 
 namespace spire {
 
@@ -67,7 +68,6 @@ namespace spire {
 
       void set_current(const Nexus::Security& s);
       void update_model(const Nexus::Security& s);
-      void update_row(const time_and_sales_model::entry& entry);
       void update_volume(const Nexus::Quantity& volume);
   };
 }

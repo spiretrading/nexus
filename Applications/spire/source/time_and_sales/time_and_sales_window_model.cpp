@@ -1,5 +1,5 @@
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
-#include <QDebug>
+#include "spire/ui/custom_qt_variants.hpp"
 
 using namespace Nexus;
 using namespace spire;
@@ -9,6 +9,8 @@ time_and_sales_window_model::time_and_sales_window_model(
     const time_and_sales_properties& properties)
     : m_model(std::move(model)) {
   set_properties(properties);
+  m_model.get()->connect_time_and_sale_signal(
+    [=] (auto e) { update_data(e); });
 }
 
 const Security& time_and_sales_window_model::get_security() const {
@@ -16,7 +18,9 @@ const Security& time_and_sales_window_model::get_security() const {
 }
 
 void time_and_sales_window_model::set_properties(
-    const time_and_sales_properties& properties) {}
+    const time_and_sales_properties& properties) {
+  m_properties = properties;
+}
 
 int time_and_sales_window_model::rowCount(const QModelIndex& parent) const {
   return m_entries.size();
@@ -31,7 +35,26 @@ QVariant time_and_sales_window_model::data(const QModelIndex& index,
   if(role != Qt::DisplayRole || !index.isValid()) {
     return QVariant();
   }
-  return 5;
+  auto row_index = (m_entries.size() - index.row()) - 1;
+  switch(index.column()) {
+    case 0:
+      return QVariant::fromValue(
+        m_entries[row_index].m_time_and_sale.GetValue().m_timestamp);
+    case 1:
+      return QVariant::fromValue(
+        m_entries[row_index].m_time_and_sale.GetValue().m_price);
+    case 2:
+      return QVariant::fromValue(
+        m_entries[row_index].m_time_and_sale.GetValue().m_size);
+    case 3:
+      return QString::fromStdString(
+        m_entries[row_index].m_time_and_sale.GetValue().m_marketCenter);
+    case 4:
+      return QString::fromStdString(
+        m_entries[row_index].m_time_and_sale.GetValue().m_condition.m_code);
+    default:
+      return QVariant();
+  }
 }
 
 QVariant time_and_sales_window_model::headerData(int section,
@@ -39,12 +62,6 @@ QVariant time_and_sales_window_model::headerData(int section,
   if(role != Qt::DisplayRole) {
     return QVariant();
   }
-  // Might be able to keep a vector of values, so when set_properties is called
-  // I can grab the list of what columns are being displayed and assign it
-  // to that vector, then when this function is called I can just return the
-  // value in the vector at 'section'. I don't think I can hardcode this,
-  // anyway, because the extra columns aren't just appended to the end of the
-  // table, some are added/removed from the front.
   switch(section) {
     case 0: return tr("Time");
     case 1: return tr("Price");
@@ -53,4 +70,11 @@ QVariant time_and_sales_window_model::headerData(int section,
     case 4: return tr("Cond");
     default: return QVariant();
   }
+}
+
+void time_and_sales_window_model::update_data(
+    const time_and_sales_model::entry& e) {
+  beginInsertRows(QModelIndex(), 0, 0);
+  m_entries.push_back(e);
+  endInsertRows();
 }
