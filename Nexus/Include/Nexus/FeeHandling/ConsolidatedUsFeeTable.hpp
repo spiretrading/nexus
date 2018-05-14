@@ -87,50 +87,50 @@ namespace Nexus {
     if(!amexConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for AMEX missing."});
     } else {
-      feeTable.m_amexFeeTable = ParseAmexFeeTable(*amexConfig);
+      feeTable.m_amexFeeTable = ParseAmexFeeTable(amexConfig);
     }
     auto arcaConfig = config["arca"];
     if(!arcaConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for ARCA missing."});
     } else {
-      feeTable.m_arcaFeeTable = ParseArcaFeeTable(*arcaConfig);
+      feeTable.m_arcaFeeTable = ParseArcaFeeTable(arcaConfig);
     }
     auto batsConfig = config["bats"];
     if(!batsConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for BATS missing."});
     } else {
-      feeTable.m_batsFeeTable = ParseBatsFeeTable(*batsConfig);
+      feeTable.m_batsFeeTable = ParseBatsFeeTable(batsConfig);
     }
     auto batyConfig = config["baty"];
     if(!batyConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for BATY missing."});
     } else {
-      feeTable.m_batyFeeTable = ParseBatyFeeTable(*batyConfig);
+      feeTable.m_batyFeeTable = ParseBatyFeeTable(batyConfig);
     }
     auto edgaConfig = config["edga"];
     if(!edgaConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for EDGA missing."});
     } else {
-      feeTable.m_edgaFeeTable = ParseEdgaFeeTable(*edgaConfig);
+      feeTable.m_edgaFeeTable = ParseEdgaFeeTable(edgaConfig);
     }
     auto edgxConfig = config["edgx"];
     if(!edgxConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for EDGX missing."});
     } else {
-      feeTable.m_edgxFeeTable = ParseEdgxFeeTable(*edgxConfig);
+      feeTable.m_edgxFeeTable = ParseEdgxFeeTable(edgxConfig);
     }
     auto nasdaqConfig = config["nasdaq"];
     if(!nasdaqConfig) {
       BOOST_THROW_EXCEPTION(
         std::runtime_error{"Fee table for NASDAQ missing."});
     } else {
-      feeTable.m_nsdqFeeTable = ParseNsdqFeeTable(*nasdaqConfig);
+      feeTable.m_nsdqFeeTable = ParseNsdqFeeTable(nasdaqConfig);
     }
     auto nyseConfig = config["nyse"];
     if(!nyseConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for NYSE missing."});
     } else {
-      feeTable.m_nyseFeeTable = ParseNyseFeeTable(*nyseConfig);
+      feeTable.m_nyseFeeTable = ParseNyseFeeTable(nyseConfig);
     }
     return feeTable;
   }

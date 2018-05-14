@@ -17,7 +17,6 @@ using namespace Nexus;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::MarketDataService::Tests;
 using namespace Nexus::Queries;
-using namespace std;
 
 namespace {
   Security SECURITY_A{"TST", DefaultMarkets::NYSE(), DefaultCountries::US()};
@@ -84,13 +83,13 @@ void MarketDataClientTester::TestRealTimeBboQuoteQuery() {
   CPPUNIT_ASSERT(updatedBbo == bbo);
 }
 
-unique_ptr<MarketDataClientTester::ClientEntry> MarketDataClientTester::
+std::unique_ptr<MarketDataClientTester::ClientEntry> MarketDataClientTester::
     MakeClient() {
   TestServiceProtocolClientBuilder builder{
     [=] {
       return std::make_unique<TestServiceProtocolClientBuilder::Channel>("test",
         Ref(*m_serverConnection));
-    }, factory<unique_ptr<TestServiceProtocolClientBuilder::Timer>>()};
+    }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>()};
   auto clientEntry = std::make_unique<ClientEntry>(builder);
   clientEntry->m_client.Open();
   return clientEntry;
@@ -99,7 +98,7 @@ unique_ptr<MarketDataClientTester::ClientEntry> MarketDataClientTester::
 void MarketDataClientTester::OnQuerySecurityBboQuotes(
     Request<QueryBboQuotesService>& request,
     const SecurityMarketDataQuery& query) {
-  vector<any> parameters;
+  std::vector<any> parameters;
   parameters.push_back(request);
   parameters.push_back(query);
   m_requestQueue->Push(parameters);
