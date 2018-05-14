@@ -3,6 +3,7 @@
 
 using namespace Nexus;
 using namespace spire;
+using columns = time_and_sales_properties::columns;
 
 time_and_sales_window_model::time_and_sales_window_model(
     std::shared_ptr<time_and_sales_model> model,
@@ -37,19 +38,19 @@ QVariant time_and_sales_window_model::data(const QModelIndex& index,
   }
   auto row_index = (m_entries.size() - index.row()) - 1;
   switch(index.column()) {
-    case 0:
+    case static_cast<int>(columns::TIME_COLUMN):
       return QVariant::fromValue(
         m_entries[row_index].m_time_and_sale.GetValue().m_timestamp);
-    case 1:
+    case static_cast<int>(columns::PRICE_COLUMN):
       return QVariant::fromValue(
         m_entries[row_index].m_time_and_sale.GetValue().m_price);
-    case 2:
+    case static_cast<int>(columns::SIZE_COLUMN):
       return QVariant::fromValue(
         m_entries[row_index].m_time_and_sale.GetValue().m_size);
-    case 3:
+    case static_cast<int>(columns::MARKET_COLUMN):
       return QString::fromStdString(
         m_entries[row_index].m_time_and_sale.GetValue().m_marketCenter);
-    case 4:
+    case static_cast<int>(columns::CONDITION_COLUMN):
       return QString::fromStdString(
         m_entries[row_index].m_time_and_sale.GetValue().m_condition.m_code);
     default:
@@ -63,12 +64,18 @@ QVariant time_and_sales_window_model::headerData(int section,
     return QVariant();
   }
   switch(section) {
-    case 0: return tr("Time");
-    case 1: return tr("Price");
-    case 2: return tr("Qty");
-    case 3: return tr("Mkt");
-    case 4: return tr("Cond");
-    default: return QVariant();
+    case static_cast<int>(columns::TIME_COLUMN):
+      return tr("Time");
+    case static_cast<int>(columns::PRICE_COLUMN):
+      return tr("Price");
+    case static_cast<int>(columns::SIZE_COLUMN):
+      return tr("Qty");
+    case static_cast<int>(columns::MARKET_COLUMN):
+      return tr("Mkt");
+    case static_cast<int>(columns::CONDITION_COLUMN):
+      return tr("Cond");
+    default:
+      return QVariant();
   }
 }
 
