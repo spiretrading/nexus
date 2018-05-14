@@ -45,6 +45,9 @@ time_and_sales_window::time_and_sales_window(
   m_table->setItemDelegate(new custom_variant_item_delegate(this));
   m_table->setFocusPolicy(Qt::NoFocus);
   m_table->verticalHeader()->setVisible(false);
+  m_table->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+  m_table->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+  m_table->horizontalHeader()->setSectionsClickable(false);
   layout->addWidget(m_table);
   m_volume_label = new QLabel(tr("Volume: 0"), this);
   m_volume_label->setFocusPolicy(Qt::NoFocus);
