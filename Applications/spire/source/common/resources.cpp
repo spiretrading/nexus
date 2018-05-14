@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QFontDatabase>
 #include <QtPlugin>
+#include "spire/ui/custom_qt_variants.hpp"
 
 #ifdef _MSC_VER
   Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)
@@ -43,6 +44,7 @@ void local_resources() {
 }
 
 void spire::initialize_resources() {
+  register_custom_qt_variants();
 #ifdef _DEBUG
   std::freopen("stdout.log", "w", stdout);
   std::freopen("stderr.log", "w", stderr);
