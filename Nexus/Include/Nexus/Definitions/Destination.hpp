@@ -131,7 +131,7 @@ namespace Nexus {
       auto marketCode = ParseMarketCode(marketName, marketDatabase);
       if(marketCode == MarketCode{}) {
         BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException("Invalid market.",
-          node.GetMark()));
+          node.Mark()));
       }
       marketCodes.push_back(marketCode);
     }
@@ -158,12 +158,12 @@ namespace Nexus {
         Beam::Extract<std::string>(entryNode, "market"), marketDatabase);
       if(market == MarketCode{}) {
         BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException("Invalid market.",
-          entryNode.GetMark()));
+          entryNode.Mark()));
       }
       auto destination = Beam::Extract<std::string>(entryNode, "destination");
       if(destinationDatabase.FromId(destination).m_id.empty()) {
         BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException(
-          "Invalid destination.", entryNode.GetMark()));
+          "Invalid destination.", entryNode.Mark()));
       }
       destinationDatabase.SetPreferredDesintation(market, destination);
     }

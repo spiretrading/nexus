@@ -77,15 +77,13 @@ namespace Nexus {
       "tsx_venture_sub_dime_cap");
     auto designatedSecuritiesPath = Beam::Extract<std::string>(config,
       "designated_securities_path");
-    YAML::Node designatedSecuritiesConfig;
-    Beam::LoadFile(designatedSecuritiesPath,
-      Beam::Store(designatedSecuritiesConfig));
-    auto symbols = designatedSecuritiesConfig.FindValue("symbols");
-    if(symbols == nullptr) {
+    auto designatedSecuritiesConfig = Beam::LoadFile(designatedSecuritiesPath);
+    auto symbols = designatedSecuritiesConfig["symbols"];
+    if(!symbols) {
       BOOST_THROW_EXCEPTION(std::runtime_error{
         "PURE designated symbols not found."});
     }
-    for(auto& symbol : *symbols) {
+    for(auto& symbol : symbols) {
       auto security = ParseSecurity(Beam::Extract<std::string>(symbol),
         marketDatabase);
       feeTable.m_designatedSecurities.insert(security);

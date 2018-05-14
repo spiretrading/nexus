@@ -76,12 +76,12 @@ namespace Nexus {
   template<typename T>
   void ParseFeeTable(const YAML::Node& config, const std::string& name,
       Beam::Out<std::unordered_map<std::string, T>> table) {
-    auto node = config.FindValue(name);
-    if(node == nullptr) {
+    auto node = config[name];
+    if(!node) {
       BOOST_THROW_EXCEPTION(
         std::runtime_error{"Fee table \"" + name + "\" not found."});
     }
-    ParseFeeTable(*node, Beam::Store(table));
+    ParseFeeTable(node, Beam::Store(table));
   }
 
   //! Parses a table of fees from a YAML Node.
@@ -111,12 +111,12 @@ namespace Nexus {
   template<typename T, std::size_t COLUMNS>
   void ParseFeeTable(const YAML::Node& config, const std::string& name,
       Beam::Out<std::array<T, COLUMNS>> table) {
-    auto node = config.FindValue(name);
-    if(node == nullptr) {
+    auto node = config[name];
+    if(!node) {
       BOOST_THROW_EXCEPTION(
         std::runtime_error{"Fee table \"" + name + "\" not found."});
     }
-    ParseFeeTable(*node, Beam::Store(table));
+    ParseFeeTable(node, Beam::Store(table));
   }
 
   //! Parses a table of fees from a YAML Node.
@@ -152,12 +152,12 @@ namespace Nexus {
   template<typename T, std::size_t ROWS, std::size_t COLUMNS>
   void ParseFeeTable(const YAML::Node& config, const std::string& name,
       Beam::Out<std::array<std::array<T, COLUMNS>, ROWS>> table) {
-    auto node = config.FindValue(name);
-    if(node == nullptr) {
+    auto node = config[name];
+    if(!node) {
       BOOST_THROW_EXCEPTION(
         std::runtime_error{"Fee table \"" + name + "\" not found."});
     }
-    ParseFeeTable(*node, Beam::Store(table));
+    ParseFeeTable(node, Beam::Store(table));
   }
 }
 
