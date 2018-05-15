@@ -61,17 +61,11 @@ time_and_sales_window::time_and_sales_window(
       font-weight: 550;
       padding-left: %2px;
     })").arg(scale_height(11)).arg(scale_width(8)));
-  m_table->setStyleSheet(QString(R"(
+  m_table->setStyleSheet(R"(
     QTableView {
       border: none;
       gridline-color: #FFFFFF;
-    }
-
-    QTableView::item {
-      border-bottom: %1px solid #D0D0D0;
-      border-right: %2px solid #D0D0D0;
-      padding-left: %3px;
-    })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_width(6)));
+    })");
   layout->addWidget(m_table);
   m_volume_label = new QLabel(tr("Volume: 0"), this);
   m_volume_label->setFocusPolicy(Qt::NoFocus);
@@ -105,7 +99,7 @@ const time_and_sales_properties& time_and_sales_window::get_properties() const {
 void time_and_sales_window::set_properties(
     const time_and_sales_properties& properties) {
   m_properties = properties;
-  // Disabled for testing, by default, properties only shows 3 columns, so leave
+  // Disabled for testing, by default, properties only shows 3 columns so leave
   // them all enabled
   //for(auto i = 0; i < static_cast<int>(
   //    m_properties.m_show_columns.size()); ++i) {
@@ -113,6 +107,11 @@ void time_and_sales_window::set_properties(
   //    m_table->hideColumn(i);
   //  }
   //}
+  if(m_properties.m_show_grid) {
+    m_table->setShowGrid(true);
+  } else {
+    m_table->setShowGrid(false);
+  }
 }
 
 connection time_and_sales_window::connect_closed_signal(

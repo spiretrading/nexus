@@ -59,8 +59,7 @@ QVariant time_and_sales_window_model::data(const QModelIndex& index,
         return QVariant();
     }
   } else if(role == Qt::BackgroundRole) {
-    //return QBrush(m_properties.get_band_color(m_entries[row_index].m_price_range));
-    return QColor(255, 0, 0);
+    return m_properties.get_band_color(m_entries[row_index].m_price_range);
   } else if(role == Qt::ForegroundRole) {
     return m_properties.get_text_color(m_entries[row_index].m_price_range);
   } else if(role == Qt::FontRole) {
