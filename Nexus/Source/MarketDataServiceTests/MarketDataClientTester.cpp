@@ -43,7 +43,7 @@ void MarketDataClientTester::setUp() {
     std::bind(&MarketDataClientTester::OnQuerySecurityBboQuotes, this,
     std::placeholders::_1, std::placeholders::_2));
   m_server->Open();
-  m_requestQueue = std::make_shared<Queue<vector<any>>>();
+  m_requestQueue = std::make_shared<Queue<std::vector<any>>>();
 }
 
 void MarketDataClientTester::tearDown() {

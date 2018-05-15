@@ -60,9 +60,8 @@ namespace Nexus {
   void ParseFeeTable(const YAML::Node& config,
       Beam::Out<std::unordered_map<std::string, T>> table) {
     for(auto i = config.begin(); i != config.end(); ++i) {
-      std::string flag;
-      i.first() >> flag;
-      auto fee = Beam::Extract<T>(i.second());
+      auto flag = i->first.as<string>();
+      auto fee = Beam::Extract<T>(i->second);
       table->insert(std::make_pair(flag, fee));
     }
   }
