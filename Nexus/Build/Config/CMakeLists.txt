@@ -1,8 +1,7 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.8)
 project(Nexus)
 
 include_directories(./../../Include)
-include_directories($ENV{ZLIB_INCLUDE_PATH})
 include_directories($ENV{BEAM_INCLUDE_PATH})
 include_directories($ENV{BOOST_INCLUDE_PATH})
 include_directories($ENV{CPPUNIT_INCLUDE_PATH})
@@ -13,6 +12,7 @@ include_directories($ENV{OPEN_SSL_INCLUDE_PATH})
 include_directories($ENV{QUICK_FIX_INCLUDE_PATH})
 include_directories($ENV{TCLAP_INCLUDE_PATH})
 include_directories($ENV{YAML_INCLUDE_PATH})
+include_directories($ENV{ZLIB_INCLUDE_PATH})
 
 link_directories($ENV{BOOST_DEBUG_PATH})
 link_directories($ENV{BOOST_OPTIMIZED_PATH})

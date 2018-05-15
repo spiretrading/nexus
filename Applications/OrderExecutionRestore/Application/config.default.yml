@@ -1,7 +1,0 @@
----
-data_store:
-  address: local_interface:3306
-  username: spireadmin
-  password: admin_password
-  schema: spire
-...
