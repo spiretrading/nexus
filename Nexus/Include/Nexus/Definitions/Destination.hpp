@@ -149,11 +149,11 @@ namespace Nexus {
   inline DestinationDatabase ParseDestinationDatabase(const YAML::Node& node,
       const MarketDatabase& marketDatabase) {
     DestinationDatabase destinationDatabase;
-    for(auto& entryNode : Beam::GetNode(node, "destinations")) {
+    for(auto entryNode : Beam::GetNode(node, "destinations")) {
       auto entry = ParseDestinationDatabaseEntry(entryNode, marketDatabase);
       destinationDatabase.Add(entry);
     }
-    for(auto& entryNode : Beam::GetNode(node, "preferred_destinations")) {
+    for(auto entryNode : Beam::GetNode(node, "preferred_destinations")) {
       auto market = ParseMarketCode(
         Beam::Extract<std::string>(entryNode, "market"), marketDatabase);
       if(market == MarketCode{}) {
