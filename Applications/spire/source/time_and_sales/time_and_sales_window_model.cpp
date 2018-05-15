@@ -4,6 +4,7 @@
 using namespace Nexus;
 using namespace spire;
 using columns = time_and_sales_properties::columns;
+using price_range = time_and_sales_properties::price_range;
 
 time_and_sales_window_model::time_and_sales_window_model(
     std::shared_ptr<time_and_sales_model> model,
@@ -33,50 +34,60 @@ int time_and_sales_window_model::columnCount(const QModelIndex& parent) const {
 
 QVariant time_and_sales_window_model::data(const QModelIndex& index,
     int role) const {
-  if(role != Qt::DisplayRole || !index.isValid()) {
+  if(!index.isValid()) {
     return QVariant();
   }
   auto row_index = (m_entries.size() - index.row()) - 1;
-  switch(index.column()) {
-    case static_cast<int>(columns::TIME_COLUMN):
-      return QVariant::fromValue(
-        m_entries[row_index].m_time_and_sale.GetValue().m_timestamp);
-    case static_cast<int>(columns::PRICE_COLUMN):
-      return QVariant::fromValue(
-        m_entries[row_index].m_time_and_sale.GetValue().m_price);
-    case static_cast<int>(columns::SIZE_COLUMN):
-      return QVariant::fromValue(
-        m_entries[row_index].m_time_and_sale.GetValue().m_size);
-    case static_cast<int>(columns::MARKET_COLUMN):
-      return QString::fromStdString(
-        m_entries[row_index].m_time_and_sale.GetValue().m_marketCenter);
-    case static_cast<int>(columns::CONDITION_COLUMN):
-      return QString::fromStdString(
-        m_entries[row_index].m_time_and_sale.GetValue().m_condition.m_code);
-    default:
-      return QVariant();
+  if(role == Qt::DisplayRole) {
+    switch(static_cast<columns>(index.column())) {
+      case columns::TIME_COLUMN:
+        return QVariant::fromValue(
+          m_entries[row_index].m_time_and_sale.GetValue().m_timestamp);
+      case columns::PRICE_COLUMN:
+        return QVariant::fromValue(
+          m_entries[row_index].m_time_and_sale.GetValue().m_price);
+      case columns::SIZE_COLUMN:
+        return QVariant::fromValue(
+          m_entries[row_index].m_time_and_sale.GetValue().m_size);
+      case columns::MARKET_COLUMN:
+        return QString::fromStdString(
+          m_entries[row_index].m_time_and_sale.GetValue().m_marketCenter);
+      case columns::CONDITION_COLUMN:
+        return QString::fromStdString(
+          m_entries[row_index].m_time_and_sale.GetValue().m_condition.m_code);
+      default:
+        return QVariant();
+    }
+  } else if(role == Qt::BackgroundRole) {
+    //return QBrush(m_properties.get_band_color(m_entries[row_index].m_price_range));
+    return QColor(255, 0, 0);
+  } else if(role == Qt::ForegroundRole) {
+    return m_properties.get_text_color(m_entries[row_index].m_price_range);
+  } else if(role == Qt::FontRole) {
+    return m_properties.m_font;
   }
+  return QVariant();
 }
 
 QVariant time_and_sales_window_model::headerData(int section,
     Qt::Orientation orientation, int role) const {
-  if(role != Qt::DisplayRole) {
-    return QVariant();
+  if(role == Qt::DisplayRole) {
+    switch(static_cast<columns>(section)) {
+      case columns::TIME_COLUMN:
+        return tr("Time");
+      case columns::PRICE_COLUMN:
+        return tr("Price");
+      case columns::SIZE_COLUMN:
+        return tr("Qty");
+      case columns::MARKET_COLUMN:
+        return tr("Mkt");
+      case columns::CONDITION_COLUMN:
+        return tr("Cond");
+      default:
+        return QVariant();
+    }
   }
-  switch(section) {
-    case static_cast<int>(columns::TIME_COLUMN):
-      return tr("Time");
-    case static_cast<int>(columns::PRICE_COLUMN):
-      return tr("Price");
-    case static_cast<int>(columns::SIZE_COLUMN):
-      return tr("Qty");
-    case static_cast<int>(columns::MARKET_COLUMN):
-      return tr("Mkt");
-    case static_cast<int>(columns::CONDITION_COLUMN):
-      return tr("Cond");
-    default:
-      return QVariant();
-  }
+  return QVariant();
 }
 
 void time_and_sales_window_model::update_data(
