@@ -24,11 +24,11 @@ namespace {
   }
 }
 
-optional<SecurityContext&> SecurityContext::FindSecurityContext(
+boost::optional<SecurityContext&> SecurityContext::FindSecurityContext(
     const std::string& identifier) {
   auto contextIterator = contexts.find(identifier);
   if(contextIterator == contexts.end()) {
-    return optional<SecurityContext&>();
+    return none;
   }
   return *contextIterator->second;
 }

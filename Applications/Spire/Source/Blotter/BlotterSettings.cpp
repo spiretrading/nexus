@@ -102,7 +102,7 @@ void BlotterSettings::Load(Out<UserProfile> userProfile) {
   }
   BlotterSettingsData data;
   try {
-    BasicIStreamReader<filesystem::ifstream> reader(
+    BasicIStreamReader<boost::filesystem::ifstream> reader(
       Initialize(blottersFilePath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
@@ -172,7 +172,7 @@ void BlotterSettings::Save(const UserProfile& userProfile) {
     data.m_activeBlotter = settings.GetActiveBlotter().GetName();
     data.m_defaultTaskProperties = settings.GetDefaultBlotterTaskProperties();
     sender.Shuttle(data);
-    BasicOStreamWriter<filesystem::ofstream> writer(
+    BasicOStreamWriter<boost::filesystem::ofstream> writer(
       Initialize(blottersFilePath, ios::binary));
     writer.Write(buffer);
   } catch(std::exception&) {

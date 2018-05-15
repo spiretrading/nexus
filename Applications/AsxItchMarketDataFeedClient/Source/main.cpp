@@ -17,6 +17,7 @@
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/Threading/TimerThreadPool.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <tclap/CmdLine.h>
@@ -90,20 +91,7 @@ int main(int argc, const char** argv) {
     cerr << "error: " << e.error() << " for arg " << e.argId() << endl;
     return -1;
   }
-  YAML::Node config;
-  try {
-    ifstream configStream{configFile.c_str()};
-    if(!configStream.good()) {
-      cerr << configFile << " not found." << endl;
-      return -1;
-    }
-    YAML::Parser configParser{configStream};
-    configParser.GetNextDocument(config);
-  } catch(const YAML::ParserException& e) {
-    cerr << "Invalid YAML at line " << (e.mark.line + 1) << ", " << "column " <<
-      (e.mark.column + 1) << ": " << e.msg << endl;
-    return -1;
-  }
+  auto config = Require(LoadFile, configFile);
   ServiceLocatorClientConfig serviceLocatorClientConfig;
   try {
     serviceLocatorClientConfig = ServiceLocatorClientConfig::Parse(
@@ -134,7 +122,7 @@ int main(int argc, const char** argv) {
     cerr << "Unable to connect to the definitions service." << endl;
     return -1;
   }
-  optional<BaseMarketDataFeedClient> baseMarketDataFeedClient;
+  boost::optional<BaseMarketDataFeedClient> baseMarketDataFeedClient;
   try {
     auto marketDataService = FindMarketDataFeedService(DefaultCountries::AU(),
       *serviceLocatorClient);
@@ -155,7 +143,7 @@ int main(int argc, const char** argv) {
     cerr << "Unable to initialize market data client: " << e.what() << endl;
     return -1;
   }
-  optional<MulticastSocketChannel> multicastSocketChannel;
+  boost::optional<MulticastSocketChannel> multicastSocketChannel;
   try {
     auto host = Extract<IpAddress>(config, "host");
     auto interface = Extract<IpAddress>(config, "interface");
@@ -174,7 +162,7 @@ int main(int argc, const char** argv) {
   ApplicationFeedChannel feedChannel{multicastSocketChannel.get_ptr(),
     &multicastSocketChannel->GetReader()};
   ApplicationMoldUdp64Client moldClient{&feedChannel};
-  optional<ApplicationSoupBinTcpClient> glimpseClient;
+  boost::optional<ApplicationSoupBinTcpClient> glimpseClient;
   try {
     auto glimpseHost = Extract<IpAddress>(config, "glimpse_host");
     auto glimpseTimeout = Extract<time_duration>(config, "glimpse_timeout",
@@ -185,7 +173,7 @@ int main(int argc, const char** argv) {
     cerr << "Unable to initialize Glimpse client: " << e.what() << endl;
     return -1;
   }
-  optional<ApplicationMarketDataFeedClient> feedClient;
+  boost::optional<ApplicationMarketDataFeedClient> feedClient;
   CurrencyDatabase currencyDatabase;
   try {
     currencyDatabase = definitionsClient->LoadCurrencyDatabase();

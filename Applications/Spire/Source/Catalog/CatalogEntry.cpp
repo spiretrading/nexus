@@ -51,7 +51,7 @@ vector<CatalogEntry*> CatalogEntry::DecodeFromMimeData(const QMimeData& data,
     stream >> data;
     auto source = data.toStdString();
     uuid entryId;
-    optional<CatalogEntry&> entry;
+    boost::optional<CatalogEntry&> entry;
     try {
       entryId = stringGenerator(source);
       entry = settings.FindEntry(entryId);
@@ -63,7 +63,7 @@ vector<CatalogEntry*> CatalogEntry::DecodeFromMimeData(const QMimeData& data,
   return entries;
 }
 
-optional<uuid> CatalogEntry::FindUuid(const CanvasNode& node) {
+boost::optional<uuid> CatalogEntry::FindUuid(const CanvasNode& node) {
   auto catalogMetaData = node.FindMetaData(CatalogEntry::GetCatalogEntryKey());
   if(!catalogMetaData.is_initialized()) {
     return none;

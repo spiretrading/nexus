@@ -12,7 +12,7 @@ FoldNode::FoldNode() {
     BuildSignatures<FoldSignatures>());
 }
 
-optional<const CanvasNode&> FoldNode::FindLeftOperand() const {
+boost::optional<const CanvasNode&> FoldNode::FindLeftOperand() const {
   auto combiner = FindChild("combiner");
   if(!combiner.is_initialized()) {
     return none;
@@ -25,7 +25,7 @@ optional<const CanvasNode&> FoldNode::FindLeftOperand() const {
   return none;
 }
 
-optional<const CanvasNode&> FoldNode::FindRightOperand() const {
+boost::optional<const CanvasNode&> FoldNode::FindRightOperand() const {
   auto combiner = FindChild("combiner");
   if(!combiner.is_initialized()) {
     return none;

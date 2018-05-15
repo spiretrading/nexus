@@ -278,7 +278,7 @@ void KeyBindings::CancelBinding::HandleCancel(
     }
   } else if(cancelBinding.m_type == Type::CLOSEST_ASK) {
     auto closestIterator = tasks->rend();
-    optional<Money> closestPrice;
+    boost::optional<Money> closestPrice;
     for(auto i = tasks->rbegin(); i != tasks->rend(); ++i) {
       auto baseSideNode = (*i)->m_node->FindChild("side");
       if(baseSideNode.is_initialized()) {
@@ -302,7 +302,7 @@ void KeyBindings::CancelBinding::HandleCancel(
     }
   } else if(cancelBinding.m_type == Type::CLOSEST_BID) {
     auto closestIterator = tasks->rend();
-    optional<Money> closestPrice;
+    boost::optional<Money> closestPrice;
     for(auto i = tasks->rbegin(); i != tasks->rend(); ++i) {
       auto baseSideNode = (*i)->m_node->FindChild("side");
       if(baseSideNode.is_initialized()) {
@@ -326,7 +326,7 @@ void KeyBindings::CancelBinding::HandleCancel(
     }
   } else if(cancelBinding.m_type == Type::FURTHEST_ASK) {
     auto closestIterator = tasks->end();
-    optional<Money> closestPrice;
+    boost::optional<Money> closestPrice;
     for(auto i = tasks->begin(); i != tasks->end(); ++i) {
       auto baseSideNode = (*i)->m_node->FindChild("side");
       if(baseSideNode.is_initialized()) {
@@ -350,7 +350,7 @@ void KeyBindings::CancelBinding::HandleCancel(
     }
   } else if(cancelBinding.m_type == Type::FURTHEST_BID) {
     auto closestIterator = tasks->end();
-    optional<Money> closestPrice;
+    boost::optional<Money> closestPrice;
     for(auto i = tasks->begin(); i != tasks->end(); ++i) {
       auto baseSideNode = (*i)->m_node->FindChild("side");
       if(baseSideNode.is_initialized()) {
@@ -451,7 +451,7 @@ void KeyBindings::CancelBinding::HandleCancel(
     }
   } else if(cancelBinding.m_type == Type::CLOSEST_ASK) {
     auto closestIterator = orders->rend();
-    optional<Money> closestPrice;
+    boost::optional<Money> closestPrice;
     for(auto i = orders->rbegin(); i != orders->rend(); ++i) {
       if(i->m_order->GetInfo().m_fields.m_side == Side::ASK) {
         if(!closestPrice.is_initialized() ||
@@ -467,7 +467,7 @@ void KeyBindings::CancelBinding::HandleCancel(
     }
   } else if(cancelBinding.m_type == Type::CLOSEST_BID) {
     auto closestIterator = orders->rend();
-    optional<Money> closestPrice;
+    boost::optional<Money> closestPrice;
     for(auto i = orders->rbegin(); i != orders->rend(); ++i) {
       if(i->m_order->GetInfo().m_fields.m_side == Side::BID) {
         if(!closestPrice.is_initialized() ||
@@ -483,7 +483,7 @@ void KeyBindings::CancelBinding::HandleCancel(
     }
   } else if(cancelBinding.m_type == Type::FURTHEST_ASK) {
     auto closestIterator = orders->rend();
-    optional<Money> closestPrice;
+    boost::optional<Money> closestPrice;
     for(auto i = orders->rbegin(); i != orders->rend(); ++i) {
       if(i->m_order->GetInfo().m_fields.m_side == Side::ASK) {
         if(!closestPrice.is_initialized() ||
@@ -499,7 +499,7 @@ void KeyBindings::CancelBinding::HandleCancel(
     }
   } else if(cancelBinding.m_type == Type::FURTHEST_BID) {
     auto closestIterator = orders->rend();
-    optional<Money> closestPrice;
+    boost::optional<Money> closestPrice;
     for(auto i = orders->rbegin(); i != orders->rend(); ++i) {
       if(i->m_order->GetInfo().m_fields.m_side == Side::ASK) {
         if(!closestPrice.is_initialized() ||
@@ -531,7 +531,7 @@ void KeyBindings::Load(Out<UserProfile> userProfile) {
   }
   KeyBindings keyBindings;
   try {
-    BasicIStreamReader<filesystem::ifstream> reader(
+    BasicIStreamReader<boost::filesystem::ifstream> reader(
       Initialize(keyBindingsFilePath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
@@ -557,7 +557,7 @@ void KeyBindings::Save(const UserProfile& userProfile) {
     SharedBuffer buffer;
     sender.SetSink(Ref(buffer));
     sender.Shuttle(userProfile.GetKeyBindings());
-    BasicOStreamWriter<filesystem::ofstream> writer(
+    BasicOStreamWriter<boost::filesystem::ofstream> writer(
       Initialize(keyBindingsFilePath, ios::binary));
     writer.Write(buffer);
   } catch(std::exception&) {
@@ -566,12 +566,13 @@ void KeyBindings::Save(const UserProfile& userProfile) {
   }
 }
 
-optional<const KeyBindings::TaskBinding&> KeyBindings::GetTaskFromBinding(
-    MarketCode market, const QKeySequence& binding) const {
+boost::optional<const KeyBindings::TaskBinding&>
+    KeyBindings::GetTaskFromBinding(MarketCode market,
+    const QKeySequence& binding) const {
   auto marketBindingsIterator = m_taskBindings.find(market);
   if(marketBindingsIterator == m_taskBindings.end()) {
     if(market.IsEmpty()) {
-      return optional<const TaskBinding&>();
+      return none;
     }
     return GetTaskFromBinding(MarketCode(), binding);
   }
@@ -580,13 +581,13 @@ optional<const KeyBindings::TaskBinding&> KeyBindings::GetTaskFromBinding(
   auto keyBindingsIterator = keyBindings.find(binding);
   if(keyBindingsIterator == keyBindings.end()) {
     if(market.IsEmpty()) {
-      return optional<const TaskBinding&>();
+      return none;
     }
     return GetTaskFromBinding(MarketCode(), binding);
   }
   auto keyBindingIterator = keyBindings.find(binding);
   if(keyBindingsIterator == keyBindings.end()) {
-    return optional<const TaskBinding&>();
+    return none;
   }
   return keyBindingIterator->second;
 }
@@ -601,11 +602,11 @@ void KeyBindings::SetTaskBinding(MarketCode market, const QKeySequence& binding,
   m_taskBindings[market][binding] = taskBinding;
 }
 
-optional<const KeyBindings::CancelBinding&> KeyBindings::GetCancelFromBinding(
-    const QKeySequence& binding) const {
+boost::optional<const KeyBindings::CancelBinding&>
+    KeyBindings::GetCancelFromBinding(const QKeySequence& binding) const {
   auto keyBindingIterator = m_cancelBindings.find(binding);
   if(keyBindingIterator == m_cancelBindings.end()) {
-    return optional<const CancelBinding&>();
+    return none;
   }
   return keyBindingIterator->second;
 }

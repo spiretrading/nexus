@@ -58,7 +58,8 @@ CanvasTypeRegistry::CanvasTypeRegistry() {
   Register(TimeRangeType::GetInstance());
 }
 
-optional<const CanvasType&> CanvasTypeRegistry::Find(const string& name) const {
+boost::optional<const CanvasType&> CanvasTypeRegistry::Find(
+    const string& name) const {
   auto type = boost::find_if(m_types,
     [&] (const std::shared_ptr<CanvasType>& type) {
       return type->GetName() == name;
@@ -69,7 +70,7 @@ optional<const CanvasType&> CanvasTypeRegistry::Find(const string& name) const {
   return **type;
 }
 
-optional<const NativeType&> CanvasTypeRegistry::Find(
+boost::optional<const NativeType&> CanvasTypeRegistry::Find(
     const type_info& type) const {
   auto typeIterator = boost::find_if(m_nativeTypes,
     [&] (const std::shared_ptr<NativeType>& nativeType) {

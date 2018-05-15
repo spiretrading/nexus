@@ -133,7 +133,7 @@ int main(int argc, char* argv[]) {
   }
   configPath /= "config.yml";
   if(!is_regular(configPath)) {
-    filesystem::ofstream configFile(configPath);
+    boost::filesystem::ofstream configFile(configPath);
     configFile <<
       "---\n"
       "address: 127.0.0.1:20000\n"
@@ -143,14 +143,13 @@ int main(int argc, char* argv[]) {
   }
   YAML::Node config;
   try {
-    filesystem::ifstream configStream(configPath);
+    boost::filesystem::ifstream configStream(configPath);
     if(!configStream.good()) {
       QMessageBox::critical(nullptr, QObject::tr("Error"),
         QObject::tr("Unable to load configuration: config.yml"));
       return -1;
     }
-    YAML::Parser configParser(configStream);
-    configParser.GetNextDocument(config);
+    config = YAML::Load(configStream);
   } catch(YAML::ParserException&) {
     QMessageBox::critical(nullptr, QObject::tr("Error"),
       QObject::tr("Invalid configuration file."));

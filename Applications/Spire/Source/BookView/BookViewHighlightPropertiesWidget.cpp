@@ -49,8 +49,7 @@ void BookViewHighlightPropertiesWidget::Initialize(
     RefType<UserProfile> userProfile, RefType<BookViewProperties> properties) {
   m_userProfile = userProfile.Get();
   m_properties = properties.Get();
-  vector<MarketDatabase::Entry> marketEntries =
-    m_userProfile->GetMarketDatabase().GetEntries();
+  auto marketEntries = m_userProfile->GetMarketDatabase().GetEntries();
   sort(marketEntries.begin(), marketEntries.end(),
     [] (const MarketDatabase::Entry& lhs, const MarketDatabase::Entry& rhs) {
       return lhs.m_displayName < rhs.m_displayName;
@@ -75,13 +74,11 @@ void BookViewHighlightPropertiesWidget::Initialize(
 
 void BookViewHighlightPropertiesWidget::Redisplay() {
   for(int i = 0; i < m_ui->m_marketsList->count(); ++i) {
-    QListWidgetItem* item = m_ui->m_marketsList->item(i);
-    const MarketDatabase::Entry& marketEntry =
-      m_userProfile->GetMarketDatabase().FromDisplayName(
+    auto item = m_ui->m_marketsList->item(i);
+    auto& marketEntry = m_userProfile->GetMarketDatabase().FromDisplayName(
       item->text().toStdString());
     QColor backgroundColor;
-    optional<const BookViewProperties::MarketHighlight&> highlight =
-      m_properties->GetMarketHighlight(marketEntry.m_code);
+    auto highlight = m_properties->GetMarketHighlight(marketEntry.m_code);
     if(highlight.is_initialized()) {
       item->setBackground(highlight->m_color);
     } else {
@@ -126,10 +123,9 @@ void BookViewHighlightPropertiesWidget::UpdateOrderHighlightColor(
 
 void BookViewHighlightPropertiesWidget::OnCurrentItemChanged(
     QListWidgetItem* current, QListWidgetItem* previous) {
-  const MarketDatabase::Entry& currentMarketEntry =
-    GetCurrentMarketHighlightEntry();
-  optional<const BookViewProperties::MarketHighlight&> currentMarketHighlight =
-    m_properties->GetMarketHighlight(currentMarketEntry.m_code);
+  auto& currentMarketEntry = GetCurrentMarketHighlightEntry();
+  auto currentMarketHighlight = m_properties->GetMarketHighlight(
+    currentMarketEntry.m_code);
   QRadioButton* highlightButton;
   if(!currentMarketHighlight.is_initialized()) {
     highlightButton = m_ui->m_highlightNoneButton;
@@ -151,8 +147,7 @@ void BookViewHighlightPropertiesWidget::OnNoneClicked(bool checked) {
   if(!checked) {
     return;
   }
-  const MarketDatabase::Entry& currentMarketEntry =
-    GetCurrentMarketHighlightEntry();
+  auto& currentMarketEntry = GetCurrentMarketHighlightEntry();
   m_properties->RemoveMarketHighlight(currentMarketEntry.m_code);
 }
 
@@ -160,10 +155,9 @@ void BookViewHighlightPropertiesWidget::OnTopLevelClicked(bool checked) {
   if(!checked) {
     return;
   }
-  const MarketDatabase::Entry& currentMarketEntry =
-    GetCurrentMarketHighlightEntry();
-  optional<const BookViewProperties::MarketHighlight&> currentHighlight =
-    m_properties->GetMarketHighlight(currentMarketEntry.m_code);
+  auto& currentMarketEntry = GetCurrentMarketHighlightEntry();
+  auto currentHighlight = m_properties->GetMarketHighlight(
+    currentMarketEntry.m_code);
   BookViewProperties::MarketHighlight newHighlight;
   if(currentHighlight.is_initialized()) {
     newHighlight = *currentHighlight;
@@ -178,10 +172,9 @@ void BookViewHighlightPropertiesWidget::OnAllLevelsClicked(bool checked) {
   if(!checked) {
     return;
   }
-  const MarketDatabase::Entry& currentMarketEntry =
-    GetCurrentMarketHighlightEntry();
-  optional<const BookViewProperties::MarketHighlight&> currentHighlight =
-    m_properties->GetMarketHighlight(currentMarketEntry.m_code);
+  auto& currentMarketEntry = GetCurrentMarketHighlightEntry();
+  auto currentHighlight = m_properties->GetMarketHighlight(
+    currentMarketEntry.m_code);
   BookViewProperties::MarketHighlight newHighlight;
   if(currentHighlight.is_initialized()) {
     newHighlight = *currentHighlight;
@@ -197,10 +190,9 @@ void BookViewHighlightPropertiesWidget::OnColorClicked() {
   if(!color.isValid()) {
     return;
   }
-  const MarketDatabase::Entry& currentMarketEntry =
-    GetCurrentMarketHighlightEntry();
-  optional<const BookViewProperties::MarketHighlight&> currentMarketHighlight =
-    m_properties->GetMarketHighlight(currentMarketEntry.m_code);
+  auto& currentMarketEntry = GetCurrentMarketHighlightEntry();
+  auto currentMarketHighlight = m_properties->GetMarketHighlight(
+    currentMarketEntry.m_code);
   BookViewProperties::MarketHighlight newMarketHighlight;
   if(currentMarketHighlight.is_initialized()) {
     newMarketHighlight = *currentMarketHighlight;

@@ -203,7 +203,7 @@ void UserProfile::SetDefaultOrderImbalanceIndicatorProperties(
   m_defaultOrderImbalanceIndicatorProperties = properties;
 }
 
-const optional<OrderImbalanceIndicatorWindowSettings>& UserProfile::
+const boost::optional<OrderImbalanceIndicatorWindowSettings>& UserProfile::
     GetInitialOrderImbalanceIndicatorWindowSettings() const {
   return m_initialOrderImbalanceIndicatorWindowSettings;
 }
@@ -276,7 +276,7 @@ Quantity UserProfile::GetDefaultQuantity(const Security& security,
   return defaultQuantity;
 }
 
-const optional<PortfolioViewerWindowSettings>& UserProfile::
+const boost::optional<PortfolioViewerWindowSettings>& UserProfile::
     GetInitialPortfolioViewerWindowSettings() const {
   return m_initialPortfolioViewerWindowSettings;
 }

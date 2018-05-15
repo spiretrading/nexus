@@ -135,7 +135,7 @@ void TaskKeyBindingsDialog::Commit() {
     return;
   }
   auto roots = canvasWindow->GetCanvasNodeModel().GetRoots();
-  optional<KeyBindings::TaskBinding> taskBinding;
+  boost::optional<KeyBindings::TaskBinding> taskBinding;
   for(const auto& root : roots) {
     if(root->GetType().GetCompatibility(TaskType::GetInstance()) ==
         CanvasType::Compatibility::EQUAL) {

@@ -167,8 +167,7 @@ unique_ptr<WindowSettings> TimeAndSalesWindow::GetWindowSettings() const {
 }
 
 void TimeAndSalesWindow::showEvent(QShowEvent* event) {
-  optional<SecurityContext&> context = SecurityContext::FindSecurityContext(
-    m_linkIdentifier);
+  auto context = SecurityContext::FindSecurityContext(m_linkIdentifier);
   if(context.is_initialized()) {
     Link(*context);
   } else {

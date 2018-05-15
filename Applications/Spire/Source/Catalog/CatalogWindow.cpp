@@ -128,7 +128,7 @@ vector<CatalogEntry*> CatalogWindow::GetSelection() const {
   return selection;
 }
 
-optional<const CatalogTabView&> CatalogWindow::GetCurrentTab() const {
+boost::optional<const CatalogTabView&> CatalogWindow::GetCurrentTab() const {
   auto currentWidget = m_ui->m_categoryTabs->currentWidget();
   if(currentWidget == nullptr || currentWidget == m_newTab) {
     return none;
@@ -136,7 +136,7 @@ optional<const CatalogTabView&> CatalogWindow::GetCurrentTab() const {
   return *static_cast<const CatalogTabView*>(currentWidget);
 }
 
-optional<CatalogTabView&> CatalogWindow::GetCurrentTab() {
+boost::optional<CatalogTabView&> CatalogWindow::GetCurrentTab() {
   auto currentWidget = m_ui->m_categoryTabs->currentWidget();
   if(currentWidget == nullptr || currentWidget == m_newTab) {
     return none;

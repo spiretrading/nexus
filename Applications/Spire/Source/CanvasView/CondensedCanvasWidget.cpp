@@ -34,7 +34,7 @@ namespace {
   }
 
   bool CheckForLabel(const vector<const CanvasNode*>& leaves) {
-    optional<const CanvasNode&> parent;
+    boost::optional<const CanvasNode&> parent;
     for(const auto& leaf : leaves) {
       if(!IsSame(leaf->GetParent(), parent)) {
         if(parent.is_initialized()) {
@@ -136,7 +136,7 @@ vector<const CanvasNode*> CondensedCanvasWidget::GetRoots() const {
   return roots;
 }
 
-optional<const CanvasNode&> CondensedCanvasWidget::GetNode(
+boost::optional<const CanvasNode&> CondensedCanvasWidget::GetNode(
     const Coordinate& coordinate) const {
   auto node = m_modelCoordinatesToNode.find(coordinate);
   if(node == m_modelCoordinatesToNode.end()) {
@@ -154,7 +154,8 @@ CanvasNodeModel::Coordinate CondensedCanvasWidget::GetCoordinate(
   return coordinate->second;
 }
 
-optional<const CanvasNode&> CondensedCanvasWidget::GetCurrentNode() const {
+boost::optional<const CanvasNode&>
+    CondensedCanvasWidget::GetCurrentNode() const {
   if(m_currentNode == nullptr) {
     return none;
   }
@@ -193,7 +194,7 @@ const CanvasNode& CondensedCanvasWidget::Add(const Coordinate& coordinate,
   m_nodeToModelCoordinates[m_node.get()] = modelCoordinates;
   m_topLeaf = leaves.front();
   m_group->setTitle(QString::fromStdString(m_name));
-  optional<const CanvasNode&> parent;
+  boost::optional<const CanvasNode&> parent;
   View<const CanvasNode>::const_iterator childIterator;
   auto columnCount = 0;
   auto rowCount = -3;

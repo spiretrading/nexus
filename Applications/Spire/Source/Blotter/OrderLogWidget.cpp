@@ -123,8 +123,8 @@ bool OrderLogWidget::eventFilter(QObject* object, QEvent* event) {
         return true;
       }
       QKeySequence key(keyEvent->modifiers() + keyEvent->key());
-      optional<const KeyBindings::CancelBinding&> cancelBinding =
-        m_userProfile->GetKeyBindings().GetCancelFromBinding(key);
+      auto cancelBinding = m_userProfile->GetKeyBindings().GetCancelFromBinding(
+        key);
       if(cancelBinding.is_initialized()) {
         KeyBindings::CancelBinding::HandleCancel(*cancelBinding,
           m_userProfile->GetServiceClients().GetOrderExecutionClient(), Store(

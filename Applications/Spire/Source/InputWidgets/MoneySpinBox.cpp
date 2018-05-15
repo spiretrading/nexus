@@ -45,11 +45,12 @@ void MoneySpinBox::Initialize(RefType<UserProfile> userProfile) {
   AdjustIncrement(KeyModifiers::PLAIN);
 }
 
-const optional<Security>& MoneySpinBox::GetLinkedSecurity() const {
+const boost::optional<Security>& MoneySpinBox::GetLinkedSecurity() const {
   return m_security;
 }
 
-void MoneySpinBox::SetLinkedSecurity(const optional<Security>& security) {
+void MoneySpinBox::SetLinkedSecurity(
+    const boost::optional<Security>& security) {
   m_security = security;
   AdjustIncrement(KeyModifiers::PLAIN);
 }

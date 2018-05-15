@@ -54,7 +54,7 @@ unique_ptr<FileReaderNode> FileReaderNode::SetErrorPolicy(
   return clone;
 }
 
-optional<const NativeType&> FileReaderNode::GetReadType() const {
+boost::optional<const NativeType&> FileReaderNode::GetReadType() const {
   if(m_readType == nullptr) {
     return none;
   }

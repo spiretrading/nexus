@@ -48,7 +48,7 @@ void RiskTimerProperties::Load(Out<UserProfile> userProfile) {
   }
   RiskTimerProperties properties;
   try {
-    BasicIStreamReader<filesystem::ifstream> reader(
+    BasicIStreamReader<boost::filesystem::ifstream> reader(
       Initialize(filePath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
@@ -57,7 +57,7 @@ void RiskTimerProperties::Load(Out<UserProfile> userProfile) {
     BinaryReceiver<SharedBuffer> receiver(Ref(typeRegistry));
     receiver.SetSource(Ref(buffer));
     receiver.Shuttle(properties);
-  } catch(std::exception&) {
+  } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to load risk timer settings, using defaults."));
     LoadDefault(Store(userProfile));
@@ -75,10 +75,10 @@ void RiskTimerProperties::Save(const UserProfile& userProfile) {
     SharedBuffer buffer;
     sender.SetSink(Ref(buffer));
     sender.Shuttle(userProfile.GetRiskTimerProperties());
-    BasicOStreamWriter<filesystem::ofstream> writer(
+    BasicOStreamWriter<boost::filesystem::ofstream> writer(
       Initialize(filePath, ios::binary));
     writer.Write(buffer);
-  } catch(std::exception&) {
+  } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to save time and sales properties."));
   }

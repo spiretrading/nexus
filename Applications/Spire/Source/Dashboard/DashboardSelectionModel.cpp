@@ -5,7 +5,7 @@ using namespace boost::signals2;
 using namespace Spire;
 using namespace std;
 
-optional<int> DashboardSelectionModel::GetActiveRow() const {
+boost::optional<int> DashboardSelectionModel::GetActiveRow() const {
   return m_activeRow;
 }
 
@@ -38,7 +38,7 @@ void DashboardSelectionModel::RemoveRow(int index) {
   m_selectedRowsUpdatedSignal();
 }
 
-void DashboardSelectionModel::SetActiveRow(const optional<int>& index) {
+void DashboardSelectionModel::SetActiveRow(const boost::optional<int>& index) {
   if(index == m_activeRow) {
     return;
   }

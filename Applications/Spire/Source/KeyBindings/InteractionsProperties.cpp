@@ -45,7 +45,7 @@ void InteractionsProperties::Load(Out<UserProfile> userProfile) {
     return;
   }
   try {
-    BasicIStreamReader<filesystem::ifstream> reader(
+    BasicIStreamReader<boost::filesystem::ifstream> reader(
       Initialize(interactionsFilePath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
@@ -71,7 +71,7 @@ void InteractionsProperties::Save(const UserProfile& userProfile) {
     SharedBuffer buffer;
     sender.SetSink(Ref(buffer));
     sender.Shuttle(userProfile.GetInteractionProperties());
-    BasicOStreamWriter<filesystem::ofstream> writer(
+    BasicOStreamWriter<boost::filesystem::ofstream> writer(
       Initialize(keyBindingsFilePath, ios::binary));
     writer.Write(buffer);
   } catch(std::exception&) {

@@ -33,7 +33,7 @@ const CanvasNode& Spire::GetNode(const CanvasPath& path,
   return *targetNode;
 }
 
-optional<const CanvasNode&> Spire::FindNode(const CanvasPath& path,
+boost::optional<const CanvasNode&> Spire::FindNode(const CanvasPath& path,
     const CanvasNode& root) {
   if(path.GetPath().empty()) {
     return root;

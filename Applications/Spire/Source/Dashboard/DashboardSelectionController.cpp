@@ -139,7 +139,8 @@ bool DashboardSelectionController::HandleMouseEvent(const QMouseEvent& event,
   return false;
 }
 
-void DashboardSelectionController::SetActiveRow(const optional<int>& row) {
+void DashboardSelectionController::SetActiveRow(
+    const boost::optional<int>& row) {
   m_multiSelectRange = make_tuple(1, 0);
   m_multiSelectedRows.clear();
   m_model->SetActiveRow(row);

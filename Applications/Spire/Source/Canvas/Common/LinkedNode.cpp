@@ -10,7 +10,7 @@ using namespace boost;
 using namespace Spire;
 using namespace std;
 
-optional<const CanvasNode&> LinkedNode::FindReferent() const {
+boost::optional<const CanvasNode&> LinkedNode::FindReferent() const {
   if(GetReferent().empty()) {
     return none;
   }

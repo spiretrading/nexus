@@ -174,7 +174,7 @@ void ComplianceRuleEntryWidget::Commit() {
 }
 
 void ComplianceRuleEntryWidget::SetupParameters() {
-  optional<ComplianceRuleSchema> schema;
+  boost::optional<ComplianceRuleSchema> schema;
   for(auto& modelSchema : m_model->GetSchemas()) {
     if(modelSchema.GetName() == m_ruleName) {
       schema = modelSchema;
@@ -197,7 +197,7 @@ void ComplianceRuleEntryWidget::SetupParameters() {
         }
         return parameter.m_name;
       }();
-    optional<ComplianceValue> parameterValue;
+    boost::optional<ComplianceValue> parameterValue;
     for(auto& schemaParameter : schema->GetParameters()) {
       if(schemaParameter.m_name == name) {
         parameterValue = schemaParameter.m_value;

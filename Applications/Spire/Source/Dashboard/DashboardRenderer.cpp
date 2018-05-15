@@ -136,7 +136,8 @@ int DashboardRenderer::GetColumnModelIndex(int index) const {
   return m_columns[index].m_index;
 }
 
-optional<const DashboardRow&> DashboardRenderer::GetRow(int index) const {
+boost::optional<const DashboardRow&> DashboardRenderer::GetRow(
+    int index) const {
   if(index < 0 || index >= static_cast<int>(m_rows.size()) ||
       m_rows[index]->m_row == nullptr) {
     return none;

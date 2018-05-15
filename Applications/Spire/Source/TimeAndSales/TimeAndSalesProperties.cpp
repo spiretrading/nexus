@@ -67,7 +67,7 @@ void TimeAndSalesProperties::Load(Out<UserProfile> userProfile) {
   }
   TimeAndSalesProperties properties;
   try {
-    BasicIStreamReader<filesystem::ifstream> reader(
+    BasicIStreamReader<boost::filesystem::ifstream> reader(
       Initialize(timeAndSalesFilePath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
@@ -94,7 +94,7 @@ void TimeAndSalesProperties::Save(const UserProfile& userProfile) {
     SharedBuffer buffer;
     sender.SetSink(Ref(buffer));
     sender.Shuttle(userProfile.GetDefaultTimeAndSalesProperties());
-    BasicOStreamWriter<filesystem::ofstream> writer(
+    BasicOStreamWriter<boost::filesystem::ofstream> writer(
       Initialize(timeAndSalesFilePath, ios::binary));
     writer.Write(buffer);
   } catch(std::exception&) {

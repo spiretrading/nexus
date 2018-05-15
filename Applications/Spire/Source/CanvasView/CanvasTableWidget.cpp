@@ -188,7 +188,7 @@ vector<const CanvasNode*> CanvasTableWidget::GetRoots() const {
   return roots;
 }
 
-optional<const CanvasNode&> CanvasTableWidget::GetNode(
+boost::optional<const CanvasNode&> CanvasTableWidget::GetNode(
     const Coordinate& coordinate) const {
   auto alignedCoordinate = Align(coordinate);
   auto cell = static_cast<CanvasCell*>(item(alignedCoordinate.m_row,
@@ -207,7 +207,7 @@ CanvasNodeModel::Coordinate CanvasTableWidget::GetCoordinate(
   return Coordinate(index.row(), index.column());
 }
 
-optional<const CanvasNode&> CanvasTableWidget::GetCurrentNode() const {
+boost::optional<const CanvasNode&> CanvasTableWidget::GetCurrentNode() const {
   auto currentCell = static_cast<CanvasCell*>(currentItem());
   if(currentCell == nullptr) {
     return none;
@@ -215,7 +215,7 @@ optional<const CanvasNode&> CanvasTableWidget::GetCurrentNode() const {
   return currentCell->GetNode();
 }
 
-optional<CanvasNodeModel::Coordinate> CanvasTableWidget::
+boost::optional<CanvasNodeModel::Coordinate> CanvasTableWidget::
     GetCurrentCoordinate() const {
   auto currentCell = static_cast<CanvasCell*>(currentItem());
   if(currentCell == nullptr) {

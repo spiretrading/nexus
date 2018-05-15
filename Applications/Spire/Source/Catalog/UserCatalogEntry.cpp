@@ -83,7 +83,7 @@ void UserCatalogEntry::Save() const {
     SharedBuffer buffer;
     sender.SetSink(Ref(buffer));
     sender.Shuttle(*this);
-    BasicOStreamWriter<filesystem::ofstream> writer(
+    BasicOStreamWriter<boost::filesystem::ofstream> writer(
       Initialize(entryPath, ios::binary));
     writer.Write(buffer);
   } catch(std::exception&) {
@@ -145,7 +145,7 @@ bool UserCatalogEntry::IsReadOnly() const {
 }
 
 void UserCatalogEntry::Validate() {
-  optional<uuid> catalogUuid = FindUuid(*m_node);
+  auto catalogUuid = FindUuid(*m_node);
   if(!catalogUuid.is_initialized() || *catalogUuid != GetUid()) {
     CanvasNodeBuilder builder(*m_node);
     stringstream ss;

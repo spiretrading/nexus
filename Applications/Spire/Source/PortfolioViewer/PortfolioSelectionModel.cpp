@@ -203,7 +203,7 @@ QVariant PortfolioSelectionModel::data(const QModelIndex& index,
         return Qt::Unchecked;
       }
     } else {
-      optional<SelectionVariant> selection = Find(index);
+      boost::optional<SelectionVariant> selection = Find(index);
       if(selection.is_initialized()) {
         return ApplyVariantLambdaVisitor<QVariant>(*selection,
           [&] (const DirectoryEntry& group) -> QVariant {
@@ -248,7 +248,7 @@ QVariant PortfolioSelectionModel::data(const QModelIndex& index,
     } else if(index == m_roots[SIDE_SELECTION]) {
       return tr("Side");
     } else {
-      optional<SelectionVariant> selection = Find(index);
+      auto selection = Find(index);
       if(selection.is_initialized()) {
         return ApplyVariantLambdaVisitor<QVariant>(*selection,
           [] (const DirectoryEntry& group) {
@@ -324,7 +324,7 @@ bool PortfolioSelectionModel::setData(const QModelIndex& index,
         Side::COUNT + 1, 0, m_roots[SIDE_SELECTION]));
       return true;
     } else {
-      optional<SelectionVariant> selection = Find(index);
+      auto selection = Find(index);
       if(selection.is_initialized()) {
         ApplyVariantLambdaVisitor<void>(*selection,
           [&] (const DirectoryEntry& group) {
@@ -372,8 +372,8 @@ QVariant PortfolioSelectionModel::headerData(int section,
   return QVariant();
 }
 
-optional<PortfolioSelectionModel::SelectionVariant> PortfolioSelectionModel::
-    Find(const QModelIndex& index) const {
+boost::optional<PortfolioSelectionModel::SelectionVariant>
+    PortfolioSelectionModel::Find(const QModelIndex& index) const {
   if(index.parent() == m_roots[GROUP_SELECTION]) {
     if(index.column() == 0 && index.row() >= 0 && index.row() <
         static_cast<int>(m_groups.size())) {

@@ -122,7 +122,7 @@ void DashboardWindow::keyPressEvent(QKeyEvent* event) {
   QWidget::keyPressEvent(event);
 }
 
-optional<Security> DashboardWindow::GetActiveSecurity() const {
+boost::optional<Security> DashboardWindow::GetActiveSecurity() const {
   auto activeRow = m_ui->m_dashboard->GetSelectionModel().GetActiveRow();
   if(!activeRow.is_initialized()) {
     return none;

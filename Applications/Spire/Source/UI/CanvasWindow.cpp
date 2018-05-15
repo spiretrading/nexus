@@ -72,7 +72,7 @@ namespace {
 
   void CheckReference(const vector<const CanvasNode*>& selection,
       QAction* action) {
-    optional<const CanvasNode&> root;
+    boost::optional<const CanvasNode&> root;
     for(const auto& node : selection) {
       if(!root) {
         root = GetRoot(*node);
@@ -550,15 +550,15 @@ void CanvasWindow::OnOpenAction() {
 void CanvasWindow::OnSaveAction() {
   auto node = CanvasNodeModel::StripIdentity(
     *m_ui->m_canvasTable->GetCurrentNode());
-  CatalogSettings& catalogSettings = m_userProfile->GetCatalogSettings();
-  optional<CatalogEntry&> catalogEntry = catalogSettings.FindEntry(*node);
+  auto& catalogSettings = m_userProfile->GetCatalogSettings();
+  auto catalogEntry = catalogSettings.FindEntry(*node);
   if(!catalogEntry.is_initialized()) {
     return OnSaveAsAction();
   }
   if(catalogEntry->IsReadOnly()) {
     return OnSaveAsAction();
   }
-  unique_ptr<CatalogEntry> newEntry = catalogEntry->SetNode(*node);
+  auto newEntry = catalogEntry->SetNode(*node);
   try {
     catalogSettings.Replace(*catalogEntry, std::move(newEntry));
   } catch(std::exception& e) {

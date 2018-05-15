@@ -14,6 +14,7 @@
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
@@ -54,7 +55,7 @@ namespace {
       const MarketDatabase& marketDatabase) {
     vector<Security> securities;
     for(auto& item : config) {
-      auto security = ParseSecurity(item.to<string>(), marketDatabase);
+      auto security = ParseSecurity(item.as<string>(), marketDatabase);
       securities.push_back(security);
     }
     return securities;
@@ -67,7 +68,7 @@ namespace {
       LiveNtpTimeClient* timeClient, RefType<SocketThreadPool> socketThreadPool,
       RefType<TimerThreadPool> timerThreadPool) {
     vector<unique_ptr<ApplicationMarketDataFeedClient>> feedClients;
-    auto securities = ParseSecurities(*config.FindValue("symbols"),
+    auto securities = ParseSecurities(GetNode(config, "symbols"),
       marketDatabase);
     auto feedCount = min<int>(Extract<int>(config, "feeds"), securities.size());
     auto securitiesPerFeed = securities.size() / feedCount;
@@ -117,24 +118,11 @@ int main(int argc, const char** argv) {
     cerr << "error: " << e.error() << " for arg " << e.argId() << endl;
     return -1;
   }
-  YAML::Node config;
-  try {
-    ifstream configStream{configFile.c_str()};
-    if(!configStream.good()) {
-      cerr << configFile << " not found." << endl;
-      return -1;
-    }
-    YAML::Parser configParser{configStream};
-    configParser.GetNextDocument(config);
-  } catch(const YAML::ParserException& e) {
-    cerr << "Invalid YAML at line " << (e.mark.line + 1) << ", " << "column " <<
-      (e.mark.column + 1) << ": " << e.msg << endl;
-    return -1;
-  }
+  auto config = Require(LoadFile, configFile);
   ServiceLocatorClientConfig serviceLocatorClientConfig;
   try {
     serviceLocatorClientConfig = ServiceLocatorClientConfig::Parse(
-      *config.FindValue("service_locator"));
+      GetNode(config, "service_locator"));
   } catch(const std::exception& e) {
     cerr << "Error parsing section 'service_locator': " << e.what() << endl;
     return -1;

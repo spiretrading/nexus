@@ -130,7 +130,7 @@ void ValueListInputDialog::ActivateRow(int row, QKeyEvent* event) {
   if(*m_type == typeid(Security)) {
     auto item = m_ui->m_valueListWidget->item(row, 0);
     auto security = item->data(Qt::DisplayRole).value<Security>();
-    optional<SecurityInputDialog> dialog;
+    boost::optional<SecurityInputDialog> dialog;
     auto text =
       [&] {
         if(event == nullptr) {
