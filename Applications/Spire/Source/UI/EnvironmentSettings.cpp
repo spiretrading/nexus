@@ -30,7 +30,7 @@ using namespace std;
 
 bool Spire::UI::Export(const EnvironmentSettings& environmentSettings,
     const path& environmentPath) {
-  filesystem::ofstream writerStream;
+  boost::filesystem::ofstream writerStream;
   writerStream.open(environmentPath, ios::binary);
   if((writerStream.rdstate() & std::ifstream::failbit) != 0) {
     QMessageBox::warning(nullptr, QObject::tr("Error"),
@@ -44,7 +44,7 @@ bool Spire::UI::Export(const EnvironmentSettings& environmentSettings,
     SharedBuffer buffer;
     sender.SetSink(Ref(buffer));
     sender.Shuttle(environmentSettings);
-    BasicOStreamWriter<filesystem::ofstream*> writer(&writerStream);
+    BasicOStreamWriter<boost::filesystem::ofstream*> writer(&writerStream);
     writer.Write(buffer);
   } catch(std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
@@ -57,7 +57,7 @@ bool Spire::UI::Export(const EnvironmentSettings& environmentSettings,
 bool Spire::UI::Import(const path& environmentPath,
     EnvironmentSettings::TypeSet settings, bool apply,
     Out<UserProfile> userProfile) {
-  filesystem::ifstream readerStream;
+  boost::filesystem::ifstream readerStream;
   readerStream.open(environmentPath, ios::binary);
   if((readerStream.rdstate() & std::ifstream::failbit) != 0) {
     QMessageBox::warning(nullptr, QObject::tr("Error"),
@@ -66,7 +66,7 @@ bool Spire::UI::Import(const path& environmentPath,
   }
   EnvironmentSettings environmentSettings;
   try {
-    BasicIStreamReader<filesystem::ifstream*> reader(&readerStream);
+    BasicIStreamReader<boost::filesystem::ifstream*> reader(&readerStream);
     SharedBuffer buffer;
     reader.Read(Store(buffer));
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;

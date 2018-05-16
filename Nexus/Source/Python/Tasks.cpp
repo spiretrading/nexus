@@ -25,16 +25,6 @@ namespace {
   }
 }
 
-BEAM_DEFINE_PYTHON_POINTER_LINKER(
-  ToPythonTask<SingleOrderTask<VirtualOrderExecutionClient>>);
-BEAM_DEFINE_PYTHON_POINTER_LINKER(
-  ToPythonTaskFactory<SingleOrderTaskFactory<VirtualOrderExecutionClient>>);
-BEAM_DEFINE_PYTHON_POINTER_LINKER(
-  ToPythonTask<SingleRedisplayableOrderTask>);
-BEAM_DEFINE_PYTHON_POINTER_LINKER(
-  ToPythonTaskFactory<SingleRedisplayableOrderTaskFactory>);
-
-
 void Nexus::Python::ExportSingleOrderTask() {
   using SingleOrderTask =
     Nexus::Tasks::SingleOrderTask<VirtualOrderExecutionClient>;

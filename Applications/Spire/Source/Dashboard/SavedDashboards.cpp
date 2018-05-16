@@ -35,7 +35,7 @@ void SavedDashboards::Load(Out<UserProfile> userProfile) {
     return;
   }
   try {
-    BasicIStreamReader<filesystem::ifstream> reader(
+    BasicIStreamReader<boost::filesystem::ifstream> reader(
       Initialize(filePath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
@@ -61,7 +61,7 @@ void SavedDashboards::Save(const UserProfile& userProfile) {
     SharedBuffer buffer;
     sender.SetSink(Ref(buffer));
     sender.Shuttle(userProfile.GetSavedDashboards());
-    BasicOStreamWriter<filesystem::ofstream> writer(
+    BasicOStreamWriter<boost::filesystem::ofstream> writer(
       Initialize(filePath, ios::binary));
     writer.Write(buffer);
   } catch(std::exception&) {

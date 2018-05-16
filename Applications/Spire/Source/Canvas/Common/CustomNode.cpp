@@ -33,7 +33,8 @@ const vector<CustomNode::Child>& CustomNode::GetChildrenDetails() const {
   return m_children;
 }
 
-optional<const CanvasNode&> CustomNode::FindNode(const string& name) const {
+boost::optional<const CanvasNode&> CustomNode::FindNode(
+    const string& name) const {
   auto node = CanvasNode::FindNode(name);
   if(node.is_initialized()) {
     return node;

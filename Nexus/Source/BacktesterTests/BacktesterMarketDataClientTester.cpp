@@ -15,7 +15,6 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::Tests;
-using namespace std;
 
 void BacktesterMarketDataClientTester::TestRealTimeQuery() {
   ptime startTime{date{2016, 5, 6}, seconds(0)};
@@ -45,7 +44,7 @@ void BacktesterMarketDataClientTester::TestRealTimeQuery() {
   auto finalTimestamp = startTime + seconds(COUNT - 1);
   Mutex queryCompleteMutex;
   ConditionVariable queryCompleteCondition;
-  optional<bool> testSucceeded;
+  boost::optional<bool> testSucceeded;
   marketDataClient.QueryBboQuotes(query, routines.GetSlot<SequencedBboQuote>(
     [&] (const SequencedBboQuote& bboQuote) {
       boost::lock_guard<Mutex> lock{queryCompleteMutex};

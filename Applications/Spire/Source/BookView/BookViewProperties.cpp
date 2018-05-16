@@ -45,7 +45,7 @@ void BookViewProperties::Load(Out<UserProfile> userProfile) {
   }
   BookViewProperties properties;
   try {
-    BasicIStreamReader<filesystem::ifstream> reader(
+    BasicIStreamReader<boost::filesystem::ifstream> reader(
       Initialize(bookFilePath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
@@ -71,7 +71,7 @@ void BookViewProperties::Save(const UserProfile& userProfile) {
     SharedBuffer buffer;
     sender.SetSink(Ref(buffer));
     sender.Shuttle(userProfile.GetDefaultBookViewProperties());
-    BasicOStreamWriter<filesystem::ofstream> writer(
+    BasicOStreamWriter<boost::filesystem::ofstream> writer(
       Initialize(bookFilePath, ios::binary));
     writer.Write(buffer);
   } catch(std::exception&) {
@@ -116,11 +116,11 @@ void BookViewProperties::SetBookQuoteFont(const QFont& font) {
   m_bookQuoteFont = font;
 }
 
-optional<const BookViewProperties::MarketHighlight&> BookViewProperties::
+boost::optional<const BookViewProperties::MarketHighlight&> BookViewProperties::
     GetMarketHighlight(MarketCode market) const {
   auto marketIterator = m_marketHighlights.find(market);
   if(marketIterator == m_marketHighlights.end()) {
-    return optional<const MarketHighlight&>();
+    return none;
   }
   return marketIterator->second;
 }

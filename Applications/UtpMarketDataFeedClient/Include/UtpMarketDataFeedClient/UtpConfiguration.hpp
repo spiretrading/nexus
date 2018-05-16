@@ -46,12 +46,12 @@ namespace MarketDataService {
     auto marketEntry = ParseMarketEntry(market, marketDatabase);
     utpConfig.m_country = marketEntry.m_countryCode;
     utpConfig.m_market = marketEntry.m_code;
-    auto& marketCodes = Beam::GetNode(config, "market_codes");
-    for(auto& marketCode : marketCodes) {
+    auto marketCodes = Beam::GetNode(config, "market_codes");
+    for(auto marketCode : marketCodes) {
       auto code = Beam::Extract<std::string>(marketCode, "code");
       if(code.size() != 1) {
         BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException(
-          "Invalid market code.", marketCode.FindValue("code")->GetMark()));
+          "Invalid market code.", marketCode["code"].Mark()));
       }
       auto marketIdentifier = Beam::Extract<std::string>(marketCode, "market");
       auto entry = ParseMarketCode(marketIdentifier, marketDatabase);

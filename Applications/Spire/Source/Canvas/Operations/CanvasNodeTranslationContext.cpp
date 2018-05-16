@@ -68,7 +68,7 @@ void CanvasNodeTranslationContext::Add(RefType<const CanvasNode> node,
   }
 }
 
-optional<Translation> CanvasNodeTranslationContext::FindTranslation(
+boost::optional<Translation> CanvasNodeTranslationContext::FindTranslation(
     const CanvasNode& node) const {
   boost::lock_guard<boost::mutex> lock(m_mutex);
   auto translationIterator = m_translations.find(&node);
@@ -81,7 +81,7 @@ optional<Translation> CanvasNodeTranslationContext::FindTranslation(
   return translationIterator->second;
 }
 
-optional<Translation> CanvasNodeTranslationContext::FindSubTranslation(
+boost::optional<Translation> CanvasNodeTranslationContext::FindSubTranslation(
     const CanvasNode& node) const {
   boost::lock_guard<boost::mutex> lock(m_mutex);
   auto translationIterator = m_translations.find(&node);

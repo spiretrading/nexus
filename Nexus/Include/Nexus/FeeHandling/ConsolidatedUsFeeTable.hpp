@@ -83,54 +83,54 @@ namespace Nexus {
     feeTable.m_nsccRate = Beam::Extract<boost::rational<int>>(
       config, "nscc_rate");
     feeTable.m_clearingFee = Beam::Extract<Money>(config, "clearing_fee");
-    auto amexConfig = config.FindValue("amex");
-    if(amexConfig == nullptr) {
+    auto amexConfig = config["amex"];
+    if(!amexConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for AMEX missing."});
     } else {
-      feeTable.m_amexFeeTable = ParseAmexFeeTable(*amexConfig);
+      feeTable.m_amexFeeTable = ParseAmexFeeTable(amexConfig);
     }
-    auto arcaConfig = config.FindValue("arca");
-    if(arcaConfig == nullptr) {
+    auto arcaConfig = config["arca"];
+    if(!arcaConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for ARCA missing."});
     } else {
-      feeTable.m_arcaFeeTable = ParseArcaFeeTable(*arcaConfig);
+      feeTable.m_arcaFeeTable = ParseArcaFeeTable(arcaConfig);
     }
-    auto batsConfig = config.FindValue("bats");
-    if(batsConfig == nullptr) {
+    auto batsConfig = config["bats"];
+    if(!batsConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for BATS missing."});
     } else {
-      feeTable.m_batsFeeTable = ParseBatsFeeTable(*batsConfig);
+      feeTable.m_batsFeeTable = ParseBatsFeeTable(batsConfig);
     }
-    auto batyConfig = config.FindValue("baty");
-    if(batyConfig == nullptr) {
+    auto batyConfig = config["baty"];
+    if(!batyConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for BATY missing."});
     } else {
-      feeTable.m_batyFeeTable = ParseBatyFeeTable(*batyConfig);
+      feeTable.m_batyFeeTable = ParseBatyFeeTable(batyConfig);
     }
-    auto edgaConfig = config.FindValue("edga");
-    if(edgaConfig == nullptr) {
+    auto edgaConfig = config["edga"];
+    if(!edgaConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for EDGA missing."});
     } else {
-      feeTable.m_edgaFeeTable = ParseEdgaFeeTable(*edgaConfig);
+      feeTable.m_edgaFeeTable = ParseEdgaFeeTable(edgaConfig);
     }
-    auto edgxConfig = config.FindValue("edgx");
-    if(edgxConfig == nullptr) {
+    auto edgxConfig = config["edgx"];
+    if(!edgxConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for EDGX missing."});
     } else {
-      feeTable.m_edgxFeeTable = ParseEdgxFeeTable(*edgxConfig);
+      feeTable.m_edgxFeeTable = ParseEdgxFeeTable(edgxConfig);
     }
-    auto nasdaqConfig = config.FindValue("nasdaq");
-    if(nasdaqConfig == nullptr) {
+    auto nasdaqConfig = config["nasdaq"];
+    if(!nasdaqConfig) {
       BOOST_THROW_EXCEPTION(
         std::runtime_error{"Fee table for NASDAQ missing."});
     } else {
-      feeTable.m_nsdqFeeTable = ParseNsdqFeeTable(*nasdaqConfig);
+      feeTable.m_nsdqFeeTable = ParseNsdqFeeTable(nasdaqConfig);
     }
-    auto nyseConfig = config.FindValue("nyse");
-    if(nyseConfig == nullptr) {
+    auto nyseConfig = config["nyse"];
+    if(!nyseConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for NYSE missing."});
     } else {
-      feeTable.m_nyseFeeTable = ParseNyseFeeTable(*nyseConfig);
+      feeTable.m_nyseFeeTable = ParseNyseFeeTable(nyseConfig);
     }
     return feeTable;
   }

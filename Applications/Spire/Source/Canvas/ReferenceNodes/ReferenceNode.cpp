@@ -74,7 +74,7 @@ unique_ptr<CanvasNode> ReferenceNode::Reset() const {
 
 ReferenceNode::ReferenceNode(ReceiveBuilder) {}
 
-optional<const CanvasNode&> Spire::FindAnchor(const CanvasNode& node) {
+boost::optional<const CanvasNode&> Spire::FindAnchor(const CanvasNode& node) {
   auto i = &node;
   unordered_set<const CanvasNode*> visitedNodes;
   while(dynamic_cast<const ReferenceNode*>(i)) {

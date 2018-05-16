@@ -138,7 +138,7 @@ string Spire::GetPath(const CanvasNode& source, const CanvasNode& destination) {
     }
   }
   string suffix;
-  optional<const CanvasNode&> i = destination;
+  boost::optional<const CanvasNode&> i = destination;
   if(&destination == &commonAncestor) {
     return prefix + "<";
   }
@@ -158,8 +158,8 @@ string Spire::AppendCanvasNodePaths(const string& prefix,
   return prefix + suffix;
 }
 
-bool Spire::IsSame(optional<const CanvasNode&> a,
-    optional<const CanvasNode&> b) {
+bool Spire::IsSame(boost::optional<const CanvasNode&> a,
+    boost::optional<const CanvasNode&> b) {
   if(a.is_initialized() && b.is_initialized()) {
     return &(*a) == &(*b);
   }
@@ -179,8 +179,8 @@ const CanvasNode& Spire::GetRoot(const CanvasNode& node) {
 
 const CanvasNode& Spire::GetCommonAncestor(const CanvasNode& a,
     const CanvasNode& b) {
-  optional<const CanvasNode&> i = a;
-  optional<const CanvasNode&> j = b;
+  boost::optional<const CanvasNode&> i = a;
+  boost::optional<const CanvasNode&> j = b;
   auto aDepth = 0;
   auto bDepth = 0;
   while(i.is_initialized()) {

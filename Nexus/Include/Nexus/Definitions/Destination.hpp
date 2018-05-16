@@ -131,7 +131,7 @@ namespace Nexus {
       auto marketCode = ParseMarketCode(marketName, marketDatabase);
       if(marketCode == MarketCode{}) {
         BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException("Invalid market.",
-          node.GetMark()));
+          node.Mark()));
       }
       marketCodes.push_back(marketCode);
     }
@@ -149,21 +149,21 @@ namespace Nexus {
   inline DestinationDatabase ParseDestinationDatabase(const YAML::Node& node,
       const MarketDatabase& marketDatabase) {
     DestinationDatabase destinationDatabase;
-    for(auto& entryNode : Beam::GetNode(node, "destinations")) {
+    for(auto entryNode : Beam::GetNode(node, "destinations")) {
       auto entry = ParseDestinationDatabaseEntry(entryNode, marketDatabase);
       destinationDatabase.Add(entry);
     }
-    for(auto& entryNode : Beam::GetNode(node, "preferred_destinations")) {
+    for(auto entryNode : Beam::GetNode(node, "preferred_destinations")) {
       auto market = ParseMarketCode(
         Beam::Extract<std::string>(entryNode, "market"), marketDatabase);
       if(market == MarketCode{}) {
         BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException("Invalid market.",
-          entryNode.GetMark()));
+          entryNode.Mark()));
       }
       auto destination = Beam::Extract<std::string>(entryNode, "destination");
       if(destinationDatabase.FromId(destination).m_id.empty()) {
         BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException(
-          "Invalid destination.", entryNode.GetMark()));
+          "Invalid destination.", entryNode.Mark()));
       }
       destinationDatabase.SetPreferredDesintation(market, destination);
     }

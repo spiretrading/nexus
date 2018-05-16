@@ -20,7 +20,7 @@ const CanvasNode& PlaceNodeCommand::PlaceNode(Out<CanvasNodeModel> view,
   return *placedNode;
 }
 
-optional<const CanvasNode&> PlaceNodeCommand::TryPlaceNode(
+boost::optional<const CanvasNode&> PlaceNodeCommand::TryPlaceNode(
     Out<CanvasNodeModel> view, const CanvasNodeModel::Coordinate coordinate,
     const CanvasNode& node, bool overrideReadOnly) {
   auto previousNode = view->GetNode(coordinate);

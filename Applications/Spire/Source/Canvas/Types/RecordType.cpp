@@ -80,8 +80,8 @@ void RecordType::Apply(CanvasTypeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-optional<const RecordType::Field&> Spire::FindField(const RecordType& type,
-    const string& name) {
+boost::optional<const RecordType::Field&> Spire::FindField(
+    const RecordType& type, const string& name) {
   return FindIf(type.GetFields(),
     [&] (const RecordType::Field& field) {
       return field.m_name == name;

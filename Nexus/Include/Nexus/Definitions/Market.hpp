@@ -195,14 +195,14 @@ namespace Nexus {
       Beam::Extract<std::string>(node, "country_code"), countryDatabase);
     if(entry.m_countryCode == CountryDatabase::NONE) {
       BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException(
-        "Invalid country code.", node.GetMark()));
+        "Invalid country code.", node.Mark()));
     }
     entry.m_timeZone = Beam::Extract<std::string>(node, "time_zone");
     entry.m_currency = ParseCurrency(
       Beam::Extract<std::string>(node, "currency"), currencyDatabase);
     if(entry.m_currency == CurrencyId::NONE()) {
       BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException("Invalid currency.",
-        node.GetMark()));
+        node.Mark()));
     }
     entry.m_boardLot = Beam::Extract<int>(node, "board_lot");
     entry.m_description = Beam::Extract<std::string>(node, "description");

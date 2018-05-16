@@ -28,7 +28,7 @@ using namespace std;
 namespace {
   struct OrderImbalanceIndicatorFileSettings {
     OrderImbalanceIndicatorProperties m_properties;
-    optional<OrderImbalanceIndicatorWindowSettings> m_windowSettings;
+    boost::optional<OrderImbalanceIndicatorWindowSettings> m_windowSettings;
 
     template<typename Shuttler>
     void Shuttle(Shuttler& shuttle, unsigned int version) {
@@ -55,7 +55,7 @@ void OrderImbalanceIndicatorProperties::Load(Out<UserProfile> userProfile) {
   }
   OrderImbalanceIndicatorFileSettings settings;
   try {
-    BasicIStreamReader<filesystem::ifstream> reader(
+    BasicIStreamReader<boost::filesystem::ifstream> reader(
       Initialize(orderImbalanceIndicatorFilePath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
@@ -69,8 +69,7 @@ void OrderImbalanceIndicatorProperties::Load(Out<UserProfile> userProfile) {
       QObject::tr("Unable to load the order imbalance indicator properties,"
       " using defaults."));
     settings.m_properties = GetDefault();
-    settings.m_windowSettings =
-      optional<OrderImbalanceIndicatorWindowSettings>();
+    settings.m_windowSettings = none;
   }
   userProfile->SetDefaultOrderImbalanceIndicatorProperties(
     settings.m_properties);
@@ -95,10 +94,10 @@ void OrderImbalanceIndicatorProperties::Save(const UserProfile& userProfile) {
     settings.m_windowSettings =
       userProfile.GetInitialOrderImbalanceIndicatorWindowSettings();
     sender.Shuttle(settings);
-    BasicOStreamWriter<filesystem::ofstream> writer(
+    BasicOStreamWriter<boost::filesystem::ofstream> writer(
       Initialize(orderImbalanceIndicatorFilePath, ios::binary));
     writer.Write(buffer);
-  } catch(std::exception&) {
+  } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to save the order imbalance indicator properties."));
   }

@@ -25,7 +25,7 @@ using namespace std;
 namespace {
   struct PortfolioViewerFileSettings {
     PortfolioViewerProperties m_properties;
-    optional<PortfolioViewerWindowSettings> m_windowSettings;
+    boost::optional<PortfolioViewerWindowSettings> m_windowSettings;
 
     template<typename Shuttler>
     void Shuttle(Shuttler& shuttle, unsigned int version) {
@@ -55,7 +55,7 @@ void PortfolioViewerProperties::Load(Out<UserProfile> userProfile) {
   }
   PortfolioViewerFileSettings settings;
   try {
-    BasicIStreamReader<filesystem::ifstream> reader(
+    BasicIStreamReader<boost::filesystem::ifstream> reader(
       Initialize(portfolioViewerFilePath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
@@ -69,7 +69,7 @@ void PortfolioViewerProperties::Load(Out<UserProfile> userProfile) {
       QObject::tr(
       "Unable to load the portfolio viewer properties, using defaults."));
     settings.m_properties = GetDefault();
-    settings.m_windowSettings = optional<PortfolioViewerWindowSettings>();
+    settings.m_windowSettings = none;
   }
   userProfile->SetDefaultPortfolioViewerProperties(settings.m_properties);
   if(settings.m_windowSettings.is_initialized()) {
@@ -92,7 +92,7 @@ void PortfolioViewerProperties::Save(const UserProfile& userProfile) {
     settings.m_windowSettings =
       userProfile.GetInitialPortfolioViewerWindowSettings();
     sender.Shuttle(settings);
-    BasicOStreamWriter<filesystem::ofstream> writer(
+    BasicOStreamWriter<boost::filesystem::ofstream> writer(
       Initialize(portfolioViewerFilePath, ios::binary));
     writer.Write(buffer);
   } catch(std::exception&) {

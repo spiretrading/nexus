@@ -200,14 +200,6 @@ namespace Details {
       Quantity m_value;
   };
 
-#ifdef _MSC_VER
-  // TODO: MSVC requires explicit instantiation.
-  static auto MoneyZero = Details::MoneyStaticDefinitions<Money>::ZERO;
-  static auto MoneyOne = Details::MoneyStaticDefinitions<Money>::ONE;
-  static auto MoneyCent = Details::MoneyStaticDefinitions<Money>::CENT;
-  static auto MoneyBip = Details::MoneyStaticDefinitions<Money>::BIP;
-#endif
-
   //! Multiplies a Money instance by a scalar quantity.
   /*!
     \param lhs The scalar quantity.

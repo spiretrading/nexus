@@ -10,6 +10,7 @@
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
@@ -71,7 +72,7 @@ namespace {
     auto entitlementsDirectory = LoadOrCreateDirectory(*serviceLocatorClient,
       "entitlements", DirectoryEntry::GetStarDirectory());
     EntitlementDatabase database;
-    for(auto& entitlementConfig : config) {
+    for(auto entitlementConfig : config) {
       EntitlementDatabase::Entry entry;
       entry.m_name = Extract<string>(entitlementConfig, "name");
       auto price = Money::FromValue(Extract<string>(entitlementConfig,
@@ -85,14 +86,14 @@ namespace {
       auto groupName = Extract<string>(entitlementConfig, "group");
       entry.m_groupEntry = LoadOrCreateDirectory(*serviceLocatorClient,
         groupName, entitlementsDirectory);
-      auto& applicability = GetNode(entitlementConfig, "applicability");
-      for(auto& applicabilityConfig : applicability) {
+      auto applicability = GetNode(entitlementConfig, "applicability");
+      for(auto applicabilityConfig : applicability) {
         MarketCode market = Extract<string>(applicabilityConfig, "market", "");
         MarketCode source = Extract<string>(applicabilityConfig, "source");
         EntitlementKey key{market, source};
-        auto& messages = GetNode(applicabilityConfig, "messages");
-        for(auto& messageConfig : messages) {
-          auto message = messageConfig.to<string>();
+        auto messages = GetNode(applicabilityConfig, "messages");
+        for(auto messageConfig : messages) {
+          auto message = messageConfig.as<string>();
           if(message == "BBO") {
             entry.m_applicability[key].Set(MarketDataType::BBO_QUOTE);
           } else if(message == "MQT") {
@@ -126,20 +127,7 @@ int main(int argc, const char** argv) {
     cerr << "error: " << e.error() << " for arg " << e.argId() << endl;
     return -1;
   }
-  YAML::Node config;
-  try {
-    ifstream configStream{configFile.c_str()};
-    if(!configStream.good()) {
-      cerr << configFile << " not found." << endl;
-      return -1;
-    }
-    YAML::Parser configParser{configStream};
-    configParser.GetNextDocument(config);
-  } catch(const YAML::ParserException& e) {
-    cerr << "Invalid YAML at line " << (e.mark.line + 1) << ", " << "column " <<
-      (e.mark.column + 1) << ": " << e.msg << endl;
-    return -1;
-  }
+  auto config = Require(LoadFile, configFile);
   AdministrationServerConnectionInitializer
     administrationServerConnectionInitializer;
   try {

@@ -21,7 +21,7 @@ const string CanvasNode::MIME_TYPE = "application/x-spire.canvas_node";
 
 CanvasNode::~CanvasNode() {}
 
-optional<const CanvasNode&> CanvasNode::GetParent() const {
+boost::optional<const CanvasNode&> CanvasNode::GetParent() const {
   if(m_parent == nullptr) {
     return none;
   }
@@ -52,7 +52,7 @@ bool CanvasNode::IsReadOnly() const {
   return m_isReadOnly || (m_parent != nullptr && m_parent->IsReadOnly());
 }
 
-optional<const CanvasNode::MetaData&> CanvasNode::FindMetaData(
+boost::optional<const CanvasNode::MetaData&> CanvasNode::FindMetaData(
     const string& name) const {
   auto metaDataIterator = m_metaData.find(name);
   if(metaDataIterator == m_metaData.end()) {
@@ -61,7 +61,8 @@ optional<const CanvasNode::MetaData&> CanvasNode::FindMetaData(
   return metaDataIterator->second;
 }
 
-optional<const CanvasNode&> CanvasNode::FindChild(const string& name) const {
+boost::optional<const CanvasNode&> CanvasNode::FindChild(
+    const string& name) const {
   auto child = find_if(m_children,
     [&] (const unique_ptr<CanvasNode>& child) {
       return name == child->GetName();
@@ -72,7 +73,8 @@ optional<const CanvasNode&> CanvasNode::FindChild(const string& name) const {
   return **child;
 }
 
-optional<const CanvasNode&> CanvasNode::FindNode(const string& name) const {
+boost::optional<const CanvasNode&> CanvasNode::FindNode(
+    const string& name) const {
   if(name.empty()) {
     return *this;
   }

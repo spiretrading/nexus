@@ -19,7 +19,8 @@ using namespace Spire;
 using namespace std;
 
 namespace {
-  optional<const ReferenceNode&> FindCycle(const ReferenceNode& reference,
+  boost::optional<const ReferenceNode&> FindCycle(
+      const ReferenceNode& reference,
       unordered_set<const ReferenceNode*> visitedReferences =
       unordered_set<const ReferenceNode*>()) {
     if(!visitedReferences.insert(&reference).second) {

@@ -12,7 +12,6 @@ using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::Tests;
-using namespace std;
 
 void BacktesterTimerTester::TestExpiry() {
   ptime startTime{date{2016, 5, 6}, seconds(0)};

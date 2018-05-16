@@ -25,7 +25,7 @@ string CanvasNodeModel::GetIdentityKey() {
   return "spire.identity";
 }
 
-optional<CanvasNodeModel::Identity> CanvasNodeModel::FindIdentity(
+boost::optional<CanvasNodeModel::Identity> CanvasNodeModel::FindIdentity(
     const CanvasNode& node) {
   auto identity = node.FindMetaData(GetIdentityKey());
   if(identity.is_initialized()) {
@@ -59,7 +59,7 @@ string CanvasNodeModel::GetReferentKey() {
   return "spire.referent";
 }
 
-optional<const CanvasNode&> CanvasNodeModel::FindReferent(
+boost::optional<const CanvasNode&> CanvasNodeModel::FindReferent(
     const ReferenceNode& node) {
   auto referentKey = node.FindMetaData(GetReferentKey());
   if(!referentKey.is_initialized()) {
@@ -125,7 +125,7 @@ void CanvasNodeModel::Snapshot::Restore(Out<CanvasNodeModel> model) {
   }
 }
 
-optional<const CanvasNode&> CanvasNodeModel::GetCurrentNode() const {
+boost::optional<const CanvasNode&> CanvasNodeModel::GetCurrentNode() const {
   auto coordinate = GetCurrentCoordinate();
   if(!coordinate) {
     return none;
@@ -133,7 +133,7 @@ optional<const CanvasNode&> CanvasNodeModel::GetCurrentNode() const {
   return GetNode(*coordinate);
 }
 
-optional<CanvasNodeModel::Coordinate> CanvasNodeModel::
+boost::optional<CanvasNodeModel::Coordinate> CanvasNodeModel::
     GetCurrentCoordinate() const {
   auto node = GetCurrentNode();
   if(!node.is_initialized()) {

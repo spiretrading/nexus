@@ -164,7 +164,7 @@ bool RegistryCatalogEntry::IsReadOnly() const {
 }
 
 void RegistryCatalogEntry::Validate() {
-  optional<uuid> catalogUuid = FindUuid(*m_node);
+  auto catalogUuid = FindUuid(*m_node);
   if(!catalogUuid.is_initialized() || *catalogUuid != GetUid()) {
     CanvasNodeBuilder builder(*m_node);
     stringstream ss;

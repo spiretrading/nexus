@@ -139,7 +139,7 @@ void ChartPlotController::Clear() {
   m_plotConnections.DisconnectAll();
 }
 
-optional<ChartValue> ChartPlotController::LoadLastValue() {
+boost::optional<ChartValue> ChartPlotController::LoadLastValue() {
   if(m_lastValue.IsInitialized()) {
     return *m_lastValue;
   }

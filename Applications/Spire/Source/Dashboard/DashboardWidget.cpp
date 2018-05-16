@@ -184,7 +184,7 @@ const DashboardRenderer& DashboardWidget::GetRenderer() const {
   return *m_renderer;
 }
 
-optional<int> DashboardWidget::GetRowDisplayIndex(
+boost::optional<int> DashboardWidget::GetRowDisplayIndex(
     const QPoint& position) const {
   if(position.y() < m_renderer->GetMaxRowHeight()) {
     return none;
@@ -544,7 +544,7 @@ void DashboardWidget::OnCellUpdatedSignal(const DashboardRow& row,
   }
 }
 
-void DashboardWidget::OnActiveRowUpdatedSignal(optional<int> activeRow) {
+void DashboardWidget::OnActiveRowUpdatedSignal(boost::optional<int> activeRow) {
   repaint();
 }
 

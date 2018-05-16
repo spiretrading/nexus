@@ -32,7 +32,7 @@ vector<unique_ptr<WindowSettings>> WindowSettings::Load(
     return windowSettings;
   }
   try {
-    BasicIStreamReader<filesystem::ifstream> reader(
+    BasicIStreamReader<boost::filesystem::ifstream> reader(
       Initialize(windowSettingsPath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
@@ -73,7 +73,7 @@ void WindowSettings::Save(const UserProfile& userProfile) {
     SharedBuffer buffer;
     sender.SetSink(Ref(buffer));
     sender.Shuttle(windowSettings);
-    BasicOStreamWriter<filesystem::ofstream> writer(
+    BasicOStreamWriter<boost::filesystem::ofstream> writer(
       Initialize(windowSettingsPath, ios::binary));
     writer.Write(buffer);
   } catch(std::exception&) {

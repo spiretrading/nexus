@@ -118,8 +118,6 @@ namespace {
   }
 }
 
-BEAM_DEFINE_PYTHON_POINTER_LINKER(VirtualComplianceClient);
-
 void Nexus::Python::ExportApplicationComplianceClient() {
   class_<ToPythonComplianceClient<Client>, bases<VirtualComplianceClient>,
     boost::noncopyable>("ApplicationComplianceClient", no_init)

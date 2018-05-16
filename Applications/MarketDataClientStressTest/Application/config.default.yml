@@ -1,8 +1,0 @@
----
-service_locator:
-  address: local_interface:20000
-  username: username
-  password: password
-
-symbols : []
-...

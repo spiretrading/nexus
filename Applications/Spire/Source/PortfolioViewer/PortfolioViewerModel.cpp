@@ -221,7 +221,7 @@ QVariant PortfolioViewerModel::headerData(int section,
   return QVariant();
 }
 
-optional<Money> PortfolioViewerModel::GetUnrealizedProfitAndLoss(
+boost::optional<Money> PortfolioViewerModel::GetUnrealizedProfitAndLoss(
     const RiskPortfolioInventory& inventory) const {
   auto valuationIterator = m_valuations.find(
     inventory.m_position.m_key.m_index);

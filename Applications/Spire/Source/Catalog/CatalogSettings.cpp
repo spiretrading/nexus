@@ -77,7 +77,7 @@ namespace {
         continue;
       }
       try {
-        BasicIStreamReader<filesystem::ifstream> reader(
+        BasicIStreamReader<boost::filesystem::ifstream> reader(
           Initialize(*i, ios::binary));
         SharedBuffer buffer;
         reader.Read(Store(buffer));
@@ -144,7 +144,7 @@ namespace {
     vector<pair<string, vector<uuid>>> tabs;
     QString warnings;
     try {
-      BasicIStreamReader<filesystem::ifstream> reader(
+      BasicIStreamReader<boost::filesystem::ifstream> reader(
         Initialize(catalogTabPath, ios::binary));
       SharedBuffer buffer;
       reader.Read(Store(buffer));
@@ -162,7 +162,7 @@ namespace {
       unique_ptr<CatalogTabModel> tab = std::make_unique<CatalogTabModel>();
       tab->SetName(i->first);
       for(auto j = i->second.begin(); j != i->second.end(); ++j) {
-        optional<CatalogEntry&> entry = settings.FindEntry(*j);
+        auto entry = settings.FindEntry(*j);
         if(entry) {
           tab->Add(Ref(*entry));
         }
@@ -195,7 +195,7 @@ namespace {
       SharedBuffer buffer;
       sender.SetSink(Ref(buffer));
       sender.Shuttle(tabs);
-      BasicOStreamWriter<filesystem::ofstream> writer(
+      BasicOStreamWriter<boost::filesystem::ofstream> writer(
         Initialize(catalogTabPath, ios::binary));
       writer.Write(buffer);
     } catch(std::exception&) {
@@ -255,16 +255,16 @@ bool CatalogSettings::HasRegistryAccess() const {
   return m_hasRegistryAccess;
 }
 
-optional<CatalogEntry&> CatalogSettings::FindEntry(const uuid& uid) const {
-  map<uuid, CatalogEntry*>::const_iterator entryIterator =
-    m_uuidToEntry.find(uid);
+boost::optional<CatalogEntry&> CatalogSettings::FindEntry(
+    const uuid& uid) const {
+  auto entryIterator = m_uuidToEntry.find(uid);
   if(entryIterator == m_uuidToEntry.end()) {
-    return optional<CatalogEntry&>();
+    return none;
   }
   return *entryIterator->second;
 }
 
-optional<CatalogEntry&> CatalogSettings::FindEntry(
+boost::optional<CatalogEntry&> CatalogSettings::FindEntry(
     const CanvasNode& node) const {
   auto catalogUuid = CatalogEntry::FindUuid(node);
   if(!catalogUuid.is_initialized()) {

@@ -11,6 +11,7 @@
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/TimeService/TimeService.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
@@ -94,13 +95,7 @@ int main(int argc, const char** argv) {
     cerr << "error: " << e.error() << " for arg " << e.argId() << endl;
     return -1;
   }
-  YAML::Node config;
-  try {
-    LoadFile(configFile, Store(config));
-  } catch(const std::exception& e) {
-    cerr << e.what() << endl;
-    return -1;
-  }
+  auto config = Require(LoadFile, configFile);
   DefinitionsServerConnectionInitializer definitionsServerConnectionInitializer;
   try {
     definitionsServerConnectionInitializer.Initialize(
@@ -142,7 +137,7 @@ int main(int argc, const char** argv) {
   complianceRuleSchemas.push_back(
     BuildSubmissionRestrictionPeriodComplianceRuleSchema());
   complianceRuleSchemas.push_back(BuildSymbolRestrictionComplianceRuleSchema());
-  optional<DefinitionsServletContainer> definitionsServer;
+  boost::optional<DefinitionsServletContainer> definitionsServer;
   try {
     auto minimumSpireClientVersion = Extract<string>(config,
       "minimum_spire_version");
@@ -155,25 +150,21 @@ int main(int argc, const char** argv) {
     timeZoneDatabaseBuffer << timeZoneDatabaseFile.rdbuf();
     auto countriesConfigFile = Extract<string>(config, "countries",
       "countries.yml");
-    YAML::Node countriesConfig;
-    LoadFile(countriesConfigFile, Store(countriesConfig));
+    auto countriesConfig = Require(LoadFile, countriesConfigFile);
     auto countryDatabase = ParseCountryDatabase(GetNode(countriesConfig,
       "countries"));
     auto currenciesConfigFile = Extract<string>(config, "currencies",
       "currencies.yml");
-    YAML::Node currenciesConfig;
-    LoadFile(currenciesConfigFile, Store(currenciesConfig));
+    auto currenciesConfig = Require(LoadFile, currenciesConfigFile);
     auto currencyDatabase = ParseCurrencyDatabase(GetNode(currenciesConfig,
       "currencies"));
     auto marketsConfigFile = Extract<string>(config, "markets", "markets.yml");
-    YAML::Node marketsConfig;
-    LoadFile(marketsConfigFile, Store(marketsConfig));
+    auto marketsConfig = Require(LoadFile, marketsConfigFile);
     auto marketDatabase = ParseMarketDatabase(GetNode(marketsConfig, "markets"),
       countryDatabase, currencyDatabase);
     auto destinationsConfigFile = Extract<string>(config, "destinations",
       "destinations.yml");
-    YAML::Node destinationsConfig;
-    LoadFile(destinationsConfigFile, Store(destinationsConfig));
+    auto destinationsConfig = Require(LoadFile, destinationsConfigFile);
     auto destinationDatabase = ParseDestinationDatabase(
       destinationsConfig, marketDatabase);
     auto exchangeRates = ParseExchangeRates(GetNode(config, "exchange_rates"));

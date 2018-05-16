@@ -1,8 +1,0 @@
----
-service_locator:
-  address: server_address:server_port
-  username: username
-  password: password
-
-symbols : []
-...

@@ -32,7 +32,7 @@ MarketCode DestinationNode::GetMarket() const {
     return MarketCode();
   }
   auto name = m_referent;
-  optional<const CanvasNode&> node = *this;
+  boost::optional<const CanvasNode&> node = *this;
   while(node.is_initialized() && !name.empty() && name[0] == '<') {
     if(IsRoot(*node)) {
       return MarketCode();

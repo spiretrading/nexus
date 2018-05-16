@@ -53,11 +53,11 @@ vector<OpenPositionsModel::Entry> OpenPositionsModel::GetOpenPositions() const {
   return entries;
 }
 
-optional<const OpenPositionsModel::Entry&> OpenPositionsModel::GetOpenPosition(
-    const Security& security) const {
+boost::optional<const OpenPositionsModel::Entry&>
+    OpenPositionsModel::GetOpenPosition(const Security& security) const {
   auto entryIterator = m_securityToEntry.find(security);
   if(entryIterator == m_securityToEntry.end()) {
-    return optional<const OpenPositionsModel::Entry&>();
+    return none;
   }
   return *entryIterator->second;
 }

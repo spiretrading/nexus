@@ -293,10 +293,6 @@ namespace {
   }
 }
 
-BEAM_DEFINE_PYTHON_QUEUE_LINKER(RiskParameters);
-BEAM_DEFINE_PYTHON_QUEUE_LINKER(RiskState);
-BEAM_DEFINE_PYTHON_POINTER_LINKER(VirtualAdministrationClient);
-
 void Nexus::Python::ExportAccountIdentity() {
   class_<AccountIdentity>("AccountIdentity", init<>())
     .def("__copy__", &MakeCopy<AccountIdentity>)

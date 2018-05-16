@@ -67,12 +67,10 @@ def build_repo(repo, path):
     nexus_applications = ['AdministrationServer', 'AsxItchMarketDataFeedClient',
       'ChartingServer', 'ChiaMarketDataFeedClient', 'ClientWebPortal',
       'ComplianceServer', 'CseMarketDataFeedClient', 'CtaMarketDataFeedClient',
-      'DefinitionsServer', 'MarketDataClientStressTest',
-      'MarketDataClientTemplate', 'MarketDataRelayServer', 'MarketDataServer',
-      'OrderExecutionBackup', 'OrderExecutionRestore', 'RiskServer',
-      'SimulationMarketDataFeedClient', 'SimulationOrderExecutionServer',
-      'TmxIpMarketDataFeedClient', 'TmxTl1MarketDataFeedClient',
-      'UtpMarketDataFeedClient']
+      'DefinitionsServer', 'MarketDataRelayServer', 'MarketDataServer',
+      'RiskServer', 'SimulationMarketDataFeedClient',
+      'SimulationOrderExecutionServer', 'TmxIpMarketDataFeedClient',
+      'TmxTl1MarketDataFeedClient', 'UtpMarketDataFeedClient']
     copy_build(nexus_applications, timestamp, 'Nexus')
     beam_applications = ['AdminClient', 'RegistryServer', 'ServiceLocator',
       'UidServer']
