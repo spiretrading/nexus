@@ -11,6 +11,7 @@
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
+#include "spire/ui/scroll_bar.hpp"
 #include "spire/ui/window.hpp"
 
 using namespace boost;
@@ -27,6 +28,7 @@ time_and_sales_window::time_and_sales_window(
     [=] (const Security& s) { update_model(s); });
   m_body = new QWidget(this);
   m_body->setMinimumSize(scale(148, 200));
+  m_body->setMaximumSize(scale_width(774), QWIDGETSIZE_MAX);
   resize(scale_width(182), scale_height(452));
   m_body->setStyleSheet("background-color: #FFFFFF;");
   auto window_layout = new QHBoxLayout(this);
@@ -42,9 +44,12 @@ time_and_sales_window::time_and_sales_window(
   layout->setContentsMargins({});
   layout->setSpacing(0);
   m_table = new QTableView(this);
+  auto vertical_scroll_bar = new scroll_bar(Qt::Vertical, m_table->viewport());
   m_table->setItemDelegate(new custom_variant_item_delegate(this));
   m_table->setFocusPolicy(Qt::NoFocus);
   m_table->verticalHeader()->setVisible(false);
+  m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
   m_table->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
   m_table->horizontalHeader()->setSectionsClickable(false);
@@ -99,6 +104,7 @@ const time_and_sales_properties& time_and_sales_window::get_properties() const {
 void time_and_sales_window::set_properties(
     const time_and_sales_properties& properties) {
   m_properties = properties;
+  m_model.get().set_properties(m_properties);
   // Disabled for testing, by default, properties only shows 3 columns so leave
   // them all enabled
   //for(auto i = 0; i < static_cast<int>(
@@ -171,7 +177,7 @@ void time_and_sales_window::update_model(const Security& s) {
   auto model = std::make_shared<periodic_time_and_sales_model>(s);
   model->set_price(Money(Quantity(20)));
   model->set_price_range(time_and_sales_properties::price_range::AT_ASK);
-  model->set_period(boost::posix_time::time_duration(0, 0, 1, 0));
+  model->set_period(boost::posix_time::time_duration(0, 0, 0, 250000));
   set_model(model);
 }
 
