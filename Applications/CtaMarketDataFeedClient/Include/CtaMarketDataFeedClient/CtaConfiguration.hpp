@@ -47,8 +47,8 @@ namespace MarketDataService {
         "Country not found.", config["country"].Mark()));
     }
     ctaConfig.m_country = countryCode;
-    auto& marketCodes = Beam::GetNode(config, "market_codes");
-    for(auto& marketCode : marketCodes) {
+    auto marketCodes = Beam::GetNode(config, "market_codes");
+    for(auto marketCode : marketCodes) {
       auto code = Beam::Extract<std::string>(marketCode, "code");
       if(code.size() != 1) {
         BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException(

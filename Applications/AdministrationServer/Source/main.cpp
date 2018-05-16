@@ -72,7 +72,7 @@ namespace {
     auto entitlementsDirectory = LoadOrCreateDirectory(*serviceLocatorClient,
       "entitlements", DirectoryEntry::GetStarDirectory());
     EntitlementDatabase database;
-    for(auto& entitlementConfig : config) {
+    for(auto entitlementConfig : config) {
       EntitlementDatabase::Entry entry;
       entry.m_name = Extract<string>(entitlementConfig, "name");
       auto price = Money::FromValue(Extract<string>(entitlementConfig,
@@ -86,13 +86,13 @@ namespace {
       auto groupName = Extract<string>(entitlementConfig, "group");
       entry.m_groupEntry = LoadOrCreateDirectory(*serviceLocatorClient,
         groupName, entitlementsDirectory);
-      auto& applicability = GetNode(entitlementConfig, "applicability");
-      for(auto& applicabilityConfig : applicability) {
+      auto applicability = GetNode(entitlementConfig, "applicability");
+      for(auto applicabilityConfig : applicability) {
         MarketCode market = Extract<string>(applicabilityConfig, "market", "");
         MarketCode source = Extract<string>(applicabilityConfig, "source");
         EntitlementKey key{market, source};
-        auto& messages = GetNode(applicabilityConfig, "messages");
-        for(auto& messageConfig : messages) {
+        auto messages = GetNode(applicabilityConfig, "messages");
+        for(auto messageConfig : messages) {
           auto message = messageConfig.as<string>();
           if(message == "BBO") {
             entry.m_applicability[key].Set(MarketDataType::BBO_QUOTE);

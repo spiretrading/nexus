@@ -69,7 +69,7 @@ namespace {
   std::vector<SecurityInfo> ParseSecurityInfoList(const std::string& path) {
     auto config = Require(LoadFile, path);
     std::vector<SecurityInfo> securities;
-    for(auto& node : config) {
+    for(auto node : config) {
       auto symbol = Extract<string>(node, "symbol");
       auto name = Extract<string>(node, "name");
       SecurityInfo info;
@@ -84,7 +84,7 @@ namespace {
   std::unordered_map<string, string> LoadMpidMappings(
       const YAML::Node& config) {
     std::unordered_map<string, string> mappings;
-    for(auto& node : config) {
+    for(auto node : config) {
       auto source = Extract<string>(node, "source");
       auto name = Extract<string>(node, "name");
       mappings.insert(make_pair(source, name));
