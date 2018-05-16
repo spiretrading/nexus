@@ -42,6 +42,10 @@ time_and_sales_window::time_and_sales_window(
   auto layout = new QVBoxLayout(m_body);
   layout->setContentsMargins({});
   layout->setSpacing(0);
+  auto padding_widget = new QWidget(this);
+  padding_widget->setFixedHeight(scale_height(4));
+  padding_widget->setStyleSheet("background-color: #F5F5F5;");
+  layout->addWidget(padding_widget);
   m_table = new QTableView(this);
   auto vertical_scroll_bar = new scroll_bar(Qt::Vertical, m_table->viewport());
   auto horizontal_scroll_bar = new scroll_bar(
