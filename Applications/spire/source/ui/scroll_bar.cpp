@@ -43,6 +43,9 @@ bool scroll_bar::eventFilter(QObject* watched, QEvent* event) {
       } else {
         setVisible(false);
       }
+    } else if(event->type() == QEvent::Wheel) {
+      event->accept();
+      return true;
     } else if(event->type() == QEvent::Move) {
       if(orientation() == Qt::Vertical) {
         move(static_cast<QWidget*>(parent())->width() - width(), 0);
