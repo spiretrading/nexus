@@ -68,5 +68,6 @@
         <file>icons/time-sale-grey.svg</file>
         <file>icons/check.svg</file>
         <file>icons/check-with-box.svg</file>
+        <file>icons/column-border.png</file>
     </qresource>
 </RCC>

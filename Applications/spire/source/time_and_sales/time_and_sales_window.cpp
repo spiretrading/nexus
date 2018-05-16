@@ -47,7 +47,7 @@ time_and_sales_window::time_and_sales_window(
   padding_widget->setStyleSheet("background-color: #F5F5F5;");
   layout->addWidget(padding_widget);
   m_empty_window_label = new QLabel(
-    tr("Type on keyboard\nto search a security"), this);
+    tr("Type on keyboard<br/>to search a security"), this);
   m_empty_window_label->setAlignment(Qt::AlignCenter);
   m_empty_window_label->setStyleSheet(QString(R"(
     font-family: Roboto;
@@ -74,12 +74,20 @@ time_and_sales_window::time_and_sales_window(
   m_table->horizontalHeader()->setStyleSheet(QString(R"(
     QHeaderView::section {
       background-color: #FFFFFF;
+      background-image: url(:icons/column-border.png);
+      background-position: left;
+      background-repeat: repeat;
       border: none;
       color: #4B23A0;
       font-family: Roboto;
       font-size: %1px;
       font-weight: 550;
       padding-left: %2px;
+    }
+
+    QHeaderView::section::first {
+      background: none;
+      background-color: #FFFFFF;
     })").arg(scale_height(11)).arg(scale_width(8)));
   m_table->setStyleSheet(R"(
     QTableView {

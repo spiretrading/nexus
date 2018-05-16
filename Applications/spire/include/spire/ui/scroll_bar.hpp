@@ -19,6 +19,7 @@ namespace spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void leaveEvent(QEvent* event) override;
   };
 }
 

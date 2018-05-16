@@ -59,3 +59,7 @@ bool scroll_bar::eventFilter(QObject* watched, QEvent* event) {
   }
   return QScrollBar::eventFilter(watched, event);
 }
+
+void scroll_bar::leaveEvent(QEvent* event) {
+  setVisible(false);
+}
