@@ -28,7 +28,6 @@ time_and_sales_window::time_and_sales_window(
     [=] (const Security& s) { update_model(s); });
   m_body = new QWidget(this);
   m_body->setMinimumSize(scale(148, 200));
-  m_body->setMaximumSize(scale_width(774), QWIDGETSIZE_MAX);
   resize(scale_width(182), scale_height(452));
   m_body->setStyleSheet("background-color: #FFFFFF;");
   auto window_layout = new QHBoxLayout(this);
@@ -47,12 +46,15 @@ time_and_sales_window::time_and_sales_window(
   auto vertical_scroll_bar = new scroll_bar(Qt::Vertical, m_table->viewport());
   m_table->setItemDelegate(new custom_variant_item_delegate(this));
   m_table->setFocusPolicy(Qt::NoFocus);
+  m_table->setSelectionMode(QAbstractItemView::NoSelection);
   m_table->verticalHeader()->setVisible(false);
   m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
   m_table->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+  m_table->verticalHeader()->setSectionsClickable(false);
   m_table->horizontalHeader()->setSectionsClickable(false);
+  m_table->horizontalHeader()->setSectionsMovable(true);
   m_table->horizontalHeader()->setFixedHeight(scale_height(26));
   m_table->horizontalHeader()->setDefaultAlignment(
     Qt::AlignLeft | Qt::AlignVCenter);
