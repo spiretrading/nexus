@@ -46,6 +46,13 @@ time_and_sales_window::time_and_sales_window(
   padding_widget->setFixedHeight(scale_height(4));
   padding_widget->setStyleSheet("background-color: #F5F5F5;");
   layout->addWidget(padding_widget);
+  m_empty_window_label = new QLabel(
+    tr("Type on keyboard\nto search a security"), this);
+  m_empty_window_label->setAlignment(Qt::AlignCenter);
+  m_empty_window_label->setStyleSheet(QString(R"(
+    font-family: Roboto;
+    font-size: %1px;)").arg(scale_height(11)));
+  layout->addWidget(m_empty_window_label);
   m_table = new QTableView(this);
   auto vertical_scroll_bar = new scroll_bar(Qt::Vertical, m_table->viewport());
   auto horizontal_scroll_bar = new scroll_bar(
@@ -79,6 +86,7 @@ time_and_sales_window::time_and_sales_window(
       border: none;
       gridline-color: #FFFFFF;
     })");
+  m_table->hide();
   layout->addWidget(m_table);
   m_volume_label = new QLabel(tr("Volume: 0"), this);
   m_volume_label->setFocusPolicy(Qt::NoFocus);
@@ -175,6 +183,8 @@ void time_and_sales_window::set_current(const Security& s) {
   if(s == m_current_security) {
     return;
   }
+  m_empty_window_label->hide();
+  m_table->show();
   m_current_security = s;
   m_change_security_signal(s);
   setWindowTitle(QString::fromStdString(ToString(s)) +

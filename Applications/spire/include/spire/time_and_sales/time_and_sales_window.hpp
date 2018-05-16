@@ -63,6 +63,7 @@ namespace spire {
       security_stack m_securities;
       Nexus::Security m_current_security;
       QWidget* m_body;
+      QLabel* m_empty_window_label;
       QTableView* m_table;
       QLabel* m_volume_label;
 
