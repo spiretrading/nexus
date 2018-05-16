@@ -44,6 +44,8 @@ time_and_sales_window::time_and_sales_window(
   layout->setSpacing(0);
   m_table = new QTableView(this);
   auto vertical_scroll_bar = new scroll_bar(Qt::Vertical, m_table->viewport());
+  auto horizontal_scroll_bar = new scroll_bar(
+    Qt::Horizontal, m_table->viewport());
   m_table->setItemDelegate(new custom_variant_item_delegate(this));
   m_table->setFocusPolicy(Qt::NoFocus);
   m_table->setSelectionMode(QAbstractItemView::NoSelection);
