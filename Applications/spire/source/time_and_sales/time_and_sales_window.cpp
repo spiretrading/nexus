@@ -60,6 +60,7 @@ time_and_sales_window::time_and_sales_window(
   m_table->viewport()->setAttribute(Qt::WA_TransparentForMouseEvents);
   m_table->setFocusPolicy(Qt::NoFocus);
   m_table->setSelectionMode(QAbstractItemView::NoSelection);
+  m_table->horizontalHeader()->setStretchLastSection(true);
   m_table->verticalHeader()->setVisible(false);
   m_table->horizontalScrollBar()->installEventFilter(this);
   m_table->verticalScrollBar()->installEventFilter(this);
