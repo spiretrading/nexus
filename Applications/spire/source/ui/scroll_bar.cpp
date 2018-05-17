@@ -29,7 +29,8 @@ scroll_bar::scroll_bar(Qt::Orientation orientation, QWidget* parent)
       border: none;
     })").arg(scale_width(left_margin)).arg(scale_height(top_margin)));
   raise();
-  setVisible(false);
+  hide();
+  setMouseTracking(true);
   parent->setMouseTracking(true);
   parent->installEventFilter(this);
 }
@@ -39,12 +40,14 @@ bool scroll_bar::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::MouseMove) {
       auto e = static_cast<QMouseEvent*>(event);
       if(geometry().contains(e->pos())) {
-        setVisible(true);
+        show();
       } else {
-        setVisible(false);
+        hide();
       }
     } else if(event->type() == QEvent::Wheel) {
       event->accept();
+      auto e = static_cast<QWheelEvent*>(event);
+      //if()
       return true;
     } else if(event->type() == QEvent::Move) {
       if(orientation() == Qt::Vertical) {
@@ -58,11 +61,14 @@ bool scroll_bar::eventFilter(QObject* watched, QEvent* event) {
       } else {
         resize(static_cast<QWidget*>(parent())->width(), height());
       }
+    } else if(event->type() == QEvent::Leave) {
+      hide();
     }
   }
   return QScrollBar::eventFilter(watched, event);
 }
 
 void scroll_bar::leaveEvent(QEvent* event) {
-  setVisible(false);
+  event->ignore();
+  hide();
 }
