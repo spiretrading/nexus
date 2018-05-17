@@ -2,6 +2,7 @@
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <QHeaderView>
 #include <QKeyEvent>
+#include <QScrollBar>
 #include <QTableView>
 #include <QVBoxLayout>
 #include "spire/security_input/security_input_dialog.hpp"
@@ -11,7 +12,6 @@
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
-#include "spire/ui/scroll_bar.hpp"
 #include "spire/ui/window.hpp"
 
 using namespace boost;
@@ -27,7 +27,7 @@ time_and_sales_window::time_and_sales_window(
   m_change_security_signal.connect(
     [=] (const Security& s) { update_model(s); });
   m_body = new QWidget(this);
-  m_body->setMinimumSize(scale(148, 200));
+  m_body->setMinimumSize(scale(180, 200));
   resize(scale_width(182), scale_height(452));
   m_body->setStyleSheet("background-color: #FFFFFF;");
   auto window_layout = new QHBoxLayout(this);
@@ -54,13 +54,19 @@ time_and_sales_window::time_and_sales_window(
     font-size: %1px;)").arg(scale_height(11)));
   layout->addWidget(m_empty_window_label);
   m_table = new QTableView(this);
-  auto vertical_scroll_bar = new scroll_bar(Qt::Vertical, m_table->viewport());
-  auto horizontal_scroll_bar = new scroll_bar(
-    Qt::Horizontal, m_table->viewport());
   m_table->setItemDelegate(new custom_variant_item_delegate(this));
+  m_table->setMouseTracking(true);
+  m_table->installEventFilter(this);
+  m_table->viewport()->setAttribute(Qt::WA_TransparentForMouseEvents);
   m_table->setFocusPolicy(Qt::NoFocus);
   m_table->setSelectionMode(QAbstractItemView::NoSelection);
   m_table->verticalHeader()->setVisible(false);
+  m_table->horizontalScrollBar()->installEventFilter(this);
+  m_table->verticalScrollBar()->installEventFilter(this);
+  m_table->horizontalScrollBar()->setMouseTracking(true);
+  m_table->verticalScrollBar()->setMouseTracking(true);
+  m_table->horizontalScrollBar()->setFixedHeight(scale_height(12));
+  m_table->verticalScrollBar()->setFixedWidth(scale_width(12));
   m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
@@ -93,6 +99,20 @@ time_and_sales_window::time_and_sales_window(
     QTableView {
       border: none;
       gridline-color: #FFFFFF;
+    }
+
+    QScrollBar[Orientation="Vertical"] {
+      background-color: blue;
+    }
+
+    QScrollBar::handle {
+      background-color: #C8C8C8;
+      width: 100px;
+    }
+
+    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+      background: none;
+      border: none;
     })");
   m_table->hide();
   layout->addWidget(m_table);
@@ -151,6 +171,35 @@ connection time_and_sales_window::connect_closed_signal(
 
 void time_and_sales_window::closeEvent(QCloseEvent* event) {
   m_closed_signal();
+}
+
+bool time_and_sales_window::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == m_table) {
+    if(event->type() == QEvent::MouseMove) {
+      auto e = static_cast<QMouseEvent*>(event);
+      if(e->pos().x() > width() - m_table->verticalScrollBar()->width()) {
+        m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+        m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+      } else if(e->pos().y() >
+          m_table->height() -
+          m_table->horizontalScrollBar()->height()) {
+        m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+        m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+      } else {
+        m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+      }
+    }
+  } else if(watched == m_table->verticalScrollBar()) {
+    if(event->type() == QEvent::HoverLeave) {
+      m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    }
+  } else if(watched == m_table->horizontalScrollBar()) {
+    if(event->type() == QEvent::HoverLeave) {
+      m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    }
+  }
+  return QWidget::eventFilter(watched, event);
 }
 
 void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
