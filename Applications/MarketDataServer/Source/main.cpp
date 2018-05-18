@@ -122,7 +122,12 @@ namespace {
 
   void PopulateRegistrySecurityInfo(Out<MarketDataRegistry> registry,
       const MarketDatabase& marketDatabase) {
-    auto config = Require(LoadFile, "symbols");
+    YAML::Node config;
+    try {
+      config = LoadFile("symbols");
+    } catch(const std::exception&) {
+      return;
+    }
     auto symbols = config["symbols"];
     if(!symbols) {
       return;
@@ -259,6 +264,7 @@ int main(int argc, const char** argv) {
     cerr << "Error opening server: " << e.what() << endl;
     return -1;
   }
+  std::cout << "RegisterA" << std::endl;
   try {
     JsonObject registryService;
     registryService["addresses"] =
@@ -283,6 +289,7 @@ int main(int argc, const char** argv) {
     cerr << "Error opening server: " << e.what() << endl;
     return -1;
   }
+  std::cout << "RegisterB" << std::endl;
   try {
     JsonObject feedService;
     feedService["addresses"] =
@@ -296,6 +303,7 @@ int main(int argc, const char** argv) {
     cerr << "Error registering service: " << e.what() << endl;
     return -1;
   }
+  std::cout << "Done" << std::endl;
   WaitForKillEvent();
   return 0;
 }
