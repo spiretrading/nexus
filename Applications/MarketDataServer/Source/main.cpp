@@ -264,7 +264,6 @@ int main(int argc, const char** argv) {
     cerr << "Error opening server: " << e.what() << endl;
     return -1;
   }
-  std::cout << "RegisterA" << std::endl;
   try {
     JsonObject registryService;
     registryService["addresses"] =
@@ -289,7 +288,6 @@ int main(int argc, const char** argv) {
     cerr << "Error opening server: " << e.what() << endl;
     return -1;
   }
-  std::cout << "RegisterB" << std::endl;
   try {
     JsonObject feedService;
     feedService["addresses"] =
@@ -303,7 +301,6 @@ int main(int argc, const char** argv) {
     cerr << "Error registering service: " << e.what() << endl;
     return -1;
   }
-  std::cout << "Done" << std::endl;
   WaitForKillEvent();
   return 0;
 }
