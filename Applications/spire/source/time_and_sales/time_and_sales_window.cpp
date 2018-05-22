@@ -24,8 +24,6 @@ time_and_sales_window::time_and_sales_window(
     security_input_model& input_model, QWidget* parent)
     : QWidget(parent),
       m_input_model(&input_model) {
-  m_change_security_signal.connect(
-    [=] (const Security& s) { update_model(s); });
   m_body = new QWidget(this);
   m_body->setMinimumSize(scale(180, 200));
   resize(scale_width(182), scale_height(452));
@@ -259,14 +257,6 @@ void time_and_sales_window::set_current(const Security& s) {
   m_change_security_signal(s);
   setWindowTitle(QString::fromStdString(ToString(s)) +
     tr(" - Time and Sales"));
-}
-
-void time_and_sales_window::update_model(const Security& s) {
-  auto model = std::make_shared<periodic_time_and_sales_model>(s);
-  model->set_price(Money(Quantity(20)));
-  model->set_price_range(time_and_sales_properties::price_range::AT_ASK);
-  model->set_period(boost::posix_time::time_duration(0, 0, 0, 250000));
-  set_model(model);
 }
 
 void time_and_sales_window::update_volume(const Quantity& volume) {
