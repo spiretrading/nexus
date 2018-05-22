@@ -112,7 +112,8 @@ time_and_sales_window::time_and_sales_window(
       background-color: #C8C8C8;
     }
 
-    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    QScrollBar::add-line, QScrollBar::sub-line,
+    QScrollBar::add-page, QScrollBar::sub-page {
       background: none;
       border: none;
     })").arg(scale_height(12)).arg(scale_height(12)));
