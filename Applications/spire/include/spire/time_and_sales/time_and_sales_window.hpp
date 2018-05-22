@@ -73,7 +73,6 @@ namespace spire {
       QLabel* m_volume_label;
 
       void set_current(const Nexus::Security& s);
-      void update_model(const Nexus::Security& s);
       void update_volume(const Nexus::Quantity& volume);
   };
 }
