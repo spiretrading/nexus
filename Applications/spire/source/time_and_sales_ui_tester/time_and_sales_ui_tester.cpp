@@ -41,6 +41,7 @@ time_and_sales_ui_tester::time_and_sales_ui_tester(
   price_range_combo_box->addItem("Inside");
   price_range_combo_box->addItem("At Bid");
   price_range_combo_box->addItem("Below Bid");
+  price_range_combo_box->setCurrentIndex(2);
   connect(price_range_combo_box,
     static_cast<void (QComboBox::*)(const QString&)>(
       &QComboBox::currentIndexChanged),
