@@ -64,8 +64,6 @@ time_and_sales_window::time_and_sales_window(
   m_table->horizontalHeader()->viewport()->setMouseTracking(true);
   m_table->horizontalHeader()->viewport()->installEventFilter(this);
   m_table->verticalHeader()->setVisible(false);
-  m_table->verticalHeader()->setSectionResizeMode(
-    QHeaderView::ResizeToContents);
   m_table->horizontalScrollBar()->installEventFilter(this);
   m_table->verticalScrollBar()->installEventFilter(this);
   m_table->horizontalScrollBar()->setAttribute(Qt::WA_Hover);
@@ -169,6 +167,8 @@ void time_and_sales_window::set_properties(
   } else {
     m_table->setShowGrid(false);
   }
+  auto row_size = (m_properties.m_font.pointSize() * 2.4) + 0.5;
+  m_table->verticalHeader()->setDefaultSectionSize(row_size);
 }
 
 connection time_and_sales_window::connect_closed_signal(
