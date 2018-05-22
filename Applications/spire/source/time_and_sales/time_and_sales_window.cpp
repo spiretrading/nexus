@@ -64,10 +64,8 @@ time_and_sales_window::time_and_sales_window(
   m_table->verticalHeader()->setVisible(false);
   m_table->horizontalScrollBar()->installEventFilter(this);
   m_table->verticalScrollBar()->installEventFilter(this);
-  m_table->horizontalScrollBar()->setMouseTracking(true);
-  m_table->verticalScrollBar()->setMouseTracking(true);
-  m_table->horizontalScrollBar()->setFixedHeight(scale_height(12));
-  m_table->verticalScrollBar()->setFixedWidth(scale_width(12));
+  m_table->horizontalScrollBar()->setAttribute(Qt::WA_Hover);
+  m_table->verticalScrollBar()->setAttribute(Qt::WA_Hover);
   m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
@@ -96,25 +94,28 @@ time_and_sales_window::time_and_sales_window(
       background: none;
       background-color: #FFFFFF;
     })").arg(scale_height(11)).arg(scale_width(8)));
-  m_table->setStyleSheet(R"(
+  m_table->setStyleSheet(QString(R"(
     QTableView {
       border: none;
       gridline-color: #FFFFFF;
     }
 
-    QScrollBar[Orientation="Vertical"] {
-      background-color: blue;
+    QScrollBar::horizontal {
+      height: %1px;
+    }
+
+    QScrollBar::vertical {
+      width: %2px;
     }
 
     QScrollBar::handle {
       background-color: #C8C8C8;
-      width: 100px;
     }
 
     QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
       background: none;
       border: none;
-    })");
+    })").arg(scale_height(12)).arg(scale_height(12)));
   m_table->hide();
   layout->addWidget(m_table);
   m_volume_label = new QLabel(tr("Volume: 0"), this);
