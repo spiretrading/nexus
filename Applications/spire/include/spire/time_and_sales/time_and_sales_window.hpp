@@ -46,6 +46,10 @@ namespace spire {
       //! Sets the display properties.
       void set_properties(const time_and_sales_properties& properties);
 
+      //! Connects a slot to the change security signal.
+      boost::signals2::connection connect_security_change_signal(
+        const change_security_signal::slot_type& slot) const;
+
       //! Connects a slot to the window closed signal.
       boost::signals2::connection connect_closed_signal(
         const closed_signal::slot_type& slot) const;
