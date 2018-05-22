@@ -45,5 +45,6 @@ int main(int argc, char** argv) {
   tester->move(test_window->pos().x() + test_window->width() + 100,
     tester->pos().y());
   test_window->activateWindow();
+  test_window->connect_closed_signal([=] { tester->close(); });
   application->exec();
 }
