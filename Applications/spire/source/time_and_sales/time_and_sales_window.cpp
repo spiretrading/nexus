@@ -116,7 +116,7 @@ time_and_sales_window::time_and_sales_window(
     QScrollBar::add-page, QScrollBar::sub-page {
       background: none;
       border: none;
-    })").arg(scale_height(12)).arg(scale_height(12)));
+    })").arg(scale_height(10)).arg(scale_height(10)));
   m_table->hide();
   layout->addWidget(m_table);
   m_volume_label = new QLabel(tr("Volume: 0"), this);
