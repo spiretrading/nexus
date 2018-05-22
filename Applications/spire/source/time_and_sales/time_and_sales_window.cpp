@@ -61,6 +61,8 @@ time_and_sales_window::time_and_sales_window(
   m_table->setFocusPolicy(Qt::NoFocus);
   m_table->setSelectionMode(QAbstractItemView::NoSelection);
   m_table->horizontalHeader()->setStretchLastSection(true);
+  m_table->horizontalHeader()->viewport()->setMouseTracking(true);
+  m_table->horizontalHeader()->viewport()->installEventFilter(this);
   m_table->verticalHeader()->setVisible(false);
   m_table->horizontalScrollBar()->installEventFilter(this);
   m_table->verticalScrollBar()->installEventFilter(this);
@@ -177,7 +179,8 @@ void time_and_sales_window::closeEvent(QCloseEvent* event) {
 }
 
 bool time_and_sales_window::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_table) {
+  if(watched == m_table ||
+      watched == m_table->horizontalHeader()->viewport()) {
     if(event->type() == QEvent::MouseMove) {
       auto e = static_cast<QMouseEvent*>(event);
       if(e->pos().x() > width() - m_table->verticalScrollBar()->width()) {
