@@ -64,6 +64,8 @@ time_and_sales_window::time_and_sales_window(
   m_table->horizontalHeader()->viewport()->setMouseTracking(true);
   m_table->horizontalHeader()->viewport()->installEventFilter(this);
   m_table->verticalHeader()->setVisible(false);
+  m_table->verticalHeader()->setSectionResizeMode(
+    QHeaderView::ResizeToContents);
   m_table->horizontalScrollBar()->installEventFilter(this);
   m_table->verticalScrollBar()->installEventFilter(this);
   m_table->horizontalScrollBar()->setAttribute(Qt::WA_Hover);
@@ -99,7 +101,7 @@ time_and_sales_window::time_and_sales_window(
   m_table->setStyleSheet(QString(R"(
     QTableView {
       border: none;
-      gridline-color: #FFFFFF;
+      gridline-color: #C8C8C8;
     }
 
     QScrollBar::horizontal {
