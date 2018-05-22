@@ -123,7 +123,7 @@ time_and_sales_window::time_and_sales_window(
   m_volume_label->setFixedHeight(scale_height(20));
   m_volume_label->setStyleSheet(QString(R"(
     background-color: #F5F5F5;
-    color: #8C8C8C;
+    color: #333333;
     font-family: Roboto;
     font-size: %1px;
     font-weight: 550;
