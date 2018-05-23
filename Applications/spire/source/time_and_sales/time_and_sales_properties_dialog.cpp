@@ -14,6 +14,8 @@
 using namespace boost;
 using namespace boost::signals2;
 using namespace spire;
+using price_range = time_and_sales_properties::price_range;
+using columns = time_and_sales_properties::columns;
 
 time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     const time_and_sales_properties& properties, QWidget* parent,
@@ -117,7 +119,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     [=] { set_text_color(); });
   set_color_button_stylesheet(m_text_color_button,
     properties.get_text_color(
-    time_and_sales_properties::price_range::UNKNOWN));
+    price_range::UNKNOWN));
   color_settings_layout->addWidget(m_text_color_button);
   color_settings_layout->setStretchFactor(m_text_color_button, 20);
   color_settings_layout->addStretch(10);
@@ -130,13 +132,11 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   m_band_color_button->connect_clicked_signal(
     [=] { set_band_color(); });
   set_color_button_stylesheet(m_band_color_button, properties.get_band_color(
-    time_and_sales_properties::price_range::UNKNOWN));
+    price_range::UNKNOWN));
   color_settings_layout->addWidget(m_band_color_button);
   color_settings_layout->setStretchFactor(m_band_color_button, 20);
   color_settings_layout->addStretch(18);
   m_show_grid_check_box = new check_box(tr("Show Grid"), this);
-  connect(m_show_grid_check_box, &QCheckBox::stateChanged,
-    [=] (auto s) { toggled_show_grid(s); });
   auto check_box_text_style = QString(R"(
     color: black;
     font-family: Roboto;
@@ -215,40 +215,30 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   column_check_box_layout->setContentsMargins({});
   column_check_box_layout->setSpacing(0);
   m_time_check_box = new check_box(tr("Time"), this);
-  connect(m_time_check_box, &QCheckBox::stateChanged,
-    [=] (auto s) { toggled_time(s); });
   m_time_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style,
     check_box_hover_style, check_box_focused_style);
   column_check_box_layout->addWidget(m_time_check_box);
   column_check_box_layout->addStretch(20);
   m_price_check_box = new check_box(tr("Price"), this);
-  connect(m_price_check_box, &QCheckBox::stateChanged,
-    [=] (auto s) { toggled_price(s); });
   m_price_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style,
     check_box_hover_style, check_box_focused_style);
   column_check_box_layout->addWidget(m_price_check_box);
   column_check_box_layout->addStretch(20);
   m_market_check_box = new check_box(tr("Market"), this);
-  connect(m_market_check_box, &QCheckBox::stateChanged,
-    [=] (auto s) { toggled_market(s); });
   m_market_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style,
     check_box_hover_style, check_box_focused_style);
   column_check_box_layout->addWidget(m_market_check_box);
   column_check_box_layout->addStretch(20);
   m_size_check_box = new check_box(tr("Size"), this);
-  connect(m_size_check_box, &QCheckBox::stateChanged,
-    [=] (auto s) { toggled_size(s); });
   m_size_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style,
     check_box_hover_style, check_box_focused_style);
   column_check_box_layout->addWidget(m_size_check_box);
   column_check_box_layout->addStretch(20);
   m_condition_check_box = new check_box(tr("Condition"), this);
-  connect(m_condition_check_box, &QCheckBox::stateChanged,
-    [=] (auto s) { toggled_condition(s); });
   m_condition_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style,
     check_box_hover_style, check_box_focused_style);
@@ -343,7 +333,68 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
 }
 
 const time_and_sales_properties&
-    time_and_sales_properties_dialog::get_properties() const {
+    time_and_sales_properties_dialog::get_properties() {
+  auto unknown_item = m_band_list->item(0);
+  m_properties.set_band_color(price_range::UNKNOWN,
+    unknown_item->backgroundColor());
+  m_properties.set_text_color(price_range::UNKNOWN,
+    unknown_item->textColor());
+  auto above_ask_item = m_band_list->item(1);
+  m_properties.set_band_color(price_range::ABOVE_ASK,
+    above_ask_item->backgroundColor());
+  m_properties.set_text_color(price_range::ABOVE_ASK,
+    above_ask_item->textColor());
+  auto at_ask_item = m_band_list->item(2);
+  m_properties.set_band_color(price_range::AT_ASK,
+    at_ask_item->backgroundColor());
+  m_properties.set_text_color(price_range::AT_ASK,
+    at_ask_item->textColor());
+  auto inside_item = m_band_list->item(3);
+  m_properties.set_band_color(price_range::INSIDE,
+    inside_item->backgroundColor());
+  m_properties.set_text_color(price_range::INSIDE,
+    inside_item->textColor());
+  auto at_bid_item = m_band_list->item(4);
+  m_properties.set_band_color(price_range::AT_BID,
+    at_bid_item->backgroundColor());
+  m_properties.set_text_color(price_range::AT_BID,
+    at_bid_item->textColor());
+  auto below_bid_item = m_band_list->item(5);
+  m_properties.set_band_color(price_range::BELOW_BID,
+    below_bid_item->backgroundColor());
+  m_properties.set_text_color(price_range::BELOW_BID,
+    below_bid_item->textColor());
+  if(m_show_grid_check_box->isChecked()) {
+    m_properties.m_show_grid = true;
+  } else {
+    m_properties.m_show_grid = false;
+  }
+  m_properties.m_font = m_font_preview_label->font();
+  if(m_time_check_box->isChecked()) {
+    m_properties.set_show_column(columns::TIME_COLUMN, true);
+  } else {
+    m_properties.set_show_column(columns::TIME_COLUMN, false);
+  }
+  if(m_price_check_box->isChecked()) {
+    m_properties.set_show_column(columns::PRICE_COLUMN, true);
+  } else {
+    m_properties.set_show_column(columns::PRICE_COLUMN, false);
+  }
+  if(m_market_check_box->isChecked()) {
+    m_properties.set_show_column(columns::MARKET_COLUMN, true);
+  } else {
+    m_properties.set_show_column(columns::MARKET_COLUMN, false);
+  }
+  if(m_size_check_box->isChecked()) {
+    m_properties.set_show_column(columns::SIZE_COLUMN, true);
+  } else {
+    m_properties.set_show_column(columns::SIZE_COLUMN, false);
+  }
+  if(m_condition_check_box->isChecked()) {
+    m_properties.set_show_column(columns::CONDITION_COLUMN, true);
+  } else {
+    m_properties.set_show_column(columns::CONDITION_COLUMN, false);
+  }
   return m_properties;
 }
 
@@ -373,67 +424,9 @@ void time_and_sales_properties_dialog::showEvent(QShowEvent* event) {
     parent_geometry.center().y() - (height() / 2));
 }
 
-void time_and_sales_properties_dialog::toggled_show_grid(int state) {
-  if(state == Qt::Checked) {
-    m_properties.m_show_grid = true;
-  } else {
-    m_properties.m_show_grid = false;
-  }
-}
-
-void time_and_sales_properties_dialog::toggled_time(int state) {
-  if(state == Qt::Checked) {
-    m_properties.set_show_column(
-      time_and_sales_properties::columns::TIME_COLUMN, true);
-  } else {
-    m_properties.set_show_column(
-      time_and_sales_properties::columns::TIME_COLUMN, false);
-  }
-}
-
-void time_and_sales_properties_dialog::toggled_price(int state) {
-  if(state == Qt::Checked) {
-    m_properties.set_show_column(
-      time_and_sales_properties::columns::PRICE_COLUMN, true);
-  } else {
-    m_properties.set_show_column(
-      time_and_sales_properties::columns::PRICE_COLUMN, false);
-  }
-}
-
-void time_and_sales_properties_dialog::toggled_market(int state) {
-  if(state == Qt::Checked) {
-    m_properties.set_show_column(
-      time_and_sales_properties::columns::MARKET_COLUMN, true);
-  } else {
-    m_properties.set_show_column(
-      time_and_sales_properties::columns::MARKET_COLUMN, false);
-  }
-}
-
-void time_and_sales_properties_dialog::toggled_size(int state) {
-  if(state == Qt::Checked) {
-    m_properties.set_show_column(
-      time_and_sales_properties::columns::SIZE_COLUMN, true);
-  } else {
-    m_properties.set_show_column(
-      time_and_sales_properties::columns::SIZE_COLUMN, false);
-  }
-}
-
-void time_and_sales_properties_dialog::toggled_condition(int state) {
-  if(state == Qt::Checked) {
-    m_properties.set_show_column(
-      time_and_sales_properties::columns::CONDITION_COLUMN, true);
-  } else {
-    m_properties.set_show_column(
-      time_and_sales_properties::columns::CONDITION_COLUMN, false);
-  }
-}
-
 void time_and_sales_properties_dialog::set_band_color() {
   auto index = m_band_list->currentIndex().row();
-  auto band = static_cast<time_and_sales_properties::price_range>(index);
+  auto band = static_cast<price_range>(index);
   auto current_color = m_properties.get_band_color(band);
   auto color = QColorDialog::getColor(current_color);
   if(color.isValid()) {
@@ -455,7 +448,7 @@ void time_and_sales_properties_dialog::set_font() {
 
 void time_and_sales_properties_dialog::set_text_color() {
   auto index = m_band_list->currentIndex().row();
-  auto band = static_cast<time_and_sales_properties::price_range>(index);
+  auto band = static_cast<price_range>(index);
   auto current_color = m_properties.get_text_color(band);
   auto color = QColorDialog::getColor(current_color);
   if(color.isValid()) {
@@ -479,7 +472,7 @@ void time_and_sales_properties_dialog::set_color_button_stylesheet(
 
 void time_and_sales_properties_dialog::set_color_settings_stylesheet(
     int band_index) {
-  auto i = static_cast<time_and_sales_properties::price_range>(band_index);
+  auto i = static_cast<price_range>(band_index);
   set_color_button_stylesheet(m_band_color_button,
     m_properties.get_band_color(i));
   set_color_button_stylesheet(m_text_color_button,
@@ -491,53 +484,53 @@ void time_and_sales_properties_dialog::set_properties(
   m_properties = properties;
   auto unknown_item = m_band_list->item(0);
   unknown_item->setBackground(m_properties.get_band_color(
-    time_and_sales_properties::price_range::UNKNOWN));
+    price_range::UNKNOWN));
   unknown_item->setForeground(m_properties.get_text_color(
-    time_and_sales_properties::price_range::UNKNOWN));
+    price_range::UNKNOWN));
   auto above_ask_item = m_band_list->item(1);
   above_ask_item->setBackground(m_properties.get_band_color(
-    time_and_sales_properties::price_range::ABOVE_ASK));
+    price_range::ABOVE_ASK));
   above_ask_item->setForeground(m_properties.get_text_color(
-    time_and_sales_properties::price_range::ABOVE_ASK));
+    price_range::ABOVE_ASK));
   auto at_ask_item = m_band_list->item(2);
   at_ask_item->setBackground(m_properties.get_band_color(
-    time_and_sales_properties::price_range::AT_ASK));
+    price_range::AT_ASK));
   at_ask_item->setForeground(m_properties.get_text_color(
-    time_and_sales_properties::price_range::AT_ASK));
+    price_range::AT_ASK));
   auto inside_item = m_band_list->item(3);
   inside_item->setBackground(m_properties.get_band_color(
-    time_and_sales_properties::price_range::INSIDE));
+    price_range::INSIDE));
   inside_item->setForeground(m_properties.get_text_color(
-    time_and_sales_properties::price_range::INSIDE));
+    price_range::INSIDE));
   auto at_bid_item = m_band_list->item(4);
   at_bid_item->setBackground(m_properties.get_band_color(
-    time_and_sales_properties::price_range::AT_BID));
+    price_range::AT_BID));
   at_bid_item->setForeground(m_properties.get_text_color(
-    time_and_sales_properties::price_range::AT_BID));
+    price_range::AT_BID));
   auto below_bid_item = m_band_list->item(5);
   below_bid_item->setBackground(m_properties.get_band_color(
-    time_and_sales_properties::price_range::BELOW_BID));
+    price_range::BELOW_BID));
   below_bid_item->setForeground(m_properties.get_text_color(
-    time_and_sales_properties::price_range::BELOW_BID));
+    price_range::BELOW_BID));
   set_color_settings_stylesheet(m_band_list->currentRow());
   m_show_grid_check_box->setChecked(m_properties.m_show_grid);
   m_font_preview_label->setFont(m_properties.m_font);
   update_font_preview_stylesheet();
   m_time_check_box->setChecked(m_properties.get_show_column(
-    time_and_sales_properties::columns::TIME_COLUMN));
+    columns::TIME_COLUMN));
   m_price_check_box->setChecked(m_properties.get_show_column(
-    time_and_sales_properties::columns::PRICE_COLUMN));
+    columns::PRICE_COLUMN));
   m_market_check_box->setChecked(m_properties.get_show_column(
-    time_and_sales_properties::columns::MARKET_COLUMN));
+    columns::MARKET_COLUMN));
   m_size_check_box->setChecked(m_properties.get_show_column(
-    time_and_sales_properties::columns::SIZE_COLUMN));
+    columns::SIZE_COLUMN));
   m_condition_check_box->setChecked(m_properties.get_show_column(
-    time_and_sales_properties::columns::CONDITION_COLUMN));
+    columns::CONDITION_COLUMN));
 }
 
 void time_and_sales_properties_dialog::update_colors(int band_index) {
   set_color_settings_stylesheet(band_index);
-  auto i = static_cast<time_and_sales_properties::price_range>(band_index);
+  auto i = static_cast<price_range>(band_index);
   auto selected_stylesheet = QString(R"(
     QListWidget::item:selected {
       background-color: %3;

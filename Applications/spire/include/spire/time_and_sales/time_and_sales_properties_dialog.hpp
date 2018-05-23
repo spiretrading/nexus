@@ -37,7 +37,7 @@ namespace spire {
         Qt::WindowFlags flags = 0);
 
       //! Returns the properties represented by this dialog.
-      const time_and_sales_properties& get_properties() const;
+      const time_and_sales_properties& get_properties();
 
       //! Connects a slot to the apply signal.
       boost::signals2::connection connect_apply_signal(
@@ -73,12 +73,6 @@ namespace spire {
       check_box* m_size_check_box;
       check_box* m_condition_check_box;
 
-      void toggled_show_grid(int state);
-      void toggled_time(int state);
-      void toggled_price(int state);
-      void toggled_market(int state);
-      void toggled_size(int state);
-      void toggled_condition(int state);
       void set_band_color();
       void set_color_button_stylesheet(flat_button* button,
         const QColor& color);
