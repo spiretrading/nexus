@@ -543,11 +543,8 @@ void time_and_sales_properties_dialog::update_colors(int band_index) {
 }
 
 void time_and_sales_properties_dialog::update_font_preview_stylesheet() {
-  auto font_metrics = QFontMetrics(m_properties.m_font);
-  auto font_height = font_metrics.size(0, "M").height();
   m_font_preview_label->setStyleSheet(QString(R"(
     background-color: white;
     border: %1px solid #C8C8C8 %2px solid #C8C8C8;
-    font-size: %3px;
-    )").arg(scale_height(1)).arg(scale_width(1)).arg(font_height));
+    )").arg(scale_height(1)).arg(scale_width(1)));
 }
