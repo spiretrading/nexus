@@ -53,6 +53,7 @@ namespace spire {
 
     protected:
       void mousePressEvent(QMouseEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
       mutable apply_signal m_apply_signal;
@@ -72,6 +73,12 @@ namespace spire {
       check_box* m_size_check_box;
       check_box* m_condition_check_box;
 
+      void toggled_show_grid(int state);
+      void toggled_time(int state);
+      void toggled_price(int state);
+      void toggled_market(int state);
+      void toggled_size(int state);
+      void toggled_condition(int state);
       void set_band_color();
       void set_color_button_stylesheet(flat_button* button,
         const QColor& color);

@@ -197,14 +197,14 @@ void time_and_sales_window::set_properties(
     const time_and_sales_properties& properties) {
   m_properties = properties;
   m_model.get().set_properties(m_properties);
-  // Disabled for testing, by default, properties only shows 3 columns so leave
-  // them all enabled
-  //for(auto i = 0; i < static_cast<int>(
-  //    m_properties.m_show_columns.size()); ++i) {
-  //  if(!m_properties.m_show_columns[i]) {
-  //    m_table->hideColumn(i);
-  //  }
-  //}
+  for(auto i = 0; i < static_cast<int>(
+      m_properties.m_show_columns.size()); ++i) {
+    if(!m_properties.m_show_columns[i]) {
+      m_table->hideColumn(i);
+    } else {
+      m_table->showColumn(i);
+    }
+  }
   if(m_properties.m_show_grid) {
     m_table->setShowGrid(true);
   } else {

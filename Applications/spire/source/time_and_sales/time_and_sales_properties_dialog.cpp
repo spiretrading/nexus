@@ -135,6 +135,8 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   color_settings_layout->setStretchFactor(m_band_color_button, 20);
   color_settings_layout->addStretch(18);
   m_show_grid_check_box = new check_box(tr("Show Grid"), this);
+  connect(m_show_grid_check_box, &QCheckBox::stateChanged,
+    [=] (auto s) { toggled_show_grid(s); });
   auto check_box_text_style = QString(R"(
     color: black;
     font-family: Roboto;
@@ -213,30 +215,40 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   column_check_box_layout->setContentsMargins({});
   column_check_box_layout->setSpacing(0);
   m_time_check_box = new check_box(tr("Time"), this);
+  connect(m_time_check_box, &QCheckBox::stateChanged,
+    [=] (auto s) { toggled_time(s); });
   m_time_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style,
     check_box_hover_style, check_box_focused_style);
   column_check_box_layout->addWidget(m_time_check_box);
   column_check_box_layout->addStretch(20);
   m_price_check_box = new check_box(tr("Price"), this);
+  connect(m_price_check_box, &QCheckBox::stateChanged,
+    [=] (auto s) { toggled_price(s); });
   m_price_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style,
     check_box_hover_style, check_box_focused_style);
   column_check_box_layout->addWidget(m_price_check_box);
   column_check_box_layout->addStretch(20);
   m_market_check_box = new check_box(tr("Market"), this);
+  connect(m_market_check_box, &QCheckBox::stateChanged,
+    [=] (auto s) { toggled_market(s); });
   m_market_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style,
     check_box_hover_style, check_box_focused_style);
   column_check_box_layout->addWidget(m_market_check_box);
   column_check_box_layout->addStretch(20);
   m_size_check_box = new check_box(tr("Size"), this);
+  connect(m_size_check_box, &QCheckBox::stateChanged,
+    [=] (auto s) { toggled_size(s); });
   m_size_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style,
     check_box_hover_style, check_box_focused_style);
   column_check_box_layout->addWidget(m_size_check_box);
   column_check_box_layout->addStretch(20);
   m_condition_check_box = new check_box(tr("Condition"), this);
+  connect(m_condition_check_box, &QCheckBox::stateChanged,
+    [=] (auto s) { toggled_condition(s); });
   m_condition_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style,
     check_box_hover_style, check_box_focused_style);
@@ -352,6 +364,71 @@ connection time_and_sales_properties_dialog::connect_save_default_signal(
 
 void time_and_sales_properties_dialog::mousePressEvent(QMouseEvent* event) {
   setFocus();
+}
+
+void time_and_sales_properties_dialog::showEvent(QShowEvent* event) {
+  m_band_list->setFocus();
+  auto parent_geometry = static_cast<QWidget*>(parent())->geometry();
+  move(parent_geometry.center().x() - (width() / 2),
+    parent_geometry.center().y() - (height() / 2));
+}
+
+void time_and_sales_properties_dialog::toggled_show_grid(int state) {
+  if(state == Qt::Checked) {
+    m_properties.m_show_grid = true;
+  } else {
+    m_properties.m_show_grid = false;
+  }
+}
+
+void time_and_sales_properties_dialog::toggled_time(int state) {
+  if(state == Qt::Checked) {
+    m_properties.set_show_column(
+      time_and_sales_properties::columns::TIME_COLUMN, true);
+  } else {
+    m_properties.set_show_column(
+      time_and_sales_properties::columns::TIME_COLUMN, false);
+  }
+}
+
+void time_and_sales_properties_dialog::toggled_price(int state) {
+  if(state == Qt::Checked) {
+    m_properties.set_show_column(
+      time_and_sales_properties::columns::PRICE_COLUMN, true);
+  } else {
+    m_properties.set_show_column(
+      time_and_sales_properties::columns::PRICE_COLUMN, false);
+  }
+}
+
+void time_and_sales_properties_dialog::toggled_market(int state) {
+  if(state == Qt::Checked) {
+    m_properties.set_show_column(
+      time_and_sales_properties::columns::MARKET_COLUMN, true);
+  } else {
+    m_properties.set_show_column(
+      time_and_sales_properties::columns::MARKET_COLUMN, false);
+  }
+}
+
+void time_and_sales_properties_dialog::toggled_size(int state) {
+  if(state == Qt::Checked) {
+    m_properties.set_show_column(
+      time_and_sales_properties::columns::SIZE_COLUMN, true);
+  } else {
+    m_properties.set_show_column(
+      time_and_sales_properties::columns::SIZE_COLUMN, false);
+  }
+}
+
+void time_and_sales_properties_dialog::toggled_condition(int state) {
+  if(state == Qt::Checked) {
+    m_properties.set_show_column(
+      time_and_sales_properties::columns::CONDITION_COLUMN, true);
+  } else {
+    m_properties.set_show_column(
+      time_and_sales_properties::columns::CONDITION_COLUMN, false);
+  }
 }
 
 void time_and_sales_properties_dialog::set_band_color() {
