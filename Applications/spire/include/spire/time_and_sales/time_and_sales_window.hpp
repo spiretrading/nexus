@@ -76,7 +76,11 @@ namespace spire {
       QLabel* m_volume_label;
       QMenu* m_context_menu;
       std::unique_ptr<drop_shadow> m_context_menu_shadow;
+      time_and_sales_properties_dialog* m_properties_dialog;
 
+      void on_properties_apply();
+      void on_properties_ok();
+      void show_properties_dialog();
       void set_current(const Nexus::Security& s);
       void update_volume(const Nexus::Quantity& volume);
   };

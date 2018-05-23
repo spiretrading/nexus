@@ -9,6 +9,7 @@
 #include "spire/security_input/security_input_model.hpp"
 #include "spire/time_and_sales/empty_time_and_sales_model.hpp"
 #include "spire/time_and_sales/periodic_time_and_sales_model.hpp"
+#include "spire/time_and_sales/time_and_sales_properties_dialog.hpp"
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
@@ -135,6 +136,8 @@ time_and_sales_window::time_and_sales_window(
   layout->addWidget(m_volume_label);
   m_context_menu = new QMenu(this);
   auto properties_action = new QAction(tr("Properties"), m_context_menu);
+  connect(properties_action, &QAction::triggered,
+    [=] { show_properties_dialog(); });
   m_context_menu->addAction(properties_action);
   auto book_view_action = new QAction(tr("Link Book View"), m_context_menu);
   m_context_menu->addAction(book_view_action);
@@ -169,6 +172,11 @@ time_and_sales_window::time_and_sales_window(
     .arg(scale_height(3)).arg(scale_width(8)));
   set_model(std::make_shared<empty_time_and_sales_model>(Security()));
   set_properties(properties);
+  m_properties_dialog = new time_and_sales_properties_dialog(properties, this);
+  connect(m_properties_dialog, &QDialog::accepted,
+    [=] { on_properties_ok(); });
+  m_properties_dialog->connect_apply_signal(
+    [=] (auto p) { on_properties_apply(); });
 }
 
 void time_and_sales_window::set_model(
@@ -300,6 +308,18 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
       }
     }
   }
+}
+
+void time_and_sales_window::on_properties_apply() {
+  set_properties(m_properties_dialog->get_properties());
+}
+
+void time_and_sales_window::on_properties_ok() {
+  set_properties(m_properties_dialog->get_properties());
+}
+
+void time_and_sales_window::show_properties_dialog() {
+  m_properties_dialog->show();
 }
 
 void time_and_sales_window::set_current(const Security& s) {
