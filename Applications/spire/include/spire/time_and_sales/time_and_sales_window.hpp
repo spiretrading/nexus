@@ -2,6 +2,7 @@
 #define SPIRE_TIME_AND_SALES_WINDOW_HPP
 #include <boost/optional.hpp>
 #include <QLabel>
+#include <QMenu>
 #include <QTableView>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
@@ -56,6 +57,7 @@ namespace spire {
 
     protected:
       void closeEvent(QCloseEvent* event) override;
+      void contextMenuEvent(QContextMenuEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
 
@@ -71,6 +73,7 @@ namespace spire {
       QLabel* m_empty_window_label;
       QTableView* m_table;
       QLabel* m_volume_label;
+      QMenu* m_context_menu;
 
       void set_current(const Nexus::Security& s);
       void update_volume(const Nexus::Quantity& volume);

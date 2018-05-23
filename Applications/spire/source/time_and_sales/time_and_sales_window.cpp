@@ -64,6 +64,8 @@ time_and_sales_window::time_and_sales_window(
   m_table->verticalHeader()->setVisible(false);
   m_table->horizontalScrollBar()->installEventFilter(this);
   m_table->verticalScrollBar()->installEventFilter(this);
+  m_table->horizontalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
+  m_table->verticalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
   m_table->horizontalScrollBar()->setAttribute(Qt::WA_Hover);
   m_table->verticalScrollBar()->setAttribute(Qt::WA_Hover);
   m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -130,6 +132,10 @@ time_and_sales_window::time_and_sales_window(
     font-weight: 550;
     padding-left: %2px;)").arg(scale_height(10)).arg(scale_width(8)));
   layout->addWidget(m_volume_label);
+  m_context_menu = new QMenu(this);
+  m_context_menu->addAction("Test");
+  m_context_menu->addAction("Test2");
+  m_context_menu->addAction("Test3");
   set_model(std::make_shared<empty_time_and_sales_model>(Security()));
   set_properties(properties);
 }
@@ -181,6 +187,24 @@ connection time_and_sales_window::connect_closed_signal(
 
 void time_and_sales_window::closeEvent(QCloseEvent* event) {
   m_closed_signal();
+}
+
+void time_and_sales_window::contextMenuEvent(QContextMenuEvent* event) {
+  QRect widget_geometry;
+  if(!m_empty_window_label->isHidden()) {
+    widget_geometry = QRect(
+      m_empty_window_label->mapToGlobal(
+        m_empty_window_label->geometry().topLeft()),
+      m_empty_window_label->mapToGlobal(
+        m_empty_window_label->geometry().bottomRight()));
+  } else {
+    widget_geometry = QRect(
+      m_table->mapToGlobal(m_table->geometry().topLeft()),
+      m_table->mapToGlobal(m_table->geometry().bottomRight()));
+  }
+  if(widget_geometry.contains(event->globalPos())) {
+    m_context_menu->exec(event->globalPos());
+  }
 }
 
 bool time_and_sales_window::eventFilter(QObject* watched, QEvent* event) {
