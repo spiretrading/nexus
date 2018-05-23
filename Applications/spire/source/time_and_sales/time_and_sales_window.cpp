@@ -12,6 +12,7 @@
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
+#include "spire/ui/drop_shadow.hpp"
 #include "spire/ui/window.hpp"
 
 using namespace boost;
@@ -133,9 +134,39 @@ time_and_sales_window::time_and_sales_window(
     padding-left: %2px;)").arg(scale_height(10)).arg(scale_width(8)));
   layout->addWidget(m_volume_label);
   m_context_menu = new QMenu(this);
-  m_context_menu->addAction("Test");
-  m_context_menu->addAction("Test2");
-  m_context_menu->addAction("Test3");
+  auto properties_action = new QAction(tr("Properties"), m_context_menu);
+  m_context_menu->addAction(properties_action);
+  auto book_view_action = new QAction(tr("Link Book View"), m_context_menu);
+  m_context_menu->addAction(book_view_action);
+  auto chart_action = new QAction(tr("Link Chart"), m_context_menu);
+  m_context_menu->addAction(chart_action);
+  auto export_action = new QAction(tr("Export Table"), m_context_menu);
+  m_context_menu->addAction(export_action);
+  m_context_menu->setFixedWidth(scale_width(140));
+  m_context_menu->setWindowFlag(Qt::NoDropShadowWindowHint);
+  m_context_menu_shadow = std::make_unique<drop_shadow>(
+    true, true, m_context_menu);
+  m_context_menu->setStyleSheet(QString(R"(
+    QMenu {
+      background-color: #FFFFFF;
+      border: %1px solid #A0A0A0 %2px solid #A0A0A0;
+      color: #000000;
+      font-family: Roboto;
+      font-size: %3px;
+      padding: %4px 0px;
+    }
+
+    QMenu::item {
+      padding: %5px 0px %5px %6px;
+    }
+
+    QMenu::item:selected, QMenu::item:hover {
+      background-color: #8D78EC;
+      color: #FFFFFF;
+    })")
+    .arg(scale_height(1)).arg(scale_width(1))
+    .arg(scale_height(12)).arg(scale_height(5))
+    .arg(scale_height(3)).arg(scale_width(8)));
   set_model(std::make_shared<empty_time_and_sales_model>(Security()));
   set_properties(properties);
 }
