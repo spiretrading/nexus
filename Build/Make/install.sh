@@ -338,6 +338,6 @@ cd ..
 sudo -u $(logname) cp /home/developers/Nexus/Applications/*.sh .
 sudo -u $(logname) cp /home/developers/Nexus/Applications/*.sql .
 python_directory=$(sudo -u $(logname) python3 -m site --user-site)
-cp /home/developers/Beam/Beam/Library/Release/beam.so $python_directory
-cp /home/developers/Nexus/Nexus/Library/Release/nexus.so $python_directory
+sudo -u $(logname) cp /home/developers/Beam/Beam/Library/Release/beam.so $python_directory
+sudo -u $(logname) cp /home/developers/Nexus/Nexus/Library/Release/nexus.so $python_directory
 ldconfig

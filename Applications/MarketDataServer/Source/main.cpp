@@ -122,7 +122,12 @@ namespace {
 
   void PopulateRegistrySecurityInfo(Out<MarketDataRegistry> registry,
       const MarketDatabase& marketDatabase) {
-    auto config = Require(LoadFile, "symbols");
+    YAML::Node config;
+    try {
+      config = LoadFile("symbols");
+    } catch(const std::exception&) {
+      return;
+    }
     auto symbols = config["symbols"];
     if(!symbols) {
       return;
