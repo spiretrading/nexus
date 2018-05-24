@@ -13,7 +13,6 @@
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
 #include "spire/ui/security_stack.hpp"
 #include "spire/ui/ui.hpp"
-#include "spire/ui/custom_qt_variants.hpp"
 
 namespace spire {
 

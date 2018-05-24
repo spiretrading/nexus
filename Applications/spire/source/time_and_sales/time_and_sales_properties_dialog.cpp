@@ -332,70 +332,71 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   set_properties(properties);
 }
 
-const time_and_sales_properties&
-    time_and_sales_properties_dialog::get_properties() {
+time_and_sales_properties
+    time_and_sales_properties_dialog::get_properties() const {
+  time_and_sales_properties properties;
   auto unknown_item = m_band_list->item(0);
-  m_properties.set_band_color(price_range::UNKNOWN,
+  properties.set_band_color(price_range::UNKNOWN,
     unknown_item->backgroundColor());
-  m_properties.set_text_color(price_range::UNKNOWN,
+  properties.set_text_color(price_range::UNKNOWN,
     unknown_item->textColor());
   auto above_ask_item = m_band_list->item(1);
-  m_properties.set_band_color(price_range::ABOVE_ASK,
+  properties.set_band_color(price_range::ABOVE_ASK,
     above_ask_item->backgroundColor());
-  m_properties.set_text_color(price_range::ABOVE_ASK,
+  properties.set_text_color(price_range::ABOVE_ASK,
     above_ask_item->textColor());
   auto at_ask_item = m_band_list->item(2);
-  m_properties.set_band_color(price_range::AT_ASK,
+  properties.set_band_color(price_range::AT_ASK,
     at_ask_item->backgroundColor());
-  m_properties.set_text_color(price_range::AT_ASK,
+  properties.set_text_color(price_range::AT_ASK,
     at_ask_item->textColor());
   auto inside_item = m_band_list->item(3);
-  m_properties.set_band_color(price_range::INSIDE,
+  properties.set_band_color(price_range::INSIDE,
     inside_item->backgroundColor());
-  m_properties.set_text_color(price_range::INSIDE,
+  properties.set_text_color(price_range::INSIDE,
     inside_item->textColor());
   auto at_bid_item = m_band_list->item(4);
-  m_properties.set_band_color(price_range::AT_BID,
+  properties.set_band_color(price_range::AT_BID,
     at_bid_item->backgroundColor());
-  m_properties.set_text_color(price_range::AT_BID,
+  properties.set_text_color(price_range::AT_BID,
     at_bid_item->textColor());
   auto below_bid_item = m_band_list->item(5);
-  m_properties.set_band_color(price_range::BELOW_BID,
+  properties.set_band_color(price_range::BELOW_BID,
     below_bid_item->backgroundColor());
-  m_properties.set_text_color(price_range::BELOW_BID,
+  properties.set_text_color(price_range::BELOW_BID,
     below_bid_item->textColor());
   if(m_show_grid_check_box->isChecked()) {
-    m_properties.m_show_grid = true;
+    properties.m_show_grid = true;
   } else {
-    m_properties.m_show_grid = false;
+    properties.m_show_grid = false;
   }
-  m_properties.m_font = m_font_preview_label->font();
+  properties.m_font = m_font_preview_label->font();
   if(m_time_check_box->isChecked()) {
-    m_properties.set_show_column(columns::TIME_COLUMN, true);
+    properties.set_show_column(columns::TIME_COLUMN, true);
   } else {
-    m_properties.set_show_column(columns::TIME_COLUMN, false);
+    properties.set_show_column(columns::TIME_COLUMN, false);
   }
   if(m_price_check_box->isChecked()) {
-    m_properties.set_show_column(columns::PRICE_COLUMN, true);
+    properties.set_show_column(columns::PRICE_COLUMN, true);
   } else {
-    m_properties.set_show_column(columns::PRICE_COLUMN, false);
+    properties.set_show_column(columns::PRICE_COLUMN, false);
   }
   if(m_market_check_box->isChecked()) {
-    m_properties.set_show_column(columns::MARKET_COLUMN, true);
+    properties.set_show_column(columns::MARKET_COLUMN, true);
   } else {
-    m_properties.set_show_column(columns::MARKET_COLUMN, false);
+    properties.set_show_column(columns::MARKET_COLUMN, false);
   }
   if(m_size_check_box->isChecked()) {
-    m_properties.set_show_column(columns::SIZE_COLUMN, true);
+    properties.set_show_column(columns::SIZE_COLUMN, true);
   } else {
-    m_properties.set_show_column(columns::SIZE_COLUMN, false);
+    properties.set_show_column(columns::SIZE_COLUMN, false);
   }
   if(m_condition_check_box->isChecked()) {
-    m_properties.set_show_column(columns::CONDITION_COLUMN, true);
+    properties.set_show_column(columns::CONDITION_COLUMN, true);
   } else {
-    m_properties.set_show_column(columns::CONDITION_COLUMN, false);
+    properties.set_show_column(columns::CONDITION_COLUMN, false);
   }
-  return m_properties;
+  return properties;
 }
 
 connection time_and_sales_properties_dialog::connect_apply_signal(
