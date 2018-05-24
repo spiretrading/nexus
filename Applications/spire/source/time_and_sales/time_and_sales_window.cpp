@@ -53,6 +53,10 @@ time_and_sales_window::time_and_sales_window(
     font-family: Roboto;
     font-size: %1px;)").arg(scale_height(11)));
   layout->addWidget(m_empty_window_label);
+  m_overlay_widget = new QLabel(m_body);
+  m_overlay_widget->setStyleSheet(
+    "background-color: rgba(245, 245, 245, 153);");
+  m_overlay_widget->hide();
   m_table = new QTableView(this);
   m_table->setItemDelegate(new custom_variant_item_delegate(this));
   m_table->setMouseTracking(true);
@@ -307,6 +311,7 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
   }
   auto pressed_key = event->text();
   if(pressed_key[0].isLetterOrNumber()) {
+    show_overlay_widget();
     auto dialog = new security_input_dialog(*m_input_model, pressed_key, this);
     dialog->move(geometry().center().x() - dialog->width() / 2,
       geometry().center().y() - dialog->height() / 2);
@@ -318,6 +323,7 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
         activateWindow();
       }
     }
+    m_overlay_widget->hide();
   }
 }
 
@@ -327,6 +333,19 @@ void time_and_sales_window::on_properties_apply() {
 
 void time_and_sales_window::on_properties_ok() {
   set_properties(m_properties_dialog->get_properties());
+}
+
+void time_and_sales_window::show_overlay_widget() {
+  if(m_empty_window_label->isVisible()) {
+    m_overlay_widget->resize(m_empty_window_label->size());
+    m_overlay_widget->move(m_empty_window_label->mapTo(m_empty_window_label,
+      m_empty_window_label->pos()));
+  } else {
+    m_overlay_widget->resize(m_table->size());
+    m_overlay_widget->move(m_table->mapTo(m_table, m_table->pos()));
+  }
+  m_overlay_widget->show();
+  m_overlay_widget->raise();
 }
 
 void time_and_sales_window::show_properties_dialog() {

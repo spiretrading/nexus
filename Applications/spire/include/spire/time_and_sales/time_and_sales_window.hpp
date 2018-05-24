@@ -71,6 +71,7 @@ namespace spire {
       Nexus::Security m_current_security;
       QWidget* m_body;
       QLabel* m_empty_window_label;
+      QLabel* m_overlay_widget;
       QTableView* m_table;
       QLabel* m_volume_label;
       QMenu* m_context_menu;
@@ -79,6 +80,7 @@ namespace spire {
 
       void on_properties_apply();
       void on_properties_ok();
+      void show_overlay_widget();
       void show_properties_dialog();
       void set_current(const Nexus::Security& s);
       void update_volume(const Nexus::Quantity& volume);
