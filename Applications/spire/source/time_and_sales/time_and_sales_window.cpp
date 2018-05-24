@@ -112,13 +112,22 @@ time_and_sales_window::time_and_sales_window(
       background-color: #C8C8C8;
     }
 
+    QScrollBar::handle:horizontal {
+      min-width: %3px;
+    }
+
+    QScrollBar::handle:vertical {
+      min-height: %4px;
+    }
+
     QScrollBar::add-line, QScrollBar::sub-line,
     QScrollBar::add-page, QScrollBar::sub-page {
       background: none;
       border: none;
       height: 0px;
       width: 0px;
-    })").arg(scale_height(10)).arg(scale_height(10)));
+    })").arg(scale_height(10)).arg(scale_height(10))
+        .arg(scale_width(30)).arg(scale_height(30)));
   m_table->hide();
   layout->addWidget(m_table);
   m_volume_label = new QLabel(tr("Volume: 0"), this);
