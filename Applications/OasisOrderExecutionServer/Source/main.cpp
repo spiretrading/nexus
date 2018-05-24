@@ -14,6 +14,7 @@
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <Beam/UidService/ApplicationDefinitions.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
 #include <tclap/CmdLine.h>
@@ -129,15 +130,8 @@ int main(int argc, const char** argv) {
     cerr << "error: " << e.error() << " for arg " << e.argId() << endl;
     return -1;
   }
-  YAML::Node config;
-  YAML::Node feeTableConfig;
-  try {
-    LoadFile(configFile, Store(config));
-    LoadFile(feeTableFile, Store(feeTableConfig));
-  } catch(const std::exception& e) {
-    cerr << e.what() << endl;
-    return -1;
-  }
+  auto config = Require(LoadFile, configFile);
+  auto feeTableConfig = Require(LoadFile, feeTableFile);
   ServiceLocatorClientConfig serviceLocatorClientConfig;
   try {
     serviceLocatorClientConfig = ServiceLocatorClientConfig::Parse(
