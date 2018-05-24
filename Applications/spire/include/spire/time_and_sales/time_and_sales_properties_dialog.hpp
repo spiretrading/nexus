@@ -37,7 +37,7 @@ namespace spire {
         Qt::WindowFlags flags = 0);
 
       //! Returns the properties represented by this dialog.
-      const time_and_sales_properties& get_properties() const;
+      time_and_sales_properties get_properties() const;
 
       //! Connects a slot to the apply signal.
       boost::signals2::connection connect_apply_signal(
@@ -53,6 +53,7 @@ namespace spire {
 
     protected:
       void mousePressEvent(QMouseEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
       mutable apply_signal m_apply_signal;

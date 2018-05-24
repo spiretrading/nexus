@@ -9,9 +9,11 @@
 #include "spire/security_input/security_input_model.hpp"
 #include "spire/time_and_sales/empty_time_and_sales_model.hpp"
 #include "spire/time_and_sales/periodic_time_and_sales_model.hpp"
+#include "spire/time_and_sales/time_and_sales_properties_dialog.hpp"
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
+#include "spire/ui/drop_shadow.hpp"
 #include "spire/ui/window.hpp"
 
 using namespace boost;
@@ -64,6 +66,8 @@ time_and_sales_window::time_and_sales_window(
   m_table->verticalHeader()->setVisible(false);
   m_table->horizontalScrollBar()->installEventFilter(this);
   m_table->verticalScrollBar()->installEventFilter(this);
+  m_table->horizontalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
+  m_table->verticalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
   m_table->horizontalScrollBar()->setAttribute(Qt::WA_Hover);
   m_table->verticalScrollBar()->setAttribute(Qt::WA_Hover);
   m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -141,8 +145,49 @@ time_and_sales_window::time_and_sales_window(
     font-weight: 550;
     padding-left: %2px;)").arg(scale_height(10)).arg(scale_width(8)));
   layout->addWidget(m_volume_label);
+  m_context_menu = new QMenu(this);
+  auto properties_action = new QAction(tr("Properties"), m_context_menu);
+  connect(properties_action, &QAction::triggered,
+    [=] { show_properties_dialog(); });
+  m_context_menu->addAction(properties_action);
+  auto book_view_action = new QAction(tr("Link Book View"), m_context_menu);
+  m_context_menu->addAction(book_view_action);
+  auto chart_action = new QAction(tr("Link Chart"), m_context_menu);
+  m_context_menu->addAction(chart_action);
+  auto export_action = new QAction(tr("Export Table"), m_context_menu);
+  m_context_menu->addAction(export_action);
+  m_context_menu->setFixedWidth(scale_width(140));
+  m_context_menu->setWindowFlag(Qt::NoDropShadowWindowHint);
+  m_context_menu_shadow = std::make_unique<drop_shadow>(
+    true, true, m_context_menu);
+  m_context_menu->setStyleSheet(QString(R"(
+    QMenu {
+      background-color: #FFFFFF;
+      border: %1px solid #A0A0A0 %2px solid #A0A0A0;
+      color: #000000;
+      font-family: Roboto;
+      font-size: %3px;
+      padding: %4px 0px;
+    }
+
+    QMenu::item {
+      padding: %5px 0px %5px %6px;
+    }
+
+    QMenu::item:selected, QMenu::item:hover {
+      background-color: #8D78EC;
+      color: #FFFFFF;
+    })")
+    .arg(scale_height(1)).arg(scale_width(1))
+    .arg(scale_height(12)).arg(scale_height(5))
+    .arg(scale_height(3)).arg(scale_width(8)));
   set_model(std::make_shared<empty_time_and_sales_model>(Security()));
   set_properties(properties);
+  m_properties_dialog = new time_and_sales_properties_dialog(properties, this);
+  connect(m_properties_dialog, &QDialog::accepted,
+    [=] { on_properties_ok(); });
+  m_properties_dialog->connect_apply_signal(
+    [=] (auto p) { on_properties_apply(); });
 }
 
 void time_and_sales_window::set_model(
@@ -163,14 +208,14 @@ void time_and_sales_window::set_properties(
     const time_and_sales_properties& properties) {
   m_properties = properties;
   m_model.get().set_properties(m_properties);
-  // Disabled for testing, by default, properties only shows 3 columns so leave
-  // them all enabled
-  //for(auto i = 0; i < static_cast<int>(
-  //    m_properties.m_show_columns.size()); ++i) {
-  //  if(!m_properties.m_show_columns[i]) {
-  //    m_table->hideColumn(i);
-  //  }
-  //}
+  for(auto i = 0; i < static_cast<int>(
+      m_properties.m_show_columns.size()); ++i) {
+    if(!m_properties.m_show_columns[i]) {
+      m_table->hideColumn(i);
+    } else {
+      m_table->showColumn(i);
+    }
+  }
   if(m_properties.m_show_grid) {
     m_table->setShowGrid(true);
   } else {
@@ -192,6 +237,24 @@ connection time_and_sales_window::connect_closed_signal(
 
 void time_and_sales_window::closeEvent(QCloseEvent* event) {
   m_closed_signal();
+}
+
+void time_and_sales_window::contextMenuEvent(QContextMenuEvent* event) {
+  QRect widget_geometry;
+  if(!m_empty_window_label->isHidden()) {
+    widget_geometry = QRect(
+      m_empty_window_label->mapToGlobal(
+        m_empty_window_label->geometry().topLeft()),
+      m_empty_window_label->mapToGlobal(
+        m_empty_window_label->geometry().bottomRight()));
+  } else {
+    widget_geometry = QRect(
+      m_table->mapToGlobal(m_table->geometry().topLeft()),
+      m_table->mapToGlobal(m_table->geometry().bottomRight()));
+  }
+  if(widget_geometry.contains(event->globalPos())) {
+    m_context_menu->exec(event->globalPos());
+  }
 }
 
 bool time_and_sales_window::eventFilter(QObject* watched, QEvent* event) {
@@ -256,6 +319,18 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
       }
     }
   }
+}
+
+void time_and_sales_window::on_properties_apply() {
+  set_properties(m_properties_dialog->get_properties());
+}
+
+void time_and_sales_window::on_properties_ok() {
+  set_properties(m_properties_dialog->get_properties());
+}
+
+void time_and_sales_window::show_properties_dialog() {
+  m_properties_dialog->show();
 }
 
 void time_and_sales_window::set_current(const Security& s) {

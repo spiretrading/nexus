@@ -2,6 +2,7 @@
 #define SPIRE_TIME_AND_SALES_WINDOW_HPP
 #include <boost/optional.hpp>
 #include <QLabel>
+#include <QMenu>
 #include <QTableView>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
@@ -11,7 +12,7 @@
 #include "spire/time_and_sales/time_and_sales_properties.hpp"
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
 #include "spire/ui/security_stack.hpp"
-#include "spire/ui/custom_qt_variants.hpp"
+#include "spire/ui/ui.hpp"
 
 namespace spire {
 
@@ -56,6 +57,7 @@ namespace spire {
 
     protected:
       void closeEvent(QCloseEvent* event) override;
+      void contextMenuEvent(QContextMenuEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
 
@@ -71,7 +73,13 @@ namespace spire {
       QLabel* m_empty_window_label;
       QTableView* m_table;
       QLabel* m_volume_label;
+      QMenu* m_context_menu;
+      std::unique_ptr<drop_shadow> m_context_menu_shadow;
+      time_and_sales_properties_dialog* m_properties_dialog;
 
+      void on_properties_apply();
+      void on_properties_ok();
+      void show_properties_dialog();
       void set_current(const Nexus::Security& s);
       void update_volume(const Nexus::Quantity& volume);
   };
