@@ -116,6 +116,8 @@ time_and_sales_window::time_and_sales_window(
     QScrollBar::add-page, QScrollBar::sub-page {
       background: none;
       border: none;
+      height: 0px;
+      width: 0px;
     })").arg(scale_height(10)).arg(scale_height(10)));
   m_table->hide();
   layout->addWidget(m_table);
