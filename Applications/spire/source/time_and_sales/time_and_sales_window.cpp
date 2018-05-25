@@ -1,7 +1,9 @@
 #include "spire/time_and_sales/time_and_sales_window.hpp"
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
+#include <QGraphicsOpacityEffect>
 #include <QHeaderView>
 #include <QKeyEvent>
+#include <QPropertyAnimation>
 #include <QScrollBar>
 #include <QTableView>
 #include <QVBoxLayout>
@@ -298,7 +300,16 @@ bool time_and_sales_window::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(watched == m_table->verticalScrollBar()) {
     if(event->type() == QEvent::HoverLeave) {
-      m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+      QGraphicsOpacityEffect *eff = new QGraphicsOpacityEffect(this);
+      m_table->verticalScrollBar()->setGraphicsEffect(eff);
+      QPropertyAnimation *a = new QPropertyAnimation(eff, "opacity");
+      a->setDuration(200);
+      a->setStartValue(1.0);
+      a->setEndValue(0.0);
+      a->setEasingCurve(QEasingCurve::InCirc);
+      a->start(QPropertyAnimation::DeleteWhenStopped);
+      connect(a, &QPropertyAnimation::finished,
+        [=] { m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff); });
     }
   } else if(watched == m_table->horizontalScrollBar()) {
     if(event->type() == QEvent::HoverLeave) {
