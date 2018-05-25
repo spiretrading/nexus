@@ -134,7 +134,7 @@ time_and_sales_window::time_and_sales_window(
       border: none;
       height: 0px;
       width: 0px;
-    })").arg(scale_height(10)).arg(scale_height(10))
+    })").arg(scale_height(12)).arg(scale_height(12))
         .arg(scale_width(30)).arg(scale_height(30)));
   m_table->hide();
   layout->addWidget(m_table);
@@ -264,6 +264,23 @@ void time_and_sales_window::contextMenuEvent(QContextMenuEvent* event) {
 bool time_and_sales_window::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_table ||
       watched == m_table->horizontalHeader()->viewport()) {
+    if(watched == m_table) {
+      if(event->type() == QEvent::Wheel) {
+        auto e = static_cast<QWheelEvent*>(event);
+        if(m_table->horizontalScrollBarPolicy() == Qt::ScrollBarAlwaysOff) {
+          m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+          if(e->angleDelta().y() < 0) {
+            m_table->verticalScrollBar()->setValue(
+              m_table->verticalScrollBar()->value() +
+              m_table->verticalScrollBar()->singleStep());
+          } else {
+            m_table->verticalScrollBar()->setValue(
+              m_table->verticalScrollBar()->value() -
+              m_table->verticalScrollBar()->singleStep());
+          }
+        }
+      }
+    }
     if(event->type() == QEvent::MouseMove) {
       auto e = static_cast<QMouseEvent*>(event);
       if(e->pos().x() > width() - m_table->verticalScrollBar()->width()) {
