@@ -4,6 +4,7 @@
 #include <QLabel>
 #include <QMenu>
 #include <QTableView>
+#include <QTimer>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/security_input/security_input.hpp"
@@ -77,7 +78,13 @@ namespace spire {
       QMenu* m_context_menu;
       std::unique_ptr<drop_shadow> m_context_menu_shadow;
       time_and_sales_properties_dialog* m_properties_dialog;
+      bool m_v_scrolling;
+      bool m_h_scrolling;
+      QTimer* m_v_scroll_bar_timer;
+      QTimer* m_h_scroll_bar_timer;
 
+      void fade_out_horizontal_scroll_bar();
+      void fade_out_vertical_scroll_bar();
       void on_properties_apply();
       void on_properties_ok();
       void show_overlay_widget();
