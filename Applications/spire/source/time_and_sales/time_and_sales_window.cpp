@@ -225,7 +225,7 @@ void time_and_sales_window::set_properties(
   } else {
     m_table->setShowGrid(false);
   }
-  auto row_size = (m_properties.m_font.pointSize() * 2.4) + 0.5;
+  auto row_size = (scale_height(m_properties.m_font.pointSize()) * 1.9) + 0.5;
   m_table->verticalHeader()->setDefaultSectionSize(row_size);
 }
 
