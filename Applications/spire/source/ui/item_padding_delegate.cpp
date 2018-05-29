@@ -1,4 +1,5 @@
 #include "spire/ui/item_padding_delegate.hpp"
+#include <QPainter>
 
 using namespace spire;
 
@@ -14,7 +15,8 @@ QString item_padding_delegate::displayText(const QVariant& value,
 
 void item_padding_delegate::paint(QPainter* painter,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
-  QStyledItemDelegate::paint(painter, option, index);
+  painter->fillRect(option.rect,
+    index.data(Qt::BackgroundRole).value<QColor>());
 }
 
 QSize item_padding_delegate::sizeHint(const QStyleOptionViewItem& option,
