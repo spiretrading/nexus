@@ -91,6 +91,7 @@ namespace spire {
       void show_properties_dialog();
       void set_current(const Nexus::Security& s);
       void update_volume(const Nexus::Quantity& volume);
+      bool within_h_scroll_bar(const QPoint& pos);
   };
 }
 

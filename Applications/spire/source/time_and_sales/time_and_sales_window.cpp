@@ -297,29 +297,30 @@ bool time_and_sales_window::eventFilter(QObject* watched, QEvent* event) {
         m_h_scrolling = true;
         m_h_scroll_bar_timer->start();
       } else {
-        if(m_table->horizontalScrollBar()->isVisible()) {
-          m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        if(!within_h_scroll_bar(e->pos())) {
+          if(m_table->horizontalScrollBar()->isVisible()) {
+            m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+          }
+          m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+          if(e->angleDelta().y() < 0) {
+            m_table->verticalScrollBar()->setValue(
+              m_table->verticalScrollBar()->value() +
+              m_table->verticalScrollBar()->singleStep());
+          } else {
+            m_table->verticalScrollBar()->setValue(
+              m_table->verticalScrollBar()->value() -
+              m_table->verticalScrollBar()->singleStep());
+          }
+          m_v_scrolling = true;
+          m_v_scroll_bar_timer->start();
         }
-        m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-        if(e->angleDelta().y() < 0) {
-          m_table->verticalScrollBar()->setValue(
-            m_table->verticalScrollBar()->value() +
-            m_table->verticalScrollBar()->singleStep());
-        } else {
-          m_table->verticalScrollBar()->setValue(
-            m_table->verticalScrollBar()->value() -
-            m_table->verticalScrollBar()->singleStep());
-        }
-        m_v_scrolling = true;
-        m_v_scroll_bar_timer->start();
       }
     } else if(event->type() == QEvent::MouseMove) {
       auto e = static_cast<QMouseEvent*>(event);
       if(e->pos().x() > width() - m_table->verticalScrollBar()->width()) {
         m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
         m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-      } else if(e->pos().y() > m_table->height() -
-          m_table->horizontalScrollBar()->height()) {
+      } else if(within_h_scroll_bar(e->pos())) {
         m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
         m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
       } else {
@@ -441,4 +442,9 @@ void time_and_sales_window::set_current(const Security& s) {
 
 void time_and_sales_window::update_volume(const Quantity& volume) {
   m_volume_label->setText(tr("Volume: ") + Beam::ToString(volume).c_str());
+}
+
+bool time_and_sales_window::within_h_scroll_bar(const QPoint& pos) {
+  return pos.y() > m_table->height() - 
+    m_table->horizontalScrollBar()->height();
 }
