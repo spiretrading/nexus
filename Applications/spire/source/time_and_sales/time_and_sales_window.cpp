@@ -315,8 +315,7 @@ bool time_and_sales_window::eventFilter(QObject* watched, QEvent* event) {
       if(e->pos().x() > width() - m_table->verticalScrollBar()->width()) {
         m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
         m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-      } else if(e->pos().y() >
-          m_table->height() -
+      } else if(e->pos().y() > m_table->height() -
           m_table->horizontalScrollBar()->height()) {
         m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
         m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -330,6 +329,14 @@ bool time_and_sales_window::eventFilter(QObject* watched, QEvent* event) {
           fade_out_horizontal_scroll_bar();
         }
       }
+    }
+  } else if(watched == m_table->verticalScrollBar()) {
+    if(event->type() == QEvent::HoverLeave) {
+      fade_out_vertical_scroll_bar();
+    }
+  } else if(watched == m_table->horizontalScrollBar()) {
+    if(event->type() == QEvent::HoverLeave) {
+      fade_out_horizontal_scroll_bar();
     }
   }
   return QWidget::eventFilter(watched, event);
