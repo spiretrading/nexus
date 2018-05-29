@@ -204,6 +204,8 @@ time_and_sales_window::time_and_sales_window(
     [=] { on_properties_ok(); });
   m_properties_dialog->connect_apply_signal(
     [=] (auto p) { on_properties_apply(); });
+  QWidget::window()->setAttribute(Qt::WA_Hover);
+  QWidget::window()->installEventFilter(this);
 }
 
 void time_and_sales_window::set_model(
@@ -337,6 +339,15 @@ bool time_and_sales_window::eventFilter(QObject* watched, QEvent* event) {
   } else if(watched == m_table->horizontalScrollBar()) {
     if(event->type() == QEvent::HoverLeave) {
       fade_out_horizontal_scroll_bar();
+    }
+  } else if(watched == QWidget::window()) {
+    if(event->type() == QEvent::HoverLeave) {
+      if(m_table->verticalScrollBarPolicy() != Qt::ScrollBarAlwaysOff) {
+        fade_out_vertical_scroll_bar();
+      } else if(m_table->horizontalScrollBarPolicy() !=
+          Qt::ScrollBarAlwaysOff) {
+        fade_out_horizontal_scroll_bar();
+      }
     }
   }
   return QWidget::eventFilter(watched, event);
