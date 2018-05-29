@@ -1,9 +1,7 @@
 #include "spire/time_and_sales/time_and_sales_window.hpp"
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
-#include <QGraphicsOpacityEffect>
 #include <QHeaderView>
 #include <QKeyEvent>
-#include <QPropertyAnimation>
 #include <QScrollBar>
 #include <QTableView>
 #include <QVBoxLayout>
