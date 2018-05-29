@@ -17,6 +17,12 @@ namespace spire {
       QString displayText(const QVariant& value,
         const QLocale& locale) const override;
 
+      void paint(QPainter* painter, const QStyleOptionViewItem& option,
+        const QModelIndex& index) const;
+
+      QSize sizeHint(const QStyleOptionViewItem& option,
+        const QModelIndex& index) const;
+
     private:
       custom_variant_item_delegate* m_custom_variant_item_delegate;
   };

@@ -14,6 +14,7 @@
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
 #include "spire/ui/drop_shadow.hpp"
+#include "spire/ui/item_padding_delegate.hpp"
 #include "spire/ui/window.hpp"
 
 using namespace boost;
@@ -60,7 +61,8 @@ time_and_sales_window::time_and_sales_window(
     "background-color: rgba(245, 245, 245, 153);");
   m_overlay_widget->hide();
   m_table = new QTableView(this);
-  m_table->setItemDelegate(new custom_variant_item_delegate(this));
+  m_table->setItemDelegate(new item_padding_delegate(
+    new custom_variant_item_delegate(this), this));
   m_table->setMouseTracking(true);
   m_table->installEventFilter(this);
   m_table->viewport()->setAttribute(Qt::WA_TransparentForMouseEvents);

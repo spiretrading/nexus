@@ -11,3 +11,13 @@ QString item_padding_delegate::displayText(const QVariant& value,
     const QLocale& locale) const {
   return m_custom_variant_item_delegate->displayText(value, locale);
 }
+
+void item_padding_delegate::paint(QPainter* painter,
+    const QStyleOptionViewItem& option, const QModelIndex& index) const {
+  QStyledItemDelegate::paint(painter, option, index);
+}
+
+QSize item_padding_delegate::sizeHint(const QStyleOptionViewItem& option,
+    const QModelIndex& index) const {
+  return QSize();
+}
