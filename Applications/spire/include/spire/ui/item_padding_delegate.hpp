@@ -11,7 +11,7 @@ namespace spire {
 
       //! Constructs an item delegate for custom padding.
       /*!
-        \param padding The amount of item padding, unscaled.
+        \param padding The amount of item padding in pixels.
         \param delegate The delegate to add padding to.
         \param parent The parent to this delegate instance.
       */
