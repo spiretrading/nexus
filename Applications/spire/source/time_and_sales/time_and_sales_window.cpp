@@ -14,6 +14,7 @@
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
 #include "spire/ui/drop_shadow.hpp"
+#include "spire/ui/item_padding_delegate.hpp"
 #include "spire/ui/window.hpp"
 
 using namespace boost;
@@ -60,7 +61,8 @@ time_and_sales_window::time_and_sales_window(
     "background-color: rgba(245, 245, 245, 153);");
   m_overlay_widget->hide();
   m_table = new QTableView(this);
-  m_table->setItemDelegate(new custom_variant_item_delegate(this));
+  m_table->setItemDelegate(new item_padding_delegate(scale_width(6),
+    new custom_variant_item_delegate(), this));
   m_table->setMouseTracking(true);
   m_table->installEventFilter(this);
   m_table->viewport()->setAttribute(Qt::WA_TransparentForMouseEvents);
@@ -237,8 +239,9 @@ void time_and_sales_window::set_properties(
   } else {
     m_table->setShowGrid(false);
   }
-  auto row_size = (scale_height(m_properties.m_font.pointSize()) * 1.9) + 0.5;
-  m_table->verticalHeader()->setDefaultSectionSize(row_size);
+  QFontMetrics metrics(m_properties.m_font);
+  auto row_height = metrics.height() + scale_height(2);
+  m_table->verticalHeader()->setDefaultSectionSize(row_height);
 }
 
 connection time_and_sales_window::connect_security_change_signal(
