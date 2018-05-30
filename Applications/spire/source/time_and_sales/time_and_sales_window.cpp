@@ -377,11 +377,11 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
   auto pressed_key = event->text();
   if(pressed_key[0].isLetterOrNumber()) {
     show_overlay_widget();
-    auto dialog = new security_input_dialog(*m_input_model, pressed_key, this);
-    dialog->move(geometry().center().x() - dialog->width() / 2,
-      geometry().center().y() - dialog->height() / 2);
-    if(dialog->exec() == QDialog::Accepted) {
-      auto s = dialog->get_security();
+    security_input_dialog dialog(*m_input_model, pressed_key, this);
+    dialog.move(geometry().center().x() - dialog.width() / 2,
+      geometry().center().y() - dialog.height() / 2);
+    if(dialog.exec() == QDialog::Accepted) {
+      auto s = dialog.get_security();
       if(s != Security() && s != m_current_security) {
         m_securities.push(m_current_security);
         set_current(s);

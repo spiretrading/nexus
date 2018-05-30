@@ -37,8 +37,10 @@ namespace spire {
       //! Returns the security that was input.
       const Nexus::Security& get_security() const noexcept;
 
-    private:
+    protected:
+      void changeEvent(QEvent* event) override;
       void closeEvent(QCloseEvent* event) override;
+      bool eventFilter(QObject* watched, QEvent* event) override;
       void mouseMoveEvent(QMouseEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;

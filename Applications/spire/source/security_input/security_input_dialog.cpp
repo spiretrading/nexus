@@ -1,4 +1,5 @@
 #include "spire/security_input/security_input_dialog.hpp"
+#include <QApplication>
 #include <QLabel>
 #include <QMouseEvent>
 #include <QVBoxLayout>
@@ -47,6 +48,9 @@ security_input_dialog::security_input_dialog(security_input_model& model,
     [=] (const Security& s) { set_security(s); });
   layout->addWidget(m_security_input_box);
   layout->setStretchFactor(m_security_input_box, 30);
+  if(parent != nullptr) {
+    parent->installEventFilter(this);
+  }
 }
 
 security_input_dialog::~security_input_dialog() = default;
@@ -55,8 +59,41 @@ const Security& security_input_dialog::get_security() const noexcept {
   return m_security;
 }
 
+void security_input_dialog::changeEvent(QEvent* event) {
+  if(event->type() == QEvent::ActivationChange) {
+    if(QApplication::activeWindow() != this) {
+      for(auto& child : m_security_input_box->children()) {
+        auto c = qobject_cast<QWidget*>(child);
+        if(c != nullptr && c->isActiveWindow()) {
+          c->installEventFilter(this);
+          return;
+        }
+      }
+      reject();
+    }
+  }
+}
+
 void security_input_dialog::closeEvent(QCloseEvent* event) {
   reject();
+}
+
+bool security_input_dialog::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == parent()) {
+    if(event->type() == QEvent::MouseButtonPress) {
+      reject();
+    }
+  } else if(event->type() == QEvent::ActivationChange) {
+    auto c = static_cast<QWidget*>(watched);
+    if(QApplication::activeWindow() != c) {
+      if(QApplication::activeWindow() == this) {
+        c->removeEventFilter(this);
+      } else {
+        reject();
+      }
+    }
+  }
+  return QDialog::eventFilter(watched, event);
 }
 
 void security_input_dialog::mouseMoveEvent(QMouseEvent* event) {
