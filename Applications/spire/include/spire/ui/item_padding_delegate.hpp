@@ -1,7 +1,7 @@
 #ifndef SPIRE_ITEM_PADDING_DELEGATE
 #define SPIRE_ITEM_PADDING_DELEGATE
 #include <QStyledItemDelegate>
-#include "spire/ui/custom_qt_variants.hpp"
+#include "spire/ui/ui.hpp"
 
 namespace spire {
 
@@ -10,21 +10,26 @@ namespace spire {
     public:
 
       //! Constructs an item delegate for custom padding.
-      item_padding_delegate(custom_variant_item_delegate* delegate,
+      /*!
+        \param padding The amount of item padding, unscaled.
+        \param delegate The delegate to add padding to.
+        \param parent The parent to this delegate instance.
+      */
+      item_padding_delegate(int padding, QStyledItemDelegate* delegate,
         QObject* parent = nullptr);
 
-      //! Forwards the returned value from custom_variant_item_delegate
       QString displayText(const QVariant& value,
         const QLocale& locale) const override;
 
       void paint(QPainter* painter, const QStyleOptionViewItem& option,
-        const QModelIndex& index) const;
+        const QModelIndex& index) const override;
 
       QSize sizeHint(const QStyleOptionViewItem& option,
-        const QModelIndex& index) const;
+        const QModelIndex& index) const override;
 
     private:
-      custom_variant_item_delegate* m_custom_variant_item_delegate;
+      int m_padding;
+      QStyledItemDelegate* m_item_delegate;
   };
 }
 
