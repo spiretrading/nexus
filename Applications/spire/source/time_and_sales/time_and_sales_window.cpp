@@ -213,6 +213,8 @@ void time_and_sales_window::set_model(
   model->connect_volume_signal(
     [=] (const Quantity& v) { update_volume(v); });
   m_model.emplace(std::move(model), m_properties);
+  connect(m_model.get_ptr(), &QAbstractTableModel::rowsAboutToBeInserted,
+    [=] { maintain_table_position(); });
   auto filter = new custom_variant_sort_filter_proxy_model(this);
   filter->setSourceModel(&m_model.get());
   m_table->setModel(filter);
@@ -402,6 +404,13 @@ void time_and_sales_window::fade_out_vertical_scroll_bar() {
   m_v_scroll_bar_timer->stop();
   m_v_scrolling = false;
   m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+}
+
+void time_and_sales_window::maintain_table_position() {
+  if(m_table->verticalScrollBar()->value() != 0) {
+    m_table->verticalScrollBar()->setValue(
+      m_table->verticalScrollBar()->value() + m_table->rowHeight(0));
+  }
 }
 
 void time_and_sales_window::on_properties_apply() {
