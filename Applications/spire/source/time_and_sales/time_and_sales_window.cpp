@@ -61,7 +61,7 @@ time_and_sales_window::time_and_sales_window(
     "background-color: rgba(245, 245, 245, 153);");
   m_overlay_widget->hide();
   m_table = new QTableView(this);
-  m_table->setItemDelegate(new item_padding_delegate(scale_width(6),
+  m_table->setItemDelegate(new item_padding_delegate(scale_width(5),
     new custom_variant_item_delegate(), this));
   m_table->setMouseTracking(true);
   m_table->installEventFilter(this);
