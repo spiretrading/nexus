@@ -28,7 +28,8 @@ time_and_sales_window::time_and_sales_window(
     : QWidget(parent),
       m_input_model(&input_model),
       m_v_scrolling(false),
-      m_h_scrolling(false) {
+      m_h_scrolling(false),
+      m_header_font(QFont()) {
   m_body = new QWidget(this);
   m_body->setMinimumSize(scale(180, 200));
   resize(scale_width(182), scale_height(452));
@@ -105,15 +106,14 @@ time_and_sales_window::time_and_sales_window(
       border: none;
       color: #4B23A0;
       font-family: Roboto;
-      font-size: %1px;
       font-weight: 550;
-      padding-left: %2px;
+      padding-left: %1px;
     }
 
     QHeaderView::section::first {
       background: none;
       background-color: #FFFFFF;
-    })").arg(scale_height(11)).arg(scale_width(8)));
+    })").arg(scale_width(8)));
   m_table->setStyleSheet(QString(R"(
     QTableView {
       border: none;
@@ -244,6 +244,14 @@ void time_and_sales_window::set_properties(
   QFontMetrics metrics(m_properties.m_font);
   auto row_height = metrics.height() + scale_height(2);
   m_table->verticalHeader()->setDefaultSectionSize(row_height);
+  if(m_properties.m_font.pointSize() >= 11) {
+    m_header_font.setPointSizeF(m_properties.m_font.pointSize() * 0.8);
+  } else {
+    m_header_font.setPointSize(9);
+  }
+  m_table->horizontalHeader()->setFont(m_header_font);
+  QFontMetrics header_metrics(m_header_font);
+  m_table->horizontalHeader()->setFixedHeight(header_metrics.height() * 1.8);
   repaint();
 }
 
