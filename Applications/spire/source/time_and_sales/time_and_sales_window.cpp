@@ -69,6 +69,7 @@ time_and_sales_window::time_and_sales_window(
   m_table->viewport()->setAttribute(Qt::WA_TransparentForMouseEvents);
   m_table->setFocusPolicy(Qt::NoFocus);
   m_table->setSelectionMode(QAbstractItemView::NoSelection);
+  m_table->horizontalHeader()->setMinimumSectionSize(scale_width(35));
   m_table->horizontalHeader()->setStretchLastSection(true);
   m_table->horizontalHeader()->viewport()->setMouseTracking(true);
   m_table->horizontalHeader()->viewport()->installEventFilter(this);
@@ -108,6 +109,7 @@ time_and_sales_window::time_and_sales_window(
       font-family: Roboto;
       font-weight: 550;
       padding-left: %1px;
+      padding-right: %1px;
     }
 
     QHeaderView::section::first {
