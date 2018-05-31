@@ -244,6 +244,7 @@ void time_and_sales_window::set_properties(
   QFontMetrics metrics(m_properties.m_font);
   auto row_height = metrics.height() + scale_height(2);
   m_table->verticalHeader()->setDefaultSectionSize(row_height);
+  repaint();
 }
 
 connection time_and_sales_window::connect_security_change_signal(
