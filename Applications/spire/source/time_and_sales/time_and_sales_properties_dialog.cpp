@@ -371,31 +371,6 @@ time_and_sales_properties
     properties.m_show_grid = false;
   }
   properties.m_font = m_font_preview_label->font();
-  if(m_time_check_box->isChecked()) {
-    properties.set_show_column(columns::TIME_COLUMN, true);
-  } else {
-    properties.set_show_column(columns::TIME_COLUMN, false);
-  }
-  if(m_price_check_box->isChecked()) {
-    properties.set_show_column(columns::PRICE_COLUMN, true);
-  } else {
-    properties.set_show_column(columns::PRICE_COLUMN, false);
-  }
-  if(m_market_check_box->isChecked()) {
-    properties.set_show_column(columns::MARKET_COLUMN, true);
-  } else {
-    properties.set_show_column(columns::MARKET_COLUMN, false);
-  }
-  if(m_size_check_box->isChecked()) {
-    properties.set_show_column(columns::SIZE_COLUMN, true);
-  } else {
-    properties.set_show_column(columns::SIZE_COLUMN, false);
-  }
-  if(m_condition_check_box->isChecked()) {
-    properties.set_show_column(columns::CONDITION_COLUMN, true);
-  } else {
-    properties.set_show_column(columns::CONDITION_COLUMN, false);
-  }
   return properties;
 }
 
@@ -517,16 +492,6 @@ void time_and_sales_properties_dialog::set_properties(
   m_show_grid_check_box->setChecked(m_properties.m_show_grid);
   m_font_preview_label->setFont(m_properties.m_font);
   update_font_preview_stylesheet();
-  m_time_check_box->setChecked(m_properties.get_show_column(
-    columns::TIME_COLUMN));
-  m_price_check_box->setChecked(m_properties.get_show_column(
-    columns::PRICE_COLUMN));
-  m_market_check_box->setChecked(m_properties.get_show_column(
-    columns::MARKET_COLUMN));
-  m_size_check_box->setChecked(m_properties.get_show_column(
-    columns::SIZE_COLUMN));
-  m_condition_check_box->setChecked(m_properties.get_show_column(
-    columns::CONDITION_COLUMN));
 }
 
 void time_and_sales_properties_dialog::update_colors(int band_index) {
