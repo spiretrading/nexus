@@ -4,7 +4,7 @@
 using namespace spire;
 
 item_padding_delegate::item_padding_delegate(int padding,
-  QStyledItemDelegate* delegate, QObject* parent)
+    QStyledItemDelegate* delegate, QObject* parent)
     : QStyledItemDelegate(parent),
       m_padding(padding),
       m_item_delegate(delegate) {

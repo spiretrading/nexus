@@ -365,11 +365,7 @@ time_and_sales_properties
     below_bid_item->backgroundColor());
   properties.set_text_color(price_range::BELOW_BID,
     below_bid_item->textColor());
-  if(m_show_grid_check_box->isChecked()) {
-    properties.m_show_grid = true;
-  } else {
-    properties.m_show_grid = false;
-  }
+  properties.m_show_grid = m_show_grid_check_box->isChecked();
   properties.m_font = m_font_preview_label->font();
   return properties;
 }

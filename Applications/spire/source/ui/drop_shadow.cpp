@@ -76,7 +76,7 @@ void drop_shadow::paintEvent(QPaintEvent* event) {
   }
   QPainter painter(this);
   auto parent_size = m_parent->frameGeometry().size();
-  const auto shadow_size = this->shadow_size();
+  auto shadow_size = this->shadow_size();
   if(m_has_top) {
     QRect top_rect(QPoint(shadow_size.width(), 0),
       QSize(parent_size.width(), shadow_size.height()));
