@@ -488,7 +488,11 @@ void time_and_sales_properties_dialog::set_properties(
     price_range::BELOW_BID));
   below_bid_item->setForeground(m_properties.get_text_color(
     price_range::BELOW_BID));
-  set_color_settings_stylesheet(m_band_list->currentRow());
+  if(m_band_list->currentRow() > 0) {
+    set_color_settings_stylesheet(m_band_list->currentRow());
+  } else {
+    set_color_settings_stylesheet(0);
+  }
   m_show_grid_check_box->setChecked(m_properties.m_show_grid);
   m_font_preview_label->setFont(m_properties.m_font);
   update_font_preview_stylesheet();
