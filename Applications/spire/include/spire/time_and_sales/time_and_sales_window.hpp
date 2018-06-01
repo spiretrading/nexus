@@ -82,7 +82,6 @@ namespace spire {
       bool m_h_scrolling;
       QTimer* m_v_scroll_bar_timer;
       QTimer* m_h_scroll_bar_timer;
-      QFont m_header_font;
 
       void fade_out_horizontal_scroll_bar();
       void fade_out_vertical_scroll_bar();
