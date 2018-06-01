@@ -29,7 +29,7 @@ int time_and_sales_window_model::rowCount(const QModelIndex& parent) const {
 }
 
 int time_and_sales_window_model::columnCount(const QModelIndex& parent) const {
-  return m_properties.m_show_columns.size();
+  return time_and_sales_properties::COLUMN_COUNT;
 }
 
 QVariant time_and_sales_window_model::data(const QModelIndex& index,

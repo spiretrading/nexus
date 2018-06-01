@@ -229,19 +229,7 @@ void time_and_sales_window::set_properties(
     const time_and_sales_properties& properties) {
   m_properties = properties;
   m_model.get().set_properties(m_properties);
-  for(auto i = 0; i < static_cast<int>(
-      m_properties.m_show_columns.size()); ++i) {
-    if(!m_properties.m_show_columns[i]) {
-      m_table->hideColumn(i);
-    } else {
-      m_table->showColumn(i);
-    }
-  }
-  if(m_properties.m_show_grid) {
-    m_table->setShowGrid(true);
-  } else {
-    m_table->setShowGrid(false);
-  }
+  m_table->setShowGrid(m_properties.m_show_grid);
   QFontMetrics metrics(m_properties.m_font);
   auto row_height = metrics.height() + scale_height(2);
   m_table->verticalHeader()->setDefaultSectionSize(row_height);
