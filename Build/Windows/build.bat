@@ -14,13 +14,8 @@ CALL %~dp0../../Applications/ComplianceServer/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/CseMarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/CtaMarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/DefinitionsServer/Build/Windows/build.bat %config%
-CALL %~dp0../../Applications/MarketDataClientStressTest/Build/Windows/build.bat %config%
-CALL %~dp0../../Applications/MarketDataClientTemplate/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/MarketDataRelayServer/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/MarketDataServer/Build/Windows/build.bat %config%
-CALL %~dp0../../Applications/OrderExecutionBackup/Build/Windows/build.bat %config%
-CALL %~dp0../../Applications/OrderExecutionRestore/Build/Windows/build.bat %config%
-CALL %~dp0../../Applications/ReplayMarketDataFeedClient/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/RiskServer/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/SimulationMarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/SimulationOrderExecutionServer/Build/Windows/build.bat %config%

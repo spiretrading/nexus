@@ -63,9 +63,6 @@ namespace spire {
     //! The list of band colors used.
     std::array<QColor, PRICE_RANGE_COUNT> m_band_colors;
 
-    //! The list of columns to show.
-    std::array<bool, COLUMN_COUNT> m_show_columns;
-
     //! Whether to display a grid.
     bool m_show_grid;
 
@@ -86,12 +83,6 @@ namespace spire {
 
     //! Sets a band color.
     void set_band_color(price_range index, const QColor& color) noexcept;
-
-    //! Returns the visibility of a column.
-    bool get_show_column(columns column) const noexcept;
-
-    //! Sets the visibility of a column.
-    void set_show_column(columns column, bool show) noexcept;
   };
 }
 

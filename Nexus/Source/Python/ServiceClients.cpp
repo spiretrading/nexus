@@ -126,23 +126,6 @@ namespace {
   }
 }
 
-BEAM_DEFINE_PYTHON_POINTER_LINKER(ChartingService::VirtualChartingClient);
-BEAM_DEFINE_PYTHON_POINTER_LINKER(Compliance::VirtualComplianceClient);
-BEAM_DEFINE_PYTHON_POINTER_LINKER(DefinitionsService::VirtualDefinitionsClient);
-BEAM_DEFINE_PYTHON_POINTER_LINKER(FromPythonServiceClients);
-BEAM_DEFINE_PYTHON_POINTER_LINKER(VirtualMarketDataClient);
-BEAM_DEFINE_PYTHON_POINTER_LINKER(
-  OrderExecutionService::VirtualOrderExecutionClient);
-BEAM_DEFINE_PYTHON_POINTER_LINKER(PythonTestServiceClients);
-BEAM_DEFINE_PYTHON_POINTER_LINKER(RegistryService::VirtualRegistryClient);
-BEAM_DEFINE_PYTHON_POINTER_LINKER(RiskService::VirtualRiskClient);
-BEAM_DEFINE_PYTHON_POINTER_LINKER(ServiceLocator::VirtualServiceLocatorClient);
-BEAM_DEFINE_PYTHON_POINTER_LINKER(
-  ToPythonServiceClients<ApplicationServiceClients>);
-BEAM_DEFINE_PYTHON_POINTER_LINKER(VirtualServiceClients);
-BEAM_DEFINE_PYTHON_POINTER_LINKER(VirtualTimeClient);
-BEAM_DEFINE_PYTHON_POINTER_LINKER(VirtualTimer);
-
 void Nexus::Python::ExportApplicationServiceClients() {
   class_<ToPythonServiceClients<ApplicationServiceClients>,
     std::shared_ptr<ToPythonServiceClients<ApplicationServiceClients>>,

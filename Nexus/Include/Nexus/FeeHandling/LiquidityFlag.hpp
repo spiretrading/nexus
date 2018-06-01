@@ -60,9 +60,8 @@ namespace Nexus {
   void ParseFeeTable(const YAML::Node& config,
       Beam::Out<std::unordered_map<std::string, T>> table) {
     for(auto i = config.begin(); i != config.end(); ++i) {
-      std::string flag;
-      i.first() >> flag;
-      auto fee = Beam::Extract<T>(i.second());
+      auto flag = i->first.as<std::string>();
+      auto fee = Beam::Extract<T>(i->second);
       table->insert(std::make_pair(flag, fee));
     }
   }
@@ -76,12 +75,12 @@ namespace Nexus {
   template<typename T>
   void ParseFeeTable(const YAML::Node& config, const std::string& name,
       Beam::Out<std::unordered_map<std::string, T>> table) {
-    auto node = config.FindValue(name);
-    if(node == nullptr) {
+    auto node = config[name];
+    if(!node) {
       BOOST_THROW_EXCEPTION(
         std::runtime_error{"Fee table \"" + name + "\" not found."});
     }
-    ParseFeeTable(*node, Beam::Store(table));
+    ParseFeeTable(node, Beam::Store(table));
   }
 
   //! Parses a table of fees from a YAML Node.
@@ -111,12 +110,12 @@ namespace Nexus {
   template<typename T, std::size_t COLUMNS>
   void ParseFeeTable(const YAML::Node& config, const std::string& name,
       Beam::Out<std::array<T, COLUMNS>> table) {
-    auto node = config.FindValue(name);
-    if(node == nullptr) {
+    auto node = config[name];
+    if(!node) {
       BOOST_THROW_EXCEPTION(
         std::runtime_error{"Fee table \"" + name + "\" not found."});
     }
-    ParseFeeTable(*node, Beam::Store(table));
+    ParseFeeTable(node, Beam::Store(table));
   }
 
   //! Parses a table of fees from a YAML Node.
@@ -152,12 +151,12 @@ namespace Nexus {
   template<typename T, std::size_t ROWS, std::size_t COLUMNS>
   void ParseFeeTable(const YAML::Node& config, const std::string& name,
       Beam::Out<std::array<std::array<T, COLUMNS>, ROWS>> table) {
-    auto node = config.FindValue(name);
-    if(node == nullptr) {
+    auto node = config[name];
+    if(!node) {
       BOOST_THROW_EXCEPTION(
         std::runtime_error{"Fee table \"" + name + "\" not found."});
     }
-    ParseFeeTable(*node, Beam::Store(table));
+    ParseFeeTable(node, Beam::Store(table));
   }
 }
 

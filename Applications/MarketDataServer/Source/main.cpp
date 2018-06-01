@@ -14,6 +14,7 @@
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
@@ -72,8 +73,8 @@ namespace {
   JsonValue ParseCountries(const YAML::Node& config,
       const CountryDatabase& countryDatabase) {
     vector<JsonValue> countries;
-    for(auto& item : config) {
-      auto country = ParseCountryCode(item.to<string>(), countryDatabase);
+    for(auto item : config) {
+      auto country = ParseCountryCode(item.as<string>(), countryDatabase);
       countries.push_back(static_cast<double>(country));
     }
     if(countries.empty()) {
@@ -123,23 +124,15 @@ namespace {
       const MarketDatabase& marketDatabase) {
     YAML::Node config;
     try {
-      ifstream symbolStream{"symbols"};
-      if(!symbolStream.good()) {
-        cerr << "symbols not found" << endl;
-        return;
-      }
-      YAML::Parser configParser{symbolStream};
-      configParser.GetNextDocument(config);
-    } catch(const YAML::ParserException& e) {
-      cerr << "Invalid symbol at line " << (e.mark.line + 1) << ", " <<
-        "column " << (e.mark.column + 1) << ": " << e.msg << endl;
+      config = LoadFile("symbols");
+    } catch(const std::exception&) {
       return;
     }
-    auto symbols = config.FindValue("symbols");
-    if(symbols == nullptr) {
+    auto symbols = config["symbols"];
+    if(!symbols) {
       return;
     }
-    for(auto& entry : *symbols) {
+    for(auto entry : symbols) {
       auto symbol = Extract<string>(entry, "symbol");
       auto name = Extract<string>(entry, "name");
       auto security = ParseSecurity(symbol, marketDatabase);
@@ -163,20 +156,7 @@ int main(int argc, const char** argv) {
     cerr << "error: " << e.error() << " for arg " << e.argId() << endl;
     return -1;
   }
-  YAML::Node config;
-  try {
-    ifstream configStream{configFile.c_str()};
-    if(!configStream.good()) {
-      cerr << configFile << " not found." << endl;
-      return -1;
-    }
-    YAML::Parser configParser{configStream};
-    configParser.GetNextDocument(config);
-  } catch(const YAML::ParserException& e) {
-    cerr << "Invalid YAML at line " << (e.mark.line + 1) << ", " <<
-      "column " << (e.mark.column + 1) << ": " << e.msg << endl;
-    return -1;
-  }
+  auto config = Require(LoadFile, configFile);
   ServiceLocatorClientConfig serviceLocatorClientConfig;
   try {
     serviceLocatorClientConfig = ServiceLocatorClientConfig::Parse(
@@ -235,9 +215,9 @@ int main(int argc, const char** argv) {
   }
   JsonValue countries = JsonNull{};
   try {
-    auto countriesNode = config.FindValue("countries");
-    if(countriesNode != nullptr) {
-      countries = ParseCountries(*countriesNode,
+    auto countriesNode = config["countries"];
+    if(countriesNode) {
+      countries = ParseCountries(countriesNode,
         definitionsClient->LoadCountryDatabase());
     }
   } catch(const std::exception& e) {
@@ -253,10 +233,10 @@ int main(int argc, const char** argv) {
   }
   MySqlHistoricalDataStore historicalDataStore{mySqlConfig.m_address,
     mySqlConfig.m_schema, mySqlConfig.m_username, mySqlConfig.m_password};
-  optional<BufferedHistoricalDataStore<MySqlHistoricalDataStore*>>
+  boost::optional<BufferedHistoricalDataStore<MySqlHistoricalDataStore*>>
     bufferedDataStore;
   MarketDataRegistry marketDataRegistry;
-  optional<BaseRegistryServlet> baseRegistryServlet;
+  boost::optional<BaseRegistryServlet> baseRegistryServlet;
   try {
     PopulateRegistrySecurityInfo(Store(marketDataRegistry),
       definitionsClient->LoadMarketDatabase());

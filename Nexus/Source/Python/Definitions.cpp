@@ -71,17 +71,6 @@ namespace {
   };
 }
 
-BEAM_DEFINE_PYTHON_QUEUE_LINKER(BboQuote);
-BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedBboQuote);
-BEAM_DEFINE_PYTHON_QUEUE_LINKER(BookQuote);
-BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedBookQuote);
-BEAM_DEFINE_PYTHON_QUEUE_LINKER(MarketQuote);
-BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedMarketQuote);
-BEAM_DEFINE_PYTHON_QUEUE_LINKER(OrderImbalance);
-BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedOrderImbalance);
-BEAM_DEFINE_PYTHON_QUEUE_LINKER(TimeAndSale);
-BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedTimeAndSale);
-
 void Nexus::Python::ExportBboQuote() {
   class_<BboQuote>("BboQuote", init<>())
     .def(init<const Quote&, const Quote&, const ptime&>())
