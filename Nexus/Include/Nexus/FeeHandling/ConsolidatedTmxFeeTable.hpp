@@ -122,7 +122,7 @@ namespace Nexus {
       const MarketDatabase& marketDatabase) {
     std::unordered_set<Security> securities;
     for(auto& item : config) {
-      auto security = ParseSecurity(item.to<std::string>(), marketDatabase);
+      auto security = ParseSecurity(item.as<std::string>(), marketDatabase);
       securities.insert(security);
     }
     return securities;
@@ -136,27 +136,13 @@ namespace Nexus {
   */
   inline std::unordered_set<Security> ParseTmxInterlistedSecurities(
       const std::string& path, const MarketDatabase& marketDatabase) {
-    std::ifstream configStream{path.c_str()};
-    if(!configStream.good()) {
-      BOOST_THROW_EXCEPTION(std::runtime_error{
-        "TMX interlisted file not found: \"" + path + "\""});
-    }
-    YAML::Node config;
-    try {
-      YAML::Parser configParser(configStream);
-      configParser.GetNextDocument(config);
-    } catch(YAML::ParserException& e) {
-      std::stringstream message;
-      message << "Invalid YAML at line " << (e.mark.line + 1) << ", " <<
-        "column " << (e.mark.column + 1) << ": " << e.msg << std::endl;
-      BOOST_THROW_EXCEPTION(std::runtime_error{message.str()});
-    }
-    auto symbols = config.FindValue("symbols");
-    if(symbols == nullptr) {
+    auto config = Beam::LoadFile(path);
+    auto symbols = config["symbols"];
+    if(!symbols) {
       BOOST_THROW_EXCEPTION(std::runtime_error{
         "Interlisted symbols not found."});
     }
-    return ParseSecuritySet(*symbols, marketDatabase);
+    return ParseSecuritySet(symbols, marketDatabase);
   }
 
   //! Parses the set of TMX ETF symbols.
@@ -167,27 +153,13 @@ namespace Nexus {
   */
   inline std::unordered_set<Security> ParseTmxEtfSecurities(
       const std::string& path, const MarketDatabase& marketDatabase) {
-    std::ifstream configStream{path.c_str()};
-    if(!configStream.good()) {
-      BOOST_THROW_EXCEPTION(std::runtime_error{
-        "TMX ETF file not found: \"" + path + "\""});
-    }
-    YAML::Node config;
-    try {
-      YAML::Parser configParser(configStream);
-      configParser.GetNextDocument(config);
-    } catch(YAML::ParserException& e) {
-      std::stringstream message;
-      message << "Invalid YAML at line " << (e.mark.line + 1) << ", " <<
-        "column " << (e.mark.column + 1) << ": " << e.msg << std::endl;
-      BOOST_THROW_EXCEPTION(std::runtime_error{message.str()});
-    }
-    auto symbols = config.FindValue("symbols");
-    if(symbols == nullptr) {
+    auto config = Beam::LoadFile(path);
+    auto symbols = config["symbols"];
+    if(!symbols) {
       BOOST_THROW_EXCEPTION(std::runtime_error{
         "Interlisted symbols not found."});
     }
-    return ParseSecuritySet(*symbols, marketDatabase);
+    return ParseSecuritySet(symbols, marketDatabase);
   }
 
   //! Parses the set of NEX listed symbols.
@@ -198,27 +170,13 @@ namespace Nexus {
   */
   inline std::unordered_set<Security> ParseNexListedSecurities(
       const std::string& path, const MarketDatabase& marketDatabase) {
-    std::ifstream configStream{path.c_str()};
-    if(!configStream.good()) {
-      BOOST_THROW_EXCEPTION(std::runtime_error{
-        "NEX listed file not found: \"" + path + "\""});
-    }
-    YAML::Node config;
-    try {
-      YAML::Parser configParser(configStream);
-      configParser.GetNextDocument(config);
-    } catch(YAML::ParserException& e) {
-      std::stringstream message;
-      message << "Invalid YAML at line " << (e.mark.line + 1) << ", " <<
-        "column " << (e.mark.column + 1) << ": " << e.msg << std::endl;
-      BOOST_THROW_EXCEPTION(std::runtime_error{message.str()});
-    }
-    auto symbols = config.FindValue("symbols");
-    if(symbols == nullptr) {
+    auto config = Beam::LoadFile(path);
+    auto symbols = config["symbols"];
+    if(!symbols) {
       BOOST_THROW_EXCEPTION(std::runtime_error{
         "Interlisted symbols not found."});
     }
-    return ParseSecuritySet(*symbols, marketDatabase);
+    return ParseSecuritySet(symbols, marketDatabase);
   }
 
   //! Parses a ConsolidatedTmxFeeTable from a YAML configuration.
@@ -237,77 +195,77 @@ namespace Nexus {
     feeTable.m_clearingFee = Beam::Extract<Money>(config, "clearing_fee");
     feeTable.m_perOrderFee = Beam::Extract<Money>(config, "per_order_fee");
     feeTable.m_perOrderCap = Beam::Extract<Money>(config, "per_order_cap");
-    auto xatsConfig = config.FindValue("xats");
-    if(xatsConfig == nullptr) {
+    auto xatsConfig = config["xats"];
+    if(!xatsConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for XATS missing."});
     } else {
-      feeTable.m_xatsFeeTable = ParseXatsFeeTable(*xatsConfig);
+      feeTable.m_xatsFeeTable = ParseXatsFeeTable(xatsConfig);
     }
-    auto chicConfig = config.FindValue("chic");
-    if(chicConfig == nullptr) {
+    auto chicConfig = config["chic"];
+    if(!chicConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for CHIC missing."});
     } else {
-      feeTable.m_chicFeeTable = ParseChicFeeTable(*chicConfig);
+      feeTable.m_chicFeeTable = ParseChicFeeTable(chicConfig);
     }
-    auto cseConfig = config.FindValue("cse");
-    if(cseConfig == nullptr) {
+    auto cseConfig = config["cse"];
+    if(!cseConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for CSE missing."});
     } else {
-      feeTable.m_cseFeeTable = ParseCseFeeTable(*cseConfig);
+      feeTable.m_cseFeeTable = ParseCseFeeTable(cseConfig);
     }
-    auto xcx2Config = config.FindValue("xcx2");
-    if(xcx2Config == nullptr) {
+    auto xcx2Config = config["xcx2"];
+    if(!xcx2Config) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for XCX2 missing."});
     } else {
-      feeTable.m_xcx2FeeTable = ParseXcx2FeeTable(*xcx2Config);
+      feeTable.m_xcx2FeeTable = ParseXcx2FeeTable(xcx2Config);
     }
-    auto lynxConfig = config.FindValue("lynx");
-    if(lynxConfig == nullptr) {
+    auto lynxConfig = config["lynx"];
+    if(!lynxConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for LYNX missing."});
     } else {
-      feeTable.m_lynxFeeTable = ParseLynxFeeTable(*lynxConfig);
+      feeTable.m_lynxFeeTable = ParseLynxFeeTable(lynxConfig);
     }
-    auto matnConfig = config.FindValue("matn");
-    if(matnConfig == nullptr) {
+    auto matnConfig = config["matn"];
+    if(!matnConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for MATN missing."});
     } else {
-      feeTable.m_matnFeeTable = ParseMatnFeeTable(*matnConfig);
+      feeTable.m_matnFeeTable = ParseMatnFeeTable(matnConfig);
     }
-    auto neoeConfig = config.FindValue("neoe");
-    if(neoeConfig == nullptr) {
+    auto neoeConfig = config["neoe"];
+    if(!neoeConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for NEOE missing."});
     } else {
-      feeTable.m_neoeFeeTable = ParseNeoeFeeTable(*neoeConfig);
+      feeTable.m_neoeFeeTable = ParseNeoeFeeTable(neoeConfig);
     }
-    auto nexConfig = config.FindValue("nex");
-    if(nexConfig == nullptr) {
+    auto nexConfig = config["nex"];
+    if(!nexConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for NEX missing."});
     } else {
-      feeTable.m_nexFeeTable = ParseNexFeeTable(*nexConfig);
+      feeTable.m_nexFeeTable = ParseNexFeeTable(nexConfig);
     }
-    auto omgaConfig = config.FindValue("omga");
-    if(omgaConfig == nullptr) {
+    auto omgaConfig = config["omga"];
+    if(!omgaConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for OMGA missing."});
     } else {
-      feeTable.m_omgaFeeTable = ParseOmgaFeeTable(*omgaConfig);
+      feeTable.m_omgaFeeTable = ParseOmgaFeeTable(omgaConfig);
     }
-    auto pureConfig = config.FindValue("pure");
-    if(pureConfig == nullptr) {
+    auto pureConfig = config["pure"];
+    if(!pureConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for PURE missing."});
     } else {
-      feeTable.m_pureFeeTable = ParsePureFeeTable(*pureConfig, marketDatabase);
+      feeTable.m_pureFeeTable = ParsePureFeeTable(pureConfig, marketDatabase);
     }
-    auto tsxConfig = config.FindValue("tsx");
-    if(tsxConfig == nullptr) {
+    auto tsxConfig = config["tsx"];
+    if(!tsxConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for XTSE missing."});
     } else {
-      feeTable.m_tsxFeeTable = ParseTsxFeeTable(*tsxConfig);
+      feeTable.m_tsxFeeTable = ParseTsxFeeTable(tsxConfig);
     }
-    auto tsxvConfig = config.FindValue("tsxv");
-    if(tsxvConfig == nullptr) {
+    auto tsxvConfig = config["tsxv"];
+    if(!tsxvConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for XTSX missing."});
     } else {
-      feeTable.m_tsxVentureTable = ParseTsxFeeTable(*tsxvConfig);
+      feeTable.m_tsxVentureTable = ParseTsxFeeTable(tsxvConfig);
     }
     auto etfPath = Beam::Extract<std::string>(config, "etf_path");
     feeTable.m_etfs = ParseTmxEtfSecurities(etfPath, marketDatabase);

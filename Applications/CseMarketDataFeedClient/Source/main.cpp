@@ -20,6 +20,7 @@
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
@@ -66,15 +67,9 @@ namespace {
   static const std::size_t DEFAULT_RECEIVE_BUFFER_SIZE = 16777216;
 
   std::vector<SecurityInfo> ParseSecurityInfoList(const std::string& path) {
-    YAML::Node config;
-    ifstream configStream{path.c_str()};
-    if(!configStream.good()) {
-      throw std::runtime_error{path + " not found."};
-    }
-    YAML::Parser configParser{configStream};
-    configParser.GetNextDocument(config);
+    auto config = Require(LoadFile, path);
     std::vector<SecurityInfo> securities;
-    for(auto& node : config) {
+    for(auto node : config) {
       auto symbol = Extract<string>(node, "symbol");
       auto name = Extract<string>(node, "name");
       SecurityInfo info;
@@ -89,7 +84,7 @@ namespace {
   std::unordered_map<string, string> LoadMpidMappings(
       const YAML::Node& config) {
     std::unordered_map<string, string> mappings;
-    for(auto& node : config) {
+    for(auto node : config) {
       auto source = Extract<string>(node, "source");
       auto name = Extract<string>(node, "name");
       mappings.insert(make_pair(source, name));
@@ -111,9 +106,8 @@ namespace {
     cseConfig.m_timeOffset = -GetUtcOffset(currentDate, *timeZone);
     cseConfig.m_isTimeAndSaleFeed = Extract<bool>(config, "is_time_and_sale",
       false);
-    if(config.FindValue("mpid_mappings") != nullptr) {
-      cseConfig.m_mpidMappings = LoadMpidMappings(*config.FindValue(
-        "mpid_mappings"));
+    if(auto mpidMappings = config["mpid_mappings"]) {
+      cseConfig.m_mpidMappings = LoadMpidMappings(mpidMappings);
     }
     return cseConfig;
   }
@@ -133,20 +127,7 @@ int main(int argc, const char** argv) {
     cerr << "error: " << e.error() << " for arg " << e.argId() << endl;
     return -1;
   }
-  YAML::Node config;
-  try {
-    ifstream configStream{configFile.c_str()};
-    if(!configStream.good()) {
-      cerr << configFile << " not found." << endl;
-      return -1;
-    }
-    YAML::Parser configParser{configStream};
-    configParser.GetNextDocument(config);
-  } catch(const YAML::ParserException& e) {
-    cerr << "Invalid YAML at line " << (e.mark.line + 1) << ", " << "column " <<
-      (e.mark.column + 1) << ": " << e.msg << endl;
-    return -1;
-  }
+  auto config = Require(LoadFile, configFile);
   ServiceLocatorClientConfig serviceLocatorClientConfig;
   try {
     serviceLocatorClientConfig = ServiceLocatorClientConfig::Parse(
@@ -199,7 +180,7 @@ int main(int argc, const char** argv) {
     cerr << "NTP service unavailable." << endl;
     return -1;
   }
-  optional<BaseMarketDataFeedClient> baseMarketDataFeedClient;
+  boost::optional<BaseMarketDataFeedClient> baseMarketDataFeedClient;
   try {
     auto marketDataService = FindMarketDataFeedService(DefaultCountries::CA(),
       *serviceLocatorClient);
@@ -220,7 +201,7 @@ int main(int argc, const char** argv) {
     cerr << "Error initializing client: " << e.what() << endl;
     return -1;
   }
-  optional<MulticastSocketChannel> multicastSocketChannel;
+  boost::optional<MulticastSocketChannel> multicastSocketChannel;
   try {
     auto host = Extract<IpAddress>(config, "host");
     auto interface = Extract<IpAddress>(config, "interface");

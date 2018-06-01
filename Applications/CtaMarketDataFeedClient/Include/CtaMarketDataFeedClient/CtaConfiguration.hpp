@@ -44,15 +44,15 @@ namespace MarketDataService {
     auto countryCode = ParseCountryCode(country, countryDatabase);
     if(countryCode == CountryDatabase::NONE) {
       BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException(
-        "Country not found.", config.FindValue("country")->GetMark()));
+        "Country not found.", config["country"].Mark()));
     }
     ctaConfig.m_country = countryCode;
-    auto& marketCodes = Beam::GetNode(config, "market_codes");
-    for(auto& marketCode : marketCodes) {
+    auto marketCodes = Beam::GetNode(config, "market_codes");
+    for(auto marketCode : marketCodes) {
       auto code = Beam::Extract<std::string>(marketCode, "code");
       if(code.size() != 1) {
         BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException(
-          "Invalid market code.", marketCode.FindValue("code")->GetMark()));
+          "Invalid market code.", marketCode["code"].Mark()));
       }
       auto marketIdentifier = Beam::Extract<std::string>(marketCode, "market");
       auto entry = ParseMarketCode(marketIdentifier, marketDatabase);

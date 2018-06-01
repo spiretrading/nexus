@@ -153,22 +153,6 @@ namespace {
   }
 }
 
-BEAM_DEFINE_PYTHON_POINTER_LINKER(Order);
-BEAM_DEFINE_PYTHON_POINTER_LINKER(PrimitiveOrder);
-BEAM_DEFINE_PYTHON_POINTER_LINKER(Publisher<PrimitiveOrder*>);
-BEAM_DEFINE_PYTHON_POINTER_LINKER(
-  SnapshotPublisher<ExecutionReport BOOST_PP_COMMA() vector<ExecutionReport>>);
-BEAM_DEFINE_PYTHON_POINTER_LINKER(
-  SnapshotPublisher<const Order* BOOST_PP_COMMA() vector<const Order*>>);
-BEAM_DEFINE_PYTHON_POINTER_LINKER(
-  SnapshotPublisher<const PrimitiveOrder* BOOST_PP_COMMA()
-  vector<const PrimitiveOrder*>>);
-BEAM_DEFINE_PYTHON_POINTER_LINKER(VirtualOrderExecutionDriver);
-BEAM_DEFINE_PYTHON_QUEUE_LINKER(const Order*);
-BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedOrder);
-BEAM_DEFINE_PYTHON_QUEUE_LINKER(ExecutionReport);
-BEAM_DEFINE_PYTHON_QUEUE_LINKER(SequencedExecutionReport);
-
 void Nexus::Python::ExportApplicationOrderExecutionClient() {
   class_<ToPythonOrderExecutionClient<Client>,
     bases<VirtualOrderExecutionClient>, boost::noncopyable>(
