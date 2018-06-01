@@ -87,6 +87,8 @@ namespace spire {
       void fade_out_vertical_scroll_bar();
       void on_properties_apply();
       void on_properties_ok();
+      void on_security_input_accept(security_input_dialog* dialog);
+      void on_security_input_reject(security_input_dialog* dialog);
       void show_overlay_widget();
       void show_properties_dialog();
       void set_current(const Nexus::Security& s);

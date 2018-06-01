@@ -377,18 +377,17 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
   auto pressed_key = event->text();
   if(pressed_key[0].isLetterOrNumber()) {
     show_overlay_widget();
-    security_input_dialog dialog(*m_input_model, pressed_key, this);
-    dialog.move(geometry().center().x() - dialog.width() / 2,
-      geometry().center().y() - dialog.height() / 2);
-    if(dialog.exec() == QDialog::Accepted) {
-      auto s = dialog.get_security();
-      if(s != Security() && s != m_current_security) {
-        m_securities.push(m_current_security);
-        set_current(s);
-        activateWindow();
-      }
-    }
-    m_overlay_widget->hide();
+    auto dialog = new security_input_dialog(*m_input_model, pressed_key, this);
+    dialog->setWindowModality(Qt::NonModal);
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    connect(dialog, &QDialog::accepted,
+      [=] { on_security_input_accept(dialog); });
+    connect(dialog, &QDialog::rejected,
+      [=] { on_security_input_reject(dialog); });
+    dialog->move(geometry().center().x() -
+      dialog->width() / 2, geometry().center().y() - dialog->height() / 2);
+    m_overlay_widget->show();
+    dialog->show();
   }
 }
 
@@ -410,6 +409,24 @@ void time_and_sales_window::on_properties_apply() {
 
 void time_and_sales_window::on_properties_ok() {
   set_properties(m_properties_dialog->get_properties());
+}
+
+void time_and_sales_window::on_security_input_accept(
+    security_input_dialog* dialog) {
+  auto s = dialog->get_security();
+  if(s != Security() && s != m_current_security) {
+    m_securities.push(m_current_security);
+    set_current(s);
+    activateWindow();
+  }
+  dialog->close();
+  m_overlay_widget->hide();
+}
+
+void time_and_sales_window::on_security_input_reject(
+    security_input_dialog* dialog) {
+  dialog->close();
+  m_overlay_widget->hide();
 }
 
 void time_and_sales_window::show_overlay_widget() {

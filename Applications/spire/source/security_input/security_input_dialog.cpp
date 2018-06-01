@@ -20,7 +20,6 @@ security_input_dialog::security_input_dialog(security_input_model& model,
     const QString& initial_text, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, Qt::Window | Qt::FramelessWindowHint | flags),
       m_is_dragging(false) {
-  setWindowModality(Qt::WindowModal);
   m_shadow = std::make_unique<drop_shadow>(this);
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins(scale_width(8), scale_height(6), scale_width(8),
@@ -48,9 +47,6 @@ security_input_dialog::security_input_dialog(security_input_model& model,
     [=] (const Security& s) { set_security(s); });
   layout->addWidget(m_security_input_box);
   layout->setStretchFactor(m_security_input_box, 30);
-  if(parent != nullptr) {
-    parent->installEventFilter(this);
-  }
 }
 
 security_input_dialog::~security_input_dialog() = default;
@@ -79,11 +75,7 @@ void security_input_dialog::closeEvent(QCloseEvent* event) {
 }
 
 bool security_input_dialog::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == parent()) {
-    if(event->type() == QEvent::MouseButtonPress) {
-      reject();
-    }
-  } else if(event->type() == QEvent::ActivationChange) {
+  if(event->type() == QEvent::ActivationChange) {
     auto c = static_cast<QWidget*>(watched);
     if(QApplication::activeWindow() != c) {
       if(QApplication::activeWindow() == this) {
