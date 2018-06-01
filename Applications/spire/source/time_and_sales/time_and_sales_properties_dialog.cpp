@@ -488,7 +488,7 @@ void time_and_sales_properties_dialog::set_properties(
     price_range::BELOW_BID));
   below_bid_item->setForeground(m_properties.get_text_color(
     price_range::BELOW_BID));
-  if(m_band_list->currentRow() > 0) {
+  if(m_band_list->currentRow() > -1) {
     set_color_settings_stylesheet(m_band_list->currentRow());
   } else {
     set_color_settings_stylesheet(0);

@@ -72,7 +72,21 @@ time_and_sales_window::time_and_sales_window(
   m_table->horizontalHeader()->setStretchLastSection(true);
   m_table->horizontalHeader()->viewport()->setMouseTracking(true);
   m_table->horizontalHeader()->viewport()->installEventFilter(this);
+  m_table->horizontalHeader()->setSectionsClickable(false);
+  m_table->horizontalHeader()->setSectionsMovable(true);
+  m_table->horizontalHeader()->setFixedHeight(scale_height(26));
+  m_table->horizontalHeader()->setDefaultAlignment(
+    Qt::AlignLeft | Qt::AlignVCenter);
   m_table->verticalHeader()->setVisible(false);
+  m_table->horizontalScrollBar()->installEventFilter(this);
+  m_table->horizontalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
+  m_table->horizontalScrollBar()->setAttribute(Qt::WA_Hover);
+  m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  m_table->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+  m_table->verticalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
+  m_table->verticalScrollBar()->setAttribute(Qt::WA_Hover);
+  m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  m_table->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
   m_v_scroll_bar_timer = new QTimer(this);
   m_v_scroll_bar_timer->setInterval(500);
   connect(m_v_scroll_bar_timer, &QTimer::timeout, [=] {
@@ -81,22 +95,6 @@ time_and_sales_window::time_and_sales_window(
   m_h_scroll_bar_timer->setInterval(500);
   connect(m_h_scroll_bar_timer, &QTimer::timeout, [=] {
     fade_out_horizontal_scroll_bar(); });
-  m_table->horizontalScrollBar()->installEventFilter(this);
-  m_table->verticalScrollBar()->installEventFilter(this);
-  m_table->horizontalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
-  m_table->verticalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
-  m_table->horizontalScrollBar()->setAttribute(Qt::WA_Hover);
-  m_table->verticalScrollBar()->setAttribute(Qt::WA_Hover);
-  m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  m_table->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-  m_table->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
-  m_table->verticalHeader()->setSectionsClickable(false);
-  m_table->horizontalHeader()->setSectionsClickable(false);
-  m_table->horizontalHeader()->setSectionsMovable(true);
-  m_table->horizontalHeader()->setFixedHeight(scale_height(26));
-  m_table->horizontalHeader()->setDefaultAlignment(
-    Qt::AlignLeft | Qt::AlignVCenter);
   m_table->horizontalHeader()->setStyleSheet(QString(R"(
     QHeaderView::section {
       background-color: #FFFFFF;
