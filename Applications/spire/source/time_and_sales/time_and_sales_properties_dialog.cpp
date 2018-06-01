@@ -446,16 +446,6 @@ void time_and_sales_properties_dialog::set_properties(
   m_show_grid_check_box->setChecked(m_properties.m_show_grid);
   m_font_preview_label->setFont(m_properties.m_font);
   update_font_preview_stylesheet();
-  m_time_check_box->setChecked(m_properties.get_show_column(
-    time_and_sales_properties::columns::TIME_COLUMN));
-  m_price_check_box->setChecked(m_properties.get_show_column(
-    time_and_sales_properties::columns::PRICE_COLUMN));
-  m_market_check_box->setChecked(m_properties.get_show_column(
-    time_and_sales_properties::columns::MARKET_COLUMN));
-  m_size_check_box->setChecked(m_properties.get_show_column(
-    time_and_sales_properties::columns::SIZE_COLUMN));
-  m_condition_check_box->setChecked(m_properties.get_show_column(
-    time_and_sales_properties::columns::CONDITION_COLUMN));
 }
 
 void time_and_sales_properties_dialog::update_colors(int band_index) {
