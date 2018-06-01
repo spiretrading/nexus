@@ -19,12 +19,11 @@ using namespace boost;
 using namespace boost::filesystem;
 using namespace Nexus;
 using namespace spire;
-using namespace std;
 
 spire_controller::spire_controller()
     : m_state(state::NONE),
-      m_socket_thread_pool(make_unique<SocketThreadPool>()),
-      m_timer_thread_pool(make_unique<TimerThreadPool>()) {}
+      m_socket_thread_pool(std::make_unique<SocketThreadPool>()),
+      m_timer_thread_pool(std::make_unique<TimerThreadPool>()) {}
 
 spire_controller::~spire_controller() = default;
 
@@ -38,11 +37,12 @@ void spire_controller::open() {
   }
   auto service_clients_factory =
     [=] (auto&& username, auto&& password) {
-      return MakeVirtualServiceClients(make_unique<ApplicationServiceClients>(
-        *ip_address, username, password, Ref(*m_socket_thread_pool),
-        Ref(*m_timer_thread_pool)));
+      return MakeVirtualServiceClients(
+        std::make_unique<ApplicationServiceClients>(*ip_address, username,
+        password, Ref(*m_socket_thread_pool), Ref(*m_timer_thread_pool)));
     };
-  m_login_controller = make_unique<login_controller>(service_clients_factory);
+  m_login_controller = std::make_unique<login_controller>(
+    service_clients_factory);
   m_login_controller->connect_logged_in_signal([=]{on_login();});
   m_state = state::LOGIN;
   m_login_controller->open();
@@ -65,14 +65,13 @@ optional<IpAddress> spire_controller::load_ip_address() {
   }
   YAML::Node config;
   try {
-    filesystem::ifstream config_stream(config_path);
+    boost::filesystem::ifstream config_stream(config_path);
     if(!config_stream.good()) {
       QMessageBox::critical(nullptr, QObject::tr("Error"),
         QObject::tr("Unable to load configuration: config.yml"));
       return none;
     }
-    YAML::Parser configParser(config_stream);
-    configParser.GetNextDocument(config);
+    config = YAML::Load(config_stream);
   } catch(const YAML::ParserException&) {
     QMessageBox::critical(nullptr, QObject::tr("Error"),
       QObject::tr("Invalid configuration file."));
@@ -81,7 +80,7 @@ optional<IpAddress> spire_controller::load_ip_address() {
   IpAddress address;
   try {
     address = Extract<IpAddress>(config, "address");
-  } catch(std::exception&) {
+  } catch(const std::exception&) {
     QMessageBox::critical(nullptr, QObject::tr("Error"),
       QObject::tr("Invalid configuration file."));
     return none;

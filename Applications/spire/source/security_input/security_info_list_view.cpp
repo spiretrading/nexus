@@ -79,10 +79,8 @@ void security_info_list_view::set_list(const std::vector<SecurityInfo>& list) {
     auto icon_path = QString(":/icons/%1.png").arg(
       security.m_security.GetCountry());
     auto security_widget = new security_info_widget(security, this);
-
-    // GCC workaround.
     security_widget->connect_highlighted_signal(
-      [=] (auto value) { this->on_highlight(i, value); });
+      [=] (auto value) { on_highlight(i, value); });
     security_widget->connect_commit_signal(
       [=] { on_commit(security.m_security); });
     m_list_widget->layout()->addWidget(security_widget);

@@ -11,7 +11,6 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace spire;
-using namespace std;
 
 login_controller::login_controller(
     service_clients_factory service_clients_factory)
@@ -19,7 +18,8 @@ login_controller::login_controller(
 
 login_controller::~login_controller() = default;
 
-unique_ptr<VirtualServiceClients>& login_controller::get_service_clients() {
+std::unique_ptr<VirtualServiceClients>&
+    login_controller::get_service_clients() {
   return m_service_clients;
 }
 
@@ -36,8 +36,8 @@ connection login_controller::connect_logged_in_signal(
   return m_logged_in_signal.connect(slot);
 }
 
-void login_controller::on_login(const string& username,
-    const string& password) {
+void login_controller::on_login(const std::string& username,
+    const std::string& password) {
   auto service_clients = m_service_clients_factory(username, password);
   m_login_promise = make_qt_promise(
     [=, service_clients = std::move(service_clients)] () mutable {
