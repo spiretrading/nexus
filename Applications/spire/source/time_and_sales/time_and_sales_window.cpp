@@ -61,13 +61,14 @@ time_and_sales_window::time_and_sales_window(
     "background-color: rgba(245, 245, 245, 153);");
   m_overlay_widget->hide();
   m_table = new QTableView(this);
-  m_table->setItemDelegate(new item_padding_delegate(scale_width(6),
+  m_table->setItemDelegate(new item_padding_delegate(scale_width(5),
     new custom_variant_item_delegate(), this));
   m_table->setMouseTracking(true);
   m_table->installEventFilter(this);
   m_table->viewport()->setAttribute(Qt::WA_TransparentForMouseEvents);
   m_table->setFocusPolicy(Qt::NoFocus);
   m_table->setSelectionMode(QAbstractItemView::NoSelection);
+  m_table->horizontalHeader()->setMinimumSectionSize(scale_width(35));
   m_table->horizontalHeader()->setStretchLastSection(true);
   m_table->horizontalHeader()->viewport()->setMouseTracking(true);
   m_table->horizontalHeader()->viewport()->installEventFilter(this);
@@ -105,15 +106,15 @@ time_and_sales_window::time_and_sales_window(
       border: none;
       color: #4B23A0;
       font-family: Roboto;
-      font-size: %1px;
       font-weight: 550;
-      padding-left: %2px;
+      padding-left: %1px;
+      padding-right: %1px;
     }
 
     QHeaderView::section::first {
       background: none;
       background-color: #FFFFFF;
-    })").arg(scale_height(11)).arg(scale_width(8)));
+    })").arg(scale_width(8)));
   m_table->setStyleSheet(QString(R"(
     QTableView {
       border: none;
@@ -244,6 +245,16 @@ void time_and_sales_window::set_properties(
   QFontMetrics metrics(m_properties.m_font);
   auto row_height = metrics.height() + scale_height(2);
   m_table->verticalHeader()->setDefaultSectionSize(row_height);
+  auto header_font = m_table->verticalHeader()->font();
+  if(m_properties.m_font.pointSize() >= 11) {
+    header_font.setPointSizeF(m_properties.m_font.pointSize() * 0.8);
+  } else {
+    header_font.setPointSize(9);
+  }
+  m_table->horizontalHeader()->setFont(header_font);
+  QFontMetrics header_metrics(header_font);
+  m_table->horizontalHeader()->setFixedHeight(header_metrics.height() * 1.8);
+  update();
 }
 
 connection time_and_sales_window::connect_security_change_signal(
@@ -288,15 +299,8 @@ bool time_and_sales_window::eventFilter(QObject* watched, QEvent* event) {
           m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         }
         m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-        if(e->angleDelta().y() < 0) {
-          m_table->horizontalScrollBar()->setValue(
-            m_table->horizontalScrollBar()->value() +
-            m_table->horizontalScrollBar()->singleStep());
-        } else {
-          m_table->horizontalScrollBar()->setValue(
-            m_table->horizontalScrollBar()->value() -
-            m_table->horizontalScrollBar()->singleStep());
-        }
+        m_table->horizontalScrollBar()->setValue(
+            m_table->horizontalScrollBar()->value() - e->delta() / 2);
         m_h_scrolling = true;
         m_h_scroll_bar_timer->start();
       } else {
@@ -305,15 +309,8 @@ bool time_and_sales_window::eventFilter(QObject* watched, QEvent* event) {
             m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
           }
           m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-          if(e->angleDelta().y() < 0) {
-            m_table->verticalScrollBar()->setValue(
-              m_table->verticalScrollBar()->value() +
-              m_table->verticalScrollBar()->singleStep());
-          } else {
-            m_table->verticalScrollBar()->setValue(
-              m_table->verticalScrollBar()->value() -
-              m_table->verticalScrollBar()->singleStep());
-          }
+          m_table->verticalScrollBar()->setValue(
+            m_table->verticalScrollBar()->value() - e->delta() / 2);
           m_v_scrolling = true;
           m_v_scroll_bar_timer->start();
         }
