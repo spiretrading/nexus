@@ -23,7 +23,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     : QDialog(parent, flags | Qt::Window | Qt::FramelessWindowHint |
         Qt::WindowCloseButtonHint) {
   m_body = new QWidget(this);
-  m_body->setFixedSize(scale(492, 312));
+  m_body->setFixedSize(scale(492, 272));
   m_body->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   auto window_layout = new QHBoxLayout(this);
   window_layout->setContentsMargins({});
@@ -122,7 +122,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     price_range::UNKNOWN));
   color_settings_layout->addWidget(m_text_color_button);
   color_settings_layout->setStretchFactor(m_text_color_button, 20);
-  color_settings_layout->addStretch(10);
+  color_settings_layout->addStretch(18);
   auto band_color_label = new QLabel(tr("Band Color"), this);
   band_color_label->setStyleSheet(generic_text_style);
   color_settings_layout->addWidget(band_color_label);
@@ -135,7 +135,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     price_range::UNKNOWN));
   color_settings_layout->addWidget(m_band_color_button);
   color_settings_layout->setStretchFactor(m_band_color_button, 20);
-  color_settings_layout->addStretch(18);
+  color_settings_layout->addStretch(30);
   m_show_grid_check_box = new check_box(tr("Show Grid"), this);
   auto check_box_text_style = QString(R"(
     color: black;
@@ -201,54 +201,8 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   style_layout->setStretchFactor(font_layout, 120);
   style_layout->addStretch(86);
   layout->addLayout(style_layout);
-  layout->addStretch(20);
-  layout->setStretchFactor(style_layout, 144);
-  auto column_settings_layout = new QVBoxLayout();
-  column_settings_layout->setContentsMargins({});
-  column_settings_layout->setSpacing(0);
-  auto column_label = new QLabel(tr("Column"), this);
-  column_label->setStyleSheet(section_label_style);
-  column_settings_layout->addWidget(column_label);
-  column_settings_layout->setStretchFactor(column_label, 14);
-  column_settings_layout->addStretch(10);
-  auto column_check_box_layout = new QHBoxLayout();
-  column_check_box_layout->setContentsMargins({});
-  column_check_box_layout->setSpacing(0);
-  m_time_check_box = new check_box(tr("Time"), this);
-  m_time_check_box->set_stylesheet(check_box_text_style,
-    check_box_indicator_style, check_box_checked_style,
-    check_box_hover_style, check_box_focused_style);
-  column_check_box_layout->addWidget(m_time_check_box);
-  column_check_box_layout->addStretch(20);
-  m_price_check_box = new check_box(tr("Price"), this);
-  m_price_check_box->set_stylesheet(check_box_text_style,
-    check_box_indicator_style, check_box_checked_style,
-    check_box_hover_style, check_box_focused_style);
-  column_check_box_layout->addWidget(m_price_check_box);
-  column_check_box_layout->addStretch(20);
-  m_market_check_box = new check_box(tr("Market"), this);
-  m_market_check_box->set_stylesheet(check_box_text_style,
-    check_box_indicator_style, check_box_checked_style,
-    check_box_hover_style, check_box_focused_style);
-  column_check_box_layout->addWidget(m_market_check_box);
-  column_check_box_layout->addStretch(20);
-  m_size_check_box = new check_box(tr("Size"), this);
-  m_size_check_box->set_stylesheet(check_box_text_style,
-    check_box_indicator_style, check_box_checked_style,
-    check_box_hover_style, check_box_focused_style);
-  column_check_box_layout->addWidget(m_size_check_box);
-  column_check_box_layout->addStretch(20);
-  m_condition_check_box = new check_box(tr("Condition"), this);
-  m_condition_check_box->set_stylesheet(check_box_text_style,
-    check_box_indicator_style, check_box_checked_style,
-    check_box_hover_style, check_box_focused_style);
-  column_check_box_layout->addWidget(m_condition_check_box);
-  column_check_box_layout->addStretch(128);
-  column_settings_layout->addLayout(column_check_box_layout);
-  column_settings_layout->setStretchFactor(column_check_box_layout, 16);
-  layout->addLayout(column_settings_layout);
-  layout->setStretchFactor(column_settings_layout, 40);
   layout->addStretch(30);
+  layout->setStretchFactor(style_layout, 164);
   auto buttons_layout = new QHBoxLayout();
   buttons_layout->setContentsMargins({});
   buttons_layout->setSpacing(0);
