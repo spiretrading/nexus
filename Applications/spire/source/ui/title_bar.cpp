@@ -197,7 +197,7 @@ void title_bar::mouseMoveEvent(QMouseEvent* event) {
       event->globalPos());
     auto mouse_screen_x = event->globalPos().x() - mouse_screen_pos.left();
     auto new_pos = QPoint(event->globalX() - (window()->width() / 2), 0);
-    if(mouse_screen_x - width() < 0) {
+    if(mouse_screen_x - (width() / 2) < 0) {
       new_pos.setX(mouse_screen_pos.left());
     } else if(mouse_screen_x + width() > mouse_screen_pos.width()) {
       new_pos.setX(mouse_screen_pos.right() - width());
