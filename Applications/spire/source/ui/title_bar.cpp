@@ -52,7 +52,7 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   m_icon->setEnabled(false);
   layout->addWidget(m_icon);
   m_title_label = new QLabel("", this);
-  m_title_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_title_label->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Expanding);
   set_title_text_stylesheet(QColor("#000000"));
   layout->addWidget(m_title_label);
   layout->addSpacerItem(new QSpacerItem(scale_width(8), 10, QSizePolicy::Fixed,
