@@ -233,7 +233,6 @@ void time_and_sales_window::set_properties(
   m_table->horizontalHeader()->setFont(header_font);
   QFontMetrics header_metrics(header_font);
   m_table->horizontalHeader()->setFixedHeight(header_metrics.height() * 1.8);
-  update();
   m_table->viewport()->update();
 }
 
@@ -415,9 +414,11 @@ void time_and_sales_window::show_overlay_widget() {
 void time_and_sales_window::show_properties_dialog() {
   auto dialog = new time_and_sales_properties_dialog(m_properties, this);
   dialog->connect_apply_signal([=] (auto p) { set_properties(p); });
+  show_overlay_widget();
   if(dialog->exec() == QDialog::Accepted) {
     set_properties(dialog->get_properties());
   }
+  m_overlay_widget->hide();
 }
 
 void time_and_sales_window::set_current(const Security& s) {
