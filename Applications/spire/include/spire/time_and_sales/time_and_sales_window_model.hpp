@@ -38,6 +38,8 @@ namespace spire {
       std::shared_ptr<time_and_sales_model> m_model;
       time_and_sales_properties m_properties;
       std::vector<time_and_sales_model::entry> m_entries;
+
+      void update_data(const time_and_sales_model::entry& e);
   };
 }
 
