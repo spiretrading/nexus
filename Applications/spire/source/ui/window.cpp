@@ -107,7 +107,11 @@ void window::handle_resize() {
   auto p = QCursor::pos();
   auto container_delta = g.size() - m_body->size();
   auto max_size = m_body->maximumSize() + container_delta;
-  auto min_size = m_body->minimumSize() + container_delta;
+  auto min_size = QSize(std::max(m_body->minimumWidth(), std::max(
+    m_body->layout()->minimumSize().width(),
+    std::max(m_title_bar->minimumWidth(),
+    m_title_bar->layout()->minimumSize().width()))), m_body->minimumHeight()) +
+    container_delta;
   if(m_current_active_rect == active_resize_rect::TOP ||
       m_current_active_rect == active_resize_rect::TOP_LEFT ||
       m_current_active_rect == active_resize_rect::TOP_RIGHT) {

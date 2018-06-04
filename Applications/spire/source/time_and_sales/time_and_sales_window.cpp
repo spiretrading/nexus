@@ -29,7 +29,7 @@ time_and_sales_window::time_and_sales_window(
       m_v_scrolling(false),
       m_h_scrolling(false) {
   m_body = new QWidget(this);
-  m_body->setMinimumSize(scale(180, 200));
+  m_body->setMinimumSize(scale(40, 200));
   resize(scale_width(182), scale_height(452));
   m_body->setStyleSheet("background-color: #FFFFFF;");
   auto window_layout = new QHBoxLayout(this);
