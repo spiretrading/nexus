@@ -8,7 +8,6 @@
 #include "spire/security_input/security_input_dialog.hpp"
 #include "spire/security_input/security_input_model.hpp"
 #include "spire/time_and_sales/empty_time_and_sales_model.hpp"
-#include "spire/time_and_sales/periodic_time_and_sales_model.hpp"
 #include "spire/time_and_sales/time_and_sales_properties_dialog.hpp"
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
 #include "spire/spire/dimensions.hpp"
@@ -64,6 +63,7 @@ time_and_sales_window::time_and_sales_window(
   m_table->setItemDelegate(new item_padding_delegate(scale_width(5),
     new custom_variant_item_delegate(), this));
   m_table->setMouseTracking(true);
+  m_table->setAttribute(Qt::WA_Hover);
   m_table->installEventFilter(this);
   m_table->viewport()->setAttribute(Qt::WA_TransparentForMouseEvents);
   m_table->setFocusPolicy(Qt::NoFocus);
@@ -149,7 +149,7 @@ time_and_sales_window::time_and_sales_window(
         .arg(scale_width(30)).arg(scale_height(30)));
   m_table->hide();
   layout->addWidget(m_table);
-  m_volume_label = new QLabel(tr("Volume: 0"), this);
+  m_volume_label = new QLabel(tr("Volume:"), this);
   m_volume_label->setFocusPolicy(Qt::NoFocus);
   m_volume_label->setFixedHeight(scale_height(20));
   m_volume_label->setStyleSheet(QString(R"(
@@ -198,13 +198,6 @@ time_and_sales_window::time_and_sales_window(
     .arg(scale_height(3)).arg(scale_width(8)));
   set_model(std::make_shared<empty_time_and_sales_model>(Security()));
   set_properties(properties);
-  m_properties_dialog = new time_and_sales_properties_dialog(properties, this);
-  connect(m_properties_dialog, &QDialog::accepted,
-    [=] { on_properties_ok(); });
-  m_properties_dialog->connect_apply_signal(
-    [=] (auto p) { on_properties_apply(); });
-  QWidget::window()->setAttribute(Qt::WA_Hover);
-  QWidget::window()->installEventFilter(this);
 }
 
 void time_and_sales_window::set_model(
@@ -226,7 +219,7 @@ const time_and_sales_properties& time_and_sales_window::get_properties() const {
 void time_and_sales_window::set_properties(
     const time_and_sales_properties& properties) {
   m_properties = properties;
-  m_model.get().set_properties(m_properties);
+  m_model->set_properties(m_properties);
   m_table->setShowGrid(m_properties.m_show_grid);
   QFontMetrics metrics(m_properties.m_font);
   auto row_height = metrics.height() + scale_height(2);
@@ -241,6 +234,7 @@ void time_and_sales_window::set_properties(
   QFontMetrics header_metrics(header_font);
   m_table->horizontalHeader()->setFixedHeight(header_metrics.height() * 1.8);
   update();
+  m_table->viewport()->update();
 }
 
 connection time_and_sales_window::connect_security_change_signal(
@@ -281,25 +275,19 @@ bool time_and_sales_window::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::Wheel) {
       auto e = static_cast<QWheelEvent*>(event);
       if(e->modifiers() & Qt::ShiftModifier) {
-        if(m_table->verticalScrollBar()->isVisible()) {
-          m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-        }
+        m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
         m_table->horizontalScrollBar()->setValue(
-            m_table->horizontalScrollBar()->value() - e->delta() / 2);
+          m_table->horizontalScrollBar()->value() - e->delta() / 2);
         m_h_scrolling = true;
         m_h_scroll_bar_timer->start();
-      } else {
-        if(!within_h_scroll_bar(e->pos())) {
-          if(m_table->horizontalScrollBar()->isVisible()) {
-            m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-          }
-          m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-          m_table->verticalScrollBar()->setValue(
-            m_table->verticalScrollBar()->value() - e->delta() / 2);
-          m_v_scrolling = true;
-          m_v_scroll_bar_timer->start();
-        }
+      } else if(!within_h_scroll_bar(e->pos())) {
+        m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+        m_table->verticalScrollBar()->setValue(
+          m_table->verticalScrollBar()->value() - e->delta() / 2);
+        m_v_scrolling = true;
+        m_v_scroll_bar_timer->start();
       }
     } else if(event->type() == QEvent::MouseMove) {
       auto e = static_cast<QMouseEvent*>(event);
@@ -319,6 +307,13 @@ bool time_and_sales_window::eventFilter(QObject* watched, QEvent* event) {
           fade_out_horizontal_scroll_bar();
         }
       }
+    } else if(event->type() == QEvent::HoverLeave) {
+      if(m_table->verticalScrollBarPolicy() != Qt::ScrollBarAlwaysOff) {
+        fade_out_vertical_scroll_bar();
+      } else if(m_table->horizontalScrollBarPolicy() !=
+          Qt::ScrollBarAlwaysOff) {
+        fade_out_horizontal_scroll_bar();
+      }
     }
   } else if(watched == m_table->verticalScrollBar()) {
     if(event->type() == QEvent::HoverLeave) {
@@ -327,15 +322,6 @@ bool time_and_sales_window::eventFilter(QObject* watched, QEvent* event) {
   } else if(watched == m_table->horizontalScrollBar()) {
     if(event->type() == QEvent::HoverLeave) {
       fade_out_horizontal_scroll_bar();
-    }
-  } else if(watched == QWidget::window()) {
-    if(event->type() == QEvent::HoverLeave) {
-      if(m_table->verticalScrollBarPolicy() != Qt::ScrollBarAlwaysOff) {
-        fade_out_vertical_scroll_bar();
-      } else if(m_table->horizontalScrollBarPolicy() !=
-          Qt::ScrollBarAlwaysOff) {
-        fade_out_horizontal_scroll_bar();
-      }
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -395,14 +381,6 @@ void time_and_sales_window::maintain_table_position() {
   }
 }
 
-void time_and_sales_window::on_properties_apply() {
-  set_properties(m_properties_dialog->get_properties());
-}
-
-void time_and_sales_window::on_properties_ok() {
-  set_properties(m_properties_dialog->get_properties());
-}
-
 void time_and_sales_window::on_security_input_accept(
     security_input_dialog* dialog) {
   auto s = dialog->get_security();
@@ -435,7 +413,11 @@ void time_and_sales_window::show_overlay_widget() {
 }
 
 void time_and_sales_window::show_properties_dialog() {
-  m_properties_dialog->show();
+  auto dialog = new time_and_sales_properties_dialog(m_properties, this);
+  dialog->connect_apply_signal([=] (auto p) { set_properties(p); });
+  if(dialog->exec() == QDialog::Accepted) {
+    set_properties(dialog->get_properties());
+  }
 }
 
 void time_and_sales_window::set_current(const Security& s) {

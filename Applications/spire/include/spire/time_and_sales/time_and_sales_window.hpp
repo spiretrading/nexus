@@ -86,8 +86,6 @@ namespace spire {
       void fade_out_horizontal_scroll_bar();
       void fade_out_vertical_scroll_bar();
       void maintain_table_position();
-      void on_properties_apply();
-      void on_properties_ok();
       void on_security_input_accept(security_input_dialog* dialog);
       void on_security_input_reject(security_input_dialog* dialog);
       void show_overlay_widget();
