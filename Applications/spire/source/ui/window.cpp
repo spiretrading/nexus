@@ -10,7 +10,7 @@
 using namespace spire;
 
 namespace {
-  auto PADDING_SIZE = 10;
+  const auto PADDING_SIZE = 10;
 }
 
 window::window(QWidget* body, QWidget* parent)
@@ -150,13 +150,11 @@ void window::update_resize_boxes() {
     m_resize_boxes.emplace();
   }
   m_resize_boxes->m_top_left = QRect(top_left.x() - PADDING_SIZE,
-    top_left.y() - PADDING_SIZE, PADDING_SIZE,
-    PADDING_SIZE);
-  m_resize_boxes->m_top = QRect(top_left.x(),
-    top_left.y() - PADDING_SIZE, width(), PADDING_SIZE);
+    top_left.y() - PADDING_SIZE, PADDING_SIZE, PADDING_SIZE);
+  m_resize_boxes->m_top = QRect(top_left.x(), top_left.y() - PADDING_SIZE,
+    width(), PADDING_SIZE);
   m_resize_boxes->m_top_right = QRect(top_left.x() + width(),
-    top_left.y() - PADDING_SIZE,
-    PADDING_SIZE, PADDING_SIZE);
+    top_left.y() - PADDING_SIZE, PADDING_SIZE, PADDING_SIZE);
   m_resize_boxes->m_right = QRect(top_left.x() + width(), top_left.y(),
     PADDING_SIZE, top_left.y() + height());
   m_resize_boxes->m_bottom_right = QRect(top_left.x() + width(),
@@ -165,8 +163,8 @@ void window::update_resize_boxes() {
     width(), PADDING_SIZE);
   m_resize_boxes->m_bottom_left = QRect(top_left.x() - PADDING_SIZE,
     top_left.y() + height(), PADDING_SIZE, PADDING_SIZE);
-  m_resize_boxes->m_left = QRect(top_left.x() - PADDING_SIZE,
-    top_left.y(), PADDING_SIZE, top_left.y() + height());
+  m_resize_boxes->m_left = QRect(top_left.x() - PADDING_SIZE, top_left.y(),
+    PADDING_SIZE, top_left.y() + height());
 }
 
 void window::update_resize_cursor() {
