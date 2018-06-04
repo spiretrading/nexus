@@ -257,7 +257,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   buttons_layout_1->setSpacing(0);
   auto save_as_default_button = new flat_button(tr("Save As Default"), this);
   save_as_default_button->connect_clicked_signal(
-    [=] { m_save_default_signal(m_properties); });
+    [=] { m_save_default_signal(get_properties()); });
   save_as_default_button->set_stylesheet(generic_button_default_style,
     generic_button_hover_style, generic_button_focused_style, "");
   buttons_layout_1->addWidget(save_as_default_button);
@@ -290,7 +290,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   buttons_layout_3->setSpacing(0);
   auto apply_to_all_button = new flat_button(tr("Apply To All"), this);
   apply_to_all_button->connect_clicked_signal(
-    [=] { m_apply_all_signal(m_properties); });
+    [=] { m_apply_all_signal(get_properties()); });
   apply_to_all_button->set_stylesheet(generic_button_default_style,
     generic_button_hover_style, generic_button_focused_style, "");
   buttons_layout_3->addWidget(apply_to_all_button);
@@ -312,7 +312,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   auto apply_button = new flat_button(tr("Apply"), this);
   setTabOrder(apply_to_all_button, apply_button);
   apply_button->connect_clicked_signal(
-    [=] { m_apply_signal(m_properties); });
+    [=] { m_apply_signal(get_properties()); });
   apply_button->set_stylesheet(generic_button_default_style,
     generic_button_hover_style, generic_button_focused_style, "");
   buttons_layout_4->addWidget(apply_button);
