@@ -49,7 +49,7 @@ time_and_sales_window::time_and_sales_window(
   padding_widget->setStyleSheet("background-color: #F5F5F5;");
   layout->addWidget(padding_widget);
   m_empty_window_label = new QLabel(
-    tr("Type on keyboard<br/>to search a security"), this);
+    tr("Enter a ticker symbol."), this);
   m_empty_window_label->setAlignment(Qt::AlignCenter);
   m_empty_window_label->setStyleSheet(QString(R"(
     font-family: Roboto;
