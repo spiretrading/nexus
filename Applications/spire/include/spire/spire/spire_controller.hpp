@@ -1,10 +1,9 @@
 #ifndef SPIRE_CONTROLLER_HPP
 #define SPIRE_CONTROLLER_HPP
 #include <memory>
+#include <optional>
 #include <Beam/Network/Network.hpp>
 #include <Beam/Threading/Threading.hpp>
-#include <boost/noncopyable.hpp>
-#include <boost/optional.hpp>
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "spire/login/login.hpp"
 #include "spire/spire/spire.hpp"
@@ -38,7 +37,7 @@ namespace spire {
       std::unique_ptr<Nexus::VirtualServiceClients> m_service_clients;
       std::unique_ptr<toolbar_controller> m_toolbar_controller;
 
-      boost::optional<Beam::Network::IpAddress> load_ip_address();
+      std::optional<Beam::Network::IpAddress> load_ip_address();
       void on_login();
   };
 }

@@ -1,10 +1,8 @@
 #include "spire/spire/spire_controller.hpp"
+#include <filesystem>
 #include <Beam/Network/SocketThreadPool.hpp>
 #include <Beam/Threading/TimerThreadPool.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include <QMessageBox>
@@ -15,8 +13,6 @@
 using namespace Beam;
 using namespace Beam::Network;
 using namespace Beam::Threading;
-using namespace boost;
-using namespace boost::filesystem;
 using namespace Nexus;
 using namespace spire;
 
@@ -32,7 +28,7 @@ void spire_controller::open() {
     return;
   }
   auto ip_address = load_ip_address();
-  if(!ip_address.is_initialized()) {
+  if(!ip_address.has_value()) {
     return;
   }
   auto service_clients_factory =
@@ -48,16 +44,16 @@ void spire_controller::open() {
   m_login_controller->open();
 }
 
-optional<IpAddress> spire_controller::load_ip_address() {
+std::optional<IpAddress> spire_controller::load_ip_address() {
   auto application_path = QStandardPaths::writableLocation(
     QStandardPaths::DataLocation);
-  path config_path = application_path.toStdString();
-  if(!exists(config_path)) {
-    create_directories(config_path);
+  std::filesystem::path config_path = application_path.toStdString();
+  if(!std::filesystem::exists(config_path)) {
+    std::filesystem::create_directories(config_path);
   }
   config_path /= "config.yml";
-  if(!is_regular(config_path)) {
-    filesystem::ofstream config_file(config_path);
+  if(!std::filesystem::is_regular_file(config_path)) {
+    std::ofstream config_file(config_path);
     config_file <<
       "---\n"
       "address: 127.0.0.1:20000\n"
@@ -65,17 +61,17 @@ optional<IpAddress> spire_controller::load_ip_address() {
   }
   YAML::Node config;
   try {
-    boost::filesystem::ifstream config_stream(config_path);
+    std::ifstream config_stream(config_path);
     if(!config_stream.good()) {
       QMessageBox::critical(nullptr, QObject::tr("Error"),
         QObject::tr("Unable to load configuration: config.yml"));
-      return none;
+      return std::nullopt;
     }
     config = YAML::Load(config_stream);
   } catch(const YAML::ParserException&) {
     QMessageBox::critical(nullptr, QObject::tr("Error"),
       QObject::tr("Invalid configuration file."));
-    return none;
+    return std::nullopt;
   }
   IpAddress address;
   try {
@@ -83,7 +79,7 @@ optional<IpAddress> spire_controller::load_ip_address() {
   } catch(const std::exception&) {
     QMessageBox::critical(nullptr, QObject::tr("Error"),
       QObject::tr("Invalid configuration file."));
-    return none;
+    return std::nullopt;
   }
   return address;
 }
