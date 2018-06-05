@@ -1,6 +1,7 @@
 #include "spire/ui/drop_shadow.hpp"
 #include <algorithm>
 #include <QEvent>
+#include <QGraphicsEffect>
 #include <QLinearGradient>
 #include <QPainter>
 #include <QRadialGradient>
@@ -124,7 +125,7 @@ void drop_shadow::paintEvent(QPaintEvent* event) {
   auto right_rect = left_rect;
   right_rect.translate(right_start, 0);
   QLinearGradient right_gradient(right_rect.topLeft(), right_rect.topRight());
-  right_gradient.setStops(TOP_STOPS);
+  right_gradient.setStops(BOTTOM_STOPS);
   painter.fillRect(right_rect, right_gradient);
   QWidget::paintEvent(event);
 }
