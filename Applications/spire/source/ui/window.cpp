@@ -43,6 +43,7 @@ window::window(QWidget* body, QWidget* parent)
   m_title_bar = new title_bar(m_body, m_border);
   border_layout->addWidget(m_title_bar);
   border_layout->addWidget(m_body);
+  border_layout->addSpacerItem(new QSpacerItem(1, 100));
   this->::QWidget::window()->installEventFilter(this);
 }
 
