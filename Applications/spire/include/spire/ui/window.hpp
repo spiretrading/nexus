@@ -63,6 +63,7 @@ namespace spire {
       QWidget* m_body;
       QSize m_maximum_body_size;
       title_bar* m_title_bar;
+      QWidget* m_maximize_padding;
       boost::optional<resize_boxes> m_resize_boxes;
       QPoint m_last_mouse_pos;
       bool m_is_resizing;

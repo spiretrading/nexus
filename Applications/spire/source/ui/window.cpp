@@ -41,9 +41,12 @@ window::window(QWidget* body, QWidget* parent)
   border_layout->setMargin(scale_width(1));
   border_layout->setSpacing(0);
   m_title_bar = new title_bar(m_body, m_border);
+  m_maximize_padding = new QWidget(this);
+  m_maximize_padding->setAttribute(Qt::WA_TransparentForMouseEvents);
+  m_maximize_padding->hide();
   border_layout->addWidget(m_title_bar);
   border_layout->addWidget(m_body);
-  border_layout->addSpacerItem(new QSpacerItem(1, 100));
+  border_layout->addWidget(m_maximize_padding);
   this->::QWidget::window()->installEventFilter(this);
 }
 
@@ -76,6 +79,19 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::Move) {
       if(m_resize_boxes.is_initialized()) {
         update_resize_boxes();
+      }
+    } else if(event->type() == QEvent::WindowStateChange) {
+      if(QWidget::window()->windowState().testFlag(Qt::WindowMaximized)) {
+        set_border_stylesheet(Qt::transparent);
+        auto taskbar_height = QApplication::desktop()->screenGeometry(
+            QWidget::window()).height() -
+          QApplication::desktop()->availableGeometry(
+            QWidget::window()).height();
+        m_maximize_padding->setFixedHeight(taskbar_height);
+        m_maximize_padding->show();
+      } else if(QWidget::window()->windowState().testFlag(Qt::WindowNoState)) {
+        set_border_stylesheet("#A0A0A0");
+        m_maximize_padding->hide();
       }
     }
   } else if(watched == m_shadow.get()) {
