@@ -1,7 +1,5 @@
 #include "spire/ui/drop_shadow.hpp"
-#include <algorithm>
 #include <QEvent>
-#include <QGraphicsEffect>
 #include <QLinearGradient>
 #include <QPainter>
 #include <QRadialGradient>
