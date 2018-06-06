@@ -60,10 +60,7 @@ connection icon_button::connect_clicked_signal(
   return m_clicked_signal.connect(slot);
 }
 
-#include <QDebug>
-
 void icon_button::enterEvent(QEvent* event) {
-  qDebug() << "enter " << this;
   if(isEnabled()) {
     switch(m_state) {
       case state::NORMAL:
