@@ -192,6 +192,13 @@ void window::update_resize_boxes() {
 }
 
 void window::update_resize_cursor() {
+  if(QWidget::window()->windowState().testFlag(Qt::WindowMaximized)) {
+    if(m_shadow->cursor().shape() != Qt::ArrowCursor) {
+      m_shadow->setCursor(Qt::ArrowCursor);
+    }
+    m_current_active_rect = active_resize_rect::NONE;
+    return;
+  }
   if(!m_resize_boxes.is_initialized()) {
     update_resize_boxes();
   }
