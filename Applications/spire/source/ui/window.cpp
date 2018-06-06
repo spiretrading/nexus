@@ -82,13 +82,16 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
       }
     } else if(event->type() == QEvent::WindowStateChange) {
       if(QWidget::window()->windowState().testFlag(Qt::WindowMaximized)) {
-        set_border_stylesheet(Qt::transparent);
-        auto taskbar_height = QApplication::desktop()->screenGeometry(
-            QWidget::window()).height() -
-          QApplication::desktop()->availableGeometry(
-            QWidget::window()).height();
-        m_maximize_padding->setFixedHeight(taskbar_height);
-        m_maximize_padding->show();
+        if(QApplication::desktop()->screenNumber(QWidget::window()) !=
+            QApplication::desktop()->primaryScreen()) {
+          set_border_stylesheet(Qt::transparent);
+          auto taskbar_height = QApplication::desktop()->screenGeometry(
+              QWidget::window()).height() -
+            QApplication::desktop()->availableGeometry(
+              QWidget::window()).height();
+          m_maximize_padding->setFixedHeight(taskbar_height);
+          m_maximize_padding->show();
+        }
       } else if(QWidget::window()->windowState().testFlag(Qt::WindowNoState)) {
         set_border_stylesheet("#A0A0A0");
         m_maximize_padding->hide();
