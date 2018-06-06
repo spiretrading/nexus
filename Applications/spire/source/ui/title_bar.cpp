@@ -242,15 +242,15 @@ void title_bar::on_minimize_button_press() {
 }
 
 void title_bar::on_maximize_button_press() {
-  window()->showMaximized();
-  m_maximize_button->setVisible(false);
   m_restore_button->setVisible(true);
+  m_maximize_button->setVisible(false);
+  window()->showMaximized();
 }
 
 void title_bar::on_restore_button_press() {
-  window()->showNormal();
   m_maximize_button->setVisible(true);
   m_restore_button->setVisible(false);
+  window()->showNormal();
 }
 
 void title_bar::on_close_button_press() {

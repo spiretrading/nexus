@@ -73,7 +73,6 @@ namespace spire {
       void enterEvent(QEvent* event) override;
       void focusInEvent(QFocusEvent* event) override;
       void focusOutEvent(QFocusEvent* event) override;
-      void hideEvent(QHideEvent* event) override;
       void leaveEvent(QEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
