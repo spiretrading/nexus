@@ -93,6 +93,10 @@ void icon_button::focusOutEvent(QFocusEvent* event) {
   }
 }
 
+void icon_button::hideEvent(QHideEvent* event) {
+  show_normal();
+}
+
 void icon_button::leaveEvent(QEvent* event) {
   switch(m_state) {
     case state::HOVERED:
