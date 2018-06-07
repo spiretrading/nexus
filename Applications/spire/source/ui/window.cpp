@@ -82,7 +82,7 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::WindowActivate) {
       set_border_stylesheet("#A0A0A0");
       m_shadow->raise();
-      if(QWidget::window()->windowState().testFlag(Qt::WindowMinimized)) {
+      if(QWidget::window()->isMinimized()) {
         QWidget::window()->setWindowState(Qt::WindowMaximized);
       }
     } else if(event->type() == QEvent::WindowDeactivate) {
@@ -195,7 +195,7 @@ void window::update_resize_boxes() {
 }
 
 void window::update_resize_cursor() {
-  if(QWidget::window()->windowState().testFlag(Qt::WindowMaximized)) {
+  if(QWidget::window()->isMaximized()) {
     if(m_shadow->cursor().shape() != Qt::ArrowCursor) {
       m_shadow->setCursor(Qt::ArrowCursor);
     }

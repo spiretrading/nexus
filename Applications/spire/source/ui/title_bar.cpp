@@ -155,8 +155,7 @@ bool title_bar::nativeEventFilter(const QByteArray& event_type, void* message,
     if(msg->wParam == SC_MAXIMIZE) {
       on_maximize_button_press();
       return true;
-    } else if(msg->wParam == SC_RESTORE && !window()->windowState().testFlag(
-        Qt::WindowMinimized)) {
+    } else if(msg->wParam == SC_RESTORE && !window()->isMinimized()) {
       on_restore_button_press();
       return true;
     }
@@ -173,6 +172,14 @@ bool title_bar::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::WindowActivate) {
       set_title_text_stylesheet(QColor("#000000"));
       m_icon->set_icon(m_default_icon);
+    } else if(event->type() == QEvent::WindowStateChange) {
+      if(window()->isMaximized()) {
+        m_maximize_button->hide();
+        m_restore_button->show();
+      } else {
+        m_maximize_button->show();
+        m_restore_button->hide();
+      }
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -190,7 +197,7 @@ void title_bar::mouseMoveEvent(QMouseEvent* event) {
   if(!m_is_dragging) {
     return;
   }
-  if(window()->windowState().testFlag(Qt::WindowMaximized)) {
+  if(window()->isMaximized()) {
     on_restore_button_press();
     auto mouse_screen_pos = QApplication::desktop()->screenGeometry(
       event->globalPos());
@@ -242,21 +249,15 @@ void title_bar::on_minimize_button_press() {
 }
 
 void title_bar::on_maximize_button_press() {
-  m_maximize_button->setVisible(false);
   window()->showMaximized();
-  m_restore_button->setVisible(true);
 }
 
 void title_bar::on_restore_button_press() {
-  m_restore_button->setVisible(false);
   window()->showNormal();
-  m_maximize_button->setVisible(true);
 }
 
 void title_bar::on_close_button_press() {
-  if(m_close_button->isVisible()) {
-    window()->close();
-  }
+  window()->close();
 }
 
 void title_bar::set_title_text_stylesheet(const QColor& font_color) {
