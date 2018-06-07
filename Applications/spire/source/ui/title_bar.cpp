@@ -30,8 +30,7 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
     QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_is_dragging(false),
-      m_body(body),
-      m_window_maximized(false) {
+      m_body(body) {
   setFixedHeight(scale_height(26));
   setStyleSheet("background-color: #F5F5F5;");
   auto layout = new QHBoxLayout(this);
@@ -186,7 +185,7 @@ bool title_bar::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void title_bar::mouseDoubleClickEvent(QMouseEvent* event) {
-  if(m_window_maximized) {
+  if(window()->isMaximized()) {
     on_restore_button_press();
   } else {
     on_maximize_button_press();
