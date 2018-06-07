@@ -3,7 +3,6 @@
 #include <vector>
 #include <boost/optional.hpp>
 #include <QAbstractNativeEventFilter>
-#include <QColor>
 #include <QWidget>
 #include "spire/ui/ui.hpp"
 
