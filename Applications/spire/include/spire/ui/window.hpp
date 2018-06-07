@@ -2,6 +2,7 @@
 #define SPIRE_WINDOW_HPP
 #include <vector>
 #include <boost/optional.hpp>
+#include <QAbstractNativeEventFilter>
 #include <QColor>
 #include <QWidget>
 #include "spire/ui/ui.hpp"
@@ -9,7 +10,7 @@
 namespace spire {
 
   //! A customized window container for top-level windows.
-  class window : public QWidget {
+  class window : public QWidget, QAbstractNativeEventFilter {
     public:
 
       //! Constructs a window.
@@ -31,6 +32,11 @@ namespace spire {
         \param icon The icon to display when the window lacks focus.
       */
       void set_icon(const QImage& icon, const QImage& unfocused_icon);
+
+#ifdef Q_OS_WIN
+      bool nativeEventFilter(const QByteArray& event_type, void* message,
+        long* result) override;
+#endif
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
@@ -61,9 +67,7 @@ namespace spire {
       std::unique_ptr<drop_shadow> m_shadow;
       QWidget* m_border;
       QWidget* m_body;
-      QSize m_maximum_body_size;
       title_bar* m_title_bar;
-      QWidget* m_maximize_padding;
       boost::optional<resize_boxes> m_resize_boxes;
       QPoint m_last_mouse_pos;
       bool m_is_resizing;

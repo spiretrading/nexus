@@ -146,9 +146,9 @@ void title_bar::set_icon(const QImage& icon, const QImage& unfocused_icon) {
   m_icon->set_icon(m_default_icon, m_unfocused_icon);
 }
 
+#ifdef Q_OS_WIN
 bool title_bar::nativeEventFilter(const QByteArray& event_type, void* message,
     long* result) {
-#ifdef Q_OS_WIN
   auto msg = static_cast<MSG*>(message);
   if(msg->message == WM_SYSCOMMAND &&
       reinterpret_cast<HWND>(window()->winId()) == msg->hwnd) {
@@ -161,9 +161,9 @@ bool title_bar::nativeEventFilter(const QByteArray& event_type, void* message,
       return true;
     }
   }
-#endif
   return false;
 }
+#endif
 
 bool title_bar::eventFilter(QObject* watched, QEvent* event) {
   if(watched == window()) {

@@ -3,6 +3,9 @@
 #include <QDesktopWidget>
 #include <QResizeEvent>
 #include <QVBoxLayout>
+#ifdef Q_OS_WIN
+#include <qt_windows.h>
+#endif
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/drop_shadow.hpp"
 #include "spire/ui/title_bar.hpp"
@@ -16,7 +19,6 @@ namespace {
 window::window(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body),
-      m_maximum_body_size(m_body->maximumSize()),
       m_is_resizing(false),
       m_hovered(false) {
   this->::QWidget::window()->setWindowFlags(
@@ -41,13 +43,12 @@ window::window(QWidget* body, QWidget* parent)
   border_layout->setMargin(scale_width(1));
   border_layout->setSpacing(0);
   m_title_bar = new title_bar(m_body, m_border);
-  m_maximize_padding = new QWidget(this);
-  m_maximize_padding->setAttribute(Qt::WA_TransparentForMouseEvents);
-  m_maximize_padding->hide();
   border_layout->addWidget(m_title_bar);
   border_layout->addWidget(m_body);
-  border_layout->addWidget(m_maximize_padding);
   this->::QWidget::window()->installEventFilter(this);
+#ifdef Q_OS_WIN
+  qApp->installNativeEventFilter(this);
+#endif
 }
 
 void window::set_icon(const QImage& icon) {
@@ -57,6 +58,24 @@ void window::set_icon(const QImage& icon) {
 void window::set_icon(const QImage& icon, const QImage& unfocused_icon) {
   m_title_bar->set_icon(icon, unfocused_icon);
 }
+
+#ifdef Q_OS_WIN
+bool window::nativeEventFilter(const QByteArray& event_type, void* message,
+    long* result) {
+  auto msg = static_cast<MSG*>(message);
+  if(msg->message == WM_GETMINMAXINFO) {
+    auto maximize_dimensions = reinterpret_cast<MINMAXINFO*>(msg->lParam);
+    auto rect = QApplication::desktop()->availableGeometry(this);
+    maximize_dimensions->ptMaxSize.x = rect.width();
+    maximize_dimensions->ptMaxSize.y = rect.height() - 1;
+    maximize_dimensions->ptMaxPosition.x = 0;
+    maximize_dimensions->ptMaxPosition.y = 0;
+    *result = 0;
+    return true;
+  }
+  return false;
+}
+#endif
 
 bool window::eventFilter(QObject* watched, QEvent* event) {
   if(watched == this->::QWidget::window()) {
@@ -79,22 +98,6 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::Move) {
       if(m_resize_boxes.is_initialized()) {
         update_resize_boxes();
-      }
-    } else if(event->type() == QEvent::WindowStateChange) {
-      if(QWidget::window()->windowState().testFlag(Qt::WindowMaximized)) {
-        if(QApplication::desktop()->screenNumber(QWidget::window()) !=
-            QApplication::desktop()->primaryScreen()) {
-          set_border_stylesheet(Qt::transparent);
-          auto taskbar_height = QApplication::desktop()->screenGeometry(
-              QWidget::window()).height() -
-            QApplication::desktop()->availableGeometry(
-              QWidget::window()).height();
-          m_maximize_padding->setFixedHeight(taskbar_height);
-          m_maximize_padding->show();
-        }
-      } else if(QWidget::window()->windowState().testFlag(Qt::WindowNoState)) {
-        set_border_stylesheet("#A0A0A0");
-        m_maximize_padding->hide();
       }
     }
   } else if(watched == m_shadow.get()) {

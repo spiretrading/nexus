@@ -52,8 +52,10 @@ namespace spire {
       */
       void set_icon(const QImage& icon, const QImage& unfocused_icon);
 
+#ifdef Q_OS_WIN
       bool nativeEventFilter(const QByteArray& event_type, void* message,
         long* result) override;
+#endif
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
