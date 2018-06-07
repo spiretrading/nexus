@@ -165,11 +165,10 @@ time_and_sales_window::time_and_sales_window(
   connect(properties_action, &QAction::triggered,
     [=] { show_properties_dialog(); });
   m_context_menu->addAction(properties_action);
-  auto book_view_action = new QAction(tr("Link Book View"), m_context_menu);
-  m_context_menu->addAction(book_view_action);
-  auto chart_action = new QAction(tr("Link Chart"), m_context_menu);
-  m_context_menu->addAction(chart_action);
   auto export_action = new QAction(tr("Export Table"), m_context_menu);
+  connect(export_action, &QAction::triggered,
+    [=] { export_table(); });
+  export_action->setEnabled(false);
   m_context_menu->addAction(export_action);
   m_context_menu->setFixedWidth(scale_width(140));
   m_context_menu->setWindowFlag(Qt::NoDropShadowWindowHint);
@@ -187,6 +186,10 @@ time_and_sales_window::time_and_sales_window(
 
     QMenu::item {
       padding: %5px 0px %5px %6px;
+    }
+
+    QMenu::item:disabled {
+      color: #C8C8C8;
     }
 
     QMenu::item:selected, QMenu::item:hover {
@@ -359,6 +362,10 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
     m_overlay_widget->show();
     dialog->show();
   }
+}
+
+void time_and_sales_window::export_table() {
+  
 }
 
 void time_and_sales_window::fade_out_horizontal_scroll_bar() {
