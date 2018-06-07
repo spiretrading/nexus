@@ -1,8 +1,10 @@
 #include "spire/time_and_sales/time_and_sales_window.hpp"
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
+#include <QFileDialog>
 #include <QHeaderView>
 #include <QKeyEvent>
 #include <QScrollBar>
+#include <QStandardPaths>
 #include <QTableView>
 #include <QVBoxLayout>
 #include "spire/security_input/security_input_dialog.hpp"
@@ -11,6 +13,7 @@
 #include "spire/time_and_sales/time_and_sales_properties_dialog.hpp"
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
 #include "spire/spire/dimensions.hpp"
+#include "spire/spire/export_model.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
 #include "spire/ui/drop_shadow.hpp"
 #include "spire/ui/item_padding_delegate.hpp"
@@ -165,11 +168,11 @@ time_and_sales_window::time_and_sales_window(
   connect(properties_action, &QAction::triggered,
     [=] { show_properties_dialog(); });
   m_context_menu->addAction(properties_action);
-  auto export_action = new QAction(tr("Export Table"), m_context_menu);
-  connect(export_action, &QAction::triggered,
+  m_export_action = new QAction(tr("Export Table"), m_context_menu);
+  connect(m_export_action, &QAction::triggered,
     [=] { export_table(); });
-  export_action->setEnabled(false);
-  m_context_menu->addAction(export_action);
+  m_export_action->setEnabled(false);
+  m_context_menu->addAction(m_export_action);
   m_context_menu->setFixedWidth(scale_width(140));
   m_context_menu->setWindowFlag(Qt::NoDropShadowWindowHint);
   m_context_menu_shadow = std::make_unique<drop_shadow>(
@@ -365,7 +368,16 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
 }
 
 void time_and_sales_window::export_table() {
-  
+  auto dialog = new QFileDialog(this, tr("Insert Title Here"),
+    QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+  // setOption fixes this:
+  // https://bugreports.qt.io/browse/QTBUG-56599
+  dialog->setOption(QFileDialog::DontUseNativeDialog);
+  show_overlay_widget();
+  if(dialog->exec() == QDialog::Accepted) {
+    
+  }
+  m_overlay_widget->hide();
 }
 
 void time_and_sales_window::fade_out_horizontal_scroll_bar() {
@@ -432,6 +444,7 @@ void time_and_sales_window::set_current(const Security& s) {
   if(s == m_current_security) {
     return;
   }
+  m_export_action->setEnabled(true);
   m_empty_window_label->hide();
   m_table->show();
   m_current_security = s;

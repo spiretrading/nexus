@@ -76,6 +76,7 @@ namespace spire {
       QTableView* m_table;
       QLabel* m_volume_label;
       QMenu* m_context_menu;
+      QAction* m_export_action;
       std::unique_ptr<drop_shadow> m_context_menu_shadow;
       time_and_sales_properties_dialog* m_properties_dialog;
       bool m_v_scrolling;
