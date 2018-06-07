@@ -3,6 +3,9 @@
 #include <QDesktopWidget>
 #include <QResizeEvent>
 #include <QVBoxLayout>
+#ifdef Q_OS_WIN
+#include <qt_windows.h>
+#endif
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/drop_shadow.hpp"
 #include "spire/ui/title_bar.hpp"
@@ -16,7 +19,6 @@ namespace {
 window::window(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body),
-      m_maximum_body_size(m_body->maximumSize()),
       m_is_resizing(false),
       m_hovered(false) {
   this->::QWidget::window()->setWindowFlags(
@@ -44,6 +46,9 @@ window::window(QWidget* body, QWidget* parent)
   border_layout->addWidget(m_title_bar);
   border_layout->addWidget(m_body);
   this->::QWidget::window()->installEventFilter(this);
+#ifdef Q_OS_WIN
+  qApp->installNativeEventFilter(this);
+#endif
 }
 
 void window::set_icon(const QImage& icon) {
@@ -54,12 +59,30 @@ void window::set_icon(const QImage& icon, const QImage& unfocused_icon) {
   m_title_bar->set_icon(icon, unfocused_icon);
 }
 
+#ifdef Q_OS_WIN
+bool window::nativeEventFilter(const QByteArray& event_type, void* message,
+    long* result) {
+  auto msg = static_cast<MSG*>(message);
+  if(msg->message == WM_GETMINMAXINFO) {
+    auto maximize_dimensions = reinterpret_cast<MINMAXINFO*>(msg->lParam);
+    auto rect = QApplication::desktop()->availableGeometry(this);
+    maximize_dimensions->ptMaxSize.x = rect.width();
+    maximize_dimensions->ptMaxSize.y = rect.height() - 1;
+    maximize_dimensions->ptMaxPosition.x = 0;
+    maximize_dimensions->ptMaxPosition.y = 0;
+    *result = 0;
+    return true;
+  }
+  return false;
+}
+#endif
+
 bool window::eventFilter(QObject* watched, QEvent* event) {
   if(watched == this->::QWidget::window()) {
     if(event->type() == QEvent::WindowActivate) {
       set_border_stylesheet("#A0A0A0");
       m_shadow->raise();
-      if(QWidget::window()->windowState().testFlag(Qt::WindowMinimized)) {
+      if(QWidget::window()->isMinimized()) {
         QWidget::window()->setWindowState(Qt::WindowMaximized);
       }
     } else if(event->type() == QEvent::WindowDeactivate) {
@@ -172,6 +195,13 @@ void window::update_resize_boxes() {
 }
 
 void window::update_resize_cursor() {
+  if(QWidget::window()->isMaximized()) {
+    if(m_shadow->cursor().shape() != Qt::ArrowCursor) {
+      m_shadow->setCursor(Qt::ArrowCursor);
+    }
+    m_current_active_rect = active_resize_rect::NONE;
+    return;
+  }
   if(!m_resize_boxes.is_initialized()) {
     update_resize_boxes();
   }

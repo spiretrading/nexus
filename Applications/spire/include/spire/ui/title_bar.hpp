@@ -75,10 +75,6 @@ namespace spire {
       bool m_is_dragging;
       QPoint m_last_mouse_pos;
       QWidget* m_body;
-      QRect m_window_restore_geometry;
-      QPoint m_window_restore_pos;
-      QSize m_max_body_size;
-      bool m_window_maximized;
 
       void on_window_title_change(const QString& title);
       void on_minimize_button_press();
