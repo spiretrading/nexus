@@ -200,24 +200,15 @@ void title_bar::mouseMoveEvent(QMouseEvent* event) {
     return;
   }
   if(window()->isMaximized()) {
-    on_restore_button_press();
-    auto mouse_screen_pos = QApplication::desktop()->screenGeometry(
-      event->globalPos());
-    auto mouse_screen_x = event->globalPos().x() - mouse_screen_pos.left();
-    auto new_pos = QPoint(event->globalX() - (window()->width() / 2), 0);
-    if(mouse_screen_x - (width() / 2) < 0) {
-      new_pos.setX(mouse_screen_pos.left());
-    } else if(mouse_screen_x + width() > mouse_screen_pos.width()) {
-      new_pos.setX(mouse_screen_pos.right() - width());
-    }
-    window()->move(new_pos);
+    drag_restore(event->globalPos());
+  } else {
+    auto delta = event->globalPos();
+    delta -= m_last_mouse_pos;
+    auto window_pos = window()->pos();
+    window_pos += delta;
+    m_last_mouse_pos = event->globalPos();
+    window()->move(window_pos);
   }
-  auto delta = event->globalPos();
-  delta -= m_last_mouse_pos;
-  auto window_pos = window()->pos();
-  window_pos += delta;
-  m_last_mouse_pos = event->globalPos();
-  window()->move(window_pos);
 }
 
 void title_bar::mousePressEvent(QMouseEvent* event)  {
@@ -239,6 +230,37 @@ void title_bar::resizeEvent(QResizeEvent* event) {
   on_window_title_change(window()->windowTitle());
 }
 
+#ifdef Q_OS_WIN
+void title_bar::drag_restore(const QPoint& pos) {
+  WINDOWPLACEMENT placement;
+  placement.length = sizeof(WINDOWPLACEMENT);
+  GetWindowPlacement(reinterpret_cast<HWND>(window()->winId()), &placement);
+  auto mouse_screen_pos = QApplication::desktop()->screenGeometry(pos);
+  auto mouse_screen_x = pos.x() - mouse_screen_pos.left();
+  auto new_pos = QPoint(pos.x() - (m_restore_geometry.width() / 2), 0);
+  placement.rcNormalPosition.left = new_pos.x();
+  placement.rcNormalPosition.top = 0;
+  placement.rcNormalPosition.right = new_pos.x() +
+    m_restore_geometry.width();
+  placement.rcNormalPosition.bottom = m_restore_geometry.height();
+  SetWindowPlacement(reinterpret_cast<HWND>(window()->winId()), &placement);
+  on_restore_button_press();
+}
+#else
+void title_bar::drag_restore(const QPoint& pos) {
+  on_restore_button_press();
+  auto mouse_screen_pos = QApplication::desktop()->screenGeometry(pos);
+  auto mouse_screen_x = pos.x() - mouse_screen_pos.left();
+  auto new_pos = QPoint(pos.x() - (window()->width() / 2), 0);
+  if(mouse_screen_x - (width() / 2) < 0) {
+    new_pos.setX(mouse_screen_pos.left());
+  } else if(mouse_screen_x + width() > mouse_screen_pos.width()) {
+    new_pos.setX(mouse_screen_pos.right() - width());
+  }
+  window()->move(new_pos);
+}
+#endif
+
 void title_bar::on_window_title_change(const QString& title) {
   QFontMetrics metrics(m_title_label->font());
   auto shortened_text = metrics.elidedText(title,
@@ -251,6 +273,7 @@ void title_bar::on_minimize_button_press() {
 }
 
 void title_bar::on_maximize_button_press() {
+  m_restore_geometry = window()->geometry();
   window()->showMaximized();
 }
 
