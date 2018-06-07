@@ -112,9 +112,7 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   connect(window(), &QWidget::windowTitleChanged,
     [=] (auto& title) {on_window_title_change(title);});
   window()->installEventFilter(this);
-#ifdef Q_OS_WIN
   qApp->installNativeEventFilter(this);
-#endif
 }
 
 void title_bar::set_icon(const QImage& icon) {
@@ -159,6 +157,11 @@ bool title_bar::nativeEventFilter(const QByteArray& event_type, void* message,
       return true;
     }
   }
+  return false;
+}
+#else
+bool title_bar::nativeEventFilter(const QByteArray& event_type, void* message,
+    long* result) {
   return false;
 }
 #endif
