@@ -240,7 +240,7 @@ void title_bar::drag_restore(const QPoint& pos) {
   auto new_pos = QPoint(pos.x() - (m_restore_geometry.width() / 2), 0);
   if(mouse_screen_x - (m_restore_geometry.width() / 2) < 0) {
     new_pos.setX(mouse_screen_pos.left());
-  } else if(mouse_screen_x + m_restore_geometry.width() >
+  } else if(mouse_screen_x + (m_restore_geometry.width() / 2) >
       mouse_screen_pos.width()) {
     new_pos.setX(mouse_screen_pos.right() - m_restore_geometry.width());
   }
