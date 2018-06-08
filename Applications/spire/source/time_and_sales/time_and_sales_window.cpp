@@ -374,7 +374,7 @@ void time_and_sales_window::export_table() {
   show_overlay_widget();
   auto filepath = QFileDialog::getSaveFileName(this, tr("Export As"),
     QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) +
-    tr("/time_and_sales"), tr("CSV (*.csv)"));
+    tr("/time_and_sales"), "CSV (*.csv)");
   if(!filepath.isNull()) {
     export_model_as_csv(m_model.get(), std::ofstream(filepath.toStdString()));
   }
