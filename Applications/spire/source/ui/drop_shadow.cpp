@@ -70,6 +70,7 @@ void drop_shadow::hideEvent(QHideEvent* event) {
 }
 
 void drop_shadow::paintEvent(QPaintEvent* event) {
+/*
   if(!m_is_visible) {
     follow_parent();
     m_is_visible = true;
@@ -126,6 +127,7 @@ void drop_shadow::paintEvent(QPaintEvent* event) {
   right_gradient.setStops(BOTTOM_STOPS);
   painter.fillRect(right_rect, right_gradient);
   QWidget::paintEvent(event);
+*/
 }
 
 void drop_shadow::follow_parent() {

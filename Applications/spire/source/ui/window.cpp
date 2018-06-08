@@ -4,6 +4,7 @@
 #include <QResizeEvent>
 #include <QVBoxLayout>
 #ifdef Q_OS_WIN
+#include <dwmapi.h>
 #include <qt_windows.h>
 #endif
 #include "spire/spire/dimensions.hpp"
@@ -21,10 +22,9 @@ window::window(QWidget* body, QWidget* parent)
       m_body(body),
       m_is_resizing(false),
       m_hovered(false) {
-  this->::QWidget::window()->setWindowFlags(
-    this->::QWidget::window()->windowFlags() | Qt::Window |
-    Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);
-  this->::QWidget::window()->setAttribute(Qt::WA_TranslucentBackground);
+//  QWidget::window()->setWindowFlags(QWidget::window()->windowFlags() |
+//    Qt::Window | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);
+//  QWidget::window()->setAttribute(Qt::WA_TranslucentBackground);
   m_shadow = std::make_unique<drop_shadow>(this);
   m_shadow->setMouseTracking(true);
   m_shadow->installEventFilter(this);
@@ -45,10 +45,13 @@ window::window(QWidget* body, QWidget* parent)
   m_title_bar = new title_bar(m_body, m_border);
   border_layout->addWidget(m_title_bar);
   border_layout->addWidget(m_body);
-  this->::QWidget::window()->installEventFilter(this);
+  QWidget::window()->installEventFilter(this);
 #ifdef Q_OS_WIN
-  qApp->installNativeEventFilter(this);
+//  auto handle = reinterpret_cast<HWND>(QWidget::window()->winId());
+//  auto frame_style = WS_POPUP            | WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX;
+//  ::SetWindowLong(handle, GWL_STYLE, frame_style);
 #endif
+  qApp->installNativeEventFilter(this);
 }
 
 void window::set_icon(const QImage& icon) {
@@ -63,7 +66,26 @@ void window::set_icon(const QImage& icon, const QImage& unfocused_icon) {
 bool window::nativeEventFilter(const QByteArray& event_type, void* message,
     long* result) {
   auto msg = static_cast<MSG*>(message);
-  if(msg->message == WM_GETMINMAXINFO) {
+  auto is_dwm_enabled = FALSE;
+  if(!SUCCEEDED(DwmIsCompositionEnabled(&is_dwm_enabled)) ||
+      !is_dwm_enabled) {
+  auto frame_style = WS_POPUP            | WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX;
+  ::SetWindowLong(msg->hwnd, GWL_STYLE, frame_style);
+    return false;
+  }
+  if(DwmDefWindowProc(msg->hwnd, msg->message, msg->wParam, msg->lParam,
+      result)) {
+    return false;
+  }
+  if(msg->message == WM_NCACTIVATE) {
+    auto margins = MARGINS{-1, -1, -1, -1};
+    ::DwmExtendFrameIntoClientArea(msg->hwnd, &margins);
+    *result = 0;
+  } else if((msg->message == WM_NCCALCSIZE) && msg->wParam == TRUE) {
+    auto region = reinterpret_cast<NCCALCSIZE_PARAMS*>(msg->lParam);
+    *result = 0;
+    return true;
+  } else if(msg->message == WM_GETMINMAXINFO) {
     auto maximize_dimensions = reinterpret_cast<MINMAXINFO*>(msg->lParam);
     auto rect = QApplication::desktop()->availableGeometry(this);
     maximize_dimensions->ptMaxSize.x = rect.width();
@@ -71,14 +93,14 @@ bool window::nativeEventFilter(const QByteArray& event_type, void* message,
     maximize_dimensions->ptMaxPosition.x = 0;
     maximize_dimensions->ptMaxPosition.y = 0;
     *result = 0;
-    return true;
+    return false;
   }
   return false;
 }
 #endif
 
 bool window::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == this->::QWidget::window()) {
+  if(watched == QWidget::window()) {
     if(event->type() == QEvent::WindowActivate) {
       set_border_stylesheet("#A0A0A0");
       m_shadow->raise();
@@ -90,7 +112,7 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::Resize) {
       auto e = static_cast<QResizeEvent*>(event);
       if(e->size().height() > height()) {
-        this->::QWidget::window()->resize(size());
+        QWidget::window()->resize(size());
       }
       if(m_resize_boxes.is_initialized()) {
         update_resize_boxes();
