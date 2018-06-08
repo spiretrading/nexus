@@ -238,7 +238,13 @@ void title_bar::drag_restore(const QPoint& pos) {
   auto mouse_screen_pos = QApplication::desktop()->screenGeometry(pos);
   auto mouse_screen_x = pos.x() - mouse_screen_pos.left();
   auto new_pos = QPoint(pos.x() - (m_restore_geometry.width() / 2), 0);
-  placement.rcNormalPosition.left = new_pos.x();
+  if(mouse_screen_x - (m_restore_geometry.width() / 2) < 0) {
+    new_pos.setX(mouse_screen_pos.left());
+  } else if(mouse_screen_x + m_restore_geometry.width() >
+      mouse_screen_pos.width()) {
+    new_pos.setX(mouse_screen_pos.right() - m_restore_geometry.width());
+  }
+  placement.rcNormalPosition.left = new_pos.x() + 1;
   placement.rcNormalPosition.top = 0;
   placement.rcNormalPosition.right = new_pos.x() +
     m_restore_geometry.width();
