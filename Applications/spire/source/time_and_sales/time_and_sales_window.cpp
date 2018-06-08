@@ -372,7 +372,7 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
 
 void time_and_sales_window::export_table() {
   show_overlay_widget();
-  auto filepath = QFileDialog::getSaveFileName(this, tr("Insert Title Here"),
+  auto filepath = QFileDialog::getSaveFileName(this, tr("Export As"),
     QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) +
     tr("/time_and_sales"), tr("CSV (*.csv)"));
   if(!filepath.isNull()) {
