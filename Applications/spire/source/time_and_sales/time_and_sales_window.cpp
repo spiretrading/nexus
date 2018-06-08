@@ -376,11 +376,8 @@ void time_and_sales_window::export_table() {
     QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) +
     tr("/time_and_sales"), tr("CSV (*.csv)"));
   if(!filepath.isNull()) {
-    std::filebuf buf;
-    buf.open(filepath.toStdString(), std::ios_base::out |
-      std::ios_base::trunc);
-    std::ostream stream(&buf);
-    export_model_as_csv(m_model.get(), stream);
+    export_model_as_csv(m_model.get(), std::ofstream(filepath.toStdString(),
+      std::ios_base::out | std::ios_base::trunc));
   }
   m_overlay_widget->hide();
 }
