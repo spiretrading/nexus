@@ -368,14 +368,16 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
 }
 
 void time_and_sales_window::export_table() {
-  auto dialog = new QFileDialog(this, tr("Insert Title Here"),
-    QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
-  // setOption fixes this:
-  // https://bugreports.qt.io/browse/QTBUG-56599
-  dialog->setOption(QFileDialog::DontUseNativeDialog);
   show_overlay_widget();
-  if(dialog->exec() == QDialog::Accepted) {
-    
+  auto filepath = QFileDialog::getSaveFileName(this, tr("Insert Title Here"),
+    QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) +
+    tr("/time_and_sales"), tr("CSV (*.csv)"));
+  if(!filepath.isNull()) {
+    std::filebuf buf;
+    buf.open(filepath.toStdString(), std::ios_base::out |
+      std::ios_base::trunc);
+    std::ostream stream(&buf);
+    export_model_as_csv(m_model.get(), stream);
   }
   m_overlay_widget->hide();
 }
