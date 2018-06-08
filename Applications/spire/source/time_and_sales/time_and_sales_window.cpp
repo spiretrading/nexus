@@ -195,6 +195,12 @@ time_and_sales_window::time_and_sales_window(
       color: #C8C8C8;
     }
 
+    QMenu::item:disabled:selected,
+    QMenu::item:disabled:hover {
+      background-color: #FFFFFF;
+      color: #C8C8C8;
+    }
+
     QMenu::item:selected, QMenu::item:hover {
       background-color: #8D78EC;
       color: #FFFFFF;
