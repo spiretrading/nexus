@@ -76,6 +76,7 @@ namespace spire {
       QTableView* m_table;
       QLabel* m_volume_label;
       QMenu* m_context_menu;
+      QAction* m_export_action;
       std::unique_ptr<drop_shadow> m_context_menu_shadow;
       time_and_sales_properties_dialog* m_properties_dialog;
       bool m_v_scrolling;
@@ -83,6 +84,7 @@ namespace spire {
       QTimer* m_v_scroll_bar_timer;
       QTimer* m_h_scroll_bar_timer;
 
+      void export_table();
       void fade_out_horizontal_scroll_bar();
       void fade_out_vertical_scroll_bar();
       void maintain_table_position();
