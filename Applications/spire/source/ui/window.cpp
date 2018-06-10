@@ -22,9 +22,6 @@ window::window(QWidget* body, QWidget* parent)
       m_body(body),
       m_is_resizing(false),
       m_hovered(false) {
-//  QWidget::window()->setWindowFlags(QWidget::window()->windowFlags() |
-//    Qt::Window | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);
-//  QWidget::window()->setAttribute(Qt::WA_TranslucentBackground);
   m_shadow = std::make_unique<drop_shadow>(this);
   m_shadow->setMouseTracking(true);
   m_shadow->installEventFilter(this);
@@ -46,11 +43,6 @@ window::window(QWidget* body, QWidget* parent)
   border_layout->addWidget(m_title_bar);
   border_layout->addWidget(m_body);
   QWidget::window()->installEventFilter(this);
-#ifdef Q_OS_WIN
-//  auto handle = reinterpret_cast<HWND>(QWidget::window()->winId());
-//  auto frame_style = WS_POPUP            | WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX;
-//  ::SetWindowLong(handle, GWL_STYLE, frame_style);
-#endif
   qApp->installNativeEventFilter(this);
 }
 
@@ -66,23 +58,10 @@ void window::set_icon(const QImage& icon, const QImage& unfocused_icon) {
 bool window::nativeEventFilter(const QByteArray& event_type, void* message,
     long* result) {
   auto msg = static_cast<MSG*>(message);
-  auto is_dwm_enabled = FALSE;
-  if(!SUCCEEDED(DwmIsCompositionEnabled(&is_dwm_enabled)) ||
-      !is_dwm_enabled) {
-  auto frame_style = WS_POPUP            | WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX;
-  ::SetWindowLong(msg->hwnd, GWL_STYLE, frame_style);
-    return false;
-  }
-  if(DwmDefWindowProc(msg->hwnd, msg->message, msg->wParam, msg->lParam,
-      result)) {
-    return false;
-  }
-  if(msg->message == WM_NCACTIVATE) {
+  if(msg->message == WM_ACTIVATE) {
     auto margins = MARGINS{-1, -1, -1, -1};
     ::DwmExtendFrameIntoClientArea(msg->hwnd, &margins);
-    *result = 0;
   } else if((msg->message == WM_NCCALCSIZE) && msg->wParam == TRUE) {
-    auto region = reinterpret_cast<NCCALCSIZE_PARAMS*>(msg->lParam);
     *result = 0;
     return true;
   } else if(msg->message == WM_GETMINMAXINFO) {
@@ -93,6 +72,22 @@ bool window::nativeEventFilter(const QByteArray& event_type, void* message,
     maximize_dimensions->ptMaxPosition.x = 0;
     maximize_dimensions->ptMaxPosition.y = 0;
     *result = 0;
+    return false;
+  } else if(msg->message == WM_NCHITTEST) {
+    *result = HTCLIENT;
+    return true;
+  } else if(msg->message == WM_NCPAINT) {
+//    ::DefWindowProc(msg->hwnd, msg->message, msg->wParam, msg->lParam);
+    auto device = GetWindowDC(msg->hwnd);
+    RECT background;
+    background.top = 0;
+    background.right = 10000;
+    background.bottom = 10000;
+    background.left = 0;
+    auto brush = CreateSolidBrush(RGB(255, 0, 0));
+    SelectObject(device, brush);
+    ::Rectangle(device, 0, 0, 10000, 10000);
+    DeleteObject(brush);
     return false;
   }
   return false;
@@ -156,7 +151,7 @@ void window::handle_resize() {
     m_body->layout()->minimumSize().width(),
     std::max(m_title_bar->minimumWidth(),
     m_title_bar->layout()->minimumSize().width()))), m_body->minimumHeight()) +
-    container_delta;
+    container_delta + QSize(16, 39);
   if(m_current_active_rect == active_resize_rect::TOP ||
       m_current_active_rect == active_resize_rect::TOP_LEFT ||
       m_current_active_rect == active_resize_rect::TOP_RIGHT) {
