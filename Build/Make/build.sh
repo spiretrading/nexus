@@ -30,7 +30,7 @@ applications+="AdministrationServer "
 applications+="AsxItchMarketDataFeedClient "
 applications+="ChartingServer "
 applications+="ChiaMarketDataFeedClient "
-applications+="ClientWebPortal "
+applications+="client_web_portal "
 applications+="ComplianceServer "
 applications+="CseMarketDataFeedClient "
 applications+="CtaMarketDataFeedClient "
@@ -45,10 +45,7 @@ applications+="TmxTl1MarketDataFeedClient "
 applications+="UtpMarketDataFeedClient "
 parallel -j$jobs --no-notice build_function ::: $applications
 
-pushd $directory/../../Applications/ClientWebPortal/Source/api/build/make
-./build.sh $config
-popd
-pushd $directory/../../Applications/ClientWebPortal/Source/webapp/build/make
+pushd $directory/../../Applications/client_web_portal/source/web_app/build/posix
 ./build.sh $config
 popd
 

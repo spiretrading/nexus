@@ -65,7 +65,7 @@ def build_repo(repo, path):
     os.chdir('./../../../')
     user_call('mkdir %s' % str(timestamp))
     nexus_applications = ['AdministrationServer', 'AsxItchMarketDataFeedClient',
-      'ChartingServer', 'ChiaMarketDataFeedClient', 'ClientWebPortal',
+      'ChartingServer', 'ChiaMarketDataFeedClient', 'client_web_portal',
       'ComplianceServer', 'CseMarketDataFeedClient', 'CtaMarketDataFeedClient',
       'DefinitionsServer', 'MarketDataRelayServer', 'MarketDataServer',
       'RiskServer', 'SimulationMarketDataFeedClient',
