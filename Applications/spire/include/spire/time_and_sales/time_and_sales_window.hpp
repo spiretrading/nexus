@@ -73,6 +73,7 @@ namespace spire {
       QWidget* m_body;
       QLabel* m_empty_window_label;
       QLabel* m_overlay_widget;
+      loading_widget* m_loading_widget;
       QTableView* m_table;
       QLabel* m_volume_label;
       QMenu* m_context_menu;

@@ -10,6 +10,7 @@
 #include "spire/security_input/security_input_dialog.hpp"
 #include "spire/security_input/security_input_model.hpp"
 #include "spire/time_and_sales/empty_time_and_sales_model.hpp"
+#include "spire/time_and_sales/loading_widget.hpp"
 #include "spire/time_and_sales/time_and_sales_properties_dialog.hpp"
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
 #include "spire/spire/dimensions.hpp"
@@ -62,6 +63,9 @@ time_and_sales_window::time_and_sales_window(
   m_overlay_widget->setStyleSheet(
     "background-color: rgba(245, 245, 245, 153);");
   m_overlay_widget->hide();
+  m_loading_widget = new loading_widget(this);
+  m_loading_widget->hide();
+  layout->addWidget(m_loading_widget);
   m_table = new QTableView(this);
   m_table->setItemDelegate(new item_padding_delegate(scale_width(5),
     new custom_variant_item_delegate(), this));

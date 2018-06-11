@@ -1,5 +1,6 @@
 #include "spire/time_and_sales/loading_widget.hpp"
 #include <QMovie>
+#include <QTimer>
 #include <QVBoxLayout>
 #include "spire/spire/dimensions.hpp"
 
@@ -25,5 +26,5 @@ void loading_widget::hideEvent(QHideEvent* event) {
 }
 
 void loading_widget::showEvent(QShowEvent* event) {
-  m_logo_widget->movie()->start();
+  QTimer::singleShot(2000, [=] { m_logo_widget->movie()->start(); });
 }
