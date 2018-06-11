@@ -1,5 +1,5 @@
 SETLOCAL
-IF NOT %1 == "Debug" (
+IF NOT "%1" == "Debug" (
   SET PROD_ENV=1
 )
 PUSHD %~dp0..\..\..\library\build\windows
