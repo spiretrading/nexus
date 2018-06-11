@@ -15,6 +15,10 @@ namespace spire {
       */
       loading_widget(QWidget* parent = nullptr);
 
+    protected:
+      void hideEvent(QHideEvent* event) override;
+      void showEvent(QShowEvent* event) override;
+
     private:
       QLabel* m_logo_widget;
   };

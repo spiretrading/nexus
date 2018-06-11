@@ -66,5 +66,6 @@
         <file>icons/check-with-box.svg</file>
         <file>icons/column-border.png</file>
         <file>icons/close-black.svg</file>
+        <file>icons/pre-loader.gif</file>
     </qresource>
 </RCC>
