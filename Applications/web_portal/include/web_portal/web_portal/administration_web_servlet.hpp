@@ -5,9 +5,9 @@
 #include <Beam/WebServices/HttpRequestSlot.hpp>
 #include <Beam/WebServices/SessionStore.hpp>
 #include <boost/noncopyable.hpp>
-#include "ClientWebPortal/ClientWebPortal/ClientWebPortal.hpp"
-#include "ClientWebPortal/ClientWebPortal/ClientWebPortalSession.hpp"
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
+#include "web_portal/web_portal/web_portal.hpp"
+#include "web_portal/web_portal/web_portal_session.hpp"
 
 namespace Nexus {
 namespace ClientWebPortal {

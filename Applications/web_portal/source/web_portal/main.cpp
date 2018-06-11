@@ -8,8 +8,8 @@
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <Beam/WebServices/HttpServletContainer.hpp>
 #include <tclap/CmdLine.h>
-#include "ClientWebPortal/ClientWebPortal/ClientWebPortalServlet.hpp"
-#include "ClientWebPortal/Version.hpp"
+#include "web_portal/web_portal/web_portal_servlet.hpp"
+#include "web_portal/version.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;
@@ -46,7 +46,7 @@ namespace {
 int main(int argc, const char** argv) {
   string configFile;
   try {
-    CmdLine cmd{"", ' ', "0.9-r" CLIENT_WEB_PORTAL_VERSION
+    CmdLine cmd{"", ' ', "0.9-r" WEB_PORTAL_VERSION
       "\nCopyright (C) 2009 Eidolon Systems Ltd."};
     ValueArg<string> configArg{"c", "config", "Configuration file", false,
       "config.yml", "path"};

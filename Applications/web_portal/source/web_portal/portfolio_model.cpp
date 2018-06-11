@@ -1,4 +1,4 @@
-#include "ClientWebPortal/ClientWebPortal/PortfolioModel.hpp"
+#include "web_portal/web_portal/portfolio_model.hpp"
 #include <boost/functional/hash.hpp>
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 

@@ -1,8 +1,8 @@
-#include "ClientWebPortal/ClientWebPortal/AdministrationWebServlet.hpp"
+#include "web_portal/web_portal/administration_web_servlet.hpp"
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
 #include <Beam/WebServices/HttpServerPredicates.hpp>
-#include "ClientWebPortal/ClientWebPortal/ClientWebPortalSession.hpp"
+#include "web_portal/web_portal/web_portal_session.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;

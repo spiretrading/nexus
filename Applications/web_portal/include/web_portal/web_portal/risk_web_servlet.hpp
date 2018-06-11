@@ -12,9 +12,9 @@
 #include <Beam/WebServices/SessionStore.hpp>
 #include <Beam/WebServices/WebSocketChannel.hpp>
 #include <boost/noncopyable.hpp>
-#include "ClientWebPortal/ClientWebPortal/ClientWebPortal.hpp"
-#include "ClientWebPortal/ClientWebPortal/ClientWebPortalSession.hpp"
-#include "ClientWebPortal/ClientWebPortal/PortfolioModel.hpp"
+#include "web_portal/web_portal/web_portal.hpp"
+#include "web_portal/web_portal/web_portal_session.hpp"
+#include "web_portal/web_portal/portfolio_model.hpp"
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"

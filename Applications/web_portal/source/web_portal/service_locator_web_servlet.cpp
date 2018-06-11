@@ -1,4 +1,4 @@
-#include "ClientWebPortal/ClientWebPortal/ServiceLocatorWebServlet.hpp"
+#include "web_portal/web_portal/service_locator_web_servlet.hpp"
 #include <Beam/Utilities/Trie.hpp>
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
@@ -6,7 +6,7 @@
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
-#include "ClientWebPortal/ClientWebPortal/ClientWebPortalSession.hpp"
+#include "web_portal/web_portal/web_portal_session.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;

@@ -8,7 +8,7 @@
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Serialization/ShuttleOptional.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include "ClientWebPortal/ClientWebPortal/ClientWebPortal.hpp"
+#include "web_portal/web_portal/web_portal.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
