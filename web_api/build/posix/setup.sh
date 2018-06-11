@@ -2,9 +2,9 @@
 pushd ../../
 npm install
 pushd node_modules
-rm -rf beam
+if [ -d beam ]; then rm -rf beam; fi
 cp -r ../../../Beam/web_api/library/* .
-rm -rf @types/beam
+if [ -d @types/beam ]; then rm -rf @types/beam; fi
 mkdir @types/beam
 cp -r ../../../Beam/web_api/library/beam/library/beam/* @types/beam
 popd

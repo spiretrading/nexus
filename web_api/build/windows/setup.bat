@@ -2,9 +2,13 @@ SETLOCAL
 PUSHD %~dp0..\..\
 CALL npm install
 PUSHD node_modules
-rm -rf beam
+IF exist beam (
+  rm -rf beam
+)
 cp -r ..\..\..\Beam\web_api\library\* .
-rm -rf @types\beam
+IF exist @types\beam (
+  rm -rf @types\beam
+)
 mkdir @types\beam
 cp -r ..\..\..\Beam\web_api\library\beam\library\beam\* @types\beam
 POPD

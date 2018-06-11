@@ -2,7 +2,7 @@
 set -o errexit
 set -o pipefail
 directory=$(pwd)
-pushd $directory/../../source/build/posix
+pushd $directory/../../library/build/posix
 ./setup.sh
 popd
 pushd $directory/../../tests/build/posix
