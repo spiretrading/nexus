@@ -8,7 +8,7 @@ nexus_applications+=" AdministrationServer"
 nexus_applications+=" MarketDataServer"
 nexus_applications+=" MarketDataRelayServer"
 nexus_applications+=" ChartingServer"
-nexus_applications+=" ClientWebPortal"
+nexus_applications+=" client_web_portal"
 nexus_applications+=" ComplianceServer"
 nexus_applications+=" RiskServer"
 nexus_applications+=" SimulationOrderExecutionServer"
@@ -26,6 +26,6 @@ for application in $nexus_applications; do
 done
 
 python_directory=$(python3 -m site --user-site)
-cp -R /home/developers/Nexus/Applications/ClientWebPortal/Application/webapp ./ClientWebPortal
+cp -R /home/developers/Nexus/Applications/client_web_portal/application/web_app ./client_web_portal
 cp /home/developers/Beam/Beam/Library/Release/beam.so $python_directory
 cp /home/developers/Nexus/Nexus/Library/Release/nexus.so $python_directory

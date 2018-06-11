@@ -1,4 +1,0 @@
-class MarketCode {
-}
-
-export {MarketCode};
