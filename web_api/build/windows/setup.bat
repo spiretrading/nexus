@@ -1,6 +1,10 @@
 SETLOCAL
 PUSHD %~dp0..\..\
 CALL npm install
+PUSHD ..\..\Beam\web_api\build\windows
+CALL setup.bat
+CALL build.bat
+POPD
 PUSHD node_modules
 IF exist beam (
   rm -rf beam
