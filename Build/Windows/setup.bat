@@ -63,6 +63,6 @@ if exist qt-5.10.0 goto end_qt_setup
     popd
 :end_qt_setup
 
-CALL %~dp0../../Applications/client_web_portal/build/windows/setup.bat
+CALL %~dp0../../Applications/web_portal/web_app/build/windows/setup.bat
 
 ENDLOCAL

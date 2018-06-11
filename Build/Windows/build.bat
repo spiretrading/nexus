@@ -9,7 +9,6 @@ CALL %~dp0../../Applications/AdministrationServer/Build/Windows/build.bat %confi
 CALL %~dp0../../Applications/AsxItchMarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/ChartingServer/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/ChiaMarketDataFeedClient/Build/Windows/build.bat %config%
-CALL %~dp0../../Applications/client_web_portal/build/windows/build.bat %config%
 CALL %~dp0../../Applications/ComplianceServer/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/CseMarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/CtaMarketDataFeedClient/Build/Windows/build.bat %config%
@@ -23,4 +22,6 @@ CALL %~dp0../../Applications/Spire/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/TmxIpMarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/TmxTl1MarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/UtpMarketDataFeedClient/Build/Windows/build.bat %config%
+CALL %~dp0../../Applications/web_portal/build/windows/build.bat %config%
+CALL %~dp0../../Applications/web_portal/web_app/build/windows/build.bat %config%
 ENDLOCAL

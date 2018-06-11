@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(client_web_portal)
+project(web_portal)
 
 include_directories(./../../include)
 include_directories($ENV{BEAM_INCLUDE_PATH})
@@ -48,4 +48,4 @@ if(NOT EXISTS $ENV{INSTALL_DIRECTORY})
   file(MAKE_DIRECTORY $ENV{INSTALL_DIRECTORY})
 endif()
 
-add_subdirectory(client_web_portal)
+add_subdirectory(web_portal)

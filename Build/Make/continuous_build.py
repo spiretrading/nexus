@@ -65,12 +65,12 @@ def build_repo(repo, path):
     os.chdir('./../../../')
     user_call('mkdir %s' % str(timestamp))
     nexus_applications = ['AdministrationServer', 'AsxItchMarketDataFeedClient',
-      'ChartingServer', 'ChiaMarketDataFeedClient', 'client_web_portal',
-      'ComplianceServer', 'CseMarketDataFeedClient', 'CtaMarketDataFeedClient',
-      'DefinitionsServer', 'MarketDataRelayServer', 'MarketDataServer',
-      'RiskServer', 'SimulationMarketDataFeedClient',
-      'SimulationOrderExecutionServer', 'TmxIpMarketDataFeedClient',
-      'TmxTl1MarketDataFeedClient', 'UtpMarketDataFeedClient']
+      'ChartingServer', 'ChiaMarketDataFeedClient', 'ComplianceServer',
+      'CseMarketDataFeedClient', 'CtaMarketDataFeedClient', 'DefinitionsServer',
+      'MarketDataRelayServer', 'MarketDataServer', 'RiskServer',
+      'SimulationMarketDataFeedClient', 'SimulationOrderExecutionServer',
+      'TmxIpMarketDataFeedClient', 'TmxTl1MarketDataFeedClient',
+      'UtpMarketDataFeedClient']
     copy_build(nexus_applications, timestamp, 'Nexus')
     beam_applications = ['AdminClient', 'RegistryServer', 'ServiceLocator',
       'UidServer']

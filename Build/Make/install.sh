@@ -109,16 +109,6 @@ if [ ! -d "ChartingServer" ]; then
   sudo -u $(logname) sed -i "s:admin_password:\"$admin_password\":g" config.yml
   cd ..
 fi
-if [ ! -d "client_web_portal" ]; then
-  sudo -u $(logname) mkdir client_web_portal
-  cd client_web_portal
-  sudo -u $(logname) cp -R /home/developers/Nexus/Applications/client_web_portal/application/* .
-  sudo -u $(logname) mv config.default.yml config.yml
-  sudo -u $(logname) sed -i "s:local_interface:$local_interface:g" config.yml
-  sudo -u $(logname) sed -i "s:global_address:$global_address:g" config.yml
-  sudo -u $(logname) sed -i "s:admin_password:\"$admin_password\":g" config.yml
-  cd ..
-fi
 if [ ! -d "ComplianceServer" ]; then
   sudo -u $(logname) mkdir ComplianceServer
   cd ComplianceServer
@@ -229,6 +219,16 @@ if [ ! -d "UidServer" ]; then
   sudo -u $(logname) cp /home/developers/Beam/Applications/UidServer/Application/UidServer .
   sudo -u $(logname) cp /home/developers/Beam/Applications/UidServer/Application/*.sh .
   sudo -u $(logname) cp /home/developers/Beam/Applications/UidServer/Application/config.default.yml config.yml
+  sudo -u $(logname) sed -i "s:local_interface:$local_interface:g" config.yml
+  sudo -u $(logname) sed -i "s:global_address:$global_address:g" config.yml
+  sudo -u $(logname) sed -i "s:admin_password:\"$admin_password\":g" config.yml
+  cd ..
+fi
+if [ ! -d "web_portal" ]; then
+  sudo -u $(logname) mkdir web_portal
+  cd web_portal
+  sudo -u $(logname) cp -R /home/developers/Nexus/Applications/web_portal/application/* .
+  sudo -u $(logname) mv config.default.yml config.yml
   sudo -u $(logname) sed -i "s:local_interface:$local_interface:g" config.yml
   sudo -u $(logname) sed -i "s:global_address:$global_address:g" config.yml
   sudo -u $(logname) sed -i "s:admin_password:\"$admin_password\":g" config.yml
