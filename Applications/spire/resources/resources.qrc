@@ -53,11 +53,7 @@
         <file>icons/time-sale-purple.svg</file>
         <file>icons/maximize-black.svg</file>
         <file>icons/maximize-grey.svg</file>
-        <file>icons/close-darker-grey.svg</file>
-        <file>icons/maximize-darker-grey.svg</file>
-        <file>icons/minimize-darker-grey.svg</file>
         <file>icons/unmaximize-black.svg</file>
-        <file>icons/unmaximize-darker-grey.svg</file>
         <file>icons/unmaximize-grey.svg</file>
         <file>icons/spire-icon-black.svg</file>
         <file>icons/spire-icon-grey.svg</file>
@@ -69,5 +65,6 @@
         <file>icons/check.svg</file>
         <file>icons/check-with-box.svg</file>
         <file>icons/column-border.png</file>
+        <file>icons/close-black.svg</file>
     </qresource>
 </RCC>
