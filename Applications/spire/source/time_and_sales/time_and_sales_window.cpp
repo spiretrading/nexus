@@ -460,8 +460,8 @@ void time_and_sales_window::set_current(const Security& s) {
   static_cast<QVBoxLayout*>(m_body->layout())->insertWidget(1,
     loading_screen.get());
   connect(m_model.get_ptr(), &QAbstractTableModel::rowsAboutToBeInserted,
-    [=, loading_screen = std::move(loading_screen)] {
-      loading_screen->hide(); m_table->show(); });
+    [=, loading_screen = std::move(loading_screen)] () mutable {
+      loading_screen.reset(); m_table->show(); });
   setWindowTitle(QString::fromStdString(ToString(s)) +
     tr(" - Time and Sales"));
 }
