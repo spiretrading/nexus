@@ -86,4 +86,6 @@ if [ "$UPDATE_BUILD" = "1" ]; then
     rm -rf application
   fi
   node ./node_modules/webpack/bin/webpack.js
+  cp -r ../../resources application
+  cp -r source/index.html application
 fi
