@@ -79,7 +79,6 @@ namespace spire {
       QMenu* m_context_menu;
       QAction* m_export_action;
       std::unique_ptr<drop_shadow> m_context_menu_shadow;
-      time_and_sales_properties_dialog* m_properties_dialog;
       bool m_v_scrolling;
       bool m_h_scrolling;
       QTimer* m_v_scroll_bar_timer;
