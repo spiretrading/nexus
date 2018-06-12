@@ -384,6 +384,7 @@ void time_and_sales_window::set_contents(QWidget* widget) {
   } else if(previous->widget() == m_table) {
     m_table = nullptr;
   }
+  delete previous->widget();
   delete previous;
   static_cast<QVBoxLayout*>(m_body->layout())->insertWidget(1, widget);
 }
@@ -465,5 +466,6 @@ void time_and_sales_window::on_security_input_reject(
 }
 
 void time_and_sales_window::on_volume(const Quantity& volume) {
-  m_volume_label->setText(tr("Volume: ") + Beam::ToString(volume).c_str());
+  m_volume_label->setText(tr("Volume:").append(" ") +
+    Beam::ToString(volume).c_str());
 }
