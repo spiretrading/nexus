@@ -99,9 +99,6 @@ IF "%UPDATE_NODE%" == "1" (
   IF EXIST nexus (
     rm -rf nexus
   )
-  IF EXIST nexus (
-    rm -rf nexus
-  )
   cp -r ..\%NEXUS_PATH%\library\* .
   IF EXIST @types\nexus (
     rm -rf @types\nexus

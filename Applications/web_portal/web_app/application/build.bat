@@ -82,6 +82,9 @@ IF "%UPDATE_NODE%" == "1" (
   PUSHD %NEXUS_PATH%
   CALL build.bat
   POPD
+  PUSHD %WEB_PORTAL_PATH%
+  CALL build.bat
+  POPD
   CALL npm install
   PUSHD node_modules
   IF EXIST beam (
