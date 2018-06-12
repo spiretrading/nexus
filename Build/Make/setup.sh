@@ -48,7 +48,3 @@ fi
 sudo -u $(logname) pip3 install argparse
 sudo -u $(logname) pip3 install HTMLParser
 sudo -u $(logname) pip3 install GitPython
-
-pushd $directory/../../Applications/web_portal/web_app/build/posix
-./setup.sh
-popd

@@ -45,7 +45,7 @@ applications+="UtpMarketDataFeedClient "
 applications+="web_portal "
 parallel -j$jobs --no-notice build_function ::: $applications
 
-pushd $directory/../../Applications/web_portal/web_app/build/posix
+pushd $directory/../../Applications/web_portal/web_app
 ./build.sh $config
 popd
 

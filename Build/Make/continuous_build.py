@@ -70,7 +70,7 @@ def build_repo(repo, path):
       'MarketDataRelayServer', 'MarketDataServer', 'RiskServer',
       'SimulationMarketDataFeedClient', 'SimulationOrderExecutionServer',
       'TmxIpMarketDataFeedClient', 'TmxTl1MarketDataFeedClient',
-      'UtpMarketDataFeedClient']
+      'UtpMarketDataFeedClient', 'web_portal']
     copy_build(nexus_applications, timestamp, 'Nexus')
     beam_applications = ['AdminClient', 'RegistryServer', 'ServiceLocator',
       'UidServer']
