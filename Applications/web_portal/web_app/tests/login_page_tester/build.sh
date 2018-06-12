@@ -1,5 +1,6 @@
 #!/bin/bash
-BEAM_PATH=../../Beam/web_api
+BEAM_PATH=../../../../../../Beam/web_api
+NEXUS_PATH=../../../../../web_api
 if [ $# -eq 0 ] || [ "$1" != "Debug" ]; then
   export PROD_ENV=1
 fi
@@ -14,11 +15,23 @@ else
     mt="$(ls -l --time-style=full-iso mod_time.txt | awk '{print $6 $7}')"
     if [ "$pt" \> "$mt" ]; then
       UPDATE_NODE=1
-    else
+    fi
+    if [ "$UPDATE_NODE" = "" ]; then
       if [ ! -d "../$BEAM_PATH/library" ]; then
         UPDATE_NODE=1
       else
         pt="$(find ../$BEAM_PATH/source -type f | xargs ls -l --time-style=full-iso | awk '{print $6 $7}' | sort -r | head -1)"
+        mt="$(ls -l --time-style=full-iso mod_time.txt | awk '{print $6 $7}')"
+        if [ "$pt" \> "$mt" ]; then
+          UPDATE_NODE=1
+        fi
+      fi
+    fi
+    if [ "$UPDATE_NODE" = "" ]; then
+      if [ ! -d "../$NEXUS_PATH/library" ]; then
+        UPDATE_NODE=1
+      else
+        pt="$(find ../$NEXUS_PATH/source -type f | xargs ls -l --time-style=full-iso | awk '{print $6 $7}' | sort -r | head -1)"
         mt="$(ls -l --time-style=full-iso mod_time.txt | awk '{print $6 $7}')"
         if [ "$pt" \> "$mt" ]; then
           UPDATE_NODE=1
@@ -33,6 +46,9 @@ if [ "$UPDATE_NODE" = "1" ]; then
   pushd $BEAM_PATH
   ./build.sh
   popd
+  pushd $NEXUS_PATH
+  ./build.sh
+  popd
   npm install
   pushd node_modules
   if [ -d beam ]; then
@@ -44,21 +60,30 @@ if [ "$UPDATE_NODE" = "1" ]; then
   fi
   mkdir -p @types/beam
   cp -r ../$BEAM_PATH/library/beam/library/beam/* @types/beam
+  if [ -d nexus ]; then
+    rm -rf nexus
+  fi
+  cp -r ../$NEXUS_PATH/library/* .
+  if [ -d @types/nexus ]; then
+    rm -rf @types/nexus
+  fi
+  mkdir -p @types/nexus
+  cp -r ../$NEXUS_PATH/library/nexus/library/nexus/* @types/nexus
   echo "timestamp" > mod_time.txt
   popd
 fi
-if [ ! -d "library" ]; then
+if [ ! -d "application" ]; then
   UPDATE_BUILD=1
 else
   st="$(find source/ -type f | xargs ls -l --time-style=full-iso | awk '{print $6 $7}' | sort -r | head -1)"
-  lt="$(find library/ -type f | xargs ls -l --time-style=full-iso | awk '{print $6 $7}' | sort -r | head -1)"
+  lt="$(find application/ -type f | xargs ls -l --time-style=full-iso | awk '{print $6 $7}' | sort -r | head -1)"
   if [ "$st" \> "$lt" ]; then
     UPDATE_BUILD=1
   fi
 fi
 if [ "$UPDATE_BUILD" = "1" ]; then
-  if [ -d library ]; then
-    rm -rf library
+  if [ -d application ]; then
+    rm -rf application
   fi
   node ./node_modules/webpack/bin/webpack.js
 fi

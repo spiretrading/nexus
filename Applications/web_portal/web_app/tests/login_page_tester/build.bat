@@ -4,7 +4,8 @@ SET UPDATE_NODE=
 SET UPDATE_BUILD=
 SET PROD_ENV=
 PUSHD %~dp0
-SET BEAM_PATH=..\..\Beam\web_api
+SET BEAM_PATH=..\..\..\..\..\..\Beam\web_api
+SET NEXUS_PATH=..\..\..\..\..\web_api
 IF NOT "%1" == "Debug" (
   SET PROD_ENV=1
 )
@@ -39,12 +40,30 @@ IF NOT EXIST node_modules (
         )
       )
     )
+    IF "%UPDATE_NODE%" == "" (
+      IF NOT EXIST ..\%NEXUS_PATH%\library (
+        SET UPDATE_NODE=1
+      ) ELSE (
+        FOR /F %%i IN (
+          'dir ..\%NEXUS_PATH%\source /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
+          FOR /F %%j IN (
+            'ls -l --time-style=full-iso mod_time.txt ^| awk "{print $6 $7}"') DO (
+            IF "%%i" GEQ "%%j" (
+              SET UPDATE_NODE=1
+            )
+          )
+        )
+      )
+    )
   )
   POPD
 )
 IF "%UPDATE_NODE%" == "1" (
   SET UPDATE_BUILD=1
   PUSHD %BEAM_PATH%
+  CALL build.bat
+  POPD
+  PUSHD %NEXUS_PATH%
   CALL build.bat
   POPD
   CALL npm install
@@ -58,16 +77,25 @@ IF "%UPDATE_NODE%" == "1" (
   )
   mkdir @types\beam
   cp -r ..\%BEAM_PATH%\library\beam\library\beam\* @types\beam
+  IF EXIST nexus (
+    rm -rf nexus
+  )
+  cp -r ..\%NEXUS_PATH%\library\* .
+  IF EXIST @types\nexus (
+    rm -rf @types\nexus
+  )
+  mkdir @types\nexus
+  cp -r ..\%NEXUS_PATH%\library\nexus\library\nexus\* @types\nexus
   echo "timestamp" > mod_time.txt
   POPD
 )
-IF NOT EXIST library (
+IF NOT EXIST application (
   SET UPDATE_BUILD=1
 ) ELSE (
   FOR /F %%i IN (
     'dir source /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
     FOR /F %%j IN (
-      'dir library /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
+      'dir application /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
       IF "%%i" GEQ "%%j" (
         SET UPDATE_BUILD=1
       )
@@ -75,8 +103,8 @@ IF NOT EXIST library (
   )
 )
 IF "%UPDATE_BUILD%" == "1" (
-  IF EXIST library (
-    rm -rf library
+  IF EXIST application (
+    rm -rf application
   )
   node .\node_modules\webpack\bin\webpack.js
 )

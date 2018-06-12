@@ -2,9 +2,12 @@
 set -o errexit
 set -o pipefail
 arguments="$@"
-pushd tests/build/posix
+pushd library
 ./build.sh $arguments
 popd
-pushd application/build/posix
+pushd tests
+./build.sh $arguments
+popd
+pushd application
 ./build.sh $arguments
 popd

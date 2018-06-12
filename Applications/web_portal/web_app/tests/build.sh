@@ -4,7 +4,7 @@ set -o pipefail
 directory=$(pwd)
 arguments="$@"
 test_build_function() {
-  pushd $directory/../../$1/build/posix
+  pushd $directory
   ./build.sh $arguments
   popd
 }

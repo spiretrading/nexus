@@ -1,5 +1,0 @@
-SETLOCAL
-PUSHD %~dp0..\..\
-CALL npm install
-POPD
-ENDLOCAL
