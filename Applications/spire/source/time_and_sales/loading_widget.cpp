@@ -18,13 +18,5 @@ loading_widget::loading_widget(QWidget* parent)
     QString("padding-top: %1px;").arg(scale_height(50)));
   m_logo_widget->setAlignment(Qt::AlignHCenter);
   layout->addWidget(m_logo_widget);
-}
-
-void loading_widget::hideEvent(QHideEvent* event) {
-  m_logo_widget->movie()->stop();
-  m_logo_widget->movie()->jumpToFrame(0);
-}
-
-void loading_widget::showEvent(QShowEvent* event) {
   QTimer::singleShot(2000, [=] { m_logo_widget->movie()->start(); });
 }
