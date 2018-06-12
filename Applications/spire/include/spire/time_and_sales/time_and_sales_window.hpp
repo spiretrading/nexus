@@ -1,5 +1,6 @@
 #ifndef SPIRE_TIME_AND_SALES_WINDOW_HPP
 #define SPIRE_TIME_AND_SALES_WINDOW_HPP
+#include <memory>
 #include <boost/optional.hpp>
 #include <QLabel>
 #include <QMenu>
@@ -72,17 +73,12 @@ namespace spire {
       Nexus::Security m_current_security;
       QWidget* m_body;
       QLabel* m_empty_window_label;
-      QLabel* m_overlay_widget;
+      std::unique_ptr<QLabel> m_overlay_widget;
       loading_widget* m_loading_widget;
       QTableView* m_table;
       QLabel* m_volume_label;
-      QMenu* m_context_menu;
-      QAction* m_export_action;
-      std::unique_ptr<drop_shadow> m_context_menu_shadow;
-      bool m_v_scrolling;
-      bool m_h_scrolling;
-      QTimer* m_v_scroll_bar_timer;
-      QTimer* m_h_scroll_bar_timer;
+      QTimer m_v_scroll_bar_timer;
+      QTimer m_h_scroll_bar_timer;
 
       void create_table();
       void export_table();

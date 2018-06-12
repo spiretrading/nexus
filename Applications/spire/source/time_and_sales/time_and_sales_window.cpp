@@ -31,8 +31,8 @@ time_and_sales_window::time_and_sales_window(
       m_input_model(&input_model),
       m_loading_widget(nullptr),
       m_table(nullptr),
-      m_v_scrolling(false),
-      m_h_scrolling(false) {
+      m_v_scroll_bar_timer(this),
+      m_h_scroll_bar_timer(this) {
   m_body = new QWidget(this);
   m_body->setMinimumSize(scale(40, 200));
   resize(scale_width(182), scale_height(452));
@@ -59,17 +59,11 @@ time_and_sales_window::time_and_sales_window(
     font-family: Roboto;
     font-size: %1px;)").arg(scale_height(11)));
   layout->addWidget(m_empty_window_label);
-  m_overlay_widget = new QLabel(m_body);
-  m_overlay_widget->setStyleSheet(
-    "background-color: rgba(245, 245, 245, 153);");
-  m_overlay_widget->hide();
-  m_v_scroll_bar_timer = new QTimer(this);
-  m_v_scroll_bar_timer->setInterval(500);
-  connect(m_v_scroll_bar_timer, &QTimer::timeout, this,
+  m_v_scroll_bar_timer.setInterval(500);
+  connect(&m_v_scroll_bar_timer, &QTimer::timeout, this,
     &time_and_sales_window::fade_out_vertical_scroll_bar);
-  m_h_scroll_bar_timer = new QTimer(this);
-  m_h_scroll_bar_timer->setInterval(500);
-  connect(m_h_scroll_bar_timer, &QTimer::timeout, this,
+  m_h_scroll_bar_timer.setInterval(500);
+  connect(&m_h_scroll_bar_timer, &QTimer::timeout, this,
     &time_and_sales_window::fade_out_horizontal_scroll_bar);
   m_volume_label = new QLabel(tr("Volume:"), this);
   m_volume_label->setFocusPolicy(Qt::NoFocus);
@@ -82,48 +76,6 @@ time_and_sales_window::time_and_sales_window(
     font-weight: 550;
     padding-left: %2px;)").arg(scale_height(10)).arg(scale_width(8)));
   layout->addWidget(m_volume_label);
-  m_context_menu = new QMenu(this);
-  auto properties_action = new QAction(tr("Properties"), m_context_menu);
-  connect(properties_action, &QAction::triggered, this,
-    &time_and_sales_window::show_properties_dialog);
-  m_context_menu->addAction(properties_action);
-  m_export_action = new QAction(tr("Export Table"), m_context_menu);
-  connect(m_export_action, &QAction::triggered, this,
-    &time_and_sales_window::export_table);
-  m_export_action->setEnabled(false);
-  m_context_menu->addAction(m_export_action);
-  m_context_menu->setFixedWidth(scale_width(140));
-  m_context_menu->setWindowFlag(Qt::NoDropShadowWindowHint);
-  m_context_menu_shadow = std::make_unique<drop_shadow>(true, true,
-    m_context_menu);
-  m_context_menu->setStyleSheet(QString(R"(
-    QMenu {
-      background-color: #FFFFFF;
-      border: %1px solid #A0A0A0 %2px solid #A0A0A0;
-      color: #000000;
-      font-family: Roboto;
-      font-size: %3px;
-      padding: %4px 0px;
-    }
-
-    QMenu::item {
-      padding: %5px 0px %5px %6px;
-    }
-
-    QMenu::item:disabled,
-    QMenu::item:disabled:selected,
-    QMenu::item:disabled:hover {
-      background-color: #FFFFFF;
-      color: #C8C8C8;
-    }
-
-    QMenu::item:selected, QMenu::item:hover {
-      background-color: #8D78EC;
-      color: #FFFFFF;
-    })")
-    .arg(scale_height(1)).arg(scale_width(1))
-    .arg(scale_height(12)).arg(scale_height(5))
-    .arg(scale_height(3)).arg(scale_width(8)));
   set_model(std::make_shared<empty_time_and_sales_model>(Security()));
   set_properties(properties);
 }
@@ -187,7 +139,48 @@ void time_and_sales_window::contextMenuEvent(QContextMenuEvent* event) {
   QRect widget_geometry(contents->mapToGlobal(contents->geometry().topLeft()),
     contents->mapToGlobal(contents->geometry().bottomRight()));
   if(widget_geometry.contains(event->globalPos())) {
-    m_context_menu->exec(event->globalPos());
+    QMenu context_menu(this);
+    QAction properties_action(tr("Properties"), &context_menu);
+    connect(&properties_action, &QAction::triggered, this,
+      &time_and_sales_window::show_properties_dialog);
+    context_menu.addAction(&properties_action);
+    QAction export_action(tr("Export Table"), &context_menu);
+    connect(&export_action, &QAction::triggered, this,
+      &time_and_sales_window::export_table);
+    export_action.setEnabled(m_table != nullptr);
+    context_menu.addAction(&export_action);
+    context_menu.setFixedWidth(scale_width(140));
+    context_menu.setWindowFlag(Qt::NoDropShadowWindowHint);
+    drop_shadow context_menu_shadow(true, true, &context_menu);
+    context_menu.setStyleSheet(QString(R"(
+      QMenu {
+        background-color: #FFFFFF;
+        border: %1px solid #A0A0A0 %2px solid #A0A0A0;
+        color: #000000;
+        font-family: Roboto;
+        font-size: %3px;
+        padding: %4px 0px;
+      }
+
+      QMenu::item {
+        padding: %5px 0px %5px %6px;
+      }
+
+      QMenu::item:disabled,
+      QMenu::item:disabled:selected,
+      QMenu::item:disabled:hover {
+        background-color: #FFFFFF;
+        color: #C8C8C8;
+      }
+
+      QMenu::item:selected, QMenu::item:hover {
+        background-color: #8D78EC;
+        color: #FFFFFF;
+      })")
+      .arg(scale_height(1)).arg(scale_width(1))
+      .arg(scale_height(12)).arg(scale_height(5))
+      .arg(scale_height(3)).arg(scale_width(8)));
+    context_menu.exec(event->globalPos());
   }
 }
 
@@ -202,15 +195,13 @@ bool time_and_sales_window::eventFilter(QObject* watched, QEvent* event) {
           m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
           m_table->horizontalScrollBar()->setValue(
             m_table->horizontalScrollBar()->value() - e->delta() / 2);
-          m_h_scrolling = true;
-          m_h_scroll_bar_timer->start();
+          m_h_scroll_bar_timer.start();
         } else if(!within_h_scroll_bar(e->pos())) {
           m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
           m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
           m_table->verticalScrollBar()->setValue(
             m_table->verticalScrollBar()->value() - e->delta() / 2);
-          m_v_scrolling = true;
-          m_v_scroll_bar_timer->start();
+          m_v_scroll_bar_timer.start();
         }
       } else if(event->type() == QEvent::MouseMove) {
         auto e = static_cast<QMouseEvent*>(event);
@@ -221,11 +212,11 @@ bool time_and_sales_window::eventFilter(QObject* watched, QEvent* event) {
           m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
           m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         } else {
-          if(!m_v_scrolling &&
+          if(!m_v_scroll_bar_timer.isActive() &&
               m_table->verticalScrollBarPolicy() != Qt::ScrollBarAlwaysOff) {
             fade_out_vertical_scroll_bar();
           }
-          if(!m_h_scrolling &&
+          if(!m_h_scroll_bar_timer.isActive() &&
               m_table->horizontalScrollBarPolicy() != Qt::ScrollBarAlwaysOff) {
             fade_out_horizontal_scroll_bar();
           }
@@ -271,7 +262,6 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
   }
   auto pressed_key = event->text();
   if(pressed_key[0].isLetterOrNumber()) {
-    show_overlay_widget();
     auto dialog = new security_input_dialog(*m_input_model, pressed_key, this);
     dialog->setWindowModality(Qt::NonModal);
     dialog->setAttribute(Qt::WA_DeleteOnClose);
@@ -281,7 +271,7 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
       [=] { on_security_input_reject(dialog); });
     dialog->move(geometry().center().x() -
       dialog->width() / 2, geometry().center().y() - dialog->height() / 2);
-    m_overlay_widget->show();
+    show_overlay_widget();
     dialog->show();
   }
 }
@@ -382,7 +372,7 @@ void time_and_sales_window::export_table() {
   if(!filepath.isNull()) {
     export_model_as_csv(m_model.get(), std::ofstream(filepath.toStdString()));
   }
-  m_overlay_widget->hide();
+  m_overlay_widget.reset();
 }
 
 void time_and_sales_window::set_contents(QWidget* widget) {
@@ -399,19 +389,20 @@ void time_and_sales_window::set_contents(QWidget* widget) {
 }
 
 void time_and_sales_window::fade_out_horizontal_scroll_bar() {
-  m_h_scroll_bar_timer->stop();
-  m_h_scrolling = false;
+  m_h_scroll_bar_timer.stop();
   m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
 
 void time_and_sales_window::fade_out_vertical_scroll_bar() {
-  m_v_scroll_bar_timer->stop();
-  m_v_scrolling = false;
+  m_v_scroll_bar_timer.stop();
   m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
 
 void time_and_sales_window::show_overlay_widget() {
   auto contents = m_body->layout()->itemAt(1)->widget();
+  m_overlay_widget = std::make_unique<QLabel>(m_body);
+  m_overlay_widget->setStyleSheet(
+    "background-color: rgba(245, 245, 245, 153);");
   m_overlay_widget->resize(contents->size());
   m_overlay_widget->move(contents->mapTo(contents, contents->pos()));
   m_overlay_widget->show();
@@ -425,14 +416,13 @@ void time_and_sales_window::show_properties_dialog() {
   if(dialog.exec() == QDialog::Accepted) {
     set_properties(dialog.get_properties());
   }
-  m_overlay_widget->hide();
+  m_overlay_widget.reset();
 }
 
 void time_and_sales_window::set_current(const Security& s) {
   if(s == m_current_security) {
     return;
   }
-  m_export_action->setEnabled(true);
   m_current_security = s;
   m_change_security_signal(s);
   m_volume_label->setText(tr("Volume:"));
@@ -465,13 +455,13 @@ void time_and_sales_window::on_security_input_accept(
     activateWindow();
   }
   dialog->close();
-  m_overlay_widget->hide();
+  m_overlay_widget.reset();
 }
 
 void time_and_sales_window::on_security_input_reject(
     security_input_dialog* dialog) {
   dialog->close();
-  m_overlay_widget->hide();
+  m_overlay_widget.reset();
 }
 
 void time_and_sales_window::on_volume(const Quantity& volume) {
