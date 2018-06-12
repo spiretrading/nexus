@@ -107,6 +107,8 @@ IF "%UPDATE_BUILD%" == "1" (
     rm -rf application
   )
   node .\node_modules\webpack\bin\webpack.js
+  cp -r ../resources application
+  cp -r source/index.html application
 )
 POPD
 ENDLOCAL
