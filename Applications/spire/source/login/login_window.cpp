@@ -58,7 +58,7 @@ login_window::login_window(const std::string& version, QWidget* parent)
   logo_layout->addStretch(73);
   m_logo_widget = new QLabel(parent);
   m_logo_widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto logo = new QMovie(":/icons/logo.gif");
+  auto logo = new QMovie(":/icons/logo.gif", QByteArray(), this);
   logo->setScaledSize(scale(134, 50));
   m_logo_widget->setMovie(logo);
   logo->start();
