@@ -85,17 +85,20 @@ namespace spire {
       QTimer* m_v_scroll_bar_timer;
       QTimer* m_h_scroll_bar_timer;
 
+      void create_table();
       void export_table();
+      void set_contents(QWidget* widget);
       void fade_out_horizontal_scroll_bar();
       void fade_out_vertical_scroll_bar();
-      void maintain_table_position();
-      void on_security_input_accept(security_input_dialog* dialog);
-      void on_security_input_reject(security_input_dialog* dialog);
       void show_overlay_widget();
       void show_properties_dialog();
       void set_current(const Nexus::Security& s);
-      void update_volume(const Nexus::Quantity& volume);
       bool within_h_scroll_bar(const QPoint& pos);
+      void on_rows_about_to_be_inserted(const QModelIndex& index, int start,
+        int end);
+      void on_security_input_accept(security_input_dialog* dialog);
+      void on_security_input_reject(security_input_dialog* dialog);
+      void on_volume(const Nexus::Quantity& volume);
   };
 }
 

@@ -30,6 +30,8 @@ time_and_sales_window::time_and_sales_window(
     security_input_model& input_model, QWidget* parent)
     : QWidget(parent),
       m_input_model(&input_model),
+      m_loading_widget(nullptr),
+      m_table(nullptr),
       m_v_scrolling(false),
       m_h_scrolling(false) {
   m_body = new QWidget(this);
@@ -63,37 +65,6 @@ time_and_sales_window::time_and_sales_window(
   m_overlay_widget->setStyleSheet(
     "background-color: rgba(245, 245, 245, 153);");
   m_overlay_widget->hide();
-  m_loading_widget = new loading_widget(this);
-  m_loading_widget->hide();
-  layout->addWidget(m_loading_widget);
-  m_table = new QTableView(this);
-  m_table->setItemDelegate(new item_padding_delegate(scale_width(5),
-    new custom_variant_item_delegate(), this));
-  m_table->setMouseTracking(true);
-  m_table->setAttribute(Qt::WA_Hover);
-  m_table->installEventFilter(this);
-  m_table->viewport()->setAttribute(Qt::WA_TransparentForMouseEvents);
-  m_table->setFocusPolicy(Qt::NoFocus);
-  m_table->setSelectionMode(QAbstractItemView::NoSelection);
-  m_table->horizontalHeader()->setMinimumSectionSize(scale_width(35));
-  m_table->horizontalHeader()->setStretchLastSection(true);
-  m_table->horizontalHeader()->viewport()->setMouseTracking(true);
-  m_table->horizontalHeader()->viewport()->installEventFilter(this);
-  m_table->horizontalHeader()->setSectionsClickable(false);
-  m_table->horizontalHeader()->setSectionsMovable(true);
-  m_table->horizontalHeader()->setFixedHeight(scale_height(26));
-  m_table->horizontalHeader()->setDefaultAlignment(
-    Qt::AlignLeft | Qt::AlignVCenter);
-  m_table->verticalHeader()->setVisible(false);
-  m_table->horizontalScrollBar()->installEventFilter(this);
-  m_table->horizontalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
-  m_table->horizontalScrollBar()->setAttribute(Qt::WA_Hover);
-  m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  m_table->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
-  m_table->verticalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
-  m_table->verticalScrollBar()->setAttribute(Qt::WA_Hover);
-  m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  m_table->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
   m_v_scroll_bar_timer = new QTimer(this);
   m_v_scroll_bar_timer->setInterval(500);
   connect(m_v_scroll_bar_timer, &QTimer::timeout, [=] {
@@ -102,60 +73,6 @@ time_and_sales_window::time_and_sales_window(
   m_h_scroll_bar_timer->setInterval(500);
   connect(m_h_scroll_bar_timer, &QTimer::timeout, [=] {
     fade_out_horizontal_scroll_bar(); });
-  m_table->horizontalHeader()->setStyleSheet(QString(R"(
-    QHeaderView::section {
-      background-color: #FFFFFF;
-      background-image: url(:icons/column-border.png);
-      background-position: left;
-      background-repeat: repeat;
-      border: none;
-      color: #4B23A0;
-      font-family: Roboto;
-      font-weight: 550;
-      padding-left: %1px;
-      padding-right: %1px;
-    }
-
-    QHeaderView::section::first {
-      background: none;
-      background-color: #FFFFFF;
-    })").arg(scale_width(8)));
-  m_table->setStyleSheet(QString(R"(
-    QTableView {
-      border: none;
-      gridline-color: #C8C8C8;
-    }
-
-    QScrollBar::horizontal {
-      height: %1px;
-    }
-
-    QScrollBar::vertical {
-      width: %2px;
-    }
-
-    QScrollBar::handle {
-      background-color: #C8C8C8;
-    }
-
-    QScrollBar::handle:horizontal {
-      min-width: %3px;
-    }
-
-    QScrollBar::handle:vertical {
-      min-height: %4px;
-    }
-
-    QScrollBar::add-line, QScrollBar::sub-line,
-    QScrollBar::add-page, QScrollBar::sub-page {
-      background: none;
-      border: none;
-      height: 0px;
-      width: 0px;
-    })").arg(scale_height(12)).arg(scale_height(12))
-        .arg(scale_width(30)).arg(scale_height(30)));
-  m_table->hide();
-  layout->addWidget(m_table);
   m_volume_label = new QLabel(tr("Volume:"), this);
   m_volume_label->setFocusPolicy(Qt::NoFocus);
   m_volume_label->setFixedHeight(scale_height(20));
@@ -213,16 +130,19 @@ time_and_sales_window::time_and_sales_window(
   set_properties(properties);
 }
 
+#include <QDebug>
+
 void time_and_sales_window::set_model(
     std::shared_ptr<time_and_sales_model> model) {
+  if(m_loading_widget == nullptr && m_empty_window_label != nullptr) {
+    m_loading_widget = new loading_widget(this);
+    set_contents(m_loading_widget);
+  }
   model->connect_volume_signal(
-    [=] (const Quantity& v) { update_volume(v); });
+    [=] (const Quantity& v) { on_volume(v); });
   m_model.emplace(std::move(model), m_properties);
   connect(m_model.get_ptr(), &QAbstractTableModel::rowsAboutToBeInserted,
-    [=] { maintain_table_position(); });
-  auto filter = new custom_variant_sort_filter_proxy_model(this);
-  filter->setSourceModel(&m_model.get());
-  m_table->setModel(filter);
+    this, &time_and_sales_window::on_rows_about_to_be_inserted);
 }
 
 const time_and_sales_properties& time_and_sales_window::get_properties() const {
@@ -233,6 +153,9 @@ void time_and_sales_window::set_properties(
     const time_and_sales_properties& properties) {
   m_properties = properties;
   m_model->set_properties(m_properties);
+  if(m_table == nullptr) {
+    return;
+  }
   m_table->setShowGrid(m_properties.m_show_grid);
   QFontMetrics metrics(m_properties.m_font);
   auto row_height = metrics.height() + scale_height(2);
@@ -374,6 +297,94 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
   }
 }
 
+void time_and_sales_window::create_table() {
+  m_table = new QTableView(this);
+  m_table->setItemDelegate(new item_padding_delegate(scale_width(5),
+    new custom_variant_item_delegate(), this));
+  m_table->setMouseTracking(true);
+  m_table->setAttribute(Qt::WA_Hover);
+  m_table->installEventFilter(this);
+  m_table->viewport()->setAttribute(Qt::WA_TransparentForMouseEvents);
+  m_table->setFocusPolicy(Qt::NoFocus);
+  m_table->setSelectionMode(QAbstractItemView::NoSelection);
+  m_table->horizontalHeader()->setMinimumSectionSize(scale_width(35));
+  m_table->horizontalHeader()->setStretchLastSection(true);
+  m_table->horizontalHeader()->viewport()->setMouseTracking(true);
+  m_table->horizontalHeader()->viewport()->installEventFilter(this);
+  m_table->horizontalHeader()->setSectionsClickable(false);
+  m_table->horizontalHeader()->setSectionsMovable(true);
+  m_table->horizontalHeader()->setFixedHeight(scale_height(26));
+  m_table->horizontalHeader()->setDefaultAlignment(
+    Qt::AlignLeft | Qt::AlignVCenter);
+  m_table->verticalHeader()->setVisible(false);
+  m_table->horizontalScrollBar()->installEventFilter(this);
+  m_table->horizontalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
+  m_table->horizontalScrollBar()->setAttribute(Qt::WA_Hover);
+  m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  m_table->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+  m_table->verticalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
+  m_table->verticalScrollBar()->setAttribute(Qt::WA_Hover);
+  m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  m_table->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+  m_table->horizontalHeader()->setStyleSheet(QString(R"(
+    QHeaderView::section {
+      background-color: #FFFFFF;
+      background-image: url(:icons/column-border.png);
+      background-position: left;
+      background-repeat: repeat;
+      border: none;
+      color: #4B23A0;
+      font-family: Roboto;
+      font-weight: 550;
+      padding-left: %1px;
+      padding-right: %1px;
+    }
+
+    QHeaderView::section::first {
+      background: none;
+      background-color: #FFFFFF;
+    })").arg(scale_width(8)));
+  m_table->setStyleSheet(QString(R"(
+    QTableView {
+      border: none;
+      gridline-color: #C8C8C8;
+    }
+
+    QScrollBar::horizontal {
+      height: %1px;
+    }
+
+    QScrollBar::vertical {
+      width: %2px;
+    }
+
+    QScrollBar::handle {
+      background-color: #C8C8C8;
+    }
+
+    QScrollBar::handle:horizontal {
+      min-width: %3px;
+    }
+
+    QScrollBar::handle:vertical {
+      min-height: %4px;
+    }
+
+    QScrollBar::add-line, QScrollBar::sub-line,
+    QScrollBar::add-page, QScrollBar::sub-page {
+      background: none;
+      border: none;
+      height: 0px;
+      width: 0px;
+    })").arg(scale_height(12)).arg(scale_height(12))
+        .arg(scale_width(30)).arg(scale_height(30)));
+  auto filter = new custom_variant_sort_filter_proxy_model(m_table);
+  filter->setSourceModel(&m_model.get());
+  m_table->setModel(filter);
+  set_contents(m_table);
+  set_properties(m_properties);
+}
+
 void time_and_sales_window::export_table() {
   show_overlay_widget();
   auto filepath = QFileDialog::getSaveFileName(this, tr("Export As"),
@@ -383,6 +394,19 @@ void time_and_sales_window::export_table() {
     export_model_as_csv(m_model.get(), std::ofstream(filepath.toStdString()));
   }
   m_overlay_widget->hide();
+}
+
+void time_and_sales_window::set_contents(QWidget* widget) {
+  auto previous = m_body->layout()->takeAt(1);
+  if(previous->widget() == m_empty_window_label) {
+    m_empty_window_label = nullptr;
+  } else if(previous->widget() == m_loading_widget) {
+    m_loading_widget = nullptr;
+  } else if(previous->widget() == m_table) {
+    m_table = nullptr;
+  }
+  delete previous;
+  static_cast<QVBoxLayout*>(m_body->layout())->insertWidget(1, widget);
 }
 
 void time_and_sales_window::fade_out_horizontal_scroll_bar() {
@@ -397,7 +421,46 @@ void time_and_sales_window::fade_out_vertical_scroll_bar() {
   m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
 
-void time_and_sales_window::maintain_table_position() {
+void time_and_sales_window::show_overlay_widget() {
+  auto contents = m_body->layout()->itemAt(1)->widget();
+  m_overlay_widget->resize(contents->size());
+  m_overlay_widget->move(contents->mapTo(contents, contents->pos()));
+  m_overlay_widget->show();
+  m_overlay_widget->raise();
+}
+
+void time_and_sales_window::show_properties_dialog() {
+  auto dialog = new time_and_sales_properties_dialog(m_properties, this);
+  dialog->connect_apply_signal([=] (auto p) { set_properties(p); });
+  show_overlay_widget();
+  if(dialog->exec() == QDialog::Accepted) {
+    set_properties(dialog->get_properties());
+  }
+  m_overlay_widget->hide();
+}
+
+void time_and_sales_window::set_current(const Security& s) {
+  if(s == m_current_security) {
+    return;
+  }
+  m_export_action->setEnabled(true);
+  m_current_security = s;
+  m_change_security_signal(s);
+  m_volume_label->setText(tr("Volume:"));
+  setWindowTitle(QString::fromStdString(ToString(s)) +
+    tr(" - Time and Sales"));
+}
+
+bool time_and_sales_window::within_h_scroll_bar(const QPoint& pos) {
+  return pos.y() > m_table->height() - 
+    m_table->horizontalScrollBar()->height();
+}
+
+void time_and_sales_window::on_rows_about_to_be_inserted(
+    const QModelIndex& index, int start, int end) {
+  if(m_table == nullptr) {
+    create_table();
+  }
   if(m_table->verticalScrollBar()->value() != 0) {
     m_table->verticalScrollBar()->setValue(
       m_table->verticalScrollBar()->value() + m_table->rowHeight(0));
@@ -422,55 +485,6 @@ void time_and_sales_window::on_security_input_reject(
   m_overlay_widget->hide();
 }
 
-void time_and_sales_window::show_overlay_widget() {
-  if(m_empty_window_label->isVisible()) {
-    m_overlay_widget->resize(m_empty_window_label->size());
-    m_overlay_widget->move(m_empty_window_label->mapTo(m_empty_window_label,
-      m_empty_window_label->pos()));
-  } else {
-    m_overlay_widget->resize(m_table->size());
-    m_overlay_widget->move(m_table->mapTo(m_table, m_table->pos()));
-  }
-  m_overlay_widget->show();
-  m_overlay_widget->raise();
-}
-
-void time_and_sales_window::show_properties_dialog() {
-  auto dialog = new time_and_sales_properties_dialog(m_properties, this);
-  dialog->connect_apply_signal([=] (auto p) { set_properties(p); });
-  show_overlay_widget();
-  if(dialog->exec() == QDialog::Accepted) {
-    set_properties(dialog->get_properties());
-  }
-  m_overlay_widget->hide();
-}
-
-void time_and_sales_window::set_current(const Security& s) {
-  if(s == m_current_security) {
-    return;
-  }
-  m_export_action->setEnabled(true);
-  m_empty_window_label->hide();
-  m_table->hide();
-  m_current_security = s;
-  m_change_security_signal(s);
-  m_volume_label->setText(tr("Volume:"));
-  auto loading_screen = std::make_unique<loading_widget>(this);
-  m_body->layout()->addWidget(loading_screen.get());
-  static_cast<QVBoxLayout*>(m_body->layout())->insertWidget(1,
-    loading_screen.get());
-  connect(m_model.get_ptr(), &QAbstractTableModel::rowsAboutToBeInserted,
-    [=, loading_screen = std::move(loading_screen)] () mutable {
-      loading_screen.reset(); m_table->show(); });
-  setWindowTitle(QString::fromStdString(ToString(s)) +
-    tr(" - Time and Sales"));
-}
-
-void time_and_sales_window::update_volume(const Quantity& volume) {
+void time_and_sales_window::on_volume(const Quantity& volume) {
   m_volume_label->setText(tr("Volume: ") + Beam::ToString(volume).c_str());
-}
-
-bool time_and_sales_window::within_h_scroll_bar(const QPoint& pos) {
-  return pos.y() > m_table->height() - 
-    m_table->horizontalScrollBar()->height();
 }
