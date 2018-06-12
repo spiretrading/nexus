@@ -451,9 +451,17 @@ void time_and_sales_window::set_current(const Security& s) {
   }
   m_export_action->setEnabled(true);
   m_empty_window_label->hide();
-  m_table->show();
+  m_table->hide();
   m_current_security = s;
   m_change_security_signal(s);
+  m_volume_label->setText("Volume:");
+  auto loading_screen = std::make_unique<loading_widget>(this);
+  m_body->layout()->addWidget(loading_screen.get());
+  static_cast<QVBoxLayout*>(m_body->layout())->insertWidget(1,
+    loading_screen.get());
+  connect(m_model.get_ptr(), &QAbstractTableModel::rowsAboutToBeInserted,
+    [=, loading_screen = std::move(loading_screen)] {
+      loading_screen->hide(); m_table->show(); });
   setWindowTitle(QString::fromStdString(ToString(s)) +
     tr(" - Time and Sales"));
 }

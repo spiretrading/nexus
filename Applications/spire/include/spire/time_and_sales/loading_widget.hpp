@@ -1,5 +1,5 @@
-#ifndef SPIRE_LOADING_WIDGET
-#define SPIRE_LOADING_WIDGET
+#ifndef SPIRE_LOADING_WIDGET_HPP
+#define SPIRE_LOADING_WIDGET_HPP
 #include <QLabel>
 #include <QWidget>
 
