@@ -41,7 +41,7 @@ if [ "$UPDATE_NODE" = "1" ]; then
   if [ -d @types/beam ]; then
     rm -rf @types/beam
   fi
-  mkdir @types/beam
+  mkdir -p @types/beam
   cp -r ../../../Beam/web_api/library/beam/library/beam/* @types/beam
   echo "timestamp" > mod_time.txt
   popd
