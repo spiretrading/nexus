@@ -454,7 +454,7 @@ void time_and_sales_window::set_current(const Security& s) {
   m_table->hide();
   m_current_security = s;
   m_change_security_signal(s);
-  m_volume_label->setText("Volume:");
+  m_volume_label->setText(tr("Volume:"));
   auto loading_screen = std::make_unique<loading_widget>(this);
   m_body->layout()->addWidget(loading_screen.get());
   static_cast<QVBoxLayout*>(m_body->layout())->insertWidget(1,
