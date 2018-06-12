@@ -13,10 +13,10 @@ class test_window : public QWidget {
       auto body = new QWidget(this);
       body->setMinimumSize(50, 60);
       resize(400, 650);
-      auto window_layout = new QVBoxLayout(body);
+      auto window_layout = new QVBoxLayout(this);
       window_layout->setContentsMargins({});
       auto w = new spire::window(body, this);
-      w->setWindowTitle("Loading Widget Test");
+      setWindowTitle("Loading Widget Test");
       window_layout->addWidget(w);
       auto layout = new QVBoxLayout(body);
       layout->setContentsMargins({});
