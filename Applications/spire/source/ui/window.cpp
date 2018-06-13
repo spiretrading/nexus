@@ -14,6 +14,11 @@ using namespace spire;
 
 namespace {
   const auto PADDING_SIZE = 10;
+
+  QImage get_svg_window_icon(const QString& icon_path) {
+    return imageFromSvg(icon_path, scale(26, 26),
+      QRect(translate(8, 8), scale(10, 10)));
+  }
 }
 
 window::window(QWidget* body, QWidget* parent)
@@ -46,6 +51,7 @@ window::window(QWidget* body, QWidget* parent)
   border_layout->addWidget(m_title_bar);
   border_layout->addWidget(m_body);
   this->::QWidget::window()->installEventFilter(this);
+  set_svg_icon(":icons/spire-icon-black.svg", ":icons/spire-icon-grey.svg");
 #ifdef Q_OS_WIN
   qApp->installNativeEventFilter(this);
 #endif
@@ -57,6 +63,16 @@ void window::set_icon(const QImage& icon) {
 
 void window::set_icon(const QImage& icon, const QImage& unfocused_icon) {
   m_title_bar->set_icon(icon, unfocused_icon);
+}
+
+void window::set_svg_icon(const QString& icon_path) {
+  set_icon(get_svg_window_icon(icon_path));
+}
+
+void window::set_svg_icon(const QString& icon_path,
+    const QString& unfocused_icon_path) {
+  set_icon(get_svg_window_icon(icon_path),
+    get_svg_window_icon(unfocused_icon_path));
 }
 
 #ifdef Q_OS_WIN
