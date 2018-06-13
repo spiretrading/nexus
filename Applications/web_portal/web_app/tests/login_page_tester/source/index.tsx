@@ -1,25 +1,60 @@
+import {css, StyleSheet} from 'aphrodite';
+import * as Beam from 'beam';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
-import * as Beam from 'beam';
+
+/** The React state for the TestApp. */
+export interface State {
+  rejectionMessage: string;
+};
+
+/** The React properties for the TestAppåå. */
+export interface Properties {
+
+};
 
 const model = new WebPortal.LocalLoginPageModel();
 const onLogin = (account: Beam.DirectoryEntry) => {
-	console.log('onLogin: ', account)
+
+};
+
+/**  Displays a testing application for the login page. */
+class TestApp extends React.Component<Properties, State> {
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      rejectionMessage: ''
+    };
+  }
+
+  public render(): JSX.Element {
+    const onChange = (event: any) => {
+      this.setState({rejectionMessage: event.target.value});
+    };
+    return (
+      <WebPortal.VBoxLayout width='100%' height='100%'>
+        <WebPortal.LoginPage model={model} onLogin={onLogin}/>
+        <div className={css(TestApp.STYLE.testingComponents)}>
+        <button onClick={() => model.accept()}>
+          Accept
+        </button>
+        <button onClick={() => model.reject(this.state.rejectionMessage)}>
+          Reject
+        </button>
+        <input type='text' placeholder='Rejection message'
+               value={this.state.rejectionMessage}
+               onChange={onChange}/>
+        </div>
+      </WebPortal.VBoxLayout>);
+  }
+  private static STYLE = StyleSheet.create({
+    testingComponents: {
+      position: 'absolute' as 'absolute',
+      bottom: '100px',
+      width: '160px',
+      left: 'calc(50% - 80px)'
+    }
+  });
 }
-class App extends React.Component<{}> {
-	public render(): JSX.Element {
-		return (
-				<div>
-					<WebPortal.LoginPage model={model} onLogin={onLogin}/>
-					<button onClick={() => model.accept.bind(model)()}>
-						Accept
-					</button>
-					<button onClick={() => model.reject("Decided to reject")}>
-						Reject
-					</button>
-				</div>
-			);
-	}
-}
-ReactDOM.render(<App/>, document.getElementById('main'));
+ReactDOM.render(<TestApp/>, document.getElementById('main'));

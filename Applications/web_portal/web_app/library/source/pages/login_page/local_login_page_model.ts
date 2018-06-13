@@ -24,12 +24,12 @@ export class LocalLoginPageModel extends LoginPageModel {
 
   public async login(username: string, password: string):
       Promise<Beam.DirectoryEntry> {
-        const callback = (resolve: any, reject: any) =>  {
-        this._account = Beam.DirectoryEntry.makeAccount(123, username);
-        this.loginResolver = resolve;
-        this.loginRejector = reject;
-      }
-    return new Promise<Beam.DirectoryEntry>(callback)
+    const callback = (resolve: any, reject: any) =>  {
+      this._account = Beam.DirectoryEntry.makeAccount(123, username);
+      this.loginResolver = resolve;
+      this.loginRejector = reject;
+    };
+    return new Promise<Beam.DirectoryEntry>(callback);
   }
 
   private _account: Beam.DirectoryEntry;
