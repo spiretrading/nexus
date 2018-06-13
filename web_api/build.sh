@@ -10,16 +10,16 @@ else
   if [ ! -f "mod_time.txt" ]; then
     UPDATE_NODE=1
   else
-    pt="$(ls -l --time-style=full-iso ../package.json | awk '{print $6 $7}')"
-    mt="$(ls -l --time-style=full-iso mod_time.txt | awk '{print $6 $7}')"
+    pt="$(stat ../package.json | grep Modify | awk '{print $2 $3}')"
+    mt="$(stat mod_time.txt | grep Modify | awk '{print $2 $3}')"
     if [ "$pt" \> "$mt" ]; then
       UPDATE_NODE=1
     else
       if [ ! -d "../$BEAM_PATH/library" ]; then
         UPDATE_NODE=1
       else
-        pt="$(find ../$BEAM_PATH/source -type f | xargs ls -l --time-style=full-iso | awk '{print $6 $7}' | sort -r | head -1)"
-        mt="$(ls -l --time-style=full-iso mod_time.txt | awk '{print $6 $7}')"
+        pt="$(find ../$BEAM_PATH/source -type f | xargs stat | grep Modify | awk '{print $2 $3}' | sort -r | head -1)"
+        mt="$(stat mod_time.txt | grep Modify | awk '{print $2 $3}')"
         if [ "$pt" \> "$mt" ]; then
           UPDATE_NODE=1
         fi
@@ -50,8 +50,8 @@ fi
 if [ ! -d "library" ]; then
   UPDATE_BUILD=1
 else
-  st="$(find source/ -type f | xargs ls -l --time-style=full-iso | awk '{print $6 $7}' | sort -r | head -1)"
-  lt="$(find library/ -type f | xargs ls -l --time-style=full-iso | awk '{print $6 $7}' | sort -r | head -1)"
+  st="$(find source/ -type f | xargs stat | grep Modify | awk '{print $2 $3}' | sort -r | head -1)"
+  lt="$(find library/ -type f | xargs stat | grep Modify | awk '{print $2 $3}' | sort -r | head -1)"
   if [ "$st" \> "$lt" ]; then
     UPDATE_BUILD=1
   fi
