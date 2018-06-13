@@ -59,7 +59,7 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   auto button_size = scale(32, 26);
   auto minimize_box = QRect(translate(11, 12), scale(10, 2));
   m_minimize_button = new icon_button(
-    imageFromSvg(":/icons/minimize-darker-grey.svg", button_size, minimize_box),
+    imageFromSvg(":/icons/minimize-black.svg", button_size, minimize_box),
     imageFromSvg(":/icons/minimize-black.svg", button_size, minimize_box),
     imageFromSvg(":/icons/minimize-grey.svg", button_size, minimize_box), this);
   m_minimize_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
@@ -72,7 +72,7 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   layout->addWidget(m_minimize_button);
   auto maximize_box = QRect(translate(11, 8), scale(10, 10));
   m_maximize_button = new icon_button(
-    imageFromSvg(":/icons/maximize-darker-grey.svg", button_size, maximize_box),
+    imageFromSvg(":/icons/maximize-black.svg", button_size, maximize_box),
     imageFromSvg(":/icons/maximize-black.svg", button_size, maximize_box),
     imageFromSvg(":/icons/maximize-grey.svg", button_size, maximize_box), this);
   m_maximize_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
@@ -85,7 +85,7 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   layout->addWidget(m_maximize_button);
   auto restore_box = QRect(translate(11, 8), scale(10, 10));
   m_restore_button = new icon_button(
-    imageFromSvg(":/icons/unmaximize-darker-grey.svg",
+    imageFromSvg(":/icons/unmaximize-black.svg",
       button_size, restore_box),
     imageFromSvg(":/icons/unmaximize-black.svg", button_size, restore_box),
     imageFromSvg(":/icons/unmaximize-grey.svg", button_size, restore_box),
@@ -98,7 +98,7 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   layout->addWidget(m_restore_button);
   auto close_box = QRect(translate(11, 8), scale(10, 10));
   m_close_button = new icon_button(
-    imageFromSvg(":/icons/close-darker-grey.svg", button_size, close_box),
+    imageFromSvg(":/icons/close-black.svg", button_size, close_box),
     imageFromSvg(":/icons/close-red.svg", button_size, close_box),
     imageFromSvg(":/icons/close-grey.svg", button_size, close_box),
     this);
@@ -238,7 +238,13 @@ void title_bar::drag_restore(const QPoint& pos) {
   auto mouse_screen_pos = QApplication::desktop()->screenGeometry(pos);
   auto mouse_screen_x = pos.x() - mouse_screen_pos.left();
   auto new_pos = QPoint(pos.x() - (m_restore_geometry.width() / 2), 0);
-  placement.rcNormalPosition.left = new_pos.x();
+  if(mouse_screen_x - (m_restore_geometry.width() / 2) < 0) {
+    new_pos.setX(mouse_screen_pos.left());
+  } else if(mouse_screen_x + (m_restore_geometry.width() / 2) >
+      mouse_screen_pos.width()) {
+    new_pos.setX(mouse_screen_pos.right() - m_restore_geometry.width());
+  }
+  placement.rcNormalPosition.left = new_pos.x() + 1;
   placement.rcNormalPosition.top = 0;
   placement.rcNormalPosition.right = new_pos.x() +
     m_restore_geometry.width();
