@@ -1,6 +1,8 @@
 #!/bin/bash
 if [ "$(uname -s)" = "Darwin" ]; then
-  alias stat='\stat -x -t "%Y%m%d%H%M%S"'
+  STAT='\stat -x -t "%Y%m%d%H%M%S"'
+else
+  STAT='stat'
 fi
 BEAM_PATH=../../../../../Beam/web_api
 NEXUS_PATH=../../../../web_api
@@ -14,8 +16,8 @@ else
   if [ ! -f "mod_time.txt" ]; then
     UPDATE_NODE=1
   else
-    pt="$(stat ../package.json | grep Modify | awk '{print $2 $3}')"
-    mt="$(stat mod_time.txt | grep Modify | awk '{print $2 $3}')"
+    pt="$($STAT ../package.json | grep Modify | awk '{print $2 $3}')"
+    mt="$($STAT mod_time.txt | grep Modify | awk '{print $2 $3}')"
     if [ "$pt" \> "$mt" ]; then
       UPDATE_NODE=1
     fi
@@ -23,8 +25,8 @@ else
       if [ ! -d "../$BEAM_PATH/library" ]; then
         UPDATE_NODE=1
       else
-        pt="$(find ../$BEAM_PATH/source -type f | xargs stat | grep Modify | awk '{print $2 $3}' | sort -r | head -1)"
-        mt="$(stat mod_time.txt | grep Modify | awk '{print $2 $3}')"
+        pt="$(find ../$BEAM_PATH/source -type f | xargs $STAT | grep Modify | awk '{print $2 $3}' | sort -r | head -1)"
+        mt="$($STAT mod_time.txt | grep Modify | awk '{print $2 $3}')"
         if [ "$pt" \> "$mt" ]; then
           UPDATE_NODE=1
         fi
@@ -34,8 +36,8 @@ else
       if [ ! -d "../$NEXUS_PATH/library" ]; then
         UPDATE_NODE=1
       else
-        pt="$(find ../$NEXUS_PATH/source -type f | xargs stat | grep Modify | awk '{print $2 $3}' | sort -r | head -1)"
-        mt="$(stat mod_time.txt | grep Modify | awk '{print $2 $3}')"
+        pt="$(find ../$NEXUS_PATH/source -type f | xargs $STAT | grep Modify | awk '{print $2 $3}' | sort -r | head -1)"
+        mt="$($STAT mod_time.txt | grep Modify | awk '{print $2 $3}')"
         if [ "$pt" \> "$mt" ]; then
           UPDATE_NODE=1
         fi
@@ -78,8 +80,8 @@ fi
 if [ ! -d "library" ]; then
   UPDATE_BUILD=1
 else
-  st="$(find source/ -type f | xargs stat | grep Modify | awk '{print $2 $3}' | sort -r | head -1)"
-  lt="$(find library/ -type f | xargs stat | grep Modify | awk '{print $2 $3}' | sort -r | head -1)"
+  st="$(find source/ -type f | xargs $STAT | grep Modify | awk '{print $2 $3}' | sort -r | head -1)"
+  lt="$(find library/ -type f | xargs $STAT | grep Modify | awk '{print $2 $3}' | sort -r | head -1)"
   if [ "$st" \> "$lt" ]; then
     UPDATE_BUILD=1
   fi
