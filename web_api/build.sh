@@ -1,6 +1,6 @@
 #!/bin/bash
 if [ "$(uname -s)" = "Darwin" ]; then
-  STAT='\stat -x -t "%Y%m%d%H%M%S"'
+  STAT='stat -x -t "%Y%m%d%H%M%S"'
 else
   STAT='stat'
 fi
