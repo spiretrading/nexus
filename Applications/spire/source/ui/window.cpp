@@ -58,9 +58,16 @@ void window::set_icon(const QImage& icon, const QImage& unfocused_icon) {
 bool window::nativeEventFilter(const QByteArray& event_type, void* message,
     long* result) {
   auto msg = static_cast<MSG*>(message);
+  auto handle = reinterpret_cast<HWND>(QWidget::window()->effectiveWinId());
+  if(handle != msg->hwnd && !::IsChild(handle, msg->hwnd)) {
+    return false;
+  }
   if(msg->message == WM_ACTIVATE) {
     auto margins = MARGINS{-1, -1, -1, -1};
     ::DwmExtendFrameIntoClientArea(msg->hwnd, &margins);
+    ::SetWindowPos(handle, NULL, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOZORDER |
+      SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    return true;
   } else if((msg->message == WM_NCCALCSIZE) && msg->wParam == TRUE) {
     *result = 0;
     return true;
@@ -72,24 +79,16 @@ bool window::nativeEventFilter(const QByteArray& event_type, void* message,
     maximize_dimensions->ptMaxPosition.x = 0;
     maximize_dimensions->ptMaxPosition.y = 0;
     *result = 0;
-    return false;
+    return true;
   } else if(msg->message == WM_NCHITTEST) {
     *result = HTCLIENT;
     return true;
-  } else if(msg->message == WM_NCPAINT) {
-//    ::DefWindowProc(msg->hwnd, msg->message, msg->wParam, msg->lParam);
-    auto device = GetWindowDC(msg->hwnd);
-    RECT background;
-    background.top = 0;
-    background.right = 10000;
-    background.bottom = 10000;
-    background.left = 0;
-    auto brush = CreateSolidBrush(RGB(255, 0, 0));
-    SelectObject(device, brush);
-    ::Rectangle(device, 0, 0, 10000, 10000);
-    DeleteObject(brush);
-    return false;
   }
+  return false;
+}
+#else
+bool window::nativeEventFilter(const QByteArray& event_type, void* message,
+    long* result) {
   return false;
 }
 #endif
@@ -151,7 +150,7 @@ void window::handle_resize() {
     m_body->layout()->minimumSize().width(),
     std::max(m_title_bar->minimumWidth(),
     m_title_bar->layout()->minimumSize().width()))), m_body->minimumHeight()) +
-    container_delta + QSize(16, 39);
+    container_delta + QSize(4, 0);
   if(m_current_active_rect == active_resize_rect::TOP ||
       m_current_active_rect == active_resize_rect::TOP_LEFT ||
       m_current_active_rect == active_resize_rect::TOP_RIGHT) {
