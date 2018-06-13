@@ -3,7 +3,9 @@ import {LoginPageModel} from './login_page_model';
 
 /** Implements the LoginPageModel for testing purposes. */
 export class LocalLoginPageModel extends LoginPageModel {
-
+  constructor() {
+    super();
+  }
   /** Accepts the username and password. */
   public accept(): void {
     this.loginResolver(this.account);
@@ -22,12 +24,12 @@ export class LocalLoginPageModel extends LoginPageModel {
 
   public async login(username: string, password: string):
       Promise<Beam.DirectoryEntry> {
-    return new Promise<Beam.DirectoryEntry>(
-      function(resolve, reject) {
+        const callback = (resolve: any, reject: any) =>  {
         this._account = Beam.DirectoryEntry.makeAccount(123, username);
         this.loginResolver = resolve;
         this.loginRejector = reject;
-      });
+      }
+    return new Promise<Beam.DirectoryEntry>(callback)
   }
 
   private _account: Beam.DirectoryEntry;

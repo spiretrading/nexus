@@ -14,6 +14,7 @@ export interface Properties {
 export interface State {
   username: string;
   password: string;
+  error: Error;
 };
 
 /** Displays the login page. */
@@ -22,8 +23,10 @@ export class LoginPage extends React.Component<Properties, State> {
     super(properties);
     this.state = {
       username: "",
-      password: ""
+      password: "",
+      error: null
     };
+    this.onLogin = this.onLogin.bind(this);
   }
 
   public render(): JSX.Element {
@@ -39,18 +42,20 @@ export class LoginPage extends React.Component<Properties, State> {
                  onChange={(event: any) => {
                    this.setState({password: event.target.value})
                  }}/>
-          <button onClick={() => {
-            const login = this.props.model.login.bind(this.props.model)
-            login(this.state.username, this.state.password).
-              then((account: Beam.DirectoryEntry) => {
-                if(this.props.onLogin) {
-                  this.props.onLogin(account)
-                }
-              });
-          }}>
+          <button onClick={this.onLogin}>
             Sign In
           </button>
         </div>
       );
+  }
+
+  private async onLogin() {
+    try {
+      const account = await this.props.model.login.bind(this.props.model)
+                              (this.state.username, this.state.password);
+    } catch(error) {
+      console.log('error: ', error)
+      this.setState({error: error});
+    }
   }
 }
