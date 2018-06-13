@@ -32,6 +32,22 @@ namespace spire {
       */
       void set_icon(const QImage& icon, const QImage& unfocused_icon);
 
+      //! Sets the icon to display using an SVG file with default size.
+      /*
+        \param path Path to the SVG file to display.
+      */
+      void set_svg_icon(const QString& icon_path);
+
+      //! Sets the icons to display using an SVG file with default sizes.
+      /*
+        \param icon_path Path to the SVG file to display when the window has
+               focus.
+        \param unfocused_icon_path Path to the SVG file to display when the
+               window lacks focus.
+      */
+      void set_svg_icon(const QString& icon_path,
+        const QString& unfocused_icon_path);
+
 #ifdef Q_OS_WIN
       bool nativeEventFilter(const QByteArray& event_type, void* message,
         long* result) override;

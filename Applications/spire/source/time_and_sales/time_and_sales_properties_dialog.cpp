@@ -28,10 +28,8 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   auto window_layout = new QHBoxLayout(this);
   window_layout->setContentsMargins({});
   auto window = new spire::window(m_body, this);
-  window->set_icon(imageFromSvg(":/icons/time-sale-black.svg", scale(26, 26),
-    QRect(translate(8, 8), scale(10, 10))),
-    imageFromSvg(":/icons/time-sale-grey.svg", scale(26, 26),
-    QRect(translate(8, 8), scale(10, 10))));
+  window->set_svg_icon(":/icons/time-sale-black.svg",
+    ":/icons/time-sale-grey.svg");
   this->window()->setWindowTitle(tr("Properties"));
   window_layout->addWidget(window);
   m_body->setStyleSheet("background-color: #F5F5F5;");

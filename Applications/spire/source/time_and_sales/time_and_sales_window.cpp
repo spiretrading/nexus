@@ -41,10 +41,8 @@ time_and_sales_window::time_and_sales_window(
   window_layout->setContentsMargins({});
   auto window = new spire::window(m_body, this);
   setWindowTitle(tr("Time and Sales"));
-  window->set_icon(imageFromSvg(":/icons/time-sale-black.svg", scale(26, 26),
-    QRect(translate(8, 8), scale(10, 10))),
-    imageFromSvg(":/icons/time-sale-grey.svg", scale(26, 26),
-    QRect(translate(8, 8), scale(10, 10))));
+  window->set_svg_icon(":/icons/time-sale-black.svg",
+    ":/icons/time-sale-grey.svg");
   window_layout->addWidget(window);
   auto layout = new QVBoxLayout(m_body);
   layout->setContentsMargins({});
