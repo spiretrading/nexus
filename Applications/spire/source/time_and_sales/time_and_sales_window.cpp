@@ -29,7 +29,6 @@ time_and_sales_window::time_and_sales_window(
     security_input_model& input_model, QWidget* parent)
     : QWidget(parent),
       m_input_model(&input_model),
-      m_loading_widget(nullptr),
       m_table(nullptr),
       m_v_scroll_bar_timer(this),
       m_h_scroll_bar_timer(this) {
@@ -57,6 +56,9 @@ time_and_sales_window::time_and_sales_window(
     font-family: Roboto;
     font-size: %1px;)").arg(scale_height(11)));
   layout->addWidget(m_empty_window_label);
+  create_table();
+  layout->addWidget(m_table);
+  m_table->hide();
   m_v_scroll_bar_timer.setInterval(500);
   connect(&m_v_scroll_bar_timer, &QTimer::timeout, this,
     &time_and_sales_window::fade_out_vertical_scroll_bar);
@@ -80,14 +82,23 @@ time_and_sales_window::time_and_sales_window(
 
 void time_and_sales_window::set_model(
     std::shared_ptr<time_and_sales_model> model) {
-  if(m_loading_widget == nullptr && m_empty_window_label == nullptr) {
-    m_loading_widget = new loading_widget(this);
-    set_contents(m_loading_widget);
+  if(m_model.is_initialized()) {
+    if(m_empty_window_label != nullptr) {
+      delete m_empty_window_label;
+      m_empty_window_label = nullptr;
+    }
+    m_table->show();
+    if(m_empty_window_label == nullptr) {
+      QTimer::singleShot(1000, this, [=] { show_loading_widget(); });
+    }
   }
   model->connect_volume_signal([=] (const Quantity& v) { on_volume(v); });
   m_model.emplace(std::move(model), m_properties);
   connect(m_model.get_ptr(), &QAbstractTableModel::rowsAboutToBeInserted, this,
     &time_and_sales_window::on_rows_about_to_be_inserted);
+  auto filter = new custom_variant_sort_filter_proxy_model(m_table);
+  filter->setSourceModel(&m_model.get());
+  m_table->setModel(filter);
 }
 
 const time_and_sales_properties&
@@ -355,11 +366,6 @@ void time_and_sales_window::create_table() {
       width: 0px;
     })").arg(scale_height(12)).arg(scale_height(12))
         .arg(scale_width(30)).arg(scale_height(30)));
-  auto filter = new custom_variant_sort_filter_proxy_model(m_table);
-  filter->setSourceModel(&m_model.get());
-  m_table->setModel(filter);
-  set_contents(m_table);
-  set_properties(m_properties);
 }
 
 void time_and_sales_window::export_table() {
@@ -373,20 +379,6 @@ void time_and_sales_window::export_table() {
   m_overlay_widget.reset();
 }
 
-void time_and_sales_window::set_contents(QWidget* widget) {
-  auto previous = m_body->layout()->takeAt(1);
-  if(previous->widget() == m_empty_window_label) {
-    m_empty_window_label = nullptr;
-  } else if(previous->widget() == m_loading_widget) {
-    m_loading_widget = nullptr;
-  } else if(previous->widget() == m_table) {
-    m_table = nullptr;
-  }
-  delete previous->widget();
-  delete previous;
-  static_cast<QVBoxLayout*>(m_body->layout())->insertWidget(1, widget);
-}
-
 void time_and_sales_window::fade_out_horizontal_scroll_bar() {
   m_h_scroll_bar_timer.stop();
   m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -395,6 +387,17 @@ void time_and_sales_window::fade_out_horizontal_scroll_bar() {
 void time_and_sales_window::fade_out_vertical_scroll_bar() {
   m_v_scroll_bar_timer.stop();
   m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+}
+
+void time_and_sales_window::show_loading_widget() {
+  if(m_model->rowCount(QModelIndex()) == 0) {
+    m_loading_widget = std::make_unique<loading_widget>(m_body);
+    auto contents = m_body->layout()->itemAt(1)->widget();
+    m_loading_widget->resize(contents->size());
+    m_loading_widget->move(contents->mapTo(m_table, contents->pos()));
+    m_loading_widget->show();
+    m_loading_widget->raise();
+  }
 }
 
 void time_and_sales_window::show_overlay_widget() {
@@ -436,9 +439,7 @@ bool time_and_sales_window::within_h_scroll_bar(const QPoint& pos) {
 
 void time_and_sales_window::on_rows_about_to_be_inserted(
     const QModelIndex& index, int start, int end) {
-  if(m_table == nullptr) {
-    create_table();
-  }
+  m_loading_widget.reset();
   if(m_table->verticalScrollBar()->value() != 0) {
     m_table->verticalScrollBar()->setValue(
       m_table->verticalScrollBar()->value() + m_table->rowHeight(0));

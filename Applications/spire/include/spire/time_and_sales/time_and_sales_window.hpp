@@ -74,7 +74,7 @@ namespace spire {
       QWidget* m_body;
       QLabel* m_empty_window_label;
       std::unique_ptr<QLabel> m_overlay_widget;
-      loading_widget* m_loading_widget;
+      std::unique_ptr<loading_widget> m_loading_widget;
       QTableView* m_table;
       QLabel* m_volume_label;
       QTimer m_v_scroll_bar_timer;
@@ -82,9 +82,9 @@ namespace spire {
 
       void create_table();
       void export_table();
-      void set_contents(QWidget* widget);
       void fade_out_horizontal_scroll_bar();
       void fade_out_vertical_scroll_bar();
+      void show_loading_widget();
       void show_overlay_widget();
       void show_properties_dialog();
       void set_current(const Nexus::Security& s);
