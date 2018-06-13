@@ -1,4 +1,7 @@
 #!/bin/bash
+if [ "$(uname -s)" = "Darwin" ]; then
+  alias stat='\stat -x -t "%Y%m%d%H%M%S"'
+fi
 BEAM_PATH=../../Beam/web_api
 if [ $# -eq 0 ] || [ "$1" != "Debug" ]; then
   export PROD_ENV=1
