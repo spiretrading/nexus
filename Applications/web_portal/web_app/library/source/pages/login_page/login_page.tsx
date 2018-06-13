@@ -16,6 +16,7 @@ export interface Properties {
 
 /** The React state for the LoginPage. */
 export interface State {
+  isLoading: boolean;
   username: string;
   password: string;
   error: Error;
@@ -26,13 +27,13 @@ export class LoginPage extends React.Component<Properties, State> {
   constructor(properties: Properties) {
     super(properties);
     this.state = {
+      isLoading: false,
       username: 'Username',
       password: 'Password',
       error: null
     };
     this.onLogin = this.onLogin.bind(this);
   }
-
   public render(): JSX.Element {
     const onFocus = (field: string) => {
       switch(field) {
@@ -70,6 +71,16 @@ export class LoginPage extends React.Component<Properties, State> {
       }
       return '';
     })();
+    const Logo = (): JSX.Element => {
+      if(this.state.isLoading) {
+        return <object data='resources/login_page/logo-animated.svg'
+                       type='image/svg+xml'
+                       className={css(LoginPage.STYLE.logo)}/>;
+      }
+      return <object data='resources/login_page/logo-static.svg'
+                     type='image/svg+xml'
+                     className={css(LoginPage.STYLE.logo)}/>;
+    };
     return (
       <Center width='100%' height='100%'
               className={css(LoginPage.STYLE.page)}>
@@ -77,8 +88,7 @@ export class LoginPage extends React.Component<Properties, State> {
           <Padding size='18px'/>
           <VBoxLayout width='100%' height='100%'>
             <Padding size='60px'/>
-            <img src='resources/login_page/logo-static.svg'
-                 className={css(LoginPage.STYLE.logo)}/>
+            <Logo/>
             <Padding size='60px'/>
             <input type='text' value={this.state.username}
                    className={css(LoginPage.STYLE.inputBox)}
@@ -97,7 +107,10 @@ export class LoginPage extends React.Component<Properties, State> {
                    }}/>
             <Padding size='50px'/>
             <button className={css(LoginPage.STYLE.signInButton)}
-                    onClick={this.onLogin}>
+                    onClick={() => {
+                      this.setState({isLoading: true});
+                      this.onLogin();
+                    }}>
               Sign In
             </button>
             <Padding size='30px'/>
@@ -115,10 +128,12 @@ export class LoginPage extends React.Component<Properties, State> {
     try {
       const login = this.props.model.login.bind(this.props.model);
       const account = await login(this.state.username, this.state.password);
+      this.setState({isLoading: false});
     } catch(error) {
-      this.setState({error: error});
+      this.setState({isLoading: false, error: error});
     }
   }
+
   private static STYLE = StyleSheet.create({
     page: {
       fontFamily: 'Roboto',
@@ -148,17 +163,19 @@ export class LoginPage extends React.Component<Properties, State> {
       height: '48px',
       color: '#4B23A0',
       fontSize: '20px',
-      backgroundColor: '#FFFFFF',
+      backgroundColor: '#E2E0FF',
+      fontWeight: 500,
       outline: 0,
+      border: 'none',
       ':hover': {
-        backgroundColor: '#E2E0FF'
+        backgroundColor: '#FFFFFF'
       }
     },
     errorMessage: {
       width: '100%',
       textAlign: 'center',
       fontSize: '14px',
-      height: '14px',
+      height: '20px',
       fontWeight: 'lighter' as 'lighter',
       color: '#FAEB96'
     }

@@ -6,7 +6,7 @@ import * as WebPortal from 'web_portal';
 
 /** The React state for the TestApp. */
 export interface State {
-  rejectionMessage: string;
+  rejectMessage: string;
 };
 
 /** The React properties for the TestAppåå. */
@@ -24,26 +24,27 @@ class TestApp extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      rejectionMessage: ''
+      rejectMessage: ''
     };
   }
 
   public render(): JSX.Element {
     const onChange = (event: any) => {
-      this.setState({rejectionMessage: event.target.value});
+      this.setState({rejectMessage: event.target.value});
     };
     return (
       <WebPortal.VBoxLayout width='100%' height='100%'>
         <WebPortal.LoginPage model={model} onLogin={onLogin}/>
         <div className={css(TestApp.STYLE.testingComponents)}>
-        <button onClick={() => model.accept()}>
+        <button onClick={() => model.accept.bind(model)()}>
           Accept
         </button>
-        <button onClick={() => model.reject(this.state.rejectionMessage)}>
+        <button onClick={() => model.reject.bind(model)
+                                              (this.state.rejectMessage)}>
           Reject
         </button>
         <input type='text' placeholder='Rejection message'
-               value={this.state.rejectionMessage}
+               value={this.state.rejectMessage}
                onChange={onChange}/>
         </div>
       </WebPortal.VBoxLayout>);
