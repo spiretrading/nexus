@@ -24,7 +24,7 @@ namespace spire {
       QWidget* m_covered;
       QWidget* m_displayed;
 
-      void align_displayed();
+      void align();
   };
 }
 
