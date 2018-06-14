@@ -39,13 +39,12 @@ class TestApp extends React.Component<Properties, State> {
         <button onClick={() => model.accept.bind(model)()}>
           Accept
         </button>
-        <button onClick={() => model.reject.bind(model)
-                                              (this.state.rejectMessage)}>
-          Reject
+        <button onClick={() => model.reject('Incorrect username or password')}>
+          Reject: Invalid Username/ Password
         </button>
-        <input type='text' placeholder='Rejection message'
-               value={this.state.rejectMessage}
-               onChange={onChange}/>
+        <button onClick={() => model.reject('Server error')}>
+          Reject - Server error
+        </button>
         </div>
       </WebPortal.VBoxLayout>);
   }

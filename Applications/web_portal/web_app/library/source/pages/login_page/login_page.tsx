@@ -1,6 +1,7 @@
 import {css, StyleSheet} from 'aphrodite';
 import * as Beam from 'beam';
 import * as React from 'react';
+import * as ReactDOM from 'react-dom';
 import {Center, HBoxLayout, Padding, VBoxLayout} from '../../';
 import {LoginPageModel} from '.';
 
@@ -14,93 +15,78 @@ export interface Properties {
   onLogin?: (account: Beam.DirectoryEntry) => void;
 }
 
-/** The React state for the LoginPage. */
 export interface State {
-  icon: JSX.Element;
-  username: string;
-  password: string;
+  isLoading: boolean;
   error: Error;
-};
+}
 
 /** Displays the Login Page. */
 export class LoginPage extends React.Component<Properties, State> {
   constructor(properties: Properties) {
     super(properties);
     this.state = {
-      icon: <LoginPage.StaticIcon/>,
-      username: 'Username',
-      password: 'Password',
+      isLoading: false,
       error: null
     };
+    this.staticLogo = (
+      <object data='resources/login_page/logo-static.svg'
+        type='image/svg+xml' className={css(LoginPage.STYLE.logo)}/>);
+    this.animatedLogo = (
+      <object data='resources/login_page/logo-animated.svg'
+        type='image/svg+xml' className={css(LoginPage.STYLE.logo)}/>);
     this.onLogin = this.onLogin.bind(this);
+    this.onKeyDown = this.onKeyDown.bind(this);
+  }
+
+  public componentDidMount(): void {
+    window.addEventListener('keydown', this.onKeyDown);
+  }
+
+  componentWillUnmount(): void {
+    window.removeEventListener('keydown', this.onKeyDown);
   }
   public render(): JSX.Element {
-    const onFocus = (field: string) => {
-      switch(field) {
-        case 'username':
-          if(this.state.username === 'Username') {
-            this.setState({username: '', error: null});
-          }
-          this.setState({error: null});
-          break;
-        case 'password':
-          if(this.state.password === 'Password') {
-            this.setState({password: '', error: null});
-          }
-          this.setState({error: null});
-          break;
-      }
-    };
-    const onBlur = (field: string) => {
-      switch(field) {
-        case 'username':
-          if(this.state.username.trim() === '') {
-            this.setState({username: 'Username'});
-          }
-          break;
-        case 'password':
-          if(this.state.password.trim() === '') {
-            this.setState({password: 'Password'});
-          }
-          break;
-      }
-    };
-    const errorMessage = ((): string => {
+    const errorMessage = (() => {
       if(this.state.error) {
-        return this.state.error.message;
+        switch(this.state.error.message) {
+          case 'Incorrect username or password':
+            return 'Incorrect username or password.';
+          default:
+            return 'Server is unavailable.'
+        }
       }
       return '';
     })();
+    const Logo = () => {
+      if(this.state.isLoading) {
+        return this.animatedLogo;
+      } else {
+        return this.staticLogo;
+      }
+    };
     return (
       <Center width='100%' height='100%'
-              className={css(LoginPage.STYLE.page)}>
+          className={css(LoginPage.STYLE.page)}>
         <HBoxLayout width='320px' height='462px'>
           <Padding size='18px'/>
           <VBoxLayout width='100%' height='100%'>
             <Padding size='60px'/>
-            {this.state.icon}
+            <Logo/>
             <Padding size='60px'/>
-            <input type='text' value={this.state.username}
-                   className={css(LoginPage.STYLE.inputBox)}
-                   onBlur={() => onBlur('username')}
-                   onFocus={() => onFocus('username')}
-                   onChange={(event: any) => {
-                     this.setState({username: event.target.value});
-                   }}/>
+            <input type='text' placeholder='Username'
+              className={css(LoginPage.STYLE.inputBox)}
+              onFocus={() => this.usernameInputField.placeholder=''}
+              onBlur={() => this.usernameInputField.placeholder='Username'}
+              ref={((ref) => this.usernameInputField = ref)}/>
             <Padding size='20px'/>
-            <input type='text' value={this.state.password}
-                   onBlur={() => onBlur('password')}
-                   onFocus={() => onFocus('password')}
-                   className={css(LoginPage.STYLE.inputBox)}
-                   onChange={(event: any) => {
-                     this.setState({password: event.target.value});
-                   }}/>
+            <input type='password' placeholder='Password'
+              className={css(LoginPage.STYLE.inputBox)}
+              onFocus={() => this.passwordInputField.placeholder=''}
+              onBlur={() => this.passwordInputField.placeholder='Password'}
+              ref={((ref) => this.passwordInputField = ref)}/>
             <Padding size='50px'/>
             <button className={css(LoginPage.STYLE.signInButton)}
-                    onClick={() => {
-                      this.setState({icon: <LoginPage.AnimatedIcon/>});
-                      this.onLogin();
-                    }}>
+                onClick={this.onLogin}>
               Sign In
             </button>
             <Padding size='30px'/>
@@ -115,15 +101,36 @@ export class LoginPage extends React.Component<Properties, State> {
   }
 
   private async onLogin() {
-    try {
-      const login = this.props.model.login.bind(this.props.model);
-      const account = await login(this.state.username, this.state.password);
-      this.setState({icon: <LoginPage.StaticIcon/>});
-    } catch(error) {
-      this.setState({icon:  <LoginPage.StaticIcon/>});
+    if(this.usernameInputField.value.trim() !== '') {
+      this.setState({isLoading: true});
+      try {
+        const account = await this.props.model.login(
+          this.usernameInputField.value, this.passwordInputField.value);
+        this.setState({
+          isLoading: false,
+          error: null
+        });
+        this.props.onLogin(account);
+      } catch(error) {
+        this.setState({
+          isLoading: false,
+          error: error
+        });
+      }
     }
   }
 
+  private onKeyDown(event: KeyboardEvent) {
+    if(document.activeElement !== ReactDOM.findDOMNode(
+        this.usernameInputField)) {
+      if(document.activeElement !== ReactDOM.findDOMNode(
+        this.passwordInputField)) {
+        this.usernameInputField.focus();
+      } else if(event.key === "Enter") {
+        this.onLogin();
+      }
+    }
+  }
   private static STYLE = StyleSheet.create({
     page: {
       fontFamily: 'Roboto',
@@ -146,7 +153,32 @@ export class LoginPage extends React.Component<Properties, State> {
       outline: 0,
       textAlign: 'center',
       fontSize: '16px',
-      fontWeight: 'lighter' as 'lighter'
+      fontWeight: 'lighter' as 'lighter',
+      '::placeholder': {
+        color: '#FFFFFF'
+      },
+      '::-moz-placeholder': {
+        color: '#FFFFFF',
+        opacity: 1,
+      },
+      '::-ms-input-placeholder': {
+        color: '#FFFFFF',
+        opacity: 1,
+      },
+      '::-ms-clear': {
+        display: 'none'
+      },
+      '::-ms-reveal': {
+        display: 'none'
+      },
+      ':focus': {
+        '::placeholder': {
+          color: 'transparent'
+        },
+        '::-ms-input-placeholder': {
+          color: 'transparent'
+        },
+      },
     },
     signInButton: {
       width: '284px',
@@ -170,14 +202,8 @@ export class LoginPage extends React.Component<Properties, State> {
       color: '#FAEB96'
     }
   });
-   private static StaticIcon = (): JSX.Element => {
-    return <object data='resources/login_page/logo-static.svg'
-                   type='image/svg+xml'
-                   className={css(LoginPage.STYLE.logo)}/>;
-  }
-  private static AnimatedIcon = (): JSX.Element => {
-    return <object data='resources/login_page/logo-animated.svg'
-                   type='image/svg+xml'
-                   className={css(LoginPage.STYLE.logo)}/>;
-  }
+  private staticLogo: JSX.Element;
+  private animatedLogo: JSX.Element;
+  private usernameInputField: HTMLInputElement;
+  private passwordInputField: HTMLInputElement;
 }
