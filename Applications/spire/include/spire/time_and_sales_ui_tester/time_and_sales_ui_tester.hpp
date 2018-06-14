@@ -1,6 +1,7 @@
 #ifndef SPIRE_TIME_AND_SALES_UI_TESTER_HPP
 #define SPIRE_TIME_AND_SALES_UI_TESTER_HPP
 #include <memory>
+#include <Beam/Threading/Threading.hpp>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/time_and_sales/periodic_time_and_sales_model.hpp"
@@ -12,10 +13,12 @@ namespace spire {
   //! Displays a time_and_sales_window tester
   class time_and_sales_ui_tester : public QWidget {
     public:
-      time_and_sales_ui_tester(time_and_sales_window* window);
+      time_and_sales_ui_tester(time_and_sales_window* window,
+        Beam::Threading::TimerThreadPool& timer_thread_pool);
 
     private:
       time_and_sales_window* m_window;
+      Beam::Threading::TimerThreadPool* m_timer_thread_pool;
       std::shared_ptr<periodic_time_and_sales_model> m_model;
 
       void security_changed(const Nexus::Security& security);
