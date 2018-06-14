@@ -89,9 +89,7 @@ void time_and_sales_window::set_model(
       m_empty_window_label = nullptr;
     }
     m_table->show();
-    if(m_empty_window_label == nullptr) {
-      QTimer::singleShot(1000, this, [=] { show_loading_widget(); });
-    }
+    QTimer::singleShot(1000, this, [=] { show_loading_widget(); });
   }
   model->connect_volume_signal([=] (const Quantity& v) { on_volume(v); });
   m_model.emplace(std::move(model), m_properties);
