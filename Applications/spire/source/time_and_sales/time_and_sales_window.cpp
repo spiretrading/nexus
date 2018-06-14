@@ -57,9 +57,9 @@ time_and_sales_window::time_and_sales_window(
     font-family: Roboto;
     font-size: %1px;)").arg(scale_height(11)));
   layout->addWidget(m_empty_window_label);
-  create_table();
-  layout->addWidget(m_table);
-  m_table->hide();
+  create_table_with_container();
+  layout->addWidget(m_table_container);
+  m_table_container->hide();
   m_v_scroll_bar_timer.setInterval(500);
   connect(&m_v_scroll_bar_timer, &QTimer::timeout, this,
     &time_and_sales_window::fade_out_vertical_scroll_bar);
@@ -88,7 +88,7 @@ void time_and_sales_window::set_model(
       delete m_empty_window_label;
       m_empty_window_label = nullptr;
     }
-    m_table->show();
+    m_table_container->show();
     QTimer::singleShot(1000, this, [=] { show_loading_widget(); });
   }
   model->connect_volume_signal([=] (const Quantity& v) { on_volume(v); });
@@ -284,8 +284,17 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
   }
 }
 
-void time_and_sales_window::create_table() {
+void time_and_sales_window::create_table_with_container() {
+  m_table_container = new QScrollArea(this);
+  m_table_container->setWidgetResizable(true);
+  m_table_container->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+  m_table_container->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+  auto container_contents = new QWidget(this);
+  auto layout = new QVBoxLayout(container_contents);
+  layout->setContentsMargins({});
+  layout->setSpacing(0);
   m_table = new QTableView(this);
+  m_table->setFixedHeight(800);
   m_table->setItemDelegate(new item_padding_delegate(scale_width(5),
     new custom_variant_item_delegate(), this));
   m_table->setMouseTracking(true);
@@ -365,6 +374,12 @@ void time_and_sales_window::create_table() {
       width: 0px;
     })").arg(scale_height(12)).arg(scale_height(12))
         .arg(scale_width(30)).arg(scale_height(30)));
+  layout->addWidget(m_table);
+  auto test_widget = new QWidget(this);
+  test_widget->setFixedHeight(100);
+  test_widget->setStyleSheet("background-color: red;");
+  layout->addWidget(test_widget);
+  m_table_container->setWidget(container_contents);
 }
 
 void time_and_sales_window::export_table() {

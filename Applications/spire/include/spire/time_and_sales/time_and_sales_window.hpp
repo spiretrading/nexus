@@ -4,6 +4,7 @@
 #include <boost/optional.hpp>
 #include <QLabel>
 #include <QMenu>
+#include <QScrollArea>
 #include <QTableView>
 #include <QTimer>
 #include <QWidget>
@@ -75,12 +76,13 @@ namespace spire {
       QLabel* m_empty_window_label;
       std::unique_ptr<QLabel> m_overlay_widget;
       std::unique_ptr<overlay_widget> m_loading_widget;
+      QScrollArea* m_table_container;
       QTableView* m_table;
       QLabel* m_volume_label;
       QTimer m_v_scroll_bar_timer;
       QTimer m_h_scroll_bar_timer;
 
-      void create_table();
+      void create_table_with_container();
       void export_table();
       void fade_out_horizontal_scroll_bar();
       void fade_out_vertical_scroll_bar();
