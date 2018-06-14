@@ -17,7 +17,7 @@ export interface Properties {
 
 export interface State {
   isLoading: boolean;
-  error: Error;
+  errorMessage: 'Incorrect username or password.'|'Server is unavailable.';
 }
 
 /** Displays the Login Page. */
@@ -26,7 +26,7 @@ export class LoginPage extends React.Component<Properties, State> {
     super(properties);
     this.state = {
       isLoading: false,
-      error: null
+      errorMessage: null
     };
     this.staticLogo = (
       <object data='resources/login_page/logo-static.svg'
@@ -42,21 +42,10 @@ export class LoginPage extends React.Component<Properties, State> {
     window.addEventListener('keydown', this.onKeyDown);
   }
 
-  componentWillUnmount(): void {
+  public componentWillUnmount(): void {
     window.removeEventListener('keydown', this.onKeyDown);
   }
   public render(): JSX.Element {
-    const errorMessage = (() => {
-      if(this.state.error) {
-        switch(this.state.error.message) {
-          case 'Incorrect username or password':
-            return 'Incorrect username or password.';
-          default:
-            return 'Server is unavailable.'
-        }
-      }
-      return '';
-    })();
     const Logo = () => {
       if(this.state.isLoading) {
         return this.animatedLogo;
@@ -91,7 +80,7 @@ export class LoginPage extends React.Component<Properties, State> {
             </button>
             <Padding size='30px'/>
             <span className={css(LoginPage.STYLE.errorMessage)}>
-              {errorMessage}
+              {this.state.errorMessage}
             </span>
             <Padding size='60px'/>
           </VBoxLayout>
@@ -108,13 +97,21 @@ export class LoginPage extends React.Component<Properties, State> {
           this.usernameInputField.value, this.passwordInputField.value);
         this.setState({
           isLoading: false,
-          error: null
+          errorMessage: null
         });
         this.props.onLogin(account);
       } catch(error) {
+        const errorMessage = (() => {
+          switch(error.message) {
+            case 'Incorrect username or password':
+              return 'Incorrect username or password.';
+            default:
+              return 'Server is unavailable.'
+          }
+        })();
         this.setState({
           isLoading: false,
-          error: error
+          errorMessage: errorMessage
         });
       }
     }
@@ -146,16 +143,17 @@ export class LoginPage extends React.Component<Properties, State> {
     inputBox: {
       width: '100%',
       height: '34px',
-      border: 'none',
-      borderBottom: '1px solid #FFFFFF',
+      borderColor: '#FFFFFF',
+      borderWidth: '0px 0px 1px 0px',
       backgroundColor: 'inherit',
       color: '#FFFFFF',
       outline: 0,
       textAlign: 'center',
       fontSize: '16px',
       fontWeight: 'lighter' as 'lighter',
+      borderRadius: 0,
       '::placeholder': {
-        color: '#FFFFFF'
+        color: '#FFFFFF',
       },
       '::-moz-placeholder': {
         color: '#FFFFFF',
@@ -169,15 +167,7 @@ export class LoginPage extends React.Component<Properties, State> {
         display: 'none'
       },
       '::-ms-reveal': {
-        display: 'none'
-      },
-      ':focus': {
-        '::placeholder': {
-          color: 'transparent'
-        },
-        '::-ms-input-placeholder': {
-          color: 'transparent'
-        },
+        display: 'none' 
       },
     },
     signInButton: {

@@ -51,9 +51,10 @@ class TestApp extends React.Component<Properties, State> {
   private static STYLE = StyleSheet.create({
     testingComponents: {
       position: 'absolute' as 'absolute',
-      bottom: '100px',
-      width: '160px',
-      left: 'calc(50% - 80px)'
+      bottom: '10%',
+      width: '100%',
+      left: '50%',
+      zIndex: 1
     }
   });
 }
