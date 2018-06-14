@@ -392,7 +392,7 @@ void time_and_sales_window::fade_out_vertical_scroll_bar() {
 }
 
 void time_and_sales_window::show_loading_widget() {
-  if(m_model->rowCount(QModelIndex()) == 0) {
+  if(m_model->rowCount(QModelIndex()) == 0 && m_loading_widget == nullptr) {
     auto backing_widget = new QLabel(m_body);
     auto logo = new QMovie(":/icons/pre-loader.gif", QByteArray(),
       m_body);
