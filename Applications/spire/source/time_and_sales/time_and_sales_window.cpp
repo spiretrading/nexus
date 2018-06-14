@@ -10,7 +10,6 @@
 #include "spire/security_input/security_input_dialog.hpp"
 #include "spire/security_input/security_input_model.hpp"
 #include "spire/time_and_sales/empty_time_and_sales_model.hpp"
-#include "spire/time_and_sales/loading_widget.hpp"
 #include "spire/time_and_sales/time_and_sales_properties_dialog.hpp"
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
 #include "spire/spire/dimensions.hpp"
