@@ -28,12 +28,6 @@ export class LoginPage extends React.Component<Properties, State> {
       isLoading: false,
       errorMessage: null
     };
-    this.staticLogo = (
-      <object data='resources/login_page/logo-static.svg'
-        type='image/svg+xml' className={css(LoginPage.STYLE.logo)}/>);
-    this.animatedLogo = (
-      <object data='resources/login_page/logo-animated.svg'
-        type='image/svg+xml' className={css(LoginPage.STYLE.logo)}/>);
     this.onLogin = this.onLogin.bind(this);
     this.onKeyDown = this.onKeyDown.bind(this);
   }
@@ -45,15 +39,32 @@ export class LoginPage extends React.Component<Properties, State> {
   public componentWillUnmount(): void {
     window.removeEventListener('keydown', this.onKeyDown);
   }
-  
+
   public render(): JSX.Element {
     const Logo = () => {
       if(this.state.isLoading) {
-        return this.animatedLogo;
+        return (
+          <Center width='100%' height='48px'>
+            <object data='resources/login_page/logo-animated.svg'
+              type='image/svg+xml' className={
+              css(LoginPage.STYLE.logoVisible)}/>
+            <object data='resources/login_page/logo-static.svg'
+              type='image/svg+xml' className={
+              css(LoginPage.STYLE.logoInvisible)}/>
+           </Center>);
       } else {
-        return this.staticLogo;
+        return (
+          <Center width='100%' height='48px'>
+            <object data='resources/login_page/logo-animated.svg'
+              type='image/svg+xml' className={
+              css(LoginPage.STYLE.logoInvisible)}/>
+            <object data='resources/login_page/logo-static.svg'
+              type='image/svg+xml' className={
+              css(LoginPage.STYLE.logoVisible)}/>
+           </Center>);
       }
-    };
+    }
+    console.log('rendering: ', new Date().getTime());
     return (
       <Center width='100%' height='100%'
           className={css(LoginPage.STYLE.page)}>
@@ -76,7 +87,8 @@ export class LoginPage extends React.Component<Properties, State> {
               ref={((ref) => this.passwordInputField = ref)}/>
             <Padding size='50px'/>
             <button className={css(LoginPage.STYLE.signInButton)}
-                onClick={this.onLogin}>
+                onClick={this.onLogin}
+                ref={((ref) => this.submitButton = ref)}>
               Sign In
             </button>
             <Padding size='30px'/>
@@ -91,7 +103,7 @@ export class LoginPage extends React.Component<Properties, State> {
   }
 
   private async onLogin() {
-    if(this.usernameInputField.value.trim() !== '') {
+    if(this.usernameInputField.value.trim() !== '' && !this.state.isLoading) {
       this.setState({isLoading: true});
       try {
         const account = await this.props.model.login(
@@ -121,6 +133,11 @@ export class LoginPage extends React.Component<Properties, State> {
       } else if(event.key === 'Enter') {
         this.onLogin();
       }
+    } else if(document.activeElement === ReactDOM.findDOMNode(
+        this.submitButton)) {
+      this.onLogin();
+    } else {
+      console.log("the active element: ", document.activeElement)
     }
   }
   private static STYLE = StyleSheet.create({
@@ -128,12 +145,13 @@ export class LoginPage extends React.Component<Properties, State> {
       fontFamily: 'Roboto',
       backgroundColor: '#4B23A0'
     },
-    logo: {
-      width: '131px',
-      height: '50.38px',
-      display: 'block' as 'block',
-      marginLeft: 'auto',
-      marginRight: 'auto'
+    logoVisible: {
+      width: '130px',
+      height: '50px'
+    },
+    logoInvisible: {
+      width: '0px',
+      height: '0px'
     },
     inputBox: {
       width: '100%',
@@ -166,7 +184,7 @@ export class LoginPage extends React.Component<Properties, State> {
       }
     },
     signInButton: {
-      width: '284px',
+      width: '100%',
       height: '48px',
       color: '#4B23A0',
       fontSize: '20px',
@@ -191,4 +209,5 @@ export class LoginPage extends React.Component<Properties, State> {
   private animatedLogo: JSX.Element;
   private usernameInputField: HTMLInputElement;
   private passwordInputField: HTMLInputElement;
+  private submitButton: HTMLButtonElement;
 }
