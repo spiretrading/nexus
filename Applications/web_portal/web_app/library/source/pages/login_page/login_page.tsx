@@ -16,7 +16,7 @@ export interface Properties {
 
 /** The React state for the LoginPage. */
 export interface State {
-  isLoading: boolean;
+  icon: JSX.Element;
   username: string;
   password: string;
   error: Error;
@@ -27,7 +27,7 @@ export class LoginPage extends React.Component<Properties, State> {
   constructor(properties: Properties) {
     super(properties);
     this.state = {
-      isLoading: false,
+      icon: <LoginPage.StaticIcon/>,
       username: 'Username',
       password: 'Password',
       error: null
@@ -71,16 +71,6 @@ export class LoginPage extends React.Component<Properties, State> {
       }
       return '';
     })();
-    const Logo = (): JSX.Element => {
-      if(this.state.isLoading) {
-        return <object data='resources/login_page/logo-animated.svg'
-                       type='image/svg+xml'
-                       className={css(LoginPage.STYLE.logo)}/>;
-      }
-      return <object data='resources/login_page/logo-static.svg'
-                     type='image/svg+xml'
-                     className={css(LoginPage.STYLE.logo)}/>;
-    };
     return (
       <Center width='100%' height='100%'
               className={css(LoginPage.STYLE.page)}>
@@ -88,7 +78,7 @@ export class LoginPage extends React.Component<Properties, State> {
           <Padding size='18px'/>
           <VBoxLayout width='100%' height='100%'>
             <Padding size='60px'/>
-            <Logo/>
+            {this.state.icon}
             <Padding size='60px'/>
             <input type='text' value={this.state.username}
                    className={css(LoginPage.STYLE.inputBox)}
@@ -108,7 +98,7 @@ export class LoginPage extends React.Component<Properties, State> {
             <Padding size='50px'/>
             <button className={css(LoginPage.STYLE.signInButton)}
                     onClick={() => {
-                      this.setState({isLoading: true});
+                      this.setState({icon: <LoginPage.AnimatedIcon/>});
                       this.onLogin();
                     }}>
               Sign In
@@ -128,9 +118,9 @@ export class LoginPage extends React.Component<Properties, State> {
     try {
       const login = this.props.model.login.bind(this.props.model);
       const account = await login(this.state.username, this.state.password);
-      this.setState({isLoading: false});
+      this.setState({icon: <LoginPage.StaticIcon/>});
     } catch(error) {
-      this.setState({isLoading: false, error: error});
+      this.setState({icon:  <LoginPage.StaticIcon/>});
     }
   }
 
@@ -180,4 +170,14 @@ export class LoginPage extends React.Component<Properties, State> {
       color: '#FAEB96'
     }
   });
+   private static StaticIcon = (): JSX.Element => {
+    return <object data='resources/login_page/logo-static.svg'
+                   type='image/svg+xml'
+                   className={css(LoginPage.STYLE.logo)}/>;
+  }
+  private static AnimatedIcon = (): JSX.Element => {
+    return <object data='resources/login_page/logo-animated.svg'
+                   type='image/svg+xml'
+                   className={css(LoginPage.STYLE.logo)}/>;
+  }
 }
