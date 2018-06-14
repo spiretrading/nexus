@@ -2,6 +2,7 @@
 #include <QFileDialog>
 #include <QHeaderView>
 #include <QKeyEvent>
+#include <QMovie>
 #include <QScrollBar>
 #include <QStandardPaths>
 #include <QTableView>
@@ -17,6 +18,7 @@
 #include "spire/ui/custom_qt_variants.hpp"
 #include "spire/ui/drop_shadow.hpp"
 #include "spire/ui/item_padding_delegate.hpp"
+#include "spire/ui/overlay_widget.hpp"
 #include "spire/ui/window.hpp"
 
 using namespace boost;
@@ -391,12 +393,17 @@ void time_and_sales_window::fade_out_vertical_scroll_bar() {
 
 void time_and_sales_window::show_loading_widget() {
   if(m_model->rowCount(QModelIndex()) == 0) {
-    m_loading_widget = std::make_unique<loading_widget>(m_body);
-    auto contents = m_body->layout()->itemAt(1)->widget();
-    m_loading_widget->resize(contents->size());
-    m_loading_widget->move(contents->mapTo(m_table, contents->pos()));
-    m_loading_widget->show();
-    m_loading_widget->raise();
+    auto backing_widget = new QLabel(m_body);
+    auto logo = new QMovie(":/icons/pre-loader.gif", QByteArray(),
+      m_body);
+    logo->setScaledSize(scale(32, 32));
+    backing_widget->setMovie(logo);
+    backing_widget->setStyleSheet(
+      QString("padding-top: %1px;").arg(scale_height(50)));
+    backing_widget->setAlignment(Qt::AlignHCenter);
+    backing_widget->movie()->start();
+    m_loading_widget = std::make_unique<overlay_widget>(m_table->viewport(),
+      backing_widget, m_body);
   }
 }
 
@@ -408,7 +415,6 @@ void time_and_sales_window::show_overlay_widget() {
   m_overlay_widget->resize(contents->size());
   m_overlay_widget->move(contents->mapTo(contents, contents->pos()));
   m_overlay_widget->show();
-  m_overlay_widget->raise();
 }
 
 void time_and_sales_window::show_properties_dialog() {
