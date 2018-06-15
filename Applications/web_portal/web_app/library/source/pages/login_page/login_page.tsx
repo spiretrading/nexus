@@ -49,28 +49,27 @@ export class LoginPage extends React.Component<Properties, State> {
             <Padding size='60px'/>
             <HBoxLayout width='100%' height='50px'>
               <Padding/>
-              <object id='static-logo'
-                data='resources/login_page/logo-static.svg'
+              <object data='resources/login_page/logo-static.svg'
                 type='image/svg+xml' className={
-                css(LoginPage.STYLE.logoVisible)}/>
-              <object id='animated-logo'
-                data='resources/login_page/logo-animated.svg'
+                css(LoginPage.STYLE.logoVisible)}
+                ref={(ref) => this.staticLogo = ref}/>
+              <object data='resources/login_page/logo-animated.svg'
                 type='image/svg+xml' className={
-                css(LoginPage.STYLE.logoInvisible)}>
-              </object>
+                css(LoginPage.STYLE.logoInvisible)}
+                ref={(ref) => this.animatedLogo = ref}/>
               <Padding/>
-           </HBoxLayout>
+            </HBoxLayout>
             <Padding size='60px'/>
             <input type='text' placeholder='Username' autoComplete='off'
               className={css(LoginPage.STYLE.inputBox)}
-              onChange={() => this.onInputChange()}
+              onChange={this.onInputChange}
               onFocus={() => this.usernameInputField.placeholder = ''}
               onBlur={() => this.usernameInputField.placeholder = 'Username'}
               ref={((ref) => this.usernameInputField = ref)}/>
             <Padding size='20px'/>
             <input type='password' placeholder='Password' autoComplete='off'
               className={css(LoginPage.STYLE.inputBox)}
-              onChange={() => this.onInputChange()}
+              onChange={this.onInputChange}
               onFocus={() => this.passwordInputField.placeholder = ''}
               onBlur={() => this.passwordInputField.placeholder = 'Password'}
               ref={((ref) => this.passwordInputField = ref)}/>
@@ -93,8 +92,8 @@ export class LoginPage extends React.Component<Properties, State> {
 
   private async onLogin() {
     if(this.usernameInputField.value.trim() !== '') {
-      const staticLogo = document.getElementById('static-logo');
-      const animatedLogo = document.getElementById('animated-logo');
+      const staticLogo = ReactDOM.findDOMNode(this.staticLogo);
+      const animatedLogo = ReactDOM.findDOMNode(this.animatedLogo);
       staticLogo.className = css(LoginPage.STYLE.logoInvisible);
       animatedLogo.className = css(LoginPage.STYLE.logoVisible);
       try {
@@ -119,7 +118,7 @@ export class LoginPage extends React.Component<Properties, State> {
   }
 
   private onInputChange() {
-    if(this.state.errorMessage) {
+    if(this.state.errorMessage === null) {
       this.setState({errorMessage: null});
     }
   }
@@ -128,9 +127,9 @@ export class LoginPage extends React.Component<Properties, State> {
     if(document.activeElement !== ReactDOM.findDOMNode(
         this.usernameInputField)) {
       if(document.activeElement !== ReactDOM.findDOMNode(
-        this.passwordInputField)) {
+          this.passwordInputField)) {
         if(document.activeElement === ReactDOM.findDOMNode(
-        this.submitButton)) {
+            this.submitButton)) {
           if(event.key === 'Enter') {
             this.onLogin();
           } else {
@@ -169,7 +168,6 @@ export class LoginPage extends React.Component<Properties, State> {
       borderColor: '#FFFFFF',
       backgroundColor: '#4B23A0',
       borderWidth: '0px 0px 1px 0px',
-      
       color: '#FFFFFF',
       outline: 0,
       textAlign: 'center',
@@ -226,8 +224,8 @@ export class LoginPage extends React.Component<Properties, State> {
       color: '#FAEB96'
     }
   });
-  private staticLogo: JSX.Element;
-  private animatedLogo: JSX.Element;
+  private staticLogo: HTMLObjectElement;
+  private animatedLogo: HTMLObjectElement;
   private usernameInputField: HTMLInputElement;
   private passwordInputField: HTMLInputElement;
   private submitButton: HTMLButtonElement;
