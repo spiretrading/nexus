@@ -8,16 +8,20 @@
 #include "spire/spire/dimensions.hpp"
 #include "spire/time_and_sales/time_and_sales_window.hpp"
 
+using namespace Beam;
+using namespace Beam::Threading;
 using namespace Nexus;
 using namespace spire;
 using price_range = time_and_sales_properties::price_range;
 
 time_and_sales_ui_tester::time_and_sales_ui_tester(
-    time_and_sales_window* window)
-    : m_window(window) {
+    time_and_sales_window* window, TimerThreadPool& timer_thread_pool)
+    : m_window(window),
+      m_timer_thread_pool(&timer_thread_pool) {
   window->connect_security_change_signal(
     [=] (const Security& s) { security_changed(s); });
-  m_model = std::make_shared<periodic_time_and_sales_model>(Security());
+  m_model = std::make_shared<periodic_time_and_sales_model>(Security(),
+    *m_timer_thread_pool);
   m_model->set_price(Money(Quantity(20)));
   m_model->set_price_range(price_range::AT_ASK);
   m_model->set_period(boost::posix_time::milliseconds(1000));
@@ -61,7 +65,8 @@ void time_and_sales_ui_tester::security_changed(const Security& security) {
   auto price = m_model->get_price();
   auto price_range = m_model->get_price_range();
   auto period = m_model->get_period();
-  m_model = std::make_shared<periodic_time_and_sales_model>(security);
+  m_model = std::make_shared<periodic_time_and_sales_model>(security,
+    *m_timer_thread_pool);
   m_model->set_price(price);
   m_model->set_price_range(price_range);
   m_model->set_period(period);

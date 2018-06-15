@@ -15,6 +15,11 @@ using namespace spire;
 
 namespace {
   const auto PADDING_SIZE = 10;
+
+  QImage make_svg_window_icon(const QString& icon_path) {
+    return imageFromSvg(icon_path, scale(26, 26),
+      QRect(translate(8, 8), scale(10, 10)));
+  }
 }
 
 window::window(QWidget* body, QWidget* parent)
@@ -43,6 +48,7 @@ window::window(QWidget* body, QWidget* parent)
   border_layout->addWidget(m_title_bar);
   border_layout->addWidget(m_body);
   QWidget::window()->installEventFilter(this);
+  set_svg_icon(":icons/spire-icon-black.svg", ":icons/spire-icon-grey.svg");
   qApp->installNativeEventFilter(this);
 }
 
@@ -52,6 +58,16 @@ void window::set_icon(const QImage& icon) {
 
 void window::set_icon(const QImage& icon, const QImage& unfocused_icon) {
   m_title_bar->set_icon(icon, unfocused_icon);
+}
+
+void window::set_svg_icon(const QString& icon_path) {
+  set_icon(make_svg_window_icon(icon_path));
+}
+
+void window::set_svg_icon(const QString& icon_path,
+    const QString& unfocused_icon_path) {
+  set_icon(make_svg_window_icon(icon_path),
+    make_svg_window_icon(unfocused_icon_path));
 }
 
 #ifdef Q_OS_WIN
@@ -65,8 +81,9 @@ bool window::nativeEventFilter(const QByteArray& event_type, void* message,
   if(msg->message == WM_ACTIVATE) {
     auto margins = MARGINS{-1, -1, -1, -1};
     ::DwmExtendFrameIntoClientArea(msg->hwnd, &margins);
-    ::SetWindowPos(handle, NULL, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOZORDER |
-      SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    ::SetWindowPos(handle, nullptr, 0, 0, 0, 0, SWP_FRAMECHANGED |
+      SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOSIZE |
+      SWP_NOACTIVATE);
     return true;
   } else if((msg->message == WM_NCCALCSIZE) && msg->wParam == TRUE) {
     *result = 0;
@@ -82,6 +99,20 @@ bool window::nativeEventFilter(const QByteArray& event_type, void* message,
     return true;
   } else if(msg->message == WM_NCHITTEST) {
     *result = HTCLIENT;
+    return true;
+  } else if(msg->message == WM_SIZE) {
+    if(msg->wParam != SIZE_MAXIMIZED) {
+      auto g = QWidget::window()->frameGeometry();
+      auto region = ::CreateRectRgn(0, 0, g.width(), g.height());
+      ::SetWindowRgn(handle, region, FALSE);
+    } else {
+      ::SetWindowRgn(handle, NULL, FALSE);
+    }
+  } else if(msg->message == WM_NCPAINT) {
+    *result = 0;
+    return true;
+  } else if(msg->message == WM_NCACTIVATE) {
+    *result = TRUE;
     return true;
   }
   return false;

@@ -2,6 +2,7 @@
 #include <QFileDialog>
 #include <QHeaderView>
 #include <QKeyEvent>
+#include <QMovie>
 #include <QScrollBar>
 #include <QStandardPaths>
 #include <QTableView>
@@ -9,7 +10,6 @@
 #include "spire/security_input/security_input_dialog.hpp"
 #include "spire/security_input/security_input_model.hpp"
 #include "spire/time_and_sales/empty_time_and_sales_model.hpp"
-#include "spire/time_and_sales/loading_widget.hpp"
 #include "spire/time_and_sales/time_and_sales_properties_dialog.hpp"
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
 #include "spire/spire/dimensions.hpp"
@@ -17,6 +17,7 @@
 #include "spire/ui/custom_qt_variants.hpp"
 #include "spire/ui/drop_shadow.hpp"
 #include "spire/ui/item_padding_delegate.hpp"
+#include "spire/ui/overlay_widget.hpp"
 #include "spire/ui/window.hpp"
 
 using namespace boost;
@@ -29,7 +30,6 @@ time_and_sales_window::time_and_sales_window(
     security_input_model& input_model, QWidget* parent)
     : QWidget(parent),
       m_input_model(&input_model),
-      m_loading_widget(nullptr),
       m_table(nullptr),
       m_v_scroll_bar_timer(this),
       m_h_scroll_bar_timer(this) {
@@ -41,10 +41,8 @@ time_and_sales_window::time_and_sales_window(
   window_layout->setContentsMargins({});
   auto window = new spire::window(m_body, this);
   setWindowTitle(tr("Time and Sales"));
-  window->set_icon(imageFromSvg(":/icons/time-sale-black.svg", scale(26, 26),
-    QRect(translate(8, 8), scale(10, 10))),
-    imageFromSvg(":/icons/time-sale-grey.svg", scale(26, 26),
-    QRect(translate(8, 8), scale(10, 10))));
+  window->set_svg_icon(":/icons/time-sale-black.svg",
+    ":/icons/time-sale-grey.svg");
   window_layout->addWidget(window);
   auto layout = new QVBoxLayout(m_body);
   layout->setContentsMargins({});
@@ -59,6 +57,9 @@ time_and_sales_window::time_and_sales_window(
     font-family: Roboto;
     font-size: %1px;)").arg(scale_height(11)));
   layout->addWidget(m_empty_window_label);
+  create_table();
+  layout->addWidget(m_table);
+  m_table->hide();
   m_v_scroll_bar_timer.setInterval(500);
   connect(&m_v_scroll_bar_timer, &QTimer::timeout, this,
     &time_and_sales_window::fade_out_vertical_scroll_bar);
@@ -82,14 +83,21 @@ time_and_sales_window::time_and_sales_window(
 
 void time_and_sales_window::set_model(
     std::shared_ptr<time_and_sales_model> model) {
-  if(m_loading_widget == nullptr && m_empty_window_label == nullptr) {
-    m_loading_widget = new loading_widget(this);
-    set_contents(m_loading_widget);
+  if(m_model.is_initialized()) {
+    if(m_empty_window_label != nullptr) {
+      delete m_empty_window_label;
+      m_empty_window_label = nullptr;
+    }
+    m_table->show();
+    QTimer::singleShot(1000, this, [=] { show_loading_widget(); });
   }
   model->connect_volume_signal([=] (const Quantity& v) { on_volume(v); });
   m_model.emplace(std::move(model), m_properties);
   connect(m_model.get_ptr(), &QAbstractTableModel::rowsAboutToBeInserted, this,
     &time_and_sales_window::on_rows_about_to_be_inserted);
+  auto filter = new custom_variant_sort_filter_proxy_model(m_table);
+  filter->setSourceModel(&m_model.get());
+  m_table->setModel(filter);
 }
 
 const time_and_sales_properties&
@@ -357,11 +365,6 @@ void time_and_sales_window::create_table() {
       width: 0px;
     })").arg(scale_height(12)).arg(scale_height(12))
         .arg(scale_width(30)).arg(scale_height(30)));
-  auto filter = new custom_variant_sort_filter_proxy_model(m_table);
-  filter->setSourceModel(&m_model.get());
-  m_table->setModel(filter);
-  set_contents(m_table);
-  set_properties(m_properties);
 }
 
 void time_and_sales_window::export_table() {
@@ -375,20 +378,6 @@ void time_and_sales_window::export_table() {
   m_overlay_widget.reset();
 }
 
-void time_and_sales_window::set_contents(QWidget* widget) {
-  auto previous = m_body->layout()->takeAt(1);
-  if(previous->widget() == m_empty_window_label) {
-    m_empty_window_label = nullptr;
-  } else if(previous->widget() == m_loading_widget) {
-    m_loading_widget = nullptr;
-  } else if(previous->widget() == m_table) {
-    m_table = nullptr;
-  }
-  delete previous->widget();
-  delete previous;
-  static_cast<QVBoxLayout*>(m_body->layout())->insertWidget(1, widget);
-}
-
 void time_and_sales_window::fade_out_horizontal_scroll_bar() {
   m_h_scroll_bar_timer.stop();
   m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -399,6 +388,22 @@ void time_and_sales_window::fade_out_vertical_scroll_bar() {
   m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
 
+void time_and_sales_window::show_loading_widget() {
+  if(m_model->rowCount(QModelIndex()) == 0 && m_loading_widget == nullptr) {
+    auto backing_widget = new QLabel(m_body);
+    auto logo = new QMovie(":/icons/pre-loader.gif", QByteArray(),
+      m_body);
+    logo->setScaledSize(scale(32, 32));
+    backing_widget->setMovie(logo);
+    backing_widget->setStyleSheet(
+      QString("padding-top: %1px;").arg(scale_height(50)));
+    backing_widget->setAlignment(Qt::AlignHCenter);
+    backing_widget->movie()->start();
+    m_loading_widget = std::make_unique<overlay_widget>(m_table->viewport(),
+      backing_widget, m_body);
+  }
+}
+
 void time_and_sales_window::show_overlay_widget() {
   auto contents = m_body->layout()->itemAt(1)->widget();
   m_overlay_widget = std::make_unique<QLabel>(m_body);
@@ -407,7 +412,6 @@ void time_and_sales_window::show_overlay_widget() {
   m_overlay_widget->resize(contents->size());
   m_overlay_widget->move(contents->mapTo(contents, contents->pos()));
   m_overlay_widget->show();
-  m_overlay_widget->raise();
 }
 
 void time_and_sales_window::show_properties_dialog() {
@@ -438,9 +442,7 @@ bool time_and_sales_window::within_h_scroll_bar(const QPoint& pos) {
 
 void time_and_sales_window::on_rows_about_to_be_inserted(
     const QModelIndex& index, int start, int end) {
-  if(m_table == nullptr) {
-    create_table();
-  }
+  m_loading_widget.reset();
   if(m_table->verticalScrollBar()->value() != 0) {
     m_table->verticalScrollBar()->setValue(
       m_table->verticalScrollBar()->value() + m_table->rowHeight(0));

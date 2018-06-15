@@ -1,17 +1,22 @@
 #include "spire/time_and_sales/periodic_time_and_sales_model.hpp"
+#include <Beam/Threading/LiveTimer.hpp>
 
 using namespace Beam;
+using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace spire;
 
-periodic_time_and_sales_model::periodic_time_and_sales_model(Security s)
+periodic_time_and_sales_model::periodic_time_and_sales_model(Security s,
+      Beam::Threading::TimerThreadPool& timer_thread_pool)
     : m_security(std::move(s)),
+      m_timer_thread_pool(&timer_thread_pool),
       m_price(Money::ONE),
       m_price_range(time_and_sales_properties::price_range::AT_ASK),
       m_period(pos_infin),
+      m_load_duration(seconds(0)),
       m_volume(0) {
   connect(&m_timer, &QTimer::timeout, [=] {on_timeout();});
 }
@@ -32,6 +37,14 @@ time_and_sales_properties::price_range periodic_time_and_sales_model::
 void periodic_time_and_sales_model::set_price_range(
     time_and_sales_properties::price_range r) {
   m_price_range = r;
+}
+
+time_duration periodic_time_and_sales_model::get_load_duration() const {
+  return m_load_duration;
+}
+
+void periodic_time_and_sales_model::set_load_duration(time_duration d) {
+  m_load_duration = d;
 }
 
 time_duration periodic_time_and_sales_model::get_period() const {
@@ -76,7 +89,11 @@ qt_promise<std::vector<time_and_sales_model::entry>>
     snapshot.push_back(m_entries[first]);
     ++first;
   }
-  return make_qt_promise([snapshot=std::move(snapshot)] {
+  return make_qt_promise([d = m_load_duration, pool = m_timer_thread_pool,
+      snapshot=std::move(snapshot)] {
+    LiveTimer t(d, Ref(*pool));
+    t.Start();
+    t.Wait();
     return std::move(snapshot);
   });
 }
@@ -94,7 +111,7 @@ connection periodic_time_and_sales_model::connect_volume_signal(
 void periodic_time_and_sales_model::on_timeout() {
   auto sequence = [&] {
     if(m_entries.empty()) {
-      return Beam::Queries::Sequence::First();
+      return Beam::Queries::Sequence(100000);
     }
     return Increment(m_entries.back().m_time_and_sale.GetSequence());
   }();
