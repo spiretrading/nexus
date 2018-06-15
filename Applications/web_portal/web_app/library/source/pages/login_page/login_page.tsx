@@ -16,7 +16,6 @@ export interface Properties {
 }
 
 export interface State {
-  isLoading: boolean;
   errorMessage: string;
 }
 
@@ -25,10 +24,10 @@ export class LoginPage extends React.Component<Properties, State> {
   constructor(properties: Properties) {
     super(properties);
     this.state = {
-      isLoading: false,
       errorMessage: null
     };
     this.onLogin = this.onLogin.bind(this);
+    this.onInputChange = this.onInputChange.bind(this);
     this.onKeyDown = this.onKeyDown.bind(this);
   }
 
@@ -41,47 +40,37 @@ export class LoginPage extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const Logo = () => {
-      if(this.state.isLoading) {
-        return (
-          <Center width='100%' height='48px'>
-            <object data='resources/login_page/logo-animated.svg'
-              type='image/svg+xml' className={
-              css(LoginPage.STYLE.logoVisible)}/>
-            <object data='resources/login_page/logo-static.svg'
-              type='image/svg+xml' className={
-              css(LoginPage.STYLE.logoInvisible)}/>
-           </Center>);
-      } else {
-        return (
-          <Center width='100%' height='48px'>
-            <object data='resources/login_page/logo-animated.svg'
-              type='image/svg+xml' className={
-              css(LoginPage.STYLE.logoInvisible)}/>
-            <object data='resources/login_page/logo-static.svg'
-              type='image/svg+xml' className={
-              css(LoginPage.STYLE.logoVisible)}/>
-           </Center>);
-      }
-    }
-    console.log('rendering: ', new Date().getTime());
     return (
       <Center width='100%' height='100%'
           className={css(LoginPage.STYLE.page)}>
         <HBoxLayout width='320px' height='462px'>
           <Padding size='18px'/>
-          <VBoxLayout width='100%' height='100%'>
+          <VBoxLayout width='284px' height='462px'>
             <Padding size='60px'/>
-            <Logo/>
+            <HBoxLayout width='100%' height='50px'>
+              <Padding/>
+              <object id='static-logo'
+                data='resources/login_page/logo-static.svg'
+                type='image/svg+xml' className={
+                css(LoginPage.STYLE.logoVisible)}/>
+              <object id='animated-logo'
+                data='resources/login_page/logo-animated.svg'
+                type='image/svg+xml' className={
+                css(LoginPage.STYLE.logoInvisible)}>
+              </object>
+              <Padding/>
+           </HBoxLayout>
             <Padding size='60px'/>
-            <input type='text' placeholder='Username'
+            <input type='text' placeholder='Username' autoComplete='off'
               className={css(LoginPage.STYLE.inputBox)}
+              onChange={() => this.onInputChange()}
               onFocus={() => this.usernameInputField.placeholder = ''}
               onBlur={() => this.usernameInputField.placeholder = 'Username'}
               ref={((ref) => this.usernameInputField = ref)}/>
             <Padding size='20px'/>
-            <input type='password' placeholder='Password'
+            <input type='password' placeholder='Password' autoComplete='off'
               className={css(LoginPage.STYLE.inputBox)}
+              onChange={() => this.onInputChange()}
               onFocus={() => this.passwordInputField.placeholder = ''}
               onBlur={() => this.passwordInputField.placeholder = 'Password'}
               ref={((ref) => this.passwordInputField = ref)}/>
@@ -103,41 +92,61 @@ export class LoginPage extends React.Component<Properties, State> {
   }
 
   private async onLogin() {
-    if(this.usernameInputField.value.trim() !== '' && !this.state.isLoading) {
-      this.setState({isLoading: true});
+    if(this.usernameInputField.value.trim() !== '') {
+      const staticLogo = document.getElementById('static-logo');
+      const animatedLogo = document.getElementById('animated-logo');
+      staticLogo.className = css(LoginPage.STYLE.logoInvisible);
+      animatedLogo.className = css(LoginPage.STYLE.logoVisible);
       try {
         const account = await this.props.model.login(
           this.usernameInputField.value, this.passwordInputField.value);
+        staticLogo.className = css(LoginPage.STYLE.logoVisible);
+        animatedLogo.className = css(LoginPage.STYLE.logoInvisible);
         this.setState({
-          isLoading: false,
           errorMessage: null
         });
         if(this.props.onLogin) {
           this.props.onLogin(account);
         }
       } catch(error) {
+        staticLogo.className = css(LoginPage.STYLE.logoVisible);
+        animatedLogo.className = css(LoginPage.STYLE.logoInvisible);
         this.setState({
-          isLoading: false,
           errorMessage: error.toString()
         });
       }
     }
   }
 
+  private onInputChange() {
+    if(this.state.errorMessage) {
+      this.setState({errorMessage: null});
+    }
+  }
+  
   private onKeyDown(event: KeyboardEvent) {
     if(document.activeElement !== ReactDOM.findDOMNode(
         this.usernameInputField)) {
       if(document.activeElement !== ReactDOM.findDOMNode(
         this.passwordInputField)) {
-        this.usernameInputField.focus();
+        if(document.activeElement === ReactDOM.findDOMNode(
+        this.submitButton)) {
+          if(event.key === 'Enter') {
+            this.onLogin();
+          } else {
+            this.usernameInputField.focus();
+            event.preventDefault();
+          }
+        } else {
+          this.usernameInputField.focus();
+          event.preventDefault();
+        }
       } else if(event.key === 'Enter') {
         this.onLogin();
+      } else if (event.key === 'Tab') {
+        this.submitButton.focus();
+        event.preventDefault();
       }
-    } else if(document.activeElement === ReactDOM.findDOMNode(
-        this.submitButton)) {
-      this.onLogin();
-    } else {
-      console.log("the active element: ", document.activeElement)
     }
   }
   private static STYLE = StyleSheet.create({
@@ -154,11 +163,13 @@ export class LoginPage extends React.Component<Properties, State> {
       height: '0px'
     },
     inputBox: {
-      width: '100%',
+      width: '284px',
+      padding: 0,
       height: '34px',
       borderColor: '#FFFFFF',
+      backgroundColor: '#4B23A0',
       borderWidth: '0px 0px 1px 0px',
-      backgroundColor: 'inherit',
+      
       color: '#FFFFFF',
       outline: 0,
       textAlign: 'center',
@@ -184,16 +195,26 @@ export class LoginPage extends React.Component<Properties, State> {
       }
     },
     signInButton: {
-      width: '100%',
+      width: '284px',
       height: '48px',
       color: '#4B23A0',
       fontSize: '20px',
       backgroundColor: '#E2E0FF',
       fontWeight: 500,
       outline: 0,
+      borderRadius: '2px',
       border: 'none',
       ':hover': {
         backgroundColor: '#FFFFFF'
+      },
+      ':focus': {
+        backgroundColor: '#FFFFFF'
+      },
+      ':active': {
+        backgroundColor: '#FFFFFF'
+      },
+      '::-moz-focus-inner': {
+        border: 0
       }
     },
     errorMessage: {

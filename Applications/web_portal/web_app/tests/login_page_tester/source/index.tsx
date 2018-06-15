@@ -7,12 +7,12 @@ import * as WebPortal from 'web_portal';
 /** The React state for the TestApp. */
 export interface State {
   rejectMessage: string;
-};
+}
 
-/** The React properties for the TestAppåå. */
+/** The React properties for the TestApp. */
 export interface Properties {
 
-};
+}
 
 const model = new WebPortal.LocalLoginPageModel();
 const onLogin = (account: Beam.DirectoryEntry) => {
@@ -20,8 +20,8 @@ const onLogin = (account: Beam.DirectoryEntry) => {
 };
 
 /**  Displays a testing application for the login page. */
-class TestApp extends React.Component<Properties, State> {
-  constructor(props: Properties) {
+class TestApp extends React.Component<{}, State> {
+  constructor(props: {}) {
     super(props);
     this.state = {
       rejectMessage: ''
