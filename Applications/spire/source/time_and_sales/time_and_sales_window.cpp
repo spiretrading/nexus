@@ -194,54 +194,54 @@ void time_and_sales_window::contextMenuEvent(QContextMenuEvent* event) {
 
 bool time_and_sales_window::eventFilter(QObject* watched, QEvent* event) {
   if(m_table != nullptr) {
-    if(watched == m_table ||
+    if(watched == m_table_container ||
         watched == m_table->horizontalHeader()->viewport()) {
       if(event->type() == QEvent::Wheel) {
         auto e = static_cast<QWheelEvent*>(event);
         if(e->modifiers() & Qt::ShiftModifier) {
-          m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-          m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-          m_table->horizontalScrollBar()->setValue(
-            m_table->horizontalScrollBar()->value() - e->delta() / 2);
+          m_table_container->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+          m_table_container->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+          m_table_container->horizontalScrollBar()->setValue(
+            m_table_container->horizontalScrollBar()->value() - e->delta() / 2);
           m_h_scroll_bar_timer.start();
         } else if(!within_h_scroll_bar(e->pos())) {
-          m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-          m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-          m_table->verticalScrollBar()->setValue(
-            m_table->verticalScrollBar()->value() - e->delta() / 2);
+          m_table_container->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+          m_table_container->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+          m_table_container->verticalScrollBar()->setValue(
+            m_table_container->verticalScrollBar()->value() - e->delta() / 2);
           m_v_scroll_bar_timer.start();
         }
       } else if(event->type() == QEvent::MouseMove) {
         auto e = static_cast<QMouseEvent*>(event);
-        if(e->pos().x() > width() - m_table->verticalScrollBar()->width()) {
-          m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-          m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        if(e->pos().x() > width() - m_table_container->verticalScrollBar()->width()) {
+          m_table_container->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+          m_table_container->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         } else if(within_h_scroll_bar(e->pos())) {
-          m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-          m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+          m_table_container->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+          m_table_container->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         } else {
           if(!m_v_scroll_bar_timer.isActive() &&
-              m_table->verticalScrollBarPolicy() != Qt::ScrollBarAlwaysOff) {
+              m_table_container->verticalScrollBarPolicy() != Qt::ScrollBarAlwaysOff) {
             fade_out_vertical_scroll_bar();
           }
           if(!m_h_scroll_bar_timer.isActive() &&
-              m_table->horizontalScrollBarPolicy() != Qt::ScrollBarAlwaysOff) {
+              m_table_container->horizontalScrollBarPolicy() != Qt::ScrollBarAlwaysOff) {
             fade_out_horizontal_scroll_bar();
           }
         }
       } else if(event->type() == QEvent::HoverLeave) {
-        if(m_table->verticalScrollBarPolicy() != Qt::ScrollBarAlwaysOff) {
+        if(m_table_container->verticalScrollBarPolicy() != Qt::ScrollBarAlwaysOff) {
           fade_out_vertical_scroll_bar();
-        } else if(m_table->horizontalScrollBarPolicy() !=
+        } else if(m_table_container->horizontalScrollBarPolicy() !=
             Qt::ScrollBarAlwaysOff) {
           fade_out_horizontal_scroll_bar();
         }
       }
-    } else if(watched == m_table->verticalScrollBar()) {
+    } else if(watched == m_table_container->verticalScrollBar()) {
       if(event->type() == QEvent::HoverLeave) {
         fade_out_vertical_scroll_bar();
       }
-    } else if(watched == m_table->horizontalScrollBar()) {
+    } else if(watched == m_table_container->horizontalScrollBar()) {
       if(event->type() == QEvent::HoverLeave) {
         fade_out_horizontal_scroll_bar();
       }
@@ -286,20 +286,20 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
 
 void time_and_sales_window::create_table_with_container() {
   m_table_container = new QScrollArea(this);
+  m_table_container->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
+  m_table_container->installEventFilter(this);
   m_table_container->setWidgetResizable(true);
-  m_table_container->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-  m_table_container->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+  m_table_container->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  m_table_container->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   auto container_contents = new QWidget(this);
   auto layout = new QVBoxLayout(container_contents);
   layout->setContentsMargins({});
   layout->setSpacing(0);
   m_table = new QTableView(this);
-  m_table->setFixedHeight(800);
   m_table->setItemDelegate(new item_padding_delegate(scale_width(5),
     new custom_variant_item_delegate(), this));
   m_table->setMouseTracking(true);
   m_table->setAttribute(Qt::WA_Hover);
-  m_table->installEventFilter(this);
   m_table->viewport()->setAttribute(Qt::WA_TransparentForMouseEvents);
   m_table->setFocusPolicy(Qt::NoFocus);
   m_table->setSelectionMode(QAbstractItemView::NoSelection);
@@ -313,13 +313,13 @@ void time_and_sales_window::create_table_with_container() {
   m_table->horizontalHeader()->setDefaultAlignment(
     Qt::AlignLeft | Qt::AlignVCenter);
   m_table->verticalHeader()->setVisible(false);
-  m_table->horizontalScrollBar()->installEventFilter(this);
-  m_table->horizontalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
-  m_table->horizontalScrollBar()->setAttribute(Qt::WA_Hover);
+  m_table_container->horizontalScrollBar()->installEventFilter(this);
+  m_table_container->horizontalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
+  m_table_container->horizontalScrollBar()->setAttribute(Qt::WA_Hover);
   m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
-  m_table->verticalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
-  m_table->verticalScrollBar()->setAttribute(Qt::WA_Hover);
+  m_table_container->verticalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
+  m_table_container->verticalScrollBar()->setAttribute(Qt::WA_Hover);
   m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
   m_table->horizontalHeader()->setStyleSheet(QString(R"(
@@ -375,9 +375,10 @@ void time_and_sales_window::create_table_with_container() {
     })").arg(scale_height(12)).arg(scale_height(12))
         .arg(scale_width(30)).arg(scale_height(30)));
   layout->addWidget(m_table);
-  auto test_widget = new QWidget(this);
+  layout->addStretch(1);
+  auto test_widget = new QLabel("Thanks, Darryl...", this);
   test_widget->setFixedHeight(100);
-  test_widget->setStyleSheet("background-color: red;");
+  test_widget->setStyleSheet("background-color: #FFFFFF;");
   layout->addWidget(test_widget);
   m_table_container->setWidget(container_contents);
 }
@@ -395,12 +396,12 @@ void time_and_sales_window::export_table() {
 
 void time_and_sales_window::fade_out_horizontal_scroll_bar() {
   m_h_scroll_bar_timer.stop();
-  m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  m_table_container->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
 
 void time_and_sales_window::fade_out_vertical_scroll_bar() {
   m_v_scroll_bar_timer.stop();
-  m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  m_table_container->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
 
 void time_and_sales_window::show_loading_widget() {
@@ -414,8 +415,8 @@ void time_and_sales_window::show_loading_widget() {
       QString("padding-top: %1px;").arg(scale_height(50)));
     backing_widget->setAlignment(Qt::AlignHCenter);
     backing_widget->movie()->start();
-    m_loading_widget = std::make_unique<overlay_widget>(m_table->viewport(),
-      backing_widget, m_body);
+    m_loading_widget = std::make_unique<overlay_widget>(
+      m_table_container->viewport(), backing_widget, m_body);
   }
 }
 
@@ -451,16 +452,25 @@ void time_and_sales_window::set_current(const Security& s) {
 }
 
 bool time_and_sales_window::within_h_scroll_bar(const QPoint& pos) {
-  return pos.y() > m_table->height() - 
-    m_table->horizontalScrollBar()->height();
+  return pos.y() > m_table_container->height() - 
+    m_table_container->horizontalScrollBar()->height();
 }
+
+#include <QDebug>
 
 void time_and_sales_window::on_rows_about_to_be_inserted(
     const QModelIndex& index, int start, int end) {
   m_loading_widget.reset();
-  if(m_table->verticalScrollBar()->value() != 0) {
-    m_table->verticalScrollBar()->setValue(
-      m_table->verticalScrollBar()->value() + m_table->rowHeight(0));
+  auto row_count = m_model->rowCount(QModelIndex());
+  if(row_count > 0) {
+    m_table->setFixedHeight(m_table->horizontalHeader()->height() +
+      (m_table->rowHeight(0) * (row_count + 1)));
+  } else {
+    m_table->setFixedHeight(m_table->horizontalHeader()->height() * 2);
+  }
+  if(m_table_container->verticalScrollBar()->value() != 0) {
+    m_table_container->verticalScrollBar()->setValue(
+      m_table_container->verticalScrollBar()->value() + m_table->rowHeight(0));
   }
 }
 
