@@ -134,6 +134,9 @@ bool window::nativeEventFilter(const QByteArray& event_type, void* message,
   } else if(msg->message == WM_NCACTIVATE) {
     *result = TRUE;
     return true;
+  } else if(msg->message == WM_SETTEXT) {
+    *result = TRUE;
+    return true;
   }
   return false;
 }
