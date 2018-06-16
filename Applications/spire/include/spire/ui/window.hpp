@@ -53,6 +53,10 @@ namespace spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void mouseMoveEvent(QMouseEvent* event) override;
+      void mousePressEvent(QMouseEvent* event) override;
+      void mouseReleaseEvent(QMouseEvent* event) override;
+      void paintEvent(QPaintEvent* event) override;
 
     private:
       enum class active_resize_rect {
@@ -77,7 +81,6 @@ namespace spire {
         QRect m_bottom_left;
         QRect m_left;
       };
-      std::unique_ptr<drop_shadow> m_shadow;
       QWidget* m_border;
       QWidget* m_body;
       title_bar* m_title_bar;
@@ -89,7 +92,7 @@ namespace spire {
       void handle_resize();
       void set_border_stylesheet(const QColor& color);
       void update_resize_boxes();
-      void update_resize_cursor();
+      void update_resize_cursor(const QPoint& pos);
   };
 }
 
