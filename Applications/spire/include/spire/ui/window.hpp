@@ -72,7 +72,6 @@ namespace spire {
       QWidget* m_border;
       QWidget* m_body;
       title_bar* m_title_bar;
-      QPoint m_last_mouse_pos;
       bool m_is_resizing;
 
       void handle_resize();

@@ -159,16 +159,24 @@ bool window::event(QEvent* e) {
     m_current_active_rect = active_resize_rect::NONE;
     setCursor(Qt::ArrowCursor);
     return true;
+  } else if(e->type() == QEvent::WindowActivate) {
+    set_border_stylesheet("#A0A0A0");
+  } else if(e->type() == QEvent::WindowDeactivate) {
+    set_border_stylesheet("#C8C8C8");
   }
   return QWidget::event(e);
 }
 
 bool window::eventFilter(QObject* watched, QEvent* event) {
   if(watched == QWidget::window()) {
-    if(event->type() == QEvent::WindowActivate) {
-      set_border_stylesheet("#A0A0A0");
-    } else if(event->type() == QEvent::WindowDeactivate) {
-      set_border_stylesheet("#C8C8C8");
+    if(event->type() == QEvent::WindowStateChange) {
+      if(QWidget::window()->isMaximized()) {
+        layout()->setContentsMargins({});
+      } else {
+        layout()->setContentsMargins(
+          {scale_width(PADDING_SIZE), scale_height(PADDING_SIZE),
+          scale_width(PADDING_SIZE), scale_height(PADDING_SIZE)});
+      }
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -189,6 +197,9 @@ void window::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void window::paintEvent(QPaintEvent* event) {
+  if(QWidget::window()->isMaximized()) {
+    return;
+  }
   QPainter painter(this);
   auto parent_size = geometry().size() -
     QSize(2 * scale_width(PADDING_SIZE), 2 * scale_height(PADDING_SIZE));
