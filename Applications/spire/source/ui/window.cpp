@@ -1,5 +1,6 @@
 #include "spire/ui/window.hpp"
 #include <QApplication>
+#include <QDebug>
 #include <QDesktopWidget>
 #include <QLinearGradient>
 #include <QMouseEvent>
@@ -44,8 +45,9 @@ namespace {
 window::window(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body),
-      m_is_resizing(false),
-      m_hovered(false) {
+      m_is_resizing(false) {
+  QWidget::window()->setAttribute(Qt::WA_TranslucentBackground);
+  setAttribute(Qt::WA_Hover);
   resize(m_body->width(), m_body->height());
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({scale_width(PADDING_SIZE),
@@ -53,7 +55,6 @@ window::window(QWidget* body, QWidget* parent)
     scale_height(PADDING_SIZE)});
   layout->setSpacing(0);
   m_border = new QWidget(this);
-  m_border->setMouseTracking(true);
   m_border->installEventFilter(this);
   m_border->setObjectName("window_border");
   m_border->resize(m_body->size() + scale(1, 1));
@@ -68,8 +69,6 @@ window::window(QWidget* body, QWidget* parent)
   QWidget::window()->installEventFilter(this);
   set_svg_icon(":icons/spire-icon-black.svg", ":icons/spire-icon-grey.svg");
   qApp->installNativeEventFilter(this);
-  setMouseTracking(true);
-  QWidget::window()->setAttribute(Qt::WA_TranslucentBackground);
 }
 
 void window::set_icon(const QImage& icon) {
@@ -147,46 +146,37 @@ bool window::nativeEventFilter(const QByteArray& event_type, void* message,
 }
 #endif
 
+bool window::event(QEvent* e) {
+  if(e->type() == QEvent::HoverMove) {
+    auto hover = static_cast<QHoverEvent*>(e);
+    if(m_is_resizing) {
+      handle_resize();
+    } else {
+      update_resize_cursor(hover->pos());
+    }
+    return true;
+  } else if(e->type() == QEvent::HoverLeave) {
+    m_current_active_rect = active_resize_rect::NONE;
+    setCursor(Qt::ArrowCursor);
+    return true;
+  }
+  return QWidget::event(e);
+}
+
 bool window::eventFilter(QObject* watched, QEvent* event) {
   if(watched == QWidget::window()) {
     if(event->type() == QEvent::WindowActivate) {
       set_border_stylesheet("#A0A0A0");
-      if(QWidget::window()->isMinimized()) {
-        QWidget::window()->setWindowState(Qt::WindowMaximized);
-      }
     } else if(event->type() == QEvent::WindowDeactivate) {
       set_border_stylesheet("#C8C8C8");
-    } else if(event->type() == QEvent::Resize) {
-      auto e = static_cast<QResizeEvent*>(event);
-      if(e->size().height() > height()) {
-        QWidget::window()->resize(size());
-      }
-      if(m_resize_boxes.is_initialized()) {
-        update_resize_boxes();
-      }
-    } else if(event->type() == QEvent::Move) {
-      if(m_resize_boxes.is_initialized()) {
-        update_resize_boxes();
-      }
-    } else if(event->type() == QEvent::Enter) {
-      m_hovered = true;
-    } else if(event->type() == QEvent::Leave) {
-      m_hovered = false;
     }
   }
   return QWidget::eventFilter(watched, event);
 }
 
-void window::mouseMoveEvent(QMouseEvent* event) {
-  if(m_is_resizing && m_hovered) {
-    handle_resize();
-  } else {
-    update_resize_cursor(event->pos());
-  }
-}
-
 void window::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
+    update_resize_cursor(event->pos());
     if(m_current_active_rect != active_resize_rect::NONE) {
       m_is_resizing = true;
     }
@@ -208,21 +198,19 @@ void window::paintEvent(QPaintEvent* event) {
   QRect top_left_rect(QPoint(0, 0), shadow_size);
   QRect top_rect(QPoint(shadow_size.width(), 0),
     QSize(parent_size.width(), shadow_size.height()));
-  if(true) { // TODO
-    QRadialGradient top_left_gradient(top_left_rect.bottomRight(),
-      top_left_rect.width());
-    top_left_gradient.setStops(TOP_STOPS);
-    painter.fillRect(top_left_rect, top_left_gradient);
-    QLinearGradient top_gradient(top_rect.bottomLeft(), top_rect.topLeft());
-    top_gradient.setStops(TOP_STOPS);
-    painter.fillRect(top_rect, top_gradient);
-    auto top_right_rect = top_left_rect;
-    top_right_rect.translate(right_start, 0);
-    QRadialGradient top_right_gradient(top_right_rect.bottomLeft(),
-      top_right_rect.width());
-    top_right_gradient.setStops(TOP_STOPS);
-    painter.fillRect(top_right_rect, top_right_gradient);
-  }
+  QRadialGradient top_left_gradient(top_left_rect.bottomRight(),
+    top_left_rect.width());
+  top_left_gradient.setStops(TOP_STOPS);
+  painter.fillRect(top_left_rect, top_left_gradient);
+  QLinearGradient top_gradient(top_rect.bottomLeft(), top_rect.topLeft());
+  top_gradient.setStops(TOP_STOPS);
+  painter.fillRect(top_rect, top_gradient);
+  auto top_right_rect = top_left_rect;
+  top_right_rect.translate(right_start, 0);
+  QRadialGradient top_right_gradient(top_right_rect.bottomLeft(),
+    top_right_rect.width());
+  top_right_gradient.setStops(TOP_STOPS);
+  painter.fillRect(top_right_rect, top_right_gradient);
   auto bottom_left_rect = top_left_rect;
   bottom_left_rect.translate(0, bottom_start);
   QRadialGradient bottom_left_gradient(bottom_left_rect.topRight(),
@@ -300,81 +288,47 @@ void window::set_border_stylesheet(const QColor& color) {
     })").arg(scale_height(1)).arg(scale_width(1)).arg(color.name()));
 }
 
-void window::update_resize_boxes() {
-  if(!m_resize_boxes.is_initialized()) {
-    m_resize_boxes.emplace();
-  }
-  m_resize_boxes->m_top_left = QRect(0, 0, scale_width(PADDING_SIZE),
-    scale_height(PADDING_SIZE));
-  m_resize_boxes->m_top = m_resize_boxes->m_top_left;
-  m_resize_boxes->m_top.moveTopLeft(m_resize_boxes->m_top_left.topRight());
-  m_resize_boxes->m_top.setWidth(
-    width() - 2 * m_resize_boxes->m_top_left.width());
-  m_resize_boxes->m_left = m_resize_boxes->m_top_left;
-  m_resize_boxes->m_left.moveTopLeft(m_resize_boxes->m_top_left.bottomLeft());
-  m_resize_boxes->m_left.setHeight(height() -
-    2 * m_resize_boxes->m_top_left.height());
-  m_resize_boxes->m_top_right = m_resize_boxes->m_top_left;
-  m_resize_boxes->m_top_right.moveTopLeft(m_resize_boxes->m_top.topRight());
-  m_resize_boxes->m_right = m_resize_boxes->m_left;
-  m_resize_boxes->m_right.moveTopLeft(m_resize_boxes->m_top_right.bottomLeft());
-  m_resize_boxes->m_bottom_right = m_resize_boxes->m_top_right;
-  m_resize_boxes->m_bottom_right.moveTopLeft(
-    m_resize_boxes->m_right.bottomLeft());
-  m_resize_boxes->m_bottom = m_resize_boxes->m_top;
-  m_resize_boxes->m_bottom.moveTopRight(
-    m_resize_boxes->m_bottom_right.topLeft());
-}
-
 void window::update_resize_cursor(const QPoint& pos) {
-  if(QWidget::window()->isMaximized()) {
-    if(cursor().shape() != Qt::ArrowCursor) {
-      setCursor(Qt::ArrowCursor);
-    }
-    m_current_active_rect = active_resize_rect::NONE;
-    return;
-  }
-  if(!m_resize_boxes.is_initialized()) {
-    update_resize_boxes();
-  }
-  auto shape = cursor().shape();
   m_current_active_rect = active_resize_rect::NONE;
-  if(m_body->sizePolicy().horizontalPolicy() != QSizePolicy::Fixed) {
-    if(m_resize_boxes->m_right.contains(pos)) {
-      shape = Qt::SizeHorCursor;
-      m_current_active_rect = active_resize_rect::RIGHT;
-    } else if(m_resize_boxes->m_left.contains(pos)) {
-      shape = Qt::SizeHorCursor;
-      m_current_active_rect = active_resize_rect::LEFT;
+  if(!QWidget::window()->isMaximized() &&
+      (m_body->sizePolicy().horizontalPolicy() != QSizePolicy::Fixed ||
+      m_body->sizePolicy().verticalPolicy() != QSizePolicy::Fixed)) {
+    auto resize_width = scale_width(PADDING_SIZE);
+    if(pos.x() <= resize_width &&
+        m_body->sizePolicy().horizontalPolicy() != QSizePolicy::Fixed) {
+      m_current_active_rect |= active_resize_rect::LEFT;
+    } else if(pos.x() >= width() - resize_width &&
+        m_body->sizePolicy().horizontalPolicy() != QSizePolicy::Fixed) {
+      m_current_active_rect |= active_resize_rect::RIGHT;
+    }
+    auto resize_height = scale_height(PADDING_SIZE);
+    if(pos.y() <= resize_height &&
+        m_body->sizePolicy().verticalPolicy() != QSizePolicy::Fixed) {
+      m_current_active_rect |= active_resize_rect::TOP;
+    } else if(pos.y() >= height() - resize_height &&
+        m_body->sizePolicy().verticalPolicy() != QSizePolicy::Fixed) {
+      m_current_active_rect |= active_resize_rect::BOTTOM;
     }
   }
-  if(m_body->sizePolicy().verticalPolicy() != QSizePolicy::Fixed) {
-    if(m_resize_boxes->m_bottom.contains(pos)) {
-      shape = Qt::SizeVerCursor;
-      m_current_active_rect = active_resize_rect::BOTTOM;
-    } else if(m_resize_boxes->m_top.contains(pos)) {
-      shape = Qt::SizeVerCursor;
-      m_current_active_rect = active_resize_rect::TOP;
+  auto cursor_shape = [&] {
+    if(m_current_active_rect == active_resize_rect::TOP) {
+      return Qt::SizeVerCursor;
+    } else if(m_current_active_rect == active_resize_rect::TOP_RIGHT) {
+      return Qt::SizeBDiagCursor;
+    } else if(m_current_active_rect == active_resize_rect::RIGHT) {
+      return Qt::SizeHorCursor;
+    } else if(m_current_active_rect == active_resize_rect::BOTTOM_RIGHT) {
+      return Qt::SizeFDiagCursor;
+    } else if(m_current_active_rect == active_resize_rect::BOTTOM) {
+      return Qt::SizeVerCursor;
+    } else if(m_current_active_rect == active_resize_rect::BOTTOM_LEFT) {
+      return Qt::SizeBDiagCursor;
+    } else if(m_current_active_rect == active_resize_rect::LEFT) {
+      return Qt::SizeHorCursor;
+    } else if(m_current_active_rect == active_resize_rect::TOP_LEFT) {
+      return Qt::SizeFDiagCursor;
     }
-  }
-  if(m_body->sizePolicy().verticalPolicy() != QSizePolicy::Fixed &&
-      m_body->sizePolicy().horizontalPolicy() != QSizePolicy::Fixed) {
-    if(m_resize_boxes->m_bottom_right.contains(pos)) {
-      shape = Qt::SizeFDiagCursor;
-      m_current_active_rect = active_resize_rect::BOTTOM_RIGHT;
-    } else if(m_resize_boxes->m_top_left.contains(pos)) {
-      shape = Qt::SizeFDiagCursor;
-      m_current_active_rect = active_resize_rect::TOP_LEFT;
-    } else if(m_resize_boxes->m_top_right.contains(pos)) {
-      shape = Qt::SizeBDiagCursor;
-      m_current_active_rect = active_resize_rect::TOP_RIGHT;
-    } else if(m_resize_boxes->m_bottom_left.contains(pos)) {
-      shape = Qt::SizeBDiagCursor;
-      m_current_active_rect = active_resize_rect::BOTTOM_LEFT;
-    }
-  }
-  if(m_current_active_rect == active_resize_rect::NONE) {
-    shape = Qt::ArrowCursor;
-  }
-  setCursor(shape);
+    return Qt::ArrowCursor;
+  }();
+  setCursor(cursor_shape);
 }
