@@ -92,13 +92,13 @@ void window::set_svg_icon(const QString& icon_path,
 #ifdef Q_OS_WIN
 bool window::nativeEventFilter(const QByteArray& event_type, void* message,
     long* result) {
-  auto msg = static_cast<MSG*>(message);
-  auto handle = reinterpret_cast<HWND>(QWidget::window()->effectiveWinId());
+  auto msg = static_cast<::MSG*>(message);
+  auto handle = reinterpret_cast<::HWND>(QWidget::window()->effectiveWinId());
   if(handle != msg->hwnd && !::IsChild(handle, msg->hwnd)) {
     return false;
   }
   if(msg->message == WM_ACTIVATE) {
-    auto margins = MARGINS{-1, -1, -1, -1};
+    auto margins = ::MARGINS{-1, -1, -1, -1};
     ::DwmExtendFrameIntoClientArea(msg->hwnd, &margins);
     ::SetWindowPos(handle, nullptr, 0, 0, 0, 0, SWP_FRAMECHANGED |
       SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOSIZE |
@@ -108,7 +108,7 @@ bool window::nativeEventFilter(const QByteArray& event_type, void* message,
     *result = 0;
     return true;
   } else if(msg->message == WM_GETMINMAXINFO) {
-    auto maximize_dimensions = reinterpret_cast<MINMAXINFO*>(msg->lParam);
+    auto maximize_dimensions = reinterpret_cast<::MINMAXINFO*>(msg->lParam);
     auto rect = QApplication::desktop()->availableGeometry(this);
     maximize_dimensions->ptMaxSize.x = rect.width();
     maximize_dimensions->ptMaxSize.y = rect.height() - 1;
