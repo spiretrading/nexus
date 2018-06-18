@@ -49,33 +49,33 @@ export class LoginPage extends React.Component<Properties, State> {
             <HBoxLayout width='100%' height='50px'>
               <Padding/>
               <object data='resources/login_page/logo-static.svg'
-                type='image/svg+xml'
-                className={css(LoginPage.STYLE.logoVisible)}
-                ref={(ref) => this.staticLogo = ref}/>
+                  type='image/svg+xml'
+                  className={css(LoginPage.STYLE.logoVisible)}
+                  ref={(ref) => this.staticLogo = ref}/>
               <object data='resources/login_page/logo-animated.svg'
-                type='image/svg+xml'
-                className={css(LoginPage.STYLE.logoInvisible)}
-                ref={(ref) => this.animatedLogo = ref}/>
+                  type='image/svg+xml'
+                  className={css(LoginPage.STYLE.logoInvisible)}
+                  ref={(ref) => this.animatedLogo = ref}/>
               <Padding/>
             </HBoxLayout>
             <Padding size='60px'/>
             <input type='text' placeholder='Username' autoComplete='off'
-              className={css(LoginPage.STYLE.inputBox)}
-              onChange={this.onInputChange}
-              onFocus={() => this.usernameInputField.placeholder = ''}
-              onBlur={() => this.usernameInputField.placeholder = 'Username'}
-              ref={(ref) => this.usernameInputField = ref}/>
+                className={css(LoginPage.STYLE.inputBox)}
+                onChange={this.onInputChange}
+                onFocus={() => this.usernameInputField.placeholder = ''}
+                onBlur={() => this.usernameInputField.placeholder = 'Username'}
+                ref={(ref) => this.usernameInputField = ref}/>
             <Padding size='20px'/>
             <input type='password' placeholder='Password' autoComplete='off'
-              className={css(LoginPage.STYLE.inputBox)}
-              onChange={this.onInputChange}
-              onFocus={() => this.passwordInputField.placeholder = ''}
-              onBlur={() => this.passwordInputField.placeholder = 'Password'}
-              ref={(ref) => this.passwordInputField = ref}/>
+                className={css(LoginPage.STYLE.inputBox)}
+                onChange={this.onInputChange}
+                onFocus={() => this.passwordInputField.placeholder = ''}
+                onBlur={() => this.passwordInputField.placeholder = 'Password'}
+                ref={(ref) => this.passwordInputField = ref}/>
             <Padding size='50px'/>
             <button className={css(LoginPage.STYLE.signInButton)}
-              onClick={this.onLogin}
-              ref={(ref) => this.submitButton = ref}>
+                onClick={this.onLogin}
+                ref={(ref) => this.submitButton = ref}>
               Sign In
             </button>
             <Padding size='30px'/>
@@ -94,7 +94,6 @@ export class LoginPage extends React.Component<Properties, State> {
       this.staticLogo.className = css(LoginPage.STYLE.logoInvisible);
       this.animatedLogo.className = css(LoginPage.STYLE.logoVisible);
       try {
-        
         const account = await this.props.model.login(
           this.usernameInputField.value, this.passwordInputField.value);
         this.staticLogo.className = css(LoginPage.STYLE.logoVisible);
