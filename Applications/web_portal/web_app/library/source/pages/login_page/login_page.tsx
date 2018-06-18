@@ -1,7 +1,6 @@
 import {css, StyleSheet} from 'aphrodite';
 import * as Beam from 'beam';
 import * as React from 'react';
-import * as ReactDOM from 'react-dom';
 import {Center, HBoxLayout, Padding, VBoxLayout} from '../../';
 import {LoginPageModel} from '.';
 
@@ -65,18 +64,18 @@ export class LoginPage extends React.Component<Properties, State> {
               onChange={this.onInputChange}
               onFocus={() => this.usernameInputField.placeholder = ''}
               onBlur={() => this.usernameInputField.placeholder = 'Username'}
-              ref={((ref) => this.usernameInputField = ref)}/>
+              ref={(ref) => this.usernameInputField = ref}/>
             <Padding size='20px'/>
             <input type='password' placeholder='Password' autoComplete='off'
               className={css(LoginPage.STYLE.inputBox)}
               onChange={this.onInputChange}
               onFocus={() => this.passwordInputField.placeholder = ''}
               onBlur={() => this.passwordInputField.placeholder = 'Password'}
-              ref={((ref) => this.passwordInputField = ref)}/>
+              ref={(ref) => this.passwordInputField = ref}/>
             <Padding size='50px'/>
             <button className={css(LoginPage.STYLE.signInButton)}
                 onClick={this.onLogin}
-                ref={((ref) => this.submitButton = ref)}>
+                ref={(ref) => this.submitButton = ref}>
               Sign In
             </button>
             <Padding size='30px'/>
@@ -92,15 +91,13 @@ export class LoginPage extends React.Component<Properties, State> {
 
   private async onLogin() {
     if(this.usernameInputField.value.trim() !== '') {
-      const staticLogo = ReactDOM.findDOMNode(this.staticLogo);
-      const animatedLogo = ReactDOM.findDOMNode(this.animatedLogo);
-      staticLogo.className = css(LoginPage.STYLE.logoInvisible);
-      animatedLogo.className = css(LoginPage.STYLE.logoVisible);
+      this.staticLogo.className = css(LoginPage.STYLE.logoInvisible);
+      this.animatedLogo.className = css(LoginPage.STYLE.logoVisible);
       try {
         const account = await this.props.model.login(
           this.usernameInputField.value, this.passwordInputField.value);
-        staticLogo.className = css(LoginPage.STYLE.logoVisible);
-        animatedLogo.className = css(LoginPage.STYLE.logoInvisible);
+        this.staticLogo.className = css(LoginPage.STYLE.logoVisible);
+        this.animatedLogo.className = css(LoginPage.STYLE.logoInvisible);
         this.setState({
           errorMessage: null
         });
@@ -108,8 +105,8 @@ export class LoginPage extends React.Component<Properties, State> {
           this.props.onLogin(account);
         }
       } catch(error) {
-        staticLogo.className = css(LoginPage.STYLE.logoVisible);
-        animatedLogo.className = css(LoginPage.STYLE.logoInvisible);
+        this.staticLogo.className = css(LoginPage.STYLE.logoVisible);
+        this.animatedLogo.className = css(LoginPage.STYLE.logoInvisible);
         this.setState({
           errorMessage: error.toString()
         });
@@ -118,18 +115,15 @@ export class LoginPage extends React.Component<Properties, State> {
   }
 
   private onInputChange() {
-    if(this.state.errorMessage === null) {
+    if(this.state.errorMessage !== null) {
       this.setState({errorMessage: null});
     }
   }
   
   private onKeyDown(event: KeyboardEvent) {
-    if(document.activeElement !== ReactDOM.findDOMNode(
-        this.usernameInputField)) {
-      if(document.activeElement !== ReactDOM.findDOMNode(
-          this.passwordInputField)) {
-        if(document.activeElement === ReactDOM.findDOMNode(
-            this.submitButton)) {
+    if(document.activeElement !== this.usernameInputField) {
+      if(document.activeElement !== this.passwordInputField) {
+        if(document.activeElement === this.submitButton) {
           if(event.key === 'Enter') {
             this.onLogin();
           } else {

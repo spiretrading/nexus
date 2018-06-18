@@ -43,7 +43,7 @@ class TestApp extends React.Component<{}> {
   });
 
   private onLogin(account: Beam.DirectoryEntry) {
-
+    console.log('Login with account: ', account)
   }
 }
 ReactDOM.render(<TestApp/>, document.getElementById('main'));
