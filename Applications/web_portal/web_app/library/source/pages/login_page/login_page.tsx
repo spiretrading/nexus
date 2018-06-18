@@ -138,8 +138,6 @@ export class LoginPage extends React.Component<Properties, State> {
         this.onLogin();
       } else if (event.key === 'Tab') {
         this.submitButton.focus();
-        this.submitButton.className = css([LoginPage.STYLE.signInButton,
-          LoginPage.STYLE.signInButtonTabFocus])
         event.preventDefault();
       }
     }
