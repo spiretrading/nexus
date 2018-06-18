@@ -136,8 +136,8 @@ export class LoginPage extends React.Component<Properties, State> {
           }
         } else {
           if(event.key === 'Tab') {
-              event.preventDefault();
-            }
+            event.preventDefault();
+          }
           this.usernameInputField.focus();
         }
       } else if(event.key === 'Enter') {
@@ -204,7 +204,7 @@ export class LoginPage extends React.Component<Properties, State> {
         pointerEvents: 'none',
         height: 0,
         width: 0,
-        margin: 0,
+        margin: 0
       }
     },
     signInButton: {
@@ -222,7 +222,13 @@ export class LoginPage extends React.Component<Properties, State> {
       },
       '::-moz-focus-inner': {
         border: 0
+      },
+      ':disabled': {
+        backgroundColor: '#684BC7'
       }
+    },
+    signInButtonTabFocus: {
+      backgroundColor: '#E2E0FF'
     },
     errorMessage: {
       width: '100%',
