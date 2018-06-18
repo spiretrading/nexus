@@ -44,7 +44,6 @@ time_and_sales_window::time_and_sales_window(
   window->set_svg_icon(":/icons/time-sale-black.svg",
     ":/icons/time-sale-grey.svg");
   window_layout->addWidget(window);
-  this->QWidget::window()->installEventFilter(this);
   auto layout = new QVBoxLayout(m_body);
   layout->setContentsMargins({});
   layout->setSpacing(0);
@@ -291,7 +290,7 @@ void time_and_sales_window::create_table_with_container() {
   m_table_container->setMouseTracking(true);
   m_table_container->setAttribute(Qt::WA_Hover);
   m_table_container->installEventFilter(this);
-  m_table_container->viewport()->installEventFilter(this);
+  //m_table_container->viewport()->installEventFilter(this);
   m_table_container->setWidgetResizable(true);
   m_table_container->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table_container->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
