@@ -93,14 +93,12 @@ export class LoginPage extends React.Component<Properties, State> {
     if(this.usernameInputField.value.trim() !== '') {
       this.staticLogo.className = css(LoginPage.STYLE.logoInvisible);
       this.animatedLogo.className = css(LoginPage.STYLE.logoVisible);
-      console.log('updated classNames: ', this.animatedLogo.className );
       try {
         
         const account = await this.props.model.login(
           this.usernameInputField.value, this.passwordInputField.value);
         this.staticLogo.className = css(LoginPage.STYLE.logoVisible);
         this.animatedLogo.className = css(LoginPage.STYLE.logoInvisible);
-        console.log('updated classNames again');
         this.setState({
           errorMessage: null
         });
