@@ -196,6 +196,7 @@ void time_and_sales_window::contextMenuEvent(QContextMenuEvent* event) {
 bool time_and_sales_window::eventFilter(QObject* watched, QEvent* event) {
   if(m_table != nullptr) {
     if(watched == m_table_container ||
+        watched == m_table_container->viewport() ||
         watched == m_table->horizontalHeader()->viewport()) {
       if(event->type() == QEvent::Wheel) {
         auto e = static_cast<QWheelEvent*>(event);
@@ -212,6 +213,8 @@ bool time_and_sales_window::eventFilter(QObject* watched, QEvent* event) {
             m_table_container->verticalScrollBar()->value() - e->delta() / 2);
           m_v_scroll_bar_timer.start();
         }
+        event->accept();
+        return true;
       } else if(event->type() == QEvent::MouseMove) {
         auto e = static_cast<QMouseEvent*>(event);
         if(e->pos().x() > width() - m_table_container->verticalScrollBar()->width()) {
@@ -289,8 +292,8 @@ void time_and_sales_window::create_table_with_container() {
   m_table_container = new QScrollArea(this);
   m_table_container->setMouseTracking(true);
   m_table_container->setAttribute(Qt::WA_Hover);
-  m_table_container->viewport()->setAttribute(Qt::WA_TransparentForMouseEvents);
   m_table_container->installEventFilter(this);
+  m_table_container->viewport()->installEventFilter(this);
   m_table_container->setWidgetResizable(true);
   m_table_container->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table_container->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
