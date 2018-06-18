@@ -21,7 +21,7 @@ class TestApp extends React.Component<{}> {
       <WebPortal.VBoxLayout width='100%' height='100%'>
         <WebPortal.LoginPage model={model} onLogin={this.onLogin}/>
         <div className={css(TestApp.STYLE.testingComponents)}>
-        <button onClick={model.accept}>
+        <button onClick={() => model.accept()}>
           Accept
         </button>
         <button onClick={() => model.reject('Incorrect username or password')}>
