@@ -90,7 +90,6 @@ namespace spire {
       void show_overlay_widget();
       void show_properties_dialog();
       void set_current(const Nexus::Security& s);
-      void update_table_width();
       bool within_h_scroll_bar(const QPoint& pos);
       void on_rows_about_to_be_inserted(const QModelIndex& index, int start,
         int end);
