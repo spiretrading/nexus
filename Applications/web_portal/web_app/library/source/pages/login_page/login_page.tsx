@@ -27,10 +27,12 @@ export class LoginPage extends React.Component<Properties, State> {
     };
     this.onLogin = this.onLogin.bind(this);
     this.onKeyDown = this.onKeyDown.bind(this);
+    this.onUsernameChange = this.onUsernameChange.bind(this);
   }
 
   public componentDidMount(): void {
     window.addEventListener('keydown', this.onKeyDown);
+    this.submitButton.disabled = true;
   }
 
   public componentWillUnmount(): void {
@@ -50,10 +52,12 @@ export class LoginPage extends React.Component<Properties, State> {
               <object data='resources/login_page/logo-static.svg'
                   type='image/svg+xml'
                   className={css(LoginPage.STYLE.logoVisible)}
+                  tabIndex={-1}
                   ref={(ref) => this.staticLogo = ref}/>
               <object data='resources/login_page/logo-animated.svg'
                   type='image/svg+xml'
                   className={css(LoginPage.STYLE.logoInvisible)}
+                  tabIndex={-1}
                   ref={(ref) => this.animatedLogo = ref}/>
               <Padding/>
             </HBoxLayout>
@@ -62,6 +66,7 @@ export class LoginPage extends React.Component<Properties, State> {
                 className={css(LoginPage.STYLE.inputBox)}
                 onFocus={() => this.usernameInputField.placeholder = ''}
                 onBlur={() => this.usernameInputField.placeholder = 'Username'}
+                onChange={this.onUsernameChange}
                 ref={(ref) => this.usernameInputField = ref}/>
             <Padding size='20px'/>
             <input type='password' placeholder='Password' autoComplete='off'
@@ -118,34 +123,20 @@ export class LoginPage extends React.Component<Properties, State> {
   }
   
   private onKeyDown(event: KeyboardEvent) {
-    if(document.activeElement !== this.usernameInputField) {
-      if(document.activeElement !== this.passwordInputField) {
-        if(document.activeElement === this.submitButton) {
-          if(event.key === 'Enter') {
-            this.onLogin();
-          } else {
-            this.usernameInputField.focus();
-            if(event.key === 'Tab') {
-              event.preventDefault();
-            }
-          }
-        } else {
-          if(event.key === 'Tab') {
-            event.preventDefault();
-          }
-          this.usernameInputField.focus();
-        }
-      } else if(event.key === 'Enter') {
-        this.onLogin();
-      } else if (event.key === 'Tab') {
-        this.submitButton.focus();
-        event.preventDefault();
-      }
+    if(document.activeElement !== this.usernameInputField &&
+        document.activeElement !== this.passwordInputField &&
+        document.activeElement !== this.submitButton &&
+        event.key.trim().length === 1) {
+      this.usernameInputField.focus();
     }
   }
+
+  private onUsernameChange() {
+    this.submitButton.disabled = this.usernameInputField.value.trim() === '';
+  }
+
   private static STYLE = StyleSheet.create({
     page: {
-      fontFamily: 'Roboto',
       backgroundColor: '#4B23A0'
     },
     logoVisible: {
@@ -168,11 +159,10 @@ export class LoginPage extends React.Component<Properties, State> {
       backgroundColor: '#4B23A0',
       borderWidth: '0px 0px 1px 0px',
       color: '#FFFFFF',
+      font: '300 16px Roboto',
       outline: 0,
       textAlign: 'center',
-      fontSize: '16px',
       borderRadius: 0,
-      fontWeight: 300,
       '::placeholder': {
         color: '#FFFFFF'
       },
@@ -206,9 +196,8 @@ export class LoginPage extends React.Component<Properties, State> {
       width: '284px',
       height: '48px',
       color: '#4B23A0',
-      fontSize: '20px',
       backgroundColor: '#E2E0FF',
-      fontWeight: 500,
+      font: '500 20px Roboto',
       borderRadius: '1px',
       border: 'none',
       outline: 0,
@@ -219,19 +208,21 @@ export class LoginPage extends React.Component<Properties, State> {
         border: 0
       },
       ':disabled': {
-        backgroundColor: '#684BC7'
+        backgroundColor: '#684BC7',
+        border: 'none'
       },
       ':focus': {
-        border: '1px solid white'
+        ':not(:disabled)': {
+          border: '1px solid white'
+        }
       }
     },
     errorMessage: {
       width: '100%',
       textAlign: 'center',
-      fontSize: '14px',
+      font: '300 14px Roboto',
       height: '20px',
       color: '#FAEB96',
-      fontWeight: 300
     }
   });
   private staticLogo: HTMLObjectElement;
