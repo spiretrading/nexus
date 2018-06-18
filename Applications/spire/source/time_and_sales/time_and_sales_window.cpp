@@ -44,6 +44,7 @@ time_and_sales_window::time_and_sales_window(
   window->set_svg_icon(":/icons/time-sale-black.svg",
     ":/icons/time-sale-grey.svg");
   window_layout->addWidget(window);
+  this->QWidget::window()->installEventFilter(this);
   auto layout = new QVBoxLayout(m_body);
   layout->setContentsMargins({});
   layout->setSpacing(0);
@@ -245,6 +246,10 @@ bool time_and_sales_window::eventFilter(QObject* watched, QEvent* event) {
       if(event->type() == QEvent::HoverLeave) {
         fade_out_horizontal_scroll_bar();
       }
+    } else if(watched == window()) {
+      if(event->type() == QEvent::Resize) {
+        update_table_width();
+      }
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -342,6 +347,7 @@ void time_and_sales_window::create_table_with_container() {
     })").arg(scale_width(8)));
   m_table->setStyleSheet(QString(R"(
     QTableView {
+      background-color: red;
       border: none;
       gridline-color: #C8C8C8;
     }
@@ -451,12 +457,22 @@ void time_and_sales_window::set_current(const Security& s) {
     tr(" - Time and Sales"));
 }
 
+void time_and_sales_window::update_table_width() {
+  if(m_table->width() > window()->width()) {
+    auto width = 0;
+    for(auto i = 0; i < m_table->horizontalHeader()->count(); ++i) {
+      width += m_table->horizontalHeader()->sectionSize(i);
+    }
+    m_table->setFixedWidth(width);
+  } else {
+    m_table->setFixedWidth(window()->width());
+  }
+}
+
 bool time_and_sales_window::within_h_scroll_bar(const QPoint& pos) {
   return pos.y() > m_table_container->height() - 
     m_table_container->horizontalScrollBar()->height();
 }
-
-#include <QDebug>
 
 void time_and_sales_window::on_rows_about_to_be_inserted(
     const QModelIndex& index, int start, int end) {
