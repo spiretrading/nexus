@@ -151,7 +151,7 @@ export class LoginPage extends React.Component<Properties, State> {
   private static STYLE = StyleSheet.create({
     page: {
       fontFamily: 'Roboto',
-      backgroundColor: '#4B23A0',
+      backgroundColor: '#4B23A0'
     },
     logoVisible: {
       width: '130px',
