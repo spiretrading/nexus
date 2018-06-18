@@ -87,6 +87,9 @@ export class LoginPage extends React.Component<Properties, State> {
   }
 
   private async onLogin() {
+    if(this.state.errorMessage !== null) {
+      this.setState({errorMessage: null});
+    }
     if(this.usernameInputField.value.trim() !== '') {
       this.staticLogo.className = css(LoginPage.STYLE.logoInvisible);
       this.animatedLogo.className = css(LoginPage.STYLE.logoVisible);
