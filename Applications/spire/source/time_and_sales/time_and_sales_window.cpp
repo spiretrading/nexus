@@ -195,9 +195,7 @@ void time_and_sales_window::contextMenuEvent(QContextMenuEvent* event) {
 
 bool time_and_sales_window::eventFilter(QObject* watched, QEvent* event) {
   if(m_table != nullptr) {
-    if(watched == m_table_container ||
-        watched == m_table_container->viewport() ||
-        watched == m_table->horizontalHeader()->viewport()) {
+    if(watched == m_table_container) {
       if(event->type() == QEvent::Wheel) {
         auto e = static_cast<QWheelEvent*>(event);
         if(e->modifiers() & Qt::ShiftModifier) {
@@ -352,8 +350,6 @@ void time_and_sales_window::create_table_with_container() {
   m_table->setSelectionMode(QAbstractItemView::NoSelection);
   m_table->horizontalHeader()->setMinimumSectionSize(scale_width(35));
   m_table->horizontalHeader()->setStretchLastSection(true);
-  m_table->horizontalHeader()->viewport()->setMouseTracking(true);
-  m_table->horizontalHeader()->viewport()->installEventFilter(this);
   m_table->horizontalHeader()->setSectionsClickable(false);
   m_table->horizontalHeader()->setSectionsMovable(true);
   m_table->horizontalHeader()->setFixedHeight(scale_height(26));
