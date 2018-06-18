@@ -130,8 +130,14 @@ export class LoginPage extends React.Component<Properties, State> {
             this.onLogin();
           } else {
             this.usernameInputField.focus();
+            if(event.key === 'Tab') {
+              event.preventDefault();
+            }
           }
         } else {
+          if(event.key === 'Tab') {
+              event.preventDefault();
+            }
           this.usernameInputField.focus();
         }
       } else if(event.key === 'Enter') {
@@ -145,7 +151,7 @@ export class LoginPage extends React.Component<Properties, State> {
   private static STYLE = StyleSheet.create({
     page: {
       fontFamily: 'Roboto',
-      backgroundColor: '#4B23A0'
+      backgroundColor: '#4B23A0',
     },
     logoVisible: {
       width: '130px',
@@ -170,8 +176,8 @@ export class LoginPage extends React.Component<Properties, State> {
       outline: 0,
       textAlign: 'center',
       fontSize: '16px',
-      fontWeight: 'lighter' as 'lighter',
       borderRadius: 0,
+      fontWeight: 300,
       '::placeholder': {
         color: '#FFFFFF'
       },
@@ -188,6 +194,17 @@ export class LoginPage extends React.Component<Properties, State> {
       },
       '::-ms-reveal': {
         display: 'none'
+      },
+      '::-webkit-autofill':  {
+        backgroundColor:  'none'
+      },
+      '::-webkit-credentials-auto-fill-button': {
+        visibility: 'hidden' as 'hidden',
+        display: 'none !important',
+        pointerEvents: 'none',
+        height: 0,
+        width: 0,
+        margin: 0,
       }
     },
     signInButton: {
@@ -197,9 +214,9 @@ export class LoginPage extends React.Component<Properties, State> {
       fontSize: '20px',
       backgroundColor: '#E2E0FF',
       fontWeight: 500,
-      outline: 0,
-      borderRadius: '2px',
+      borderRadius: '1px',
       border: 'none',
+      outline: 0,
       ':hover': {
         backgroundColor: '#FFFFFF'
       },
@@ -212,8 +229,8 @@ export class LoginPage extends React.Component<Properties, State> {
       textAlign: 'center',
       fontSize: '14px',
       height: '20px',
-      fontWeight: 'lighter' as 'lighter',
-      color: '#FAEB96'
+      color: '#FAEB96',
+      fontWeight: 300
     }
   });
   private staticLogo: HTMLObjectElement;
