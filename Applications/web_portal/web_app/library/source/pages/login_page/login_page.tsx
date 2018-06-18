@@ -225,10 +225,10 @@ export class LoginPage extends React.Component<Properties, State> {
       },
       ':disabled': {
         backgroundColor: '#684BC7'
+      },
+      ':focus': {
+        border: '1px solid white'
       }
-    },
-    signInButtonTabFocus: {
-      backgroundColor: '#E2E0FF'
     },
     errorMessage: {
       width: '100%',
