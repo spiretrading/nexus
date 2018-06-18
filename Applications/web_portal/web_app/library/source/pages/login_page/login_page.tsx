@@ -74,8 +74,8 @@ export class LoginPage extends React.Component<Properties, State> {
               ref={(ref) => this.passwordInputField = ref}/>
             <Padding size='50px'/>
             <button className={css(LoginPage.STYLE.signInButton)}
-                onClick={this.onLogin}
-                ref={(ref) => this.submitButton = ref}>
+              onClick={this.onLogin}
+              ref={(ref) => this.submitButton = ref}>
               Sign In
             </button>
             <Padding size='30px'/>
