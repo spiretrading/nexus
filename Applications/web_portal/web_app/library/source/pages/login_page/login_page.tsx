@@ -26,7 +26,6 @@ export class LoginPage extends React.Component<Properties, State> {
       errorMessage: null
     };
     this.onLogin = this.onLogin.bind(this);
-    this.onInputChange = this.onInputChange.bind(this);
     this.onKeyDown = this.onKeyDown.bind(this);
   }
 
@@ -61,14 +60,12 @@ export class LoginPage extends React.Component<Properties, State> {
             <Padding size='60px'/>
             <input type='text' placeholder='Username' autoComplete='off'
                 className={css(LoginPage.STYLE.inputBox)}
-                onChange={this.onInputChange}
                 onFocus={() => this.usernameInputField.placeholder = ''}
                 onBlur={() => this.usernameInputField.placeholder = 'Username'}
                 ref={(ref) => this.usernameInputField = ref}/>
             <Padding size='20px'/>
             <input type='password' placeholder='Password' autoComplete='off'
                 className={css(LoginPage.STYLE.inputBox)}
-                onChange={this.onInputChange}
                 onFocus={() => this.passwordInputField.placeholder = ''}
                 onBlur={() => this.passwordInputField.placeholder = 'Password'}
                 ref={(ref) => this.passwordInputField = ref}/>
@@ -109,16 +106,11 @@ export class LoginPage extends React.Component<Properties, State> {
       } catch(error) {
         this.staticLogo.className = css(LoginPage.STYLE.logoVisible);
         this.animatedLogo.className = css(LoginPage.STYLE.logoInvisible);
+        this.submitButton.disabled = false;
         this.setState({
           errorMessage: error.toString()
         });
       }
-    }
-  }
-
-  private onInputChange() {
-    if(this.state.errorMessage !== null) {
-      this.setState({errorMessage: null});
     }
   }
   
