@@ -93,11 +93,13 @@ export class LoginPage extends React.Component<Properties, State> {
     if(this.usernameInputField.value.trim() !== '') {
       this.staticLogo.className = css(LoginPage.STYLE.logoInvisible);
       this.animatedLogo.className = css(LoginPage.STYLE.logoVisible);
+      this.submitButton.disabled = true;
       try {
         const account = await this.props.model.login(
           this.usernameInputField.value, this.passwordInputField.value);
         this.staticLogo.className = css(LoginPage.STYLE.logoVisible);
         this.animatedLogo.className = css(LoginPage.STYLE.logoInvisible);
+        this.submitButton.disabled = false;
         this.setState({
           errorMessage: null
         });
@@ -128,16 +130,16 @@ export class LoginPage extends React.Component<Properties, State> {
             this.onLogin();
           } else {
             this.usernameInputField.focus();
-            event.preventDefault();
           }
         } else {
           this.usernameInputField.focus();
-          event.preventDefault();
         }
       } else if(event.key === 'Enter') {
         this.onLogin();
       } else if (event.key === 'Tab') {
         this.submitButton.focus();
+        this.submitButton.className = css([LoginPage.STYLE.signInButton,
+          LoginPage.STYLE.signInButtonTabFocus])
         event.preventDefault();
       }
     }
@@ -201,12 +203,6 @@ export class LoginPage extends React.Component<Properties, State> {
       borderRadius: '2px',
       border: 'none',
       ':hover': {
-        backgroundColor: '#FFFFFF'
-      },
-      ':focus': {
-        backgroundColor: '#FFFFFF'
-      },
-      ':active': {
         backgroundColor: '#FFFFFF'
       },
       '::-moz-focus-inner': {
