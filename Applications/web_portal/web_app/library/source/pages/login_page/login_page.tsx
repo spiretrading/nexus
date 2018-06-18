@@ -49,12 +49,12 @@ export class LoginPage extends React.Component<Properties, State> {
             <HBoxLayout width='100%' height='50px'>
               <Padding/>
               <object data='resources/login_page/logo-static.svg'
-                type='image/svg+xml' className={
-                css(LoginPage.STYLE.logoVisible)}
+                type='image/svg+xml'
+                className={css(LoginPage.STYLE.logoVisible)}
                 ref={(ref) => this.staticLogo = ref}/>
               <object data='resources/login_page/logo-animated.svg'
-                type='image/svg+xml' className={
-                css(LoginPage.STYLE.logoInvisible)}
+                type='image/svg+xml'
+                className={css(LoginPage.STYLE.logoInvisible)}
                 ref={(ref) => this.animatedLogo = ref}/>
               <Padding/>
             </HBoxLayout>
@@ -93,11 +93,14 @@ export class LoginPage extends React.Component<Properties, State> {
     if(this.usernameInputField.value.trim() !== '') {
       this.staticLogo.className = css(LoginPage.STYLE.logoInvisible);
       this.animatedLogo.className = css(LoginPage.STYLE.logoVisible);
+      console.log('updated classNames: ', this.animatedLogo.className );
       try {
+        
         const account = await this.props.model.login(
           this.usernameInputField.value, this.passwordInputField.value);
         this.staticLogo.className = css(LoginPage.STYLE.logoVisible);
         this.animatedLogo.className = css(LoginPage.STYLE.logoInvisible);
+        console.log('updated classNames again');
         this.setState({
           errorMessage: null
         });
@@ -154,6 +157,10 @@ export class LoginPage extends React.Component<Properties, State> {
     logoInvisible: {
       width: '0px',
       height: '0px'
+    },
+    logo: {
+      width: '100%',
+      height: '100%'
     },
     inputBox: {
       width: '284px',
