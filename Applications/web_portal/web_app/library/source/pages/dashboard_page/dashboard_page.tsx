@@ -10,6 +10,7 @@ export interface State {}
 export class DashboardPage extends React.Component<Properties, State> {
   constructor(properties: Properties) {
     super(properties);
+    this.onBurgerButtonClick = this.onBurgerButtonClick.bind(this);
   }
 
   public render(): JSX.Element {
@@ -19,11 +20,15 @@ export class DashboardPage extends React.Component<Properties, State> {
     			<Padding size='15px'/>
     			<HBoxLayout width='136px'>
     				<Padding size='18px'/>
-    				<BurgerButton width={50} height={50} color='#684BC7'
-    				highlightColor='#FFFFFF'/>
+    				<BurgerButton width='40px' height='34px' color='#FFFFFF'
+    				highlightColor='#684BC7' onClick={this.onBurgerButtonClick}/>
     			</HBoxLayout>
     			<Padding size='15px'/>
     		</VBoxLayout>
     	</VBoxLayout>);
+  }
+
+  private onBurgerButtonClick() {
+
   }
 }
