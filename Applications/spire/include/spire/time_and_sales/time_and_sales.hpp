@@ -4,6 +4,7 @@
 
 namespace spire {
   class empty_time_and_sales_model;
+  class loading_widget;
   class time_and_sales_controller;
   class time_and_sales_model;
   struct time_and_sales_properties;
