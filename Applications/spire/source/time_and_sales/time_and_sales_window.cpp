@@ -10,6 +10,7 @@
 #include "spire/security_input/security_input_dialog.hpp"
 #include "spire/security_input/security_input_model.hpp"
 #include "spire/time_and_sales/empty_time_and_sales_model.hpp"
+#include "spire/time_and_sales/loading_widget.hpp"
 #include "spire/time_and_sales/time_and_sales_properties_dialog.hpp"
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
 #include "spire/spire/dimensions.hpp"
@@ -346,7 +347,7 @@ void time_and_sales_window::create_table_with_container() {
   m_table->setItemDelegate(new item_padding_delegate(scale_width(5),
     new custom_variant_item_delegate(), this));
   m_table->setFocusPolicy(Qt::NoFocus);
-  m_table->setSelectionMode(QAbstractItemView::NoSelection);
+  //m_table->setSelectionMode(QAbstractItemView::NoSelection);
   m_table->horizontalHeader()->setMinimumSectionSize(scale_width(35));
   m_table->horizontalHeader()->setStretchLastSection(true);
   m_table->horizontalHeader()->setSectionsClickable(false);
@@ -377,10 +378,6 @@ void time_and_sales_window::create_table_with_container() {
     })").arg(scale_width(8)));
   layout->addWidget(m_table);
   layout->addStretch(1);
-  auto test_widget = new QLabel("Thanks, Darryl...", this);
-  test_widget->setFixedHeight(100);
-  test_widget->setStyleSheet("background-color: #FFFFFF;");
-  layout->addWidget(test_widget);
   m_table_container->setWidget(container_contents);
 }
 
@@ -464,6 +461,13 @@ void time_and_sales_window::on_rows_about_to_be_inserted(
   if(row_count > 0) {
     m_table->setFixedHeight(m_table->horizontalHeader()->height() +
       (m_table->rowHeight(0) * (row_count + 1)));
+    if(m_table->selectionModel()->selectedIndexes().size() > 0) {
+      auto x = new loading_widget(":icons/pre-loader.gif", this);
+      m_table->setIndexWidget(m_table->selectionModel()->selectedIndexes().first(), x);
+      m_table->setRowHeight(m_table->selectionModel()->selectedIndexes().first().row(), scale_height(32));
+      m_table->setSpan(m_table->selectionModel()->selectedIndexes().first().row(), 0,
+        1, 5);
+    }
   } else {
     m_table->setFixedHeight(m_table->horizontalHeader()->height() * 2);
   }
