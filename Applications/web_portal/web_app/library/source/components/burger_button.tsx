@@ -23,63 +23,68 @@ export interface Properties {
 export interface State {}
 
 /** Displays a burger button. */
-export class BurgerButton extends React.Component<Properties, State> {
+export class BurgerButton extends React.Component<Properties> {
   constructor(properties: Properties) {
     super(properties);
     this.buttonStyle = StyleSheet.create({
-      dimensions: {
+      unHighlighted: {
+        ...BurgerButton.STYLE.buttonBase,
+        backgroundColor: this.props.color,
         width: this.props.width,
         height: this.props.height
       },
-      unHighlighted: {
-        backgroundColor: this.props.color
-      },
       highlighted: {
-        backgroundColor: this.props.highlightColor
+        ...BurgerButton.STYLE.buttonBase,
+        backgroundColor: this.props.highlightColor,
+        width: this.props.width,
+        height: this.props.height
       }
     });
     this.iconStyle = StyleSheet.create({
       unHighlighted: {
+        ...BurgerButton.STYLE.iconBase,
         fill: this.props.highlightColor
       },
       highlighted: {
+        ...BurgerButton.STYLE.iconBase,
         fill: this.props.color
       }
     });
+    this.onClick = this.onClick.bind(this);
   }
 
   public componentWillReceiveProps(newProps: Properties) {
     this.buttonStyle = StyleSheet.create({
-      dimensions: {
+      unHighlighted: {
+        backgroundColor: newProps.color,
         width: newProps.width,
         height: newProps.height
       },
-      unHighlighted: {
-        backgroundColor: newProps.color
-      },
       highlighted: {
-        backgroundColor: newProps.highlightColor
+        backgroundColor: newProps.highlightColor,
+        width: newProps.width,
+        height: newProps.height
       }
     });
     this.iconStyle = StyleSheet.create({
       unHighlighted: {
+        ...BurgerButton.STYLE.iconBase,
         fill: newProps.highlightColor
       },
       highlighted: {
+        ...BurgerButton.STYLE.iconBase,
         fill: newProps.color
       }
     });
   }
   public render(): JSX.Element {
-    
     return (
       <HBoxLayout>
-        <button onClick={this.props.onClick}
-                className={css([BurgerButton.STYLE.buttonBase,
-                                this.buttonStyle.dimensions,
-                                this.buttonStyle.unHighlighted])}>
-          <svg className={css([BurgerButton.STYLE.iconBase,
-                               this.iconStyle.unHighlighted])}>
+        <button onClick={this.onClick}
+                className={css(this.buttonStyle.unHighlighted)}
+                ref={(ref) => this.button = ref}>
+          <svg className={css(this.iconStyle.unHighlighted)}
+               ref={(ref) => this.icon = ref}>
             <g>
               <rect y='0' width='20px' height='2'/>
               <rect y='6' width='20px' height='2'/>
@@ -89,7 +94,22 @@ export class BurgerButton extends React.Component<Properties, State> {
       </button>
     </HBoxLayout>);
   }
-  private static STYLE = StyleSheet.create({
+  private onClick() {
+    if(this.button.className === css(this.buttonStyle.unHighlighted)) {
+      this.button.className = css(this.buttonStyle.highlighted);
+    } else {
+      this.button.className = css(this.buttonStyle.unHighlighted);
+    }
+    if(this.icon.className.baseVal === css(this.iconStyle.unHighlighted)) {
+      this.icon.className.baseVal = css(this.iconStyle.highlighted);
+    } else {
+      this.icon.className.baseVal = css(this.iconStyle.unHighlighted);
+    }
+    if(this.props.onClick) {
+      this.props.onClick();
+    }
+  }
+  private static STYLE = {
     buttonBase: {
       position: 'relative' as 'relative',
       border: 'none',
@@ -115,7 +135,9 @@ export class BurgerButton extends React.Component<Properties, State> {
         cursor: 'pointer'
       }
     }
-  });
+  };
   private buttonStyle: any;
   private iconStyle: any;
+  private button: HTMLButtonElement;
+  private icon: SVGElement;
 }
