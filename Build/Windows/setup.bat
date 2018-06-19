@@ -1,6 +1,6 @@
 SETLOCAL
 
-SET expected_commit="2b3b9bc05c41cc84a76f85a985854e0b85ff3c69"
+SET expected_commit="38f8cf480b7ad455de8bcd8dc594c041903b2ae0"
 if exist Beam goto end_beam_setup
   git clone https://www.github.com/eidolonsystems/beam.git Beam
   pushd Beam
@@ -62,7 +62,5 @@ if exist qt-5.10.0 goto end_qt_setup
     nmake
     popd
 :end_qt_setup
-
-CALL %~dp0../../Applications/ClientWebPortal/Build/Windows/setup.bat
 
 ENDLOCAL

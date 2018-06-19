@@ -367,8 +367,6 @@ Resources.qrc.depends
 # Web Artifacts
 package-lock.json
 .vscode/
-web_api/library/
-*/ClientWebPortal/Application/web_app/
 
 # Config files.
 config.yml

@@ -17,7 +17,6 @@ applications+="AdministrationServer "
 applications+="AsxItchMarketDataFeedClient "
 applications+="ChartingServer "
 applications+="ChiaMarketDataFeedClient "
-applications+="ClientWebPortal "
 applications+="ComplianceServer "
 applications+="CseMarketDataFeedClient "
 applications+="CtaMarketDataFeedClient "
@@ -31,6 +30,7 @@ applications+="SimulationOrderExecutionServer "
 applications+="TmxIpMarketDataFeedClient "
 applications+="TmxTl1MarketDataFeedClient "
 applications+="UtpMarketDataFeedClient "
+applications+="web_portal "
 
 for i in $applications; do
   pushd $directory/../../Applications/$i/Build/Make

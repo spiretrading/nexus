@@ -2,7 +2,7 @@
 let cores="`grep -c "processor" < /proc/cpuinfo`"
 directory=$(dirname $(readlink -f $0))
 
-expected_commit="2b3b9bc05c41cc84a76f85a985854e0b85ff3c69"
+expected_commit="38f8cf480b7ad455de8bcd8dc594c041903b2ae0"
 if [ ! -d "Beam" ]; then
   sudo -u $(logname) git clone https://www.github.com/eidolonsystems/beam.git Beam
   pushd Beam
@@ -48,7 +48,3 @@ fi
 sudo -u $(logname) pip3 install argparse
 sudo -u $(logname) pip3 install HTMLParser
 sudo -u $(logname) pip3 install GitPython
-
-pushd $directory/../../Applications/ClientWebPortal/Build/Make
-./setup.sh
-popd

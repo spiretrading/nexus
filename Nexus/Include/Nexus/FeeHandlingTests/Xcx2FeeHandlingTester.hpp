@@ -49,11 +49,23 @@ namespace Tests {
       //! Tests a sub-dollar passive fee calculation.
       void TestPassiveSubDollar();
 
+      //! Tests a sub-dime active fee calculation.
+      void TestActiveSubDime();
+
+      //! Tests a sub-dime passive fee calculation.
+      void TestPassiveSubDime();
+
       //! Tests a sub-dollar large passive fee calculation.
       void TestLargeActiveSubDollar();
 
       //! Tests a sub-dollar large passive fee calculation.
       void TestLargePassiveSubDollar();
+
+      //! Tests a sub-dime large passive fee calculation.
+      void TestLargeActiveSubDime();
+
+      //! Tests a sub-dime large passive fee calculation.
+      void TestLargePassiveSubDime();
 
       //! Tests a sub-dollar hidden active fee calculation.
       void TestHiddenActiveSubDollar();
@@ -61,11 +73,23 @@ namespace Tests {
       //! Tests a sub-dollar hidden passive fee calculation.
       void TestHiddenPassiveSubDollar();
 
+      //! Tests a sub-dime hidden active fee calculation.
+      void TestHiddenActiveSubDime();
+
+      //! Tests a sub-dime hidden passive fee calculation.
+      void TestHiddenPassiveSubDime();
+
       //! Tests an active sub-dollar odd-lot.
       void TestActiveOddLotSubDollar();
 
       //! Tests a passive sub-dollar odd-lot.
       void TestPassiveOddLotSubDollar();
+
+      //! Tests an active sub-dime odd-lot.
+      void TestActiveOddLotSubDime();
+
+      //! Tests a passive sub-dime odd-lot.
+      void TestPassiveOddLotSubDime();
 
       //! Tests a hidden odd-lot.
       void TestHiddenOddLot();
@@ -90,12 +114,20 @@ namespace Tests {
         CPPUNIT_TEST(TestPassiveOddLotOverDollar);
         CPPUNIT_TEST(TestActiveSubDollar);
         CPPUNIT_TEST(TestPassiveSubDollar);
+        CPPUNIT_TEST(TestActiveSubDime);
+        CPPUNIT_TEST(TestPassiveSubDime);
         CPPUNIT_TEST(TestLargeActiveSubDollar);
         CPPUNIT_TEST(TestLargePassiveSubDollar);
+        CPPUNIT_TEST(TestLargeActiveSubDime);
+        CPPUNIT_TEST(TestLargePassiveSubDime);
         CPPUNIT_TEST(TestHiddenActiveSubDollar);
         CPPUNIT_TEST(TestHiddenPassiveSubDollar);
+        CPPUNIT_TEST(TestHiddenActiveSubDime);
+        CPPUNIT_TEST(TestHiddenPassiveSubDime);
         CPPUNIT_TEST(TestActiveOddLotSubDollar);
         CPPUNIT_TEST(TestPassiveOddLotSubDollar);
+        CPPUNIT_TEST(TestActiveOddLotSubDime);
+        CPPUNIT_TEST(TestPassiveOddLotSubDime);
         CPPUNIT_TEST(TestHiddenOddLot);
         CPPUNIT_TEST(TestUnknownLiquidityFlag);
         CPPUNIT_TEST(TestEmptyLiquidityFlag);

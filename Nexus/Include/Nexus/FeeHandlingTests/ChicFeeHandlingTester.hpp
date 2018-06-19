@@ -37,8 +37,17 @@ namespace Tests {
       //! Tests a sub dollar passive execution.
       void TestSubDollarPassive();
 
+      //! Tests a sub dime active execution.
+      void TestSubDimeActive();
+
+      //! Tests a sub dime passive execution.
+      void TestSubDimePassive();
+
       //! Tests a sub dollar active execution.
       void TestSubDollarHiddenActive();
+
+      //! Tests a sub dime active execution.
+      void TestSubDimeHiddenActive();
 
       //! Tests an interlisted active execution.
       void TestInterlistedActive();
@@ -55,6 +64,9 @@ namespace Tests {
       //! Tests a sub-dollar interlisted active execution.
       void TestSubDollarInterlistedActive();
 
+      //! Tests a sub-dime interlisted active execution.
+      void TestSubDimeInterlistedActive();
+
       //! Tests an ETF active execution.
       void TestEtfActive();
 
@@ -69,6 +81,9 @@ namespace Tests {
 
       //! Tests a sub-dollar ETF active execution.
       void TestSubDollarEtfActive();
+
+      //! Tests a sub-dime ETF active execution.
+      void TestSubDimeEtfActive();
 
       //! Tests calculating fees with an unknown liquidity flag.
       void TestUnknownLiquidityFlag();
@@ -86,17 +101,22 @@ namespace Tests {
         CPPUNIT_TEST(TestDefaultHiddenActive);
         CPPUNIT_TEST(TestSubDollarActive);
         CPPUNIT_TEST(TestSubDollarPassive);
+        CPPUNIT_TEST(TestSubDimeActive);
+        CPPUNIT_TEST(TestSubDimePassive);
         CPPUNIT_TEST(TestSubDollarHiddenActive);
+        CPPUNIT_TEST(TestSubDimeHiddenActive);
         CPPUNIT_TEST(TestInterlistedActive);
         CPPUNIT_TEST(TestInterlistedPassive);
         CPPUNIT_TEST(TestInterlistedHiddenPassive);
         CPPUNIT_TEST(TestInterlistedHiddenActive);
         CPPUNIT_TEST(TestSubDollarInterlistedActive);
+        CPPUNIT_TEST(TestSubDimeInterlistedActive);
         CPPUNIT_TEST(TestEtfActive);
         CPPUNIT_TEST(TestEtfPassive);
         CPPUNIT_TEST(TestEtfHiddenPassive);
         CPPUNIT_TEST(TestEtfHiddenActive);
         CPPUNIT_TEST(TestSubDollarEtfActive);
+        CPPUNIT_TEST(TestSubDimeEtfActive);
         CPPUNIT_TEST(TestUnknownLiquidityFlag);
         CPPUNIT_TEST(TestEmptyLiquidityFlag);
       BEAM_CPPUNIT_TEST_SUITE_END();
