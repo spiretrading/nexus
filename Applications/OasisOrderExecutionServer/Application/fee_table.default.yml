@@ -57,13 +57,15 @@ ca_equities:
   #                     Active, Passive, Hidden
   # >= $1.00               X       X       X
   #  < $1.00               X       X       X
+  #  < $0.10               X       X       X
   #  Interlisted           X       X       X
   #  ETF                   X       X       X
     fee_table:
-      [[0.0014, -0.0010, -0.0005],
-       [0.0003, -0.0001,  0.0000],
-       [0.0026, -0.0022, -0.0015],
-       [0.0014, -0.0010, -0.0005]]
+      [[0.0014, -0.00100, -0.00050],
+       [0.0000, -0.00010,  0.00010],
+       [0.0000, -0.00001,  0.00001],
+       [0.0026, -0.00220, -0.00150],
+       [0.0017, -0.00130, -0.00050]]
 
   # CSE fees are based on http://thecse.com/en/services/become-dealer/fee-schedule
   cse:
@@ -83,15 +85,16 @@ ca_equities:
   xcx2:
 
   # The fee_table is structured as follows:
-  #                     Active, Passive, Large Passive, Hidden Active, Hidden Passive, Odd Lot
-  # >= $1.00               X       X          X               X             X             X
-  #  < $1.00               X       X          X               X             X             X
+  #                     Active, Passive, Large Active, Large Passive, Hidden Active, Hidden Passive, Odd Lot
+  # >= $1.00               X       X           X             X               X             X             X
+  #  < $1.00               X       X           X             X               X             X             X
+  #  < $0.10               X       X           X             X               X             X             X
     fee_table:
-      [[-0.0010, 0.0014, 0.0012, 0.0000, 0.0004, 0.0009],
-       [-0.0010, 0.0014, 0.0008, 0.0000, 0.0004, 0.0005]]
+      [[-0.0010, 0.0014, -0.0012, 0.0013, 0.0000, 0.0004, 0.0000],
+       [-0.0010, 0.0014, -0.0010, 0.0014, 0.0000, 0.0004, 0.0000],
+       [-0.0011, 0.0014, -0.0011, 0.0014, 0.0000, 0.0004, 0.0000]]
 
     large_trade_size: 50000
-    large_trade_size_sub_dollar: 100000
 
   # LYNX ATS fees based on http://omegaats.com/lynx-ats-pricing/
   # Fees for notes and debentures are not supported.
