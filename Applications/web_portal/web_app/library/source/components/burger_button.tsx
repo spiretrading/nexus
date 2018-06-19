@@ -20,8 +20,6 @@ export interface Properties {
   onClick?: () => void;
 }
 
-export interface State {}
-
 /** Displays a burger button. */
 export class BurgerButton extends React.Component<Properties> {
   constructor(properties: Properties) {
