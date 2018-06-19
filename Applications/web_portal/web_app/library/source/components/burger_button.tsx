@@ -78,10 +78,10 @@ export class BurgerButton extends React.Component<Properties> {
   public render(): JSX.Element {
     return (
       <button onClick={this.onClick}
-              className={css(this.buttonStyle.unHighlighted)}
-              ref={(ref) => this.button = ref}>
+          className={css(this.buttonStyle.unHighlighted)}
+          ref={(ref) => this.button = ref}>
         <svg className={css(this.iconStyle.unHighlighted)}
-             ref={(ref) => this.icon = ref}>
+            ref={(ref) => this.icon = ref}>
           <g>
             <rect y='0' width='20px' height='2'/>
             <rect y='6' width='20px' height='2'/>
