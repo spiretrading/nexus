@@ -75,6 +75,7 @@ export class BurgerButton extends React.Component<Properties> {
       }
     });
   }
+
   public render(): JSX.Element {
     return (
       <button onClick={this.onClick}
@@ -90,6 +91,7 @@ export class BurgerButton extends React.Component<Properties> {
       </svg>
     </button>);
   }
+  
   private onClick() {
     if(this.button.className === css(this.buttonStyle.unHighlighted)) {
       this.button.className = css(this.buttonStyle.highlighted);
