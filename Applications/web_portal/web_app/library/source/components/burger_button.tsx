@@ -1,6 +1,6 @@
 import {css, StyleSheet} from 'aphrodite';
 import * as React from 'react';
-import {HBoxLayout} from '../layouts';
+
 /** The properties used to display the BurgerButton. */
 export interface Properties {
 
@@ -77,7 +77,6 @@ export class BurgerButton extends React.Component<Properties> {
   }
   public render(): JSX.Element {
     return (
-      <HBoxLayout>
         <button onClick={this.onClick}
                 className={css(this.buttonStyle.unHighlighted)}
                 ref={(ref) => this.button = ref}>
@@ -89,8 +88,7 @@ export class BurgerButton extends React.Component<Properties> {
               <rect y='12' width='20px' height='2'/>
           </g>
         </svg>
-      </button>
-    </HBoxLayout>);
+      </button>);
   }
   private onClick() {
     if(this.button.className === css(this.buttonStyle.unHighlighted)) {
