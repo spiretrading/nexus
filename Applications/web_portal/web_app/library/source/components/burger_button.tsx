@@ -114,6 +114,7 @@ export class BurgerButton extends React.Component<Properties> {
       width: '100%',
       height: '100%',
       fill: 'inherit',
+      shapeRendering: 'geometricPrecision',
       ':hover': {
         cursor: 'pointer'
       },
