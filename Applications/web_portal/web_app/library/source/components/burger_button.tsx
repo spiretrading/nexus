@@ -1,6 +1,5 @@
 import {css, StyleSheet} from 'aphrodite';
 import * as React from 'react';
-import {HBoxLayout} from '../';
 
 /** The properties used to display the BurgerButton. */
 export interface Properties {

@@ -11,6 +11,6 @@ export class DashboardPage extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    return <div>Dashboard</div>
+    return <div>Dashboard</div>;
   }
 }
