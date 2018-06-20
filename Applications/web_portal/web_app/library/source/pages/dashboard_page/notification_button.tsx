@@ -21,6 +21,7 @@ export class NotificationButton extends React.Component<Properties> {
       button: {
         border: 'none',
         outline: 0,
+        padding: 0,
         backgroundColor: 'rgba(0, 0, 0, 0)',
         width: this.props.width,
         height: this.props.height,
