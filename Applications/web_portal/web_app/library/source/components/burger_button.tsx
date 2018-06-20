@@ -75,9 +75,9 @@ export class BurgerButton extends React.Component<Properties> {
           <svg className={css(BurgerButton.STYLE.icon)}
               ref={(ref) => this.icon = ref}>
             <g>
-              <rect y='0' width='20px' height='2'/>
-              <rect y='6' width='20px' height='2'/>
-              <rect y='12' width='20px' height='2'/>
+              <rect y='0' width='100%' height='20%'/>
+              <rect y='40%' width='100%' height='20%'/>
+              <rect y='80%' width='100%' height='20%'/>
             </g>
           </svg>
         </button>);
@@ -109,13 +109,11 @@ export class BurgerButton extends React.Component<Properties> {
     },
     icon: {
       position: 'absolute' as 'absolute',
-      top: 'calc(50% - 7px)',
-      left: 'calc(50% - 10px)',
-      viewBox: '0 0 20 14',
-      width: '20px',
-      height: '14px',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
       fill: 'inherit',
-      shapeRendering: 'geometricPrecision',
       ':hover': {
         cursor: 'pointer'
       },
