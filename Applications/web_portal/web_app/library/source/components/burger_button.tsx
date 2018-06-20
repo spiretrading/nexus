@@ -23,27 +23,12 @@ export interface Properties {
 
 /** Displays a burger button. */
 export class BurgerButton extends React.Component<Properties> {
-  constructor(properties: Properties) {
-    super(properties);
-    const buttonStyles = StyleSheet.create({
-      highlighted: {
-        ...BurgerButton.STYLE.buttonBase,
-        width: this.props.width,
-        height: this.props.height,
-        fill: this.props.highlightColor
-      },
-      unHighlighted: {
-        ...BurgerButton.STYLE.buttonBase,
-        width: this.props.width,
-        height: this.props.height,
-        fill: this.props.color
-      }
-    });
-    this.unHighlightedClassName = css([buttonStyles.unHighlighted,
-      BurgerButton.STYLE.buttonBase]);
-    this.highlightedClassName = css([buttonStyles.highlighted,
-      BurgerButton.STYLE.buttonBase]);
+  constructor(props: Properties) {
+    super(props);
     this.onClick = this.onClick.bind(this);
+    this.onMouseEnter = this.onMouseEnter.bind(this);
+    this.onMouseLeave = this.onMouseLeave.bind(this);
+    this.componentWillReceiveProps(props);
   }
 
   public componentWillReceiveProps(newProps: Properties) {
@@ -69,36 +54,42 @@ export class BurgerButton extends React.Component<Properties> {
 
   public render(): JSX.Element {
     return (
-        <button onClick={this.onClick}
-            className={this.unHighlightedClassName}
-            ref={(ref) => this.button = ref}>
-          <svg className={css(BurgerButton.STYLE.icon)}
-              ref={(ref) => this.icon = ref}>
-            <g>
-              <rect y='0' width='100%' height='20%'/>
-              <rect y='40%' width='100%' height='20%'/>
-              <rect y='80%' width='100%' height='20%'/>
-            </g>
-          </svg>
-        </button>);
+      <button className={this.unHighlightedClassName}
+          onClick={this.onClick}
+          onMouseEnter={this.onMouseEnter}
+          onMouseLeave={this.onMouseLeave}
+          ref={(ref) => this.button = ref}>
+        <svg className={css(BurgerButton.STYLE.icon)}
+            ref={(ref) => this.icon = ref}>
+          <g>
+            <rect y='0' width='100%' height='20%'/>
+            <rect y='40%' width='100%' height='20%'/>
+            <rect y='80%' width='100%' height='20%'/>
+          </g>
+        </svg>
+      </button>);
   }
 
   private onClick() {
-    if(this.button.className === this.unHighlightedClassName) {
-      this.button.className = this.highlightedClassName;
-    } else {
-      this.button.className = this.unHighlightedClassName;
-    }
     if(this.props.onClick) {
       this.props.onClick();
     }
   }
+
+  private onMouseEnter() {
+    this.button.className = this.highlightedClassName;
+  }
+
+  private onMouseLeave() {
+    this.button.className = this.unHighlightedClassName;
+  }
+
   private static STYLE = StyleSheet.create({
     buttonBase: {
-      position: 'relative' as 'relative',
       border: 'none',
-      backgroundColor: 'rgba(0, 0, 0, 0)',
       outline: '0',
+      padding: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0)',
       '-webkit-tap-highlight-color': 'rgba(0,0,0,0)',
       ':hover': {
         cursor: 'pointer'
@@ -108,19 +99,10 @@ export class BurgerButton extends React.Component<Properties> {
       }
     },
     icon: {
-      position: 'absolute' as 'absolute',
-      top: 0,
-      left: 0,
       width: '100%',
       height: '100%',
       fill: 'inherit',
-      shapeRendering: 'geometricPrecision',
-      ':hover': {
-        cursor: 'pointer'
-      },
-      ':active': {
-        cursor: 'pointer'
-      }
+      shapeRendering: 'geometricPrecision'
     }
   });
   private unHighlightedClassName: string;
