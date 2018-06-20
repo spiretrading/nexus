@@ -111,10 +111,11 @@ export class BurgerButton extends React.Component<Properties> {
       position: 'absolute' as 'absolute',
       top: 'calc(50% - 7px)',
       left: 'calc(50% - 10px)',
+      viewBox: '0 0 20 14',
       width: '20px',
       height: '14px',
       fill: 'inherit',
-      shapeRendering: 'crispEdges',
+      shapeRendering: 'geometricPrecision',
       ':hover': {
         cursor: 'pointer'
       },
