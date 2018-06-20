@@ -1,5 +1,6 @@
 import {css, StyleSheet} from 'aphrodite';
 import * as React from 'react';
+import {HBoxLayout} from '../';
 
 /** The properties used to display the BurgerButton. */
 export interface Properties {
@@ -68,18 +69,18 @@ export class BurgerButton extends React.Component<Properties> {
 
   public render(): JSX.Element {
     return (
-      <button onClick={this.onClick}
-          className={this.unHighlightedClassName}
-          ref={(ref) => this.button = ref}>
-        <svg className={css(BurgerButton.STYLE.icon)}
-            ref={(ref) => this.icon = ref}>
-          <g>
-            <rect y='0' width='20px' height='2'/>
-            <rect y='6' width='20px' height='2'/>
-            <rect y='12' width='20px' height='2'/>
-        </g>
-      </svg>
-    </button>);
+        <button onClick={this.onClick}
+            className={this.unHighlightedClassName}
+            ref={(ref) => this.button = ref}>
+          <svg className={css(BurgerButton.STYLE.icon)}
+              ref={(ref) => this.icon = ref}>
+            <g>
+              <rect y='0' width='20px' height='2'/>
+              <rect y='6' width='20px' height='2'/>
+              <rect y='12' width='20px' height='2'/>
+            </g>
+          </svg>
+        </button>);
   }
 
   private onClick() {
@@ -95,8 +96,8 @@ export class BurgerButton extends React.Component<Properties> {
   private static STYLE = StyleSheet.create({
     buttonBase: {
       position: 'relative' as 'relative',
-      backgroundColor: 'rgba(0, 0, 0, 0)',
       border: 'none',
+      backgroundColor: 'rgba(0, 0, 0, 0)',
       outline: '0',
       '-webkit-tap-highlight-color': 'rgba(0,0,0,0)',
       ':hover': {
