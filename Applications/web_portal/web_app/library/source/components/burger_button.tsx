@@ -1,3 +1,4 @@
+import {css, StyleSheet} from 'aphrodite';
 import * as React from 'react';
 
 /** The properties used to display the BurgerButton. */
@@ -19,15 +20,92 @@ export interface Properties {
   onClick?: () => void;
 }
 
-export interface State {}
-
 /** Displays a burger button. */
-export class BurgerButton extends React.Component<Properties, State> {
-  constructor(properties: Properties) {
-    super(properties);
+export class BurgerButton extends React.Component<Properties> {
+  constructor(props: Properties) {
+    super(props);
+    this.onClick = this.onClick.bind(this);
+    this.onMouseEnter = this.onMouseEnter.bind(this);
+    this.onMouseLeave = this.onMouseLeave.bind(this);
+    this.componentWillReceiveProps(props);
+  }
+
+  public componentWillReceiveProps(newProps: Properties) {
+    const buttonStyles = StyleSheet.create({
+      highlighted: {
+        ...BurgerButton.STYLE.buttonBase,
+        width: newProps.width,
+        height: newProps.height,
+        fill: newProps.highlightColor
+      },
+      unHighlighted: {
+        ...BurgerButton.STYLE.buttonBase,
+        width: newProps.width,
+        height: newProps.height,
+        fill: newProps.color
+      }
+    });
+    this.unHighlightedClassName = css([buttonStyles.unHighlighted,
+      BurgerButton.STYLE.buttonBase]);
+    this.highlightedClassName = css([buttonStyles.highlighted,
+      BurgerButton.STYLE.buttonBase]);
   }
 
   public render(): JSX.Element {
-    return null;
+    return (
+      <button className={this.unHighlightedClassName}
+          onClick={this.onClick}
+          onMouseEnter={this.onMouseEnter}
+          onMouseLeave={this.onMouseLeave}
+          ref={(ref) => this.button = ref}>
+        <svg className={css(BurgerButton.STYLE.icon)}
+            ref={(ref) => this.icon = ref}>
+          <g>
+            <rect y='0' width='100%' height='20%'/>
+            <rect y='40%' width='100%' height='20%'/>
+            <rect y='80%' width='100%' height='20%'/>
+          </g>
+        </svg>
+      </button>);
   }
+
+  private onClick() {
+    if(this.props.onClick) {
+      this.props.onClick();
+    }
+  }
+
+  private onMouseEnter() {
+    this.button.className = this.highlightedClassName;
+  }
+
+  private onMouseLeave() {
+    this.button.className = this.unHighlightedClassName;
+  }
+
+  private static STYLE = StyleSheet.create({
+    buttonBase: {
+      border: 'none',
+      outline: '0',
+      padding: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0)',
+      '-webkit-tap-highlight-color': 'rgba(0,0,0,0)',
+      ':hover': {
+        cursor: 'pointer'
+      },
+      ':active': {
+        cursor: 'pointer'
+      }
+    },
+    icon: {
+      width: '100%',
+      height: '100%',
+      fill: 'inherit',
+      shapeRendering: 'geometricPrecision'
+    }
+  });
+  private unHighlightedClassName: string;
+  private highlightedClassName: string;
+  private button: HTMLButtonElement;
+  private icon: SVGElement;
 }
