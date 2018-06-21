@@ -5,7 +5,8 @@ import {NotificationButton} from './notification_button';
 
 export interface Properties {}
 
-export interface State {}
+export interface State {
+}
 
 /** Displays the main dashboard. */
 export class DashboardPage extends React.Component<Properties, State> {
@@ -32,17 +33,17 @@ export class DashboardPage extends React.Component<Properties, State> {
             </VBoxLayout>
             <Padding size='20px'/>
             <VBoxLayout height='75px'>
-              <Padding/>
+              <Padding size='22.5px'/>
               <img src='resources/dashboard/logo.png'
                 className={css(DashboardPage.STYLE.logo)}/>
-              <Padding/>
+              <Padding size='22.5px'/>
             </VBoxLayout>
           </HBoxLayout>
           <Padding/>
           <VBoxLayout height='75px' width='78px'>
-            <Padding size='30px'/>
+            <Padding size='27.5px'/>
             <NotificationButton width='15px' height='20px'/>
-            <Padding size='30px'/>
+            <Padding size='27.5px'/>
           </VBoxLayout>
         </HBoxLayout>
       </VBoxLayout>);
