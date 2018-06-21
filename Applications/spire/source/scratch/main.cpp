@@ -195,7 +195,10 @@ void time_and_sales_table_view::resizeEvent(QResizeEvent* event) {
 }
 
 void time_and_sales_table_view::wheelEvent(QWheelEvent* event) {
-
+  if(event->modifiers() & Qt::ShiftModifier) {
+    horizontalScrollBar()->setValue(horizontalScrollBar()->value() -
+      (event->delta() / 2));
+  }
 }
 
 void time_and_sales_table_view::on_header_resize(int index, int old_size,
