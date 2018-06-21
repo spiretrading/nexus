@@ -18,7 +18,6 @@ using namespace Nexus;
 using namespace Nexus::FixUtilities;
 using namespace Nexus::OasisOrderExecutionService;
 using namespace Nexus::OrderExecutionService;
-using namespace std;
 
 namespace {
   const auto UMIR_ACCOUNT_TYPE_TAG = 6750;
@@ -62,7 +61,7 @@ const Order& ChixFixApplication::Submit(const OrderInfo& info) {
       bool hasDestination = false;
       for(auto& tag : info.m_fields.m_additionalFields) {
         if(tag.GetKey() == FIX::FIELD::ExDestination) {
-          if(auto value = boost::get<string>(&tag.GetValue())) {
+          if(auto value = boost::get<std::string>(&tag.GetValue())) {
             FIX::ExDestination destination(*value);
             newOrderSingle->getHeader().setField(destination);
             if(*value == "SMRTXDARKNR") {
@@ -160,7 +159,7 @@ void ChixFixApplication::onMessage(const FIX42::ExecutionReport& message,
     const FIX::SessionID& sessionId) {
   m_orderLog.Update(message, sessionId, m_timeClient->GetTime(),
     [=] (const Order& order, Out<ExecutionReport> update) {
-      string liquidityFlag;
+      std::string liquidityFlag;
       if(message.isSetField(TRADE_LIQUIDITY_INDICATOR_TAG)) {
         liquidityFlag = message.getField(TRADE_LIQUIDITY_INDICATOR_TAG);
       }
@@ -173,14 +172,23 @@ void ChixFixApplication::onMessage(const FIX42::ExecutionReport& message,
       if(message.isSet(execBroker)) {
         message.get(execBroker);
       }
-      if(execBroker == "CHIX") {
+      if(execBroker == "AEQN") {
+        update->m_lastMarket = DefaultMarkets::NEOE().GetData();
+      } else if(execBroker == "AEQL") {
+        update->m_lastMarket = DefaultMarkets::NEOE().GetData();
+      } else if(execBroker == "CHIX") {
         update->m_lastMarket = DefaultMarkets::CHIC().GetData();
       } else if(execBroker == "CX2") {
         update->m_lastMarket = DefaultMarkets::XCX2().GetData();
       } else if(execBroker == "TSX") {
         update->m_lastMarket = DefaultMarkets::TSX().GetData();
       } else if(execBroker == "PURE") {
-        update->m_lastMarket = DefaultMarkets::PURE().GetData();
+        if(order.GetInfo().m_fields.m_security.GetMarket() ==
+            DefaultMarkets::CSE()) {
+          update->m_lastMarket = DefaultMarkets::CSE().GetData();
+        } else {
+          update->m_lastMarket = DefaultMarkets::PURE().GetData();
+        }
       } else if(execBroker == "ALPH") {
         update->m_lastMarket = DefaultMarkets::XATS().GetData();
       } else if(execBroker == "LYNX") {
@@ -199,43 +207,43 @@ void ChixFixApplication::onMessage(const FIX42::TradingSessionStatus& message,
 void ChixFixApplication::onMessage(const FIX42::OrderCancelReject& message,
     const FIX::SessionID& sessionId) {}
 
-string ChixFixApplication::GetAccount() const {
+std::string ChixFixApplication::GetAccount() const {
   return GetSessionSettings().get(GetSessionId()).getString("Account");
 }
 
-string ChixFixApplication::GetSenderSubID() const {
+std::string ChixFixApplication::GetSenderSubID() const {
   return GetSessionSettings().get(GetSessionId()).getString("SenderSubID");
 }
 
-string ChixFixApplication::GetUmirUserID() const {
+std::string ChixFixApplication::GetUmirUserID() const {
   if(GetSessionSettings().get(GetSessionId()).has("UMIRUserID")) {
     return GetSessionSettings().get(GetSessionId()).getString("UMIRUserID");
   }
   return GetSenderSubID();
 }
 
-string ChixFixApplication::GetBrokerNumber() const {
+std::string ChixFixApplication::GetBrokerNumber() const {
   if(GetSessionSettings().get(GetSessionId()).has("BrokerNumber")) {
     return GetSessionSettings().get(GetSessionId()).getString("BrokerNumber");
   }
   return GetSenderSubID();
 }
 
-string ChixFixApplication::GetNoTradeFeat() const {
+std::string ChixFixApplication::GetNoTradeFeat() const {
   if(GetSessionSettings().get(GetSessionId()).has("NoTradeFeat")) {
     return GetSessionSettings().get(GetSessionId()).getString("NoTradeFeat");
   }
   return {};
 }
 
-string ChixFixApplication::GetNoTradeKey() const {
+std::string ChixFixApplication::GetNoTradeKey() const {
   if(GetSessionSettings().get(GetSessionId()).has("NoTradeKey")) {
     return GetSessionSettings().get(GetSessionId()).getString("NoTradeKey");
   }
   return {};
 }
 
-const optional<string>& ChixFixApplication::GetAnonymousTag() const {
+const optional<std::string>& ChixFixApplication::GetAnonymousTag() const {
   if(m_anonymousTag.is_initialized()) {
     return *m_anonymousTag;
   }

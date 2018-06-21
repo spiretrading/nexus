@@ -18,7 +18,6 @@ using namespace Nexus;
 using namespace Nexus::FixUtilities;
 using namespace Nexus::OasisOrderExecutionService;
 using namespace Nexus::OrderExecutionService;
-using namespace std;
 
 namespace {
   const auto TSX_ACCOUNT_TYPE_TAG = 6750;
@@ -88,7 +87,7 @@ const Order& TsxSorFixApplication::Submit(const OrderInfo& info) {
       }
       newOrderSingle->setField(TSX_ACCOUNT_TYPE_TAG, "CL");
       newOrderSingle->setField(TSX_USER_ID_TAG, GetTsxUserID());
-      string adminField;
+      std::string adminField;
       if(info.m_fields.m_destination == DefaultDestinations::ALPHA()) {
         adminField = "00000A00";
       }
@@ -150,7 +149,7 @@ void TsxSorFixApplication::onMessage(const FIX42::ExecutionReport& message,
   }
   m_orderLog.Update(message, sessionId, m_timeClient->GetTime(),
     [=] (const Order& order, Out<ExecutionReport> update) {
-      string tsxExchangeAdminValue;
+      std::string tsxExchangeAdminValue;
       if(message.isSetField(TSX_EXCHANGE_ADMIN_TAG)) {
         tsxExchangeAdminValue = message.getField(TSX_EXCHANGE_ADMIN_TAG);
       }
@@ -192,22 +191,22 @@ void TsxSorFixApplication::onMessage(
 void TsxSorFixApplication::onMessage(const FIX42::OrderCancelReject& message,
     const FIX::SessionID& sessionId) {}
 
-string TsxSorFixApplication::GetAccount() const {
+std::string TsxSorFixApplication::GetAccount() const {
   return GetSessionSettings().get(GetSessionId()).getString("Account");
 }
 
-string TsxSorFixApplication::GetSenderSubID() const {
+std::string TsxSorFixApplication::GetSenderSubID() const {
   return GetSessionSettings().get(GetSessionId()).getString("SenderSubID");
 }
 
-string TsxSorFixApplication::GetTsxUserID() const {
+std::string TsxSorFixApplication::GetTsxUserID() const {
   if(GetSessionSettings().get(GetSessionId()).has("TSXUserID")) {
     return GetSessionSettings().get(GetSessionId()).getString("TSXUserID");
   }
   return GetSenderSubID();
 }
 
-string TsxSorFixApplication::GetNoTradeFeat() const {
+std::string TsxSorFixApplication::GetNoTradeFeat() const {
   if(GetSessionSettings().get(GetSessionId()).has("TSXNoTradeFeat")) {
     return GetSessionSettings().get(GetSessionId()).getString(
       "TSXNoTradeFeat");
@@ -215,14 +214,14 @@ string TsxSorFixApplication::GetNoTradeFeat() const {
   return {};
 }
 
-string TsxSorFixApplication::GetNoTradeKey() const {
+std::string TsxSorFixApplication::GetNoTradeKey() const {
   if(GetSessionSettings().get(GetSessionId()).has("TSXNoTradeKey")) {
     return GetSessionSettings().get(GetSessionId()).getString("TSXNoTradeKey");
   }
   return {};
 }
 
-const optional<string>& TsxSorFixApplication::GetAnonymousTag() const {
+const optional<std::string>& TsxSorFixApplication::GetAnonymousTag() const {
   if(m_anonymousTag.is_initialized()) {
     return *m_anonymousTag;
   }

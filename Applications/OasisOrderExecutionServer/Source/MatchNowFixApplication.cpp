@@ -17,7 +17,6 @@ using namespace Nexus;
 using namespace Nexus::FixUtilities;
 using namespace Nexus::OasisOrderExecutionService;
 using namespace Nexus::OrderExecutionService;
-using namespace std;
 
 namespace {
   const auto UMIR_ACCOUNT_TYPE_TAG = 47;
@@ -153,15 +152,15 @@ void MatchNowFixApplication::onMessage(
 void MatchNowFixApplication::onMessage(const FIX42::OrderCancelReject& message,
     const FIX::SessionID& sessionId) {}
 
-string MatchNowFixApplication::GetAccount() const {
+std::string MatchNowFixApplication::GetAccount() const {
   return GetSessionSettings().get(GetSessionId()).getString("Account");
 }
 
-string MatchNowFixApplication::GetSenderSubID() const {
+std::string MatchNowFixApplication::GetSenderSubID() const {
   return GetSessionSettings().get(GetSessionId()).getString("SenderSubID");
 }
 
-const optional<string>& MatchNowFixApplication::GetAnonymousTag() const {
+const optional<std::string>& MatchNowFixApplication::GetAnonymousTag() const {
   if(m_anonymousTag.is_initialized()) {
     return *m_anonymousTag;
   }

@@ -20,7 +20,6 @@ using namespace Nexus::MarketDataService;
 using namespace Nexus::Queries;
 using namespace Nexus::OasisOrderExecutionService;
 using namespace Nexus::OrderExecutionService;
-using namespace std;
 
 namespace {
   const auto UMIR_ACCOUNT_TYPE_TAG = 6750;
@@ -145,7 +144,7 @@ void OmegaFixApplication::onMessage(const FIX42::ExecutionReport& message,
   m_orderLog.Update(message, sessionId, m_timeClient->GetTime(),
     [=] (const Order& order, Out<ExecutionReport> update) {
       if(update->m_lastQuantity != 0) {
-        string liquidityFlag;
+        std::string liquidityFlag;
         if(message.isSetField(TRADE_LIQUIDITY_INDICATOR_TAG)) {
           liquidityFlag = message.getField(TRADE_LIQUIDITY_INDICATOR_TAG);
         }
@@ -170,7 +169,12 @@ void OmegaFixApplication::onMessage(const FIX42::ExecutionReport& message,
       } else if(lastMkt == "OMGA") {
         update->m_lastMarket = DefaultMarkets::OMGA().GetData();
       } else if(lastMkt == "PURE") {
-        update->m_lastMarket = DefaultMarkets::PURE().GetData();
+        if(order.GetInfo().m_fields.m_security.GetMarket() ==
+            DefaultMarkets::CSE()) {
+          update->m_lastMarket = DefaultMarkets::CSE().GetData();
+        } else {
+          update->m_lastMarket = DefaultMarkets::PURE().GetData();
+        }
       } else if(lastMkt == "XTSE") {
         update->m_lastMarket = DefaultMarkets::TSX().GetData();
       }
@@ -199,27 +203,27 @@ BboQuote OmegaFixApplication::LoadBboQuote(const Security& security) {
   }
 }
 
-string OmegaFixApplication::GetAccount() const {
+std::string OmegaFixApplication::GetAccount() const {
   return GetSessionSettings().get(GetSessionId()).getString("Account");
 }
 
-string OmegaFixApplication::GetExecBroker() const {
+std::string OmegaFixApplication::GetExecBroker() const {
   return GetSessionSettings().get(GetSessionId()).getString("ExecBroker");
 }
 
-string OmegaFixApplication::GetUmirUserID() const {
+std::string OmegaFixApplication::GetUmirUserID() const {
   return GetSessionSettings().get(GetSessionId()).getString("UMIRUserID");
 }
 
-string OmegaFixApplication::GetOmegaRoute() const {
+std::string OmegaFixApplication::GetOmegaRoute() const {
   return GetSessionSettings().get(GetSessionId()).getString("OmegaRoute");
 }
 
-string OmegaFixApplication::GetLynxRoute() const {
+std::string OmegaFixApplication::GetLynxRoute() const {
   return GetSessionSettings().get(GetSessionId()).getString("LynxRoute");
 }
 
-const optional<string>& OmegaFixApplication::GetAnonymousTag() const {
+const optional<std::string>& OmegaFixApplication::GetAnonymousTag() const {
   if(m_anonymousTag.is_initialized()) {
     return *m_anonymousTag;
   }
@@ -232,14 +236,14 @@ const optional<string>& OmegaFixApplication::GetAnonymousTag() const {
   return *m_anonymousTag;
 }
 
-string OmegaFixApplication::GetNoTradeFeat() const {
+std::string OmegaFixApplication::GetNoTradeFeat() const {
   if(GetSessionSettings().get(GetSessionId()).has("NoTradeFeat")) {
     return GetSessionSettings().get(GetSessionId()).getString("NoTradeFeat");
   }
   return {};
 }
 
-string OmegaFixApplication::GetNoTradeKey() const {
+std::string OmegaFixApplication::GetNoTradeKey() const {
   if(GetSessionSettings().get(GetSessionId()).has("NoTradeKey")) {
     return GetSessionSettings().get(GetSessionId()).getString("NoTradeKey");
   }

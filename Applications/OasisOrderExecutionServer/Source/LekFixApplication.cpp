@@ -18,7 +18,6 @@ using namespace Nexus;
 using namespace Nexus::FixUtilities;
 using namespace Nexus::OasisOrderExecutionService;
 using namespace Nexus::OrderExecutionService;
-using namespace std;
 
 namespace {
   const auto PRIMARY_TRADE_LIQUIDITY_INDICATOR_TAG = 9730;
@@ -162,7 +161,7 @@ void LekFixApplication::onMessage(const FIX42::TradingSessionStatus& message,
 void LekFixApplication::onMessage(const FIX42::OrderCancelReject& message,
     const FIX::SessionID& sessionId) {}
 
-const optional<string>& LekFixApplication::GetAccount() const {
+const optional<std::string>& LekFixApplication::GetAccount() const {
   if(m_accountTag.is_initialized()) {
     return *m_accountTag;
   }

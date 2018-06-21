@@ -17,7 +17,6 @@ using namespace Nexus;
 using namespace Nexus::FixUtilities;
 using namespace Nexus::OasisOrderExecutionService;
 using namespace Nexus::OrderExecutionService;
-using namespace std;
 
 namespace {
   const auto UMIR_ACCOUNT_TYPE_TAG = 6750;
@@ -116,7 +115,7 @@ void CnsxFixApplication::onMessage(const FIX42::ExecutionReport& message,
     const FIX::SessionID& sessionId) {
   m_orderLog.Update(message, sessionId, m_timeClient->GetTime(),
     [=] (const Order& order, Out<ExecutionReport> update) {
-      string exchangeAdminValue;
+      std::string exchangeAdminValue;
       if(message.isSetField(EXCHANGE_ADMIN_TAG)) {
         exchangeAdminValue = message.getField(EXCHANGE_ADMIN_TAG);
       }
@@ -145,36 +144,36 @@ void CnsxFixApplication::onMessage(const FIX42::TradingSessionStatus& message,
 void CnsxFixApplication::onMessage(const FIX42::OrderCancelReject& message,
     const FIX::SessionID& sessionId) {}
 
-string CnsxFixApplication::GetAccount() const {
+std::string CnsxFixApplication::GetAccount() const {
   return GetSessionSettings().get(GetSessionId()).getString("Account");
 }
 
-string CnsxFixApplication::GetSenderSubID() const {
+std::string CnsxFixApplication::GetSenderSubID() const {
   return GetSessionSettings().get(GetSessionId()).getString("SenderSubID");
 }
 
-string CnsxFixApplication::GetUmirUserID() const {
+std::string CnsxFixApplication::GetUmirUserID() const {
   if(GetSessionSettings().get(GetSessionId()).has("UMIRUserID")) {
     return GetSessionSettings().get(GetSessionId()).getString("UMIRUserID");
   }
   return GetSenderSubID();
 }
 
-string CnsxFixApplication::GetNoTradeFeat() const {
+std::string CnsxFixApplication::GetNoTradeFeat() const {
   if(GetSessionSettings().get(GetSessionId()).has("NoTradeFeat")) {
     return GetSessionSettings().get(GetSessionId()).getString("NoTradeFeat");
   }
   return "";
 }
 
-string CnsxFixApplication::GetNoTradeKey() const {
+std::string CnsxFixApplication::GetNoTradeKey() const {
   if(GetSessionSettings().get(GetSessionId()).has("NoTradeKey")) {
     return GetSessionSettings().get(GetSessionId()).getString("NoTradeKey");
   }
   return "";
 }
 
-const optional<string>& CnsxFixApplication::GetAnonymousTag() const {
+const optional<std::string>& CnsxFixApplication::GetAnonymousTag() const {
   if(m_anonymousTag.is_initialized()) {
     return *m_anonymousTag;
   }
