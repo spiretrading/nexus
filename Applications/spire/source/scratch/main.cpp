@@ -150,12 +150,8 @@ time_and_sales_table_view::time_and_sales_table_view(
   m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table->setStyleSheet(R"(
-    QTableView {
       border: none;
-      gridline-color: red;
-    }
-
-    QTableView::)");
+      gridline-color: #C8C8C8;)");
   m_table->setItemDelegate(new item_padding_delegate(scale_width(5),
     new custom_variant_item_delegate(), this));
   connect(model, &QAbstractItemModel::rowsAboutToBeInserted, this,
