@@ -1,11 +1,7 @@
 import {css, StyleSheet} from 'aphrodite';
 import * as React from 'react';
 
-<<<<<<< HEAD
-/** The properties used to display the BurgerButton. */
-=======
 /** The properties used to render a NotificationButton. */
->>>>>>> origin/master
 export interface Properties {
 
   /** The width of the button. */
@@ -20,6 +16,10 @@ export interface Properties {
 
 /** Displays a notification button. */
 export class NotificationButton extends React.Component<Properties> {
+  public constructor(props: Properties) {
+    super(props);
+    this.onClick = this.onClick.bind(this);
+  }
   public render(): JSX.Element {
     const STYLE = StyleSheet.create({
       button: {
@@ -35,7 +35,7 @@ export class NotificationButton extends React.Component<Properties> {
       }
     });
     return (
-      <button className={css(STYLE.button)} onClick={this.onClick.bind(this)}>
+      <button className={css(STYLE.button)} onClick={this.onClick}>
         <img width={this.props.width} height={this.props.height}
              src='resources/dashboard/notification.svg'/>
       </button>);
