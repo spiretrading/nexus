@@ -29,6 +29,9 @@ namespace Nexus {
       //! Price < $1.00.
       SUB_DOLLAR,
 
+      //! Price < $0.10.
+      SUB_DIME,
+
       //! Interlisted symbols.
       INTERLISTED,
 
@@ -37,7 +40,7 @@ namespace Nexus {
     };
 
     //! The number of categories enumerated.
-    static const std::size_t CATEGORY_COUNT = 4;
+    static const std::size_t CATEGORY_COUNT = 5;
 
     /*! \enum Type
         \brief Enumerates the types of trades.
@@ -117,7 +120,9 @@ namespace Nexus {
       return Money::ZERO;
     }
     auto category = [&] {
-      if(executionReport.m_lastPrice < Money::ONE) {
+      if(executionReport.m_lastPrice < 10 * Money::CENT) {
+        return ChicFeeTable::Category::SUB_DIME;
+      } else if(executionReport.m_lastPrice < Money::ONE) {
         return ChicFeeTable::Category::SUB_DOLLAR;
       } else if(isInterlisted) {
         return ChicFeeTable::Category::INTERLISTED;
