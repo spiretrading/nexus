@@ -4,6 +4,7 @@
 #include <QHeaderView>
 #include <QLayout>
 #include <QScrollArea>
+#include <QScrollBar>
 #include <QTableWidget>
 #include <QVBoxLayout>
 #include <QWidget>
@@ -53,6 +54,7 @@ class time_and_sales_table_view : public QScrollArea {
 
     void on_header_resize(int index, int old_size, int new_size);
     void on_header_swap(int logical_index, int old_index, int new_index);
+    void on_horizontal_slider_value_changed(int new_value);
     void on_rows_about_to_be_inserted();
 };
 
@@ -96,6 +98,8 @@ time_and_sales_table_view::time_and_sales_table_view(
       width: 0px;
     })").arg(scale_height(12)).arg(scale_height(12))
         .arg(scale_width(30)).arg(scale_height(30)));
+  connect(horizontalScrollBar(), &QScrollBar::valueChanged, this,
+    &time_and_sales_table_view::on_horizontal_slider_value_changed);
   m_header = new QHeaderView(Qt::Horizontal, this);
   m_header->setMinimumSectionSize(scale_width(35));
   m_header->setStretchLastSection(true);
@@ -198,6 +202,15 @@ void time_and_sales_table_view::on_header_resize(int index, int old_size,
 void time_and_sales_table_view::on_header_swap(int logical_index,
     int old_index, int new_index) {
   m_table->horizontalHeader()->moveSection(old_index, new_index);
+}
+
+void time_and_sales_table_view::on_horizontal_slider_value_changed(
+    int new_value) {
+  if(new_value != 0) {
+    m_header->move(widget()->pos().x(), m_header->pos().y());
+  } else {
+    m_header->move(0, m_header->pos().y());
+  }
 }
 
 void time_and_sales_table_view::on_rows_about_to_be_inserted() {
