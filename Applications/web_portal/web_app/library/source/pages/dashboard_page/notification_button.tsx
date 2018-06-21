@@ -37,7 +37,7 @@ export class NotificationButton extends React.Component<Properties> {
     return (
       <button className={css(STYLE.button)} onClick={this.onClick}>
         <img width={this.props.width} height={this.props.height}
-             src='resources/dashboard/notification.svg'/>
+          src='resources/dashboard/notification.svg'/>
       </button>);
   }
 
