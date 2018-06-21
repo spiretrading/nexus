@@ -1,5 +1,6 @@
 #include <memory>
 #include <QApplication>
+#include <QDebug>
 #include <QHeaderView>
 #include <QLayout>
 #include <QScrollArea>
@@ -36,6 +37,8 @@ class time_and_sales_table_view : public QScrollArea {
     */
     void set_model(QAbstractItemModel* model);
 
+    void set_properties(const time_and_sales_properties& properties);
+
   protected:
     void resizeEvent(QResizeEvent* event) override;
 
@@ -44,6 +47,8 @@ class time_and_sales_table_view : public QScrollArea {
     QWidget* m_header_padding;
     QTableView* m_table;
 
+    void on_header_resize(int index, int old_size, int new_size);
+    void on_header_swap(int logical_index, int old_index, int new_index);
     void on_rows_about_to_be_inserted();
 };
 
@@ -51,31 +56,64 @@ time_and_sales_table_view::time_and_sales_table_view(
     QAbstractItemModel* model,QWidget* parent)
     : QScrollArea(parent) {
   m_header = new QHeaderView(Qt::Horizontal, this);
+  m_header->setMinimumSectionSize(scale_width(35));
   m_header->setStretchLastSection(true);
+  m_header->setSectionsClickable(false);
+  m_header->setSectionsMovable(true);
+  //
+  // Need initial height?
+  //
+  m_header->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+  m_header->setStyleSheet(QString(R"(
+    QHeaderView::section {
+      background-color: #FFFFFF;
+      background-image: url(:icons/column-border.png);
+      background-position: left;
+      background-repeat: repeat;
+      border: none;
+      color: #4B23A0;
+      font-family: Roboto;
+      font-weight: 550;
+      padding-left: %1px;
+      padding-right: %1px;
+    }
+
+    QHeaderView::section::first {
+      background: none;
+      background-color: #FFFFFF;
+    })").arg(scale_width(8)));
+  connect(m_header, &QHeaderView::sectionResized, this,
+    &time_and_sales_table_view::on_header_resize);
+  connect(m_header, &QHeaderView::sectionMoved, this,
+    &time_and_sales_table_view::on_header_swap);
   auto main_widget = new QWidget(this);
   auto layout = new QVBoxLayout(main_widget);
   layout->setContentsMargins({});
   layout->setSpacing(0);
-  m_header_padding = new QWidget(this);
+  m_header_padding = new QWidget(this); 
   m_header_padding->setFixedHeight(m_header->height());
   layout->addWidget(m_header_padding);
   m_table = new QTableView(this);
   m_table->setMinimumWidth(750);
+  m_table->resize(width(), 0);
+  m_table->setSelectionMode(QAbstractItemView::NoSelection);
   m_table->horizontalHeader()->setStretchLastSection(true);
   m_table->horizontalHeader()->hide();
   m_table->verticalHeader()->hide();
   m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  m_table->setStyleSheet(R"(
+    border: none;
+    gridline-color: red;)");
   m_table->setItemDelegate(new item_padding_delegate(scale_width(5),
     new custom_variant_item_delegate(), this));
   connect(model, &QAbstractItemModel::rowsAboutToBeInserted, this,
     &time_and_sales_table_view::on_rows_about_to_be_inserted);
   layout->addWidget(m_table);
   set_model(model);
-  setWidgetResizable(true);
   setWidget(main_widget);
-  setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-  setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+  setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+  setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 }
 
 void time_and_sales_table_view::set_model(QAbstractItemModel* model) {
@@ -83,15 +121,50 @@ void time_and_sales_table_view::set_model(QAbstractItemModel* model) {
   m_table->setModel(model);
 }
 
+void time_and_sales_table_view::set_properties(
+    const time_and_sales_properties& properties) {
+  m_table->setShowGrid(properties.m_show_grid);
+  QFontMetrics metrics(properties.m_font);
+  auto row_height = metrics.height() + scale_height(2);
+  m_table->verticalHeader()->setDefaultSectionSize(row_height);
+  auto header_font = m_table->verticalHeader()->font();
+  if(properties.m_font.pointSize() >= 11) {
+    header_font.setPointSizeF(properties.m_font.pointSize() * 0.8);
+  } else {
+    header_font.setPointSize(9);
+  }
+  m_header->setFont(header_font);
+  QFontMetrics header_metrics(header_font);
+  m_header->setFixedHeight(header_metrics.height() * 1.8);
+  m_header_padding->setFixedHeight(m_header->height());
+  //
+  // is this still required?
+  //
+  viewport()->update();
+}
+
 void time_and_sales_table_view::resizeEvent(QResizeEvent* event) {
-  m_header->setFixedWidth(width());
+  m_header->setFixedWidth(m_table->width());
+}
+
+void time_and_sales_table_view::on_header_resize(int index, int old_size,
+    int new_size) {
+  m_table->horizontalHeader()->resizeSection(index,
+    m_header->sectionSize(index));
+}
+
+void time_and_sales_table_view::on_header_swap(int logical_index,
+    int old_index, int new_index) {
+  m_table->horizontalHeader()->moveSection(old_index, new_index);
 }
 
 void time_and_sales_table_view::on_rows_about_to_be_inserted() {
   if(m_table->model()->rowCount() > 0) {
     widget()->resize(width(),
-      (m_table->model()->rowCount() + 1) * m_table->rowHeight(0));
+      (m_table->model()->rowCount() + 1) * m_table->rowHeight(0) +
+      m_header->height());
   }
+  setWindowTitle(QString("%1").arg(m_table->model()->rowCount()));
 }
 
 int main(int argc, char** argv) {
@@ -101,15 +174,16 @@ int main(int argc, char** argv) {
   initialize_resources();
   auto periodic_model = std::make_shared<periodic_time_and_sales_model>(
     Security("MRU", DefaultMarkets::TSX(), DefaultCountries::CA()));
-  periodic_model->set_price(Money(Quantity(100)));
+  periodic_model->set_price(Money(Quantity(44)));
   periodic_model->set_price_range(
     time_and_sales_properties::price_range::AT_ASK);
-  periodic_model->set_period(boost::posix_time::milliseconds(500));
+  periodic_model->set_period(boost::posix_time::milliseconds(1500));
   auto table_model = new time_and_sales_window_model(periodic_model,
       time_and_sales_properties());
   auto filter = new custom_variant_sort_filter_proxy_model();
   filter->setSourceModel(table_model);
   auto table = new time_and_sales_table_view(filter);
+  table->set_properties(time_and_sales_properties());
   table->show();
   application->exec();
 }
