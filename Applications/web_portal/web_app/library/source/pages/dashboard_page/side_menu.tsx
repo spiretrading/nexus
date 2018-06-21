@@ -10,19 +10,19 @@ export interface Properties {
   roles: Nexus.AccountRoles;
 
   /** The action to perform when the Profile menu item is selected. */
-  onProfileAction: () => void;
+  onProfileAction?: () => void;
 
   /** The action to perform when the Accounts menu item is selected. */
-  onAccountsAction: () => void;
+  onAccountsAction?: () => void;
 
   /** The action to perform when the Portfolio menu item is selected. */
-  onPortfolioAction: () => void;
+  onPortfolioAction?: () => void;
 
   /** The action to perform when the Request History menu item is selected. */
-  onRequestHistoryAction: () => void;
+  onRequestHistoryAction?: () => void;
 
   /** The action to perform when the Sign Out menu item is selected. */
-  onSignOutAction: () => void;
+  onSignOutAction?: () => void;
 }
 
 export interface State {}
