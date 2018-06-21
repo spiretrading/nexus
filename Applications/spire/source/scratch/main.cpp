@@ -67,6 +67,7 @@ time_and_sales_table_view::time_and_sales_table_view(
     : QScrollArea(parent) {
   setStyleSheet(QString(R"(
     QScrollArea {
+      background-color: #FFFFFF;
       border: none;
     }
 
@@ -98,6 +99,8 @@ time_and_sales_table_view::time_and_sales_table_view(
       width: 0px;
     })").arg(scale_height(12)).arg(scale_height(12))
         .arg(scale_width(30)).arg(scale_height(30)));
+  setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   connect(horizontalScrollBar(), &QScrollBar::valueChanged, this,
     &time_and_sales_table_view::on_horizontal_slider_value_changed);
   m_header = new QHeaderView(Qt::Horizontal, this);
@@ -105,9 +108,6 @@ time_and_sales_table_view::time_and_sales_table_view(
   m_header->setStretchLastSection(true);
   m_header->setSectionsClickable(false);
   m_header->setSectionsMovable(true);
-  //
-  // Need initial height?
-  //
   m_header->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
   m_header->setStyleSheet(QString(R"(
     QHeaderView::section {
@@ -142,6 +142,7 @@ time_and_sales_table_view::time_and_sales_table_view(
   m_table = new QTableView(this);
   m_table->setMinimumWidth(MINIMUM_TABLE_WIDTH);
   m_table->resize(width(), 0);
+  m_table->setFocusPolicy(Qt::NoFocus);
   m_table->setSelectionMode(QAbstractItemView::NoSelection);
   m_table->horizontalHeader()->setStretchLastSection(true);
   m_table->horizontalHeader()->hide();
@@ -149,8 +150,12 @@ time_and_sales_table_view::time_and_sales_table_view(
   m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table->setStyleSheet(R"(
-    border: none;
-    gridline-color: red;)");
+    QTableView {
+      border: none;
+      gridline-color: red;
+    }
+
+    QTableView::)");
   m_table->setItemDelegate(new item_padding_delegate(scale_width(5),
     new custom_variant_item_delegate(), this));
   connect(model, &QAbstractItemModel::rowsAboutToBeInserted, this,
@@ -158,8 +163,6 @@ time_and_sales_table_view::time_and_sales_table_view(
   layout->addWidget(m_table);
   set_model(model);
   setWidget(main_widget);
-  setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-  setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 }
 
 void time_and_sales_table_view::set_model(QAbstractItemModel* model) {
@@ -232,7 +235,7 @@ int main(int argc, char** argv) {
   periodic_model->set_price(Money(Quantity(44)));
   periodic_model->set_price_range(
     time_and_sales_properties::price_range::AT_ASK);
-  periodic_model->set_period(boost::posix_time::milliseconds(500));
+  periodic_model->set_period(boost::posix_time::milliseconds(1000));
   auto table_model = new time_and_sales_window_model(periodic_model,
       time_and_sales_properties());
   auto filter = new custom_variant_sort_filter_proxy_model();
