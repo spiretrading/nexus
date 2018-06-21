@@ -7,6 +7,7 @@
 #include <QScrollBar>
 #include <QTableWidget>
 #include <QVBoxLayout>
+#include <QWheelEvent>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/ui/item_padding_delegate.hpp"
@@ -46,6 +47,7 @@ class time_and_sales_table_view : public QScrollArea {
 
   protected:
     void resizeEvent(QResizeEvent* event) override;
+    void wheelEvent(QWheelEvent* event) override;
 
   private:
     QHeaderView* m_header;
@@ -190,6 +192,10 @@ void time_and_sales_table_view::set_properties(
 
 void time_and_sales_table_view::resizeEvent(QResizeEvent* event) {
   m_header->setFixedWidth(m_table->width());
+}
+
+void time_and_sales_table_view::wheelEvent(QWheelEvent* event) {
+
 }
 
 void time_and_sales_table_view::on_header_resize(int index, int old_size,
