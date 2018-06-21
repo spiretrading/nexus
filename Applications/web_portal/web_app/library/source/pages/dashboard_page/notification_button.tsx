@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-/** The properties used to render a NotificationButton */
+/** The properties used to render a NotificationButton. */
 export interface Properties {
 
   /** The number of notification items. */

@@ -3953,8 +3953,14 @@ namespace {
     PopulateEdgxOrders(asexOrderTypes);
     PopulateNasdaqOrders(asexOrderTypes);
     auto& cseOrderTypes = orderTypes[DefaultMarkets::CSE()];
+    PopulateChixOrders(cseOrderTypes);
     PopulateCseOrders(cseOrderTypes);
+    PopulateCx2Orders(cseOrderTypes);
+    PopulateLynxOrders(cseOrderTypes);
+    PopulateMatchNowLpOrders(cseOrderTypes);
+    PopulateMatchNowMfOrders(cseOrderTypes);
     PopulateNeoeOrders(cseOrderTypes);
+    PopulateOmegaOrders(cseOrderTypes);
     PopulatePureOrders(cseOrderTypes);
     auto& nasdaqOrderTypes = orderTypes[DefaultMarkets::NASDAQ()];
     PopulateArcaOrders(nasdaqOrderTypes);
