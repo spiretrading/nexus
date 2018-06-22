@@ -126,6 +126,9 @@ export class LoginPage extends React.Component<Properties, State> {
         document.activeElement !== this.submitButton &&
         event.key.trim().length === 1) {
       this.usernameInputField.focus();
+    } else if(document.activeElement === this.submitButton &&
+      event.key.trim() === 'Enter') {
+      this.onLogin();
     }
   }
 
