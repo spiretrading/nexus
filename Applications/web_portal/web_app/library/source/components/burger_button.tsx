@@ -61,9 +61,9 @@ export class BurgerButton extends React.Component<Properties> {
         <svg className={css(BurgerButton.STYLE.icon)}
             ref={(ref) => this.icon = ref}>
           <g>
-            <rect y='0' width='100%' height='20%'/>
-            <rect y='40%' width='100%' height='20%'/>
-            <rect y='80%' width='100%' height='20%'/>
+            <rect y='0' width='100%' height='15%'/>
+            <rect y='42.5%' width='100%' height='15%'/>
+            <rect y='85%' width='100%' height='15%'/>
           </g>
         </svg>
       </button>);
