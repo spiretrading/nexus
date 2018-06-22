@@ -20,13 +20,13 @@ using namespace Beam::WebServices;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::ClientWebPortal;
+using namespace Nexus::WebPortal;
 using namespace std;
 using namespace TCLAP;
 
 namespace {
-  using ClientWebPortalServletContainer = HttpServletContainer<
-    ClientWebPortalServlet, TcpServerSocket>;
+  using WebPortalServletContainer = HttpServletContainer<
+    WebPortalServlet, TcpServerSocket>;
 
   struct ServerConnectionInitializer {
     IpAddress m_interface;
@@ -85,7 +85,7 @@ int main(int argc, const char** argv) {
     cerr << "Error parsing section 'server': " << e.what() << endl;
     return -1;
   }
-  ClientWebPortalServletContainer server{Initialize(Ref(serviceClients)),
+  WebPortalServletContainer server{Initialize(Ref(serviceClients)),
     Initialize(serverConnectionInitializer.m_interface, Ref(socketThreadPool))};
   try {
     server.Open();

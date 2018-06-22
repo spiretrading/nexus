@@ -1,5 +1,5 @@
-#ifndef NEXUS_CLIENTWEBPORTALSESSION_HPP
-#define NEXUS_CLIENTWEBPORTALSESSION_HPP
+#ifndef NEXUS_WEB_PORTAL_SESSION_HPP
+#define NEXUS_WEB_PORTAL_SESSION_HPP
 #include <boost/thread/mutex.hpp>
 #include <Beam/Serialization/JsonReceiver.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
@@ -8,21 +8,17 @@
 #include <Beam/WebServices/HttpResponse.hpp>
 #include "web_portal/web_portal/web_portal.hpp"
 
-namespace Nexus {
-namespace ClientWebPortal {
+namespace Nexus::WebPortal {
 
-  /*! \class ClientWebPortalSession
-      \brief Represents a session to the ClientWebPortal.
-   */
-  class ClientWebPortalSession :
-      public Beam::WebServices::AuthenticatedSession {
+  //! Represents a session to the WebPortal.
+  class WebPortalSession : public Beam::WebServices::AuthenticatedSession {
     public:
 
-      //! Constructs a ClientWebPortalSession.
+      //! Constructs a WebPortalSession.
       /*!
         \param id The session's id.
       */
-      ClientWebPortalSession(std::string id);
+      WebPortalSession(std::string id);
 
       //! Shuttles the parameters from this client.
       /*!
@@ -30,7 +26,7 @@ namespace ClientWebPortal {
         \return The deserialized value.
       */
       template<typename T>
-      T ShuttleParameters(const Beam::WebServices::HttpRequest& request);
+      auto ShuttleParameters(const Beam::WebServices::HttpRequest& request);
 
       //! Shuttles the response to this client.
       /*!
@@ -48,7 +44,7 @@ namespace ClientWebPortal {
   };
 
   template<typename T>
-  T ClientWebPortalSession::ShuttleParameters(
+  auto WebPortalSession::ShuttleParameters(
       const Beam::WebServices::HttpRequest& request) {
     T parameters;
     {
@@ -60,7 +56,7 @@ namespace ClientWebPortal {
   }
 
   template<typename T>
-  void ClientWebPortalSession::ShuttleResponse(const T& value,
+  void WebPortalSession::ShuttleResponse(const T& value,
       Beam::Out<Beam::WebServices::HttpResponse> response) {
     response->SetHeader({"Content-Type", "application/json"});
     auto buffer =
@@ -71,7 +67,6 @@ namespace ClientWebPortal {
       }();
     response->SetBody(std::move(buffer));
   }
-}
 }
 
 #endif

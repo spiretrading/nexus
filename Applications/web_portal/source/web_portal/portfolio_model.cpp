@@ -7,9 +7,9 @@ using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace Nexus;
 using namespace Nexus::Accounting;
-using namespace Nexus::ClientWebPortal;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::RiskService;
+using namespace Nexus::WebPortal;
 using namespace std;
 
 PortfolioModel::Entry::Entry(Beam::ServiceLocator::DirectoryEntry account,
