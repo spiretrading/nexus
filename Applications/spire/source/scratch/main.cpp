@@ -53,7 +53,11 @@ class time_and_sales_table_view : public QScrollArea {
     QHeaderView* m_header;
     QWidget* m_header_padding;
     QTableView* m_table;
+    QTimer m_h_scroll_bar_timer;
+    QTimer m_v_scroll_bar_timer;
 
+    void fade_out_horizontal_scroll_bar();
+    void fade_out_vertical_scroll_bar();
     void on_header_resize(int index, int old_size, int new_size);
     void on_header_swap(int logical_index, int old_index, int new_index);
     void on_horizontal_slider_value_changed(int new_value);
@@ -62,6 +66,7 @@ class time_and_sales_table_view : public QScrollArea {
 
 namespace {
   auto MINIMUM_TABLE_WIDTH = 750;
+  auto SCROLL_BAR_FADE_TIME_MS = 500;
 }
 
 time_and_sales_table_view::time_and_sales_table_view(
@@ -159,6 +164,12 @@ time_and_sales_table_view::time_and_sales_table_view(
   connect(model, &QAbstractItemModel::rowsAboutToBeInserted, this,
     &time_and_sales_table_view::on_rows_about_to_be_inserted);
   layout->addWidget(m_table);
+  m_h_scroll_bar_timer.setInterval(SCROLL_BAR_FADE_TIME_MS);
+  connect(&m_h_scroll_bar_timer, &QTimer::timeout, this,
+    &time_and_sales_table_view::fade_out_horizontal_scroll_bar);
+  m_v_scroll_bar_timer.setInterval(SCROLL_BAR_FADE_TIME_MS);
+  connect(&m_v_scroll_bar_timer, &QTimer::timeout, this,
+    &time_and_sales_table_view::fade_out_vertical_scroll_bar);
   set_model(model);
   setWidget(main_widget);
 }
@@ -196,9 +207,26 @@ void time_and_sales_table_view::resizeEvent(QResizeEvent* event) {
 
 void time_and_sales_table_view::wheelEvent(QWheelEvent* event) {
   if(event->modifiers() & Qt::ShiftModifier) {
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     horizontalScrollBar()->setValue(horizontalScrollBar()->value() -
       (event->delta() / 2));
+    m_h_scroll_bar_timer.start();
+  } else if(!event->modifiers().testFlag(Qt::ShiftModifier)) {
+    setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    verticalScrollBar()->setValue(verticalScrollBar()->value() -
+      (event->delta() / 2));
+    m_v_scroll_bar_timer.start();
   }
+}
+
+void time_and_sales_table_view::fade_out_horizontal_scroll_bar() {
+  m_h_scroll_bar_timer.stop();
+  setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+}
+
+void time_and_sales_table_view::fade_out_vertical_scroll_bar() {
+  m_v_scroll_bar_timer.stop();
+  setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
 
 void time_and_sales_table_view::on_header_resize(int index, int old_size,
