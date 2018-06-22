@@ -77,7 +77,7 @@ time_and_sales_table_view::time_and_sales_table_view(
     QAbstractItemModel* model,QWidget* parent)
     : QScrollArea(parent) {
   setStyleSheet(QString(R"(
-    QScrollArea {
+    QWidget {
       background-color: #FFFFFF;
       border: none;
     }
