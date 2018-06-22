@@ -112,6 +112,8 @@ time_and_sales_table_view::time_and_sales_table_view(
         .arg(scale_width(30)).arg(scale_height(30)));
   setMouseTracking(true);
   setAttribute(Qt::WA_Hover);
+  horizontalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
+  verticalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   connect(horizontalScrollBar(), &QScrollBar::valueChanged, this,
