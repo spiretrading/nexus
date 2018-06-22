@@ -9,6 +9,7 @@ import * as WebPortal from 'web_portal';
 interface Properties {}
 
 interface State {
+  redirect: string;
   account: Beam.DirectoryEntry;
   isLoading: boolean;
 }
@@ -33,15 +34,19 @@ class Application extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
+      redirect: null,
       account: Beam.DirectoryEntry.INVALID,
       isLoading: true
     };
     this.serviceClients = new Nexus.WebServiceClients();
     this.onLogin = this.onLogin.bind(this);
-    this.onSignOut = this.onSignOut.bind(this);
+    this.onLogout = this.onLogout.bind(this);
   }
 
   public render(): JSX.Element {
+    if(this.state.redirect) {
+      return <Router.Redirect push to={this.state.redirect}/>;
+    }
     if(this.state.isLoading) {
       return <div></div>;
     }
@@ -58,13 +63,14 @@ class Application extends React.Component<Properties, State> {
             }}/>
           <AuthenticatedRoute path='/' account={this.state.account}
             render={() => {
-              return <WebPortal.DashboardPage/>;
+              return <WebPortal.DashboardPage model={this.dashboardModel}
+                onLogout={this.onLogout}/>;
             }}/>
         </Router.Switch>
       </Router.BrowserRouter>);
   }
 
-  public componentDidMount() {
+  public componentDidMount(): void {
     this.serviceClients.serviceLocatorClient.loadCurrentAccount().then(
       (account: Beam.DirectoryEntry) => {
         if(account.equals(Beam.DirectoryEntry.INVALID)) {
@@ -85,13 +91,22 @@ class Application extends React.Component<Properties, State> {
       });
   }
 
-  private onLogin(account: Beam.DirectoryEntry): void {
+  public componentDidUpdate(): void {
+    if(this.state.redirect) {
+      this.setState({
+        redirect: null
+      });
+    }
+  }
+
+  private onLogin(account: Beam.DirectoryEntry) {
     this.setState({
       account: account
     });
   }
 
-  private onSignOut(): void {
+  private async onLogout() {
+    await this.serviceClients.close();
     this.setState({
       account: Beam.DirectoryEntry.INVALID
     });
