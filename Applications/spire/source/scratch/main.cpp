@@ -301,6 +301,10 @@ void time_and_sales_table_view::on_rows_about_to_be_inserted() {
     widget()->resize(width(),
       (m_table->model()->rowCount() + 1) * m_table->rowHeight(0) +
       m_header->height());
+    if(verticalScrollBar()->value() != 0) {
+      verticalScrollBar()->setValue(verticalScrollBar()->value() +
+        m_table->rowHeight(0));
+    }
   }
   setWindowTitle(QString("%1").arg(m_table->model()->rowCount()));
 }
