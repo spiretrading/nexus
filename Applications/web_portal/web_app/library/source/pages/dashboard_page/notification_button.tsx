@@ -24,7 +24,7 @@ export class NotificationButton extends React.Component<Properties> {
         border: 'none',
         outline: 0,
         padding: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0)',
+        backgroundColor: 'transparent',
         ':hover': {
           cursor: 'pointer'
         }
