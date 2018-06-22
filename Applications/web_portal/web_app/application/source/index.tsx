@@ -100,6 +100,7 @@ class Application extends React.Component<Properties, State> {
   }
 
   private onLogin(account: Beam.DirectoryEntry) {
+    this.dashboardModel = new WebPortal.WebDashboardModel(this.serviceClients);
     this.setState({
       account: account
     });
@@ -114,6 +115,7 @@ class Application extends React.Component<Properties, State> {
 
   private serviceClients: Nexus.WebServiceClients;
   private loginPageModel: WebPortal.LoginPageModel;
+  private dashboardModel: WebPortal.DashboardModel;
 }
 
 ReactDOM.render(<Application/>, document.getElementById('main'));

@@ -1,19 +1,23 @@
 import {css, StyleSheet} from 'aphrodite';
 import * as React from 'react';
 import {BurgerButton, HBoxLayout, Padding, VBoxLayout} from '../..';
+import {DashboardModel} from '.';
 import {NotificationButton} from './notification_button';
 
-export interface Properties {}
+/** The properties used to render the DashboardPage. */
+export interface Properties {
 
-export interface State {
+  /** The model to display. */
+  model: DashboardModel;
+
+  /** The action to perform when logging out. */
+  onLogout?: () => void;
 }
+
+export interface State {}
 
 /** Displays the main dashboard. */
 export class DashboardPage extends React.Component<Properties, State> {
-  constructor(props: Properties) {
-    super(props);
-  }
-
   public render(): JSX.Element {
     return (
       <VBoxLayout width='100%' height='100%'>
@@ -45,6 +49,7 @@ export class DashboardPage extends React.Component<Properties, State> {
         <div className={css(DashboardPage.STYLE.separator)}/>
       </VBoxLayout>);
   }
+
   private static STYLE = StyleSheet.create({
     separator: {
       width: '100%',
