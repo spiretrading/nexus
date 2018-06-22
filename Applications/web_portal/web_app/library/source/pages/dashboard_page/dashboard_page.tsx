@@ -17,8 +17,7 @@ export class DashboardPage extends React.Component<Properties, State> {
   public render(): JSX.Element {
     return (
       <VBoxLayout width='100%' height='100%'>
-        <HBoxLayout width='100%' height='60px'
-            className={css(DashboardPage.STYLE.header)}>
+        <HBoxLayout width='100%' height='60px'>
           <HBoxLayout width='136px' height='60px'>
             <Padding size='18px'/>
             <VBoxLayout height='60px'>
@@ -47,9 +46,6 @@ export class DashboardPage extends React.Component<Properties, State> {
       </VBoxLayout>);
   }
   private static STYLE = StyleSheet.create({
-    header: {
-      backgroundColor: 'rgba(255, 255, 255, 0)'
-    },
     separator: {
       width: '100%',
       height: '1px',
