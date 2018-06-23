@@ -1,10 +1,7 @@
-#ifndef NEXUS_CLIENTWEBPORTALAPPLICATIONDEFINITIONS_HPP
-#define NEXUS_CLIENTWEBPORTALAPPLICATIONDEFINITIONS_HPP
+#ifndef NEXUS_WEB_PORTAL_APPLICATION_DEFINITIONS_HPP
+#define NEXUS_WEB_PORTAL_APPLICATION_DEFINITIONS_HPP
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 
-namespace Nexus {
-namespace ClientWebPortal {
-}
-}
+namespace Nexus::WebPortal {}
 
 #endif
