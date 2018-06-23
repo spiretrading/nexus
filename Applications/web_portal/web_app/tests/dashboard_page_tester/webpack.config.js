@@ -7,16 +7,9 @@ const minigyPluginOpts = {
   test: /\.js($|\?)/i,
 };
 module.exports = {
-  entry: './source/index.tsx',
-  output: {
-    path: path.resolve(__dirname, 'application'),
-    filename: 'bundle.js'
-  },
-  resolve: {
-    extensions: ['.ts', '.tsx', '.js', '.json']
-  },
   devtool: PROD ? 'none' : 'source-map',
-  plugins: PROD ? [new MinifyPlugin(minifyOpts, minigyPluginOpts)] : [],
+  entry: './source/index.tsx',
+  mode: PROD ? 'production' : 'development',
   module: {
     rules: [
       {
@@ -29,5 +22,13 @@ module.exports = {
         loader: 'source-map-loader'
       }
     ]
+  },
+  output: {
+    path: path.resolve(__dirname, 'application'),
+    filename: 'bundle.js'
+  },
+  plugins: PROD ? [new MinifyPlugin(minifyOpts, minigyPluginOpts)] : [],
+  resolve: {
+    extensions: ['.ts', '.tsx', '.js', '.json']
   }
 };
