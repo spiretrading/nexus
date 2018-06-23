@@ -2,7 +2,7 @@ import * as React from 'react';
 import {BoxLayout} from './box_layout';
 
 /** Specifies the React properties for the VBoxLayout components. */
-export interface Properties {
+interface Properties {
 
   /** The width of the VBoxLayout, leaving this value empty results in a width
    *  equal to the width of its content.
@@ -51,8 +51,7 @@ export class VBoxLayout extends React.Component<Properties> {
   public render(): JSX.Element {
     return (
       <BoxLayout width={this.props.width} height={this.props.height}
-          id={this.props.id} 
-          className={this.props.className}
+          id={this.props.id} className={this.props.className}
           onMouseEnter={this.props.onMouseEnter}
           onMouseLeave={this.props.onMouseLeave}
           onMouseOut={this.props.onMouseOut} onClick={this.props.onClick}

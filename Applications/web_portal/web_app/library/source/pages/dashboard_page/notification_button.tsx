@@ -2,7 +2,7 @@ import {css, StyleSheet} from 'aphrodite';
 import * as React from 'react';
 
 /** The properties used to render a NotificationButton. */
-export interface Properties {
+interface Properties {
 
   /** The number of notification items. */
   items: number;
@@ -16,6 +16,7 @@ export class NotificationButton extends React.Component<Properties> {
   public constructor(props: Properties) {
     super(props);
   }
+
   public render(): JSX.Element {
     const STYLE = StyleSheet.create({
       button: {

@@ -4,7 +4,7 @@ import {Padding} from './padding'
 import {VBoxLayout} from './vbox_layout'
 
 /** The properties used to center a component. */
-export interface Properties {
+interface Properties {
 
   /** The width of the box to center. */
   width?: number | string;
@@ -42,12 +42,9 @@ export class Center extends React.Component<Properties> {
   public render(): JSX.Element {
     return (
       <HBoxLayout width={this.props.width} height={this.props.height}
-                  id={this.props.id}
-                  className={this.props.className}
-                  onMouseEnter={this.props.onMouseEnter}
-                  onMouseOut={this.props.onMouseOut}
-                  onClick={this.props.onClick}
-                  >
+          id={this.props.id} className={this.props.className}
+          onMouseEnter={this.props.onMouseEnter}
+          onMouseOut={this.props.onMouseOut} onClick={this.props.onClick}>
         <Padding/>
         <VBoxLayout>
           <Padding/>

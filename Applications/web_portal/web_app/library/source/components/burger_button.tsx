@@ -2,7 +2,7 @@ import {css, StyleSheet} from 'aphrodite';
 import * as React from 'react';
 
 /** The properties used to display the BurgerButton. */
-export interface Properties {
+interface Properties {
 
   /** The width of the button. */
   width: number | string;

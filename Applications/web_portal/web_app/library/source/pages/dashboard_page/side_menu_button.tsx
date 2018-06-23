@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 /** Specifies the properties used to render a SideMenuButton. */
-export interface Properties {
+interface Properties {
 
   /** The text label. */
   label: string;
@@ -13,7 +13,7 @@ export interface Properties {
   onClick?: () => void;
 }
 
-export interface State {}
+interface State {}
 
 /** Renders a single SideMenu button. */
 export class SideMenuButton extends React.Component<Properties, State> {

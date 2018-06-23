@@ -2,7 +2,7 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 
 /** The properties used to render a SideMenu. */
-export interface Properties {
+interface Properties {
 
   /** Used to determine what actions are available based on the account's
    *  roles.
@@ -25,7 +25,7 @@ export interface Properties {
   onSignOutAction?: () => void;
 }
 
-export interface State {}
+interface State {}
 
 /** Display's the dashboard's side menu. */
 export class SideMenu extends React.Component<Properties, State> {

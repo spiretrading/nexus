@@ -2,7 +2,7 @@ import * as React from 'react';
 import {BoxLayout} from './box_layout';
 
 /** Specifies the React properties of the Padding component. */
-export interface Properties {
+interface Properties {
 
   /** The size of the padding to add, by default the size is 100%. */
   size?: number | string;

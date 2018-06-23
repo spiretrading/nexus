@@ -5,7 +5,7 @@ import {DashboardModel} from '.';
 import {NotificationButton} from './notification_button';
 
 /** The properties used to render the DashboardPage. */
-export interface Properties {
+interface Properties {
 
   /** The model to display. */
   model: DashboardModel;
@@ -14,7 +14,7 @@ export interface Properties {
   onLogout?: () => void;
 }
 
-export interface State {}
+interface State {}
 
 /** Displays the main dashboard. */
 export class DashboardPage extends React.Component<Properties, State> {
