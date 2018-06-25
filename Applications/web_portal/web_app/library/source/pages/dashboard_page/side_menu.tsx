@@ -87,7 +87,8 @@ export class SideMenu extends React.Component<Properties, State> {
       height: '40px',
       backgroundColor: '#4B23A0',
       ':hover': {
-        backgroundColor: '#684BC7'
+        backgroundColor: '#684BC7',
+        cursor: 'pointer'
       }
     },
     buttonText: {
