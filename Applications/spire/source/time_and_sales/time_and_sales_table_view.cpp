@@ -99,6 +99,7 @@ time_and_sales_table_view::time_and_sales_table_view(QWidget* parent)
   m_table->setMinimumWidth(MINIMUM_TABLE_WIDTH);
   m_table->resize(width(), 0);
   m_table->setFocusPolicy(Qt::NoFocus);
+  m_table->setAttribute(Qt::WA_TransparentForMouseEvents);
   m_table->setSelectionMode(QAbstractItemView::NoSelection);
   m_table->horizontalHeader()->setStretchLastSection(true);
   m_table->horizontalHeader()->hide();
