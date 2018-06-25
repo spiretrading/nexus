@@ -5,7 +5,7 @@ import {Center, HBoxLayout, Padding, VBoxLayout} from '../../';
 import {LoginPageModel} from '.';
 
 /** The React properties for the LoginPage. */
-interface Properties {
+export interface Properties {
 
   /** The model used to login. */
   model: LoginPageModel;
@@ -14,7 +14,7 @@ interface Properties {
   onLogin?: (account: Beam.DirectoryEntry) => void;
 }
 
-interface State {
+export interface State {
   errorMessage: string;
 }
 

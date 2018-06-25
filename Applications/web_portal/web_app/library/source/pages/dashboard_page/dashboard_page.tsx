@@ -3,6 +3,7 @@ import * as React from 'react';
 import {BurgerButton, HBoxLayout, Padding, VBoxLayout} from '../..';
 import {DashboardModel} from '.';
 import {NotificationButton} from './notification_button';
+import {SideMenu} from './side_menu';
 
 /** The properties used to render the DashboardPage. */
 interface Properties {
@@ -47,6 +48,7 @@ export class DashboardPage extends React.Component<Properties, State> {
           </VBoxLayout>
         </HBoxLayout>
         <div className={css(DashboardPage.STYLE.separator)}/>
+        <SideMenu roles={this.props.model.roles}/>
       </VBoxLayout>);
   }
 
