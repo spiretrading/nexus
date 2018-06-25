@@ -170,6 +170,13 @@ bool time_and_sales_table_view::event(QEvent* event) {
         fade_out_horizontal_scroll_bar();
       }
     }
+  } else if(event->type() == QEvent::HoverLeave) {
+    if(!m_h_scroll_bar_timer.isActive()) {
+      fade_out_horizontal_scroll_bar();
+    }
+    if(!m_v_scroll_bar_timer.isActive()) {
+      fade_out_vertical_scroll_bar();
+    }
   }
   return QScrollArea::event(event);
 }
