@@ -247,6 +247,7 @@ bool time_and_sales_table_view::eventFilter(QObject* watched, QEvent* event) {
 
 void time_and_sales_table_view::resizeEvent(QResizeEvent* event) {
   m_header->setFixedWidth(m_table->width());
+  widget()->resize(width(), height());
 }
 
 void time_and_sales_table_view::wheelEvent(QWheelEvent* event) {
