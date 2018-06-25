@@ -75,72 +75,71 @@ export class DashboardPage extends React.Component<Properties, State> {
     };
     return (
       <VBoxLayout width='100%' height='100%'>
-      <HBoxLayout width='100%' height='60px'>
-        <HBoxLayout width='200px' height='60px'>
-          <Transition in={this.state.isSideMenuOpen}
-              timeout={DashboardPage.MENU_TRANSITION_LENGTH_MS}
-              unmountOnExit={true} component={null}>
-            {(status: string) => {
-              return (
-              <HBoxLayout width='200px' height='60px' className={
-                  css([DashboardPage.STYLE.menuIsOpenHeaderStyle,
-                    headerStyle(status)])}>
-                <Padding size='18px'/>
-                <VBoxLayout height='60px'>
-                  <Padding size='23px'/>
-                  <BurgerButton width='20px' height='14px' color={buttonColor}
-                    highlightColor={buttonHighlightColor}
-                    onClick={this.toggleSideMenuIsOpen}/>
-                  <Padding size='23px'/>
-                </VBoxLayout>
-                <Padding size='20px'/>
-                <VBoxLayout height='60px'>
-                  <Padding size='15px'/>
-                  <img src={logoImageSrc} width='78px' height='30px'/>
-                  <Padding size='15px'/>
-                </VBoxLayout>
-              </HBoxLayout>);
-            }}
-          </Transition>
-          <Transition in={!this.state.isSideMenuOpen}
-              timeout={DashboardPage.MENU_TRANSITION_LENGTH_MS}
-              unmountOnExit={true} component={null}>
-            {(status: string) => {
-              return (
-              <HBoxLayout width='200px' height='60px' className={
-                  css([DashboardPage.STYLE.menuIsNotOpenHeaderStyle,
-                    headerStyle(status)])}>
-                <Padding size='18px'/>
-                <VBoxLayout height='60px'>
-                  <Padding size='23px'/>
-                  <BurgerButton width='20px' height='14px' color={buttonColor}
-                    highlightColor={buttonHighlightColor}
-                    onClick={this.toggleSideMenuIsOpen}/>
-                  <Padding size='23px'/>
-                </VBoxLayout>
-                <Padding size='20px'/>
-                <VBoxLayout height='60px'>
-                  <Padding size='15px'/>
-                  <img src={logoImageSrc} width='78px' height='30px'/>
-                  <Padding size='15px'/>
-                </VBoxLayout>
-              </HBoxLayout>);
-            }}
-          </Transition>
-        </HBoxLayout>
-        <Padding/>
-            <VBoxLayout height='60px' width='45px'>
-              <Padding size='20px'/>
-              <NotificationButton items={0} isOpen={false}/>
-              <Padding size='20px'/>
-              <Padding/>
-            </VBoxLayout>
+        <HBoxLayout width='100%' height='60px'>
+          <HBoxLayout width='200px' height='60px'>
+            <Transition in={this.state.isSideMenuOpen}
+                timeout={DashboardPage.MENU_TRANSITION_LENGTH_MS}
+                unmountOnExit={true} component={null}>
+              {(status: string) => {
+                return (
+                <HBoxLayout width='200px' height='60px' className={
+                    css([DashboardPage.STYLE.menuIsOpenHeaderStyle,
+                      headerStyle(status)])}>
+                  <Padding size='18px'/>
+                  <VBoxLayout height='60px'>
+                    <Padding size='23px'/>
+                    <BurgerButton width='20px' height='14px' color={buttonColor}
+                      highlightColor={buttonHighlightColor}
+                      onClick={this.toggleSideMenuIsOpen}/>
+                    <Padding size='23px'/>
+                  </VBoxLayout>
+                  <Padding size='20px'/>
+                  <VBoxLayout height='60px'>
+                    <Padding size='15px'/>
+                    <img src={logoImageSrc} width='78px' height='30px'/>
+                    <Padding size='15px'/>
+                  </VBoxLayout>
+                </HBoxLayout>);
+              }}
+            </Transition>
+            <Transition in={!this.state.isSideMenuOpen}
+                timeout={DashboardPage.MENU_TRANSITION_LENGTH_MS}
+                unmountOnExit={true} component={null}>
+              {(status: string) => {
+                return (
+                <HBoxLayout width='200px' height='60px' className={
+                    css([DashboardPage.STYLE.menuIsNotOpenHeaderStyle,
+                      headerStyle(status)])}>
+                  <Padding size='18px'/>
+                  <VBoxLayout height='60px'>
+                    <Padding size='23px'/>
+                    <BurgerButton width='20px' height='14px' color={buttonColor}
+                      highlightColor={buttonHighlightColor}
+                      onClick={this.toggleSideMenuIsOpen}/>
+                    <Padding size='23px'/>
+                  </VBoxLayout>
+                  <Padding size='20px'/>
+                  <VBoxLayout height='60px'>
+                    <Padding size='15px'/>
+                    <img src={logoImageSrc} width='78px' height='30px'/>
+                    <Padding size='15px'/>
+                  </VBoxLayout>
+                </HBoxLayout>);
+              }}
+            </Transition>
+          </HBoxLayout>
+          <Padding/>
+          <VBoxLayout height='60px' width='45px'>
+            <Padding size='20px'/>
+            <NotificationButton items={0} isOpen={false}/>
+            <Padding size='20px'/>
+            <Padding/>
+          </VBoxLayout>
         </HBoxLayout>
         <div className={css(DashboardPage.STYLE.separator)}/>
         <Transition in={this.state.isSideMenuOpen}
-                    timeout={DashboardPage.MENU_TRANSITION_LENGTH_MS}
-                    unmountOnExit={true}
-                    component={null}>
+            timeout={DashboardPage.MENU_TRANSITION_LENGTH_MS}
+            unmountOnExit={true} component={null}>
           {(status: string) => {
             return (
               <HBoxLayout height='100%' className={sideMenuClassName(status)}>
@@ -149,7 +148,7 @@ export class DashboardPage extends React.Component<Properties, State> {
           }}
         </Transition>
       </VBoxLayout>);
-  }
+    }
 
   private toggleSideMenuIsOpen() {
     this.setState({
