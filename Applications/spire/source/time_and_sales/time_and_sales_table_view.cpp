@@ -1,5 +1,5 @@
 #include "spire/time_and_sales/time_and_sales_table_view.hpp"
-#include <qevent.h>
+#include <QEvent>
 #include <QScrollBar>
 #include <QTableView>
 #include <QVBoxLayout>
@@ -14,8 +14,7 @@ namespace {
   auto SCROLL_BAR_FADE_TIME_MS = 500;
 }
 
-time_and_sales_table_view::time_and_sales_table_view(
-    QAbstractItemModel* model,QWidget* parent)
+time_and_sales_table_view::time_and_sales_table_view(QWidget* parent)
     : QScrollArea(parent) {
   setStyleSheet(QString(R"(
     QWidget {
@@ -111,8 +110,6 @@ time_and_sales_table_view::time_and_sales_table_view(
   m_table->installEventFilter(this);
   m_table->setItemDelegate(new item_padding_delegate(scale_width(5),
     new custom_variant_item_delegate(), this));
-  connect(model, &QAbstractItemModel::rowsAboutToBeInserted, this,
-    &time_and_sales_table_view::on_rows_about_to_be_inserted);
   layout->addWidget(m_table);
   m_h_scroll_bar_timer.setInterval(SCROLL_BAR_FADE_TIME_MS);
   connect(&m_h_scroll_bar_timer, &QTimer::timeout, this,
@@ -120,11 +117,12 @@ time_and_sales_table_view::time_and_sales_table_view(
   m_v_scroll_bar_timer.setInterval(SCROLL_BAR_FADE_TIME_MS);
   connect(&m_v_scroll_bar_timer, &QTimer::timeout, this,
     &time_and_sales_table_view::fade_out_vertical_scroll_bar);
-  set_model(model);
   setWidget(main_widget);
 }
 
 void time_and_sales_table_view::set_model(QAbstractItemModel* model) {
+  connect(model, &QAbstractItemModel::rowsAboutToBeInserted, this,
+    &time_and_sales_table_view::on_rows_about_to_be_inserted);
   m_header->setModel(model);
   m_table->setModel(model);
 }

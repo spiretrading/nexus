@@ -14,11 +14,9 @@ namespace spire {
 
       //! Constructs a time_and_sales_table_view
       /*
-        \param model The model to get the table data from.
         \param parent The parent to this widget.
       */
-      time_and_sales_table_view(QAbstractItemModel* model,
-        QWidget* parent = nullptr);
+      time_and_sales_table_view(QWidget* parent = nullptr);
 
       //! Sets the model to get the table data from.
       /*
