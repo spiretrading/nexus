@@ -194,7 +194,7 @@ bool time_and_sales_table_view::eventFilter(QObject* watched, QEvent* event) {
 
 void time_and_sales_table_view::resizeEvent(QResizeEvent* event) {
   m_header->setFixedWidth(m_table->width());
-  widget()->resize(width(), height());
+  widget()->resize(width(), widget()->height());
 }
 
 void time_and_sales_table_view::wheelEvent(QWheelEvent* event) {
@@ -255,9 +255,8 @@ void time_and_sales_table_view::on_horizontal_slider_value_changed(
 
 void time_and_sales_table_view::on_rows_about_to_be_inserted() {
   if(m_table->model()->rowCount() > 0) {
-    widget()->resize(width(),
-      (m_table->model()->rowCount() + 1) * m_table->rowHeight(0) +
-      m_header->height());
+    widget()->setFixedHeight((m_table->model()->rowCount() + 1) *
+      m_table->rowHeight(0) + m_header->height());
     if(verticalScrollBar()->value() != 0) {
       verticalScrollBar()->setValue(verticalScrollBar()->value() +
         m_table->rowHeight(0));
