@@ -47,7 +47,6 @@ namespace spire {
       void fade_out_vertical_scroll_bar();
       bool within_horizontal_scroll_bar(const QPoint& pos);
       bool within_vertical_scroll_bar(const QPoint& pos);
-      int true_height();
       void on_header_resize(int index, int old_size, int new_size);
       void on_header_move(int logical_index, int old_index, int new_index);
       void on_horizontal_slider_value_changed(int new_value);

@@ -215,15 +215,10 @@ void time_and_sales_table_view::fade_out_vertical_scroll_bar() {
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
 
-int time_and_sales_table_view::true_height() {
-  return visibleRegion().boundingRect().height() +
-    m_table->visibleRegion().boundingRect().height() +
-    m_header->height();
-}
-
 bool time_and_sales_table_view::within_horizontal_scroll_bar(
     const QPoint& pos) {
-  return pos.y() > true_height() -  horizontalScrollBar()->height();
+  return pos.y() > visibleRegion().boundingRect().height() -
+    horizontalScrollBar()->height();
 }
 
 bool time_and_sales_table_view::within_vertical_scroll_bar(const QPoint& pos) {
