@@ -2,8 +2,10 @@
 #define SPIRE_TIME_AND_SALES_TABLE_VIEW_HPP
 #include <QAbstractItemModel>
 #include <QHeaderView>
+#include <QLabel>
 #include <QScrollArea>
 #include <QTimer>
+#include <QVBoxLayout>
 #include "spire/time_and_sales/time_and_sales_properties.hpp"
 
 namespace spire {
@@ -30,6 +32,12 @@ namespace spire {
       */
       void set_properties(const time_and_sales_properties& properties);
 
+      //! Hides the loading widget.
+      void hide_loading_widget();
+
+      //! Displays the loading widget.
+      void show_loading_widget();
+
     protected:
       bool event(QEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
@@ -37,14 +45,17 @@ namespace spire {
       void wheelEvent(QWheelEvent* event) override;
 
     private:
+      QVBoxLayout* m_layout;
       QHeaderView* m_header;
       QWidget* m_header_padding;
       QTableView* m_table;
       QTimer m_h_scroll_bar_timer;
       QTimer m_v_scroll_bar_timer;
+      QLabel* m_loading_widget;
 
       void fade_out_horizontal_scroll_bar();
       void fade_out_vertical_scroll_bar();
+      int table_height_with_additional_row();
       bool within_horizontal_scroll_bar(const QPoint& pos);
       bool within_vertical_scroll_bar(const QPoint& pos);
       void on_header_resize(int index, int old_size, int new_size);

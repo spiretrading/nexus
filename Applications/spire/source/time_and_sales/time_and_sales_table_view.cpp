@@ -1,9 +1,9 @@
 #include "spire/time_and_sales/time_and_sales_table_view.hpp"
 #include <QEvent>
 #include <QHoverEvent>
+#include <QMovie>
 #include <QScrollBar>
 #include <QTableView>
-#include <QVBoxLayout>
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
 #include "spire/ui/item_padding_delegate.hpp"
@@ -89,15 +89,14 @@ time_and_sales_table_view::time_and_sales_table_view(QWidget* parent)
     &time_and_sales_table_view::on_header_move);
   auto main_widget = new QWidget(this);
   main_widget->setMinimumWidth(MINIMUM_TABLE_WIDTH);
-  auto layout = new QVBoxLayout(main_widget);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
+  m_layout = new QVBoxLayout(main_widget);
+  m_layout->setContentsMargins({});
+  m_layout->setSpacing(0);
   m_header_padding = new QWidget(this); 
   m_header_padding->setFixedHeight(m_header->height());
-  layout->addWidget(m_header_padding);
+  m_layout->addWidget(m_header_padding);
   m_table = new QTableView(this);
   m_table->setMinimumWidth(MINIMUM_TABLE_WIDTH);
-  m_table->resize(width(), 0);
   m_table->setFocusPolicy(Qt::NoFocus);
   m_table->setAttribute(Qt::WA_TransparentForMouseEvents);
   m_table->setSelectionMode(QAbstractItemView::NoSelection);
@@ -112,7 +111,7 @@ time_and_sales_table_view::time_and_sales_table_view(QWidget* parent)
   m_table->installEventFilter(this);
   m_table->setItemDelegate(new item_padding_delegate(scale_width(5),
     new custom_variant_item_delegate(), this));
-  layout->addWidget(m_table);
+  m_layout->addWidget(m_table);
   m_h_scroll_bar_timer.setInterval(SCROLL_BAR_FADE_TIME_MS);
   connect(&m_h_scroll_bar_timer, &QTimer::timeout, this,
     &time_and_sales_table_view::fade_out_horizontal_scroll_bar);
@@ -120,6 +119,7 @@ time_and_sales_table_view::time_and_sales_table_view(QWidget* parent)
   connect(&m_v_scroll_bar_timer, &QTimer::timeout, this,
     &time_and_sales_table_view::fade_out_vertical_scroll_bar);
   setWidget(main_widget);
+  show_loading_widget();
 }
 
 void time_and_sales_table_view::set_model(QAbstractItemModel* model) {
@@ -149,6 +149,25 @@ void time_and_sales_table_view::set_properties(
   // is this still required?
   //
   viewport()->update();
+}
+
+void time_and_sales_table_view::hide_loading_widget() {
+  delete m_loading_widget;
+  m_loading_widget = nullptr;
+}
+
+void time_and_sales_table_view::show_loading_widget() {
+  if(m_loading_widget != nullptr) {
+    m_loading_widget = new QLabel(this);
+    m_loading_widget->setFixedSize(width(), scale_height(32));
+    auto logo = new QMovie(":/icons/pre-loader.gif", QByteArray(),
+      m_loading_widget);
+    logo->setScaledSize(scale(16, 16));
+    m_loading_widget->setMovie(logo);
+    m_loading_widget->setAlignment(Qt::AlignCenter);
+    m_loading_widget->movie()->start();
+    m_layout->addWidget(m_loading_widget);
+  }
 }
 
 bool time_and_sales_table_view::event(QEvent* event) {
@@ -195,6 +214,9 @@ bool time_and_sales_table_view::eventFilter(QObject* watched, QEvent* event) {
 void time_and_sales_table_view::resizeEvent(QResizeEvent* event) {
   m_header->setFixedWidth(m_table->width());
   widget()->resize(width(), widget()->height());
+  if(m_loading_widget != nullptr) {
+    m_loading_widget->setFixedWidth(width());
+  }
 }
 
 void time_and_sales_table_view::wheelEvent(QWheelEvent* event) {
@@ -221,6 +243,17 @@ void time_and_sales_table_view::fade_out_horizontal_scroll_bar() {
 void time_and_sales_table_view::fade_out_vertical_scroll_bar() {
   m_v_scroll_bar_timer.stop();
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+}
+
+int time_and_sales_table_view::table_height_with_additional_row() {
+  return [=] {
+    auto height = (m_table->model()->rowCount() + 1) *
+    m_table->rowHeight(0) + m_header->height();
+    if(m_loading_widget != nullptr) {
+      height += m_loading_widget->height();
+    }
+    return height;
+  }();
 }
 
 bool time_and_sales_table_view::within_horizontal_scroll_bar(
@@ -255,8 +288,7 @@ void time_and_sales_table_view::on_horizontal_slider_value_changed(
 
 void time_and_sales_table_view::on_rows_about_to_be_inserted() {
   if(m_table->model()->rowCount() > 0) {
-    widget()->setFixedHeight((m_table->model()->rowCount() + 1) *
-      m_table->rowHeight(0) + m_header->height());
+    widget()->setFixedHeight(table_height_with_additional_row());
     if(verticalScrollBar()->value() != 0) {
       verticalScrollBar()->setValue(verticalScrollBar()->value() +
         m_table->rowHeight(0));

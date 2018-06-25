@@ -71,12 +71,12 @@ namespace spire {
       QWidget* m_body;
       QLabel* m_empty_window_label;
       std::unique_ptr<QLabel> m_overlay_widget;
-      std::unique_ptr<overlay_widget> m_loading_widget;
+      std::unique_ptr<overlay_widget> m_transition_widget;
       time_and_sales_table_view* m_table;
       QLabel* m_volume_label;
 
       void export_table();
-      //void show_loading_widget();
+      void show_transition_widget();
       void show_overlay_widget();
       void show_properties_dialog();
       void set_current(const Nexus::Security& s);
