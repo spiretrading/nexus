@@ -1,5 +1,6 @@
 #include "spire/time_and_sales/time_and_sales_table_view.hpp"
 #include <QEvent>
+#include <QHoverEvent>
 #include <QScrollBar>
 #include <QTableView>
 #include <QVBoxLayout>
@@ -259,5 +260,4 @@ void time_and_sales_table_view::on_rows_about_to_be_inserted() {
         m_table->rowHeight(0));
     }
   }
-  setWindowTitle(QString("%1").arg(m_table->model()->rowCount()));
 }
