@@ -47,6 +47,7 @@ class time_and_sales_table_view : public QScrollArea {
 
   protected:
     bool event(QEvent* event) override;
+    bool eventFilter(QObject* watched, QEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
 
@@ -167,6 +168,7 @@ time_and_sales_table_view::time_and_sales_table_view(
   m_table->setStyleSheet(R"(
       border: none;
       gridline-color: #C8C8C8;)");
+  m_table->installEventFilter(this);
   m_table->setItemDelegate(new item_padding_delegate(scale_width(5),
     new custom_variant_item_delegate(), this));
   connect(model, &QAbstractItemModel::rowsAboutToBeInserted, this,
@@ -231,6 +233,16 @@ bool time_and_sales_table_view::event(QEvent* event) {
     }
   }
   return QScrollArea::event(event);
+}
+
+bool time_and_sales_table_view::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == m_table) {
+    if(event->type() == QEvent::Paint) {
+      m_table->update();
+      m_header->update();
+    }
+  }
+  return QScrollArea::eventFilter(watched, event);
 }
 
 void time_and_sales_table_view::resizeEvent(QResizeEvent* event) {
