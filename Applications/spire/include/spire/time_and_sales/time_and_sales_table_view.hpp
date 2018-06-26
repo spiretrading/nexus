@@ -51,7 +51,7 @@ namespace spire {
       QTableView* m_table;
       QTimer m_h_scroll_bar_timer;
       QTimer m_v_scroll_bar_timer;
-      QLabel* m_loading_widget;
+      snapshot_loading_widget* m_loading_widget;
 
       void fade_out_horizontal_scroll_bar();
       void fade_out_vertical_scroll_bar();

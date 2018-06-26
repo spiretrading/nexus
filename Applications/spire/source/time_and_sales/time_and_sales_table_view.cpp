@@ -1,10 +1,10 @@
 #include "spire/time_and_sales/time_and_sales_table_view.hpp"
 #include <QEvent>
 #include <QHoverEvent>
-#include <QMovie>
 #include <QScrollBar>
 #include <QTableView>
 #include "spire/spire/dimensions.hpp"
+#include "spire/time_and_sales/snapshot_loading_widget.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
 #include "spire/ui/item_padding_delegate.hpp"
 
@@ -154,14 +154,7 @@ void time_and_sales_table_view::hide_loading_widget() {
 
 void time_and_sales_table_view::show_loading_widget() {
   if(m_loading_widget != nullptr) {
-    m_loading_widget = new QLabel(this);
-    m_loading_widget->setFixedSize(width(), scale_height(32));
-    auto logo = new QMovie(":/icons/pre-loader.gif", QByteArray(),
-      m_loading_widget);
-    logo->setScaledSize(scale(16, 16));
-    m_loading_widget->setMovie(logo);
-    m_loading_widget->setAlignment(Qt::AlignCenter);
-    m_loading_widget->movie()->start();
+    m_loading_widget = new snapshot_loading_widget(this);
     m_layout->addWidget(m_loading_widget);
   }
 }
