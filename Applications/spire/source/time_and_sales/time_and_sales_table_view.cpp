@@ -145,10 +145,6 @@ void time_and_sales_table_view::set_properties(
   QFontMetrics header_metrics(header_font);
   m_header->setFixedHeight(header_metrics.height() * 1.8);
   m_header_padding->setFixedHeight(m_header->height());
-  //
-  // is this still required?
-  //
-  viewport()->update();
 }
 
 void time_and_sales_table_view::hide_loading_widget() {
