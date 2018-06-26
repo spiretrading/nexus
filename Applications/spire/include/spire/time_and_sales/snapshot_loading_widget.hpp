@@ -21,6 +21,7 @@ namespace spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
       QScrollArea* m_scroll_area;

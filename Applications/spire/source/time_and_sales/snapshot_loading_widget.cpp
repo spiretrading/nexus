@@ -22,7 +22,6 @@ snapshot_loading_widget::snapshot_loading_widget(QScrollArea* scroll_area,
   m_scroll_area->widget()->installEventFilter(this);
   connect(m_scroll_area->horizontalScrollBar(), &QScrollBar::valueChanged, this,
     [=] (auto i) { update_logo_geometry(); });
-  update_logo_geometry();
 }
 
 bool snapshot_loading_widget::eventFilter(QObject* watched, QEvent* event) {
@@ -36,6 +35,10 @@ bool snapshot_loading_widget::eventFilter(QObject* watched, QEvent* event) {
     }
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void snapshot_loading_widget::showEvent(QShowEvent* event) {
+  update_logo_geometry();
 }
 
 void snapshot_loading_widget::update_logo_geometry() {
