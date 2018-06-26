@@ -1,6 +1,7 @@
 #ifndef SNAPSHOT_LOADING_WIDGET_HPP
 #define SNAPSHOT_LOADING_WIDGET_HPP
 #include <QLabel>
+#include <QScrollArea>
 #include "spire/time_and_sales/time_and_sales.hpp"
 
 namespace spire {
@@ -10,14 +11,22 @@ namespace spire {
     public:
 
       //! Constructs a snapshot_loading_widget.
-      snapshot_loading_widget(QWidget* parent = nullptr);
+      /*
+        \param scroll_area The reference scroll area, used to size the
+          animated logo widget.
+        \param parent The parent widget.
+      */
+      snapshot_loading_widget(QScrollArea* scroll_area,
+        QWidget* parent = nullptr);
 
     protected:
-      void paintEvent(QPaintEvent* event) override;
-      void resizeEvent(QResizeEvent* event) override;
+      bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
+      QScrollArea* m_scroll_area;
       QLabel* m_logo_widget;
+
+      void update_logo_geometry();
   };
 }
 
