@@ -16,7 +16,8 @@ namespace {
 }
 
 time_and_sales_table_view::time_and_sales_table_view(QWidget* parent)
-    : QScrollArea(parent) {
+    : QScrollArea(parent),
+      m_loading_widget(nullptr) {
   setStyleSheet(QString(R"(
     QWidget {
       background-color: #FFFFFF;
@@ -148,12 +149,14 @@ void time_and_sales_table_view::set_properties(
 }
 
 void time_and_sales_table_view::hide_loading_widget() {
-  delete m_loading_widget;
-  m_loading_widget = nullptr;
+  if(m_loading_widget != nullptr) {
+    delete m_loading_widget;
+    m_loading_widget = nullptr;
+  }
 }
 
 void time_and_sales_table_view::show_loading_widget() {
-  if(m_loading_widget != nullptr) {
+  if(m_loading_widget == nullptr) {
     m_loading_widget = new snapshot_loading_widget(this);
     m_layout->addWidget(m_loading_widget);
   }
@@ -203,9 +206,6 @@ bool time_and_sales_table_view::eventFilter(QObject* watched, QEvent* event) {
 void time_and_sales_table_view::resizeEvent(QResizeEvent* event) {
   m_header->setFixedWidth(m_table->width());
   widget()->resize(width(), widget()->height());
-  if(m_loading_widget != nullptr) {
-    m_loading_widget->setFixedWidth(width());
-  }
 }
 
 void time_and_sales_table_view::wheelEvent(QWheelEvent* event) {
