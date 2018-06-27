@@ -191,7 +191,6 @@ bool time_and_sales_table_view::event(QEvent* event) {
     } else if(within_vertical_scroll_bar(e->pos())) {
       setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
       setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-      m_v_scroll_bar_timer.start();
     } else {
       if(!m_v_scroll_bar_timer.isActive() &&
           verticalScrollBarPolicy() != Qt::ScrollBarAlwaysOff) {
