@@ -33,14 +33,8 @@ namespace spire {
       */
       void set_properties(const time_and_sales_properties& properties);
 
-      //! Hides the loading widget.
-      void hide_loading_widget();
-
       //! Displays the loading widget.
       void show_loading_widget();
-
-      //! Hides to the transition widget.
-      void hide_transition_widget();
 
       //! Displays the transition widget.
       void show_transition_widget();
@@ -63,6 +57,8 @@ namespace spire {
 
       void fade_out_horizontal_scroll_bar();
       void fade_out_vertical_scroll_bar();
+      void hide_loading_widget();
+      void hide_transition_widget();
       int table_height_with_additional_row();
       bool within_horizontal_scroll_bar(const QPoint& pos);
       bool within_vertical_scroll_bar(const QPoint& pos);
