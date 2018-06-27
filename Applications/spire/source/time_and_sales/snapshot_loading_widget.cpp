@@ -1,5 +1,6 @@
 #include "spire/time_and_sales/snapshot_loading_widget.hpp"
 #include <QMovie>
+#include <QResizeEvent>
 #include <QScrollBar>
 #include "spire/spire/dimensions.hpp"
 
@@ -21,13 +22,17 @@ snapshot_loading_widget::snapshot_loading_widget(QScrollArea* scroll_area,
   m_scroll_area->installEventFilter(this);
   m_scroll_area->widget()->installEventFilter(this);
   connect(m_scroll_area->horizontalScrollBar(), &QScrollBar::valueChanged, this,
-    [=] (auto i) { update_logo_geometry(); });
+    [=] (auto i) { 
+      auto rect = m_scroll_area->widget()->visibleRegion().boundingRect();
+      update_logo_geometry(rect.x(), rect.width()); });
 }
 
 bool snapshot_loading_widget::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_scroll_area) {
     if(event->type() == QEvent::Resize) {
-      update_logo_geometry();
+      auto e = static_cast<QResizeEvent*>(event);
+      auto rect = m_scroll_area->widget()->visibleRegion().boundingRect();
+      update_logo_geometry(rect.x(), e->size().width());
     }
   } else if(watched == m_scroll_area->widget()) {
     if(event->type() == QEvent::Resize) {
@@ -38,10 +43,10 @@ bool snapshot_loading_widget::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void snapshot_loading_widget::showEvent(QShowEvent* event) {
-  update_logo_geometry();
+  auto rect = visibleRegion().boundingRect();
+  update_logo_geometry(rect.x(), rect.width());
 }
 
-void snapshot_loading_widget::update_logo_geometry() {
-  auto rect = m_scroll_area->widget()->visibleRegion().boundingRect();
-  m_logo_widget->setGeometry(rect.x(), 0, rect.width(), height());
+void snapshot_loading_widget::update_logo_geometry(int x_pos, int width) {
+  m_logo_widget->setGeometry(x_pos, 0, width, height());
 }

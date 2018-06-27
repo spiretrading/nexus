@@ -27,7 +27,7 @@ namespace spire {
       QScrollArea* m_scroll_area;
       QLabel* m_logo_widget;
 
-      void update_logo_geometry();
+      void update_logo_geometry(int x_pos, int width);
   };
 }
 
