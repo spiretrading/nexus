@@ -148,6 +148,7 @@ void time_and_sales_table_view::set_properties(
   QFontMetrics header_metrics(header_font);
   m_header->setFixedHeight(header_metrics.height() * 1.8);
   m_header_padding->setFixedHeight(m_header->height());
+  update_table_height();
 }
 
 void time_and_sales_table_view::hide_loading_widget() {
@@ -262,6 +263,14 @@ int time_and_sales_table_view::table_height_with_additional_row() {
   }();
 }
 
+void time_and_sales_table_view::update_table_height() {
+  widget()->setFixedHeight(table_height_with_additional_row());
+  if(verticalScrollBar()->value() != 0) {
+    verticalScrollBar()->setValue(verticalScrollBar()->value() +
+      m_table->rowHeight(0));
+  }
+}
+
 bool time_and_sales_table_view::within_horizontal_scroll_bar(
     const QPoint& pos) {
   return pos.y() > visibleRegion().boundingRect().height() -
@@ -294,11 +303,7 @@ void time_and_sales_table_view::on_horizontal_slider_value_changed(
 
 void time_and_sales_table_view::on_rows_about_to_be_inserted() {
   if(m_table->model()->rowCount() > 0) {
-    widget()->setFixedHeight(table_height_with_additional_row());
-    if(verticalScrollBar()->value() != 0) {
-      verticalScrollBar()->setValue(verticalScrollBar()->value() +
-        m_table->rowHeight(0));
-    }
+    update_table_height();
   } else {
     m_transition_widget.reset();
   }
