@@ -1,10 +1,8 @@
 #ifndef SPIRE_TIME_AND_SALES_WINDOW_HPP
 #define SPIRE_TIME_AND_SALES_WINDOW_HPP
-#include <memory>
 #include <boost/optional.hpp>
 #include <QLabel>
 #include <QMenu>
-#include <QTimer>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/security_input/security_input.hpp"
 #include "spire/time_and_sales/time_and_sales.hpp"
