@@ -1,15 +1,11 @@
 #include "spire/time_and_sales/time_and_sales_window.hpp"
 #include <QFileDialog>
-#include <QHeaderView>
 #include <QKeyEvent>
-#include <QMovie>
-#include <QScrollBar>
 #include <QStandardPaths>
 #include <QVBoxLayout>
 #include "spire/security_input/security_input_dialog.hpp"
 #include "spire/security_input/security_input_model.hpp"
 #include "spire/time_and_sales/empty_time_and_sales_model.hpp"
-#include "spire/time_and_sales/loading_widget.hpp"
 #include "spire/time_and_sales/time_and_sales_properties_dialog.hpp"
 #include "spire/time_and_sales/time_and_sales_table_view.hpp"
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
@@ -17,7 +13,6 @@
 #include "spire/spire/export_model.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
 #include "spire/ui/drop_shadow.hpp"
-#include "spire/ui/item_padding_delegate.hpp"
 #include "spire/ui/overlay_widget.hpp"
 #include "spire/ui/window.hpp"
 
