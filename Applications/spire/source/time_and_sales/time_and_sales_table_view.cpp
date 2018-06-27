@@ -148,7 +148,9 @@ void time_and_sales_table_view::set_properties(
   QFontMetrics header_metrics(header_font);
   m_header->setFixedHeight(header_metrics.height() * 1.8);
   m_header_padding->setFixedHeight(m_header->height());
-  update_table_height();
+  if(m_table->model()->rowCount() > 0) {
+    update_table_height();
+  }
 }
 
 void time_and_sales_table_view::hide_loading_widget() {
