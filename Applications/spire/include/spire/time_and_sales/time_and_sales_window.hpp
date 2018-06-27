@@ -75,7 +75,6 @@ namespace spire {
       QLabel* m_volume_label;
 
       void export_table();
-      void show_transition_widget();
       void show_overlay_widget();
       void show_properties_dialog();
       void set_current(const Nexus::Security& s);

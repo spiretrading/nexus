@@ -128,7 +128,7 @@ void time_and_sales_window::contextMenuEvent(QContextMenuEvent* event) {
     QAction export_action(tr("Export Table"), &context_menu);
     connect(&export_action, &QAction::triggered, this,
       &time_and_sales_window::export_table);
-    export_action.setEnabled(m_table != nullptr);
+    export_action.setEnabled(m_table->isVisible());
     context_menu.addAction(&export_action);
     context_menu.setFixedWidth(scale_width(140));
     context_menu.setWindowFlag(Qt::NoDropShadowWindowHint);
