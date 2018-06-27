@@ -33,10 +33,12 @@ namespace spire {
       */
       void set_properties(const time_and_sales_properties& properties);
 
-      //! Displays the loading widget.
+      //! Displays the loading widget. The loading widget will automatically
+      //  hide when the snapshot isn't finished loading.
       void show_loading_widget();
 
-      //! Displays the transition widget.
+      //! Displays the transition widget. The transition widget will
+      //  automatically hide when the new model is set.
       void show_transition_widget();
 
     protected:
