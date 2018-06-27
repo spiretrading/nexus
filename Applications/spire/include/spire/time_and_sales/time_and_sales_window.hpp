@@ -71,7 +71,6 @@ namespace spire {
       QWidget* m_body;
       QLabel* m_empty_window_label;
       std::unique_ptr<QLabel> m_overlay_widget;
-      std::unique_ptr<overlay_widget> m_transition_widget;
       time_and_sales_table_view* m_table;
       QLabel* m_volume_label;
 

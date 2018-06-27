@@ -82,7 +82,7 @@ void time_and_sales_window::set_model(
       m_empty_window_label = nullptr;
     }
     m_table->show();
-    QTimer::singleShot(1000, this, [=] { show_transition_widget(); });
+    QTimer::singleShot(1000, this, [=] { m_table->show_transition_widget(); });
   }
   model->connect_volume_signal([=] (const Quantity& v) { on_volume(v); });
   m_model.emplace(std::move(model), m_properties);
@@ -213,22 +213,6 @@ void time_and_sales_window::export_table() {
     export_model_as_csv(m_model.get(), std::ofstream(filepath.toStdString()));
   }
   m_overlay_widget.reset();
-}
-
-void time_and_sales_window::show_transition_widget() {
-  if(m_model->rowCount(QModelIndex()) == 0 && m_transition_widget == nullptr) {
-    auto backing_widget = new QLabel(m_body);
-    auto logo = new QMovie(":/icons/pre-loader.gif", QByteArray(),
-      m_body);
-    logo->setScaledSize(scale(32, 32));
-    backing_widget->setMovie(logo);
-    backing_widget->setStyleSheet(
-      QString("padding-top: %1px;").arg(scale_height(50)));
-    backing_widget->setAlignment(Qt::AlignHCenter);
-    backing_widget->movie()->start();
-    m_transition_widget = std::make_unique<overlay_widget>(
-      m_table->viewport(), backing_widget, m_body);
-  }
 }
 
 void time_and_sales_window::show_overlay_widget() {

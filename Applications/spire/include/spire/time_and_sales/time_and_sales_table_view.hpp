@@ -7,6 +7,7 @@
 #include <QTimer>
 #include <QVBoxLayout>
 #include "spire/time_and_sales/time_and_sales_properties.hpp"
+#include "spire/ui/ui.hpp"
 
 namespace spire {
 
@@ -38,6 +39,12 @@ namespace spire {
       //! Displays the loading widget.
       void show_loading_widget();
 
+      //! Hides to the transition widget.
+      void hide_transition_widget();
+
+      //! Displays the transition widget.
+      void show_transition_widget();
+
     protected:
       bool event(QEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
@@ -51,7 +58,8 @@ namespace spire {
       QTableView* m_table;
       QTimer m_h_scroll_bar_timer;
       QTimer m_v_scroll_bar_timer;
-      snapshot_loading_widget* m_loading_widget;
+      std::unique_ptr<snapshot_loading_widget> m_loading_widget;
+      std::unique_ptr<overlay_widget> m_transition_widget;
 
       void fade_out_horizontal_scroll_bar();
       void fade_out_vertical_scroll_bar();

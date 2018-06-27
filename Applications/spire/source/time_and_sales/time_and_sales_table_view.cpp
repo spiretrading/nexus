@@ -1,12 +1,14 @@
 #include "spire/time_and_sales/time_and_sales_table_view.hpp"
 #include <QEvent>
 #include <QHoverEvent>
+#include <QMovie>
 #include <QScrollBar>
 #include <QTableView>
 #include "spire/spire/dimensions.hpp"
 #include "spire/time_and_sales/snapshot_loading_widget.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
 #include "spire/ui/item_padding_delegate.hpp"
+#include "spire/ui/overlay_widget.hpp"
 
 using namespace spire;
 
@@ -149,16 +151,31 @@ void time_and_sales_table_view::set_properties(
 }
 
 void time_and_sales_table_view::hide_loading_widget() {
-  if(m_loading_widget != nullptr) {
-    delete m_loading_widget;
-    m_loading_widget = nullptr;
-  }
+  m_loading_widget.reset();
 }
 
 void time_and_sales_table_view::show_loading_widget() {
-  if(m_loading_widget == nullptr) {
-    m_loading_widget = new snapshot_loading_widget(this);
-    m_layout->addWidget(m_loading_widget);
+  m_loading_widget = std::make_unique<snapshot_loading_widget>(this);
+  m_layout->addWidget(m_loading_widget.get());
+}
+
+void time_and_sales_table_view::hide_transition_widget() {
+  m_transition_widget.reset();
+}
+
+void time_and_sales_table_view::show_transition_widget() {
+  if(m_table->model()->rowCount(QModelIndex()) == 0) {
+    auto backing_widget = new QLabel(this);
+    auto logo = new QMovie(":/icons/pre-loader.gif", QByteArray(),
+      backing_widget);
+    logo->setScaledSize(scale(32, 32));
+    backing_widget->setMovie(logo);
+    backing_widget->setStyleSheet(
+      QString("padding-top: %1px;").arg(scale_height(50)));
+    backing_widget->setAlignment(Qt::AlignHCenter);
+    backing_widget->movie()->start();
+    m_transition_widget = std::make_unique<overlay_widget>(
+      this, backing_widget, this);
   }
 }
 
@@ -282,5 +299,7 @@ void time_and_sales_table_view::on_rows_about_to_be_inserted() {
       verticalScrollBar()->setValue(verticalScrollBar()->value() +
         m_table->rowHeight(0));
     }
+  } else {
+    m_transition_widget.reset();
   }
 }
