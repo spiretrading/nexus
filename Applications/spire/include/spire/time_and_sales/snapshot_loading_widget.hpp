@@ -13,7 +13,7 @@ namespace spire {
       //! Constructs a snapshot_loading_widget.
       /*
         \param scroll_area The reference scroll area, used to size the
-          animated logo widget.
+               animated logo widget.
         \param parent The parent widget.
       */
       snapshot_loading_widget(QScrollArea* scroll_area,
@@ -28,6 +28,7 @@ namespace spire {
       QLabel* m_logo_widget;
 
       void update_logo_geometry(int x_pos, int width);
+      void on_scroll_bar_value_changed();
   };
 }
 

@@ -2,7 +2,6 @@
 #define SPIRE_TIME_AND_SALES_TABLE_VIEW_HPP
 #include <QAbstractItemModel>
 #include <QHeaderView>
-#include <QLabel>
 #include <QScrollArea>
 #include <QTimer>
 #include <QVBoxLayout>
@@ -15,7 +14,7 @@ namespace spire {
   class time_and_sales_table_view : public QScrollArea {
     public:
 
-      //! Constructs a time_and_sales_table_view
+      //! Constructs a time_and_sales_table_view.
       /*
         \param parent The parent to this widget.
       */
@@ -34,11 +33,11 @@ namespace spire {
       void set_properties(const time_and_sales_properties& properties);
 
       //! Displays the loading widget. The loading widget will automatically
-      //  hide when the snapshot is finished loading.
+      //! hide when the snapshot is finished loading.
       void show_loading_widget();
 
       //! Displays the transition widget. The transition widget will
-      //  automatically hide when the new model is set.
+      //! automatically hide when the new model is set.
       void show_transition_widget();
 
     protected:
@@ -60,7 +59,6 @@ namespace spire {
       void fade_out_horizontal_scroll_bar();
       void fade_out_vertical_scroll_bar();
       void hide_loading_widget();
-      void hide_transition_widget();
       int table_height_with_additional_row();
       void update_table_height();
       bool within_horizontal_scroll_bar(const QPoint& pos);

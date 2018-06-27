@@ -162,10 +162,6 @@ void time_and_sales_table_view::show_loading_widget() {
   m_layout->addWidget(m_loading_widget.get());
 }
 
-void time_and_sales_table_view::hide_transition_widget() {
-  m_transition_widget.reset();
-}
-
 void time_and_sales_table_view::show_transition_widget() {
   if(m_table->model()->rowCount(QModelIndex()) == 0) {
     auto backing_widget = new QLabel(this);
@@ -254,14 +250,12 @@ void time_and_sales_table_view::fade_out_vertical_scroll_bar() {
 }
 
 int time_and_sales_table_view::table_height_with_additional_row() {
-  return [=] {
-    auto height = (m_table->model()->rowCount() + 1) *
+  auto height = (m_table->model()->rowCount() + 1) *
     m_table->rowHeight(0) + m_header->height();
-    if(m_loading_widget != nullptr) {
-      height += m_loading_widget->height();
-    }
-    return height;
-  }();
+  if(m_loading_widget != nullptr) {
+    height += m_loading_widget->height();
+  }
+  return height;
 }
 
 void time_and_sales_table_view::update_table_height() {
