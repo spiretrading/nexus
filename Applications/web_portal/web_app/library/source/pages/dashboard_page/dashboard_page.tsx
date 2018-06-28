@@ -76,7 +76,9 @@ export class DashboardPage extends React.Component<Properties, State> {
     return (
       <VBoxLayout width='100%' height='100%'>
         <HBoxLayout width='100%' height='60px'>
-          <HBoxLayout width='200px' height='60px'>
+          <HBoxLayout width='200px' height='60px' className={
+            css(DashboardPage.STYLE.header)
+          }>
             <Transition in={this.state.isSideMenuOpen}
                 timeout={DashboardPage.MENU_TRANSITION_LENGTH_MS}
                 unmountOnExit={true} component={null}>
@@ -148,7 +150,7 @@ export class DashboardPage extends React.Component<Properties, State> {
           }}
         </Transition>
       </VBoxLayout>);
-    }
+  }
 
   private toggleSideMenuIsOpen() {
     this.setState({
@@ -162,6 +164,11 @@ export class DashboardPage extends React.Component<Properties, State> {
       height: '1px',
       backgroundColor: 'rgba(0, 0, 0, 0.16)'
     },
+    header: {
+      position: 'absolute' as 'absolute',
+      top: 0,
+      left: 0,
+    },
     menuIsOpenHeaderStyle: {
       opacity:  0,
       transition: `opacity ${DashboardPage.MENU_TRANSITION_LENGTH_MS}ms `
@@ -169,6 +176,7 @@ export class DashboardPage extends React.Component<Properties, State> {
       backgroundColor: '#4B23A0'
     },
     menuIsNotOpenHeaderStyle: {
+      position: 'absolute' as 'absolute',
       opacity:  0,
       transition: `opacity ${DashboardPage.MENU_TRANSITION_LENGTH_MS}ms `
         + `ease-out`,
