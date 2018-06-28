@@ -24,6 +24,7 @@ time_and_sales_ui_tester::time_and_sales_ui_tester(
   m_model->set_price(Money(Quantity(20)));
   m_model->set_price_range(price_range::AT_ASK);
   m_model->set_period(boost::posix_time::milliseconds(1000));
+  m_model->set_load_duration(boost::posix_time::milliseconds(1000));
   setFixedSize(scale(400, 200));
   auto layout = new QGridLayout(this);
   auto price_label = new QLabel("Price:", this);
