@@ -24,21 +24,13 @@ namespace spire {
       /*
         \param model The model.
       */
-      void set_model(QAbstractItemModel* model);
+      void set_model(time_and_sales_window_model* model);
 
       //! Sets the time_and_sales_properties of the table.
       /*
         \param properties The properties the table will be updated to have.
       */
       void set_properties(const time_and_sales_properties& properties);
-
-      //! Displays the loading widget. The loading widget will automatically
-      //! hide when the snapshot is finished loading.
-      void show_loading_widget();
-
-      //! Displays the transition widget. The transition widget will
-      //! automatically hide when the new model is set.
-      void show_transition_widget();
 
     protected:
       bool event(QEvent* event) override;
@@ -51,6 +43,7 @@ namespace spire {
       QHeaderView* m_header;
       QWidget* m_header_padding;
       QTableView* m_table;
+      time_and_sales_window_model* m_model;
       QTimer m_h_scroll_bar_timer;
       QTimer m_v_scroll_bar_timer;
       std::unique_ptr<snapshot_loading_widget> m_loading_widget;
@@ -58,14 +51,17 @@ namespace spire {
 
       void fade_out_horizontal_scroll_bar();
       void fade_out_vertical_scroll_bar();
+      void show_transition_widget();
+      void show_loading_widget();
       void hide_loading_widget();
-      int table_height_with_additional_row();
+      int get_table_height_with_additional_row();
       void update_table_height();
-      bool within_horizontal_scroll_bar(const QPoint& pos);
-      bool within_vertical_scroll_bar(const QPoint& pos);
+      bool is_within_horizontal_scroll_bar(const QPoint& pos);
+      bool is_within_vertical_scroll_bar(const QPoint& pos);
       void on_header_resize(int index, int old_size, int new_size);
       void on_header_move(int logical_index, int old_index, int new_index);
       void on_horizontal_slider_value_changed(int new_value);
+      void on_vertical_slider_value_changed(int new_value);
       void on_rows_about_to_be_inserted();
   };
 }
