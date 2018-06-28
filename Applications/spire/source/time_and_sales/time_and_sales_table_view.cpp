@@ -129,6 +129,15 @@ time_and_sales_table_view::time_and_sales_table_view(QWidget* parent)
 
 void time_and_sales_table_view::set_model(time_and_sales_window_model* model) {
   m_model = model;
+  m_transition_widget.reset();
+  m_loading_widget.reset();
+  if(m_model->is_loading()) {
+    QTimer::singleShot(1000, [=] { show_transition_widget(); });
+  }
+  m_model->connect_begin_loading_signal([=] {
+    show_loading_widget(); });
+  m_model->connect_end_loading_signal([=] {
+    on_end_loading_signal(); });
   auto filter = new custom_variant_sort_filter_proxy_model(this);
   filter->setSourceModel(m_model);
   connect(filter, &QAbstractItemModel::rowsAboutToBeInserted, this,
@@ -250,10 +259,6 @@ void time_and_sales_table_view::show_loading_widget() {
   m_layout->addWidget(m_loading_widget.get());
 }
 
-void time_and_sales_table_view::hide_loading_widget() {
-  m_loading_widget.reset();
-}
-
 int time_and_sales_table_view::get_table_height_with_additional_row() {
   auto height = (m_table->model()->rowCount() + 1) *
     m_table->rowHeight(0) + m_header->height();
@@ -279,6 +284,11 @@ bool time_and_sales_table_view::is_within_horizontal_scroll_bar(
 
 bool time_and_sales_table_view::is_within_vertical_scroll_bar(const QPoint& pos) {
   return pos.x() > width() - verticalScrollBar()->width();
+}
+
+void time_and_sales_table_view::on_end_loading_signal() {
+  m_transition_widget.reset();
+  m_loading_widget.reset();
 }
 
 void time_and_sales_table_view::on_header_resize(int index, int old_size,

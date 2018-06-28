@@ -53,11 +53,11 @@ namespace spire {
       void fade_out_vertical_scroll_bar();
       void show_transition_widget();
       void show_loading_widget();
-      void hide_loading_widget();
       int get_table_height_with_additional_row();
       void update_table_height();
       bool is_within_horizontal_scroll_bar(const QPoint& pos);
       bool is_within_vertical_scroll_bar(const QPoint& pos);
+      void on_end_loading_signal();
       void on_header_resize(int index, int old_size, int new_size);
       void on_header_move(int logical_index, int old_index, int new_index);
       void on_horizontal_slider_value_changed(int new_value);
