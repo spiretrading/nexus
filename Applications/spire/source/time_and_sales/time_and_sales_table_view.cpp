@@ -1,4 +1,5 @@
 #include "spire/time_and_sales/time_and_sales_table_view.hpp"
+#include <QApplication>
 #include <QEvent>
 #include <QHoverEvent>
 #include <QMovie>
@@ -186,19 +187,23 @@ void time_and_sales_table_view::show_transition_widget() {
 bool time_and_sales_table_view::event(QEvent* event) {
   if(event->type() == QEvent::HoverMove) {
     auto e = static_cast<QHoverEvent*>(event);
-    if(is_within_horizontal_scroll_bar(e->pos())) {
+    if(is_within_horizontal_scroll_bar(e->pos()) &&
+        !verticalScrollBar()->isSliderDown()) {
       setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
       setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    } else if(is_within_vertical_scroll_bar(e->pos())) {
+    } else if(is_within_vertical_scroll_bar(e->pos()) &&
+        !horizontalScrollBar()->isSliderDown()) {
       setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
       setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     } else {
       if(!m_v_scroll_bar_timer.isActive() &&
-          verticalScrollBarPolicy() != Qt::ScrollBarAlwaysOff) {
+          verticalScrollBarPolicy() != Qt::ScrollBarAlwaysOff &&
+          !verticalScrollBar()->isSliderDown()) {
         fade_out_vertical_scroll_bar();
       }
       if(!m_h_scroll_bar_timer.isActive() &&
-          horizontalScrollBarPolicy() != Qt::ScrollBarAlwaysOff) {
+          horizontalScrollBarPolicy() != Qt::ScrollBarAlwaysOff &&
+          !horizontalScrollBar()->isSliderDown()) {
         fade_out_horizontal_scroll_bar();
       }
     }
