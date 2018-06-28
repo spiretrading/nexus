@@ -16,7 +16,7 @@ periodic_time_and_sales_model::periodic_time_and_sales_model(Security s,
       m_price(Money::ONE),
       m_price_range(time_and_sales_properties::price_range::AT_ASK),
       m_period(pos_infin),
-      m_load_duration(seconds(0)),
+      m_load_duration(seconds(10)),
       m_volume(0) {
   connect(&m_timer, &QTimer::timeout, [=] {on_timeout();});
 }
@@ -70,24 +70,47 @@ Quantity periodic_time_and_sales_model::get_volume() const {
 qt_promise<std::vector<time_and_sales_model::entry>>
     periodic_time_and_sales_model::load_snapshot(Beam::Queries::Sequence last,
     int count) {
+  auto insert = [&] (auto where, auto sequence) {
+    auto timestamp = where->m_time_and_sale->m_timestamp - seconds(1);
+    auto value = MakeSequencedValue(TimeAndSale(timestamp, m_price, 100,
+      TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
+      "NYSE"), sequence);
+    return m_entries.insert(where, {value, m_price_range});
+  };
   std::vector<time_and_sales_model::entry> snapshot;
+  if(m_load_duration == pos_infin) {
+    return make_qt_promise(
+      [=] {
+        return snapshot;
+      });
+  }
   if(m_entries.empty()) {
-    return make_qt_promise([snapshot=std::move(snapshot)] {
-      return std::move(snapshot);
-    });
+    auto value = MakeSequencedValue(TimeAndSale(second_clock::universal_time(),
+      m_price, 100, TimeAndSale::Condition(
+      TimeAndSale::Condition::Type::REGULAR, "@"), "NYSE"),
+      Beam::Queries::Sequence(100000));
+    m_entries.push_back({value, m_price_range});
   }
-  last = std::min(last, m_entries.back().m_time_and_sale.GetSequence());
-  auto front = m_entries.front().m_time_and_sale.GetSequence();
-  if(last < front) {
-    return make_qt_promise([snapshot=std::move(snapshot)] {
-      return std::move(snapshot);
+  auto i = std::lower_bound(m_entries.begin(), m_entries.end(), last,
+    [] (auto& lhs, auto& rhs) {
+      return lhs.m_time_and_sale.GetSequence() < rhs;
     });
-  }
-  int first = std::max(static_cast<int>(front.GetOrdinal()),
-    static_cast<int>(last.GetOrdinal()) - count);
-  while(count != 0 && first <= last.GetOrdinal()) {
-    snapshot.push_back(m_entries[first]);
-    ++first;
+  if(i != m_entries.end()) {
+    auto e = Decrement(last);
+    while(e.GetOrdinal() > count &&
+        i->m_time_and_sale.GetSequence().GetOrdinal() !=
+        (last.GetOrdinal() - count)) {
+      if(i == m_entries.begin()) {
+        i = insert(m_entries.begin(), e);
+      } else {
+        --i;
+        if(i->m_time_and_sale.GetSequence() != e) {
+          i = insert(i, e);
+        }
+      }
+      e = Decrement(e);
+    }
+    snapshot.insert(snapshot.begin(), i, i + count);
   }
   return make_qt_promise([d = m_load_duration, pool = m_timer_thread_pool,
       snapshot=std::move(snapshot)] {
@@ -109,12 +132,10 @@ connection periodic_time_and_sales_model::connect_volume_signal(
 }
 
 void periodic_time_and_sales_model::on_timeout() {
-  auto sequence = [&] {
-    if(m_entries.empty()) {
-      return Beam::Queries::Sequence(100000);
-    }
-    return Increment(m_entries.back().m_time_and_sale.GetSequence());
-  }();
+  if(m_entries.empty()) {
+    return;
+  }
+  auto sequence = Increment(m_entries.back().m_time_and_sale.GetSequence());
   auto value = MakeSequencedValue(TimeAndSale(second_clock::universal_time(),
     m_price, 100, TimeAndSale::Condition(
     TimeAndSale::Condition::Type::REGULAR, "@"), "NYSE"), sequence);

@@ -77,13 +77,10 @@ void time_and_sales_window::set_model(
       m_empty_window_label = nullptr;
     }
     m_table->show();
-    QTimer::singleShot(1000, this, [=] { m_table->show_transition_widget(); });
   }
   model->connect_volume_signal([=] (const Quantity& v) { on_volume(v); });
   m_model.emplace(std::move(model), m_properties);
-  auto filter = new custom_variant_sort_filter_proxy_model(m_table);
-  filter->setSourceModel(&m_model.get());
-  m_table->set_model(filter);
+  m_table->set_model(m_model.get_ptr());
 }
 
 const time_and_sales_properties&
