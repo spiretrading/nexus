@@ -182,10 +182,12 @@ void time_and_sales_table_view::show_transition_widget() {
 bool time_and_sales_table_view::event(QEvent* event) {
   if(event->type() == QEvent::HoverMove) {
     auto e = static_cast<QHoverEvent*>(event);
-    if(within_horizontal_scroll_bar(e->pos())) {
+    if(within_horizontal_scroll_bar(e->pos()) &&
+        !QApplication::mouseButtons().testFlag(Qt::LeftButton)) {
       setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
       setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    } else if(within_vertical_scroll_bar(e->pos())) {
+    } else if(within_vertical_scroll_bar(e->pos()) &&
+        !QApplication::mouseButtons().testFlag(Qt::LeftButton)) {
       setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
       setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     } else {
