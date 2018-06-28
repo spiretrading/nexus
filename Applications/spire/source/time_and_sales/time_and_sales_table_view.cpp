@@ -98,7 +98,7 @@ time_and_sales_table_view::time_and_sales_table_view(QWidget* parent)
   m_layout = new QVBoxLayout(main_widget);
   m_layout->setContentsMargins({});
   m_layout->setSpacing(0);
-  m_header_padding = new QWidget(this); 
+  m_header_padding = new QWidget(this);
   m_header_padding->setFixedHeight(m_header->height());
   m_layout->addWidget(m_header_padding);
   m_table = new QTableView(this);
