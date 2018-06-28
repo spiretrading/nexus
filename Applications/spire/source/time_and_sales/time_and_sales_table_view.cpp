@@ -179,22 +179,22 @@ bool time_and_sales_table_view::event(QEvent* event) {
   if(event->type() == QEvent::HoverMove) {
     auto e = static_cast<QHoverEvent*>(event);
     if(is_within_horizontal_scroll_bar(e->pos()) &&
-        !QApplication::mouseButtons().testFlag(Qt::LeftButton)) {
+        !verticalScrollBar()->isSliderDown()) {
       setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
       setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     } else if(is_within_vertical_scroll_bar(e->pos()) &&
-        !QApplication::mouseButtons().testFlag(Qt::LeftButton)) {
+        !horizontalScrollBar()->isSliderDown()) {
       setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
       setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     } else {
       if(!m_v_scroll_bar_timer.isActive() &&
           verticalScrollBarPolicy() != Qt::ScrollBarAlwaysOff &&
-          !QApplication::mouseButtons().testFlag(Qt::LeftButton)) {
+          !verticalScrollBar()->isSliderDown()) {
         fade_out_vertical_scroll_bar();
       }
       if(!m_h_scroll_bar_timer.isActive() &&
           horizontalScrollBarPolicy() != Qt::ScrollBarAlwaysOff &&
-          !QApplication::mouseButtons().testFlag(Qt::LeftButton)) {
+          !horizontalScrollBar()->isSliderDown()) {
         fade_out_horizontal_scroll_bar();
       }
     }
