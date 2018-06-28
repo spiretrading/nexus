@@ -257,6 +257,7 @@ void time_and_sales_table_view::fade_out_vertical_scroll_bar() {
 void time_and_sales_table_view::show_loading_widget() {
   m_loading_widget = std::make_unique<snapshot_loading_widget>(this);
   m_layout->addWidget(m_loading_widget.get());
+  update_table_height(m_table->model()->rowCount());
 }
 
 void time_and_sales_table_view::update_table_height(int num_rows) {
