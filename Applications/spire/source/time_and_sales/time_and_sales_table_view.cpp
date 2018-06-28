@@ -163,7 +163,7 @@ void time_and_sales_table_view::set_properties(
   m_header->setFixedHeight(header_metrics.height() * 1.8);
   m_header_padding->setFixedHeight(m_header->height());
   if(m_table->model()->rowCount() > 0) {
-    update_table_height();
+    update_table_height(m_table->model()->rowCount());
   }
 }
 
@@ -259,17 +259,12 @@ void time_and_sales_table_view::show_loading_widget() {
   m_layout->addWidget(m_loading_widget.get());
 }
 
-int time_and_sales_table_view::get_table_height_with_additional_row() {
-  auto height = (m_table->model()->rowCount() + 1) *
-    m_table->rowHeight(0) + m_header->height();
+void time_and_sales_table_view::update_table_height(int num_rows) {
+  auto height = (num_rows * m_table->rowHeight(0)) + m_header->height();
   if(m_loading_widget != nullptr) {
     height += m_loading_widget->height();
   }
-  return height;
-}
-
-void time_and_sales_table_view::update_table_height() {
-  widget()->setFixedHeight(get_table_height_with_additional_row());
+  widget()->setFixedHeight(height);
   if(verticalScrollBar()->value() != 0) {
     verticalScrollBar()->setValue(verticalScrollBar()->value() +
       m_table->rowHeight(0));
@@ -320,10 +315,10 @@ void time_and_sales_table_view::on_vertical_slider_value_changed(
     widget()->visibleRegion().boundingRect().top()));
 }
 
-void time_and_sales_table_view::on_rows_about_to_be_inserted() {
+void time_and_sales_table_view::on_rows_about_to_be_inserted(
+    const QModelIndex& parent, int first_index, int last_index) {
   if(m_table->model()->rowCount() > 0) {
-    update_table_height();
-  } else {
-    m_transition_widget.reset();
+    update_table_height(m_table->model()->rowCount() +
+      (last_index - first_index + 1));
   }
 }
