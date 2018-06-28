@@ -95,23 +95,24 @@ qt_promise<std::vector<time_and_sales_model::entry>>
     [] (auto& lhs, auto& rhs) {
       return lhs.m_time_and_sale.GetSequence() < rhs;
     });
-  if(i != m_entries.end()) {
-    auto e = Decrement(last);
-    while(e.GetOrdinal() > count &&
-        i->m_time_and_sale.GetSequence().GetOrdinal() !=
-        (last.GetOrdinal() - count)) {
-      if(i == m_entries.begin()) {
-        i = insert(m_entries.begin(), e);
-      } else {
-        --i;
-        if(i->m_time_and_sale.GetSequence() != e) {
-          i = insert(i, e);
-        }
-      }
-      e = Decrement(e);
-    }
-    snapshot.insert(snapshot.begin(), i, i + count);
+  if(i == m_entries.end()) {
+    --i;
   }
+  auto e = Decrement(last);
+  while(e.GetOrdinal() > count &&
+      i->m_time_and_sale.GetSequence().GetOrdinal() !=
+      (last.GetOrdinal() - count)) {
+    if(i == m_entries.begin()) {
+      i = insert(m_entries.begin(), e);
+    } else {
+      --i;
+      if(i->m_time_and_sale.GetSequence() != e) {
+        i = insert(i, e);
+      }
+    }
+    e = Decrement(e);
+  }
+  snapshot.insert(snapshot.begin(), i, i + count);
   return make_qt_promise([d = m_load_duration, pool = m_timer_thread_pool,
       snapshot=std::move(snapshot)] {
     LiveTimer t(d, Ref(*pool));
