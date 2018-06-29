@@ -1,4 +1,2 @@
-class MarketCode {
+export class MarketCode {
 }
-
-export {MarketCode};

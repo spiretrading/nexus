@@ -3,7 +3,6 @@ CALL %~dp0../../Applications/AdministrationServer/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/AsxItchMarketDataFeedClient/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/ChartingServer/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/ChiaMarketDataFeedClient/Build/Windows/run_cmake.bat
-CALL %~dp0../../Applications/ClientWebPortal/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/ComplianceServer/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/CseMarketDataFeedClient/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/CtaMarketDataFeedClient/Build/Windows/run_cmake.bat
@@ -17,3 +16,4 @@ CALL %~dp0../../Applications/spire/build/windows/run_cmake.bat
 CALL %~dp0../../Applications/TmxIpMarketDataFeedClient/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/TmxTl1MarketDataFeedClient/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/UtpMarketDataFeedClient/Build/Windows/run_cmake.bat
+CALL %~dp0../../Applications/web_portal/build/windows/run_cmake.bat
