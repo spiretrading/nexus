@@ -59,8 +59,7 @@ export class DashboardPage extends React.Component<Properties, State> {
                 dashboardBurgerButtonIcon)}
                 onClick={this.toggleSideMenuIsOpen}
                 src={pngSrc}/>
-            </button>
-          );
+            </button>);
       }
       const color = (() => {
         if(props.isMenuOpen) {
@@ -104,21 +103,20 @@ export class DashboardPage extends React.Component<Properties, State> {
           </Transition>
           <HBoxLayout width='200px' height='60px' className={
                   css([DashboardPage.HEADER_STYLE.base])}>
-                <Padding size='18px'/>
-                <VBoxLayout height='60px'>
-                  <Padding size='23px'/>
-                  <DashboardBurgerButton isMenuOpen={false}/>
-                  <Padding size='23px'/>
-                </VBoxLayout>
-                <Padding size='20px'/>
-                <VBoxLayout height='60px'>
-                  <Padding size='15px'/>
-                  <img src='resources/dashboard/logo.png'
-                    width='78px' height='30px'/>
-                  <Padding size='15px'/>
-                </VBoxLayout>
-              </HBoxLayout>
-           
+            <Padding size='18px'/>
+            <VBoxLayout height='60px'>
+              <Padding size='23px'/>
+              <DashboardBurgerButton isMenuOpen={false}/>
+              <Padding size='23px'/>
+            </VBoxLayout>
+            <Padding size='20px'/>
+            <VBoxLayout height='60px'>
+              <Padding size='15px'/>
+              <img src='resources/dashboard/logo.png' width='78px'
+                height='30px'/>
+              <Padding size='15px'/>
+            </VBoxLayout>
+          </HBoxLayout>
           <Padding/>
           <VBoxLayout height='60px' width='45px' className={
               css(DashboardPage.STYLE.notificationButtonWrapper)}>
