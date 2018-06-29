@@ -1,7 +1,7 @@
 find_package(Qt5Widgets REQUIRED)
 
-file(GLOB header_files ./../../../include/spire/toolbar_ui_tester/*.hpp)
-file(GLOB source_files ./../../../source/toolbar_ui_tester/*.cpp)
+file(GLOB header_files ./../../../include/spire/book_view_ui_tester/*.hpp)
+file(GLOB source_files ./../../../source/book_view_ui_tester/*.cpp)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 if(WIN32)
@@ -10,11 +10,12 @@ elseif(APPLE)
   set(app_type MACOSX_BUNDLE)
 endif()
 
-add_executable(toolbar_ui_tester ${app_type} ${header_files} ${source_files})
+add_executable(book_view_ui_tester ${app_type} ${header_files}
+  ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 
 if(UNIX)
-  target_link_libraries(toolbar_ui_tester
+  target_link_libraries(book_view_ui_tester
     debug $ENV{QT_GIF_LIBRARY_DEBUG_PATH}
     optimized $ENV{QT_GIF_LIBRARY_OPTIMIZED_PATH}
     debug $ENV{QT_XCB_PLATFORM_LIBRARY_DEBUG_PATH}
@@ -22,11 +23,11 @@ if(UNIX)
     debug $ENV{QT_XCB_PLUGIN_LIBRARY_DEBUG_PATH}
     optimized $ENV{QT_XCB_PLUGIN_LIBRARY_OPTIMIZED_PATH})
   if(EXISTS $ENV{QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_DEBUG_PATH})
-    target_link_libraries(toolbar_ui_tester
+    target_link_libraries(book_view_ui_tester
       debug $ENV{QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_DEBUG_PATH}
       optimized $ENV{QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_OPTIMIZED_PATH})
   endif()
-  target_link_libraries(toolbar_ui_tester
+  target_link_libraries(book_view_ui_tester
     debug $ENV{QT_SERVICE_SUPPORT_LIBRARY_DEBUG_PATH}
     optimized $ENV{QT_SERVICE_SUPPORT_LIBRARY_OPTIMIZED_PATH}
     debug $ENV{QT_THEME_LIBRARY_DEBUG_PATH}
@@ -37,7 +38,7 @@ if(UNIX)
     optimized $ENV{QT_XML_LIBRARY_OPTIMIZED_PATH})
 endif()
 
-target_link_libraries(toolbar_ui_tester library resources
+target_link_libraries(book_view_ui_tester library resources
   debug $ENV{CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized $ENV{CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{OPEN_SSL_LIBRARY_DEBUG_PATH}
@@ -76,7 +77,7 @@ target_link_libraries(toolbar_ui_tester library resources
   optimized $ENV{ZLIB_LIBRARY_OPTIMIZED_PATH})
 
 if(WIN32)
-  target_link_libraries(toolbar_ui_tester
+  target_link_libraries(book_view_ui_tester
     debug $ENV{QT_THEME_LIBRARY_DEBUG_PATH}
     optimized $ENV{QT_THEME_LIBRARY_OPTIMIZED_PATH}
     debug $ENV{QT_FREETYPE_LIBRARY_DEBUG_PATH}
@@ -90,7 +91,7 @@ if(WIN32)
 endif()
 
 if(UNIX)
-  target_link_libraries(toolbar_ui_tester
+  target_link_libraries(book_view_ui_tester
     debug $ENV{BOOST_CHRONO_LIBRARY_DEBUG_PATH}
     optimized $ENV{BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
     debug $ENV{BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
@@ -117,4 +118,5 @@ if(UNIX)
     X11 X11-xcb xcb Xi xkbcommon xkbcommon-x11 Xrender)
 endif()
 
-install(TARGETS toolbar_ui_tester DESTINATION $ENV{TEST_INSTALL_DIRECTORY})
+install(TARGETS book_view_ui_tester DESTINATION
+  $ENV{TEST_INSTALL_DIRECTORY})

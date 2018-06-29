@@ -1,5 +1,4 @@
 #include "spire/time_and_sales/time_and_sales_table_view.hpp"
-#include <QApplication>
 #include <QEvent>
 #include <QHoverEvent>
 #include <QMovie>
