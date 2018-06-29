@@ -136,7 +136,12 @@ void time_and_sales_table_view::set_model(time_and_sales_window_model* model) {
     QTimer::singleShot(1000, [=] { show_transition_widget(); });
   }
   m_model->connect_begin_loading_signal([=] {
-    show_loading_widget(); });
+    QTimer::singleShot(500, [=] { 
+      if(m_model->is_loading()) {
+        show_loading_widget();
+      }
+    }); 
+  });
   m_model->connect_end_loading_signal([=] {
     on_end_loading_signal(); });
   auto filter = new custom_variant_sort_filter_proxy_model(this);
