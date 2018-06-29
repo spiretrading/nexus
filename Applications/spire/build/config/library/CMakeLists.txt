@@ -6,6 +6,10 @@ file(GLOB common_header_files ./../../../include/spire/spire/*.hpp)
 file(GLOB common_source_files ./../../../source/common/*.cpp)
 source_group("Header Files\\common" FILES ${common_header_files})
 source_group("Source Files\\common" FILES ${common_source_files})
+file(GLOB key_bindings_header_files ./../../../include/spire/key_bindings/*.hpp)
+file(GLOB key_bindings_source_files ./../../../source/key_bindings/*.cpp)
+source_group("Header Files\\key_bindings" FILES ${key_bindings_header_files})
+source_group("Source Files\\key_bindings" FILES ${key_bindings_source_files})
 file(GLOB login_header_files ./../../../include/spire/login/*.hpp)
 file(GLOB login_source_files ./../../../source/login/*.cpp)
 source_group("Header Files\\login" FILES ${login_header_files})
@@ -33,11 +37,13 @@ file(GLOB ui_source_files ./../../../source/ui/*.cpp)
 source_group("Header Files\\ui" FILES ${ui_header_files})
 source_group("Source Files\\ui" FILES ${ui_source_files})
 file(GLOB header_files ${book_view_header_files} ${common_header_files}
-  ${login_header_files} ${security_input_header_files}
-  ${time_and_sales_header_files} ${toolbar_header_files} ${ui_header_files})
+  ${key_bindings_header_files} ${login_header_files}
+  ${security_input_header_files} ${time_and_sales_header_files}
+  ${toolbar_header_files} ${ui_header_files})
 file(GLOB source_files ${book_view_source_files} ${common_source_files}
-  ${login_source_files} ${security_input_source_files}
-  ${time_and_sales_source_files} ${toolbar_source_files} ${ui_source_files})
+  ${key_bindings_source_files} ${login_source_files}
+  ${security_input_source_files} ${time_and_sales_source_files}
+  ${toolbar_source_files} ${ui_source_files})
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")

@@ -1,6 +1,7 @@
 #ifndef SPIRE_BOOK_VIEW_PROPERTIES_DIALOG_HPP
 #define SPIRE_BOOK_VIEW_PROPERTIES_DIALOG_HPP
 #include <QDialog>
+#include "Nexus/Definitions/Security.hpp"
 #include "spire/book_view/book_view.hpp"
 #include "spire/book_view/book_view_properties.hpp"
 
@@ -25,11 +26,13 @@ namespace spire {
       //! Constructs a book view properties dialog.
       /*!
         \param properties The properties to modify.
+        \param security The security used for modifying interactions.
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
       book_view_properties_dialog(const book_view_properties& properties,
-        QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+        const Nexus::Security& security, QWidget* parent = nullptr,
+        Qt::WindowFlags flags = 0);
 
       //! Returns the properties represented by this dialog.
       book_view_properties get_properties() const;

@@ -2,14 +2,14 @@
 
 using namespace boost;
 using namespace boost::signals2;
+using namespace Nexus;
 using namespace spire;
 
 book_view_properties_dialog::book_view_properties_dialog(
-    const book_view_properties& properties, QWidget* parent,
-    Qt::WindowFlags flags)
+    const book_view_properties& properties, const Security& security,
+    QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags | Qt::Window | Qt::FramelessWindowHint |
-        Qt::WindowCloseButtonHint) {
-}
+        Qt::WindowCloseButtonHint) {}
 
 book_view_properties book_view_properties_dialog::get_properties() const {
   return m_properties;

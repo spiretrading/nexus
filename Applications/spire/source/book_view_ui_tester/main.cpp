@@ -10,7 +10,8 @@ int main(int argc, char** argv) {
   application->setOrganizationName(QObject::tr("Eidolon Systems Ltd"));
   application->setApplicationName(QObject::tr("Book View UI Tester"));
   initialize_resources();
-  auto dialog = new book_view_properties_dialog(book_view_properties());
+  auto dialog = new book_view_properties_dialog(book_view_properties(),
+    Nexus::Security());
   dialog->show();
   application->exec();
 }
