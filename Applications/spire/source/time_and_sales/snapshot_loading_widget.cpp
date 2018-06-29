@@ -11,13 +11,15 @@ snapshot_loading_widget::snapshot_loading_widget(QScrollArea* scroll_area,
     : QWidget(parent),
       m_scroll_area(scroll_area) {
   setAttribute(Qt::WA_TransparentForMouseEvents);
-  setFixedHeight(scale_height(32));
+  setFixedHeight(scale_height(44));
   m_logo_widget = new QLabel(this);
   auto logo = new QMovie(":/icons/pre-loader.gif", QByteArray(),
     m_logo_widget);
   logo->setScaledSize(scale(16, 16));
   m_logo_widget->setMovie(logo);
-  m_logo_widget->setAlignment(Qt::AlignCenter);
+  m_logo_widget->setStyleSheet(
+    QString("padding-top: %1px;").arg(scale_height(8)));
+  m_logo_widget->setAlignment(Qt::AlignHCenter);
   m_logo_widget->movie()->start();
   m_scroll_area->installEventFilter(this);
   m_scroll_area->widget()->installEventFilter(this);
