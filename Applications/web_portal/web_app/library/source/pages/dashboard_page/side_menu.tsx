@@ -39,21 +39,28 @@ export class SideMenu extends React.Component<Properties, State> {
     }
     const MenuButton = (props: MenuButtonProps): JSX.Element => {
       return (
-        <HBoxLayout onClick={props.onClick} className={
-            css(SideMenu.STYLE.button)}>
+        <button onClick={props.onClick} className={
+            css(SideMenu.STYLE.button)}
+            >
+        <HBoxLayout className={
+            css(SideMenu.STYLE.buttonContents)}>
           <Padding size='18px'/>
-          <Center width='16px' height='40px'>
+          <Center width='20px' height='40px'>
             <img className={css(SideMenu.STYLE.img)} src={props.iconSrc}/>
           </Center>
-          <Padding size='14px'/>
-          <h1 className={css(SideMenu.STYLE.buttonText)}>
+          <Padding size='20px'/>
+          <VBoxLayout height='40px' className={css(SideMenu.STYLE.buttonText)}>
+            <Padding/>
             {props.text}
-          </h1>
-        </HBoxLayout>);
+            <Padding/>
+          </VBoxLayout>
+        </HBoxLayout>
+        </button>);
     };
     return (
       <VBoxLayout className={css(SideMenu.STYLE.base)}>
-        <MenuButton iconSrc='resources/dashboard/profile.svg'
+        <Padding size='15px'/>
+        <MenuButton iconSrc='resources/dashboard/my-profile.svg'
           text='My Profile' onClick={
             () => this.safeOnClick(this.props.onProfileAction)}/>
         <MenuButton iconSrc='resources/dashboard/accounts.svg'
@@ -61,7 +68,8 @@ export class SideMenu extends React.Component<Properties, State> {
             () => this.safeOnClick(this.props.onAccountsAction)}/>
         <MenuButton iconSrc='resources/dashboard/portfolio.svg'
           text='Portfolio' onClick={
-            () => this.safeOnClick(this.props.onPortfolioAction)}/>
+            () => this.safeOnClick(this.props.onPortfolioAction)}
+            />
         <MenuButton iconSrc='resources/dashboard/request-history.svg'
           text='Request History' onClick={
             () => this.safeOnClick(this.props.onRequestHistoryAction)}/>
@@ -78,11 +86,29 @@ export class SideMenu extends React.Component<Properties, State> {
   private static STYLE = StyleSheet.create({
     base: {
       width: '200px',
+      padding: 0,
       height: '100%',
       minHeight: '568px',
       backgroundColor: '#4B23A0'
     },
     button: {
+      width: '200px',
+      height: '40px',
+      backgroundColor: '#4B23A0',
+      outline: 0,
+      border: 'none',
+      padding: 0,
+      font: '200 14px Roboto',
+      '-webkit-tap-highlight-color': 'transparent',
+      ':hover': {
+        backgroundColor: '#684BC7',
+        cursor: 'pointer'
+      },
+      ':active': {
+        font: '400 14px Roboto'
+      }
+    },
+    buttonContents: {
       width: '100%',
       height: '40px',
       backgroundColor: '#4B23A0',
@@ -93,11 +119,12 @@ export class SideMenu extends React.Component<Properties, State> {
     },
     buttonText: {
       color: 'white',
-      font: '200 16px Roboto'
+      font: 'inherit',
+      lineHeight: '20px'
     },
     img: {
-      width: '16px',
-      height: '16px'
+      width: '20px',
+      height: '20px'
     }
   });
 }
