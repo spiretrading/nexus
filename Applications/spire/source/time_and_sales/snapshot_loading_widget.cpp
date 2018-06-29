@@ -43,7 +43,10 @@ bool snapshot_loading_widget::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void snapshot_loading_widget::showEvent(QShowEvent* event) {
-  auto rect = m_scroll_area->widget()->visibleRegion().boundingRect();
+  auto rect = m_scroll_area->visibleRegion().boundingRect();
+  if(m_scroll_area->verticalScrollBar()->isVisible()) {
+    rect.setWidth(rect.width() + m_scroll_area->verticalScrollBar()->width());
+  }
   update_logo_geometry(rect.x(), rect.width());
 }
 
