@@ -88,9 +88,7 @@ export class DashboardPage extends React.Component<Properties, State> {
           <VBoxLayout height='60px' width='45px' className={
               css(DashboardPage.STYLE.notificationButtonWrapper)}>
             <Padding size='20px'/>
-            <div style={{height: '20px', width: '15px'}}>
-              <NotificationButton items={0} isOpen={false}/>
-            </div>
+            <NotificationButton items={0} isOpen={false}/>
             <Padding size='20px'/>
             <Padding/>
           </VBoxLayout>
@@ -120,6 +118,19 @@ export class DashboardPage extends React.Component<Properties, State> {
           }}
         </Transition>
       </VBoxLayout>);
+  }
+
+  private static getFadeTransition(status: string) {
+    switch(status) {
+      case 'entering':
+        return DashboardPage.FADE_TRANSITION_STYLE.entering;
+      case 'entered':
+        return DashboardPage.FADE_TRANSITION_STYLE.entered;
+      case 'exiting':
+        return DashboardPage.FADE_TRANSITION_STYLE.exiting;
+      case 'exited':
+        return DashboardPage.FADE_TRANSITION_STYLE.exited;
+    }
   }
 
   private toggleSideMenuIsOpen() {
@@ -188,19 +199,6 @@ export class DashboardPage extends React.Component<Properties, State> {
     exiting: {opacity:  0},
     exited: {opacity: 0}
   });
-
-  private static getFadeTransition(status: string) {
-    switch(status) {
-      case 'entering':
-        return DashboardPage.FADE_TRANSITION_STYLE.entering;
-      case 'entered':
-        return DashboardPage.FADE_TRANSITION_STYLE.entered;
-      case 'exiting':
-        return DashboardPage.FADE_TRANSITION_STYLE.exiting;
-      case 'exited':
-        return DashboardPage.FADE_TRANSITION_STYLE.exited;
-    }
-  }
 }
 
 class DashboardBurgerButton extends 
@@ -216,8 +214,7 @@ class DashboardBurgerButton extends
       return (
         <button className={css(DashboardBurgerButton.STYLE.button)}>
           <img className={css(DashboardBurgerButton.STYLE.icon)}
-            onClick={this.props.onClick}
-            src={pngSrc}/>
+            onClick={this.props.onClick} src={pngSrc}/>
         </button>);
     }
     const color = (() => {
