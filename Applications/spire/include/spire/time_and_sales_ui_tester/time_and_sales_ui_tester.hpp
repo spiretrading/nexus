@@ -2,6 +2,8 @@
 #define SPIRE_TIME_AND_SALES_UI_TESTER_HPP
 #include <memory>
 #include <Beam/Threading/Threading.hpp>
+#include <QCheckBox>
+#include <QSpinBox>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/time_and_sales/periodic_time_and_sales_model.hpp"
@@ -20,8 +22,12 @@ namespace spire {
       time_and_sales_window* m_window;
       Beam::Threading::TimerThreadPool* m_timer_thread_pool;
       std::shared_ptr<periodic_time_and_sales_model> m_model;
+      QSpinBox* m_loading_time_spin_box;
+      QCheckBox* m_all_data_loaded_check_box;
 
       void security_changed(const Nexus::Security& security);
+      void update_data_loaded_check_box();
+      void update_loading_time();
       void update_price(double price);
       void update_price_range(
         time_and_sales_properties::price_range range);

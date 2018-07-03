@@ -17,7 +17,8 @@ periodic_time_and_sales_model::periodic_time_and_sales_model(Security s,
       m_price_range(time_and_sales_properties::price_range::AT_ASK),
       m_period(pos_infin),
       m_load_duration(seconds(10)),
-      m_volume(0) {
+      m_volume(0),
+      m_is_loaded(std::make_shared<std::atomic_bool>(false)) {
   connect(&m_timer, &QTimer::timeout, [=] {on_timeout();});
 }
 
@@ -95,28 +96,30 @@ qt_promise<std::vector<time_and_sales_model::entry>>
     [] (auto& lhs, auto& rhs) {
       return lhs.m_time_and_sale.GetSequence() < rhs;
     });
-  if(i != m_entries.end()) {
-    auto e = Decrement(last);
-    while(e.GetOrdinal() > count &&
-        i->m_time_and_sale.GetSequence().GetOrdinal() !=
-        (last.GetOrdinal() - count)) {
-      if(i == m_entries.begin()) {
-        i = insert(m_entries.begin(), e);
-      } else {
-        --i;
-        if(i->m_time_and_sale.GetSequence() != e) {
-          i = insert(i, e);
-        }
-      }
-      e = Decrement(e);
-    }
-    snapshot.insert(snapshot.begin(), i, i + count);
+  if(i == m_entries.end()) {
+    --i;
   }
+  auto e = Decrement(last);
+  while(e.GetOrdinal() > count &&
+      i->m_time_and_sale.GetSequence().GetOrdinal() !=
+      (last.GetOrdinal() - count)) {
+    if(i == m_entries.begin()) {
+      i = insert(m_entries.begin(), e);
+    } else {
+      --i;
+      if(i->m_time_and_sale.GetSequence() != e) {
+        i = insert(i, e);
+      }
+    }
+    e = Decrement(e);
+  }
+  snapshot.insert(snapshot.begin(), i, i + count);
   return make_qt_promise([d = m_load_duration, pool = m_timer_thread_pool,
-      snapshot=std::move(snapshot)] {
+      snapshot=std::move(snapshot), is_loaded = m_is_loaded] {
     LiveTimer t(d, Ref(*pool));
     t.Start();
     t.Wait();
+    *is_loaded = true;
     return std::move(snapshot);
   });
 }
@@ -132,7 +135,7 @@ connection periodic_time_and_sales_model::connect_volume_signal(
 }
 
 void periodic_time_and_sales_model::on_timeout() {
-  if(m_entries.empty()) {
+  if(!*m_is_loaded) {
     return;
   }
   auto sequence = Increment(m_entries.back().m_time_and_sale.GetSequence());

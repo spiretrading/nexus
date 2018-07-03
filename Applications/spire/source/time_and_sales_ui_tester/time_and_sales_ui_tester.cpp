@@ -4,7 +4,6 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QPushButton>
-#include <QSpinBox>
 #include "spire/spire/dimensions.hpp"
 #include "spire/time_and_sales/time_and_sales_window.hpp"
 
@@ -25,6 +24,7 @@ time_and_sales_ui_tester::time_and_sales_ui_tester(
   m_model->set_price(Money(Quantity(20)));
   m_model->set_price_range(price_range::AT_ASK);
   m_model->set_period(boost::posix_time::milliseconds(1000));
+  m_model->set_load_duration(boost::posix_time::milliseconds(1000));
   setFixedSize(scale(400, 200));
   auto layout = new QGridLayout(this);
   auto price_label = new QLabel("Price:", this);
@@ -59,18 +59,48 @@ time_and_sales_ui_tester::time_and_sales_ui_tester(
   connect(period_line_edit, &QSpinBox::editingFinished,
     [=] { update_period(period_line_edit->value()); });
   layout->addWidget(period_line_edit, 2, 1);
+  auto loading_time_label = new QLabel("Loading Time (ms):", this);
+  layout->addWidget(loading_time_label, 3, 0);
+  m_loading_time_spin_box = new QSpinBox(this);
+  m_loading_time_spin_box->setMaximum(100000);
+  m_loading_time_spin_box->setValue(1000);
+  connect(m_loading_time_spin_box, &QSpinBox::editingFinished,
+    this, &time_and_sales_ui_tester::update_loading_time);
+  layout->addWidget(m_loading_time_spin_box, 3, 1);
+  auto data_loaded_check_box_label = new QLabel("All Data Loaded", this);
+  layout->addWidget(data_loaded_check_box_label, 4, 0);
+  m_all_data_loaded_check_box = new QCheckBox(this);
+  connect(m_all_data_loaded_check_box, &QCheckBox::toggled, this,
+    &time_and_sales_ui_tester::update_data_loaded_check_box);
+  layout->addWidget(m_all_data_loaded_check_box, 4, 1);
 }
 
 void time_and_sales_ui_tester::security_changed(const Security& security) {
   auto price = m_model->get_price();
   auto price_range = m_model->get_price_range();
   auto period = m_model->get_period();
+  auto load_duration = m_model->get_load_duration();
   m_model = std::make_shared<periodic_time_and_sales_model>(security,
     *m_timer_thread_pool);
   m_model->set_price(price);
   m_model->set_price_range(price_range);
   m_model->set_period(period);
+  m_model->set_load_duration(load_duration);
   m_window->set_model(m_model);
+}
+
+void time_and_sales_ui_tester::update_data_loaded_check_box() {
+  if(m_all_data_loaded_check_box->isChecked()) {
+    m_model->set_load_duration(boost::posix_time::pos_infin);
+  } else {
+    m_model->set_load_duration(boost::posix_time::milliseconds(
+      m_loading_time_spin_box->value()));
+  }
+}
+
+void time_and_sales_ui_tester::update_loading_time() {
+  m_model->set_load_duration(boost::posix_time::milliseconds(
+    m_loading_time_spin_box->value()));
 }
 
 void time_and_sales_ui_tester::update_price(double price) {
