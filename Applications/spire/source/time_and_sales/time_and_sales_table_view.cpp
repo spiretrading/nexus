@@ -273,8 +273,7 @@ void time_and_sales_table_view::update_table_height(int num_rows) {
 
 bool time_and_sales_table_view::is_within_horizontal_scroll_bar(
     const QPoint& pos) {
-  return pos.y() > visibleRegion().boundingRect().height() -
-    horizontalScrollBar()->height();
+  return pos.y() > height() - horizontalScrollBar()->height();
 }
 
 bool time_and_sales_table_view::is_within_vertical_scroll_bar(
