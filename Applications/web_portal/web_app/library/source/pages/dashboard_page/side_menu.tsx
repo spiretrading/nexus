@@ -40,8 +40,7 @@ export class SideMenu extends React.Component<Properties, State> {
     const MenuButton = (props: MenuButtonProps): JSX.Element => {
       return (
         <button onClick={props.onClick} className={
-            css(SideMenu.STYLE.button)}
-            >
+            css(SideMenu.STYLE.button)}>
         <HBoxLayout className={
             css(SideMenu.STYLE.buttonContents)}>
           <Padding size='18px'/>
@@ -102,7 +101,8 @@ export class SideMenu extends React.Component<Properties, State> {
       '-webkit-tap-highlight-color': 'transparent',
       ':hover': {
         backgroundColor: '#684BC7',
-        cursor: 'pointer'
+        cursor: 'pointer',
+        color: 'blue'
       },
       ':active': {
         font: '400 14px Roboto'
@@ -111,11 +111,7 @@ export class SideMenu extends React.Component<Properties, State> {
     buttonContents: {
       width: '100%',
       height: '40px',
-      backgroundColor: '#4B23A0',
-      ':hover': {
-        backgroundColor: '#684BC7',
-        cursor: 'pointer'
-      }
+      backgroundColor: 'inherit'
     },
     buttonText: {
       color: 'white',
