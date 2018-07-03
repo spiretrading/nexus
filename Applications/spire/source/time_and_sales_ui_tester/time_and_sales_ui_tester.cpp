@@ -79,11 +79,13 @@ void time_and_sales_ui_tester::security_changed(const Security& security) {
   auto price = m_model->get_price();
   auto price_range = m_model->get_price_range();
   auto period = m_model->get_period();
+  auto load_duration = m_model->get_load_duration();
   m_model = std::make_shared<periodic_time_and_sales_model>(security,
     *m_timer_thread_pool);
   m_model->set_price(price);
   m_model->set_price_range(price_range);
   m_model->set_period(period);
+  m_model->set_load_duration(load_duration);
   m_window->set_model(m_model);
 }
 
