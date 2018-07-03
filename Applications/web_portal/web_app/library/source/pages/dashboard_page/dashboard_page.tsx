@@ -46,7 +46,7 @@ export class DashboardPage extends React.Component<Properties, State> {
       isMenuOpen: boolean;
     }
     const DashboardBurgerButton = (props: DashboardBurgerButton):
-     JSX.Element => {
+        JSX.Element => {
       const pngSrc = (() => {
         if(props.isMenuOpen) {
           return 'resources/dashboard/burger-light-purple.png';
@@ -55,12 +55,12 @@ export class DashboardPage extends React.Component<Properties, State> {
       })();
       if(window.navigator.userAgent.indexOf('Edge') > -1) {
         return (
-            <button className={css(DashboardPage.STYLE.dashboardBurgerButton)}>
-              <img className={css(DashboardPage.STYLE.
-                dashboardBurgerButtonIcon)}
-                onClick={this.toggleSideMenuIsOpen}
-                src={pngSrc}/>
-            </button>);
+          <button className={css(DashboardPage.STYLE.dashboardBurgerButton)}>
+            <img className={css(DashboardPage.STYLE.
+              dashboardBurgerButtonIcon)}
+              onClick={this.toggleSideMenuIsOpen}
+              src={pngSrc}/>
+          </button>);
       }
       const color = (() => {
         if(props.isMenuOpen) {
@@ -80,7 +80,6 @@ export class DashboardPage extends React.Component<Properties, State> {
               timeout={DashboardPage.MENU_TRANSITION_LENGTH_MS}
               component={null}>
             {(status: string) => {
-              console.log('status: ', status)
               return (
                 <HBoxLayout width='200px' height='60px' className={
                     css([DashboardPage.HEADER_STYLE.base,
