@@ -267,12 +267,9 @@ void time_and_sales_table_view::fade_out_vertical_scroll_bar() {
 void time_and_sales_table_view::show_loading_widget() {
   m_loading_widget = std::make_unique<snapshot_loading_widget>(this);
   m_layout->addWidget(m_loading_widget.get());
-  auto scroll_bar_at_bottom = verticalScrollBar()->value() ==
-    verticalScrollBar()->maximum();
+  auto scroll_pos = verticalScrollBar()->value();
   update_table_height(m_table->model()->rowCount());
-  if(scroll_bar_at_bottom) {
-    verticalScrollBar()->setValue(verticalScrollBar()->maximum());
-  }
+  verticalScrollBar()->setValue(scroll_pos);
 }
 
 void time_and_sales_table_view::update_table_height(int num_rows) {
