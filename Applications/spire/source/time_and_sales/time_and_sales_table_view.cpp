@@ -271,7 +271,8 @@ void time_and_sales_table_view::show_loading_widget() {
 }
 
 void time_and_sales_table_view::update_table_height(int num_rows) {
-  auto height = (num_rows * m_table->rowHeight(0)) + m_header->height();
+  auto height = (num_rows * m_table->verticalHeader()->defaultSectionSize())
+    + m_header->height();
   if(m_loading_widget != nullptr) {
     height += m_loading_widget->height();
   }
@@ -331,7 +332,7 @@ void time_and_sales_table_view::on_rows_about_to_be_inserted(
     if(first_index == 0) {
       if(verticalScrollBar()->value() != 0) {
         verticalScrollBar()->setValue(verticalScrollBar()->value() +
-          (m_table->rowHeight(0) * num_rows));
+          (m_table->verticalHeader()->defaultSectionSize() * num_rows));
       }
     }
   }
