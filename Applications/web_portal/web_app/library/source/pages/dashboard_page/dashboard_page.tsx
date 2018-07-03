@@ -20,6 +20,10 @@ interface State {
   isSideMenuOpen: boolean;
 }
 
+interface DashboardBurgerButtonProps {
+  isMenuOpen: boolean;
+}
+
 /** Displays the main dashboard. */
 export class DashboardPage extends React.Component<Properties, State> {
   constructor(props: Properties) {
@@ -29,23 +33,9 @@ export class DashboardPage extends React.Component<Properties, State> {
     };
     this.toggleSideMenuIsOpen = this.toggleSideMenuIsOpen.bind(this);
   }
+
   public render(): JSX.Element {
-    const getFadeTransition = (status: string) => {
-      switch(status) {
-        case 'entering':
-          return DashboardPage.FADE_TRANSITION_STYLE.entering;
-        case 'entered':
-          return DashboardPage.FADE_TRANSITION_STYLE.entered;
-        case 'exiting':
-          return  DashboardPage.FADE_TRANSITION_STYLE.exiting;
-        case 'exited':
-          return  DashboardPage.FADE_TRANSITION_STYLE.exited;
-      }
-    };
-    interface DashboardBurgerButton {
-      isMenuOpen: boolean;
-    }
-    const DashboardBurgerButton = (props: DashboardBurgerButton):
+    const DashboardBurgerButton = (props: DashboardBurgerButtonProps):
         JSX.Element => {
       const pngSrc = (() => {
         if(props.isMenuOpen) {
@@ -85,7 +75,7 @@ export class DashboardPage extends React.Component<Properties, State> {
                     css([DashboardPage.HEADER_STYLE.base,
                     DashboardPage.HEADER_STYLE.menuIsOpen,
                     DashboardPage.FADE_TRANSITION_STYLE.base,
-                    getFadeTransition(status)])}>
+                    DashboardPage.getFadeTransition(status)])}>
                   <Padding size='18px'/>
                   <VBoxLayout height='60px'>
                     <Padding size='23px'/>
@@ -103,7 +93,7 @@ export class DashboardPage extends React.Component<Properties, State> {
             }}
           </Transition>
           <HBoxLayout width='200px' height='60px' className={
-                  css([DashboardPage.HEADER_STYLE.base])}>
+              css([DashboardPage.HEADER_STYLE.base])}>
             <Padding size='18px'/>
             <VBoxLayout height='60px'>
               <Padding size='23px'/>
@@ -138,7 +128,7 @@ export class DashboardPage extends React.Component<Properties, State> {
               <HBoxLayout height='100%' className={ css([
                   DashboardPage.STYLE.sideBarWrapper,
                   DashboardPage.FADE_TRANSITION_STYLE.base,
-                  getFadeTransition(status)])}>
+                  DashboardPage.getFadeTransition(status)])}>
                 <SideMenu roles={this.props.model.roles}/>
               </HBoxLayout>);
           }}
@@ -150,7 +140,7 @@ export class DashboardPage extends React.Component<Properties, State> {
             return (
               <div className={css([DashboardPage.STYLE.dropShaddow,
                 DashboardPage.FADE_TRANSITION_STYLE.base,
-                getFadeTransition(status)])}/>);
+                DashboardPage.getFadeTransition(status)])}/>);
           }}
         </Transition>
       </VBoxLayout>);
@@ -238,4 +228,17 @@ export class DashboardPage extends React.Component<Properties, State> {
     exiting: {opacity:  0},
     exited: {opacity: 0}
   });
+
+  private static getFadeTransition(status: string) {
+    switch(status) {
+      case 'entering':
+        return DashboardPage.FADE_TRANSITION_STYLE.entering;
+      case 'entered':
+        return DashboardPage.FADE_TRANSITION_STYLE.entered;
+      case 'exiting':
+        return DashboardPage.FADE_TRANSITION_STYLE.exiting;
+      case 'exited':
+        return DashboardPage.FADE_TRANSITION_STYLE.exited;
+    }
+  }
 }

@@ -29,14 +29,14 @@ interface Properties {
 
 interface State {}
 
+interface MenuButtonProps {
+  iconSrc: string;
+  text: string;
+  onClick: () => void;
+}
 /** Display's the dashboard's side menu. */
 export class SideMenu extends React.Component<Properties, State> {
   public render(): JSX.Element {
-    interface MenuButtonProps {
-      iconSrc: string;
-      text: string;
-      onClick: () => void;
-    }
     const MenuButton = (props: MenuButtonProps): JSX.Element => {
       return (
         <button onClick={props.onClick} className={
@@ -77,6 +77,7 @@ export class SideMenu extends React.Component<Properties, State> {
             () => this.safeOnClick(this.props.onSignOutAction)}/>
       </VBoxLayout>);
   }
+  
   private safeOnClick(onClick?: () => void) {
     if(onClick) {
       onClick();
