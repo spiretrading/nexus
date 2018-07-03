@@ -133,10 +133,10 @@ void time_and_sales_table_view::set_model(time_and_sales_window_model* model) {
   m_transition_widget.reset();
   m_loading_widget.reset();
   if(m_model->is_loading()) {
-    QTimer::singleShot(1000, [=] { show_transition_widget(); });
+    QTimer::singleShot(1000, this, [=] { show_transition_widget(); });
   }
   m_model->connect_begin_loading_signal([=] {
-    QTimer::singleShot(500, [=] { 
+    QTimer::singleShot(500, this, [=] {
       if(m_model->is_loading()) {
         show_loading_widget();
       }
