@@ -1,18 +1,23 @@
-import string
-import xlrd
+import argparse
+import csv
 
-printable = set(string.printable)
-output = open('symbols.yml', 'w')
-book = xlrd.open_workbook('cse.xls')
-first_sheet = book.sheet_by_index(0)
-output.write('---\n')
-for i in range(5, first_sheet.nrows):
-  symbol = filter(lambda x: x in printable,
-    first_sheet.cell(i, 1).value.split('\n')[0])
-  name = filter(lambda x: x in printable,
-    first_sheet.cell(i, 0).value.split('\n')[0])
-  if len(symbol) == 0 or len(name) == 0:
-    break
-  output.write('  - symbol: %s\n' % symbol)
-  output.write('    name: %s\n' % name)
-output.write('...\n')
+def main():
+  parser = argparse.ArgumentParser(
+    description='v1.0 Copyright (C) 2018 Eidolon Systems Ltd.')
+  parser.add_argument('-f', '--file', type=str, help='Symbol file.',
+    required=True)
+  parser.add_argument('-o', '--out', type=str, help='Output file.',
+    default='symbols.yml')
+  args = parser.parse_args()
+  with open(args.file, 'r') as input, open(args.out, 'w') as output:
+    output.write('---\n')
+    symbol_reader = csv.reader(input)
+    next(symbol_reader, None)
+    for row in symbol_reader:
+      if row[4] == 'CAD' and row[5] == 'CSE':
+        output.write('  - symbol: %s\n' % row[1])
+        output.write('    name: %s\n' % row[2])
+    output.write('...\n')
+
+if __name__ == '__main__':
+  main()
