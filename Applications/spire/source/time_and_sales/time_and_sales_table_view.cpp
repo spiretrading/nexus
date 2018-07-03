@@ -325,15 +325,13 @@ void time_and_sales_table_view::on_vertical_slider_value_changed(
 }
 
 void time_and_sales_table_view::on_rows_about_to_be_inserted(
-    const QModelIndex& parent, int first_index, int last_index) {
-  if(m_table->model()->rowCount() > 0) {
-    auto num_rows = last_index - first_index + 1;
-    update_table_height(m_table->model()->rowCount() + num_rows);
-    if(first_index == 0) {
-      if(verticalScrollBar()->value() != 0) {
-        verticalScrollBar()->setValue(verticalScrollBar()->value() +
-          (m_table->verticalHeader()->defaultSectionSize() * num_rows));
-      }
+  const QModelIndex& parent, int first_index, int last_index) {
+  auto num_rows = last_index - first_index + 1;
+  update_table_height(m_table->model()->rowCount() + num_rows);
+  if(first_index == 0) {
+    if(verticalScrollBar()->value() != 0) {
+      verticalScrollBar()->setValue(verticalScrollBar()->value() +
+        (m_table->verticalHeader()->defaultSectionSize() * num_rows));
     }
   }
 }
