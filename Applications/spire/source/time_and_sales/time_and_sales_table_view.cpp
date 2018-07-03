@@ -135,15 +135,8 @@ void time_and_sales_table_view::set_model(time_and_sales_window_model* model) {
   if(m_model->is_loading()) {
     QTimer::singleShot(1000, this, [=] { show_transition_widget(); });
   }
-  m_model->connect_begin_loading_signal([=] {
-    QTimer::singleShot(500, this, [=] {
-      if(m_model->is_loading()) {
-        show_loading_widget();
-      }
-    }); 
-  });
-  m_model->connect_end_loading_signal([=] {
-    on_end_loading_signal(); });
+  m_model->connect_begin_loading_signal([=] { show_loading_widget(); });  
+  m_model->connect_end_loading_signal([=] { on_end_loading_signal(); });
   auto filter = new custom_variant_sort_filter_proxy_model(this);
   filter->setSourceModel(m_model);
   connect(filter, &QAbstractItemModel::rowsAboutToBeInserted, this,
