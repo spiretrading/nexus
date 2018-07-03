@@ -1,7 +1,0 @@
-SETLOCAL
-PUSHD %~dp0
-PUSHD %~dp0..\..\
-npm install
-POPD
-POPD
-ENDLOCAL

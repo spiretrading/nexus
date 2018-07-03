@@ -17,7 +17,6 @@ applications+="AdministrationServer "
 applications+="AsxItchMarketDataFeedClient "
 applications+="ChartingServer "
 applications+="ChiaMarketDataFeedClient "
-applications+="ClientWebPortal "
 applications+="ComplianceServer "
 applications+="CseMarketDataFeedClient "
 applications+="CtaMarketDataFeedClient "
@@ -37,5 +36,8 @@ for i in $applications; do
   popd
 done
 pushd $directory/../../Applications/spire/build/posix
+./run_cmake.sh $build_type
+popd
+pushd $directory/../../Applications/web_portal/build/posix
 ./run_cmake.sh $build_type
 popd

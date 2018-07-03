@@ -38,8 +38,7 @@ if(UNIX)
     optimized $ENV{QT_XML_LIBRARY_OPTIMIZED_PATH})
 endif()
 
-target_link_libraries(security_input_ui_tester security_input common resources
-  ui
+target_link_libraries(security_input_ui_tester library resources
   debug $ENV{CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized $ENV{CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{OPEN_SSL_LIBRARY_DEBUG_PATH}

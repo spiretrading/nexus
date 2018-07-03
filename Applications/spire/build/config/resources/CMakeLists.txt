@@ -9,4 +9,4 @@ set_target_properties(resources PROPERTIES OUTPUT_NAME spire_resources)
 install(TARGETS resources CONFIGURATIONS Debug
   DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/debug)
 install(TARGETS resources CONFIGURATIONS Release
-DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/release)
+  DESTINATION $ENV{LIB_INSTALL_DIRECTORY}/release)
