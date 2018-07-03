@@ -26,6 +26,8 @@ export class NotificationButton extends React.Component<Properties> {
         outline: 0,
         padding: 0,
         backgroundColor: 'transparent',
+        shapeRendering: 'geometricPrecision',
+        '-webkit-tap-highlight-color': 'transparent',
         ':hover': {
           cursor: 'pointer'
         }

@@ -5,7 +5,7 @@ import * as ReactDOM from 'react-dom';
 import {DashboardPage, LocalDashboardModel} from 'web_portal';
 
 const model = new LocalDashboardModel(
-  Beam.DirectoryEntry.makeAccount(123, 'demo'),
+  Beam.DirectoryEntry.makeAccount(124, 'demo'),
   new Nexus.AccountRoles(0));
 
 ReactDOM.render(<DashboardPage model={model}/>,
