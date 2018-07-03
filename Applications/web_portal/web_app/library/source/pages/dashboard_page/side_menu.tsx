@@ -75,6 +75,7 @@ export class SideMenu extends React.Component<Properties, State> {
     }
   });
 }
+
 class MenuButton extends React.Component<MenuButtonProps> {
   public render(): JSX.Element {
     return (

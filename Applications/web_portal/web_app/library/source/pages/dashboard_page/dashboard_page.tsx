@@ -202,32 +202,33 @@ export class DashboardPage extends React.Component<Properties, State> {
     }
   }
 }
-class DashboardBurgerButton extends React.
-  Component<DashboardBurgerButtonProps> {
-    public render(): JSX.Element {
-      const pngSrc = (() => {
-        if(this.props.isMenuOpen) {
-          return 'resources/dashboard/burger-light-purple.png';
-        }
-        return 'resources/dashboard/burger-purple.png';
-      })();
-      if(window.navigator.userAgent.indexOf('Edge') > -1) {
-        return (
-          <button className={css(DashboardBurgerButton.STYLE.button)}>
-            <img className={css(DashboardBurgerButton.STYLE.icon)}
-              onClick={this.props.onClick}
-              src={pngSrc}/>
-          </button>);
+
+class DashboardBurgerButton extends 
+    React.Component<DashboardBurgerButtonProps> {
+  public render(): JSX.Element {
+    const pngSrc = (() => {
+      if(this.props.isMenuOpen) {
+        return 'resources/dashboard/burger-light-purple.png';
       }
-      const color = (() => {
-        if(this.props.isMenuOpen) {
-          return '#E2E0FF';
-        }
-        return '#684BC7';
-      })();
+      return 'resources/dashboard/burger-purple.png';
+    })();
+    if(window.navigator.userAgent.indexOf('Edge') > -1) {
       return (
-        <BurgerButton width='20px' height='14px' color={color}
-          highlightColor={color} onClick={this.props.onClick}/>);
+        <button className={css(DashboardBurgerButton.STYLE.button)}>
+          <img className={css(DashboardBurgerButton.STYLE.icon)}
+            onClick={this.props.onClick}
+            src={pngSrc}/>
+        </button>);
+    }
+    const color = (() => {
+      if(this.props.isMenuOpen) {
+        return '#E2E0FF';
+      }
+      return '#684BC7';
+    })();
+    return (
+      <BurgerButton width='20px' height='14px' color={color}
+        highlightColor={color} onClick={this.props.onClick}/>);
   }
   private static STYLE = StyleSheet.create({
     button: {
