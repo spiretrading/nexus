@@ -37,8 +37,9 @@ export class DashboardPage extends React.Component<Properties, State> {
         case 'entered':
           return DashboardPage.FADE_TRANSITION_STYLE.entered;
         case 'exiting':
-        case 'exiting':
           return  DashboardPage.FADE_TRANSITION_STYLE.exiting;
+        case 'exited':
+          return  DashboardPage.FADE_TRANSITION_STYLE.exited;
       }
     };
     interface DashboardBurgerButton {
@@ -77,8 +78,9 @@ export class DashboardPage extends React.Component<Properties, State> {
             className={css(DashboardPage.STYLE.header)}>
           <Transition in={this.state.isSideMenuOpen}
               timeout={DashboardPage.MENU_TRANSITION_LENGTH_MS}
-              unmountOnExit={true} component={null}>
+              component={null}>
             {(status: string) => {
+              console.log('status: ', status)
               return (
                 <HBoxLayout width='200px' height='60px' className={
                     css([DashboardPage.HEADER_STYLE.base,
@@ -131,7 +133,7 @@ export class DashboardPage extends React.Component<Properties, State> {
         <div className={css(DashboardPage.STYLE.separator)}/>
         <Transition in={this.state.isSideMenuOpen}
             timeout={DashboardPage.MENU_TRANSITION_LENGTH_MS}
-            unmountOnExit={true} component={null}>
+            component={null}>
           {(status: string) => {
             return (
               <HBoxLayout height='100%' className={ css([
@@ -144,7 +146,7 @@ export class DashboardPage extends React.Component<Properties, State> {
         </Transition>
         <Transition in={this.state.isSideMenuOpen}
             timeout={DashboardPage.MENU_TRANSITION_LENGTH_MS}
-            unmountOnExit={true} component={null}>
+            component={null}>
           {(status: string) => {
             return (
               <div className={css([DashboardPage.STYLE.dropShaddow,
@@ -232,8 +234,9 @@ export class DashboardPage extends React.Component<Properties, State> {
       transition: `opacity ${DashboardPage.MENU_TRANSITION_LENGTH_MS}ms `
         + `ease-out`
     },
-    entering: {opacity:  0},
+    entering: {opacity:  1},
     entered: {opacity:  1},
-    exiting: {opacity:  0}
+    exiting: {opacity:  0},
+    exited: {opacity: 0}
   });
 }
