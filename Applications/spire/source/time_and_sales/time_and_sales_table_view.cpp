@@ -193,7 +193,7 @@ bool time_and_sales_table_view::event(QEvent* event) {
   if(event->type() == QEvent::HoverMove) {
     auto e = static_cast<QHoverEvent*>(event);
     if(is_within_horizontal_scroll_bar(e->pos()) &&
-        !verticalScrollBar()->isSliderDown()) {
+        !verticalScrollBar()->isVisible()) {
       setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
       setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     } else if(is_within_vertical_scroll_bar(e->pos()) &&
