@@ -34,30 +34,12 @@ interface MenuButtonProps {
   text: string;
   onClick: () => void;
 }
+
 /** Display's the dashboard's side menu. */
 export class SideMenu extends React.Component<Properties, State> {
   public render(): JSX.Element {
-    const MenuButton = (props: MenuButtonProps): JSX.Element => {
-      return (
-        <button onClick={props.onClick} className={
-            css(SideMenu.STYLE.button)}>
-        <HBoxLayout className={
-            css(SideMenu.STYLE.buttonContents)}>
-          <Padding size='18px'/>
-          <Center width='20px' height='40px'>
-            <img className={css(SideMenu.STYLE.img)} src={props.iconSrc}/>
-          </Center>
-          <Padding size='20px'/>
-          <VBoxLayout height='40px' className={css(SideMenu.STYLE.buttonText)}>
-            <Padding/>
-            {props.text}
-            <Padding/>
-          </VBoxLayout>
-        </HBoxLayout>
-        </button>);
-    };
     return (
-      <VBoxLayout className={css(SideMenu.STYLE.base)}>
+      <VBoxLayout className={css(SideMenu.STYLE.sideMenu)}>
         <Padding size='15px'/>
         <MenuButton iconSrc='resources/dashboard/my-profile.svg'
           text='My Profile' onClick={
@@ -77,20 +59,45 @@ export class SideMenu extends React.Component<Properties, State> {
             () => this.safeOnClick(this.props.onSignOutAction)}/>
       </VBoxLayout>);
   }
-  
+
   private safeOnClick(onClick?: () => void) {
     if(onClick) {
       onClick();
     }
   }
   private static STYLE = StyleSheet.create({
-    base: {
+    sideMenu: {
       width: '200px',
       padding: 0,
       height: '100%',
       minHeight: '568px',
       backgroundColor: '#4B23A0'
-    },
+    }
+  });
+}
+class MenuButton extends React.Component<MenuButtonProps> {
+  public render(): JSX.Element {
+    return (
+      <button onClick={this.props.onClick} className={
+          css(MenuButton.STYLE.button)}>
+        <HBoxLayout className={
+            css(MenuButton.STYLE.buttonContents)}>
+          <Padding size='18px'/>
+          <Center width='20px' height='40px'>
+            <img className={css(MenuButton.STYLE.img)}
+              src={this.props.iconSrc}/>
+          </Center>
+          <Padding size='20px'/>
+          <VBoxLayout height='40px'
+              className={css(MenuButton.STYLE.buttonText)}>
+            <Padding/>
+            {this.props.text}
+            <Padding/>
+          </VBoxLayout>
+        </HBoxLayout>
+      </button>);
+  }
+  private static STYLE = StyleSheet.create({
     button: {
       width: '200px',
       height: '40px',

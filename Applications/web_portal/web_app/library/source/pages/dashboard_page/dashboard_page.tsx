@@ -22,6 +22,7 @@ interface State {
 
 interface DashboardBurgerButtonProps {
   isMenuOpen: boolean;
+  onClick: () => void;
 }
 
 /** Displays the main dashboard. */
@@ -35,33 +36,6 @@ export class DashboardPage extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const DashboardBurgerButton = (props: DashboardBurgerButtonProps):
-        JSX.Element => {
-      const pngSrc = (() => {
-        if(props.isMenuOpen) {
-          return 'resources/dashboard/burger-light-purple.png';
-        }
-        return 'resources/dashboard/burger-purple.png';
-      })();
-      if(window.navigator.userAgent.indexOf('Edge') > -1) {
-        return (
-          <button className={css(DashboardPage.STYLE.dashboardBurgerButton)}>
-            <img className={css(DashboardPage.STYLE.
-              dashboardBurgerButtonIcon)}
-              onClick={this.toggleSideMenuIsOpen}
-              src={pngSrc}/>
-          </button>);
-      }
-      const color = (() => {
-        if(props.isMenuOpen) {
-          return '#E2E0FF';
-        }
-        return '#684BC7';
-      })();
-      return (
-        <BurgerButton width='20px' height='14px' color={color}
-          highlightColor={color} onClick={this.toggleSideMenuIsOpen}/>);
-    };
     return (
       <VBoxLayout width='100%' height='100%'>
         <HBoxLayout width='100%' height='60px'
@@ -79,7 +53,8 @@ export class DashboardPage extends React.Component<Properties, State> {
                   <Padding size='18px'/>
                   <VBoxLayout height='60px'>
                     <Padding size='23px'/>
-                    <DashboardBurgerButton isMenuOpen={true}/>
+                    <DashboardBurgerButton isMenuOpen={true}
+                      onClick={this.toggleSideMenuIsOpen}/>
                     <Padding size='23px'/>
                   </VBoxLayout>
                   <Padding size='20px'/>
@@ -97,7 +72,8 @@ export class DashboardPage extends React.Component<Properties, State> {
             <Padding size='18px'/>
             <VBoxLayout height='60px'>
               <Padding size='23px'/>
-              <DashboardBurgerButton isMenuOpen={false}/>
+              <DashboardBurgerButton isMenuOpen={false}
+                onClick={this.toggleSideMenuIsOpen}/>
               <Padding size='23px'/>
             </VBoxLayout>
             <Padding size='20px'/>
@@ -187,22 +163,6 @@ export class DashboardPage extends React.Component<Properties, State> {
       position: 'absolute' as 'absolute',
       top: 0,
       left: 'calc(100% - 45px)'
-    },
-    dashboardBurgerButton: {
-      width: '20px',
-      height: '14px',
-      position: 'relative' as 'relative',
-      border: 'none',
-      cursor: 'pointer',
-      backgroundColor: 'inherit',
-      outline: 0
-    },
-    dashboardBurgerButtonIcon: {
-      width: '20px',
-      height: '14px',
-      position: 'absolute' as 'absolute',
-      top: 0,
-      left: 0
     }
   });
   private static HEADER_STYLE = StyleSheet.create({
@@ -241,4 +201,50 @@ export class DashboardPage extends React.Component<Properties, State> {
         return DashboardPage.FADE_TRANSITION_STYLE.exited;
     }
   }
+}
+class DashboardBurgerButton extends React.
+  Component<DashboardBurgerButtonProps> {
+    public render(): JSX.Element {
+      const pngSrc = (() => {
+        if(this.props.isMenuOpen) {
+          return 'resources/dashboard/burger-light-purple.png';
+        }
+        return 'resources/dashboard/burger-purple.png';
+      })();
+      if(window.navigator.userAgent.indexOf('Edge') > -1) {
+        return (
+          <button className={css(DashboardBurgerButton.STYLE.button)}>
+            <img className={css(DashboardBurgerButton.STYLE.icon)}
+              onClick={this.props.onClick}
+              src={pngSrc}/>
+          </button>);
+      }
+      const color = (() => {
+        if(this.props.isMenuOpen) {
+          return '#E2E0FF';
+        }
+        return '#684BC7';
+      })();
+      return (
+        <BurgerButton width='20px' height='14px' color={color}
+          highlightColor={color} onClick={this.props.onClick}/>);
+  }
+  private static STYLE = StyleSheet.create({
+    button: {
+      width: '20px',
+      height: '14px',
+      position: 'relative' as 'relative',
+      border: 'none',
+      cursor: 'pointer',
+      backgroundColor: 'inherit',
+      outline: 0
+    },
+    icon: {
+      width: '20px',
+      height: '14px',
+      position: 'absolute' as 'absolute',
+      top: 0,
+      left: 0
+    }
+  });
 }
