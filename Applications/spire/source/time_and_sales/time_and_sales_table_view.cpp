@@ -284,7 +284,8 @@ bool time_and_sales_table_view::is_within_horizontal_scroll_bar(
     horizontalScrollBar()->height();
 }
 
-bool time_and_sales_table_view::is_within_vertical_scroll_bar(const QPoint& pos) {
+bool time_and_sales_table_view::is_within_vertical_scroll_bar(
+    const QPoint& pos) {
   return pos.x() > width() - verticalScrollBar()->width();
 }
 
