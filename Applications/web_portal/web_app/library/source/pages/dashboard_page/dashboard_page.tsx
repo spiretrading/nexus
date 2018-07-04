@@ -45,10 +45,10 @@ export class DashboardPage extends React.Component<Properties, State> {
       });
     });
   }
-  
+
   public render(): JSX.Element {
     if(this.state.isLoading) {
-      return <div/>
+      return <div/>;
     }
     return (
       <VBoxLayout width='100%' height='100%'>
@@ -215,7 +215,7 @@ export class DashboardPage extends React.Component<Properties, State> {
   });
 }
 
-class DashboardBurgerButton extends 
+class DashboardBurgerButton extends
     React.Component<DashboardBurgerButtonProps> {
   public render(): JSX.Element {
     const pngSrc = (() => {
