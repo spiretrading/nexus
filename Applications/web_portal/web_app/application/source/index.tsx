@@ -19,7 +19,7 @@ class AuthenticatedRoute extends React.Component<any> {
     return (
       <Router.Route
         {...this.props}
-        render={(props) => {
+        render={(_) => {
           if(this.props.account.equals(Beam.DirectoryEntry.INVALID)) {
             return <Router.Redirect to='/login'/>;
           } else {

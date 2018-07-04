@@ -11,20 +11,20 @@ interface Properties {
    */
   roles: Nexus.AccountRoles;
 
-  /** The action to perform when the Profile menu item is selected. */
-  onProfileAction?: () => void;
+  /** Indicates the Profile menu item was clicked. */
+  onProfileClick?: () => void;
 
-  /** The action to perform when the Accounts menu item is selected. */
-  onAccountsAction?: () => void;
+  /** Indicates the Accounts menu item was clicked. */
+  onAccountsClick?: () => void;
 
-  /** The action to perform when the Portfolio menu item is selected. */
-  onPortfolioAction?: () => void;
+  /** Indicates the Portfolio menu item was clicked. */
+  onPortfolioClick?: () => void;
 
-  /** The action to perform when the Request History menu item is selected. */
-  onRequestHistoryAction?: () => void;
+  /** Indicates the Request History menu item was clicked. */
+  onRequestHistoryClick?: () => void;
 
-  /** The action to perform when the Sign Out menu item is selected. */
-  onSignOutAction?: () => void;
+  /** Indicates the Sign Out menu item was clicked. */
+  onSignOutClick?: () => void;
 }
 
 interface State {}
@@ -43,20 +43,20 @@ export class SideMenu extends React.Component<Properties, State> {
         <Padding size='15px'/>
         <MenuButton iconSrc='resources/dashboard/my-profile.svg'
           text='My Profile' onClick={
-            () => this.safeOnClick(this.props.onProfileAction)}/>
+            () => this.safeOnClick(this.props.onProfileClick)}/>
         <MenuButton iconSrc='resources/dashboard/accounts.svg'
           text='Accounts' onClick={
-            () => this.safeOnClick(this.props.onAccountsAction)}/>
+            () => this.safeOnClick(this.props.onAccountsClick)}/>
         <MenuButton iconSrc='resources/dashboard/portfolio.svg'
           text='Portfolio' onClick={
-            () => this.safeOnClick(this.props.onPortfolioAction)}
+            () => this.safeOnClick(this.props.onPortfolioClick)}
             />
         <MenuButton iconSrc='resources/dashboard/request-history.svg'
           text='Request History' onClick={
-            () => this.safeOnClick(this.props.onRequestHistoryAction)}/>
+            () => this.safeOnClick(this.props.onRequestHistoryClick)}/>
         <MenuButton iconSrc='resources/dashboard/sign-out.svg'
           text='Sign Out' onClick={
-            () => this.safeOnClick(this.props.onSignOutAction)}/>
+            () => this.safeOnClick(this.props.onSignOutClick)}/>
       </VBoxLayout>);
   }
 
