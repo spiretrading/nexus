@@ -41,12 +41,12 @@ security_info_list_view::security_info_list_view(QWidget* parent)
     QScrollBar {
       background-color: #FFFFFF;
       border: none;
-      width: %1px;
     }
 
     QScrollBar::handle:vertical {
       background-color: #EBEBEB;
       margin-left: %3px;
+      width: %1px;
     }
 
     QScrollBar::sub-line:vertical {
