@@ -117,7 +117,8 @@ export class DashboardPage extends React.Component<Properties, State> {
                   DashboardPage.STYLE.sideBarWrapper,
                   DashboardPage.FADE_TRANSITION_STYLE.base,
                   DashboardPage.getFadeTransition(status)])}>
-                <SideMenu roles={this.props.model.roles}/>
+                <SideMenu roles={this.props.model.roles}
+                  onSignOutClick={this.props.onLogout}/>
               </HBoxLayout>);
           }}
         </Transition>
