@@ -188,10 +188,12 @@ bool title_bar::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void title_bar::mouseDoubleClickEvent(QMouseEvent* event) {
-  if(window()->isMaximized()) {
-    on_restore_button_press();
-  } else {
-    on_maximize_button_press();
+  if(window()->windowFlags().testFlag(Qt::WindowMaximizeButtonHint)) {
+    if(window()->isMaximized()) {
+      on_restore_button_press();
+    } else {
+      on_maximize_button_press();
+    }
   }
 }
 
