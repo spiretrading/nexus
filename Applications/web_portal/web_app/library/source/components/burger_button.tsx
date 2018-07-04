@@ -24,7 +24,6 @@ interface Properties {
 export class BurgerButton extends React.Component<Properties> {
   constructor(props: Properties) {
     super(props);
-    this.onClick = this.onClick.bind(this);
     this.onMouseEnter = this.onMouseEnter.bind(this);
     this.onMouseLeave = this.onMouseLeave.bind(this);
     this.componentWillReceiveProps(props);
@@ -54,7 +53,7 @@ export class BurgerButton extends React.Component<Properties> {
   public render(): JSX.Element {
     return (
       <button className={this.unHighlightedClassName}
-          onClick={this.onClick}
+          onClick={this.props.onClick}
           onMouseEnter={this.onMouseEnter}
           onMouseLeave={this.onMouseLeave}
           ref={(ref) => this.button = ref}>
@@ -69,12 +68,6 @@ export class BurgerButton extends React.Component<Properties> {
       </button>);
   }
 
-  private onClick() {
-    if(this.props.onClick) {
-      this.props.onClick();
-    }
-  }
-
   private onMouseEnter() {
     this.button.className = this.highlightedClassName;
   }
@@ -83,6 +76,9 @@ export class BurgerButton extends React.Component<Properties> {
     this.button.className = this.unHighlightedClassName;
   }
 
+  private static defaultProps = {
+    onClick: () => {}
+  }
   private static STYLE = StyleSheet.create({
     buttonBase: {
       border: 'none',

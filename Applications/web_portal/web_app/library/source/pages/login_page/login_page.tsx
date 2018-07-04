@@ -106,9 +106,7 @@ export class LoginPage extends React.Component<Properties, State> {
         this.setState({
           errorMessage: null
         });
-        if(this.props.onLogin) {
-          this.props.onLogin(account);
-        }
+        this.props.onLogin(account);
       } catch(error) {
         this.staticLogo.className = css(LoginPage.STYLE.logoVisible);
         this.animatedLogo.className = css(LoginPage.STYLE.logoInvisible);
@@ -137,6 +135,9 @@ export class LoginPage extends React.Component<Properties, State> {
     this.submitButton.disabled = this.usernameInputField.value.trim() === '';
   }
 
+  private static defaultProps = {
+    onLogin: (account: LoginPageModel) => {}
+  };
   private static STYLE = StyleSheet.create({
     page: {
       backgroundColor: '#4B23A0'
