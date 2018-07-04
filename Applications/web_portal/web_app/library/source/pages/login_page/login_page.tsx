@@ -126,7 +126,8 @@ export class LoginPage extends React.Component<Properties, State> {
         document.activeElement !== this.submitButton &&
         event.key.trim().length === 1) {
       this.usernameInputField.focus();
-    } else if(document.activeElement === this.submitButton &&
+    } else if((document.activeElement === this.submitButton ||
+        document.activeElement === this.passwordInputField) &&
         event.key.trim() === 'Enter') {
       this.onLogin();
     }
@@ -198,7 +199,7 @@ export class LoginPage extends React.Component<Properties, State> {
       height: '48px',
       color: '#4B23A0',
       backgroundColor: '#E2E0FF',
-      font: '500 20px Roboto',
+      font: '400 20px Roboto',
       borderRadius: '1px',
       border: 'none',
       outline: 0,
