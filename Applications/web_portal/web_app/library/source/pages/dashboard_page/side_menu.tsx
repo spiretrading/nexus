@@ -54,14 +54,14 @@ export class SideMenu extends React.Component<Properties, State> {
       </VBoxLayout>);
   }
 
-  static defaultProps = {
+  private static defaultProps = {
     onProfileClick: () => {},
     onAccountsClick: () => {},
     onPortfolioClick: () => {},
     onRequestHistoryClick: () => {},
     onSignOutClick: () => {}
   }
-  
+
   private static STYLE = StyleSheet.create({
     sideMenu: {
       width: '200px',
