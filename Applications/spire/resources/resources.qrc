@@ -67,5 +67,6 @@
         <file>icons/column-border.png</file>
         <file>icons/close-black.svg</file>
         <file>icons/pre-loader.gif</file>
+        <file>icons/bookview-grey.svg</file>
     </qresource>
 </RCC>
