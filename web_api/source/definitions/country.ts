@@ -1,4 +1,2 @@
-class CountryCode {
+export class CountryCode {
 }
-
-export {CountryCode};

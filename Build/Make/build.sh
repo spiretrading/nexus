@@ -30,7 +30,6 @@ applications+="AdministrationServer "
 applications+="AsxItchMarketDataFeedClient "
 applications+="ChartingServer "
 applications+="ChiaMarketDataFeedClient "
-applications+="ClientWebPortal "
 applications+="ComplianceServer "
 applications+="CseMarketDataFeedClient "
 applications+="CtaMarketDataFeedClient "
@@ -48,10 +47,10 @@ parallel -j$jobs --no-notice build_function ::: $applications
 pushd $directory/../../Applications/spire/build/posix
 ./build.sh $config
 popd
-pushd $directory/../../Applications/ClientWebPortal/Source/api/build/make
+pushd $directory/../../Applications/web_portal/build/posix
 ./build.sh $config
 popd
-pushd $directory/../../Applications/ClientWebPortal/Source/webapp/build/make
+pushd $directory/../../Applications/web_portal/web_app
 ./build.sh $config
 popd
 pushd $directory/../../Documents/sphinx

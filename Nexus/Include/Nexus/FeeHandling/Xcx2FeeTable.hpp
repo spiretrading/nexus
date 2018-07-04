@@ -28,10 +28,13 @@ namespace Nexus {
 
       //! Price < $1.00.
       SUB_DOLLAR,
+
+      //! Price < $0.10.
+      SUB_DIME,
     };
 
     //! The number of price classes enumerated.
-    static const std::size_t PRICE_CLASS_COUNT = 2;
+    static const std::size_t PRICE_CLASS_COUNT = 3;
 
     /*! \enum Type
         \brief Enumerates the types of trades.
@@ -47,6 +50,9 @@ namespace Nexus {
       //! Passive.
       PASSIVE,
 
+      //! Large Size Trade Active.
+      LARGE_ACTIVE,
+
       //! Large Size Trade Passive.
       LARGE_PASSIVE,
 
@@ -61,16 +67,13 @@ namespace Nexus {
     };
 
     //! The number of trade types enumerated.
-    static const std::size_t TYPE_COUNT = 6;
+    static const std::size_t TYPE_COUNT = 7;
 
     //! The fee table.
     std::array<std::array<Money, TYPE_COUNT>, PRICE_CLASS_COUNT> m_feeTable;
 
     //! The large trade size threshold.
     Quantity m_largeTradeSize;
-
-    //! The large trade size threshold for sub-dollar trades.
-    Quantity m_largeTradeSizeSubDollar;
   };
 
   //! Parses an Xcx2FeeTable from a YAML configuration.
@@ -83,8 +86,6 @@ namespace Nexus {
     ParseFeeTable(config, "fee_table", Beam::Store(feeTable.m_feeTable));
     feeTable.m_largeTradeSize = Beam::Extract<Quantity>(config,
       "large_trade_size");
-    feeTable.m_largeTradeSizeSubDollar = Beam::Extract<Quantity>(config,
-      "large_trade_size_sub_dollar");
     return feeTable;
   }
 
@@ -128,7 +129,9 @@ namespace Nexus {
       return Money::ZERO;
     }
     auto priceClass = [&] {
-      if(executionReport.m_lastPrice < Money::ONE) {
+      if(executionReport.m_lastPrice < 10 * Money::CENT) {
+        return Xcx2FeeTable::PriceClass::SUB_DIME;
+      } else if(executionReport.m_lastPrice < Money::ONE) {
         return Xcx2FeeTable::PriceClass::SUB_DOLLAR;
       } else {
         return Xcx2FeeTable::PriceClass::DEFAULT;
@@ -153,20 +156,12 @@ namespace Nexus {
             executionReport.m_liquidityFlag << "\"\n";
           return Xcx2FeeTable::Type::HIDDEN_PASSIVE;
         }
-      } else {
+      } else if(executionReport.m_lastQuantity >= feeTable.m_largeTradeSize) {
         if(executionReport.m_liquidityFlag.size() == 1) {
           if(executionReport.m_liquidityFlag[0] == 'A') {
-            return Xcx2FeeTable::Type::ACTIVE;
+            return Xcx2FeeTable::Type::LARGE_ACTIVE;
           } else if(executionReport.m_liquidityFlag[0] == 'P') {
-            if((priceClass == Xcx2FeeTable::PriceClass::SUB_DOLLAR &&
-                executionReport.m_lastQuantity >=
-                feeTable.m_largeTradeSizeSubDollar) ||
-                (priceClass == Xcx2FeeTable::PriceClass::DEFAULT &&
-                executionReport.m_lastQuantity >= feeTable.m_largeTradeSize)) {
-              return Xcx2FeeTable::Type::LARGE_PASSIVE;
-            } else {
-              return Xcx2FeeTable::Type::PASSIVE;
-            }
+            return Xcx2FeeTable::Type::LARGE_PASSIVE;
           } else {
             std::cout << "Unknown liquidity flag [XCX2]: \"" <<
               executionReport.m_liquidityFlag << "\"\n";
@@ -177,6 +172,20 @@ namespace Nexus {
             executionReport.m_liquidityFlag << "\"\n";
           return Xcx2FeeTable::Type::PASSIVE;
         }
+      } else if(executionReport.m_liquidityFlag.size() == 1) {
+        if(executionReport.m_liquidityFlag[0] == 'A') {
+          return Xcx2FeeTable::Type::ACTIVE;
+        } else if(executionReport.m_liquidityFlag[0] == 'P') {
+          return Xcx2FeeTable::Type::PASSIVE;
+        } else {
+          std::cout << "Unknown liquidity flag [XCX2]: \"" <<
+            executionReport.m_liquidityFlag << "\"\n";
+          return Xcx2FeeTable::Type::PASSIVE;
+        }
+      } else {
+        std::cout << "Unknown liquidity flag [XCX2]: \"" <<
+          executionReport.m_liquidityFlag << "\"\n";
+        return Xcx2FeeTable::Type::PASSIVE;
       }
     }();
     auto fee = LookupFee(feeTable, type, priceClass);

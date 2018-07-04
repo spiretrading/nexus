@@ -1,34 +1,22 @@
-var path = require('path');
-var webpack = require('webpack');
+const MinifyPlugin = require("babel-minify-webpack-plugin");
+const path = require('path');
+const webpack = require('webpack');
+
+const PROD = JSON.parse(process.env.PROD_ENV || '0');
+const minifyOpts = {};
+const minigyPluginOpts = {
+  test: /\.js($|\?)/i,
+};
 
 module.exports = {
-  entry: {
-    'spire': './source/index.ts',
-    'spire.min': './source/index.ts'
-  },
-  output: {
-    path: path.resolve(__dirname, 'build'),
-    filename: '[name].js',
-    libraryTarget: 'umd',
-    library: 'Spire',
-    umdNamedDefine: true
-  },
-  resolve: {
-    extensions: ['.ts', '.js']
-  },
-  devtool: 'source-map',
-  plugins: [
-    new webpack.optimize.UglifyJsPlugin({
-      minimize: true,
-      sourceMap: true,
-      include: /\.min\.js$/,
-    })
-  ],
+  devtool: PROD ? 'none' : 'source-map',
+  entry: './source/index.ts',
+  mode: PROD ? 'production' : 'development',
   module: {
     rules: [
       {
         test: /\.ts$/,
-        loader: 'awesome-typescript-loader'
+        loader: 'ts-loader'
       },
       {
         test: /\.js$/,
@@ -36,5 +24,16 @@ module.exports = {
         enforce: 'pre'
       }
     ]
+  },
+  output: {
+    filename: 'index.js',
+    library: 'Nexus',
+    libraryTarget: 'umd',
+    path: path.resolve(__dirname, 'library/nexus'),
+    umdNamedDefine: true
+  },
+  plugins: PROD ? [new MinifyPlugin(minifyOpts, minigyPluginOpts)] : [],
+  resolve: {
+    extensions: ['.ts', '.js']
   }
 };

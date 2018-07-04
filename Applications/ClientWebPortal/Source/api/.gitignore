@@ -1,5 +1,0 @@
-dist
-.idea
-node_modules
-spec/transpiled
-**/.fuse*

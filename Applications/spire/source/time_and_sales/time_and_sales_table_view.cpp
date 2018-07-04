@@ -1,5 +1,4 @@
 #include "spire/time_and_sales/time_and_sales_table_view.hpp"
-#include <QApplication>
 #include <QEvent>
 #include <QHoverEvent>
 #include <QMovie>
@@ -99,7 +98,7 @@ time_and_sales_table_view::time_and_sales_table_view(QWidget* parent)
   m_layout = new QVBoxLayout(main_widget);
   m_layout->setContentsMargins({});
   m_layout->setSpacing(0);
-  m_header_padding = new QWidget(this); 
+  m_header_padding = new QWidget(this);
   m_header_padding->setFixedHeight(m_header->height());
   m_layout->addWidget(m_header_padding);
   m_table = new QTableView(this);
@@ -130,6 +129,13 @@ time_and_sales_table_view::time_and_sales_table_view(QWidget* parent)
 
 void time_and_sales_table_view::set_model(time_and_sales_window_model* model) {
   m_model = model;
+  m_transition_widget.reset();
+  m_loading_widget.reset();
+  if(m_model->is_loading()) {
+    QTimer::singleShot(1000, this, [=] { show_transition_widget(); });
+  }
+  m_model->connect_begin_loading_signal([=] { show_loading_widget(); });  
+  m_model->connect_end_loading_signal([=] { on_end_loading_signal(); });
   auto filter = new custom_variant_sort_filter_proxy_model(this);
   filter->setSourceModel(m_model);
   connect(filter, &QAbstractItemModel::rowsAboutToBeInserted, this,
@@ -155,7 +161,7 @@ void time_and_sales_table_view::set_properties(
   m_header->setFixedHeight(header_metrics.height() * 1.8);
   m_header_padding->setFixedHeight(m_header->height());
   if(m_table->model()->rowCount() > 0) {
-    update_table_height();
+    update_table_height(m_table->model()->rowCount());
   }
 }
 
@@ -179,7 +185,7 @@ bool time_and_sales_table_view::event(QEvent* event) {
   if(event->type() == QEvent::HoverMove) {
     auto e = static_cast<QHoverEvent*>(event);
     if(is_within_horizontal_scroll_bar(e->pos()) &&
-        !verticalScrollBar()->isSliderDown()) {
+        !verticalScrollBar()->isVisible()) {
       setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
       setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     } else if(is_within_vertical_scroll_bar(e->pos()) &&
@@ -253,37 +259,31 @@ void time_and_sales_table_view::fade_out_vertical_scroll_bar() {
 void time_and_sales_table_view::show_loading_widget() {
   m_loading_widget = std::make_unique<snapshot_loading_widget>(this);
   m_layout->addWidget(m_loading_widget.get());
+  update_table_height(m_table->model()->rowCount());
 }
 
-void time_and_sales_table_view::hide_loading_widget() {
-  m_loading_widget.reset();
-}
-
-int time_and_sales_table_view::get_table_height_with_additional_row() {
-  auto height = (m_table->model()->rowCount() + 1) *
-    m_table->rowHeight(0) + m_header->height();
+void time_and_sales_table_view::update_table_height(int num_rows) {
+  auto height = (num_rows * m_table->verticalHeader()->defaultSectionSize())
+    + m_header->height();
   if(m_loading_widget != nullptr) {
     height += m_loading_widget->height();
   }
-  return height;
-}
-
-void time_and_sales_table_view::update_table_height() {
-  widget()->setFixedHeight(get_table_height_with_additional_row());
-  if(verticalScrollBar()->value() != 0) {
-    verticalScrollBar()->setValue(verticalScrollBar()->value() +
-      m_table->rowHeight(0));
-  }
+  widget()->setFixedHeight(height);
 }
 
 bool time_and_sales_table_view::is_within_horizontal_scroll_bar(
     const QPoint& pos) {
-  return pos.y() > visibleRegion().boundingRect().height() -
-    horizontalScrollBar()->height();
+  return pos.y() > height() - horizontalScrollBar()->height();
 }
 
-bool time_and_sales_table_view::is_within_vertical_scroll_bar(const QPoint& pos) {
+bool time_and_sales_table_view::is_within_vertical_scroll_bar(
+    const QPoint& pos) {
   return pos.x() > width() - verticalScrollBar()->width();
+}
+
+void time_and_sales_table_view::on_end_loading_signal() {
+  m_transition_widget.reset();
+  m_loading_widget.reset();
 }
 
 void time_and_sales_table_view::on_header_resize(int index, int old_size,
@@ -315,10 +315,14 @@ void time_and_sales_table_view::on_vertical_slider_value_changed(
     widget()->visibleRegion().boundingRect().top()));
 }
 
-void time_and_sales_table_view::on_rows_about_to_be_inserted() {
-  if(m_table->model()->rowCount() > 0) {
-    update_table_height();
-  } else {
-    m_transition_widget.reset();
+void time_and_sales_table_view::on_rows_about_to_be_inserted(
+    const QModelIndex& parent, int first_index, int last_index) {
+  auto num_rows = last_index - first_index + 1;
+  update_table_height(m_table->model()->rowCount() + num_rows);
+  if(first_index == 0) {
+    if(verticalScrollBar()->value() != 0) {
+      verticalScrollBar()->setValue(verticalScrollBar()->value() +
+        (m_table->verticalHeader()->defaultSectionSize() * num_rows));
+    }
   }
 }

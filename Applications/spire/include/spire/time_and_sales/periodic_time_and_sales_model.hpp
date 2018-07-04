@@ -1,5 +1,6 @@
 #ifndef SPIRE_PERIODIC_TIME_AND_SALES_MODEL_HPP
 #define SPIRE_PERIODIC_TIME_AND_SALES_MODEL_HPP
+#include <atomic>
 #include <Beam/Threading/Threading.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <QTimer>
@@ -68,6 +69,7 @@ namespace spire {
       boost::posix_time::time_duration m_load_duration;
       boost::posix_time::time_duration m_period;
       Nexus::Quantity m_volume;
+      std::shared_ptr<std::atomic_bool> m_is_loaded;
       std::vector<entry> m_entries;
       QTimer m_timer;
 
