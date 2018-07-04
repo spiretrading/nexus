@@ -27,6 +27,9 @@ module.exports = {
     path: path.resolve(__dirname, 'application'),
     filename: 'bundle.js'
   },
+  performance: {
+    hints: false
+  },
   plugins: PROD ? [new MinifyPlugin(minifyOpts, minigyPluginOpts)] : [],
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.json']

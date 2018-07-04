@@ -1,14 +1,11 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
-import {DashboardModel} from '.';
+import {AccountModel} from './account_model';
 
-/** Implements the DashboardModel using local memory. */
-export class LocalDashboardModel extends DashboardModel {
+/** Implements an AccountModel locally. */
+export class LocalAccountModel extends AccountModel {
 
-  /** Constructs a LocalDashboardModel.
-   * @param account - The account that's logged in.
-   * @param roles - The account's roles.
-   */
+  /** Constructs a LocalAccountModel. */
   constructor(account: Beam.DirectoryEntry, roles: Nexus.AccountRoles) {
     super();
     this.is_loaded = false;
@@ -32,7 +29,6 @@ export class LocalDashboardModel extends DashboardModel {
 
   public async load(): Promise<void> {
     this.is_loaded = true;
-    return;
   }
 
   private is_loaded: boolean;
