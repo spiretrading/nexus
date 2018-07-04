@@ -2,6 +2,9 @@
 #include <QHBoxLayout>
 #include <QTabBar>
 #include <QTabWidget>
+#include "spire/book_view/book_view_highlight_properties_widget.hpp"
+#include "spire/book_view/book_view_level_properties_widget.hpp"
+#include "spire/key_bindings/interactions_properties_widget.hpp"
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/window.hpp"
 
@@ -55,12 +58,15 @@ book_view_properties_dialog::book_view_properties_dialog(
       color: #4B23A0;
     })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_height(10))
         .arg(scale_width(2)).arg(scale_width(80)));
-  auto display_tab_widget = new QWidget(tab_widget);
-  tab_widget->addTab(display_tab_widget, tr("Display"));
-  auto highlights_tab_widget = new QWidget(tab_widget);
+  auto levels_tab_widget = new book_view_level_properties_widget(properties,
+    tab_widget);
+  tab_widget->addTab(levels_tab_widget, tr("Display"));
+  auto highlights_tab_widget = new book_view_highlight_properties_widget(
+    properties, tab_widget);
   tab_widget->addTab(highlights_tab_widget, tr("Highlights"));
   if(security != Security()) {
-    auto interactions_tab_widget = new QWidget(tab_widget);
+    auto interactions_tab_widget = new interactions_properties_widget(
+      tab_widget);
     tab_widget->addTab(interactions_tab_widget, tr("Interactions"));
   }
   layout->addWidget(tab_widget);
