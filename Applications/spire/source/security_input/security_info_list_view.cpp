@@ -57,7 +57,7 @@ security_info_list_view::security_info_list_view(QWidget* parent)
     QScrollBar::add-line:vertical {
       background: none;
       border: none;
-    })").arg(scale_height(15)).arg(scale_width(1)).arg(scale_width(2)));
+    })").arg(scale_width(15)).arg(scale_width(1)).arg(scale_width(2)));
   layout->addWidget(m_scroll_area);
   m_list_widget = new QWidget(m_scroll_area);
   auto list_layout = new QVBoxLayout(m_list_widget);
