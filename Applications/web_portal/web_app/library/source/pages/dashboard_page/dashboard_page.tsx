@@ -18,6 +18,7 @@ interface Properties {
 
 interface State {
   isSideMenuOpen: boolean;
+  isLoading: boolean;
 }
 
 interface DashboardBurgerButtonProps {
@@ -30,12 +31,25 @@ export class DashboardPage extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      isSideMenuOpen: false
+      isSideMenuOpen: false,
+      isLoading: false
     };
     this.toggleSideMenuIsOpen = this.toggleSideMenuIsOpen.bind(this);
   }
 
+  public componentWillMount(): void {
+    this.props.model.load().then(
+      () => {
+        this.setState({
+          isLoading: false
+      });
+    });
+  }
+  
   public render(): JSX.Element {
+    if(this.state.isLoading) {
+      return <div/>
+    }
     return (
       <VBoxLayout width='100%' height='100%'>
         <HBoxLayout width='100%' height='60px'
