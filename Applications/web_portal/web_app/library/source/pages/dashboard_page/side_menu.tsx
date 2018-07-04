@@ -42,29 +42,26 @@ export class SideMenu extends React.Component<Properties, State> {
       <VBoxLayout className={css(SideMenu.STYLE.sideMenu)}>
         <Padding size='15px'/>
         <MenuButton iconSrc='resources/dashboard/my-profile.svg'
-          text='My Profile' onClick={
-            () => this.safeOnClick(this.props.onProfileClick)}/>
+          text='My Profile' onClick={this.props.onProfileClick}/>
         <MenuButton iconSrc='resources/dashboard/accounts.svg'
-          text='Accounts' onClick={
-            () => this.safeOnClick(this.props.onAccountsClick)}/>
+          text='Accounts' onClick={this.props.onAccountsClick}/>
         <MenuButton iconSrc='resources/dashboard/portfolio.svg'
-          text='Portfolio' onClick={
-            () => this.safeOnClick(this.props.onPortfolioClick)}
-            />
+          text='Portfolio' onClick={this.props.onPortfolioClick}/>
         <MenuButton iconSrc='resources/dashboard/request-history.svg'
-          text='Request History' onClick={
-            () => this.safeOnClick(this.props.onRequestHistoryClick)}/>
+          text='Request History' onClick={this.props.onRequestHistoryClick}/>
         <MenuButton iconSrc='resources/dashboard/sign-out.svg'
-          text='Sign Out' onClick={
-            () => this.safeOnClick(this.props.onSignOutClick)}/>
+          text='Sign Out' onClick={this.props.onSignOutClick}/>
       </VBoxLayout>);
   }
 
-  private safeOnClick(onClick?: () => void) {
-    if(onClick) {
-      onClick();
-    }
+  static defaultProps = {
+    onProfileClick: () => {},
+    onAccountsClick: () => {},
+    onPortfolioClick: () => {},
+    onRequestHistoryClick: () => {},
+    onSignOutClick: () => {}
   }
+  
   private static STYLE = StyleSheet.create({
     sideMenu: {
       width: '200px',
