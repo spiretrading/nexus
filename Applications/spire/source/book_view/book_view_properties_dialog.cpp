@@ -37,8 +37,6 @@ book_view_properties_dialog::book_view_properties_dialog(
       border: none;
     }
 
-    QTabBar {}
-
     QTabBar::tab {
       background-color: #EBEBEB;
       font-family: Roboto;
