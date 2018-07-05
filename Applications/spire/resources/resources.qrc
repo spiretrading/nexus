@@ -68,5 +68,6 @@
         <file>icons/close-black.svg</file>
         <file>icons/pre-loader.gif</file>
         <file>icons/bookview-grey.svg</file>
+        <file>icons/arrow-up.svg</file>
     </qresource>
 </RCC>
