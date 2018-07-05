@@ -58,28 +58,28 @@ properties_window_buttons_widget::properties_window_buttons_widget(
   right_layout->setContentsMargins({});
   right_layout->setHorizontalSpacing(scale_width(8));
   right_layout->setVerticalSpacing(scale_height(8));
+ auto apply_button = new flat_button(tr("Apply"));
+  apply_button->set_stylesheet(generic_button_default_style,
+    generic_button_hover_style, generic_button_focused_style, "");
+  apply_button->connect_clicked_signal([=] { m_apply_signal(); });
+  right_layout->addWidget(apply_button, 0, 0);
   auto apply_to_all_button = new flat_button(tr("Apply To All"));
   apply_to_all_button->set_stylesheet(generic_button_default_style,
     generic_button_hover_style, generic_button_focused_style, "");
   apply_to_all_button->connect_clicked_signal(
     [=] { m_apply_to_all_signal(); });
   right_layout->addWidget(apply_to_all_button, 0, 1);
-  auto cancel_button = new flat_button(tr("Cancel"));
-  cancel_button->set_stylesheet(generic_button_default_style,
-    generic_button_hover_style, generic_button_focused_style, "");
-  cancel_button->connect_clicked_signal([=] { m_cancel_signal(); });
-  right_layout->addWidget(cancel_button, 1, 1);
-  auto apply_button = new flat_button(tr("Apply"));
-  apply_button->set_stylesheet(generic_button_default_style,
-    generic_button_hover_style, generic_button_focused_style, "");
-  apply_button->connect_clicked_signal([=] { m_apply_signal(); });
-  right_layout->addWidget(apply_button, 0, 0);
   auto ok_button = new flat_button(tr("OK"));
   ok_button->set_stylesheet(generic_button_default_style,
     generic_button_hover_style, generic_button_focused_style, "");
   ok_button->connect_clicked_signal([=] { m_ok_signal(); });
   right_layout->addWidget(ok_button, 1, 0);
   main_layout->addWidget(right_widget);
+  auto cancel_button = new flat_button(tr("Cancel"));
+  cancel_button->set_stylesheet(generic_button_default_style,
+    generic_button_hover_style, generic_button_focused_style, "");
+  cancel_button->connect_clicked_signal([=] { m_cancel_signal(); });
+  right_layout->addWidget(cancel_button, 1, 1);
 }
 
 connection properties_window_buttons_widget::connect_save_as_default_signal(
