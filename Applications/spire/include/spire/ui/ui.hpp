@@ -11,6 +11,7 @@ namespace spire {
   class flat_button;
   class icon_button;
   class overlay_widget;
+  class properties_window_buttons_widget;
   class security_stack;
   class title_bar;
   class window;
