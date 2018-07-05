@@ -35,14 +35,20 @@ properties_window_buttons_widget::properties_window_buttons_widget(
   auto save_as_default_button = new flat_button(tr("Save As Default"));
   save_as_default_button->set_stylesheet(generic_button_default_style,
     generic_button_hover_style, generic_button_focused_style, "");
+  save_as_default_button->connect_clicked_signal(
+    [=] { m_save_as_default_signal(); });
   left_layout->addWidget(save_as_default_button, 0, 0);
   auto load_default_button = new flat_button(tr("Load Default"));
   load_default_button->set_stylesheet(generic_button_default_style,
     generic_button_hover_style, generic_button_focused_style, "");
+  load_default_button->connect_clicked_signal(
+    [=] { m_load_default_signal(); });
   left_layout->addWidget(load_default_button, 1, 0);
   auto reset_default_button = new flat_button(tr("Reset Default"));
   reset_default_button->set_stylesheet(generic_button_default_style,
     generic_button_hover_style, generic_button_focused_style, "");
+  reset_default_button->connect_clicked_signal(
+    [=] { m_reset_default_signal(); });
   left_layout->addWidget(reset_default_button, 1, 1);
   main_layout->addWidget(left_widget);
   main_layout->addStretch(1);
@@ -55,18 +61,23 @@ properties_window_buttons_widget::properties_window_buttons_widget(
   auto apply_to_all_button = new flat_button(tr("Apply To All"));
   apply_to_all_button->set_stylesheet(generic_button_default_style,
     generic_button_hover_style, generic_button_focused_style, "");
+  apply_to_all_button->connect_clicked_signal(
+    [=] { m_apply_to_all_signal(); });
   right_layout->addWidget(apply_to_all_button, 0, 0);
   auto cancel_button = new flat_button(tr("Cancel"));
   cancel_button->set_stylesheet(generic_button_default_style,
     generic_button_hover_style, generic_button_focused_style, "");
+  cancel_button->connect_clicked_signal([=] { m_cancel_signal(); });
   right_layout->addWidget(cancel_button, 1, 0);
   auto apply_button = new flat_button(tr("Apply"));
   apply_button->set_stylesheet(generic_button_default_style,
     generic_button_hover_style, generic_button_focused_style, "");
+  apply_button->connect_clicked_signal([=] { m_apply_signal(); });
   right_layout->addWidget(apply_button, 0, 1);
   auto ok_button = new flat_button(tr("OK"));
   ok_button->set_stylesheet(generic_button_default_style,
     generic_button_hover_style, generic_button_focused_style, "");
+  ok_button->connect_clicked_signal([=] { m_ok_signal(); });
   right_layout->addWidget(ok_button, 1, 1);
   main_layout->addWidget(right_widget);
 }
