@@ -35,6 +35,15 @@ namespace spire {
 
       boost::signals2::connection connect_ok_signal(
         const clicked_signal::slot_type& slot) const;
+
+    private:
+      mutable clicked_signal m_save_as_default_signal;
+      mutable clicked_signal m_load_default_signal;
+      mutable clicked_signal m_reset_default_signal;
+      mutable clicked_signal m_apply_to_all_signal;
+      mutable clicked_signal m_cancel_signal;
+      mutable clicked_signal m_apply_signal;
+      mutable clicked_signal m_ok_signal;
   };
 }
 

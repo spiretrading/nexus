@@ -4,6 +4,7 @@
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/flat_button.hpp"
 
+using namespace boost::signals2;
 using namespace spire;
 
 properties_window_buttons_widget::properties_window_buttons_widget(
@@ -51,26 +52,56 @@ properties_window_buttons_widget::properties_window_buttons_widget(
   right_layout->setContentsMargins({});
   right_layout->setHorizontalSpacing(scale_width(8));
   right_layout->setVerticalSpacing(scale_height(8));
-
   auto apply_to_all_button = new flat_button(tr("Apply To All"));
   apply_to_all_button->set_stylesheet(generic_button_default_style,
     generic_button_hover_style, generic_button_focused_style, "");
   right_layout->addWidget(apply_to_all_button, 0, 0);
-
   auto cancel_button = new flat_button(tr("Cancel"));
   cancel_button->set_stylesheet(generic_button_default_style,
     generic_button_hover_style, generic_button_focused_style, "");
   right_layout->addWidget(cancel_button, 1, 0);
-
   auto apply_button = new flat_button(tr("Apply"));
   apply_button->set_stylesheet(generic_button_default_style,
     generic_button_hover_style, generic_button_focused_style, "");
   right_layout->addWidget(apply_button, 0, 1);
-
   auto ok_button = new flat_button(tr("OK"));
   ok_button->set_stylesheet(generic_button_default_style,
     generic_button_hover_style, generic_button_focused_style, "");
   right_layout->addWidget(ok_button, 1, 1);
-
   main_layout->addWidget(right_widget);
+}
+
+connection properties_window_buttons_widget::connect_save_as_default_signal(
+    const clicked_signal::slot_type& slot) const {
+  return m_save_as_default_signal.connect(slot);
+}
+
+connection properties_window_buttons_widget::connect_load_default_signal(
+    const clicked_signal::slot_type& slot) const {
+  return m_load_default_signal.connect(slot);
+}
+
+connection properties_window_buttons_widget::connect_reset_default_signal(
+    const clicked_signal::slot_type& slot) const {
+  return m_reset_default_signal.connect(slot);
+}
+
+connection properties_window_buttons_widget::connect_apply_to_all_signal(
+    const clicked_signal::slot_type& slot) const {
+  return m_apply_to_all_signal.connect(slot);
+}
+
+connection properties_window_buttons_widget::connect_cancel_signal(
+    const clicked_signal::slot_type& slot) const {
+  return m_cancel_signal.connect(slot);
+}
+
+connection properties_window_buttons_widget::connect_apply_signal(
+    const clicked_signal::slot_type& slot) const {
+  return m_apply_signal.connect(slot);
+}
+
+connection properties_window_buttons_widget::connect_ok_signal(
+    const clicked_signal::slot_type& slot) const {
+  return m_ok_signal.connect(slot);
 }
