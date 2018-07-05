@@ -2,10 +2,12 @@
 #include <QHBoxLayout>
 #include <QTabBar>
 #include <QTabWidget>
+#include <QVBoxLayout>
 #include "spire/book_view/book_view_highlight_properties_widget.hpp"
 #include "spire/book_view/book_view_level_properties_widget.hpp"
 #include "spire/key_bindings/interactions_properties_widget.hpp"
 #include "spire/spire/dimensions.hpp"
+#include "spire/ui/properties_window_buttons_widget.hpp"
 #include "spire/ui/window.hpp"
 
 using namespace boost;
@@ -29,7 +31,7 @@ book_view_properties_dialog::book_view_properties_dialog(
   window->set_svg_icon(":/icons/bookview-black.svg",
     ":/icons/bookview-grey.svg");
   window_layout->addWidget(window);
-  auto layout = new QHBoxLayout(body);
+  auto layout = new QVBoxLayout(body);
   layout->setContentsMargins(scale_width(8), scale_height(10), scale_width(8),
     0);
   layout->setSpacing(0);
@@ -70,6 +72,10 @@ book_view_properties_dialog::book_view_properties_dialog(
     tab_widget->addTab(interactions_tab_widget, tr("Interactions"));
   }
   layout->addWidget(tab_widget);
+  auto button_group_widget = new properties_window_buttons_widget(this);
+  button_group_widget->connect_cancel_signal([=] { reject(); });
+  button_group_widget->connect_ok_signal([=] { accept(); });
+  layout->addWidget(button_group_widget);
 }
 
 book_view_properties book_view_properties_dialog::get_properties() const {
