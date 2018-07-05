@@ -20,7 +20,9 @@ enum Breakpoint {
   LARGE
 }
 interface MenuItemProperties {
+  isSelected: boolean;
   src: string;
+  label: string;
   breakpoint: Breakpoint;
 }
 /** Implements the container used to display account information. */
@@ -58,20 +60,24 @@ export class AccountPage extends React.Component<Properties, State> {
             className={css(AccountPage.STYLE.underlinedBox)}>
           <Padding size='18px'/>
           <HBoxLayout>
-            <MenuItem src='resources/account/account-grey.svg'
-              breakpoint={this.state.breakpoint}/>
+            <MenuItem isSelected={false} src='resources/account/account-grey.svg'
+              label='Account' breakpoint={this.state.breakpoint}/>
             <Padding size='14px'/>
-            <MenuItem src='resources/account/risk-controls-grey.svg'
-              breakpoint={this.state.breakpoint}/>
+            <MenuItem isSelected={false}
+              src='resources/account/risk-controls-grey.svg'
+              label='Risk Controls' breakpoint={this.state.breakpoint}/>
             <Padding size='14px'/>
-            <MenuItem src='resources/account/entitlements-grey.svg'
-              breakpoint={this.state.breakpoint}/>
+            <MenuItem isSelected={false}
+              src='resources/account/entitlements-grey.svg'
+              label='Entitlements' breakpoint={this.state.breakpoint}/>
             <Padding size='14px'/>
-            <MenuItem src='resources/account/compliance-grey.svg'
-              breakpoint={this.state.breakpoint}/>
+            <MenuItem isSelected={false}
+              src='resources/account/compliance-grey.svg'
+              label='Compliance' breakpoint={this.state.breakpoint}/>
             <Padding size='14px'/>
-            <MenuItem src='resources/account/profit-loss-grey.svg'
-              breakpoint={this.state.breakpoint}/>
+            <MenuItem isSelected={false}
+              src='resources/account/profit-loss-grey.svg'
+              label='Entitlements' breakpoint={this.state.breakpoint}/>
           </HBoxLayout>
         </HBoxLayout>
         <HBoxLayout height='30px' width='100%'
@@ -85,9 +91,9 @@ export class AccountPage extends React.Component<Properties, State> {
     const screenWidth = window.innerWidth ||
       document.documentElement.clientWidth ||
       document.getElementsByTagName('body')[0].clientWidth;
-    if(screenWidth <= 559) {
+    if(screenWidth <= 767) {
       return Breakpoint.SMALL;
-    } else if(screenWidth >= 560 && screenWidth <= 1039) {
+    } else if(screenWidth > 767 && screenWidth <= 1035) {
       return Breakpoint.MEDIUM;
     } else {
       return Breakpoint.LARGE;
@@ -112,11 +118,32 @@ export class AccountPage extends React.Component<Properties, State> {
 
 class MenuItem extends React.Component<MenuItemProperties> {
   render(): JSX.Element {
-    return (
+    if(this.props.breakpoint === Breakpoint.SMALL) {
+      return (
       <VBoxLayout height='40px'>
         <Padding size='8px'/>
         <img src={this.props.src} width='24px' height='24px'/>
         <Padding size='8px'/>
       </VBoxLayout>);
+    }
+    return (
+      <HBoxLayout>
+        <VBoxLayout height='40px'>
+          <Padding size='8px'/>
+          <img src={this.props.src} width='24px' height='24px'/>
+          <Padding size='8px'/>
+        </VBoxLayout>
+        <Padding size='8px'/>
+        <VBoxLayout height='40px'>
+          <Padding/>
+          <span className={css(MenuItem.STYLE.label)}>{this.props.label}</span>
+          <Padding/>
+        </VBoxLayout>
+      </HBoxLayout>);
   }
+  private static STYLE = StyleSheet.create({
+    label: {
+     font: '200 14px Roboto'
+    }
+  });
 }
