@@ -3,6 +3,7 @@
 #include <QListWidget>
 #include <QWidget>
 #include "spire/book_view/book_view.hpp"
+#include "spire/ui/flat_button.hpp"
 #include "spire/ui/ui.hpp"
 
 namespace spire {
@@ -26,9 +27,13 @@ namespace spire {
       */
       void apply(book_view_properties& properties) const;
 
+    protected:
+      void showEvent(QShowEvent* event) override;
+
     private:
       QListWidget* m_band_list_widget;
       QString m_band_list_stylesheet;
+      flat_button* m_band_color_button;
 
       void set_color_button_stylesheet(flat_button* button,
         const QColor& color);

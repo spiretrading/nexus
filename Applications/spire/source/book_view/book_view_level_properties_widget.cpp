@@ -8,7 +8,6 @@
 #include "spire/book_view/book_view_properties.hpp"
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/check_box.hpp"
-#include "spire/ui/flat_button.hpp"
 
 using namespace spire;
 
@@ -115,10 +114,10 @@ book_view_level_properties_widget::book_view_level_properties_widget(
   band_color_label->setStyleSheet(generic_label_style);
   band_properties_layout->addWidget(band_color_label);
   band_properties_layout->addStretch(4);
-  auto band_color_button = new flat_button(this);
-  band_color_button->setFixedHeight(scale_height(26));
-  set_color_button_stylesheet(band_color_button, QColor(Qt::red));
-  band_properties_layout->addWidget(band_color_button);
+  m_band_color_button = new flat_button(this);
+  m_band_color_button->setFixedHeight(scale_height(26));
+  set_color_button_stylesheet(m_band_color_button, bg_colors[0]);
+  band_properties_layout->addWidget(m_band_color_button);
   band_properties_layout->addStretch(10);
   auto color_gradient_label = new QLabel(tr("Color Gradient"), this);
   color_gradient_label->setFixedHeight(scale_height(14));
@@ -199,6 +198,10 @@ void book_view_level_properties_widget::apply(
     book_view_properties& properties) const {
 }
 
+void book_view_level_properties_widget::showEvent(QShowEvent* event) {
+  m_band_list_widget->setFocus();
+}
+
 void book_view_level_properties_widget::set_color_button_stylesheet(
     flat_button* button, const QColor& color) {
   button->set_stylesheet(QString(R"(
@@ -211,10 +214,10 @@ void book_view_level_properties_widget::set_color_button_stylesheet(
       .arg(scale_height(1)).arg(scale_width(1)), "");
 }
 
-#include <QDebug>
-
 void book_view_level_properties_widget::update_band_list_stylesheet(
     int index) {
+  set_color_button_stylesheet(m_band_color_button,
+    m_band_list_widget->item(index)->background().color());
   auto selected_stylesheet = QString(R"(
     QListWidget::item:selected {
       background-color: %3;
