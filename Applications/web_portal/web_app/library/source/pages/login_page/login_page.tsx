@@ -4,7 +4,6 @@ import * as React from 'react';
 import {Center, HBoxLayout, Padding, VBoxLayout} from '../../';
 import {LoginPageModel} from '.';
 
-/** The React properties for the LoginPage. */
 interface Properties {
 
   /** The model used to login. */

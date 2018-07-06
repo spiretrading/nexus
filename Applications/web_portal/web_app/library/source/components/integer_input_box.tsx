@@ -1,6 +1,5 @@
 import * as React from 'react';
 
-/** The React properties used to display an IntegerInputBox. */
 interface Properties {
 
   /** The minimum allowed value. */

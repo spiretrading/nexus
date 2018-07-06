@@ -3,7 +3,6 @@ import {HBoxLayout} from './hbox_layout'
 import {Padding} from './padding'
 import {VBoxLayout} from './vbox_layout'
 
-/** The properties used to center a component. */
 interface Properties {
 
   /** The width of the box to center. */

@@ -1,7 +1,6 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 
-/** Specifies the React properties used to render a MoneyInputBox. */
 interface Properties {
 
   /** The minimum allowed value (inclusive). */

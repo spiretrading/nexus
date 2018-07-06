@@ -1,7 +1,6 @@
 import * as React from 'react';
 import * as Nexus from 'nexus';
 
-/** The React props used to render the CurrencySelectionBox. */
 interface Properties {
 
   /** The set of available currencies to select. */

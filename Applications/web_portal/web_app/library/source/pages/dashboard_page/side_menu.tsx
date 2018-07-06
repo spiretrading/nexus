@@ -3,7 +3,6 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import {Center, HBoxLayout, Padding, VBoxLayout} from '../..';
 
-/** The properties used to render a SideMenu. */
 interface Properties {
 
   /** Used to determine what actions are available based on the account's

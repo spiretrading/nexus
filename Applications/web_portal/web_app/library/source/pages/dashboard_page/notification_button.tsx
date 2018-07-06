@@ -1,7 +1,6 @@
 import {css, StyleSheet} from 'aphrodite';
 import * as React from 'react';
 
-/** The properties used to render a NotificationButton. */
 interface Properties {
 
   /** The number of notification items. */

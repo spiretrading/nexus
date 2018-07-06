@@ -6,7 +6,6 @@ import {DashboardModel} from '.';
 import {NotificationButton} from './notification_button';
 import {SideMenu} from './side_menu';
 
-/** The properties used to render the DashboardPage. */
 interface Properties {
 
   /** The model to display. */

@@ -1,6 +1,5 @@
 import * as React from 'react';
 
-/** Specifies the properties used to render a SideMenuButton. */
 interface Properties {
 
   /** The text label. */
