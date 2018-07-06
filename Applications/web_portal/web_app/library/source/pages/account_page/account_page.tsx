@@ -2,6 +2,8 @@ import {css, StyleSheet} from 'aphrodite';
 import * as React from 'react';
 import {Center, HBoxLayout, Padding, VBoxLayout} from '../..';
 import {AccountModel} from '.';
+import {MenuBar} from './menu_bar';
+import {RolePanel} from './role_panel';
 
 interface Properties {
 
@@ -62,12 +64,6 @@ export class AccountPage extends React.Component<Properties, State> {
       }
       return css(AccountPage.ACCOUNT_HEADER_STYLE.base);
     })();
-    const AccountHeaderPadding = (): JSX.Element => {
-      if(this.state.breakpoint === Breakpoint.SMALL) {
-        return <Padding/>;
-      }
-      return <Padding size='30px'/>;
-    };
     const accountHeaderWidth = (() => {
       if(this.state.breakpoint === Breakpoint.SMALL) {
         return '100%';
@@ -76,35 +72,6 @@ export class AccountPage extends React.Component<Properties, State> {
       }
       return '1036px';
     })();
-    const menuIconContainerClassName = (() => {
-      if(this.state.breakpoint === Breakpoint.SMALL) {
-        return css(AccountPage.ACCOUNT_HEADER_STYLE.smallMenuIconContainer);
-      }
-    })();
-    const AccountHeader = ():JSX.Element => {
-      return (
-        <HBoxLayout className={menuIconContainerClassName}>
-          <MenuItem isSelected={false}
-            src='resources/account/account-grey.svg' label='Account'
-            breakpoint={this.state.breakpoint}/>
-          <AccountHeaderPadding/>
-          <MenuItem isSelected={false}
-            src='resources/account/risk-controls-grey.svg'
-            label='Risk Controls' breakpoint={this.state.breakpoint}/>
-          <AccountHeaderPadding/>
-          <MenuItem isSelected={false}
-            src='resources/account/entitlements-grey.svg'
-            label='Entitlements' breakpoint={this.state.breakpoint}/>
-          <AccountHeaderPadding/>
-          <MenuItem isSelected={false}
-            src='resources/account/compliance-grey.svg' label='Compliance'
-            breakpoint={this.state.breakpoint}/>
-          <AccountHeaderPadding/>
-          <MenuItem isSelected={false}
-            src='resources/account/profit-loss-grey.svg' label='Profit/Loss'
-            breakpoint={this.state.breakpoint}/>
-        </HBoxLayout>);
-    };
     if(this.state.breakpoint === Breakpoint.LARGE) {
       return (
         <VBoxLayout width='100%' height='100%'>
@@ -114,30 +81,14 @@ export class AccountPage extends React.Component<Properties, State> {
           <HBoxLayout width={accountHeaderWidth}
               className={accountHeaderClassName}>
           <Padding size='18px'/>
-          <AccountHeader/>
+          <MenuBar/>
           <Padding/>
           <HBoxLayout>
             <Center className={css(AccountPage.STYLE.username)}>
               {this.props.model.account.name}
             </Center>
             <Padding size='10px'/>
-            <VBoxLayout width='68px' height='40px'>
-              <Padding/>
-              <HBoxLayout width='68px' height='14px'>
-                <img src='resources/account/trader-grey.svg' width='14px'
-                  height='14px'/>
-                <Padding size='4px'/>
-                <img src='resources/account/manager-grey.svg' width='14px'
-                  height='14px'/>
-                <Padding size='4px'/>
-                <img src='resources/account/admin-grey.svg' width='14px'
-                  height='14px'/>
-                <Padding size='4px'/>
-                <img src='resources/account/service-grey.svg' width='14px'
-                  height='14px'/>
-              </HBoxLayout>
-              <Padding/>
-            </VBoxLayout>
+            <RolePanel roles={this.props.model.roles}/>
           </HBoxLayout>
           <Padding size='18px'/>
           </HBoxLayout>
@@ -145,6 +96,13 @@ export class AccountPage extends React.Component<Properties, State> {
         </HBoxLayout>
       </VBoxLayout>);
     }
+    const accountContentsClassName = (() => {
+      if(this.state.breakpoint === Breakpoint.SMALL) {
+        return css(AccountPage.ACCOUNT_HEADER_STYLE.smallContainer);
+      } else {
+        return css(AccountPage.ACCOUNT_HEADER_STYLE.mediumContainer);
+      }
+    })();
     return (
       <VBoxLayout width='100%' height='100%'>
         <HBoxLayout width='100%' height='40px'
@@ -153,25 +111,11 @@ export class AccountPage extends React.Component<Properties, State> {
           <HBoxLayout width={accountHeaderWidth}
               className={accountHeaderClassName}>
             <Padding size='18px'/>
-            <AccountHeader/>
-            <Padding/>
-            <VBoxLayout width='68px' height='40px'>
+            <HBoxLayout height='40px' className={accountContentsClassName}>
+              <MenuBar/>
               <Padding/>
-              <HBoxLayout width='68px' height='14px'>
-                <img src='resources/account/trader-grey.svg' width='14px'
-                  height='14px'/>
-                <Padding size='4px'/>
-                <img src='resources/account/manager-grey.svg' width='14px'
-                  height='14px'/>
-                <Padding size='4px'/>
-                <img src='resources/account/admin-grey.svg' width='14px'
-                  height='14px'/>
-                <Padding size='4px'/>
-                <img src='resources/account/service-grey.svg' width='14px'
-                  height='14px'/>
-              </HBoxLayout>
-              <Padding/>
-            </VBoxLayout>
+              <RolePanel roles={this.props.model.roles}/>
+            </HBoxLayout>
             <Padding size='18px'/>
           </HBoxLayout>
           <Padding/>
@@ -211,13 +155,16 @@ export class AccountPage extends React.Component<Properties, State> {
     },
     small: {
       width: '100%',
+      minWidth: '356px',
+      maxWidth: '496px'
+    },
+    smallContainer: {
+      width: '60%',
       minWidth: '320px',
       maxWidth: '460px'
     },
-    smallMenuIconContainer: {
-      width: 'calc(90% - 104px)',
-      maxWidth: '240px',
-      minWidth: '176px'
+    mediumContainer: {
+      width: 'calc(100% - 36px)'
     }
   });
   private static STYLE = StyleSheet.create({
@@ -230,42 +177,6 @@ export class AccountPage extends React.Component<Properties, State> {
       height: '40px',
       font: '500 14px Roboto',
       color: '#4B23A0',
-      whiteSpace: 'nowrap'
-    }
-  });
-}
-
-class MenuItem extends React.Component<MenuItemProperties> {
-  public render(): JSX.Element {
-    if(this.props.breakpoint === Breakpoint.SMALL) {
-      return (
-      <VBoxLayout height='40px'>
-        <Padding size='8px'/>
-        <img src={this.props.src} width='24px' height='24px'/>
-        <Padding size='8px'/>
-      </VBoxLayout>);
-    }
-    return (
-      <VBoxLayout height='40px'>
-        <Padding/>
-        <HBoxLayout height='16px'>
-          <img src={this.props.src} width='16px' height='16px'/>
-          <Padding size='8px'/>
-          <VBoxLayout height='16px'>
-            <Padding/>
-            <span className={css(MenuItem.STYLE.label)}>
-              {this.props.label}
-            </span>
-            <Padding/>
-          </VBoxLayout>
-        </HBoxLayout>
-        <Padding/>
-      </VBoxLayout>);
-  }
-
-  private static STYLE = StyleSheet.create({
-    label: {
-      font: '200 14px Roboto',
       whiteSpace: 'nowrap'
     }
   });
