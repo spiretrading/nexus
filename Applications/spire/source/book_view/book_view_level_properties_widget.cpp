@@ -1,5 +1,6 @@
 #include "spire/book_view/book_view_level_properties_widget.hpp"
-#include <QCheckBox>
+#include <QColorDialog>
+#include <QFontDialog>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidgetItem>
@@ -124,15 +125,20 @@ book_view_level_properties_widget::book_view_level_properties_widget(
   color_gradient_label->setStyleSheet(generic_label_style);
   band_properties_layout->addWidget(color_gradient_label);
   band_properties_layout->addStretch(4);
-  auto gradient_start_button = new flat_button(this);
-  gradient_start_button->setFixedHeight(scale_height(26));
-  set_color_button_stylesheet(gradient_start_button, QColor(Qt::red));
-  band_properties_layout->addWidget(gradient_start_button);
+  m_gradient_start_button = new flat_button(this);
+  m_gradient_start_button->setFixedHeight(scale_height(26));
+  set_color_button_stylesheet(m_gradient_start_button, bg_colors[0]);
+  m_gradient_start_button->connect_clicked_signal(
+    [=] { on_gradient_start_button_clicked(); });
+  band_properties_layout->addWidget(m_gradient_start_button);
   band_properties_layout->addStretch(8);
-  auto gradient_end_button = new flat_button(this);
-  gradient_end_button->setFixedHeight(scale_height(26));
-  set_color_button_stylesheet(gradient_end_button, QColor(Qt::red));
-  band_properties_layout->addWidget(gradient_end_button);
+  m_gradient_end_button = new flat_button(this);
+  m_gradient_end_button->setFixedHeight(scale_height(26));
+  set_color_button_stylesheet(m_gradient_end_button,
+    bg_colors[bg_colors.size() - 1]);
+  m_gradient_end_button->connect_clicked_signal(
+    [=] { on_gradient_end_button_clicked(); });
+  band_properties_layout->addWidget(m_gradient_end_button);
   band_properties_layout->addStretch(10);
   auto apply_gradient_button = new flat_button(tr("Apply Gradient"), this);
   apply_gradient_button->setFixedHeight(scale_height(26));
@@ -161,6 +167,8 @@ book_view_level_properties_widget::book_view_level_properties_widget(
   change_font_button->setFixedSize(scale(100, 26));
   change_font_button->set_stylesheet(generic_button_default_style,
     generic_button_hover_style, generic_button_focused_style, "");
+  change_font_button->connect_clicked_signal(
+    [=] { on_change_font_button_clicked(); });
   font_button_layout->addWidget(change_font_button);
   font_button_layout->addStretch(33);
   auto show_grid_lines_check_box = new check_box(tr("Show Grid Lines"), this);
@@ -212,6 +220,36 @@ void book_view_level_properties_widget::set_color_button_stylesheet(
       .arg(scale_height(1)).arg(scale_width(1)),
     QString(R"(border: %4 solid #4B23A0 %5 solid #4B23A0;)")
       .arg(scale_height(1)).arg(scale_width(1)), "");
+  QPalette bg = button->palette();
+  bg.setColor(QPalette::Foreground, color);
+  button->setPalette(bg);
+}
+
+void book_view_level_properties_widget::update_band_list_font(
+    const QFont& font) {
+  for(auto i = 0; i < m_band_list_widget->count(); ++i) {
+    m_band_list_widget->item(i)->setFont(font);
+  }
+}
+
+void book_view_level_properties_widget::update_band_list_gradient() {
+  auto band_count = m_band_list_widget->count();
+  int start_red;
+  int start_green;
+  int start_blue;
+  int end_red;
+  int end_green;
+  int end_blue;
+  m_gradient_start_button->palette().background().color().getRgb(&start_red,
+    &start_green, &start_blue);
+  m_gradient_end_button->palette().background().color().getRgb(&end_red,
+    &end_green, &end_blue);
+  for(auto i = 0; i < band_count; ++i) {
+    auto red = start_red + (i * ((end_red - start_red) / band_count));
+    auto green = start_green + (i * ((end_green - start_green) / band_count));
+    auto blue = start_blue + (i * ((end_blue - start_blue) / band_count));
+    m_band_list_widget->item(i)->setBackground(QColor(red, green, blue));
+  }
 }
 
 void book_view_level_properties_widget::update_band_list_stylesheet(
@@ -227,4 +265,28 @@ void book_view_level_properties_widget::update_band_list_stylesheet(
         .arg(m_band_list_widget->item(index)->background().color().name());
   m_band_list_widget->setStyleSheet(m_band_list_stylesheet +
     selected_stylesheet);
+}
+
+void book_view_level_properties_widget::on_change_font_button_clicked() {
+  auto ok = false;
+  auto font = QFontDialog::getFont(&ok, m_band_list_widget->item(0)->font());
+  if(ok) {
+    update_band_list_font(font);
+  }
+}
+
+void book_view_level_properties_widget::on_gradient_end_button_clicked() {
+  auto color = QColorDialog::getColor(m_gradient_end_button->palette().color(
+    QPalette::Foreground));
+  if(color.isValid()) {
+    set_color_button_stylesheet(m_gradient_end_button, color);
+  }
+}
+
+void book_view_level_properties_widget::on_gradient_start_button_clicked() {
+  auto color = QColorDialog::getColor(m_gradient_start_button->palette().color(
+    QPalette::Foreground));
+  if(color.isValid()) {
+    set_color_button_stylesheet(m_gradient_start_button, color);
+  }
 }

@@ -34,10 +34,17 @@ namespace spire {
       QListWidget* m_band_list_widget;
       QString m_band_list_stylesheet;
       flat_button* m_band_color_button;
+      flat_button* m_gradient_start_button;
+      flat_button* m_gradient_end_button;
 
       void set_color_button_stylesheet(flat_button* button,
         const QColor& color);
+      void update_band_list_font(const QFont& font);
+      void update_band_list_gradient();
       void update_band_list_stylesheet(int index);
+      void on_change_font_button_clicked();
+      void on_gradient_end_button_clicked();
+      void on_gradient_start_button_clicked();
   };
 }
 
