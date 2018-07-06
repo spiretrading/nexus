@@ -25,6 +25,7 @@ interface MenuItemProperties {
   label: string;
   breakpoint: Breakpoint;
 }
+
 /** Implements the container used to display account information. */
 export class AccountPage extends React.Component<Properties, State> {
   public constructor(props: Properties) {
