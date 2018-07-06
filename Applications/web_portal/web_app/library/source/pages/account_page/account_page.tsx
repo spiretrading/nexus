@@ -76,25 +76,25 @@ export class AccountPage extends React.Component<Properties, State> {
       return (
         <VBoxLayout width='100%' height='100%'>
           <HBoxLayout width='100%' height='40px'
-            className={css(AccountPage.STYLE.underlinedBox)}>
-          <Padding/>
-          <HBoxLayout width={accountHeaderWidth}
-              className={accountHeaderClassName}>
-          <Padding size='18px'/>
-          <MenuBar/>
-          <Padding/>
-          <HBoxLayout>
-            <Center className={css(AccountPage.STYLE.username)}>
-              {this.props.model.account.name}
-            </Center>
-            <Padding size='10px'/>
-            <RolePanel roles={this.props.model.roles}/>
+              className={css(AccountPage.STYLE.underlinedBox)}>
+            <Padding/>
+            <HBoxLayout width={accountHeaderWidth}
+                className={accountHeaderClassName}>
+              <Padding size='18px'/>
+              <MenuBar/>
+              <Padding/>
+              <HBoxLayout>
+                <Center className={css(AccountPage.STYLE.username)}>
+                  {this.props.model.account.name}
+                </Center>
+                <Padding size='10px'/>
+                <RolePanel roles={this.props.model.roles}/>
+              </HBoxLayout>
+              <Padding size='18px'/>
+            </HBoxLayout>
+            <Padding/>
           </HBoxLayout>
-          <Padding size='18px'/>
-          </HBoxLayout>
-          <Padding/>
-        </HBoxLayout>
-      </VBoxLayout>);
+        </VBoxLayout>);
     }
     const accountContentsClassName = (() => {
       if(this.state.breakpoint === Breakpoint.SMALL) {
@@ -121,7 +121,7 @@ export class AccountPage extends React.Component<Properties, State> {
           <Padding/>
         </HBoxLayout>
         <HBoxLayout height='30px' width='100%'
-          className={css(AccountPage.STYLE.underlinedBox)}>
+            className={css(AccountPage.STYLE.underlinedBox)}>
           <Padding/>
           <Center className={css(AccountPage.STYLE.username)}>
             {this.props.model.account.name}
