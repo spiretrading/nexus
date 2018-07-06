@@ -1,5 +1,6 @@
 #ifndef BOOK_VIEW_LEVEL_PROPERTIES_WIDGET_HPP
 #define BOOK_VIEW_LEVEL_PROPERTIES_WIDGET_HPP
+#include <QListWidget>
 #include <QWidget>
 #include "spire/book_view/book_view.hpp"
 #include "spire/ui/ui.hpp"
@@ -26,8 +27,12 @@ namespace spire {
       void apply(book_view_properties& properties) const;
 
     private:
+      QListWidget* m_band_list_widget;
+      QString m_band_list_stylesheet;
+
       void set_color_button_stylesheet(flat_button* button,
         const QColor& color);
+      void update_band_list_stylesheet(int index);
   };
 }
 

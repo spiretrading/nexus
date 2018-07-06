@@ -2,7 +2,6 @@
 #include <QCheckBox>
 #include <QHBoxLayout>
 #include <QLabel>
-#include <QListWidget>
 #include <QListWidgetItem>
 #include <QSpinBox>
 #include <QVBoxLayout>
@@ -31,25 +30,33 @@ book_view_level_properties_widget::book_view_level_properties_widget(
   auto horizontal_layout = new QHBoxLayout();
   horizontal_layout->setContentsMargins({});
   horizontal_layout->setSpacing(0);
-  auto band_list_widget = new QListWidget(this);
-  band_list_widget->setFixedSize(scale(140, 222));
-  band_list_widget->setStyleSheet(QString(R"(
+  m_band_list_widget = new QListWidget(this);
+  m_band_list_widget->setFixedSize(scale(140, 222));
+  m_band_list_stylesheet = QString(R"(
     QListWidget {
       background-color: #FFFFFF;
       border: %1px solid #C8C8C8 %2px solid #C8C8C8;
-    })").arg(scale_height(1)).arg(scale_width(1)));
+      outline: none;
+      padding: %3px %4px %3px %4px;
+    })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(4))
+        .arg(scale_width(4));
+  m_band_list_widget->setStyleSheet(m_band_list_stylesheet);
   auto bg_colors =
     properties.get_book_quote_background_colors();
   for(auto i = 0 ; i < bg_colors.size(); ++i) {
     auto item = new QListWidgetItem(tr("Level") + QString(" %1").arg(i + 1),
-      band_list_widget);
+      m_band_list_widget);
     item->setBackground(bg_colors[i]);
     item->setForeground(properties.get_book_quote_foreground_color());
     item->setFont(properties.get_book_quote_font());
     item->setTextAlignment(Qt::AlignCenter);
-    band_list_widget->addItem(item);
   }
-  horizontal_layout->addWidget(band_list_widget);
+  m_band_list_widget->setSelectionMode(
+    QAbstractItemView::SelectionMode::SingleSelection);
+  m_band_list_widget->setItemSelected(m_band_list_widget->item(0), true);
+  connect(m_band_list_widget, &QListWidget::currentRowChanged,
+    this, &book_view_level_properties_widget::update_band_list_stylesheet);
+  horizontal_layout->addWidget(m_band_list_widget);
   horizontal_layout->addStretch(18);
   auto band_properties_layout = new QVBoxLayout();
   band_properties_layout->setContentsMargins({});
@@ -202,4 +209,19 @@ void book_view_level_properties_widget::set_color_button_stylesheet(
       .arg(scale_height(1)).arg(scale_width(1)),
     QString(R"(border: %4 solid #4B23A0 %5 solid #4B23A0;)")
       .arg(scale_height(1)).arg(scale_width(1)), "");
+}
+
+#include <QDebug>
+
+void book_view_level_properties_widget::update_band_list_stylesheet(
+    int index) {
+  auto selected_stylesheet = QString(R"(
+    QListWidget::item:selected {
+      background-color: %3;
+      border: %1px solid #000000 %2px solid #000000;
+      color: #000000;
+    })").arg(scale_height(1)).arg(scale_width(1))
+        .arg(m_band_list_widget->item(index)->background().color().name());
+  m_band_list_widget->setStyleSheet(m_band_list_stylesheet +
+    selected_stylesheet);
 }
