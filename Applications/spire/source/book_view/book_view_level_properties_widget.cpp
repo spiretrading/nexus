@@ -3,8 +3,10 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidget>
+#include <QListWidgetItem>
 #include <QSpinBox>
 #include <QVBoxLayout>
+#include "spire/book_view/book_view_properties.hpp"
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/check_box.hpp"
 #include "spire/ui/flat_button.hpp"
@@ -32,9 +34,21 @@ book_view_level_properties_widget::book_view_level_properties_widget(
   auto band_list_widget = new QListWidget(this);
   band_list_widget->setFixedSize(scale(140, 222));
   band_list_widget->setStyleSheet(QString(R"(
-    background-color: #FFFFFF;
-    border: %1px solid #C8C8C8 %2px solid #C8C8C8;
-    )").arg(scale_height(1)).arg(scale_width(1)));
+    QListWidget {
+      background-color: #FFFFFF;
+      border: %1px solid #C8C8C8 %2px solid #C8C8C8;
+    })").arg(scale_height(1)).arg(scale_width(1)));
+  auto bg_colors =
+    properties.get_book_quote_background_colors();
+  for(auto i = 0 ; i < bg_colors.size(); ++i) {
+    auto item = new QListWidgetItem(tr("Level") + QString(" %1").arg(i + 1),
+      band_list_widget);
+    item->setBackground(bg_colors[i]);
+    item->setForeground(properties.get_book_quote_foreground_color());
+    item->setFont(properties.get_book_quote_font());
+    item->setTextAlignment(Qt::AlignCenter);
+    band_list_widget->addItem(item);
+  }
   horizontal_layout->addWidget(band_list_widget);
   horizontal_layout->addStretch(18);
   auto band_properties_layout = new QVBoxLayout();
@@ -50,7 +64,7 @@ book_view_level_properties_widget::book_view_level_properties_widget(
   band_properties_layout->addWidget(number_of_bands_label);
   band_properties_layout->addStretch(4);
   auto number_of_bands_spin_box = new QSpinBox(this);
-  number_of_bands_spin_box->setValue(7);
+  number_of_bands_spin_box->setValue(static_cast<int>(bg_colors.size()));
   number_of_bands_spin_box->setMinimum(1);
   number_of_bands_spin_box->setFixedHeight(scale_height(26));
   number_of_bands_spin_box->setStyleSheet(QString(R"(
