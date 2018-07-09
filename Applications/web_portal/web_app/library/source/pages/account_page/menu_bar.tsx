@@ -37,7 +37,7 @@ export class MenuBar extends React.Component<Properties, State> {
     super(props);
     this.state = {
       breakpoint: MenuBar.getBreakpoint(),
-      selected: ''
+      selected: 'Account'
     }
     this.onScreenResize = this.onScreenResize.bind(this);
     this.onIconClick = this.onIconClick.bind(this);
