@@ -103,23 +103,33 @@ export class AccountPage extends React.Component<Properties, State> {
         return css(AccountPage.ACCOUNT_HEADER_STYLE.mediumContainer);
       }
     })();
+    const accountContentsPaddingClassName = (() => {
+      if(this.state.breakpoint === Breakpoint.SMALL) {
+        return css(AccountPage.ACCOUNT_HEADER_STYLE.smallContainerPadding);
+      } else {
+        return css(AccountPage.ACCOUNT_HEADER_STYLE.mediumContainerPadding);
+      }
+    })();
+    const accountHeaderPaddingClassName = (() => {
+      if(this.state.breakpoint === Breakpoint.SMALL) {
+        return css(AccountPage.ACCOUNT_HEADER_STYLE.smallPadding);
+      } else {
+        return css(AccountPage.ACCOUNT_HEADER_STYLE.mediumPadding);
+      }
+    })();
     return (
       <VBoxLayout width='100%' height='100%'>
         <HBoxLayout width='100%' height='40px'
             className={css(AccountPage.STYLE.underlinedBox)}>
-          <Padding/>
-          <HBoxLayout width={accountHeaderWidth}
-              className={accountHeaderClassName}>
+            <div className={accountHeaderPaddingClassName}/>
             <Padding size='18px'/>
             <HBoxLayout height='40px' className={accountContentsClassName}>
               <MenuBar/>
-              <Padding/>
+              <div className={accountContentsPaddingClassName}/>
               <RolePanel roles={this.props.model.roles}/>
             </HBoxLayout>
             <Padding size='18px'/>
           </HBoxLayout>
-          <Padding/>
-        </HBoxLayout>
         <HBoxLayout height='30px' width='100%'
             className={css(AccountPage.STYLE.underlinedBox)}>
           <Padding/>
@@ -155,8 +165,13 @@ export class AccountPage extends React.Component<Properties, State> {
     },
     small: {
       width: '100%',
-      minWidth: '356px',
-      maxWidth: '496px'
+    },
+    smallPadding: {
+      width: 'calc(20% - 18px)'
+    },
+    mediumPadding: {
+      width: 'calc(50% - 393px)',
+      height: '100%'
     },
     smallContainer: {
       width: '60%',
@@ -164,7 +179,16 @@ export class AccountPage extends React.Component<Properties, State> {
       maxWidth: '460px'
     },
     mediumContainer: {
-      width: 'calc(100% - 36px)'
+      width: '768px'
+    },
+    smallContainerPadding: {
+      width: 'calc(45% - 68px)',
+      height: '100%'
+    },
+    mediumContainerPadding: {
+      width: '100%',
+      height: '100%',
+      flex: '1 1 auto'
     }
   });
   private static STYLE = StyleSheet.create({

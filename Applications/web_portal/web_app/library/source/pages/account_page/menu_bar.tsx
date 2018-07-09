@@ -61,7 +61,7 @@ export class MenuBar extends React.Component<Properties, State> {
       }
     })();
     return (
-      <HBoxLayout className={menuIconContainerClassName}>
+      <HBoxLayout id='menu-bar' className={menuIconContainerClassName}>
         <Item iconSrc='resources/account/account-grey.svg' name='Account'
           breakpoint={this.state.breakpoint}
           onClick={this.props.onAccountClick}/>
@@ -116,9 +116,9 @@ export class MenuBar extends React.Component<Properties, State> {
       height: '40px'
     },
     small: {
-      width: '100%',
-      minWidth: '356px',
-      maxWidth: '496px'
+      width: '55%',
+      minWidth: '176px',
+      maxWidth: '308px'
     },
     smallPadding: {
       width: '100%',
