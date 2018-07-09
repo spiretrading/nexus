@@ -99,6 +99,9 @@ book_view_level_properties_widget::book_view_level_properties_widget(
       width: %3px;
     })").arg(scale_width(1)).arg(scale_height(6)).arg(scale_width(6))
         .arg(scale_width(10)).arg(scale_height(12)));
+  connect(number_of_bands_spin_box,
+    static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this,
+    &book_view_level_properties_widget::on_number_of_bands_spin_box_changed);
   band_properties_layout->addWidget(number_of_bands_spin_box);
   band_properties_layout->addStretch(10);
   auto band_color_label = new QLabel(tr("Band Color"), this);
@@ -268,17 +271,19 @@ void book_view_level_properties_widget::update_band_list_gradient() {
 
 void book_view_level_properties_widget::update_band_list_stylesheet(
     int index) {
-  set_color_button_stylesheet(m_band_color_button,
-    m_band_list_widget->item(index)->background().color());
-  auto selected_stylesheet = QString(R"(
-    QListWidget::item:selected {
-      background-color: %3;
-      border: %1px solid #000000 %2px solid #000000;
-      color: #000000;
-    })").arg(scale_height(1)).arg(scale_width(1))
-        .arg(m_band_list_widget->item(index)->background().color().name());
-  m_band_list_widget->setStyleSheet(m_band_list_stylesheet +
-    selected_stylesheet);
+  if(m_band_list_widget->item(index) != nullptr) {
+    set_color_button_stylesheet(m_band_color_button,
+      m_band_list_widget->item(index)->background().color());
+    auto selected_stylesheet = QString(R"(
+      QListWidget::item:selected {
+        background-color: %3;
+        border: %1px solid #000000 %2px solid #000000;
+        color: #000000;
+      })").arg(scale_height(1)).arg(scale_width(1))
+          .arg(m_band_list_widget->item(index)->background().color().name());
+    m_band_list_widget->setStyleSheet(m_band_list_stylesheet +
+      selected_stylesheet);
+  }
 }
 
 void book_view_level_properties_widget::on_band_color_button_clicked() {
@@ -318,4 +323,10 @@ void book_view_level_properties_widget::on_gradient_start_button_clicked() {
   if(color.isValid()) {
     set_color_button_stylesheet(m_gradient_start_button, color);
   }
+}
+
+void book_view_level_properties_widget::on_number_of_bands_spin_box_changed(
+    int value) {
+  populate_band_list(value);
+  update_band_list_gradient();
 }

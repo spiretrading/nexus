@@ -49,6 +49,7 @@ namespace spire {
       void on_gradient_apply_button_clicked();
       void on_gradient_end_button_clicked();
       void on_gradient_start_button_clicked();
+      void on_number_of_bands_spin_box_changed(int value);
   };
 }
 
