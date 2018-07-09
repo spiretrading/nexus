@@ -39,10 +39,13 @@ namespace spire {
 
       void set_color_button_stylesheet(flat_button* button,
         const QColor& color);
+      void populate_band_list(int num_items);
       void update_band_list_font(const QFont& font);
       void update_band_list_gradient();
       void update_band_list_stylesheet(int index);
+      void on_band_color_button_clicked();
       void on_change_font_button_clicked();
+      void on_gradient_apply_button_clicked();
       void on_gradient_end_button_clicked();
       void on_gradient_start_button_clicked();
   };
