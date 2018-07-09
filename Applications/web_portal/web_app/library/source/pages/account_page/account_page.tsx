@@ -133,9 +133,11 @@ export class AccountPage extends React.Component<Properties, State> {
         <HBoxLayout height='30px' width='100%'
             className={css(AccountPage.STYLE.underlinedBox)}>
           <Padding/>
+          <Padding size='18px'/>
           <Center className={css(AccountPage.STYLE.username)}>
             {this.props.model.account.name}
           </Center>
+          <Padding size='18px'/>
         </HBoxLayout>
       </VBoxLayout>);
   }
