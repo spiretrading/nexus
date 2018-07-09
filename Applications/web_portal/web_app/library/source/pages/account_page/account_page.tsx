@@ -200,7 +200,7 @@ export class AccountPage extends React.Component<Properties, State> {
       boxShadow: '0px 1px 1px 0px rgba(149,152,154,0.16)'
     },
     username: {
-      height: '40px',
+      height: '30px',
       font: '500 14px Roboto',
       color: '#4B23A0',
       whiteSpace: 'nowrap'
