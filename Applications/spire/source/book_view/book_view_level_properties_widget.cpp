@@ -64,6 +64,7 @@ book_view_level_properties_widget::book_view_level_properties_widget(
     properties.get_book_quote_background_colors();
   number_of_bands_spin_box->setValue(static_cast<int>(bg_colors.size()));
   number_of_bands_spin_box->setMinimum(1);
+  number_of_bands_spin_box->setKeyboardTracking(false);
   number_of_bands_spin_box->setFixedHeight(scale_height(26));
   number_of_bands_spin_box->setStyleSheet(QString(R"(
     QSpinBox {
