@@ -36,6 +36,7 @@ namespace spire {
       flat_button* m_band_color_button;
       flat_button* m_gradient_start_button;
       flat_button* m_gradient_end_button;
+      check_box* m_show_grid_lines_check_box;
 
       void set_color_button_stylesheet(flat_button* button,
         const QColor& color);

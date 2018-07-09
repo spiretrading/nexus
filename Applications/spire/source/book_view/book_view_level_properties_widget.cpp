@@ -166,7 +166,7 @@ book_view_level_properties_widget::book_view_level_properties_widget(
     [=] { on_change_font_button_clicked(); });
   font_button_layout->addWidget(change_font_button);
   font_button_layout->addStretch(33);
-  auto show_grid_lines_check_box = new check_box(tr("Show Grid Lines"), this);
+  m_show_grid_lines_check_box = new check_box(tr("Show Grid Lines"), this);
   auto check_box_text_style = QString(R"(
     color: black;
     font-family: Roboto;
@@ -186,10 +186,10 @@ book_view_level_properties_widget::book_view_level_properties_widget(
     border: %1px solid #4B23A0 %2px solid #4B23A0;)")
     .arg(scale_height(1)).arg(scale_width(1));
   auto check_box_focused_style = QString(R"(border-color: #4B23A0;)");
-  show_grid_lines_check_box->set_stylesheet(check_box_text_style,
+  m_show_grid_lines_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style,
     check_box_hover_style, check_box_focused_style);
-  font_button_layout->addWidget(show_grid_lines_check_box);
+  font_button_layout->addWidget(m_show_grid_lines_check_box);
   font_button_layout->addStretch(129);
   horizontal_layout->addLayout(font_button_layout);
   horizontal_layout->addStretch(60);
@@ -203,6 +203,15 @@ book_view_level_properties_widget::book_view_level_properties_widget(
 
 void book_view_level_properties_widget::apply(
     book_view_properties& properties) const {
+  properties.set_book_quote_foreground_color(
+    m_band_list_widget->currentItem()->textColor());
+  properties.set_book_quote_font(m_band_list_widget->currentItem()->font());
+  properties.set_show_grid(m_show_grid_lines_check_box->isChecked());
+  auto& colors = properties.get_book_quote_background_colors();
+  colors.clear();
+  for(auto i = 0; i < m_band_list_widget->count(); ++i) {
+    colors.push_back(m_band_list_widget->item(i)->backgroundColor());
+  }
 }
 
 void book_view_level_properties_widget::showEvent(QShowEvent* event) {
@@ -277,8 +286,7 @@ void book_view_level_properties_widget::on_band_color_button_clicked() {
     QPalette::Window));
   if(color.isValid()) {
     set_color_button_stylesheet(m_band_color_button, color);
-    m_band_list_widget->item(m_band_list_widget->currentRow())->
-      setBackground(color);
+    m_band_list_widget->currentItem()->setBackground(color);
     update_band_list_stylesheet(m_band_list_widget->currentRow());
   }
 }
