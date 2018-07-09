@@ -121,15 +121,15 @@ export class AccountPage extends React.Component<Properties, State> {
       <VBoxLayout width='100%' height='100%'>
         <HBoxLayout width='100%' height='40px'
             className={css(AccountPage.STYLE.underlinedBox)}>
-            <div className={accountHeaderPaddingClassName}/>
-            <Padding size='18px'/>
-            <HBoxLayout height='40px' className={accountContentsClassName}>
-              <MenuBar/>
-              <div className={accountContentsPaddingClassName}/>
-              <RolePanel roles={this.props.model.roles}/>
-            </HBoxLayout>
-            <Padding size='18px'/>
+          <div className={accountHeaderPaddingClassName}/>
+          <Padding size='18px'/>
+          <HBoxLayout height='40px' className={accountContentsClassName}>
+            <MenuBar/>
+            <div className={accountContentsPaddingClassName}/>
+            <RolePanel roles={this.props.model.roles}/>
           </HBoxLayout>
+          <Padding size='18px'/>
+        </HBoxLayout>
         <HBoxLayout height='30px' width='100%'
             className={css(AccountPage.STYLE.underlinedBox)}>
           <Padding/>
