@@ -22,6 +22,7 @@ interface Properties {
 
 interface State {
   breakpoint: Breakpoint;
+  selected: string;
 }
 
 enum Breakpoint {
@@ -35,9 +36,11 @@ export class MenuBar extends React.Component<Properties, State> {
   public constructor(props: Properties) {
     super(props);
     this.state = {
-      breakpoint: MenuBar.getBreakpoint()
+      breakpoint: MenuBar.getBreakpoint(),
+      selected: ''
     }
     this.onScreenResize = this.onScreenResize.bind(this);
+    this.onIconClick = this.onIconClick.bind(this);
   }
 
   public componentDidMount() {
@@ -62,27 +65,64 @@ export class MenuBar extends React.Component<Properties, State> {
       return css(MenuBar.STYLE.base);
       
     })();
+    const getIconColor = (name: string) => {
+      if(this.state.selected === name) {
+        return 'purple';
+      }
+      return 'grey'
+    }
+    const getIconUnderlineClassName = (name: string) => {
+      if(name === this.state.selected) {
+        return css(MenuBar.STYLE.selectedBorder);
+      }
+      return css(MenuBar.STYLE.unselectedBorder);
+    }
     return (
       <HBoxLayout id='menu-bar' className={menuIconContainerClassName}>
-        <Item iconSrc='resources/account/account-grey.svg' name='Account'
-          breakpoint={this.state.breakpoint}
-          onClick={this.props.onAccountClick}/>
+        <VBoxLayout height='40px'>
+          <Item iconSrc={`resources/account/account` +
+              `-${getIconColor('Account')}.svg`} name='Account'
+            breakpoint={this.state.breakpoint}
+            onClick={() => this.onIconClick('Account',
+              this.props.onAccountClick)}/>
+          <div className={getIconUnderlineClassName('Account')}/>
+        </VBoxLayout>
         <MenuBarPadding/>
-        <Item iconSrc='resources/account/risk-controls-grey.svg'
-          name='Risk Controls' breakpoint={this.state.breakpoint}
-          onClick={this.props.onRiskControlsClick}/>
+        <VBoxLayout height='40px'>
+          <Item iconSrc={`resources/account/risk-controls` +
+            `-${getIconColor('Risk Controls')}.svg`} name='Risk Controls'
+            breakpoint={this.state.breakpoint}
+            onClick={() => this.onIconClick('Risk Controls',
+              this.props.onRiskControlsClick)}/>
+          <div className={getIconUnderlineClassName('Risk Controls')}/>
+        </VBoxLayout>
         <MenuBarPadding/>
-        <Item iconSrc='resources/account/entitlements-grey.svg'
-          name='Entitlements' breakpoint={this.state.breakpoint}
-          onClick={this.props.onEntitlementsClick}/>
+        <VBoxLayout height='40px'>
+          <Item iconSrc={`resources/account/entitlements` +
+            `-${getIconColor('Entitlements')}.svg`} name='Entitlements'
+            breakpoint={this.state.breakpoint}
+            onClick={() => this.onIconClick('Entitlements',
+              this.props.onEntitlementsClick)}/>
+          <div className={getIconUnderlineClassName('Entitlements')}/>
+        </VBoxLayout>
         <MenuBarPadding/>
-        <Item iconSrc='resources/account/compliance-grey.svg' name='Compliance'
-          breakpoint={this.state.breakpoint}
-          onClick={this.props.onComplianceClick}/>
+        <VBoxLayout height='40px'>
+          <Item iconSrc={`resources/account/compliance` +
+            `-${getIconColor('Compliance')}.svg`} name='Compliance'
+            breakpoint={this.state.breakpoint}
+            onClick={() => this.onIconClick('Compliance',
+              this.props.onComplianceClick)}/>
+          <div className={getIconUnderlineClassName('Compliance')}/>
+        </VBoxLayout>
         <MenuBarPadding/>
-        <Item iconSrc='resources/account/profit-loss-grey.svg'
-          name='Profit/Loss' breakpoint={this.state.breakpoint}
-          onClick={this.props.onProfitAndLossClick}/>
+        <VBoxLayout height='40px'>
+          <Item iconSrc={`resources/account/profit-loss` +
+            `-${getIconColor('Profit/Loss')}.svg`}
+            name='Profit/Loss' breakpoint={this.state.breakpoint}
+            onClick={() => this.onIconClick('Profit/Loss',
+              this.props.onProfitAndLossClick)}/>
+          <div className={getIconUnderlineClassName('Profit/Loss')}/>
+        </VBoxLayout>
       </HBoxLayout>);
   }
 
@@ -106,6 +146,11 @@ export class MenuBar extends React.Component<Properties, State> {
     }
   }
 
+  private onIconClick(name: string, onClick: () => void): void {
+    onClick();
+    this.setState({selected: name})
+  }
+
   private static defaultProps = {
     onAccountClick: () => {},
     onRiskControlsClick: () => {},
@@ -115,7 +160,8 @@ export class MenuBar extends React.Component<Properties, State> {
   };
   private static STYLE = StyleSheet.create({
     base: {
-      height: '40px'
+      height: '40px',
+      cursor: 'pointer'
     },
     small: {
       width: '55%',
@@ -127,6 +173,16 @@ export class MenuBar extends React.Component<Properties, State> {
       maxWidth: '30px',
       height: '100%',
       flex: '1 1 auto'
+    },
+    selectedBorder: {
+      width: '100%',
+      height: '2px',
+      backgroundColor: '#4B23A0'
+    },
+    unselectedBorder: {
+      width: '100%',
+      height: '2px',
+      backgroundColor: 'rgba(255, 255, 255, 0)'
     }
   });
 }
@@ -142,14 +198,14 @@ class Item extends React.Component<ItemProperties> {
   public render(): JSX.Element {
     if(this.props.breakpoint === Breakpoint.SMALL) {
       return (
-      <VBoxLayout height='40px'>
+      <VBoxLayout height='38px' onClick={this.props.onClick}>
         <Padding size='8px'/>
         <img src={this.props.iconSrc} width='24px' height='24px'/>
-        <Padding size='8px'/>
+        <Padding size='6px'/>
       </VBoxLayout>);
     }
     return (
-      <Center height='40px'>
+      <Center height='38px' onClick={this.props.onClick}>
         <HBoxLayout height='16px'>
           <img src={this.props.iconSrc} width='16px' height='16px'/>
           <Padding size='8px'/>
