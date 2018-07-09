@@ -1,6 +1,6 @@
 import {css, StyleSheet} from 'aphrodite';
 import * as React from 'react';
-import {HBoxLayout, Padding, VBoxLayout} from '../..';
+import {Center, HBoxLayout, Padding, VBoxLayout} from '../..';
 
 interface Properties {
 
@@ -149,21 +149,15 @@ class Item extends React.Component<ItemProperties> {
       </VBoxLayout>);
     }
     return (
-      <VBoxLayout height='40px'>
-        <Padding/>
+      <Center height='40px'>
         <HBoxLayout height='16px'>
           <img src={this.props.iconSrc} width='16px' height='16px'/>
           <Padding size='8px'/>
-          <VBoxLayout height='16px'>
-            <Padding/>
-            <span className={css(Item.STYLE.label)}>
-              {this.props.name}
-            </span>
-            <Padding/>
-          </VBoxLayout>
+          <Center height='16px' className={css(Item.STYLE.label)}>
+            {this.props.name}
+          </Center>
         </HBoxLayout>
-        <Padding/>
-      </VBoxLayout>);
+      </Center>);
   }
 
   private static STYLE = StyleSheet.create({
