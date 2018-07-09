@@ -84,7 +84,7 @@ export class AccountPage extends React.Component<Properties, State> {
               <MenuBar/>
               <Padding/>
               <HBoxLayout>
-                <Center className={css(AccountPage.STYLE.username)}>
+                <Center height='40px' className={css(AccountPage.STYLE.username)}>
                   {this.props.model.account.name}
                 </Center>
                 <Padding size='10px'/>
@@ -134,7 +134,7 @@ export class AccountPage extends React.Component<Properties, State> {
             className={css(AccountPage.STYLE.underlinedBox)}>
           <Padding/>
           <Padding size='18px'/>
-          <Center className={css(AccountPage.STYLE.username)}>
+          <Center height='30px' className={css(AccountPage.STYLE.username)}>
             {this.props.model.account.name}
           </Center>
           <Padding size='18px'/>
@@ -200,7 +200,6 @@ export class AccountPage extends React.Component<Properties, State> {
       boxShadow: '0px 1px 1px 0px rgba(149,152,154,0.16)'
     },
     username: {
-      height: '30px',
       font: '500 14px Roboto',
       color: '#4B23A0',
       whiteSpace: 'nowrap'
