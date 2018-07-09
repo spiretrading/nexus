@@ -235,10 +235,15 @@ void book_view_level_properties_widget::set_color_button_stylesheet(
 }
 
 void book_view_level_properties_widget::populate_band_list(int num_items) {
+  QFont font;
+  if(m_band_list_widget->item(0) != nullptr) {
+    font = m_band_list_widget->item(0)->font();
+  }
   m_band_list_widget->clear();
   for(auto i = 0 ; i < num_items; ++i) {
     auto item = new QListWidgetItem(tr("Level") + QString(" %1").arg(i + 1),
       m_band_list_widget);
+    item->setFont(font);
     item->setTextAlignment(Qt::AlignCenter);
   }
 }
