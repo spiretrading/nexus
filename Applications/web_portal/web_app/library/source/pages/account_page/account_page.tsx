@@ -164,7 +164,7 @@ export class AccountPage extends React.Component<Properties, State> {
       height: '40px'
     },
     small: {
-      width: '100%',
+      width: '100%'
     },
     smallPadding: {
       width: 'calc(20% - 18px)'

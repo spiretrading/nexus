@@ -57,8 +57,10 @@ export class MenuBar extends React.Component<Properties, State> {
     };
     const menuIconContainerClassName = (() => {
       if(this.state.breakpoint === Breakpoint.SMALL) {
-        return css(MenuBar.STYLE.small);
+        return css([MenuBar.STYLE.base, MenuBar.STYLE.small]);
       }
+      return css(MenuBar.STYLE.base);
+      
     })();
     return (
       <HBoxLayout id='menu-bar' className={menuIconContainerClassName}>
