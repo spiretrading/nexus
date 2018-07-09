@@ -92,6 +92,7 @@ book_view_level_properties_widget::book_view_level_properties_widget(
     QSpinBox::up-arrow {
       height: %2px;
       image: url(:/icons/arrow-up.svg);
+      padding-top: %6px;
       width: %3px;
     }
 
@@ -100,7 +101,7 @@ book_view_level_properties_widget::book_view_level_properties_widget(
       image: url(:/icons/arrow-down.svg);
       width: %3px;
     })").arg(scale_width(1)).arg(scale_height(6)).arg(scale_width(6))
-        .arg(scale_width(10)).arg(scale_height(12)));
+        .arg(scale_width(10)).arg(scale_height(12)).arg(scale_height(4)));
   connect(number_of_bands_spin_box,
     static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this,
     &book_view_level_properties_widget::on_number_of_bands_spin_box_changed);
