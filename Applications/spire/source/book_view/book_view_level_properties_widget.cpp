@@ -303,8 +303,8 @@ void book_view_level_properties_widget::update_band_list_stylesheet(
 }
 
 void book_view_level_properties_widget::on_band_color_button_clicked() {
-  auto color = QColorDialog::getColor(m_band_color_button->palette().color(
-    QPalette::Window));
+  auto color = QColorDialog::getColor(
+    m_band_color_button->get_background_color());
   if(color.isValid()) {
     set_color_button_stylesheet(m_band_color_button, color);
     m_band_list_widget->currentItem()->setBackground(color);
