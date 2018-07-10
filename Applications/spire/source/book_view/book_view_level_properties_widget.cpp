@@ -345,8 +345,8 @@ void book_view_level_properties_widget::on_number_of_bands_spin_box_changed(
   auto current_row = m_band_list_widget->currentRow();
   populate_band_list(value);
   update_band_list_gradient();
-  if(current_row == m_band_list_widget->count()) {
-    m_band_list_widget->setCurrentRow(current_row - 1);
+  if(current_row > m_band_list_widget->count() - 1) {
+    m_band_list_widget->setCurrentRow(m_band_list_widget->count() - 1);
   } else {
     m_band_list_widget->setCurrentRow(current_row);
   }
