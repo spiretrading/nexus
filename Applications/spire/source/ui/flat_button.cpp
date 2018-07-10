@@ -39,6 +39,20 @@ void flat_button::set_stylesheet(const QString& default_style,
   } else {
     set_focused_stylesheet();
   }
+  auto search_string = QString("background-color:");
+  auto index = m_default_style.indexOf(search_string);
+  if(index != -1) {
+    auto color_hex = m_default_style.mid(
+      index + search_string.size(), 8).trimmed();
+    if(color_hex.endsWith(';')) {
+      color_hex.chop(1);
+    }
+    m_background_color = QColor(color_hex);
+  }
+}
+
+const QColor& flat_button::get_background_color() {
+  return m_background_color;
 }
 
 connection flat_button::connect_clicked_signal(

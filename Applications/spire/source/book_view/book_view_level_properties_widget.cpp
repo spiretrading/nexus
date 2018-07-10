@@ -265,9 +265,9 @@ void book_view_level_properties_widget::update_band_list_gradient() {
   int end_red;
   int end_green;
   int end_blue;
-  m_gradient_start_button->palette().background().color().getRgb(&start_red,
+  m_gradient_start_button->get_background_color().getRgb(&start_red,
     &start_green, &start_blue);
-  m_gradient_end_button->palette().background().color().getRgb(&end_red,
+  m_gradient_end_button->get_background_color().getRgb(&end_red,
     &end_green, &end_blue);
   for(auto i = 0; i < band_count; ++i) {
     auto red = start_red + (i * ((end_red - start_red) / band_count));
@@ -275,6 +275,7 @@ void book_view_level_properties_widget::update_band_list_gradient() {
     auto blue = start_blue + (i * ((end_blue - start_blue) / band_count));
     m_band_list_widget->item(i)->setBackground(QColor(red, green, blue));
   }
+  update_band_list_stylesheet(m_band_list_widget->currentRow());
 }
 
 void book_view_level_properties_widget::update_band_list_stylesheet(
@@ -314,20 +315,19 @@ void book_view_level_properties_widget::on_change_font_button_clicked() {
 
 void book_view_level_properties_widget::on_gradient_apply_button_clicked() {
   update_band_list_gradient();
-  set_color_button_stylesheet(m_band_color_button, Qt::yellow);
 }
 
 void book_view_level_properties_widget::on_gradient_end_button_clicked() {
-  auto color = QColorDialog::getColor(m_gradient_end_button->palette().color(
-    QPalette::Window));
+  auto color = QColorDialog::getColor(
+    m_gradient_end_button->get_background_color());
   if(color.isValid()) {
     set_color_button_stylesheet(m_gradient_end_button, color);
   }
 }
 
 void book_view_level_properties_widget::on_gradient_start_button_clicked() {
-  auto color = QColorDialog::getColor(m_gradient_start_button->palette().color(
-    QPalette::Window));
+  auto color = QColorDialog::getColor(
+    m_gradient_start_button->get_background_color());
   if(color.isValid()) {
     set_color_button_stylesheet(m_gradient_start_button, color);
   }

@@ -46,6 +46,8 @@ namespace spire {
         const QString& hover_style, const QString& focused_style,
         const QString& disabled_style);
 
+      const QColor& get_background_color();
+
       //! Connects a slot to the clicked signal.
       boost::signals2::connection connect_clicked_signal(
         const clicked_signal::slot_type& slot) const;
@@ -62,6 +64,7 @@ namespace spire {
       QLabel* m_label;
       mutable clicked_signal m_clicked_signal;
       bool m_clickable;
+      QColor m_background_color;
       QString m_default_style;
       QString m_hover_style;
       QString m_focused_style;
