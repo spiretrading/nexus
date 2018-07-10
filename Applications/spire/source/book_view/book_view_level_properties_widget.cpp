@@ -270,9 +270,11 @@ void book_view_level_properties_widget::update_band_list_gradient() {
   m_gradient_end_button->get_background_color().getRgb(&end_red,
     &end_green, &end_blue);
   for(auto i = 0; i < band_count; ++i) {
-    auto red = start_red + (i * ((end_red - start_red) / band_count));
-    auto green = start_green + (i * ((end_green - start_green) / band_count));
-    auto blue = start_blue + (i * ((end_blue - start_blue) / band_count));
+    auto red = start_red + (i * ((end_red - start_red) / (band_count - 1)));
+    auto green = start_green + (i * ((end_green - start_green) /
+      (band_count - 1)));
+    auto blue = start_blue + (i * ((end_blue - start_blue) /
+      (band_count - 1)));
     m_band_list_widget->item(i)->setBackground(QColor(red, green, blue));
   }
   update_band_list_stylesheet(m_band_list_widget->currentRow());
