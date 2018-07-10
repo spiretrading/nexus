@@ -259,23 +259,28 @@ void book_view_level_properties_widget::update_band_list_font(
 
 void book_view_level_properties_widget::update_band_list_gradient() {
   auto band_count = m_band_list_widget->count();
-  int start_red;
-  int start_green;
-  int start_blue;
-  int end_red;
-  int end_green;
-  int end_blue;
-  m_gradient_start_button->get_background_color().getRgb(&start_red,
-    &start_green, &start_blue);
-  m_gradient_end_button->get_background_color().getRgb(&end_red,
-    &end_green, &end_blue);
-  for(auto i = 0; i < band_count; ++i) {
-    auto red = start_red + (i * ((end_red - start_red) / (band_count - 1)));
-    auto green = start_green + (i * ((end_green - start_green) /
-      (band_count - 1)));
-    auto blue = start_blue + (i * ((end_blue - start_blue) /
-      (band_count - 1)));
-    m_band_list_widget->item(i)->setBackground(QColor(red, green, blue));
+  if(band_count > 1) {
+    int start_red;
+    int start_green;
+    int start_blue;
+    int end_red;
+    int end_green;
+    int end_blue;
+    m_gradient_start_button->get_background_color().getRgb(&start_red,
+      &start_green, &start_blue);
+    m_gradient_end_button->get_background_color().getRgb(&end_red,
+      &end_green, &end_blue);
+    for(auto i = 0; i < band_count; ++i) {
+      auto red = start_red + (i * ((end_red - start_red) / (band_count - 1)));
+      auto green = start_green + (i * ((end_green - start_green) /
+        (band_count - 1)));
+      auto blue = start_blue + (i * ((end_blue - start_blue) /
+        (band_count - 1)));
+      m_band_list_widget->item(i)->setBackground(QColor(red, green, blue));
+    }
+  } else {
+    m_band_list_widget->item(0)->setBackground(
+      m_gradient_start_button->get_background_color());
   }
   update_band_list_stylesheet(m_band_list_widget->currentRow());
 }
