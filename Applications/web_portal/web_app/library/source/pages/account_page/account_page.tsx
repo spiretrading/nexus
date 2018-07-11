@@ -76,26 +76,26 @@ export class AccountPage extends React.Component<Properties, State> {
     if(this.state.breakpoint === Breakpoint.LARGE) {
       return (
         <VBoxLayout width='100%' height='100%'>
-          <HBoxLayout width='100%' height='40px'
+          <Center width='100%' height='40px'
               className={css(AccountPage.STYLE.underlinedBox)}>
-            <Padding/>
             <HBoxLayout width={accountHeaderWidth}
                 className={accountHeaderClassName}>
               <Padding size='18px'/>
               <MenuBar/>
               <Padding/>
-              <HBoxLayout>
+              <div className={css(AccountPage.ACCOUNT_HEADER_STYLE.largeUsernameAndRoleContainer)}>
+              <div className={css(AccountPage.ACCOUNT_HEADER_STYLE.largeUsernameAndRoleWrapper)}>
                 <Center height='40px' className={
                     css(AccountPage.STYLE.username)}>
                   {this.props.model.account.name}
                 </Center>
                 <Padding size='10px'/>
                 <RolePanel roles={this.props.model.roles}/>
-              </HBoxLayout>
+              </div>
+              </div>
               <Padding size='18px'/>
             </HBoxLayout>
-            <Padding/>
-          </HBoxLayout>
+          </Center>
         </VBoxLayout>);
     }
     const accountContentsClassName = (() => {
@@ -197,6 +197,16 @@ export class AccountPage extends React.Component<Properties, State> {
       width: '100%',
       height: '100%',
       flex: '1 1 auto'
+    },
+    largeUsernameAndRoleContainer: {
+      height: '40px',
+      display: 'flex',
+      flexWrap: 'wrap'
+    },
+    largeUsernameAndRoleWrapper: {
+      height: '40px',
+      width: 'auto',
+      display: 'flex'
     }
   });
   private static STYLE = StyleSheet.create({

@@ -77,8 +77,14 @@ export class MenuBar extends React.Component<Properties, State> {
       }
       return css(MenuBar.STYLE.unselectedBorder);
     };
+    const menuBarWidth = (() => {
+      if(this.state.breakpoint !== Breakpoint.SMALL) {
+        return '590px'
+      }
+    })();
     return (
-      <HBoxLayout id='menu-bar' className={menuIconContainerClassName}>
+      <HBoxLayout id='menu-bar' width={menuBarWidth}
+          className={menuIconContainerClassName}>
         <VBoxLayout id='item-vbox'  height='40px'>
           <Item iconSrc={`resources/account/account` +
               `-${getIconColor('Account')}.svg`} name='Account'
@@ -160,7 +166,8 @@ export class MenuBar extends React.Component<Properties, State> {
   };
   private static STYLE = StyleSheet.create({
     base: {
-      height: '40px'
+      height: '40px',
+      width: '590px'
     },
     small: {
       width: '55%',
