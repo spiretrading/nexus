@@ -95,14 +95,6 @@ export class AccountPage extends React.Component<Properties, State> {
           </Center>
         </VBoxLayout>);
     }
-    const accountHeaderWidth = (() => {
-      if(this.state.breakpoint === Breakpoint.SMALL) {
-        return '100%';
-      } else if(this.state.breakpoint === Breakpoint.MEDIUM) {
-        return '786px';
-      }
-      return '1036px';
-    })();
     const accountContentsClassName = (() => {
       if(this.state.breakpoint === Breakpoint.SMALL) {
         return css(AccountPage.ACCOUNT_HEADER_STYLE.smallContainer);
