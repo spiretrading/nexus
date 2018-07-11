@@ -248,7 +248,6 @@ class Item extends React.Component<ItemProperties> {
         <Padding size='6px'/>
       </VBoxLayout>);
     }
-    console.log('isSelected: ', this.props.isSelected)
     return (
       <VBoxLayout className={itemClassName}
           onMouseEnter={this.props.onMouseEnter}
