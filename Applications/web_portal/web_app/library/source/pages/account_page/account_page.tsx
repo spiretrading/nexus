@@ -83,15 +83,19 @@ export class AccountPage extends React.Component<Properties, State> {
               <Padding size='18px'/>
               <MenuBar/>
               <Padding/>
-              <div className={css(AccountPage.ACCOUNT_HEADER_STYLE.largeUsernameAndRoleContainer)}>
-              <div className={css(AccountPage.ACCOUNT_HEADER_STYLE.largeUsernameAndRoleWrapper)}>
-                <Center height='40px' className={
-                    css(AccountPage.STYLE.username)}>
-                  {this.props.model.account.name}
-                </Center>
-                <Padding size='10px'/>
-                <RolePanel roles={this.props.model.roles}/>
-              </div>
+              <div className={
+                  css(AccountPage.ACCOUNT_HEADER_STYLE.
+                    largeUsernameAndRoleContainer)}>
+                <div className={
+                    css(AccountPage.ACCOUNT_HEADER_STYLE.
+                      largeUsernameAndRoleWrapper)}>
+                  <Center height='40px' className={
+                      css(AccountPage.STYLE.username)}>
+                    {this.props.model.account.name}
+                  </Center>
+                  <Padding size='10px'/>
+                  <RolePanel roles={this.props.model.roles}/>
+                </div>
               </div>
               <Padding size='18px'/>
             </HBoxLayout>
