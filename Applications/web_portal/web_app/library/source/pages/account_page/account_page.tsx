@@ -188,16 +188,15 @@ export class AccountPage extends React.Component<Properties, State> {
       maxWidth: '460px'
     },
     mediumContainer: {
-      minWidth: '768px'
+      width: '750px'
     },
     smallContainerPadding: {
       width: 'calc(45% - 68px)',
       height: '100%'
     },
     mediumContainerPadding: {
-      width: '100%',
-      height: '100%',
-      flex: '1 1 auto'
+      width: 'calc(100% - 658px)',
+      height: '100%'
     },
     largeUsernameAndRoleContainer: {
       height: '40px',
