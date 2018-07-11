@@ -38,7 +38,7 @@ export class MenuBar extends React.Component<Properties, State> {
     this.state = {
       breakpoint: MenuBar.getBreakpoint(),
       selected: 'Account'
-    }
+    };
     this.onScreenResize = this.onScreenResize.bind(this);
     this.onIconClick = this.onIconClick.bind(this);
   }
@@ -69,17 +69,17 @@ export class MenuBar extends React.Component<Properties, State> {
       if(this.state.selected === name) {
         return 'purple';
       }
-      return 'grey'
-    }
+      return 'grey';
+    };
     const getIconUnderlineClassName = (name: string) => {
       if(name === this.state.selected) {
         return css(MenuBar.STYLE.selectedBorder);
       }
       return css(MenuBar.STYLE.unselectedBorder);
-    }
+    };
     return (
       <HBoxLayout id='menu-bar' className={menuIconContainerClassName}>
-        <VBoxLayout height='40px'>
+        <VBoxLayout id='item-vbox'  height='40px'>
           <Item iconSrc={`resources/account/account` +
               `-${getIconColor('Account')}.svg`} name='Account'
             breakpoint={this.state.breakpoint}
@@ -148,7 +148,7 @@ export class MenuBar extends React.Component<Properties, State> {
 
   private onIconClick(name: string, onClick: () => void): void {
     onClick();
-    this.setState({selected: name})
+    this.setState({selected: name});
   }
 
   private static defaultProps = {
@@ -160,8 +160,7 @@ export class MenuBar extends React.Component<Properties, State> {
   };
   private static STYLE = StyleSheet.create({
     base: {
-      height: '40px',
-      cursor: 'pointer'
+      height: '40px'
     },
     small: {
       width: '55%',
@@ -205,18 +204,40 @@ class Item extends React.Component<ItemProperties> {
       </VBoxLayout>);
     }
     return (
-      <Center height='38px' onClick={this.props.onClick}>
-        <HBoxLayout height='16px'>
-          <img src={this.props.iconSrc} width='16px' height='16px'/>
-          <Padding size='8px'/>
-          <Center height='16px' className={css(Item.STYLE.label)}>
-            {this.props.name}
-          </Center>
-        </HBoxLayout>
-      </Center>);
+      <VBoxLayout className={css(Item.STYLE.item)} onClick={this.props.onClick}>
+        <Padding size='12px'/>
+        <div className={css(Item.STYLE.container)}>
+          <div className={css(Item.STYLE.wrapper)}>
+            <img src={this.props.iconSrc} width='16px' height='16px'/>
+            <div className={css(Item.STYLE.padding)}/>
+            <Center id='center-1' height='16px'>
+              <span className={css(Item.STYLE.label)}>{this.props.name}</span>
+            </Center>
+          </div>
+        </div>
+        <Padding size='10px'/>
+      </VBoxLayout>);
   }
 
   private static STYLE = StyleSheet.create({
+    item: {
+      height: '38px',
+      cursor: 'pointer'
+    },
+    container: {
+      height: '16px',
+      display: 'flex',
+      flexWrap: 'wrap'
+    },
+    wrapper: {
+      height: '16px',
+      width: 'auto',
+      display: 'flex'
+    },
+    padding: {
+      height: '16px',
+      width: '8px'
+    },
     label: {
       font: '200 14px Roboto',
       whiteSpace: 'nowrap'

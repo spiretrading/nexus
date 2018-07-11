@@ -21,6 +21,7 @@ enum Breakpoint {
   MEDIUM,
   LARGE
 }
+
 interface MenuItemProperties {
   isSelected: boolean;
   src: string;
@@ -84,7 +85,8 @@ export class AccountPage extends React.Component<Properties, State> {
               <MenuBar/>
               <Padding/>
               <HBoxLayout>
-                <Center height='40px' className={css(AccountPage.STYLE.username)}>
+                <Center height='40px' className={
+                    css(AccountPage.STYLE.username)}>
                   {this.props.model.account.name}
                 </Center>
                 <Padding size='10px'/>
@@ -134,9 +136,13 @@ export class AccountPage extends React.Component<Properties, State> {
             className={css(AccountPage.STYLE.underlinedBox)}>
           <Padding/>
           <Padding size='18px'/>
-          <Center height='30px' className={css(AccountPage.STYLE.username)}>
-            {this.props.model.account.name}
-          </Center>
+          <VBoxLayout height='30px'>
+            <Padding/>
+            <span className={css(AccountPage.STYLE.username)}>
+              {this.props.model.account.name}
+            </span>
+            <Padding/>
+          </VBoxLayout>
           <Padding size='18px'/>
         </HBoxLayout>
       </VBoxLayout>);
@@ -181,7 +187,7 @@ export class AccountPage extends React.Component<Properties, State> {
       maxWidth: '460px'
     },
     mediumContainer: {
-      width: '768px'
+      minWidth: '768px'
     },
     smallContainerPadding: {
       width: 'calc(45% - 68px)',
