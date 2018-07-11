@@ -65,20 +65,13 @@ export class AccountPage extends React.Component<Properties, State> {
       }
       return css(AccountPage.ACCOUNT_HEADER_STYLE.base);
     })();
-    const accountHeaderWidth = (() => {
-      if(this.state.breakpoint === Breakpoint.SMALL) {
-        return '100%';
-      } else if(this.state.breakpoint === Breakpoint.MEDIUM) {
-        return '786px';
-      }
-      return '1036px';
-    })();
+    
     if(this.state.breakpoint === Breakpoint.LARGE) {
       return (
         <VBoxLayout width='100%' height='100%'>
           <Center width='100%' height='40px'
               className={css(AccountPage.STYLE.underlinedBox)}>
-            <HBoxLayout width={accountHeaderWidth}
+            <HBoxLayout width='1036px'
                 className={accountHeaderClassName}>
               <Padding size='18px'/>
               <MenuBar/>
@@ -102,6 +95,14 @@ export class AccountPage extends React.Component<Properties, State> {
           </Center>
         </VBoxLayout>);
     }
+    const accountHeaderWidth = (() => {
+      if(this.state.breakpoint === Breakpoint.SMALL) {
+        return '100%';
+      } else if(this.state.breakpoint === Breakpoint.MEDIUM) {
+        return '786px';
+      }
+      return '1036px';
+    })();
     const accountContentsClassName = (() => {
       if(this.state.breakpoint === Breakpoint.SMALL) {
         return css(AccountPage.ACCOUNT_HEADER_STYLE.smallContainer);
