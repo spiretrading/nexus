@@ -138,18 +138,22 @@ export class AccountPage extends React.Component<Properties, State> {
           <Padding size='18px'/>
           <div className={accountHeaderPaddingClassName}/>
         </HBoxLayout>
-        <HBoxLayout height='30px' width='100%'
+        <HBoxLayout width='100%' height='30px'
             className={css(AccountPage.STYLE.underlinedBox)}>
-          <Padding/>
+          <div className={accountHeaderPaddingClassName}/>
           <Padding size='18px'/>
-          <VBoxLayout height='30px'>
+          <HBoxLayout height='30px' className={accountContentsClassName}>
             <Padding/>
-            <span className={css(AccountPage.STYLE.username)}>
-              {this.props.model.account.name}
-            </span>
-            <Padding/>
-          </VBoxLayout>
+            <VBoxLayout height='30px'>
+              <Padding/>
+              <span className={css(AccountPage.STYLE.username)}>
+                {this.props.model.account.name}
+              </span>
+              <Padding/>
+            </VBoxLayout>
+          </HBoxLayout>
           <Padding size='18px'/>
+          <div className={accountHeaderPaddingClassName}/>
         </HBoxLayout>
       </VBoxLayout>);
   }
@@ -189,8 +193,8 @@ export class AccountPage extends React.Component<Properties, State> {
     },
     smallContainer: {
       width: '60%',
-      minWidth: '320px',
-      maxWidth: '460px'
+      minWidth: '284px',
+      maxWidth: '424px'
     },
     mediumContainer: {
       width: '750px'
@@ -216,9 +220,7 @@ export class AccountPage extends React.Component<Properties, State> {
   });
   private static STYLE = StyleSheet.create({
     underlinedBox: {
-      '-webkit-box-shadow': '0px 1px 1px 0px rgba(149,152,154,0.16)',
-      '-moz-box-shadow': '0px 1px 1px 0px rgba(149,152,154,0.16)',
-      boxShadow: '0px 1px 1px 0px rgba(149,152,154,0.16)'
+      borderBottom: '1px solid #E6E6E6'
     },
     username: {
       font: '500 14px Roboto',

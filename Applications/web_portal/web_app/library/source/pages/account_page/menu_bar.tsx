@@ -66,8 +66,7 @@ export class MenuBar extends React.Component<Properties, State> {
       if(this.state.breakpoint === Breakpoint.SMALL) {
         return css([MenuBar.STYLE.base, MenuBar.STYLE.small]);
       }
-      return css(MenuBar.STYLE.base);
-      
+      return css(MenuBar.STYLE.base);  
     })();
     const getIconColor = (name: string) => {
       if(this.state.selected === name || this.state.hovered === name) {
@@ -83,7 +82,7 @@ export class MenuBar extends React.Component<Properties, State> {
     };
     const menuBarWidth = (() => {
       if(this.state.breakpoint !== Breakpoint.SMALL) {
-        return '590px'
+        return '590px';
       }
     })();
     return (
@@ -240,11 +239,13 @@ class Item extends React.Component<ItemProperties> {
     })();
     if(this.props.breakpoint === Breakpoint.SMALL) {
       return (
-      <VBoxLayout className={itemClassName} height='38px'
-          onMouseEnter={this.props.onMouseEnter}
-          onMouseLeave={this.props.onMouseLeave} onClick={this.props.onClick}>
+      <VBoxLayout height='38px'>
         <Padding size='8px'/>
-        <img src={this.props.iconSrc} width='24px' height='24px'/>
+        <Center width='24px' height='24px' className={itemClassName}
+            onMouseEnter={this.props.onMouseEnter}
+            onMouseLeave={this.props.onMouseLeave} onClick={this.props.onClick}>
+          <img src={this.props.iconSrc} width='20px' height='20px'/>
+        </Center>
         <Padding size='6px'/>
       </VBoxLayout>);
     }
@@ -280,11 +281,11 @@ class Item extends React.Component<ItemProperties> {
       cursor: 'pointer',
       '-webkit-tap-highlight-color': 'transparent',
       ':hover': {
-        color: '#4B23A0',
+        color: '#4B23A0'
       }
     },
     selectedItem: {
-      color: '#4B23A0',
+      color: '#4B23A0'
     },
     unSelectedItem: {
       color: '#7D7E90'
