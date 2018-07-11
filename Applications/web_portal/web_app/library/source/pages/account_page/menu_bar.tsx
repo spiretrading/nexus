@@ -23,6 +23,7 @@ interface Properties {
 interface State {
   breakpoint: Breakpoint;
   selected: string;
+  hovered: string;
 }
 
 enum Breakpoint {
@@ -37,9 +38,12 @@ export class MenuBar extends React.Component<Properties, State> {
     super(props);
     this.state = {
       breakpoint: MenuBar.getBreakpoint(),
-      selected: 'Account'
+      selected: 'Account',
+      hovered: ''
     };
     this.onScreenResize = this.onScreenResize.bind(this);
+    this.onIconMouseEnter = this.onIconMouseEnter.bind(this);
+    this.onIconMouseLeave = this.onIconMouseLeave.bind(this);
     this.onIconClick = this.onIconClick.bind(this);
   }
 
@@ -66,7 +70,7 @@ export class MenuBar extends React.Component<Properties, State> {
       
     })();
     const getIconColor = (name: string) => {
-      if(this.state.selected === name) {
+      if(this.state.selected === name || this.state.hovered === name) {
         return 'purple';
       }
       return 'grey';
@@ -88,7 +92,10 @@ export class MenuBar extends React.Component<Properties, State> {
         <VBoxLayout id='item-vbox'  height='40px'>
           <Item iconSrc={`resources/account/account` +
               `-${getIconColor('Account')}.svg`} name='Account'
+            isSelected={this.state.selected === 'Account'}
             breakpoint={this.state.breakpoint}
+            onMouseEnter={() => this.onIconMouseEnter('Account')}
+            onMouseLeave={this.onIconMouseLeave}
             onClick={() => this.onIconClick('Account',
               this.props.onAccountClick)}/>
           <div className={getIconUnderlineClassName('Account')}/>
@@ -97,7 +104,10 @@ export class MenuBar extends React.Component<Properties, State> {
         <VBoxLayout height='40px'>
           <Item iconSrc={`resources/account/risk-controls` +
             `-${getIconColor('Risk Controls')}.svg`} name='Risk Controls'
+            isSelected={this.state.selected === 'Risk Controls'}
             breakpoint={this.state.breakpoint}
+            onMouseEnter={() => this.onIconMouseEnter('Risk Controls')}
+            onMouseLeave={this.onIconMouseLeave}
             onClick={() => this.onIconClick('Risk Controls',
               this.props.onRiskControlsClick)}/>
           <div className={getIconUnderlineClassName('Risk Controls')}/>
@@ -106,7 +116,10 @@ export class MenuBar extends React.Component<Properties, State> {
         <VBoxLayout height='40px'>
           <Item iconSrc={`resources/account/entitlements` +
             `-${getIconColor('Entitlements')}.svg`} name='Entitlements'
+            isSelected={this.state.selected === 'Entitlements'}
             breakpoint={this.state.breakpoint}
+            onMouseEnter={() => this.onIconMouseEnter('Entitlements')}
+            onMouseLeave={this.onIconMouseLeave}
             onClick={() => this.onIconClick('Entitlements',
               this.props.onEntitlementsClick)}/>
           <div className={getIconUnderlineClassName('Entitlements')}/>
@@ -115,7 +128,10 @@ export class MenuBar extends React.Component<Properties, State> {
         <VBoxLayout height='40px'>
           <Item iconSrc={`resources/account/compliance` +
             `-${getIconColor('Compliance')}.svg`} name='Compliance'
+            isSelected={this.state.selected === 'Compliance'}
             breakpoint={this.state.breakpoint}
+            onMouseEnter={() => this.onIconMouseEnter('Compliance')}
+            onMouseLeave={this.onIconMouseLeave}
             onClick={() => this.onIconClick('Compliance',
               this.props.onComplianceClick)}/>
           <div className={getIconUnderlineClassName('Compliance')}/>
@@ -125,6 +141,9 @@ export class MenuBar extends React.Component<Properties, State> {
           <Item iconSrc={`resources/account/profit-loss` +
             `-${getIconColor('Profit/Loss')}.svg`}
             name='Profit/Loss' breakpoint={this.state.breakpoint}
+            isSelected={this.state.selected === 'Profit/Loss'}
+            onMouseEnter={() => this.onIconMouseEnter('Profit/Loss')}
+            onMouseLeave={this.onIconMouseLeave}
             onClick={() => this.onIconClick('Profit/Loss',
               this.props.onProfitAndLossClick)}/>
           <div className={getIconUnderlineClassName('Profit/Loss')}/>
@@ -150,6 +169,14 @@ export class MenuBar extends React.Component<Properties, State> {
     if(newBreakpoint !== this.state.breakpoint) {
       this.setState({breakpoint: newBreakpoint});
     }
+  }
+
+  private onIconMouseEnter(name: string) {
+    this.setState({hovered: name});
+  }
+
+  private onIconMouseLeave() {
+    this.setState({hovered: ''});
   }
 
   private onIconClick(name: string, onClick: () => void): void {
@@ -195,23 +222,38 @@ export class MenuBar extends React.Component<Properties, State> {
 
 interface ItemProperties {
   iconSrc: string;
+  isSelected: boolean;
   breakpoint: Breakpoint;
   name: string;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
   onClick?: () => void;
 }
 
 class Item extends React.Component<ItemProperties> {
   public render(): JSX.Element {
+    const itemClassName = (() => {
+      if(this.props.isSelected) {
+        return css([Item.STYLE.item, Item.STYLE.selectedItem]);
+      }
+      return css([Item.STYLE.item, Item.STYLE.unSelectedItem]);
+    })();
     if(this.props.breakpoint === Breakpoint.SMALL) {
       return (
-      <VBoxLayout height='38px' onClick={this.props.onClick}>
+      <VBoxLayout className={itemClassName} height='38px'
+          onMouseEnter={this.props.onMouseEnter}
+          onMouseLeave={this.props.onMouseLeave} onClick={this.props.onClick}>
         <Padding size='8px'/>
         <img src={this.props.iconSrc} width='24px' height='24px'/>
         <Padding size='6px'/>
       </VBoxLayout>);
     }
+    console.log('isSelected: ', this.props.isSelected)
     return (
-      <VBoxLayout className={css(Item.STYLE.item)} onClick={this.props.onClick}>
+      <VBoxLayout className={itemClassName}
+          onMouseEnter={this.props.onMouseEnter}
+          onMouseLeave={this.props.onMouseLeave}
+          onClick={this.props.onClick}>
         <Padding size='12px'/>
         <div className={css(Item.STYLE.container)}>
           <div className={css(Item.STYLE.wrapper)}>
@@ -226,10 +268,27 @@ class Item extends React.Component<ItemProperties> {
       </VBoxLayout>);
   }
 
+  private static defaultProps = {
+    isSelected: false,
+    onMouseEnter: () => {},
+    onMouseLeave: () => {},
+    onClick: () => {}
+  };
+
   private static STYLE = StyleSheet.create({
     item: {
       height: '38px',
-      cursor: 'pointer'
+      cursor: 'pointer',
+      '-webkit-tap-highlight-color': 'transparent',
+      ':hover': {
+        color: '#4B23A0',
+      }
+    },
+    selectedItem: {
+      color: '#4B23A0',
+    },
+    unSelectedItem: {
+      color: '#7D7E90'
     },
     container: {
       height: '16px',
@@ -246,6 +305,7 @@ class Item extends React.Component<ItemProperties> {
       width: '8px'
     },
     label: {
+      color: 'inherit',
       font: '200 14px Roboto',
       whiteSpace: 'nowrap'
     }
