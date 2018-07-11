@@ -131,6 +131,7 @@ export class AccountPage extends React.Component<Properties, State> {
             <RolePanel roles={this.props.model.roles}/>
           </HBoxLayout>
           <Padding size='18px'/>
+          <div className={accountHeaderPaddingClassName}/>
         </HBoxLayout>
         <HBoxLayout height='30px' width='100%'
             className={css(AccountPage.STYLE.underlinedBox)}>
