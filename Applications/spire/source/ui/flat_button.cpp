@@ -174,7 +174,7 @@ QString flat_button::get_stylesheet_properties(const style& s) {
       font-size: %6px;
       font-weight: %7;
       qproperty-alignment: AlignCenter;)")
-        .arg(s.m_background_color.name()).arg(scale_height(1))
+        .arg(s.m_background_color.name(QColor::HexArgb)).arg(scale_height(1))
         .arg(s.m_border_color.name(QColor::HexArgb)).arg(scale_width(1))
         .arg(s.m_text_color.name(QColor::HexArgb)).arg(s.m_text_size)
         .arg(s.m_font_weight * 10);
