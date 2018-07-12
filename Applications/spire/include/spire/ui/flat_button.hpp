@@ -13,9 +13,7 @@ namespace spire {
       struct style {
         QColor m_background_color;
         QColor m_border_color;
-        QFont::Weight m_font_weight;
         QColor m_text_color;
-        int m_text_size;
       };
 
       //! Signals that the button was clicked.

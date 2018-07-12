@@ -179,11 +179,12 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   font_layout->addStretch(10);
   auto edit_font_button = new flat_button(tr("Edit Font"), this);
   edit_font_button->connect_clicked_signal([=] { set_font(); });
+  QFont generic_button_font;
+  generic_button_font.setFamily("Roboto");
+  generic_button_font.setPixelSize(scale_height(12));
   auto  generic_button_default_style = edit_font_button->get_style();
   generic_button_default_style.m_background_color = QColor("#EBEBEB");
-  generic_button_default_style.m_font_weight = static_cast<QFont::Weight>(40);
   generic_button_default_style.m_text_color = Qt::black;
-  generic_button_default_style.m_text_size = scale_height(12);
   auto generic_button_hover_style = edit_font_button->get_hover_style();
   generic_button_hover_style.m_background_color = QColor("#4B23A0");
   generic_button_hover_style.m_text_color = Qt::white;
@@ -210,6 +211,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   auto save_as_default_button = new flat_button(tr("Save As Default"), this);
   save_as_default_button->connect_clicked_signal(
     [=] { m_save_default_signal(get_properties()); });
+  save_as_default_button->setFont(generic_button_font);
   save_as_default_button->set_style(generic_button_default_style);
   save_as_default_button->set_hover_style(generic_button_hover_style);
   save_as_default_button->set_focus_style(generic_button_focused_style);
