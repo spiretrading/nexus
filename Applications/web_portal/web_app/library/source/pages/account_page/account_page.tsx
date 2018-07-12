@@ -1,4 +1,5 @@
 import {css, StyleSheet} from 'aphrodite';
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import {Center, HBoxLayout, Padding, VBoxLayout} from '../..';
 import {AccountModel} from '.';
@@ -21,14 +22,14 @@ enum Breakpoint {
   MEDIUM,
   LARGE
 }
-
-interface MenuItemProperties {
-  isSelected: boolean;
-  src: string;
-  label: string;
-  breakpoint: Breakpoint;
+interface UsernameProps {
+  name: string;
+  height: string;
 }
-
+interface HeaderProps {
+  name: string;
+  roles: Nexus.AccountRoles;
+}
 /** Implements the container used to display account information. */
 export class AccountPage extends React.Component<Properties, State> {
   public constructor(props: Properties) {
@@ -58,95 +59,25 @@ export class AccountPage extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const accountHeaderClassName = ((): string => {
-      if(this.state.breakpoint === Breakpoint.SMALL) {
-        return css([AccountPage.ACCOUNT_HEADER_STYLE.base,
-          AccountPage.ACCOUNT_HEADER_STYLE.small]);
+    const Header = (): JSX.Element => {
+      switch(this.state.breakpoint) {
+        case Breakpoint.LARGE:
+          return <LargeHeader name={this.props.model.account.name}
+            roles={this.props.model.roles}/>;
+        case Breakpoint.MEDIUM:
+          return <MediumHeader name={this.props.model.account.name}
+            roles={this.props.model.roles}/>;
+        case Breakpoint.SMALL:
+          return <SmallHeader name={this.props.model.account.name}
+            roles={this.props.model.roles}/>;
+        default:
+          return <MediumHeader name={this.props.model.account.name}
+            roles={this.props.model.roles}/>;
       }
-      return css(AccountPage.ACCOUNT_HEADER_STYLE.base);
-    })();
-    
-    if(this.state.breakpoint === Breakpoint.LARGE) {
-      return (
-        <VBoxLayout width='100%' height='100%'>
-          <Center width='100%' height='40px'
-              className={css(AccountPage.STYLE.underlinedBox)}>
-            <HBoxLayout width='1036px'
-                className={accountHeaderClassName}>
-              <Padding size='18px'/>
-              <MenuBar/>
-              <Padding/>
-              <div className={
-                  css(AccountPage.ACCOUNT_HEADER_STYLE.
-                    largeUsernameAndRoleContainer)}>
-                <div className={
-                    css(AccountPage.ACCOUNT_HEADER_STYLE.
-                      largeUsernameAndRoleWrapper)}>
-                  <Center height='40px' className={
-                      css(AccountPage.STYLE.username)}>
-                    {this.props.model.account.name}
-                  </Center>
-                  <Padding size='10px'/>
-                  <RolePanel roles={this.props.model.roles}/>
-                </div>
-              </div>
-              <Padding size='18px'/>
-            </HBoxLayout>
-          </Center>
-        </VBoxLayout>);
-    }
-    const accountContentsClassName = (() => {
-      if(this.state.breakpoint === Breakpoint.SMALL) {
-        return css(AccountPage.ACCOUNT_HEADER_STYLE.smallContainer);
-      } else {
-        return css(AccountPage.ACCOUNT_HEADER_STYLE.mediumContainer);
-      }
-    })();
-    const accountContentsPaddingClassName = (() => {
-      if(this.state.breakpoint === Breakpoint.SMALL) {
-        return css(AccountPage.ACCOUNT_HEADER_STYLE.smallContainerPadding);
-      } else {
-        return css(AccountPage.ACCOUNT_HEADER_STYLE.mediumContainerPadding);
-      }
-    })();
-    const accountHeaderPaddingClassName = (() => {
-      if(this.state.breakpoint === Breakpoint.SMALL) {
-        return css(AccountPage.ACCOUNT_HEADER_STYLE.smallPadding);
-      } else {
-        return css(AccountPage.ACCOUNT_HEADER_STYLE.mediumPadding);
-      }
-    })();
+    };
     return (
-      <VBoxLayout width='100%' height='100%'>
-        <HBoxLayout width='100%' height='40px'
-            className={css(AccountPage.STYLE.underlinedBox)}>
-          <div className={accountHeaderPaddingClassName}/>
-          <Padding size='18px'/>
-          <HBoxLayout height='40px' className={accountContentsClassName}>
-            <MenuBar/>
-            <div className={accountContentsPaddingClassName}/>
-            <RolePanel roles={this.props.model.roles}/>
-          </HBoxLayout>
-          <Padding size='18px'/>
-          <div className={accountHeaderPaddingClassName}/>
-        </HBoxLayout>
-        <HBoxLayout width='100%' height='30px'
-            className={css(AccountPage.STYLE.underlinedBox)}>
-          <div className={accountHeaderPaddingClassName}/>
-          <Padding size='18px'/>
-          <HBoxLayout height='30px' className={accountContentsClassName}>
-            <Padding/>
-            <VBoxLayout height='30px'>
-              <Padding/>
-              <span className={css(AccountPage.STYLE.username)}>
-                {this.props.model.account.name}
-              </span>
-              <Padding/>
-            </VBoxLayout>
-          </HBoxLayout>
-          <Padding size='18px'/>
-          <div className={accountHeaderPaddingClassName}/>
-        </HBoxLayout>
+      <VBoxLayout height='100%' width='100%'>
+        <Header/>
       </VBoxLayout>);
   }
 
@@ -169,51 +100,166 @@ export class AccountPage extends React.Component<Properties, State> {
       this.setState({breakpoint: newBreakpoint});
     }
   }
-  private static ACCOUNT_HEADER_STYLE = StyleSheet.create({
+}
+
+class HeaderUnderline extends React.Component {
+  public render() {
+    return <div className={css(HeaderUnderline.STYLE.base)}/>;
+  }
+
+  private static STYLE = StyleSheet.create({
     base: {
-      height: '40px'
+      width: '100%',
+      height: '1px',
+      backgroundColor: '#E6E6E6'
+    }
+  });
+}
+
+class LargeHeader extends React.Component<HeaderProps> {
+  public render(): JSX.Element {
+    return (
+      <VBoxLayout width='100%'>
+        <HBoxLayout width='100%' height='40px'>
+          <Padding/>
+          <HBoxLayout width='1036px' height='40px'>
+            <Padding size='18px'/>
+            <MenuBar/>
+            <Padding/>
+            <div className={
+                css(LargeHeader.STYLE.usernameAndRoleContainer)}>
+              <div className={
+                  css(LargeHeader.STYLE.usernameAndRoleWrapper)}>
+                <Username name={this.props.name} height='40px'/>
+                <Padding size='10px'/>
+                <RolePanel roles={this.props.roles}/>
+              </div>
+            </div>
+            <Padding size='18px'/>
+          </HBoxLayout>
+          <Padding/>
+        </HBoxLayout>
+        <HeaderUnderline/>
+      </VBoxLayout>);
+  }
+
+  private static STYLE = StyleSheet.create({
+    usernameAndRoleWrapper: {
+      height: '40px',
+      width: 'auto',
+      display: 'flex'
     },
-    small: {
-      width: '100%'
-    },
-    smallPadding: {
-      width: 'calc(20% - 18px)'
-    },
-    mediumPadding: {
+    usernameAndRoleContainer: {
+      height: '40px',
+      display: 'flex',
+      flexWrap: 'wrap'
+    }
+  });
+}
+
+class MediumHeader extends React.Component<HeaderProps> {
+  public render(): JSX.Element {
+    return (
+      <VBoxLayout width='100%'>
+        <HBoxLayout width='100%' height='40px'>
+          <div className={css(MediumHeader.STYLE.headerPadding)}/>
+          <Padding size='18px'/>
+          <HBoxLayout height='40px' width='750px'>
+            <MenuBar/>
+            <div className={css(MediumHeader.STYLE.innerPadding)}/>
+            <RolePanel roles={this.props.roles}/>
+          </HBoxLayout>
+          <Padding size='18px'/>
+          <div className={css(MediumHeader.STYLE.headerPadding)}/>
+        </HBoxLayout>
+        <HeaderUnderline/>
+        <HBoxLayout width='100%' height='30px'>
+          <div className={css(MediumHeader.STYLE.headerPadding)}/>
+          <Padding size='18px'/>
+          <HBoxLayout height='30px' width='750px'>
+            <Padding/>
+            <Username name={this.props.name} height='30px'/>
+          </HBoxLayout>
+          <Padding size='18px'/>
+          <div className={css(MediumHeader.STYLE.headerPadding)}/>
+        </HBoxLayout>
+        <HeaderUnderline/>
+      </VBoxLayout>);
+  }
+
+  private static STYLE = StyleSheet.create({
+    headerPadding: {
       width: 'calc(50% - 393px)',
       height: '100%'
     },
-    smallContainer: {
+    innerPadding: {
+      width: 'calc(100% - 658px)',
+      height: '100%'
+    }
+  });
+}
+
+class SmallHeader extends React.Component<HeaderProps> {
+  public render(): JSX.Element {
+    return (
+      <VBoxLayout width='100%'>
+        <HBoxLayout width='100%' height='40px'>
+          <div className={css(SmallHeader.STYLE.headerPadding)}/>
+          <Padding size='18px'/>
+          <HBoxLayout height='40px' className={
+              css(SmallHeader.STYLE.accountHeader)}>
+            <MenuBar/>
+            <div className={css(SmallHeader.STYLE.innerPadding)}/>
+            <RolePanel roles={this.props.roles}/>
+          </HBoxLayout>
+          <Padding size='18px'/>
+          <div className={css(SmallHeader.STYLE.headerPadding)}/>
+        </HBoxLayout>
+        <HeaderUnderline/>
+        <HBoxLayout width='100%' height='30px'>
+          <div className={css(SmallHeader.STYLE.headerPadding)}/>
+          <Padding size='18px'/>
+          <HBoxLayout height='30px' className={
+              css(SmallHeader.STYLE.accountHeader)}>
+            <Padding/>
+            <Username name={this.props.name} height='30px'/>
+          </HBoxLayout>
+          <Padding size='18px'/>
+          <div className={css(SmallHeader.STYLE.headerPadding)}/>
+        </HBoxLayout>
+        <HeaderUnderline/>
+      </VBoxLayout>);
+  }
+
+  private static STYLE = StyleSheet.create({
+    accountHeader: {
       width: '60%',
       minWidth: '284px',
       maxWidth: '424px'
     },
-    mediumContainer: {
-      width: '750px'
+    headerPadding: {
+      width: 'calc(20% - 18px)'
     },
-    smallContainerPadding: {
+    innerPadding: {
       width: 'calc(45% - 68px)',
       height: '100%'
-    },
-    mediumContainerPadding: {
-      width: 'calc(100% - 658px)',
-      height: '100%'
-    },
-    largeUsernameAndRoleContainer: {
-      height: '40px',
-      display: 'flex',
-      flexWrap: 'wrap'
-    },
-    largeUsernameAndRoleWrapper: {
-      height: '40px',
-      width: 'auto',
-      display: 'flex'
     }
   });
+}
+
+class Username extends React.Component<UsernameProps>  {
+  public render(): JSX.Element {
+    return (
+      <VBoxLayout height={this.props.height}>
+        <Padding/>
+        <span className={css(Username.STYLE.username)}>
+          {this.props.name}
+        </span>
+        <Padding/>
+      </VBoxLayout>);
+  }
+
   private static STYLE = StyleSheet.create({
-    underlinedBox: {
-      borderBottom: '1px solid #E6E6E6'
-    },
     username: {
       font: '500 14px Roboto',
       color: '#4B23A0',
