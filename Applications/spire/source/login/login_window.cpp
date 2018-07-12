@@ -174,7 +174,6 @@ login_window::login_window(const std::string& version, QWidget* parent)
   m_sign_in_button->set_hover_style(button_hover_style);
   m_sign_in_button->set_focus_style(button_focused_style);
   m_sign_in_button->set_disabled_style(button_disabled_style);
-  m_sign_in_button->set_hover_style(button_hover_style);
   m_sign_in_button->setDisabled(true);
   button_layout->addWidget(m_sign_in_button);
   button_layout->setStretchFactor(m_sign_in_button, 120);
