@@ -181,6 +181,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   edit_font_button->connect_clicked_signal([=] { set_font(); });
   auto  generic_button_default_style = edit_font_button->get_style();
   generic_button_default_style.m_background_color = QColor("#EBEBEB");
+  generic_button_default_style.m_font_weight = static_cast<QFont::Weight>(40);
   generic_button_default_style.m_text_color = Qt::black;
   generic_button_default_style.m_text_size = scale_height(12);
   auto generic_button_hover_style = edit_font_button->get_hover_style();
@@ -390,14 +391,13 @@ void time_and_sales_properties_dialog::set_text_color() {
 
 void time_and_sales_properties_dialog::set_color_button_stylesheet(
     flat_button* button, const QColor& color) {
-  //button->set_stylesheet(QString(R"(
-  //  background-color: %1;
-  //  border: %2 solid #C8C8C8 %3 solid #C8C8C8;)")
-  //  .arg(color.name()).arg(scale_height(1)).arg(scale_width(1)),
-  //  QString(R"(border: %4 solid #4B23A0 %5 solid #4B23A0;)")
-  //    .arg(scale_height(1)).arg(scale_width(1)),
-  //  QString(R"(border: %4 solid #4B23A0 %5 solid #4B23A0;)")
-  //    .arg(scale_height(1)).arg(scale_width(1)), "");
+  auto s = button->get_style();
+  s.m_background_color = color;
+  s.m_border_color = QColor("#C8C8C8");
+  button->set_style(s);
+  s.m_border_color = QColor("#4B23A0");
+  button->set_hover_style(s);
+  button->set_focus_style(s);
 }
 
 void time_and_sales_properties_dialog::set_color_settings_stylesheet(
