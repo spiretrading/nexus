@@ -37,6 +37,10 @@ flat_button::flat_button(const QString& label, QWidget* parent)
   m_disabled_style.m_font_weight = QFont::Normal;
   m_disabled_style.m_text_color = Qt::white;
   m_disabled_style.m_text_size = scale_height(12);
+  set_style(m_default_style);
+  set_hover_style(m_hover_style);
+  set_focus_style(m_focus_style);
+  set_disabled_style(m_disabled_style);
   m_label = new QLabel(label, this);
   m_label->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
   auto layout = new QHBoxLayout(this);
