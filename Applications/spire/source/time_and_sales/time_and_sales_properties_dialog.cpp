@@ -182,6 +182,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   QFont generic_button_font;
   generic_button_font.setFamily("Roboto");
   generic_button_font.setPixelSize(scale_height(12));
+  edit_font_button->setFont(generic_button_font);
   auto  generic_button_default_style = edit_font_button->get_style();
   generic_button_default_style.m_background_color = QColor("#EBEBEB");
   generic_button_default_style.m_text_color = Qt::black;
@@ -219,6 +220,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   buttons_layout_1->setStretchFactor(save_as_default_button, 26);
   buttons_layout_1->addStretch(8);
   auto load_default_button = new flat_button(tr("Load Default"), this);
+  load_default_button->setFont(generic_button_font);
   load_default_button->set_style(generic_button_default_style);
   load_default_button->set_hover_style(generic_button_hover_style);
   load_default_button->set_focus_style(generic_button_focused_style);
@@ -234,6 +236,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   auto reset_default_button = new flat_button(tr("Reset Default"), this);
   reset_default_button->connect_clicked_signal(
     [=] { m_save_default_signal(time_and_sales_properties()); });
+  reset_default_button->setFont(generic_button_font);
   reset_default_button->set_style(generic_button_default_style);
   reset_default_button->set_hover_style(generic_button_hover_style);
   reset_default_button->set_focus_style(generic_button_focused_style);
@@ -248,6 +251,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   auto apply_to_all_button = new flat_button(tr("Apply To All"), this);
   apply_to_all_button->connect_clicked_signal(
     [=] { m_apply_all_signal(get_properties()); });
+  apply_to_all_button->setFont(generic_button_font);
   apply_to_all_button->set_style(generic_button_default_style);
   apply_to_all_button->set_hover_style(generic_button_hover_style);
   apply_to_all_button->set_focus_style(generic_button_focused_style);
@@ -257,6 +261,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   auto cancel_button = new flat_button(tr("Cancel"), this);
   cancel_button->connect_clicked_signal(
     [=] { reject(); });
+  cancel_button->setFont(generic_button_font);
   cancel_button->set_style(generic_button_default_style);
   cancel_button->set_hover_style(generic_button_hover_style);
   cancel_button->set_focus_style(generic_button_focused_style);
@@ -272,6 +277,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   setTabOrder(apply_to_all_button, apply_button);
   apply_button->connect_clicked_signal(
     [=] { m_apply_signal(get_properties()); });
+  apply_button->setFont(generic_button_font);
   apply_button->set_style(generic_button_default_style);
   apply_button->set_hover_style(generic_button_hover_style);
   apply_button->set_focus_style(generic_button_focused_style);
@@ -281,6 +287,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   auto ok_button = new flat_button(tr("OK"), this);
   ok_button->connect_clicked_signal(
     [=] { accept(); });
+  ok_button->setFont(generic_button_font);
   ok_button->set_style(generic_button_default_style);
   ok_button->set_hover_style(generic_button_hover_style);
   ok_button->set_focus_style(generic_button_focused_style);
