@@ -150,16 +150,16 @@ login_window::login_window(const std::string& version, QWidget* parent)
   m_sign_in_button->installEventFilter(this);
   m_sign_in_button->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
-  flat_button::style button_default_style;
+  auto button_default_style = m_sign_in_button->get_style();
   button_default_style.m_background_color = QColor("#684BC7");
   button_default_style.m_font_weight = QFont::Bold;
   button_default_style.m_text_color = QColor("#E2E0FF");
   button_default_style.m_text_size = scale_height(14);
-  flat_button::style button_hover_style;
+  auto button_hover_style = m_sign_in_button->get_hover_style();
   button_hover_style.m_background_color = QColor("#8D78EC");
-  flat_button::style button_focused_style;
+  auto button_focused_style = m_sign_in_button->get_focus_style();
   button_focused_style.m_border_color = QColor("#8D78EC");
-  flat_button::style button_disabled_style;
+  auto button_disabled_style = m_sign_in_button->get_disabled_style();
   button_disabled_style.m_background_color = QColor("#4B23A0");
   button_disabled_style.m_border_color = QColor("#684BC7");
   button_disabled_style.m_font_weight = QFont::Bold;

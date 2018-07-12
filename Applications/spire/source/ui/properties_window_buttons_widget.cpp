@@ -20,14 +20,14 @@ properties_window_buttons_widget::properties_window_buttons_widget(
   left_layout->setContentsMargins({});
   left_layout->setHorizontalSpacing(scale_width(8));
   left_layout->setVerticalSpacing(scale_height(8));
-  flat_button::style generic_button_style;
+  auto save_as_default_button = new flat_button(tr("Save As Default"));
+  auto generic_button_style = save_as_default_button->get_style();
   generic_button_style.m_background_color = QColor("#EBEBEB");
-  flat_button::style generic_button_hover_style;
+  auto generic_button_hover_style = save_as_default_button->get_hover_style();
   generic_button_hover_style.m_background_color = QColor("4B23A0");
   generic_button_hover_style.m_text_color = Qt::white;
-  flat_button::style generic_button_focus_style;
+  auto generic_button_focus_style = save_as_default_button->get_focus_style();
   generic_button_focus_style.m_border_color = QColor("#4B23A0");
-  auto save_as_default_button = new flat_button(tr("Save As Default"));
   save_as_default_button->set_style(generic_button_style);
   save_as_default_button->set_hover_style(generic_button_hover_style);
   save_as_default_button->set_focus_style(generic_button_focus_style);

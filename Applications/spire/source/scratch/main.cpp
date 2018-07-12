@@ -10,9 +10,11 @@ int main(int argc, char** argv) {
   application->setApplicationName(QObject::tr("Scratch"));
   initialize_resources();
   auto button = new flat_button("Test Button");
-  flat_button::style s;
-  s.m_background_color = QColor("#0000FF");
-  s.m_text_color = Qt::black;
+  auto s = button->get_style();
+  s.m_background_color = QColor("#FFFFFF");
+  s.m_text_color = Qt::red;
+  s.m_text_size = 40;
+  s.m_font_weight = QFont::Black;
   button->set_style(s);
   button->resize(400, 250);
   button->show();

@@ -156,10 +156,7 @@ void flat_button::enable_button() {
   set_hover_stylesheet();
 }
 
-#include <QDebug>
-
 QString flat_button::get_stylesheet_properties(const style& s) {
-  qDebug() << s.m_text_size;
   return QString(R"(
       background-color: %1;
       border: %2px solid %3 %4px solid %3;
@@ -169,9 +166,9 @@ QString flat_button::get_stylesheet_properties(const style& s) {
       font-weight: %7;
       qproperty-alignment: AlignCenter;)")
         .arg(s.m_background_color.name()).arg(scale_height(1))
-        .arg(s.m_border_color.name()).arg(scale_width(1))
-        .arg(s.m_text_color.name()).arg(s.m_text_size)
-        .arg(s.m_font_weight);
+        .arg(s.m_border_color.name(QColor::HexArgb)).arg(scale_width(1))
+        .arg(s.m_text_color.name(QColor::HexArgb)).arg(s.m_text_size)
+        .arg(s.m_font_weight * 10);
 }
 
 void flat_button::set_disabled_stylesheet() {
