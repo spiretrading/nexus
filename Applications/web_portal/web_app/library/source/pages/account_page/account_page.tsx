@@ -14,7 +14,7 @@ interface Properties {
 
 interface State {
   isLoading: boolean;
-  breakpoint?: Breakpoint;
+  breakpoint: Breakpoint;
 }
 
 enum Breakpoint {
@@ -22,10 +22,12 @@ enum Breakpoint {
   MEDIUM,
   LARGE
 }
+
 interface UsernameProps {
   name: string;
   height: string;
 }
+
 interface HeaderProps {
   name: string;
   roles: Nexus.AccountRoles;
@@ -59,7 +61,7 @@ export class AccountPage extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const Header = (): JSX.Element => {
+    const header = ((): JSX.Element => {
       switch(this.state.breakpoint) {
         case Breakpoint.LARGE:
           return <LargeHeader name={this.props.model.account.name}
@@ -74,10 +76,10 @@ export class AccountPage extends React.Component<Properties, State> {
           return <MediumHeader name={this.props.model.account.name}
             roles={this.props.model.roles}/>;
       }
-    };
+    })();
     return (
       <VBoxLayout height='100%' width='100%'>
-        <Header/>
+        {header}
       </VBoxLayout>);
   }
 

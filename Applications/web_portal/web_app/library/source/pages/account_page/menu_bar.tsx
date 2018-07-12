@@ -56,12 +56,12 @@ export class MenuBar extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const MenuBarPadding = (): JSX.Element => {
+    const menuBarPadding = ((): JSX.Element => {
       if(this.state.breakpoint === Breakpoint.SMALL) {
         return <div className={css(MenuBar.STYLE.smallPadding)}/>;
       }
       return <Padding size='30px'/>;
-    };
+    })();
     const menuIconContainerClassName = (() => {
       if(this.state.breakpoint === Breakpoint.SMALL) {
         return css([MenuBar.STYLE.base, MenuBar.STYLE.small]);
@@ -99,7 +99,7 @@ export class MenuBar extends React.Component<Properties, State> {
               this.props.onAccountClick)}/>
           <div className={getIconUnderlineClassName('Account')}/>
         </VBoxLayout>
-        <MenuBarPadding/>
+        {menuBarPadding}
         <VBoxLayout height='40px'>
           <Item iconSrc={`resources/account/risk-controls` +
             `-${getIconColor('Risk Controls')}.svg`} name='Risk Controls'
@@ -111,7 +111,7 @@ export class MenuBar extends React.Component<Properties, State> {
               this.props.onRiskControlsClick)}/>
           <div className={getIconUnderlineClassName('Risk Controls')}/>
         </VBoxLayout>
-        <MenuBarPadding/>
+        {menuBarPadding}
         <VBoxLayout height='40px'>
           <Item iconSrc={`resources/account/entitlements` +
             `-${getIconColor('Entitlements')}.svg`} name='Entitlements'
@@ -123,7 +123,7 @@ export class MenuBar extends React.Component<Properties, State> {
               this.props.onEntitlementsClick)}/>
           <div className={getIconUnderlineClassName('Entitlements')}/>
         </VBoxLayout>
-        <MenuBarPadding/>
+        {menuBarPadding}
         <VBoxLayout height='40px'>
           <Item iconSrc={`resources/account/compliance` +
             `-${getIconColor('Compliance')}.svg`} name='Compliance'
@@ -135,7 +135,7 @@ export class MenuBar extends React.Component<Properties, State> {
               this.props.onComplianceClick)}/>
           <div className={getIconUnderlineClassName('Compliance')}/>
         </VBoxLayout>
-        <MenuBarPadding/>
+        {menuBarPadding}
         <VBoxLayout height='40px'>
           <Item iconSrc={`resources/account/profit-loss` +
             `-${getIconColor('Profit/Loss')}.svg`}
