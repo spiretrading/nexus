@@ -5,7 +5,7 @@ import * as ReactDOM from 'react-dom';
 import {AccountPage, LocalAccountModel} from 'web_portal';
 
 const model = new LocalAccountModel(
-  Beam.DirectoryEntry.makeAccount(124, 'riley'),
+  Beam.DirectoryEntry.makeAccount(124, 'username_can_be_very_long'),
   new Nexus.AccountRoles(
     Nexus.AccountRoles.Role.TRADER |
     Nexus.AccountRoles.Role.MANAGER |
