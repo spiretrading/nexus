@@ -32,6 +32,7 @@ interface HeaderProps {
   name: string;
   roles: Nexus.AccountRoles;
 }
+
 /** Implements the container used to display account information. */
 export class AccountPage extends React.Component<Properties, State> {
   public constructor(props: Properties) {

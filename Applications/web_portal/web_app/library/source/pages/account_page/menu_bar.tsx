@@ -22,10 +22,17 @@ interface Properties {
 
 interface State {
   breakpoint: Breakpoint;
-  selected: string;
-  hovered: string;
+  selected: MenuItem;
+  hovered: MenuItem;
 }
 
+enum MenuItem {
+  ACCOUNT,
+  RISK_CONTROLS,
+  ENTITLEMENTS,
+  COMPLIANCE,
+  PROFIT_LOSS
+}
 enum Breakpoint {
   SMALL,
   MEDIUM,
@@ -38,8 +45,8 @@ export class MenuBar extends React.Component<Properties, State> {
     super(props);
     this.state = {
       breakpoint: MenuBar.getBreakpoint(),
-      selected: 'Account',
-      hovered: ''
+      selected: MenuItem.ACCOUNT,
+      hovered: null
     };
     this.onScreenResize = this.onScreenResize.bind(this);
     this.onIconMouseEnter = this.onIconMouseEnter.bind(this);
@@ -68,14 +75,14 @@ export class MenuBar extends React.Component<Properties, State> {
       }
       return css(MenuBar.STYLE.base);  
     })();
-    const getIconColor = (name: string) => {
-      if(this.state.selected === name || this.state.hovered === name) {
+    const getIconColor = (item: MenuItem) => {
+      if(this.state.selected === item || this.state.hovered === item) {
         return 'purple';
       }
       return 'grey';
     };
-    const getIconUnderlineClassName = (name: string) => {
-      if(name === this.state.selected) {
+    const getIconUnderlineClassName = (item: MenuItem) => {
+      if(item === this.state.selected) {
         return css(MenuBar.STYLE.selectedBorder);
       }
       return css(MenuBar.STYLE.unselectedBorder);
@@ -90,62 +97,62 @@ export class MenuBar extends React.Component<Properties, State> {
           className={menuIconContainerClassName}>
         <VBoxLayout id='item-vbox'  height='40px'>
           <Item iconSrc={`resources/account/account` +
-              `-${getIconColor('Account')}.svg`} name='Account'
-            isSelected={this.state.selected === 'Account'}
+              `-${getIconColor(MenuItem.ACCOUNT)}.svg`} name='Account'
+            isSelected={this.state.selected === MenuItem.ACCOUNT}
             breakpoint={this.state.breakpoint}
-            onMouseEnter={() => this.onIconMouseEnter('Account')}
+            onMouseEnter={() => this.onIconMouseEnter(MenuItem.ACCOUNT)}
             onMouseLeave={this.onIconMouseLeave}
-            onClick={() => this.onIconClick('Account',
+            onClick={() => this.onIconClick(MenuItem.ACCOUNT,
               this.props.onAccountClick)}/>
-          <div className={getIconUnderlineClassName('Account')}/>
+          <div className={getIconUnderlineClassName(MenuItem.ACCOUNT)}/>
         </VBoxLayout>
         {menuBarPadding}
         <VBoxLayout height='40px'>
           <Item iconSrc={`resources/account/risk-controls` +
-            `-${getIconColor('Risk Controls')}.svg`} name='Risk Controls'
-            isSelected={this.state.selected === 'Risk Controls'}
+            `-${getIconColor(MenuItem.RISK_CONTROLS)}.svg`} name='Risk Controls'
+            isSelected={this.state.selected === MenuItem.RISK_CONTROLS}
             breakpoint={this.state.breakpoint}
-            onMouseEnter={() => this.onIconMouseEnter('Risk Controls')}
+            onMouseEnter={() => this.onIconMouseEnter(MenuItem.RISK_CONTROLS)}
             onMouseLeave={this.onIconMouseLeave}
-            onClick={() => this.onIconClick('Risk Controls',
+            onClick={() => this.onIconClick(MenuItem.RISK_CONTROLS,
               this.props.onRiskControlsClick)}/>
-          <div className={getIconUnderlineClassName('Risk Controls')}/>
+          <div className={getIconUnderlineClassName(MenuItem.RISK_CONTROLS)}/>
         </VBoxLayout>
         {menuBarPadding}
         <VBoxLayout height='40px'>
           <Item iconSrc={`resources/account/entitlements` +
-            `-${getIconColor('Entitlements')}.svg`} name='Entitlements'
-            isSelected={this.state.selected === 'Entitlements'}
+            `-${getIconColor(MenuItem.ENTITLEMENTS)}.svg`} name='Entitlements'
+            isSelected={this.state.selected === MenuItem.ENTITLEMENTS}
             breakpoint={this.state.breakpoint}
-            onMouseEnter={() => this.onIconMouseEnter('Entitlements')}
+            onMouseEnter={() => this.onIconMouseEnter(MenuItem.ENTITLEMENTS)}
             onMouseLeave={this.onIconMouseLeave}
-            onClick={() => this.onIconClick('Entitlements',
+            onClick={() => this.onIconClick(MenuItem.ENTITLEMENTS,
               this.props.onEntitlementsClick)}/>
-          <div className={getIconUnderlineClassName('Entitlements')}/>
+          <div className={getIconUnderlineClassName(MenuItem.ENTITLEMENTS)}/>
         </VBoxLayout>
         {menuBarPadding}
         <VBoxLayout height='40px'>
           <Item iconSrc={`resources/account/compliance` +
-            `-${getIconColor('Compliance')}.svg`} name='Compliance'
-            isSelected={this.state.selected === 'Compliance'}
+            `-${getIconColor(MenuItem.COMPLIANCE)}.svg`} name='Compliance'
+            isSelected={this.state.selected === MenuItem.COMPLIANCE}
             breakpoint={this.state.breakpoint}
-            onMouseEnter={() => this.onIconMouseEnter('Compliance')}
+            onMouseEnter={() => this.onIconMouseEnter(MenuItem.COMPLIANCE)}
             onMouseLeave={this.onIconMouseLeave}
-            onClick={() => this.onIconClick('Compliance',
+            onClick={() => this.onIconClick(MenuItem.COMPLIANCE,
               this.props.onComplianceClick)}/>
-          <div className={getIconUnderlineClassName('Compliance')}/>
+          <div className={getIconUnderlineClassName(MenuItem.COMPLIANCE)}/>
         </VBoxLayout>
         {menuBarPadding}
         <VBoxLayout height='40px'>
           <Item iconSrc={`resources/account/profit-loss` +
-            `-${getIconColor('Profit/Loss')}.svg`}
+            `-${getIconColor(MenuItem.PROFIT_LOSS)}.svg`}
             name='Profit/Loss' breakpoint={this.state.breakpoint}
-            isSelected={this.state.selected === 'Profit/Loss'}
-            onMouseEnter={() => this.onIconMouseEnter('Profit/Loss')}
+            isSelected={this.state.selected === MenuItem.PROFIT_LOSS}
+            onMouseEnter={() => this.onIconMouseEnter(MenuItem.PROFIT_LOSS)}
             onMouseLeave={this.onIconMouseLeave}
-            onClick={() => this.onIconClick('Profit/Loss',
+            onClick={() => this.onIconClick(MenuItem.PROFIT_LOSS,
               this.props.onProfitAndLossClick)}/>
-          <div className={getIconUnderlineClassName('Profit/Loss')}/>
+          <div className={getIconUnderlineClassName(MenuItem.PROFIT_LOSS)}/>
         </VBoxLayout>
       </HBoxLayout>);
   }
@@ -170,17 +177,17 @@ export class MenuBar extends React.Component<Properties, State> {
     }
   }
 
-  private onIconMouseEnter(name: string) {
-    this.setState({hovered: name});
+  private onIconMouseEnter(item: MenuItem) {
+    this.setState({hovered: item});
   }
 
   private onIconMouseLeave() {
-    this.setState({hovered: ''});
+    this.setState({hovered: null});
   }
 
-  private onIconClick(name: string, onClick: () => void): void {
+  private onIconClick(item: MenuItem, onClick: () => void): void {
     onClick();
-    this.setState({selected: name});
+    this.setState({selected: item});
   }
 
   private static defaultProps = {
