@@ -96,6 +96,7 @@ namespace spire {
       void set_disabled_stylesheet();
       void set_focus_stylesheet();
       void set_hover_stylesheet();
+      void on_style_updated();
   };
 }
 

@@ -187,6 +187,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   generic_button_hover_style.m_background_color = QColor("#4B23A0");
   generic_button_hover_style.m_text_color = Qt::white;
   auto generic_button_focused_style = edit_font_button->get_focus_style();
+  generic_button_focused_style.m_background_color = QColor("#EBEBEB");
   generic_button_focused_style.m_border_color = QColor("#4B23A0");
   edit_font_button->set_style(generic_button_default_style);
   edit_font_button->set_hover_style(generic_button_hover_style);

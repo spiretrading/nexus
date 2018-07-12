@@ -41,6 +41,7 @@ flat_button::flat_button(const QString& label, QWidget* parent)
   set_hover_style(m_hover_style);
   set_focus_style(m_focus_style);
   set_disabled_style(m_disabled_style);
+  set_hover_stylesheet();
   m_label = new QLabel(label, this);
   m_label->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
   auto layout = new QHBoxLayout(this);
@@ -60,6 +61,7 @@ const style& flat_button::get_style() const {
 void flat_button::set_style(const style& default_style) {
   m_default_stylesheet = QString(R"(
     QLabel { %1 })").arg(get_stylesheet_properties(default_style));
+  on_style_updated();
 }
 
 const style& flat_button::get_hover_style() const {
@@ -69,6 +71,7 @@ const style& flat_button::get_hover_style() const {
 void flat_button::set_hover_style(const style& hover_style) {
   m_hover_stylesheet = QString(R"(
     QLabel:hover { %1 })").arg(get_stylesheet_properties(hover_style));
+  on_style_updated();
 }
 
 const style& flat_button::get_focus_style() const {
@@ -78,6 +81,7 @@ const style& flat_button::get_focus_style() const {
 void flat_button::set_focus_style(const style& focus_style) {
   m_focus_stylesheet = QString(R"(
     QLabel { %1 })").arg(get_stylesheet_properties(focus_style));
+  on_style_updated();
 }
 
 const style& flat_button::get_disabled_style() const {
@@ -87,6 +91,7 @@ const style& flat_button::get_disabled_style() const {
 void flat_button::set_disabled_style(const style& disabled_style) {
   m_disabled_stylesheet = QString(R"(
     QLabel { %1 })").arg(get_stylesheet_properties(disabled_style));
+  on_style_updated();
 }
 
 connection flat_button::connect_clicked_signal(
@@ -186,4 +191,14 @@ void flat_button::set_focus_stylesheet() {
 
 void flat_button::set_hover_stylesheet() {
   setStyleSheet(m_default_stylesheet + m_hover_stylesheet);
+}
+
+void flat_button::on_style_updated() {
+  if(!hasFocus() && isEnabled()) {
+    set_hover_stylesheet();
+  } else if(hasFocus()) {
+    set_focus_stylesheet();
+  } else {
+    set_disabled_stylesheet();
+  }
 }
