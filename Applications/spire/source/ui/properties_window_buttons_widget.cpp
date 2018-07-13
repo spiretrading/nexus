@@ -50,7 +50,7 @@ properties_window_buttons_widget::properties_window_buttons_widget(
   reset_default_button->set_style(generic_button_style);
   reset_default_button->set_hover_style(generic_button_hover_style);
   reset_default_button->set_focus_style(generic_button_focus_style);
-  reset_default_button->connect_clicked_signal( m_reset_default_signal);
+  reset_default_button->connect_clicked_signal(m_reset_default_signal);
   left_layout->addWidget(reset_default_button, 1, 1);
   main_layout->addWidget(left_widget);
   main_layout->addStretch(1);
