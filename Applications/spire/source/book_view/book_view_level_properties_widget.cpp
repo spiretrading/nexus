@@ -141,20 +141,21 @@ book_view_level_properties_widget::book_view_level_properties_widget(
   band_properties_layout->addStretch(10);
   auto apply_gradient_button = new flat_button(tr("Apply Gradient"), this);
   apply_gradient_button->setFixedHeight(scale_height(26));
-  auto generic_button_default_style = QString(R"(
-    background-color: #EBEBEB;
-    color: black;
-    font-family: Roboto;
-    font-size: %1px;
-    qproperty-alignment: AlignCenter;)").arg(scale_height(12));
-  auto generic_button_hover_style = QString(R"(
-    background-color: #4B23A0;
-    color: white;)");
-  auto generic_button_focused_style = QString(R"(
-    border: %1px solid #4B23A0 %2px solid #4B23A0;)")
-    .arg(scale_height(1)).arg(scale_width(1));
-  apply_gradient_button->set_stylesheet(generic_button_default_style,
-    generic_button_hover_style, generic_button_focused_style, "");
+  QFont generic_button_font;
+  generic_button_font.setFamily("Roboto");
+  generic_button_font.setPixelSize(scale_height(12));
+  apply_gradient_button->setFont(generic_button_font);
+  auto generic_button_default_style = apply_gradient_button->get_style();
+  generic_button_default_style.m_background_color = QColor("#EBEBEB");
+  apply_gradient_button->set_style(generic_button_default_style);
+  auto generic_button_hover_style = apply_gradient_button->get_hover_style();
+  generic_button_hover_style.m_background_color = QColor("#4B23A0");
+  generic_button_hover_style.m_text_color = Qt::white;
+  apply_gradient_button->set_hover_style(generic_button_hover_style);
+  auto generic_button_focus_style = apply_gradient_button->get_focus_style();
+  generic_button_focus_style.m_background_color = QColor("#EBEBEB");
+  generic_button_focus_style.m_border_color = QColor("#4B23A0");
+  apply_gradient_button->set_focus_style(generic_button_focus_style);
   apply_gradient_button->connect_clicked_signal(
     [=] { on_gradient_apply_button_clicked(); });
   band_properties_layout->addWidget(apply_gradient_button);
@@ -166,8 +167,10 @@ book_view_level_properties_widget::book_view_level_properties_widget(
   font_button_layout->addStretch(18);
   auto change_font_button = new flat_button(tr("Change Font"), this);
   change_font_button->setFixedSize(scale(100, 26));
-  change_font_button->set_stylesheet(generic_button_default_style,
-    generic_button_hover_style, generic_button_focused_style, "");
+  change_font_button->setFont(generic_button_font);
+  change_font_button->set_style(generic_button_default_style);
+  change_font_button->set_hover_style(generic_button_hover_style);
+  change_font_button->set_focus_style(generic_button_focus_style);
   change_font_button->connect_clicked_signal(
     [=] { on_change_font_button_clicked(); });
   font_button_layout->addWidget(change_font_button);
@@ -226,14 +229,13 @@ void book_view_level_properties_widget::showEvent(QShowEvent* event) {
 
 void book_view_level_properties_widget::set_color_button_stylesheet(
     flat_button* button, const QColor& color) {
-  button->set_stylesheet(QString(R"(
-    background-color: %1;
-    border: %2 solid #C8C8C8 %3 solid #C8C8C8;)")
-    .arg(color.name()).arg(scale_height(1)).arg(scale_width(1)),
-    QString(R"(border: %4 solid #4B23A0 %5 solid #4B23A0;)")
-      .arg(scale_height(1)).arg(scale_width(1)),
-    QString(R"(border: %4 solid #4B23A0 %5 solid #4B23A0;)")
-      .arg(scale_height(1)).arg(scale_width(1)), "");
+  auto s = button->get_style();
+  s.m_background_color = color;
+  s.m_border_color = QColor("#C8C8C8");
+  button->set_style(s);
+  s.m_border_color = QColor("#4B23A0");
+  button->set_hover_style(s);
+  button->set_focus_style(s);
 }
 
 void book_view_level_properties_widget::populate_band_list(int num_items) {
@@ -266,9 +268,9 @@ void book_view_level_properties_widget::update_band_list_gradient() {
     int end_red;
     int end_green;
     int end_blue;
-    m_gradient_start_button->get_background_color().getRgb(&start_red,
+    m_gradient_start_button->get_style().m_background_color.getRgb(&start_red,
       &start_green, &start_blue);
-    m_gradient_end_button->get_background_color().getRgb(&end_red,
+    m_gradient_end_button->get_style().m_background_color.getRgb(&end_red,
       &end_green, &end_blue);
     auto red_delta = (end_red - start_red) / (band_count - 1);
     auto green_delta = (end_green - start_green) / (band_count -1);
@@ -284,7 +286,7 @@ void book_view_level_properties_widget::update_band_list_gradient() {
     }
   } else {
     m_band_list_widget->item(0)->setBackground(
-      m_gradient_start_button->get_background_color());
+      m_gradient_start_button->get_style().m_background_color);
   }
   update_band_list_stylesheet(m_band_list_widget->currentRow());
 }
@@ -308,7 +310,7 @@ void book_view_level_properties_widget::update_band_list_stylesheet(
 
 void book_view_level_properties_widget::on_band_color_button_clicked() {
   auto color = QColorDialog::getColor(
-    m_band_color_button->get_background_color());
+    m_band_color_button->get_style().m_background_color);
   if(color.isValid()) {
     set_color_button_stylesheet(m_band_color_button, color);
     m_band_list_widget->currentItem()->setBackground(color);
@@ -330,7 +332,7 @@ void book_view_level_properties_widget::on_gradient_apply_button_clicked() {
 
 void book_view_level_properties_widget::on_gradient_end_button_clicked() {
   auto color = QColorDialog::getColor(
-    m_gradient_end_button->get_background_color());
+    m_gradient_end_button->get_style().m_background_color);
   if(color.isValid()) {
     set_color_button_stylesheet(m_gradient_end_button, color);
   }
@@ -338,7 +340,7 @@ void book_view_level_properties_widget::on_gradient_end_button_clicked() {
 
 void book_view_level_properties_widget::on_gradient_start_button_clicked() {
   auto color = QColorDialog::getColor(
-    m_gradient_start_button->get_background_color());
+    m_gradient_start_button->get_style().m_background_color);
   if(color.isValid()) {
     set_color_button_stylesheet(m_gradient_start_button, color);
   }
