@@ -259,6 +259,8 @@ void book_view_level_properties_widget::update_band_list_font(
   }
 }
 
+#include <QDebug>
+
 void book_view_level_properties_widget::update_band_list_gradient() {
   auto band_count = m_band_list_widget->count();
   if(band_count > 1) {
@@ -272,12 +274,12 @@ void book_view_level_properties_widget::update_band_list_gradient() {
       &start_green, &start_blue);
     m_gradient_end_button->get_style().m_background_color.getRgb(&end_red,
       &end_green, &end_blue);
-    auto red_delta = (end_red - start_red) / (band_count - 1);
-    auto green_delta = (end_green - start_green) / (band_count -1);
-    auto blue_delta = (end_blue - start_blue) / (band_count - 1);
-    auto red = start_red;
-    auto green = start_green;
-    auto blue = start_blue;
+    auto red_delta = (double)(end_red - start_red) / (band_count - 1);
+    auto green_delta = (double)(end_green - start_green) / (band_count -1);
+    auto blue_delta = (double)(end_blue - start_blue) / (band_count - 1);
+    double red = start_red;
+    double green = start_green;
+    double blue = start_blue;
     for(auto i = 0; i < band_count; ++i) {
       m_band_list_widget->item(i)->setBackground(QColor(red, green, blue));
       red += red_delta;
