@@ -9,6 +9,7 @@
 #include "spire/time_and_sales/time_and_sales_model.hpp"
 #include "spire/ui/check_box.hpp"
 #include "spire/ui/flat_button.hpp"
+#include "spire/ui/properties_window_buttons_widget.hpp"
 #include "spire/ui/window.hpp"
 
 using namespace boost;
@@ -35,7 +36,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   m_body->setStyleSheet("background-color: #F5F5F5;");
   auto layout = new QVBoxLayout(m_body);
   layout->setContentsMargins(scale_width(8), scale_height(10), scale_width(8),
-    scale_height(8));
+    0);
   layout->setSpacing(0);
   auto style_layout = new QHBoxLayout();
   style_layout->setContentsMargins({});
@@ -206,95 +207,8 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   auto buttons_layout = new QHBoxLayout();
   buttons_layout->setContentsMargins({});
   buttons_layout->setSpacing(0);
-  auto buttons_layout_1 = new QVBoxLayout();
-  buttons_layout_1->setContentsMargins({});
-  buttons_layout_1->setSpacing(0);
-  auto save_as_default_button = new flat_button(tr("Save As Default"), this);
-  save_as_default_button->connect_clicked_signal(
-    [=] { m_save_default_signal(get_properties()); });
-  save_as_default_button->setFont(generic_button_font);
-  save_as_default_button->set_style(generic_button_default_style);
-  save_as_default_button->set_hover_style(generic_button_hover_style);
-  save_as_default_button->set_focus_style(generic_button_focused_style);
-  buttons_layout_1->addWidget(save_as_default_button);
-  buttons_layout_1->setStretchFactor(save_as_default_button, 26);
-  buttons_layout_1->addStretch(8);
-  auto load_default_button = new flat_button(tr("Load Default"), this);
-  load_default_button->setFont(generic_button_font);
-  load_default_button->set_style(generic_button_default_style);
-  load_default_button->set_hover_style(generic_button_hover_style);
-  load_default_button->set_focus_style(generic_button_focused_style);
-  buttons_layout_1->addWidget(load_default_button);
-  buttons_layout_1->setStretchFactor(load_default_button, 26);
-  buttons_layout->addLayout(buttons_layout_1);
-  buttons_layout->setStretchFactor(buttons_layout_1, 100);
-  buttons_layout->addStretch(8);
-  auto buttons_layout_2 = new QVBoxLayout();
-  buttons_layout_2->setContentsMargins({});
-  buttons_layout_2->setSpacing(0);
-  buttons_layout_2->addStretch(34);
-  auto reset_default_button = new flat_button(tr("Reset Default"), this);
-  reset_default_button->connect_clicked_signal(
-    [=] { m_save_default_signal(time_and_sales_properties()); });
-  reset_default_button->setFont(generic_button_font);
-  reset_default_button->set_style(generic_button_default_style);
-  reset_default_button->set_hover_style(generic_button_hover_style);
-  reset_default_button->set_focus_style(generic_button_focused_style);
-  buttons_layout_2->addWidget(reset_default_button);
-  buttons_layout_2->setStretchFactor(reset_default_button, 26);
-  buttons_layout->addLayout(buttons_layout_2);
-  buttons_layout->setStretchFactor(buttons_layout_2, 100);
-  buttons_layout->addStretch(60);
-  auto buttons_layout_3 = new QVBoxLayout();
-  buttons_layout_3->setContentsMargins({});
-  buttons_layout_3->setSpacing(0);
-  auto apply_to_all_button = new flat_button(tr("Apply To All"), this);
-  apply_to_all_button->connect_clicked_signal(
-    [=] { m_apply_all_signal(get_properties()); });
-  apply_to_all_button->setFont(generic_button_font);
-  apply_to_all_button->set_style(generic_button_default_style);
-  apply_to_all_button->set_hover_style(generic_button_hover_style);
-  apply_to_all_button->set_focus_style(generic_button_focused_style);
-  buttons_layout_3->addWidget(apply_to_all_button);
-  buttons_layout_3->setStretchFactor(apply_to_all_button, 26);
-  buttons_layout_3->addStretch(8);
-  auto cancel_button = new flat_button(tr("Cancel"), this);
-  cancel_button->connect_clicked_signal(
-    [=] { reject(); });
-  cancel_button->setFont(generic_button_font);
-  cancel_button->set_style(generic_button_default_style);
-  cancel_button->set_hover_style(generic_button_hover_style);
-  cancel_button->set_focus_style(generic_button_focused_style);
-  buttons_layout_3->addWidget(cancel_button);
-  buttons_layout_3->setStretchFactor(cancel_button, 26);
-  buttons_layout->addLayout(buttons_layout_3);
-  buttons_layout->setStretchFactor(buttons_layout_3, 100);
-  buttons_layout->addStretch(8);
-  auto buttons_layout_4 = new QVBoxLayout();
-  buttons_layout_4->setContentsMargins({});
-  buttons_layout_4->setSpacing(0);
-  auto apply_button = new flat_button(tr("Apply"), this);
-  setTabOrder(apply_to_all_button, apply_button);
-  apply_button->connect_clicked_signal(
-    [=] { m_apply_signal(get_properties()); });
-  apply_button->setFont(generic_button_font);
-  apply_button->set_style(generic_button_default_style);
-  apply_button->set_hover_style(generic_button_hover_style);
-  apply_button->set_focus_style(generic_button_focused_style);
-  buttons_layout_4->addWidget(apply_button);
-  buttons_layout_4->setStretchFactor(apply_button, 26);
-  buttons_layout_4->addStretch(8);
-  auto ok_button = new flat_button(tr("OK"), this);
-  ok_button->connect_clicked_signal(
-    [=] { accept(); });
-  ok_button->setFont(generic_button_font);
-  ok_button->set_style(generic_button_default_style);
-  ok_button->set_hover_style(generic_button_hover_style);
-  ok_button->set_focus_style(generic_button_focused_style);
-  buttons_layout_4->addWidget(ok_button);
-  buttons_layout_4->setStretchFactor(ok_button, 26);
-  buttons_layout->addLayout(buttons_layout_4);
-  buttons_layout->setStretchFactor(buttons_layout_4, 100);
+  auto buttons_widget = new properties_window_buttons_widget(this);
+  buttons_layout->addWidget(buttons_widget);
   layout->addLayout(buttons_layout);
   layout->setStretchFactor(buttons_layout, 60);
   set_properties(properties);
