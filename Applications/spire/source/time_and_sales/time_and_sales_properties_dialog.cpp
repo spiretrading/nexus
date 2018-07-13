@@ -96,10 +96,10 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
         .arg(scale_height(11)).arg(scale_height(16));
   m_band_list->setItemSelected(band_unknown_item, true);
   band_list_layout->addWidget(m_band_list);
-  band_list_layout->setStretchFactor(m_band_list, 120);
+  band_list_layout->setStretchFactor(m_band_list, 144);
   style_layout->addLayout(band_list_layout);
-  style_layout->setStretchFactor(band_list_layout, 144);
-  style_layout->addStretch(10);
+  style_layout->setStretchFactor(band_list_layout, 190);
+  style_layout->addStretch(18);
   auto color_settings_layout = new QVBoxLayout();
   color_settings_layout->setContentsMargins({});
   color_settings_layout->setSpacing(0);
@@ -120,8 +120,8 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     properties.get_text_color(
     price_range::UNKNOWN));
   color_settings_layout->addWidget(m_text_color_button);
-  color_settings_layout->setStretchFactor(m_text_color_button, 20);
-  color_settings_layout->addStretch(18);
+  color_settings_layout->setStretchFactor(m_text_color_button, 26);
+  color_settings_layout->addStretch(10);
   auto band_color_label = new QLabel(tr("Band Color"), this);
   band_color_label->setStyleSheet(generic_text_style);
   color_settings_layout->addWidget(band_color_label);
@@ -133,8 +133,36 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   set_color_button_stylesheet(m_band_color_button, properties.get_band_color(
     price_range::UNKNOWN));
   color_settings_layout->addWidget(m_band_color_button);
-  color_settings_layout->setStretchFactor(m_band_color_button, 20);
-  color_settings_layout->addStretch(30);
+  color_settings_layout->setStretchFactor(m_band_color_button, 26);
+  color_settings_layout->addStretch(42);
+  style_layout->addLayout(color_settings_layout);
+  style_layout->setStretchFactor(color_settings_layout, 100);
+  style_layout->addStretch(18);
+  auto font_layout = new QVBoxLayout();
+  font_layout->setContentsMargins({});
+  font_layout->setSpacing(0);
+  font_layout->addStretch(18);
+  auto edit_font_button = new flat_button(tr("Change Font"), this);
+  edit_font_button->connect_clicked_signal([=] { set_font(); });
+  QFont generic_button_font;
+  generic_button_font.setFamily("Roboto");
+  generic_button_font.setPixelSize(scale_height(12));
+  edit_font_button->setFont(generic_button_font);
+  auto  generic_button_default_style = edit_font_button->get_style();
+  generic_button_default_style.m_background_color = QColor("#EBEBEB");
+  generic_button_default_style.m_text_color = Qt::black;
+  auto generic_button_hover_style = edit_font_button->get_hover_style();
+  generic_button_hover_style.m_background_color = QColor("#4B23A0");
+  generic_button_hover_style.m_text_color = Qt::white;
+  auto generic_button_focused_style = edit_font_button->get_focus_style();
+  generic_button_focused_style.m_background_color = QColor("#EBEBEB");
+  generic_button_focused_style.m_border_color = QColor("#4B23A0");
+  edit_font_button->set_style(generic_button_default_style);
+  edit_font_button->set_hover_style(generic_button_hover_style);
+  edit_font_button->set_focus_style(generic_button_focused_style);
+  font_layout->addWidget(edit_font_button);
+  font_layout->setStretchFactor(edit_font_button, 26);
+  font_layout->addStretch(33);
   m_show_grid_check_box = new check_box(tr("Show Grid"), this);
   auto check_box_text_style = QString(R"(
     color: black;
@@ -158,49 +186,12 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   m_show_grid_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style,
     check_box_hover_style, check_box_focused_style);
-  color_settings_layout->addWidget(m_show_grid_check_box);
-  color_settings_layout->setStretchFactor(m_show_grid_check_box, 16);
-  style_layout->addLayout(color_settings_layout);
-  style_layout->setStretchFactor(color_settings_layout, 80);
-  style_layout->addStretch(40);
-  auto font_layout = new QVBoxLayout();
-  font_layout->setContentsMargins({});
-  font_layout->setSpacing(0);
-  auto font_label = new QLabel(tr("Font"), this);
-  font_label->setStyleSheet(section_label_style);
-  font_layout->addWidget(font_label);
-  font_layout->setStretchFactor(font_label, 14);
-  font_layout->addStretch(10);
-  m_font_preview_label = new QLabel(tr("Aa Bb Cc\n0123"), this);
-  m_font_preview_label->setSizePolicy(QSizePolicy::Ignored,
-    QSizePolicy::Ignored);
-  m_font_preview_label->setAlignment(Qt::AlignCenter);
-  font_layout->addWidget(m_font_preview_label);
-  font_layout->setStretchFactor(m_font_preview_label, 84);
-  font_layout->addStretch(10);
-  auto edit_font_button = new flat_button(tr("Edit Font"), this);
-  edit_font_button->connect_clicked_signal([=] { set_font(); });
-  QFont generic_button_font;
-  generic_button_font.setFamily("Roboto");
-  generic_button_font.setPixelSize(scale_height(12));
-  edit_font_button->setFont(generic_button_font);
-  auto  generic_button_default_style = edit_font_button->get_style();
-  generic_button_default_style.m_background_color = QColor("#EBEBEB");
-  generic_button_default_style.m_text_color = Qt::black;
-  auto generic_button_hover_style = edit_font_button->get_hover_style();
-  generic_button_hover_style.m_background_color = QColor("#4B23A0");
-  generic_button_hover_style.m_text_color = Qt::white;
-  auto generic_button_focused_style = edit_font_button->get_focus_style();
-  generic_button_focused_style.m_background_color = QColor("#EBEBEB");
-  generic_button_focused_style.m_border_color = QColor("#4B23A0");
-  edit_font_button->set_style(generic_button_default_style);
-  edit_font_button->set_hover_style(generic_button_hover_style);
-  edit_font_button->set_focus_style(generic_button_focused_style);
-  font_layout->addWidget(edit_font_button);
-  font_layout->setStretchFactor(edit_font_button, 26);
+  font_layout->addWidget(m_show_grid_check_box);
+  font_layout->setStretchFactor(m_show_grid_check_box, 16);
+  font_layout->addStretch(47);
   style_layout->addLayout(font_layout);
-  style_layout->setStretchFactor(font_layout, 120);
-  style_layout->addStretch(86);
+  style_layout->setStretchFactor(font_layout, 140);
+  style_layout->addStretch(20);
   layout->addLayout(style_layout);
   layout->addStretch(30);
   layout->setStretchFactor(style_layout, 164);
@@ -302,9 +293,7 @@ void time_and_sales_properties_dialog::set_font() {
   auto ok = false;
   auto font = QFontDialog::getFont(&ok, m_properties.m_font);
   if(ok) {
-    m_font_preview_label->setFont(font);
     m_properties.m_font = font;
-    update_font_preview_stylesheet();
   }
 }
 
@@ -379,8 +368,6 @@ void time_and_sales_properties_dialog::set_properties(
     set_color_settings_stylesheet(0);
   }
   m_show_grid_check_box->setChecked(m_properties.m_show_grid);
-  m_font_preview_label->setFont(m_properties.m_font);
-  update_font_preview_stylesheet();
 }
 
 void time_and_sales_properties_dialog::update_colors(int band_index) {
@@ -395,11 +382,4 @@ void time_and_sales_properties_dialog::update_colors(int band_index) {
     .arg(m_properties.get_band_color(i).name())
     .arg(m_properties.get_text_color(i).name());
   m_band_list->setStyleSheet(m_band_list_stylesheet + selected_stylesheet);
-}
-
-void time_and_sales_properties_dialog::update_font_preview_stylesheet() {
-  m_font_preview_label->setStyleSheet(QString(R"(
-    background-color: white;
-    border: %1px solid #C8C8C8 %2px solid #C8C8C8;
-    )").arg(scale_height(1)).arg(scale_width(1)));
 }
