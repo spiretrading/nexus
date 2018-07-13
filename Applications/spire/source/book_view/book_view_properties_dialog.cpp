@@ -66,7 +66,7 @@ book_view_properties_dialog::book_view_properties_dialog(
         .arg(scale_width(2)).arg(scale_width(80)).arg(scale_width(1)));
   auto levels_tab_widget = new book_view_level_properties_widget(properties,
     tab_widget);
-  tab_widget->addTab(levels_tab_widget, tr("Display"));
+  tab_widget->addTab(levels_tab_widget, tr("Price Levels"));
   auto highlights_tab_widget = new book_view_highlight_properties_widget(
     properties, tab_widget);
   tab_widget->addTab(highlights_tab_widget, tr("Highlights"));
