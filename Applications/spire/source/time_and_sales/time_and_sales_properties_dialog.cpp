@@ -179,20 +179,22 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   font_layout->addStretch(10);
   auto edit_font_button = new flat_button(tr("Edit Font"), this);
   edit_font_button->connect_clicked_signal([=] { set_font(); });
-  auto generic_button_default_style = QString(R"(
-    background-color: #EBEBEB;
-    color: black;
-    font-family: Roboto;
-    font-size: %1px;
-    qproperty-alignment: AlignCenter;)").arg(scale_height(12));
-  auto generic_button_hover_style = QString(R"(
-    background-color: #4B23A0;
-    color: white;)");
-  auto generic_button_focused_style = QString(R"(
-    border: %1px solid #4B23A0 %2px solid #4B23A0;)")
-    .arg(scale_height(1)).arg(scale_width(1));
-  edit_font_button->set_stylesheet(generic_button_default_style,
-    generic_button_hover_style, generic_button_focused_style, "");
+  QFont generic_button_font;
+  generic_button_font.setFamily("Roboto");
+  generic_button_font.setPixelSize(scale_height(12));
+  edit_font_button->setFont(generic_button_font);
+  auto  generic_button_default_style = edit_font_button->get_style();
+  generic_button_default_style.m_background_color = QColor("#EBEBEB");
+  generic_button_default_style.m_text_color = Qt::black;
+  auto generic_button_hover_style = edit_font_button->get_hover_style();
+  generic_button_hover_style.m_background_color = QColor("#4B23A0");
+  generic_button_hover_style.m_text_color = Qt::white;
+  auto generic_button_focused_style = edit_font_button->get_focus_style();
+  generic_button_focused_style.m_background_color = QColor("#EBEBEB");
+  generic_button_focused_style.m_border_color = QColor("#4B23A0");
+  edit_font_button->set_style(generic_button_default_style);
+  edit_font_button->set_hover_style(generic_button_hover_style);
+  edit_font_button->set_focus_style(generic_button_focused_style);
   font_layout->addWidget(edit_font_button);
   font_layout->setStretchFactor(edit_font_button, 26);
   style_layout->addLayout(font_layout);
@@ -210,14 +212,18 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   auto save_as_default_button = new flat_button(tr("Save As Default"), this);
   save_as_default_button->connect_clicked_signal(
     [=] { m_save_default_signal(get_properties()); });
-  save_as_default_button->set_stylesheet(generic_button_default_style,
-    generic_button_hover_style, generic_button_focused_style, "");
+  save_as_default_button->setFont(generic_button_font);
+  save_as_default_button->set_style(generic_button_default_style);
+  save_as_default_button->set_hover_style(generic_button_hover_style);
+  save_as_default_button->set_focus_style(generic_button_focused_style);
   buttons_layout_1->addWidget(save_as_default_button);
   buttons_layout_1->setStretchFactor(save_as_default_button, 26);
   buttons_layout_1->addStretch(8);
   auto load_default_button = new flat_button(tr("Load Default"), this);
-  load_default_button->set_stylesheet(generic_button_default_style,
-    generic_button_hover_style, generic_button_focused_style, "");
+  load_default_button->setFont(generic_button_font);
+  load_default_button->set_style(generic_button_default_style);
+  load_default_button->set_hover_style(generic_button_hover_style);
+  load_default_button->set_focus_style(generic_button_focused_style);
   buttons_layout_1->addWidget(load_default_button);
   buttons_layout_1->setStretchFactor(load_default_button, 26);
   buttons_layout->addLayout(buttons_layout_1);
@@ -230,8 +236,10 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   auto reset_default_button = new flat_button(tr("Reset Default"), this);
   reset_default_button->connect_clicked_signal(
     [=] { m_save_default_signal(time_and_sales_properties()); });
-  reset_default_button->set_stylesheet(generic_button_default_style,
-    generic_button_hover_style, generic_button_focused_style, "");
+  reset_default_button->setFont(generic_button_font);
+  reset_default_button->set_style(generic_button_default_style);
+  reset_default_button->set_hover_style(generic_button_hover_style);
+  reset_default_button->set_focus_style(generic_button_focused_style);
   buttons_layout_2->addWidget(reset_default_button);
   buttons_layout_2->setStretchFactor(reset_default_button, 26);
   buttons_layout->addLayout(buttons_layout_2);
@@ -243,16 +251,20 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   auto apply_to_all_button = new flat_button(tr("Apply To All"), this);
   apply_to_all_button->connect_clicked_signal(
     [=] { m_apply_all_signal(get_properties()); });
-  apply_to_all_button->set_stylesheet(generic_button_default_style,
-    generic_button_hover_style, generic_button_focused_style, "");
+  apply_to_all_button->setFont(generic_button_font);
+  apply_to_all_button->set_style(generic_button_default_style);
+  apply_to_all_button->set_hover_style(generic_button_hover_style);
+  apply_to_all_button->set_focus_style(generic_button_focused_style);
   buttons_layout_3->addWidget(apply_to_all_button);
   buttons_layout_3->setStretchFactor(apply_to_all_button, 26);
   buttons_layout_3->addStretch(8);
   auto cancel_button = new flat_button(tr("Cancel"), this);
   cancel_button->connect_clicked_signal(
     [=] { reject(); });
-  cancel_button->set_stylesheet(generic_button_default_style,
-    generic_button_hover_style, generic_button_focused_style, "");
+  cancel_button->setFont(generic_button_font);
+  cancel_button->set_style(generic_button_default_style);
+  cancel_button->set_hover_style(generic_button_hover_style);
+  cancel_button->set_focus_style(generic_button_focused_style);
   buttons_layout_3->addWidget(cancel_button);
   buttons_layout_3->setStretchFactor(cancel_button, 26);
   buttons_layout->addLayout(buttons_layout_3);
@@ -265,16 +277,20 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   setTabOrder(apply_to_all_button, apply_button);
   apply_button->connect_clicked_signal(
     [=] { m_apply_signal(get_properties()); });
-  apply_button->set_stylesheet(generic_button_default_style,
-    generic_button_hover_style, generic_button_focused_style, "");
+  apply_button->setFont(generic_button_font);
+  apply_button->set_style(generic_button_default_style);
+  apply_button->set_hover_style(generic_button_hover_style);
+  apply_button->set_focus_style(generic_button_focused_style);
   buttons_layout_4->addWidget(apply_button);
   buttons_layout_4->setStretchFactor(apply_button, 26);
   buttons_layout_4->addStretch(8);
   auto ok_button = new flat_button(tr("OK"), this);
   ok_button->connect_clicked_signal(
     [=] { accept(); });
-  ok_button->set_stylesheet(generic_button_default_style,
-    generic_button_hover_style, generic_button_focused_style, "");
+  ok_button->setFont(generic_button_font);
+  ok_button->set_style(generic_button_default_style);
+  ok_button->set_hover_style(generic_button_hover_style);
+  ok_button->set_focus_style(generic_button_focused_style);
   buttons_layout_4->addWidget(ok_button);
   buttons_layout_4->setStretchFactor(ok_button, 26);
   buttons_layout->addLayout(buttons_layout_4);
@@ -384,14 +400,13 @@ void time_and_sales_properties_dialog::set_text_color() {
 
 void time_and_sales_properties_dialog::set_color_button_stylesheet(
     flat_button* button, const QColor& color) {
-  button->set_stylesheet(QString(R"(
-    background-color: %1;
-    border: %2 solid #C8C8C8 %3 solid #C8C8C8;)")
-    .arg(color.name()).arg(scale_height(1)).arg(scale_width(1)),
-    QString(R"(border: %4 solid #4B23A0 %5 solid #4B23A0;)")
-      .arg(scale_height(1)).arg(scale_width(1)),
-    QString(R"(border: %4 solid #4B23A0 %5 solid #4B23A0;)")
-      .arg(scale_height(1)).arg(scale_width(1)), "");
+  auto s = button->get_style();
+  s.m_background_color = color;
+  s.m_border_color = QColor("#C8C8C8");
+  button->set_style(s);
+  s.m_border_color = QColor("#4B23A0");
+  button->set_hover_style(s);
+  button->set_focus_style(s);
 }
 
 void time_and_sales_properties_dialog::set_color_settings_stylesheet(

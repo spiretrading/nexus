@@ -150,26 +150,29 @@ login_window::login_window(const std::string& version, QWidget* parent)
   m_sign_in_button->installEventFilter(this);
   m_sign_in_button->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
-  auto sign_in_default_style = QString(R"(
-    background-color: #684BC7;
-    color: #E2E0FF;
-    font-family: Roboto;
-    font-size: %1px;
-    font-weight: bold;
-    qproperty-alignment: AlignCenter;)").arg(scale_height(14));
-  auto sign_in_hover_style = QString("background-color: #8D78EC;");
-  auto sign_in_focused_style = QString("border: 1px solid #8D78EC;");
-  auto sign_in_disabled_style = QString(R"(
-    background-color: #4B23A0;
-    border: %2px solid #684BC7;
-    color: #8D78EC;
-    font-family: Roboto;
-    font-size: %1px;
-    font-weight: bold;
-    qproperty-alignment: AlignCenter;)")
-    .arg(scale_height(14)).arg(scale_width(1));
-  m_sign_in_button->set_stylesheet(sign_in_default_style, sign_in_hover_style,
-    sign_in_focused_style, sign_in_disabled_style);
+  QFont button_default_font;
+  button_default_font.setFamily("Roboto");
+  button_default_font.setPixelSize(scale_height(14));
+  button_default_font.setWeight(QFont::Bold);
+  m_sign_in_button->setFont(button_default_font);
+  auto button_default_style = m_sign_in_button->get_style();
+  button_default_style.m_background_color = QColor("#684BC7");
+  button_default_style.m_text_color = QColor("#E2E0FF");
+  m_sign_in_button->set_style(button_default_style);
+  auto button_hover_style = m_sign_in_button->get_hover_style();
+  button_hover_style.m_background_color = QColor("#8D78EC");
+  button_hover_style.m_text_color = QColor("#E2E0FF");
+  m_sign_in_button->set_hover_style(button_hover_style);
+  auto button_focused_style = m_sign_in_button->get_focus_style();
+  button_focused_style.m_background_color = QColor("#684BC7");
+  button_focused_style.m_border_color = QColor("#8D78EC");
+  button_focused_style.m_text_color = QColor("#E2E0FF");
+  m_sign_in_button->set_focus_style(button_focused_style);
+  auto button_disabled_style = m_sign_in_button->get_disabled_style();
+  button_disabled_style.m_background_color = QColor("#4B23A0");
+  button_disabled_style.m_border_color = QColor("#684BC7");
+  button_disabled_style.m_text_color = QColor("#8D78EC");
+  m_sign_in_button->set_disabled_style(button_disabled_style);
   m_sign_in_button->setDisabled(true);
   button_layout->addWidget(m_sign_in_button);
   button_layout->setStretchFactor(m_sign_in_button, 120);
