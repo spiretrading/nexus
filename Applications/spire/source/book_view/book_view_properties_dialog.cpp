@@ -38,6 +38,10 @@ book_view_properties_dialog::book_view_properties_dialog(
   auto tab_widget = new QTabWidget(body);
   tab_widget->tabBar()->setFixedHeight(scale_height(40));
   tab_widget->setStyleSheet(QString(R"(
+    QWidget {
+      outline: %6px solid #4B23A0;
+    }
+
     QTabWidget::pane {
       border: none;
     }
@@ -59,7 +63,7 @@ book_view_properties_dialog::book_view_properties_dialog(
       background-color: #F5F5F5;
       color: #4B23A0;
     })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_height(10))
-        .arg(scale_width(2)).arg(scale_width(80)));
+        .arg(scale_width(2)).arg(scale_width(80)).arg(scale_width(1)));
   auto levels_tab_widget = new book_view_level_properties_widget(properties,
     tab_widget);
   tab_widget->addTab(levels_tab_widget, tr("Display"));

@@ -36,24 +36,21 @@ properties_window_buttons_widget::properties_window_buttons_widget(
   save_as_default_button->set_style(generic_button_style);
   save_as_default_button->set_hover_style(generic_button_hover_style);
   save_as_default_button->set_focus_style(generic_button_focus_style);
-  save_as_default_button->connect_clicked_signal(
-    [=] { m_save_as_default_signal(); });
+  save_as_default_button->connect_clicked_signal(m_save_as_default_signal);
   left_layout->addWidget(save_as_default_button, 0, 0);
   auto load_default_button = new flat_button(tr("Load Default"));
   load_default_button->setFont(generic_button_font);
   load_default_button->set_style(generic_button_style);
   load_default_button->set_hover_style(generic_button_hover_style);
   load_default_button->set_focus_style(generic_button_focus_style);
-  load_default_button->connect_clicked_signal(
-    [=] { m_load_default_signal(); });
+  load_default_button->connect_clicked_signal(m_load_default_signal);
   left_layout->addWidget(load_default_button, 1, 0);
   auto reset_default_button = new flat_button(tr("Reset Default"));
   reset_default_button->setFont(generic_button_font);
   reset_default_button->set_style(generic_button_style);
   reset_default_button->set_hover_style(generic_button_hover_style);
   reset_default_button->set_focus_style(generic_button_focus_style);
-  reset_default_button->connect_clicked_signal(
-    [=] { m_reset_default_signal(); });
+  reset_default_button->connect_clicked_signal(m_reset_default_signal);
   left_layout->addWidget(reset_default_button, 1, 1);
   main_layout->addWidget(left_widget);
   main_layout->addStretch(1);
@@ -63,35 +60,35 @@ properties_window_buttons_widget::properties_window_buttons_widget(
   right_layout->setContentsMargins({});
   right_layout->setHorizontalSpacing(scale_width(8));
   right_layout->setVerticalSpacing(scale_height(8));
-  auto apply_to_all_button = new flat_button(tr("Apply To All"));
-  apply_to_all_button->setFont(generic_button_font);
-  apply_to_all_button->set_style(generic_button_style);
-  apply_to_all_button->set_hover_style(generic_button_hover_style);
-  apply_to_all_button->set_focus_style(generic_button_focus_style);
-  apply_to_all_button->connect_clicked_signal(
-    [=] { m_apply_to_all_signal(); });
-  right_layout->addWidget(apply_to_all_button, 0, 1);
-  auto cancel_button = new flat_button(tr("Cancel"));
-  cancel_button->setFont(generic_button_font);
-  cancel_button->set_style(generic_button_style);
-  cancel_button->set_hover_style(generic_button_hover_style);
-  cancel_button->set_focus_style(generic_button_focus_style);
-  cancel_button->connect_clicked_signal([=] { m_cancel_signal(); });
-  right_layout->addWidget(cancel_button, 1, 1);
   auto apply_button = new flat_button(tr("Apply"));
   apply_button->setFont(generic_button_font);
   apply_button->set_style(generic_button_style);
   apply_button->set_hover_style(generic_button_hover_style);
   apply_button->set_focus_style(generic_button_focus_style);
-  apply_button->connect_clicked_signal([=] { m_apply_signal(); });
+  apply_button->connect_clicked_signal(m_apply_signal);
+  setTabOrder(reset_default_button, apply_button);
   right_layout->addWidget(apply_button, 0, 0);
+  auto apply_to_all_button = new flat_button(tr("Apply To All"));
+  apply_to_all_button->setFont(generic_button_font);
+  apply_to_all_button->set_style(generic_button_style);
+  apply_to_all_button->set_hover_style(generic_button_hover_style);
+  apply_to_all_button->set_focus_style(generic_button_focus_style);
+  apply_to_all_button->connect_clicked_signal(m_apply_to_all_signal);
+  right_layout->addWidget(apply_to_all_button, 0, 1);
   auto ok_button = new flat_button(tr("OK"));
   ok_button->setFont(generic_button_font);
   ok_button->set_style(generic_button_style);
   ok_button->set_hover_style(generic_button_hover_style);
   ok_button->set_focus_style(generic_button_focus_style);
-  ok_button->connect_clicked_signal([=] { m_ok_signal(); });
+  ok_button->connect_clicked_signal(m_ok_signal);
   right_layout->addWidget(ok_button, 1, 0);
+  auto cancel_button = new flat_button(tr("Cancel"));
+  cancel_button->setFont(generic_button_font);
+  cancel_button->set_style(generic_button_style);
+  cancel_button->set_hover_style(generic_button_hover_style);
+  cancel_button->set_focus_style(generic_button_focus_style);
+  cancel_button->connect_clicked_signal(m_cancel_signal);
+  right_layout->addWidget(cancel_button, 1, 1);
   main_layout->addWidget(right_widget);
 }
 

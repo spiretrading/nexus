@@ -5,8 +5,8 @@ using namespace Nexus;
 using namespace spire;
 
 book_view_properties::book_view_properties() {
-  set_bbo_quote_font(QFont("Arial", 14, QFont::Bold));
-  set_book_quote_font(QFont("Arial", 8, QFont::Bold));
+  set_bbo_quote_font(QFont("Roboto", 14, QFont::Medium));
+  set_book_quote_font(QFont("Roboto", 8, QFont::Medium));
   QColor baseColor(0, 84, 168);
   for(auto i = 0; i < 7; ++i) {
     get_book_quote_background_colors().push_back(
