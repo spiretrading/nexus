@@ -69,8 +69,6 @@ namespace spire {
       //! Sets the style of the button when it's disabled.
       void set_disabled_style(const style& disabled_style);
 
-      const QColor& get_background_color();
-
       //! Connects a slot to the clicked signal.
       boost::signals2::connection connect_clicked_signal(
         const clicked_signal::slot_type& slot) const;

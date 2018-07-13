@@ -3,7 +3,6 @@
 #include <QListWidget>
 #include <QWidget>
 #include "spire/book_view/book_view.hpp"
-#include "spire/ui/flat_button.hpp"
 #include "spire/ui/ui.hpp"
 
 namespace spire {

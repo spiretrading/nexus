@@ -9,6 +9,7 @@
 #include "spire/book_view/book_view_properties.hpp"
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/check_box.hpp"
+#include "spire/ui/flat_button.hpp"
 
 using namespace spire;
 
@@ -258,8 +259,6 @@ void book_view_level_properties_widget::update_band_list_font(
     m_band_list_widget->item(i)->setFont(font);
   }
 }
-
-#include <QDebug>
 
 void book_view_level_properties_widget::update_band_list_gradient() {
   auto band_count = m_band_list_widget->count();
