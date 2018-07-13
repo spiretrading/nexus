@@ -214,10 +214,8 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     [=] { m_apply_all_signal(get_properties()); });
   buttons_widget->connect_apply_signal(
     [=] { m_apply_signal(get_properties()); });
-  buttons_widget->connect_ok_signal(
-    [=] { accept(); });
-  buttons_widget->connect_cancel_signal(
-    [=] { reject(); });
+  buttons_widget->connect_ok_signal([=] { accept(); });
+  buttons_widget->connect_cancel_signal([=] { reject(); });
   buttons_layout->addWidget(buttons_widget);
   layout->addLayout(buttons_layout);
   layout->setStretchFactor(buttons_layout, 60);
