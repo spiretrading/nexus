@@ -208,6 +208,16 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   buttons_layout->setContentsMargins({});
   buttons_layout->setSpacing(0);
   auto buttons_widget = new properties_window_buttons_widget(this);
+  buttons_widget->connect_save_as_default_signal(
+    [=] { m_save_default_signal(get_properties()); });
+  buttons_widget->connect_apply_to_all_signal(
+    [=] { m_apply_all_signal(get_properties()); });
+  buttons_widget->connect_apply_signal(
+    [=] { m_apply_signal(get_properties()); });
+  buttons_widget->connect_ok_signal(
+    [=] { accept(); });
+  buttons_widget->connect_cancel_signal(
+    [=] { reject(); });
   buttons_layout->addWidget(buttons_widget);
   layout->addLayout(buttons_layout);
   layout->setStretchFactor(buttons_layout, 60);
