@@ -42,7 +42,7 @@ book_view_level_properties_widget::book_view_level_properties_widget(
     })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(4))
         .arg(scale_width(4));
   m_band_list_widget->setStyleSheet(m_band_list_stylesheet);
-  auto bg_colors =
+  auto& bg_colors =
     properties.get_book_quote_background_colors();
   for(auto i = 0 ; i < static_cast<int>(bg_colors.size()); ++i) {
     auto item = new QListWidgetItem(tr("Level") + QString(" %1").arg(i + 1),
