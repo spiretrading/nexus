@@ -39,7 +39,6 @@ namespace spire {
 
       void set_color_button_stylesheet(flat_button* button,
         const QColor& color);
-      void populate_band_list(int num_items);
       void update_band_list_font(const QFont& font);
       void update_band_list_gradient();
       void update_band_list_stylesheet(int index);

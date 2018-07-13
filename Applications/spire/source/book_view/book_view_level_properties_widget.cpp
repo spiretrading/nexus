@@ -42,6 +42,15 @@ book_view_level_properties_widget::book_view_level_properties_widget(
     })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(4))
         .arg(scale_width(4));
   m_band_list_widget->setStyleSheet(m_band_list_stylesheet);
+  auto bg_colors =
+    properties.get_book_quote_background_colors();
+  for(auto i = 0 ; i < static_cast<int>(bg_colors.size()); ++i) {
+    auto item = new QListWidgetItem(tr("Level") + QString(" %1").arg(i + 1),
+      m_band_list_widget);
+    item->setFont(properties.get_book_quote_font());
+    item->setTextAlignment(Qt::AlignCenter);
+  }
+  update_band_list_font(properties.get_book_quote_font());
   m_band_list_widget->setSelectionMode(
     QAbstractItemView::SelectionMode::SingleSelection);
   connect(m_band_list_widget, &QListWidget::currentRowChanged,
@@ -61,8 +70,6 @@ book_view_level_properties_widget::book_view_level_properties_widget(
   band_properties_layout->addWidget(number_of_bands_label);
   band_properties_layout->addStretch(4);
   auto number_of_bands_spin_box = new QSpinBox(this);
-  auto bg_colors =
-    properties.get_book_quote_background_colors();
   number_of_bands_spin_box->setValue(static_cast<int>(bg_colors.size()));
   number_of_bands_spin_box->setMinimum(1);
   number_of_bands_spin_box->setMaximum(INT_MAX);
@@ -205,8 +212,6 @@ book_view_level_properties_widget::book_view_level_properties_widget(
   horizontal_layout->addStretch(60);
   layout->addLayout(horizontal_layout);
   layout->addStretch(20);
-  populate_band_list(static_cast<int>(bg_colors.size()));
-  update_band_list_font(properties.get_book_quote_font());
   update_band_list_gradient();
   m_band_list_widget->setCurrentRow(0);
 }
@@ -237,20 +242,6 @@ void book_view_level_properties_widget::set_color_button_stylesheet(
   s.m_border_color = QColor("#4B23A0");
   button->set_hover_style(s);
   button->set_focus_style(s);
-}
-
-void book_view_level_properties_widget::populate_band_list(int num_items) {
-  QFont font;
-  if(m_band_list_widget->item(0) != nullptr) {
-    font = m_band_list_widget->item(0)->font();
-  }
-  m_band_list_widget->clear();
-  for(auto i = 0 ; i < num_items; ++i) {
-    auto item = new QListWidgetItem(tr("Level") + QString(" %1").arg(i + 1),
-      m_band_list_widget);
-    item->setFont(font);
-    item->setTextAlignment(Qt::AlignCenter);
-  }
 }
 
 void book_view_level_properties_widget::update_band_list_font(
@@ -350,8 +341,22 @@ void book_view_level_properties_widget::on_gradient_start_button_clicked() {
 void book_view_level_properties_widget::on_number_of_bands_spin_box_changed(
     int value) {
   auto current_row = m_band_list_widget->currentRow();
-  populate_band_list(value);
-  update_band_list_gradient();
+  auto item_count = m_band_list_widget->count();
+  if(value > item_count) {
+    for(auto i = item_count; i < value; ++i) {
+      auto item = new QListWidgetItem(
+        tr("Level") + QString(" %1").arg(i + 1), m_band_list_widget);
+      item->setBackgroundColor(m_band_list_widget->item(
+        item_count - 1)->backgroundColor());
+      item->setFont(m_band_list_widget->item(item_count - 1)->font());
+      item->setTextAlignment(Qt::AlignCenter);
+    }
+  } else {
+    for(auto i = item_count; i > value - 1; --i) {
+      auto item = m_band_list_widget->takeItem(i);
+      delete item;
+    }
+  }
   if(current_row > m_band_list_widget->count() - 1) {
     m_band_list_widget->setCurrentRow(m_band_list_widget->count() - 1);
   } else {
