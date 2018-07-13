@@ -50,8 +50,7 @@ const style& flat_button::get_style() const {
 }
 
 void flat_button::set_style(const style& default_style) {
-  m_default_stylesheet = QString(R"(
-    QLabel { %1 })").arg(get_stylesheet_properties(default_style));
+  m_default_style = default_style;
   on_style_updated();
 }
 
@@ -60,8 +59,7 @@ const style& flat_button::get_hover_style() const {
 }
 
 void flat_button::set_hover_style(const style& hover_style) {
-  m_hover_stylesheet = QString(R"(
-    QLabel:hover { %1 })").arg(get_stylesheet_properties(hover_style));
+  m_hover_style = hover_style;
   on_style_updated();
 }
 
@@ -70,8 +68,7 @@ const style& flat_button::get_focus_style() const {
 }
 
 void flat_button::set_focus_style(const style& focus_style) {
-  m_focus_stylesheet = QString(R"(
-    QLabel { %1 })").arg(get_stylesheet_properties(focus_style));
+  m_focus_style = focus_style;
   on_style_updated();
 }
 
@@ -80,7 +77,7 @@ const style& flat_button::get_disabled_style() const {
 }
 
 void flat_button::set_disabled_style(const style& disabled_style) {
-  m_disabled_stylesheet = get_stylesheet_properties(disabled_style);
+  m_disabled_style = disabled_style;
   on_style_updated();
 }
 
@@ -167,16 +164,25 @@ QString flat_button::get_stylesheet_properties(const style& s) {
 }
 
 void flat_button::set_disabled_stylesheet() {
-  m_label->setStyleSheet(m_disabled_stylesheet);
+  m_label->setStyleSheet(get_stylesheet_properties(m_disabled_style));
 }
 
 void flat_button::set_focus_stylesheet() {
-  m_label->setStyleSheet(m_default_stylesheet + m_hover_stylesheet +
-    m_focus_stylesheet);
+  m_label->setStyleSheet(
+    QString(R"(QLabel { %1 })").arg(
+      get_stylesheet_properties(m_default_style)) +
+    QString(R"(QLabel:hover { %1 })").arg(
+      get_stylesheet_properties(m_hover_style)) +
+    QString(R"(QLabel { %1 })").arg(
+      get_stylesheet_properties(m_focus_style)));
 }
 
 void flat_button::set_hover_stylesheet() {
-  m_label->setStyleSheet(m_default_stylesheet + m_hover_stylesheet);
+  m_label->setStyleSheet(
+    QString(R"(QLabel { %1 })").arg(
+      get_stylesheet_properties(m_default_style)) +
+    QString(R"(QLabel:hover { %1 })").arg(
+      get_stylesheet_properties(m_hover_style)));
 }
 
 void flat_button::on_style_updated() {

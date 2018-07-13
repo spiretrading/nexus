@@ -10,9 +10,16 @@ namespace spire {
   class flat_button : public QWidget {
     public:
 
+      //! Stores the colors of the styled elements.
       struct style {
+
+        //! The main background color.
         QColor m_background_color;
+
+        //! The border color. Set to transparent to disable the border.
         QColor m_border_color;
+
+        //! The text color.
         QColor m_text_color;
       };
 
@@ -82,10 +89,6 @@ namespace spire {
       style m_hover_style;
       style m_focus_style;
       style m_disabled_style;
-      QString m_default_stylesheet;
-      QString m_hover_stylesheet;
-      QString m_focus_stylesheet;
-      QString m_disabled_stylesheet;
       Qt::FocusReason m_last_focus_reason;
 
       void disable_button();
