@@ -35,15 +35,9 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   window_layout->addWidget(window);
   m_body->setStyleSheet("background-color: #F5F5F5;");
   auto layout = new QVBoxLayout(m_body);
-  layout->setContentsMargins(scale_width(8), scale_height(10), scale_width(8),
-    0);
+  layout->setContentsMargins(scale_width(8), 0, scale_width(8), 0);
   layout->setSpacing(0);
-  auto style_layout = new QHBoxLayout();
-  style_layout->setContentsMargins({});
-  style_layout->setSpacing(0);
-  auto band_list_layout = new QVBoxLayout();
-  band_list_layout->setContentsMargins({});
-  band_list_layout->setSpacing(0);
+  layout->addStretch(10);
   auto section_label_style = QString(R"(
     color: #4B23A0;
     font-family: Roboto;
@@ -51,9 +45,15 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     font-weight: 550;)").arg(scale_height(12));
   auto band_appearance_label = new QLabel(tr("Band Appearance"), this);
   band_appearance_label->setStyleSheet(section_label_style);
-  band_list_layout->addWidget(band_appearance_label);
-  band_list_layout->setStretchFactor(band_appearance_label, 14);
-  band_list_layout->addStretch(10);
+  layout->addWidget(band_appearance_label);
+  layout->setStretchFactor(band_appearance_label, 14);
+  layout->addStretch(10);
+  auto style_layout = new QHBoxLayout();
+  style_layout->setContentsMargins({});
+  style_layout->setSpacing(0);
+  auto band_list_layout = new QVBoxLayout();
+  band_list_layout->setContentsMargins({});
+  band_list_layout->setSpacing(0);
   m_band_list = new QListWidget(this);
   m_band_list->setSelectionMode(
     QAbstractItemView::SelectionMode::SingleSelection);
@@ -96,14 +96,13 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
         .arg(scale_height(11)).arg(scale_height(16));
   m_band_list->setItemSelected(band_unknown_item, true);
   band_list_layout->addWidget(m_band_list);
-  band_list_layout->setStretchFactor(m_band_list, 144);
+  band_list_layout->setStretchFactor(m_band_list, 140);
   style_layout->addLayout(band_list_layout);
   style_layout->setStretchFactor(band_list_layout, 190);
   style_layout->addStretch(18);
   auto color_settings_layout = new QVBoxLayout();
   color_settings_layout->setContentsMargins({});
   color_settings_layout->setSpacing(0);
-  color_settings_layout->addStretch(24);
   auto text_color_label = new QLabel(tr("Text Color"), this);
   auto generic_text_style = QString(R"(
     color: black;
@@ -190,11 +189,11 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   font_layout->setStretchFactor(m_show_grid_check_box, 16);
   font_layout->addStretch(47);
   style_layout->addLayout(font_layout);
-  style_layout->setStretchFactor(font_layout, 140);
+  style_layout->setStretchFactor(font_layout, 100);
   style_layout->addStretch(20);
   layout->addLayout(style_layout);
-  layout->addStretch(30);
-  layout->setStretchFactor(style_layout, 164);
+  layout->setStretchFactor(style_layout, 140);
+  layout->addStretch(20);
   auto buttons_layout = new QHBoxLayout();
   buttons_layout->setContentsMargins({});
   buttons_layout->setSpacing(0);
