@@ -81,14 +81,14 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     m_band_list);
   below_bid_item->setTextAlignment(Qt::AlignCenter);
   m_band_list->setFont(properties.m_font);
-  m_band_list_stylesheet = QString(R"(
+  m_band_list->setStyleSheet(QString(R"(
     QListWidget {
       background-color: white;
       border: %1px solid #C8C8C8 %2px solid #C8C8C8;
       outline: none;
       padding: %3px %4px 0px %4px;
     })").arg(scale_height(1)).arg(scale_width(1))
-        .arg(scale_height(4)).arg(scale_width(4));
+        .arg(scale_height(4)).arg(scale_width(4)));
   m_band_list->setItemSelected(band_unknown_item, true);
   band_list_layout->addWidget(m_band_list);
   band_list_layout->setStretchFactor(m_band_list, 140);
@@ -376,5 +376,5 @@ void time_and_sales_properties_dialog::update_colors(int band_index) {
     })").arg(scale_height(1)).arg(scale_width(1))
     .arg(m_properties.get_band_color(i).name())
     .arg(m_properties.get_text_color(i).name());
-  m_band_list->setStyleSheet(m_band_list_stylesheet + selected_stylesheet);
+  m_band_list->setStyleSheet(m_band_list->styleSheet() + selected_stylesheet);
 }
