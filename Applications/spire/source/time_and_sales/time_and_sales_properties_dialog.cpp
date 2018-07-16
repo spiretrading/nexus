@@ -25,7 +25,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     : QDialog(parent, flags | Qt::Window | Qt::FramelessWindowHint |
         Qt::WindowCloseButtonHint) {
   m_body = new QWidget(this);
-  m_body->setFixedSize(scale(492, 272));
+  m_body->setFixedSize(scale(462, 272));
   m_body->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   auto window_layout = new QHBoxLayout(this);
   window_layout->setContentsMargins({});
