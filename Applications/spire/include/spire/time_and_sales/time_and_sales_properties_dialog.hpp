@@ -73,7 +73,6 @@ namespace spire {
       void set_properties(const time_and_sales_properties& properties);
       void set_text_color();
       void update_colors(int band_index);
-      void update_band_list_font(const QFont& font);
   };
 }
 
