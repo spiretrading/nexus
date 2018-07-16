@@ -81,7 +81,6 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     m_band_list);
   below_bid_item->setTextAlignment(Qt::AlignCenter);
   m_band_list->setFont(properties.m_font);
-
   m_band_list->setItemSelected(band_unknown_item, true);
   band_list_layout->addWidget(m_band_list);
   band_list_layout->setStretchFactor(m_band_list, 140);
