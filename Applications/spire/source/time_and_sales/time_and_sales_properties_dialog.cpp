@@ -233,7 +233,7 @@ time_and_sales_properties
   properties.set_text_color(price_range::BELOW_BID,
     below_bid_item->textColor());
   properties.m_show_grid = m_show_grid_check_box->isChecked();
-  properties.m_font = m_band_list->item(0)->font();
+  properties.m_font = m_band_list->font();
   return properties;
 }
 
