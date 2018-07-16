@@ -61,7 +61,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   m_band_list->setSelectionBehavior(
     QAbstractItemView::SelectionBehavior::SelectRows);
   connect(m_band_list, &QListWidget::currentRowChanged,
-    [=] (auto index) {update_colors(index);});
+    [=] (auto index) {update_band_list_stylesheet(index);});
   auto band_unknown_item = new QListWidgetItem(tr("Bid/Ask Unknown"),
     m_band_list);
   band_unknown_item->setTextAlignment(Qt::AlignCenter);
@@ -81,14 +81,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     m_band_list);
   below_bid_item->setTextAlignment(Qt::AlignCenter);
   m_band_list->setFont(properties.m_font);
-  m_band_list->setStyleSheet(QString(R"(
-    QListWidget {
-      background-color: white;
-      border: %1px solid #C8C8C8 %2px solid #C8C8C8;
-      outline: none;
-      padding: %3px %4px 0px %4px;
-    })").arg(scale_height(1)).arg(scale_width(1))
-        .arg(scale_height(4)).arg(scale_width(4)));
+
   m_band_list->setItemSelected(band_unknown_item, true);
   band_list_layout->addWidget(m_band_list);
   band_list_layout->setStretchFactor(m_band_list, 140);
@@ -279,7 +272,7 @@ void time_and_sales_properties_dialog::set_band_color() {
   if(color.isValid()) {
     m_properties.set_band_color(band, color);
     m_band_list->item(index)->setBackground(color);
-    update_colors(index);
+    update_band_list_stylesheet(index);
   }
 }
 
@@ -300,7 +293,7 @@ void time_and_sales_properties_dialog::set_text_color() {
   if(color.isValid()) {
     m_properties.set_text_color(band, color);
     m_band_list->item(index)->setForeground(color);
-    update_colors(index);
+    update_band_list_stylesheet(index);
   }
 }
 
@@ -365,16 +358,25 @@ void time_and_sales_properties_dialog::set_properties(
   m_show_grid_check_box->setChecked(m_properties.m_show_grid);
 }
 
-void time_and_sales_properties_dialog::update_colors(int band_index) {
-  set_color_settings_stylesheet(band_index);
-  auto i = static_cast<price_range>(band_index);
-  auto selected_stylesheet = QString(R"(
+void time_and_sales_properties_dialog::update_band_list_stylesheet(
+    int highlighted_band_index) {
+  set_color_settings_stylesheet(highlighted_band_index);
+  auto i = static_cast<price_range>(highlighted_band_index);
+  m_band_list->setStyleSheet(QString(R"(
+    QListWidget {
+      background-color: white;
+      border: %1px solid #C8C8C8 %2px solid #C8C8C8;
+      outline: none;
+      padding: %3px %4px 0px %4px;
+    }
+
     QListWidget::item:selected {
-      background-color: %3;
-      border: %1px solid #4B23A0 %2px solid #4B23A0;
-      color: %4;
+      background-color: %7;
+      border: %5px solid #4B23A0 %6px solid #4B23A0;
+      color: %8;
     })").arg(scale_height(1)).arg(scale_width(1))
-    .arg(m_properties.get_band_color(i).name())
-    .arg(m_properties.get_text_color(i).name());
-  m_band_list->setStyleSheet(m_band_list->styleSheet() + selected_stylesheet);
+        .arg(scale_height(4)).arg(scale_width(4))
+        .arg(scale_height(1)).arg(scale_width(1))
+        .arg(m_properties.get_band_color(i).name())
+        .arg(m_properties.get_text_color(i).name()));
 }
