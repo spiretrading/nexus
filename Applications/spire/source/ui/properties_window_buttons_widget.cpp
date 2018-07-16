@@ -66,8 +66,8 @@ properties_window_buttons_widget::properties_window_buttons_widget(
   apply_button->set_hover_style(generic_button_hover_style);
   apply_button->set_focus_style(generic_button_focus_style);
   apply_button->connect_clicked_signal(m_apply_signal);
-  setTabOrder(reset_default_button, apply_button);
   right_layout->addWidget(apply_button, 0, 0);
+  setTabOrder(reset_default_button, apply_button);
   auto apply_to_all_button = new flat_button(tr("Apply To All"));
   apply_to_all_button->setFont(generic_button_font);
   apply_to_all_button->set_style(generic_button_style);
