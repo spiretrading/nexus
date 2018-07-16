@@ -2,6 +2,7 @@
 #include <QColorDialog>
 #include <QFontDialog>
 #include <QHBoxLayout>
+#include <QLabel>
 #include <QListWidgetItem>
 #include <QPushButton>
 #include <QVBoxLayout>
@@ -79,6 +80,7 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
   auto below_bid_item = new QListWidgetItem(tr("Trade Below Bid"),
     m_band_list);
   below_bid_item->setTextAlignment(Qt::AlignCenter);
+  update_band_list_font(properties.m_font);
   m_band_list_stylesheet = QString(R"(
     QListWidget {
       background-color: white;
@@ -87,13 +89,9 @@ time_and_sales_properties_dialog::time_and_sales_properties_dialog(
       font-size: %5px;
       outline: none;
       padding: %3px %4px 0px %4px;
-    }
-
-    QListWidget::item {
-      height: %6px;
     })").arg(scale_height(1)).arg(scale_width(1))
         .arg(scale_height(4)).arg(scale_width(4))
-        .arg(scale_height(11)).arg(scale_height(16));
+        .arg(scale_height(11));
   m_band_list->setItemSelected(band_unknown_item, true);
   band_list_layout->addWidget(m_band_list);
   band_list_layout->setStretchFactor(m_band_list, 140);
@@ -246,7 +244,7 @@ time_and_sales_properties
   properties.set_text_color(price_range::BELOW_BID,
     below_bid_item->textColor());
   properties.m_show_grid = m_show_grid_check_box->isChecked();
-  properties.m_font = m_font_preview_label->font();
+  properties.m_font = m_band_list->item(0)->font();
   return properties;
 }
 
@@ -293,6 +291,7 @@ void time_and_sales_properties_dialog::set_font() {
   auto font = QFontDialog::getFont(&ok, m_properties.m_font);
   if(ok) {
     m_properties.m_font = font;
+    update_band_list_font(font);
   }
 }
 
@@ -381,4 +380,11 @@ void time_and_sales_properties_dialog::update_colors(int band_index) {
     .arg(m_properties.get_band_color(i).name())
     .arg(m_properties.get_text_color(i).name());
   m_band_list->setStyleSheet(m_band_list_stylesheet + selected_stylesheet);
+}
+
+void time_and_sales_properties_dialog::update_band_list_font(
+    const QFont& font) {
+  for(auto i = 0; i < m_band_list->count(); ++i) {
+    m_band_list->item(i)->setFont(font);
+  }
 }
