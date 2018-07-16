@@ -16,7 +16,7 @@ time_and_sales_properties::time_and_sales_properties() {
   set_text_color(price_range::BELOW_BID, QColor(197, 0, 0));
   set_band_color(price_range::BELOW_BID, QColor(225, 220, 220));
   m_show_grid = false;
-  m_font = QFont("Roboto", 8);
+  m_font = QFont("Roboto", 8, QFont::Medium);
 }
 
 const QColor& time_and_sales_properties::get_text_color(
