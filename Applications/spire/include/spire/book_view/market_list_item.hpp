@@ -18,7 +18,15 @@ namespace spire {
       market_list_item(const Nexus::MarketDatabase::Entry& market,
         QListWidget* parent = nullptr);
 
+      //! Returns the market info associated with this item.
+      const Nexus::MarketDatabase::Entry& get_market_info() const;
+
+      boost::optional<const book_view_properties::market_highlight&>
+        get_market_highlight() const;
+
     private:
+      boost::optional<book_view_properties::market_highlight>
+        m_market_highlight;
       Nexus::MarketDatabase::Entry m_market;
   };
 }

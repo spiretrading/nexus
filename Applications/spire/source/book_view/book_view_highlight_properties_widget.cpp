@@ -30,20 +30,35 @@ book_view_highlight_properties_widget::book_view_highlight_properties_widget(
   markets_label->setStyleSheet(generic_header_label_stylesheet);
   markets_layout->addWidget(markets_label, 14);
   markets_layout->addStretch(10);
-  auto markets_list_widget = new QListWidget(this);
-  markets_list_widget->setFixedWidth(scale_width(140));
+  m_markets_list_widget = new QListWidget(this);
   auto market_database = GetDefaultMarketDatabase().GetEntries();
   for(auto i = 0; i < static_cast<int>(market_database.size()); ++i) {
-    auto item = new market_list_item(market_database[i], markets_list_widget);
+    auto item = new market_list_item(market_database[i], m_markets_list_widget);
+    item->setTextAlignment(Qt::AlignCenter);
+    auto highlight = properties.get_market_highlight(
+      market_database[i].m_code);
+    if(highlight.is_initialized()) {
+      item->setBackgroundColor(highlight->m_color);
+    } else {
+      item->setBackgroundColor(Qt::white);
+    }
   }
-  markets_layout->addWidget(markets_list_widget, 222);
+  m_markets_list_widget->item(0)->setSelected(true);
+  m_markets_list_widget->setSelectionMode(
+    QAbstractItemView::SelectionMode::SingleSelection);
+  m_markets_list_widget->setSelectionBehavior(
+    QAbstractItemView::SelectionBehavior::SelectRows);
+  connect(m_markets_list_widget, &QListWidget::currentRowChanged,
+    [=] (auto index) { update_market_widgets(index); });
+  m_markets_list_widget->setFixedWidth(scale_width(140));
+  markets_layout->addWidget(m_markets_list_widget, 222);
   layout->addLayout(markets_layout, 140);
   layout->addStretch(18);
   auto market_highlight_layout = new QVBoxLayout();
   market_highlight_layout->setContentsMargins({});
   market_highlight_layout->setSpacing(0);
   market_highlight_layout->addStretch(26);
-  auto highlight_none_check_box = new check_box(tr("Highlight None"), this);
+  m_highlight_none_check_box = new check_box(tr("Highlight None"), this);
   auto check_box_text_style = QString(R"(
     color: black;
     font-family: Roboto;
@@ -63,24 +78,24 @@ book_view_highlight_properties_widget::book_view_highlight_properties_widget(
     border: %1px solid #4B23A0 %2px solid #4B23A0;)")
     .arg(scale_height(1)).arg(scale_width(1));
   auto check_box_focused_style = QString(R"(border-color: #4B23A0;)");
-  highlight_none_check_box->set_stylesheet(check_box_text_style,
+  m_highlight_none_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style, check_box_hover_style,
     check_box_focused_style);
-  market_highlight_layout->addWidget(highlight_none_check_box, 16);
+  market_highlight_layout->addWidget(m_highlight_none_check_box, 16);
   market_highlight_layout->addStretch(10);
-  auto highlight_top_level_check_box = new check_box(tr("Highlight Top Level"),
+  m_highlight_top_level_check_box = new check_box(tr("Highlight Top Level"),
     this);
-  highlight_top_level_check_box->set_stylesheet(check_box_text_style,
+  m_highlight_top_level_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style, check_box_hover_style,
     check_box_focused_style);
-  market_highlight_layout->addWidget(highlight_top_level_check_box, 16);
+  market_highlight_layout->addWidget(m_highlight_top_level_check_box, 16);
   market_highlight_layout->addStretch(10);
-  auto highlight_all_levels_check_box = new check_box(
+  m_highlight_all_levels_check_box = new check_box(
     tr("Highlight All Levels"), this);
-  highlight_all_levels_check_box->set_stylesheet(check_box_text_style,
+  m_highlight_all_levels_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style, check_box_hover_style,
     check_box_focused_style);
-  market_highlight_layout->addWidget(highlight_all_levels_check_box, 16);
+  market_highlight_layout->addWidget(m_highlight_all_levels_check_box, 16);
   market_highlight_layout->addStretch(18);
   auto market_highlight_color_label = new QLabel(tr("Highlight Color"), this);
   auto generic_label_text_style = QString(R"(
@@ -154,4 +169,31 @@ void book_view_highlight_properties_widget::update_color_button_stylesheet(
   s.m_border_color = QColor("#4B23A0");
   button->set_hover_style(s);
   button->set_focus_style(s);
+}
+
+void book_view_highlight_properties_widget::update_market_widgets(
+    int selected_item_index) {
+  update_market_list_stylesheet(selected_item_index);
+
+}
+
+void book_view_highlight_properties_widget::update_market_list_stylesheet(
+    int selected_item_index) {
+  m_markets_list_widget->setStyleSheet(QString(R"(
+    QListWidget {
+      background-color: white;
+      border: %1px solid #C8C8C8 %2px solid #C8C8C8;
+      outline: none;
+      padding: %3px %4px 0px %4px;
+    }
+
+    QListWidget::item:selected {
+      background-color: %7;
+      border: %5px solid #4B23A0 %6px solid #4B23A0;
+      color: #000000;
+    })").arg(scale_height(1)).arg(scale_width(1))
+        .arg(scale_height(4)).arg(scale_width(4))
+        .arg(scale_height(1)).arg(scale_width(1))
+        .arg(m_markets_list_widget->item(
+          selected_item_index)->background().color().name()));
 }
