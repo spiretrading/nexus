@@ -1,7 +1,9 @@
 import {css, StyleSheet} from 'aphrodite';
+import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import {Center, HBoxLayout, Padding, VBoxLayout} from '../../..';
+import {Center, CurrencySelectionBox, HBoxLayout, MoneyInputBox, Padding, VBoxLayout}
+	from '../../..';
 
 interface Properties {
 
@@ -16,13 +18,9 @@ interface FooterProperties {
 	isAdmin: boolean;
 }
 
-interface NumberInputBoxProperties {
+interface MoneyInputBoxProperties {
 	label: string;
 	onChange: (value: number) => void;
-}
-
-interface NumberInputBoxState {
-	value: string;
 }
 
 interface State {
@@ -35,6 +33,20 @@ enum Breakpoint {
   LARGE
 }
 
+interface LabelProperties {
+	text: string;
+}
+
+interface TransistionTimeProperties {
+	max: number;
+	min: number;
+}
+
+interface Duration {
+	seconds: number;
+	minutes: number;
+	hours: number;
+}
 /** Implements a React component to display a set of RiskParameters. */
 export class RiskParametersView extends React.Component<Properties, State> {
 
@@ -44,6 +56,9 @@ export class RiskParametersView extends React.Component<Properties, State> {
       breakpoint: RiskParametersView.getBreakpoint()
     };
     this.onScreenResize = this.onScreenResize.bind(this);
+    this.onCurrencyChange = this.onCurrencyChange.bind(this);
+    this.onBuyingPowerChange = this.onBuyingPowerChange.bind(this);
+    this.onNetLossChange = this.onNetLossChange.bind(this);
   }
 
   public componentDidMount() {
@@ -58,11 +73,11 @@ export class RiskParametersView extends React.Component<Properties, State> {
   	const containerClassName = (() => {
   		switch(this.state.breakpoint) {
   			case Breakpoint.SMALL:
-  				return css(RiskParametersView.STYLE.smallContainer);
+  				return css(RiskParametersView.CONTAINERS.small);
   			case Breakpoint.MEDIUM:
-  				return css(RiskParametersView.STYLE.mediumContainer);
+  				return css(RiskParametersView.CONTAINERS.medium);
   			case Breakpoint.LARGE:
-  				return css(RiskParametersView.STYLE.largeContainer);
+  				return css(RiskParametersView.CONTAINERS.large);
   			default:
   				Breakpoint.MEDIUM;
   		}
@@ -71,9 +86,22 @@ export class RiskParametersView extends React.Component<Properties, State> {
     		<HBoxLayout width='100%' height='100%'>
     			<Padding/>
     			<VBoxLayout className={containerClassName}>
-    				<VBoxLayout width='246px' height='359px'>
-    				<NumberInputBox label='Buying Power ($)'
+    				<Padding size='30px'/>
+    				<VBoxLayout width='246px'>
+    				<Label text='Currency'/>
+    				<Padding size='12px'/>
+    				<CurrencySelectionBox currencyDatabase={
+    					this.props.currencyDatabase} onChange={this.onCurrencyChange}/>
+    				<Padding size='30px'/>
+    				<Label text='Buying Power ($)'/>
+    				<Padding size='12px'/>
+    				<MoneyInputBox
     					onChange={this.onBuyingPowerChange}/>
+    				<Padding size='30px'/>
+    				<Label text='Net Loss ($)'/>
+    				<Padding size='12px'/>
+    				<MoneyInputBox
+    					onChange={this.onNetLossChange}/>
     				</VBoxLayout>
     			</VBoxLayout>
     			<Padding/>
@@ -101,88 +129,66 @@ export class RiskParametersView extends React.Component<Properties, State> {
     }
   }
 
-  private onBuyingPowerChange(value: number) {
+  private onCurrencyChange(value: Nexus.Currency) {
+  	this.currency = value;
+  }
+
+  private onBuyingPowerChange(value: Nexus.Money) {
   	this.buyingPower = value;
   }
 
-  private static STYLE = StyleSheet.create({
-  	smallContainer: {
+  private onNetLossChange(value: Nexus.Money) {
+  	this.buyingPower = value;
+  }
+
+  private onDurationChange(value: number, field: string) {
+  	const newDurationJSON = this.duration.toJson();
+  	newDurationJSON[field] = value;
+  	this.duration = Beam.Duration.fromJson(newDurationJSON);
+  }
+
+  private static CONTAINERS = StyleSheet.create({
+  	small: {
   		width: '60%',
   		minWidth: '320px',
   		maxWidth: '460px'
   	},
-  	mediumContainer: {
+  	medium: {
   		width: '768px'
   	},
-  	largeContainer: {
-  		backgroundColor: 'pink'
+  	large: {
+  		width: '1036px'
   	}
   });
+  
 
-  private buyingPower: number;
+  private currency: Nexus.Currency;
+  private buyingPower: Nexus.Money;
+  private netLoss: Nexus.Money;
+  private duration: Beam.Duration;
+}
+class Label extends React.Component<LabelProperties> {
+	public render(): JSX.Element {
+		return (
+			<HBoxLayout width='100%'>
+				<span className={css(Label.STYLE.text)}>
+					{this.props.text}
+				</span>
+				<Padding/>
+			</HBoxLayout>);
+	}
+
+	private static STYLE = StyleSheet.create({
+  	text: {
+  		font: '400 14px Roboto',
+  		color: '#333333',
+  		whiteSpace: 'nowrap'
+  	}
+  });
 }
 
-class NumberInputBox extends React.Component<
-	NumberInputBoxProperties, NumberInputBoxState> {
-		constructor(props: NumberInputBoxProperties) {
-			super(props);
-			this.state = {
-				value: ''
-			}
-			this.onChange = this.onChange.bind(this);
-		}
-		public render(): JSX.Element {
-			return (
-					<VBoxLayout width='100%'>
-						<HBoxLayout width='100%'>
-							<span className={css(NumberInputBox.STYLE.label)}>
-								{this.props.label}
-							</span>
-							<Padding/>
-						</HBoxLayout>
-						<Padding size='12px'/>
-						<input type='text' className={css(NumberInputBox.STYLE.input)}
-							value={this.state.value} onChange={this.onChange}/>
-					</VBoxLayout>
-				)
-		}
+class TransistionTime extends React.Component<TransistionTimeProperties> {
 
-		private onChange(event: React.FormEvent<HTMLInputElement>) {
-			const value = parseFloat(event.currentTarget.value);
-			if(value && event.currentTarget.value.match('^[0-9]*[\\.]*[0-9]{0,2}$')) {
-				let displayValue = value.toString();
-				this.props.onChange(value);
-				this.setState({value: event.currentTarget.value});
-			} else if(event.currentTarget.value === '') {
-				this.setState({value: ''});
-				this.props.onChange(0);
-			} else if(event.currentTarget.value.match('^[0]*\\.$')) {
-				this.setState({value: '0.'});
-				this.props.onChange(0);
-			} else if(event.currentTarget.value.match('^[0]*$')) {
-				this.setState({value: '0'});
-				this.props.onChange(0);
-			} else if(event.currentTarget.value.match('^[0]*\\.0$')) {
-				this.setState({value: '0.0'});
-				this.props.onChange(0);
-			} else if(event.currentTarget.value.match('^[0]*\\.00$')) {
-				this.setState({value: '0.00'});
-				this.props.onChange(0);
-			}
-		}
-
-		private static STYLE = StyleSheet.create({
-			label: {
-				font: '400 14px Roboto',
-				color: '#333333',
-      	whiteSpace: 'nowrap'
-			},
-			input: {
-				width: '100%',
-				font: '400 14px Roboto',
-				color: '#333333'
-			}
-		});
 }
 class Footer extends React.Component<FooterProperties> {
 
