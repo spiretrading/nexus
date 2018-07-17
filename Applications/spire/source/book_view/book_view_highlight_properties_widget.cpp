@@ -3,10 +3,14 @@
 #include <QLabel>
 #include <QListWidget>
 #include <QVBoxLayout>
+#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "spire/book_view/book_view_properties.hpp"
+#include "spire/book_view/market_list_item.hpp"
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/flat_button.hpp"
 #include "spire/ui/check_box.hpp"
 
+using namespace Nexus;
 using namespace spire;
 
 book_view_highlight_properties_widget::book_view_highlight_properties_widget(
@@ -28,6 +32,10 @@ book_view_highlight_properties_widget::book_view_highlight_properties_widget(
   markets_layout->addStretch(10);
   auto markets_list_widget = new QListWidget(this);
   markets_list_widget->setFixedWidth(scale_width(140));
+  auto market_database = GetDefaultMarketDatabase().GetEntries();
+  for(auto i = 0; i < static_cast<int>(market_database.size()); ++i) {
+    auto item = new market_list_item(market_database[i], markets_list_widget);
+  }
   markets_layout->addWidget(markets_list_widget, 222);
   layout->addLayout(markets_layout, 140);
   layout->addStretch(18);
