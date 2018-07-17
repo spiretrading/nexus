@@ -12,6 +12,18 @@ interface Properties {
 
   /** Used to lookup currency names and symbols. */
   currencyDatabase: Nexus.CurrencyDatabase;
+
+  /** Called on an update of the currency. */
+  onCurrencyChange?: (currency: Nexus.Currency) => void;
+
+  /** Called on an update of the buying power. */
+  onBuyingPowerChange?: (value: Nexus.Money) => void;
+
+  /** Called on an update of the net loss. */
+  onNetLossChange?: (value: Nexus.Money) => void;
+
+  /** Called on an update of the transition time. */
+  onTransitionTimeChange?: (duration: number, field: string) => void;
 }
 
 interface FooterProperties {
@@ -38,14 +50,7 @@ interface LabelProperties {
 }
 
 interface TransistionTimeProperties {
-	max: number;
-	min: number;
-}
-
-interface Duration {
-	seconds: number;
-	minutes: number;
-	hours: number;
+	onTransitionTimeUpdate: (duration: number, field: string) => void;
 }
 /** Implements a React component to display a set of RiskParameters. */
 export class RiskParametersView extends React.Component<Properties, State> {
@@ -56,9 +61,6 @@ export class RiskParametersView extends React.Component<Properties, State> {
       breakpoint: RiskParametersView.getBreakpoint()
     };
     this.onScreenResize = this.onScreenResize.bind(this);
-    this.onCurrencyChange = this.onCurrencyChange.bind(this);
-    this.onBuyingPowerChange = this.onBuyingPowerChange.bind(this);
-    this.onNetLossChange = this.onNetLossChange.bind(this);
   }
 
   public componentDidMount() {
@@ -91,17 +93,18 @@ export class RiskParametersView extends React.Component<Properties, State> {
     				<Label text='Currency'/>
     				<Padding size='12px'/>
     				<CurrencySelectionBox currencyDatabase={
-    					this.props.currencyDatabase} onChange={this.onCurrencyChange}/>
+    					this.props.currencyDatabase} onChange={
+    					this.props.onCurrencyChange}/>
     				<Padding size='30px'/>
     				<Label text='Buying Power ($)'/>
     				<Padding size='12px'/>
     				<MoneyInputBox
-    					onChange={this.onBuyingPowerChange}/>
+    					onChange={this.props.onBuyingPowerChange}/>
     				<Padding size='30px'/>
     				<Label text='Net Loss ($)'/>
     				<Padding size='12px'/>
     				<MoneyInputBox
-    					onChange={this.onNetLossChange}/>
+    					onChange={this.props.onNetLossChange}/>
     				</VBoxLayout>
     			</VBoxLayout>
     			<Padding/>
@@ -129,24 +132,12 @@ export class RiskParametersView extends React.Component<Properties, State> {
     }
   }
 
-  private onCurrencyChange(value: Nexus.Currency) {
-  	this.currency = value;
+  private static defaultProps = {
+  	onCurrencyChange: (currency: Nexus.Currency) => {},
+	  onBuyingPowerChange: (value: Nexus.Money) => {},
+	  onNetLossChange: (value: Nexus.Money) => {},
+	  onTransitionTimeChange: (duration: number, field: string) => {}
   }
-
-  private onBuyingPowerChange(value: Nexus.Money) {
-  	this.buyingPower = value;
-  }
-
-  private onNetLossChange(value: Nexus.Money) {
-  	this.buyingPower = value;
-  }
-
-  private onDurationChange(value: number, field: string) {
-  	const newDurationJSON = this.duration.toJson();
-  	newDurationJSON[field] = value;
-  	this.duration = Beam.Duration.fromJson(newDurationJSON);
-  }
-
   private static CONTAINERS = StyleSheet.create({
   	small: {
   		width: '60%',
@@ -160,12 +151,6 @@ export class RiskParametersView extends React.Component<Properties, State> {
   		width: '1036px'
   	}
   });
-  
-
-  private currency: Nexus.Currency;
-  private buyingPower: Nexus.Money;
-  private netLoss: Nexus.Money;
-  private duration: Beam.Duration;
 }
 class Label extends React.Component<LabelProperties> {
 	public render(): JSX.Element {

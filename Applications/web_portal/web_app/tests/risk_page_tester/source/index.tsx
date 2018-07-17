@@ -10,7 +10,22 @@ const parameters = new Nexus.RiskParameters(
   Nexus.Money.ONE.multiply(1000), 100,
   Beam.Duration.HOUR.multiply(5).add(Beam.Duration.MINUTE.multiply(30)).add(
   Beam.Duration.SECOND.multiply(15)));
+const onCurrencyChange = (currency: Nexus.Currency) => {
+	console.log(currency);
+};
+
+const onBuyingPowerChange = (value: Nexus.Money) => {
+	console.log(value);
+};
+
+const onNetLossChange = (value: Nexus.Money) => {
+	console.log(value);
+};
 
 ReactDOM.render(<WebPortal.RiskParametersView parameters={parameters}
-  currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}/>,
+  currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
+  onCurrencyChange={onCurrencyChange}
+  onBuyingPowerChange={onBuyingPowerChange}
+  onNetLossChange={onNetLossChange}
+  />,
   document.getElementById('main'));
