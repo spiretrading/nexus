@@ -2,6 +2,7 @@
 #define BOOK_VIEW_HIGHLIGHT_PROPERTIES_WIDGET_HPP
 #include <QWidget>
 #include "spire/book_view/book_view.hpp"
+#include "spire/ui/ui.hpp"
 
 namespace spire {
 
@@ -22,6 +23,10 @@ namespace spire {
         \param properties The instance to apply the properties to.
       */
       void apply(book_view_properties& properties) const;
+
+    private:
+      void update_color_button_stylesheet(flat_button* button,
+        const QColor& color);
   };
 }
 
