@@ -1,4 +1,6 @@
 #include "spire/book_view/book_view_highlight_properties_widget.hpp"
+#include <QButtonGroup>
+#include <QColorDialog>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidget>
@@ -96,6 +98,10 @@ book_view_highlight_properties_widget::book_view_highlight_properties_widget(
     check_box_indicator_style, check_box_checked_style, check_box_hover_style,
     check_box_focused_style);
   market_highlight_layout->addWidget(m_highlight_all_levels_check_box, 16);
+  auto market_check_box_button_group = new QButtonGroup(this);
+  market_check_box_button_group->addButton(m_highlight_none_check_box);
+  market_check_box_button_group->addButton(m_highlight_top_level_check_box);
+  market_check_box_button_group->addButton(m_highlight_all_levels_check_box);
   market_highlight_layout->addStretch(18);
   auto market_highlight_color_label = new QLabel(tr("Highlight Color"), this);
   auto generic_label_text_style = QString(R"(
@@ -105,11 +111,13 @@ book_view_highlight_properties_widget::book_view_highlight_properties_widget(
   market_highlight_color_label->setStyleSheet(generic_label_text_style);
   market_highlight_layout->addWidget(market_highlight_color_label, 14);
   market_highlight_layout->addStretch(4);
-  auto market_highlight_color_button = new flat_button(this);
-  market_highlight_color_button->setFixedWidth(scale_width(100));
-  update_color_button_stylesheet(market_highlight_color_button,
+  m_market_highlight_color_button = new flat_button(this);
+  m_market_highlight_color_button->setFixedWidth(scale_width(100));
+  update_color_button_stylesheet(m_market_highlight_color_button,
     Qt::yellow);
-  market_highlight_layout->addWidget(market_highlight_color_button, 26);
+  m_market_highlight_color_button->connect_clicked_signal(
+    [=] { on_market_highlight_color_button_clicked(); });
+  market_highlight_layout->addWidget(m_market_highlight_color_button, 26);
   market_highlight_layout->addStretch(92);
   layout->addLayout(market_highlight_layout, 130);
   layout->addStretch(18);
@@ -173,8 +181,22 @@ void book_view_highlight_properties_widget::update_color_button_stylesheet(
 
 void book_view_highlight_properties_widget::update_market_widgets(
     int selected_item_index) {
+  auto selected_item = static_cast<market_list_item*>(
+    m_markets_list_widget->item(selected_item_index));
+  auto& market_highlight = selected_item->get_market_highlight();
+  if(market_highlight.is_initialized()) {
+    update_color_button_stylesheet(m_market_highlight_color_button,
+      market_highlight->m_color);
+    if(market_highlight->m_highlight_all_levels) {
+      m_highlight_all_levels_check_box->setChecked(true);
+    } else {
+      m_highlight_top_level_check_box->setChecked(true);
+    }
+  } else {
+    update_color_button_stylesheet(m_market_highlight_color_button, Qt::white);
+    m_highlight_none_check_box->setChecked(true);
+  }
   update_market_list_stylesheet(selected_item_index);
-
 }
 
 void book_view_highlight_properties_widget::update_market_list_stylesheet(
@@ -196,4 +218,17 @@ void book_view_highlight_properties_widget::update_market_list_stylesheet(
         .arg(scale_height(1)).arg(scale_width(1))
         .arg(m_markets_list_widget->item(
           selected_item_index)->background().color().name()));
+}
+
+void book_view_highlight_properties_widget::
+    on_market_highlight_color_button_clicked() {
+  auto item = static_cast<market_list_item*>(
+    m_markets_list_widget->currentItem());
+  auto color = QColorDialog::getColor(item->backgroundColor());
+  if(color.isValid()) {
+    item->set_highlight_color(color);
+    update_market_widgets(m_markets_list_widget->currentRow());
+    item->setBackgroundColor(color);
+    update_market_list_stylesheet(m_markets_list_widget->currentRow());
+  }
 }

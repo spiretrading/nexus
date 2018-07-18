@@ -2,6 +2,7 @@
 #define SPIRE_MARKET_LIST_ITEM_HPP
 #include <QListWidget>
 #include "Nexus/Definitions/Market.hpp"
+#include "spire/book_view/book_view_properties.hpp"
 
 namespace spire {
 
@@ -21,8 +22,22 @@ namespace spire {
       //! Returns the market info associated with this item.
       const Nexus::MarketDatabase::Entry& get_market_info() const;
 
-      boost::optional<const book_view_properties::market_highlight&>
+      const boost::optional<book_view_properties::market_highlight>&
         get_market_highlight() const;
+
+      //! Sets the market highlight's color. If the market highlight is
+      //! uninitialized, the market highlight is set to highlight the top
+      //! level.
+      void set_highlight_color(const QColor& color);
+
+      //! Sets the market highlight to highlight all levels.
+      void set_highlight_all_levels(bool highlight_all);
+
+      //! Sets the market highlight to highlight the top level only.
+      void set_highlight_top_level(bool highlight_top);
+
+      //! Removes the market highlight.
+      void remove_highlight();
 
     private:
       boost::optional<book_view_properties::market_highlight>
