@@ -57,11 +57,11 @@ def build_repo(repo, path):
     os.chdir('./Nexus/Build/Make/')
     result.append(user_call('./run_cmake.sh'))
     result.append(user_call('./build.sh'))
-    terminal_output = ''
+    terminal_output = b''
     for output in result:
-      terminal_output += output[0] + '\n\n\n\n'
+      terminal_output += output[0] + b'\n\n\n\n'
     for output in result:
-      terminal_output += output[1] + '\n\n\n\n'
+      terminal_output += output[1] + b'\n\n\n\n'
     os.chdir('./../../../')
     user_call('mkdir %s' % str(timestamp))
     nexus_applications = ['AdministrationServer', 'AsxItchMarketDataFeedClient',
