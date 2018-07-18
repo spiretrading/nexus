@@ -31,10 +31,10 @@ namespace spire {
       void set_highlight_color(const QColor& color);
 
       //! Sets the market highlight to highlight all levels.
-      void set_highlight_all_levels(bool highlight_all);
+      void set_highlight_all_levels();
 
       //! Sets the market highlight to highlight the top level only.
-      void set_highlight_top_level(bool highlight_top);
+      void set_highlight_top_level();
 
       //! Removes the market highlight.
       void remove_highlight();
@@ -43,6 +43,8 @@ namespace spire {
       boost::optional<book_view_properties::market_highlight>
         m_market_highlight;
       Nexus::MarketDatabase::Entry m_market;
+
+      void initialize();
   };
 }
 
