@@ -131,8 +131,9 @@ book_view_highlight_properties_widget::book_view_highlight_properties_widget(
   layout->addLayout(market_highlight_layout, 130);
   layout->addStretch(18);
   auto vertical_rule = new QWidget(this);
+  vertical_rule->setFixedWidth(scale_width(1));
   vertical_rule->setStyleSheet("background-color: #C8C8C8;");
-  layout->addWidget(vertical_rule, 1);
+  layout->addWidget(vertical_rule);
   layout->addStretch(18);
   auto orders_layout = new QVBoxLayout();
   orders_layout->setContentsMargins({});
@@ -155,19 +156,27 @@ book_view_highlight_properties_widget::book_view_highlight_properties_widget(
   orders_layout->addStretch(10);
   auto highlight_orders_check_box = new check_box(tr("Highlight Orders"),
     this);
+  highlight_orders_check_box->setChecked(true);
   highlight_orders_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style, check_box_hover_style,
     check_box_focused_style);
   orders_layout->addWidget(highlight_orders_check_box, 16);
+  auto orders_check_box_button_group = new QButtonGroup(this);
+  orders_check_box_button_group->addButton(hide_orders_check_box);
+  orders_check_box_button_group->addButton(display_orders_check_box);
+  orders_check_box_button_group->addButton(highlight_orders_check_box);
   orders_layout->addStretch(18);
   auto order_highlight_color_label = new QLabel(tr("Highlight Color"), this);
   order_highlight_color_label->setStyleSheet(generic_label_text_style);
   orders_layout->addWidget(order_highlight_color_label, 14);
   orders_layout->addStretch(4);
-  auto order_highlight_color_button = new flat_button(this);
-  order_highlight_color_button->setFixedWidth(scale_width(100));
-  update_color_button_stylesheet(order_highlight_color_button, Qt::yellow);
-  orders_layout->addWidget(order_highlight_color_button, 26);
+  m_order_highlight_color_button = new flat_button(this);
+  m_order_highlight_color_button->setFixedWidth(scale_width(100));
+  update_color_button_stylesheet(m_order_highlight_color_button,
+    properties.get_order_highlight_color());
+  m_order_highlight_color_button->connect_clicked_signal(
+    [=] { on_order_highlight_color_button_clicked(); });
+  orders_layout->addWidget(m_order_highlight_color_button, 26);
   orders_layout->addStretch(92);
   layout->addLayout(orders_layout, 151);
   layout->addStretch(27);
@@ -217,6 +226,11 @@ void book_view_highlight_properties_widget::update_market_list_stylesheet(
       padding: %3px %4px 0px %4px;
     }
 
+    QListWidget::item {
+      padding-top: %8px;
+      padding-bottom: %8px;
+    }
+
     QListWidget::item:selected {
       background-color: %7;
       border: %5px solid #4B23A0 %6px solid #4B23A0;
@@ -225,7 +239,8 @@ void book_view_highlight_properties_widget::update_market_list_stylesheet(
         .arg(scale_height(4)).arg(scale_width(4))
         .arg(scale_height(1)).arg(scale_width(1))
         .arg(m_markets_list_widget->item(
-          selected_item_index)->background().color().name()));
+          selected_item_index)->background().color().name())
+        .arg(scale_height(3)));
 }
 
 void book_view_highlight_properties_widget::
@@ -237,6 +252,15 @@ void book_view_highlight_properties_widget::
     item->set_highlight_color(color);
     item->setBackgroundColor(color);
     update_market_widgets(m_markets_list_widget->currentRow());
+  }
+}
+
+void book_view_highlight_properties_widget::
+    on_order_highlight_color_button_clicked() {
+  auto color = QColorDialog::getColor(
+    m_order_highlight_color_button->get_style().m_background_color);
+  if(color.isValid()) {
+    update_color_button_stylesheet(m_order_highlight_color_button, color);
   }
 }
 
