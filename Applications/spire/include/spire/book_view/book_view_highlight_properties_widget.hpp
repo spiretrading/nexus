@@ -31,6 +31,9 @@ namespace spire {
       check_box* m_highlight_top_level_check_box;
       check_box* m_highlight_all_levels_check_box;
       flat_button* m_market_highlight_color_button;
+      check_box* m_hide_orders_check_box;
+      check_box* m_display_orders_check_box;
+      check_box* m_highlight_orders_check_box;
       flat_button* m_order_highlight_color_button;
 
       void update_color_button_stylesheet(flat_button* button,

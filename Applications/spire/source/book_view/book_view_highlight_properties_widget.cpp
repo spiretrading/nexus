@@ -142,29 +142,29 @@ book_view_highlight_properties_widget::book_view_highlight_properties_widget(
   orders_label->setStyleSheet(generic_header_label_stylesheet);
   orders_layout->addWidget(orders_label, 14);
   orders_layout->addStretch(10);
-  auto hide_orders_check_box = new check_box(tr("Hide Orders"), this);
-  hide_orders_check_box->set_stylesheet(check_box_text_style,
+  m_hide_orders_check_box = new check_box(tr("Hide Orders"), this);
+  m_hide_orders_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style, check_box_hover_style,
     check_box_focused_style);
-  orders_layout->addWidget(hide_orders_check_box, 16);
+  orders_layout->addWidget(m_hide_orders_check_box, 16);
   orders_layout->addStretch(10);
-  auto display_orders_check_box = new check_box(tr("Display Orders"), this);
-  display_orders_check_box->set_stylesheet(check_box_text_style,
+  m_display_orders_check_box = new check_box(tr("Display Orders"), this);
+  m_display_orders_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style, check_box_hover_style,
     check_box_focused_style);
-  orders_layout->addWidget(display_orders_check_box, 16);
+  orders_layout->addWidget(m_display_orders_check_box, 16);
   orders_layout->addStretch(10);
-  auto highlight_orders_check_box = new check_box(tr("Highlight Orders"),
+  m_highlight_orders_check_box = new check_box(tr("Highlight Orders"),
     this);
-  highlight_orders_check_box->setChecked(true);
-  highlight_orders_check_box->set_stylesheet(check_box_text_style,
+  m_highlight_orders_check_box->setChecked(true);
+  m_highlight_orders_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style, check_box_hover_style,
     check_box_focused_style);
-  orders_layout->addWidget(highlight_orders_check_box, 16);
+  orders_layout->addWidget(m_highlight_orders_check_box, 16);
   auto orders_check_box_button_group = new QButtonGroup(this);
-  orders_check_box_button_group->addButton(hide_orders_check_box);
-  orders_check_box_button_group->addButton(display_orders_check_box);
-  orders_check_box_button_group->addButton(highlight_orders_check_box);
+  orders_check_box_button_group->addButton(m_hide_orders_check_box);
+  orders_check_box_button_group->addButton(m_display_orders_check_box);
+  orders_check_box_button_group->addButton(m_highlight_orders_check_box);
   orders_layout->addStretch(18);
   auto order_highlight_color_label = new QLabel(tr("Highlight Color"), this);
   order_highlight_color_label->setStyleSheet(generic_label_text_style);
@@ -184,6 +184,27 @@ book_view_highlight_properties_widget::book_view_highlight_properties_widget(
 
 void book_view_highlight_properties_widget::apply(
     book_view_properties& properties) const {
+  for(auto i = 0; i < m_markets_list_widget->count(); ++i) {
+    auto item = static_cast<market_list_item*>
+      (m_markets_list_widget->item(i));
+    auto highlight = item->get_market_highlight();
+    if(highlight.is_initialized()) {
+    properties.set_market_highlight(item->get_market_info().m_code,
+      highlight.get());
+    }
+  }
+  if(m_highlight_orders_check_box->isChecked()) {
+    properties.set_order_highlight(
+      book_view_properties::order_highlight::HIGHLIGHT_ORDERS);
+  } else if(m_display_orders_check_box->isChecked()) {
+    properties.set_order_highlight(
+      book_view_properties::order_highlight::DISPLAY_ORDERS);
+  } else {
+    properties.set_order_highlight(
+      book_view_properties::order_highlight::HIDE_ORDERS);
+  }
+  properties.set_order_highlight_color(m_order_highlight_color_button->
+    get_style().m_background_color);
 }
 
 void book_view_highlight_properties_widget::update_color_button_stylesheet(
