@@ -83,7 +83,7 @@ def build_repo(repo, path):
     user_call('tar -czf nexus-%s.tar.gz Nexus' % str(timestamp))
     user_call('touch ./Nexus/build.txt')
     log_file = open('./Nexus/build.txt', 'w')
-    log_file.write(terminal_output)
+    log_file.write(terminal_output.encode('utf-8'))
     log_file.close()
     destination = os.path.join(path, str(timestamp))
     user_call('mkdir %s' % destination)
