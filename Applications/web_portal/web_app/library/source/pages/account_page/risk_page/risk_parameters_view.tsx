@@ -38,7 +38,7 @@ interface Properties {
 
 interface FooterProperties {
   isButtonDisabled: boolean;
-  isCommentBoxPresent: boolean
+  isUserAdmin: boolean
   message: FOOTER_MESSAGE;
   onButtonClick: (message?: string) => void;
 }
@@ -227,7 +227,7 @@ export class RiskParametersView extends React.Component<Properties, State> {
                 <div className={css(RiskParametersView.STYLE.divider)}/>
                 <Padding size='30px'/>
                 <Footer isButtonDisabled={isButtonDisabled}
-                  isCommentBoxPresent={!this.props.isUserAdmin}
+                  isUserAdmin={!this.props.isUserAdmin}
                   onButtonClick={() => {}}
                   message={this.props.footerMessage}/>
               </VBoxLayout>
@@ -389,16 +389,22 @@ class Footer extends React.Component<FooterProperties,
       }
     })();
     const commentBox = (() => {
-      if(this.props.isCommentBoxPresent) {
+      if(this.props.isUserAdmin) {
         return <textarea className={css(Footer.STYLE.commentBox)} 
           value={this.state.comment}
           placeholder='Leave comment here…' onChange={this.onChange}/>;
       }
     })();
     const commentBoxPadding = (() => {
-      if(this.props.isCommentBoxPresent) {
+      if(this.props.isUserAdmin) {
         return <Padding size='30px'/>;
       }
+    })();
+    const buttonText = (() => {
+      if(this.props.isUserAdmin) {
+        return 'Submit Request'
+      }
+      return 'Save Changes'
     })();
     return (
       <VBoxLayout width='100%'>
