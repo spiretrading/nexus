@@ -13,6 +13,10 @@ interface Properties {
   /** Used to lookup currency names and symbols. */
   currencyDatabase: Nexus.CurrencyDatabase;
 
+  /** The message for the footer to display. */
+  footerMessage: FOOTER_MESSAGE;
+
+  isUserAdmin: boolean;
   /** Called on an update of the currency. */
   onCurrencyChange?: (currency: Nexus.Currency) => void;
 
@@ -26,7 +30,7 @@ interface Properties {
   onTransitionTimeChange?: (duration: Beam.Duration) => void;
 
   /** Called when the submit request button is clicked. */
-  onSubmitRequest?: () => void;
+  onSubmitRequest?: (message: string) => void;
 
   /** Called when the save changes button is clicked. */
   onSaveChanges?: () => void;
@@ -34,9 +38,12 @@ interface Properties {
 
 interface FooterProperties {
   isButtonDisabled: boolean;
+  isCommentBoxPresent: boolean
+  message: FOOTER_MESSAGE;
+  onButtonClick: (message?: string) => void;
 }
 
-interface NonAdminFooterState {
+interface FooterState {
   comment: string;
 }
 
@@ -60,6 +67,14 @@ enum TIME_UNIT {
   MINUTE,
   HOUR
 }
+
+enum FOOTER_MESSAGE {
+  SAVED,
+  SUBMITTED,
+  SERVER_ISSUE,
+  NONE
+};
+
 interface LabelProperties {
   text: string;
 }
@@ -76,6 +91,12 @@ export class RiskParametersView extends React.Component<Properties, State> {
     this.state = {
       breakpoint: RiskParametersView.getBreakpoint()
     };
+    this.originalParameters = new Nexus.RiskParameters(
+        this.props.parameters.currency,
+        this.props.parameters.buyingPower,
+        this.props.parameters.allowedState,
+        this.props.parameters.netLoss, this.props.parameters.lossFromTop,
+        this.props.parameters.transitionTime);
     this.onScreenResize = this.onScreenResize.bind(this);
     this.onTransitionSecondChange = this.onTransitionSecondChange.bind(this);
     this.onTransitionMinuteChange = this.onTransitionMinuteChange.bind(this);
@@ -112,24 +133,14 @@ export class RiskParametersView extends React.Component<Properties, State> {
           return '768px';
       }
     })();
-    const containerPaddingWidth = (() => {
-      switch(this.state.breakpoint) {
-        case Breakpoint.SMALL:
-          return '20%';
-      }
-    })();
-    const isButtonDisabled = (() => {
-    })();
-    const footer = (() => {
-      return <NonAdminFooter isButtonDisabled={false}/>
-    })();
     const hours = Math.floor(
       this.props.parameters.transitionTime.getTotalHours());
     const minutes = Math.floor(
       this.props.parameters.transitionTime.getTotalMinutes() % 60);
     const seconds = Math.floor(
       this.props.parameters.transitionTime.getTotalSeconds() % 60);
-
+    const isButtonDisabled = this.originalParameters.equals(
+      this.props.parameters);
     return (
         <VBoxLayout width='100%' height='100%'>
           <Padding size='30px'/>
@@ -143,20 +154,23 @@ export class RiskParametersView extends React.Component<Properties, State> {
                   <VBoxLayout width='246px'>
                     <Label text='Currency'/>
                     <Padding size='12px'/>
-                    <CurrencySelectionBox currencyDatabase={
-                      this.props.currencyDatabase}
+                    <CurrencySelectionBox className={
+                      css(RiskParametersView.STYLE.dropdownButton)}
+                      currencyDatabase={this.props.currencyDatabase}
                       value={this.props.parameters.currency} onChange={
                       this.props.onCurrencyChange}/>
                     <Padding size='30px'/>
                     <Label text='Buying Power ($)'/>
                     <Padding size='12px'/>
                     <MoneyInputBox
+                      className={css(RiskParametersView.STYLE.inputBox)}
                       value={this.props.parameters.buyingPower}
                       onChange={this.props.onBuyingPowerChange}/>
                     <Padding size='30px'/>
                     <Label text='Net Loss ($)'/>
                     <Padding size='12px'/>
                     <MoneyInputBox
+                      className={css(RiskParametersView.STYLE.inputBox)}
                       value={this.props.parameters.netLoss}
                       onChange={this.props.onNetLossChange}/>
                     <Padding size='30px'/>
@@ -164,8 +178,9 @@ export class RiskParametersView extends React.Component<Properties, State> {
                     <Padding size='12px'/>
                     <HBoxLayout width='100%'>
                       <VBoxLayout>
-                        <IntegerInputBox min={0} value={hours} onChange={
-                          this.onTransitionHourChange}/>
+                        <IntegerInputBox min={0} value={hours}
+                          className={css(RiskParametersView.STYLE.inputBox)}
+                          onChange={this.onTransitionHourChange}/>
                         <Padding size='10px'/>
                         <span className={
                             css(RiskParametersView.TRANSITION_STYLE.label)}>
@@ -180,6 +195,7 @@ export class RiskParametersView extends React.Component<Properties, State> {
                       <Padding size='10px'/>
                       <VBoxLayout>
                         <IntegerInputBox min={0} max={59} value={minutes}
+                          className={css(RiskParametersView.STYLE.inputBox)}
                           onChange={this.onTransitionMinuteChange}/>
                         <Padding size='10px'/>
                         <span className={
@@ -195,6 +211,7 @@ export class RiskParametersView extends React.Component<Properties, State> {
                       <Padding size='10px'/>
                       <VBoxLayout>
                         <IntegerInputBox min={0} max={59} value={seconds}
+                          className={css(RiskParametersView.STYLE.inputBox)}
                           onChange={this.onTransitionSecondChange}/>
                         <Padding size='10px'/>
                         <span className={
@@ -209,7 +226,10 @@ export class RiskParametersView extends React.Component<Properties, State> {
                 <Padding size='30px'/>
                 <div className={css(RiskParametersView.STYLE.divider)}/>
                 <Padding size='30px'/>
-                {footer}
+                <Footer isButtonDisabled={isButtonDisabled}
+                  isCommentBoxPresent={!this.props.isUserAdmin}
+                  onButtonClick={() => {}}
+                  message={this.props.footerMessage}/>
               </VBoxLayout>
             </VBoxLayout>
             <Padding/>
@@ -267,6 +287,7 @@ export class RiskParametersView extends React.Component<Properties, State> {
     this.props.onTransitionTimeChange(newDuration);
   }
 
+  private originalParameters: Nexus.RiskParameters;
   private static defaultProps = {
     onCurrencyChange: (currency: Nexus.Currency) => {},
     onBuyingPowerChange: (value: Nexus.Money) => {},
@@ -303,6 +324,22 @@ export class RiskParametersView extends React.Component<Properties, State> {
     },
     controlsContainer: {
       position: 'absolute' as 'absolute'
+    },
+    dropdownButton: {
+      backgroundColor: '#F8F8F8',
+      border: '1px solid #C8C8C8',
+      outline: 0
+    },
+    inputBox: {
+      outline: 0,
+      color: '#333333',
+      border: '1px solid #C8C8C8',
+      ':focus': {
+        border: '1px solid #684BC7',
+        '-webkit-box-shadow': '0px 0px 1px 0px #684BC7',
+        '-moz-box-shadow': '0px 0px 1px 0px #684BC7',
+        boxShadow: '0px 0px 1px 0px #684BC7'
+      }
     }
   });
 }
@@ -326,34 +363,55 @@ class Label extends React.Component<LabelProperties> {
   });
 }
 
-class NonAdminFooter extends React.Component<FooterProperties,
-    NonAdminFooterState> {
+class Footer extends React.Component<FooterProperties,
+    FooterState> {
   public constructor(props: FooterProperties) {
     super(props);
     this.state = {
       comment: ''
     };
     this.onChange = this.onChange.bind(this);
+    this.onClick = this.onClick.bind(this);
   }
 
   public render(): JSX.Element {
     const message = (() => {
-      return <span className={css([NonAdminFooter.MESSAGE_STYLE.base,
-        NonAdminFooter.MESSAGE_STYLE.validMessage])}>Saved</span>
+      switch(this.props.message) {
+        case FOOTER_MESSAGE.SUBMITTED:
+          return <span className={css([Footer.MESSAGE_STYLE.base,
+            Footer.MESSAGE_STYLE.valid])}>Submitted</span>;
+        case FOOTER_MESSAGE.SERVER_ISSUE:
+          return <span className={css([Footer.MESSAGE_STYLE.base,
+            Footer.MESSAGE_STYLE.invalid])}>Server issue</span>;
+        case FOOTER_MESSAGE.SAVED:
+          return <span className={css([Footer.MESSAGE_STYLE.base,
+            Footer.MESSAGE_STYLE.valid])}>Saved</span>;
+      }
+    })();
+    const commentBox = (() => {
+      if(this.props.isCommentBoxPresent) {
+        return <textarea className={css(Footer.STYLE.commentBox)} 
+          value={this.state.comment}
+          placeholder='Leave comment here…' onChange={this.onChange}/>;
+      }
+    })();
+    const commentBoxPadding = (() => {
+      if(this.props.isCommentBoxPresent) {
+        return <Padding size='30px'/>;
+      }
     })();
     return (
       <VBoxLayout width='100%'>
-        <textarea className={css(NonAdminFooter.STYLE.commentBox)} 
-          value={this.state.comment}
-          placeholder='Leave comment here…' onChange={this.onChange}/>
-        <Padding size='30px'/>
+        {commentBox}
+        {commentBoxPadding}
         <HBoxLayout width='100%'>
-          <Padding/>
+          <Padding size='calc(50% - 123px)'/>
           <button disabled={this.props.isButtonDisabled}
-          className={css(NonAdminFooter.STYLE.button)}>
+              className={css(Footer.STYLE.button)}
+              onClick={this.onClick}>
             Submit Request
           </button>
-          <Padding/>
+          <Padding size='calc(50% - 123px)'/>
         </HBoxLayout>
         <Padding size='18px'/>
         <HBoxLayout width='100%'>
@@ -366,6 +424,14 @@ class NonAdminFooter extends React.Component<FooterProperties,
 
   private onChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
     this.setState({comment: event.currentTarget.value});
+  }
+
+  private onClick() {
+    if(this.state.comment !== '') {
+      this.props.onButtonClick()
+    } else {
+      this.props.onButtonClick(this.state.comment)
+    }
   }
 
   private static STYLE = StyleSheet.create({
@@ -401,10 +467,15 @@ class NonAdminFooter extends React.Component<FooterProperties,
   });
   private static MESSAGE_STYLE = StyleSheet.create({
     base: {
-      font: '400 14px Roboto'
+      font: '400 14px Roboto',
+      width: '100%',
+      textAlign: 'center'
     },
-    validMessage: {
+    valid: {
       color: '#36BB55'
+    },
+    invalid: {
+      color: '#E63F44'
     }
   });
 }

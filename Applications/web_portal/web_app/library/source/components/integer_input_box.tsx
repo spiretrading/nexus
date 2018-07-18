@@ -17,6 +17,9 @@ interface Properties {
   /** Additional CSS styles. */
   style?: any;
 
+  /** The class name of the input box. */
+  className?: string;
+
   /** The event handler for when a change is made. */
   onChange?: (value?: number) => (boolean | void);
 }
@@ -52,6 +55,7 @@ export class IntegerInputBox extends React.Component<Properties, State> {
     return (
       <div>
         <input style={style} type='text'
+          className={this.props.className}
           ref={(input) => { this._input = input; }} value={value}
           onKeyDown={this.onKeyDown} onWheel={this.onWheel}
           onChange={this.onChange}/>

@@ -11,6 +11,9 @@ interface Properties {
 
   /** The event handler called when the selection changes. */
   onChange?: (currency: Nexus.Currency) => void;
+
+  /** The class name of the currency selection box. */
+  className?: string;
 }
 
 /** Displays a selection box for currencies. */
@@ -54,8 +57,8 @@ export class CurrencySelectionBox extends React.Component<Properties> {
     })();
     return (
       <div>
-        <select style={selectStyle} onChange={this.onChange}
-            defaultValue={defaultValue}>
+        <select style={selectStyle} className={this.props.className}
+            onChange={this.onChange} defaultValue={defaultValue}>
           {currencies}
         </select>
       </div>);
