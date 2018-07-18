@@ -103,6 +103,9 @@ book_view_highlight_properties_widget::book_view_highlight_properties_widget(
   m_highlight_all_levels_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style, check_box_hover_style,
     check_box_focused_style);
+  connect(m_highlight_all_levels_check_box, &QCheckBox::stateChanged, this,
+    &book_view_highlight_properties_widget::
+    on_highlight_all_levels_check_box_checked);
   market_highlight_layout->addWidget(m_highlight_all_levels_check_box, 16);
   auto market_check_box_button_group = new QButtonGroup(this);
   market_check_box_button_group->addButton(m_highlight_none_check_box);
@@ -258,5 +261,8 @@ void book_view_highlight_properties_widget::
 
 void book_view_highlight_properties_widget::
     on_highlight_all_levels_check_box_checked(int state) {
-
+  if(state == Qt::Checked) {
+    static_cast<market_list_item*>(m_markets_list_widget->currentItem())->
+      set_highlight_all_levels();
+  }
 }
