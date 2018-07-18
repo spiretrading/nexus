@@ -37,6 +37,9 @@ namespace spire {
       void update_market_widgets(int selected_item_index);
       void update_market_list_stylesheet(int selected_item_index);
       void on_market_highlight_color_button_clicked();
+      void on_highlight_none_check_box_checked(int state);
+      void on_highlight_top_level_check_box_checked(int state);
+      void on_highlight_all_levels_check_box_checked(int state);
   };
 }
 
