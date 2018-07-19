@@ -45,12 +45,6 @@ interface FooterProperties {
   onCommentChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }
 
-
-interface MoneyInputBoxProperties {
-  label: string;
-  onChange: (value: number) => void;
-}
-
 interface State {
   breakpoint: Breakpoint;
   comment: string;
@@ -60,12 +54,6 @@ enum Breakpoint {
   SMALL,
   MEDIUM,
   LARGE
-}
-
-enum TIME_UNIT {
-  SECOND,
-  MINUTE,
-  HOUR
 }
 
 enum FOOTER_MESSAGE {
@@ -92,12 +80,7 @@ export class RiskParametersView extends React.Component<Properties, State> {
       breakpoint: RiskParametersView.getBreakpoint(),
       comment: ''
     };
-    this.originalParameters = new Nexus.RiskParameters(
-        this.props.parameters.currency,
-        this.props.parameters.buyingPower,
-        this.props.parameters.allowedState,
-        this.props.parameters.netLoss, this.props.parameters.lossFromTop,
-        this.props.parameters.transitionTime);
+    this.originalParameters = this.props.parameters.copy();
     this.onScreenResize = this.onScreenResize.bind(this);
     this.onTransitionSecondChange = this.onTransitionSecondChange.bind(this);
     this.onTransitionMinuteChange = this.onTransitionMinuteChange.bind(this);
@@ -120,20 +103,15 @@ export class RiskParametersView extends React.Component<Properties, State> {
         case Breakpoint.SMALL:
           return css([RiskParametersView.CONTAINER_STYLE.small,
             RiskParametersView.CONTAINER_STYLE.base]);
-        default:
-          return css(RiskParametersView.CONTAINER_STYLE.base);
-      }
-    })();
-    const containerWidth = (() => {
-      switch(this.state.breakpoint) {
-        case Breakpoint.SMALL:
-          return '60%'
         case Breakpoint.MEDIUM:
-          return '768px';
+          return css([RiskParametersView.CONTAINER_STYLE.medium,
+            RiskParametersView.CONTAINER_STYLE.base]);
         case Breakpoint.LARGE:
-          return '1036px';
+          return css([RiskParametersView.CONTAINER_STYLE.large,
+            RiskParametersView.CONTAINER_STYLE.base]);
         default:
-          return '768px';
+          return css([RiskParametersView.CONTAINER_STYLE.medium,
+              RiskParametersView.CONTAINER_STYLE.base]);
       }
     })();
     const hours = Math.floor(
@@ -149,7 +127,7 @@ export class RiskParametersView extends React.Component<Properties, State> {
           <Padding size='30px'/>
           <HBoxLayout width='100%'>
             <Padding/>
-            <VBoxLayout width={containerWidth} className={containerClassName}>
+            <VBoxLayout className={containerClassName}>
               <VBoxLayout width='100%' className={
                   css(RiskParametersView.STYLE.controlsContainer)}>
                 <HBoxLayout width='100%'>
@@ -181,7 +159,7 @@ export class RiskParametersView extends React.Component<Properties, State> {
                     <Padding size='12px'/>
                     <HBoxLayout width='100%'>
                       <VBoxLayout>
-                        <IntegerInputBox min={0} value={hours}
+                        <IntegerInputBox min={0} value={hours} padding={2}
                           className={css(RiskParametersView.STYLE.inputBox)}
                           onChange={this.onTransitionHourChange}/>
                         <Padding size='10px'/>
@@ -198,6 +176,7 @@ export class RiskParametersView extends React.Component<Properties, State> {
                       <Padding size='10px'/>
                       <VBoxLayout>
                         <IntegerInputBox min={0} max={59} value={minutes}
+                          padding={2}
                           className={css(RiskParametersView.STYLE.inputBox)}
                           onChange={this.onTransitionMinuteChange}/>
                         <Padding size='10px'/>
@@ -214,6 +193,7 @@ export class RiskParametersView extends React.Component<Properties, State> {
                       <Padding size='10px'/>
                       <VBoxLayout>
                         <IntegerInputBox min={0} max={59} value={seconds}
+                          padding={2}
                           className={css(RiskParametersView.STYLE.inputBox)}
                           onChange={this.onTransitionSecondChange}/>
                         <Padding size='10px'/>
@@ -316,12 +296,19 @@ export class RiskParametersView extends React.Component<Properties, State> {
     onSaveChanges: () => {},
   }
   private static CONTAINER_STYLE = StyleSheet.create({
+    base: {
+      position: 'relative' as 'relative'
+    },
     small: {
+      width: '60%',
       minWidth: '320px',
       maxWidth: '460px'
     },
-    base: {
-      position: 'relative' as 'relative'
+    medium: {
+      width: '768px'
+    },
+    large: {
+      width: '1036px'
     }
   });
   private static TRANSITION_STYLE = StyleSheet.create({
