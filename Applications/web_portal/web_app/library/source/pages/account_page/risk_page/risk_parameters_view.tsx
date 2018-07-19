@@ -6,6 +6,7 @@ import {Center, CurrencySelectionBox, HBoxLayout, IntegerInputBox,
   MoneyInputBox, Padding, VBoxLayout} from '../../..';
 
 interface Properties {
+  
   /** The type of display to render on. */
   breakpoint: RiskParametersView.Breakpoint;
 
@@ -263,6 +264,7 @@ class Label extends React.Component<LabelProperties> {
     }
   });
 }
+
 export namespace RiskParametersView {
   export enum Breakpoint {
     SMALL,

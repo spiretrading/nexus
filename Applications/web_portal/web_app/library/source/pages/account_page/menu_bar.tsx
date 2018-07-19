@@ -228,15 +228,15 @@ class Item extends React.Component<ItemProperties> {
     })();
     if(this.props.breakpoint === MenuBar.Breakpoint.SMALL) {
       return (
-      <VBoxLayout height='38px'>
-        <Padding size='8px'/>
-        <Center width='24px' height='24px' className={itemClassName}
-            onMouseEnter={this.props.onMouseEnter}
-            onMouseLeave={this.props.onMouseLeave} onClick={this.props.onClick}>
-          <img src={this.props.iconSrc} width='20px' height='20px'/>
-        </Center>
-        <Padding size='6px'/>
-      </VBoxLayout>);
+        <VBoxLayout height='38px'>
+          <Padding size='8px'/>
+          <Center width='24px' height='24px' className={itemClassName}
+              onMouseEnter={this.props.onMouseEnter}
+              onMouseLeave={this.props.onMouseLeave} onClick={this.props.onClick}>
+            <img src={this.props.iconSrc} width='20px' height='20px'/>
+          </Center>
+          <Padding size='6px'/>
+        </VBoxLayout>);
     }
     return (
       <VBoxLayout className={itemClassName}
