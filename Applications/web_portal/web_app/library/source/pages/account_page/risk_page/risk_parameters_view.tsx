@@ -30,10 +30,6 @@ enum TimeUnit {
   HOURS
 }
 
-interface TransistionTimeProperties {
-  onTransitionTimeUpdate?: (duration: number, field: string) => void;
-}
-
 /** Implements a React component to display a set of RiskParameters. */
 export class RiskParametersView extends React.Component<Properties, State> {
   constructor(props: Properties) {
@@ -73,12 +69,9 @@ export class RiskParametersView extends React.Component<Properties, State> {
               RiskParametersView.CONTAINER_STYLE.base]);
       }
     })();
-    const hours = Math.floor(
-      this.props.parameters.transitionTime.getTotalHours());
-    const minutes = Math.floor(
-      this.props.parameters.transitionTime.getTotalMinutes() % 60);
-    const seconds = Math.floor(
-      this.props.parameters.transitionTime.getTotalSeconds() % 60);
+    const hours = this.props.parameters.transitionTime.split().hours;
+    const minutes = this.props.parameters.transitionTime.split().minutes;
+    const seconds = this.props.parameters.transitionTime.split().seconds;
     const currencySign = this.props.currencyDatabase.fromCurrency(
       this.props.parameters.currency).sign;
     return (
@@ -232,7 +225,10 @@ export class RiskParametersView extends React.Component<Properties, State> {
           };
         }
     })();
-    this.props.parameters.transitionTime = Beam.Duration.fromJson(newTimeJSON);
+    this.props.parameters.transitionTime = Beam.Duration.HOUR.multiply(
+      newTimeJSON.hours).add(Beam.Duration.MINUTE.multiply(
+        newTimeJSON.minutes)).add(Beam.Duration.SECOND.multiply(
+        newTimeJSON.seconds));
   }
 
   private static CONTAINER_STYLE = StyleSheet.create({
