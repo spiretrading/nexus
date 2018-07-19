@@ -6,6 +6,9 @@ interface Properties {
   /** Determines how a form gets submitted depending on the account's roles. */
   roles: Nexus.AccountRoles;
 
+  /** The status message to display. */
+  status?: string;
+
   /** Indicates the form should be submitted. */
   onClick?: () => void;
 }
