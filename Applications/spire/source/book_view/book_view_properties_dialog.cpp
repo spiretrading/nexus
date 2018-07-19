@@ -87,8 +87,14 @@ book_view_properties_dialog::book_view_properties_dialog(
   connect(m_tab_widget->tabBar(), &QTabBar::tabBarClicked, this,
     &book_view_properties_dialog::on_tab_bar_clicked);
   auto button_group_widget = new properties_window_buttons_widget(this);
+  button_group_widget->connect_apply_signal(
+    [=] { m_apply_signal(get_properties()); });
+  button_group_widget->connect_apply_to_all_signal(
+    [=] { m_apply_all_signal(get_properties()); });
   button_group_widget->connect_cancel_signal([=] { reject(); });
   button_group_widget->connect_ok_signal([=] { accept(); });
+  button_group_widget->connect_save_as_default_signal(
+    [=] { m_save_default_signal(get_properties()); });
   layout->addWidget(button_group_widget);
 }
 
