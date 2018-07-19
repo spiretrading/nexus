@@ -14,6 +14,9 @@ interface Properties {
 
   /** The event handler for when a change is made. */
   onChange?: (value?: Nexus.Money) => (boolean | void);
+
+  /** The class name of the money input box. */
+  className?: string;
 }
 
 interface State {
@@ -44,7 +47,7 @@ export class MoneyInputBox extends React.Component<Properties, State> {
     } as any;
     return (
       <div>
-        <input style={inputStyle} type='text'
+        <input style={inputStyle} className={this.props.className} type='text'
           ref={(input) => { this._input = input; }}
           value={this.state.value.toString()}
           onKeyDown={this.onKeyDown} onWheel={this.onWheel}
