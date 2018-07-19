@@ -2,6 +2,7 @@ import {css, StyleSheet} from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import {Center, HBoxLayout, Padding, VBoxLayout} from '../..';
+import {SideMenuButton} from './side_menu_button';
 
 interface Properties {
 
@@ -40,16 +41,16 @@ export class SideMenu extends React.Component<Properties, State> {
     return (
       <VBoxLayout className={css(SideMenu.STYLE.sideMenu)}>
         <Padding size='15px'/>
-        <MenuButton iconSrc='resources/dashboard/my-profile.svg'
-          text='My Profile' onClick={this.props.onProfileClick}/>
-        <MenuButton iconSrc='resources/dashboard/accounts.svg'
-          text='Accounts' onClick={this.props.onAccountsClick}/>
-        <MenuButton iconSrc='resources/dashboard/portfolio.svg'
-          text='Portfolio' onClick={this.props.onPortfolioClick}/>
-        <MenuButton iconSrc='resources/dashboard/request-history.svg'
-          text='Request History' onClick={this.props.onRequestHistoryClick}/>
-        <MenuButton iconSrc='resources/dashboard/sign-out.svg'
-          text='Sign Out' onClick={this.props.onSignOutClick}/>
+        <SideMenuButton icon='resources/dashboard/my-profile.svg'
+          label='My Profile' onClick={this.props.onProfileClick}/>
+        <SideMenuButton icon='resources/dashboard/accounts.svg'
+          label='Accounts' onClick={this.props.onAccountsClick}/>
+        <SideMenuButton icon='resources/dashboard/portfolio.svg'
+          label='Portfolio' onClick={this.props.onPortfolioClick}/>
+        <SideMenuButton icon='resources/dashboard/request-history.svg'
+          label='Request History' onClick={this.props.onRequestHistoryClick}/>
+        <SideMenuButton icon='resources/dashboard/sign-out.svg'
+          label='Sign Out' onClick={this.props.onSignOutClick}/>
       </VBoxLayout>);
   }
 
@@ -68,64 +69,6 @@ export class SideMenu extends React.Component<Properties, State> {
       height: '100%',
       minHeight: '568px',
       backgroundColor: '#4B23A0'
-    }
-  });
-}
-
-class MenuButton extends React.Component<MenuButtonProps> {
-  public render(): JSX.Element {
-    return (
-      <button onClick={this.props.onClick} className={
-          css(MenuButton.STYLE.button)}>
-        <HBoxLayout className={
-            css(MenuButton.STYLE.buttonContents)}>
-          <Padding size='18px'/>
-          <Center width='20px' height='40px'>
-            <img className={css(MenuButton.STYLE.img)}
-              src={this.props.iconSrc}/>
-          </Center>
-          <Padding size='20px'/>
-          <VBoxLayout height='40px'
-              className={css(MenuButton.STYLE.buttonText)}>
-            <Padding/>
-            {this.props.text}
-            <Padding/>
-          </VBoxLayout>
-        </HBoxLayout>
-      </button>);
-  }
-  private static STYLE = StyleSheet.create({
-    button: {
-      width: '200px',
-      height: '40px',
-      backgroundColor: '#4B23A0',
-      outline: 0,
-      border: 'none',
-      padding: 0,
-      font: '200 14px Roboto',
-      '-webkit-tap-highlight-color': 'transparent',
-      ':hover': {
-        backgroundColor: '#684BC7',
-        cursor: 'pointer',
-        color: 'blue'
-      },
-      ':active': {
-        font: '400 14px Roboto'
-      }
-    },
-    buttonContents: {
-      width: '100%',
-      height: '40px',
-      backgroundColor: 'inherit'
-    },
-    buttonText: {
-      color: 'white',
-      font: 'inherit',
-      lineHeight: '20px'
-    },
-    img: {
-      width: '20px',
-      height: '20px'
     }
   });
 }
