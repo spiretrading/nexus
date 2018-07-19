@@ -69,9 +69,7 @@ export class RiskParametersView extends React.Component<Properties, State> {
               RiskParametersView.CONTAINER_STYLE.base]);
       }
     })();
-    const hours = this.props.parameters.transitionTime.split().hours;
-    const minutes = this.props.parameters.transitionTime.split().minutes;
-    const seconds = this.props.parameters.transitionTime.split().seconds;
+    const splitTransitionTime = this.props.parameters.transitionTime.split();
     const currencySign = this.props.currencyDatabase.fromCurrency(
       this.props.parameters.currency).sign;
     return (
@@ -109,8 +107,9 @@ export class RiskParametersView extends React.Component<Properties, State> {
                 <Padding size='12px'/>
                 <HBoxLayout width='100%'>
                   <VBoxLayout>
-                    <IntegerInputBox min={0} value={hours} padding={2}
-                      className={css(RiskParametersView.STYLE.inputBox)}
+                    <IntegerInputBox min={0} value={splitTransitionTime.hours}
+                      padding={2} className={
+                        css(RiskParametersView.STYLE.inputBox)}
                       onChange={(value) => this.onTransitionTimeChange(
                         value, TimeUnit.HOURS)}/>
                     <Padding size='10px'/>
@@ -127,8 +126,8 @@ export class RiskParametersView extends React.Component<Properties, State> {
                   </Center>
                   <Padding size='10px'/>
                   <VBoxLayout>
-                    <IntegerInputBox min={0} max={59} value={minutes}
-                      padding={2}
+                    <IntegerInputBox min={0} max={59} value={
+                      splitTransitionTime.minutes} padding={2}
                       className={css(RiskParametersView.STYLE.inputBox)}
                       onChange={(value) => this.onTransitionTimeChange(
                         value, TimeUnit.MINUTES)}/>
@@ -146,8 +145,8 @@ export class RiskParametersView extends React.Component<Properties, State> {
                   </Center>
                   <Padding size='10px'/>
                   <VBoxLayout>
-                    <IntegerInputBox min={0} max={59} value={seconds}
-                      padding={2}
+                    <IntegerInputBox min={0} max={59} value={
+                      splitTransitionTime.seconds} padding={2}
                       className={css(RiskParametersView.STYLE.inputBox)}
                       onChange={(value) => this.onTransitionTimeChange(
                         value, TimeUnit.SECONDS)}/>
