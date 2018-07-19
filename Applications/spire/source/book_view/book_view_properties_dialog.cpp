@@ -1,6 +1,5 @@
 #include "spire/book_view/book_view_properties_dialog.hpp"
 #include <QHBoxLayout>
-#include <QTabBar>
 #include <QTabWidget>
 #include <QVBoxLayout>
 #include "spire/book_view/book_view_highlight_properties_widget.hpp"
@@ -39,7 +38,7 @@ book_view_properties_dialog::book_view_properties_dialog(
   tab_widget->tabBar()->setFixedHeight(scale_height(40));
   tab_widget->setStyleSheet(QString(R"(
     QWidget {
-      outline: %6px solid #4B23A0;
+      outline: none;
     }
 
     QTabWidget::pane {
@@ -53,6 +52,11 @@ book_view_properties_dialog::book_view_properties_dialog(
       height: %2px;
       margin: %3px %4px %3px 0px;
       width: %5px;
+    }
+
+    QTabBar::tab:focus {
+      border: %6px solid #4B23A0;
+      padding: -%6px 0px 0px -%6px;
     }
 
     QTabBar::tab:hover {
