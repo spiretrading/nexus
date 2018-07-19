@@ -122,7 +122,7 @@ class LargeHeader extends React.Component<HeaderProps> {
           <Padding/>
           <HBoxLayout width='1036px' height='40px'>
             <Padding size='18px'/>
-            <MenuBar/>
+            <MenuBar breakpoint={MenuBar.Breakpoint.LARGE}/>
             <Padding/>
             <div className={
                 css(LargeHeader.STYLE.usernameAndRoleContainer)}>
@@ -163,7 +163,7 @@ class MediumHeader extends React.Component<HeaderProps> {
           <div className={css(MediumHeader.STYLE.headerPadding)}/>
           <Padding size='18px'/>
           <HBoxLayout height='40px' width='750px'>
-            <MenuBar/>
+            <MenuBar breakpoint={MenuBar.Breakpoint.MEDIUM}/>
             <div className={css(MediumHeader.STYLE.innerPadding)}/>
             <RolePanel roles={this.props.roles}/>
           </HBoxLayout>
@@ -206,7 +206,7 @@ class SmallHeader extends React.Component<HeaderProps> {
           <Padding size='18px'/>
           <HBoxLayout height='40px' className={
               css(SmallHeader.STYLE.accountHeader)}>
-            <MenuBar/>
+            <MenuBar breakpoint={MenuBar.Breakpoint.SMALL}/>
             <div className={css(SmallHeader.STYLE.innerPadding)}/>
             <RolePanel roles={this.props.roles}/>
           </HBoxLayout>

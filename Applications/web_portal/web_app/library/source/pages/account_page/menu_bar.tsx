@@ -2,7 +2,16 @@ import {css, StyleSheet} from 'aphrodite';
 import * as React from 'react';
 import {Center, HBoxLayout, Padding, VBoxLayout} from '../..';
 
+enum MenuBarBreakpoint {
+  SMALL,
+  MEDIUM,
+  LARGE
+}
+
 interface Properties {
+
+  /** The type of display to render on. */
+  breakpoint: MenuBarBreakpoint;
 
   /** Indicates the account item was clicked. */
   onAccountClick?: () => void;
@@ -20,12 +29,6 @@ interface Properties {
   onProfitAndLossClick?: () => void;
 }
 
-enum Breakpoint {
-  SMALL,
-  MEDIUM,
-  LARGE
-}
-
 enum MenuItem {
   ACCOUNT,
   RISK_CONTROLS,
@@ -35,7 +38,6 @@ enum MenuItem {
 }
 
 interface State {
-  breakpoint: Breakpoint;
   selected: MenuItem;
   hovered: MenuItem;
 }
@@ -53,39 +55,29 @@ export class MenuBar extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      breakpoint: MenuBar.getBreakpoint(),
       selected: MenuItem.ACCOUNT,
       hovered: null
     };
-    this.onScreenResize = this.onScreenResize.bind(this);
     this.onIconMouseEnter = this.onIconMouseEnter.bind(this);
     this.onIconMouseLeave = this.onIconMouseLeave.bind(this);
     this.onIconClick = this.onIconClick.bind(this);
   }
 
-  public componentDidMount() {
-    window.addEventListener('resize', this.onScreenResize);
-  }
-
-  public componentWillUnmount(): void {
-    window.removeEventListener('resize', this.onScreenResize);
-  }
-
   public render(): JSX.Element {
     const menuBarPadding = ((): JSX.Element => {
-      if(this.state.breakpoint === Breakpoint.SMALL) {
+      if(this.props.breakpoint === MenuBar.Breakpoint.SMALL) {
         return <div className={css(MenuBar.STYLE.smallPadding)}/>;
       }
       return <Padding size='30px'/>;
     })();
     const menuIconContainerClassName = (() => {
-      if(this.state.breakpoint === Breakpoint.SMALL) {
+      if(this.props.breakpoint === MenuBar.Breakpoint.SMALL) {
         return css([MenuBar.STYLE.base, MenuBar.STYLE.small]);
       }
       return css(MenuBar.STYLE.base);
     })();
     const menuBarWidth = (() => {
-      if(this.state.breakpoint !== Breakpoint.SMALL) {
+      if(this.props.breakpoint !== MenuBar.Breakpoint.SMALL) {
         return '590px';
       }
     })();
@@ -96,7 +88,7 @@ export class MenuBar extends React.Component<Properties, State> {
           <Item iconSrc={`resources/account/account` +
               `-${this.getIconColor(MenuItem.ACCOUNT)}.svg`} name='Account'
             isSelected={this.state.selected === MenuItem.ACCOUNT}
-            breakpoint={this.state.breakpoint}
+            breakpoint={this.props.breakpoint}
             onMouseEnter={() => this.onIconMouseEnter(MenuItem.ACCOUNT)}
             onMouseLeave={this.onIconMouseLeave}
             onClick={() => this.onIconClick(MenuItem.ACCOUNT,
@@ -109,7 +101,7 @@ export class MenuBar extends React.Component<Properties, State> {
             `-${this.getIconColor(MenuItem.RISK_CONTROLS)}.svg`}
             name='Risk Controls'
             isSelected={this.state.selected === MenuItem.RISK_CONTROLS}
-            breakpoint={this.state.breakpoint}
+            breakpoint={this.props.breakpoint}
             onMouseEnter={() => this.onIconMouseEnter(MenuItem.RISK_CONTROLS)}
             onMouseLeave={this.onIconMouseLeave}
             onClick={() => this.onIconClick(MenuItem.RISK_CONTROLS,
@@ -123,7 +115,7 @@ export class MenuBar extends React.Component<Properties, State> {
             `-${this.getIconColor(MenuItem.ENTITLEMENTS)}.svg`}
             name='Entitlements'
             isSelected={this.state.selected === MenuItem.ENTITLEMENTS}
-            breakpoint={this.state.breakpoint}
+            breakpoint={this.props.breakpoint}
             onMouseEnter={() => this.onIconMouseEnter(MenuItem.ENTITLEMENTS)}
             onMouseLeave={this.onIconMouseLeave}
             onClick={() => this.onIconClick(MenuItem.ENTITLEMENTS,
@@ -136,7 +128,7 @@ export class MenuBar extends React.Component<Properties, State> {
           <Item iconSrc={`resources/account/compliance` +
             `-${this.getIconColor(MenuItem.COMPLIANCE)}.svg`} name='Compliance'
             isSelected={this.state.selected === MenuItem.COMPLIANCE}
-            breakpoint={this.state.breakpoint}
+            breakpoint={this.props.breakpoint}
             onMouseEnter={() => this.onIconMouseEnter(MenuItem.COMPLIANCE)}
             onMouseLeave={this.onIconMouseLeave}
             onClick={() => this.onIconClick(MenuItem.COMPLIANCE,
@@ -147,7 +139,7 @@ export class MenuBar extends React.Component<Properties, State> {
         <VBoxLayout height='40px'>
           <Item iconSrc={`resources/account/profit-loss` +
             `-${this.getIconColor(MenuItem.PROFIT_LOSS)}.svg`}
-            name='Profit/Loss' breakpoint={this.state.breakpoint}
+            name='Profit/Loss' breakpoint={this.props.breakpoint}
             isSelected={this.state.selected === MenuItem.PROFIT_LOSS}
             onMouseEnter={() => this.onIconMouseEnter(MenuItem.PROFIT_LOSS)}
             onMouseLeave={this.onIconMouseLeave}
@@ -157,19 +149,6 @@ export class MenuBar extends React.Component<Properties, State> {
             MenuItem.PROFIT_LOSS)}/>
         </VBoxLayout>
       </HBoxLayout>);
-  }
-
-  private static getBreakpoint(): Breakpoint {
-    const screenWidth = window.innerWidth ||
-      document.documentElement.clientWidth ||
-      document.getElementsByTagName('body')[0].clientWidth;
-    if(screenWidth <= 767) {
-      return Breakpoint.SMALL;
-    } else if(screenWidth > 767 && screenWidth <= 1035) {
-      return Breakpoint.MEDIUM;
-    } else {
-      return Breakpoint.LARGE;
-    }
   }
 
   private getIconColor(item: MenuItem) {
@@ -184,13 +163,6 @@ export class MenuBar extends React.Component<Properties, State> {
       return css(MenuBar.STYLE.selectedBorder);
     }
     return css(MenuBar.STYLE.unselectedBorder);
-  }
-
-  private onScreenResize(): void {
-    const newBreakpoint = MenuBar.getBreakpoint();
-    if(newBreakpoint !== this.state.breakpoint) {
-      this.setState({breakpoint: newBreakpoint});
-    }
   }
 
   private onIconMouseEnter(item: MenuItem) {
@@ -238,7 +210,7 @@ export class MenuBar extends React.Component<Properties, State> {
 interface ItemProperties {
   iconSrc: string;
   isSelected: boolean;
-  breakpoint: Breakpoint;
+  breakpoint: MenuBarBreakpoint;
   name: string;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
@@ -260,7 +232,7 @@ class Item extends React.Component<ItemProperties> {
       }
       return css([Item.STYLE.item, Item.STYLE.unSelectedItem]);
     })();
-    if(this.props.breakpoint === Breakpoint.SMALL) {
+    if(this.props.breakpoint === MenuBar.Breakpoint.SMALL) {
       return (
       <VBoxLayout height='38px'>
         <Padding size='8px'/>
@@ -326,4 +298,8 @@ class Item extends React.Component<ItemProperties> {
       whiteSpace: 'nowrap'
     }
   });
+}
+
+export namespace MenuBar {
+  export const Breakpoint = MenuBarBreakpoint;
 }
