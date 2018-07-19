@@ -12,31 +12,10 @@ interface Properties {
 
   /** Used to lookup currency names and symbols. */
   currencyDatabase: Nexus.CurrencyDatabase;
-
-  /** Called on an update of the currency. */
-  onCurrencyChange?: (currency: Nexus.Currency) => void;
-
-  /** Called on an update of the buying power. */
-  onBuyingPowerChange?: (value: Nexus.Money) => void;
-
-  /** Called on an update of the net loss. */
-  onNetLossChange?: (value: Nexus.Money) => void;
-
-  /** Called on an update of the transition time. */
-  onTransitionTimeChange?: (duration: Beam.Duration) => void;
 }
 
 interface State {
   breakpoint: Breakpoint;
-}
-
-interface FooterProperties {
-  isButtonDisabled: boolean;
-  isUserAdmin: boolean;
-  message: FOOTER_MESSAGE;
-  comment?: string;
-  onButtonClick: () => void;
-  onCommentChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }
 
 enum Breakpoint {
@@ -45,15 +24,10 @@ enum Breakpoint {
   LARGE
 }
 
-enum FOOTER_MESSAGE {
-  SAVED,
-  SUBMITTED,
-  SERVER_ISSUE,
-  NONE
-}
-
-interface LabelProperties {
-  text: string;
+enum TimeUnit {
+  SECONDS,
+  MINUTES,
+  HOURS
 }
 
 interface TransistionTimeProperties {
@@ -62,16 +36,16 @@ interface TransistionTimeProperties {
 
 /** Implements a React component to display a set of RiskParameters. */
 export class RiskParametersView extends React.Component<Properties, State> {
-
-  public constructor(props: Properties) {
+  constructor(props: Properties) {
     super(props);
     this.state = {
       breakpoint: RiskParametersView.getBreakpoint()
     };
     this.onScreenResize = this.onScreenResize.bind(this);
-    this.onTransitionSecondChange = this.onTransitionSecondChange.bind(this);
-    this.onTransitionMinuteChange = this.onTransitionMinuteChange.bind(this);
-    this.onTransitionHourChange = this.onTransitionHourChange.bind(this);
+    this.onCurrencyChange = this.onCurrencyChange.bind(this);
+    this.onBuyingPowerChange = this.onBuyingPowerChange.bind(this);
+    this.onNetLossChange = this.onNetLossChange.bind(this);
+    this.onTransitionTimeChange = this.onTransitionTimeChange.bind(this);
   }
 
   public componentDidMount() {
@@ -122,21 +96,21 @@ export class RiskParametersView extends React.Component<Properties, State> {
                   css(RiskParametersView.STYLE.dropdownButton)}
                   currencyDatabase={this.props.currencyDatabase}
                   value={this.props.parameters.currency} onChange={
-                  this.props.onCurrencyChange}/>
+                  this.onCurrencyChange}/>
                 <Padding size='30px'/>
                 <Label text={`Buying Power (${currencySign})`}/>
                 <Padding size='12px'/>
                 <MoneyInputBox
                   className={css(RiskParametersView.STYLE.inputBox)}
                   value={this.props.parameters.buyingPower}
-                  onChange={this.props.onBuyingPowerChange}/>
+                  onChange={this.onBuyingPowerChange}/>
                 <Padding size='30px'/>
                 <Label text={`Net Loss (${currencySign})`}/>
                 <Padding size='12px'/>
                 <MoneyInputBox
                   className={css(RiskParametersView.STYLE.inputBox)}
                   value={this.props.parameters.netLoss}
-                  onChange={this.props.onNetLossChange}/>
+                  onChange={this.onNetLossChange}/>
                 <Padding size='30px'/>
                 <Label text='Transition Time'/>
                 <Padding size='12px'/>
@@ -144,7 +118,8 @@ export class RiskParametersView extends React.Component<Properties, State> {
                   <VBoxLayout>
                     <IntegerInputBox min={0} value={hours} padding={2}
                       className={css(RiskParametersView.STYLE.inputBox)}
-                      onChange={this.onTransitionHourChange}/>
+                      onChange={(value) => this.onTransitionTimeChange(
+                        value, TimeUnit.HOURS)}/>
                     <Padding size='10px'/>
                     <span className={
                         css(RiskParametersView.
@@ -162,7 +137,8 @@ export class RiskParametersView extends React.Component<Properties, State> {
                     <IntegerInputBox min={0} max={59} value={minutes}
                       padding={2}
                       className={css(RiskParametersView.STYLE.inputBox)}
-                      onChange={this.onTransitionMinuteChange}/>
+                      onChange={(value) => this.onTransitionTimeChange(
+                        value, TimeUnit.MINUTES)}/>
                     <Padding size='10px'/>
                     <span className={
                         css(RiskParametersView.
@@ -180,7 +156,8 @@ export class RiskParametersView extends React.Component<Properties, State> {
                     <IntegerInputBox min={0} max={59} value={seconds}
                       padding={2}
                       className={css(RiskParametersView.STYLE.inputBox)}
-                      onChange={this.onTransitionSecondChange}/>
+                      onChange={(value) => this.onTransitionTimeChange(
+                        value, TimeUnit.SECONDS)}/>
                     <Padding size='10px'/>
                     <span className={
                         css(RiskParametersView.
@@ -218,45 +195,46 @@ export class RiskParametersView extends React.Component<Properties, State> {
     }
   }
 
-  private onTransitionSecondChange(value: number) {
-    const hours = Math.floor(
-      this.props.parameters.transitionTime.getTotalHours());
-    const minutes = Math.floor(
-      this.props.parameters.transitionTime.getTotalMinutes() % 60);
-    const newDuration = Beam.Duration.HOUR.multiply(hours).add(
-      Beam.Duration.MINUTE.multiply(minutes)).add(
-      Beam.Duration.SECOND.multiply(value));
-    this.props.onTransitionTimeChange(newDuration);
+  private onCurrencyChange(value: Nexus.Currency) {
+    this.props.parameters.currency = value;
+    this.forceUpdate();
   }
 
-  private onTransitionMinuteChange(value: number) {
-    const hours = Math.floor(
-      this.props.parameters.transitionTime.getTotalHours());
-    const seconds = Math.floor(
-      this.props.parameters.transitionTime.getTotalSeconds() % 60);
-    const newDuration = Beam.Duration.HOUR.multiply(hours).add(
-      Beam.Duration.MINUTE.multiply(value)).add(
-      Beam.Duration.SECOND.multiply(seconds));
-    this.props.onTransitionTimeChange(newDuration);
+  private onBuyingPowerChange(value: Nexus.Money) {
+    this.props.parameters.buyingPower = value;
   }
 
-  private onTransitionHourChange(value: number) {
-    const minutes = Math.floor(
-      this.props.parameters.transitionTime.getTotalMinutes() % 60);
-    const seconds = Math.floor(
-      this.props.parameters.transitionTime.getTotalSeconds() % 60);
-    const newDuration = Beam.Duration.HOUR.multiply(value).add(
-      Beam.Duration.MINUTE.multiply(minutes)).add(
-      Beam.Duration.SECOND.multiply(seconds));
-    this.props.onTransitionTimeChange(newDuration);
+  private onNetLossChange(value: Nexus.Money) {
+    this.props.parameters.netLoss = value;
   }
 
-  private static defaultProps = {
-    onCurrencyChange: (currency: Nexus.Currency) => {},
-    onBuyingPowerChange: (value: Nexus.Money) => {},
-    onNetLossChange: (value: Nexus.Money) => {},
-    onTransitionTimeChange: (duration: Beam.Duration) => {}
-  };
+  private onTransitionTimeChange(value: number, timeUnit: TimeUnit) {
+    const timeJSON = this.props.parameters.transitionTime.split();
+    const newTimeJSON = (() => {
+      switch (timeUnit) {
+        case TimeUnit.HOURS:
+          return {
+            hours: value,
+            minutes: timeJSON.minutes,
+            seconds: timeJSON.seconds
+          };
+        case TimeUnit.MINUTES:
+          return {
+            hours: timeJSON.hours,
+            minutes: value,
+            seconds: timeJSON.seconds
+          };
+        case TimeUnit.SECONDS:
+          return {
+            hours: timeJSON.hours,
+            minutes: timeJSON.minutes,
+            seconds: value
+          };
+        }
+    })();
+    this.props.parameters.transitionTime = Beam.Duration.fromJson(newTimeJSON);
+  }
+
   private static CONTAINER_STYLE = StyleSheet.create({
     base: {
       position: 'relative' as 'relative'
@@ -305,6 +283,10 @@ export class RiskParametersView extends React.Component<Properties, State> {
       }
     }
   });
+}
+
+interface LabelProperties {
+  text: string;
 }
 
 class Label extends React.Component<LabelProperties> {
