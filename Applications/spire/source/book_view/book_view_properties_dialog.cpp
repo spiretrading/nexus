@@ -19,7 +19,8 @@ book_view_properties_dialog::book_view_properties_dialog(
     const book_view_properties& properties, const Security& security,
     QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags | Qt::Window | Qt::FramelessWindowHint |
-        Qt::WindowCloseButtonHint) {
+        Qt::WindowCloseButtonHint),
+        m_last_focus_was_key(false) {
   auto body = new QWidget(this);
   body->setFixedSize(scale(492, 394));
   body->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);

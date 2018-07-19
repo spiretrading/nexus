@@ -22,6 +22,7 @@ namespace spire {
       //! Returns the market info associated with this item.
       const Nexus::MarketDatabase::Entry& get_market_info() const;
 
+      //! Returns the market highlight associated with this item.
       const boost::optional<book_view_properties::market_highlight>&
         get_market_highlight() const;
 
