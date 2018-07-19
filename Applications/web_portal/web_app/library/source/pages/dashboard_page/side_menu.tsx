@@ -27,8 +27,6 @@ interface Properties {
   onSignOutClick?: () => void;
 }
 
-interface State {}
-
 interface MenuButtonProps {
   iconSrc: string;
   text: string;
@@ -36,7 +34,15 @@ interface MenuButtonProps {
 }
 
 /** Display's the dashboard's side menu. */
-export class SideMenu extends React.Component<Properties, State> {
+export class SideMenu extends React.Component<Properties> {
+  public static defaultProps = {
+    onProfileClick: () => {},
+    onAccountsClick: () => {},
+    onPortfolioClick: () => {},
+    onRequestHistoryClick: () => {},
+    onSignOutClick: () => {}
+  };
+
   public render(): JSX.Element {
     return (
       <VBoxLayout className={css(SideMenu.STYLE.sideMenu)}>
@@ -52,14 +58,6 @@ export class SideMenu extends React.Component<Properties, State> {
         <SideMenuButton icon='resources/dashboard/sign-out.svg'
           label='Sign Out' onClick={this.props.onSignOutClick}/>
       </VBoxLayout>);
-  }
-
-  private static defaultProps = {
-    onProfileClick: () => {},
-    onAccountsClick: () => {},
-    onPortfolioClick: () => {},
-    onRequestHistoryClick: () => {},
-    onSignOutClick: () => {}
   }
 
   private static STYLE = StyleSheet.create({
