@@ -33,7 +33,7 @@ namespace spire {
       //! Sets the icon to display using an SVG file with default size, and
       //! sets the task bar icon.
       /*
-        \param path Path to the SVG file to display.
+        \param path Path to the SVG file to display, and the task bar icon.
       */
       void set_svg_icon(const QString& icon_path);
 
