@@ -1,7 +1,7 @@
 import {css, StyleSheet} from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import {Center, HBoxLayout, Padding, VBoxLayout} from '../..';
+import {HBoxLayout, Padding, VBoxLayout} from '../..';
 import {AccountModel} from '.';
 import {MenuBar} from './menu_bar';
 import {RolePanel} from './role_panel';
@@ -25,7 +25,7 @@ interface State {
 
 /** Implements the container used to display account information. */
 export class AccountPage extends React.Component<Properties, State> {
-  public constructor(props: Properties) {
+  constructor(props: Properties) {
     super(props);
     this.state = {
       isLoading: true,
@@ -95,8 +95,8 @@ export class AccountPage extends React.Component<Properties, State> {
   }
 }
 
-class HeaderUnderline extends React.Component {
-  public render() {
+class HeaderUnderline extends React.PureComponent {
+  public render(): JSX.Element {
     return <div className={css(HeaderUnderline.STYLE.base)}/>;
   }
 
