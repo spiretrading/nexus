@@ -7,7 +7,7 @@ using namespace spire;
 book_view_properties::book_view_properties() {
   set_bbo_quote_font(QFont("Roboto", 14, QFont::Medium));
   set_book_quote_font(QFont("Roboto", 8, QFont::Medium));
-  QColor baseColor(99, 45, 213);
+  QColor baseColor(75, 35, 160);
   for(auto i = 0; i < 7; ++i) {
     get_book_quote_background_colors().push_back(
       baseColor.lighter(300 - i * (200 / 7)));
