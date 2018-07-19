@@ -1,5 +1,7 @@
 #include "spire/book_view/book_view_properties_dialog.hpp"
+#include <QEvent>
 #include <QHBoxLayout>
+#include <QKeyEvent>
 #include <QVBoxLayout>
 #include "spire/book_view/book_view_highlight_properties_widget.hpp"
 #include "spire/book_view/book_view_level_properties_widget.hpp"
@@ -79,6 +81,9 @@ book_view_properties_dialog::book_view_properties_dialog(
     m_tab_widget->addTab(interactions_tab_widget, tr("Interactions"));
   }
   layout->addWidget(m_tab_widget);
+  connect(m_tab_widget, &QTabWidget::currentChanged, this,
+    &book_view_properties_dialog::on_tab_changed);
+  m_tab_widget->tabBar()->installEventFilter(this);
   connect(m_tab_widget->tabBar(), &QTabBar::tabBarClicked, this,
     &book_view_properties_dialog::on_tab_bar_clicked);
   auto button_group_widget = new properties_window_buttons_widget(this);
@@ -106,8 +111,29 @@ connection book_view_properties_dialog::connect_save_default_signal(
   return m_save_default_signal.connect(slot);
 }
 
+bool book_view_properties_dialog::eventFilter(QObject* watched,
+    QEvent* event) {
+  if(watched == m_tab_widget->tabBar()) {
+    if(event->type() == QEvent::KeyPress) {
+      auto e = static_cast<QKeyEvent*>(event);
+      if(e->key() == Qt::Key_Left || e->key() == Qt::Key_Right) {
+        m_last_focus_was_key = true;
+      }
+    } else if(event->type() == QEvent::MouseButtonPress) {
+      m_last_focus_was_key = false;
+    }
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
 void book_view_properties_dialog::on_tab_bar_clicked(int index) {
   if(index > -1) {
     m_tab_widget->widget(index)->setFocus();
+  }
+}
+
+void book_view_properties_dialog::on_tab_changed() {
+  if(m_last_focus_was_key) {
+    m_tab_widget->tabBar()->setFocus();
   }
 }
