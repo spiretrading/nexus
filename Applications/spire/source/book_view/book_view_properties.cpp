@@ -13,7 +13,7 @@ book_view_properties::book_view_properties() {
       baseColor.lighter(300 - i * (200 / 7)));
   }
   set_book_quote_foreground_color(QColor(0, 0, 0));
-  set_order_highlight_color(QColor(0, 255, 0));
+  set_order_highlight_color(QColor(75, 35, 160));
   set_show_grid(false);
 }
 
