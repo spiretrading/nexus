@@ -44,6 +44,6 @@ void market_list_item::remove_highlight() {
 }
 
 void market_list_item::initialize() {
-  m_market_highlight.emplace(book_view_properties::market_highlight());
+  m_market_highlight.emplace();
   m_market_highlight->m_color = Qt::white;
 }
