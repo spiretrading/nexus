@@ -2,7 +2,7 @@ import {css, StyleSheet} from 'aphrodite';
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import {Center, CurrencySelectionBox, HBoxLayout, IntegerInputBox, 
+import {Center, CurrencySelectionBox, HBoxLayout, IntegerInputBox,
   MoneyInputBox, Padding, VBoxLayout} from '../../..';
 
 interface Properties {
@@ -36,18 +36,18 @@ interface Properties {
   onSaveChanges?: () => void;
 }
 
+interface State {
+  breakpoint: Breakpoint;
+  comment: string;
+}
+
 interface FooterProperties {
   isButtonDisabled: boolean;
-  isUserAdmin: boolean
+  isUserAdmin: boolean;
   message: FOOTER_MESSAGE;
   comment?: string;
   onButtonClick: () => void;
   onCommentChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
-}
-
-interface State {
-  breakpoint: Breakpoint;
-  comment: string;
 }
 
 enum Breakpoint {
@@ -61,7 +61,7 @@ enum FOOTER_MESSAGE {
   SUBMITTED,
   SERVER_ISSUE,
   NONE
-};
+}
 
 interface LabelProperties {
   text: string;
@@ -291,10 +291,10 @@ export class RiskParametersView extends React.Component<Properties, State> {
     onCurrencyChange: (currency: Nexus.Currency) => {},
     onBuyingPowerChange: (value: Nexus.Money) => {},
     onNetLossChange: (value: Nexus.Money) => {},
-    onTransitionTimeChange: (duration: number, field: string) => {},
+    onTransitionTimeChange: (duration: Beam.Duration) => {},
     onSubmitRequest: () => {},
-    onSaveChanges: () => {},
-  }
+    onSaveChanges: () => {}
+  };
   private static CONTAINER_STYLE = StyleSheet.create({
     base: {
       position: 'relative' as 'relative'
@@ -349,6 +349,7 @@ export class RiskParametersView extends React.Component<Properties, State> {
     }
   });
 }
+
 class Label extends React.Component<LabelProperties> {
   public render(): JSX.Element {
     return (
@@ -386,10 +387,9 @@ class Footer extends React.Component<FooterProperties> {
     })();
     const commentBox = (() => {
       if(this.props.isUserAdmin) {
-        return <textarea className={css(Footer.STYLE.commentBox)} 
-          value={this.props.comment}
-          placeholder='Leave comment here…' onChange={
-            this.props.onCommentChange}/>;
+        return <textarea className={css(Footer.STYLE.commentBox)}
+          value={this.props.comment} placeholder='Leave comment here…'
+          onChange={this.props.onCommentChange}/>;
       }
     })();
     const commentBoxPadding = (() => {
@@ -399,9 +399,9 @@ class Footer extends React.Component<FooterProperties> {
     })();
     const buttonText = (() => {
       if(this.props.isUserAdmin) {
-        return 'Submit Request'
+        return 'Submit Request';
       }
-      return 'Save Changes'
+      return 'Save Changes';
     })();
     return (
       <VBoxLayout width='100%'>
@@ -427,8 +427,7 @@ class Footer extends React.Component<FooterProperties> {
 
   private static defaultProps = {
     message: ''
-  }
-
+  };
   private static STYLE = StyleSheet.create({
     button: {
       width: '246px',
