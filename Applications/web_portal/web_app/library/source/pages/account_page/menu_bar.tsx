@@ -20,10 +20,10 @@ interface Properties {
   onProfitAndLossClick?: () => void;
 }
 
-interface State {
-  breakpoint: Breakpoint;
-  selected: MenuItem;
-  hovered: MenuItem;
+enum Breakpoint {
+  SMALL,
+  MEDIUM,
+  LARGE
 }
 
 enum MenuItem {
@@ -33,10 +33,11 @@ enum MenuItem {
   COMPLIANCE,
   PROFIT_LOSS
 }
-enum Breakpoint {
-  SMALL,
-  MEDIUM,
-  LARGE
+
+interface State {
+  breakpoint: Breakpoint;
+  selected: MenuItem;
+  hovered: MenuItem;
 }
 
 /** Displays the horizontal menu used to navigate an account's properties. */

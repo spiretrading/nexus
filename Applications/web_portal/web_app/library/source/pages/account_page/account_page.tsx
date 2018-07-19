@@ -12,25 +12,15 @@ interface Properties {
   model: AccountModel;
 }
 
-interface State {
-  isLoading: boolean;
-  breakpoint: Breakpoint;
-}
-
 enum Breakpoint {
   SMALL,
   MEDIUM,
   LARGE
 }
 
-interface UsernameProps {
-  name: string;
-  height: string;
-}
-
-interface HeaderProps {
-  name: string;
-  roles: Nexus.AccountRoles;
+interface State {
+  isLoading: boolean;
+  breakpoint: Breakpoint;
 }
 
 /** Implements the container used to display account information. */
@@ -119,6 +109,11 @@ class HeaderUnderline extends React.Component {
   });
 }
 
+interface HeaderProps {
+  name: string;
+  roles: Nexus.AccountRoles;
+}
+
 class LargeHeader extends React.Component<HeaderProps> {
   public render(): JSX.Element {
     return (
@@ -133,7 +128,7 @@ class LargeHeader extends React.Component<HeaderProps> {
                 css(LargeHeader.STYLE.usernameAndRoleContainer)}>
               <div className={
                   css(LargeHeader.STYLE.usernameAndRoleWrapper)}>
-                <Username name={this.props.name} height='40px'/>
+                <UsernameLabel name={this.props.name} height='40px'/>
                 <Padding size='10px'/>
                 <RolePanel roles={this.props.roles}/>
               </div>
@@ -181,7 +176,7 @@ class MediumHeader extends React.Component<HeaderProps> {
           <Padding size='18px'/>
           <HBoxLayout height='30px' width='750px'>
             <Padding/>
-            <Username name={this.props.name} height='30px'/>
+            <UsernameLabel name={this.props.name} height='30px'/>
           </HBoxLayout>
           <Padding size='18px'/>
           <div className={css(MediumHeader.STYLE.headerPadding)}/>
@@ -225,7 +220,7 @@ class SmallHeader extends React.Component<HeaderProps> {
           <HBoxLayout height='30px' className={
               css(SmallHeader.STYLE.accountHeader)}>
             <Padding/>
-            <Username name={this.props.name} height='30px'/>
+            <UsernameLabel name={this.props.name} height='30px'/>
           </HBoxLayout>
           <Padding size='18px'/>
           <div className={css(SmallHeader.STYLE.headerPadding)}/>
@@ -250,12 +245,17 @@ class SmallHeader extends React.Component<HeaderProps> {
   });
 }
 
-class Username extends React.Component<UsernameProps>  {
+interface UsernameProps {
+  name: string;
+  height: string;
+}
+
+class UsernameLabel extends React.Component<UsernameProps>  {
   public render(): JSX.Element {
     return (
       <VBoxLayout height={this.props.height}>
         <Padding/>
-        <span className={css(Username.STYLE.username)}>
+        <span className={css(UsernameLabel.STYLE.username)}>
           {this.props.name}
         </span>
         <Padding/>
