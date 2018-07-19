@@ -40,12 +40,11 @@ interface FooterProperties {
   isButtonDisabled: boolean;
   isUserAdmin: boolean
   message: FOOTER_MESSAGE;
-  onButtonClick: (message?: string) => void;
+  comment?: string;
+  onButtonClick: () => void;
+  onCommentChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }
 
-interface FooterState {
-  comment: string;
-}
 
 interface MoneyInputBoxProperties {
   label: string;
@@ -54,6 +53,7 @@ interface MoneyInputBoxProperties {
 
 interface State {
   breakpoint: Breakpoint;
+  comment: string;
 }
 
 enum Breakpoint {
@@ -89,7 +89,8 @@ export class RiskParametersView extends React.Component<Properties, State> {
   public constructor(props: Properties) {
     super(props);
     this.state = {
-      breakpoint: RiskParametersView.getBreakpoint()
+      breakpoint: RiskParametersView.getBreakpoint(),
+      comment: ''
     };
     this.originalParameters = new Nexus.RiskParameters(
         this.props.parameters.currency,
@@ -101,6 +102,8 @@ export class RiskParametersView extends React.Component<Properties, State> {
     this.onTransitionSecondChange = this.onTransitionSecondChange.bind(this);
     this.onTransitionMinuteChange = this.onTransitionMinuteChange.bind(this);
     this.onTransitionHourChange = this.onTransitionHourChange.bind(this);
+    this.onCommentChange = this.onCommentChange.bind(this);
+    this.onButtonClick = this.onButtonClick.bind(this);
   }
 
   public componentDidMount() {
@@ -228,8 +231,10 @@ export class RiskParametersView extends React.Component<Properties, State> {
                 <Padding size='30px'/>
                 <Footer isButtonDisabled={isButtonDisabled}
                   isUserAdmin={!this.props.isUserAdmin}
-                  onButtonClick={() => {}}
-                  message={this.props.footerMessage}/>
+                  onButtonClick={this.onButtonClick}
+                  message={this.props.footerMessage}
+                  comment={this.state.comment}
+                  onCommentChange={this.onCommentChange}/>
               </VBoxLayout>
             </VBoxLayout>
             <Padding/>
@@ -256,6 +261,7 @@ export class RiskParametersView extends React.Component<Properties, State> {
       this.setState({breakpoint: newBreakpoint});
     }
   }
+
   private onTransitionSecondChange(value: number) {
     const hours = Math.floor(
       this.props.parameters.transitionTime.getTotalHours());
@@ -266,6 +272,7 @@ export class RiskParametersView extends React.Component<Properties, State> {
       Beam.Duration.SECOND.multiply(value));
     this.props.onTransitionTimeChange(newDuration);
   }
+
   private onTransitionMinuteChange(value: number) {
     const hours = Math.floor(
       this.props.parameters.transitionTime.getTotalHours());
@@ -276,6 +283,7 @@ export class RiskParametersView extends React.Component<Properties, State> {
       Beam.Duration.SECOND.multiply(seconds));
     this.props.onTransitionTimeChange(newDuration);
   }
+
   private onTransitionHourChange(value: number) {
     const minutes = Math.floor(
       this.props.parameters.transitionTime.getTotalMinutes() % 60);
@@ -287,6 +295,17 @@ export class RiskParametersView extends React.Component<Properties, State> {
     this.props.onTransitionTimeChange(newDuration);
   }
 
+  private onCommentChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
+    this.setState({comment: event.currentTarget.value});
+  }
+
+  private onButtonClick() {
+    if(!this.props.isUserAdmin) {
+      this.props.onSubmitRequest(this.state.comment);
+    } else {
+      this.props.onSaveChanges();
+    }
+  }
   private originalParameters: Nexus.RiskParameters;
   private static defaultProps = {
     onCurrencyChange: (currency: Nexus.Currency) => {},
@@ -363,17 +382,7 @@ class Label extends React.Component<LabelProperties> {
   });
 }
 
-class Footer extends React.Component<FooterProperties,
-    FooterState> {
-  public constructor(props: FooterProperties) {
-    super(props);
-    this.state = {
-      comment: ''
-    };
-    this.onChange = this.onChange.bind(this);
-    this.onClick = this.onClick.bind(this);
-  }
-
+class Footer extends React.Component<FooterProperties> {
   public render(): JSX.Element {
     const message = (() => {
       switch(this.props.message) {
@@ -391,8 +400,9 @@ class Footer extends React.Component<FooterProperties,
     const commentBox = (() => {
       if(this.props.isUserAdmin) {
         return <textarea className={css(Footer.STYLE.commentBox)} 
-          value={this.state.comment}
-          placeholder='Leave comment here…' onChange={this.onChange}/>;
+          value={this.props.comment}
+          placeholder='Leave comment here…' onChange={
+            this.props.onCommentChange}/>;
       }
     })();
     const commentBoxPadding = (() => {
@@ -413,9 +423,9 @@ class Footer extends React.Component<FooterProperties,
         <HBoxLayout width='100%'>
           <Padding size='calc(50% - 123px)'/>
           <button disabled={this.props.isButtonDisabled}
-              className={css(Footer.STYLE.button)}
-              onClick={this.onClick}>
-            Submit Request
+            className={css(Footer.STYLE.button)}
+            onClick={this.props.onButtonClick}>
+            {buttonText}
           </button>
           <Padding size='calc(50% - 123px)'/>
         </HBoxLayout>
@@ -428,16 +438,8 @@ class Footer extends React.Component<FooterProperties,
       </VBoxLayout>);
   }
 
-  private onChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
-    this.setState({comment: event.currentTarget.value});
-  }
-
-  private onClick() {
-    if(this.state.comment !== '') {
-      this.props.onButtonClick()
-    } else {
-      this.props.onButtonClick(this.state.comment)
-    }
+  private static defaultProps = {
+    message: ''
   }
 
   private static STYLE = StyleSheet.create({

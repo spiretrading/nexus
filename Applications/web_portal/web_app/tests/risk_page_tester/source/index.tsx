@@ -42,6 +42,8 @@ class TestApp extends React.Component<Properties, State> {
     this.onBuyingPowerChange = this.onBuyingPowerChange.bind(this);
     this.onNetLossChange = this.onNetLossChange.bind(this);
     this.onTransitionTimeChange = this.onTransitionTimeChange.bind(this);
+    this.onSubmitRequest = this.onSubmitRequest.bind(this);
+    this.onSaveChanges = this.onSaveChanges.bind(this);
   }
 
   public render(): JSX.Element {
@@ -66,12 +68,14 @@ class TestApp extends React.Component<Properties, State> {
         </WebPortal.HBoxLayout>
         <WebPortal.RiskParametersView parameters={this.state.parameters}
           currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
+          footerMessage={this.state.footerMessage}
+          isUserAdmin={this.state.isAdmin}
           onCurrencyChange={this.onCurrencyChange}
           onBuyingPowerChange={this.onBuyingPowerChange}
           onNetLossChange={this.onNetLossChange}
           onTransitionTimeChange={this.onTransitionTimeChange}
-          footerMessage={this.state.footerMessage}
-          isUserAdmin={this.state.isAdmin}/>
+          onSubmitRequest={this.onSubmitRequest}
+          onSaveChanges={this.onSaveChanges}/>
       </WebPortal.VBoxLayout>);
   }
 
@@ -117,6 +121,16 @@ class TestApp extends React.Component<Properties, State> {
     const newParameters = this.state.parameters;
     newParameters.transitionTime = value;
     this.setState({parameters: newParameters})
+  }
+
+  private onSubmitRequest(comment: string) {
+    console.log('submitting with request with comment: ',
+      comment, ' parameters: ', this.state.parameters);
+  }
+
+  private onSaveChanges() {
+    console.log('saving changes with parameters: ',
+      this.state.parameters);
   }
 
   private static STYLE = StyleSheet.create({
