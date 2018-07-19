@@ -4,6 +4,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidget>
+#include <QShowEvent>
 #include <QVBoxLayout>
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "spire/book_view/book_view_properties.hpp"
@@ -205,6 +206,12 @@ void book_view_highlight_properties_widget::apply(
   }
   properties.set_order_highlight_color(m_order_highlight_color_button->
     get_style().m_background_color);
+}
+
+void book_view_highlight_properties_widget::showEvent(QShowEvent* event) {
+  if(m_markets_list_widget->currentRow() == -1) {
+    m_markets_list_widget->setCurrentRow(0);
+  }
 }
 
 void book_view_highlight_properties_widget::update_color_button_stylesheet(

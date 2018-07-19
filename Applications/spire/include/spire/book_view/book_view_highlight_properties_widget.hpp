@@ -25,6 +25,9 @@ namespace spire {
       */
       void apply(book_view_properties& properties) const;
 
+    protected:
+      void showEvent(QShowEvent* event) override;
+
     private:
       QListWidget* m_markets_list_widget;
       check_box* m_highlight_none_check_box;
