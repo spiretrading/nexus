@@ -14,10 +14,8 @@ interface Properties {
   onClick?: () => void;
 }
 
-interface State {}
-
 /** Renders a single SideMenu button. */
-export class SideMenuButton extends React.Component<Properties, State> {
+export class SideMenuButton extends React.Component<Properties> {
   public render(): JSX.Element {
     return (
       <button onClick={this.props.onClick} className={
