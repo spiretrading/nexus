@@ -288,7 +288,7 @@ class Item extends React.Component<ItemProperties> {
     },
     label: {
       color: 'inherit',
-      font: '200 14px Roboto',
+      font: '400 14px Roboto',
       whiteSpace: 'nowrap'
     }
   });
