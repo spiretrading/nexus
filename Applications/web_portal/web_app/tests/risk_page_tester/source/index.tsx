@@ -21,7 +21,7 @@ class TestApp extends React.Component<Properties, State>{
     this.onScreenResize = this.onScreenResize.bind(this);
   }
 
-  public componentDidMount() {
+  public componentDidMount(): void {
     window.addEventListener('resize', this.onScreenResize);
   }
 

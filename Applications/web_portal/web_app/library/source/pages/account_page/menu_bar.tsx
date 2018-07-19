@@ -295,9 +295,9 @@ class Item extends React.Component<ItemProperties> {
 }
 
 export namespace MenuBar {
-    export enum Breakpoint {
-      SMALL,
-      MEDIUM,
-      LARGE
-    }
+  export enum Breakpoint {
+    SMALL,
+    MEDIUM,
+    LARGE
+  }
 }

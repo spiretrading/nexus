@@ -7,7 +7,8 @@ import {Center, CurrencySelectionBox, HBoxLayout, IntegerInputBox,
 
 interface Properties {
   /** The type of display to render on. */
-  breakpoint: RiskParametersView.Breakpoint
+  breakpoint: RiskParametersView.Breakpoint;
+
   /** The parameters to display. */
   parameters: Nexus.RiskParameters;
 
@@ -264,8 +265,8 @@ class Label extends React.Component<LabelProperties> {
 }
 export namespace RiskParametersView {
   export enum Breakpoint {
-      SMALL,
-      MEDIUM,
-      LARGE
-    }
+    SMALL,
+    MEDIUM,
+    LARGE
+  }
 }
