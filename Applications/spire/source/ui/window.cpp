@@ -1,7 +1,7 @@
 #include "spire/ui/window.hpp"
 #include <QApplication>
-#include <QDebug>
 #include <QDesktopWidget>
+#include <QIcon>
 #include <QLinearGradient>
 #include <QMouseEvent>
 #include <QPainter>
@@ -81,12 +81,14 @@ void window::set_icon(const QImage& icon, const QImage& unfocused_icon) {
 
 void window::set_svg_icon(const QString& icon_path) {
   set_icon(make_svg_window_icon(icon_path));
+  qApp->setWindowIcon(QIcon(icon_path));
 }
 
 void window::set_svg_icon(const QString& icon_path,
     const QString& unfocused_icon_path) {
   set_icon(make_svg_window_icon(icon_path),
     make_svg_window_icon(unfocused_icon_path));
+  qApp->setWindowIcon(QIcon(icon_path));
 }
 
 #ifdef Q_OS_WIN
