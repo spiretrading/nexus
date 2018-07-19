@@ -6,22 +6,15 @@ import {Center, CurrencySelectionBox, HBoxLayout, IntegerInputBox,
   MoneyInputBox, Padding, VBoxLayout} from '../../..';
 
 interface Properties {
+  
+  /** The type of display to render on. */
+  breakpoint: RiskParametersView.Breakpoint;
 
   /** The parameters to display. */
   parameters: Nexus.RiskParameters;
 
   /** Used to lookup currency names and symbols. */
   currencyDatabase: Nexus.CurrencyDatabase;
-}
-
-interface State {
-  breakpoint: Breakpoint;
-}
-
-enum Breakpoint {
-  SMALL,
-  MEDIUM,
-  LARGE
 }
 
 enum TimeUnit {
@@ -31,37 +24,25 @@ enum TimeUnit {
 }
 
 /** Implements a React component to display a set of RiskParameters. */
-export class RiskParametersView extends React.Component<Properties, State> {
+export class RiskParametersView extends React.Component<Properties> {
   constructor(props: Properties) {
     super(props);
-    this.state = {
-      breakpoint: RiskParametersView.getBreakpoint()
-    };
-    this.onScreenResize = this.onScreenResize.bind(this);
     this.onCurrencyChange = this.onCurrencyChange.bind(this);
     this.onBuyingPowerChange = this.onBuyingPowerChange.bind(this);
     this.onNetLossChange = this.onNetLossChange.bind(this);
     this.onTransitionTimeChange = this.onTransitionTimeChange.bind(this);
   }
 
-  public componentDidMount() {
-    window.addEventListener('resize', this.onScreenResize);
-  }
-
-  public componentWillUnmount(): void {
-    window.removeEventListener('resize', this.onScreenResize);
-  }
-
   public render(): JSX.Element {
     const containerClassName = (() => {
-      switch(this.state.breakpoint) {
-        case Breakpoint.SMALL:
+      switch(this.props.breakpoint) {
+        case RiskParametersView.Breakpoint.SMALL:
           return css([RiskParametersView.CONTAINER_STYLE.small,
             RiskParametersView.CONTAINER_STYLE.base]);
-        case Breakpoint.MEDIUM:
+        case RiskParametersView.Breakpoint.MEDIUM:
           return css([RiskParametersView.CONTAINER_STYLE.medium,
             RiskParametersView.CONTAINER_STYLE.base]);
-        case Breakpoint.LARGE:
+        case RiskParametersView.Breakpoint.LARGE:
           return css([RiskParametersView.CONTAINER_STYLE.large,
             RiskParametersView.CONTAINER_STYLE.base]);
         default:
@@ -165,26 +146,6 @@ export class RiskParametersView extends React.Component<Properties, State> {
         </VBoxLayout>
         <Padding/>
       </HBoxLayout>);
-  }
-
-  private static getBreakpoint(): Breakpoint {
-    const screenWidth = window.innerWidth ||
-      document.documentElement.clientWidth ||
-      document.getElementsByTagName('body')[0].clientWidth;
-    if(screenWidth <= 767) {
-      return Breakpoint.SMALL;
-    } else if(screenWidth > 767 && screenWidth <= 1035) {
-      return Breakpoint.MEDIUM;
-    } else {
-      return Breakpoint.LARGE;
-    }
-  }
-
-  private onScreenResize(): void {
-    const newBreakpoint = RiskParametersView.getBreakpoint();
-    if(newBreakpoint !== this.state.breakpoint) {
-      this.setState({breakpoint: newBreakpoint});
-    }
   }
 
   private onCurrencyChange(value: Nexus.Currency) {
@@ -302,4 +263,12 @@ class Label extends React.Component<LabelProperties> {
       whiteSpace: 'nowrap'
     }
   });
+}
+
+export namespace RiskParametersView {
+  export enum Breakpoint {
+    SMALL,
+    MEDIUM,
+    LARGE
+  }
 }
