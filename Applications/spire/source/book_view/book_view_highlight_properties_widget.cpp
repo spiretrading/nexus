@@ -34,12 +34,10 @@ book_view_highlight_properties_widget::book_view_highlight_properties_widget(
   markets_layout->addWidget(markets_label, 14);
   markets_layout->addStretch(10);
   m_markets_list_widget = new QListWidget(this);
-  auto market_database = GetDefaultMarketDatabase().GetEntries();
-  for(auto i = 0; i < static_cast<int>(market_database.size()); ++i) {
-    auto item = new market_list_item(market_database[i], m_markets_list_widget);
+  for(auto& entry : GetDefaultMarketDatabase().GetEntries()) {
+    auto item = new market_list_item(entry, m_markets_list_widget);
     item->setTextAlignment(Qt::AlignCenter);
-    auto highlight = properties.get_market_highlight(
-      market_database[i].m_code);
+    auto highlight = properties.get_market_highlight(entry.m_code);
     if(highlight.is_initialized()) {
       item->setBackgroundColor(highlight->m_color);
     } else {
@@ -186,12 +184,11 @@ book_view_highlight_properties_widget::book_view_highlight_properties_widget(
 void book_view_highlight_properties_widget::apply(
     book_view_properties& properties) const {
   for(auto i = 0; i < m_markets_list_widget->count(); ++i) {
-    auto item = static_cast<market_list_item*>
-      (m_markets_list_widget->item(i));
-    auto highlight = item->get_market_highlight();
+    auto item = static_cast<market_list_item*>(m_markets_list_widget->item(i));
+    auto& highlight = item->get_market_highlight();
     if(highlight.is_initialized()) {
-    properties.set_market_highlight(item->get_market_info().m_code,
-      highlight.get());
+      properties.set_market_highlight(item->get_market_info().m_code,
+        *highlight);
     }
   }
   if(m_highlight_orders_check_box->isChecked()) {
@@ -295,8 +292,9 @@ void book_view_highlight_properties_widget::
 void book_view_highlight_properties_widget::
     on_highlight_none_check_box_checked(int state) {
   if(state == Qt::Checked) {
-    auto current_item = m_markets_list_widget->currentItem();
-    static_cast<market_list_item*>(current_item)->remove_highlight();
+    auto current_item = static_cast<market_list_item*>(
+      m_markets_list_widget->currentItem());
+    current_item->remove_highlight();
     current_item->setBackgroundColor(Qt::white);
     update_market_list_stylesheet(m_markets_list_widget->currentRow());
     update_color_button_stylesheet(m_market_highlight_color_button, Qt::white);
