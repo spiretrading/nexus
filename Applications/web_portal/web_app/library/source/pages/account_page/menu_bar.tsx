@@ -2,16 +2,10 @@ import {css, StyleSheet} from 'aphrodite';
 import * as React from 'react';
 import {Center, HBoxLayout, Padding, VBoxLayout} from '../..';
 
-enum MenuBarBreakpoint {
-  SMALL,
-  MEDIUM,
-  LARGE
-}
-
 interface Properties {
 
   /** The type of display to render on. */
-  breakpoint: MenuBarBreakpoint;
+  breakpoint: MenuBar.Breakpoint;
 
   /** Indicates the account item was clicked. */
   onAccountClick?: () => void;
@@ -210,7 +204,7 @@ export class MenuBar extends React.Component<Properties, State> {
 interface ItemProperties {
   iconSrc: string;
   isSelected: boolean;
-  breakpoint: MenuBarBreakpoint;
+  breakpoint: MenuBar.Breakpoint;
   name: string;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
@@ -301,5 +295,9 @@ class Item extends React.Component<ItemProperties> {
 }
 
 export namespace MenuBar {
-  export const Breakpoint = MenuBarBreakpoint;
+    export enum Breakpoint {
+      SMALL,
+      MEDIUM,
+      LARGE
+    }
 }
