@@ -1,6 +1,7 @@
 #ifndef SPIRE_BOOK_VIEW_PROPERTIES_DIALOG_HPP
 #define SPIRE_BOOK_VIEW_PROPERTIES_DIALOG_HPP
 #include <QDialog>
+#include <QTabWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/book_view/book_view.hpp"
 #include "spire/book_view/book_view_properties.hpp"
@@ -54,6 +55,9 @@ namespace spire {
       mutable apply_all_signal m_apply_all_signal;
       mutable save_default_signal m_save_default_signal;
       book_view_properties m_properties;
+      QTabWidget* m_tab_widget;
+
+      void on_tab_bar_clicked(int index);
   };
 }
 

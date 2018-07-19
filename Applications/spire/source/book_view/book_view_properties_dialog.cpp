@@ -1,6 +1,5 @@
 #include "spire/book_view/book_view_properties_dialog.hpp"
 #include <QHBoxLayout>
-#include <QTabWidget>
 #include <QVBoxLayout>
 #include "spire/book_view/book_view_highlight_properties_widget.hpp"
 #include "spire/book_view/book_view_level_properties_widget.hpp"
@@ -34,9 +33,9 @@ book_view_properties_dialog::book_view_properties_dialog(
   layout->setContentsMargins(scale_width(8), scale_height(10), scale_width(8),
     0);
   layout->setSpacing(0);
-  auto tab_widget = new QTabWidget(body);
-  tab_widget->tabBar()->setFixedHeight(scale_height(40));
-  tab_widget->setStyleSheet(QString(R"(
+  m_tab_widget = new QTabWidget(body);
+  m_tab_widget->tabBar()->setFixedHeight(scale_height(40));
+  m_tab_widget->setStyleSheet(QString(R"(
     QWidget {
       outline: none;
     }
@@ -69,17 +68,19 @@ book_view_properties_dialog::book_view_properties_dialog(
     })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_height(10))
         .arg(scale_width(2)).arg(scale_width(80)).arg(scale_width(1)));
   auto levels_tab_widget = new book_view_level_properties_widget(properties,
-    tab_widget);
-  tab_widget->addTab(levels_tab_widget, tr("Price Levels"));
+    m_tab_widget);
+  m_tab_widget->addTab(levels_tab_widget, tr("Price Levels"));
   auto highlights_tab_widget = new book_view_highlight_properties_widget(
-    properties, tab_widget);
-  tab_widget->addTab(highlights_tab_widget, tr("Highlights"));
+    properties, m_tab_widget);
+  m_tab_widget->addTab(highlights_tab_widget, tr("Highlights"));
   if(security != Security()) {
     auto interactions_tab_widget = new interactions_properties_widget(
-      tab_widget);
-    tab_widget->addTab(interactions_tab_widget, tr("Interactions"));
+      m_tab_widget);
+    m_tab_widget->addTab(interactions_tab_widget, tr("Interactions"));
   }
-  layout->addWidget(tab_widget);
+  layout->addWidget(m_tab_widget);
+  connect(m_tab_widget->tabBar(), &QTabBar::tabBarClicked, this,
+    &book_view_properties_dialog::on_tab_bar_clicked);
   auto button_group_widget = new properties_window_buttons_widget(this);
   button_group_widget->connect_cancel_signal([=] { reject(); });
   button_group_widget->connect_ok_signal([=] { accept(); });
@@ -103,4 +104,10 @@ connection book_view_properties_dialog::connect_apply_all_signal(
 connection book_view_properties_dialog::connect_save_default_signal(
     const save_default_signal::slot_type& slot) const {
   return m_save_default_signal.connect(slot);
+}
+
+void book_view_properties_dialog::on_tab_bar_clicked(int index) {
+  if(index > -1) {
+    m_tab_widget->widget(index)->setFocus();
+  }
 }
