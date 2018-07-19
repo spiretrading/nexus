@@ -1,6 +1,7 @@
 #ifndef SPIRE_BOOK_VIEW_PROPERTIES_DIALOG_HPP
 #define SPIRE_BOOK_VIEW_PROPERTIES_DIALOG_HPP
 #include <QDialog>
+#include <QTabWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/book_view/book_view.hpp"
 #include "spire/book_view/book_view_properties.hpp"
@@ -49,11 +50,19 @@ namespace spire {
       boost::signals2::connection connect_save_default_signal(
         const save_default_signal::slot_type& slot) const;
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+
     private:
       mutable apply_signal m_apply_signal;
       mutable apply_all_signal m_apply_all_signal;
       mutable save_default_signal m_save_default_signal;
       book_view_properties m_properties;
+      QTabWidget* m_tab_widget;
+      bool m_last_focus_was_key;
+
+      void on_tab_bar_clicked(int index);
+      void on_tab_changed();
   };
 }
 
