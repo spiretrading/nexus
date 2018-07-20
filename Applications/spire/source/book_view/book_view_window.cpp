@@ -29,6 +29,9 @@ book_view_window::book_view_window(const book_view_properties& properties,
   header_widget->setFixedHeight(scale_height(36));
   header_widget->setStyleSheet("background-color: #F5F5F5;");
   layout->addWidget(header_widget);
+  auto header_layout = new QVBoxLayout(header_widget);
+  header_layout->setContentsMargins(scale_width(8), 0, scale_width(8), 0);
+  header_layout->setSpacing(0);
   m_empty_window_label = new QLabel(tr("Enter a ticker symbol."), this);
   m_empty_window_label->setAlignment(Qt::AlignCenter);
   m_empty_window_label->setStyleSheet(QString(R"(
