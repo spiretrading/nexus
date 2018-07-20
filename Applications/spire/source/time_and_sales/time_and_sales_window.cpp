@@ -22,7 +22,7 @@ using namespace Nexus;
 using namespace spire;
 
 time_and_sales_window::time_and_sales_window(
-    const time_and_sales_properties& properties, 
+    const time_and_sales_properties& properties,
     security_input_model& input_model, QWidget* parent)
     : QWidget(parent),
       m_input_model(&input_model),
