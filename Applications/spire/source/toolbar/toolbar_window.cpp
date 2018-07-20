@@ -16,7 +16,7 @@ toolbar_window::toolbar_window(recently_closed_model& model,
     : QWidget(parent),
       m_model(&model) {
   setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint |
-    Qt::WindowCloseButtonHint);
+    Qt::FramelessWindowHint | Qt::WindowCloseButtonHint);
   setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
   m_body = new QWidget(this);
   m_body->setFixedSize(scale(308, 72));

@@ -13,7 +13,7 @@ using namespace boost::signals2;
 using namespace spire;
 
 login_window::login_window(const std::string& version, QWidget* parent)
-    : QWidget(parent, Qt::Window | Qt::FramelessWindowHint),
+    : QWidget(parent, Qt::FramelessWindowHint),
       m_is_dragging(false) {
   setFixedSize(scale(396, 358));
   m_shadow = std::make_unique<drop_shadow>(this);
