@@ -1,6 +1,7 @@
 #ifndef SPIRE_BOOK_VIEW_WINDOW_HPP
 #define SPIRE_BOOK_VIEW_WINDOW_HPP
 #include <boost/optional.hpp>
+#include <QLabel>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/security_input/security_input.hpp"
@@ -58,6 +59,7 @@ namespace spire {
       security_input_model* m_input_model;
       security_stack m_securities;
       Nexus::Security m_current_security;
+      QLabel* m_empty_window_label;
   };
 }
 

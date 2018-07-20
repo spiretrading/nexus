@@ -25,6 +25,16 @@ book_view_window::book_view_window(const book_view_properties& properties,
   auto layout = new QVBoxLayout(body);
   layout->setContentsMargins({});
   layout->setSpacing(0);
+  auto header_widget = new QWidget(this);
+  header_widget->setFixedHeight(scale_height(36));
+  header_widget->setStyleSheet("background-color: #F5F5F5;");
+  layout->addWidget(header_widget);
+  m_empty_window_label = new QLabel(tr("Enter a ticker symbol."), this);
+  m_empty_window_label->setAlignment(Qt::AlignCenter);
+  m_empty_window_label->setStyleSheet(QString(R"(
+    font-family: Roboto;
+    font-size: %1px;)").arg(scale_height(12)));
+  layout->addWidget(m_empty_window_label);
 }
 
 void book_view_window::set_model(std::shared_ptr<book_view_model> model) {
