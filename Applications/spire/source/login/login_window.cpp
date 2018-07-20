@@ -1,5 +1,4 @@
 #include "spire/login/login_window.hpp"
-#include <QApplication>
 #include <QHBoxLayout>
 #include <QMovie>
 #include <QVBoxLayout>
@@ -16,7 +15,7 @@ using namespace spire;
 login_window::login_window(const std::string& version, QWidget* parent)
     : QWidget(parent, Qt::Window | Qt::FramelessWindowHint),
       m_is_dragging(false) {
-  qApp->setWindowIcon(QIcon(":/icons/spire-icon-48x48.png"));
+  setWindowIcon(QIcon(":icons/spire-icon-48x48.png"));
   setFixedSize(scale(396, 358));
   m_shadow = std::make_unique<drop_shadow>(this);
   setObjectName("login_window");
