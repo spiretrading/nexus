@@ -19,6 +19,7 @@ class TestApp extends React.Component<Properties, State>{
       breakpoint: TestApp.getBreakpoint()
     };
     this.onScreenResize = this.onScreenResize.bind(this);
+    this.onSubmit = this.onSubmit.bind(this);
   }
 
   public componentDidMount(): void {
@@ -37,12 +38,43 @@ class TestApp extends React.Component<Properties, State>{
       Nexus.Money.ONE.multiply(1000), 100,
       Beam.Duration.HOUR.multiply(5).add(Beam.Duration.MINUTE.multiply(30)).add(
       Beam.Duration.SECOND.multiply(15)));
+    const roles = new Nexus.AccountRoles(
+      Nexus.AccountRoles.Role.TRADER |
+      Nexus.AccountRoles.Role.MANAGER |
+      Nexus.AccountRoles.Role.ADMINISTRATOR);
+    console.log('upper roles: ', roles.isSet(Nexus.AccountRoles.Role.ADMINISTRATOR))
+    const containerClassName = (() => {
+      switch(this.state.breakpoint) {
+        case WebPortal.RiskParametersView.Breakpoint.SMALL:
+          return css([TestApp.CONTAINER_STYLE.small,
+            TestApp.CONTAINER_STYLE.base]);
+        case WebPortal.RiskParametersView.Breakpoint.MEDIUM:
+          return css([TestApp.CONTAINER_STYLE.medium,
+            TestApp.CONTAINER_STYLE.base]);
+        case WebPortal.RiskParametersView.Breakpoint.LARGE:
+          return css([TestApp.CONTAINER_STYLE.large,
+            TestApp.CONTAINER_STYLE.base]);
+        default:
+          return css([TestApp.CONTAINER_STYLE.medium,
+              TestApp.CONTAINER_STYLE.base]);
+      }
+    })();
     return (
       <WebPortal.VBoxLayout width='100%' height='100%'>
         <WebPortal.Padding size='30px'/>
-        <WebPortal.RiskParametersView parameters={parameters}
-          breakpoint={this.state.breakpoint}
-          currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}/>
+        <WebPortal.HBoxLayout width='100%'>
+          <WebPortal.Padding/>
+          <WebPortal.VBoxLayout className={containerClassName}>
+            <WebPortal.RiskParametersView parameters={parameters}
+              breakpoint={this.state.breakpoint}
+              currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}/>
+            <WebPortal.Padding size='30px'/>
+            <WebPortal.SubmissionBox ref={
+              (ref: any) => this.submissionBox = ref}
+              roles={roles} onClick={this.onSubmit}/>
+          </WebPortal.VBoxLayout>
+          <WebPortal.Padding/>
+        </WebPortal.HBoxLayout>
       </WebPortal.VBoxLayout>);
   }
 
@@ -58,13 +90,34 @@ class TestApp extends React.Component<Properties, State>{
       return WebPortal.RiskParametersView.Breakpoint.LARGE;
     }
   }
-
+  private static CONTAINER_STYLE = StyleSheet.create({
+    base: {
+      
+    },
+    small: {
+      width: '60%',
+      minWidth: '320px',
+      maxWidth: '460px'
+    },
+    medium: {
+      width: '768px'
+    },
+    large: {
+      width: '1036px'
+    }
+  });
   private onScreenResize(): void {
     const newBreakpoint = TestApp.getBreakpoint();
     if(newBreakpoint !== this.state.breakpoint) {
       this.setState({breakpoint: newBreakpoint});
     }
   }
+
+  private onSubmit() {
+    console.log(this.submissionBox.getComment());
+  }
+
+  private submissionBox: WebPortal.SubmissionBox;
 }
 
 ReactDOM.render(<TestApp/>, document.getElementById('main'));

@@ -23,6 +23,9 @@ interface State {
 
 /** Displays the components needed to submit an account related form. */
 export class SubmissionBox extends React.Component<Properties, State> {
+	public static defaultProps = {
+		onClick: () => {}
+	};
 	constructor(props: Properties) {
 		super(props);
 		this.state = {
@@ -30,11 +33,17 @@ export class SubmissionBox extends React.Component<Properties, State> {
 		};
 	}
 
+	public getComment() {
+  	if(this.commentBox) {
+  		return this.commentBox.getComment();
+  	}
+  }
+
   public render(): JSX.Element {
     const commentBox = (() => {
+    	console.log('is set: ', this.props.roles.isSet(Nexus.AccountRoles.Role.ADMINISTRATOR))
       if(!this.props.roles.isSet(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
-        return <CommentBox comment={this.state.comment}
-        	onChange={this.onCommentChange}/>;
+        return <CommentBox ref={(ref) => this.commentBox = ref}/>;
       }
     })();
     const commentBoxPadding = (() => {
@@ -61,7 +70,7 @@ export class SubmissionBox extends React.Component<Properties, State> {
           <Padding size='calc(50% - 123px)'/>
           <SubmitButton isDisabled={false}
           	roles={this.props.roles}
-            onClick={() => {console.log('clicked')}}/>
+            onClick={this.props.onClick}/>
           <Padding size='calc(50% - 123px)'/>
         </HBoxLayout>
         <Padding size='18px'/>
@@ -72,7 +81,7 @@ export class SubmissionBox extends React.Component<Properties, State> {
         </HBoxLayout>
       </VBoxLayout>);
   }
-  
+
   private static MESSAGE_STYLE = StyleSheet.create({
     base: {
       font: '400 14px Roboto',
@@ -86,8 +95,5 @@ export class SubmissionBox extends React.Component<Properties, State> {
       color: '#E63F44'
     }
   });
-
-  private onCommentChange(comment: string) {
-  	this.setState({comment: comment});
-  }
+  private commentBox: CommentBox;
 }

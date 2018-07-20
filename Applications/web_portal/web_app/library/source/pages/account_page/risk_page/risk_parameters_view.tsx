@@ -34,31 +34,11 @@ export class RiskParametersView extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
-    const containerClassName = (() => {
-      switch(this.props.breakpoint) {
-        case RiskParametersView.Breakpoint.SMALL:
-          return css([RiskParametersView.CONTAINER_STYLE.small,
-            RiskParametersView.CONTAINER_STYLE.base]);
-        case RiskParametersView.Breakpoint.MEDIUM:
-          return css([RiskParametersView.CONTAINER_STYLE.medium,
-            RiskParametersView.CONTAINER_STYLE.base]);
-        case RiskParametersView.Breakpoint.LARGE:
-          return css([RiskParametersView.CONTAINER_STYLE.large,
-            RiskParametersView.CONTAINER_STYLE.base]);
-        default:
-          return css([RiskParametersView.CONTAINER_STYLE.medium,
-              RiskParametersView.CONTAINER_STYLE.base]);
-      }
-    })();
     const splitTransitionTime = this.props.parameters.transitionTime.split();
     const currencySign = this.props.currencyDatabase.fromCurrency(
       this.props.parameters.currency).sign;
     return (
-      <HBoxLayout width='100%'>
-        <Padding/>
-        <VBoxLayout className={containerClassName}>
-          <VBoxLayout width='100%' className={
-              css(RiskParametersView.STYLE.innerContainer)}>
+      
             <HBoxLayout width='100%'>
               <Padding/>
               <VBoxLayout width='246px'>
@@ -141,11 +121,7 @@ export class RiskParametersView extends React.Component<Properties> {
                 </HBoxLayout>
               </VBoxLayout>
               <Padding/>
-            </HBoxLayout>
-          </VBoxLayout>
-        </VBoxLayout>
-        <Padding/>
-      </HBoxLayout>);
+            </HBoxLayout>);
   }
 
   private onCurrencyChange(value: Nexus.Currency) {
@@ -191,22 +167,6 @@ export class RiskParametersView extends React.Component<Properties> {
         newTimeJSON.seconds));
   }
 
-  private static CONTAINER_STYLE = StyleSheet.create({
-    base: {
-      position: 'relative' as 'relative'
-    },
-    small: {
-      width: '60%',
-      minWidth: '320px',
-      maxWidth: '460px'
-    },
-    medium: {
-      width: '768px'
-    },
-    large: {
-      width: '1036px'
-    }
-  });
   private static TRANSITION_TIME_STYLE = StyleSheet.create({
     label: {
       font: '400 10px Roboto',
@@ -219,9 +179,6 @@ export class RiskParametersView extends React.Component<Properties> {
     }
   });
   private static STYLE = StyleSheet.create({
-    innerContainer: {
-      position: 'absolute' as 'absolute'
-    },
     dropdownButton: {
       backgroundColor: '#F8F8F8',
       border: '1px solid #C8C8C8',
