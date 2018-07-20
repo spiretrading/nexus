@@ -20,11 +20,6 @@ interface State {
   isLoading: boolean;
 }
 
-interface DashboardBurgerButtonProps {
-  isMenuOpen: boolean;
-  onClick: () => void;
-}
-
 /** Displays the main dashboard. */
 export class DashboardPage extends React.Component<Properties, State> {
   constructor(props: Properties) {
@@ -66,7 +61,7 @@ export class DashboardPage extends React.Component<Properties, State> {
                   <Padding size='18px'/>
                   <VBoxLayout height='60px'>
                     <Padding size='23px'/>
-                    <DashboardBurgerButton isMenuOpen={true}
+                    <BurgerButton width='20px' height='14px' color='#E2E0FF'
                       onClick={this.toggleSideMenuIsOpen}/>
                     <Padding size='23px'/>
                   </VBoxLayout>
@@ -85,7 +80,7 @@ export class DashboardPage extends React.Component<Properties, State> {
             <Padding size='18px'/>
             <VBoxLayout height='60px'>
               <Padding size='23px'/>
-              <DashboardBurgerButton isMenuOpen={false}
+              <BurgerButton width='20px' height='14px' color='#684BC7'
                 onClick={this.toggleSideMenuIsOpen}/>
               <Padding size='23px'/>
             </VBoxLayout>
@@ -112,7 +107,7 @@ export class DashboardPage extends React.Component<Properties, State> {
             component={null}>
           {(status: string) => {
             return (
-              <HBoxLayout height='100%' className={ css([
+              <HBoxLayout height='100%' className={css([
                   DashboardPage.STYLE.sideBarWrapper,
                   DashboardPage.FADE_TRANSITION_STYLE.base,
                   DashboardPage.getFadeTransition(status)])}>
@@ -212,51 +207,5 @@ export class DashboardPage extends React.Component<Properties, State> {
     entered: {opacity:  1},
     exiting: {opacity:  0},
     exited: {opacity: 0}
-  });
-}
-
-class DashboardBurgerButton extends 
-    React.Component<DashboardBurgerButtonProps> {
-  public render(): JSX.Element {
-    const pngSrc = (() => {
-      if(this.props.isMenuOpen) {
-        return 'resources/dashboard/burger-light-purple.png';
-      }
-      return 'resources/dashboard/burger-purple.png';
-    })();
-    if(window.navigator.userAgent.indexOf('Edge') > -1) {
-      return (
-        <button className={css(DashboardBurgerButton.STYLE.button)}>
-          <img className={css(DashboardBurgerButton.STYLE.icon)}
-            onClick={this.props.onClick} src={pngSrc}/>
-        </button>);
-    }
-    const color = (() => {
-      if(this.props.isMenuOpen) {
-        return '#E2E0FF';
-      }
-      return '#684BC7';
-    })();
-    return (
-      <BurgerButton width='20px' height='14px' color={color}
-        highlightColor={color} onClick={this.props.onClick}/>);
-  }
-  private static STYLE = StyleSheet.create({
-    button: {
-      width: '20px',
-      height: '14px',
-      position: 'relative' as 'relative',
-      border: 'none',
-      cursor: 'pointer',
-      backgroundColor: 'inherit',
-      outline: 0
-    },
-    icon: {
-      width: '20px',
-      height: '14px',
-      position: 'absolute' as 'absolute',
-      top: 0,
-      left: 0
-    }
   });
 }
