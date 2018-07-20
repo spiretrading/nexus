@@ -18,7 +18,7 @@ using namespace spire;
 book_view_properties_dialog::book_view_properties_dialog(
     const book_view_properties& properties, const Security& security,
     QWidget* parent, Qt::WindowFlags flags)
-    : QDialog(parent, flags | Qt::Window | Qt::FramelessWindowHint |
+    : QDialog(parent, flags | Qt::FramelessWindowHint |
         Qt::WindowCloseButtonHint),
         m_last_focus_was_key(false) {
   auto body = new QWidget(this);
