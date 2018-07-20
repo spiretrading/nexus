@@ -22,7 +22,7 @@ using columns = time_and_sales_properties::columns;
 time_and_sales_properties_dialog::time_and_sales_properties_dialog(
     const time_and_sales_properties& properties, QWidget* parent,
     Qt::WindowFlags flags)
-    : QDialog(parent, flags | Qt::Window | Qt::FramelessWindowHint |
+    : QDialog(parent, flags | Qt::FramelessWindowHint |
         Qt::WindowCloseButtonHint) {
   m_body = new QWidget(this);
   m_body->setFixedSize(scale(462, 272));
