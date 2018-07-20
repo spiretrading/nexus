@@ -35,7 +35,9 @@ for i in $applications; do
   ./run_cmake.sh $build_type
   popd
 done
-
+pushd $directory/../../Applications/spire/build/posix
+./run_cmake.sh $build_type
+popd
 pushd $directory/../../Applications/web_portal/build/posix
 ./run_cmake.sh $build_type
 popd
