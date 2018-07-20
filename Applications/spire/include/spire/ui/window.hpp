@@ -30,16 +30,18 @@ namespace spire {
       */
       void set_icon(const QImage& icon, const QImage& unfocused_icon);
 
-      //! Sets the icon to display using an SVG file with default size.
+      //! Sets the icon to display using an SVG file with default size, and
+      //! sets the task bar icon.
       /*
-        \param path Path to the SVG file to display.
+        \param path Path to the SVG file to display, and the task bar icon.
       */
       void set_svg_icon(const QString& icon_path);
 
-      //! Sets the icons to display using an SVG file with default sizes.
+      //! Sets the icons to display using an SVG file with default sizes,
+      //! and sets the task bar icon.
       /*
         \param icon_path Path to the SVG file to display when the window has
-               focus.
+               focus, and the task bar icon.
         \param unfocused_icon_path Path to the SVG file to display when the
                window lacks focus.
       */
