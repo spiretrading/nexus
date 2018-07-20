@@ -42,6 +42,17 @@ export class SubmissionBox extends React.Component<Properties, State> {
         return <Padding size='30px'/>;
       }
     })();
+    const message = (() => {
+      switch(this.props.status) {
+        case 'Submitted':
+        case 'Saved':
+        	return <span className={css([SubmissionBox.MESSAGE_STYLE.base,
+            SubmissionBox.MESSAGE_STYLE.valid])}>Submitted</span>;
+       	default:
+       		return <span className={css([SubmissionBox.MESSAGE_STYLE.base,
+            SubmissionBox.MESSAGE_STYLE.invalid])}>Server issue</span>;
+      }
+    })();
     return (
     	<VBoxLayout width='100%'>
         {commentBox}
@@ -61,6 +72,20 @@ export class SubmissionBox extends React.Component<Properties, State> {
         </HBoxLayout>
       </VBoxLayout>);
   }
+  
+  private static MESSAGE_STYLE = StyleSheet.create({
+    base: {
+      font: '400 14px Roboto',
+      width: '100%',
+      textAlign: 'center'
+    },
+    valid: {
+      color: '#36BB55'
+    },
+    invalid: {
+      color: '#E63F44'
+    }
+  });
 
   private onCommentChange(comment: string) {
   	this.setState({comment: comment});
