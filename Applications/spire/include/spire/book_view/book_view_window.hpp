@@ -71,7 +71,7 @@ namespace spire {
       QGridLayout* m_header_layout;
       labeled_data_widget* m_high_label_widget;
       labeled_data_widget* m_open_label_widget;
-      labeled_data_widget* m_def_label_widget;
+      labeled_data_widget* m_defaults_label_widget;
       labeled_data_widget* m_low_label_widget;
       labeled_data_widget* m_close_label_widget;
       labeled_data_widget* m_volume_label_widget;

@@ -32,9 +32,3 @@ void labeled_data_widget::set_label_text(const QString& text) {
 void labeled_data_widget::set_data_text(const QString& text) {
   m_data_label->setText(text);
 }
-
-void labeled_data_widget::set_label_and_data_text(const QString& label_text,
-    const QString& data_text) {
-  m_label->setText(label_text);
-  m_data_label->setText(data_text);
-}

@@ -24,10 +24,6 @@ namespace spire {
       //! Sets the data text.
       void set_data_text(const QString& text);
 
-      //! Sets the label text and data text.
-      void set_label_and_data_text(const QString& label_text,
-        const QString& data_text);
-
     private:
       QLabel* m_label;
       QLabel* m_data_label;

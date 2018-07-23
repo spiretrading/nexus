@@ -50,9 +50,9 @@ book_view_window::book_view_window(const book_view_properties& properties,
     this);
   m_header_layout->addWidget(m_open_label_widget, 0, 1);
   m_header_layout->setColumnStretch(1, 100);
-  m_def_label_widget = new labeled_data_widget(tr("D"),
+  m_defaults_label_widget = new labeled_data_widget(tr("D"),
     QString("100%1%2").arg(tr("x")).arg("100"), this);
-  m_header_layout->addWidget(m_def_label_widget, 0, 2);
+  m_header_layout->addWidget(m_defaults_label_widget, 0, 2);
   m_header_layout->setColumnStretch(2, 1);
   m_low_label_widget = new labeled_data_widget(tr("L"), tr("0.00"),
     this);
@@ -154,7 +154,7 @@ void book_view_window::set_current(const Security& s) {
 void book_view_window::set_labeled_data_long_form_text() {
   m_high_label_widget->set_label_text(tr("High"));
   m_open_label_widget->set_label_text(tr("Open"));
-  m_def_label_widget->set_label_text(tr("Def"));
+  m_defaults_label_widget->set_label_text(tr("Def"));
   m_low_label_widget->set_label_text(tr("Low"));
   m_close_label_widget->set_label_text(tr("Close"));
   m_volume_label_widget->set_label_text(tr("Vol"));
@@ -163,7 +163,7 @@ void book_view_window::set_labeled_data_long_form_text() {
 void book_view_window::set_labeled_data_short_form_text() {
   m_high_label_widget->set_label_text(tr("H"));
   m_open_label_widget->set_label_text(tr("O"));
-  m_def_label_widget->set_label_text(tr("D"));
+  m_defaults_label_widget->set_label_text(tr("D"));
   m_low_label_widget->set_label_text(tr("L"));
   m_close_label_widget->set_label_text(tr("C"));
   m_volume_label_widget->set_label_text(tr("V"));
@@ -226,7 +226,7 @@ void book_view_window::update_header_layout() {
     if(m_header_layout->itemAtPosition(0, 3) != nullptr) {
       m_header_widget->setFixedHeight(scale_height(36));
       m_header_layout->addWidget(m_open_label_widget, 0, 1);
-      m_header_layout->addWidget(m_def_label_widget, 0, 2);
+      m_header_layout->addWidget(m_defaults_label_widget, 0, 2);
       m_header_layout->addWidget(m_low_label_widget, 1, 0);
       m_header_layout->addWidget(m_close_label_widget, 1, 1);
       m_header_layout->addWidget(m_volume_label_widget, 1, 2);
@@ -242,7 +242,7 @@ void book_view_window::update_header_layout() {
       m_header_layout->addWidget(m_open_label_widget, 0, 2);
       m_header_layout->addWidget(m_close_label_widget, 0, 3);
       m_header_layout->addWidget(m_volume_label_widget, 0, 4);
-      m_header_layout->addWidget(m_def_label_widget, 0, 5);
+      m_header_layout->addWidget(m_defaults_label_widget, 0, 5);
       m_header_layout->setColumnStretch(2, 100);
       m_header_layout->setColumnStretch(3, 100);
       m_header_layout->setColumnStretch(4, 100);
