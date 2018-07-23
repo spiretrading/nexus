@@ -66,25 +66,14 @@ namespace spire {
       security_stack m_securities;
       Nexus::Security m_current_security;
       QWidget* m_body;
+      technicals_panel* m_header_widget;
       std::unique_ptr<QWidget> m_overlay_widget;
-      QWidget* m_header_widget;
-      QGridLayout* m_header_layout;
-      labeled_data_widget* m_high_label_widget;
-      labeled_data_widget* m_open_label_widget;
-      labeled_data_widget* m_defaults_label_widget;
-      labeled_data_widget* m_low_label_widget;
-      labeled_data_widget* m_close_label_widget;
-      labeled_data_widget* m_volume_label_widget;
       QLabel* m_empty_window_label;
 
       void set_current(const Nexus::Security& s);
-      void set_labeled_data_long_form_text();
-      void set_labeled_data_short_form_text();
       void show_context_menu(const QPoint& pos);
       void show_overlay_widget();
       void show_properties_dialog();
-      void update_header_layout();
-      void on_header_resize();
       void on_security_input_accept(security_input_dialog* dialog);
       void on_security_input_reject(security_input_dialog* dialog);
   };
