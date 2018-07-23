@@ -1,8 +1,11 @@
 #include "spire/book_view/book_view_window.hpp"
+#include <QContextMenuEvent>
 #include <QEvent>
+#include <QMenu>
 #include <QVBoxLayout>
 #include "spire/book_view/labeled_data_widget.hpp"
 #include "spire/spire/dimensions.hpp"
+#include "spire/ui/drop_shadow.hpp"
 #include "spire/ui/window.hpp"
 
 using namespace boost;
@@ -13,18 +16,19 @@ using namespace spire;
 book_view_window::book_view_window(const book_view_properties& properties,
     security_input_model& input_model, QWidget* parent)
     : QWidget(parent) {
-  auto body = new QWidget(this);
-  body->setMinimumSize(scale(210, 280));
+  m_body = new QWidget(this);
+  m_body->setMinimumSize(scale(210, 280));
   resize(scale(232, 410));
-  body->setStyleSheet("background-color: #FFFFFF;");
+  m_body->setStyleSheet("background-color: #FFFFFF;");
   auto window_layout = new QVBoxLayout(this);
   window_layout->setContentsMargins({});
-  auto window = new spire::window(body, this);
+  auto window = new spire::window(m_body, this);
   setWindowTitle(tr("Book View"));
   window->set_svg_icon(":/icons/bookview-black.svg",
     ":/icons/bookview-grey.svg");
   window_layout->addWidget(window);
-  auto layout = new QVBoxLayout(body);
+  m_body->installEventFilter(this);
+  auto layout = new QVBoxLayout(m_body);
   layout->setContentsMargins({});
   layout->setSpacing(0);
   m_header_widget = new QWidget(this);
@@ -88,8 +92,49 @@ bool book_view_window::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::Resize) {
       on_header_resize();
     }
+  } else if(watched == m_body) {
+    if(event->type() == QEvent::ContextMenu) {
+      show_context_menu(static_cast<QContextMenuEvent*>(event)->globalPos());
+    }
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void book_view_window::show_context_menu(const QPoint& pos) {
+  QMenu context_menu(this);
+  QAction properties_action(tr("Properties"), &context_menu);
+  connect(&properties_action, &QAction::triggered, this,
+    &book_view_window::show_properties_dialog);
+  context_menu.addAction(&properties_action);
+  context_menu.setFixedSize(scale(140, 28));
+  context_menu.setWindowFlag(Qt::NoDropShadowWindowHint);
+  drop_shadow context_menu_shadow(true, true, &context_menu);
+  context_menu.setStyleSheet(QString(R"(
+    QMenu {
+      background-color: #FFFFFF;
+      border: %1px solid #A0A0A0 %2px solid #A0A0A0;
+      color: #000000;
+      font-family: Roboto;
+      font-size: %3px;
+      padding: %4px 0px;
+    }
+
+    QMenu::item {
+      padding: %5px 0px %5px %6px;
+    }
+
+    QMenu::item:selected, QMenu::item:hover {
+      background-color: #8D78EC;
+      color: #FFFFFF;
+    })")
+    .arg(scale_height(1)).arg(scale_width(1))
+    .arg(scale_height(12)).arg(scale_height(4))
+    .arg(scale_height(2)).arg(scale_width(8)));
+  context_menu.exec(pos);
+}
+
+void book_view_window::show_properties_dialog() {
+
 }
 
 void book_view_window::set_labeled_data_long_form_text() {

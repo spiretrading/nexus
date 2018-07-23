@@ -63,6 +63,7 @@ namespace spire {
       security_input_model* m_input_model;
       security_stack m_securities;
       Nexus::Security m_current_security;
+      QWidget* m_body;
       QWidget* m_header_widget;
       QGridLayout* m_header_layout;
       labeled_data_widget* m_high_label_widget;
@@ -73,6 +74,8 @@ namespace spire {
       labeled_data_widget* m_volume_label_widget;
       QLabel* m_empty_window_label;
 
+      void show_context_menu(const QPoint& pos);
+      void show_properties_dialog();
       void set_labeled_data_long_form_text();
       void set_labeled_data_short_form_text();
       void update_header_layout();
