@@ -54,6 +54,7 @@ namespace spire {
         const closed_signal::slot_type& slot) const;
 
     protected:
+      void closeEvent(QCloseEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:

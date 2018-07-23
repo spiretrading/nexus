@@ -88,6 +88,10 @@ connection book_view_window::connect_closed_signal(
   return m_closed_signal.connect(slot);
 }
 
+void book_view_window::closeEvent(QCloseEvent* event) {
+  m_closed_signal();
+}
+
 bool book_view_window::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_header_widget) {
     if(event->type() == QEvent::Resize) {
