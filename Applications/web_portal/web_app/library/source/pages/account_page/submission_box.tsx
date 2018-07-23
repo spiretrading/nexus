@@ -41,7 +41,6 @@ export class SubmissionBox extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const commentBox = (() => {
-    	console.log('is set: ', this.props.roles.isSet(Nexus.AccountRoles.Role.ADMINISTRATOR))
       if(!this.props.roles.isSet(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
         return <CommentBox ref={(ref) => this.commentBox = ref}/>;
       }

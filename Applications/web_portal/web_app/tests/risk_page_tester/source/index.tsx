@@ -9,17 +9,21 @@ interface Properties {
 }
 
 interface State {
-  breakpoint: WebPortal.RiskParametersView.Breakpoint
+  breakpoint: WebPortal.RiskParametersView.Breakpoint,
+  roles: Nexus.AccountRoles
 }
 
 class TestApp extends React.Component<Properties, State>{
   constructor(props: Properties) {
     super(props);
+    const roles = new Nexus.AccountRoles(8);
     this.state = {
-      breakpoint: TestApp.getBreakpoint()
+      breakpoint: TestApp.getBreakpoint(),
+      roles: roles
     };
     this.onScreenResize = this.onScreenResize.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
+    this.onToggleIsAdmin = this.onToggleIsAdmin.bind(this);
   }
 
   public componentDidMount(): void {
@@ -38,11 +42,7 @@ class TestApp extends React.Component<Properties, State>{
       Nexus.Money.ONE.multiply(1000), 100,
       Beam.Duration.HOUR.multiply(5).add(Beam.Duration.MINUTE.multiply(30)).add(
       Beam.Duration.SECOND.multiply(15)));
-    const roles = new Nexus.AccountRoles(
-      Nexus.AccountRoles.Role.TRADER |
-      Nexus.AccountRoles.Role.MANAGER |
-      Nexus.AccountRoles.Role.ADMINISTRATOR);
-    console.log('upper roles: ', roles.isSet(Nexus.AccountRoles.Role.ADMINISTRATOR))
+    
     const containerClassName = (() => {
       switch(this.state.breakpoint) {
         case WebPortal.RiskParametersView.Breakpoint.SMALL:
@@ -59,22 +59,41 @@ class TestApp extends React.Component<Properties, State>{
               TestApp.CONTAINER_STYLE.base]);
       }
     })();
+    const submissionBoxPadding = (() => {
+      switch(this.state.breakpoint) {
+        case WebPortal.RiskParametersView.Breakpoint.SMALL:
+          return <div className={css(TestApp.CONTAINER_STYLE.smallPadding)}/>;
+        }
+    })();
+    const toggleAdminButtonText = (() => {
+      if(this.state.roles.isSet(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
+        return 'Admin';
+      }
+      return 'Not Admin';
+    })();
     return (
       <WebPortal.VBoxLayout width='100%' height='100%'>
         <WebPortal.Padding size='30px'/>
-        <WebPortal.HBoxLayout width='100%'>
-          <WebPortal.Padding/>
+        <WebPortal.HBoxLayout width='100%' className={
+          css(TestApp.STYLE.outerContainer)}>
           <WebPortal.VBoxLayout className={containerClassName}>
             <WebPortal.RiskParametersView parameters={parameters}
               breakpoint={this.state.breakpoint}
               currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}/>
             <WebPortal.Padding size='30px'/>
-            <WebPortal.SubmissionBox ref={
-              (ref: any) => this.submissionBox = ref}
-              roles={roles} onClick={this.onSubmit}/>
+            <WebPortal.HBoxLayout width='100%'>
+              {submissionBoxPadding}
+              <WebPortal.SubmissionBox ref={
+                (ref: any) => this.submissionBox = ref}
+                roles={this.state.roles} onClick={this.onSubmit}/>
+              {submissionBoxPadding}
+              </WebPortal.HBoxLayout>
           </WebPortal.VBoxLayout>
-          <WebPortal.Padding/>
         </WebPortal.HBoxLayout>
+        <button className={css(TestApp.STYLE.button)} onClick={
+            this.onToggleIsAdmin}>
+          {toggleAdminButtonText}
+        </button>
       </WebPortal.VBoxLayout>);
   }
 
@@ -90,9 +109,22 @@ class TestApp extends React.Component<Properties, State>{
       return WebPortal.RiskParametersView.Breakpoint.LARGE;
     }
   }
+  private static STYLE = StyleSheet.create({
+    outerContainer: {
+      position: 'relative' as 'relative'
+    },
+    button: {
+      position: 'absolute' as 'absolute',
+      top: 0,
+      left: 0
+    }
+  });
   private static CONTAINER_STYLE = StyleSheet.create({
     base: {
-      
+      position: 'absolute' as 'absolute',
+      left: 0,
+      right: 0,
+      margin: 'auto'
     },
     small: {
       width: '60%',
@@ -104,6 +136,9 @@ class TestApp extends React.Component<Properties, State>{
     },
     large: {
       width: '1036px'
+    },
+    smallPadding: {
+      width: '20%'
     }
   });
   private onScreenResize(): void {
@@ -116,7 +151,15 @@ class TestApp extends React.Component<Properties, State>{
   private onSubmit() {
     console.log(this.submissionBox.getComment());
   }
-
+  private onToggleIsAdmin() {
+    const roles = (() => {
+      if(!this.state.roles.isSet(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
+        return new Nexus.AccountRoles(8);
+      }
+      return new Nexus.AccountRoles();
+    })();
+    this.setState({roles: roles});
+  }
   private submissionBox: WebPortal.SubmissionBox;
 }
 
