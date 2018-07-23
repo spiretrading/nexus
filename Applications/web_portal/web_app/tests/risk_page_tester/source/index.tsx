@@ -63,6 +63,8 @@ class TestApp extends React.Component<Properties, State>{
       switch(this.state.breakpoint) {
         case WebPortal.RiskParametersView.Breakpoint.SMALL:
           return <div className={css(TestApp.CONTAINER_STYLE.smallPadding)}/>;
+        default:
+          <WebPortal.Padding/>
         }
     })();
     const toggleAdminButtonText = (() => {
@@ -81,13 +83,9 @@ class TestApp extends React.Component<Properties, State>{
               breakpoint={this.state.breakpoint}
               currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}/>
             <WebPortal.Padding size='30px'/>
-            <WebPortal.HBoxLayout width='100%'>
-              {submissionBoxPadding}
-              <WebPortal.SubmissionBox ref={
-                (ref: any) => this.submissionBox = ref}
-                roles={this.state.roles} onClick={this.onSubmit}/>
-              {submissionBoxPadding}
-              </WebPortal.HBoxLayout>
+            <WebPortal.SubmissionBox ref={
+              (ref: any) => this.submissionBox = ref}
+              roles={this.state.roles} onClick={this.onSubmit}/>
           </WebPortal.VBoxLayout>
         </WebPortal.HBoxLayout>
         <button className={css(TestApp.STYLE.button)} onClick={
@@ -114,9 +112,7 @@ class TestApp extends React.Component<Properties, State>{
       position: 'relative' as 'relative'
     },
     button: {
-      position: 'absolute' as 'absolute',
-      top: 0,
-      left: 0
+      position: 'absolute' as 'absolute'
     }
   });
   private static CONTAINER_STYLE = StyleSheet.create({
@@ -132,10 +128,10 @@ class TestApp extends React.Component<Properties, State>{
       maxWidth: '460px'
     },
     medium: {
-      width: '768px'
+      width: '732px'
     },
     large: {
-      width: '1036px'
+      width: '1000px'
     },
     smallPadding: {
       width: '20%'
