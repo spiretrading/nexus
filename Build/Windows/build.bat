@@ -18,7 +18,7 @@ CALL %~dp0../../Applications/MarketDataServer/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/RiskServer/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/SimulationMarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/SimulationOrderExecutionServer/Build/Windows/build.bat %config%
-CALL %~dp0../../Applications/spire/build/windows/build.bat %config%
+CALL %~dp0../../Applications/Spire/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/TmxIpMarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/TmxTl1MarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/UtpMarketDataFeedClient/Build/Windows/build.bat %config%
