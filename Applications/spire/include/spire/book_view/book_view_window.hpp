@@ -56,6 +56,7 @@ namespace spire {
     protected:
       void closeEvent(QCloseEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
 
     private:
       mutable change_security_signal m_change_security_signal;
@@ -76,13 +77,16 @@ namespace spire {
       labeled_data_widget* m_volume_label_widget;
       QLabel* m_empty_window_label;
 
-      void show_context_menu(const QPoint& pos);
-      void show_properties_dialog();
+      void set_current(const Nexus::Security& s);
       void set_labeled_data_long_form_text();
       void set_labeled_data_short_form_text();
+      void show_context_menu(const QPoint& pos);
       void show_overlay_widget();
+      void show_properties_dialog();
       void update_header_layout();
       void on_header_resize();
+      void on_security_input_accept(security_input_dialog* dialog);
+      void on_security_input_reject(security_input_dialog* dialog);
   };
 }
 

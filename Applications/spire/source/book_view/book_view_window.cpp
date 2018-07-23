@@ -5,6 +5,7 @@
 #include <QVBoxLayout>
 #include "spire/book_view/book_view_properties_dialog.hpp"
 #include "spire/book_view/labeled_data_widget.hpp"
+#include "spire/security_input/security_input_dialog.hpp"
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/drop_shadow.hpp"
 #include "spire/ui/window.hpp"
@@ -16,7 +17,8 @@ using namespace spire;
 
 book_view_window::book_view_window(const book_view_properties& properties,
     security_input_model& input_model, QWidget* parent)
-    : QWidget(parent) {
+    : QWidget(parent),
+      m_input_model(&input_model) {
   m_body = new QWidget(this);
   m_body->setMinimumSize(scale(210, 280));
   resize(scale(232, 410));
@@ -105,6 +107,68 @@ bool book_view_window::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
+void book_view_window::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_PageUp) {
+    if(m_current_security != Security()) {
+      auto s = m_securities.push_front(m_current_security);
+      if(s != Security()) {
+        set_current(s);
+      }
+    }
+    return;
+  } else if(event->key() == Qt::Key_PageDown) {
+    if(m_current_security != Security()) {
+      auto s = m_securities.push_back(m_current_security);
+      if(s != Security()) {
+        set_current(s);
+      }
+    }
+    return;
+  }
+  auto pressed_key = event->text();
+  if(pressed_key[0].isLetterOrNumber()) {
+    auto dialog = new security_input_dialog(*m_input_model, pressed_key, this);
+    dialog->setWindowModality(Qt::NonModal);
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    connect(dialog, &QDialog::accepted, this,
+      [=] { on_security_input_accept(dialog); });
+    connect(dialog, &QDialog::rejected, this,
+      [=] { on_security_input_reject(dialog); });
+    dialog->move(geometry().center().x() -
+      dialog->width() / 2, geometry().center().y() - dialog->height() / 2);
+    show_overlay_widget();
+    dialog->show();
+  }
+}
+
+void book_view_window::set_current(const Security& s) {
+  if(s == m_current_security) {
+    return;
+  }
+  m_current_security = s;
+  m_change_security_signal(s);
+  setWindowTitle(QString::fromStdString(ToString(s)) +
+    tr(" - Book View"));
+}
+
+void book_view_window::set_labeled_data_long_form_text() {
+  m_high_label_widget->set_label_text(tr("High"));
+  m_open_label_widget->set_label_text(tr("Open"));
+  m_def_label_widget->set_label_text(tr("Def"));
+  m_low_label_widget->set_label_text(tr("Low"));
+  m_close_label_widget->set_label_text(tr("Close"));
+  m_volume_label_widget->set_label_text(tr("Vol"));
+}
+
+void book_view_window::set_labeled_data_short_form_text() {
+  m_high_label_widget->set_label_text(tr("H"));
+  m_open_label_widget->set_label_text(tr("O"));
+  m_def_label_widget->set_label_text(tr("D"));
+  m_low_label_widget->set_label_text(tr("L"));
+  m_close_label_widget->set_label_text(tr("C"));
+  m_volume_label_widget->set_label_text(tr("V"));
+}
+
 void book_view_window::show_context_menu(const QPoint& pos) {
   QMenu context_menu(this);
   QAction properties_action(tr("Properties"), &context_menu);
@@ -138,6 +202,15 @@ void book_view_window::show_context_menu(const QPoint& pos) {
   context_menu.exec(pos);
 }
 
+void book_view_window::show_overlay_widget() {
+  m_overlay_widget = std::make_unique<QWidget>(m_body);
+  m_overlay_widget->setStyleSheet(
+    "background-color: rgba(245, 245, 245, 153);");
+  m_overlay_widget->resize(m_body->size());
+  m_overlay_widget->move(m_header_widget->pos());
+  m_overlay_widget->show();
+}
+
 void book_view_window::show_properties_dialog() {
   book_view_properties_dialog dialog(get_properties(), Security(), this);
   dialog.connect_apply_signal([=] (auto p) { set_properties(p); });
@@ -146,33 +219,6 @@ void book_view_window::show_properties_dialog() {
     set_properties(dialog.get_properties());
   }
   m_overlay_widget.reset();
-}
-
-void book_view_window::set_labeled_data_long_form_text() {
-  m_high_label_widget->set_label_text(tr("High"));
-  m_open_label_widget->set_label_text(tr("Open"));
-  m_def_label_widget->set_label_text(tr("Def"));
-  m_low_label_widget->set_label_text(tr("Low"));
-  m_close_label_widget->set_label_text(tr("Close"));
-  m_volume_label_widget->set_label_text(tr("Vol"));
-}
-
-void book_view_window::set_labeled_data_short_form_text() {
-  m_high_label_widget->set_label_text(tr("H"));
-  m_open_label_widget->set_label_text(tr("O"));
-  m_def_label_widget->set_label_text(tr("D"));
-  m_low_label_widget->set_label_text(tr("L"));
-  m_close_label_widget->set_label_text(tr("C"));
-  m_volume_label_widget->set_label_text(tr("V"));
-}
-
-void book_view_window::show_overlay_widget() {
-  m_overlay_widget = std::make_unique<QWidget>(m_body);
-  m_overlay_widget->setStyleSheet(
-    "background-color: rgba(245, 245, 245, 153);");
-  m_overlay_widget->resize(m_body->size());
-  m_overlay_widget->move(m_header_widget->pos());
-  m_overlay_widget->show();
 }
 
 void book_view_window::update_header_layout() {
@@ -215,4 +261,22 @@ void book_view_window::on_header_resize() {
     set_labeled_data_long_form_text();
   }
   update_header_layout();
+}
+
+void book_view_window::on_security_input_accept(
+    security_input_dialog* dialog) {
+  auto s = dialog->get_security();
+  if(s != Security() && s != m_current_security) {
+    m_securities.push(m_current_security);
+    set_current(s);
+    activateWindow();
+  }
+  dialog->close();
+  m_overlay_widget.reset();
+}
+
+void book_view_window::on_security_input_reject(
+    security_input_dialog* dialog) {
+  dialog->close();
+  m_overlay_widget.reset();
 }
