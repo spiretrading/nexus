@@ -400,12 +400,19 @@ namespace MarketDataService {
     }
     auto brokerNumber = message.GetBusinessField<std::string>(70);
     auto orderId = GetOrderId(symbol, brokerNumber, *orderNumber);
+    if(m_config.m_market == DefaultMarkets::OMGA() ||
+        m_config.m_market == DefaultMarkets::LYNX()) {
+      auto modificationId = message.GetBusinessField<std::string>(11);
+      if(modificationId.is_initialized()) {
+        auto previousId = GetOrderId(symbol, brokerNumber, *modificationId);
+        m_marketDataFeedClient->DeleteOrder(previousId, *timestamp);
+      }
+    } else if(m_config.m_isNeoBook && !isPrimaryMpid) {
+      m_marketDataFeedClient->DeleteOrder(orderId, *timestamp);
+    }
     Security security(std::move(*symbol), m_config.m_market,
       m_config.m_country);
     *quantity = GetBoardLotPortion(*quantity, *price);
-    if(m_config.m_isNeoBook && !isPrimaryMpid) {
-      m_marketDataFeedClient->DeleteOrder(orderId, *timestamp);
-    }
     m_marketDataFeedClient->AddOrder(security, m_config.m_market, mpid,
       isPrimaryMpid, orderId, *side, *price, *quantity, *timestamp);
   }
