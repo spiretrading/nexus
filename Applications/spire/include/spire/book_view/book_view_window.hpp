@@ -64,6 +64,7 @@ namespace spire {
       security_stack m_securities;
       Nexus::Security m_current_security;
       QWidget* m_body;
+      std::unique_ptr<QWidget> m_overlay_widget;
       QWidget* m_header_widget;
       QGridLayout* m_header_layout;
       labeled_data_widget* m_high_label_widget;
@@ -78,6 +79,7 @@ namespace spire {
       void show_properties_dialog();
       void set_labeled_data_long_form_text();
       void set_labeled_data_short_form_text();
+      void show_overlay_widget();
       void update_header_layout();
       void on_header_resize();
   };

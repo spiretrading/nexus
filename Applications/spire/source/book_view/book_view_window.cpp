@@ -3,6 +3,7 @@
 #include <QEvent>
 #include <QMenu>
 #include <QVBoxLayout>
+#include "spire/book_view/book_view_properties_dialog.hpp"
 #include "spire/book_view/labeled_data_widget.hpp"
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/drop_shadow.hpp"
@@ -134,7 +135,13 @@ void book_view_window::show_context_menu(const QPoint& pos) {
 }
 
 void book_view_window::show_properties_dialog() {
-
+  book_view_properties_dialog dialog(get_properties(), Security(), this);
+  dialog.connect_apply_signal([=] (auto p) { set_properties(p); });
+  show_overlay_widget();
+  if(dialog.exec() == QDialog::Accepted) {
+    set_properties(dialog.get_properties());
+  }
+  m_overlay_widget.reset();
 }
 
 void book_view_window::set_labeled_data_long_form_text() {
@@ -153,6 +160,15 @@ void book_view_window::set_labeled_data_short_form_text() {
   m_low_label_widget->set_label_text(tr("L"));
   m_close_label_widget->set_label_text(tr("C"));
   m_volume_label_widget->set_label_text(tr("V"));
+}
+
+void book_view_window::show_overlay_widget() {
+  m_overlay_widget = std::make_unique<QWidget>(this);
+  m_overlay_widget->setStyleSheet(
+    "background-color: rgba(245, 245, 245, 153);");
+  m_overlay_widget->resize(m_body->size());
+  m_overlay_widget->move(m_header_widget->pos());
+  m_overlay_widget->show();
 }
 
 void book_view_window::update_header_layout() {
