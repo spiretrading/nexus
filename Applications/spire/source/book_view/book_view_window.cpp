@@ -35,11 +35,11 @@ book_view_window::book_view_window(const book_view_properties& properties,
   m_header_layout = new QGridLayout(m_header_widget);
   m_header_layout->setContentsMargins(scale_width(8), 0, scale_width(8), 0);
   m_header_layout->setSpacing(0);
-  m_high_label_widget = new labeled_data_widget(tr("H"), tr("N/A"),
+  m_high_label_widget = new labeled_data_widget(tr("H"), tr("0.00"),
     this);
   m_header_layout->addWidget(m_high_label_widget, 0, 0);
   m_header_layout->setColumnStretch(0, 100);
-  m_open_label_widget = new labeled_data_widget(tr("O"), tr("N/A"),
+  m_open_label_widget = new labeled_data_widget(tr("O"), tr("0.00"),
     this);
   m_header_layout->addWidget(m_open_label_widget, 0, 1);
   m_header_layout->setColumnStretch(1, 100);
@@ -47,10 +47,10 @@ book_view_window::book_view_window(const book_view_properties& properties,
     QString("100%1100").arg(tr("x")), this);
   m_header_layout->addWidget(m_def_label_widget, 0, 2);
   m_header_layout->setColumnStretch(2, 1);
-  m_low_label_widget = new labeled_data_widget(tr("L"), tr("N/A"),
+  m_low_label_widget = new labeled_data_widget(tr("L"), tr("0.00"),
     this);
   m_header_layout->addWidget(m_low_label_widget, 1, 0);
-  m_close_label_widget = new labeled_data_widget(tr("C"), tr("N/A"),
+  m_close_label_widget = new labeled_data_widget(tr("C"), tr("0.00"),
     this);
   m_header_layout->addWidget(m_close_label_widget, 1, 1);
   m_volume_label_widget = new labeled_data_widget(tr("V"), "0", this);
