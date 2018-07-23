@@ -18,25 +18,25 @@ interface Properties {
 }
 
 interface State {
-	comment: string;
+  comment: string;
 }
 
 /** Displays the components needed to submit an account related form. */
 export class SubmissionBox extends React.Component<Properties, State> {
-	public static defaultProps = {
-		onClick: () => {}
-	};
-	constructor(props: Properties) {
-		super(props);
-		this.state = {
-			comment: ''
-		};
-	}
+  public static defaultProps = {
+    onClick: () => {}
+  };
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      comment: ''
+    };
+  }
 
-	public getComment() {
-  	if(this.commentBox) {
-  		return this.commentBox.getComment();
-  	}
+  public getComment() {
+    if(this.commentBox) {
+      return this.commentBox.getComment();
+    }
   }
 
   public render(): JSX.Element {
@@ -54,21 +54,21 @@ export class SubmissionBox extends React.Component<Properties, State> {
       switch(this.props.status) {
         case 'Submitted':
         case 'Saved':
-        	return <span className={css([SubmissionBox.MESSAGE_STYLE.base,
+          return <span className={css([SubmissionBox.MESSAGE_STYLE.base,
             SubmissionBox.MESSAGE_STYLE.valid])}>Submitted</span>;
-       	default:
-       		return <span className={css([SubmissionBox.MESSAGE_STYLE.base,
+        default:
+          return <span className={css([SubmissionBox.MESSAGE_STYLE.base,
             SubmissionBox.MESSAGE_STYLE.invalid])}>Server issue</span>;
       }
     })();
     return (
-    	<VBoxLayout width='100%'>
+      <VBoxLayout width='100%'>
         {commentBox}
         {commentBoxPadding}
         <HBoxLayout width='100%'>
           <Padding size='calc(50% - 123px)'/>
           <SubmitButton isDisabled={false}
-          	roles={this.props.roles}
+            roles={this.props.roles}
             onClick={this.props.onClick}/>
           <Padding size='calc(50% - 123px)'/>
         </HBoxLayout>

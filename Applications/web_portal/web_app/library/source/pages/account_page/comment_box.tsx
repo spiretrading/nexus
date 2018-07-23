@@ -1,29 +1,23 @@
 import {css, StyleSheet} from 'aphrodite';
 import * as React from 'react';
 
-interface Properties {
-}
-
 /** Displays the comment box. */
-export class CommentBox extends React.Component<Properties> {
-	constructor(props: Properties) {
-		super(props);
-	}
+export class CommentBox extends React.Component {
   public render(): JSX.Element {
     return <textarea className={css(CommentBox.STYLE.submissionBox)}
-    	ref={(ref) => this.textArea = ref}
+      ref={(ref) => this.textArea = ref}
       placeholder='Leave comment here…'/>;
   }
   
   public getComment() {
-  	return this.textArea.value;
+    return this.textArea.value;
   }
 
   private static STYLE = StyleSheet.create({
     submissionBox: {
       boxSizing: 'border-box',
       width: '100%',
-      height: '130px',
+      height: '150px',
       border: '1px solid #C8C8C8',
       padding: '10px',
       margin: 0,
