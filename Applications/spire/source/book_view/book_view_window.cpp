@@ -1,5 +1,5 @@
 #include "spire/book_view/book_view_window.hpp"
-#include <QGridLayout>
+#include <QEvent>
 #include <QVBoxLayout>
 #include "spire/book_view/labeled_data_widget.hpp"
 #include "spire/spire/dimensions.hpp"
@@ -14,7 +14,7 @@ book_view_window::book_view_window(const book_view_properties& properties,
     security_input_model& input_model, QWidget* parent)
     : QWidget(parent) {
   auto body = new QWidget(this);
-  body->setMinimumSize(scale(232, 280));
+  body->setMinimumSize(scale(210, 280));
   resize(scale(232, 410));
   body->setStyleSheet("background-color: #FFFFFF;");
   auto window_layout = new QVBoxLayout(this);
@@ -27,33 +27,34 @@ book_view_window::book_view_window(const book_view_properties& properties,
   auto layout = new QVBoxLayout(body);
   layout->setContentsMargins({});
   layout->setSpacing(0);
-  auto header_widget = new QWidget(this);
-  header_widget->setFixedHeight(scale_height(36));
-  header_widget->setStyleSheet("background-color: #F5F5F5;");
-  layout->addWidget(header_widget);
-  auto header_layout = new QGridLayout(header_widget);
-  header_layout->setContentsMargins(scale_width(8), 0, scale_width(8), 0);
-  header_layout->setSpacing(0);
-  auto high_labeled_data_widget = new labeled_data_widget(tr("H"), tr("N/A"),
+  m_header_widget = new QWidget(this);
+  m_header_widget->setFixedHeight(scale_height(36));
+  m_header_widget->setStyleSheet("background-color: #F5F5F5;");
+  m_header_widget->installEventFilter(this);
+  layout->addWidget(m_header_widget);
+  m_header_layout = new QGridLayout(m_header_widget);
+  m_header_layout->setContentsMargins(scale_width(8), 0, scale_width(8), 0);
+  m_header_layout->setSpacing(0);
+  m_high_label_widget = new labeled_data_widget(tr("H"), tr("N/A"),
     this);
-  header_layout->addWidget(high_labeled_data_widget, 0, 0);
-  header_layout->setColumnStretch(0, 100);
-  auto open_labaled_data_widget = new labeled_data_widget(tr("O"), tr("N/A"),
+  m_header_layout->addWidget(m_high_label_widget, 0, 0);
+  m_header_layout->setColumnStretch(0, 100);
+  m_open_label_widget = new labeled_data_widget(tr("O"), tr("N/A"),
     this);
-  header_layout->addWidget(open_labaled_data_widget, 0, 1);
-  header_layout->setColumnStretch(1, 100);
-  auto def_labeled_data_widget = new labeled_data_widget(tr("D"),
+  m_header_layout->addWidget(m_open_label_widget, 0, 1);
+  m_header_layout->setColumnStretch(1, 100);
+  m_def_label_widget = new labeled_data_widget(tr("D"),
     QString("100%1100").arg(tr("x")), this);
-  header_layout->addWidget(def_labeled_data_widget, 0, 2);
-  header_layout->setColumnStretch(2, 1);
-  auto low_labeled_data_widget = new labeled_data_widget(tr("L"), tr("N/A"),
+  m_header_layout->addWidget(m_def_label_widget, 0, 2);
+  m_header_layout->setColumnStretch(2, 1);
+  m_low_label_widget = new labeled_data_widget(tr("L"), tr("N/A"),
     this);
-  header_layout->addWidget(low_labeled_data_widget, 1, 0);
-  auto close_labled_data_widget = new labeled_data_widget(tr("C"), tr("N/A"),
+  m_header_layout->addWidget(m_low_label_widget, 1, 0);
+  m_close_label_widget = new labeled_data_widget(tr("C"), tr("N/A"),
     this);
-  header_layout->addWidget(close_labled_data_widget, 1, 1);
-  auto volume_labled_data_widget = new labeled_data_widget(tr("V"), "0", this);
-  header_layout->addWidget(volume_labled_data_widget, 1, 2);
+  m_header_layout->addWidget(m_close_label_widget, 1, 1);
+  m_volume_label_widget = new labeled_data_widget(tr("V"), "0", this);
+  m_header_layout->addWidget(m_volume_label_widget, 1, 2);
   m_empty_window_label = new QLabel(tr("Enter a ticker symbol."), this);
   m_empty_window_label->setAlignment(Qt::AlignCenter);
   m_empty_window_label->setStyleSheet(QString(R"(
@@ -80,4 +81,73 @@ connection book_view_window::connect_security_change_signal(
 connection book_view_window::connect_closed_signal(
     const closed_signal::slot_type& slot) const {
   return m_closed_signal.connect(slot);
+}
+
+bool book_view_window::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == m_header_widget) {
+    if(event->type() == QEvent::Resize) {
+      on_header_resize();
+    }
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
+void book_view_window::set_labeled_data_long_form_text() {
+  m_high_label_widget->set_label_text(tr("High"));
+  m_open_label_widget->set_label_text(tr("Open"));
+  m_def_label_widget->set_label_text(tr("Def"));
+  m_low_label_widget->set_label_text(tr("Low"));
+  m_close_label_widget->set_label_text(tr("Close"));
+  m_volume_label_widget->set_label_text(tr("Vol"));
+}
+
+void book_view_window::set_labeled_data_short_form_text() {
+  m_high_label_widget->set_label_text(tr("H"));
+  m_open_label_widget->set_label_text(tr("O"));
+  m_def_label_widget->set_label_text(tr("D"));
+  m_low_label_widget->set_label_text(tr("L"));
+  m_close_label_widget->set_label_text(tr("C"));
+  m_volume_label_widget->set_label_text(tr("V"));
+}
+
+void book_view_window::update_header_layout() {
+  if(m_header_widget->width() <= scale_width(412)) {
+    if(m_header_layout->itemAtPosition(0, 3) != nullptr) {
+      m_header_widget->setFixedHeight(scale_height(36));
+      m_header_layout->addWidget(m_low_label_widget, 1, 0);
+      m_header_layout->addWidget(m_close_label_widget, 1, 1);
+      m_header_layout->addWidget(m_volume_label_widget, 1, 2);
+      m_header_layout->setColumnStretch(2, 1);
+      m_header_layout->setColumnStretch(3, 0);
+      m_header_layout->setColumnStretch(4, 0);
+      m_header_layout->setColumnStretch(5, 0);
+    }
+  } else {
+    if(m_header_layout->itemAtPosition(1, 0) != nullptr) {
+      m_header_widget->setFixedHeight(scale_height(20));
+      m_header_layout->addWidget(m_low_label_widget, 0, 3);
+      m_header_layout->addWidget(m_close_label_widget, 0, 4);
+      m_header_layout->addWidget(m_volume_label_widget, 0, 5);
+      m_header_layout->setColumnStretch(2, 100);
+      m_header_layout->setColumnStretch(3, 100);
+      m_header_layout->setColumnStretch(4, 100);
+      m_header_layout->setColumnStretch(5, 1);
+    }
+  }
+}
+
+void book_view_window::on_header_resize() {
+  auto header_width = m_header_widget->width();
+  if(header_width <= scale_width(255)) {
+    set_labeled_data_short_form_text();
+  } else if(header_width >= scale_width(256) &&
+      header_width <= scale_width(411)) {
+    set_labeled_data_long_form_text();
+  } else if(header_width >= scale_width(412) &&
+      header_width <= scale_width(503)) {
+    set_labeled_data_short_form_text();
+  } else if(header_width >= scale_width(504)) {
+    set_labeled_data_long_form_text();
+  }
+  update_header_layout();
 }

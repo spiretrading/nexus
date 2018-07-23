@@ -1,6 +1,7 @@
 #ifndef SPIRE_BOOK_VIEW_WINDOW_HPP
 #define SPIRE_BOOK_VIEW_WINDOW_HPP
 #include <boost/optional.hpp>
+#include <QGridLayout>
 #include <QLabel>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
@@ -52,6 +53,9 @@ namespace spire {
       boost::signals2::connection connect_closed_signal(
         const closed_signal::slot_type& slot) const;
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+
     private:
       mutable change_security_signal m_change_security_signal;
       mutable closed_signal m_closed_signal;
@@ -59,7 +63,20 @@ namespace spire {
       security_input_model* m_input_model;
       security_stack m_securities;
       Nexus::Security m_current_security;
+      QWidget* m_header_widget;
+      QGridLayout* m_header_layout;
+      labeled_data_widget* m_high_label_widget;
+      labeled_data_widget* m_open_label_widget;
+      labeled_data_widget* m_def_label_widget;
+      labeled_data_widget* m_low_label_widget;
+      labeled_data_widget* m_close_label_widget;
+      labeled_data_widget* m_volume_label_widget;
       QLabel* m_empty_window_label;
+
+      void set_labeled_data_long_form_text();
+      void set_labeled_data_short_form_text();
+      void update_header_layout();
+      void on_header_resize();
   };
 }
 
