@@ -163,7 +163,7 @@ void book_view_window::set_labeled_data_short_form_text() {
 }
 
 void book_view_window::show_overlay_widget() {
-  m_overlay_widget = std::make_unique<QWidget>(this);
+  m_overlay_widget = std::make_unique<QWidget>(m_body);
   m_overlay_widget->setStyleSheet(
     "background-color: rgba(245, 245, 245, 153);");
   m_overlay_widget->resize(m_body->size());
