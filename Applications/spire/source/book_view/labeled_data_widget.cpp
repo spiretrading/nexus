@@ -22,6 +22,7 @@ labeled_data_widget::labeled_data_widget(const QString& label_text,
     font-size: %1px;
     font-weight: 550;)").arg(scale_height(10)));
   layout->addWidget(m_data_label);
+  layout->addStretch(1);
 }
 
 void labeled_data_widget::set_label_text(const QString& text) {

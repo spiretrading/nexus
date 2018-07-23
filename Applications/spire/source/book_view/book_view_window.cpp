@@ -1,5 +1,7 @@
 #include "spire/book_view/book_view_window.hpp"
+#include <QGridLayout>
 #include <QVBoxLayout>
+#include "spire/book_view/labeled_data_widget.hpp"
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/window.hpp"
 
@@ -29,9 +31,29 @@ book_view_window::book_view_window(const book_view_properties& properties,
   header_widget->setFixedHeight(scale_height(36));
   header_widget->setStyleSheet("background-color: #F5F5F5;");
   layout->addWidget(header_widget);
-  auto header_layout = new QVBoxLayout(header_widget);
+  auto header_layout = new QGridLayout(header_widget);
   header_layout->setContentsMargins(scale_width(8), 0, scale_width(8), 0);
   header_layout->setSpacing(0);
+  auto high_labeled_data_widget = new labeled_data_widget(tr("H"), tr("N/A"),
+    this);
+  header_layout->addWidget(high_labeled_data_widget, 0, 0);
+  header_layout->setColumnStretch(0, 100);
+  auto open_labaled_data_widget = new labeled_data_widget(tr("O"), tr("N/A"),
+    this);
+  header_layout->addWidget(open_labaled_data_widget, 0, 1);
+  header_layout->setColumnStretch(1, 100);
+  auto def_labeled_data_widget = new labeled_data_widget(tr("D"),
+    QString("100%1100").arg(tr("x")), this);
+  header_layout->addWidget(def_labeled_data_widget, 0, 2);
+  header_layout->setColumnStretch(2, 1);
+  auto low_labeled_data_widget = new labeled_data_widget(tr("L"), tr("N/A"),
+    this);
+  header_layout->addWidget(low_labeled_data_widget, 1, 0);
+  auto close_labled_data_widget = new labeled_data_widget(tr("C"), tr("N/A"),
+    this);
+  header_layout->addWidget(close_labled_data_widget, 1, 1);
+  auto volume_labled_data_widget = new labeled_data_widget(tr("V"), "0", this);
+  header_layout->addWidget(volume_labled_data_widget, 1, 2);
   m_empty_window_label = new QLabel(tr("Enter a ticker symbol."), this);
   m_empty_window_label->setAlignment(Qt::AlignCenter);
   m_empty_window_label->setStyleSheet(QString(R"(
