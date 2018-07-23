@@ -87,7 +87,7 @@ class TestApp extends React.Component<Properties, State>{
               breakpoint={this.state.breakpoint}
               currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}/>
             <WebPortal.Padding size='30px'/>
-            <WebPortal.HBoxLayout width='100%' style={{backgroundColor: 'pink'}}>
+            <WebPortal.HBoxLayout width='100%'>
               <WebPortal.SubmissionBox ref={
                 (ref: any) => this.submissionBox = ref}
                 roles={this.state.roles} onClick={this.onSubmit}/>

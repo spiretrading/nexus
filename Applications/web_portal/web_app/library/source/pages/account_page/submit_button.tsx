@@ -16,7 +16,7 @@ interface Properties {
 
 /** Displays the submission button. */
 export class SubmitButton extends React.Component<Properties> {
-  public defaultProps = {
+  public static defaultProps = {
     isDisabled: false,
     onClick: () => {}
   };
