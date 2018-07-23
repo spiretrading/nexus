@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 /** Specifies whether elements are ordered horizontally or vertically. */
-export enum BoxOrientation {
+enum BoxOrientation {
 
   /** Elements are layed out side-by-side. */
   HORIZONTAL,
@@ -10,8 +10,7 @@ export enum BoxOrientation {
   VERTICAL
 }
 
-/** Specifies the React properties for the BoxLayout component. */
-export interface Properties {
+interface Properties {
 
   /** The width of the BoxLayout, leaving this value empty results in a width
    *  equal to the width of its content.

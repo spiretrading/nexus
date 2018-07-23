@@ -142,4 +142,10 @@ IF "%UPDATE_BUILD%" == "1" (
   cp -r source/index.html application
 )
 POPD
+IF NOT EXIST %~dp0..\..\application\web_app (
+  PUSHD %~dp0..\..\application\
+  mkdir web_app
+  POPD
+)
+cp -r %~dp0\application\* %~dp0..\..\application\web_app
 ENDLOCAL

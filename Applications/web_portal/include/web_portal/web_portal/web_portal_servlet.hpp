@@ -1,5 +1,5 @@
-#ifndef NEXUS_CLIENTWEBPORTALSERVLET_HPP
-#define NEXUS_CLIENTWEBPORTALSERVLET_HPP
+#ifndef NEXUS_WEB_PORTAL_SERVLET_HPP
+#define NEXUS_WEB_PORTAL_SERVLET_HPP
 #include <vector>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
@@ -12,6 +12,7 @@
 #include <Beam/WebServices/SessionStore.hpp>
 #include <Beam/WebServices/WebSocketChannel.hpp>
 #include <boost/noncopyable.hpp>
+#include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
 #include "web_portal/web_portal/administration_web_servlet.hpp"
 #include "web_portal/web_portal/web_portal.hpp"
 #include "web_portal/web_portal/web_portal_session.hpp"
@@ -20,29 +21,25 @@
 #include "web_portal/web_portal/market_data_web_servlet.hpp"
 #include "web_portal/web_portal/risk_web_servlet.hpp"
 #include "web_portal/web_portal/service_locator_web_servlet.hpp"
-#include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
 
-namespace Nexus {
-namespace ClientWebPortal {
+namespace Nexus::WebPortal {
 
-  /*! \class ClientWebPortalServlet
-      \brief Implements a web servlet for Spire client services.
-   */
-  class ClientWebPortalServlet : private boost::noncopyable {
+  //! Implements a web servlet for Spire client services.
+  class WebPortalServlet : private boost::noncopyable {
     public:
 
       //! The type of WebSocketChannel used.
       using WebSocketChannel = Beam::WebServices::WebSocketChannel<
         std::shared_ptr<Beam::Network::TcpSocketChannel>>;
 
-      //! Constructs a ClientWebPortalServlet.
+      //! Constructs a WebPortalServlet.
       /*!
         \param serviceClients The clients used to access Spire services.
       */
-      ClientWebPortalServlet(
+      WebPortalServlet(
         Beam::RefType<ApplicationServiceClients> serviceClients);
 
-      ~ClientWebPortalServlet();
+      ~WebPortalServlet();
 
       //! Returns the HTTP request slots.
       std::vector<Beam::WebServices::HttpRequestSlot> GetSlots();
@@ -57,7 +54,7 @@ namespace ClientWebPortal {
 
     private:
       Beam::WebServices::FileStore m_fileStore;
-      Beam::WebServices::SessionStore<ClientWebPortalSession> m_sessions;
+      Beam::WebServices::SessionStore<WebPortalSession> m_sessions;
       ApplicationServiceClients* m_serviceClients;
       ServiceLocatorWebServlet m_serviceLocatorServlet;
       DefinitionsWebServlet m_definitionsServlet;
@@ -76,7 +73,6 @@ namespace ClientWebPortal {
       Beam::WebServices::HttpResponse OnLoadProfitAndLossReport(
         const Beam::WebServices::HttpRequest& request);
   };
-}
 }
 
 #endif

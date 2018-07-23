@@ -12,8 +12,8 @@ using namespace Beam::WebServices;
 using namespace boost;
 using namespace Nexus;
 using namespace Nexus::AdministrationService;
-using namespace Nexus::ClientWebPortal;
 using namespace Nexus::RiskService;
+using namespace Nexus::WebPortal;
 using namespace std;
 
 namespace {
@@ -60,7 +60,7 @@ namespace {
 }
 
 AdministrationWebServlet::AdministrationWebServlet(
-    RefType<SessionStore<ClientWebPortalSession>> sessions,
+    RefType<SessionStore<WebPortalSession>> sessions,
     RefType<ApplicationServiceClients> serviceClients)
     : m_sessions{sessions.Get()},
       m_serviceClients{serviceClients.Get()} {}

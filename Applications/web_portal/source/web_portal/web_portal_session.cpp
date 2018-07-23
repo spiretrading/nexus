@@ -3,8 +3,8 @@
 using namespace Beam;
 using namespace Beam::WebServices;
 using namespace Nexus;
-using namespace Nexus::ClientWebPortal;
+using namespace Nexus::WebPortal;
 using namespace std;
 
-ClientWebPortalSession::ClientWebPortalSession(string id)
+WebPortalSession::WebPortalSession(string id)
     : AuthenticatedSession{std::move(id)} {}

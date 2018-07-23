@@ -11,6 +11,7 @@ const minigyPluginOpts = {
 module.exports = {
   devtool: PROD ? 'none' : 'source-map',
   entry: './source/index.ts',
+  mode: PROD ? 'production' : 'development',
   module: {
     rules: [
       {

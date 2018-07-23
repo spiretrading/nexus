@@ -4,8 +4,7 @@ import * as React from 'react';
 import {Center, HBoxLayout, Padding, VBoxLayout} from '../../';
 import {LoginPageModel} from '.';
 
-/** The React properties for the LoginPage. */
-export interface Properties {
+interface Properties {
 
   /** The model used to login. */
   model: LoginPageModel;
@@ -14,7 +13,7 @@ export interface Properties {
   onLogin?: (account: Beam.DirectoryEntry) => void;
 }
 
-export interface State {
+interface State {
   errorMessage: string;
 }
 
@@ -106,9 +105,7 @@ export class LoginPage extends React.Component<Properties, State> {
         this.setState({
           errorMessage: null
         });
-        if(this.props.onLogin) {
-          this.props.onLogin(account);
-        }
+        this.props.onLogin(account);
       } catch(error) {
         this.staticLogo.className = css(LoginPage.STYLE.logoVisible);
         this.animatedLogo.className = css(LoginPage.STYLE.logoInvisible);
@@ -126,6 +123,10 @@ export class LoginPage extends React.Component<Properties, State> {
         document.activeElement !== this.submitButton &&
         event.key.trim().length === 1) {
       this.usernameInputField.focus();
+    } else if((document.activeElement === this.submitButton ||
+        document.activeElement === this.passwordInputField) &&
+        event.key.trim() === 'Enter') {
+      this.onLogin();
     }
   }
 
@@ -133,6 +134,9 @@ export class LoginPage extends React.Component<Properties, State> {
     this.submitButton.disabled = this.usernameInputField.value.trim() === '';
   }
 
+  private static defaultProps = {
+    onLogin: (account: LoginPageModel) => {}
+  };
   private static STYLE = StyleSheet.create({
     page: {
       backgroundColor: '#4B23A0'
@@ -195,7 +199,7 @@ export class LoginPage extends React.Component<Properties, State> {
       height: '48px',
       color: '#4B23A0',
       backgroundColor: '#E2E0FF',
-      font: '500 20px Roboto',
+      font: '400 20px Roboto',
       borderRadius: '1px',
       border: 'none',
       outline: 0,

@@ -20,14 +20,14 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::Accounting;
 using namespace Nexus::AdministrationService;
-using namespace Nexus::ClientWebPortal;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::RiskService;
+using namespace Nexus::WebPortal;
 using namespace std;
 
-ClientWebPortalServlet::ClientWebPortalServlet(
+WebPortalServlet::WebPortalServlet(
     RefType<ApplicationServiceClients> serviceClients)
-    : m_fileStore{"webapp"},
+    : m_fileStore{"web_app"},
       m_serviceClients{serviceClients.Get()},
       m_serviceLocatorServlet{Ref(m_sessions), Ref(*m_serviceClients)},
       m_definitionsServlet{Ref(m_sessions), Ref(*m_serviceClients)},
@@ -36,24 +36,23 @@ ClientWebPortalServlet::ClientWebPortalServlet(
       m_complianceServlet{Ref(m_sessions), Ref(*m_serviceClients)},
       m_riskServlet{Ref(m_sessions), Ref(*m_serviceClients)} {}
 
-ClientWebPortalServlet::~ClientWebPortalServlet() {
+WebPortalServlet::~WebPortalServlet() {
   Close();
 }
 
-vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
+vector<HttpRequestSlot> WebPortalServlet::GetSlots() {
   vector<HttpRequestSlot> slots;
   slots.emplace_back(MatchesPath(HttpMethod::GET, "/"),
-    std::bind(&ClientWebPortalServlet::OnIndex, this, std::placeholders::_1));
+    std::bind(&WebPortalServlet::OnIndex, this, std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, ""),
-    std::bind(&ClientWebPortalServlet::OnIndex, this, std::placeholders::_1));
+    std::bind(&WebPortalServlet::OnIndex, this, std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, "/index.html"),
-    std::bind(&ClientWebPortalServlet::OnIndex, this, std::placeholders::_1));
+    std::bind(&WebPortalServlet::OnIndex, this, std::placeholders::_1));
   slots.emplace_back(MatchAny(HttpMethod::GET),
-    std::bind(&ClientWebPortalServlet::OnServeFile, this,
-    std::placeholders::_1));
+    std::bind(&WebPortalServlet::OnServeFile, this, std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/reporting_service/load_profit_and_loss_report"),
-    std::bind(&ClientWebPortalServlet::OnLoadProfitAndLossReport, this,
+    std::bind(&WebPortalServlet::OnLoadProfitAndLossReport, this,
     std::placeholders::_1));
   auto serviceLocatorSlots = m_serviceLocatorServlet.GetSlots();
   slots.insert(slots.end(), serviceLocatorSlots.begin(),
@@ -72,15 +71,15 @@ vector<HttpRequestSlot> ClientWebPortalServlet::GetSlots() {
   return slots;
 }
 
-vector<HttpUpgradeSlot<ClientWebPortalServlet::WebSocketChannel>>
-    ClientWebPortalServlet::GetWebSocketSlots() {
+vector<HttpUpgradeSlot<WebPortalServlet::WebSocketChannel>>
+    WebPortalServlet::GetWebSocketSlots() {
   vector<HttpUpgradeSlot<WebSocketChannel>> slots;
   auto riskSlots = m_riskServlet.GetWebSocketSlots();
   slots.insert(slots.end(), riskSlots.begin(), riskSlots.end());
   return slots;
 }
 
-void ClientWebPortalServlet::Open() {
+void WebPortalServlet::Open() {
   if(m_openState.SetOpening()) {
     return;
   }
@@ -99,14 +98,14 @@ void ClientWebPortalServlet::Open() {
   m_openState.SetOpen();
 }
 
-void ClientWebPortalServlet::Close() {
+void WebPortalServlet::Close() {
   if(m_openState.SetClosing()) {
     return;
   }
   Shutdown();
 }
 
-void ClientWebPortalServlet::Shutdown() {
+void WebPortalServlet::Shutdown() {
   m_riskServlet.Close();
   m_complianceServlet.Close();
   m_marketDataServlet.Close();
@@ -117,13 +116,13 @@ void ClientWebPortalServlet::Shutdown() {
   m_openState.SetClosed();
 }
 
-HttpResponse ClientWebPortalServlet::OnIndex(const HttpRequest& request) {
+HttpResponse WebPortalServlet::OnIndex(const HttpRequest& request) {
   HttpResponse response;
   m_fileStore.Serve("index.html", Store(response));
   return response;
 }
 
-HttpResponse ClientWebPortalServlet::OnServeFile(const HttpRequest& request) {
+HttpResponse WebPortalServlet::OnServeFile(const HttpRequest& request) {
   auto response = m_fileStore.Serve(request);
   if(response.GetStatusCode() == HttpStatusCode::NOT_FOUND) {
     return OnIndex(request);
@@ -131,7 +130,7 @@ HttpResponse ClientWebPortalServlet::OnServeFile(const HttpRequest& request) {
   return response;
 }
 
-HttpResponse ClientWebPortalServlet::OnLoadProfitAndLossReport(
+HttpResponse WebPortalServlet::OnLoadProfitAndLossReport(
     const HttpRequest& request) {
   struct Parameters {
     DirectoryEntry m_directoryEntry;

@@ -1,5 +1,5 @@
-#ifndef NEXUS_ADMINISTRATIONWEBSERVLET_HPP
-#define NEXUS_ADMINISTRATIONWEBSERVLET_HPP
+#ifndef NEXUS_ADMINISTRATION_WEB_SERVLET_HPP
+#define NEXUS_ADMINISTRATION_WEB_SERVLET_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
@@ -9,12 +9,9 @@
 #include "web_portal/web_portal/web_portal.hpp"
 #include "web_portal/web_portal/web_portal_session.hpp"
 
-namespace Nexus {
-namespace ClientWebPortal {
+namespace Nexus::WebPortal {
 
-  /*! \class AdministrationWebServlet
-      \brief Provides a web interface to the AdministrationService.
-   */
+  //! Provides a web interface to the AdministrationService.
   class AdministrationWebServlet : private boost::noncopyable {
     public:
 
@@ -24,7 +21,7 @@ namespace ClientWebPortal {
         \param serviceClients The clients used to access Spire services.
       */
       AdministrationWebServlet(Beam::RefType<
-        Beam::WebServices::SessionStore<ClientWebPortalSession>> sessions,
+        Beam::WebServices::SessionStore<WebPortalSession>> sessions,
         Beam::RefType<ApplicationServiceClients> serviceClients);
 
       ~AdministrationWebServlet();
@@ -37,7 +34,7 @@ namespace ClientWebPortal {
 
     private:
       ApplicationServiceClients* m_serviceClients;
-      Beam::WebServices::SessionStore<ClientWebPortalSession>* m_sessions;
+      Beam::WebServices::SessionStore<WebPortalSession>* m_sessions;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
@@ -101,7 +98,6 @@ namespace ClientWebPortal {
       Beam::WebServices::HttpResponse OnSendAccountModificationRequestMessage(
         const Beam::WebServices::HttpRequest& request);
   };
-}
 }
 
 #endif

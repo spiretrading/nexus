@@ -16,11 +16,11 @@ using namespace Beam::WebServices;
 using namespace boost;
 using namespace Nexus;
 using namespace Nexus::AdministrationService;
-using namespace Nexus::ClientWebPortal;
+using namespace Nexus::WebPortal;
 using namespace std;
 
 ServiceLocatorWebServlet::ServiceLocatorWebServlet(
-    RefType<SessionStore<ClientWebPortalSession>> sessions,
+    RefType<SessionStore<WebPortalSession>> sessions,
     RefType<ApplicationServiceClients> serviceClients)
     : m_sessions{sessions.Get()},
       m_serviceClients{serviceClients.Get()} {}
