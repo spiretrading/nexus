@@ -34,115 +34,90 @@ export class RiskParametersView extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
-    const containerClassName = (() => {
-      switch(this.props.breakpoint) {
-        case RiskParametersView.Breakpoint.SMALL:
-          return css([RiskParametersView.CONTAINER_STYLE.small,
-            RiskParametersView.CONTAINER_STYLE.base]);
-        case RiskParametersView.Breakpoint.MEDIUM:
-          return css([RiskParametersView.CONTAINER_STYLE.medium,
-            RiskParametersView.CONTAINER_STYLE.base]);
-        case RiskParametersView.Breakpoint.LARGE:
-          return css([RiskParametersView.CONTAINER_STYLE.large,
-            RiskParametersView.CONTAINER_STYLE.base]);
-        default:
-          return css([RiskParametersView.CONTAINER_STYLE.medium,
-              RiskParametersView.CONTAINER_STYLE.base]);
-      }
-    })();
     const splitTransitionTime = this.props.parameters.transitionTime.split();
     const currencySign = this.props.currencyDatabase.fromCurrency(
       this.props.parameters.currency).sign;
     return (
       <HBoxLayout width='100%'>
         <Padding/>
-        <VBoxLayout className={containerClassName}>
-          <VBoxLayout width='100%' className={
-              css(RiskParametersView.STYLE.innerContainer)}>
-            <HBoxLayout width='100%'>
-              <Padding/>
-              <VBoxLayout width='246px'>
-                <Label text='Currency'/>
-                <Padding size='12px'/>
-                <CurrencySelectionBox className={
-                  css(RiskParametersView.STYLE.dropdownButton)}
-                  currencyDatabase={this.props.currencyDatabase}
-                  value={this.props.parameters.currency} onChange={
-                  this.onCurrencyChange}/>
-                <Padding size='30px'/>
-                <Label text={`Buying Power (${currencySign})`}/>
-                <Padding size='12px'/>
-                <MoneyInputBox
-                  className={css(RiskParametersView.STYLE.inputBox)}
-                  value={this.props.parameters.buyingPower}
-                  onChange={this.onBuyingPowerChange}/>
-                <Padding size='30px'/>
-                <Label text={`Net Loss (${currencySign})`}/>
-                <Padding size='12px'/>
-                <MoneyInputBox
-                  className={css(RiskParametersView.STYLE.inputBox)}
-                  value={this.props.parameters.netLoss}
-                  onChange={this.onNetLossChange}/>
-                <Padding size='30px'/>
-                <Label text='Transition Time'/>
-                <Padding size='12px'/>
-                <HBoxLayout width='100%'>
-                  <VBoxLayout>
-                    <IntegerInputBox min={0} value={splitTransitionTime.hours}
-                      padding={2} className={
-                        css(RiskParametersView.STYLE.inputBox)}
-                      onChange={(value) => this.onTransitionTimeChange(
-                        value, TimeUnit.HOURS)}/>
-                    <Padding size='10px'/>
-                    <span className={
-                        css(RiskParametersView.
-                          TRANSITION_TIME_STYLE.label)}>
-                      HOUR
-                    </span>
-                  </VBoxLayout>
-                  <Padding size='10px'/>
-                  <Center height='34px' className={
-                      css(RiskParametersView.TRANSITION_TIME_STYLE.colon)}>
-                    :
-                  </Center>
-                  <Padding size='10px'/>
-                  <VBoxLayout>
-                    <IntegerInputBox min={0} max={59} value={
-                      splitTransitionTime.minutes} padding={2}
-                      className={css(RiskParametersView.STYLE.inputBox)}
-                      onChange={(value) => this.onTransitionTimeChange(
-                        value, TimeUnit.MINUTES)}/>
-                    <Padding size='10px'/>
-                    <span className={
-                        css(RiskParametersView.
-                          TRANSITION_TIME_STYLE.label)}>
-                      MINUTE
-                    </span>
-                  </VBoxLayout>
-                  <Padding size='10px'/>
-                  <Center height='34px' className={
-                      css(RiskParametersView.TRANSITION_TIME_STYLE.colon)}>
-                    :
-                  </Center>
-                  <Padding size='10px'/>
-                  <VBoxLayout>
-                    <IntegerInputBox min={0} max={59} value={
-                      splitTransitionTime.seconds} padding={2}
-                      className={css(RiskParametersView.STYLE.inputBox)}
-                      onChange={(value) => this.onTransitionTimeChange(
-                        value, TimeUnit.SECONDS)}/>
-                    <Padding size='10px'/>
-                    <span className={
-                        css(RiskParametersView.
-                          TRANSITION_TIME_STYLE.label)}>
-                      SECOND
-                    </span>
-                  </VBoxLayout>
-                </HBoxLayout>
-              </VBoxLayout>
-              <Padding/>
-            </HBoxLayout>
-          </VBoxLayout>
+        <VBoxLayout width='246px'>
+          <Label text='Currency'/>
+          <Padding size='12px'/>
+          <CurrencySelectionBox className={
+            css(RiskParametersView.STYLE.dropdownButton)}
+            currencyDatabase={this.props.currencyDatabase}
+            value={this.props.parameters.currency} onChange={
+            this.onCurrencyChange}/>
+          <Padding size='30px'/>
+          <Label text={`Buying Power (${currencySign})`}/>
+          <Padding size='12px'/>
+          <MoneyInputBox
+            className={css(RiskParametersView.STYLE.inputBox)}
+            value={this.props.parameters.buyingPower}
+            onChange={this.onBuyingPowerChange}/>
+          <Padding size='30px'/>
+          <Label text={`Net Loss (${currencySign})`}/>
+          <Padding size='12px'/>
+          <MoneyInputBox
+            className={css(RiskParametersView.STYLE.inputBox)}
+            value={this.props.parameters.netLoss}
+            onChange={this.onNetLossChange}/>
+          <Padding size='30px'/>
+          <Label text='Transition Time'/>
+          <Padding size='12px'/>
+          <HBoxLayout width='100%'>
+            <VBoxLayout>
+              <IntegerInputBox min={0} value={splitTransitionTime.hours}
+                padding={2} className={
+                  css(RiskParametersView.STYLE.inputBox)}
+                onChange={(value) => this.onTransitionTimeChange(
+                  value, TimeUnit.HOURS)}/>
+              <Padding size='10px'/>
+              <span className={
+                  css(RiskParametersView.
+                    TRANSITION_TIME_STYLE.label)}>
+                HOUR
+              </span>
+            </VBoxLayout>
+            <Padding size='10px'/>
+            <Center height='34px' className={
+                css(RiskParametersView.TRANSITION_TIME_STYLE.colon)}>
+              :
+            </Center>
+            <Padding size='10px'/>
+            <VBoxLayout>
+              <IntegerInputBox min={0} max={59} value={
+                splitTransitionTime.minutes} padding={2}
+                className={css(RiskParametersView.STYLE.inputBox)}
+                onChange={(value) => this.onTransitionTimeChange(
+                  value, TimeUnit.MINUTES)}/>
+              <Padding size='10px'/>
+              <span className={
+                  css(RiskParametersView.
+                    TRANSITION_TIME_STYLE.label)}>
+                MINUTE
+              </span>
+            </VBoxLayout>
+            <Padding size='10px'/>
+            <Center height='34px' className={
+                css(RiskParametersView.TRANSITION_TIME_STYLE.colon)}>
+              :
+            </Center>
+            <Padding size='10px'/>
+            <VBoxLayout>
+              <IntegerInputBox min={0} max={59} value={
+                splitTransitionTime.seconds} padding={2}
+                className={css(RiskParametersView.STYLE.inputBox)}
+                onChange={(value) => this.onTransitionTimeChange(
+                  value, TimeUnit.SECONDS)}/>
+              <Padding size='10px'/>
+              <span className={
+                  css(RiskParametersView.
+                    TRANSITION_TIME_STYLE.label)}>
+                SECOND
+              </span>
+            </VBoxLayout>
+          </HBoxLayout>
         </VBoxLayout>
         <Padding/>
       </HBoxLayout>);
@@ -191,22 +166,6 @@ export class RiskParametersView extends React.Component<Properties> {
         newTimeJSON.seconds));
   }
 
-  private static CONTAINER_STYLE = StyleSheet.create({
-    base: {
-      position: 'relative' as 'relative'
-    },
-    small: {
-      width: '60%',
-      minWidth: '320px',
-      maxWidth: '460px'
-    },
-    medium: {
-      width: '768px'
-    },
-    large: {
-      width: '1036px'
-    }
-  });
   private static TRANSITION_TIME_STYLE = StyleSheet.create({
     label: {
       font: '400 10px Roboto',
@@ -219,9 +178,6 @@ export class RiskParametersView extends React.Component<Properties> {
     }
   });
   private static STYLE = StyleSheet.create({
-    innerContainer: {
-      position: 'absolute' as 'absolute'
-    },
     dropdownButton: {
       backgroundColor: '#F8F8F8',
       border: '1px solid #C8C8C8',
