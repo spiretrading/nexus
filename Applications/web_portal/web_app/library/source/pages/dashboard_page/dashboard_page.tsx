@@ -23,10 +23,6 @@ interface State {
 /** Displays the main dashboard. */
 export class DashboardPage extends React.Component<Properties, State> {
   public static defaultProps = {
-    onGoToProfile: () => {},
-    onGoToAccounts: () => {},
-    onGoToPortfolio: () => {},
-    onGoToRequestHistory: () => {},
     onSignOut: () => {}
   }
 
@@ -38,7 +34,7 @@ export class DashboardPage extends React.Component<Properties, State> {
     };
     this.onToggleMenuIsOpen = this.onToggleMenuIsOpen.bind(this);
   }
-  
+
   public componentWillMount(): void {
     this.props.model.load().then(
       () => {
