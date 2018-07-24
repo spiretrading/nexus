@@ -11,8 +11,29 @@ interface Properties {
   /** The model to display. */
   model: DashboardModel;
 
-  /** The action to perform when logging out. */
-  onLogout?: () => void;
+  /** The action to perform when the user wants to navigate
+      to their profile.
+  */
+  onGoToProfile?: () => void;
+
+  /** The action to perform when the user wants to navigate
+      to their accounts.
+  */
+  onGoToAccounts?: () => void;
+
+  /** The action to perform when the user wants to navigate
+      to their portfolio.
+  */
+  onGoToPortfolio?: () => void;
+
+  /** The action to perform when the user wants to navigate
+      to their request history.
+  */
+  onGoToRequestHistory?: () => void;
+
+  /** The action to perform when the user wants to sign out.
+  */
+  onSignOut?: () => void;
 }
 
 interface State {
@@ -28,7 +49,15 @@ export class DashboardPage extends React.Component<Properties, State> {
       isSideMenuOpen: false,
       isLoading: false
     };
-    this.toggleSideMenuIsOpen = this.toggleSideMenuIsOpen.bind(this);
+    this.onToggleMenuIsOpen = this.onToggleMenuIsOpen.bind(this);
+  }
+
+  public static defaultProps = {
+    onGoToProfile: () => {},
+    onGoToAccounts: () => {},
+    onGoToPortfolio: () => {},
+    onGoToRequestHistory: () => {},
+    onSignOut: () => {}
   }
 
   public componentWillMount(): void {
@@ -62,7 +91,7 @@ export class DashboardPage extends React.Component<Properties, State> {
                   <VBoxLayout height='60px'>
                     <Padding size='23px'/>
                     <BurgerButton width='20px' height='14px' color='#E2E0FF'
-                      onClick={this.toggleSideMenuIsOpen}/>
+                      onClick={this.onToggleMenuIsOpen}/>
                     <Padding size='23px'/>
                   </VBoxLayout>
                   <Padding size='20px'/>
@@ -81,7 +110,7 @@ export class DashboardPage extends React.Component<Properties, State> {
             <VBoxLayout height='60px'>
               <Padding size='23px'/>
               <BurgerButton width='20px' height='14px' color='#684BC7'
-                onClick={this.toggleSideMenuIsOpen}/>
+                onClick={this.onToggleMenuIsOpen}/>
               <Padding size='23px'/>
             </VBoxLayout>
             <Padding size='20px'/>
@@ -112,7 +141,16 @@ export class DashboardPage extends React.Component<Properties, State> {
                   DashboardPage.FADE_TRANSITION_STYLE.base,
                   DashboardPage.getFadeTransition(status)])}>
                 <SideMenu roles={this.props.model.roles}
-                  onSignOutClick={this.props.onLogout}/>
+                  onProfileClick={() => this.onSideMenuButtonClick(
+                    this.props.onGoToProfile)}
+                  onAccountsClick={() => this.onSideMenuButtonClick(
+                    this.props.onGoToAccounts)}
+                  onPortfolioClick={() => this.onSideMenuButtonClick(
+                    this.props.onGoToPortfolio)}
+                  onRequestHistoryClick={() => this.onSideMenuButtonClick(
+                    this.props.onGoToRequestHistory)}
+                  onSignOutClick={() => this.onSideMenuButtonClick(
+                    this.props.onSignOut)}/>
               </HBoxLayout>);
           }}
         </Transition>
@@ -142,10 +180,15 @@ export class DashboardPage extends React.Component<Properties, State> {
     }
   }
 
-  private toggleSideMenuIsOpen() {
+  private onToggleMenuIsOpen() {
     this.setState({
       isSideMenuOpen: !this.state.isSideMenuOpen
     });
+  }
+
+  private onSideMenuButtonClick(methodToCall: () => void) {
+    methodToCall();
+    this.onToggleMenuIsOpen();
   }
   private static MENU_TRANSITION_LENGTH_MS = 200;
   private static STYLE = StyleSheet.create({
