@@ -38,6 +38,7 @@ export class DashboardPage extends React.Component<Properties, State> {
     };
     this.onToggleMenuIsOpen = this.onToggleMenuIsOpen.bind(this);
   }
+  
   public componentWillMount(): void {
     this.props.model.load().then(
       () => {
