@@ -11,28 +11,19 @@ interface Properties {
   /** The model to display. */
   model: DashboardModel;
 
-  /** The action to perform when the user wants to navigate
-      to their profile.
-  */
+  /** The action to perform when navigating to the profile. */
   onGoToProfile?: () => void;
 
-  /** The action to perform when the user wants to navigate
-      to their accounts.
-  */
+  /** The action to perform when navigating to the account. */
   onGoToAccounts?: () => void;
 
-  /** The action to perform when the user wants to navigate
-      to their portfolio.
-  */
+  /** The action to perform when navigating to the portfolio. */
   onGoToPortfolio?: () => void;
 
-  /** The action to perform when the user wants to navigate
-      to their request history.
-  */
+  /** The action to perform when navigating to the request history. */
   onGoToRequestHistory?: () => void;
 
-  /** The action to perform when the user wants to sign out.
-  */
+  /** The action to perform on a sign out. */
   onSignOut?: () => void;
 }
 
