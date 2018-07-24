@@ -11,18 +11,6 @@ interface Properties {
   /** The model to display. */
   model: DashboardModel;
 
-  /** The action to perform when navigating to the profile. */
-  onGoToProfile?: () => void;
-
-  /** The action to perform when navigating to the account. */
-  onGoToAccounts?: () => void;
-
-  /** The action to perform when navigating to the portfolio. */
-  onGoToPortfolio?: () => void;
-
-  /** The action to perform when navigating to the request history. */
-  onGoToRequestHistory?: () => void;
-
   /** The action to perform on a sign out. */
   onSignOut?: () => void;
 }
@@ -34,15 +22,6 @@ interface State {
 
 /** Displays the main dashboard. */
 export class DashboardPage extends React.Component<Properties, State> {
-  constructor(props: Properties) {
-    super(props);
-    this.state = {
-      isSideMenuOpen: false,
-      isLoading: false
-    };
-    this.onToggleMenuIsOpen = this.onToggleMenuIsOpen.bind(this);
-  }
-
   public static defaultProps = {
     onGoToProfile: () => {},
     onGoToAccounts: () => {},
@@ -51,6 +30,14 @@ export class DashboardPage extends React.Component<Properties, State> {
     onSignOut: () => {}
   }
 
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      isSideMenuOpen: false,
+      isLoading: false
+    };
+    this.onToggleMenuIsOpen = this.onToggleMenuIsOpen.bind(this);
+  }
   public componentWillMount(): void {
     this.props.model.load().then(
       () => {
@@ -133,13 +120,13 @@ export class DashboardPage extends React.Component<Properties, State> {
                   DashboardPage.getFadeTransition(status)])}>
                 <SideMenu roles={this.props.model.roles}
                   onProfileClick={() => this.onSideMenuButtonClick(
-                    this.props.onGoToProfile)}
+                    this.onGoToProfile)}
                   onAccountsClick={() => this.onSideMenuButtonClick(
-                    this.props.onGoToAccounts)}
+                    this.onGoToAccounts)}
                   onPortfolioClick={() => this.onSideMenuButtonClick(
-                    this.props.onGoToPortfolio)}
+                    this.onGoToPortfolio)}
                   onRequestHistoryClick={() => this.onSideMenuButtonClick(
-                    this.props.onGoToRequestHistory)}
+                    this.onGoToRequestHistory)}
                   onSignOutClick={() => this.onSideMenuButtonClick(
                     this.props.onSignOut)}/>
               </HBoxLayout>);
@@ -180,6 +167,22 @@ export class DashboardPage extends React.Component<Properties, State> {
   private onSideMenuButtonClick(methodToCall: () => void) {
     methodToCall();
     this.onToggleMenuIsOpen();
+  }
+
+  private onGoToProfile(){
+
+  }
+
+  private onGoToAccounts(){
+
+  }
+
+  private onGoToPortfolio(){
+
+  }
+
+  private onGoToRequestHistory(){
+
   }
   private static MENU_TRANSITION_LENGTH_MS = 200;
   private static STYLE = StyleSheet.create({
