@@ -17,27 +17,18 @@ interface Properties {
   onClick?: () => void;
 }
 
-interface State {
-  comment: string;
-}
-
 /** Displays the components needed to submit an account related form. */
-export class SubmissionBox extends React.Component<Properties, State> {
+export class SubmissionBox extends React.Component<Properties> {
   public static defaultProps = {
     onClick: () => {}
   };
-  constructor(props: Properties) {
-    super(props);
-    this.state = {
-      comment: ''
-    };
-  }
 
   /** @return The comment currently typed in the CommentBox. */
   public getComment(): string {
     if(this.commentBox) {
       return this.commentBox.getComment();
     }
+    return '';
   }
 
   public render(): JSX.Element {
