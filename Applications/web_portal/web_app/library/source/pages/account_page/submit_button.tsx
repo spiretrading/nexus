@@ -21,32 +21,18 @@ export class SubmitButton extends React.Component<Properties> {
     onClick: () => {}
   };
   
-  constructor(props: Properties) {
-    super(props);
-    this.buttonText = (() => {
+  public render(): JSX.Element {
+    const buttonText = (() => {
       if(this.props.roles.isSet(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
         return 'Save Changes';
       }
       return 'Submit Request';
     })();
-  }
-
-  public componentWillReceiveProps(newProps: Properties) {
-    this.buttonText = (() => {
-      if(newProps.roles.isSet(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
-        return 'Save Changes';
-      }
-      return 'Submit Request';
-    })();
-    this.forceUpdate();
-  }
-
-  public render(): JSX.Element {
     return (
       <button disabled={this.props.isDisabled}
         className={css(SubmitButton.STYLE.button)}
         onClick={this.props.onClick}>
-        {this.buttonText}
+        {buttonText}
       </button>);
   }
   private static STYLE = StyleSheet.create({
@@ -67,5 +53,4 @@ export class SubmitButton extends React.Component<Properties> {
       }
     }
   });
-  private buttonText: string;
 }

@@ -9,7 +9,8 @@ export class CommentBox extends React.Component {
       placeholder='Leave comment here…'/>;
   }
   
-  public getComment() {
+  /** @return The comment currently typed in the CommentBox. */
+  public getComment(): string {
     return this.textArea.value;
   }
 

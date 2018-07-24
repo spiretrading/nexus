@@ -33,7 +33,8 @@ export class SubmissionBox extends React.Component<Properties, State> {
     };
   }
 
-  public getComment() {
+  /** @return The comment currently typed in the CommentBox. */
+  public getComment(): string {
     if(this.commentBox) {
       return this.commentBox.getComment();
     }
@@ -46,7 +47,7 @@ export class SubmissionBox extends React.Component<Properties, State> {
       }
     })();
     const commentBoxPadding = (() => {
-     if(!this.props.roles.isSet(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
+      if(!this.props.roles.isSet(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
         return <Padding size='30px'/>;
       }
     })();
