@@ -35,8 +35,8 @@ book_view_window::book_view_window(const book_view_properties& properties,
   auto layout = new QVBoxLayout(m_body);
   layout->setContentsMargins({});
   layout->setSpacing(0);
-  m_header_widget = new technicals_panel(this);
-  layout->addWidget(m_header_widget);
+  auto header_widget = new technicals_panel(this);
+  layout->addWidget(header_widget);
   m_empty_window_label = new QLabel(tr("Enter a ticker symbol."), this);
   m_empty_window_label->setAlignment(Qt::AlignCenter);
   m_empty_window_label->setStyleSheet(QString(R"(
@@ -160,7 +160,7 @@ void book_view_window::show_overlay_widget() {
   m_overlay_widget->setStyleSheet(
     "background-color: rgba(245, 245, 245, 153);");
   m_overlay_widget->resize(m_body->size());
-  m_overlay_widget->move(m_header_widget->pos());
+  m_overlay_widget->move(0, 0);
   m_overlay_widget->show();
 }
 
