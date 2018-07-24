@@ -11,6 +11,7 @@ namespace spire {
   class book_view_window;
   class empty_book_view_model;
   class labeled_data_widget;
+  class technicals_panel;
 }
 
 #endif
