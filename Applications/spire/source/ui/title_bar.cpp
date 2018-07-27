@@ -246,11 +246,12 @@ void title_bar::drag_restore(const QPoint& pos) {
       mouse_screen_pos.width()) {
     new_pos.setX(mouse_screen_pos.right() - m_restore_geometry.width());
   }
-  placement.rcNormalPosition.left = new_pos.x() + 1;
-  placement.rcNormalPosition.top = 0;
+  placement.rcNormalPosition.left = new_pos.x();
+  placement.rcNormalPosition.top = mouse_screen_pos.y() - (height() / 2);
   placement.rcNormalPosition.right = new_pos.x() +
     m_restore_geometry.width();
-  placement.rcNormalPosition.bottom = m_restore_geometry.height();
+  placement.rcNormalPosition.bottom = m_restore_geometry.height() -
+    (height() / 2);
   placement.showCmd = SW_RESTORE;
   SetWindowPlacement(reinterpret_cast<HWND>(window()->winId()), &placement);
   on_restore_button_press();
