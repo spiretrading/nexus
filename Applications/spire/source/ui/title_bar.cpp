@@ -288,6 +288,7 @@ void title_bar::on_maximize_button_press() {
 
 void title_bar::on_restore_button_press() {
   window()->showNormal();
+  window()->resize(m_restore_geometry.size());
 }
 
 void title_bar::on_close_button_press() {
