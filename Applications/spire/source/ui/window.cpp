@@ -173,8 +173,14 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
   if(watched == QWidget::window()) {
     if(event->type() == QEvent::WindowStateChange) {
       if(QWidget::window()->isMaximized()) {
+        m_normal_size = QWidget::window()->size();
         layout()->setContentsMargins({});
       } else {
+        if(!QWidget::window()->isMinimized()) {
+          QWidget::window()->resize(m_normal_size.width() + 1,
+            m_normal_size.height());
+          QWidget::window()->resize(m_normal_size);
+        }
         layout()->setContentsMargins(
           {scale_width(PADDING_SIZE), scale_height(PADDING_SIZE),
           scale_width(PADDING_SIZE), scale_height(PADDING_SIZE)});
