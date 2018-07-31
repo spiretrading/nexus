@@ -2,6 +2,7 @@
 #define SPIRE_RANDOM_BOOK_VIEW_MODEL_HPP
 #include <random>
 #include <Beam/Threading/CallOnce.hpp>
+#include <Beam/Threading/TimerThreadPool.hpp>
 #include <QTimer>
 #include "spire/book_view_ui_tester/book_view_ui_tester.hpp"
 #include "spire/book_view/book_view_model.hpp"
@@ -14,9 +15,12 @@ namespace spire {
 
       //! Constructs a random book view model.
       /*!
-        \param s The security to model.
+        \param security The security to model.
+        \param load_time The amount of time to take to load.
       */
-      random_book_view_model(Nexus::Security security);
+      random_book_view_model(Nexus::Security security,
+        boost::posix_time::time_duration load_time,
+        Beam::Threading::TimerThreadPool& timer_thread_pool);
 
       //! Returns the update period.
       boost::posix_time::time_duration get_period() const;
@@ -74,6 +78,8 @@ namespace spire {
       mutable price_signal m_close_signal;
       mutable quantity_signal m_volume_signal;
       Nexus::Security m_security;
+      boost::posix_time::time_duration m_load_time;
+      Beam::Threading::TimerThreadPool* m_timer_thread_pool;
       boost::posix_time::time_duration m_period;
       Nexus::BboQuote m_bbo;
       std::vector<Nexus::BookQuote> m_asks;

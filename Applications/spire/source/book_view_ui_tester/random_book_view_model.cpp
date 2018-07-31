@@ -1,13 +1,19 @@
 #include "spire/book_view_ui_tester/random_book_view_model.hpp"
+#include <Beam/Threading/LiveTimer.hpp>
 
+using namespace Beam;
+using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace spire;
 
-random_book_view_model::random_book_view_model(Security security)
+random_book_view_model::random_book_view_model(Security security,
+    time_duration load_time, TimerThreadPool& timer_thread_pool)
     : m_security(std::move(security)),
+      m_load_time(load_time),
+      m_timer_thread_pool(&timer_thread_pool),
       m_period(seconds(1)),
       m_bbo(Quote(100 * Money::ONE, 1000, Side::BID),
         Quote(100 * Money::ONE + Money::CENT, 1000, Side::ASK),
@@ -66,6 +72,9 @@ qt_promise<void> random_book_view_model::load() {
   return make_qt_promise([=] {
     m_loading_flag.Call(
       [&] {
+        LiveTimer load_timer(m_load_time, Ref(*m_timer_thread_pool));
+        load_timer.Start();
+        load_timer.Wait();
         for(auto i = 0; i < 1000; ++i) {
           update();
         }
