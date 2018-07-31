@@ -118,6 +118,7 @@ void book_view_window::set_current(const Security& s) {
     m_empty_window_label.reset();
     m_header_widget = new technicals_panel(this);
     m_layout->addWidget(m_header_widget);
+    m_layout->addStretch(1);
   }
   m_current_security = s;
   m_change_security_signal(s);
