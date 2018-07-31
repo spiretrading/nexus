@@ -2,7 +2,6 @@
 #include <QContextMenuEvent>
 #include <QEvent>
 #include <QMenu>
-#include <QVBoxLayout>
 #include "spire/book_view/book_view_properties_dialog.hpp"
 #include "spire/book_view/labeled_data_widget.hpp"
 #include "spire/book_view/technicals_panel.hpp"
@@ -22,7 +21,7 @@ book_view_window::book_view_window(const book_view_properties& properties,
       m_input_model(&input_model) {
   m_body = new QWidget(this);
   m_body->setMinimumSize(scale(210, 280));
-  resize(scale(232, 410));
+  resize(scale(210, 410));
   m_body->setStyleSheet("background-color: #FFFFFF;");
   auto window_layout = new QVBoxLayout(this);
   window_layout->setContentsMargins({});
