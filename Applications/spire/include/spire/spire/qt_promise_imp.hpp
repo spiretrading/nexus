@@ -27,6 +27,19 @@ namespace details {
       virtual void disconnect() = 0;
   };
 
+  template<>
+  class base_qt_promise_imp<void> : public QObject, private boost::noncopyable {
+    public:
+      using type = void;
+      using continuation_type = std::function<void (Beam::Expect<void> value)>;
+
+      virtual ~base_qt_promise_imp() = default;
+
+      virtual void then(continuation_type continuation) = 0;
+
+      virtual void disconnect() = 0;
+  };
+
   template<typename Executor>
   class qt_promise_imp final :
       public base_qt_promise_imp<std::result_of_t<Executor()>> {

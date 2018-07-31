@@ -1,4 +1,4 @@
-#include "spire/time_and_sales_ui_tester/time_and_sales_ui_tester.hpp"
+#include "spire/time_and_sales_ui_tester/time_and_sales_test_controller_window.hpp"
 #include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QGridLayout>
@@ -13,12 +13,12 @@ using namespace Nexus;
 using namespace spire;
 using price_range = time_and_sales_properties::price_range;
 
-time_and_sales_ui_tester::time_and_sales_ui_tester(
+time_and_sales_test_controller_window::time_and_sales_test_controller_window(
     time_and_sales_window* window, TimerThreadPool& timer_thread_pool)
     : m_window(window),
       m_timer_thread_pool(&timer_thread_pool) {
-  window->connect_security_change_signal(
-    [=] (const Security& s) { security_changed(s); });
+  m_window->connect_security_change_signal(
+    [=] (const auto& s) { security_changed(s); });
   m_model = std::make_shared<periodic_time_and_sales_model>(Security(),
     *m_timer_thread_pool);
   m_model->set_price(Money(Quantity(20)));
@@ -32,8 +32,7 @@ time_and_sales_ui_tester::time_and_sales_ui_tester(
   auto price_spin_box = new QDoubleSpinBox(this);
   price_spin_box->setMaximum(1000000000);
   price_spin_box->setValue(20.00);
-  connect(price_spin_box,
-    &QDoubleSpinBox::editingFinished,
+  connect(price_spin_box, &QDoubleSpinBox::editingFinished,
     [=] { update_price(price_spin_box->value()); });
   layout->addWidget(price_spin_box, 0, 1);
   auto price_range_label = new QLabel("Price Range:", this);
@@ -48,7 +47,7 @@ time_and_sales_ui_tester::time_and_sales_ui_tester(
   price_range_combo_box->setCurrentIndex(2);
   connect(price_range_combo_box,
     static_cast<void (QComboBox::*)(const QString&)>(
-      &QComboBox::currentIndexChanged),
+    &QComboBox::currentIndexChanged),
     [=] (auto i) { update_price_range(get_price_range(i)); });
   layout->addWidget(price_range_combo_box, 1, 1);
   auto period_label = new QLabel("Period (ms):", this);
@@ -65,17 +64,18 @@ time_and_sales_ui_tester::time_and_sales_ui_tester(
   m_loading_time_spin_box->setMaximum(100000);
   m_loading_time_spin_box->setValue(1000);
   connect(m_loading_time_spin_box, &QSpinBox::editingFinished,
-    this, &time_and_sales_ui_tester::update_loading_time);
+    this, &time_and_sales_test_controller_window::update_loading_time);
   layout->addWidget(m_loading_time_spin_box, 3, 1);
   auto data_loaded_check_box_label = new QLabel("All Data Loaded", this);
   layout->addWidget(data_loaded_check_box_label, 4, 0);
   m_all_data_loaded_check_box = new QCheckBox(this);
   connect(m_all_data_loaded_check_box, &QCheckBox::toggled, this,
-    &time_and_sales_ui_tester::update_data_loaded_check_box);
+    &time_and_sales_test_controller_window::update_data_loaded_check_box);
   layout->addWidget(m_all_data_loaded_check_box, 4, 1);
 }
 
-void time_and_sales_ui_tester::security_changed(const Security& security) {
+void time_and_sales_test_controller_window::security_changed(
+    const Security& security) {
   auto price = m_model->get_price();
   auto price_range = m_model->get_price_range();
   auto period = m_model->get_period();
@@ -89,7 +89,7 @@ void time_and_sales_ui_tester::security_changed(const Security& security) {
   m_window->set_model(m_model);
 }
 
-void time_and_sales_ui_tester::update_data_loaded_check_box() {
+void time_and_sales_test_controller_window::update_data_loaded_check_box() {
   if(m_all_data_loaded_check_box->isChecked()) {
     m_model->set_load_duration(boost::posix_time::pos_infin);
   } else {
@@ -98,24 +98,26 @@ void time_and_sales_ui_tester::update_data_loaded_check_box() {
   }
 }
 
-void time_and_sales_ui_tester::update_loading_time() {
+void time_and_sales_test_controller_window::update_loading_time() {
   m_model->set_load_duration(boost::posix_time::milliseconds(
     m_loading_time_spin_box->value()));
 }
 
-void time_and_sales_ui_tester::update_price(double price) {
+void time_and_sales_test_controller_window::update_price(double price) {
   m_model->set_price(Money(Quantity(price)));
 }
 
-void time_and_sales_ui_tester::update_price_range(price_range range) {
+void time_and_sales_test_controller_window::update_price_range(
+    price_range range) {
   m_model->set_price_range(range);
 }
 
-void time_and_sales_ui_tester::update_period(int ms) {
+void time_and_sales_test_controller_window::update_period(int ms) {
   m_model->set_period(boost::posix_time::milliseconds(ms));
 }
 
-price_range time_and_sales_ui_tester::get_price_range(const QString& range) {
+price_range time_and_sales_test_controller_window::get_price_range(
+    const QString& range) {
   if(range == "Unknown") {
     return price_range::UNKNOWN;
   }

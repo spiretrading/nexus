@@ -2,9 +2,11 @@
 #define SPIRE_BOOK_VIEW_MODEL_HPP
 #include <boost/noncopyable.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
+#include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/book_view/book_view.hpp"
+#include "spire/spire/qt_promise.hpp"
 
 namespace spire {
 
@@ -21,6 +23,9 @@ namespace spire {
       //! Signals a quantity update.
       using quantity_signal = signal<void (Nexus::Quantity value)>;
 
+      //! Signals a BookQuote update.
+      using book_quote_signal = signal<void (const Nexus::BookQuote& quote)>;
+
       virtual ~book_view_model() = default;
 
       //! Returns the security being modeled.
@@ -29,20 +34,29 @@ namespace spire {
       //! Returns the BboQuote.
       virtual const Nexus::BboQuote& get_bbo() const = 0;
 
+      //! Returns a snapshot of BookQuotes on the ask.
+      virtual const std::vector<Nexus::BookQuote>& get_asks() const = 0;
+
+      //! Returns a snapshot of BookQuotes on the bid.
+      virtual const std::vector<Nexus::BookQuote>& get_bids() const = 0;
+
       //! Returns the highest price of the session.
-      virtual Nexus::Money get_high() const = 0;
+      virtual boost::optional<Nexus::Money> get_high() const = 0;
 
       //! Returns the lowest price of the session.
-      virtual Nexus::Money get_low() const = 0;
+      virtual boost::optional<Nexus::Money> get_low() const = 0;
 
       //! Returns the session's opening price.
-      virtual Nexus::Money get_open() const = 0;
+      virtual boost::optional<Nexus::Money> get_open() const = 0;
 
       //! Returns the previous session's closing price.
-      virtual Nexus::Money get_close() const = 0;
+      virtual boost::optional<Nexus::Money> get_close() const = 0;
 
       //! Returns the session's volume.
       virtual Nexus::Quantity get_volume() const = 0;
+
+      //! Loads the model.
+      virtual qt_promise<void> load() = 0;
 
       //! Connects a slot to the bbo signal.
       /*!
@@ -50,6 +64,13 @@ namespace spire {
       */
       virtual boost::signals2::connection connect_bbo_slot(
         const bbo_signal::slot_type& slot) const = 0;
+
+      //! Connects a slot to the book quote signal.
+      /*!
+        \param slot The slot to connect.
+      */
+      virtual boost::signals2::connection connect_book_quote_slot(
+        const book_quote_signal::slot_type& slot) const = 0;
 
       //! Connects a slot to the high signal.
       /*!

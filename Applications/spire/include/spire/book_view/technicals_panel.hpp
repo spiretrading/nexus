@@ -2,11 +2,12 @@
 #define SPIRE_TECHNICALS_PANEL_HPP
 #include <QWidget>
 #include <QGridLayout>
+#include "spire/book_view/book_view.hpp"
 #include "spire/book_view/labeled_data_widget.hpp"
 
 namespace spire {
 
-  //! Displays 
+  //! Displays a security's technical indicators.
   class technicals_panel : public QWidget {
     public:
 

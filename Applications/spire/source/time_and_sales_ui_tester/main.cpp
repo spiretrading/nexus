@@ -6,7 +6,7 @@
 #include "spire/security_input/local_security_input_model.hpp"
 #include "spire/spire/resources.hpp"
 #include "spire/time_and_sales/time_and_sales_window.hpp"
-#include "spire/time_and_sales_ui_tester/time_and_sales_ui_tester.hpp"
+#include "spire/time_and_sales_ui_tester/time_and_sales_test_controller_window.hpp"
 
 using namespace Beam;
 using namespace Beam::Threading;
@@ -43,7 +43,8 @@ int main(int argc, char** argv) {
     "Morgan Stanley", "Finance"));
   auto test_window = new time_and_sales_window(time_and_sales_properties(),
     model);
-  auto tester = new time_and_sales_ui_tester(test_window, timer_thread_pool);
+  auto tester = new time_and_sales_test_controller_window(test_window,
+    timer_thread_pool);
   test_window->show();
   tester->show();
   tester->move(test_window->pos().x() + test_window->width() + 100,

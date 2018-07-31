@@ -1,19 +1,28 @@
-#ifndef SPIRE_EMPTY_BOOK_VIEW_MODEL_HPP
-#define SPIRE_EMPTY_BOOK_VIEW_MODEL_HPP
-#include "spire/book_view/book_view.hpp"
+#ifndef SPIRE_RANDOM_BOOK_VIEW_MODEL_HPP
+#define SPIRE_RANDOM_BOOK_VIEW_MODEL_HPP
+#include <random>
+#include <Beam/Threading/CallOnce.hpp>
+#include <QTimer>
+#include "spire/book_view_ui_tester/book_view_ui_tester.hpp"
 #include "spire/book_view/book_view_model.hpp"
 
 namespace spire {
 
-  //! Implements a book view model with no quotes.
-  class empty_book_view_model final : public book_view_model {
+  //! Implements a book view model using randomly generated quotes.
+  class random_book_view_model final : public book_view_model, public QObject {
     public:
 
-      //! Constructs an empty book view model.
+      //! Constructs a random book view model.
       /*!
         \param s The security to model.
       */
-      empty_book_view_model(Nexus::Security security);
+      random_book_view_model(Nexus::Security security);
+
+      //! Returns the update period.
+      boost::posix_time::time_duration get_period() const;
+
+      //! Sets the update period.
+      void set_period(boost::posix_time::time_duration period);
 
       const Nexus::Security& get_security() const override;
 
@@ -57,7 +66,29 @@ namespace spire {
         const quantity_signal::slot_type& slot) const override;
 
     private:
+      mutable bbo_signal m_bbo_signal;
+      mutable book_quote_signal m_book_quote_signal;
+      mutable price_signal m_high_signal;
+      mutable price_signal m_low_signal;
+      mutable price_signal m_open_signal;
+      mutable price_signal m_close_signal;
+      mutable quantity_signal m_volume_signal;
       Nexus::Security m_security;
+      boost::posix_time::time_duration m_period;
+      Nexus::BboQuote m_bbo;
+      std::vector<Nexus::BookQuote> m_asks;
+      std::vector<Nexus::BookQuote> m_bids;
+      Nexus::Money m_high;
+      Nexus::Money m_low;
+      Nexus::Money m_open;
+      Nexus::Money m_close;
+      Nexus::Quantity m_volume;
+      std::default_random_engine m_random_engine;
+      QTimer m_timer;
+      Beam::Threading::CallOnce<Beam::Threading::Mutex> m_loading_flag;
+
+      void update();
+      void on_timeout();
   };
 }
 

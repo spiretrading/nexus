@@ -17,28 +17,47 @@ const BboQuote& empty_book_view_model::get_bbo() const {
   return bbo;
 }
 
-Money empty_book_view_model::get_high() const {
-  return Money::ZERO;
+const std::vector<BookQuote>& empty_book_view_model::get_asks() const {
+  static std::vector<BookQuote> quotes;
+  return quotes;
 }
 
-Money empty_book_view_model::get_low() const {
-  return Money::ZERO;
+const std::vector<BookQuote>& empty_book_view_model::get_bids() const {
+  static std::vector<BookQuote> quotes;
+  return quotes;
 }
 
-Money empty_book_view_model::get_open() const {
-  return Money::ZERO;
+optional<Money> empty_book_view_model::get_high() const {
+  return {};
 }
 
-Money empty_book_view_model::get_close() const {
-  return Money::ZERO;
+optional<Money> empty_book_view_model::get_low() const {
+  return {};
+}
+
+optional<Money> empty_book_view_model::get_open() const {
+  return {};
+}
+
+optional<Money> empty_book_view_model::get_close() const {
+  return {};
 }
 
 Quantity empty_book_view_model::get_volume() const {
   return 0;
 }
 
+qt_promise<void> empty_book_view_model::load() {
+  return make_qt_promise([] {});
+}
+
 connection empty_book_view_model::connect_bbo_slot(
     const bbo_signal::slot_type& slot) const {
+  return {};
+}
+
+connection empty_book_view_model::connect_book_quote_slot(
+    const book_quote_signal::slot_type& slot) const {
   return {};
 }
 

@@ -2,6 +2,7 @@
 #define SPIRE_MARKET_LIST_ITEM_HPP
 #include <QListWidget>
 #include "Nexus/Definitions/Market.hpp"
+#include "spire/book_view/book_view.hpp"
 #include "spire/book_view/book_view_properties.hpp"
 
 namespace spire {

@@ -1,4 +1,4 @@
-#include "spire/time_and_sales/periodic_time_and_sales_model.hpp"
+#include "spire/time_and_sales_ui_tester/periodic_time_and_sales_model.hpp"
 #include <Beam/Threading/LiveTimer.hpp>
 
 using namespace Beam;
@@ -19,7 +19,7 @@ periodic_time_and_sales_model::periodic_time_and_sales_model(Security s,
       m_load_duration(seconds(10)),
       m_volume(0),
       m_is_loaded(std::make_shared<std::atomic_bool>(false)) {
-  connect(&m_timer, &QTimer::timeout, [=] {on_timeout();});
+  connect(&m_timer, &QTimer::timeout, [=] { on_timeout(); });
 }
 
 Money periodic_time_and_sales_model::get_price() const {
