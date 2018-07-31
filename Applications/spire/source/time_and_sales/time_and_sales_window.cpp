@@ -28,8 +28,8 @@ time_and_sales_window::time_and_sales_window(
       m_input_model(&input_model),
       m_table(nullptr) {
   m_body = new QWidget(this);
-  m_body->setMinimumSize(scale(40, 200));
-  resize(scale_width(182), scale_height(452));
+  m_body->setMinimumSize(scale(180, 200));
+  resize(scale_width(180), scale_height(450));
   m_body->setStyleSheet("background-color: #FFFFFF;");
   auto window_layout = new QHBoxLayout(this);
   window_layout->setContentsMargins({});
@@ -45,12 +45,14 @@ time_and_sales_window::time_and_sales_window(
   padding_widget->setFixedHeight(scale_height(4));
   padding_widget->setStyleSheet("background-color: #F5F5F5;");
   layout->addWidget(padding_widget);
-  m_empty_window_label = new QLabel(tr("Enter a ticker symbol."), this);
+  m_empty_window_label = std::make_unique<QLabel>(
+    tr("Enter a ticker symbol."), this);
   m_empty_window_label->setAlignment(Qt::AlignCenter);
   m_empty_window_label->setStyleSheet(QString(R"(
     font-family: Roboto;
-    font-size: %1px;)").arg(scale_height(11)));
-  layout->addWidget(m_empty_window_label);
+    font-size: %1px;
+    padding-top: %2px;)").arg(scale_height(12)).arg(scale_height(16)));
+  layout->addWidget(m_empty_window_label.get());
   m_table = new time_and_sales_table_view(this);
   layout->addWidget(m_table);
   m_table->hide();
@@ -73,8 +75,7 @@ void time_and_sales_window::set_model(
     std::shared_ptr<time_and_sales_model> model) {
   if(m_model.is_initialized()) {
     if(m_empty_window_label != nullptr) {
-      delete m_empty_window_label;
-      m_empty_window_label = nullptr;
+      m_empty_window_label.reset();
     }
     m_table->show();
   }

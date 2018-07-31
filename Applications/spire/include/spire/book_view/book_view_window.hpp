@@ -1,8 +1,8 @@
 #ifndef SPIRE_BOOK_VIEW_WINDOW_HPP
 #define SPIRE_BOOK_VIEW_WINDOW_HPP
 #include <boost/optional.hpp>
-#include <QGridLayout>
 #include <QLabel>
+#include <QVBoxLayout>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/security_input/security_input.hpp"
