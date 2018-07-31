@@ -115,7 +115,7 @@ void book_view_window::set_current(const Security& s) {
   if(s == m_current_security) {
     return;
   }
-  if(m_empty_window_label) {
+  if(m_empty_window_label != nullptr) {
     m_empty_window_label.reset();
     m_header_widget = new technicals_panel(this);
     m_layout->addWidget(m_header_widget);
