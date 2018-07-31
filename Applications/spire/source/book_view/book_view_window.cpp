@@ -32,17 +32,16 @@ book_view_window::book_view_window(const book_view_properties& properties,
     ":/icons/bookview-grey.svg");
   window_layout->addWidget(window);
   m_body->installEventFilter(this);
-  auto layout = new QVBoxLayout(m_body);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
-  auto header_widget = new technicals_panel(this);
-  layout->addWidget(header_widget);
-  m_empty_window_label = new QLabel(tr("Enter a ticker symbol."), this);
+  m_layout = new QVBoxLayout(m_body);
+  m_layout->setContentsMargins({});
+  m_layout->setSpacing(0);
+  m_empty_window_label = std::make_unique<QLabel>(
+    tr("Enter a ticker symbol."), this);
   m_empty_window_label->setAlignment(Qt::AlignCenter);
   m_empty_window_label->setStyleSheet(QString(R"(
     font-family: Roboto;
     font-size: %1px;)").arg(scale_height(12)));
-  layout->addWidget(m_empty_window_label);
+  m_layout->addWidget(m_empty_window_label.get());
 }
 
 void book_view_window::set_model(std::shared_ptr<book_view_model> model) {
@@ -115,6 +114,11 @@ void book_view_window::keyPressEvent(QKeyEvent* event) {
 void book_view_window::set_current(const Security& s) {
   if(s == m_current_security) {
     return;
+  }
+  if(m_empty_window_label) {
+    m_empty_window_label.reset();
+    m_header_widget = new technicals_panel(this);
+    m_layout->addWidget(m_header_widget);
   }
   m_current_security = s;
   m_change_security_signal(s);

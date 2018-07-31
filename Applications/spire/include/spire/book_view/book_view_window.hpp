@@ -66,8 +66,10 @@ namespace spire {
       security_stack m_securities;
       Nexus::Security m_current_security;
       QWidget* m_body;
+      QVBoxLayout* m_layout;
+      technicals_panel* m_header_widget;
       std::unique_ptr<QWidget> m_overlay_widget;
-      QLabel* m_empty_window_label;
+      std::unique_ptr<QLabel> m_empty_window_label;
 
       void set_current(const Nexus::Security& s);
       void show_context_menu(const QPoint& pos);
