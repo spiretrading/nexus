@@ -2,7 +2,6 @@
 #include <QContextMenuEvent>
 #include <QEvent>
 #include <QMenu>
-#include <QVBoxLayout>
 #include "spire/book_view/book_view_properties_dialog.hpp"
 #include "spire/book_view/labeled_data_widget.hpp"
 #include "spire/book_view/technicals_panel.hpp"
@@ -22,7 +21,7 @@ book_view_window::book_view_window(const book_view_properties& properties,
       m_input_model(&input_model) {
   m_body = new QWidget(this);
   m_body->setMinimumSize(scale(210, 280));
-  resize(scale(232, 410));
+  resize(scale(210, 410));
   m_body->setStyleSheet("background-color: #FFFFFF;");
   auto window_layout = new QVBoxLayout(this);
   window_layout->setContentsMargins({});
@@ -115,10 +114,11 @@ void book_view_window::set_current(const Security& s) {
   if(s == m_current_security) {
     return;
   }
-  if(m_empty_window_label) {
+  if(m_empty_window_label != nullptr) {
     m_empty_window_label.reset();
     m_header_widget = new technicals_panel(this);
     m_layout->addWidget(m_header_widget);
+    m_layout->addStretch(1);
   }
   m_current_security = s;
   m_change_security_signal(s);
