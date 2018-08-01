@@ -67,7 +67,7 @@ Quantity random_book_view_model::get_volume() const {
   return m_volume;
 }
 
-qt_promise<void> random_book_view_model::load() {
+QtPromise<void> random_book_view_model::load() {
   auto period = m_period;
   return make_qt_promise([=] {
     m_loading_flag.Call(
@@ -84,37 +84,37 @@ qt_promise<void> random_book_view_model::load() {
 }
 
 connection random_book_view_model::connect_bbo_slot(
-    const bbo_signal::slot_type& slot) const {
+    const BboSignal::slot_type& slot) const {
   return m_bbo_signal.connect(slot);
 }
 
 connection random_book_view_model::connect_book_quote_slot(
-    const book_quote_signal::slot_type& slot) const {
+    const BookQuoteSignal::slot_type& slot) const {
   return m_book_quote_signal.connect(slot);
 }
 
 connection random_book_view_model::connect_high_slot(
-    const price_signal::slot_type& slot) const {
+    const PriceSignal::slot_type& slot) const {
   return m_high_signal.connect(slot);
 }
 
 connection random_book_view_model::connect_low_slot(
-    const price_signal::slot_type& slot) const {
+    const PriceSignal::slot_type& slot) const {
   return m_low_signal.connect(slot);
 }
 
 connection random_book_view_model::connect_open_slot(
-    const price_signal::slot_type& slot) const {
+    const PriceSignal::slot_type& slot) const {
   return m_open_signal.connect(slot);
 }
 
 connection random_book_view_model::connect_close_slot(
-    const price_signal::slot_type& slot) const {
+    const PriceSignal::slot_type& slot) const {
   return m_close_signal.connect(slot);
 }
 
 connection random_book_view_model::connect_volume_slot(
-    const quantity_signal::slot_type& slot) const {
+    const QuantitySignal::slot_type& slot) const {
   return m_volume_signal.connect(slot);
 }
 

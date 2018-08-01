@@ -14,25 +14,25 @@ namespace spire {
       \tparam T The type of value to compute.
   */
   template<typename T>
-  class qt_promise : private boost::noncopyable {
+  class QtPromise : private boost::noncopyable {
     public:
 
       //! The type of value to compute.
       using type = T;
 
       //! Constructs an empty promise.
-      qt_promise() = default;
+      QtPromise() = default;
 
       //! Constructs a Qt promise.
       /*!
         \param executor The callable performing the computation.
       */
       template<typename Executor>
-      qt_promise(Executor&& executor);
+      QtPromise(Executor&& executor);
 
-      qt_promise(qt_promise&& other);
+      QtPromise(QtPromise&& other);
 
-      ~qt_promise();
+      ~QtPromise();
 
       //! Assigns a function to be called when the computation completes.
       /*!
@@ -46,10 +46,10 @@ namespace spire {
       void disconnect();
 
       //! Disconnects this promise and then moves another promise into this.
-      qt_promise& operator =(qt_promise&& other);
+      QtPromise& operator =(QtPromise&& other);
 
     private:
-      std::shared_ptr<details::base_qt_promise_imp<type>> m_imp;
+      std::shared_ptr<details::BaseQtPromiseImp<type>> m_imp;
   };
 
   //! Makes a Qt promise.
@@ -58,13 +58,13 @@ namespace spire {
   */
   template<typename Executor>
   auto make_qt_promise(Executor&& executor) {
-    return qt_promise<std::result_of_t<Executor()>>(
+    return QtPromise<std::result_of_t<Executor()>>(
       std::forward<Executor>(executor));
   }
 
   template<typename T>
   template<typename Executor>
-  qt_promise<T>::qt_promise(Executor&& executor) {
+  QtPromise<T>::QtPromise(Executor&& executor) {
     auto imp = std::make_shared<details::qt_promise_imp<Executor>>(
       std::forward<Executor>(executor));
     imp->bind(imp);
@@ -72,22 +72,22 @@ namespace spire {
   }
 
   template<typename T>
-  qt_promise<T>::qt_promise(qt_promise&& other)
+  QtPromise<T>::QtPromise(QtPromise&& other)
       : m_imp(std::move(other.m_imp)) {}
 
   template<typename T>
-  qt_promise<T>::~qt_promise() {
+  QtPromise<T>::~QtPromise() {
     disconnect();
   }
 
   template<typename T>
   template<typename F>
-  void qt_promise<T>::then(F&& continuation) {
+  void QtPromise<T>::then(F&& continuation) {
     m_imp->then(std::forward<F>(continuation));
   }
 
   template<typename T>
-  void qt_promise<T>::disconnect() {
+  void QtPromise<T>::disconnect() {
     if(m_imp == nullptr) {
       return;
     }
@@ -96,7 +96,7 @@ namespace spire {
   }
 
   template<typename T>
-  qt_promise<T>& qt_promise<T>::operator =(qt_promise&& other) {
+  QtPromise<T>& QtPromise<T>::operator =(QtPromise&& other) {
     disconnect();
     m_imp = std::move(other.m_imp);
     return *this;

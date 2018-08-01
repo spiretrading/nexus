@@ -26,13 +26,13 @@ namespace spire {
       /*!
         \param e The new time and sale.
       */
-      using time_and_sale_signal = signal<void (const entry& e)>;
+      using time_and_sale_signal = Signal<void (const entry& e)>;
 
       //! Signals a change in the volume.
       /*!
         \param v The updated volume.
       */
-      using volume_signal = signal<void (Nexus::Quantity v)>;
+      using volume_signal = Signal<void (Nexus::Quantity v)>;
 
       virtual ~time_and_sales_model() = default;
 
@@ -52,7 +52,7 @@ namespace spire {
                 where the last item's sequence number is no greater than
                 <i>last</i>.
       */
-      virtual qt_promise<std::vector<entry>> load_snapshot(
+      virtual QtPromise<std::vector<entry>> load_snapshot(
         Beam::Queries::Sequence last, int count) = 0;
 
       //! Connects a slot to the time and sale signal.

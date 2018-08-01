@@ -6,17 +6,17 @@
 
 namespace spire {
 namespace details {
-  class qt_base_promise_event : public QEvent {
+  class QtBasePromiseEvent : public QEvent {
     public:
       const static QEvent::Type EVENT_TYPE;
 
-      qt_base_promise_event();
+      QtBasePromiseEvent();
   };
 
   template<typename T>
-  class qt_promise_event : public qt_base_promise_event {
+  class QtPromiseEvent : public QtBasePromiseEvent {
     public:
-      qt_promise_event(Beam::Expect<T> result);
+      QtPromiseEvent(Beam::Expect<T> result);
 
       Beam::Expect<T>& get_result();
 
@@ -26,15 +26,15 @@ namespace details {
 
   template<typename T>
   auto make_qt_promise_event(Beam::Expect<T> result) {
-    return new qt_promise_event<T>(std::move(result));
+    return new QtPromiseEvent<T>(std::move(result));
   }
 
   template<typename T>
-  qt_promise_event<T>::qt_promise_event(Beam::Expect<T> result)
+  QtPromiseEvent<T>::QtPromiseEvent(Beam::Expect<T> result)
       : m_result(std::move(result)) {}
 
   template<typename T>
-  Beam::Expect<T>& qt_promise_event<T>::get_result() {
+  Beam::Expect<T>& QtPromiseEvent<T>::get_result() {
     return m_result;
   }
 }

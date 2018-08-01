@@ -238,17 +238,17 @@ time_and_sales_properties
 }
 
 connection time_and_sales_properties_dialog::connect_apply_signal(
-    const apply_signal::slot_type& slot) const {
+    const ApplySignal::slot_type& slot) const {
   return m_apply_signal.connect(slot);
 }
 
 connection time_and_sales_properties_dialog::connect_apply_all_signal(
-    const apply_all_signal::slot_type& slot) const {
+    const ApplyAllSignal::slot_type& slot) const {
   return m_apply_all_signal.connect(slot);
 }
 
 connection time_and_sales_properties_dialog::connect_save_default_signal(
-    const save_default_signal::slot_type& slot) const {
+    const SaveDefaultSignal::slot_type& slot) const {
   return m_save_default_signal.connect(slot);
 }
 

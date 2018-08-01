@@ -24,7 +24,7 @@ namespace spire {
       };
 
       //! Signals that the button was clicked.
-      using clicked_signal = signal<void ()>;
+      using clicked_signal = Signal<void ()>;
 
       //! Constructs a flat_button without text.
       /*!

@@ -15,10 +15,10 @@ namespace spire {
       /*!
         \param value true iff the security is highlighted.
       */
-      using highlighted_signal = signal<void (bool value)>;
+      using highlighted_signal = Signal<void (bool value)>;
 
       //! Signals that the represented security should be committed.
-      using commit_signal = signal<void ()>;
+      using commit_signal = Signal<void ()>;
 
       //! Constructs a security_info_widget.
       /*!

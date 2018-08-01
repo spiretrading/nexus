@@ -10,7 +10,7 @@ namespace spire {
     public:
 
       //! Signals that a button was clicked.
-      using clicked_signal = signal<void ()>;
+      using clicked_signal = Signal<void ()>;
 
       //! Constructs a properties_window_buttons_widget.
       properties_window_buttons_widget(QWidget* parent = nullptr);

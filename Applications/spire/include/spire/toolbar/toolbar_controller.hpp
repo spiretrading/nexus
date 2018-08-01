@@ -13,7 +13,7 @@ namespace spire {
     public:
 
       //! Signals that this toolbar and all its windows have closed.
-      using closed_signal = signal<void ()>;
+      using ClosedSignal = Signal<void ()>;
 
       //! Constructs the toolbar controller.
       /*!
@@ -28,12 +28,12 @@ namespace spire {
 
       //! Connects a slot to the closed signal.
       boost::signals2::connection connect_closed_signal(
-        const closed_signal::slot_type& slot) const;
+        const ClosedSignal::slot_type& slot) const;
 
     private:
       struct base_controller;
       template<typename> struct controller;
-      mutable closed_signal m_closed_signal;
+      mutable ClosedSignal m_closed_signal;
       Nexus::VirtualServiceClients* m_service_clients;
       recently_closed_model m_model;
       std::unique_ptr<toolbar_window> m_toolbar_window;

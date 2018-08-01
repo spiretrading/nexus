@@ -10,12 +10,12 @@
 
 namespace spire {
 
-  //! Stores the properties used to display a book_view_window.
-  class book_view_properties {
+  //! Stores the properties used to display a BookViewWindow.
+  class BookViewProperties {
     public:
 
       //! Stores a market's highlight properties.
-      struct market_highlight {
+      struct MarketHighlight {
 
         //! The color to highlight the market with.
         QColor m_color;
@@ -25,7 +25,7 @@ namespace spire {
       };
 
       //! Stores options available to highlight Orders.
-      enum class order_highlight {
+      enum class OrderHighlight {
 
         //! Do not display Orders.
         HIDE_ORDERS,
@@ -38,7 +38,7 @@ namespace spire {
       };
 
       //! Constructs the default properties.
-      book_view_properties();
+      BookViewProperties();
 
       //! Returns the foreground color of a BookQuote.
       const QColor& get_book_quote_foreground_color() const;
@@ -66,38 +66,38 @@ namespace spire {
       //! Sets the font used by BookQuotes.
       void set_book_quote_font(const QFont& font);
 
-      //! Returns the market_highlight for a specified market.
+      //! Returns the MarketHighlight for a specified market.
       /*!
         \param market The market to get the property for.
         \return The <i>market</i>'s highlight property.
       */
-      boost::optional<const market_highlight&> get_market_highlight(
+      boost::optional<const MarketHighlight&> get_market_highlight(
         Nexus::MarketCode market) const;
 
-      //! Sets the market_highlight for a specified market.
+      //! Sets the MarketHighlight for a specified market.
       /*!
         \param market The market to apply the property to.
-        \param highlight The market_highlight to apply.
+        \param highlight The MarketHighlight to apply.
       */
       void set_market_highlight(Nexus::MarketCode market,
-        const market_highlight& highlight);
+        const MarketHighlight& highlight);
 
-      //! Removes the market_highlight for a specified market.
+      //! Removes the MarketHighlight for a specified market.
       /*!
         \param market The market to remove the highlight from.
       */
       void remove_market_highlight(Nexus::MarketCode market);
 
-      //! Returns the order_highlight option.
-      order_highlight get_order_highlight() const;
+      //! Returns the OrderHighlight option.
+      OrderHighlight get_order_highlight() const;
 
-      //! Sets the order_highlight option.
-      void set_order_highlight(order_highlight highlight);
+      //! Sets the OrderHighlight option.
+      void set_order_highlight(OrderHighlight highlight);
 
-      //! Returns the order_highlight color.
+      //! Returns the OrderHighlight color.
       const QColor& get_order_highlight_color() const;
 
-      //! Sets the order_highlight color.
+      //! Sets the OrderHighlight color.
       void set_order_highlight_color(const QColor& color);
 
       //! Returns <code>true</code> iff grid lines should be displayed.
@@ -111,9 +111,9 @@ namespace spire {
       std::vector<QColor> m_book_quote_background_colors;
       QFont m_bbo_quote_font;
       QFont m_book_quote_font;
-      std::unordered_map<Nexus::MarketCode, market_highlight>
+      std::unordered_map<Nexus::MarketCode, MarketHighlight>
         m_market_highlights;
-      order_highlight m_order_highlight;
+      OrderHighlight m_order_highlight;
       QColor m_order_highlight_color;
       bool m_show_grid;
   };

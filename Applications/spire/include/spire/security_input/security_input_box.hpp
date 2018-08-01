@@ -16,7 +16,7 @@ namespace spire {
       /*!
         \param s The security that was input.
       */
-      using commit_signal = signal<void (const Nexus::Security& s)>;
+      using commit_signal = Signal<void (const Nexus::Security& s)>;
 
       //! Constructs a blank security input box.
       /*!

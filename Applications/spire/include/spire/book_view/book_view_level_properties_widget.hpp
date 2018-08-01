@@ -9,22 +9,22 @@ namespace spire {
 
   //! Displays/modifies the properties used to display a book view's price
   //! levels.
-  class book_view_level_properties_widget : public QWidget {
+  class BookViewLevelPropertiesWidget : public QWidget {
     public:
 
-      //! Constructs a book_view_level_properties_widget.
+      //! Constructs a BookViewLevelPropertiesWidget.
       /*!
         \param properties The properties to display.
         \param parent The parent widget.
       */
-      book_view_level_properties_widget(const book_view_properties& properties,
+      BookViewLevelPropertiesWidget(const BookViewProperties& properties,
         QWidget* parent = nullptr);
 
       //! Applies the properties represented by this widget to an instance.
       /*!
         \param properties The instance to apply the properties to.
       */
-      void apply(book_view_properties& properties) const;
+      void apply(BookViewProperties& properties) const;
 
     protected:
       void showEvent(QShowEvent* event) override;

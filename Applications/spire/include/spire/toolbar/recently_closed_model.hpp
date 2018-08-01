@@ -34,13 +34,13 @@ namespace spire {
       /*!
         \param e The entry that was added.
       */
-      using entry_added_signal = signal<void (const entry& e)>;
+      using entry_added_signal = Signal<void (const entry& e)>;
 
       //! Signals an entry was removed from the model.
       /*!
         \param e The entry that was removed.
       */
-      using entry_removed_signal = signal<void (const entry& e)>;
+      using entry_removed_signal = Signal<void (const entry& e)>;
 
       //! Constructs an empty model.
       recently_closed_model();

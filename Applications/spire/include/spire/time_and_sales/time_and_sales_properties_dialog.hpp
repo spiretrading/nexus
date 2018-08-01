@@ -13,15 +13,15 @@ namespace spire {
     public:
 
       //! Signals that properties should be applied to the parent window.
-      using apply_signal = signal<
+      using ApplySignal = Signal<
         void (const time_and_sales_properties& properties)>;
 
       //! Signals that properties should be applied to all windows.
-      using apply_all_signal = signal<
+      using ApplyAllSignal = Signal<
         void (const time_and_sales_properties& properties)>;
 
       //! Signals that properties should be saved as the default.
-      using save_default_signal = signal<
+      using SaveDefaultSignal = Signal<
         void (const time_and_sales_properties& properties)>;
 
       //! Constructs a time and sales properties dialog.
@@ -39,24 +39,24 @@ namespace spire {
 
       //! Connects a slot to the apply signal.
       boost::signals2::connection connect_apply_signal(
-        const apply_signal::slot_type& slot) const;
+        const ApplySignal::slot_type& slot) const;
 
       //! Connects a slot to the apply all signal.
       boost::signals2::connection connect_apply_all_signal(
-        const apply_all_signal::slot_type& slot) const;
+        const ApplyAllSignal::slot_type& slot) const;
 
       //! Connects a slot to the save default signal.
       boost::signals2::connection connect_save_default_signal(
-        const save_default_signal::slot_type& slot) const;
+        const SaveDefaultSignal::slot_type& slot) const;
 
     protected:
       void mousePressEvent(QMouseEvent* event) override;
       void showEvent(QShowEvent* event) override;
 
     private:
-      mutable apply_signal m_apply_signal;
-      mutable apply_all_signal m_apply_all_signal;
-      mutable save_default_signal m_save_default_signal;
+      mutable ApplySignal m_apply_signal;
+      mutable ApplyAllSignal m_apply_all_signal;
+      mutable SaveDefaultSignal m_save_default_signal;
       time_and_sales_properties m_properties;
       QWidget* m_body;
       QListWidget* m_band_list;

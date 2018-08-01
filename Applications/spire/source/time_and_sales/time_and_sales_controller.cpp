@@ -26,7 +26,7 @@ void time_and_sales_controller::open() {
 }
 
 connection time_and_sales_controller::connect_closed_signal(
-    const closed_signal::slot_type& slot) const {
+    const ClosedSignal::slot_type& slot) const {
   return m_closed_signal.connect(slot);
 }
 

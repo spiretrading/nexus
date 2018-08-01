@@ -22,10 +22,10 @@ namespace spire {
       /*!
         \param s The security to display.
       */
-      using change_security_signal = signal<void (const Nexus::Security& s)>;
+      using ChangeSecuritySignal = Signal<void (const Nexus::Security& s)>;
 
       //! Signals that the window closed.
-      using closed_signal = signal<void ()>;
+      using ClosedSignal = Signal<void ()>;
 
       //! Constructs a time and sales window.
       /*!
@@ -47,11 +47,11 @@ namespace spire {
 
       //! Connects a slot to the change security signal.
       boost::signals2::connection connect_security_change_signal(
-        const change_security_signal::slot_type& slot) const;
+        const ChangeSecuritySignal::slot_type& slot) const;
 
       //! Connects a slot to the window closed signal.
       boost::signals2::connection connect_closed_signal(
-        const closed_signal::slot_type& slot) const;
+        const ClosedSignal::slot_type& slot) const;
 
     protected:
       void closeEvent(QCloseEvent* event) override;
@@ -59,8 +59,8 @@ namespace spire {
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
-      mutable change_security_signal m_change_security_signal;
-      mutable closed_signal m_closed_signal;
+      mutable ChangeSecuritySignal m_change_security_signal;
+      mutable ClosedSignal m_closed_signal;
       time_and_sales_properties m_properties;
       security_input_model* m_input_model;
       boost::optional<time_and_sales_window_model> m_model;

@@ -11,7 +11,7 @@ int main(int argc, char** argv) {
   application->setApplicationName(QObject::tr("Spire"));
   application->setApplicationVersion(SPIRE_VERSION);
   initialize_resources();
-  spire_controller controller;
+  SpireController controller;
   controller.open();
   application->exec();
 }

@@ -12,25 +12,25 @@
 namespace spire {
 
   //! Controller for the application as a whole.
-  class spire_controller : private boost::noncopyable {
+  class SpireController : private boost::noncopyable {
     public:
 
       //! Constructs a controller in a state ready to execute a new instance of
       //! the application.
-      spire_controller();
+      SpireController();
 
-      ~spire_controller();
+      ~SpireController();
 
       //! Begins running the application.
       void open();
 
     private:
-      enum class state {
+      enum class State {
         NONE,
         LOGIN,
         TOOLBAR
       };
-      state m_state;
+      State m_state;
       std::unique_ptr<Beam::Network::SocketThreadPool> m_socket_thread_pool;
       std::unique_ptr<Beam::Threading::TimerThreadPool> m_timer_thread_pool;
       std::unique_ptr<login_controller> m_login_controller;

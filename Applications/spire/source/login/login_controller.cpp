@@ -50,7 +50,7 @@ void login_controller::on_login(const std::string& username,
 
 void login_controller::on_cancel() {
   m_login_promise.disconnect();
-  m_login_window->set_state(login_window::state::NONE);
+  m_login_window->set_state(login_window::State::NONE);
 }
 
 void login_controller::on_login_promise(
@@ -61,8 +61,8 @@ void login_controller::on_login_promise(
     m_login_window.reset();
     m_logged_in_signal();
   } catch(const AuthenticationException&) {
-    m_login_window->set_state(login_window::state::INCORRECT_CREDENTIALS);
+    m_login_window->set_state(login_window::State::INCORRECT_CREDENTIALS);
   } catch(const std::exception&) {
-    m_login_window->set_state(login_window::state::SERVER_UNAVAILABLE);
+    m_login_window->set_state(login_window::State::SERVER_UNAVAILABLE);
   }
 }

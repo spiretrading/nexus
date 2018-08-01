@@ -15,7 +15,7 @@ namespace spire {
     public:
 
       //! Signals a successful login.
-      using logged_in_signal = signal<void ()>;
+      using logged_in_signal = Signal<void ()>;
 
       //! Factory used to build the Spire service clients.
       /*!
@@ -51,7 +51,7 @@ namespace spire {
       mutable logged_in_signal m_logged_in_signal;
       service_clients_factory m_service_clients_factory;
       std::unique_ptr<login_window> m_login_window;
-      qt_promise<std::unique_ptr<Nexus::VirtualServiceClients>> m_login_promise;
+      QtPromise<std::unique_ptr<Nexus::VirtualServiceClients>> m_login_promise;
       std::unique_ptr<Nexus::VirtualServiceClients> m_service_clients;
 
       void on_login(const std::string& username, const std::string& password);

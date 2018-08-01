@@ -12,10 +12,10 @@ namespace spire {
     public:
 
       //! Signals that additional time and sales are being loaded.
-      using begin_loading_signal = signal<void ()>;
+      using begin_loading_signal = Signal<void ()>;
 
       //! Signals that additional time and sales have completed loading.
-      using end_loading_signal = signal<void ()>;
+      using end_loading_signal = Signal<void ()>;
 
       //! Constructs a time and sales window model.
       /*!
@@ -65,7 +65,7 @@ namespace spire {
       std::vector<time_and_sales_model::entry> m_entries;
       bool m_is_loading;
       bool m_is_fully_loaded;
-      qt_promise<std::vector<time_and_sales_model::entry>> m_snapshot_promise;
+      QtPromise<std::vector<time_and_sales_model::entry>> m_snapshot_promise;
 
       void update_data(const time_and_sales_model::entry& e);
       void load_snapshot(Beam::Queries::Sequence last);

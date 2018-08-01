@@ -68,7 +68,7 @@ Quantity periodic_time_and_sales_model::get_volume() const {
   return m_volume;
 }
 
-qt_promise<std::vector<time_and_sales_model::entry>>
+QtPromise<std::vector<time_and_sales_model::entry>>
     periodic_time_and_sales_model::load_snapshot(Beam::Queries::Sequence last,
     int count) {
   auto insert = [&] (auto where, auto sequence) {

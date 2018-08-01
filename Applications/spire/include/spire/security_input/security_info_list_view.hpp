@@ -16,13 +16,13 @@ namespace spire {
       /*!
         \param s The activated security.
       */
-      using activate_signal = signal<void (const Nexus::Security& s)>;
+      using activate_signal = Signal<void (const Nexus::Security& s)>;
 
       //! Signals a security was committed.
       /*!
         \param s The committed security.
       */
-      using commit_signal = signal<void (const Nexus::Security& s)>;
+      using commit_signal = Signal<void (const Nexus::Security& s)>;
 
       //! Constructs a security info list view with an empty list.
       /*!

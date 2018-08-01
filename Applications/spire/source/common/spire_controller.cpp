@@ -16,15 +16,15 @@ using namespace Beam::Threading;
 using namespace Nexus;
 using namespace spire;
 
-spire_controller::spire_controller()
-    : m_state(state::NONE),
+SpireController::SpireController()
+    : m_state(State::NONE),
       m_socket_thread_pool(std::make_unique<SocketThreadPool>()),
       m_timer_thread_pool(std::make_unique<TimerThreadPool>()) {}
 
-spire_controller::~spire_controller() = default;
+SpireController::~SpireController() = default;
 
-void spire_controller::open() {
-  if(m_state != state::NONE) {
+void SpireController::open() {
+  if(m_state != State::NONE) {
     return;
   }
   auto ip_address = load_ip_address();
@@ -40,11 +40,11 @@ void spire_controller::open() {
   m_login_controller = std::make_unique<login_controller>(
     service_clients_factory);
   m_login_controller->connect_logged_in_signal([=]{on_login();});
-  m_state = state::LOGIN;
+  m_state = State::LOGIN;
   m_login_controller->open();
 }
 
-std::optional<IpAddress> spire_controller::load_ip_address() {
+std::optional<IpAddress> SpireController::load_ip_address() {
   auto application_path = QStandardPaths::writableLocation(
     QStandardPaths::DataLocation);
   std::filesystem::path config_path = application_path.toStdString();
@@ -84,11 +84,11 @@ std::optional<IpAddress> spire_controller::load_ip_address() {
   return address;
 }
 
-void spire_controller::on_login() {
+void SpireController::on_login() {
   m_service_clients = std::move(m_login_controller->get_service_clients());
   m_login_controller.reset();
   m_toolbar_controller = std::make_unique<toolbar_controller>(
     *m_service_clients);
   m_toolbar_controller->open();
-  m_state = state::TOOLBAR;
+  m_state = State::TOOLBAR;
 }

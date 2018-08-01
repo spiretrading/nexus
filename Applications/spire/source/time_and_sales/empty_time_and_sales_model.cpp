@@ -18,7 +18,7 @@ Quantity empty_time_and_sales_model::get_volume() const {
   return 0;
 }
 
-qt_promise<std::vector<time_and_sales_model::entry>>
+QtPromise<std::vector<time_and_sales_model::entry>>
     empty_time_and_sales_model::load_snapshot(Beam::Queries::Sequence last,
     int count) {
   return make_qt_promise([] {

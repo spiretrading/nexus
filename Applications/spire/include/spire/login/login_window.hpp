@@ -43,11 +43,11 @@ namespace spire {
         \param username The username to login with.
         \param password The password to login with.
       */
-      using login_signal = signal<void (const std::string& username,
+      using login_signal = Signal<void (const std::string& username,
         const std::string& password)>;
 
       //! Signals to cancel a previous login operation.
-      using cancel_signal = signal<void ()>;
+      using cancel_signal = Signal<void ()>;
 
       //! Constructs a login window in the NONE state.
       login_window(const std::string& version, QWidget* parent = nullptr);

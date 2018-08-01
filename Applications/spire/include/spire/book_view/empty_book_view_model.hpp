@@ -6,14 +6,14 @@
 namespace spire {
 
   //! Implements a book view model with no quotes.
-  class empty_book_view_model final : public book_view_model {
+  class EmptyBookViewModel final : public BookViewModel {
     public:
 
       //! Constructs an empty book view model.
       /*!
-        \param s The security to model.
+        \param security The security to model.
       */
-      empty_book_view_model(Nexus::Security security);
+      EmptyBookViewModel(Nexus::Security security);
 
       const Nexus::Security& get_security() const override;
 
@@ -33,28 +33,28 @@ namespace spire {
 
       Nexus::Quantity get_volume() const override;
 
-      qt_promise<void> load() override;
+      QtPromise<void> load() override;
 
       boost::signals2::connection connect_bbo_slot(
-        const bbo_signal::slot_type& slot) const override;
+        const BboSignal::slot_type& slot) const override;
 
       boost::signals2::connection connect_book_quote_slot(
-        const book_quote_signal::slot_type& slot) const override;
+        const BookQuoteSignal::slot_type& slot) const override;
 
       boost::signals2::connection connect_high_slot(
-        const price_signal::slot_type& slot) const override;
+        const PriceSignal::slot_type& slot) const override;
 
       boost::signals2::connection connect_low_slot(
-        const price_signal::slot_type& slot) const override;
+        const PriceSignal::slot_type& slot) const override;
 
       boost::signals2::connection connect_open_slot(
-        const price_signal::slot_type& slot) const override;
+        const PriceSignal::slot_type& slot) const override;
 
       boost::signals2::connection connect_close_slot(
-        const price_signal::slot_type& slot) const override;
+        const PriceSignal::slot_type& slot) const override;
 
       boost::signals2::connection connect_volume_slot(
-        const quantity_signal::slot_type& slot) const override;
+        const QuantitySignal::slot_type& slot) const override;
 
     private:
       Nexus::Security m_security;

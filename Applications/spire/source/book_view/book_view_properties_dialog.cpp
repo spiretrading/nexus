@@ -15,8 +15,8 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace spire;
 
-book_view_properties_dialog::book_view_properties_dialog(
-    const book_view_properties& properties, const Security& security,
+BookViewPropertiesDialog::BookViewPropertiesDialog(
+    const BookViewProperties& properties, const Security& security,
     QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags | Qt::FramelessWindowHint |
         Qt::WindowCloseButtonHint),
@@ -70,10 +70,10 @@ book_view_properties_dialog::book_view_properties_dialog(
       color: #4B23A0;
     })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_height(10))
         .arg(scale_width(2)).arg(scale_width(80)).arg(scale_width(1)));
-  auto levels_tab_widget = new book_view_level_properties_widget(properties,
+  auto levels_tab_widget = new BookViewLevelPropertiesWidget(properties,
     m_tab_widget);
   m_tab_widget->addTab(levels_tab_widget, tr("Price Levels"));
-  auto highlights_tab_widget = new book_view_highlight_properties_widget(
+  auto highlights_tab_widget = new BookViewHighlightPropertiesWidget(
     properties, m_tab_widget);
   m_tab_widget->addTab(highlights_tab_widget, tr("Highlights"));
   if(security != Security()) {
@@ -83,10 +83,10 @@ book_view_properties_dialog::book_view_properties_dialog(
   }
   layout->addWidget(m_tab_widget);
   connect(m_tab_widget, &QTabWidget::currentChanged, this,
-    &book_view_properties_dialog::on_tab_changed);
+    &BookViewPropertiesDialog::on_tab_changed);
   m_tab_widget->tabBar()->installEventFilter(this);
   connect(m_tab_widget->tabBar(), &QTabBar::tabBarClicked, this,
-    &book_view_properties_dialog::on_tab_bar_clicked);
+    &BookViewPropertiesDialog::on_tab_bar_clicked);
   auto button_group_widget = new properties_window_buttons_widget(this);
   button_group_widget->connect_apply_signal(
     [=] { m_apply_signal(get_properties()); });
@@ -99,26 +99,26 @@ book_view_properties_dialog::book_view_properties_dialog(
   layout->addWidget(button_group_widget);
 }
 
-book_view_properties book_view_properties_dialog::get_properties() const {
+BookViewProperties BookViewPropertiesDialog::get_properties() const {
   return m_properties;
 }
 
-connection book_view_properties_dialog::connect_apply_signal(
-    const apply_signal::slot_type& slot) const {
+connection BookViewPropertiesDialog::connect_apply_signal(
+    const ApplySignal::slot_type& slot) const {
   return m_apply_signal.connect(slot);
 }
 
-connection book_view_properties_dialog::connect_apply_all_signal(
-    const apply_all_signal::slot_type& slot) const {
+connection BookViewPropertiesDialog::connect_apply_all_signal(
+    const ApplyAllSignal::slot_type& slot) const {
   return m_apply_all_signal.connect(slot);
 }
 
-connection book_view_properties_dialog::connect_save_default_signal(
-    const save_default_signal::slot_type& slot) const {
+connection BookViewPropertiesDialog::connect_save_default_signal(
+    const SaveDefaultSignal::slot_type& slot) const {
   return m_save_default_signal.connect(slot);
 }
 
-bool book_view_properties_dialog::eventFilter(QObject* watched,
+bool BookViewPropertiesDialog::eventFilter(QObject* watched,
     QEvent* event) {
   if(watched == m_tab_widget->tabBar()) {
     if(event->type() == QEvent::KeyPress) {
@@ -133,13 +133,13 @@ bool book_view_properties_dialog::eventFilter(QObject* watched,
   return QWidget::eventFilter(watched, event);
 }
 
-void book_view_properties_dialog::on_tab_bar_clicked(int index) {
+void BookViewPropertiesDialog::on_tab_bar_clicked(int index) {
   if(index > -1) {
     m_tab_widget->widget(index)->setFocus();
   }
 }
 
-void book_view_properties_dialog::on_tab_changed() {
+void BookViewPropertiesDialog::on_tab_changed() {
   if(m_last_focus_was_key) {
     m_tab_widget->tabBar()->setFocus();
   }

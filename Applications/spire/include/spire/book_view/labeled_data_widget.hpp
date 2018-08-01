@@ -7,16 +7,16 @@
 namespace spire {
 
   //! Represents a label with a label string and data string.
-  class labeled_data_widget : public QWidget {
+  class LabeledDataWidget : public QWidget {
     public:
 
-      //! Constructs a labeled_data_widget with label text and data text.
+      //! Constructs a LabeledDataWidget with label text and data text.
       /*
         \param label_text The label text string.
         \param data_text The data text value.
         \param parent The parent to this widget.
       */
-      labeled_data_widget(const QString& label_text, const QString& data_text,
+      LabeledDataWidget(const QString& label_text, const QString& data_text,
         QWidget* parent = nullptr);
 
       //! Sets the label text.

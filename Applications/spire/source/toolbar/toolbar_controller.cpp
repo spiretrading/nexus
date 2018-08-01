@@ -44,7 +44,7 @@ void toolbar_controller::open() {
 }
 
 connection toolbar_controller::connect_closed_signal(
-    const closed_signal::slot_type& slot) const {
+    const ClosedSignal::slot_type& slot) const {
   return m_closed_signal.connect(slot);
 }
 

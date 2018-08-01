@@ -10,7 +10,7 @@
 namespace spire {
 
   //! Implements a book view model using randomly generated quotes.
-  class random_book_view_model final : public book_view_model, public QObject {
+  class random_book_view_model final : public BookViewModel, public QObject {
     public:
 
       //! Constructs a random book view model.
@@ -46,37 +46,37 @@ namespace spire {
 
       Nexus::Quantity get_volume() const override;
 
-      qt_promise<void> load() override;
+      QtPromise<void> load() override;
 
       boost::signals2::connection connect_bbo_slot(
-        const bbo_signal::slot_type& slot) const override;
+        const BboSignal::slot_type& slot) const override;
 
       boost::signals2::connection connect_book_quote_slot(
-        const book_quote_signal::slot_type& slot) const override;
+        const BookQuoteSignal::slot_type& slot) const override;
 
       boost::signals2::connection connect_high_slot(
-        const price_signal::slot_type& slot) const override;
+        const PriceSignal::slot_type& slot) const override;
 
       boost::signals2::connection connect_low_slot(
-        const price_signal::slot_type& slot) const override;
+        const PriceSignal::slot_type& slot) const override;
 
       boost::signals2::connection connect_open_slot(
-        const price_signal::slot_type& slot) const override;
+        const PriceSignal::slot_type& slot) const override;
 
       boost::signals2::connection connect_close_slot(
-        const price_signal::slot_type& slot) const override;
+        const PriceSignal::slot_type& slot) const override;
 
       boost::signals2::connection connect_volume_slot(
-        const quantity_signal::slot_type& slot) const override;
+        const QuantitySignal::slot_type& slot) const override;
 
     private:
-      mutable bbo_signal m_bbo_signal;
-      mutable book_quote_signal m_book_quote_signal;
-      mutable price_signal m_high_signal;
-      mutable price_signal m_low_signal;
-      mutable price_signal m_open_signal;
-      mutable price_signal m_close_signal;
-      mutable quantity_signal m_volume_signal;
+      mutable BboSignal m_bbo_signal;
+      mutable BookQuoteSignal m_book_quote_signal;
+      mutable PriceSignal m_high_signal;
+      mutable PriceSignal m_low_signal;
+      mutable PriceSignal m_open_signal;
+      mutable PriceSignal m_close_signal;
+      mutable QuantitySignal m_volume_signal;
       Nexus::Security m_security;
       boost::posix_time::time_duration m_load_time;
       Beam::Threading::TimerThreadPool* m_timer_thread_pool;

@@ -18,14 +18,14 @@ namespace spire {
       /*!
         \param w The type of window to open.
       */
-      using open_signal = signal<void (recently_closed_model::type w)>;
+      using open_signal = Signal<void (recently_closed_model::type w)>;
 
       //! Signals that this window has closed.
-      using closed_signal = signal<void ()>;
+      using ClosedSignal = Signal<void ()>;
 
       //! Signals that a recently closed window should be re-opened.
       using reopen_signal =
-        signal<void (const recently_closed_model::entry& w)>;
+        Signal<void (const recently_closed_model::entry& w)>;
 
       //! Constructs a toolbar_window.
       /*!
@@ -43,7 +43,7 @@ namespace spire {
 
       //! Connects a slot to the closed signal.
       boost::signals2::connection connect_closed_signal(
-        const closed_signal::slot_type& slot) const;
+        const ClosedSignal::slot_type& slot) const;
 
       //! Connects a slot to the reopen window signal.
       boost::signals2::connection connect_reopen_signal(
@@ -55,7 +55,7 @@ namespace spire {
 
     private:
       mutable open_signal m_open_signal;
-      mutable closed_signal m_closed_signal;
+      mutable ClosedSignal m_closed_signal;
       mutable reopen_signal m_reopen_signal;
       recently_closed_model* m_model;
       std::vector<recently_closed_model::entry> m_entries;

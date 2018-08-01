@@ -15,7 +15,7 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace spire;
 
-book_view_window::book_view_window(const book_view_properties& properties,
+BookViewWindow::BookViewWindow(const BookViewProperties& properties,
     security_input_model& input_model, QWidget* parent)
     : QWidget(parent),
       m_input_model(&input_model) {
@@ -43,31 +43,31 @@ book_view_window::book_view_window(const book_view_properties& properties,
   m_layout->addWidget(m_empty_window_label.get());
 }
 
-void book_view_window::set_model(std::shared_ptr<book_view_model> model) {
+void BookViewWindow::set_model(std::shared_ptr<BookViewModel> model) {
 }
 
-const book_view_properties& book_view_window::get_properties() const {
+const BookViewProperties& BookViewWindow::get_properties() const {
   return m_properties;
 }
 
-void book_view_window::set_properties(const book_view_properties& properties) {
+void BookViewWindow::set_properties(const BookViewProperties& properties) {
 }
 
-connection book_view_window::connect_security_change_signal(
-    const change_security_signal::slot_type& slot) const {
+connection BookViewWindow::connect_security_change_signal(
+    const ChangeSecuritySignal::slot_type& slot) const {
   return m_change_security_signal.connect(slot);
 }
 
-connection book_view_window::connect_closed_signal(
-    const closed_signal::slot_type& slot) const {
+connection BookViewWindow::connect_closed_signal(
+    const ClosedSignal::slot_type& slot) const {
   return m_closed_signal.connect(slot);
 }
 
-void book_view_window::closeEvent(QCloseEvent* event) {
+void BookViewWindow::closeEvent(QCloseEvent* event) {
   m_closed_signal();
 }
 
-bool book_view_window::eventFilter(QObject* watched, QEvent* event) {
+bool BookViewWindow::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_body) {
     if(event->type() == QEvent::ContextMenu) {
       show_context_menu(static_cast<QContextMenuEvent*>(event)->globalPos());
@@ -76,7 +76,7 @@ bool book_view_window::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-void book_view_window::keyPressEvent(QKeyEvent* event) {
+void BookViewWindow::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_PageUp) {
     if(m_current_security != Security()) {
       auto s = m_securities.push_front(m_current_security);
@@ -110,13 +110,13 @@ void book_view_window::keyPressEvent(QKeyEvent* event) {
   }
 }
 
-void book_view_window::set_current(const Security& s) {
+void BookViewWindow::set_current(const Security& s) {
   if(s == m_current_security) {
     return;
   }
   if(m_empty_window_label != nullptr) {
     m_empty_window_label.reset();
-    m_header_widget = new technicals_panel(this);
+    m_header_widget = new TechnicalsPanel(this);
     m_layout->addWidget(m_header_widget);
     m_layout->addStretch(1);
   }
@@ -126,11 +126,11 @@ void book_view_window::set_current(const Security& s) {
     tr(" - Book View"));
 }
 
-void book_view_window::show_context_menu(const QPoint& pos) {
+void BookViewWindow::show_context_menu(const QPoint& pos) {
   QMenu context_menu(this);
   QAction properties_action(tr("Properties"), &context_menu);
   connect(&properties_action, &QAction::triggered, this,
-    &book_view_window::show_properties_dialog);
+    &BookViewWindow::show_properties_dialog);
   context_menu.addAction(&properties_action);
   context_menu.setFixedSize(scale(140, 28));
   context_menu.setWindowFlag(Qt::NoDropShadowWindowHint);
@@ -159,7 +159,7 @@ void book_view_window::show_context_menu(const QPoint& pos) {
   context_menu.exec(pos);
 }
 
-void book_view_window::show_overlay_widget() {
+void BookViewWindow::show_overlay_widget() {
   m_overlay_widget = std::make_unique<QWidget>(m_body);
   m_overlay_widget->setStyleSheet(
     "background-color: rgba(245, 245, 245, 153);");
@@ -168,8 +168,8 @@ void book_view_window::show_overlay_widget() {
   m_overlay_widget->show();
 }
 
-void book_view_window::show_properties_dialog() {
-  book_view_properties_dialog dialog(get_properties(), Security(), this);
+void BookViewWindow::show_properties_dialog() {
+  BookViewPropertiesDialog dialog(get_properties(), Security(), this);
   dialog.connect_apply_signal([=] (auto p) { set_properties(p); });
   show_overlay_widget();
   if(dialog.exec() == QDialog::Accepted) {
@@ -178,7 +178,7 @@ void book_view_window::show_properties_dialog() {
   m_overlay_widget.reset();
 }
 
-void book_view_window::on_security_input_accept(
+void BookViewWindow::on_security_input_accept(
     security_input_dialog* dialog) {
   auto s = dialog->get_security();
   if(s != Security() && s != m_current_security) {
@@ -190,7 +190,7 @@ void book_view_window::on_security_input_accept(
   m_overlay_widget.reset();
 }
 
-void book_view_window::on_security_input_reject(
+void BookViewWindow::on_security_input_reject(
     security_input_dialog* dialog) {
   dialog->close();
   m_overlay_widget.reset();

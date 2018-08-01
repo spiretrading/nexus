@@ -4,7 +4,7 @@
 
 using namespace spire;
 
-labeled_data_widget::labeled_data_widget(const QString& label_text,
+LabeledDataWidget::LabeledDataWidget(const QString& label_text,
     const QString& data_text, QWidget* parent)
     : QWidget(parent) {
   auto layout = new QHBoxLayout(this);
@@ -25,10 +25,10 @@ labeled_data_widget::labeled_data_widget(const QString& label_text,
   layout->addStretch(1);
 }
 
-void labeled_data_widget::set_label_text(const QString& text) {
+void LabeledDataWidget::set_label_text(const QString& text) {
   m_label->setText(text);
 }
 
-void labeled_data_widget::set_data_text(const QString& text) {
+void LabeledDataWidget::set_data_text(const QString& text) {
   m_data_label->setText(text);
 }

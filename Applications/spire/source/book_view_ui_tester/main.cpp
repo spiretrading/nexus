@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
   model.add(SecurityInfo(
     Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
     "Morgan Stanley", "Finance"));
-  auto test_window = new book_view_window(book_view_properties(), model);
+  auto test_window = new BookViewWindow(BookViewProperties(), model);
   test_window->show();
   test_window->activateWindow();
   application->exec();

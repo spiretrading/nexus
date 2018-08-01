@@ -5,83 +5,83 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace spire;
 
-empty_book_view_model::empty_book_view_model(Security security)
+EmptyBookViewModel::EmptyBookViewModel(Security security)
     : m_security(std::move(security)) {}
 
-const Security& empty_book_view_model::get_security() const {
+const Security& EmptyBookViewModel::get_security() const {
   return m_security;
 }
 
-const BboQuote& empty_book_view_model::get_bbo() const {
+const BboQuote& EmptyBookViewModel::get_bbo() const {
   static BboQuote bbo;
   return bbo;
 }
 
-const std::vector<BookQuote>& empty_book_view_model::get_asks() const {
+const std::vector<BookQuote>& EmptyBookViewModel::get_asks() const {
   static std::vector<BookQuote> quotes;
   return quotes;
 }
 
-const std::vector<BookQuote>& empty_book_view_model::get_bids() const {
+const std::vector<BookQuote>& EmptyBookViewModel::get_bids() const {
   static std::vector<BookQuote> quotes;
   return quotes;
 }
 
-optional<Money> empty_book_view_model::get_high() const {
+optional<Money> EmptyBookViewModel::get_high() const {
   return {};
 }
 
-optional<Money> empty_book_view_model::get_low() const {
+optional<Money> EmptyBookViewModel::get_low() const {
   return {};
 }
 
-optional<Money> empty_book_view_model::get_open() const {
+optional<Money> EmptyBookViewModel::get_open() const {
   return {};
 }
 
-optional<Money> empty_book_view_model::get_close() const {
+optional<Money> EmptyBookViewModel::get_close() const {
   return {};
 }
 
-Quantity empty_book_view_model::get_volume() const {
+Quantity EmptyBookViewModel::get_volume() const {
   return 0;
 }
 
-qt_promise<void> empty_book_view_model::load() {
+QtPromise<void> EmptyBookViewModel::load() {
   return make_qt_promise([] {});
 }
 
-connection empty_book_view_model::connect_bbo_slot(
-    const bbo_signal::slot_type& slot) const {
+connection EmptyBookViewModel::connect_bbo_slot(
+    const BboSignal::slot_type& slot) const {
   return {};
 }
 
-connection empty_book_view_model::connect_book_quote_slot(
-    const book_quote_signal::slot_type& slot) const {
+connection EmptyBookViewModel::connect_book_quote_slot(
+    const BookQuoteSignal::slot_type& slot) const {
   return {};
 }
 
-connection empty_book_view_model::connect_high_slot(
-    const price_signal::slot_type& slot) const {
+connection EmptyBookViewModel::connect_high_slot(
+    const PriceSignal::slot_type& slot) const {
   return {};
 }
 
-connection empty_book_view_model::connect_low_slot(
-    const price_signal::slot_type& slot) const {
+connection EmptyBookViewModel::connect_low_slot(
+    const PriceSignal::slot_type& slot) const {
   return {};
 }
 
-connection empty_book_view_model::connect_open_slot(
-    const price_signal::slot_type& slot) const {
+connection EmptyBookViewModel::connect_open_slot(
+    const PriceSignal::slot_type& slot) const {
   return {};
 }
 
-connection empty_book_view_model::connect_close_slot(
-    const price_signal::slot_type& slot) const {
+connection EmptyBookViewModel::connect_close_slot(
+    const PriceSignal::slot_type& slot) const {
   return {};
 }
 
-connection empty_book_view_model::connect_volume_slot(
-    const quantity_signal::slot_type& slot) const {
+connection EmptyBookViewModel::connect_volume_slot(
+    const QuantitySignal::slot_type& slot) const {
   return {};
 }

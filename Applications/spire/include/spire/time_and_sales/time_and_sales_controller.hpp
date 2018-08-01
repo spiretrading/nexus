@@ -13,7 +13,7 @@ namespace spire {
     public:
 
       //! Signals that the window closed.
-      using closed_signal = signal<void ()>;
+      using ClosedSignal = Signal<void ()>;
 
       //! Constructs a time and sales controller.
       /*!
@@ -28,10 +28,10 @@ namespace spire {
 
       //! Connects a slot to the closed signal.
       boost::signals2::connection connect_closed_signal(
-        const closed_signal::slot_type& slot) const;
+        const ClosedSignal::slot_type& slot) const;
 
     private:
-      mutable closed_signal m_closed_signal;
+      mutable ClosedSignal m_closed_signal;
       Nexus::VirtualServiceClients* m_service_clients;
       std::unique_ptr<security_input_model> m_input_model;
       std::unique_ptr<time_and_sales_window> m_window;

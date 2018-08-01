@@ -15,38 +15,38 @@
 namespace spire {
 namespace details {
   template<typename T>
-  class base_qt_promise_imp : public QObject, private boost::noncopyable {
+  class BaseQtPromiseImp : public QObject, private boost::noncopyable {
     public:
-      using type = T;
-      using continuation_type = std::function<void (Beam::Expect<type> value)>;
+      using Type = T;
+      using ContinuationType = std::function<void (Beam::Expect<type> value)>;
 
-      virtual ~base_qt_promise_imp() = default;
+      virtual ~BaseQtPromiseImp() = default;
 
-      virtual void then(continuation_type continuation) = 0;
+      virtual void then(ContinuationType continuation) = 0;
 
       virtual void disconnect() = 0;
   };
 
   template<>
-  class base_qt_promise_imp<void> : public QObject, private boost::noncopyable {
+  class BaseQtPromiseImp<void> : public QObject, private boost::noncopyable {
     public:
-      using type = void;
-      using continuation_type = std::function<void (Beam::Expect<void> value)>;
+      using Type = void;
+      using ContinuationType = std::function<void (Beam::Expect<void> value)>;
 
-      virtual ~base_qt_promise_imp() = default;
+      virtual ~BaseQtPromiseImp() = default;
 
-      virtual void then(continuation_type continuation) = 0;
+      virtual void then(ContinuationType continuation) = 0;
 
       virtual void disconnect() = 0;
   };
 
   template<typename Executor>
   class qt_promise_imp final :
-      public base_qt_promise_imp<std::result_of_t<Executor()>> {
+      public BaseQtPromiseImp<std::result_of_t<Executor()>> {
     public:
-      using super = base_qt_promise_imp<std::result_of_t<Executor()>>;
-      using type = typename super::type;
-      using continuation_type = typename super::continuation_type;
+      using Super = BaseQtPromiseImp<std::result_of_t<Executor()>>;
+      using Type = typename Super::Type;
+      using ContinuationType = typename Super::ContinuationType;
 
       template<typename ExecutorForward>
       qt_promise_imp(ExecutorForward&& executor);
@@ -55,7 +55,7 @@ namespace details {
 
       void bind(std::shared_ptr<void> self);
 
-      void then(continuation_type continuation) override;
+      void then(ContinuationType continuation) override;
 
       void disconnect() override;
 
@@ -66,7 +66,7 @@ namespace details {
       bool m_is_disconnected;
       Executor m_executor;
       boost::optional<Beam::Expect<type>> m_value;
-      boost::optional<continuation_type> m_continuation;
+      boost::optional<ContinuationType> m_continuation;
       std::shared_ptr<void> m_self;
       Beam::Routines::RoutineHandler m_routine;
   };
@@ -93,7 +93,7 @@ namespace details {
   }
 
   template<typename Executor>
-  void qt_promise_imp<Executor>::then(continuation_type continuation) {
+  void qt_promise_imp<Executor>::then(ContinuationType continuation) {
     m_continuation.emplace(std::move(continuation));
     if(m_value.is_initialized()) {
       QApplication::instance()->postEvent(this,
@@ -109,14 +109,14 @@ namespace details {
 
   template<typename Executor>
   bool qt_promise_imp<Executor>::event(QEvent* event) {
-    if(event->type() != qt_base_promise_event::EVENT_TYPE) {
+    if(event->type() != QtBasePromiseEvent::EVENT_TYPE) {
       return QObject::event(event);
     }
     if(m_is_disconnected) {
       m_self = nullptr;
       return true;
     }
-    auto& promise_event = *static_cast<qt_promise_event<type>*>(event);
+    auto& promise_event = *static_cast<QtPromiseEvent<type>*>(event);
     if(m_continuation.is_initialized()) {
       (*m_continuation)(std::move(promise_event.get_result()));
       disconnect();

@@ -13,7 +13,7 @@ namespace spire {
     public:
 
       //! Signal type for the clicked signal.
-      using clicked_signal = signal<void ()>;
+      using clicked_signal = Signal<void ()>;
 
       //! Constructs an icon_button.
       /*!

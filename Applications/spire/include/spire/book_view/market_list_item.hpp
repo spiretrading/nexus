@@ -8,23 +8,23 @@
 namespace spire {
 
   //! Displays a market's code as a list item.
-  class market_list_item : public QListWidgetItem {
+  class MarketListItem : public QListWidgetItem {
     public:
 
-      //! Constructs a market_list_item and sets it's display text to the
+      //! Constructs a MarketListItem and sets it's display text to the
       //! market code.
       /*
         \param market The market that this widget represents.
         \param parent The list that this widget will be displayed in.
       */
-      market_list_item(const Nexus::MarketDatabase::Entry& market,
+      MarketListItem(const Nexus::MarketDatabase::Entry& market,
         QListWidget* parent = nullptr);
 
       //! Returns the market info associated with this item.
       const Nexus::MarketDatabase::Entry& get_market_info() const;
 
       //! Returns the market highlight associated with this item.
-      const boost::optional<book_view_properties::market_highlight>&
+      const boost::optional<BookViewProperties::MarketHighlight>&
         get_market_highlight() const;
 
       //! Sets the market highlight's color. If the market highlight is
@@ -42,8 +42,7 @@ namespace spire {
       void remove_highlight();
 
     private:
-      boost::optional<book_view_properties::market_highlight>
-        m_market_highlight;
+      boost::optional<BookViewProperties::MarketHighlight> m_market_highlight;
       Nexus::MarketDatabase::Entry m_market;
 
       void initialize();
