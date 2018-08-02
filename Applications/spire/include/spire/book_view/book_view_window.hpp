@@ -63,6 +63,7 @@ namespace Spire {
       mutable ClosedSignal m_closed_signal;
       BookViewProperties m_properties;
       SecurityInputModel* m_input_model;
+      std::shared_ptr<BookViewModel> m_model;
       SecurityStack m_securities;
       Nexus::Security m_current_security;
       QWidget* m_body;
@@ -77,6 +78,12 @@ namespace Spire {
       void show_properties_dialog();
       void on_security_input_accept(SecurityInputDialog* dialog);
       void on_security_input_reject(SecurityInputDialog* dialog);
+      void on_data_loaded(Beam::Expect<void> value);
+      void on_close(const Nexus::Money& close);
+      void on_high(const Nexus::Money& high);
+      void on_low(const Nexus::Money& low);
+      void on_open(const Nexus::Money& open);
+      void on_volume(const Nexus::Quantity& volume);
   };
 }
 
