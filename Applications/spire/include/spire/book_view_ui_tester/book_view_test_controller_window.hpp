@@ -1,5 +1,6 @@
 #ifndef SPIRE_BOOK_VIEW_TEST_CONTROLLER_WINDOW
 #define SPIRE_BOOK_VIEW_TEST_CONTROLLER_WINDOW
+#include <QSpinBox>
 #include <QWidget>
 #include <Beam/Threading/TimerThreadPool.hpp>
 #include <Nexus/Definitions/Security.hpp>
@@ -16,8 +17,10 @@ namespace Spire {
     private:
       BookViewWindow* m_window;
       Beam::Threading::TimerThreadPool* m_timer_thread_pool;
+      QSpinBox* m_load_time_spin_box;
 
       void on_security_changed(const Nexus::Security& security);
+      void on_loading_time_updated();
   };
 }
 
