@@ -12,7 +12,7 @@
 #include "spire/ui/security_stack.hpp"
 #include "spire/ui/ui.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Displays a time and sales window.
   class TimeAndSalesWindow : public QWidget {

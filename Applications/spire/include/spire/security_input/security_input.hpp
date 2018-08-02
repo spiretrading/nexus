@@ -2,7 +2,7 @@
 #define SPIRE_SECURITY_INPUT_HPP
 #include "spire/spire/spire.hpp"
 
-namespace spire {
+namespace Spire {
   class LocalSecurityInputModel;
   class SecurityInfoListView;
   class SecurityInfoWidget;

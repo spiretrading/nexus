@@ -6,7 +6,7 @@
 
 using namespace boost;
 using namespace boost::signals2;
-using namespace spire;
+using namespace Spire;
 
 IconButton::IconButton(QImage icon, QWidget* parent)
     : IconButton(icon, icon, parent) {}

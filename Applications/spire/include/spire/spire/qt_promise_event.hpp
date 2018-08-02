@@ -4,7 +4,7 @@
 #include <Beam/Utilities/Expect.hpp>
 #include <QEvent>
 
-namespace spire {
+namespace Spire {
 namespace details {
   class QtBasePromiseEvent : public QEvent {
     public:

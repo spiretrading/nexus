@@ -9,7 +9,7 @@ using namespace Beam;
 using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::signals2;
-using namespace spire;
+using namespace Spire;
 
 ToolbarWindow::ToolbarWindow(RecentlyClosedModel& model,
     const DirectoryEntry& account, QWidget* parent)
@@ -23,7 +23,7 @@ ToolbarWindow::ToolbarWindow(RecentlyClosedModel& model,
   m_body->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   auto window_layout = new QHBoxLayout(this);
   window_layout->setContentsMargins({});
-  m_window = new spire::Window(m_body, this);
+  m_window = new Window(m_body, this);
   m_window->set_svg_icon(":/icons/spire-icon-black.svg",
     ":/icons/spire-icon-grey.svg");
   window_layout->addWidget(m_window);

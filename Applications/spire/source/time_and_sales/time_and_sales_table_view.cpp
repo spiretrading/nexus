@@ -11,7 +11,7 @@
 #include "spire/ui/item_padding_delegate.hpp"
 #include "spire/ui/overlay_widget.hpp"
 
-using namespace spire;
+using namespace Spire;
 
 namespace {
   const auto MINIMUM_TABLE_WIDTH = 750;

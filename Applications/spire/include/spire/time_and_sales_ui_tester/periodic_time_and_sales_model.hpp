@@ -7,7 +7,7 @@
 #include "spire/time_and_sales/time_and_sales.hpp"
 #include "spire/time_and_sales/time_and_sales_model.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Implements a time and sales model that periodically emits new values.
   class PeriodicTimeAndSalesModel final : public TimeAndSalesModel,

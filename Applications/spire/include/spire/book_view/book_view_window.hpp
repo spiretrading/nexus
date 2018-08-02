@@ -12,7 +12,7 @@
 #include "spire/ui/security_stack.hpp"
 #include "spire/ui/ui.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Displays a book view window.
   class BookViewWindow : public QWidget {

@@ -11,7 +11,7 @@
 #include "spire/ui/check_box.hpp"
 #include "spire/ui/flat_button.hpp"
 
-using namespace spire;
+using namespace Spire;
 
 BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
     const BookViewProperties& properties, QWidget* parent)

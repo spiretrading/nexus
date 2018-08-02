@@ -9,7 +9,7 @@
 #include <QWidgetAction>
 #include "spire/toolbar/toolbar.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Provides a drop-down menu with a title.
   class ToolbarMenu : public QPushButton {

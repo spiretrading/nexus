@@ -2,7 +2,7 @@
 #define SPIRE_TIME_AND_SALES_HPP
 #include "spire/spire/spire.hpp"
 
-namespace spire {
+namespace Spire {
   class EmptyTimeAndSalesModel;
   class SnapshotLoadingWidget;
   class TimeAndSalesController;

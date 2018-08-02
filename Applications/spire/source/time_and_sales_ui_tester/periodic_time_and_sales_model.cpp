@@ -7,7 +7,7 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace spire;
+using namespace Spire;
 
 PeriodicTimeAndSalesModel::PeriodicTimeAndSalesModel(Security s,
       Beam::Threading::TimerThreadPool& timer_thread_pool)

@@ -5,7 +5,7 @@
 #include "spire/ui/flat_button.hpp"
 
 using namespace boost::signals2;
-using namespace spire;
+using namespace Spire;
 
 PropertiesWindowButtonsWidget::PropertiesWindowButtonsWidget(
     QWidget* parent)

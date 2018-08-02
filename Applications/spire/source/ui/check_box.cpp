@@ -2,7 +2,7 @@
 #include <QFocusEvent>
 #include <QMouseEvent>
 
-using namespace spire;
+using namespace Spire;
 
 CheckBox::CheckBox(const QString& text, QWidget* parent)
   : QCheckBox(text, parent),

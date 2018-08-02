@@ -1,7 +1,7 @@
 #include "spire/ui/item_padding_delegate.hpp"
 #include <QPainter>
 
-using namespace spire;
+using namespace Spire;
 
 ItemPaddingDelegate::ItemPaddingDelegate(int padding,
     QStyledItemDelegate* delegate, QObject* parent)

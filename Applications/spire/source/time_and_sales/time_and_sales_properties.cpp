@@ -1,6 +1,6 @@
 #include "spire/time_and_sales/time_and_sales_properties.hpp"
 
-using namespace spire;
+using namespace Spire;
 
 TimeAndSalesProperties::TimeAndSalesProperties() {
   set_text_color(PriceRange::UNKNOWN, QColor(0, 0, 0));

@@ -11,7 +11,7 @@
 using namespace Beam;
 using namespace Beam::Threading;
 using namespace Nexus;
-using namespace spire;
+using namespace Spire;
 
 int main(int argc, char** argv) {
   auto application = new QApplication(argc, argv);

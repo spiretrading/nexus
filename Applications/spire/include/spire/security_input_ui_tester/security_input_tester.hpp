@@ -5,7 +5,7 @@
 #include "spire/security_input/local_security_input_model.hpp"
 #include "spire/security_input_ui_tester/security_input_ui_tester.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Tester class for SecurityInputDialog.
   class SecurityInputTester : public QListWidget {

@@ -3,7 +3,7 @@
 #include <QWidget>
 #include "spire/ui/ui.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Displays the button group for a properties window.
   class PropertiesWindowButtonsWidget : public QWidget {

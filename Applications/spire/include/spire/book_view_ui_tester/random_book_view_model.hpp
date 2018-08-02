@@ -7,7 +7,7 @@
 #include "spire/book_view_ui_tester/book_view_ui_tester.hpp"
 #include "spire/book_view/book_view_model.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Implements a book view model using randomly generated quotes.
   class RandomBookViewModel final : public BookViewModel, public QObject {

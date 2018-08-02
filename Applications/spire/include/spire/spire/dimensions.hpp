@@ -4,7 +4,7 @@
 #include <QSize>
 #include "spire/spire/spire.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! The normalized DPI.
   static constexpr auto DPI = 96;

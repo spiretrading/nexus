@@ -5,7 +5,7 @@ using namespace Beam::Queries;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace spire;
+using namespace Spire;
 
 EmptyTimeAndSalesModel::EmptyTimeAndSalesModel(Security s)
     : m_security(std::move(s)) {}

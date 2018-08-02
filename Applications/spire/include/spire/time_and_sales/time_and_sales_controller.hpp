@@ -6,7 +6,7 @@
 #include "spire/security_input/security_input.hpp"
 #include "spire/time_and_sales/time_and_sales.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Manages a time and sales window.
   class TimeAndSalesController : private boost::noncopyable {

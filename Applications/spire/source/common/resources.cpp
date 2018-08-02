@@ -43,7 +43,7 @@ void local_resources() {
   QApplication::setFont(f);
 }
 
-void spire::initialize_resources() {
+void Spire::initialize_resources() {
   register_custom_qt_variants();
 #ifdef _DEBUG
   std::freopen("stdout.log", "w", stdout);

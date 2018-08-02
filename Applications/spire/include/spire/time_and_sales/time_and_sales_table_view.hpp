@@ -8,7 +8,7 @@
 #include "spire/time_and_sales/time_and_sales_properties.hpp"
 #include "spire/ui/ui.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Displays a table with horizontal header and loading widget.
   class TimeAndSalesTableView : public QScrollArea {

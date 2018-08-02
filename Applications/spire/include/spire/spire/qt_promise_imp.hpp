@@ -12,7 +12,7 @@
 #include "spire/spire/spire.hpp"
 #include "spire/spire/qt_promise_event.hpp"
 
-namespace spire {
+namespace Spire {
 namespace details {
   template<typename T>
   class BaseQtPromiseImp : public QObject, private boost::noncopyable {

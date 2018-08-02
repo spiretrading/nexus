@@ -6,7 +6,7 @@
 #include "spire/login/login.hpp"
 #include "spire/ui/ui.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Displays a window to simulate account login, rejection, and server
   //  unavailable status'.
@@ -18,7 +18,7 @@ namespace spire {
       \param window The LoginWindow that this widget will interact with.
       \param frame The top-
     */
-    LoginUiTester(spire::LoginWindow* login, QWidget* parent = nullptr);
+    LoginUiTester(Spire::LoginWindow* login, QWidget* parent = nullptr);
 
     protected:
       bool eventFilter(QObject* receiver, QEvent* event);

@@ -3,7 +3,7 @@
 #include "spire/spire/spire_controller.hpp"
 #include "spire/version.hpp"
 
-using namespace spire;
+using namespace Spire;
 
 int main(int argc, char** argv) {
   auto application = new QApplication(argc, argv);

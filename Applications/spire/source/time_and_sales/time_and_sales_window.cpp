@@ -19,7 +19,7 @@
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace spire;
+using namespace Spire;
 
 TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
     SecurityInputModel& input_model, QWidget* parent)
@@ -32,7 +32,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
   m_body->setStyleSheet("background-color: #FFFFFF;");
   auto window_layout = new QHBoxLayout(this);
   window_layout->setContentsMargins({});
-  auto window = new spire::Window(m_body, this);
+  auto window = new Window(m_body, this);
   setWindowTitle(tr("Time and Sales"));
   window->set_svg_icon(":/icons/time-sale-black.svg",
     ":/icons/time-sale-grey.svg");

@@ -5,7 +5,7 @@
 #include "spire/book_view/book_view.hpp"
 #include "spire/book_view/book_view_properties.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Displays a market's code as a list item.
   class MarketListItem : public QListWidgetItem {

@@ -13,7 +13,7 @@
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace spire;
+using namespace Spire;
 
 BookViewWindow::BookViewWindow(const BookViewProperties& properties,
     SecurityInputModel& input_model, QWidget* parent)
@@ -25,7 +25,7 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
   m_body->setStyleSheet("background-color: #FFFFFF;");
   auto window_layout = new QVBoxLayout(this);
   window_layout->setContentsMargins({});
-  auto window = new spire::Window(m_body, this);
+  auto window = new Window(m_body, this);
   setWindowTitle(tr("Book View"));
   window->set_svg_icon(":/icons/bookview-black.svg",
     ":/icons/bookview-grey.svg");

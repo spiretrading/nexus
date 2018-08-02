@@ -5,7 +5,7 @@
 #include <QRadialGradient>
 #include "spire/spire/dimensions.hpp"
 
-using namespace spire;
+using namespace Spire;
 
 namespace {
   const auto TOP_STOPS = QGradientStops({

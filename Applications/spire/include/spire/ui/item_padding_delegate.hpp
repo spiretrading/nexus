@@ -3,7 +3,7 @@
 #include <QStyledItemDelegate>
 #include "spire/ui/ui.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Implements Qt' item delegate to support custom item padding.
   class ItemPaddingDelegate : public QStyledItemDelegate {

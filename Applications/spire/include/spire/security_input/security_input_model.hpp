@@ -6,7 +6,7 @@
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "spire/security_input/security_input.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Represents a searchable database of available securities.
   class SecurityInputModel : private boost::noncopyable {

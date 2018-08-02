@@ -1,7 +1,7 @@
 #include "spire/ui/security_stack.hpp"
 
 using namespace Nexus;
-using namespace spire;
+using namespace Spire;
 
 void SecurityStack::push(Nexus::Security s) {
   if(s == Security()) {

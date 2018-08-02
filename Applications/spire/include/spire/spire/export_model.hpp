@@ -3,7 +3,7 @@
 #include <QAbstractItemModel>
 #include <ostream>
 
-namespace spire {
+namespace Spire {
 
   //! Exports a model in CSV format.
   /*!

@@ -4,7 +4,7 @@
 
 using namespace boost;
 using namespace boost::signals2;
-using namespace spire;
+using namespace Spire;
 
 ToolbarMenu::ToolbarMenu(const QString& title, QWidget* parent)
     : QPushButton(title, parent),

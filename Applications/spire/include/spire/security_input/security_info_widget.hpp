@@ -5,7 +5,7 @@
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "spire/security_input/security_input.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! A convenience widget to display a security's name and ticker symbol.
   class SecurityInfoWidget : public QWidget {

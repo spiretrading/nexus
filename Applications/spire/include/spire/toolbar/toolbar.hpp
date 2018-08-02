@@ -2,7 +2,7 @@
 #define SPIRE_TOOLBAR_HPP
 #include "spire/spire/spire.hpp"
 
-namespace spire {
+namespace Spire {
   class RecentlyClosedModel;
   class ToolbarController;
   class ToolbarWindow;

@@ -2,7 +2,7 @@
 #define SPIRE_CHECK_BOX_HPP
 #include <QCheckBox>
 
-namespace spire {
+namespace Spire {
 
   //! A check box with a custom focus style
   class CheckBox : public QCheckBox {

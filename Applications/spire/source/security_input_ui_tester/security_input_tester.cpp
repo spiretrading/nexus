@@ -5,7 +5,7 @@
 #include "spire/spire/dimensions.hpp"
 
 using namespace Nexus;
-using namespace spire;
+using namespace Spire;
 
 SecurityInputTester::SecurityInputTester(QWidget* parent)
     : QListWidget(parent) {

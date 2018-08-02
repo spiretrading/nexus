@@ -2,7 +2,7 @@
 #define SPIRE_BOOK_VIEW_HPP
 #include "spire/spire/spire.hpp"
 
-namespace spire {
+namespace Spire {
   class BookViewHighlightPropertiesWidget;
   class BookViewLevelPropertiesWidget;
   class BookViewModel;

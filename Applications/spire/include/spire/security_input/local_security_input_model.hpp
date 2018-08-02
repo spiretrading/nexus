@@ -4,7 +4,7 @@
 #include "spire/security_input/security_input.hpp"
 #include "spire/security_input/security_input_model.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Implements the security input model using a local database.
   class LocalSecurityInputModel final : public SecurityInputModel {

@@ -13,7 +13,7 @@
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace spire;
+using namespace Spire;
 
 BookViewPropertiesDialog::BookViewPropertiesDialog(
     const BookViewProperties& properties, const Security& security,
@@ -27,7 +27,7 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
   body->setStyleSheet("background-color: #F5F5F5;");
   auto window_layout = new QHBoxLayout(this);
   window_layout->setContentsMargins({});
-  auto window = new spire::Window(body, this);
+  auto window = new Window(body, this);
   setWindowTitle(tr("Properties"));
   window->set_svg_icon(":/icons/bookview-black.svg",
     ":/icons/bookview-grey.svg");

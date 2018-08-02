@@ -6,7 +6,7 @@
 #include <QWidget>
 #include "spire/ui/ui.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Displays a button using an icon.
   class IconButton : public QAbstractButton {

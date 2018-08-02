@@ -6,7 +6,7 @@
   #include <QDebug>
 #endif
 
-namespace spire {
+namespace Spire {
   template<typename T> class QtPromise;
   class SpireController;
 

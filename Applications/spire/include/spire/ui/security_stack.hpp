@@ -6,7 +6,7 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/ui/ui.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Stores a stack like cycle of security's viewed by a user.
   class SecurityStack {

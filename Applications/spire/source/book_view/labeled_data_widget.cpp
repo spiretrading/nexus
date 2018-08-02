@@ -2,7 +2,7 @@
 #include <QHBoxLayout>
 #include "spire/spire/dimensions.hpp"
 
-using namespace spire;
+using namespace Spire;
 
 LabeledDataWidget::LabeledDataWidget(const QString& label_text,
     const QString& data_text, QWidget* parent)

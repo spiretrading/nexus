@@ -4,7 +4,7 @@
 #include <QScrollBar>
 #include "spire/spire/dimensions.hpp"
 
-using namespace spire;
+using namespace Spire;
 
 SnapshotLoadingWidget::SnapshotLoadingWidget(QScrollArea* scroll_area,
     QWidget* parent)

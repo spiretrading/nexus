@@ -2,7 +2,7 @@
 #define SPIRE_BOOK_VIEW_UI_TESTER_HPP
 #include "spire/book_view/book_view.hpp"
 
-namespace spire {
+namespace Spire {
   class RandomBookViewModel;
 }
 

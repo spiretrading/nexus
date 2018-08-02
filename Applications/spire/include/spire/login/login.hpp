@@ -2,7 +2,7 @@
 #define SPIRE_LOGIN_HPP
 #include "spire/spire/spire.hpp"
 
-namespace spire {
+namespace Spire {
   class ChromaHashWidget;
   class LoginController;
   class LoginWindow;

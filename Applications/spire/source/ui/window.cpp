@@ -15,7 +15,7 @@
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/title_bar.hpp"
 
-using namespace spire;
+using namespace Spire;
 
 namespace {
   const auto PADDING_SIZE = 10;

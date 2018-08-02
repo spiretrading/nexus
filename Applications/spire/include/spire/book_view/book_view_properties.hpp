@@ -8,7 +8,7 @@
 #include "Nexus/Definitions/Market.hpp"
 #include "spire/book_view/book_view.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Stores the properties used to display a BookViewWindow.
   class BookViewProperties {

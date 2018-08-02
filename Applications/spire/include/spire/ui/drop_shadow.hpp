@@ -3,7 +3,7 @@
 #include <QWidget>
 #include "spire/ui/ui.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Paints a drop shadow around its parent widget.
   class DropShadow : public QWidget {

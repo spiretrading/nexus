@@ -4,7 +4,7 @@
 #include <QWidget>
 #include "spire/spire/spire.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Displays a flat button with no click animation.
   class FlatButton : public QWidget {

@@ -3,7 +3,7 @@
 #include <boost/algorithm/string/case_conv.hpp>
 
 using namespace Nexus;
-using namespace spire;
+using namespace Spire;
 
 LocalSecurityInputModel::LocalSecurityInputModel()
     : m_securities('\0') {}

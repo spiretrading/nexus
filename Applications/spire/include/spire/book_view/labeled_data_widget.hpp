@@ -4,7 +4,7 @@
 #include <QLabel>
 #include "spire/book_view/book_view.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Represents a label with a label string and data string.
   class LabeledDataWidget : public QWidget {

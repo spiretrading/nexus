@@ -10,7 +10,7 @@
 using namespace Beam;
 using namespace Beam::Threading;
 using namespace Nexus;
-using namespace spire;
+using namespace Spire;
 using PriceRange = TimeAndSalesProperties::PriceRange;
 
 TimeAndSalesTestControllerWindow::TimeAndSalesTestControllerWindow(

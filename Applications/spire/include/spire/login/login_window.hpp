@@ -13,7 +13,7 @@
 #include "spire/login/login.hpp"
 #include "spire/ui/ui.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Displays the login window.
   class LoginWindow : public QWidget {

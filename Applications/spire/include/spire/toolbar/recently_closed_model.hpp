@@ -5,7 +5,7 @@
 #include <boost/noncopyable.hpp>
 #include "spire/toolbar/toolbar.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Models the recently closed windows that can be re-opened.
   class RecentlyClosedModel : private boost::noncopyable {

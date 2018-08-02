@@ -10,7 +10,7 @@ using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace spire;
+using namespace Spire;
 
 LoginController::LoginController(ServiceClientsFactory service_clients_factory)
     : m_service_clients_factory(std::move(service_clients_factory)) {}

@@ -6,7 +6,7 @@
 #include "spire/book_view/book_view.hpp"
 #include "spire/book_view/book_view_properties.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Displays the properties for a book view window.
   class BookViewPropertiesDialog : public QDialog {

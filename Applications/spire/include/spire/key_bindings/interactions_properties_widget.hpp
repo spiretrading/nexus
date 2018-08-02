@@ -3,7 +3,7 @@
 #include <QWidget>
 #include "spire/key_bindings/key_bindings.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Displays and allows modification of the interaction properties.
   class InteractionsPropertiesWidget : public QWidget {

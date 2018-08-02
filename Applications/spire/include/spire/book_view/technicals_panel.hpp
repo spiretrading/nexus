@@ -5,7 +5,7 @@
 #include "spire/book_view/book_view.hpp"
 #include "spire/book_view/labeled_data_widget.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Displays a security's technical indicators.
   class TechnicalsPanel : public QWidget {

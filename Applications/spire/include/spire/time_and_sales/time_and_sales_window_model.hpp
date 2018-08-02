@@ -5,7 +5,7 @@
 #include "spire/time_and_sales/time_and_sales_model.hpp"
 #include "spire/time_and_sales/time_and_sales_properties.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Implements the table model for displaying time and sales in a list view.
   class TimeAndSalesWindowModel : public QAbstractTableModel {

@@ -1,7 +1,7 @@
 #ifndef SPIRE_KEY_BINDINGS_HPP
 #define SPIRE_KEY_BINDINGS_HPP
 
-namespace spire {
+namespace Spire {
   class InteractionsPropertiesWidget;
 }
 

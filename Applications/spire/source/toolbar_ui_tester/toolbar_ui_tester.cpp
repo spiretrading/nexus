@@ -5,7 +5,7 @@
 #include "spire/spire/dimensions.hpp"
 #include "spire/toolbar/toolbar_window.hpp"
 
-using namespace spire;
+using namespace Spire;
 
 ToolbarUiTester::ToolbarUiTester(ToolbarWindow* window,
     RecentlyClosedModel& model,

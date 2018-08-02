@@ -6,7 +6,7 @@
 #include "spire/security_input/security_input.hpp"
 #include "spire/ui/ui.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Displays a list of securities with symbol, exchange, and company name.
   class SecurityInfoListView : public QWidget {

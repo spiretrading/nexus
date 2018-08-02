@@ -6,7 +6,7 @@
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace spire;
+using namespace Spire;
 
 TimeAndSalesController::TimeAndSalesController(
     VirtualServiceClients& service_clients)

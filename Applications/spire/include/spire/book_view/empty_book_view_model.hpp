@@ -3,7 +3,7 @@
 #include "spire/book_view/book_view.hpp"
 #include "spire/book_view/book_view_model.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Implements a book view model with no quotes.
   class EmptyBookViewModel final : public BookViewModel {

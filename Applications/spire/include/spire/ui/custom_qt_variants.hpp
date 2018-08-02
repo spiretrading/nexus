@@ -18,7 +18,7 @@
 #include "spire/spire/spire.hpp"
 #include "spire/ui/ui.hpp"
 
-namespace spire {
+namespace Spire {
 
   /*! Wraps a MarketCode so that it can be displayed in a model. */
   struct MarketToken {
@@ -70,10 +70,10 @@ Q_DECLARE_METATYPE(Nexus::Quantity);
 Q_DECLARE_METATYPE(Nexus::Security);
 Q_DECLARE_METATYPE(Nexus::Side);
 Q_DECLARE_METATYPE(Nexus::TimeInForce);
-Q_DECLARE_METATYPE(spire::MarketToken);
-Q_DECLARE_METATYPE(spire::PositionSideToken);
+Q_DECLARE_METATYPE(Spire::MarketToken);
+Q_DECLARE_METATYPE(Spire::PositionSideToken);
 
-namespace spire {
+namespace Spire {
 
   //! Converts a posix time duration into a QTime.
   QTime to_qtime(const boost::posix_time::time_duration& time);

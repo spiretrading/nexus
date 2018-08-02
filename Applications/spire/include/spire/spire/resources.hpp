@@ -2,7 +2,7 @@
 #define SPIRE_RESOURCES_HPP
 #include "spire/spire/spire.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Loads all custom resources.
   void initialize_resources();

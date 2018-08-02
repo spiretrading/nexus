@@ -9,7 +9,7 @@
 #include "spire/spire/spire.hpp"
 #include "spire/toolbar/toolbar.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Controller for the application as a whole.
   class SpireController : private boost::noncopyable {

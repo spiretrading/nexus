@@ -7,7 +7,7 @@
 #include "spire/spire/qt_promise_imp.hpp"
 #include "spire/spire/spire.hpp"
 
-namespace spire {
+namespace Spire {
 
   /*! \brief Performs an asyncronous computation and signals the result within a
              Qt-thread in a thread-safe manner.

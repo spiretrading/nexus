@@ -5,7 +5,7 @@
 #include <QWidget>
 #include "spire/ui/ui.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Displays a window's title bar.
   class TitleBar : public QWidget, public QAbstractNativeEventFilter {

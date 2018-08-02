@@ -3,7 +3,7 @@
 #include "spire/time_and_sales/time_and_sales.hpp"
 #include "spire/time_and_sales/time_and_sales_model.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Implements a time and sales model with no entries and no updates.
   class EmptyTimeAndSalesModel final : public TimeAndSalesModel {

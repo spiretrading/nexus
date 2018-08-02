@@ -10,7 +10,7 @@
 #include "spire/time_and_sales/time_and_sales.hpp"
 #include "spire/time_and_sales/time_and_sales_properties.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Displays the window used to control how a time and sales window is tested.
   class TimeAndSalesTestControllerWindow : public QWidget {

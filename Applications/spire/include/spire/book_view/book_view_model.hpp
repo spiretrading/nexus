@@ -8,7 +8,7 @@
 #include "spire/book_view/book_view.hpp"
 #include "spire/spire/qt_promise.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Models a security's quotes.
   class BookViewModel : private boost::noncopyable {

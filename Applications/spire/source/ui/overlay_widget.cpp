@@ -2,7 +2,7 @@
 #include <QEvent>
 #include <QHBoxLayout>
 
-using namespace spire;
+using namespace Spire;
 
 OverlayWidget::OverlayWidget(QWidget* covered, QWidget* displayed,
     QWidget* parent)

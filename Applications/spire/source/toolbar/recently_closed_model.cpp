@@ -2,7 +2,7 @@
 
 using namespace boost;
 using namespace boost::signals2;
-using namespace spire;
+using namespace Spire;
 
 RecentlyClosedModel::RecentlyClosedModel()
     : m_next_id(0) {}

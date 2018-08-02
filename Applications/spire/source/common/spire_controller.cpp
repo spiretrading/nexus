@@ -14,7 +14,7 @@ using namespace Beam;
 using namespace Beam::Network;
 using namespace Beam::Threading;
 using namespace Nexus;
-using namespace spire;
+using namespace Spire;
 
 SpireController::SpireController()
     : m_state(State::NONE),

@@ -1,9 +1,9 @@
 #include "spire/spire/export_model.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
 
-using namespace spire;
+using namespace Spire;
 
-void spire::export_model_as_csv(const QAbstractItemModel& model,
+void Spire::export_model_as_csv(const QAbstractItemModel& model,
     std::ostream& out) {
   CustomVariantItemDelegate delegate;
   for(auto i = 0; i < model.columnCount(); ++i) {

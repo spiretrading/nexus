@@ -2,7 +2,7 @@
 #define SPIRE_SECURITY_INPUT_UI_TESTER_HPP
 #include "spire/security_input/security_input.hpp"
 
-namespace spire {
+namespace Spire {
   class SecurityInputTester;
 }
 

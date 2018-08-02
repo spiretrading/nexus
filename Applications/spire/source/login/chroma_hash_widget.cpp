@@ -4,7 +4,7 @@
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;
-using namespace spire;
+using namespace Spire;
 
 ChromaHashWidget::ChromaHashWidget(QWidget* parent)
     : QWidget(parent) {

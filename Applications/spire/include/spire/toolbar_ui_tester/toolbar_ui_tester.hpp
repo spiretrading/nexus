@@ -7,7 +7,7 @@
 #include "spire/toolbar/toolbar.hpp"
 #include "spire/toolbar/recently_closed_model.hpp"
 
-namespace spire {
+namespace Spire {
   
   class ToolbarUiTester : public QWidget {
     public:

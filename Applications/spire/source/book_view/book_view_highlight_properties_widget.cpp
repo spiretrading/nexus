@@ -14,7 +14,7 @@
 #include "spire/ui/check_box.hpp"
 
 using namespace Nexus;
-using namespace spire;
+using namespace Spire;
 
 BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
     const BookViewProperties& properties, QWidget* parent)

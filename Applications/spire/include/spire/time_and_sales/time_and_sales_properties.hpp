@@ -5,7 +5,7 @@
 #include <QFont>
 #include "spire/time_and_sales/time_and_sales.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Stores the properties used to display a time and sales window.
   struct TimeAndSalesProperties {

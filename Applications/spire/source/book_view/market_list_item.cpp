@@ -1,7 +1,7 @@
 #include "spire/book_view/market_list_item.hpp"
 
 using namespace boost;
-using namespace spire;
+using namespace Spire;
 using Entry = Nexus::MarketDatabase::Entry;
 
 MarketListItem::MarketListItem(const Entry& entry, QListWidget* parent)

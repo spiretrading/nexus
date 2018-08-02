@@ -1,7 +1,7 @@
 #include "spire/book_view/technicals_panel.hpp"
 #include "spire/spire/dimensions.hpp"
 
-using namespace spire;
+using namespace Spire;
 
 TechnicalsPanel::TechnicalsPanel(QWidget* parent)
     : QWidget(parent) {

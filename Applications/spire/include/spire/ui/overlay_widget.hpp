@@ -2,7 +2,7 @@
 #define SPIRE_OVERLAY_WIDGET_HPP
 #include <QWidget>
 
-namespace spire {
+namespace Spire {
 
   //! Displays a widget on top of another widget.
   class OverlayWidget : public QWidget {

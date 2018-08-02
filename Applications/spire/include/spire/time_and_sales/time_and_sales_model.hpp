@@ -6,7 +6,7 @@
 #include "spire/time_and_sales/time_and_sales.hpp"
 #include "spire/time_and_sales/time_and_sales_properties.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Models the time and sales for a single security.
   class TimeAndSalesModel : private boost::noncopyable {

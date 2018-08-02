@@ -10,7 +10,7 @@
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace spire;
+using namespace Spire;
 
 SecurityInputDialog::SecurityInputDialog(SecurityInputModel& model,
     QWidget* parent, Qt::WindowFlags flags)

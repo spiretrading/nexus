@@ -8,7 +8,7 @@
 #include "spire/login/login.hpp"
 #include "spire/spire/qt_promise.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Allows the user to login to Spire.
   class LoginController : private boost::noncopyable {

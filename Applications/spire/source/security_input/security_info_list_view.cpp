@@ -7,7 +7,7 @@
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace spire;
+using namespace Spire;
 
 namespace {
   const auto MAX_VISIBLE_ITEMS = 5;

@@ -6,7 +6,7 @@
 #include "spire/time_and_sales/time_and_sales_properties.hpp"
 #include "spire/ui/ui.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Displays the properties for a time and sales window.
   class TimeAndSalesPropertiesDialog : public QDialog {

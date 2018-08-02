@@ -7,7 +7,7 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace spire;
+using namespace Spire;
 
 RandomBookViewModel::RandomBookViewModel(Security security,
     time_duration load_time, TimerThreadPool& timer_thread_pool)

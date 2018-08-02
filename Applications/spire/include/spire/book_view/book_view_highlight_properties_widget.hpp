@@ -5,7 +5,7 @@
 #include "spire/book_view/book_view.hpp"
 #include "spire/ui/ui.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Displays/modifies the properties used to highlight a book view's quotes.
   class BookViewHighlightPropertiesWidget : public QWidget {

@@ -4,7 +4,7 @@
 #include <QScrollArea>
 #include "spire/time_and_sales/time_and_sales.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Displays a widget with an animated loading icon.
   class SnapshotLoadingWidget : public QWidget {

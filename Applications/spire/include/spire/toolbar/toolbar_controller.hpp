@@ -6,7 +6,7 @@
 #include "spire/toolbar/recently_closed_model.hpp"
 #include "spire/toolbar/toolbar.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Launches the main application windows.
   class ToolbarController : private boost::noncopyable {

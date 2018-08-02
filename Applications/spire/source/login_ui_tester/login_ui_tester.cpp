@@ -6,9 +6,9 @@
 
 using namespace boost;
 using namespace boost::signals2;
-using namespace spire;
+using namespace Spire;
 
-LoginUiTester::LoginUiTester(spire::LoginWindow* login, QWidget* parent)
+LoginUiTester::LoginUiTester(Spire::LoginWindow* login, QWidget* parent)
     : QWidget(parent),
       m_login_window(login) {
   setFixedSize(scale(480, 270));

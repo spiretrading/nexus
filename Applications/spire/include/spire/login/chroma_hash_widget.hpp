@@ -6,7 +6,7 @@
 #include <QWidget>
 #include "spire/login/login.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Displays chroma hash.
   class ChromaHashWidget : public QWidget {

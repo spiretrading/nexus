@@ -2,7 +2,7 @@
 
 using namespace boost;
 using namespace Nexus;
-using namespace spire;
+using namespace Spire;
 
 BookViewProperties::BookViewProperties() {
   set_bbo_quote_font(QFont("Roboto", 14, QFont::Medium));

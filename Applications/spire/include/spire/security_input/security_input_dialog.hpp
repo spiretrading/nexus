@@ -7,7 +7,7 @@
 #include "spire/security_input/security_input_box.hpp"
 #include "spire/ui/ui.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Displays a security input box within a dialog window.
   class SecurityInputDialog : public QDialog {

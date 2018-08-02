@@ -11,7 +11,7 @@ using namespace boost;
 using namespace boost::date_time;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace spire;
+using namespace Spire;
 
 namespace {
   QVariant to_variant(const any& value) {
@@ -80,32 +80,32 @@ QString PositionSideToken::to_string() const {
   return QObject::tr("Flat");
 }
 
-QTime spire::to_qtime(const posix_time::time_duration& time) {
+QTime Spire::to_qtime(const posix_time::time_duration& time) {
   QTime timestamp(time.hours(), time.minutes(), time.seconds(),
     time.fractional_seconds() / 1000);
   return timestamp;
 }
 
-posix_time::time_duration spire::to_time_duration(const QTime& time) {
+posix_time::time_duration Spire::to_time_duration(const QTime& time) {
   posix_time::time_duration timestamp(time.hour(), time.minute(), time.second(),
     time.msec());
   return timestamp;
 }
 
-QDateTime spire::to_qdate_time(const ptime& time) {
+QDateTime Spire::to_qdate_time(const ptime& time) {
   QDateTime date_time(QDate(time.date().year(), time.date().month(),
     time.date().day()), to_qtime(time.time_of_day()));
   return date_time;
 }
 
-posix_time::ptime spire::to_ptime(const QDateTime& time) {
+posix_time::ptime Spire::to_ptime(const QDateTime& time) {
   ptime posix_time(gregorian::date(time.date().year(), time.date().month(),
     time.date().day()), posix_time::time_duration(time.time().hour(),
     time.time().minute(), time.time().second(), time.time().msec()));
   return posix_time;
 }
 
-void spire::register_custom_qt_variants() {}
+void Spire::register_custom_qt_variants() {}
 
 CustomVariantItemDelegate::CustomVariantItemDelegate(QObject* parent)
     : QStyledItemDelegate(parent) {}

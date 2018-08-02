@@ -10,7 +10,7 @@
 
 using namespace boost;
 using namespace boost::signals2;
-using namespace spire;
+using namespace Spire;
 
 LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
     : QWidget(parent, Qt::FramelessWindowHint),

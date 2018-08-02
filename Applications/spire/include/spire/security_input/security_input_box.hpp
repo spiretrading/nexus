@@ -6,7 +6,7 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/security_input/security_input.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! Displays a input/search box for securities.
   class SecurityInputBox : public QWidget {

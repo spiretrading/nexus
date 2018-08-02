@@ -4,7 +4,7 @@
 #include <QWidget>
 #include "spire/ui/ui.hpp"
 
-namespace spire {
+namespace Spire {
 
   //! A customized window container for top-level windows.
   class Window : public QWidget, QAbstractNativeEventFilter {

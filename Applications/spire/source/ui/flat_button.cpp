@@ -7,7 +7,7 @@
 
 using namespace boost;
 using namespace boost::signals2;
-using namespace spire;
+using namespace Spire;
 using Style = FlatButton::Style;
 
 FlatButton::FlatButton(QWidget* parent)
