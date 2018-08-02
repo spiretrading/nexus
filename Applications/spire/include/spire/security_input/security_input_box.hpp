@@ -9,22 +9,21 @@
 namespace spire {
 
   //! Displays a input/search box for securities.
-  class security_input_box : public QWidget {
+  class SecurityInputBox : public QWidget {
     public:
 
       //! Signals that editing has completed.
       /*!
         \param s The security that was input.
       */
-      using commit_signal = Signal<void (const Nexus::Security& s)>;
+      using CommitSignal = Signal<void (const Nexus::Security& s)>;
 
       //! Constructs a blank security input box.
       /*!
         \param model The model to query for securities.
         \param parent The parent to this widget.
       */
-      security_input_box(security_input_model& model,
-        QWidget* parent = nullptr);
+      SecurityInputBox(SecurityInputModel& model, QWidget* parent = nullptr);
 
       //! Constructs a security input box with an initial text value.
       /*!
@@ -32,12 +31,12 @@ namespace spire {
         \param initial_text The initial text to display in the line edit.
         \param parent The parent to this widget.
       */
-      security_input_box(security_input_model& model,
-        const QString& initial_text, QWidget* parent = nullptr);
+      SecurityInputBox(SecurityInputModel& model, const QString& initial_text,
+        QWidget* parent = nullptr);
 
       //! Connects a slot to the commit signal.
       boost::signals2::connection connect_commit_signal(
-        const commit_signal::slot_type& slot) const;
+        const CommitSignal::slot_type& slot) const;
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
@@ -46,11 +45,11 @@ namespace spire {
       void showEvent(QShowEvent* event) override;
 
     private:
-      mutable commit_signal m_commit_signal;
-      security_input_model* m_model;
+      mutable CommitSignal m_commit_signal;
+      SecurityInputModel* m_model;
       QLineEdit* m_security_line_edit;
       QLabel* m_icon_label;
-      security_info_list_view* m_securities;
+      SecurityInfoListView* m_securities;
 
       void on_text_edited();
       void move_line_edit();

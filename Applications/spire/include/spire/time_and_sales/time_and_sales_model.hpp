@@ -9,32 +9,32 @@
 namespace spire {
 
   //! Models the time and sales for a single security.
-  class time_and_sales_model : private boost::noncopyable {
+  class TimeAndSalesModel : private boost::noncopyable {
     public:
 
       //! Stores a single time and sale entry.
-      struct entry {
+      struct Entry {
 
         //! The time and sale.
         Nexus::SequencedTimeAndSale m_time_and_sale;
 
         //! The price range the entry belongs to.
-        time_and_sales_properties::price_range m_price_range;
+        TimeAndSalesProperties::PriceRange m_price_range;
       };
 
       //! Signals a new time and sale.
       /*!
         \param e The new time and sale.
       */
-      using time_and_sale_signal = Signal<void (const entry& e)>;
+      using TimeAndSaleSignal = Signal<void (const Entry& e)>;
 
       //! Signals a change in the volume.
       /*!
         \param v The updated volume.
       */
-      using volume_signal = Signal<void (Nexus::Quantity v)>;
+      using VolumeSignal = Signal<void (Nexus::Quantity v)>;
 
-      virtual ~time_and_sales_model() = default;
+      virtual ~TimeAndSalesModel() = default;
 
       //! Returns the security being modeled.
       virtual const Nexus::Security& get_security() const = 0;
@@ -52,21 +52,21 @@ namespace spire {
                 where the last item's sequence number is no greater than
                 <i>last</i>.
       */
-      virtual QtPromise<std::vector<entry>> load_snapshot(
+      virtual QtPromise<std::vector<Entry>> load_snapshot(
         Beam::Queries::Sequence last, int count) = 0;
 
       //! Connects a slot to the time and sale signal.
       virtual boost::signals2::connection connect_time_and_sale_signal(
-        const time_and_sale_signal::slot_type& slot) const = 0;
+        const TimeAndSaleSignal::slot_type& slot) const = 0;
 
       //! Connects a slot to the volume signal.
       virtual boost::signals2::connection connect_volume_signal(
-        const volume_signal::slot_type& slot) const = 0;
+        const VolumeSignal::slot_type& slot) const = 0;
 
     protected:
 
       //! Constructs a time and sales model.
-      time_and_sales_model() = default;
+      TimeAndSalesModel() = default;
   };
 }
 

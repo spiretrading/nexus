@@ -9,26 +9,26 @@
 namespace spire {
 
   //! Displays a list of securities with symbol, exchange, and company name.
-  class security_info_list_view : public QWidget {
+  class SecurityInfoListView : public QWidget {
     public:
 
       //! Signals a security was activated.
       /*!
         \param s The activated security.
       */
-      using activate_signal = Signal<void (const Nexus::Security& s)>;
+      using ActivateSignal = Signal<void (const Nexus::Security& s)>;
 
       //! Signals a security was committed.
       /*!
         \param s The committed security.
       */
-      using commit_signal = Signal<void (const Nexus::Security& s)>;
+      using CommitSignal = Signal<void (const Nexus::Security& s)>;
 
       //! Constructs a security info list view with an empty list.
       /*!
         \param parent The parent widget.
       */
-      security_info_list_view(QWidget* parent = nullptr);
+      SecurityInfoListView(QWidget* parent = nullptr);
 
       //! Sets the list of securities to display.
       void set_list(const std::vector<Nexus::SecurityInfo>& list);
@@ -41,15 +41,15 @@ namespace spire {
 
       //! Connects a slot to the activate signal.
       boost::signals2::connection connect_activate_signal(
-        const commit_signal::slot_type& slot) const;
+        const CommitSignal::slot_type& slot) const;
 
       //! Connects a slot to the commit signal.
       boost::signals2::connection connect_commit_signal(
-        const commit_signal::slot_type& slot) const;
+        const CommitSignal::slot_type& slot) const;
 
     private:
-      mutable activate_signal m_activate_signal;
-      mutable commit_signal m_commit_signal;
+      mutable ActivateSignal m_activate_signal;
+      mutable CommitSignal m_commit_signal;
       std::unique_ptr<drop_shadow> m_shadow;
       QScrollArea* m_scroll_area;
       QWidget* m_list_widget;

@@ -14,7 +14,7 @@ periodic_time_and_sales_model::periodic_time_and_sales_model(Security s,
     : m_security(std::move(s)),
       m_timer_thread_pool(&timer_thread_pool),
       m_price(Money::ONE),
-      m_price_range(time_and_sales_properties::price_range::AT_ASK),
+      m_price_range(TimeAndSalesProperties::PriceRange::AT_ASK),
       m_period(pos_infin),
       m_load_duration(seconds(10)),
       m_volume(0),
@@ -30,13 +30,13 @@ void periodic_time_and_sales_model::set_price(Money price) {
   m_price = price;
 }
 
-time_and_sales_properties::price_range periodic_time_and_sales_model::
+TimeAndSalesProperties::PriceRange periodic_time_and_sales_model::
     get_price_range() const {
   return m_price_range;
 }
 
 void periodic_time_and_sales_model::set_price_range(
-    time_and_sales_properties::price_range r) {
+    TimeAndSalesProperties::PriceRange r) {
   m_price_range = r;
 }
 
@@ -68,7 +68,7 @@ Quantity periodic_time_and_sales_model::get_volume() const {
   return m_volume;
 }
 
-QtPromise<std::vector<time_and_sales_model::entry>>
+QtPromise<std::vector<TimeAndSalesModel::Entry>>
     periodic_time_and_sales_model::load_snapshot(Beam::Queries::Sequence last,
     int count) {
   auto insert = [&] (auto where, auto sequence) {
@@ -78,7 +78,7 @@ QtPromise<std::vector<time_and_sales_model::entry>>
       "NYSE"), sequence);
     return m_entries.insert(where, {value, m_price_range});
   };
-  std::vector<time_and_sales_model::entry> snapshot;
+  std::vector<TimeAndSalesModel::Entry> snapshot;
   if(m_load_duration == pos_infin) {
     return make_qt_promise(
       [=] {
@@ -125,12 +125,12 @@ QtPromise<std::vector<time_and_sales_model::entry>>
 }
 
 connection periodic_time_and_sales_model::connect_time_and_sale_signal(
-    const time_and_sale_signal::slot_type& slot) const {
+    const TimeAndSaleSignal::slot_type& slot) const {
   return m_time_and_sale_signal.connect(slot);
 }
 
 connection periodic_time_and_sales_model::connect_volume_signal(
-    const volume_signal::slot_type& slot) const {
+    const VolumeSignal::slot_type& slot) const {
   return m_volume_signal.connect(slot);
 }
 

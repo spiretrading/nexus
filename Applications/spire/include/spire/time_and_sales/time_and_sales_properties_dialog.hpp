@@ -9,20 +9,20 @@
 namespace spire {
 
   //! Displays the properties for a time and sales window.
-  class time_and_sales_properties_dialog : public QDialog {
+  class TimeAndSalesPropertiesDialog : public QDialog {
     public:
 
       //! Signals that properties should be applied to the parent window.
       using ApplySignal = Signal<
-        void (const time_and_sales_properties& properties)>;
+        void (const TimeAndSalesProperties& properties)>;
 
       //! Signals that properties should be applied to all windows.
       using ApplyAllSignal = Signal<
-        void (const time_and_sales_properties& properties)>;
+        void (const TimeAndSalesProperties& properties)>;
 
       //! Signals that properties should be saved as the default.
       using SaveDefaultSignal = Signal<
-        void (const time_and_sales_properties& properties)>;
+        void (const TimeAndSalesProperties& properties)>;
 
       //! Constructs a time and sales properties dialog.
       /*!
@@ -30,12 +30,12 @@ namespace spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      time_and_sales_properties_dialog(
-        const time_and_sales_properties& properties, QWidget* parent = nullptr,
+      TimeAndSalesPropertiesDialog(
+        const TimeAndSalesProperties& properties, QWidget* parent = nullptr,
         Qt::WindowFlags flags = 0);
 
       //! Returns the properties represented by this dialog.
-      time_and_sales_properties get_properties() const;
+      TimeAndSalesProperties get_properties() const;
 
       //! Connects a slot to the apply signal.
       boost::signals2::connection connect_apply_signal(
@@ -57,7 +57,7 @@ namespace spire {
       mutable ApplySignal m_apply_signal;
       mutable ApplyAllSignal m_apply_all_signal;
       mutable SaveDefaultSignal m_save_default_signal;
-      time_and_sales_properties m_properties;
+      TimeAndSalesProperties m_properties;
       QWidget* m_body;
       QListWidget* m_band_list;
       flat_button* m_band_color_button;
@@ -69,7 +69,7 @@ namespace spire {
         const QColor& color);
       void set_color_settings_stylesheet(int band_index);
       void set_font();
-      void set_properties(const time_and_sales_properties& properties);
+      void set_properties(const TimeAndSalesProperties& properties);
       void set_text_color();
       void update_band_list_stylesheet(int highlighted_band_index);
   };

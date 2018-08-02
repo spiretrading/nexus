@@ -8,17 +8,17 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace spire;
 
-struct toolbar_controller::base_controller {
+struct ToolbarController::BaseController {
   virtual void open() = 0;
 };
 
 template<typename T>
-struct toolbar_controller::controller : toolbar_controller::base_controller {
-  using type = T;
-  type m_controller;
+struct ToolbarController::Controller : ToolbarController::BaseController {
+  using Type = T;
+  Type m_controller;
 
   template<typename... Args>
-  controller(Args&&... args)
+  Controller(Args&&... args)
       : m_controller(std::forward<Args>(args)...) {}
 
   void open() override {
@@ -26,16 +26,16 @@ struct toolbar_controller::controller : toolbar_controller::base_controller {
   }
 };
 
-toolbar_controller::toolbar_controller(VirtualServiceClients& service_clients)
+ToolbarController::ToolbarController(VirtualServiceClients& service_clients)
     : m_service_clients(&service_clients) {}
 
-toolbar_controller::~toolbar_controller() = default;
+ToolbarController::~ToolbarController() = default;
 
-void toolbar_controller::open() {
+void ToolbarController::open() {
   if(m_toolbar_window != nullptr) {
     return;
   }
-  m_toolbar_window = std::make_unique<toolbar_window>(m_model,
+  m_toolbar_window = std::make_unique<ToolbarWindow>(m_model,
     m_service_clients->GetServiceLocatorClient().GetAccount());
   m_toolbar_window->connect_open_signal(
     [=] (auto w) { on_open_window(w); });
@@ -43,20 +43,20 @@ void toolbar_controller::open() {
   m_toolbar_window->show();
 }
 
-connection toolbar_controller::connect_closed_signal(
+connection ToolbarController::connect_closed_signal(
     const ClosedSignal::slot_type& slot) const {
   return m_closed_signal.connect(slot);
 }
 
-void toolbar_controller::on_open_window(recently_closed_model::type w) {
-  if(w == recently_closed_model::type::TIME_AND_SALE) {
-    auto c = std::make_unique<controller<time_and_sales_controller>>(
+void ToolbarController::on_open_window(RecentlyClosedModel::Type w) {
+  if(w == RecentlyClosedModel::Type::TIME_AND_SALE) {
+    auto c = std::make_unique<Controller<TimeAndSalesController>>(
       *m_service_clients);
     c->open();
     m_controllers.push_back(std::move(c));
   }
 }
 
-void toolbar_controller::on_closed() {
+void ToolbarController::on_closed() {
   m_closed_signal();
 }

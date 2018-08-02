@@ -6,12 +6,12 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace spire;
 
-toolbar_menu::toolbar_menu(const QString& title, QWidget* parent)
+ToolbarMenu::ToolbarMenu(const QString& title, QWidget* parent)
     : QPushButton(title, parent),
       m_items(new QMenu(this)),
       m_empty_style(true) {
   setMenu(m_items);
-  connect(m_items, &QMenu::triggered, this, &toolbar_menu::on_triggered);
+  connect(m_items, &QMenu::triggered, this, &ToolbarMenu::on_triggered);
   m_empty_item = new QWidgetAction(this);
   m_empty_item->setText(tr("Empty"));
   m_action_to_index[m_empty_item] = 0;
@@ -41,7 +41,7 @@ toolbar_menu::toolbar_menu(const QString& title, QWidget* parent)
   set_empty_menu_stylesheet();
 }
 
-void toolbar_menu::add(const QString& text) {
+void ToolbarMenu::add(const QString& text) {
   auto action = new QWidgetAction(this);
   action->setText(text);
   remove_empty_item();
@@ -53,7 +53,7 @@ void toolbar_menu::add(const QString& text) {
   m_action_to_index[action] = m_action_to_index.size();
 }
 
-void toolbar_menu::add(const QString& text, const QImage& icon) {
+void ToolbarMenu::add(const QString& text, const QImage& icon) {
   auto action = new QWidgetAction(this);
   action->setText(text);
   action->setIcon(QPixmap::fromImage(icon));
@@ -67,7 +67,7 @@ void toolbar_menu::add(const QString& text, const QImage& icon) {
   m_action_to_index[action] = m_action_to_index.size();
 }
 
-void toolbar_menu::remove(int index) {
+void ToolbarMenu::remove(int index) {
   auto action = [&] () -> QAction* {
     for(auto& item : m_action_to_index) {
       if(item.second == index) {
@@ -92,23 +92,23 @@ void toolbar_menu::remove(int index) {
   }
 }
 
-connection toolbar_menu::connect_item_selected_signal(
-    const item_selected_signal::slot_type& slot) const {
+connection ToolbarMenu::connect_item_selected_signal(
+    const ItemSelectedSignal::slot_type& slot) const {
   return m_item_selected_signal.connect(slot);
 }
 
-void toolbar_menu::resizeEvent(QResizeEvent* event) {
+void ToolbarMenu::resizeEvent(QResizeEvent* event) {
   m_items->setFixedWidth(size().width());
 }
 
-void toolbar_menu::remove_empty_item() {
+void ToolbarMenu::remove_empty_item() {
   if(m_action_to_index.find(m_empty_item) != m_action_to_index.end()) {
     m_action_to_index.erase(m_empty_item);
     m_items->removeAction(m_empty_item);
   }
 }
 
-void toolbar_menu::set_empty_menu_stylesheet() {
+void ToolbarMenu::set_empty_menu_stylesheet() {
   m_items->setStyleSheet(QString(R"(
     QMenu {
       background-color: white;
@@ -127,7 +127,7 @@ void toolbar_menu::set_empty_menu_stylesheet() {
   })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_width(8)));
 }
 
-void toolbar_menu::set_default_menu_stylesheet(int padding_left) {
+void ToolbarMenu::set_default_menu_stylesheet(int padding_left) {
   m_items->setStyleSheet(QString(R"(
     QMenu {
       background-color: white;
@@ -147,7 +147,7 @@ void toolbar_menu::set_default_menu_stylesheet(int padding_left) {
   })").arg(scale_height(12)).arg(padding_left).arg(scale_height(20)));
 }
 
-void toolbar_menu::on_triggered(QAction* action) {
+void ToolbarMenu::on_triggered(QAction* action) {
   if(action == m_empty_item) {
     return;
   }

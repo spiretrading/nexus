@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
   application->setApplicationName(QObject::tr("Book View UI Tester"));
   initialize_resources();
   TimerThreadPool timer_thread_pool;
-  local_security_input_model model;
+  LocalSecurityInputModel model;
   model.add(SecurityInfo(
     Security("MSFT", DefaultMarkets::NASDAQ(), DefaultCountries::US()),
     "Microsoft Corp", "Software"));

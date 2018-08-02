@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
   application->setApplicationName(QObject::tr("Time and Sales UI Tester"));
   initialize_resources();
   TimerThreadPool timer_thread_pool;
-  local_security_input_model model;
+  LocalSecurityInputModel model;
   model.add(SecurityInfo(
     Security("MSFT", DefaultMarkets::NASDAQ(), DefaultCountries::US()),
     "Microsoft Corp", "Software"));
@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
   model.add(SecurityInfo(
     Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
     "Morgan Stanley", "Finance"));
-  auto test_window = new time_and_sales_window(time_and_sales_properties(),
+  auto test_window = new TimeAndSalesWindow(TimeAndSalesProperties(),
     model);
   auto tester = new time_and_sales_test_controller_window(test_window,
     timer_thread_pool);

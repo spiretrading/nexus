@@ -16,7 +16,7 @@ using namespace Nexus;
 using namespace spire;
 
 BookViewWindow::BookViewWindow(const BookViewProperties& properties,
-    security_input_model& input_model, QWidget* parent)
+    SecurityInputModel& input_model, QWidget* parent)
     : QWidget(parent),
       m_input_model(&input_model) {
   m_body = new QWidget(this);
@@ -96,7 +96,7 @@ void BookViewWindow::keyPressEvent(QKeyEvent* event) {
   }
   auto pressed_key = event->text();
   if(pressed_key[0].isLetterOrNumber()) {
-    auto dialog = new security_input_dialog(*m_input_model, pressed_key, this);
+    auto dialog = new SecurityInputDialog(*m_input_model, pressed_key, this);
     dialog->setWindowModality(Qt::NonModal);
     dialog->setAttribute(Qt::WA_DeleteOnClose);
     connect(dialog, &QDialog::accepted, this,
@@ -122,8 +122,7 @@ void BookViewWindow::set_current(const Security& s) {
   }
   m_current_security = s;
   m_change_security_signal(s);
-  setWindowTitle(QString::fromStdString(ToString(s)) +
-    tr(" - Book View"));
+  setWindowTitle(QString::fromStdString(ToString(s)) + tr(" - Book View"));
 }
 
 void BookViewWindow::show_context_menu(const QPoint& pos) {
@@ -179,7 +178,7 @@ void BookViewWindow::show_properties_dialog() {
 }
 
 void BookViewWindow::on_security_input_accept(
-    security_input_dialog* dialog) {
+    SecurityInputDialog* dialog) {
   auto s = dialog->get_security();
   if(s != Security() && s != m_current_security) {
     m_securities.push(m_current_security);
@@ -191,7 +190,7 @@ void BookViewWindow::on_security_input_accept(
 }
 
 void BookViewWindow::on_security_input_reject(
-    security_input_dialog* dialog) {
+    SecurityInputDialog* dialog) {
   dialog->close();
   m_overlay_widget.reset();
 }

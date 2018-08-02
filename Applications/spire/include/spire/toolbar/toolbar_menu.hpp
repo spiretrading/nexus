@@ -12,21 +12,21 @@
 namespace spire {
 
   //! Provides a drop-down menu with a title.
-  class toolbar_menu : public QPushButton {
+  class ToolbarMenu : public QPushButton {
     public:
 
       //! Signals that a menu item was selected.
       /*!
         \param index The index of the menu item.
       */
-      using item_selected_signal = Signal<void (int index)>;
+      using ItemSelectedSignal = Signal<void (int index)>;
 
-      //! Constructs an empty toolbar_menu.
+      //! Constructs an empty ToolbarMenu.
       /*!
         \param title The text on the top-level button.
-        \param parent The parent to the toolbar_menu.
+        \param parent The parent to the ToolbarMenu.
       */
-      toolbar_menu(const QString& title, QWidget* parent = nullptr);
+      ToolbarMenu(const QString& title, QWidget* parent = nullptr);
 
       //! Adds a text item to the menu.
       /*!
@@ -49,13 +49,13 @@ namespace spire {
 
       //! Connects a slot to the item selected signal.
       boost::signals2::connection connect_item_selected_signal(
-        const item_selected_signal::slot_type& slot) const;
+        const ItemSelectedSignal::slot_type& slot) const;
 
     protected:
       void resizeEvent(QResizeEvent* event) override;
 
     private:
-      mutable item_selected_signal m_item_selected_signal;
+      mutable ItemSelectedSignal m_item_selected_signal;
       QMenu* m_items;
       QWidgetAction* m_empty_item;
       std::unordered_map<QAction*, int> m_action_to_index;

@@ -12,15 +12,15 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace spire;
 
-login_window::login_window(const std::string& version, QWidget* parent)
+LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
     : QWidget(parent, Qt::FramelessWindowHint),
       m_is_dragging(false) {
   setWindowIcon(QIcon(":icons/spire-icon-48x48.png"));
   setFixedSize(scale(396, 358));
   m_shadow = std::make_unique<drop_shadow>(this);
-  setObjectName("login_window");
+  setObjectName("LoginWindow");
   setStyleSheet(R"(
-    #login_window {
+    #LoginWindow {
       background-color: #4B23A0;
       border: 1px solid #321471;
     })");
@@ -126,7 +126,7 @@ login_window::login_window(const std::string& version, QWidget* parent)
   auto ch_layout = new QHBoxLayout(ch_outer_widget);
   ch_layout->setContentsMargins({});
   ch_layout->setSpacing(0);
-  m_chroma_hash_widget = new chroma_hash_widget(this);
+  m_chroma_hash_widget = new ChromaHashWidget(this);
   ch_layout->addWidget(m_chroma_hash_widget);
   password_layout->addWidget(ch_outer_widget);
   password_layout->setStretchFactor(ch_outer_widget, 34);
@@ -187,18 +187,18 @@ login_window::login_window(const std::string& version, QWidget* parent)
   body_layout->setStretchFactor(padding_layout, 320);
   setTabOrder(m_username_line_edit, m_password_line_edit);
   setTabOrder(m_password_line_edit, m_sign_in_button);
-  set_state(state::NONE);
+  set_state(State::NONE);
 }
 
-login_window::~login_window() = default;
+LoginWindow::~LoginWindow() = default;
 
-void login_window::set_state(state s) {
+void LoginWindow::set_state(State s) {
   switch(s) {
-    case state::NONE: {
+    case State::NONE: {
       reset_all();
       break;
     }
-    case state::LOGGING_IN: {
+    case State::LOGGING_IN: {
       m_username_line_edit->setEnabled(false);
       m_password_line_edit->setEnabled(false);
       m_status_label->setText("");
@@ -206,17 +206,17 @@ void login_window::set_state(state s) {
       m_logo_widget->movie()->start();
       break;
     }
-    case state::CANCELLING: {
+    case State::CANCELLING: {
       reset_all();
-      s = state::NONE;
+      s = State::NONE;
       break;
     }
-    case state::INCORRECT_CREDENTIALS: {
+    case State::INCORRECT_CREDENTIALS: {
       m_status_label->setText(tr("Incorrect username or password."));
       reset_visuals();
       break;
     }
-    case state::SERVER_UNAVAILABLE: {
+    case State::SERVER_UNAVAILABLE: {
       m_status_label->setText(tr("Server is unavailable."));
       reset_visuals();
       break;
@@ -225,17 +225,17 @@ void login_window::set_state(state s) {
   m_state = s;
 }
 
-connection login_window::connect_login_signal(
-    const login_signal::slot_type& slot) const {
+connection LoginWindow::connect_login_signal(
+    const LoginSignal::slot_type& slot) const {
   return m_login_signal.connect(slot);
 }
 
-connection login_window::connect_cancel_signal(
-    const cancel_signal::slot_type& slot) const {
+connection LoginWindow::connect_cancel_signal(
+    const CancelSignal::slot_type& slot) const {
   return m_cancel_signal.connect(slot);
 }
 
-void login_window::keyPressEvent(QKeyEvent* event) {
+void LoginWindow::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
     window()->close();
   } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
@@ -253,7 +253,7 @@ void login_window::keyPressEvent(QKeyEvent* event) {
   }
 }
 
-void login_window::mouseMoveEvent(QMouseEvent* event) {
+void LoginWindow::mouseMoveEvent(QMouseEvent* event) {
   if(!m_is_dragging) {
     return;
   }
@@ -265,7 +265,7 @@ void login_window::mouseMoveEvent(QMouseEvent* event) {
   window()->move(window_pos);
 }
 
-void login_window::mousePressEvent(QMouseEvent* event) {
+void LoginWindow::mousePressEvent(QMouseEvent* event) {
   if(m_is_dragging || event->button() != Qt::LeftButton) {
     return;
   }
@@ -273,19 +273,19 @@ void login_window::mousePressEvent(QMouseEvent* event) {
   m_last_pos = event->globalPos();
 }
 
-void login_window::mouseReleaseEvent(QMouseEvent* event) {
+void LoginWindow::mouseReleaseEvent(QMouseEvent* event) {
   if(event->button() != Qt::LeftButton) {
     return;
   }
   m_is_dragging = false;
 }
 
-void login_window::reset_all() {
+void LoginWindow::reset_all() {
   m_status_label->setText("");
   reset_visuals();
 }
 
-void login_window::reset_visuals() {
+void LoginWindow::reset_visuals() {
   m_username_line_edit->setEnabled(true);
   m_password_line_edit->setEnabled(true);
   m_sign_in_button->setFocus();
@@ -294,22 +294,22 @@ void login_window::reset_visuals() {
   m_logo_widget->movie()->jumpToFrame(0);
 }
 
-void login_window::try_login() {
-  if(m_state != state::LOGGING_IN) {
+void LoginWindow::try_login() {
+  if(m_state != State::LOGGING_IN) {
     if(m_username_line_edit->text().isEmpty()) {
-      set_state(state::INCORRECT_CREDENTIALS);
+      set_state(State::INCORRECT_CREDENTIALS);
     } else {
       m_login_signal(m_username_line_edit->text().toStdString(),
         m_password_line_edit->text().toStdString());
-      set_state(state::LOGGING_IN);
+      set_state(State::LOGGING_IN);
     }
   } else {
     m_cancel_signal();
-    set_state(state::CANCELLING);
+    set_state(State::CANCELLING);
   }
 }
 
-void login_window::on_input_updated() {
+void LoginWindow::on_input_updated() {
   if(!m_username_line_edit->text().isEmpty()) {
     m_sign_in_button->setEnabled(true);
   } else {
@@ -317,6 +317,6 @@ void login_window::on_input_updated() {
   }
 }
 
-void login_window::on_password_updated() {
+void LoginWindow::on_password_updated() {
   m_chroma_hash_widget->set_text(m_password_line_edit->text());
 }

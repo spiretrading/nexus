@@ -7,8 +7,8 @@
 
 using namespace spire;
 
-toolbar_ui_tester::toolbar_ui_tester(toolbar_window* window,
-    recently_closed_model& model,
+toolbar_ui_tester::toolbar_ui_tester(ToolbarWindow* window,
+    RecentlyClosedModel& model,
     QWidget* parent)
     : QWidget(parent),
       m_recently_closed_model(&model) {
@@ -47,15 +47,15 @@ bool toolbar_ui_tester::eventFilter(QObject* receiver, QEvent* event) {
 void toolbar_ui_tester::add_item() {
   if(!m_text_line_edit->text().isEmpty()) {
     if(m_book_view_radio->isChecked()) {
-      m_recently_closed_model->add(recently_closed_model::type::BOOK_VIEW,
+      m_recently_closed_model->add(RecentlyClosedModel::Type::BOOK_VIEW,
         m_text_line_edit->text().toStdString());
     } else {
-      m_recently_closed_model->add(recently_closed_model::type::TIME_AND_SALE,
+      m_recently_closed_model->add(RecentlyClosedModel::Type::TIME_AND_SALE,
         m_text_line_edit->text().toStdString());
     }
   }
 }
 
-void toolbar_ui_tester::remove_item(const recently_closed_model::entry& e) {
+void toolbar_ui_tester::remove_item(const RecentlyClosedModel::Entry& e) {
   m_recently_closed_model->remove(e);
 }

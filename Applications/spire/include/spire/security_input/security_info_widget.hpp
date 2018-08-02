@@ -8,24 +8,24 @@
 namespace spire {
 
   //! A convenience widget to display a security's name and ticker symbol.
-  class security_info_widget : public QWidget {
+  class SecurityInfoWidget : public QWidget {
     public:
 
       //! Signals whether the represented security is highlighted.
       /*!
         \param value true iff the security is highlighted.
       */
-      using highlighted_signal = Signal<void (bool value)>;
+      using HighlightedSignal = Signal<void (bool value)>;
 
       //! Signals that the represented security should be committed.
-      using commit_signal = Signal<void ()>;
+      using CommitSignal = Signal<void ()>;
 
-      //! Constructs a security_info_widget.
+      //! Constructs a SecurityInfoWidget.
       /*!
         \param info SecurityInfo to display.
         \param parent Parent to this widget.
       */
-      security_info_widget(Nexus::SecurityInfo info, QWidget* parent = nullptr);
+      SecurityInfoWidget(Nexus::SecurityInfo info, QWidget* parent = nullptr);
 
       //! Returns the security info represented.
       const Nexus::SecurityInfo& get_info() const;
@@ -38,11 +38,11 @@ namespace spire {
 
       //! Connects a slot to the highlighted signal.
       boost::signals2::connection connect_highlighted_signal(
-        const highlighted_signal::slot_type& slot) const;
+        const HighlightedSignal::slot_type& slot) const;
 
       //! Connects a slot to the commit signal.
       boost::signals2::connection connect_commit_signal(
-        const commit_signal::slot_type& slot) const;
+        const CommitSignal::slot_type& slot) const;
 
     protected:
       void enterEvent(QEvent* event) override;
@@ -51,8 +51,8 @@ namespace spire {
       void resizeEvent(QResizeEvent* event) override;
 
     private:
-      mutable highlighted_signal m_highlighted_signal;
-      mutable commit_signal m_commit_signal;
+      mutable HighlightedSignal m_highlighted_signal;
+      mutable CommitSignal m_commit_signal;
       Nexus::SecurityInfo m_info;
       bool m_is_highlighted;
       QLabel* m_security_name_label;

@@ -7,16 +7,16 @@
 namespace spire {
 
   //! Displays a widget with an animated loading icon.
-  class snapshot_loading_widget : public QWidget {
+  class SnapshotLoadingWidget : public QWidget {
     public:
 
-      //! Constructs a snapshot_loading_widget.
+      //! Constructs a SnapshotLoadingWidget.
       /*
         \param scroll_area The reference scroll area, used to size the
                animated logo widget.
         \param parent The parent widget.
       */
-      snapshot_loading_widget(QScrollArea* scroll_area,
+      SnapshotLoadingWidget(QScrollArea* scroll_area,
         QWidget* parent = nullptr);
 
     protected:

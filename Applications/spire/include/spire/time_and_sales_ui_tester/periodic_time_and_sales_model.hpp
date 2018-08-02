@@ -10,7 +10,7 @@
 namespace spire {
 
   //! Implements a time and sales model that periodically emits new values.
-  class periodic_time_and_sales_model final : public time_and_sales_model,
+  class periodic_time_and_sales_model final : public TimeAndSalesModel,
       public QObject {
     public:
 
@@ -29,10 +29,10 @@ namespace spire {
       void set_price(Nexus::Money price);
 
       //! Returns the price range used to emit time and sales.
-      time_and_sales_properties::price_range get_price_range() const;
+      TimeAndSalesProperties::PriceRange get_price_range() const;
 
       //! Sets the price range used to emit time and sales.
-      void set_price_range(time_and_sales_properties::price_range r);
+      void set_price_range(TimeAndSalesProperties::PriceRange r);
 
       //! Returns the amount of time it takes to load a snapshot.
       boost::posix_time::time_duration get_load_duration() const;
@@ -50,27 +50,27 @@ namespace spire {
 
       Nexus::Quantity get_volume() const override;
 
-      QtPromise<std::vector<entry>> load_snapshot(Beam::Queries::Sequence last,
+      QtPromise<std::vector<Entry>> load_snapshot(Beam::Queries::Sequence last,
         int count) override;
 
       boost::signals2::connection connect_time_and_sale_signal(
-        const time_and_sale_signal::slot_type& slot) const override;
+        const TimeAndSaleSignal::slot_type& slot) const override;
 
       boost::signals2::connection connect_volume_signal(
-        const volume_signal::slot_type& slot) const override;
+        const VolumeSignal::slot_type& slot) const override;
 
     private:
-      mutable time_and_sale_signal m_time_and_sale_signal;
-      mutable volume_signal m_volume_signal;
+      mutable TimeAndSaleSignal m_time_and_sale_signal;
+      mutable VolumeSignal m_volume_signal;
       Nexus::Security m_security;
       Beam::Threading::TimerThreadPool* m_timer_thread_pool;
       Nexus::Money m_price;
-      time_and_sales_properties::price_range m_price_range;
+      TimeAndSalesProperties::PriceRange m_price_range;
       boost::posix_time::time_duration m_load_duration;
       boost::posix_time::time_duration m_period;
       Nexus::Quantity m_volume;
       std::shared_ptr<std::atomic_bool> m_is_loaded;
-      std::vector<entry> m_entries;
+      std::vector<Entry> m_entries;
       QTimer m_timer;
 
       void on_timeout();

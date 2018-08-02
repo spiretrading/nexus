@@ -6,14 +6,14 @@
 namespace spire {
 
   //! Displays and allows modification of the interaction properties.
-  class interactions_properties_widget : public QWidget {
+  class InteractionsPropertiesWidget : public QWidget {
     public:
 
-      //! Constructs an interactions_properties_widget.
+      //! Constructs an InteractionsPropertiesWidget.
       /*!
         \param parent The parent widget.
       */
-      interactions_properties_widget(QWidget* parent = nullptr);
+      InteractionsPropertiesWidget(QWidget* parent = nullptr);
   };
 }
 

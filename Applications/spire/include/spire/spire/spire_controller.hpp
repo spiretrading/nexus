@@ -33,9 +33,9 @@ namespace spire {
       State m_state;
       std::unique_ptr<Beam::Network::SocketThreadPool> m_socket_thread_pool;
       std::unique_ptr<Beam::Threading::TimerThreadPool> m_timer_thread_pool;
-      std::unique_ptr<login_controller> m_login_controller;
+      std::unique_ptr<LoginController> m_login_controller;
       std::unique_ptr<Nexus::VirtualServiceClients> m_service_clients;
-      std::unique_ptr<toolbar_controller> m_toolbar_controller;
+      std::unique_ptr<ToolbarController> m_toolbar_controller;
 
       std::optional<Beam::Network::IpAddress> load_ip_address();
       void on_login();

@@ -8,33 +8,33 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace spire;
 
-time_and_sales_controller::time_and_sales_controller(
+TimeAndSalesController::TimeAndSalesController(
     VirtualServiceClients& service_clients)
     : m_service_clients(&service_clients),
-      m_input_model(std::make_unique<local_security_input_model>()) {}
+      m_input_model(std::make_unique<LocalSecurityInputModel>()) {}
 
-time_and_sales_controller::~time_and_sales_controller() = default;
+TimeAndSalesController::~TimeAndSalesController() = default;
 
-void time_and_sales_controller::open() {
+void TimeAndSalesController::open() {
   if(m_window != nullptr) {
     return;
   }
-  m_window = std::make_unique<time_and_sales_window>(
-    time_and_sales_properties(), *m_input_model);
+  m_window = std::make_unique<TimeAndSalesWindow>(
+    TimeAndSalesProperties(), *m_input_model);
   m_window->connect_closed_signal([=] { on_closed(); });
   m_window->show();
 }
 
-connection time_and_sales_controller::connect_closed_signal(
+connection TimeAndSalesController::connect_closed_signal(
     const ClosedSignal::slot_type& slot) const {
   return m_closed_signal.connect(slot);
 }
 
-void time_and_sales_controller::on_change_security(const Security& s) {
-  auto model = std::make_shared<empty_time_and_sales_model>(s);
+void TimeAndSalesController::on_change_security(const Security& s) {
+  auto model = std::make_shared<EmptyTimeAndSalesModel>(s);
   m_window->set_model(model);
 }
 
-void time_and_sales_controller::on_closed() {
+void TimeAndSalesController::on_closed() {
   m_closed_signal();
 }

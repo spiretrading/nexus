@@ -2,7 +2,7 @@
 #define SPIRE_KEY_BINDINGS_HPP
 
 namespace spire {
-  class interactions_properties_widget;
+  class InteractionsPropertiesWidget;
 }
 
 #endif

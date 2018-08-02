@@ -6,17 +6,17 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace spire;
-using columns = time_and_sales_properties::columns;
-using price_range = time_and_sales_properties::price_range;
+using Columns = TimeAndSalesProperties::Columns;
+using PriceRange = TimeAndSalesProperties::PriceRange;
 
 namespace {
   const auto LOADING_THRESHOLD = 25;
   const auto SNAPSHOT_COUNT = 4 * LOADING_THRESHOLD;
 }
 
-time_and_sales_window_model::time_and_sales_window_model(
-    std::shared_ptr<time_and_sales_model> model,
-    const time_and_sales_properties& properties)
+TimeAndSalesWindowModel::TimeAndSalesWindowModel(
+    std::shared_ptr<TimeAndSalesModel> model,
+    const TimeAndSalesProperties& properties)
     : m_model(std::move(model)),
       m_is_loading(false),
       m_is_fully_loaded(false) {
@@ -26,20 +26,20 @@ time_and_sales_window_model::time_and_sales_window_model(
   load_snapshot(Beam::Queries::Sequence::Last());
 }
 
-const Security& time_and_sales_window_model::get_security() const {
+const Security& TimeAndSalesWindowModel::get_security() const {
   return m_model->get_security();
 }
 
-bool time_and_sales_window_model::is_loading() const {
+bool TimeAndSalesWindowModel::is_loading() const {
   return m_is_loading;
 }
 
-void time_and_sales_window_model::set_properties(
-    const time_and_sales_properties& properties) {
+void TimeAndSalesWindowModel::set_properties(
+    const TimeAndSalesProperties& properties) {
   m_properties = properties;
 }
 
-void time_and_sales_window_model::set_row_visible(int row) {
+void TimeAndSalesWindowModel::set_row_visible(int row) {
   if(!m_is_fully_loaded && !m_is_loading &&
       m_entries.size() >= LOADING_THRESHOLD &&
       row >= m_entries.size() - LOADING_THRESHOLD) {
@@ -47,45 +47,45 @@ void time_and_sales_window_model::set_row_visible(int row) {
   }
 }
 
-connection time_and_sales_window_model::connect_begin_loading_signal(
-    const begin_loading_signal::slot_type& slot) const {
+connection TimeAndSalesWindowModel::connect_begin_loading_signal(
+    const BeginLoadingSignal::slot_type& slot) const {
   return m_begin_loading_signal.connect(slot);
 }
 
-connection time_and_sales_window_model::connect_end_loading_signal(
-    const end_loading_signal::slot_type& slot) const {
+connection TimeAndSalesWindowModel::connect_end_loading_signal(
+    const EndLoadingSignal::slot_type& slot) const {
   return m_end_loading_signal.connect(slot);
 }
 
-int time_and_sales_window_model::rowCount(const QModelIndex& parent) const {
+int TimeAndSalesWindowModel::rowCount(const QModelIndex& parent) const {
   return m_entries.size();
 }
 
-int time_and_sales_window_model::columnCount(const QModelIndex& parent) const {
-  return time_and_sales_properties::COLUMN_COUNT;
+int TimeAndSalesWindowModel::columnCount(const QModelIndex& parent) const {
+  return TimeAndSalesProperties::COLUMN_COUNT;
 }
 
-QVariant time_and_sales_window_model::data(const QModelIndex& index,
+QVariant TimeAndSalesWindowModel::data(const QModelIndex& index,
     int role) const {
   if(!index.isValid()) {
     return QVariant();
   }
   auto row_index = (m_entries.size() - index.row()) - 1;
   if(role == Qt::DisplayRole) {
-    switch(static_cast<columns>(index.column())) {
-      case columns::TIME_COLUMN:
+    switch(static_cast<Columns>(index.column())) {
+      case Columns::TIME_COLUMN:
         return QVariant::fromValue(
           m_entries[row_index].m_time_and_sale.GetValue().m_timestamp);
-      case columns::PRICE_COLUMN:
+      case Columns::PRICE_COLUMN:
         return QVariant::fromValue(
           m_entries[row_index].m_time_and_sale.GetValue().m_price);
-      case columns::SIZE_COLUMN:
+      case Columns::SIZE_COLUMN:
         return QVariant::fromValue(
           m_entries[row_index].m_time_and_sale.GetValue().m_size);
-      case columns::MARKET_COLUMN:
+      case Columns::MARKET_COLUMN:
         return QString::fromStdString(
           m_entries[row_index].m_time_and_sale.GetValue().m_marketCenter);
-      case columns::CONDITION_COLUMN:
+      case Columns::CONDITION_COLUMN:
         return QString::fromStdString(
           m_entries[row_index].m_time_and_sale.GetValue().m_condition.m_code);
       default:
@@ -101,19 +101,19 @@ QVariant time_and_sales_window_model::data(const QModelIndex& index,
   return QVariant();
 }
 
-QVariant time_and_sales_window_model::headerData(int section,
+QVariant TimeAndSalesWindowModel::headerData(int section,
     Qt::Orientation orientation, int role) const {
   if(role == Qt::DisplayRole) {
-    switch(static_cast<columns>(section)) {
-      case columns::TIME_COLUMN:
+    switch(static_cast<Columns>(section)) {
+      case Columns::TIME_COLUMN:
         return tr("Time");
-      case columns::PRICE_COLUMN:
+      case Columns::PRICE_COLUMN:
         return tr("Price");
-      case columns::SIZE_COLUMN:
+      case Columns::SIZE_COLUMN:
         return tr("Qty");
-      case columns::MARKET_COLUMN:
+      case Columns::MARKET_COLUMN:
         return tr("Mkt");
-      case columns::CONDITION_COLUMN:
+      case Columns::CONDITION_COLUMN:
         return tr("Cond");
       default:
         return QVariant();
@@ -122,19 +122,19 @@ QVariant time_and_sales_window_model::headerData(int section,
   return QVariant();
 }
 
-void time_and_sales_window_model::update_data(
-    const time_and_sales_model::entry& e) {
+void TimeAndSalesWindowModel::update_data(
+    const TimeAndSalesModel::Entry& e) {
   beginInsertRows(QModelIndex(), 0, 0);
   m_entries.push_back(e);
   endInsertRows();
 }
 
-void time_and_sales_window_model::load_snapshot(Beam::Queries::Sequence last) {
+void TimeAndSalesWindowModel::load_snapshot(Beam::Queries::Sequence last) {
   m_is_loading = true;
   m_begin_loading_signal();
   m_snapshot_promise = m_model->load_snapshot(last, SNAPSHOT_COUNT);
   m_snapshot_promise.then(
-    [=] (std::vector<time_and_sales_model::entry> snapshot) {
+    [=] (std::vector<TimeAndSalesModel::Entry> snapshot) {
       if(snapshot.empty()) {
         m_is_fully_loaded = true;
       } else {

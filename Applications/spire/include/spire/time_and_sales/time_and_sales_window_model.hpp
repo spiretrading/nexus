@@ -8,22 +8,22 @@
 namespace spire {
 
   //! Implements the table model for displaying time and sales in a list view.
-  class time_and_sales_window_model : public QAbstractTableModel {
+  class TimeAndSalesWindowModel : public QAbstractTableModel {
     public:
 
       //! Signals that additional time and sales are being loaded.
-      using begin_loading_signal = Signal<void ()>;
+      using BeginLoadingSignal = Signal<void ()>;
 
       //! Signals that additional time and sales have completed loading.
-      using end_loading_signal = Signal<void ()>;
+      using EndLoadingSignal = Signal<void ()>;
 
       //! Constructs a time and sales window model.
       /*!
         \param model The base model.
         \param properties The display properties to use.
       */
-      time_and_sales_window_model(std::shared_ptr<time_and_sales_model> model,
-        const time_and_sales_properties& properties);
+      TimeAndSalesWindowModel(std::shared_ptr<TimeAndSalesModel> model,
+        const TimeAndSalesProperties& properties);
 
       //! Returns the security being displayed.
       const Nexus::Security& get_security() const;
@@ -32,7 +32,7 @@ namespace spire {
       bool is_loading() const;
 
       //! Sets the display properties.
-      void set_properties(const time_and_sales_properties& properties);
+      void set_properties(const TimeAndSalesProperties& properties);
 
       //! Informs the model that a particular row is being displayed.
       /*!
@@ -40,13 +40,13 @@ namespace spire {
       */
       void set_row_visible(int row);
 
-      //! Connects a slot to the begin_loading_signal.
+      //! Connects a slot to the BeginLoadingSignal.
       boost::signals2::connection connect_begin_loading_signal(
-        const begin_loading_signal::slot_type& slot) const;
+        const BeginLoadingSignal::slot_type& slot) const;
 
-      //! Connects a slot to the end_loading_signal.
+      //! Connects a slot to the EndLoadingSignal.
       boost::signals2::connection connect_end_loading_signal(
-        const end_loading_signal::slot_type& slot) const;
+        const EndLoadingSignal::slot_type& slot) const;
 
       int rowCount(const QModelIndex& parent) const override;
 
@@ -58,16 +58,16 @@ namespace spire {
         int role) const override;
 
     private:
-      mutable begin_loading_signal m_begin_loading_signal;
-      mutable end_loading_signal m_end_loading_signal;
-      std::shared_ptr<time_and_sales_model> m_model;
-      time_and_sales_properties m_properties;
-      std::vector<time_and_sales_model::entry> m_entries;
+      mutable BeginLoadingSignal m_begin_loading_signal;
+      mutable EndLoadingSignal m_end_loading_signal;
+      std::shared_ptr<TimeAndSalesModel> m_model;
+      TimeAndSalesProperties m_properties;
+      std::vector<TimeAndSalesModel::Entry> m_entries;
       bool m_is_loading;
       bool m_is_fully_loaded;
-      QtPromise<std::vector<time_and_sales_model::entry>> m_snapshot_promise;
+      QtPromise<std::vector<TimeAndSalesModel::Entry>> m_snapshot_promise;
 
-      void update_data(const time_and_sales_model::entry& e);
+      void update_data(const TimeAndSalesModel::Entry& e);
       void load_snapshot(Beam::Queries::Sequence last);
   };
 }

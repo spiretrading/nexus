@@ -18,7 +18,7 @@ namespace spire {
     public:
 
       //! The type of value to compute.
-      using type = T;
+      using Type = T;
 
       //! Constructs an empty promise.
       QtPromise() = default;
@@ -49,7 +49,7 @@ namespace spire {
       QtPromise& operator =(QtPromise&& other);
 
     private:
-      std::shared_ptr<details::BaseQtPromiseImp<type>> m_imp;
+      std::shared_ptr<details::BaseQtPromiseImp<Type>> m_imp;
   };
 
   //! Makes a Qt promise.

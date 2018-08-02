@@ -30,11 +30,11 @@ namespace spire {
       //! Constructs a book view window.
       /*!
         \param properties The display properties.
-        \param input_model The security_input_model to use for autocomplete.
+        \param input_model The SecurityInputModel to use for autocomplete.
         \param parent The parent widget.
       */
       BookViewWindow(const BookViewProperties& properties,
-        security_input_model& input_model, QWidget* parent = nullptr);
+        SecurityInputModel& input_model, QWidget* parent = nullptr);
 
       //! Sets the model to display.
       void set_model(std::shared_ptr<BookViewModel> model);
@@ -62,7 +62,7 @@ namespace spire {
       mutable ChangeSecuritySignal m_change_security_signal;
       mutable ClosedSignal m_closed_signal;
       BookViewProperties m_properties;
-      security_input_model* m_input_model;
+      SecurityInputModel* m_input_model;
       security_stack m_securities;
       Nexus::Security m_current_security;
       QWidget* m_body;
@@ -75,8 +75,8 @@ namespace spire {
       void show_context_menu(const QPoint& pos);
       void show_overlay_widget();
       void show_properties_dialog();
-      void on_security_input_accept(security_input_dialog* dialog);
-      void on_security_input_reject(security_input_dialog* dialog);
+      void on_security_input_accept(SecurityInputDialog* dialog);
+      void on_security_input_reject(SecurityInputDialog* dialog);
   };
 }
 

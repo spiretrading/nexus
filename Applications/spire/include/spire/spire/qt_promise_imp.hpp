@@ -18,7 +18,7 @@ namespace details {
   class BaseQtPromiseImp : public QObject, private boost::noncopyable {
     public:
       using Type = T;
-      using ContinuationType = std::function<void (Beam::Expect<type> value)>;
+      using ContinuationType = std::function<void (Beam::Expect<Type> value)>;
 
       virtual ~BaseQtPromiseImp() = default;
 
@@ -65,7 +65,7 @@ namespace details {
     private:
       bool m_is_disconnected;
       Executor m_executor;
-      boost::optional<Beam::Expect<type>> m_value;
+      boost::optional<Beam::Expect<Type>> m_value;
       boost::optional<ContinuationType> m_continuation;
       std::shared_ptr<void> m_self;
       Beam::Routines::RoutineHandler m_routine;
@@ -116,7 +116,7 @@ namespace details {
       m_self = nullptr;
       return true;
     }
-    auto& promise_event = *static_cast<QtPromiseEvent<type>*>(event);
+    auto& promise_event = *static_cast<QtPromiseEvent<Type>*>(event);
     if(m_continuation.is_initialized()) {
       (*m_continuation)(std::move(promise_event.get_result()));
       disconnect();

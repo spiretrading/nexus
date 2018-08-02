@@ -16,11 +16,11 @@
 namespace spire {
 
   //! Displays the login window.
-  class login_window : public QWidget {
+  class LoginWindow : public QWidget {
     public:
 
       //! The login state to display to the user.
-      enum class state {
+      enum class State {
 
         //! Nothing to report.
         NONE,
@@ -43,27 +43,27 @@ namespace spire {
         \param username The username to login with.
         \param password The password to login with.
       */
-      using login_signal = Signal<void (const std::string& username,
+      using LoginSignal = Signal<void (const std::string& username,
         const std::string& password)>;
 
       //! Signals to cancel a previous login operation.
-      using cancel_signal = Signal<void ()>;
+      using CancelSignal = Signal<void ()>;
 
       //! Constructs a login window in the NONE state.
-      login_window(const std::string& version, QWidget* parent = nullptr);
+      LoginWindow(const std::string& version, QWidget* parent = nullptr);
 
-      ~login_window();
+      ~LoginWindow();
 
       //! Sets the state to display to the user.
-      void set_state(state state);
+      void set_state(State state);
 
       //! Connects a slot to the login signal.
       boost::signals2::connection connect_login_signal(
-        const login_signal::slot_type& slot) const;
+        const LoginSignal::slot_type& slot) const;
 
       //! Connects a slot to the cancel signal.
       boost::signals2::connection connect_cancel_signal(
-        const cancel_signal::slot_type& slot) const;
+        const CancelSignal::slot_type& slot) const;
 
     protected:
       void keyPressEvent(QKeyEvent* event) override;
@@ -72,9 +72,9 @@ namespace spire {
       void mouseReleaseEvent(QMouseEvent* event) override;
 
     private:
-      mutable login_signal m_login_signal;
-      mutable cancel_signal m_cancel_signal;
-      state m_state;
+      mutable LoginSignal m_login_signal;
+      mutable CancelSignal m_cancel_signal;
+      State m_state;
       std::unique_ptr<drop_shadow> m_shadow;
       QLabel* m_logo_widget;
       QLabel* m_status_label;
@@ -84,7 +84,7 @@ namespace spire {
       icon_button* m_exit_button;
       bool m_is_dragging;
       QPoint m_last_pos;
-      chroma_hash_widget* m_chroma_hash_widget;
+      ChromaHashWidget* m_chroma_hash_widget;
 
       void reset_all();
       void reset_visuals();

@@ -21,8 +21,7 @@ const QColor& BookViewProperties::get_book_quote_foreground_color() const {
   return m_book_quote_foreground_color;
 }
 
-void BookViewProperties::set_book_quote_foreground_color(
-    const QColor& color) {
+void BookViewProperties::set_book_quote_foreground_color(const QColor& color) {
   m_book_quote_foreground_color = color;
 }
 

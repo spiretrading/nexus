@@ -8,10 +8,10 @@
 namespace spire {
 
   //! Stores the properties used to display a time and sales window.
-  struct time_and_sales_properties {
+  struct TimeAndSalesProperties {
 
     //! The position of a time and sale print relative to the BBO price.
-    enum class price_range {
+    enum class PriceRange {
 
       //! The BBO price was not known.
       UNKNOWN,
@@ -29,14 +29,14 @@ namespace spire {
       AT_BID,
 
       //! The time and sale price is less than the BBO bid.
-      BELOW_BID,
+      BELOW_BID
     };
 
     //! The number of enumerated price ranges.
     static const auto PRICE_RANGE_COUNT = 6;
 
     //! The available columns to display.
-    enum class columns {
+    enum class Columns {
 
       //! The time column.
       TIME_COLUMN,
@@ -51,7 +51,7 @@ namespace spire {
       MARKET_COLUMN,
 
       //! The sales condition column.
-      CONDITION_COLUMN,
+      CONDITION_COLUMN
     };
 
     //! The number of columns in this model.
@@ -70,19 +70,19 @@ namespace spire {
     QFont m_font;
 
     //! Constructs a default set of properties.
-    time_and_sales_properties();
+    TimeAndSalesProperties();
 
     //! Returns a text color.
-    const QColor& get_text_color(price_range index) const noexcept;
+    const QColor& get_text_color(PriceRange index) const noexcept;
 
     //! Sets a text color.
-    void set_text_color(price_range index, const QColor& color) noexcept;
+    void set_text_color(PriceRange index, const QColor& color) noexcept;
 
     //! Returns a band color.
-    const QColor& get_band_color(price_range index) const noexcept;
+    const QColor& get_band_color(PriceRange index) const noexcept;
 
     //! Sets a band color.
-    void set_band_color(price_range index, const QColor& color) noexcept;
+    void set_band_color(PriceRange index, const QColor& color) noexcept;
   };
 }
 

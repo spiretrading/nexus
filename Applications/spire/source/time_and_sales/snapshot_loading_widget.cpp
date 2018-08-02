@@ -6,7 +6,7 @@
 
 using namespace spire;
 
-snapshot_loading_widget::snapshot_loading_widget(QScrollArea* scroll_area,
+SnapshotLoadingWidget::SnapshotLoadingWidget(QScrollArea* scroll_area,
     QWidget* parent)
     : QWidget(parent),
       m_scroll_area(scroll_area) {
@@ -27,7 +27,7 @@ snapshot_loading_widget::snapshot_loading_widget(QScrollArea* scroll_area,
     [=] (auto i) { on_scroll_bar_value_changed(); });
 }
 
-bool snapshot_loading_widget::eventFilter(QObject* watched, QEvent* event) {
+bool SnapshotLoadingWidget::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_scroll_area) {
     if(event->type() == QEvent::Resize) {
       auto e = static_cast<QResizeEvent*>(event);
@@ -42,7 +42,7 @@ bool snapshot_loading_widget::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-void snapshot_loading_widget::showEvent(QShowEvent* event) {
+void SnapshotLoadingWidget::showEvent(QShowEvent* event) {
   auto rect = m_scroll_area->visibleRegion().boundingRect();
   if(m_scroll_area->verticalScrollBar()->isVisible()) {
     rect.setWidth(rect.width() + m_scroll_area->verticalScrollBar()->width());
@@ -50,11 +50,11 @@ void snapshot_loading_widget::showEvent(QShowEvent* event) {
   update_logo_geometry(rect.x(), rect.width());
 }
 
-void snapshot_loading_widget::update_logo_geometry(int x_pos, int width) {
+void SnapshotLoadingWidget::update_logo_geometry(int x_pos, int width) {
   m_logo_widget->setGeometry(x_pos, 0, width, height());
 }
 
-void snapshot_loading_widget::on_scroll_bar_value_changed() {
+void SnapshotLoadingWidget::on_scroll_bar_value_changed() {
   auto rect = m_scroll_area->widget()->visibleRegion().boundingRect();
   update_logo_geometry(rect.x(), rect.width());
 }

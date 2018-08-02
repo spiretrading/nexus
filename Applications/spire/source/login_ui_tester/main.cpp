@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
   application->setOrganizationName(QObject::tr("Eidolon Systems Ltd"));
   application->setApplicationName(QObject::tr("Login UI Tester"));
   initialize_resources();
-  login_window login(SPIRE_VERSION);
+  LoginWindow login(SPIRE_VERSION);
   login.show();
   login_ui_tester tester(&login);
   login.installEventFilter(&tester);

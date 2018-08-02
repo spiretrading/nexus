@@ -12,31 +12,30 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace spire;
 
-login_controller::login_controller(
-    service_clients_factory service_clients_factory)
+LoginController::LoginController(ServiceClientsFactory service_clients_factory)
     : m_service_clients_factory(std::move(service_clients_factory)) {}
 
-login_controller::~login_controller() = default;
+LoginController::~LoginController() = default;
 
 std::unique_ptr<VirtualServiceClients>&
-    login_controller::get_service_clients() {
+    LoginController::get_service_clients() {
   return m_service_clients;
 }
 
-void login_controller::open() {
-  m_login_window = std::make_unique<login_window>(SPIRE_VERSION);
+void LoginController::open() {
+  m_login_window = std::make_unique<LoginWindow>(SPIRE_VERSION);
   m_login_window->connect_login_signal(
     [=] (auto&& p1, auto&& p2) {on_login(p1, p2);});
   m_login_window->connect_cancel_signal([=] () {on_cancel();});
   m_login_window->show();
 }
 
-connection login_controller::connect_logged_in_signal(
-    const logged_in_signal::slot_type& slot) const {
+connection LoginController::connect_logged_in_signal(
+    const LoggedInSignal::slot_type& slot) const {
   return m_logged_in_signal.connect(slot);
 }
 
-void login_controller::on_login(const std::string& username,
+void LoginController::on_login(const std::string& username,
     const std::string& password) {
   auto service_clients = m_service_clients_factory(username, password);
   m_login_promise = make_qt_promise(
@@ -48,12 +47,12 @@ void login_controller::on_login(const std::string& username,
     [=] (auto&& result) {on_login_promise(std::move(result));});
 }
 
-void login_controller::on_cancel() {
+void LoginController::on_cancel() {
   m_login_promise.disconnect();
-  m_login_window->set_state(login_window::State::NONE);
+  m_login_window->set_state(LoginWindow::State::NONE);
 }
 
-void login_controller::on_login_promise(
+void LoginController::on_login_promise(
     Expect<std::unique_ptr<VirtualServiceClients>> service_clients) {
   try {
     m_service_clients = std::move(service_clients.Get());
@@ -61,8 +60,8 @@ void login_controller::on_login_promise(
     m_login_window.reset();
     m_logged_in_signal();
   } catch(const AuthenticationException&) {
-    m_login_window->set_state(login_window::State::INCORRECT_CREDENTIALS);
+    m_login_window->set_state(LoginWindow::State::INCORRECT_CREDENTIALS);
   } catch(const std::exception&) {
-    m_login_window->set_state(login_window::State::SERVER_UNAVAILABLE);
+    m_login_window->set_state(LoginWindow::State::SERVER_UNAVAILABLE);
   }
 }

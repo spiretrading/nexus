@@ -18,7 +18,7 @@ namespace {
   const auto SCROLL_BAR_FADE_TIME_MS = 500;
 }
 
-time_and_sales_table_view::time_and_sales_table_view(QWidget* parent)
+TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
     : QScrollArea(parent),
       m_model(nullptr) {
   setStyleSheet(QString(R"(
@@ -62,9 +62,9 @@ time_and_sales_table_view::time_and_sales_table_view(QWidget* parent)
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   connect(horizontalScrollBar(), &QScrollBar::valueChanged, this,
-    &time_and_sales_table_view::on_horizontal_slider_value_changed);
+    &TimeAndSalesTableView::on_horizontal_slider_value_changed);
   connect(verticalScrollBar(), &QScrollBar::valueChanged, this,
-    &time_and_sales_table_view::on_vertical_slider_value_changed);
+    &TimeAndSalesTableView::on_vertical_slider_value_changed);
   m_header = new QHeaderView(Qt::Horizontal, this);
   m_header->setMinimumSectionSize(scale_width(35));
   m_header->setStretchLastSection(true);
@@ -90,9 +90,9 @@ time_and_sales_table_view::time_and_sales_table_view(QWidget* parent)
       background-color: #FFFFFF;
     })").arg(scale_width(8)));
   connect(m_header, &QHeaderView::sectionResized, this,
-    &time_and_sales_table_view::on_header_resize);
+    &TimeAndSalesTableView::on_header_resize);
   connect(m_header, &QHeaderView::sectionMoved, this,
-    &time_and_sales_table_view::on_header_move);
+    &TimeAndSalesTableView::on_header_move);
   auto main_widget = new QWidget(this);
   main_widget->setMinimumWidth(MINIMUM_TABLE_WIDTH);
   m_layout = new QVBoxLayout(main_widget);
@@ -120,14 +120,14 @@ time_and_sales_table_view::time_and_sales_table_view(QWidget* parent)
   m_layout->addWidget(m_table);
   m_h_scroll_bar_timer.setInterval(SCROLL_BAR_FADE_TIME_MS);
   connect(&m_h_scroll_bar_timer, &QTimer::timeout, this,
-    &time_and_sales_table_view::fade_out_horizontal_scroll_bar);
+    &TimeAndSalesTableView::fade_out_horizontal_scroll_bar);
   m_v_scroll_bar_timer.setInterval(SCROLL_BAR_FADE_TIME_MS);
   connect(&m_v_scroll_bar_timer, &QTimer::timeout, this,
-    &time_and_sales_table_view::fade_out_vertical_scroll_bar);
+    &TimeAndSalesTableView::fade_out_vertical_scroll_bar);
   setWidget(main_widget);
 }
 
-void time_and_sales_table_view::set_model(time_and_sales_window_model* model) {
+void TimeAndSalesTableView::set_model(TimeAndSalesWindowModel* model) {
   m_model = model;
   m_transition_widget.reset();
   m_loading_widget.reset();
@@ -139,13 +139,13 @@ void time_and_sales_table_view::set_model(time_and_sales_window_model* model) {
   auto filter = new custom_variant_sort_filter_proxy_model(this);
   filter->setSourceModel(m_model);
   connect(filter, &QAbstractItemModel::rowsAboutToBeInserted, this,
-    &time_and_sales_table_view::on_rows_about_to_be_inserted);
+    &TimeAndSalesTableView::on_rows_about_to_be_inserted);
   m_header->setModel(filter);
   m_table->setModel(filter);
 }
 
-void time_and_sales_table_view::set_properties(
-    const time_and_sales_properties& properties) {
+void TimeAndSalesTableView::set_properties(
+    const TimeAndSalesProperties& properties) {
   m_table->setShowGrid(properties.m_show_grid);
   QFontMetrics metrics(properties.m_font);
   auto row_height = metrics.height() + scale_height(2);
@@ -165,7 +165,7 @@ void time_and_sales_table_view::set_properties(
   }
 }
 
-void time_and_sales_table_view::show_transition_widget() {
+void TimeAndSalesTableView::show_transition_widget() {
   if(m_table->model()->rowCount(QModelIndex()) == 0) {
     auto backing_widget = new QLabel(this);
     auto logo = new QMovie(":/icons/pre-loader.gif", QByteArray(),
@@ -181,7 +181,7 @@ void time_and_sales_table_view::show_transition_widget() {
   }
 }
 
-bool time_and_sales_table_view::event(QEvent* event) {
+bool TimeAndSalesTableView::event(QEvent* event) {
   if(event->type() == QEvent::HoverMove) {
     auto e = static_cast<QHoverEvent*>(event);
     if(is_within_horizontal_scroll_bar(e->pos()) &&
@@ -215,7 +215,7 @@ bool time_and_sales_table_view::event(QEvent* event) {
   return QScrollArea::event(event);
 }
 
-bool time_and_sales_table_view::eventFilter(QObject* watched, QEvent* event) {
+bool TimeAndSalesTableView::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_table) {
     if(event->type() == QEvent::Paint) {
       m_table->update();
@@ -225,12 +225,12 @@ bool time_and_sales_table_view::eventFilter(QObject* watched, QEvent* event) {
   return QScrollArea::eventFilter(watched, event);
 }
 
-void time_and_sales_table_view::resizeEvent(QResizeEvent* event) {
+void TimeAndSalesTableView::resizeEvent(QResizeEvent* event) {
   widget()->resize(width(), widget()->height());
   m_header->setFixedWidth(widget()->width());
 }
 
-void time_and_sales_table_view::wheelEvent(QWheelEvent* event) {
+void TimeAndSalesTableView::wheelEvent(QWheelEvent* event) {
   if(event->modifiers() & Qt::ShiftModifier) {
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
@@ -246,23 +246,23 @@ void time_and_sales_table_view::wheelEvent(QWheelEvent* event) {
   }
 }
 
-void time_and_sales_table_view::fade_out_horizontal_scroll_bar() {
+void TimeAndSalesTableView::fade_out_horizontal_scroll_bar() {
   m_h_scroll_bar_timer.stop();
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
 
-void time_and_sales_table_view::fade_out_vertical_scroll_bar() {
+void TimeAndSalesTableView::fade_out_vertical_scroll_bar() {
   m_v_scroll_bar_timer.stop();
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
 
-void time_and_sales_table_view::show_loading_widget() {
-  m_loading_widget = std::make_unique<snapshot_loading_widget>(this);
+void TimeAndSalesTableView::show_loading_widget() {
+  m_loading_widget = std::make_unique<SnapshotLoadingWidget>(this);
   m_layout->addWidget(m_loading_widget.get());
   update_table_height(m_table->model()->rowCount());
 }
 
-void time_and_sales_table_view::update_table_height(int num_rows) {
+void TimeAndSalesTableView::update_table_height(int num_rows) {
   auto height = (num_rows * m_table->verticalHeader()->defaultSectionSize())
     + m_header->height();
   if(m_loading_widget != nullptr) {
@@ -271,33 +271,33 @@ void time_and_sales_table_view::update_table_height(int num_rows) {
   widget()->setFixedHeight(height);
 }
 
-bool time_and_sales_table_view::is_within_horizontal_scroll_bar(
+bool TimeAndSalesTableView::is_within_horizontal_scroll_bar(
     const QPoint& pos) {
   return pos.y() > height() - horizontalScrollBar()->height();
 }
 
-bool time_and_sales_table_view::is_within_vertical_scroll_bar(
+bool TimeAndSalesTableView::is_within_vertical_scroll_bar(
     const QPoint& pos) {
   return pos.x() > width() - verticalScrollBar()->width();
 }
 
-void time_and_sales_table_view::on_end_loading_signal() {
+void TimeAndSalesTableView::on_end_loading_signal() {
   m_transition_widget.reset();
   m_loading_widget.reset();
 }
 
-void time_and_sales_table_view::on_header_resize(int index, int old_size,
+void TimeAndSalesTableView::on_header_resize(int index, int old_size,
     int new_size) {
   m_table->horizontalHeader()->resizeSection(index,
     m_header->sectionSize(index));
 }
 
-void time_and_sales_table_view::on_header_move(int logical_index,
+void TimeAndSalesTableView::on_header_move(int logical_index,
     int old_index, int new_index) {
   m_table->horizontalHeader()->moveSection(old_index, new_index);
 }
 
-void time_and_sales_table_view::on_horizontal_slider_value_changed(
+void TimeAndSalesTableView::on_horizontal_slider_value_changed(
     int new_value) {
   if(new_value != 0) {
     m_header->move(widget()->pos().x(), m_header->pos().y());
@@ -306,7 +306,7 @@ void time_and_sales_table_view::on_horizontal_slider_value_changed(
   }
 }
 
-void time_and_sales_table_view::on_vertical_slider_value_changed(
+void TimeAndSalesTableView::on_vertical_slider_value_changed(
     int new_value) {
   if(m_model == nullptr) {
     return;
@@ -315,7 +315,7 @@ void time_and_sales_table_view::on_vertical_slider_value_changed(
     widget()->visibleRegion().boundingRect().top()));
 }
 
-void time_and_sales_table_view::on_rows_about_to_be_inserted(
+void TimeAndSalesTableView::on_rows_about_to_be_inserted(
     const QModelIndex& parent, int first_index, int last_index) {
   auto num_rows = last_index - first_index + 1;
   update_table_height(m_table->model()->rowCount() + num_rows);

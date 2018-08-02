@@ -37,7 +37,7 @@ void SpireController::open() {
         std::make_unique<ApplicationServiceClients>(*ip_address, username,
         password, Ref(*m_socket_thread_pool), Ref(*m_timer_thread_pool)));
     };
-  m_login_controller = std::make_unique<login_controller>(
+  m_login_controller = std::make_unique<LoginController>(
     service_clients_factory);
   m_login_controller->connect_logged_in_signal([=]{on_login();});
   m_state = State::LOGIN;
@@ -87,7 +87,7 @@ std::optional<IpAddress> SpireController::load_ip_address() {
 void SpireController::on_login() {
   m_service_clients = std::move(m_login_controller->get_service_clients());
   m_login_controller.reset();
-  m_toolbar_controller = std::make_unique<toolbar_controller>(
+  m_toolbar_controller = std::make_unique<ToolbarController>(
     *m_service_clients);
   m_toolbar_controller->open();
   m_state = State::TOOLBAR;

@@ -9,7 +9,7 @@
 namespace spire {
 
   //! Launches the main application windows.
-  class toolbar_controller : private boost::noncopyable {
+  class ToolbarController : private boost::noncopyable {
     public:
 
       //! Signals that this toolbar and all its windows have closed.
@@ -19,9 +19,9 @@ namespace spire {
       /*!
         \param service_clients The service clients logged into Spire.
       */
-      toolbar_controller(Nexus::VirtualServiceClients& service_clients);
+      ToolbarController(Nexus::VirtualServiceClients& service_clients);
 
-      ~toolbar_controller();
+      ~ToolbarController();
 
       //! Begins displaying the toolbar window.
       void open();
@@ -31,15 +31,15 @@ namespace spire {
         const ClosedSignal::slot_type& slot) const;
 
     private:
-      struct base_controller;
-      template<typename> struct controller;
+      struct BaseController;
+      template<typename> struct Controller;
       mutable ClosedSignal m_closed_signal;
       Nexus::VirtualServiceClients* m_service_clients;
-      recently_closed_model m_model;
-      std::unique_ptr<toolbar_window> m_toolbar_window;
-      std::vector<std::unique_ptr<base_controller>> m_controllers;
+      RecentlyClosedModel m_model;
+      std::unique_ptr<ToolbarWindow> m_toolbar_window;
+      std::vector<std::unique_ptr<BaseController>> m_controllers;
 
-      void on_open_window(recently_closed_model::type w);
+      void on_open_window(RecentlyClosedModel::Type w);
       void on_closed();
   };
 }

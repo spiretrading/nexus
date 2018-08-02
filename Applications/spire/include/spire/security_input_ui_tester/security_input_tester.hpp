@@ -7,7 +7,7 @@
 
 namespace spire {
 
-  //! Tester class for security_input_dialog.
+  //! Tester class for SecurityInputDialog.
   class security_input_tester : public QListWidget {
     public:
       
@@ -19,8 +19,8 @@ namespace spire {
       void showEvent(QShowEvent* event) override;
 
     private:
-      local_security_input_model m_model;
-      security_input_dialog* m_dialog;
+      LocalSecurityInputModel m_model;
+      SecurityInputDialog* m_dialog;
   };
 }
 

@@ -11,17 +11,16 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace spire;
 
-security_input_box::security_input_box(security_input_model& model,
-    QWidget* parent)
-    : security_input_box(model, "", parent) {}
+SecurityInputBox::SecurityInputBox(SecurityInputModel& model, QWidget* parent)
+    : SecurityInputBox(model, "", parent) {}
 
-security_input_box::security_input_box(security_input_model& model,
+SecurityInputBox::SecurityInputBox(SecurityInputModel& model,
     const QString& initial_text, QWidget* parent)
     : QWidget(parent),
       m_model(&model) {
-  setObjectName("security_input_box");
+  setObjectName("SecurityInputBox");
   setStyleSheet(QString(R"(
-    #security_input_box {
+    #SecurityInputBox {
       border: %1px solid #C8C8C8;
     }
     :hover {
@@ -53,7 +52,7 @@ security_input_box::security_input_box(security_input_model& model,
     padding: %1px %2px %1px 0px;)")
     .arg(scale_height(9)).arg(scale_width(8)));
   layout->addWidget(m_icon_label);
-  m_securities = new security_info_list_view(this);
+  m_securities = new SecurityInfoListView(this);
   m_securities->connect_activate_signal(
     [=] (auto& s) { on_activated(s); });
   m_securities->connect_commit_signal([=] (auto& s) { on_commit(s); });
@@ -63,12 +62,12 @@ security_input_box::security_input_box(security_input_model& model,
   on_text_edited();
 }
 
-connection security_input_box::connect_commit_signal(
-    const commit_signal::slot_type& slot) const {
+connection SecurityInputBox::connect_commit_signal(
+    const CommitSignal::slot_type& slot) const {
   return m_commit_signal.connect(slot);
 }
 
-bool security_input_box::eventFilter(QObject* watched, QEvent* event) {
+bool SecurityInputBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_security_line_edit) {
     if(event->type() == QEvent::KeyPress) {
       auto e = static_cast<QKeyEvent*>(event);
@@ -80,18 +79,18 @@ bool security_input_box::eventFilter(QObject* watched, QEvent* event) {
     }
     if(event->type() == QEvent::FocusIn) {
       setStyleSheet(QString(R"(
-        #security_input_box {
+        #SecurityInputBox {
           border: %1px solid #4b23A0;
         }
-        #security_input_box:hover {
+        #SecurityInputBox:hover {
           border: %1px solid #4b23A0;
         })").arg(scale_width(1)));
     } else if(event->type() == QEvent::FocusOut) {
       setStyleSheet(QString(R"(
-        #security_input_box {
+        #SecurityInputBox {
           border: %1px solid #C8C8C8;
         }
-        #security_input_box:hover {
+        #SecurityInputBox:hover {
           border: %1px solid #4b23A0;
         })").arg(scale_width(1)));
     }
@@ -107,19 +106,19 @@ bool security_input_box::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-void security_input_box::hideEvent(QHideEvent* event) {
+void SecurityInputBox::hideEvent(QHideEvent* event) {
   m_securities->close();
 }
 
-void security_input_box::resizeEvent(QResizeEvent* event) {
+void SecurityInputBox::resizeEvent(QResizeEvent* event) {
   m_securities->setFixedWidth(width());
 }
 
-void security_input_box::showEvent(QShowEvent* event) {
+void SecurityInputBox::showEvent(QShowEvent* event) {
   m_securities->setFixedWidth(width());
 }
 
-void security_input_box::on_text_edited() {
+void SecurityInputBox::on_text_edited() {
   auto recommendations = m_model->autocomplete(
     m_security_line_edit->text().toStdString());
   m_securities->set_list(recommendations);
@@ -132,7 +131,7 @@ void security_input_box::on_text_edited() {
   }
 }
 
-void security_input_box::move_line_edit() {
+void SecurityInputBox::move_line_edit() {
   auto x_pos = static_cast<QWidget*>(parent())->mapToGlobal(
     geometry().bottomLeft()).x();
   auto y_pos = static_cast<QWidget*>(parent())->mapToGlobal(
@@ -140,16 +139,16 @@ void security_input_box::move_line_edit() {
   m_securities->move(x_pos, y_pos + 1);
 }
 
-void security_input_box::enter_pressed() {
+void SecurityInputBox::enter_pressed() {
   m_commit_signal(ParseSecurity(
     m_security_line_edit->text().toUpper().toStdString()));
 }
 
-void security_input_box::on_activated(const Security& security) {
+void SecurityInputBox::on_activated(const Security& security) {
   m_security_line_edit->setText(QString::fromStdString(
     Nexus::ToString(security)));
 }
 
-void security_input_box::on_commit(const Security& security) {
+void SecurityInputBox::on_commit(const Security& security) {
   m_commit_signal(security);
 }

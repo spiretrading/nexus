@@ -12,11 +12,11 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace spire;
 
-security_input_dialog::security_input_dialog(security_input_model& model,
+SecurityInputDialog::SecurityInputDialog(SecurityInputModel& model,
     QWidget* parent, Qt::WindowFlags flags)
-    : security_input_dialog(model, "", parent, flags) {}
+    : SecurityInputDialog(model, "", parent, flags) {}
 
-security_input_dialog::security_input_dialog(security_input_model& model,
+SecurityInputDialog::SecurityInputDialog(SecurityInputModel& model,
     const QString& initial_text, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, Qt::FramelessWindowHint | flags),
       m_is_dragging(false) {
@@ -27,9 +27,9 @@ security_input_dialog::security_input_dialog(security_input_model& model,
     scale_height(8));
   layout->setSpacing(0);
   setFixedSize(scale(196, 68));
-  setObjectName("security_input_dialog");
+  setObjectName("SecurityInputDialog");
   setStyleSheet(QString(R"(
-    #security_input_dialog {
+    #SecurityInputDialog {
       background-color: #F5F5F5;
       border: %1px solid #A0A0A0;
     }
@@ -43,20 +43,20 @@ security_input_dialog::security_input_dialog(security_input_model& model,
   layout->addWidget(text_label);
   layout->setStretchFactor(text_label, 14);
   layout->addStretch(10);
-  m_security_input_box = new security_input_box(model, initial_text, this);
+  m_security_input_box = new SecurityInputBox(model, initial_text, this);
   m_security_input_box->connect_commit_signal(
     [=] (const Security& s) { set_security(s); });
   layout->addWidget(m_security_input_box);
   layout->setStretchFactor(m_security_input_box, 30);
 }
 
-security_input_dialog::~security_input_dialog() = default;
+SecurityInputDialog::~SecurityInputDialog() = default;
 
-const Security& security_input_dialog::get_security() const noexcept {
+const Security& SecurityInputDialog::get_security() const noexcept {
   return m_security;
 }
 
-void security_input_dialog::changeEvent(QEvent* event) {
+void SecurityInputDialog::changeEvent(QEvent* event) {
   if(event->type() == QEvent::ActivationChange) {
     if(QApplication::activeWindow() != this) {
       for(auto& child : m_security_input_box->children()) {
@@ -71,11 +71,11 @@ void security_input_dialog::changeEvent(QEvent* event) {
   }
 }
 
-void security_input_dialog::closeEvent(QCloseEvent* event) {
+void SecurityInputDialog::closeEvent(QCloseEvent* event) {
   reject();
 }
 
-bool security_input_dialog::eventFilter(QObject* watched, QEvent* event) {
+bool SecurityInputDialog::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::ActivationChange) {
     auto c = static_cast<QWidget*>(watched);
     if(QApplication::activeWindow() != c) {
@@ -89,7 +89,7 @@ bool security_input_dialog::eventFilter(QObject* watched, QEvent* event) {
   return QDialog::eventFilter(watched, event);
 }
 
-void security_input_dialog::mouseMoveEvent(QMouseEvent* event) {
+void SecurityInputDialog::mouseMoveEvent(QMouseEvent* event) {
   if(!m_is_dragging) {
     return;
   }
@@ -101,7 +101,7 @@ void security_input_dialog::mouseMoveEvent(QMouseEvent* event) {
   window()->move(window_pos);
 }
 
-void security_input_dialog::mousePressEvent(QMouseEvent* event) {
+void SecurityInputDialog::mousePressEvent(QMouseEvent* event) {
   if(m_is_dragging || event->button() != Qt::LeftButton) {
     return;
   }
@@ -109,14 +109,14 @@ void security_input_dialog::mousePressEvent(QMouseEvent* event) {
   m_last_mouse_pos = event->globalPos();
 }
 
-void security_input_dialog::mouseReleaseEvent(QMouseEvent* event) {
+void SecurityInputDialog::mouseReleaseEvent(QMouseEvent* event) {
   if(event->button() != Qt::LeftButton) {
     return;
   }
   m_is_dragging = false;
 }
 
-void security_input_dialog::set_security(const Security& security) {
+void SecurityInputDialog::set_security(const Security& security) {
   m_security = security;
   accept();
 }

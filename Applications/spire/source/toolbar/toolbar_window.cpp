@@ -11,7 +11,7 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace spire;
 
-toolbar_window::toolbar_window(recently_closed_model& model,
+ToolbarWindow::ToolbarWindow(RecentlyClosedModel& model,
     const DirectoryEntry& account, QWidget* parent)
     : QWidget(parent),
       m_model(&model) {
@@ -41,7 +41,7 @@ toolbar_window::toolbar_window(recently_closed_model& model,
   layout->setStretchFactor(combo_box_layout, 26);
   layout->addStretch(10);
   combo_box_layout->addStretch(8);
-  m_window_manager_button = new toolbar_menu(tr("Window Manager"), m_body);
+  m_window_manager_button = new ToolbarMenu(tr("Window Manager"), m_body);
   m_window_manager_button->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
   m_window_manager_button->add(tr("Minimize All"));
@@ -50,7 +50,7 @@ toolbar_window::toolbar_window(recently_closed_model& model,
   combo_box_layout->addWidget(m_window_manager_button);
   combo_box_layout->setStretchFactor(m_window_manager_button, 138);
   combo_box_layout->addStretch(16);
-  m_recently_closed_button = new toolbar_menu(tr("Recently Closed"), m_body);
+  m_recently_closed_button = new ToolbarMenu(tr("Recently Closed"), m_body);
   m_recently_closed_button->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
   m_recently_closed_button->connect_item_selected_signal(
@@ -88,7 +88,7 @@ toolbar_window::toolbar_window(recently_closed_model& model,
     imageFromSvg(":/icons/time-sale-purple.svg", window_button_size), m_body);
   m_time_and_sales_button->setToolTip(tr("Time and Sales"));
   m_time_and_sales_button->connect_clicked_signal(
-    [=] { on_open_window(recently_closed_model::type::TIME_AND_SALE); });
+    [=] { on_open_window(RecentlyClosedModel::Type::TIME_AND_SALE); });
   button_layout->addWidget(m_time_and_sales_button);
   m_chart_button = new icon_button(
     imageFromSvg(":/icons/chart-light-purple.svg", window_button_size),
@@ -119,26 +119,26 @@ toolbar_window::toolbar_window(recently_closed_model& model,
   m_model->connect_entry_removed_signal([=] (auto e) {entry_removed(e);});
 }
 
-connection toolbar_window::connect_open_signal(
-    const open_signal::slot_type& slot) const {
+connection ToolbarWindow::connect_open_signal(
+    const OpenSignal::slot_type& slot) const {
   return m_open_signal.connect(slot);
 }
 
-connection toolbar_window::connect_closed_signal(
+connection ToolbarWindow::connect_closed_signal(
     const ClosedSignal::slot_type& slot) const {
   return m_closed_signal.connect(slot);
 }
 
-connection toolbar_window::connect_reopen_signal(
-    const reopen_signal::slot_type& slot) const {
+connection ToolbarWindow::connect_reopen_signal(
+    const ReopenSignal::slot_type& slot) const {
   return m_reopen_signal.connect(slot);
 }
 
-void toolbar_window::closeEvent(QCloseEvent* event) {
+void ToolbarWindow::closeEvent(QCloseEvent* event) {
   m_closed_signal();
 }
 
-void toolbar_window::keyPressEvent(QKeyEvent* event) {
+void ToolbarWindow::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
     if(m_window_manager_button->hasFocus()) {
       m_window_manager_button->showMenu();
@@ -152,18 +152,18 @@ void toolbar_window::keyPressEvent(QKeyEvent* event) {
   }
 }
 
-void toolbar_window::entry_added(const recently_closed_model::entry& e) {
+void ToolbarWindow::entry_added(const RecentlyClosedModel::Entry& e) {
   auto icon_size = scale(26, 20);
   auto icon_rect = QRect(translate(8, 5), scale(10, 10));
   m_entries.push_back(e);
   switch(e.m_type) {
-    case recently_closed_model::type::BOOK_VIEW: {
+    case RecentlyClosedModel::Type::BOOK_VIEW: {
       m_recently_closed_button->add(e.m_identifier.c_str(),
         imageFromSvg(QString(":/icons/bookview-black.svg"), icon_size,
           icon_rect));
       break;
     }
-    case recently_closed_model::type::TIME_AND_SALE: {
+    case RecentlyClosedModel::Type::TIME_AND_SALE: {
       m_recently_closed_button->add(e.m_identifier.c_str(),
         imageFromSvg(QString(":/icons/time-sale-black.svg"), icon_size,
           icon_rect));
@@ -172,7 +172,7 @@ void toolbar_window::entry_added(const recently_closed_model::entry& e) {
   }
 }
 
-void toolbar_window::entry_removed(const recently_closed_model::entry& e) {
+void ToolbarWindow::entry_removed(const RecentlyClosedModel::Entry& e) {
   for(auto i = 0; i < static_cast<int>(m_entries.size()); ++i) {
     if(m_entries[i].m_id == e.m_id) {
       m_entries.erase(m_entries.begin() + i);
@@ -181,10 +181,10 @@ void toolbar_window::entry_removed(const recently_closed_model::entry& e) {
   }
 }
 
-void toolbar_window::on_item_selected(int index) {
+void ToolbarWindow::on_item_selected(int index) {
   m_reopen_signal(m_entries[index]);
 }
 
-void toolbar_window::on_open_window(recently_closed_model::type w) {
+void ToolbarWindow::on_open_window(RecentlyClosedModel::Type w) {
   m_open_signal(w);
 }

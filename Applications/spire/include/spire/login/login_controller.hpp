@@ -11,11 +11,11 @@
 namespace spire {
 
   //! Allows the user to login to Spire.
-  class login_controller : private boost::noncopyable {
+  class LoginController : private boost::noncopyable {
     public:
 
       //! Signals a successful login.
-      using logged_in_signal = Signal<void ()>;
+      using LoggedInSignal = Signal<void ()>;
 
       //! Factory used to build the Spire service clients.
       /*!
@@ -23,9 +23,9 @@ namespace spire {
         \param password The password to login with.
         \return The service clients used to login to Spire.
       */
-      using service_clients_factory =
-        std::function<std::unique_ptr<Nexus::VirtualServiceClients>
-        (const std::string& username, const std::string& password)>;
+      using ServiceClientsFactory = std::function<
+        std::unique_ptr<Nexus::VirtualServiceClients>(
+        const std::string& username, const std::string& password)>;
 
       //! Constructs a login controller in a state ready to display the login
       //! window.
@@ -33,9 +33,9 @@ namespace spire {
         \param service_clients_factory Builds the service clients used to
                login to Spire.
       */
-      login_controller(service_clients_factory service_clients_factory);
+      LoginController(ServiceClientsFactory service_clients_factory);
 
-      ~login_controller();
+      ~LoginController();
 
       //! Returns the service clients that logged in.
       std::unique_ptr<Nexus::VirtualServiceClients>& get_service_clients();
@@ -45,12 +45,12 @@ namespace spire {
 
       //! Connects a slot to the logged in signal.
       boost::signals2::connection connect_logged_in_signal(
-        const logged_in_signal::slot_type& slot) const;
+        const LoggedInSignal::slot_type& slot) const;
 
     private:
-      mutable logged_in_signal m_logged_in_signal;
-      service_clients_factory m_service_clients_factory;
-      std::unique_ptr<login_window> m_login_window;
+      mutable LoggedInSignal m_logged_in_signal;
+      ServiceClientsFactory m_service_clients_factory;
+      std::unique_ptr<LoginWindow> m_login_window;
       QtPromise<std::unique_ptr<Nexus::VirtualServiceClients>> m_login_promise;
       std::unique_ptr<Nexus::VirtualServiceClients> m_service_clients;
 

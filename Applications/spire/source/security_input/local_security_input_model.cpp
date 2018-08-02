@@ -5,17 +5,17 @@
 using namespace Nexus;
 using namespace spire;
 
-local_security_input_model::local_security_input_model()
+LocalSecurityInputModel::LocalSecurityInputModel()
     : m_securities('\0') {}
 
-void local_security_input_model::add(SecurityInfo security) {
+void LocalSecurityInputModel::add(SecurityInfo security) {
   auto key = ToString(security.m_security, GetDefaultMarketDatabase());
   auto name = boost::to_upper_copy(security.m_name);
   m_securities[key.c_str()] = security;
   m_securities[name.c_str()] = std::move(security);
 }
 
-std::vector<SecurityInfo> local_security_input_model::autocomplete(
+std::vector<SecurityInfo> LocalSecurityInputModel::autocomplete(
     const std::string& query) {
   if(query.empty()) {
     return {};

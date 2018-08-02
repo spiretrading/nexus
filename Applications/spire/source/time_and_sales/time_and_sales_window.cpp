@@ -21,9 +21,8 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace spire;
 
-time_and_sales_window::time_and_sales_window(
-    const time_and_sales_properties& properties,
-    security_input_model& input_model, QWidget* parent)
+TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
+    SecurityInputModel& input_model, QWidget* parent)
     : QWidget(parent),
       m_input_model(&input_model),
       m_table(nullptr) {
@@ -53,7 +52,7 @@ time_and_sales_window::time_and_sales_window(
     font-size: %1px;
     padding-top: %2px;)").arg(scale_height(12)).arg(scale_height(16)));
   layout->addWidget(m_empty_window_label.get());
-  m_table = new time_and_sales_table_view(this);
+  m_table = new TimeAndSalesTableView(this);
   layout->addWidget(m_table);
   m_table->hide();
   m_volume_label = new QLabel(tr("Volume:"), this);
@@ -67,12 +66,12 @@ time_and_sales_window::time_and_sales_window(
     font-weight: 550;
     padding-left: %2px;)").arg(scale_height(10)).arg(scale_width(8)));
   layout->addWidget(m_volume_label);
-  set_model(std::make_shared<empty_time_and_sales_model>(Security()));
+  set_model(std::make_shared<EmptyTimeAndSalesModel>(Security()));
   set_properties(properties);
 }
 
-void time_and_sales_window::set_model(
-    std::shared_ptr<time_and_sales_model> model) {
+void TimeAndSalesWindow::set_model(
+    std::shared_ptr<TimeAndSalesModel> model) {
   if(m_model.is_initialized()) {
     if(m_empty_window_label != nullptr) {
       m_empty_window_label.reset();
@@ -84,13 +83,13 @@ void time_and_sales_window::set_model(
   m_table->set_model(m_model.get_ptr());
 }
 
-const time_and_sales_properties&
-    time_and_sales_window::get_properties() const {
+const TimeAndSalesProperties&
+    TimeAndSalesWindow::get_properties() const {
   return m_properties;
 }
 
-void time_and_sales_window::set_properties(
-    const time_and_sales_properties& properties) {
+void TimeAndSalesWindow::set_properties(
+    const TimeAndSalesProperties& properties) {
   m_properties = properties;
   m_model->set_properties(m_properties);
   if(m_table == nullptr) {
@@ -99,21 +98,21 @@ void time_and_sales_window::set_properties(
   m_table->set_properties(m_properties);
 }
 
-connection time_and_sales_window::connect_security_change_signal(
+connection TimeAndSalesWindow::connect_security_change_signal(
     const ChangeSecuritySignal::slot_type& slot) const {
   return m_change_security_signal.connect(slot);
 }
 
-connection time_and_sales_window::connect_closed_signal(
+connection TimeAndSalesWindow::connect_closed_signal(
     const ClosedSignal::slot_type& slot) const {
   return m_closed_signal.connect(slot);
 }
 
-void time_and_sales_window::closeEvent(QCloseEvent* event) {
+void TimeAndSalesWindow::closeEvent(QCloseEvent* event) {
   m_closed_signal();
 }
 
-void time_and_sales_window::contextMenuEvent(QContextMenuEvent* event) {
+void TimeAndSalesWindow::contextMenuEvent(QContextMenuEvent* event) {
   auto contents = m_body->layout()->itemAt(1)->widget();
   QRect widget_geometry(contents->mapToGlobal(contents->geometry().topLeft()),
     contents->mapToGlobal(contents->geometry().bottomRight()));
@@ -121,11 +120,11 @@ void time_and_sales_window::contextMenuEvent(QContextMenuEvent* event) {
     QMenu context_menu(this);
     QAction properties_action(tr("Properties"), &context_menu);
     connect(&properties_action, &QAction::triggered, this,
-      &time_and_sales_window::show_properties_dialog);
+      &TimeAndSalesWindow::show_properties_dialog);
     context_menu.addAction(&properties_action);
     QAction export_action(tr("Export Table"), &context_menu);
     connect(&export_action, &QAction::triggered, this,
-      &time_and_sales_window::export_table);
+      &TimeAndSalesWindow::export_table);
     export_action.setEnabled(m_table->isVisible());
     context_menu.addAction(&export_action);
     context_menu.setFixedWidth(scale_width(140));
@@ -163,7 +162,7 @@ void time_and_sales_window::contextMenuEvent(QContextMenuEvent* event) {
   }
 }
 
-void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
+void TimeAndSalesWindow::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_PageUp) {
     if(m_current_security != Security()) {
       auto s = m_securities.push_front(m_current_security);
@@ -183,7 +182,7 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
   }
   auto pressed_key = event->text();
   if(pressed_key[0].isLetterOrNumber()) {
-    auto dialog = new security_input_dialog(*m_input_model, pressed_key, this);
+    auto dialog = new SecurityInputDialog(*m_input_model, pressed_key, this);
     dialog->setWindowModality(Qt::NonModal);
     dialog->setAttribute(Qt::WA_DeleteOnClose);
     connect(dialog, &QDialog::accepted, this,
@@ -197,7 +196,7 @@ void time_and_sales_window::keyPressEvent(QKeyEvent* event) {
   }
 }
 
-void time_and_sales_window::export_table() {
+void TimeAndSalesWindow::export_table() {
   show_overlay_widget();
   auto filepath = QFileDialog::getSaveFileName(this, tr("Export As"),
     QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) +
@@ -208,7 +207,7 @@ void time_and_sales_window::export_table() {
   m_overlay_widget.reset();
 }
 
-void time_and_sales_window::show_overlay_widget() {
+void TimeAndSalesWindow::show_overlay_widget() {
   auto contents = m_body->layout()->itemAt(1)->widget();
   m_overlay_widget = std::make_unique<QLabel>(m_body);
   m_overlay_widget->setStyleSheet(
@@ -218,8 +217,8 @@ void time_and_sales_window::show_overlay_widget() {
   m_overlay_widget->show();
 }
 
-void time_and_sales_window::show_properties_dialog() {
-  time_and_sales_properties_dialog dialog(m_properties, this);
+void TimeAndSalesWindow::show_properties_dialog() {
+  TimeAndSalesPropertiesDialog dialog(m_properties, this);
   dialog.connect_apply_signal([=] (auto p) { set_properties(p); });
   show_overlay_widget();
   if(dialog.exec() == QDialog::Accepted) {
@@ -228,7 +227,7 @@ void time_and_sales_window::show_properties_dialog() {
   m_overlay_widget.reset();
 }
 
-void time_and_sales_window::set_current(const Security& s) {
+void TimeAndSalesWindow::set_current(const Security& s) {
   if(s == m_current_security) {
     return;
   }
@@ -239,8 +238,8 @@ void time_and_sales_window::set_current(const Security& s) {
     tr(" - Time and Sales"));
 }
 
-void time_and_sales_window::on_security_input_accept(
-    security_input_dialog* dialog) {
+void TimeAndSalesWindow::on_security_input_accept(
+    SecurityInputDialog* dialog) {
   auto s = dialog->get_security();
   if(s != Security() && s != m_current_security) {
     m_securities.push(m_current_security);
@@ -251,13 +250,13 @@ void time_and_sales_window::on_security_input_accept(
   m_overlay_widget.reset();
 }
 
-void time_and_sales_window::on_security_input_reject(
-    security_input_dialog* dialog) {
+void TimeAndSalesWindow::on_security_input_reject(
+    SecurityInputDialog* dialog) {
   dialog->close();
   m_overlay_widget.reset();
 }
 
-void time_and_sales_window::on_volume(const Quantity& volume) {
+void TimeAndSalesWindow::on_volume(const Quantity& volume) {
   m_volume_label->setText(tr("Volume:").append(" ") +
     Beam::ToString(volume).c_str());
 }

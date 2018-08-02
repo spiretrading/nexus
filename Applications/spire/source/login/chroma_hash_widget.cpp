@@ -6,7 +6,7 @@ using namespace Beam;
 using namespace Beam::ServiceLocator;
 using namespace spire;
 
-chroma_hash_widget::chroma_hash_widget(QWidget* parent)
+ChromaHashWidget::ChromaHashWidget(QWidget* parent)
     : QWidget(parent) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
@@ -19,7 +19,7 @@ chroma_hash_widget::chroma_hash_widget(QWidget* parent)
   set_text({});
 }
 
-void chroma_hash_widget::set_text(const QString& text) {
+void ChromaHashWidget::set_text(const QString& text) {
   const auto COLOR_LENGTH = 6;
   auto hash = ComputeSHA(text.toStdString());
   for(auto i = 0; i < COMPONENTS; ++i) {

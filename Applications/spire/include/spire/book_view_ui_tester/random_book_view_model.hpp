@@ -10,7 +10,7 @@
 namespace spire {
 
   //! Implements a book view model using randomly generated quotes.
-  class random_book_view_model final : public BookViewModel, public QObject {
+  class RandomBookViewModel final : public BookViewModel, public QObject {
     public:
 
       //! Constructs a random book view model.
@@ -18,7 +18,7 @@ namespace spire {
         \param security The security to model.
         \param load_time The amount of time to take to load.
       */
-      random_book_view_model(Nexus::Security security,
+      RandomBookViewModel(Nexus::Security security,
         boost::posix_time::time_duration load_time,
         Beam::Threading::TimerThreadPool& timer_thread_pool);
 

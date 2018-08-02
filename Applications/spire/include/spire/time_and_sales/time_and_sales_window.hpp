@@ -15,7 +15,7 @@
 namespace spire {
 
   //! Displays a time and sales window.
-  class time_and_sales_window : public QWidget {
+  class TimeAndSalesWindow : public QWidget {
     public:
 
       //! Signals a request to change the displayed security.
@@ -30,20 +30,20 @@ namespace spire {
       //! Constructs a time and sales window.
       /*!
         \param properties The display properties.
-        \param input_model The security_input_model to use for autocomplete.
+        \param input_model The SecurityInputModel to use for autocomplete.
         \param parent The parent widget.
       */
-      time_and_sales_window(const time_and_sales_properties& properties,
-        security_input_model& input_model, QWidget* parent = nullptr);
+      TimeAndSalesWindow(const TimeAndSalesProperties& properties,
+        SecurityInputModel& input_model, QWidget* parent = nullptr);
 
       //! Sets the model to display.
-      void set_model(std::shared_ptr<time_and_sales_model> model);
+      void set_model(std::shared_ptr<TimeAndSalesModel> model);
 
       //! Returns the display properties.
-      const time_and_sales_properties& get_properties() const;
+      const TimeAndSalesProperties& get_properties() const;
 
       //! Sets the display properties.
-      void set_properties(const time_and_sales_properties& properties);
+      void set_properties(const TimeAndSalesProperties& properties);
 
       //! Connects a slot to the change security signal.
       boost::signals2::connection connect_security_change_signal(
@@ -61,23 +61,23 @@ namespace spire {
     private:
       mutable ChangeSecuritySignal m_change_security_signal;
       mutable ClosedSignal m_closed_signal;
-      time_and_sales_properties m_properties;
-      security_input_model* m_input_model;
-      boost::optional<time_and_sales_window_model> m_model;
+      TimeAndSalesProperties m_properties;
+      SecurityInputModel* m_input_model;
+      boost::optional<TimeAndSalesWindowModel> m_model;
       security_stack m_securities;
       Nexus::Security m_current_security;
       QWidget* m_body;
       std::unique_ptr<QLabel> m_empty_window_label;
       std::unique_ptr<QLabel> m_overlay_widget;
-      time_and_sales_table_view* m_table;
+      TimeAndSalesTableView* m_table;
       QLabel* m_volume_label;
 
       void export_table();
       void show_overlay_widget();
       void show_properties_dialog();
       void set_current(const Nexus::Security& s);
-      void on_security_input_accept(security_input_dialog* dialog);
-      void on_security_input_reject(security_input_dialog* dialog);
+      void on_security_input_accept(SecurityInputDialog* dialog);
+      void on_security_input_reject(SecurityInputDialog* dialog);
       void on_volume(const Nexus::Quantity& volume);
   };
 }

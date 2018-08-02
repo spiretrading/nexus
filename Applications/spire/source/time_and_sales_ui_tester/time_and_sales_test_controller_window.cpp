@@ -11,10 +11,10 @@ using namespace Beam;
 using namespace Beam::Threading;
 using namespace Nexus;
 using namespace spire;
-using price_range = time_and_sales_properties::price_range;
+using PriceRange = TimeAndSalesProperties::PriceRange;
 
 time_and_sales_test_controller_window::time_and_sales_test_controller_window(
-    time_and_sales_window* window, TimerThreadPool& timer_thread_pool)
+    TimeAndSalesWindow* window, TimerThreadPool& timer_thread_pool)
     : m_window(window),
       m_timer_thread_pool(&timer_thread_pool) {
   m_window->connect_security_change_signal(
@@ -22,7 +22,7 @@ time_and_sales_test_controller_window::time_and_sales_test_controller_window(
   m_model = std::make_shared<periodic_time_and_sales_model>(Security(),
     *m_timer_thread_pool);
   m_model->set_price(Money(Quantity(20)));
-  m_model->set_price_range(price_range::AT_ASK);
+  m_model->set_price_range(PriceRange::AT_ASK);
   m_model->set_period(boost::posix_time::milliseconds(1000));
   m_model->set_load_duration(boost::posix_time::milliseconds(1000));
   setFixedSize(scale(400, 200));
@@ -108,7 +108,7 @@ void time_and_sales_test_controller_window::update_price(double price) {
 }
 
 void time_and_sales_test_controller_window::update_price_range(
-    price_range range) {
+    PriceRange range) {
   m_model->set_price_range(range);
 }
 
@@ -116,25 +116,25 @@ void time_and_sales_test_controller_window::update_period(int ms) {
   m_model->set_period(boost::posix_time::milliseconds(ms));
 }
 
-price_range time_and_sales_test_controller_window::get_price_range(
+PriceRange time_and_sales_test_controller_window::get_price_range(
     const QString& range) {
   if(range == "Unknown") {
-    return price_range::UNKNOWN;
+    return PriceRange::UNKNOWN;
   }
   if(range == "Above Ask") {
-    return price_range::ABOVE_ASK;
+    return PriceRange::ABOVE_ASK;
   }
   if(range == "At Ask") {
-    return price_range::AT_ASK;
+    return PriceRange::AT_ASK;
   }
   if(range == "Inside") {
-    return price_range::INSIDE;
+    return PriceRange::INSIDE;
   }
   if(range == "At Bid") {
-    return price_range::AT_BID;
+    return PriceRange::AT_BID;
   }
   if(range == "Below Bid") {
-    return price_range::BELOW_BID;
+    return PriceRange::BELOW_BID;
   }
-  return price_range::UNKNOWN;
+  return PriceRange::UNKNOWN;
 }

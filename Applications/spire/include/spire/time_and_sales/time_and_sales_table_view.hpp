@@ -11,26 +11,26 @@
 namespace spire {
 
   //! Displays a table with horizontal header and loading widget.
-  class time_and_sales_table_view : public QScrollArea {
+  class TimeAndSalesTableView : public QScrollArea {
     public:
 
-      //! Constructs a time_and_sales_table_view.
+      //! Constructs a TimeAndSalesTableView.
       /*
         \param parent The parent to this widget.
       */
-      time_and_sales_table_view(QWidget* parent = nullptr);
+      TimeAndSalesTableView(QWidget* parent = nullptr);
 
       //! Sets the model to get the table data from.
       /*
         \param model The model.
       */
-      void set_model(time_and_sales_window_model* model);
+      void set_model(TimeAndSalesWindowModel* model);
 
-      //! Sets the time_and_sales_properties of the table.
+      //! Sets the TimeAndSalesProperties of the table.
       /*
         \param properties The properties the table will be updated to have.
       */
-      void set_properties(const time_and_sales_properties& properties);
+      void set_properties(const TimeAndSalesProperties& properties);
 
     protected:
       bool event(QEvent* event) override;
@@ -43,10 +43,10 @@ namespace spire {
       QHeaderView* m_header;
       QWidget* m_header_padding;
       QTableView* m_table;
-      time_and_sales_window_model* m_model;
+      TimeAndSalesWindowModel* m_model;
       QTimer m_h_scroll_bar_timer;
       QTimer m_v_scroll_bar_timer;
-      std::unique_ptr<snapshot_loading_widget> m_loading_widget;
+      std::unique_ptr<SnapshotLoadingWidget> m_loading_widget;
       std::unique_ptr<overlay_widget> m_transition_widget;
 
       void fade_out_horizontal_scroll_bar();

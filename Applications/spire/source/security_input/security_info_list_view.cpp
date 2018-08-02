@@ -13,7 +13,7 @@ namespace {
   const auto MAX_VISIBLE_ITEMS = 5;
 }
 
-security_info_list_view::security_info_list_view(QWidget* parent)
+SecurityInfoListView::SecurityInfoListView(QWidget* parent)
     : QWidget(parent, Qt::FramelessWindowHint | Qt::Tool),
       m_highlighted_index(-1),
       m_active_index(-1) {
@@ -67,7 +67,7 @@ security_info_list_view::security_info_list_view(QWidget* parent)
   m_scroll_area->setWidget(m_list_widget);
 }
 
-void security_info_list_view::set_list(const std::vector<SecurityInfo>& list) {
+void SecurityInfoListView::set_list(const std::vector<SecurityInfo>& list) {
   while(auto item = m_list_widget->layout()->takeAt(0)) {
     delete item->widget();
     delete item;
@@ -78,7 +78,7 @@ void security_info_list_view::set_list(const std::vector<SecurityInfo>& list) {
     auto& security = list[i];
     auto icon_path = QString(":/icons/%1.png").arg(
       security.m_security.GetCountry());
-    auto security_widget = new security_info_widget(security, this);
+    auto security_widget = new SecurityInfoWidget(security, this);
     security_widget->connect_highlighted_signal(
       [=] (auto value) { on_highlight(i, value); });
     security_widget->connect_commit_signal(
@@ -95,7 +95,7 @@ void security_info_list_view::set_list(const std::vector<SecurityInfo>& list) {
   setFixedHeight(h + scale_width(1));
 }
 
-void security_info_list_view::activate_next() {
+void SecurityInfoListView::activate_next() {
   if(m_list_widget->layout()->count() == 1) {
     update_active(0);
   } else if(m_active_index == -1) {
@@ -105,7 +105,7 @@ void security_info_list_view::activate_next() {
   }
 }
 
-void security_info_list_view::activate_previous() {
+void SecurityInfoListView::activate_previous() {
   if(m_active_index == 0) {
     return;
   } else if(m_active_index == -1) {
@@ -115,28 +115,28 @@ void security_info_list_view::activate_previous() {
   }
 }
 
-connection security_info_list_view::connect_activate_signal(
-    const activate_signal::slot_type& slot) const {
+connection SecurityInfoListView::connect_activate_signal(
+    const ActivateSignal::slot_type& slot) const {
   return m_activate_signal.connect(slot);
 }
 
-connection security_info_list_view::connect_commit_signal(
-    const commit_signal::slot_type& slot) const {
+connection SecurityInfoListView::connect_commit_signal(
+    const CommitSignal::slot_type& slot) const {
   return m_commit_signal.connect(slot);
 }
 
-void security_info_list_view::update_active(int active_index) {
+void SecurityInfoListView::update_active(int active_index) {
   if(active_index == m_active_index || active_index < -1 ||
       active_index >= m_list_widget->layout()->count()) {
     return;
   }
   if(m_highlighted_index != -1) {
-    auto highlighted_widget = static_cast<security_info_widget*>(
+    auto highlighted_widget = static_cast<SecurityInfoWidget*>(
       m_list_widget->layout()->itemAt(m_highlighted_index)->widget());
     highlighted_widget->remove_highlight();
   }
   if(m_active_index != -1) {
-    auto active_widget = static_cast<security_info_widget*>(
+    auto active_widget = static_cast<SecurityInfoWidget*>(
       m_list_widget->layout()->itemAt(m_active_index)->widget());
     active_widget->remove_highlight();
   };
@@ -144,23 +144,23 @@ void security_info_list_view::update_active(int active_index) {
   if(m_active_index == -1) {
     return;
   }
-  auto active_widget = static_cast<security_info_widget*>(
+  auto active_widget = static_cast<SecurityInfoWidget*>(
     m_list_widget->layout()->itemAt(m_active_index)->widget());
   active_widget->set_highlighted();
   m_scroll_area->ensureWidgetVisible(active_widget, 0, 0);
   m_activate_signal(active_widget->get_info().m_security);
 }
 
-void security_info_list_view::on_highlight(int index, bool is_highlighted) {
+void SecurityInfoListView::on_highlight(int index, bool is_highlighted) {
   if(is_highlighted) {
     if(m_active_index != -1 && m_active_index != index) {
-      auto active_widget = static_cast<security_info_widget*>(
+      auto active_widget = static_cast<SecurityInfoWidget*>(
         m_list_widget->layout()->itemAt(m_active_index)->widget());
       active_widget->remove_highlight();
       m_active_index = -1;
     }
     m_highlighted_index = index;
-    auto highlighted_widget = static_cast<security_info_widget*>(
+    auto highlighted_widget = static_cast<SecurityInfoWidget*>(
       m_list_widget->layout()->itemAt(m_highlighted_index)->widget());
     highlighted_widget->set_highlighted();
   } else {
@@ -168,6 +168,6 @@ void security_info_list_view::on_highlight(int index, bool is_highlighted) {
   }
 }
 
-void security_info_list_view::on_commit(const Security& security) {
+void SecurityInfoListView::on_commit(const Security& security) {
   m_commit_signal(security);
 }

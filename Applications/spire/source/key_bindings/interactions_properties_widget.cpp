@@ -2,5 +2,5 @@
 
 using namespace spire;
 
-interactions_properties_widget::interactions_properties_widget(QWidget* parent)
+InteractionsPropertiesWidget::InteractionsPropertiesWidget(QWidget* parent)
     : QWidget(parent) {}

@@ -8,7 +8,7 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace spire;
 
-login_ui_tester::login_ui_tester(spire::login_window* login, QWidget* parent)
+login_ui_tester::login_ui_tester(spire::LoginWindow* login, QWidget* parent)
     : QWidget(parent),
       m_login_window(login) {
   setFixedSize(scale(480, 270));
@@ -36,11 +36,11 @@ login_ui_tester::login_ui_tester(spire::login_window* login, QWidget* parent)
 bool login_ui_tester::eventFilter(QObject* receiver, QEvent* event) {
   if(event->type() == QEvent::MouseButtonRelease && event->type() != QEvent::Move) {
     if(receiver == m_accept_button) {
-      m_login_window->set_state(login_window::state::NONE);
+      m_login_window->set_state(LoginWindow::State::NONE);
     } else if(receiver == m_reject_button) {
-      m_login_window->set_state(login_window::state::INCORRECT_CREDENTIALS);
+      m_login_window->set_state(LoginWindow::State::INCORRECT_CREDENTIALS);
     } else if(receiver == m_server_unavailable_button) {
-      m_login_window->set_state(login_window::state::SERVER_UNAVAILABLE);
+      m_login_window->set_state(LoginWindow::State::SERVER_UNAVAILABLE);
     }
   }
   if(receiver == m_login_window && event->type() == QEvent::Close) {

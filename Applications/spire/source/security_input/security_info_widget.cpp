@@ -8,7 +8,7 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace spire;
 
-security_info_widget::security_info_widget(SecurityInfo info, QWidget* parent)
+SecurityInfoWidget::SecurityInfoWidget(SecurityInfo info, QWidget* parent)
     : QWidget(parent),
       m_info(std::move(info)),
       m_is_highlighted(false) {
@@ -54,11 +54,11 @@ security_info_widget::security_info_widget(SecurityInfo info, QWidget* parent)
   setMouseTracking(true);
 }
 
-const SecurityInfo& security_info_widget::get_info() const {
+const SecurityInfo& SecurityInfoWidget::get_info() const {
   return m_info;
 }
 
-void security_info_widget::set_highlighted() {
+void SecurityInfoWidget::set_highlighted() {
   if(m_is_highlighted) {
     return;
   }
@@ -67,7 +67,7 @@ void security_info_widget::set_highlighted() {
   m_highlighted_signal(true);
 }
 
-void security_info_widget::remove_highlight() {
+void SecurityInfoWidget::remove_highlight() {
   if(!m_is_highlighted) {
     return;
   }
@@ -76,33 +76,33 @@ void security_info_widget::remove_highlight() {
   m_highlighted_signal(false);
 }
 
-connection security_info_widget::connect_highlighted_signal(
-    const highlighted_signal::slot_type& slot) const {
+connection SecurityInfoWidget::connect_highlighted_signal(
+    const HighlightedSignal::slot_type& slot) const {
   return m_highlighted_signal.connect(slot);
 }
 
-connection security_info_widget::connect_commit_signal(
-    const commit_signal::slot_type& slot) const {
+connection SecurityInfoWidget::connect_commit_signal(
+    const CommitSignal::slot_type& slot) const {
   return m_commit_signal.connect(slot);
 }
 
-void security_info_widget::enterEvent(QEvent* event) {
+void SecurityInfoWidget::enterEvent(QEvent* event) {
   set_highlighted();
 }
 
-void security_info_widget::leaveEvent(QEvent* event) {
+void SecurityInfoWidget::leaveEvent(QEvent* event) {
   remove_highlight();
 }
 
-void security_info_widget::mouseReleaseEvent(QMouseEvent* event) {
+void SecurityInfoWidget::mouseReleaseEvent(QMouseEvent* event) {
   m_commit_signal();
 }
 
-void security_info_widget::resizeEvent(QResizeEvent* event) {
+void SecurityInfoWidget::resizeEvent(QResizeEvent* event) {
   display_company_name();
 }
 
-void security_info_widget::display_company_name() {
+void SecurityInfoWidget::display_company_name() {
   QFontMetrics metrics(m_company_name_label->font());
   auto shortened_text = metrics.elidedText(
     QString::fromStdString(m_info.m_name), Qt::ElideRight,

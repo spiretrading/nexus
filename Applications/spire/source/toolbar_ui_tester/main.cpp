@@ -14,9 +14,9 @@ int main(int argc, char** argv) {
   application->setOrganizationName(QObject::tr("Eidolon Systems Ltd"));
   application->setApplicationName(QObject::tr("Toolbar UI Tester"));
   initialize_resources();
-  recently_closed_model model;
+  RecentlyClosedModel model;
   auto account = DirectoryEntry::MakeAccount(1, "demo_account");
-  toolbar_window tw(model, account);
+  ToolbarWindow tw(model, account);
   tw.show();
   toolbar_ui_tester tester(&tw, model);
   tester.show();

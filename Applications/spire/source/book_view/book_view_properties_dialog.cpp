@@ -77,7 +77,7 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
     properties, m_tab_widget);
   m_tab_widget->addTab(highlights_tab_widget, tr("Highlights"));
   if(security != Security()) {
-    auto interactions_tab_widget = new interactions_properties_widget(
+    auto interactions_tab_widget = new InteractionsPropertiesWidget(
       m_tab_widget);
     m_tab_widget->addTab(interactions_tab_widget, tr("Interactions"));
   }

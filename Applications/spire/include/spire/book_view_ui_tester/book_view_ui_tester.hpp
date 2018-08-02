@@ -3,7 +3,7 @@
 #include "spire/book_view/book_view.hpp"
 
 namespace spire {
-  class random_book_view_model;
+  class RandomBookViewModel;
 }
 
 #endif

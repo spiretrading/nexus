@@ -7,11 +7,11 @@
 namespace spire {
 
   //! Implements the security input model using a local database.
-  class local_security_input_model final : public security_input_model {
+  class LocalSecurityInputModel final : public SecurityInputModel {
     public:
 
       //! Constructs an empty local security input model.
-      local_security_input_model();
+      LocalSecurityInputModel();
 
       //! Adds a security to this model.
       /*!

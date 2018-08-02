@@ -8,23 +8,23 @@
 namespace spire {
 
   //! Models the recently closed windows that can be re-opened.
-  class recently_closed_model : private boost::noncopyable {
+  class RecentlyClosedModel : private boost::noncopyable {
     public:
 
       //! The types of windows that can be re-opened.
-      enum class type {
+      enum class Type {
         BOOK_VIEW,
         TIME_AND_SALE
       };
 
       //! Stores the details of a single recently closed window.
-      struct entry {
+      struct Entry {
 
         //! The entry's unique id.
         int m_id;
 
         //! The type of window that was recently closed.
-        type m_type;
+        Type m_type;
 
         //! The window's name/identifier.
         std::string m_identifier;
@@ -34,19 +34,19 @@ namespace spire {
       /*!
         \param e The entry that was added.
       */
-      using entry_added_signal = Signal<void (const entry& e)>;
+      using EntryAddedSignal = Signal<void (const Entry& e)>;
 
       //! Signals an entry was removed from the model.
       /*!
         \param e The entry that was removed.
       */
-      using entry_removed_signal = Signal<void (const entry& e)>;
+      using EntryRemovedSignal = Signal<void (const Entry& e)>;
 
       //! Constructs an empty model.
-      recently_closed_model();
+      RecentlyClosedModel();
 
       //! Returns the list of entries.
-      const std::vector<entry>& get_entries() const noexcept;
+      const std::vector<Entry>& get_entries() const noexcept;
 
       //! Adds a recently closed window entry.
       /*!
@@ -54,24 +54,24 @@ namespace spire {
         \param identifier The window's identifier.
         \return The entry that was added.
       */
-      entry add(type t, std::string identifier);
+      Entry add(Type t, std::string identifier);
 
       //! Removes an entry from this model.
-      void remove(const entry& e);
+      void remove(const Entry& e);
 
       //! Connects a slot to the entry added signal.
       boost::signals2::connection connect_entry_added_signal(
-        const entry_added_signal::slot_type& slot) const;
+        const EntryAddedSignal::slot_type& slot) const;
 
       //! Connects a slot to the entry removed signal.
       boost::signals2::connection connect_entry_removed_signal(
-        const entry_removed_signal::slot_type& slot) const;
+        const EntryRemovedSignal::slot_type& slot) const;
 
     private:
-      mutable entry_added_signal m_entry_added_signal;
-      mutable entry_removed_signal m_entry_removed_signal;
+      mutable EntryAddedSignal m_entry_added_signal;
+      mutable EntryRemovedSignal m_entry_removed_signal;
       int m_next_id;
-      std::vector<entry> m_entries;
+      std::vector<Entry> m_entries;
   };
 }
 
