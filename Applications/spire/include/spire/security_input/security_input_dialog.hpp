@@ -47,7 +47,7 @@ namespace spire {
 
     private:
       Nexus::Security m_security;
-      std::unique_ptr<drop_shadow> m_shadow;
+      std::unique_ptr<DropShadow> m_shadow;
       SecurityInputBox* m_security_input_box;
       bool m_is_dragging;
       QPoint m_last_mouse_pos;

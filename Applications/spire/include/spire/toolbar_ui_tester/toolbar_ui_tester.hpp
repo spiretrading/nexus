@@ -9,10 +9,10 @@
 
 namespace spire {
   
-  class toolbar_ui_tester : public QWidget {
+  class ToolbarUiTester : public QWidget {
     public:
 
-      toolbar_ui_tester(ToolbarWindow* window,
+      ToolbarUiTester(ToolbarWindow* window,
         RecentlyClosedModel& model,
         QWidget* parent = nullptr);
 

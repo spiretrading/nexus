@@ -10,7 +10,7 @@
 namespace spire {
 
   //! Implements a time and sales model that periodically emits new values.
-  class periodic_time_and_sales_model final : public TimeAndSalesModel,
+  class PeriodicTimeAndSalesModel final : public TimeAndSalesModel,
       public QObject {
     public:
 
@@ -19,7 +19,7 @@ namespace spire {
         \param s The security to model.
         \param timer_thread_pool The timer pool used to simulating load times.
       */
-      periodic_time_and_sales_model(Nexus::Security s,
+      PeriodicTimeAndSalesModel(Nexus::Security s,
         Beam::Threading::TimerThreadPool& timer_thread_pool);
 
       //! Returns the price of new time and sales.

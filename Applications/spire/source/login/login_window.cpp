@@ -17,7 +17,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
       m_is_dragging(false) {
   setWindowIcon(QIcon(":icons/spire-icon-48x48.png"));
   setFixedSize(scale(396, 358));
-  m_shadow = std::make_unique<drop_shadow>(this);
+  m_shadow = std::make_unique<DropShadow>(this);
   setObjectName("LoginWindow");
   setStyleSheet(R"(
     #LoginWindow {
@@ -33,7 +33,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   title_bar_layout->addStretch(352);
   auto button_size = scale(32, 26);
   auto button_box = QRect(translate(11, 8), scale(10, 10));
-  m_exit_button = new icon_button(
+  m_exit_button = new IconButton(
     imageFromSvg(":/icons/close-purple.svg", button_size, button_box),
     imageFromSvg(":/icons/close-red.svg", button_size, button_box), this);
   m_exit_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -146,7 +146,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   button_layout->addWidget(build_label);
   button_layout->setStretchFactor(build_label, 57);
   button_layout->addStretch(103);
-  m_sign_in_button = new flat_button(tr("Sign In"), this);
+  m_sign_in_button = new FlatButton(tr("Sign In"), this);
   m_sign_in_button->connect_clicked_signal([=] {try_login();});
   m_sign_in_button->installEventFilter(this);
   m_sign_in_button->setSizePolicy(QSizePolicy::Expanding,

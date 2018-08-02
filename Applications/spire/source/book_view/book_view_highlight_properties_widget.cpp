@@ -59,7 +59,7 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   market_highlight_layout->setContentsMargins({});
   market_highlight_layout->setSpacing(0);
   market_highlight_layout->addStretch(26);
-  m_highlight_none_check_box = new check_box(tr("Highlight None"), this);
+  m_highlight_none_check_box = new CheckBox(tr("Highlight None"), this);
   auto check_box_text_style = QString(R"(
     color: black;
     font-family: Roboto;
@@ -87,7 +87,7 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
     on_highlight_none_check_box_checked);
   market_highlight_layout->addWidget(m_highlight_none_check_box, 16);
   market_highlight_layout->addStretch(10);
-  m_highlight_top_level_check_box = new check_box(tr("Highlight Top Level"),
+  m_highlight_top_level_check_box = new CheckBox(tr("Highlight Top Level"),
     this);
   m_highlight_top_level_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style, check_box_hover_style,
@@ -97,7 +97,7 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
     on_highlight_top_level_check_box_checked);
   market_highlight_layout->addWidget(m_highlight_top_level_check_box, 16);
   market_highlight_layout->addStretch(10);
-  m_highlight_all_levels_check_box = new check_box(
+  m_highlight_all_levels_check_box = new CheckBox(
     tr("Highlight All Levels"), this);
   m_highlight_all_levels_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style, check_box_hover_style,
@@ -119,7 +119,7 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   market_highlight_color_label->setStyleSheet(generic_label_text_style);
   market_highlight_layout->addWidget(market_highlight_color_label, 14);
   market_highlight_layout->addStretch(4);
-  m_market_highlight_color_button = new flat_button(this);
+  m_market_highlight_color_button = new FlatButton(this);
   m_market_highlight_color_button->setFixedWidth(scale_width(100));
   update_color_button_stylesheet(m_market_highlight_color_button,
     Qt::yellow);
@@ -141,19 +141,19 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   orders_label->setStyleSheet(generic_header_label_stylesheet);
   orders_layout->addWidget(orders_label, 14);
   orders_layout->addStretch(10);
-  m_hide_orders_check_box = new check_box(tr("Hide Orders"), this);
+  m_hide_orders_check_box = new CheckBox(tr("Hide Orders"), this);
   m_hide_orders_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style, check_box_hover_style,
     check_box_focused_style);
   orders_layout->addWidget(m_hide_orders_check_box, 16);
   orders_layout->addStretch(10);
-  m_display_orders_check_box = new check_box(tr("Display Orders"), this);
+  m_display_orders_check_box = new CheckBox(tr("Display Orders"), this);
   m_display_orders_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style, check_box_hover_style,
     check_box_focused_style);
   orders_layout->addWidget(m_display_orders_check_box, 16);
   orders_layout->addStretch(10);
-  m_highlight_orders_check_box = new check_box(tr("Highlight Orders"),
+  m_highlight_orders_check_box = new CheckBox(tr("Highlight Orders"),
     this);
   m_highlight_orders_check_box->setChecked(true);
   m_highlight_orders_check_box->set_stylesheet(check_box_text_style,
@@ -169,7 +169,7 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   order_highlight_color_label->setStyleSheet(generic_label_text_style);
   orders_layout->addWidget(order_highlight_color_label, 14);
   orders_layout->addStretch(4);
-  m_order_highlight_color_button = new flat_button(this);
+  m_order_highlight_color_button = new FlatButton(this);
   m_order_highlight_color_button->setFixedWidth(scale_width(100));
   update_color_button_stylesheet(m_order_highlight_color_button,
     properties.get_order_highlight_color());
@@ -212,7 +212,7 @@ void BookViewHighlightPropertiesWidget::showEvent(QShowEvent* event) {
 }
 
 void BookViewHighlightPropertiesWidget::update_color_button_stylesheet(
-    flat_button* button, const QColor& color) {
+    FlatButton* button, const QColor& color) {
   auto s = button->get_style();
   s.m_background_color = color;
   s.m_border_color = QColor("#C8C8C8");

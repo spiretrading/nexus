@@ -13,15 +13,15 @@
 namespace spire {
 
   //! Displays the window used to control how a time and sales window is tested.
-  class time_and_sales_test_controller_window : public QWidget {
+  class TimeAndSalesTestControllerWindow : public QWidget {
     public:
-      time_and_sales_test_controller_window(TimeAndSalesWindow* window,
+      TimeAndSalesTestControllerWindow(TimeAndSalesWindow* window,
         Beam::Threading::TimerThreadPool& timer_thread_pool);
 
     private:
       TimeAndSalesWindow* m_window;
       Beam::Threading::TimerThreadPool* m_timer_thread_pool;
-      std::shared_ptr<periodic_time_and_sales_model> m_model;
+      std::shared_ptr<PeriodicTimeAndSalesModel> m_model;
       QSpinBox* m_loading_time_spin_box;
       QCheckBox* m_all_data_loaded_check_box;
 

@@ -120,7 +120,7 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   band_color_label->setStyleSheet(generic_label_style);
   band_properties_layout->addWidget(band_color_label);
   band_properties_layout->addStretch(4);
-  m_band_color_button = new flat_button(this);
+  m_band_color_button = new FlatButton(this);
   m_band_color_button->setFixedHeight(scale_height(26));
   set_color_button_stylesheet(m_band_color_button, bg_colors[0]);
   m_band_color_button->connect_clicked_signal(
@@ -132,14 +132,14 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   color_gradient_label->setStyleSheet(generic_label_style);
   band_properties_layout->addWidget(color_gradient_label);
   band_properties_layout->addStretch(4);
-  m_gradient_start_button = new flat_button(this);
+  m_gradient_start_button = new FlatButton(this);
   m_gradient_start_button->setFixedHeight(scale_height(26));
   set_color_button_stylesheet(m_gradient_start_button, bg_colors[0]);
   m_gradient_start_button->connect_clicked_signal(
     [=] { on_gradient_start_button_clicked(); });
   band_properties_layout->addWidget(m_gradient_start_button);
   band_properties_layout->addStretch(8);
-  m_gradient_end_button = new flat_button(this);
+  m_gradient_end_button = new FlatButton(this);
   m_gradient_end_button->setFixedHeight(scale_height(26));
   set_color_button_stylesheet(m_gradient_end_button,
     bg_colors[bg_colors.size() - 1]);
@@ -147,7 +147,7 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
     [=] { on_gradient_end_button_clicked(); });
   band_properties_layout->addWidget(m_gradient_end_button);
   band_properties_layout->addStretch(10);
-  auto apply_gradient_button = new flat_button(tr("Apply Gradient"), this);
+  auto apply_gradient_button = new FlatButton(tr("Apply Gradient"), this);
   apply_gradient_button->setFixedHeight(scale_height(26));
   QFont generic_button_font;
   generic_button_font.setFamily("Roboto");
@@ -173,7 +173,7 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   font_button_layout->setContentsMargins({});
   font_button_layout->setSpacing(0);
   font_button_layout->addStretch(18);
-  auto change_font_button = new flat_button(tr("Change Font"), this);
+  auto change_font_button = new FlatButton(tr("Change Font"), this);
   change_font_button->setFixedSize(scale(100, 26));
   change_font_button->setFont(generic_button_font);
   change_font_button->set_style(generic_button_default_style);
@@ -183,7 +183,7 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
     [=] { on_change_font_button_clicked(); });
   font_button_layout->addWidget(change_font_button);
   font_button_layout->addStretch(33);
-  m_show_grid_lines_check_box = new check_box(tr("Show Grid Lines"), this);
+  m_show_grid_lines_check_box = new CheckBox(tr("Show Grid Lines"), this);
   auto check_box_text_style = QString(R"(
     color: black;
     font-family: Roboto;
@@ -234,7 +234,7 @@ void BookViewLevelPropertiesWidget::showEvent(QShowEvent* event) {
 }
 
 void BookViewLevelPropertiesWidget::set_color_button_stylesheet(
-    flat_button* button, const QColor& color) {
+    FlatButton* button, const QColor& color) {
   auto s = button->get_style();
   s.m_background_color = color;
   s.m_border_color = QColor("#C8C8C8");

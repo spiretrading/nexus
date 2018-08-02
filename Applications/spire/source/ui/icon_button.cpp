@@ -8,13 +8,13 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace spire;
 
-icon_button::icon_button(QImage icon, QWidget* parent)
-    : icon_button(icon, icon, parent) {}
+IconButton::IconButton(QImage icon, QWidget* parent)
+    : IconButton(icon, icon, parent) {}
 
-icon_button::icon_button(QImage icon, QImage hover_icon, QWidget* parent)
-    : icon_button(icon, hover_icon, icon, parent) {}
+IconButton::IconButton(QImage icon, QImage hover_icon, QWidget* parent)
+    : IconButton(icon, hover_icon, icon, parent) {}
 
-icon_button::icon_button(QImage icon, QImage hover_icon, QImage blur_icon,
+IconButton::IconButton(QImage icon, QImage hover_icon, QImage blur_icon,
     QWidget* parent)
     : QAbstractButton(parent),
       m_icon(std::move(icon)),
@@ -27,27 +27,27 @@ icon_button::icon_button(QImage icon, QImage hover_icon, QImage blur_icon,
   show_normal();
 }
 
-void icon_button::set_default_style(const QString& stylesheet) {
+void IconButton::set_default_style(const QString& stylesheet) {
   m_default_stylesheet = stylesheet;
 }
 
-void icon_button::set_hover_style(const QString& stylesheet) {
+void IconButton::set_hover_style(const QString& stylesheet) {
   m_hover_stylesheet = stylesheet;
 }
 
-const QImage& icon_button::get_icon() const {
+const QImage& IconButton::get_icon() const {
   return m_icon;
 }
 
-void icon_button::set_icon(QImage icon) {
+void IconButton::set_icon(QImage icon) {
   set_icon(icon, icon);
 }
 
-void icon_button::set_icon(QImage icon, QImage hover_icon) {
+void IconButton::set_icon(QImage icon, QImage hover_icon) {
   set_icon(icon, hover_icon, icon);
 }
 
-void icon_button::set_icon(QImage icon, QImage hover_icon, QImage blur_icon) {
+void IconButton::set_icon(QImage icon, QImage hover_icon, QImage blur_icon) {
   m_icon = std::move(icon);
   m_hover_icon = std::move(hover_icon);
   m_blur_icon = std::move(blur_icon);
@@ -55,60 +55,60 @@ void icon_button::set_icon(QImage icon, QImage hover_icon, QImage blur_icon) {
   update();
 }
 
-connection icon_button::connect_clicked_signal(
-    const clicked_signal::slot_type& slot) const {
+connection IconButton::connect_clicked_signal(
+    const ClickedSignal::slot_type& slot) const {
   return m_clicked_signal.connect(slot);
 }
 
-void icon_button::enterEvent(QEvent* event) {
+void IconButton::enterEvent(QEvent* event) {
   if(isEnabled()) {
     switch(m_state) {
-      case state::NORMAL:
+      case State::NORMAL:
         return show_hovered();
-      case state::BLURRED:
+      case State::BLURRED:
         return show_hover_blurred();
     }
   }
 }
 
-void icon_button::focusInEvent(QFocusEvent* event) {
+void IconButton::focusInEvent(QFocusEvent* event) {
   if(focusPolicy() & Qt::TabFocus) {
     switch(m_state) {
-      case state::NORMAL:
+      case State::NORMAL:
         return show_hovered();
-      case state::BLURRED:
+      case State::BLURRED:
         return show_hover_blurred();
     }
   }
 }
 
-void icon_button::focusOutEvent(QFocusEvent* event) {
+void IconButton::focusOutEvent(QFocusEvent* event) {
   if(focusPolicy() & Qt::TabFocus) {
     switch(m_state) {
-      case state::HOVERED:
+      case State::HOVERED:
         return show_normal();
-      case state::HOVER_BLURRED:
+      case State::HOVER_BLURRED:
         return show_blurred();
     }
   }
 }
 
-void icon_button::leaveEvent(QEvent* event) {
+void IconButton::leaveEvent(QEvent* event) {
   switch(m_state) {
-    case state::HOVERED:
+    case State::HOVERED:
       return show_normal();
-    case state::HOVER_BLURRED:
+    case State::HOVER_BLURRED:
       return show_blurred();
   }
 }
 
-void icon_button::mousePressEvent(QMouseEvent* event) {
+void IconButton::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     event->accept();
   }
 }
 
-void icon_button::mouseReleaseEvent(QMouseEvent* event) {
+void IconButton::mouseReleaseEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     if(rect().contains(event->localPos().toPoint())) {
       event->accept();
@@ -117,36 +117,36 @@ void icon_button::mouseReleaseEvent(QMouseEvent* event) {
   }
 }
 
-void icon_button::paintEvent(QPaintEvent* event) {
+void IconButton::paintEvent(QPaintEvent* event) {
   QPainter painter(this);
   QStyleOption style_option;
   style_option.initFrom(this);
   style()->drawPrimitive(QStyle::PE_Widget, &style_option, &painter, this);
-  if(m_state == state::NORMAL) {
+  if(m_state == State::NORMAL) {
     painter.drawImage(0, 0, m_icon);
-  } else if(m_state == state::BLURRED) {
+  } else if(m_state == State::BLURRED) {
     painter.drawImage(0, 0, m_blur_icon);
   } else {
     painter.drawImage(0, 0, m_hover_icon);
   }
 }
 
-bool icon_button::event(QEvent* event) {
+bool IconButton::event(QEvent* event) {
   if(event->type() == QEvent::WindowDeactivate) {
     switch(m_state) {
-      case state::NORMAL:
+      case State::NORMAL:
         show_blurred();
         break;
-      case state::HOVERED:
+      case State::HOVERED:
         show_blurred();
         break;
     }
   } else if(event->type() == QEvent::WindowActivate) {
     switch(m_state) {
-      case state::BLURRED:
+      case State::BLURRED:
         show_normal();
         break;
-      case state::HOVER_BLURRED:
+      case State::HOVER_BLURRED:
         show_hovered();
         break;
     }
@@ -154,26 +154,26 @@ bool icon_button::event(QEvent* event) {
   return QWidget::event(event);
 }
 
-void icon_button::show_normal() {
-  m_state = state::NORMAL;
+void IconButton::show_normal() {
+  m_state = State::NORMAL;
   setStyleSheet(m_default_stylesheet);
   update();
 }
 
-void icon_button::show_hovered() {
-  m_state = state::HOVERED;
+void IconButton::show_hovered() {
+  m_state = State::HOVERED;
   setStyleSheet(m_hover_stylesheet);
   update();
 }
 
-void icon_button::show_blurred() {
-  m_state = state::BLURRED;
+void IconButton::show_blurred() {
+  m_state = State::BLURRED;
   setStyleSheet(m_default_stylesheet);
   update();
 }
 
-void icon_button::show_hover_blurred() {
-  m_state = state::HOVER_BLURRED;
+void IconButton::show_hover_blurred() {
+  m_state = State::HOVER_BLURRED;
   setStyleSheet(m_hover_stylesheet);
   update();
 }

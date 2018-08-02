@@ -9,7 +9,7 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace spire;
 
-periodic_time_and_sales_model::periodic_time_and_sales_model(Security s,
+PeriodicTimeAndSalesModel::PeriodicTimeAndSalesModel(Security s,
       Beam::Threading::TimerThreadPool& timer_thread_pool)
     : m_security(std::move(s)),
       m_timer_thread_pool(&timer_thread_pool),
@@ -22,37 +22,37 @@ periodic_time_and_sales_model::periodic_time_and_sales_model(Security s,
   connect(&m_timer, &QTimer::timeout, [=] { on_timeout(); });
 }
 
-Money periodic_time_and_sales_model::get_price() const {
+Money PeriodicTimeAndSalesModel::get_price() const {
   return m_price;
 }
 
-void periodic_time_and_sales_model::set_price(Money price) {
+void PeriodicTimeAndSalesModel::set_price(Money price) {
   m_price = price;
 }
 
-TimeAndSalesProperties::PriceRange periodic_time_and_sales_model::
+TimeAndSalesProperties::PriceRange PeriodicTimeAndSalesModel::
     get_price_range() const {
   return m_price_range;
 }
 
-void periodic_time_and_sales_model::set_price_range(
+void PeriodicTimeAndSalesModel::set_price_range(
     TimeAndSalesProperties::PriceRange r) {
   m_price_range = r;
 }
 
-time_duration periodic_time_and_sales_model::get_load_duration() const {
+time_duration PeriodicTimeAndSalesModel::get_load_duration() const {
   return m_load_duration;
 }
 
-void periodic_time_and_sales_model::set_load_duration(time_duration d) {
+void PeriodicTimeAndSalesModel::set_load_duration(time_duration d) {
   m_load_duration = d;
 }
 
-time_duration periodic_time_and_sales_model::get_period() const {
+time_duration PeriodicTimeAndSalesModel::get_period() const {
   return m_period;
 }
 
-void periodic_time_and_sales_model::set_period(time_duration p) {
+void PeriodicTimeAndSalesModel::set_period(time_duration p) {
   m_period = p;
   m_timer.stop();
   if(m_period != pos_infin) {
@@ -60,16 +60,16 @@ void periodic_time_and_sales_model::set_period(time_duration p) {
   }
 }
 
-const Security& periodic_time_and_sales_model::get_security() const {
+const Security& PeriodicTimeAndSalesModel::get_security() const {
   return m_security;
 }
 
-Quantity periodic_time_and_sales_model::get_volume() const {
+Quantity PeriodicTimeAndSalesModel::get_volume() const {
   return m_volume;
 }
 
 QtPromise<std::vector<TimeAndSalesModel::Entry>>
-    periodic_time_and_sales_model::load_snapshot(Beam::Queries::Sequence last,
+    PeriodicTimeAndSalesModel::load_snapshot(Beam::Queries::Sequence last,
     int count) {
   auto insert = [&] (auto where, auto sequence) {
     auto timestamp = where->m_time_and_sale->m_timestamp - seconds(1);
@@ -124,17 +124,17 @@ QtPromise<std::vector<TimeAndSalesModel::Entry>>
   });
 }
 
-connection periodic_time_and_sales_model::connect_time_and_sale_signal(
+connection PeriodicTimeAndSalesModel::connect_time_and_sale_signal(
     const TimeAndSaleSignal::slot_type& slot) const {
   return m_time_and_sale_signal.connect(slot);
 }
 
-connection periodic_time_and_sales_model::connect_volume_signal(
+connection PeriodicTimeAndSalesModel::connect_volume_signal(
     const VolumeSignal::slot_type& slot) const {
   return m_volume_signal.connect(slot);
 }
 
-void periodic_time_and_sales_model::on_timeout() {
+void PeriodicTimeAndSalesModel::on_timeout() {
   if(!*m_is_loaded) {
     return;
   }

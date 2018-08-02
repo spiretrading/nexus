@@ -4,7 +4,7 @@
 
 using namespace spire;
 
-overlay_widget::overlay_widget(QWidget* covered, QWidget* displayed,
+OverlayWidget::OverlayWidget(QWidget* covered, QWidget* displayed,
     QWidget* parent)
     : QWidget(parent),
       m_covered(covered),
@@ -18,7 +18,7 @@ overlay_widget::overlay_widget(QWidget* covered, QWidget* displayed,
   show();
 }
 
-bool overlay_widget::eventFilter(QObject* watched, QEvent* event) {
+bool OverlayWidget::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_covered) {
     if(event->type() == QEvent::Move || event->type() == QEvent::Resize) {
       align();
@@ -27,7 +27,7 @@ bool overlay_widget::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-void overlay_widget::align() {
+void OverlayWidget::align() {
   resize(m_covered->size());
   move(m_covered->mapTo(m_covered, m_covered->pos()));
 }

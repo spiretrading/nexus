@@ -9,11 +9,11 @@
 namespace spire {
 
   //! Stores a stack like cycle of security's viewed by a user.
-  class security_stack {
+  class SecurityStack {
     public:
 
       //! Constructs an empty stack.
-      security_stack() = default;
+      SecurityStack() = default;
 
       //! Pushes a security onto the stack.
       void push(Nexus::Security s);
@@ -41,7 +41,7 @@ namespace spire {
   };
 
   template<typename Shuttler>
-  void security_stack::Shuttle(Shuttler& shuttle, unsigned int version) {
+  void SecurityStack::Shuttle(Shuttler& shuttle, unsigned int version) {
     shuttle.Shuttle("securities", m_securities);
   }
 }

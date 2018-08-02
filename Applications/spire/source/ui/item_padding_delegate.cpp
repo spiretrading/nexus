@@ -3,7 +3,7 @@
 
 using namespace spire;
 
-item_padding_delegate::item_padding_delegate(int padding,
+ItemPaddingDelegate::ItemPaddingDelegate(int padding,
     QStyledItemDelegate* delegate, QObject* parent)
     : QStyledItemDelegate(parent),
       m_padding(padding),
@@ -11,12 +11,12 @@ item_padding_delegate::item_padding_delegate(int padding,
   m_item_delegate->setParent(this);
 }
 
-QString item_padding_delegate::displayText(const QVariant& value,
+QString ItemPaddingDelegate::displayText(const QVariant& value,
     const QLocale& locale) const {
   return m_item_delegate->displayText(value, locale);
 }
 
-void item_padding_delegate::paint(QPainter* painter,
+void ItemPaddingDelegate::paint(QPainter* painter,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
   painter->save();
   painter->fillRect(option.rect,
@@ -26,7 +26,7 @@ void item_padding_delegate::paint(QPainter* painter,
   painter->restore();
 }
 
-QSize item_padding_delegate::sizeHint(const QStyleOptionViewItem& option,
+QSize ItemPaddingDelegate::sizeHint(const QStyleOptionViewItem& option,
     const QModelIndex& index) const {
   return m_item_delegate->sizeHint(option, index);
 }

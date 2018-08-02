@@ -5,7 +5,7 @@
 namespace spire {
 
   //! Displays a widget on top of another widget.
-  class overlay_widget : public QWidget {
+  class OverlayWidget : public QWidget {
     public:
 
       //! Constructs an overlay widget.
@@ -14,7 +14,7 @@ namespace spire {
         \param displayed The widget to display on top of the covered widget.
         \param parent The parent widget.
       */
-      overlay_widget(QWidget* covered, QWidget* displayed,
+      OverlayWidget(QWidget* covered, QWidget* displayed,
         QWidget* parent = nullptr);
 
     protected:

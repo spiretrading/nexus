@@ -6,15 +6,15 @@
 #include "spire/spire/spire.hpp"
 
 namespace spire {
-  class check_box;
-  class drop_shadow;
-  class flat_button;
-  class icon_button;
-  class overlay_widget;
-  class properties_window_buttons_widget;
-  class security_stack;
-  class title_bar;
-  class window;
+  class CheckBox;
+  class DropShadow;
+  class FlatButton;
+  class IconButton;
+  class OverlayWidget;
+  class PropertiesWindowButtonsWidget;
+  class SecurityStack;
+  class TitleBar;
+  class Window;
 
   //! Builds a QImage from an SVG resource where the size of the SVG is equal
   //! to the image as a whole.

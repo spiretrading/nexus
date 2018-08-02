@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
     "Morgan Stanley", "Finance"));
   auto test_window = new TimeAndSalesWindow(TimeAndSalesProperties(),
     model);
-  auto tester = new time_and_sales_test_controller_window(test_window,
+  auto tester = new TimeAndSalesTestControllerWindow(test_window,
     timer_thread_pool);
   test_window->show();
   tester->show();

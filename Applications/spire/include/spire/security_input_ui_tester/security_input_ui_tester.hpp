@@ -3,7 +3,7 @@
 #include "spire/security_input/security_input.hpp"
 
 namespace spire {
-  class security_input_tester;
+  class SecurityInputTester;
 }
 
 #endif

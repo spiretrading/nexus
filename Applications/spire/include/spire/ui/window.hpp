@@ -7,15 +7,15 @@
 namespace spire {
 
   //! A customized window container for top-level windows.
-  class window : public QWidget, QAbstractNativeEventFilter {
+  class Window : public QWidget, QAbstractNativeEventFilter {
     public:
 
-      //! Constructs a window.
+      //! Constructs a Window.
       /*!
         \param body The widget displayed within the window.
         \param parent The parent widget to the window.
       */
-      window(QWidget* body, QWidget* parent = nullptr);
+      Window(QWidget* body, QWidget* parent = nullptr);
 
       //! Sets the icon to display.
       /*!
@@ -59,7 +59,7 @@ namespace spire {
       void paintEvent(QPaintEvent* event) override;
 
     private:
-      enum active_resize_rect {
+      enum ActiveResizeRect {
         NONE = 0,
         TOP = 1,
         RIGHT = 2,
@@ -73,7 +73,7 @@ namespace spire {
       int m_current_active_rect;
       QWidget* m_border;
       QWidget* m_body;
-      title_bar* m_title_bar;
+      TitleBar* m_title_bar;
       bool m_is_resizing;
       QSize m_normal_size;
 

@@ -5,7 +5,7 @@ using namespace spire;
 
 void spire::export_model_as_csv(const QAbstractItemModel& model,
     std::ostream& out) {
-  custom_variant_item_delegate delegate;
+  CustomVariantItemDelegate delegate;
   for(auto i = 0; i < model.columnCount(); ++i) {
     auto title = delegate.displayText(model.headerData(i, Qt::Horizontal,
       Qt::DisplayRole), QLocale());

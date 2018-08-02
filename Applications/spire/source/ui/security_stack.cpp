@@ -3,7 +3,7 @@
 using namespace Nexus;
 using namespace spire;
 
-void security_stack::push(Nexus::Security s) {
+void SecurityStack::push(Nexus::Security s) {
   if(s == Security()) {
     return;
   }
@@ -16,7 +16,7 @@ void security_stack::push(Nexus::Security s) {
   }
 }
 
-Security security_stack::push_front(Security s) {
+Security SecurityStack::push_front(Security s) {
   while(!m_securities.empty()) {
     auto top = std::move(m_securities.front());
     m_securities.pop_front();
@@ -28,7 +28,7 @@ Security security_stack::push_front(Security s) {
   return {};
 }
 
-Security security_stack::push_back(Security s) {
+Security SecurityStack::push_back(Security s) {
   while(!m_securities.empty()) {
     auto bottom = std::move(m_securities.back());
     m_securities.pop_back();

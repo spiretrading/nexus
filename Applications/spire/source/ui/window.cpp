@@ -42,7 +42,7 @@ namespace {
   }
 }
 
-window::window(QWidget* body, QWidget* parent)
+Window::Window(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body),
       m_is_resizing(false) {
@@ -63,7 +63,7 @@ window::window(QWidget* body, QWidget* parent)
   auto border_layout = new QVBoxLayout(m_border);
   border_layout->setMargin(scale_width(1));
   border_layout->setSpacing(0);
-  m_title_bar = new title_bar(m_body, m_border);
+  m_title_bar = new TitleBar(m_body, m_border);
   border_layout->addWidget(m_title_bar);
   border_layout->addWidget(m_body);
   QWidget::window()->installEventFilter(this);
@@ -71,20 +71,20 @@ window::window(QWidget* body, QWidget* parent)
   qApp->installNativeEventFilter(this);
 }
 
-void window::set_icon(const QImage& icon) {
+void Window::set_icon(const QImage& icon) {
   m_title_bar->set_icon(icon);
 }
 
-void window::set_icon(const QImage& icon, const QImage& unfocused_icon) {
+void Window::set_icon(const QImage& icon, const QImage& unfocused_icon) {
   m_title_bar->set_icon(icon, unfocused_icon);
 }
 
-void window::set_svg_icon(const QString& icon_path) {
+void Window::set_svg_icon(const QString& icon_path) {
   set_icon(make_svg_window_icon(icon_path));
   QWidget::window()->setWindowIcon(QIcon(icon_path));
 }
 
-void window::set_svg_icon(const QString& icon_path,
+void Window::set_svg_icon(const QString& icon_path,
     const QString& unfocused_icon_path) {
   set_icon(make_svg_window_icon(icon_path),
     make_svg_window_icon(unfocused_icon_path));
@@ -92,7 +92,7 @@ void window::set_svg_icon(const QString& icon_path,
 }
 
 #ifdef Q_OS_WIN
-bool window::nativeEventFilter(const QByteArray& event_type, void* message,
+bool Window::nativeEventFilter(const QByteArray& event_type, void* message,
     long* result) {
   auto msg = static_cast<::MSG*>(message);
   auto handle = reinterpret_cast<::HWND>(QWidget::window()->effectiveWinId());
@@ -142,13 +142,13 @@ bool window::nativeEventFilter(const QByteArray& event_type, void* message,
   return false;
 }
 #else
-bool window::nativeEventFilter(const QByteArray& event_type, void* message,
+bool Window::nativeEventFilter(const QByteArray& event_type, void* message,
     long* result) {
   return false;
 }
 #endif
 
-bool window::event(QEvent* e) {
+bool Window::event(QEvent* e) {
   if(e->type() == QEvent::HoverMove) {
     auto hover = static_cast<QHoverEvent*>(e);
     if(m_is_resizing) {
@@ -158,7 +158,7 @@ bool window::event(QEvent* e) {
     }
     return true;
   } else if(e->type() == QEvent::HoverLeave) {
-    m_current_active_rect = active_resize_rect::NONE;
+    m_current_active_rect = ActiveResizeRect::NONE;
     setCursor(Qt::ArrowCursor);
     return true;
   } else if(e->type() == QEvent::WindowActivate) {
@@ -169,7 +169,7 @@ bool window::event(QEvent* e) {
   return QWidget::event(e);
 }
 
-bool window::eventFilter(QObject* watched, QEvent* event) {
+bool Window::eventFilter(QObject* watched, QEvent* event) {
   if(watched == QWidget::window()) {
     if(event->type() == QEvent::WindowStateChange) {
       if(QWidget::window()->isMaximized()) {
@@ -190,21 +190,21 @@ bool window::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-void window::mousePressEvent(QMouseEvent* event) {
+void Window::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     update_resize_cursor(event->pos());
-    if(m_current_active_rect != active_resize_rect::NONE) {
+    if(m_current_active_rect != ActiveResizeRect::NONE) {
       m_is_resizing = true;
     }
   }
 }
 
-void window::mouseReleaseEvent(QMouseEvent* event) {
+void Window::mouseReleaseEvent(QMouseEvent* event) {
   m_is_resizing = false;
   update_resize_cursor(event->pos());
 }
 
-void window::paintEvent(QPaintEvent* event) {
+void Window::paintEvent(QPaintEvent* event) {
   if(QWidget::window()->isMaximized()) {
     return;
   }
@@ -261,7 +261,7 @@ void window::paintEvent(QPaintEvent* event) {
   QWidget::paintEvent(event);
 }
 
-void window::handle_resize() {
+void Window::handle_resize() {
   auto g = QWidget::window()->geometry();
   auto p = QCursor::pos();
   auto container_delta = g.size() - m_body->size();
@@ -271,28 +271,28 @@ void window::handle_resize() {
     std::max(m_title_bar->minimumWidth(),
     m_title_bar->layout()->minimumSize().width()))), m_body->minimumHeight()) +
     container_delta + QSize(4, 0);
-  if(m_current_active_rect == active_resize_rect::TOP ||
-      m_current_active_rect == active_resize_rect::TOP_LEFT ||
-      m_current_active_rect == active_resize_rect::TOP_RIGHT) {
+  if(m_current_active_rect == ActiveResizeRect::TOP ||
+      m_current_active_rect == ActiveResizeRect::TOP_LEFT ||
+      m_current_active_rect == ActiveResizeRect::TOP_RIGHT) {
     auto min_y = g.bottom() - max_size.height() + 1;
     auto max_y = g.bottom() - min_size.height() + 1;
     g.setY(std::max(min_y, std::min(max_y, p.y())));
-  } else if(m_current_active_rect == active_resize_rect::BOTTOM ||
-      m_current_active_rect == active_resize_rect::BOTTOM_LEFT ||
-      m_current_active_rect == active_resize_rect::BOTTOM_RIGHT) {
+  } else if(m_current_active_rect == ActiveResizeRect::BOTTOM ||
+      m_current_active_rect == ActiveResizeRect::BOTTOM_LEFT ||
+      m_current_active_rect == ActiveResizeRect::BOTTOM_RIGHT) {
     auto min_y = g.top() + min_size.height() - 1;
     auto max_y = g.top() + max_size.height() - 1;
     g.setBottom(std::max(min_y, std::min(max_y, p.y())));
   }
-  if(m_current_active_rect == active_resize_rect::LEFT ||
-      m_current_active_rect == active_resize_rect::TOP_LEFT ||
-      m_current_active_rect == active_resize_rect::BOTTOM_LEFT) {
+  if(m_current_active_rect == ActiveResizeRect::LEFT ||
+      m_current_active_rect == ActiveResizeRect::TOP_LEFT ||
+      m_current_active_rect == ActiveResizeRect::BOTTOM_LEFT) {
     auto min_x = g.right() - max_size.width() + 1;
     auto max_x = g.right() - min_size.width() + 1;
     g.setX(std::min(max_x, std::max(min_x, p.x())));
-  } else if(m_current_active_rect == active_resize_rect::RIGHT ||
-      m_current_active_rect == active_resize_rect::TOP_RIGHT ||
-      m_current_active_rect == active_resize_rect::BOTTOM_RIGHT) {
+  } else if(m_current_active_rect == ActiveResizeRect::RIGHT ||
+      m_current_active_rect == ActiveResizeRect::TOP_RIGHT ||
+      m_current_active_rect == ActiveResizeRect::BOTTOM_RIGHT) {
     auto min_x = g.x() + min_size.width() - 1;
     auto max_x = g.x() + max_size.width() - 1;
     g.setRight(std::max(min_x, std::min(max_x, p.x())));
@@ -300,51 +300,51 @@ void window::handle_resize() {
   QWidget::window()->setGeometry(g);
 }
 
-void window::set_border_stylesheet(const QColor& color) {
+void Window::set_border_stylesheet(const QColor& color) {
   m_border->setStyleSheet(QString(R"(
     #window_border {
       border: %1px solid %3 %2px solid %3;
     })").arg(scale_height(1)).arg(scale_width(1)).arg(color.name()));
 }
 
-void window::update_resize_cursor(const QPoint& pos) {
-  m_current_active_rect = active_resize_rect::NONE;
+void Window::update_resize_cursor(const QPoint& pos) {
+  m_current_active_rect = ActiveResizeRect::NONE;
   if(!QWidget::window()->isMaximized() &&
       (m_body->sizePolicy().horizontalPolicy() != QSizePolicy::Fixed ||
       m_body->sizePolicy().verticalPolicy() != QSizePolicy::Fixed)) {
     auto resize_width = scale_width(PADDING_SIZE);
     if(pos.x() <= resize_width &&
         m_body->sizePolicy().horizontalPolicy() != QSizePolicy::Fixed) {
-      m_current_active_rect |= active_resize_rect::LEFT;
+      m_current_active_rect |= ActiveResizeRect::LEFT;
     } else if(pos.x() >= width() - resize_width &&
         m_body->sizePolicy().horizontalPolicy() != QSizePolicy::Fixed) {
-      m_current_active_rect |= active_resize_rect::RIGHT;
+      m_current_active_rect |= ActiveResizeRect::RIGHT;
     }
     auto resize_height = scale_height(PADDING_SIZE);
     if(pos.y() <= resize_height &&
         m_body->sizePolicy().verticalPolicy() != QSizePolicy::Fixed) {
-      m_current_active_rect |= active_resize_rect::TOP;
+      m_current_active_rect |= ActiveResizeRect::TOP;
     } else if(pos.y() >= height() - resize_height &&
         m_body->sizePolicy().verticalPolicy() != QSizePolicy::Fixed) {
-      m_current_active_rect |= active_resize_rect::BOTTOM;
+      m_current_active_rect |= ActiveResizeRect::BOTTOM;
     }
   }
   auto cursor_shape = [&] {
-    if(m_current_active_rect == active_resize_rect::TOP) {
+    if(m_current_active_rect == ActiveResizeRect::TOP) {
       return Qt::SizeVerCursor;
-    } else if(m_current_active_rect == active_resize_rect::TOP_RIGHT) {
+    } else if(m_current_active_rect == ActiveResizeRect::TOP_RIGHT) {
       return Qt::SizeBDiagCursor;
-    } else if(m_current_active_rect == active_resize_rect::RIGHT) {
+    } else if(m_current_active_rect == ActiveResizeRect::RIGHT) {
       return Qt::SizeHorCursor;
-    } else if(m_current_active_rect == active_resize_rect::BOTTOM_RIGHT) {
+    } else if(m_current_active_rect == ActiveResizeRect::BOTTOM_RIGHT) {
       return Qt::SizeFDiagCursor;
-    } else if(m_current_active_rect == active_resize_rect::BOTTOM) {
+    } else if(m_current_active_rect == ActiveResizeRect::BOTTOM) {
       return Qt::SizeVerCursor;
-    } else if(m_current_active_rect == active_resize_rect::BOTTOM_LEFT) {
+    } else if(m_current_active_rect == ActiveResizeRect::BOTTOM_LEFT) {
       return Qt::SizeBDiagCursor;
-    } else if(m_current_active_rect == active_resize_rect::LEFT) {
+    } else if(m_current_active_rect == ActiveResizeRect::LEFT) {
       return Qt::SizeHorCursor;
-    } else if(m_current_active_rect == active_resize_rect::TOP_LEFT) {
+    } else if(m_current_active_rect == ActiveResizeRect::TOP_LEFT) {
       return Qt::SizeFDiagCursor;
     }
     return Qt::ArrowCursor;

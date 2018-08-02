@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
   auto account = DirectoryEntry::MakeAccount(1, "demo_account");
   ToolbarWindow tw(model, account);
   tw.show();
-  toolbar_ui_tester tester(&tw, model);
+  ToolbarUiTester tester(&tw, model);
   tester.show();
   application->exec();
 }

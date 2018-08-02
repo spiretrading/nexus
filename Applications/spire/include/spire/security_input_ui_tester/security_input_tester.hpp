@@ -8,11 +8,11 @@
 namespace spire {
 
   //! Tester class for SecurityInputDialog.
-  class security_input_tester : public QListWidget {
+  class SecurityInputTester : public QListWidget {
     public:
       
-      //! Constructs an empty security_input_tester.
-      security_input_tester(QWidget* parent = nullptr);
+      //! Constructs an empty SecurityInputTester.
+      SecurityInputTester(QWidget* parent = nullptr);
 
     protected:
       void closeEvent(QCloseEvent* event) override;

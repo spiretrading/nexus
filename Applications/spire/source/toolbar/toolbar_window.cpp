@@ -23,7 +23,7 @@ ToolbarWindow::ToolbarWindow(RecentlyClosedModel& model,
   m_body->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   auto window_layout = new QHBoxLayout(this);
   window_layout->setContentsMargins({});
-  m_window = new spire::window(m_body, this);
+  m_window = new spire::Window(m_body, this);
   m_window->set_svg_icon(":/icons/spire-icon-black.svg",
     ":/icons/spire-icon-grey.svg");
   window_layout->addWidget(m_window);
@@ -62,52 +62,52 @@ ToolbarWindow::ToolbarWindow(RecentlyClosedModel& model,
   button_layout->setContentsMargins({});
   button_layout->setSpacing(0);
   auto window_button_size = scale(20, 20);
-  m_account_button = new icon_button(
+  m_account_button = new IconButton(
     imageFromSvg(":/icons/account-light-purple.svg", window_button_size),
     imageFromSvg(":/icons/account-purple.svg", window_button_size), m_body);
   m_account_button->setToolTip(tr("Account"));
   button_layout->addWidget(m_account_button);
-  m_key_bindings_button = new icon_button(
+  m_key_bindings_button = new IconButton(
     imageFromSvg(":/icons/key-bindings-light-purple.svg", window_button_size),
     imageFromSvg(":/icons/key-bindings-purple.svg", window_button_size),
     m_body);
   m_key_bindings_button->setToolTip(tr("Key Bindings"));
   button_layout->addWidget(m_key_bindings_button);
-  m_canvas_button = new icon_button(
+  m_canvas_button = new IconButton(
     imageFromSvg(":/icons/canvas-light-purple.svg", window_button_size),
     imageFromSvg(":/icons/canvas-purple.svg", window_button_size), m_body);
   m_canvas_button->setToolTip(tr("Canvas"));
   button_layout->addWidget(m_canvas_button);
-  m_book_view_button = new icon_button(
+  m_book_view_button = new IconButton(
     imageFromSvg(":/icons/bookview-light-purple.svg", window_button_size),
     imageFromSvg(":/icons/bookview-purple.svg", window_button_size), m_body);
   m_book_view_button->setToolTip(tr("Book View"));
   button_layout->addWidget(m_book_view_button);
-  m_time_and_sales_button = new icon_button(
+  m_time_and_sales_button = new IconButton(
     imageFromSvg(":/icons/time-sale-light-purple.svg", window_button_size),
     imageFromSvg(":/icons/time-sale-purple.svg", window_button_size), m_body);
   m_time_and_sales_button->setToolTip(tr("Time and Sales"));
   m_time_and_sales_button->connect_clicked_signal(
     [=] { on_open_window(RecentlyClosedModel::Type::TIME_AND_SALE); });
   button_layout->addWidget(m_time_and_sales_button);
-  m_chart_button = new icon_button(
+  m_chart_button = new IconButton(
     imageFromSvg(":/icons/chart-light-purple.svg", window_button_size),
     imageFromSvg(":/icons/chart-purple.svg", window_button_size), m_body);
   m_chart_button->setToolTip(tr("Chart"));
   button_layout->addWidget(m_chart_button);
-  m_dashboard_button = new icon_button(
+  m_dashboard_button = new IconButton(
     imageFromSvg(":/icons/dashboard-light-purple.svg", window_button_size),
     imageFromSvg(":/icons/dashboard-purple.svg", window_button_size), m_body);
   m_dashboard_button->setToolTip(tr("Dashboard"));
   button_layout->addWidget(m_dashboard_button);
-  m_order_imbalances_button = new icon_button(
+  m_order_imbalances_button = new IconButton(
     imageFromSvg(":/icons/order-imbalances-light-purple.svg",
       window_button_size),
     imageFromSvg(":/icons/order-imbalances-purple.svg", window_button_size),
     m_body);
   m_order_imbalances_button->setToolTip(tr("Order Imbalances"));
   button_layout->addWidget(m_order_imbalances_button);
-  m_blotter_button = new icon_button(
+  m_blotter_button = new IconButton(
     imageFromSvg(":/icons/blotter-light-purple.svg", window_button_size),
     imageFromSvg(":/icons/blotter-purple.svg", window_button_size), m_body);
   m_blotter_button->setToolTip(tr("Blotter"));

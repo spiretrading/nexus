@@ -32,7 +32,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
   m_body->setStyleSheet("background-color: #FFFFFF;");
   auto window_layout = new QHBoxLayout(this);
   window_layout->setContentsMargins({});
-  auto window = new spire::window(m_body, this);
+  auto window = new spire::Window(m_body, this);
   setWindowTitle(tr("Time and Sales"));
   window->set_svg_icon(":/icons/time-sale-black.svg",
     ":/icons/time-sale-grey.svg");
@@ -129,7 +129,7 @@ void TimeAndSalesWindow::contextMenuEvent(QContextMenuEvent* event) {
     context_menu.addAction(&export_action);
     context_menu.setFixedWidth(scale_width(140));
     context_menu.setWindowFlag(Qt::NoDropShadowWindowHint);
-    drop_shadow context_menu_shadow(true, true, &context_menu);
+    DropShadow context_menu_shadow(true, true, &context_menu);
     context_menu.setStyleSheet(QString(R"(
       QMenu {
         background-color: #FFFFFF;

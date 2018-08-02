@@ -32,12 +32,12 @@ namespace spire {
     private:
       QListWidget* m_band_list_widget;
       QString m_band_list_stylesheet;
-      flat_button* m_band_color_button;
-      flat_button* m_gradient_start_button;
-      flat_button* m_gradient_end_button;
-      check_box* m_show_grid_lines_check_box;
+      FlatButton* m_band_color_button;
+      FlatButton* m_gradient_start_button;
+      FlatButton* m_gradient_end_button;
+      CheckBox* m_show_grid_lines_check_box;
 
-      void set_color_button_stylesheet(flat_button* button,
+      void set_color_button_stylesheet(FlatButton* button,
         const QColor& color);
       void update_band_list_font(const QFont& font);
       void update_band_list_gradient();

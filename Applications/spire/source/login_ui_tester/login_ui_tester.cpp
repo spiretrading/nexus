@@ -8,7 +8,7 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace spire;
 
-login_ui_tester::login_ui_tester(spire::LoginWindow* login, QWidget* parent)
+LoginUiTester::LoginUiTester(spire::LoginWindow* login, QWidget* parent)
     : QWidget(parent),
       m_login_window(login) {
   setFixedSize(scale(480, 270));
@@ -33,7 +33,7 @@ login_ui_tester::login_ui_tester(spire::LoginWindow* login, QWidget* parent)
   layout->addWidget(m_server_unavailable_button);
 }
 
-bool login_ui_tester::eventFilter(QObject* receiver, QEvent* event) {
+bool LoginUiTester::eventFilter(QObject* receiver, QEvent* event) {
   if(event->type() == QEvent::MouseButtonRelease && event->type() != QEvent::Move) {
     if(receiver == m_accept_button) {
       m_login_window->set_state(LoginWindow::State::NONE);

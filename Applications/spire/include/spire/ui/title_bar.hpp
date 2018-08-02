@@ -8,7 +8,7 @@
 namespace spire {
 
   //! Displays a window's title bar.
-  class title_bar : public QWidget, public QAbstractNativeEventFilter {
+  class TitleBar : public QWidget, public QAbstractNativeEventFilter {
     public:
 
       //! Constructs a title bar.
@@ -17,7 +17,7 @@ namespace spire {
                     when changing the window state.
         \param parent The parent widget.
       */
-      title_bar(QWidget* body, QWidget* parent = nullptr);
+      TitleBar(QWidget* body, QWidget* parent = nullptr);
 
       //! Constructs a title bar.
       /*!
@@ -26,7 +26,7 @@ namespace spire {
                     when changing the window state.
         \param parent The parent widget.
       */
-      title_bar(const QImage& icon, QWidget* body, QWidget* parent = nullptr);
+      TitleBar(const QImage& icon, QWidget* body, QWidget* parent = nullptr);
 
       //! Constructs a title bar.
       /*!
@@ -36,7 +36,7 @@ namespace spire {
                     when changing the window state.
         \param parent The parent widget.
       */
-      title_bar(const QImage& icon, const QImage& unfocused_icon,
+      TitleBar(const QImage& icon, const QImage& unfocused_icon,
         QWidget* body, QWidget* parent = nullptr);
 
       //! Sets the icon to display.
@@ -64,14 +64,14 @@ namespace spire {
       void resizeEvent(QResizeEvent* event) override;
 
     private:
-      icon_button* m_icon;
+      IconButton* m_icon;
       QImage m_default_icon;
       QImage m_unfocused_icon;
       QLabel* m_title_label;
-      icon_button* m_minimize_button;
-      icon_button* m_maximize_button;
-      icon_button* m_restore_button;
-      icon_button* m_close_button;
+      IconButton* m_minimize_button;
+      IconButton* m_maximize_button;
+      IconButton* m_restore_button;
+      IconButton* m_close_button;
       bool m_is_dragging;
       QPoint m_last_mouse_pos;
       QWidget* m_body;

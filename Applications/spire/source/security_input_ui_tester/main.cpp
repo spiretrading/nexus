@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
   application->setOrganizationName(QObject::tr("Eidolon Systems Ltd"));
   application->setApplicationName(QObject::tr("Security Input UI Tester"));
   initialize_resources();
-  security_input_tester tester;
+  SecurityInputTester tester;
   tester.show();
   application->exec();
 }

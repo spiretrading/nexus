@@ -10,15 +10,15 @@ namespace spire {
 
   //! Displays a window to simulate account login, rejection, and server
   //  unavailable status'.
-  class login_ui_tester : public QWidget {
+  class LoginUiTester : public QWidget {
     public:
 
-    //! Constructs the login_ui_tester.
+    //! Constructs the LoginUiTester.
     /*!
       \param window The LoginWindow that this widget will interact with.
       \param frame The top-
     */
-    login_ui_tester(spire::LoginWindow* login, QWidget* parent = nullptr);
+    LoginUiTester(spire::LoginWindow* login, QWidget* parent = nullptr);
 
     protected:
       bool eventFilter(QObject* receiver, QEvent* event);

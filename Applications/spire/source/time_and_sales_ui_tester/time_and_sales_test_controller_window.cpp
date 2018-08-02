@@ -13,13 +13,13 @@ using namespace Nexus;
 using namespace spire;
 using PriceRange = TimeAndSalesProperties::PriceRange;
 
-time_and_sales_test_controller_window::time_and_sales_test_controller_window(
+TimeAndSalesTestControllerWindow::TimeAndSalesTestControllerWindow(
     TimeAndSalesWindow* window, TimerThreadPool& timer_thread_pool)
     : m_window(window),
       m_timer_thread_pool(&timer_thread_pool) {
   m_window->connect_security_change_signal(
     [=] (const auto& s) { security_changed(s); });
-  m_model = std::make_shared<periodic_time_and_sales_model>(Security(),
+  m_model = std::make_shared<PeriodicTimeAndSalesModel>(Security(),
     *m_timer_thread_pool);
   m_model->set_price(Money(Quantity(20)));
   m_model->set_price_range(PriceRange::AT_ASK);
@@ -64,23 +64,23 @@ time_and_sales_test_controller_window::time_and_sales_test_controller_window(
   m_loading_time_spin_box->setMaximum(100000);
   m_loading_time_spin_box->setValue(1000);
   connect(m_loading_time_spin_box, &QSpinBox::editingFinished,
-    this, &time_and_sales_test_controller_window::update_loading_time);
+    this, &TimeAndSalesTestControllerWindow::update_loading_time);
   layout->addWidget(m_loading_time_spin_box, 3, 1);
   auto data_loaded_check_box_label = new QLabel("All Data Loaded", this);
   layout->addWidget(data_loaded_check_box_label, 4, 0);
   m_all_data_loaded_check_box = new QCheckBox(this);
   connect(m_all_data_loaded_check_box, &QCheckBox::toggled, this,
-    &time_and_sales_test_controller_window::update_data_loaded_check_box);
+    &TimeAndSalesTestControllerWindow::update_data_loaded_check_box);
   layout->addWidget(m_all_data_loaded_check_box, 4, 1);
 }
 
-void time_and_sales_test_controller_window::security_changed(
+void TimeAndSalesTestControllerWindow::security_changed(
     const Security& security) {
   auto price = m_model->get_price();
   auto price_range = m_model->get_price_range();
   auto period = m_model->get_period();
   auto load_duration = m_model->get_load_duration();
-  m_model = std::make_shared<periodic_time_and_sales_model>(security,
+  m_model = std::make_shared<PeriodicTimeAndSalesModel>(security,
     *m_timer_thread_pool);
   m_model->set_price(price);
   m_model->set_price_range(price_range);
@@ -89,7 +89,7 @@ void time_and_sales_test_controller_window::security_changed(
   m_window->set_model(m_model);
 }
 
-void time_and_sales_test_controller_window::update_data_loaded_check_box() {
+void TimeAndSalesTestControllerWindow::update_data_loaded_check_box() {
   if(m_all_data_loaded_check_box->isChecked()) {
     m_model->set_load_duration(boost::posix_time::pos_infin);
   } else {
@@ -98,25 +98,25 @@ void time_and_sales_test_controller_window::update_data_loaded_check_box() {
   }
 }
 
-void time_and_sales_test_controller_window::update_loading_time() {
+void TimeAndSalesTestControllerWindow::update_loading_time() {
   m_model->set_load_duration(boost::posix_time::milliseconds(
     m_loading_time_spin_box->value()));
 }
 
-void time_and_sales_test_controller_window::update_price(double price) {
+void TimeAndSalesTestControllerWindow::update_price(double price) {
   m_model->set_price(Money(Quantity(price)));
 }
 
-void time_and_sales_test_controller_window::update_price_range(
+void TimeAndSalesTestControllerWindow::update_price_range(
     PriceRange range) {
   m_model->set_price_range(range);
 }
 
-void time_and_sales_test_controller_window::update_period(int ms) {
+void TimeAndSalesTestControllerWindow::update_period(int ms) {
   m_model->set_period(boost::posix_time::milliseconds(ms));
 }
 
-PriceRange time_and_sales_test_controller_window::get_price_range(
+PriceRange TimeAndSalesTestControllerWindow::get_price_range(
     const QString& range) {
   if(range == "Unknown") {
     return PriceRange::UNKNOWN;

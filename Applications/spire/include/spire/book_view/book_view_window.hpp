@@ -63,7 +63,7 @@ namespace spire {
       mutable ClosedSignal m_closed_signal;
       BookViewProperties m_properties;
       SecurityInputModel* m_input_model;
-      security_stack m_securities;
+      SecurityStack m_securities;
       Nexus::Security m_current_security;
       QWidget* m_body;
       QVBoxLayout* m_layout;

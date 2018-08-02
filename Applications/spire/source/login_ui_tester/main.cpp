@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
   initialize_resources();
   LoginWindow login(SPIRE_VERSION);
   login.show();
-  login_ui_tester tester(&login);
+  LoginUiTester tester(&login);
   login.installEventFilter(&tester);
   tester.setGeometry(login.pos().x(),
     login.pos().y() + login.height() + 100, 0, 0);

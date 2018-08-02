@@ -64,7 +64,7 @@ namespace spire {
       TimeAndSalesProperties m_properties;
       SecurityInputModel* m_input_model;
       boost::optional<TimeAndSalesWindowModel> m_model;
-      security_stack m_securities;
+      SecurityStack m_securities;
       Nexus::Security m_current_security;
       QWidget* m_body;
       std::unique_ptr<QLabel> m_empty_window_label;

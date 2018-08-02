@@ -7,7 +7,7 @@
 
 using namespace spire;
 
-toolbar_ui_tester::toolbar_ui_tester(ToolbarWindow* window,
+ToolbarUiTester::ToolbarUiTester(ToolbarWindow* window,
     RecentlyClosedModel& model,
     QWidget* parent)
     : QWidget(parent),
@@ -32,19 +32,19 @@ toolbar_ui_tester::toolbar_ui_tester(ToolbarWindow* window,
   m_add_button->setStyleSheet("background-color: #33FF33;");
   layout->addWidget(m_add_button);
   connect(m_add_button, &QPushButton::clicked, this,
-    &toolbar_ui_tester::add_item);
+    &ToolbarUiTester::add_item);
   window->connect_reopen_signal([&] (auto& e) {remove_item(e);});
   window->installEventFilter(this);
 }
 
-bool toolbar_ui_tester::eventFilter(QObject* receiver, QEvent* event) {
+bool ToolbarUiTester::eventFilter(QObject* receiver, QEvent* event) {
   if(event->type() == QEvent::Close) {
     close();
   }
   return QWidget::eventFilter(receiver, event);
 }
 
-void toolbar_ui_tester::add_item() {
+void ToolbarUiTester::add_item() {
   if(!m_text_line_edit->text().isEmpty()) {
     if(m_book_view_radio->isChecked()) {
       m_recently_closed_model->add(RecentlyClosedModel::Type::BOOK_VIEW,
@@ -56,6 +56,6 @@ void toolbar_ui_tester::add_item() {
   }
 }
 
-void toolbar_ui_tester::remove_item(const RecentlyClosedModel::Entry& e) {
+void ToolbarUiTester::remove_item(const RecentlyClosedModel::Entry& e) {
   m_recently_closed_model->remove(e);
 }

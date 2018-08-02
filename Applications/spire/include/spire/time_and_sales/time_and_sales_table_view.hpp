@@ -47,7 +47,7 @@ namespace spire {
       QTimer m_h_scroll_bar_timer;
       QTimer m_v_scroll_bar_timer;
       std::unique_ptr<SnapshotLoadingWidget> m_loading_widget;
-      std::unique_ptr<overlay_widget> m_transition_widget;
+      std::unique_ptr<OverlayWidget> m_transition_widget;
 
       void fade_out_horizontal_scroll_bar();
       void fade_out_vertical_scroll_bar();

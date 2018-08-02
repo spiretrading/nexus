@@ -30,8 +30,8 @@ namespace {
         any_cast<std::string>(value)));
     } else if(value.type() == typeid(CurrencyId)) {
       return QVariant::fromValue(any_cast<CurrencyId>(value));
-    } else if(value.type() == typeid(market_token)) {
-      return QVariant::fromValue(any_cast<market_token>(value));
+    } else if(value.type() == typeid(MarketToken)) {
+      return QVariant::fromValue(any_cast<MarketToken>(value));
     } else if(value.type() == typeid(Money)) {
       return QVariant::fromValue(any_cast<Money>(value));
     } else if(value.type() == typeid(Quantity)) {
@@ -42,8 +42,8 @@ namespace {
       return QVariant::fromValue(any_cast<Task::State>(value));
     } else if(value.type() == typeid(OrderType)) {
       return QVariant::fromValue(any_cast<OrderType>(value));
-    } else if(value.type() == typeid(position_side_token)) {
-      return QVariant::fromValue(any_cast<position_side_token>(value));
+    } else if(value.type() == typeid(PositionSideToken)) {
+      return QVariant::fromValue(any_cast<PositionSideToken>(value));
     } else if(value.type() == typeid(Security)) {
       return QVariant::fromValue(any_cast<Security>(value));
     } else if(value.type() == typeid(Side)) {
@@ -65,13 +65,13 @@ namespace {
   }
 }
 
-market_token::market_token(MarketCode code)
+MarketToken::MarketToken(MarketCode code)
     : m_code(code) {}
 
-position_side_token::position_side_token(Side side)
+PositionSideToken::PositionSideToken(Side side)
     : m_side(side) {}
 
-QString position_side_token::to_string() const {
+QString PositionSideToken::to_string() const {
   if(m_side == Side::BID) {
     return QObject::tr("Long");
   } else if(m_side == Side::ASK) {
@@ -107,10 +107,10 @@ posix_time::ptime spire::to_ptime(const QDateTime& time) {
 
 void spire::register_custom_qt_variants() {}
 
-custom_variant_item_delegate::custom_variant_item_delegate(QObject* parent)
+CustomVariantItemDelegate::CustomVariantItemDelegate(QObject* parent)
     : QStyledItemDelegate(parent) {}
 
-QString custom_variant_item_delegate::displayText(const QVariant& value,
+QString CustomVariantItemDelegate::displayText(const QVariant& value,
     const QLocale& locale) const {
   if(value.canConvert<ptime>()) {
     auto time_value = ToLocalTime(value.value<ptime>());
@@ -127,9 +127,9 @@ QString custom_variant_item_delegate::displayText(const QVariant& value,
     auto& entry = GetDefaultCurrencyDatabase().FromId(
       value.value<CurrencyId>());
     return QString::fromStdString(entry.m_code.GetData());
-  } else if(value.canConvert<market_token>()) {
+  } else if(value.canConvert<MarketToken>()) {
     auto& entry = GetDefaultMarketDatabase().FromCode(
-      value.value<market_token>().m_code);
+      value.value<MarketToken>().m_code);
     return QString::fromStdString(entry.m_displayName);
   } else if(value.canConvert<Money>()) {
     return QString::fromStdString(value.value<Money>().ToString());
@@ -146,8 +146,8 @@ QString custom_variant_item_delegate::displayText(const QVariant& value,
     return QString::fromStdString(ToString(state));
   } else if(value.canConvert<OrderType>()) {
     return QString::fromStdString(ToString(value.value<OrderType>()));
-  } else if(value.canConvert<position_side_token>()) {
-    return value.value<position_side_token>().to_string();
+  } else if(value.canConvert<PositionSideToken>()) {
+    return value.value<PositionSideToken>().to_string();
   } else if(value.canConvert<Security>()) {
     return QString::fromStdString(ToWildCardString(value.value<Security>(),
       GetDefaultMarketDatabase(), GetDefaultCountryDatabase()));
@@ -163,13 +163,13 @@ QString custom_variant_item_delegate::displayText(const QVariant& value,
   return QStyledItemDelegate::displayText(value, locale);
 }
 
-custom_variant_sort_filter_proxy_model::custom_variant_sort_filter_proxy_model(
+CustomVariantSortFilterProxyModel::CustomVariantSortFilterProxyModel(
     QObject* parent)
     : QSortFilterProxyModel(parent) {
   setDynamicSortFilter(true);
 }
 
-bool custom_variant_sort_filter_proxy_model::lessThan(const QModelIndex& left,
+bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
     const QModelIndex& right) const {
   auto left_variant = sourceModel()->data(left, sortRole());
   if(left_variant.canConvert<any>()) {
@@ -219,14 +219,14 @@ bool custom_variant_sort_filter_proxy_model::lessThan(const QModelIndex& left,
     auto& rightEntry = GetDefaultCurrencyDatabase().FromId(
       right_variant.value<CurrencyId>());
     return leftEntry.m_code < rightEntry.m_code;
-  } else if(left_variant.canConvert<position_side_token>()) {
-    return compare(left_variant.value<position_side_token>().to_string(),
-      right_variant.value<position_side_token>().to_string(), left, right);
-  } else if(left_variant.canConvert<market_token>()) {
+  } else if(left_variant.canConvert<PositionSideToken>()) {
+    return compare(left_variant.value<PositionSideToken>().to_string(),
+      right_variant.value<PositionSideToken>().to_string(), left, right);
+  } else if(left_variant.canConvert<MarketToken>()) {
     auto& leftEntry = GetDefaultMarketDatabase().FromCode(
-      left_variant.value<market_token>().m_code);
+      left_variant.value<MarketToken>().m_code);
     auto& rightEntry = GetDefaultMarketDatabase().FromCode(
-      right_variant.value<market_token>().m_code);
+      right_variant.value<MarketToken>().m_code);
     return leftEntry.m_displayName < rightEntry.m_displayName;
   }
   if(left_variant == right_variant) {

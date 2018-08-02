@@ -7,7 +7,7 @@
 using namespace boost::signals2;
 using namespace spire;
 
-properties_window_buttons_widget::properties_window_buttons_widget(
+PropertiesWindowButtonsWidget::PropertiesWindowButtonsWidget(
     QWidget* parent)
     : QWidget(parent) {
   setFixedHeight(scale_height(78));
@@ -20,7 +20,7 @@ properties_window_buttons_widget::properties_window_buttons_widget(
   left_layout->setContentsMargins({});
   left_layout->setHorizontalSpacing(scale_width(8));
   left_layout->setVerticalSpacing(scale_height(8));
-  auto save_as_default_button = new flat_button(tr("Save As Default"));
+  auto save_as_default_button = new FlatButton(tr("Save As Default"));
   QFont generic_button_font;
   generic_button_font.setFamily("Roboto");
   generic_button_font.setPixelSize(scale_height(12));
@@ -38,14 +38,14 @@ properties_window_buttons_widget::properties_window_buttons_widget(
   save_as_default_button->set_focus_style(generic_button_focus_style);
   save_as_default_button->connect_clicked_signal(m_save_as_default_signal);
   left_layout->addWidget(save_as_default_button, 0, 0);
-  auto load_default_button = new flat_button(tr("Load Default"));
+  auto load_default_button = new FlatButton(tr("Load Default"));
   load_default_button->setFont(generic_button_font);
   load_default_button->set_style(generic_button_style);
   load_default_button->set_hover_style(generic_button_hover_style);
   load_default_button->set_focus_style(generic_button_focus_style);
   load_default_button->connect_clicked_signal(m_load_default_signal);
   left_layout->addWidget(load_default_button, 1, 0);
-  auto reset_default_button = new flat_button(tr("Reset Default"));
+  auto reset_default_button = new FlatButton(tr("Reset Default"));
   reset_default_button->setFont(generic_button_font);
   reset_default_button->set_style(generic_button_style);
   reset_default_button->set_hover_style(generic_button_hover_style);
@@ -60,7 +60,7 @@ properties_window_buttons_widget::properties_window_buttons_widget(
   right_layout->setContentsMargins({});
   right_layout->setHorizontalSpacing(scale_width(8));
   right_layout->setVerticalSpacing(scale_height(8));
-  auto apply_button = new flat_button(tr("Apply"));
+  auto apply_button = new FlatButton(tr("Apply"));
   apply_button->setFont(generic_button_font);
   apply_button->set_style(generic_button_style);
   apply_button->set_hover_style(generic_button_hover_style);
@@ -68,21 +68,21 @@ properties_window_buttons_widget::properties_window_buttons_widget(
   apply_button->connect_clicked_signal(m_apply_signal);
   right_layout->addWidget(apply_button, 0, 0);
   setTabOrder(reset_default_button, apply_button);
-  auto apply_to_all_button = new flat_button(tr("Apply To All"));
+  auto apply_to_all_button = new FlatButton(tr("Apply To All"));
   apply_to_all_button->setFont(generic_button_font);
   apply_to_all_button->set_style(generic_button_style);
   apply_to_all_button->set_hover_style(generic_button_hover_style);
   apply_to_all_button->set_focus_style(generic_button_focus_style);
   apply_to_all_button->connect_clicked_signal(m_apply_to_all_signal);
   right_layout->addWidget(apply_to_all_button, 0, 1);
-  auto ok_button = new flat_button(tr("OK"));
+  auto ok_button = new FlatButton(tr("OK"));
   ok_button->setFont(generic_button_font);
   ok_button->set_style(generic_button_style);
   ok_button->set_hover_style(generic_button_hover_style);
   ok_button->set_focus_style(generic_button_focus_style);
   ok_button->connect_clicked_signal(m_ok_signal);
   right_layout->addWidget(ok_button, 1, 0);
-  auto cancel_button = new flat_button(tr("Cancel"));
+  auto cancel_button = new FlatButton(tr("Cancel"));
   cancel_button->setFont(generic_button_font);
   cancel_button->set_style(generic_button_style);
   cancel_button->set_hover_style(generic_button_hover_style);
@@ -92,37 +92,37 @@ properties_window_buttons_widget::properties_window_buttons_widget(
   main_layout->addWidget(right_widget);
 }
 
-connection properties_window_buttons_widget::connect_save_as_default_signal(
-    const clicked_signal::slot_type& slot) const {
+connection PropertiesWindowButtonsWidget::connect_save_as_default_signal(
+    const ClickedSignal::slot_type& slot) const {
   return m_save_as_default_signal.connect(slot);
 }
 
-connection properties_window_buttons_widget::connect_load_default_signal(
-    const clicked_signal::slot_type& slot) const {
+connection PropertiesWindowButtonsWidget::connect_load_default_signal(
+    const ClickedSignal::slot_type& slot) const {
   return m_load_default_signal.connect(slot);
 }
 
-connection properties_window_buttons_widget::connect_reset_default_signal(
-    const clicked_signal::slot_type& slot) const {
+connection PropertiesWindowButtonsWidget::connect_reset_default_signal(
+    const ClickedSignal::slot_type& slot) const {
   return m_reset_default_signal.connect(slot);
 }
 
-connection properties_window_buttons_widget::connect_apply_to_all_signal(
-    const clicked_signal::slot_type& slot) const {
+connection PropertiesWindowButtonsWidget::connect_apply_to_all_signal(
+    const ClickedSignal::slot_type& slot) const {
   return m_apply_to_all_signal.connect(slot);
 }
 
-connection properties_window_buttons_widget::connect_cancel_signal(
-    const clicked_signal::slot_type& slot) const {
+connection PropertiesWindowButtonsWidget::connect_cancel_signal(
+    const ClickedSignal::slot_type& slot) const {
   return m_cancel_signal.connect(slot);
 }
 
-connection properties_window_buttons_widget::connect_apply_signal(
-    const clicked_signal::slot_type& slot) const {
+connection PropertiesWindowButtonsWidget::connect_apply_signal(
+    const ClickedSignal::slot_type& slot) const {
   return m_apply_signal.connect(slot);
 }
 
-connection properties_window_buttons_widget::connect_ok_signal(
-    const clicked_signal::slot_type& slot) const {
+connection PropertiesWindowButtonsWidget::connect_ok_signal(
+    const ClickedSignal::slot_type& slot) const {
   return m_ok_signal.connect(slot);
 }

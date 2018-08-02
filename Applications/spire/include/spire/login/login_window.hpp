@@ -75,13 +75,13 @@ namespace spire {
       mutable LoginSignal m_login_signal;
       mutable CancelSignal m_cancel_signal;
       State m_state;
-      std::unique_ptr<drop_shadow> m_shadow;
+      std::unique_ptr<DropShadow> m_shadow;
       QLabel* m_logo_widget;
       QLabel* m_status_label;
       QLineEdit* m_username_line_edit;
       QLineEdit* m_password_line_edit;
-      flat_button* m_sign_in_button;
-      icon_button* m_exit_button;
+      FlatButton* m_sign_in_button;
+      IconButton* m_exit_button;
       bool m_is_dragging;
       QPoint m_last_pos;
       ChromaHashWidget* m_chroma_hash_widget;

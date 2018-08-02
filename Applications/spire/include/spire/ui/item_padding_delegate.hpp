@@ -6,7 +6,7 @@
 namespace spire {
 
   //! Implements Qt' item delegate to support custom item padding.
-  class item_padding_delegate : public QStyledItemDelegate {
+  class ItemPaddingDelegate : public QStyledItemDelegate {
     public:
 
       //! Constructs an item delegate for custom padding.
@@ -15,7 +15,7 @@ namespace spire {
         \param delegate The delegate to add padding to.
         \param parent The parent to this delegate instance.
       */
-      item_padding_delegate(int padding, QStyledItemDelegate* delegate,
+      ItemPaddingDelegate(int padding, QStyledItemDelegate* delegate,
         QObject* parent = nullptr);
 
       QString displayText(const QVariant& value,

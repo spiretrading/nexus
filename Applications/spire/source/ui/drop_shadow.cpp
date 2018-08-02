@@ -25,13 +25,13 @@ namespace {
     QGradientStop(1, Qt::transparent)});
 }
 
-drop_shadow::drop_shadow(QWidget* parent)
-    : drop_shadow(false, true, parent) {}
+DropShadow::DropShadow(QWidget* parent)
+    : DropShadow(false, true, parent) {}
 
-drop_shadow::drop_shadow(bool has_top, QWidget* parent)
-    : drop_shadow(false, has_top, parent) {}
+DropShadow::DropShadow(bool has_top, QWidget* parent)
+    : DropShadow(false, has_top, parent) {}
 
-drop_shadow::drop_shadow(bool is_menu_shadow, bool has_top, QWidget* parent)
+DropShadow::DropShadow(bool is_menu_shadow, bool has_top, QWidget* parent)
     : QWidget(nullptr, Qt::FramelessWindowHint | Qt::Tool),
       m_parent(parent),
       m_has_top(has_top),
@@ -42,14 +42,14 @@ drop_shadow::drop_shadow(bool is_menu_shadow, bool has_top, QWidget* parent)
   m_parent->window()->installEventFilter(this);
 }
 
-bool drop_shadow::event(QEvent* event) {
+bool DropShadow::event(QEvent* event) {
   if(event->type() == QEvent::WindowActivate) {
     m_parent->activateWindow();
   }
   return QWidget::event(event);
 }
 
-bool drop_shadow::eventFilter(QObject* watched, QEvent* event) {
+bool DropShadow::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::Move) {
     follow_parent();
   } else if(event->type() == QEvent::Resize) {
@@ -65,12 +65,12 @@ bool drop_shadow::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-void drop_shadow::hideEvent(QHideEvent* event) {
+void DropShadow::hideEvent(QHideEvent* event) {
   m_is_visible = false;
 }
 
 #ifdef Q_OS_WIN
-void drop_shadow::paintEvent(QPaintEvent* event) {
+void DropShadow::paintEvent(QPaintEvent* event) {
   if(!m_is_visible) {
     follow_parent();
     m_is_visible = true;
@@ -109,7 +109,7 @@ void drop_shadow::paintEvent(QPaintEvent* event) {
   QWidget::paintEvent(event);
 }
 #else
-void drop_shadow::paintEvent(QPaintEvent* event) {
+void DropShadow::paintEvent(QPaintEvent* event) {
   if(!m_is_visible) {
     follow_parent();
     m_is_visible = true;
@@ -169,13 +169,13 @@ void drop_shadow::paintEvent(QPaintEvent* event) {
 }
 #endif
 
-void drop_shadow::follow_parent() {
+void DropShadow::follow_parent() {
   auto top_left = m_parent->window()->frameGeometry().topLeft();
   move(top_left.x() - shadow_size().width(),
     top_left.y() - shadow_size().height());
 }
 
-QSize drop_shadow::shadow_size() {
+QSize DropShadow::shadow_size() {
   if(m_is_menu_shadow) {
     return scale(7, 7);
   } else {

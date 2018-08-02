@@ -20,13 +20,13 @@ namespace {
   }
 }
 
-title_bar::title_bar(QWidget* body, QWidget* parent)
-    : title_bar(QImage(), body, parent) {}
+TitleBar::TitleBar(QWidget* body, QWidget* parent)
+    : TitleBar(QImage(), body, parent) {}
 
-title_bar::title_bar(const QImage& icon, QWidget* body, QWidget* parent)
-    : title_bar(icon, icon, body, parent) {}
+TitleBar::TitleBar(const QImage& icon, QWidget* body, QWidget* parent)
+    : TitleBar(icon, icon, body, parent) {}
 
-title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
+TitleBar::TitleBar(const QImage& icon, const QImage& unfocused_icon,
     QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_is_dragging(false),
@@ -38,14 +38,14 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   layout->setSpacing(0);
   if(icon.isNull()) {
     m_default_icon = QImage(ICON_SIZE(), QImage::Format::Format_ARGB32);
-    m_icon = new icon_button(m_default_icon, this);
+    m_icon = new IconButton(m_default_icon, this);
   } else if(unfocused_icon.isNull()) {
     m_default_icon = icon.scaled(ICON_SIZE());
-    m_icon = new icon_button(m_default_icon, this);
+    m_icon = new IconButton(m_default_icon, this);
   } else {
     m_default_icon = icon.scaled(ICON_SIZE());
     m_unfocused_icon = unfocused_icon.scaled(ICON_SIZE());
-    m_icon = new icon_button(m_default_icon, m_unfocused_icon, this);
+    m_icon = new IconButton(m_default_icon, m_unfocused_icon, this);
   }
   m_icon->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_icon->setEnabled(false);
@@ -58,7 +58,7 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
     QSizePolicy::Expanding));
   auto button_size = scale(32, 26);
   auto minimize_box = QRect(translate(11, 12), scale(10, 2));
-  m_minimize_button = new icon_button(
+  m_minimize_button = new IconButton(
     imageFromSvg(":/icons/minimize-black.svg", button_size, minimize_box),
     imageFromSvg(":/icons/minimize-black.svg", button_size, minimize_box),
     imageFromSvg(":/icons/minimize-grey.svg", button_size, minimize_box), this);
@@ -71,7 +71,7 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
     [=] { on_minimize_button_press(); });
   layout->addWidget(m_minimize_button);
   auto maximize_box = QRect(translate(11, 8), scale(10, 10));
-  m_maximize_button = new icon_button(
+  m_maximize_button = new IconButton(
     imageFromSvg(":/icons/maximize-black.svg", button_size, maximize_box),
     imageFromSvg(":/icons/maximize-black.svg", button_size, maximize_box),
     imageFromSvg(":/icons/maximize-grey.svg", button_size, maximize_box), this);
@@ -84,7 +84,7 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
     [=] { on_maximize_button_press(); });
   layout->addWidget(m_maximize_button);
   auto restore_box = QRect(translate(11, 8), scale(10, 10));
-  m_restore_button = new icon_button(
+  m_restore_button = new IconButton(
     imageFromSvg(":/icons/unmaximize-black.svg",
       button_size, restore_box),
     imageFromSvg(":/icons/unmaximize-black.svg", button_size, restore_box),
@@ -97,7 +97,7 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   m_restore_button->hide();
   layout->addWidget(m_restore_button);
   auto close_box = QRect(translate(11, 8), scale(10, 10));
-  m_close_button = new icon_button(
+  m_close_button = new IconButton(
     imageFromSvg(":/icons/close-black.svg", button_size, close_box),
     imageFromSvg(":/icons/close-red.svg", button_size, close_box),
     imageFromSvg(":/icons/close-grey.svg", button_size, close_box),
@@ -115,7 +115,7 @@ title_bar::title_bar(const QImage& icon, const QImage& unfocused_icon,
   qApp->installNativeEventFilter(this);
 }
 
-void title_bar::set_icon(const QImage& icon) {
+void TitleBar::set_icon(const QImage& icon) {
   if(icon.isNull()) {
     m_default_icon = QImage(ICON_SIZE(), QImage::Format::Format_ARGB32);
     set_icon(m_default_icon);
@@ -125,7 +125,7 @@ void title_bar::set_icon(const QImage& icon) {
   m_icon->set_icon(m_default_icon);
 }
 
-void title_bar::set_icon(const QImage& icon, const QImage& unfocused_icon) {
+void TitleBar::set_icon(const QImage& icon, const QImage& unfocused_icon) {
   if(icon.isNull()) {
     m_default_icon = QImage(ICON_SIZE(), QImage::Format::Format_ARGB32);
     m_unfocused_icon = unfocused_icon;
@@ -144,7 +144,7 @@ void title_bar::set_icon(const QImage& icon, const QImage& unfocused_icon) {
 }
 
 #ifdef Q_OS_WIN
-bool title_bar::nativeEventFilter(const QByteArray& event_type, void* message,
+bool TitleBar::nativeEventFilter(const QByteArray& event_type, void* message,
     long* result) {
   auto msg = static_cast<MSG*>(message);
   if(msg->message == WM_SYSCOMMAND &&
@@ -160,13 +160,13 @@ bool title_bar::nativeEventFilter(const QByteArray& event_type, void* message,
   return false;
 }
 #else
-bool title_bar::nativeEventFilter(const QByteArray& event_type, void* message,
+bool TitleBar::nativeEventFilter(const QByteArray& event_type, void* message,
     long* result) {
   return false;
 }
 #endif
 
-bool title_bar::eventFilter(QObject* watched, QEvent* event) {
+bool TitleBar::eventFilter(QObject* watched, QEvent* event) {
   if(watched == window()) {
     if(event->type() == QEvent::WindowDeactivate) {
       set_title_text_stylesheet(QColor("#A0A0A0"));
@@ -187,7 +187,7 @@ bool title_bar::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-void title_bar::mouseDoubleClickEvent(QMouseEvent* event) {
+void TitleBar::mouseDoubleClickEvent(QMouseEvent* event) {
   if(window()->windowFlags().testFlag(Qt::WindowMaximizeButtonHint)) {
     if(window()->isMaximized()) {
       on_restore_button_press();
@@ -197,7 +197,7 @@ void title_bar::mouseDoubleClickEvent(QMouseEvent* event) {
   }
 }
 
-void title_bar::mouseMoveEvent(QMouseEvent* event) {
+void TitleBar::mouseMoveEvent(QMouseEvent* event) {
   if(!m_is_dragging) {
     return;
   }
@@ -213,7 +213,7 @@ void title_bar::mouseMoveEvent(QMouseEvent* event) {
   }
 }
 
-void title_bar::mousePressEvent(QMouseEvent* event)  {
+void TitleBar::mousePressEvent(QMouseEvent* event)  {
   if(m_is_dragging || event->button() != Qt::LeftButton) {
     return;
   }
@@ -221,19 +221,19 @@ void title_bar::mousePressEvent(QMouseEvent* event)  {
   m_last_mouse_pos = event->globalPos();
 }
 
-void title_bar::mouseReleaseEvent(QMouseEvent* event) {
+void TitleBar::mouseReleaseEvent(QMouseEvent* event) {
   if(event->button() != Qt::LeftButton) {
     return;
   }
   m_is_dragging = false;
 }
 
-void title_bar::resizeEvent(QResizeEvent* event) {
+void TitleBar::resizeEvent(QResizeEvent* event) {
   on_window_title_change(window()->windowTitle());
 }
 
 #ifdef Q_OS_WIN
-void title_bar::drag_restore(const QPoint& pos) {
+void TitleBar::drag_restore(const QPoint& pos) {
   WINDOWPLACEMENT placement;
   placement.length = sizeof(WINDOWPLACEMENT);
   GetWindowPlacement(reinterpret_cast<HWND>(window()->winId()), &placement);
@@ -257,7 +257,7 @@ void title_bar::drag_restore(const QPoint& pos) {
   on_restore_button_press();
 }
 #else
-void title_bar::drag_restore(const QPoint& pos) {
+void TitleBar::drag_restore(const QPoint& pos) {
   on_restore_button_press();
   auto mouse_screen_pos = QApplication::desktop()->screenGeometry(pos);
   auto mouse_screen_x = pos.x() - mouse_screen_pos.left();
@@ -271,31 +271,31 @@ void title_bar::drag_restore(const QPoint& pos) {
 }
 #endif
 
-void title_bar::on_window_title_change(const QString& title) {
+void TitleBar::on_window_title_change(const QString& title) {
   QFontMetrics metrics(m_title_label->font());
   auto shortened_text = metrics.elidedText(title,
     Qt::ElideRight, m_title_label->width());
   m_title_label->setText(shortened_text);
 }
 
-void title_bar::on_minimize_button_press() {
+void TitleBar::on_minimize_button_press() {
   window()->showMinimized();
 }
 
-void title_bar::on_maximize_button_press() {
+void TitleBar::on_maximize_button_press() {
   m_restore_geometry = window()->geometry();
   window()->showMaximized();
 }
 
-void title_bar::on_restore_button_press() {
+void TitleBar::on_restore_button_press() {
   window()->showNormal();
 }
 
-void title_bar::on_close_button_press() {
+void TitleBar::on_close_button_press() {
   window()->close();
 }
 
-void title_bar::set_title_text_stylesheet(const QColor& font_color) {
+void TitleBar::set_title_text_stylesheet(const QColor& font_color) {
   m_title_label->setStyleSheet(QString(
     R"(color: %2;
        font-family: Roboto;

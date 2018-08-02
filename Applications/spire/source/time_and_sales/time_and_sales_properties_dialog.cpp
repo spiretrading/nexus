@@ -29,7 +29,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   m_body->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   auto window_layout = new QHBoxLayout(this);
   window_layout->setContentsMargins({});
-  auto window = new spire::window(m_body, this);
+  auto window = new spire::Window(m_body, this);
   window->set_svg_icon(":/icons/time-sale-black.svg",
     ":/icons/time-sale-grey.svg");
   this->window()->setWindowTitle(tr("Properties"));
@@ -99,7 +99,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   color_settings_layout->addWidget(text_color_label);
   color_settings_layout->setStretchFactor(text_color_label, 14);
   color_settings_layout->addStretch(4);
-  m_text_color_button = new flat_button(this);
+  m_text_color_button = new FlatButton(this);
   m_text_color_button->connect_clicked_signal(
     [=] { set_text_color(); });
   set_color_button_stylesheet(m_text_color_button,
@@ -113,7 +113,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   color_settings_layout->addWidget(band_color_label);
   color_settings_layout->setStretchFactor(band_color_label, 14);
   color_settings_layout->addStretch(4);
-  m_band_color_button = new flat_button(this);
+  m_band_color_button = new FlatButton(this);
   m_band_color_button->connect_clicked_signal(
     [=] { set_band_color(); });
   set_color_button_stylesheet(m_band_color_button, properties.get_band_color(
@@ -128,7 +128,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   font_layout->setContentsMargins({});
   font_layout->setSpacing(0);
   font_layout->addStretch(18);
-  auto edit_font_button = new flat_button(tr("Change Font"), this);
+  auto edit_font_button = new FlatButton(tr("Change Font"), this);
   edit_font_button->connect_clicked_signal([=] { set_font(); });
   QFont generic_button_font;
   generic_button_font.setFamily("Roboto");
@@ -149,7 +149,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   font_layout->addWidget(edit_font_button);
   font_layout->setStretchFactor(edit_font_button, 26);
   font_layout->addStretch(33);
-  m_show_grid_check_box = new check_box(tr("Show Grid"), this);
+  m_show_grid_check_box = new CheckBox(tr("Show Grid"), this);
   auto check_box_text_style = QString(R"(
     color: black;
     font-family: Roboto;
@@ -184,7 +184,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   auto buttons_layout = new QHBoxLayout();
   buttons_layout->setContentsMargins({});
   buttons_layout->setSpacing(0);
-  auto buttons_widget = new properties_window_buttons_widget(this);
+  auto buttons_widget = new PropertiesWindowButtonsWidget(this);
   buttons_widget->connect_save_as_default_signal(
     [=] { m_save_default_signal(get_properties()); });
   buttons_widget->connect_apply_to_all_signal(
@@ -297,7 +297,7 @@ void TimeAndSalesPropertiesDialog::set_text_color() {
 }
 
 void TimeAndSalesPropertiesDialog::set_color_button_stylesheet(
-    flat_button* button, const QColor& color) {
+    FlatButton* button, const QColor& color) {
   auto s = button->get_style();
   s.m_background_color = color;
   s.m_border_color = QColor("#C8C8C8");

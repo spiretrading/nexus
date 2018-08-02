@@ -3,7 +3,7 @@
 #include "spire/time_and_sales/time_and_sales.hpp"
 
 namespace spire {
-  class time_and_sales_test_controller_window;
+  class TimeAndSalesTestControllerWindow;
 }
 
 #endif

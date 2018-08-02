@@ -115,8 +115,8 @@ TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
       border: none;
       gridline-color: #C8C8C8;)");
   m_table->installEventFilter(this);
-  m_table->setItemDelegate(new item_padding_delegate(scale_width(5),
-    new custom_variant_item_delegate(), this));
+  m_table->setItemDelegate(new ItemPaddingDelegate(scale_width(5),
+    new CustomVariantItemDelegate(), this));
   m_layout->addWidget(m_table);
   m_h_scroll_bar_timer.setInterval(SCROLL_BAR_FADE_TIME_MS);
   connect(&m_h_scroll_bar_timer, &QTimer::timeout, this,
@@ -136,7 +136,7 @@ void TimeAndSalesTableView::set_model(TimeAndSalesWindowModel* model) {
   }
   m_model->connect_begin_loading_signal([=] { show_loading_widget(); });  
   m_model->connect_end_loading_signal([=] { on_end_loading_signal(); });
-  auto filter = new custom_variant_sort_filter_proxy_model(this);
+  auto filter = new CustomVariantSortFilterProxyModel(this);
   filter->setSourceModel(m_model);
   connect(filter, &QAbstractItemModel::rowsAboutToBeInserted, this,
     &TimeAndSalesTableView::on_rows_about_to_be_inserted);
@@ -176,7 +176,7 @@ void TimeAndSalesTableView::show_transition_widget() {
       QString("padding-top: %1px;").arg(scale_height(50)));
     backing_widget->setAlignment(Qt::AlignHCenter);
     backing_widget->movie()->start();
-    m_transition_widget = std::make_unique<overlay_widget>(
+    m_transition_widget = std::make_unique<OverlayWidget>(
       this, backing_widget, this);
   }
 }

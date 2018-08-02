@@ -7,7 +7,7 @@
 using namespace Nexus;
 using namespace spire;
 
-security_input_tester::security_input_tester(QWidget* parent)
+SecurityInputTester::SecurityInputTester(QWidget* parent)
     : QListWidget(parent) {
   setFixedSize(scale(100, 250));
   m_model.add(SecurityInfo(
@@ -33,11 +33,11 @@ security_input_tester::security_input_tester(QWidget* parent)
     "Morgan Stanley", "Finance"));
 }
 
-void security_input_tester::closeEvent(QCloseEvent* event) {
+void SecurityInputTester::closeEvent(QCloseEvent* event) {
   m_dialog->close();
 }
 
-void security_input_tester::showEvent(QShowEvent* event) {
+void SecurityInputTester::showEvent(QShowEvent* event) {
   QTimer::singleShot(0, this,
     [=] {
       auto positioned = false;

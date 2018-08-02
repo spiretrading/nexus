@@ -25,7 +25,7 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
   m_body->setStyleSheet("background-color: #FFFFFF;");
   auto window_layout = new QVBoxLayout(this);
   window_layout->setContentsMargins({});
-  auto window = new spire::window(m_body, this);
+  auto window = new spire::Window(m_body, this);
   setWindowTitle(tr("Book View"));
   window->set_svg_icon(":/icons/bookview-black.svg",
     ":/icons/bookview-grey.svg");
@@ -133,7 +133,7 @@ void BookViewWindow::show_context_menu(const QPoint& pos) {
   context_menu.addAction(&properties_action);
   context_menu.setFixedSize(scale(140, 28));
   context_menu.setWindowFlag(Qt::NoDropShadowWindowHint);
-  drop_shadow context_menu_shadow(true, true, &context_menu);
+  DropShadow context_menu_shadow(true, true, &context_menu);
   context_menu.setStyleSheet(QString(R"(
     QMenu {
       background-color: #FFFFFF;

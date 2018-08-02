@@ -21,37 +21,37 @@
 namespace spire {
 
   /*! Wraps a MarketCode so that it can be displayed in a model. */
-  struct market_token {
+  struct MarketToken {
 
     //! Wraps the MarketCode.
     Nexus::MarketCode m_code;
 
     //! Constructs a default token.
-    market_token() = default;
+    MarketToken() = default;
 
     //! Wraps a MarketCode.
     /*!
       \param code The MarketCode to wrap.
     */
-    market_token(Nexus::MarketCode code);
+    MarketToken(Nexus::MarketCode code);
   };
 
   /*! Wraps a Side so that it can be displayed within the context of a
       position.
    */
-  struct position_side_token {
+  struct PositionSideToken {
 
     //! Wraps the Side.
     Nexus::Side m_side;
 
     //! Constructs a default token.
-    position_side_token() = default;
+    PositionSideToken() = default;
 
     //! Wraps a Side.
     /*!
       \param side The Side to wrap.
     */
-    position_side_token(Nexus::Side side);
+    PositionSideToken(Nexus::Side side);
 
     //! Returns the string representation of this Side.
     QString to_string() const;
@@ -70,8 +70,8 @@ Q_DECLARE_METATYPE(Nexus::Quantity);
 Q_DECLARE_METATYPE(Nexus::Security);
 Q_DECLARE_METATYPE(Nexus::Side);
 Q_DECLARE_METATYPE(Nexus::TimeInForce);
-Q_DECLARE_METATYPE(spire::market_token);
-Q_DECLARE_METATYPE(spire::position_side_token);
+Q_DECLARE_METATYPE(spire::MarketToken);
+Q_DECLARE_METATYPE(spire::PositionSideToken);
 
 namespace spire {
 
@@ -91,28 +91,28 @@ namespace spire {
   void register_custom_qt_variants();
 
   /*! Implements Qt's item delegate to support the custom QVariant types. */
-  class custom_variant_item_delegate : public QStyledItemDelegate {
+  class CustomVariantItemDelegate : public QStyledItemDelegate {
     public:
 
       //! Constructs an item delegate for custom variants.
       /*!
         \param parent The parent object.
       */
-      custom_variant_item_delegate(QObject* parent = nullptr);
+      CustomVariantItemDelegate(QObject* parent = nullptr);
 
       QString displayText(const QVariant& value,
         const QLocale& locale) const override;
   };
 
   /*! Implements Qt's proxy model to support the custom QVariant types. */
-  class custom_variant_sort_filter_proxy_model : public QSortFilterProxyModel {
+  class CustomVariantSortFilterProxyModel : public QSortFilterProxyModel {
     public:
 
       //! Constructs a proxy model for custom variants.
       /*!
         \param parent The parent object.
       */
-      custom_variant_sort_filter_proxy_model(QObject* parent = nullptr);
+      CustomVariantSortFilterProxyModel(QObject* parent = nullptr);
 
     protected:
       bool lessThan(const QModelIndex& left,

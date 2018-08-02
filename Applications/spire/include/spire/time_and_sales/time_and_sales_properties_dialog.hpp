@@ -60,12 +60,12 @@ namespace spire {
       TimeAndSalesProperties m_properties;
       QWidget* m_body;
       QListWidget* m_band_list;
-      flat_button* m_band_color_button;
-      flat_button* m_text_color_button;
-      check_box* m_show_grid_check_box;
+      FlatButton* m_band_color_button;
+      FlatButton* m_text_color_button;
+      CheckBox* m_show_grid_check_box;
 
       void set_band_color();
-      void set_color_button_stylesheet(flat_button* button,
+      void set_color_button_stylesheet(FlatButton* button,
         const QColor& color);
       void set_color_settings_stylesheet(int band_index);
       void set_font();

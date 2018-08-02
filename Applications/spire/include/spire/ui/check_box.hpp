@@ -5,25 +5,25 @@
 namespace spire {
 
   //! A check box with a custom focus style
-  class check_box : public QCheckBox {
+  class CheckBox : public QCheckBox {
     public:
 
-      //! Constructs a check_box
+      //! Constructs a CheckBox
       /*!
         \param text The text to display next to the check box.
         \param parent The parent to this widget.
       */
-      check_box(const QString& text, QWidget* parent = nullptr);
+      CheckBox(const QString& text, QWidget* parent = nullptr);
 
-      //! Sets the check_box's stylesheet. Note that these styles are
+      //! Sets the CheckBox's stylesheet. Note that these styles are
       //! wrapped in the appropriate CSS selectors, so only the properties
       //! need to be specified.
       /*
         \param base_style The text style.
         \param indicator_style The default box style.
-        \param checked_style The box style when the check_box is selected.
+        \param checked_style The box style when the CheckBox is selected.
         \param hover_style The style when the box or text is hovered.
-        \param focused_style The style when the check_box has keyboard focus.
+        \param focused_style The style when the CheckBox has keyboard focus.
       */
       void set_stylesheet(const QString& text_style,
         const QString& indicator_style, const QString& checked_style,

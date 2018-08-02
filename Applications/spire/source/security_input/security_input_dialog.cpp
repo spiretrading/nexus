@@ -21,7 +21,7 @@ SecurityInputDialog::SecurityInputDialog(SecurityInputModel& model,
     : QDialog(parent, Qt::FramelessWindowHint | flags),
       m_is_dragging(false) {
   setWindowModality(Qt::WindowModal);
-  m_shadow = std::make_unique<drop_shadow>(this);
+  m_shadow = std::make_unique<DropShadow>(this);
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins(scale_width(8), scale_height(6), scale_width(8),
     scale_height(8));

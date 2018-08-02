@@ -6,21 +6,21 @@
 namespace spire {
 
   //! Paints a drop shadow around its parent widget.
-  class drop_shadow : public QWidget {
+  class DropShadow : public QWidget {
     public:
 
       //! Constructs a drop shadow.
       /*!
         \param parent The parent to add the drop shadow to.
       */
-      drop_shadow(QWidget* parent);
+      DropShadow(QWidget* parent);
 
       //! Constructs a drop shadow.
       /*!
         \param has_top True if the top gradient is drawn.
         \param parent The parent to add the drop shadow to.
       */
-      drop_shadow(bool has_top, QWidget* parent);
+      DropShadow(bool has_top, QWidget* parent);
 
       //! Constructs a drop shadow.
       /*!
@@ -29,7 +29,7 @@ namespace spire {
         \param has_top True if the top gradient is drawn.
         \param parent The parent to add the drop shadow to.
       */
-      drop_shadow(bool is_menu_shadow, bool has_top, QWidget* parent);
+      DropShadow(bool is_menu_shadow, bool has_top, QWidget* parent);
 
     protected:
       bool event(QEvent* event) override;

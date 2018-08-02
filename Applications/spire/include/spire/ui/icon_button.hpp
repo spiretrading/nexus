@@ -9,36 +9,36 @@
 namespace spire {
 
   //! Displays a button using an icon.
-  class icon_button : public QAbstractButton {
+  class IconButton : public QAbstractButton {
     public:
 
       //! Signal type for the clicked signal.
-      using clicked_signal = Signal<void ()>;
+      using ClickedSignal = Signal<void ()>;
 
-      //! Constructs an icon_button.
+      //! Constructs an IconButton.
       /*!
         \param icon The icon to show.
-        \param parent The parent QWidget to the icon_button.
+        \param parent The parent QWidget to the IconButton.
       */
-      icon_button(QImage icon, QWidget* parent = nullptr);
+      IconButton(QImage icon, QWidget* parent = nullptr);
 
-      //! Constructs an icon_button with a default icon and a hover icon.
+      //! Constructs an IconButton with a default icon and a hover icon.
       /*!
         \param icon The icon shown when the button is not hovered.
         \param hover_icon The icon shown when the button is hovered.
-        \param parent The parent QWidget to the icon_button.
+        \param parent The parent QWidget to the IconButton.
       */
-      icon_button(QImage icon, QImage hover_icon, QWidget* parent = nullptr);
+      IconButton(QImage icon, QImage hover_icon, QWidget* parent = nullptr);
 
-      //! Constructs an icon_button with a default icon, hover icon, and
+      //! Constructs an IconButton with a default icon, hover icon, and
       //!  blur icon.
       /*!
         \param icon The icon shown when the button is not hovered.
         \param hover_icon The icon shown when the button is hovered.
         \param blur_icon The icon shown when the window lacks focus.
-        \param parent The parent QWidget to the icon_button.
+        \param parent The parent QWidget to the IconButton.
       */
-      icon_button(QImage icon, QImage hover_icon, QImage blur_icon,
+      IconButton(QImage icon, QImage hover_icon, QImage blur_icon,
         QWidget* parent = nullptr);
 
       //! Sets the default stylesheet for the button.
@@ -67,7 +67,7 @@ namespace spire {
 
       //! Connects a slot to the clicked signal.
       boost::signals2::connection connect_clicked_signal(
-        const clicked_signal::slot_type& slot) const;
+        const ClickedSignal::slot_type& slot) const;
 
     protected:
       void enterEvent(QEvent* event) override;
@@ -80,14 +80,14 @@ namespace spire {
       bool event(QEvent* event) override;
 
     private:
-      enum class state {
+      enum class State {
         NORMAL,
         HOVERED,
         BLURRED,
         HOVER_BLURRED
       };
-      mutable clicked_signal m_clicked_signal;
-      state m_state;
+      mutable ClickedSignal m_clicked_signal;
+      State m_state;
       QImage m_icon;
       QImage m_hover_icon;
       QImage m_blur_icon;

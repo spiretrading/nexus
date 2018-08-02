@@ -27,7 +27,7 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
   body->setStyleSheet("background-color: #F5F5F5;");
   auto window_layout = new QHBoxLayout(this);
   window_layout->setContentsMargins({});
-  auto window = new spire::window(body, this);
+  auto window = new spire::Window(body, this);
   setWindowTitle(tr("Properties"));
   window->set_svg_icon(":/icons/bookview-black.svg",
     ":/icons/bookview-grey.svg");
@@ -87,7 +87,7 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
   m_tab_widget->tabBar()->installEventFilter(this);
   connect(m_tab_widget->tabBar(), &QTabBar::tabBarClicked, this,
     &BookViewPropertiesDialog::on_tab_bar_clicked);
-  auto button_group_widget = new properties_window_buttons_widget(this);
+  auto button_group_widget = new PropertiesWindowButtonsWidget(this);
   button_group_widget->connect_apply_signal(
     [=] { m_apply_signal(get_properties()); });
   button_group_widget->connect_apply_to_all_signal(
