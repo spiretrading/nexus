@@ -5,6 +5,10 @@
 using namespace Spire;
 
 LabeledDataWidget::LabeledDataWidget(const QString& label_text,
+  QWidget* parent)
+  : LabeledDataWidget(label_text, "", parent) {}
+
+LabeledDataWidget::LabeledDataWidget(const QString& label_text,
     const QString& data_text, QWidget* parent)
     : QWidget(parent) {
   auto layout = new QHBoxLayout(this);

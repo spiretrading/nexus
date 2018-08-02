@@ -10,25 +10,21 @@ TechnicalsPanel::TechnicalsPanel(QWidget* parent)
   m_layout = new QGridLayout(this);
   m_layout->setContentsMargins(scale_width(8), 0, scale_width(8), 0);
   m_layout->setSpacing(0);
-  m_high_label_widget = new LabeledDataWidget(tr("H"), tr("0.00"),
-    this);
+  m_high_label_widget = new LabeledDataWidget(tr("H"), this);
   m_layout->addWidget(m_high_label_widget, 0, 0);
   m_layout->setColumnStretch(0, 100);
-  m_open_label_widget = new LabeledDataWidget(tr("O"), tr("0.00"),
-    this);
+  m_open_label_widget = new LabeledDataWidget(tr("O"), this);
   m_layout->addWidget(m_open_label_widget, 0, 1);
   m_layout->setColumnStretch(1, 100);
   m_defaults_label_widget = new LabeledDataWidget(tr("D"),
     QString("100%1%2").arg(tr("x")).arg("100"), this);
   m_layout->addWidget(m_defaults_label_widget, 0, 2);
   m_layout->setColumnStretch(2, 1);
-  m_low_label_widget = new LabeledDataWidget(tr("L"), tr("0.00"),
-    this);
+  m_low_label_widget = new LabeledDataWidget(tr("L"), this);
   m_layout->addWidget(m_low_label_widget, 1, 0);
-  m_close_label_widget = new LabeledDataWidget(tr("C"), tr("0.00"),
-    this);
+  m_close_label_widget = new LabeledDataWidget(tr("C"), this);
   m_layout->addWidget(m_close_label_widget, 1, 1);
-  m_volume_label_widget = new LabeledDataWidget(tr("V"), "0", this);
+  m_volume_label_widget = new LabeledDataWidget(tr("V"), this);
   m_layout->addWidget(m_volume_label_widget, 1, 2);
 }
 
