@@ -14,6 +14,37 @@ namespace Spire {
       //! Constructs a TechnicalsPanel.
       TechnicalsPanel(QWidget* parent = nullptr);
 
+      // Sets the text of the close label.
+      /*
+        \param close The new string to display.
+      */
+      void set_close(const QString& close);
+
+      // Sets the text of the high label.
+      /*
+        \param high The new string to display.
+      */
+      void set_high(const QString& high);
+
+      // Sets the text of the low label.
+      /*
+        \param low The new string to display.
+      */
+      void set_low(const QString& low);
+
+      // Sets the text of the open label.
+      /*
+        \param open The new string to display.
+      */
+      void set_open(const QString& open);
+
+
+      // Sets the text of the volume label.
+      /*
+        \param volume The new string to display.
+      */
+      void set_volume(const QString& volume);
+
     protected:
       void resizeEvent(QResizeEvent* event) override;
 

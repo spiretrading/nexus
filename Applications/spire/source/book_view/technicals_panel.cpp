@@ -32,6 +32,26 @@ TechnicalsPanel::TechnicalsPanel(QWidget* parent)
   m_layout->addWidget(m_volume_label_widget, 1, 2);
 }
 
+void TechnicalsPanel::set_close(const QString& close) {
+  m_close_label_widget->set_data_text(close);
+}
+
+void TechnicalsPanel::set_high(const QString& high) {
+  m_high_label_widget->set_data_text(high);
+}
+
+void TechnicalsPanel::set_low(const QString& low) {
+  m_low_label_widget->set_data_text(low);
+}
+
+void TechnicalsPanel::set_open(const QString& open) {
+  m_open_label_widget->set_data_text(open);
+}
+
+void TechnicalsPanel::set_volume(const QString& volume) {
+  m_volume_label_widget->set_data_text(volume);
+}
+
 void TechnicalsPanel::resizeEvent(QResizeEvent* event) {
   auto header_width = width();
   if(header_width <= scale_width(255)) {
