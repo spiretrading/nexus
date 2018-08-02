@@ -43,10 +43,11 @@ int main(int argc, char** argv) {
     "Morgan Stanley", "Finance"));
   auto window = new BookViewWindow(BookViewProperties(), model);
   window->show();
-  auto tester = new BookViewTestControllerWindow(window);
+  auto tester = new BookViewTestControllerWindow(window, timer_thread_pool);
   tester->show();
   tester->move(window->pos().x() + window->width() + 100,
     tester->pos().y());
   window->activateWindow();
+  window->connect_closed_signal([=] { tester->close(); });
   application->exec();
 }
