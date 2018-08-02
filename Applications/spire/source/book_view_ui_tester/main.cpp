@@ -5,6 +5,7 @@
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "spire/security_input/local_security_input_model.hpp"
 #include "spire/spire/resources.hpp"
+#include "spire/book_view_ui_tester/book_view_test_controller_window.hpp"
 #include "spire/book_view/book_view_window.hpp"
 
 using namespace Beam;
@@ -40,8 +41,12 @@ int main(int argc, char** argv) {
   model.add(SecurityInfo(
     Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
     "Morgan Stanley", "Finance"));
-  auto test_window = new BookViewWindow(BookViewProperties(), model);
-  test_window->show();
-  test_window->activateWindow();
+  auto window = new BookViewWindow(BookViewProperties(), model);
+  window->show();
+  auto tester = new BookViewTestControllerWindow(window);
+  tester->show();
+  tester->move(window->pos().x() + window->width() + 100,
+    tester->pos().y());
+  window->activateWindow();
   application->exec();
 }
