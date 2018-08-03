@@ -14,13 +14,13 @@ RandomBookViewModel::RandomBookViewModel(Security security,
     : m_security(std::move(security)),
       m_load_time(load_time),
       m_timer_thread_pool(&timer_thread_pool),
-      m_period(seconds(1)),
+      m_is_loaded(false),
       m_bbo(Quote(100 * Money::ONE, 1000, Side::BID),
         Quote(100 * Money::ONE + Money::CENT, 1000, Side::ASK),
         second_clock::universal_time()),
       m_random_engine(std::random_device()()) {
-  m_timer.setSingleShot(true);
   connect(&m_timer, &QTimer::timeout, [=] { on_timeout(); });
+  set_period(seconds(1));
 }
 
 time_duration RandomBookViewModel::get_period() const {
@@ -29,6 +29,10 @@ time_duration RandomBookViewModel::get_period() const {
 
 void RandomBookViewModel::set_period(time_duration period) {
   m_period = period;
+  m_timer.stop();
+  if(m_period != pos_infin) {
+    m_timer.start(m_period.total_milliseconds());
+  }
 }
 
 const Security& RandomBookViewModel::get_security() const {
@@ -68,7 +72,6 @@ Quantity RandomBookViewModel::get_volume() const {
 }
 
 QtPromise<void> RandomBookViewModel::load() {
-  auto period = m_period;
   return make_qt_promise([=] {
     m_loading_flag.Call(
       [&] {
@@ -78,7 +81,7 @@ QtPromise<void> RandomBookViewModel::load() {
         for(auto i = 0; i < 1000; ++i) {
           update();
         }
-        m_timer.start(period.total_milliseconds());
+        m_is_loaded = true;
       });
   });
 }
@@ -121,6 +124,9 @@ connection RandomBookViewModel::connect_volume_slot(
 void RandomBookViewModel::update() {}
 
 void RandomBookViewModel::on_timeout() {
+  if(!m_is_loaded) {
+    return;
+  }
   update();
   m_timer.start(m_period.total_milliseconds());
 }
