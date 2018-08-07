@@ -208,6 +208,7 @@ void BookViewWindow::on_security_input_reject(
 }
 
 void BookViewWindow::on_data_loaded(Expect<void> value) {
+  m_transition_widget.reset();
   if(m_model->get_close().is_initialized()) {
     m_header_widget->set_close(Beam::ToString(
       m_model->get_close().get()).c_str());
