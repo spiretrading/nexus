@@ -49,7 +49,9 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
 void BookViewWindow::set_model(std::shared_ptr<BookViewModel> model) {
   m_transition_widget.reset();
   QTimer::singleShot(2000, this, [=] { show_transition_widget(); });
-  model->load().then([=] (auto&& value) { on_data_loaded(std::move(value)); });
+  m_data_loaded_promise = model->load();
+  m_data_loaded_promise.then(
+    [=] (auto&& value) { on_data_loaded(std::move(value)); });
   m_model = model;
 }
 

@@ -73,6 +73,7 @@ namespace Spire {
       std::unique_ptr<QLabel> m_empty_window_label;
       std::unique_ptr<TransitionWidget> m_transition_widget;
       QWidget* m_table;
+      QtPromise<void> m_data_loaded_promise;
 
       void set_current(const Nexus::Security& s);
       void show_context_menu(const QPoint& pos);
