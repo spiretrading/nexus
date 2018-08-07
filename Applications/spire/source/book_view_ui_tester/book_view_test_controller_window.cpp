@@ -29,7 +29,8 @@ BookViewTestControllerWindow::BookViewTestControllerWindow(
 void BookViewTestControllerWindow::on_security_changed(
     const Security& security) {
   auto model = std::make_shared<RandomBookViewModel>(security,
-    boost::posix_time::millisec(1000), *m_timer_thread_pool);
+    boost::posix_time::millisec(m_load_time_spin_box->value()),
+    *m_timer_thread_pool);
   m_window->set_model(model);
 }
 
