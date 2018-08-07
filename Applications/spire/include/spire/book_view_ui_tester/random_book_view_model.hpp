@@ -1,5 +1,6 @@
 #ifndef SPIRE_RANDOM_BOOK_VIEW_MODEL_HPP
 #define SPIRE_RANDOM_BOOK_VIEW_MODEL_HPP
+#include <atomic>
 #include <random>
 #include <Beam/Threading/CallOnce.hpp>
 #include <Beam/Threading/TimerThreadPool.hpp>
@@ -81,6 +82,7 @@ namespace Spire {
       boost::posix_time::time_duration m_load_time;
       Beam::Threading::TimerThreadPool* m_timer_thread_pool;
       boost::posix_time::time_duration m_period;
+      std::atomic_bool m_is_loaded;
       Nexus::BboQuote m_bbo;
       std::vector<Nexus::BookQuote> m_asks;
       std::vector<Nexus::BookQuote> m_bids;
