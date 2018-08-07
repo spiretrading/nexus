@@ -132,7 +132,7 @@ void TimeAndSalesTableView::set_model(TimeAndSalesWindowModel* model) {
   m_transition_widget.reset();
   m_loading_widget.reset();
   if(m_model->is_loading()) {
-    QTimer::singleShot(1000, this, [=] { show_transition_widget(); });
+    QTimer::singleShot(2000, this, [=] { show_transition_widget(); });
   }
   m_model->connect_begin_loading_signal([=] { show_loading_widget(); });  
   m_model->connect_end_loading_signal([=] { on_end_loading_signal(); });
