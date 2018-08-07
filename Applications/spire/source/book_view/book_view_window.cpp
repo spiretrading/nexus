@@ -21,7 +21,8 @@ using namespace Spire;
 BookViewWindow::BookViewWindow(const BookViewProperties& properties,
     SecurityInputModel& input_model, QWidget* parent)
     : QWidget(parent),
-      m_input_model(&input_model) {
+      m_input_model(&input_model),
+      m_is_data_loaded(false) {
   m_body = new QWidget(this);
   m_body->setMinimumSize(scale(210, 280));
   resize(scale(210, 410));
@@ -50,6 +51,7 @@ void BookViewWindow::set_model(std::shared_ptr<BookViewModel> model) {
   m_transition_widget.reset();
   m_header_widget->reset_labels();
   QTimer::singleShot(2000, this, [=] { show_transition_widget(); });
+  m_is_data_loaded = false;
   m_data_loaded_promise = model->load();
   m_data_loaded_promise.then(
     [=] (auto&& value) { on_data_loaded(std::move(value)); });
@@ -189,7 +191,9 @@ void BookViewWindow::show_properties_dialog() {
 }
 
 void BookViewWindow::show_transition_widget() {
-  m_transition_widget = std::make_unique<TransitionWidget>(m_table);
+  if(!m_is_data_loaded) {
+    m_transition_widget = std::make_unique<TransitionWidget>(m_table);
+  }
 }
 
 void BookViewWindow::on_security_input_accept(
@@ -212,6 +216,7 @@ void BookViewWindow::on_security_input_reject(
 
 void BookViewWindow::on_data_loaded(Expect<void> value) {
   m_transition_widget.reset();
+  m_is_data_loaded = true;
   if(m_model->get_close().is_initialized()) {
     m_header_widget->set_close(Beam::ToString(
       m_model->get_close().get()).c_str());
