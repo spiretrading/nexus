@@ -45,6 +45,9 @@ namespace Spire {
       */
       void set_volume(const QString& volume);
 
+      // Resets the text of all labels to their default values.
+      void reset_labels();
+
     protected:
       void resizeEvent(QResizeEvent* event) override;
 

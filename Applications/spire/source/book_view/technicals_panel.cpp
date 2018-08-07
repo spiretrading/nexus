@@ -48,6 +48,14 @@ void TechnicalsPanel::set_volume(const QString& volume) {
   m_volume_label_widget->set_data_text(volume);
 }
 
+void TechnicalsPanel::reset_labels() {
+  set_close("");
+  set_high("");
+  set_low("");
+  set_open("");
+  set_volume("");
+}
+
 void TechnicalsPanel::resizeEvent(QResizeEvent* event) {
   auto header_width = width();
   if(header_width <= scale_width(255)) {
