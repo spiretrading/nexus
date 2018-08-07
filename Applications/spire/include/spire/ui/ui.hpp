@@ -10,10 +10,10 @@ namespace Spire {
   class DropShadow;
   class FlatButton;
   class IconButton;
-  class OverlayWidget;
   class PropertiesWindowButtonsWidget;
   class SecurityStack;
   class TitleBar;
+  class TransitionWidget;
   class Window;
 
   //! Builds a QImage from an SVG resource where the size of the SVG is equal

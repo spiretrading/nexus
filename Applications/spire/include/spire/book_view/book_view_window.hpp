@@ -71,11 +71,14 @@ namespace Spire {
       TechnicalsPanel* m_header_widget;
       std::unique_ptr<QWidget> m_overlay_widget;
       std::unique_ptr<QLabel> m_empty_window_label;
+      std::unique_ptr<TransitionWidget> m_transition_widget;
+      QWidget* m_table;
 
       void set_current(const Nexus::Security& s);
       void show_context_menu(const QPoint& pos);
       void show_overlay_widget();
       void show_properties_dialog();
+      void show_transition_widget();
       void on_security_input_accept(SecurityInputDialog* dialog);
       void on_security_input_reject(SecurityInputDialog* dialog);
       void on_data_loaded(Beam::Expect<void> value);

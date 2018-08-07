@@ -2,12 +2,14 @@
 #include <QContextMenuEvent>
 #include <QEvent>
 #include <QMenu>
+#include <QTimer>
 #include "spire/book_view/book_view_properties_dialog.hpp"
 #include "spire/book_view/labeled_data_widget.hpp"
 #include "spire/book_view/technicals_panel.hpp"
 #include "spire/security_input/security_input_dialog.hpp"
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/drop_shadow.hpp"
+#include "spire/ui/transition_widget.hpp"
 #include "spire/ui/window.hpp"
 
 using namespace Beam;
@@ -45,9 +47,8 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
 }
 
 void BookViewWindow::set_model(std::shared_ptr<BookViewModel> model) {
-  if(m_empty_window_label != nullptr) {
-    m_empty_window_label.reset();
-  }
+  m_transition_widget.reset();
+  QTimer::singleShot(2000, this, [=] { show_transition_widget(); });
   model->load().then([=] (auto&& value) { on_data_loaded(std::move(value)); });
   m_model = model;
 }
@@ -124,7 +125,8 @@ void BookViewWindow::set_current(const Security& s) {
     m_empty_window_label.reset();
     m_header_widget = new TechnicalsPanel(this);
     m_layout->addWidget(m_header_widget);
-    m_layout->addStretch(1);
+    m_table = new QWidget(this);
+    m_layout->addWidget(m_table);
   }
   m_current_security = s;
   m_change_security_signal(s);
@@ -181,6 +183,10 @@ void BookViewWindow::show_properties_dialog() {
     set_properties(dialog.get_properties());
   }
   m_overlay_widget.reset();
+}
+
+void BookViewWindow::show_transition_widget() {
+  m_transition_widget = std::make_unique<TransitionWidget>(m_table);
 }
 
 void BookViewWindow::on_security_input_accept(
