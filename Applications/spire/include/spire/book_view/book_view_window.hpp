@@ -84,11 +84,6 @@ namespace Spire {
       void on_security_input_accept(SecurityInputDialog* dialog);
       void on_security_input_reject(SecurityInputDialog* dialog);
       void on_data_loaded(Beam::Expect<void> value);
-      void on_close(const Nexus::Money& close);
-      void on_high(const Nexus::Money& high);
-      void on_low(const Nexus::Money& low);
-      void on_open(const Nexus::Money& open);
-      void on_volume(const Nexus::Quantity& volume);
   };
 }
 

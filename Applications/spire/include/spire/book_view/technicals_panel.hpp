@@ -2,6 +2,8 @@
 #define SPIRE_TECHNICALS_PANEL_HPP
 #include <QWidget>
 #include <QGridLayout>
+#include "Nexus/Definitions/Money.hpp"
+#include "Nexus/Definitions/Quantity.hpp"
 #include "spire/book_view/book_view.hpp"
 #include "spire/book_view/labeled_data_widget.hpp"
 
@@ -14,36 +16,11 @@ namespace Spire {
       //! Constructs a TechnicalsPanel.
       TechnicalsPanel(QWidget* parent = nullptr);
 
-      // Sets the text of the close label.
+      //! Sets the model the panel gets its data from.
       /*
-        \param close The new string to display.
+        \param model The associated model.
       */
-      void set_close(const QString& close);
-
-      // Sets the text of the high label.
-      /*
-        \param high The new string to display.
-      */
-      void set_high(const QString& high);
-
-      // Sets the text of the low label.
-      /*
-        \param low The new string to display.
-      */
-      void set_low(const QString& low);
-
-      // Sets the text of the open label.
-      /*
-        \param open The new string to display.
-      */
-      void set_open(const QString& open);
-
-
-      // Sets the text of the volume label.
-      /*
-        \param volume The new string to display.
-      */
-      void set_volume(const QString& volume);
+      void set_model(std::shared_ptr<BookViewModel> model);
 
       // Resets the text of all labels to their default values.
       void reset_labels();
@@ -59,9 +36,15 @@ namespace Spire {
       LabeledDataWidget* m_low_label_widget;
       LabeledDataWidget* m_close_label_widget;
       LabeledDataWidget* m_volume_label_widget;
+      std::shared_ptr<BookViewModel> m_model;
 
       void set_labeled_data_long_form_text();
       void set_labeled_data_short_form_text();
+      void on_close_signal(const Nexus::Money& close);
+      void on_high_signal(const Nexus::Money& high);
+      void on_low_signal(const Nexus::Money& low);
+      void on_open_signal(const Nexus::Money& open);
+      void on_volume_signal(const Nexus::Quantity& volume);
   };
 }
 

@@ -1,6 +1,8 @@
 #include "spire/book_view/technicals_panel.hpp"
+#include "spire/book_view/book_view_model.hpp"
 #include "spire/spire/dimensions.hpp"
 
+using namespace Nexus;
 using namespace Spire;
 
 TechnicalsPanel::TechnicalsPanel(QWidget* parent)
@@ -28,32 +30,47 @@ TechnicalsPanel::TechnicalsPanel(QWidget* parent)
   m_layout->addWidget(m_volume_label_widget, 1, 2);
 }
 
-void TechnicalsPanel::set_close(const QString& close) {
-  m_close_label_widget->set_data_text(close);
-}
-
-void TechnicalsPanel::set_high(const QString& high) {
-  m_high_label_widget->set_data_text(high);
-}
-
-void TechnicalsPanel::set_low(const QString& low) {
-  m_low_label_widget->set_data_text(low);
-}
-
-void TechnicalsPanel::set_open(const QString& open) {
-  m_open_label_widget->set_data_text(open);
-}
-
-void TechnicalsPanel::set_volume(const QString& volume) {
-  m_volume_label_widget->set_data_text(volume);
+void TechnicalsPanel::set_model(std::shared_ptr<BookViewModel> model) {
+  m_model = model;
+  if(m_model->get_close().is_initialized()) {
+    m_close_label_widget->set_data_text(
+      Beam::ToString(m_model->get_close().get()).c_str());
+  } else {
+    m_close_label_widget->set_data_text(tr("N/A"));
+  }
+  if(m_model->get_high().is_initialized()) {
+    m_high_label_widget->set_data_text(
+      Beam::ToString(m_model->get_high().get()).c_str());
+  } else {
+    m_high_label_widget->set_data_text(tr("N/A"));
+  }
+  if(m_model->get_low().is_initialized()) {
+    m_low_label_widget->set_data_text(
+      Beam::ToString(m_model->get_low().get()).c_str());
+  } else {
+    m_low_label_widget->set_data_text(tr("N/A"));
+  }
+  if(m_model->get_open().is_initialized()) {
+    m_open_label_widget->set_data_text(
+      Beam::ToString(m_model->get_open().get()).c_str());
+  } else {
+    m_open_label_widget->set_data_text(tr("N/A"));
+  }
+  m_volume_label_widget->set_data_text(
+    Beam::ToString(m_model->get_volume()).c_str());
+  m_model->connect_close_slot([=] (auto& c) { on_close_signal(c); });
+  m_model->connect_high_slot([=] (auto& h) { on_high_signal(h); });
+  m_model->connect_low_slot([=] (auto& l) { on_low_signal(l); });
+  m_model->connect_open_slot([=] (auto& o) { on_open_signal(o); });
+  m_model->connect_volume_slot([=] (auto& v) { on_volume_signal(v); });
 }
 
 void TechnicalsPanel::reset_labels() {
-  set_close("");
-  set_high("");
-  set_low("");
-  set_open("");
-  set_volume("");
+  m_close_label_widget->set_data_text("");
+  m_high_label_widget->set_data_text("");
+  m_low_label_widget->set_data_text("");
+  m_open_label_widget->set_data_text("");
+  m_volume_label_widget->set_data_text("");
 }
 
 void TechnicalsPanel::resizeEvent(QResizeEvent* event) {
@@ -114,4 +131,24 @@ void TechnicalsPanel::set_labeled_data_short_form_text() {
   m_low_label_widget->set_label_text(tr("L"));
   m_close_label_widget->set_label_text(tr("C"));
   m_volume_label_widget->set_label_text(tr("V"));
+}
+
+void TechnicalsPanel::on_close_signal(const Money& close) {
+  m_close_label_widget->set_data_text(Beam::ToString(close).c_str());
+}
+
+void TechnicalsPanel::on_high_signal(const Money& high) {
+  m_high_label_widget->set_data_text(Beam::ToString(high).c_str());
+}
+
+void TechnicalsPanel::on_low_signal(const Money& low) {
+  m_low_label_widget->set_data_text(Beam::ToString(low).c_str());
+}
+
+void TechnicalsPanel::on_open_signal(const Money& open) {
+  m_open_label_widget->set_data_text(Beam::ToString(open).c_str());
+}
+
+void TechnicalsPanel::on_volume_signal(const Quantity& volume) {
+  m_volume_label_widget->set_data_text(Beam::ToString(volume).c_str());
 }

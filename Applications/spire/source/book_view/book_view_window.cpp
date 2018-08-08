@@ -217,48 +217,5 @@ void BookViewWindow::on_security_input_reject(
 void BookViewWindow::on_data_loaded(Expect<void> value) {
   m_transition_widget.reset();
   m_is_data_loaded = true;
-  if(m_model->get_close().is_initialized()) {
-    m_header_widget->set_close(Beam::ToString(
-      m_model->get_close().get()).c_str());
-  } else {
-    m_header_widget->set_close("N/A");
-  }
-  if(m_model->get_high().is_initialized()) {
-    m_header_widget->set_high(Beam::ToString(
-      m_model->get_high().get()).c_str());
-  } else {
-    m_header_widget->set_high("N/A");
-  }
-  if(m_model->get_low().is_initialized()) {
-    m_header_widget->set_low(Beam::ToString(m_model->get_low().get()).c_str());
-  } else {
-    m_header_widget->set_low("N/A");
-  }
-  if(m_model->get_open().is_initialized()) {
-    m_header_widget->set_open(Beam::ToString(
-      m_model->get_open().get()).c_str());
-  } else {
-    m_header_widget->set_open("N/A");
-  }
-  m_header_widget->set_volume(Beam::ToString(m_model->get_volume()).c_str());
-}
-
-void BookViewWindow::on_close(const Nexus::Money& close) {
-  m_header_widget->set_close(Beam::ToString(close).c_str());
-}
-
-void BookViewWindow::on_high(const Nexus::Money& high) {
-  m_header_widget->set_high(Beam::ToString(high).c_str());
-}
-
-void BookViewWindow::on_low(const Nexus::Money& low) {
-  m_header_widget->set_low(Beam::ToString(low).c_str());
-}
-
-void BookViewWindow::on_open(const Nexus::Money& open) {
-  m_header_widget->set_open(Beam::ToString(open).c_str());
-}
-
-void BookViewWindow::on_volume(const Nexus::Quantity& volume) {
-  m_header_widget->set_volume(Beam::ToString(volume).c_str());
+  m_header_widget->set_model(m_model);
 }
