@@ -49,7 +49,6 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
 
 void BookViewWindow::set_model(std::shared_ptr<BookViewModel> model) {
   m_model = std::move(model);
-  m_transition_widget.reset();
   m_technicals_panel->reset_model();
   QTimer::singleShot(2000, this, [=] { show_transition_widget(); });
   m_is_data_loaded = false;
