@@ -11,7 +11,7 @@ LocalSecurityInputModel::LocalSecurityInputModel()
 void LocalSecurityInputModel::add(SecurityInfo security) {
   auto key = ToString(security.m_security, GetDefaultMarketDatabase());
   auto name = boost::to_upper_copy(security.m_name);
-  m_securities[QString::fromStdString(key)] = security;
+  m_securities[key.c_str()] = security;
   m_securities[name.c_str()] = std::move(security);
 }
 
