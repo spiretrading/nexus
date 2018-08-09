@@ -158,13 +158,13 @@ void ToolbarWindow::entry_added(const RecentlyClosedModel::Entry& e) {
   m_entries.push_back(e);
   switch(e.m_type) {
     case RecentlyClosedModel::Type::BOOK_VIEW: {
-      m_recently_closed_button->add(e.m_identifier.c_str(),
+      m_recently_closed_button->add(QString::fromStdString(e.m_identifier),
         imageFromSvg(QString(":/icons/bookview-black.svg"), icon_size,
           icon_rect));
       break;
     }
     case RecentlyClosedModel::Type::TIME_AND_SALE: {
-      m_recently_closed_button->add(e.m_identifier.c_str(),
+      m_recently_closed_button->add(QString::fromStdString(e.m_identifier),
         imageFromSvg(QString(":/icons/time-sale-black.svg"), icon_size,
           icon_rect));
       break;

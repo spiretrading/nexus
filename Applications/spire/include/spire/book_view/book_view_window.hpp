@@ -68,7 +68,7 @@ namespace Spire {
       Nexus::Security m_current_security;
       QWidget* m_body;
       QVBoxLayout* m_layout;
-      TechnicalsPanel* m_header_widget;
+      TechnicalsPanel* m_technicals_panel;
       std::unique_ptr<QWidget> m_overlay_widget;
       std::unique_ptr<QLabel> m_empty_window_label;
       std::unique_ptr<TransitionWidget> m_transition_widget;

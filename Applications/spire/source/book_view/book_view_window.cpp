@@ -48,14 +48,14 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
 }
 
 void BookViewWindow::set_model(std::shared_ptr<BookViewModel> model) {
+  m_model = std::move(model);
   m_transition_widget.reset();
-  m_header_widget->reset_labels();
+  m_technicals_panel->reset_model();
   QTimer::singleShot(2000, this, [=] { show_transition_widget(); });
   m_is_data_loaded = false;
-  m_data_loaded_promise = model->load();
+  m_data_loaded_promise = m_model->load();
   m_data_loaded_promise.then(
     [=] (auto&& value) { on_data_loaded(std::move(value)); });
-  m_model = model;
 }
 
 const BookViewProperties& BookViewWindow::get_properties() const {
@@ -128,8 +128,8 @@ void BookViewWindow::set_current(const Security& s) {
   }
   if(m_empty_window_label != nullptr) {
     m_empty_window_label.reset();
-    m_header_widget = new TechnicalsPanel(this);
-    m_layout->addWidget(m_header_widget);
+    m_technicals_panel = new TechnicalsPanel(this);
+    m_layout->addWidget(m_technicals_panel);
     m_table = new QWidget(this);
     m_layout->addWidget(m_table);
   }
@@ -217,5 +217,5 @@ void BookViewWindow::on_security_input_reject(
 void BookViewWindow::on_data_loaded(Expect<void> value) {
   m_transition_widget.reset();
   m_is_data_loaded = true;
-  m_header_widget->set_model(m_model);
+  m_technicals_panel->set_model(m_model);
 }
