@@ -30,7 +30,8 @@ QuotePanel::QuotePanel(const std::shared_ptr<BookViewModel>& model, Side side,
   m_price_label->setStyleSheet(QString(R"(
     color: #4B23A0;
     font-family: Roboto;
-    font-size: %1px;)").arg(scale_height(12)));
+    font-size: %1px;
+    font-weight: 550;)").arg(scale_height(12)));
   label_layout->addWidget(m_price_label);
   m_size_label = new QLabel(this);
   m_size_label->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
@@ -38,7 +39,8 @@ QuotePanel::QuotePanel(const std::shared_ptr<BookViewModel>& model, Side side,
     color: #4B23A0;
     font-family: Roboto;
     font-size: %1px;
-    padding-top: %2px;)").arg(scale_height(10)).arg(scale_height(1)));
+    padding-top: %2px;
+    font-weight: 550;)").arg(scale_height(10)).arg(scale_height(1)));
   label_layout->addWidget(m_size_label);
   label_layout->addStretch(1);
   layout->addLayout(label_layout);
