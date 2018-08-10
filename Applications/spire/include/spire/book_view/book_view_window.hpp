@@ -6,6 +6,7 @@
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/security_input/security_input.hpp"
+#include "spire/book_view/bbo_quote_panel.hpp"
 #include "spire/book_view/book_view.hpp"
 #include "spire/book_view/book_view_model.hpp"
 #include "spire/book_view/book_view_properties.hpp"
@@ -69,9 +70,11 @@ namespace Spire {
       QWidget* m_body;
       QVBoxLayout* m_layout;
       TechnicalsPanel* m_technicals_panel;
+      std::unique_ptr<BboQuotePanel> m_bbo_quote_panel;
       std::unique_ptr<QWidget> m_overlay_widget;
       std::unique_ptr<QLabel> m_empty_window_label;
       std::unique_ptr<TransitionWidget> m_transition_widget;
+      QWidget* m_quote_widgets_container;
       QWidget* m_table;
       QtPromise<void> m_data_loaded_promise;
       bool m_is_data_loaded;
