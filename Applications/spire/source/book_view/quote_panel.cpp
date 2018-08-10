@@ -71,18 +71,14 @@ void QuotePanel::on_bbo_quote(const BboQuote& bbo) {
     } else if(bbo.m_bid.m_price < m_current_bbo.m_bid.m_price) {
       set_indicator_color("#FF6F7A");
     }
-    if(bbo.m_bid.m_price != Money()) {
-      set_quote_text(bbo.m_bid.m_price, bbo.m_bid.m_size);
-    }
+    set_quote_text(bbo.m_bid.m_price, bbo.m_bid.m_size);
   } else {
     if(bbo.m_ask.m_price > m_current_bbo.m_ask.m_price) {
       set_indicator_color("#37D186");
     } else if(bbo.m_ask.m_price < m_current_bbo.m_ask.m_price) {
       set_indicator_color("#FF6F7A");
     }
-    if(bbo.m_ask.m_price != Money()) {
-      set_quote_text(bbo.m_ask.m_price, bbo.m_ask.m_size);
-    }
+    set_quote_text(bbo.m_ask.m_price, bbo.m_ask.m_size);
   }
   m_current_bbo = bbo;
 }
