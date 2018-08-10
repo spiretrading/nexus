@@ -46,19 +46,9 @@ QuotePanel::QuotePanel(const std::shared_ptr<BookViewModel>& model, Side side,
   layout->addLayout(label_layout);
   auto bbo = model->get_bbo();
   if(m_side == Side::BID) {
-    if(bbo.m_bid.m_price == Nexus::Money()) {
-      m_price_label->setText(tr("N/A"));
-      m_size_label->hide();
-    } else {
-      set_quote_text(bbo.m_bid.m_price, bbo.m_bid.m_size);
-    }
+    set_quote_text(bbo.m_bid.m_price, bbo.m_bid.m_size);
   } else {
-    if(bbo.m_ask.m_price == Nexus::Money()) {
-      m_price_label->setText(tr("N/A"));
-      m_size_label->hide();
-    } else {
-      set_quote_text(bbo.m_ask.m_price, bbo.m_ask.m_size);
-    }
+    set_quote_text(bbo.m_ask.m_price, bbo.m_ask.m_size);
   }
 }
 
