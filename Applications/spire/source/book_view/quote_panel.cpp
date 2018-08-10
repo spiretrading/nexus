@@ -35,7 +35,7 @@ QuotePanel::QuotePanel(const std::shared_ptr<BookViewModel>& model, Side side,
     color: #4B23A0;
     font-family: Roboto;
     font-size: %1px;
-    padding-top: %2px;)").arg(scale_height(10)).arg(scale_height(2)));
+    padding-top: %2px;)").arg(scale_height(10)).arg(scale_height(1)));
   label_layout->addWidget(m_size_label);
   layout->addLayout(label_layout);
   auto bbo = model->get_bbo();
