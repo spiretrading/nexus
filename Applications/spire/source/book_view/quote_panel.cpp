@@ -22,6 +22,9 @@ QuotePanel::QuotePanel(const std::shared_ptr<BookViewModel>& model, Side side,
   set_indicator_color("#C8C8C8");
   layout->addWidget(m_indicator_widget);
   auto label_layout = new QHBoxLayout();
+  label_layout->setContentsMargins({});
+  label_layout->setSpacing(0);
+  label_layout->addStretch(1);
   m_price_label = new QLabel(this);
   m_price_label->setAlignment(Qt::AlignCenter);
   m_price_label->setStyleSheet(QString(R"(
@@ -37,6 +40,7 @@ QuotePanel::QuotePanel(const std::shared_ptr<BookViewModel>& model, Side side,
     font-size: %1px;
     padding-top: %2px;)").arg(scale_height(10)).arg(scale_height(1)));
   label_layout->addWidget(m_size_label);
+  label_layout->addStretch(1);
   layout->addLayout(label_layout);
   auto bbo = model->get_bbo();
   if(m_side == Side::BID) {
