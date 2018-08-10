@@ -30,6 +30,8 @@ namespace Spire {
       QLabel* m_size_label;
 
       void set_indicator_color(const QColor& color);
+      void set_quote_text(const Nexus::Money& price,
+        const Nexus::Quantity& size);
       void on_bbo_quote(const Nexus::BboQuote& bbo);
   };
 }
