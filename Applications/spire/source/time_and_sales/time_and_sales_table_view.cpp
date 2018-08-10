@@ -9,7 +9,7 @@
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
 #include "spire/ui/item_padding_delegate.hpp"
-#include "spire/ui/overlay_widget.hpp"
+#include "spire/ui/transition_widget.hpp"
 
 using namespace Spire;
 
@@ -132,7 +132,7 @@ void TimeAndSalesTableView::set_model(TimeAndSalesWindowModel* model) {
   m_transition_widget.reset();
   m_loading_widget.reset();
   if(m_model->is_loading()) {
-    QTimer::singleShot(1000, this, [=] { show_transition_widget(); });
+    QTimer::singleShot(2000, this, [=] { show_transition_widget(); });
   }
   m_model->connect_begin_loading_signal([=] { show_loading_widget(); });  
   m_model->connect_end_loading_signal([=] { on_end_loading_signal(); });
@@ -167,17 +167,7 @@ void TimeAndSalesTableView::set_properties(
 
 void TimeAndSalesTableView::show_transition_widget() {
   if(m_table->model()->rowCount(QModelIndex()) == 0) {
-    auto backing_widget = new QLabel(this);
-    auto logo = new QMovie(":/icons/pre-loader.gif", QByteArray(),
-      backing_widget);
-    logo->setScaledSize(scale(32, 32));
-    backing_widget->setMovie(logo);
-    backing_widget->setStyleSheet(
-      QString("padding-top: %1px;").arg(scale_height(50)));
-    backing_widget->setAlignment(Qt::AlignHCenter);
-    backing_widget->movie()->start();
-    m_transition_widget = std::make_unique<OverlayWidget>(
-      this, backing_widget, this);
+    m_transition_widget = std::make_unique<TransitionWidget>(this);
   }
 }
 

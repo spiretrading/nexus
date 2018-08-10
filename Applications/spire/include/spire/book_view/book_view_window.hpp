@@ -63,20 +63,27 @@ namespace Spire {
       mutable ClosedSignal m_closed_signal;
       BookViewProperties m_properties;
       SecurityInputModel* m_input_model;
+      std::shared_ptr<BookViewModel> m_model;
       SecurityStack m_securities;
       Nexus::Security m_current_security;
       QWidget* m_body;
       QVBoxLayout* m_layout;
-      TechnicalsPanel* m_header_widget;
+      TechnicalsPanel* m_technicals_panel;
       std::unique_ptr<QWidget> m_overlay_widget;
       std::unique_ptr<QLabel> m_empty_window_label;
+      std::unique_ptr<TransitionWidget> m_transition_widget;
+      QWidget* m_table;
+      QtPromise<void> m_data_loaded_promise;
+      bool m_is_data_loaded;
 
       void set_current(const Nexus::Security& s);
       void show_context_menu(const QPoint& pos);
       void show_overlay_widget();
       void show_properties_dialog();
+      void show_transition_widget();
       void on_security_input_accept(SecurityInputDialog* dialog);
       void on_security_input_reject(SecurityInputDialog* dialog);
+      void on_data_loaded(Beam::Expect<void> value);
   };
 }
 

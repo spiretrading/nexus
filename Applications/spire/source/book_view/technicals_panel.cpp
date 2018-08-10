@@ -1,6 +1,8 @@
 #include "spire/book_view/technicals_panel.hpp"
+#include "spire/book_view/book_view_model.hpp"
 #include "spire/spire/dimensions.hpp"
 
+using namespace Nexus;
 using namespace Spire;
 
 TechnicalsPanel::TechnicalsPanel(QWidget* parent)
@@ -10,26 +12,66 @@ TechnicalsPanel::TechnicalsPanel(QWidget* parent)
   m_layout = new QGridLayout(this);
   m_layout->setContentsMargins(scale_width(8), 0, scale_width(8), 0);
   m_layout->setSpacing(0);
-  m_high_label_widget = new LabeledDataWidget(tr("H"), tr("0.00"),
-    this);
+  m_high_label_widget = new LabeledDataWidget(tr("H"), this);
   m_layout->addWidget(m_high_label_widget, 0, 0);
   m_layout->setColumnStretch(0, 100);
-  m_open_label_widget = new LabeledDataWidget(tr("O"), tr("0.00"),
-    this);
+  m_open_label_widget = new LabeledDataWidget(tr("O"), this);
   m_layout->addWidget(m_open_label_widget, 0, 1);
   m_layout->setColumnStretch(1, 100);
   m_defaults_label_widget = new LabeledDataWidget(tr("D"),
     QString("100%1%2").arg(tr("x")).arg("100"), this);
   m_layout->addWidget(m_defaults_label_widget, 0, 2);
   m_layout->setColumnStretch(2, 1);
-  m_low_label_widget = new LabeledDataWidget(tr("L"), tr("0.00"),
-    this);
+  m_low_label_widget = new LabeledDataWidget(tr("L"), this);
   m_layout->addWidget(m_low_label_widget, 1, 0);
-  m_close_label_widget = new LabeledDataWidget(tr("C"), tr("0.00"),
-    this);
+  m_close_label_widget = new LabeledDataWidget(tr("C"), this);
   m_layout->addWidget(m_close_label_widget, 1, 1);
-  m_volume_label_widget = new LabeledDataWidget(tr("V"), "0", this);
+  m_volume_label_widget = new LabeledDataWidget(tr("V"), this);
   m_layout->addWidget(m_volume_label_widget, 1, 2);
+}
+
+void TechnicalsPanel::set_model(std::shared_ptr<BookViewModel> model) {
+  m_model = model;
+  if(m_model->get_close().is_initialized()) {
+    m_close_label_widget->set_data_text(
+      QString::fromStdString(Beam::ToString(*m_model->get_close())));
+  } else {
+    m_close_label_widget->set_data_text(tr("N/A"));
+  }
+  if(m_model->get_high().is_initialized()) {
+    m_high_label_widget->set_data_text(
+      QString::fromStdString(Beam::ToString(*m_model->get_high())));
+  } else {
+    m_high_label_widget->set_data_text(tr("N/A"));
+  }
+  if(m_model->get_low().is_initialized()) {
+    m_low_label_widget->set_data_text(
+      QString::fromStdString(Beam::ToString(*m_model->get_low())));
+  } else {
+    m_low_label_widget->set_data_text(tr("N/A"));
+  }
+  if(m_model->get_open().is_initialized()) {
+    m_open_label_widget->set_data_text(
+      QString::fromStdString(Beam::ToString(*m_model->get_open())));
+  } else {
+    m_open_label_widget->set_data_text(tr("N/A"));
+  }
+  m_volume_label_widget->set_data_text(
+    QString::fromStdString(Beam::ToString(m_model->get_volume())));
+  m_model->connect_close_slot([=] (auto& c) { on_close_signal(c); });
+  m_model->connect_high_slot([=] (auto& h) { on_high_signal(h); });
+  m_model->connect_low_slot([=] (auto& l) { on_low_signal(l); });
+  m_model->connect_open_slot([=] (auto& o) { on_open_signal(o); });
+  m_model->connect_volume_slot([=] (auto& v) { on_volume_signal(v); });
+}
+
+void TechnicalsPanel::reset_model() {
+  m_model.reset();
+  m_close_label_widget->set_data_text("");
+  m_high_label_widget->set_data_text("");
+  m_low_label_widget->set_data_text("");
+  m_open_label_widget->set_data_text("");
+  m_volume_label_widget->set_data_text("");
 }
 
 void TechnicalsPanel::resizeEvent(QResizeEvent* event) {
@@ -90,4 +132,29 @@ void TechnicalsPanel::set_labeled_data_short_form_text() {
   m_low_label_widget->set_label_text(tr("L"));
   m_close_label_widget->set_label_text(tr("C"));
   m_volume_label_widget->set_label_text(tr("V"));
+}
+
+void TechnicalsPanel::on_close_signal(const Money& close) {
+  m_close_label_widget->set_data_text(
+    QString::fromStdString(Beam::ToString(close)));
+}
+
+void TechnicalsPanel::on_high_signal(const Money& high) {
+  m_high_label_widget->set_data_text(
+    QString::fromStdString(Beam::ToString(high)));
+}
+
+void TechnicalsPanel::on_low_signal(const Money& low) {
+  m_low_label_widget->set_data_text(
+    QString::fromStdString(Beam::ToString(low)));
+}
+
+void TechnicalsPanel::on_open_signal(const Money& open) {
+  m_open_label_widget->set_data_text(
+    QString::fromStdString(Beam::ToString(open)));
+}
+
+void TechnicalsPanel::on_volume_signal(const Quantity& volume) {
+  m_volume_label_widget->set_data_text(
+    QString::fromStdString(Beam::ToString(volume)));
 }

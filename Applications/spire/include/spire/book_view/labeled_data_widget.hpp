@@ -10,6 +10,13 @@ namespace Spire {
   class LabeledDataWidget : public QWidget {
     public:
 
+      //! Constructs a LabeledDataWidget with label text and no data text.
+      /*
+        \param label_text The label text string.
+        \param parent The parent to this widget.
+      */
+      LabeledDataWidget(const QString& label_text, QWidget* parent = nullptr);
+
       //! Constructs a LabeledDataWidget with label text and data text.
       /*
         \param label_text The label text string.

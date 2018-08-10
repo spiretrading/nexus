@@ -2,14 +2,17 @@
 #include <QContextMenuEvent>
 #include <QEvent>
 #include <QMenu>
+#include <QTimer>
 #include "spire/book_view/book_view_properties_dialog.hpp"
 #include "spire/book_view/labeled_data_widget.hpp"
 #include "spire/book_view/technicals_panel.hpp"
 #include "spire/security_input/security_input_dialog.hpp"
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/drop_shadow.hpp"
+#include "spire/ui/transition_widget.hpp"
 #include "spire/ui/window.hpp"
 
+using namespace Beam;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
@@ -18,7 +21,8 @@ using namespace Spire;
 BookViewWindow::BookViewWindow(const BookViewProperties& properties,
     SecurityInputModel& input_model, QWidget* parent)
     : QWidget(parent),
-      m_input_model(&input_model) {
+      m_input_model(&input_model),
+      m_is_data_loaded(false) {
   m_body = new QWidget(this);
   m_body->setMinimumSize(scale(210, 280));
   resize(scale(210, 410));
@@ -44,6 +48,13 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
 }
 
 void BookViewWindow::set_model(std::shared_ptr<BookViewModel> model) {
+  m_model = std::move(model);
+  m_technicals_panel->reset_model();
+  QTimer::singleShot(2000, this, [=] { show_transition_widget(); });
+  m_is_data_loaded = false;
+  m_data_loaded_promise = m_model->load();
+  m_data_loaded_promise.then(
+    [=] (auto&& value) { on_data_loaded(std::move(value)); });
 }
 
 const BookViewProperties& BookViewWindow::get_properties() const {
@@ -116,9 +127,10 @@ void BookViewWindow::set_current(const Security& s) {
   }
   if(m_empty_window_label != nullptr) {
     m_empty_window_label.reset();
-    m_header_widget = new TechnicalsPanel(this);
-    m_layout->addWidget(m_header_widget);
-    m_layout->addStretch(1);
+    m_technicals_panel = new TechnicalsPanel(this);
+    m_layout->addWidget(m_technicals_panel);
+    m_table = new QWidget(this);
+    m_layout->addWidget(m_table);
   }
   m_current_security = s;
   m_change_security_signal(s);
@@ -177,6 +189,12 @@ void BookViewWindow::show_properties_dialog() {
   m_overlay_widget.reset();
 }
 
+void BookViewWindow::show_transition_widget() {
+  if(!m_is_data_loaded) {
+    m_transition_widget = std::make_unique<TransitionWidget>(m_table);
+  }
+}
+
 void BookViewWindow::on_security_input_accept(
     SecurityInputDialog* dialog) {
   auto s = dialog->get_security();
@@ -193,4 +211,10 @@ void BookViewWindow::on_security_input_reject(
     SecurityInputDialog* dialog) {
   dialog->close();
   m_overlay_widget.reset();
+}
+
+void BookViewWindow::on_data_loaded(Expect<void> value) {
+  m_transition_widget.reset();
+  m_is_data_loaded = true;
+  m_technicals_panel->set_model(m_model);
 }

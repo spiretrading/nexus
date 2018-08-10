@@ -13,7 +13,7 @@
 #include "spire/spire/export_model.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
 #include "spire/ui/drop_shadow.hpp"
-#include "spire/ui/overlay_widget.hpp"
+#include "spire/ui/transition_widget.hpp"
 #include "spire/ui/window.hpp"
 
 using namespace boost;
@@ -258,5 +258,5 @@ void TimeAndSalesWindow::on_security_input_reject(
 
 void TimeAndSalesWindow::on_volume(const Quantity& volume) {
   m_volume_label->setText(tr("Volume:").append(" ") +
-    Beam::ToString(volume).c_str());
+    QString::fromStdString(Beam::ToString(volume)));
 }

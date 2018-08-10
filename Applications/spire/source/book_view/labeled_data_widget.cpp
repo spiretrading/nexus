@@ -5,17 +5,21 @@
 using namespace Spire;
 
 LabeledDataWidget::LabeledDataWidget(const QString& label_text,
+  QWidget* parent)
+  : LabeledDataWidget(label_text, "", parent) {}
+
+LabeledDataWidget::LabeledDataWidget(const QString& label_text,
     const QString& data_text, QWidget* parent)
     : QWidget(parent) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
   m_label = new QLabel(label_text, this);
+  m_label->setFixedWidth(scale_width(10));
   m_label->setStyleSheet(QString(R"(
     font-family: Roboto;
     font-size: %1px;)").arg(scale_height(10)));
   layout->addWidget(m_label);
-  layout->addSpacing(scale_width(4));
   m_data_label = new QLabel(data_text, this);
   m_data_label->setStyleSheet(QString(R"(
     font-family: Roboto;

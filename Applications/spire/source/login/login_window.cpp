@@ -137,7 +137,8 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   auto button_layout = new QHBoxLayout();
   button_layout->setContentsMargins({});
   button_layout->setSpacing(0);
-  auto build_label = new QLabel(QString(tr("Build ")) + version.c_str(), this);
+  auto build_label = new QLabel(QString(tr("Build ")) +
+    QString::fromStdString(version), this);
   build_label->setStyleSheet(QString(
     R"(color: white;
        font-family: Roboto;
