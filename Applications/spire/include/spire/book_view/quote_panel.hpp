@@ -19,8 +19,11 @@ namespace Spire {
         \param side Which side of a BBO quote this widget represents.
         \param parent The parent widget.
       */
-      QuotePanel(const std::shared_ptr<BookViewModel>& model, Nexus::Side side,
+      QuotePanel(const BookViewModel& model, Nexus::Side side,
         QWidget* parent = nullptr);
+
+      //! Sets the model that supplies the data to this widget.
+      void set_model(const BookViewModel& model);
 
     private:
       Nexus::Side m_side;
@@ -28,6 +31,7 @@ namespace Spire {
       QWidget* m_indicator_widget;
       QLabel* m_price_label;
       QLabel* m_size_label;
+      boost::signals2::scoped_connection m_bbo_connection;
 
       void set_indicator_color(const QColor& color);
       void set_quote_text(const Nexus::Money& price,

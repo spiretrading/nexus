@@ -222,9 +222,11 @@ void BookViewWindow::on_data_loaded(Expect<void> value) {
     auto layout = new QVBoxLayout(m_quote_widgets_container);
     layout->setContentsMargins({});
     layout->setSpacing(0);
-    m_bbo_quote_panel = std::make_unique<BboQuotePanel>(m_model, this);
+    m_bbo_quote_panel = std::make_unique<BboQuotePanel>(*m_model, this);
     layout->addWidget(m_bbo_quote_panel.get());
     m_table = new QWidget(this);
     layout->addWidget(m_table);
+  } else {
+    m_bbo_quote_panel->set_model(*m_model);
   }
 }

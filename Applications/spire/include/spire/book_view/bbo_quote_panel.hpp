@@ -15,8 +15,11 @@ namespace Spire {
         \param model The model that supplies the BBO quote data.
         \param parent The parent widget.
       */
-      BboQuotePanel(const std::shared_ptr<BookViewModel>& model,
+      BboQuotePanel(const BookViewModel& model,
         QWidget* parent = nullptr);
+
+      //! Sets the model that supplies the data to this widget.
+      void set_model(const BookViewModel& model);
 
     private:
       QuotePanel* m_bid_quote_panel;

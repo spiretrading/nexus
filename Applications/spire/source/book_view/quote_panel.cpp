@@ -8,11 +8,10 @@
 using namespace Nexus;
 using namespace Spire;
 
-QuotePanel::QuotePanel(const std::shared_ptr<BookViewModel>& model, Side side,
+QuotePanel::QuotePanel(const BookViewModel& model, Side side,
     QWidget* parent)
     : QWidget(parent),
       m_side(side) {
-  model->connect_bbo_slot([=] (auto& b) { on_bbo_quote(b); });
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
@@ -44,12 +43,18 @@ QuotePanel::QuotePanel(const std::shared_ptr<BookViewModel>& model, Side side,
   label_layout->addWidget(m_size_label);
   label_layout->addStretch(1);
   layout->addLayout(label_layout);
-  auto bbo = model->get_bbo();
+  auto& bbo = model.get_bbo();
   if(m_side == Side::BID) {
     set_quote_text(bbo.m_bid.m_price, bbo.m_bid.m_size);
   } else {
     set_quote_text(bbo.m_ask.m_price, bbo.m_ask.m_size);
   }
+  set_model(model);
+}
+
+void QuotePanel::set_model(const BookViewModel& model) {
+  m_bbo_connection = model.connect_bbo_slot(
+    [=] (auto& b) { on_bbo_quote(b); });
 }
 
 void QuotePanel::set_indicator_color(const QColor& color) {
@@ -65,20 +70,17 @@ void QuotePanel::set_quote_text(const Money& price, const Quantity& size) {
 }
 
 void QuotePanel::on_bbo_quote(const BboQuote& bbo) {
-  if(m_side == Side::BID) {
-    if(bbo.m_bid.m_price > m_current_bbo.m_bid.m_price) {
-      set_indicator_color("#37D186");
-    } else if(bbo.m_bid.m_price < m_current_bbo.m_bid.m_price) {
-      set_indicator_color("#FF6F7A");
+  auto& quote = [&] {
+    if(m_side == Side::BID) {
+      return bbo.m_bid;
     }
-    set_quote_text(bbo.m_bid.m_price, bbo.m_bid.m_size);
-  } else {
-    if(bbo.m_ask.m_price > m_current_bbo.m_ask.m_price) {
-      set_indicator_color("#37D186");
-    } else if(bbo.m_ask.m_price < m_current_bbo.m_ask.m_price) {
-      set_indicator_color("#FF6F7A");
-    }
-    set_quote_text(bbo.m_ask.m_price, bbo.m_ask.m_size);
+    return bbo.m_ask;
+  }();
+  if(quote.m_price > m_current_bbo.m_bid.m_price) {
+    set_indicator_color("#37D186");
+  } else if(quote.m_price < m_current_bbo.m_bid.m_price) {
+    set_indicator_color("#FF6F7A");
   }
+  set_quote_text(quote.m_price, quote.m_size);
   m_current_bbo = bbo;
 }

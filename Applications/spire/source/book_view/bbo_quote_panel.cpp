@@ -6,7 +6,7 @@
 
 using namespace Spire;
 
-BboQuotePanel::BboQuotePanel(const std::shared_ptr<BookViewModel>& model,
+BboQuotePanel::BboQuotePanel(const BookViewModel& model,
     QWidget* parent)
     : QWidget(parent) {
   setFixedHeight(scale_height(28));
@@ -18,4 +18,9 @@ BboQuotePanel::BboQuotePanel(const std::shared_ptr<BookViewModel>& model,
   layout->addSpacing(scale_width(2));
   m_ask_quote_panel = new QuotePanel(model, Nexus::Side::ASK, this);
   layout->addWidget(m_ask_quote_panel);
+}
+
+void BboQuotePanel::set_model(const BookViewModel& model) {
+  m_bid_quote_panel->set_model(model);
+  m_ask_quote_panel->set_model(model);
 }
