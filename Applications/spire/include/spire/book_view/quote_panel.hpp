@@ -2,6 +2,7 @@
 #define SPIRE_QUOTE_PANEL_HPP
 #include <QLabel>
 #include <QWidget>
+#include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "spire/book_view/book_view.hpp"
 
@@ -22,12 +23,14 @@ namespace Spire {
         QWidget* parent = nullptr);
 
     private:
-      std::shared_ptr<BookViewModel> m_model;
+      Nexus::Side m_side;
+      Nexus::BboQuote m_current_bbo;
       QWidget* m_indicator_widget;
       QLabel* m_price_label;
       QLabel* m_size_label;
 
       void set_indicator_color(const QColor& color);
+      void on_bbo_quote(const Nexus::BboQuote& bbo);
   };
 }
 
