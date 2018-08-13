@@ -18,9 +18,17 @@ RandomBookViewModel::RandomBookViewModel(Security security,
       m_bbo(Quote(100 * Money::ONE, 1000, Side::BID),
         Quote(100 * Money::ONE + Money::CENT, 1000, Side::ASK),
         second_clock::universal_time()),
-      m_random_engine(std::random_device()()) {
+      m_random_engine(std::random_device()()),
+      m_loading_flag(std::make_shared<CallOnce<Mutex>>()) {
   connect(&m_timer, &QTimer::timeout, [=] { on_timeout(); });
   set_period(seconds(1));
+}
+
+RandomBookViewModel::~RandomBookViewModel() {
+  m_loading_flag->Call(
+    [&] {
+      m_is_loaded = true;
+    });
 }
 
 time_duration RandomBookViewModel::get_period() const {
@@ -72,12 +80,15 @@ Quantity RandomBookViewModel::get_volume() const {
 }
 
 QtPromise<void> RandomBookViewModel::load() {
+  auto load_time = m_load_time;
+  auto timer_thread_pool = m_timer_thread_pool;
+  auto loading_flag = m_loading_flag;
   return make_qt_promise([=] {
-    m_loading_flag.Call(
+    LiveTimer load_timer(load_time, Ref(*timer_thread_pool));
+    load_timer.Start();
+    load_timer.Wait();
+    loading_flag->Call(
       [&] {
-        LiveTimer load_timer(m_load_time, Ref(*m_timer_thread_pool));
-        load_timer.Start();
-        load_timer.Wait();
         for(auto i = 0; i < 1000; ++i) {
           update();
         }

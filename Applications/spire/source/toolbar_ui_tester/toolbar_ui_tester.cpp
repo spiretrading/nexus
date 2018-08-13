@@ -8,8 +8,7 @@
 using namespace Spire;
 
 ToolbarUiTester::ToolbarUiTester(ToolbarWindow* window,
-    RecentlyClosedModel& model,
-    QWidget* parent)
+    RecentlyClosedModel& model, QWidget* parent)
     : QWidget(parent),
       m_recently_closed_model(&model) {
   setGeometry(window->pos().x(), window->pos().y() + window->height() + 100, 0,

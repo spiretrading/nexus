@@ -23,6 +23,8 @@ namespace Spire {
         boost::posix_time::time_duration load_time,
         Beam::Threading::TimerThreadPool& timer_thread_pool);
 
+      virtual ~RandomBookViewModel() override;
+
       //! Returns the update period.
       boost::posix_time::time_duration get_period() const;
 
@@ -93,7 +95,8 @@ namespace Spire {
       Nexus::Quantity m_volume;
       std::default_random_engine m_random_engine;
       QTimer m_timer;
-      Beam::Threading::CallOnce<Beam::Threading::Mutex> m_loading_flag;
+      std::shared_ptr<Beam::Threading::CallOnce<Beam::Threading::Mutex>>
+        m_loading_flag;
 
       void update();
       void on_timeout();
