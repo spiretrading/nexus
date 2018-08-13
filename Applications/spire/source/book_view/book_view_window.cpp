@@ -129,9 +129,15 @@ void BookViewWindow::set_current(const Security& s) {
     m_empty_window_label.reset();
     m_technicals_panel = new TechnicalsPanel(this);
     m_layout->addWidget(m_technicals_panel);
-    m_table = new QWidget(this);
-    m_layout->addWidget(m_table);
+    m_quote_widgets_container = new QWidget(this);
+    m_quote_widgets_container_layout = new QVBoxLayout(
+      m_quote_widgets_container);
+    m_quote_widgets_container_layout->setContentsMargins({});
+    m_quote_widgets_container_layout->setSpacing(0);
+    m_layout->addWidget(m_quote_widgets_container);
   }
+  m_bbo_quote_panel.reset();
+  m_table.reset();
   m_current_security = s;
   m_change_security_signal(s);
   setWindowTitle(QString::fromStdString(ToString(s)) + tr(" - Book View"));
@@ -191,7 +197,8 @@ void BookViewWindow::show_properties_dialog() {
 
 void BookViewWindow::show_transition_widget() {
   if(!m_is_data_loaded) {
-    m_transition_widget = std::make_unique<TransitionWidget>(m_table);
+    m_transition_widget = std::make_unique<TransitionWidget>(
+      m_quote_widgets_container);
   }
 }
 
@@ -217,4 +224,9 @@ void BookViewWindow::on_data_loaded(Expect<void> value) {
   m_transition_widget.reset();
   m_is_data_loaded = true;
   m_technicals_panel->set_model(m_model);
+  m_bbo_quote_panel = std::make_unique<BboQuotePanel>(*m_model, this);
+  m_quote_widgets_container_layout->addWidget(m_bbo_quote_panel.get());
+  m_table = std::make_unique<QWidget>(this);
+  m_quote_widgets_container_layout->addWidget(m_table.get());
+  m_bbo_quote_panel->set_model(*m_model);
 }
