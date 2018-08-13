@@ -70,20 +70,19 @@ void QuotePanel::set_quote_text(const Money& price, const Quantity& size) {
 }
 
 void QuotePanel::on_bbo_quote(const BboQuote& bbo) {
-  if(m_side == Side::BID) {
-    if(bbo.m_bid.m_price > m_current_bbo.m_bid.m_price) {
-      set_indicator_color("#37D186");
-    } else if(bbo.m_bid.m_price < m_current_bbo.m_bid.m_price) {
-      set_indicator_color("#FF6F7A");
+  auto side = [&] (auto& b) { 
+    if(m_side == Side::BID) {
+      return b.m_bid;
     }
-    set_quote_text(bbo.m_bid.m_price, bbo.m_bid.m_size);
-  } else {
-    if(bbo.m_ask.m_price > m_current_bbo.m_ask.m_price) {
-      set_indicator_color("#37D186");
-    } else if(bbo.m_ask.m_price < m_current_bbo.m_ask.m_price) {
-      set_indicator_color("#FF6F7A");
-    }
-    set_quote_text(bbo.m_ask.m_price, bbo.m_ask.m_size);
+    return b.m_ask;
+  };
+  auto quote = side(bbo);
+  auto current_quote = side(m_current_bbo);
+  if(quote.m_price > current_quote.m_price) {
+    set_indicator_color("#37D186");
+  } else if(quote.m_price < current_quote.m_price) {
+    set_indicator_color("#FF6F7A");
   }
+  set_quote_text(bbo.m_bid.m_price, bbo.m_bid.m_size);
   m_current_bbo = bbo;
 }
