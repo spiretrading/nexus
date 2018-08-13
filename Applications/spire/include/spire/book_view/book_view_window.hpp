@@ -75,7 +75,8 @@ namespace Spire {
       std::unique_ptr<QLabel> m_empty_window_label;
       std::unique_ptr<TransitionWidget> m_transition_widget;
       QWidget* m_quote_widgets_container;
-      QWidget* m_table;
+      QVBoxLayout* m_quote_widgets_container_layout;
+      std::unique_ptr<QWidget> m_table;
       QtPromise<void> m_data_loaded_promise;
       bool m_is_data_loaded;
 
