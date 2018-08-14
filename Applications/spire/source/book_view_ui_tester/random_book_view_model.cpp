@@ -140,7 +140,7 @@ void RandomBookViewModel::update() {
   auto& bid_price = m_bbo.m_bid.m_price;
   auto& ask_price = m_bbo.m_ask.m_price;
   if(random_num == 1) {
-    if(boost::float64_t(bid_price) > 0.01) {
+    if(bid_price > Money::CENT) {
       bid_price -= Money::CENT;
       ask_price -= Money::CENT;
       m_bbo_signal(m_bbo);
