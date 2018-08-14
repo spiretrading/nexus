@@ -5,6 +5,7 @@
 #include <Beam/Threading/TimerThreadPool.hpp>
 #include <Nexus/Definitions/Security.hpp>
 #include "spire/book_view/book_view.hpp"
+#include "spire/book_view_ui_tester/random_book_view_model.hpp"
 
 namespace Spire {
 
@@ -16,11 +17,13 @@ namespace Spire {
 
     private:
       BookViewWindow* m_window;
+      std::shared_ptr<RandomBookViewModel> m_model;
       Beam::Threading::TimerThreadPool* m_timer_thread_pool;
       QSpinBox* m_load_time_spin_box;
+      QSpinBox* m_model_update_period_spin_box;
 
       void on_security_changed(const Nexus::Security& security);
-      void on_loading_time_updated();
+      void on_model_period_updated();
   };
 }
 
