@@ -92,12 +92,12 @@ QtPromise<void> RandomBookViewModel::load() {
         for(auto i = 0; i < 1000; ++i) {
           update();
           if(i == 0) {
-            m_close = m_bbo.m_bid.m_price;
+            m_close = m_bbo.m_ask.m_price;
             m_close_signal(m_close);
           } else if(i == 1) {
-            m_open = m_bbo.m_bid.m_price;
-            m_high = m_bbo.m_bid.m_price;
-            m_low = m_bbo.m_bid.m_price;
+            m_open = m_bbo.m_ask.m_price;
+            m_high = m_bbo.m_ask.m_price;
+            m_low = m_bbo.m_ask.m_price;
             m_open_signal(m_open);
             m_high_signal(m_high);
             m_low_signal(m_low);
@@ -158,12 +158,20 @@ void RandomBookViewModel::update() {
       m_bbo_signal(m_bbo);
       m_volume_signal(m_volume);
     }
+    if(m_bbo.m_bid.m_price < m_low) {
+      m_low = m_bbo.m_bid.m_price;
+      m_low_signal(m_low);
+    }
   } else if(random_num == 2) {
     bid_price += Money::CENT;
     ask_price += Money::CENT;
     m_volume += 100;
     m_bbo_signal(m_bbo);
     m_volume_signal(m_volume);
+    if(m_bbo.m_ask.m_price > m_high) {
+      m_high = m_bbo.m_ask.m_price;
+      m_high_signal(m_high);
+    }
   }
 }
 
