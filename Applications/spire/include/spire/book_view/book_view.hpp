@@ -3,6 +3,7 @@
 #include "spire/spire/spire.hpp"
 
 namespace Spire {
+  class BboQuotePanel;
   class BookViewHighlightPropertiesWidget;
   class BookViewLevelPropertiesWidget;
   class BookViewModel;
@@ -12,6 +13,7 @@ namespace Spire {
   class EmptyBookViewModel;
   class LabeledDataWidget;
   class MarketListItem;
+  class QuotePanel;
   class TechnicalsPanel;
 }
 
