@@ -83,6 +83,6 @@ void QuotePanel::on_bbo_quote(const BboQuote& bbo) {
   } else if(quote.m_price < current_quote.m_price) {
     set_indicator_color("#FF6F7A");
   }
-  set_quote_text(bbo.m_bid.m_price, bbo.m_bid.m_size);
+  set_quote_text(quote.m_price, quote.m_size);
   m_current_bbo = bbo;
 }
