@@ -37,10 +37,14 @@ void BookViewTestControllerWindow::on_security_changed(
   m_model = std::make_shared<RandomBookViewModel>(security,
     boost::posix_time::millisec(m_load_time_spin_box->value()),
     *m_timer_thread_pool);
+  m_model->set_period(boost::posix_time::milliseconds(
+      m_model_update_period_spin_box->value()));
   m_window->set_model(m_model);
 }
 
 void BookViewTestControllerWindow::on_model_period_updated() {
-  m_model->set_period(boost::posix_time::milliseconds(
-    m_model_update_period_spin_box->value()));
+  if(m_model != nullptr) {
+    m_model->set_period(boost::posix_time::milliseconds(
+      m_model_update_period_spin_box->value()));
+  }
 }
