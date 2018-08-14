@@ -32,6 +32,9 @@ namespace Spire {
       //! Sets the data text.
       void set_data_text(const QString& text);
 
+      //! Sets the width of the label text's widget.
+      void set_label_width(int width);
+
     private:
       QLabel* m_label;
       QLabel* m_data_label;

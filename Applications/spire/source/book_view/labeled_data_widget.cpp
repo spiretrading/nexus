@@ -36,3 +36,7 @@ void LabeledDataWidget::set_label_text(const QString& text) {
 void LabeledDataWidget::set_data_text(const QString& text) {
   m_data_label->setText(text);
 }
+
+void LabeledDataWidget::set_label_width(int width) {
+  m_label->setFixedWidth(width);
+}

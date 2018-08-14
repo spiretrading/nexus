@@ -118,20 +118,33 @@ void TechnicalsPanel::resizeEvent(QResizeEvent* event) {
 
 void TechnicalsPanel::set_labeled_data_long_form_text() {
   m_high_label_widget->set_label_text(tr("High"));
+  m_high_label_widget->set_label_width(scale_width(24));
   m_open_label_widget->set_label_text(tr("Open"));
+  m_open_label_widget->set_label_width(scale_width(28));
   m_defaults_label_widget->set_label_text(tr("Def"));
+  m_defaults_label_widget->set_label_width(scale_width(20));
   m_low_label_widget->set_label_text(tr("Low"));
+  m_low_label_widget->set_label_width(scale_width(24));
   m_close_label_widget->set_label_text(tr("Close"));
+  m_close_label_widget->set_label_width(scale_width(28));
   m_volume_label_widget->set_label_text(tr("Vol"));
+  m_volume_label_widget->set_label_width(scale_width(20));
 }
 
 void TechnicalsPanel::set_labeled_data_short_form_text() {
+  auto width = scale_width(10);
   m_high_label_widget->set_label_text(tr("H"));
+  m_high_label_widget->set_label_width(width);
   m_open_label_widget->set_label_text(tr("O"));
+  m_open_label_widget->set_label_width(width);
   m_defaults_label_widget->set_label_text(tr("D"));
+  m_defaults_label_widget->set_label_width(width);
   m_low_label_widget->set_label_text(tr("L"));
+  m_low_label_widget->set_label_width(width);
   m_close_label_widget->set_label_text(tr("C"));
+  m_close_label_widget->set_label_width(width);
   m_volume_label_widget->set_label_text(tr("V"));
+  m_volume_label_widget->set_label_width(width);
 }
 
 void TechnicalsPanel::on_close_signal(const Money& close) {
