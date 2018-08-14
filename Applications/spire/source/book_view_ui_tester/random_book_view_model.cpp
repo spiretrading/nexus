@@ -141,13 +141,13 @@ void RandomBookViewModel::update() {
   auto& ask_price = m_bbo.m_ask.m_price;
   if(random_num == 1) {
     if(boost::float64_t(bid_price) > 0.01) {
-      bid_price = Money(float64_t(bid_price) - 0.01);
-      ask_price = Money(float64_t(ask_price) - 0.01);
+      bid_price = bid_price - Money::CENT;
+      ask_price = ask_price - Money::CENT;
       m_bbo_signal(m_bbo);
     }
   } else if(random_num == 2) {
-    bid_price = Money(float64_t(bid_price) + 0.01);
-    ask_price = Money(float64_t(ask_price) + 0.01);
+    bid_price = bid_price + Money::CENT;
+    ask_price = ask_price + Money::CENT;
     m_bbo_signal(m_bbo);
   }
 }
