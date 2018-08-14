@@ -190,7 +190,7 @@ void BookViewWindow::show_properties_dialog() {
 }
 
 void BookViewWindow::show_transition_widget() {
-  if(!m_is_data_loaded && m_transition_widget == nullptr) {
+  if(!m_is_data_loaded) {
     m_transition_widget = std::make_unique<TransitionWidget>(m_table);
   }
 }
