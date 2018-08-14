@@ -143,28 +143,12 @@ void TimeAndSalesWindow::contextMenuEvent(QContextMenuEvent* event) {
       QMenu::item {
         padding: %5px 0px %5px %6px;
       }
-<<<<<<< Updated upstream
 
       QMenu::item:disabled,
       QMenu::item:disabled:selected,
       QMenu::item:disabled:hover {
         background-color: #FFFFFF;
         color: #C8C8C8;
-=======
-    }
-    if(event->type() == QEvent::MouseMove) {
-      auto e = static_cast<QMouseEvent*>(event);
-      if(e->pos().x() > width() - m_table->verticalScrollBar()->width()) {
-        m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-        m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-      } else if(e->pos().y() >
-          m_table->height() - m_table->horizontalScrollBar()->height()) {
-        m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-        m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-      } else {
-        m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-        m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
->>>>>>> Stashed changes
       }
 
       QMenu::item:selected, QMenu::item:hover {
