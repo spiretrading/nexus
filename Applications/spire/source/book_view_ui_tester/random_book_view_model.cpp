@@ -91,6 +91,17 @@ QtPromise<void> RandomBookViewModel::load() {
       [&] {
         for(auto i = 0; i < 1000; ++i) {
           update();
+          if(i == 0) {
+            m_close = m_bbo.m_bid.m_price;
+            m_close_signal(m_close);
+          } else if(i == 1) {
+            m_open = m_bbo.m_bid.m_price;
+            m_high = m_bbo.m_bid.m_price;
+            m_low = m_bbo.m_bid.m_price;
+            m_open_signal(m_open);
+            m_high_signal(m_high);
+            m_low_signal(m_low);
+          }
         }
         m_is_loaded = true;
       });
