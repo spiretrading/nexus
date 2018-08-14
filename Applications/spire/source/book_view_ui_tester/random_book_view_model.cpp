@@ -143,12 +143,16 @@ void RandomBookViewModel::update() {
     if(bid_price > Money::CENT) {
       bid_price -= Money::CENT;
       ask_price -= Money::CENT;
+      m_volume += 100;
       m_bbo_signal(m_bbo);
+      m_volume_signal(m_volume);
     }
   } else if(random_num == 2) {
     bid_price += Money::CENT;
     ask_price += Money::CENT;
+    m_volume += 100;
     m_bbo_signal(m_bbo);
+    m_volume_signal(m_volume);
   }
 }
 
