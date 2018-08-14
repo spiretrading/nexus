@@ -15,8 +15,8 @@ RandomBookViewModel::RandomBookViewModel(Security security,
       m_load_time(load_time),
       m_timer_thread_pool(&timer_thread_pool),
       m_is_loaded(false),
-      m_bbo(Quote(100 * Money::ONE, 1000, Side::BID),
-        Quote(100 * Money::ONE + Money::CENT, 1000, Side::ASK),
+      m_bbo(Quote(100 * Money::ONE, 100, Side::BID),
+        Quote(100 * Money::ONE + Money::CENT, 100, Side::ASK),
         second_clock::universal_time()),
       m_random_engine(std::random_device()()),
       m_loading_flag(std::make_shared<CallOnce<Mutex>>()) {
@@ -132,7 +132,25 @@ connection RandomBookViewModel::connect_volume_slot(
   return m_volume_signal.connect(slot);
 }
 
-void RandomBookViewModel::update() {}
+void RandomBookViewModel::update() {
+  auto random_num = m_random_engine() % 3;
+  if(random_num == 0) {
+    return;
+  }
+  auto& bid_price = m_bbo.m_bid.m_price;
+  auto& ask_price = m_bbo.m_ask.m_price;
+  if(random_num == 1) {
+    if(bid_price > Money::CENT) {
+      bid_price -= Money::CENT;
+      ask_price -= Money::CENT;
+      m_bbo_signal(m_bbo);
+    }
+  } else if(random_num == 2) {
+    bid_price += Money::CENT;
+    ask_price += Money::CENT;
+    m_bbo_signal(m_bbo);
+  }
+}
 
 void RandomBookViewModel::on_timeout() {
   if(!m_is_loaded) {

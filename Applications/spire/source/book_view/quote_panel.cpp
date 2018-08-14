@@ -18,7 +18,6 @@ QuotePanel::QuotePanel(const BookViewModel& model, Side side,
   m_indicator_widget = new QWidget(this);
   m_indicator_widget->setFixedHeight(scale_height(2));
   m_indicator_widget->setAutoFillBackground(true);
-  set_indicator_color("#C8C8C8");
   layout->addWidget(m_indicator_widget);
   auto label_layout = new QHBoxLayout();
   label_layout->setContentsMargins({});
@@ -43,16 +42,17 @@ QuotePanel::QuotePanel(const BookViewModel& model, Side side,
   label_layout->addWidget(m_size_label);
   label_layout->addStretch(1);
   layout->addLayout(label_layout);
-  auto& bbo = model.get_bbo();
-  if(m_side == Side::BID) {
-    set_quote_text(bbo.m_bid.m_price, bbo.m_bid.m_size);
-  } else {
-    set_quote_text(bbo.m_ask.m_price, bbo.m_ask.m_size);
-  }
   set_model(model);
 }
 
 void QuotePanel::set_model(const BookViewModel& model) {
+  set_indicator_color("#C8C8C8");
+  m_current_bbo = model.get_bbo();
+  if(m_side == Side::BID) {
+    set_quote_text(m_current_bbo.m_bid.m_price, m_current_bbo.m_bid.m_size);
+  } else {
+    set_quote_text(m_current_bbo.m_ask.m_price, m_current_bbo.m_ask.m_size);
+  }
   m_bbo_connection = model.connect_bbo_slot(
     [=] (auto& b) { on_bbo_quote(b); });
 }
@@ -70,19 +70,19 @@ void QuotePanel::set_quote_text(const Money& price, const Quantity& size) {
 }
 
 void QuotePanel::on_bbo_quote(const BboQuote& bbo) {
-  auto side = [&] (auto& b) { 
+  auto get_quote = [&] (auto& b) { 
     if(m_side == Side::BID) {
       return b.m_bid;
     }
     return b.m_ask;
   };
-  auto quote = side(bbo);
-  auto current_quote = side(m_current_bbo);
+  auto quote = get_quote(bbo);
+  auto current_quote = get_quote(m_current_bbo);
   if(quote.m_price > current_quote.m_price) {
     set_indicator_color("#37D186");
   } else if(quote.m_price < current_quote.m_price) {
     set_indicator_color("#FF6F7A");
   }
-  set_quote_text(bbo.m_bid.m_price, bbo.m_bid.m_size);
+  set_quote_text(quote.m_price, quote.m_size);
   m_current_bbo = bbo;
 }
