@@ -70,14 +70,14 @@ void QuotePanel::set_quote_text(const Money& price, const Quantity& size) {
 }
 
 void QuotePanel::on_bbo_quote(const BboQuote& bbo) {
-  auto side = [&] (auto& b) { 
+  auto get_quote = [&] (auto& b) { 
     if(m_side == Side::BID) {
       return b.m_bid;
     }
     return b.m_ask;
   };
-  auto quote = side(bbo);
-  auto current_quote = side(m_current_bbo);
+  auto quote = get_quote(bbo);
+  auto current_quote = get_quote(m_current_bbo);
   if(quote.m_price > current_quote.m_price) {
     set_indicator_color("#37D186");
   } else if(quote.m_price < current_quote.m_price) {
