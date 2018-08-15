@@ -97,8 +97,12 @@ namespace Spire {
       QTimer m_timer;
       std::shared_ptr<Beam::Threading::CallOnce<Beam::Threading::Mutex>>
         m_loading_flag;
+      bool m_received_first_quote;
+      bool m_received_second_quote;
 
       void update();
+      void update_bbo();
+      void update_time_and_sales();
       void on_timeout();
   };
 }

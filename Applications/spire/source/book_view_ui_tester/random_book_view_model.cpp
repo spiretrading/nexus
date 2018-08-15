@@ -19,7 +19,9 @@ RandomBookViewModel::RandomBookViewModel(Security security,
         Quote(100 * Money::ONE + Money::CENT, 100, Side::ASK),
         second_clock::universal_time()),
       m_random_engine(std::random_device()()),
-      m_loading_flag(std::make_shared<CallOnce<Mutex>>()) {
+      m_loading_flag(std::make_shared<CallOnce<Mutex>>()),
+      m_received_first_quote(false),
+      m_received_second_quote(false) {
   connect(&m_timer, &QTimer::timeout, [=] { on_timeout(); });
   set_period(seconds(1));
 }
@@ -91,17 +93,6 @@ QtPromise<void> RandomBookViewModel::load() {
       [&] {
         for(auto i = 0; i < 1000; ++i) {
           update();
-          if(i == 0) {
-            m_close = m_bbo.m_ask.m_price;
-            m_close_signal(m_close);
-          } else if(i == 1) {
-            m_open = m_bbo.m_ask.m_price;
-            m_high = m_bbo.m_ask.m_price;
-            m_low = m_bbo.m_ask.m_price;
-            m_open_signal(m_open);
-            m_high_signal(m_high);
-            m_low_signal(m_low);
-          }
         }
         m_is_loaded = true;
       });
@@ -144,6 +135,11 @@ connection RandomBookViewModel::connect_volume_slot(
 }
 
 void RandomBookViewModel::update() {
+  update_bbo();
+  update_time_and_sales();
+}
+
+void RandomBookViewModel::update_bbo() {
   auto random_num = m_random_engine() % 3;
   if(random_num == 0) {
     return;
@@ -154,25 +150,48 @@ void RandomBookViewModel::update() {
     if(bid_price > Money::CENT) {
       bid_price -= Money::CENT;
       ask_price -= Money::CENT;
-      m_volume += 100;
       m_bbo_signal(m_bbo);
-      m_volume_signal(m_volume);
-    }
-    if(m_bbo.m_bid.m_price < m_low) {
-      m_low = m_bbo.m_bid.m_price;
-      m_low_signal(m_low);
     }
   } else if(random_num == 2) {
     bid_price += Money::CENT;
     ask_price += Money::CENT;
-    m_volume += 100;
     m_bbo_signal(m_bbo);
-    m_volume_signal(m_volume);
-    if(m_bbo.m_ask.m_price > m_high) {
-      m_high = m_bbo.m_ask.m_price;
-      m_high_signal(m_high);
-    }
   }
+}
+
+void RandomBookViewModel::update_time_and_sales() {
+  auto random_num = m_random_engine() % 3;
+  if(random_num == 0) {
+    return;
+  }
+  Money quote;
+  if(random_num == 1) {
+    quote = m_bbo.m_bid.m_price;
+  } else if(random_num == 2) {
+    quote = m_bbo.m_ask.m_price;
+  }
+  if(!m_received_first_quote) {
+    m_received_first_quote = true;
+    m_close = quote;
+    m_close_signal(quote);
+  } else if(!m_received_second_quote) {
+    m_received_second_quote = true;
+    m_open = quote;
+    m_high = quote;
+    m_low = quote;
+    m_open_signal(m_open);
+    m_high_signal(m_high);
+    m_low_signal(m_low);
+  }
+  if(quote < m_low) {
+    m_low = quote;
+    m_low_signal(m_low);
+  } else if(quote > m_high) {
+    m_high = quote;
+    m_high_signal(m_high);
+  }
+  m_volume += 100;
+  m_volume_signal(m_volume);
 }
 
 void RandomBookViewModel::on_timeout() {
