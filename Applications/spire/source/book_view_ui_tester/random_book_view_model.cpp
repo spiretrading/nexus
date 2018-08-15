@@ -20,8 +20,7 @@ RandomBookViewModel::RandomBookViewModel(Security security,
         second_clock::universal_time()),
       m_random_engine(std::random_device()()),
       m_loading_flag(std::make_shared<CallOnce<Mutex>>()),
-      m_received_first_quote(false),
-      m_received_second_quote(false) {
+      m_quote_count(0) {
   connect(&m_timer, &QTimer::timeout, [=] { on_timeout(); });
   set_period(seconds(1));
 }
@@ -170,12 +169,12 @@ void RandomBookViewModel::update_time_and_sales() {
   } else if(random_num == 2) {
     quote = m_bbo.m_ask.m_price;
   }
-  if(!m_received_first_quote) {
-    m_received_first_quote = true;
+  if(m_quote_count == 0) {
+    ++m_quote_count;
     m_close = quote;
     m_close_signal(quote);
-  } else if(!m_received_second_quote) {
-    m_received_second_quote = true;
+  } else if(m_quote_count == 1) {
+    ++m_quote_count;
     m_open = quote;
     m_high = quote;
     m_low = quote;
