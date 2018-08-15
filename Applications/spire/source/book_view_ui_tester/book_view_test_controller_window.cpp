@@ -19,7 +19,7 @@ BookViewTestControllerWindow::BookViewTestControllerWindow(
   layout->addWidget(loading_time_label, 0, 0);
   m_load_time_spin_box = new QSpinBox(this);
   m_load_time_spin_box->setMaximum(100000);
-  m_load_time_spin_box->setValue(4000);
+  m_load_time_spin_box->setValue(1);
   layout->addWidget(m_load_time_spin_box, 0, 1);
   auto m_model_update_period_label = new QLabel("Model Update Period (ms):",
     this);
