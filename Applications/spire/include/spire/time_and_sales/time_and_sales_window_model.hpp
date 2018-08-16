@@ -17,7 +17,7 @@ namespace Spire {
       //! Signals that additional time and sales have completed loading.
       using EndLoadingSignal = Signal<void ()>;
 
-      //! Constructs a time and sales window model.
+      //! Constructs a TimeAndSalesWindowModel.
       /*!
         \param model The base model.
         \param properties The display properties to use.
