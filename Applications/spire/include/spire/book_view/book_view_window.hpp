@@ -76,7 +76,7 @@ namespace Spire {
       std::unique_ptr<TransitionWidget> m_transition_widget;
       QWidget* m_quote_widgets_container;
       QVBoxLayout* m_quote_widgets_container_layout;
-      std::unique_ptr<QWidget> m_table;
+      std::unique_ptr<BookViewTableWidget> m_table;
       QtPromise<void> m_data_loaded_promise;
       bool m_is_data_loaded;
 

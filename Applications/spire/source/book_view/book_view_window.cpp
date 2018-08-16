@@ -4,6 +4,7 @@
 #include <QMenu>
 #include <QTimer>
 #include "spire/book_view/book_view_properties_dialog.hpp"
+#include "spire/book_view/book_view_table_widget.hpp"
 #include "spire/book_view/labeled_data_widget.hpp"
 #include "spire/book_view/technicals_panel.hpp"
 #include "spire/security_input/security_input_dialog.hpp"
@@ -138,6 +139,7 @@ void BookViewWindow::set_current(const Security& s) {
   }
   m_bbo_quote_panel.reset();
   m_table.reset();
+  m_table.reset();
   m_current_security = s;
   m_change_security_signal(s);
   setWindowTitle(QString::fromStdString(ToString(s)) + tr(" - Book View"));
@@ -226,7 +228,7 @@ void BookViewWindow::on_data_loaded(Expect<void> value) {
   m_technicals_panel->set_model(m_model);
   m_bbo_quote_panel = std::make_unique<BboQuotePanel>(*m_model, this);
   m_quote_widgets_container_layout->addWidget(m_bbo_quote_panel.get());
-  m_table = std::make_unique<QWidget>(this);
+  m_table = std::make_unique<BookViewTableWidget>(this);
   m_quote_widgets_container_layout->addWidget(m_table.get());
   m_bbo_quote_panel->set_model(*m_model);
 }

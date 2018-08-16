@@ -1,6 +1,7 @@
 #ifndef SPIRE_BOOK_QUOTE_TABLE_MODEL_HPP
 #define SPIRE_BOOK_QUOTE_TABLE_MODEL_HPP
 #include <QAbstractTableModel>
+#include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "spire/book_view/book_view.hpp"
 #include "spire/book_view/book_view_properties.hpp"
@@ -21,14 +22,11 @@ namespace Spire {
 
       QVariant data(const QModelIndex& index, int role) const override;
 
-      QVariant headerData(int section, Qt::Orientation orientation,
-        int role) const override;
-
     private:
       std::shared_ptr<BookViewModel> m_model;
       Nexus::Side m_side;
       BookViewProperties m_properties;
-      std::vector<BookQuote> m_data;
+      std::vector<Nexus::BookQuote> m_data;
   };
 }
 

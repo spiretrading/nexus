@@ -38,8 +38,3 @@ QVariant BookQuoteTableModel::data(const QModelIndex& index, int role) const {
   }
   return QVariant();
 }
-
-QVariant BookQuoteTableModel::headerData(int section,
-    Qt::Orientation orientation, int role) const {
-  
-}
