@@ -19,7 +19,8 @@ RandomBookViewModel::RandomBookViewModel(Security security,
         Quote(100 * Money::ONE + Money::CENT, 100, Side::ASK),
         second_clock::universal_time()),
       m_random_engine(std::random_device()()),
-      m_loading_flag(std::make_shared<CallOnce<Mutex>>()) {
+      m_loading_flag(std::make_shared<CallOnce<Mutex>>()),
+      m_quote_count(0) {
   connect(&m_timer, &QTimer::timeout, [=] { on_timeout(); });
   set_period(seconds(1));
 }
@@ -133,6 +134,11 @@ connection RandomBookViewModel::connect_volume_slot(
 }
 
 void RandomBookViewModel::update() {
+  update_bbo();
+  update_time_and_sales();
+}
+
+void RandomBookViewModel::update_bbo() {
   auto random_num = m_random_engine() % 3;
   if(random_num == 0) {
     return;
@@ -150,6 +156,41 @@ void RandomBookViewModel::update() {
     ask_price += Money::CENT;
     m_bbo_signal(m_bbo);
   }
+}
+
+void RandomBookViewModel::update_time_and_sales() {
+  auto random_num = m_random_engine() % 3;
+  if(random_num == 0) {
+    return;
+  }
+  Money quote;
+  if(random_num == 1) {
+    quote = m_bbo.m_bid.m_price;
+  } else if(random_num == 2) {
+    quote = m_bbo.m_ask.m_price;
+  }
+  if(m_quote_count == 0) {
+    ++m_quote_count;
+    m_close = quote;
+    m_close_signal(quote);
+  } else if(m_quote_count == 1) {
+    ++m_quote_count;
+    m_open = quote;
+    m_high = quote;
+    m_low = quote;
+    m_open_signal(m_open);
+    m_high_signal(m_high);
+    m_low_signal(m_low);
+  }
+  if(quote < m_low) {
+    m_low = quote;
+    m_low_signal(m_low);
+  } else if(quote > m_high) {
+    m_high = quote;
+    m_high_signal(m_high);
+  }
+  m_volume += 100;
+  m_volume_signal(m_volume);
 }
 
 void RandomBookViewModel::on_timeout() {
