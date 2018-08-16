@@ -93,15 +93,15 @@ QtPromise<void> RandomBookViewModel::load() {
         for(auto i = 0; i < 1000; ++i) {
           update();
         }
-        Quote bid_quote(Money(100), 100, Side::BID);
-        Quote ask_quote(Money(100), 100, Side::ASK);
+        Quote bid_quote(Money(), 100, Side::BID);
+        Quote ask_quote(Money(), 100, Side::ASK);
         for(auto i = 0; i < 100; ++i) {
           bid_quote.m_price = (100 * Money::ONE) - (i * Money::CENT);
           m_bids.push_back(BookQuote("TST", true, DefaultMarkets::TSX(),
-            bid_quote, ptime()));
+            bid_quote, ptime(second_clock::universal_time())));
           ask_quote.m_price = (100 * Money::ONE) + (i * Money::CENT);
           m_asks.push_back(BookQuote("TST", true, DefaultMarkets::TSX(),
-            ask_quote, ptime()));
+            ask_quote, ptime(second_clock::universal_time())));
         }
         m_is_loaded = true;
       });
