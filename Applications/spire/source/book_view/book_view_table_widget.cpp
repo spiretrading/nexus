@@ -9,7 +9,9 @@ BookViewTableWidget::BookViewTableWidget(QWidget* parent)
   m_layout->setContentsMargins({});
   m_layout->setSpacing(0);
   m_bid_table_view = new BookViewSideTableView(this);
-  m_bid_table_view = new BookViewSideTableView(this);
+  m_layout->addWidget(m_bid_table_view);
+  m_ask_table_view = new BookViewSideTableView(this);
+  m_layout->addWidget(m_ask_table_view);
 }
 
 void BookViewTableWidget::set_model(
