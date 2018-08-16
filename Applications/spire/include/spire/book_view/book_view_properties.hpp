@@ -37,6 +37,9 @@ namespace Spire {
         HIGHLIGHT_ORDERS
       };
 
+      //! The number of columns in this model.
+      static const auto COLUMN_COUNT = 3;
+
       //! Constructs the default properties.
       BookViewProperties();
 
