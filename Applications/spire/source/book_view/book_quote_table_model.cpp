@@ -44,7 +44,12 @@ QVariant BookQuoteTableModel::data(const QModelIndex& index, int role) const {
         return QVariant();
     }
   } else if(role == Qt::BackgroundRole) {
-    return m_properties.get_book_quote_background_colors()[index.row()];
+    auto bg_colors = m_properties.get_book_quote_background_colors();
+    if(index.row() < bg_colors.size()) {
+      return bg_colors[index.row()];
+    } else {
+      return bg_colors.back();
+    }
   } else if(role == Qt::ForegroundRole) {
     return m_properties.get_book_quote_foreground_color();
   } else if(role == Qt::FontRole) {

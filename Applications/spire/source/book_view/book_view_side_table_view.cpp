@@ -1,6 +1,7 @@
 #include "spire/book_view/book_view_side_table_view.hpp"
 #include <QHeaderView>
 #include "spire/book_view/book_quote_table_model.hpp"
+#include "spire/spire/dimensions.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
 
 using namespace Spire;
@@ -27,4 +28,7 @@ void BookViewSideTableView::set_model(
 void BookViewSideTableView::set_properties(
     const BookViewProperties& properties) {
   m_model->set_properties(properties);
+  QFontMetrics metrics(properties.get_book_quote_font());
+  auto row_height = metrics.height() + scale_height(2);
+  verticalHeader()->setDefaultSectionSize(row_height);
 }

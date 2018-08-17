@@ -63,6 +63,7 @@ const BookViewProperties& BookViewWindow::get_properties() const {
 }
 
 void BookViewWindow::set_properties(const BookViewProperties& properties) {
+  m_table->set_properties(properties);
 }
 
 connection BookViewWindow::connect_security_change_signal(
@@ -232,4 +233,5 @@ void BookViewWindow::on_data_loaded(Expect<void> value) {
   m_quote_widgets_container_layout->addWidget(m_table.get());
   m_bbo_quote_panel->set_model(*m_model);
   m_table->set_model(m_model);
+  m_table->set_properties(m_properties);
 }
