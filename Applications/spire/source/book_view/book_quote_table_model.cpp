@@ -44,11 +44,17 @@ QVariant BookQuoteTableModel::data(const QModelIndex& index, int role) const {
         return QVariant();
     }
   } else if(role == Qt::BackgroundRole) {
-    auto bg_colors = m_properties.get_book_quote_background_colors();
-    if(index.row() < bg_colors.size()) {
-      return bg_colors[index.row()];
-    } else {
-      return bg_colors.back();
+    if(m_properties.get_market_highlight(
+        m_data[index.row()].m_market).is_initialized()) {
+      return m_properties.get_market_highlight(
+        m_data[index.row()].m_market).get().m_color;
+    } else  {
+      auto& bg_colors = m_properties.get_book_quote_background_colors();
+      if(index.row() < bg_colors.size()) {
+        return bg_colors[index.row()];
+      } else {
+        return bg_colors.back();
+      }
     }
   } else if(role == Qt::ForegroundRole) {
     return m_properties.get_book_quote_foreground_color();

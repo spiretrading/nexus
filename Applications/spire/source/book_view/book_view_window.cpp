@@ -64,7 +64,9 @@ const BookViewProperties& BookViewWindow::get_properties() const {
 
 void BookViewWindow::set_properties(const BookViewProperties& properties) {
   m_properties = properties;
-  m_table->set_properties(m_properties);
+  if(m_table != nullptr) {
+    m_table->set_properties(m_properties);
+  }
 }
 
 connection BookViewWindow::connect_security_change_signal(
