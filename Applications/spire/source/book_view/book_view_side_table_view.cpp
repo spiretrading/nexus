@@ -8,13 +8,17 @@ using namespace Spire;
 
 BookViewSideTableView::BookViewSideTableView(QWidget* parent)
     : QTableView(parent) {
+  setStyleSheet(QString(R"(
+    border: none;
+    gridline-color: #C8C8C8;)"));
   horizontalHeader()->hide();
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   verticalHeader()->hide();
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
   setSelectionMode(QAbstractItemView::NoSelection);
   setFocusPolicy(Qt::NoFocus);
-  setShowGrid(false);
+  horizontalHeader()->setStretchLastSection(true);
 }
 
 void BookViewSideTableView::set_model(
@@ -31,5 +35,6 @@ void BookViewSideTableView::set_properties(
   QFontMetrics metrics(properties.get_book_quote_font());
   auto row_height = metrics.height() + scale_height(2);
   verticalHeader()->setDefaultSectionSize(row_height);
+  setShowGrid(properties.get_show_grid());
   update();
 }

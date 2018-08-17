@@ -206,6 +206,7 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   m_show_grid_lines_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style,
     check_box_hover_style, check_box_focused_style);
+  m_show_grid_lines_check_box->setChecked(properties.get_show_grid());
   font_button_layout->addWidget(m_show_grid_lines_check_box);
   font_button_layout->addStretch(129);
   horizontal_layout->addLayout(font_button_layout);
