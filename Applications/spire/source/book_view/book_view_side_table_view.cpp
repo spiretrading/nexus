@@ -1,6 +1,7 @@
 #include "spire/book_view/book_view_side_table_view.hpp"
 #include <QHeaderView>
 #include "spire/book_view/book_quote_table_model.hpp"
+#include "spire/ui/custom_qt_variants.hpp"
 
 using namespace Spire;
 
@@ -18,7 +19,9 @@ BookViewSideTableView::BookViewSideTableView(QWidget* parent)
 void BookViewSideTableView::set_model(
     std::unique_ptr<BookQuoteTableModel> model) {
   m_model = std::move(model);
-  setModel(m_model.get());
+  auto filter = new CustomVariantSortFilterProxyModel(this);
+  filter->setSourceModel(m_model.get());
+  setModel(filter);
 }
 
 void BookViewSideTableView::set_properties(
