@@ -35,7 +35,7 @@ namespace Spire {
         Qt::WindowFlags flags = 0);
 
       //! Returns the properties represented by this dialog.
-      BookViewProperties get_properties() const;
+      BookViewProperties get_properties();
 
       //! Connects a slot to the apply signal.
       boost::signals2::connection connect_apply_signal(
@@ -58,6 +58,8 @@ namespace Spire {
       mutable SaveDefaultSignal m_save_default_signal;
       BookViewProperties m_properties;
       QTabWidget* m_tab_widget;
+      BookViewLevelPropertiesWidget* m_levels_tab_widget;
+      BookViewHighlightPropertiesWidget* m_highlights_tab_widget;
       bool m_last_focus_was_key;
 
       void on_tab_bar_clicked(int index);

@@ -31,4 +31,5 @@ void BookViewSideTableView::set_properties(
   QFontMetrics metrics(properties.get_book_quote_font());
   auto row_height = metrics.height() + scale_height(2);
   verticalHeader()->setDefaultSectionSize(row_height);
+  update();
 }
