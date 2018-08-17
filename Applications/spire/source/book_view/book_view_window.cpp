@@ -231,4 +231,5 @@ void BookViewWindow::on_data_loaded(Expect<void> value) {
   m_table = std::make_unique<BookViewTableWidget>(this);
   m_quote_widgets_container_layout->addWidget(m_table.get());
   m_bbo_quote_panel->set_model(*m_model);
+  m_table->set_model(m_model);
 }

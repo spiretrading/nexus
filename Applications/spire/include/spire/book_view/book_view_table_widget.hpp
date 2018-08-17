@@ -3,6 +3,7 @@
 #include <QHBoxLayout>
 #include <QWidget>
 #include "spire/book_view/book_view.hpp"
+#include "spire/book_view/book_view_properties.hpp"
 
 namespace Spire {
 
@@ -19,7 +20,7 @@ namespace Spire {
       /*
         \param model The model to get the table data from.
       */
-      void set_model(std::shared_ptr<BookQuoteTableModel> model);
+      void set_model(std::shared_ptr<BookViewModel> model);
 
       //! Sets the properties of the table.
       /*
@@ -31,6 +32,7 @@ namespace Spire {
       QHBoxLayout* m_layout;
       BookViewSideTableView* m_bid_table_view;
       BookViewSideTableView* m_ask_table_view;
+      BookViewProperties m_properties;
   };
 }
 

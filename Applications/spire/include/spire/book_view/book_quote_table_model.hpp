@@ -22,6 +22,12 @@ namespace Spire {
 
       QVariant data(const QModelIndex& index, int role) const override;
 
+      //! Sets the properties that this model uses to style the table items.
+      /*
+        \param properties The properties to apply.
+      */
+      void set_properties(const BookViewProperties& properties);
+
     private:
       std::shared_ptr<BookViewModel> m_model;
       Nexus::Side m_side;

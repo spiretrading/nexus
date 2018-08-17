@@ -38,3 +38,8 @@ QVariant BookQuoteTableModel::data(const QModelIndex& index, int role) const {
   }
   return QVariant();
 }
+
+void BookQuoteTableModel::set_properties(
+    const BookViewProperties& properties) {
+  m_properties = properties;
+}

@@ -1,7 +1,7 @@
 #ifndef SPIRE_BOOK_VIEW_SIDE_TABLE_VIEW_HPP
 #define SPIRE_BOOK_VIEW_SIDE_TABLE_VIEW_HPP
 #include <QTableView>
-#include "spire/book_view/book_quote_table_model.hpp"
+#include "spire/book_view/book_view.hpp"
 
 namespace Spire {
 
@@ -19,13 +19,16 @@ namespace Spire {
       /*
         \param model The model to get the table data from.
       */
-      void set_model(std::shared_ptr<BookQuoteTableModel> model);
+      void set_model(std::unique_ptr<BookQuoteTableModel> model);
 
       //! Sets the properties of the table.
       /*
         \param properties The properties the table will be updated to have.
       */
       void set_properties(const BookViewProperties& properties);
+
+    private:
+      std::unique_ptr<BookQuoteTableModel> m_model;
   };
 }
 
