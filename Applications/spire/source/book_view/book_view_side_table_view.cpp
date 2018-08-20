@@ -19,7 +19,7 @@ BookViewSideTableView::BookViewSideTableView(QWidget* parent)
   setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
   setSelectionMode(QAbstractItemView::NoSelection);
   setFocusPolicy(Qt::NoFocus);
-  setItemDelegate(new ItemPaddingDelegate(scale_width(8),
+  setItemDelegate(new ItemPaddingDelegate(scale_width(4),
     new CustomVariantItemDelegate(), this));
 }
 
