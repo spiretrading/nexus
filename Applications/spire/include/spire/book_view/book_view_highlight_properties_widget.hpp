@@ -41,7 +41,7 @@ namespace Spire {
 
       void update_color_button_stylesheet(FlatButton* button,
         const QColor& color);
-      void update_market_widgets(int selected_item_index);
+      void update_market_widgets();
       void update_market_list_stylesheet(int selected_item_index);
       void on_market_highlight_color_button_clicked();
       void on_order_highlight_color_button_clicked();

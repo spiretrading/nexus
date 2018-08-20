@@ -50,7 +50,7 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   m_markets_list_widget->setSelectionBehavior(
     QAbstractItemView::SelectionBehavior::SelectRows);
   connect(m_markets_list_widget, &QListWidget::currentRowChanged,
-    [=] (auto index) { update_market_widgets(index); });
+    [=] { update_market_widgets(); });
   m_markets_list_widget->setFixedWidth(scale_width(140));
   markets_layout->addWidget(m_markets_list_widget, 222);
   layout->addLayout(markets_layout, 140);
@@ -222,10 +222,9 @@ void BookViewHighlightPropertiesWidget::update_color_button_stylesheet(
   button->set_focus_style(s);
 }
 
-void BookViewHighlightPropertiesWidget::update_market_widgets(
-    int selected_item_index) {
+void BookViewHighlightPropertiesWidget::update_market_widgets() {
   auto& selected_item = static_cast<MarketListItem*>(
-    m_markets_list_widget->item(selected_item_index))->get_market_highlight();
+    m_markets_list_widget->currentItem())->get_market_highlight();
   if(selected_item.is_initialized()) {
     update_color_button_stylesheet(m_market_highlight_color_button,
       selected_item->m_color);
@@ -238,7 +237,7 @@ void BookViewHighlightPropertiesWidget::update_market_widgets(
     update_color_button_stylesheet(m_market_highlight_color_button, Qt::white);
     m_highlight_none_check_box->setChecked(true);
   }
-  update_market_list_stylesheet(selected_item_index);
+  update_market_list_stylesheet(m_markets_list_widget->currentRow());
 }
 
 void BookViewHighlightPropertiesWidget::update_market_list_stylesheet(
@@ -276,7 +275,7 @@ void BookViewHighlightPropertiesWidget::
   if(color.isValid()) {
     item->set_highlight_color(color);
     item->setBackgroundColor(color);
-    update_market_widgets(m_markets_list_widget->currentRow());
+    update_market_widgets();
   }
 }
 
