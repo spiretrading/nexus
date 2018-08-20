@@ -17,6 +17,12 @@ BookQuoteTableModel::BookQuoteTableModel(std::shared_ptr<BookViewModel> model,
   } else {
     m_data = m_model->get_asks();
   }
+  for(auto i = 0; i < m_data.size(); ++i) {
+    if(m_market_first_index.find(m_data[i].m_market) ==
+        m_market_first_index.end()) {
+      m_market_first_index[m_data[i].m_market] = i;
+    }
+  }
 }
 
 int BookQuoteTableModel::rowCount(const QModelIndex& parent) const {
@@ -44,17 +50,20 @@ QVariant BookQuoteTableModel::data(const QModelIndex& index, int role) const {
         return QVariant();
     }
   } else if(role == Qt::BackgroundRole) {
-    if(m_properties.get_market_highlight(
-        m_data[index.row()].m_market).is_initialized()) {
-      return m_properties.get_market_highlight(
-        m_data[index.row()].m_market).get().m_color;
-    } else  {
-      auto& bg_colors = m_properties.get_book_quote_background_colors();
-      if(index.row() < bg_colors.size()) {
-        return bg_colors[index.row()];
-      } else {
-        return bg_colors.back();
+    auto market = m_data[index.row()].m_market;
+    auto highlight = m_properties.get_market_highlight(market);
+    auto& bg_colors = m_properties.get_book_quote_background_colors();
+    if(highlight.is_initialized()) {
+      if(highlight->m_highlight_all_levels) {
+        return highlight->m_color;
+      } else if(index.row() == (*m_market_first_index.find(market)).second) {
+        return highlight->m_color;
       }
+    }
+    if(index.row() < bg_colors.size()) {
+      return bg_colors[index.row()];
+    } else {
+      return bg_colors.back();
     }
   } else if(role == Qt::ForegroundRole) {
     return m_properties.get_book_quote_foreground_color();

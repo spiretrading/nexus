@@ -2,6 +2,7 @@
 #define SPIRE_BOOK_QUOTE_TABLE_MODEL_HPP
 #include <QAbstractTableModel>
 #include "Nexus/Definitions/BookQuote.hpp"
+#include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "spire/book_view/book_view.hpp"
 #include "spire/book_view/book_view_properties.hpp"
@@ -33,6 +34,8 @@ namespace Spire {
       Nexus::Side m_side;
       BookViewProperties m_properties;
       std::vector<Nexus::BookQuote> m_data;
+      std::unordered_map<Nexus::MarketCode , int>
+        m_market_first_index;
   };
 }
 
