@@ -3,6 +3,7 @@
 #include "spire/book_view/book_quote_table_model.hpp"
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
+#include "spire/ui/item_padding_delegate.hpp"
 
 using namespace Spire;
 
@@ -18,15 +19,14 @@ BookViewSideTableView::BookViewSideTableView(QWidget* parent)
   setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
   setSelectionMode(QAbstractItemView::NoSelection);
   setFocusPolicy(Qt::NoFocus);
-  horizontalHeader()->setStretchLastSection(true);
+  setItemDelegate(new ItemPaddingDelegate(scale_width(8),
+    new CustomVariantItemDelegate(), this));
 }
 
 void BookViewSideTableView::set_model(
     std::unique_ptr<BookQuoteTableModel> model) {
   m_model = std::move(model);
-  auto filter = new CustomVariantSortFilterProxyModel(this);
-  filter->setSourceModel(m_model.get());
-  setModel(filter);
+  setModel(m_model.get());
 }
 
 void BookViewSideTableView::set_properties(
@@ -37,4 +37,10 @@ void BookViewSideTableView::set_properties(
   verticalHeader()->setDefaultSectionSize(row_height);
   setShowGrid(properties.get_show_grid());
   update();
+}
+
+void BookViewSideTableView::resizeEvent(QResizeEvent* event) {
+  setColumnWidth(0, width() / 3);
+  setColumnWidth(1, width() / 3);
+  setColumnWidth(2, width() / 3);
 }

@@ -27,6 +27,9 @@ namespace Spire {
       */
       void set_properties(const BookViewProperties& properties);
 
+    protected:
+      void resizeEvent(QResizeEvent* event) override;
+
     private:
       std::unique_ptr<BookQuoteTableModel> m_model;
   };
