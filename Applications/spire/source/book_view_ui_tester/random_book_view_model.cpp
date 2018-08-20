@@ -97,10 +97,10 @@ QtPromise<void> RandomBookViewModel::load() {
         Quote ask_quote(Money(), 100, Side::ASK);
         for(auto i = 0; i < 100; ++i) {
           bid_quote.m_price = (100 * Money::ONE) - (i * Money::CENT);
-          m_bids.push_back(BookQuote("TST", true, DefaultMarkets::TSX(),
+          m_bids.push_back(BookQuote("TST", true, get_random_market(),
             bid_quote, second_clock::universal_time()));
           ask_quote.m_price = (100 * Money::ONE) + (i * Money::CENT);
-          m_asks.push_back(BookQuote("TST", true, DefaultMarkets::TSX(),
+          m_asks.push_back(BookQuote("TST", true, get_random_market(),
             ask_quote, second_clock::universal_time()));
         }
         m_is_loaded = true;
@@ -141,6 +141,11 @@ connection RandomBookViewModel::connect_close_slot(
 connection RandomBookViewModel::connect_volume_slot(
     const QuantitySignal::slot_type& slot) const {
   return m_volume_signal.connect(slot);
+}
+
+MarketCode RandomBookViewModel::get_random_market() {
+  auto markets = GetDefaultMarketDatabase().GetEntries();
+  return markets[m_random_engine() % markets.size()].m_code;
 }
 
 void RandomBookViewModel::update() {

@@ -99,6 +99,7 @@ namespace Spire {
         m_loading_flag;
       int m_quote_count;
 
+      Nexus::MarketCode get_random_market();
       void update();
       void update_bbo();
       void update_time_and_sales();
