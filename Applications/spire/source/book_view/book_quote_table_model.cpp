@@ -69,10 +69,6 @@ QVariant BookQuoteTableModel::data(const QModelIndex& index, int role) const {
     return m_properties.get_book_quote_foreground_color();
   } else if(role == Qt::FontRole) {
     return m_properties.get_book_quote_font();
-  } else if(role == Qt::TextAlignmentRole) {
-    if(index.column() == 1) {
-      return Qt::AlignCenter;
-    }
   }
   return QVariant();
 }
