@@ -39,6 +39,7 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
     item->setTextAlignment(Qt::AlignCenter);
     auto highlight = properties.get_market_highlight(entry.m_code);
     if(highlight.is_initialized()) {
+      item->setBackgroundColor(highlight->m_color);
       item->set_highlight_color(highlight->m_color);
       if(highlight->m_highlight_all_levels) {
         item->set_highlight_all_levels();
