@@ -1,7 +1,6 @@
 import * as React from 'react';
 import {BoxLayout} from './box_layout';
 
-/** Specifies the React properties for the HBoxLayout component. */
 interface Properties {
 
   /** The width of the HBoxLayout, leaving this value empty results in a width

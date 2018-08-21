@@ -1,7 +1,6 @@
 import * as React from 'react';
 import * as Nexus from 'nexus';
 
-/** The React props used to render the CurrencySelectionBox. */
 interface Properties {
 
   /** The set of available currencies to select. */
@@ -12,6 +11,9 @@ interface Properties {
 
   /** The event handler called when the selection changes. */
   onChange?: (currency: Nexus.Currency) => void;
+
+  /** The class name of the currency selection box. */
+  className?: string;
 }
 
 /** Displays a selection box for currencies. */
@@ -55,8 +57,8 @@ export class CurrencySelectionBox extends React.Component<Properties> {
     })();
     return (
       <div>
-        <select style={selectStyle} onChange={this.onChange}
-            defaultValue={defaultValue}>
+        <select style={selectStyle} className={this.props.className}
+            onChange={this.onChange} defaultValue={defaultValue}>
           {currencies}
         </select>
       </div>);

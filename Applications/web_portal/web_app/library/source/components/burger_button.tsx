@@ -1,5 +1,6 @@
-import {css, StyleSheet} from 'aphrodite';
 import * as React from 'react';
+import {HLine} from '.';
+import {Padding, VBoxLayout} from '../layouts';
 
 /** The properties used to display the BurgerButton. */
 interface Properties {
@@ -14,98 +15,66 @@ interface Properties {
   color: string;
 
   /** The color of the bars when highlighted. */
-  highlightColor: string;
+  highlightColor?: string;
 
   /** The onClick event handler. */
-  onClick?: () => void;
+  onClick?: (event?: React.MouseEvent<any>) => void;
+}
+
+interface State {
+  isHovered: boolean;
 }
 
 /** Displays a burger button. */
-export class BurgerButton extends React.Component<Properties> {
-  constructor(props: Properties) {
-    super(props);
-    this.onClick = this.onClick.bind(this);
-    this.onMouseEnter = this.onMouseEnter.bind(this);
-    this.onMouseLeave = this.onMouseLeave.bind(this);
-    this.componentWillReceiveProps(props);
-  }
-
-  public componentWillReceiveProps(newProps: Properties) {
-    const buttonStyles = StyleSheet.create({
-      highlighted: {
-        ...BurgerButton.STYLE.buttonBase,
-        width: newProps.width,
-        height: newProps.height,
-        fill: newProps.highlightColor
-      },
-      unHighlighted: {
-        ...BurgerButton.STYLE.buttonBase,
-        width: newProps.width,
-        height: newProps.height,
-        fill: newProps.color
-      }
-    });
-    this.unHighlightedClassName = css([buttonStyles.unHighlighted,
-      BurgerButton.STYLE.buttonBase]);
-    this.highlightedClassName = css([buttonStyles.highlighted,
-      BurgerButton.STYLE.buttonBase]);
+export class BurgerButton extends React.Component<Properties, State> {
+  constructor(properties: Properties) {
+    super(properties);
+    this.state = {
+      isHovered: false,
+    };
+    this.onHover = this.onHover.bind(this);
+    this.onLeave = this.onLeave.bind(this);
   }
 
   public render(): JSX.Element {
-    return (
-      <button className={this.unHighlightedClassName}
-          onClick={this.onClick}
-          onMouseEnter={this.onMouseEnter}
-          onMouseLeave={this.onMouseLeave}
-          ref={(ref) => this.button = ref}>
-        <svg className={css(BurgerButton.STYLE.icon)}
-            ref={(ref) => this.icon = ref}>
-          <g>
-            <rect y='0' width='100%' height='15%'/>
-            <rect y='42.5%' width='100%' height='15%'/>
-            <rect y='85%' width='100%' height='15%'/>
-          </g>
-        </svg>
-      </button>);
-  }
-
-  private onClick() {
-    if(this.props.onClick) {
-      this.props.onClick();
-    }
-  }
-
-  private onMouseEnter() {
-    this.button.className = this.highlightedClassName;
-  }
-
-  private onMouseLeave() {
-    this.button.className = this.unHighlightedClassName;
-  }
-
-  private static STYLE = StyleSheet.create({
-    buttonBase: {
-      border: 'none',
-      outline: '0',
-      padding: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0)',
-      '-webkit-tap-highlight-color': 'rgba(0,0,0,0)',
-      ':hover': {
-        cursor: 'pointer'
-      },
-      ':active': {
-        cursor: 'pointer'
+    const barHeight = parseInt(this.props.height as any) / 7;
+    const color = (() => {
+      if(this.state.isHovered && this.props.highlightColor) {
+        return this.props.highlightColor;
       }
-    },
-    icon: {
-      width: '100%',
-      height: '100%',
-      fill: 'inherit',
-      shapeRendering: 'geometricPrecision'
-    }
-  });
-  private unHighlightedClassName: string;
-  private highlightedClassName: string;
-  private button: HTMLButtonElement;
-  private icon: SVGElement;
+      return this.props.color;
+    })();
+    const style = {
+      minWidth: this.props.width,
+      width: this.props.width,
+      minHeight: this.props.height,
+      height: this.props.height,
+      display: 'inline-block',
+      cursor: 'pointer'
+    };
+    return (
+      <div style={style}>
+        <VBoxLayout width={this.props.width}
+            height={this.props.height} onMouseEnter={this.onHover}
+            onMouseOut={this.onLeave} onClick={this.props.onClick}>
+          <HLine height={barHeight} color={color}/>
+          <Padding/>
+          <HLine height={barHeight} color={color}/>
+          <Padding/>
+          <HLine height={barHeight} color={color}/>
+        </VBoxLayout>
+      </div>);
+  }
+
+  private onHover() {
+    this.setState({
+      isHovered: true
+    });
+  }
+
+  private onLeave() {
+    this.setState({
+      isHovered: false
+    });
+  }
 }

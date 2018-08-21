@@ -10,7 +10,6 @@ enum BoxOrientation {
   VERTICAL
 }
 
-/** Specifies the React properties for the BoxLayout component. */
 interface Properties {
 
   /** The width of the BoxLayout, leaving this value empty results in a width
