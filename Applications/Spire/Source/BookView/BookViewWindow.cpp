@@ -3,6 +3,7 @@
 #include <Beam/Utilities/Utilities.hpp>
 #include <boost/lexical_cast.hpp>
 #include <QApplication>
+#include <QHeaderView>
 #include <QKeyEvent>
 #include <QLineEdit>
 #include <QMenu>

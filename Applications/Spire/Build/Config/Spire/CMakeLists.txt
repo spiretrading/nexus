@@ -61,6 +61,8 @@ target_link_libraries(Spire Dashboard Charting PortfolioViewer Utilities
 
 if(WIN32)
   target_link_libraries(Spire
+    debug $ENV{QT_WINDOWS_ACCESSIBILITY_LIBRARY_DEBUG_PATH}
+    optimized $ENV{QT_WINDOWS_ACCESSIBILITY_LIBRARY_OPTIMIZED_PATH}
     debug $ENV{QT_WINDOWS_LIBRARY_DEBUG_PATH}
     optimized $ENV{QT_WINDOWS_LIBRARY_OPTIMIZED_PATH}
     imm32.lib winmm.lib ws2_32.lib opengl32.lib version.lib netapi32.lib

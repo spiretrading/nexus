@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/TaskKeyBindingsDialog.hpp"
+#include <QHeaderView>
 #include <QStandardItemModel>
 #include <QTableView>
 #include "Spire/Canvas/Common/CanvasNode.hpp"
