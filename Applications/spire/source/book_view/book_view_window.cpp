@@ -25,8 +25,8 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
       m_input_model(&input_model),
       m_is_data_loaded(false) {
   m_body = new QWidget(this);
-  m_body->setMinimumSize(scale(210, 280));
-  resize(scale(210, 410));
+  m_body->setMinimumSize(scale(220, 280));
+  resize(scale(220, 410));
   m_body->setStyleSheet("background-color: #FFFFFF;");
   auto window_layout = new QVBoxLayout(this);
   window_layout->setContentsMargins({});

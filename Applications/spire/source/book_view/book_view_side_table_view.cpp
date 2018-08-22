@@ -1,9 +1,9 @@
 #include "spire/book_view/book_view_side_table_view.hpp"
 #include <QHeaderView>
 #include "spire/book_view/book_quote_table_model.hpp"
+#include "spire/book_view/book_view_table_delegate.hpp"
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
-#include "spire/ui/item_padding_delegate.hpp"
 
 using namespace Spire;
 
@@ -19,8 +19,8 @@ BookViewSideTableView::BookViewSideTableView(QWidget* parent)
   setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
   setSelectionMode(QAbstractItemView::NoSelection);
   setFocusPolicy(Qt::NoFocus);
-  setItemDelegate(new ItemPaddingDelegate(scale_width(4),
-    new CustomVariantItemDelegate(), this));
+  setItemDelegate(new BookViewTableDelegate(new CustomVariantItemDelegate(),
+    this));
 }
 
 void BookViewSideTableView::set_model(
