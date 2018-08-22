@@ -49,13 +49,13 @@ if exist quickfix goto end_quick_fix_setup
     rm quickfix-1.14.3.zip
 :end_quick_fix_setup
 
-if exist qt-5.10.0 goto end_qt_setup
-  git clone git://code.qt.io/qt/qt5.git qt-5.10.0
-  if not exist qt-5.10.0 goto end_qt_setup
-    pushd qt-5.10.0
-    git checkout v5.10.0
+if exist qt-5.11.2 goto end_qt_setup
+  git clone git://code.qt.io/qt/qt5.git qt-5.11.2
+  if not exist qt-5.11.2 goto end_qt_setup
+    pushd qt-5.11.2
+    git checkout 5.11.2
     perl init-repository --module-subset=default
-    call configure -opensource -static -mp -make libs -make tools ^
+    call configure -prefix %cd% -opensource -static -mp -make libs -make tools ^
       -nomake examples -nomake tests -opengl desktop -no-icu -qt-freetype ^
       -qt-harfbuzz -qt-libpng -qt-pcre -qt-zlib -confirm-license
     set CL=/MP
