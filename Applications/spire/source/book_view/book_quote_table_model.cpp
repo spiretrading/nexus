@@ -23,6 +23,8 @@ BookQuoteTableModel::BookQuoteTableModel(std::shared_ptr<BookViewModel> model,
       m_market_first_index[m_data[i].m_market] = i;
     }
   }
+  m_book_quote_connection = m_model->connect_book_quote_slot(
+    [=] { on_book_quote_signal(); });
 }
 
 int BookQuoteTableModel::rowCount(const QModelIndex& parent) const {
@@ -76,4 +78,8 @@ QVariant BookQuoteTableModel::data(const QModelIndex& index, int role) const {
 void BookQuoteTableModel::set_properties(
     const BookViewProperties& properties) {
   m_properties = properties;
+}
+
+void BookQuoteTableModel::on_book_quote_signal() {
+  
 }

@@ -58,11 +58,16 @@ void TechnicalsPanel::set_model(std::shared_ptr<BookViewModel> model) {
   }
   m_volume_label_widget->set_data_text(
     QString::fromStdString(Beam::ToString(m_model->get_volume())));
-  m_model->connect_close_slot([=] (auto& c) { on_close_signal(c); });
-  m_model->connect_high_slot([=] (auto& h) { on_high_signal(h); });
-  m_model->connect_low_slot([=] (auto& l) { on_low_signal(l); });
-  m_model->connect_open_slot([=] (auto& o) { on_open_signal(o); });
-  m_model->connect_volume_slot([=] (auto& v) { on_volume_signal(v); });
+  m_close_connection = m_model->connect_close_slot(
+    [=] (auto& c) { on_close_signal(c); });
+  m_high_connection = m_model->connect_high_slot(
+    [=] (auto& h) { on_high_signal(h); });
+  m_low_connection = m_model->connect_low_slot(
+    [=] (auto& l) { on_low_signal(l); });
+  m_open_connection = m_model->connect_open_slot(
+    [=] (auto& o) { on_open_signal(o); });
+  m_volume_connection = m_model->connect_volume_slot(
+    [=] (auto& v) { on_volume_signal(v); });
 }
 
 void TechnicalsPanel::reset_model() {
