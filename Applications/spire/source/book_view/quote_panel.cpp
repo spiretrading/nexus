@@ -42,8 +42,8 @@ QuotePanel::QuotePanel(const BookViewModel& model, Side side,
   label_layout->addWidget(m_size_label);
   label_layout->addStretch(1);
   layout->addLayout(label_layout);
-  set_model(model);
   m_item_delegate = new CustomVariantItemDelegate(this);
+  set_model(model);
 }
 
 void QuotePanel::set_model(const BookViewModel& model) {
@@ -72,7 +72,7 @@ void QuotePanel::set_quote_text(const Money& price, const Quantity& size) {
 }
 
 void QuotePanel::on_bbo_quote(const BboQuote& bbo) {
-  auto get_quote = [&] (auto& b) { 
+  auto get_quote = [&] (auto& b) {
     if(m_side == Side::BID) {
       return b.m_bid;
     }

@@ -36,28 +36,28 @@ void TechnicalsPanel::set_model(std::shared_ptr<BookViewModel> model) {
   m_model = model;
   if(m_model->get_close().is_initialized()) {
     m_close_label_widget->set_data_text(
-      m_item_delegate->displayText(QVariant::fromValue(m_model->get_close()),
+      m_item_delegate->displayText(QVariant::fromValue(*m_model->get_close()),
         QLocale()));
   } else {
     m_close_label_widget->set_data_text(tr("N/A"));
   }
   if(m_model->get_high().is_initialized()) {
     m_high_label_widget->set_data_text(
-      m_item_delegate->displayText(QVariant::fromValue(m_model->get_high()),
+      m_item_delegate->displayText(QVariant::fromValue(*m_model->get_high()),
         QLocale()));
   } else {
     m_high_label_widget->set_data_text(tr("N/A"));
   }
   if(m_model->get_low().is_initialized()) {
     m_low_label_widget->set_data_text(
-      m_item_delegate->displayText(QVariant::fromValue(m_model->get_low()),
+      m_item_delegate->displayText(QVariant::fromValue(*m_model->get_low()),
         QLocale()));
   } else {
     m_low_label_widget->set_data_text(tr("N/A"));
   }
   if(m_model->get_open().is_initialized()) {
     m_open_label_widget->set_data_text(
-      m_item_delegate->displayText(QVariant::fromValue(m_model->get_open()),
+      m_item_delegate->displayText(QVariant::fromValue(*m_model->get_open()),
         QLocale()));
   } else {
     m_open_label_widget->set_data_text(tr("N/A"));
@@ -180,6 +180,6 @@ void TechnicalsPanel::on_open_signal(const Money& open) {
 }
 
 void TechnicalsPanel::on_volume_signal(const Quantity& volume) {
-  m_volume_label_widget->set_data_text(QString("%L1").arg(1000000));
-    //m_item_delegate->displayText(QVariant::fromValue(volume), QLocale()));
+  m_volume_label_widget->set_data_text(
+    m_item_delegate->displayText(QVariant::fromValue(volume), QLocale()));
 }
