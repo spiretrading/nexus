@@ -81,5 +81,31 @@ void BookQuoteTableModel::set_properties(
 }
 
 void BookQuoteTableModel::on_book_quote_signal(const BookQuote& book_quote) {
-  
+  if(book_quote.m_quote.m_side != m_side) {
+    return;
+  }
+  auto it = std::lower_bound(m_data.begin(), m_data.end(), book_quote,
+    BookQuoteListingComparator);
+  if(it == m_data.end()) {
+    beginInsertRows(QModelIndex(), m_data.size(), m_data.size());
+    m_data.push_back(book_quote);
+    endInsertRows();
+  } else if(std::tie(it->m_quote.m_price, it->m_mpid) ==
+      std::tie(book_quote.m_quote.m_price, book_quote.m_mpid)) {
+    auto index = std::distance(m_data.begin(), it);
+    if(book_quote.m_quote.m_size == 0) {
+      beginRemoveRows(QModelIndex(), index, index);
+      m_data.erase(it);
+      endRemoveRows();
+    } else {
+      *it = book_quote;
+      dataChanged(createIndex(index, 0), createIndex(index,
+        columnCount(QModelIndex())));
+    }
+  } else {
+    auto index = std::distance(m_data.begin(), it);
+    beginInsertRows(QModelIndex(), index, index);
+    m_data.insert(it, book_quote);
+    endInsertRows();
+  }
 }
