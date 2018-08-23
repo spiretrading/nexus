@@ -2,6 +2,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include "spire/spire/dimensions.hpp"
+#include "spire/ui/custom_qt_variants.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -22,8 +23,9 @@ SecurityInfoWidget::SecurityInfoWidget(SecurityInfo info, QWidget* parent)
   auto top_line_layout = new QHBoxLayout();
   top_line_layout->setContentsMargins({});
   top_line_layout->setSpacing(0);
-  m_security_name_label = new QLabel(QString::fromStdString(
-    Nexus::ToString(m_info.m_security)), this);
+  CustomVariantItemDelegate item_delegate;
+  m_security_name_label = new QLabel(item_delegate.displayText(
+    QVariant::fromValue(m_info.m_security), QLocale()), this);
   m_security_name_label->setStyleSheet(QString(R"(
     background-color: transparent;
     color: #333333;

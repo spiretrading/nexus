@@ -9,6 +9,7 @@
 #include "spire/time_and_sales/time_and_sales_model.hpp"
 #include "spire/time_and_sales/time_and_sales_properties.hpp"
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
+#include "spire/ui/custom_qt_variants.hpp"
 #include "spire/ui/security_stack.hpp"
 #include "spire/ui/ui.hpp"
 
@@ -71,6 +72,7 @@ namespace Spire {
       std::unique_ptr<QLabel> m_overlay_widget;
       TimeAndSalesTableView* m_table;
       QLabel* m_volume_label;
+      CustomVariantItemDelegate* m_item_delegate;
 
       void export_table();
       void show_overlay_widget();

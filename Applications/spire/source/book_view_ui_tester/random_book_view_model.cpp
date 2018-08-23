@@ -150,6 +150,7 @@ MarketCode RandomBookViewModel::get_random_market() {
 
 void RandomBookViewModel::update() {
   update_bbo();
+  update_book_quote();
   update_time_and_sales();
 }
 
@@ -171,6 +172,10 @@ void RandomBookViewModel::update_bbo() {
     ask_price += Money::CENT;
     m_bbo_signal(m_bbo);
   }
+}
+
+void RandomBookViewModel::update_book_quote() {
+  auto random_num = m_random_engine() % 100;
 }
 
 void RandomBookViewModel::update_time_and_sales() {

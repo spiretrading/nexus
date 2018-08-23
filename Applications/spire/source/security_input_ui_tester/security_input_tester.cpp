@@ -3,6 +3,7 @@
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "spire/security_input/security_input_dialog.hpp"
 #include "spire/spire/dimensions.hpp"
+#include "spire/ui/custom_qt_variants.hpp"
 
 using namespace Nexus;
 using namespace Spire;
@@ -50,8 +51,9 @@ void SecurityInputTester::showEvent(QShowEvent* event) {
           positioned = true;
         }
         if(m_dialog->exec() == QDialog::Accepted) {
-          addItem(QString::fromStdString(
-            Nexus::ToString(m_dialog->get_security())));
+          auto item_delegate = new CustomVariantItemDelegate(m_dialog);
+          addItem(item_delegate->displayText(
+            QVariant::fromValue(m_dialog->get_security()), QLocale()));
         } else {
           break;
         }

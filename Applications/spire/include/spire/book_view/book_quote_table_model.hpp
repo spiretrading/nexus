@@ -38,7 +38,7 @@ namespace Spire {
         m_market_first_index;
       boost::signals2::scoped_connection m_book_quote_connection;
 
-      void on_book_quote_signal();
+      void on_book_quote_signal(const Nexus::BookQuote& book_quote);
   };
 }
 

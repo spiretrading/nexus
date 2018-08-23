@@ -24,7 +24,7 @@ BookQuoteTableModel::BookQuoteTableModel(std::shared_ptr<BookViewModel> model,
     }
   }
   m_book_quote_connection = m_model->connect_book_quote_slot(
-    [=] { on_book_quote_signal(); });
+    [=] (auto& b) { on_book_quote_signal(b); });
 }
 
 int BookQuoteTableModel::rowCount(const QModelIndex& parent) const {
@@ -80,6 +80,6 @@ void BookQuoteTableModel::set_properties(
   m_properties = properties;
 }
 
-void BookQuoteTableModel::on_book_quote_signal() {
+void BookQuoteTableModel::on_book_quote_signal(const BookQuote& book_quote) {
   
 }

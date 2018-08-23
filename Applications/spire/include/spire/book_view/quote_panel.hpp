@@ -5,6 +5,7 @@
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "spire/book_view/book_view.hpp"
+#include "spire/ui/custom_qt_variants.hpp"
 
 namespace Spire {
 
@@ -32,6 +33,7 @@ namespace Spire {
       QLabel* m_price_label;
       QLabel* m_size_label;
       boost::signals2::scoped_connection m_bbo_connection;
+      CustomVariantItemDelegate* m_item_delegate;
 
       void set_indicator_color(const QColor& color);
       void set_quote_text(const Nexus::Money& price,

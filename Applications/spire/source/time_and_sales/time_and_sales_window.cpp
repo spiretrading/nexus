@@ -68,6 +68,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
   layout->addWidget(m_volume_label);
   set_model(std::make_shared<EmptyTimeAndSalesModel>(Security()));
   set_properties(properties);
+  m_item_delegate = new CustomVariantItemDelegate(this);
 }
 
 void TimeAndSalesWindow::set_model(
@@ -234,7 +235,8 @@ void TimeAndSalesWindow::set_current(const Security& s) {
   m_current_security = s;
   m_change_security_signal(s);
   m_volume_label->setText(tr("Volume:"));
-  setWindowTitle(QString::fromStdString(ToString(s)) +
+  setWindowTitle(
+    m_item_delegate->displayText(QVariant::fromValue(s), QLocale()) +
     tr(" - Time and Sales"));
 }
 
@@ -258,5 +260,5 @@ void TimeAndSalesWindow::on_security_input_reject(
 
 void TimeAndSalesWindow::on_volume(const Quantity& volume) {
   m_volume_label->setText(tr("Volume:").append(" ") +
-    QString::fromStdString(Beam::ToString(volume)));
+    m_item_delegate->displayText(QVariant::fromValue(volume), QLocale()));
 }

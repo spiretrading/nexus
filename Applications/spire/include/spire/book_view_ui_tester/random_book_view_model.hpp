@@ -102,6 +102,7 @@ namespace Spire {
       Nexus::MarketCode get_random_market();
       void update();
       void update_bbo();
+      void update_book_quote();
       void update_time_and_sales();
       void on_timeout();
   };

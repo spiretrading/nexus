@@ -43,6 +43,7 @@ QuotePanel::QuotePanel(const BookViewModel& model, Side side,
   label_layout->addStretch(1);
   layout->addLayout(label_layout);
   set_model(model);
+  m_item_delegate = new CustomVariantItemDelegate(this);
 }
 
 void QuotePanel::set_model(const BookViewModel& model) {
@@ -64,9 +65,10 @@ void QuotePanel::set_indicator_color(const QColor& color) {
 
 void QuotePanel::set_quote_text(const Money& price, const Quantity& size) {
     m_price_label->setAlignment(Qt::AlignVCenter | Qt::AlignRight);
-    m_price_label->setText(QString::fromStdString(price.ToString()));
-    m_size_label->setText(QString::fromStdString(
-      " / " + Beam::ToString(size)));
+    m_price_label->setText(
+      m_item_delegate->displayText(QVariant::fromValue(price), QLocale()));
+    m_size_label->setText(" / " +  m_item_delegate->displayText(
+      QVariant::fromValue(size), QLocale()));
 }
 
 void QuotePanel::on_bbo_quote(const BboQuote& bbo) {

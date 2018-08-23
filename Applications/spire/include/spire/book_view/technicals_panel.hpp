@@ -6,6 +6,7 @@
 #include "Nexus/Definitions/Quantity.hpp"
 #include "spire/book_view/book_view.hpp"
 #include "spire/book_view/labeled_data_widget.hpp"
+#include "spire/ui/custom_qt_variants.hpp"
 
 namespace Spire {
 
@@ -43,6 +44,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_low_connection;
       boost::signals2::scoped_connection m_open_connection;
       boost::signals2::scoped_connection m_volume_connection;
+      CustomVariantItemDelegate* m_item_delegate;
 
       void set_labeled_data_long_form_text();
       void set_labeled_data_short_form_text();

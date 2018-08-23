@@ -1,6 +1,7 @@
 #include "spire/book_view/technicals_panel.hpp"
 #include "spire/book_view/book_view_model.hpp"
 #include "spire/spire/dimensions.hpp"
+#include "spire/ui/custom_qt_variants.hpp"
 
 using namespace Nexus;
 using namespace Spire;
@@ -28,36 +29,42 @@ TechnicalsPanel::TechnicalsPanel(QWidget* parent)
   m_layout->addWidget(m_close_label_widget, 1, 1);
   m_volume_label_widget = new LabeledDataWidget(tr("V"), this);
   m_layout->addWidget(m_volume_label_widget, 1, 2);
+  m_item_delegate = new CustomVariantItemDelegate(this);
 }
 
 void TechnicalsPanel::set_model(std::shared_ptr<BookViewModel> model) {
   m_model = model;
   if(m_model->get_close().is_initialized()) {
     m_close_label_widget->set_data_text(
-      QString::fromStdString(Beam::ToString(*m_model->get_close())));
+      m_item_delegate->displayText(QVariant::fromValue(m_model->get_close()),
+        QLocale()));
   } else {
     m_close_label_widget->set_data_text(tr("N/A"));
   }
   if(m_model->get_high().is_initialized()) {
     m_high_label_widget->set_data_text(
-      QString::fromStdString(Beam::ToString(*m_model->get_high())));
+      m_item_delegate->displayText(QVariant::fromValue(m_model->get_high()),
+        QLocale()));
   } else {
     m_high_label_widget->set_data_text(tr("N/A"));
   }
   if(m_model->get_low().is_initialized()) {
     m_low_label_widget->set_data_text(
-      QString::fromStdString(Beam::ToString(*m_model->get_low())));
+      m_item_delegate->displayText(QVariant::fromValue(m_model->get_low()),
+        QLocale()));
   } else {
     m_low_label_widget->set_data_text(tr("N/A"));
   }
   if(m_model->get_open().is_initialized()) {
     m_open_label_widget->set_data_text(
-      QString::fromStdString(Beam::ToString(*m_model->get_open())));
+      m_item_delegate->displayText(QVariant::fromValue(m_model->get_open()),
+        QLocale()));
   } else {
     m_open_label_widget->set_data_text(tr("N/A"));
   }
   m_volume_label_widget->set_data_text(
-    QString::fromStdString(Beam::ToString(m_model->get_volume())));
+    m_item_delegate->displayText(QVariant::fromValue(m_model->get_volume()),
+      QLocale()));
   m_close_connection = m_model->connect_close_slot(
     [=] (auto& c) { on_close_signal(c); });
   m_high_connection = m_model->connect_high_slot(
@@ -154,25 +161,25 @@ void TechnicalsPanel::set_labeled_data_short_form_text() {
 
 void TechnicalsPanel::on_close_signal(const Money& close) {
   m_close_label_widget->set_data_text(
-    QString::fromStdString(Beam::ToString(close)));
+    m_item_delegate->displayText(QVariant::fromValue(close), QLocale()));
 }
 
 void TechnicalsPanel::on_high_signal(const Money& high) {
   m_high_label_widget->set_data_text(
-    QString::fromStdString(Beam::ToString(high)));
+    m_item_delegate->displayText(QVariant::fromValue(high), QLocale()));
 }
 
 void TechnicalsPanel::on_low_signal(const Money& low) {
   m_low_label_widget->set_data_text(
-    QString::fromStdString(Beam::ToString(low)));
+    m_item_delegate->displayText(QVariant::fromValue(low), QLocale()));
 }
 
 void TechnicalsPanel::on_open_signal(const Money& open) {
   m_open_label_widget->set_data_text(
-    QString::fromStdString(Beam::ToString(open)));
+    m_item_delegate->displayText(QVariant::fromValue(open), QLocale()));
 }
 
 void TechnicalsPanel::on_volume_signal(const Quantity& volume) {
-  m_volume_label_widget->set_data_text(
-    QString::fromStdString(Beam::ToString(volume)));
+  m_volume_label_widget->set_data_text(QString("%L1").arg(1000000));
+    //m_item_delegate->displayText(QVariant::fromValue(volume), QLocale()));
 }

@@ -9,6 +9,7 @@
 #include "spire/book_view/technicals_panel.hpp"
 #include "spire/security_input/security_input_dialog.hpp"
 #include "spire/spire/dimensions.hpp"
+#include "spire/ui/custom_qt_variants.hpp"
 #include "spire/ui/drop_shadow.hpp"
 #include "spire/ui/transition_widget.hpp"
 #include "spire/ui/window.hpp"
@@ -146,7 +147,9 @@ void BookViewWindow::set_current(const Security& s) {
   m_table.reset();
   m_current_security = s;
   m_change_security_signal(s);
-  setWindowTitle(QString::fromStdString(ToString(s)) + tr(" - Book View"));
+  CustomVariantItemDelegate item_delegate;
+  setWindowTitle(item_delegate.displayText(QVariant::fromValue(s), QLocale())
+    + tr(" - Book View"));
 }
 
 void BookViewWindow::show_context_menu(const QPoint& pos) {
