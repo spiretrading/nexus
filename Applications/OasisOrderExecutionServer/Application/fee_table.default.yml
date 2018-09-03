@@ -164,8 +164,8 @@ ca_equities:
   # Price < $1.00       X       X           X               X             X           X          X
   omga:
     fee_table:
-      [[0.0023, -0.0016, 0.00069, 0.0000, 0.0015, -0.0011, 0.001],
-       [0.0015, -0.0010, 0.00023, 0.0000, 0.0000,  0.0000, 0.001]]
+      [[0.0023, -0.0016, 0.00023, -0.0016, 0.0023, -0.0016, 0.001],
+       [0.0023, -0.0016, 0.00023, -0.0016, 0.0023, -0.0016, 0.001]]
 
   # Pure ATS fees based on http://www.cnsx.ca/CNSX/Trading/Fees--Hours/Fee-Schedule.aspx
   # Fees for notes and debentures are not supported.
