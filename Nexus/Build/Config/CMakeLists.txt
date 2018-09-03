@@ -11,6 +11,7 @@ include_directories($ENV{MYSQLPP_INCLUDE_PATH})
 include_directories($ENV{OPEN_SSL_INCLUDE_PATH})
 include_directories($ENV{QUICK_FIX_INCLUDE_PATH})
 include_directories($ENV{TCLAP_INCLUDE_PATH})
+include_directories($ENV{VIPER_INCLUDE_PATH})
 include_directories($ENV{YAML_INCLUDE_PATH})
 include_directories($ENV{ZLIB_INCLUDE_PATH})
 

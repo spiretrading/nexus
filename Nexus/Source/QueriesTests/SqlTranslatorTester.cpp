@@ -20,5 +20,5 @@ void SqlTranslatorTester::TestQueryOrderFields() {
   auto equalExpression = Beam::Queries::MakeEqualsExpression(
     marketCodeExpression, marketAccessExpression);
   SqlTranslator translator("submissions", equalExpression);
-  auto query = translator.BuildQuery();
+  auto query = translator.Build();
 }

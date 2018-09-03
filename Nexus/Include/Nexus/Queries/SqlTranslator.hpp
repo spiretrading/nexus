@@ -1,5 +1,5 @@
-#ifndef NEXUS_SQLEXPRESSIONTRANSLATOR_HPP
-#define NEXUS_SQLEXPRESSIONTRANSLATOR_HPP
+#ifndef NEXUS_SQL_EXPRESSION_TRANSLATOR_HPP
+#define NEXUS_SQL_EXPRESSION_TRANSLATOR_HPP
 #include <string>
 #include <boost/lexical_cast.hpp>
 #include <boost/throw_exception.hpp>
@@ -21,12 +21,9 @@
 #include "Nexus/Queries/Queries.hpp"
 #include "Nexus/Queries/StandardDataTypes.hpp"
 
-namespace Nexus {
-namespace Queries {
+namespace Nexus::Queries {
 
-  /*! \class SqlTranslator
-      \brief Translates an Expression into an SQL query.
-   */
+  /** Translates an Expression into an SQL query. */
   class SqlTranslator : public Beam::Queries::SqlTranslator,
       public ExpressionVisitor {
     public:
@@ -39,10 +36,9 @@ namespace Queries {
       SqlTranslator(std::string parameter,
         Beam::Queries::Expression expression);
 
-      virtual void Visit(const Beam::Queries::ConstantExpression& expression)
-        override;
+      void Visit(const Beam::Queries::ConstantExpression& expression) override;
 
-      virtual void Visit(
+      void Visit(
         const Beam::Queries::MemberAccessExpression& expression) override;
 
     private:
@@ -62,25 +58,26 @@ namespace Queries {
     \param expression The Expression to translate.
     \return The SQL query representing the <i>expression</i>.
   */
-  inline std::string BuildSqlQuery(std::string parameter,
+  inline auto BuildSqlQuery(std::string parameter,
       Beam::Queries::Expression expression) {
-    SqlTranslator translator{std::move(parameter), std::move(expression)};
-    return translator.BuildQuery();
+    return Beam::Queries::BuildSqlQuery<SqlTranslator>(std::move(parameter),
+      std::move(expression));
   }
 
   inline SqlTranslator::SqlTranslator(std::string parameter,
       Beam::Queries::Expression expression)
-      : Beam::Queries::SqlTranslator{std::move(parameter),
-          std::move(expression)} {}
+      : Beam::Queries::SqlTranslator(std::move(parameter),
+          std::move(expression)) {}
 
   inline void SqlTranslator::Visit(
       const Beam::Queries::ConstantExpression& expression) {
     auto& value = expression.GetValue();
     if(value->GetType()->GetNativeType() == typeid(Quantity)) {
-      GetQuery() = boost::lexical_cast<std::string>(
-        value->GetValue<Quantity>());
+      GetTranslation() = Viper::literal(
+        value->GetValue<Quantity>().GetRepresentation());
     } else if(value->GetType()->GetNativeType() == typeid(Money)) {
-      GetQuery() = boost::lexical_cast<std::string>(value->GetValue<Money>());
+      GetTranslation() = Viper::literal(static_cast<Quantity>(
+        value->GetValue<Money>()).GetRepresentation());
     } else {
       Beam::Queries::SqlTranslator::Visit(expression);
     }
@@ -88,13 +85,13 @@ namespace Queries {
 
   inline void SqlTranslator::Visit(
       const Beam::Queries::MemberAccessExpression& expression) {
-    if(expression.GetExpression()->GetType() == SecurityType{}) {
+    if(expression.GetExpression()->GetType() == SecurityType()) {
       TranslateSecurityMemberAccessExpression(expression);
-    } else if(expression.GetExpression()->GetType() == TimeAndSaleType{}) {
+    } else if(expression.GetExpression()->GetType() == TimeAndSaleType()) {
       TranslateTimeAndSaleMemberAccessExpression(expression);
-    } else if(expression.GetExpression()->GetType() == OrderFieldsType{}) {
+    } else if(expression.GetExpression()->GetType() == OrderFieldsType()) {
       TranslateOrderFieldsMemberAccessExpression(expression);
-    } else if(expression.GetExpression()->GetType() == OrderInfoType{}) {
+    } else if(expression.GetExpression()->GetType() == OrderInfoType()) {
       TranslateOrderInfoMemberAccessExpression(expression);
     } else {
       Beam::Queries::SqlTranslator::Visit(expression);
@@ -103,6 +100,7 @@ namespace Queries {
 
   inline void SqlTranslator::TranslateSecurityMemberAccessExpression(
       const Beam::Queries::MemberAccessExpression& expression) {
+/*
     if(auto* parameter =
         dynamic_cast<const Beam::Queries::ParameterExpression*>(
         &*expression.GetExpression())) {
@@ -120,10 +118,12 @@ namespace Queries {
     } else {
       Beam::Queries::SqlTranslator::Visit(expression);
     }
+*/
   }
 
   inline void SqlTranslator::TranslateTimeAndSaleMemberAccessExpression(
       const Beam::Queries::MemberAccessExpression& expression) {
+/*
     if(auto* parameter =
         dynamic_cast<const Beam::Queries::ParameterExpression*>(
         &*expression.GetExpression())) {
@@ -140,20 +140,24 @@ namespace Queries {
     } else {
       Beam::Queries::SqlTranslator::Visit(expression);
     }
+*/
   }
 
   inline void SqlTranslator::TranslateOrderFieldsMemberAccessExpression(
       const Beam::Queries::MemberAccessExpression& expression) {
+/*
     if(expression.GetName() == "security") {
       GetQuery().clear();
       return;
     } else {
       Beam::Queries::SqlTranslator::Visit(expression);
     }
+*/
   }
 
   inline void SqlTranslator::TranslateOrderInfoMemberAccessExpression(
       const Beam::Queries::MemberAccessExpression& expression) {
+/*
     if(expression.GetName() == "fields") {
       GetQuery().clear();
       return;
@@ -174,8 +178,8 @@ namespace Queries {
     } else {
       Beam::Queries::SqlTranslator::Visit(expression);
     }
+*/
   }
-}
 }
 
 #endif
