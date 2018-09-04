@@ -11,7 +11,7 @@ BookViewTestControllerWindow::BookViewTestControllerWindow(
     Beam::Threading::TimerThreadPool& timer_thread_pool)
     : m_window(window),
       m_timer_thread_pool(&timer_thread_pool) {
-  setFixedSize(scale(400, 200));
+  setFixedSize(scale(500, 300));
   m_window->connect_security_change_signal(
     [=] (const auto& s) { on_security_changed(s); });
   auto layout = new QGridLayout(this);
@@ -30,6 +30,37 @@ BookViewTestControllerWindow::BookViewTestControllerWindow(
   connect(m_model_update_period_spin_box, &QSpinBox::editingFinished,
     this, &BookViewTestControllerWindow::on_model_period_updated);
   layout->addWidget(m_model_update_period_spin_box, 1, 1);
+  auto line = new QFrame(this);
+  line->setFrameShape(QFrame::HLine);
+  layout->addWidget(line, 2, 1, 1, 2);
+  auto market_combo_box_label = new QLabel("Market:", this);
+  layout->addWidget(market_combo_box_label, 3, 0);
+  m_market_combo_box = new QComboBox(this);
+  layout->addWidget(m_market_combo_box, 3, 1);
+  auto mpid_label = new QLabel("MPID:", this);
+  layout->addWidget(mpid_label, 4, 0);
+  m_mpid_line_edit = new QLineEdit(this);
+  layout->addWidget(m_mpid_line_edit, 4, 1);
+  auto price_label = new QLabel("Price:", this);
+  layout->addWidget(price_label, 5, 0);
+  m_price_spin_box = new QSpinBox(this);
+  m_price_spin_box->setMaximum(1000000);
+  m_price_spin_box->setValue(50);
+  layout->addWidget(m_price_spin_box, 5, 1);
+  auto quantity_label = new QLabel("Quantity", this);
+  layout->addWidget(quantity_label, 6, 0);
+  m_quantity_spin_box = new QSpinBox(this);
+  m_quantity_spin_box->setMaximum(1000000);
+  m_quantity_spin_box->setValue(100);
+  layout->addWidget(m_quantity_spin_box, 6, 1);
+  auto side_label = new QLabel("Side:", this);
+  layout->addWidget(side_label, 7, 0);
+  m_side_combo_box = new QComboBox(this);
+  m_side_combo_box->addItem("Bid");
+  m_side_combo_box->addItem("Ask");
+  layout->addWidget(m_side_combo_box, 7, 1);
+  m_submit_button = new QPushButton("Submit", this);
+  layout->addWidget(m_submit_button, 8, 1);
 }
 
 void BookViewTestControllerWindow::on_security_changed(
