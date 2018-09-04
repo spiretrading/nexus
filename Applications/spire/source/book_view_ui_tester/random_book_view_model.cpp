@@ -44,6 +44,37 @@ void RandomBookViewModel::set_period(time_duration period) {
   }
 }
 
+void RandomBookViewModel::publish(const BookQuote& quote) {
+  if(quote.m_quote.m_side == Side::BID) {
+    auto it = find(m_bids.begin(), m_bids.end(), quote);
+    if(it == m_bids.end()) {
+      if(m_bids.front().m_quote.m_price > quote.m_quote.m_price) {
+        m_bids.push_back(quote);
+      } else {
+        m_bids.insert(m_bids.begin(), quote);
+      }
+    } else {
+      auto index = std::lower_bound(m_bids.begin(), m_bids.end(), quote,
+        BookQuoteListingComparator);
+      m_bids.insert(index, quote);
+    }
+  } else {
+    auto it = find(m_asks.begin(), m_asks.end(), quote);
+    if(it == m_asks.end()) {
+      if(m_asks.front().m_quote.m_price < quote.m_quote.m_price) {
+        m_asks.push_back(quote);
+      } else {
+        m_asks.insert(m_asks.begin(), quote);
+      }
+    } else {
+      auto index = std::lower_bound(m_asks.begin(), m_asks.end(), quote,
+        BookQuoteListingComparator);
+      m_asks.insert(index, quote);
+    }
+  }
+  m_book_quote_signal(quote);
+}
+
 const Security& RandomBookViewModel::get_security() const {
   return m_security;
 }
@@ -206,7 +237,7 @@ void RandomBookViewModel::update_book_quote() {
     book_quote = get_random_book_quote();
     book_quote.m_quote.m_size = 0;
   }
-  m_book_quote_signal(book_quote);
+  publish(book_quote);
 }
 
 void RandomBookViewModel::update_time_and_sales() {

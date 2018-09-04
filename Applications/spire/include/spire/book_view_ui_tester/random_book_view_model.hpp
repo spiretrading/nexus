@@ -31,6 +31,9 @@ namespace Spire {
       //! Sets the update period.
       void set_period(boost::posix_time::time_duration period);
 
+      //! Publishes a book quote.
+      void publish(const Nexus::BookQuote& quote);
+
       const Nexus::Security& get_security() const override;
 
       const Nexus::BboQuote& get_bbo() const override;

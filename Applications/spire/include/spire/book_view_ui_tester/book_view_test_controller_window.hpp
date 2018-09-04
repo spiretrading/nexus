@@ -26,13 +26,14 @@ namespace Spire {
       QSpinBox* m_model_update_period_spin_box;
       QComboBox* m_market_combo_box;
       QLineEdit* m_mpid_line_edit;
-      QSpinBox* m_price_spin_box;
+      QDoubleSpinBox* m_price_spin_box;
       QSpinBox* m_quantity_spin_box;
       QComboBox* m_side_combo_box;
       QPushButton* m_submit_button;
 
       void on_security_changed(const Nexus::Security& security);
       void on_model_period_updated();
+      void on_submit();
   };
 }
 

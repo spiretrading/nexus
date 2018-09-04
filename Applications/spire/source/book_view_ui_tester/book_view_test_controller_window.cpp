@@ -11,7 +11,7 @@ BookViewTestControllerWindow::BookViewTestControllerWindow(
     Beam::Threading::TimerThreadPool& timer_thread_pool)
     : m_window(window),
       m_timer_thread_pool(&timer_thread_pool) {
-  setFixedSize(scale(500, 300));
+  setFixedSize(scale(250, 300));
   m_window->connect_security_change_signal(
     [=] (const auto& s) { on_security_changed(s); });
   auto layout = new QGridLayout(this);
@@ -36,6 +36,10 @@ BookViewTestControllerWindow::BookViewTestControllerWindow(
   auto market_combo_box_label = new QLabel("Market:", this);
   layout->addWidget(market_combo_box_label, 3, 0);
   m_market_combo_box = new QComboBox(this);
+  auto markets = GetDefaultMarketDatabase().GetEntries();
+  for(auto market : markets) {
+    m_market_combo_box->addItem(QString::fromStdString(market.m_displayName));
+  }
   layout->addWidget(m_market_combo_box, 3, 1);
   auto mpid_label = new QLabel("MPID:", this);
   layout->addWidget(mpid_label, 4, 0);
@@ -43,9 +47,9 @@ BookViewTestControllerWindow::BookViewTestControllerWindow(
   layout->addWidget(m_mpid_line_edit, 4, 1);
   auto price_label = new QLabel("Price:", this);
   layout->addWidget(price_label, 5, 0);
-  m_price_spin_box = new QSpinBox(this);
+  m_price_spin_box = new QDoubleSpinBox(this);
   m_price_spin_box->setMaximum(1000000);
-  m_price_spin_box->setValue(50);
+  m_price_spin_box->setValue(50.00);
   layout->addWidget(m_price_spin_box, 5, 1);
   auto quantity_label = new QLabel("Quantity", this);
   layout->addWidget(quantity_label, 6, 0);
@@ -60,7 +64,10 @@ BookViewTestControllerWindow::BookViewTestControllerWindow(
   m_side_combo_box->addItem("Ask");
   layout->addWidget(m_side_combo_box, 7, 1);
   m_submit_button = new QPushButton("Submit", this);
+  m_submit_button->setStyleSheet("background-color: rgb(125, 255, 125);");
   layout->addWidget(m_submit_button, 8, 1);
+  connect(m_submit_button, &QPushButton::clicked, this,
+    &BookViewTestControllerWindow::on_submit);
 }
 
 void BookViewTestControllerWindow::on_security_changed(
@@ -78,4 +85,18 @@ void BookViewTestControllerWindow::on_model_period_updated() {
     m_model->set_period(boost::posix_time::milliseconds(
       m_model_update_period_spin_box->value()));
   }
+}
+
+void BookViewTestControllerWindow::on_submit() {
+  BookQuote quote;
+  quote.m_market = m_market_combo_box->currentText().toStdString();
+  quote.m_mpid = m_mpid_line_edit->text().toStdString();
+  quote.m_quote.m_price = Money(Quantity(m_price_spin_box->value()));
+  quote.m_quote.m_size = m_quantity_spin_box->value();
+  if(m_side_combo_box->currentText() == "Bid") {
+    quote.m_quote.m_side = Side::BID;
+  } else {
+    quote.m_quote.m_side = Side::ASK;
+  }
+  m_model->publish(quote);
 }

@@ -42,11 +42,14 @@ QVariant BookQuoteTableModel::data(const QModelIndex& index, int role) const {
   if(role == Qt::DisplayRole) {
     switch(static_cast<Columns>(index.column())) {
       case Columns::MARKET_COLUMN:
-        return QString::fromStdString(
-          ToString(m_data[index.row()].m_market));
+        return QString::fromStdString(m_data[index.row()].m_mpid);
       case Columns::PRICE_COLUMN:
         return QVariant::fromValue(m_data[index.row()].m_quote.m_price);
       case Columns::SIZE_COLUMN:
+        if(m_data[index.row()].m_quote.m_size == 0) {
+          qDebug() << index.row();
+          std::cout << "asfd";
+        }
         return QVariant::fromValue(m_data[index.row()].m_quote.m_size);
       default:
         return QVariant();
@@ -87,9 +90,11 @@ void BookQuoteTableModel::on_book_quote_signal(const BookQuote& book_quote) {
   auto it = std::lower_bound(m_data.begin(), m_data.end(), book_quote,
     BookQuoteListingComparator);
   if(it == m_data.end()) {
-    beginInsertRows(QModelIndex(), m_data.size(), m_data.size());
-    m_data.push_back(book_quote);
-    endInsertRows();
+    if(book_quote.m_quote.m_size != 0) {
+      beginInsertRows(QModelIndex(), m_data.size(), m_data.size());
+      m_data.push_back(book_quote);
+      endInsertRows();
+    }
   } else if(std::tie(it->m_quote.m_price, it->m_mpid) ==
       std::tie(book_quote.m_quote.m_price, book_quote.m_mpid)) {
     auto index = std::distance(m_data.begin(), it);
@@ -103,9 +108,11 @@ void BookQuoteTableModel::on_book_quote_signal(const BookQuote& book_quote) {
         columnCount(QModelIndex())));
     }
   } else {
-    auto index = std::distance(m_data.begin(), it);
-    beginInsertRows(QModelIndex(), index, index);
-    m_data.insert(it, book_quote);
-    endInsertRows();
+    if(book_quote.m_quote.m_size != 0) {
+      auto index = std::distance(m_data.begin(), it);
+      beginInsertRows(QModelIndex(), index, index);
+      m_data.insert(it, book_quote);
+      endInsertRows();
+    }
   }
 }
