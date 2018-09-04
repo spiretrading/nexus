@@ -46,10 +46,6 @@ QVariant BookQuoteTableModel::data(const QModelIndex& index, int role) const {
       case Columns::PRICE_COLUMN:
         return QVariant::fromValue(m_data[index.row()].m_quote.m_price);
       case Columns::SIZE_COLUMN:
-        if(m_data[index.row()].m_quote.m_size == 0) {
-          qDebug() << index.row();
-          std::cout << "asfd";
-        }
         return QVariant::fromValue(m_data[index.row()].m_quote.m_size);
       default:
         return QVariant();
