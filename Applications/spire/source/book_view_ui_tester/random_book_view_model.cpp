@@ -48,10 +48,12 @@ void RandomBookViewModel::publish(const BookQuote& quote) {
   if(quote.m_quote.m_side == Side::BID) {
     auto it = find(m_bids.begin(), m_bids.end(), quote);
     if(it == m_bids.end()) {
-      if(m_bids.front().m_quote.m_price > quote.m_quote.m_price) {
-        m_bids.push_back(quote);
-      } else {
-        m_bids.insert(m_bids.begin(), quote);
+      if(quote.m_quote.m_size != 0) {
+        if(m_bids.front().m_quote.m_price > quote.m_quote.m_price) {
+          m_bids.push_back(quote);
+        } else {
+          m_bids.insert(m_bids.begin(), quote);
+        }
       }
     } else {
       auto index = std::lower_bound(m_bids.begin(), m_bids.end(), quote,
@@ -61,10 +63,12 @@ void RandomBookViewModel::publish(const BookQuote& quote) {
   } else {
     auto it = find(m_asks.begin(), m_asks.end(), quote);
     if(it == m_asks.end()) {
-      if(m_asks.front().m_quote.m_price < quote.m_quote.m_price) {
-        m_asks.push_back(quote);
-      } else {
-        m_asks.insert(m_asks.begin(), quote);
+      if(quote.m_quote.m_size != 0) {
+        if(m_asks.front().m_quote.m_price < quote.m_quote.m_price) {
+          m_asks.push_back(quote);
+        } else {
+          m_asks.insert(m_asks.begin(), quote);
+        }
       }
     } else {
       auto index = std::lower_bound(m_asks.begin(), m_asks.end(), quote,
