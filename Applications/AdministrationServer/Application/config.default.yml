@@ -133,6 +133,14 @@ entitlements:
       - market: XTSX
         source: CHIC
         messages: [TAS, BOOK]
+  - name: CHI-X (CSE)
+    price: 0.00
+    currency: CAD
+    group: chix_cse
+    applicability:
+      - market: XCNQ
+        source: CHIC
+        messages: [TAS, BOOK]
   - name: CX2
     price: 0.00
     currency: CAD

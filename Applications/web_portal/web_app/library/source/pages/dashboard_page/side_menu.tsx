@@ -1,7 +1,9 @@
+import {css, StyleSheet} from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
+import {Center, HBoxLayout, Padding, VBoxLayout} from '../..';
+import {SideMenuButton} from './side_menu_button';
 
-/** The properties used to render a SideMenu. */
 interface Properties {
 
   /** Used to determine what actions are available based on the account's
@@ -9,27 +11,62 @@ interface Properties {
    */
   roles: Nexus.AccountRoles;
 
-  /** The action to perform when the Profile menu item is selected. */
-  onProfileAction?: () => void;
+  /** Indicates the Profile menu item was clicked. */
+  onProfileClick?: () => void;
 
-  /** The action to perform when the Accounts menu item is selected. */
-  onAccountsAction?: () => void;
+  /** Indicates the Accounts menu item was clicked. */
+  onAccountsClick?: () => void;
 
-  /** The action to perform when the Portfolio menu item is selected. */
-  onPortfolioAction?: () => void;
+  /** Indicates the Portfolio menu item was clicked. */
+  onPortfolioClick?: () => void;
 
-  /** The action to perform when the Request History menu item is selected. */
-  onRequestHistoryAction?: () => void;
+  /** Indicates the Request History menu item was clicked. */
+  onRequestHistoryClick?: () => void;
 
-  /** The action to perform when the Sign Out menu item is selected. */
-  onSignOutAction?: () => void;
+  /** Indicates the Sign Out menu item was clicked. */
+  onSignOutClick?: () => void;
 }
 
-interface State {}
+interface MenuButtonProps {
+  iconSrc: string;
+  text: string;
+  onClick: () => void;
+}
 
 /** Display's the dashboard's side menu. */
-export class SideMenu extends React.Component<Properties, State> {
+export class SideMenu extends React.Component<Properties> {
+  public static defaultProps = {
+    onProfileClick: () => {},
+    onAccountsClick: () => {},
+    onPortfolioClick: () => {},
+    onRequestHistoryClick: () => {},
+    onSignOutClick: () => {}
+  };
+
   public render(): JSX.Element {
-    return null;
+    return (
+      <VBoxLayout className={css(SideMenu.STYLE.sideMenu)}>
+        <Padding size='15px'/>
+        <SideMenuButton icon='resources/dashboard/menu-icons/my-profile.svg'
+          label='My Profile' onClick={this.props.onProfileClick}/>
+        <SideMenuButton icon='resources/dashboard/menu-icons/accounts.svg'
+          label='Accounts' onClick={this.props.onAccountsClick}/>
+        <SideMenuButton icon='resources/dashboard/menu-icons/portfolio.svg'
+          label='Portfolio' onClick={this.props.onPortfolioClick}/>
+        <SideMenuButton icon='resources/dashboard/menu-icons/request-history.svg'
+          label='Request History' onClick={this.props.onRequestHistoryClick}/>
+        <SideMenuButton icon='resources/dashboard/menu-icons/sign-out.svg'
+          label='Sign Out' onClick={this.props.onSignOutClick}/>
+      </VBoxLayout>);
   }
+
+  private static STYLE = StyleSheet.create({
+    sideMenu: {
+      width: '200px',
+      padding: 0,
+      height: '100%',
+      minHeight: '568px',
+      backgroundColor: '#4B23A0'
+    }
+  });
 }

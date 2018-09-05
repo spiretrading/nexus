@@ -1,7 +1,6 @@
 import * as React from 'react';
 import {BoxLayout} from './box_layout';
 
-/** Specifies the React properties for the VBoxLayout components. */
 interface Properties {
 
   /** The width of the VBoxLayout, leaving this value empty results in a width

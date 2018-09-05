@@ -1,6 +1,6 @@
 SETLOCAL
 
-SET expected_commit="20e91ff0faaaf7f421877446e7eb8244e3ada859"
+SET expected_commit="7987a72c97e6e760fc525329df47846f55570adb"
 if exist Beam goto end_beam_setup
   git clone https://www.github.com/eidolonsystems/beam.git Beam
   pushd Beam
@@ -49,15 +49,14 @@ if exist quickfix goto end_quick_fix_setup
     rm quickfix-1.14.3.zip
 :end_quick_fix_setup
 
-if exist qt-5.10.0 goto end_qt_setup
-  git clone git://code.qt.io/qt/qt5.git qt-5.10.0
-  if not exist qt-5.10.0 goto end_qt_setup
-    pushd qt-5.10.0
-    git checkout v5.10.0
-    perl init-repository ^
-      --module-subset=default,-qtgamepad,-qtmultimedia,-qtspeech,-qtvirualkeyboard,-qtwebchannel,-qtwebengine,-qtwebglplugin,-qtwebkit,-qtwebkit-examples,-qtwebsockets,-qtwebview
-    call configure -opensource -static -mp -make libs -make tools ^
-      -nomake examples -nomake tests -gif -opengl desktop -no-icu -qt-freetype ^
+if exist qt-5.11.2 goto end_qt_setup
+  git clone git://code.qt.io/qt/qt5.git qt-5.11.2
+  if not exist qt-5.11.2 goto end_qt_setup
+    pushd qt-5.11.2
+    git checkout 5.11.2
+    perl init-repository --module-subset=default
+    call configure -prefix %cd% -opensource -static -mp -make libs -make tools ^
+      -nomake examples -nomake tests -opengl desktop -no-icu -qt-freetype ^
       -qt-harfbuzz -qt-libpng -qt-pcre -qt-zlib -confirm-license
     set CL=/MP
     nmake

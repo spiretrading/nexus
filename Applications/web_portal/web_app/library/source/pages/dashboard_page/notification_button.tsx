@@ -1,7 +1,6 @@
 import {css, StyleSheet} from 'aphrodite';
 import * as React from 'react';
 
-/** The properties used to render a NotificationButton. */
 interface Properties {
 
   /** The number of notification items. */
@@ -26,6 +25,8 @@ export class NotificationButton extends React.Component<Properties> {
         outline: 0,
         padding: 0,
         backgroundColor: 'transparent',
+        shapeRendering: 'geometricPrecision',
+        '-webkit-tap-highlight-color': 'transparent',
         ':hover': {
           cursor: 'pointer'
         }
@@ -34,7 +35,7 @@ export class NotificationButton extends React.Component<Properties> {
     return (
       <button className={css(STYLE.button)}>
         <img width='15px' height='20px'
-          src='resources/dashboard/notification.svg'/>
+          src='resources/dashboard/icons/notification-grey.svg'/>
       </button>);
   }
 }
