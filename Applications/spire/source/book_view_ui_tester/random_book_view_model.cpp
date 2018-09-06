@@ -44,6 +44,27 @@ void RandomBookViewModel::set_period(time_duration period) {
   }
 }
 
+void RandomBookViewModel::publish(const BookQuote& quote) {
+  auto& quotes = Pick(quote.m_quote.m_side, m_asks, m_bids);
+  auto direction = GetDirection(quote.m_quote.m_side);
+  auto it = std::find(quotes.begin(), quotes.end(), quote);
+  if(it == quotes.end()) {
+    if(quote.m_quote.m_size != 0) {
+      if(direction * quotes.front().m_quote.m_price > direction *
+          quote.m_quote.m_price) {
+        quotes.push_back(quote);
+      } else {
+        quotes.insert(quotes.begin(), quote);
+      }
+    } else {
+      auto index = std::lower_bound(quotes.begin(), quotes.end(), quote,
+        BookQuoteListingComparator);
+      quotes.insert(index, quote);
+    }
+  }
+  m_book_quote_signal(quote);
+}
+
 const Security& RandomBookViewModel::get_security() const {
   return m_security;
 }
@@ -97,11 +118,13 @@ QtPromise<void> RandomBookViewModel::load() {
         Quote ask_quote(Money(), 100, Side::ASK);
         for(auto i = 0; i < 100; ++i) {
           bid_quote.m_price = (100 * Money::ONE) - (i * Money::CENT);
-          m_bids.push_back(BookQuote("TST", true, DefaultMarkets::TSX(),
-            bid_quote, second_clock::universal_time()));
+          auto market = get_random_market();
+          m_bids.push_back(BookQuote(market.GetData(), true, market, bid_quote,
+            second_clock::universal_time()));
+          market = get_random_market();
           ask_quote.m_price = (100 * Money::ONE) + (i * Money::CENT);
-          m_asks.push_back(BookQuote("TST", true, DefaultMarkets::TSX(),
-            ask_quote, second_clock::universal_time()));
+          m_asks.push_back(BookQuote(market.GetData(), true, market, ask_quote,
+            second_clock::universal_time()));
         }
         m_is_loaded = true;
       });
@@ -143,8 +166,14 @@ connection RandomBookViewModel::connect_volume_slot(
   return m_volume_signal.connect(slot);
 }
 
+MarketCode RandomBookViewModel::get_random_market() {
+  auto markets = GetDefaultMarketDatabase().GetEntries();
+  return markets[m_random_engine() % markets.size()].m_code;
+}
+
 void RandomBookViewModel::update() {
   update_bbo();
+  update_book_quote();
   update_time_and_sales();
 }
 
@@ -166,6 +195,39 @@ void RandomBookViewModel::update_bbo() {
     ask_price += Money::CENT;
     m_bbo_signal(m_bbo);
   }
+}
+
+void RandomBookViewModel::update_book_quote() {
+  if(m_bids.size() == 0 || m_asks.size() == 0) {
+    return;
+  }
+  auto side = [&] {
+    if(m_random_engine() % 2 == 0) {
+      return Side::BID;
+    }
+    return Side::ASK;
+  }();
+  auto& get_random_book_quote = [&] {
+    if(side == Side::BID) {
+      return m_bids[m_random_engine() % m_bids.size()];
+    }
+    return m_asks[m_random_engine() % m_asks.size()];
+  };
+  BookQuote book_quote;
+  auto random_num = m_random_engine() % 100;
+  if(random_num < 10) {
+    book_quote = get_random_book_quote();
+    book_quote.m_quote.m_size = (m_random_engine() % 200) + 1;
+  } else if(random_num >= 10 && random_num < 45) {
+    auto market = get_random_market();
+    Quote quote((m_random_engine() % 200) * Money::ONE, 100, side);
+    book_quote = BookQuote(market.GetData(), true, market, quote,
+      second_clock::universal_time());
+  } else {
+    book_quote = get_random_book_quote();
+    book_quote.m_quote.m_size = 0;
+  }
+  publish(book_quote);
 }
 
 void RandomBookViewModel::update_time_and_sales() {

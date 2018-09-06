@@ -47,6 +47,7 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   for(auto i = 0 ; i < static_cast<int>(bg_colors.size()); ++i) {
     auto item = new QListWidgetItem(tr("Level") + QString(" %1").arg(i + 1),
       m_band_list_widget);
+    item->setBackground(bg_colors[i]);
     item->setFont(properties.get_book_quote_font());
     item->setTextAlignment(Qt::AlignCenter);
   }
@@ -206,13 +207,13 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   m_show_grid_lines_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style,
     check_box_hover_style, check_box_focused_style);
+  m_show_grid_lines_check_box->setChecked(properties.get_show_grid());
   font_button_layout->addWidget(m_show_grid_lines_check_box);
   font_button_layout->addStretch(129);
   horizontal_layout->addLayout(font_button_layout);
   horizontal_layout->addStretch(60);
   layout->addLayout(horizontal_layout);
   layout->addStretch(20);
-  update_band_list_gradient();
   m_band_list_widget->setCurrentRow(0);
 }
 

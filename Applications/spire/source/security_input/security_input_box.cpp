@@ -4,6 +4,7 @@
 #include "spire/security_input/local_security_input_model.hpp"
 #include "spire/security_input/security_info_list_view.hpp"
 #include "spire/spire/dimensions.hpp"
+#include "spire/ui/custom_qt_variants.hpp"
 #include "spire/ui/ui.hpp"
 
 using namespace boost;
@@ -145,8 +146,9 @@ void SecurityInputBox::enter_pressed() {
 }
 
 void SecurityInputBox::on_activated(const Security& security) {
-  m_security_line_edit->setText(QString::fromStdString(
-    Nexus::ToString(security)));
+  auto item_delegate = new CustomVariantItemDelegate(this);
+  m_security_line_edit->setText(item_delegate->displayText(
+    QVariant::fromValue(security), QLocale()));
 }
 
 void SecurityInputBox::on_commit(const Security& security) {

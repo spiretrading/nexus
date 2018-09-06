@@ -37,6 +37,22 @@ namespace Spire {
         HIGHLIGHT_ORDERS
       };
 
+      //! The available columns to display.
+      enum class Columns {
+
+        //! The market column.
+        MARKET_COLUMN,
+
+        //! The price column.
+        PRICE_COLUMN,
+
+        //! The size column.
+        SIZE_COLUMN
+      };
+
+      //! The number of columns in this model.
+      static const auto COLUMN_COUNT = 3;
+
       //! Constructs the default properties.
       BookViewProperties();
 

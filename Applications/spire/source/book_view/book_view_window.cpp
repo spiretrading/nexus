@@ -4,10 +4,12 @@
 #include <QMenu>
 #include <QTimer>
 #include "spire/book_view/book_view_properties_dialog.hpp"
+#include "spire/book_view/book_view_table_widget.hpp"
 #include "spire/book_view/labeled_data_widget.hpp"
 #include "spire/book_view/technicals_panel.hpp"
 #include "spire/security_input/security_input_dialog.hpp"
 #include "spire/spire/dimensions.hpp"
+#include "spire/ui/custom_qt_variants.hpp"
 #include "spire/ui/drop_shadow.hpp"
 #include "spire/ui/transition_widget.hpp"
 #include "spire/ui/window.hpp"
@@ -24,8 +26,8 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
       m_input_model(&input_model),
       m_is_data_loaded(false) {
   m_body = new QWidget(this);
-  m_body->setMinimumSize(scale(210, 280));
-  resize(scale(210, 410));
+  m_body->setMinimumSize(scale(220, 280));
+  resize(scale(220, 410));
   m_body->setStyleSheet("background-color: #FFFFFF;");
   auto window_layout = new QVBoxLayout(this);
   window_layout->setContentsMargins({});
@@ -62,6 +64,10 @@ const BookViewProperties& BookViewWindow::get_properties() const {
 }
 
 void BookViewWindow::set_properties(const BookViewProperties& properties) {
+  m_properties = properties;
+  if(m_table != nullptr) {
+    m_table->set_properties(m_properties);
+  }
 }
 
 connection BookViewWindow::connect_security_change_signal(
@@ -140,7 +146,9 @@ void BookViewWindow::set_current(const Security& s) {
   m_table.reset();
   m_current_security = s;
   m_change_security_signal(s);
-  setWindowTitle(QString::fromStdString(ToString(s)) + tr(" - Book View"));
+  CustomVariantItemDelegate item_delegate;
+  setWindowTitle(item_delegate.displayText(QVariant::fromValue(s), QLocale())
+    + tr(" - Book View"));
 }
 
 void BookViewWindow::show_context_menu(const QPoint& pos) {
@@ -226,7 +234,9 @@ void BookViewWindow::on_data_loaded(Expect<void> value) {
   m_technicals_panel->set_model(m_model);
   m_bbo_quote_panel = std::make_unique<BboQuotePanel>(*m_model, this);
   m_quote_widgets_container_layout->addWidget(m_bbo_quote_panel.get());
-  m_table = std::make_unique<QWidget>(this);
+  m_table = std::make_unique<BookViewTableWidget>(this);
   m_quote_widgets_container_layout->addWidget(m_table.get());
   m_bbo_quote_panel->set_model(*m_model);
+  m_table->set_model(m_model);
+  m_table->set_properties(m_properties);
 }

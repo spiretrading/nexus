@@ -70,12 +70,12 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
       color: #4B23A0;
     })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_height(10))
         .arg(scale_width(2)).arg(scale_width(80)).arg(scale_width(1)));
-  auto levels_tab_widget = new BookViewLevelPropertiesWidget(properties,
+  m_levels_tab_widget = new BookViewLevelPropertiesWidget(properties,
     m_tab_widget);
-  m_tab_widget->addTab(levels_tab_widget, tr("Price Levels"));
-  auto highlights_tab_widget = new BookViewHighlightPropertiesWidget(
+  m_tab_widget->addTab(m_levels_tab_widget, tr("Price Levels"));
+  m_highlights_tab_widget = new BookViewHighlightPropertiesWidget(
     properties, m_tab_widget);
-  m_tab_widget->addTab(highlights_tab_widget, tr("Highlights"));
+  m_tab_widget->addTab(m_highlights_tab_widget, tr("Highlights"));
   if(security != Security()) {
     auto interactions_tab_widget = new InteractionsPropertiesWidget(
       m_tab_widget);
@@ -100,7 +100,10 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
 }
 
 BookViewProperties BookViewPropertiesDialog::get_properties() const {
-  return m_properties;
+  BookViewProperties properties;
+  m_levels_tab_widget->apply(properties);
+  m_highlights_tab_widget->apply(properties);
+  return properties;
 }
 
 connection BookViewPropertiesDialog::connect_apply_signal(
