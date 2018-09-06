@@ -1,30 +1,79 @@
-#ifndef NEXUS_MARKETDATAMYSQLHISTORICALDATASTOREDETAILS_HPP
-#define NEXUS_MARKETDATAMYSQLHISTORICALDATASTOREDETAILS_HPP
-#include <string>
-#include <Beam/MySql/PosixTimeToMySqlDateTime.hpp>
-#include <Beam/MySql/Utilities.hpp>
-#include <Beam/Queries/SqlUtilities.hpp>
-#include <boost/lexical_cast.hpp>
-#include <mysql++/mysql++.h>
-#include <mysql++/ssqls.h>
+#ifndef NEXUS_MARKET_DATA_SQL_DEFINITIONS_HPP
+#define NEXUS_MARKET_DATA_SQL_DEFINITIONS_HPP
+#include <Viper/Row.hpp>
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
-namespace Details {
-  sql_create_9(order_imbalances, 9, 0,
-    mysqlpp::sql_varchar, market,
-    mysqlpp::sql_varchar, symbol,
-    mysqlpp::sql_varchar, symbol_market,
-    mysqlpp::sql_int, country,
-    mysqlpp::sql_int, side,
-    mysqlpp::sql_double, size,
-    mysqlpp::sql_double, price,
-    mysqlpp::sql_bigint_unsigned, timestamp,
-    mysqlpp::sql_bigint_unsigned, query_sequence);
+namespace Nexus::MarketDataService {
 
+  //! Returns a row representing a market code.
+  inline const auto& GetMarketCodeRow() {
+    static auto ROW = Viper::Row<MarketCode>().
+      add_column("market", Viper::varchar(16),
+        [] (const auto& row) {
+          return std::string{row.GetData()};
+        },
+        [] (auto& row, const auto& value) {
+          row = value;
+        });
+    return ROW;
+  }
+
+  //! Returns a row representing an order imbalance.
+  inline const auto& GetOrderImbalanceRow() {
+    static auto ROW = Viper::Row<OrderImbalance>().
+      add_column("symbol", Viper::varchar(16),
+        [] (const auto& row) -> auto& {
+          return row.m_security.GetSymbol();
+        },
+        [] (auto& row, auto value) {
+          row.m_security = Security(std::move(value),
+            row.m_security.GetMarket(), row.m_security.GetCountry());
+        }).
+      add_column("symbol_market", Viper::varchar(16),
+        [] (const auto& row) -> auto& {
+          return std::string{row.m_security.GetMarket().GetData()};
+        },
+        [] (auto& row, auto value) {
+          row.m_security = Security(std::move(row.m_security.GetSymbol()),
+            value, row.m_security.GetCountry());
+        }).
+      add_column("country",
+        [] (const auto& row) {
+          return std::uint32_t(row.m_security.GetCountry());
+        },
+        [] (auto& row, auto value) {
+          row.m_security = Security(std::move(row.m_security.GetSymbol()),
+            row.m_security.GetMarket(), CountryCode(value));
+        }).
+      add_column("side",
+        [] (const auto& row) {
+          return static_cast<std::uint32_t>(row.m_side);
+        },
+        [] (auto& row, auto value) {
+          row.m_side = static_cast<Side>(value);
+        }).
+      add_column("size",
+        [] (const auto& row) {
+          return row.m_size.GetRepresentation();
+        },
+        [] (auto& row, auto value) {
+          row.m_size = Quantity::FromRepresentation(value);
+        }).
+      add_column("price",
+        [] (const auto& row) {
+          return static_cast<Quantity>(
+            row.m_referencePrice).GetRepresentation();
+        },
+        [] (auto& row, auto value) {
+          row.m_price = Quantity::FromRepresentation(value);
+        });
+    return ROW;
+  }
+}
+/*
+namespace Details {
   sql_create_8(bbo_quotes, 8, 0,
     mysqlpp::sql_varchar, symbol,
     mysqlpp::sql_int, country,
@@ -68,27 +117,6 @@ namespace Details {
     mysqlpp::sql_varchar, market,
     mysqlpp::sql_bigint_unsigned, timestamp,
     mysqlpp::sql_bigint_unsigned, query_sequence);
-
-  inline bool LoadOrderImbalancesTable(mysqlpp::Connection& connection,
-      const std::string& schema) {
-    if(Beam::MySql::TestTable(schema, "order_imbalances", connection)) {
-      return true;
-    }
-    auto query = connection.query();
-    query << "CREATE TABLE order_imbalances ("
-      "market VARCHAR(16) BINARY NOT NULL,"
-      "symbol VARCHAR(16) BINARY NOT NULL,"
-      "symbol_market VARCHAR(16) BINARY NOT NULL,"
-      "country INTEGER UNSIGNED NOT NULL,"
-      "side INTEGER UNSIGNED NOT NULL,"
-      "size DOUBLE NOT NULL,"
-      "price DOUBLE NOT NULL,"
-      "timestamp BIGINT UNSIGNED NOT NULL,"
-      "query_sequence BIGINT UNSIGNED NOT NULL,"
-      "INDEX sequence_index(market, query_sequence),"
-      "INDEX timestamp_index(market, timestamp, query_sequence))";
-    return query.execute();
-  }
 
   inline bool LoadBboQuotesTable(mysqlpp::Connection& connection,
       const std::string& schema) {
@@ -345,5 +373,6 @@ namespace Details {
 }
 }
 }
+*/
 
 #endif

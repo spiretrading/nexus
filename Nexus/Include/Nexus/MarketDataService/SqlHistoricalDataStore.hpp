@@ -1,5 +1,6 @@
 #ifndef NEXUS_SQL_HISTORICAL_DATA_STORE_HPP
 #define NEXUS_SQL_HISTORICAL_DATA_STORE_HPP
+#include <functional>
 #include <thread>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queries/SqlDataStore.hpp>
@@ -16,7 +17,9 @@
 
 namespace Nexus::MarketDataService {
 
-  /** Stores historical market data in an SQL database. */
+  /** Stores historical market data in an SQL database.
+      \tparam C The type of SQL connection.
+   */
   template<typename C>
   class SqlHistoricalDataStore : private boost::noncopyable {
     public:
@@ -24,11 +27,14 @@ namespace Nexus::MarketDataService {
       //! The type of SQL connection.
       using Connection = C;
 
-      //! Constructs a MySqlHistoricalDataStore.
+      //! The callable used to build SQL connections.
+      using ConnectionBuilder = std::function<Connection ()>;
+
+      //! Constructs an SqlHistoricalDataStore.
       /*!
-        \param config The MySQL configuration.
+        \param connectionBuilder The callable used to build SQL connections.
       */
-      SqlHistoricalDataStore(Beam::MySqlConfig config);
+      SqlHistoricalDataStore(ConnectionBuilder connectionBuilder);
 
       ~SqlHistoricalDataStore();
 
@@ -76,7 +82,7 @@ namespace Nexus::MarketDataService {
       template<typename V, typename I>
       using DataStore = Beam::Queries::SqlDataStore<Connection, V, I,
         Queries::SqlTranslator>;
-      std::function<std::unique_ptr<Connection>> m_connectionBuilder;
+      ConnectionBuilder m_connectionBuilder;
       Beam::DatabaseConnectionPool<Connection> m_connectionPool;
       Beam::Threading::Sync<Connection, Beam::Threading::Mutex>
         m_writeConnection;
@@ -91,90 +97,124 @@ namespace Nexus::MarketDataService {
       void Shutdown();
   };
 
-  inline MySqlHistoricalDataStore::MySqlHistoricalDataStore(
-      Beam::MySqlConfig config)
-      : m_config(std::move(config)) {}
+  template<typename C>
+  SqlHistoricalDataStore<C>::SqlHistoricalDataStore(
+      ConnectionBuilder connectionBuilder)
+      : m_connectionBuilder(std::move(connectionBuilder)),
+        m_writeConnection(m_connectionBuilder()),
+        m_orderImbalanceDataStore("order_imbalances", GetMarketCodeRow(),
+          GetOrderImbalanceRow(), Beam::Ref(m_connectionPool),
+          Beam::Ref(m_writeConnection), Beam::Ref(m_threadPool)),
+        m_bboQuoteDataStore("bbo_quotes", GetSecurityRow(), GetBboQuoteRow(),
+          Beam::Ref(m_connectionPool), Beam::Ref(m_writeConnection),
+          Beam::Ref(m_threadPool)),
+        m_marketQuoteDataStore("market_quotes", GetSecurityRow(),
+          GetMarketQuoteRow(), Beam::Ref(m_connectionPool),
+          Beam::Ref(m_writeConnection), Beam::Ref(m_threadPool)),
+        m_bookQuoteDataStore("book_quotes", GetSecurityRow(), GetBookQuoteRow(),
+          Beam::Ref(m_connectionPool), Beam::Ref(m_writeConnection),
+          Beam::Ref(m_threadPool)),
+        m_timeAndSaleDataStore("time_and_sales", GetSecurityRow(),
+          GetTimeAndSaleRow(), Beam::Ref(m_connectionPool),
+          Beam::Ref(m_writeConnection), Beam::Ref(m_threadPool)) {}
 
-  inline MySqlHistoricalDataStore::~MySqlHistoricalDataStore() {
+  template<typename C>
+  SqlHistoricalDataStore<C>::~SqlHistoricalDataStore() {
     Close();
   }
 
-  inline std::vector<SequencedOrderImbalance> MySqlHistoricalDataStore::
+  template<typename C>
+  std::vector<SequencedOrderImbalance> SqlHistoricalDataStore<C>::
       LoadOrderImbalances(const MarketWideDataQuery& query) {
     return m_orderImbalanceDataStore.Load(query);
   }
 
-  inline std::vector<SequencedBboQuote> MySqlHistoricalDataStore::LoadBboQuotes(
+  template<typename C>
+  std::vector<SequencedBboQuote> SqlHistoricalDataStore<C>::LoadBboQuotes(
       const SecurityMarketDataQuery& query) {
     return m_bboQuoteDataStore.Load(query);
   }
 
-  inline std::vector<SequencedBookQuote> MySqlHistoricalDataStore::
-      LoadBookQuotes(const SecurityMarketDataQuery& query) {
+  template<typename C>
+  std::vector<SequencedBookQuote> SqlHistoricalDataStore<C>::LoadBookQuotes(
+      const SecurityMarketDataQuery& query) {
     return m_bookQuoteDataStore.Load(query);
   }
 
-  inline std::vector<SequencedMarketQuote> MySqlHistoricalDataStore::
-      LoadMarketQuotes(const SecurityMarketDataQuery& query) {
+  template<typename C>
+  std::vector<SequencedMarketQuote> SqlHistoricalDataStore<C>::LoadMarketQuotes(
+      const SecurityMarketDataQuery& query) {
     return m_marketQuoteDataStore.Load(query);
   }
 
-  inline std::vector<SequencedTimeAndSale> MySqlHistoricalDataStore::
-      LoadTimeAndSales(const SecurityMarketDataQuery& query) {
+  template<typename C>
+  std::vector<SequencedTimeAndSale> SqlHistoricalDataStore<C>::LoadTimeAndSales(
+      const SecurityMarketDataQuery& query) {
     return m_timeAndSaleDataStore.Load(query);
   }
 
-  inline void MySqlHistoricalDataStore::Store(
+  template<typename C>
+  void SqlHistoricalDataStore<C>::Store(
       const SequencedMarketOrderImbalance& orderImbalance) {
     return m_orderImbalanceDataStore.Store(orderImbalance);
   }
 
-  inline void MySqlHistoricalDataStore::Store(
+  template<typename C>
+  void SqlHistoricalDataStore<C>::Store(
       const std::vector<SequencedMarketOrderImbalance>& orderImbalances) {
     return m_orderImbalanceDataStore.Store(orderImbalances);
   }
 
-  inline void MySqlHistoricalDataStore::Store(
+  template<typename C>
+  void SqlHistoricalDataStore<C>::Store(
       const SequencedSecurityBboQuote& bboQuote) {
     return m_bboQuoteDataStore.Store(bboQuote);
   }
 
-  inline void MySqlHistoricalDataStore::Store(
+  template<typename C>
+  void SqlHistoricalDataStore<C>::Store(
       const std::vector<SequencedSecurityBboQuote>& bboQuotes) {
     return m_bboQuoteDataStore.Store(bboQuotes);
   }
 
-  inline void MySqlHistoricalDataStore::Store(
+  template<typename C>
+  void SqlHistoricalDataStore<C>::Store(
       const SequencedSecurityMarketQuote& marketQuote) {
     return m_marketQuoteDataStore.Store(marketQuote);
   }
 
-  inline void MySqlHistoricalDataStore::Store(
+  template<typename C>
+  void SqlHistoricalDataStore<C>::Store(
       const std::vector<SequencedSecurityMarketQuote>& marketQuotes) {
     return m_marketQuoteDataStore.Store(marketQuotes);
   }
 
-  inline void MySqlHistoricalDataStore::Store(
+  template<typename C>
+  void SqlHistoricalDataStore<C>::Store(
       const SequencedSecurityBookQuote& bookQuote) {
     return m_bookQuoteDataStore.Store(bookQuote);
   }
 
-  inline void MySqlHistoricalDataStore::Store(
+  template<typename C>
+  void SqlHistoricalDataStore<C>::Store(
       const std::vector<SequencedSecurityBookQuote>& bookQuotes) {
     return m_bookQuoteDataStore.Store(bookQuotes);
   }
 
-  inline void MySqlHistoricalDataStore::Store(
+  template<typename C>
+  void SqlHistoricalDataStore<C>::Store(
       const SequencedSecurityTimeAndSale& timeAndSale) {
     return m_timeAndSaleDataStore.Store(timeAndSale);
   }
 
-  inline void MySqlHistoricalDataStore::Store(
+  template<typename C>
+  void SqlHistoricalDataStore<C>::Store(
       const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {
     return m_timeAndSaleDataStore.Store(timeAndSales);
   }
 
-  inline void MySqlHistoricalDataStore::Open() {
+  template<typename C>
+  void SqlHistoricalDataStore<C>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
@@ -185,9 +225,7 @@ namespace Nexus::MarketDataService {
         });
       for(auto i = std::size_t(0);
           i <= std::thread::hardware_concurrency(); ++i) {
-        auto connection = std::make_unique<Viper::MySql::Connection>(
-          m_config.m_address.GetHost(), m_config.m_address.GetPort(),
-          m_config.m_username, m_config.m_password, m_config.m_schema);
+        auto connection = m_connectionBuilder();
         connection->open();
         m_connectionPool.Add(std::move(connection));
       }
@@ -203,14 +241,16 @@ namespace Nexus::MarketDataService {
     m_openState.SetOpen();
   }
 
-  inline void MySqlHistoricalDataStore::Close() {
+  template<typename C>
+  void SqlHistoricalDataStore<C>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  inline void MySqlHistoricalDataStore::Shutdown() {
+  template<typename C>
+  void SqlHistoricalDataStore<C>::Shutdown() {
     m_timeAndSaleDataStore.Close();
     m_bookQuoteDataStore.Close();
     m_marketQuoteDataStore.Close();

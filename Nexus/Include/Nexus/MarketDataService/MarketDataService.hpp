@@ -34,12 +34,12 @@ namespace MarketDataService {
   class MarketEntry;
   template<typename MarketDataClientType, typename MarketExpressionType,
     typename TimeRangeExpressionType> class MarketOrderImbalanceExpression;
-  class MySqlHistoricalDataStore;
   template<typename MarketDataClientType> class RealTimeMarketDataPublisher;
   class SecurityEntry;
   struct SecuritySnapshot;
   template<typename HistoricalDataStoreType>
     class SessionCachedHistoricalDataStore;
+  template<typename C> class SqlHistoricalDataStore;
   class VirtualMarketDataClient;
   class VirtualMarketDataFeedClient;
   template<typename ClientType> class WrapperMarketDataClient;
