@@ -103,12 +103,10 @@ void BookQuoteTableModel::on_book_quote_signal(const BookQuote& book_quote) {
       dataChanged(createIndex(index, 0), createIndex(index,
         columnCount(QModelIndex())));
     }
-  } else {
-    if(book_quote.m_quote.m_size != 0) {
-      auto index = std::distance(m_data.begin(), it);
-      beginInsertRows(QModelIndex(), index, index);
-      m_data.insert(it, book_quote);
-      endInsertRows();
-    }
+  } else if(book_quote.m_quote.m_size != 0) {
+    auto index = std::distance(m_data.begin(), it);
+    beginInsertRows(QModelIndex(), index, index);
+    m_data.insert(it, book_quote);
+    endInsertRows();
   }
 }

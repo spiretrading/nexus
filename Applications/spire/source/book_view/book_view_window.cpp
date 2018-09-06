@@ -144,7 +144,6 @@ void BookViewWindow::set_current(const Security& s) {
   }
   m_bbo_quote_panel.reset();
   m_table.reset();
-  m_table.reset();
   m_current_security = s;
   m_change_security_signal(s);
   CustomVariantItemDelegate item_delegate;

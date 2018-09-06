@@ -229,7 +229,7 @@ void BookViewHighlightPropertiesWidget::update_color_button_stylesheet(
 }
 
 void BookViewHighlightPropertiesWidget::update_market_widgets() {
-  auto& selected_item = static_cast<MarketListItem*>(
+  auto selected_item = static_cast<MarketListItem*>(
     m_markets_list_widget->currentItem())->get_market_highlight();
   if(selected_item.is_initialized()) {
     update_color_button_stylesheet(m_market_highlight_color_button,

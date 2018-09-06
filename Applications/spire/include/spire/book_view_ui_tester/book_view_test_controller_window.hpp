@@ -1,8 +1,8 @@
 #ifndef SPIRE_BOOK_VIEW_TEST_CONTROLLER_WINDOW
 #define SPIRE_BOOK_VIEW_TEST_CONTROLLER_WINDOW
-#include <QPushButton>
 #include <QComboBox>
 #include <QLineEdit>
+#include <QPushButton>
 #include <QSpinBox>
 #include <QWidget>
 #include <Beam/Threading/TimerThreadPool.hpp>

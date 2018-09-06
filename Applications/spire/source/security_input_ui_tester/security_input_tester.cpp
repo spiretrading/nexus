@@ -51,8 +51,8 @@ void SecurityInputTester::showEvent(QShowEvent* event) {
           positioned = true;
         }
         if(m_dialog->exec() == QDialog::Accepted) {
-          auto item_delegate = new CustomVariantItemDelegate(m_dialog);
-          addItem(item_delegate->displayText(
+          auto item_delegate = CustomVariantItemDelegate(m_dialog);
+          addItem(item_delegate.displayText(
             QVariant::fromValue(m_dialog->get_security()), QLocale()));
         } else {
           break;

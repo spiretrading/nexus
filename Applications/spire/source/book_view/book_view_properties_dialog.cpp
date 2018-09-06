@@ -99,10 +99,11 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
   layout->addWidget(button_group_widget);
 }
 
-BookViewProperties BookViewPropertiesDialog::get_properties() {
-  m_levels_tab_widget->apply(m_properties);
-  m_highlights_tab_widget->apply(m_properties);
-  return m_properties;
+BookViewProperties BookViewPropertiesDialog::get_properties() const {
+  BookViewProperties properties;
+  m_levels_tab_widget->apply(properties);
+  m_highlights_tab_widget->apply(properties);
+  return properties;
 }
 
 connection BookViewPropertiesDialog::connect_apply_signal(

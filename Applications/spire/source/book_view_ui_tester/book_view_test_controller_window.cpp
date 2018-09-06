@@ -36,8 +36,7 @@ BookViewTestControllerWindow::BookViewTestControllerWindow(
   auto market_combo_box_label = new QLabel("Market:", this);
   layout->addWidget(market_combo_box_label, 3, 0);
   m_market_combo_box = new QComboBox(this);
-  auto markets = GetDefaultMarketDatabase().GetEntries();
-  for(auto market : markets) {
+  for(auto& market : GetDefaultMarketDatabase().GetEntries()) {
     m_market_combo_box->addItem(QString::fromStdString(market.m_displayName));
   }
   layout->addWidget(m_market_combo_box, 3, 1);

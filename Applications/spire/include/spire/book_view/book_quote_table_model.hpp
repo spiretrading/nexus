@@ -34,7 +34,7 @@ namespace Spire {
       Nexus::Side m_side;
       BookViewProperties m_properties;
       std::vector<Nexus::BookQuote> m_data;
-      std::unordered_map<Nexus::MarketCode , int>
+      std::unordered_map<Nexus::MarketCode, int>
         m_market_first_index;
       boost::signals2::scoped_connection m_book_quote_connection;
 
