@@ -43,4 +43,5 @@ void BookViewSideTableView::resizeEvent(QResizeEvent* event) {
   setColumnWidth(0, width() / 3);
   setColumnWidth(1, width() / 3);
   setColumnWidth(2, width() / 3);
+  QTableView::resizeEvent(event);
 }
