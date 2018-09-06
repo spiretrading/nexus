@@ -1,10 +1,9 @@
-#ifndef NEXUS_MARKETDATAMYSQLHISTORICALDATASTORE_HPP
-#define NEXUS_MARKETDATAMYSQLHISTORICALDATASTORE_HPP
-#include <Beam/IO/ConnectException.hpp>
+#ifndef NEXUS_SQL_HISTORICAL_DATA_STORE_HPP
+#define NEXUS_SQL_HISTORICAL_DATA_STORE_HPP
+#include <thread>
 #include <Beam/IO/OpenState.hpp>
-#include <Beam/MySql/DatabaseConnectionPool.hpp>
-#include <Beam/Network/IpAddress.hpp>
 #include <Beam/Queries/SqlDataStore.hpp>
+#include <Beam/Sql/DatabaseConnectionPool.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Threading/ThreadPool.hpp>
 #include <boost/noncopyable.hpp>
@@ -12,30 +11,26 @@
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/HistoricalDataStoreException.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
-#include "Nexus/MarketDataService/MySqlHistoricalDataStoreDetails.hpp"
+#include "Nexus/MarketDataService/SqlDefinitions.hpp"
 #include "Nexus/Queries/SqlTranslator.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \class MySqlHistoricalDataStore
-      \brief Stores historical market data in a MySQL database.
-   */
-  class MySqlHistoricalDataStore : private boost::noncopyable {
+  /** Stores historical market data in an SQL database. */
+  template<typename C>
+  class SqlHistoricalDataStore : private boost::noncopyable {
     public:
+
+      //! The type of SQL connection.
+      using Connection = C;
 
       //! Constructs a MySqlHistoricalDataStore.
       /*!
-        \param address The IP address of the MySQL database to connect to.
-        \param schema The name of the schema.
-        \param username The username to connect as.
-        \param password The password associated with the <i>username</i>.
+        \param config The MySQL configuration.
       */
-      MySqlHistoricalDataStore(const Beam::Network::IpAddress& address,
-        const std::string& schema, const std::string& username,
-        const std::string& password);
+      SqlHistoricalDataStore(Beam::MySqlConfig config);
 
-      ~MySqlHistoricalDataStore();
+      ~SqlHistoricalDataStore();
 
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query);
@@ -78,52 +73,27 @@ namespace MarketDataService {
       void Close();
 
     private:
-      template<typename Query, typename T, typename Row>
-      using DataStore = Beam::Queries::SqlDataStore<Query, T, Row,
-        Queries::SqlTranslator, Details::SqlFunctor>;
-      Beam::Network::IpAddress m_address;
-      std::string m_schema;
-      std::string m_username;
-      std::string m_password;
-      Beam::MySql::DatabaseConnectionPool m_readerDatabaseConnectionPool;
-      Beam::Threading::Sync<mysqlpp::Connection, Beam::Threading::Mutex>
-        m_writerDatabaseConnection;
-      Beam::Threading::ThreadPool m_readerThreadPool;
-      DataStore<MarketWideDataQuery, OrderImbalance, Details::order_imbalances>
-        m_orderImbalanceDataStore;
-      DataStore<SecurityMarketDataQuery, BboQuote, Details::bbo_quotes>
-        m_bboQuoteDataStore;
-      DataStore<SecurityMarketDataQuery, MarketQuote, Details::market_quotes>
-        m_marketQuoteDataStore;
-      DataStore<SecurityMarketDataQuery, BookQuote, Details::book_quotes>
-        m_bookQuoteDataStore;
-      DataStore<SecurityMarketDataQuery, TimeAndSale, Details::time_and_sales>
-        m_timeAndSaleDataStore;
+      template<typename V, typename I>
+      using DataStore = Beam::Queries::SqlDataStore<Connection, V, I,
+        Queries::SqlTranslator>;
+      std::function<std::unique_ptr<Connection>> m_connectionBuilder;
+      Beam::DatabaseConnectionPool<Connection> m_connectionPool;
+      Beam::Threading::Sync<Connection, Beam::Threading::Mutex>
+        m_writeConnection;
+      Beam::Threading::ThreadPool m_threadPool;
+      DataStore<OrderImbalanceRow, MarketCodeRow> m_orderImbalanceDataStore;
+      DataStore<BboQuoteRow, SecurityRow> m_bboQuoteDataStore;
+      DataStore<MarketQuoteRow, SecurityRow> m_marketQuoteDataStore;
+      DataStore<BookQuoteRow SecurityRow> m_bookQuoteDataStore;
+      DataStore<TimeAndSaleRow, SecurityRow> m_timeAndSaleDataStore;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
-      void OpenDatabaseConnection(mysqlpp::Connection& connection);
   };
 
   inline MySqlHistoricalDataStore::MySqlHistoricalDataStore(
-      const Beam::Network::IpAddress& address, const std::string& schema,
-      const std::string& username, const std::string& password)
-      : m_address{address},
-        m_schema{schema},
-        m_username{username},
-        m_password{password},
-        m_writerDatabaseConnection{false},
-        m_orderImbalanceDataStore{Beam::Ref(m_readerDatabaseConnectionPool),
-          Beam::Ref(m_writerDatabaseConnection), Beam::Ref(m_readerThreadPool)},
-        m_bboQuoteDataStore{Beam::Ref(m_readerDatabaseConnectionPool),
-          Beam::Ref(m_writerDatabaseConnection), Beam::Ref(m_readerThreadPool)},
-        m_marketQuoteDataStore{Beam::Ref(m_readerDatabaseConnectionPool),
-          Beam::Ref(m_writerDatabaseConnection), Beam::Ref(m_readerThreadPool)},
-        m_bookQuoteDataStore{Beam::Ref(m_readerDatabaseConnectionPool),
-          Beam::Ref(m_writerDatabaseConnection), Beam::Ref(m_readerThreadPool)},
-        m_timeAndSaleDataStore{Beam::Ref(m_readerDatabaseConnectionPool),
-          Beam::Ref(m_writerDatabaseConnection),
-          Beam::Ref(m_readerThreadPool)} {}
+      Beam::MySqlConfig config)
+      : m_config(std::move(config)) {}
 
   inline MySqlHistoricalDataStore::~MySqlHistoricalDataStore() {
     Close();
@@ -209,19 +179,23 @@ namespace MarketDataService {
       return;
     }
     try {
-      Beam::Threading::With(m_writerDatabaseConnection,
+      Beam::Threading::With(m_writeConnection,
         [&] (auto& connection) {
-          this->OpenDatabaseConnection(connection);
-          if(!Details::LoadTables(connection, m_schema)) {
-            BOOST_THROW_EXCEPTION(Beam::IO::ConnectException{
-              "Unable to load database tables."});
-          }
+          connection.open();
         });
-      for(std::size_t i = 0; i <= boost::thread::hardware_concurrency(); ++i) {
-        auto connection = std::make_unique<mysqlpp::Connection>(false);
-        OpenDatabaseConnection(*connection);
-        m_readerDatabaseConnectionPool.Add(std::move(connection));
+      for(auto i = std::size_t(0);
+          i <= std::thread::hardware_concurrency(); ++i) {
+        auto connection = std::make_unique<Viper::MySql::Connection>(
+          m_config.m_address.GetHost(), m_config.m_address.GetPort(),
+          m_config.m_username, m_config.m_password, m_config.m_schema);
+        connection->open();
+        m_connectionPool.Add(std::move(connection));
       }
+      m_orderImbalanceDataStore.Open();
+      m_bboQuoteDataStore.Open();
+      m_marketQuoteDataStore.Open();
+      m_bookQuoteDataStore.Open();
+      m_timeAndSaleDataStore.Open();
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
       Shutdown();
@@ -237,29 +211,17 @@ namespace MarketDataService {
   }
 
   inline void MySqlHistoricalDataStore::Shutdown() {
-    m_readerDatabaseConnectionPool.Close();
-    Beam::Threading::With(m_writerDatabaseConnection,
+    m_timeAndSaleDataStore.Close();
+    m_bookQuoteDataStore.Close();
+    m_marketQuoteDataStore.Close();
+    m_bboQuoteDataStore.Close();
+    m_orderImbalanceDataStore.Close();
+    m_connectionPool.Close();
+    Beam::Threading::With(m_writeConnection,
       [] (auto& connection) {
-        connection.disconnect();
+        connection.close();
       });
     m_openState.SetClosed();
-  }
-
-  inline void MySqlHistoricalDataStore::OpenDatabaseConnection(
-      mysqlpp::Connection& connection) {
-    bool connectionResult = connection.set_option(
-      new mysqlpp::ReconnectOption{true});
-    if(!connectionResult) {
-      BOOST_THROW_EXCEPTION(Beam::IO::ConnectException{
-        "Unable to set MySQL reconnect option."});
-    }
-    connectionResult = connection.connect(m_schema.c_str(),
-      m_address.GetHost().c_str(), m_username.c_str(), m_password.c_str(),
-      m_address.GetPort());
-    if(!connectionResult) {
-      BOOST_THROW_EXCEPTION(Beam::IO::ConnectException{std::string(
-        "Unable to connect to MySQL database - ") + connection.error()});
-    }
   }
 }
 }
