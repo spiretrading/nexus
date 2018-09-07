@@ -183,6 +183,8 @@ bool Window::eventFilter(QObject* watched, QEvent* event) {
           QWidget::window()->resize(m_normal_size.width() + 1,
             m_normal_size.height());
           QWidget::window()->resize(m_normal_size);
+        } else {
+          m_normal_size = size();
         }
         layout()->setContentsMargins(
           {scale_width(PADDING_SIZE), scale_height(PADDING_SIZE),
