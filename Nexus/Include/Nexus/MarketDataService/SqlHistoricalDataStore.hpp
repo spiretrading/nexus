@@ -229,7 +229,7 @@ namespace Nexus::MarketDataService {
         });
       for(auto i = std::size_t(0);
           i <= std::thread::hardware_concurrency(); ++i) {
-        auto connection = m_connectionBuilder();
+        auto connection = std::make_unique<Connection>(m_connectionBuilder());
         connection->open();
         m_connectionPool.Add(std::move(connection));
       }

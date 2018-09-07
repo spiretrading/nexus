@@ -226,12 +226,16 @@ namespace Nexus::MarketDataService {
           row.m_size = Quantity::FromRepresentation(value);
         }).
       add_column("condition_code", Viper::varchar(4),
-        [] (const auto& row) -> auto& {
+        [] (auto& row) -> auto& {
           return row.m_condition.m_code;
         }).
       add_column("condition_type",
-        [] (const auto& row) -> auto& {
-          return row.m_condition.m_type;
+        [] (const auto& row) {
+          return static_cast<int>(row.m_condition.m_type);
+        },
+        [] (auto& row, auto value) {
+          row.m_condition.m_type = static_cast<TimeAndSale::Condition::Type>(
+            value);
         }).
       add_column("market", Viper::varchar(16), &TimeAndSale::m_marketCenter);
     return ROW;
