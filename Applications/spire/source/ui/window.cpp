@@ -176,7 +176,10 @@ bool Window::eventFilter(QObject* watched, QEvent* event) {
         m_normal_size = QWidget::window()->size();
         layout()->setContentsMargins({});
       } else {
-        if(!QWidget::window()->isMinimized()) {
+        auto screen_width =
+          QApplication::desktop()->screenGeometry(this).width();
+        if(!QWidget::window()->isMinimized() && m_normal_size.width() >
+            screen_width) {
           QWidget::window()->resize(m_normal_size.width() + 1,
             m_normal_size.height());
           QWidget::window()->resize(m_normal_size);
