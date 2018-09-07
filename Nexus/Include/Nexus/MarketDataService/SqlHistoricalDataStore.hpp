@@ -87,11 +87,15 @@ namespace Nexus::MarketDataService {
       Beam::Threading::Sync<Connection, Beam::Threading::Mutex>
         m_writeConnection;
       Beam::Threading::ThreadPool m_threadPool;
-      DataStore<OrderImbalanceRow, MarketCodeRow> m_orderImbalanceDataStore;
-      DataStore<BboQuoteRow, SecurityRow> m_bboQuoteDataStore;
-      DataStore<MarketQuoteRow, SecurityRow> m_marketQuoteDataStore;
-      DataStore<BookQuoteRow SecurityRow> m_bookQuoteDataStore;
-      DataStore<TimeAndSaleRow, SecurityRow> m_timeAndSaleDataStore;
+      DataStore<Viper::Row<OrderImbalance>, Viper::Row<MarketCode>>
+        m_orderImbalanceDataStore;
+      DataStore<Viper::Row<BboQuote>, Viper::Row<Security>> m_bboQuoteDataStore;
+      DataStore<Viper::Row<MarketQuote>, Viper::Row<Security>>
+        m_marketQuoteDataStore;
+      DataStore<Viper::Row<BookQuote>, Viper::Row<Security>>
+        m_bookQuoteDataStore;
+      DataStore<Viper::Row<TimeAndSale>, Viper::Row<Security>>
+        m_timeAndSaleDataStore;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
@@ -102,20 +106,20 @@ namespace Nexus::MarketDataService {
       ConnectionBuilder connectionBuilder)
       : m_connectionBuilder(std::move(connectionBuilder)),
         m_writeConnection(m_connectionBuilder()),
-        m_orderImbalanceDataStore("order_imbalances", GetMarketCodeRow(),
-          GetOrderImbalanceRow(), Beam::Ref(m_connectionPool),
+        m_orderImbalanceDataStore("order_imbalances", GetOrderImbalanceRow(),
+          GetMarketCodeRow(), Beam::Ref(m_connectionPool),
           Beam::Ref(m_writeConnection), Beam::Ref(m_threadPool)),
-        m_bboQuoteDataStore("bbo_quotes", GetSecurityRow(), GetBboQuoteRow(),
+        m_bboQuoteDataStore("bbo_quotes", GetBboQuoteRow(), GetSecurityRow(),
           Beam::Ref(m_connectionPool), Beam::Ref(m_writeConnection),
           Beam::Ref(m_threadPool)),
-        m_marketQuoteDataStore("market_quotes", GetSecurityRow(),
-          GetMarketQuoteRow(), Beam::Ref(m_connectionPool),
+        m_marketQuoteDataStore("market_quotes", GetMarketQuoteRow(),
+          GetSecurityRow(), Beam::Ref(m_connectionPool),
           Beam::Ref(m_writeConnection), Beam::Ref(m_threadPool)),
-        m_bookQuoteDataStore("book_quotes", GetSecurityRow(), GetBookQuoteRow(),
+        m_bookQuoteDataStore("book_quotes", GetBookQuoteRow(), GetSecurityRow(),
           Beam::Ref(m_connectionPool), Beam::Ref(m_writeConnection),
           Beam::Ref(m_threadPool)),
-        m_timeAndSaleDataStore("time_and_sales", GetSecurityRow(),
-          GetTimeAndSaleRow(), Beam::Ref(m_connectionPool),
+        m_timeAndSaleDataStore("time_and_sales", GetTimeAndSaleRow(),
+          GetSecurityRow(), Beam::Ref(m_connectionPool),
           Beam::Ref(m_writeConnection), Beam::Ref(m_threadPool)) {}
 
   template<typename C>
@@ -263,7 +267,6 @@ namespace Nexus::MarketDataService {
       });
     m_openState.SetClosed();
   }
-}
 }
 
 #endif

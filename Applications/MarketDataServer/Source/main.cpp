@@ -5,7 +5,7 @@
 #include <Beam/Codecs/ZLibDecoder.hpp>
 #include <Beam/Codecs/ZLibEncoder.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
-#include <Beam/MySql/MySqlConfig.hpp>
+#include <Beam/Sql/MySqlConfig.hpp>
 #include <Beam/Network/TcpServerSocket.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
@@ -19,6 +19,7 @@
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
 #include <tclap/CmdLine.h>
+#include <Viper/MySql/Connection.hpp>
 #include "MarketDataServer/Version.hpp"
 #include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
@@ -26,13 +27,12 @@
 #include "Nexus/MarketDataService/MarketDataFeedServlet.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistry.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServlet.hpp"
-#include "Nexus/MarketDataService/MySqlHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/SessionCachedHistoricalDataStore.hpp"
+#include "Nexus/MarketDataService/SqlHistoricalDataStore.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;
 using namespace Beam::IO;
-using namespace Beam::MySql;
 using namespace Beam::Network;
 using namespace Beam::Routines;
 using namespace Beam::Serialization;
@@ -47,13 +47,15 @@ using namespace Nexus::DefinitionsService;
 using namespace Nexus::MarketDataService;
 using namespace std;
 using namespace TCLAP;
+using namespace Viper;
 
 namespace {
+  using SqlDataStore = SqlHistoricalDataStore<MySql::Connection>;
   using RegistryServletContainer =
     ServiceProtocolServletContainer<MetaAuthenticationServletAdapter<
     MetaMarketDataRegistryServlet<MarketDataRegistry*,
     SessionCachedHistoricalDataStore<
-    BufferedHistoricalDataStore<MySqlHistoricalDataStore*>*>,
+    BufferedHistoricalDataStore<SqlDataStore*>*>,
     ApplicationAdministrationClient::Client*>,
     ApplicationServiceLocatorClient::Client*, NativePointerPolicy>,
     TcpServerSocket, BinarySender<SharedBuffer>, NullEncoder,
@@ -61,7 +63,7 @@ namespace {
   using BaseRegistryServlet =
     MarketDataRegistryServlet<RegistryServletContainer, MarketDataRegistry*,
     SessionCachedHistoricalDataStore<
-    BufferedHistoricalDataStore<MySqlHistoricalDataStore*>*>,
+    BufferedHistoricalDataStore<SqlDataStore*>*>,
     ApplicationAdministrationClient::Client*>;
   using FeedServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<
@@ -231,9 +233,13 @@ int main(int argc, const char** argv) {
     cerr << "Error parsing section 'data_store': " << e.what() << endl;
     return -1;
   }
-  MySqlHistoricalDataStore historicalDataStore{mySqlConfig.m_address,
-    mySqlConfig.m_schema, mySqlConfig.m_username, mySqlConfig.m_password};
-  boost::optional<BufferedHistoricalDataStore<MySqlHistoricalDataStore*>>
+  SqlDataStore historicalDataStore(
+    [=] {
+      return MySql::Connection(mySqlConfig.m_address.GetHost(),
+        mySqlConfig.m_address.GetPort(), mySqlConfig.m_username,
+        mySqlConfig.m_password, mySqlConfig.m_schema);
+    });
+  boost::optional<BufferedHistoricalDataStore<SqlDataStore*>>
     bufferedDataStore;
   MarketDataRegistry marketDataRegistry;
   boost::optional<BaseRegistryServlet> baseRegistryServlet;
