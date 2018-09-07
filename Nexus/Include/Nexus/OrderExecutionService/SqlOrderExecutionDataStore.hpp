@@ -127,7 +127,17 @@ namespace Nexus::OrderExecutionService {
   SqlOrderExecutionDataStore<C>::SqlOrderExecutionDataStore(
       ConnectionBuilder connectionBuilder,
       const AccountSourceFunction& accountSourceFunction)
-      : m_connectionBuilder(std::move(connectionBuilder)) {}
+      : m_connectionBuilder(std::move(connectionBuilder)),
+        m_writeConnection(m_connectionBuilder()),
+        m_submissionDataStore("submissions", GetOrderRecordRow(),
+          GetAccountRow(), Beam::Ref(m_connectionPool),
+          Beam::Ref(m_writeConnection), Beam::Ref(m_threadPool)),
+        m_statusSubmissionsDataStore("status_submissions", GetOrderRecordRow(),
+          GetAccountRow(), Beam::Ref(m_connectionPool),
+          Beam::Ref(m_writeConnection), Beam::Ref(m_threadPool)),
+        m_executionReportDataStore("execution_reports", GetExecutionReportRow(),
+          GetAccountRow(), Beam::Ref(m_connectionPool),
+          Beam::Ref(m_writeConnection), Beam::Ref(m_threadPool)) {}
 
   template<typename C>
   SqlOrderExecutionDataStore<C>::SqlOrderExecutionDataStore(
