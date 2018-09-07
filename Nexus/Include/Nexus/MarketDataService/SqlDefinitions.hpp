@@ -138,7 +138,7 @@ namespace Nexus::MarketDataService {
         [] (const auto& row) {
           return std::string{row.m_market.GetData()};
         },
-        [] (auto& row, auto& value) {
+        [] (auto& row, const auto& value) {
           row.m_market = value;
         }).
       add_column("bid_price",
@@ -181,7 +181,7 @@ namespace Nexus::MarketDataService {
         [] (const auto& row) {
           return std::string{row.m_market.GetData()};
         },
-        [] (auto& row, auto& value) {
+        [] (auto& row, const auto& value) {
           row.m_market = value;
         }).
       add_column("price",
@@ -226,8 +226,11 @@ namespace Nexus::MarketDataService {
           row.m_size = Quantity::FromRepresentation(value);
         }).
       add_column("condition_code", Viper::varchar(4),
-        [] (auto& row) -> auto& {
+        [] (const auto& row) -> auto& {
           return row.m_condition.m_code;
+        },
+        [] (auto& row, auto value) {
+          row.m_condition.m_code = std::move(value);
         }).
       add_column("condition_type",
         [] (const auto& row) {
