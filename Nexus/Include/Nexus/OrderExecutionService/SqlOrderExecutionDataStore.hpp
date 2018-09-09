@@ -83,12 +83,16 @@ namespace Nexus::OrderExecutionService {
       Beam::Threading::Sync<Connection, Beam::Threading::Mutex>
         m_writeConnection;
       Beam::Threading::ThreadPool m_threadPool;
-      DataStore<Viper::Row<OrderRecord>, Viper::Row<unsigned int>>
+      DataStore<Viper::Row<OrderInfo>,
+        Viper::Row<Beam::ServiceLocator::DirectoryEntry>>
         m_submissionDataStore;
-      DataStore<Viper::Row<OrderRecord>, Viper::Row<unsigned int>>
+      DataStore<Viper::Row<OrderInfo>,
+        Viper::Row<Beam::ServiceLocator::DirectoryEntry>>
         m_statusSubmissionDataStore;
-      DataStore<Viper::Row<ExecutionReport>, Viper::Row<unsigned int>>
+      DataStore<Viper::Row<ExecutionReport>,
+        Viper::Row<Beam::ServiceLocator::DirectoryEntry>>
         m_executionReportDataStore;
+      Viper::Row<OrderId> m_liveOrdersRow;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
@@ -106,7 +110,7 @@ namespace Nexus::OrderExecutionService {
       const std::vector<std::function<Connection ()>>& connectionBuilders,
       const typename SqlOrderExecutionDataStore<
       Connection>::AccountSourceFunction& accountSourceFunction) {
-    auto& primaryConnectionBuilder = config.front();
+    auto& primaryConnectionBuilder = connectionBuilders.front();
     auto primary = MakeVirtualOrderExecutionDataStore(
       std::make_unique<SqlOrderExecutionDataStore<Connection>>(
       primaryConnectionBuilder, accountSourceFunction));
@@ -128,16 +132,21 @@ namespace Nexus::OrderExecutionService {
       ConnectionBuilder connectionBuilder,
       const AccountSourceFunction& accountSourceFunction)
       : m_connectionBuilder(std::move(connectionBuilder)),
+        m_accountEntries(accountSourceFunction),
         m_writeConnection(m_connectionBuilder()),
-        m_submissionDataStore("submissions", GetOrderRecordRow(),
+        m_submissionDataStore("submissions", GetOrderInfoRow(),
           GetAccountRow(), Beam::Ref(m_connectionPool),
           Beam::Ref(m_writeConnection), Beam::Ref(m_threadPool)),
-        m_statusSubmissionsDataStore("status_submissions", GetOrderRecordRow(),
+        m_statusSubmissionDataStore("status_submissions", GetOrderInfoRow(),
           GetAccountRow(), Beam::Ref(m_connectionPool),
           Beam::Ref(m_writeConnection), Beam::Ref(m_threadPool)),
         m_executionReportDataStore("execution_reports", GetExecutionReportRow(),
           GetAccountRow(), Beam::Ref(m_connectionPool),
-          Beam::Ref(m_writeConnection), Beam::Ref(m_threadPool)) {}
+          Beam::Ref(m_writeConnection), Beam::Ref(m_threadPool)) {
+    m_liveOrdersRow = Viper::Row<OrderId>().
+      add_column("order_id").
+      set_primary_key("order_id");
+  }
 
   template<typename C>
   SqlOrderExecutionDataStore<C>::SqlOrderExecutionDataStore(
@@ -145,7 +154,7 @@ namespace Nexus::OrderExecutionService {
       : MySqlOrderExecutionDataStore(std::move(connectionBuilder),
         [] (unsigned int id) {
           return Beam::ServiceLocator::DirectoryEntry::MakeAccount(id, "");
-        }} {}
+        }) {}
 
   template<typename C>
   SqlOrderExecutionDataStore<C>::~SqlOrderExecutionDataStore() {
@@ -169,7 +178,7 @@ namespace Nexus::OrderExecutionService {
         order->m_fields.m_account.m_id);
       order->m_submissionAccount = m_accountEntries.Load(
         order->m_submissionAccount.m_id);
-      auto sequencedExecutionReports = m_executionReportsDataStore.Load(
+      auto sequencedExecutionReports = m_executionReportDataStore.Load(
         Viper::sym("order_id") == order->m_orderId);
       auto executionReports = std::vector<ExecutionReport>();
       for(auto& executionReport : sequencedExecutionReports) {
@@ -185,16 +194,16 @@ namespace Nexus::OrderExecutionService {
   template<typename C>
   std::vector<SequencedExecutionReport> SqlOrderExecutionDataStore<C>::
       LoadExecutionReports(const AccountQuery& query) {
-    return m_executionReportsDataStore.Load(query);
+    return m_executionReportDataStore.Load(query);
   }
 
   template<typename C>
   void SqlOrderExecutionDataStore<C>::Store(
       const SequencedAccountOrderInfo& orderInfo) {
-    m_submissionsDataStore.Store(orderInfo);
+    m_submissionDataStore.Store(orderInfo);
     Beam::Threading::With(m_writeConnection,
       [&] (auto& connection) {
-        connection.execute(Viper::insert("live_orders",
+        connection.execute(Viper::insert(m_liveOrdersRow, "live_orders",
           &(*orderInfo)->m_orderId));
       });
   }
@@ -214,15 +223,15 @@ namespace Nexus::OrderExecutionService {
       });
     Beam::Threading::With(m_writeConnection,
       [&] (auto& connection) {
-        connection.execute(Viper::insert("live_orders", orderIds.begin(),
-          orderIds.end()));
+        connection.execute(Viper::insert(m_liveOrdersRow, "live_orders",
+          orderIds.begin(), orderIds.end()));
       });
   }
 
   template<typename C>
   void SqlOrderExecutionDataStore<C>::Store(
       const SequencedAccountExecutionReport& executionReport) {
-    m_executionReportsDataStore.Store(executionReport);
+    m_executionReportDataStore.Store(executionReport);
     if(IsTerminal((*executionReport)->m_status)) {
       Beam::Threading::With(m_writeConnection,
         [&] (auto& connection) {
@@ -235,7 +244,7 @@ namespace Nexus::OrderExecutionService {
   template<typename C>
   void SqlOrderExecutionDataStore<C>::Store(
       const std::vector<SequencedAccountExecutionReport>& executionReports) {
-    m_executionReportsDataStore.Store(executionReports);
+    m_executionReportDataStore.Store(executionReports);
     auto eraseCondition = Viper::literal(false);
     auto hasErase = false;
     for(auto& executionReport : executionReports) {

@@ -226,11 +226,8 @@ namespace Nexus::MarketDataService {
           row.m_size = Quantity::FromRepresentation(value);
         }).
       add_column("condition_code", Viper::varchar(4),
-        [] (const auto& row) -> auto& {
+        [] (auto& row) -> auto& {
           return row.m_condition.m_code;
-        },
-        [] (auto& row, auto value) {
-          row.m_condition.m_code = std::move(value);
         }).
       add_column("condition_type",
         [] (const auto& row) {

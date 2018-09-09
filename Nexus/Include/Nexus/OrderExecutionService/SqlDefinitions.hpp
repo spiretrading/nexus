@@ -1,23 +1,147 @@
-#ifndef NEXUS_MYSQLORDEREXECUTIONDATASTOREDETAILS_HPP
-#define NEXUS_MYSQLORDEREXECUTIONDATASTOREDETAILS_HPP
-#include <string>
-#include <Beam/IO/SharedBuffer.hpp>
-#include <Beam/MySql/PosixTimeToMySqlDateTime.hpp>
-#include <Beam/MySql/Utilities.hpp>
-#include <Beam/Queries/SqlUtilities.hpp>
-#include <Beam/Serialization/BinaryReceiver.hpp>
-#include <Beam/Serialization/BinarySender.hpp>
-#include <boost/lexical_cast.hpp>
-#include <mysql++/mysql++.h>
-#include <mysql++/ssqls.h>
-#include "Nexus/OrderExecutionService/AccountQuery.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionDataStoreException.hpp"
+#ifndef NEXUS_ORDER_EXECUTION_SQL_DEFINITIONS_HPP
+#define NEXUS_ORDER_EXECUTION_SQL_DEFINITIONS_HPP
+#include <Viper/Row.hpp>
+#include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
-#include "Nexus/Queries/StandardDataTypes.hpp"
+#include "Nexus/OrderExecutionService/OrderRecord.hpp"
 #include "Nexus/Queries/TraversalExpressionVisitor.hpp"
 
-namespace Nexus {
-namespace OrderExecutionService {
+namespace Nexus::OrderExecutionService {
+  inline const auto& GetAccountRow() {
+    static auto ROW = Viper::Row<Beam::ServiceLocator::DirectoryEntry>().
+      add_column("account",
+      [] (auto& row) -> auto& {
+        return row.m_id;
+      });
+    return ROW;
+  }
+
+  inline const auto& GetOrderInfoRow() {
+    static auto ROW = Viper::Row<OrderInfo>().
+      add_column("order_id", &OrderInfo::m_orderId).
+      add_column("submission_account",
+        [] (auto& row) -> auto& {
+          return row.m_submissionAccount.m_id;
+        },
+        [] (auto& row, auto column) {
+          row.m_submissionAccount.m_id = column;
+          row.m_submissionAccount.m_type =
+            Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT;
+        }).
+      add_column("symbol", Viper::varchar(16),
+        [] (auto& row) -> auto& {
+          return row.m_fields.m_security.GetSymbol();
+        },
+        [] (auto& row, auto& column) {
+          row.m_fields.m_security = Security(std::move(column),
+            row.m_fields.m_security.GetMarket(),
+            row.m_fields.m_security.GetCountry());
+        }).
+      add_column("market", Viper::varchar(16),
+        [] (auto& row) {
+          return std::string{row.m_fields.m_security.GetMarket().GetData()};
+        },
+        [] (auto& row, auto& column) {
+          row.m_fields.m_security = Security(
+            row.m_fields.m_security.GetSymbol(), column,
+            row.m_fields.m_security.GetCountry());
+        }).
+      add_column("country",
+        [] (auto& row) {
+          return static_cast<std::uint32_t>(
+            row.m_fields.m_security.GetCountry());
+        },
+        [] (auto& row, auto column) {
+          row.m_fields.m_security = Security(
+            row.m_fields.m_security.GetSymbol(),
+            row.m_fields.m_security.GetMarket(), CountryCode(column));
+        }).
+      add_column("currency",
+        [] (auto& row) {
+          return static_cast<std::uint32_t>(row.m_fields.m_currency.m_value);
+        },
+        [] (auto& row, auto column) {
+          row.m_fields.m_currency = CurrencyId(static_cast<int>(column));
+        }).
+      add_column("type",
+        [] (auto& row) {
+          return static_cast<std::uint32_t>(row.m_fields.m_type);
+        },
+        [] (auto& row, auto column) {
+          row.m_fields.m_type = OrderType(column);
+        }).
+      add_column("side",
+        [] (auto& row) {
+          return static_cast<std::uint32_t>(row.m_fields.m_side);
+        },
+        [] (auto& row, auto column) {
+          row.m_fields.m_side = Side(column);
+        }).
+      add_column("destination", Viper::varchar(16),
+        [] (auto& row) -> auto& {
+          return row.m_fields.m_destination;
+        }).
+      add_column("quantity",
+        [] (auto& row) {
+          return row.m_fields.m_quantity.GetRepresentation();
+        },
+        [] (auto& row, auto column) {
+          row.m_fields.m_quantity = Quantity::FromRepresentation(column);
+        }).
+      add_column("price",
+        [] (auto& row) {
+          return static_cast<Quantity>(
+            row.m_fields.m_price).GetRepresentation();
+        },
+        [] (auto& row, auto column) {
+          row.m_fields.m_price = Money(Quantity::FromRepresentation(column));
+        }).
+      add_column("time_in_force",
+        [] (auto& row) {
+          return static_cast<std::uint32_t>(
+            row.m_fields.m_timeInForce.GetType());
+        },
+        [] (auto& row, auto column) {
+          row.m_fields.m_timeInForce = TimeInForce(TimeInForce::Type(column),
+            row.m_fields.m_timeInForce.GetExpiry());
+        }).
+      add_column("time_in_force_expiry",
+        [] (auto& row) {
+          return Beam::ToSqlTimestamp(row.m_fields.m_timeInForce.GetExpiry());
+        },
+        [] (auto& row, auto column) {
+          row.m_fields.m_timeInForce = TimeInForce(
+            row.m_fields.m_timeInForce.GetType(),
+            Beam::FromSqlTimestamp(column));
+        }).
+      add_column("shorting_flag", &OrderInfo::m_shortingFlag);
+    return ROW;
+  }
+
+  inline const auto& GetExecutionReportRow() {
+    static auto ROW = Viper::Row<ExecutionReport>();
+    return ROW;
+  }
+
+  inline auto HasLiveCheck(const Beam::Queries::Expression& expression) {
+    struct IsLiveVisitor final : Queries::TraversalExpressionVisitor {
+      bool m_hasCheck = false;
+
+      void Visit(const Beam::Queries::MemberAccessExpression& expression)
+          override {
+        if(expression.GetName() == "is_live" &&
+            expression.GetExpression()->GetType() == Queries::OrderInfoType()) {
+          m_hasCheck = true;
+        } else {
+          Queries::TraversalExpressionVisitor::Visit(expression);
+        }
+      }
+    };
+    IsLiveVisitor visitor;
+    expression->Apply(visitor);
+    return visitor.m_hasCheck;
+  }
+/*
 namespace Details {
   sql_create_18(submissions, 18, 0,
     mysqlpp::sql_bigint_unsigned, order_id,
@@ -106,17 +230,6 @@ namespace Details {
       "INDEX(order_id),"
       "INDEX sequence_index(account, query_sequence),"
       "INDEX timestamp_index(account, timestamp, query_sequence))";
-    return query.execute();
-  }
-
-  inline bool LoadLiveOrdersTable(mysqlpp::Connection& connection,
-      const std::string& schema) {
-    if(Beam::MySql::TestTable(schema, "live_orders", connection)) {
-      return true;
-    }
-    auto query = connection.query();
-    query << "CREATE TABLE live_orders ("
-      "order_id BIGINT UNSIGNED PRIMARY KEY NOT NULL)";
     return query.execute();
   }
 
@@ -351,28 +464,9 @@ namespace Details {
       return row;
     }
   };
-
-  inline bool HasLiveCheck(const Beam::Queries::Expression& expression) {
-    struct IsLiveVisitor : Queries::TraversalExpressionVisitor {
-      bool m_hasCheck = false;
-
-      virtual void Visit(
-          const Beam::Queries::MemberAccessExpression& expression)
-          override final {
-        if(expression.GetName() == "is_live" &&
-            expression.GetExpression()->GetType() == Queries::OrderInfoType()) {
-          m_hasCheck = true;
-        } else {
-          Queries::TraversalExpressionVisitor::Visit(expression);
-        }
-      }
-    };
-    IsLiveVisitor visitor;
-    expression->Apply(visitor);
-    return visitor.m_hasCheck;
-  }
 }
 }
+*/
 }
 
 #endif
