@@ -5,8 +5,6 @@
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/Utilities/AssertionException.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <QApplication>
 #include <QMessageBox>
 #include "Spire/BookView/BookViewWindow.hpp"
@@ -23,14 +21,14 @@ using namespace Beam;
 using namespace Beam::IO;
 using namespace Beam::Serialization;
 using namespace boost;
-using namespace boost::filesystem;
 using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
+using namespace std::filesystem;
 
 bool Spire::UI::Export(const EnvironmentSettings& environmentSettings,
     const path& environmentPath) {
-  boost::filesystem::ofstream writerStream;
+  ofstream writerStream;
   writerStream.open(environmentPath, ios::binary);
   if((writerStream.rdstate() & std::ifstream::failbit) != 0) {
     QMessageBox::warning(nullptr, QObject::tr("Error"),
@@ -44,7 +42,7 @@ bool Spire::UI::Export(const EnvironmentSettings& environmentSettings,
     SharedBuffer buffer;
     sender.SetSink(Ref(buffer));
     sender.Shuttle(environmentSettings);
-    BasicOStreamWriter<boost::filesystem::ofstream*> writer(&writerStream);
+    BasicOStreamWriter<ofstream*> writer(&writerStream);
     writer.Write(buffer);
   } catch(std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
@@ -57,7 +55,7 @@ bool Spire::UI::Export(const EnvironmentSettings& environmentSettings,
 bool Spire::UI::Import(const path& environmentPath,
     EnvironmentSettings::TypeSet settings, bool apply,
     Out<UserProfile> userProfile) {
-  boost::filesystem::ifstream readerStream;
+  ifstream readerStream;
   readerStream.open(environmentPath, ios::binary);
   if((readerStream.rdstate() & std::ifstream::failbit) != 0) {
     QMessageBox::warning(nullptr, QObject::tr("Error"),
@@ -66,7 +64,7 @@ bool Spire::UI::Import(const path& environmentPath,
   }
   EnvironmentSettings environmentSettings;
   try {
-    BasicIStreamReader<boost::filesystem::ifstream*> reader(&readerStream);
+    BasicIStreamReader<ifstream*> reader(&readerStream);
     SharedBuffer buffer;
     reader.Read(Store(buffer));
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;

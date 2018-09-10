@@ -1,9 +1,9 @@
 #ifndef SPIRE_CATALOGSETTINGS_HPP
 #define SPIRE_CATALOGSETTINGS_HPP
+#include <filesystem>
 #include <map>
 #include <vector>
 #include <Beam/Pointers/Out.hpp>
-#include <boost/filesystem/path.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/signals2/signal.hpp>
 #include <boost/uuid/uuid.hpp>
@@ -68,13 +68,13 @@ namespace Spire {
         \param hasRegistryAccess Whether write access to the registry is
                available.
       */
-      CatalogSettings(const boost::filesystem::path& settingsPath,
+      CatalogSettings(const std::filesystem::path& settingsPath,
         bool hasRegistryAccess);
 
       ~CatalogSettings();
 
       //! Returns the path to the catalog settings.
-      const boost::filesystem::path& GetSettingsPath() const;
+      const std::filesystem::path& GetSettingsPath() const;
 
       //! Returns <code>true</code> iff write access to the registry is
       //! available.
@@ -174,7 +174,7 @@ namespace Spire {
         const CatalogTabModelRemovedSignal::slot_type& slot) const;
 
     private:
-      boost::filesystem::path m_settingsPath;
+      std::filesystem::path m_settingsPath;
       bool m_hasRegistryAccess;
       std::vector<std::unique_ptr<CatalogEntry>> m_catalogEntries;
       std::vector<std::unique_ptr<CatalogTabModel>> m_catalogTabs;

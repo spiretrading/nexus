@@ -1,5 +1,4 @@
 #include "Spire/Spire/UserProfile.hpp"
-#include <boost/filesystem/operations.hpp>
 #include <QStandardPaths>
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
@@ -12,13 +11,13 @@ using namespace Beam;
 using namespace Beam::Routines;
 using namespace Beam::Threading;
 using namespace boost;
-using namespace boost::filesystem;
 using namespace boost::local_time;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
 using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
+using namespace std::filesystem;
 
 UserProfile::UserProfile(const string& username, bool isAdministrator,
     bool isManager, const CountryDatabase& countryDatabase,

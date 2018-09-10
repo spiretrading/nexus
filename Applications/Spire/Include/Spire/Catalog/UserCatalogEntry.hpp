@@ -1,6 +1,6 @@
 #ifndef SPIRE_USERCATALOGENTRY_HPP
 #define SPIRE_USERCATALOGENTRY_HPP
-#include <boost/filesystem/path.hpp>
+#include <filesystem>
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Catalog/PersistentCatalogEntry.hpp"
 
@@ -19,7 +19,7 @@ namespace Spire {
       /*!
         \param catalogPath The path to save this entry to.
       */
-      UserCatalogEntry(const boost::filesystem::path& catalogPath);
+      UserCatalogEntry(const std::filesystem::path& catalogPath);
 
       //! Constructs a UserCatalogEntry.
       /*!
@@ -31,7 +31,7 @@ namespace Spire {
       */
       UserCatalogEntry(const std::string& name, const CanvasNode& node,
         const std::string& iconPath, const std::string& description,
-        const boost::filesystem::path& catalogPath);
+        const std::filesystem::path& catalogPath);
 
       //! Constructs a UserCatalogEntry.
       /*!
@@ -45,7 +45,7 @@ namespace Spire {
       UserCatalogEntry(const std::string& name, const CanvasNode& node,
         const boost::uuids::uuid& uuid, const std::string& iconPath,
         const std::string& description,
-        const boost::filesystem::path& catalogPath);
+        const std::filesystem::path& catalogPath);
 
       virtual ~UserCatalogEntry();
 
@@ -81,7 +81,7 @@ namespace Spire {
       std::string m_iconPath;
       QIcon m_icon;
       std::string m_description;
-      boost::filesystem::path m_catalogPath;
+      std::filesystem::path m_catalogPath;
 
       void Validate();
       template<typename Shuttler>

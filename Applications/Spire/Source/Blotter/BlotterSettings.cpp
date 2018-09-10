@@ -1,4 +1,6 @@
 #include "Spire/Blotter/BlotterSettings.hpp"
+#include <filesystem>
+#include <fstream>
 #include <unordered_map>
 #include <Beam/IO/BasicIStreamReader.hpp>
 #include <Beam/IO/BasicOStreamWriter.hpp>
@@ -7,8 +9,6 @@
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
 #include <Beam/Utilities/AssertionException.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <QMessageBox>
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterTaskProperties.hpp"
@@ -23,11 +23,11 @@ using namespace Beam::Serialization;
 using namespace Beam::ServiceLocator;
 using namespace Beam::Threading;
 using namespace boost;
-using namespace boost::filesystem;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
+using namespace std::filesystem;
 
 namespace {
   void LoadDefaultBlotter(Out<UserProfile> userProfile) {
@@ -102,7 +102,7 @@ void BlotterSettings::Load(Out<UserProfile> userProfile) {
   }
   BlotterSettingsData data;
   try {
-    BasicIStreamReader<boost::filesystem::ifstream> reader(
+    BasicIStreamReader<ifstream> reader(
       Initialize(blottersFilePath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
@@ -172,7 +172,7 @@ void BlotterSettings::Save(const UserProfile& userProfile) {
     data.m_activeBlotter = settings.GetActiveBlotter().GetName();
     data.m_defaultTaskProperties = settings.GetDefaultBlotterTaskProperties();
     sender.Shuttle(data);
-    BasicOStreamWriter<boost::filesystem::ofstream> writer(
+    BasicOStreamWriter<ofstream> writer(
       Initialize(blottersFilePath, ios::binary));
     writer.Write(buffer);
   } catch(std::exception&) {

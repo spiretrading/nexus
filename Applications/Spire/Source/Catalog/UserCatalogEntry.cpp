@@ -1,12 +1,12 @@
 #include "Spire/Catalog/UserCatalogEntry.hpp"
+#include <filesystem>
+#include <fstream>
 #include <Beam/IO/BasicIStreamReader.hpp>
 #include <Beam/IO/BasicOStreamWriter.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <boost/uuid/uuid_generators.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <QMessageBox>
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
 #include "Spire/UI/UISerialization.hpp"
@@ -16,11 +16,11 @@ using namespace Beam::IO;
 using namespace Beam::Serialization;
 using namespace Beam::Threading;
 using namespace boost;
-using namespace boost::filesystem;
 using namespace boost::uuids;
 using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
+using namespace std::filesystem;
 
 namespace {
   uuid GenerateUid() {
@@ -83,8 +83,7 @@ void UserCatalogEntry::Save() const {
     SharedBuffer buffer;
     sender.SetSink(Ref(buffer));
     sender.Shuttle(*this);
-    BasicOStreamWriter<boost::filesystem::ofstream> writer(
-      Initialize(entryPath, ios::binary));
+    BasicOStreamWriter<ofstream> writer(Initialize(entryPath, ios::binary));
     writer.Write(buffer);
   } catch(std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
