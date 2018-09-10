@@ -172,20 +172,16 @@ bool Window::event(QEvent* e) {
 bool Window::eventFilter(QObject* watched, QEvent* event) {
   if(watched == QWidget::window()) {
     if(event->type() == QEvent::WindowStateChange) {
-      if(QWidget::window()->isMaximized()) {
+      auto state_change_event = static_cast<QWindowStateChangeEvent*>(event);
+      if(!state_change_event->oldState().testFlag(Qt::WindowMaximized)
+          && QWidget::window()->isMaximized()) {
         m_normal_size = QWidget::window()->size();
         layout()->setContentsMargins({});
-      } else {
-        auto screen_width =
-          QApplication::desktop()->screenGeometry(this).width();
-        if(!QWidget::window()->isMinimized() && m_normal_size.width() >
-            screen_width) {
-          QWidget::window()->resize(m_normal_size.width() + 1,
-            m_normal_size.height());
-          QWidget::window()->resize(m_normal_size);
-        } else {
-          m_normal_size = size();
-        }
+      } else if(state_change_event->oldState().testFlag(Qt::WindowMaximized) &&
+          !QWidget::window()->isMaximized()) {
+        QWidget::window()->resize(m_normal_size.width() + 1,
+          m_normal_size.height());
+        QWidget::window()->resize(m_normal_size);
         layout()->setContentsMargins(
           {scale_width(PADDING_SIZE), scale_height(PADDING_SIZE),
           scale_width(PADDING_SIZE), scale_height(PADDING_SIZE)});
