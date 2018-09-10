@@ -75,7 +75,7 @@ namespace Spire {
       QWidget* m_body;
       TitleBar* m_title_bar;
       bool m_is_resizing;
-      QSize m_normal_size;
+      QRect m_normal_rect;
 
       void handle_resize();
       void set_border_stylesheet(const QColor& color);
