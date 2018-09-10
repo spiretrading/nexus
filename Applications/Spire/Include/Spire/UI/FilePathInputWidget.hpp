@@ -1,6 +1,6 @@
 #ifndef SPIRE_FILEPATHINPUTWIDGET_HPP
 #define SPIRE_FILEPATHINPUTWIDGET_HPP
-#include <boost/filesystem/path.hpp>
+#include <filesystem>
 #include <QFileDialog>
 #include <QWidget>
 #include "Spire/UI/UI.hpp"
@@ -26,13 +26,13 @@ namespace UI {
       virtual ~FilePathInputWidget();
 
       //! Returns the path.
-      boost::filesystem::path GetPath() const;
+      std::filesystem::path GetPath() const;
 
       //! Sets the path.
       /*!
         \param path The font to represent.
       */
-      void SetPath(const boost::filesystem::path& path);
+      void SetPath(const std::filesystem::path& path);
 
       //! Sets the caption.
       /*!

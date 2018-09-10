@@ -1,10 +1,9 @@
+#include <filesystem>
+#include <fstream>
 #include <Beam/Network/SocketThreadPool.hpp>
 #include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
 #include <Beam/Threading/TimerThreadPool.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
 #include <QApplication>
@@ -42,11 +41,11 @@ using namespace Beam::Network;
 using namespace Beam::ServiceLocator;
 using namespace Beam::Threading;
 using namespace boost;
-using namespace boost::filesystem;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
+using namespace std::filesystem;
 
 inline void InitializeResources() {
   Q_INIT_RESOURCE(Resources);
@@ -132,8 +131,8 @@ int main(int argc, char* argv[]) {
     create_directories(configPath);
   }
   configPath /= "config.yml";
-  if(!is_regular(configPath)) {
-    boost::filesystem::ofstream configFile(configPath);
+  if(!is_regular_file(configPath)) {
+    std::ofstream configFile(configPath);
     configFile <<
       "---\n"
       "address: 127.0.0.1:20000\n"
@@ -143,7 +142,7 @@ int main(int argc, char* argv[]) {
   }
   YAML::Node config;
   try {
-    boost::filesystem::ifstream configStream(configPath);
+    std::ifstream configStream(configPath);
     if(!configStream.good()) {
       QMessageBox::critical(nullptr, QObject::tr("Error"),
         QObject::tr("Unable to load configuration: config.yml"));

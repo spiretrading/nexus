@@ -4,8 +4,6 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <QApplication>
 #include <QMessageBox>
 #include "Spire/Spire/UserProfile.hpp"
@@ -19,7 +17,6 @@ using namespace Beam::IO;
 using namespace Beam::Serialization;
 using namespace Beam::Threading;
 using namespace boost;
-using namespace boost::filesystem;
 using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
@@ -32,7 +29,7 @@ vector<unique_ptr<WindowSettings>> WindowSettings::Load(
     return windowSettings;
   }
   try {
-    BasicIStreamReader<boost::filesystem::ifstream> reader(
+    BasicIStreamReader<ifstream> reader(
       Initialize(windowSettingsPath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
@@ -73,7 +70,7 @@ void WindowSettings::Save(const UserProfile& userProfile) {
     SharedBuffer buffer;
     sender.SetSink(Ref(buffer));
     sender.Shuttle(windowSettings);
-    BasicOStreamWriter<boost::filesystem::ofstream> writer(
+    BasicOStreamWriter<ofstream> writer(
       Initialize(windowSettingsPath, ios::binary));
     writer.Write(buffer);
   } catch(std::exception&) {
