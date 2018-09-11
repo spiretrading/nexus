@@ -112,18 +112,11 @@ bool Window::nativeEventFilter(const QByteArray& event_type, void* message,
   } else if(msg->message == WM_GETMINMAXINFO) {
     auto maximize_dimensions = reinterpret_cast<::MINMAXINFO*>(msg->lParam);
     auto rect = QApplication::desktop()->availableGeometry(this);
-    if(!QWidget::window()->isMaximized() &&
-        m_normal_rect.width() > rect.width()) {
-      maximize_dimensions->ptMaxSize.x = 65535;
-      maximize_dimensions->ptMaxSize.y = 65535;
-    } else {
-      maximize_dimensions->ptMaxSize.x = rect.width();
-      maximize_dimensions->ptMaxSize.y = rect.height() - 1;
-    }
+    maximize_dimensions->ptMaxSize.x = rect.width();
+    maximize_dimensions->ptMaxSize.y = rect.height() - 1;
     maximize_dimensions->ptMaxPosition.x = 0;
     maximize_dimensions->ptMaxPosition.y = 0;
     *result = 0;
-    return true;
   } else if(msg->message == WM_NCHITTEST) {
     *result = HTCLIENT;
     return true;
@@ -185,8 +178,9 @@ bool Window::eventFilter(QObject* watched, QEvent* event) {
         layout()->setContentsMargins({});
       } else if(state_change_event->oldState().testFlag(Qt::WindowMaximized) &&
           !QWidget::window()->isMaximized()) {
+        QWidget::window()->resize(m_normal_rect.width() + 1,
+          m_normal_rect.height());
         QWidget::window()->resize(m_normal_rect.size());
-        m_normal_rect = QRect();
         layout()->setContentsMargins(
           {scale_width(PADDING_SIZE), scale_height(PADDING_SIZE),
           scale_width(PADDING_SIZE), scale_height(PADDING_SIZE)});
