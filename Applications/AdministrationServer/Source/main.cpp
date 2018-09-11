@@ -1,13 +1,14 @@
 #include <fstream>
 #include <iostream>
 #include <Beam/IO/SharedBuffer.hpp>
-#include <Beam/MySql/MySqlConfig.hpp>
 #include <Beam/Network/TcpServerSocket.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
+#include <Beam/Sql/MySqlConfig.hpp>
+#include <Beam/Sql/Utilities.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
@@ -24,7 +25,6 @@
 using namespace Beam;
 using namespace Beam::Codecs;
 using namespace Beam::IO;
-using namespace Beam::MySql;
 using namespace Beam::Network;
 using namespace Beam::Routines;
 using namespace Beam::Serialization;

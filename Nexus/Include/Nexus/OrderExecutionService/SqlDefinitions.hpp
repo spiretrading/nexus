@@ -32,7 +32,7 @@ namespace Nexus::OrderExecutionService {
         [] (auto& row) -> auto& {
           return row.m_fields.m_security.GetSymbol();
         },
-        [] (auto& row, auto& column) {
+        [] (auto& row, auto column) {
           row.m_fields.m_security = Security(std::move(column),
             row.m_fields.m_security.GetMarket(),
             row.m_fields.m_security.GetCountry());
@@ -41,7 +41,7 @@ namespace Nexus::OrderExecutionService {
         [] (auto& row) {
           return std::string{row.m_fields.m_security.GetMarket().GetData()};
         },
-        [] (auto& row, auto& column) {
+        [] (auto& row, auto column) {
           row.m_fields.m_security = Security(
             row.m_fields.m_security.GetSymbol(), column,
             row.m_fields.m_security.GetCountry());

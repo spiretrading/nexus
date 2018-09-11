@@ -151,7 +151,7 @@ namespace Nexus::OrderExecutionService {
   template<typename C>
   SqlOrderExecutionDataStore<C>::SqlOrderExecutionDataStore(
       ConnectionBuilder connectionBuilder)
-      : MySqlOrderExecutionDataStore(std::move(connectionBuilder),
+      : SqlOrderExecutionDataStore(std::move(connectionBuilder),
         [] (unsigned int id) {
           return Beam::ServiceLocator::DirectoryEntry::MakeAccount(id, "");
         }) {}
