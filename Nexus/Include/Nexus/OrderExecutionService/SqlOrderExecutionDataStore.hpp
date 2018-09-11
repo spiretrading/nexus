@@ -271,6 +271,8 @@ namespace Nexus::OrderExecutionService {
       Beam::Threading::With(m_writeConnection,
         [&] (auto& connection) {
           connection.open();
+          connection.execute(Viper::create_if_not_exists(m_liveOrdersRow,
+            "live_orders"));
         });
       for(auto i = std::size_t(0);
           i <= std::thread::hardware_concurrency(); ++i) {
@@ -279,8 +281,17 @@ namespace Nexus::OrderExecutionService {
         m_connectionPool.Add(std::move(connection));
       }
       m_submissionDataStore.Open();
-      m_statusSubmissionDataStore.Open();
       m_executionReportDataStore.Open();
+      Beam::Threading::With(m_writeConnection,
+        [&] (auto& connection) {
+          if(!connection.has_table("status_submissions")) {
+            connection.execute("CREATE VIEW status_submissions AS "
+              "SELECT submissions.*, IFNULL(live_orders.order_id, 0) != 0 AS "
+              "is_live FROM submissions LEFT JOIN live_orders ON "
+              "submissions.order_id = live_orders.order_id");
+          }
+        });
+      m_statusSubmissionDataStore.Open();
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
       Shutdown();
