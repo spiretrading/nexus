@@ -117,6 +117,7 @@ bool Window::nativeEventFilter(const QByteArray& event_type, void* message,
     maximize_dimensions->ptMaxPosition.x = 0;
     maximize_dimensions->ptMaxPosition.y = 0;
     *result = 0;
+    return true;
   } else if(msg->message == WM_NCHITTEST) {
     *result = HTCLIENT;
     return true;
