@@ -23,5 +23,5 @@ void SqlTranslatorTester::TestQueryOrderFields() {
   auto translation = translator.Build();
   std::string query;
   translation.append_query(query);
-  CPPUNIT_ASSERT(query == "\"XTSX\" == market");
+  CPPUNIT_ASSERT(query == "\"XTSX\" = market");
 }
