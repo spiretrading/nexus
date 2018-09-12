@@ -113,7 +113,10 @@ namespace Nexus::Queries {
 
   inline void SqlTranslator::TranslateTimeAndSaleMemberAccessExpression(
       const Beam::Queries::MemberAccessExpression& expression) {
-    expression.GetExpression()->Apply(*this);
+    if(dynamic_cast<const Beam::Queries::ParameterExpression*>(
+        &*expression.GetExpression())) {
+      expression.GetExpression()->Apply(*this);
+    }
     auto term = GetTranslation();
     if(expression.GetName() == "timestamp" ||
         expression.GetName() == "price" ||
@@ -127,8 +130,6 @@ namespace Nexus::Queries {
 
   inline void SqlTranslator::TranslateOrderFieldsMemberAccessExpression(
       const Beam::Queries::MemberAccessExpression& expression) {
-    expression.GetExpression()->Apply(*this);
-    auto term = GetTranslation();
     if(expression.GetName() == "security") {
       GetTranslation() = Viper::sym("");
     } else {
@@ -142,7 +143,10 @@ namespace Nexus::Queries {
       GetTranslation() = Viper::sym("");
       return;
     }
-    expression.GetExpression()->Apply(*this);
+    if(dynamic_cast<const Beam::Queries::ParameterExpression*>(
+        &*expression.GetExpression())) {
+      expression.GetExpression()->Apply(*this);
+    }
     auto term = GetTranslation();
     if(expression.GetName() == "order_id" ||
         expression.GetName() == "shorting_flag" ||
