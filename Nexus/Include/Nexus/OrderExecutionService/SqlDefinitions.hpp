@@ -21,6 +21,10 @@ namespace Nexus::OrderExecutionService {
 
   inline const auto& GetOrderInfoRow() {
     static auto ROW = Viper::Row<OrderInfo>().
+      add_column("account",
+        [] (auto& row) -> auto& {
+          return row.m_fields.m_account.m_id;
+        }).
       add_column("order_id", &OrderInfo::m_orderId).
       add_column("submission_account",
         [] (auto& row) -> auto& {
