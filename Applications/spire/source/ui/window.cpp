@@ -172,15 +172,12 @@ bool Window::event(QEvent* e) {
 bool Window::eventFilter(QObject* watched, QEvent* event) {
   if(watched == QWidget::window()) {
     if(event->type() == QEvent::WindowStateChange) {
-      if(QWidget::window()->isMaximized()) {
-        m_normal_size = QWidget::window()->size();
+      auto state_change_event = static_cast<QWindowStateChangeEvent*>(event);
+      if(!state_change_event->oldState().testFlag(Qt::WindowMaximized)
+          && QWidget::window()->isMaximized()) {
         layout()->setContentsMargins({});
-      } else {
-        if(!QWidget::window()->isMinimized()) {
-          QWidget::window()->resize(m_normal_size.width() + 1,
-            m_normal_size.height());
-          QWidget::window()->resize(m_normal_size);
-        }
+      } else if(state_change_event->oldState().testFlag(Qt::WindowMaximized) &&
+          !QWidget::window()->isMaximized()) {
         layout()->setContentsMargins(
           {scale_width(PADDING_SIZE), scale_height(PADDING_SIZE),
           scale_width(PADDING_SIZE), scale_height(PADDING_SIZE)});
