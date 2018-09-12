@@ -100,85 +100,58 @@ namespace Nexus::Queries {
 
   inline void SqlTranslator::TranslateSecurityMemberAccessExpression(
       const Beam::Queries::MemberAccessExpression& expression) {
-/*
-    if(auto* parameter =
-        dynamic_cast<const Beam::Queries::ParameterExpression*>(
-        &*expression.GetExpression())) {
-      GetQuery() = GetParameter() + ".";
-    } else {
-      auto& leftExpression = expression.GetExpression();
-      leftExpression->Apply(*this);
-    }
-    if(expression.GetName() == "symbol") {
-      GetQuery() += "symbol";
-    } else if(expression.GetName() == "market") {
-      GetQuery() += "market";
-    } else if(expression.GetName() == "country") {
-      GetQuery() += "country";
+    expression.GetExpression()->Apply(*this);
+    auto term = GetTranslation();
+    if(expression.GetName() == "symbol" ||
+        expression.GetName() == "market" ||
+        expression.GetName() == "country") {
+      GetTranslation() = Viper::access(term, expression.GetName());
     } else {
       Beam::Queries::SqlTranslator::Visit(expression);
     }
-*/
   }
 
   inline void SqlTranslator::TranslateTimeAndSaleMemberAccessExpression(
       const Beam::Queries::MemberAccessExpression& expression) {
-/*
-    if(auto* parameter =
-        dynamic_cast<const Beam::Queries::ParameterExpression*>(
-        &*expression.GetExpression())) {
-      GetQuery() = GetParameter() + ".";
-    }
-    if(expression.GetName() == "timestamp") {
-      GetQuery() += "timestamp";
-    } else if(expression.GetName() == "price") {
-      GetQuery() += "price";
-    } else if(expression.GetName() == "size") {
-      GetQuery() += "size";
-    } else if(expression.GetName() == "market_center") {
-      GetQuery() += "market";
+    expression.GetExpression()->Apply(*this);
+    auto term = GetTranslation();
+    if(expression.GetName() == "timestamp" ||
+        expression.GetName() == "price" ||
+        expression.GetName() == "size" ||
+        expression.GetName() == "market_center") {
+      GetTranslation() = Viper::access(term, expression.GetName());
     } else {
       Beam::Queries::SqlTranslator::Visit(expression);
     }
-*/
   }
 
   inline void SqlTranslator::TranslateOrderFieldsMemberAccessExpression(
       const Beam::Queries::MemberAccessExpression& expression) {
-/*
+    expression.GetExpression()->Apply(*this);
+    auto term = GetTranslation();
     if(expression.GetName() == "security") {
-      GetQuery().clear();
-      return;
+      GetTranslation() = Viper::sym("");
     } else {
       Beam::Queries::SqlTranslator::Visit(expression);
     }
-*/
   }
 
   inline void SqlTranslator::TranslateOrderInfoMemberAccessExpression(
       const Beam::Queries::MemberAccessExpression& expression) {
-/*
     if(expression.GetName() == "fields") {
-      GetQuery().clear();
+      GetTranslation() = Viper::sym("");
       return;
     }
-    if(auto* parameter =
-        dynamic_cast<const Beam::Queries::ParameterExpression*>(
-        &*expression.GetExpression())) {
-      GetQuery() = GetParameter() + ".";
-    }
-    if(expression.GetName() == "order_id") {
-      GetQuery() += "order_id";
-    } else if(expression.GetName() == "shorting_flag") {
-      GetQuery() += "shorting_flag";
-    } else if(expression.GetName() == "timestamp") {
-      GetQuery() += "timestamp";
-    } else if(expression.GetName() == "is_live") {
-      GetQuery() += "is_live";
+    expression.GetExpression()->Apply(*this);
+    auto term = GetTranslation();
+    if(expression.GetName() == "order_id" ||
+        expression.GetName() == "shorting_flag" ||
+        expression.GetName() == "timestamp" ||
+        expression.GetName() == "is_live") {
+      GetTranslation() = Viper::access(term, expression.GetName());
     } else {
       Beam::Queries::SqlTranslator::Visit(expression);
     }
-*/
   }
 }
 
