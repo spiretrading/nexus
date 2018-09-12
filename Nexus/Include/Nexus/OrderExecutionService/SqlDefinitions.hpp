@@ -158,6 +158,7 @@ namespace Nexus::OrderExecutionService {
   inline const auto& GetExecutionReportRow() {
     static auto ROW = Viper::Row<ExecutionReport>().
       add_column("order_id", &ExecutionReport::m_id).
+      add_column("sequence", &ExecutionReport::m_sequence).
       add_column("status",
         [] (auto& row) {
           return static_cast<std::uint32_t>(row.m_status);
