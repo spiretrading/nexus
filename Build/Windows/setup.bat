@@ -1,10 +1,10 @@
 SETLOCAL
 
-SET expected_commit="b1457479c99f07de214196a22fffb228d0a18ca1"
+SET beam_commit="546bf44e8f7de46eba84667684b330f0a37a80e0"
 if exist Beam goto end_beam_setup
   git clone https://www.github.com/eidolonsystems/beam.git Beam
   pushd Beam
-  git checkout %expected_commit%
+  git checkout %beam_commit%
   popd
   call Beam\Build\Windows\setup.bat
   pushd Beam\Build\Windows
@@ -16,10 +16,10 @@ if exist Beam goto end_beam_setup
 if not exist Beam goto end_beam_pull
   pushd Beam
   for /f "usebackq tokens=*" %%a in (`git log -1 ^| head -1 ^| awk "{ print $2 }"`) do SET commit=%%a
-  if not "%commit%" == %expected_commit% (
+  if not "%commit%" == %beam_commit% (
     git checkout master
     git pull
-    git checkout %expected_commit%
+    git checkout %beam_commit%
     popd
     call Beam\Build\Make\setup.bat
     pushd Beam\Build\Windows
