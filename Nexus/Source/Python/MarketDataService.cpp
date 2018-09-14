@@ -25,6 +25,7 @@
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
+#include "Nexus/Python/ToPythonHistoricalDataStore.hpp"
 #include "Nexus/Python/ToPythonMarketDataClient.hpp"
 
 using namespace Beam;
@@ -54,6 +55,57 @@ namespace {
     BinarySender<SharedBuffer>, SizeDeclarativeEncoder<ZLibEncoder>>,
     LiveTimer>;
   using Client = MarketDataClient<SessionBuilder>;
+
+  struct FromPythonHistoricalDataStore final : VirtualHistoricalDataStore,
+      wrapper<VirtualHistoricalDataStore> {
+    std::vector<SequencedOrderImbalance> LoadOrderImbalances(
+      const MarketWideDataQuery& query) override;
+
+    std::vector<SequencedBboQuote> LoadBboQuotes(
+      const SecurityMarketDataQuery& query) override;
+
+    std::vector<SequencedBookQuote> LoadBookQuotes(
+      const SecurityMarketDataQuery& query) override;
+
+    std::vector<SequencedMarketQuote> LoadMarketQuotes(
+      const SecurityMarketDataQuery& query) override;
+
+    std::vector<SequencedTimeAndSale> LoadTimeAndSales(
+      const SecurityMarketDataQuery& query) override;
+
+    void Store(const SequencedMarketOrderImbalance& orderImbalance) override;
+
+    void Store(const std::vector<SequencedMarketOrderImbalance>&
+      orderImbalances) override;
+
+    void Store(const SequencedSecurityBboQuote& bboQuote) override;
+
+    void Store(
+      const std::vector<SequencedSecurityBboQuote>& bboQuotes) override;
+
+    void Store(const SequencedSecurityMarketQuote& marketQuote) override;
+
+    void Store(
+      const std::vector<SequencedSecurityMarketQuote>& marketQuotes) override;
+
+    void Store(const SequencedSecurityBookQuote& bookQuote) override;
+
+    void Store(
+      const std::vector<SequencedSecurityBookQuote>& bookQuotes) override;
+
+    void Store(const SequencedSecurityTimeAndSale& timeAndSale) override;
+
+    void Store(
+      const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) override;
+
+    void Open() override {
+      get_override("open")();
+    }
+
+    void Close() override {
+      get_override("close")();
+    }
+  };
 
   struct FromPythonMarketDataClient : VirtualMarketDataClient,
       wrapper<VirtualMarketDataClient> {
@@ -183,6 +235,14 @@ void Nexus::Python::ExportApplicationMarketDataClient() {
     .def("__init__", make_constructor(&BuildClient));
 }
 
+void Nexus::Python::ExportHistoricalDataStore() {
+  class_<FromPythonHistoricalDataStore, boost::noncopyable>(
+    "HistoricalDataStore", no_init)
+    .def("open", pure_virtual(&VirtualHistoricalDataStore::Open))
+    .def("close", pure_virtual(&VirtualHistoricalDataStore::Close));
+  ExportUniquePtr<VirtualHistoricalDataStore>();
+}
+
 void Nexus::Python::ExportMarketDataClient() {
   class_<FromPythonMarketDataClient, boost::noncopyable>("MarketDataClient",
     no_init)
@@ -253,6 +313,7 @@ void Nexus::Python::ExportMarketDataService() {
     borrowed(PyImport_AddModule(nestedName.c_str())))};
   scope().attr("market_data_service") = nestedModule;
   scope parent = nestedModule;
+  ExportHistoricalDataStore();
   ExportMarketDataClient();
   ExportApplicationMarketDataClient();
   ExportBasicQuery<MarketCode>("MarketWideData");

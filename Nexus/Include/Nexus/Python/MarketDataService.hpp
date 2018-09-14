@@ -1,12 +1,14 @@
-#ifndef NEXUS_PYTHONMARKETDATASERVICE_HPP
-#define NEXUS_PYTHONMARKETDATASERVICE_HPP
+#ifndef NEXUS_PYTHON_MARKET_DATA_SERVICE_HPP
+#define NEXUS_PYTHON_MARKET_DATA_SERVICE_HPP
 #include "Nexus/Python/Python.hpp"
 
-namespace Nexus {
-namespace Python {
+namespace Nexus::Python {
 
   //! Exports the ApplicationMarketDataClient class.
   void ExportApplicationMarketDataClient();
+
+  //! Exports the HistoricalDataStore class.
+  void ExportHistoricalDataStore();
 
   //! Exports the MarketDataClient class.
   void ExportMarketDataClient();
@@ -19,7 +21,6 @@ namespace Python {
 
   //! Exports the SecuritySnapshot class.
   void ExportSecuritySnapshot();
-}
 }
 
 #endif
