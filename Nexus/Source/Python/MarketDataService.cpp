@@ -472,7 +472,7 @@ void Nexus::Python::ExportSecuritySnapshot() {
 void Nexus::Python::ExportSqliteHistoricalDataStore() {
   class_<ToPythonHistoricalDataStore<
     SqlHistoricalDataStore<Viper::Sqlite3::Connection>>,
-    bases<VirtualMarketDataClient>, boost::noncopyable>(
+    bases<VirtualHistoricalDataStore>, boost::noncopyable>(
     "SqliteHistoricalDataStore", no_init)
     .def("__init__", make_constructor(&BuildSqliteHistoricalDataStore));
 }

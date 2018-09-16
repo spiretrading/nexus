@@ -190,7 +190,9 @@ void Nexus::Python::ExportExecutionReport() {
     .def_readwrite("additional_tags", &ExecutionReport::m_additionalTags)
     .def(self == self)
     .def(self != self);
-  ExportSequencedValue<ExecutionReport>("SequencedExecutionReport");
+  ExportSequencedValue<ExecutionReport>();
+  ExportIndexedValue<ExecutionReport, DirectoryEntry>();
+  ExportSequencedValue<AccountExecutionReport>();
   ExportQueueSuite<ExecutionReport>("ExecutionReport");
   ExportQueueSuite<SequencedExecutionReport>("SequencedExecutionReport");
   ExportVector<vector<ExecutionReport>>("VectorExecutionReport");
@@ -224,7 +226,7 @@ void Nexus::Python::ExportOrder() {
     .add_property("info", make_function(&Order::GetInfo,
       return_value_policy<copy_const_reference>()))
     .def("get_publisher", &Order::GetPublisher, return_internal_reference<>());
-  ExportSequencedValue<const Order*>("SequencedOrder");
+  ExportSequencedValue<const Order*>();
   ExportQueueSuite<const Order*>("Order");
   ExportQueueSuite<SequencedOrder>("SequencedOrder");
   ExportVector<vector<const Order*>>("VectorOrder");
