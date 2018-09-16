@@ -19,8 +19,14 @@ namespace Nexus::Python {
   //! Exports the MarketDataServiceTestEnvironment class.
   void ExportMarketDataServiceTestEnvironment();
 
+  //! Exports the SqlHistoricalDataStore class connecting to MySQL.
+  void ExportMySqlHistoricalDataStore();
+
   //! Exports the SecuritySnapshot class.
   void ExportSecuritySnapshot();
+
+  //! Exports the SqlHistoricalDataStore class connecting to SQLite.
+  void ExportSqliteHistoricalDataStore();
 }
 
 #endif

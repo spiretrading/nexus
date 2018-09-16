@@ -12,7 +12,7 @@ namespace Nexus::MarketDataService {
       \tparam D The type of HistoricalDataStore to wrap.
    */
   template<typename D>
-  class ToPythonHistoricalDataStore final : public VirtualMarketDataClient {
+  class ToPythonHistoricalDataStore final : public VirtualHistoricalDataStore {
     public:
 
       //! The type of DataStore to wrap.
@@ -94,7 +94,7 @@ namespace Nexus::MarketDataService {
     Beam::Python::GilRelease gil;
     auto release = std::lock_guard(gil);
     Close();
-    m_client.reset();
+    m_dataStore.reset();
   }
 
   template<typename D>
@@ -103,7 +103,7 @@ namespace Nexus::MarketDataService {
       const MarketWideDataQuery& query) {
     Beam::Python::GilRelease gil;
     auto release = std::lock_guard(gil);
-    return m_client->LoadOrderImbalances(query);
+    return m_dataStore->LoadOrderImbalances(query);
   }
 
   template<typename D>
@@ -111,7 +111,7 @@ namespace Nexus::MarketDataService {
       const SecurityMarketDataQuery& query) {
     Beam::Python::GilRelease gil;
     auto release = std::lock_guard(gil);
-    return m_client->LoadBboQuotes(query);
+    return m_dataStore->LoadBboQuotes(query);
   }
 
   template<typename D>
@@ -120,7 +120,7 @@ namespace Nexus::MarketDataService {
       const SecurityMarketDataQuery& query) {
     Beam::Python::GilRelease gil;
     auto release = std::lock_guard(gil);
-    return m_client->LoadBookQuotes(query);
+    return m_dataStore->LoadBookQuotes(query);
   }
 
   template<typename D>
@@ -129,7 +129,7 @@ namespace Nexus::MarketDataService {
       const SecurityMarketDataQuery& query) {
     Beam::Python::GilRelease gil;
     auto release = std::lock_guard(gil);
-    return m_client->LoadMarketQuotes(query);
+    return m_dataStore->LoadMarketQuotes(query);
   }
 
   template<typename D>
@@ -138,7 +138,7 @@ namespace Nexus::MarketDataService {
       const SecurityMarketDataQuery& query) {
     Beam::Python::GilRelease gil;
     auto release = std::lock_guard(gil);
-    return m_client->LoadTimeAndSales(query);
+    return m_dataStore->LoadTimeAndSales(query);
   }
 
   template<typename D>
@@ -146,7 +146,7 @@ namespace Nexus::MarketDataService {
       const SequencedMarketOrderImbalance& orderImbalance) {
     Beam::Python::GilRelease gil;
     auto release = std::lock_guard(gil);
-    m_client->Store(orderImbalance);
+    m_dataStore->Store(orderImbalance);
   }
 
   template<typename D>
@@ -154,7 +154,7 @@ namespace Nexus::MarketDataService {
       const std::vector<SequencedMarketOrderImbalance>& orderImbalances) {
     Beam::Python::GilRelease gil;
     auto release = std::lock_guard(gil);
-    m_client->Store(orderImbalances);
+    m_dataStore->Store(orderImbalances);
   }
 
   template<typename D>
@@ -162,7 +162,7 @@ namespace Nexus::MarketDataService {
       const SequencedSecurityBboQuote& bboQuote) {
     Beam::Python::GilRelease gil;
     auto release = std::lock_guard(gil);
-    m_client->Store(bboQuote);
+    m_dataStore->Store(bboQuote);
   }
 
   template<typename D>
@@ -170,7 +170,7 @@ namespace Nexus::MarketDataService {
       const std::vector<SequencedSecurityBboQuote>& bboQuotes) {
     Beam::Python::GilRelease gil;
     auto release = std::lock_guard(gil);
-    m_client->Store(bboQuotes);
+    m_dataStore->Store(bboQuotes);
   }
 
   template<typename D>
@@ -178,7 +178,7 @@ namespace Nexus::MarketDataService {
       const SequencedSecurityMarketQuote& marketQuote) {
     Beam::Python::GilRelease gil;
     auto release = std::lock_guard(gil);
-    m_client->Store(marketQuote);
+    m_dataStore->Store(marketQuote);
   }
 
   template<typename D>
@@ -186,7 +186,7 @@ namespace Nexus::MarketDataService {
       const std::vector<SequencedSecurityMarketQuote>& marketQuotes) {
     Beam::Python::GilRelease gil;
     auto release = std::lock_guard(gil);
-    m_client->Store(marketQuotes);
+    m_dataStore->Store(marketQuotes);
   }
 
   template<typename D>
@@ -194,7 +194,7 @@ namespace Nexus::MarketDataService {
       const SequencedSecurityBookQuote& bookQuote) {
     Beam::Python::GilRelease gil;
     auto release = std::lock_guard(gil);
-    m_client->Store(bookQuote);
+    m_dataStore->Store(bookQuote);
   }
 
   template<typename D>
@@ -202,7 +202,7 @@ namespace Nexus::MarketDataService {
       const std::vector<SequencedSecurityBookQuote>& bookQuotes) {
     Beam::Python::GilRelease gil;
     auto release = std::lock_guard(gil);
-    m_client->Store(bookQuotes);
+    m_dataStore->Store(bookQuotes);
   }
 
   template<typename D>
@@ -210,7 +210,7 @@ namespace Nexus::MarketDataService {
       const SequencedSecurityTimeAndSale& timeAndSale) {
     Beam::Python::GilRelease gil;
     auto release = std::lock_guard(gil);
-    m_client->Store(timeAndSale);
+    m_dataStore->Store(timeAndSale);
   }
 
   template<typename D>
@@ -218,21 +218,21 @@ namespace Nexus::MarketDataService {
       const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {
     Beam::Python::GilRelease gil;
     auto release = std::lock_guard(gil);
-    m_client->Store(timeAndSales);
+    m_dataStore->Store(timeAndSales);
   }
 
   template<typename D>
   void ToPythonHistoricalDataStore<D>::Open() {
     Beam::Python::GilRelease gil;
     auto release = std::lock_guard(gil);
-    m_client->Open();
+    m_dataStore->Open();
   }
 
   template<typename D>
   void ToPythonHistoricalDataStore<D>::Close() {
     Beam::Python::GilRelease gil;
     auto release = std::lock_guard(gil);
-    m_client->Close();
+    m_dataStore->Close();
   }
 }
 
