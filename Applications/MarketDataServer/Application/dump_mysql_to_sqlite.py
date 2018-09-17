@@ -28,23 +28,28 @@ def parse_ip_address(source):
   return beam.network.IpAddress(source[0:separator],
     int(source[separator + 1 :]))
 
-def backup_bbo_quotes(security, start, end, source, destination):
-  if security.country == nexus.default_countries.CA or \
-      security.country == nexus.default_countries.US:
+def backup(index, start, end, loader, destination):
+  if isinstance(index, nexus.Security):
+    if index.country == nexus.default_countries.CA or \
+        index.country == nexus.default_countries.US:
+      timezone = pytz.timezone('US/Eastern')
+    elif index.country == nexus.default_countries.AU:
+      timezone = pytz.timezone('Australia/Sydney')
+  else:
     timezone = pytz.timezone('US/Eastern')
-  elif security.country == nexus.default_countries.AU:
-    timezone = pytz.timezone('Australia/Sydney')
   localized_start = timezone.localize(start)
   localized_end = timezone.localize(end)
   utc_start = localized_start.astimezone(pytz.utc)
   utc_end = localized_end.astimezone(pytz.utc)
   query = beam.queries.Query()
-  query.index = security
+  query.index = index
   query.snapshot_limit = beam.queries.SnapshotLimit.UNLIMITED
   query.set_range(utc_start, utc_end)
-  values = source.load_bbo_quotes(query)
+  values = loader(query)
   for i in range(len(values)):
-    print(values[i].sequence.ordinal)
+    values[i] = beam.queries.SequencedValue(
+      beam.queries.IndexedValue(values[i].value, index), values[i].sequence)
+  destination.store(values)
 
 def main():
   parser = argparse.ArgumentParser(
@@ -93,7 +98,16 @@ def main():
     args.out)
   sqlite_data_store.open()
   for security in securities:
-    backup_bbo_quotes(security, args.start, args.end, mysql_data_store,
+    backup(security, args.start, args.end, mysql_data_store.load_bbo_quotes,
+      sqlite_data_store)
+    backup(security, args.start, args.end, mysql_data_store.load_time_and_sales,
+      sqlite_data_store)
+    backup(security, args.start, args.end, mysql_data_store.load_book_quotes,
+      sqlite_data_store)
+    backup(security, args.start, args.end, mysql_data_store.load_market_quotes,
+      sqlite_data_store)
+  for market in markets:
+    backup(market, args.start, args.end, mysql_data_store.load_order_imbalances,
       sqlite_data_store)
 
 if __name__ == '__main__':
