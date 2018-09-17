@@ -224,18 +224,14 @@ namespace Nexus {
         MarketDataService::MakeVirtualMarketDataClient(
         &m_client->GetMarketDataClient()));
       m_marketDataClient->Open();
-      m_complianceClient = Compliance::MakeToPythonComplianceClient(
-        Compliance::MakeVirtualComplianceClient(
-        &m_client->GetComplianceClient()));
-      m_complianceClient->Open();
+      // TODO: Implement the compliance client.
       m_orderExecutionClient =
         OrderExecutionService::MakeToPythonOrderExecutionClient(
         OrderExecutionService::MakeVirtualOrderExecutionClient(
         &m_client->GetOrderExecutionClient()));
       m_orderExecutionClient->Open();
       m_timeClient = Beam::TimeService::MakeToPythonTimeClient(
-        Beam::TimeService::MakeVirtualTimeClient(
-        &m_client->GetTimeClient()));
+        Beam::TimeService::MakeVirtualTimeClient(&m_client->GetTimeClient()));
       m_timeClient->Open();
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();

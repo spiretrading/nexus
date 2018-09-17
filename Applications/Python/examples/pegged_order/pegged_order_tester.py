@@ -57,8 +57,8 @@ class TestPeggedOrder(unittest.TestCase):
     order = pegged_order.PeggedOrder(self.service_clients, order_fields,
       nexus.Money.CENT)
     order.start()
-    self.environment.update_bbo_price(security,
-      nexus.Money.from_value('1.00'), nexus.Money.from_value('1.01'))
+    self.environment.update_bbo_price(security, nexus.Money.from_value('1.00'),
+       nexus.Money.from_value('1.01'))
     submission_queue = beam.Queue()
     self.environment.monitor_order_submissions(submission_queue)
     expected_order = submission_queue.top()
