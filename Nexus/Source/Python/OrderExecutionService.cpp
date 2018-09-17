@@ -226,7 +226,6 @@ void Nexus::Python::ExportOrder() {
     .add_property("info", make_function(&Order::GetInfo,
       return_value_policy<copy_const_reference>()))
     .def("get_publisher", &Order::GetPublisher, return_internal_reference<>());
-  ExportSequencedValue<const Order*>();
   ExportQueueSuite<const Order*>("Order");
   ExportQueueSuite<SequencedOrder>("SequencedOrder");
   ExportVector<vector<const Order*>>("VectorOrder");
