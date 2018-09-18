@@ -1,4 +1,6 @@
 #include "Spire/Catalog/CatalogSettings.hpp"
+#include <filesystem>
+#include <fstream>
 #include <Beam/IO/BasicIStreamReader.hpp>
 #include <Beam/IO/BasicOStreamWriter.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
@@ -7,8 +9,6 @@
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/Serialization/ShuttleUuid.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <QMessageBox>
 #include "Spire/Catalog/BuiltInCatalogEntry.hpp"
 #include "Spire/Catalog/CatalogEntry.hpp"
@@ -25,12 +25,12 @@ using namespace Beam::RegistryService;
 using namespace Beam::Serialization;
 using namespace Beam::Threading;
 using namespace boost;
-using namespace boost::filesystem;
 using namespace boost::signals2;
 using namespace boost::uuids;
 using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
+using namespace std::filesystem;
 
 namespace {
   void CreateValuesTab(CatalogSettings& settings) {
@@ -77,8 +77,7 @@ namespace {
         continue;
       }
       try {
-        BasicIStreamReader<boost::filesystem::ifstream> reader(
-          Initialize(*i, ios::binary));
+        BasicIStreamReader<ifstream> reader(Initialize(*i, ios::binary));
         SharedBuffer buffer;
         reader.Read(Store(buffer));
         TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
@@ -144,7 +143,7 @@ namespace {
     vector<pair<string, vector<uuid>>> tabs;
     QString warnings;
     try {
-      BasicIStreamReader<boost::filesystem::ifstream> reader(
+      BasicIStreamReader<ifstream> reader(
         Initialize(catalogTabPath, ios::binary));
       SharedBuffer buffer;
       reader.Read(Store(buffer));
@@ -195,7 +194,7 @@ namespace {
       SharedBuffer buffer;
       sender.SetSink(Ref(buffer));
       sender.Shuttle(tabs);
-      BasicOStreamWriter<boost::filesystem::ofstream> writer(
+      BasicOStreamWriter<ofstream> writer(
         Initialize(catalogTabPath, ios::binary));
       writer.Write(buffer);
     } catch(std::exception&) {

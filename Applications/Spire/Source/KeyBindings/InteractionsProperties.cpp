@@ -1,11 +1,11 @@
 #include "Spire/KeyBindings/InteractionsProperties.hpp"
+#include <filesystem>
+#include <fstream>
 #include <Beam/IO/BasicIStreamReader.hpp>
 #include <Beam/IO/BasicOStreamWriter.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <QMessageBox>
 #include "Nexus/Definitions/Country.hpp"
 #include "Spire/Spire/UserProfile.hpp"
@@ -15,10 +15,10 @@ using namespace Beam;
 using namespace Beam::IO;
 using namespace Beam::Serialization;
 using namespace boost;
-using namespace boost::filesystem;
 using namespace Nexus;
 using namespace Spire;
 using namespace std;
+using namespace std::filesystem;
 
 InteractionsProperties InteractionsProperties::GetDefaultProperties() {
   InteractionsProperties properties;
@@ -45,7 +45,7 @@ void InteractionsProperties::Load(Out<UserProfile> userProfile) {
     return;
   }
   try {
-    BasicIStreamReader<boost::filesystem::ifstream> reader(
+    BasicIStreamReader<ifstream> reader(
       Initialize(interactionsFilePath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
@@ -71,7 +71,7 @@ void InteractionsProperties::Save(const UserProfile& userProfile) {
     SharedBuffer buffer;
     sender.SetSink(Ref(buffer));
     sender.Shuttle(userProfile.GetInteractionProperties());
-    BasicOStreamWriter<boost::filesystem::ofstream> writer(
+    BasicOStreamWriter<ofstream> writer(
       Initialize(keyBindingsFilePath, ios::binary));
     writer.Write(buffer);
   } catch(std::exception&) {

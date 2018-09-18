@@ -1,11 +1,11 @@
 #ifndef SPIRE_LUASCRIPTNODE_HPP
 #define SPIRE_LUASCRIPTNODE_HPP
+#include <filesystem>
 #include <string>
 #include <vector>
 #include <Beam/Serialization/ShuttleFileSystemPath.hpp>
 #include <Beam/Serialization/ShuttleSharedPtr.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
-#include <boost/filesystem/path.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 
@@ -53,13 +53,13 @@ namespace Spire {
         \param parameters The parameters to pass to the script.
       */
       LuaScriptNode(std::string name, const NativeType& type,
-        const boost::filesystem::path& path, std::vector<Parameter> parameters);
+        const std::filesystem::path& path, std::vector<Parameter> parameters);
 
       //! Returns the name.
       const std::string& GetName() const;
 
       //! Returns the path.
-      const boost::filesystem::path& GetPath() const;
+      const std::filesystem::path& GetPath() const;
 
       //! Returns the parameters.
       const std::vector<Parameter>& GetParameters() const;
@@ -72,7 +72,7 @@ namespace Spire {
     private:
       friend struct Beam::Serialization::DataShuttle;
       std::string m_name;
-      boost::filesystem::path m_path;
+      std::filesystem::path m_path;
       std::vector<Parameter> m_parameters;
 
       LuaScriptNode(Beam::Serialization::ReceiveBuilder);

@@ -9,7 +9,6 @@
 
 using namespace Beam;
 using namespace boost;
-using namespace boost::filesystem;
 using namespace Spire;
 using namespace std;
 

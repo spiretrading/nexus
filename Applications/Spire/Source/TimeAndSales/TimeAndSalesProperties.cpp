@@ -1,11 +1,11 @@
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
+#include <filesystem>
+#include <fstream>
 #include <Beam/IO/BasicIStreamReader.hpp>
 #include <Beam/IO/BasicOStreamWriter.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <QMessageBox>
 #include "Spire/Spire/UserProfile.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
@@ -15,9 +15,9 @@ using namespace Beam;
 using namespace Beam::IO;
 using namespace Beam::Serialization;
 using namespace boost;
-using namespace boost::filesystem;
 using namespace Spire;
 using namespace std;
+using namespace std::filesystem;
 
 TimeAndSalesProperties TimeAndSalesProperties::GetDefault() {
   TimeAndSalesProperties properties;
@@ -67,7 +67,7 @@ void TimeAndSalesProperties::Load(Out<UserProfile> userProfile) {
   }
   TimeAndSalesProperties properties;
   try {
-    BasicIStreamReader<boost::filesystem::ifstream> reader(
+    BasicIStreamReader<ifstream> reader(
       Initialize(timeAndSalesFilePath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
@@ -94,7 +94,7 @@ void TimeAndSalesProperties::Save(const UserProfile& userProfile) {
     SharedBuffer buffer;
     sender.SetSink(Ref(buffer));
     sender.Shuttle(userProfile.GetDefaultTimeAndSalesProperties());
-    BasicOStreamWriter<boost::filesystem::ofstream> writer(
+    BasicOStreamWriter<ofstream> writer(
       Initialize(timeAndSalesFilePath, ios::binary));
     writer.Write(buffer);
   } catch(std::exception&) {

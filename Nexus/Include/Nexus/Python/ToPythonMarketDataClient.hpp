@@ -13,7 +13,7 @@ namespace MarketDataService {
       \tparam ClientType The type of MarketDataClient to wrap.
    */
   template<typename ClientType>
-  class ToPythonMarketDataClient : public VirtualMarketDataClient {
+  class ToPythonMarketDataClient final : public VirtualMarketDataClient {
     public:
 
       //! The type of MarketDataClient to wrap.
@@ -25,60 +25,56 @@ namespace MarketDataService {
       */
       ToPythonMarketDataClient(std::unique_ptr<Client> client);
 
-      virtual ~ToPythonMarketDataClient() override final;
+      virtual ~ToPythonMarketDataClient() override;
 
       virtual void QueryOrderImbalances(const MarketWideDataQuery& query,
         const std::shared_ptr<
-        Beam::QueueWriter<SequencedOrderImbalance>>& queue) override final;
+        Beam::QueueWriter<SequencedOrderImbalance>>& queue) override;
 
       virtual void QueryOrderImbalances(const MarketWideDataQuery& query,
         const std::shared_ptr<Beam::QueueWriter<OrderImbalance>>& queue)
-        override final;
+        override;
 
       virtual void QueryBboQuotes(const SecurityMarketDataQuery& query,
         const std::shared_ptr<Beam::QueueWriter<SequencedBboQuote>>& queue)
-        override final;
+        override;
 
       virtual void QueryBboQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<BboQuote>>& queue)
-        override final;
+        const std::shared_ptr<Beam::QueueWriter<BboQuote>>& queue) override;
 
       virtual void QueryBookQuotes(const SecurityMarketDataQuery& query,
         const std::shared_ptr<
-        Beam::QueueWriter<SequencedBookQuote>>& queue) override final;
+        Beam::QueueWriter<SequencedBookQuote>>& queue) override;
 
       virtual void QueryBookQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<BookQuote>>& queue)
-        override final;
+        const std::shared_ptr<Beam::QueueWriter<BookQuote>>& queue) override;
 
       virtual void QueryMarketQuotes(const SecurityMarketDataQuery& query,
         const std::shared_ptr<
-        Beam::QueueWriter<SequencedMarketQuote>>& queue) override final;
+        Beam::QueueWriter<SequencedMarketQuote>>& queue) override;
 
       virtual void QueryMarketQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<MarketQuote>>& queue)
-        override final;
+        const std::shared_ptr<Beam::QueueWriter<MarketQuote>>& queue) override;
 
       virtual void QueryTimeAndSales(const SecurityMarketDataQuery& query,
         const std::shared_ptr<
-        Beam::QueueWriter<SequencedTimeAndSale>>& queue) override final;
+        Beam::QueueWriter<SequencedTimeAndSale>>& queue) override;
 
       virtual void QueryTimeAndSales(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<TimeAndSale>>& queue)
-        override final;
+        const std::shared_ptr<Beam::QueueWriter<TimeAndSale>>& queue) override;
 
       virtual SecuritySnapshot LoadSecuritySnapshot(
-        const Security& security) override final;
+        const Security& security) override;
 
       virtual SecurityTechnicals LoadSecurityTechnicals(
-        const Security& security) override final;
+        const Security& security) override;
 
       virtual std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
-        const std::string& prefix) override final;
+        const std::string& prefix) override;
 
-      virtual void Open() override final;
+      virtual void Open() override;
 
-      virtual void Close() override final;
+      virtual void Close() override;
 
     private:
       std::unique_ptr<Client> m_client;

@@ -1,4 +1,5 @@
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
+#include <QHeaderView>
 #include <QScrollBar>
 #include <QTableView>
 #include "Nexus/Definitions/SecuritySet.hpp"

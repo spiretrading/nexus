@@ -1,12 +1,12 @@
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
+#include <filesystem>
+#include <fstream>
 #include <Beam/IO/BasicIStreamReader.hpp>
 #include <Beam/IO/BasicOStreamWriter.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/Serialization/ShuttleOptional.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <QMessageBox>
 #include "Spire/PortfolioViewer/PortfolioViewerWindowSettings.hpp"
 #include "Spire/Spire/UserProfile.hpp"
@@ -17,10 +17,10 @@ using namespace Beam::IO;
 using namespace Beam::Serialization;
 using namespace Beam::ServiceLocator;
 using namespace boost;
-using namespace boost::filesystem;
 using namespace Nexus;
 using namespace Spire;
 using namespace std;
+using namespace std::filesystem;
 
 namespace {
   struct PortfolioViewerFileSettings {
@@ -55,7 +55,7 @@ void PortfolioViewerProperties::Load(Out<UserProfile> userProfile) {
   }
   PortfolioViewerFileSettings settings;
   try {
-    BasicIStreamReader<boost::filesystem::ifstream> reader(
+    BasicIStreamReader<ifstream> reader(
       Initialize(portfolioViewerFilePath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
@@ -92,7 +92,7 @@ void PortfolioViewerProperties::Save(const UserProfile& userProfile) {
     settings.m_windowSettings =
       userProfile.GetInitialPortfolioViewerWindowSettings();
     sender.Shuttle(settings);
-    BasicOStreamWriter<boost::filesystem::ofstream> writer(
+    BasicOStreamWriter<ofstream> writer(
       Initialize(portfolioViewerFilePath, ios::binary));
     writer.Write(buffer);
   } catch(std::exception&) {
