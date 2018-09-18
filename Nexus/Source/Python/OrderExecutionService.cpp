@@ -161,9 +161,6 @@ void Nexus::Python::ExportApplicationOrderExecutionClient() {
 }
 
 void Nexus::Python::ExportExecutionReport() {
-  ExportPublisher<ExecutionReport>("ExecutionReportPublisher");
-  ExportSnapshotPublisher<ExecutionReport, vector<ExecutionReport>>(
-    "ExecutionReportSnapshotPublisher");
   class_<ExecutionReport>("ExecutionReport", init<>())
     .def("__copy__", &MakeCopy<ExecutionReport>)
     .def("__deepcopy__", &MakeDeepCopy<ExecutionReport>)
@@ -195,6 +192,8 @@ void Nexus::Python::ExportExecutionReport() {
   ExportSequencedValue<AccountExecutionReport>();
   ExportQueueSuite<ExecutionReport>("ExecutionReport");
   ExportQueueSuite<SequencedExecutionReport>("SequencedExecutionReport");
+  ExportSnapshotPublisher<ExecutionReport, vector<ExecutionReport>>(
+    "ExecutionReportSnapshotPublisher");
   ExportVector<vector<ExecutionReport>>("VectorExecutionReport");
 }
 
@@ -219,15 +218,14 @@ void Nexus::Python::ExportMockOrderExecutionDriver() {
 }
 
 void Nexus::Python::ExportOrder() {
-  ExportPublisher<const Order*>("OrderPublisher");
-  ExportSnapshotPublisher<const Order*, vector<const Order*>>(
-    "OrderSnapshotPublisher");
   class_<Order, boost::noncopyable>("Order", no_init)
     .add_property("info", make_function(&Order::GetInfo,
       return_value_policy<copy_const_reference>()))
     .def("get_publisher", &Order::GetPublisher, return_internal_reference<>());
   ExportQueueSuite<const Order*>("Order");
   ExportQueueSuite<SequencedOrder>("SequencedOrder");
+  ExportSnapshotPublisher<const Order*, vector<const Order*>>(
+    "OrderSnapshotPublisher");
   ExportVector<vector<const Order*>>("VectorOrder");
 }
 
@@ -401,18 +399,18 @@ void Nexus::Python::ExportOrderRecord() {
 }
 
 void Nexus::Python::ExportPrimitiveOrder() {
-  ExportPublisher<const PrimitiveOrder*>("ConstPrimitiveOrderPublisher");
-  ExportPublisher<PrimitiveOrder*>("PrimitiveOrderPublisher");
-  ExportSnapshotPublisher<const PrimitiveOrder*,
-    vector<const PrimitiveOrder*>>("ConstPrimitiveOrderSnapshotPublisher");
-  ExportSnapshotPublisher<PrimitiveOrder*, vector<PrimitiveOrder*>>(
-    "PrimitiveOrderSnapshotPublisher");
   class_<PrimitiveOrder, bases<Order>, boost::noncopyable>("PrimitiveOrder",
     init<OrderInfo>())
     .def(init<OrderRecord>())
     .def("update", BlockingFunction(&PrimitiveOrder::Update));
   def("build_rejected_order", &BuildRejectedOrder);
   def("reject_cancel_request", &RejectCancelRequest);
+  ExportPublisher<const PrimitiveOrder*>("ConstPrimitiveOrderPublisher");
+  ExportPublisher<PrimitiveOrder*>("PrimitiveOrderPublisher");
+  ExportSnapshotPublisher<const PrimitiveOrder*,
+    vector<const PrimitiveOrder*>>("ConstPrimitiveOrderSnapshotPublisher");
+  ExportSnapshotPublisher<PrimitiveOrder*, vector<PrimitiveOrder*>>(
+    "PrimitiveOrderSnapshotPublisher");
 }
 
 void Nexus::Python::ExportStandardQueries() {
