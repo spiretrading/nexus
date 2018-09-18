@@ -273,11 +273,11 @@ namespace {
   }
 
   auto BuildSqliteHistoricalDataStore(std::string path) {
-    return MakeToPythonHistoricalDataStore(
+    return std::shared_ptr(MakeToPythonHistoricalDataStore(
       std::make_unique<SqlHistoricalDataStore<Viper::Sqlite3::Connection>>(
       [=] {
         return Viper::Sqlite3::Connection(path);
-      })).release();
+      })));
   }
 }
 
@@ -470,9 +470,13 @@ void Nexus::Python::ExportSecuritySnapshot() {
 }
 
 void Nexus::Python::ExportSqliteHistoricalDataStore() {
-  class_<ToPythonHistoricalDataStore<
-    SqlHistoricalDataStore<Viper::Sqlite3::Connection>>,
+  using PythonSqliteHistoricalDataStore = ToPythonHistoricalDataStore<
+    SqlHistoricalDataStore<Viper::Sqlite3::Connection>>;
+  class_<PythonSqliteHistoricalDataStore,
+    std::shared_ptr<PythonSqliteHistoricalDataStore>,
     bases<VirtualHistoricalDataStore>, boost::noncopyable>(
     "SqliteHistoricalDataStore", no_init)
     .def("__init__", make_constructor(&BuildSqliteHistoricalDataStore));
+  implicitly_convertible<std::shared_ptr<PythonSqliteHistoricalDataStore>,
+    std::shared_ptr<VirtualHistoricalDataStore>>();
 }
