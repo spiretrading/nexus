@@ -1,5 +1,5 @@
-#ifndef NEXUS_POSITIONORDERBOOK_HPP
-#define NEXUS_POSITIONORDERBOOK_HPP
+#ifndef NEXUS_POSITION_ORDER_BOOK_HPP
+#define NEXUS_POSITION_ORDER_BOOK_HPP
 #include <functional>
 #include <unordered_map>
 #include <vector>
@@ -12,19 +12,15 @@
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
-namespace Nexus {
-namespace Accounting {
+namespace Nexus::Accounting {
 
-  /*! \class PositionOrderBook
-      \brief Maintains an Order book for the purpose of keeping track of
-             positions and opening/closing orders.
+  /** Maintains an Order book for the purpose of keeping track of positions and
+      opening/closing orders.
    */
   class PositionOrderBook {
     public:
 
-      /*! \class PositionEntry
-          \brief Stores a single position.
-       */
+      /** Stores a single position. */
       struct PositionEntry {
 
         //! The position's Security.
@@ -311,7 +307,6 @@ namespace Accounting {
       orders.erase(entryIterator);
     }
   }
-}
 }
 
 #endif
