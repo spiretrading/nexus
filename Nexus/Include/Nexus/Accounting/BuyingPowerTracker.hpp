@@ -1,5 +1,5 @@
-#ifndef NEXUS_BUYINGPOWERTRACKER_HPP
-#define NEXUS_BUYINGPOWERTRACKER_HPP
+#ifndef NEXUS_BUYING_POWER_TRACKER_HPP
+#define NEXUS_BUYING_POWER_TRACKER_HPP
 #include <unordered_map>
 #include <Beam/Utilities/Algorithm.hpp>
 #include "Nexus/Accounting/Accounting.hpp"
@@ -10,17 +10,11 @@
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
-namespace Nexus {
-namespace Accounting {
+namespace Nexus::Accounting {
 
-  /*! \class BuyingPowerTracker
-      \brief Tracks the amount of buying power used up by a series of Orders.
-   */
+  /** Tracks the amount of buying power used up by a series of Orders. */
   class BuyingPowerTracker {
     public:
-
-      //! Constructs an empty BuyingPowerTracker.
-      BuyingPowerTracker();
 
       //! Returns <code>true</code> iff an Order has been accounted for.
       /*!
@@ -96,8 +90,6 @@ namespace Accounting {
 
   inline BuyingPowerTracker::BuyingPowerEntry::BuyingPowerEntry()
       : m_quantity(0) {}
-
-  inline BuyingPowerTracker::BuyingPowerTracker() {}
 
   inline bool BuyingPowerTracker::HasOrder(
       OrderExecutionService::OrderId id) const {
@@ -215,7 +207,6 @@ namespace Accounting {
     }
     return std::max(askBuyingPower, bidBuyingPower);
   }
-}
 }
 
 #endif

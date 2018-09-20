@@ -8,13 +8,10 @@
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Side.hpp"
 
-namespace Nexus {
-namespace Accounting {
+namespace Nexus::Accounting {
 namespace Details {
 
-  /*! \struct Key
-      \brief Identifies an inventory managed in a specific Currency.
-    */
+  /** Identifies an inventory managed in a specific Currency. */
   template<typename IndexType>
   struct Key {
 
@@ -53,8 +50,7 @@ namespace Details {
   }
 }
 
-  /*! \struct Position
-      \brief Stores information about a single Inventory position.
+  /** Stores information about a single Inventory position.
       \tparam IndexType Used to identify the Position.
    */
   template<typename IndexType>
@@ -112,17 +108,15 @@ namespace Details {
 
   template<typename IndexType>
   Position<IndexType>::Position()
-      : m_quantity{0} {}
+      : m_quantity(0) {}
 
   template<typename IndexType>
   Position<IndexType>::Position(const Key& key)
-      : m_quantity{0},
-        m_key{key} {}
-}
+      : m_quantity(0),
+        m_key(key) {}
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<typename IndexType>
   struct Shuttle<Nexus::Accounting::Details::Key<IndexType>> {
     template<typename Shuttler>
@@ -145,7 +139,6 @@ namespace Serialization {
     }
   };
 }
-}
 
 namespace std {
   template <typename IndexType>
@@ -158,6 +151,6 @@ namespace std {
       return seed;
     }
   };
-};
+}
 
 #endif

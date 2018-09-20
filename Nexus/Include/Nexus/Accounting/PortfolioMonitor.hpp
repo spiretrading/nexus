@@ -1,5 +1,5 @@
-#ifndef NEXUS_PORTFOLIOMONITOR_HPP
-#define NEXUS_PORTFOLIOMONITOR_HPP
+#ifndef NEXUS_PORTFOLIO_MONITOR_HPP
+#define NEXUS_PORTFOLIO_MONITOR_HPP
 #include <unordered_set>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -18,12 +18,10 @@
 #include "Nexus/OrderExecutionService/ExecutionReportPublisher.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 
-namespace Nexus {
-namespace Accounting {
+namespace Nexus::Accounting {
 
-  /*! \class PortfolioMonitor
-      \brief Uses the BboQuote published by a MarketDataClient and the Orders
-             published by an OrderExecutionPublisher to update a Portfolio.
+  /** Uses the BboQuote published by a MarketDataClient and the Orders
+      published by an OrderExecutionPublisher to update a Portfolio.
       \tparam PortfolioType The type of Portfolio to update.
       \tparam MarketDataClientType The type of MarketDataClient to use.
    */
@@ -189,7 +187,6 @@ namespace Accounting {
         }
       });
   }
-}
 }
 
 #endif
