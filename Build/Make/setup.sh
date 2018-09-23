@@ -30,18 +30,22 @@ if [ -d "Beam" ]; then
   popd
 fi
 
-if [ ! -d "quickfix-v.1.14.4" ]; then
-  sudo -u $(logname) wget https://github.com/quickfix/quickfix/archive/v.1.14.4.zip --no-check-certificate -O v.1.14.4.zip
-  if [ -f v.1.14.4.zip ]; then
-    sudo -u $(logname) unzip v.1.14.4.zip
-    pushd quickfix-v.1.14.4
+if [ ! -d "quickfix-v.1.15.1" ]; then
+  sudo -u $(logname) wget https://github.com/quickfix/quickfix/archive/49b3508e48f0bbafbab13b68be72250bdd971ac2.zip -O quickfix-v.1.15.1.zip --no-check-certificate
+  if [ -f quickfix-v.1.15.1.zip ]; then
+    sudo -u $(logname) unzip quickfix-v.1.15.1.zip
+    sudo -u $(logname) mv quickfix-49b3508e48f0bbafbab13b68be72250bdd971ac2 quickfix-v.1.15.1
+    pushd ./quickfix-v.1.15.1
+    pushd ./src/C++
+    sudo -u $(logname) sed -i '105s/.*/template<typename T> using SmartPtr = std::shared_ptr<T>;/' Utility.h
+    sudo -u $(logname) sed -i '108s/.*/template<typename T> using SmartPtr = std::shared_ptr<T>;/' Utility.h
+    popd
     sudo -u $(logname) ./bootstrap
     sudo -u $(logname) ./configure
     sudo -u $(logname) make -j $cores
-    sudo -u $(logname) make check
     make install
     popd
-    rm v.1.14.4.zip
+    rm quickfix-v.1.15.1.zip
   fi
 fi
 
