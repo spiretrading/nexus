@@ -1,5 +1,5 @@
-#ifndef NEXUS_SHORTINGTRACKER_HPP
-#define NEXUS_SHORTINGTRACKER_HPP
+#ifndef NEXUS_SHORTING_TRACKER_HPP
+#define NEXUS_SHORTING_TRACKER_HPP
 #include <unordered_map>
 #include "Nexus/Accounting/Accounting.hpp"
 #include "Nexus/Definitions/Security.hpp"
@@ -7,17 +7,11 @@
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
-namespace Nexus {
-namespace Accounting {
+namespace Nexus::Accounting {
 
-  /*! \class ShortingTracker
-      \brief Tracks whether an Order should be submitted as a short sale.
-   */
+  /** Tracks whether an Order should be submitted as a short sale. */
   class ShortingTracker {
     public:
-
-      //! Constructs an empty ShortingTracker.
-      ShortingTracker();
 
       //! Tracks a submission and returns whether it should be marked as a
       //! short sale.
@@ -42,8 +36,6 @@ namespace Accounting {
       struct PositionEntry {
         Quantity m_askQuantityPending;
         Quantity m_position;
-
-        PositionEntry();
       };
       struct OrderEntry {
         Security m_security;
@@ -60,16 +52,10 @@ namespace Accounting {
       PositionEntry& GetPosition(const Security& security);
   };
 
-  inline ShortingTracker::PositionEntry::PositionEntry()
-      : m_askQuantityPending(0),
-        m_position(0) {}
-
   inline ShortingTracker::OrderEntry::OrderEntry()
       : m_side(Side::BID),
         m_quantity(0),
         m_remainingQuantity(0) {}
-
-  inline ShortingTracker::ShortingTracker() {}
 
   inline bool ShortingTracker::Submit(OrderExecutionService::OrderId id,
       const OrderExecutionService::OrderFields& orderFields) {
@@ -124,7 +110,6 @@ namespace Accounting {
     }
     return positionIterator->second;
   }
-}
 }
 
 #endif

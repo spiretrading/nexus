@@ -3,7 +3,7 @@
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include <Beam/MySql/PosixTimeToMySqlDateTime.hpp>
+#include <Beam/Sql/PosixTimeToSqlDateTime.hpp>
 #include <Beam/Network/IpAddress.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/KeyValueCache.hpp>
@@ -319,7 +319,7 @@ namespace AdministrationService {
         auto account = Beam::ServiceLocator::DirectoryEntry::MakeAccount(
           row.account);
         RiskService::RiskState state{static_cast<RiskService::RiskState::Type>(
-          row.state), Beam::MySql::FromDateTime(row.expiry)};
+          row.state), Beam::FromDateTime(row.expiry)};
         return std::make_tuple(account, state);
       });
     return results;
@@ -339,7 +339,7 @@ namespace AdministrationService {
     }
     auto row = riskStates.front();
     RiskService::RiskState result{static_cast<RiskService::RiskState::Type>(
-      row.state), Beam::MySql::FromDateTime(row.expiry)};
+      row.state), Beam::FromDateTime(row.expiry)};
     return result;
   }
 
@@ -348,8 +348,7 @@ namespace AdministrationService {
       const RiskService::RiskState& riskState) {
     auto query = m_databaseConnection.query();
     Details::risk_states entryRow{account.m_id,
-      static_cast<int>(riskState.m_type),
-      Beam::MySql::ToDateTime(riskState.m_expiry)};
+      static_cast<int>(riskState.m_type), Beam::ToDateTime(riskState.m_expiry)};
     query.replace(entryRow);
     if(!query.execute()) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
@@ -373,7 +372,7 @@ namespace AdministrationService {
       static_cast<AccountModificationRequest::Type>(row.type),
       m_directoryEntries.Load(row.account),
       m_directoryEntries.Load(row.submission_account),
-      Beam::MySql::FromMySqlTimestamp(row.timestamp)};
+      Beam::FromSqlTimestamp(row.timestamp)};
     return result;
   }
 
@@ -444,7 +443,7 @@ namespace AdministrationService {
     Details::account_modification_requests row{request.GetId(),
       static_cast<int>(request.GetType()), request.GetAccount().m_id,
       request.GetSubmissionAccount().m_id,
-      Beam::MySql::ToMySqlTimestamp(request.GetTimestamp())};
+      Beam::ToSqlTimestamp(request.GetTimestamp())};
     query.insert(row);
     if(!query.execute()) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
@@ -496,7 +495,7 @@ namespace AdministrationService {
     Details::account_modification_requests row{request.GetId(),
       static_cast<int>(request.GetType()), request.GetAccount().m_id,
       request.GetSubmissionAccount().m_id,
-      Beam::MySql::ToMySqlTimestamp(request.GetTimestamp())};
+      Beam::ToSqlTimestamp(request.GetTimestamp())};
     query.insert(row);
     if(!query.execute()) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
@@ -521,8 +520,7 @@ namespace AdministrationService {
       AccountModificationRequest::Id id, const Message& message) {
     auto query = m_databaseConnection.query();
     Details::administration_messages row{message.GetId(),
-      message.GetAccount().m_id,
-      Beam::MySql::ToMySqlTimestamp(message.GetTimestamp())};
+      message.GetAccount().m_id, Beam::ToSqlTimestamp(message.GetTimestamp())};
     query.insert(row);
     if(!query.execute()) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
@@ -563,7 +561,7 @@ namespace AdministrationService {
     AccountModificationRequest::Update result{
       static_cast<AccountModificationRequest::Status>(row.status),
       m_directoryEntries.Load(row.account), row.sequence_number,
-      Beam::MySql::FromMySqlTimestamp(row.timestamp)};
+      Beam::FromSqlTimestamp(row.timestamp)};
     return result;
   }
 
@@ -573,8 +571,7 @@ namespace AdministrationService {
     auto query = m_databaseConnection.query();
     Details::account_modification_request_status row{id,
       static_cast<int>(status.m_status), status.m_account.m_id,
-      status.m_sequenceNumber,
-      Beam::MySql::ToMySqlTimestamp(status.m_timestamp)};
+      status.m_sequenceNumber, Beam::ToSqlTimestamp(status.m_timestamp)};
     query.insert(row);
     if(!query.execute()) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException{query.error()});
@@ -619,7 +616,7 @@ namespace AdministrationService {
     }
     auto& messageRow = messageRows.front();
     Message message{id, m_directoryEntries.Load(messageRow.account),
-      Beam::MySql::FromMySqlTimestamp(messageRow.timestamp), std::move(bodies)};
+      Beam::FromSqlTimestamp(messageRow.timestamp), std::move(bodies)};
     return message;
   }
 

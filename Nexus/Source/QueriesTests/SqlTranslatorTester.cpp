@@ -20,5 +20,8 @@ void SqlTranslatorTester::TestQueryOrderFields() {
   auto equalExpression = Beam::Queries::MakeEqualsExpression(
     marketCodeExpression, marketAccessExpression);
   SqlTranslator translator("submissions", equalExpression);
-  auto query = translator.BuildQuery();
+  auto translation = translator.Build();
+  std::string query;
+  translation.append_query(query);
+  CPPUNIT_ASSERT(query == "(\"XTSX\" = market)");
 }

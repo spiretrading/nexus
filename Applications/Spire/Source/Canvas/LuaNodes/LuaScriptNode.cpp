@@ -24,7 +24,7 @@ LuaScriptNode::LuaScriptNode()
 }
 
 LuaScriptNode::LuaScriptNode(string name, const NativeType& type,
-    const boost::filesystem::path& path, vector<Parameter> parameters)
+    const std::filesystem::path& path, vector<Parameter> parameters)
     : m_name(std::move(name)),
       m_path(path),
       m_parameters(std::move(parameters)) {
@@ -39,7 +39,7 @@ const string& LuaScriptNode::GetName() const {
   return m_name;
 }
 
-const boost::filesystem::path& LuaScriptNode::GetPath() const {
+const std::filesystem::path& LuaScriptNode::GetPath() const {
   return m_path;
 }
 

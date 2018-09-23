@@ -5,6 +5,7 @@
 #include <QMessageBox>
 #include <QMimeData>
 #include <QMimeType>
+#include <QTabBar>
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
 #include "Spire/Canvas/Common/CustomNode.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"

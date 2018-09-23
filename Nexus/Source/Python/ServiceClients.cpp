@@ -147,6 +147,7 @@ void Nexus::Python::ExportServiceClients() {
 void Nexus::Python::ExportTestEnvironment() {
   class_<TestEnvironment, std::shared_ptr<TestEnvironment>, boost::noncopyable>(
       "TestEnvironment", init<>())
+    .def(init<std::shared_ptr<VirtualHistoricalDataStore>>())
     .def("set_time", BlockingFunction(&TestEnvironment::SetTime))
     .def("advance_time", BlockingFunction(&TestEnvironment::AdvanceTime))
     .def("publish", BlockingFunction(static_cast<void (TestEnvironment::*)(

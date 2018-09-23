@@ -1,4 +1,6 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorProperties.hpp"
+#include <filesystem>
+#include <fstream>
 #include <Beam/IO/BasicIStreamReader.hpp>
 #include <Beam/IO/BasicOStreamWriter.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
@@ -6,8 +8,6 @@
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/Serialization/ShuttleOptional.hpp>
 #include <Beam/TimeService/VirtualTimeClient.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <QMessageBox>
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindowSettings.hpp"
 #include "Spire/Spire/UserProfile.hpp"
@@ -19,11 +19,11 @@ using namespace Beam::Queries;
 using namespace Beam::Serialization;
 using namespace Beam::ServiceLocator;
 using namespace boost;
-using namespace boost::filesystem;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
 using namespace std;
+using namespace std::filesystem;
 
 namespace {
   struct OrderImbalanceIndicatorFileSettings {
@@ -55,7 +55,7 @@ void OrderImbalanceIndicatorProperties::Load(Out<UserProfile> userProfile) {
   }
   OrderImbalanceIndicatorFileSettings settings;
   try {
-    BasicIStreamReader<boost::filesystem::ifstream> reader(
+    BasicIStreamReader<ifstream> reader(
       Initialize(orderImbalanceIndicatorFilePath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
@@ -94,7 +94,7 @@ void OrderImbalanceIndicatorProperties::Save(const UserProfile& userProfile) {
     settings.m_windowSettings =
       userProfile.GetInitialOrderImbalanceIndicatorWindowSettings();
     sender.Shuttle(settings);
-    BasicOStreamWriter<boost::filesystem::ofstream> writer(
+    BasicOStreamWriter<ofstream> writer(
       Initialize(orderImbalanceIndicatorFilePath, ios::binary));
     writer.Write(buffer);
   } catch(const std::exception&) {

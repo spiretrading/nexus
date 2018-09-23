@@ -1,14 +1,12 @@
-#ifndef NEXUS_TRUEAVERAGEBOOKKEEPER_HPP
-#define NEXUS_TRUEAVERAGEBOOKKEEPER_HPP
+#ifndef NEXUS_TRUE_AVERAGE_BOOKKEEPER_HPP
+#define NEXUS_TRUE_AVERAGE_BOOKKEEPER_HPP
 #include <unordered_map>
 #include <Beam/Collections/View.hpp>
 #include "Nexus/Accounting/Bookkeeper.hpp"
 
-namespace Nexus {
-namespace Accounting {
+namespace Nexus::Accounting {
 
-  /*! \class TrueAverageBookkeeper
-      \brief Implements a Bookkeeper using true average bookkeeping.
+  /** Implements a Bookkeeper using true average bookkeeping.
       \tparam InventoryType The type of Inventory to manage.
    */
   template<typename InventoryType>
@@ -17,15 +15,6 @@ namespace Accounting {
       using Inventory = typename Bookkeeper<InventoryType>::Inventory;
       using Index = typename Bookkeeper<InventoryType>::Index;
       using Key = typename Bookkeeper<InventoryType>::Key;
-
-      //! Constructs a TrueAverageBookkeeper.
-      TrueAverageBookkeeper() = default;
-
-      //! Copies a TrueAverageBookkeeper.
-      /*!
-        \param bookkeeper The TrueAverageBookkeeper to copy.
-      */
-      TrueAverageBookkeeper(const TrueAverageBookkeeper& bookkeeper);
 
       void RecordTransaction(const Index& index, CurrencyId currency,
         Quantity quantity, Money costBasis, Money fees);
@@ -45,12 +34,6 @@ namespace Accounting {
 
       Inventory& InternalGetTotal(CurrencyId currency);
   };
-
-  template<typename InventoryType>
-  TrueAverageBookkeeper<InventoryType>::TrueAverageBookkeeper(
-      const TrueAverageBookkeeper& bookkeeper)
-      : m_inventories{bookkeeper.m_inventories},
-        m_totals{bookkeeper.m_totals} {}
 
   template<typename InventoryType>
   void TrueAverageBookkeeper<InventoryType>::RecordTransaction(
@@ -166,7 +149,6 @@ namespace Accounting {
     }
     return totalsIterator->second;
   }
-}
 }
 
 #endif

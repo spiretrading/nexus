@@ -45,11 +45,9 @@ void ChartingServletTester::TestLoadSecurityTimePriceSeries() {
   for(int i = 0; i < 5; ++i) {
     auto timestamp = startTime + minutes(i);
     auto price = (i + 1) * Money::ONE;
-    SecurityTimeAndSale timeAndSale{TimeAndSale{timestamp, price, i * 100,
-      TimeAndSale::Condition{TimeAndSale::Condition::Type::NONE, "?"}, "N"},
-      security};
-    m_environment->GetMarketDataEnvironment().GetDataStore().Store(
-      MakeSequencedValue(timeAndSale, Beam::Queries::Sequence(i + 1)));
+    auto timeAndSale = TimeAndSale(timestamp, price, i * 100,
+      TimeAndSale::Condition(TimeAndSale::Condition::Type::NONE, "?"), "N");
+    m_environment->GetMarketDataEnvironment().Publish(security, timeAndSale);
     expectedSeries.emplace_back(timestamp, timestamp + interval, price, price,
       price, price);
   }

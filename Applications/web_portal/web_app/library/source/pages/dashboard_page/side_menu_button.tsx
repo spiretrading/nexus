@@ -51,9 +51,6 @@ export class SideMenuButton extends React.Component<Properties> {
         backgroundColor: '#684BC7',
         cursor: 'pointer',
         color: 'blue'
-      },
-      ':active': {
-        font: '400 14px Roboto'
       }
     },
     buttonContents: {

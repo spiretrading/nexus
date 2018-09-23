@@ -1,11 +1,10 @@
 #include "Spire/UI/FilePathInputWidget.hpp"
 #include "ui_FilePathInputWidget.h"
 
-using namespace boost;
-using namespace boost::filesystem;
 using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
+using namespace std::filesystem;
 
 FilePathInputWidget::FilePathInputWidget(QWidget* parent, Qt::WindowFlags flags)
     : QWidget(parent, flags),

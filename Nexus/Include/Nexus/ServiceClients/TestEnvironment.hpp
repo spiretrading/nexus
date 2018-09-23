@@ -1,14 +1,11 @@
-#ifndef NEXUS_TESTENVIRONMENT_HPP
-#define NEXUS_TESTENVIRONMENT_HPP
+#ifndef NEXUS_TEST_ENVIRONMENT_HPP
+#define NEXUS_TEST_ENVIRONMENT_HPP
 #include <Beam/IO/OpenState.hpp>
 #include "Beam/Queues/AliasQueue.hpp"
 #include <Beam/Queues/ConverterWriterQueue.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
-#include <Beam/Threading/Mutex.hpp>
-#include <Beam/TimeServiceTests/TestTimeClient.hpp>
 #include <Beam/TimeServiceTests/TimeServiceTestEnvironment.hpp>
 #include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
-#include <Beam/Routines/RoutineHandler.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -32,6 +29,14 @@ namespace Nexus {
 
       //! Constructs a TestEnvironment.
       TestEnvironment() = default;
+
+      //! Constructs a TestEnvironment using historical market data.
+      /*!
+        \param historicalDataStore The data store to use for historical market
+               data.
+      */
+      TestEnvironment(std::shared_ptr<
+        MarketDataService::VirtualHistoricalDataStore> historicalDataStore);
 
       ~TestEnvironment();
 
@@ -202,12 +207,18 @@ namespace Nexus {
       boost::optional<
         OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment>
         m_orderExecutionEnvironment;
+      std::shared_ptr<MarketDataService::VirtualHistoricalDataStore>
+        m_historicalDataStore;
       Beam::IO::OpenState m_openState;
 
       template<typename Index, typename Value>
       void PublishMarketData(const Index& index, const Value& value);
       void Shutdown();
   };
+
+  inline TestEnvironment::TestEnvironment(std::shared_ptr<
+      MarketDataService::VirtualHistoricalDataStore> historicalDataStore)
+      : m_historicalDataStore(std::move(historicalDataStore)) {}
 
   inline TestEnvironment::~TestEnvironment() {
     Close();
@@ -467,9 +478,15 @@ namespace Nexus {
       auto marketDataAdministrationClient =
         m_administrationEnvironment->BuildClient(
         Beam::Ref(*marketDataServiceLocatorClient));
-      m_marketDataEnvironment.emplace(
-        std::move(marketDataServiceLocatorClient),
-        std::move(marketDataAdministrationClient));
+      if(m_historicalDataStore == nullptr) {
+        m_marketDataEnvironment.emplace(
+          std::move(marketDataServiceLocatorClient),
+          std::move(marketDataAdministrationClient));
+      } else {
+        m_marketDataEnvironment.emplace(
+          std::move(marketDataServiceLocatorClient),
+          std::move(marketDataAdministrationClient), m_historicalDataStore);
+      }
       m_marketDataEnvironment->Open();
       auto orderExecutionServiceLocatorClient =
         m_serviceLocatorEnvironment.BuildClient();

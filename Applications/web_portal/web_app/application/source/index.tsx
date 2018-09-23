@@ -40,7 +40,7 @@ class Application extends React.Component<Properties, State> {
     };
     this.serviceClients = new Nexus.WebServiceClients();
     this.onLogin = this.onLogin.bind(this);
-    this.onLogout = this.onLogout.bind(this);
+    this.onSignOut = this.onSignOut.bind(this);
   }
 
   public render(): JSX.Element {
@@ -64,7 +64,7 @@ class Application extends React.Component<Properties, State> {
           <AuthenticatedRoute path='/' account={this.state.account}
             render={() => {
               return <WebPortal.DashboardPage model={this.dashboardModel}
-                onLogout={this.onLogout}/>;
+                onSignOut={this.onSignOut}/>;
             }}/>
         </Router.Switch>
       </Router.BrowserRouter>);
@@ -106,7 +106,7 @@ class Application extends React.Component<Properties, State> {
     });
   }
 
-  private async onLogout() {
+  private async onSignOut() {
     await this.serviceClients.close();
     this.setState({
       account: Beam.DirectoryEntry.INVALID

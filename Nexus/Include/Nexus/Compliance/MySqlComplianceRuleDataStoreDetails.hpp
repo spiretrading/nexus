@@ -1,6 +1,6 @@
 #ifndef NEXUS_MYSQLCOMPLIANCERULEDATASTOREDETAILS_HPP
 #define NEXUS_MYSQLCOMPLIANCERULEDATASTOREDETAILS_HPP
-#include <Beam/MySql/Utilities.hpp>
+#include <Beam/Sql/Utilities.hpp>
 #include <mysql++/mysql++.h>
 #include <mysql++/ssqls.h>
 #include "Nexus/Compliance/Compliance.hpp"
@@ -26,8 +26,7 @@ namespace Details {
 
   inline bool LoadComplianceRuleEntriesTable(
       mysqlpp::Connection& databaseConnection, const std::string& schema) {
-    if(Beam::MySql::TestTable(schema, "compliance_rule_entries",
-        databaseConnection)) {
+    if(Beam::TestTable(schema, "compliance_rule_entries", databaseConnection)) {
       return true;
     }
     auto query = databaseConnection.query();
@@ -43,7 +42,7 @@ namespace Details {
 
   inline bool LoadComplianceRuleViolationsTable(
       mysqlpp::Connection& databaseConnection, const std::string& schema) {
-    if(Beam::MySql::TestTable(schema, "compliance_rule_violation_records",
+    if(Beam::TestTable(schema, "compliance_rule_violation_records",
         databaseConnection)) {
       return true;
     }

@@ -1,11 +1,11 @@
 #include "Spire/Dashboard/SavedDashboards.hpp"
+#include <filesystem>
+#include <fstream>
 #include <Beam/IO/BasicIStreamReader.hpp>
 #include <Beam/IO/BasicOStreamWriter.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <QMessageBox>
 #include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/UISerialization.hpp"
@@ -15,11 +15,11 @@ using namespace Beam::IO;
 using namespace Beam::Serialization;
 using namespace Beam::Threading;
 using namespace boost;
-using namespace boost::filesystem;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
+using namespace std::filesystem;
 
 SavedDashboards::Entry::Entry(string name, DashboardModelSchema schema,
     std::shared_ptr<WindowSettings> settings)
@@ -35,8 +35,7 @@ void SavedDashboards::Load(Out<UserProfile> userProfile) {
     return;
   }
   try {
-    BasicIStreamReader<boost::filesystem::ifstream> reader(
-      Initialize(filePath, ios::binary));
+    BasicIStreamReader<ifstream> reader(Initialize(filePath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
@@ -61,8 +60,7 @@ void SavedDashboards::Save(const UserProfile& userProfile) {
     SharedBuffer buffer;
     sender.SetSink(Ref(buffer));
     sender.Shuttle(userProfile.GetSavedDashboards());
-    BasicOStreamWriter<boost::filesystem::ofstream> writer(
-      Initialize(filePath, ios::binary));
+    BasicOStreamWriter<ofstream> writer(Initialize(filePath, ios::binary));
     writer.Write(buffer);
   } catch(std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),

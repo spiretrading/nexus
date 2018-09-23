@@ -1,10 +1,10 @@
 SETLOCAL
 
-SET expected_commit="d181538e0a6b4635d8d8a6a111838f03550b7193"
+SET beam_commit="1ff5429851d64d57f22326845765fa659432d515"
 if exist Beam goto end_beam_setup
   git clone https://www.github.com/eidolonsystems/beam.git Beam
   pushd Beam
-  git checkout %expected_commit%
+  git checkout %beam_commit%
   popd
   call Beam\Build\Windows\setup.bat
   pushd Beam\Build\Windows
@@ -16,10 +16,10 @@ if exist Beam goto end_beam_setup
 if not exist Beam goto end_beam_pull
   pushd Beam
   for /f "usebackq tokens=*" %%a in (`git log -1 ^| head -1 ^| awk "{ print $2 }"`) do SET commit=%%a
-  if not "%commit%" == %expected_commit% (
+  if not "%commit%" == %beam_commit% (
     git checkout master
     git pull
-    git checkout %expected_commit%
+    git checkout %beam_commit%
     popd
     call Beam\Build\Make\setup.bat
     pushd Beam\Build\Windows
@@ -49,13 +49,13 @@ if exist quickfix goto end_quick_fix_setup
     rm quickfix-1.14.3.zip
 :end_quick_fix_setup
 
-if exist qt-5.10.0 goto end_qt_setup
-  git clone git://code.qt.io/qt/qt5.git qt-5.10.0
-  if not exist qt-5.10.0 goto end_qt_setup
-    pushd qt-5.10.0
-    git checkout v5.10.0
+if exist qt-5.11.2 goto end_qt_setup
+  git clone git://code.qt.io/qt/qt5.git qt-5.11.2
+  if not exist qt-5.11.2 goto end_qt_setup
+    pushd qt-5.11.2
+    git checkout 5.11.2
     perl init-repository --module-subset=default
-    call configure -opensource -static -mp -make libs -make tools ^
+    call configure -prefix %cd% -opensource -static -mp -make libs -make tools ^
       -nomake examples -nomake tests -opengl desktop -no-icu -qt-freetype ^
       -qt-harfbuzz -qt-libpng -qt-pcre -qt-zlib -confirm-license
     set CL=/MP

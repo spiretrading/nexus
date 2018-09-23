@@ -1,6 +1,6 @@
 #ifndef NEXUS_MYSQL_ADMINISTRATION_DATA_STORE_DETAILS_HPP
 #define NEXUS_MYSQL_ADMINISTRATION_DATA_STORE_DETAILS_HPP
-#include <Beam/MySql/Utilities.hpp>
+#include <Beam/Sql/Utilities.hpp>
 #include <mysql++/mysql++.h>
 #include <mysql++/ssqls.h>
 #include "Nexus/AdministrationService/AdministrationService.hpp"
@@ -80,8 +80,7 @@ namespace Details {
 
   inline bool LoadAccountIdentitiesTable(
       mysqlpp::Connection& databaseConnection, const std::string& schema) {
-    if(Beam::MySql::TestTable(schema, "account_identities",
-        databaseConnection)) {
+    if(Beam::TestTable(schema, "account_identities", databaseConnection)) {
       return true;
     }
     auto query = databaseConnection.query();
@@ -103,7 +102,7 @@ namespace Details {
 
   inline bool LoadAccountModificationRequestsTable(
       mysqlpp::Connection& databaseConnection, const std::string& schema) {
-    if(Beam::MySql::TestTable(schema, "account_modification_requests",
+    if(Beam::TestTable(schema, "account_modification_requests",
         databaseConnection)) {
       return true;
     }
@@ -120,7 +119,7 @@ namespace Details {
 
   inline bool LoadAccountModificationRequestMessagesTable(
       mysqlpp::Connection& databaseConnection, const std::string& schema) {
-    if(Beam::MySql::TestTable(schema, "account_modification_request_messages",
+    if(Beam::TestTable(schema, "account_modification_request_messages",
         databaseConnection)) {
       return true;
     }
@@ -134,7 +133,7 @@ namespace Details {
 
   inline bool LoadAccountModificationRequestStatusTable(
       mysqlpp::Connection& databaseConnection, const std::string& schema) {
-    if(Beam::MySql::TestTable(schema, "account_modification_request_status",
+    if(Beam::TestTable(schema, "account_modification_request_status",
         databaseConnection)) {
       return true;
     }
@@ -151,8 +150,7 @@ namespace Details {
 
   inline bool LoadAdministrationMessagesTable(
       mysqlpp::Connection& databaseConnection, const std::string& schema) {
-    if(Beam::MySql::TestTable(schema, "administration_messages",
-        databaseConnection)) {
+    if(Beam::TestTable(schema, "administration_messages", databaseConnection)) {
       return true;
     }
     auto query = databaseConnection.query();
@@ -165,7 +163,7 @@ namespace Details {
 
   inline bool LoadAdministrationMessageBodiesTable(
       mysqlpp::Connection& databaseConnection, const std::string& schema) {
-    if(Beam::MySql::TestTable(schema, "administration_message_bodies",
+    if(Beam::TestTable(schema, "administration_message_bodies",
         databaseConnection)) {
       return true;
     }
@@ -180,7 +178,7 @@ namespace Details {
 
   inline bool LoadEntitlementModificationsTable(
       mysqlpp::Connection& databaseConnection, const std::string& schema) {
-    if(Beam::MySql::TestTable(schema, "entitlement_modifications",
+    if(Beam::TestTable(schema, "entitlement_modifications",
         databaseConnection)) {
       return true;
     }
@@ -194,8 +192,7 @@ namespace Details {
 
   inline bool LoadRiskModificationsTable(
       mysqlpp::Connection& databaseConnection, const std::string& schema) {
-    if(Beam::MySql::TestTable(schema, "risk_modifications",
-        databaseConnection)) {
+    if(Beam::TestTable(schema, "risk_modifications", databaseConnection)) {
       return true;
     }
     auto query = databaseConnection.query();
@@ -213,7 +210,7 @@ namespace Details {
 
   inline bool LoadRiskParametersTable(mysqlpp::Connection& databaseConnection,
       const std::string& schema) {
-    if(Beam::MySql::TestTable(schema, "risk_parameters", databaseConnection)) {
+    if(Beam::TestTable(schema, "risk_parameters", databaseConnection)) {
       return true;
     }
     auto query = databaseConnection.query();
@@ -230,7 +227,7 @@ namespace Details {
 
   inline bool LoadRiskStatesTable(mysqlpp::Connection& databaseConnection,
       const std::string& schema) {
-    if(Beam::MySql::TestTable(schema, "risk_states", databaseConnection)) {
+    if(Beam::TestTable(schema, "risk_states", databaseConnection)) {
       return true;
     }
     auto query = databaseConnection.query();

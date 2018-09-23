@@ -1,11 +1,11 @@
 #include "Spire/RiskTimer/RiskTimerProperties.hpp"
+#include <filesystem>
+#include <fstream>
 #include <Beam/IO/BasicIStreamReader.hpp>
 #include <Beam/IO/BasicOStreamWriter.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <QApplication>
 #include <QDesktopServices>
 #include <QDesktopWidget>
@@ -18,9 +18,9 @@ using namespace Beam::IO;
 using namespace Beam::Serialization;
 using namespace Beam::Threading;
 using namespace boost;
-using namespace boost::filesystem;
 using namespace Spire;
 using namespace std;
+using namespace std::filesystem;
 
 namespace {
   const int RISK_TIMER_DIALOG_WIDTH = 309;
@@ -48,8 +48,7 @@ void RiskTimerProperties::Load(Out<UserProfile> userProfile) {
   }
   RiskTimerProperties properties;
   try {
-    BasicIStreamReader<boost::filesystem::ifstream> reader(
-      Initialize(filePath, ios::binary));
+    BasicIStreamReader<ifstream> reader(Initialize(filePath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
@@ -75,8 +74,7 @@ void RiskTimerProperties::Save(const UserProfile& userProfile) {
     SharedBuffer buffer;
     sender.SetSink(Ref(buffer));
     sender.Shuttle(userProfile.GetRiskTimerProperties());
-    BasicOStreamWriter<boost::filesystem::ofstream> writer(
-      Initialize(filePath, ios::binary));
+    BasicOStreamWriter<ofstream> writer(Initialize(filePath, ios::binary));
     writer.Write(buffer);
   } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
