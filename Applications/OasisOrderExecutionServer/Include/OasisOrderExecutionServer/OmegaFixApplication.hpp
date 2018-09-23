@@ -55,17 +55,12 @@ namespace OasisOrderExecutionService {
 
       virtual void toAdmin(FIX::Message&, const FIX::SessionID&);
 
-      virtual void toApp(FIX::Message&, const FIX::SessionID&) throw(
-        FIX::DoNotSend);
+      virtual void toApp(FIX::Message&, const FIX::SessionID&);
 
-      virtual void fromAdmin(const FIX::Message&, const FIX::SessionID&) throw(
-        FIX::FieldNotFound, FIX::IncorrectDataFormat, FIX::IncorrectTagValue,
-        FIX::RejectLogon);
+      virtual void fromAdmin(const FIX::Message&, const FIX::SessionID&);
 
       virtual void fromApp(const FIX::Message& message,
-        const FIX::SessionID& sessionID) throw(FIX::FieldNotFound,
-        FIX::IncorrectDataFormat, FIX::IncorrectTagValue,
-        FIX::UnsupportedMessageType);
+        const FIX::SessionID& sessionID);
 
       virtual void onMessage(const FIX42::ExecutionReport& message,
         const FIX::SessionID& sessionId);
