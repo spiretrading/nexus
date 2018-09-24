@@ -157,14 +157,14 @@ SecurityTechnicalsModel::SecurityTechnicalsModel(
     m_userProfile->GetTimeZoneDatabase(),
     m_slotHandler.GetSlot<Nexus::Queries::QueryVariant>(std::bind(
     &SecurityTechnicalsModel::OnVolumeUpdate, this, std::placeholders::_1)));
+  QueryOpen(userProfile->GetServiceClients().GetMarketDataClient(),
+    security, userProfile->GetServiceClients().GetTimeClient().GetTime(),
+    userProfile->GetMarketDatabase(), userProfile->GetTimeZoneDatabase(), "",
+    m_slotHandler.GetSlot<TimeAndSale>(std::bind(
+    &SecurityTechnicalsModel::OnOpenUpdate, this, std::placeholders::_1)));
   Spawn(
     [=, userProfile = m_userProfile,
         loadTechnicalsFlag = m_loadTechnicalsFlag] {
-      QueryOpen(userProfile->GetServiceClients().GetMarketDataClient(),
-        security, userProfile->GetServiceClients().GetTimeClient().GetTime(),
-        userProfile->GetMarketDatabase(), userProfile->GetTimeZoneDatabase(),
-        "", m_slotHandler.GetSlot<TimeAndSale>(std::bind(
-        &SecurityTechnicalsModel::OnOpenUpdate, this, std::placeholders::_1)));
       auto close = LoadPreviousClose(
         userProfile->GetServiceClients().GetMarketDataClient(), security,
         userProfile->GetServiceClients().GetTimeClient().GetTime(),
