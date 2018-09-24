@@ -414,8 +414,8 @@ namespace Nexus::MarketDataService {
       QueryMarketDataClient(*client, snapshotQuery, queue);
       Beam::FlushQueue(queue, std::back_inserter(result.m_snapshot));
       subscriptions.Commit(query.GetIndex(), std::move(result),
-        [&] (auto& result) {
-          request.SetResult(result);
+        [&] (auto&& result) {
+          request.SetResult(std::forward<decltype(result)>(result));
         });
     } else {
       auto queue = std::make_shared<Beam::Queue<MarketDataType>>();
