@@ -3,6 +3,9 @@ file(GLOB source_files ./../../../Source/Python/*.cpp)
 
 include_directories($ENV{PYTHON_INCLUDE_PATH})
 
+if(MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+endif()
 add_library(Python SHARED ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(Python PROPERTIES OUTPUT_NAME nexus)

@@ -147,6 +147,7 @@ namespace Nexus::MarketDataService {
   struct MetaMarketDataRelayServlet {
     using Session = MarketDataRegistrySession;
     static constexpr auto SupportsParallelism = true;
+
     template<typename ContainerType>
     struct apply {
       using type = MarketDataRelayServlet<ContainerType, MarketDataClientType,
