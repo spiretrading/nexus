@@ -23,7 +23,7 @@ namespace Nexus {
     boost::posix_time::ptime m_timestamp;
 
     //! Constructs an uninitialized BboQuote.
-    BboQuote() = default;
+    BboQuote();
 
     //! Constructs a BboQuote.
     /*!
@@ -52,6 +52,11 @@ namespace Nexus {
   inline std::ostream& operator <<(std::ostream& out, const BboQuote& value) {
     return out << "(" << value.m_bid << " " << value.m_ask << " " <<
       value.m_timestamp << ")";
+  }
+
+  inline BboQuote::BboQuote() {
+    m_bid.m_side = Side::BID;
+    m_ask.m_side = Side::ASK;
   }
 
   inline BboQuote::BboQuote(const Quote& bid, const Quote& ask,

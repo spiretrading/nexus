@@ -18,7 +18,6 @@ namespace OrderExecutionService {
   class LocalOrderExecutionDataStore;
   template<typename OrderExecutionDriverType, typename AdministrationClientType>
     class ManualOrderEntryDriver;
-  class MySqlOrderExecutionDataStore;
   class Order;
   typedef std::uint64_t OrderId;
   template<typename ServiceProtocolClientBuilderType>
@@ -42,6 +41,7 @@ namespace OrderExecutionService {
   class OrderUnrecoverableException;
   class PrimitiveOrder;
   template<typename AdministrationClientType> class RiskStateCheck;
+  template<typename C> class SqlOrderExecutionDataStore;
   class VirtualOrderExecutionClient;
   class VirtualOrderExecutionDataStore;
   class VirtualOrderExecutionDriver;

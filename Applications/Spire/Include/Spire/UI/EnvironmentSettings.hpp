@@ -1,9 +1,9 @@
 #ifndef SPIRE_ENVIRONMENTSETTINGS_HPP
 #define SPIRE_ENVIRONMENTSETTINGS_HPP
+#include <filesystem>
 #include <Beam/Collections/Enum.hpp>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleOptional.hpp>
-#include <boost/filesystem/path.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Definitions/RegionMap.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
@@ -91,7 +91,7 @@ namespace Details {
     \return <code>true</code> iff the settings were exported successfully.
   */
   bool Export(const EnvironmentSettings& environmentSettings,
-    const boost::filesystem::path& environmentPath);
+    const std::filesystem::path& environmentPath);
 
   //! Imports a user's EnvironmentSettings.
   /*!
@@ -101,7 +101,7 @@ namespace Details {
     \param userProfile The user's profile.
     \return <code>true</code> iff the settings were imported successfully.
   */
-  bool Import(const boost::filesystem::path& environmentPath,
+  bool Import(const std::filesystem::path& environmentPath,
     EnvironmentSettings::TypeSet settings, bool apply,
     Beam::Out<UserProfile> userProfile);
 }

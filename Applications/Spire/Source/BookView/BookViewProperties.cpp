@@ -1,11 +1,11 @@
 #include "Spire/BookView/BookViewProperties.hpp"
+#include <filesystem>
+#include <fstream>
 #include <Beam/IO/BasicIStreamReader.hpp>
 #include <Beam/IO/BasicOStreamWriter.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <QMessageBox>
 #include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/UISerialization.hpp"
@@ -15,11 +15,11 @@ using namespace Beam::IO;
 using namespace Beam::Serialization;
 using namespace Beam::Threading;
 using namespace boost;
-using namespace boost::filesystem;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
+using namespace std::filesystem;
 
 BookViewProperties BookViewProperties::GetDefault() {
   BookViewProperties properties;
@@ -45,8 +45,7 @@ void BookViewProperties::Load(Out<UserProfile> userProfile) {
   }
   BookViewProperties properties;
   try {
-    BasicIStreamReader<boost::filesystem::ifstream> reader(
-      Initialize(bookFilePath, ios::binary));
+    BasicIStreamReader<ifstream> reader(Initialize(bookFilePath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
@@ -71,8 +70,7 @@ void BookViewProperties::Save(const UserProfile& userProfile) {
     SharedBuffer buffer;
     sender.SetSink(Ref(buffer));
     sender.Shuttle(userProfile.GetDefaultBookViewProperties());
-    BasicOStreamWriter<boost::filesystem::ofstream> writer(
-      Initialize(bookFilePath, ios::binary));
+    BasicOStreamWriter<ofstream> writer(Initialize(bookFilePath, ios::binary));
     writer.Write(buffer);
   } catch(std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),

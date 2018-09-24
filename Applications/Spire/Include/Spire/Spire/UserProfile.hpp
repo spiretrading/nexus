@@ -1,11 +1,11 @@
 #ifndef SPIRE_USERPROFILE_HPP
 #define SPIRE_USERPROFILE_HPP
+#include <filesystem>
 #include <string>
 #include <vector>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Threading/Threading.hpp>
 #include <boost/date_time/local_time/tz_database.hpp>
-#include <boost/filesystem/path.hpp>
 #include "Nexus/Definitions/Country.hpp"
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
@@ -108,7 +108,7 @@ namespace Spire {
       void CreateProfilePath() const;
 
       //! Returns the path to this user's profile directory.
-      const boost::filesystem::path& GetProfilePath() const;
+      const std::filesystem::path& GetProfilePath() const;
 
       //! Returns the list of recently closed windows.
       const std::vector<std::unique_ptr<UI::WindowSettings>>&
@@ -256,7 +256,7 @@ namespace Spire {
         m_entitlementDatabase;
       Beam::Threading::TimerThreadPool* m_timerThreadPool;
       ServiceClients* m_serviceClients;
-      boost::filesystem::path m_profilePath;
+      std::filesystem::path m_profilePath;
       std::vector<std::unique_ptr<UI::WindowSettings>> m_recentlyClosedWindows;
       BookViewProperties m_defaultBookViewProperties;
       SavedDashboards m_savedDashboards;

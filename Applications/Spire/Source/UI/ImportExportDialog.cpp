@@ -1,5 +1,4 @@
 #include "Spire/UI/ImportExportDialog.hpp"
-#include <boost/filesystem/path.hpp>
 #include <QStandardPaths>
 #include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/EnvironmentSettings.hpp"
@@ -9,10 +8,10 @@
 
 using namespace Beam;
 using namespace boost;
-using namespace boost::filesystem;
 using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
+using namespace std::filesystem;
 
 ImportExportDialog::ImportExportDialog(RefType<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)

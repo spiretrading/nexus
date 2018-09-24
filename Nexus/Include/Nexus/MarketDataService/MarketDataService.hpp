@@ -1,12 +1,12 @@
-#ifndef NEXUS_MARKETDATASERVICE_HPP
-#define NEXUS_MARKETDATASERVICE_HPP
+#ifndef NEXUS_MARKET_DATA_SERVICE_HPP
+#define NEXUS_MARKET_DATA_SERVICE_HPP
 #include <string>
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
   class ApplicationMarketDataClient;
   template<typename HistoricalDataStoreType> class BufferedHistoricalDataStore;
   template<typename HistoricalDataStoreType> class CachedHistoricalDataStore;
+  template<typename D> class DataStoreMarketDataClient;
   template<typename MarketExpressionType> class DefaultCurrencyExpression;
   class DistributedMarketDataClient;
   class EntitlementDatabase;
@@ -34,14 +34,16 @@ namespace MarketDataService {
   class MarketEntry;
   template<typename MarketDataClientType, typename MarketExpressionType,
     typename TimeRangeExpressionType> class MarketOrderImbalanceExpression;
-  class MySqlHistoricalDataStore;
   template<typename MarketDataClientType> class RealTimeMarketDataPublisher;
   class SecurityEntry;
   struct SecuritySnapshot;
   template<typename HistoricalDataStoreType>
     class SessionCachedHistoricalDataStore;
+  template<typename C> class SqlHistoricalDataStore;
+  class VirtualHistoricalDataStore;
   class VirtualMarketDataClient;
   class VirtualMarketDataFeedClient;
+  template<typename C> class WrapperHistoricalDataStore;
   template<typename ClientType> class WrapperMarketDataClient;
   template<typename ClientType> class WrapperMarketDataFeedClient;
 
@@ -54,7 +56,6 @@ namespace MarketDataService {
 
   // Standard name for the market data relay service.
   static const std::string RELAY_SERVICE_NAME = "market_data_relay_service";
-}
 }
 
 #endif

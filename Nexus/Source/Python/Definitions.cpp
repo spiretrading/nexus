@@ -83,7 +83,9 @@ void Nexus::Python::ExportBboQuote() {
       &BboQuote::m_timestamp, return_value_policy<return_by_value>()))
     .def(self == self)
     .def(self != self);
-  ExportSequencedValue<BboQuote>("SequencedBboQuote");
+  ExportSequencedValue<BboQuote>();
+  ExportIndexedValue<BboQuote, Security>();
+  ExportSequencedValue<SecurityBboQuote>();
   ExportQueueSuite<BboQuote>("BboQuote");
   ExportQueueSuite<SequencedBboQuote>("SequencedBboQuote");
 }
@@ -106,7 +108,9 @@ void Nexus::Python::ExportBookQuote() {
     .def(self == self)
     .def(self != self);
   ExportFixedString<4>();
-  ExportSequencedValue<BookQuote>("SequencedBookQuote");
+  ExportSequencedValue<BookQuote>();
+  ExportIndexedValue<BookQuote, Security>();
+  ExportSequencedValue<SecurityBookQuote>();
   ExportQueueSuite<BookQuote>("BookQuote");
   ExportQueueSuite<SequencedBookQuote>("SequencedBookQuote");
   def("book_quote_listing_comparator", &BookQuoteListingComparator);
@@ -422,7 +426,9 @@ void Nexus::Python::ExportMarketQuote() {
       &MarketQuote::m_timestamp, return_value_policy<return_by_value>()))
     .def(self == self)
     .def(self != self);
-  ExportSequencedValue<MarketQuote>("SequencedMarketQuote");
+  ExportSequencedValue<MarketQuote>();
+  ExportIndexedValue<MarketQuote, Security>();
+  ExportSequencedValue<SecurityMarketQuote>();
   ExportQueueSuite<MarketQuote>("MarketQuote");
   ExportQueueSuite<SequencedMarketQuote>("SequencedMarketQuote");
 }
@@ -481,7 +487,9 @@ void Nexus::Python::ExportOrderImbalance() {
       &OrderImbalance::m_timestamp, return_value_policy<return_by_value>()))
     .def(self == self)
     .def(self != self);
-  ExportSequencedValue<OrderImbalance>("SequencedOrderImbalance");
+  ExportSequencedValue<OrderImbalance>();
+  ExportIndexedValue<OrderImbalance, MarketCode>();
+  ExportSequencedValue<MarketOrderImbalance>();
   ExportQueueSuite<OrderImbalance>("OrderImbalance");
   ExportQueueSuite<SequencedOrderImbalance>("SequencedOrderImbalance");
 }
@@ -713,7 +721,9 @@ void Nexus::Python::ExportTimeAndSale() {
     }
   }
   ExportEnum<TimeAndSale::Condition::Type>();
-  ExportSequencedValue<TimeAndSale>("SequencedTimeAndSale");
+  ExportSequencedValue<TimeAndSale>();
+  ExportIndexedValue<TimeAndSale, Security>();
+  ExportSequencedValue<SecurityTimeAndSale>();
   ExportQueueSuite<TimeAndSale>("TimeAndSale");
   ExportQueueSuite<SequencedTimeAndSale>("SequencedTimeAndSale");
 }
