@@ -199,7 +199,7 @@ namespace Nexus::OrderExecutionService {
   void SqlOrderExecutionDataStore<C>::Store(
       const SequencedAccountOrderInfo& orderInfo) {
     m_submissionDataStore.Store(orderInfo);
-    auto connection = m_writerPool->Acquire();
+    auto connection = m_writerPool.Acquire();
     connection->execute(Viper::insert(m_liveOrdersRow, "live_orders",
       &(*orderInfo)->m_orderId));
   }
@@ -217,7 +217,7 @@ namespace Nexus::OrderExecutionService {
       [] (auto& orderInfo) {
         return (*orderInfo)->m_orderId;
       });
-    auto connection = m_writerPool->Acquire();
+    auto connection = m_writerPool.Acquire();
     connection->execute(Viper::insert(m_liveOrdersRow, "live_orders",
       orderIds.begin(), orderIds.end()));
   }
@@ -227,7 +227,7 @@ namespace Nexus::OrderExecutionService {
       const SequencedAccountExecutionReport& executionReport) {
     m_executionReportDataStore.Store(executionReport);
     if(IsTerminal((*executionReport)->m_status)) {
-      auto connection = m_writerPool->Acquire();
+      auto connection = m_writerPool.Acquire();
       connection->execute(Viper::erase("live_orders",
         Viper::sym("order_id") == (*executionReport)->m_id));
     }
@@ -247,7 +247,7 @@ namespace Nexus::OrderExecutionService {
       }
     }
     if(hasErase) {
-      auto connection = m_writerPool->Acquire();
+      auto connection = m_writerPool.Acquire();
       connection->execute(Viper::erase("live_orders", eraseCondition));
     }
   }
@@ -275,7 +275,7 @@ namespace Nexus::OrderExecutionService {
       }
       m_submissionDataStore.Open();
       m_executionReportDataStore.Open();
-      auto writerConnection = m_writerPool->Acquire();
+      auto writerConnection = m_writerPool.Acquire();
       if(!writerConnection->has_table("status_submissions")) {
         writerConnection->execute("CREATE VIEW status_submissions AS "
           "SELECT submissions.*, IFNULL(live_orders.order_id, 0) != 0 AS "
