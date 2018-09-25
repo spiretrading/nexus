@@ -264,16 +264,18 @@ namespace Nexus::OrderExecutionService {
           std::make_unique<Connection>(m_connectionBuilder());
         readerConnection->open();
         m_readerPool.Add(std::move(readerConnection));
+      }
+      {
         auto writerConnection =
           std::make_unique<Connection>(m_connectionBuilder());
         writerConnection->open();
+        writerConnection->execute(Viper::create_if_not_exists(m_liveOrdersRow,
+          "live_orders"));
         m_writerPool.Add(std::move(writerConnection));
       }
-      auto writerConnection = m_writerPool->Acquire();
-      writerConnection->execute(Viper::create_if_not_exists(m_liveOrdersRow,
-        "live_orders"));
       m_submissionDataStore.Open();
       m_executionReportDataStore.Open();
+      auto writerConnection = m_writerPool->Acquire();
       if(!writerConnection->has_table("status_submissions")) {
         writerConnection->execute("CREATE VIEW status_submissions AS "
           "SELECT submissions.*, IFNULL(live_orders.order_id, 0) != 0 AS "

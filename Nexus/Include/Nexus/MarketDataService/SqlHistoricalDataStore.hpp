@@ -227,11 +227,11 @@ namespace Nexus::MarketDataService {
           std::make_unique<Connection>(m_connectionBuilder());
         readerConnection->open();
         m_readerPool.Add(std::move(readerConnection));
-        auto writerConnection =
-          std::make_unique<Connection>(m_connectionBuilder());
-        writerConnection->open();
-        m_writerPool.Add(std::move(writerConnection));
       }
+      auto writerConnection =
+        std::make_unique<Connection>(m_connectionBuilder());
+      writerConnection->open();
+      m_writerPool.Add(std::move(writerConnection));
       m_orderImbalanceDataStore.Open();
       m_bboQuoteDataStore.Open();
       m_marketQuoteDataStore.Open();
