@@ -1,5 +1,5 @@
-#ifndef NEXUS_MARKETDATABUFFEREDHISTORICALDATASTORE_HPP
-#define NEXUS_MARKETDATABUFFEREDHISTORICALDATASTORE_HPP
+#ifndef NEXUS_MARKET_DATA_BUFFERED_HISTORICAL_DATA_STORE_HPP
+#define NEXUS_MARKET_DATA_BUFFERED_HISTORICAL_DATA_STORE_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Queries/BufferedDataStore.hpp>
@@ -8,12 +8,10 @@
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \class BufferedHistoricalDataStore
-      \brief Buffers historical market data before committing it to an
-             underlying data store.
+  /** Buffers historical market data before committing it to an underlying data
+      store.
       \tparam HistoricalDataStoreType The underlying data store to commit the
               data to.
    */
@@ -22,8 +20,8 @@ namespace MarketDataService {
     public:
 
       //! The type of HistoricalDataStore to buffer.
-      typedef typename Beam::TryDereferenceType<HistoricalDataStoreType>::type
-        HistoricalDataStore;
+      using HistoricalDataStore =
+        Beam::GetTryDereferenceType<HistoricalDataStoreType>;
 
       //! Constructs a BufferedHistoricalDataStore.
       /*!
@@ -84,8 +82,7 @@ namespace MarketDataService {
       using DataStore = Beam::Queries::BufferedDataStore<
         HistoricalDataStoreQueryWrapper<T, HistoricalDataStore*>,
         Queries::EvaluatorTranslator>;
-      typename Beam::OptionalLocalPtr<HistoricalDataStoreType>::type
-        m_dataStore;
+      Beam::GetOptionalLocalPtr<HistoricalDataStoreType> m_dataStore;
       DataStore<OrderImbalance> m_orderImbalanceDataStore;
       DataStore<BboQuote> m_bboQuoteDataStore;
       DataStore<BookQuote> m_bookQuoteDataStore;
@@ -250,7 +247,6 @@ namespace MarketDataService {
     m_dataStore->Close();
     m_openState.SetClosed();
   }
-}
 }
 
 #endif
