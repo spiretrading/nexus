@@ -79,9 +79,8 @@ namespace Nexus::OrderExecutionService {
       ConnectionBuilder m_connectionBuilder;
       Beam::KeyValueCache<unsigned int, Beam::ServiceLocator::DirectoryEntry,
         Beam::Threading::Mutex> m_accountEntries;
-      Beam::DatabaseConnectionPool<Connection> m_connectionPool;
-      Beam::Threading::Sync<Connection, Beam::Threading::Mutex>
-        m_writeConnection;
+      Beam::DatabaseConnectionPool<Connection> m_readerPool;
+      Beam::DatabaseConnectionPool<Connection> m_writerPool;
       Beam::Threading::ThreadPool m_threadPool;
       DataStore<Viper::Row<OrderInfo>,
         Viper::Row<Beam::ServiceLocator::DirectoryEntry>>
@@ -133,16 +132,15 @@ namespace Nexus::OrderExecutionService {
       const AccountSourceFunction& accountSourceFunction)
       : m_connectionBuilder(std::move(connectionBuilder)),
         m_accountEntries(accountSourceFunction),
-        m_writeConnection(m_connectionBuilder()),
         m_submissionDataStore("submissions", GetOrderInfoRow(),
-          GetAccountRow(), Beam::Ref(m_connectionPool),
-          Beam::Ref(m_writeConnection), Beam::Ref(m_threadPool)),
+          GetAccountRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
+          Beam::Ref(m_threadPool)),
         m_statusSubmissionDataStore("status_submissions", GetOrderInfoRow(),
-          GetAccountRow(), Beam::Ref(m_connectionPool),
-          Beam::Ref(m_writeConnection), Beam::Ref(m_threadPool)),
+          GetAccountRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
+          Beam::Ref(m_threadPool)),
         m_executionReportDataStore("execution_reports", GetExecutionReportRow(),
-          GetAccountRow(), Beam::Ref(m_connectionPool),
-          Beam::Ref(m_writeConnection), Beam::Ref(m_threadPool)) {
+          GetAccountRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
+          Beam::Ref(m_threadPool)) {
     m_liveOrdersRow = Viper::Row<OrderId>().
       add_column("order_id").
       set_primary_key("order_id");
@@ -201,11 +199,9 @@ namespace Nexus::OrderExecutionService {
   void SqlOrderExecutionDataStore<C>::Store(
       const SequencedAccountOrderInfo& orderInfo) {
     m_submissionDataStore.Store(orderInfo);
-    Beam::Threading::With(m_writeConnection,
-      [&] (auto& connection) {
-        connection.execute(Viper::insert(m_liveOrdersRow, "live_orders",
-          &(*orderInfo)->m_orderId));
-      });
+    auto connection = m_writerPool->Acquire();
+    connection->execute(Viper::insert(m_liveOrdersRow, "live_orders",
+      &(*orderInfo)->m_orderId));
   }
 
   template<typename C>
@@ -221,11 +217,9 @@ namespace Nexus::OrderExecutionService {
       [] (auto& orderInfo) {
         return (*orderInfo)->m_orderId;
       });
-    Beam::Threading::With(m_writeConnection,
-      [&] (auto& connection) {
-        connection.execute(Viper::insert(m_liveOrdersRow, "live_orders",
-          orderIds.begin(), orderIds.end()));
-      });
+    auto connection = m_writerPool->Acquire();
+    connection->execute(Viper::insert(m_liveOrdersRow, "live_orders",
+      orderIds.begin(), orderIds.end()));
   }
 
   template<typename C>
@@ -233,11 +227,9 @@ namespace Nexus::OrderExecutionService {
       const SequencedAccountExecutionReport& executionReport) {
     m_executionReportDataStore.Store(executionReport);
     if(IsTerminal((*executionReport)->m_status)) {
-      Beam::Threading::With(m_writeConnection,
-        [&] (auto& connection) {
-          connection.execute(Viper::erase("live_orders",
-            Viper::sym("order_id") == (*executionReport)->m_id));
-        });
+      auto connection = m_writerPool->Acquire();
+      connection->execute(Viper::erase("live_orders",
+        Viper::sym("order_id") == (*executionReport)->m_id));
     }
   }
 
@@ -255,10 +247,8 @@ namespace Nexus::OrderExecutionService {
       }
     }
     if(hasErase) {
-      Beam::Threading::With(m_writeConnection,
-        [&] (auto& connection) {
-          connection.execute(Viper::erase("live_orders", eraseCondition));
-        });
+      auto connection = m_writerPool->Acquire();
+      connection->execute(Viper::erase("live_orders", eraseCondition));
     }
   }
 
@@ -268,29 +258,28 @@ namespace Nexus::OrderExecutionService {
       return;
     }
     try {
-      Beam::Threading::With(m_writeConnection,
-        [&] (auto& connection) {
-          connection.open();
-          connection.execute(Viper::create_if_not_exists(m_liveOrdersRow,
-            "live_orders"));
-        });
       for(auto i = std::size_t(0);
           i <= std::thread::hardware_concurrency(); ++i) {
-        auto connection = std::make_unique<Connection>(m_connectionBuilder());
-        connection->open();
-        m_connectionPool.Add(std::move(connection));
+        auto readerConnection =
+          std::make_unique<Connection>(m_connectionBuilder());
+        readerConnection->open();
+        m_readerPool.Add(std::move(readerConnection));
+        auto writerConnection =
+          std::make_unique<Connection>(m_connectionBuilder());
+        writerConnection->open();
+        m_writerPool.Add(std::move(writerConnection));
       }
+      auto writerConnection = m_writerPool->Acquire();
+      writerConnection->execute(Viper::create_if_not_exists(m_liveOrdersRow,
+        "live_orders"));
       m_submissionDataStore.Open();
       m_executionReportDataStore.Open();
-      Beam::Threading::With(m_writeConnection,
-        [&] (auto& connection) {
-          if(!connection.has_table("status_submissions")) {
-            connection.execute("CREATE VIEW status_submissions AS "
-              "SELECT submissions.*, IFNULL(live_orders.order_id, 0) != 0 AS "
-              "is_live FROM submissions LEFT JOIN live_orders ON "
-              "submissions.order_id = live_orders.order_id");
-          }
-        });
+      if(!writerConnection->has_table("status_submissions")) {
+        writerConnection->execute("CREATE VIEW status_submissions AS "
+          "SELECT submissions.*, IFNULL(live_orders.order_id, 0) != 0 AS "
+          "is_live FROM submissions LEFT JOIN live_orders ON "
+          "submissions.order_id = live_orders.order_id");
+      }
       m_statusSubmissionDataStore.Open();
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
@@ -312,11 +301,8 @@ namespace Nexus::OrderExecutionService {
     m_executionReportDataStore.Close();
     m_statusSubmissionDataStore.Close();
     m_submissionDataStore.Close();
-    m_connectionPool.Close();
-    Beam::Threading::With(m_writeConnection,
-      [] (auto& connection) {
-        connection.close();
-      });
+    m_writerPool.Close();
+    m_readerPool.Close();
     m_openState.SetClosed();
   }
 }
