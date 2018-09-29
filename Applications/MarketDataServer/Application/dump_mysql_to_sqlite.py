@@ -1,10 +1,13 @@
 import argparse
-import beam
+import copy
 import datetime
+import multiprocessing
+import sys
+
+import beam
 import nexus
 import pymysql
 import pytz
-import sys
 import yaml
 
 def parse_date(source):
@@ -46,10 +49,19 @@ def backup(index, start, end, loader, destination):
   query.snapshot_limit = beam.queries.SnapshotLimit.UNLIMITED
   query.set_range(utc_start, utc_end)
   values = loader(query)
+  sys.stdout.flush()
   for i in range(len(values)):
     values[i] = beam.queries.SequencedValue(
       beam.queries.IndexedValue(values[i].value, index), values[i].sequence)
+  sys.stdout.flush()
   destination.store(values)
+  sys.stdout.flush()
+
+def backup_spawn(index, start, end, source, destination):
+  backup(index, start, end, source.load_bbo_quotes, destination)
+  backup(index, start, end, source.load_time_and_sales, destination)
+  backup(index, start, end, source.load_book_quotes, destination)
+  backup(index, start, end, source.load_market_quotes, destination)
 
 def main():
   parser = argparse.ArgumentParser(
@@ -62,6 +74,8 @@ def main():
     required=True)
   parser.add_argument('-o', '--out', type=str, help='SQLite File',
     required=True)
+  parser.add_argument('-j', '--cores', type=int, help='Number of cores to use',
+    required=False, default=(multiprocessing.cpu_count() - 1))
   args = parser.parse_args()
   try:
     stream = open(args.config, 'r').read()
@@ -97,18 +111,28 @@ def main():
   sqlite_data_store = nexus.market_data_service.SqliteHistoricalDataStore(
     args.out)
   sqlite_data_store.open()
+  routines = []
   for security in securities:
-    backup(security, args.start, args.end, mysql_data_store.load_bbo_quotes,
-      sqlite_data_store)
-    backup(security, args.start, args.end, mysql_data_store.load_time_and_sales,
-      sqlite_data_store)
-    backup(security, args.start, args.end, mysql_data_store.load_book_quotes,
-      sqlite_data_store)
-    backup(security, args.start, args.end, mysql_data_store.load_market_quotes,
-      sqlite_data_store)
+    if len(routines) == args.cores:
+      for routine in routines:
+        routine.wait()
+      routines = []
+    routines.append(beam.routines.RoutineHandler(beam.routines.spawn(
+      (lambda s: lambda: backup_spawn(s, args.start, args.end, mysql_data_store,
+        sqlite_data_store))(security))))
+  for routine in routines:
+    routine.wait()
+  routines = []
   for market in markets:
-    backup(market, args.start, args.end, mysql_data_store.load_order_imbalances,
-      sqlite_data_store)
+    if len(routines) == args.cores:
+      for routine in routines:
+        routine.wait()
+      routines = []
+    routines.append(beam.routines.RoutineHandler(beam.routines.spawn(
+      lambda: backup(market, args.start, args.end,
+        mysql_data_store.load_order_imbalances, sqlite_data_store))))
+  for routine in routines:
+    routine.wait()
 
 if __name__ == '__main__':
   main()
