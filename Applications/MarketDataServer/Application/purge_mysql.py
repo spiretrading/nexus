@@ -31,34 +31,45 @@ def parse_ip_address(source):
   return beam.network.IpAddress(source[0:separator],
     int(source[separator + 1 :]))
 
-def backup(index, start, end, loader, destination):
-  if isinstance(index, nexus.Security):
-    if index.country == nexus.default_countries.CA or \
-        index.country == nexus.default_countries.US:
-      timezone = pytz.timezone('US/Eastern')
-    elif index.country == nexus.default_countries.AU:
-      timezone = pytz.timezone('Australia/Sydney')
-  else:
+def purge_security(security, start, end, connection, table):
+  if security.country == nexus.default_countries.CA or \
+      security.country == nexus.default_countries.US:
     timezone = pytz.timezone('US/Eastern')
+  elif security.country == nexus.default_countries.AU:
+    timezone = pytz.timezone('Australia/Sydney')
   localized_start = timezone.localize(start)
   localized_end = timezone.localize(end)
   utc_start = localized_start.astimezone(pytz.utc)
   utc_end = localized_end.astimezone(pytz.utc)
-  query = beam.queries.Query()
-  query.index = index
-  query.snapshot_limit = beam.queries.SnapshotLimit.UNLIMITED
-  query.set_range(utc_start, utc_end)
-  values = loader(query)
-  for i in range(len(values)):
-    values[i] = beam.queries.SequencedValue(
-      beam.queries.IndexedValue(values[i].value, index), values[i].sequence)
-  destination.store(values)
+  start_timestamp = beam.to_sql_timestamp(utc_start)
+  end_timestamp = beam.to_sql_timestamp(utc_end)
+  with connection.cursor() as cursor:
+    query = 'DELETE FROM %s WHERE symbol = "%s" AND country = "%s" AND ' \
+      'timestamp >= %s and timestamp <= %s' % \
+      (security.symbol, security.country, start_timestamp, end_timestamp)
+    print(query)
+    #cursor.execute(query)
 
-def backup_spawn(index, start, end, source, destination):
-  backup(index, start, end, source.load_bbo_quotes, destination)
-  backup(index, start, end, source.load_time_and_sales, destination)
-  backup(index, start, end, source.load_book_quotes, destination)
-  backup(index, start, end, source.load_market_quotes, destination)
+def purge_market(market, start, end, connection, table):
+  timezone = pytz.timezone('US/Eastern')
+  localized_start = timezone.localize(start)
+  localized_end = timezone.localize(end)
+  utc_start = localized_start.astimezone(pytz.utc)
+  utc_end = localized_end.astimezone(pytz.utc)
+  start_timestamp = beam.to_sql_timestamp(utc_start)
+  end_timestamp = beam.to_sql_timestamp(utc_end)
+  with connection.cursor() as cursor:
+    query = 'DELETE FROM %s WHERE market = "%s" AND ' \
+      'timestamp >= %s and timestamp <= %s' % \
+      (market, start_timestamp, end_timestamp)
+    print(query)
+    #cursor.execute(query)
+
+def purge_all_security(security, start, end, connection):
+  purge_security(security, start, end, connection, 'bbo_quotes')
+  purge_security(security, start, end, connection, 'book_quotes')
+  purge_security(security, start, end, connection, 'time_and_sales')
+  purge_security(security, start, end, connection, 'market_quotes')
 
 def main():
   parser = argparse.ArgumentParser(
@@ -68,8 +79,6 @@ def main():
   parser.add_argument('-s', '--start', type=parse_date, help='Start range',
     required=True)
   parser.add_argument('-e', '--end', type=parse_date, help='End range',
-    required=True)
-  parser.add_argument('-o', '--out', type=str, help='SQLite File',
     required=True)
   parser.add_argument('-j', '--cores', type=int, help='Number of cores to use',
     required=False, default=(multiprocessing.cpu_count() - 1))
@@ -88,9 +97,6 @@ def main():
   username = data_store_config['username']
   password = data_store_config['password']
   schema = data_store_config['schema']
-  mysql_data_store = nexus.market_data_service.MySqlHistoricalDataStore(
-    address.host, address.port, username, password, schema)
-  mysql_data_store.open()
   mysql_connection = pymysql.connect(address.host, username, password, schema,
     address.port)
   securities = []
@@ -105,31 +111,27 @@ def main():
     cursor.execute(query)
     for result in cursor.fetchall():
       markets.append(result[0])
-  sqlite_data_store = nexus.market_data_service.SqliteHistoricalDataStore(
-    args.out)
-  sqlite_data_store.open()
-  routines = []
+  threads = []
   for security in securities:
-    if len(routines) == args.cores:
-      for routine in routines:
-        routine.wait()
-      routines = []
-    routines.append(beam.routines.RoutineHandler(beam.routines.spawn(
-      (lambda s: lambda: backup_spawn(s, args.start, args.end, mysql_data_store,
-        sqlite_data_store))(security))))
-  for routine in routines:
-    routine.wait()
-  routines = []
+    if len(threads) == args.cores:
+      for thread in threads:
+        thread.join()
+      threads = []
+    threads.append(threading.Thread(target = purge_all_security,
+      args = (security, args.start, args.end, mysql_connection)))
+  for thread in threads:
+    thread.join()
+  threads = []
   for market in markets:
-    if len(routines) == args.cores:
-      for routine in routines:
-        routine.wait()
-      routines = []
-    routines.append(beam.routines.RoutineHandler(beam.routines.spawn(
-      lambda: backup(market, args.start, args.end,
-        mysql_data_store.load_order_imbalances, sqlite_data_store))))
-  for routine in routines:
-    routine.wait()
+    if len(threads) == args.cores:
+      for thread in threads:
+        thread.join()
+      threads = []
+    threads.append(threading.Thread(target = purge_market,
+      args = (market, args.start, args.end, mysql_connection,
+      'order_imbalances')))
+  for thread in threads:
+    thread.join()
 
 if __name__ == '__main__':
   main()
