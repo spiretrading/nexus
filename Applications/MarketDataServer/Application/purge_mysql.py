@@ -3,6 +3,7 @@ import copy
 import datetime
 import multiprocessing
 import sys
+import threading
 
 import beam
 import nexus
@@ -46,9 +47,8 @@ def purge_security(security, start, end, connection, table):
   with connection.cursor() as cursor:
     query = 'DELETE FROM %s WHERE symbol = "%s" AND country = "%s" AND ' \
       'timestamp >= %s and timestamp <= %s' % \
-      (security.symbol, security.country, start_timestamp, end_timestamp)
-    print(query)
-    #cursor.execute(query)
+      (table, security.symbol, security.country, start_timestamp, end_timestamp)
+    cursor.execute(query)
 
 def purge_market(market, start, end, connection, table):
   timezone = pytz.timezone('US/Eastern')
@@ -61,9 +61,8 @@ def purge_market(market, start, end, connection, table):
   with connection.cursor() as cursor:
     query = 'DELETE FROM %s WHERE market = "%s" AND ' \
       'timestamp >= %s and timestamp <= %s' % \
-      (market, start_timestamp, end_timestamp)
-    print(query)
-    #cursor.execute(query)
+      (table, market, start_timestamp, end_timestamp)
+    cursor.execute(query)
 
 def purge_all_security(security, start, end, connection):
   purge_security(security, start, end, connection, 'bbo_quotes')
@@ -117,8 +116,12 @@ def main():
       for thread in threads:
         thread.join()
       threads = []
-    threads.append(threading.Thread(target = purge_all_security,
-      args = (security, args.start, args.end, mysql_connection)))
+    connection = pymysql.connect(address.host, username, password, schema,
+      address.port)
+    thread = threading.Thread(target = purge_all_security,
+      args = (security, args.start, args.end, connection))
+    threads.append(thread)
+    thread.start()
   for thread in threads:
     thread.join()
   threads = []
@@ -127,9 +130,12 @@ def main():
       for thread in threads:
         thread.join()
       threads = []
-    threads.append(threading.Thread(target = purge_market,
-      args = (market, args.start, args.end, mysql_connection,
-      'order_imbalances')))
+    connection = pymysql.connect(address.host, username, password, schema,
+      address.port)
+    thread = threading.Thread(target = purge_market,
+      args = (market, args.start, args.end, connection, 'order_imbalances'))
+    threads.append(thread)
+    thread.start()
   for thread in threads:
     thread.join()
 
