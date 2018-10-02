@@ -275,12 +275,14 @@ namespace Nexus::OrderExecutionService {
       }
       m_submissionDataStore.Open();
       m_executionReportDataStore.Open();
-      auto writerConnection = m_writerPool.Acquire();
-      if(!writerConnection->has_table("status_submissions")) {
-        writerConnection->execute("CREATE VIEW status_submissions AS "
-          "SELECT submissions.*, IFNULL(live_orders.order_id, 0) != 0 AS "
-          "is_live FROM submissions LEFT JOIN live_orders ON "
-          "submissions.order_id = live_orders.order_id");
+      {
+        auto writerConnection = m_writerPool.Acquire();
+        if(!writerConnection->has_table("status_submissions")) {
+          writerConnection->execute("CREATE VIEW status_submissions AS "
+            "SELECT submissions.*, IFNULL(live_orders.order_id, 0) != 0 AS "
+            "is_live FROM submissions LEFT JOIN live_orders ON "
+            "submissions.order_id = live_orders.order_id");
+        }
       }
       m_statusSubmissionDataStore.Open();
     } catch(const std::exception&) {
