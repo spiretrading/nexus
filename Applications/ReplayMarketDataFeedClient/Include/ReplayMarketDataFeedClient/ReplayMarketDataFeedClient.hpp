@@ -188,7 +188,7 @@ namespace Nexus {
       if(data.empty()) {
         return;
       }
-      startPoint = data.back().GetSequence();
+      startPoint = Beam::Queries::Increment(data.back().GetSequence());
       auto updateTime = m_timeClient->GetTime();
       auto timeDelta = updateTime - currentTime;
       replayTime += timeDelta;
