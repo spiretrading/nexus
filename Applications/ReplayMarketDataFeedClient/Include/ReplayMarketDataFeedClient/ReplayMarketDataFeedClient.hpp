@@ -76,10 +76,9 @@ namespace Nexus {
       Beam::Routines::RoutineHandlerGroup m_routines;
 
       void Shutdown();
-      void ReplayBboQuotes(const Security& security);
-      void ReplayMarketQuotes(const Security& security);
-      void ReplayBookQuotes(const Security& security);
-      void ReplayTimeAndSales(const Security& security);
+      template<typename F, typename P>
+      void ReplayMarketData(const Security& security, F queryLoader,
+        P publisher);
   };
 
   template<typename M, typename D, typename T, typename R>
@@ -112,19 +111,43 @@ namespace Nexus {
       for(auto& security : m_securities) {
         m_routines.Spawn(
           [=] {
-            ReplayBboQuotes(security);
+            ReplayMarketData(security,
+              [=] (const auto& query) {
+                return m_dataStore->LoadBboQuotes(query);
+              },
+              [=] (const auto& value) {
+                return m_feedClient->PublishBboQuote(value);
+              });
           });
         m_routines.Spawn(
           [=] {
-            ReplayMarketQuotes(security);
+            ReplayMarketData(security,
+              [=] (const auto& query) {
+                return m_dataStore->LoadMarketQuotes(query);
+              },
+              [=] (const auto& value) {
+                return m_feedClient->PublishMarketQuote(value);
+              });
           });
         m_routines.Spawn(
           [=] {
-            ReplayBookQuotes(security);
+            ReplayMarketData(security,
+              [=] (const auto& query) {
+                return m_dataStore->LoadBookQuotes(query);
+              },
+              [=] (const auto& value) {
+                return m_feedClient->SetBookQuote(value);
+              });
           });
         m_routines.Spawn(
           [=] {
-            ReplayTimeAndSales(security);
+            ReplayMarketData(security,
+              [=] (const auto& query) {
+                return m_dataStore->LoadTimeAndSales(query);
+              },
+              [=] (const auto& value) {
+                return m_feedClient->PublishTimeAndSale(value);
+              });
           });
       }
     } catch(std::exception&) {
@@ -148,53 +171,44 @@ namespace Nexus {
   }
 
   template<typename M, typename D, typename T, typename R>
-  void ReplayMarketDataFeedClient<M, D, T, R>::ReplayBboQuotes(
-      const Security& security) {
+  template<typename F, typename P>
+  void ReplayMarketDataFeedClient<M, D, T, R>::ReplayMarketData(
+      const Security& security, F queryLoader, P publisher) {
     constexpr auto QUERY_SIZE = 1000;
     auto currentTime = m_timeClient->GetTime();
     auto replayTime = m_startTime;
-    auto query = MarketDataService::SecurityMarketDataQuery();
-    query.SetIndex(security);
-    query.SetRange(replayTime, Beam::Queries::Sequence::Last());
-    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(QUERY_SIZE));
-    std::cout << query << std::endl;
-    auto data = m_dataStore->LoadBboQuotes(query);
-    std::cout << data.size() << std::endl;
-    auto updateTime = m_timeClient->GetTime();
-    auto timeDelta = updateTime - currentTime;
-    replayTime += timeDelta;
-    currentTime = updateTime;
-    for(auto& item : data) {
-      auto wait = Beam::Queries::GetTimestamp(*item) - replayTime;
-      if(wait > boost::posix_time::seconds(0)) {
-        auto timer = m_timerBuilder(wait);
-        timer->Start();
-        timer->Wait();
+    auto startPoint = Beam::Queries::Range::Point(replayTime);
+    while(true) {
+      auto query = MarketDataService::SecurityMarketDataQuery();
+      query.SetIndex(security);
+      query.SetRange(startPoint, Beam::Queries::Sequence::Last());
+      query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(
+        QUERY_SIZE));
+      auto data = queryLoader(query);
+      if(data.empty()) {
+        return;
       }
-      auto replayValue = *item;
-      Beam::Queries::GetTimestamp(replayValue) = m_timeClient->GetTime();
-      m_feedClient->PublishBboQuote(Beam::Queries::MakeIndexedValue(
-        replayValue, security));
-      updateTime = m_timeClient->GetTime();
-      timeDelta = updateTime - currentTime;
+      startPoint = data.back().GetSequence();
+      auto updateTime = m_timeClient->GetTime();
+      auto timeDelta = updateTime - currentTime;
       replayTime += timeDelta;
       currentTime = updateTime;
+      for(auto& item : data) {
+        auto wait = Beam::Queries::GetTimestamp(*item) - replayTime;
+        if(wait > boost::posix_time::seconds(0)) {
+          auto timer = m_timerBuilder(wait);
+          timer->Start();
+          timer->Wait();
+        }
+        auto replayValue = *item;
+        Beam::Queries::GetTimestamp(replayValue) = m_timeClient->GetTime();
+        publisher(Beam::Queries::MakeIndexedValue(replayValue, security));
+        updateTime = m_timeClient->GetTime();
+        timeDelta = updateTime - currentTime;
+        replayTime += timeDelta;
+        currentTime = updateTime;
+      }
     }
-  }
-
-  template<typename M, typename D, typename T, typename R>
-  void ReplayMarketDataFeedClient<M, D, T, R>::ReplayMarketQuotes(
-      const Security& security) {
-  }
-
-  template<typename M, typename D, typename T, typename R>
-  void ReplayMarketDataFeedClient<M, D, T, R>::ReplayBookQuotes(
-      const Security& security) {
-  }
-
-  template<typename M, typename D, typename T, typename R>
-  void ReplayMarketDataFeedClient<M, D, T, R>::ReplayTimeAndSales(
-      const Security& security) {
   }
 }
 

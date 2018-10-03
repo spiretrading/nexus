@@ -63,7 +63,7 @@ namespace {
     auto startTime = Extract<ptime>(config, "start_time");
     auto client_count = Extract<int>(config, "client_count");
     auto chunks = static_cast<int>(securities.size()) / client_count;
-    if(chunks % securities.size() != 0) {
+    if(securities.size() % client_count != 0) {
       ++chunks;
     }
     auto timerBuilder =
@@ -165,6 +165,8 @@ int main(int argc, const char** argv) {
   auto feedClients =
     std::vector<std::unique_ptr<ApplicationMarketDataFeedClient>>();
   auto securities = std::vector<Security>();
+  securities.push_back(Security("MSFT", DefaultMarkets::NASDAQ(),
+    DefaultCountries::US()));
   securities.push_back(Security("ABX", DefaultMarkets::TSX(),
     DefaultCountries::CA()));
   try {
