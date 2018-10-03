@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <string_view>
 #include <Beam/Codecs/SizeDeclarativeDecoder.hpp>
 #include <Beam/Codecs/SizeDeclarativeEncoder.hpp>
 #include <Beam/Codecs/ZLibDecoder.hpp>
@@ -52,6 +53,19 @@ namespace {
     SizeDeclarativeEncoder<ZLibEncoder>>, LiveTimer>;
   using ApplicationMarketDataFeedClient = ReplayMarketDataFeedClient<
     BaseMarketDataFeedClient, SqlDataStore*, LiveNtpTimeClient*, LiveTimer>;
+
+  auto ParseSecurities(const std::string& path,
+      const MarketDatabase& marketDatabase) {
+    auto config = Require(LoadFile, path);
+    auto securitiesNode = GetNode(config, "securities");
+    auto securities = std::vector<Security>();
+    for(auto item : securitiesNode) {
+      auto symbol = GetNode(item, "symbol");
+      securities.push_back(ParseSecurity(symbol.as<std::string>(),
+        marketDatabase));
+    }
+    return securities;
+  }
 
   auto BuildReplayClients(const YAML::Node& config,
       std::vector<Security> securities, SqlDataStore* dataStore,
@@ -164,7 +178,9 @@ int main(int argc, const char** argv) {
     });
   auto feedClients =
     std::vector<std::unique_ptr<ApplicationMarketDataFeedClient>>();
-  auto securities = std::vector<Security>();
+  auto securities = ParseSecurities(Extract<std::string>(
+    config, "securities_path", "securities.yml"),
+    definitionsClient->LoadMarketDatabase());
   securities.push_back(Security("MSFT", DefaultMarkets::NASDAQ(),
     DefaultCountries::US()));
   securities.push_back(Security("ABX", DefaultMarkets::TSX(),
