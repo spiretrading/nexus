@@ -157,7 +157,9 @@ namespace Nexus {
     query.SetIndex(security);
     query.SetRange(replayTime, Beam::Queries::Sequence::Last());
     query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(QUERY_SIZE));
+    std::cout << query << std::endl;
     auto data = m_dataStore->LoadBboQuotes(query);
+    std::cout << data.size() << std::endl;
     auto updateTime = m_timeClient->GetTime();
     auto timeDelta = updateTime - currentTime;
     replayTime += timeDelta;
