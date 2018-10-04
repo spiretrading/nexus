@@ -14,11 +14,9 @@
 #include <boost/thread/mutex.hpp>
 #include "Nexus/MarketDataService/MarketDataFeedServices.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \class MarketDataFeedClient
-      \brief Client used to access the MarketDataFeedServlet.
+  /** Client used to access the MarketDataFeedServlet.
       \tparam OrderIdType The type used to represent order ids.
       \tparam SamplingTimerType The type of Timer used to sample market data
               sent to the servlet.
@@ -184,7 +182,7 @@ namespace MarketDataService {
       mutable boost::mutex m_mutex;
       ServiceProtocolClient m_client;
       Authenticator m_authenticator;
-      typename Beam::OptionalLocalPtr<SamplingTimerType>::type m_samplingTimer;
+      Beam::GetOptionalLocalPtr<SamplingTimerType> m_samplingTimer;
       std::unordered_map<Security, QuoteUpdates> m_quoteUpdates;
       std::vector<MarketOrderImbalance> m_orderImbalances;
       std::unordered_map<OrderId, OrderEntry> m_orders;
@@ -238,9 +236,9 @@ namespace MarketDataService {
   template<typename OrderIdType, typename SamplingTimerType,
     typename MessageProtocolType, typename HeartbeatTimerType>
   MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::OrderEntry::OrderEntry(
-      const Security& security, MarketCode market, const std::string& mpid,
-      bool isPrimaryMpid, Side side, Money price, Quantity size)
+      HeartbeatTimerType>::OrderEntry::OrderEntry(const Security& security,
+      MarketCode market, const std::string& mpid, bool isPrimaryMpid, Side side,
+      Money price, Quantity size)
       : m_security(security),
         m_market(market),
         m_mpid(mpid),
@@ -254,9 +252,8 @@ namespace MarketDataService {
   template<typename ChannelForward, typename SamplingTimerForward,
     typename HeartbeatTimerForward>
   MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::MarketDataFeedClient(
-      ChannelForward&& channel, const Authenticator& authenticator,
-      SamplingTimerForward&& samplingTimer,
+      HeartbeatTimerType>::MarketDataFeedClient(ChannelForward&& channel,
+      const Authenticator& authenticator, SamplingTimerForward&& samplingTimer,
       HeartbeatTimerForward&& heartbeatTimer)
       : m_client(std::forward<ChannelForward>(channel),
           std::forward<HeartbeatTimerForward>(heartbeatTimer)),
@@ -284,7 +281,7 @@ namespace MarketDataService {
     typename MessageProtocolType, typename HeartbeatTimerType>
   void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
       HeartbeatTimerType>::PublishBboQuote(const SecurityBboQuote& bboQuote) {
-    boost::lock_guard<boost::mutex> lock(m_mutex);
+    auto lock = boost::lock_guard(m_mutex);
     auto& updates = m_quoteUpdates[bboQuote.GetIndex()];
     updates.m_bboQuote = bboQuote;
   }
@@ -294,7 +291,7 @@ namespace MarketDataService {
   void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
       HeartbeatTimerType>::PublishMarketQuote(
       const SecurityMarketQuote& marketQuote) {
-    boost::lock_guard<boost::mutex> lock(m_mutex);
+    auto lock = boost::lock_guard(m_mutex);
     m_quoteUpdates[marketQuote.GetIndex()].m_marketQuotes[
       marketQuote->m_market] = marketQuote;
   }
@@ -303,8 +300,26 @@ namespace MarketDataService {
     typename MessageProtocolType, typename HeartbeatTimerType>
   void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
       HeartbeatTimerType>::SetBookQuote(const SecurityBookQuote& bookQuote) {
-    boost::lock_guard<boost::mutex> lock(m_mutex);
-    UpdateBookSampling(bookQuote);
+    auto lock = boost::lock_guard(m_mutex);
+    auto book = [&] {
+      if(bookQuote->m_quote.m_side == Side::ASK) {
+        return &(m_quoteUpdates[bookQuote.GetIndex()].m_askBook);
+      } else {
+        BEAM_ASSERT(bookQuote->m_quote.m_side == Side::BID);
+        return &(m_quoteUpdates[bookQuote.GetIndex()].m_bidBook);
+      }
+    }();
+    auto quoteIterator = std::lower_bound(book->begin(), book->end(), bookQuote,
+      &BookQuoteListingComparator);
+    if(quoteIterator == book->end()) {
+      book->push_back(bookQuote);
+    } else if((*quoteIterator)->m_quote.m_price == bookQuote->m_quote.m_price &&
+        (*quoteIterator)->m_mpid == bookQuote->m_mpid) {
+      (*quoteIterator)->m_quote.m_size = bookQuote->m_quote.m_size;
+      (*quoteIterator)->m_timestamp = bookQuote->m_timestamp;
+    } else {
+      book->insert(quoteIterator, bookQuote);
+    }
   }
 
   template<typename OrderIdType, typename SamplingTimerType,
@@ -313,7 +328,7 @@ namespace MarketDataService {
       HeartbeatTimerType>::AddOrder(const Security& security, MarketCode market,
       const std::string& mpid, bool isPrimaryMpid, const OrderId& id, Side side,
       Money price, Quantity size, const boost::posix_time::ptime& timestamp) {
-    boost::lock_guard<boost::mutex> lock(m_mutex);
+    auto lock = boost::lock_guard(m_mutex);
     LockedAddOrder(security, market, mpid, isPrimaryMpid, id, side, price,
       size, timestamp);
   }
@@ -323,7 +338,7 @@ namespace MarketDataService {
   void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
       HeartbeatTimerType>::ModifyOrderSize(const OrderId& id, Quantity size,
       const boost::posix_time::ptime& timestamp) {
-    boost::lock_guard<boost::mutex> lock(m_mutex);
+    auto lock = boost::lock_guard(m_mutex);
     auto orderIterator = m_orders.find(id);
     if(orderIterator == m_orders.end()) {
       return;
@@ -339,7 +354,7 @@ namespace MarketDataService {
   void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
       HeartbeatTimerType>::OffsetOrderSize(const OrderId& id, Quantity delta,
       const boost::posix_time::ptime& timestamp) {
-    boost::lock_guard<boost::mutex> lock(m_mutex);
+    auto lock = boost::lock_guard(m_mutex);
     auto orderIterator = m_orders.find(id);
     if(orderIterator == m_orders.end()) {
       return;
@@ -356,7 +371,7 @@ namespace MarketDataService {
   void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
       HeartbeatTimerType>::ModifyOrderPrice(const OrderId& id, Money price,
       const boost::posix_time::ptime& timestamp) {
-    boost::lock_guard<boost::mutex> lock(m_mutex);
+    auto lock = boost::lock_guard(m_mutex);
     auto orderIterator = m_orders.find(id);
     if(orderIterator == m_orders.end()) {
       return;
@@ -372,7 +387,7 @@ namespace MarketDataService {
   void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
       HeartbeatTimerType>::DeleteOrder(const OrderId& id,
       const boost::posix_time::ptime& timestamp) {
-    boost::lock_guard<boost::mutex> lock(m_mutex);
+    auto lock = boost::lock_guard(m_mutex);
     auto orderIterator = m_orders.find(id);
     if(orderIterator == m_orders.end()) {
       return;
@@ -385,7 +400,7 @@ namespace MarketDataService {
   void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
       HeartbeatTimerType>::PublishTimeAndSale(
       const SecurityTimeAndSale& timeAndSale) {
-    boost::lock_guard<boost::mutex> lock(m_mutex);
+    auto lock = boost::lock_guard(m_mutex);
     auto& updates = m_quoteUpdates[timeAndSale.GetIndex()];
     updates.m_timeAndSales.push_back(timeAndSale);
   }
@@ -395,7 +410,7 @@ namespace MarketDataService {
   void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
       HeartbeatTimerType>::PublishOrderImbalance(
       const MarketOrderImbalance& orderImbalance) {
-    boost::lock_guard<boost::mutex> lock(m_mutex);
+    auto lock = boost::lock_guard(m_mutex);
     m_orderImbalances.push_back(orderImbalance);
   }
 
@@ -445,13 +460,14 @@ namespace MarketDataService {
   void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
       HeartbeatTimerType>::UpdateBookSampling(
       const SecurityBookQuote& bookQuote) {
-    std::vector<SecurityBookQuote>* book;
-    if(bookQuote->m_quote.m_side == Side::ASK) {
-      book = &(m_quoteUpdates[bookQuote.GetIndex()].m_askBook);
-    } else {
-      BEAM_ASSERT(bookQuote->m_quote.m_side == Side::BID);
-      book = &(m_quoteUpdates[bookQuote.GetIndex()].m_bidBook);
-    }
+    auto book = [&] {
+      if(bookQuote->m_quote.m_side == Side::ASK) {
+        return &(m_quoteUpdates[bookQuote.GetIndex()].m_askBook);
+      } else {
+        BEAM_ASSERT(bookQuote->m_quote.m_side == Side::BID);
+        return &(m_quoteUpdates[bookQuote.GetIndex()].m_bidBook);
+      }
+    }();
     auto quoteIterator = std::lower_bound(book->begin(), book->end(), bookQuote,
       &BookQuoteListingComparator);
     if(quoteIterator == book->end()) {
@@ -481,8 +497,8 @@ namespace MarketDataService {
     }
     m_orders.insert(std::make_pair(id, OrderEntry(security, market, mpid,
       isPrimaryMpid, side, price, size)));
-    Quote quote(price, size, side);
-    BookQuote bookQuote(mpid, isPrimaryMpid, market, quote, timestamp);
+    auto bookQuote = BookQuote(mpid, isPrimaryMpid, market,
+      Quote(price, size, side), timestamp);
     UpdateBookSampling(Beam::Queries::MakeIndexedValue(
       std::move(bookQuote), security));
   }
@@ -494,9 +510,9 @@ namespace MarketDataService {
       typename std::unordered_map<OrderId, OrderEntry>::iterator& orderIterator,
       const boost::posix_time::ptime& timestamp) {
     auto& entry = orderIterator->second;
-    Quote quote(entry.m_price, -entry.m_size, entry.m_side);
-    BookQuote bookQuote(entry.m_mpid, entry.m_isPrimaryMpid, entry.m_market,
-      quote, timestamp);
+    auto bookQuote = BookQuote(entry.m_mpid, entry.m_isPrimaryMpid,
+      entry.m_market, Quote(entry.m_price, -entry.m_size, entry.m_side),
+      timestamp);
     UpdateBookSampling(Beam::Queries::MakeIndexedValue(
       std::move(bookQuote), entry.m_security));
     m_orders.erase(orderIterator);
@@ -507,17 +523,15 @@ namespace MarketDataService {
   void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
       HeartbeatTimerType>::OnTimerExpired(
       const Beam::Threading::Timer::Result& result) {
-    std::vector<MarketDataFeedMessage> messages;
-    std::unordered_map<Security, QuoteUpdates> quoteUpdates;
-    std::vector<MarketOrderImbalance> orderImbalances;
+    auto messages = std::vector<MarketDataFeedMessage>();
+    auto quoteUpdates = std::unordered_map<Security, QuoteUpdates>();
+    auto orderImbalances = std::vector<MarketOrderImbalance>();
     {
-      boost::lock_guard<boost::mutex> lock(m_mutex);
+      auto lock = boost::lock_guard(m_mutex);
       quoteUpdates.swap(m_quoteUpdates);
       orderImbalances.swap(m_orderImbalances);
     }
-    for(const auto& quoteUpdate : quoteUpdates) {
-      const auto& security = quoteUpdate.first;
-      auto& updates = quoteUpdate.second;
+    for(auto& [security, updates] : quoteUpdates) {
       if(updates.m_bboQuote.is_initialized()) {
         messages.push_back(std::move(*updates.m_bboQuote));
       }
@@ -549,7 +563,6 @@ namespace MarketDataService {
     }
     m_samplingTimer->Start();
   }
-}
 }
 
 #endif
