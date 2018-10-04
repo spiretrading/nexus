@@ -537,19 +537,19 @@ namespace Nexus::MarketDataService {
       }
       std::transform(updates.m_marketQuotes.begin(),
         updates.m_marketQuotes.end(), std::back_inserter(messages),
-        [] (auto& quote) -> decltype(auto) {
+        [] (const auto& quote) -> decltype(auto) {
           return std::move(quote.second);
         });
       std::copy_if(std::make_move_iterator(updates.m_askBook.begin()),
         std::make_move_iterator(updates.m_askBook.end()),
         std::back_inserter(messages),
-        [] (auto& quote) {
+        [] (const auto& quote) {
           return quote->m_quote.m_size != 0;
         });
       std::copy_if(std::make_move_iterator(updates.m_bidBook.begin()),
         std::make_move_iterator(updates.m_bidBook.end()),
         std::back_inserter(messages),
-        [] (auto& quote) {
+        [] (const auto& quote) {
           return quote->m_quote.m_size != 0;
         });
       std::move(updates.m_timeAndSales.begin(), updates.m_timeAndSales.end(),
