@@ -1,5 +1,6 @@
 #ifndef NEXUS_REPLAY_MARKET_DATA_FEED_CLIENT_HPP
 #define NEXUS_REPLAY_MARKET_DATA_FEED_CLIENT_HPP
+#include <atomic>
 #include <functional>
 #include <memory>
 #include <vector>
@@ -7,6 +8,7 @@
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
+#include <Beam/Threading/ConditionVariable.hpp>
 #include <Beam/Threading/Timer.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -47,7 +49,7 @@ namespace Nexus {
       //! Constructs a ReplayMarketDataFeedClient.
       /*!
         \param securities The list of Securities to replay.
-        \param startTime The timestamp to begin loading data to replay.
+        \param replayTime The timestamp to begin loading data to replay.
         \param feedClient Initializes the MarketDataFeedClient to send the
                replayed data to.
         \param dataStore The HistoricalDataStore to load market data from.
@@ -56,7 +58,7 @@ namespace Nexus {
       */
       template<typename MF, typename DF, typename TF>
       ReplayMarketDataFeedClient(std::vector<Security> securities,
-        boost::posix_time::ptime startTime, MF&& feedClient, DF&& dataStore,
+        boost::posix_time::ptime replayTime, MF&& feedClient, DF&& dataStore,
         TF&& timeClient, TimerBuilder timerBuilder);
 
       ~ReplayMarketDataFeedClient();
@@ -67,11 +69,15 @@ namespace Nexus {
 
     private:
       std::vector<Security> m_securities;
-      boost::posix_time::ptime m_startTime;
+      boost::posix_time::ptime m_replayTime;
       Beam::GetOptionalLocalPtr<M> m_feedClient;
       Beam::GetOptionalLocalPtr<D> m_dataStore;
       Beam::GetOptionalLocalPtr<T> m_timeClient;
+      boost::posix_time::ptime m_openTime;
       TimerBuilder m_timerBuilder;
+      std::atomic_bool m_isRunning;
+      std::atomic_size_t m_pendingLoadCount;
+      Beam::Threading::ConditionVariable m_isPendingLoad;
       Beam::IO::OpenState m_openState;
       Beam::Routines::RoutineHandlerGroup m_routines;
 
@@ -84,11 +90,11 @@ namespace Nexus {
   template<typename M, typename D, typename T, typename R>
   template<typename MF, typename DF, typename TF>
   ReplayMarketDataFeedClient<M, D, T, R>::ReplayMarketDataFeedClient(
-      std::vector<Security> securities, boost::posix_time::ptime startTime,
+      std::vector<Security> securities, boost::posix_time::ptime replayTime,
       MF&& feedClient, DF&& dataStore, TF&& timeClient,
       TimerBuilder timerBuilder)
       : m_securities(std::move(securities)),
-        m_startTime(startTime),
+        m_replayTime(replayTime),
         m_feedClient(std::forward<MF>(feedClient)),
         m_dataStore(std::forward<DF>(dataStore)),
         m_timeClient(std::forward<TF>(timeClient)),
@@ -105,9 +111,12 @@ namespace Nexus {
       return;
     }
     try {
+      m_isRunning = true;
       m_feedClient->Open();
       m_dataStore->Open();
       m_timeClient->Open();
+      m_openTime = m_timeClient->GetTime();
+      m_pendingLoadCount = 4 * m_securities.size();
       for(auto& security : m_securities) {
         m_routines.Spawn(
           [=] {
@@ -167,6 +176,8 @@ namespace Nexus {
 
   template<typename M, typename D, typename T, typename R>
   void ReplayMarketDataFeedClient<M, D, T, R>::Shutdown() {
+    m_isRunning = false;
+    m_routines.Wait();
     m_openState.SetClosed();
   }
 
@@ -175,39 +186,42 @@ namespace Nexus {
   void ReplayMarketDataFeedClient<M, D, T, R>::ReplayMarketData(
       const Security& security, F queryLoader, P publisher) {
     constexpr auto QUERY_SIZE = 1000;
+    const auto WAIT_QUANTUM = boost::posix_time::time_duration(
+      boost::posix_time::seconds(1));
+    auto query = MarketDataService::SecurityMarketDataQuery();
+    query.SetIndex(security);
+    query.SetRange(m_replayTime, Beam::Queries::Sequence::Last());
+    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(QUERY_SIZE));
+    auto data = queryLoader(query);
+    if(--m_pendingLoadCount == 0) {
+      m_isPendingLoad.notify_all();
+    } else {
+      m_isPendingLoad.wait();
+    }
     auto currentTime = m_timeClient->GetTime();
-    auto replayTime = m_startTime;
-    auto startPoint = Beam::Queries::Range::Point(replayTime);
-    while(true) {
-      auto query = MarketDataService::SecurityMarketDataQuery();
-      query.SetIndex(security);
-      query.SetRange(startPoint, Beam::Queries::Sequence::Last());
-      query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(
-        QUERY_SIZE));
-      auto data = queryLoader(query);
-      if(data.empty()) {
-        return;
-      }
-      startPoint = Beam::Queries::Increment(data.back().GetSequence());
-      auto updateTime = m_timeClient->GetTime();
-      auto timeDelta = updateTime - currentTime;
-      replayTime += timeDelta;
-      currentTime = updateTime;
+    auto replayTime = m_replayTime + (currentTime - m_openTime);
+    while(!data.empty() && m_isRunning) {
       for(auto& item : data) {
         auto wait = Beam::Queries::GetTimestamp(*item) - replayTime;
-        if(wait > boost::posix_time::seconds(0)) {
-          auto timer = m_timerBuilder(wait);
+        while(wait > boost::posix_time::seconds(0)) {
+          auto timer = m_timerBuilder(std::min(wait, WAIT_QUANTUM));
           timer->Start();
           timer->Wait();
+          wait -= WAIT_QUANTUM;
         }
         auto replayValue = *item;
         Beam::Queries::GetTimestamp(replayValue) = m_timeClient->GetTime();
         publisher(Beam::Queries::MakeIndexedValue(replayValue, security));
-        updateTime = m_timeClient->GetTime();
-        timeDelta = updateTime - currentTime;
-        replayTime += timeDelta;
-        currentTime = updateTime;
+        auto updatedTime = m_timeClient->GetTime();
+        replayTime += updatedTime - currentTime;
+        currentTime = updatedTime;
       }
+      query.SetRange(Beam::Queries::Increment(data.back().GetSequence()),
+        Beam::Queries::Sequence::Last());
+      data = queryLoader(query);
+      auto updatedTime = m_timeClient->GetTime();
+      replayTime += updatedTime - currentTime;
+      currentTime = updatedTime;
     }
   }
 }
