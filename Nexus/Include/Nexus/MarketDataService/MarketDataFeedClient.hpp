@@ -300,25 +300,23 @@ namespace Nexus::MarketDataService {
     typename MessageProtocolType, typename HeartbeatTimerType>
   void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
       HeartbeatTimerType>::SetBookQuote(const SecurityBookQuote& bookQuote) {
+    auto id = bookQuote->m_mpid + "-" + bookQuote->m_quote.m_price.ToString() +
+      ToChar(bookQuote->m_quote.m_side);
     auto lock = boost::lock_guard(m_mutex);
-    auto book = [&] {
-      if(bookQuote->m_quote.m_side == Side::ASK) {
-        return &(m_quoteUpdates[bookQuote.GetIndex()].m_askBook);
-      } else {
-        BEAM_ASSERT(bookQuote->m_quote.m_side == Side::BID);
-        return &(m_quoteUpdates[bookQuote.GetIndex()].m_bidBook);
-      }
-    }();
-    auto quoteIterator = std::lower_bound(book->begin(), book->end(), bookQuote,
-      &BookQuoteListingComparator);
-    if(quoteIterator == book->end()) {
-      book->push_back(bookQuote);
-    } else if((*quoteIterator)->m_quote.m_price == bookQuote->m_quote.m_price &&
-        (*quoteIterator)->m_mpid == bookQuote->m_mpid) {
-      (*quoteIterator)->m_quote.m_size = bookQuote->m_quote.m_size;
-      (*quoteIterator)->m_timestamp = bookQuote->m_timestamp;
+    auto orderIterator = m_orders.find(id);
+    if(orderIterator == m_orders.end()) {
+      LockedAddOrder(bookQuote.GetIndex(), bookQuote->m_market,
+        bookQuote->m_mpid, bookQuote->m_isPrimaryMpid, id,
+        bookQuote->m_quote.m_side, bookQuote->m_quote.m_price,
+        bookQuote->m_quote.m_size, bookQuote->m_timestamp);
     } else {
-      book->insert(quoteIterator, bookQuote);
+      LockedDeleteOrder(orderIterator, bookQuote->m_timestamp);
+      if(bookQuote->m_quote.m_size != 0) {
+        LockedAddOrder(bookQuote.GetIndex(), bookQuote->m_market,
+          bookQuote->m_mpid, bookQuote->m_isPrimaryMpid, id,
+          bookQuote->m_quote.m_side, bookQuote->m_quote.m_price,
+          bookQuote->m_quote.m_size, bookQuote->m_timestamp);
+      }
     }
   }
 
