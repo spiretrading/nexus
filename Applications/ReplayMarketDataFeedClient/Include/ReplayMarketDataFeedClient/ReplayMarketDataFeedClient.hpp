@@ -9,6 +9,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/Threading/ConditionVariable.hpp>
+#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Timer.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -76,7 +77,8 @@ namespace Nexus {
       boost::posix_time::ptime m_openTime;
       TimerBuilder m_timerBuilder;
       std::atomic_bool m_isRunning;
-      std::atomic_size_t m_pendingLoadCount;
+      Beam::Threading::Mutex m_pendingMutex;
+      std::size_t m_pendingLoadCount;
       Beam::Threading::ConditionVariable m_isPendingLoad;
       Beam::IO::OpenState m_openState;
       Beam::Routines::RoutineHandlerGroup m_routines;
@@ -193,10 +195,14 @@ namespace Nexus {
     query.SetRange(m_replayTime, Beam::Queries::Sequence::Last());
     query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(QUERY_SIZE));
     auto data = queryLoader(query);
-    if(--m_pendingLoadCount == 0) {
-      m_isPendingLoad.notify_all();
-    } else {
-      m_isPendingLoad.wait();
+    {
+      auto lock = boost::unique_lock(m_pendingMutex);
+      --m_pendingLoadCount;
+      if(m_pendingLoadCount == 0) {
+        m_isPendingLoad.notify_all();
+      } else {
+        m_isPendingLoad.wait(lock);
+      }
     }
     auto currentTime = m_timeClient->GetTime();
     auto replayTime = m_replayTime + (currentTime - m_openTime);
