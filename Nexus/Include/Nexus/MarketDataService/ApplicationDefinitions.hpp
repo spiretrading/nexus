@@ -1,5 +1,5 @@
-#ifndef NEXUS_MARKETDATAAPPLICATIONDEFINITIONS_HPP
-#define NEXUS_MARKETDATAAPPLICATIONDEFINITIONS_HPP
+#ifndef NEXUS_MARKET_DATA_APPLICATION_DEFINITIONS_HPP
+#define NEXUS_MARKET_DATA_APPLICATION_DEFINITIONS_HPP
 #include <string>
 #include <Beam/Codecs/SizeDeclarativeDecoder.hpp>
 #include <Beam/Codecs/SizeDeclarativeEncoder.hpp>
@@ -105,11 +105,11 @@ namespace Details {
     auto addresses = Beam::ServiceLocator::LocateServiceAddresses(
       *serviceLocatorClientHandle, service, servicePredicate);
     auto delay = false;
-    SessionBuilder sessionBuilder(Beam::Ref(serviceLocatorClient),
+    auto sessionBuilder = SessionBuilder(Beam::Ref(serviceLocatorClient),
       [=] () mutable {
         if(delay) {
-          Beam::Threading::LiveTimer delayTimer(boost::posix_time::seconds(3),
-            Beam::Ref(*timerThreadPoolHandle));
+          auto delayTimer = Beam::Threading::LiveTimer(
+            boost::posix_time::seconds(3), Beam::Ref(*timerThreadPoolHandle));
           delayTimer.Start();
           delayTimer.Wait();
         }
@@ -144,12 +144,12 @@ namespace Details {
     auto addresses = Beam::ServiceLocator::LocateServiceAddresses(
       *serviceLocatorClientHandle, service);
     auto delay = false;
-    Details::MarketDataClientSessionBuilder sessionBuilder(
+    auto sessionBuilder = Details::MarketDataClientSessionBuilder(
       Beam::Ref(serviceLocatorClient),
       [=] () mutable {
         if(delay) {
-          Beam::Threading::LiveTimer delayTimer(boost::posix_time::seconds(3),
-            Beam::Ref(*timerThreadPoolHandle));
+          auto delayTimer = Beam::Threading::LiveTimer(
+            boost::posix_time::seconds(3), Beam::Ref(*timerThreadPoolHandle));
           delayTimer.Start();
           delayTimer.Wait();
         }

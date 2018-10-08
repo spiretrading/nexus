@@ -102,7 +102,7 @@ namespace MarketDataService {
       template<typename MarketDataFeedClientForward, typename ItchClientForward,
         typename GlimpseClientForward>
       AsxItchMarketDataFeedClient(const AsxItchConfiguration& config,
-        Beam::RefType<CurrencyDatabase> currencyDatabase,
+        Beam::Ref<CurrencyDatabase> currencyDatabase,
         MarketDataFeedClientForward&& marketDataFeedClient,
         ItchClientForward&& itchClient, GlimpseClientForward&& glimpseClient);
 
@@ -180,7 +180,7 @@ namespace MarketDataService {
   AsxItchMarketDataFeedClient<MarketDataFeedClientType, ItchClientType,
       GlimpseClientType>::AsxItchMarketDataFeedClient(
       const AsxItchConfiguration& config,
-      Beam::RefType<CurrencyDatabase> currencyDatabase,
+      Beam::Ref<CurrencyDatabase> currencyDatabase,
       MarketDataFeedClientForward&& marketDataFeedClient,
       ItchClientForward&& itchClient, GlimpseClientForward&& glimpseClient)
       : m_config{config},

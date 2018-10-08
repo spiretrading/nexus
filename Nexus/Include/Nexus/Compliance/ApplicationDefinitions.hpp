@@ -1,5 +1,5 @@
-#ifndef NEXUS_COMPLIANCEAPPLICATIONDEFINITIONS_HPP
-#define NEXUS_COMPLIANCEAPPLICATIONDEFINITIONS_HPP
+#ifndef NEXUS_COMPLIANCE_APPLICATION_DEFINITIONS_HPP
+#define NEXUS_COMPLIANCE_APPLICATION_DEFINITIONS_HPP
 #include <string>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/IpAddress.hpp>
@@ -93,12 +93,12 @@ namespace Details {
     auto addresses = Beam::ServiceLocator::LocateServiceAddresses(
       *serviceLocatorClientHandle, Compliance::SERVICE_NAME);
     auto delay = false;
-    Details::ComplianceClientSessionBuilder sessionBuilder(
+    auto sessionBuilder = Details::ComplianceClientSessionBuilder(
       Beam::Ref(serviceLocatorClient),
       [=] () mutable {
         if(delay) {
-          Beam::Threading::LiveTimer delayTimer(boost::posix_time::seconds(3),
-            Beam::Ref(*timerThreadPoolHandle));
+          auto delayTimer = Beam::Threading::LiveTimer(
+            boost::posix_time::seconds(3), Beam::Ref(*timerThreadPoolHandle));
           delayTimer.Start();
           delayTimer.Wait();
         }

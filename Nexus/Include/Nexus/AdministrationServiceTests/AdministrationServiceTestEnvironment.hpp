@@ -1,5 +1,5 @@
-#ifndef NEXUS_ADMINISTRATIONSERVICETESTENVIRONMENT_HPP
-#define NEXUS_ADMINISTRATIONSERVICETESTENVIRONMENT_HPP
+#ifndef NEXUS_ADMINISTRATION_SERVICE_TEST_ENVIRONMENT_HPP
+#define NEXUS_ADMINISTRATION_SERVICE_TEST_ENVIRONMENT_HPP
 #include <Beam/IO/LocalClientChannel.hpp>
 #include <Beam/IO/LocalServerConnection.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
@@ -20,13 +20,10 @@
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTests.hpp"
 
-namespace Nexus {
-namespace AdministrationService {
-namespace Tests {
+namespace Nexus::AdministrationService::Tests {
 
-  /*! \class AdministrationServiceTestEnvironment
-      \brief Wraps most components needed to run an instance of the
-             AdministrationService with helper functions.
+  /** Wraps most components needed to run an instance of the
+      AdministrationService with helper functions.
    */
   class AdministrationServiceTestEnvironment : private boost::noncopyable {
     public:
@@ -40,12 +37,6 @@ namespace Tests {
         serviceLocatorClient);
 
       ~AdministrationServiceTestEnvironment();
-
-      //! Opens the servlet.
-      void Open();
-
-      //! Closes the servlet.
-      void Close();
 
       //! Sets the EntitlementDatabase used by the AdministrationServlet.
       void SetEntitlements(const MarketDataService::EntitlementDatabase&
@@ -66,6 +57,10 @@ namespace Tests {
       std::unique_ptr<VirtualAdministrationClient> BuildClient(
         Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
         serviceLocatorClient);
+
+      void Open();
+
+      void Close();
 
     private:
       using ServerConnection =
@@ -101,11 +96,46 @@ namespace Tests {
       AdministrationServiceTestEnvironment(
       const std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>&
       serviceLocatorClient)
-      : m_serviceLocatorClient{serviceLocatorClient} {}
+      : m_serviceLocatorClient(serviceLocatorClient) {}
 
   inline AdministrationServiceTestEnvironment::
       ~AdministrationServiceTestEnvironment() {
     Close();
+  }
+
+  inline void AdministrationServiceTestEnvironment::SetEntitlements(
+      const MarketDataService::EntitlementDatabase& entitlements) {
+    m_entitlements = entitlements;
+  }
+
+  inline void AdministrationServiceTestEnvironment::MakeAdministrator(
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto administrators = m_serviceLocatorClient->LoadDirectoryEntry(
+      Beam::ServiceLocator::DirectoryEntry::GetStarDirectory(),
+      "administrators");
+    m_serviceLocatorClient->Associate(account, administrators);
+  }
+
+  inline std::unique_ptr<VirtualAdministrationClient>
+      AdministrationServiceTestEnvironment::BuildClient(
+      Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
+      serviceLocatorClient) {
+    auto builder = ServiceProtocolClientBuilder(Beam::Ref(serviceLocatorClient),
+      [&, serviceLocatorClient = serviceLocatorClient.Get()] {
+        if(m_globalEntitlementGroup.m_type !=
+            Beam::ServiceLocator::DirectoryEntry::Type::NONE) {
+          m_serviceLocatorClient->Associate(serviceLocatorClient->GetAccount(),
+            m_globalEntitlementGroup);
+        }
+        return std::make_unique<ServiceProtocolClientBuilder::Channel>(
+          "test_administration_client", Beam::Ref(m_serverConnection));
+      },
+      [&] {
+        return std::make_unique<ServiceProtocolClientBuilder::Timer>();
+      });
+    auto client = std::make_unique<AdministrationService::AdministrationClient<
+      ServiceProtocolClientBuilder>>(builder);
+    return MakeVirtualAdministrationClient(std::move(client));
   }
 
   inline void AdministrationServiceTestEnvironment::Open() {
@@ -151,43 +181,6 @@ namespace Tests {
     m_container->Close();
     m_container.reset();
   }
-
-  inline void AdministrationServiceTestEnvironment::SetEntitlements(
-      const MarketDataService::EntitlementDatabase& entitlements) {
-    m_entitlements = entitlements;
-  }
-
-  inline void AdministrationServiceTestEnvironment::MakeAdministrator(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
-    auto administrators = m_serviceLocatorClient->LoadDirectoryEntry(
-      Beam::ServiceLocator::DirectoryEntry::GetStarDirectory(),
-      "administrators");
-    m_serviceLocatorClient->Associate(account, administrators);
-  }
-
-  inline std::unique_ptr<VirtualAdministrationClient>
-      AdministrationServiceTestEnvironment::BuildClient(
-      Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
-      serviceLocatorClient) {
-    ServiceProtocolClientBuilder builder(Beam::Ref(serviceLocatorClient),
-      [&, serviceLocatorClient = serviceLocatorClient.Get()] {
-        if(m_globalEntitlementGroup.m_type !=
-            Beam::ServiceLocator::DirectoryEntry::Type::NONE) {
-          m_serviceLocatorClient->Associate(serviceLocatorClient->GetAccount(),
-            m_globalEntitlementGroup);
-        }
-        return std::make_unique<ServiceProtocolClientBuilder::Channel>(
-          "test_administration_client", Beam::Ref(m_serverConnection));
-      },
-      [&] {
-        return std::make_unique<ServiceProtocolClientBuilder::Timer>();
-      });
-    auto client = std::make_unique<AdministrationService::AdministrationClient<
-      ServiceProtocolClientBuilder>>(builder);
-    return MakeVirtualAdministrationClient(std::move(client));
-  }
-}
-}
 }
 
 #endif

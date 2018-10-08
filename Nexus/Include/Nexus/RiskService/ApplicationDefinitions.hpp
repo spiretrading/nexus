@@ -1,5 +1,5 @@
-#ifndef NEXUS_RISKAPPLICATIONDEFINITIONS_HPP
-#define NEXUS_RISKAPPLICATIONDEFINITIONS_HPP
+#ifndef NEXUS_RISK_APPLICATION_DEFINITIONS_HPP
+#define NEXUS_RISK_APPLICATION_DEFINITIONS_HPP
 #include <string>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/IpAddress.hpp>
@@ -94,12 +94,12 @@ namespace Details {
     auto addresses = Beam::ServiceLocator::LocateServiceAddresses(
       *serviceLocatorClientHandle, SERVICE_NAME);
     auto delay = false;
-    Details::RiskClientSessionBuilder sessionBuilder(
+    auto sessionBuilder = Details::RiskClientSessionBuilder(
       Beam::Ref(serviceLocatorClient),
       [=] () mutable {
         if(delay) {
-          Beam::Threading::LiveTimer delayTimer(boost::posix_time::seconds(3),
-            Beam::Ref(*timerThreadPoolHandle));
+          auto delayTimer = Beam::Threading::LiveTimer(
+            boost::posix_time::seconds(3), Beam::Ref(*timerThreadPoolHandle));
           delayTimer.Start();
           delayTimer.Wait();
         }
