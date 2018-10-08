@@ -25,7 +25,7 @@ namespace Tasks {
         \param orderExecutionClient The OrderExecutionClient to use.
         \param order The Order to wrap.
       */
-      OrderWrapperTask(Beam::RefType<OrderExecutionClient> orderExecutionClient,
+      OrderWrapperTask(Beam::Ref<OrderExecutionClient> orderExecutionClient,
         const OrderExecutionService::Order& order);
 
     protected:
@@ -69,7 +69,7 @@ namespace Tasks {
         \param order The Order to wrap.
       */
       OrderWrapperTaskFactory(
-        Beam::RefType<OrderExecutionClient> orderExecutionClient,
+        Beam::Ref<OrderExecutionClient> orderExecutionClient,
         const OrderExecutionService::Order& order);
 
       virtual std::shared_ptr<Beam::Tasks::Task> Create() override final;
@@ -81,7 +81,7 @@ namespace Tasks {
 
   template<typename OrderExecutionClientType>
   OrderWrapperTask<OrderExecutionClientType>::OrderWrapperTask(
-      Beam::RefType<OrderExecutionClient> orderExecutionClient,
+      Beam::Ref<OrderExecutionClient> orderExecutionClient,
       const OrderExecutionService::Order& order)
       : m_orderExecutionClient{orderExecutionClient.Get()},
         m_order{&order} {}
@@ -177,7 +177,7 @@ namespace Tasks {
 
   template<typename OrderExecutionClientType>
   OrderWrapperTaskFactory<OrderExecutionClientType>::OrderWrapperTaskFactory(
-      Beam::RefType<OrderExecutionClient> orderExecutionClient,
+      Beam::Ref<OrderExecutionClient> orderExecutionClient,
       const OrderExecutionService::Order& order)
       : m_orderExecutionClient{orderExecutionClient.Get()},
         m_order{&order} {}

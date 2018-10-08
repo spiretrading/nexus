@@ -31,7 +31,7 @@ namespace Queries {
       /*!
         \param liveOrders The set of live Orders.
       */
-      EvaluatorTranslator(Beam::RefType<
+      EvaluatorTranslator(Beam::Ref<
         const Beam::SynchronizedUnorderedSet<OrderExecutionService::OrderId>>
         liveOrders);
 
@@ -61,7 +61,7 @@ namespace Queries {
   inline EvaluatorTranslator::EvaluatorTranslator()
       : m_liveOrders{nullptr} {}
 
-  inline EvaluatorTranslator::EvaluatorTranslator(Beam::RefType<
+  inline EvaluatorTranslator::EvaluatorTranslator(Beam::Ref<
       const Beam::SynchronizedUnorderedSet<OrderExecutionService::OrderId>>
       liveOrders)
       : m_liveOrders{liveOrders.Get()} {}

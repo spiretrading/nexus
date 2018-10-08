@@ -31,12 +31,12 @@ namespace Tasks {
         \param orderExecutionPublisher Used to report Order executions.
         \param fields The Order's execution fields.
       */
-      SingleOrderTask(Beam::RefType<OrderExecutionClient> orderExecutionClient,
+      SingleOrderTask(Beam::Ref<OrderExecutionClient> orderExecutionClient,
         std::shared_ptr<Beam::QueueWriter<const OrderExecutionService::Order*>>
         orderExecutionPublisher,
         const OrderExecutionService::OrderFields& fields);
 
-      SingleOrderTask(Beam::RefType<OrderExecutionClient> orderExecutionClient,
+      SingleOrderTask(Beam::Ref<OrderExecutionClient> orderExecutionClient,
         std::shared_ptr<Beam::QueueWriter<const OrderExecutionService::Order*>>
         orderExecutionPublisher,
         const OrderExecutionService::OrderFields& fields, Quantity fillSize,
@@ -122,7 +122,7 @@ namespace Tasks {
         \param account The account to assign the Order to.
       */
       SingleOrderTaskFactory(
-        Beam::RefType<OrderExecutionClient> orderExecutionClient,
+        Beam::Ref<OrderExecutionClient> orderExecutionClient,
         std::shared_ptr<Beam::QueueWriter<const OrderExecutionService::Order*>>
         orderExecutionPublisher,
         const Beam::ServiceLocator::DirectoryEntry& account);
@@ -134,7 +134,7 @@ namespace Tasks {
         \param fields The initial set of OrderFields.
       */
       SingleOrderTaskFactory(
-        Beam::RefType<OrderExecutionClient> orderExecutionClient,
+        Beam::Ref<OrderExecutionClient> orderExecutionClient,
         std::shared_ptr<Beam::QueueWriter<const OrderExecutionService::Order*>>
         orderExecutionPublisher,
         const OrderExecutionService::OrderFields& fields);
@@ -175,7 +175,7 @@ namespace Tasks {
 
   template<typename OrderExecutionClientType>
   SingleOrderTask<OrderExecutionClientType>::SingleOrderTask(
-      Beam::RefType<OrderExecutionClient> orderExecutionClient,
+      Beam::Ref<OrderExecutionClient> orderExecutionClient,
       std::shared_ptr<Beam::QueueWriter<const OrderExecutionService::Order*>>
       orderExecutionPublisher, const OrderExecutionService::OrderFields& fields)
       : m_orderExecutionClient{orderExecutionClient.Get()},
@@ -286,7 +286,7 @@ namespace Tasks {
 
   template<typename OrderExecutionClientType>
   SingleOrderTask<OrderExecutionClientType>::SingleOrderTask(
-      Beam::RefType<OrderExecutionClient> orderExecutionClient,
+      Beam::Ref<OrderExecutionClient> orderExecutionClient,
       std::shared_ptr<Beam::QueueWriter<const OrderExecutionService::Order*>>
       orderExecutionPublisher, const OrderExecutionService::OrderFields& fields,
       Quantity fillSize, Guard)
@@ -323,7 +323,7 @@ namespace Tasks {
 
   template<typename OrderExecutionClientType>
   SingleOrderTaskFactory<OrderExecutionClientType>::SingleOrderTaskFactory(
-      Beam::RefType<OrderExecutionClient> orderExecutionClient,
+      Beam::Ref<OrderExecutionClient> orderExecutionClient,
       std::shared_ptr<Beam::QueueWriter<const OrderExecutionService::Order*>>
       orderExecutionPublisher,
       const Beam::ServiceLocator::DirectoryEntry& account)
@@ -344,7 +344,7 @@ namespace Tasks {
 
   template<typename OrderExecutionClientType>
   SingleOrderTaskFactory<OrderExecutionClientType>::SingleOrderTaskFactory(
-      Beam::RefType<OrderExecutionClient> orderExecutionClient,
+      Beam::Ref<OrderExecutionClient> orderExecutionClient,
       std::shared_ptr<Beam::QueueWriter<const OrderExecutionService::Order*>>
       orderExecutionPublisher, const OrderExecutionService::OrderFields& fields)
       : SingleOrderTaskFactory<OrderExecutionClientType>{

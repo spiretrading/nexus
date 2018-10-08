@@ -55,10 +55,10 @@ namespace Details {
                connection.
         \param timerThreadPool The TimerThreadPool used for heartbeats.
       */
-      void BuildSession(Beam::RefType<Beam::ServiceLocator::
+      void BuildSession(Beam::Ref<Beam::ServiceLocator::
         ApplicationServiceLocatorClient::Client> serviceLocatorClient,
-        Beam::RefType<Beam::Network::SocketThreadPool> socketThreadPool,
-        Beam::RefType<Beam::Threading::TimerThreadPool> timerThreadPool);
+        Beam::Ref<Beam::Network::SocketThreadPool> socketThreadPool,
+        Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
 
       //! Returns a reference to the Client.
       Client& operator *();
@@ -93,10 +93,10 @@ namespace Details {
     \param service The name of the service to connect to.
   */
   template<typename SessionBuilder, typename Predicate>
-  SessionBuilder BuildBasicMarketDataClientSessionBuilder(Beam::RefType<
+  SessionBuilder BuildBasicMarketDataClientSessionBuilder(Beam::Ref<
       Beam::ServiceLocator::ApplicationServiceLocatorClient::Client>
-      serviceLocatorClient, Beam::RefType<Beam::Network::SocketThreadPool>
-      socketThreadPool, Beam::RefType<Beam::Threading::TimerThreadPool>
+      serviceLocatorClient, Beam::Ref<Beam::Network::SocketThreadPool>
+      socketThreadPool, Beam::Ref<Beam::Threading::TimerThreadPool>
       timerThreadPool, const Predicate& servicePredicate,
       const std::string& service = RELAY_SERVICE_NAME) {
     auto serviceLocatorClientHandle = serviceLocatorClient.Get();
@@ -133,10 +133,10 @@ namespace Details {
     \param service The name of the service to connect to.
   */
   inline Details::MarketDataClientSessionBuilder
-      BuildMarketDataClientSessionBuilder(Beam::RefType<
+      BuildMarketDataClientSessionBuilder(Beam::Ref<
       Beam::ServiceLocator::ApplicationServiceLocatorClient::Client>
-      serviceLocatorClient, Beam::RefType<Beam::Network::SocketThreadPool>
-      socketThreadPool, Beam::RefType<Beam::Threading::TimerThreadPool>
+      serviceLocatorClient, Beam::Ref<Beam::Network::SocketThreadPool>
+      socketThreadPool, Beam::Ref<Beam::Threading::TimerThreadPool>
       timerThreadPool, const std::string& service = RELAY_SERVICE_NAME) {
     auto serviceLocatorClientHandle = serviceLocatorClient.Get();
     auto socketThreadPoolHandle = socketThreadPool.Get();
@@ -165,9 +165,9 @@ namespace Details {
   }
 
   inline void ApplicationMarketDataClient::BuildSession(
-      Beam::RefType<Beam::ServiceLocator::ApplicationServiceLocatorClient::
-      Client> serviceLocatorClient, Beam::RefType<Beam::Network::
-      SocketThreadPool> socketThreadPool, Beam::RefType<
+      Beam::Ref<Beam::ServiceLocator::ApplicationServiceLocatorClient::
+      Client> serviceLocatorClient, Beam::Ref<Beam::Network::
+      SocketThreadPool> socketThreadPool, Beam::Ref<
       Beam::Threading::TimerThreadPool> timerThreadPool) {
     if(m_client.IsInitialized()) {
       m_client->Close();

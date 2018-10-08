@@ -21,7 +21,7 @@ namespace Nexus {
         \param eventHandler The event handler to publish timer events to.
       */
       BacktesterTimer(boost::posix_time::time_duration interval,
-        Beam::RefType<BacktesterEventHandler> eventHandler);
+        Beam::Ref<BacktesterEventHandler> eventHandler);
 
       ~BacktesterTimer();
 
@@ -70,7 +70,7 @@ namespace Nexus {
 
   inline BacktesterTimer::BacktesterTimer(
       boost::posix_time::time_duration interval,
-      Beam::RefType<BacktesterEventHandler> eventHandler)
+      Beam::Ref<BacktesterEventHandler> eventHandler)
       : m_interval{interval},
         m_eventHandler{eventHandler.Get()} {}
 

@@ -55,10 +55,10 @@ namespace Details {
                connection.
         \param timerThreadPool The TimerThreadPool used for heartbeats.
       */
-      void BuildSession(Beam::RefType<Beam::ServiceLocator::
+      void BuildSession(Beam::Ref<Beam::ServiceLocator::
         ApplicationServiceLocatorClient::Client> serviceLocatorClient,
-        Beam::RefType<Beam::Network::SocketThreadPool> socketThreadPool,
-        Beam::RefType<Beam::Threading::TimerThreadPool> timerThreadPool);
+        Beam::Ref<Beam::Network::SocketThreadPool> socketThreadPool,
+        Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
 
       //! Returns a reference to the Client.
       Client& operator *();
@@ -83,10 +83,10 @@ namespace Details {
   };
 
   inline void ApplicationOrderExecutionClient::BuildSession(
-      Beam::RefType<Beam::ServiceLocator::ApplicationServiceLocatorClient::
-      Client> serviceLocatorClient, Beam::RefType<Beam::Network::
-      SocketThreadPool> socketThreadPool, Beam::RefType<
-      Beam::Threading::TimerThreadPool> timerThreadPool) {
+      Beam::Ref<Beam::ServiceLocator::ApplicationServiceLocatorClient::Client>
+      serviceLocatorClient,
+      Beam::Ref<Beam::Network::SocketThreadPool> socketThreadPool,
+      Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool) {
     if(m_client.IsInitialized()) {
       m_client->Close();
       m_client.Reset();

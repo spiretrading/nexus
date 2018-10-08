@@ -68,7 +68,7 @@ namespace Nexus::MarketDataService {
         const MarketDataClientBuilder& marketDataClientBuilder,
         std::size_t minMarketDataClients, std::size_t maxMarketDataClients,
         AdministrationClientForward&& administrationClient,
-        Beam::RefType<Beam::Threading::TimerThreadPool> timerThreadPool);
+        Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
 
       void RegisterServices(Beam::Out<Beam::Services::ServiceSlots<
         ServiceProtocolClient>> slots);
@@ -172,7 +172,7 @@ namespace Nexus::MarketDataService {
       const MarketDataClientBuilder& marketDataClientBuilder,
       std::size_t minMarketDataClients, std::size_t maxMarketDataClients,
       AdministrationClientForward&& administrationClient,
-      Beam::RefType<Beam::Threading::TimerThreadPool> timerThreadPool)
+      Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool)
       : m_entitlementDatabase(entitlementDatabase),
         m_marketDataClients(clientTimeout, marketDataClientBuilder,
           Beam::Ref(timerThreadPool), minMarketDataClients,

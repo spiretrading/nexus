@@ -116,7 +116,7 @@ namespace Nexus::MarketDataService::Tests {
                authenticate the MarketDataClient.
       */
       std::unique_ptr<VirtualMarketDataClient> BuildClient(
-        Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
+        Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
         serviceLocatorClient);
 
       //! Builds a new MarketDataFeedClient.
@@ -125,7 +125,7 @@ namespace Nexus::MarketDataService::Tests {
                authenticate the MarketDataFeedClient.
       */
       std::unique_ptr<VirtualMarketDataFeedClient> BuildFeedClient(
-        Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
+        Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
         serviceLocatorClient);
 
     private:
@@ -268,7 +268,7 @@ namespace Nexus::MarketDataService::Tests {
 
   inline std::unique_ptr<VirtualMarketDataClient>
       MarketDataServiceTestEnvironment::BuildClient(
-      Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
+      Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
       serviceLocatorClient) {
     ServiceProtocolClientBuilder builder(Beam::Ref(serviceLocatorClient),
       [&] {
@@ -285,7 +285,7 @@ namespace Nexus::MarketDataService::Tests {
 
   inline std::unique_ptr<VirtualMarketDataFeedClient>
       MarketDataServiceTestEnvironment::BuildFeedClient(
-      Beam::RefType<ServiceLocatorClient> serviceLocatorClient) {
+      Beam::Ref<ServiceLocatorClient> serviceLocatorClient) {
     using Client = MarketDataService::MarketDataFeedClient<std::string,
       Beam::Threading::TriggerTimer*, Beam::Services::MessageProtocol<
       ClientChannel, Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,

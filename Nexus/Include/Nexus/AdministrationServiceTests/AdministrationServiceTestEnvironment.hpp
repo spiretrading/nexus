@@ -64,7 +64,7 @@ namespace Tests {
                authenticate the AdministrationClient.
       */
       std::unique_ptr<VirtualAdministrationClient> BuildClient(
-        Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
+        Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
         serviceLocatorClient);
 
     private:
@@ -167,7 +167,7 @@ namespace Tests {
 
   inline std::unique_ptr<VirtualAdministrationClient>
       AdministrationServiceTestEnvironment::BuildClient(
-      Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
+      Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
       serviceLocatorClient) {
     ServiceProtocolClientBuilder builder(Beam::Ref(serviceLocatorClient),
       [&, serviceLocatorClient = serviceLocatorClient.Get()] {
