@@ -15,14 +15,14 @@ ChartIntervalComboBoxWindowSettings::ChartIntervalComboBoxWindowSettings(
       m_geometry(widget.saveGeometry()) {}
 
 QWidget* ChartIntervalComboBoxWindowSettings::Reopen(
-    RefType<UserProfile> userProfile) const {
+    Ref<UserProfile> userProfile) const {
   auto comboBox = new ChartIntervalComboBox();
   Apply(Ref(userProfile), Store(*comboBox));
   return comboBox;
 }
 
 void ChartIntervalComboBoxWindowSettings::Apply(
-    RefType<UserProfile> userProfile, Out<QWidget> widget) const {
+    Ref<UserProfile> userProfile, Out<QWidget> widget) const {
   auto& comboBox = dynamic_cast<ChartIntervalComboBox&>(*widget);
   comboBox.restoreGeometry(m_geometry);
   comboBox.SetInterval(m_type, m_value);

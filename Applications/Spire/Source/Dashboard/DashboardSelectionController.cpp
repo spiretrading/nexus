@@ -10,7 +10,7 @@ using namespace Spire;
 using namespace std;
 
 DashboardSelectionController::DashboardSelectionController(
-    RefType<DashboardSelectionModel> model)
+    Ref<DashboardSelectionModel> model)
     : m_model{model.Get()},
       m_mouseState{MouseState::NONE},
       m_selectState{SelectState::NONE},

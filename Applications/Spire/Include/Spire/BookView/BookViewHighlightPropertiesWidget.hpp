@@ -33,8 +33,8 @@ namespace Spire {
         \param userProfile The user's profile.
         \param properties The BookViewProperties to represent.
       */
-      void Initialize(Beam::RefType<UserProfile> userProfile,
-        Beam::RefType<BookViewProperties> properties);
+      void Initialize(Beam::Ref<UserProfile> userProfile,
+        Beam::Ref<BookViewProperties> properties);
 
       void Redisplay();
 

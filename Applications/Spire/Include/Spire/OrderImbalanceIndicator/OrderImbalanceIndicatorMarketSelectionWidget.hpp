@@ -34,7 +34,7 @@ namespace Spire {
       */
       OrderImbalanceIndicatorMarketSelectionWidget(
         const Nexus::MarketDatabase& marketDatabase,
-        Beam::RefType<OrderImbalanceIndicatorModel> model,
+        Beam::Ref<OrderImbalanceIndicatorModel> model,
         QWidget* parent = nullptr);
 
       //! Initializes this widget.
@@ -43,7 +43,7 @@ namespace Spire {
         \param model The model to update.
       */
       void Initialize(const Nexus::MarketDatabase& marketDatabase,
-        Beam::RefType<OrderImbalanceIndicatorModel> model);
+        Beam::Ref<OrderImbalanceIndicatorModel> model);
 
       virtual std::unique_ptr<UI::WindowSettings> GetWindowSettings() const;
 

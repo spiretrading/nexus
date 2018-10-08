@@ -45,7 +45,7 @@ namespace Spire {
       */
       OrderTaskView(const DisplayWidgetSlot& displayWidgetSlot,
         const RemoveWidgetSlot& removeWidgetSlot,
-        Beam::RefType<QWidget> parent, Beam::RefType<UserProfile> userProfile);
+        Beam::Ref<QWidget> parent, Beam::Ref<UserProfile> userProfile);
 
       //! Handles a key event sent to the parent widget.
       /*!

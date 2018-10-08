@@ -18,7 +18,7 @@ namespace {
   struct ParserBuilder {
     template<typename T>
     static RuleParser<Record::Field> Template(const NativeType& type,
-        RefType<UserProfile> userProfile) {
+        Ref<UserProfile> userProfile) {
       RuleParser<Record::Field> parser;
       parser = typename ParserType<T>::type();
       return parser;
@@ -26,7 +26,7 @@ namespace {
 
     template<>
     static RuleParser<Record::Field> Template<Security>(const NativeType& type,
-        RefType<UserProfile> userProfile) {
+        Ref<UserProfile> userProfile) {
       RuleParser<Record::Field> parser;
       parser = ParserType<Security>::type(userProfile->GetMarketDatabase());
       return parser;
@@ -34,7 +34,7 @@ namespace {
 
     template<>
     static RuleParser<Record::Field> Template<Record>(const NativeType& type,
-        RefType<UserProfile> userProfile) {
+        Ref<UserProfile> userProfile) {
       RuleParser<Record::Field> parser;
       parser = ParserType<Record>::type(static_cast<const RecordType&>(type),
         Ref(userProfile));
@@ -47,7 +47,7 @@ namespace {
 }
 
 RecordParser::RecordParser(const RecordType& recordType,
-    RefType<UserProfile> userProfile) {
+    Ref<UserProfile> userProfile) {
   vector<RuleParser<Record::Field>> fieldParserList;
   for(const auto& field : recordType.GetFields()) {
     fieldParserList.push_back(

@@ -26,7 +26,7 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      EntitlementEntryWidget(Beam::RefType<UserProfile> userProfile,
+      EntitlementEntryWidget(Beam::Ref<UserProfile> userProfile,
         bool isReadOnly,
         const Nexus::MarketDataService::EntitlementDatabase::Entry& entitlement,
         std::shared_ptr<AccountEntitlementModel> model,

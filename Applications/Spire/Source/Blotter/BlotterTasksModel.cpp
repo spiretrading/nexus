@@ -88,14 +88,15 @@ namespace {
   }
 }
 
-BlotterTasksModel::TaskContext::TaskContext(RefType<UserProfile> userProfile,
+BlotterTasksModel::TaskContext::TaskContext(Ref<UserProfile> userProfile,
     const CanvasNode& node, const DirectoryEntry& executingAccount)
     : m_context(Ref(userProfile), Ref(m_reactorMonitor), executingAccount) {
   m_node = PreprocessTranslation(node);
   if(m_node == nullptr) {
     m_node = CanvasNode::Clone(node);
   }
-  CanvasNodeTaskFactory canvasNodeTaskFactory(Ref(m_context), Ref(*m_node));
+  auto canvasNodeTaskFactory = CanvasNodeTaskFactory(Ref(m_context),
+    Ref(*m_node));
   m_orderExecutionPublisher =
     canvasNodeTaskFactory.GetOrderExecutionPublisher();
   m_factory = ReactorMonitorTaskFactory(Ref(m_context.GetReactorMonitor()),
@@ -108,7 +109,7 @@ BlotterTasksModel::ObserverEntry::ObserverEntry(string name,
     : m_name(std::move(name)),
       m_observer(std::move(observer)) {}
 
-BlotterTasksModel::BlotterTasksModel(RefType<UserProfile> userProfile,
+BlotterTasksModel::BlotterTasksModel(Ref<UserProfile> userProfile,
     const DirectoryEntry& executingAccount, bool isConsolidated,
     const BlotterTaskProperties& properties)
     : m_userProfile(userProfile.Get()),
@@ -259,7 +260,7 @@ void BlotterTasksModel::Refresh() {
   endResetModel();
 }
 
-void BlotterTasksModel::Link(RefType<BlotterTasksModel> model) {
+void BlotterTasksModel::Link(Ref<BlotterTasksModel> model) {
   m_linkedOrderExecutionPublisher->Add(model->GetOrderExecutionPublisher());
   m_incomingLinks.push_back(model.Get());
   model->m_outgoingLinks.push_back(this);

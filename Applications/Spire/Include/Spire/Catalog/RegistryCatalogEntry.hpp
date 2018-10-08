@@ -23,7 +23,7 @@ namespace Spire {
         \param registryClient The RegistryClient used to save this CatalogEntry.
       */
       RegistryCatalogEntry(bool isReadOnly, const std::string& path,
-        Beam::RefType<Beam::RegistryService::VirtualRegistryClient>
+        Beam::Ref<Beam::RegistryService::VirtualRegistryClient>
         registryClient);
 
       //! Constructs a RegistryCatalogEntry.
@@ -37,7 +37,7 @@ namespace Spire {
       */
       RegistryCatalogEntry(const std::string& name, const std::string& iconPath,
         const std::string& description, const CanvasNode& node,
-        const std::string& path, Beam::RefType<
+        const std::string& path, Beam::Ref<
         Beam::RegistryService::VirtualRegistryClient> registryClient);
 
       //! Constructs a RegistryCatalogEntry.
@@ -52,7 +52,7 @@ namespace Spire {
       */
       RegistryCatalogEntry(const std::string& name, const std::string& iconPath,
         const std::string& description, const CanvasNode& node,
-        const boost::uuids::uuid& uid, const std::string& path, Beam::RefType<
+        const boost::uuids::uuid& uid, const std::string& path, Beam::Ref<
         Beam::RegistryService::VirtualRegistryClient> registryClient);
 
       virtual void Save() const;

@@ -62,7 +62,7 @@ namespace {
   };
 }
 
-Toolbar::Toolbar(RefType<UserProfile> userProfile, QWidget* parent,
+Toolbar::Toolbar(Ref<UserProfile> userProfile, QWidget* parent,
     Qt::WindowFlags flags)
     : QWidget(parent, flags),
       m_ui(std::make_unique<Ui_Toolbar>()),
@@ -269,7 +269,7 @@ void Toolbar::OnRestoreAllAction() {
 }
 
 void Toolbar::OnImportExportAction() {
-  ImportExportDialog dialog(Ref(*m_userProfile));
+  auto dialog = ImportExportDialog(Ref(*m_userProfile));
   dialog.exec();
 }
 

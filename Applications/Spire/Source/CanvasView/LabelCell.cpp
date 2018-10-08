@@ -6,7 +6,7 @@ using namespace boost;
 using namespace Spire;
 using namespace std;
 
-LabelCell::LabelCell(const string& name, RefType<const CanvasNode> node)
+LabelCell::LabelCell(const string& name, Ref<const CanvasNode> node)
     : m_name(name),
       m_node(node.Get()) {
   replace_all(m_name, "\\.", ".");

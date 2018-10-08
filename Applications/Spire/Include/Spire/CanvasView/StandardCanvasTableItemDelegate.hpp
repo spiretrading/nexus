@@ -16,7 +16,7 @@ namespace Spire {
       /*!
         \param parent The table displaying the item.
       */
-      StandardCanvasTableItemDelegate(Beam::RefType<CanvasTableWidget> parent);
+      StandardCanvasTableItemDelegate(Beam::Ref<CanvasTableWidget> parent);
 
       void paint(QPainter* painter, const QStyleOptionViewItem& option,
         const QModelIndex& index) const;

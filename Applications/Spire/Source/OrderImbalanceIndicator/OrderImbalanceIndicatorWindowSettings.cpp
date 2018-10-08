@@ -15,7 +15,7 @@ OrderImbalanceIndicatorWindowSettings::
 
 OrderImbalanceIndicatorWindowSettings::OrderImbalanceIndicatorWindowSettings(
     const OrderImbalanceIndicatorWindow& window,
-    RefType<UserProfile> userProfile)
+    Ref<UserProfile> userProfile)
     : m_properties(window.GetModel()->GetProperties()),
       m_geometry(window.saveGeometry()),
       m_tableHeaderGeometry(window.m_ui->m_orderImbalanceIndicatorTableView->
@@ -35,7 +35,7 @@ string OrderImbalanceIndicatorWindowSettings::GetName() const {
 }
 
 QWidget* OrderImbalanceIndicatorWindowSettings::Reopen(
-    RefType<UserProfile> userProfile) const {
+    Ref<UserProfile> userProfile) const {
   std::shared_ptr<OrderImbalanceIndicatorModel> model =
     std::make_shared<OrderImbalanceIndicatorModel>(Ref(userProfile),
     m_properties);
@@ -47,7 +47,7 @@ QWidget* OrderImbalanceIndicatorWindowSettings::Reopen(
 }
 
 void OrderImbalanceIndicatorWindowSettings::Apply(
-    RefType<UserProfile> userProfile, Out<QWidget> widget) const {
+    Ref<UserProfile> userProfile, Out<QWidget> widget) const {
   OrderImbalanceIndicatorWindow& window =
     dynamic_cast<OrderImbalanceIndicatorWindow&>(*widget);
   window.restoreGeometry(m_geometry);

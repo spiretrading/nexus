@@ -19,7 +19,7 @@ namespace Spire {
         \param userProfile The user's profile.
       */
       RecordParser(const RecordType& recordType,
-        Beam::RefType<UserProfile> userProfile);
+        Beam::Ref<UserProfile> userProfile);
   };
 }
 

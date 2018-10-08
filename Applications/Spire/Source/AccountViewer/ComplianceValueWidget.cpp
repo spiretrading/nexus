@@ -42,7 +42,7 @@ namespace {
     QWidget* m_parent;
     Qt::WindowFlags m_flags;
 
-    ComplianceWidgetVisitor(bool isReadOnly, RefType<UserProfile> userProfile,
+    ComplianceWidgetVisitor(bool isReadOnly, Ref<UserProfile> userProfile,
         QWidget* parent, Qt::WindowFlags flags)
         : m_isReadOnly{isReadOnly},
           m_userProfile{userProfile.Get()},
@@ -137,7 +137,7 @@ namespace {
 }
 
 QWidget* Spire::BuildComplianceValueWidget(ComplianceValue value,
-    bool isReadOnly, RefType<UserProfile> userProfile, QWidget* parent,
+    bool isReadOnly, Ref<UserProfile> userProfile, QWidget* parent,
     Qt::WindowFlags flags) {
   return apply_visitor(ComplianceWidgetVisitor{isReadOnly, Ref(userProfile),
     parent, flags}, value);

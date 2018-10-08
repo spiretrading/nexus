@@ -44,8 +44,8 @@ namespace Spire {
         \param reactorMonitor The ReactorMonitor.
         \param executingAccount The account used to execute Orders.
       */
-      CanvasNodeTranslationContext(Beam::RefType<UserProfile> userProfile,
-        Beam::RefType<Beam::Reactors::ReactorMonitor> reactorMonitor,
+      CanvasNodeTranslationContext(Beam::Ref<UserProfile> userProfile,
+        Beam::Ref<Beam::Reactors::ReactorMonitor> reactorMonitor,
         const Beam::ServiceLocator::DirectoryEntry& executingAccount);
 
       //! Constructs a CanvasNodeTranslationContext from a parent context.
@@ -53,7 +53,7 @@ namespace Spire {
         \param parent The parent CanvasNodeTranslationContext.
       */
       CanvasNodeTranslationContext(
-        Beam::RefType<CanvasNodeTranslationContext> parent);
+        Beam::Ref<CanvasNodeTranslationContext> parent);
 
       //! Returns the UserProfile.
       const UserProfile& GetUserProfile() const;
@@ -75,7 +75,7 @@ namespace Spire {
         \param node The CanvasNode that was translated.
         \param translation The Translation to associate with the <i>node</i>.
       */
-      void Add(Beam::RefType<const CanvasNode> node,
+      void Add(Beam::Ref<const CanvasNode> node,
         const Translation& translation);
 
       //! Finds a Translation.
@@ -123,7 +123,7 @@ namespace Spire {
         Nexus::MarketDataService::VirtualMarketDataClient*>>
         m_marketDataPublisher;
 
-      void AddSubtranslation(Beam::RefType<const CanvasNode> node,
+      void AddSubtranslation(Beam::Ref<const CanvasNode> node,
         const Translation& translation);
   };
 

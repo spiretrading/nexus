@@ -15,13 +15,13 @@ CancelOnFillController::OrderEntry::OrderEntry(const Order& order)
       m_cancelSubmitted(false),
       m_status(OrderStatus::PENDING_NEW) {}
 
-CancelOnFillController::CancelOnFillController(RefType<UserProfile> userProfile)
+CancelOnFillController::CancelOnFillController(Ref<UserProfile> userProfile)
     : m_userProfile(userProfile.Get()) {
   m_slotHandler.Initialize();
 }
 
 void CancelOnFillController::SetOrderExecutionPublisher(
-    RefType<OrderExecutionPublisher> orderExecutionPublisher) {
+    Ref<OrderExecutionPublisher> orderExecutionPublisher) {
   m_slotHandler.Reset();
   m_slotHandler.Initialize();
   m_orderExecutionPublisher = orderExecutionPublisher.Get();

@@ -23,7 +23,7 @@ CurrencyInputWidget::CurrencyInputWidget(QWidget* parent, Qt::WindowFlags flags)
     &CurrencyInputWidget::OnCurrencyActivated);
 }
 
-CurrencyInputWidget::CurrencyInputWidget(RefType<UserProfile> userProfile,
+CurrencyInputWidget::CurrencyInputWidget(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : CurrencyInputWidget{parent, flags} {
   Initialize(Ref(userProfile));
@@ -31,7 +31,7 @@ CurrencyInputWidget::CurrencyInputWidget(RefType<UserProfile> userProfile,
 
 CurrencyInputWidget::~CurrencyInputWidget() {}
 
-void CurrencyInputWidget::Initialize(RefType<UserProfile> userProfile) {
+void CurrencyInputWidget::Initialize(Ref<UserProfile> userProfile) {
   m_userProfile = userProfile.Get();
   auto& currencies = m_userProfile->GetCurrencyDatabase();
   for(auto& currency : currencies.GetEntries()) {

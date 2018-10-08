@@ -26,8 +26,8 @@ UserProfile::UserProfile(const string& username, bool isAdministrator,
     const vector<ExchangeRate>& exchangeRates,
     const MarketDatabase& marketDatabase,
     const DestinationDatabase& destinationDatabase,
-    RefType<TimerThreadPool> timerThreadPool,
-    RefType<ServiceClients> serviceClients)
+    Ref<TimerThreadPool> timerThreadPool,
+    Ref<ServiceClients> serviceClients)
     : m_username(username),
       m_isAdministrator{isAdministrator},
       m_isManager{isManager},

@@ -144,8 +144,8 @@ namespace Spire {
         \param selectionModel The PortfolioSelectionModel used to filter this
                model.
       */
-      PortfolioViewerModel(Beam::RefType<UserProfile> userProfile,
-        Beam::RefType<PortfolioSelectionModel> selectionModel);
+      PortfolioViewerModel(Beam::Ref<UserProfile> userProfile,
+        Beam::Ref<PortfolioSelectionModel> selectionModel);
 
       virtual ~PortfolioViewerModel();
 

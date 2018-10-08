@@ -18,7 +18,7 @@ namespace Spire {
       /*!
         \param node The CanvasNode represented.
       */
-      ValueCell(Beam::RefType<const CanvasNode> node);
+      ValueCell(Beam::Ref<const CanvasNode> node);
 
       //! Returns the errors associated with this cell.
       const std::vector<CanvasNodeValidationError>& GetErrors() const;

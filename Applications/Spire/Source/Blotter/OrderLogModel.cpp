@@ -47,7 +47,7 @@ const OrderLogModel::OrderEntry& OrderLogModel::GetEntry(
 }
 
 void OrderLogModel::SetOrderExecutionPublisher(
-    RefType<OrderExecutionPublisher> orderExecutionPublisher) {
+    Ref<OrderExecutionPublisher> orderExecutionPublisher) {
   if(!m_entries.empty()) {
     beginRemoveRows(QModelIndex(), 0, m_entries.size() - 1);
     vector<OrderEntry> entries;

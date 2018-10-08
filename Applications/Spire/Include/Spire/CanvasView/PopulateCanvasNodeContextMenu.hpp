@@ -17,8 +17,8 @@ namespace Spire {
     \param userProfile The user's profile.
     \param menu The menu to populate.
   */
-  void PopulateCanvasNodeContextMenu(Beam::RefType<CanvasNodeModel> view,
-    const CanvasNode& node, Beam::RefType<UserProfile> userProfile,
+  void PopulateCanvasNodeContextMenu(Beam::Ref<CanvasNodeModel> view,
+    const CanvasNode& node, Beam::Ref<UserProfile> userProfile,
     Beam::Out<QMenu> menu);
 }
 

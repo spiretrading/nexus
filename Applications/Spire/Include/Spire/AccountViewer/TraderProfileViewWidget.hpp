@@ -38,7 +38,7 @@ namespace Spire {
         \param riskModel The RiskModel to display.
         \param complianceModel The ComplianceModel to display.
       */
-      void Initialize(Beam::RefType<UserProfile> userProfile,
+      void Initialize(Beam::Ref<UserProfile> userProfile,
         bool isReadOnly, bool isPasswordReadOnly,
         std::shared_ptr<AccountInfoModel> accountInfoModel,
         std::shared_ptr<AccountEntitlementModel> accountEntitlementModel,

@@ -107,7 +107,7 @@ namespace UI {
         \param userProfile The user's profile.
         \param parent The parent object.
       */
-      CustomVariantItemDelegate(Beam::RefType<UserProfile> userProfile,
+      CustomVariantItemDelegate(Beam::Ref<UserProfile> userProfile,
         QObject* parent = nullptr);
 
       virtual ~CustomVariantItemDelegate();
@@ -130,7 +130,7 @@ namespace UI {
         \param userProfile The user's profile.
         \param parent The parent object.
       */
-      CustomVariantSortFilterProxyModel(Beam::RefType<UserProfile> userProfile,
+      CustomVariantSortFilterProxyModel(Beam::Ref<UserProfile> userProfile,
         QObject* parent = nullptr);
 
       virtual ~CustomVariantSortFilterProxyModel();

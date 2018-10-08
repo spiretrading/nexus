@@ -29,7 +29,7 @@ namespace Spire {
       /*!
         \param userProfile The user's profile.
       */
-      RiskTimerModel(Beam::RefType<UserProfile> userProfile);
+      RiskTimerModel(Beam::Ref<UserProfile> userProfile);
 
       //! Returns the time remaining before the next RiskState transition.
       const boost::posix_time::time_duration& GetTimeRemaining() const;

@@ -9,7 +9,7 @@ using namespace Nexus;
 using namespace Nexus::AdministrationService;
 using namespace Spire;
 
-AccountInfoModel::AccountInfoModel(RefType<UserProfile> userProfile,
+AccountInfoModel::AccountInfoModel(Ref<UserProfile> userProfile,
     const DirectoryEntry& account)
     : m_userProfile(userProfile.Get()),
       m_account(account) {}

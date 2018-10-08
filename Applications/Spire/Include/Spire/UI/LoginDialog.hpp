@@ -34,8 +34,8 @@ namespace UI {
       */
       LoginDialog(const Beam::Network::IpAddress& address,
         const std::string& username, bool saveLoginInfo,
-        Beam::RefType<Beam::Network::SocketThreadPool> socketThreadPool,
-        Beam::RefType<Beam::Threading::TimerThreadPool> timerThreadPool);
+        Beam::Ref<Beam::Network::SocketThreadPool> socketThreadPool,
+        Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
 
       virtual ~LoginDialog();
 

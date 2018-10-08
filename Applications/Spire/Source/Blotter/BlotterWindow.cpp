@@ -32,7 +32,7 @@ namespace {
 
   class LinkBlotterAction : public QAction {
     public:
-      LinkBlotterAction(RefType<BlotterModel> blotterModel, QObject* parent);
+      LinkBlotterAction(Ref<BlotterModel> blotterModel, QObject* parent);
 
       virtual ~LinkBlotterAction();
 
@@ -43,7 +43,7 @@ namespace {
   };
 }
 
-LinkBlotterAction::LinkBlotterAction(RefType<BlotterModel> blotterModel,
+LinkBlotterAction::LinkBlotterAction(Ref<BlotterModel> blotterModel,
     QObject* parent)
     : QAction(parent),
       m_blotterModel(blotterModel.Get()) {}
@@ -54,13 +54,13 @@ BlotterModel& LinkBlotterAction::GetBlotterModel() {
   return *m_blotterModel;
 }
 
-BlotterWindow& BlotterWindow::GetBlotterWindow(RefType<UserProfile> userProfile,
-    RefType<BlotterModel> model) {
+BlotterWindow& BlotterWindow::GetBlotterWindow(Ref<UserProfile> userProfile,
+    Ref<BlotterModel> model) {
   return GetBlotterWindow(Ref(userProfile), Ref(model), nullptr, 0);
 }
 
-BlotterWindow& BlotterWindow::GetBlotterWindow(RefType<UserProfile> userProfile,
-    RefType<BlotterModel> model, QWidget* parent, Qt::WindowFlags flags) {
+BlotterWindow& BlotterWindow::GetBlotterWindow(Ref<UserProfile> userProfile,
+    Ref<BlotterModel> model, QWidget* parent, Qt::WindowFlags flags) {
   auto windowIterator = blotterWindows.find(model.Get());
   if(windowIterator == blotterWindows.end()) {
     auto window = new BlotterWindow(userProfile.Get(), model.Get(), parent,

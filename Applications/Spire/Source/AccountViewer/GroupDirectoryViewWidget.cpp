@@ -17,7 +17,7 @@ GroupDirectoryViewWidget::GroupDirectoryViewWidget(QWidget* parent,
 
 GroupDirectoryViewWidget::~GroupDirectoryViewWidget() {}
 
-void GroupDirectoryViewWidget::Initialize(RefType<UserProfile> userProfile,
+void GroupDirectoryViewWidget::Initialize(Ref<UserProfile> userProfile,
     bool isReadOnly, const DirectoryEntry& directoryEntry,
     std::shared_ptr<ComplianceModel> complianceModel) {
   m_ui->m_complianceTab->Initialize(Ref(userProfile), isReadOnly);

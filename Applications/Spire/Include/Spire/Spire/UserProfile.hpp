@@ -58,8 +58,8 @@ namespace Spire {
         const std::vector<Nexus::ExchangeRate>& exchangeRates,
         const Nexus::MarketDatabase& marketDatabase,
         const Nexus::DestinationDatabase& destinationDatabase,
-        Beam::RefType<Beam::Threading::TimerThreadPool> timerThreadPool,
-        Beam::RefType<ServiceClients> serviceClients);
+        Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool,
+        Beam::Ref<ServiceClients> serviceClients);
 
       virtual ~UserProfile();
 

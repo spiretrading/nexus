@@ -22,7 +22,7 @@ namespace {
 }
 
 OrderImbalanceIndicatorWindow::OrderImbalanceIndicatorWindow(
-    RefType<UserProfile> userProfile,
+    Ref<UserProfile> userProfile,
     const std::shared_ptr<OrderImbalanceIndicatorModel>& model, QWidget* parent,
     Qt::WindowFlags flags)
     : QFrame(parent, flags),

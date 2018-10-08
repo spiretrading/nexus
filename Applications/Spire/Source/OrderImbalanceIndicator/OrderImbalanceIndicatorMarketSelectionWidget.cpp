@@ -21,14 +21,14 @@ OrderImbalanceIndicatorMarketSelectionWidget::
 OrderImbalanceIndicatorMarketSelectionWidget::
     OrderImbalanceIndicatorMarketSelectionWidget(
     const MarketDatabase& marketDatabase,
-    RefType<OrderImbalanceIndicatorModel> model, QWidget* parent)
+    Ref<OrderImbalanceIndicatorModel> model, QWidget* parent)
     : QWidget(parent) {
   Initialize(marketDatabase, Ref(model));
 }
 
 void OrderImbalanceIndicatorMarketSelectionWidget::Initialize(
     const MarketDatabase& marketDatabase,
-    RefType<OrderImbalanceIndicatorModel> model) {
+    Ref<OrderImbalanceIndicatorModel> model) {
   m_model = model.Get();
   QGridLayout* layout = new QGridLayout();
   setLayout(layout);

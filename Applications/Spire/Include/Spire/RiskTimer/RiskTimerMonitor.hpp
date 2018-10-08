@@ -22,7 +22,7 @@ namespace Spire {
       /*!
         \param userProfile The user's profile.
       */
-      RiskTimerMonitor(Beam::RefType<UserProfile> userProfile);
+      RiskTimerMonitor(Beam::Ref<UserProfile> userProfile);
 
       ~RiskTimerMonitor();
 

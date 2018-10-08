@@ -24,7 +24,7 @@ namespace {
   }
 }
 
-TimeInputDialog::TimeInputDialog(RefType<UserProfile> userProfile,
+TimeInputDialog::TimeInputDialog(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui{std::make_unique<Ui_TimeInputDialog>()},
@@ -44,7 +44,7 @@ TimeInputDialog::TimeInputDialog(RefType<UserProfile> userProfile,
 }
 
 TimeInputDialog::TimeInputDialog(const time_duration& initialValue,
-    RefType<UserProfile> userProfile, QWidget* parent, Qt::WindowFlags flags)
+    Ref<UserProfile> userProfile, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_TimeInputDialog>()),
       m_userProfile(userProfile.Get()) {

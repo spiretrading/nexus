@@ -28,7 +28,7 @@ namespace {
   class CanvasNodeTypeFilterProxyModel : public QSortFilterProxyModel {
     public:
       CanvasNodeTypeFilterProxyModel(const CatalogTabView::Filter& filter,
-          RefType<CatalogTabModel> model, QObject* parent)
+          Ref<CatalogTabModel> model, QObject* parent)
           : QSortFilterProxyModel(parent),
             m_filter(filter),
             m_model(model.Get()) {
@@ -57,9 +57,9 @@ namespace {
   };
 }
 
-CatalogTabView::CatalogTabView(RefType<CatalogTabModel> model,
-    RefType<CatalogSearchBarModel> searchBarModel, const Filter& filter,
-    RefType<UserProfile> userProfile, bool saving, QWidget* parent,
+CatalogTabView::CatalogTabView(Ref<CatalogTabModel> model,
+    Ref<CatalogSearchBarModel> searchBarModel, const Filter& filter,
+    Ref<UserProfile> userProfile, bool saving, QWidget* parent,
     Qt::WindowFlags flags)
     : QWidget(parent, flags),
       m_ui(std::make_unique<Ui_CatalogTabView>()),

@@ -12,7 +12,7 @@ using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
 
-OptionalPriceSpinBox::OptionalPriceSpinBox(RefType<UserProfile> userProfile,
+OptionalPriceSpinBox::OptionalPriceSpinBox(Ref<UserProfile> userProfile,
     const OptionalPriceNode& node, QWidget* parent)
     : QDoubleSpinBox(parent),
       m_userProfile(userProfile.Get()),

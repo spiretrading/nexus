@@ -20,7 +20,7 @@ namespace {
   static const int COLUMN_COUNT = 2;
 }
 
-FileReaderNodeDialog::FileReaderNodeDialog(RefType<UserProfile> userProfile,
+FileReaderNodeDialog::FileReaderNodeDialog(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : m_ui(std::make_unique<Ui_FileReaderNodeDialog>()),
       m_userProfile(userProfile.Get()) {
@@ -28,7 +28,7 @@ FileReaderNodeDialog::FileReaderNodeDialog(RefType<UserProfile> userProfile,
 }
 
 FileReaderNodeDialog::FileReaderNodeDialog(const FileReaderNode& node,
-    RefType<UserProfile> userProfile, QWidget* parent, Qt::WindowFlags flags)
+    Ref<UserProfile> userProfile, QWidget* parent, Qt::WindowFlags flags)
     : m_ui(std::make_unique<Ui_FileReaderNodeDialog>()),
       m_userProfile(userProfile.Get()) {
   Setup(node);

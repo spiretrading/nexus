@@ -100,8 +100,8 @@ DashboardWidget::DashboardWidget(QWidget* parent, Qt::WindowFlags flags)
 
 DashboardWidget::~DashboardWidget() {}
 
-void DashboardWidget::Initialize(RefType<DashboardModel> model,
-    const DashboardRowBuilder& rowBuilder, RefType<UserProfile> userProfile) {
+void DashboardWidget::Initialize(Ref<DashboardModel> model,
+    const DashboardRowBuilder& rowBuilder, Ref<UserProfile> userProfile) {
   m_model = model.Get();
   m_rowBuilder = rowBuilder.Clone();
   m_userProfile = userProfile.Get();

@@ -11,7 +11,7 @@ using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
 
-DeleteNodeCommand::DeleteNodeCommand(RefType<CanvasNodeModel> view,
+DeleteNodeCommand::DeleteNodeCommand(Ref<CanvasNodeModel> view,
     const CanvasNodeModel::Coordinate& coordinate)
     : m_view(view.Get()),
       m_coordinate(coordinate) {}

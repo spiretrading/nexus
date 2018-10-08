@@ -41,7 +41,7 @@ InteractionsWidget::InteractionsWidget(QWidget* parent, Qt::WindowFlags flags)
 
 InteractionsWidget::~InteractionsWidget() {}
 
-void InteractionsWidget::Initialize(RefType<UserProfile> userProfile) {
+void InteractionsWidget::Initialize(Ref<UserProfile> userProfile) {
   m_userProfile = userProfile.Get();
   m_properties = m_userProfile->GetInteractionProperties();
   m_ui->m_regionComboBox->clear();
@@ -78,7 +78,7 @@ void InteractionsWidget::Initialize(RefType<UserProfile> userProfile) {
   Update();
 }
 
-void InteractionsWidget::Initialize(RefType<UserProfile> userProfile,
+void InteractionsWidget::Initialize(Ref<UserProfile> userProfile,
     const Security& security) {
   m_userProfile = userProfile.Get();
   m_properties = m_userProfile->GetInteractionProperties();

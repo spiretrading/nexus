@@ -21,7 +21,7 @@ namespace Spire {
         \param node The CanvasNode that is invalid.
         \param message The error message.
       */
-      CanvasNodeValidationError(Beam::RefType<const CanvasNode> node,
+      CanvasNodeValidationError(Beam::Ref<const CanvasNode> node,
         std::string message);
 
       //! Returns the invalid CanvasNode.

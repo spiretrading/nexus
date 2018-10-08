@@ -48,7 +48,7 @@ namespace Spire {
         \param properties The properties used to model the selection.
         \param parent The parent object.
       */
-      PortfolioSelectionModel(Beam::RefType<UserProfile> userProfile,
+      PortfolioSelectionModel(Beam::Ref<UserProfile> userProfile,
         const PortfolioViewerProperties& properties, QObject* parent = nullptr);
 
       virtual ~PortfolioSelectionModel();

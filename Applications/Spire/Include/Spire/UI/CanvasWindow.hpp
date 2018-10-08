@@ -31,7 +31,7 @@ namespace UI {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      CanvasWindow(Beam::RefType<UserProfile> userProfile,
+      CanvasWindow(Beam::Ref<UserProfile> userProfile,
         QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
 
       //! Returns the CanvasNodeModel being displayed.

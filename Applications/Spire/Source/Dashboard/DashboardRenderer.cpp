@@ -16,7 +16,7 @@ using namespace std;
 
 namespace {
   DashboardRenderer::DashboardRowRendererBuilder
-      GetDefaultHeaderRendererBuilder(RefType<UserProfile> userProfile) {
+      GetDefaultHeaderRendererBuilder(Ref<UserProfile> userProfile) {
     auto rowRenderer = [=] (const DashboardRow& row) {
       auto renderer = std::make_unique<DashboardRowRenderer>(Ref(row),
         [=] (const DashboardCell& cell) {
@@ -34,10 +34,10 @@ namespace {
   }
 }
 
-DashboardRenderer::DashboardRenderer(RefType<const DashboardModel> model,
-    RefType<const DashboardSelectionModel> selectionModel,
+DashboardRenderer::DashboardRenderer(Ref<const DashboardModel> model,
+    Ref<const DashboardSelectionModel> selectionModel,
     const DashboardRowRendererBuilder& rowRendererBuilder,
-    RefType<UserProfile> userProfile)
+    Ref<UserProfile> userProfile)
     : m_model{model.Get()},
       m_selectionModel{selectionModel.Get()},
       m_rowRendererBuilder{rowRendererBuilder},

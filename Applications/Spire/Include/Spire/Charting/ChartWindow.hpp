@@ -36,7 +36,7 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      ChartWindow(Beam::RefType<UserProfile> userProfile,
+      ChartWindow(Beam::Ref<UserProfile> userProfile,
         const std::string& identifier = "", QWidget* parent = nullptr,
         Qt::WindowFlags flags = 0);
 

@@ -27,7 +27,7 @@ using namespace Spire::UI;
 using namespace std;
 
 GroupProfitAndLossReportWidget::ReportModel::ReportModel(
-    RefType<UserProfile> userProfile,
+    Ref<UserProfile> userProfile,
     const std::shared_ptr<OrderExecutionPublisher>& orderPublisher)
     : m_orderPublisher(orderPublisher),
       m_profitAndLossModel(Ref(userProfile->GetCurrencyDatabase()),
@@ -51,7 +51,7 @@ GroupProfitAndLossReportWidget::GroupProfitAndLossReportWidget(QWidget* parent,
 GroupProfitAndLossReportWidget::~GroupProfitAndLossReportWidget() {}
 
 void GroupProfitAndLossReportWidget::Initialize(
-    RefType<UserProfile> userProfile, const DirectoryEntry& group) {
+    Ref<UserProfile> userProfile, const DirectoryEntry& group) {
   m_userProfile = userProfile.Get();
   m_group = group;
   m_ui->m_fromPeriodDateEdit->setDate(ToQDateTime(ToLocalTime(

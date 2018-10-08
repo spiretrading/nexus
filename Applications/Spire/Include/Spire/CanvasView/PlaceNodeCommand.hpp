@@ -49,7 +49,7 @@ namespace Spire {
         \param coordinate The Coordinate of the node to place.
         \param node The node to place.
       */
-      PlaceNodeCommand(Beam::RefType<CanvasNodeModel> view,
+      PlaceNodeCommand(Beam::Ref<CanvasNodeModel> view,
         const CanvasNodeModel::Coordinate& coordinate, const CanvasNode& node);
 
       virtual void undo();

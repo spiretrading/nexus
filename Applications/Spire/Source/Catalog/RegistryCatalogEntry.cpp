@@ -35,14 +35,14 @@ const string& RegistryCatalogEntry::GetRegistrySourceValue() {
 }
 
 RegistryCatalogEntry::RegistryCatalogEntry(bool isReadOnly,
-    const string& path, RefType<VirtualRegistryClient> registryClient)
+    const string& path, Ref<VirtualRegistryClient> registryClient)
     : m_isReadOnly(isReadOnly),
       m_path(path),
       m_registryClient(registryClient.Get()) {}
 
 RegistryCatalogEntry::RegistryCatalogEntry(const string& name,
     const string& iconPath, const string& description, const CanvasNode& node,
-    const string& path, RefType<VirtualRegistryClient> registryClient)
+    const string& path, Ref<VirtualRegistryClient> registryClient)
     : PersistentCatalogEntry(GenerateUid()),
       m_isReadOnly(false),
       m_name(name),
@@ -63,7 +63,7 @@ RegistryCatalogEntry::RegistryCatalogEntry(const string& name,
 RegistryCatalogEntry::RegistryCatalogEntry(const string& name,
     const string& iconPath, const string& description, const CanvasNode& node,
     const uuid& uid, const string& path,
-    RefType<VirtualRegistryClient> registryClient)
+    Ref<VirtualRegistryClient> registryClient)
     : PersistentCatalogEntry(uid),
       m_isReadOnly(false),
       m_name(name),
@@ -88,7 +88,7 @@ void RegistryCatalogEntry::Save() const {
   SharedBuffer buffer;
   TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
   RegisterSpireTypes(Store(typeRegistry));
-  BinarySender<SharedBuffer> sender(Ref(typeRegistry));
+  auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
   sender.SetSink(Ref(buffer));
   sender.Shuttle(*this);
   m_registryClient->Store(GetName(), buffer, directory);

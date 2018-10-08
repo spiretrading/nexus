@@ -35,8 +35,8 @@ PortfolioViewerModel::TotalEntry::TotalEntry()
     : m_volume(0),
       m_trades(0) {}
 
-PortfolioViewerModel::PortfolioViewerModel(RefType<UserProfile> userProfile,
-    RefType<PortfolioSelectionModel> selectionModel)
+PortfolioViewerModel::PortfolioViewerModel(Ref<UserProfile> userProfile,
+    Ref<PortfolioSelectionModel> selectionModel)
     : m_userProfile(userProfile.Get()),
       m_totalCurrency(DefaultCurrencies::CAD()),
       m_exchangeRates(&m_userProfile->GetExchangeRates()),

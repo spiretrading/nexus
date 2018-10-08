@@ -16,7 +16,7 @@ namespace Spire {
       /*!
         \param userProfile The user's profile.
       */
-      BlotterTaskEntryItemDelegate(Beam::RefType<UserProfile> userProfile);
+      BlotterTaskEntryItemDelegate(Beam::Ref<UserProfile> userProfile);
 
       virtual ~BlotterTaskEntryItemDelegate();
 

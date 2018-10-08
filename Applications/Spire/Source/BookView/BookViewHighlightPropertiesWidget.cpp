@@ -46,7 +46,7 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
 BookViewHighlightPropertiesWidget::~BookViewHighlightPropertiesWidget() {}
 
 void BookViewHighlightPropertiesWidget::Initialize(
-    RefType<UserProfile> userProfile, RefType<BookViewProperties> properties) {
+    Ref<UserProfile> userProfile, Ref<BookViewProperties> properties) {
   m_userProfile = userProfile.Get();
   m_properties = properties.Get();
   auto marketEntries = m_userProfile->GetMarketDatabase().GetEntries();

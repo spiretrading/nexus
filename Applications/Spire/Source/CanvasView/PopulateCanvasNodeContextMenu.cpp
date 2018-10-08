@@ -17,8 +17,8 @@ using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
 
-void Spire::PopulateCanvasNodeContextMenu(RefType<CanvasNodeModel> view,
-    const CanvasNode& node, RefType<UserProfile> userProfile, Out<QMenu> menu) {
+void Spire::PopulateCanvasNodeContextMenu(Ref<CanvasNodeModel> view,
+    const CanvasNode& node, Ref<UserProfile> userProfile, Out<QMenu> menu) {
   auto coordinate = view->GetCoordinate(node);
   auto cutAction = new CommandAction(
     make_unique<CutNodeCommand>(Ref(view), coordinate), menu.Get());

@@ -9,7 +9,7 @@ using namespace Spire;
 using namespace std;
 
 BookViewPropertiesDialog::BookViewPropertiesDialog(
-    RefType<UserProfile> userProfile, const Security& security,
+    Ref<UserProfile> userProfile, const Security& security,
     const BookViewProperties& properties, QWidget* parent,
     Qt::WindowFlags flags)
     : QDialog(parent, flags),

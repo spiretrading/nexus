@@ -30,8 +30,8 @@ using namespace Spire;
 using namespace std;
 
 OrderTaskView::OrderTaskView(const DisplayWidgetSlot& displayWidgetSlot,
-    const RemoveWidgetSlot& removeWidgetSlot,  RefType<QWidget> parent,
-    RefType<UserProfile> userProfile)
+    const RemoveWidgetSlot& removeWidgetSlot,  Ref<QWidget> parent,
+    Ref<UserProfile> userProfile)
     : m_parent{parent.Get()},
       m_userProfile{userProfile.Get()},
       m_isTaskEntryWidgetForInteractionsProperties{false},

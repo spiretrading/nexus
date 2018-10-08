@@ -21,7 +21,7 @@ namespace Spire {
         \param coordinate The Coordinate to add the root at.
         \param node The node to add.
       */
-      AddRootCommand(Beam::RefType<CanvasNodeModel> view,
+      AddRootCommand(Beam::Ref<CanvasNodeModel> view,
         const CanvasNodeModel::Coordinate& coordinate, const CanvasNode& node);
 
       virtual void undo();

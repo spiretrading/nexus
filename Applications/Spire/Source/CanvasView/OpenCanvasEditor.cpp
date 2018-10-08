@@ -64,8 +64,8 @@ using namespace std;
 namespace {
   class OpenEditorCanvasNodeVisitor : public CanvasNodeVisitor {
     public:
-      OpenEditorCanvasNodeVisitor(RefType<const CanvasNode> node,
-        RefType<CanvasNodeModel> model, RefType<UserProfile> userProfile,
+      OpenEditorCanvasNodeVisitor(Ref<const CanvasNode> node,
+        Ref<CanvasNodeModel> model, Ref<UserProfile> userProfile,
         QEvent* event);
       CanvasNodeEditor::EditVariant GetEditor();
       virtual void Visit(const BooleanNode& node);
@@ -113,8 +113,8 @@ CanvasNodeEditor::EditVariant Spire::OpenCanvasEditor(const CanvasNode& node,
 }
 
 OpenEditorCanvasNodeVisitor::OpenEditorCanvasNodeVisitor(
-    RefType<const CanvasNode> node, RefType<CanvasNodeModel> model,
-    RefType<UserProfile> userProfile, QEvent* event)
+    Ref<const CanvasNode> node, Ref<CanvasNodeModel> model,
+    Ref<UserProfile> userProfile, QEvent* event)
     : m_node(node.Get()),
       m_model(model.Get()),
       m_userProfile(userProfile.Get()),

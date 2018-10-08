@@ -23,7 +23,7 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      BookViewPropertiesDialog(Beam::RefType<UserProfile> userProfile,
+      BookViewPropertiesDialog(Beam::Ref<UserProfile> userProfile,
         const Nexus::Security& security, const BookViewProperties& properties,
         QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
 

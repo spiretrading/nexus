@@ -35,7 +35,7 @@ namespace {
     {60, 60, 40, 60, 60};
 }
 
-TimeAndSalesWindow::TimeAndSalesWindow(RefType<UserProfile> userProfile,
+TimeAndSalesWindow::TimeAndSalesWindow(Ref<UserProfile> userProfile,
     const TimeAndSalesProperties& properties, const string& identifier,
     QWidget* parent, Qt::WindowFlags flags)
     : QFrame(parent, flags),

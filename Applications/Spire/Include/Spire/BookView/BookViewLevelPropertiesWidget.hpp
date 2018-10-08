@@ -31,7 +31,7 @@ namespace Spire {
       /*!
         \param properties The BookViewProperties to represent.
       */
-      void Initialize(Beam::RefType<BookViewProperties> properties);
+      void Initialize(Beam::Ref<BookViewProperties> properties);
 
       void Redisplay();
 

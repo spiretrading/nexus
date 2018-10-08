@@ -17,7 +17,7 @@ namespace Spire {
         \param label The cell's label.
         \param node The CanvasNode represented by this cell.
       */
-      LabelCell(const std::string& label, Beam::RefType<const CanvasNode> node);
+      LabelCell(const std::string& label, Beam::Ref<const CanvasNode> node);
 
       virtual const CanvasNode& GetNode() const;
 

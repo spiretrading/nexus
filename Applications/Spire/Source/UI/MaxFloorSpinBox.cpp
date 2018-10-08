@@ -13,7 +13,7 @@ using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
 
-MaxFloorSpinBox::MaxFloorSpinBox(RefType<UserProfile> userProfile,
+MaxFloorSpinBox::MaxFloorSpinBox(Ref<UserProfile> userProfile,
     const MaxFloorNode& node, QWidget* parent)
     : QSpinBox(parent),
       m_userProfile(userProfile.Get()) {

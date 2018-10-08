@@ -20,8 +20,8 @@ namespace Spire {
         \param node The CanvasNode to translate into a Task.
         \param orderExecutionPublisher Reports this Task's Order executions.
       */
-      CanvasNodeTask(Beam::RefType<CanvasNodeTranslationContext> context,
-        Beam::RefType<const CanvasNode> node,
+      CanvasNodeTask(Beam::Ref<CanvasNodeTranslationContext> context,
+        Beam::Ref<const CanvasNode> node,
         const std::shared_ptr<SpireAggregateOrderExecutionPublisher>&
         orderExecutionPublisher);
 
@@ -63,8 +63,8 @@ namespace Spire {
         \param context The context to translate the <i>node</i> in.
         \param node The CanvasNode to translate into an Task.
       */
-      CanvasNodeTaskFactory(Beam::RefType<CanvasNodeTranslationContext> context,
-        Beam::RefType<const CanvasNode> node);
+      CanvasNodeTaskFactory(Beam::Ref<CanvasNodeTranslationContext> context,
+        Beam::Ref<const CanvasNode> node);
 
       //! Returns the OrderExecutionMonitor.
       std::shared_ptr<Nexus::OrderExecutionService::OrderExecutionPublisher>

@@ -58,8 +58,8 @@ namespace Spire {
         \param userProfile The user's profile.
         \param model The model to represent.
       */
-      void SetModel(Beam::RefType<UserProfile> userProfile,
-        Beam::RefType<BlotterModel> model);
+      void SetModel(Beam::Ref<UserProfile> userProfile,
+        Beam::Ref<BlotterModel> model);
 
     private:
       std::unique_ptr<Ui_OpenPositionsWidget> m_ui;

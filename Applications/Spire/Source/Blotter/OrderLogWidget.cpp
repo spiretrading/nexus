@@ -23,8 +23,8 @@ namespace {
 
   class OrderLogFilterProxyModel : public CustomVariantSortFilterProxyModel {
     public:
-      OrderLogFilterProxyModel(RefType<UserProfile> userProfile,
-          RefType<OrderLogModel> sourceModel)
+      OrderLogFilterProxyModel(Ref<UserProfile> userProfile,
+          Ref<OrderLogModel> sourceModel)
           : CustomVariantSortFilterProxyModel(Ref(userProfile)),
             m_sourceModel(sourceModel.Get()) {
         setSourceModel(m_sourceModel);
@@ -87,8 +87,8 @@ void OrderLogWidget::SetUIState(const UIState& state) {
   m_ui->m_orderLogTable->horizontalHeader()->restoreState(state.m_tableState);
 }
 
-void OrderLogWidget::SetModel(RefType<UserProfile> userProfile,
-    RefType<BlotterModel> model) {
+void OrderLogWidget::SetModel(Ref<UserProfile> userProfile,
+    Ref<BlotterModel> model) {
   m_userProfile = userProfile.Get();
   m_orderEntries.clear();
   m_ui->m_orderLogTable->reset();

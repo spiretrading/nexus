@@ -16,7 +16,7 @@ using namespace Beam::ServiceLocator;
 using namespace Spire;
 using namespace std;
 
-AccountViewModel::AccountViewModel(RefType<UserProfile> userProfile,
+AccountViewModel::AccountViewModel(Ref<UserProfile> userProfile,
     QObject* parent)
     : QAbstractTableModel(parent),
       m_userProfile(userProfile.Get()) {}

@@ -34,7 +34,7 @@ namespace Spire {
       /*!
         \param entry The CatalogEntry to add.
       */
-      void Add(Beam::RefType<CatalogEntry> entry);
+      void Add(Beam::Ref<CatalogEntry> entry);
 
       //! Removes a CatalogEntry from this tab.
       /*!

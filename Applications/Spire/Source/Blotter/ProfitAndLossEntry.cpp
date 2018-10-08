@@ -13,8 +13,8 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::UI;
 
-ProfitAndLossEntry::ProfitAndLossEntry(RefType<UserProfile> userProfile,
-    RefType<ProfitAndLossEntryModel> model, QWidget* parent,
+ProfitAndLossEntry::ProfitAndLossEntry(Ref<UserProfile> userProfile,
+    Ref<ProfitAndLossEntryModel> model, QWidget* parent,
     Qt::WindowFlags flags)
     : QWidget(parent, flags),
       m_model(model.Get()) {

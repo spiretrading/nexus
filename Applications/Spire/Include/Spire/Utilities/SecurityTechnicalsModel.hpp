@@ -25,7 +25,7 @@ namespace Spire {
         \param security The Security to model.
       */
       static std::shared_ptr<SecurityTechnicalsModel> GetModel(
-        Beam::RefType<UserProfile> userProfile,
+        Beam::Ref<UserProfile> userProfile,
         const Nexus::Security& security);
 
       //! Signals a change in the opening price.
@@ -102,7 +102,7 @@ namespace Spire {
         const VolumeSignal::slot_type& slot) const;
 
     protected:
-      SecurityTechnicalsModel(Beam::RefType<UserProfile> userProfile,
+      SecurityTechnicalsModel(Beam::Ref<UserProfile> userProfile,
         const Nexus::Security& security);
 
     private:

@@ -32,7 +32,7 @@ namespace {
   const unsigned int UPDATE_INTERVAL = 100;
 }
 
-BookViewModel::BookViewModel(RefType<UserProfile> userProfile,
+BookViewModel::BookViewModel(Ref<UserProfile> userProfile,
     const BookViewProperties& properties, const Security& security, Side side)
     : m_userProfile(userProfile.Get()),
       m_properties(properties),

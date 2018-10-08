@@ -38,14 +38,14 @@ namespace Spire {
         \param parent The parent widget.
         \param flags The widget's flags.
       */
-      MoneySpinBox(Beam::RefType<UserProfile> userProfile,
+      MoneySpinBox(Beam::Ref<UserProfile> userProfile,
         QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
 
       //! Initializes this widget.
       /*!
         \param userProfile The user's profile.
       */
-      void Initialize(Beam::RefType<UserProfile> userProfile);
+      void Initialize(Beam::Ref<UserProfile> userProfile);
 
       //! Returns the Security linked to.
       const boost::optional<Nexus::Security>& GetLinkedSecurity() const;

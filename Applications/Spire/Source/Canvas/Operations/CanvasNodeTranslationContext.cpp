@@ -16,7 +16,7 @@ using namespace Spire;
 using namespace std;
 
 CanvasNodeTranslationContext::CanvasNodeTranslationContext(
-    RefType<UserProfile> userProfile, RefType<ReactorMonitor> reactorMonitor,
+    Ref<UserProfile> userProfile, Ref<ReactorMonitor> reactorMonitor,
     const DirectoryEntry& executingAccount)
     : m_parent(nullptr),
       m_userProfile(userProfile.Get()),
@@ -27,7 +27,7 @@ CanvasNodeTranslationContext::CanvasNodeTranslationContext(
         &m_userProfile->GetServiceClients().GetMarketDataClient())) {}
 
 CanvasNodeTranslationContext::CanvasNodeTranslationContext(
-    RefType<CanvasNodeTranslationContext> parent)
+    Ref<CanvasNodeTranslationContext> parent)
     : m_parent(parent.Get()),
       m_userProfile(m_parent->m_userProfile),
       m_executingAccount(m_parent->m_executingAccount),
@@ -54,7 +54,7 @@ const DirectoryEntry& CanvasNodeTranslationContext::
   return m_executingAccount;
 }
 
-void CanvasNodeTranslationContext::Add(RefType<const CanvasNode> node,
+void CanvasNodeTranslationContext::Add(Ref<const CanvasNode> node,
     const Translation& translation) {
   boost::lock_guard<boost::mutex> lock(m_mutex);
   m_translations.insert(std::make_pair(node.Get(), translation));
@@ -121,7 +121,7 @@ RealTimeMarketDataPublisher<VirtualMarketDataClient*>&
 }
 
 void CanvasNodeTranslationContext::AddSubtranslation(
-    Beam::RefType<const CanvasNode> node, const Translation& translation) {
+    Beam::Ref<const CanvasNode> node, const Translation& translation) {
   boost::lock_guard<boost::mutex> lock(m_mutex);
   m_subTranslations.insert(std::make_pair(node.Get(), translation));
   if(m_parent != nullptr) {

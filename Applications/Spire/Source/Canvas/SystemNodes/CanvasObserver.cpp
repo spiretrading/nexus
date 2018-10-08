@@ -42,9 +42,9 @@ namespace {
 }
 
 CanvasObserver::CanvasObserver(const CanvasNode& target,
-    const CanvasNode& observer, RefType<CanvasNodeTranslationContext> context,
-    RefType<ReactorMonitor> monitor, const DirectoryEntry& executingAccount,
-    RefType<UserProfile> userProfile)
+    const CanvasNode& observer, Ref<CanvasNodeTranslationContext> context,
+    Ref<ReactorMonitor> monitor, const DirectoryEntry& executingAccount,
+    Ref<UserProfile> userProfile)
     : m_context(context.Get()),
       m_isTranslated(false),
       m_executingAccount(executingAccount),
