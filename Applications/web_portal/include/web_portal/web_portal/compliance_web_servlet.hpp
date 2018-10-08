@@ -20,9 +20,9 @@ namespace Nexus::WebPortal {
         \param sessions The available web sessions.
         \param serviceClients The clients used to access Spire services.
       */
-      ComplianceWebServlet(Beam::RefType<
+      ComplianceWebServlet(Beam::Ref<
         Beam::WebServices::SessionStore<WebPortalSession>> sessions,
-        Beam::RefType<ApplicationServiceClients> serviceClients);
+        Beam::Ref<ApplicationServiceClients> serviceClients);
 
       ~ComplianceWebServlet();
 

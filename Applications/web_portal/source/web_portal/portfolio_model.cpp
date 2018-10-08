@@ -23,7 +23,7 @@ bool PortfolioModel::Entry::operator ==(const Entry& rhs) const {
 }
 
 PortfolioModel::PortfolioModel(
-    RefType<ApplicationServiceClients> serviceClients)
+    Ref<ApplicationServiceClients> serviceClients)
     : m_serviceClients{serviceClients.Get()} {}
 
 PortfolioModel::~PortfolioModel() {
