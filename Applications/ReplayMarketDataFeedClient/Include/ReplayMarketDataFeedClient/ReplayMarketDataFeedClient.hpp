@@ -209,15 +209,17 @@ namespace Nexus {
     while(!data.empty() && m_isRunning) {
       for(auto& item : data) {
         auto wait = Beam::Queries::GetTimestamp(*item) - replayTime;
-        while(wait > boost::posix_time::seconds(0)) {
+        while(m_isRunning && wait > boost::posix_time::seconds(0)) {
           auto timer = m_timerBuilder(std::min(wait, WAIT_QUANTUM));
           timer->Start();
           timer->Wait();
           wait -= WAIT_QUANTUM;
         }
-        auto replayValue = *item;
-        Beam::Queries::GetTimestamp(replayValue) = m_timeClient->GetTime();
-        publisher(Beam::Queries::MakeIndexedValue(replayValue, security));
+        if(!m_isRunning) {
+          return;
+        }
+        Beam::Queries::GetTimestamp(*item) = m_timeClient->GetTime();
+        publisher(Beam::Queries::MakeIndexedValue(*item, security));
         auto updatedTime = m_timeClient->GetTime();
         replayTime += updatedTime - currentTime;
         currentTime = updatedTime;
