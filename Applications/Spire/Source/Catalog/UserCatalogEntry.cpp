@@ -79,7 +79,7 @@ void UserCatalogEntry::Save() const {
   try {
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
     RegisterSpireTypes(Store(typeRegistry));
-    BinarySender<SharedBuffer> sender(Ref(typeRegistry));
+    auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
     SharedBuffer buffer;
     sender.SetSink(Ref(buffer));
     sender.Shuttle(*this);

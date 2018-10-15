@@ -16,7 +16,7 @@ namespace Spire {
 
       virtual std::unique_ptr<DashboardCell> Build(
         const DashboardCell::Value& index,
-        Beam::RefType<UserProfile> userProfile) const;
+        Beam::Ref<UserProfile> userProfile) const;
 
       virtual std::unique_ptr<DashboardCellBuilder> Clone() const;
 

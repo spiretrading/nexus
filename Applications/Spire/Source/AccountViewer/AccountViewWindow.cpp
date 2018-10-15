@@ -40,7 +40,7 @@ namespace {
   };
 }
 
-AccountViewWindow::AccountViewWindow(RefType<UserProfile> userProfile,
+AccountViewWindow::AccountViewWindow(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : QFrame{parent, flags},
       m_ui{std::make_unique<Ui_AccountViewWindow>()},

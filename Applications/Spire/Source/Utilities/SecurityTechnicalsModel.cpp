@@ -74,7 +74,7 @@ namespace {
 }
 
 std::shared_ptr<SecurityTechnicalsModel> SecurityTechnicalsModel::GetModel(
-    RefType<UserProfile> userProfile, const Security& security) {
+    Ref<UserProfile> userProfile, const Security& security) {
   if(expiryTimer == nullptr) {
     expiryTimer = make_unique<QTimer>();
     expiryTimer->start(EXPIRY_INTERVAL);
@@ -132,7 +132,7 @@ connection SecurityTechnicalsModel::ConnectVolumeSignal(
 }
 
 SecurityTechnicalsModel::SecurityTechnicalsModel(
-    RefType<UserProfile> userProfile, const Security& security)
+    Ref<UserProfile> userProfile, const Security& security)
     : m_userProfile(userProfile.Get()),
       m_loadTechnicalsFlag(std::make_shared<Sync<bool>>(true)),
       m_volume(0) {

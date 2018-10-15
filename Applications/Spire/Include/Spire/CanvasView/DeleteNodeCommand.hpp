@@ -19,7 +19,7 @@ namespace Spire {
         \param view The CanvasNodeModel to perform the command to.
         \param coordinate The Coordinate to add the root at.
       */
-      DeleteNodeCommand(Beam::RefType<CanvasNodeModel> view,
+      DeleteNodeCommand(Beam::Ref<CanvasNodeModel> view,
         const CanvasNodeModel::Coordinate& coordinate);
 
       virtual void undo();

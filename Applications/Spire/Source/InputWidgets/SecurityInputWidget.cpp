@@ -24,7 +24,7 @@ SecurityInputWidget::SecurityInputWidget(QWidget* parent, Qt::WindowFlags flags)
   layout->addWidget(m_lineEdit);
 }
 
-SecurityInputWidget::SecurityInputWidget(RefType<UserProfile> userProfile,
+SecurityInputWidget::SecurityInputWidget(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : SecurityInputWidget{parent, flags} {
   Initialize(Ref(userProfile));
@@ -32,7 +32,7 @@ SecurityInputWidget::SecurityInputWidget(RefType<UserProfile> userProfile,
 
 SecurityInputWidget::~SecurityInputWidget() {}
 
-void SecurityInputWidget::Initialize(RefType<UserProfile> userProfile) {
+void SecurityInputWidget::Initialize(Ref<UserProfile> userProfile) {
   m_userProfile = userProfile.Get();
 }
 

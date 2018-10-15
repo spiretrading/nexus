@@ -53,7 +53,7 @@ namespace Spire {
         \param userProfile The user's profile.
         \param properties The model's properties.
       */
-      OrderImbalanceIndicatorModel(Beam::RefType<UserProfile> userProfile,
+      OrderImbalanceIndicatorModel(Beam::Ref<UserProfile> userProfile,
         const OrderImbalanceIndicatorProperties& properties);
 
       //! Returns the properties.

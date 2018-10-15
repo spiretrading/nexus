@@ -11,7 +11,7 @@ using namespace std;
 TimeAndSalesWindowSettings::TimeAndSalesWindowSettings() {}
 
 TimeAndSalesWindowSettings::TimeAndSalesWindowSettings(
-    const TimeAndSalesWindow& window, RefType<UserProfile> userProfile)
+    const TimeAndSalesWindow& window, Ref<UserProfile> userProfile)
     : m_properties(window.GetProperties()),
       m_security(window.m_security),
       m_securityViewStack(window.m_securityViewStack),
@@ -38,7 +38,7 @@ string TimeAndSalesWindowSettings::GetName() const {
 }
 
 QWidget* TimeAndSalesWindowSettings::Reopen(
-    RefType<UserProfile> userProfile) const {
+    Ref<UserProfile> userProfile) const {
   TimeAndSalesWindow* window = new TimeAndSalesWindow(Ref(userProfile),
     m_properties, m_identifier);
   window->setAttribute(Qt::WA_DeleteOnClose);
@@ -46,7 +46,7 @@ QWidget* TimeAndSalesWindowSettings::Reopen(
   return window;
 }
 
-void TimeAndSalesWindowSettings::Apply(RefType<UserProfile> userProfile,
+void TimeAndSalesWindowSettings::Apply(Ref<UserProfile> userProfile,
     Out<QWidget> widget) const {
   TimeAndSalesWindow& window = dynamic_cast<TimeAndSalesWindow&>(*widget);
   window.restoreGeometry(m_geometry);

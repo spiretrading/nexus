@@ -36,7 +36,7 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      TimeInputWidget(Beam::RefType<UserProfile> userProfile,
+      TimeInputWidget(Beam::Ref<UserProfile> userProfile,
         QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
 
       virtual ~TimeInputWidget();
@@ -45,7 +45,7 @@ namespace Spire {
       /*!
         \param userProfile The user's profile.
       */
-      void Initialize(Beam::RefType<UserProfile> userProfile);
+      void Initialize(Beam::Ref<UserProfile> userProfile);
 
       //! Returns the time.
       const boost::posix_time::time_duration& GetTime() const;

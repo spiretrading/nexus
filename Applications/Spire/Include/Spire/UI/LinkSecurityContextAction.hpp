@@ -34,7 +34,7 @@ namespace UI {
         \param securityContext The SecurityContext to link to.
       */
       LinkSecurityContextAction(
-        Beam::RefType<SecurityContext> securityContext, QObject* parent);
+        Beam::Ref<SecurityContext> securityContext, QObject* parent);
 
       virtual ~LinkSecurityContextAction();
 

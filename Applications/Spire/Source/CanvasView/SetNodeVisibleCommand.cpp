@@ -8,7 +8,7 @@ using namespace boost;
 using namespace Spire;
 using namespace std;
 
-SetNodeVisibleCommand::SetNodeVisibleCommand(RefType<CanvasNodeModel> view,
+SetNodeVisibleCommand::SetNodeVisibleCommand(Ref<CanvasNodeModel> view,
     const CanvasNodeModel::Coordinate& parent, const string& node,
     bool isVisible)
     : m_view(view.Get()),

@@ -167,8 +167,8 @@ namespace {
   class CanvasNodeTranslationVisitor : private CanvasNodeVisitor {
     public:
       CanvasNodeTranslationVisitor(
-        RefType<CanvasNodeTranslationContext> context,
-        RefType<const CanvasNode> node);
+        Ref<CanvasNodeTranslationContext> context,
+        Ref<const CanvasNode> node);
 
       Translation Translate();
       virtual void Visit(const AbsNode& node);
@@ -514,8 +514,8 @@ namespace {
 
     template<typename T>
     static std::shared_ptr<BaseReactor> Template(const NativeType& nativeType,
-        RefType<ReactorMonitor> reactorMonitor,
-        RefType<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
+        Ref<ReactorMonitor> reactorMonitor,
+        Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
         const string& path) {
       using BaseParser = ParserType<T>::type;
       auto parser = BuildParser(BaseParser());
@@ -528,8 +528,8 @@ namespace {
 
     template<>
     static std::shared_ptr<BaseReactor> Template<CurrencyId>(
-        const NativeType& nativeType, RefType<ReactorMonitor> reactorMonitor,
-        RefType<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
+        const NativeType& nativeType, Ref<ReactorMonitor> reactorMonitor,
+        Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
         const string& path) {
       using BaseParser = ParserType<CurrencyId>::type;
       auto parser = BuildParser(BaseParser(userProfile->GetCurrencyDatabase()));
@@ -542,8 +542,8 @@ namespace {
 
     template<>
     static std::shared_ptr<BaseReactor> Template<MarketCode>(
-        const NativeType& nativeType, RefType<ReactorMonitor> reactorMonitor,
-        RefType<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
+        const NativeType& nativeType, Ref<ReactorMonitor> reactorMonitor,
+        Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
         const string& path) {
       using BaseParser = ParserType<MarketCode>::type;
       auto parser = BuildParser(BaseParser(userProfile->GetMarketDatabase()));
@@ -556,8 +556,8 @@ namespace {
 
     template<>
     static std::shared_ptr<BaseReactor> Template<Record>(
-        const NativeType& nativeType, RefType<ReactorMonitor> reactorMonitor,
-        RefType<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
+        const NativeType& nativeType, Ref<ReactorMonitor> reactorMonitor,
+        Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
         const string& path) {
       using BaseParser = ParserType<Record>::type;
       auto parser = BuildParser(BaseParser(
@@ -571,8 +571,8 @@ namespace {
 
     template<>
     static std::shared_ptr<BaseReactor> Template<Security>(
-        const NativeType& nativeType, RefType<ReactorMonitor> reactorMonitor,
-        RefType<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
+        const NativeType& nativeType, Ref<ReactorMonitor> reactorMonitor,
+        Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
         const string& path) {
       using BaseParser = ParserType<Security>::type;
       auto parser = BuildParser(BaseParser(userProfile->GetMarketDatabase()));
@@ -1131,13 +1131,13 @@ namespace {
 
 Translation Spire::Translate(CanvasNodeTranslationContext& context,
     const CanvasNode& node) {
-  CanvasNodeTranslationVisitor visitor(Ref(context), Ref(node));
+  auto visitor = CanvasNodeTranslationVisitor(Ref(context), Ref(node));
   return visitor.Translate();
 }
 
 CanvasNodeTranslationVisitor::CanvasNodeTranslationVisitor(
-    RefType<CanvasNodeTranslationContext> context,
-    RefType<const CanvasNode> node)
+    Ref<CanvasNodeTranslationContext> context,
+    Ref<const CanvasNode> node)
     : m_context(context.Get()),
       m_node(node.Get()) {}
 

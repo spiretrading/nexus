@@ -43,7 +43,7 @@ namespace Spire {
         \param coordinate The Coordinate of the node to replace.
         \param node The replacement CanvasNode.
       */
-      ReplaceNodeCommand(Beam::RefType<CanvasNodeModel> view,
+      ReplaceNodeCommand(Beam::Ref<CanvasNodeModel> view,
         const CanvasNodeModel::Coordinate& coordinate, const CanvasNode& node);
 
       virtual void undo();

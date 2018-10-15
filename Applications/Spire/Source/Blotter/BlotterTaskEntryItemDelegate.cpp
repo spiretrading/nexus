@@ -7,7 +7,7 @@ using namespace Spire;
 using namespace Spire::UI;
 
 BlotterTaskEntryItemDelegate::BlotterTaskEntryItemDelegate(
-    RefType<UserProfile> userProfile)
+    Ref<UserProfile> userProfile)
     : CustomVariantItemDelegate(Ref(userProfile)) {}
 
 BlotterTaskEntryItemDelegate::~BlotterTaskEntryItemDelegate() {}

@@ -58,7 +58,7 @@ namespace Spire {
       /*!
         \param userProfile The user's profile.
       */
-      BlotterSettings(Beam::RefType<UserProfile> userProfile);
+      BlotterSettings(Beam::Ref<UserProfile> userProfile);
 
       ~BlotterSettings();
 

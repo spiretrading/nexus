@@ -33,7 +33,7 @@ unique_ptr<QMimeData> Spire::EncodeAsMimeData(
   auto mimeData = make_unique<QMimeData>();
   TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
   RegisterSpireTypes(Store(typeRegistry));
-  BinarySender<SharedBuffer> sender(Ref(typeRegistry));
+  auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
   SharedBuffer buffer;
   sender.SetSink(Ref(buffer));
   sender.Shuttle(clonedNodes);
@@ -52,7 +52,7 @@ vector<unique_ptr<CanvasNode>> Spire::DecodeFromMimeData(
   SharedBuffer buffer(encodedData.data(), encodedData.size());
   TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
   RegisterSpireTypes(Store(typeRegistry));
-  BinaryReceiver<SharedBuffer> receiver(Ref(typeRegistry));
+  auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
   receiver.SetSource(Ref(buffer));
   receiver.Shuttle(nodes);
   return nodes;

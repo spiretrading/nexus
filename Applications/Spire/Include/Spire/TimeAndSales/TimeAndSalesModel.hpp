@@ -71,7 +71,7 @@ namespace Spire {
         \param properties The TimeAndSalesProperties used.
         \param security The Security whose TimeAndSales is to be modeled.
       */
-      TimeAndSalesModel(Beam::RefType<UserProfile> userProfile,
+      TimeAndSalesModel(Beam::Ref<UserProfile> userProfile,
         const TimeAndSalesProperties& properties,
         const Nexus::Security& security);
 

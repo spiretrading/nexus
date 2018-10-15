@@ -29,7 +29,7 @@ OpenPositionsModel::OpenPositionsModel()
 OpenPositionsModel::~OpenPositionsModel() {}
 
 void OpenPositionsModel::SetPortfolioMonitor(
-    RefType<SpirePortfolioMonitor> portfolioMonitor) {
+    Ref<SpirePortfolioMonitor> portfolioMonitor) {
   if(!m_entries.empty()) {
     beginRemoveRows(QModelIndex(), 0, m_entries.size() - 1);
     m_securityToEntry.clear();

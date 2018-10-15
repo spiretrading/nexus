@@ -66,7 +66,7 @@ namespace Details {
       /*!
         \param userProfile The user's profile.
       */
-      void SetUserProfile(Beam::RefType<UserProfile> userProfile);
+      void SetUserProfile(Beam::Ref<UserProfile> userProfile);
 
       //! Navigates the current node forward.
       void NavigateForward();

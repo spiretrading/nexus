@@ -32,8 +32,8 @@ namespace Nexus::MarketDataService {
       */
       template<typename HistoricalDataStoreForward>
       BufferedHistoricalDataStore(HistoricalDataStoreForward&& dataStore,
-        std::size_t bufferSize, Beam::RefType<Beam::Threading::ThreadPool>
-        threadPool);
+        std::size_t bufferSize,
+        Beam::Ref<Beam::Threading::ThreadPool> threadPool);
 
       ~BufferedHistoricalDataStore();
 
@@ -97,8 +97,7 @@ namespace Nexus::MarketDataService {
   template<typename HistoricalDataStoreForward>
   BufferedHistoricalDataStore<HistoricalDataStoreType>::
       BufferedHistoricalDataStore(HistoricalDataStoreForward&& dataStore,
-      std::size_t bufferSize,
-      Beam::RefType<Beam::Threading::ThreadPool> threadPool)
+      std::size_t bufferSize, Beam::Ref<Beam::Threading::ThreadPool> threadPool)
       : m_dataStore(std::forward<HistoricalDataStoreForward>(dataStore)),
         m_orderImbalanceDataStore(&*m_dataStore, bufferSize,
           Beam::Ref(threadPool)),

@@ -24,7 +24,7 @@ RiskWidget::RiskWidget(QWidget* parent, Qt::WindowFlags flags)
 
 RiskWidget::~RiskWidget() {}
 
-void RiskWidget::Initialize(RefType<UserProfile> userProfile,
+void RiskWidget::Initialize(Ref<UserProfile> userProfile,
     bool isReadOnly) {
   m_isReadOnly = isReadOnly;
   m_userProfile = userProfile.Get();

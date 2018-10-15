@@ -15,7 +15,7 @@ using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
 
-SecurityInputDialog::SecurityInputDialog(RefType<UserProfile> userProfile,
+SecurityInputDialog::SecurityInputDialog(Ref<UserProfile> userProfile,
     const Security& initial, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_SecurityInputDialog>()),
@@ -26,7 +26,7 @@ SecurityInputDialog::SecurityInputDialog(RefType<UserProfile> userProfile,
   m_ui->m_input->setText(QString::fromStdString(text));
 }
 
-SecurityInputDialog::SecurityInputDialog(RefType<UserProfile> userProfile,
+SecurityInputDialog::SecurityInputDialog(Ref<UserProfile> userProfile,
     const string& text, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_SecurityInputDialog>()),

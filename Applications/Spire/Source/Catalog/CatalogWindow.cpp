@@ -61,7 +61,7 @@ CatalogWindow::Filter CatalogWindow::SubstitutionFilter(
   return filter;
 }
 
-CatalogWindow::CatalogWindow(RefType<UserProfile> userProfile, QWidget* parent,
+CatalogWindow::CatalogWindow(Ref<UserProfile> userProfile, QWidget* parent,
     Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_filter(DisplayAllFilter),
@@ -71,7 +71,7 @@ CatalogWindow::CatalogWindow(RefType<UserProfile> userProfile, QWidget* parent,
   Initialize();
 }
 
-CatalogWindow::CatalogWindow(RefType<UserProfile> userProfile,
+CatalogWindow::CatalogWindow(Ref<UserProfile> userProfile,
     const CanvasNode& node, bool saveToRegistry, QWidget* parent,
     Qt::WindowFlags flags)
     : QDialog(parent, flags),
@@ -87,7 +87,7 @@ CatalogWindow::CatalogWindow(RefType<UserProfile> userProfile,
   SetDefaultSearchName(node);
 }
 
-CatalogWindow::CatalogWindow(RefType<UserProfile> userProfile,
+CatalogWindow::CatalogWindow(Ref<UserProfile> userProfile,
     const Filter& filter, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_filter(filter),
@@ -97,7 +97,7 @@ CatalogWindow::CatalogWindow(RefType<UserProfile> userProfile,
   Initialize();
 }
 
-CatalogWindow::CatalogWindow(RefType<UserProfile> userProfile,
+CatalogWindow::CatalogWindow(Ref<UserProfile> userProfile,
     const Filter& filter, const CanvasNode& node, bool saveToRegistry,
     QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),

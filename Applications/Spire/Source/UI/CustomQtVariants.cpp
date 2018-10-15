@@ -116,7 +116,7 @@ posix_time::ptime Spire::UI::ToPosixTime(const QDateTime& time) {
 void Spire::UI::RegisterCustomQtVariants() {}
 
 CustomVariantItemDelegate::CustomVariantItemDelegate(
-    RefType<UserProfile> userProfile, QObject* parent)
+    Ref<UserProfile> userProfile, QObject* parent)
     : QStyledItemDelegate(parent),
       m_userProfile(userProfile.Get()) {}
 
@@ -177,7 +177,7 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
 }
 
 CustomVariantSortFilterProxyModel::CustomVariantSortFilterProxyModel(
-    RefType<UserProfile> userProfile, QObject* parent)
+    Ref<UserProfile> userProfile, QObject* parent)
     : QSortFilterProxyModel(parent),
       m_userProfile(userProfile.Get()) {
   setDynamicSortFilter(true);

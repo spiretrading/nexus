@@ -105,7 +105,7 @@ namespace {
   }
 }
 
-BookViewWindow::BookViewWindow(RefType<UserProfile> userProfile,
+BookViewWindow::BookViewWindow(Ref<UserProfile> userProfile,
     const BookViewProperties& properties, const string& identifier,
     QWidget* parent, Qt::WindowFlags flags)
     : QFrame(parent, flags),

@@ -26,6 +26,9 @@ namespace {
     QWidget#m_passwordBox {\
       background-color: rgb(174, 203, 232);\
     }\
+    QWidget#m_serverBox {\
+      background-color: rgb(174, 203, 232);\
+    }\
   ";
 
   int UPDATE_INTERVAL = 100;
@@ -43,29 +46,25 @@ struct LoginDialog::LoginRoutine {
 LoginDialog::LoginRoutine::LoginRoutine()
     : m_loginCount(0) {}
 
-LoginDialog::LoginDialog(const IpAddress& address, const string& username,
-    bool saveLoginInfo, RefType<SocketThreadPool> socketThreadPool,
-    RefType<TimerThreadPool> timerThreadPool)
+LoginDialog::LoginDialog(std::vector<ServerEntry> servers,
+    Ref<SocketThreadPool> socketThreadPool,
+    Ref<TimerThreadPool> timerThreadPool)
     : m_ui(std::make_unique<Ui_LoginDialog>()),
-      m_address(address),
-      m_username(username),
-      m_saveLoginInfo(saveLoginInfo),
+      m_servers(std::move(servers)),
       m_socketThreadPool(socketThreadPool.Get()),
       m_timerThreadPool(timerThreadPool.Get()),
       m_loginRoutine(std::make_unique<Sync<LoginRoutine>>()),
       m_state(READY) {
   m_ui->setupUi(this);
+  for(auto& server : m_servers) {
+    m_ui->m_serverComboBox->addItem(QString::fromStdString(server.m_name));
+  }
   auto desktopGeometry = QApplication::desktop()->screenGeometry();
   move(desktopGeometry.center() - rect().center());
-  m_ui->m_usernameInput->setText(QString::fromStdString(username));
   m_ui->m_usernameInput->installEventFilter(this);
   m_ui->m_passwordInput->installEventFilter(this);
-  if(username.empty()) {
-    m_ui->m_usernameInput->setFocus();
-  } else {
-    m_ui->m_passwordInput->setFocus();
-  }
-  m_ui->m_saveLoginInfoCheckBox->setChecked(saveLoginInfo);
+  m_ui->m_serverComboBox->installEventFilter(this);
+  m_ui->m_usernameInput->setFocus();
   connect(m_ui->m_passwordInput, &QLineEdit::textChanged, this,
     &LoginDialog::OnPasswordTextChanged);
   connect(m_ui->m_loginButton, &QPushButton::clicked, this,
@@ -98,10 +97,6 @@ string LoginDialog::GetPassword() const {
   return m_ui->m_passwordInput->text().toStdString();
 }
 
-bool LoginDialog::IsSaveLoginInfoChecked() const {
-  return m_ui->m_saveLoginInfoCheckBox->isChecked();
-}
-
 bool LoginDialog::eventFilter(QObject* object, QEvent* event) {
   if(object == m_ui->m_usernameInput && event->type() == QEvent::FocusIn) {
     m_ui->m_usernameBox->setStyleSheet(FOCUS_IN_STYLE);
@@ -109,11 +104,17 @@ bool LoginDialog::eventFilter(QObject* object, QEvent* event) {
       event->type() == QEvent::FocusOut) {
     m_ui->m_usernameBox->setStyleSheet("");
   } else if(object == m_ui->m_passwordInput &&
-    event->type() == QEvent::FocusIn) {
+      event->type() == QEvent::FocusIn) {
     m_ui->m_passwordBox->setStyleSheet(FOCUS_IN_STYLE);
   } else if(object == m_ui->m_passwordInput &&
       event->type() == QEvent::FocusOut) {
     m_ui->m_passwordBox->setStyleSheet("");
+  } else if(object == m_ui->m_serverComboBox &&
+      event->type() == QEvent::FocusIn) {
+    m_ui->m_serverBox->setStyleSheet(FOCUS_IN_STYLE);
+  } else if(object == m_ui->m_serverComboBox &&
+      event->type() == QEvent::FocusOut) {
+    m_ui->m_serverBox->setStyleSheet("");
   }
   return QWidget::eventFilter(object, event);
 }
@@ -148,7 +149,7 @@ void LoginDialog::OnPasswordTextChanged(const QString& text) {
 void LoginDialog::OnLoginButtonClicked() {
   m_ui->m_resultLabel->clear();
   m_ui->m_resultLabel->repaint();
-  auto address = m_address;
+  auto address = m_servers[m_ui->m_serverComboBox->currentIndex()].m_address;
   auto username = GetUsername();
   auto password = GetPassword();
   auto socketThreadPoolHandle = m_socketThreadPool;
@@ -196,6 +197,7 @@ void LoginDialog::OnLoginButtonClicked() {
     };
   m_ui->m_usernameInput->setEnabled(false);
   m_ui->m_passwordInput->setEnabled(false);
+  m_ui->m_serverComboBox->setEnabled(false);
   m_ui->m_loginButton->setEnabled(false);
   With(*m_loginRoutine,
     [&] (LoginRoutine& loginRoutine) {
@@ -216,6 +218,7 @@ void LoginDialog::OnCancelButtonClicked() {
     m_state = READY;
     m_ui->m_usernameInput->setEnabled(true);
     m_ui->m_passwordInput->setEnabled(true);
+    m_ui->m_serverComboBox->setEnabled(true);
     m_ui->m_loginButton->setEnabled(true);
     m_ui->m_resultLabel->setText(tr("Login canceled by user."));
   }
@@ -236,6 +239,7 @@ void LoginDialog::OnUpdateTimer() {
   }
   m_ui->m_usernameInput->setEnabled(true);
   m_ui->m_passwordInput->setEnabled(true);
+  m_ui->m_serverComboBox->setEnabled(true);
   m_ui->m_loginButton->setEnabled(true);
   m_state = READY;
   if(m_serviceLocatorClient != nullptr) {

@@ -24,7 +24,7 @@ namespace Spire {
         \param userProfile The user's profile.
         \param parent The parent object.
       */
-      AccountViewModel(Beam::RefType<UserProfile> userProfile,
+      AccountViewModel(Beam::Ref<UserProfile> userProfile,
         QObject* parent = nullptr);
 
       virtual ~AccountViewModel();

@@ -27,7 +27,7 @@ namespace Spire {
         \param security The Security to plot.
         \param interval The size of each candlestick.
       */
-      SecurityTimePriceChartPlotSeries(Beam::RefType<UserProfile> userProfile,
+      SecurityTimePriceChartPlotSeries(Beam::Ref<UserProfile> userProfile,
         const Nexus::Security& security,
         const boost::posix_time::time_duration& interval);
 

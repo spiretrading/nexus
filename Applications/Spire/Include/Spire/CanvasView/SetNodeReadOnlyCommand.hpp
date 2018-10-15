@@ -20,7 +20,7 @@ namespace Spire {
         \param node The coordinate of the node to move.
         \param readOnly Whether the CanvasNode should be set to read-only.
       */
-      SetNodeReadOnlyCommand(Beam::RefType<CanvasNodeModel> view,
+      SetNodeReadOnlyCommand(Beam::Ref<CanvasNodeModel> view,
         const CanvasNodeModel::Coordinate& source, bool readOnly);
 
       virtual void undo();

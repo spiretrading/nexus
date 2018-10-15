@@ -27,7 +27,7 @@ TimeInputWidget::TimeInputWidget(QWidget* parent, Qt::WindowFlags flags)
   layout->addWidget(m_lineEdit);
 }
 
-TimeInputWidget::TimeInputWidget(RefType<UserProfile> userProfile,
+TimeInputWidget::TimeInputWidget(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : TimeInputWidget{parent, flags} {
   Initialize(Ref(userProfile));
@@ -35,7 +35,7 @@ TimeInputWidget::TimeInputWidget(RefType<UserProfile> userProfile,
 
 TimeInputWidget::~TimeInputWidget() {}
 
-void TimeInputWidget::Initialize(RefType<UserProfile> userProfile) {
+void TimeInputWidget::Initialize(Ref<UserProfile> userProfile) {
   m_userProfile = userProfile.Get();
 }
 

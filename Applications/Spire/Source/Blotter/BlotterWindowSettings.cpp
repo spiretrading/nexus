@@ -31,7 +31,7 @@ string BlotterWindowSettings::GetName() const {
   return "Blotter - " + m_blotterName;
 }
 
-QWidget* BlotterWindowSettings::Reopen(RefType<UserProfile> userProfile) const {
+QWidget* BlotterWindowSettings::Reopen(Ref<UserProfile> userProfile) const {
   BlotterModel* model = nullptr;
   BlotterSettings& settings = userProfile->GetBlotterSettings();
   for(auto i = settings.GetAllBlotters().begin();
@@ -50,7 +50,7 @@ QWidget* BlotterWindowSettings::Reopen(RefType<UserProfile> userProfile) const {
   return window;
 }
 
-void BlotterWindowSettings::Apply(RefType<UserProfile> userProfile,
+void BlotterWindowSettings::Apply(Ref<UserProfile> userProfile,
     Out<QWidget> widget) const {
   BlotterWindow& window = dynamic_cast<BlotterWindow&>(*widget);
   window.restoreGeometry(m_geometry);

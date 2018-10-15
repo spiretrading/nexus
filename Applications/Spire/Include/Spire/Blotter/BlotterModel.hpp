@@ -34,7 +34,7 @@ namespace Spire {
       */
       BlotterModel(const std::string& name,
         const Beam::ServiceLocator::DirectoryEntry& executingAccount,
-        bool isConsolidated, Beam::RefType<UserProfile> userProfile,
+        bool isConsolidated, Beam::Ref<UserProfile> userProfile,
         const BlotterTaskProperties& taskProperties,
         const OrderLogProperties& orderLogProperties);
 
@@ -93,7 +93,7 @@ namespace Spire {
       /*!
         \param blotter The blotter to link to.
       */
-      void Link(Beam::RefType<BlotterModel> blotter);
+      void Link(Beam::Ref<BlotterModel> blotter);
 
       //! Unlinks this blotter from another.
       /*!

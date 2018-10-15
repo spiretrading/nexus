@@ -41,9 +41,8 @@ bool RiskWebServlet::PortfolioFilter::IsFiltered(
   return false;
 }
 
-RiskWebServlet::RiskWebServlet(
-    RefType<SessionStore<WebPortalSession>> sessions,
-    RefType<ApplicationServiceClients> serviceClients)
+RiskWebServlet::RiskWebServlet(Ref<SessionStore<WebPortalSession>> sessions,
+    Ref<ApplicationServiceClients> serviceClients)
     : m_sessions{sessions.Get()},
       m_serviceClients{serviceClients.Get()},
       m_portfolioModel{Ref(*m_serviceClients)} {}

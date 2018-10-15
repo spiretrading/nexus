@@ -20,7 +20,7 @@ namespace {
   const int F_KEY_COUNT = 12;
 }
 
-TaskKeyBindingsDialog::TaskKeyBindingsDialog(RefType<UserProfile> userProfile,
+TaskKeyBindingsDialog::TaskKeyBindingsDialog(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_TaskKeyBindingsDialog>()),

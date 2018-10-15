@@ -12,7 +12,7 @@ using namespace std;
 ChartWindowSettings::ChartWindowSettings() {}
 
 ChartWindowSettings::ChartWindowSettings(const ChartWindow& window,
-    RefType<UserProfile> userProfile)
+    Ref<UserProfile> userProfile)
     : m_interactionMode(window.GetInteractionMode()),
       m_isAutoScaleEnabled(window.IsAutoScaleEnabled()),
       m_isLockGridEnabled(window.IsLockGridEnabled()),
@@ -38,14 +38,14 @@ string ChartWindowSettings::GetName() const {
   return m_name;
 }
 
-QWidget* ChartWindowSettings::Reopen(RefType<UserProfile> userProfile) const {
+QWidget* ChartWindowSettings::Reopen(Ref<UserProfile> userProfile) const {
   ChartWindow* window = new ChartWindow(Ref(userProfile), m_identifier);
   window->setAttribute(Qt::WA_DeleteOnClose);
   Apply(Ref(userProfile), Store(*window));
   return window;
 }
 
-void ChartWindowSettings::Apply(RefType<UserProfile> userProfile,
+void ChartWindowSettings::Apply(Ref<UserProfile> userProfile,
     Out<QWidget> widget) const {
   ChartWindow& window = dynamic_cast<ChartWindow&>(*widget);
   window.restoreGeometry(m_geometry);

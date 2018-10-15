@@ -28,7 +28,7 @@ string CollapsibleWidgetWindowSettings::GetName() const {
 }
 
 QWidget* CollapsibleWidgetWindowSettings::Reopen(
-    RefType<UserProfile> userProfile) const {
+    Ref<UserProfile> userProfile) const {
   QWidget* subWidget = m_subWindowSettings->Reopen(Ref(userProfile));
   CollapsibleWidget* widget = new CollapsibleWidget(
     QString::fromStdString(m_label), subWidget, m_isExpanded);
@@ -36,7 +36,7 @@ QWidget* CollapsibleWidgetWindowSettings::Reopen(
   return widget;
 }
 
-void CollapsibleWidgetWindowSettings::Apply(RefType<UserProfile> userProfile,
+void CollapsibleWidgetWindowSettings::Apply(Ref<UserProfile> userProfile,
     Out<QWidget> widget) const {
   CollapsibleWidget& collapsibleWidget = dynamic_cast<CollapsibleWidget&>(
     *widget);

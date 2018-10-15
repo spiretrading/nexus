@@ -56,7 +56,7 @@ namespace Nexus::WebPortal {
       /*!
         \param serviceClients The ServiceClients used to query for positions.
       */
-      PortfolioModel(Beam::RefType<ApplicationServiceClients> serviceClients);
+      PortfolioModel(Beam::Ref<ApplicationServiceClients> serviceClients);
 
       ~PortfolioModel();
 

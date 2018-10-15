@@ -26,7 +26,7 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      CustomNodeDialog(Beam::RefType<UserProfile> userProfile,
+      CustomNodeDialog(Beam::Ref<UserProfile> userProfile,
         QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
 
       //! Constructs a CustomNodeDialog based on an existing CustomNode.
@@ -37,7 +37,7 @@ namespace Spire {
         \param flags Qt flags passed to the parent widget.
       */
       CustomNodeDialog(const CustomNode& customNode,
-        Beam::RefType<UserProfile> userProfile, QWidget* parent = nullptr,
+        Beam::Ref<UserProfile> userProfile, QWidget* parent = nullptr,
         Qt::WindowFlags flags = 0);
 
       virtual ~CustomNodeDialog();

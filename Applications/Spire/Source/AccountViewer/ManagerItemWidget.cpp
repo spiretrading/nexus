@@ -7,7 +7,7 @@ using namespace Beam;
 using namespace Spire;
 using namespace std;
 
-ManagerItemWidget::ManagerItemWidget(RefType<UserProfile> userProfile,
+ManagerItemWidget::ManagerItemWidget(Ref<UserProfile> userProfile,
     const std::shared_ptr<AccountInfoModel>& infoModel, QWidget* parent,
     Qt::WindowFlags flags)
     : QWidget(parent, flags),

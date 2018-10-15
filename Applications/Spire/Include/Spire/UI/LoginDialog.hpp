@@ -1,7 +1,8 @@
-#ifndef SPIRE_LOGINDIALOG_HPP
-#define SPIRE_LOGINDIALOG_HPP
+#ifndef SPIRE_LOGIN_DIALOG_HPP
+#define SPIRE_LOGIN_DIALOG_HPP
 #include <memory>
 #include <string>
+#include <vector>
 #include <Beam/Network/IpAddress.hpp>
 #include <Beam/Network/Network.hpp>
 #include <Beam/Pointers/Ref.hpp>
@@ -14,28 +15,32 @@
 
 class Ui_LoginDialog;
 
-namespace Spire {
-namespace UI {
+namespace Spire::UI {
 
-  /*! \class LoginDialog
-      \brief Presents the login dialog.
-   */
+  /** Presents the login dialog. */
   class LoginDialog : public QDialog {
     public:
 
+      //! Specifies a server to connect to.
+      struct ServerEntry {
+
+        //! The name of the server.
+        std::string m_name;
+
+        //! The server's address.
+        Beam::Network::IpAddress m_address;
+      };
+
       //! Constructs the LoginDialog.
       /*!
-        \param address The IP address to connect to.
-        \param username The initial username to display.
-        \param saveLoginInfo Whether the save login box is initially checked.
+        \param servers The list of servers available to connect to.
         \param socketThreadPool The SocketThreadPool to use for socket
                connections.
         \param timerThreadPool The TimerThreadPool to use for heartbeats.
       */
-      LoginDialog(const Beam::Network::IpAddress& address,
-        const std::string& username, bool saveLoginInfo,
-        Beam::RefType<Beam::Network::SocketThreadPool> socketThreadPool,
-        Beam::RefType<Beam::Threading::TimerThreadPool> timerThreadPool);
+      LoginDialog(std::vector<ServerEntry> servers,
+        Beam::Ref<Beam::Network::SocketThreadPool> socketThreadPool,
+        Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
 
       virtual ~LoginDialog();
 
@@ -49,18 +54,13 @@ namespace UI {
       //! Returns the password.
       std::string GetPassword() const;
 
-      //! Returns <code>true</code> iff the save login info box is checked.
-      bool IsSaveLoginInfoChecked() const;
-
     protected:
       virtual bool eventFilter(QObject* object, QEvent* event);
 
     private:
       struct LoginRoutine;
       std::unique_ptr<Ui_LoginDialog> m_ui;
-      Beam::Network::IpAddress m_address;
-      std::string m_username;
-      bool m_saveLoginInfo;
+      std::vector<ServerEntry> m_servers;
       Beam::Network::SocketThreadPool* m_socketThreadPool;
       Beam::Threading::TimerThreadPool* m_timerThreadPool;
       std::unique_ptr<Beam::ServiceLocator::ApplicationServiceLocatorClient>
@@ -78,7 +78,6 @@ namespace UI {
       void OnCancelButtonClicked();
       void OnUpdateTimer();
   };
-}
 }
 
 #endif

@@ -9,7 +9,7 @@ using namespace std;
 
 void Spire::ExportModelAsCsv(UserProfile& userProfile,
     const QAbstractItemModel& model, ostream& out) {
-  CustomVariantItemDelegate delegate(Ref(userProfile));
+  auto delegate = CustomVariantItemDelegate(Ref(userProfile));
   for(int i = 0; i < model.columnCount(); ++i) {
     QString columnTitle = delegate.displayText(
       model.headerData(i, Qt::Horizontal, Qt::DisplayRole), QLocale());

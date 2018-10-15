@@ -5,7 +5,7 @@ using namespace Spire;
 using namespace std;
 
 LinkCell::LinkCell(Qt::Orientation orientation,
-    RefType<const CanvasNode> parent, RefType<const CanvasNode> child)
+    Ref<const CanvasNode> parent, Ref<const CanvasNode> child)
     : m_orientation(orientation),
       m_parent(parent.Get()),
       m_child(child.Get()) {

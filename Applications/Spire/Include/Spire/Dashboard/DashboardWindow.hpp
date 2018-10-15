@@ -37,7 +37,7 @@ namespace Spire {
       */
       DashboardWindow(const std::string& name,
         const DashboardModelSchema& schema,
-        Beam::RefType<UserProfile> userProfile, QWidget* parent = nullptr,
+        Beam::Ref<UserProfile> userProfile, QWidget* parent = nullptr,
         Qt::WindowFlags flags = 0);
 
       virtual ~DashboardWindow();

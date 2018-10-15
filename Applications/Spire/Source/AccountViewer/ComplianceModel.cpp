@@ -14,7 +14,7 @@ using namespace Nexus::Compliance;
 using namespace Spire;
 using namespace std;
 
-ComplianceModel::ComplianceModel(RefType<UserProfile> userProfile,
+ComplianceModel::ComplianceModel(Ref<UserProfile> userProfile,
     const DirectoryEntry& account)
     : m_userProfile{userProfile.Get()},
       m_account{account},

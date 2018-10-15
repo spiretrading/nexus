@@ -15,8 +15,8 @@ using namespace boost;
 using namespace Spire;
 using namespace std;
 
-CondensedCanvasCell::CondensedCanvasCell(RefType<UserProfile> userProfile,
-    RefType<CondensedCanvasWidget> parent, RefType<const CanvasNode> node)
+CondensedCanvasCell::CondensedCanvasCell(Ref<UserProfile> userProfile,
+    Ref<CondensedCanvasWidget> parent, Ref<const CanvasNode> node)
     : QWidget{parent.Get()},
       m_userProfile{userProfile.Get()},
       m_parent{parent.Get()},

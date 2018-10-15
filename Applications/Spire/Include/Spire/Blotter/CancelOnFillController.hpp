@@ -25,7 +25,7 @@ namespace Spire {
       /*!
         \param userProfile The user's profile.
       */
-      CancelOnFillController(Beam::RefType<UserProfile> userProfile);
+      CancelOnFillController(Beam::Ref<UserProfile> userProfile);
 
       //! Sets the OrderExecutionPublisher whose Orders are checked for fills.
       /*!
@@ -33,7 +33,7 @@ namespace Spire {
                are checked for fills.
       */
       void SetOrderExecutionPublisher(
-        Beam::RefType<Nexus::OrderExecutionService::OrderExecutionPublisher>
+        Beam::Ref<Nexus::OrderExecutionService::OrderExecutionPublisher>
         orderExecutionPublisher);
 
     private:

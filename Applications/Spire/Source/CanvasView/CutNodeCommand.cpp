@@ -13,7 +13,7 @@ using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
 
-CutNodeCommand::CutNodeCommand(RefType<CanvasNodeModel> view,
+CutNodeCommand::CutNodeCommand(Ref<CanvasNodeModel> view,
     const CanvasNodeModel::Coordinate& coordinate)
     : m_isInitialRedo(true),
       m_view(view.Get()),

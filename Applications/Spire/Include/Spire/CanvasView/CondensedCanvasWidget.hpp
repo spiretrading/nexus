@@ -26,7 +26,7 @@ namespace Spire {
         \param parent The parent widget.
       */
       CondensedCanvasWidget(const std::string& name,
-        Beam::RefType<UserProfile> userProfile, QWidget* parent = nullptr);
+        Beam::Ref<UserProfile> userProfile, QWidget* parent = nullptr);
 
       virtual ~CondensedCanvasWidget();
 

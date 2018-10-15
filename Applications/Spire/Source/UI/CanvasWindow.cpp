@@ -131,7 +131,7 @@ namespace {
   }
 }
 
-CanvasWindow::CanvasWindow(RefType<UserProfile> userProfile, QWidget* parent,
+CanvasWindow::CanvasWindow(Ref<UserProfile> userProfile, QWidget* parent,
     Qt::WindowFlags flags)
     : QFrame(parent, flags),
       m_ui(make_unique<Ui_CanvasWindow>()),

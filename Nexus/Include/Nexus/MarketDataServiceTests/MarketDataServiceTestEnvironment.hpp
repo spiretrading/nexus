@@ -63,12 +63,6 @@ namespace Nexus::MarketDataService::Tests {
 
       ~MarketDataServiceTestEnvironment();
 
-      //! Opens the servlet.
-      void Open();
-
-      //! Closes the servlet.
-      void Close();
-
       //! Returns the historical data store.
       const VirtualHistoricalDataStore& GetDataStore() const;
 
@@ -116,7 +110,7 @@ namespace Nexus::MarketDataService::Tests {
                authenticate the MarketDataClient.
       */
       std::unique_ptr<VirtualMarketDataClient> BuildClient(
-        Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
+        Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
         serviceLocatorClient);
 
       //! Builds a new MarketDataFeedClient.
@@ -125,8 +119,12 @@ namespace Nexus::MarketDataService::Tests {
                authenticate the MarketDataFeedClient.
       */
       std::unique_ptr<VirtualMarketDataFeedClient> BuildFeedClient(
-        Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
+        Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
         serviceLocatorClient);
+
+      void Open();
+
+      void Close();
 
     private:
       using ServerConnection =
@@ -207,25 +205,6 @@ namespace Nexus::MarketDataService::Tests {
     Close();
   }
 
-  inline void MarketDataServiceTestEnvironment::Open() {
-    m_registryServlet.emplace(m_administrationClient, &m_registry,
-      &*m_dataStore);
-    m_container.emplace(Beam::Initialize(m_serviceLocatorClient.get(),
-      &*m_registryServlet), &m_serverConnection,
-      boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>());
-    m_feedContainer.emplace(Beam::Initialize(m_serviceLocatorClient.get(),
-      &*m_registryServlet), &m_feedServerConnection,
-      boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>());
-    m_container->Open();
-    m_feedContainer->Open();
-  }
-
-  inline void MarketDataServiceTestEnvironment::Close() {
-    m_feedContainer.reset();
-    m_container.reset();
-    m_registryServlet.reset();
-  }
-
   inline const VirtualHistoricalDataStore& MarketDataServiceTestEnvironment::
       GetDataStore() const {
     return *m_dataStore;
@@ -268,9 +247,9 @@ namespace Nexus::MarketDataService::Tests {
 
   inline std::unique_ptr<VirtualMarketDataClient>
       MarketDataServiceTestEnvironment::BuildClient(
-      Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
+      Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
       serviceLocatorClient) {
-    ServiceProtocolClientBuilder builder(Beam::Ref(serviceLocatorClient),
+    auto builder = ServiceProtocolClientBuilder(Beam::Ref(serviceLocatorClient),
       [&] {
         return std::make_unique<ServiceProtocolClientBuilder::Channel>(
           "test_market_data_client", Beam::Ref(m_serverConnection));
@@ -285,7 +264,7 @@ namespace Nexus::MarketDataService::Tests {
 
   inline std::unique_ptr<VirtualMarketDataFeedClient>
       MarketDataServiceTestEnvironment::BuildFeedClient(
-      Beam::RefType<ServiceLocatorClient> serviceLocatorClient) {
+      Beam::Ref<ServiceLocatorClient> serviceLocatorClient) {
     using Client = MarketDataService::MarketDataFeedClient<std::string,
       Beam::Threading::TriggerTimer*, Beam::Services::MessageProtocol<
       ClientChannel, Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
@@ -296,6 +275,25 @@ namespace Nexus::MarketDataService::Tests {
       Beam::ServiceLocator::SessionAuthenticator<ServiceLocatorClient>(
       Beam::Ref(serviceLocatorClient)), &m_samplingTimer, Beam::Initialize());
     return MakeVirtualMarketDataFeedClient(std::move(client));
+  }
+
+  inline void MarketDataServiceTestEnvironment::Open() {
+    m_registryServlet.emplace(m_administrationClient, &m_registry,
+      &*m_dataStore);
+    m_container.emplace(Beam::Initialize(m_serviceLocatorClient.get(),
+      &*m_registryServlet), &m_serverConnection,
+      boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>());
+    m_feedContainer.emplace(Beam::Initialize(m_serviceLocatorClient.get(),
+      &*m_registryServlet), &m_feedServerConnection,
+      boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>());
+    m_container->Open();
+    m_feedContainer->Open();
+  }
+
+  inline void MarketDataServiceTestEnvironment::Close() {
+    m_feedContainer.reset();
+    m_container.reset();
+    m_registryServlet.reset();
   }
 }
 

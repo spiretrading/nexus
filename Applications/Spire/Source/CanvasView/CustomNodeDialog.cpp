@@ -23,14 +23,14 @@ namespace {
 }
 
 CustomNodeDialog::CustomNodeDialog(const CustomNode& customNode,
-    RefType<UserProfile> userProfile, QWidget* parent, Qt::WindowFlags flags)
+    Ref<UserProfile> userProfile, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_CustomNodeDialog>()),
       m_userProfile(userProfile.Get()) {
   Setup(customNode);
 }
 
-CustomNodeDialog::CustomNodeDialog(RefType<UserProfile> userProfile,
+CustomNodeDialog::CustomNodeDialog(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_CustomNodeDialog>()),

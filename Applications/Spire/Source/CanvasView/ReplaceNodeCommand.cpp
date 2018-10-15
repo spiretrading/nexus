@@ -23,7 +23,7 @@ const CanvasNode& ReplaceNodeCommand::Replace(Out<CanvasNodeModel> view,
   return Replace(Store(view), view->GetCoordinate(source), replacement);
 }
 
-ReplaceNodeCommand::ReplaceNodeCommand(RefType<CanvasNodeModel> view,
+ReplaceNodeCommand::ReplaceNodeCommand(Ref<CanvasNodeModel> view,
     const CanvasNodeModel::Coordinate& coordinate, const CanvasNode& node)
     : m_view(view.Get()),
       m_coordinate(coordinate),

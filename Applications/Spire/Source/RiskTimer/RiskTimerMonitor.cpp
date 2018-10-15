@@ -20,7 +20,7 @@ namespace {
   const unsigned int UPDATE_INTERVAL = 100;
 }
 
-RiskTimerMonitor::RiskTimerMonitor(RefType<UserProfile> userProfile)
+RiskTimerMonitor::RiskTimerMonitor(Ref<UserProfile> userProfile)
     : m_userProfile(userProfile.Get()) {
   connect(&m_updateTimer, &QTimer::timeout, this,
     &RiskTimerMonitor::OnUpdateTimer);

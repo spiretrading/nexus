@@ -26,7 +26,7 @@ using namespace Nexus::WebPortal;
 using namespace std;
 
 WebPortalServlet::WebPortalServlet(
-    RefType<ApplicationServiceClients> serviceClients)
+    Ref<ApplicationServiceClients> serviceClients)
     : m_fileStore{"web_app"},
       m_serviceClients{serviceClients.Get()},
       m_serviceLocatorServlet{Ref(m_sessions), Ref(*m_serviceClients)},

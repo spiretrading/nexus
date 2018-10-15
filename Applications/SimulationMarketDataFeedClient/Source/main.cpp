@@ -64,9 +64,9 @@ namespace {
   vector<unique_ptr<ApplicationMarketDataFeedClient>> BuildMockFeedClients(
       const YAML::Node& config, const MarketDatabase& marketDatabase,
       const vector<IpAddress>& addresses,
-      RefType<ApplicationServiceLocatorClient> serviceLocatorClient,
-      LiveNtpTimeClient* timeClient, RefType<SocketThreadPool> socketThreadPool,
-      RefType<TimerThreadPool> timerThreadPool) {
+      Ref<ApplicationServiceLocatorClient> serviceLocatorClient,
+      LiveNtpTimeClient* timeClient, Ref<SocketThreadPool> socketThreadPool,
+      Ref<TimerThreadPool> timerThreadPool) {
     vector<unique_ptr<ApplicationMarketDataFeedClient>> feedClients;
     auto securities = ParseSecurities(GetNode(config, "symbols"),
       marketDatabase);

@@ -44,7 +44,7 @@ BookViewPanel::BookViewPanel(QWidget* parent, Qt::WindowFlags flags)
 
 BookViewPanel::~BookViewPanel() {}
 
-void BookViewPanel::Initialize(RefType<UserProfile> userProfile,
+void BookViewPanel::Initialize(Ref<UserProfile> userProfile,
     const BookViewProperties& properties, Side side) {
   m_userProfile = userProfile.Get();
   m_itemDelegate.Initialize(Ref(*m_userProfile));

@@ -57,8 +57,7 @@ namespace Nexus {
       /*!
         \param environment The BacktesterEnvironment to use.
       */
-      BacktesterServiceClients(
-        Beam::RefType<BacktesterEnvironment> environment);
+      BacktesterServiceClients(Beam::Ref<BacktesterEnvironment> environment);
 
       ~BacktesterServiceClients();
 
@@ -107,7 +106,7 @@ namespace Nexus {
   };
 
   inline BacktesterServiceClients::BacktesterServiceClients(
-      Beam::RefType<BacktesterEnvironment> environment)
+      Beam::Ref<BacktesterEnvironment> environment)
       : m_environment{environment.Get()},
         m_serviceLocatorClient{
           m_environment->GetServiceLocatorEnvironment().BuildClient()},

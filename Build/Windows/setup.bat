@@ -1,6 +1,6 @@
 SETLOCAL
 
-SET beam_commit="7791540c510d3e581edb03b0fd910135da1e00bc"
+SET beam_commit="b847efc596c71d37c7636df73db2b17345d47e82"
 if exist Beam goto end_beam_setup
   git clone https://www.github.com/eidolonsystems/beam.git Beam
   pushd Beam
@@ -62,7 +62,5 @@ if exist qt-5.11.2 goto end_qt_setup
     nmake
     popd
 :end_qt_setup
-
-pip install argparse HTMLParser GitPython pymysql pytz pyyaml --user
 
 ENDLOCAL

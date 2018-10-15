@@ -43,7 +43,7 @@ namespace Spire {
       /*!
         \param view The view to populate with ChartPlots.
       */
-      void SetView(Beam::RefType<ChartPlotView> view);
+      void SetView(Beam::Ref<ChartPlotView> view);
 
       //! Adds a ChartPlotSeries to populate the ChartPlotView with.
       /*!

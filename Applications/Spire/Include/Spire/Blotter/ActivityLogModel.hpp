@@ -75,7 +75,7 @@ namespace Spire {
         \param publisher Publishes the Orders to model.
       */
       void SetOrderExecutionPublisher(
-        Beam::RefType<Nexus::OrderExecutionService::OrderExecutionPublisher>
+        Beam::Ref<Nexus::OrderExecutionService::OrderExecutionPublisher>
         publisher);
 
       int rowCount(const QModelIndex& parent) const;

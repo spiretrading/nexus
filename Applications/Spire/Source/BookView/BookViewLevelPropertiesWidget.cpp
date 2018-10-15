@@ -45,7 +45,7 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(QWidget* parent,
 BookViewLevelPropertiesWidget::~BookViewLevelPropertiesWidget() {}
 
 void BookViewLevelPropertiesWidget::Initialize(
-    RefType<BookViewProperties> properties) {
+    Ref<BookViewProperties> properties) {
   m_properties = properties.Get();
 }
 

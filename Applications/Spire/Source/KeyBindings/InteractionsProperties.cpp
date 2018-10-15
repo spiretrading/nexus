@@ -51,7 +51,7 @@ void InteractionsProperties::Load(Out<UserProfile> userProfile) {
     reader.Read(Store(buffer));
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
     RegisterSpireTypes(Store(typeRegistry));
-    BinaryReceiver<SharedBuffer> receiver(Ref(typeRegistry));
+    auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
     receiver.SetSource(Ref(buffer));
     receiver.Shuttle(userProfile->GetInteractionProperties());
   } catch(std::exception&) {
@@ -67,7 +67,7 @@ void InteractionsProperties::Save(const UserProfile& userProfile) {
   try {
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
     RegisterSpireTypes(Store(typeRegistry));
-    BinarySender<SharedBuffer> sender(Ref(typeRegistry));
+    auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
     SharedBuffer buffer;
     sender.SetSink(Ref(buffer));
     sender.Shuttle(userProfile.GetInteractionProperties());

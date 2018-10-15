@@ -28,7 +28,7 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      ComplianceRuleEntryWidget(Beam::RefType<UserProfile> userProfile,
+      ComplianceRuleEntryWidget(Beam::Ref<UserProfile> userProfile,
         bool isReadOnly, const Nexus::Compliance::ComplianceRuleEntry& entry,
         std::shared_ptr<ComplianceModel> model, QWidget* parent = nullptr,
         Qt::WindowFlags flags = 0);

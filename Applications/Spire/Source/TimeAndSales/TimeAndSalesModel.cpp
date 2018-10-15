@@ -21,7 +21,7 @@ namespace {
   const unsigned int UPDATE_INTERVAL = 100;
 }
 
-TimeAndSalesModel::TimeAndSalesModel(RefType<UserProfile> userProfile,
+TimeAndSalesModel::TimeAndSalesModel(Ref<UserProfile> userProfile,
     const TimeAndSalesProperties& properties, const Security& security)
     : m_userProfile(userProfile.Get()),
       m_properties(properties) {

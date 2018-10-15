@@ -19,7 +19,7 @@ TraderProfileViewWidget::TraderProfileViewWidget(QWidget* parent,
 
 TraderProfileViewWidget::~TraderProfileViewWidget() {}
 
-void TraderProfileViewWidget::Initialize(RefType<UserProfile> userProfile,
+void TraderProfileViewWidget::Initialize(Ref<UserProfile> userProfile,
     bool isReadOnly, bool isPasswordReadOnly,
     std::shared_ptr<AccountInfoModel> accountInfoModel,
     std::shared_ptr<AccountEntitlementModel> accountEntitlementModel,

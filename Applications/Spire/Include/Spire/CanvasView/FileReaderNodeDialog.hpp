@@ -26,7 +26,7 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      FileReaderNodeDialog(Beam::RefType<UserProfile> userProfile,
+      FileReaderNodeDialog(Beam::Ref<UserProfile> userProfile,
         QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
 
       //! Constructs a FileReaderNodeDialog based on an existing FileReaderNode.
@@ -37,7 +37,7 @@ namespace Spire {
         \param flags Qt flags passed to the parent widget.
       */
       FileReaderNodeDialog(const FileReaderNode& node,
-        Beam::RefType<UserProfile> userProfile, QWidget* parent = nullptr,
+        Beam::Ref<UserProfile> userProfile, QWidget* parent = nullptr,
         Qt::WindowFlags flags = 0);
 
       virtual ~FileReaderNodeDialog();

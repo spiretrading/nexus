@@ -38,9 +38,9 @@ namespace Spire {
         \param rowBuilder Builds the rows to display.
         \param userProfile The user's profile.
       */
-      void Initialize(Beam::RefType<DashboardModel> model,
+      void Initialize(Beam::Ref<DashboardModel> model,
         const DashboardRowBuilder& rowBuilder,
-        Beam::RefType<UserProfile> userProfile);
+        Beam::Ref<UserProfile> userProfile);
 
       //! Returns the selection model.
       const DashboardSelectionModel& GetSelectionModel() const;

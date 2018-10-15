@@ -24,7 +24,7 @@ AccountInfoWidget::AccountInfoWidget(QWidget* parent, Qt::WindowFlags flags)
 
 AccountInfoWidget::~AccountInfoWidget() {}
 
-void AccountInfoWidget::Initialize(RefType<UserProfile> userProfile,
+void AccountInfoWidget::Initialize(Ref<UserProfile> userProfile,
     bool isReadOnly, bool isPasswordReadOnly) {
   m_userProfile = userProfile.Get();
   m_isReadOnly = isReadOnly;
