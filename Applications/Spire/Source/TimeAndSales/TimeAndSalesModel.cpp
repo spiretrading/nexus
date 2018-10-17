@@ -1,5 +1,6 @@
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 #include <Beam/TimeService/VirtualTimeClient.hpp>
+#include <QCoreApplication>
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 #include "Spire/Spire/ServiceClients.hpp"
 #include "Spire/Spire/UserProfile.hpp"
@@ -146,5 +147,15 @@ void TimeAndSalesModel::OnTimeAndSale(const TimeAndSale& timeAndSale) {
 }
 
 void TimeAndSalesModel::OnUpdateTimer() {
-  HandleTasks(m_slotHandler);
+  auto startTime = boost::posix_time::microsec_clock::universal_time();
+  while(!m_slotHandler.IsEmpty()) {
+    std::function<void ()> task;
+    m_slotHandler.Emplace(Store(task));
+    task();
+    auto frameTime = boost::posix_time::microsec_clock::universal_time();
+    if(frameTime - startTime > boost::posix_time::seconds(1) / 10) {
+      QCoreApplication::instance()->processEvents();
+      startTime = boost::posix_time::microsec_clock::universal_time();
+    }
+  }
 }

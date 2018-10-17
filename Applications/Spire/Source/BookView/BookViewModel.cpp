@@ -7,6 +7,7 @@
 #include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <Beam/Utilities/HashTuple.hpp>
 #include <boost/range/adaptor/map.hpp>
+#include <QCoreApplication>
 #include "Nexus/Definitions/QuoteConversions.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
@@ -142,8 +143,8 @@ QVariant BookViewModel::data(const QModelIndex& index, int role) const {
     if(index.column() == PRICE_COLUMN) {
       return QVariant::fromValue(quote.m_quote.m_price);
     } else if(index.column() == SIZE_COLUMN) {
-      return QVariant::fromValue(
-        Floor(std::max<Quantity>(1, quote.m_quote.m_size / m_boardLot), 0));
+      return static_cast<qlonglong>(
+        std::max<Quantity>(1, quote.m_quote.m_size / m_boardLot));
     } else if(index.column() == MPID_COLUMN) {
       return QString::fromStdString(quote.m_mpid);
     }
@@ -210,8 +211,14 @@ void BookViewModel::HighlightQuote(const BookQuote& quote) {
       }
       if(newTopQuoteIndex != -1) {
         topQuote = m_bookQuotes[newTopQuoteIndex];
+        dataChanged(index(newTopQuoteIndex, 0),
+          index(newTopQuoteIndex, COLUMN_COUNT - 1));
       } else {
         m_topLevels.erase(quote.m_market);
+      }
+      if(previousTopQuoteIndex != -1) {
+        dataChanged(index(previousTopQuoteIndex, 0),
+          index(previousTopQuoteIndex, COLUMN_COUNT - 1));
       }
     } else if(quote.m_quote.m_size != 0 &&
         (-GetDirection(m_side) * quote.m_quote.m_price <
@@ -223,23 +230,27 @@ void BookViewModel::HighlightQuote(const BookQuote& quote) {
       auto topQuoteIndex = static_cast<int>(std::distance(m_bookQuotes.begin(),
         bookQuoteIterator));
       topQuote = quote;
+      dataChanged(index(topQuoteIndex, 0),
+        index(topQuoteIndex, COLUMN_COUNT - 1));
     }
   }
 }
 
 void BookViewModel::AddQuote(const BookQuote& quote, int quoteIndex) {
-  m_minRow = std::min(m_minRow, quoteIndex);
-  m_maxRow = std::max(m_maxRow, quoteIndex);
+  beginInsertRows(QModelIndex(), quoteIndex, quoteIndex);
   if(m_quoteLevels.empty()) {
     m_quoteLevels.push_back(0);
+    endInsertRows();
   } else if(quoteIndex > 0 &&
       quote.m_quote.m_price == m_bookQuotes[quoteIndex - 1].m_quote.m_price) {
     auto nextLevel = m_quoteLevels[quoteIndex - 1];
     m_quoteLevels.insert(m_quoteLevels.begin() + quoteIndex, nextLevel);
+    endInsertRows();
   } else if(quoteIndex < static_cast<int>(m_bookQuotes.size()) - 1 &&
       quote.m_quote.m_price == m_bookQuotes[quoteIndex + 1].m_quote.m_price) {
     auto nextLevel = m_quoteLevels[quoteIndex];
     m_quoteLevels.insert(m_quoteLevels.begin() + quoteIndex, nextLevel);
+    endInsertRows();
   } else {
     int level;
     if(quoteIndex == 0) {
@@ -253,20 +264,24 @@ void BookViewModel::AddQuote(const BookQuote& quote, int quoteIndex) {
       ++(*i);
     }
     auto lastRow = static_cast<int>(m_quoteLevels.size() - 1);
+    endInsertRows();
+    dataChanged(index(quoteIndex, 0), index(lastRow, COLUMN_COUNT - 1));
   }
 }
 
 void BookViewModel::RemoveQuote(const BookQuote& quote, int quoteIndex) {
-  m_minRow = std::min(m_minRow, quoteIndex);
-  m_maxRow = std::max(m_maxRow, quoteIndex);
+  beginRemoveRows(QModelIndex(), quoteIndex, quoteIndex);
   if(m_quoteLevels.size() == 1) {
     m_quoteLevels.clear();
+    endRemoveRows();
   } else if(quoteIndex == m_bookQuotes.size()) {
     m_quoteLevels.pop_back();
+    endRemoveRows();
   } else if(quoteIndex > 0 &&
       quote.m_quote.m_price == m_bookQuotes[quoteIndex - 1].m_quote.m_price ||
       quote.m_quote.m_price == m_bookQuotes[quoteIndex].m_quote.m_price) {
     m_quoteLevels.erase(m_quoteLevels.begin() + quoteIndex);
+    endRemoveRows();
   } else {
     for(auto i = m_quoteLevels.begin() + quoteIndex;
         i != m_quoteLevels.end(); ++i) {
@@ -274,6 +289,8 @@ void BookViewModel::RemoveQuote(const BookQuote& quote, int quoteIndex) {
     }
     m_quoteLevels.erase(m_quoteLevels.begin() + quoteIndex);
     auto lastRow = static_cast<int>(m_quoteLevels.size() - 1);
+    endRemoveRows();
+    dataChanged(index(quoteIndex, 0), index(lastRow, COLUMN_COUNT - 1));
   }
 }
 
@@ -424,22 +441,16 @@ void BookViewModel::OnMarketQuoteInterruption(const std::exception_ptr& e) {
 }
 
 void BookViewModel::OnUpdateTimer() {
-  m_minRow = m_bookQuotes.size();
-  m_maxRow = -1;
-  auto startCount = m_bookQuotes.size();
-  HandleTasks(m_slotHandler);
-  auto endCount = m_bookQuotes.size();
-  m_maxRow = std::min(m_maxRow, static_cast<int>(startCount) - 1);
-  m_minRow = std::min(m_minRow, m_maxRow);
-  if(m_maxRow != -1) {
-    dataChanged(index(m_minRow, 0), index(m_maxRow, COLUMN_COUNT - 1));
-  }
-  if(startCount < endCount) {
-    beginInsertRows(QModelIndex{}, startCount, endCount - 1);
-    endInsertRows();
-  } else if(startCount > endCount) {
-    beginRemoveRows(QModelIndex{}, endCount - 1, startCount - 1);
-    endRemoveRows();
+  auto startTime = boost::posix_time::microsec_clock::universal_time();
+  while(!m_slotHandler.IsEmpty()) {
+    std::function<void ()> task;
+    m_slotHandler.Emplace(Store(task));
+    task();
+    auto frameTime = boost::posix_time::microsec_clock::universal_time();
+    if(frameTime - startTime > boost::posix_time::seconds(1) / 10) {
+      QCoreApplication::instance()->processEvents();
+      startTime = boost::posix_time::microsec_clock::universal_time();
+    }
   }
 }
 

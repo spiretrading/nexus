@@ -88,8 +88,6 @@ namespace Spire {
       std::unordered_map<const Nexus::OrderExecutionService::Order*,
         Nexus::Quantity> m_remainingOrderQuantities;
       QTimer m_updateTimer;
-      int m_minRow;
-      int m_maxRow;
       Beam::TaskQueue m_slotHandler;
 
       bool TestHighlight(const BookViewProperties::MarketHighlight& highlight,

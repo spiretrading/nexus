@@ -1,4 +1,5 @@
 #include "Spire/PortfolioViewer/PortfolioViewerModel.hpp"
+#include <QCoreApplication>
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
@@ -493,5 +494,15 @@ void PortfolioViewerModel::OnSelectionModelUpdated(const QModelIndex& topLeft,
 }
 
 void PortfolioViewerModel::OnUpdateTimer() {
-  HandleTasks(*m_slotHandler);
+  auto startTime = boost::posix_time::microsec_clock::universal_time();
+  while(!m_slotHandler->IsEmpty()) {
+    std::function<void ()> task;
+    m_slotHandler->Emplace(Store(task));
+    task();
+    auto frameTime = boost::posix_time::microsec_clock::universal_time();
+    if(frameTime - startTime > boost::posix_time::seconds(1) / 10) {
+      QCoreApplication::instance()->processEvents();
+      startTime = boost::posix_time::microsec_clock::universal_time();
+    }
+  }
 }
