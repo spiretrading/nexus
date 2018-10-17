@@ -167,7 +167,7 @@ int main(int argc, char* argv[]) {
       "servers:\n"
       "  - name: Local Environment\n"
       "    address: 127.0.0.1:20000\n"
-      "...";
+      "...\n";
   }
   YAML::Node config;
   try {
