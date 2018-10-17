@@ -127,16 +127,13 @@ void AequitasFixApplication::toAdmin(FIX::Message& message,
     const FIX::SessionID& sessionID) {}
 
 void AequitasFixApplication::toApp(FIX::Message& message,
-    const FIX::SessionID& sessionID) throw(FIX::DoNotSend) {}
+    const FIX::SessionID& sessionID) {}
 
 void AequitasFixApplication::fromAdmin(const FIX::Message& message,
-    const FIX::SessionID& sessionID) throw(FIX::FieldNotFound,
-    FIX::IncorrectDataFormat, FIX::IncorrectTagValue, FIX::RejectLogon) {}
+    const FIX::SessionID& sessionID) {}
 
 void AequitasFixApplication::fromApp(const FIX::Message& message,
-    const FIX::SessionID& sessionID) throw(FIX::FieldNotFound,
-    FIX::IncorrectDataFormat, FIX::IncorrectTagValue,
-    FIX::UnsupportedMessageType) {
+    const FIX::SessionID& sessionID) {
   crack(message, sessionID);
 }
 

@@ -126,16 +126,13 @@ void OmegaFixApplication::toAdmin(FIX::Message& message,
     const FIX::SessionID& sessionID) {}
 
 void OmegaFixApplication::toApp(FIX::Message& message,
-    const FIX::SessionID& sessionID) throw(FIX::DoNotSend) {}
+    const FIX::SessionID& sessionID) {}
 
 void OmegaFixApplication::fromAdmin(const FIX::Message& message,
-    const FIX::SessionID& sessionID) throw(FIX::FieldNotFound,
-    FIX::IncorrectDataFormat, FIX::IncorrectTagValue, FIX::RejectLogon) {}
+    const FIX::SessionID& sessionID) {}
 
 void OmegaFixApplication::fromApp(const FIX::Message& message,
-    const FIX::SessionID& sessionID) throw(FIX::FieldNotFound,
-    FIX::IncorrectDataFormat, FIX::IncorrectTagValue,
-    FIX::UnsupportedMessageType) {
+    const FIX::SessionID& sessionID) {
   crack(message, sessionID);
 }
 

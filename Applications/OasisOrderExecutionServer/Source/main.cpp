@@ -1,7 +1,6 @@
 #include <fstream>
 #include <iostream>
 #include <Beam/IO/SharedBuffer.hpp>
-#include <Beam/MySql/MySqlConfig.hpp>
 #include <Beam/Network/TcpServerSocket.hpp>
 #include <Beam/Network/UdpSocketChannel.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
@@ -9,6 +8,7 @@
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
+#include <Beam/Sql/MySqlConfig.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/TimeService/ToLocalTime.hpp>
@@ -18,6 +18,7 @@
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
 #include <tclap/CmdLine.h>
+#include <Viper/MySql/Connection.hpp>
 #include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
 #include "Nexus/Compliance/ApplicationDefinitions.hpp"
 #include "Nexus/Compliance/ComplianceCheckOrderExecutionDriver.hpp"
@@ -29,11 +30,11 @@
 #include "Nexus/OrderExecutionService/BoardLotCheck.hpp"
 #include "Nexus/OrderExecutionService/BuyingPowerCheck.hpp"
 #include "Nexus/OrderExecutionService/ManualOrderEntryDriver.hpp"
-#include "Nexus/OrderExecutionService/MySqlOrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionServlet.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheckDriver.hpp"
 #include "Nexus/OrderExecutionService/ReplicatedOrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionService/RiskStateCheck.hpp"
+#include "Nexus/OrderExecutionService/SqlOrderExecutionDataStore.hpp"
 #include "OasisOrderExecutionServer/AequitasFixApplication.hpp"
 #include "OasisOrderExecutionServer/AsxFixApplication.hpp"
 #include "OasisOrderExecutionServer/ChixFixApplication.hpp"
@@ -48,7 +49,6 @@
 using namespace Beam;
 using namespace Beam::Codecs;
 using namespace Beam::IO;
-using namespace Beam::MySql;
 using namespace Beam::Network;
 using namespace Beam::Routines;
 using namespace Beam::Serialization;
@@ -69,8 +69,10 @@ using namespace Nexus::OasisOrderExecutionService;
 using namespace Nexus::OrderExecutionService;
 using namespace std;
 using namespace TCLAP;
+using namespace Viper;
 
 namespace {
+  using SqlDataStore = SqlOrderExecutionDataStore<MySql::Connection>;
   using ApplicationFixOrderExecutionDriver = FixOrderExecutionDriver;
   using ApplicationFeesCalculatorOrderExecutionDriver =
     FeesCalculatorOrderExecutionDriver<ApplicationFixOrderExecutionDriver*>;
@@ -380,8 +382,17 @@ int main(int argc, const char** argv) {
     [&] (unsigned int id) {
       return serviceLocatorClient->LoadDirectoryEntry(id);
     };
-  auto dataStore = MakeReplicatedMySqlOrderExecutionDataStore(mySqlConfigs,
-    accountSource);
+  auto connectionBuilders = std::vector<SqlDataStore::ConnectionBuilder>();
+  for(auto& mySqlConfig : mySqlConfigs) {
+    connectionBuilders.emplace_back(
+      [=] {
+        return MySql::Connection(mySqlConfig.m_address.GetHost(),
+          mySqlConfig.m_address.GetPort(), mySqlConfig.m_username,
+          mySqlConfig.m_password, mySqlConfig.m_schema);
+      });
+  }
+  auto dataStore = MakeReplicatedMySqlOrderExecutionDataStore(
+    connectionBuilders, accountSource);
   OrderExecutionServletContainer orderExecutionServer{
     Initialize(serviceLocatorClient.Get(), Initialize(sessionStartTime,
     definitionsClient->LoadMarketDatabase(),
