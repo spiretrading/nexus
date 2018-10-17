@@ -170,6 +170,17 @@ if [ ! -d "RegistryServer" ]; then
   sudo -u $username sed -i "s:admin_password:\"$admin_password\":g" config.yml
   cd ..
 fi
+if [ ! -d "ReplayMarketDataFeedClient" ]; then
+  sudo -u $username mkdir ReplayMarketDataFeedClient
+  cd ReplayMarketDataFeedClient
+  sudo -u $username cp /home/developers/Nexus/Applications/ReplayMarketDataFeedClient/Application/ReplayMarketDataFeedClient .
+  sudo -u $username cp /home/developers/Nexus/Applications/ReplayMarketDataFeedClient/Application/*.sh .
+  sudo -u $username cp /home/developers/Nexus/Applications/ReplayMarketDataFeedClient/Application/config.default.yml config.yml
+  sudo -u $username sed -i "s:local_interface:$local_interface:g" config.yml
+  sudo -u $username sed -i "s:global_address:$global_address:g" config.yml
+  sudo -u $username sed -i "s:admin_password:\"$admin_password\":g" config.yml
+  cd ..
+fi
 if [ ! -d "RiskServer" ]; then
   sudo -u $username mkdir RiskServer
   cd RiskServer

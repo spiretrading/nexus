@@ -52,6 +52,35 @@ inline void InitializeResources() {
 }
 
 namespace {
+  std::vector<LoginDialog::ServerEntry> ParseServers(const YAML::Node& config,
+      const path& configPath) {
+    auto servers = std::vector<LoginDialog::ServerEntry>();
+    if(!config["servers"]) {
+      {
+        std::ofstream configFile(configPath);
+        configFile <<
+          "---\n"
+          "servers:\n"
+          "  - name: Local Environment\n"
+          "    address: 127.0.0.1:20000\n"
+          "...";
+      }
+      std::ifstream configStream(configPath);
+      if(!configStream.good()) {
+        QMessageBox::critical(nullptr, QObject::tr("Error"),
+          QObject::tr("Unable to load configuration: config.yml"));
+      }
+      return ParseServers(YAML::Load(configStream), configPath);
+    }
+    auto serverList = GetNode(config, "servers");
+    for(auto server : serverList) {
+      auto name = Extract<string>(server, "name");
+      auto address = Extract<IpAddress>(server, "address");
+      servers.push_back({name, address});
+    }
+    return servers;
+  }
+
   void LoadDefaultLayout(vector<QWidget*>& windows, UserProfile& userProfile) {
     auto instantiateSecurityWindows = true;
     QPoint nextPosition(0, 0);
@@ -135,10 +164,10 @@ int main(int argc, char* argv[]) {
     std::ofstream configFile(configPath);
     configFile <<
       "---\n"
-      "address: 127.0.0.1:20000\n"
-      "username: \"\"\n"
-      "save_login: true\n"
-      "...";
+      "servers:\n"
+      "  - name: Local Environment\n"
+      "    address: 127.0.0.1:20000\n"
+      "...\n";
   }
   YAML::Node config;
   try {
@@ -154,25 +183,18 @@ int main(int argc, char* argv[]) {
       QObject::tr("Invalid configuration file."));
     return -1;
   }
-  IpAddress address;
-  string username;
-  bool saveLoginInfo;
-  string orderExecutionServiceName;
+  auto servers = std::vector<LoginDialog::ServerEntry>();
   try {
-    address = Extract<IpAddress>(config, "address");
-    username = Extract<string>(config, "username");
-    saveLoginInfo = Extract<bool>(config, "save_login");
-    orderExecutionServiceName = Extract<string>(config,
-      "order_execution_service", OrderExecutionService::SERVICE_NAME);
-  } catch(std::exception&) {
+    servers = ParseServers(config, configPath);
+  } catch(const std::exception&) {
     QMessageBox::critical(nullptr, QObject::tr("Error"),
       QObject::tr("Invalid configuration file."));
     return -1;
   }
   SocketThreadPool socketThreadPool;
   TimerThreadPool timerThreadPool;
-  LoginDialog loginDialog(address, username, saveLoginInfo,
-    Ref(socketThreadPool), Ref(timerThreadPool));
+  LoginDialog loginDialog(std::move(servers), Ref(socketThreadPool),
+    Ref(timerThreadPool));
   auto loginResultCode = loginDialog.exec();
   if(loginResultCode == QDialog::Rejected) {
     return -1;
