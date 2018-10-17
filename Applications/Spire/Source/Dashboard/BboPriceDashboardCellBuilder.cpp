@@ -19,7 +19,7 @@ BboPriceDashboardCellBuilder::BboPriceDashboardCellBuilder(Side side)
     : m_side{side} {}
 
 std::unique_ptr<DashboardCell> BboPriceDashboardCellBuilder::Build(
-    const DashboardCell::Value& index, RefType<UserProfile> userProfile) const {
+    const DashboardCell::Value& index, Ref<UserProfile> userProfile) const {
   auto& security = boost::get<Security>(index);
   auto& marketDataClient =
     userProfile.Get()->GetServiceClients().GetMarketDataClient();

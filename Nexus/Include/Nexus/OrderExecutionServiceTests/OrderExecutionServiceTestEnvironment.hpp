@@ -98,7 +98,7 @@ namespace Tests {
                authenticate the OrderExecutionClient.
       */
       std::unique_ptr<VirtualOrderExecutionClient> BuildClient(
-        Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
+        Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
         serviceLocatorClient);
 
     private:
@@ -188,7 +188,7 @@ namespace Tests {
 
   inline std::unique_ptr<VirtualOrderExecutionClient>
       OrderExecutionServiceTestEnvironment::BuildClient(
-      Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
+      Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
       serviceLocatorClient) {
     ServiceProtocolClientBuilder builder{Beam::Ref(serviceLocatorClient),
       [&] {

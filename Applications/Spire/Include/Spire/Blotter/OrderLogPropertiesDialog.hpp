@@ -27,8 +27,8 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      OrderLogPropertiesDialog(Beam::RefType<UserProfile> userProfile,
-        Beam::RefType<BlotterModel> blotterModel, QWidget* parent = nullptr,
+      OrderLogPropertiesDialog(Beam::Ref<UserProfile> userProfile,
+        Beam::Ref<BlotterModel> blotterModel, QWidget* parent = nullptr,
         Qt::WindowFlags flags = 0);
 
       virtual ~OrderLogPropertiesDialog();

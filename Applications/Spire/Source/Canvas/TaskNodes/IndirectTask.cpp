@@ -11,7 +11,7 @@ using namespace boost;
 using namespace Spire;
 using namespace std;
 
-IndirectTask::IndirectTask(RefType<ReactorMonitor> reactorMonitor)
+IndirectTask::IndirectTask(Ref<ReactorMonitor> reactorMonitor)
     : m_reactorMonitor{reactorMonitor.Get()} {}
 
 void IndirectTask::SetTask(std::shared_ptr<Task> task) {
@@ -47,7 +47,7 @@ void IndirectTask::OnTaskUpdate(const StateEntry& update) {
   }
 }
 
-IndirectTaskFactory::IndirectTaskFactory(RefType<ReactorMonitor> reactorMonitor)
+IndirectTaskFactory::IndirectTaskFactory(Ref<ReactorMonitor> reactorMonitor)
     : m_taskFactory{std::make_shared<boost::optional<TaskFactory>>()},
       m_task{std::make_shared<IndirectTask>(Ref(reactorMonitor))} {}
 

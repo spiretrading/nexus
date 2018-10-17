@@ -19,7 +19,7 @@ namespace {
   int UPDATE_INTERVAL = 50;
 }
 
-SecurityInfoModel::SecurityInfoModel(RefType<UserProfile> userProfile)
+SecurityInfoModel::SecurityInfoModel(Ref<UserProfile> userProfile)
     : m_userProfile(userProfile.Get()),
       m_isAliveFlag(std::make_shared<Sync<bool>>(true)) {
   connect(&m_updateTimer, &QTimer::timeout, this,

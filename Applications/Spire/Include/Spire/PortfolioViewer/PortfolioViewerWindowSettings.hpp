@@ -28,9 +28,9 @@ namespace Spire {
 
       virtual std::string GetName() const;
 
-      virtual QWidget* Reopen(Beam::RefType<UserProfile> userProfile) const;
+      virtual QWidget* Reopen(Beam::Ref<UserProfile> userProfile) const;
 
-      virtual void Apply(Beam::RefType<UserProfile> userProfile,
+      virtual void Apply(Beam::Ref<UserProfile> userProfile,
         Beam::Out<QWidget> widget) const;
 
     private:

@@ -38,7 +38,7 @@ size_t SecurityTimePriceChartPlotSeries::TimestampHash::operator ()(
 }
 
 SecurityTimePriceChartPlotSeries::SecurityTimePriceChartPlotSeries(
-    RefType<UserProfile> userProfile, const Security& security,
+    Ref<UserProfile> userProfile, const Security& security,
     const time_duration& interval)
     : m_userProfile(userProfile.Get()),
       m_security(security),

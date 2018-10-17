@@ -50,8 +50,8 @@ namespace Spire {
         \param exchangeRates The list of exchange rates.
       */
       ProfitAndLossModel(
-        Beam::RefType<const Nexus::CurrencyDatabase> currencyDatabase,
-        Beam::RefType<const Nexus::ExchangeRateTable> exchangeRates,
+        Beam::Ref<const Nexus::CurrencyDatabase> currencyDatabase,
+        Beam::Ref<const Nexus::ExchangeRateTable> exchangeRates,
         bool showUnrealized);
 
       virtual ~ProfitAndLossModel();
@@ -61,7 +61,7 @@ namespace Spire {
         \param portfolioMonitor The PortfolioMonitor whose profit and loss is to
                be modeled.
       */
-      void SetPortfolioMonitor(Beam::RefType<SpirePortfolioMonitor>
+      void SetPortfolioMonitor(Beam::Ref<SpirePortfolioMonitor>
         portfolioMonitor);
 
       //! Set the currency that profit and loss updates are expressed in.

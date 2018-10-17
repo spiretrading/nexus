@@ -38,7 +38,7 @@ bool Spire::UI::Export(const EnvironmentSettings& environmentSettings,
   try {
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
     RegisterSpireTypes(Store(typeRegistry));
-    BinarySender<SharedBuffer> sender(Ref(typeRegistry));
+    auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
     SharedBuffer buffer;
     sender.SetSink(Ref(buffer));
     sender.Shuttle(environmentSettings);
@@ -69,7 +69,7 @@ bool Spire::UI::Import(const path& environmentPath,
     reader.Read(Store(buffer));
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
     RegisterSpireTypes(Store(typeRegistry));
-    BinaryReceiver<SharedBuffer> receiver(Ref(typeRegistry));
+    auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
     receiver.SetSource(Ref(buffer));
     receiver.Shuttle(environmentSettings);
   } catch(std::exception&) {

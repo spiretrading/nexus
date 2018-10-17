@@ -23,9 +23,9 @@ namespace Spire {
         \param parent The parent widget.
         \param node The CanvasNode to display.
       */
-      CondensedCanvasCell(Beam::RefType<UserProfile> userProfile,
-        Beam::RefType<CondensedCanvasWidget> parent,
-        Beam::RefType<const CanvasNode> node);
+      CondensedCanvasCell(Beam::Ref<UserProfile> userProfile,
+        Beam::Ref<CondensedCanvasWidget> parent,
+        Beam::Ref<const CanvasNode> node);
 
       //! Returns the displayed CanvasNode.
       const CanvasNode& GetNode() const;

@@ -8,7 +8,7 @@ using namespace boost::signals2;
 using namespace Spire;
 using namespace std;
 
-DashboardRowRenderer::DashboardRowRenderer(RefType<const DashboardRow> row,
+DashboardRowRenderer::DashboardRowRenderer(Ref<const DashboardRow> row,
     const DashboardCellRendererBuilder& cellRendererBuilder)
     : m_row{row.Get()},
       m_cellRendererBuilder{cellRendererBuilder},

@@ -18,7 +18,7 @@ namespace Spire {
     \return A ComplianceValueWidget that represents the specified <i>value</i>.
   */
   QWidget* BuildComplianceValueWidget(Nexus::Compliance::ComplianceValue value,
-    bool isReadOnly, Beam::RefType<UserProfile> userProfile,
+    bool isReadOnly, Beam::Ref<UserProfile> userProfile,
     QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
 
   //! Returns the ComplianceValue represented by a widget.

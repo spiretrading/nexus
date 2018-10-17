@@ -19,7 +19,7 @@ namespace Spire {
         \param userProfile The user's profile.
         \param account The account whose risk is represented by this model.
       */
-      RiskModel(Beam::RefType<UserProfile> userProfile,
+      RiskModel(Beam::Ref<UserProfile> userProfile,
         const Beam::ServiceLocator::DirectoryEntry& account);
 
       //! Loads the account's risk model.

@@ -39,10 +39,10 @@ namespace Spire {
         \param userProfile The user's profile.
       */
       CanvasObserver(const CanvasNode& target, const CanvasNode& observer,
-        Beam::RefType<CanvasNodeTranslationContext> context,
-        Beam::RefType<Beam::Reactors::ReactorMonitor> monitor,
+        Beam::Ref<CanvasNodeTranslationContext> context,
+        Beam::Ref<Beam::Reactors::ReactorMonitor> monitor,
         const Beam::ServiceLocator::DirectoryEntry& executingAccount,
-        Beam::RefType<UserProfile> userProfile);
+        Beam::Ref<UserProfile> userProfile);
 
       //! Returns the current value of the CanvasNode.
       const boost::any& GetValue() const;

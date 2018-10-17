@@ -8,7 +8,7 @@ using namespace boost;
 using namespace Spire;
 using namespace std;
 
-SetNodeReadOnlyCommand::SetNodeReadOnlyCommand(RefType<CanvasNodeModel> view,
+SetNodeReadOnlyCommand::SetNodeReadOnlyCommand(Ref<CanvasNodeModel> view,
     const CanvasNodeModel::Coordinate& node, bool readOnly)
     : m_view(view.Get()),
       m_node(node),

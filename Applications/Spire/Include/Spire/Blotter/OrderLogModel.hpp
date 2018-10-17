@@ -120,7 +120,7 @@ namespace Spire {
                are to be logged.
       */
       void SetOrderExecutionPublisher(
-        Beam::RefType<Nexus::OrderExecutionService::OrderExecutionPublisher>
+        Beam::Ref<Nexus::OrderExecutionService::OrderExecutionPublisher>
         orderExecutionPublisher);
 
       //! Connects a slot to the OrderAddedSignal.

@@ -27,7 +27,7 @@ ComplianceWidget::ComplianceWidget(QWidget* parent, Qt::WindowFlags flags)
 
 ComplianceWidget::~ComplianceWidget() {}
 
-void ComplianceWidget::Initialize(RefType<UserProfile> userProfile,
+void ComplianceWidget::Initialize(Ref<UserProfile> userProfile,
     bool isReadOnly) {
   m_isReadOnly = isReadOnly;
   m_userProfile = userProfile.Get();

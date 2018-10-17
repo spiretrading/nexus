@@ -23,8 +23,8 @@ ProfitAndLossWidget::ProfitAndLossWidget(QWidget* parent, Qt::WindowFlags flags)
 
 ProfitAndLossWidget::~ProfitAndLossWidget() {}
 
-void ProfitAndLossWidget::SetModel(RefType<UserProfile> userProfile,
-    RefType<ProfitAndLossModel> model) {
+void ProfitAndLossWidget::SetModel(Ref<UserProfile> userProfile,
+    Ref<ProfitAndLossModel> model) {
   vector<ProfitAndLossEntryModel*> entryModels;
   auto layout = static_cast<QVBoxLayout*>(m_ui->m_area->layout());
   for(auto i = 0; i < layout->count(); ++i) {

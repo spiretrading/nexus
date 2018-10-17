@@ -42,8 +42,8 @@ void ActivityLogWidget::SetUIState(const UIState& state) {
     state.m_tableState);
 }
 
-void ActivityLogWidget::SetModel(RefType<UserProfile> userProfile,
-    RefType<BlotterModel> model) {
+void ActivityLogWidget::SetModel(Ref<UserProfile> userProfile,
+    Ref<BlotterModel> model) {
   m_userProfile = userProfile.Get();
   m_ui->m_activityLogTable->reset();
   m_model = model.Get();

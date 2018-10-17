@@ -35,7 +35,7 @@ namespace OrderExecutionService {
       */
       template<typename MarketDataClient>
       SecurityOrderSimulator(MarketDataClient& marketDataClient,
-        const Security& security, Beam::RefType<TimeClient> timeClient);
+        const Security& security, Beam::Ref<TimeClient> timeClient);
 
       //! Submits an Order for simulated Order entry.
       /*!
@@ -83,7 +83,7 @@ namespace OrderExecutionService {
   template<typename MarketDataClient>
   SecurityOrderSimulator<TimeClientType>::SecurityOrderSimulator(
       MarketDataClient& marketDataClient, const Security& security,
-      Beam::RefType<TimeClient> timeClient)
+      Beam::Ref<TimeClient> timeClient)
       : m_timeClient{timeClient.Get()} {
     SetSessionTimestamps(m_timeClient->GetTime());
     auto realTimeQuery = Beam::Queries::BuildCurrentQuery(security);

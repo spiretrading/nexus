@@ -1,4 +1,5 @@
 #include "Spire/PortfolioViewer/PortfolioViewerModel.hpp"
+#include <QCoreApplication>
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
@@ -35,8 +36,8 @@ PortfolioViewerModel::TotalEntry::TotalEntry()
     : m_volume(0),
       m_trades(0) {}
 
-PortfolioViewerModel::PortfolioViewerModel(RefType<UserProfile> userProfile,
-    RefType<PortfolioSelectionModel> selectionModel)
+PortfolioViewerModel::PortfolioViewerModel(Ref<UserProfile> userProfile,
+    Ref<PortfolioSelectionModel> selectionModel)
     : m_userProfile(userProfile.Get()),
       m_totalCurrency(DefaultCurrencies::CAD()),
       m_exchangeRates(&m_userProfile->GetExchangeRates()),
@@ -493,5 +494,15 @@ void PortfolioViewerModel::OnSelectionModelUpdated(const QModelIndex& topLeft,
 }
 
 void PortfolioViewerModel::OnUpdateTimer() {
-  HandleTasks(*m_slotHandler);
+  auto startTime = boost::posix_time::microsec_clock::universal_time();
+  while(!m_slotHandler->IsEmpty()) {
+    std::function<void ()> task;
+    m_slotHandler->Emplace(Store(task));
+    task();
+    auto frameTime = boost::posix_time::microsec_clock::universal_time();
+    if(frameTime - startTime > boost::posix_time::seconds(1) / 10) {
+      QCoreApplication::instance()->processEvents();
+      startTime = boost::posix_time::microsec_clock::universal_time();
+    }
+  }
 }

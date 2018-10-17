@@ -7,7 +7,7 @@ using namespace std;
 CanvasNodeValidationError::CanvasNodeValidationError() {}
 
 CanvasNodeValidationError::CanvasNodeValidationError(
-    RefType<const CanvasNode> node, string message)
+    Ref<const CanvasNode> node, string message)
     : m_node(node.Get()),
       m_message(std::move(message)) {}
 

@@ -8,7 +8,7 @@ using namespace Beam;
 using namespace Spire;
 using namespace std;
 
-ServiceItemWidget::ServiceItemWidget(RefType<UserProfile> userProfile,
+ServiceItemWidget::ServiceItemWidget(Ref<UserProfile> userProfile,
     const std::shared_ptr<AccountEntitlementModel>& entitlementModel,
     QWidget* parent, Qt::WindowFlags flags)
     : QWidget(parent, flags),

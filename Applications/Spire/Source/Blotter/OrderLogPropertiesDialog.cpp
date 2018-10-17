@@ -12,7 +12,7 @@ using namespace Spire;
 using namespace std;
 
 OrderLogPropertiesDialog::OrderLogPropertiesDialog(
-    RefType<UserProfile> userProfile, RefType<BlotterModel> blotterModel,
+    Ref<UserProfile> userProfile, Ref<BlotterModel> blotterModel,
     QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_OrderLogPropertiesDialog>()),

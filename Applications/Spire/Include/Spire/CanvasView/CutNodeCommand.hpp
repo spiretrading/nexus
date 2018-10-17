@@ -18,7 +18,7 @@ namespace Spire {
         \param view The CanvasNodeModel to perform the command on.
         \param coordinate The Coordinate to add the root at.
       */
-      CutNodeCommand(Beam::RefType<CanvasNodeModel> view,
+      CutNodeCommand(Beam::Ref<CanvasNodeModel> view,
         const CanvasNodeModel::Coordinate& coordinate);
 
       virtual void undo();

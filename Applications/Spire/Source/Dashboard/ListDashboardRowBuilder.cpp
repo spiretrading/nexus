@@ -14,7 +14,7 @@ ListDashboardRowBuilder::ListDashboardRowBuilder(
 ListDashboardRowBuilder::~ListDashboardRowBuilder() {}
 
 std::unique_ptr<DashboardRow> ListDashboardRowBuilder::Build(
-    const DashboardCell::Value& index, RefType<UserProfile> userProfile) const {
+    const DashboardCell::Value& index, Ref<UserProfile> userProfile) const {
   auto indexCell = std::make_unique<ValueDashboardCell>();
   indexCell->SetBufferSize(1);
   indexCell->SetValue(index);

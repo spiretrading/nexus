@@ -92,7 +92,7 @@ namespace Details {
         MarketDataClientForward&& marketDataClient,
         TimeClientForward&& timeClient, UidClientForward&& uidClient,
         OrderExecutionDriverForward&& orderExecutionDriver,
-        Beam::RefType<Beam::Threading::TimerThreadPool> timerThreadPool);
+        Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
 
       ~InternalMatchingOrderExecutionDriver();
 
@@ -127,7 +127,7 @@ namespace Details {
         Beam::Threading::TimedConditionVariable m_isTerminalCondition;
 
         OrderEntry(const OrderExecutionService::OrderInfo& orderInfo,
-          Beam::RefType<Beam::Threading::TimerThreadPool> timerThreadPool);
+          Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
       };
       struct SecurityEntry {
         std::vector<std::shared_ptr<OrderEntry>> m_asks;
@@ -179,7 +179,7 @@ namespace Details {
       MarketDataClientType, TimeClientType, UidClientType,
       OrderExecutionDriverType>::OrderEntry::OrderEntry(
       const OrderExecutionService::OrderInfo& orderInfo,
-      Beam::RefType<Beam::Threading::TimerThreadPool> timerThreadPool)
+      Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool)
       : m_orderInfo{orderInfo},
         m_driverOrder{nullptr},
         m_order{std::make_shared<OrderExecutionService::PrimitiveOrder>(
@@ -214,7 +214,7 @@ namespace Details {
       MarketDataClientForward&& marketDataClient,
       TimeClientForward&& timeClient, UidClientForward&& uidClient,
       OrderExecutionDriverForward&& orderExecutionDriver,
-      Beam::RefType<Beam::Threading::TimerThreadPool> timerThreadPool)
+      Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool)
       : m_matchReportBuilder{std::forward<MatchReportBuilderForward>(
           matchReportBuilder)},
         m_marketDataClient{std::forward<MarketDataClientForward>(

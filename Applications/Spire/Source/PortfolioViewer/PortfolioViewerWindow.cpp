@@ -48,7 +48,7 @@ namespace {
   }
 }
 
-PortfolioViewerWindow::PortfolioViewerWindow(RefType<UserProfile> userProfile,
+PortfolioViewerWindow::PortfolioViewerWindow(Ref<UserProfile> userProfile,
     const PortfolioViewerProperties& properties, QWidget* parent,
     Qt::WindowFlags flags)
     : QFrame(parent, flags),

@@ -98,10 +98,10 @@ namespace {
     auto addresses = LocateServiceAddresses(serviceLocatorClient,
       Compliance::SERVICE_NAME);
     auto delay = false;
-    SessionBuilder sessionBuilder(Ref(serviceLocatorClient),
+    auto sessionBuilder = SessionBuilder(Ref(serviceLocatorClient),
       [=] () mutable {
         if(delay) {
-          LiveTimer delayTimer(seconds(3), Ref(*GetTimerThreadPool()));
+          auto delayTimer = LiveTimer(seconds(3), Ref(*GetTimerThreadPool()));
           delayTimer.Start();
           delayTimer.Wait();
         }

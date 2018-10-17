@@ -38,7 +38,7 @@ namespace Spire {
         \param properties The BookViewProperties used to display this panel.
         \param side The Side to display.
       */
-      void Initialize(Beam::RefType<UserProfile> userProfile,
+      void Initialize(Beam::Ref<UserProfile> userProfile,
         const BookViewProperties& properties, Nexus::Side side);
 
       //! Returns the best Quote currently displayed.

@@ -59,7 +59,7 @@ namespace {
   };
 }
 
-ValueListInputDialog::ValueListInputDialog(RefType<UserProfile> userProfile,
+ValueListInputDialog::ValueListInputDialog(Ref<UserProfile> userProfile,
     const std::type_info& type, QWidget* parent, Qt::WindowFlags flags)
     : QDialog{parent, flags},
       m_ui{std::make_unique<Ui_ValueListInputDialog>()},
@@ -86,7 +86,7 @@ ValueListInputDialog::ValueListInputDialog(RefType<UserProfile> userProfile,
     metrics.height() + 4);
 }
 
-ValueListInputDialog::ValueListInputDialog(RefType<UserProfile> userProfile,
+ValueListInputDialog::ValueListInputDialog(Ref<UserProfile> userProfile,
     const std::type_info& type, const std::vector<Value>& values,
     QWidget* parent, Qt::WindowFlags flags)
     : ValueListInputDialog{Ref(userProfile), type, parent, flags} {

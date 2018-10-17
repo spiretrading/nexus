@@ -10,7 +10,7 @@ ValueDashboardCellBuilder::ValueDashboardCellBuilder(
     : m_value{value} {}
 
 std::unique_ptr<DashboardCell> ValueDashboardCellBuilder::Build(
-    const DashboardCell::Value& index, RefType<UserProfile> userProfile) const {
+    const DashboardCell::Value& index, Ref<UserProfile> userProfile) const {
   auto cell = std::make_unique<ValueDashboardCell>();
   cell->SetBufferSize(1);
   cell->SetValue(m_value);

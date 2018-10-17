@@ -28,7 +28,7 @@ const vector<CatalogEntry*>& CatalogTabModel::GetEntries() const {
   return m_entries;
 }
 
-void CatalogTabModel::Add(RefType<CatalogEntry> entry) {
+void CatalogTabModel::Add(Ref<CatalogEntry> entry) {
   CatalogEntry* selfEntry = entry.Get();
   if(find(m_entries.begin(), m_entries.end(), selfEntry) != m_entries.end()) {
     return;

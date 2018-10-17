@@ -25,7 +25,7 @@ namespace UI {
         \param node The OptionalPriceNode represented.
         \param parent The parent widget.
       */
-      OptionalPriceSpinBox(Beam::RefType<UserProfile> userProfile,
+      OptionalPriceSpinBox(Beam::Ref<UserProfile> userProfile,
         const OptionalPriceNode& node, QWidget* parent = nullptr);
 
       virtual ~OptionalPriceSpinBox();

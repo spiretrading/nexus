@@ -108,7 +108,7 @@ void ChartPlotController::SetLockGrid(bool lockGrid) {
   UpdateLockGrid();
 }
 
-void ChartPlotController::SetView(RefType<ChartPlotView> view) {
+void ChartPlotController::SetView(Ref<ChartPlotView> view) {
   m_view = view.Get();
   m_xAxisParametersConnection = m_view->ConnectXAxisParametersChangedSignal(
     std::bind(&ChartPlotController::OnXAxisParametersChanged, this,

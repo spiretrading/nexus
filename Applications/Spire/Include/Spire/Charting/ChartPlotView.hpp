@@ -110,7 +110,7 @@ namespace Spire {
         \param userProfile The user's profile.
         \param properties The properties used to display the chart.
       */
-      void Initialize(Beam::RefType<UserProfile> userProfile,
+      void Initialize(Beam::Ref<UserProfile> userProfile,
         const Properties& properties);
 
       //! Returns the interaction mode.

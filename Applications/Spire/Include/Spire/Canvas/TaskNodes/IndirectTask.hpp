@@ -19,7 +19,7 @@ namespace Spire {
       /*!
         \param reactorMonitor The ReactorMonitor used to synchronize Tasks.
       */
-      IndirectTask(Beam::RefType<Beam::Reactors::ReactorMonitor>
+      IndirectTask(Beam::Ref<Beam::Reactors::ReactorMonitor>
         reactorMonitor);
 
       //! Sets the Task to indirectly reference.
@@ -53,7 +53,7 @@ namespace Spire {
       /*!
         \param reactorMonitor The ReactorMonitor used to synchronize Tasks.
       */
-      IndirectTaskFactory(Beam::RefType<Beam::Reactors::ReactorMonitor>
+      IndirectTaskFactory(Beam::Ref<Beam::Reactors::ReactorMonitor>
         reactorMonitor);
 
       //! Returns the IndirectTask.

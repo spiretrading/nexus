@@ -14,8 +14,8 @@ using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
 
-BlotterMonitorsDialog::BlotterMonitorsDialog(RefType<UserProfile> userProfile,
-    const BlotterTaskProperties& properties, RefType<BlotterModel> model,
+BlotterMonitorsDialog::BlotterMonitorsDialog(Ref<UserProfile> userProfile,
+    const BlotterTaskProperties& properties, Ref<BlotterModel> model,
     QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_BlotterMonitorsDialog>()),

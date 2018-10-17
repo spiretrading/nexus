@@ -23,7 +23,7 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      ServiceItemWidget(Beam::RefType<UserProfile> userProfile,
+      ServiceItemWidget(Beam::Ref<UserProfile> userProfile,
         const std::shared_ptr<AccountEntitlementModel>& entitlementModel,
         QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
 

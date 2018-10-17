@@ -75,7 +75,7 @@ namespace Spire {
         \param userProfile The user's profile.
       */
       std::unique_ptr<DashboardModel> Build(
-        Beam::RefType<UserProfile> userProfile) const;
+        Beam::Ref<UserProfile> userProfile) const;
 
     private:
       friend struct Beam::Serialization::Shuttle<DashboardModelSchema>;

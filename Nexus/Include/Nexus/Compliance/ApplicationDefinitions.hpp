@@ -1,5 +1,5 @@
-#ifndef NEXUS_COMPLIANCEAPPLICATIONDEFINITIONS_HPP
-#define NEXUS_COMPLIANCEAPPLICATIONDEFINITIONS_HPP
+#ifndef NEXUS_COMPLIANCE_APPLICATION_DEFINITIONS_HPP
+#define NEXUS_COMPLIANCE_APPLICATION_DEFINITIONS_HPP
 #include <string>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/IpAddress.hpp>
@@ -50,10 +50,10 @@ namespace Details {
                connection.
         \param timerThreadPool The TimerThreadPool used for heartbeats.
       */
-      void BuildSession(Beam::RefType<
+      void BuildSession(Beam::Ref<
         Beam::ServiceLocator::ApplicationServiceLocatorClient::Client>
-        serviceLocatorClient, Beam::RefType<Beam::Network::SocketThreadPool>
-        socketThreadPool, Beam::RefType<Beam::Threading::TimerThreadPool>
+        serviceLocatorClient, Beam::Ref<Beam::Network::SocketThreadPool>
+        socketThreadPool, Beam::Ref<Beam::Threading::TimerThreadPool>
         timerThreadPool);
 
       //! Returns a reference to the Client.
@@ -78,10 +78,10 @@ namespace Details {
       Beam::DelayPtr<Client> m_client;
   };
 
-  inline void ApplicationComplianceClient::BuildSession(Beam::RefType<
+  inline void ApplicationComplianceClient::BuildSession(Beam::Ref<
       Beam::ServiceLocator::ApplicationServiceLocatorClient::Client>
-      serviceLocatorClient, Beam::RefType<Beam::Network::SocketThreadPool>
-      socketThreadPool, Beam::RefType<Beam::Threading::TimerThreadPool>
+      serviceLocatorClient, Beam::Ref<Beam::Network::SocketThreadPool>
+      socketThreadPool, Beam::Ref<Beam::Threading::TimerThreadPool>
       timerThreadPool) {
     if(m_client.IsInitialized()) {
       m_client->Close();
@@ -93,12 +93,12 @@ namespace Details {
     auto addresses = Beam::ServiceLocator::LocateServiceAddresses(
       *serviceLocatorClientHandle, Compliance::SERVICE_NAME);
     auto delay = false;
-    Details::ComplianceClientSessionBuilder sessionBuilder(
+    auto sessionBuilder = Details::ComplianceClientSessionBuilder(
       Beam::Ref(serviceLocatorClient),
       [=] () mutable {
         if(delay) {
-          Beam::Threading::LiveTimer delayTimer(boost::posix_time::seconds(3),
-            Beam::Ref(*timerThreadPoolHandle));
+          auto delayTimer = Beam::Threading::LiveTimer(
+            boost::posix_time::seconds(3), Beam::Ref(*timerThreadPoolHandle));
           delayTimer.Start();
           delayTimer.Wait();
         }

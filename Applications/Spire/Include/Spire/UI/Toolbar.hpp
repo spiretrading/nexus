@@ -29,7 +29,7 @@ namespace UI {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      Toolbar(Beam::RefType<UserProfile> userProfile,
+      Toolbar(Beam::Ref<UserProfile> userProfile,
         QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
 
       virtual std::unique_ptr<WindowSettings> GetWindowSettings() const;

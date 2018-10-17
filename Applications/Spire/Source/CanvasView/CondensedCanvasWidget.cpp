@@ -48,7 +48,7 @@ namespace {
 }
 
 CondensedCanvasWidget::CondensedCanvasWidget(const string& name,
-    RefType<UserProfile> userProfile, QWidget* parent)
+    Ref<UserProfile> userProfile, QWidget* parent)
     : QWidget{parent},
       m_name{name},
       m_userProfile{userProfile.Get()},

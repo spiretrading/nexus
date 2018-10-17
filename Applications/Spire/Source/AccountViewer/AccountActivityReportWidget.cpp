@@ -24,7 +24,7 @@ using namespace Spire::UI;
 using namespace std;
 
 AccountActivityReportWidget::ReportModel::ReportModel(
-    RefType<UserProfile> userProfile,
+    Ref<UserProfile> userProfile,
     const std::shared_ptr<OrderExecutionPublisher>& orderPublisher)
     : m_orderPublisher(orderPublisher),
       m_profitAndLossModel(Ref(userProfile->GetCurrencyDatabase()),
@@ -47,7 +47,7 @@ AccountActivityReportWidget::AccountActivityReportWidget(QWidget* parent,
 
 AccountActivityReportWidget::~AccountActivityReportWidget() {}
 
-void AccountActivityReportWidget::Initialize(RefType<UserProfile> userProfile,
+void AccountActivityReportWidget::Initialize(Ref<UserProfile> userProfile,
     const DirectoryEntry& account) {
   m_userProfile = userProfile.Get();
   m_account = account;

@@ -25,7 +25,7 @@ namespace Spire {
         \param security The Security to model.
       */
       static std::shared_ptr<SecurityTechnicalsModel> GetModel(
-        Beam::RefType<UserProfile> userProfile,
+        Beam::Ref<UserProfile> userProfile,
         const Nexus::Security& security);
 
       //! Signals a change in the opening price.
@@ -102,7 +102,7 @@ namespace Spire {
         const VolumeSignal::slot_type& slot) const;
 
     protected:
-      SecurityTechnicalsModel(Beam::RefType<UserProfile> userProfile,
+      SecurityTechnicalsModel(Beam::Ref<UserProfile> userProfile,
         const Nexus::Security& security);
 
     private:
@@ -121,7 +121,10 @@ namespace Spire {
       QTimer m_updateTimer;
       mutable Beam::TaskQueue m_slotHandler;
 
-      void OnTimeAndSale(const Nexus::TimeAndSale& timeAndSale);
+      void OnOpenUpdate(const Nexus::TimeAndSale& open);
+      void OnHighUpdate(const Nexus::Queries::QueryVariant& volume);
+      void OnLowUpdate(const Nexus::Queries::QueryVariant& volume);
+      void OnVolumeUpdate(const Nexus::Queries::QueryVariant& volume);
       void OnUpdateTimer();
   };
 }

@@ -21,8 +21,8 @@ namespace Spire {
         \param cell The cell to render.
         \param userProfile The user's profile.
       */
-      PercentageDashboardCellRenderer(Beam::RefType<const DashboardCell> cell,
-        Beam::RefType<UserProfile> userProfile);
+      PercentageDashboardCellRenderer(Beam::Ref<const DashboardCell> cell,
+        Beam::Ref<UserProfile> userProfile);
 
       //! Returns the text's font.
       const QFont& GetFont() const;

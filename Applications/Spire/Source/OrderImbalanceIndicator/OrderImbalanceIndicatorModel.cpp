@@ -21,7 +21,7 @@ namespace {
 }
 
 OrderImbalanceIndicatorModel::OrderImbalanceIndicatorModel(
-    RefType<UserProfile> userProfile,
+    Ref<UserProfile> userProfile,
     const OrderImbalanceIndicatorProperties& properties)
     : m_userProfile(userProfile.Get()),
       m_properties(properties) {

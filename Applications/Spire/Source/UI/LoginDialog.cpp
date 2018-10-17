@@ -44,8 +44,8 @@ LoginDialog::LoginRoutine::LoginRoutine()
     : m_loginCount(0) {}
 
 LoginDialog::LoginDialog(const IpAddress& address, const string& username,
-    bool saveLoginInfo, RefType<SocketThreadPool> socketThreadPool,
-    RefType<TimerThreadPool> timerThreadPool)
+    bool saveLoginInfo, Ref<SocketThreadPool> socketThreadPool,
+    Ref<TimerThreadPool> timerThreadPool)
     : m_ui(std::make_unique<Ui_LoginDialog>()),
       m_address(address),
       m_username(username),

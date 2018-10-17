@@ -34,7 +34,7 @@ namespace Spire {
         \param userProfile The user's profile.
         \param group The group to display.
       */
-      void Initialize(Beam::RefType<UserProfile> userProfile,
+      void Initialize(Beam::Ref<UserProfile> userProfile,
         const Beam::ServiceLocator::DirectoryEntry& group);
 
     private:
@@ -44,7 +44,7 @@ namespace Spire {
         ProfitAndLossModel m_profitAndLossModel;
         SpirePortfolioMonitor m_portfolioMonitor;
 
-        ReportModel(Beam::RefType<UserProfile> userProfile,
+        ReportModel(Beam::Ref<UserProfile> userProfile,
           const std::shared_ptr<
           Nexus::OrderExecutionService::OrderExecutionPublisher>&
           orderPublisher);

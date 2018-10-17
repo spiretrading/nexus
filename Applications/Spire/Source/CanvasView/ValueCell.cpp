@@ -11,7 +11,7 @@ namespace {
   QColor readOnlyBackgroundColor = QColor::fromRgb(212, 208, 200);
 }
 
-ValueCell::ValueCell(RefType<const CanvasNode> node)
+ValueCell::ValueCell(Ref<const CanvasNode> node)
     : m_node(node.Get()) {
   setFlags((flags() | Qt::ItemIsDragEnabled) & ~Qt::ItemIsDropEnabled);
 }

@@ -21,7 +21,7 @@ namespace Spire {
         \param model The profit and loss model to represent.
         \param parent The parent widget.
       */
-      ProfitAndLossHeader(Beam::RefType<ProfitAndLossEntryModel> model,
+      ProfitAndLossHeader(Beam::Ref<ProfitAndLossEntryModel> model,
         QWidget* parent = nullptr);
 
       virtual ~ProfitAndLossHeader();

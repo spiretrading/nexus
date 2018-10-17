@@ -13,7 +13,7 @@ using namespace std;
 BookViewWindowSettings::BookViewWindowSettings() {}
 
 BookViewWindowSettings::BookViewWindowSettings(const BookViewWindow& window,
-    RefType<UserProfile> userProfile)
+    Ref<UserProfile> userProfile)
     : m_properties(window.GetBookViewProperties()),
       m_security(window.m_security),
       m_securityViewStack(window.m_securityViewStack),
@@ -37,7 +37,7 @@ string BookViewWindowSettings::GetName() const {
 }
 
 QWidget* BookViewWindowSettings::Reopen(
-    RefType<UserProfile> userProfile) const {
+    Ref<UserProfile> userProfile) const {
   BookViewWindow* window = new BookViewWindow(Ref(userProfile), m_properties,
     m_identifier);
   window->setAttribute(Qt::WA_DeleteOnClose);
@@ -45,7 +45,7 @@ QWidget* BookViewWindowSettings::Reopen(
   return window;
 }
 
-void BookViewWindowSettings::Apply(RefType<UserProfile> userProfile,
+void BookViewWindowSettings::Apply(Ref<UserProfile> userProfile,
     Out<QWidget> widget) const {
   BookViewWindow& window = dynamic_cast<BookViewWindow&>(*widget);
   window.restoreGeometry(m_geometry);

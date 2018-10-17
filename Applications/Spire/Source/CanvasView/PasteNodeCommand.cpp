@@ -14,7 +14,7 @@ using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
 
-PasteNodeCommand::PasteNodeCommand(RefType<CanvasNodeModel> view,
+PasteNodeCommand::PasteNodeCommand(Ref<CanvasNodeModel> view,
     const CanvasNodeModel::Coordinate& coordinate)
     : m_view(view.Get()),
       m_coordinate(coordinate) {}

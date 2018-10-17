@@ -16,7 +16,7 @@ using namespace Spire::UI;
 using namespace std;
 
 PortfolioSelectionModel::PortfolioSelectionModel(
-    RefType<UserProfile> userProfile,
+    Ref<UserProfile> userProfile,
     const PortfolioViewerProperties& properties, QObject* parent)
     : m_userProfile(userProfile.Get()) {
   for(size_t i = 0; i < SELECTION_TYPES_COUNT; ++i) {

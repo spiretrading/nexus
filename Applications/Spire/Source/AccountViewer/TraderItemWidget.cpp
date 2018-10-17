@@ -12,7 +12,7 @@ using namespace boost;
 using namespace Spire;
 using namespace std;
 
-TraderItemWidget::TraderItemWidget(RefType<UserProfile> userProfile,
+TraderItemWidget::TraderItemWidget(Ref<UserProfile> userProfile,
     std::shared_ptr<AccountInfoModel> infoModel,
     std::shared_ptr<AccountEntitlementModel> entitlementModel,
     std::shared_ptr<RiskModel> riskModel,

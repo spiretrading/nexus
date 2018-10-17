@@ -7,5 +7,5 @@ const DashboardCell& DashboardCellRenderer::GetCell() const {
   return *m_cell;
 }
 
-DashboardCellRenderer::DashboardCellRenderer(RefType<const DashboardCell> cell)
+DashboardCellRenderer::DashboardCellRenderer(Ref<const DashboardCell> cell)
     : m_cell{cell.Get()} {}

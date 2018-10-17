@@ -15,7 +15,7 @@ namespace {
 }
 
 StandardCanvasTableItemDelegate::StandardCanvasTableItemDelegate(
-    RefType<CanvasTableWidget> parent)
+    Ref<CanvasTableWidget> parent)
     : m_parent(parent.Get()) {}
 
 void StandardCanvasTableItemDelegate::paint(QPainter* painter,

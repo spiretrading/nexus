@@ -29,7 +29,7 @@ namespace UI {
         \param userProfile The user's profile.
       */
       ValueLabel(const std::string& label,
-        Beam::RefType<UserProfile> userProfile);
+        Beam::Ref<UserProfile> userProfile);
 
       //! Initializes this ValueLabel.
       /*!
@@ -37,7 +37,7 @@ namespace UI {
         \param userProfile The user's profile.
       */
       void Initialize(const std::string& label,
-        Beam::RefType<UserProfile> userProfile);
+        Beam::Ref<UserProfile> userProfile);
 
       //! Adjusts the size of this label to fit a value.
       /*!

@@ -10,7 +10,7 @@ using namespace Spire::UI;
 using namespace std;
 
 PercentageDashboardCellRenderer::PercentageDashboardCellRenderer(
-    RefType<const DashboardCell> cell, RefType<UserProfile> userProfile)
+    Ref<const DashboardCell> cell, Ref<UserProfile> userProfile)
     : DashboardCellRenderer{Ref(cell)},
       m_userProfile{userProfile.Get()},
       m_pen{QColor{255, 255, 255}},

@@ -41,7 +41,7 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      ValueListInputWidget(Beam::RefType<UserProfile> userProfile,
+      ValueListInputWidget(Beam::Ref<UserProfile> userProfile,
         const std::type_info& type, QWidget* parent = nullptr,
         Qt::WindowFlags flags = 0);
 
@@ -52,7 +52,7 @@ namespace Spire {
         \param userProfile The user's profile.
         \param type The type of value to display.
       */
-      void Initialize(Beam::RefType<UserProfile> userProfile,
+      void Initialize(Beam::Ref<UserProfile> userProfile,
         const std::type_info& type);
 
       //! Returns the list of values.

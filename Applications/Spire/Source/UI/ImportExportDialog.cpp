@@ -13,7 +13,7 @@ using namespace Spire::UI;
 using namespace std;
 using namespace std::filesystem;
 
-ImportExportDialog::ImportExportDialog(RefType<UserProfile> userProfile,
+ImportExportDialog::ImportExportDialog(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_ImportExportDialog>()),

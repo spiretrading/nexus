@@ -27,7 +27,7 @@ string PortfolioViewerWindowSettings::GetName() const {
 }
 
 QWidget* PortfolioViewerWindowSettings::Reopen(
-    RefType<UserProfile> userProfile) const {
+    Ref<UserProfile> userProfile) const {
   PortfolioViewerWindow* window = new PortfolioViewerWindow(Ref(userProfile),
     m_properties);
   window->setAttribute(Qt::WA_DeleteOnClose);
@@ -35,7 +35,7 @@ QWidget* PortfolioViewerWindowSettings::Reopen(
   return window;
 }
 
-void PortfolioViewerWindowSettings::Apply(RefType<UserProfile> userProfile,
+void PortfolioViewerWindowSettings::Apply(Ref<UserProfile> userProfile,
     Out<QWidget> widget) const {
   PortfolioViewerWindow& window = dynamic_cast<PortfolioViewerWindow&>(*widget);
   window.restoreGeometry(m_geometry);

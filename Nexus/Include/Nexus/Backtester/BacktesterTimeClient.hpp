@@ -18,7 +18,7 @@ namespace Nexus {
       /*!
         \param environment The event handler this client belongs to.
       */
-      BacktesterTimeClient(Beam::RefType<BacktesterEventHandler> eventHandler);
+      BacktesterTimeClient(Beam::Ref<BacktesterEventHandler> eventHandler);
 
       ~BacktesterTimeClient();
 
@@ -36,7 +36,7 @@ namespace Nexus {
   };
 
   inline BacktesterTimeClient::BacktesterTimeClient(
-      Beam::RefType<BacktesterEventHandler> eventHandler)
+      Beam::Ref<BacktesterEventHandler> eventHandler)
       : m_eventHandler{eventHandler.Get()} {}
 
   inline BacktesterTimeClient::~BacktesterTimeClient() {

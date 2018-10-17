@@ -9,8 +9,8 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::UI;
 
-ProfitAndLossTable::ProfitAndLossTable(RefType<UserProfile> userProfile,
-    RefType<ProfitAndLossEntryModel> model, QWidget* parent)
+ProfitAndLossTable::ProfitAndLossTable(Ref<UserProfile> userProfile,
+    Ref<ProfitAndLossEntryModel> model, QWidget* parent)
     : QWidget(parent),
       m_ui(std::make_unique<Ui_ProfitAndLossTable>()),
       m_model(model.Get()),

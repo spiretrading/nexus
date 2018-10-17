@@ -16,8 +16,8 @@ namespace {
 }
 
 ProfitAndLossModel::ProfitAndLossModel(
-    RefType<const CurrencyDatabase> currencyDatabase,
-    RefType<const ExchangeRateTable> exchangeRates, bool showUnrealized)
+    Ref<const CurrencyDatabase> currencyDatabase,
+    Ref<const ExchangeRateTable> exchangeRates, bool showUnrealized)
     : m_currencyDatabase(currencyDatabase.Get()),
       m_exchangeRates(exchangeRates.Get()),
       m_showUnrealized{showUnrealized},
@@ -31,7 +31,7 @@ ProfitAndLossModel::ProfitAndLossModel(
 ProfitAndLossModel::~ProfitAndLossModel() {}
 
 void ProfitAndLossModel::SetPortfolioMonitor(
-    RefType<SpirePortfolioMonitor> portfolioMonitor) {
+    Ref<SpirePortfolioMonitor> portfolioMonitor) {
   for(auto& model : m_currencyToModel | boost::adaptors::map_values) {
     m_profitAndLossEntryModelRemovedSignal(*model);
     model.reset();

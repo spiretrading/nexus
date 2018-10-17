@@ -40,7 +40,7 @@ string DashboardWindow::GetDefaultName() {
 }
 
 DashboardWindow::DashboardWindow(const string& name,
-    const DashboardModelSchema& schema, RefType<UserProfile> userProfile,
+    const DashboardModelSchema& schema, Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : QWidget{parent, flags},
       m_ui{std::make_unique<Ui_DashboardWindow>()},

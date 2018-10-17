@@ -44,7 +44,7 @@ namespace {
   }
 }
 
-EntitlementEntryWidget::EntitlementEntryWidget(RefType<UserProfile> userProfile,
+EntitlementEntryWidget::EntitlementEntryWidget(Ref<UserProfile> userProfile,
     bool isReadOnly, const EntitlementDatabase::Entry& entitlement,
     std::shared_ptr<AccountEntitlementModel> model, QWidget* parent,
     Qt::WindowFlags flags)

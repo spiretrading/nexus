@@ -22,14 +22,14 @@ namespace {
 }
 
 LuaScriptDialog::LuaScriptDialog(const LuaScriptNode& node,
-    RefType<UserProfile> userProfile, QWidget* parent, Qt::WindowFlags flags)
+    Ref<UserProfile> userProfile, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_LuaScriptDialog>()),
       m_userProfile(userProfile.Get()) {
   Setup(node);
 }
 
-LuaScriptDialog::LuaScriptDialog(RefType<UserProfile> userProfile,
+LuaScriptDialog::LuaScriptDialog(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_LuaScriptDialog>()),

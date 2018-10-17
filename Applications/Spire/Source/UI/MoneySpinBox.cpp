@@ -24,7 +24,7 @@ MoneySpinBox::MoneySpinBox(QWidget* parent)
   setDecimals(6);
 }
 
-MoneySpinBox::MoneySpinBox(RefType<UserProfile> userProfile,
+MoneySpinBox::MoneySpinBox(Ref<UserProfile> userProfile,
     const MoneyNode& node, QWidget* parent)
     : QDoubleSpinBox(parent),
       m_userProfile(userProfile.Get()) {

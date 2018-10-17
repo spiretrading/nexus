@@ -32,16 +32,16 @@ void Nexus::Python::ExportSingleOrderTask() {
     Nexus::Tasks::SingleOrderTaskFactory<VirtualOrderExecutionClient>;
   class_<ToPythonTask<SingleOrderTask>,
     std::shared_ptr<ToPythonTask<SingleOrderTask>>, boost::noncopyable,
-    bases<Task>>("SingleOrderTask", init<RefType<VirtualOrderExecutionClient>,
+    bases<Task>>("SingleOrderTask", init<Ref<VirtualOrderExecutionClient>,
       std::shared_ptr<QueueWriter<const Order*>>, const OrderFields&>());
   implicitly_convertible<std::shared_ptr<ToPythonTask<SingleOrderTask>>,
     std::shared_ptr<Task>>();
   {
     class_<ToPythonTaskFactory<SingleOrderTaskFactory>,
       bases<VirtualTaskFactory>>("SingleOrderTaskFactory", init<
-      RefType<VirtualOrderExecutionClient>,
+      Ref<VirtualOrderExecutionClient>,
       std::shared_ptr<QueueWriter<const Order*>>, const DirectoryEntry&>())
-      .def(init<RefType<VirtualOrderExecutionClient>,
+      .def(init<Ref<VirtualOrderExecutionClient>,
         std::shared_ptr<QueueWriter<const Order*>>, const OrderFields&>())
       .def("__copy__", &MakeCopy<ToPythonTaskFactory<SingleOrderTaskFactory>>)
       .def("__deepcopy__", &MakeDeepCopy<

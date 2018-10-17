@@ -27,7 +27,7 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      OrderImbalanceIndicatorWindow(Beam::RefType<UserProfile> userProfile,
+      OrderImbalanceIndicatorWindow(Beam::Ref<UserProfile> userProfile,
         const std::shared_ptr<OrderImbalanceIndicatorModel>& model,
         QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
 

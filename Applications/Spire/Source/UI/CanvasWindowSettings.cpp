@@ -24,14 +24,14 @@ string CanvasWindowSettings::GetName() const {
   return "Canvas";
 }
 
-QWidget* CanvasWindowSettings::Reopen(RefType<UserProfile> userProfile) const {
+QWidget* CanvasWindowSettings::Reopen(Ref<UserProfile> userProfile) const {
   auto window = new CanvasWindow(Ref(userProfile));
   window->setAttribute(Qt::WA_DeleteOnClose);
   Apply(Ref(userProfile), Store(*window));
   return window;
 }
 
-void CanvasWindowSettings::Apply(RefType<UserProfile> userProfile,
+void CanvasWindowSettings::Apply(Ref<UserProfile> userProfile,
     Out<QWidget> widget) const {
   auto& window = dynamic_cast<CanvasWindow&>(*widget);
   window.restoreGeometry(m_geometry);

@@ -41,14 +41,14 @@ namespace UI {
       /*!
         \param userProfile The user's profile.
       */
-      virtual QWidget* Reopen(Beam::RefType<UserProfile> userProfile) const = 0;
+      virtual QWidget* Reopen(Beam::Ref<UserProfile> userProfile) const = 0;
 
       //! Applies the settings to an existing window/widget.
       /*!
         \param userProfile The user's profile.
         \param widget The widget to apply the settings to.
       */
-      virtual void Apply(Beam::RefType<UserProfile> userProfile,
+      virtual void Apply(Beam::Ref<UserProfile> userProfile,
         Beam::Out<QWidget> widget) const = 0;
   };
 }

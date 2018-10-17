@@ -21,8 +21,8 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      ProfitAndLossEntry(Beam::RefType<UserProfile> userProfile,
-        Beam::RefType<ProfitAndLossEntryModel> model,
+      ProfitAndLossEntry(Beam::Ref<UserProfile> userProfile,
+        Beam::Ref<ProfitAndLossEntryModel> model,
         QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
 
       virtual ~ProfitAndLossEntry();

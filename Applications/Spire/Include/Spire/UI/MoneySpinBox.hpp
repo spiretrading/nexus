@@ -29,7 +29,7 @@ namespace UI {
         \param node The MoneyNode this MoneySpinBox represents.
         \param parent The parent widget.
       */
-      MoneySpinBox(Beam::RefType<UserProfile> userProfile,
+      MoneySpinBox(Beam::Ref<UserProfile> userProfile,
         const MoneyNode& node, QWidget* parent = nullptr);
 
       virtual ~MoneySpinBox();

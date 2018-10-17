@@ -8,13 +8,13 @@ TimeRangeInputWidgetWindowSettings::TimeRangeInputWidgetWindowSettings(
     const TimeRangeInputWidget& widget) {}
 
 QWidget* TimeRangeInputWidgetWindowSettings::Reopen(
-    RefType<UserProfile> userProfile) const {
+    Ref<UserProfile> userProfile) const {
 
   // TODO
   return nullptr;
 }
 
-void TimeRangeInputWidgetWindowSettings::Apply(RefType<UserProfile> userProfile,
+void TimeRangeInputWidgetWindowSettings::Apply(Ref<UserProfile> userProfile,
     Out<QWidget> widget) const {
 
   // TODO

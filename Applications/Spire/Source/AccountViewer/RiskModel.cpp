@@ -10,7 +10,7 @@ using namespace Nexus::AdministrationService;
 using namespace Nexus::RiskService;
 using namespace Spire;
 
-RiskModel::RiskModel(RefType<UserProfile> userProfile,
+RiskModel::RiskModel(Ref<UserProfile> userProfile,
     const DirectoryEntry& account)
     : m_userProfile(userProfile.Get()),
       m_account(account) {}

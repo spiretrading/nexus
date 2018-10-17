@@ -232,7 +232,7 @@ int main(int argc, char* argv[]) {
   for(auto& window : windows) {
     window->show();
   }
-  RiskTimerMonitor riskMonitor(Ref(userProfile));
+  auto riskMonitor = RiskTimerMonitor(Ref(userProfile));
   riskMonitor.Load();
   application.exec();
   SavedDashboards::Save(userProfile);

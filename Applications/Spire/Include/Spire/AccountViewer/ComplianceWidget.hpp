@@ -33,7 +33,7 @@ namespace Spire {
         \param isReadOnly <code>true</code> iff the model is being shown
                strictly for display purposes.
       */
-      void Initialize(Beam::RefType<UserProfile> userProfile, bool isReadOnly);
+      void Initialize(Beam::Ref<UserProfile> userProfile, bool isReadOnly);
 
       //! Returns the model being displayed.
       const ComplianceModel& GetModel() const;

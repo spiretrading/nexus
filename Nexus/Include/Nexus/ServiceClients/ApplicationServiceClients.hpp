@@ -64,8 +64,8 @@ namespace Nexus {
       */
       ApplicationServiceClients(const Beam::Network::IpAddress& address,
         const std::string& username, const std::string& password,
-        Beam::RefType<Beam::Network::SocketThreadPool> socketThreadPool,
-        Beam::RefType<Beam::Threading::TimerThreadPool> timerThreadPool);
+        Beam::Ref<Beam::Network::SocketThreadPool> socketThreadPool,
+        Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
 
       ~ApplicationServiceClients();
 
@@ -130,8 +130,8 @@ namespace Nexus {
   inline ApplicationServiceClients::ApplicationServiceClients(
       const Beam::Network::IpAddress& address, const std::string& username,
       const std::string& password,
-      Beam::RefType<Beam::Network::SocketThreadPool> socketThreadPool,
-      Beam::RefType<Beam::Threading::TimerThreadPool> timerThreadPool)
+      Beam::Ref<Beam::Network::SocketThreadPool> socketThreadPool,
+      Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool)
 BEAM_SUPPRESS_THIS_INITIALIZER()
       : m_address{address},
         m_username{username},

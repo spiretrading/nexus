@@ -11,7 +11,7 @@ using namespace Spire;
 using namespace std;
 
 AccountEntitlementModel::AccountEntitlementModel(
-    RefType<UserProfile> userProfile, const DirectoryEntry& account)
+    Ref<UserProfile> userProfile, const DirectoryEntry& account)
     : m_userProfile(userProfile.Get()),
       m_account(account) {}
 

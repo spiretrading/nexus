@@ -77,7 +77,7 @@ namespace Spire {
           \param node The node used to build the Task.
           \param executingAccount The account executing Orders.
         */
-        TaskContext(Beam::RefType<UserProfile> userProfile,
+        TaskContext(Beam::Ref<UserProfile> userProfile,
           const CanvasNode& node,
           const Beam::ServiceLocator::DirectoryEntry& executingAccount);
       };
@@ -148,7 +148,7 @@ namespace Spire {
                <i>executingAccount<i>'s Orders.
         \param properties The properties used to display Tasks.
       */
-      BlotterTasksModel(Beam::RefType<UserProfile> userProfile,
+      BlotterTasksModel(Beam::Ref<UserProfile> userProfile,
         const Beam::ServiceLocator::DirectoryEntry& executingAccount,
         bool isConsolidated, const BlotterTaskProperties& properties);
 
@@ -200,7 +200,7 @@ namespace Spire {
       /*!
         \param model The BlotterTasksModel to link to this one.
       */
-      void Link(Beam::RefType<BlotterTasksModel> model);
+      void Link(Beam::Ref<BlotterTasksModel> model);
 
       //! Unlinks an BlotterTasksModel from this one.
       /*!

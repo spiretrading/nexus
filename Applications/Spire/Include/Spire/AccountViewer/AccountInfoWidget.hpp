@@ -33,7 +33,7 @@ namespace Spire {
         \param isPasswordReadOnly <code>true</code> iff the password can not be
                changed.
       */
-      void Initialize(Beam::RefType<UserProfile> userProfile, bool isReadOnly,
+      void Initialize(Beam::Ref<UserProfile> userProfile, bool isReadOnly,
         bool isPasswordReadOnly);
 
       //! Returns the model being displayed.

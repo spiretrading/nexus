@@ -53,7 +53,7 @@ namespace Nexus {
       /*!
         \param environment The TestEnvironment to use.
       */
-      TestServiceClients(Beam::RefType<TestEnvironment> environment);
+      TestServiceClients(Beam::Ref<TestEnvironment> environment);
 
       ~TestServiceClients();
 
@@ -102,7 +102,7 @@ namespace Nexus {
   };
 
   inline TestServiceClients::TestServiceClients(
-      Beam::RefType<TestEnvironment> environment)
+      Beam::Ref<TestEnvironment> environment)
       : m_environment{environment.Get()},
         m_serviceLocatorClient{
           m_environment->GetServiceLocatorEnvironment().BuildClient()},

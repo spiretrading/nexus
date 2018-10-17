@@ -82,7 +82,7 @@ namespace Spire {
         \param portfolioMonitor The PortfolioMonitor whose open positions
                are to be modelled.
       */
-      void SetPortfolioMonitor(Beam::RefType<SpirePortfolioMonitor>
+      void SetPortfolioMonitor(Beam::Ref<SpirePortfolioMonitor>
         portfolioMonitor);
 
       //! Returns all open positions.

@@ -46,7 +46,7 @@ namespace Spire {
         \param userProfile The user's profile.
         \param account The account being represented.
       */
-      ComplianceModel(Beam::RefType<UserProfile> userProfile,
+      ComplianceModel(Beam::Ref<UserProfile> userProfile,
         const Beam::ServiceLocator::DirectoryEntry& account);
 
       //! Loads the account's compliance model.

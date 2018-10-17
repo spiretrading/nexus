@@ -22,7 +22,7 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      TimeInputDialog(Beam::RefType<UserProfile> userProfile,
+      TimeInputDialog(Beam::Ref<UserProfile> userProfile,
         QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
 
       //! Constructs a TimeInputDialog with an initial date/time.
@@ -33,7 +33,7 @@ namespace Spire {
         \param flags Qt flags passed to the parent widget.
       */
       TimeInputDialog(const boost::posix_time::time_duration& initialValue,
-        Beam::RefType<UserProfile> userProfile, QWidget* parent = nullptr,
+        Beam::Ref<UserProfile> userProfile, QWidget* parent = nullptr,
         Qt::WindowFlags flags = 0);
 
       virtual ~TimeInputDialog();

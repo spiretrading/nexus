@@ -30,7 +30,7 @@ namespace Nexus {
                data source.
       */
       BacktesterEnvironment(boost::posix_time::ptime startTime,
-        Beam::RefType<VirtualServiceClients> serviceClients);
+        Beam::Ref<VirtualServiceClients> serviceClients);
 
       //! Constructs a BacktesterEnvironment.
       /*!
@@ -41,7 +41,7 @@ namespace Nexus {
       */
       BacktesterEnvironment(boost::posix_time::ptime startTime,
         boost::posix_time::ptime endTime,
-        Beam::RefType<VirtualServiceClients> serviceClients);
+        Beam::Ref<VirtualServiceClients> serviceClients);
 
       ~BacktesterEnvironment();
 
@@ -112,13 +112,13 @@ namespace Nexus {
 
   inline BacktesterEnvironment::BacktesterEnvironment(
       boost::posix_time::ptime startTime,
-      Beam::RefType<VirtualServiceClients> serviceClients)
+      Beam::Ref<VirtualServiceClients> serviceClients)
       : BacktesterEnvironment{startTime, boost::posix_time::pos_infin,
           Beam::Ref(serviceClients)} {}
 
   inline BacktesterEnvironment::BacktesterEnvironment(
       boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
-      Beam::RefType<VirtualServiceClients> serviceClients)
+      Beam::Ref<VirtualServiceClients> serviceClients)
       : m_serviceClients{serviceClients.Get()},
         m_eventHandler{startTime, endTime} {}
 

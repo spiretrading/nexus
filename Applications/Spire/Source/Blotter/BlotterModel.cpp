@@ -27,7 +27,7 @@ namespace {
 
 BlotterModel::BlotterModel(const string& name,
     const DirectoryEntry& executingAccount, bool isConsolidated,
-    RefType<UserProfile> userProfile,
+    Ref<UserProfile> userProfile,
     const BlotterTaskProperties& taskProperties,
     const OrderLogProperties& orderLogProperties)
     : m_name(name),
@@ -124,7 +124,7 @@ const vector<BlotterModel*>& BlotterModel::GetLinkedBlotters() const {
   return m_incomingLinks;
 }
 
-void BlotterModel::Link(RefType<BlotterModel> blotter) {
+void BlotterModel::Link(Ref<BlotterModel> blotter) {
   if(find(m_incomingLinks.begin(), m_incomingLinks.end(), blotter.Get()) !=
       m_incomingLinks.end()) {
     return;

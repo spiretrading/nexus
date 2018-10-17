@@ -23,7 +23,7 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      TaskKeyBindingsDialog(Beam::RefType<UserProfile> userProfile,
+      TaskKeyBindingsDialog(Beam::Ref<UserProfile> userProfile,
         QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
 
       virtual ~TaskKeyBindingsDialog();

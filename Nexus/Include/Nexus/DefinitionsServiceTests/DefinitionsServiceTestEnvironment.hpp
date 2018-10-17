@@ -1,5 +1,5 @@
-#ifndef NEXUS_DEFINITIONSSERVICETESTENVIRONMENT_HPP
-#define NEXUS_DEFINITIONSSERVICETESTENVIRONMENT_HPP
+#ifndef NEXUS_DEFINITIONS_SERVICE_TEST_ENVIRONMENT_HPP
+#define NEXUS_DEFINITIONS_SERVICE_TEST_ENVIRONMENT_HPP
 #include <Beam/IO/LocalClientChannel.hpp>
 #include <Beam/IO/LocalServerConnection.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
@@ -27,9 +27,7 @@
 #include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
 #include "Nexus/DefinitionsServiceTests/DefinitionsServiceTests.hpp"
 
-namespace Nexus {
-namespace DefinitionsService {
-namespace Tests {
+namespace Nexus::DefinitionsService::Tests {
 
   /*! \class DefinitionsServiceTestEnvironment
       \brief Provides DefinitionsService related classes for testing purposes.
@@ -47,20 +45,18 @@ namespace Tests {
 
       ~DefinitionsServiceTestEnvironment();
 
-      //! Opens the servlet.
-      void Open();
-
-      //! Closes the servlet.
-      void Close();
-
       //! Builds a new DefinitionsClient.
       /*!
         \param serviceLocatorClient The ServiceLocatorClient used to
                authenticate the DefinitionsClient.
       */
       std::unique_ptr<VirtualDefinitionsClient> BuildClient(
-        Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
+        Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
         serviceLocatorClient);
+
+      void Open();
+
+      void Close();
 
     private:
       using ServerConnection =
@@ -90,33 +86,25 @@ namespace Tests {
   inline DefinitionsServiceTestEnvironment::DefinitionsServiceTestEnvironment(
       const std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>&
       serviceLocatorClient)
-      : m_container{Beam::Initialize(serviceLocatorClient,
+      : m_container(Beam::Initialize(serviceLocatorClient,
           Beam::Initialize("1", GetDefaultTimeZoneTable(),
           GetDefaultCountryDatabase(), GetDefaultCurrencyDatabase(),
           GetDefaultMarketDatabase(), GetDefaultDestinationDatabase(),
           std::vector<ExchangeRate>(),
           std::vector<Compliance::ComplianceRuleSchema>())),
           &m_serverConnection,
-          boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()} {}
+          boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
 
   inline DefinitionsServiceTestEnvironment::
       ~DefinitionsServiceTestEnvironment() {
     Close();
   }
 
-  inline void DefinitionsServiceTestEnvironment::Open() {
-    m_container.Open();
-  }
-
-  inline void DefinitionsServiceTestEnvironment::Close() {
-    m_container.Close();
-  }
-
   inline std::unique_ptr<VirtualDefinitionsClient>
       DefinitionsServiceTestEnvironment::BuildClient(
-      Beam::RefType<Beam::ServiceLocator::VirtualServiceLocatorClient>
+      Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
       serviceLocatorClient) {
-    ServiceProtocolClientBuilder builder(Beam::Ref(serviceLocatorClient),
+    auto builder = ServiceProtocolClientBuilder(Beam::Ref(serviceLocatorClient),
       [&] {
         return std::make_unique<ServiceProtocolClientBuilder::Channel>(
           "test_definitions_client", Beam::Ref(m_serverConnection));
@@ -128,8 +116,14 @@ namespace Tests {
         ServiceProtocolClientBuilder>>(builder);
     return MakeVirtualDefinitionsClient(std::move(client));
   }
-}
-}
+
+  inline void DefinitionsServiceTestEnvironment::Open() {
+    m_container.Open();
+  }
+
+  inline void DefinitionsServiceTestEnvironment::Close() {
+    m_container.Close();
+  }
 }
 
 #endif

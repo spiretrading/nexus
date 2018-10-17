@@ -20,7 +20,7 @@ namespace Spire {
         \param source The coordinate of the node to move.
         \param destination The coordinate to move the node to.
       */
-      MoveNodeCommand(Beam::RefType<CanvasNodeModel> view,
+      MoveNodeCommand(Beam::Ref<CanvasNodeModel> view,
         const CanvasNodeModel::Coordinate& source,
         const CanvasNodeModel::Coordinate& destination);
 

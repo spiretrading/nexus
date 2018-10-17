@@ -35,8 +35,8 @@ namespace Spire {
       ServiceClients(
         std::unique_ptr<Beam::ServiceLocator::ApplicationServiceLocatorClient>
         serviceLocatorClient,
-        Beam::RefType<Beam::Network::SocketThreadPool> socketThreadPool,
-        Beam::RefType<Beam::Threading::TimerThreadPool> timerThreadPool);
+        Beam::Ref<Beam::Network::SocketThreadPool> socketThreadPool,
+        Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
 
       ~ServiceClients();
 

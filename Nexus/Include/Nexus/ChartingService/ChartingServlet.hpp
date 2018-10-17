@@ -1,5 +1,5 @@
-#ifndef NEXUS_CHARTINGSERVLET_HPP
-#define NEXUS_CHARTINGSERVLET_HPP
+#ifndef NEXUS_CHARTING_SERVLET_HPP
+#define NEXUS_CHARTING_SERVLET_HPP
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Pointers/UniquePtr.hpp>
 #include <Beam/Queries/ConversionEvaluatorNode.hpp>
@@ -110,6 +110,8 @@ namespace Details {
   template<typename MarketDataClientType>
   struct MetaChartingServlet {
     using Session = Beam::NullType;
+    static constexpr auto SupportsParallelism = true;
+
     template<typename ContainerType>
     struct apply {
       using type = ChartingServlet<ContainerType, MarketDataClientType>;
@@ -120,9 +122,9 @@ namespace Details {
   template<typename MarketDataClientForward>
   ChartingServlet<ContainerType, MarketDataClientType>::ChartingServlet(
       MarketDataClientForward&& marketDataClient)
-      : m_marketDataClient{std::forward<MarketDataClientForward>(
-          marketDataClient)},
-        m_dataStore{Beam::Initialize(&*m_marketDataClient), 10000} {}
+      : m_marketDataClient(std::forward<MarketDataClientForward>(
+          marketDataClient)),
+        m_dataStore(Beam::Initialize(&*m_marketDataClient), 10000) {}
 
   template<typename ContainerType, typename MarketDataClientType>
   void ChartingServlet<ContainerType, MarketDataClientType>::RegisterServices(
@@ -188,8 +190,7 @@ namespace Details {
         MarketDataService::MarketDataType::TIME_AND_SALE) {
       HandleQuery(request, query, clientQueryId, m_timeAndSaleQueries);
     } else {
-      SecurityChartingQueryResult result;
-      request.SetResult(std::move(result));
+      request.SetResult(SecurityChartingQueryResult());
     }
   }
 
@@ -212,15 +213,15 @@ namespace Details {
       throw Beam::Services::ServiceRequestException{"Invalid time range."};
     }
     auto queue = std::make_shared<Beam::Queue<SequencedTimeAndSale>>();
-    MarketDataService::SecurityMarketDataQuery timeAndSaleQuery;
+    auto timeAndSaleQuery = MarketDataService::SecurityMarketDataQuery();
     timeAndSaleQuery.SetIndex(security);
     timeAndSaleQuery.SetRange(startTime, endTime);
     timeAndSaleQuery.SetSnapshotLimit(
       Beam::Queries::SnapshotLimit::Unlimited());
     m_marketDataClient->QueryTimeAndSales(timeAndSaleQuery, queue);
-    std::vector<SequencedTimeAndSale> timeAndSales;
+    auto timeAndSales = std::vector<SequencedTimeAndSale>();
     Beam::FlushQueue(queue, std::back_inserter(timeAndSales));
-    TimePriceQueryResult result;
+    auto result = TimePriceQueryResult();
     if(!timeAndSales.empty()) {
       result.start = timeAndSales.front().GetSequence();
       result.end = timeAndSales.back().GetSequence();
@@ -230,8 +231,8 @@ namespace Details {
     auto timeAndSalesIterator = timeAndSales.begin();
     while(timeAndSalesIterator != timeAndSales.end() &&
         currentStart <= endTime) {
-      TechnicalAnalysis::TimePriceCandlestick candlestick{currentStart,
-        currentEnd};
+      auto candlestick = TechnicalAnalysis::TimePriceCandlestick(
+        currentStart, currentEnd);
       auto hasPoint = false;
       while(timeAndSalesIterator != timeAndSales.end() &&
           (*timeAndSalesIterator)->m_timestamp < currentEnd) {
@@ -258,7 +259,7 @@ namespace Details {
     if(query.GetRange().GetEnd() == Beam::Queries::Sequence::Last()) {
       queryEntry.m_realTimeSubscriptions.TestAndSet(query.GetIndex(),
         [&] {
-          Query realTimeQuery;
+          auto realTimeQuery = Query();
           realTimeQuery.SetIndex(query.GetIndex());
           realTimeQuery.SetRange(Beam::Queries::Range::RealTime());
           MarketDataService::QueryMarketDataClient(*m_marketDataClient,
@@ -268,11 +269,11 @@ namespace Details {
             std::placeholders::_1, std::ref(queryEntry))));
         });
     }
-    SecurityChartingQueryResult result;
+    auto result = SecurityChartingQueryResult();
     result.m_queryId = clientQueryId;
     auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
       query.GetFilter());
-    Queries::EvaluatorTranslator translator;
+    auto translator = Queries::EvaluatorTranslator();
     translator.Translate(query.GetExpression());
     auto baseExpression = std::move(translator.GetEvaluator());
     auto expression = Beam::Instantiate<Details::ExpressionConverter>(
@@ -282,14 +283,14 @@ namespace Details {
     queryEntry.m_queries.Initialize(query.GetIndex(), request.GetClient(),
       clientQueryId, query.GetRange(), std::move(filter),
       query.GetUpdatePolicy(), std::move(expressionEvaluator));
-    Query snapshotQuery = query;
+    auto snapshotQuery = query;
     snapshotQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
     auto snapshot = MarketDataService::HistoricalDataStoreLoad<MarketDataType>(
       m_dataStore, snapshotQuery);
     queryEntry.m_queries.Commit(query.GetIndex(), request.GetClient(),
       query.GetSnapshotLimit(), std::move(result), std::move(snapshot),
-      [&] (const SecurityChartingQueryResult& result) {
-        request.SetResult(result);
+      [&] (auto&& result) {
+        request.SetResult(std::forward<decltype(result)>(result));
       });
   }
 
@@ -302,8 +303,7 @@ namespace Details {
       Beam::Queries::MakeIndexedValue(*value, index), value.GetSequence());
     m_dataStore.Store(indexedValue);
     queries.m_queries.Publish(indexedValue,
-      [&] (ServiceProtocolClient& client, int id,
-          const Queries::SequencedQueryVariant& value) {
+      [&] (auto& client, auto id, auto& value) {
         Beam::Services::SendRecordMessage<SecurityQueryMessage>(client, id,
           value);
       });

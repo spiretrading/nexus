@@ -30,8 +30,8 @@ namespace Spire {
         \param model The model to display.
       */
       static BlotterWindow& GetBlotterWindow(
-        Beam::RefType<UserProfile> userProfile,
-        Beam::RefType<BlotterModel> model);
+        Beam::Ref<UserProfile> userProfile,
+        Beam::Ref<BlotterModel> model);
 
       //! Returns the BlotterWindow for a specified BlotterModel.
       /*!
@@ -41,8 +41,8 @@ namespace Spire {
         \param flags Qt flags passed to the parent widget.
       */
       static BlotterWindow& GetBlotterWindow(
-        Beam::RefType<UserProfile> userProfile,
-        Beam::RefType<BlotterModel> model, QWidget* parent,
+        Beam::Ref<UserProfile> userProfile,
+        Beam::Ref<BlotterModel> model, QWidget* parent,
         Qt::WindowFlags flags = 0);
 
       virtual ~BlotterWindow();

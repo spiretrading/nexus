@@ -20,7 +20,7 @@ namespace Spire {
         \param account The account whose entitlements are represented by this
                model.
       */
-      AccountInfoModel(Beam::RefType<UserProfile> userProfile,
+      AccountInfoModel(Beam::Ref<UserProfile> userProfile,
         const Beam::ServiceLocator::DirectoryEntry& account);
 
       //! Loads the account's info.

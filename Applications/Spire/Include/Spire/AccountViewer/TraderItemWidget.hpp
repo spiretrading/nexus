@@ -26,7 +26,7 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      TraderItemWidget(Beam::RefType<UserProfile> userProfile,
+      TraderItemWidget(Beam::Ref<UserProfile> userProfile,
         std::shared_ptr<AccountInfoModel> infoModel,
         std::shared_ptr<AccountEntitlementModel> entitlementModel,
         std::shared_ptr<RiskModel> riskModel,

@@ -52,7 +52,7 @@ boost::optional<const CanvasNode&> PlaceNodeCommand::TryPlaceNode(
   return *replacementRoot.FindNode(path);
 }
 
-PlaceNodeCommand::PlaceNodeCommand(RefType<CanvasNodeModel> view,
+PlaceNodeCommand::PlaceNodeCommand(Ref<CanvasNodeModel> view,
     const CanvasNodeModel::Coordinate& coordinate, const CanvasNode& node)
     : m_view(view.Get()),
       m_coordinate(coordinate),

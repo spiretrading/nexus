@@ -21,7 +21,7 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      SimplifiedKeyBindingsDialog(Beam::RefType<UserProfile> userProfile,
+      SimplifiedKeyBindingsDialog(Beam::Ref<UserProfile> userProfile,
         QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
 
       virtual ~SimplifiedKeyBindingsDialog();

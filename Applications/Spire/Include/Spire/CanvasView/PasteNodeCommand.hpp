@@ -19,7 +19,7 @@ namespace Spire {
         \param view The CanvasNodeModel to perform the command to.
         \param coordinate The Coordinate to paste the CanvasNode into.
       */
-      PasteNodeCommand(Beam::RefType<CanvasNodeModel> view,
+      PasteNodeCommand(Beam::Ref<CanvasNodeModel> view,
         const CanvasNodeModel::Coordinate& coordinate);
 
       virtual ~PasteNodeCommand();

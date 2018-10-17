@@ -7,7 +7,7 @@ using namespace Beam::ServiceLocator;
 using namespace Spire;
 
 GroupDirectoryItemWidget::GroupDirectoryItemWidget(
-    RefType<UserProfile> userProfile, const DirectoryEntry& directoryEntry,
+    Ref<UserProfile> userProfile, const DirectoryEntry& directoryEntry,
     std::shared_ptr<ComplianceModel> complianceModel, QWidget* parent,
     Qt::WindowFlags flags)
     : QWidget{parent, flags},

@@ -9,8 +9,8 @@ using namespace boost;
 using namespace Spire;
 
 CanvasNodeEditor::EditVariant CanvasNodeEditor::GetEditor(
-    RefType<const CanvasNode> node, RefType<CanvasNodeModel> view,
-    RefType<UserProfile> userProfile, QEvent* event) {
+    Ref<const CanvasNode> node, Ref<CanvasNodeModel> view,
+    Ref<UserProfile> userProfile, QEvent* event) {
   m_node = node.Get();
   if(m_node->IsReadOnly()) {
     return static_cast<QUndoCommand*>(nullptr);

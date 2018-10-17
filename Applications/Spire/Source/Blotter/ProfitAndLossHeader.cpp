@@ -9,7 +9,7 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::UI;
 
-ProfitAndLossHeader::ProfitAndLossHeader(RefType<ProfitAndLossEntryModel> model,
+ProfitAndLossHeader::ProfitAndLossHeader(Ref<ProfitAndLossEntryModel> model,
     QWidget* parent)
     : QWidget(parent),
       m_ui(std::make_unique<Ui_ProfitAndLossHeader>()),

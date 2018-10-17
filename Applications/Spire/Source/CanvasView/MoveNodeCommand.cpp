@@ -27,7 +27,7 @@ namespace {
   }
 }
 
-MoveNodeCommand::MoveNodeCommand(RefType<CanvasNodeModel> view,
+MoveNodeCommand::MoveNodeCommand(Ref<CanvasNodeModel> view,
     const CanvasNodeModel::Coordinate& source,
     const CanvasNodeModel::Coordinate& destination)
     : m_view(view.Get()),

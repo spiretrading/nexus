@@ -9,14 +9,14 @@ OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings::
     const OrderImbalanceIndicatorMarketSelectionWidget& widget) {}
 
 QWidget* OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings::Reopen(
-    RefType<UserProfile> userProfile) const {
+    Ref<UserProfile> userProfile) const {
 
   // TODO
   return nullptr;
 }
 
 void OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings::Apply(
-    RefType<UserProfile> userProfile, Out<QWidget> widget) const {
+    Ref<UserProfile> userProfile, Out<QWidget> widget) const {
 
   // TODO
 }

@@ -26,14 +26,14 @@ string DashboardWindowSettings::GetName() const {
 }
 
 QWidget* DashboardWindowSettings::Reopen(
-    RefType<UserProfile> userProfile) const {
+    Ref<UserProfile> userProfile) const {
   auto window = new DashboardWindow(m_name, m_schema, Ref(userProfile));
   window->setAttribute(Qt::WA_DeleteOnClose);
   Apply(Ref(userProfile), Store(*window));
   return window;
 }
 
-void DashboardWindowSettings::Apply(RefType<UserProfile> userProfile,
+void DashboardWindowSettings::Apply(Ref<UserProfile> userProfile,
     Out<QWidget> widget) const {
   auto& window = dynamic_cast<DashboardWindow&>(*widget);
   window.restoreGeometry(m_geometry);

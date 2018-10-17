@@ -19,8 +19,8 @@ namespace Spire {
         \param child The CanvasNode connected to the parent by this cell.
       */
       LinkCell(Qt::Orientation orientation,
-        Beam::RefType<const CanvasNode> parent,
-        Beam::RefType<const CanvasNode> child);
+        Beam::Ref<const CanvasNode> parent,
+        Beam::Ref<const CanvasNode> child);
 
       //! Returns the orientation of this link.
       Qt::Orientation GetOrientation() const;

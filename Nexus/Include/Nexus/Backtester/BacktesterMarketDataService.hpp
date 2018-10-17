@@ -36,10 +36,10 @@ namespace Nexus {
                historicalMarketData.
       */
       BacktesterMarketDataService(
-        Beam::RefType<BacktesterEventHandler> eventHandler, Beam::RefType<
+        Beam::Ref<BacktesterEventHandler> eventHandler, Beam::Ref<
         MarketDataService::Tests::MarketDataServiceTestEnvironment>
-        marketDataEnvironment, Beam::RefType<
-        MarketDataService::VirtualMarketDataClient> marketDataClient);
+        marketDataEnvironment,
+        Beam::Ref<MarketDataService::VirtualMarketDataClient> marketDataClient);
 
       //! Submits a query for OrderImbalances.
       /*!
@@ -97,7 +97,7 @@ namespace Nexus {
         Beam::Queries::SequencedValue<MarketDataType>>;
 
       MarketDataQueryEvent(Query query,
-        Beam::RefType<BacktesterMarketDataService> service);
+        Beam::Ref<BacktesterMarketDataService> service);
 
       virtual void Execute() override;
 
@@ -117,7 +117,7 @@ namespace Nexus {
       MarketDataLoadEvent(typename Query::Index index,
         Beam::Queries::Range::Point startPoint,
         boost::posix_time::ptime timestamp,
-        Beam::RefType<BacktesterMarketDataService> service);
+        Beam::Ref<BacktesterMarketDataService> service);
 
       virtual void Execute() override;
 
@@ -136,7 +136,7 @@ namespace Nexus {
 
       MarketDataEvent(Index index, MarketDataType value,
         boost::posix_time::ptime timestamp,
-        Beam::RefType<BacktesterMarketDataService> service);
+        Beam::Ref<BacktesterMarketDataService> service);
 
       virtual void Execute() override;
 
@@ -147,9 +147,9 @@ namespace Nexus {
   };
 
   inline BacktesterMarketDataService::BacktesterMarketDataService(
-      Beam::RefType<BacktesterEventHandler> eventHandler, Beam::RefType<
+      Beam::Ref<BacktesterEventHandler> eventHandler, Beam::Ref<
       MarketDataService::Tests::MarketDataServiceTestEnvironment>
-      marketDataEnvironment, Beam::RefType<
+      marketDataEnvironment, Beam::Ref<
       MarketDataService::VirtualMarketDataClient> marketDataClient)
       : m_eventHandler{eventHandler.Get()},
         m_marketDataEnvironment{marketDataEnvironment.Get()},
@@ -192,7 +192,7 @@ namespace Nexus {
 
   template<typename MarketDataTypeType>
   MarketDataQueryEvent<MarketDataTypeType>::MarketDataQueryEvent(Query query,
-      Beam::RefType<BacktesterMarketDataService> service)
+      Beam::Ref<BacktesterMarketDataService> service)
       : BacktesterEvent{boost::posix_time::neg_infin},
         m_query{std::move(query)},
         m_service{service.Get()} {}
@@ -217,7 +217,7 @@ namespace Nexus {
   MarketDataLoadEvent<MarketDataTypeType>::MarketDataLoadEvent(
       typename Query::Index index, Beam::Queries::Range::Point startPoint,
       boost::posix_time::ptime timestamp,
-      Beam::RefType<BacktesterMarketDataService> service)
+      Beam::Ref<BacktesterMarketDataService> service)
       : BacktesterEvent{timestamp},
         m_index{std::move(index)},
         m_startPoint{startPoint},
@@ -267,7 +267,7 @@ namespace Nexus {
   template<typename IndexType, typename MarketDataTypeType>
   MarketDataEvent<IndexType, MarketDataTypeType>::MarketDataEvent(Index index,
       MarketDataType value, boost::posix_time::ptime timestamp,
-      Beam::RefType<BacktesterMarketDataService> service)
+      Beam::Ref<BacktesterMarketDataService> service)
       : BacktesterEvent{timestamp},
         m_index{std::move(index)},
         m_value{std::move(value)},

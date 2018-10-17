@@ -24,7 +24,7 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      TimeAndSalesPropertiesDialog(Beam::RefType<UserProfile> userProfile,
+      TimeAndSalesPropertiesDialog(Beam::Ref<UserProfile> userProfile,
         const TimeAndSalesProperties& properties, QWidget* parent = nullptr,
         Qt::WindowFlags flags = 0);
 

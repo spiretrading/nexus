@@ -21,7 +21,7 @@ namespace Spire {
         \param node The name of the node to modify.
         \param isVisible Whether the CanvasNode should be visible.
       */
-      SetNodeVisibleCommand(Beam::RefType<CanvasNodeModel> view,
+      SetNodeVisibleCommand(Beam::Ref<CanvasNodeModel> view,
         const CanvasNodeModel::Coordinate& parent, const std::string& node,
         bool isVisible);
 

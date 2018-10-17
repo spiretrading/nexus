@@ -64,7 +64,7 @@ ChartPlotView::ChartPlotView(QWidget* parent)
   setMouseTracking(true);
 }
 
-void ChartPlotView::Initialize(RefType<UserProfile> userProfile,
+void ChartPlotView::Initialize(Ref<UserProfile> userProfile,
     const Properties& properties) {
   m_userProfile = userProfile.Get();
   m_properties = properties;

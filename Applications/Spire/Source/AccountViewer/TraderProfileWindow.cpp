@@ -12,7 +12,7 @@ using namespace Beam;
 using namespace Beam::ServiceLocator;
 using namespace Spire;
 
-TraderProfileWindow::TraderProfileWindow(RefType<UserProfile> userProfile,
+TraderProfileWindow::TraderProfileWindow(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : QFrame{parent, flags},
       m_ui{std::make_unique<Ui_TraderProfileWindow>()},

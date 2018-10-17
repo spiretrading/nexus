@@ -34,7 +34,7 @@ namespace Spire {
         \param directoryEntry The DirectoryEntry being displayed.
         \param complianceModel The ComplianceModel to display.
       */
-      void Initialize(Beam::RefType<UserProfile> userProfile, bool isReadOnly,
+      void Initialize(Beam::Ref<UserProfile> userProfile, bool isReadOnly,
         const Beam::ServiceLocator::DirectoryEntry& directoryEntry,
         std::shared_ptr<ComplianceModel> complianceModel);
 

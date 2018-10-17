@@ -22,7 +22,7 @@ using namespace Spire;
 using namespace std;
 
 std::unique_ptr<DashboardCell> CloseDashboardCellBuilder::Build(
-    const DashboardCell::Value& index, RefType<UserProfile> userProfile) const {
+    const DashboardCell::Value& index, Ref<UserProfile> userProfile) const {
   auto& security = boost::get<Security>(index);
   auto queue = std::make_shared<Queue<DashboardCell::Value>>();
   auto cell = std::make_unique<QueueDashboardCell>(queue);

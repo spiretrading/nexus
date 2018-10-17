@@ -41,10 +41,10 @@ using namespace std;
 namespace {
   class CommitEditorCanvasNodeVisitor : public CanvasNodeVisitor {
     public:
-      CommitEditorCanvasNodeVisitor(Beam::RefType<const CanvasNode> node,
-        Beam::RefType<const QWidget> editor,
-        Beam::RefType<CanvasNodeModel> model,
-        Beam::RefType<const UserProfile> userProfile);
+      CommitEditorCanvasNodeVisitor(Beam::Ref<const CanvasNode> node,
+        Beam::Ref<const QWidget> editor,
+        Beam::Ref<CanvasNodeModel> model,
+        Beam::Ref<const UserProfile> userProfile);
       QUndoCommand* GetCommand();
       virtual void Visit(const BooleanNode& node);
       virtual void Visit(const CurrencyNode& node);
@@ -77,14 +77,14 @@ namespace {
 QUndoCommand* Spire::CommitCanvasEditor(const CanvasNode& node,
     const QWidget& editor, CanvasNodeModel& model,
     const UserProfile& userProfile) {
-  CommitEditorCanvasNodeVisitor visitor(Ref(node), Ref(editor), Ref(model),
-    Ref(userProfile));
+  auto visitor = CommitEditorCanvasNodeVisitor(Ref(node), Ref(editor),
+    Ref(model), Ref(userProfile));
   return visitor.GetCommand();
 }
 
 CommitEditorCanvasNodeVisitor::CommitEditorCanvasNodeVisitor(
-    RefType<const CanvasNode> node, RefType<const QWidget> editor,
-    RefType<CanvasNodeModel> model, RefType<const UserProfile> userProfile)
+    Ref<const CanvasNode> node, Ref<const QWidget> editor,
+    Ref<CanvasNodeModel> model, Ref<const UserProfile> userProfile)
     : m_node(node.Get()),
       m_editor(editor.Get()),
       m_model(model.Get()),

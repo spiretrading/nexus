@@ -26,7 +26,7 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      PortfolioViewerWindow(Beam::RefType<UserProfile> userProfile,
+      PortfolioViewerWindow(Beam::Ref<UserProfile> userProfile,
         const PortfolioViewerProperties& properties, QWidget* parent = nullptr,
         Qt::WindowFlags flags = 0);
 

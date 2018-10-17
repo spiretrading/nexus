@@ -30,14 +30,14 @@ namespace Spire {
       /*!
         \param userProfile The user's profile.
       */
-      void Initialize(Beam::RefType<UserProfile> userProfile);
+      void Initialize(Beam::Ref<UserProfile> userProfile);
 
       //! Initializes the InteractionsWidget, must be called after construction.
       /*!
         \param userProfile The user's profile.
         \param security The Security to display the InteractionsProperties for.
       */
-      void Initialize(Beam::RefType<UserProfile> userProfile,
+      void Initialize(Beam::Ref<UserProfile> userProfile,
         const Nexus::Security& security);
 
       //! Returns the InteractionsProperties represented by this widget.

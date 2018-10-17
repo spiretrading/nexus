@@ -23,7 +23,7 @@ namespace UI {
         \param node The IntegerNode this QuantitySpinBox represents.
         \param parent The parent widget.
       */
-      QuantitySpinBox(Beam::RefType<UserProfile> userProfile,
+      QuantitySpinBox(Beam::Ref<UserProfile> userProfile,
         const IntegerNode& node, QWidget* parent = nullptr);
 
     protected:

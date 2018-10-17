@@ -18,7 +18,7 @@ namespace Spire {
     public:
 
       DashboardSelectionController(
-        Beam::RefType<DashboardSelectionModel> model);
+        Beam::Ref<DashboardSelectionModel> model);
 
       bool HandleKeyEvent(const QKeyEvent& event);
 

@@ -19,7 +19,7 @@ namespace {
 }
 
 TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
-    RefType<UserProfile> userProfile, const TimeAndSalesProperties& properties,
+    Ref<UserProfile> userProfile, const TimeAndSalesProperties& properties,
     QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_TimeAndSalesPropertiesDialog>()),

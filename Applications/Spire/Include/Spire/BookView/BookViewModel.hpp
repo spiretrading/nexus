@@ -47,7 +47,7 @@ namespace Spire {
         \param security The Security whose book is to be modeled.
         \param side The Side of the book to model.
       */
-      BookViewModel(Beam::RefType<UserProfile> userProfile,
+      BookViewModel(Beam::Ref<UserProfile> userProfile,
         const BookViewProperties& properties, const Nexus::Security& security,
         Nexus::Side side);
 
@@ -88,8 +88,6 @@ namespace Spire {
       std::unordered_map<const Nexus::OrderExecutionService::Order*,
         Nexus::Quantity> m_remainingOrderQuantities;
       QTimer m_updateTimer;
-      int m_minRow;
-      int m_maxRow;
       Beam::TaskQueue m_slotHandler;
 
       bool TestHighlight(const BookViewProperties::MarketHighlight& highlight,

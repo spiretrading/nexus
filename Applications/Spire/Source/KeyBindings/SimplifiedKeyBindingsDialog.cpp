@@ -4005,7 +4005,7 @@ namespace {
 }
 
 SimplifiedKeyBindingsDialog::SimplifiedKeyBindingsDialog(
-    RefType<UserProfile> userProfile, QWidget* parent, Qt::WindowFlags flags)
+    Ref<UserProfile> userProfile, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_SimplifiedKeyBindingsDialog>()),
       m_userProfile(userProfile.Get()),

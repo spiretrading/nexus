@@ -15,7 +15,7 @@ namespace {
   const unsigned int UPDATE_INTERVAL = 100;
 }
 
-RiskTimerModel::RiskTimerModel(RefType<UserProfile> userProfile)
+RiskTimerModel::RiskTimerModel(Ref<UserProfile> userProfile)
     : m_userProfile(userProfile.Get()),
       m_timeRemaining(seconds(0)),
       m_timeRemainingTimer(milliseconds(UPDATE_INTERVAL),

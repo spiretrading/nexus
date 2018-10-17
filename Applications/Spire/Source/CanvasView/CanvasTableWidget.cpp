@@ -87,7 +87,7 @@ CanvasTableWidget::CanvasTableWidget(QWidget* parent)
     &CanvasTableWidget::OnContextMenu);
 }
 
-void CanvasTableWidget::SetUserProfile(RefType<UserProfile> userProfile) {
+void CanvasTableWidget::SetUserProfile(Ref<UserProfile> userProfile) {
   m_userProfile = userProfile.Get();
 }
 

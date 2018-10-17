@@ -14,8 +14,8 @@ using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace std;
 
-CanvasNodeTask::CanvasNodeTask(RefType<CanvasNodeTranslationContext> context,
-      RefType<const CanvasNode> node,
+CanvasNodeTask::CanvasNodeTask(Ref<CanvasNodeTranslationContext> context,
+      Ref<const CanvasNode> node,
       const std::shared_ptr<SpireAggregateOrderExecutionPublisher>&
       orderExecutionPublisher)
     : m_context{Ref(context)},
@@ -106,8 +106,8 @@ void CanvasNodeTask::S5() {
 }
 
 CanvasNodeTaskFactory::CanvasNodeTaskFactory(
-    RefType<CanvasNodeTranslationContext> context,
-    RefType<const CanvasNode> node)
+    Ref<CanvasNodeTranslationContext> context,
+    Ref<const CanvasNode> node)
     : m_context{context.Get()},
       m_orderExecutionPublisher{MakeAggregateOrderExecutionPublisher()},
       m_node{node.Get()} {}

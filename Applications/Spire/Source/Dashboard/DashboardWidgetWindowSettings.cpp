@@ -18,12 +18,12 @@ string DashboardWidgetWindowSettings::GetName() const {
 }
 
 QWidget* DashboardWidgetWindowSettings::Reopen(
-    RefType<UserProfile> userProfile) const {
+    Ref<UserProfile> userProfile) const {
   assert(false);
   return nullptr;
 }
 
-void DashboardWidgetWindowSettings::Apply(RefType<UserProfile> userProfile,
+void DashboardWidgetWindowSettings::Apply(Ref<UserProfile> userProfile,
     Out<QWidget> widget) const {
   auto& dashboard = dynamic_cast<DashboardWidget&>(*widget);
   dashboard.m_columnSortOrder = m_sortOrder;

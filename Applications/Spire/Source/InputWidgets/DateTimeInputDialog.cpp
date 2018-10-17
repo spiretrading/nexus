@@ -20,7 +20,7 @@ namespace {
   const unsigned int UPDATE_INTERVAL = 1000;
 }
 
-DateTimeInputDialog::DateTimeInputDialog(RefType<UserProfile> userProfile,
+DateTimeInputDialog::DateTimeInputDialog(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_DateTimeInputDialog>()),
@@ -39,7 +39,7 @@ DateTimeInputDialog::DateTimeInputDialog(RefType<UserProfile> userProfile,
 }
 
 DateTimeInputDialog::DateTimeInputDialog(const ptime& initialValue,
-    RefType<UserProfile> userProfile, QWidget* parent, Qt::WindowFlags flags)
+    Ref<UserProfile> userProfile, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_DateTimeInputDialog>()),
       m_userProfile(userProfile.Get()) {

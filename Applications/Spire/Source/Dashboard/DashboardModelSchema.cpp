@@ -97,7 +97,7 @@ const DashboardRowBuilder& DashboardModelSchema::GetRowBuilder() const {
 }
 
 std::unique_ptr<DashboardModel> DashboardModelSchema::Build(
-    RefType<UserProfile> userProfile) const {
+    Ref<UserProfile> userProfile) const {
   auto model = std::make_unique<DashboardModel>(m_columnNames);
   for(auto& index : m_rowIndices) {
     auto row = GetRowBuilder().Build(index, Ref(userProfile));

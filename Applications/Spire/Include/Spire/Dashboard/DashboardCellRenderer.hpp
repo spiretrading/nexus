@@ -44,7 +44,7 @@ namespace Spire {
       /*!
         \param cell The cell to render.
       */
-      DashboardCellRenderer(Beam::RefType<const DashboardCell> cell);
+      DashboardCellRenderer(Beam::Ref<const DashboardCell> cell);
 
     private:
       const DashboardCell* m_cell;

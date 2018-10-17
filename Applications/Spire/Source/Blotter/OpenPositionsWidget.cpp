@@ -72,8 +72,8 @@ void OpenPositionsWidget::SetUIState(const UIState& state) {
     state.m_tableState);
 }
 
-void OpenPositionsWidget::SetModel(RefType<UserProfile> userProfile,
-    RefType<BlotterModel> model) {
+void OpenPositionsWidget::SetModel(Ref<UserProfile> userProfile,
+    Ref<BlotterModel> model) {
   if(m_proxyModel != nullptr) {
     disconnect(m_selectionChangedConnection);
   }

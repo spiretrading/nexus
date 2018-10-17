@@ -33,7 +33,7 @@ namespace {
   const unsigned int UPDATE_INTERVAL = 100;
 }
 
-ChartWindow::ChartWindow(RefType<UserProfile> userProfile,
+ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
     const string& identifier, QWidget* parent, Qt::WindowFlags flags)
     : QMainWindow(parent, flags),
       SecurityContext(identifier),

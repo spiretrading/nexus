@@ -60,7 +60,7 @@ namespace MarketDataService {
       MarketOrderImbalanceExpression(MarketDataClientForward&& marketDataClient,
         MarketExpressionForward&& marketExpression,
         TimeRangeExpressionForward&& timeRangeExpression,
-        Beam::RefType<Beam::Expressions::ExpressionRuntime> expressionRuntime);
+        Beam::Ref<Beam::Expressions::ExpressionRuntime> expressionRuntime);
 
       virtual void Commit();
 
@@ -94,7 +94,7 @@ namespace MarketDataService {
       MarketDataClientForward&& marketDataClient,
       MarketExpressionForward&& marketExpression,
       TimeRangeExpressionForward&& timeRangeExpression,
-      Beam::RefType<Beam::Expressions::ExpressionRuntime> expressionRuntime)
+      Beam::Ref<Beam::Expressions::ExpressionRuntime> expressionRuntime)
 BEAM_SUPPRESS_THIS_INITIALIZER()
       : Beam::Expressions::IterationExpression<OrderImbalance>(
           Ref(expressionRuntime)),
@@ -152,10 +152,6 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       if(m_market.is_initialized() && m_timeRange.is_initialized()) {
         m_exception = std::exception_ptr();
         try {
-#if 0
-          m_publisher = m_marketDataClient->GetMarketOrderImbalancePublisher(
-            *m_market, *m_timeRange);
-#endif
           boost::optional<std::vector<OrderImbalance>> snapshot;
           m_publisherConnection = m_expressionRuntime->Connect(*m_publisher,
             std::bind(&MarketOrderImbalanceExpression::OnOrderImbalance, this,

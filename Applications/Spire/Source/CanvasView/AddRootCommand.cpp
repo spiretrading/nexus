@@ -5,7 +5,7 @@ using namespace Beam;
 using namespace Spire;
 using namespace std;
 
-AddRootCommand::AddRootCommand(RefType<CanvasNodeModel> view,
+AddRootCommand::AddRootCommand(Ref<CanvasNodeModel> view,
     const CanvasNodeModel::Coordinate& coordinate, const CanvasNode& node)
     : m_view(view.Get()),
       m_coordinate(coordinate),

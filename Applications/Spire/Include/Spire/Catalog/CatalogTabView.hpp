@@ -43,9 +43,9 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      CatalogTabView(Beam::RefType<CatalogTabModel> model,
-        Beam::RefType<CatalogSearchBarModel> searchBarModel,
-        const Filter& filter, Beam::RefType<UserProfile> userProfile,
+      CatalogTabView(Beam::Ref<CatalogTabModel> model,
+        Beam::Ref<CatalogSearchBarModel> searchBarModel,
+        const Filter& filter, Beam::Ref<UserProfile> userProfile,
         bool saving, QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
 
       //! Returns the model being displayed.

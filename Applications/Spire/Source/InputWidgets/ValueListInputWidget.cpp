@@ -39,7 +39,7 @@ ValueListInputWidget::ValueListInputWidget(QWidget* parent,
   layout->addWidget(m_lineEdit);
 }
 
-ValueListInputWidget::ValueListInputWidget(RefType<UserProfile> userProfile,
+ValueListInputWidget::ValueListInputWidget(Ref<UserProfile> userProfile,
     const type_info& type, QWidget* parent, Qt::WindowFlags flags)
     : ValueListInputWidget{parent, flags} {
   Initialize(Ref(userProfile), type);
@@ -47,7 +47,7 @@ ValueListInputWidget::ValueListInputWidget(RefType<UserProfile> userProfile,
 
 ValueListInputWidget::~ValueListInputWidget() {}
 
-void ValueListInputWidget::Initialize(RefType<UserProfile> userProfile,
+void ValueListInputWidget::Initialize(Ref<UserProfile> userProfile,
     const type_info& type) {
   m_userProfile = userProfile.Get();
   m_type = &type;

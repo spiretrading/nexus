@@ -47,10 +47,10 @@ namespace Spire {
                row in the <i>model</i>.
         \param userProfile The user's profile.
       */
-      DashboardRenderer(Beam::RefType<const DashboardModel> model,
-        Beam::RefType<const DashboardSelectionModel> selectionModel,
+      DashboardRenderer(Beam::Ref<const DashboardModel> model,
+        Beam::Ref<const DashboardSelectionModel> selectionModel,
         const DashboardRowRendererBuilder& rowRendererBuilder,
-        Beam::RefType<UserProfile> userProfile);
+        Beam::Ref<UserProfile> userProfile);
 
       //! Returns the model being rendered.
       const DashboardModel& GetModel() const;

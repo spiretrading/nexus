@@ -108,7 +108,7 @@ void BlotterSettings::Load(Out<UserProfile> userProfile) {
     reader.Read(Store(buffer));
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
     RegisterSpireTypes(Store(typeRegistry));
-    BinaryReceiver<SharedBuffer> receiver(Ref(typeRegistry));
+    auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
     receiver.SetSource(Ref(buffer));
     receiver.Shuttle(data);
   } catch(std::exception&) {
@@ -158,7 +158,7 @@ void BlotterSettings::Save(const UserProfile& userProfile) {
   try {
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
     RegisterSpireTypes(Store(typeRegistry));
-    BinarySender<SharedBuffer> sender(Ref(typeRegistry));
+    auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
     SharedBuffer buffer;
     sender.SetSink(Ref(buffer));
     const BlotterSettings& settings = userProfile.GetBlotterSettings();
@@ -181,7 +181,7 @@ void BlotterSettings::Save(const UserProfile& userProfile) {
   }
 }
 
-BlotterSettings::BlotterSettings(RefType<UserProfile> userProfile)
+BlotterSettings::BlotterSettings(Ref<UserProfile> userProfile)
     : m_userProfile(userProfile.Get()) {}
 
 BlotterSettings::~BlotterSettings() {}

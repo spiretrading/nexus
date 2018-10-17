@@ -8,12 +8,12 @@ using namespace Spire::UI;
 ValueLabel::ValueLabel(QWidget* parent, Qt::WindowFlags flags)
     : QLabel(parent, flags) {}
 
-ValueLabel::ValueLabel(const string& label, RefType<UserProfile> userProfile) {
+ValueLabel::ValueLabel(const string& label, Ref<UserProfile> userProfile) {
   Initialize(label, Ref(userProfile));
 }
 
 void ValueLabel::Initialize(const string& label,
-    RefType<UserProfile> userProfile) {
+    Ref<UserProfile> userProfile) {
   m_label = label;
   m_converter.Initialize(Ref(userProfile));
   QSizePolicy sizePolicy(QSizePolicy::Maximum, sizePolicy().verticalPolicy());

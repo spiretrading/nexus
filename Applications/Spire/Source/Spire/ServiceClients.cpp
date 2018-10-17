@@ -71,8 +71,8 @@ namespace {
 
 ServiceClients::ServiceClients(
     std::unique_ptr<ApplicationServiceLocatorClient> serviceLocatorClient,
-    RefType<SocketThreadPool> socketThreadPool,
-    RefType<TimerThreadPool> timerThreadPool)
+    Ref<SocketThreadPool> socketThreadPool,
+    Ref<TimerThreadPool> timerThreadPool)
     : m_applicationServiceLocatorClient{std::move(serviceLocatorClient)},
       m_serviceLocatorClient{MakeVirtualServiceLocatorClient(
         &**m_applicationServiceLocatorClient)},

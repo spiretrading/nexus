@@ -40,7 +40,7 @@ namespace Spire {
       /*!
         \param userProfile The user's profile.
       */
-      SecurityInfoModel(Beam::RefType<UserProfile> userProfile);
+      SecurityInfoModel(Beam::Ref<UserProfile> userProfile);
 
       virtual ~SecurityInfoModel();
 

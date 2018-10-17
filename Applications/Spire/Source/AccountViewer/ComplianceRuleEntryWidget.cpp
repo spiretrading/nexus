@@ -15,7 +15,7 @@ using namespace Spire;
 using namespace std;
 
 ComplianceRuleEntryWidget::ComplianceRuleEntryWidget(
-    RefType<UserProfile> userProfile, bool isReadOnly,
+    Ref<UserProfile> userProfile, bool isReadOnly,
     const ComplianceRuleEntry& entry, std::shared_ptr<ComplianceModel> model,
     QWidget* parent, Qt::WindowFlags flags)
     : QWidget{parent, flags},

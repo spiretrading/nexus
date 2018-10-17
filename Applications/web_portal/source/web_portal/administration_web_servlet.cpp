@@ -60,8 +60,8 @@ namespace {
 }
 
 AdministrationWebServlet::AdministrationWebServlet(
-    RefType<SessionStore<WebPortalSession>> sessions,
-    RefType<ApplicationServiceClients> serviceClients)
+    Ref<SessionStore<WebPortalSession>> sessions,
+    Ref<ApplicationServiceClients> serviceClients)
     : m_sessions{sessions.Get()},
       m_serviceClients{serviceClients.Get()} {}
 

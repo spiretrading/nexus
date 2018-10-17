@@ -12,7 +12,7 @@ using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
 
-QuantitySpinBox::QuantitySpinBox(RefType<UserProfile> userProfile,
+QuantitySpinBox::QuantitySpinBox(Ref<UserProfile> userProfile,
     const IntegerNode& node, QWidget* parent)
     : QSpinBox(parent),
       m_userProfile(userProfile.Get()) {

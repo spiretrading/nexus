@@ -24,7 +24,7 @@ namespace UI {
         \param node The MaxFloorNode this MaxFloorSpinBox represents.
         \param parent The parent widget.
       */
-      MaxFloorSpinBox(Beam::RefType<UserProfile> userProfile,
+      MaxFloorSpinBox(Beam::Ref<UserProfile> userProfile,
         const MaxFloorNode& node, QWidget* parent = nullptr);
 
       virtual ~MaxFloorSpinBox();
