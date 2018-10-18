@@ -61,9 +61,11 @@ namespace {
         configFile <<
           "---\n"
           "servers:\n"
-          "  - name: Local Environment\n"
-          "    address: 127.0.0.1:20000\n"
-          "...";
+          "  - name: Live Trading\n"
+          "    address: 69.90.18.212:20000\n"
+          "  - name: Replay Simulator\n"
+          "    address: 64.34.75.195:20000\n"
+          "...\n";
       }
       std::ifstream configStream(configPath);
       if(!configStream.good()) {
