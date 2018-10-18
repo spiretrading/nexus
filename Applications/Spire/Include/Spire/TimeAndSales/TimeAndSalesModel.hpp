@@ -93,7 +93,7 @@ namespace Spire {
       Nexus::BboQuote m_bbo;
       std::vector<std::pair<Nexus::TimeAndSale, PriceRange>> m_entries;
       QTimer m_updateTimer;
-      Beam::TaskQueue m_slotHandler;
+      std::shared_ptr<Beam::TaskQueue> m_slotHandler;
 
       void OnBbo(const Nexus::BboQuote& bbo);
       void OnTimeAndSale(const Nexus::TimeAndSale& timeAndSale);

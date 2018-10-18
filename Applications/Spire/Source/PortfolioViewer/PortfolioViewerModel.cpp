@@ -495,9 +495,10 @@ void PortfolioViewerModel::OnSelectionModelUpdated(const QModelIndex& topLeft,
 
 void PortfolioViewerModel::OnUpdateTimer() {
   auto startTime = boost::posix_time::microsec_clock::universal_time();
-  while(!m_slotHandler->IsEmpty()) {
+  auto slotHandler = m_slotHandler;
+  while(slotHandler.use_count() != 1 && !slotHandler->IsEmpty()) {
     std::function<void ()> task;
-    m_slotHandler->Emplace(Store(task));
+    slotHandler->Emplace(Store(task));
     task();
     auto frameTime = boost::posix_time::microsec_clock::universal_time();
     if(frameTime - startTime > boost::posix_time::seconds(1) / 10) {

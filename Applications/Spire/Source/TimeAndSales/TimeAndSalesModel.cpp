@@ -25,7 +25,8 @@ namespace {
 TimeAndSalesModel::TimeAndSalesModel(Ref<UserProfile> userProfile,
     const TimeAndSalesProperties& properties, const Security& security)
     : m_userProfile(userProfile.Get()),
-      m_properties(properties) {
+      m_properties(properties),
+      m_slotHandler(std::make_shared<TaskQueue>()) {
   connect(&m_updateTimer, &QTimer::timeout, this,
     &TimeAndSalesModel::OnUpdateTimer);
   m_updateTimer.start(UPDATE_INTERVAL);
@@ -41,12 +42,12 @@ TimeAndSalesModel::TimeAndSalesModel(Ref<UserProfile> userProfile,
   query.SetSnapshotLimit(SnapshotLimit::Type::TAIL, 50);
   query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
   m_userProfile->GetServiceClients().GetMarketDataClient().QueryTimeAndSales(
-    query, m_slotHandler.GetSlot<TimeAndSale>(
+    query, m_slotHandler->GetSlot<TimeAndSale>(
     std::bind(&TimeAndSalesModel::OnTimeAndSale, this, std::placeholders::_1)));
   auto bboQuery = BuildCurrentQuery(security);
   bboQuery.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
   m_userProfile->GetServiceClients().GetMarketDataClient().QueryBboQuotes(
-    bboQuery, m_slotHandler.GetSlot<BboQuote>(
+    bboQuery, m_slotHandler->GetSlot<BboQuote>(
     std::bind(&TimeAndSalesModel::OnBbo, this, std::placeholders::_1)));
 }
 
@@ -148,9 +149,10 @@ void TimeAndSalesModel::OnTimeAndSale(const TimeAndSale& timeAndSale) {
 
 void TimeAndSalesModel::OnUpdateTimer() {
   auto startTime = boost::posix_time::microsec_clock::universal_time();
-  while(!m_slotHandler.IsEmpty()) {
+  auto slotHandler = m_slotHandler;
+  while(slotHandler.use_count() != 1 && !slotHandler->IsEmpty()) {
     std::function<void ()> task;
-    m_slotHandler.Emplace(Store(task));
+    slotHandler->Emplace(Store(task));
     task();
     auto frameTime = boost::posix_time::microsec_clock::universal_time();
     if(frameTime - startTime > boost::posix_time::seconds(1) / 10) {
