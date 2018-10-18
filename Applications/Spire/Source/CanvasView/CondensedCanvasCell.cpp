@@ -1,5 +1,6 @@
 #include "Spire/CanvasView/CondensedCanvasCell.hpp"
 #include <Beam/Utilities/VariantLambdaVisitor.hpp>
+#include <QApplication>
 #include <QEvent>
 #include <QFocusEvent>
 #include <QLayout>
@@ -94,27 +95,29 @@ bool CondensedCanvasCell::eventFilter(QObject* object, QEvent* event) {
         key != Qt::Key_Return && key != Qt::Key_Tab && key != Qt::Key_Backtab ||
         key == Qt::Key_Up || key == Qt::Key_Down || key == Qt::Key_Left ||
         key == Qt::Key_Right) {
-      CanvasNodeEditor editor;
-      auto editVariant = editor.GetEditor(Ref(*m_node), Ref(*m_parent),
-        Ref(*m_userProfile), event);
-      ApplyVariantLambdaVisitor<void>(editVariant,
-        [&] (QWidget* widget) {
-          m_editor = widget;
-          m_editor->setSizePolicy(m_valueWidget->sizePolicy());
-          layout()->removeWidget(m_valueWidget);
-          m_valueWidget->setEnabled(false);
-          layout()->addWidget(m_editor);
-          m_editor->setFocus();
-          m_editor->installEventFilter(this);
-        },
-        [&] (QUndoCommand* command) {
-          if(command == nullptr) {
-            return;
-          }
-          m_valueWidget->setText(QString::fromStdString(m_node->GetText()));
-          command->redo();
-          delete command;
-        });
+      if(m_editor != nullptr) {
+        QApplication::sendEvent(m_editor, event);
+      } else {
+        CanvasNodeEditor editor;
+        auto editVariant = editor.GetEditor(Ref(*m_node), Ref(*m_parent),
+          Ref(*m_userProfile), event);
+        ApplyVariantLambdaVisitor<void>(editVariant,
+          [&] (QWidget* widget) {
+            m_editor = widget;
+            m_editor->setSizePolicy(m_valueWidget->sizePolicy());
+            layout()->replaceWidget(m_valueWidget, m_editor);
+            m_editor->setFocus();
+            m_editor->installEventFilter(this);
+          },
+          [&] (QUndoCommand* command) {
+            if(command == nullptr) {
+              return;
+            }
+            m_valueWidget->setText(QString::fromStdString(m_node->GetText()));
+            command->redo();
+            delete command;
+          });
+      }
       return true;
     }
   }
@@ -150,7 +153,6 @@ void CondensedCanvasCell::focusOutEvent(QFocusEvent* event) {
       } else if(event->reason() == Qt::BacktabFocusReason) {
         parent->NavigateBackward();
       }
-//      return;
     }
   }
   return QWidget::focusOutEvent(event);
