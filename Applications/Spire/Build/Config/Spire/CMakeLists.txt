@@ -9,15 +9,20 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 if(WIN32)
   file(GLOB resource_files
     ./../../../Source/Spire/*.rc)
+  file(GLOB manifest_files
+    ./../../../Source/Spire/*.manifest)
   set(app_type WIN32)
 elseif(APPLE)
   set(app_type MACOSX_BUNDLE)
+  set(resource_files "")
+  set(manifest_files "")
 else()
   set(resource_files "")
+  set(manifest_files "")
 endif(WIN32)
 
 add_executable(Spire ${app_type} ${header_files} ${source_files}
-  ${resource_files})
+  ${resource_files} ${manifest_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 target_link_libraries(Spire Dashboard Charting PortfolioViewer Utilities
   RiskTimer AccountViewer KeyBindings Blotter Catalog BookView TimeAndSales
