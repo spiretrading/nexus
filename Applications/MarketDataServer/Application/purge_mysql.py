@@ -49,6 +49,7 @@ def purge_security(security, start, end, connection, table):
       'timestamp >= %s and timestamp <= %s' % \
       (table, security.symbol, security.country, start_timestamp, end_timestamp)
     cursor.execute(query)
+  connection.commit()
 
 def purge_market(market, start, end, connection, table):
   timezone = pytz.timezone('US/Eastern')
@@ -63,6 +64,7 @@ def purge_market(market, start, end, connection, table):
       'timestamp >= %s and timestamp <= %s' % \
       (table, market, start_timestamp, end_timestamp)
     cursor.execute(query)
+  connection.commit()
 
 def purge_all_security(security, start, end, connection):
   purge_security(security, start, end, connection, 'bbo_quotes')

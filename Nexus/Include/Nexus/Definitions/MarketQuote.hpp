@@ -25,8 +25,8 @@ namespace Nexus {
     //! The timestamp.
     boost::posix_time::ptime m_timestamp;
 
-    //! Constructs an uninitialized MarketQuote.
-    MarketQuote() = default;
+    //! Constructs a MarketQuote with 0 size and price.
+    MarketQuote();
 
     //! Constructs an MarketQuote.
     /*!
@@ -57,6 +57,11 @@ namespace Nexus {
       const MarketQuote& value) {
     return out << "(" << value.m_market << " " << value.m_bid << " " <<
       value.m_ask << " " << value.m_timestamp << ")";
+  }
+
+  inline MarketQuote::MarketQuote() {
+    m_bid.m_side = Side::BID;
+    m_ask.m_side = Side::ASK;
   }
 
   inline MarketQuote::MarketQuote(MarketCode market, const Quote& bid,

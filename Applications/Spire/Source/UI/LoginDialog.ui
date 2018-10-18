@@ -98,26 +98,13 @@
     <string>Login</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="m_saveLoginInfoCheckBox">
-   <property name="geometry">
-    <rect>
-     <x>200</x>
-     <y>220</y>
-     <width>181</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Remember my login information</string>
-   </property>
-  </widget>
   <widget class="QWidget" name="m_credentialsBox" native="true">
    <property name="geometry">
     <rect>
      <x>20</x>
      <y>70</y>
      <width>350</width>
-     <height>140</height>
+     <height>171</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -328,8 +315,8 @@
    <widget class="QLabel" name="m_resultLabel">
     <property name="geometry">
      <rect>
-      <x>47</x>
-      <y>103</y>
+      <x>50</x>
+      <y>140</y>
       <width>261</width>
       <height>21</height>
      </rect>
@@ -384,14 +371,114 @@
      <set>Qt::AlignCenter</set>
     </property>
    </widget>
+   <widget class="QWidget" name="m_serverBox" native="true">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>100</y>
+      <width>311</width>
+      <height>35</height>
+     </rect>
+    </property>
+    <widget class="QLabel" name="m_serverLabel">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>10</y>
+       <width>81</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>MS Reference Sans Serif</family>
+       <pointsize>10</pointsize>
+       <weight>50</weight>
+       <bold>false</bold>
+      </font>
+     </property>
+     <property name="text">
+      <string>Server:</string>
+     </property>
+    </widget>
+    <widget class="QWidget" name="">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>0</y>
+       <width>183</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <property name="spacing">
+       <number>0</number>
+      </property>
+      <item>
+       <spacer name="verticalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QComboBox" name="m_serverComboBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>181</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>181</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="frame">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </widget>
   </widget>
  </widget>
  <tabstops>
   <tabstop>m_usernameInput</tabstop>
   <tabstop>m_passwordInput</tabstop>
+  <tabstop>m_serverComboBox</tabstop>
   <tabstop>m_loginButton</tabstop>
   <tabstop>m_cancelButton</tabstop>
-  <tabstop>m_saveLoginInfoCheckBox</tabstop>
  </tabstops>
  <resources/>
  <connections/>
