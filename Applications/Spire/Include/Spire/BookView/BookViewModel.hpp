@@ -97,7 +97,7 @@ namespace Spire {
         const Nexus::BookQuote& quote) const;
       void HighlightQuote(const Nexus::BookQuote& quote);
       void AddQuote(const Nexus::BookQuote& quote, int quoteIndex);
-      void RemoveQuote(const Nexus::BookQuote& quote, int quoteIndex);
+      void RemoveQuote(int quoteIndex);
       void OnMarketQuote(const Nexus::MarketQuote& quote);
       void OnBookQuote(const Nexus::BookQuote& quote);
       void OnOrderExecuted(const Nexus::OrderExecutionService::Order* order);

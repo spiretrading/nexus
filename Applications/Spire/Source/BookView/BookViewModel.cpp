@@ -264,9 +264,11 @@ void BookViewModel::AddQuote(const BookQuote& quote, int quoteIndex) {
         return (*(i - 1))->m_level + 1;
       }
     }();
+/*
     for(auto j = i; j != m_bookQuotes.rend(); ++j) {
       ++(*j)->m_level;
     }
+*/
     m_bookQuotes.insert(i.base(), std::move(entry));
     endInsertRows();
     auto lastRow = static_cast<int>(m_bookQuotes.size() - 1);
@@ -274,25 +276,24 @@ void BookViewModel::AddQuote(const BookQuote& quote, int quoteIndex) {
   }
 }
 
-void BookViewModel::RemoveQuote(const BookQuote& quote, int quoteIndex) {
+void BookViewModel::RemoveQuote(int quoteIndex) {
   auto i = m_bookQuotes.rbegin() + quoteIndex;
   beginRemoveRows(QModelIndex(), quoteIndex, quoteIndex);
-  if(m_bookQuotes.size() == 1) {
-    m_bookQuotes.clear();
-    endRemoveRows();
-  } else if(i == m_bookQuotes.rend() - 1) {
-    m_bookQuotes.erase(i.base());
-    endRemoveRows();
-  } else if(i != m_bookQuotes.rbegin() &&
-      quote.m_quote.m_price == (*(i - 1))->m_quote.m_quote.m_price ||
-      quote.m_quote.m_price == (*(i + 1))->m_quote.m_quote.m_price) {
-    m_bookQuotes.erase(i.base());
+  if(i == (m_bookQuotes.rend() - 1) ||
+      i != m_bookQuotes.rbegin() && (*i)->m_quote.m_quote.m_price ==
+      (*(i - 1))->m_quote.m_quote.m_price ||
+      (*i)->m_quote.m_quote.m_price == (*(i + 1))->m_quote.m_quote.m_price) {
+    m_bookQuotes.erase((i + 1).base());
     endRemoveRows();
   } else {
+/*
     for(auto j = i; j != m_bookQuotes.rend(); ++j) {
-      --(*j)->m_level;
+      if((*j)->m_quote.m_quote.m_price != (*i)->m_quote.m_quote.m_price) {
+        --(*j)->m_level;
+      }
     }
-    m_bookQuotes.erase(i.base());
+*/
+    m_bookQuotes.erase((i + 1).base());
     endRemoveRows();
     auto lastRow = static_cast<int>(m_bookQuotes.size() - 1);
     dataChanged(index(quoteIndex, 0), index(lastRow, COLUMN_COUNT - 1));
@@ -335,10 +336,6 @@ void BookViewModel::OnBookQuote(const BookQuote& quote) {
       }
       return m_bookQuotes.rend();
     }();
-  if(lowerBound == m_bookQuotes.rend()) {
-    AddQuote(quote, 0);
-  }
-/*
   auto existingIterator = lowerBound;
   while(existingIterator != m_bookQuotes.rend() &&
       (*existingIterator)->m_quote.m_quote.m_price == quote.m_quote.m_price &&
@@ -347,30 +344,24 @@ void BookViewModel::OnBookQuote(const BookQuote& quote) {
   }
   if(existingIterator == m_bookQuotes.rend() ||
       (*existingIterator)->m_quote.m_quote.m_price != quote.m_quote.m_price) {
-  }
-
-  auto quoteIndex = std::distance(m_bookQuotes.rbegin(), quoteLocation);
-  if(quoteLocation == m_bookQuotes.rend() ||
-      (*quoteLocation)->m_quote.m_mpid != quote.m_mpid ||
-      (*quoteLocation)->m_quote.m_quote.m_price != quote.m_quote.m_price) {
-    AddQuote(quote, quoteIndex);
-  } else {
-    if(quoteLocation != m_bookQuotes.rbegin() &&
-        quoteLocation != (m_bookQuotes.rend() - 1) &&
-        Comparator((*(quoteLocation - 1))->m_quote, quote) &&
-        Comparator(quote, (*(quoteLocation + 1))->m_quote) ||
-        quoteLocation != m_bookQuotes.rbegin() &&
-        Comparator((*(quoteLocation - 1))->m_quote, quote) ||
-        quoteLocation != (m_bookQuotes.rend() - 1) &&
-        Comparator(quote, (*(quoteLocation + 1))->m_quote)) {
-      (*quoteLocation)->m_quote.m_quote.m_size = quote.m_quote.m_size;
-      (*quoteLocation)->m_quote.m_timestamp = quote.m_timestamp;
-      dataChanged(index(quoteIndex, 0), index(quoteIndex, COLUMN_COUNT - 1));
-    } else {
-      RemoveQuote(quote, quoteIndex);
+    if(quote.m_quote.m_size != 0) {
+      auto insertIterator = lowerBound;
+      while(insertIterator != m_bookQuotes.rend() &&
+          (*insertIterator)->m_quote.m_quote.m_price == quote.m_quote.m_price &&
+          std::tie(quote.m_quote.m_size, quote.m_timestamp, quote.m_mpid) <
+          std::tie((*insertIterator)->m_quote.m_quote.m_size,
+          (*insertIterator)->m_quote.m_timestamp,
+          (*insertIterator)->m_quote.m_mpid)) {
+        ++insertIterator;
+      }
+      AddQuote(quote, std::distance(m_bookQuotes.rbegin(), insertIterator));
     }
+    return;
   }
-*/
+  if(quote.m_quote.m_size == 0) {
+    RemoveQuote(std::distance(m_bookQuotes.rbegin(), existingIterator));
+  } else {
+  }
 }
 
 void BookViewModel::OnOrderExecuted(const Order* order) {
