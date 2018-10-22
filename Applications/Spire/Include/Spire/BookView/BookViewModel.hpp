@@ -75,6 +75,10 @@ namespace Spire {
 
         bool operator <(const OrderKey& value) const;
       };
+      struct BookQuoteEntry {
+        Nexus::BookQuote m_quote;
+        int m_level;
+      };
       UserProfile* m_userProfile;
       BookViewProperties m_properties;
       Nexus::Security m_security;
@@ -82,8 +86,7 @@ namespace Spire {
       Nexus::Quantity m_boardLot;
       std::unordered_map<Nexus::MarketCode, Nexus::MarketQuote> m_marketQuotes;
       std::unordered_map<Nexus::MarketCode, Nexus::BookQuote> m_topLevels;
-      std::vector<Nexus::BookQuote> m_bookQuotes;
-      std::vector<int> m_quoteLevels;
+      std::vector<std::unique_ptr<BookQuoteEntry>> m_bookQuotes;
       std::map<OrderKey, Nexus::Quantity> m_orderQuantities;
       std::unordered_map<const Nexus::OrderExecutionService::Order*,
         Nexus::Quantity> m_remainingOrderQuantities;
