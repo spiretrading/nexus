@@ -257,17 +257,13 @@ void BookViewModel::AddQuote(const BookQuote& quote, int quoteIndex) {
     m_bookQuotes.insert(i.base(), std::move(entry));
     endInsertRows();
   } else {
-    auto level = [&] {
-      if(i == m_bookQuotes.rbegin()) {
-        return 0;
-      } else {
-        return (*(i - 1))->m_level + 1;
-      }
-    }();
+    if(i == m_bookQuotes.rend()) {
+      entry->m_level = (*(i - 1))->m_level + 1;
+    } else {
+      entry->m_level = (*i)->m_level;
+    }
     for(auto j = i; j != m_bookQuotes.rend(); ++j) {
-      if((*j)->m_quote.m_quote.m_price != quote.m_quote.m_price) {
-        ++(*j)->m_level;
-      }
+      ++(*j)->m_level;
     }
     m_bookQuotes.insert(i.base(), std::move(entry));
     endInsertRows();
@@ -279,22 +275,20 @@ void BookViewModel::AddQuote(const BookQuote& quote, int quoteIndex) {
 void BookViewModel::RemoveQuote(int quoteIndex) {
   auto i = m_bookQuotes.rbegin() + quoteIndex;
   beginRemoveRows(QModelIndex(), quoteIndex, quoteIndex);
-  if(i == (m_bookQuotes.rend() - 1) ||
-      i != m_bookQuotes.rbegin() && (*i)->m_quote.m_quote.m_price ==
-      (*(i - 1))->m_quote.m_quote.m_price ||
-      (*i)->m_quote.m_quote.m_price == (*(i + 1))->m_quote.m_quote.m_price) {
+  if(i == (m_bookQuotes.rend() - 1) || (*i)->m_level == (*(i + 1))->m_level ||
+      i != m_bookQuotes.rbegin() && (*i)->m_level == (*(i - 1))->m_level) {
     m_bookQuotes.erase((i + 1).base());
     endRemoveRows();
   } else {
-    for(auto j = i; j != m_bookQuotes.rend(); ++j) {
-      if((*j)->m_quote.m_quote.m_price != (*i)->m_quote.m_quote.m_price) {
-        --(*j)->m_level;
-      }
+    for(auto j = i + 1; j != m_bookQuotes.rend(); ++j) {
+      --(*j)->m_level;
     }
     m_bookQuotes.erase((i + 1).base());
     endRemoveRows();
-    auto lastRow = static_cast<int>(m_bookQuotes.size() - 1);
-    dataChanged(index(quoteIndex, 0), index(lastRow, COLUMN_COUNT - 1));
+    if(!m_bookQuotes.empty()) {
+      auto lastRow = static_cast<int>(m_bookQuotes.size() - 1);
+      dataChanged(index(quoteIndex, 0), index(lastRow, COLUMN_COUNT - 1));
+    }
   }
 }
 
