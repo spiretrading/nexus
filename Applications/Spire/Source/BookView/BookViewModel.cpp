@@ -264,11 +264,11 @@ void BookViewModel::AddQuote(const BookQuote& quote, int quoteIndex) {
         return (*(i - 1))->m_level + 1;
       }
     }();
-/*
     for(auto j = i; j != m_bookQuotes.rend(); ++j) {
-      ++(*j)->m_level;
+      if((*j)->m_quote.m_quote.m_price != quote.m_quote.m_price) {
+        ++(*j)->m_level;
+      }
     }
-*/
     m_bookQuotes.insert(i.base(), std::move(entry));
     endInsertRows();
     auto lastRow = static_cast<int>(m_bookQuotes.size() - 1);
@@ -286,13 +286,11 @@ void BookViewModel::RemoveQuote(int quoteIndex) {
     m_bookQuotes.erase((i + 1).base());
     endRemoveRows();
   } else {
-/*
     for(auto j = i; j != m_bookQuotes.rend(); ++j) {
       if((*j)->m_quote.m_quote.m_price != (*i)->m_quote.m_quote.m_price) {
         --(*j)->m_level;
       }
     }
-*/
     m_bookQuotes.erase((i + 1).base());
     endRemoveRows();
     auto lastRow = static_cast<int>(m_bookQuotes.size() - 1);
@@ -361,6 +359,30 @@ void BookViewModel::OnBookQuote(const BookQuote& quote) {
   if(quote.m_quote.m_size == 0) {
     RemoveQuote(std::distance(m_bookQuotes.rbegin(), existingIterator));
   } else {
+    auto insertIterator = lowerBound;
+    while(insertIterator != m_bookQuotes.rend() &&
+        (*insertIterator)->m_quote.m_quote.m_price == quote.m_quote.m_price &&
+        std::tie(quote.m_quote.m_size, quote.m_timestamp, quote.m_mpid) <
+        std::tie((*insertIterator)->m_quote.m_quote.m_size,
+        (*insertIterator)->m_quote.m_timestamp,
+        (*insertIterator)->m_quote.m_mpid)) {
+      ++insertIterator;
+    }
+    if(insertIterator == existingIterator) {
+      (*insertIterator)->m_quote.m_quote.m_size = quote.m_quote.m_size;
+      (*insertIterator)->m_quote.m_timestamp = quote.m_timestamp;
+      auto quoteIndex = std::distance(m_bookQuotes.rbegin(), insertIterator);
+      dataChanged(index(quoteIndex, 0), index(quoteIndex, COLUMN_COUNT - 1));
+    } else {
+      auto existingIndex = std::distance(m_bookQuotes.rbegin(),
+        existingIterator);
+      auto quoteIndex = std::distance(m_bookQuotes.rbegin(), insertIterator);
+      if(quoteIndex > existingIndex) {
+        --quoteIndex;
+      }
+      RemoveQuote(existingIndex);
+      AddQuote(quote, quoteIndex);
+    }
   }
 }
 
