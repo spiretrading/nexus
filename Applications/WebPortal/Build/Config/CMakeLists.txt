@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
-project(web_portal)
+project(WebPortal)
 
-include_directories(./../../include)
+include_directories(./../../Include)
 include_directories($ENV{BEAM_INCLUDE_PATH})
 include_directories($ENV{BOOST_INCLUDE_PATH})
 include_directories($ENV{CRYPTOPP_INCLUDE_PATH})
@@ -48,4 +48,4 @@ if(NOT EXISTS $ENV{INSTALL_DIRECTORY})
   file(MAKE_DIRECTORY $ENV{INSTALL_DIRECTORY})
 endif()
 
-add_subdirectory(web_portal)
+add_subdirectory(WebPortal)

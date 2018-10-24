@@ -1,14 +1,14 @@
-file(GLOB header_files ./../../../include/web_portal/web_portal/*.hpp)
-file(GLOB source_files ./../../../source/web_portal/*.cpp)
+file(GLOB header_files ./../../../Include/WebPortal/WebPortal/*.hpp)
+file(GLOB source_files ./../../../Source/WebPortal/*.cpp)
 
-add_executable(web_portal ${header_files} ${source_files})
+add_executable(WebPortal ${header_files} ${source_files})
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj")
 endif()
 
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
-target_link_libraries(web_portal
+target_link_libraries(WebPortal
   debug $ENV{CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized $ENV{CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{OPEN_SSL_LIBRARY_DEBUG_PATH}
@@ -21,7 +21,7 @@ target_link_libraries(web_portal
   optimized $ENV{ZLIB_LIBRARY_OPTIMIZED_PATH})
 
 if(UNIX)
-  target_link_libraries(web_portal
+  target_link_libraries(WebPortal
     debug $ENV{BOOST_CHRONO_LIBRARY_DEBUG_PATH}
     optimized $ENV{BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
     debug $ENV{BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
@@ -35,4 +35,4 @@ if(UNIX)
     dl pthread rt stdc++fs)
 endif(UNIX)
 
-install(TARGETS web_portal DESTINATION $ENV{INSTALL_DIRECTORY})
+install(TARGETS WebPortal DESTINATION $ENV{INSTALL_DIRECTORY})

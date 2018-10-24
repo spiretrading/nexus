@@ -43,13 +43,10 @@ applications+="SimulationOrderExecutionServer "
 applications+="TmxIpMarketDataFeedClient "
 applications+="TmxTl1MarketDataFeedClient "
 applications+="UtpMarketDataFeedClient "
+applications+="WebPortal "
 parallel -j$jobs --no-notice build_function ::: $applications
 
-pushd $directory/../../Applications/web_portal/build/posix
-./build.sh $config
-popd
-
-pushd $directory/../../Applications/web_portal/web_app
+pushd $directory/../../Applications/WebPortal/WebApp
 ./build.sh $config
 popd
 

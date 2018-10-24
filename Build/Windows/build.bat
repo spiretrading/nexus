@@ -22,6 +22,6 @@ CALL %~dp0../../Applications/Spire/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/TmxIpMarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/TmxTl1MarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/UtpMarketDataFeedClient/Build/Windows/build.bat %config%
-CALL %~dp0../../Applications/web_portal/build/windows/build.bat %config%
-CALL %~dp0../../Applications/web_portal/web_app/build.bat %config%
+CALL %~dp0../../Applications/WebPortal/Build/Windows/build.bat %config%
+CALL %~dp0../../Applications/WebPortal/WebApp/build.bat %config%
 ENDLOCAL

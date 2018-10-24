@@ -236,10 +236,10 @@ if [ ! -d "UidServer" ]; then
   sudo -u $username sed -i "s:admin_password:\"$admin_password\":g" config.yml
   cd ..
 fi
-if [ ! -d "web_portal" ]; then
-  sudo -u $username mkdir web_portal
-  cd web_portal
-  sudo -u $username cp -R /home/developers/Nexus/Applications/web_portal/application/* .
+if [ ! -d "WebPortal" ]; then
+  sudo -u $username mkdir WebPortal
+  cd WebPortal
+  sudo -u $username cp -R /home/developers/Nexus/Applications/WebPortal/Application/* .
   sudo -u $username mv config.default.yml config.yml
   sudo -u $username sed -i "s:local_interface:$local_interface:g" config.yml
   sudo -u $username sed -i "s:global_address:$global_address:g" config.yml

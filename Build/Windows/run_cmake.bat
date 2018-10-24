@@ -16,4 +16,4 @@ CALL %~dp0../../Applications/Spire/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/TmxIpMarketDataFeedClient/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/TmxTl1MarketDataFeedClient/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/UtpMarketDataFeedClient/Build/Windows/run_cmake.bat
-CALL %~dp0../../Applications/web_portal/build/windows/run_cmake.bat
+CALL %~dp0../../Applications/WebPortal/Build/Windows/run_cmake.bat

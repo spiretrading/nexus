@@ -4,7 +4,7 @@ if [ "$(uname -s)" = "Darwin" ]; then
 else
   STAT='stat'
 fi
-BEAM_PATH=../../Beam/web_api
+BEAM_PATH=../../Beam/WebApi
 if [ $# -eq 0 ] || [ "$1" != "Debug" ]; then
   export PROD_ENV=1
 fi
