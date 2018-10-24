@@ -8,8 +8,8 @@
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <Beam/WebServices/HttpServletContainer.hpp>
 #include <tclap/CmdLine.h>
-#include "web_portal/web_portal/web_portal_servlet.hpp"
-#include "web_portal/version.hpp"
+#include "WebPortal/WebPortal/WebPortalServlet.hpp"
+#include "WebPortal/Version.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;

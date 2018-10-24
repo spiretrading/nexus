@@ -1,13 +1,13 @@
-#ifndef NEXUS_ADMINISTRATION_WEB_SERVLET_HPP
-#define NEXUS_ADMINISTRATION_WEB_SERVLET_HPP
+#ifndef NEXUS_AdministrationWebServlet_HPP
+#define NEXUS_AdministrationWebServlet_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
 #include <Beam/WebServices/SessionStore.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
-#include "web_portal/web_portal/web_portal.hpp"
-#include "web_portal/web_portal/web_portal_session.hpp"
+#include "WebPortal/WebPortal/WebPortal.hpp"
+#include "WebPortal/WebPortal/WebPortalSession.hpp"
 
 namespace Nexus::WebPortal {
 

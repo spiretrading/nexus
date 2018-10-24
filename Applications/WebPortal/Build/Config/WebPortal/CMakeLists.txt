@@ -4,7 +4,7 @@ file(GLOB source_files ./../../../Source/WebPortal/*.cpp)
 add_executable(WebPortal ${header_files} ${source_files})
 
 if(MSVC)
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj")
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj /MP")
 endif()
 
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)

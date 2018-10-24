@@ -13,14 +13,14 @@
 #include <Beam/WebServices/WebSocketChannel.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
-#include "web_portal/web_portal/administration_web_servlet.hpp"
-#include "web_portal/web_portal/web_portal.hpp"
-#include "web_portal/web_portal/web_portal_session.hpp"
-#include "web_portal/web_portal/compliance_web_servlet.hpp"
-#include "web_portal/web_portal/definitions_web_servlet.hpp"
-#include "web_portal/web_portal/market_data_web_servlet.hpp"
-#include "web_portal/web_portal/risk_web_servlet.hpp"
-#include "web_portal/web_portal/service_locator_web_servlet.hpp"
+#include "WebPortal/WebPortal/AdministrationWebServlet.hpp"
+#include "WebPortal/WebPortal/ComplianceWebServlet.hpp"
+#include "WebPortal/WebPortal/DefinitionsWebServlet.hpp"
+#include "WebPortal/WebPortal/MarketDataWebServlet.hpp"
+#include "WebPortal/WebPortal/RiskWebServlet.hpp"
+#include "WebPortal/WebPortal/ServiceLocatorWebServlet.hpp"
+#include "WebPortal/WebPortal/WebPortal.hpp"
+#include "WebPortal/WebPortal/WebPortalSession.hpp"
 
 namespace Nexus::WebPortal {
 

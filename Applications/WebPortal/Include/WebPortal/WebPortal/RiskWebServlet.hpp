@@ -16,9 +16,9 @@
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
-#include "web_portal/web_portal/web_portal.hpp"
-#include "web_portal/web_portal/web_portal_session.hpp"
-#include "web_portal/web_portal/portfolio_model.hpp"
+#include "WebPortal/WebPortal/WebPortal.hpp"
+#include "WebPortal/WebPortal/WebPortalSession.hpp"
+#include "WebPortal/WebPortal/PortfolioModel.hpp"
 
 namespace Nexus::WebPortal {
 
