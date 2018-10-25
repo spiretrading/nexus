@@ -57,7 +57,7 @@ IF "%UPDATE_NODE%" == "1" (
     rm -rf @types\beam
   )
   mkdir @types\beam
-  cp -r ..\%BEAM_PATH%\library\beam\library\beam\* @types\beam
+  cp -r ..\%BEAM_PATH%\library\beam\* @types\beam
   echo "timestamp" > mod_time.txt
   POPD
 )

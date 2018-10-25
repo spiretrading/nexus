@@ -95,7 +95,7 @@ IF "%UPDATE_NODE%" == "1" (
     rm -rf @types\beam
   )
   mkdir @types\beam
-  cp -r ..\%BEAM_PATH%\library\beam\library\beam\* @types\beam
+  cp -r ..\%BEAM_PATH%\library\beam\* @types\beam
   IF EXIST nexus (
     rm -rf nexus
   )
@@ -104,7 +104,7 @@ IF "%UPDATE_NODE%" == "1" (
     rm -rf @types\nexus
   )
   mkdir @types\nexus
-  cp -r ..\%NEXUS_PATH%\library\nexus\library\nexus\* @types\nexus
+  cp -r ..\%NEXUS_PATH%\library\nexus\* @types\nexus
   IF EXIST web_portal (
     rm -rf web_portal
   )
@@ -113,7 +113,7 @@ IF "%UPDATE_NODE%" == "1" (
     rm -rf @types\web_portal
   )
   mkdir @types\web_portal
-  cp -r ..\%WEB_PORTAL_PATH%\library\web_portal\library\web_portal\* @types\web_portal
+  cp -r ..\%WEB_PORTAL_PATH%\library\web_portal* @types\web_portal
   echo "timestamp" > mod_time.txt
   POPD
 )
