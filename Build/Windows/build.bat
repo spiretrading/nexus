@@ -15,6 +15,7 @@ CALL %~dp0../../Applications/CtaMarketDataFeedClient/Build/Windows/build.bat %co
 CALL %~dp0../../Applications/DefinitionsServer/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/MarketDataRelayServer/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/MarketDataServer/Build/Windows/build.bat %config%
+CALL %~dp0../../Applications/ReplayMarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/RiskServer/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/SimulationMarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/SimulationOrderExecutionServer/Build/Windows/build.bat %config%

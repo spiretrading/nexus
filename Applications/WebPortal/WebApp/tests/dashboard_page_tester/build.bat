@@ -4,8 +4,8 @@ SET UPDATE_NODE=
 SET UPDATE_BUILD=
 SET PROD_ENV=
 PUSHD %~dp0
-SET BEAM_PATH=..\..\..\..\..\..\Beam\web_api
-SET NEXUS_PATH=..\..\..\..\..\web_api
+SET BEAM_PATH=..\..\..\..\..\..\Beam\WebApi
+SET NEXUS_PATH=..\..\..\..\..\WebApi
 SET WEB_PORTAL_PATH=..\..\library
 IF NOT "%1" == "Debug" (
   SET PROD_ENV=1

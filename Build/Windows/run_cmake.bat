@@ -9,6 +9,7 @@ CALL %~dp0../../Applications/CtaMarketDataFeedClient/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/DefinitionsServer/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/MarketDataRelayServer/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/MarketDataServer/Build/Windows/run_cmake.bat
+CALL %~dp0../../Applications/ReplayMarketDataFeedClient/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/RiskServer/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/SimulationMarketDataFeedClient/Build/Windows/run_cmake.bat
 CALL %~dp0../../Applications/SimulationOrderExecutionServer/Build/Windows/run_cmake.bat
