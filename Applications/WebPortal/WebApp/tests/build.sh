@@ -5,6 +5,9 @@ arguments="$@"
 pushd account_page_tester
 ./build.sh $arguments
 popd
+pushd entitlements_page_tester
+./build.sh $arguments
+popd
 pushd login_page_tester
 ./build.sh $arguments
 popd
