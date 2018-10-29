@@ -1,48 +1,18 @@
-#ifndef NEXUS_MARKETDATASECURITYSNAPSHOT_HPP
-#define NEXUS_MARKETDATASECURITYSNAPSHOT_HPP
-#include <bitset>
+#ifndef NEXUS_MARKET_DATA_SECURITY_SNAPSHOT_HPP
+#define NEXUS_MARKET_DATA_SECURITY_SNAPSHOT_HPP
 #include <unordered_map>
 #include <vector>
-#include <Beam/Collections/Enum.hpp>
-#include <Beam/Collections/EnumSet.hpp>
-#include <Beam/Pointers/Out.hpp>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleUnorderedMap.hpp>
-#include <Beam/Utilities/Algorithm.hpp>
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
+#include "Nexus/MarketDataService/MarketDataType.hpp"
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \enum MarketDataType
-      \brief Lists the types market data available to subscribe to.
-   */
-  BEAM_ENUM(MarketDataType,
-
-    //! A TimeAndSale.
-    TIME_AND_SALE,
-
-    //! A BookQuote.
-    BOOK_QUOTE,
-
-    //! A MarketQuote.
-    MARKET_QUOTE,
-
-    //! A BboQuote.
-    BBO_QUOTE,
-
-    //! An OrderImbalance.
-    ORDER_IMBALANCE);
-
-  //! Stores a set of MarketDataTypes.
-  using MarketDataTypeSet = Beam::EnumSet<MarketDataType>;
-
-  /*! \struct SecuritySnapshot
-      \brief Stores a market data snapshot of a Security.
-   */
+  /* Stores a market data snapshot of a Security. */
   struct SecuritySnapshot {
 
     //! The Security represented.
@@ -73,30 +43,11 @@ namespace MarketDataService {
     SecuritySnapshot(const Security& security);
   };
 
-  //! Returns a static type's MarketDataType.
-  template<typename T>
-  MarketDataType GetMarketDataType() {
-    if(std::is_same<T, TimeAndSale>::value) {
-      return MarketDataType::TIME_AND_SALE;
-    } else if(std::is_same<T, BookQuote>::value) {
-      return MarketDataType::BOOK_QUOTE;
-    } else if(std::is_same<T, MarketQuote>::value) {
-      return MarketDataType::MARKET_QUOTE;
-    } else if(std::is_same<T, BboQuote>::value) {
-      return MarketDataType::BBO_QUOTE;
-    } else if(std::is_same<T, OrderImbalance>::value) {
-      return MarketDataType::ORDER_IMBALANCE;
-    }
-    return MarketDataType::NONE;
-  }
-
   inline SecuritySnapshot::SecuritySnapshot(const Security& security)
       : m_security(security) {}
 }
-}
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::MarketDataService::SecuritySnapshot> {
     template<typename Shuttler>
@@ -111,7 +62,6 @@ namespace Serialization {
       shuttle.Shuttle("bid_book", value.m_bidBook);
     }
   };
-}
 }
 
 #endif

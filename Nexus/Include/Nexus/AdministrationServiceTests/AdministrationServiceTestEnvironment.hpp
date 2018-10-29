@@ -19,6 +19,8 @@
 #include "Nexus/AdministrationService/LocalAdministrationDataStore.hpp"
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTests.hpp"
+#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/MarketDataService/EntitlementSet.hpp"
 
 namespace Nexus::AdministrationService::Tests {
 
