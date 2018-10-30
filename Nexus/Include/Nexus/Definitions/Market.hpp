@@ -17,17 +17,13 @@
 namespace Nexus {
 
   //! Represents a market.
-  typedef Beam::FixedString<4> MarketCode;
+  using MarketCode = Beam::FixedString<4>;
 
-  /*! \class MarketDatabase
-      \brief Stores the database of all markets.
-   */
+  /* Stores the database of all markets. */
   class MarketDatabase {
     public:
 
-      /*! \struct Entry
-          \brief Stores a single entry in a MarketDatabase.
-       */
+      /* Stores a single entry in a MarketDatabase. */
       struct Entry {
 
         //! The market identifier code.
@@ -336,8 +332,7 @@ namespace Nexus {
   }
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::MarketDatabase::Entry> {
     template<typename Shuttler>
@@ -361,7 +356,6 @@ namespace Serialization {
       shuttle.Shuttle("entries", value.m_entries);
     }
   };
-}
 }
 
 #endif

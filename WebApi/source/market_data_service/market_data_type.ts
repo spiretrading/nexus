@@ -1,3 +1,5 @@
+import * as Beam from 'beam';
+
 /** Enumerates the types of market data. */
 export enum MarketDataType {
 
@@ -17,4 +19,4 @@ export enum MarketDataType {
   ORDER_IMBALANCE
 }
 
-export class MarketDataTypeSet {}
+export class MarketDataTypeSet extends Beam.EnumSet<MarketDataType> {}
