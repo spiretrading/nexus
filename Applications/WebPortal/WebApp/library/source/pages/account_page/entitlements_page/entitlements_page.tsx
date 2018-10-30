@@ -3,6 +3,7 @@ import * as Beam from 'beam';
 import * as React from 'react';
 import {Center, HBoxLayout, Padding, VBoxLayout} from '../../../';
 import {CheckMarkButton} from '.';
+import {DropDownButton} from '../../../components';
 
 interface Properties {
 }
@@ -17,16 +18,14 @@ export class EntitlementsPage extends React.Component<Properties, State> {
     };
   }
 
- 
-
   public render(): JSX.Element {
     return (
       <div>
-        <CheckMarkButton size='16px'/>
+        <CheckMarkButton size='16px' isReadOnly={false}/>
+        <DropDownButton size='16px'/>
       </div>);
   }
 
- 
   private static STYLE = StyleSheet.create({
     page: {
       backgroundColor: '#4B23A0'

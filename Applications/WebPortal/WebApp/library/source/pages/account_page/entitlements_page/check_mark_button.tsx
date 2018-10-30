@@ -6,6 +6,9 @@ interface Properties {
   /** The width and height of the button. */
   size: number | string;
 
+  /** Determines if the check mark is readonly or not. */
+  isReadOnly: boolean;
+
   /** The onClick event handler. */
   onClick?: (event?: React.MouseEvent<any>) => void;
 
@@ -37,15 +40,14 @@ export class CheckMarkButton extends React.Component<Properties, State> {
     })();
     return (
       <div>
-        <img
-          src={source}
+        <img src={source}
           alt='checkbox'
           height={this.props.size}
           width={this.props.size} 
           onClick={this.onClick}
           style = {this.STYLE.base}/>
       </div>);
-  } //maybe use object instead of image???
+  }
 
   private onClick() {
     this.setState({
