@@ -36,7 +36,10 @@ if(UNIX)
     debug $ENV{BOOST_SYSTEM_LIBRARY_DEBUG_PATH}
     optimized $ENV{BOOST_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     dl pthread rt)
-endif(UNIX)
+elseif(WIN32)
+  target_link_libraries(OasisOrderExecutionServer shlwapi.lib)
+endif()
+
 if(MSVC)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj")
 endif()

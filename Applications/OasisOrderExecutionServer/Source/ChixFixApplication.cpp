@@ -169,7 +169,7 @@ void ChixFixApplication::onMessage(const FIX42::ExecutionReport& message,
       } else if(liquidityFlag == "R") {
         update->m_liquidityFlag = "A";
       } else if(execBroker == "CX2" || execBroker == "CHIX" ||
-          execBroker.empty()) {
+          execBroker.getString().empty()) {
         update->m_liquidityFlag = liquidityFlag;
       } else {
         update->m_liquidityFlag = "R";
