@@ -2,7 +2,12 @@ import * as React from 'react';
 import {css, StyleSheet} from 'aphrodite';
 
 interface Properties {
- size?: number|string;
+
+  /* Determines the size element. */
+  size?: number|string;
+
+  /** The onClick event handler. */
+  onClick?(event?: React.MouseEvent<any>): void;
 }
 
 interface State {
@@ -40,39 +45,39 @@ export class DropDownButton extends React.Component<Properties, State> {
           'resources/account_page/entitlements_page/icons/arrow-collapse.svg');
       }
     })();
-    const startStyle = (() => {
-      if(this.state.isFirstTime) {
-        return this.ANIMATION.noAnimationHidden;
-      } else {
-        if (this.state.isExpanded) {
-          return  this.ANIMATION.spinOpen;
-        } else {
-          return this.ANIMATION.spinClose;
-        }
-      }
-    })();
     const endStyle = (() => {
       if(this.state.isFirstTime) {
         return this.ANIMATION.noAnimation;
       } else {
         if (this.state.isExpanded) {
-          return  this.ANIMATION.spinOpenFadeIn;
+          return this.ANIMATION.spinOpenFadeIn;
         } else {
           return this.ANIMATION.spinCloseFadeIn;
+        }
+      }
+    })();
+    const startStyle = (() => {
+      if(this.state.isFirstTime) {
+        return this.ANIMATION.noAnimationHidden;
+      } else {
+        if (this.state.isExpanded) {
+          return this.ANIMATION.spinOpen;
+        } else {
+          return this.ANIMATION.spinClose;
         }
       }
     })();
     return (
       <div style={this.STYLE.containerStyle}>
         <img src={endSource}
-          width = {this.props.size}
-          height = {this.props.size}
-          className = {css(baseStyle, startStyle)}
+          width={this.props.size}
+          height={this.props.size}
+          className={css(baseStyle, startStyle)}
           onClick={this.onClick}/>
         <img src={startSource}
-          width = {this.props.size}
-          height = {this.props.size}
-          className = {css(baseStyle, endStyle)}
+          width={this.props.size}
+          height={this.props.size}
+          className={css(baseStyle, endStyle)}
           onClick={this.onClick}/>
       </div>);
   }
@@ -86,39 +91,42 @@ export class DropDownButton extends React.Component<Properties, State> {
       isFirstTime: false
       });
     }
+    if(this.props.onClick) {
+      this.props.onClick();
+    }
   }
 
-  private readonly open =  {
-    '0%' : {
+  private readonly openAndFadeOut =  {
+    '0%': {
       transform: 'rotate(0deg)',
       opacity: '1'
     },
-    '100%' : {
+    '100%': {
       transform: 'rotate(90deg)',
       opacity: '0'
     }
   };
-  private readonly close =  {
-    '0%' : {
+  private readonly closeAndFadeOut =  {
+    '0%': {
       transform: 'rotate(0deg)',
       opacity: '1'
     },
-    '100%' : {
+    '100%': {
       transform: 'rotate(-90deg)',
       opacity: '0'
     }
   };
-  private readonly openAndFade =  {
-    '0%' : {
+  private readonly openAndFadeIn =  {
+    '0%': {
       transform: 'rotate(-90deg)',
       opacity: '0'
     },
-    '100%' : {
+    '100%': {
       transform: 'rotate(0deg)',
       opacity: '1'
     }
   };
-  private readonly closeAndFade =  {
+  private readonly closeAndFadeIn =  {
     '0%' : {
       transform: 'rotate(90deg)',
       opacity: '0'
@@ -143,19 +151,18 @@ export class DropDownButton extends React.Component<Properties, State> {
       animationFillMode: 'forwards'
     },
     spinOpen: {
-      animationName: this.open
+      animationName: this.openAndFadeOut
     },
     spinClose: {
-      animationName: this.close
+      animationName: this.closeAndFadeOut
     },
     spinOpenFadeIn: {
-      animationName: this.openAndFade
+      animationName: this.openAndFadeIn
     },
     spinCloseFadeIn:{
-      animationName: this.closeAndFade
+      animationName: this.closeAndFadeIn
     }
   });
-
   public readonly STYLE= {
     containerStyle: {
       position: 'relative' as 'relative',
