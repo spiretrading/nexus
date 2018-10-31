@@ -53,19 +53,19 @@ ca_equities:
   # Fees for notes and debentures are not supported.
   chic:
 
-  # The fee_table is structured as follows:
-  #                     Active, Passive, Hidden
-  # >= $1.00               X       X       X
-  #  < $1.00               X       X       X
-  #  < $0.10               X       X       X
-  #  Interlisted           X       X       X
-  #  ETF                   X       X       X
-    fee_table:
-      [[0.0014, -0.00100, -0.00050],
-       [0.0000, -0.00010,  0.00010],
-       [0.0000, -0.00001,  0.00001],
-       [0.0026, -0.00220, -0.00150],
-       [0.0017, -0.00130, -0.00050]]
+    # The fee_table is structured as follows:
+    #                     Active    Passive   Hidden Active   Hidden Passive
+    # Interlisted            X         X            X               X
+    # Non-interlisted        X         X            X               X
+    # ETF                    X         X            X               X
+    # Sub-dollar             X         X            X               X
+    # Sub-dime               X         X            X               X
+    security_table:
+      [[0.00260, -0.00220, 0.00260, -0.00150],
+       [0.00140, -0.00100, 0.00140, -0.00050],
+       [0.00170, -0.00130, 0.00170, -0.00050],
+       [0.00000,  0.00010, 0.00000,  0.00010],
+       [0.00000,  0.00001, 0.00000,  0.00001]]
 
   # CSE fees are based on http://thecse.com/en/services/become-dealer/fee-schedule
   cse:
@@ -84,14 +84,19 @@ ca_equities:
   # Fees for notes and debentures are not supported.
   xcx2:
 
-  # The fee_table is structured as follows:
-  #                     Active, Passive, Large Active, Large Passive, Hidden Active, Hidden Passive, Odd Lot
-  # >= $1.00               X       X           X             X               X             X             X
-  #  < $1.00               X       X           X             X               X             X             X
-  #  < $0.10               X       X           X             X               X             X             X
-    fee_table:
+    # The fee_table is structured as follows:
+    #            Active, Passive, Large Active, Large Passive, Hidden Active, Hidden Passive, Odd Lot
+    # >= $1.00      X       X           X             X               X             X            X
+    #  < $1.00      X       X           X             X               X             X            X
+    #  < $0.10      X       X           X             X               X             X            X
+    default_table:
       [[-0.0010, 0.0014, -0.0012, 0.0013, 0.0000, 0.0004, 0.0000],
        [-0.0010, 0.0014, -0.0010, 0.0014, 0.0000, 0.0004, 0.0000],
+       [-0.0011, 0.0014, -0.0011, 0.0014, 0.0000, 0.0004, 0.0000]]
+
+    tsx_table:
+      [[-0.0014, 0.0020, -0.0014, 0.0020, 0.0000, 0.0004, 0.0000],
+       [-0.0014, 0.0020, -0.0014, 0.0020, 0.0000, 0.0004, 0.0000],
        [-0.0011, 0.0014, -0.0011, 0.0014, 0.0000, 0.0004, 0.0000]]
 
     large_trade_size: 50000
