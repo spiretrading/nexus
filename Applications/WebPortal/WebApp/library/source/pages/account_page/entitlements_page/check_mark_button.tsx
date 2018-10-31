@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import * as React from 'react';
 
 /** The properties used to display the BurgerButton. */
@@ -61,3 +62,6 @@ export class CheckMarkButton extends React.Component<Properties, State> {
     }
   };
 }
+=======
+export class CheckMarkButton {}
+>>>>>>> 87f0b9ed787ac34e939c063b10d7862bf284f0db

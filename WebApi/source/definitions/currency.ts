@@ -3,6 +3,9 @@ import * as Beam from 'beam';
 /** Represents an ISO 4217 currency code. */
 export class Currency {
 
+  /** Represents no currency. */
+  public static readonly NONE = new Currency(0);
+
   /** Parses a Currency from JSON. */
   public static fromJson(value: any): Currency {
     return new Currency(value);
