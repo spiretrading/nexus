@@ -156,6 +156,10 @@ void ChixFixApplication::onMessage(const FIX42::ExecutionReport& message,
     const FIX::SessionID& sessionId) {
   m_orderLog.Update(message, sessionId, m_timeClient->GetTime(),
     [=] (const Order& order, Out<ExecutionReport> update) {
+      FIX::ExecBroker execBroker;
+      if(message.isSet(execBroker)) {
+        message.get(execBroker);
+      }
       std::string liquidityFlag;
       if(message.isSetField(TRADE_LIQUIDITY_INDICATOR_TAG)) {
         liquidityFlag = message.getField(TRADE_LIQUIDITY_INDICATOR_TAG);
@@ -164,10 +168,11 @@ void ChixFixApplication::onMessage(const FIX42::ExecutionReport& message,
         update->m_liquidityFlag = "P";
       } else if(liquidityFlag == "R") {
         update->m_liquidityFlag = "A";
-      }
-      FIX::ExecBroker execBroker;
-      if(message.isSet(execBroker)) {
-        message.get(execBroker);
+      } else if(execBroker == "CX2" || execBroker == "CHIX" ||
+          execBroker.empty()) {
+        update->m_liquidityFlag = liquidityFlag;
+      } else {
+        update->m_liquidityFlag = "R";
       }
       if(execBroker == "AEQN") {
         update->m_lastMarket = DefaultMarkets::NEOE().GetData();
