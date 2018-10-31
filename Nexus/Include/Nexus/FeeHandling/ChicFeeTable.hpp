@@ -133,10 +133,10 @@ namespace Nexus {
     }();
     auto index = [&] {
       if(executionReport.m_liquidityFlag.size() == 1) {
-        if(executionReport.m_liquidityFlag[0] == 'A' ||
+        if(executionReport.m_liquidityFlag[0] == 'P' ||
             executionReport.m_liquidityFlag[0] == 'S') {
           return ChicFeeTable::Index::PASSIVE;
-        } else if(executionReport.m_liquidityFlag[0] == 'R' ||
+        } else if(executionReport.m_liquidityFlag[0] == 'A' ||
             executionReport.m_liquidityFlag[0] == 'C') {
           return ChicFeeTable::Index::ACTIVE;
         } else if(executionReport.m_liquidityFlag[0] == 'a' ||

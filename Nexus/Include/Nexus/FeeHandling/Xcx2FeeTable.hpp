@@ -1,5 +1,5 @@
-#ifndef NEXUS_XCX2FEETABLE_HPP
-#define NEXUS_XCX2FEETABLE_HPP
+#ifndef NEXUS_XCX2_FEE_TABLE_HPP
+#define NEXUS_XCX2_FEE_TABLE_HPP
 #include <array>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/Definitions/Money.hpp"
@@ -10,14 +10,10 @@
 
 namespace Nexus {
 
-  /*! \struct Xcx2FeeTable
-      \brief Stores the table of fees used by CX2 on TSX.
-   */
+  /* Stores the table of fees used by CX2 on TSX. */
   struct Xcx2FeeTable {
 
-    /*! \enum PriceClass
-        \brief Enumerates the types of price classes.
-     */
+    /* Enumerates the types of price classes. */
     enum class PriceClass : int {
 
       //! Unknown.
@@ -34,11 +30,9 @@ namespace Nexus {
     };
 
     //! The number of price classes enumerated.
-    static const std::size_t PRICE_CLASS_COUNT = 3;
+    static constexpr std::size_t PRICE_CLASS_COUNT = 3;
 
-    /*! \enum Type
-        \brief Enumerates the types of trades.
-     */
+    /* Enumerates the types of trades. */
     enum class Type : int {
 
       //! Unknown.
@@ -67,10 +61,13 @@ namespace Nexus {
     };
 
     //! The number of trade types enumerated.
-    static const std::size_t TYPE_COUNT = 7;
+    static constexpr std::size_t TYPE_COUNT = 7;
 
-    //! The fee table.
-    std::array<std::array<Money, TYPE_COUNT>, PRICE_CLASS_COUNT> m_feeTable;
+    //! The fee table for non-TSX listed securities.
+    std::array<std::array<Money, TYPE_COUNT>, PRICE_CLASS_COUNT> m_defaultTable;
+
+    //! The fee table for TSX listed securities.
+    std::array<std::array<Money, TYPE_COUNT>, PRICE_CLASS_COUNT> m_tsxTable;
 
     //! The large trade size threshold.
     Quantity m_largeTradeSize;
@@ -82,8 +79,10 @@ namespace Nexus {
     \return The Xcx2FeeTable represented by the <i>config</i>.
   */
   inline Xcx2FeeTable ParseXcx2FeeTable(const YAML::Node& config) {
-    Xcx2FeeTable feeTable;
-    ParseFeeTable(config, "fee_table", Beam::Store(feeTable.m_feeTable));
+    auto feeTable = Xcx2FeeTable();
+    ParseFeeTable(config, "default_table",
+      Beam::Store(feeTable.m_defaultTable));
+    ParseFeeTable(config, "tsx_table", Beam::Store(feeTable.m_tsxTable));
     feeTable.m_largeTradeSize = Beam::Extract<Quantity>(config,
       "large_trade_size");
     return feeTable;
@@ -92,33 +91,28 @@ namespace Nexus {
   //! Looks up a fee.
   /*!
     \param feeTable The Xcx2FeeTable used to lookup the fee.
+    \param orderFields The OrderFields the trade took place on.
     \param type The trade's Type.
     \param priceClass The trade's PriceClass.
     \return The fee corresponding to the specified <i>type</i> and
             <i>priceClass</i>.
   */
-  inline Money LookupFee(const Xcx2FeeTable& feeTable, Xcx2FeeTable::Type type,
+  inline Money LookupFee(const Xcx2FeeTable& feeTable,
+      const OrderExecutionService::OrderFields& fields, Xcx2FeeTable::Type type,
       Xcx2FeeTable::PriceClass priceClass) {
-    return feeTable.m_feeTable[static_cast<int>(priceClass)][
-      static_cast<int>(type)];
-  }
-
-  //! Tests if an OrderFields represents a hidden liquidity provider.
-  /*!
-    \param fields The OrderFields to test.
-    \return <code>true</code> iff the <i>order</i> counts as a hidden liquidity
-            provider.
-  */
-  inline bool IsXcx2HiddenLiquidityProvider(
-      const OrderExecutionService::OrderFields& fields) {
-    return fields.m_type == OrderType::PEGGED &&
-      OrderExecutionService::HasField(fields, Tag{18, "M"});
+    if(fields.m_security.GetMarket() == DefaultMarkets::TSX()) {
+      return feeTable.m_tsxTable[static_cast<int>(priceClass)][
+        static_cast<int>(type)];
+    } else {
+      return feeTable.m_defaultTable[static_cast<int>(priceClass)][
+        static_cast<int>(type)];
+    }
   }
 
   //! Calculates the fee on a trade executed on XCX2.
   /*!
     \param feeTable The Xcx2FeeTable used to calculate the fee.
-    \param orderFields The OrderFields  the trade took place on.
+    \param orderFields The OrderFields the trade took place on.
     \param executionReport The ExecutionReport to calculate the fee for.
     \return The fee calculated for the specified trade.
   */
@@ -140,43 +134,27 @@ namespace Nexus {
     auto type = [&] {
       if(executionReport.m_lastQuantity < 100) {
         return Xcx2FeeTable::Type::ODD_LOT;
-      } else if(IsXcx2HiddenLiquidityProvider(fields)) {
-        if(executionReport.m_liquidityFlag.size() == 1) {
-          if(executionReport.m_liquidityFlag[0] == 'A') {
-            return Xcx2FeeTable::Type::HIDDEN_ACTIVE;
-          } else if(executionReport.m_liquidityFlag[0] == 'P') {
-            return Xcx2FeeTable::Type::HIDDEN_PASSIVE;
-          } else {
-            std::cout << "Unknown liquidity flag [XCX2]: \"" <<
-              executionReport.m_liquidityFlag << "\"\n";
-            return Xcx2FeeTable::Type::HIDDEN_PASSIVE;
-          }
-        } else {
-          std::cout << "Unknown liquidity flag [XCX2]: \"" <<
-            executionReport.m_liquidityFlag << "\"\n";
-          return Xcx2FeeTable::Type::HIDDEN_PASSIVE;
-        }
-      } else if(executionReport.m_lastQuantity >= feeTable.m_largeTradeSize) {
-        if(executionReport.m_liquidityFlag.size() == 1) {
-          if(executionReport.m_liquidityFlag[0] == 'A') {
-            return Xcx2FeeTable::Type::LARGE_ACTIVE;
-          } else if(executionReport.m_liquidityFlag[0] == 'P') {
+      } else if(executionReport.m_liquidityFlag.size() == 1) {
+        if(executionReport.m_liquidityFlag[0] == 'P' ||
+            executionReport.m_liquidityFlag[0] == 'S') {
+          if(executionReport.m_lastQuantity >= feeTable.m_largeTradeSize) {
             return Xcx2FeeTable::Type::LARGE_PASSIVE;
           } else {
-            std::cout << "Unknown liquidity flag [XCX2]: \"" <<
-              executionReport.m_liquidityFlag << "\"\n";
             return Xcx2FeeTable::Type::PASSIVE;
           }
-        } else {
-          std::cout << "Unknown liquidity flag [XCX2]: \"" <<
-            executionReport.m_liquidityFlag << "\"\n";
-          return Xcx2FeeTable::Type::PASSIVE;
-        }
-      } else if(executionReport.m_liquidityFlag.size() == 1) {
-        if(executionReport.m_liquidityFlag[0] == 'A') {
-          return Xcx2FeeTable::Type::ACTIVE;
-        } else if(executionReport.m_liquidityFlag[0] == 'P') {
-          return Xcx2FeeTable::Type::PASSIVE;
+        } else if(executionReport.m_liquidityFlag[0] == 'A' ||
+            executionReport.m_liquidityFlag[0] == 'C') {
+          if(executionReport.m_lastQuantity >= feeTable.m_largeTradeSize) {
+            return Xcx2FeeTable::Type::LARGE_ACTIVE;
+          } else {
+            return Xcx2FeeTable::Type::ACTIVE;
+          }
+        } else if(executionReport.m_liquidityFlag[0] == 'a' ||
+            executionReport.m_liquidityFlag[0] == 'd') {
+          return Xcx2FeeTable::Type::HIDDEN_PASSIVE;
+        } else if(executionReport.m_liquidityFlag[0] == 'r' ||
+            executionReport.m_liquidityFlag[0] == 'D') {
+          return Xcx2FeeTable::Type::HIDDEN_ACTIVE;
         } else {
           std::cout << "Unknown liquidity flag [XCX2]: \"" <<
             executionReport.m_liquidityFlag << "\"\n";
@@ -188,7 +166,7 @@ namespace Nexus {
         return Xcx2FeeTable::Type::PASSIVE;
       }
     }();
-    auto fee = LookupFee(feeTable, type, priceClass);
+    auto fee = LookupFee(feeTable, fields, type, priceClass);
     return executionReport.m_lastQuantity * fee;
   }
 }
