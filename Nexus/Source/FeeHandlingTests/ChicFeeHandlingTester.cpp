@@ -15,285 +15,266 @@ using namespace Nexus::Tests;
 using namespace std;
 
 namespace {
-  OrderFields BuildOrderFields(Money price) {
-    auto fields = OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(),
-      Security{"TST", DefaultMarkets::TSX(), DefaultCountries::CA()},
-      DefaultCurrencies::CAD(), Side::BID, DefaultDestinations::CHIX(), 100,
-      price);
-    return fields;
+  auto GetTestSecurity() {
+    return Security("TST", DefaultMarkets::TSX(), DefaultCountries::CA());
   }
 
-  OrderFields BuildHiddenOrderFields(Money price) {
-    auto fields = BuildOrderFields(price);
-    fields.m_type = OrderType::PEGGED;
-    fields.m_additionalFields.emplace_back(18, "M");
+  auto BuildOrderFields(Money price) {
+    auto fields = OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(),
+      GetTestSecurity(), DefaultCurrencies::CAD(), Side::BID,
+      DefaultDestinations::CHIX(), 100, price);
     return fields;
   }
 }
 
 void ChicFeeHandlingTester::TestFeeTableCalculations() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
-  TestFeeTableIndex(feeTable, feeTable.m_feeTable, LookupFee,
-    ChicFeeTable::TYPE_COUNT, ChicFeeTable::CATEGORY_COUNT);
+  auto feeTable = ChicFeeTable();
+  PopulateFeeTable(Store(feeTable.m_securityTable));
+  TestFeeTableIndex(feeTable, feeTable.m_securityTable, LookupFee,
+    ChicFeeTable::INDEX_COUNT, ChicFeeTable::CLASSIFICATION_COUNT);
 }
 
 void ChicFeeHandlingTester::TestZeroQuantity() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
+  auto feeTable = ChicFeeTable();
+  PopulateFeeTable(Store(feeTable.m_securityTable));
   auto fields = BuildOrderFields(Money::ONE);
   fields.m_quantity = 0;
   auto expectedFee = Money::ZERO;
   TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::NONE,
-    std::bind(CalculateFee, std::placeholders::_1, false, false,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+    CalculateFee, expectedFee);
 }
 
 void ChicFeeHandlingTester::TestDefaultActive() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
+  auto feeTable = ChicFeeTable();
+  PopulateFeeTable(Store(feeTable.m_securityTable));
   auto fields = BuildOrderFields(Money::ONE);
-  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
-    ChicFeeTable::Category::DEFAULT);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    std::bind(CalculateFee, std::placeholders::_1, false, false,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::ACTIVE,
+    ChicFeeTable::Classification::NON_INTERLISTED);
+  TestPerShareFeeCalculation(feeTable, fields, "R", CalculateFee, expectedFee);
 }
 
 void ChicFeeHandlingTester::TestDefaultPassive() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
+  auto feeTable = ChicFeeTable();
+  PopulateFeeTable(Store(feeTable.m_securityTable));
   auto fields = BuildOrderFields(Money::ONE);
-  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::PASSIVE,
-    ChicFeeTable::Category::DEFAULT);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
-    std::bind(CalculateFee, std::placeholders::_1, false, false,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::PASSIVE,
+    ChicFeeTable::Classification::NON_INTERLISTED);
+  TestPerShareFeeCalculation(feeTable, fields, "A", CalculateFee, expectedFee);
 }
 
 void ChicFeeHandlingTester::TestDefaultHiddenPassive() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
-  auto fields = BuildHiddenOrderFields(Money::ONE);
-  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::HIDDEN,
-    ChicFeeTable::Category::DEFAULT);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
-    std::bind(CalculateFee, std::placeholders::_1, false, false,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+  auto feeTable = ChicFeeTable();
+  PopulateFeeTable(Store(feeTable.m_securityTable));
+  auto fields = BuildOrderFields(Money::ONE);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::HIDDEN_PASSIVE,
+    ChicFeeTable::Classification::NON_INTERLISTED);
+  TestPerShareFeeCalculation(feeTable, fields, "a", CalculateFee, expectedFee);
 }
 
 void ChicFeeHandlingTester::TestDefaultHiddenActive() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
-  auto fields = BuildHiddenOrderFields(Money::ONE);
-  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
-    ChicFeeTable::Category::DEFAULT);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    std::bind(CalculateFee, std::placeholders::_1, false, false,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+  auto feeTable = ChicFeeTable();
+  PopulateFeeTable(Store(feeTable.m_securityTable));
+  auto fields = BuildOrderFields(Money::ONE);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::HIDDEN_ACTIVE,
+    ChicFeeTable::Classification::NON_INTERLISTED);
+  TestPerShareFeeCalculation(feeTable, fields, "r", CalculateFee, expectedFee);
 }
 
 void ChicFeeHandlingTester::TestSubDollarActive() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
+  auto feeTable = ChicFeeTable();
+  PopulateFeeTable(Store(feeTable.m_securityTable));
   auto fields = BuildOrderFields(20 * Money::CENT);
-  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
-    ChicFeeTable::Category::SUB_DOLLAR);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    std::bind(CalculateFee, std::placeholders::_1, false, false,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::ACTIVE,
+    ChicFeeTable::Classification::SUB_DOLLAR);
+  TestPerShareFeeCalculation(feeTable, fields, "R", CalculateFee, expectedFee);
 }
 
 void ChicFeeHandlingTester::TestSubDollarPassive() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
+  auto feeTable = ChicFeeTable();
+  PopulateFeeTable(Store(feeTable.m_securityTable));
   auto fields = BuildOrderFields(20 * Money::CENT);
-  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::PASSIVE,
-    ChicFeeTable::Category::SUB_DOLLAR);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
-    std::bind(CalculateFee, std::placeholders::_1, false, false,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::PASSIVE,
+    ChicFeeTable::Classification::SUB_DOLLAR);
+  TestPerShareFeeCalculation(feeTable, fields, "A", CalculateFee, expectedFee);
 }
 
 void ChicFeeHandlingTester::TestSubDimeActive() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
+  auto feeTable = ChicFeeTable();
+  PopulateFeeTable(Store(feeTable.m_securityTable));
   auto fields = BuildOrderFields(Money::CENT);
-  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
-    ChicFeeTable::Category::SUB_DIME);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    std::bind(CalculateFee, std::placeholders::_1, false, false,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::ACTIVE,
+    ChicFeeTable::Classification::SUB_DIME);
+  TestPerShareFeeCalculation(feeTable, fields, "R", CalculateFee, expectedFee);
 }
 
 void ChicFeeHandlingTester::TestSubDimePassive() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
+  auto feeTable = ChicFeeTable();
+  PopulateFeeTable(Store(feeTable.m_securityTable));
   auto fields = BuildOrderFields(Money::CENT);
-  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::PASSIVE,
-    ChicFeeTable::Category::SUB_DIME);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
-    std::bind(CalculateFee, std::placeholders::_1, false, false,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::PASSIVE,
+    ChicFeeTable::Classification::SUB_DIME);
+  TestPerShareFeeCalculation(feeTable, fields, "A", CalculateFee, expectedFee);
 }
 
 void ChicFeeHandlingTester::TestSubDollarHiddenActive() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
-  auto fields = BuildHiddenOrderFields(20 * Money::CENT);
-  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
-    ChicFeeTable::Category::SUB_DOLLAR);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    std::bind(CalculateFee, std::placeholders::_1, false, false,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+  auto feeTable = ChicFeeTable();
+  PopulateFeeTable(Store(feeTable.m_securityTable));
+  auto fields = BuildOrderFields(20 * Money::CENT);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::HIDDEN_ACTIVE,
+    ChicFeeTable::Classification::SUB_DOLLAR);
+  TestPerShareFeeCalculation(feeTable, fields, "r", CalculateFee, expectedFee);
+}
+
+void ChicFeeHandlingTester::TestSubDollarHiddenPassive() {
+  auto feeTable = ChicFeeTable();
+  PopulateFeeTable(Store(feeTable.m_securityTable));
+  auto fields = BuildOrderFields(20 * Money::CENT);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::HIDDEN_PASSIVE,
+    ChicFeeTable::Classification::SUB_DOLLAR);
+  TestPerShareFeeCalculation(feeTable, fields, "a", CalculateFee, expectedFee);
 }
 
 void ChicFeeHandlingTester::TestSubDimeHiddenActive() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
-  auto fields = BuildHiddenOrderFields(Money::CENT);
-  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
-    ChicFeeTable::Category::SUB_DIME);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    std::bind(CalculateFee, std::placeholders::_1, false, false,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+  auto feeTable = ChicFeeTable();
+  PopulateFeeTable(Store(feeTable.m_securityTable));
+  auto fields = BuildOrderFields(Money::CENT);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::HIDDEN_ACTIVE,
+    ChicFeeTable::Classification::SUB_DIME);
+  TestPerShareFeeCalculation(feeTable, fields, "r", CalculateFee, expectedFee);
+}
+
+void ChicFeeHandlingTester::TestSubDimeHiddenPassive() {
+  auto feeTable = ChicFeeTable();
+  PopulateFeeTable(Store(feeTable.m_securityTable));
+  auto fields = BuildOrderFields(Money::CENT);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::HIDDEN_PASSIVE,
+    ChicFeeTable::Classification::SUB_DIME);
+  TestPerShareFeeCalculation(feeTable, fields, "a", CalculateFee, expectedFee);
 }
 
 void ChicFeeHandlingTester::TestInterlistedActive() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
+  auto feeTable = ChicFeeTable();
+  feeTable.m_interlisted.insert(GetTestSecurity());
+  PopulateFeeTable(Store(feeTable.m_securityTable));
   auto fields = BuildOrderFields(Money::ONE);
-  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
-    ChicFeeTable::Category::INTERLISTED);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    std::bind(CalculateFee, std::placeholders::_1, false, true,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::ACTIVE,
+    ChicFeeTable::Classification::INTERLISTED);
+  TestPerShareFeeCalculation(feeTable, fields, "R", CalculateFee, expectedFee);
 }
 
 void ChicFeeHandlingTester::TestInterlistedPassive() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
+  auto feeTable = ChicFeeTable();
+  feeTable.m_interlisted.insert(GetTestSecurity());
+  PopulateFeeTable(Store(feeTable.m_securityTable));
   auto fields = BuildOrderFields(Money::ONE);
-  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::PASSIVE,
-    ChicFeeTable::Category::INTERLISTED);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
-    std::bind(CalculateFee, std::placeholders::_1, false, true,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::PASSIVE,
+    ChicFeeTable::Classification::INTERLISTED);
+  TestPerShareFeeCalculation(feeTable, fields, "A", CalculateFee, expectedFee);
 }
 
 void ChicFeeHandlingTester::TestInterlistedHiddenPassive() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
-  auto fields = BuildHiddenOrderFields(Money::ONE);
-  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::HIDDEN,
-    ChicFeeTable::Category::INTERLISTED);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
-    std::bind(CalculateFee, std::placeholders::_1, false, true,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+  auto feeTable = ChicFeeTable();
+  feeTable.m_interlisted.insert(GetTestSecurity());
+  PopulateFeeTable(Store(feeTable.m_securityTable));
+  auto fields = BuildOrderFields(Money::ONE);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::HIDDEN_PASSIVE,
+    ChicFeeTable::Classification::INTERLISTED);
+  TestPerShareFeeCalculation(feeTable, fields, "a", CalculateFee, expectedFee);
 }
 
 void ChicFeeHandlingTester::TestInterlistedHiddenActive() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
-  auto fields = BuildHiddenOrderFields(Money::ONE);
-  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
-    ChicFeeTable::Category::INTERLISTED);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    std::bind(CalculateFee, std::placeholders::_1, false, true,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+  auto feeTable = ChicFeeTable();
+  feeTable.m_interlisted.insert(GetTestSecurity());
+  PopulateFeeTable(Store(feeTable.m_securityTable));
+  auto fields = BuildOrderFields(Money::ONE);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::HIDDEN_ACTIVE,
+    ChicFeeTable::Classification::INTERLISTED);
+  TestPerShareFeeCalculation(feeTable, fields, "r", CalculateFee, expectedFee);
 }
 
 void ChicFeeHandlingTester::TestSubDollarInterlistedActive() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
+  auto feeTable = ChicFeeTable();
+  feeTable.m_interlisted.insert(GetTestSecurity());
+  PopulateFeeTable(Store(feeTable.m_securityTable));
   auto fields = BuildOrderFields(20 * Money::CENT);
-  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
-    ChicFeeTable::Category::SUB_DOLLAR);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    std::bind(CalculateFee, std::placeholders::_1, false, true,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::ACTIVE,
+    ChicFeeTable::Classification::SUB_DOLLAR);
+  TestPerShareFeeCalculation(feeTable, fields, "R", CalculateFee, expectedFee);
 }
 
 void ChicFeeHandlingTester::TestSubDimeInterlistedActive() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
+  auto feeTable = ChicFeeTable();
+  feeTable.m_interlisted.insert(GetTestSecurity());
+  PopulateFeeTable(Store(feeTable.m_securityTable));
   auto fields = BuildOrderFields(Money::CENT);
-  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
-    ChicFeeTable::Category::SUB_DIME);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    std::bind(CalculateFee, std::placeholders::_1, false, true,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::ACTIVE,
+    ChicFeeTable::Classification::SUB_DIME);
+  TestPerShareFeeCalculation(feeTable, fields, "R", CalculateFee, expectedFee);
 }
 
 void ChicFeeHandlingTester::TestEtfActive() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
+  auto feeTable = ChicFeeTable();
+  feeTable.m_etfs.insert(GetTestSecurity());
+  PopulateFeeTable(Store(feeTable.m_securityTable));
   auto fields = BuildOrderFields(Money::ONE);
-  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
-    ChicFeeTable::Category::ETF);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    std::bind(CalculateFee, std::placeholders::_1, true, false,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::ACTIVE,
+    ChicFeeTable::Classification::ETF);
+  TestPerShareFeeCalculation(feeTable, fields, "R", CalculateFee, expectedFee);
 }
 
 void ChicFeeHandlingTester::TestEtfPassive() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
+  auto feeTable = ChicFeeTable();
+  feeTable.m_etfs.insert(GetTestSecurity());
+  PopulateFeeTable(Store(feeTable.m_securityTable));
   auto fields = BuildOrderFields(Money::ONE);
-  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::PASSIVE,
-    ChicFeeTable::Category::ETF);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
-    std::bind(CalculateFee, std::placeholders::_1, true, false,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::PASSIVE,
+    ChicFeeTable::Classification::ETF);
+  TestPerShareFeeCalculation(feeTable, fields, "A", CalculateFee, expectedFee);
 }
 
 void ChicFeeHandlingTester::TestEtfHiddenPassive() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
-  auto fields = BuildHiddenOrderFields(Money::ONE);
-  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::HIDDEN,
-    ChicFeeTable::Category::ETF);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
-    std::bind(CalculateFee, std::placeholders::_1, true, false,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+  auto feeTable = ChicFeeTable();
+  feeTable.m_etfs.insert(GetTestSecurity());
+  PopulateFeeTable(Store(feeTable.m_securityTable));
+  auto fields = BuildOrderFields(Money::ONE);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::HIDDEN_PASSIVE,
+    ChicFeeTable::Classification::ETF);
+  TestPerShareFeeCalculation(feeTable, fields, "a", CalculateFee, expectedFee);
 }
 
 void ChicFeeHandlingTester::TestEtfHiddenActive() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
-  auto fields = BuildHiddenOrderFields(Money::ONE);
-  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
-    ChicFeeTable::Category::ETF);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    std::bind(CalculateFee, std::placeholders::_1, true, false,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+  auto feeTable = ChicFeeTable();
+  feeTable.m_etfs.insert(GetTestSecurity());
+  PopulateFeeTable(Store(feeTable.m_securityTable));
+  auto fields = BuildOrderFields(Money::ONE);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::HIDDEN_ACTIVE,
+    ChicFeeTable::Classification::ETF);
+  TestPerShareFeeCalculation(feeTable, fields, "r", CalculateFee, expectedFee);
 }
 
 void ChicFeeHandlingTester::TestSubDollarEtfActive() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
+  auto feeTable = ChicFeeTable();
+  feeTable.m_etfs.insert(GetTestSecurity());
+  PopulateFeeTable(Store(feeTable.m_securityTable));
   auto fields = BuildOrderFields(20 * Money::CENT);
-  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
-    ChicFeeTable::Category::SUB_DOLLAR);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    std::bind(CalculateFee, std::placeholders::_1, true, false,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::ACTIVE,
+    ChicFeeTable::Classification::SUB_DOLLAR);
+  TestPerShareFeeCalculation(feeTable, fields, "R", CalculateFee, expectedFee);
 }
 
 void ChicFeeHandlingTester::TestSubDimeEtfActive() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
+  auto feeTable = ChicFeeTable();
+  feeTable.m_etfs.insert(GetTestSecurity());
+  PopulateFeeTable(Store(feeTable.m_securityTable));
   auto fields = BuildOrderFields(Money::CENT);
-  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
-    ChicFeeTable::Category::SUB_DIME);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    std::bind(CalculateFee, std::placeholders::_1, true, false,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::ACTIVE,
+    ChicFeeTable::Classification::SUB_DIME);
+  TestPerShareFeeCalculation(feeTable, fields, "R", CalculateFee, expectedFee);
 }
 
 void ChicFeeHandlingTester::TestUnknownLiquidityFlag() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
+  auto feeTable = ChicFeeTable();
+  PopulateFeeTable(Store(feeTable.m_securityTable));
   auto fields = BuildOrderFields(Money::ONE);
   {
     auto executionReport = ExecutionReport::BuildInitialReport(0,
@@ -301,10 +282,10 @@ void ChicFeeHandlingTester::TestUnknownLiquidityFlag() {
     executionReport.m_lastPrice = Money::ONE;
     executionReport.m_lastQuantity = 100;
     executionReport.m_liquidityFlag = "AP";
-    auto calculatedFee = CalculateFee(feeTable, false, false, fields,
-      executionReport);
+    auto calculatedFee = CalculateFee(feeTable, fields, executionReport);
     auto expectedFee = executionReport.m_lastQuantity * LookupFee(feeTable,
-      ChicFeeTable::Type::ACTIVE, ChicFeeTable::Category::DEFAULT);
+      ChicFeeTable::Index::ACTIVE,
+      ChicFeeTable::Classification::NON_INTERLISTED);
     CPPUNIT_ASSERT(calculatedFee == expectedFee);
   }
   {
@@ -313,10 +294,9 @@ void ChicFeeHandlingTester::TestUnknownLiquidityFlag() {
     executionReport.m_lastPrice = Money::CENT;
     executionReport.m_lastQuantity = 100;
     executionReport.m_liquidityFlag = "PA";
-    auto calculatedFee = CalculateFee(feeTable, false, false, fields,
-      executionReport);
+    auto calculatedFee = CalculateFee(feeTable, fields, executionReport);
     auto expectedFee = executionReport.m_lastQuantity * LookupFee(feeTable,
-      ChicFeeTable::Type::ACTIVE, ChicFeeTable::Category::SUB_DIME);
+      ChicFeeTable::Index::ACTIVE, ChicFeeTable::Classification::SUB_DIME);
     CPPUNIT_ASSERT(calculatedFee == expectedFee);
   }
   {
@@ -325,21 +305,20 @@ void ChicFeeHandlingTester::TestUnknownLiquidityFlag() {
     executionReport.m_lastPrice = Money::ONE;
     executionReport.m_lastQuantity = 100;
     executionReport.m_liquidityFlag = "?";
-    auto calculatedFee = CalculateFee(feeTable, false, false, fields,
-      executionReport);
+    auto calculatedFee = CalculateFee(feeTable, fields, executionReport);
     auto expectedFee = executionReport.m_lastQuantity * LookupFee(feeTable,
-      ChicFeeTable::Type::ACTIVE, ChicFeeTable::Category::DEFAULT);
+      ChicFeeTable::Index::ACTIVE,
+      ChicFeeTable::Classification::NON_INTERLISTED);
     CPPUNIT_ASSERT(calculatedFee == expectedFee);
   }
 }
 
 void ChicFeeHandlingTester::TestEmptyLiquidityFlag() {
-  ChicFeeTable feeTable;
-  PopulateFeeTable(Store(feeTable.m_feeTable));
+  auto feeTable = ChicFeeTable();
+  PopulateFeeTable(Store(feeTable.m_securityTable));
   auto fields = BuildOrderFields(Money::ONE);
-  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Type::ACTIVE,
-    ChicFeeTable::Category::DEFAULT);
+  auto expectedFee = LookupFee(feeTable, ChicFeeTable::Index::ACTIVE,
+    ChicFeeTable::Classification::NON_INTERLISTED);
   TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::NONE,
-    std::bind(CalculateFee, std::placeholders::_1, false, false,
-    std::placeholders::_2, std::placeholders::_3), expectedFee);
+    CalculateFee, expectedFee);
 }
