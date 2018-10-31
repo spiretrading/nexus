@@ -1,6 +1,5 @@
 import * as React from 'react';
 import {css, StyleSheet} from 'aphrodite';
-import { url } from 'inspector';
 
 interface Properties {
  size?: number|string;
@@ -8,68 +7,73 @@ interface Properties {
 
 interface State {
   isExpanded: boolean;
+  isFirstTime: boolean;
 }
 
 export class DropDownButton extends React.Component<Properties, State> {
   constructor(properties: Properties) {
     super(properties);
     this.state = {
-      isExpanded: false
+      isExpanded: false,
+      isFirstTime: true
     };
     this.onClick = this.onClick.bind(this);
   }
 
   public render(): JSX.Element {
     const baseStyle = this.ANIMATION.base;
+    const sourceOverlay = (() => {
+      if (this.state.isExpanded) {
+        return (
+          'resources/account_page/entitlements_page/icons/arrow-collapse.svg');
+      } else {
+        return (
+          'resources/account_page/entitlements_page/icons/arrow-expand.svg');
+      }
+    })();
     const source = (() => {
       if (this.state.isExpanded) {
         return (
-          'resources/account_page/entitlements_page/icons/arrow-expand.svg'
-          );
+          'resources/account_page/entitlements_page/icons/arrow-expand.svg');
       } else {
         return (
           'resources/account_page/entitlements_page/icons/arrow-collapse.svg');
       }
     })();
-    const sourceShadow = (() => {
-      if (this.state.isExpanded) {
-        return (
-          'resources/account_page/entitlements_page/icons/arrow-collapse.svg'
-          );
-      } else {
-        return (
-          'resources/account_page/entitlements_page/icons/arrow-expand.svg'
-          );
-      }
-    })();
     const style = (() => {
-      if (this.state.isExpanded) {
-        return this.ANIMATION.spinClose;
+      if(this.state.isFirstTime) {
+        return this.ANIMATION.noAnimationBase;
       } else {
-        return  this.ANIMATION.spinOpen;
+        if (this.state.isExpanded) {
+          return  this.ANIMATION.spinOpen;
+        } else {
+          return this.ANIMATION.spinClose;
+        }
       }
     })();
     const overlayStyle = (() => {
-      if (this.state.isExpanded) {
-        return this.ANIMATION.spinCloseFadeIn;
+      if(this.state.isFirstTime) {
+        return this.ANIMATION.noAnimation;
       } else {
-        return  this.ANIMATION.spinOpenFadeIn;
+        if (this.state.isExpanded) {
+          return  this.ANIMATION.spinOpenFadeIn;
+        } else {
+          return this.ANIMATION.spinCloseFadeIn;
+        }
       }
     })();
-
     return (
       <div style={this.STYLE.containerStyle}>
-        <img src={source}
+        <img src={sourceOverlay}
           width = {this.props.size}
           height = {this.props.size}
           className = {css(baseStyle, style)}
           onClick={this.onClick}/>
-        <img src={sourceShadow}
+        <img src={source}
           width = {this.props.size}
           height = {this.props.size}
           className = {css(baseStyle, overlayStyle)}
           onClick={this.onClick}/>
-
       </div>);
   }
 
@@ -77,6 +81,11 @@ export class DropDownButton extends React.Component<Properties, State> {
     this.setState({
       isExpanded: !this.state.isExpanded
     });
+    if(this.state.isFirstTime) {
+      this.setState({
+      isFirstTime: false
+      });
+    }
   }
 
   private readonly open =  {
@@ -120,9 +129,16 @@ export class DropDownButton extends React.Component<Properties, State> {
     }
   };
   private readonly ANIMATION = StyleSheet.create({
+    noAnimation: {
+      position: 'absolute'
+    },
+    noAnimationBase: {
+      position: 'absolute',
+      visibility: 'hidden'
+    },
     base:{
       position: 'absolute',
-      animationDuration: '300ms',
+      animationDuration: '5s',
       animationIterationCount: 1,
       animationFillMode: 'forwards'
     },
@@ -142,10 +158,8 @@ export class DropDownButton extends React.Component<Properties, State> {
 
   public readonly STYLE= {
     containerStyle: {
-      position: 'relative' as 'relative'
-    },
-    shadowStyle: {
-      position: 'absolute' as 'absolute'
+      position: 'relative' as 'relative',
+      cursor: 'pointer'
     }
   };
 }

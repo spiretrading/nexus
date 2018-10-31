@@ -10,7 +10,7 @@ interface Properties {
   isReadOnly: boolean;
 
   /** The onClick event handler. */
-  onClick?: (event?: React.MouseEvent<any>) => void;
+  onClick?(event?: React.MouseEvent<any>): void;
 
 }
 
@@ -23,7 +23,7 @@ export class CheckMarkButton extends React.Component<Properties, State> {
   constructor(properties: Properties) {
     super(properties);
     this.state = {
-      isChecked: false,
+      isChecked: false
     };
     this.onClick = this.onClick.bind(this);
   }
@@ -43,7 +43,7 @@ export class CheckMarkButton extends React.Component<Properties, State> {
         <img src={source}
           alt='checkbox'
           height={this.props.size}
-          width={this.props.size} 
+          width={this.props.size}
           onClick={this.onClick}
           style = {this.STYLE.base}/>
       </div>);
@@ -60,5 +60,5 @@ export class CheckMarkButton extends React.Component<Properties, State> {
     base: {
       cursor: 'pointer'
     }
-  }
+  };
 }
