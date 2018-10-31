@@ -205,7 +205,7 @@ namespace Nexus {
   }
 
   inline CurrencyId::CurrencyId()
-      : m_value{-0} {}
+      : m_value{0} {}
 
   inline CurrencyId::CurrencyId(std::uint16_t value)
       : m_value{value} {}

@@ -1,16 +1,15 @@
-#ifndef NEXUS_MARKETDATAENTITLEMENTSET_HPP
-#define NEXUS_MARKETDATAENTITLEMENTSET_HPP
+#ifndef NEXUS_MARKET_DATA_ENTITLEMENT_SET_HPP
+#define NEXUS_MARKET_DATA_ENTITLEMENT_SET_HPP
+#include <functional>
 #include <Beam/Serialization/DataShuttle.hpp>
+#include <boost/functional/hash.hpp>
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \struct EntitlementKey
-      \brief Stores an index into a market data entitlement.
-   */
+  /* Stores an index into a market data entitlement. */
   struct EntitlementKey {
 
     //! The market that the data is being provided for.
@@ -73,7 +72,6 @@ namespace MarketDataService {
     return seed;
   }
 }
-}
 
 namespace std {
   template<>
@@ -85,12 +83,9 @@ namespace std {
   };
 }
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \class EntitlementSet
-      \brief Stores a set of market data entitlements.
-   */
+  /* Stores a set of market data entitlements. */
   class EntitlementSet {
     public:
 
@@ -168,10 +163,8 @@ namespace MarketDataService {
     m_entitlements[key].SetAll(messages);
   }
 }
-}
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::MarketDataService::EntitlementKey> {
     template<typename Shuttler>
@@ -181,7 +174,6 @@ namespace Serialization {
       shuttle.Shuttle("source", value.m_source);
     }
   };
-}
 }
 
 #endif

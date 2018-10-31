@@ -120,7 +120,7 @@ namespace Nexus {
   */
   inline std::unordered_set<Security> ParseSecuritySet(const YAML::Node& config,
       const MarketDatabase& marketDatabase) {
-    std::unordered_set<Security> securities;
+    auto securities = std::unordered_set<Security>();
     for(auto& item : config) {
       auto security = ParseSecurity(item.as<std::string>(), marketDatabase);
       securities.insert(security);
@@ -187,7 +187,15 @@ namespace Nexus {
   */
   inline ConsolidatedTmxFeeTable ParseConsolidatedTmxFeeTable(
       const YAML::Node& config, const MarketDatabase& marketDatabase) {
-    ConsolidatedTmxFeeTable feeTable;
+    auto feeTable = ConsolidatedTmxFeeTable();
+    auto etfPath = Beam::Extract<std::string>(config, "etf_path");
+    feeTable.m_etfs = ParseTmxEtfSecurities(etfPath, marketDatabase);
+    auto interlistedPath = Beam::Extract<std::string>(config,
+      "interlisted_path");
+    feeTable.m_interlisted = ParseTmxInterlistedSecurities(interlistedPath,
+      marketDatabase);
+    auto nexPath = Beam::Extract<std::string>(config, "nex_path");
+    feeTable.m_nexListed = ParseNexListedSecurities(nexPath, marketDatabase);
     feeTable.m_spireFee = Beam::Extract<Money>(config, "spire_fee");
     feeTable.m_iirocFee = Beam::Extract<Money>(config, "iiroc_fee");
     feeTable.m_cdsFee = Beam::Extract<Money>(config, "cds_fee");
@@ -205,7 +213,8 @@ namespace Nexus {
     if(!chicConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for CHIC missing."});
     } else {
-      feeTable.m_chicFeeTable = ParseChicFeeTable(chicConfig);
+      feeTable.m_chicFeeTable = ParseChicFeeTable(chicConfig, feeTable.m_etfs,
+        feeTable.m_interlisted);
     }
     auto cseConfig = config["cse"];
     if(!cseConfig) {
@@ -267,14 +276,6 @@ namespace Nexus {
     } else {
       feeTable.m_tsxVentureTable = ParseTsxFeeTable(tsxvConfig);
     }
-    auto etfPath = Beam::Extract<std::string>(config, "etf_path");
-    feeTable.m_etfs = ParseTmxEtfSecurities(etfPath, marketDatabase);
-    auto interlistedPath = Beam::Extract<std::string>(config,
-      "interlisted_path");
-    feeTable.m_interlisted = ParseTmxInterlistedSecurities(interlistedPath,
-      marketDatabase);
-    auto nexPath = Beam::Extract<std::string>(config, "nex_path");
-    feeTable.m_nexListed = ParseNexListedSecurities(nexPath, marketDatabase);
     return feeTable;
   }
 
@@ -350,12 +351,8 @@ namespace Nexus {
           order.GetInfo().m_fields.m_security);
         return CalculateFee(feeTable.m_xatsFeeTable, isEtf, executionReport);
       } else if(lastMarket == DefaultMarkets::CHIC()) {
-        auto isEtf = Beam::Contains(feeTable.m_etfs,
-          order.GetInfo().m_fields.m_security);
-        auto isInterlisted = Beam::Contains(feeTable.m_interlisted,
-          order.GetInfo().m_fields.m_security);
-        return CalculateFee(feeTable.m_chicFeeTable, isEtf, isInterlisted,
-          order.GetInfo().m_fields, executionReport);
+        return CalculateFee(feeTable.m_chicFeeTable, order.GetInfo().m_fields,
+          executionReport);
       } else if(lastMarket == DefaultMarkets::CSE()) {
         return CalculateFee(feeTable.m_cseFeeTable, executionReport);
       } else if(lastMarket == DefaultMarkets::XCX2()) {

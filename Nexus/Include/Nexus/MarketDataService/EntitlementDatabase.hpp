@@ -1,29 +1,22 @@
-#ifndef NEXUS_MARKETDATAENTITLEMENTDATABASE_HPP
-#define NEXUS_MARKETDATAENTITLEMENTDATABASE_HPP
+#ifndef NEXUS_MARKET_DATA_ENTITLEMENT_DATABASE_HPP
+#define NEXUS_MARKET_DATA_ENTITLEMENT_DATABASE_HPP
 #include <unordered_map>
 #include <vector>
 #include <Beam/Serialization/DataShuttle.hpp>
-#include <Beam/Serialization/ShuttleBitset.hpp>
 #include <Beam/Serialization/ShuttleUnorderedMap.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include <boost/functional/hash.hpp>
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/MarketDataService/EntitlementSet.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
-#include "Nexus/MarketDataService/SecuritySnapshot.hpp"
+#include "Nexus/MarketDataService/MarketDataType.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \class EntitlementDatabase
-      \brief Stores the database of all market data entitlements.
-   */
+  /* Stores the database of all market data entitlements. */
   class EntitlementDatabase {
     public:
 
-      /*! \struct Entry
-          \brief Stores a single entry in an EntitlementDatabase.
-       */
+      /* Stores a single entry in an EntitlementDatabase. */
       struct Entry {
 
         //! The name the entitlement displays as.
@@ -88,7 +81,7 @@ namespace MarketDataService {
   inline void EntitlementDatabase::Delete(
       const Beam::ServiceLocator::DirectoryEntry& groupEntry) {
     auto entryIterator = std::find_if(m_entries.begin(), m_entries.end(),
-      [&] (const Entry& entry) {
+      [&] (const auto& entry) {
         return entry.m_groupEntry == groupEntry;
       });
     if(entryIterator == m_entries.end()) {
@@ -102,10 +95,8 @@ namespace MarketDataService {
     shuttle.Shuttle("entries", m_entries);
   }
 }
-}
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::MarketDataService::EntitlementDatabase::Entry> {
     template<typename Shuttler>
@@ -119,7 +110,6 @@ namespace Serialization {
       shuttle.Shuttle("applicability", value.m_applicability);
     }
   };
-}
 }
 
 #endif

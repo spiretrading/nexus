@@ -13,9 +13,6 @@ namespace Tests {
   class Xcx2FeeHandlingTester : public CPPUNIT_NS::TestFixture {
     public:
 
-      //! Tests fee calculations across the entire fee table.
-      void TestFeeTableCalculations();
-
       //! Tests calculating fees with a quantity of 0.
       void TestZeroQuantity();
 
@@ -102,7 +99,6 @@ namespace Tests {
 
     private:
       CPPUNIT_TEST_SUITE(Xcx2FeeHandlingTester);
-        CPPUNIT_TEST(TestFeeTableCalculations);
         CPPUNIT_TEST(TestZeroQuantity);
         CPPUNIT_TEST(TestActiveDefault);
         CPPUNIT_TEST(TestPassiveDefault);

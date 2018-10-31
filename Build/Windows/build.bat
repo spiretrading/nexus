@@ -16,6 +16,7 @@ CALL %~dp0../../Applications/DefinitionsServer/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/MarketDataRelayServer/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/MarketDataServer/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/OasisOrderExecutionServer/Build/Windows/build.bat %config%
+CALL %~dp0../../Applications/ReplayMarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/RiskServer/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/SimulationMarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/SimulationOrderExecutionServer/Build/Windows/build.bat %config%
@@ -23,6 +24,6 @@ CALL %~dp0../../Applications/Spire/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/TmxIpMarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/TmxTl1MarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/UtpMarketDataFeedClient/Build/Windows/build.bat %config%
-CALL %~dp0../../Applications/web_portal/build/windows/build.bat %config%
-CALL %~dp0../../Applications/web_portal/web_app/build.bat %config%
+CALL %~dp0../../Applications/WebPortal/Build/Windows/build.bat %config%
+CALL %~dp0../../Applications/WebPortal/WebApp/build.bat %config%
 ENDLOCAL

@@ -51,24 +51,26 @@ void Nexus::Python::ExportChicFeeTable() {
     scope outer = class_<ChicFeeTable>("ChicFeeTable", init<>())
       .def("__copy__", &MakeCopy<ChicFeeTable>)
       .def("__deepcopy__", &MakeDeepCopy<ChicFeeTable>)
-      .add_property("fee_table", MakeArray(&ChicFeeTable::m_feeTable));
-    enum_<ChicFeeTable::Category>("Category")
-      .value("NONE", ChicFeeTable::Category::NONE)
-      .value("DEFAULT", ChicFeeTable::Category::DEFAULT)
-      .value("SUB_DOLLAR", ChicFeeTable::Category::SUB_DOLLAR)
-      .value("INTERLISTED", ChicFeeTable::Category::INTERLISTED)
-      .value("ETF", ChicFeeTable::Category::ETF);
-    enum_<ChicFeeTable::Type>("Type")
-      .value("NONE", ChicFeeTable::Type::NONE)
-      .value("ACTIVE", ChicFeeTable::Type::ACTIVE)
-      .value("PASSIVE", ChicFeeTable::Type::PASSIVE)
-      .value("HIDDEN", ChicFeeTable::Type::HIDDEN);
+      .add_property("security_table",
+      MakeArray(&ChicFeeTable::m_securityTable));
+    enum_<ChicFeeTable::Classification>("Classification")
+      .value("NONE", ChicFeeTable::Classification::NONE)
+      .value("INTERLISTED", ChicFeeTable::Classification::INTERLISTED)
+      .value("NON_INTERLISTED", ChicFeeTable::Classification::NON_INTERLISTED)
+      .value("ETF", ChicFeeTable::Classification::ETF)
+      .value("SUB_DOLLAR", ChicFeeTable::Classification::SUB_DOLLAR)
+      .value("SUB_DIME", ChicFeeTable::Classification::SUB_DIME);
+    enum_<ChicFeeTable::Index>("Index")
+      .value("NONE", ChicFeeTable::Index::NONE)
+      .value("ACTIVE", ChicFeeTable::Index::ACTIVE)
+      .value("PASSIVE", ChicFeeTable::Index::PASSIVE)
+      .value("HIDDEN_ACTIVE", ChicFeeTable::Index::HIDDEN_ACTIVE)
+      .value("HIDDEN_PASSIVE", ChicFeeTable::Index::HIDDEN_PASSIVE);
   }
   def("parse_chic_fee_table", &ParseChicFeeTable);
   def("lookup_fee", static_cast<Money (*)(const ChicFeeTable&,
-    ChicFeeTable::Type, ChicFeeTable::Category)>(&LookupFee));
-  def("is_chic_hidden_liquidity_provider", &IsChicHiddenLiquidityProvider);
-  def("calculate_fee", static_cast<Money (*)(const ChicFeeTable&, bool, bool,
+    ChicFeeTable::Index, ChicFeeTable::Classification)>(&LookupFee));
+  def("calculate_fee", static_cast<Money (*)(const ChicFeeTable&,
     const OrderFields&, const ExecutionReport&)>(&CalculateFee));
 }
 

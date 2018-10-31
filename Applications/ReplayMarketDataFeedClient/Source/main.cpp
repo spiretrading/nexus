@@ -70,9 +70,9 @@ namespace {
   auto BuildReplayClients(const YAML::Node& config,
       std::vector<Security> securities, SqlDataStore* dataStore,
       const std::vector<IpAddress>& addresses,
-      RefType<ApplicationServiceLocatorClient> serviceLocatorClient,
-      LiveNtpTimeClient* timeClient, RefType<SocketThreadPool> socketThreadPool,
-      RefType<TimerThreadPool> timerThreadPool) {
+      Ref<ApplicationServiceLocatorClient> serviceLocatorClient,
+      LiveNtpTimeClient* timeClient, Ref<SocketThreadPool> socketThreadPool,
+      Ref<TimerThreadPool> timerThreadPool) {
     auto sampling = Extract<time_duration>(config, "sampling");
     auto startTime = Extract<ptime>(config, "start_time");
     auto client_count = Extract<int>(config, "client_count");
