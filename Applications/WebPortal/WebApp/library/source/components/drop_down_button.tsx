@@ -20,6 +20,7 @@ export class DropDownButton extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
+    const baseStyle = this.ANIMATION.base;
     const source = (() => {
       if (this.state.isExpanded) {
         return (
@@ -48,23 +49,27 @@ export class DropDownButton extends React.Component<Properties, State> {
         return  this.ANIMATION.spinOpen;
       }
     })();
+    const overlayStyle = (() => {
+      if (this.state.isExpanded) {
+        return this.ANIMATION.spinCloseFadeIn;
+      } else {
+        return  this.ANIMATION.spinOpenFadeIn;
+      }
+    })();
 
     return (
       <div style={this.STYLE.containerStyle}>
+        <img src={source}
+          width = {this.props.size}
+          height = {this.props.size}
+          className = {css(baseStyle, style)}
+          onClick={this.onClick}/>
         <img src={sourceShadow}
           width = {this.props.size}
           height = {this.props.size}
-          style={this.STYLE.shadowStyle}/>
-        <img src={source}
-          width = {this.props.size}
-          height = {this.props.size}
-          className = {css(style)}
-          onClick = {this.onClick}/>
-        <img src={source}
-          width = {this.props.size}
-          height = {this.props.size}
-          className = {css(style)}
-          onClick = {this.onClick}/>
+          className = {css(baseStyle, overlayStyle)}
+          onClick={this.onClick}/>
+
       </div>);
   }
 
@@ -79,11 +84,8 @@ export class DropDownButton extends React.Component<Properties, State> {
       transform: 'rotate(0deg)',
       opacity: '1'
     },
-    '99%' : {
-      transform: 'rotate(90deg)',
-      opacity: '1'
-    },
     '100%' : {
+      transform: 'rotate(90deg)',
       opacity: '0'
     }
   };
@@ -92,56 +94,49 @@ export class DropDownButton extends React.Component<Properties, State> {
       transform: 'rotate(0deg)',
       opacity: '1'
     },
-    '99%' : {
-      transform: 'rotate(-90deg)',
-      opacity: '1'
-    },
     '100%' : {
+      transform: 'rotate(-90deg)',
       opacity: '0'
     }
   };
   private readonly openAndFade =  {
     '0%' : {
-      transform: 'rotate(0deg)',
-      opacity: '1'
-    },
-    '99%' : {
-      transform: 'rotate(90deg)',
-      opacity: '1'
+      transform: 'rotate(-90deg)',
+      opacity: '0'
     },
     '100%' : {
-      opacity: '0'
+      transform: 'rotate(0deg)',
+      opacity: '1'
     }
   };
   private readonly closeAndFade =  {
     '0%' : {
-      transform: 'rotate(0deg)',
-      opacity: '1'
-    },
-    '99%' : {
-      transform: 'rotate(-90deg)',
-      opacity: '1'
+      transform: 'rotate(90deg)',
+      opacity: '0'
     },
     '100%' : {
-      opacity: '0'
+      transform: 'rotate(0deg)',
+      opacity: '1'
     }
   };
   private readonly ANIMATION = StyleSheet.create({
-    spinOpen: {
+    base:{
       position: 'absolute',
-      background: '#ffffff',
-      animationName: this.open,
-      animationDuration: '5s',
+      animationDuration: '300ms',
       animationIterationCount: 1,
       animationFillMode: 'forwards'
     },
+    spinOpen: {
+      animationName: this.open
+    },
     spinClose: {
-      position: 'absolute',
-      background: '#ffffff',
-      animationName: this.close,
-      animationDuration: '5s',
-      animationIterationCount: 1,
-      animationFillMode: 'forwards'
+      animationName: this.close
+    },
+    spinOpenFadeIn: {
+      animationName: this.openAndFade
+    },
+    spinCloseFadeIn:{
+      animationName: this.closeAndFade
     }
   });
 
