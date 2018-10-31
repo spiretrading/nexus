@@ -22,7 +22,7 @@ export class DropDownButton extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const baseStyle = this.ANIMATION.base;
-    const sourceOverlay = (() => {
+    const endSource = (() => {
       if (this.state.isExpanded) {
         return (
           'resources/account_page/entitlements_page/icons/arrow-collapse.svg');
@@ -31,7 +31,7 @@ export class DropDownButton extends React.Component<Properties, State> {
           'resources/account_page/entitlements_page/icons/arrow-expand.svg');
       }
     })();
-    const source = (() => {
+    const startSource = (() => {
       if (this.state.isExpanded) {
         return (
           'resources/account_page/entitlements_page/icons/arrow-expand.svg');
@@ -40,9 +40,9 @@ export class DropDownButton extends React.Component<Properties, State> {
           'resources/account_page/entitlements_page/icons/arrow-collapse.svg');
       }
     })();
-    const style = (() => {
+    const startStyle = (() => {
       if(this.state.isFirstTime) {
-        return this.ANIMATION.noAnimationBase;
+        return this.ANIMATION.noAnimationHidden;
       } else {
         if (this.state.isExpanded) {
           return  this.ANIMATION.spinOpen;
@@ -51,7 +51,7 @@ export class DropDownButton extends React.Component<Properties, State> {
         }
       }
     })();
-    const overlayStyle = (() => {
+    const endStyle = (() => {
       if(this.state.isFirstTime) {
         return this.ANIMATION.noAnimation;
       } else {
@@ -64,15 +64,15 @@ export class DropDownButton extends React.Component<Properties, State> {
     })();
     return (
       <div style={this.STYLE.containerStyle}>
-        <img src={sourceOverlay}
+        <img src={endSource}
           width = {this.props.size}
           height = {this.props.size}
-          className = {css(baseStyle, style)}
+          className = {css(baseStyle, startStyle)}
           onClick={this.onClick}/>
-        <img src={source}
+        <img src={startSource}
           width = {this.props.size}
           height = {this.props.size}
-          className = {css(baseStyle, overlayStyle)}
+          className = {css(baseStyle, endStyle)}
           onClick={this.onClick}/>
       </div>);
   }
@@ -132,13 +132,13 @@ export class DropDownButton extends React.Component<Properties, State> {
     noAnimation: {
       position: 'absolute'
     },
-    noAnimationBase: {
+    noAnimationHidden: {
       position: 'absolute',
       visibility: 'hidden'
     },
     base:{
       position: 'absolute',
-      animationDuration: '5s',
+      animationDuration: '200ms',
       animationIterationCount: 1,
       animationFillMode: 'forwards'
     },
