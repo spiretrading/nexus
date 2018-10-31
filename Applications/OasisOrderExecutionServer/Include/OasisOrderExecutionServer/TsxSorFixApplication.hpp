@@ -22,7 +22,7 @@ namespace OasisOrderExecutionService {
       /*!
         \param timeClient The TimeClient used for timestamps.
       */
-      TsxSorFixApplication(Beam::RefType<Beam::TimeService::LiveNtpTimeClient>
+      TsxSorFixApplication(Beam::Ref<Beam::TimeService::LiveNtpTimeClient>
         timeClient);
 
       virtual const OrderExecutionService::Order& Recover(

@@ -23,7 +23,7 @@ namespace {
   const auto ACCOUNT_TAG = 28888;
 }
 
-AsxFixApplication::AsxFixApplication(RefType<LiveNtpTimeClient> timeClient)
+AsxFixApplication::AsxFixApplication(Ref<LiveNtpTimeClient> timeClient)
     : m_timeClient(timeClient.Get()) {}
 
 const Order& AsxFixApplication::Recover(

@@ -27,9 +27,9 @@ namespace OasisOrderExecutionService {
         \param timeClient The TimeClient used for timestamps.
         \param marketDataClient The MarketDataClient used to determine the BBO.
       */
-      OmegaFixApplication(Beam::RefType<Beam::TimeService::LiveNtpTimeClient>
+      OmegaFixApplication(Beam::Ref<Beam::TimeService::LiveNtpTimeClient>
         timeClient,
-        Beam::RefType<MarketDataService::ApplicationMarketDataClient::Client>
+        Beam::Ref<MarketDataService::ApplicationMarketDataClient::Client>
         marketDataClient);
 
       virtual const OrderExecutionService::Order& Recover(

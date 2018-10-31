@@ -21,7 +21,7 @@ namespace OasisOrderExecutionService {
       /*!
         \param timeClient The TimeClient used for timestamps.
       */
-      ChixFixApplication(Beam::RefType<Beam::TimeService::LiveNtpTimeClient>
+      ChixFixApplication(Beam::Ref<Beam::TimeService::LiveNtpTimeClient>
         timeClient);
 
       virtual const OrderExecutionService::Order& Recover(

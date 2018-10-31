@@ -28,7 +28,7 @@ namespace {
   const auto NO_TRADE_KEY_TAG = 7714;
 }
 
-CnsxFixApplication::CnsxFixApplication(RefType<LiveNtpTimeClient> timeClient)
+CnsxFixApplication::CnsxFixApplication(Ref<LiveNtpTimeClient> timeClient)
     : m_timeClient(timeClient.Get()) {}
 
 const Order& CnsxFixApplication::Recover(

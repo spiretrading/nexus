@@ -30,8 +30,7 @@ namespace {
   const auto TSX_UNDISPLAYED_TAG = 7726;
 }
 
-TsxSorFixApplication::TsxSorFixApplication(RefType<LiveNtpTimeClient>
-    timeClient)
+TsxSorFixApplication::TsxSorFixApplication(Ref<LiveNtpTimeClient> timeClient)
     : m_timeClient(timeClient.Get()) {}
 
 const Order& TsxSorFixApplication::Recover(

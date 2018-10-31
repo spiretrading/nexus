@@ -21,7 +21,7 @@ namespace OasisOrderExecutionService {
       /*!
         \param timeClient The TimeClient used for timestamps.
       */
-      AequitasFixApplication(Beam::RefType<Beam::TimeService::LiveNtpTimeClient>
+      AequitasFixApplication(Beam::Ref<Beam::TimeService::LiveNtpTimeClient>
         timeClient);
 
       virtual const OrderExecutionService::Order& Recover(

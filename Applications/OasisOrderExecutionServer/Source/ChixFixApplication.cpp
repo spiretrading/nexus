@@ -29,7 +29,7 @@ namespace {
   const auto NO_TRADE_KEY_TAG = 7714;
 }
 
-ChixFixApplication::ChixFixApplication(RefType<LiveNtpTimeClient> timeClient)
+ChixFixApplication::ChixFixApplication(Ref<LiveNtpTimeClient> timeClient)
     : m_timeClient(timeClient.Get()) {}
 
 const Order& ChixFixApplication::Recover(

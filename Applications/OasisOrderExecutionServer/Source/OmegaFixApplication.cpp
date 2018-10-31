@@ -31,8 +31,8 @@ namespace {
   const auto TRADE_LIQUIDITY_INDICATOR_TAG = 9730;
 }
 
-OmegaFixApplication::OmegaFixApplication(RefType<LiveNtpTimeClient> timeClient,
-    RefType<ApplicationMarketDataClient::Client> marketDataClient)
+OmegaFixApplication::OmegaFixApplication(Ref<LiveNtpTimeClient> timeClient,
+    Ref<ApplicationMarketDataClient::Client> marketDataClient)
     : m_timeClient(timeClient.Get()),
       m_marketDataClient(marketDataClient.Get()) {}
 

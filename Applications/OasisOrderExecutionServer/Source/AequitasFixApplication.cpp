@@ -30,7 +30,7 @@ namespace {
 }
 
 AequitasFixApplication::AequitasFixApplication(
-    RefType<LiveNtpTimeClient> timeClient)
+    Ref<LiveNtpTimeClient> timeClient)
     : m_timeClient(timeClient.Get()) {}
 
 const Order& AequitasFixApplication::Recover(

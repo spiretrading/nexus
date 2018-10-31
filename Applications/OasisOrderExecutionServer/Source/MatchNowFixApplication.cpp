@@ -24,7 +24,7 @@ namespace {
   const auto CONSTRAINTS_TAG = 6005;
 }
 
-MatchNowFixApplication::MatchNowFixApplication(RefType<LiveNtpTimeClient>
+MatchNowFixApplication::MatchNowFixApplication(Ref<LiveNtpTimeClient>
     timeClient)
     : m_timeClient(timeClient.Get()) {}
 

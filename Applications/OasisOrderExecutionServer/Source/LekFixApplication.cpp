@@ -39,7 +39,7 @@ namespace {
   }
 }
 
-LekFixApplication::LekFixApplication(RefType<LiveNtpTimeClient> timeClient)
+LekFixApplication::LekFixApplication(Ref<LiveNtpTimeClient> timeClient)
     : m_timeClient(timeClient.Get()) {}
 
 const Order& LekFixApplication::Recover(

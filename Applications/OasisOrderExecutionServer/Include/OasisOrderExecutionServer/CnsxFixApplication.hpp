@@ -21,7 +21,7 @@ namespace OasisOrderExecutionService {
       /*!
         \param timeClient The TimeClient used for timestamps.
       */
-      CnsxFixApplication(Beam::RefType<Beam::TimeService::LiveNtpTimeClient>
+      CnsxFixApplication(Beam::Ref<Beam::TimeService::LiveNtpTimeClient>
         timeClient);
 
       virtual const OrderExecutionService::Order& Recover(
