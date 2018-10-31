@@ -11,7 +11,6 @@ interface Properties {
 
   /** The onClick event handler. */
   onClick?(event?: React.MouseEvent<any>): void;
-
 }
 
 interface State {
@@ -45,7 +44,7 @@ export class CheckMarkButton extends React.Component<Properties, State> {
           height={this.props.size}
           width={this.props.size}
           onClick={this.onClick}
-          style = {this.STYLE.base}/>
+          style={this.STYLE.base}/>
       </div>);
   }
 

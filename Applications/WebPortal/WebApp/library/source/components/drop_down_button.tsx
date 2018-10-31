@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {css, StyleSheet} from 'aphrodite';
+import {css, StyleSheet} from 'aphrodite/no-important';
 
 interface Properties {
 
