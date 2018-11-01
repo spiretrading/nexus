@@ -49,7 +49,7 @@ export class CurrencyDatabase {
 
   /** Constructs an empty database. */
   constructor() {
-    this._entries = new Array<CurrencyDatabase.Entry>();
+    this._entries = [];
   }
 
   /** Returns an entry from a currency.
@@ -109,7 +109,7 @@ export class CurrencyDatabase {
     return this._entries[Symbol.iterator]();
   }
 
-  private _entries: Array<CurrencyDatabase.Entry>;
+  private _entries: CurrencyDatabase.Entry[];
 }
 
 export module CurrencyDatabase {
