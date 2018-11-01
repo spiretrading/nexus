@@ -43,7 +43,7 @@ export class CheckMarkButton extends React.Component<Properties, State> {
         height={this.props.size}
         width={this.props.size}
         onClick={this.onClick}
-        style={this.STYLE.base}/>);
+        style={CheckMarkButton.STYLE.base}/>);
   }
 
   private onClick() {
@@ -53,7 +53,7 @@ export class CheckMarkButton extends React.Component<Properties, State> {
     this.props.onClick();
   }
 
-  private readonly STYLE = {
+  private static STYLE = {
     base: {
       cursor: 'pointer'
     }
