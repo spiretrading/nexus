@@ -87,7 +87,7 @@ export class DropDownButton extends React.Component<Properties, State> {
     this.props.onClick();
   }
 
-  private static readonly OPEN_AND_FADEOUT =  {
+  private static readonly OPEN_AND_FADEOUT = {
     '0%': {
       transform: 'rotate(0deg)',
       opacity: '1'
@@ -97,7 +97,7 @@ export class DropDownButton extends React.Component<Properties, State> {
       opacity: '0'
     }
   };
-  private static readonly CLOSE_AND_FADEOUT =  {
+  private static readonly CLOSE_AND_FADEOUT = {
     '0%': {
       transform: 'rotate(0deg)',
       opacity: '1'
@@ -107,7 +107,7 @@ export class DropDownButton extends React.Component<Properties, State> {
       opacity: '0'
     }
   };
-  private static readonly OPEN_AND_FADEIN =  {
+  private static readonly OPEN_AND_FADEIN = {
     '0%': {
       transform: 'rotate(-90deg)',
       opacity: '0'
@@ -117,7 +117,7 @@ export class DropDownButton extends React.Component<Properties, State> {
       opacity: '1'
     }
   };
-  private static readonly CLOSE_AND_FADE_IN =  {
+  private static readonly CLOSE_AND_FADE_IN = {
     '0%' : {
       transform: 'rotate(90deg)',
       opacity: '0'
@@ -154,7 +154,7 @@ export class DropDownButton extends React.Component<Properties, State> {
       animationName: DropDownButton.CLOSE_AND_FADE_IN
     }
   });
-  public static readonly STYLE= {
+  public static readonly STYLE = {
     containerStyle: {
       position: 'relative' as 'relative',
       cursor: 'pointer'
