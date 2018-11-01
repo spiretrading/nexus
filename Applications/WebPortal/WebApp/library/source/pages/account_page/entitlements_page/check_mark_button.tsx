@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import * as React from 'react';
 
 /** The properties used to display the BurgerButton. */
@@ -30,7 +29,7 @@ export class CheckMarkButton extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const source = (() => {
-      if (this.state.isChecked) {
+      if(this.state.isChecked) {
         return (
           'resources/account_page/entitlements_page/icons/check-green.svg');
       } else {
@@ -39,14 +38,12 @@ export class CheckMarkButton extends React.Component<Properties, State> {
       }
     })();
     return (
-      <div>
-        <img src={source}
-          alt='checkbox'
-          height={this.props.size}
-          width={this.props.size}
-          onClick={this.onClick}
-          style={this.STYLE.base}/>
-      </div>);
+      <img src={source}
+        alt='checkbox'
+        height={this.props.size}
+        width={this.props.size}
+        onClick={this.onClick}
+        style={this.STYLE.base}/>);
   }
 
   private onClick() {
@@ -62,6 +59,3 @@ export class CheckMarkButton extends React.Component<Properties, State> {
     }
   };
 }
-=======
-export class CheckMarkButton {}
->>>>>>> 87f0b9ed787ac34e939c063b10d7862bf284f0db
