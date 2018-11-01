@@ -126,7 +126,7 @@ export class DropDownButton extends React.Component<Properties, State> {
       opacity: '1'
     }
   };
-  private static readonly closeAndFadeIn =  {
+  private static closeAndFadeIn =  {
     '0%' : {
       transform: 'rotate(90deg)',
       opacity: '0'
