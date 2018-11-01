@@ -52,7 +52,7 @@ export class DropDownButton extends React.Component<Properties, State> {
     const startStyle = (() => {
       if(this.state.isFirstTime) {
         return DropDownButton.ANIMATION.noAnimationHidden;
-      } else if (this.state.isExpanded) {
+      } else if(this.state.isExpanded) {
         return DropDownButton.ANIMATION.spinOpen;
       } else {
         return DropDownButton.ANIMATION.spinClose;
