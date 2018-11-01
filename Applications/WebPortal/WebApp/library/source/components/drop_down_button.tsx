@@ -26,45 +26,36 @@ export class DropDownButton extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const baseStyle = DropDownButton.ANIMATION.base;
     const endSource = (() => {
       if(this.state.isExpanded) {
-        return (
-          'resources/arrow-collapse.svg');
+        return 'resources/arrow-collapse.svg';
       } else {
-        return (
-          'resources/arrow-expand.svg');
+        return 'resources/arrow-expand.svg';
       }
     })();
     const startSource = (() => {
       if(this.state.isExpanded) {
-        return (
-          'resources/arrow-expand.svg');
+        return 'resources/arrow-expand.svg';
       } else {
-        return (
-          'resources/arrow-collapse.svg');
+        return 'resources/arrow-collapse.svg';
       }
     })();
     const endStyle = (() => {
       if(this.state.isFirstTime) {
         return DropDownButton.ANIMATION.noAnimation;
+      } else if(this.state.isExpanded) {
+        return DropDownButton.ANIMATION.spinOpenFadeIn;
       } else {
-        if(this.state.isExpanded) {
-          return DropDownButton.ANIMATION.spinOpenFadeIn;
-        } else {
-          return DropDownButton.ANIMATION.spinCloseFadeIn;
-        }
+        return DropDownButton.ANIMATION.spinCloseFadeIn;
       }
     })();
     const startStyle = (() => {
       if(this.state.isFirstTime) {
         return DropDownButton.ANIMATION.noAnimationHidden;
+      } else if (this.state.isExpanded) {
+        return DropDownButton.ANIMATION.spinOpen;
       } else {
-        if(this.state.isExpanded) {
-          return DropDownButton.ANIMATION.spinOpen;
-        } else {
-          return DropDownButton.ANIMATION.spinClose;
-        }
+        return DropDownButton.ANIMATION.spinClose;
       }
     })();
     return (
@@ -72,12 +63,12 @@ export class DropDownButton extends React.Component<Properties, State> {
         <img src={endSource}
           width={this.props.size}
           height={this.props.size}
-          className={css(baseStyle, startStyle)}
+          className={css(DropDownButton.ANIMATION.base, startStyle)}
           onClick={this.onClick}/>
         <img src={startSource}
           width={this.props.size}
           height={this.props.size}
-          className={css(baseStyle, endStyle)}
+          className={css(DropDownButton.ANIMATION.base, endStyle)}
           onClick={this.onClick}/>
       </div>);
   }
@@ -96,7 +87,7 @@ export class DropDownButton extends React.Component<Properties, State> {
     this.props.onClick();
   }
 
-  private static openAndFadeOut =  {
+  private static readonly OPEN_AND_FADEOUT =  {
     '0%': {
       transform: 'rotate(0deg)',
       opacity: '1'
@@ -106,7 +97,7 @@ export class DropDownButton extends React.Component<Properties, State> {
       opacity: '0'
     }
   };
-  private static closeAndFadeOut =  {
+  private static readonly CLOSE_AND_FADEOUT =  {
     '0%': {
       transform: 'rotate(0deg)',
       opacity: '1'
@@ -116,7 +107,7 @@ export class DropDownButton extends React.Component<Properties, State> {
       opacity: '0'
     }
   };
-  private static openAndFadeIn =  {
+  private static readonly OPEN_AND_FADEIN =  {
     '0%': {
       transform: 'rotate(-90deg)',
       opacity: '0'
@@ -126,7 +117,7 @@ export class DropDownButton extends React.Component<Properties, State> {
       opacity: '1'
     }
   };
-  private static closeAndFadeIn =  {
+  private static readonly CLOSE_AND_FADE_IN =  {
     '0%' : {
       transform: 'rotate(90deg)',
       opacity: '0'
@@ -136,7 +127,7 @@ export class DropDownButton extends React.Component<Properties, State> {
       opacity: '1'
     }
   };
-  private static ANIMATION = StyleSheet.create({
+  private static readonly ANIMATION = StyleSheet.create({
     noAnimation: {
       position: 'absolute'
     },
@@ -151,19 +142,19 @@ export class DropDownButton extends React.Component<Properties, State> {
       animationFillMode: 'forwards'
     },
     spinOpen: {
-      animationName: DropDownButton.openAndFadeOut
+      animationName: DropDownButton.OPEN_AND_FADEOUT
     },
     spinClose: {
-      animationName: DropDownButton.closeAndFadeOut
+      animationName: DropDownButton.CLOSE_AND_FADEOUT
     },
     spinOpenFadeIn: {
-      animationName: DropDownButton.openAndFadeIn
+      animationName: DropDownButton.OPEN_AND_FADEIN
     },
     spinCloseFadeIn:{
-      animationName: DropDownButton.closeAndFadeIn
+      animationName: DropDownButton.CLOSE_AND_FADE_IN
     }
   });
-  public static STYLE= {
+  public static readonly STYLE= {
     containerStyle: {
       position: 'relative' as 'relative',
       cursor: 'pointer'

@@ -47,10 +47,12 @@ export class CheckMarkButton extends React.Component<Properties, State> {
   }
 
   private onClick() {
-    this.setState({
-      isChecked: !this.state.isChecked
-    });
-    this.props.onClick();
+    if(!this.props.isReadOnly) {
+      this.setState({
+        isChecked: !this.state.isChecked
+      });
+      this.props.onClick();
+    }
   }
 
   private static STYLE = {
