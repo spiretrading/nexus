@@ -9,27 +9,26 @@ interface Properties {
   /** Determines if the check mark is readonly or not. */
   isReadOnly: boolean;
 
-  /** The onClick event handler. */
+  /** The onClick event handler.
+   * This is not needed if the component is readonly.
+   * This should cause the isChecked property to toggle.
+   * */
   onClick?(event?: React.MouseEvent<any>): void;
-}
 
-interface State {
+  /** Determines if the checkmark is currenly active(green) or inactive(grey)*/
   isChecked: boolean;
 }
 
 /** Displays a check mark button. */
-export class CheckMarkButton extends React.Component<Properties, State> {
+export class CheckMarkButton extends React.Component<Properties, {}> {
   constructor(properties: Properties) {
     super(properties);
-    this.state = {
-      isChecked: false
-    };
     this.onClick = this.onClick.bind(this);
   }
 
   public render(): JSX.Element {
     const source = (() => {
-      if(this.state.isChecked) {
+      if(this.props.isChecked) {
         return (
           'resources/account_page/entitlements_page/icons/check-green.svg');
       } else {
@@ -48,9 +47,6 @@ export class CheckMarkButton extends React.Component<Properties, State> {
 
   private onClick() {
     if(!this.props.isReadOnly) {
-      this.setState({
-        isChecked: !this.state.isChecked
-      });
       this.props.onClick();
     }
   }

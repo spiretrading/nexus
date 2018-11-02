@@ -6,7 +6,7 @@ import * as WebPortal from 'web_portal';
 
 const buttontest = (
   <div>
-    <WebPortal.CheckMarkButton size='50px' isReadOnly={false}/>
+    <WebPortal.CheckMarkButton size='50px' isReadOnly={false} isChecked/>
     <WebPortal.DropDownButton size='50px'/>
   </div>);
 
