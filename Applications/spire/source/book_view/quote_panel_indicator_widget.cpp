@@ -40,7 +40,7 @@ void QuotePanelIndicatorWidget::on_animation_timer() {
   if(elapsed.count() >= FADE_TIME_MS) {
     m_color.setAlpha(255);
   } else {
-    m_color.setAlpha(::mapTo(elapsed.count(), 0, FADE_TIME_MS, 128, 255));
+    m_color.setAlpha(::mapTo(elapsed.count(), 0, FADE_TIME_MS, 100, 255));
     m_animation_timer.start();
   }
   update();
