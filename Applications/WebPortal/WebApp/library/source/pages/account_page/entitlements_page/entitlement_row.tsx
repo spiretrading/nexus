@@ -41,8 +41,7 @@ export class EntitlementRow extends React.Component<Properties, {}> {
         <div style={EntitlementRow.STYLE.container}>
           <CheckMarkButton 
             size={buttonSize}
-            isReadOnly //???????????
-            //isChecked? 
+            isChecked
             />
           <DropDownButton size={buttonSize}/>
           <div style={EntitlementRow.STYLE.textBase}>
