@@ -6,8 +6,7 @@ import * as WebPortal from 'web_portal';
 
 const buttontest = (
   <div>
-    <WebPortal.CheckMarkButton size='50px' isReadOnly={false}/>
-    <WebPortal.DropDownButton size='50px'/>
+    <WebPortal.EntitlementRow isSecurityActive/>
   </div>);
 
 ReactDOM.render(buttontest,

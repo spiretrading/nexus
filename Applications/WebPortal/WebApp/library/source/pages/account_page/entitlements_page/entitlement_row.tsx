@@ -25,9 +25,9 @@ export class EntitlementRow extends React.Component<Properties, {}> {
      }
      })();
     */
-    const ammount = this.props.currencyEntry.sign +
-      this.props.entitlementEntry.price + ' ' +
-      this.props.currencyEntry.code;
+    const ammount = '$' +
+      '100'+ ' ' +
+      'USD';
     const belowFoldAmmountStyle = 0; //if desktop, hidden
     const aboveFoldAmmountStyle = 0; //if mobile, hidden
     const ammountColor = (() => {
@@ -38,30 +38,29 @@ export class EntitlementRow extends React.Component<Properties, {}> {
       }
     })();
     return (
-      <div>
         <div style={EntitlementRow.STYLE.container}>
           <CheckMarkButton 
             size={buttonSize}
             isReadOnly //???????????
             //isChecked? 
             />
-          <DropDownButton size='20px'/>
+          <DropDownButton size={buttonSize}/>
           <div style={EntitlementRow.STYLE.textBase}>
             {name}
           </div>
           <div style={{...EntitlementRow.STYLE.textBase}}>
             {ammount}
           </div>
-        </div>
       </div>);
   }
 
   private static readonly STYLE = {
     container: {
-      display: 'flex' as 'flex',
+      width: '800px',
+      display: 'inline-flex ' as 'inline-flex ',
       flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'flex-end' as 'flex-end',
+      //flexWrap: 'nowrap' as 'nowrap',
+      //alignItems: 'flex-end' as 'flex-end',
     },
     desktopButtonStyle: {
       paddingLeft: '20px'
@@ -69,9 +68,7 @@ export class EntitlementRow extends React.Component<Properties, {}> {
     mobileButtonStyle:{
       paddingLeft: '18px'
     },
-
     textBase: {
-      flexBasis: '0',
       font: 'Roboto',
       fontSize: '14px'
     },
