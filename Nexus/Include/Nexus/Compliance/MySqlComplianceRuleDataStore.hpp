@@ -5,7 +5,7 @@
 #include <Beam/IO/IOException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
-#include <Beam/MySql/PosixTimeToMySqlDateTime.hpp>
+#include <Beam/Sql/PosixTimeToSqlDateTime.hpp>
 #include <Beam/Network/IpAddress.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
@@ -196,7 +196,7 @@ namespace Compliance {
       violationRecord.m_account.m_id, violationRecord.m_orderId,
       violationRecord.m_ruleId, violationRecord.m_schemaName,
       violationRecord.m_reason,
-      Beam::MySql::ToMySqlTimestamp(violationRecord.m_timestamp)};
+      Beam::ToSqlTimestamp(violationRecord.m_timestamp)};
     boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
     auto query = m_databaseConnection.query();
     query.insert(row);

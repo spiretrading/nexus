@@ -22,7 +22,7 @@ namespace Nexus {
                queries to.
       */
       BacktesterMarketDataClient(
-        Beam::RefType<BacktesterMarketDataService> service,
+        Beam::Ref<BacktesterMarketDataService> service,
         std::unique_ptr<MarketDataService::VirtualMarketDataClient>
         marketDataClient);
 
@@ -95,7 +95,7 @@ namespace Nexus {
   };
 
   inline BacktesterMarketDataClient::BacktesterMarketDataClient(
-      Beam::RefType<BacktesterMarketDataService> service,
+      Beam::Ref<BacktesterMarketDataService> service,
       std::unique_ptr<MarketDataService::VirtualMarketDataClient>
       marketDataClient)
       : m_service{service.Get()},

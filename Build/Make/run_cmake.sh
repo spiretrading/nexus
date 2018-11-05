@@ -23,19 +23,17 @@ applications+="CtaMarketDataFeedClient "
 applications+="DefinitionsServer "
 applications+="MarketDataRelayServer "
 applications+="MarketDataServer "
+applications+="ReplayMarketDataFeedClient "
 applications+="RiskServer "
 applications+="SimulationMarketDataFeedClient "
 applications+="SimulationOrderExecutionServer "
 applications+="TmxIpMarketDataFeedClient "
 applications+="TmxTl1MarketDataFeedClient "
 applications+="UtpMarketDataFeedClient "
+applications+="WebPortal "
 
 for i in $applications; do
   pushd $directory/../../Applications/$i/Build/Make
   ./run_cmake.sh $build_type
   popd
 done
-
-pushd $directory/../../Applications/web_portal/build/posix
-./run_cmake.sh $build_type
-popd

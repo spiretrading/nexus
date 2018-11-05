@@ -1,10 +1,11 @@
-file(GLOB header_files
-  ./../../../Include/Nexus/Python/*.hpp)
-file(GLOB source_files
-  ./../../../Source/Python/*.cpp)
+file(GLOB header_files ./../../../Include/Nexus/Python/*.hpp)
+file(GLOB source_files ./../../../Source/Python/*.cpp)
 
 include_directories($ENV{PYTHON_INCLUDE_PATH})
 
+if(MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+endif()
 add_library(Python SHARED ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(Python PROPERTIES OUTPUT_NAME nexus)
@@ -25,10 +26,14 @@ endif()
 target_link_libraries(Python
   debug $ENV{CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized $ENV{CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{MYSQL_LIBRARY_DEBUG_PATH}
+  optimized $ENV{MYSQL_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{OPEN_SSL_LIBRARY_DEBUG_PATH}
   optimized $ENV{OPEN_SSL_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{OPEN_SSL_BASE_LIBRARY_DEBUG_PATH}
   optimized $ENV{OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH}
+  debug $ENV{SQLITE_LIBRARY_DEBUG_PATH}
+  optimized $ENV{SQLITE_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{BEAM_PYTHON_LIBRARY_DEBUG_PATH}
   optimized $ENV{BEAM_PYTHON_LIBRARY_OPTIMIZED_PATH}
   debug $ENV{PYTHON_LIBRARY_DEBUG_PATH}
@@ -50,6 +55,9 @@ if(UNIX)
     optimized $ENV{BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
     debug $ENV{BOOST_SYSTEM_LIBRARY_DEBUG_PATH}
     optimized $ENV{BOOST_SYSTEM_LIBRARY_OPTIMIZED_PATH})
+endif()
+if(WIN32)
+  target_link_libraries(Python shlwapi)
 endif()
 
 install(TARGETS Python CONFIGURATIONS Debug

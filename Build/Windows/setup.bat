@@ -1,10 +1,10 @@
 SETLOCAL
 
-SET expected_commit="7987a72c97e6e760fc525329df47846f55570adb"
+SET beam_commit="340b5967dcddd711c315c0d684da7a1c66c32436"
 if exist Beam goto end_beam_setup
   git clone https://www.github.com/eidolonsystems/beam.git Beam
   pushd Beam
-  git checkout %expected_commit%
+  git checkout %beam_commit%
   popd
   call Beam\Build\Windows\setup.bat
   pushd Beam\Build\Windows
@@ -16,10 +16,10 @@ if exist Beam goto end_beam_setup
 if not exist Beam goto end_beam_pull
   pushd Beam
   for /f "usebackq tokens=*" %%a in (`git log -1 ^| head -1 ^| awk "{ print $2 }"`) do SET commit=%%a
-  if not "%commit%" == %expected_commit% (
+  if not "%commit%" == %beam_commit% (
     git checkout master
     git pull
-    git checkout %expected_commit%
+    git checkout %beam_commit%
     popd
     call Beam\Build\Make\setup.bat
     pushd Beam\Build\Windows
@@ -29,24 +29,24 @@ if not exist Beam goto end_beam_pull
   popd
 :end_beam_pull
 
-if exist quickfix goto end_quick_fix_setup
-  wget --no-check-certificate http://prdownloads.sourceforge.net/quickfix/quickfix-1.14.3.zip
-  if not exist quickfix-1.14.3.zip goto end_quick_fix_setup
-    unzip quickfix-1.14.3.zip
-    pushd quickfix
+if exist quickfix-v.1.15.1 goto end_quick_fix_setup
+  wget https://github.com/quickfix/quickfix/archive/49b3508e48f0bbafbab13b68be72250bdd971ac2.zip -O quickfix-v.1.15.1.zip --no-check-certificate
+  if not exist quickfix-v.1.15.1.zip goto end_quick_fix_setup
+    unzip quickfix-v.1.15.1.zip
+    mv quickfix-49b3508e48f0bbafbab13b68be72250bdd971ac2 quickfix-v.1.15.1
+    pushd quickfix-v.1.15.1
+    pushd src\C++
+    sed -i "105s/.*/template<typename T> using SmartPtr = std::shared_ptr<T>;/" Utility.h
+    sed -i "108s/.*/template<typename T> using SmartPtr = std::shared_ptr<T>;/" Utility.h
+    sed -i "s/  result = _beginthreadex( NULL, 0, &func, var, 0, &id );/  result = _beginthreadex( NULL, 0, reinterpret_cast<_beginthreadex_proc_type>(\&func), var, 0, \&id );/"
+    popd
     devenv /Upgrade quickfix_vs12.sln
-    popd
-    pushd quickfix\src\C++
-    cat Utility.cpp | sed "s/  result = _beginthreadex( NULL, 0, &func, var, 0, &id );/  result = _beginthreadex( NULL, 0, reinterpret_cast<_beginthreadex_proc_type>(\&func), var, 0, \&id );/" > Utility.cpp.new
-    mv Utility.cpp.new Utility.cpp
-    popd
-    pushd quickfix
     msbuild quickfix_vs12.sln /p:PlatformToolset=v141 /p:configuration=Debug ^
       /p:UseEnv=true
     msbuild quickfix_vs12.sln /p:PlatformToolset=v141 /p:configuration=Release ^
       /p:UseEnv=true
     popd
-    rm quickfix-1.14.3.zip
+    rm quickfix-v.1.15.1.zip
 :end_quick_fix_setup
 
 if exist qt-5.11.2 goto end_qt_setup

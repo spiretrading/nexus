@@ -18,7 +18,7 @@ if [ "$admin_password" != "$admin_password2" ]; then
   echo 'Passwords do not match'
   exit 1
 fi
-local_interface=$(echo -n `ifconfig -a | egrep -o "([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})" | head -1`)
+local_interface=$(echo -n `ip addr | egrep -o "inet ([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}).*global" | egrep -o "([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})" | head -1`)
 echo 'Enter the IP address of the global network interface to bind to.'
 echo "Default is ($local_interface)"
 read global_address
@@ -170,6 +170,17 @@ if [ ! -d "RegistryServer" ]; then
   sudo -u $username sed -i "s:admin_password:\"$admin_password\":g" config.yml
   cd ..
 fi
+if [ ! -d "ReplayMarketDataFeedClient" ]; then
+  sudo -u $username mkdir ReplayMarketDataFeedClient
+  cd ReplayMarketDataFeedClient
+  sudo -u $username cp /home/developers/Nexus/Applications/ReplayMarketDataFeedClient/Application/ReplayMarketDataFeedClient .
+  sudo -u $username cp /home/developers/Nexus/Applications/ReplayMarketDataFeedClient/Application/*.sh .
+  sudo -u $username cp /home/developers/Nexus/Applications/ReplayMarketDataFeedClient/Application/config.default.yml config.yml
+  sudo -u $username sed -i "s:local_interface:$local_interface:g" config.yml
+  sudo -u $username sed -i "s:global_address:$global_address:g" config.yml
+  sudo -u $username sed -i "s:admin_password:\"$admin_password\":g" config.yml
+  cd ..
+fi
 if [ ! -d "RiskServer" ]; then
   sudo -u $username mkdir RiskServer
   cd RiskServer
@@ -225,10 +236,10 @@ if [ ! -d "UidServer" ]; then
   sudo -u $username sed -i "s:admin_password:\"$admin_password\":g" config.yml
   cd ..
 fi
-if [ ! -d "web_portal" ]; then
-  sudo -u $username mkdir web_portal
-  cd web_portal
-  sudo -u $username cp -R /home/developers/Nexus/Applications/web_portal/application/* .
+if [ ! -d "WebPortal" ]; then
+  sudo -u $username mkdir WebPortal
+  cd WebPortal
+  sudo -u $username cp -R /home/developers/Nexus/Applications/WebPortal/Application/* .
   sudo -u $username mv config.default.yml config.yml
   sudo -u $username sed -i "s:local_interface:$local_interface:g" config.yml
   sudo -u $username sed -i "s:global_address:$global_address:g" config.yml

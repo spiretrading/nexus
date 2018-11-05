@@ -132,14 +132,54 @@ namespace Tests {
   template<typename FeeTable, typename CalculateFeeType>
   void TestPerShareFeeCalculation(const FeeTable& feeTable,
       const OrderExecutionService::OrderFields& orderFields,
-      LiquidityFlag liquidityFlag, CalculateFeeType&& calculateFee,
+      const std::string& liquidityFlag, CalculateFeeType&& calculateFee,
       Money expectedFee) {
     auto executionReport = OrderExecutionService::ExecutionReport::
       BuildInitialReport(0, boost::posix_time::second_clock::universal_time());
     executionReport.m_lastPrice = orderFields.m_price;
     executionReport.m_lastQuantity = orderFields.m_quantity;
-    executionReport.m_liquidityFlag = ToString(liquidityFlag);
+    executionReport.m_liquidityFlag = liquidityFlag;
     auto calculatedTotal = calculateFee(feeTable, orderFields, executionReport);
+    auto expectedTotal = executionReport.m_lastQuantity * expectedFee;
+    CPPUNIT_ASSERT(calculatedTotal == expectedTotal);
+  }
+
+  //! Tests a per share fee calculation.
+  /*!
+    \param feeTable The fee table to test.
+    \param orderFields The OrderFields used to produce an ExecutionReport.
+    \param liquidityFlag The trade's LiquidityFlag.
+    \param calculateFee The function used to calculate the fee.
+    \param expectedFee The expected fee to use in the calculation.
+  */
+  template<typename FeeTable, typename CalculateFeeType>
+  void TestPerShareFeeCalculation(const FeeTable& feeTable,
+      const OrderExecutionService::OrderFields& orderFields,
+      LiquidityFlag liquidityFlag, CalculateFeeType&& calculateFee,
+      Money expectedFee) {
+    TestPerShareFeeCalculation(feeTable, orderFields, ToString(liquidityFlag),
+      std::forward<CalculateFeeType>(calculateFee), expectedFee);
+  }
+
+  //! Tests a per share fee calculation.
+  /*!
+    \param feeTable The fee table to test.
+    \param price The price of the trade to test.
+    \param quantity The trade's quantity.
+    \param liquidityFlag The trade's LiquidityFlag.
+    \param calculateFee The function used to calculate the fee.
+    \param expectedFee The expected fee to use in the calculation.
+  */
+  template<typename FeeTable, typename CalculateFeeType>
+  void TestPerShareFeeCalculation(const FeeTable& feeTable, Money price,
+      Quantity quantity, const std::string& liquidityFlag,
+      CalculateFeeType&& calculateFee, Money expectedFee) {
+    auto executionReport = OrderExecutionService::ExecutionReport::
+      BuildInitialReport(0, boost::posix_time::second_clock::universal_time());
+    executionReport.m_lastPrice = price;
+    executionReport.m_lastQuantity = quantity;
+    executionReport.m_liquidityFlag = liquidityFlag;
+    auto calculatedTotal = calculateFee(feeTable, executionReport);
     auto expectedTotal = executionReport.m_lastQuantity * expectedFee;
     CPPUNIT_ASSERT(calculatedTotal == expectedTotal);
   }
@@ -157,14 +197,9 @@ namespace Tests {
   void TestPerShareFeeCalculation(const FeeTable& feeTable, Money price,
       Quantity quantity, LiquidityFlag liquidityFlag,
       CalculateFeeType&& calculateFee, Money expectedFee) {
-    auto executionReport = OrderExecutionService::ExecutionReport::
-      BuildInitialReport(0, boost::posix_time::second_clock::universal_time());
-    executionReport.m_lastPrice = price;
-    executionReport.m_lastQuantity = quantity;
-    executionReport.m_liquidityFlag = ToString(liquidityFlag);
-    auto calculatedTotal = calculateFee(feeTable, executionReport);
-    auto expectedTotal = executionReport.m_lastQuantity * expectedFee;
-    CPPUNIT_ASSERT(calculatedTotal == expectedTotal);
+    TestPerShareFeeCalculation(feeTable, price, quantity,
+      ToString(liquidityFlag), std::forward<CalculateFeeType>(calculateFee),
+      expectedFee);
   }
 }
 }

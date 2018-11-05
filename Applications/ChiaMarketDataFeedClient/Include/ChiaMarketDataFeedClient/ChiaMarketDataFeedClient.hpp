@@ -8,6 +8,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Pointers/Out.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
+#include <Beam/Utilities/Algorithm.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "ChiaMarketDataFeedClient/ChiaConfiguration.hpp"

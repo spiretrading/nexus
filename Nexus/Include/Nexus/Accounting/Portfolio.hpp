@@ -12,12 +12,9 @@
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
-namespace Nexus {
-namespace Accounting {
+namespace Nexus::Accounting {
 
-  /*! \struct PortfolioUpdateEntry
-      \brief Stores an update to a Portfolio's snapshot.
-   */
+  /** Stores an update to a Portfolio's snapshot. */
   template<typename InventoryType>
   struct PortfolioUpdateEntry {
 
@@ -37,9 +34,7 @@ namespace Accounting {
     Money m_unrealizedCurrency;
   };
 
-  /*! \struct SecurityValuation
-      \brief Stores the valuation used for a Security.
-   */
+  /** Stores the valuation used for a Security. */
   struct SecurityValuation {
 
     //! The currency used to value the Security.
@@ -52,7 +47,7 @@ namespace Accounting {
     boost::optional<Money> m_bidValue;
 
     //! Constructs a SecurityValuation.
-    SecurityValuation();
+    SecurityValuation() = default;
 
     //! Constructs a SecurityValuation.
     /*!
@@ -78,9 +73,7 @@ namespace Accounting {
       //! The type of update published.
       using UpdateEntry = PortfolioUpdateEntry<Inventory>;
 
-      /*! \struct SecurityEntry
-          \brief Stores portfolio related info about a single Security.
-       */
+      /** Stores portfolio related info about a single Security. */
       struct SecurityEntry {
 
         //! The current value of the Security.
@@ -156,8 +149,6 @@ namespace Accounting {
       static Money CalculateUnrealized(
         const typename PortfolioBookkeeper::Inventory& inventory,
         const SecurityEntry& securityEntry);
-      SecurityEntry& GetSecurityEntry(const Security& security,
-        CurrencyId currency);
       SecurityEntry& GetSecurityEntry(const Security& security);
   };
 
@@ -275,8 +266,6 @@ namespace Accounting {
       f(update);
     }
   }
-
-  inline SecurityValuation::SecurityValuation() {}
 
   inline SecurityValuation::SecurityValuation(CurrencyId currency)
       : m_currency(currency) {}
@@ -427,10 +416,8 @@ namespace Accounting {
     return securityIterator->second;
   }
 }
-}
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<typename InventoryType>
   struct Shuttle<Nexus::Accounting::PortfolioUpdateEntry<InventoryType>> {
     template<typename Shuttler>
@@ -454,7 +441,6 @@ namespace Serialization {
       shuttle.Shuttle("bid_value", value.m_bidValue);
     }
   };
-}
 }
 
 #endif

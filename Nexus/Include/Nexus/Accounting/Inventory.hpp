@@ -4,11 +4,9 @@
 #include "Nexus/Accounting/Accounting.hpp"
 #include "Nexus/Accounting/Position.hpp"
 
-namespace Nexus {
-namespace Accounting {
+namespace Nexus::Accounting {
 
-  /*! \struct Inventory
-      \brief Stores bookkeeping info for a single inventory.
+  /** Stores bookkeeping info for a single inventory.
       \tparam PositionType The type used to manage inventory Positions.
    */
   template<typename PositionType>
@@ -44,21 +42,17 @@ namespace Accounting {
 
   template<typename PositionType>
   Inventory<PositionType>::Inventory()
-      : m_fees{Money::ZERO},
-        m_volume{0},
-        m_transactionCount{0} {}
+      : m_volume(0),
+        m_transactionCount(0) {}
 
   template<typename PositionType>
   Inventory<PositionType>::Inventory(const typename PositionType::Key& key)
-      : m_position{key},
-        m_fees{Money::ZERO},
-        m_volume{0},
-        m_transactionCount{0} {}
-}
+      : m_position(key),
+        m_volume(0),
+        m_transactionCount(0) {}
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<typename PositionType>
   struct Shuttle<Nexus::Accounting::Inventory<PositionType>> {
     template<typename Shuttler>
@@ -72,7 +66,6 @@ namespace Serialization {
       shuttle.Shuttle("transaction_count", value.m_transactionCount);
     }
   };
-}
 }
 
 #endif

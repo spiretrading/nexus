@@ -18,8 +18,7 @@ using namespace Nexus::Tests;
 
 void BacktesterMarketDataClientTester::TestRealTimeQuery() {
   ptime startTime{date{2016, 5, 6}, seconds(0)};
-  TestEnvironment testEnvironment;
-  testEnvironment.Open();
+  auto dataStore = std::make_shared<LocalHistoricalDataStore>();
   Security security{"TST", DefaultMarkets::NYSE(), DefaultCountries::US()};
   auto COUNT = 3;
   for(auto i = 0; i < COUNT; ++i) {
@@ -28,8 +27,10 @@ void BacktesterMarketDataClientTester::TestRealTimeQuery() {
       Quote{Money::ONE, 100, Side::ASK}, startTime + seconds(i)}, security),
       Beam::Queries::Sequence{
       static_cast<Beam::Queries::Sequence::Ordinal>(i)});
-    testEnvironment.GetMarketDataEnvironment().GetDataStore().Store(bboQuote);
+    dataStore->Store(bboQuote);
   }
+  TestEnvironment testEnvironment(MakeVirtualHistoricalDataStore(dataStore));
+  testEnvironment.Open();
   auto testServiceClients = MakeVirtualServiceClients<TestServiceClients>(
     Initialize(Ref(testEnvironment)));
   BacktesterEnvironment backtesterEnvironment{startTime,

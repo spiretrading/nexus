@@ -3,11 +3,9 @@
 #include "Nexus/Accounting/Accounting.hpp"
 #include "Nexus/Accounting/Inventory.hpp"
 
-namespace Nexus {
-namespace Accounting {
+namespace Nexus::Accounting {
 
-  /*! \class Bookkeeper
-      \brief Performs bookkeeping and cost management of inventories.
+  /** Performs bookkeeping and cost management of inventories.
       \tparam InventoryType The type of Inventory to manage.
    */
   template<typename InventoryType>
@@ -23,7 +21,6 @@ namespace Accounting {
       //! The key used to lookup Inventories.
       using Key = typename Inventory::Position::Key;
   };
-}
 }
 
 #endif

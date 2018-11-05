@@ -1,8 +1,7 @@
 #ifndef NEXUS_ACCOUNTING_HPP
 #define NEXUS_ACCOUNTING_HPP
 
-namespace Nexus {
-namespace Accounting {
+namespace Nexus::Accounting {
   template<typename InventoryType> class Bookkeeper;
   class BuyingPowerTracker;
   template<typename PositionType> struct Inventory;
@@ -15,7 +14,6 @@ namespace Accounting {
   struct SecurityValuation;
   class ShortingTracker;
   template<typename InventoryType> class TrueAverageBookkeeper;
-}
 }
 
 #endif

@@ -1,5 +1,5 @@
-#ifndef NEXUS_MARKETDATARELAYSERVLET_HPP
-#define NEXUS_MARKETDATARELAYSERVLET_HPP
+#ifndef NEXUS_MARKET_DATA_RELAY_SERVLET_HPP
+#define NEXUS_MARKET_DATA_RELAY_SERVLET_HPP
 #include <vector>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
@@ -20,11 +20,9 @@
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \class MarketDataRelayServlet
-      \brief Implements a relay servlet for querying market data.
+  /** Implements a relay servlet for querying market data.
       \tparam ContainerType The container instantiating this servlet.
       \tparam MarketDataClientType The type of MarketDataClient connected to
               the source providing market data queries.
@@ -70,7 +68,7 @@ namespace MarketDataService {
         const MarketDataClientBuilder& marketDataClientBuilder,
         std::size_t minMarketDataClients, std::size_t maxMarketDataClients,
         AdministrationClientForward&& administrationClient,
-        Beam::RefType<Beam::Threading::TimerThreadPool> timerThreadPool);
+        Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
 
       void RegisterServices(Beam::Out<Beam::Services::ServiceSlots<
         ServiceProtocolClient>> slots);
@@ -136,18 +134,20 @@ namespace MarketDataService {
       std::vector<SecurityInfo> OnLoadSecurityInfoFromPrefix(
         ServiceProtocolClient& client, const std::string& prefix);
       template<typename Index, typename Value, typename Subscriptions>
-      typename std::enable_if<
-        !std::is_same<Value, SequencedBookQuote>::value>::type OnRealTimeUpdate(
-        const Index& index, const Value& value, Subscriptions& subscriptions);
+      std::enable_if_t<!std::is_same_v<Value, SequencedBookQuote>>
+        OnRealTimeUpdate(const Index& index, const Value& value,
+        Subscriptions& subscriptions);
       template<typename Index, typename Value, typename Subscriptions>
-      typename std::enable_if<
-        std::is_same<Value, SequencedBookQuote>::value>::type OnRealTimeUpdate(
-        const Index& index, const Value& value, Subscriptions& subscriptions);
+      std::enable_if_t<std::is_same_v<Value, SequencedBookQuote>>
+        OnRealTimeUpdate(const Index& index, const Value& value,
+        Subscriptions& subscriptions);
   };
 
   template<typename MarketDataClientType, typename AdministrationClientType>
   struct MetaMarketDataRelayServlet {
     using Session = MarketDataRegistrySession;
+    static constexpr auto SupportsParallelism = true;
+
     template<typename ContainerType>
     struct apply {
       using type = MarketDataRelayServlet<ContainerType, MarketDataClientType,
@@ -160,7 +160,7 @@ namespace MarketDataService {
   MarketDataRelayServlet<ContainerType, MarketDataClientType,
       AdministrationClientType>::RealTimeQueryEntry::RealTimeQueryEntry(
       std::unique_ptr<MarketDataClient> marketDataClient)
-      : m_marketDataClient{std::move(marketDataClient)} {}
+      : m_marketDataClient(std::move(marketDataClient)) {}
 
   template<typename ContainerType, typename MarketDataClientType,
     typename AdministrationClientType>
@@ -172,13 +172,13 @@ namespace MarketDataService {
       const MarketDataClientBuilder& marketDataClientBuilder,
       std::size_t minMarketDataClients, std::size_t maxMarketDataClients,
       AdministrationClientForward&& administrationClient,
-      Beam::RefType<Beam::Threading::TimerThreadPool> timerThreadPool)
-      : m_entitlementDatabase{entitlementDatabase},
-        m_marketDataClients{clientTimeout, marketDataClientBuilder,
+      Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool)
+      : m_entitlementDatabase(entitlementDatabase),
+        m_marketDataClients(clientTimeout, marketDataClientBuilder,
           Beam::Ref(timerThreadPool), minMarketDataClients,
-          maxMarketDataClients},
-        m_administrationClient{std::forward<AdministrationClientForward>(
-          administrationClient)} {
+          maxMarketDataClients),
+        m_administrationClient(std::forward<AdministrationClientForward>(
+          administrationClient)) {
     for(std::size_t i = 0; i < boost::thread::hardware_concurrency(); ++i) {
       m_realTimeQueryEntries.emplace_back(
         std::make_unique<RealTimeQueryEntry>(marketDataClientBuilder()));
@@ -332,7 +332,7 @@ namespace MarketDataService {
     typename AdministrationClientType>
   void MarketDataRelayServlet<ContainerType, MarketDataClientType,
       AdministrationClientType>::Shutdown() {
-    for(const auto& entry : m_realTimeQueryEntries) {
+    for(auto& entry : m_realTimeQueryEntries) {
       entry->m_marketDataClient->Close();
     }
     m_openState.SetClosed();
@@ -361,7 +361,7 @@ namespace MarketDataService {
     using Result = typename Service::Return;
     using MarketDataType = typename Result::Type;
     auto& session = request.GetSession();
-    Result result;
+    auto result = Result();
     if(!HasEntitlement<typename MarketDataType::Value>(
         session.GetEntitlements(), query)) {
       request.SetResult(result);
@@ -375,7 +375,7 @@ namespace MarketDataService {
       realTimeSubscriptions.TestAndSet(query.GetIndex(),
         [&] {
           auto& queryEntry = GetRealTimeQueryEntry(query.GetIndex());
-          Query initialValueQuery;
+          auto initialValueQuery = Query();
           initialValueQuery.SetIndex(query.GetIndex());
           initialValueQuery.SetRange(Beam::Queries::Sequence::First(),
             Beam::Queries::Sequence::Present());
@@ -385,17 +385,17 @@ namespace MarketDataService {
             std::make_shared<Beam::Queue<MarketDataType>>();
           QueryMarketDataClient(*queryEntry.m_marketDataClient,
             initialValueQuery, initialValueQueue);
-          std::vector<MarketDataType> initialValues;
+          auto initialValues = std::vector<MarketDataType>();
           Beam::FlushQueue(initialValueQueue,
             std::back_inserter(initialValues));
-          Beam::Queries::Sequence initialSequence;
+          auto initialSequence = Beam::Queries::Sequence();
           if(initialValues.empty()) {
             initialSequence = Beam::Queries::Sequence::First();
           } else {
             initialSequence = Beam::Queries::Increment(
               initialValues.back().GetSequence());
           }
-          Query realTimeQuery;
+          auto realTimeQuery = Query();
           realTimeQuery.SetIndex(query.GetIndex());
           realTimeQuery.SetInterruptionPolicy(
             Beam::Queries::InterruptionPolicy::RECOVER_DATA);
@@ -415,8 +415,8 @@ namespace MarketDataService {
       QueryMarketDataClient(*client, snapshotQuery, queue);
       Beam::FlushQueue(queue, std::back_inserter(result.m_snapshot));
       subscriptions.Commit(query.GetIndex(), std::move(result),
-        [&] (const Result& result) {
-          request.SetResult(result);
+        [&] (auto&& result) {
+          request.SetResult(std::forward<decltype(result)>(result));
         });
     } else {
       auto queue = std::make_shared<Beam::Queue<MarketDataType>>();
@@ -459,18 +459,18 @@ namespace MarketDataService {
     }
     auto askEndRange = std::remove_if(securitySnapshot.m_askBook.begin(),
       securitySnapshot.m_askBook.end(),
-      [&] (const BookQuote& bookQuote) {
+      [&] (auto& bookQuote) {
         return !session.GetEntitlements().HasEntitlement(
-          EntitlementKey(security.GetMarket(), bookQuote.m_market),
+          EntitlementKey(security.GetMarket(), bookQuote->m_market),
           MarketDataType::BOOK_QUOTE);
       });
     securitySnapshot.m_askBook.erase(askEndRange,
       securitySnapshot.m_askBook.end());
     auto bidEndRange = std::remove_if(securitySnapshot.m_bidBook.begin(),
       securitySnapshot.m_bidBook.end(),
-      [&] (const BookQuote& bookQuote) {
+      [&] (auto& bookQuote) {
         return !session.GetEntitlements().HasEntitlement(
-          EntitlementKey(security.GetMarket(), bookQuote.m_market),
+          EntitlementKey(security.GetMarket(), bookQuote->m_market),
           MarketDataType::BOOK_QUOTE);
       });
     securitySnapshot.m_bidBook.erase(bidEndRange,
@@ -500,14 +500,14 @@ namespace MarketDataService {
   template<typename ContainerType, typename MarketDataClientType,
     typename AdministrationClientType>
   template<typename Index, typename Value, typename Subscriptions>
-  typename std::enable_if<!std::is_same<Value, SequencedBookQuote>::value>::type
+  std::enable_if_t<!std::is_same_v<Value, SequencedBookQuote>>
       MarketDataRelayServlet<ContainerType, MarketDataClientType,
       AdministrationClientType>::OnRealTimeUpdate(const Index& index,
       const Value& value, Subscriptions& subscriptions) {
     auto indexedValue = Beam::Queries::MakeSequencedValue(
       Beam::Queries::MakeIndexedValue(*value, index), value.GetSequence());
     subscriptions.Publish(indexedValue,
-      [&] (const std::vector<ServiceProtocolClient*>& clients) {
+      [&] (auto& clients) {
         Beam::Services::BroadcastRecordMessage<
           GetMarketDataMessageType<typename Value::Value>>(
           clients, indexedValue);
@@ -517,7 +517,7 @@ namespace MarketDataService {
   template<typename ContainerType, typename MarketDataClientType,
     typename AdministrationClientType>
   template<typename Index, typename Value, typename Subscriptions>
-  typename std::enable_if<std::is_same<Value, SequencedBookQuote>::value>::type
+  std::enable_if_t<std::is_same_v<Value, SequencedBookQuote>>
       MarketDataRelayServlet<ContainerType, MarketDataClientType,
       AdministrationClientType>::OnRealTimeUpdate(const Index& index,
       const Value& value, Subscriptions& subscriptions) {
@@ -525,17 +525,16 @@ namespace MarketDataService {
     auto indexedValue = Beam::Queries::MakeSequencedValue(
       Beam::Queries::MakeIndexedValue(*value, index), value.GetSequence());
     subscriptions.Publish(indexedValue,
-      [&] (const ServiceProtocolClient& client) {
+      [&] (auto& client) {
         return client.GetSession().GetEntitlements().HasEntitlement(key,
           MarketDataType::BOOK_QUOTE);
       },
-      [&] (const std::vector<ServiceProtocolClient*>& clients) {
+      [&] (auto& clients) {
         Beam::Services::BroadcastRecordMessage<
           GetMarketDataMessageType<typename Value::Value>>(
           clients, indexedValue);
       });
   }
-}
 }
 
 #endif

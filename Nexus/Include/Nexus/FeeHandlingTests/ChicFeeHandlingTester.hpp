@@ -46,8 +46,14 @@ namespace Tests {
       //! Tests a sub dollar active execution.
       void TestSubDollarHiddenActive();
 
+      //! Tests a sub dollar passive execution.
+      void TestSubDollarHiddenPassive();
+
       //! Tests a sub dime active execution.
       void TestSubDimeHiddenActive();
+
+      //! Tests a sub dime passive execution.
+      void TestSubDimeHiddenPassive();
 
       //! Tests an interlisted active execution.
       void TestInterlistedActive();
@@ -104,7 +110,9 @@ namespace Tests {
         CPPUNIT_TEST(TestSubDimeActive);
         CPPUNIT_TEST(TestSubDimePassive);
         CPPUNIT_TEST(TestSubDollarHiddenActive);
+        CPPUNIT_TEST(TestSubDollarHiddenPassive);
         CPPUNIT_TEST(TestSubDimeHiddenActive);
+        CPPUNIT_TEST(TestSubDimeHiddenPassive);
         CPPUNIT_TEST(TestInterlistedActive);
         CPPUNIT_TEST(TestInterlistedPassive);
         CPPUNIT_TEST(TestInterlistedHiddenPassive);
