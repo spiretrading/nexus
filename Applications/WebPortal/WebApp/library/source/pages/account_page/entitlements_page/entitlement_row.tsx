@@ -2,6 +2,7 @@ import * as React from 'react';
 import * as Nexus from 'nexus';
 import {CheckMarkButton} from '.';
 import {DropDownButton} from '../../../components';
+import { throws } from 'assert';
 
 
 interface Properties {
@@ -15,19 +16,10 @@ export class EntitlementRow extends React.Component<Properties, {}> {
   }
 
   public render(): JSX.Element {
-    const buttonSize = '16px'; // can be 16 or 20 px
+    const buttonSize = '16px';
     const padding = EntitlementRow.STYLE.desktopPaddingStyle;
-    /** 
-    const buttonSize = (() => {
-     if(size is mobile) {
-     return '20px'
-     } else {
-       return '16px'
-     }
-     })();
-    */
     const ammount = this.props.currencyEntry.sign + 
-      '100' + ' ' + this.props.currencyEntry.code ;
+      this.props.entitlementEntry.name + ' ' + this.props.currencyEntry.code ;
     const name = 'Beep'
     const isCheckMarkChecked = (() => {
       if(this.props.isSecurityActive){
