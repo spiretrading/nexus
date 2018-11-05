@@ -6,7 +6,7 @@
 
 namespace Spire {
 
-  //! Displays a widget with an animated background color.
+  //! Displays a BBO indicator panel with an animated background color.
   class QuotePanelIndicatorWidget : public QWidget {
     public:
 
