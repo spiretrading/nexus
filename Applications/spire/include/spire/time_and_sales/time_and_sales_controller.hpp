@@ -1,6 +1,7 @@
 #ifndef SPIRE_TIME_AND_SALES_CONTROLLER_HPP
 #define SPIRE_TIME_AND_SALES_CONTROLLER_HPP
 #include <memory>
+#include <Beam/Pointers/Ref.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "spire/security_input/security_input.hpp"
@@ -17,14 +18,19 @@ namespace Spire {
 
       //! Constructs a time and sales controller.
       /*!
+        \param security_input_model The model used to autocomplete securities.
         \param service_clients The service clients logged into Spire.
       */
-      TimeAndSalesController(Nexus::VirtualServiceClients& service_clients);
+      TimeAndSalesController(Beam::Ref<SecurityInputModel> security_input_model,
+        Beam::Ref<Nexus::VirtualServiceClients> service_clients);
 
       ~TimeAndSalesController();
 
       //! Displays the time and sales window.
       void open();
+
+      //! Closes the time and sales window.
+      void close();
 
       //! Connects a slot to the closed signal.
       boost::signals2::connection connect_closed_signal(
@@ -32,11 +38,11 @@ namespace Spire {
 
     private:
       mutable ClosedSignal m_closed_signal;
+      SecurityInputModel* m_security_input_model;
       Nexus::VirtualServiceClients* m_service_clients;
-      std::unique_ptr<SecurityInputModel> m_input_model;
       std::unique_ptr<TimeAndSalesWindow> m_window;
 
-      void on_change_security(const Nexus::Security& s);
+      void on_change_security(const Nexus::Security& security);
       void on_closed();
   };
 }

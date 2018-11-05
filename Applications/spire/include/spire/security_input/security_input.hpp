@@ -9,6 +9,7 @@ namespace Spire {
   class SecurityInputBox;
   class SecurityInputDialog;
   class SecurityInputModel;
+  class ServicesSecurityInputModel;
 }
 
 #endif

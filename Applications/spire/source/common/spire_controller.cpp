@@ -97,7 +97,7 @@ void SpireController::on_login() {
   m_service_clients = std::move(m_login_controller->get_service_clients());
   m_login_controller.reset();
   m_toolbar_controller = std::make_unique<ToolbarController>(
-    *m_service_clients);
+    Ref(*m_service_clients));
   m_toolbar_controller->open();
   m_state = State::TOOLBAR;
 }
