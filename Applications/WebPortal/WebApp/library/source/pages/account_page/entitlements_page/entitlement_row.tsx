@@ -30,8 +30,13 @@ export class EntitlementRow extends React.Component<Properties, {}> {
       '100'+ ' ' +
       'USD';
     const name = 'Beep'
-    const belowFoldAmmountStyle = 0; //if desktop, hidden
-    const aboveFoldAmmountStyle = 0; //if mobile, hidden
+    const isCheckMarkChecked = (() => {
+      if(this.props.isSecurityActive){
+        return true;
+      } else {
+        return false;
+      }
+    })();
     const ammountColor = (() => {
       if(this.props.isSecurityActive){
         return EntitlementRow.STYLE.greenCheckMark;
@@ -41,25 +46,21 @@ export class EntitlementRow extends React.Component<Properties, {}> {
     })();
     return (
         <div style={EntitlementRow.STYLE.container}>
-
           <CheckMarkButton 
             size={buttonSize}
-            isChecked
-            />
-
+            isChecked={isCheckMarkChecked}
+          />
           <div style={padding}/>
-
+          <div>
           <DropDownButton size={buttonSize}/>
-
+          </div>
           <div style={padding}/>
-
           <div style={{...EntitlementRow.STYLE.textBase}}>
             {name}
           </div>
-
           <div style={EntitlementRow.STYLE.filler}/>
-
-          <div style={{...EntitlementRow.STYLE.textBase}}>
+          <div style={{...EntitlementRow.STYLE.textBase,
+              ...ammountColor}}>
             {ammount}
           </div>
       </div>);
@@ -67,6 +68,7 @@ export class EntitlementRow extends React.Component<Properties, {}> {
 
   private static readonly STYLE = {
     container: {
+      width: '100%',
       display: 'flex ' as 'flex ',
       flexDirection: 'row' as 'row',
       flexWrap: 'nowrap' as 'nowrap',
@@ -81,13 +83,9 @@ export class EntitlementRow extends React.Component<Properties, {}> {
     filler:{
        flexGrow: 1
     },
-    name: {
-      font: '400 14px Roboto',
-    },
     textBase: {
       font: '400 14px Roboto',
     },
-
     greenCheckMark: {
       color: '#36BB55'
     },
