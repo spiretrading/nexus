@@ -1,9 +1,10 @@
-#ifndef NEXUS_ORDEREXECUTIONSERVLET_HPP
-#define NEXUS_ORDEREXECUTIONSERVLET_HPP
+#ifndef NEXUS_ORDER_EXECUTION_SERVLET_HPP
+#define NEXUS_ORDER_EXECUTION_SERVLET_HPP
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queries/IndexedSubscriptions.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Threading/Sync.hpp>
+#include <Beam/Utilities/ReportException.hpp>
 #include <Beam/Utilities/SynchronizedMap.hpp>
 #include <Beam/Utilities/SynchronizedSet.hpp>
 #include <boost/functional/factory.hpp>
@@ -22,11 +23,9 @@
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
-namespace Nexus {
-namespace OrderExecutionService {
+namespace Nexus::OrderExecutionService {
 
-  /*! \class OrderExecutionServlet
-      \brief Stores and executes Orders.
+  /*! Stores and executes Orders.
       \tparam ContainerType The container instantiating this servlet.
       \tparam TimeClientType The type of TimeClient used for timestamps.
       \tparam ServiceLocatorClientType The type of ServiceLocatorClient used.
@@ -190,10 +189,10 @@ namespace OrderExecutionService {
       AdministrationClientForward&& administrationClient,
       OrderExecutionDriverForward&& driver,
       OrderExecutionDataStoreForward&& dataStore)
-      : m_sessionStartTime{sessionStartTime},
-        m_marketDatabase{marketDatabase},
-        m_destinationDatabase{destinationDatabase},
-        m_timeClient{std::forward<TimeClientForward>(timeClient)},
+      : m_sessionStartTime(sessionStartTime),
+        m_marketDatabase(marketDatabase),
+        m_destinationDatabase(destinationDatabase),
+        m_timeClient(std::forward<TimeClientForward>(timeClient)),
         m_serviceLocatorClient(std::forward<ServiceLocatorClientForward>(
           serviceLocatorClient)),
         m_uidClient(std::forward<UidClientForward>(uidClient)),
@@ -404,24 +403,28 @@ namespace OrderExecutionService {
       [&] (auto& shortingTracker) {
         shortingTracker.Update(executionReport);
       });
-    m_registry.Publish(
-      Beam::Queries::MakeIndexedValue(executionReport, account),
-      [&] {
-        return LoadInitialSequences(*m_dataStore, account);
-      },
-      [&] (auto& executionReport) {
-        m_dataStore->Store(executionReport);
-        m_orderSubscriptions.Publish(executionReport,
-          [&] (auto& clients) {
-            Beam::Services::BroadcastRecordMessage<OrderUpdateMessage>(clients,
-              **executionReport);
-          });
-        m_executionReportSubscriptions.Publish(executionReport,
-          [&] (auto& clients) {
-            Beam::Services::BroadcastRecordMessage<ExecutionReportMessage>(
-              clients, executionReport);
-          });
-      });
+    try {
+      m_registry.Publish(
+        Beam::Queries::MakeIndexedValue(executionReport, account),
+        [&] {
+          return LoadInitialSequences(*m_dataStore, account);
+        },
+        [&] (auto& executionReport) {
+          m_dataStore->Store(executionReport);
+          m_orderSubscriptions.Publish(executionReport,
+            [&] (auto& clients) {
+              Beam::Services::BroadcastRecordMessage<OrderUpdateMessage>(
+                clients, **executionReport);
+            });
+          m_executionReportSubscriptions.Publish(executionReport,
+            [&] (auto& clients) {
+              Beam::Services::BroadcastRecordMessage<ExecutionReportMessage>(
+                clients, executionReport);
+            });
+        });
+    } catch(const std::exception& e) {
+      std::cout << BEAM_REPORT_CURRENT_EXCEPTION() << std::flush;
+    }
   }
 
   template<typename ContainerType, typename TimeClientType,
@@ -641,7 +644,6 @@ namespace OrderExecutionService {
     auto& session = client.GetSession();
     m_driver->Cancel(session, orderId);
   }
-}
 }
 
 #endif
