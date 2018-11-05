@@ -7,7 +7,7 @@ interface Properties {
   size: number | string;
 
   /** The onClick event handler. */
-  onClick(event?: React.MouseEvent<any>): void;
+  onClick?(event?: React.MouseEvent<any>): void;
 
   /** Determines if the checkmark is currenly active(green) or inactive(grey) */
   isChecked: boolean;
@@ -15,7 +15,8 @@ interface Properties {
 
 /** Displays a check mark button. */
 export class CheckMarkButton extends React.Component<Properties, {}> {
-  static defaultProps = {
+
+  static readonly defaultProps = {
     onClick: () => {}
   }
 
@@ -24,7 +25,6 @@ export class CheckMarkButton extends React.Component<Properties, {}> {
   }
 
   public render(): JSX.Element {
-    const {onClick} = this.props;
     const source = (() => {
       if(this.props.isChecked) {
         return (
@@ -39,7 +39,7 @@ export class CheckMarkButton extends React.Component<Properties, {}> {
         alt='checkbox'
         height={this.props.size}
         width={this.props.size}
-        onClick={onClick}
+        onClick={this.props.onClick}
         style={CheckMarkButton.STYLE.base}/>);
   }
 
