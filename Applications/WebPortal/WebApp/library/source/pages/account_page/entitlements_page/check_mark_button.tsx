@@ -15,7 +15,6 @@ interface Properties {
 
 /** Displays a check mark button. */
 export class CheckMarkButton extends React.Component<Properties, {}> {
-
   static readonly defaultProps = {
     onClick: () => {}
   }
