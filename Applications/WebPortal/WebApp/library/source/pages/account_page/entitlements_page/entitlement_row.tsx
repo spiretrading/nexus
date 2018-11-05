@@ -6,7 +6,7 @@ import {DropDownButton} from '../../../components';
 
 interface Properties {
   entitlementEntry?: Nexus.EntitlementDatabase.Entry;
-  currencyEntry?: Nexus.CurrencyDatabase.Entry; //is this needed if ED Entry has a currency????
+  currencyEntry: Nexus.CurrencyDatabase.Entry; //is this needed if ED Entry has a currency????
   isSecurityActive: boolean;
 }
 export class EntitlementRow extends React.Component<Properties, {}> {
@@ -26,9 +26,8 @@ export class EntitlementRow extends React.Component<Properties, {}> {
      }
      })();
     */
-    const ammount = '$' +
-      '100'+ ' ' +
-      'USD';
+    const ammount = this.props.currencyEntry.sign + 
+      '100' + ' ' + this.props.currencyEntry.code ;
     const name = 'Beep'
     const isCheckMarkChecked = (() => {
       if(this.props.isSecurityActive){
@@ -51,9 +50,7 @@ export class EntitlementRow extends React.Component<Properties, {}> {
             isChecked={isCheckMarkChecked}
           />
           <div style={padding}/>
-          <div>
           <DropDownButton size={buttonSize}/>
-          </div>
           <div style={padding}/>
           <div style={{...EntitlementRow.STYLE.textBase}}>
             {name}
@@ -72,7 +69,6 @@ export class EntitlementRow extends React.Component<Properties, {}> {
       display: 'flex ' as 'flex ',
       flexDirection: 'row' as 'row',
       flexWrap: 'nowrap' as 'nowrap',
-      //alignItems: 'flex-end' as 'flex-end',
     },
     desktopPaddingStyle: {
       width: '20px'
