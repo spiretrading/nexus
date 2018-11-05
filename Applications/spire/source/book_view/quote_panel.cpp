@@ -3,6 +3,7 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include "spire/book_view/book_view_model.hpp"
+#include "spire/book_view/quote_panel_indicator_widget.hpp"
 #include "spire/spire/dimensions.hpp"
 
 using namespace Nexus;
@@ -15,7 +16,7 @@ QuotePanel::QuotePanel(const BookViewModel& model, Side side,
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
-  m_indicator_widget = new QWidget(this);
+  m_indicator_widget = new QuotePanelIndicatorWidget(this);
   m_indicator_widget->setFixedHeight(scale_height(2));
   m_indicator_widget->setAutoFillBackground(true);
   layout->addWidget(m_indicator_widget);
@@ -47,7 +48,7 @@ QuotePanel::QuotePanel(const BookViewModel& model, Side side,
 }
 
 void QuotePanel::set_model(const BookViewModel& model) {
-  set_indicator_color("#C8C8C8");
+  m_indicator_widget->set_color("#C8C8C8");
   m_current_bbo = model.get_bbo();
   if(m_side == Side::BID) {
     set_quote_text(m_current_bbo.m_bid.m_price, m_current_bbo.m_bid.m_size);
@@ -56,11 +57,6 @@ void QuotePanel::set_model(const BookViewModel& model) {
   }
   m_bbo_connection = model.connect_bbo_slot(
     [=] (auto& b) { on_bbo_quote(b); });
-}
-
-void QuotePanel::set_indicator_color(const QColor& color) {
-  m_indicator_widget->setStyleSheet(
-    QString("background-color: %1").arg(color.name()));
 }
 
 void QuotePanel::set_quote_text(const Money& price, const Quantity& size) {
@@ -81,9 +77,9 @@ void QuotePanel::on_bbo_quote(const BboQuote& bbo) {
   auto quote = get_quote(bbo);
   auto current_quote = get_quote(m_current_bbo);
   if(quote.m_price > current_quote.m_price) {
-    set_indicator_color("#37D186");
+    m_indicator_widget->animate_color("#37D186");
   } else if(quote.m_price < current_quote.m_price) {
-    set_indicator_color("#FF6F7A");
+    m_indicator_widget->animate_color("#FF6F7A");
   }
   set_quote_text(quote.m_price, quote.m_size);
   m_current_bbo = bbo;
