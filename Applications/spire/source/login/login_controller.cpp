@@ -12,21 +12,22 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
-LoginController::LoginController(ServiceClientsFactory service_clients_factory)
-    : m_service_clients_factory(std::move(service_clients_factory)) {}
+LoginController::LoginController(std::vector<ServerEntry> servers,
+    ServiceClientsFactory service_clients_factory)
+    : m_servers(std::move(servers)),
+      m_service_clients_factory(std::move(service_clients_factory)) {}
 
 LoginController::~LoginController() = default;
 
-std::unique_ptr<VirtualServiceClients>&
-    LoginController::get_service_clients() {
+std::unique_ptr<VirtualServiceClients>& LoginController::get_service_clients() {
   return m_service_clients;
 }
 
 void LoginController::open() {
   m_login_window = std::make_unique<LoginWindow>(SPIRE_VERSION);
   m_login_window->connect_login_signal(
-    [=] (auto&& p1, auto&& p2) {on_login(p1, p2);});
-  m_login_window->connect_cancel_signal([=] () {on_cancel();});
+    [=] (const auto& p1, const auto& p2) { on_login(p1, p2); });
+  m_login_window->connect_cancel_signal([=] () { on_cancel(); });
   m_login_window->show();
 }
 
@@ -37,14 +38,15 @@ connection LoginController::connect_logged_in_signal(
 
 void LoginController::on_login(const std::string& username,
     const std::string& password) {
-  auto service_clients = m_service_clients_factory(username, password);
+  auto service_clients = m_service_clients_factory(username, password,
+    m_servers.front().m_address);
   m_login_promise = make_qt_promise(
     [=, service_clients = std::move(service_clients)] () mutable {
       service_clients->Open();
       return std::move(service_clients);
     });
   m_login_promise.then(
-    [=] (auto&& result) {on_login_promise(std::move(result));});
+    [=] (auto&& result) { on_login_promise(std::move(result)); });
 }
 
 void LoginController::on_cancel() {

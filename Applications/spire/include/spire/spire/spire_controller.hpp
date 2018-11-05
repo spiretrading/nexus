@@ -1,11 +1,11 @@
 #ifndef SPIRE_CONTROLLER_HPP
 #define SPIRE_CONTROLLER_HPP
 #include <memory>
-#include <optional>
+#include <vector>
 #include <Beam/Network/Network.hpp>
 #include <Beam/Threading/Threading.hpp>
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
-#include "spire/login/login.hpp"
+#include "spire/login/login_controller.hpp"
 #include "spire/spire/spire.hpp"
 #include "spire/toolbar/toolbar.hpp"
 
@@ -37,7 +37,7 @@ namespace Spire {
       std::unique_ptr<Nexus::VirtualServiceClients> m_service_clients;
       std::unique_ptr<ToolbarController> m_toolbar_controller;
 
-      std::optional<Beam::Network::IpAddress> load_ip_address();
+      std::vector<LoginController::ServerEntry> load_server_entries();
       void on_login();
   };
 }

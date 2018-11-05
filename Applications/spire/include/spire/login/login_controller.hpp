@@ -3,6 +3,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <Beam/Network/IpAddress.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/ServiceClients/ServiceClients.hpp"
 #include "spire/login/login.hpp"
@@ -14,6 +15,16 @@ namespace Spire {
   class LoginController : private boost::noncopyable {
     public:
 
+      //! Specifies a server to connect to.
+      struct ServerEntry {
+
+        //! The name of the server.
+        std::string m_name;
+
+        //! The server's address.
+        Beam::Network::IpAddress m_address;
+      };
+
       //! Signals a successful login.
       using LoggedInSignal = Signal<void ()>;
 
@@ -21,19 +32,23 @@ namespace Spire {
       /*!
         \param username The username to login with.
         \param password The password to login with.
+        \param address The IpAddress to connect to.
         \return The service clients used to login to Spire.
       */
       using ServiceClientsFactory = std::function<
         std::unique_ptr<Nexus::VirtualServiceClients>(
-        const std::string& username, const std::string& password)>;
+        const std::string& username, const std::string& password,
+        const Beam::Network::IpAddress& address)>;
 
       //! Constructs a login controller in a state ready to display the login
       //! window.
       /*!
+        \param servers The list of servers available to connect to.
         \param service_clients_factory Builds the service clients used to
                login to Spire.
       */
-      LoginController(ServiceClientsFactory service_clients_factory);
+      LoginController(std::vector<ServerEntry> servers,
+        ServiceClientsFactory service_clients_factory);
 
       ~LoginController();
 
@@ -48,11 +63,12 @@ namespace Spire {
         const LoggedInSignal::slot_type& slot) const;
 
     private:
-      mutable LoggedInSignal m_logged_in_signal;
+      std::vector<ServerEntry> m_servers;
       ServiceClientsFactory m_service_clients_factory;
       std::unique_ptr<LoginWindow> m_login_window;
       QtPromise<std::unique_ptr<Nexus::VirtualServiceClients>> m_login_promise;
       std::unique_ptr<Nexus::VirtualServiceClients> m_service_clients;
+      mutable LoggedInSignal m_logged_in_signal;
 
       void on_login(const std::string& username, const std::string& password);
       void on_cancel();

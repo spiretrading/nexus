@@ -27,61 +27,70 @@ void SpireController::open() {
   if(m_state != State::NONE) {
     return;
   }
-  auto ip_address = load_ip_address();
-  if(!ip_address.has_value()) {
-    return;
-  }
   auto service_clients_factory =
-    [=] (auto&& username, auto&& password) {
+    [=] (const auto& username, const auto& password, const auto& address) {
       return MakeVirtualServiceClients(
-        std::make_unique<ApplicationServiceClients>(*ip_address, username,
+        std::make_unique<ApplicationServiceClients>(address, username,
         password, Ref(*m_socket_thread_pool), Ref(*m_timer_thread_pool)));
     };
+  auto server_entries = load_server_entries();
+  if(server_entries.empty()) {
+    QMessageBox::critical(nullptr, QObject::tr("Error"),
+      QObject::tr("Invalid configuration file."));
+    return;
+  }
   m_login_controller = std::make_unique<LoginController>(
-    service_clients_factory);
+    std::move(server_entries), service_clients_factory);
   m_login_controller->connect_logged_in_signal([=]{on_login();});
   m_state = State::LOGIN;
   m_login_controller->open();
 }
 
-std::optional<IpAddress> SpireController::load_ip_address() {
+std::vector<LoginController::ServerEntry>
+    SpireController::load_server_entries() {
   auto application_path = QStandardPaths::writableLocation(
     QStandardPaths::DataLocation);
-  std::filesystem::path config_path = application_path.toStdString();
+  auto config_path = std::filesystem::path(application_path.toStdString());
   if(!std::filesystem::exists(config_path)) {
     std::filesystem::create_directories(config_path);
   }
   config_path /= "config.yml";
   if(!std::filesystem::is_regular_file(config_path)) {
-    std::ofstream config_file(config_path);
+    auto config_file = std::ofstream(config_path);
     config_file <<
       "---\n"
-      "address: 127.0.0.1:20000\n"
-      "...\n";
+      "servers:\n"
+      "  - name: Local Environment\n"
+      "    address: 127.0.0.1:20000\n"
+      "...";
   }
-  YAML::Node config;
+  auto config = YAML::Node();
   try {
-    std::ifstream config_stream(config_path);
+    auto config_stream = std::ifstream(config_path);
     if(!config_stream.good()) {
       QMessageBox::critical(nullptr, QObject::tr("Error"),
         QObject::tr("Unable to load configuration: config.yml"));
-      return std::nullopt;
+      return {};
     }
     config = YAML::Load(config_stream);
   } catch(const YAML::ParserException&) {
     QMessageBox::critical(nullptr, QObject::tr("Error"),
       QObject::tr("Invalid configuration file."));
-    return std::nullopt;
+    return {};
   }
-  IpAddress address;
-  try {
-    address = Extract<IpAddress>(config, "address");
-  } catch(const std::exception&) {
+  auto servers = std::vector<LoginController::ServerEntry>();
+  if(!config["servers"]) {
     QMessageBox::critical(nullptr, QObject::tr("Error"),
-      QObject::tr("Invalid configuration file."));
-    return std::nullopt;
+      QObject::tr("Unable to load configuration: config.yml"));
+    return {};
   }
-  return address;
+  auto server_list = GetNode(config, "servers");
+  for(auto server : server_list) {
+    auto name = Extract<std::string>(server, "name");
+    auto address = Extract<IpAddress>(server, "address");
+    servers.push_back({name, address});
+  }
+  return servers;
 }
 
 void SpireController::on_login() {
