@@ -16,6 +16,7 @@ export class EntitlementRow extends React.Component<Properties, {}> {
 
   public render(): JSX.Element {
     const buttonSize = '16px'; // can be 16 or 20 px
+    const padding = EntitlementRow.STYLE.desktopPaddingStyle;
     /** 
     const buttonSize = (() => {
      if(size is mobile) {
@@ -28,10 +29,11 @@ export class EntitlementRow extends React.Component<Properties, {}> {
     const ammount = '$' +
       '100'+ ' ' +
       'USD';
+    const name = 'Beep'
     const belowFoldAmmountStyle = 0; //if desktop, hidden
     const aboveFoldAmmountStyle = 0; //if mobile, hidden
     const ammountColor = (() => {
-      if(this.props.entitlementEntry){
+      if(this.props.isSecurityActive){
         return EntitlementRow.STYLE.greenCheckMark;
       } else {
         return EntitlementRow.STYLE.greyCheckMark;
@@ -39,14 +41,24 @@ export class EntitlementRow extends React.Component<Properties, {}> {
     })();
     return (
         <div style={EntitlementRow.STYLE.container}>
+
           <CheckMarkButton 
             size={buttonSize}
             isChecked
             />
+
+          <div style={padding}/>
+
           <DropDownButton size={buttonSize}/>
-          <div style={EntitlementRow.STYLE.textBase}>
+
+          <div style={padding}/>
+
+          <div style={{...EntitlementRow.STYLE.textBase}}>
             {name}
           </div>
+
+          <div style={EntitlementRow.STYLE.filler}/>
+
           <div style={{...EntitlementRow.STYLE.textBase}}>
             {ammount}
           </div>
@@ -55,22 +67,27 @@ export class EntitlementRow extends React.Component<Properties, {}> {
 
   private static readonly STYLE = {
     container: {
-      width: '800px',
-      display: 'inline-flex ' as 'inline-flex ',
+      display: 'flex ' as 'flex ',
       flexDirection: 'row' as 'row',
-      //flexWrap: 'nowrap' as 'nowrap',
+      flexWrap: 'nowrap' as 'nowrap',
       //alignItems: 'flex-end' as 'flex-end',
     },
-    desktopButtonStyle: {
-      paddingLeft: '20px'
+    desktopPaddingStyle: {
+      width: '20px'
     },
     mobileButtonStyle:{
-      paddingLeft: '18px'
+      width: '18px'
+    },
+    filler:{
+       flexGrow: 1
+    },
+    name: {
+      font: '400 14px Roboto',
     },
     textBase: {
-      font: 'Roboto',
-      fontSize: '14px'
+      font: '400 14px Roboto',
     },
+
     greenCheckMark: {
       color: '#36BB55'
     },

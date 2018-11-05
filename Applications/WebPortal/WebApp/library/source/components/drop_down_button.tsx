@@ -129,7 +129,7 @@ export class DropDownButton extends React.Component<Properties, State> {
   };
   private static readonly ANIMATION = StyleSheet.create({
     noAnimation: {
-      position: 'static' as 'static',
+      position: 'absolute'
     },
     noAnimationHidden: {
       position: 'absolute',
@@ -148,17 +148,15 @@ export class DropDownButton extends React.Component<Properties, State> {
       animationName: DropDownButton.CLOSE_AND_FADEOUT
     },
     spinOpenFadeIn: {
-      position: 'static' as 'static',
       animationName: DropDownButton.OPEN_AND_FADEIN
     },
     spinCloseFadeIn:{
-      position: 'static' as 'static',
       animationName: DropDownButton.CLOSE_AND_FADE_IN
     }
   });
   public static readonly STYLE = {
     containerStyle: {
-      position: 'static' as 'static',
+      position: 'relative' as 'relative',
       cursor: 'pointer'
     }
   };
