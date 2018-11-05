@@ -18,6 +18,7 @@ export class CheckMarkButton extends React.Component<Properties, {}> {
   static defaultProps = {
     onClick: () => {}
   }
+  
   constructor(properties: Properties) {
     super(properties);
   }
