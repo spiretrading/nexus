@@ -1,5 +1,6 @@
 #ifndef SPIRE_QUOTE_PANEL_INDICATOR_WIDGET_HPP
 #define SPIRE_QUOTE_PANEL_INDICATOR_WIDGET_HPP
+#include <chrono>
 #include <QTimer>
 #include <QWidget>
 
@@ -30,8 +31,13 @@ namespace Spire {
       void paintEvent(QPaintEvent* event) override;
 
     private:
+      static constexpr auto FADE_TIME_MS = 400;
       QColor m_color;
       QTimer m_animation_timer;
+      std::chrono::time_point<std::chrono::high_resolution_clock>
+        m_animation_start;
+
+      void on_animation_timer();
   };
 }
 
