@@ -2,25 +2,32 @@ import * as React from 'react';
 import * as Nexus from 'nexus';
 import {CheckMarkButton} from '.';
 import {DropDownButton} from '../../../components';
-import { throws } from 'assert';
 
 
 interface Properties {
   entitlementEntry?: Nexus.EntitlementDatabase.Entry;
-  currencyEntry: Nexus.CurrencyDatabase.Entry; //is this needed if ED Entry has a currency????
+  currencyEntry: Nexus.CurrencyDatabase.Entry;
   isSecurityActive: boolean;
 }
-export class EntitlementRow extends React.Component<Properties, {}> {
+
+interface State {
+  isOpen: boolean;
+}
+
+export class EntitlementRow extends React.Component<Properties, State> {
   constructor(properties: Properties) {
     super(properties);
+    this.state = {
+      isOpen: false
+    };
+    this.showApplicabilityTable = this.showApplicabilityTable.bind(this);
   }
 
   public render(): JSX.Element {
     const buttonSize = '16px';
     const padding = EntitlementRow.STYLE.desktopPaddingStyle;
-    const ammount = this.props.currencyEntry.sign + 
-      this.props.entitlementEntry.name + ' ' + this.props.currencyEntry.code ;
-    const name = 'Beep'
+    const ammount = this.props.currencyEntry.sign +
+      this.props.entitlementEntry.price.toString() + ' ' + this.props.currencyEntry.code ;
     const isCheckMarkChecked = (() => {
       if(this.props.isSecurityActive){
         return true;
@@ -35,6 +42,13 @@ export class EntitlementRow extends React.Component<Properties, {}> {
         return EntitlementRow.STYLE.greyCheckMark;
       }
     })();
+    const nameColor = (() => {
+      if(this.state.isOpen){
+        return EntitlementRow.STYLE.activeName;
+      } else {
+        return undefined;
+      }
+    })();
     return (
         <div style={EntitlementRow.STYLE.container}>
           <CheckMarkButton 
@@ -42,10 +56,11 @@ export class EntitlementRow extends React.Component<Properties, {}> {
             isChecked={isCheckMarkChecked}
           />
           <div style={padding}/>
-          <DropDownButton size={buttonSize}/>
+          <DropDownButton size={buttonSize}
+            onClick={this.showApplicabilityTable}/>
           <div style={padding}/>
-          <div style={{...EntitlementRow.STYLE.textBase}}>
-            {name}
+          <div style={{...EntitlementRow.STYLE.textBase, ...nameColor}}>
+            {this.props.entitlementEntry.name}
           </div>
           <div style={EntitlementRow.STYLE.filler}/>
           <div style={{...EntitlementRow.STYLE.textBase,
@@ -55,9 +70,14 @@ export class EntitlementRow extends React.Component<Properties, {}> {
       </div>);
   }
 
+  private showApplicabilityTable(): void {
+    this.setState({ isOpen: !this.state.isOpen});
+  }
+
   private static readonly STYLE = {
     container: {
       width: '100%',
+      height: '40px',
       display: 'flex ' as 'flex ',
       flexDirection: 'row' as 'row',
       flexWrap: 'nowrap' as 'nowrap',
@@ -74,6 +94,9 @@ export class EntitlementRow extends React.Component<Properties, {}> {
     textBase: {
       font: '400 14px Roboto',
     },
+    activeName: {
+      color: '#4B23A0'
+    },
     greenCheckMark: {
       color: '#36BB55'
     },
@@ -82,3 +105,6 @@ export class EntitlementRow extends React.Component<Properties, {}> {
     }
   };
 }
+
+
+
