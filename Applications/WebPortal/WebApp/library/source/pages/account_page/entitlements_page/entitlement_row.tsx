@@ -59,9 +59,12 @@ export class EntitlementRow extends React.Component<Properties, State> {
         return EntitlementRow.STYLE.desktopPaddingStyle;
       }
     })();
-    const amount = this.props.currencyEntry.sign +
+    const ammount = this.props.currencyEntry.sign +
       this.props.entitlementEntry.price.toString() + ' ' +
       this.props.currencyEntry.code ;
+    const amount = `${this.props.currencyEntry.sign}${
+      this.props.entitlementEntry.price.toString()} ${
+      this.props.currencyEntry.code}`;
     const amountColor = (() => {
       if(this.props.isSecurityActive) {
         return EntitlementRow.STYLE.greenCheckMark;
