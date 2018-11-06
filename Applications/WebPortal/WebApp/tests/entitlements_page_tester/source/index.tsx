@@ -1,4 +1,3 @@
-import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
@@ -17,23 +16,34 @@ const buttontest = (
   <WebPortal.HBoxLayout height='100%' width='100%'>
     <WebPortal.Padding size='10%'/> 
     <WebPortal.VBoxLayout height='100%' width='80%'>
-      <WebPortal.Padding />
-      <div>
-        <WebPortal.EntitlementRow 
+      <WebPortal.Padding size='30%'/>
+      <WebPortal.EntitlementRow 
         isSecurityActive
         currencyEntry={cEntry1}
-        entitlementEntry={entitlementEntry1}/>
-      </div>
-      <div>
-        <WebPortal.EntitlementRow 
+        entitlementEntry={entitlementEntry1}
+        breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.SMALL}/>
+      <WebPortal.EntitlementRow 
         isSecurityActive={false}
         currencyEntry={cEntry2}
-        entitlementEntry={entitlementEntry2}/>
-      </div>
-      <WebPortal.Padding/>
+        entitlementEntry={entitlementEntry2}
+        breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.SMALL}/>
+      <WebPortal.Padding size='80px'/>
+      <WebPortal.EntitlementRow 
+        isSecurityActive
+        currencyEntry={cEntry1}
+        entitlementEntry={entitlementEntry1}
+        breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.MEDIUM}/>
+      <WebPortal.EntitlementRow 
+        isSecurityActive={false}
+        currencyEntry={cEntry2}
+        entitlementEntry={entitlementEntry2}
+        breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.MEDIUM}/>
+      <WebPortal.Padding size='30%'/>
     </WebPortal.VBoxLayout>
     <WebPortal.Padding size='10%'/> 
   </WebPortal.HBoxLayout>);
 
 ReactDOM.render(buttontest,
   document.getElementById('main'));
+
+

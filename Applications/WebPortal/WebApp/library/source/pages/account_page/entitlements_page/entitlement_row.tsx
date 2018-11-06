@@ -2,14 +2,13 @@ import * as React from 'react';
 import * as Nexus from 'nexus';
 import {CheckMarkButton} from '.';
 import {DropDownButton} from '../../../components';
-import { EntitlementsPage } from './entitlements_page';
-
+import {EntitlementsPageSizing} from './entitlements_page';
 
 interface Properties {
   entitlementEntry?: Nexus.EntitlementDatabase.Entry;
   currencyEntry: Nexus.CurrencyDatabase.Entry;
   isSecurityActive: boolean;
-  breakpoint: EntitlementsPage.BreakPoint;
+  breakpoint?: EntitlementsPageSizing.BreakPoint;
 }
 
 interface State {
@@ -26,34 +25,61 @@ export class EntitlementRow extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const buttonSize = '16px';
-    const padding = EntitlementRow.STYLE.desktopPaddingStyle;
+    const containerStyle = (() => {
+        switch(this.props.breakpoint) {
+          case EntitlementsPageSizing.BreakPoint.SMALL:
+            return {...EntitlementRow.STYLE.container,
+              ...EntitlementRow.STYLE.smallContainer};
+          case EntitlementsPageSizing.BreakPoint.MEDIUM:
+            return {...EntitlementRow.STYLE.container,
+              ...EntitlementRow.STYLE.mediumContainer};
+          case EntitlementsPageSizing.BreakPoint.LARGE:
+            return {...EntitlementRow.STYLE.container,
+              ...EntitlementRow.STYLE.largeContainer};
+        }
+    })();
+    const buttonSize = (() => {
+      if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
+        return '20px';
+      } else {
+        return '16px';
+      }
+    })();
+    const nameColor = (() => {
+      if(this.state.isOpen) {
+        return EntitlementRow.STYLE.activeName;
+      } else {
+        return undefined;
+      }
+    })();
+    const padding = (() => {
+      if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
+        return EntitlementRow.STYLE.mobileButtonStyle;
+      } else {
+        return EntitlementRow.STYLE.desktopPaddingStyle;
+      }
+    })();
     const ammount = this.props.currencyEntry.sign +
-      this.props.entitlementEntry.price.toString() + ' ' + this.props.currencyEntry.code ;
+      this.props.entitlementEntry.price.toString() + ' ' +
+      this.props.currencyEntry.code ;
     const isCheckMarkChecked = (() => {
-      if(this.props.isSecurityActive){
+      if(this.props.isSecurityActive) {
         return true;
       } else {
         return false;
       }
     })();
     const ammountColor = (() => {
-      if(this.props.isSecurityActive){
+      if(this.props.isSecurityActive) {
         return EntitlementRow.STYLE.greenCheckMark;
       } else {
         return EntitlementRow.STYLE.greyCheckMark;
       }
     })();
-    const nameColor = (() => {
-      if(this.state.isOpen){
-        return EntitlementRow.STYLE.activeName;
-      } else {
-        return undefined;
-      }
-    })();
+
     return (
-        <div style={EntitlementRow.STYLE.container}>
-          <CheckMarkButton 
+        <div style={containerStyle}>
+          <CheckMarkButton
             size={buttonSize}
             isChecked={isCheckMarkChecked}
           />
@@ -65,8 +91,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
             {this.props.entitlementEntry.name}
           </div>
           <div style={EntitlementRow.STYLE.filler}/>
-          <div style={{...EntitlementRow.STYLE.textBase,
-              ...ammountColor}}>
+          <div style={{...EntitlementRow.STYLE.textBase, ...ammountColor}}>
             {ammount}
           </div>
       </div>);
@@ -78,11 +103,21 @@ export class EntitlementRow extends React.Component<Properties, State> {
 
   private static readonly STYLE = {
     container: {
-      width: '100%',
       height: '40px',
       display: 'flex ' as 'flex ',
       flexDirection: 'row' as 'row',
       flexWrap: 'nowrap' as 'nowrap',
+      //alignItems: 'center' as 'center'
+    },
+    smallContainer: {
+      minWidth: '320px',
+      maxWidth: '460px'
+    },
+    mediumContainer: {
+      width: '732px'
+    },
+    largeContainer:{
+      width: '1000px'
     },
     desktopPaddingStyle: {
       width: '20px'
@@ -94,7 +129,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
        flexGrow: 1
     },
     textBase: {
-      font: '400 14px Roboto',
+      font: '400 14px Roboto'
     },
     activeName: {
       color: '#4B23A0'

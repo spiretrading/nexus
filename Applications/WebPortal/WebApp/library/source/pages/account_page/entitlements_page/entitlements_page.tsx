@@ -1,10 +1,5 @@
 import * as React from 'react';
 
-enum BreakPointMode {
-  MOBILE,
-  DESKTOP
-}
-
 export class EntitlementsPage extends React.Component<{}, {}> {
   constructor(properties: {}) {
     super(properties);
@@ -15,7 +10,16 @@ export class EntitlementsPage extends React.Component<{}, {}> {
   }
 }
 
+export module EntitlementsPageSizing {
+  export enum BreakPoint {
 
-export module EntitlementsPage {
-  export const BreakPoint = BreakPointMode;
+    /** Page is between 320 and 767 pixels (inclusive). */
+    SMALL,
+
+    /** Page is between 768 and 1035 pixels (inclusive). */
+    MEDIUM,
+
+    /** Page is bigger than 1036px. */
+    LARGE,
+  }
 }
