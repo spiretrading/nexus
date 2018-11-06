@@ -28,9 +28,8 @@ void QuotePanelIndicatorWidget::set_color(const QColor& color) {
 
 void QuotePanelIndicatorWidget::animate_color(const QColor& color) {
   m_color = color;
-  m_color.setAlpha(STARTING_ALPHA);
   m_animation_start = std::chrono::steady_clock::now();
-  m_animation_timer.start();
+  on_animation_timer();
 }
 
 void QuotePanelIndicatorWidget::paintEvent(QPaintEvent* event) {
