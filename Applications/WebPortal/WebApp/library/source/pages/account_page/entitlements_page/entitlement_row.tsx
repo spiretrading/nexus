@@ -76,7 +76,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
         return EntitlementRow.STYLE.greyCheckMark;
       }
     })();
-    const inlineAmmountStyle = (() => {
+    const buttonRowAmmountStyle = (() => {
       if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
         return EntitlementRow.STYLE.hiddenText;
       } else {
@@ -84,22 +84,22 @@ export class EntitlementRow extends React.Component<Properties, State> {
       }
     })();
     return (
-        <div style={containerStyle}>
-          <CheckMarkButton
-            size={buttonSize}
-            isChecked={isCheckMarkChecked}/>
-          <div style={padding}/>
-          <DropDownButton size={buttonSize}
-            onClick={this.showApplicabilityTable}/>
-          <div style={padding}/>
-          <div style={{...EntitlementRow.STYLE.textBase, ...nameColor}}>
-            {this.props.entitlementEntry.name}
-          </div>
-          <div style={EntitlementRow.STYLE.filler}/>
-          <div style={{...EntitlementRow.STYLE.textBase,
-              ...ammountColor, ...inlineAmmountStyle}}>
-            {ammount}
-          </div>
+      <div style={containerStyle}>
+        <CheckMarkButton
+          size={buttonSize}
+          isChecked={isCheckMarkChecked}/>
+        <div style={padding}/>
+        <DropDownButton size={buttonSize}
+          onClick={this.showApplicabilityTable}/>
+        <div style={padding}/>
+        <div style={{...EntitlementRow.STYLE.textBase, ...nameColor}}>
+          {this.props.entitlementEntry.name}
+        </div>
+        <div style={EntitlementRow.STYLE.filler}/>
+        <div style={{...EntitlementRow.STYLE.textBase,
+            ...ammountColor, ...inlineAmmountStyle}}>
+          {ammount}
+        </div>
       </div>);
   }
 
