@@ -31,7 +31,6 @@ namespace Spire {
       void paintEvent(QPaintEvent* event) override;
 
     private:
-      static constexpr auto FADE_TIME_MS = 400;
       QColor m_color;
       QTimer m_animation_timer;
       std::chrono::time_point<std::chrono::high_resolution_clock>

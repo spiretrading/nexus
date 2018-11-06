@@ -2,10 +2,10 @@
 #include <QPainter>
 
 using namespace Spire;
-using MS = std::chrono::milliseconds;
-using SC = std::chrono::steady_clock;
 
 namespace {
+  constexpr auto FADE_TIME_MS = 400;
+
   double map_to(double value, double a1, double a2, double b1, double b2) {
     return ((value - a1) * ((b2 - b1) / (a2 - a1))) + b1;
   }
@@ -36,11 +36,12 @@ void QuotePanelIndicatorWidget::paintEvent(QPaintEvent* event) {
 }
 
 void QuotePanelIndicatorWidget::on_animation_timer() {
-  auto elapsed = std::chrono::duration_cast<MS>(SC::now() - m_animation_start);
+  auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+    std::chrono::steady_clock::now() - m_animation_start);
   if(elapsed.count() >= FADE_TIME_MS) {
     m_color.setAlpha(255);
   } else {
-    m_color.setAlpha(::map_to(elapsed.count(), 0, FADE_TIME_MS, 100, 255));
+    m_color.setAlpha(map_to(elapsed.count(), 0, FADE_TIME_MS, 100, 255));
     m_animation_timer.start();
   }
   update();
