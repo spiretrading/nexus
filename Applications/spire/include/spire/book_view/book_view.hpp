@@ -17,6 +17,7 @@ namespace Spire {
   class LabeledDataWidget;
   class MarketListItem;
   class QuotePanel;
+  class QuotePanelIndicatorWidget;
   class TechnicalsPanel;
 }
 

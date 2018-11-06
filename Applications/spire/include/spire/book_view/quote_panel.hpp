@@ -29,13 +29,12 @@ namespace Spire {
     private:
       Nexus::Side m_side;
       Nexus::BboQuote m_current_bbo;
-      QWidget* m_indicator_widget;
+      QuotePanelIndicatorWidget* m_indicator_widget;
       QLabel* m_price_label;
       QLabel* m_size_label;
       boost::signals2::scoped_connection m_bbo_connection;
       CustomVariantItemDelegate* m_item_delegate;
 
-      void set_indicator_color(const QColor& color);
       void set_quote_text(const Nexus::Money& price,
         const Nexus::Quantity& size);
       void on_bbo_quote(const Nexus::BboQuote& bbo);
