@@ -1,6 +1,5 @@
 #include "spire/time_and_sales/time_and_sales_controller.hpp"
-#include "spire/security_input/local_security_input_model.hpp"
-#include "spire/time_and_sales/empty_time_and_sales_model.hpp"
+#include "spire/time_and_sales/services_time_and_sales_model.hpp"
 #include "spire/time_and_sales/time_and_sales_window.hpp"
 
 using namespace Beam;
@@ -45,7 +44,8 @@ connection TimeAndSalesController::connect_closed_signal(
 }
 
 void TimeAndSalesController::on_change_security(const Security& security) {
-  auto model = std::make_shared<EmptyTimeAndSalesModel>(security);
+  auto model = std::make_shared<ServicesTimeAndSalesModel>(security,
+    Ref(m_service_clients->GetMarketDataClient()));
   m_window->set_model(model);
 }
 

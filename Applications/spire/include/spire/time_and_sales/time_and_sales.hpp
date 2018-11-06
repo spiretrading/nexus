@@ -4,6 +4,7 @@
 
 namespace Spire {
   class EmptyTimeAndSalesModel;
+  class ServicesTimeAndSalesModel;
   class SnapshotLoadingWidget;
   class TimeAndSalesController;
   class TimeAndSalesModel;

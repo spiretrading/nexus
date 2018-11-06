@@ -1,19 +1,23 @@
-#ifndef SPIRE_EMPTY_TIME_AND_SALES_MODEL_HPP
-#define SPIRE_EMPTY_TIME_AND_SALES_MODEL_HPP
+#ifndef SPIRE_SERVICES_TIME_AND_SALES_MODEL_HPP
+#define SPIRE_SERVICES_TIME_AND_SALES_MODEL_HPP
+#include <Beam/Pointers/Ref.hpp>
+#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 #include "spire/time_and_sales/time_and_sales.hpp"
 #include "spire/time_and_sales/time_and_sales_model.hpp"
 
 namespace Spire {
 
-  //! Implements a time and sales model with no entries and no updates.
-  class EmptyTimeAndSalesModel final : public TimeAndSalesModel {
+  //! Implements a time and sales model using remote service calls.
+  class ServicesTimeAndSalesModel final : public TimeAndSalesModel {
     public:
 
-      //! Constructs an empty model.
+      //! Constructs a model.
       /*!
         \param security The security to model.
+        \param client The market data client to query.
       */
-      EmptyTimeAndSalesModel(Nexus::Security security);
+      ServicesTimeAndSalesModel(Nexus::Security security,
+        Beam::Ref<Nexus::MarketDataService::VirtualMarketDataClient> client);
 
       const Nexus::Security& get_security() const override;
 
@@ -30,6 +34,7 @@ namespace Spire {
 
     private:
       Nexus::Security m_security;
+      Nexus::MarketDataService::VirtualMarketDataClient* m_client;
   };
 }
 

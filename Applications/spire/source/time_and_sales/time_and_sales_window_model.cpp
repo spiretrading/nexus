@@ -23,7 +23,7 @@ TimeAndSalesWindowModel::TimeAndSalesWindowModel(
   set_properties(properties);
   m_model.get()->connect_time_and_sale_signal(
     [=] (auto e) { update_data(e); });
-  load_snapshot(Beam::Queries::Sequence::Last());
+  load_snapshot(Beam::Queries::Sequence::Present());
 }
 
 const Security& TimeAndSalesWindowModel::get_security() const {
