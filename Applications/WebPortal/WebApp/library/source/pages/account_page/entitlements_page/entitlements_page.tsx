@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-enum BreakPoint {
+enum BreakPointMode {
   MOBILE,
   DESKTOP
 }
@@ -16,6 +16,6 @@ export class EntitlementsPage extends React.Component<{}, {}> {
 }
 
 
-export module GamePage {
-  //export const this.BreakPoint = BreakPoint;
+export module EntitlementsPage {
+  export const BreakPoint = BreakPointMode;
 }

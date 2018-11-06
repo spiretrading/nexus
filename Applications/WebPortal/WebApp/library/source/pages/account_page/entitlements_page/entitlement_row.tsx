@@ -2,12 +2,14 @@ import * as React from 'react';
 import * as Nexus from 'nexus';
 import {CheckMarkButton} from '.';
 import {DropDownButton} from '../../../components';
+import { EntitlementsPage } from './entitlements_page';
 
 
 interface Properties {
   entitlementEntry?: Nexus.EntitlementDatabase.Entry;
   currencyEntry: Nexus.CurrencyDatabase.Entry;
   isSecurityActive: boolean;
+  breakpoint: EntitlementsPage.BreakPoint;
 }
 
 interface State {
