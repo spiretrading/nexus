@@ -99,8 +99,10 @@ void TimeAndSalesTestControllerWindow::update_data_loaded_check_box() {
 }
 
 void TimeAndSalesTestControllerWindow::update_loading_time() {
-  m_model->set_load_duration(boost::posix_time::milliseconds(
-    m_loading_time_spin_box->value()));
+  if(!m_all_data_loaded_check_box->isChecked()) {
+    m_model->set_load_duration(boost::posix_time::milliseconds(
+      m_loading_time_spin_box->value()));
+  }
 }
 
 void TimeAndSalesTestControllerWindow::update_price(double price) {

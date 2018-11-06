@@ -166,7 +166,7 @@ void TimeAndSalesTableView::set_properties(
 }
 
 void TimeAndSalesTableView::show_transition_widget() {
-  if(m_table->model()->rowCount(QModelIndex()) == 0) {
+  if(m_table->model()->rowCount(QModelIndex()) == 0 && m_model->is_loading()) {
     m_transition_widget = std::make_unique<TransitionWidget>(this);
   }
 }
@@ -302,7 +302,7 @@ void TimeAndSalesTableView::on_vertical_slider_value_changed(
     return;
   }
   m_model->set_row_visible(m_table->rowAt(
-    widget()->visibleRegion().boundingRect().top()));
+    widget()->visibleRegion().boundingRect().bottom()));
 }
 
 void TimeAndSalesTableView::on_rows_about_to_be_inserted(
