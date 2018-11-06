@@ -16,34 +16,34 @@ const test = (
     <WebPortal.VBoxLayout height='100%' width='80%'>
       <WebPortal.Padding size='30%'/>
       <WebPortal.EntitlementRow
-        isSecurityActive
+        isActive
         currencyEntry={cEntry1}
         entitlementEntry={entitlementEntry1}
         breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.SMALL}/>
       <WebPortal.EntitlementRow
-        isSecurityActive={false}
+        isActive={false}
         currencyEntry={cEntry2}
         entitlementEntry={entitlementEntry2}
         breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.SMALL}/>
       <WebPortal.Padding size='80px'/>
       <WebPortal.EntitlementRow
-        isSecurityActive
+        isActive
         currencyEntry={cEntry1}
         entitlementEntry={entitlementEntry1}
         breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.MEDIUM}/>
       <WebPortal.EntitlementRow
-        isSecurityActive={false}
+        isActive={false}
         currencyEntry={cEntry2}
         entitlementEntry={entitlementEntry2}
         breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.MEDIUM}/>
       <WebPortal.Padding size='80px'/>
       <WebPortal.EntitlementRow
-        isSecurityActive
+        isActive
         currencyEntry={cEntry1}
         entitlementEntry={entitlementEntry1}
         breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.LARGE}/>
       <WebPortal.EntitlementRow
-        isSecurityActive={false}
+        isActive={false}
         currencyEntry={cEntry2}
         entitlementEntry={entitlementEntry2}
         breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.LARGE}/>

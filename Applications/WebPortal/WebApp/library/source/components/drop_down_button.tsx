@@ -16,6 +16,10 @@ interface State {
 }
 
 export class DropDownButton extends React.Component<Properties, State> {
+  static readonly defaultProps = {
+    onClick: () => {}
+  }
+
   constructor(properties: Properties) {
     super(properties);
     this.state = {
@@ -76,19 +80,18 @@ export class DropDownButton extends React.Component<Properties, State> {
   }
 
   private onClick() {
-    if(this.props.onClick) {
-      if(this.state.isFirstTime) {
-        this.setState({
-          isFirstTime: false,
-          isExpanded: !this.state.isExpanded
-        });
-      } else {
-        this.setState({
-          isExpanded: !this.state.isExpanded
-        });
-      }
-      this.props.onClick();
+    if(this.state.isFirstTime) {
+      this.setState({
+        isFirstTime: false,
+        isExpanded: !this.state.isExpanded
+      });
+    } else {
+      this.setState({
+        isExpanded: !this.state.isExpanded
+      });
     }
+    this.props.onClick();
+
   }
 
   private static readonly OPEN_AND_FADEOUT = {
