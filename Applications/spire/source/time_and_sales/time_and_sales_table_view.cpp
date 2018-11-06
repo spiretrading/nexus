@@ -302,7 +302,7 @@ void TimeAndSalesTableView::on_vertical_slider_value_changed(
     return;
   }
   m_model->set_row_visible(m_table->rowAt(
-    widget()->visibleRegion().boundingRect().top()));
+    widget()->visibleRegion().boundingRect().bottom()));
 }
 
 void TimeAndSalesTableView::on_rows_about_to_be_inserted(
