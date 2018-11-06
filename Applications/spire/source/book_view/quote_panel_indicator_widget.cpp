@@ -5,6 +5,7 @@ using namespace Spire;
 
 namespace {
   constexpr auto FADE_TIME_MS = 400;
+  constexpr auto STARTING_ALPHA = 100;
 
   double map_to(double value, double a1, double a2, double b1, double b2) {
     return ((value - a1) * ((b2 - b1) / (a2 - a1))) + b1;
@@ -15,6 +16,7 @@ QuotePanelIndicatorWidget::QuotePanelIndicatorWidget(QWidget* parent)
     : QWidget(parent),
       m_color(Qt::black) {
   m_animation_timer.setInterval(33);
+  m_animation_timer.setSingleShot(true);
   connect(&m_animation_timer, &QTimer::timeout, this,
     &QuotePanelIndicatorWidget::on_animation_timer);
 }
@@ -26,13 +28,14 @@ void QuotePanelIndicatorWidget::set_color(const QColor& color) {
 
 void QuotePanelIndicatorWidget::animate_color(const QColor& color) {
   m_color = color;
+  m_color.setAlpha(STARTING_ALPHA);
   m_animation_start = std::chrono::steady_clock::now();
   m_animation_timer.start();
 }
 
 void QuotePanelIndicatorWidget::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  painter.fillRect(this->rect(), m_color);
+  painter.fillRect(rect(), m_color);
 }
 
 void QuotePanelIndicatorWidget::on_animation_timer() {
@@ -41,7 +44,8 @@ void QuotePanelIndicatorWidget::on_animation_timer() {
   if(elapsed.count() >= FADE_TIME_MS) {
     m_color.setAlpha(255);
   } else {
-    m_color.setAlpha(map_to(elapsed.count(), 0, FADE_TIME_MS, 100, 255));
+    m_color.setAlpha(map_to(elapsed.count(), 0, FADE_TIME_MS, STARTING_ALPHA,
+      255));
     m_animation_timer.start();
   }
   update();
