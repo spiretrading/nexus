@@ -104,10 +104,11 @@ export class EntitlementRow extends React.Component<Properties, State> {
   private static readonly STYLE = {
     container: {
       height: '40px',
+      boxSizing: 'border-box' as 'border-box',
       display: 'flex ' as 'flex ',
       flexDirection: 'row' as 'row',
       flexWrap: 'nowrap' as 'nowrap',
-      //alignItems: 'center' as 'center'
+      alignItems: 'center' as 'center'
     },
     smallContainer: {
       minWidth: '320px',
@@ -142,6 +143,3 @@ export class EntitlementRow extends React.Component<Properties, State> {
     }
   };
 }
-
-
-

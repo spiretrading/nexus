@@ -59,32 +59,36 @@ export class DropDownButton extends React.Component<Properties, State> {
       }
     })();
     return (
-      <div style={DropDownButton.STYLE.containerStyle}>
-        <img src={endSource}
-          width={this.props.size}
-          height={this.props.size}
-          className={css(DropDownButton.ANIMATION.base, startStyle)}
-          onClick={this.onClick}/>
-        <img src={startSource}
-          width={this.props.size}
-          height={this.props.size}
-          className={css(DropDownButton.ANIMATION.base, endStyle)}
-          onClick={this.onClick}/>
+      <div style={{height: this.props.size}}>
+        <div style={DropDownButton.STYLE.containerStyle}>
+          <img src={endSource}
+            width={this.props.size}
+            height={this.props.size}
+            className={css(DropDownButton.ANIMATION.base, startStyle)}
+            onClick={this.onClick}/>
+          <img src={startSource}
+            width={this.props.size}
+            height={this.props.size}
+            className={css(DropDownButton.ANIMATION.base, endStyle)}
+            onClick={this.onClick}/>
+        </div>
       </div>);
   }
 
   private onClick() {
-    if(this.state.isFirstTime) {
-      this.setState({
-        isFirstTime: false,
-        isExpanded: !this.state.isExpanded
-      });
-    } else {
-      this.setState({
-        isExpanded: !this.state.isExpanded
-      });
+    if(this.props.onClick) {
+      if(this.state.isFirstTime) {
+        this.setState({
+          isFirstTime: false,
+          isExpanded: !this.state.isExpanded
+        });
+      } else {
+        this.setState({
+          isExpanded: !this.state.isExpanded
+        });
+      }
+      this.props.onClick();
     }
-    this.props.onClick();
   }
 
   private static readonly OPEN_AND_FADEOUT = {

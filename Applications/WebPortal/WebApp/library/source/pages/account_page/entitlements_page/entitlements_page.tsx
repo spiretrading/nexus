@@ -20,6 +20,6 @@ export module EntitlementsPageSizing {
     MEDIUM,
 
     /** Page is bigger than 1036px. */
-    LARGE,
+    LARGE
   }
 }
