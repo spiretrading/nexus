@@ -7,7 +7,7 @@ import {EntitlementsPageSizing} from './entitlements_page';
 interface Properties {
   entitlementEntry?: Nexus.EntitlementDatabase.Entry;
   currencyEntry: Nexus.CurrencyDatabase.Entry;
-  isSecurityActive: boolean;
+  isActive: boolean;
   breakpoint: EntitlementsPageSizing.BreakPoint;
 }
 
@@ -59,14 +59,11 @@ export class EntitlementRow extends React.Component<Properties, State> {
         return EntitlementRow.STYLE.desktopPaddingStyle;
       }
     })();
-    const ammount = this.props.currencyEntry.sign +
-      this.props.entitlementEntry.price.toString() + ' ' +
-      this.props.currencyEntry.code ;
     const amount = `${this.props.currencyEntry.sign}${
       this.props.entitlementEntry.price.toString()} ${
       this.props.currencyEntry.code}`;
     const amountColor = (() => {
-      if(this.props.isSecurityActive) {
+      if(this.props.isActive) {
         return EntitlementRow.STYLE.greenCheckMark;
       } else {
         return EntitlementRow.STYLE.greyCheckMark;
@@ -83,7 +80,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
       <div style={containerStyle}>
         <CheckMarkButton
           size={buttonSize}
-          isChecked={this.props.isSecurityActive}/>
+          isChecked={this.props.isActive}/>
         <div style={padding}/>
         <DropDownButton size={buttonSize}
           onClick={this.showApplicabilityTable}/>
