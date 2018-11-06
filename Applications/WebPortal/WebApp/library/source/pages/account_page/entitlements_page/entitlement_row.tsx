@@ -26,17 +26,17 @@ export class EntitlementRow extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const containerStyle = (() => {
-        switch(this.props.breakpoint) {
-          case EntitlementsPageSizing.BreakPoint.SMALL:
-            return {...EntitlementRow.STYLE.container,
-              ...EntitlementRow.STYLE.smallContainer};
-          case EntitlementsPageSizing.BreakPoint.MEDIUM:
-            return {...EntitlementRow.STYLE.container,
-              ...EntitlementRow.STYLE.mediumContainer};
-          case EntitlementsPageSizing.BreakPoint.LARGE:
-            return {...EntitlementRow.STYLE.container,
-              ...EntitlementRow.STYLE.largeContainer};
-        }
+      switch(this.props.breakpoint) {
+        case EntitlementsPageSizing.BreakPoint.SMALL:
+          return {...EntitlementRow.STYLE.container,
+            ...EntitlementRow.STYLE.smallContainer};
+        case EntitlementsPageSizing.BreakPoint.MEDIUM:
+          return {...EntitlementRow.STYLE.container,
+            ...EntitlementRow.STYLE.mediumContainer};
+        case EntitlementsPageSizing.BreakPoint.LARGE:
+          return {...EntitlementRow.STYLE.container,
+            ...EntitlementRow.STYLE.largeContainer};
+      }
     })();
     const buttonSize = (() => {
       if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
@@ -49,7 +49,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
       if(this.state.isOpen) {
         return EntitlementRow.STYLE.activeName;
       } else {
-        return undefined;
+        return null;
       }
     })();
     const padding = (() => {
@@ -59,35 +59,28 @@ export class EntitlementRow extends React.Component<Properties, State> {
         return EntitlementRow.STYLE.desktopPaddingStyle;
       }
     })();
-    const ammount = this.props.currencyEntry.sign +
+    const amount = this.props.currencyEntry.sign +
       this.props.entitlementEntry.price.toString() + ' ' +
       this.props.currencyEntry.code ;
-    const isCheckMarkChecked = (() => {
-      if(this.props.isSecurityActive) {
-        return true;
-      } else {
-        return false;
-      }
-    })();
-    const ammountColor = (() => {
+    const amountColor = (() => {
       if(this.props.isSecurityActive) {
         return EntitlementRow.STYLE.greenCheckMark;
       } else {
         return EntitlementRow.STYLE.greyCheckMark;
       }
     })();
-    const buttonRowAmmountStyle = (() => {
+    const buttonRowAmountStyle = (() => {
       if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
         return EntitlementRow.STYLE.hiddenText;
       } else {
-        return undefined;
+        return null;
       }
     })();
     return (
       <div style={containerStyle}>
         <CheckMarkButton
           size={buttonSize}
-          isChecked={isCheckMarkChecked}/>
+          isChecked={this.props.isSecurityActive}/>
         <div style={padding}/>
         <DropDownButton size={buttonSize}
           onClick={this.showApplicabilityTable}/>
@@ -97,8 +90,8 @@ export class EntitlementRow extends React.Component<Properties, State> {
         </div>
         <div style={EntitlementRow.STYLE.filler}/>
         <div style={{...EntitlementRow.STYLE.textBase,
-            ...ammountColor, ...inlineAmmountStyle}}>
-          {ammount}
+            ...amountColor, ...buttonRowAmountStyle}}>
+          {amount}
         </div>
       </div>);
   }
