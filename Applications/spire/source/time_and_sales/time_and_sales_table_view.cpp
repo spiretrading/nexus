@@ -166,7 +166,7 @@ void TimeAndSalesTableView::set_properties(
 }
 
 void TimeAndSalesTableView::show_transition_widget() {
-  if(m_table->model()->rowCount(QModelIndex()) == 0) {
+  if(m_table->model()->rowCount(QModelIndex()) == 0 && m_model->is_loading()) {
     m_transition_widget = std::make_unique<TransitionWidget>(this);
   }
 }
