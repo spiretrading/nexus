@@ -10,8 +10,7 @@ const cEntry1 = currencyDB.fromCode('USD');
 const entitlementEntry2 = new Nexus.EntitlementDatabase.Entry('TSX Venture',
 Nexus.Money.parse('200'), Nexus.DefaultCurrencies.EUR, null, null);
 const cEntry2 = currencyDB.fromCode('EUR');
-
-const buttontest = (
+const test = (
   <WebPortal.HBoxLayout height='100%' width='100%'>
     <WebPortal.Padding size='10%'/>
     <WebPortal.VBoxLayout height='100%' width='80%'>
@@ -37,10 +36,20 @@ const buttontest = (
         currencyEntry={cEntry2}
         entitlementEntry={entitlementEntry2}
         breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.MEDIUM}/>
-      <WebPortal.Padding size='30%'/>
+      <WebPortal.Padding size='80px'/>
+      <WebPortal.EntitlementRow
+        isSecurityActive
+        currencyEntry={cEntry1}
+        entitlementEntry={entitlementEntry1}
+        breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.LARGE}/>
+      <WebPortal.EntitlementRow
+        isSecurityActive={false}
+        currencyEntry={cEntry2}
+        entitlementEntry={entitlementEntry2}
+        breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.LARGE}/>
     </WebPortal.VBoxLayout>
     <WebPortal.Padding size='10%'/>
   </WebPortal.HBoxLayout>);
 
-ReactDOM.render(buttontest,
+ReactDOM.render(test,
   document.getElementById('main'));

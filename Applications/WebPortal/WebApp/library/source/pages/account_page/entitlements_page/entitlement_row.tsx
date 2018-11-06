@@ -8,7 +8,7 @@ interface Properties {
   entitlementEntry?: Nexus.EntitlementDatabase.Entry;
   currencyEntry: Nexus.CurrencyDatabase.Entry;
   isSecurityActive: boolean;
-  breakpoint?: EntitlementsPageSizing.BreakPoint;
+  breakpoint: EntitlementsPageSizing.BreakPoint;
 }
 
 interface State {
@@ -54,7 +54,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
     })();
     const padding = (() => {
       if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
-        return EntitlementRow.STYLE.mobileButtonStyle;
+        return EntitlementRow.STYLE.mobilePaddingStyle;
       } else {
         return EntitlementRow.STYLE.desktopPaddingStyle;
       }
@@ -76,13 +76,18 @@ export class EntitlementRow extends React.Component<Properties, State> {
         return EntitlementRow.STYLE.greyCheckMark;
       }
     })();
-
+    const inlineAmmountStyle = (() => {
+      if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
+        return EntitlementRow.STYLE.hiddenText;
+      } else {
+        return undefined;
+      }
+    })();
     return (
         <div style={containerStyle}>
           <CheckMarkButton
             size={buttonSize}
-            isChecked={isCheckMarkChecked}
-          />
+            isChecked={isCheckMarkChecked}/>
           <div style={padding}/>
           <DropDownButton size={buttonSize}
             onClick={this.showApplicabilityTable}/>
@@ -91,7 +96,8 @@ export class EntitlementRow extends React.Component<Properties, State> {
             {this.props.entitlementEntry.name}
           </div>
           <div style={EntitlementRow.STYLE.filler}/>
-          <div style={{...EntitlementRow.STYLE.textBase, ...ammountColor}}>
+          <div style={{...EntitlementRow.STYLE.textBase,
+              ...ammountColor, ...inlineAmmountStyle}}>
             {ammount}
           </div>
       </div>);
@@ -123,8 +129,11 @@ export class EntitlementRow extends React.Component<Properties, State> {
     desktopPaddingStyle: {
       width: '20px'
     },
-    mobileButtonStyle:{
+    mobilePaddingStyle:{
       width: '18px'
+    },
+    hiddenText: {
+      visibility: 'hidden' as 'hidden'
     },
     filler:{
        flexGrow: 1
