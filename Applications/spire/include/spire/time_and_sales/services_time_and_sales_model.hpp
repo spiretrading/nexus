@@ -1,9 +1,10 @@
 #ifndef SPIRE_SERVICES_TIME_AND_SALES_MODEL_HPP
 #define SPIRE_SERVICES_TIME_AND_SALES_MODEL_HPP
 #include <Beam/Pointers/Ref.hpp>
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "spire/time_and_sales/time_and_sales.hpp"
 #include "spire/time_and_sales/time_and_sales_model.hpp"
+#include "spire/spire/event_handler.hpp"
 
 namespace Spire {
 
@@ -14,10 +15,10 @@ namespace Spire {
       //! Constructs a model.
       /*!
         \param security The security to model.
-        \param client The market data client to query.
+        \param clients The service clients to query for market data.
       */
       ServicesTimeAndSalesModel(Nexus::Security security,
-        Beam::Ref<Nexus::MarketDataService::VirtualMarketDataClient> client);
+        Beam::Ref<Nexus::VirtualServiceClients> clients);
 
       const Nexus::Security& get_security() const override;
 
@@ -34,7 +35,16 @@ namespace Spire {
 
     private:
       Nexus::Security m_security;
-      Nexus::MarketDataService::VirtualMarketDataClient* m_client;
+      Nexus::VirtualServiceClients* m_clients;
+      Nexus::SequencedBboQuote m_bbo;
+      Nexus::Quantity m_volume;
+      mutable TimeAndSaleSignal m_time_and_sale_signal;
+      mutable VolumeSignal m_volume_signal;
+      EventHandler m_event_handler;
+
+      void on_bbo(const Nexus::SequencedBboQuote& bbo);
+      void on_time_and_sale(const Nexus::SequencedTimeAndSale& time_and_sale);
+      void on_volume(const Nexus::Queries::QueryVariant& volume);
   };
 }
 

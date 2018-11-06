@@ -45,7 +45,7 @@ connection TimeAndSalesController::connect_closed_signal(
 
 void TimeAndSalesController::on_change_security(const Security& security) {
   auto model = std::make_shared<ServicesTimeAndSalesModel>(security,
-    Ref(m_service_clients->GetMarketDataClient()));
+    Ref(*m_service_clients));
   m_window->set_model(model);
 }
 
