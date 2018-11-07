@@ -91,7 +91,6 @@ export class DropDownButton extends React.Component<Properties, State> {
       });
     }
     this.props.onClick();
-
   }
 
   private static readonly OPEN_AND_FADEOUT = {
