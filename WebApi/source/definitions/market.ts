@@ -68,6 +68,27 @@ export class MarketDatabase {
     return MarketDatabase.Entry.NONE;
   }
 
+  /** Adds an entry.
+   * @param entry - The entry to add.
+   */
+  public add(entry: MarketDatabase.Entry): void {
+    if(this.fromCode(entry.code).equals(MarketDatabase.Entry.NONE)) {
+      this._entries.push(entry);
+    }
+  }
+
+  /** Removes an entry.
+   * @param code - The MarketCode whose entry is to be removed.
+   */
+  public delete(code: MarketCode): void {
+    for(let i = 0; i < this._entries.length; ++i) {
+      if(this._entries[i].code.equals(code)) {
+        this._entries.splice(i, 1);
+        break;
+      }
+    }
+  }
+
   /** Converts this object to JSON. */
   public toJson(): any {
     return Beam.arrayToJson(this._entries);
