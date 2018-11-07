@@ -16,6 +16,10 @@ interface State {
 }
 
 export class DropDownButton extends React.Component<Properties, State> {
+  static readonly defaultProps = {
+    onClick: () => {}
+  }
+
   constructor(properties: Properties) {
     super(properties);
     this.state = {
@@ -59,17 +63,19 @@ export class DropDownButton extends React.Component<Properties, State> {
       }
     })();
     return (
-      <div style={DropDownButton.STYLE.containerStyle}>
-        <img src={endSource}
-          width={this.props.size}
-          height={this.props.size}
-          className={css(DropDownButton.ANIMATION.base, startStyle)}
-          onClick={this.onClick}/>
-        <img src={startSource}
-          width={this.props.size}
-          height={this.props.size}
-          className={css(DropDownButton.ANIMATION.base, endStyle)}
-          onClick={this.onClick}/>
+      <div style={{height: this.props.size}}>
+        <div style={DropDownButton.STYLE.containerStyle}>
+          <img src={endSource}
+            width={this.props.size}
+            height={this.props.size}
+            className={css(DropDownButton.ANIMATION.base, startStyle)}
+            onClick={this.onClick}/>
+          <img src={startSource}
+            width={this.props.size}
+            height={this.props.size}
+            className={css(DropDownButton.ANIMATION.base, endStyle)}
+            onClick={this.onClick}/>
+        </div>
       </div>);
   }
 
@@ -129,7 +135,7 @@ export class DropDownButton extends React.Component<Properties, State> {
   };
   private static readonly ANIMATION = StyleSheet.create({
     noAnimation: {
-      position: 'absolute'
+      position: 'static'
     },
     noAnimationHidden: {
       position: 'absolute',
@@ -148,9 +154,11 @@ export class DropDownButton extends React.Component<Properties, State> {
       animationName: DropDownButton.CLOSE_AND_FADEOUT
     },
     spinOpenFadeIn: {
+      position: 'static',
       animationName: DropDownButton.OPEN_AND_FADEIN
     },
     spinCloseFadeIn:{
+      position: 'static',
       animationName: DropDownButton.CLOSE_AND_FADE_IN
     }
   });
