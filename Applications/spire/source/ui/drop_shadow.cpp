@@ -69,53 +69,13 @@ void DropShadow::hideEvent(QHideEvent* event) {
   m_is_visible = false;
 }
 
-#ifdef Q_OS_WIN
 void DropShadow::paintEvent(QPaintEvent* event) {
   if(!m_is_visible) {
     follow_parent();
     m_is_visible = true;
   }
   QPainter painter(this);
-  auto background_color = QColor(0, 0, 0, 1);
-  auto parent_size = m_parent->frameGeometry().size();
-  auto shadow_size = this->shadow_size();
-  auto right_start = shadow_size.width() + parent_size.width();
-  auto bottom_start = shadow_size.height() + parent_size.height();
-  QRect top_left_rect(QPoint(0, 0), shadow_size);
-  QRect top_rect(QPoint(shadow_size.width(), 0),
-    QSize(parent_size.width(), shadow_size.height()));
-  if(m_has_top) {
-    painter.fillRect(top_left_rect, background_color);
-    painter.fillRect(top_rect, background_color);
-    auto top_right_rect = top_left_rect;
-    top_right_rect.translate(right_start, 0);
-    painter.fillRect(top_right_rect, background_color);
-  }
-  auto bottom_left_rect = top_left_rect;
-  bottom_left_rect.translate(0, bottom_start);
-  painter.fillRect(bottom_left_rect, background_color);
-  auto bottom_rect = top_rect;
-  bottom_rect.translate(0, bottom_start);
-  painter.fillRect(bottom_rect, background_color);
-  auto bottom_right_rect = top_left_rect;
-  bottom_right_rect.translate(right_start, bottom_start);
-  painter.fillRect(bottom_right_rect, background_color);
-  QRect left_rect(QPoint(0, shadow_size.height()),
-    QSize(shadow_size.width(), parent_size.height()));
-  painter.fillRect(left_rect, background_color);
-  auto right_rect = left_rect;
-  right_rect.translate(right_start, 0);
-  painter.fillRect(right_rect, background_color);
-  QWidget::paintEvent(event);
-}
-#else
-void DropShadow::paintEvent(QPaintEvent* event) {
-  if(!m_is_visible) {
-    follow_parent();
-    m_is_visible = true;
-  }
-  QPainter painter(this);
-  auto parent_size = m_parent->frameGeometry().size();
+  auto parent_size = m_parent->size();
   auto shadow_size = this->shadow_size();
   auto right_start = shadow_size.width() + parent_size.width();
   auto bottom_start = shadow_size.height() + parent_size.height();
@@ -167,7 +127,6 @@ void DropShadow::paintEvent(QPaintEvent* event) {
   painter.fillRect(right_rect, right_gradient);
   QWidget::paintEvent(event);
 }
-#endif
 
 void DropShadow::follow_parent() {
   auto top_left = m_parent->window()->frameGeometry().topLeft();
