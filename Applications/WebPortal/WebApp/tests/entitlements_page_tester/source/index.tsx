@@ -14,7 +14,7 @@ const test = (
   <WebPortal.HBoxLayout height='100%' width='100%'>
     <WebPortal.Padding size='10%'/>
     <WebPortal.VBoxLayout height='100%' width='80%'>
-      <WebPortal.Padding size='30%'/>
+      <WebPortal.Padding size='10%'/>
       <WebPortal.EntitlementRow
         isActive
         currencyEntry={cEntry1}
@@ -47,6 +47,7 @@ const test = (
         currencyEntry={cEntry2}
         entitlementEntry={entitlementEntry2}
         breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.LARGE}/>
+        <WebPortal.EntitlementTable/>
     </WebPortal.VBoxLayout>
     <WebPortal.Padding size='10%'/>
   </WebPortal.HBoxLayout>);
