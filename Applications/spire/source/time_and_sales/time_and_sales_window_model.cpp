@@ -80,7 +80,7 @@ QVariant TimeAndSalesWindowModel::data(const QModelIndex& index,
         return QVariant::fromValue(
           m_entries[row_index].m_time_and_sale.GetValue().m_price);
       case Columns::SIZE_COLUMN:
-        return QLocale().toString(static_cast<int>(
+        return QLocale().toString(static_cast<double>(
           m_entries[row_index].m_time_and_sale.GetValue().m_size));
       case Columns::MARKET_COLUMN:
         return QString::fromStdString(
