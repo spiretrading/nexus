@@ -1,4 +1,5 @@
 #include "spire/ui/ui.hpp"
+#include <QLocale>
 #include <QPainter>
 #include <QtSvg/QSvgRenderer>
 
