@@ -40,11 +40,11 @@ export class EntitlementTable extends React.Component<Properties, {}> {
     const tableData = (() => {
       const data = [];
       const MarketDataTypes = [
-          Nexus.MarketDataType.BBO_QUOTE,
-          Nexus.MarketDataType.MARKET_QUOTE,
-          Nexus.MarketDataType.BOOK_QUOTE,
-          Nexus.MarketDataType.TIME_AND_SALE,
-          Nexus.MarketDataType.ORDER_IMBALANCE];
+        Nexus.MarketDataType.BBO_QUOTE,
+        Nexus.MarketDataType.MARKET_QUOTE,
+        Nexus.MarketDataType.BOOK_QUOTE,
+        Nexus.MarketDataType.TIME_AND_SALE,
+        Nexus.MarketDataType.ORDER_IMBALANCE];
       for(const app of this.props.entitlementEntry.applicability) {
         const dots = [];
         for(const type of MarketDataTypes) {
@@ -83,7 +83,7 @@ export class EntitlementTable extends React.Component<Properties, {}> {
             <th style={compactHeader}>Imb</th>
           </tr>
           <tr>
-            <th style={{...expandedHeader}}>Market</th>
+            <th style={expandedHeader}>Market</th>
             <th style={expandedHeader}>BBO</th>
             <th style={expandedHeader}>Market Quotes</th>
             <th style={expandedHeader}>Book Quotes</th>
