@@ -3,6 +3,7 @@
 #include <QImage>
 #include <QRect>
 #include <QSize>
+#include "Nexus/Definitions/Quantity.hpp"
 #include "spire/spire/spire.hpp"
 
 namespace Spire {
@@ -34,6 +35,16 @@ namespace Spire {
     \return An image rendered from the SVG resource to the specified dimensions.
   */
   QImage imageFromSvg(const QString& path, const QSize& size, const QRect& box);
+
+  //! Creates a comma delimited number from the supplied Quantity.
+  /*
+    \param quantity The quantity to add commas to.
+    \param precision The number of decimal places to preserve in the returned
+            number. Trailing zeros are removed.
+    \param locale The locale to use when converting the number to a string.
+  */
+  QString displayed_quantity(const Nexus::Quantity& quantity, int precision,
+    const QLocale& locale);
 }
 
 #endif

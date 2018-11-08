@@ -46,8 +46,8 @@ QVariant BookQuoteTableModel::data(const QModelIndex& index, int role) const {
       case Columns::PRICE_COLUMN:
         return QVariant::fromValue(m_data[index.row()].m_quote.m_price);
       case Columns::SIZE_COLUMN:
-        return QLocale().toString(
-          static_cast<int>(m_data[index.row()].m_quote.m_size));
+        return displayed_quantity(
+          static_cast<int>(m_data[index.row()].m_quote.m_size), 2, QLocale());
       default:
         return QVariant();
     }

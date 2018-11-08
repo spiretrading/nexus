@@ -134,7 +134,8 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
   } else if(value.canConvert<Money>()) {
     return QString::fromStdString(value.value<Money>().ToString());
   } else if(value.canConvert<Quantity>()) {
-    return locale.toString(static_cast<double>(value.value<Quantity>()));
+    return displayed_quantity(static_cast<double>(value.value<Quantity>()), 2,
+      locale);
   } else if(value.canConvert<OrderStatus>()) {
     return QString::fromStdString(ToString(value.value<OrderStatus>()));
   } else if(value.canConvert<Task::State>()) {

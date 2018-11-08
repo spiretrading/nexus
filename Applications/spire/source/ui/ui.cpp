@@ -17,3 +17,24 @@ QImage Spire::imageFromSvg(const QString& path, const QSize& size,
   renderer.render(&painter, box);
   return image;
 }
+
+QString Spire::displayed_quantity(const Nexus::Quantity& quantity,
+    int precision, const QLocale& locale) {
+  auto str = locale.toString(static_cast<double>(quantity), 'f');
+  auto index = str.indexOf(".");
+  if(index == -1) {
+    return str;
+  }
+  if(str.length() > index + precision) {
+    str.chop(str.length() - (index + precision + 1));
+  }
+  for(auto i = str.length() - 1; i >= index; --i) {
+    auto& ch = str.at(i);
+    if(ch == "0" || ch == ".") {
+      str.chop(1);
+    } else {
+      break;
+    }
+  }
+  return str;
+}
