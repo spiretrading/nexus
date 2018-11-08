@@ -7,16 +7,17 @@
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/drop_shadow.hpp"
 
+using namespace Beam;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
-SecurityInputDialog::SecurityInputDialog(SecurityInputModel& model,
+SecurityInputDialog::SecurityInputDialog(Ref<SecurityInputModel> model,
     QWidget* parent, Qt::WindowFlags flags)
-    : SecurityInputDialog(model, "", parent, flags) {}
+    : SecurityInputDialog(Ref(model), "", parent, flags) {}
 
-SecurityInputDialog::SecurityInputDialog(SecurityInputModel& model,
+SecurityInputDialog::SecurityInputDialog(Ref<SecurityInputModel> model,
     const QString& initial_text, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, Qt::FramelessWindowHint | flags),
       m_is_dragging(false) {
@@ -43,7 +44,7 @@ SecurityInputDialog::SecurityInputDialog(SecurityInputModel& model,
   layout->addWidget(text_label);
   layout->setStretchFactor(text_label, 14);
   layout->addStretch(10);
-  m_security_input_box = new SecurityInputBox(model, initial_text, this);
+  m_security_input_box = new SecurityInputBox(Ref(model), initial_text, this);
   m_security_input_box->connect_commit_signal(
     [=] (const Security& s) { set_security(s); });
   layout->addWidget(m_security_input_box);

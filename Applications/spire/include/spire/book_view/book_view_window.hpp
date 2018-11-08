@@ -1,5 +1,6 @@
 #ifndef SPIRE_BOOK_VIEW_WINDOW_HPP
 #define SPIRE_BOOK_VIEW_WINDOW_HPP
+#include <Beam/Pointers/Ref.hpp>
 #include <boost/optional.hpp>
 #include <QLabel>
 #include <QVBoxLayout>
@@ -21,9 +22,10 @@ namespace Spire {
 
       //! Signals a request to change the displayed security.
       /*!
-        \param s The security to display.
+        \param security The security to display.
       */
-      using ChangeSecuritySignal = Signal<void (const Nexus::Security& s)>;
+      using ChangeSecuritySignal =
+        Signal<void (const Nexus::Security& security)>;
 
       //! Signals that the window closed.
       using ClosedSignal = Signal<void ()>;
@@ -35,7 +37,7 @@ namespace Spire {
         \param parent The parent widget.
       */
       BookViewWindow(const BookViewProperties& properties,
-        SecurityInputModel& input_model, QWidget* parent = nullptr);
+        Beam::Ref<SecurityInputModel> input_model, QWidget* parent = nullptr);
 
       //! Sets the model to display.
       void set_model(std::shared_ptr<BookViewModel> model);

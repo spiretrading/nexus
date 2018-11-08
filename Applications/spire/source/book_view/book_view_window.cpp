@@ -21,9 +21,9 @@ using namespace Nexus;
 using namespace Spire;
 
 BookViewWindow::BookViewWindow(const BookViewProperties& properties,
-    SecurityInputModel& input_model, QWidget* parent)
+    Ref<SecurityInputModel> input_model, QWidget* parent)
     : QWidget(parent),
-      m_input_model(&input_model),
+      m_input_model(input_model.Get()),
       m_is_data_loaded(false) {
   m_body = new QWidget(this);
   m_body->setMinimumSize(scale(220, 280));
@@ -113,7 +113,8 @@ void BookViewWindow::keyPressEvent(QKeyEvent* event) {
   }
   auto pressed_key = event->text();
   if(pressed_key[0].isLetterOrNumber()) {
-    auto dialog = new SecurityInputDialog(*m_input_model, pressed_key, this);
+    auto dialog = new SecurityInputDialog(Ref(*m_input_model), pressed_key,
+      this);
     dialog->setWindowModality(Qt::NonModal);
     dialog->setAttribute(Qt::WA_DeleteOnClose);
     connect(dialog, &QDialog::accepted, this,

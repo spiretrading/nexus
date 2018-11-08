@@ -9,8 +9,8 @@ using namespace Nexus;
 using namespace Spire;
 
 TimeAndSalesController::TimeAndSalesController(
-    Beam::Ref<SecurityInputModel> security_input_model,
-    Beam::Ref<VirtualServiceClients> service_clients)
+    Ref<SecurityInputModel> security_input_model,
+    Ref<VirtualServiceClients> service_clients)
     : m_security_input_model(security_input_model.Get()),
       m_service_clients(service_clients.Get()) {}
 
@@ -23,7 +23,7 @@ void TimeAndSalesController::open() {
     return;
   }
   m_window = std::make_unique<TimeAndSalesWindow>(TimeAndSalesProperties(),
-    *m_security_input_model);
+    Ref(*m_security_input_model));
   m_window->connect_security_change_signal(
     [=] (const auto& security) { on_change_security(security); });
   m_window->connect_closed_signal([=] { on_closed(); });

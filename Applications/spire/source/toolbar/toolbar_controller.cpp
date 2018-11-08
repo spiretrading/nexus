@@ -51,7 +51,7 @@ void ToolbarController::open() {
   if(m_toolbar_window != nullptr) {
     return;
   }
-  m_toolbar_window = std::make_unique<ToolbarWindow>(m_model,
+  m_toolbar_window = std::make_unique<ToolbarWindow>(Ref(m_model),
     m_service_clients->GetServiceLocatorClient().GetAccount());
   m_toolbar_window->connect_open_signal(
     [=] (auto window) { on_open_window(window); });

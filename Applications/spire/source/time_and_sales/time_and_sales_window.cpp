@@ -16,15 +16,16 @@
 #include "spire/ui/transition_widget.hpp"
 #include "spire/ui/window.hpp"
 
+using namespace Beam;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
 TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
-    SecurityInputModel& input_model, QWidget* parent)
+    Ref<SecurityInputModel> input_model, QWidget* parent)
     : QWidget(parent),
-      m_input_model(&input_model),
+      m_input_model(input_model.Get()),
       m_table(nullptr) {
   m_body = new QWidget(this);
   m_body->setMinimumSize(scale(180, 200));
@@ -71,8 +72,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
   m_item_delegate = new CustomVariantItemDelegate(this);
 }
 
-void TimeAndSalesWindow::set_model(
-    std::shared_ptr<TimeAndSalesModel> model) {
+void TimeAndSalesWindow::set_model(std::shared_ptr<TimeAndSalesModel> model) {
   if(m_model.is_initialized()) {
     if(m_empty_window_label != nullptr) {
       m_empty_window_label.reset();
@@ -84,8 +84,7 @@ void TimeAndSalesWindow::set_model(
   m_table->set_model(m_model.get_ptr());
 }
 
-const TimeAndSalesProperties&
-    TimeAndSalesWindow::get_properties() const {
+const TimeAndSalesProperties& TimeAndSalesWindow::get_properties() const {
   return m_properties;
 }
 
@@ -183,7 +182,8 @@ void TimeAndSalesWindow::keyPressEvent(QKeyEvent* event) {
   }
   auto pressed_key = event->text();
   if(pressed_key[0].isLetterOrNumber()) {
-    auto dialog = new SecurityInputDialog(*m_input_model, pressed_key, this);
+    auto dialog = new SecurityInputDialog(Ref(*m_input_model), pressed_key,
+      this);
     dialog->setWindowModality(Qt::NonModal);
     dialog->setAttribute(Qt::WA_DeleteOnClose);
     connect(dialog, &QDialog::accepted, this,
@@ -240,8 +240,7 @@ void TimeAndSalesWindow::set_current(const Security& s) {
     tr(" - Time and Sales"));
 }
 
-void TimeAndSalesWindow::on_security_input_accept(
-    SecurityInputDialog* dialog) {
+void TimeAndSalesWindow::on_security_input_accept(SecurityInputDialog* dialog) {
   auto s = dialog->get_security();
   if(s != Security() && s != m_current_security) {
     m_securities.push(m_current_security);
@@ -252,8 +251,7 @@ void TimeAndSalesWindow::on_security_input_accept(
   m_overlay_widget.reset();
 }
 
-void TimeAndSalesWindow::on_security_input_reject(
-    SecurityInputDialog* dialog) {
+void TimeAndSalesWindow::on_security_input_reject(SecurityInputDialog* dialog) {
   dialog->close();
   m_overlay_widget.reset();
 }
