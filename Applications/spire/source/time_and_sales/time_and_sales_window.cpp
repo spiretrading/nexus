@@ -37,6 +37,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
   setWindowTitle(tr("Time and Sales"));
   window->set_svg_icon(":/icons/time-sale-black.svg",
     ":/icons/time-sale-grey.svg");
+  setWindowIcon(QIcon(":icons/time-sales-icon-256x256.png"));
   window_layout->addWidget(window);
   auto layout = new QVBoxLayout(m_body);
   layout->setContentsMargins({});
