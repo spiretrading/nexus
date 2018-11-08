@@ -10,8 +10,12 @@ const group =
 const dataset = new Nexus.MarketDataTypeSet(134);
 const marketcode = new Nexus.MarketCode('XASX');
 const ekey = new Nexus.EntitlementKey(marketcode);
+const dataset2 = new Nexus.MarketDataTypeSet(1);
+const marketcode2 = new Nexus.MarketCode('GOOP');
+const ekey2 = new Nexus.EntitlementKey(marketcode2);
 const app = new Beam.Map<Nexus.EntitlementKey, Nexus.MarketDataTypeSet>();
 app.set(ekey, dataset);
+app.set(ekey2, dataset2);
 
 const entitlementEntry1 = new Nexus.EntitlementDatabase.Entry('ASX Total',
 Nexus.Money.parse('68'), Nexus.DefaultCurrencies.USD, group, app);
@@ -30,18 +34,6 @@ const test = (
         currencyEntry={cEntry1}
         entitlementEntry={entitlementEntry1}
         breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.SMALL}/>
-      <WebPortal.Padding size='40px'/>
-      <WebPortal.EntitlementRow
-        isActive
-        currencyEntry={cEntry1}
-        entitlementEntry={entitlementEntry1}
-        breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.MEDIUM}/>
-      <WebPortal.Padding size='40px'/>
-      <WebPortal.EntitlementRow
-        isActive
-        currencyEntry={cEntry1}
-        entitlementEntry={entitlementEntry1}
-        breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.LARGE}/>
       <WebPortal.Padding size='40px'/>
       <WebPortal.EntitlementTable
       entitlementEntry={entitlementEntry2}

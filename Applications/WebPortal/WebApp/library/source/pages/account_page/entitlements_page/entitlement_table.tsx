@@ -14,9 +14,16 @@ export class EntitlementTable extends React.Component<Properties, {}> {
   }
 
   public render(): JSX.Element {
+    const containerWidth = (() => {
+      if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
+        return EntitlementTable.STYLE.container.small;
+      } else {
+        return EntitlementTable.STYLE.container.notSmall;
+      }
+    })();
     const compactHeader = (() => {
       if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
-       return EntitlementTable.STYLE.header;
+       return EntitlementTable.STYLE.headerLabel;
       } else {
         return EntitlementTable.STYLE.hiddenHeader;
       }
@@ -25,56 +32,49 @@ export class EntitlementTable extends React.Component<Properties, {}> {
       if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
         return EntitlementTable.STYLE.hiddenHeader;
       } else {
-        return EntitlementTable.STYLE.header;
+        return EntitlementTable.STYLE.headerLabel;
       }
     })();
-    const containerWidth = (() => {
-      if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
-        return EntitlementTable.STYLE.container.small;
-      } else {
-        return EntitlementTable.STYLE.container.notSmall;
-      }
-    })();
-    const greysrc =
-      'resources/account_page/entitlements_page/icons/dot-grey.svg';
-    const grensrc =
-      'resources/account_page/entitlements_page/icons/dot-green.svg';
     const tableData = (() => {
       const data = [];
       for(const applicability of this.props.entitlementEntry.applicability) {
         const dots = [];
-        const green =
+        const greenCircle =
           (<td>
-            <img src={grensrc} style={EntitlementTable.STYLE.circle}/>
+            <img style={EntitlementTable.STYLE.circle}
+              src=
+                'resources/account_page/entitlements_page/icons/dot-green.svg'/>
           </td>);
-        const grey =
+        const greyCircle =
           (<td>
-            <img src={greysrc} style={EntitlementTable.STYLE.circle}/>
+            <img style={EntitlementTable.STYLE.circle}
+              src=
+                'resources/account_page/entitlements_page/icons/dot-grey.svg'/>
           </td>);
         if(applicability[1].test(Nexus.MarketDataType.BBO_QUOTE)) {
-          dots.push(green);
+          dots.push(greenCircle);
         } else {
-          dots.push(grey);
+          dots.push(greyCircle);
         }
         if(applicability[1].test(Nexus.MarketDataType.MARKET_QUOTE)) {
-          dots.push(green);
+          dots.push(greenCircle);
         } else {
-          dots.push(grey);
+          dots.push(greyCircle);
         }
         if(applicability[1].test(Nexus.MarketDataType.BOOK_QUOTE)) {
-          dots.push(green);
+          dots.push(greenCircle);
         } else {
-          dots.push(grey);
+          dots.push(greyCircle);
         }
         if(applicability[1].test(Nexus.MarketDataType.TIME_AND_SALE)) {
-          dots.push(green);
+          dots.push(greenCircle);
         } else {
-          dots.push(grey);
+          dots.push(greyCircle);
         }
         if(applicability[1].test(Nexus.MarketDataType.ORDER_IMBALANCE)) {
-          dots.push(green);
+          dots.push(greenCircle);
         } else {
-          dots.push(grey);
+          dots.push(greyCircle);
         }
         data.push(
           <tr style={EntitlementTable.STYLE.row}>
@@ -85,19 +85,22 @@ export class EntitlementTable extends React.Component<Properties, {}> {
       return data;
     })();
     return (
-      <div>
       <table style={{...EntitlementTable.STYLE.container,...containerWidth}}>
           <thead>
-              <tr>
-                <th style={compactHeader}>Mkt</th>
-                <th style={compactHeader}>BBO</th>
-                <th style={compactHeader}>MQ</th>
-                <th style={compactHeader}>BQ</th>
-                <th style={compactHeader}>T{'&'}S</th>
-                <th style={compactHeader}>Imb</th>
+            <tr>
+              <th style={{...compactHeader, ...EntitlementTable.STYLE.first}}>
+                Mkt
+              </th>
+              <th style={compactHeader}>BBO</th>
+              <th style={compactHeader}>MQ</th>
+              <th style={compactHeader}>BQ</th>
+              <th style={compactHeader}>T{'&'}S</th>
+              <th style={compactHeader}>Imb</th>
             </tr>
             <tr>
-              <th style={expandedHeader}>Market</th>
+              <th style={{...expandedHeader}}>
+                Market
+              </th>
               <th style={expandedHeader}>BBO</th>
               <th style={expandedHeader}>Market Quotes</th>
               <th style={expandedHeader}>Book Quotes</th>
@@ -108,17 +111,16 @@ export class EntitlementTable extends React.Component<Properties, {}> {
           <tbody>
             {tableData}
           </tbody>
-        </table>
-        </div>);
+        </table>);
   }
 
   private static readonly STYLE = {
     container: {
+      border: '1px solid #C8C8C8',
       font: '400 14px Roboto',
-      borderStyle: 'none' as 'none',
-      cellspacing: 0,
       borderCollapse: 'collapse' as 'collapse',
       textAlign: 'center' as 'center',
+      padding: 0,
       small: {
         minWidth: '284px',
         maxWidth: '242px'
@@ -127,18 +129,25 @@ export class EntitlementTable extends React.Component<Properties, {}> {
         width: '636px'
       }
     },
-    row: {
-      height: '40px'
-    },
-    header: {
+    headerLabel: {
       height: '40px',
+      backgroundColor: '#F8F8F8',
+      borderTop: '1px solid #C8C8C8',
       fontWeight: 400,
-      backgroundColor: '#F8F8F8'
+      padding: 0,
+      marginLeft: '19px',
+      marginRight: '19px'
+    },
+    first: {
+      width: '22%'
     },
     hiddenHeader: {
       visibility: 'hidden' as 'hidden',
       display: 'none' as 'none',
       height: '0px'
+    },
+    row: {
+      height: '40px'
     },
     circle: {
       height: '14px',
