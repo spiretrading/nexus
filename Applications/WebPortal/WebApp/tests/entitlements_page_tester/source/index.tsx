@@ -1,5 +1,5 @@
-import * as Nexus from 'nexus';
 import * as Beam from 'Beam';
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';

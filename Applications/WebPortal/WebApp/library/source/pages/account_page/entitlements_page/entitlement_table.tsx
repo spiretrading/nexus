@@ -39,48 +39,31 @@ export class EntitlementTable extends React.Component<Properties, {}> {
     })();
     const tableData = (() => {
       const data = [];
-      for(const applicability of this.props.entitlementEntry.applicability) {
+      const MarketDataTypes = [
+          Nexus.MarketDataType.BBO_QUOTE,
+          Nexus.MarketDataType.MARKET_QUOTE,
+          Nexus.MarketDataType.BOOK_QUOTE,
+          Nexus.MarketDataType.TIME_AND_SALE,
+          Nexus.MarketDataType.ORDER_IMBALANCE];
+      for(const app of this.props.entitlementEntry.applicability) {
         const dots = [];
-        const greenCircle =
-          (<td>
-            <img style={EntitlementTable.STYLE.circle}
-              src=
-                'resources/account_page/entitlements_page/icons/dot-green.svg'/>
-          </td>);
-        const greyCircle =
-          (<td>
-            <img style={EntitlementTable.STYLE.circle}
-              src=
-                'resources/account_page/entitlements_page/icons/dot-grey.svg'/>
-          </td>);
-        if(applicability[1].test(Nexus.MarketDataType.BBO_QUOTE)) {
-          dots.push(greenCircle);
-        } else {
-          dots.push(greyCircle);
-        }
-        if(applicability[1].test(Nexus.MarketDataType.MARKET_QUOTE)) {
-          dots.push(greenCircle);
-        } else {
-          dots.push(greyCircle);
-        }
-        if(applicability[1].test(Nexus.MarketDataType.BOOK_QUOTE)) {
-          dots.push(greenCircle);
-        } else {
-          dots.push(greyCircle);
-        }
-        if(applicability[1].test(Nexus.MarketDataType.TIME_AND_SALE)) {
-          dots.push(greenCircle);
-        } else {
-          dots.push(greyCircle);
-        }
-        if(applicability[1].test(Nexus.MarketDataType.ORDER_IMBALANCE)) {
-          dots.push(greenCircle);
-        } else {
-          dots.push(greyCircle);
+        for(const type of MarketDataTypes) {
+          let imageSrc;
+          if(app[1].test(type)) {
+            imageSrc =
+              'resources/account_page/entitlements_page/icons/dot-green.svg';
+          } else {
+            imageSrc =
+              'resources/account_page/entitlements_page/icons/dot-green.svg';
+          }
+          dots.push(
+            <td>
+              <img style={EntitlementTable.STYLE.circle} src={imageSrc}/>
+            </td>);
         }
         data.push(
           <tr style={EntitlementTable.STYLE.row}>
-            <td>{this.getDisplayName(applicability[0].source)}</td>{dots}
+            <td>{this.getDisplayName(app[0].source)}</td>{dots}
           </tr>);
       }
       return data;
