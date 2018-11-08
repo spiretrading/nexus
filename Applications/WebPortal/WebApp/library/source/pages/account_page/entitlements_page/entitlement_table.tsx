@@ -4,6 +4,7 @@ import * as React from 'react';
 import {EntitlementsPageSizing} from './entitlements_page';
 
 interface Properties {
+  marketDatabase: Nexus.MarketDatabase;
   entitlementEntry: Nexus.EntitlementDatabase.Entry;
   breakpoint: EntitlementsPageSizing.BreakPoint;
 }
@@ -11,6 +12,7 @@ interface Properties {
 export class EntitlementTable extends React.Component<Properties, {}> {
   constructor(properties: Properties) {
     super(properties);
+    this.getDisplayName = this.getDisplayName.bind(this);
   }
 
   public render(): JSX.Element {
@@ -78,7 +80,7 @@ export class EntitlementTable extends React.Component<Properties, {}> {
         }
         data.push(
           <tr style={EntitlementTable.STYLE.row}>
-            <td>{applicability[0].source.toString()}</td>{dots}
+            <td>{this.getDisplayName(applicability[0].source)}</td>{dots}
           </tr>);
       }
       return data;
@@ -110,6 +112,11 @@ export class EntitlementTable extends React.Component<Properties, {}> {
           {tableData}
         </tbody>
       </table>);
+  }
+
+  private getDisplayName(code: Nexus.MarketCode) {
+    const market = this.props.marketDatabase.fromCode(code);
+    return market.displayName;
   }
 
   private static readonly STYLE = {
