@@ -11,10 +11,10 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
-ToolbarWindow::ToolbarWindow(RecentlyClosedModel& model,
+ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
     const DirectoryEntry& account, QWidget* parent)
     : QWidget(parent),
-      m_model(&model) {
+      m_model(model.Get()) {
   setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint |
     Qt::FramelessWindowHint | Qt::WindowCloseButtonHint);
   setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);

@@ -7,18 +7,20 @@
 #include "spire/ui/custom_qt_variants.hpp"
 #include "spire/ui/ui.hpp"
 
+using namespace Beam;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
-SecurityInputBox::SecurityInputBox(SecurityInputModel& model, QWidget* parent)
-    : SecurityInputBox(model, "", parent) {}
+SecurityInputBox::SecurityInputBox(Ref<SecurityInputModel> model,
+    QWidget* parent)
+    : SecurityInputBox(Ref(model), "", parent) {}
 
-SecurityInputBox::SecurityInputBox(SecurityInputModel& model,
+SecurityInputBox::SecurityInputBox(Ref<SecurityInputModel> model,
     const QString& initial_text, QWidget* parent)
     : QWidget(parent),
-      m_model(&model) {
+      m_model(model.Get()) {
   setObjectName("SecurityInputBox");
   setStyleSheet(QString(R"(
     #SecurityInputBox {

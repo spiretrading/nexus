@@ -1,5 +1,6 @@
 #ifndef SPIRE_TIME_AND_SALES_WINDOW_HPP
 #define SPIRE_TIME_AND_SALES_WINDOW_HPP
+#include <Beam/Pointers/Ref.hpp>
 #include <boost/optional.hpp>
 #include <QLabel>
 #include <QMenu>
@@ -35,7 +36,7 @@ namespace Spire {
         \param parent The parent widget.
       */
       TimeAndSalesWindow(const TimeAndSalesProperties& properties,
-        SecurityInputModel& input_model, QWidget* parent = nullptr);
+        Beam::Ref<SecurityInputModel> input_model, QWidget* parent = nullptr);
 
       //! Sets the model to display.
       void set_model(std::shared_ptr<TimeAndSalesModel> model);

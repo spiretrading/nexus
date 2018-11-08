@@ -1,6 +1,7 @@
 #ifndef SPIRE_TOOLBAR_WINDOW_HPP
 #define SPIRE_TOOLBAR_WINDOW_HPP
 #include <vector>
+#include <Beam/Pointers/Ref.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <QWidget>
 #include "spire/toolbar/recently_closed_model.hpp"
@@ -32,7 +33,7 @@ namespace Spire {
         \param account The account that logged in.
         \param parent The parent widget to ToolbarWindow.
       */
-      ToolbarWindow(RecentlyClosedModel& model,
+      ToolbarWindow(Beam::Ref<RecentlyClosedModel> model,
         const Beam::ServiceLocator::DirectoryEntry& account,
         QWidget* parent = nullptr);
 

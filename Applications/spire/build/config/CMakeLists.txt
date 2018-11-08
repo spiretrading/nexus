@@ -69,6 +69,7 @@ if(NOT EXISTS $ENV{TEST_INSTALL_DIRECTORY}/release)
 endif()
 
 add_subdirectory(book_view_ui_tester)
+add_subdirectory(charting_ui_tester)
 add_subdirectory(library)
 add_subdirectory(login_ui_tester)
 add_subdirectory(resources)

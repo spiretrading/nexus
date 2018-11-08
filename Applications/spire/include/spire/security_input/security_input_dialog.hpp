@@ -1,5 +1,6 @@
 #ifndef SPIRE_SECURITY_INPUT_DIALOG_HPP
 #define SPIRE_SECURITY_INPUT_DIALOG_HPP
+#include <Beam/Pointers/Ref.hpp>
 #include <QDialog>
 #include <QPoint>
 #include "Nexus/Definitions/Security.hpp"
@@ -19,8 +20,8 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      SecurityInputDialog(SecurityInputModel& model, QWidget* parent = nullptr,
-        Qt::WindowFlags flags = 0);
+      SecurityInputDialog(Beam::Ref<SecurityInputModel> model,
+        QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
 
       //! Constructs a security input dialog with an initial text value.
       /*!
@@ -29,8 +30,9 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      SecurityInputDialog(SecurityInputModel& model, const QString& text,
-        QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+      SecurityInputDialog(Beam::Ref<SecurityInputModel> model,
+        const QString& text, QWidget* parent = nullptr,
+        Qt::WindowFlags flags = 0);
 
       ~SecurityInputDialog();
 

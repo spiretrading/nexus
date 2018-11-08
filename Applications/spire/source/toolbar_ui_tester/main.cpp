@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
   initialize_resources();
   RecentlyClosedModel model;
   auto account = DirectoryEntry::MakeAccount(1, "demo_account");
-  ToolbarWindow tw(model, account);
+  ToolbarWindow tw(Ref(model), account);
   tw.show();
   ToolbarUiTester tester(&tw, model);
   tester.show();
