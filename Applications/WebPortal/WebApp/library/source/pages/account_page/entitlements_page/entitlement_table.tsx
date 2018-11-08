@@ -78,40 +78,38 @@ export class EntitlementTable extends React.Component<Properties, {}> {
         }
         data.push(
           <tr style={EntitlementTable.STYLE.row}>
-            <td>{applicability[0].source.toString()}</td>
-            {dots}
+            <td>{applicability[0].source.toString()}</td>{dots}
           </tr>);
       }
       return data;
     })();
     return (
       <table style={{...EntitlementTable.STYLE.container,...containerWidth}}>
-          <thead>
-            <tr>
-              <th style={{...compactHeader, ...EntitlementTable.STYLE.first}}>
-                Mkt
-              </th>
-              <th style={compactHeader}>BBO</th>
-              <th style={compactHeader}>MQ</th>
-              <th style={compactHeader}>BQ</th>
-              <th style={compactHeader}>T{'&'}S</th>
-              <th style={compactHeader}>Imb</th>
-            </tr>
-            <tr>
-              <th style={{...expandedHeader}}>
-                Market
-              </th>
-              <th style={expandedHeader}>BBO</th>
-              <th style={expandedHeader}>Market Quotes</th>
-              <th style={expandedHeader}>Book Quotes</th>
-              <th style={expandedHeader}>Time {'&'} Sales</th>
-              <th style={expandedHeader}>Imbalances</th>
+        <thead>
+          <tr>
+            <th style={{...compactHeader,
+                ...EntitlementTable.STYLE.marketWidth}}>
+              Mkt
+            </th>
+            <th style={compactHeader}>BBO</th>
+            <th style={compactHeader}>MQ</th>
+            <th style={compactHeader}>BQ</th>
+            <th style={compactHeader}>T{'&'}S</th>
+            <th style={compactHeader}>Imb</th>
           </tr>
-          </thead>
-          <tbody>
-            {tableData}
-          </tbody>
-        </table>);
+          <tr>
+            <th style={{...expandedHeader}}>Market</th>
+            <th style={expandedHeader}>BBO</th>
+            <th style={expandedHeader}>Market Quotes</th>
+            <th style={expandedHeader}>Book Quotes</th>
+            <th style={expandedHeader}>Time {'&'} Sales</th>
+            <th style={expandedHeader}>Imbalances</th>
+        </tr>
+        </thead>
+        <tbody>
+          {tableData}
+        </tbody>
+      </table>);
   }
 
   private static readonly STYLE = {
@@ -138,7 +136,7 @@ export class EntitlementTable extends React.Component<Properties, {}> {
       marginLeft: '19px',
       marginRight: '19px'
     },
-    first: {
+    marketWidth: {
       width: '22%'
     },
     hiddenHeader: {

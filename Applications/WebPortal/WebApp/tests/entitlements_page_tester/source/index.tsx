@@ -7,14 +7,14 @@ import * as WebPortal from 'web_portal';
 const currencyDB = Nexus.buildDefaultCurrencyDatabase();
 const group =
   new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 89, 'BOOP');
-const dataset = new Nexus.MarketDataTypeSet(134);
-const marketcode = new Nexus.MarketCode('XASX');
-const ekey = new Nexus.EntitlementKey(marketcode);
+const dataset1 = new Nexus.MarketDataTypeSet(134);
+const marketcode1 = new Nexus.MarketCode('XASX');
+const ekey1 = new Nexus.EntitlementKey(marketcode1);
 const dataset2 = new Nexus.MarketDataTypeSet(1);
 const marketcode2 = new Nexus.MarketCode('GOOP');
 const ekey2 = new Nexus.EntitlementKey(marketcode2);
 const app = new Beam.Map<Nexus.EntitlementKey, Nexus.MarketDataTypeSet>();
-app.set(ekey, dataset);
+app.set(ekey1, dataset1);
 app.set(ekey2, dataset2);
 
 const entitlementEntry1 = new Nexus.EntitlementDatabase.Entry('ASX Total',
