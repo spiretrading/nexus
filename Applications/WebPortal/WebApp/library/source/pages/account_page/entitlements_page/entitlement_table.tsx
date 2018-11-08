@@ -1,6 +1,6 @@
-import * as React from 'react';
-import * as Nexus from 'nexus';
 import * as Beam from 'beam';
+import * as Nexus from 'nexus';
+import * as React from 'react';
 import {EntitlementsPageSizing} from './entitlements_page';
 
 interface Properties {
@@ -23,7 +23,7 @@ export class EntitlementTable extends React.Component<Properties, {}> {
     })();
     const compactHeader = (() => {
       if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
-       return EntitlementTable.STYLE.headerLabel;
+        return EntitlementTable.STYLE.headerLabel;
       } else {
         return EntitlementTable.STYLE.hiddenHeader;
       }

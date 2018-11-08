@@ -36,14 +36,14 @@ const test = (
         breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.SMALL}/>
       <WebPortal.Padding size='40px'/>
       <WebPortal.EntitlementTable
-      entitlementEntry={entitlementEntry2}
+        entitlementEntry={entitlementEntry2}
         breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.SMALL}/>
       <WebPortal.Padding size='40px'/>
       <WebPortal.EntitlementTable
       entitlementEntry={entitlementEntry2}
         breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.LARGE}/>
     </WebPortal.VBoxLayout>
-    <WebPortal.Padding size='10%' />
+    <WebPortal.Padding size='10%'/>
   </WebPortal.HBoxLayout>);
 
 ReactDOM.render(test,
