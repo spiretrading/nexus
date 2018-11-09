@@ -41,6 +41,8 @@ namespace Spire {
     private:
       mutable ChangeSecuritySignal m_change_security_signal;
       mutable ClosedSignal m_closed_signal;
+      SecurityInputModel* m_input_model;
+      QWidget* m_body;
   };
 }
 

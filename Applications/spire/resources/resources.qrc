@@ -79,5 +79,6 @@
         <file>icons/key-bindings-icon-256x256.png</file>
         <file>icons/spire-icon-256x256.png</file>
         <file>icons/time-sales-icon-256x256.png</file>
+        <file>icons/chart-grey.svg</file>
     </qresource>
 </RCC>
