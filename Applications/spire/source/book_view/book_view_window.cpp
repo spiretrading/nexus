@@ -35,6 +35,7 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
   setWindowTitle(tr("Book View"));
   window->set_svg_icon(":/icons/bookview-black.svg",
     ":/icons/bookview-grey.svg");
+  setWindowIcon(QIcon(":icons/book-view-icon-256x256.png"));
   window_layout->addWidget(window);
   m_body->installEventFilter(this);
   m_layout = new QVBoxLayout(m_body);

@@ -70,5 +70,14 @@
         <file>icons/bookview-grey.svg</file>
         <file>icons/arrow-up.svg</file>
         <file>icons/spire-icon-48x48.png</file>
+        <file>icons/blotter-icon-256x256.png</file>
+        <file>icons/book-view-icon-256x256.png</file>
+        <file>icons/canvas-icon-256x256.png</file>
+        <file>icons/chart-icon-256x256.png</file>
+        <file>icons/dashboard-icon-256x256.png</file>
+        <file>icons/imbalance-icon-256x256.png</file>
+        <file>icons/key-bindings-icon-256x256.png</file>
+        <file>icons/spire-icon-256x256.png</file>
+        <file>icons/time-sales-icon-256x256.png</file>
     </qresource>
 </RCC>
