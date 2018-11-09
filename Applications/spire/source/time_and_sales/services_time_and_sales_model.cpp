@@ -20,10 +20,10 @@ ServicesTimeAndSalesModel::ServicesTimeAndSalesModel(Security security,
   query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
   m_clients->GetMarketDataClient().QueryBboQuotes(query,
     m_event_handler.get_slot<SequencedBboQuote>(
-    [=] (const auto& bbo) { on_bbo(bbo); } ));
+    [=] (const auto& bbo) { on_bbo(bbo); }));
   m_clients->GetMarketDataClient().QueryTimeAndSales(query,
     m_event_handler.get_slot<SequencedTimeAndSale>(
-    [=] (const auto& time_and_sale) { on_time_and_sale(time_and_sale); } ));
+    [=] (const auto& time_and_sale) { on_time_and_sale(time_and_sale); }));
   QueryDailyVolume(m_clients->GetChartingClient(), m_security,
     m_clients->GetTimeClient().GetTime(), pos_infin,
     definitions.get_market_database(), definitions.get_time_zone_database(),

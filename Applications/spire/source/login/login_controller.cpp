@@ -64,6 +64,7 @@ void LoginController::on_login_promise(
       m_service_clients->GetDefinitionsClient().LoadCountryDatabase(),
       m_service_clients->GetDefinitionsClient().LoadMarketDatabase(),
       m_service_clients->GetDefinitionsClient().LoadTimeZoneDatabase());
+    m_service_clients->GetTimeClient().GetTime();
     m_logged_in_signal(definitions);
   } catch(const AuthenticationException&) {
     m_login_window->set_state(LoginWindow::State::INCORRECT_CREDENTIALS);
