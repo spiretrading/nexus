@@ -54,7 +54,7 @@ export class EntitlementTable extends React.Component<Properties, {}> {
               'resources/account_page/entitlements_page/icons/dot-green.svg';
           } else {
             imageSrc =
-              'resources/account_page/entitlements_page/icons/dot-green.svg';
+              'resources/account_page/entitlements_page/icons/dot-grey.svg';
           }
           dots.push(
             <td>

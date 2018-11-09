@@ -1,14 +1,16 @@
 import * as React from 'react';
 import * as Nexus from 'nexus';
 import {CheckMarkButton} from '.';
-import {DropDownButton} from '../../../components';
+import {DropDownButton, HLine} from '../../../components';
 import {EntitlementsPageSizing} from './entitlements_page';
+import { EntitlementTable } from './entitlement_table';
 
 interface Properties {
   entitlementEntry?: Nexus.EntitlementDatabase.Entry;
   currencyEntry: Nexus.CurrencyDatabase.Entry;
   isActive: boolean;
   breakpoint: EntitlementsPageSizing.BreakPoint;
+  marketDatabase: Nexus.MarketDatabase;
 }
 
 interface State {
@@ -25,7 +27,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const containerStyle = (() => {
+    const topRowStyle = (() => {
       switch(this.props.breakpoint) {
         case EntitlementsPageSizing.BreakPoint.SMALL:
           return {...EntitlementRow.STYLE.container,
@@ -52,6 +54,20 @@ export class EntitlementRow extends React.Component<Properties, State> {
         return null;
       }
     })();
+    const table = (() => {
+      if(this.state.isOpen) {
+        return null;
+      } else {
+        return EntitlementRow.STYLE.hidden;
+      }
+    })();
+    const tableHeader = (() => {
+      if(this.state.isOpen) {
+        return topRowStyle;
+      } else {
+        return EntitlementRow.STYLE.hidden;
+      }
+    })();
     const padding = (() => {
       if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
         return EntitlementRow.STYLE.mobilePaddingStyle;
@@ -71,27 +87,54 @@ export class EntitlementRow extends React.Component<Properties, State> {
     })();
     const buttonRowAmountStyle = (() => {
       if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
-        return EntitlementRow.STYLE.hiddenText;
+        return EntitlementRow.STYLE.hidden;
       } else {
         return null;
       }
     })();
+    const tableHeaderAmmount = (() => {
+      if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
+        return null;
+      } else {
+        return EntitlementRow.STYLE.hidden;
+      }
+    })();
     return (
-      <div style={containerStyle}>
-        <CheckMarkButton
-          size={buttonSize}
-          isChecked={this.props.isActive}/>
-        <div style={padding}/>
-        <DropDownButton size={buttonSize}
-          onClick={this.showApplicabilityTable}/>
-        <div style={padding}/>
-        <div style={{...EntitlementRow.STYLE.textBase, ...nameColor}}>
-          {this.props.entitlementEntry.name}
+      <div>
+        <div style={topRowStyle}>
+          <CheckMarkButton
+            size={buttonSize}
+            isChecked={this.props.isActive}/>
+          <div style={padding}/>
+          <DropDownButton size={buttonSize}
+            onClick={this.showApplicabilityTable}/>
+          <div style={padding}/>
+          <div style={{...EntitlementRow.STYLE.textBase, ...nameColor}}>
+            {this.props.entitlementEntry.name}
+          </div>
+          <div style={EntitlementRow.STYLE.filler}/>
+          <div style={{...EntitlementRow.STYLE.textBase,
+              ...amountColor, ...buttonRowAmountStyle}}>
+            {amount}
+          </div>
         </div>
-        <div style={EntitlementRow.STYLE.filler}/>
-        <div style={{...EntitlementRow.STYLE.textBase,
-            ...amountColor, ...buttonRowAmountStyle}}>
-          {amount}
+        <div style= {table}>
+         <HLine color='#E6E6E6'/>
+            <div style={tableHeader}>
+              <div style={{...EntitlementRow.STYLE.textBase,
+                ...EntitlementRow.STYLE.activeName}}>
+                  Applicability
+              </div>
+              <div style={EntitlementRow.STYLE.filler}/>
+              <div style={{...EntitlementRow.STYLE.textBase,
+                  ...amountColor, ...tableHeaderAmmount}}>
+                {amount}
+              </div>
+            </div>
+          <EntitlementTable
+          entitlementEntry={this.props.entitlementEntry}
+          breakpoint={this.props.breakpoint}
+          marketDatabase={this.props.marketDatabase}/>
         </div>
       </div>);
   }
@@ -125,7 +168,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
     mobilePaddingStyle:{
       width: '18px'
     },
-    hiddenText: {
+    hidden: {
       visibility: 'hidden' as 'hidden'
     },
     filler:{
