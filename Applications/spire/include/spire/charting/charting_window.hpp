@@ -1,6 +1,8 @@
 #ifndef SPIRE_CHARTING_WINDOW_HPP
 #define SPIRE_CHARTING_WINDOW_HPP
 #include <Beam/Pointers/Ref.hpp>
+#include <QComboBox>
+#include <QLineEdit>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/charting/charting.hpp"
@@ -43,6 +45,9 @@ namespace Spire {
       mutable ClosedSignal m_closed_signal;
       SecurityInputModel* m_input_model;
       QWidget* m_body;
+      QWidget* m_button_header_widget;
+      QLineEdit* m_period_line_edit;
+      QComboBox* m_period_combo_box;
   };
 }
 
