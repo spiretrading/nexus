@@ -1,8 +1,8 @@
 import * as React from 'react';
 import * as Nexus from 'nexus';
-import {CheckMarkButton} from '.';
-import {DropDownButton, HLine} from '../../../components';
-import {EntitlementsPageSizing} from './entitlements_page';
+import { CheckMarkButton } from '.';
+import { DropDownButton, HLine } from '../../../components';
+import { EntitlementsPageSizing } from './entitlements_page';
 import { EntitlementTable } from './entitlement_table';
 
 interface Properties {
@@ -28,48 +28,61 @@ export class EntitlementRow extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const topRowStyle = (() => {
-      switch(this.props.breakpoint) {
+      switch (this.props.breakpoint) {
         case EntitlementsPageSizing.BreakPoint.SMALL:
-          return {...EntitlementRow.STYLE.container,
-            ...EntitlementRow.STYLE.smallContainer};
+          return {
+            ...EntitlementRow.STYLE.container,
+            ...EntitlementRow.STYLE.smallContainer
+          };
         case EntitlementsPageSizing.BreakPoint.MEDIUM:
-          return {...EntitlementRow.STYLE.container,
-            ...EntitlementRow.STYLE.mediumContainer};
+          return {
+            ...EntitlementRow.STYLE.container,
+            ...EntitlementRow.STYLE.mediumContainer
+          };
         case EntitlementsPageSizing.BreakPoint.LARGE:
-          return {...EntitlementRow.STYLE.container,
-            ...EntitlementRow.STYLE.largeContainer};
+          return {
+            ...EntitlementRow.STYLE.container,
+            ...EntitlementRow.STYLE.largeContainer
+          };
       }
     })();
     const buttonSize = (() => {
-      if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
+      if (this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
         return '20px';
       } else {
         return '16px';
       }
     })();
     const nameColor = (() => {
-      if(this.state.isOpen) {
+      if (this.state.isOpen) {
         return EntitlementRow.STYLE.activeName;
       } else {
         return null;
       }
     })();
-    const table = (() => {
-      if(this.state.isOpen) {
+    const tableContainer = (() => {
+      if (this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
         return null;
       } else {
-        return EntitlementRow.STYLE.hidden;
+        return EntitlementRow.STYLE.tablePadding;
       }
     })();
-    const tableHeader = (() => {
-      if(this.state.isOpen) {
-        return topRowStyle;
+    const dropDownContainer = (() => {
+      if (this.state.isOpen) {
+        switch(this.props.breakpoint) {
+        case EntitlementsPageSizing.BreakPoint.SMALL:
+          return EntitlementRow.STYLE.smallContainer;
+        case EntitlementsPageSizing.BreakPoint.MEDIUM:
+          return EntitlementRow.STYLE.mediumContainer;
+        case EntitlementsPageSizing.BreakPoint.LARGE:
+          EntitlementRow.STYLE.largeContainer;
+        }
       } else {
         return EntitlementRow.STYLE.hidden;
       }
     })();
     const padding = (() => {
-      if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
+      if (this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
         return EntitlementRow.STYLE.mobilePaddingStyle;
       } else {
         return EntitlementRow.STYLE.desktopPaddingStyle;
@@ -79,68 +92,75 @@ export class EntitlementRow extends React.Component<Properties, State> {
       this.props.entitlementEntry.price.toString()} ${
       this.props.currencyEntry.code}`;
     const amountColor = (() => {
-      if(this.props.isActive) {
+      if (this.props.isActive) {
         return EntitlementRow.STYLE.greenCheckMark;
       } else {
         return EntitlementRow.STYLE.greyCheckMark;
       }
     })();
     const buttonRowAmountStyle = (() => {
-      if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
+      if (this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
         return EntitlementRow.STYLE.hidden;
       } else {
         return null;
       }
     })();
     const tableHeaderAmmount = (() => {
-      if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
+      if (this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
         return null;
       } else {
         return EntitlementRow.STYLE.hidden;
       }
     })();
     return (
-      <div>
-        <div style={topRowStyle}>
+      <div id='container'>
+        <div id='EntititlemtButtonRow' style={topRowStyle}>
           <CheckMarkButton
             size={buttonSize}
-            isChecked={this.props.isActive}/>
-          <div style={padding}/>
+            isChecked={this.props.isActive} />
+          <div style={padding} />
           <DropDownButton size={buttonSize}
-            onClick={this.showApplicabilityTable}/>
-          <div style={padding}/>
-          <div style={{...EntitlementRow.STYLE.textBase, ...nameColor}}>
+            onClick={this.showApplicabilityTable} />
+          <div style={padding} />
+          <div style={{ ...EntitlementRow.STYLE.textBase, ...nameColor }}>
             {this.props.entitlementEntry.name}
           </div>
-          <div style={EntitlementRow.STYLE.filler}/>
-          <div style={{...EntitlementRow.STYLE.textBase,
-              ...amountColor, ...buttonRowAmountStyle}}>
+          <div style={EntitlementRow.STYLE.filler} />
+          <div style={{
+            ...EntitlementRow.STYLE.textBase,
+            ...amountColor, ...buttonRowAmountStyle
+          }}>
             {amount}
           </div>
         </div>
-        <div style= {table}>
-         <HLine color='#E6E6E6'/>
-            <div style={tableHeader}>
-              <div style={{...EntitlementRow.STYLE.textBase,
-                ...EntitlementRow.STYLE.activeName}}>
-                  Applicability
+        <div id='DropDownContainer' style={dropDownContainer}>
+          <HLine color='#E6E6E6' />
+          <div style={tableContainer}>
+            <div id='Table Header' style={{
+              ...EntitlementRow.STYLE.textBase,
+              ...EntitlementRow.STYLE.container
+            }}>
+              <div style={{ ...EntitlementRow.STYLE.activeName }}>
+                Applicability
               </div>
-              <div style={EntitlementRow.STYLE.filler}/>
-              <div style={{...EntitlementRow.STYLE.textBase,
-                  ...amountColor, ...tableHeaderAmmount}}>
+              <div style={EntitlementRow.STYLE.filler} />
+              <div style={{ ...amountColor, ...tableHeaderAmmount }}>
                 {amount}
               </div>
             </div>
-          <EntitlementTable
-          entitlementEntry={this.props.entitlementEntry}
-          breakpoint={this.props.breakpoint}
-          marketDatabase={this.props.marketDatabase}/>
+            <EntitlementTable
+              entitlementEntry={this.props.entitlementEntry}
+              breakpoint={this.props.breakpoint}
+              marketDatabase={this.props.marketDatabase} />
+            <div>
+            </div>
+          </div>
         </div>
-      </div>);
+    </div>);
   }
 
   private showApplicabilityTable(): void {
-    this.setState({ isOpen: !this.state.isOpen});
+    this.setState({ isOpen: !this.state.isOpen });
   }
 
   private static readonly STYLE = {
@@ -159,20 +179,23 @@ export class EntitlementRow extends React.Component<Properties, State> {
     mediumContainer: {
       width: '732px'
     },
-    largeContainer:{
+    largeContainer: {
       width: '1000px'
     },
     desktopPaddingStyle: {
       width: '20px'
     },
-    mobilePaddingStyle:{
+    mobilePaddingStyle: {
       width: '18px'
+    },
+    tablePadding: {
+      paddingLeft: '76px'
     },
     hidden: {
       visibility: 'hidden' as 'hidden'
     },
-    filler:{
-       flexGrow: 1
+    filler: {
+      flexGrow: 1
     },
     textBase: {
       font: '400 14px Roboto'
