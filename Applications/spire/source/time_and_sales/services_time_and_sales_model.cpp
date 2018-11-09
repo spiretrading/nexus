@@ -1,5 +1,6 @@
 #include "spire/time_and_sales/services_time_and_sales_model.hpp"
 #include "Nexus/TechnicalAnalysis/StandardSecurityQueries.hpp"
+#include "spire/spire/definitions.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;
@@ -12,7 +13,7 @@ using namespace Nexus::TechnicalAnalysis;
 using namespace Spire;
 
 ServicesTimeAndSalesModel::ServicesTimeAndSalesModel(Security security,
-    Ref<VirtualServiceClients> clients)
+    const Definitions& definitions, Ref<VirtualServiceClients> clients)
     : m_security(std::move(security)),
       m_clients(clients.Get()) {
   auto query = BuildRealTimeQuery(m_security);
@@ -25,8 +26,7 @@ ServicesTimeAndSalesModel::ServicesTimeAndSalesModel(Security security,
     [=] (const auto& time_and_sale) { on_time_and_sale(time_and_sale); } ));
   QueryDailyVolume(m_clients->GetChartingClient(), m_security,
     m_clients->GetTimeClient().GetTime(), pos_infin,
-    m_clients->GetDefinitionsClient().LoadMarketDatabase(),
-    m_clients->GetDefinitionsClient().LoadTimeZoneDatabase(),
+    definitions.get_market_database(), definitions.get_time_zone_database(),
     m_event_handler.get_slot<Nexus::Queries::QueryVariant>(
     [=] (const auto& volume) { on_volume(volume); }));
 }

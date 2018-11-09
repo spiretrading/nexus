@@ -16,7 +16,7 @@ namespace details {
   template<typename T>
   class QtPromiseEvent : public QtBasePromiseEvent {
     public:
-      QtPromiseEvent(Beam::Expect<T> result);
+      explicit QtPromiseEvent(Beam::Expect<T> result);
 
       Beam::Expect<T>& get_result();
 

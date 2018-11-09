@@ -13,7 +13,7 @@ namespace Spire {
       /*!
         \param security The security to model.
       */
-      EmptyBookViewModel(Nexus::Security security);
+      explicit EmptyBookViewModel(Nexus::Security security);
 
       const Nexus::Security& get_security() const override;
 

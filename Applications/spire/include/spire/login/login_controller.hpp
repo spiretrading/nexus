@@ -7,6 +7,7 @@
 #include <boost/noncopyable.hpp>
 #include "Nexus/ServiceClients/ServiceClients.hpp"
 #include "spire/login/login.hpp"
+#include "spire/spire/definitions.hpp"
 #include "spire/spire/qt_promise.hpp"
 
 namespace Spire {
@@ -26,7 +27,10 @@ namespace Spire {
       };
 
       //! Signals a successful login.
-      using LoggedInSignal = Signal<void ()>;
+      /*!
+        \param definitions The set of definitions available.
+      */
+      using LoggedInSignal = Signal<void (const Definitions& definitions)>;
 
       //! Factory used to build the Spire service clients.
       /*!

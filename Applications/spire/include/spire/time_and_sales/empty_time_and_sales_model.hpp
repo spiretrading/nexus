@@ -13,7 +13,7 @@ namespace Spire {
       /*!
         \param security The security to model.
       */
-      EmptyTimeAndSalesModel(Nexus::Security security);
+      explicit EmptyTimeAndSalesModel(Nexus::Security security);
 
       const Nexus::Security& get_security() const override;
 

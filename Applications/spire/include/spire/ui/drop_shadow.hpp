@@ -13,7 +13,7 @@ namespace Spire {
       /*!
         \param parent The parent to add the drop shadow to.
       */
-      DropShadow(QWidget* parent);
+      explicit DropShadow(QWidget* parent);
 
       //! Constructs a drop shadow.
       /*!

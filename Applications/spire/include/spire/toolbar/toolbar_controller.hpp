@@ -5,6 +5,7 @@
 #include <boost/noncopyable.hpp>
 #include "Nexus/ServiceClients/ServiceClients.hpp"
 #include "spire/security_input/security_input.hpp"
+#include "spire/spire/definitions.hpp"
 #include "spire/toolbar/recently_closed_model.hpp"
 #include "spire/toolbar/toolbar.hpp"
 
@@ -19,9 +20,10 @@ namespace Spire {
 
       //! Constructs the toolbar controller.
       /*!
+        \param definitions The set of definitions to use.
         \param service_clients The service clients logged into Spire.
       */
-      ToolbarController(
+      ToolbarController(Definitions definitions,
         Beam::Ref<Nexus::VirtualServiceClients> service_clients);
 
       ~ToolbarController();
@@ -40,6 +42,7 @@ namespace Spire {
       struct BaseController;
       template<typename> struct Controller;
       mutable ClosedSignal m_closed_signal;
+      Definitions m_definitions;
       Nexus::VirtualServiceClients* m_service_clients;
       RecentlyClosedModel m_model;
       std::unique_ptr<SecurityInputModel> m_security_input_model;

@@ -25,7 +25,8 @@ namespace Spire {
         \param info SecurityInfo to display.
         \param parent Parent to this widget.
       */
-      SecurityInfoWidget(Nexus::SecurityInfo info, QWidget* parent = nullptr);
+      explicit SecurityInfoWidget(Nexus::SecurityInfo info,
+        QWidget* parent = nullptr);
 
       //! Returns the security info represented.
       const Nexus::SecurityInfo& get_info() const;

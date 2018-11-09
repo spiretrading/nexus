@@ -8,10 +8,11 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
-TimeAndSalesController::TimeAndSalesController(
+TimeAndSalesController::TimeAndSalesController(Definitions definitions,
     Ref<SecurityInputModel> security_input_model,
     Ref<VirtualServiceClients> service_clients)
-    : m_security_input_model(security_input_model.Get()),
+    : m_definitions(std::move(definitions)),
+      m_security_input_model(security_input_model.Get()),
       m_service_clients(service_clients.Get()) {}
 
 TimeAndSalesController::~TimeAndSalesController() {
@@ -45,7 +46,7 @@ connection TimeAndSalesController::connect_closed_signal(
 
 void TimeAndSalesController::on_change_security(const Security& security) {
   auto model = std::make_shared<ServicesTimeAndSalesModel>(security,
-    Ref(*m_service_clients));
+    m_definitions, Ref(*m_service_clients));
   m_window->set_model(model);
 }
 

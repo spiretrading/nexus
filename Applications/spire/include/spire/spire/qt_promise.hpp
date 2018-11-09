@@ -28,7 +28,7 @@ namespace Spire {
         \param executor The callable performing the computation.
       */
       template<typename Executor>
-      QtPromise(Executor&& executor);
+      explicit QtPromise(Executor&& executor);
 
       QtPromise(QtPromise&& other);
 

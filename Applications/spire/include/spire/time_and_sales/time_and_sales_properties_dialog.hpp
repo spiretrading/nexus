@@ -30,7 +30,7 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      TimeAndSalesPropertiesDialog(
+      explicit TimeAndSalesPropertiesDialog(
         const TimeAndSalesProperties& properties, QWidget* parent = nullptr,
         Qt::WindowFlags flags = 0);
 

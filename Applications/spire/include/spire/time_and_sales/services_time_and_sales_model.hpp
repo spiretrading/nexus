@@ -15,9 +15,11 @@ namespace Spire {
       //! Constructs a model.
       /*!
         \param security The security to model.
+        \param definitions The set of definitions.
         \param clients The service clients to query for market data.
       */
       ServicesTimeAndSalesModel(Nexus::Security security,
+        const Definitions& definitions,
         Beam::Ref<Nexus::VirtualServiceClients> clients);
 
       const Nexus::Security& get_security() const override;

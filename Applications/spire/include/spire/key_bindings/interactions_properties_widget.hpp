@@ -13,7 +13,7 @@ namespace Spire {
       /*!
         \param parent The parent widget.
       */
-      InteractionsPropertiesWidget(QWidget* parent = nullptr);
+      explicit InteractionsPropertiesWidget(QWidget* parent = nullptr);
   };
 }
 

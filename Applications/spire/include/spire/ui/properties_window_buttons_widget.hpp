@@ -13,7 +13,7 @@ namespace Spire {
       using ClickedSignal = Signal<void ()>;
 
       //! Constructs a PropertiesWindowButtonsWidget.
-      PropertiesWindowButtonsWidget(QWidget* parent = nullptr);
+      explicit PropertiesWindowButtonsWidget(QWidget* parent = nullptr);
 
       boost::signals2::connection connect_save_as_default_signal(
         const ClickedSignal::slot_type& slot) const;

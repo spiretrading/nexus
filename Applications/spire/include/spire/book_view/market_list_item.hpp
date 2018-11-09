@@ -17,7 +17,7 @@ namespace Spire {
         \param market The market that this widget represents.
         \param parent The list that this widget will be displayed in.
       */
-      MarketListItem(const Nexus::MarketDatabase::Entry& market,
+      explicit MarketListItem(const Nexus::MarketDatabase::Entry& market,
         QListWidget* parent = nullptr);
 
       //! Returns the market info associated with this item.

@@ -15,7 +15,8 @@ namespace Spire {
         \param label_text The label text string.
         \param parent The parent to this widget.
       */
-      LabeledDataWidget(const QString& label_text, QWidget* parent = nullptr);
+      explicit LabeledDataWidget(const QString& label_text,
+        QWidget* parent = nullptr);
 
       //! Constructs a LabeledDataWidget with label text and data text.
       /*

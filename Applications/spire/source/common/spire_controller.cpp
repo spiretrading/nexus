@@ -41,7 +41,8 @@ void SpireController::open() {
   }
   m_login_controller = std::make_unique<LoginController>(
     std::move(server_entries), service_clients_factory);
-  m_login_controller->connect_logged_in_signal([=]{on_login();});
+  m_login_controller->connect_logged_in_signal(
+    [=] (const auto& definitions) { on_login(definitions); });
   m_state = State::LOGIN;
   m_login_controller->open();
 }
@@ -93,10 +94,10 @@ std::vector<LoginController::ServerEntry>
   return servers;
 }
 
-void SpireController::on_login() {
+void SpireController::on_login(const Definitions& definitions) {
   m_service_clients = std::move(m_login_controller->get_service_clients());
   m_login_controller.reset();
-  m_toolbar_controller = std::make_unique<ToolbarController>(
+  m_toolbar_controller = std::make_unique<ToolbarController>(definitions,
     Ref(*m_service_clients));
   m_toolbar_controller->open();
   m_state = State::TOOLBAR;

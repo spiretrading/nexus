@@ -60,7 +60,11 @@ void LoginController::on_login_promise(
     m_service_clients = std::move(service_clients.Get());
     m_login_window->close();
     m_login_window.reset();
-    m_logged_in_signal();
+    auto definitions = Definitions(
+      m_service_clients->GetDefinitionsClient().LoadCountryDatabase(),
+      m_service_clients->GetDefinitionsClient().LoadMarketDatabase(),
+      m_service_clients->GetDefinitionsClient().LoadTimeZoneDatabase());
+    m_logged_in_signal(definitions);
   } catch(const AuthenticationException&) {
     m_login_window->set_state(LoginWindow::State::INCORRECT_CREDENTIALS);
   } catch(const std::exception&) {

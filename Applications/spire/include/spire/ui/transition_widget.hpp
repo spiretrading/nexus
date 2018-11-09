@@ -13,7 +13,7 @@ namespace Spire {
         \param parent The parent widget, and the widget that the transition
                       animation will be displayed on top of.
       */
-      TransitionWidget(QWidget* parent = nullptr);
+      explicit TransitionWidget(QWidget* parent = nullptr);
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;

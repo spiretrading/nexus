@@ -7,6 +7,7 @@
 #endif
 
 namespace Spire {
+  class Definitions;
   template<typename T> class QtPromise;
   class SpireController;
 

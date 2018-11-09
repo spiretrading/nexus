@@ -98,7 +98,7 @@ namespace Spire {
       /*!
         \param parent The parent object.
       */
-      CustomVariantItemDelegate(QObject* parent = nullptr);
+      explicit CustomVariantItemDelegate(QObject* parent = nullptr);
 
       QString displayText(const QVariant& value,
         const QLocale& locale) const override;
@@ -112,7 +112,7 @@ namespace Spire {
       /*!
         \param parent The parent object.
       */
-      CustomVariantSortFilterProxyModel(QObject* parent = nullptr);
+      explicit CustomVariantSortFilterProxyModel(QObject* parent = nullptr);
 
     protected:
       bool lessThan(const QModelIndex& left,

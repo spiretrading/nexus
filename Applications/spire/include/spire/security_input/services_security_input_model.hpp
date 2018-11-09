@@ -15,7 +15,7 @@ namespace Spire {
       /*!
         \param client The client to submit autocomplete requests to.
       */
-      ServicesSecurityInputModel(
+      explicit ServicesSecurityInputModel(
         Beam::Ref<Nexus::MarketDataService::VirtualMarketDataClient> client);
 
       std::vector<Nexus::SecurityInfo> autocomplete(

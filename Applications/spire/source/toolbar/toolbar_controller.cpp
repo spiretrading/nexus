@@ -38,8 +38,10 @@ struct ToolbarController::Controller final : ToolbarController::BaseController {
   }
 };
 
-ToolbarController::ToolbarController(Ref<VirtualServiceClients> service_clients)
-    : m_service_clients(service_clients.Get()),
+ToolbarController::ToolbarController(Definitions definitions,
+    Ref<VirtualServiceClients> service_clients)
+    : m_definitions(std::move(definitions)),
+      m_service_clients(service_clients.Get()),
       m_security_input_model(std::make_unique<ServicesSecurityInputModel>(
         Ref(m_service_clients->GetMarketDataClient()))) {}
 
@@ -79,7 +81,7 @@ void ToolbarController::on_open_window(RecentlyClosedModel::Type window) {
     [&] () -> std::unique_ptr<BaseController> {
       if(window == RecentlyClosedModel::Type::TIME_AND_SALE) {
         return std::make_unique<Controller<TimeAndSalesController>>(
-          Ref(*m_security_input_model), Ref(*m_service_clients));
+          m_definitions, Ref(*m_security_input_model), Ref(*m_service_clients));
       }
       return nullptr;
     }();

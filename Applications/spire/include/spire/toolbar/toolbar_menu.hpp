@@ -26,7 +26,7 @@ namespace Spire {
         \param title The text on the top-level button.
         \param parent The parent to the ToolbarMenu.
       */
-      ToolbarMenu(const QString& title, QWidget* parent = nullptr);
+      explicit ToolbarMenu(const QString& title, QWidget* parent = nullptr);
 
       //! Adds a text item to the menu.
       /*!

@@ -15,7 +15,7 @@ namespace Spire {
         \param delegate The delegate to add padding to.
         \param parent The parent to this delegate instance.
       */
-      BookViewTableDelegate(QStyledItemDelegate* delegate,
+      explicit BookViewTableDelegate(QStyledItemDelegate* delegate,
         QObject* parent = nullptr);
 
       QString displayText(const QVariant& value,

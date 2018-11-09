@@ -14,7 +14,7 @@ namespace Spire {
       /*
         \param parent The parent to this widget.
       */
-      BookViewTableWidget(QWidget* parent = nullptr);
+      explicit BookViewTableWidget(QWidget* parent = nullptr);
 
       //! Sets the model for this table widget.
       /*

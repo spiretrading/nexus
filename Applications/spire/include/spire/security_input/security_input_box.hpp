@@ -24,7 +24,7 @@ namespace Spire {
         \param model The model to query for securities.
         \param parent The parent to this widget.
       */
-      SecurityInputBox(Beam::Ref<SecurityInputModel> model,
+      explicit SecurityInputBox(Beam::Ref<SecurityInputModel> model,
         QWidget* parent = nullptr);
 
       //! Constructs a security input box with an initial text value.

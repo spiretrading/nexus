@@ -49,7 +49,7 @@ namespace details {
       using ContinuationType = typename Super::ContinuationType;
 
       template<typename ExecutorForward>
-      qt_promise_imp(ExecutorForward&& executor);
+      explicit qt_promise_imp(ExecutorForward&& executor);
 
       ~qt_promise_imp() override;
 

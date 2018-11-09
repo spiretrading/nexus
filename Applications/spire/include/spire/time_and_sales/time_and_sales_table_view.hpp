@@ -18,7 +18,7 @@ namespace Spire {
       /*
         \param parent The parent to this widget.
       */
-      TimeAndSalesTableView(QWidget* parent = nullptr);
+      explicit TimeAndSalesTableView(QWidget* parent = nullptr);
 
       //! Sets the model to get the table data from.
       /*
