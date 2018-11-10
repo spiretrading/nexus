@@ -13,6 +13,10 @@ void LocalBookViewModel::update(const BboQuote& bbo) {
   m_bbo_signal(m_bbo);
 }
 
+void LocalBookViewModel::update(const BookQuote& quote) {
+  m_book_quote_signal(quote);
+}
+
 const Security& LocalBookViewModel::get_security() const {
   return m_security;
 }

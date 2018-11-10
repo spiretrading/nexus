@@ -21,6 +21,12 @@ namespace Spire {
       */
       void update(const Nexus::BboQuote& bbo);
 
+      //! Updates a book quote.
+      /*!
+        \param quote The book quote to update.
+      */
+      void update(const Nexus::BookQuote& quote);
+
       const Nexus::Security& get_security() const override;
 
       const Nexus::BboQuote& get_bbo() const override;

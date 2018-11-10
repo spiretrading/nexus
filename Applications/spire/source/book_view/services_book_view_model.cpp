@@ -111,6 +111,7 @@ void ServicesBookViewModel::on_bbo(const BboQuote& quote) {
 }
 
 void ServicesBookViewModel::on_book_quote(const BookQuote& quote) {
+  m_local_model.update(quote);
 }
 
 void ServicesBookViewModel::on_book_quote_interruption(
