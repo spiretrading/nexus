@@ -83,6 +83,8 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
     imageFromSvg(":/icons/bookview-light-purple.svg", window_button_size),
     imageFromSvg(":/icons/bookview-purple.svg", window_button_size), m_body);
   m_book_view_button->setToolTip(tr("Book View"));
+  m_book_view_button->connect_clicked_signal(
+    [=] { on_open_window(RecentlyClosedModel::Type::BOOK_VIEW); });
   button_layout->addWidget(m_book_view_button);
   m_time_and_sales_button = new IconButton(
     imageFromSvg(":/icons/time-sale-light-purple.svg", window_button_size),

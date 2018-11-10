@@ -82,8 +82,8 @@ namespace Spire {
       void mouseReleaseEvent(QMouseEvent* event) override;
 
     private:
-      QLabel* m_label;
       mutable ClickedSignal m_clicked_signal;
+      QLabel* m_label;
       bool m_clickable;
       Style m_default_style;
       Style m_hover_style;

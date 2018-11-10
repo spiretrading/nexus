@@ -1,5 +1,6 @@
 #include "spire/toolbar/toolbar_controller.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include "spire/book_view/book_view_controller.hpp"
 #include "spire/security_input/services_security_input_model.hpp"
 #include "spire/time_and_sales/time_and_sales_controller.hpp"
 #include "spire/toolbar/toolbar_window.hpp"
@@ -79,11 +80,13 @@ connection ToolbarController::connect_closed_signal(
 void ToolbarController::on_open_window(RecentlyClosedModel::Type window) {
   auto controller =
     [&] () -> std::unique_ptr<BaseController> {
-      if(window == RecentlyClosedModel::Type::TIME_AND_SALE) {
+      if(window == RecentlyClosedModel::Type::BOOK_VIEW) {
+        return std::make_unique<Controller<BookViewController>>(
+          m_definitions, Ref(*m_security_input_model), Ref(*m_service_clients));
+      } else {
         return std::make_unique<Controller<TimeAndSalesController>>(
           m_definitions, Ref(*m_security_input_model), Ref(*m_service_clients));
       }
-      return nullptr;
     }();
   if(controller == nullptr) {
     return;

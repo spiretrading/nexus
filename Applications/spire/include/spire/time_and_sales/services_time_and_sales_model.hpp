@@ -8,7 +8,7 @@
 
 namespace Spire {
 
-  //! Implements a time and sales model using remote service calls.
+  //! Implements the TimeAndSalesModel using remote service calls.
   class ServicesTimeAndSalesModel final : public TimeAndSalesModel {
     public:
 
@@ -36,12 +36,12 @@ namespace Spire {
         const VolumeSignal::slot_type& slot) const override;
 
     private:
+      mutable TimeAndSaleSignal m_time_and_sale_signal;
+      mutable VolumeSignal m_volume_signal;
       Nexus::Security m_security;
       Nexus::VirtualServiceClients* m_clients;
       Nexus::SequencedBboQuote m_bbo;
       Nexus::Quantity m_volume;
-      mutable TimeAndSaleSignal m_time_and_sale_signal;
-      mutable VolumeSignal m_volume_signal;
       EventHandler m_event_handler;
 
       void on_bbo(const Nexus::SequencedBboQuote& bbo);

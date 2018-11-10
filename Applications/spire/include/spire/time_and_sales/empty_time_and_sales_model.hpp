@@ -5,7 +5,7 @@
 
 namespace Spire {
 
-  //! Implements a time and sales model with no entries and no updates.
+  //! Implements the TimeAndSalesModel with no entries and no updates.
   class EmptyTimeAndSalesModel final : public TimeAndSalesModel {
     public:
 

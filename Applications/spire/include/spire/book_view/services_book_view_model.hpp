@@ -1,19 +1,28 @@
-#ifndef SPIRE_EMPTY_BOOK_VIEW_MODEL_HPP
-#define SPIRE_EMPTY_BOOK_VIEW_MODEL_HPP
+#ifndef SPIRE_SERVICES_BOOK_VIEW_MODEL_HPP
+#define SPIRE_SERVICES_BOOK_VIEW_MODEL_HPP
+#include <Beam/Pointers/Ref.hpp>
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "spire/book_view/book_view.hpp"
 #include "spire/book_view/book_view_model.hpp"
+#include "spire/book_view/local_book_view_model.hpp"
+#include "spire/spire/definitions.hpp"
+#include "spire/spire/event_handler.hpp"
 
 namespace Spire {
 
-  //! Implements the BookViewModel with no quotes.
-  class EmptyBookViewModel final : public BookViewModel {
+  //! Implements the BookViewModel using remote service calls.
+  class ServicesBookViewModel final : public BookViewModel {
     public:
 
-      //! Constructs an empty book view model.
+      //! Constructs a model.
       /*!
         \param security The security to model.
+        \param definitions The set of definitions.
+        \param clients The service clients to query for market data.
       */
-      explicit EmptyBookViewModel(Nexus::Security security);
+      ServicesBookViewModel(Nexus::Security security,
+        Definitions definitions,
+        Beam::Ref<Nexus::VirtualServiceClients> clients);
 
       const Nexus::Security& get_security() const override;
 
@@ -57,7 +66,16 @@ namespace Spire {
         const QuantitySignal::slot_type& slot) const override;
 
     private:
-      Nexus::Security m_security;
+      LocalBookViewModel m_local_model;
+      Definitions m_definitions;
+      Nexus::VirtualServiceClients* m_clients;
+      EventHandler m_event_handler;
+
+      void on_bbo(const Nexus::BboQuote& quote);
+      void on_book_quote(const Nexus::BookQuote& quote);
+      void on_book_quote_interruption(const std::exception_ptr& e);
+      void on_market_quote(const Nexus::MarketQuote& quote);
+      void on_market_quote_interruption(const std::exception_ptr& e);
   };
 }
 

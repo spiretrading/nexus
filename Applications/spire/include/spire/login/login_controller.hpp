@@ -67,12 +67,12 @@ namespace Spire {
         const LoggedInSignal::slot_type& slot) const;
 
     private:
+      mutable LoggedInSignal m_logged_in_signal;
       std::vector<ServerEntry> m_servers;
       ServiceClientsFactory m_service_clients_factory;
       std::unique_ptr<LoginWindow> m_login_window;
       QtPromise<std::unique_ptr<Nexus::VirtualServiceClients>> m_login_promise;
       std::unique_ptr<Nexus::VirtualServiceClients> m_service_clients;
-      mutable LoggedInSignal m_logged_in_signal;
 
       void on_login(const std::string& username, const std::string& password);
       void on_cancel();
