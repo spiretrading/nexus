@@ -54,6 +54,10 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
       color: #000000;
       font-family: Roboto;
       font-size: %3px;
+    }
+
+    QLineEdit:focus {
+      border: %1px solid #4B23A0 %2px solid #4B23A0;
     })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12)));
   button_header_layout->addWidget(m_period_line_edit);
   button_header_layout->addSpacing(scale_width(4));
