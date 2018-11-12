@@ -112,16 +112,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
         return EntitlementRow.STYLE.hidden;
       }
     })();
-    const table = (() => {
-      if (this.state.isOpen) {
-        return (<EntitlementTable
-          entitlementEntry={this.props.entitlementEntry}
-          breakpoint={this.props.breakpoint}
-          marketDatabase={this.props.marketDatabase} />);
-      } else {
-        return null;
-      }
-    })();
+
     return (
       <VBoxLayout style={elementSize}>
 
@@ -147,34 +138,41 @@ export class EntitlementRow extends React.Component<Properties, State> {
         </div>
         <VBoxLayout id='hiddenDropDpwn' style={dropDownContainer}>
           <HLine color='#E6E6E6' />
-          <div style={tableContainer}>
-            <div id='Table Header' style={{
-              ...EntitlementRow.STYLE.textBase,
-              ...EntitlementRow.STYLE.header
+
+          <CSSTransition in={this.state.isOpen}
+            timeout={EntitlementRow.TRANSITION_LENGTH_MS}
+            classNames={{
+              enter: css(EntitlementRow.CSS_TRANSITION_STYLE.start),
+              enterActive: css(EntitlementRow.CSS_TRANSITION_STYLE.entering),
+              exit: css(EntitlementRow.CSS_TRANSITION_STYLE.exit),
+              exitActive: css(EntitlementRow.CSS_TRANSITION_STYLE.exiting)
             }}>
-              <div style={{ ...EntitlementRow.STYLE.activeName }}>
-                Applicability
+            {(state) => (
+              <div style={{...tableContainer, 
+              ...EntitlementRow.STYLE.hiddenTable}}>
+                <div id='Table Header' style={{
+                  ...EntitlementRow.STYLE.textBase,
+                  ...EntitlementRow.STYLE.header
+                }}>
+                  <div style={{ ...EntitlementRow.STYLE.activeName }}>
+                    Applicability
               </div>
-              <div style={EntitlementRow.STYLE.filler} />
-              <div style={{ ...amountColor, ...tableHeaderAmmount }}>
-                {amount}
-              </div>
-            </div>
-            <CSSTransition in={this.state.isOpen}
-              timeout={EntitlementRow.TRANSITION_LENGTH_MS}
-              classNames={{
-                enter: css(EntitlementRow.CSS_TRANSITION_STYLE.start),
-                enterActive: css(EntitlementRow.CSS_TRANSITION_STYLE.entering)
-              }}>
-              {(state) => (
-                <div>
-                  {table}
+                  <div style={EntitlementRow.STYLE.filler} />
+                  <div style={{ ...amountColor, ...tableHeaderAmmount }}>
+                    {amount}
+                  </div>
                 </div>
-              )}
-            </CSSTransition>
-            <div>
-            </div>
-          </div>
+                <div>
+                  <EntitlementTable
+          entitlementEntry={this.props.entitlementEntry}
+          breakpoint={this.props.breakpoint}
+          marketDatabase={this.props.marketDatabase} />
+                </div>
+              </div>
+            )}
+
+
+          </CSSTransition>
         </VBoxLayout>
       </VBoxLayout>);
   }
@@ -231,6 +229,9 @@ export class EntitlementRow extends React.Component<Properties, State> {
     },
     greyCheckMark: {
       color: '#000000'
+    },
+    hiddenTable: {
+      zIndex: -100
     }
   };
 
@@ -244,7 +245,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
     },
     start: {
       opacity: 0,
-      transform: 'translate(0,-25px)'
+      transform: 'translate(0,-40px)'
     },
     entering: {
       opacity: 1,
@@ -252,6 +253,16 @@ export class EntitlementRow extends React.Component<Properties, State> {
       transform: 'translate(0,0)',
       transitionProperty: 'transform, opacity',
       transitionDuration: '1000ms'
+    },
+    exit: {
+      opacity: 1,
+      transform: 'translate(0, 0)',
+      transitionProperty: 'transform, opacity',
+      transitionDuration: '1000ms'
+    },
+    exiting: {
+      opacity: 0,
+      transform: 'translate(0,-40px)'
     }
   });
 
