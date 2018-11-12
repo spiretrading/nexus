@@ -7,6 +7,7 @@
 #include <QVBoxLayout>
 #include "spire/security_input/security_input_model.hpp"
 #include "spire/spire/dimensions.hpp"
+#include "spire/ui/dropdown_menu.hpp"
 #include "spire/ui/toggle_button.hpp"
 #include "spire/ui/window.hpp"
 
@@ -56,50 +57,12 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12)));
   button_header_layout->addWidget(m_period_line_edit);
   button_header_layout->addSpacing(scale_width(4));
-  m_period_combo_box = new QComboBox(m_button_header_widget);
-  m_period_combo_box->addItem(tr("seconds"));
-  m_period_combo_box->addItem(tr("minutes"));
-  m_period_combo_box->addItem(tr("hours"));
-  m_period_combo_box->setFixedSize(scale(80, 26));
-  m_period_combo_box->setStyleSheet(QString(R"(
-    QComboBox {
-      background-color: #FFFFFF;
-      border: %1px solid #C8C8C8 %2px solid #C8C8C8;
-      color: #000000;
-      font-family: Roboto;
-      font-size: %3px;
-      padding-left: %4px;
-    }
-
-    QComboBox::drop-down {
-      border: none;
-      height: %5px;
-      padding-right: %4px;
-      subcontrol-origin: padding;
-      subcontrol-position: right center;
-      width: %6px;
-    }
-
-    QComboBox::down-arrow {
-      image: url(":/icons/arrow-down.svg");
-    }
-
-    QComboBox QAbstractItemView {
-      background-color: #FFFFFF;
-      border: %1px solid #C8C8C8 %2px solid #C8C8C8;
-      font-family: Roboto;
-      font-size: %3px;
-      selection-background-color: #F2F2FF;
-      selection-color: #000000;
-    }
-
-    QComboBox QAbstractItemView::item {
-      min-height: %7px;
-    })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12))
-    .arg(scale_width(8)).arg(scale_height(4)).arg(scale_width(6))
-    .arg(scale_height(20)));
-  m_period_combo_box->setView(new QListView());
-  button_header_layout->addWidget(m_period_combo_box);
+  m_period_dropdown = new DropdownMenu(m_button_header_widget);
+  m_period_dropdown->addItem(tr("seconds"));
+  m_period_dropdown->addItem(tr("minutes"));
+  m_period_dropdown->addItem(tr("hours"));
+  m_period_dropdown->setFixedSize(scale(80, 26));
+  button_header_layout->addWidget(m_period_dropdown);
   button_header_layout->addSpacing(scale_width(18));
   auto button_size = scale(16, 16);
   auto lock_grid_button = new ToggleButton(

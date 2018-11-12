@@ -7,6 +7,7 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/charting/charting.hpp"
 #include "spire/security_input/security_input.hpp"
+#include "spire/ui/ui.hpp"
 
 namespace Spire {
 
@@ -47,7 +48,7 @@ namespace Spire {
       QWidget* m_body;
       QWidget* m_button_header_widget;
       QLineEdit* m_period_line_edit;
-      QComboBox* m_period_combo_box;
+      DropdownMenu* m_period_dropdown;
   };
 }
 
