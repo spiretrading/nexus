@@ -1,5 +1,7 @@
 import * as React from 'react';
 import * as Nexus from 'nexus';
+import { Transition, CSSTransition } from 'react-transition-group';
+import { css, StyleSheet } from 'aphrodite/no-important';
 import { CheckMarkButton } from '.';
 import { DropDownButton, HLine } from '../../../components';
 import { EntitlementsPageSizing } from './entitlements_page';
@@ -67,13 +69,13 @@ export class EntitlementRow extends React.Component<Properties, State> {
     })();
     const dropDownContainer = (() => {
       if (this.state.isOpen) {
-        switch(this.props.breakpoint) {
-        case EntitlementsPageSizing.BreakPoint.SMALL:
-          return EntitlementRow.STYLE.smallContainer;
-        case EntitlementsPageSizing.BreakPoint.MEDIUM:
-          return EntitlementRow.STYLE.mediumContainer;
-        case EntitlementsPageSizing.BreakPoint.LARGE:
-          EntitlementRow.STYLE.largeContainer;
+        switch (this.props.breakpoint) {
+          case EntitlementsPageSizing.BreakPoint.SMALL:
+            return EntitlementRow.STYLE.smallContainer;
+          case EntitlementsPageSizing.BreakPoint.MEDIUM:
+            return EntitlementRow.STYLE.mediumContainer;
+          case EntitlementsPageSizing.BreakPoint.LARGE:
+            EntitlementRow.STYLE.largeContainer;
         }
       } else {
         return EntitlementRow.STYLE.hidden;
@@ -110,8 +112,20 @@ export class EntitlementRow extends React.Component<Properties, State> {
         return EntitlementRow.STYLE.hidden;
       }
     })();
+    const table = (() => {
+      if (this.state.isOpen) {
+        return (<EntitlementTable
+          entitlementEntry={this.props.entitlementEntry}
+          breakpoint={this.props.breakpoint}
+          marketDatabase={this.props.marketDatabase} />);
+      } else {
+        return null;
+      }
+    })();
     return (
       <VBoxLayout style={elementSize}>
+
+
         <div id='EntititlemtButtonRow' style={EntitlementRow.STYLE.header}>
           <CheckMarkButton
             size={buttonSize}
@@ -146,15 +160,23 @@ export class EntitlementRow extends React.Component<Properties, State> {
                 {amount}
               </div>
             </div>
-            <EntitlementTable
-              entitlementEntry={this.props.entitlementEntry}
-              breakpoint={this.props.breakpoint}
-              marketDatabase={this.props.marketDatabase} />
+            <CSSTransition in={this.state.isOpen}
+              timeout={EntitlementRow.TRANSITION_LENGTH_MS}
+              classNames={{
+                enter: css(EntitlementRow.CSS_TRANSITION_STYLE.start),
+                enterActive: css(EntitlementRow.CSS_TRANSITION_STYLE.entering)
+              }}>
+              {(state) => (
+                <div>
+                  {table}
+                </div>
+              )}
+            </CSSTransition>
             <div>
             </div>
           </div>
         </VBoxLayout>
-    </VBoxLayout>);
+      </VBoxLayout>);
   }
 
   private showApplicabilityTable(): void {
@@ -168,7 +190,8 @@ export class EntitlementRow extends React.Component<Properties, State> {
       display: 'flex ' as 'flex ',
       flexDirection: 'row' as 'row',
       flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center'
+      alignItems: 'center' as 'center',
+      backgroundColor: '#FFFFFF'
     },
     smallContainer: {
       minWidth: '320px',
@@ -210,4 +233,27 @@ export class EntitlementRow extends React.Component<Properties, State> {
       color: '#000000'
     }
   };
+
+  private static CSS_TRANSITION_STYLE = StyleSheet.create({
+    base: {
+      backgroundColor: '#404040',
+      width: '400px',
+      padding: '10px 5px',
+      marginTop: '10px',
+      borderRadius: '8px'
+    },
+    start: {
+      opacity: 0,
+      transform: 'translate(0,-25px)'
+    },
+    entering: {
+      opacity: 1,
+      transition: 'opacity 1s ease',
+      transform: 'translate(0,0)',
+      transitionProperty: 'transform, opacity',
+      transitionDuration: '1000ms'
+    }
+  });
+
+  private static TRANSITION_LENGTH_MS = 1000;
 }
