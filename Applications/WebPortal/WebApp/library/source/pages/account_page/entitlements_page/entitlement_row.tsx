@@ -4,6 +4,7 @@ import { CheckMarkButton } from '.';
 import { DropDownButton, HLine } from '../../../components';
 import { EntitlementsPageSizing } from './entitlements_page';
 import { EntitlementTable } from './entitlement_table';
+import { VBoxLayout } from '../../../layouts';
 
 interface Properties {
   entitlementEntry?: Nexus.EntitlementDatabase.Entry;
@@ -27,21 +28,18 @@ export class EntitlementRow extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const topRowStyle = (() => {
+    const elementSize = (() => {
       switch (this.props.breakpoint) {
         case EntitlementsPageSizing.BreakPoint.SMALL:
           return {
-            ...EntitlementRow.STYLE.container,
             ...EntitlementRow.STYLE.smallContainer
           };
         case EntitlementsPageSizing.BreakPoint.MEDIUM:
           return {
-            ...EntitlementRow.STYLE.container,
             ...EntitlementRow.STYLE.mediumContainer
           };
         case EntitlementsPageSizing.BreakPoint.LARGE:
           return {
-            ...EntitlementRow.STYLE.container,
             ...EntitlementRow.STYLE.largeContainer
           };
       }
@@ -113,8 +111,8 @@ export class EntitlementRow extends React.Component<Properties, State> {
       }
     })();
     return (
-      <div id='container'>
-        <div id='EntititlemtButtonRow' style={topRowStyle}>
+      <VBoxLayout style={elementSize}>
+        <div id='EntititlemtButtonRow' style={EntitlementRow.STYLE.header}>
           <CheckMarkButton
             size={buttonSize}
             isChecked={this.props.isActive} />
@@ -133,12 +131,12 @@ export class EntitlementRow extends React.Component<Properties, State> {
             {amount}
           </div>
         </div>
-        <div id='DropDownContainer' style={dropDownContainer}>
+        <VBoxLayout id='hiddenDropDpwn' style={dropDownContainer}>
           <HLine color='#E6E6E6' />
           <div style={tableContainer}>
             <div id='Table Header' style={{
               ...EntitlementRow.STYLE.textBase,
-              ...EntitlementRow.STYLE.container
+              ...EntitlementRow.STYLE.header
             }}>
               <div style={{ ...EntitlementRow.STYLE.activeName }}>
                 Applicability
@@ -155,8 +153,8 @@ export class EntitlementRow extends React.Component<Properties, State> {
             <div>
             </div>
           </div>
-        </div>
-    </div>);
+        </VBoxLayout>
+    </VBoxLayout>);
   }
 
   private showApplicabilityTable(): void {
@@ -164,7 +162,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
   }
 
   private static readonly STYLE = {
-    container: {
+    header: {
       height: '40px',
       boxSizing: 'border-box' as 'border-box',
       display: 'flex ' as 'flex ',
@@ -177,9 +175,11 @@ export class EntitlementRow extends React.Component<Properties, State> {
       maxWidth: '460px'
     },
     mediumContainer: {
+      minWidth: '730px',
       width: '732px'
     },
     largeContainer: {
+      minWidth: '998px',
       width: '1000px'
     },
     desktopPaddingStyle: {
