@@ -61,10 +61,8 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12)));
   button_header_layout->addWidget(m_period_line_edit);
   button_header_layout->addSpacing(scale_width(4));
-  m_period_dropdown = new DropdownMenu(m_button_header_widget);
-  m_period_dropdown->addItem(tr("seconds"));
-  m_period_dropdown->addItem(tr("minutes"));
-  m_period_dropdown->addItem(tr("hours"));
+  m_period_dropdown = new DropdownMenu(
+    {tr("seconds"), tr("minutes"), tr("hours")}, m_button_header_widget);
   m_period_dropdown->setFixedSize(scale(80, 26));
   button_header_layout->addWidget(m_period_dropdown);
   button_header_layout->addSpacing(scale_width(18));

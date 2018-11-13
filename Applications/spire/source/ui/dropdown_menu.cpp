@@ -6,8 +6,9 @@
 
 using namespace Spire;
 
-DropdownMenu::DropdownMenu(QWidget* parent)
-    : QComboBox(parent),
+DropdownMenu::DropdownMenu(const std::initializer_list<QString>& items,
+    QWidget* parent)
+    : QWidget(parent),
       m_dropdown_image(imageFromSvg(":/icons/arrow-down.svg", scale(6, 4))) {}
 
 void DropdownMenu::paintEvent(QPaintEvent* event) {

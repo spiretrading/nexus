@@ -5,14 +5,17 @@
 namespace Spire {
 
   //! Displays a Spire-styled QComboBox.
-  class DropdownMenu : public QComboBox {
+  class DropdownMenu : public QWidget {
     public:
 
-      //! Constructs an empty DropdownMenu.
+      //! Constructs a DropdownMenu with specified items. The first item
+      //! in the initializer_list is the default selected item.
       /*
+        \param items The items to display in the menu.
         \param parent The parent widget to the DropdownMenu.
       */
-      DropdownMenu(QWidget* parent = nullptr);
+      DropdownMenu(const std::initializer_list<QString>& items,
+        QWidget* parent = nullptr);
 
     protected:
       void paintEvent(QPaintEvent* event) override;
