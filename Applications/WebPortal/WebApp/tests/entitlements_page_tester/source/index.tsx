@@ -30,20 +30,23 @@ const test = (
     <WebPortal.Padding size='10%'/>
     <WebPortal.VBoxLayout height='100%' width='80%'>
       <WebPortal.Padding size='10%'/>
-      <div>
         <WebPortal.EntitlementRow
           isActive
           currencyEntry={cEntry1}
           entitlementEntry={entitlementEntry1}
           breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.SMALL}
           marketDatabase={marketDB}/>
-      </div>
-      <WebPortal.Padding size='40px'/>
       <WebPortal.EntitlementRow
         isActive
         currencyEntry={cEntry1}
         entitlementEntry={entitlementEntry1}
-        breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.LARGE}
+        breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.SMALL}
+        marketDatabase={marketDB}/>
+              <WebPortal.EntitlementRow
+        isActive
+        currencyEntry={cEntry1}
+        entitlementEntry={entitlementEntry1}
+        breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.SMALL}
         marketDatabase={marketDB}/>
     </WebPortal.VBoxLayout>
     <WebPortal.Padding size='10%'/>

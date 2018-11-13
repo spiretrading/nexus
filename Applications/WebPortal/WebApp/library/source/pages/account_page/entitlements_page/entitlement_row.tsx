@@ -78,7 +78,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
             EntitlementRow.STYLE.largeContainer;
         }
       } else {
-        return EntitlementRow.STYLE.hidden;
+        return null;
       }
     })();
     const padding = (() => {
@@ -112,11 +112,17 @@ export class EntitlementRow extends React.Component<Properties, State> {
         return EntitlementRow.STYLE.hidden;
       }
     })();
+    const lineVibibilityStyle = (() => {
+      if (this.state.isOpen) {
+        return null;
+      } else {
+        return EntitlementRow.STYLE.hidden;
+      }
+    })();
+
 
     return (
-      <VBoxLayout style={elementSize}>
-
-
+      <VBoxLayout style={{...elementSize}}>
         <div id='EntititlemtButtonRow' style={EntitlementRow.STYLE.header}>
           <CheckMarkButton
             size={buttonSize}
@@ -137,19 +143,24 @@ export class EntitlementRow extends React.Component<Properties, State> {
           </div>
         </div>
         <VBoxLayout id='hiddenDropDpwn' style={dropDownContainer}>
-          <HLine color='#E6E6E6' />
-
+          <div style={lineVibibilityStyle}>
+            <HLine color='#E6E6E6' />
+          </div>
           <CSSTransition in={this.state.isOpen}
             timeout={EntitlementRow.TRANSITION_LENGTH_MS}
             classNames={{
               enter: css(EntitlementRow.CSS_TRANSITION_STYLE.start),
               enterActive: css(EntitlementRow.CSS_TRANSITION_STYLE.entering),
               exit: css(EntitlementRow.CSS_TRANSITION_STYLE.exit),
-              exitActive: css(EntitlementRow.CSS_TRANSITION_STYLE.exiting)
+              exitActive: css(EntitlementRow.CSS_TRANSITION_STYLE.exiting),
+              exitDone: css(EntitlementRow.CSS_TRANSITION_STYLE.end)
             }}>
             {(state) => (
-              <div style={{...tableContainer, 
-              ...EntitlementRow.STYLE.hiddenTable}}>
+              <div className={css(EntitlementRow.CSS_TRANSITION_STYLE.end)}
+                style={{
+                  ...tableContainer,
+                  ...EntitlementRow.STYLE.hiddenTable
+                }}>
                 <div id='Table Header' style={{
                   ...EntitlementRow.STYLE.textBase,
                   ...EntitlementRow.STYLE.header
@@ -164,21 +175,21 @@ export class EntitlementRow extends React.Component<Properties, State> {
                 </div>
                 <div>
                   <EntitlementTable
-          entitlementEntry={this.props.entitlementEntry}
-          breakpoint={this.props.breakpoint}
-          marketDatabase={this.props.marketDatabase} />
+                    entitlementEntry={this.props.entitlementEntry}
+                    breakpoint={this.props.breakpoint}
+                    marketDatabase={this.props.marketDatabase} />
                 </div>
               </div>
             )}
-
-
           </CSSTransition>
         </VBoxLayout>
       </VBoxLayout>);
   }
 
   private showApplicabilityTable(): void {
-    this.setState({ isOpen: !this.state.isOpen });
+    this.setState({
+      isOpen: !this.state.isOpen
+    });
   }
 
   private static readonly STYLE = {
@@ -231,7 +242,11 @@ export class EntitlementRow extends React.Component<Properties, State> {
       color: '#000000'
     },
     hiddenTable: {
-      zIndex: -100
+      zIndex: -100,
+      visibility: 'inherit' as 'inherit'
+    },
+    page: {
+     backgroundColor: '#FFFFFF'
     }
   };
 
@@ -245,24 +260,34 @@ export class EntitlementRow extends React.Component<Properties, State> {
     },
     start: {
       opacity: 0,
-      transform: 'translate(0,-40px)'
+      marginTop: '-60px',
+      marginBottom: '20px',
+      transform: 'translate(0,0)',
+      visibility: 'visible' as 'visible'
     },
     entering: {
       opacity: 1,
-      transition: 'opacity 1s ease',
+      marginTop: '0px',
+      marginBottom: '20px',
       transform: 'translate(0,0)',
-      transitionProperty: 'transform, opacity',
-      transitionDuration: '1000ms'
+      transitionProperty: 'transform, opacity, margin',
+      transitionDuration: '500ms'
     },
     exit: {
       opacity: 1,
-      transform: 'translate(0, 0)',
-      transitionProperty: 'transform, opacity',
-      transitionDuration: '1000ms'
+      marginTop: '0px',
+      marginBottom: '20px'
     },
     exiting: {
       opacity: 0,
-      transform: 'translate(0,-40px)'
+      marginTop: '-40px',
+      marginBottom: '20px',
+      transitionProperty: 'opacity, margin',
+      transitionDuration: '500ms'
+    },
+    end: {
+      visibility: 'hidden' as 'hidden',
+      display: 'none' as 'none'
     }
   });
 
