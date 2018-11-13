@@ -261,31 +261,31 @@ export class EntitlementRow extends React.Component<Properties, State> {
     start: {
       opacity: 0,
       marginTop: '-60px',
-      marginBottom: '20px',
+      marginBottom: '0px',
       transform: 'translate(0,0)',
       visibility: 'visible' as 'visible'
     },
     entering: {
       opacity: 1,
       marginTop: '0px',
-      marginBottom: '20px',
+      marginBottom: '0px',
       transform: 'translate(0,0)',
       transitionProperty: 'transform, opacity, margin',
-      transitionDuration: '500ms'
+      transitionDuration: '200ms'
     },
     exit: {
-      opacity: 1,
+      opacity: 0,
       marginTop: '0px',
-      marginBottom: '20px'
+      marginBottom: '0px'
     },
     exiting: {
       opacity: 0,
-      marginTop: '-40px',
-      marginBottom: '20px',
-      transitionProperty: 'opacity, margin',
-      transitionDuration: '500ms'
+      marginTop: '-200px',
+      marginBottom: '0px',
+      transition: 'opacity 100ms, margin 200ms'
     },
     end: {
+      opacity: 0,
       visibility: 'hidden' as 'hidden',
       display: 'none' as 'none'
     }
