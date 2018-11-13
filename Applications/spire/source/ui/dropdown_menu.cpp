@@ -21,6 +21,10 @@ DropdownMenu::DropdownMenu(const std::initializer_list<QString>& items,
   window()->installEventFilter(this);
 }
 
+const QString& DropdownMenu::get_text() const {
+  return m_current_text;
+}
+
 bool DropdownMenu::eventFilter(QObject* watched, QEvent* event) {
   if(watched == window()) {
     if(event->type() == QEvent::Move) {

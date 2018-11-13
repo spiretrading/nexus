@@ -18,6 +18,9 @@ namespace Spire {
       DropdownMenu(const std::initializer_list<QString>& items,
         QWidget* parent = nullptr);
 
+      //! Returns the selected item.
+      const QString& get_text() const;
+
     protected:
       bool eventFilter(QObject* object, QEvent* event) override;
       void focusOutEvent(QFocusEvent* event) override;
