@@ -67,20 +67,6 @@ export class EntitlementRow extends React.Component<Properties, State> {
         return EntitlementRow.STYLE.tablePadding;
       }
     })();
-    const dropDownContainer = (() => {
-      if (this.state.isOpen) {
-        switch (this.props.breakpoint) {
-          case EntitlementsPageSizing.BreakPoint.SMALL:
-            return EntitlementRow.STYLE.smallContainer;
-          case EntitlementsPageSizing.BreakPoint.MEDIUM:
-            return EntitlementRow.STYLE.mediumContainer;
-          case EntitlementsPageSizing.BreakPoint.LARGE:
-            EntitlementRow.STYLE.largeContainer;
-        }
-      } else {
-        return null;
-      }
-    })();
     const padding = (() => {
       if (this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
         return EntitlementRow.STYLE.mobilePaddingStyle;
@@ -119,10 +105,8 @@ export class EntitlementRow extends React.Component<Properties, State> {
         return EntitlementRow.STYLE.hidden;
       }
     })();
-
-
     return (
-      <VBoxLayout style={{...elementSize}}>
+      <VBoxLayout style={{ ...elementSize }}>
         <div id='EntititlemtButtonRow' style={EntitlementRow.STYLE.header}>
           <CheckMarkButton
             size={buttonSize}
@@ -149,25 +133,22 @@ export class EntitlementRow extends React.Component<Properties, State> {
           <CSSTransition in={this.state.isOpen}
             timeout={EntitlementRow.TRANSITION_LENGTH_MS}
             classNames={{
-              enter: css(EntitlementRow.CSS_TRANSITION_STYLE.start),
-              enterActive: css(EntitlementRow.CSS_TRANSITION_STYLE.entering),
-              exit: css(EntitlementRow.CSS_TRANSITION_STYLE.exit),
-              exitActive: css(EntitlementRow.CSS_TRANSITION_STYLE.exiting),
-              exitDone: css(EntitlementRow.CSS_TRANSITION_STYLE.end)
+              enter: css(EntitlementRow.SLIDE_TRANSITION_STYLE.start),
+              enterActive: css(EntitlementRow.SLIDE_TRANSITION_STYLE.entering),
+              exit: css(EntitlementRow.SLIDE_TRANSITION_STYLE.exit),
+              exitActive: css(EntitlementRow.SLIDE_TRANSITION_STYLE.exiting),
+              exitDone: css(EntitlementRow.SLIDE_TRANSITION_STYLE.end)
             }}>
             {(state) => (
-              <div className={css(EntitlementRow.CSS_TRANSITION_STYLE.end)}
-                style={{
-                  ...tableContainer,
-                  ...EntitlementRow.STYLE.hiddenTable
-                }}>
+              <div className={css(EntitlementRow.SLIDE_TRANSITION_STYLE.end)}
+                style={{ ...EntitlementRow.STYLE.hiddenTable }}>
                 <div id='Table Header' style={{
                   ...EntitlementRow.STYLE.textBase,
                   ...EntitlementRow.STYLE.header
                 }}>
                   <div style={{ ...EntitlementRow.STYLE.activeName }}>
                     Applicability
-              </div>
+                </div>
                   <div style={EntitlementRow.STYLE.filler} />
                   <div style={{ ...amountColor, ...tableHeaderAmmount }}>
                     {amount}
@@ -242,15 +223,14 @@ export class EntitlementRow extends React.Component<Properties, State> {
     },
     hiddenTable: {
       zIndex: -100,
-      visibility: 'inherit' as 'inherit',
       width: 'inherit' as 'inherit'
     },
     page: {
-     backgroundColor: '#FFFFFF'
+      backgroundColor: '#FFFFFF'
     }
   };
 
-  private static CSS_TRANSITION_STYLE = StyleSheet.create({
+  private static SLIDE_TRANSITION_STYLE = StyleSheet.create({
     start: {
       opacity: 0,
       marginTop: '-60px',
