@@ -213,7 +213,8 @@ export class EntitlementRow extends React.Component<Properties, State> {
       font: '400 14px Roboto'
     },
     activeName: {
-      color: '#4B23A0'
+      color: '#4B23A0',
+      fontWeight: 500
     },
     greenCheckMark: {
       color: '#36BB55'
