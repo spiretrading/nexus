@@ -34,6 +34,11 @@ bool DropdownMenu::eventFilter(QObject* watched, QEvent* event) {
   return false;
 }
 
+void DropdownMenu::focusOutEvent(QFocusEvent* event) {
+  m_menu_list->hide();
+  update();
+}
+
 void DropdownMenu::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key::Key_Enter ||
       event->key() == Qt::Key::Key_Return) {

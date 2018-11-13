@@ -20,6 +20,7 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* object, QEvent* event) override;
+      void focusOutEvent(QFocusEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
