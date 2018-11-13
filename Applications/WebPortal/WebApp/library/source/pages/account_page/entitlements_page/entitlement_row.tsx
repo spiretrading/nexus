@@ -203,15 +203,14 @@ export class EntitlementRow extends React.Component<Properties, State> {
       backgroundColor: '#FFFFFF'
     },
     smallContainer: {
-      minWidth: '320px'
+      minWidth: '284px',
+      maxWidth: '424px'
     },
     mediumContainer: {
-      minWidth: '730px',
-      width: '732px'
+      width: '636px'
     },
     largeContainer: {
-      minWidth: '998px',
-      width: '1000px'
+      width: '636px'
     },
     desktopPaddingStyle: {
       width: '20px'

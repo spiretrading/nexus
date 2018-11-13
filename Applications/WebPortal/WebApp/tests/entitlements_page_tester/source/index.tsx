@@ -27,8 +27,8 @@ const cEntry2 = currencyDB.fromCode('EUR');
 
 const test = (
   <WebPortal.HBoxLayout height='100%' width='100%'>
-    <WebPortal.Padding size='10%'/>
-    <WebPortal.VBoxLayout height='100%' width='80%'>
+   
+    <WebPortal.VBoxLayout height='100%' width='100%'>
       <WebPortal.EntitlementTable
           breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.SMALL}
           marketDatabase={marketDB}
@@ -54,7 +54,7 @@ const test = (
         breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.SMALL}
         marketDatabase={marketDB}/>
     </WebPortal.VBoxLayout>
-    <WebPortal.Padding size='10%'/>
+
   </WebPortal.HBoxLayout>);
 
 ReactDOM.render(test,
