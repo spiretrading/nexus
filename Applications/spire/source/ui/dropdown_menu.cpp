@@ -44,8 +44,8 @@ void DropdownMenu::focusOutEvent(QFocusEvent* event) {
 }
 
 void DropdownMenu::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key::Key_Enter ||
-      event->key() == Qt::Key::Key_Return) {
+  if(event->key() == Qt::Key_Enter ||
+      event->key() == Qt::Key_Return) {
     on_clicked();
   }
 }
@@ -90,7 +90,7 @@ void DropdownMenu::move_menu_list() {
 void DropdownMenu::on_clicked() {
   move_menu_list();
   m_menu_list->setFixedWidth(width());
-  m_menu_list->setVisible(true);
+  m_menu_list->show();
   m_menu_list->raise();
 }
 
