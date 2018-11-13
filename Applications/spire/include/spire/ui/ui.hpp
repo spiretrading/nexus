@@ -8,6 +8,7 @@
 namespace Spire {
   class CheckBox;
   class DropdownMenu;
+  class DropdownMenuItem;
   class DropdownMenuList;
   class DropShadow;
   class FlatButton;

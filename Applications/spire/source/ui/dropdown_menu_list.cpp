@@ -1,6 +1,7 @@
 #include "spire/ui/dropdown_menu_list.hpp"
 #include <QVBoxLayout>
 #include "spire/spire/dimensions.hpp"
+#include "spire/ui/dropdown_menu_item.hpp"
 #include "spire/ui/drop_shadow.hpp"
 
 using namespace Spire;
@@ -12,6 +13,7 @@ DropdownMenuList::DropdownMenuList(
   setAttribute(Qt::WA_ShowWithoutActivating);
   setAttribute(Qt::WA_TranslucentBackground);
   m_shadow = std::make_unique<DropShadow>(false, this);
+  setFixedHeight(1 + scale_height(20) * items.size());
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
   m_scroll_area = new QScrollArea(this);
@@ -21,7 +23,7 @@ DropdownMenuList::DropdownMenuList(
   m_scroll_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_scroll_area->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
   m_scroll_area->setStyleSheet(QString(R"(
-    #security_info_list_view_scroll_area {
+    #dropdown_menu_list_scroll_area {
       background-color: #FFFFFF;
       border-bottom: %2px solid #A0A0A0;
       border-left: %2px solid #A0A0A0;
@@ -54,6 +56,9 @@ DropdownMenuList::DropdownMenuList(
   auto list_layout = new QVBoxLayout(m_list_widget);
   list_layout->setContentsMargins({});
   list_layout->setSpacing(0);
-  m_list_widget->setStyleSheet("background-color: red;");
+  for(auto& item : items) {
+    list_layout->addWidget(new DropdownMenuItem(item, m_list_widget));
+  }
+  m_list_widget->setStyleSheet("background-color: #FFFFFF;");
   m_scroll_area->setWidget(m_list_widget);
 }
