@@ -29,6 +29,11 @@ const test = (
   <WebPortal.HBoxLayout height='100%' width='100%'>
     <WebPortal.Padding size='10%'/>
     <WebPortal.VBoxLayout height='100%' width='80%'>
+      <WebPortal.EntitlementTable
+          breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.SMALL}
+          marketDatabase={marketDB}
+          entitlementEntry={entitlementEntry1}
+      />
       <WebPortal.Padding size='10%'/>
         <WebPortal.EntitlementRow
           isActive

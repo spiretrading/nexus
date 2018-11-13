@@ -142,7 +142,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
             {amount}
           </div>
         </div>
-        <VBoxLayout id='hiddenDropDpwn' style={dropDownContainer}>
+        <VBoxLayout id='hiddenDropDpwn'>
           <div style={lineVibibilityStyle}>
             <HLine color='#E6E6E6' />
           </div>
@@ -173,7 +173,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
                     {amount}
                   </div>
                 </div>
-                <div>
+                <div style={EntitlementRow.STYLE.tablePadding}>
                   <EntitlementTable
                     entitlementEntry={this.props.entitlementEntry}
                     breakpoint={this.props.breakpoint}
@@ -203,8 +203,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
       backgroundColor: '#FFFFFF'
     },
     smallContainer: {
-      minWidth: '320px',
-      maxWidth: '460px'
+      minWidth: '320px'
     },
     mediumContainer: {
       minWidth: '730px',
@@ -221,7 +220,8 @@ export class EntitlementRow extends React.Component<Properties, State> {
       width: '18px'
     },
     tablePadding: {
-      paddingLeft: '76px'
+      paddingBottom: '20px',
+      width: 'inherit' as 'inherit'
     },
     hidden: {
       visibility: 'hidden' as 'hidden'
@@ -243,7 +243,8 @@ export class EntitlementRow extends React.Component<Properties, State> {
     },
     hiddenTable: {
       zIndex: -100,
-      visibility: 'inherit' as 'inherit'
+      visibility: 'inherit' as 'inherit',
+      width: 'inherit' as 'inherit'
     },
     page: {
      backgroundColor: '#FFFFFF'
@@ -251,13 +252,6 @@ export class EntitlementRow extends React.Component<Properties, State> {
   };
 
   private static CSS_TRANSITION_STYLE = StyleSheet.create({
-    base: {
-      backgroundColor: '#404040',
-      width: '400px',
-      padding: '10px 5px',
-      marginTop: '10px',
-      borderRadius: '8px'
-    },
     start: {
       opacity: 0,
       marginTop: '-60px',

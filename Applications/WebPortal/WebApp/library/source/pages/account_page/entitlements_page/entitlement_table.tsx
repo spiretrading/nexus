@@ -111,7 +111,8 @@ export class EntitlementTable extends React.Component<Properties, {}> {
       padding: 0,
       small: {
         minWidth: '284px',
-        maxWidth: '422px'
+        width: 'inherit' as 'inherit',
+        maxWidth: '424px'
       },
       notSmall: {
         width: '636px'
