@@ -31,6 +31,7 @@ namespace Spire {
 
       void move_menu_list();
       void on_clicked();
+      void on_item_selected(const QString& text);
   };
 }
 

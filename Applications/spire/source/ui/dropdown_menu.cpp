@@ -16,6 +16,7 @@ DropdownMenu::DropdownMenu(const std::initializer_list<QString>& items,
   }
   setFocusPolicy(Qt::StrongFocus);
   m_menu_list = new DropdownMenuList(items, this);
+  m_menu_list->connect_selected_signal([=] (auto& t) { on_item_selected(t); });
   m_menu_list->hide();
   window()->installEventFilter(this);
 }
@@ -26,6 +27,8 @@ bool DropdownMenu::eventFilter(QObject* watched, QEvent* event) {
       if(m_menu_list->isVisible()) {
         move_menu_list();
       }
+    } else if(event->type() == QEvent::WindowDeactivate) {
+      m_menu_list->hide();
     }
   }
   return false;
@@ -80,4 +83,10 @@ void DropdownMenu::on_clicked() {
   m_menu_list->setFixedWidth(width());
   m_menu_list->setVisible(true);
   m_menu_list->raise();
+}
+
+void DropdownMenu::on_item_selected(const QString& text) {
+  m_menu_list->hide();
+  m_current_text = text;
+  update();
 }

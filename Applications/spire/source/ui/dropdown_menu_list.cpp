@@ -4,6 +4,7 @@
 #include "spire/ui/dropdown_menu_item.hpp"
 #include "spire/ui/drop_shadow.hpp"
 
+using namespace boost::signals2;
 using namespace Spire;
 
 DropdownMenuList::DropdownMenuList(
@@ -57,8 +58,19 @@ DropdownMenuList::DropdownMenuList(
   list_layout->setContentsMargins({});
   list_layout->setSpacing(0);
   for(auto& item : items) {
-    list_layout->addWidget(new DropdownMenuItem(item, m_list_widget));
+    auto i = new DropdownMenuItem(item, m_list_widget);
+    i->connect_selected_signal([=] (auto& t) { on_select(t); });
+    list_layout->addWidget(i);
   }
   m_list_widget->setStyleSheet("background-color: #FFFFFF;");
   m_scroll_area->setWidget(m_list_widget);
+}
+
+connection DropdownMenuList::connect_selected_signal(
+    const SelectedSignal::slot_type& slot) const {
+  return m_selected_signal.connect(slot);
+}
+
+void DropdownMenuList::on_select(const QString& text) {
+  m_selected_signal(text);
 }

@@ -8,6 +8,8 @@ namespace Spire {
   class DropdownMenuList : public QWidget {
     public:
 
+      using SelectedSignal = Signal<void (const QString& text)>;
+
       //! Constructs a DropdownMenuList with the specified items.
       /*
         \param items The initial items in the list.
@@ -16,10 +18,16 @@ namespace Spire {
       DropdownMenuList(const std::initializer_list<QString>& items,
           QWidget* parent = nullptr);
 
+      boost::signals2::connection connect_selected_signal(
+        const SelectedSignal::slot_type& slot) const;
+
     private:
+      mutable SelectedSignal m_selected_signal;
       std::unique_ptr<DropShadow> m_shadow;
       QScrollArea* m_scroll_area;
       QWidget* m_list_widget;
+
+      void on_select(const QString& text);
   };
 }
 
