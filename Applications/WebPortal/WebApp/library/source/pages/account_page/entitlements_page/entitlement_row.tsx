@@ -7,6 +7,7 @@ import { DropDownButton, HLine } from '../../../components';
 import { EntitlementsPageSizing } from './entitlements_page';
 import { EntitlementTable } from './entitlement_table';
 import { VBoxLayout } from '../../../layouts';
+import { inherits } from 'util';
 
 interface Properties {
   entitlementEntry?: Nexus.EntitlementDatabase.Entry;
@@ -256,9 +257,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
     },
     exit: {
       overflow: 'hidden' as 'hidden',
-      maxHeight: '200px',
-      transitionProperty: 'max-height',
-      transitionDuration: `2000ms`
+      maxHeight: '500px'
     },
     exiting: {
       overflow: 'hidden' as 'hidden',
@@ -267,11 +266,11 @@ export class EntitlementRow extends React.Component<Properties, State> {
       transitionDuration: `2000ms`
     },
     end: {
-      maxHeight: '0px',
+      maxHeight: '0',
       overflow: 'hidden' as 'hidden'
     },
     default: {
-      maxHeight: '0px',
+      maxHeight: '0',
       overflow: 'hidden' as 'hidden'
     }
   });
@@ -280,7 +279,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
       maxHeight: '200px'
     },
     exit: {
-      maxHeight: '200px'
+      maxHeight: '10000px'
     }
   };
   private EXTRA_HEIGHT_INFO_STYLE = StyleSheet.create(
@@ -288,7 +287,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
   );
 
   private dropDownTable: HTMLDivElement;
-  private static readonly TRANSITION_LENGTH_MS = 10000;
+  private static readonly TRANSITION_LENGTH_MS = 2000;
   private static readonly MOBILE_BUTTON_SIZE_PX = '20px';
   private static readonly DESKTOP_BUTTON_SIZE_PX = '16px';
 }
