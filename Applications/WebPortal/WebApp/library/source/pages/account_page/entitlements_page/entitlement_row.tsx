@@ -51,7 +51,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
       if (this.state.isExpanded) {
         return EntitlementRow.STYLE.text.nameWhenExpandedTable;
       } else {
-        return EntitlementRow.STYLE.text.basic;
+        return EntitlementRow.STYLE.text.default;
       }
     })();
     const headerPaddingInternal = (() => {
@@ -222,7 +222,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
       }
     },
     text: {
-      basic: {
+      default: {
         font: '400 14px Roboto',
         color: '#000000'
       },
