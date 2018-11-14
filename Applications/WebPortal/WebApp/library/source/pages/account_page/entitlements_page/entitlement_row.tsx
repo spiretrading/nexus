@@ -1,12 +1,12 @@
-import {css, StyleSheet} from 'aphrodite/no-important';
-import {CSSTransition} from 'react-transition-group';
+import { css, StyleSheet } from 'aphrodite/no-important';
+import { CSSTransition } from 'react-transition-group';
 import * as React from 'react';
 import * as Nexus from 'nexus';
-import {CheckMarkButton} from '.';
-import {DropDownButton, HLine} from '../../../components';
-import {EntitlementsPageSizing} from './entitlements_page';
-import {EntitlementTable} from './entitlement_table';
-import {VBoxLayout} from '../../../layouts';
+import { CheckMarkButton } from '.';
+import { DropDownButton, HLine } from '../../../components';
+import { EntitlementsPageSizing } from './entitlements_page';
+import { EntitlementTable } from './entitlement_table';
+import { VBoxLayout } from '../../../layouts';
 
 interface Properties {
   entitlementEntry?: Nexus.EntitlementDatabase.Entry;
@@ -41,14 +41,14 @@ export class EntitlementRow extends React.Component<Properties, State> {
       }
     })();
     const buttonSize = (() => {
-      if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
+      if (this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
         return EntitlementRow.MOBILE_BUTTON_SIZE_PX;
       } else {
         return EntitlementRow.DESKTOP_BUTTON_SIZE_PX;
       }
     })();
     const entitlementNameStyle = (() => {
-      if(this.state.isExpanded) {
+      if (this.state.isExpanded) {
         return EntitlementRow.STYLE.text.nameWhenExpandedTable;
       } else {
         return EntitlementRow.STYLE.text.default;
@@ -65,8 +65,8 @@ export class EntitlementRow extends React.Component<Properties, State> {
       this.props.entitlementEntry.price.toString()} ${
       this.props.currencyEntry.code}`;
     const amountColor = (() => {
-      if(this.props.isActive) {
-        if(this.state.isExpanded) {
+      if (this.props.isActive) {
+        if (this.state.isExpanded) {
           return EntitlementRow.STYLE.text.activeAmmountWhenExpandedTable;
         } else {
           return EntitlementRow.STYLE.text.activeAmmount;
@@ -76,7 +76,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
       }
     })();
     const buttonRowAmountVisibility = (() => {
-      if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
+      if (this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
         return EntitlementRow.STYLE.hidden;
       } else {
         return null;
@@ -90,17 +90,10 @@ export class EntitlementRow extends React.Component<Properties, State> {
       }
     })();
     const applicabilityTablePadding = (() => {
-      if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
+      if (this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
         return EntitlementRow.STYLE.box.mobileTablePadding;
       } else {
         return EntitlementRow.STYLE.box.tablePadding;
-      }
-    })();
-    const lineVisibility = (() => {
-      if(this.state.isExpanded) {
-        return null;
-      } else {
-        return EntitlementRow.STYLE.hidden;
       }
     })();
     return (
@@ -108,42 +101,44 @@ export class EntitlementRow extends React.Component<Properties, State> {
         <div style={EntitlementRow.STYLE.box.header}>
           <CheckMarkButton
             size={buttonSize}
-            isChecked={this.props.isActive}/>
-          <div style={headerPaddingInternal}/>
+            isChecked={this.props.isActive} />
+          <div style={headerPaddingInternal} />
           <DropDownButton size={buttonSize}
-            onClick={this.showApplicabilityTable}/>
-          <div style={headerPaddingInternal}/>
+            onClick={this.showApplicabilityTable} />
+          <div style={headerPaddingInternal} />
           <div style={entitlementNameStyle}>
             {this.props.entitlementEntry.name}
           </div>
-          <div style={EntitlementRow.STYLE.box.headerFiller}/>
-          <div style={{...amountColor, ...buttonRowAmountVisibility}}>
+          <div style={EntitlementRow.STYLE.box.headerFiller} />
+          <div style={{ ...amountColor, ...buttonRowAmountVisibility }}>
             {amount}
           </div>
         </div>
         <VBoxLayout>
-          <div style={lineVisibility}>
-            <HLine color='#E6E6E6'/>
-          </div>
           <CSSTransition in={this.state.isExpanded}
             timeout={EntitlementRow.TRANSITION_LENGTH_MS}
+            id='TRANSITON!'
             classNames={{
               enter: css(EntitlementRow.SLIDE_TRANSITION_STYLE.enter),
-              enterActive: css(EntitlementRow.SLIDE_TRANSITION_STYLE.entering),
+              enterActive: css(EntitlementRow.SLIDE_TRANSITION_STYLE.entering,
+                this.EXTRA_HEIGHT_INFO_STYLE.entering),
+              enterDone: css(EntitlementRow.SLIDE_TRANSITION_STYLE.entered),
               exit: css(EntitlementRow.SLIDE_TRANSITION_STYLE.exit),
               exitActive: css(EntitlementRow.SLIDE_TRANSITION_STYLE.exiting),
               exitDone: css(EntitlementRow.SLIDE_TRANSITION_STYLE.end)
             }}>
-            {() => (
-              <div className={css(EntitlementRow.SLIDE_TRANSITION_STYLE.end)}
-                ref={(divElement) => this.dropDownTable = divElement}
-                style={EntitlementRow.STYLE.box.expandableTable }>
+            {(state) => (
+              <div ref={(divElement) => this.dropDownTable = divElement}
+                id='TableBox'
+                className={css(EntitlementRow.SLIDE_TRANSITION_STYLE.enter)}
+                style={EntitlementRow.STYLE.box.expandableTable}>
+                <HLine color='#E6E6E6' />
                 <div id='Table Header' style={EntitlementRow.STYLE.box.header}>
                   <div style={EntitlementRow.STYLE.text.nameWhenExpandedTable}>
                     Applicability
                   </div>
-                  <div style={EntitlementRow.STYLE.box.headerFiller}/>
-                  <div style={{...amountColor,...tableHeaderAmmountVisibility}}>
+                  <div style={EntitlementRow.STYLE.box.headerFiller} />
+                  <div style={{ ...amountColor, ...tableHeaderAmmountVisibility }}>
                     {amount}
                   </div>
                 </div>
@@ -151,13 +146,22 @@ export class EntitlementRow extends React.Component<Properties, State> {
                   <EntitlementTable
                     entitlementEntry={this.props.entitlementEntry}
                     breakpoint={this.props.breakpoint}
-                    marketDatabase={this.props.marketDatabase}/>
+                    marketDatabase={this.props.marketDatabase} />
                 </div>
               </div>
             )}
           </CSSTransition>
         </VBoxLayout>
       </VBoxLayout>);
+  }
+
+  public componentDidMount(): void {
+    this.EXTRA_HEIGHT_INFO.entering.maxHeight =
+    `${this.dropDownTable.offsetHeight}px`;
+    this.EXTRA_HEIGHT_INFO.exit.maxHeight =
+      `${this.dropDownTable.offsetHeight}px`;
+    this.EXTRA_HEIGHT_INFO_STYLE = StyleSheet.create(
+    this.EXTRA_HEIGHT_INFO);
   }
 
   private showApplicabilityTable(): void {
@@ -201,7 +205,6 @@ export class EntitlementRow extends React.Component<Properties, State> {
         width: '20px'
       },
       expandableTable: {
-        zIndex: -100,
         width: 'inherit' as 'inherit'
       },
       mobilePaddingStyle: {
@@ -239,33 +242,53 @@ export class EntitlementRow extends React.Component<Properties, State> {
   private static readonly SLIDE_TRANSITION_STYLE = StyleSheet.create({
     enter: {
       overflow: 'hidden' as 'hidden',
-      maxHeight: '0px',
-      visibility: 'visible' as 'visible'
+      maxHeight: '0px'
     },
     entering: {
       overflow: 'hidden' as 'hidden',
       maxHeight: '200px',
       transitionProperty: 'max-height',
-      transitionDuration: `1000ms`
+      transitionDuration: `2000ms`
+    },
+    entered:{
+      overflow: 'hidden' as 'hidden',
+      maxHeight: '200px'
     },
     exit: {
       overflow: 'hidden' as 'hidden',
-      maxHeight: '200px'
+      maxHeight: '200px',
+      transitionProperty: 'max-height',
+      transitionDuration: `2000ms`
     },
     exiting: {
       overflow: 'hidden' as 'hidden',
       maxHeight: '0px',
-      transition: `max-height`,
-      transitionDuration: `1000ms`
+      transitionProperty: 'max-height',
+      transitionDuration: `2000ms`
     },
     end: {
-      opacity: 0,
-      visibility: 'hidden' as 'hidden',
-      display: 'none' as 'none'
+      maxHeight: '0px',
+      overflow: 'hidden' as 'hidden'
+    },
+    default: {
+      maxHeight: '0px',
+      overflow: 'hidden' as 'hidden'
     }
   });
+  private  EXTRA_HEIGHT_INFO = {
+    entering: {
+      maxHeight: '200px'
+    },
+    exit: {
+      maxHeight: '200px'
+    }
+  };
+  private EXTRA_HEIGHT_INFO_STYLE = StyleSheet.create(
+    this.EXTRA_HEIGHT_INFO
+  );
+
   private dropDownTable: HTMLDivElement;
-  private static readonly TRANSITION_LENGTH_MS = 1000;
+  private static readonly TRANSITION_LENGTH_MS = 10000;
   private static readonly MOBILE_BUTTON_SIZE_PX = '20px';
   private static readonly DESKTOP_BUTTON_SIZE_PX = '16px';
 }
