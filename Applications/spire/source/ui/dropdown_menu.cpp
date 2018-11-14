@@ -1,7 +1,9 @@
 #include "spire/ui/dropdown_menu.hpp"
+#include <QLayout>
 #include <QPainter>
 #include <QPaintEvent>
 #include "spire/spire/dimensions.hpp"
+#include "spire/ui/dropdown_menu_item.hpp"
 #include "spire/ui/dropdown_menu_list.hpp"
 #include "spire/ui/ui.hpp"
 
@@ -19,6 +21,14 @@ DropdownMenu::DropdownMenu(const std::initializer_list<QString>& items,
   m_menu_list->connect_selected_signal([=] (auto& t) { on_item_selected(t); });
   m_menu_list->hide();
   window()->installEventFilter(this);
+}
+
+void DropdownMenu::set_items(const std::initializer_list<QString>& items) {
+  m_menu_list->set_items(items);
+  if(m_menu_list->layout()->count() > 0) {
+    m_current_text = *items.begin();
+  }
+  update();
 }
 
 const QString& DropdownMenu::get_text() const {

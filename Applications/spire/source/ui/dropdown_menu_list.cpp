@@ -69,6 +69,18 @@ DropdownMenuList::DropdownMenuList(
   parent->installEventFilter(this);
 }
 
+void DropdownMenuList::set_items(const std::initializer_list<QString>& items) {
+  while(auto item = m_list_widget->layout()->takeAt(0)) {
+    delete item->widget();
+    delete item;
+  }
+  for(auto& item : items) {
+    auto i = new DropdownMenuItem(item, m_list_widget);
+    i->connect_selected_signal([=] (auto& t) { on_select(t); });
+    m_list_widget->layout()->addWidget(i);
+  }
+}
+
 connection DropdownMenuList::connect_selected_signal(
     const SelectedSignal::slot_type& slot) const {
   return m_selected_signal.connect(slot);

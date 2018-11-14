@@ -42,6 +42,8 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     scale_height(10));
   button_header_layout->addSpacing(scale_width(8));
   m_period_line_edit = new QLineEdit(m_button_header_widget);
+  connect(m_period_line_edit, &QLineEdit::editingFinished, this,
+    &ChartingWindow::on_period_line_edit_changed);
   m_period_line_edit->setFixedSize(scale(36, 26));
   m_period_line_edit->setValidator(new QIntValidator(1, INT_MAX,
     m_period_line_edit));
@@ -62,7 +64,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   button_header_layout->addWidget(m_period_line_edit);
   button_header_layout->addSpacing(scale_width(4));
   m_period_dropdown = new DropdownMenu(
-    {tr("seconds"), tr("minutes"), tr("hours")}, m_button_header_widget);
+    {tr("second"), tr("minute"), tr("hour")}, m_button_header_widget);
   m_period_dropdown->setFixedSize(scale(80, 26));
   button_header_layout->addWidget(m_period_dropdown);
   button_header_layout->addSpacing(scale_width(18));
@@ -99,4 +101,13 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   button_header_layout->addStretch(1);
   layout->addWidget(m_button_header_widget);
   layout->addStretch(1);
+}
+
+void ChartingWindow::on_period_line_edit_changed() {
+  auto value = m_period_line_edit->text().toInt();
+  if(value == 1) {
+    m_period_dropdown->set_items({tr("second"), tr("minute"), tr("hour")});
+  } else {
+    m_period_dropdown->set_items({tr("seconds"), tr("minutes"), tr("hours")});
+  }
 }

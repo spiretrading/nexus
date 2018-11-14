@@ -49,6 +49,8 @@ namespace Spire {
       QWidget* m_button_header_widget;
       QLineEdit* m_period_line_edit;
       DropdownMenu* m_period_dropdown;
+
+      void on_period_line_edit_changed();
   };
 }
 

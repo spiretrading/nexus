@@ -18,6 +18,13 @@ namespace Spire {
       DropdownMenuList(const std::initializer_list<QString>& items,
           QWidget* parent = nullptr);
 
+      //! Clears the items from the list and populates it with the specified
+      //! items.
+      /*
+        \param items The items to display in the menu.
+      */
+      void set_items(const std::initializer_list<QString>& items);
+
       boost::signals2::connection connect_selected_signal(
         const SelectedSignal::slot_type& slot) const;
 
