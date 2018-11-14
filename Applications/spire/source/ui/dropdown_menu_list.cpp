@@ -11,7 +11,8 @@ using namespace Spire;
 DropdownMenuList::DropdownMenuList(
     const std::initializer_list<QString>& items,
     QWidget* parent)
-    : QWidget(parent, Qt::Tool | Qt::FramelessWindowHint) {
+    : QWidget(parent, Qt::Tool | Qt::FramelessWindowHint),
+      m_highlight_index(-1) {
   setAttribute(Qt::WA_ShowWithoutActivating);
   setAttribute(Qt::WA_TranslucentBackground);
   m_shadow = std::make_unique<DropShadow>(false, this);
@@ -92,14 +93,46 @@ bool DropdownMenuList::eventFilter(QObject* object, QEvent* event) {
   return false;
 }
 
+void DropdownMenuList::showEvent(QShowEvent* event) {
+  m_highlight_index = -1;
+  for(auto i = 0; i < m_list_widget->layout()->count(); ++i) {
+    auto w = m_list_widget->layout()->itemAt(i)->widget();
+    static_cast<DropdownMenuItem*>(w)->remove_highlight();
+    w->update();
+  }
+}
+
 void DropdownMenuList::on_select(const QString& text) {
   m_selected_signal(text);
 }
 
 void DropdownMenuList::focus_next() {
-  
+  auto index = (m_highlight_index + 1) % m_list_widget->layout()->count();
+  if(m_highlight_index < 0) {
+    m_highlight_index = 0;
+  }
+  update_highlights(m_highlight_index, index);
+  m_highlight_index = index;
 }
 
 void DropdownMenuList::focus_previous() {
-  
+  if(m_highlight_index < 0) {
+    m_highlight_index = 0;
+  }
+  auto index = m_highlight_index - 1;
+  if(index < 0) {
+    index = m_list_widget->layout()->count() - 1;
+  }
+  update_highlights(m_highlight_index, index);
+  m_highlight_index = index;
+}
+
+void DropdownMenuList::update_highlights(int old_index, int new_index) {
+  auto previous_widget = m_list_widget->layout()->itemAt(old_index)->widget();
+  static_cast<DropdownMenuItem*>(previous_widget)->remove_highlight();
+  previous_widget->update();
+  auto current_widget = m_list_widget->layout()->
+    itemAt(new_index)->widget();
+  static_cast<DropdownMenuItem*>(current_widget)->set_highlight();
+  current_widget->update();
 }

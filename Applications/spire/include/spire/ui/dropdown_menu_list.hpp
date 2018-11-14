@@ -23,16 +23,19 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* object, QEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
       mutable SelectedSignal m_selected_signal;
       std::unique_ptr<DropShadow> m_shadow;
       QScrollArea* m_scroll_area;
       QWidget* m_list_widget;
+      int m_highlight_index;
 
       void on_select(const QString& text);
       void focus_next();
       void focus_previous();
+      void update_highlights(int old_index, int new_index);
   };
 }
 

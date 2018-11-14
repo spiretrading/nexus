@@ -18,15 +18,23 @@ namespace Spire {
       */
       DropdownMenuItem(const QString& text, QWidget* parent = nullptr);
 
+      //! Sets the item's highlighted style.
+      void set_highlight();
+
+      //! Removes the item's highlighted style.
+      void remove_highlight();
+
       boost::signals2::connection connect_selected_signal(
         const SelectedSignal::slot_type& slot) const;
 
     protected:
       void keyPressEvent(QKeyEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
+      void paintEvent(QPaintEvent* event) override;
 
     private:
       mutable SelectedSignal m_selected_signal;
+      bool m_is_highlighted;
   };
 }
 
