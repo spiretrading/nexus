@@ -3,15 +3,19 @@
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QIntValidator>
+#include <QKeyEvent>
 #include <QListView>
 #include <QVBoxLayout>
+#include "spire/security_input/security_input_dialog.hpp"
 #include "spire/security_input/security_input_model.hpp"
 #include "spire/spire/dimensions.hpp"
+#include "spire/ui/custom_qt_variants.hpp"
 #include "spire/ui/dropdown_menu.hpp"
 #include "spire/ui/toggle_button.hpp"
 #include "spire/ui/window.hpp"
 
 using namespace Beam;
+using namespace Nexus;
 using namespace Spire;
 
 ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
@@ -19,6 +23,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     : QWidget(parent),
       m_input_model(input_model.Get()) {
   m_body = new QWidget(this);
+  m_body->installEventFilter(this);
   m_body->setMinimumSize(scale(400, 320));
   m_body->resize(scale(400, 320));
   m_body->setStyleSheet("background-color: #FFFFFF;");
@@ -66,6 +71,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   m_period_dropdown = new DropdownMenu(
     {tr("second"), tr("minute"), tr("hour")}, m_button_header_widget);
   m_period_dropdown->setFixedSize(scale(80, 26));
+  m_period_dropdown->installEventFilter(this);
   button_header_layout->addWidget(m_period_dropdown);
   button_header_layout->addSpacing(scale_width(18));
   auto button_size = scale(16, 16);
@@ -112,6 +118,82 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   layout->addWidget(m_empty_window_label.get());
 }
 
+bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
+  if(object == m_period_dropdown) {
+    if(event->type() == QEvent::KeyPress) {
+      auto e = static_cast<QKeyEvent*>(event);
+      if(e->text()[0].isLetterOrNumber()) {
+        show_security_input_dialog(e->text());
+      }
+    }
+  } else if(object == m_body) {
+    if(event->type() == QEvent::MouseButtonPress) {
+      m_body->setFocus();
+    }
+  }
+  return false;
+}
+
+void ChartingWindow::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_PageUp) {
+    if(m_current_security != Security()) {
+      auto s = m_securities.push_front(m_current_security);
+      if(s != Security()) {
+        set_current(s);
+      }
+    }
+    return;
+  } else if(event->key() == Qt::Key_PageDown) {
+    if(m_current_security != Security()) {
+      auto s = m_securities.push_back(m_current_security);
+      if(s != Security()) {
+        set_current(s);
+      }
+    }
+    return;
+  }
+  auto pressed_key = event->text();
+  if(pressed_key[0].isLetterOrNumber()) {
+    show_security_input_dialog(pressed_key);
+  }
+}
+
+void ChartingWindow::set_current(const Security& s) {
+  if(s == m_current_security) {
+    return;
+  }
+  m_current_security = s;
+  m_change_security_signal(s);
+  setWindowTitle(
+    CustomVariantItemDelegate().displayText(QVariant::fromValue(s),
+      QLocale()) + tr(" - Chart"));
+}
+
+void ChartingWindow::show_overlay_widget() {
+  auto contents = m_body->layout()->itemAt(1)->widget();
+  m_overlay_widget = std::make_unique<QLabel>(m_body);
+  m_overlay_widget->setStyleSheet(
+    "background-color: rgba(245, 245, 245, 153);");
+  m_overlay_widget->resize(contents->size());
+  m_overlay_widget->move(contents->mapTo(contents, contents->pos()));
+  m_overlay_widget->show();
+}
+
+void ChartingWindow::show_security_input_dialog(const QString& text) {
+  auto dialog = new SecurityInputDialog(Ref(*m_input_model), text,
+    this);
+  dialog->setWindowModality(Qt::NonModal);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  connect(dialog, &QDialog::accepted, this,
+    [=] { on_security_input_accept(dialog); });
+  connect(dialog, &QDialog::rejected, this,
+    [=] { on_security_input_reject(dialog); });
+  dialog->move(geometry().center().x() -
+    dialog->width() / 2, geometry().center().y() - dialog->height() / 2);
+  show_overlay_widget();
+  dialog->show();
+}
+
 void ChartingWindow::on_period_line_edit_changed() {
   auto value = m_period_line_edit->text().toInt();
   if(value == 1) {
@@ -119,4 +201,20 @@ void ChartingWindow::on_period_line_edit_changed() {
   } else {
     m_period_dropdown->set_items({tr("seconds"), tr("minutes"), tr("hours")});
   }
+}
+
+void ChartingWindow::on_security_input_accept(SecurityInputDialog* dialog) {
+  auto s = dialog->get_security();
+  if(s != Security() && s != m_current_security) {
+    m_securities.push(m_current_security);
+    set_current(s);
+    activateWindow();
+  }
+  dialog->close();
+  m_overlay_widget.reset();
+}
+
+void ChartingWindow::on_security_input_reject(SecurityInputDialog* dialog) {
+  dialog->close();
+  m_overlay_widget.reset();
 }

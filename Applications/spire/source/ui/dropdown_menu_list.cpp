@@ -69,7 +69,7 @@ DropdownMenuList::DropdownMenuList(
   parent->installEventFilter(this);
 }
 
-void DropdownMenuList::set_items(const std::initializer_list<QString>& items) {
+void DropdownMenuList::set_items(const std::vector<QString>& items) {
   while(auto item = m_list_widget->layout()->takeAt(0)) {
     delete item->widget();
     delete item;

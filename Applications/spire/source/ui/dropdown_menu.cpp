@@ -23,10 +23,18 @@ DropdownMenu::DropdownMenu(const std::initializer_list<QString>& items,
   window()->installEventFilter(this);
 }
 
-void DropdownMenu::set_items(const std::initializer_list<QString>& items) {
+void DropdownMenu::set_items(const std::vector<QString>& items) {
+  auto index = 0;
+  for(auto i = 0; i < m_menu_list->layout()->count(); ++i) {
+    auto t = static_cast<DropdownMenuItem*>(
+      m_menu_list->layout()->itemAt(0)->widget())->text();
+    if(t == m_current_text) {
+      index = i;
+    }
+  }
   m_menu_list->set_items(items);
   if(m_menu_list->layout()->count() > 0) {
-    m_current_text = *items.begin();
+    m_current_text = items[index];
   }
   update();
 }

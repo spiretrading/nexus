@@ -23,7 +23,7 @@ namespace Spire {
       /*
         \param items The items to display in the menu.
       */
-      void set_items(const std::initializer_list<QString>& items);
+      void set_items(const std::vector<QString>& items);
 
       //! Returns the selected item.
       const QString& get_text() const;
