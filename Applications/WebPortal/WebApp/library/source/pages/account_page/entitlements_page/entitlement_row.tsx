@@ -39,14 +39,14 @@ export class EntitlementRow extends React.Component<Properties, State> {
         case EntitlementsPageSizing.BreakPoint.LARGE:
           return EntitlementRow.STYLE.box.largeComponent;
       }
-    })(); // good
+    })();
     const buttonSize = (() => {
       if (this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
-        return '20px';
+        return EntitlementRow.MOBILE_BUTTON_SIZE_PX;
       } else {
-        return '16px';
+        return EntitlementRow.DESKTOP_BUTTON_SIZE_PX;
       }
-    })(); // good
+    })();
     const entitlementNameStyle = (() => {
       if (this.state.isExpanded) {
         return EntitlementRow.STYLE.text.nameWhenExpandedTable;
@@ -81,21 +81,21 @@ export class EntitlementRow extends React.Component<Properties, State> {
       } else {
         return null;
       }
-    })(); // needs better name
+    })();
     const tableHeaderAmmountVisibility = (() => {
       if (this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
         return null;
       } else {
         return EntitlementRow.STYLE.hidden;
       }
-    })(); // needs better name
+    })();
     const applicabilityTablePadding = (() => {
       if (this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
         return EntitlementRow.STYLE.box.mobileTablePadding;
       } else {
         return EntitlementRow.STYLE.box.tablePadding;
       }
-    })(); // needs better name
+    })();
     const lineVisibility = (() => {
       if (this.state.isExpanded) {
         return null;
@@ -105,7 +105,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
     })();
     return (
       <VBoxLayout id='EntititlemtButtonRow' style={elementSize}>
-        <div id='EntititlemtButtonRow' style={EntitlementRow.STYLE.header}>
+        <div id='EntititlemtButtonRow' style={EntitlementRow.STYLE.box.header}>
           <CheckMarkButton
             size={buttonSize}
             isChecked={this.props.isActive} />
@@ -116,7 +116,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
           <div style={entitlementNameStyle}>
             {this.props.entitlementEntry.name}
           </div>
-          <div style={EntitlementRow.STYLE.box.headerFiller} />
+          <div style={EntitlementRow.STYLE.box.headerFiller}/>
           <div style={{
             ...amountColor, ...buttonRowAmountVisibility
           }}>
@@ -125,12 +125,12 @@ export class EntitlementRow extends React.Component<Properties, State> {
         </div>
         <VBoxLayout id='hiddenDropDpwn'>
           <div style={lineVisibility}>
-            <HLine color='#E6E6E6' />
+            <HLine color='#E6E6E6'/>
           </div>
           <CSSTransition in={this.state.isExpanded}
             timeout={EntitlementRow.TRANSITION_LENGTH_MS}
             classNames={{
-              enter: css(EntitlementRow.SLIDE_TRANSITION_STYLE.start),
+              enter: css(EntitlementRow.SLIDE_TRANSITION_STYLE.enter),
               enterActive: css(EntitlementRow.SLIDE_TRANSITION_STYLE.entering),
               exit: css(EntitlementRow.SLIDE_TRANSITION_STYLE.exit),
               exitActive: css(EntitlementRow.SLIDE_TRANSITION_STYLE.exiting),
@@ -138,10 +138,8 @@ export class EntitlementRow extends React.Component<Properties, State> {
             }}>
             {(state) => (
               <div className={css(EntitlementRow.SLIDE_TRANSITION_STYLE.end)}
-                style={{ ...EntitlementRow.STYLE.hiddenTable }}>
-                <div id='Table Header' style={{
-                  ...EntitlementRow.STYLE.header
-                }}>
+                style={EntitlementRow.STYLE.box.expandableTable }>
+                <div id='Table Header' style={EntitlementRow.STYLE.box.header}>
                   <div style={entitlementNameStyle}>
                     Applicability
                 </div>
@@ -173,23 +171,10 @@ export class EntitlementRow extends React.Component<Properties, State> {
   }
 
   private static readonly STYLE = {
-    header: {
-      height: '40px',
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex ' as 'flex ',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
-      backgroundColor: '#FFFFFF'
-    },
     hidden: {
       opacity: 0,
       visibility: 'hidden' as 'hidden',
       display: 'none' as 'none'
-    },
-    hiddenTable: {
-      zIndex: -100,
-      width: 'inherit' as 'inherit'
     },
     box: {
       header: {
@@ -219,6 +204,10 @@ export class EntitlementRow extends React.Component<Properties, State> {
       paddingStyle: {
         width: '20px'
       },
+      expandableTable: {
+        zIndex: -100,
+        width: 'inherit' as 'inherit'
+      },
       mobilePaddingStyle: {
         width: '18px'
       },
@@ -246,14 +235,13 @@ export class EntitlementRow extends React.Component<Properties, State> {
         color: '#36BB55'
       },
       nameWhenExpandedTable: {
-        font: '400 14px Roboto',
+        font: '500 14px Roboto',
         color: '#4B23A0'
       }
     }
   };
-
-  private static SLIDE_TRANSITION_STYLE = StyleSheet.create({
-    start: {
+  private static readonly SLIDE_TRANSITION_STYLE = StyleSheet.create({
+    enter: {
       opacity: 0,
       marginTop: '-60px',
       marginBottom: '0px',
@@ -264,9 +252,9 @@ export class EntitlementRow extends React.Component<Properties, State> {
       opacity: 1,
       marginTop: '0px',
       marginBottom: '0px',
-      transform: 'translate(0,0)',
+      transform: 'translate(0,-20)',
       transitionProperty: 'transform, opacity, margin',
-      transitionDuration: '200ms'
+      transitionDuration: `200ms`
     },
     exit: {
       opacity: 0,
@@ -277,7 +265,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
       opacity: 0,
       marginTop: '-200px',
       marginBottom: '0px',
-      transition: 'opacity 100ms, margin 200ms'
+      transition: `margin 200ms`
     },
     end: {
       opacity: 0,
@@ -285,6 +273,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
       display: 'none' as 'none'
     }
   });
-
-  private static TRANSITION_LENGTH_MS = 1000;
+  private static readonly TRANSITION_LENGTH_MS = 200;
+  private static readonly MOBILE_BUTTON_SIZE_PX = '20px';
+  private static readonly DESKTOP_BUTTON_SIZE_PX = '16px';
 }
