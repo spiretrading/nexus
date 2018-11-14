@@ -3,6 +3,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queries/IndexedSubscriptions.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
+#include <Beam/Serialization/JsonSender.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/ReportException.hpp>
 #include <Beam/Utilities/SynchronizedMap.hpp>
@@ -422,8 +423,11 @@ namespace Nexus::OrderExecutionService {
                 clients, executionReport);
             });
         });
-    } catch(const std::exception& e) {
+    } catch(const std::exception&) {
       std::cout << BEAM_REPORT_CURRENT_EXCEPTION() << std::flush;
+      std::cout << "\taccount: " << Beam::Serialization::ToJson(account) <<
+        "\n\texecutionReport:" <<
+        Beam::Serialization::ToJson(executionReport) << std::endl;
     }
   }
 
