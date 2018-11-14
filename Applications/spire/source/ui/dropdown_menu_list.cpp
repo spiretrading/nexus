@@ -85,6 +85,10 @@ bool DropdownMenuList::eventFilter(QObject* object, QEvent* event) {
           e->modifiers() & Qt::ShiftModifier) || e->key() == Qt::Key_Up) {
         focus_previous();
         return true;
+      } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
+        on_select(static_cast<DropdownMenuItem*>(m_list_widget->layout()->
+          itemAt(m_highlight_index)->widget())->text());
+        return true;
       } else if(e->key() == Qt::Key_Escape) {
         close();
       }
