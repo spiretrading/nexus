@@ -2,6 +2,7 @@
 #define SPIRE_CHARTING_WINDOW_HPP
 #include <Beam/Pointers/Ref.hpp>
 #include <QComboBox>
+#include <QLabel>
 #include <QLineEdit>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
@@ -49,6 +50,7 @@ namespace Spire {
       QWidget* m_button_header_widget;
       QLineEdit* m_period_line_edit;
       DropdownMenu* m_period_dropdown;
+      std::unique_ptr<QLabel> m_empty_window_label;
 
       void on_period_line_edit_changed();
   };

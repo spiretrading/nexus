@@ -100,7 +100,16 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   button_header_layout->addWidget(draw_line_button);
   button_header_layout->addStretch(1);
   layout->addWidget(m_button_header_widget);
-  layout->addStretch(1);
+  m_empty_window_label = std::make_unique<QLabel>(tr("Enter a ticker symbol."),
+    this);
+  m_empty_window_label->setAlignment(Qt::AlignCenter);
+  m_empty_window_label->setStyleSheet(QString(R"(
+    background-color: #25212E;
+    color: #FFFFFF;
+    font-family: Roboto;
+    font-size: %1px;
+    padding-top: %2px;)").arg(scale_height(12)).arg(scale_height(16)));
+  layout->addWidget(m_empty_window_label.get());
 }
 
 void ChartingWindow::on_period_line_edit_changed() {
