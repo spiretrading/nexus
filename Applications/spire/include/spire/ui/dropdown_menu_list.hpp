@@ -21,6 +21,9 @@ namespace Spire {
       boost::signals2::connection connect_selected_signal(
         const SelectedSignal::slot_type& slot) const;
 
+    protected:
+      bool eventFilter(QObject* object, QEvent* event) override;
+
     private:
       mutable SelectedSignal m_selected_signal;
       std::unique_ptr<DropShadow> m_shadow;
@@ -28,6 +31,8 @@ namespace Spire {
       QWidget* m_list_widget;
 
       void on_select(const QString& text);
+      void focus_next();
+      void focus_previous();
   };
 }
 

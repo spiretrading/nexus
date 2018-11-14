@@ -1,4 +1,5 @@
 #include "spire/ui/dropdown_menu_list.hpp"
+#include <QKeyEvent>
 #include <QVBoxLayout>
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/dropdown_menu_item.hpp"
@@ -64,6 +65,7 @@ DropdownMenuList::DropdownMenuList(
   }
   m_list_widget->setStyleSheet("background-color: #FFFFFF;");
   m_scroll_area->setWidget(m_list_widget);
+  parent->installEventFilter(this);
 }
 
 connection DropdownMenuList::connect_selected_signal(
@@ -71,6 +73,33 @@ connection DropdownMenuList::connect_selected_signal(
   return m_selected_signal.connect(slot);
 }
 
+bool DropdownMenuList::eventFilter(QObject* object, QEvent* event) {
+  if(object == parent()) {
+    if(event->type() == QEvent::KeyPress && isVisible()) {
+      auto e = static_cast<QKeyEvent*>(event);
+      if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Down) {
+        focus_next();
+        return true;
+      } else if((e->key() & Qt::Key_Tab &&
+          e->modifiers() & Qt::ShiftModifier) || e->key() == Qt::Key_Up) {
+        focus_previous();
+        return true;
+      } else if(e->key() == Qt::Key_Escape) {
+        close();
+      }
+    }
+  }
+  return false;
+}
+
 void DropdownMenuList::on_select(const QString& text) {
   m_selected_signal(text);
+}
+
+void DropdownMenuList::focus_next() {
+  
+}
+
+void DropdownMenuList::focus_previous() {
+  
 }
