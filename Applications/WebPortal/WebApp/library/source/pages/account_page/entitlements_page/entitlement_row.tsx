@@ -136,9 +136,10 @@ export class EntitlementRow extends React.Component<Properties, State> {
             }}>
             {() => (
               <div className={css(EntitlementRow.SLIDE_TRANSITION_STYLE.end)}
+                ref={(divElement) => this.dropDownTable = divElement}
                 style={EntitlementRow.STYLE.box.expandableTable }>
                 <div id='Table Header' style={EntitlementRow.STYLE.box.header}>
-                  <div style={entitlementNameStyle}>
+                  <div style={EntitlementRow.STYLE.text.nameWhenExpandedTable}>
                     Applicability
                   </div>
                   <div style={EntitlementRow.STYLE.box.headerFiller}/>
@@ -237,30 +238,25 @@ export class EntitlementRow extends React.Component<Properties, State> {
   };
   private static readonly SLIDE_TRANSITION_STYLE = StyleSheet.create({
     enter: {
-      opacity: 0,
-      marginTop: '-60px',
-      marginBottom: '0px',
-      transform: 'translate(0,0)',
+      overflow: 'hidden' as 'hidden',
+      maxHeight: '0px',
       visibility: 'visible' as 'visible'
     },
     entering: {
-      opacity: 1,
-      marginTop: '0px',
-      marginBottom: '0px',
-      transform: 'translate(0,-20)',
-      transitionProperty: 'transform, opacity, margin',
-      transitionDuration: `200ms`
+      overflow: 'hidden' as 'hidden',
+      maxHeight: '200px',
+      transitionProperty: 'max-height',
+      transitionDuration: `1000ms`
     },
     exit: {
-      opacity: 0,
-      marginTop: '0px',
-      marginBottom: '0px'
+      overflow: 'hidden' as 'hidden',
+      maxHeight: '200px'
     },
     exiting: {
-      opacity: 0,
-      marginTop: '-200px',
-      marginBottom: '0px',
-      transition: `margin 200ms`
+      overflow: 'hidden' as 'hidden',
+      maxHeight: '0px',
+      transition: `max-height`,
+      transitionDuration: `1000ms`
     },
     end: {
       opacity: 0,
@@ -268,7 +264,8 @@ export class EntitlementRow extends React.Component<Properties, State> {
       display: 'none' as 'none'
     }
   });
-  private static readonly TRANSITION_LENGTH_MS = 200;
+  private dropDownTable: HTMLDivElement;
+  private static readonly TRANSITION_LENGTH_MS = 1000;
   private static readonly MOBILE_BUTTON_SIZE_PX = '20px';
   private static readonly DESKTOP_BUTTON_SIZE_PX = '16px';
 }
