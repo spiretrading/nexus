@@ -18,9 +18,6 @@ namespace Spire {
       explicit BboQuotePanel(const BookViewModel& model,
         QWidget* parent = nullptr);
 
-      //! Sets the model that supplies the data to this widget.
-      void set_model(const BookViewModel& model);
-
     private:
       QuotePanel* m_bid_quote_panel;
       QuotePanel* m_ask_quote_panel;

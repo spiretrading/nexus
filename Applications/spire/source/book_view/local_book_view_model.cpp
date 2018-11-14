@@ -1,12 +1,16 @@
 #include "spire/book_view/local_book_view_model.hpp"
+#include "Nexus/Definitions/MarketQuote.hpp"
+#include "Nexus/Definitions/QuoteConversions.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
-LocalBookViewModel::LocalBookViewModel(Security security)
-    : m_security(std::move(security)) {}
+LocalBookViewModel::LocalBookViewModel(Security security,
+    Definitions definitions)
+    : m_security(std::move(security)),
+      m_definitions(std::move(definitions)) {}
 
 void LocalBookViewModel::update(const BboQuote& bbo) {
   m_bbo = bbo;
@@ -15,6 +19,52 @@ void LocalBookViewModel::update(const BboQuote& bbo) {
 
 void LocalBookViewModel::update(const BookQuote& quote) {
   m_book_quote_signal(quote);
+}
+
+void LocalBookViewModel::update(const MarketQuote& quote) {
+  auto& previous = m_market_quotes[quote.m_market];
+  auto mpid = m_definitions.get_market_database().FromCode(
+    quote.m_market).m_displayName;
+  if(!previous.m_market.IsEmpty()) {
+    auto book_quotes = ToBookQuotePair(previous);
+    book_quotes.m_ask.m_quote.m_size = 0;
+    book_quotes.m_ask.m_mpid = mpid;
+    update(book_quotes.m_ask);
+    book_quotes.m_bid.m_quote.m_size = 0;
+    book_quotes.m_bid.m_mpid = mpid;
+    update(book_quotes.m_bid);
+  }
+  auto book_quotes = ToBookQuotePair(quote);
+  previous = quote;
+  book_quotes.m_ask.m_mpid = mpid;
+  update(book_quotes.m_ask);
+  book_quotes.m_bid.m_mpid = mpid;
+  update(book_quotes.m_bid);
+}
+
+void LocalBookViewModel::update_volume(Quantity volume) {
+  m_volume = volume;
+  m_volume_signal(m_volume);
+}
+
+void LocalBookViewModel::update_high(Money high) {
+  m_high = high;
+  m_high_signal(*m_high);
+}
+
+void LocalBookViewModel::update_low(Money low) {
+  m_low = low;
+  m_low_signal(*m_low);
+}
+
+void LocalBookViewModel::update_open(Money open) {
+  m_open = open;
+  m_open_signal(*m_open);
+}
+
+void LocalBookViewModel::update_close(Money close) {
+  m_close = close;
+  m_close_signal(*m_close);
 }
 
 const Security& LocalBookViewModel::get_security() const {

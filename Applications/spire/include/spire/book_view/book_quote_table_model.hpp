@@ -14,7 +14,7 @@ namespace Spire {
     public:
 
       //! Constructs a BookQuoteTableModel.
-      BookQuoteTableModel(std::shared_ptr<BookViewModel> model,
+      BookQuoteTableModel(const BookViewModel& model,
         const Nexus::Side& side, const BookViewProperties& properties);
 
       int rowCount(const QModelIndex& parent) const override;
@@ -30,12 +30,11 @@ namespace Spire {
       void set_properties(const BookViewProperties& properties);
 
     private:
-      std::shared_ptr<BookViewModel> m_model;
+      const BookViewModel* m_model;
       Nexus::Side m_side;
       BookViewProperties m_properties;
       std::vector<Nexus::BookQuote> m_data;
-      std::unordered_map<Nexus::MarketCode, int>
-        m_market_first_index;
+      std::unordered_map<Nexus::MarketCode, int> m_market_first_index;
       boost::signals2::scoped_connection m_book_quote_connection;
 
       void on_book_quote_signal(const Nexus::BookQuote& book_quote);

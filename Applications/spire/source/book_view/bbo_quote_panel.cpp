@@ -19,9 +19,6 @@ BboQuotePanel::BboQuotePanel(const BookViewModel& model,
   layout->addSpacing(scale_width(2));
   m_ask_quote_panel = new QuotePanel(model, Side::ASK, this);
   layout->addWidget(m_ask_quote_panel);
-}
-
-void BboQuotePanel::set_model(const BookViewModel& model) {
   m_bid_quote_panel->set_model(model);
   m_ask_quote_panel->set_model(model);
 }

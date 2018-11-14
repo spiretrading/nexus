@@ -1,35 +1,24 @@
 #include "spire/book_view/services_book_view_model.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
+#include "Nexus/TechnicalAnalysis/StandardSecurityQueries.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;
+using namespace Beam::Threading;
 using namespace boost;
+using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
+using namespace Nexus::TechnicalAnalysis;
 using namespace Spire;
 
 ServicesBookViewModel::ServicesBookViewModel(Security security,
     Definitions definitions, Ref<VirtualServiceClients> clients)
-    : m_local_model(std::move(security)),
+    : m_local_model(std::move(security), definitions),
       m_definitions(std::move(definitions)),
-      m_clients(clients.Get()) {
-  auto query = BuildCurrentQuery(get_security());
-  query.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
-  m_clients->GetMarketDataClient().QueryBboQuotes(query,
-    m_event_handler.get_slot<SequencedBboQuote>(
-    [=] (const auto& bbo) { on_bbo(bbo); }));
-  QueryRealTimeBookQuotesWithSnapshot(m_clients->GetMarketDataClient(),
-    get_security(), m_event_handler.get_slot<BookQuote>(
-    [=] (const auto& quote) { on_book_quote(quote); },
-    [=] (const auto& e) { on_book_quote_interruption(e); }),
-    InterruptionPolicy::BREAK_QUERY);
-  QueryRealTimeMarketQuotesWithSnapshot(m_clients->GetMarketDataClient(),
-    get_security(), m_event_handler.get_slot<MarketQuote>(
-    [=] (const auto& quote) { on_market_quote(quote); },
-    [=] (const auto& e) { on_market_quote_interruption(e); }),
-    InterruptionPolicy::BREAK_QUERY);
-}
+      m_clients(clients.Get()),
+      m_loader(std::make_shared<CallOnce<Mutex>>()) {}
 
 const Security& ServicesBookViewModel::get_security() const {
   return m_local_model.get_security();
@@ -68,7 +57,61 @@ Quantity ServicesBookViewModel::get_volume() const {
 }
 
 QtPromise<void> ServicesBookViewModel::load() {
-  return make_qt_promise([] {});
+  auto security = get_security();
+  auto bbo_slot = m_event_handler.get_slot<SequencedBboQuote>(
+    [=] (const auto& bbo) { on_bbo(bbo); });
+  auto book_quote_slot = m_event_handler.get_slot<BookQuote>(
+    [=] (const auto& quote) { on_book_quote(quote); },
+    [=] (const auto& e) { on_book_quote_interruption(e); });
+  auto market_quote_slot = m_event_handler.get_slot<MarketQuote>(
+    [=] (const auto& quote) { on_market_quote(quote); },
+    [=] (const auto& e) { on_market_quote_interruption(e); });
+  auto volume_slot = m_event_handler.get_slot<Nexus::Queries::QueryVariant>(
+    [=] (const auto& value) { on_volume(value); });
+  auto high_slot = m_event_handler.get_slot<Nexus::Queries::QueryVariant>(
+    [=] (const auto& value) { on_high(value); });
+  auto low_slot = m_event_handler.get_slot<Nexus::Queries::QueryVariant>(
+    [=] (const auto& value) { on_low(value); });
+  auto open_slot = m_event_handler.get_slot<TimeAndSale>(
+    [=] (const auto& value) { on_open(value); });
+  auto close_slot = m_event_handler.get_slot<TimeAndSale>(
+    [=] (const auto& value) { on_close(value); });
+  auto loader = m_loader;
+  auto definitions = m_definitions;
+  return make_qt_promise([=, clients = m_clients] {
+    loader->Call(
+      [&] {
+        auto query = BuildCurrentQuery(security);
+        query.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
+        clients->GetMarketDataClient().QueryBboQuotes(query, bbo_slot);
+        QueryRealTimeBookQuotesWithSnapshot(clients->GetMarketDataClient(),
+          security, book_quote_slot, InterruptionPolicy::BREAK_QUERY);
+        QueryRealTimeMarketQuotesWithSnapshot(clients->GetMarketDataClient(),
+          security, market_quote_slot, InterruptionPolicy::BREAK_QUERY);
+        QueryDailyVolume(clients->GetChartingClient(), security,
+          clients->GetTimeClient().GetTime(), pos_infin,
+          definitions.get_market_database(),
+          definitions.get_time_zone_database(), volume_slot);
+        QueryDailyHigh(clients->GetChartingClient(), security,
+          clients->GetTimeClient().GetTime(), pos_infin,
+          definitions.get_market_database(),
+          definitions.get_time_zone_database(), high_slot);
+        QueryDailyLow(clients->GetChartingClient(), security,
+          clients->GetTimeClient().GetTime(), pos_infin,
+          definitions.get_market_database(),
+          definitions.get_time_zone_database(), low_slot);
+        QueryOpen(clients->GetMarketDataClient(), security,
+          clients->GetTimeClient().GetTime(), definitions.get_market_database(),
+          definitions.get_time_zone_database(), "", open_slot);
+        auto close = LoadPreviousClose(clients->GetMarketDataClient(), security,
+          clients->GetTimeClient().GetTime(),
+          definitions.get_market_database(),
+          definitions.get_time_zone_database(), "");
+        if(close.is_initialized()) {
+          close_slot->Push(*close);
+        }
+      });
+  });
 }
 
 connection ServicesBookViewModel::connect_bbo_slot(
@@ -119,8 +162,30 @@ void ServicesBookViewModel::on_book_quote_interruption(
 }
 
 void ServicesBookViewModel::on_market_quote(const MarketQuote& quote) {
+  m_local_model.update(quote);
 }
 
 void ServicesBookViewModel::on_market_quote_interruption(
     const std::exception_ptr& e) {
+}
+
+void ServicesBookViewModel::on_volume(
+    const Nexus::Queries::QueryVariant& value) {
+  m_local_model.update_volume(get<Quantity>(value));
+}
+
+void ServicesBookViewModel::on_high(const Nexus::Queries::QueryVariant& value) {
+  m_local_model.update_high(get<Money>(value));
+}
+
+void ServicesBookViewModel::on_low(const Nexus::Queries::QueryVariant& value) {
+  m_local_model.update_low(get<Money>(value));
+}
+
+void ServicesBookViewModel::on_open(const TimeAndSale& value) {
+  m_local_model.update_open(value.m_price);
+}
+
+void ServicesBookViewModel::on_close(const TimeAndSale& value) {
+  m_local_model.update_close(value.m_price);
 }

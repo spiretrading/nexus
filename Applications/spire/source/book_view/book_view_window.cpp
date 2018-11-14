@@ -236,9 +236,6 @@ void BookViewWindow::on_data_loaded(Expect<void> value) {
   m_technicals_panel->set_model(m_model);
   m_bbo_quote_panel = std::make_unique<BboQuotePanel>(*m_model, this);
   m_quote_widgets_container_layout->addWidget(m_bbo_quote_panel.get());
-  m_table = std::make_unique<BookViewTableWidget>(this);
+  m_table = std::make_unique<BookViewTableWidget>(*m_model, m_properties, this);
   m_quote_widgets_container_layout->addWidget(m_table.get());
-  m_bbo_quote_panel->set_model(*m_model);
-  m_table->set_model(m_model);
-  m_table->set_properties(m_properties);
 }

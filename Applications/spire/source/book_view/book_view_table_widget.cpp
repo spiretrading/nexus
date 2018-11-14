@@ -8,7 +8,8 @@
 using namespace Nexus;
 using namespace Spire;
 
-BookViewTableWidget::BookViewTableWidget(QWidget* parent)
+BookViewTableWidget::BookViewTableWidget(const BookViewModel& model,
+    BookViewProperties properties, QWidget* parent)
     : QWidget(parent) {
   m_layout = new QHBoxLayout(this);
   m_layout->setContentsMargins({});
@@ -17,18 +18,15 @@ BookViewTableWidget::BookViewTableWidget(QWidget* parent)
   m_layout->addWidget(m_bid_table_view);
   m_ask_table_view = new BookViewSideTableView(this);
   m_layout->addWidget(m_ask_table_view);
+  m_bid_table_view->set_model(std::make_unique<BookQuoteTableModel>(model,
+    Side::BID, m_properties));
+  m_ask_table_view->set_model(std::make_unique<BookQuoteTableModel>(model,
+    Side::ASK, m_properties));
+  set_properties(std::move(properties));
 }
 
-void BookViewTableWidget::set_model(std::shared_ptr<BookViewModel> model) {
-  m_bid_table_view->set_model(std::make_unique<BookQuoteTableModel>(
-    model, Side::BID, m_properties));
-  m_ask_table_view->set_model(std::make_unique<BookQuoteTableModel>(
-    model, Side::ASK, m_properties));
-}
-
-void BookViewTableWidget::set_properties(
-    const BookViewProperties& properties) {
-  m_properties = properties;
+void BookViewTableWidget::set_properties(BookViewProperties properties) {
+  m_properties = std::move(properties);
   m_bid_table_view->set_properties(m_properties);
   m_ask_table_view->set_properties(m_properties);
 }

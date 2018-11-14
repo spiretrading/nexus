@@ -1,6 +1,9 @@
 #ifndef SPIRE_SERVICES_BOOK_VIEW_MODEL_HPP
 #define SPIRE_SERVICES_BOOK_VIEW_MODEL_HPP
+#include <memory>
 #include <Beam/Pointers/Ref.hpp>
+#include <Beam/Threading/CallOnce.hpp>
+#include <Beam/Threading/Mutex.hpp>
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "spire/book_view/book_view.hpp"
 #include "spire/book_view/book_view_model.hpp"
@@ -69,6 +72,8 @@ namespace Spire {
       LocalBookViewModel m_local_model;
       Definitions m_definitions;
       Nexus::VirtualServiceClients* m_clients;
+      std::shared_ptr<Beam::Threading::CallOnce<Beam::Threading::Mutex>>
+        m_loader;
       EventHandler m_event_handler;
 
       void on_bbo(const Nexus::BboQuote& quote);
@@ -76,6 +81,11 @@ namespace Spire {
       void on_book_quote_interruption(const std::exception_ptr& e);
       void on_market_quote(const Nexus::MarketQuote& quote);
       void on_market_quote_interruption(const std::exception_ptr& e);
+      void on_volume(const Nexus::Queries::QueryVariant& value);
+      void on_high(const Nexus::Queries::QueryVariant& value);
+      void on_low(const Nexus::Queries::QueryVariant& value);
+      void on_open(const Nexus::TimeAndSale& value);
+      void on_close(const Nexus::TimeAndSale& value);
   };
 }
 

@@ -7,28 +7,21 @@ using namespace Nexus;
 using namespace Spire;
 using Columns = BookViewProperties::Columns;
 
-BookQuoteTableModel::BookQuoteTableModel(std::shared_ptr<BookViewModel> model,
+BookQuoteTableModel::BookQuoteTableModel(const BookViewModel& model,
     const Side& side, const BookViewProperties& properties)
-    : m_model(std::move(model)),
+    : m_model(&model),
       m_side(side),
       m_properties(properties) {
-  if(m_side == Side::BID) {
-    m_data = m_model->get_bids();
-  } else {
-    m_data = m_model->get_asks();
-  }
-  for(auto i = 0; i < m_data.size(); ++i) {
-    if(m_market_first_index.find(m_data[i].m_market) ==
-        m_market_first_index.end()) {
-      m_market_first_index[m_data[i].m_market] = i;
-    }
+  auto& quotes = Pick(m_side, m_model->get_asks(), m_model->get_bids());
+  for(auto& quote : quotes) {
+    on_book_quote_signal(quote);
   }
   m_book_quote_connection = m_model->connect_book_quote_slot(
-    [=] (auto& b) { on_book_quote_signal(b); });
+    [=] (const auto& b) { on_book_quote_signal(b); });
 }
 
 int BookQuoteTableModel::rowCount(const QModelIndex& parent) const {
-  return m_data.size();
+  return static_cast<int>(m_data.size());
 }
 
 int BookQuoteTableModel::columnCount(const QModelIndex& parent) const {
