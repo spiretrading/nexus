@@ -7,7 +7,6 @@ import { DropDownButton, HLine } from '../../../components';
 import { EntitlementsPageSizing } from './entitlements_page';
 import { EntitlementTable } from './entitlement_table';
 import { VBoxLayout } from '../../../layouts';
-import { inherits } from 'util';
 
 interface Properties {
   entitlementEntry?: Nexus.EntitlementDatabase.Entry;
@@ -44,21 +43,21 @@ export class EntitlementRow extends React.Component<Properties, State> {
       }
     })();
     const buttonSize = (() => {
-      if (this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
+      if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
         return EntitlementRow.MOBILE_BUTTON_SIZE_PX;
       } else {
         return EntitlementRow.DESKTOP_BUTTON_SIZE_PX;
       }
     })();
     const entitlementNameStyle = (() => {
-      if (this.state.isExpanded) {
+      if(this.state.isExpanded) {
         return EntitlementRow.STYLE.text.nameWhenExpandedTable;
       } else {
         return EntitlementRow.STYLE.text.default;
       }
     })();
     const headerPaddingInternal = (() => {
-      if (this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
+      if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
         return EntitlementRow.STYLE.box.mobilePaddingStyle;
       } else {
         return EntitlementRow.STYLE.box.paddingStyle;
@@ -68,8 +67,8 @@ export class EntitlementRow extends React.Component<Properties, State> {
       this.props.entitlementEntry.price.toString()} ${
       this.props.currencyEntry.code}`;
     const amountColor = (() => {
-      if (this.props.isActive) {
-        if (this.state.isExpanded) {
+      if(this.props.isActive) {
+        if(this.state.isExpanded) {
           return EntitlementRow.STYLE.text.activeAmmountWhenExpandedTable;
         } else {
           return EntitlementRow.STYLE.text.activeAmmount;
@@ -79,21 +78,21 @@ export class EntitlementRow extends React.Component<Properties, State> {
       }
     })();
     const buttonRowAmountVisibility = (() => {
-      if (this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
+      if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
         return EntitlementRow.STYLE.hidden;
       } else {
         return null;
       }
     })();
     const tableHeaderAmmountVisibility = (() => {
-      if (this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
+      if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
         return null;
       } else {
         return EntitlementRow.STYLE.hidden;
       }
     })();
     const applicabilityTablePadding = (() => {
-      if (this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
+      if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
         return EntitlementRow.STYLE.box.mobileTablePadding;
       } else {
         return EntitlementRow.STYLE.box.tablePadding;
@@ -104,15 +103,15 @@ export class EntitlementRow extends React.Component<Properties, State> {
         <div style={EntitlementRow.STYLE.box.header}>
           <CheckMarkButton
             size={buttonSize}
-            isChecked={this.props.isActive} />
-          <div style={headerPaddingInternal} />
+            isChecked={this.props.isActive}/>
+          <div style={headerPaddingInternal}/>
           <DropDownButton size={buttonSize}
-            onClick={this.showApplicabilityTable} />
-          <div style={headerPaddingInternal} />
+            onClick={this.showApplicabilityTable}/>
+          <div style={headerPaddingInternal}/>
           <div style={entitlementNameStyle}>
             {this.props.entitlementEntry.name}
           </div>
-          <div style={EntitlementRow.STYLE.box.headerFiller} />
+          <div style={EntitlementRow.STYLE.box.headerFiller}/>
           <div style={{ ...amountColor, ...buttonRowAmountVisibility }}>
             {amount}
           </div>
@@ -124,13 +123,14 @@ export class EntitlementRow extends React.Component<Properties, State> {
               <div ref={(divElement) => this.dropDownTable = divElement}
                   className={css((this.state.applicabilityStyle as any)[state])}
                   style={EntitlementRow.STYLE.box.expandableTable}>
-                <HLine color='#E6E6E6' />
+                <HLine color='#E6E6E6'/>
                 <div style={EntitlementRow.STYLE.box.header}>
                   <div style={EntitlementRow.STYLE.text.nameWhenExpandedTable}>
                     Applicability
                   </div>
-                  <div style={EntitlementRow.STYLE.box.headerFiller} />
-                  <div style={{...amountColor, ...tableHeaderAmmountVisibility}}>
+                  <div style={EntitlementRow.STYLE.box.headerFiller}/>
+                  <div style={{...amountColor,
+                      ...tableHeaderAmmountVisibility}}>
                     {amount}
                   </div>
                 </div>
@@ -138,7 +138,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
                   <EntitlementTable
                     entitlementEntry={this.props.entitlementEntry}
                     breakpoint={this.props.breakpoint}
-                    marketDatabase={this.props.marketDatabase} />
+                    marketDatabase={this.props.marketDatabase}/>
                 </div>
               </div>)}
           </Transition>
@@ -148,7 +148,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
 
   public componentDidMount(): void {
     this.applicabilityStyleDefinition.entering.maxHeight =
-      `${this.dropDownTable.offsetHeight}px`;
+      `${this.dropDownTable.offsetHeisght}px`;
     this.applicabilityStyleDefinition.entered.maxHeight =
       `${this.dropDownTable.offsetHeight}px`;
     this.setState({
@@ -243,7 +243,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
     },
     entered: {
       maxHeight: '0',
-      overflow: 'hidden' as 'hidden',
+      overflow: 'hidden' as 'hidden'
     },
     exiting: {
       maxHeight: '0',
