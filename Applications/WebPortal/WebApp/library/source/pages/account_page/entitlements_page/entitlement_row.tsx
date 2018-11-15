@@ -1,18 +1,28 @@
-import { css, StyleSheet } from 'aphrodite/no-important';
-import { Transition } from 'react-transition-group';
-import * as React from 'react';
+import {css, StyleSheet} from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
-import { CheckMarkButton } from '.';
-import { DropDownButton, HLine } from '../../../components';
-import { EntitlementsPageSizing } from './entitlements_page';
-import { EntitlementTable } from './entitlement_table';
-import { VBoxLayout } from '../../../layouts';
+import * as React from 'react';
+import {Transition} from 'react-transition-group';
+import {DropDownButton, HLine} from '../../../components';
+import {VBoxLayout} from '../../../layouts';
+import {CheckMarkButton} from './check_mark_button';
+import {EntitlementsPageSizing} from './entitlements_page';
+import {EntitlementTable} from './entitlement_table';
 
 interface Properties {
-  entitlementEntry?: Nexus.EntitlementDatabase.Entry;
+
+  /** The entitlement to be displayed. */
+  entitlementEntry: Nexus.EntitlementDatabase.Entry;
+
+  /** The currency in which the entitlment is delt in. */
   currencyEntry: Nexus.CurrencyDatabase.Entry;
+
+  /** Determines if the entitlement is active. */
   isActive: boolean;
+
+  /** The size at which the component should be displayed at. */
   breakpoint: EntitlementsPageSizing.BreakPoint;
+
+  /** The set of markets. */
   marketDatabase: Nexus.MarketDatabase;
 }
 
@@ -20,7 +30,9 @@ interface State {
   isExpanded: boolean;
   applicabilityStyle: any;
 }
-
+/** Displays a Entitlement Row. It displays a name, a ammount and
+ * applicability table.
+ */
 export class EntitlementRow extends React.Component<Properties, State> {
   constructor(properties: Properties) {
     super(properties);
@@ -33,7 +45,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const elementSize = (() => {
-      switch (this.props.breakpoint) {
+      switch(this.props.breakpoint) {
         case EntitlementsPageSizing.BreakPoint.SMALL:
           return EntitlementRow.STYLE.box.smallComponent;
         case EntitlementsPageSizing.BreakPoint.MEDIUM:
@@ -84,7 +96,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
         return null;
       }
     })();
-    const tableHeaderAmmountVisibility = (() => {
+    const tableHeaderAmountVisibility = (() => {
       if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
         return null;
       } else {
@@ -130,7 +142,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
                   </div>
                   <div style={EntitlementRow.STYLE.box.headerFiller}/>
                   <div style={{...amountColor,
-                      ...tableHeaderAmmountVisibility}}>
+                      ...tableHeaderAmountVisibility}}>
                     {amount}
                   </div>
                 </div>
