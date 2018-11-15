@@ -1,5 +1,5 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
-import { CSSTransition } from 'react-transition-group';
+import { Transition } from 'react-transition-group';
 import * as React from 'react';
 import * as Nexus from 'nexus';
 import { CheckMarkButton } from '.';
@@ -19,13 +19,15 @@ interface Properties {
 
 interface State {
   isExpanded: boolean;
+  applicabilityStyle: any;
 }
 
 export class EntitlementRow extends React.Component<Properties, State> {
   constructor(properties: Properties) {
     super(properties);
     this.state = {
-      isExpanded: false
+      isExpanded: false,
+      applicabilityStyle: StyleSheet.create(this.applicabilityStyleDefinition)
     };
     this.showApplicabilityTable = this.showApplicabilityTable.bind(this);
   }
@@ -116,30 +118,19 @@ export class EntitlementRow extends React.Component<Properties, State> {
           </div>
         </div>
         <VBoxLayout>
-          <CSSTransition in={this.state.isExpanded}
-            timeout={EntitlementRow.TRANSITION_LENGTH_MS}
-            id='TRANSITON!'
-            classNames={{
-              enter: css(EntitlementRow.SLIDE_TRANSITION_STYLE.enter),
-              enterActive: css(EntitlementRow.SLIDE_TRANSITION_STYLE.entering,
-                this.EXTRA_HEIGHT_INFO_STYLE.entering),
-              enterDone: css(EntitlementRow.SLIDE_TRANSITION_STYLE.entered),
-              exit: css(EntitlementRow.SLIDE_TRANSITION_STYLE.exit),
-              exitActive: css(EntitlementRow.SLIDE_TRANSITION_STYLE.exiting),
-              exitDone: css(EntitlementRow.SLIDE_TRANSITION_STYLE.end)
-            }}>
+          <Transition in={this.state.isExpanded}
+              timeout={EntitlementRow.TRANSITION_LENGTH_MS}>
             {(state) => (
               <div ref={(divElement) => this.dropDownTable = divElement}
-                id='TableBox'
-                className={css(EntitlementRow.SLIDE_TRANSITION_STYLE.enter)}
-                style={EntitlementRow.STYLE.box.expandableTable}>
+                  className={css((this.state.applicabilityStyle as any)[state])}
+                  style={EntitlementRow.STYLE.box.expandableTable}>
                 <HLine color='#E6E6E6' />
-                <div id='Table Header' style={EntitlementRow.STYLE.box.header}>
+                <div style={EntitlementRow.STYLE.box.header}>
                   <div style={EntitlementRow.STYLE.text.nameWhenExpandedTable}>
                     Applicability
                   </div>
                   <div style={EntitlementRow.STYLE.box.headerFiller} />
-                  <div style={{ ...amountColor, ...tableHeaderAmmountVisibility }}>
+                  <div style={{...amountColor, ...tableHeaderAmmountVisibility}}>
                     {amount}
                   </div>
                 </div>
@@ -149,20 +140,20 @@ export class EntitlementRow extends React.Component<Properties, State> {
                     breakpoint={this.props.breakpoint}
                     marketDatabase={this.props.marketDatabase} />
                 </div>
-              </div>
-            )}
-          </CSSTransition>
+              </div>)}
+          </Transition>
         </VBoxLayout>
       </VBoxLayout>);
   }
 
   public componentDidMount(): void {
-    this.EXTRA_HEIGHT_INFO.entering.maxHeight =
-    `${this.dropDownTable.offsetHeight}px`;
-    this.EXTRA_HEIGHT_INFO.exit.maxHeight =
+    this.applicabilityStyleDefinition.entering.maxHeight =
       `${this.dropDownTable.offsetHeight}px`;
-    this.EXTRA_HEIGHT_INFO_STYLE = StyleSheet.create(
-    this.EXTRA_HEIGHT_INFO);
+    this.applicabilityStyleDefinition.entered.maxHeight =
+      `${this.dropDownTable.offsetHeight}px`;
+    this.setState({
+      applicabilityStyle: StyleSheet.create(this.applicabilityStyleDefinition)
+    });
   }
 
   private showApplicabilityTable(): void {
@@ -171,6 +162,9 @@ export class EntitlementRow extends React.Component<Properties, State> {
     });
   }
 
+  private static readonly TRANSITION_LENGTH_MS = 600;
+  private static readonly MOBILE_BUTTON_SIZE_PX = '20px';
+  private static readonly DESKTOP_BUTTON_SIZE_PX = '16px';
   private static readonly STYLE = {
     hidden: {
       opacity: 0,
@@ -240,54 +234,27 @@ export class EntitlementRow extends React.Component<Properties, State> {
       }
     }
   };
-  private static readonly SLIDE_TRANSITION_STYLE = StyleSheet.create({
-    enter: {
-      overflow: 'hidden' as 'hidden',
-      maxHeight: '0px'
-    },
+  private applicabilityStyleDefinition = {
     entering: {
+      maxHeight: '0',
       overflow: 'hidden' as 'hidden',
-      maxHeight: '200px',
       transitionProperty: 'max-height',
-      transitionDuration: `2000ms`
+      transitionDuration: `${EntitlementRow.TRANSITION_LENGTH_MS}ms`
     },
-    entered:{
+    entered: {
+      maxHeight: '0',
       overflow: 'hidden' as 'hidden',
-      maxHeight: '200px'
-    },
-    exit: {
-      overflow: 'hidden' as 'hidden',
-      maxHeight: '500px'
     },
     exiting: {
+      maxHeight: '0',
       overflow: 'hidden' as 'hidden',
-      maxHeight: '0px',
       transitionProperty: 'max-height',
-      transitionDuration: `2000ms`
+      transitionDuration: `${EntitlementRow.TRANSITION_LENGTH_MS}ms`
     },
-    end: {
+    exited: {
       maxHeight: '0',
       overflow: 'hidden' as 'hidden'
-    },
-    default: {
-      maxHeight: '0',
-      overflow: 'hidden' as 'hidden'
-    }
-  });
-  private  EXTRA_HEIGHT_INFO = {
-    entering: {
-      maxHeight: '200px'
-    },
-    exit: {
-      maxHeight: '10000px'
     }
   };
-  private EXTRA_HEIGHT_INFO_STYLE = StyleSheet.create(
-    this.EXTRA_HEIGHT_INFO
-  );
-
   private dropDownTable: HTMLDivElement;
-  private static readonly TRANSITION_LENGTH_MS = 2000;
-  private static readonly MOBILE_BUTTON_SIZE_PX = '20px';
-  private static readonly DESKTOP_BUTTON_SIZE_PX = '16px';
 }
