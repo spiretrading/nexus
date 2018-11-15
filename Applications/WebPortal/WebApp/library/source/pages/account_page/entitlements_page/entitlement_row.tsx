@@ -160,7 +160,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
 
   public componentDidMount(): void {
     this.applicabilityStyleDefinition.entering.maxHeight =
-      `${this.dropDownTable.offsetHeisght}px`;
+      `${this.dropDownTable.offsetHeight}px`;
     this.applicabilityStyleDefinition.entered.maxHeight =
       `${this.dropDownTable.offsetHeight}px`;
     this.setState({
