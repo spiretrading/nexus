@@ -12,6 +12,7 @@ namespace Spire {
   class IconButton;
   class PropertiesWindowButtonsWidget;
   class SecurityStack;
+  class SecurityWidget;
   class TitleBar;
   class TransitionWidget;
   class Window;
