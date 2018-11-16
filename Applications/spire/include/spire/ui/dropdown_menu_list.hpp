@@ -25,6 +25,18 @@ namespace Spire {
       */
       void set_items(const std::vector<QString>& items);
 
+      //! Returns the item in the list that follows the item specified.
+      /*
+        \param text The specified item.
+      */
+      QString get_next(const QString& text);
+
+      //! Returns the item in the list that comes before the item specified.
+      /*
+        \param text The specified item.
+      */
+      QString get_previous(const QString& text);
+
       boost::signals2::connection connect_selected_signal(
         const SelectedSignal::slot_type& slot) const;
 
@@ -39,6 +51,7 @@ namespace Spire {
       QWidget* m_list_widget;
       int m_highlight_index;
 
+      int get_index(const QString& text);
       void on_select(const QString& text);
       void focus_next();
       void focus_previous();

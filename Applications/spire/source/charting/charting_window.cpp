@@ -107,7 +107,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     imageFromSvg(":/icons/draw-grey.svg", button_image_size),
     m_button_header_widget);
   draw_line_button->setFixedSize(scale(26, 26));
-  draw_line_button->setToolTip(tr("Auto Scale"));
+  draw_line_button->setToolTip(tr("Draw Line"));
   button_header_layout->addWidget(draw_line_button);
   button_header_layout->addStretch(1);
   layout->addWidget(m_button_header_widget);

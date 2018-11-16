@@ -81,6 +81,23 @@ void DropdownMenuList::set_items(const std::vector<QString>& items) {
   }
 }
 
+QString DropdownMenuList::get_next(const QString& text) {
+  auto num_items = m_list_widget->layout()->count();
+  auto index = (get_index(text) + 1) % num_items;
+  return static_cast<DropdownMenuItem*>(
+    m_list_widget->layout()->itemAt(index)->widget())->text();
+}
+
+QString DropdownMenuList::get_previous(const QString& text) {
+  auto num_items = m_list_widget->layout()->count();
+  auto index = (get_index(text) - 1) % num_items;
+  if(index < 0) {
+    index = num_items - 1;
+  }
+  return static_cast<DropdownMenuItem*>(
+    m_list_widget->layout()->itemAt(index)->widget())->text();
+}
+
 connection DropdownMenuList::connect_selected_signal(
     const SelectedSignal::slot_type& slot) const {
   return m_selected_signal.connect(slot);
@@ -116,6 +133,19 @@ void DropdownMenuList::showEvent(QShowEvent* event) {
     static_cast<DropdownMenuItem*>(w)->remove_highlight();
     w->update();
   }
+}
+
+int DropdownMenuList::get_index(const QString& text) {
+  auto index = -1;
+  for(auto i = 0; i < m_list_widget->layout()->count(); ++i) {
+    auto t = static_cast<DropdownMenuItem*>(
+      m_list_widget->layout()->itemAt(i)->widget())->text();
+    if(t == text) {
+      index = i;
+      break;
+    }
+  }
+  return index;
 }
 
 void DropdownMenuList::on_select(const QString& text) {
