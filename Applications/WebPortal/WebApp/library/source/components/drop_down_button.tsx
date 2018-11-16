@@ -151,7 +151,8 @@ export class DropDownButton extends React.Component<Properties, State> {
       animationName: DropDownButton.OPEN_AND_FADEOUT
     },
     spinClose: {
-      animationName: DropDownButton.CLOSE_AND_FADEOUT
+      animationName: DropDownButton.CLOSE_AND_FADEOUT,
+      animationDuration: '200ms'
     },
     spinOpenFadeIn: {
       position: 'static',
@@ -159,7 +160,8 @@ export class DropDownButton extends React.Component<Properties, State> {
     },
     spinCloseFadeIn:{
       position: 'static',
-      animationName: DropDownButton.CLOSE_AND_FADE_IN
+      animationName: DropDownButton.CLOSE_AND_FADE_IN,
+      animationDuration: '200ms'
     }
   });
   public static readonly STYLE = {

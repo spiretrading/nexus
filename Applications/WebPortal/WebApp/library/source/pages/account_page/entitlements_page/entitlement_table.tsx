@@ -54,7 +54,7 @@ export class EntitlementTable extends React.Component<Properties, {}> {
               'resources/account_page/entitlements_page/icons/dot-green.svg';
           } else {
             imageSrc =
-              'resources/account_page/entitlements_page/icons/dot-green.svg';
+              'resources/account_page/entitlements_page/icons/dot-grey.svg';
           }
           dots.push(
             <td>
@@ -111,7 +111,8 @@ export class EntitlementTable extends React.Component<Properties, {}> {
       padding: 0,
       small: {
         minWidth: '284px',
-        maxWidth: '242px'
+        width: 'inherit' as 'inherit',
+        maxWidth: '424px'
       },
       notSmall: {
         width: '636px'

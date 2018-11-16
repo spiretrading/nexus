@@ -27,26 +27,34 @@ const cEntry2 = currencyDB.fromCode('EUR');
 
 const test = (
   <WebPortal.HBoxLayout height='100%' width='100%'>
-    <WebPortal.Padding size='10%'/>
-    <WebPortal.VBoxLayout height='100%' width='80%'>
+    <WebPortal.Padding size='20%'/>
+    <WebPortal.VBoxLayout height='100%' width='100%'>
       <WebPortal.Padding size='10%'/>
       <WebPortal.EntitlementRow
         isActive
         currencyEntry={cEntry1}
         entitlementEntry={entitlementEntry1}
-        breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.SMALL}/>
-      <WebPortal.Padding size='40px'/>
-      <WebPortal.EntitlementTable
-        entitlementEntry={entitlementEntry2}
         breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.SMALL}
         marketDatabase={marketDB}/>
-      <WebPortal.Padding size='40px'/>
-      <WebPortal.EntitlementTable
-      entitlementEntry={entitlementEntry2}
+      <WebPortal.EntitlementRow
+        isActive
+        currencyEntry={cEntry1}
+        entitlementEntry={entitlementEntry1}
+        breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.MEDIUM}
+        marketDatabase={marketDB}/>
+      <WebPortal.EntitlementRow
+        isActive
+        currencyEntry={cEntry1}
+        entitlementEntry={entitlementEntry1}
+        breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.LARGE}
+        marketDatabase={marketDB}/>
+      <WebPortal.EntitlementRow
+        isActive
+        currencyEntry={cEntry1}
+        entitlementEntry={entitlementEntry1}
         breakpoint={WebPortal.EntitlementsPageSizing.BreakPoint.LARGE}
         marketDatabase={marketDB}/>
     </WebPortal.VBoxLayout>
-    <WebPortal.Padding size='10%'/>
   </WebPortal.HBoxLayout>);
 
 ReactDOM.render(test,
