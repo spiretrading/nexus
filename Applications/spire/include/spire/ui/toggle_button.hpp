@@ -58,6 +58,7 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* object, QEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
@@ -70,6 +71,7 @@ namespace Spire {
       QImage m_disabled_icon;
 
       void set_icons(bool enabled);
+      void swap_toggle();
   };
 }
 

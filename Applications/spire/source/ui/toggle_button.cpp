@@ -50,15 +50,17 @@ bool ToggleButton::eventFilter(QObject* object, QEvent* event) {
   } else if(event->type() == QEvent::MouseButtonRelease) {
     auto e = static_cast<QMouseEvent*>(event);
     if(e->button() == Qt::LeftButton) {
-      if(m_is_toggled) {
-        m_icon_button.set_icon(m_toggle_icon, m_toggle_icon);
-      } else {
-        m_icon_button.set_icon(m_icon, m_hover_icon);
-      }
-      m_is_toggled = !m_is_toggled;
+      swap_toggle();
     }
   }
   return QWidget::eventFilter(object, event);
+}
+
+void ToggleButton::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return ||
+      event->key() == Qt::Key_Space) {
+    swap_toggle();
+  }
 }
 
 void ToggleButton::paintEvent(QPaintEvent* event) {
@@ -88,4 +90,13 @@ void ToggleButton::set_icons(bool enabled) {
   } else {
     m_icon_button.set_icon(m_disabled_icon, m_disabled_icon);
   }
+}
+
+void ToggleButton::swap_toggle() {
+  if(m_is_toggled) {
+    m_icon_button.set_icon(m_toggle_icon, m_toggle_icon);
+  } else {
+    m_icon_button.set_icon(m_icon, m_hover_icon);
+  }
+  m_is_toggled = !m_is_toggled;
 }
