@@ -82,6 +82,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     imageFromSvg(":/icons/lock-grid-grey.svg", button_image_size),
     m_button_header_widget);
   lock_grid_button->setFixedSize(scale(26, 26));
+  lock_grid_button->setToolTip(tr("Lock Grid"));
   button_header_layout->addWidget(lock_grid_button);
   button_header_layout->addSpacing(scale_width(10));
   auto auto_scale_button = new ToggleButton(
@@ -91,6 +92,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     imageFromSvg(":/icons/auto-scale-grey.svg", button_image_size),
     m_button_header_widget);
   auto_scale_button->setFixedSize(scale(26, 26));
+  auto_scale_button->setToolTip(tr("Auto Scale"));
   button_header_layout->addWidget(auto_scale_button);
   button_header_layout->addSpacing(scale_width(10));
   auto seperator = new QWidget(m_button_header_widget);
@@ -105,6 +107,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     imageFromSvg(":/icons/draw-grey.svg", button_image_size),
     m_button_header_widget);
   draw_line_button->setFixedSize(scale(26, 26));
+  draw_line_button->setToolTip(tr("Auto Scale"));
   button_header_layout->addWidget(draw_line_button);
   button_header_layout->addStretch(1);
   layout->addWidget(m_button_header_widget);
