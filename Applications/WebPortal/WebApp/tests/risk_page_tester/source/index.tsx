@@ -9,7 +9,7 @@ interface Properties {
 }
 
 interface State {
-  breakpoint: WebPortal.DisplaySize;
+  displaySize: WebPortal.DisplaySize;
   roles: Nexus.AccountRoles;
 }
 
@@ -18,7 +18,7 @@ class TestApp extends React.Component<Properties, State> {
     super(props);
     const roles = new Nexus.AccountRoles(8);
     this.state = {
-      breakpoint: TestApp.getBreakpoint(),
+      displaySize: TestApp.getDisplaySize(),
       roles: roles
     };
     this.onScreenResize = this.onScreenResize.bind(this);
@@ -44,7 +44,7 @@ class TestApp extends React.Component<Properties, State> {
       Beam.Duration.SECOND.multiply(15)));
 
     const containerClassName = (() => {
-      switch(this.state.breakpoint) {
+      switch(this.state.displaySize) {
         case WebPortal.DisplaySize.SMALL:
           return css([TestApp.CONTAINER_STYLE.small,
             TestApp.CONTAINER_STYLE.base]);
@@ -60,7 +60,7 @@ class TestApp extends React.Component<Properties, State> {
       }
     })();
     const submissionBoxPadding = (() => {
-      switch(this.state.breakpoint) {
+      switch(this.state.displaySize) {
         case WebPortal.DisplaySize.SMALL:
           return <div className={css(TestApp.CONTAINER_STYLE.smallPadding)}/>;
         case WebPortal.DisplaySize.MEDIUM:
@@ -84,7 +84,7 @@ class TestApp extends React.Component<Properties, State> {
           css(TestApp.STYLE.outerContainer)}>
           <WebPortal.VBoxLayout className={containerClassName}>
             <WebPortal.RiskParametersView parameters={parameters}
-              breakpoint={this.state.breakpoint}
+              displaySize={this.state.displaySize}
               currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}/>
             <WebPortal.Padding size='30px'/>
             <WebPortal.HBoxLayout width='100%'>
@@ -101,7 +101,7 @@ class TestApp extends React.Component<Properties, State> {
       </WebPortal.VBoxLayout>);
   }
 
-  private static getBreakpoint(): WebPortal.DisplaySize {
+  private static getDisplaySize(): WebPortal.DisplaySize {
     const screenWidth = window.innerWidth ||
       document.documentElement.clientWidth ||
       document.getElementsByTagName('body')[0].clientWidth;
@@ -150,9 +150,9 @@ class TestApp extends React.Component<Properties, State> {
     }
   });
   private onScreenResize(): void {
-    const newBreakpoint = TestApp.getBreakpoint();
-    if(newBreakpoint !== this.state.breakpoint) {
-      this.setState({breakpoint: newBreakpoint});
+    const newDisplaySize = TestApp.getDisplaySize();
+    if(newDisplaySize !== this.state.displaySize) {
+      this.setState({displaySize: newDisplaySize});
     }
   }
 

@@ -18,7 +18,7 @@ interface Properties {
   isActive: boolean;
 
   /** The size at which the component should be displayed at. */
-  breakpoint: DisplaySize;
+  displaySize: DisplaySize;
 
   /** The set of markets. */
   marketDatabase: Nexus.MarketDatabase;
@@ -43,7 +43,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const elementSize = (() => {
-      switch(this.props.breakpoint) {
+      switch(this.props.displaySize) {
         case DisplaySize.SMALL:
           return EntitlementRow.STYLE.box.smallComponent;
         case DisplaySize.MEDIUM:
@@ -53,7 +53,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
       }
     })();
     const buttonSize = (() => {
-      if(this.props.breakpoint === DisplaySize.SMALL) {
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return EntitlementRow.MOBILE_BUTTON_SIZE_PX;
       } else {
         return EntitlementRow.DESKTOP_BUTTON_SIZE_PX;
@@ -67,7 +67,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
       }
     })();
     const headerPaddingInternal = (() => {
-      if(this.props.breakpoint === DisplaySize.SMALL) {
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return EntitlementRow.STYLE.box.mobilePaddingStyle;
       } else {
         return EntitlementRow.STYLE.box.paddingStyle;
@@ -88,21 +88,21 @@ export class EntitlementRow extends React.Component<Properties, State> {
       }
     })();
     const buttonRowAmountVisibility = (() => {
-      if(this.props.breakpoint === DisplaySize.SMALL) {
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return EntitlementRow.STYLE.hidden;
       } else {
         return null;
       }
     })();
     const tableHeaderAmountVisibility = (() => {
-      if(this.props.breakpoint === DisplaySize.SMALL) {
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return null;
       } else {
         return EntitlementRow.STYLE.hidden;
       }
     })();
     const applicabilityTablePadding = (() => {
-      if(this.props.breakpoint === DisplaySize.SMALL) {
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return EntitlementRow.STYLE.box.mobileTablePadding;
       } else {
         return EntitlementRow.STYLE.box.tablePadding;
@@ -147,7 +147,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
                 <div style={applicabilityTablePadding}>
                   <ApplicabilityTable
                     entitlementEntry={this.props.entitlementEntry}
-                    breakpoint={this.props.breakpoint}
+                    displaySize={this.props.displaySize}
                     marketDatabase={this.props.marketDatabase}/>
                 </div>
               </div>)}

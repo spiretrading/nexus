@@ -14,7 +14,7 @@ interface Properties {
 
 interface State {
   isLoading: boolean;
-  breakpoint: DisplaySize;
+  displaySize: DisplaySize;
 }
 
 /** Implements the container used to display account information. */
@@ -23,7 +23,7 @@ export class AccountPage extends React.Component<Properties, State> {
     super(props);
     this.state = {
       isLoading: true,
-      breakpoint: AccountPage.getBreakpoint()
+      displaySize: AccountPage.getDisplaySize()
     };
     this.onScreenResize = this.onScreenResize.bind(this);
   }
@@ -47,7 +47,7 @@ export class AccountPage extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const header = ((): JSX.Element => {
-      switch(this.state.breakpoint) {
+      switch(this.state.displaySize) {
         case DisplaySize.LARGE:
           return <LargeHeader name={this.props.model.account.name}
             roles={this.props.model.roles}/>;
@@ -68,7 +68,7 @@ export class AccountPage extends React.Component<Properties, State> {
       </VBoxLayout>);
   }
 
-  private static getBreakpoint(): DisplaySize {
+  private static getDisplaySize(): DisplaySize {
     const screenWidth = window.innerWidth ||
       document.documentElement.clientWidth ||
       document.getElementsByTagName('body')[0].clientWidth;
@@ -82,9 +82,9 @@ export class AccountPage extends React.Component<Properties, State> {
   }
 
   private onScreenResize(): void {
-    const newBreakpoint = AccountPage.getBreakpoint();
-    if(newBreakpoint !== this.state.breakpoint) {
-      this.setState({breakpoint: newBreakpoint});
+    const newDisplaySize = AccountPage.getDisplaySize();
+    if(newDisplaySize !== this.state.displaySize) {
+      this.setState({displaySize: newDisplaySize});
     }
   }
 }
@@ -116,7 +116,7 @@ class LargeHeader extends React.Component<HeaderProps> {
           <Padding/>
           <HBoxLayout width='1036px' height='40px'>
             <Padding size='18px'/>
-            <MenuBar breakpoint={DisplaySize.LARGE}/>
+            <MenuBar displaySize={DisplaySize.LARGE}/>
             <Padding/>
             <div className={
                 css(LargeHeader.STYLE.usernameAndRoleContainer)}>
@@ -157,7 +157,7 @@ class MediumHeader extends React.Component<HeaderProps> {
           <div className={css(MediumHeader.STYLE.headerPadding)}/>
           <Padding size='18px'/>
           <HBoxLayout height='40px' width='750px'>
-            <MenuBar breakpoint={DisplaySize.MEDIUM}/>
+            <MenuBar displaySize={DisplaySize.MEDIUM}/>
             <div className={css(MediumHeader.STYLE.innerPadding)}/>
             <RolePanel roles={this.props.roles}/>
           </HBoxLayout>
@@ -200,7 +200,7 @@ class SmallHeader extends React.Component<HeaderProps> {
           <Padding size='18px'/>
           <HBoxLayout height='40px' className={
               css(SmallHeader.STYLE.accountHeader)}>
-            <MenuBar breakpoint={DisplaySize.SMALL}/>
+            <MenuBar displaySize={DisplaySize.SMALL}/>
             <div className={css(SmallHeader.STYLE.innerPadding)}/>
             <RolePanel roles={this.props.roles}/>
           </HBoxLayout>

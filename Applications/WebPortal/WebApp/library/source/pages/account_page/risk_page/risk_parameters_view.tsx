@@ -8,7 +8,7 @@ import {Center, CurrencySelectionBox, DisplaySize, HBoxLayout, IntegerInputBox,
 interface Properties {
 
   /** The type of display to render on. */
-  breakpoint: DisplaySize;
+  displaySize: DisplaySize;
 
   /** The parameters to display. */
   parameters: Nexus.RiskParameters;

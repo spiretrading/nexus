@@ -12,7 +12,7 @@ interface Properties {
   entitlementEntry: Nexus.EntitlementDatabase.Entry;
 
   /** The size at which the component should be displayed at. */
-  breakpoint: DisplaySize;
+  displaySize: DisplaySize;
 }
 
 /*Displays a applicability table */
@@ -24,21 +24,21 @@ export class ApplicabilityTable extends React.Component<Properties, {}> {
 
   public render(): JSX.Element {
     const containerWidth = (() => {
-      if(this.props.breakpoint === DisplaySize.SMALL) {
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return ApplicabilityTable.STYLE.container.small;
       } else {
         return ApplicabilityTable.STYLE.container.notSmall;
       }
     })();
     const compactHeader = (() => {
-      if(this.props.breakpoint === DisplaySize.SMALL) {
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return ApplicabilityTable.STYLE.headerLabel;
       } else {
         return ApplicabilityTable.STYLE.hiddenHeader;
       }
     })();
     const expandedHeader = (() => {
-      if(this.props.breakpoint === DisplaySize.SMALL) {
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return ApplicabilityTable.STYLE.hiddenHeader;
       } else {
         return ApplicabilityTable.STYLE.headerLabel;

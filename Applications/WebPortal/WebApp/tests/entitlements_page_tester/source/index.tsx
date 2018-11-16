@@ -34,25 +34,25 @@ const test = (
         isActive
         currencyEntry={cEntry1}
         entitlementEntry={entitlementEntry1}
-        breakpoint={WebPortal.DisplaySize.SMALL}
+        displaySize={WebPortal.DisplaySize.SMALL}
         marketDatabase={marketDB}/>
       <WebPortal.EntitlementRow
         isActive
         currencyEntry={cEntry1}
         entitlementEntry={entitlementEntry1}
-        breakpoint={WebPortal.DisplaySize.MEDIUM}
+        displaySize={WebPortal.DisplaySize.MEDIUM}
         marketDatabase={marketDB}/>
       <WebPortal.EntitlementRow
         isActive
         currencyEntry={cEntry1}
         entitlementEntry={entitlementEntry1}
-        breakpoint={WebPortal.DisplaySize.LARGE}
+        displaySize={WebPortal.DisplaySize.LARGE}
         marketDatabase={marketDB}/>
       <WebPortal.EntitlementRow
         isActive
         currencyEntry={cEntry1}
         entitlementEntry={entitlementEntry1}
-        breakpoint={WebPortal.DisplaySize.LARGE}
+        displaySize={WebPortal.DisplaySize.LARGE}
         marketDatabase={marketDB}/>
     </WebPortal.VBoxLayout>
   </WebPortal.HBoxLayout>);
