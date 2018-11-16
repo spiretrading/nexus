@@ -81,9 +81,9 @@ export class EntitlementRow extends React.Component<Properties, State> {
     const amountColor = (() => {
       if(this.props.isActive) {
         if(this.state.isExpanded) {
-          return EntitlementRow.STYLE.text.activeAmmountWhenExpandedTable;
+          return EntitlementRow.STYLE.text.activeAmountWhenExpandedTable;
         } else {
-          return EntitlementRow.STYLE.text.activeAmmount;
+          return EntitlementRow.STYLE.text.activeAmount;
         }
       } else {
         return EntitlementRow.STYLE.text;
@@ -124,7 +124,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
             {this.props.entitlementEntry.name}
           </div>
           <div style={EntitlementRow.STYLE.box.headerFiller}/>
-          <div style={{ ...amountColor, ...buttonRowAmountVisibility }}>
+          <div style={{ ...amountColor, ...buttonRowAmountVisibility}}>
             {amount}
           </div>
         </div>
@@ -232,11 +232,11 @@ export class EntitlementRow extends React.Component<Properties, State> {
         font: '400 14px Roboto',
         color: '#000000'
       },
-      activeAmmount: {
+      activeAmount: {
         font: '400 14px Roboto',
         color: '#36BB55'
       },
-      activeAmmountWhenExpandedTable: {
+      activeAmountWhenExpandedTable: {
         font: '500 14px Roboto',
         color: '#36BB55'
       },
