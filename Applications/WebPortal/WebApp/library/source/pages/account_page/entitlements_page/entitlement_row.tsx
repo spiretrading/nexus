@@ -13,7 +13,7 @@ interface Properties {
   /** The entitlement to be displayed. */
   entitlementEntry: Nexus.EntitlementDatabase.Entry;
 
-  /** The currency in which the entitlment is delt in. */
+  /** The currency in which the entitlement is priced in. */
   currencyEntry: Nexus.CurrencyDatabase.Entry;
 
   /** Determines if the entitlement is active. */
@@ -30,7 +30,7 @@ interface State {
   isExpanded: boolean;
   applicabilityStyle: any;
 }
-/** Displays a Entitlement Row. It displays a name, a ammount and
+/** Displays a Entitlement Row. It displays a name, a amount and
  * applicability table.
  */
 export class EntitlementRow extends React.Component<Properties, State> {
