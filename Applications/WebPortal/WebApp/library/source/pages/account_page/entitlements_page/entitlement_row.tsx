@@ -4,9 +4,10 @@ import * as React from 'react';
 import {Transition} from 'react-transition-group';
 import {DropDownButton, HLine} from '../../../components';
 import {VBoxLayout} from '../../../layouts';
+import {ApplicabilityTable} from './applicability_table';
 import {CheckMarkButton} from './check_mark_button';
 import {EntitlementsPageSizing} from './entitlements_page';
-import {ApplicabilityTable} from './applicability_table';
+
 
 interface Properties {
 

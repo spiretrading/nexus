@@ -8,13 +8,14 @@ interface Properties {
   /** The set of markets. */
   marketDatabase: Nexus.MarketDatabase;
 
-    /** The entitlement the table belongs to. */
+  /** The entitlement the table belongs to. */
   entitlementEntry: Nexus.EntitlementDatabase.Entry;
 
   /** The size at which the component should be displayed at. */
   breakpoint: EntitlementsPageSizing.BreakPoint;
 }
 
+/*Displays a applicability table */
 export class ApplicabilityTable extends React.Component<Properties, {}> {
   constructor(properties: Properties) {
     super(properties);
