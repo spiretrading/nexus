@@ -1,7 +1,7 @@
 import {css, StyleSheet} from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import {HBoxLayout, Padding, VBoxLayout} from '../..';
+import {DisplaySize, HBoxLayout, Padding, VBoxLayout} from '../..';
 import {AccountModel} from '.';
 import {MenuBar} from './menu_bar';
 import {RolePanel} from './role_panel';
@@ -12,15 +12,9 @@ interface Properties {
   model: AccountModel;
 }
 
-enum Breakpoint {
-  SMALL,
-  MEDIUM,
-  LARGE
-}
-
 interface State {
   isLoading: boolean;
-  breakpoint: Breakpoint;
+  breakpoint: DisplaySize;
 }
 
 /** Implements the container used to display account information. */
@@ -54,13 +48,13 @@ export class AccountPage extends React.Component<Properties, State> {
   public render(): JSX.Element {
     const header = ((): JSX.Element => {
       switch(this.state.breakpoint) {
-        case Breakpoint.LARGE:
+        case DisplaySize.LARGE:
           return <LargeHeader name={this.props.model.account.name}
             roles={this.props.model.roles}/>;
-        case Breakpoint.MEDIUM:
+        case DisplaySize.MEDIUM:
           return <MediumHeader name={this.props.model.account.name}
             roles={this.props.model.roles}/>;
-        case Breakpoint.SMALL:
+        case DisplaySize.SMALL:
           return <SmallHeader name={this.props.model.account.name}
             roles={this.props.model.roles}/>;
         default:
@@ -74,16 +68,16 @@ export class AccountPage extends React.Component<Properties, State> {
       </VBoxLayout>);
   }
 
-  private static getBreakpoint(): Breakpoint {
+  private static getBreakpoint(): DisplaySize {
     const screenWidth = window.innerWidth ||
       document.documentElement.clientWidth ||
       document.getElementsByTagName('body')[0].clientWidth;
     if(screenWidth <= 767) {
-      return Breakpoint.SMALL;
+      return DisplaySize.SMALL;
     } else if(screenWidth > 767 && screenWidth <= 1035) {
-      return Breakpoint.MEDIUM;
+      return DisplaySize.MEDIUM;
     } else {
-      return Breakpoint.LARGE;
+      return DisplaySize.LARGE;
     }
   }
 

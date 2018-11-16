@@ -2,13 +2,13 @@ import {css, StyleSheet} from 'aphrodite';
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import {Center, CurrencySelectionBox, HBoxLayout, IntegerInputBox,
+import {Center, CurrencySelectionBox, DisplaySize, HBoxLayout, IntegerInputBox,
   MoneyInputBox, Padding, VBoxLayout} from '../../..';
 
 interface Properties {
-  
+
   /** The type of display to render on. */
-  breakpoint: RiskParametersView.Breakpoint;
+  breakpoint: DisplaySize;
 
   /** The parameters to display. */
   parameters: Nexus.RiskParameters;
@@ -219,12 +219,4 @@ class Label extends React.Component<LabelProperties> {
       whiteSpace: 'nowrap'
     }
   });
-}
-
-export namespace RiskParametersView {
-  export enum Breakpoint {
-    SMALL,
-    MEDIUM,
-    LARGE
-  }
 }

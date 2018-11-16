@@ -1,11 +1,11 @@
 import {css, StyleSheet} from 'aphrodite';
 import * as React from 'react';
-import {Center, HBoxLayout, Padding, VBoxLayout} from '../..';
+import {Center, DisplaySize, HBoxLayout, Padding, VBoxLayout} from '../..';
 
 interface Properties {
 
   /** The type of display to render on. */
-  breakpoint: MenuBar.Breakpoint;
+  breakpoint: DisplaySize;
 
   /** Indicates the account item was clicked. */
   onAccountClick?: () => void;
@@ -59,19 +59,19 @@ export class MenuBar extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const menuBarPadding = ((): JSX.Element => {
-      if(this.props.breakpoint === MenuBar.Breakpoint.SMALL) {
+      if(this.props.breakpoint === DisplaySize.SMALL) {
         return <div className={css(MenuBar.STYLE.smallPadding)}/>;
       }
       return <Padding size='30px'/>;
     })();
     const menuIconContainerClassName = (() => {
-      if(this.props.breakpoint === MenuBar.Breakpoint.SMALL) {
+      if(this.props.breakpoint === DisplaySize.SMALL) {
         return css([MenuBar.STYLE.base, MenuBar.STYLE.small]);
       }
       return css(MenuBar.STYLE.base);
     })();
     const menuBarWidth = (() => {
-      if(this.props.breakpoint !== MenuBar.Breakpoint.SMALL) {
+      if(this.props.breakpoint !== DisplaySize.SMALL) {
         return '590px';
       }
     })();
@@ -204,7 +204,7 @@ export class MenuBar extends React.Component<Properties, State> {
 interface ItemProperties {
   iconSrc: string;
   isSelected: boolean;
-  breakpoint: MenuBar.Breakpoint;
+  breakpoint: DisplaySize;
   name: string;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
@@ -226,13 +226,14 @@ class Item extends React.Component<ItemProperties> {
       }
       return css([Item.STYLE.item, Item.STYLE.unSelectedItem]);
     })();
-    if(this.props.breakpoint === MenuBar.Breakpoint.SMALL) {
+    if(this.props.breakpoint === DisplaySize.SMALL) {
       return (
         <VBoxLayout height='38px'>
           <Padding size='8px'/>
           <Center width='24px' height='24px' className={itemClassName}
               onMouseEnter={this.props.onMouseEnter}
-              onMouseLeave={this.props.onMouseLeave} onClick={this.props.onClick}>
+              onMouseLeave={this.props.onMouseLeave}
+              onClick={this.props.onClick}>
             <img src={this.props.iconSrc} width='20px' height='20px'/>
           </Center>
           <Padding size='6px'/>
@@ -292,12 +293,4 @@ class Item extends React.Component<ItemProperties> {
       whiteSpace: 'nowrap'
     }
   });
-}
-
-export namespace MenuBar {
-  export enum Breakpoint {
-    SMALL,
-    MEDIUM,
-    LARGE
-  }
 }

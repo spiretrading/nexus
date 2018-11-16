@@ -2,9 +2,7 @@ import {css, StyleSheet} from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import {Transition} from 'react-transition-group';
-import {DisplaySize} from '../../../display_size';
-import {DropDownButton, HLine} from '../../../components';
-import {VBoxLayout} from '../../../layouts';
+import {DisplaySize, DropDownButton, HLine, VBoxLayout} from '../../..';
 import {ApplicabilityTable} from './applicability_table';
 import {CheckMarkButton} from './check_mark_button';
 
