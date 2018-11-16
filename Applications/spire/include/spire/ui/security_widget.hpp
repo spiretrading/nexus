@@ -13,6 +13,16 @@ namespace Spire {
   class SecurityWidget : public QWidget {
     public:
 
+      /** The theme used to display the loading UI. */
+      enum class Theme {
+
+        /** Light colored theme. */
+        LIGHT,
+
+        /** Dark/inverted color theme. */
+        DARK
+      };
+
       //! Signals a request to change the displayed security.
       /*!
         \param security The security to display.
@@ -23,10 +33,11 @@ namespace Spire {
       //! Constructs a SecurityWidget.
       /*!
         \param input_model The SecurityInputModel to use for autocomplete.
+        \param theme The widget's theme.
         \param parent The parent widget.
       */
       explicit SecurityWidget(Beam::Ref<SecurityInputModel> input_model,
-        QWidget* parent = nullptr);
+        Theme theme, QWidget* parent = nullptr);
 
       //! Sets the widget to display and indicates that loading has completed.
       void set_widget(QWidget* widget);
