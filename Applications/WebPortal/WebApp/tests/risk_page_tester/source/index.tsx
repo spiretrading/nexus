@@ -9,16 +9,16 @@ interface Properties {
 }
 
 interface State {
-  breakpoint: WebPortal.RiskParametersView.Breakpoint,
-  roles: Nexus.AccountRoles
+  displaySize: WebPortal.DisplaySize;
+  roles: Nexus.AccountRoles;
 }
 
-class TestApp extends React.Component<Properties, State>{
+class TestApp extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     const roles = new Nexus.AccountRoles(8);
     this.state = {
-      breakpoint: TestApp.getBreakpoint(),
+      displaySize: TestApp.getDisplaySize(),
       roles: roles
     };
     this.onScreenResize = this.onScreenResize.bind(this);
@@ -42,16 +42,16 @@ class TestApp extends React.Component<Properties, State>{
       Nexus.Money.ONE.multiply(1000), 100,
       Beam.Duration.HOUR.multiply(5).add(Beam.Duration.MINUTE.multiply(30)).add(
       Beam.Duration.SECOND.multiply(15)));
-    
+
     const containerClassName = (() => {
-      switch(this.state.breakpoint) {
-        case WebPortal.RiskParametersView.Breakpoint.SMALL:
+      switch(this.state.displaySize) {
+        case WebPortal.DisplaySize.SMALL:
           return css([TestApp.CONTAINER_STYLE.small,
             TestApp.CONTAINER_STYLE.base]);
-        case WebPortal.RiskParametersView.Breakpoint.MEDIUM:
+        case WebPortal.DisplaySize.MEDIUM:
           return css([TestApp.CONTAINER_STYLE.medium,
             TestApp.CONTAINER_STYLE.base]);
-        case WebPortal.RiskParametersView.Breakpoint.LARGE:
+        case WebPortal.DisplaySize.LARGE:
           return css([TestApp.CONTAINER_STYLE.large,
             TestApp.CONTAINER_STYLE.base]);
         default:
@@ -60,12 +60,12 @@ class TestApp extends React.Component<Properties, State>{
       }
     })();
     const submissionBoxPadding = (() => {
-      switch(this.state.breakpoint) {
-        case WebPortal.RiskParametersView.Breakpoint.SMALL:
+      switch(this.state.displaySize) {
+        case WebPortal.DisplaySize.SMALL:
           return <div className={css(TestApp.CONTAINER_STYLE.smallPadding)}/>;
-        case WebPortal.RiskParametersView.Breakpoint.SMALL:
+        case WebPortal.DisplaySize.MEDIUM:
           return <div className={css(TestApp.CONTAINER_STYLE.mediumPadding)}/>;
-        case WebPortal.RiskParametersView.Breakpoint.SMALL:
+        case WebPortal.DisplaySize.LARGE:
           return <div className={css(TestApp.CONTAINER_STYLE.largePadding)}/>;
         default:
           return <div className={css(TestApp.CONTAINER_STYLE.mediumPadding)}/>;
@@ -84,7 +84,7 @@ class TestApp extends React.Component<Properties, State>{
           css(TestApp.STYLE.outerContainer)}>
           <WebPortal.VBoxLayout className={containerClassName}>
             <WebPortal.RiskParametersView parameters={parameters}
-              breakpoint={this.state.breakpoint}
+              displaySize={this.state.displaySize}
               currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}/>
             <WebPortal.Padding size='30px'/>
             <WebPortal.HBoxLayout width='100%'>
@@ -101,16 +101,16 @@ class TestApp extends React.Component<Properties, State>{
       </WebPortal.VBoxLayout>);
   }
 
-  private static getBreakpoint(): WebPortal.RiskParametersView.Breakpoint {
+  private static getDisplaySize(): WebPortal.DisplaySize {
     const screenWidth = window.innerWidth ||
       document.documentElement.clientWidth ||
       document.getElementsByTagName('body')[0].clientWidth;
     if(screenWidth <= 767) {
-      return WebPortal.RiskParametersView.Breakpoint.SMALL;
+      return WebPortal.DisplaySize.SMALL;
     } else if(screenWidth > 767 && screenWidth <= 1035) {
-      return WebPortal.RiskParametersView.Breakpoint.MEDIUM;
+      return WebPortal.DisplaySize.MEDIUM;
     } else {
-      return WebPortal.RiskParametersView.Breakpoint.LARGE;
+      return WebPortal.DisplaySize.LARGE;
     }
   }
   private static STYLE = StyleSheet.create({
@@ -150,9 +150,9 @@ class TestApp extends React.Component<Properties, State>{
     }
   });
   private onScreenResize(): void {
-    const newBreakpoint = TestApp.getBreakpoint();
-    if(newBreakpoint !== this.state.breakpoint) {
-      this.setState({breakpoint: newBreakpoint});
+    const newDisplaySize = TestApp.getDisplaySize();
+    if(newDisplaySize !== this.state.displaySize) {
+      this.setState({displaySize: newDisplaySize});
     }
   }
 
