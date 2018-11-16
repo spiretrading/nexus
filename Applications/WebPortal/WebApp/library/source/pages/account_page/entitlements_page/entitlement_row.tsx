@@ -2,11 +2,11 @@ import {css, StyleSheet} from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import {Transition} from 'react-transition-group';
+import {DisplaySize} from '../../../display_size';
 import {DropDownButton, HLine} from '../../../components';
 import {VBoxLayout} from '../../../layouts';
 import {ApplicabilityTable} from './applicability_table';
 import {CheckMarkButton} from './check_mark_button';
-import {EntitlementsPageSizing} from './entitlements_page';
 
 interface Properties {
 
@@ -20,7 +20,7 @@ interface Properties {
   isActive: boolean;
 
   /** The size at which the component should be displayed at. */
-  breakpoint: EntitlementsPageSizing.BreakPoint;
+  breakpoint: DisplaySize;
 
   /** The set of markets. */
   marketDatabase: Nexus.MarketDatabase;
@@ -46,16 +46,16 @@ export class EntitlementRow extends React.Component<Properties, State> {
   public render(): JSX.Element {
     const elementSize = (() => {
       switch(this.props.breakpoint) {
-        case EntitlementsPageSizing.BreakPoint.SMALL:
+        case DisplaySize.SMALL:
           return EntitlementRow.STYLE.box.smallComponent;
-        case EntitlementsPageSizing.BreakPoint.MEDIUM:
+        case DisplaySize.MEDIUM:
           return EntitlementRow.STYLE.box.mediumComponent;
-        case EntitlementsPageSizing.BreakPoint.LARGE:
+        case DisplaySize.LARGE:
           return EntitlementRow.STYLE.box.largeComponent;
       }
     })();
     const buttonSize = (() => {
-      if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
+      if(this.props.breakpoint === DisplaySize.SMALL) {
         return EntitlementRow.MOBILE_BUTTON_SIZE_PX;
       } else {
         return EntitlementRow.DESKTOP_BUTTON_SIZE_PX;
@@ -69,7 +69,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
       }
     })();
     const headerPaddingInternal = (() => {
-      if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
+      if(this.props.breakpoint === DisplaySize.SMALL) {
         return EntitlementRow.STYLE.box.mobilePaddingStyle;
       } else {
         return EntitlementRow.STYLE.box.paddingStyle;
@@ -90,21 +90,21 @@ export class EntitlementRow extends React.Component<Properties, State> {
       }
     })();
     const buttonRowAmountVisibility = (() => {
-      if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
+      if(this.props.breakpoint === DisplaySize.SMALL) {
         return EntitlementRow.STYLE.hidden;
       } else {
         return null;
       }
     })();
     const tableHeaderAmountVisibility = (() => {
-      if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
+      if(this.props.breakpoint === DisplaySize.SMALL) {
         return null;
       } else {
         return EntitlementRow.STYLE.hidden;
       }
     })();
     const applicabilityTablePadding = (() => {
-      if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
+      if(this.props.breakpoint === DisplaySize.SMALL) {
         return EntitlementRow.STYLE.box.mobileTablePadding;
       } else {
         return EntitlementRow.STYLE.box.tablePadding;
