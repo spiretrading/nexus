@@ -8,7 +8,6 @@ import {ApplicabilityTable} from './applicability_table';
 import {CheckMarkButton} from './check_mark_button';
 import {EntitlementsPageSizing} from './entitlements_page';
 
-
 interface Properties {
 
   /** The entitlement to be displayed. */
