@@ -2,6 +2,9 @@
 #include <QEvent>
 #include <QHBoxLayout>
 #include <QMouseEvent>
+#include <QPainter>
+#include <QPaintEvent>
+#include "spire/spire/dimensions.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -55,6 +58,18 @@ bool ToggleButton::eventFilter(QObject* object, QEvent* event) {
     }
   }
   return QWidget::eventFilter(object, event);
+}
+
+void ToggleButton::paintEvent(QPaintEvent* event) {
+  if(hasFocus()) {
+    auto painter = QPainter(this);
+    painter.setPen(QColor("#4B23A0"));
+    painter.drawLine(scale_width(5), event->rect().height() - 2,
+      event->rect().width() - scale_width(6), event->rect().height() - 2);
+    painter.drawLine(scale_width(5), event->rect().height() - 1,
+      event->rect().width() - scale_width(6), event->rect().height() - 1);
+  }
+  QWidget::paintEvent(event);
 }
 
 void ToggleButton::resizeEvent(QResizeEvent* event) {

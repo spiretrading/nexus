@@ -74,22 +74,23 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   m_period_dropdown->installEventFilter(this);
   button_header_layout->addWidget(m_period_dropdown);
   button_header_layout->addSpacing(scale_width(18));
-  auto button_size = scale(16, 16);
+  auto button_image_size = scale(16, 16);
   auto lock_grid_button = new ToggleButton(
-    imageFromSvg(":/icons/lock-grid-purple.svg", button_size),
-    imageFromSvg(":/icons/lock-grid-green.svg", button_size),
-    imageFromSvg(":/icons/lock-grid-purple.svg", button_size),
-    imageFromSvg(":/icons/lock-grid-grey.svg", button_size),
+    imageFromSvg(":/icons/lock-grid-purple.svg", button_image_size),
+    imageFromSvg(":/icons/lock-grid-green.svg", button_image_size),
+    imageFromSvg(":/icons/lock-grid-purple.svg", button_image_size),
+    imageFromSvg(":/icons/lock-grid-grey.svg", button_image_size),
     m_button_header_widget);
-  lock_grid_button->setFixedSize(button_size);
+  lock_grid_button->setFixedSize(scale(26, 26));
   button_header_layout->addWidget(lock_grid_button);
   button_header_layout->addSpacing(scale_width(10));
   auto auto_scale_button = new ToggleButton(
-    imageFromSvg(":/icons/auto-scale-purple.svg", button_size),
-    imageFromSvg(":/icons/auto-scale-green.svg", button_size),
-    imageFromSvg(":/icons/auto-scale-purple.svg", button_size),
-    imageFromSvg(":/icons/auto-scale-grey.svg", button_size),
+    imageFromSvg(":/icons/auto-scale-purple.svg", button_image_size),
+    imageFromSvg(":/icons/auto-scale-green.svg", button_image_size),
+    imageFromSvg(":/icons/auto-scale-purple.svg", button_image_size),
+    imageFromSvg(":/icons/auto-scale-grey.svg", button_image_size),
     m_button_header_widget);
+  auto_scale_button->setFixedSize(scale(26, 26));
   button_header_layout->addWidget(auto_scale_button);
   button_header_layout->addSpacing(scale_width(10));
   auto seperator = new QWidget(m_button_header_widget);
@@ -98,11 +99,12 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   button_header_layout->addWidget(seperator);
   button_header_layout->addSpacing(scale_width(10));
   auto draw_line_button = new ToggleButton(
-    imageFromSvg(":/icons/draw-purple.svg", button_size),
-    imageFromSvg(":/icons/draw-green.svg", button_size),
-    imageFromSvg(":/icons/draw-purple.svg", button_size),
-    imageFromSvg(":/icons/draw-grey.svg", button_size),
+    imageFromSvg(":/icons/draw-purple.svg", button_image_size),
+    imageFromSvg(":/icons/draw-green.svg", button_image_size),
+    imageFromSvg(":/icons/draw-purple.svg", button_image_size),
+    imageFromSvg(":/icons/draw-grey.svg", button_image_size),
     m_button_header_widget);
+  draw_line_button->setFixedSize(scale(26, 26));
   button_header_layout->addWidget(draw_line_button);
   button_header_layout->addStretch(1);
   layout->addWidget(m_button_header_widget);
@@ -116,6 +118,10 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     font-size: %1px;
     padding-top: %2px;)").arg(scale_height(12)).arg(scale_height(16)));
   layout->addWidget(m_empty_window_label.get());
+  setTabOrder(m_period_line_edit, m_period_dropdown);
+  setTabOrder(m_period_dropdown, lock_grid_button);
+  setTabOrder(lock_grid_button, auto_scale_button);
+  setTabOrder(auto_scale_button, draw_line_button);
 }
 
 bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
