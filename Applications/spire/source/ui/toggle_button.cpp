@@ -27,6 +27,7 @@ ToggleButton::ToggleButton(QImage icon, QImage toggle_icon, QImage hover_icon,
       m_disabled_icon(std::move(disable_icon)) {
   setFocusPolicy(Qt::StrongFocus);
   m_icon_button.installEventFilter(this);
+  m_icon_button.setFocusPolicy(Qt::NoFocus);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(&m_icon_button);
