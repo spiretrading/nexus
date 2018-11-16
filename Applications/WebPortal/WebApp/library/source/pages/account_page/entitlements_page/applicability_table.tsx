@@ -4,8 +4,14 @@ import * as React from 'react';
 import {EntitlementsPageSizing} from './entitlements_page';
 
 interface Properties {
+
+  /** The set of markets. */
   marketDatabase: Nexus.MarketDatabase;
+
+    /** The entitlement the table belongs to. */
   entitlementEntry: Nexus.EntitlementDatabase.Entry;
+
+  /** The size at which the component should be displayed at. */
   breakpoint: EntitlementsPageSizing.BreakPoint;
 }
 
