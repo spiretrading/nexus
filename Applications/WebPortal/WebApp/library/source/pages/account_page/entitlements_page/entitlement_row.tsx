@@ -4,9 +4,9 @@ import * as React from 'react';
 import {Transition} from 'react-transition-group';
 import {DropDownButton, HLine} from '../../../components';
 import {VBoxLayout} from '../../../layouts';
+import {ApplicabilityTable} from './applicability_table';
 import {CheckMarkButton} from './check_mark_button';
 import {EntitlementsPageSizing} from './entitlements_page';
-import {EntitlementTable} from './entitlement_table';
 
 interface Properties {
 
@@ -147,7 +147,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
                   </div>
                 </div>
                 <div style={applicabilityTablePadding}>
-                  <EntitlementTable
+                  <ApplicabilityTable
                     entitlementEntry={this.props.entitlementEntry}
                     breakpoint={this.props.breakpoint}
                     marketDatabase={this.props.marketDatabase}/>

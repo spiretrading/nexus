@@ -4,12 +4,19 @@ import * as React from 'react';
 import {EntitlementsPageSizing} from './entitlements_page';
 
 interface Properties {
+
+  /** The set of markets. */
   marketDatabase: Nexus.MarketDatabase;
+
+  /** The entitlement the table belongs to. */
   entitlementEntry: Nexus.EntitlementDatabase.Entry;
+
+  /** The size at which the component should be displayed at. */
   breakpoint: EntitlementsPageSizing.BreakPoint;
 }
 
-export class EntitlementTable extends React.Component<Properties, {}> {
+/*Displays a applicability table */
+export class ApplicabilityTable extends React.Component<Properties, {}> {
   constructor(properties: Properties) {
     super(properties);
     this.getDisplayName = this.getDisplayName.bind(this);
@@ -18,23 +25,23 @@ export class EntitlementTable extends React.Component<Properties, {}> {
   public render(): JSX.Element {
     const containerWidth = (() => {
       if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
-        return EntitlementTable.STYLE.container.small;
+        return ApplicabilityTable.STYLE.container.small;
       } else {
-        return EntitlementTable.STYLE.container.notSmall;
+        return ApplicabilityTable.STYLE.container.notSmall;
       }
     })();
     const compactHeader = (() => {
       if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
-        return EntitlementTable.STYLE.headerLabel;
+        return ApplicabilityTable.STYLE.headerLabel;
       } else {
-        return EntitlementTable.STYLE.hiddenHeader;
+        return ApplicabilityTable.STYLE.hiddenHeader;
       }
     })();
     const expandedHeader = (() => {
       if(this.props.breakpoint === EntitlementsPageSizing.BreakPoint.SMALL) {
-        return EntitlementTable.STYLE.hiddenHeader;
+        return ApplicabilityTable.STYLE.hiddenHeader;
       } else {
-        return EntitlementTable.STYLE.headerLabel;
+        return ApplicabilityTable.STYLE.headerLabel;
       }
     })();
     const tableData = (() => {
@@ -58,22 +65,22 @@ export class EntitlementTable extends React.Component<Properties, {}> {
           }
           dots.push(
             <td>
-              <img style={EntitlementTable.STYLE.circle} src={imageSrc}/>
+              <img style={ApplicabilityTable.STYLE.circle} src={imageSrc}/>
             </td>);
         }
         data.push(
-          <tr style={EntitlementTable.STYLE.row}>
+          <tr style={ApplicabilityTable.STYLE.row}>
             <td>{this.getDisplayName(app[0].source)}</td>{dots}
           </tr>);
       }
       return data;
     })();
     return (
-      <table style={{...EntitlementTable.STYLE.container,...containerWidth}}>
+      <table style={{...ApplicabilityTable.STYLE.container,...containerWidth}}>
         <thead>
           <tr>
             <th style={{...compactHeader,
-                ...EntitlementTable.STYLE.marketWidth}}>
+                ...ApplicabilityTable.STYLE.marketWidth}}>
               Mkt
             </th>
             <th style={compactHeader}>BBO</th>
