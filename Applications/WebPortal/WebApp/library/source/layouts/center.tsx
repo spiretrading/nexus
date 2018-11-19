@@ -1,7 +1,7 @@
 import * as React from 'react';
-import {HBoxLayout} from './hbox_layout'
-import {Padding} from './padding'
-import {VBoxLayout} from './vbox_layout'
+import { HBoxLayout } from './hbox_layout'
+import { Padding } from './padding'
+import { VBoxLayout } from './vbox_layout'
 
 interface Properties {
 

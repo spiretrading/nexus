@@ -1,9 +1,9 @@
-import {css, StyleSheet} from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import {Center, HBoxLayout, Padding, VBoxLayout} from '../..';
-import {CommentBox} from './comment_box';
-import {SubmitButton} from './submit_button';
+import { HBoxLayout, Padding, VBoxLayout } from '../..';
+import { CommentBox } from './comment_box';
+import { SubmitButton } from './submit_button';
 
 interface Properties {
 
@@ -13,28 +13,33 @@ interface Properties {
   /** The status message to display. */
   status?: string;
 
-  /** Indicates the form should be submitted. */
-  onClick?: () => void;
+  /** Indicates the form should be submitted.
+   * @param comment - The comment to submit with the form.
+   */
+  onSubmit?: (comment: string) => void;
+}
+
+interface State {
+  comment: string;
 }
 
 /** Displays the components needed to submit an account related form. */
-export class SubmissionBox extends React.Component<Properties> {
+export class SubmissionBox extends React.Component<Properties, State> {
   public static defaultProps = {
-    onClick: () => {}
-  };
+    onSubmit: () => {}
+  }
 
-  /** @return The comment currently typed in the CommentBox. */
-  public getComment(): string {
-    if(this.commentBox) {
-      return this.commentBox.getComment();
-    }
-    return '';
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      comment: ''
+    };
   }
 
   public render(): JSX.Element {
     const commentBox = (() => {
       if(!this.props.roles.isSet(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
-        return <CommentBox ref={(ref) => this.commentBox = ref}/>;
+        return <CommentBox comment={this.state.comment}/>;
       }
     })();
     const commentBoxPadding = (() => {
@@ -61,7 +66,7 @@ export class SubmissionBox extends React.Component<Properties> {
           <Padding size='calc(50% - 123px)'/>
           <SubmitButton isDisabled={false}
             roles={this.props.roles}
-            onClick={this.props.onClick}/>
+            onClick={() => this.props.onSubmit(this.state.comment)}/>
           <Padding size='calc(50% - 123px)'/>
         </HBoxLayout>
         <Padding size='18px'/>
@@ -86,5 +91,4 @@ export class SubmissionBox extends React.Component<Properties> {
       color: '#E63F44'
     }
   });
-  private commentBox: CommentBox;
 }

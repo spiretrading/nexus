@@ -1,10 +1,10 @@
-import {css, StyleSheet} from 'aphrodite/no-important';
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import {Transition} from 'react-transition-group';
-import {DisplaySize, DropDownButton, HLine, VBoxLayout} from '../../..';
-import {ApplicabilityTable} from './applicability_table';
-import {CheckMarkButton} from './check_mark_button';
+import { Transition } from 'react-transition-group';
+import { DisplaySize, DropDownButton, HLine, VBoxLayout } from '../../..';
+import { ApplicabilityTable } from './applicability_table';
+import { CheckMarkButton } from './check_mark_button';
 
 interface Properties {
 
@@ -28,6 +28,7 @@ interface State {
   isExpanded: boolean;
   applicabilityStyle: any;
 }
+
 /** Displays a Entitlement Row. It displays a name, a amount and
  * applicability table.
  */

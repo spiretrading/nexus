@@ -1,10 +1,10 @@
-import {css, StyleSheet} from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
-import {Transition} from 'react-transition-group';
-import {BurgerButton, HBoxLayout, Padding, VBoxLayout} from '../..';
-import {DashboardModel} from '.';
-import {NotificationButton} from './notification_button';
-import {SideMenu} from './side_menu';
+import { Transition } from 'react-transition-group';
+import { BurgerButton, HBoxLayout, Padding, VBoxLayout } from '../..';
+import { DashboardModel } from '.';
+import { NotificationButton } from './notification_button';
+import { SideMenu } from './side_menu';
 
 interface Properties {
 

@@ -1,6 +1,6 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
-import {AccountModel} from './account_model';
+import { AccountModel } from './account_model';
 
 /** Implements an AccountModel locally. */
 export class LocalAccountModel extends AccountModel {

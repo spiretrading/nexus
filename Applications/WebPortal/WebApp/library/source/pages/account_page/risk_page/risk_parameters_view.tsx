@@ -1,9 +1,9 @@
-import {css, StyleSheet} from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import {Center, CurrencySelectionBox, DisplaySize, HBoxLayout, IntegerInputBox,
-  MoneyInputBox, Padding, VBoxLayout} from '../../..';
+import { Center, CurrencySelectionBox, DisplaySize, HBoxLayout, IntegerInputBox,
+         MoneyInputBox, Padding, VBoxLayout } from '../../..';
 
 interface Properties {
 
@@ -112,8 +112,7 @@ export class RiskParametersView extends React.Component<Properties> {
                   value, TimeUnit.SECONDS)}/>
               <Padding size='10px'/>
               <span className={
-                  css(RiskParametersView.
-                    TRANSITION_TIME_STYLE.label)}>
+                  css(RiskParametersView.TRANSITION_TIME_STYLE.label)}>
                 SECOND
               </span>
             </VBoxLayout>
@@ -162,8 +161,8 @@ export class RiskParametersView extends React.Component<Properties> {
     })();
     this.props.parameters.transitionTime = Beam.Duration.HOUR.multiply(
       newTimeJSON.hours).add(Beam.Duration.MINUTE.multiply(
-        newTimeJSON.minutes)).add(Beam.Duration.SECOND.multiply(
-        newTimeJSON.seconds));
+      newTimeJSON.minutes)).add(Beam.Duration.SECOND.multiply(
+      newTimeJSON.seconds));
   }
 
   private static TRANSITION_TIME_STYLE = StyleSheet.create({

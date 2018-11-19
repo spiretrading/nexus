@@ -5,16 +5,13 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
-interface Properties {
-}
-
 interface State {
   displaySize: WebPortal.DisplaySize;
   roles: Nexus.AccountRoles;
 }
 
-class TestApp extends React.Component<Properties, State> {
-  constructor(props: Properties) {
+class TestApp extends React.Component<{}, State> {
+  constructor(props: {}) {
     super(props);
     const roles = new Nexus.AccountRoles(8);
     this.state = {
@@ -88,9 +85,8 @@ class TestApp extends React.Component<Properties, State> {
               currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}/>
             <WebPortal.Padding size='30px'/>
             <WebPortal.HBoxLayout width='100%'>
-              <WebPortal.SubmissionBox ref={
-                (ref: any) => this.submissionBox = ref}
-                roles={this.state.roles} onClick={this.onSubmit}/>
+              <WebPortal.SubmissionBox roles={this.state.roles}
+                onSubmit={ this.onSubmit }/>
             </WebPortal.HBoxLayout>
           </WebPortal.VBoxLayout>
         </WebPortal.HBoxLayout>
@@ -113,6 +109,28 @@ class TestApp extends React.Component<Properties, State> {
       return WebPortal.DisplaySize.LARGE;
     }
   }
+
+  private onScreenResize(): void {
+    const newDisplaySize = TestApp.getDisplaySize();
+    if(newDisplaySize !== this.state.displaySize) {
+      this.setState({ displaySize: newDisplaySize });
+    }
+  }
+
+  private onSubmit(comment: string) {
+    console.log(comment);
+  }
+
+  private onToggleIsAdmin() {
+    const roles = (() => {
+      if(!this.state.roles.isSet(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
+        return new Nexus.AccountRoles(8);
+      }
+      return new Nexus.AccountRoles();
+    })();
+    this.setState({ roles: roles });
+  }
+
   private static STYLE = StyleSheet.create({
     outerContainer: {
       position: 'relative' as 'relative'
@@ -149,26 +167,6 @@ class TestApp extends React.Component<Properties, State> {
       width: 'calc(50% - 500px)'
     }
   });
-  private onScreenResize(): void {
-    const newDisplaySize = TestApp.getDisplaySize();
-    if(newDisplaySize !== this.state.displaySize) {
-      this.setState({displaySize: newDisplaySize});
-    }
-  }
-
-  private onSubmit() {
-    console.log(this.submissionBox.getComment());
-  }
-  private onToggleIsAdmin() {
-    const roles = (() => {
-      if(!this.state.roles.isSet(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
-        return new Nexus.AccountRoles(8);
-      }
-      return new Nexus.AccountRoles();
-    })();
-    this.setState({roles: roles});
-  }
-  private submissionBox: WebPortal.SubmissionBox;
 }
 
 ReactDOM.render(<TestApp/>, document.getElementById('main'));

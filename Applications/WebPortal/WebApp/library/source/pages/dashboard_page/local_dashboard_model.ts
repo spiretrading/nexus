@@ -1,6 +1,6 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
-import {DashboardModel} from '.';
+import { DashboardModel } from '.';
 
 /** Implements the DashboardModel using local memory. */
 export class LocalDashboardModel extends DashboardModel {

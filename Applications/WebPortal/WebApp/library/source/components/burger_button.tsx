@@ -1,6 +1,6 @@
 import * as React from 'react';
-import {HLine} from '.';
-import {Padding, VBoxLayout} from '../layouts';
+import { HLine } from '.';
+import { Padding, VBoxLayout } from '../layouts';
 
 /** The properties used to display the BurgerButton. */
 interface Properties {

@@ -1,6 +1,6 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import {HBoxLayout, Padding, VBoxLayout} from '../..';
+import { HBoxLayout, Padding, VBoxLayout } from '../..';
 
 interface Properties {
 

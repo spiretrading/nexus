@@ -1,8 +1,8 @@
-import {css, StyleSheet} from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as React from 'react';
-import {Center, HBoxLayout, Padding, VBoxLayout} from '../../';
-import {LoginPageModel} from '.';
+import { Center, HBoxLayout, Padding, VBoxLayout } from '../../';
+import { LoginPageModel } from '.';
 
 interface Properties {
 

@@ -1,10 +1,10 @@
-import {css, StyleSheet} from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import {DisplaySize, HBoxLayout, Padding, VBoxLayout} from '../..';
-import {AccountModel} from '.';
-import {MenuBar} from './menu_bar';
-import {RolePanel} from './role_panel';
+import { DisplaySize, HBoxLayout, Padding, VBoxLayout } from '../..';
+import { AccountModel } from '.';
+import { MenuBar } from './menu_bar';
+import { RolePanel } from './role_panel';
 
 interface Properties {
 

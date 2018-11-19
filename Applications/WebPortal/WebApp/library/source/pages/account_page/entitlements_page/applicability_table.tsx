@@ -1,7 +1,6 @@
-import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import {DisplaySize} from '../../../display_size';
+import { DisplaySize } from '../../../display_size';
 
 interface Properties {
 
