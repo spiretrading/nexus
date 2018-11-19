@@ -38,12 +38,12 @@ export class SubmissionBox extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const commentBox = (() => {
-      if(!this.props.roles.isSet(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
+      if(!this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
         return <CommentBox comment={this.state.comment}/>;
       }
     })();
     const commentBoxPadding = (() => {
-      if(!this.props.roles.isSet(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
+      if(!this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
         return <Padding size='30px'/>;
       }
     })();

@@ -12,7 +12,7 @@ interface Properties {
 export class RolePanel extends React.Component<Properties> {
   public render(): JSX.Element {
     const getIconColour = (role: Nexus.AccountRoles.Role) => {
-      if(this.props.roles.isSet(role)) {
+      if(this.props.roles.test(role)) {
         return 'purple';
       }
       return 'grey';

@@ -23,7 +23,7 @@ export class SubmitButton extends React.Component<Properties> {
   
   public render(): JSX.Element {
     const buttonText = (() => {
-      if(this.props.roles.isSet(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
+      if(this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
         return 'Save Changes';
       }
       return 'Submit Request';
