@@ -127,7 +127,7 @@ void SecurityInputBox::on_text_edited() {
     m_securities->hide();
   } else {
     move_line_edit();
-    m_securities->setVisible(true);
+    m_securities->show();
     m_securities->raise();
   }
 }

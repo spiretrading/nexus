@@ -32,7 +32,8 @@ DropShadow::DropShadow(bool has_top, QWidget* parent)
     : DropShadow(false, has_top, parent) {}
 
 DropShadow::DropShadow(bool is_menu_shadow, bool has_top, QWidget* parent)
-    : QWidget(nullptr, Qt::FramelessWindowHint | Qt::Tool),
+    : QWidget(nullptr, Qt::FramelessWindowHint | Qt::Tool |
+        Qt::WindowStaysOnTopHint),
       m_parent(parent),
       m_has_top(has_top),
       m_is_menu_shadow(is_menu_shadow),

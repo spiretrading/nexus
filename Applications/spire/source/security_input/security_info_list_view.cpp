@@ -14,7 +14,8 @@ namespace {
 }
 
 SecurityInfoListView::SecurityInfoListView(QWidget* parent)
-    : QWidget(parent, Qt::FramelessWindowHint | Qt::Tool),
+    : QWidget(parent, Qt::FramelessWindowHint | Qt::Tool |
+        Qt::WindowStaysOnTopHint),
       m_highlighted_index(-1),
       m_active_index(-1) {
   setAttribute(Qt::WA_ShowWithoutActivating);
