@@ -1,6 +1,7 @@
 #ifndef SPIRE_LOCAL_BOOK_VIEW_MODEL_HPP
 #define SPIRE_LOCAL_BOOK_VIEW_MODEL_HPP
 #include <unordered_map>
+#include "Nexus/Definitions/MarketQuote.hpp"
 #include "spire/book_view/book_view.hpp"
 #include "spire/book_view/book_view_model.hpp"
 #include "spire/spire/definitions.hpp"
@@ -17,6 +18,9 @@ namespace Spire {
         \param definitions The set of definitions to use.
       */
       LocalBookViewModel(Nexus::Security security, Definitions definitions);
+
+      //! Returns the set of definitions used.
+      const Definitions& get_definitions() const;
 
       //! Updates the BBO.
       /*!
@@ -70,9 +74,9 @@ namespace Spire {
 
       const Nexus::BboQuote& get_bbo() const override;
 
-      const std::vector<Nexus::BookQuote>& get_asks() const override;
+      const std::vector<std::unique_ptr<Quote>>& get_asks() const override;
 
-      const std::vector<Nexus::BookQuote>& get_bids() const override;
+      const std::vector<std::unique_ptr<Quote>>& get_bids() const override;
 
       boost::optional<Nexus::Money> get_high() const override;
 
@@ -89,8 +93,8 @@ namespace Spire {
       boost::signals2::connection connect_bbo_slot(
         const BboSignal::slot_type& slot) const override;
 
-      boost::signals2::connection connect_book_quote_slot(
-        const BookQuoteSignal::slot_type& slot) const override;
+      boost::signals2::connection connect_quote_slot(
+        const QuoteSignal::slot_type& slot) const override;
 
       boost::signals2::connection connect_high_slot(
         const PriceSignal::slot_type& slot) const override;
@@ -109,7 +113,7 @@ namespace Spire {
 
     private:
       mutable BboSignal m_bbo_signal;
-      mutable BookQuoteSignal m_book_quote_signal;
+      mutable QuoteSignal m_quote_signal;
       mutable PriceSignal m_high_signal;
       mutable PriceSignal m_low_signal;
       mutable PriceSignal m_open_signal;
@@ -119,13 +123,16 @@ namespace Spire {
       Definitions m_definitions;
       Nexus::BboQuote m_bbo;
       std::unordered_map<Nexus::MarketCode, Nexus::MarketQuote> m_market_quotes;
-      std::vector<Nexus::BookQuote> m_asks;
-      std::vector<Nexus::BookQuote> m_bids;
+      std::vector<std::unique_ptr<Quote>> m_asks;
+      std::vector<std::unique_ptr<Quote>> m_bids;
       boost::optional<Nexus::Money> m_high;
       boost::optional<Nexus::Money> m_low;
       boost::optional<Nexus::Money> m_open;
       boost::optional<Nexus::Money> m_close;
       Nexus::Quantity m_volume;
+
+      void add(const Quote& quote, int index);
+      void remove(Nexus::Side side, int index);
   };
 }
 

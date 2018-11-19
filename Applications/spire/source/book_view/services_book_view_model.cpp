@@ -28,11 +28,13 @@ const BboQuote& ServicesBookViewModel::get_bbo() const {
   return m_local_model.get_bbo();
 }
 
-const std::vector<BookQuote>& ServicesBookViewModel::get_asks() const {
+const std::vector<std::unique_ptr<BookViewModel::Quote>>&
+    ServicesBookViewModel::get_asks() const {
   return m_local_model.get_asks();
 }
 
-const std::vector<BookQuote>& ServicesBookViewModel::get_bids() const {
+const std::vector<std::unique_ptr<BookViewModel::Quote>>&
+    ServicesBookViewModel::get_bids() const {
   return m_local_model.get_bids();
 }
 
@@ -119,9 +121,9 @@ connection ServicesBookViewModel::connect_bbo_slot(
   return m_local_model.connect_bbo_slot(slot);
 }
 
-connection ServicesBookViewModel::connect_book_quote_slot(
-    const BookQuoteSignal::slot_type& slot) const {
-  return m_local_model.connect_book_quote_slot(slot);
+connection ServicesBookViewModel::connect_quote_slot(
+    const QuoteSignal::slot_type& slot) const {
+  return m_local_model.connect_quote_slot(slot);
 }
 
 connection ServicesBookViewModel::connect_high_slot(

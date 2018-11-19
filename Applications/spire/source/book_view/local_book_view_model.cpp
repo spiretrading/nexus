@@ -12,13 +12,80 @@ LocalBookViewModel::LocalBookViewModel(Security security,
     : m_security(std::move(security)),
       m_definitions(std::move(definitions)) {}
 
+const Definitions& LocalBookViewModel::get_definitions() const {
+  return m_definitions;
+}
+
 void LocalBookViewModel::update(const BboQuote& bbo) {
   m_bbo = bbo;
   m_bbo_signal(m_bbo);
 }
 
 void LocalBookViewModel::update(const BookQuote& quote) {
-  m_book_quote_signal(quote);
+  auto& quotes = Pick(quote.m_quote.m_side, m_asks, m_bids);
+  auto direction = GetDirection(quote.m_quote.m_side);
+  auto lower_bound = [&] {
+    for(auto i = quotes.rbegin(); i != quotes.rend(); ++i) {
+      auto& book_quote = (*i)->m_quote;
+      if(direction * book_quote.m_quote.m_price <=
+          direction * quote.m_quote.m_price) {
+        return i;
+      }
+    }
+    return quotes.rend();
+  }();
+  auto existing_iterator = lower_bound;
+  while(existing_iterator != quotes.rend() &&
+      (*existing_iterator)->m_quote.m_quote.m_price == quote.m_quote.m_price &&
+      (*existing_iterator)->m_quote.m_mpid != quote.m_mpid) {
+    ++existing_iterator;
+  }
+  if(existing_iterator == quotes.rend() ||
+      (*existing_iterator)->m_quote.m_quote.m_price != quote.m_quote.m_price) {
+    if(quote.m_quote.m_size != 0) {
+      auto insert_iterator = lower_bound;
+      while(insert_iterator != quotes.rend() &&
+          (*insert_iterator)->m_quote.m_quote.m_price ==
+          quote.m_quote.m_price &&
+          std::tie(quote.m_quote.m_size, quote.m_timestamp, quote.m_mpid) <
+          std::tie((*insert_iterator)->m_quote.m_quote.m_size,
+          (*insert_iterator)->m_quote.m_timestamp,
+          (*insert_iterator)->m_quote.m_mpid)) {
+        ++insert_iterator;
+      }
+      add(Quote{Type::BOOK_QUOTE, quote, 0},
+        std::distance(quotes.rbegin(), insert_iterator));
+    }
+    return;
+  }
+  if(quote.m_quote.m_size == 0) {
+    remove(quote.m_quote.m_side,
+      std::distance(quotes.rbegin(), existing_iterator));
+  } else {
+    auto insert_iterator = lower_bound;
+    while(insert_iterator != quotes.rend() &&
+        (*insert_iterator)->m_quote.m_quote.m_price == quote.m_quote.m_price &&
+        std::tie(quote.m_quote.m_size, quote.m_timestamp, quote.m_mpid) <
+        std::tie((*insert_iterator)->m_quote.m_quote.m_size,
+        (*insert_iterator)->m_quote.m_timestamp,
+        (*insert_iterator)->m_quote.m_mpid)) {
+      ++insert_iterator;
+    }
+    if(insert_iterator == existing_iterator) {
+      (*insert_iterator)->m_quote.m_quote.m_size = quote.m_quote.m_size;
+      (*insert_iterator)->m_quote.m_timestamp = quote.m_timestamp;
+      auto quote_index = std::distance(quotes.rbegin(), insert_iterator);
+      m_quote_signal(**insert_iterator, quote_index);
+    } else {
+      auto existing_index = std::distance(quotes.rbegin(), existing_iterator);
+      auto quote_index = std::distance(quotes.rbegin(), insert_iterator);
+      if(quote_index > existing_index) {
+        --quote_index;
+      }
+      remove(quote.m_quote.m_side, existing_index);
+      add(Quote{Type::BOOK_QUOTE, quote, 0}, quote_index);
+    }
+  }
 }
 
 void LocalBookViewModel::update(const MarketQuote& quote) {
@@ -75,11 +142,13 @@ const BboQuote& LocalBookViewModel::get_bbo() const {
   return m_bbo;
 }
 
-const std::vector<BookQuote>& LocalBookViewModel::get_asks() const {
+const std::vector<std::unique_ptr<BookViewModel::Quote>>&
+    LocalBookViewModel::get_asks() const {
   return m_asks;
 }
 
-const std::vector<BookQuote>& LocalBookViewModel::get_bids() const {
+const std::vector<std::unique_ptr<BookViewModel::Quote>>&
+    LocalBookViewModel::get_bids() const {
   return m_bids;
 }
 
@@ -112,9 +181,9 @@ connection LocalBookViewModel::connect_bbo_slot(
   return m_bbo_signal.connect(slot);
 }
 
-connection LocalBookViewModel::connect_book_quote_slot(
-    const BookQuoteSignal::slot_type& slot) const {
-  return m_book_quote_signal.connect(slot);
+connection LocalBookViewModel::connect_quote_slot(
+    const QuoteSignal::slot_type& slot) const {
+  return m_quote_signal.connect(slot);
 }
 
 connection LocalBookViewModel::connect_high_slot(
@@ -140,4 +209,54 @@ connection LocalBookViewModel::connect_close_slot(
 connection LocalBookViewModel::connect_volume_slot(
     const QuantitySignal::slot_type& slot) const {
   return m_volume_signal.connect(slot);
+}
+
+void LocalBookViewModel::add(const Quote& quote, int index) {
+  auto entry = std::make_unique<Quote>(quote);
+  auto& quotes = Pick(quote.m_quote.m_quote.m_side, m_asks, m_bids);
+  auto i = quotes.rbegin() + index;
+  if(quotes.empty()) {
+    quotes.push_back(std::move(entry));
+    m_quote_signal(*quotes.back(), index);
+  } else if(i != quotes.rend() &&
+      quote.m_quote.m_quote.m_price == (*i)->m_quote.m_quote.m_price) {
+    entry->m_price_level = (*i)->m_price_level;
+    quotes.insert(i.base(), std::move(entry));
+    m_quote_signal(*quotes[index], index);
+  } else if(i != quotes.rbegin() &&
+      quote.m_quote.m_quote.m_price == (*(i - 1))->m_quote.m_quote.m_price) {
+    entry->m_price_level = (*(i - 1))->m_price_level;
+    quotes.insert(i.base(), std::move(entry));
+    m_quote_signal(*quotes[index], index);
+  } else {
+    if(i == quotes.rend()) {
+      entry->m_price_level = (*(i - 1))->m_price_level + 1;
+    } else {
+      entry->m_price_level = (*i)->m_price_level;
+    }
+    for(auto j = i; j != quotes.rend(); ++j) {
+      ++(*j)->m_price_level;
+    }
+    quotes.insert(i.base(), std::move(entry));
+    m_quote_signal(*quotes[index], index);
+  }
+}
+
+void LocalBookViewModel::remove(Side side, int index) {
+  auto& quotes = Pick(side, m_asks, m_bids);
+  auto i = quotes.rbegin() + index;
+  auto quote = **i;
+  if(i == (quotes.rend() - 1) ||
+      (*i)->m_price_level == (*(i + 1))->m_price_level ||
+      i != quotes.rbegin() &&
+      (*i)->m_price_level == (*(i - 1))->m_price_level) {
+    quotes.erase((i + 1).base());
+    m_quote_signal(quote, index);
+  } else {
+    for(auto j = i + 1; j != quotes.rend(); ++j) {
+      --(*j)->m_price_level;
+    }
+    quotes.erase((i + 1).base());
+    m_quote_signal(quote, index);
+  }
 }

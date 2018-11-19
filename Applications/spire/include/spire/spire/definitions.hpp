@@ -11,6 +11,9 @@ namespace Spire {
   class Definitions {
     public:
 
+      //! Returns a set of Definitions based on the built-in defaults.
+      static Definitions GetDefaults();
+
       //! Constructs the set of Definitions.
       /*!
         \param country_database The country database.

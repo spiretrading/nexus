@@ -1,6 +1,7 @@
 #include "spire/book_view_ui_tester/book_view_test_controller_window.hpp"
 #include <QGridLayout>
 #include "spire/book_view/book_view_window.hpp"
+#include "spire/spire/definitions.hpp"
 #include "spire/spire/dimensions.hpp"
 
 using namespace Nexus;
@@ -72,10 +73,11 @@ BookViewTestControllerWindow::BookViewTestControllerWindow(
 void BookViewTestControllerWindow::on_security_changed(
     const Security& security) {
   m_model = std::make_shared<RandomBookViewModel>(security,
+    Definitions::GetDefaults(),
     boost::posix_time::millisec(m_load_time_spin_box->value()),
     *m_timer_thread_pool);
   m_model->set_period(boost::posix_time::milliseconds(
-      m_model_update_period_spin_box->value()));
+    m_model_update_period_spin_box->value()));
   m_window->set_model(m_model);
 }
 

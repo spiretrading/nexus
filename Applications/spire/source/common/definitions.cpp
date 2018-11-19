@@ -1,9 +1,17 @@
 #include "spire/spire/definitions.hpp"
+#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
+#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
 
 using namespace boost;
 using namespace boost::local_time;
 using namespace Nexus;
 using namespace Spire;
+
+Definitions Definitions::GetDefaults() {
+  return Definitions(GetDefaultCountryDatabase(), GetDefaultMarketDatabase(),
+    GetDefaultTimeZoneDatabase());
+}
 
 Definitions::Definitions(CountryDatabase country_database,
     MarketDatabase market_database, tz_database time_zone_database)
