@@ -39,6 +39,7 @@ void SecurityWidget::set_widget(QWidget* widget) {
   m_layout->addWidget(m_widget);
   m_widget->show();
   m_widget->installEventFilter(this);
+  window()->removeEventFilter(this);
 }
 
 connection SecurityWidget::connect_security_change_signal(
@@ -47,7 +48,7 @@ connection SecurityWidget::connect_security_change_signal(
 }
 
 bool SecurityWidget::eventFilter(QObject* object, QEvent* event) {
-  if(object == window() || object == m_widget) {
+  if(object == m_widget || object == window()) {
     if(event->type() == QEvent::KeyPress) {
       auto e = static_cast<QKeyEvent*>(event);
       if(e->key() == Qt::Key_PageUp) {
@@ -80,7 +81,8 @@ bool SecurityWidget::eventFilter(QObject* object, QEvent* event) {
         connect(dialog, &QDialog::rejected, this,
           [=] { on_security_input_reject(dialog); });
         dialog->move(window()->geometry().center().x() -
-          dialog->width() / 2, window()->geometry().center().y() - dialog->height() / 2);
+          dialog->width() / 2, window()->geometry().center().y() -
+          dialog->height() / 2);
         show_overlay_widget();
         dialog->show();
       }
