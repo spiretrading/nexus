@@ -13,6 +13,7 @@
 #include "spire/spire/export_model.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
 #include "spire/ui/drop_shadow.hpp"
+#include "spire/ui/security_widget.hpp"
 #include "spire/ui/transition_widget.hpp"
 #include "spire/ui/window.hpp"
 
@@ -25,7 +26,6 @@ using namespace Spire;
 TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
     Ref<SecurityInputModel> input_model, QWidget* parent)
     : QWidget(parent),
-      m_input_model(input_model.Get()),
       m_table(nullptr) {
   m_body = new QWidget(this);
   m_body->setMinimumSize(scale(180, 200));
@@ -46,17 +46,13 @@ TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
   padding_widget->setFixedHeight(scale_height(4));
   padding_widget->setStyleSheet("background-color: #F5F5F5;");
   layout->addWidget(padding_widget);
-  m_empty_window_label = std::make_unique<QLabel>(
-    tr("Enter a ticker symbol."), this);
-  m_empty_window_label->setAlignment(Qt::AlignCenter);
-  m_empty_window_label->setStyleSheet(QString(R"(
-    font-family: Roboto;
-    font-size: %1px;
-    padding-top: %2px;)").arg(scale_height(12)).arg(scale_height(16)));
-  layout->addWidget(m_empty_window_label.get());
   m_table = new TimeAndSalesTableView(this);
-  layout->addWidget(m_table);
   m_table->hide();
+  m_security_widget = new SecurityWidget(input_model,
+    SecurityWidget::Theme::LIGHT, this);
+  m_security_widget->connect_security_change_signal(
+    [=] (const auto& s) { set_current(s); });
+  layout->addWidget(m_security_widget);
   m_volume_label = new QLabel(tr("Volume:"), this);
   m_volume_label->setFocusPolicy(Qt::NoFocus);
   m_volume_label->setFixedHeight(scale_height(20));
@@ -75,10 +71,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
 
 void TimeAndSalesWindow::set_model(std::shared_ptr<TimeAndSalesModel> model) {
   if(m_model.is_initialized()) {
-    if(m_empty_window_label != nullptr) {
-      m_empty_window_label.reset();
-    }
-    m_table->show();
+    m_security_widget->set_widget(m_table);
   }
   model->connect_volume_signal([=] (const Quantity& v) { on_volume(v); });
   m_model.emplace(std::move(model), m_properties);
@@ -163,70 +156,25 @@ void TimeAndSalesWindow::contextMenuEvent(QContextMenuEvent* event) {
   }
 }
 
-void TimeAndSalesWindow::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_PageUp) {
-    if(m_current_security != Security()) {
-      auto s = m_securities.push_front(m_current_security);
-      if(s != Security()) {
-        set_current(s);
-      }
-    }
-    return;
-  } else if(event->key() == Qt::Key_PageDown) {
-    if(m_current_security != Security()) {
-      auto s = m_securities.push_back(m_current_security);
-      if(s != Security()) {
-        set_current(s);
-      }
-    }
-    return;
-  }
-  auto pressed_key = event->text();
-  if(pressed_key[0].isLetterOrNumber()) {
-    auto dialog = new SecurityInputDialog(Ref(*m_input_model), pressed_key,
-      this);
-    dialog->setWindowModality(Qt::NonModal);
-    dialog->setAttribute(Qt::WA_DeleteOnClose);
-    connect(dialog, &QDialog::accepted, this,
-      [=] { on_security_input_accept(dialog); });
-    connect(dialog, &QDialog::rejected, this,
-      [=] { on_security_input_reject(dialog); });
-    dialog->move(geometry().center().x() -
-      dialog->width() / 2, geometry().center().y() - dialog->height() / 2);
-    show_overlay_widget();
-    dialog->show();
-  }
-}
-
 void TimeAndSalesWindow::export_table() {
-  show_overlay_widget();
+  m_security_widget->show_overlay_widget(this);
   auto filepath = QFileDialog::getSaveFileName(this, tr("Export As"),
     QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) +
     tr("/time_and_sales"), "CSV (*.csv)");
   if(!filepath.isNull()) {
     export_model_as_csv(m_model.get(), std::ofstream(filepath.toStdString()));
   }
-  m_overlay_widget.reset();
-}
-
-void TimeAndSalesWindow::show_overlay_widget() {
-  auto contents = m_body->layout()->itemAt(1)->widget();
-  m_overlay_widget = std::make_unique<QLabel>(m_body);
-  m_overlay_widget->setStyleSheet(
-    "background-color: rgba(245, 245, 245, 153);");
-  m_overlay_widget->resize(contents->size());
-  m_overlay_widget->move(contents->mapTo(contents, contents->pos()));
-  m_overlay_widget->show();
+  m_security_widget->hide_overlay_widget();
 }
 
 void TimeAndSalesWindow::show_properties_dialog() {
   TimeAndSalesPropertiesDialog dialog(m_properties, this);
   dialog.connect_apply_signal([=] (auto p) { set_properties(p); });
-  show_overlay_widget();
+  m_security_widget->show_overlay_widget(this);
   if(dialog.exec() == QDialog::Accepted) {
     set_properties(dialog.get_properties());
   }
-  m_overlay_widget.reset();
+  m_security_widget->hide_overlay_widget();
 }
 
 void TimeAndSalesWindow::set_current(const Security& s) {
@@ -239,22 +187,7 @@ void TimeAndSalesWindow::set_current(const Security& s) {
   setWindowTitle(
     m_item_delegate->displayText(QVariant::fromValue(s), QLocale()) +
     tr(" - Time and Sales"));
-}
-
-void TimeAndSalesWindow::on_security_input_accept(SecurityInputDialog* dialog) {
-  auto s = dialog->get_security();
-  if(s != Security() && s != m_current_security) {
-    m_securities.push(m_current_security);
-    set_current(s);
-    activateWindow();
-  }
-  dialog->close();
-  m_overlay_widget.reset();
-}
-
-void TimeAndSalesWindow::on_security_input_reject(SecurityInputDialog* dialog) {
-  dialog->close();
-  m_overlay_widget.reset();
+  m_security_widget->set_widget(m_table);
 }
 
 void TimeAndSalesWindow::on_volume(const Quantity& volume) {
