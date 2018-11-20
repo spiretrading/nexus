@@ -40,15 +40,12 @@ entitlementDB.add(entitlementEntry1);
 entitlementDB.add(entitlementEntry3);
 entitlementDB.add(entitlementEntry2);
 
-const roles1 = new Nexus.AccountRoles();
-roles1.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
-roles1.unset(Nexus.AccountRoles.Role.TRADER);
-roles1.unset(Nexus.AccountRoles.Role.MANAGER);
-const roles2 = new Nexus.AccountRoles();
-roles2.set(Nexus.AccountRoles.Role.TRADER);
-roles2.unset(Nexus.AccountRoles.Role.ADMINISTRATOR);
-const roles3 = new Nexus.AccountRoles();
-roles2.set(Nexus.AccountRoles.Role.MANAGER);
+const testAdmin = new Nexus.AccountRoles();
+testAdmin.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
+const testTrader = new Nexus.AccountRoles();
+testTrader.set(Nexus.AccountRoles.Role.TRADER);
+const testManager = new Nexus.AccountRoles();
+testTrader.set(Nexus.AccountRoles.Role.MANAGER);
 
 /**  Displays a testing application. */
 interface State {
@@ -60,7 +57,7 @@ class TestApp extends React.Component<{}, State> {
   constructor(props: {}) {
     super(props);
     this.state = {
-      roles: roles1,
+      roles: testAdmin,
       displaySize: TestApp.getDisplaySize()
     };
     this.changeRole = this.changeRole.bind(this);
@@ -106,13 +103,13 @@ class TestApp extends React.Component<{}, State> {
 
   private changeRole(newRole: Nexus.AccountRoles.Role): void {
     if(newRole === Nexus.AccountRoles.Role.ADMINISTRATOR) {
-        this.setState({roles: roles1 });
+        this.setState({roles: testAdmin });
     }
     if(newRole === Nexus.AccountRoles.Role.TRADER) {
-        this.setState({roles: roles2 });
+        this.setState({roles: testTrader });
     }
     if(newRole === Nexus.AccountRoles.Role.MANAGER) {
-        this.setState({roles: roles3 });
+        this.setState({roles: testManager });
     }
   }
 

@@ -83,8 +83,6 @@ export class EntitlementsPage extends React.Component<Properties> {
             <Padding size={EntitlementsPage.LINE_PADDING}/>
             <SubmissionBox
             roles={this.props.roles}/>
-          <Padding size={EntitlementsPage.DEFAULT_PADDING}/>
-          <div style={EntitlementsPage.STYLE.text}>Status</div>
           <Padding size={EntitlementsPage.BOTTOM_PADDING}/>
         </VBoxLayout>
        <Padding size={EntitlementsPage.DEFAULT_PADDING}/>
