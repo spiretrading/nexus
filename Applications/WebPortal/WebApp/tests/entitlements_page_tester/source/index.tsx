@@ -68,7 +68,7 @@ class TestApp extends React.Component<{}, State> {
         <WebPortal.EntitlementsPage
           displaySize={this.state.displaySize}
           marketDatabase={marketDB}
-          roles={roles1}
+          roles={this.state.roles}
           entitlements={entitlementDB}
           checked={null}
           currencyDatabase={currencyDB}

@@ -6,6 +6,7 @@ import { EntitlementRow } from './entitlement_row';
 import { HLine } from '../../../components';
 import { SubmitButton } from '../submit_button';
 import { Center } from '../../../layouts';
+import { SubmissionBox } from '../submission_box';
 
 interface Properties {
 
@@ -70,9 +71,6 @@ export class EntitlementsPage extends React.Component<Properties> {
       }
       return <div>{rows}</div>;
     })();
-    const messageBox = (() => {
-      return <div/>;
-    })();
     return (
       <HBoxLayout id='Page' width='100%'>
        <Padding/>
@@ -83,12 +81,8 @@ export class EntitlementsPage extends React.Component<Properties> {
             <Padding size={EntitlementsPage.LINE_PADDING}/>
             <HLine color={EntitlementsPage.LINE_COLOR}/>
             <Padding size={EntitlementsPage.LINE_PADDING}/>
-            <HBoxLayout>
-              <Padding/>
-              <SubmitButton
-                roles={this.props.roles}/>
-              <Padding/>
-            </HBoxLayout>
+            <SubmissionBox
+            roles={this.props.roles}/>
           <Padding size={EntitlementsPage.DEFAULT_PADDING}/>
           <div style={EntitlementsPage.STYLE.text}>Status</div>
           <Padding size={EntitlementsPage.BOTTOM_PADDING}/>
