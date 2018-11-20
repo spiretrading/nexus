@@ -7,8 +7,10 @@
 
 using namespace Spire;
 
-BookViewSideTableView::BookViewSideTableView(QWidget* parent)
-    : QTableView(parent) {
+BookViewSideTableView::BookViewSideTableView(
+    std::unique_ptr<BookQuoteTableModel> model, QWidget* parent)
+    : QTableView(parent),
+      m_model(std::move(model)) {
   setStyleSheet(QString(R"(
     border: none;
     gridline-color: #C8C8C8;)"));
@@ -21,11 +23,6 @@ BookViewSideTableView::BookViewSideTableView(QWidget* parent)
   setFocusPolicy(Qt::NoFocus);
   setItemDelegate(new BookViewTableDelegate(new CustomVariantItemDelegate(),
     this));
-}
-
-void BookViewSideTableView::set_model(
-    std::unique_ptr<BookQuoteTableModel> model) {
-  m_model = std::move(model);
   setModel(m_model.get());
 }
 

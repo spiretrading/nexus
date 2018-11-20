@@ -11,15 +11,11 @@ namespace Spire {
 
       //! Constructs a BookViewSideTableView.
       /*
+        \param model The model to get the table data from.
         \param parent The parent to this widget.
       */
-      explicit BookViewSideTableView(QWidget* parent = nullptr);
-
-      //! Sets the model for this table widget.
-      /*
-        \param model The model to get the table data from.
-      */
-      void set_model(std::unique_ptr<BookQuoteTableModel> model);
+      explicit BookViewSideTableView(std::unique_ptr<BookQuoteTableModel> model,
+        QWidget* parent = nullptr);
 
       //! Sets the properties of the table.
       /*

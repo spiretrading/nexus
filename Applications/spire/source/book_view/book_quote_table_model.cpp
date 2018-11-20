@@ -14,18 +14,15 @@ BookQuoteTableModel::BookQuoteTableModel(const BookViewModel& model,
       m_properties(properties),
       m_size(0) {
   auto& quotes = Pick(m_side, m_model->get_asks(), m_model->get_bids());
-  auto index = static_cast<int>(quotes.size()) - 1;
-  for(auto& quote : quotes) {
-    on_quote_signal(*quote, index);
-    --index;
+  for(auto i = quotes.rbegin(); i != quotes.rend(); ++i) {
+    on_quote_signal(**i, std::distance(quotes.rbegin(), i));
   }
   m_quote_connection = m_model->connect_quote_slot(
     [=] (const auto& quote, auto index) { on_quote_signal(quote, index); });
 }
 
 int BookQuoteTableModel::rowCount(const QModelIndex& parent) const {
-  auto& quotes = Pick(m_side, m_model->get_asks(), m_model->get_bids());
-  return static_cast<int>(quotes.size());
+  return m_size;
 }
 
 int BookQuoteTableModel::columnCount(const QModelIndex& parent) const {
@@ -37,7 +34,7 @@ QVariant BookQuoteTableModel::data(const QModelIndex& index, int role) const {
     return QVariant();
   }
   auto& book = Pick(m_side, m_model->get_asks(), m_model->get_bids());
-  auto& quote = *book[book.size() - 1 - index.row()];
+  auto& quote = *book[m_size - 1 - index.row()];
   if(role == Qt::DisplayRole) {
     switch(static_cast<Columns>(index.column())) {
       case Columns::MARKET_COLUMN:
@@ -84,9 +81,11 @@ void BookQuoteTableModel::on_quote_signal(const BookViewModel::Quote& quote,
     return;
   }
   auto& book = Pick(m_side, m_model->get_asks(), m_model->get_bids());
-  if(quote.m_quote.m_quote.m_size == 0) {
+  auto test_price_levels = false;
+  if(m_size > book.size()) {
     beginRemoveRows(QModelIndex(), index, index);
     --m_size;
+    test_price_levels = true;
     endRemoveRows();
   } else if(m_size == book.size()) {
     dataChanged(createIndex(index, 0), createIndex(index,
@@ -94,6 +93,14 @@ void BookQuoteTableModel::on_quote_signal(const BookViewModel::Quote& quote,
   } else {
     beginInsertRows(QModelIndex(), index, index);
     ++m_size;
+    test_price_levels = true;
     endInsertRows();
+  }
+  if(test_price_levels && index != m_size &&
+      quote.m_quote.m_quote.m_price != book[index]->m_quote.m_quote.m_price &&
+      (index == 0 || quote.m_quote.m_quote.m_price !=
+      book[index - 1]->m_quote.m_quote.m_price)) {
+    dataChanged(createIndex(index, 0), createIndex(m_size - 1,
+      columnCount(QModelIndex())));
   }
 }
