@@ -157,7 +157,7 @@ void TimeAndSalesWindow::contextMenuEvent(QContextMenuEvent* event) {
 }
 
 void TimeAndSalesWindow::export_table() {
-  m_security_widget->show_overlay_widget(this);
+  m_security_widget->show_overlay_widget();
   auto filepath = QFileDialog::getSaveFileName(this, tr("Export As"),
     QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) +
     tr("/time_and_sales"), "CSV (*.csv)");
@@ -170,7 +170,7 @@ void TimeAndSalesWindow::export_table() {
 void TimeAndSalesWindow::show_properties_dialog() {
   TimeAndSalesPropertiesDialog dialog(m_properties, this);
   dialog.connect_apply_signal([=] (auto p) { set_properties(p); });
-  m_security_widget->show_overlay_widget(this);
+  m_security_widget->show_overlay_widget();
   if(dialog.exec() == QDialog::Accepted) {
     set_properties(dialog.get_properties());
   }

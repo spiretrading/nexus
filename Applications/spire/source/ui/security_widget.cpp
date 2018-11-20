@@ -81,7 +81,7 @@ bool SecurityWidget::eventFilter(QObject* object, QEvent* event) {
           [=] { on_security_input_reject(dialog); });
         dialog->move(window()->geometry().center().x() -
           dialog->width() / 2, window()->geometry().center().y() - dialog->height() / 2);
-        show_overlay_widget(this);
+        show_overlay_widget();
         dialog->show();
       }
     }
@@ -89,12 +89,13 @@ bool SecurityWidget::eventFilter(QObject* object, QEvent* event) {
   return QWidget::eventFilter(object, event);
 }
 
-void SecurityWidget::show_overlay_widget(QWidget* widget) {
+void SecurityWidget::show_overlay_widget() {
   m_overlay_widget = std::make_unique<QLabel>(this);
   m_overlay_widget->setStyleSheet(
     "background-color: rgba(245, 245, 245, 153);");
-  m_overlay_widget->resize(widget->size());
-  m_overlay_widget->move(widget->mapTo(widget, widget->pos()));
+  auto w = static_cast<QWidget*>(parent());
+  m_overlay_widget->resize(w->size());
+  m_overlay_widget->move(w->mapTo(w, w->pos()));
   m_overlay_widget->show();
 }
 

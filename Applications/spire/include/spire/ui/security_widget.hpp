@@ -37,7 +37,8 @@ namespace Spire {
       /*!
         \param input_model The SecurityInputModel to use for autocomplete.
         \param theme The widget's theme.
-        \param parent The parent widget.
+        \param parent The parent widget, also the widget that is covered by
+                      the overlay widget.
       */
       explicit SecurityWidget(Beam::Ref<SecurityInputModel> input_model,
         Theme theme, QWidget* parent = nullptr);
@@ -45,11 +46,8 @@ namespace Spire {
       //! Sets the widget to display and indicates that loading has completed.
       void set_widget(QWidget* widget);
 
-      //! Displays the overlay widget that covers the specified widget.
-      /*
-        \param widget The widget to cover.
-      */
-      void show_overlay_widget(QWidget* widget);
+      //! Displays the overlay widget that covers the parent widget.
+      void show_overlay_widget();
 
       //! Hides the overlay widget.
       void hide_overlay_widget();
