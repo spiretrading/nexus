@@ -42,8 +42,13 @@ entitlementDB.add(entitlementEntry2);
 
 const roles1 = new Nexus.AccountRoles();
 roles1.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
+roles1.unset(Nexus.AccountRoles.Role.TRADER);
+roles1.unset(Nexus.AccountRoles.Role.MANAGER);
 const roles2 = new Nexus.AccountRoles();
 roles2.set(Nexus.AccountRoles.Role.TRADER);
+roles2.unset(Nexus.AccountRoles.Role.ADMINISTRATOR);
+const roles3 = new Nexus.AccountRoles();
+roles2.set(Nexus.AccountRoles.Role.MANAGER);
 
 /**  Displays a testing application. */
 interface State {
@@ -79,9 +84,13 @@ class TestApp extends React.Component<{}, State> {
               this.changeRole(Nexus.AccountRoles.Role.ADMINISTRATOR)}>
             ADMINISTRATOR
         </button>
-          <button tabIndex={-1}
+        <button tabIndex={-1}
             onClick={() => this.changeRole(Nexus.AccountRoles.Role.TRADER)}>
             TRADER
+        </button>
+        <button tabIndex={-1}
+            onClick={() => this.changeRole(Nexus.AccountRoles.Role.MANAGER)}>
+            MANAGER
         </button>
         </div>
       </WebPortal.VBoxLayout>);
@@ -96,11 +105,14 @@ class TestApp extends React.Component<{}, State> {
   }
 
   private changeRole(newRole: Nexus.AccountRoles.Role): void {
-    switch(newRole) {
-      case(Nexus.AccountRoles.Role.ADMINISTRATOR):
+    if(newRole === Nexus.AccountRoles.Role.ADMINISTRATOR) {
         this.setState({roles: roles1 });
-      case(Nexus.AccountRoles.Role.TRADER):
-        this.setState({roles: roles2});
+    }
+    if(newRole === Nexus.AccountRoles.Role.TRADER) {
+        this.setState({roles: roles2 });
+    }
+    if(newRole === Nexus.AccountRoles.Role.MANAGER) {
+        this.setState({roles: roles3 });
     }
   }
 
