@@ -85,7 +85,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
           return EntitlementRow.STYLE.text.activeAmount;
         }
       } else {
-        return EntitlementRow.STYLE.text;
+        return EntitlementRow.STYLE.text.default;
       }
     })();
     const buttonRowAmountVisibility = (() => {
