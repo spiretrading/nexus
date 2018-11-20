@@ -1,4 +1,4 @@
-#include "spire/book_view/book_view_side_table_view.hpp"
+#include "spire/book_view/book_quote_table_view.hpp"
 #include <QHeaderView>
 #include "spire/book_view/book_quote_table_model.hpp"
 #include "spire/book_view/book_view_table_delegate.hpp"
@@ -7,7 +7,7 @@
 
 using namespace Spire;
 
-BookViewSideTableView::BookViewSideTableView(
+BookQuoteTableView::BookQuoteTableView(
     std::unique_ptr<BookQuoteTableModel> model, QWidget* parent)
     : QTableView(parent),
       m_model(std::move(model)) {
@@ -26,7 +26,7 @@ BookViewSideTableView::BookViewSideTableView(
   setModel(m_model.get());
 }
 
-void BookViewSideTableView::set_properties(
+void BookQuoteTableView::set_properties(
     const BookViewProperties& properties) {
   m_model->set_properties(properties);
   QFontMetrics metrics(properties.get_book_quote_font());
@@ -36,7 +36,7 @@ void BookViewSideTableView::set_properties(
   update();
 }
 
-void BookViewSideTableView::resizeEvent(QResizeEvent* event) {
+void BookQuoteTableView::resizeEvent(QResizeEvent* event) {
   setColumnWidth(0, width() / 3);
   setColumnWidth(1, width() / 3);
   setColumnWidth(2, width() / 3);

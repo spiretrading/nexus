@@ -27,8 +27,8 @@ namespace Spire {
 
     private:
       QHBoxLayout* m_layout;
-      BookViewSideTableView* m_bid_table_view;
-      BookViewSideTableView* m_ask_table_view;
+      BookQuoteTableView* m_bid_table_view;
+      BookQuoteTableView* m_ask_table_view;
       BookViewProperties m_properties;
   };
 }
