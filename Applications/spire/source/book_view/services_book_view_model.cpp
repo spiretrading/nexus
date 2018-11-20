@@ -161,6 +161,12 @@ void ServicesBookViewModel::on_book_quote(const BookQuote& quote) {
 
 void ServicesBookViewModel::on_book_quote_interruption(
     const std::exception_ptr& e) {
+  m_local_model.clear_book_quotes();
+  QueryRealTimeBookQuotesWithSnapshot(m_clients->GetMarketDataClient(),
+    m_local_model.get_security(), m_event_handler.get_slot<BookQuote>(
+    [=] (const auto& quote) { on_book_quote(quote); },
+    [=] (const auto& e) { on_book_quote_interruption(e); }),
+    InterruptionPolicy::BREAK_QUERY);
 }
 
 void ServicesBookViewModel::on_market_quote(const MarketQuote& quote) {
@@ -169,6 +175,12 @@ void ServicesBookViewModel::on_market_quote(const MarketQuote& quote) {
 
 void ServicesBookViewModel::on_market_quote_interruption(
     const std::exception_ptr& e) {
+  m_local_model.clear_market_quotes();
+  QueryRealTimeMarketQuotesWithSnapshot(m_clients->GetMarketDataClient(),
+    m_local_model.get_security(), m_event_handler.get_slot<MarketQuote>(
+    [=] (const auto& quote) { on_market_quote(quote); },
+    [=] (const auto& e) { on_market_quote_interruption(e); }),
+    InterruptionPolicy::BREAK_QUERY);
 }
 
 void ServicesBookViewModel::on_volume(

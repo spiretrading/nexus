@@ -22,70 +22,7 @@ void LocalBookViewModel::update(const BboQuote& bbo) {
 }
 
 void LocalBookViewModel::update(const BookQuote& quote) {
-  auto& quotes = Pick(quote.m_quote.m_side, m_asks, m_bids);
-  auto direction = GetDirection(quote.m_quote.m_side);
-  auto lower_bound = [&] {
-    for(auto i = quotes.rbegin(); i != quotes.rend(); ++i) {
-      auto& book_quote = (*i)->m_quote;
-      if(direction * book_quote.m_quote.m_price <=
-          direction * quote.m_quote.m_price) {
-        return i;
-      }
-    }
-    return quotes.rend();
-  }();
-  auto existing_iterator = lower_bound;
-  while(existing_iterator != quotes.rend() &&
-      (*existing_iterator)->m_quote.m_quote.m_price == quote.m_quote.m_price &&
-      (*existing_iterator)->m_quote.m_mpid != quote.m_mpid) {
-    ++existing_iterator;
-  }
-  if(existing_iterator == quotes.rend() ||
-      (*existing_iterator)->m_quote.m_quote.m_price != quote.m_quote.m_price) {
-    if(quote.m_quote.m_size != 0) {
-      auto insert_iterator = lower_bound;
-      while(insert_iterator != quotes.rend() &&
-          (*insert_iterator)->m_quote.m_quote.m_price ==
-          quote.m_quote.m_price &&
-          std::tie(quote.m_quote.m_size, quote.m_timestamp, quote.m_mpid) <
-          std::tie((*insert_iterator)->m_quote.m_quote.m_size,
-          (*insert_iterator)->m_quote.m_timestamp,
-          (*insert_iterator)->m_quote.m_mpid)) {
-        ++insert_iterator;
-      }
-      add(Quote{Type::BOOK_QUOTE, quote, 0},
-        std::distance(quotes.rbegin(), insert_iterator));
-    }
-    return;
-  }
-  if(quote.m_quote.m_size == 0) {
-    remove(quote.m_quote.m_side,
-      std::distance(quotes.rbegin(), existing_iterator));
-  } else {
-    auto insert_iterator = lower_bound;
-    while(insert_iterator != quotes.rend() &&
-        (*insert_iterator)->m_quote.m_quote.m_price == quote.m_quote.m_price &&
-        std::tie(quote.m_quote.m_size, quote.m_timestamp, quote.m_mpid) <
-        std::tie((*insert_iterator)->m_quote.m_quote.m_size,
-        (*insert_iterator)->m_quote.m_timestamp,
-        (*insert_iterator)->m_quote.m_mpid)) {
-      ++insert_iterator;
-    }
-    if(insert_iterator == existing_iterator) {
-      (*insert_iterator)->m_quote.m_quote.m_size = quote.m_quote.m_size;
-      (*insert_iterator)->m_quote.m_timestamp = quote.m_timestamp;
-      auto quote_index = std::distance(quotes.rbegin(), insert_iterator);
-      m_quote_signal(**insert_iterator, quote_index);
-    } else {
-      auto existing_index = std::distance(quotes.rbegin(), existing_iterator);
-      auto quote_index = std::distance(quotes.rbegin(), insert_iterator);
-      if(quote_index > existing_index) {
-        --quote_index;
-      }
-      remove(quote.m_quote.m_side, existing_index);
-      add(Quote{Type::BOOK_QUOTE, quote, 0}, quote_index);
-    }
-  }
+  update(quote, Type::BOOK_QUOTE);
 }
 
 void LocalBookViewModel::update(const MarketQuote& quote) {
@@ -96,17 +33,17 @@ void LocalBookViewModel::update(const MarketQuote& quote) {
     auto book_quotes = ToBookQuotePair(previous);
     book_quotes.m_ask.m_quote.m_size = 0;
     book_quotes.m_ask.m_mpid = mpid;
-    update(book_quotes.m_ask);
+    update(book_quotes.m_ask, Type::MARKET_QUOTE);
     book_quotes.m_bid.m_quote.m_size = 0;
     book_quotes.m_bid.m_mpid = mpid;
-    update(book_quotes.m_bid);
+    update(book_quotes.m_bid, Type::MARKET_QUOTE);
   }
   auto book_quotes = ToBookQuotePair(quote);
   previous = quote;
   book_quotes.m_ask.m_mpid = mpid;
-  update(book_quotes.m_ask);
+  update(book_quotes.m_ask, Type::MARKET_QUOTE);
   book_quotes.m_bid.m_mpid = mpid;
-  update(book_quotes.m_bid);
+  update(book_quotes.m_bid, Type::MARKET_QUOTE);
 }
 
 void LocalBookViewModel::update_volume(Quantity volume) {
@@ -132,6 +69,42 @@ void LocalBookViewModel::update_open(Money open) {
 void LocalBookViewModel::update_close(Money close) {
   m_close = close;
   m_close_signal(*m_close);
+}
+
+void LocalBookViewModel::clear_book_quotes() {
+  auto book_quotes = std::vector<BookQuote>();
+  for(auto& bid : m_bids) {
+    if(bid->m_type == Type::BOOK_QUOTE) {
+      book_quotes.push_back(bid->m_quote);
+    }
+  }
+  for(auto& ask : m_asks) {
+    if(ask->m_type == Type::BOOK_QUOTE) {
+      book_quotes.push_back(ask->m_quote);
+    }
+  }
+  for(auto& book_quote : book_quotes) {
+    book_quote.m_quote.m_size = 0;
+    update(book_quote);
+  }
+}
+
+void LocalBookViewModel::clear_market_quotes() {
+  auto book_quotes = std::vector<BookQuote>();
+  for(auto& bid : m_bids) {
+    if(bid->m_type == Type::MARKET_QUOTE) {
+      book_quotes.push_back(bid->m_quote);
+    }
+  }
+  for(auto& ask : m_asks) {
+    if(ask->m_type == Type::MARKET_QUOTE) {
+      book_quotes.push_back(ask->m_quote);
+    }
+  }
+  for(auto& book_quote : book_quotes) {
+    book_quote.m_quote.m_size = 0;
+    update(book_quote);
+  }
 }
 
 const Security& LocalBookViewModel::get_security() const {
@@ -209,6 +182,73 @@ connection LocalBookViewModel::connect_close_slot(
 connection LocalBookViewModel::connect_volume_slot(
     const QuantitySignal::slot_type& slot) const {
   return m_volume_signal.connect(slot);
+}
+
+void LocalBookViewModel::update(const BookQuote& quote, Type type) {
+  auto& quotes = Pick(quote.m_quote.m_side, m_asks, m_bids);
+  auto direction = GetDirection(quote.m_quote.m_side);
+  auto lower_bound = [&] {
+    for(auto i = quotes.rbegin(); i != quotes.rend(); ++i) {
+      auto& book_quote = (*i)->m_quote;
+      if(direction * book_quote.m_quote.m_price <=
+          direction * quote.m_quote.m_price) {
+        return i;
+      }
+    }
+    return quotes.rend();
+  }();
+  auto existing_iterator = lower_bound;
+  while(existing_iterator != quotes.rend() &&
+      (*existing_iterator)->m_quote.m_quote.m_price == quote.m_quote.m_price &&
+      (*existing_iterator)->m_quote.m_mpid != quote.m_mpid) {
+    ++existing_iterator;
+  }
+  if(existing_iterator == quotes.rend() ||
+      (*existing_iterator)->m_quote.m_quote.m_price != quote.m_quote.m_price) {
+    if(quote.m_quote.m_size != 0) {
+      auto insert_iterator = lower_bound;
+      while(insert_iterator != quotes.rend() &&
+          (*insert_iterator)->m_quote.m_quote.m_price ==
+          quote.m_quote.m_price &&
+          std::tie(quote.m_quote.m_size, quote.m_timestamp, quote.m_mpid) <
+          std::tie((*insert_iterator)->m_quote.m_quote.m_size,
+          (*insert_iterator)->m_quote.m_timestamp,
+          (*insert_iterator)->m_quote.m_mpid)) {
+        ++insert_iterator;
+      }
+      add(Quote{type, quote, 0},
+        std::distance(quotes.rbegin(), insert_iterator));
+    }
+    return;
+  }
+  if(quote.m_quote.m_size == 0) {
+    remove(quote.m_quote.m_side,
+      std::distance(quotes.rbegin(), existing_iterator));
+  } else {
+    auto insert_iterator = lower_bound;
+    while(insert_iterator != quotes.rend() &&
+        (*insert_iterator)->m_quote.m_quote.m_price == quote.m_quote.m_price &&
+        std::tie(quote.m_quote.m_size, quote.m_timestamp, quote.m_mpid) <
+        std::tie((*insert_iterator)->m_quote.m_quote.m_size,
+        (*insert_iterator)->m_quote.m_timestamp,
+        (*insert_iterator)->m_quote.m_mpid)) {
+      ++insert_iterator;
+    }
+    if(insert_iterator == existing_iterator) {
+      (*insert_iterator)->m_quote.m_quote.m_size = quote.m_quote.m_size;
+      (*insert_iterator)->m_quote.m_timestamp = quote.m_timestamp;
+      auto quote_index = std::distance(quotes.rbegin(), insert_iterator);
+      m_quote_signal(**insert_iterator, quote_index);
+    } else {
+      auto existing_index = std::distance(quotes.rbegin(), existing_iterator);
+      auto quote_index = std::distance(quotes.rbegin(), insert_iterator);
+      if(quote_index > existing_index) {
+        --quote_index;
+      }
+      remove(quote.m_quote.m_side, existing_index);
+      add(Quote{type, quote, 0}, quote_index);
+    }
+  }
 }
 
 void LocalBookViewModel::add(const Quote& quote, int index) {

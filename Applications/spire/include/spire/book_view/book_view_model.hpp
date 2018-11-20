@@ -22,6 +22,9 @@ namespace Spire {
         /** Represents a book quote. */
         BOOK_QUOTE,
 
+        /** Represents a market quote. */
+        MARKET_QUOTE,
+
         /** Represents an order entry. */
         ORDER_ENTRY
       };

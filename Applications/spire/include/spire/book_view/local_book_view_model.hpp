@@ -70,6 +70,12 @@ namespace Spire {
       */
       void update_close(Nexus::Money close);
 
+      //! Clears all the BookQuotes from this model.
+      void clear_book_quotes();
+
+      //! Clears all the MarketQuotes from this model.
+      void clear_market_quotes();
+
       const Nexus::Security& get_security() const override;
 
       const Nexus::BboQuote& get_bbo() const override;
@@ -131,6 +137,7 @@ namespace Spire {
       boost::optional<Nexus::Money> m_close;
       Nexus::Quantity m_volume;
 
+      void update(const Nexus::BookQuote& quote, Type type);
       void add(const Quote& quote, int index);
       void remove(Nexus::Side side, int index);
   };
