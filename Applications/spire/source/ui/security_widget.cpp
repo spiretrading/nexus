@@ -54,6 +54,7 @@ bool SecurityWidget::eventFilter(QObject* object, QEvent* event) {
         if(m_current_security != Security()) {
           auto s = m_securities.push_front(m_current_security);
           if(s != Security()) {
+            m_current_security = s;
             m_security_change_signal(s);
           }
         }
@@ -62,6 +63,7 @@ bool SecurityWidget::eventFilter(QObject* object, QEvent* event) {
         if(m_current_security != Security()) {
           auto s = m_securities.push_back(m_current_security);
           if(s != Security()) {
+            m_current_security = s;
             m_security_change_signal(s);
           }
         }

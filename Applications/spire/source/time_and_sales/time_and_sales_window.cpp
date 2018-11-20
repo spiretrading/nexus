@@ -178,9 +178,6 @@ void TimeAndSalesWindow::show_properties_dialog() {
 }
 
 void TimeAndSalesWindow::set_current(const Security& s) {
-  if(s == m_current_security) {
-    return;
-  }
   m_current_security = s;
   m_change_security_signal(s);
   m_volume_label->setText(tr("Volume:"));
