@@ -69,7 +69,7 @@ class TestApp extends React.Component<{}, State> {
         }
     })();
     const toggleAdminButtonText = (() => {
-      if(this.state.roles.isSet(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
+      if(this.state.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
         return 'Admin';
       }
       return 'Not Admin';
@@ -123,7 +123,7 @@ class TestApp extends React.Component<{}, State> {
 
   private onToggleIsAdmin() {
     const roles = (() => {
-      if(!this.state.roles.isSet(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
+      if(!this.state.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
         return new Nexus.AccountRoles(8);
       }
       return new Nexus.AccountRoles();

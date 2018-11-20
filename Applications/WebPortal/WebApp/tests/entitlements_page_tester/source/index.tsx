@@ -1,4 +1,4 @@
-import {css, StyleSheet} from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'Beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
@@ -37,34 +37,16 @@ entitlementDB.add(entitlementEntry2);
 //why does add not work more than once?
 
 
-
-const test = (
-  <WebPortal.HBoxLayout height='100%' width='100%'>
-      <WebPortal.EntitlementsPage
-        displaySize={WebPortal.DisplaySize.SMALL}
-        marketDatabase={marketDB}
-        roles={null}
-        entitlements={entitlementDB}
-        checked={null}
-        currencyDatabase={currencyDB}
-        />
-  </WebPortal.HBoxLayout>);
-
-ReactDOM.render(test,
-  document.getElementById('main'));
-
-/**  Displays a testing application for the login page. */
-
-
+/**  Displays a testing application. */
 interface State {
-  roles: Nexus.AccountRoles.Role; //hmmmmmmmmmmmmmmm
+  roles: Nexus.AccountRoles.Role;
 }
 
 class TestApp extends React.Component<{}, State> {
   constructor(props: {}) {
     super(props);
     this.state = {
-      roles : Nexus.AccountRoles.Role.ADMINISTRATOR
+      roles: Nexus.AccountRoles.Role.ADMINISTRATOR
     };
     this.changeRole = this.changeRole.bind(this);
   }
@@ -72,14 +54,23 @@ class TestApp extends React.Component<{}, State> {
   public render(): JSX.Element {
     return (
       <WebPortal.VBoxLayout width='100%' height='100%'>
+        <WebPortal.EntitlementsPage
+          displaySize={WebPortal.DisplaySize.SMALL}
+          marketDatabase={marketDB}
+          roles={null}
+          entitlements={entitlementDB}
+          checked={null}
+          currencyDatabase={currencyDB}
+        />
         <div className={css(TestApp.STYLE.testingComponents)}>
-        <button tabIndex={-1}
-        onClick={() => this.changeRole(Nexus.AccountRoles.Role.ADMINISTRATOR)}>
-          ADMINISTRATOR
+          <button tabIndex={-1}
+            onClick={() =>
+              this.changeRole(Nexus.AccountRoles.Role.ADMINISTRATOR)}>
+            ADMINISTRATOR
         </button>
-        <button tabIndex={-1}
-        onClick={() => this.changeRole(Nexus.AccountRoles.Role.TRADER)}>
-          TRADER
+          <button tabIndex={-1}
+            onClick={() => this.changeRole(Nexus.AccountRoles.Role.TRADER)}>
+            TRADER
         </button>
         </div>
       </WebPortal.VBoxLayout>);
@@ -99,4 +90,5 @@ class TestApp extends React.Component<{}, State> {
     });
   }
 }
+
 ReactDOM.render(<TestApp/>, document.getElementById('main'));
