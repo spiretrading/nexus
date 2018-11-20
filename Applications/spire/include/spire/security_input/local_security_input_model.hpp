@@ -19,7 +19,7 @@ namespace Spire {
       */
       void add(Nexus::SecurityInfo security);
 
-      std::vector<Nexus::SecurityInfo> autocomplete(
+      QtPromise<std::vector<Nexus::SecurityInfo>> autocomplete(
         const std::string& query) override;
 
     private:

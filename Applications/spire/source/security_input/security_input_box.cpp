@@ -122,16 +122,25 @@ void SecurityInputBox::showEvent(QShowEvent* event) {
 }
 
 void SecurityInputBox::on_text_edited() {
-  auto recommendations = m_model->autocomplete(
+  m_completions = m_model->autocomplete(
     m_security_line_edit->text().toStdString());
-  m_securities->set_list(recommendations);
-  if(recommendations.empty()) {
-    m_securities->hide();
-  } else {
-    move_line_edit();
-    m_securities->setVisible(true);
-    m_securities->raise();
-  }
+  m_completions.then([=] (auto result) {
+    auto completions = [&] {
+      try {
+        return result.Get();
+      } catch(const std::exception&) {
+        return std::vector<SecurityInfo>();
+      }
+    }();
+    m_securities->set_list(completions);
+    if(completions.empty()) {
+      m_securities->hide();
+    } else {
+      move_line_edit();
+      m_securities->setVisible(true);
+      m_securities->raise();
+    }
+  });
 }
 
 void SecurityInputBox::move_line_edit() {

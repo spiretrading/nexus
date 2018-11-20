@@ -15,20 +15,26 @@ void LocalSecurityInputModel::add(SecurityInfo security) {
   m_securities[name.c_str()] = std::move(security);
 }
 
-std::vector<SecurityInfo> LocalSecurityInputModel::autocomplete(
+QtPromise<std::vector<SecurityInfo>> LocalSecurityInputModel::autocomplete(
     const std::string& query) {
-  if(query.empty()) {
-    return {};
-  }
-  static const auto MAX_MATCH_COUNT = 8;
-  std::unordered_set<SecurityInfo> matches;
-  auto uppercasePrefix = boost::to_upper_copy(query);
-  for(auto i = m_securities.startsWith(uppercasePrefix.c_str());
-      i != m_securities.end(); ++i) {
-    matches.insert(*i->second);
-    if(matches.size() >= MAX_MATCH_COUNT) {
-      break;
+  constexpr auto MAX_MATCH_COUNT = 8;
+  auto matches = [&] {
+    if(query.empty()) {
+      return std::vector<SecurityInfo>();
     }
-  }
-  return std::vector<SecurityInfo>(matches.begin(), matches.end());
+    auto matches = std::unordered_set<SecurityInfo>();
+    auto uppercasePrefix = boost::to_upper_copy(query);
+    for(auto i = m_securities.startsWith(uppercasePrefix.c_str());
+        i != m_securities.end(); ++i) {
+      matches.insert(*i->second);
+      if(matches.size() >= MAX_MATCH_COUNT) {
+        break;
+      }
+    }
+    return std::vector<SecurityInfo>(matches.begin(), matches.end());
+  }();
+  return make_qt_promise(
+    [matches = std::move(matches)] {
+      return std::move(matches);
+    });
 }

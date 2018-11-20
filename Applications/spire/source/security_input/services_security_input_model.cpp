@@ -9,11 +9,14 @@ ServicesSecurityInputModel::ServicesSecurityInputModel(
     Ref<VirtualMarketDataClient> client)
     : m_client(client.Get()) {}
 
-std::vector<SecurityInfo> ServicesSecurityInputModel::autocomplete(
+QtPromise<std::vector<SecurityInfo>> ServicesSecurityInputModel::autocomplete(
     const std::string& query) {
-  try {
-    return m_client->LoadSecurityInfoFromPrefix(query);
-  } catch(const std::exception&) {
-    return {};
-  }
+  return make_qt_promise(
+    [=, client = m_client] {
+      try {
+        return client->LoadSecurityInfoFromPrefix(query);
+      } catch(const std::exception&) {
+        return std::vector<SecurityInfo>();
+      }
+    });
 }

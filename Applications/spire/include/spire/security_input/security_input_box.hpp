@@ -6,6 +6,7 @@
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/security_input/security_input.hpp"
+#include "spire/spire/qt_promise.hpp"
 
 namespace Spire {
 
@@ -52,6 +53,7 @@ namespace Spire {
       QLineEdit* m_security_line_edit;
       QLabel* m_icon_label;
       SecurityInfoListView* m_securities;
+      QtPromise<std::vector<Nexus::SecurityInfo>> m_completions;
 
       void on_text_edited();
       void move_line_edit();
