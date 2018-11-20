@@ -47,6 +47,11 @@ testTrader.set(Nexus.AccountRoles.Role.TRADER);
 const testManager = new Nexus.AccountRoles();
 testTrader.set(Nexus.AccountRoles.Role.MANAGER);
 
+//how the heck do I use this??????
+const checkedDB = new Beam.Set<Beam.DirectoryEntry>();
+checkedDB.set(group);
+
+
 /**  Displays a testing application. */
 interface State {
   roles: Nexus.AccountRoles;
@@ -72,7 +77,7 @@ class TestApp extends React.Component<{}, State> {
           marketDatabase={marketDB}
           roles={this.state.roles}
           entitlements={entitlementDB}
-          checked={null}
+          checked={checkedDB}
           currencyDatabase={currencyDB}
         />
         <div className={css(TestApp.STYLE.testingComponents)}>
