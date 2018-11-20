@@ -5,6 +5,7 @@ import { DisplaySize, HBoxLayout, Padding, VBoxLayout } from '../../..';
 import { EntitlementRow } from './entitlement_row';
 import { HLine } from '../../../components';
 import { SubmitButton } from '../submit_button';
+import { Center } from '../../../layouts';
 
 interface Properties {
 
@@ -79,8 +80,17 @@ export class EntitlementsPage extends React.Component<Properties> {
         <VBoxLayout>
           <Padding size={EntitlementsPage.DEFAULT_PADDING}/>
             {data}
-            <HLine/>
-            
+            <Padding size={EntitlementsPage.LINE_PADDING}/>
+            <HLine color={EntitlementsPage.LINE_COLOR}/>
+            <Padding size={EntitlementsPage.LINE_PADDING}/>
+            <HBoxLayout>
+              <Padding/>
+              <SubmitButton
+                roles={this.props.roles}/>
+              <Padding/>
+            </HBoxLayout>
+          <Padding size={EntitlementsPage.DEFAULT_PADDING}/>
+          <div style={EntitlementsPage.STYLE.text}>Status</div>
           <Padding size={EntitlementsPage.BOTTOM_PADDING}/>
         </VBoxLayout>
        <Padding size={EntitlementsPage.DEFAULT_PADDING}/>
@@ -89,8 +99,31 @@ export class EntitlementsPage extends React.Component<Properties> {
     );
   }
 
+  private static readonly STYLE = {
+    container: {
+      border: '1px solid #C8C8C8',
+      font: '400 14px Roboto',
+      borderCollapse: 'collapse' as 'collapse',
+      textAlign: 'center' as 'center',
+      padding: 0,
+      small: {
+        minWidth: '284px',
+        width: 'inherit' as 'inherit',
+        maxWidth: '424px'
+      },
+      notSmall: {
+        width: '636px'
+      }
+    },
+    text: {
+      font: '400 14px Roboto',
+      textAlign: 'center' as 'center'
+    }
+  };
   private static readonly DEFAULT_PADDING = '18px';
   private static readonly BOTTOM_PADDING = '20px';
+  private static readonly LINE_PADDING = '30px';
+  private static readonly LINE_COLOR = '#E6E6E6';
 }
 
 //footer ???

@@ -10,54 +10,65 @@ const marketDB = Nexus.buildDefaultMarketDatabase();
 
 const group =
   new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 89, 'BOOP');
+const group2 =
+  new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 42, 'MEEP');
+const group3 =
+  new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 34, 'MEH');
 const dataset1 = new Nexus.MarketDataTypeSet(134);
 const marketcode1 = new Nexus.MarketCode('XASX');
 const ekey1 = new Nexus.EntitlementKey(marketcode1);
 const dataset2 = new Nexus.MarketDataTypeSet(1);
 const marketcode2 = new Nexus.MarketCode('XCIS');
+
 const ekey2 = new Nexus.EntitlementKey(marketcode2);
 const app = new Beam.Map<Nexus.EntitlementKey, Nexus.MarketDataTypeSet>();
 app.set(ekey1, dataset1);
-app.set(ekey2, dataset2);
+const app2 = new Beam.Map<Nexus.EntitlementKey, Nexus.MarketDataTypeSet>();
+app2.set(ekey2, dataset2);
 
 const entitlementEntry1 = new Nexus.EntitlementDatabase.Entry('ASX Total',
   Nexus.Money.parse('68'), Nexus.DefaultCurrencies.USD, group, app);
 const cEntry1 = currencyDB.fromCode('USD');
 const entitlementEntry2 = new Nexus.EntitlementDatabase.Entry('TSX Venture',
-  Nexus.Money.parse('200'), Nexus.DefaultCurrencies.EUR, group, app);
+  Nexus.Money.parse('200'), Nexus.DefaultCurrencies.EUR, group2, app2);
 const cEntry2 = currencyDB.fromCode('EUR');
 const entitlementEntry3 = new Nexus.EntitlementDatabase.Entry('Musk Media',
-  Nexus.Money.parse('45'), Nexus.DefaultCurrencies.EUR, group, app);
+  Nexus.Money.parse('45'), Nexus.DefaultCurrencies.EUR, group3, app2);
 
 const entitlementDB = new Nexus.EntitlementDatabase();
-const input = [entitlementEntry1, entitlementEntry2, entitlementEntry3];
 entitlementDB.add(entitlementEntry1);
 entitlementDB.add(entitlementEntry3);
 entitlementDB.add(entitlementEntry2);
-//why does add not work more than once?
 
+const roles1 = new Nexus.AccountRoles();
+roles1.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
+const roles2 = new Nexus.AccountRoles();
+roles2.set(Nexus.AccountRoles.Role.TRADER);
 
 /**  Displays a testing application. */
 interface State {
-  roles: Nexus.AccountRoles.Role;
+  roles: Nexus.AccountRoles;
+  displaySize: WebPortal.DisplaySize;
 }
 
 class TestApp extends React.Component<{}, State> {
   constructor(props: {}) {
     super(props);
     this.state = {
-      roles: Nexus.AccountRoles.Role.ADMINISTRATOR
+      roles: roles1,
+      displaySize: TestApp.getDisplaySize()
     };
     this.changeRole = this.changeRole.bind(this);
+    this.onScreenResize = this.onScreenResize.bind(this);
   }
 
   public render(): JSX.Element {
     return (
       <WebPortal.VBoxLayout width='100%' height='100%'>
         <WebPortal.EntitlementsPage
-          displaySize={WebPortal.DisplaySize.SMALL}
+          displaySize={this.state.displaySize}
           marketDatabase={marketDB}
-          roles={null}
+          roles={roles1}
           entitlements={entitlementDB}
           checked={null}
           currencyDatabase={currencyDB}
@@ -75,6 +86,44 @@ class TestApp extends React.Component<{}, State> {
         </div>
       </WebPortal.VBoxLayout>);
   }
+
+  public componentDidMount(): void {
+    window.addEventListener('resize', this.onScreenResize);
+  }
+
+  public componentWillUnmount(): void {
+    window.removeEventListener('resize', this.onScreenResize);
+  }
+
+  private changeRole(newRole: Nexus.AccountRoles.Role): void {
+    switch(newRole) {
+      case(Nexus.AccountRoles.Role.ADMINISTRATOR):
+        this.setState({roles: roles1 });
+      case(Nexus.AccountRoles.Role.TRADER):
+        this.setState({roles: roles2});
+    }
+  }
+
+  private static getDisplaySize(): WebPortal.DisplaySize {
+    const screenWidth = window.innerWidth ||
+      document.documentElement.clientWidth ||
+      document.getElementsByTagName('body')[0].clientWidth;
+    if(screenWidth <= 767) {
+      return WebPortal.DisplaySize.SMALL;
+    } else if(screenWidth > 767 && screenWidth <= 1035) {
+      return WebPortal.DisplaySize.MEDIUM;
+    } else {
+      return WebPortal.DisplaySize.LARGE;
+    }
+  }
+
+  private onScreenResize(): void {
+    const newDisplaySize = TestApp.getDisplaySize();
+    if(newDisplaySize !== this.state.displaySize) {
+      this.setState({ displaySize: newDisplaySize });
+    }
+  }
+
   private static STYLE = StyleSheet.create({
     testingComponents: {
       position: 'fixed' as 'fixed',
@@ -83,12 +132,6 @@ class TestApp extends React.Component<{}, State> {
       zIndex: 1
     }
   });
-
-  private changeRole(newRole: Nexus.AccountRoles.Role): void {
-    this.setState({
-      roles: newRole
-    });
-  }
 }
 
 ReactDOM.render(<TestApp/>, document.getElementById('main'));
