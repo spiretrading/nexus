@@ -37,6 +37,7 @@ SecurityInputDialog::SecurityInputDialog(Ref<SecurityInputModel> model,
   )").arg(scale_width(1)));
   auto text_label = new QLabel(tr("Security"), this);
   text_label->setStyleSheet(QString(R"(
+    background-color: #F5F5F5;
     border: none;
     font-family: Roboto;
     font-size: %1px;
