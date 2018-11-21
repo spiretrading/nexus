@@ -21,8 +21,8 @@ class TestApp extends React.Component<{}, State> {
   constructor(props: {}) {
     super(props);
     this.state = {
-      roles: null,
-      entitlementDB: null,
+      roles:  new Nexus.AccountRoles(),
+      entitlementDB: new Nexus.EntitlementDatabase(),
       displaySize: TestApp.getDisplaySize(),
       checkedDB: new Beam.Set<Beam.DirectoryEntry>(),
       currencyDB: Nexus.buildDefaultCurrencyDatabase(),
@@ -33,13 +33,11 @@ class TestApp extends React.Component<{}, State> {
     this.toggleCheckMark = this.toggleCheckMark.bind(this);
     this.setup = this.setup.bind(this);
     this.buildEntitlementDB = this.buildEntitlementDB.bind(this);
-    this.setup();
-    this.buildEntitlementDB();
   }
 
   public render(): JSX.Element {
-    const cEntry1 = this.state.currencyDB.fromCode('USD');
-    const cEntry2 = this.state.currencyDB.fromCode('EUR');
+    this.setup();
+    this.buildEntitlementDB();
     return (
       <WebPortal.VBoxLayout width='100%' height='100%'>
         <WebPortal.EntitlementsPage
@@ -71,6 +69,7 @@ class TestApp extends React.Component<{}, State> {
 
   public componentDidMount(): void {
     window.addEventListener('resize', this.onScreenResize);
+    this.setState({ roles: this.testAdmin });
   }
 
   public componentWillUnmount(): void {
@@ -122,7 +121,7 @@ class TestApp extends React.Component<{}, State> {
   private setup(): void {
     this.testAdmin.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
     this.testTrader.set(Nexus.AccountRoles.Role.TRADER);
-    this.testTrader.set(Nexus.AccountRoles.Role.MANAGER);
+    this.testManager.set(Nexus.AccountRoles.Role.MANAGER);
   }
 
   private buildEntitlementDB(): void {
@@ -132,6 +131,7 @@ class TestApp extends React.Component<{}, State> {
       new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 42, 'MEEP');
     const group3 =
       new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 34, 'MEH');
+
     const dataset1 = new Nexus.MarketDataTypeSet(134);
     const marketcode1 = new Nexus.MarketCode('XASX');
     const ekey1 = new Nexus.EntitlementKey(marketcode1);
