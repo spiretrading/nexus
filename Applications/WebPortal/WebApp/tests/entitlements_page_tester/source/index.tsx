@@ -1,4 +1,4 @@
-import { css, StyleSheet } from 'aphrodite';
+import {css, StyleSheet} from 'aphrodite';
 import * as Beam from 'Beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';

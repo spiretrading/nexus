@@ -1,10 +1,9 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize, HBoxLayout, Padding, VBoxLayout } from '../../..';
-import { EntitlementRow } from './entitlement_row';
-import { HLine } from '../../../components';
-import { SubmissionBox } from '../submission_box';
+import {DisplaySize, HBoxLayout, HLine, Padding, VBoxLayout} from '../../..';
+import {SubmissionBox} from '../submission_box';
+import {EntitlementRow} from './entitlement_row';
 
 interface Properties {
 
