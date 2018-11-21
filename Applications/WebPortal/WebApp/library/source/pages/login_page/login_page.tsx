@@ -2,12 +2,12 @@ import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as React from 'react';
 import { Center, HBoxLayout, Padding, VBoxLayout } from '../../';
-import { LoginPageModel } from '.';
+import { LoginModel } from '.';
 
 interface Properties {
 
   /** The model used to login. */
-  model: LoginPageModel;
+  model: LoginModel;
 
   /** The event handler called upon a successful login. */
   onLogin?: (account: Beam.DirectoryEntry) => void;
@@ -135,7 +135,7 @@ export class LoginPage extends React.Component<Properties, State> {
   }
 
   private static defaultProps = {
-    onLogin: (account: LoginPageModel) => {}
+    onLogin: (_: Beam.DirectoryEntry) => {}
   };
   private static STYLE = StyleSheet.create({
     page: {
