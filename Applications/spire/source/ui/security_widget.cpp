@@ -92,12 +92,12 @@ bool SecurityWidget::eventFilter(QObject* object, QEvent* event) {
 }
 
 void SecurityWidget::show_overlay_widget() {
-  m_overlay_widget = std::make_unique<QLabel>(this);
+  auto p = static_cast<QWidget*>(parent());
+  m_overlay_widget = std::make_unique<QLabel>(p);
   m_overlay_widget->setStyleSheet(
     "background-color: rgba(245, 245, 245, 153);");
-  auto w = static_cast<QWidget*>(parent());
-  m_overlay_widget->resize(w->size());
-  m_overlay_widget->move(w->mapTo(w, w->pos()));
+  m_overlay_widget->resize(p->size());
+  m_overlay_widget->move(0, 0);
   m_overlay_widget->show();
 }
 
