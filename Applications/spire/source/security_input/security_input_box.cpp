@@ -157,8 +157,8 @@ void SecurityInputBox::enter_pressed() {
 }
 
 void SecurityInputBox::on_activated(const Security& security) {
-  auto item_delegate = new CustomVariantItemDelegate(this);
-  m_security_line_edit->setText(item_delegate->displayText(
+  auto item_delegate = CustomVariantItemDelegate();
+  m_security_line_edit->setText(item_delegate.displayText(
     QVariant::fromValue(security), QLocale()));
 }
 
