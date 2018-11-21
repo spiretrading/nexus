@@ -25,7 +25,7 @@ interface Properties {
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
 
-  /** The message that lets the suer know if their submission was succesful. */
+  /** The message that lets the user know if their submission was succesful. */
   submissionStatus?: string;
 
   /** Indicates an entitlement has been clicked.

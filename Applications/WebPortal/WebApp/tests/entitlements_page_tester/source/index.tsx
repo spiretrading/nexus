@@ -104,7 +104,7 @@ class TestApp extends React.Component<{}, State> {
     }
   }
 
-  private changeStatus(newStatus: string): void {
+  private changeStatus(newStatus: string) {
     if (newStatus === '') {
       this.setState({displayedStatus: ''});
     } else if (newStatus !== this.state.status) {
@@ -112,11 +112,11 @@ class TestApp extends React.Component<{}, State> {
     }
   }
 
-  private commentsSubmitted(value: string): void {
+  private commentsSubmitted(value: string) {
     this.setState({ displayedStatus: this.state.status.toString()});
   }
 
-  private toggleCheckMark(value: Beam.DirectoryEntry): void {
+  private toggleCheckMark(value: Beam.DirectoryEntry) {
     if (!this.state.checkedDB.test(value)) {
       this.state.checkedDB.add(value);
     } else {
@@ -137,21 +137,21 @@ class TestApp extends React.Component<{}, State> {
     }
   }
 
-  private onScreenResize(): void {
+  private onScreenResize() {
     const newDisplaySize = TestApp.getDisplaySize();
     if (newDisplaySize !== this.state.displaySize) {
       this.setState({ displaySize: newDisplaySize });
     }
   }
 
-  private setup(): void {
+  private setup() {
     this.testAdmin.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
     this.testTrader.set(Nexus.AccountRoles.Role.TRADER);
     this.testManager.set(Nexus.AccountRoles.Role.MANAGER);
     this.buildEntitlementDB();
   }
 
-  private buildEntitlementDB(): void {
+  private buildEntitlementDB() {
     const group =
       new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 89, 'BOOP');
     const group2 =
