@@ -1,6 +1,7 @@
 import * as Beam from 'beam';
 import * as Router from 'react-router-dom';
 import * as React from 'react';
+import { DisplaySize } from '..';
 import { ApplicationModel } from './application_model';
 import { LoginController } from './login_page';
 
@@ -12,6 +13,7 @@ interface Properties {
 
 interface State {
   redirect: string;
+  displaySize: DisplaySize;
   account: Beam.DirectoryEntry;
   isLoading: boolean;
 }
@@ -22,9 +24,11 @@ export class ApplicationController extends React.Component<Properties, State> {
     super(props);
     this.state = {
       redirect: null,
+      displaySize: DisplaySize.getDisplaySize(),
       account: Beam.DirectoryEntry.INVALID,
       isLoading: true
     };
+    this.onResize = this.onResize.bind(this);
     this.onLogin = this.onLogin.bind(this);
     this.navigateToLogin = this.navigateToLogin.bind(this);
     this.navigateToDashboard = this.navigateToDashboard.bind(this);
@@ -57,9 +61,24 @@ export class ApplicationController extends React.Component<Properties, State> {
       });
   }
 
+  public componentDidMount(): void {
+    window.addEventListener('resize', this.onResize);
+  }
+
   public componentDidUpdate(): void {
     if(this.state.redirect) {
       this.setState({redirect: null});
+    }
+  }
+
+  public componentWillUnmount(): void {
+    window.removeEventListener('resize', this.onResize);
+  }
+
+  private onResize() {
+    const displaySize = DisplaySize.getDisplaySize();
+    if(displaySize !== this.state.displaySize) {
+      this.setState({displaySize: displaySize});
     }
   }
 

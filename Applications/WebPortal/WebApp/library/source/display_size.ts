@@ -10,3 +10,20 @@ export enum DisplaySize {
   /** Desktop size for widths greater than 1023px. */
   LARGE
 }
+
+export namespace DisplaySize {
+
+  /** Returns the default display size to use for the current resolution. */
+  export function getDisplaySize(): DisplaySize {
+    const screenWidth = window.innerWidth ||
+      document.documentElement.clientWidth ||
+      document.getElementsByTagName('body')[0].clientWidth;
+    if(screenWidth <= 767) {
+      return DisplaySize.SMALL;
+    } else if(screenWidth > 767 && screenWidth <= 1035) {
+      return DisplaySize.MEDIUM;
+    } else {
+      return DisplaySize.LARGE;
+    }
+  }
+}

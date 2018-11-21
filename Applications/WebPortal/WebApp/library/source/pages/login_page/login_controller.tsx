@@ -22,6 +22,6 @@ export class LoginController extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    return <LoginPage/>;
+    return <LoginPage />;
   }
 }
