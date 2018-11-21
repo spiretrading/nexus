@@ -86,7 +86,9 @@ class TestApp extends React.Component<{}, State> {
 
   private toggleCheckMark(value: Beam.DirectoryEntry): void {
     if (!this.state.checkedDB.test(value)) {
-      this.state.checkedDB.set(value);
+      this.state.checkedDB.add(value);
+    } else {
+      this.state.checkedDB.remove(value);
     }
   }
 
@@ -164,7 +166,7 @@ class TestApp extends React.Component<{}, State> {
     this.state.entitlementDB.add(entitlementEntry5);
     this.state.entitlementDB.add(entitlementEntry6);
 
-    this.state.checkedDB.set(group);
+    this.state.checkedDB.add(group);
   }
 
   private testAdmin = new Nexus.AccountRoles();
