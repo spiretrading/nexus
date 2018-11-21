@@ -91,7 +91,11 @@ export class EntitlementRow extends React.Component<Properties, State> {
           return EntitlementRow.STYLE.text.activeAmount;
         }
       } else {
-        return EntitlementRow.STYLE.text.default;
+        if(this.state.isExpanded) {
+          return EntitlementRow.STYLE.text.amountWhenExpandedTable;
+        } else {
+          return EntitlementRow.STYLE.text.default;
+        }
       }
     })();
     const buttonRowAmountVisibility = (() => {
@@ -245,6 +249,10 @@ export class EntitlementRow extends React.Component<Properties, State> {
       activeAmountWhenExpandedTable: {
         font: '500 14px Roboto',
         color: '#36BB55'
+      },
+      amountWhenExpandedTable: {
+        font: '500 14px Roboto',
+        color: '#000000'
       },
       nameWhenExpandedTable: {
         font: '500 14px Roboto',
