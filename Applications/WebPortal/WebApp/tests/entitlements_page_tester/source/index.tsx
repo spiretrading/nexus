@@ -5,8 +5,6 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
-
-
 /**  Displays a testing application. */
 interface State {
   roles: Nexus.AccountRoles;
@@ -37,7 +35,6 @@ class TestApp extends React.Component<{}, State> {
 
   public render(): JSX.Element {
     this.setup();
-    this.buildEntitlementDB();
     return (
       <WebPortal.VBoxLayout width='100%' height='100%'>
         <WebPortal.EntitlementsPage
@@ -47,8 +44,7 @@ class TestApp extends React.Component<{}, State> {
           entitlements={this.state.entitlementDB}
           checked={this.state.checkedDB}
           currencyDatabase={this.state.currencyDB}
-          onEntitlementClick={this.toggleCheckMark}
-        />
+          onEntitlementClick={this.toggleCheckMark}/>
         <div className={css(TestApp.STYLE.testingComponents)}>
           <button tabIndex={-1}
             onClick={() =>
@@ -89,12 +85,8 @@ class TestApp extends React.Component<{}, State> {
   }
 
   private toggleCheckMark(value: Beam.DirectoryEntry): void {
-    console.log('You clicked a checkmark box');
-    console.log('The group value is: ' + value.id);
-    console.log('The test result is: ' + this.state.checkedDB.test(value));
     if (!this.state.checkedDB.test(value)) {
       this.state.checkedDB.set(value);
-      console.log(this.state.checkedDB);
     }
   }
 
@@ -122,6 +114,7 @@ class TestApp extends React.Component<{}, State> {
     this.testAdmin.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
     this.testTrader.set(Nexus.AccountRoles.Role.TRADER);
     this.testManager.set(Nexus.AccountRoles.Role.MANAGER);
+    this.buildEntitlementDB();
   }
 
   private buildEntitlementDB(): void {

@@ -49,22 +49,22 @@ export class EntitlementsPage extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
-    const data = (() => {
+    const entitlements = (() => {
       const rows = [];
       for(const entry of this.props.entitlements) {
         rows.push(
           <EntitlementRow
-          entitlementEntry={entry}
-          currencyEntry=
-          {this.props.currencyDatabase.fromCurrency(entry.currency)}
-          isActive={this.props.checked.test(entry.group)}
-          onClick = {() => {
-            this.props.onEntitlementClick(entry.group);
-            this.forceUpdate();
+            entitlementEntry={entry}
+            currencyEntry=
+            {this.props.currencyDatabase.fromCurrency(entry.currency)}
+            isActive={this.props.checked.test(entry.group)}
+            onClick = {() => {
+              this.props.onEntitlementClick(entry.group);
+              this.forceUpdate();
+              }
             }
-          }
-          displaySize={this.props.displaySize}
-          marketDatabase={this.props.marketDatabase}/>);
+            displaySize={this.props.displaySize}
+            marketDatabase={this.props.marketDatabase}/>);
       }
       return <div>{rows}</div>;
     })();
@@ -74,7 +74,7 @@ export class EntitlementsPage extends React.Component<Properties> {
         <Padding size={EntitlementsPage.DEFAULT_PADDING}/>
         <VBoxLayout>
           <Padding size={EntitlementsPage.DEFAULT_PADDING}/>
-          {data}
+          {entitlements}
           <Padding size={EntitlementsPage.LINE_PADDING}/>
           <HLine color={EntitlementsPage.LINE_COLOR}/>
           <Padding size={EntitlementsPage.LINE_PADDING}/>
