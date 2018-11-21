@@ -1,5 +1,4 @@
 import * as Beam from 'beam';
-import * as Nexus from 'nexus';
 
 /** Provides the connectivity needed by the LoginPage to login a user. */
 export abstract class LoginPageModel {

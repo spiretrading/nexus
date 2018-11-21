@@ -1,6 +1,6 @@
-import {css, StyleSheet} from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
-import {Center, HBoxLayout, Padding, VBoxLayout} from '../..';
+import { Center, HBoxLayout, Padding, VBoxLayout } from '../..';
 
 interface Properties {
 

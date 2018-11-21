@@ -1,5 +1,5 @@
 import * as Beam from 'beam';
-import {LoginPageModel} from './login_page_model';
+import { LoginPageModel } from './login_page_model';
 
 /** Implements the LoginPageModel for testing purposes. */
 export class LocalLoginPageModel extends LoginPageModel {

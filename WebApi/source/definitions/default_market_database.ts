@@ -1,4 +1,92 @@
-import { MarketCode } from '.';
+import { DefaultCountries, DefaultCurrencies, MarketCode,
+         MarketDatabase } from '.';
+
+/** Builds a MarketDatabase containing a set of common marketplaces. */
+export function buildDefaultMarketDatabase(): MarketDatabase {
+  const database = new MarketDatabase();
+  database.add(new MarketDatabase.Entry(new MarketCode('XASX'),
+    DefaultCountries.AU, 'Australian_Eastern_Standard_Time',
+    DefaultCurrencies.AUD, 100, 'Australian Stock Market', 'ASX'));
+  database.add(new MarketDatabase.Entry(new MarketCode('CHIA'),
+    DefaultCountries.AU, 'Australian_Eastern_Standard_Time',
+    DefaultCurrencies.AUD, 100, 'CHI-X Australia', 'CXA'));
+  database.add(new MarketDatabase.Entry(new MarketCode('XASE'),
+    DefaultCountries.US, 'Eastern_Time', DefaultCurrencies.USD, 100,
+    'NYSE MKT LLC', 'ASEX'));
+  database.add(new MarketDatabase.Entry(new MarketCode('ARCX'),
+    DefaultCountries.US, 'Eastern_Time', DefaultCurrencies.USD, 100,
+    'NYSE ARCA', 'ARCX'));
+  database.add(new MarketDatabase.Entry(new MarketCode('BATS'),
+    DefaultCountries.US, 'Eastern_Time', DefaultCurrencies.USD, 100,
+    'BATS Exchange', 'BATS'));
+  database.add(new MarketDatabase.Entry(new MarketCode('BATY'),
+    DefaultCountries.US, 'Eastern_Time', DefaultCurrencies.USD, 100,
+    'BATS-Y Exchange', 'BATY'));
+  database.add(new MarketDatabase.Entry(new MarketCode('XBOS'),
+    DefaultCountries.US, 'Eastern_Time', DefaultCurrencies.USD, 100,
+    'NASDAQ OMX BX', 'BOSX'));
+  database.add(new MarketDatabase.Entry(new MarketCode('XCBO'),
+    DefaultCountries.US, 'Eastern_Time', DefaultCurrencies.USD, 100,
+    'Chicago Board of Options Exchange', 'CBOE'));
+  database.add(new MarketDatabase.Entry(new MarketCode('XCIS'),
+    DefaultCountries.US, 'Eastern_Time', DefaultCurrencies.USD, 100,
+    'National Stock Exchange', 'NSEX'));
+  database.add(new MarketDatabase.Entry(new MarketCode('XADF'),
+    DefaultCountries.US, 'Eastern_Time', DefaultCurrencies.USD, 100,
+    'FINRA Alternative Display Facility', 'ADFX'));
+  database.add(new MarketDatabase.Entry(new MarketCode('XISX'),
+    DefaultCountries.US, 'Eastern_Time', DefaultCurrencies.USD, 100,
+    'International Securities Exchange', 'ISE'));
+  database.add(new MarketDatabase.Entry(new MarketCode('EDGA'),
+    DefaultCountries.US, 'Eastern_Time', DefaultCurrencies.USD, 100,
+    'EDGA Exchange', 'EDGA'));
+  database.add(new MarketDatabase.Entry(new MarketCode('EDGX'),
+    DefaultCountries.US, 'Eastern_Time', DefaultCurrencies.USD, 100,
+    'EDGX Exchange', 'EDGX'));
+  database.add(new MarketDatabase.Entry(new MarketCode('XNYS'),
+    DefaultCountries.US, 'Eastern_Time', DefaultCurrencies.USD, 100, 'NYSE',
+    'NYSE'));
+  database.add(new MarketDatabase.Entry(new MarketCode('XNAS'),
+    DefaultCountries.US, 'Eastern_Time', DefaultCurrencies.USD, 100, 'NASDAQ',
+    'NSDQ'));
+  database.add(new MarketDatabase.Entry(new MarketCode('XPHL'),
+    DefaultCountries.US, 'Eastern_Time', DefaultCurrencies.USD, 100,
+    'NASDAQ OMX PHLX', 'PHLX'));
+  database.add(new MarketDatabase.Entry(new MarketCode('XATS'),
+    DefaultCountries.CA, 'Eastern_Time', DefaultCurrencies.CAD, 100,
+    'Alpha Exchange', 'XATS'));
+  database.add(new MarketDatabase.Entry(new MarketCode('CHIC'),
+    DefaultCountries.CA, 'Eastern_Time', DefaultCurrencies.CAD, 100,
+    'CHI-X Canada', 'CHIC'));
+  database.add(new MarketDatabase.Entry(new MarketCode('XCNQ'),
+    DefaultCountries.CA, 'Eastern_Time', DefaultCurrencies.CAD, 100,
+    'Canadian Securities Exchange', 'CSE'));
+  database.add(new MarketDatabase.Entry(new MarketCode('XCX2'),
+    DefaultCountries.CA, 'Eastern_Time', DefaultCurrencies.CAD, 100,
+    'CX2', 'CX2'));
+  database.add(new MarketDatabase.Entry(new MarketCode('LYNX'),
+    DefaultCountries.CA, 'Eastern_Time', DefaultCurrencies.CAD, 100,
+    'LYNX', 'LYNX'));
+  database.add(new MarketDatabase.Entry(new MarketCode('MATN'),
+    DefaultCountries.CA, 'Eastern_Time', DefaultCurrencies.CAD, 100,
+    'MATCH Now', 'MATN'));
+  database.add(new MarketDatabase.Entry(new MarketCode('NEOE'),
+    DefaultCountries.CA, 'Eastern_Time', DefaultCurrencies.CAD, 100,
+    'Aequitas NEO Exchange', 'NEOE'));
+  database.add(new MarketDatabase.Entry(new MarketCode('OMGA'),
+    DefaultCountries.CA, 'Eastern_Time', DefaultCurrencies.CAD, 100,
+    'Omega', 'OMGA'));
+  database.add(new MarketDatabase.Entry(new MarketCode('PURE'),
+    DefaultCountries.CA, 'Eastern_Time', DefaultCurrencies.CAD, 100,
+    'Pure Trading', 'PURE'));
+  database.add(new MarketDatabase.Entry(new MarketCode('XTSE'),
+    DefaultCountries.CA, 'Eastern_Time', DefaultCurrencies.CAD, 100,
+    'Toronto Stock Exchange', 'TSX'));
+  database.add(new MarketDatabase.Entry(new MarketCode('XTSX'),
+    DefaultCountries.CA, 'Eastern_Time', DefaultCurrencies.CAD, 100,
+    'TSX Venture Exchange', 'TSXV'));
+  return database;
+}
 
 export namespace DefaultMarkets {
   export const ASX = new MarketCode('XASX');

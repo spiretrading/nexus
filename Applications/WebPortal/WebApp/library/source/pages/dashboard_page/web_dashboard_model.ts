@@ -1,6 +1,6 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
-import {DashboardModel, LocalDashboardModel} from '.';
+import { DashboardModel, LocalDashboardModel } from '.';
 
 /** Implements the DashboardModel using web services. */
 export class WebDashboardModel extends DashboardModel {

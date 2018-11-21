@@ -1,10 +1,10 @@
-import {css, StyleSheet} from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import {HBoxLayout, Padding, VBoxLayout} from '../..';
-import {AccountModel} from '.';
-import {MenuBar} from './menu_bar';
-import {RolePanel} from './role_panel';
+import { DisplaySize, HBoxLayout, Padding, VBoxLayout } from '../..';
+import { AccountModel } from '.';
+import { MenuBar } from './menu_bar';
+import { RolePanel } from './role_panel';
 
 interface Properties {
 
@@ -12,15 +12,9 @@ interface Properties {
   model: AccountModel;
 }
 
-enum Breakpoint {
-  SMALL,
-  MEDIUM,
-  LARGE
-}
-
 interface State {
   isLoading: boolean;
-  breakpoint: Breakpoint;
+  displaySize: DisplaySize;
 }
 
 /** Implements the container used to display account information. */
@@ -29,7 +23,7 @@ export class AccountPage extends React.Component<Properties, State> {
     super(props);
     this.state = {
       isLoading: true,
-      breakpoint: AccountPage.getBreakpoint()
+      displaySize: AccountPage.getDisplaySize()
     };
     this.onScreenResize = this.onScreenResize.bind(this);
   }
@@ -53,14 +47,14 @@ export class AccountPage extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const header = ((): JSX.Element => {
-      switch(this.state.breakpoint) {
-        case Breakpoint.LARGE:
+      switch(this.state.displaySize) {
+        case DisplaySize.LARGE:
           return <LargeHeader name={this.props.model.account.name}
             roles={this.props.model.roles}/>;
-        case Breakpoint.MEDIUM:
+        case DisplaySize.MEDIUM:
           return <MediumHeader name={this.props.model.account.name}
             roles={this.props.model.roles}/>;
-        case Breakpoint.SMALL:
+        case DisplaySize.SMALL:
           return <SmallHeader name={this.props.model.account.name}
             roles={this.props.model.roles}/>;
         default:
@@ -74,23 +68,23 @@ export class AccountPage extends React.Component<Properties, State> {
       </VBoxLayout>);
   }
 
-  private static getBreakpoint(): Breakpoint {
+  private static getDisplaySize(): DisplaySize {
     const screenWidth = window.innerWidth ||
       document.documentElement.clientWidth ||
       document.getElementsByTagName('body')[0].clientWidth;
     if(screenWidth <= 767) {
-      return Breakpoint.SMALL;
+      return DisplaySize.SMALL;
     } else if(screenWidth > 767 && screenWidth <= 1035) {
-      return Breakpoint.MEDIUM;
+      return DisplaySize.MEDIUM;
     } else {
-      return Breakpoint.LARGE;
+      return DisplaySize.LARGE;
     }
   }
 
   private onScreenResize(): void {
-    const newBreakpoint = AccountPage.getBreakpoint();
-    if(newBreakpoint !== this.state.breakpoint) {
-      this.setState({breakpoint: newBreakpoint});
+    const newDisplaySize = AccountPage.getDisplaySize();
+    if(newDisplaySize !== this.state.displaySize) {
+      this.setState({displaySize: newDisplaySize});
     }
   }
 }
@@ -122,7 +116,7 @@ class LargeHeader extends React.Component<HeaderProps> {
           <Padding/>
           <HBoxLayout width='1036px' height='40px'>
             <Padding size='18px'/>
-            <MenuBar breakpoint={MenuBar.Breakpoint.LARGE}/>
+            <MenuBar displaySize={DisplaySize.LARGE}/>
             <Padding/>
             <div className={
                 css(LargeHeader.STYLE.usernameAndRoleContainer)}>
@@ -163,7 +157,7 @@ class MediumHeader extends React.Component<HeaderProps> {
           <div className={css(MediumHeader.STYLE.headerPadding)}/>
           <Padding size='18px'/>
           <HBoxLayout height='40px' width='750px'>
-            <MenuBar breakpoint={MenuBar.Breakpoint.MEDIUM}/>
+            <MenuBar displaySize={DisplaySize.MEDIUM}/>
             <div className={css(MediumHeader.STYLE.innerPadding)}/>
             <RolePanel roles={this.props.roles}/>
           </HBoxLayout>
@@ -206,7 +200,7 @@ class SmallHeader extends React.Component<HeaderProps> {
           <Padding size='18px'/>
           <HBoxLayout height='40px' className={
               css(SmallHeader.STYLE.accountHeader)}>
-            <MenuBar breakpoint={MenuBar.Breakpoint.SMALL}/>
+            <MenuBar displaySize={DisplaySize.SMALL}/>
             <div className={css(SmallHeader.STYLE.innerPadding)}/>
             <RolePanel roles={this.props.roles}/>
           </HBoxLayout>

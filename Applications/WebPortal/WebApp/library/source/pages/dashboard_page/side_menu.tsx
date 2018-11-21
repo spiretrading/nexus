@@ -1,8 +1,8 @@
-import {css, StyleSheet} from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import {Center, HBoxLayout, Padding, VBoxLayout} from '../..';
-import {SideMenuButton} from './side_menu_button';
+import {Padding, VBoxLayout} from '../..';
+import { SideMenuButton } from './side_menu_button';
 
 interface Properties {
 

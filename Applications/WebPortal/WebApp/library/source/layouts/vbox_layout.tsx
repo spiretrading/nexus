@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {BoxLayout} from './box_layout';
+import { BoxLayout } from './box_layout';
 
 interface Properties {
 
