@@ -13,6 +13,8 @@ interface State {
   currencyDB: Nexus.CurrencyDatabase;
   marketDB: Nexus.MarketDatabase;
   entitlementDB: Nexus.EntitlementDatabase;
+  status: string;
+  displayedStatus: string;
 }
 
 class TestApp extends React.Component<{}, State> {
@@ -24,13 +26,17 @@ class TestApp extends React.Component<{}, State> {
       displaySize: TestApp.getDisplaySize(),
       checkedDB: new Beam.Set<Beam.DirectoryEntry>(),
       currencyDB: Nexus.buildDefaultCurrencyDatabase(),
-      marketDB: Nexus.buildDefaultMarketDatabase()
+      marketDB: Nexus.buildDefaultMarketDatabase(),
+      status: '',
+      displayedStatus: ''
     };
     this.changeRole = this.changeRole.bind(this);
     this.onScreenResize = this.onScreenResize.bind(this);
     this.toggleCheckMark = this.toggleCheckMark.bind(this);
     this.setup = this.setup.bind(this);
     this.buildEntitlementDB = this.buildEntitlementDB.bind(this);
+    this.changeStatus = this.changeStatus.bind(this);
+    this.commentsSubmitted = this.commentsSubmitted.bind(this);
   }
 
   public render(): JSX.Element {
@@ -44,20 +50,34 @@ class TestApp extends React.Component<{}, State> {
           entitlements={this.state.entitlementDB}
           checked={this.state.checkedDB}
           currencyDatabase={this.state.currencyDB}
-          onEntitlementClick={this.toggleCheckMark}/>
+          onEntitlementClick={this.toggleCheckMark}
+          submissionStatus={this.state.displayedStatus}
+          onSubmit={this.commentsSubmitted}/>
         <div className={css(TestApp.STYLE.testingComponents)}>
-          <button tabIndex={-1}
-            onClick={() =>
+        <button tabIndex={-1}
+              onClick={() =>
               this.changeRole(Nexus.AccountRoles.Role.ADMINISTRATOR)}>
             ADMINISTRATOR
         </button>
-          <button tabIndex={-1}
+        <button tabIndex={-1}
             onClick={() => this.changeRole(Nexus.AccountRoles.Role.TRADER)}>
-            TRADER
+          TRADER
         </button>
-          <button tabIndex={-1}
+        <button tabIndex={-1}
             onClick={() => this.changeRole(Nexus.AccountRoles.Role.MANAGER)}>
-            MANAGER
+          MANAGER
+        </button>
+        <button tabIndex={-1}
+            onClick={() => this.changeStatus('')}>
+          NOT SUBMITTED
+        </button>
+        <button tabIndex={-1}
+            onClick={() => this.changeStatus('Saved')}>
+          SUCCESSFUL SUBMIT
+        </button>
+        <button tabIndex={-1}
+            onClick={() => this.changeStatus('Server issue')}>
+          UNSUCCESSFUL SUBMIT
         </button>
         </div>
       </WebPortal.VBoxLayout>);
@@ -82,6 +102,18 @@ class TestApp extends React.Component<{}, State> {
     if (newRole === Nexus.AccountRoles.Role.MANAGER) {
       this.setState({ roles: this.testManager });
     }
+  }
+
+  private changeStatus(newStatus: string): void {
+    if (newStatus === '') {
+      this.setState({displayedStatus: ''});
+    } else if (newStatus !== this.state.status) {
+      this.setState({ status: newStatus});
+    }
+  }
+
+  private commentsSubmitted(value: string): void {
+    this.setState({ displayedStatus: this.state.status.toString()});
   }
 
   private toggleCheckMark(value: Beam.DirectoryEntry): void {

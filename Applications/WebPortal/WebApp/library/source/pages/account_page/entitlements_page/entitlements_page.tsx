@@ -25,6 +25,9 @@ interface Properties {
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
 
+  /** The message that lets the suer know if their submission was succesful. */
+  submissionStatus?: string;
+
   /** Indicates an entitlement has been clicked.
    * @param entitlement - The entitlement that was clicked.
    */
@@ -79,6 +82,7 @@ export class EntitlementsPage extends React.Component<Properties> {
           <Padding size={EntitlementsPage.LINE_PADDING}/>
           <SubmissionBox
             onSubmit={this.props.onSubmit}
+            status={this.props.submissionStatus}
             roles={this.props.roles}/>
           <Padding size={EntitlementsPage.BOTTOM_PADDING}/>
         </VBoxLayout>

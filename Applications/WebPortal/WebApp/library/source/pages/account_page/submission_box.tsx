@@ -34,12 +34,14 @@ export class SubmissionBox extends React.Component<Properties, State> {
     this.state = {
       comment: ''
     };
+    this.onInputChange = this.onInputChange.bind(this);
   }
 
   public render(): JSX.Element {
     const commentBox = (() => {
       if(!this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
-        return <CommentBox comment={this.state.comment}/>;
+        return <CommentBox comment={this.state.comment}
+          onInput={this.onInputChange}/>;
       }
     })();
     const commentBoxPadding = (() => {
@@ -49,7 +51,8 @@ export class SubmissionBox extends React.Component<Properties, State> {
     })();
     const message = (() => {
       switch(this.props.status) {
-        case 'Submitted':
+        case '':
+          return <div/>;
         case 'Saved':
           return <span className={css([SubmissionBox.MESSAGE_STYLE.base,
             SubmissionBox.MESSAGE_STYLE.valid])}>Submitted</span>;
@@ -72,10 +75,16 @@ export class SubmissionBox extends React.Component<Properties, State> {
         <Padding size='18px'/>
         <HBoxLayout width='100%'>
           <Padding/>
-          {this.props.status}
+          {message}
           <Padding/>
         </HBoxLayout>
       </VBoxLayout>);
+  }
+
+  private onInputChange(value: string) {
+    this.setState({
+      comment: value
+    });
   }
 
   private static MESSAGE_STYLE = StyleSheet.create({
