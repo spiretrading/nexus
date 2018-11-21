@@ -131,16 +131,23 @@ class TestApp extends React.Component<{}, State> {
       new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 42, 'MEEP');
     const group3 =
       new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 34, 'MEH');
+    const group4 =
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 35, 'MEH');
+    const group5 =
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 36, 'MEH');
+    const group6 =
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 37, 'MEH');
 
     const dataset1 = new Nexus.MarketDataTypeSet(134);
     const marketcode1 = new Nexus.MarketCode('XASX');
     const ekey1 = new Nexus.EntitlementKey(marketcode1);
     const dataset2 = new Nexus.MarketDataTypeSet(1);
     const marketcode2 = new Nexus.MarketCode('XCIS');
-
     const ekey2 = new Nexus.EntitlementKey(marketcode2);
+
     const app = new Beam.Map<Nexus.EntitlementKey, Nexus.MarketDataTypeSet>();
     app.set(ekey1, dataset1);
+    app.set(ekey2, dataset2);
     const app2 = new Beam.Map<Nexus.EntitlementKey, Nexus.MarketDataTypeSet>();
     app2.set(ekey2, dataset2);
 
@@ -148,12 +155,21 @@ class TestApp extends React.Component<{}, State> {
       Nexus.Money.parse('68'), Nexus.DefaultCurrencies.USD, group, app);
     const entitlementEntry2 = new Nexus.EntitlementDatabase.Entry('TSX Venture',
       Nexus.Money.parse('200'), Nexus.DefaultCurrencies.EUR, group2, app2);
-    const entitlementEntry3 = new Nexus.EntitlementDatabase.Entry('Musk Media',
+    const entitlementEntry3 = new Nexus.EntitlementDatabase.Entry('TSX CDG',
       Nexus.Money.parse('45'), Nexus.DefaultCurrencies.EUR, group3, app2);
+    const entitlementEntry4 = new Nexus.EntitlementDatabase.Entry('TSX TL1',
+      Nexus.Money.parse('68'), Nexus.DefaultCurrencies.USD, group4, app);
+    const entitlementEntry5 = new Nexus.EntitlementDatabase.Entry('CSE',
+      Nexus.Money.parse('175'), Nexus.DefaultCurrencies.USD, group5, app);
+    const entitlementEntry6 = new Nexus.EntitlementDatabase.Entry('Alpha APD',
+      Nexus.Money.parse('0'), Nexus.DefaultCurrencies.USD, group6, app);
 
     this.state.entitlementDB.add(entitlementEntry1);
     this.state.entitlementDB.add(entitlementEntry3);
     this.state.entitlementDB.add(entitlementEntry2);
+    this.state.entitlementDB.add(entitlementEntry4);
+    this.state.entitlementDB.add(entitlementEntry5);
+    this.state.entitlementDB.add(entitlementEntry6);
 
     this.state.checkedDB.set(group);
   }

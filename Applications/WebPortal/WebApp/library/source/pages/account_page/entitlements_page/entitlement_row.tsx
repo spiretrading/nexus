@@ -25,9 +25,9 @@ interface Properties {
   marketDatabase: Nexus.MarketDatabase;
 
   /** Indicates an entitlement has been clicked.
-  * @param entitlement - The entitlement that was clicked.
-  */
-  onClick?: () => void;
+   * @param entitlement - The entitlement that was clicked.
+   */
+  onClick?(): void;
 }
 
 interface State {

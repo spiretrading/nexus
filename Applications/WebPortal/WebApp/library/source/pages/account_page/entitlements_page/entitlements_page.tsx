@@ -29,12 +29,12 @@ interface Properties {
   /** Indicates an entitlement has been clicked.
    * @param entitlement - The entitlement that was clicked.
    */
-  onEntitlementClick?: (entitlement: Beam.DirectoryEntry) => void;
+  onEntitlementClick?(entitlement: Beam.DirectoryEntry): void;
 
   /** Indicates the form should be submitted.
    * @param comment - The comment to submit with the form.
    */
-  onSubmit?: (comment: string) => void;
+  onSubmit?(comment: string): void;
 }
 
 /* Displays a list of entitlements. */
@@ -64,7 +64,7 @@ export class EntitlementsPage extends React.Component<Properties> {
             }
           }
           displaySize={this.props.displaySize}
-          marketDatabase={this.props.marketDatabase}/>);0
+          marketDatabase={this.props.marketDatabase}/>);
       }
       return <div>{rows}</div>;
     })();
@@ -90,8 +90,10 @@ export class EntitlementsPage extends React.Component<Properties> {
 
   private static readonly STYLE = {
     page: {
+      overflow: 'auto',
       minWidth: '320px',
-      width: '100%'
+      width: '100%',
+      height: '100%'
     },
     text: {
       font: '400 14px Roboto',
