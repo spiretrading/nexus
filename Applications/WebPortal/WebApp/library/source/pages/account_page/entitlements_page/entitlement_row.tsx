@@ -1,4 +1,5 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
+import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
@@ -22,6 +23,11 @@ interface Properties {
 
   /** The set of markets. */
   marketDatabase: Nexus.MarketDatabase;
+
+  /** Indicates an entitlement has been clicked.
+  * @param entitlement - The entitlement that was clicked.
+  */
+  onClick?: () => void;
 }
 
 interface State {
@@ -114,6 +120,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
         <div style={EntitlementRow.STYLE.box.header}>
           <CheckMarkButton
             size={buttonSize}
+            onClick={this.props.onClick}
             isChecked={this.props.isActive}/>
           <div style={headerPaddingInternal}/>
           <DropDownButton size={buttonSize}

@@ -5,80 +5,51 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
-const currencyDB = Nexus.buildDefaultCurrencyDatabase();
-const marketDB = Nexus.buildDefaultMarketDatabase();
-
-const group =
-  new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 89, 'BOOP');
-const group2 =
-  new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 42, 'MEEP');
-const group3 =
-  new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 34, 'MEH');
-const dataset1 = new Nexus.MarketDataTypeSet(134);
-const marketcode1 = new Nexus.MarketCode('XASX');
-const ekey1 = new Nexus.EntitlementKey(marketcode1);
-const dataset2 = new Nexus.MarketDataTypeSet(1);
-const marketcode2 = new Nexus.MarketCode('XCIS');
-
-const ekey2 = new Nexus.EntitlementKey(marketcode2);
-const app = new Beam.Map<Nexus.EntitlementKey, Nexus.MarketDataTypeSet>();
-app.set(ekey1, dataset1);
-const app2 = new Beam.Map<Nexus.EntitlementKey, Nexus.MarketDataTypeSet>();
-app2.set(ekey2, dataset2);
-
-const entitlementEntry1 = new Nexus.EntitlementDatabase.Entry('ASX Total',
-  Nexus.Money.parse('68'), Nexus.DefaultCurrencies.USD, group, app);
-const cEntry1 = currencyDB.fromCode('USD');
-const entitlementEntry2 = new Nexus.EntitlementDatabase.Entry('TSX Venture',
-  Nexus.Money.parse('200'), Nexus.DefaultCurrencies.EUR, group2, app2);
-const cEntry2 = currencyDB.fromCode('EUR');
-const entitlementEntry3 = new Nexus.EntitlementDatabase.Entry('Musk Media',
-  Nexus.Money.parse('45'), Nexus.DefaultCurrencies.EUR, group3, app2);
-
-const entitlementDB = new Nexus.EntitlementDatabase();
-entitlementDB.add(entitlementEntry1);
-entitlementDB.add(entitlementEntry3);
-entitlementDB.add(entitlementEntry2);
-
-const testAdmin = new Nexus.AccountRoles();
-testAdmin.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
-const testTrader = new Nexus.AccountRoles();
-testTrader.set(Nexus.AccountRoles.Role.TRADER);
-const testManager = new Nexus.AccountRoles();
-testTrader.set(Nexus.AccountRoles.Role.MANAGER);
-
-//how the heck do I use this??????
-const checkedDB = new Beam.Set<Beam.DirectoryEntry>();
-checkedDB.set(group);
 
 
 /**  Displays a testing application. */
 interface State {
   roles: Nexus.AccountRoles;
   displaySize: WebPortal.DisplaySize;
+  checkedDB: Beam.Set<Beam.DirectoryEntry>;
+  currencyDB: Nexus.CurrencyDatabase;
+  marketDB: Nexus.MarketDatabase;
+  entitlementDB: Nexus.EntitlementDatabase;
 }
 
 class TestApp extends React.Component<{}, State> {
   constructor(props: {}) {
     super(props);
     this.state = {
-      roles: testAdmin,
-      displaySize: TestApp.getDisplaySize()
+      roles: null,
+      entitlementDB: null,
+      displaySize: TestApp.getDisplaySize(),
+      checkedDB: new Beam.Set<Beam.DirectoryEntry>(),
+      currencyDB: Nexus.buildDefaultCurrencyDatabase(),
+      marketDB: Nexus.buildDefaultMarketDatabase()
     };
     this.changeRole = this.changeRole.bind(this);
     this.onScreenResize = this.onScreenResize.bind(this);
+    this.toggleCheckMark = this.toggleCheckMark.bind(this);
+    this.setup = this.setup.bind(this);
+    this.buildEntitlementDB = this.buildEntitlementDB.bind(this);
+    this.setup();
+    this.buildEntitlementDB();
   }
 
   public render(): JSX.Element {
+    const cEntry1 = this.state.currencyDB.fromCode('USD');
+    const cEntry2 = this.state.currencyDB.fromCode('EUR');
     return (
       <WebPortal.VBoxLayout width='100%' height='100%'>
         <WebPortal.EntitlementsPage
           displaySize={this.state.displaySize}
-          marketDatabase={marketDB}
+          marketDatabase={this.state.marketDB}
           roles={this.state.roles}
-          entitlements={entitlementDB}
-          checked={checkedDB}
-          currencyDatabase={currencyDB}
+          entitlements={this.state.entitlementDB}
+          checked={this.state.checkedDB}
+          currencyDatabase={this.state.currencyDB}
+          onEntitlementClick={this.toggleCheckMark}
         />
         <div className={css(TestApp.STYLE.testingComponents)}>
           <button tabIndex={-1}
@@ -86,11 +57,11 @@ class TestApp extends React.Component<{}, State> {
               this.changeRole(Nexus.AccountRoles.Role.ADMINISTRATOR)}>
             ADMINISTRATOR
         </button>
-        <button tabIndex={-1}
+          <button tabIndex={-1}
             onClick={() => this.changeRole(Nexus.AccountRoles.Role.TRADER)}>
             TRADER
         </button>
-        <button tabIndex={-1}
+          <button tabIndex={-1}
             onClick={() => this.changeRole(Nexus.AccountRoles.Role.MANAGER)}>
             MANAGER
         </button>
@@ -107,14 +78,24 @@ class TestApp extends React.Component<{}, State> {
   }
 
   private changeRole(newRole: Nexus.AccountRoles.Role): void {
-    if(newRole === Nexus.AccountRoles.Role.ADMINISTRATOR) {
-        this.setState({roles: testAdmin });
+    if (newRole === Nexus.AccountRoles.Role.ADMINISTRATOR) {
+      this.setState({ roles: this.testAdmin });
     }
-    if(newRole === Nexus.AccountRoles.Role.TRADER) {
-        this.setState({roles: testTrader });
+    if (newRole === Nexus.AccountRoles.Role.TRADER) {
+      this.setState({ roles: this.testTrader });
     }
-    if(newRole === Nexus.AccountRoles.Role.MANAGER) {
-        this.setState({roles: testManager });
+    if (newRole === Nexus.AccountRoles.Role.MANAGER) {
+      this.setState({ roles: this.testManager });
+    }
+  }
+
+  private toggleCheckMark(value: Beam.DirectoryEntry): void {
+    console.log('You clicked a checkmark box');
+    console.log('The group value is: ' + value.id);
+    console.log('The test result is: ' + this.state.checkedDB.test(value));
+    if (!this.state.checkedDB.test(value)) {
+      this.state.checkedDB.set(value);
+      console.log(this.state.checkedDB);
     }
   }
 
@@ -122,9 +103,9 @@ class TestApp extends React.Component<{}, State> {
     const screenWidth = window.innerWidth ||
       document.documentElement.clientWidth ||
       document.getElementsByTagName('body')[0].clientWidth;
-    if(screenWidth <= 767) {
+    if (screenWidth <= 767) {
       return WebPortal.DisplaySize.SMALL;
-    } else if(screenWidth > 767 && screenWidth <= 1035) {
+    } else if (screenWidth > 767 && screenWidth <= 1035) {
       return WebPortal.DisplaySize.MEDIUM;
     } else {
       return WebPortal.DisplaySize.LARGE;
@@ -133,11 +114,53 @@ class TestApp extends React.Component<{}, State> {
 
   private onScreenResize(): void {
     const newDisplaySize = TestApp.getDisplaySize();
-    if(newDisplaySize !== this.state.displaySize) {
+    if (newDisplaySize !== this.state.displaySize) {
       this.setState({ displaySize: newDisplaySize });
     }
   }
 
+  private setup(): void {
+    this.testAdmin.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
+    this.testTrader.set(Nexus.AccountRoles.Role.TRADER);
+    this.testTrader.set(Nexus.AccountRoles.Role.MANAGER);
+  }
+
+  private buildEntitlementDB(): void {
+    const group =
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 89, 'BOOP');
+    const group2 =
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 42, 'MEEP');
+    const group3 =
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 34, 'MEH');
+    const dataset1 = new Nexus.MarketDataTypeSet(134);
+    const marketcode1 = new Nexus.MarketCode('XASX');
+    const ekey1 = new Nexus.EntitlementKey(marketcode1);
+    const dataset2 = new Nexus.MarketDataTypeSet(1);
+    const marketcode2 = new Nexus.MarketCode('XCIS');
+
+    const ekey2 = new Nexus.EntitlementKey(marketcode2);
+    const app = new Beam.Map<Nexus.EntitlementKey, Nexus.MarketDataTypeSet>();
+    app.set(ekey1, dataset1);
+    const app2 = new Beam.Map<Nexus.EntitlementKey, Nexus.MarketDataTypeSet>();
+    app2.set(ekey2, dataset2);
+
+    const entitlementEntry1 = new Nexus.EntitlementDatabase.Entry('ASX Total',
+      Nexus.Money.parse('68'), Nexus.DefaultCurrencies.USD, group, app);
+    const entitlementEntry2 = new Nexus.EntitlementDatabase.Entry('TSX Venture',
+      Nexus.Money.parse('200'), Nexus.DefaultCurrencies.EUR, group2, app2);
+    const entitlementEntry3 = new Nexus.EntitlementDatabase.Entry('Musk Media',
+      Nexus.Money.parse('45'), Nexus.DefaultCurrencies.EUR, group3, app2);
+
+    this.state.entitlementDB.add(entitlementEntry1);
+    this.state.entitlementDB.add(entitlementEntry3);
+    this.state.entitlementDB.add(entitlementEntry2);
+
+    this.state.checkedDB.set(group);
+  }
+
+  private testAdmin = new Nexus.AccountRoles();
+  private testTrader = new Nexus.AccountRoles();
+  private testManager = new Nexus.AccountRoles();
   private static STYLE = StyleSheet.create({
     testingComponents: {
       position: 'fixed' as 'fixed',
@@ -148,4 +171,4 @@ class TestApp extends React.Component<{}, State> {
   });
 }
 
-ReactDOM.render(<TestApp/>, document.getElementById('main'));
+ReactDOM.render(<TestApp />, document.getElementById('main'));

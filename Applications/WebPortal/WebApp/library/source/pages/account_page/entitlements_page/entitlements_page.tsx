@@ -4,8 +4,6 @@ import * as React from 'react';
 import { DisplaySize, HBoxLayout, Padding, VBoxLayout } from '../../..';
 import { EntitlementRow } from './entitlement_row';
 import { HLine } from '../../../components';
-import { SubmitButton } from '../submit_button';
-import { Center } from '../../../layouts';
 import { SubmissionBox } from '../submission_box';
 
 interface Properties {
@@ -19,20 +17,18 @@ interface Properties {
   /** The set of entitlements that are checked. */
   checked: Beam.Set<Beam.DirectoryEntry>;
 
-  //  New stuff
-  /** The currency in which the entitlement is priced in. */
+  /** The database of currencies */
   currencyDatabase: Nexus.CurrencyDatabase;
+
+  /** The set of markets. */
+  marketDatabase: Nexus.MarketDatabase;
 
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
 
-  /** The set of markets. */
-  marketDatabase: Nexus.MarketDatabase;
-  //  new stuff ends
-
   /** Indicates an entitlement has been clicked.
    * @param entitlement - The entitlement that was clicked.
-   */ //which aspect? Checkmart? Dropdown arrow?
+   */
   onEntitlementClick?: (entitlement: Beam.DirectoryEntry) => void;
 
   /** Indicates the form should be submitted.
@@ -41,8 +37,7 @@ interface Properties {
   onSubmit?: (comment: string) => void;
 }
 
-//trader and manager look the same
-//
+/* Displays a list of entitlements. */
 export class EntitlementsPage extends React.Component<Properties> {
   public static readonly defaultProps = {
     onEntitlementClick: () => {},
@@ -57,55 +52,46 @@ export class EntitlementsPage extends React.Component<Properties> {
     const data = (() => {
       const rows = [];
       for(const entry of this.props.entitlements) {
-        console.log(entry.toJson());
         rows.push(
           <EntitlementRow
           entitlementEntry={entry}
           currencyEntry=
           {this.props.currencyDatabase.fromCurrency(entry.currency)}
           isActive={this.props.checked.test(entry.group)}
+          onClick = {() => {
+            this.props.onEntitlementClick(entry.group);
+            this.forceUpdate();
+            }
+          }
           displaySize={this.props.displaySize}
-          marketDatabase={this.props.marketDatabase}
-          />);
-        console.log('NEXT!');
+          marketDatabase={this.props.marketDatabase}/>);0
       }
       return <div>{rows}</div>;
     })();
     return (
-      <HBoxLayout id='Page' width='100%'>
-       <Padding/>
+      <HBoxLayout id='Page' width='100%' style={EntitlementsPage.STYLE.page}>
+        <Padding/>
         <Padding size={EntitlementsPage.DEFAULT_PADDING}/>
         <VBoxLayout>
           <Padding size={EntitlementsPage.DEFAULT_PADDING}/>
-            {data}
-            <Padding size={EntitlementsPage.LINE_PADDING}/>
-            <HLine color={EntitlementsPage.LINE_COLOR}/>
-            <Padding size={EntitlementsPage.LINE_PADDING}/>
-            <SubmissionBox
+          {data}
+          <Padding size={EntitlementsPage.LINE_PADDING}/>
+          <HLine color={EntitlementsPage.LINE_COLOR}/>
+          <Padding size={EntitlementsPage.LINE_PADDING}/>
+          <SubmissionBox
+            onSubmit={this.props.onSubmit}
             roles={this.props.roles}/>
           <Padding size={EntitlementsPage.BOTTOM_PADDING}/>
         </VBoxLayout>
-       <Padding size={EntitlementsPage.DEFAULT_PADDING}/>
-      <Padding/>
-      </HBoxLayout>
-    );
+        <Padding size={EntitlementsPage.DEFAULT_PADDING}/>
+        <Padding/>
+      </HBoxLayout>);
   }
 
   private static readonly STYLE = {
-    container: {
-      border: '1px solid #C8C8C8',
-      font: '400 14px Roboto',
-      borderCollapse: 'collapse' as 'collapse',
-      textAlign: 'center' as 'center',
-      padding: 0,
-      small: {
-        minWidth: '284px',
-        width: 'inherit' as 'inherit',
-        maxWidth: '424px'
-      },
-      notSmall: {
-        width: '636px'
-      }
+    page: {
+      minWidth: '320px',
+      width: '100%'
     },
     text: {
       font: '400 14px Roboto',
@@ -117,5 +103,3 @@ export class EntitlementsPage extends React.Component<Properties> {
   private static readonly LINE_PADDING = '30px';
   private static readonly LINE_COLOR = '#E6E6E6';
 }
-
-//footer ???
