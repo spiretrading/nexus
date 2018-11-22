@@ -1,4 +1,4 @@
-import {css, StyleSheet} from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'Beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
@@ -93,21 +93,21 @@ class TestApp extends React.Component<{}, State> {
   }
 
   private changeRole(newRole: Nexus.AccountRoles.Role): void {
-    if (newRole === Nexus.AccountRoles.Role.ADMINISTRATOR) {
+    if(newRole === Nexus.AccountRoles.Role.ADMINISTRATOR) {
       this.setState({ roles: this.testAdmin });
     }
-    if (newRole === Nexus.AccountRoles.Role.TRADER) {
+    if(newRole === Nexus.AccountRoles.Role.TRADER) {
       this.setState({ roles: this.testTrader });
     }
-    if (newRole === Nexus.AccountRoles.Role.MANAGER) {
+    if(newRole === Nexus.AccountRoles.Role.MANAGER) {
       this.setState({ roles: this.testManager });
     }
   }
 
   private changeStatus(newStatus: string) {
-    if (newStatus === '') {
+    if(newStatus === '') {
       this.setState({displayedStatus: ''});
-    } else if (newStatus !== this.state.status) {
+    } else if(newStatus !== this.state.status) {
       this.setState({ status: newStatus});
     }
   }
@@ -117,7 +117,7 @@ class TestApp extends React.Component<{}, State> {
   }
 
   private toggleCheckMark(value: Beam.DirectoryEntry) {
-    if (!this.state.checkedDB.test(value)) {
+    if(!this.state.checkedDB.test(value)) {
       this.state.checkedDB.add(value);
     } else {
       this.state.checkedDB.remove(value);
@@ -128,7 +128,7 @@ class TestApp extends React.Component<{}, State> {
     const screenWidth = window.innerWidth ||
       document.documentElement.clientWidth ||
       document.getElementsByTagName('body')[0].clientWidth;
-    if (screenWidth <= 767) {
+    if(screenWidth <= 767) {
       return WebPortal.DisplaySize.SMALL;
     } else if (screenWidth > 767 && screenWidth <= 1035) {
       return WebPortal.DisplaySize.MEDIUM;
@@ -139,7 +139,7 @@ class TestApp extends React.Component<{}, State> {
 
   private onScreenResize() {
     const newDisplaySize = TestApp.getDisplaySize();
-    if (newDisplaySize !== this.state.displaySize) {
+    if(newDisplaySize !== this.state.displaySize) {
       this.setState({ displaySize: newDisplaySize });
     }
   }
