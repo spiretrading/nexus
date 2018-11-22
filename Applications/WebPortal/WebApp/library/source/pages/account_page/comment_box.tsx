@@ -15,8 +15,8 @@ export class CommentBox extends React.Component<Properties> {
   public render(): JSX.Element {
     return <textarea className={css(CommentBox.STYLE.submissionBox)}
       value={this.props.comment}
-      onChange={(event: any) => {
-        this.props.onInput(event.target.value);
+      onChange={(event: React.FormEvent) => {
+        this.props.onInput(event.currentTarget.nodeValue);
       }}
       placeholder='Leave comment here…'/>;
   }

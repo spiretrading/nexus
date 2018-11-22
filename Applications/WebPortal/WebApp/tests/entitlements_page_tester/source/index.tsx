@@ -5,7 +5,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
-/**  Displays a testing application. */
+
 interface State {
   roles: Nexus.AccountRoles;
   displaySize: WebPortal.DisplaySize;
@@ -17,6 +17,7 @@ interface State {
   displayedStatus: string;
 }
 
+/**  Displays a testing application. */
 class TestApp extends React.Component<{}, State> {
   constructor(props: {}) {
     super(props);
@@ -130,7 +131,7 @@ class TestApp extends React.Component<{}, State> {
       document.getElementsByTagName('body')[0].clientWidth;
     if(screenWidth <= 767) {
       return WebPortal.DisplaySize.SMALL;
-    } else if (screenWidth > 767 && screenWidth <= 1035) {
+    } else if(screenWidth > 767 && screenWidth <= 1035) {
       return WebPortal.DisplaySize.MEDIUM;
     } else {
       return WebPortal.DisplaySize.LARGE;
