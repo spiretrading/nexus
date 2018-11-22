@@ -1,4 +1,5 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
+import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
@@ -22,6 +23,11 @@ interface Properties {
 
   /** The set of markets. */
   marketDatabase: Nexus.MarketDatabase;
+
+  /** Indicates an entitlement has been clicked.
+   * @param entitlement - The entitlement that was clicked.
+   */
+  onClick?: () => void;
 }
 
 interface State {
@@ -74,9 +80,15 @@ export class EntitlementRow extends React.Component<Properties, State> {
         return EntitlementRow.STYLE.box.paddingStyle;
       }
     })();
-    const amount = `${this.props.currencyEntry.sign}${
-      this.props.entitlementEntry.price.toString()} ${
-      this.props.currencyEntry.code}`;
+    const amount = (() => {
+      if(this.props.entitlementEntry.price.equals(Nexus.Money.ZERO)) {
+        return 'FREE';
+      } else {
+        return (`${this.props.currencyEntry.sign}${
+          this.props.entitlementEntry.price.toString()} ${
+          this.props.currencyEntry.code}`);
+      }
+    })();
     const amountColor = (() => {
       if(this.props.isActive) {
         if(this.state.isExpanded) {
@@ -85,7 +97,11 @@ export class EntitlementRow extends React.Component<Properties, State> {
           return EntitlementRow.STYLE.text.activeAmount;
         }
       } else {
-        return EntitlementRow.STYLE.text;
+        if(this.state.isExpanded) {
+          return EntitlementRow.STYLE.text.amountWhenExpandedTable;
+        } else {
+          return EntitlementRow.STYLE.text.default;
+        }
       }
     })();
     const buttonRowAmountVisibility = (() => {
@@ -114,6 +130,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
         <div style={EntitlementRow.STYLE.box.header}>
           <CheckMarkButton
             size={buttonSize}
+            onClick={this.props.onClick}
             isChecked={this.props.isActive}/>
           <div style={headerPaddingInternal}/>
           <DropDownButton size={buttonSize}
@@ -238,6 +255,10 @@ export class EntitlementRow extends React.Component<Properties, State> {
       activeAmountWhenExpandedTable: {
         font: '500 14px Roboto',
         color: '#36BB55'
+      },
+      amountWhenExpandedTable: {
+        font: '500 14px Roboto',
+        color: '#000000'
       },
       nameWhenExpandedTable: {
         font: '500 14px Roboto',
