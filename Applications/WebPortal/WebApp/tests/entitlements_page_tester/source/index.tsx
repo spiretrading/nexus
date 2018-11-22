@@ -55,9 +55,9 @@ class TestApp extends React.Component<{}, State> {
           onSubmit={this.commentsSubmitted}/>
         <div className={css(TestApp.STYLE.testingComponents)}>
           <button tabIndex={-1}
-                onClick={() =>
-                this.changeRole(Nexus.AccountRoles.Role.ADMINISTRATOR)}>
-              ADMINISTRATOR
+              onClick={() =>
+              this.changeRole(Nexus.AccountRoles.Role.ADMINISTRATOR)}>
+            ADMINISTRATOR
           </button>
           <button tabIndex={-1}
               onClick={() => this.changeRole(Nexus.AccountRoles.Role.TRADER)}>

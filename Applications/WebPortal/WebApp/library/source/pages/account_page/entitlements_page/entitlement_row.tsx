@@ -85,8 +85,8 @@ export class EntitlementRow extends React.Component<Properties, State> {
         return 'FREE';
       } else {
         return (`${this.props.currencyEntry.sign}${
-            this.props.entitlementEntry.price.toString()} ${
-            this.props.currencyEntry.code}`);
+          this.props.entitlementEntry.price.toString()} ${
+          this.props.currencyEntry.code}`);
       }
     })();
     const amountColor = (() => {

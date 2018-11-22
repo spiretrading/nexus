@@ -28,9 +28,7 @@ interface Properties {
   /** The message that lets the user know if their submission was successful. */
   submissionStatus?: string;
 
-  /** Indicates an entitlement has been clicked.
-   * @param entitlement - The entitlement that was clicked.
-   */
+  /** Indicates an entitlement has been clicked. */
   onEntitlementClick?: (entitlement: Beam.DirectoryEntry) => void;
 
   /** Indicates the form should be submitted.
@@ -61,9 +59,8 @@ export class EntitlementsPage extends React.Component<Properties> {
               {this.props.currencyDatabase.fromCurrency(entry.currency)}
             isActive={this.props.checked.test(entry.group)}
             onClick = {() => {
-              this.props.onEntitlementClick(entry.group)
-              
-            ;}}
+              this.props.onEntitlementClick(entry.group);
+            }}
             displaySize={this.props.displaySize}
             marketDatabase={this.props.marketDatabase}/>);
       }
