@@ -25,7 +25,8 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
     Ref<SecurityInputModel> input_model, QWidget* parent)
     : QWidget(parent),
       m_input_model(input_model.Get()),
-      m_is_data_loaded(false) {
+      m_is_data_loaded(false),
+      m_technicals_panel(nullptr) {
   m_body = new QWidget(this);
   m_body->setMinimumSize(scale(220, 280));
   resize(scale(220, 410));
@@ -101,7 +102,7 @@ void BookViewWindow::set_current(const Security& s) {
   if(s == m_current_security) {
     return;
   }
-  if(m_technicals_panel != nullptr) {
+  if(m_technicals_panel == nullptr) {
     m_technicals_panel = new TechnicalsPanel(this);
     m_layout->addWidget(m_technicals_panel);
     m_quote_widgets_container = new QWidget(this);
