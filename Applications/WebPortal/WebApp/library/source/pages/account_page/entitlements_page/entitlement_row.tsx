@@ -27,7 +27,7 @@ interface Properties {
   /** Indicates an entitlement has been clicked.
    * @param entitlement - The entitlement that was clicked.
    */
-  onClick?(): void;
+  onClick?: () => void;
 }
 
 interface State {

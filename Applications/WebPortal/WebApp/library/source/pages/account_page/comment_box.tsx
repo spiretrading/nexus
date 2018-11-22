@@ -7,7 +7,7 @@ interface Properties {
   comment: string;
 
   /** The callback function that updates the comment. */
-  onInput(value: string): void;
+  onInput?: (value: string) => void;
 }
 
 /** Displays the comment box. */

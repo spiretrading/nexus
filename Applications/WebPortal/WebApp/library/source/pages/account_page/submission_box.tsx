@@ -16,7 +16,7 @@ interface Properties {
   /** Indicates the form should be submitted.
    * @param comment - The comment to submit with the form.
    */
-  onSubmit?(comment: string): void;
+  onSubmit?: (comment: string) => void;
 }
 
 interface State {
