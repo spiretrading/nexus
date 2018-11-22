@@ -12,7 +12,6 @@ interface Properties {
 }
 
 interface State {
-  redirect: string;
   displaySize: DisplaySize;
   account: Beam.DirectoryEntry;
   isLoading: boolean;
@@ -23,7 +22,6 @@ export class ApplicationController extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      redirect: null,
       displaySize: DisplaySize.getDisplaySize(),
       account: Beam.DirectoryEntry.INVALID,
       isLoading: true
@@ -35,9 +33,6 @@ export class ApplicationController extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    if(this.state.redirect) {
-      return <Router.Redirect push to={this.state.redirect}/>;
-    }
     if(this.state.isLoading) {
       return <div></div>;
     }
@@ -65,12 +60,6 @@ export class ApplicationController extends React.Component<Properties, State> {
     window.addEventListener('resize', this.onResize);
   }
 
-  public componentDidUpdate(): void {
-    if(this.state.redirect) {
-      this.setState({redirect: null});
-    }
-  }
-
   public componentWillUnmount(): void {
     window.removeEventListener('resize', this.onResize);
   }
@@ -84,13 +73,12 @@ export class ApplicationController extends React.Component<Properties, State> {
 
   private onLogin(account: Beam.DirectoryEntry) {
     this.setState({
-      redirect: '/',
       account: account
     });
   }
 
   private navigateToLogin() {
-    if(this.state.account === Beam.DirectoryEntry.INVALID) {
+    if(this.state.account.equals(Beam.DirectoryEntry.INVALID)) {
       return <LoginController model={this.props.model.makeLoginModel()}
         onLogin={this.onLogin}/>;
     }
