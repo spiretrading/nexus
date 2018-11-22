@@ -79,7 +79,6 @@ namespace Spire {
       std::unique_ptr<BookViewTableWidget> m_table;
       QtPromise<void> m_data_loaded_promise;
       bool m_is_data_loaded;
-      QTimer* m_model_load_timer;
 
       void set_current(const Nexus::Security& s);
       void show_context_menu(const QPoint& pos);

@@ -52,16 +52,12 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
   m_layout = new QVBoxLayout(m_container_widget);
   m_layout->setContentsMargins({});
   m_layout->setSpacing(0);
-  m_model_load_timer = new QTimer(this);
-  m_model_load_timer->setInterval(2000);
-  connect(m_model_load_timer, &QTimer::timeout, this,
-    [=] { show_transition_widget(); });
 }
 
 void BookViewWindow::set_model(std::shared_ptr<BookViewModel> model) {
   m_model = std::move(model);
   m_technicals_panel->reset_model();
-  m_model_load_timer->start();
+  QTimer::singleShot(2000, this, [=] { show_transition_widget(); });
   m_is_data_loaded = false;
   m_data_loaded_promise = m_model->load();
   m_data_loaded_promise.then(
@@ -174,7 +170,6 @@ void BookViewWindow::show_transition_widget() {
     m_transition_widget = std::make_unique<TransitionWidget>(
       m_quote_widgets_container);
   }
-  m_model_load_timer->stop();
 }
 
 void BookViewWindow::on_data_loaded(Expect<void> value) {
