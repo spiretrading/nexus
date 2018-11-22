@@ -52,10 +52,10 @@ export class ApplicationController extends React.Component<Properties, State> {
   }
 
   public componentWillMount(): void {
-    this.props.model.load().then(
-      () => {
+    this.props.model.loadAccount().then(
+      (account) => {
         this.setState({
-          account: this.props.model.account,
+          account: account,
           isLoading: false
         })
       });

@@ -1,7 +1,7 @@
 import * as Beam from 'beam';
-import {AdministrationClient, DefinitionsClient, RiskClient,
-  WebAdministrationClient, WebDefinitionsClient, WebRiskClient} from '..';
-import {ServiceClients} from '.';
+import { WebAdministrationClient, WebDefinitionsClient,
+  WebRiskClient } from '..';
+import { ServiceClients } from '.';
 
 /** Implements the ServiceClients class using web services. */
 export class WebServiceClients extends ServiceClients {

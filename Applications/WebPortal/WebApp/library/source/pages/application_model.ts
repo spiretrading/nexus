@@ -6,12 +6,9 @@ import { LoginModel } from './login_page';
  */
 export abstract class ApplicationModel {
 
-  /** Returns the account currently logged in. */
-  public abstract get account(): Beam.DirectoryEntry;
-
   /** Returns a new LoginModel. */
   public abstract makeLoginModel(): LoginModel;
 
-  /** Loads the initial application state. */
-  public abstract load(): Promise<void>;
+  /** Loads the account. */
+  public abstract async loadAccount(): Promise<Beam.DirectoryEntry>;
 }
