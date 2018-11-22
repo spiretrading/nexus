@@ -38,6 +38,7 @@ void SecurityWidget::set_widget(QWidget* widget) {
   m_widget = widget;
   m_layout->addWidget(m_widget);
   m_widget->show();
+  m_widget->installEventFilter(this);
 }
 
 connection SecurityWidget::connect_security_change_signal(
@@ -46,7 +47,7 @@ connection SecurityWidget::connect_security_change_signal(
 }
 
 bool SecurityWidget::eventFilter(QObject* object, QEvent* event) {
-  if(object == window()) {
+  if(object == window() || object == m_widget) {
     if(event->type() == QEvent::KeyPress) {
       auto e = static_cast<QKeyEvent*>(event);
       if(e->key() == Qt::Key_PageUp) {

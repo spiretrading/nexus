@@ -1,6 +1,6 @@
 #include "spire/time_and_sales/time_and_sales_window.hpp"
+#include <QContextMenuEvent>
 #include <QFileDialog>
-#include <QKeyEvent>
 #include <QStandardPaths>
 #include <QVBoxLayout>
 #include "spire/security_input/security_input_dialog.hpp"
