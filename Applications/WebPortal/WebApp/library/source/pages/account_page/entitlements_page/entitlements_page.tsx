@@ -31,12 +31,12 @@ interface Properties {
   /** Indicates an entitlement has been clicked.
    * @param entitlement - The entitlement that was clicked.
    */
-  onEntitlementClick?(entitlement: Beam.DirectoryEntry): void;
+  onEntitlementClick?: (entitlement: Beam.DirectoryEntry) => void;
 
   /** Indicates the form should be submitted.
    * @param comment - The comment to submit with the form.
    */
-  onSubmit?(comment: string): void;
+  onSubmit?: (comment: string) => void;
 }
 
 /* Displays a list of entitlements. */
