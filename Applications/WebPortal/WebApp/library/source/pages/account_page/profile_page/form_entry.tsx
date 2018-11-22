@@ -1,4 +1,6 @@
+import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
+import { HBoxLayout, VBoxLayout, Padding } from '../../../layouts';
 
 interface Properties {
 
@@ -19,8 +21,40 @@ export class FormEntry extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
-    return null;
+    const content = ( () => {
+      if(this.props.orientation === FormEntry.Orientation.HORIZONTAL) {
+        return (<HBoxLayout>
+          <div style={FormEntry.STYLE.horizontalHeader}>{this.props.name}</div>
+          <div>{this.props.children}</div>
+        </HBoxLayout>);
+      } else {
+        return (<VBoxLayout>
+          <div style={FormEntry.STYLE.verticalHeader}>{this.props.name}</div>
+          <Padding size={FormEntry.VERTICAL_PADDING}/>
+          <div>{this.props.children}</div>
+       </VBoxLayout>);
+      }
+    })();
+    return (<div>
+     {content}
+    </div>);
   }
+
+  private static STYLE = {
+    horizontalHeader: {
+      height: `${FormEntry.FIELD_HEIGHT}`,
+      width: '130px',
+      font: '400 14px Roboto',
+      color: '#000000'
+    },
+    verticalHeader : {
+      height: '16px',
+      font: '400 14px Roboto',
+      color: '#000000'
+    }
+  };
+  private static readonly FIELD_HEIGHT = '34px';
+  private static readonly VERTICAL_PADDING = '12px';
 }
 
 export namespace FormEntry {
