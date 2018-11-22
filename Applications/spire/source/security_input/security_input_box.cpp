@@ -62,7 +62,6 @@ SecurityInputBox::SecurityInputBox(Ref<SecurityInputModel> model,
   m_securities->setVisible(false);
   window()->installEventFilter(this);
   m_security_line_edit->setText(initial_text);
-  on_text_edited();
 }
 
 connection SecurityInputBox::connect_commit_signal(
@@ -118,7 +117,7 @@ void SecurityInputBox::resizeEvent(QResizeEvent* event) {
 }
 
 void SecurityInputBox::showEvent(QShowEvent* event) {
-  move_line_edit();
+  on_text_edited();
   m_securities->setFixedWidth(width());
 }
 
