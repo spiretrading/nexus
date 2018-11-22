@@ -3,6 +3,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <QDialog>
 #include <QPoint>
+#include <QVBoxLayout>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/security_input/security_input.hpp"
 #include "spire/security_input/security_input_box.hpp"
@@ -46,11 +47,15 @@ namespace Spire {
       void mouseMoveEvent(QMouseEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
       Nexus::Security m_security;
+      Beam::Ref<SecurityInputModel> m_model;
       std::unique_ptr<DropShadow> m_shadow;
+      QVBoxLayout* m_layout;
       SecurityInputBox* m_security_input_box;
+      QString m_initial_text;
       bool m_is_dragging;
       QPoint m_last_mouse_pos;
 

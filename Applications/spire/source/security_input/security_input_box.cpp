@@ -118,6 +118,7 @@ void SecurityInputBox::resizeEvent(QResizeEvent* event) {
 }
 
 void SecurityInputBox::showEvent(QShowEvent* event) {
+  move_line_edit();
   m_securities->setFixedWidth(width());
 }
 
