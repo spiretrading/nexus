@@ -48,6 +48,7 @@ namespace Spire {
       QTimer m_v_scroll_bar_timer;
       std::unique_ptr<SnapshotLoadingWidget> m_loading_widget;
       std::unique_ptr<TransitionWidget> m_transition_widget;
+      QTimer* m_model_load_timer;
 
       void fade_out_horizontal_scroll_bar();
       void fade_out_vertical_scroll_bar();
