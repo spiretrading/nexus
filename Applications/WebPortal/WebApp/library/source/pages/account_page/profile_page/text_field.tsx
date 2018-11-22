@@ -1,6 +1,7 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import { DisplaySize } from '../../../';
+import { HBoxLayout } from '../../../layouts';
 
 interface Properties {
 
@@ -32,19 +33,24 @@ export class TextField extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
-    return <input value={this.props.value}
-      className={css(TextField.STYLE.text)}/>;
+    return (
+    <div className={css(TextField.STYLE.box)}>
+      <input value={this.props.value}
+        className={css(TextField.STYLE.text)}/>
+      <img src={'resources/account_page/edit.svg'}
+        className={css(TextField.STYLE.image)}/>
+    </div>);
   }
 
   private static STYLE = StyleSheet.create({
-    text: {
+    box: {
       height: '34px',
-      font: '400 14px Roboto',
-      color: '#000000',
-      whiteSpace: 'nowrap',
-      border: '0px solid #684BC7',
-      paddingRight: `${TextField.TEXT_PADDING}`,
-      paddingLeft: `${TextField.TEXT_PADDING}`,
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'nowrap' as 'nowrap',
+      alignItems: 'center' as 'center',
+      justifyContent: 'space-between',
+      border: '1px solid #FFFFFF',
       ':focus': {
         border: '1px solid #684BC7'
       },
@@ -52,20 +58,27 @@ export class TextField extends React.Component<Properties> {
         border: '1px solid #C8C8C8'
       }
     },
+    image: {
+      visibility: 'visible' as 'visible',
+      height: '14px',
+      width: '14px',
+      paddingRight: '10px',
+      ':hover': {
+        visibility: 'visible' as 'visible'
+      }
+    },
+    text: {
+      font: '400 14px Roboto',
+      color: '#000000',
+      whiteSpace: 'nowrap',
+      paddingLeft: '10px',
+      border: '1px solid #FFFFFF'
+    },
     largerText: {
-      height: '34px',
       font: '400 16px Roboto',
       color: '#000000',
       whiteSpace: 'nowrap',
-      border: '0px solid #684BC7',
-      paddingRight: `${TextField.TEXT_PADDING}`,
-      paddingLeft: `${TextField.TEXT_PADDING}`,
-      ':focus': {
-        border: '1px solid #684BC7'
-      },
-      ':hover': {
-        border: '1px solid #C8C8C8'
-      }
+      border: '1px solid #FFFFFF'
     }
   });
   private static readonly TEXT_PADDING = '10px';
