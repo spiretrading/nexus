@@ -45,12 +45,18 @@ export class FormEntry extends React.Component<Properties> {
       height: `${FormEntry.FIELD_HEIGHT}`,
       width: '130px',
       font: '400 14px Roboto',
-      color: '#000000'
+      color: '#000000',
+      tabindex: '1',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'nowrap' as 'nowrap',
+      alignItems: 'center' as 'center'
     },
     verticalHeader : {
       height: '16px',
       font: '400 14px Roboto',
-      color: '#000000'
+      color: '#000000',
+      paddingLeft: '10px'
     }
   };
   private static readonly FIELD_HEIGHT = '34px';

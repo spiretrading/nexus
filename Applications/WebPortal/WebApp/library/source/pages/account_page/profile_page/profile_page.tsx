@@ -13,6 +13,7 @@ interface Properties {
 export class ProfilePage extends React.Component<Properties> {
   constructor(props: Properties) {
     super(props);
+    this.onInput = this.onInput.bind(this);
   }
 
   public render(): JSX.Element {
@@ -33,4 +34,12 @@ export class ProfilePage extends React.Component<Properties> {
       value={'zbeep'}/>}/>
     </div>);
   }
+
+  private onInput(value: string) {
+    console.log(value);
+    this.setState({
+      comment: value
+    });
+  }
+
 }

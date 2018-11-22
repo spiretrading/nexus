@@ -33,9 +33,26 @@ export class TextField extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
+    const textStyle = ( () => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return TextField.STYLE.largerText;
+      } else {
+        return TextField.STYLE.text;
+      }
+    })();
+    const imageStyle = ( () => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return TextField.STYLE.largerText;
+      } else {
+        return TextField.STYLE.text;
+      }
+    })();
     return (
     <div className={css(TextField.STYLE.box)}>
       <input value={this.props.value}
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+        this.props.onInput(event.target.value);
+      }}
         className={css(TextField.STYLE.text)}/>
       <img src={'resources/account_page/edit.svg'}
         className={css(TextField.STYLE.image)}/>
@@ -44,6 +61,7 @@ export class TextField extends React.Component<Properties> {
 
   private static STYLE = StyleSheet.create({
     box: {
+      tabindex: '1',
       height: '34px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
