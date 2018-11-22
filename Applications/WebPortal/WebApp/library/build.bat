@@ -61,10 +61,10 @@ IF NOT EXIST node_modules (
 IF "%UPDATE_NODE%" == "1" (
   SET UPDATE_BUILD=1
   PUSHD %BEAM_PATH%
-  CALL build.bat
+  CALL build.bat %*
   POPD
   PUSHD %NEXUS_PATH%
-  CALL build.bat
+  CALL build.bat %*
   POPD
   CALL npm install
   PUSHD node_modules

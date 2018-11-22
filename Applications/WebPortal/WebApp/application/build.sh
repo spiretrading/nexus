@@ -61,13 +61,13 @@ fi
 if [ "$UPDATE_NODE" = "1" ]; then
   UPDATE_BUILD=1
   pushd $BEAM_PATH
-  ./build.sh
+  ./build.sh "$@"
   popd
   pushd $NEXUS_PATH
-  ./build.sh
+  ./build.sh "$@"
   popd
   pushd $WEB_PORTAL_PATH
-  ./build.sh
+  ./build.sh "$@"
   popd
   npm install
   pushd node_modules
