@@ -17,6 +17,7 @@ interface State {
   errorMessage: string;
 }
 
+/** Implements the controller for the login page. */
 export class LoginController extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);

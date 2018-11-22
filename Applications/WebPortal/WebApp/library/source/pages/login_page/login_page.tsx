@@ -35,13 +35,14 @@ export class LoginPage extends React.Component<Properties> {
     const [staticStyle, animatedStyle] = (() => {
       switch(this.props.status) {
         case LoginPage.Status.NONE:
-          return [css(LoginPage.DYNAMIC_STYLES.logoVisible),
-            css(LoginPage.DYNAMIC_STYLES.logoInvisible)];
+          return [LoginPage.STATIC_STYLES.logoVisible,
+            LoginPage.STATIC_STYLES.logoInvisible];
         case LoginPage.Status.LOADING:
-          return [css(LoginPage.DYNAMIC_STYLES.logoInvisible),
-            css(LoginPage.DYNAMIC_STYLES.logoVisible)];
+          return [LoginPage.STATIC_STYLES.logoInvisible,
+            LoginPage.STATIC_STYLES.logoVisible];
       }
     })();
+    const isDisabled = this.props.status === LoginPage.Status.LOADING;
     return (
       <Center width='100%' height='100%' style={LoginPage.STATIC_STYLES.page}>
         <HBoxLayout width='320px' height='462px'>
@@ -51,14 +52,15 @@ export class LoginPage extends React.Component<Properties> {
             <HBoxLayout width='100%' height='50px'>
               <Padding/>
               <object data='resources/login_page/logo-static.svg'
-                type='image/svg+xml' className={staticStyle} tabIndex={-1}/>
+                type='image/svg+xml' style={staticStyle} tabIndex={-1}/>
               <object data='resources/login_page/logo-animated.svg'
-                type='image/svg+xml' className={animatedStyle} tabIndex={-1}/>
+                type='image/svg+xml' style={animatedStyle} tabIndex={-1}/>
               <Padding/>
             </HBoxLayout>
             <Padding size='60px'/>
             <input type='text' placeholder='Username' autoComplete='off'
               className={css(LoginPage.DYNAMIC_STYLES.inputBox)}
+              disabled={isDisabled}
               onFocus={() => this.usernameInputField.placeholder = ''}
               onBlur={() => this.usernameInputField.placeholder = 'Username'}
               onChange={this.onUsernameChange}
@@ -66,12 +68,13 @@ export class LoginPage extends React.Component<Properties> {
             <Padding size='20px'/>
             <input type='password' placeholder='Password' autoComplete='off'
               className={css(LoginPage.DYNAMIC_STYLES.inputBox)}
+              disabled={isDisabled}
               onFocus={() => this.passwordInputField.placeholder = ''}
               onBlur={() => this.passwordInputField.placeholder = 'Password'}
               ref={(ref) => this.passwordInputField = ref}/>
             <Padding size='50px'/>
             <button className={css(LoginPage.DYNAMIC_STYLES.signInButton)}
-                disabled={this.props.status === LoginPage.Status.LOADING}
+                disabled={isDisabled}
                 onClick={this.onSubmit} ref={(ref) => this.submitButton = ref}>
               Sign In
             </button>
@@ -114,16 +117,21 @@ export class LoginPage extends React.Component<Properties> {
   }
 
   private onUsernameChange() {
-    this.submitButton.disabled = this.usernameInputField.value.trim() === '';
+    this.submitButton.disabled = this.usernameInputField.value.trim() === '' ||
+      this.props.status === LoginPage.Status.LOADING;
   }
 
   private static readonly STATIC_STYLES = {
     page: {
       backgroundColor: '#4B23A0'
     },
-    logo: {
-      width: '100%',
-      height: '100%'
+    logoVisible: {
+      width: '130px',
+      height: '50px'
+    },
+    logoInvisible: {
+      width: '0px',
+      height: '0px'
     },
     errorMessage: {
       width: '100%',
@@ -175,14 +183,6 @@ export class LoginPage extends React.Component<Properties> {
         width: 0,
         margin: 0
       }
-    },
-    logoVisible: {
-      width: '130px',
-      height: '50px'
-    },
-    logoInvisible: {
-      width: '0px',
-      height: '0px'
     },
     signInButton: {
       width: '284px',
