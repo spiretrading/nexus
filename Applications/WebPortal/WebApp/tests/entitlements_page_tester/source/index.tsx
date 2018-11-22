@@ -123,6 +123,7 @@ class TestApp extends React.Component<{}, State> {
     } else {
       this.state.checkedDB.remove(value);
     }
+    this.forceUpdate();
   }
 
   private static getDisplaySize(): WebPortal.DisplaySize {

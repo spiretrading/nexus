@@ -82,6 +82,7 @@ export class SubmissionBox extends React.Component<Properties, State> {
   }
 
   private onInput(value: string) {
+    console.log(value);
     this.setState({
       comment: value
     });
