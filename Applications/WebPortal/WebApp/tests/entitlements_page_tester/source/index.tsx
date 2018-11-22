@@ -40,7 +40,6 @@ class TestApp extends React.Component<{}, State> {
   }
 
   public render(): JSX.Element {
-    this.setup();
     return (
       <WebPortal.VBoxLayout width='100%' height='100%'>
         <WebPortal.EntitlementsPage
@@ -54,31 +53,31 @@ class TestApp extends React.Component<{}, State> {
           submissionStatus={this.state.displayedStatus}
           onSubmit={this.commentsSubmitted}/>
         <div className={css(TestApp.STYLE.testingComponents)}>
-        <button tabIndex={-1}
-              onClick={() =>
-              this.changeRole(Nexus.AccountRoles.Role.ADMINISTRATOR)}>
-            ADMINISTRATOR
-        </button>
-        <button tabIndex={-1}
-            onClick={() => this.changeRole(Nexus.AccountRoles.Role.TRADER)}>
-          TRADER
-        </button>
-        <button tabIndex={-1}
-            onClick={() => this.changeRole(Nexus.AccountRoles.Role.MANAGER)}>
-          MANAGER
-        </button>
-        <button tabIndex={-1}
-            onClick={() => this.changeStatus('')}>
-          NOT SUBMITTED
-        </button>
-        <button tabIndex={-1}
-            onClick={() => this.changeStatus('Saved')}>
-          SUCCESSFUL SUBMIT
-        </button>
-        <button tabIndex={-1}
-            onClick={() => this.changeStatus('Server issue')}>
-          UNSUCCESSFUL SUBMIT
-        </button>
+          <button tabIndex={-1}
+                onClick={() =>
+                this.changeRole(Nexus.AccountRoles.Role.ADMINISTRATOR)}>
+              ADMINISTRATOR
+          </button>
+          <button tabIndex={-1}
+              onClick={() => this.changeRole(Nexus.AccountRoles.Role.TRADER)}>
+            TRADER
+          </button>
+          <button tabIndex={-1}
+              onClick={() => this.changeRole(Nexus.AccountRoles.Role.MANAGER)}>
+            MANAGER
+          </button>
+          <button tabIndex={-1}
+              onClick={() => this.changeStatus('')}>
+            NOT SUBMITTED
+          </button>
+          <button tabIndex={-1}
+              onClick={() => this.changeStatus('Saved')}>
+            SUCCESSFUL SUBMIT
+          </button>
+          <button tabIndex={-1}
+              onClick={() => this.changeStatus('Server issue')}>
+            UNSUCCESSFUL SUBMIT
+          </button>
         </div>
       </WebPortal.VBoxLayout>);
   }
@@ -86,6 +85,7 @@ class TestApp extends React.Component<{}, State> {
   public componentDidMount(): void {
     window.addEventListener('resize', this.onScreenResize);
     this.setState({ roles: this.testAdmin });
+    this.setup();
   }
 
   public componentWillUnmount(): void {

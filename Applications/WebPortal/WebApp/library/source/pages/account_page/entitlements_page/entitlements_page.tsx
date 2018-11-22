@@ -1,9 +1,9 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import {DisplaySize, HBoxLayout, HLine, Padding, VBoxLayout} from '../../..';
-import {SubmissionBox} from '../submission_box';
-import {EntitlementRow} from './entitlement_row';
+import { DisplaySize, HBoxLayout, HLine, Padding, VBoxLayout } from '../../..';
+import { SubmissionBox } from '../submission_box';
+import { EntitlementRow } from './entitlement_row';
 
 interface Properties {
 
@@ -25,7 +25,7 @@ interface Properties {
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
 
-  /** The message that lets the user know if their submission was succesful. */
+  /** The message that lets the user know if their submission was successful. */
   submissionStatus?: string;
 
   /** Indicates an entitlement has been clicked.
@@ -44,7 +44,7 @@ export class EntitlementsPage extends React.Component<Properties> {
   public static readonly defaultProps = {
     onEntitlementClick: () => {},
     onSubmit: () => {}
-  };
+  }
 
   constructor(props: Properties) {
     super(props);
@@ -58,7 +58,7 @@ export class EntitlementsPage extends React.Component<Properties> {
           <EntitlementRow
             entitlementEntry={entry}
             currencyEntry=
-            {this.props.currencyDatabase.fromCurrency(entry.currency)}
+              {this.props.currencyDatabase.fromCurrency(entry.currency)}
             isActive={this.props.checked.test(entry.group)}
             onClick = {() => {
               this.props.onEntitlementClick(entry.group);

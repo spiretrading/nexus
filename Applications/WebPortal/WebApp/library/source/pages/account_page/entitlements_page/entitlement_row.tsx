@@ -6,7 +6,6 @@ import { Transition } from 'react-transition-group';
 import { DisplaySize, DropDownButton, HLine, VBoxLayout } from '../../..';
 import { ApplicabilityTable } from './applicability_table';
 import { CheckMarkButton } from './check_mark_button';
-import { Money } from 'nexus';
 
 interface Properties {
 
@@ -82,7 +81,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
       }
     })();
     const amount = (() => {
-      if(this.props.entitlementEntry.price.equals(Money.ZERO)) {
+      if(this.props.entitlementEntry.price.equals(Nexus.Money.ZERO)) {
         return 'FREE';
       } else {
         return (`${this.props.currencyEntry.sign}${

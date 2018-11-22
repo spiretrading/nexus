@@ -34,14 +34,14 @@ export class SubmissionBox extends React.Component<Properties, State> {
     this.state = {
       comment: ''
     };
-    this.onInputChange = this.onInputChange.bind(this);
+    this.onInput = this.onInput.bind(this);
   }
 
   public render(): JSX.Element {
     const commentBox = (() => {
       if(!this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
         return <CommentBox comment={this.state.comment}
-          onInput={this.onInputChange}/>;
+          onInput={this.onInput}/>;
       }
     })();
     const commentBoxPadding = (() => {
@@ -81,7 +81,7 @@ export class SubmissionBox extends React.Component<Properties, State> {
       </VBoxLayout>);
   }
 
-  private onInputChange(value: string) {
+  private onInput(value: string) {
     this.setState({
       comment: value
     });
