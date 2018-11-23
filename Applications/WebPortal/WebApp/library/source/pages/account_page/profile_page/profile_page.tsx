@@ -13,7 +13,6 @@ interface Properties {
 export class ProfilePage extends React.Component<Properties> {
   constructor(props: Properties) {
     super(props);
-    this.onInput = this.onInput.bind(this);
   }
 
   public render(): JSX.Element {
@@ -24,22 +23,6 @@ export class ProfilePage extends React.Component<Properties> {
         return FormEntry.Orientation.HORIZONTAL;
       }
     })();
-    return (<div>
-      <FormEntry name='test'
-      orientation={orientation}
-      children={<TextField displaySize={this.props.displaySize}/>}/>
-      <FormEntry name='test'
-      orientation={orientation}
-      children={ <TextField displaySize={this.props.displaySize}
-      value={'zbeep'}/>}/>
-    </div>);
+    return (<div/>);
   }
-
-  private onInput(value: string) {
-    console.log(value);
-    this.setState({
-      comment: value
-    });
-  }
-
 }

@@ -4,6 +4,7 @@ import * as WebPortal from 'web_portal';
 
 interface State {
   displaySize: WebPortal.DisplaySize;
+  comment: string;
 }
 
 /**  Displays a testing application. */
@@ -11,18 +12,43 @@ class TestApp extends React.Component<{}, State> {
   constructor(props: {}) {
     super(props);
     this.state = {
-      displaySize: TestApp.getDisplaySize()
+      displaySize: TestApp.getDisplaySize(),
+      comment: 'the Grey'
     };
     this.onScreenResize = this.onScreenResize.bind(this);
+    this.onInput = this.onInput.bind(this);
   }
 
   public render(): JSX.Element {
+    const orientation = ( () => {
+      if(this.state.displaySize === WebPortal.DisplaySize.SMALL) {
+        return WebPortal.FormEntry.Orientation.VERTICAL;
+      } else {
+        return WebPortal.FormEntry.Orientation.HORIZONTAL;
+      }
+    })();
     return (
     <WebPortal.HBoxLayout>
       <WebPortal.Padding size='12px'/>
         <WebPortal.VBoxLayout>
           <WebPortal.Padding size='20px'/>
-          <WebPortal.ProfilePage displaySize={this.state.displaySize}/>
+           <WebPortal.FormEntry name='First Name'
+              orientation={orientation}
+              children={
+                <WebPortal.TextField
+                  value = 'Gandalf'
+                  displaySize={this.state.displaySize}
+                  disabled/>}
+              />
+            <WebPortal.Padding size='14px'/>
+            <WebPortal.FormEntry name='Last Name'
+              orientation={orientation}
+              children={
+                <WebPortal.TextField
+                  displaySize={this.state.displaySize}
+                  value={this.state.comment}
+                  onInput={this.onInput}/>
+              }/>
         </WebPortal.VBoxLayout>
       <WebPortal.Padding/>
     </WebPortal.HBoxLayout>
@@ -56,6 +82,13 @@ class TestApp extends React.Component<{}, State> {
       this.setState({ displaySize: newDisplaySize });
     }
     console.log(this.state.displaySize.toString());
+  }
+
+  private onInput(value: string) {
+    console.log(value);
+    this.setState({
+      comment: value
+    });
   }
 }
 
