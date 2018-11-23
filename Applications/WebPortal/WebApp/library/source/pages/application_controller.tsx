@@ -3,8 +3,8 @@ import * as Router from 'react-router-dom';
 import * as React from 'react';
 import { DisplaySize } from '..';
 import { ApplicationModel } from './application_model';
-import { DashboardController } from './dashboard_page';
-import { LoginController } from './login_page';
+import { DashboardController, DashboardModel } from './dashboard_page';
+import { LoginController, LoginModel } from './login_page';
 
 interface Properties {
 
@@ -87,16 +87,24 @@ export class ApplicationController extends React.Component<Properties, State> {
 
   private navigateToLogin() {
     if(this.state.account.equals(Beam.DirectoryEntry.INVALID)) {
-      return <LoginController model={this.props.model.makeLoginModel()}
-        onLogin={this.onLogin}/>;
+      if(this.loginModel == null) {
+        this.loginModel = this.props.model.makeLoginModel();
+      }
+      return <LoginController model={this.loginModel} onLogin={this.onLogin}/>;
     }
     return <Router.Redirect to='/'/>;
   }
 
   private navigateToDashboard() {
-    return <DashboardController model={this.props.model.makeDashboardModel()}
-      onLogout={this.onLogout}/>;
+    if(this.dashboardModel == null) {
+      this.dashboardModel = this.props.model.makeDashboardModel();
+    }
+    return <DashboardController model={this.dashboardModel}
+      displaySize={this.state.displaySize} onLogout={this.onLogout}/>;
   }
+
+  private loginModel: LoginModel;
+  private dashboardModel: DashboardModel;
 }
 
 class AuthenticatedRoute extends React.Component<any> {
