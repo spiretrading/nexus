@@ -6,7 +6,7 @@ interface Properties {
   /** The name of the input field. */
   name: string;
 
-  /** Determines it the input is editable. */
+  /** Determines if the input is editable. */
   readonly?: boolean;
 
   /** Whether the form is rendered vertically or horizontally. */
