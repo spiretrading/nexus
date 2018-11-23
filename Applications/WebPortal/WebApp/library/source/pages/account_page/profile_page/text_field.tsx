@@ -1,7 +1,6 @@
-import { css, StyleSheet } from 'aphrodite/no-important';
+import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
-import { DisplaySize } from '../../../';
-import { HBoxLayout } from '../../../layouts';
+import { DisplaySize, HBoxLayout } from '../../../';
 
 enum Effects {
 
@@ -126,6 +125,7 @@ export class TextField extends React.Component<Properties, State> {
       });
     }
   }
+
   private static STYLE = StyleSheet.create({
     box: {
       height: '34px',

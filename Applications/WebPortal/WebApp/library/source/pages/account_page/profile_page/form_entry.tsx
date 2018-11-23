@@ -1,4 +1,3 @@
-import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import { HBoxLayout, VBoxLayout, Padding } from '../../../layouts';
 
@@ -23,31 +22,33 @@ export class FormEntry extends React.Component<Properties> {
   public render(): JSX.Element {
     const content = ( () => {
       if(this.props.orientation === FormEntry.Orientation.HORIZONTAL) {
-        return (<HBoxLayout>
+        return (
+        <HBoxLayout>
           <div style={FormEntry.STYLE.horizontalHeader}>{this.props.name}</div>
           <Padding size={FormEntry.HORIZONTAL_PADDING}/>
           <div>{this.props.children}</div>
         </HBoxLayout>);
       } else {
-        return (<VBoxLayout>
+        return (
+        <VBoxLayout>
           <div style={FormEntry.STYLE.verticalHeader}>{this.props.name}</div>
           <Padding size={FormEntry.VERTICAL_PADDING}/>
           <div>{this.props.children}</div>
        </VBoxLayout>);
       }
     })();
-    return (<div>
-     {content}
-    </div>);
+    return (
+      <div>
+        {content}
+      </div>);
   }
 
   private static STYLE = {
     horizontalHeader: {
-      height: `${FormEntry.FIELD_HEIGHT}`,
+      height: '34px',
       width: '130px',
       font: '400 14px Roboto',
       color: '#000000',
-      tabindex: '1',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       flexWrap: 'nowrap' as 'nowrap',
@@ -60,7 +61,6 @@ export class FormEntry extends React.Component<Properties> {
       paddingLeft: '10px'
     }
   };
-  private static readonly FIELD_HEIGHT = '34px';
   private static readonly VERTICAL_PADDING = '12px';
   private static readonly HORIZONTAL_PADDING = '8px';
 }

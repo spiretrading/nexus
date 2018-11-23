@@ -4,7 +4,7 @@ import * as WebPortal from 'web_portal';
 
 interface State {
   displaySize: WebPortal.DisplaySize;
-  comment: string;
+  lastNameValue: string;
 }
 
 /**  Displays a testing application. */
@@ -13,7 +13,7 @@ class TestApp extends React.Component<{}, State> {
     super(props);
     this.state = {
       displaySize: TestApp.getDisplaySize(),
-      comment: 'the Grey'
+      lastNameValue: 'the Grey'
     };
     this.onScreenResize = this.onScreenResize.bind(this);
     this.onInput = this.onInput.bind(this);
@@ -38,17 +38,15 @@ class TestApp extends React.Component<{}, State> {
                 <WebPortal.TextField
                   value = 'Gandalf'
                   displaySize={this.state.displaySize}
-                  disabled/>}
-              />
+                  disabled/>}/>
             <WebPortal.Padding size='14px'/>
             <WebPortal.FormEntry name='Last Name'
               orientation={orientation}
               children={
                 <WebPortal.TextField
                   displaySize={this.state.displaySize}
-                  value={this.state.comment}
-                  onInput={this.onInput}/>
-              }/>
+                  value={this.state.lastNameValue}
+                  onInput={this.onInput}/>}/>
         </WebPortal.VBoxLayout>
       <WebPortal.Padding/>
     </WebPortal.HBoxLayout>
@@ -87,10 +85,9 @@ class TestApp extends React.Component<{}, State> {
   private onInput(value: string) {
     console.log(value);
     this.setState({
-      comment: value
+      lastNameValue: value
     });
   }
 }
 
 ReactDOM.render(<TestApp/>, document.getElementById('main'));
-

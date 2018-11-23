@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { DisplaySize } from '../../..';
 import { FormEntry } from './form_entry';
-import { TextField } from './text_field';
 
 interface Properties {
 
@@ -23,6 +22,6 @@ export class ProfilePage extends React.Component<Properties> {
         return FormEntry.Orientation.HORIZONTAL;
       }
     })();
-    return (<div/>);
+    return <div/>;
   }
 }
