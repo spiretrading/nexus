@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { DisplaySize } from '../../..';
+import { FormEntry } from './form_entry';
 
 interface Properties {
 
@@ -14,6 +15,13 @@ export class ProfilePage extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
-    return <div>Profile Page</div>;
+    const orientation = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return FormEntry.Orientation.VERTICAL;
+      } else {
+        return FormEntry.Orientation.HORIZONTAL;
+      }
+    })();
+    return <div/>;
   }
 }

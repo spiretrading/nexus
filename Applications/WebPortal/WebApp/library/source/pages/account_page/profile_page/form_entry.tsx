@@ -1,9 +1,13 @@
 import * as React from 'react';
+import { HBoxLayout, VBoxLayout, Padding } from '../../../layouts';
 
 interface Properties {
 
   /** The name of the input field. */
   name: string;
+
+  /** Determines if the input is editable. */
+  readonly?: boolean;
 
   /** Whether the form is rendered vertically or horizontally. */
   orientation: FormEntry.Orientation;
@@ -14,13 +18,70 @@ interface Properties {
 
 /** Displays an input form for a single item. */
 export class FormEntry extends React.Component<Properties> {
+  public static readonly defaultProps = {
+    readonly: false
+  }
+
   constructor(props: Properties) {
     super(props);
   }
 
   public render(): JSX.Element {
-    return null;
+    const boxStyle = (() => {
+      if(this.props.readonly) {
+        return FormEntry.STYLE.box;
+      } else {
+        return null;
+      }
+    })();
+    const content = (() => {
+      if(this.props.orientation === FormEntry.Orientation.HORIZONTAL) {
+        return (
+          <HBoxLayout style={boxStyle}>
+            <div style={FormEntry.STYLE.horizontalHeader}>
+              {this.props.name}
+            </div>
+            <Padding size={FormEntry.HORIZONTAL_PADDING}/>
+            <div>{this.props.children}</div>
+          </HBoxLayout>);
+      } else {
+        return (
+          <VBoxLayout style={boxStyle}>
+            <div style={FormEntry.STYLE.verticalHeader}>{this.props.name}</div>
+            <Padding size={FormEntry.VERTICAL_PADDING}/>
+            <div>{this.props.children}</div>
+          </VBoxLayout>);
+      }
+    })();
+    return (
+      <div>
+        {content}
+      </div>);
   }
+
+  private static STYLE = {
+    box: {
+      cursor: 'default'
+    },
+    horizontalHeader: {
+      height: '34px',
+      width: '130px',
+      font: '400 14px Roboto',
+      color: '#000000',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'nowrap' as 'nowrap',
+      alignItems: 'center' as 'center'
+    },
+    verticalHeader : {
+      height: '16px',
+      font: '400 14px Roboto',
+      color: '#000000',
+      paddingLeft: '10px'
+    }
+  };
+  private static readonly VERTICAL_PADDING = '12px';
+  private static readonly HORIZONTAL_PADDING = '8px';
 }
 
 export namespace FormEntry {
