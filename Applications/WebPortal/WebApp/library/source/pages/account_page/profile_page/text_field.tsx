@@ -83,6 +83,7 @@ export class TextField extends React.Component<Properties, State> {
       onMouseEnter={this.onMouseEnter}
       onMouseLeave={this.onMouseLeave}>
       <input value={this.props.value}
+        disabled={this.props.disabled}
         onFocus={this.onInputFocused}
         onBlur={this.onInputBlurred}
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
@@ -177,14 +178,38 @@ export class TextField extends React.Component<Properties, State> {
       color: '#000000',
       whiteSpace: 'nowrap',
       paddingLeft: '10px',
-      border: '1px solid #FFFFFF'
+      border: '1px solid #FFFFFF',
+      backgroundColor: '#FFFFFF',
+      ':focus': {
+        ouline: 0,
+        outlineColor: 'transparent',
+        outlineStyle: 'none'
+      },
+      '::moz-focus-inner': {
+        border: 0
+      },
+      '::-ms-clear': {
+        display: 'none' as 'none'
+      }
     },
     largerText: {
       font: '400 16px Roboto',
       color: '#000000',
       whiteSpace: 'nowrap',
       paddingLeft: '10px',
-      border: '1px solid #FFFFFF'
+      border: '1px solid #FFFFFF',
+      backgroundColor: '#FFFFFF',
+      ':focus': {
+        ouline: 0,
+        outlineColor: 'transparent',
+        outlineStyle: 'none'
+      },
+      '::moz-focus-inner': {
+        border: 0
+      },
+      '::-ms-clear': {
+        display: 'none' as 'none'
+      }
     }
   });
 }
