@@ -4,8 +4,14 @@ import { DisplaySize } from '../../../';
 import { HBoxLayout } from '../../../layouts';
 
 enum Effects {
+
+  /** No effects need to be applied to the component. */
   NONE,
+
+  /** The input box is focused. */
   FOCUSED,
+
+  /** The mouse is hovering over the component. */
   HOVER
 }
 
@@ -17,13 +23,13 @@ interface Properties {
   /** The value to display in the field. */
   value?: string;
 
+  /** The size to display the component at. */
   displaySize: DisplaySize;
 
   /** Called when the value changes.
    * @param value - The updated value.
    */
   onInput?: (value: string) => void;
-
 }
 
 interface State {
@@ -45,15 +51,15 @@ export class TextField extends React.Component<Properties, State> {
     };
     this.onInputBlurred = this.onInputBlurred.bind(this);
     this.onInputFocused = this.onInputFocused.bind(this);
-    this.onMouseEntered = this.onMouseEntered.bind(this);
-    this.onMouseLeft = this.onMouseLeft.bind(this);
+    this.onMouseEnter = this.onMouseEnter.bind(this);
+    this.onMouseLeave = this.onMouseLeave.bind(this);
   }
 
   public render(): JSX.Element {
     const boxStyle = ( () => {
       if(this.state.effects === Effects.HOVER) {
         return TextField.STYLE.hoveredBox;
-      } else if(this.state.effects === Effects.FOCUSED){
+      } else if(this.state.effects === Effects.FOCUSED) {
         return TextField.STYLE.focusedBox;
       } else {
         return TextField.STYLE.box;
@@ -74,15 +80,15 @@ export class TextField extends React.Component<Properties, State> {
       }
     })();
     return (
-    <div className={css(boxStyle)} tabIndex={1}
-      onMouseEnter={this.onMouseEntered}
-      onMouseLeave={this.onMouseLeft}>
+    <div className={css(boxStyle)}
+      onMouseEnter={this.onMouseEnter}
+      onMouseLeave={this.onMouseLeave}>
       <input value={this.props.value}
         onFocus={this.onInputFocused}
         onBlur={this.onInputBlurred}
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-        this.props.onInput(event.target.value);
-      }}
+          this.props.onInput(event.target.value);
+        }}
         className={css(textStyle)}/>
       <img src={'resources/account_page/edit.svg'}
         className={css(imageStyle)}/>
@@ -103,7 +109,7 @@ export class TextField extends React.Component<Properties, State> {
     });
   }
 
-  private onMouseEntered() {
+  private onMouseEnter() {
     if(!this.props.disabled) {
       if(this.state.effects !== Effects.FOCUSED) {
         this.setState({
@@ -113,7 +119,7 @@ export class TextField extends React.Component<Properties, State> {
     }
   }
 
-  private onMouseLeft() {
+  private onMouseLeave() {
     if(this.state.effects !== Effects.FOCUSED) {
      this.setState({
         effects: Effects.NONE
@@ -128,7 +134,13 @@ export class TextField extends React.Component<Properties, State> {
       flexWrap: 'nowrap' as 'nowrap',
       alignItems: 'center' as 'center',
       justifyContent: 'space-between',
-      border: '1px solid #FFFFFF'
+      border: '1px solid #FFFFFF',
+      ':focus': {
+        ouline: 0
+      },
+      '::moz-focus-inner': {
+        border: 0
+      }
     },
     hoveredBox: {
       height: '34px',

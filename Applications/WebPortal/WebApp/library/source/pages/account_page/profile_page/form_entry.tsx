@@ -25,6 +25,7 @@ export class FormEntry extends React.Component<Properties> {
       if(this.props.orientation === FormEntry.Orientation.HORIZONTAL) {
         return (<HBoxLayout>
           <div style={FormEntry.STYLE.horizontalHeader}>{this.props.name}</div>
+          <Padding size={FormEntry.HORIZONTAL_PADDING}/>
           <div>{this.props.children}</div>
         </HBoxLayout>);
       } else {
@@ -61,6 +62,7 @@ export class FormEntry extends React.Component<Properties> {
   };
   private static readonly FIELD_HEIGHT = '34px';
   private static readonly VERTICAL_PADDING = '12px';
+  private static readonly HORIZONTAL_PADDING = '8px';
 }
 
 export namespace FormEntry {
