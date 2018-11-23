@@ -1,3 +1,4 @@
+export * from './account_controller';
 export * from './account_model';
 export * from './account_page';
 export * from './entitlements_page';
@@ -5,3 +6,5 @@ export * from './local_account_model';
 export * from './profile_page';
 export * from './risk_page';
 export * from './submission_box';
+export * from './sub_page';
+export * from './web_account_model';

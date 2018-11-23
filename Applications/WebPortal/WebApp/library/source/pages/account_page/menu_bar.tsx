@@ -1,56 +1,36 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import { Center, DisplaySize, HBoxLayout, Padding, VBoxLayout } from '../..';
+import { SubPage } from './sub_page';
 
 interface Properties {
+
+  /** The sub-page currently selected. */
+  selected: SubPage;
 
   /** The type of display to render on. */
   displaySize: DisplaySize;
 
-  /** Indicates the account item was clicked. */
-  onAccountClick?: () => void;
-
-  /** Indicates the risk controls item was clicked. */
-  onRiskControlsClick?: () => void;
-
-  /** Indicates the entitlements item was clicked. */
-  onEntitlementsClick?: () => void;
-
-  /** Indicates the compliance item was clicked. */
-  onComplianceClick?: () => void;
-
-  /** Indicates the profit and loss item was clicked. */
-  onProfitAndLossClick?: () => void;
-}
-
-enum MenuItem {
-  ACCOUNT,
-  RISK_CONTROLS,
-  ENTITLEMENTS,
-  COMPLIANCE,
-  PROFIT_LOSS
+  /** Indicates a menu item was clicked.
+   * @param subPage - The sub-page item that was clicked.
+   */
+  onClick?: (subPage: SubPage) => void;
 }
 
 interface State {
-  selected: MenuItem;
-  hovered: MenuItem;
+  hovered: SubPage;
 }
 
 /** Displays the horizontal menu used to navigate an account's properties. */
 export class MenuBar extends React.Component<Properties, State> {
   public static defaultProps = {
-    onAccountClick: () => {},
-    onRiskControlsClick: () => {},
-    onEntitlementsClick: () => {},
-    onComplianceClick: () => {},
-    onProfitAndLossClick: () => {}
+    onClick: () => {},
   };
 
   constructor(props: Properties) {
     super(props);
     this.state = {
-      selected: MenuItem.ACCOUNT,
-      hovered: null
+      hovered: SubPage.NONE
     };
     this.onIconMouseEnter = this.onIconMouseEnter.bind(this);
     this.onIconMouseLeave = this.onIconMouseLeave.bind(this);
@@ -60,15 +40,15 @@ export class MenuBar extends React.Component<Properties, State> {
   public render(): JSX.Element {
     const menuBarPadding = ((): JSX.Element => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return <div className={css(MenuBar.STYLE.smallPadding)}/>;
+        return <div style={MenuBar.STYLE.smallPadding}/>;
       }
       return <Padding size='30px'/>;
     })();
     const menuIconContainerClassName = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return css([MenuBar.STYLE.base, MenuBar.STYLE.small]);
+        return {...MenuBar.STYLE.base, ...MenuBar.STYLE.small};
       }
-      return css(MenuBar.STYLE.base);
+      return MenuBar.STYLE.base;
     })();
     const menuBarWidth = (() => {
       if(this.props.displaySize !== DisplaySize.SMALL) {
@@ -77,102 +57,96 @@ export class MenuBar extends React.Component<Properties, State> {
     })();
     return (
       <HBoxLayout id='menu-bar' width={menuBarWidth}
-          className={menuIconContainerClassName}>
+          style={menuIconContainerClassName}>
         <VBoxLayout id='item-vbox'  height='40px'>
           <Item iconSrc={`resources/account/account` +
-              `-${this.getIconColor(MenuItem.ACCOUNT)}.svg`} name='Account'
-            isSelected={this.state.selected === MenuItem.ACCOUNT}
+              `-${this.getIconColor(SubPage.PROFILE)}.svg`} name='Account'
+            isSelected={this.props.selected === SubPage.PROFILE}
             displaySize={this.props.displaySize}
-            onMouseEnter={() => this.onIconMouseEnter(MenuItem.ACCOUNT)}
+            onMouseEnter={() => this.onIconMouseEnter(SubPage.PROFILE)}
             onMouseLeave={this.onIconMouseLeave}
-            onClick={() => this.onIconClick(MenuItem.ACCOUNT,
-              this.props.onAccountClick)}/>
-          <div className={this.getIconUnderlineClassName(MenuItem.ACCOUNT)}/>
+            onClick={() => this.onIconClick(SubPage.PROFILE)}/>
+          <div style={this.getIconUnderlineStyle(SubPage.PROFILE)}/>
         </VBoxLayout>
         {menuBarPadding}
         <VBoxLayout height='40px'>
           <Item iconSrc={`resources/account/risk-controls` +
-            `-${this.getIconColor(MenuItem.RISK_CONTROLS)}.svg`}
+              `-${this.getIconColor(SubPage.RISK_CONTROLS)}.svg`}
             name='Risk Controls'
-            isSelected={this.state.selected === MenuItem.RISK_CONTROLS}
+            isSelected={this.props.selected === SubPage.RISK_CONTROLS}
             displaySize={this.props.displaySize}
-            onMouseEnter={() => this.onIconMouseEnter(MenuItem.RISK_CONTROLS)}
+            onMouseEnter={() => this.onIconMouseEnter(SubPage.RISK_CONTROLS)}
             onMouseLeave={this.onIconMouseLeave}
-            onClick={() => this.onIconClick(MenuItem.RISK_CONTROLS,
-              this.props.onRiskControlsClick)}/>
-          <div className={this.getIconUnderlineClassName(
-            MenuItem.RISK_CONTROLS)}/>
+            onClick={() => this.onIconClick(SubPage.RISK_CONTROLS)}/>
+          <div style={this.getIconUnderlineStyle(SubPage.RISK_CONTROLS)}/>
         </VBoxLayout>
         {menuBarPadding}
         <VBoxLayout height='40px'>
           <Item iconSrc={`resources/account/entitlements` +
-            `-${this.getIconColor(MenuItem.ENTITLEMENTS)}.svg`}
+              `-${this.getIconColor(SubPage.ENTITLEMENTS)}.svg`}
             name='Entitlements'
-            isSelected={this.state.selected === MenuItem.ENTITLEMENTS}
+            isSelected={this.props.selected === SubPage.ENTITLEMENTS}
             displaySize={this.props.displaySize}
-            onMouseEnter={() => this.onIconMouseEnter(MenuItem.ENTITLEMENTS)}
+            onMouseEnter={() => this.onIconMouseEnter(SubPage.ENTITLEMENTS)}
             onMouseLeave={this.onIconMouseLeave}
-            onClick={() => this.onIconClick(MenuItem.ENTITLEMENTS,
-              this.props.onEntitlementsClick)}/>
-          <div className={this.getIconUnderlineClassName(
-            MenuItem.ENTITLEMENTS)}/>
+            onClick={() => this.onIconClick(SubPage.ENTITLEMENTS)}/>
+          <div style={this.getIconUnderlineStyle(SubPage.ENTITLEMENTS)}/>
         </VBoxLayout>
         {menuBarPadding}
         <VBoxLayout height='40px'>
           <Item iconSrc={`resources/account/compliance` +
-            `-${this.getIconColor(MenuItem.COMPLIANCE)}.svg`} name='Compliance'
-            isSelected={this.state.selected === MenuItem.COMPLIANCE}
+              `-${this.getIconColor(SubPage.COMPLIANCE)}.svg`}
+            name='Compliance'
+            isSelected={this.props.selected === SubPage.COMPLIANCE}
             displaySize={this.props.displaySize}
-            onMouseEnter={() => this.onIconMouseEnter(MenuItem.COMPLIANCE)}
+            onMouseEnter={() => this.onIconMouseEnter(SubPage.COMPLIANCE)}
             onMouseLeave={this.onIconMouseLeave}
-            onClick={() => this.onIconClick(MenuItem.COMPLIANCE,
-              this.props.onComplianceClick)}/>
-          <div className={this.getIconUnderlineClassName(MenuItem.COMPLIANCE)}/>
+            onClick={() => this.onIconClick(SubPage.COMPLIANCE)}/>
+          <div style={this.getIconUnderlineStyle(SubPage.COMPLIANCE)}/>
         </VBoxLayout>
         {menuBarPadding}
         <VBoxLayout height='40px'>
           <Item iconSrc={`resources/account/profit-loss` +
-            `-${this.getIconColor(MenuItem.PROFIT_LOSS)}.svg`}
+              `-${this.getIconColor(SubPage.PROFIT_LOSS)}.svg`}
             name='Profit/Loss' displaySize={this.props.displaySize}
-            isSelected={this.state.selected === MenuItem.PROFIT_LOSS}
-            onMouseEnter={() => this.onIconMouseEnter(MenuItem.PROFIT_LOSS)}
+            isSelected={this.props.selected === SubPage.PROFIT_LOSS}
+            onMouseEnter={() => this.onIconMouseEnter(SubPage.PROFIT_LOSS)}
             onMouseLeave={this.onIconMouseLeave}
-            onClick={() => this.onIconClick(MenuItem.PROFIT_LOSS,
-              this.props.onProfitAndLossClick)}/>
-          <div className={this.getIconUnderlineClassName(
-            MenuItem.PROFIT_LOSS)}/>
+            onClick={() => this.onIconClick(SubPage.PROFIT_LOSS)}/>
+          <div style={this.getIconUnderlineStyle(SubPage.PROFIT_LOSS)}/>
         </VBoxLayout>
       </HBoxLayout>);
   }
 
-  private getIconColor(item: MenuItem) {
-    if(this.state.selected === item || this.state.hovered === item) {
+  private getIconColor(subPage: SubPage) {
+    if(this.props.selected === subPage || this.state.hovered === subPage) {
       return 'purple';
     }
     return 'grey';
   }
 
-  private getIconUnderlineClassName(item: MenuItem) {
-    if(item === this.state.selected) {
-      return css(MenuBar.STYLE.selectedBorder);
+  private getIconUnderlineStyle(subPage: SubPage) {
+    if(subPage === this.props.selected) {
+      return MenuBar.STYLE.selectedBorder;
     }
-    return css(MenuBar.STYLE.unselectedBorder);
+    return MenuBar.STYLE.unselectedBorder;
   }
 
-  private onIconMouseEnter(item: MenuItem) {
-    this.setState({hovered: item});
+  private onIconMouseEnter(subPage: SubPage) {
+    this.setState({hovered: subPage});
   }
 
   private onIconMouseLeave() {
-    this.setState({hovered: null});
+    this.setState({hovered: SubPage.NONE});
   }
 
-  private onIconClick(item: MenuItem, onClick: () => void): void {
-    onClick();
-    this.setState({selected: item});
+  private onIconClick(subPage: SubPage) {
+    if(this.props.selected !== subPage) {
+      this.props.onClick(subPage);
+    }
   }
 
-  private static STYLE = StyleSheet.create({
+  private static readonly STYLE = {
     base: {
       height: '40px',
       width: '590px'
@@ -198,7 +172,7 @@ export class MenuBar extends React.Component<Properties, State> {
       height: '2px',
       backgroundColor: 'rgba(255, 255, 255, 0)'
     }
-  });
+  }
 }
 
 interface ItemProperties {
