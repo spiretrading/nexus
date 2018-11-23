@@ -55,7 +55,7 @@ export class TextField extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const boxStyle = ( () => {
+    const boxStyle = (() => {
       if(this.state.effects === Effects.HOVER) {
         return TextField.STYLE.hoveredBox;
       } else if(this.state.effects === Effects.FOCUSED) {
@@ -64,14 +64,14 @@ export class TextField extends React.Component<Properties, State> {
         return TextField.STYLE.box;
       }
     })();
-    const textStyle = ( () => {
+    const textStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return TextField.STYLE.largerText;
       } else {
         return TextField.STYLE.text;
       }
     })();
-    const imageStyle = ( () => {
+    const imageStyle = (() => {
       if(this.state.effects === Effects.HOVER) {
         return TextField.STYLE.image;
       } else {
@@ -79,20 +79,20 @@ export class TextField extends React.Component<Properties, State> {
       }
     })();
     return (
-    <div className={css(boxStyle)}
-      onMouseEnter={this.onMouseEnter}
-      onMouseLeave={this.onMouseLeave}>
-      <input value={this.props.value}
-        disabled={this.props.disabled}
-        onFocus={this.onInputFocused}
-        onBlur={this.onInputBlurred}
-        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-          this.props.onInput(event.target.value);
-        }}
-        className={css(textStyle)}/>
-      <img src={'resources/account_page/edit.svg'}
-        className={css(imageStyle)}/>
-    </div>);
+      <div className={css(boxStyle)}
+          onMouseEnter={this.onMouseEnter}
+          onMouseLeave={this.onMouseLeave}>
+        <input value={this.props.value}
+          disabled={this.props.disabled}
+          onFocus={this.onInputFocused}
+          onBlur={this.onInputBlurred}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+            this.props.onInput(event.target.value);
+          }}
+          className={css(textStyle)}/>
+        <img src={'resources/account_page/edit.svg'}
+          className={css(imageStyle)}/>
+      </div>);
   }
 
   private onInputFocused() {
@@ -104,24 +104,24 @@ export class TextField extends React.Component<Properties, State> {
   }
 
   private onInputBlurred() {
-    this.setState({
-      effects: Effects.NONE
-    });
+    if(!this.props.disabled) {
+      this.setState({
+        effects: Effects.NONE
+      });
+    }
   }
 
   private onMouseEnter() {
-    if(!this.props.disabled) {
-      if(this.state.effects !== Effects.FOCUSED) {
-        this.setState({
-          effects: Effects.HOVER
-        });
-      }
+    if(!this.props.disabled && this.state.effects !== Effects.FOCUSED) {
+      this.setState({
+        effects: Effects.HOVER
+      });
     }
   }
 
   private onMouseLeave() {
-    if(this.state.effects !== Effects.FOCUSED) {
-     this.setState({
+    if(!this.props.disabled && this.state.effects !== Effects.FOCUSED) {
+      this.setState({
         effects: Effects.NONE
       });
     }

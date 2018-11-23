@@ -15,7 +15,7 @@ export class ProfilePage extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
-    const orientation = ( () => {
+    const orientation = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return FormEntry.Orientation.VERTICAL;
       } else {

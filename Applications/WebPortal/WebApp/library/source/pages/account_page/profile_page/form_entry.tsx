@@ -6,6 +6,9 @@ interface Properties {
   /** The name of the input field. */
   name: string;
 
+  /** The name of the input field. */
+  readonly?: boolean;
+
   /** Whether the form is rendered vertically or horizontally. */
   orientation: FormEntry.Orientation;
 
@@ -20,21 +23,30 @@ export class FormEntry extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
-    const content = ( () => {
+    const boxStyle = (() => {
+      if(this.props.readonly) {
+        return FormEntry.STYLE.box;
+      } else {
+        return null;
+      }
+    })();
+    const content = (() => {
       if(this.props.orientation === FormEntry.Orientation.HORIZONTAL) {
         return (
-        <HBoxLayout>
-          <div style={FormEntry.STYLE.horizontalHeader}>{this.props.name}</div>
-          <Padding size={FormEntry.HORIZONTAL_PADDING}/>
-          <div>{this.props.children}</div>
-        </HBoxLayout>);
+          <HBoxLayout style={boxStyle}>
+            <div style={FormEntry.STYLE.horizontalHeader}>
+              {this.props.name}
+            </div>
+            <Padding size={FormEntry.HORIZONTAL_PADDING}/>
+            <div>{this.props.children}</div>
+          </HBoxLayout>);
       } else {
         return (
-        <VBoxLayout>
-          <div style={FormEntry.STYLE.verticalHeader}>{this.props.name}</div>
-          <Padding size={FormEntry.VERTICAL_PADDING}/>
-          <div>{this.props.children}</div>
-       </VBoxLayout>);
+          <VBoxLayout style={boxStyle}>
+            <div style={FormEntry.STYLE.verticalHeader}>{this.props.name}</div>
+            <Padding size={FormEntry.VERTICAL_PADDING}/>
+            <div>{this.props.children}</div>
+        </VBoxLayout>);
       }
     })();
     return (
@@ -44,6 +56,9 @@ export class FormEntry extends React.Component<Properties> {
   }
 
   private static STYLE = {
+    box: {
+      cursor: 'default'
+    },
     horizontalHeader: {
       height: '34px',
       width: '130px',
