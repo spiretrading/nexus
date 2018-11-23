@@ -12,4 +12,7 @@ export abstract class DashboardModel {
 
   /** Loads this model. */
   public abstract async load(): Promise<void>;
+
+  /** Logs the user out. */
+  public abstract async logout(): Promise<void>;
 }

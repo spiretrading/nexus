@@ -30,6 +30,11 @@ export class WebDashboardModel extends DashboardModel {
     const roles = await
       this.serviceClients.administrationClient.loadAccountRoles(account);
     this.model = new LocalDashboardModel(account, roles);
+    await this.model.load();
+  }
+
+  public async logout(): Promise<void> {
+    this.serviceClients.close();
   }
 
   private serviceClients: Nexus.ServiceClients;

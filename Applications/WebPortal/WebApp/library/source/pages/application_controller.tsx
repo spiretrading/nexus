@@ -3,6 +3,7 @@ import * as Router from 'react-router-dom';
 import * as React from 'react';
 import { DisplaySize } from '..';
 import { ApplicationModel } from './application_model';
+import { DashboardController } from './dashboard_page';
 import { LoginController } from './login_page';
 
 interface Properties {
@@ -28,6 +29,7 @@ export class ApplicationController extends React.Component<Properties, State> {
     };
     this.onResize = this.onResize.bind(this);
     this.onLogin = this.onLogin.bind(this);
+    this.onLogout = this.onLogout.bind(this);
     this.navigateToLogin = this.navigateToLogin.bind(this);
     this.navigateToDashboard = this.navigateToDashboard.bind(this);
   }
@@ -52,7 +54,7 @@ export class ApplicationController extends React.Component<Properties, State> {
         this.setState({
           account: account,
           isLoading: false
-        })
+        });
       });
   }
 
@@ -77,6 +79,12 @@ export class ApplicationController extends React.Component<Properties, State> {
     });
   }
 
+  private onLogout() {
+    this.setState({
+      account: Beam.DirectoryEntry.INVALID
+    });
+  }
+
   private navigateToLogin() {
     if(this.state.account.equals(Beam.DirectoryEntry.INVALID)) {
       return <LoginController model={this.props.model.makeLoginModel()}
@@ -86,7 +94,8 @@ export class ApplicationController extends React.Component<Properties, State> {
   }
 
   private navigateToDashboard() {
-    return <div/>;
+    return <DashboardController model={this.props.model.makeDashboardModel()}
+      onLogout={this.onLogout}/>;
   }
 }
 

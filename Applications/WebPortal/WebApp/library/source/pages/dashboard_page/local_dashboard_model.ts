@@ -35,6 +35,10 @@ export class LocalDashboardModel extends DashboardModel {
     return;
   }
 
+  public async logout(): Promise<void> {
+    return;
+  }
+
   private is_loaded: boolean;
   private _account: Beam.DirectoryEntry;
   private _roles: Nexus.AccountRoles;
