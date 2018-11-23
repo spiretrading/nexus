@@ -66,11 +66,9 @@ class TestApp extends React.Component<{}, State> {
     if(newDisplaySize !== this.state.displaySize) {
       this.setState({ displaySize: newDisplaySize });
     }
-    console.log(this.state.displaySize.toString());
   }
 
   private onInput(value: string) {
-    console.log(value);
     this.setState({
       lastNameValue: value
     });

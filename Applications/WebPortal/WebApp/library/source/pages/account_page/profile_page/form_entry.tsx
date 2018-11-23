@@ -6,7 +6,7 @@ interface Properties {
   /** The name of the input field. */
   name: string;
 
-  /** The name of the input field. */
+  /** Determines it the input is editable. */
   readonly?: boolean;
 
   /** Whether the form is rendered vertically or horizontally. */
@@ -18,6 +18,10 @@ interface Properties {
 
 /** Displays an input form for a single item. */
 export class FormEntry extends React.Component<Properties> {
+  public static readonly defaultProps = {
+    readonly: false
+  }
+
   constructor(props: Properties) {
     super(props);
   }
@@ -46,7 +50,7 @@ export class FormEntry extends React.Component<Properties> {
             <div style={FormEntry.STYLE.verticalHeader}>{this.props.name}</div>
             <Padding size={FormEntry.VERTICAL_PADDING}/>
             <div>{this.props.children}</div>
-        </VBoxLayout>);
+          </VBoxLayout>);
       }
     })();
     return (
