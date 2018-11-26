@@ -27,6 +27,7 @@ export class ApplicationController extends React.Component<Properties, State> {
       account: Beam.DirectoryEntry.INVALID,
       isLoading: true
     };
+    this.dashboardModel = null;
     this.onResize = this.onResize.bind(this);
     this.onLogin = this.onLogin.bind(this);
     this.onLogout = this.onLogout.bind(this);
@@ -96,7 +97,7 @@ export class ApplicationController extends React.Component<Properties, State> {
   }
 
   private navigateToDashboard() {
-    if(this.dashboardModel == null) {
+    if(this.dashboardModel === null) {
       this.dashboardModel = this.props.model.makeDashboardModel();
     }
     return <DashboardController model={this.dashboardModel}

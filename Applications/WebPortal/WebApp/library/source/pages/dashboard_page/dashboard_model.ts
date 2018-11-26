@@ -5,6 +5,15 @@ import { AccountModel } from '../account_page';
 /** Base class for the model used by the DashboardPage. */
 export abstract class DashboardModel {
 
+  /** Returns the database of entitlements. */
+  public abstract get entitlementDatabase(): Nexus.EntitlementDatabase;
+
+  /** Returns the database of currencies */
+  public abstract get currencyDatabase(): Nexus.CurrencyDatabase;
+
+  /** Returns the database of markets. */
+  public abstract get marketDatabase(): Nexus.MarketDatabase;
+
   /** The account currently logged in. */
   public abstract get account(): Beam.DirectoryEntry;
 

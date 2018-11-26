@@ -1,3 +1,4 @@
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import { AccountController, AccountModel } from '../account_page';
 import { DashboardModel } from './dashboard_model';
@@ -7,11 +8,11 @@ import { SideMenu } from './side_menu';
 
 interface Properties {
 
-  /** The device's display size. */
-  displaySize: DisplaySize;
-
   /** The model to use. */
   model: DashboardModel;
+
+  /** The device's display size. */
+  displaySize: DisplaySize;
 
   /** Indicates the user has logged out. */
   onLogout?: () => void;
@@ -40,8 +41,11 @@ export class DashboardController extends React.Component<Properties, State> {
     const page = (() => {
       switch(this.state.page) {
         case DashboardController.Page.ACCOUNT:
-          return <AccountController displaySize={this.props.displaySize}
-            model={this.accountModel}/>;
+          return <AccountController
+            entitlements={this.props.model.entitlementDatabase}
+            currencyDatabase={this.props.model.currencyDatabase}
+            marketDatabase={this.props.model.marketDatabase}
+            model={this.accountModel} displaySize={this.props.displaySize}/>;
       }
     })();
     return <DashboardPage roles={this.props.model.roles}

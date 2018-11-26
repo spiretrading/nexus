@@ -14,7 +14,20 @@ export class WebDashboardModel extends DashboardModel {
     super();
     this.serviceClients = serviceClients;
     this.model = new LocalDashboardModel(Beam.DirectoryEntry.INVALID,
-      new Nexus.AccountRoles(0));
+      new Nexus.AccountRoles(0), new Nexus.EntitlementDatabase(),
+      new Nexus.CurrencyDatabase(), new Nexus.MarketDatabase());
+  }
+
+  public get entitlementDatabase(): Nexus.EntitlementDatabase {
+    return this.model.entitlementDatabase;
+  }
+
+  public get currencyDatabase(): Nexus.CurrencyDatabase {
+    return this.model.currencyDatabase;
+  }
+
+  public get marketDatabase(): Nexus.MarketDatabase {
+    return this.model.marketDatabase;
   }
 
   public get account(): Beam.DirectoryEntry {
@@ -33,11 +46,15 @@ export class WebDashboardModel extends DashboardModel {
     if(this.model.isLoaded) {
       return;
     }
+    await this.serviceClients.open();
     const account = await
       this.serviceClients.serviceLocatorClient.loadCurrentAccount();
     const roles = await
       this.serviceClients.administrationClient.loadAccountRoles(account);
-    this.model = new LocalDashboardModel(account, roles);
+    this.model = new LocalDashboardModel(account, roles,
+      this.serviceClients.definitionsClient.entitlementDatabase,
+      this.serviceClients.definitionsClient.currencyDatabase,
+      this.serviceClients.definitionsClient.marketDatabase);
     return this.model.load();
   }
 

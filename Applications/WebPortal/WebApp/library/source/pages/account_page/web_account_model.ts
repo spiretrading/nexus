@@ -1,6 +1,7 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import { AccountModel, LocalAccountModel } from '.';
+import { WebEntitlementsModel } from './entitlements_page';
 
 /** Implements an AccountModel using web services. */
 export class WebAccountModel extends AccountModel {
@@ -22,6 +23,10 @@ export class WebAccountModel extends AccountModel {
 
   public get roles(): Nexus.AccountRoles {
     return this.model.roles;
+  }
+
+  public makeEntitlementsModel(): WebEntitlementsModel {
+    return new WebEntitlementsModel(this.account);
   }
 
   public async load(): Promise<void> {

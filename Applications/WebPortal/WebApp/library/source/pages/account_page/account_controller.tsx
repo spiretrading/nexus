@@ -1,11 +1,22 @@
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as Router from 'react-router-dom';
 import { AccountModel } from './account_model';
 import { AccountPage } from './account_page';
 import { DisplaySize } from '../../display_size';
+import { EntitlementsController, EntitlementsModel } from './entitlements_page';
 import { SubPage } from './sub_page';
 
 interface Properties {
+
+  /** Stores the entitlements to display. */
+  entitlements: Nexus.EntitlementDatabase;
+
+  /** The database of currencies */
+  currencyDatabase: Nexus.CurrencyDatabase;
+
+  /** The set of markets. */
+  marketDatabase: Nexus.MarketDatabase;
 
   /** The URL prefix to match. */
   urlPrefix?: string;
@@ -34,6 +45,7 @@ export class AccountController extends React.Component<Properties, State> {
       isLoaded: false,
       redirect: null,
     };
+    this.entitlementsModel = null;
     this.navigateToProfile = this.navigateToProfile.bind(this);
     this.navigateToEntitlements = this.navigateToEntitlements.bind(this);
     this.onMenuClick = this.onMenuClick.bind(this);
@@ -90,7 +102,14 @@ export class AccountController extends React.Component<Properties, State> {
   }
 
   private navigateToEntitlements() {
-    return <div>Entitlements</div>;
+    if(this.entitlementsModel === null) {
+      this.entitlementsModel = this.props.model.makeEntitlementsModel();
+    }
+    return <EntitlementsController roles={this.props.model.roles}
+      entitlements={this.props.entitlements} model={this.entitlementsModel}
+      currencyDatabase={this.props.currencyDatabase}
+      marketDatabase={this.props.marketDatabase}
+      displaySize={this.props.displaySize}/>;
   }
 
   private onMenuClick(subPage: SubPage) {
@@ -104,4 +123,6 @@ export class AccountController extends React.Component<Properties, State> {
       });
     }
   }
+
+  private entitlementsModel: EntitlementsModel;
 }

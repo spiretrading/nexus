@@ -1,6 +1,7 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import { AccountModel } from './account_model';
+import { LocalEntitlementsModel } from './entitlements_page';
 
 /** Implements an AccountModel locally. */
 export class LocalAccountModel extends AccountModel {
@@ -30,6 +31,10 @@ export class LocalAccountModel extends AccountModel {
       throw Error('Model not loaded.');
     }
     return this._roles;
+  }
+
+  public makeEntitlementsModel(): LocalEntitlementsModel {
+    return new LocalEntitlementsModel(this._account);
   }
 
   public async load(): Promise<void> {
