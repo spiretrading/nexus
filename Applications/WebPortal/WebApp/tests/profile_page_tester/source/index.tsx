@@ -20,6 +20,7 @@ class TestApp extends React.Component<{}, State> {
     };
     this.onScreenResize = this.onScreenResize.bind(this);
     this.onInput = this.onInput.bind(this);
+    this.onRoleClick = this.onRoleClick.bind(this);
   }
 
   public render(): JSX.Element {
@@ -34,7 +35,7 @@ class TestApp extends React.Component<{}, State> {
     <WebPortal.HBoxLayout>
       <WebPortal.Padding size='12px'/>
       <WebPortal.VBoxLayout>
-        <WebPortal.Padding size='20px'/>
+        <WebPortal.Padding size='30px'/>
         <WebPortal.FormEntry name='First Name'
             readonly
             orientation={orientation}>
@@ -43,7 +44,7 @@ class TestApp extends React.Component<{}, State> {
             displaySize={this.state.displaySize}
             disabled/>
         </WebPortal.FormEntry>
-        <WebPortal.Padding size='14px'/>
+        <WebPortal.Padding size='30px'/>
         <WebPortal.FormEntry name='Last Name'
             orientation={orientation}>
           <WebPortal.TextField
@@ -51,13 +52,16 @@ class TestApp extends React.Component<{}, State> {
             value={this.state.lastNameValue}
             onInput={this.onInput}/>
         </WebPortal.FormEntry>
-        <WebPortal.RolesField roles={this.state.someRoles}/>
-        <WebPortal.FormEntry name='Last Name'
+        <WebPortal.Padding size='30px'/>
+        <WebPortal.RolesField roles={this.state.someRoles}
+          onClick={this.onRoleClick}/>
+        <WebPortal.Padding size='30px'/>
+        <WebPortal.FormEntry name='Nickname'
             orientation={orientation}>
           <WebPortal.TextField
             displaySize={this.state.displaySize}
-            value={this.state.lastNameValue}
-            onInput={this.onInput}/>
+            value='Stormcrow'
+            disabled/>
         </WebPortal.FormEntry>
       </WebPortal.VBoxLayout>
       <WebPortal.Padding/>
@@ -83,6 +87,17 @@ class TestApp extends React.Component<{}, State> {
     this.setState({
       lastNameValue: value
     });
+  }
+
+  private onRoleClick(role: Nexus.AccountRoles.Role) {
+    if(this.state.someRoles.test(role)) {
+      this.state.someRoles.unset(role);
+    } else {
+      this.state.someRoles.set(role);
+    }
+    console.log('Some role was changed!' +  role.toString());
+    console.log(this.state.someRoles.toJson());
+    this.forceUpdate();
   }
 }
 

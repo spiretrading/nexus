@@ -8,30 +8,35 @@ export class LocalAccountModel extends AccountModel {
   /** Constructs a LocalAccountModel. */
   constructor(account: Beam.DirectoryEntry, roles: Nexus.AccountRoles) {
     super();
-    this.is_loaded = false;
+    this._isLoaded = false;
     this._account = account;
     this._roles = roles;
   }
 
+  /** Returns true of this model has been loaded. */
+  public get isLoaded(): boolean {
+    return this._isLoaded;
+  }
+
   public get account(): Beam.DirectoryEntry {
-    if(!this.is_loaded) {
+    if(!this.isLoaded) {
       throw Error('Model not loaded.');
     }
     return this._account;
   }
 
   public get roles(): Nexus.AccountRoles {
-    if(!this.is_loaded) {
+    if(!this.isLoaded) {
       throw Error('Model not loaded.');
     }
     return this._roles;
   }
 
   public async load(): Promise<void> {
-    this.is_loaded = true;
+    this._isLoaded = true;
   }
 
-  private is_loaded: boolean;
+  private _isLoaded: boolean;
   private _account: Beam.DirectoryEntry;
   private _roles: Nexus.AccountRoles;
 }

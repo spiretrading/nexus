@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { AccountPage, AccountModel, LocalAccountModel } from '../account_page';
+import { AccountController, AccountModel } from '../account_page';
 import { DashboardModel } from './dashboard_model';
 import { DashboardPage } from './dashboard_page';
 import { DisplaySize } from '../../display_size';
@@ -38,10 +38,11 @@ export class DashboardController extends React.Component<Properties, State> {
       return <div/>;
     }
     const page = (() => {
-      if(this.state.page === DashboardController.Page.ACCOUNT) {
-        return <AccountPage model={this.accountModel}/>
+      switch(this.state.page) {
+        case DashboardController.Page.ACCOUNT:
+          return <AccountController displaySize={this.props.displaySize}
+            model={this.accountModel}/>;
       }
-      return null as JSX.Element;
     })();
     return <DashboardPage roles={this.props.model.roles}
       onSideMenuClick={this.onSideMenuClick}>{page}</DashboardPage>;
@@ -50,8 +51,8 @@ export class DashboardController extends React.Component<Properties, State> {
   public componentWillMount(): void {
     this.props.model.load().then(
       () => {
-        this.accountModel = new LocalAccountModel(this.props.model.account,
-          this.props.model.roles);
+        this.accountModel = this.props.model.makeAccountModel(
+          this.props.model.account);
         this.setState({isLoaded: true});
       });
   }
