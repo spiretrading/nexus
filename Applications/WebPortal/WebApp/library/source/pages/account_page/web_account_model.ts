@@ -26,7 +26,7 @@ export class WebAccountModel extends AccountModel {
   }
 
   public makeEntitlementsModel(): WebEntitlementsModel {
-    return new WebEntitlementsModel(this.account);
+    return new WebEntitlementsModel(this.account, this.serviceClients);
   }
 
   public async load(): Promise<void> {

@@ -28,6 +28,7 @@ interface Properties {
 
 interface State {
   isLoaded: boolean;
+  disabled: boolean;
   selectedEntitlements: Beam.Set<Beam.DirectoryEntry>;
 }
 
@@ -37,9 +38,11 @@ export class EntitlementsController extends React.Component<Properties, State> {
     super(props);
     this.state = {
       isLoaded: false,
+      disabled: true,
       selectedEntitlements: new Beam.Set<Beam.DirectoryEntry>()
     };
     this.onEntitlementClick = this.onEntitlementClick.bind(this);
+    this.onSubmit = this.onSubmit.bind(this);
   }
 
   public render(): JSX.Element {
@@ -49,16 +52,20 @@ export class EntitlementsController extends React.Component<Properties, State> {
     return <EntitlementsPage roles={this.props.roles}
       entitlements={this.props.entitlements}
       checked={this.state.selectedEntitlements}
+      disabled={this.state.disabled}
       currencyDatabase={this.props.currencyDatabase}
       marketDatabase={this.props.marketDatabase}
       displaySize={this.props.displaySize}
-      onEntitlementClick={this.onEntitlementClick}/>;
+      onEntitlementClick={this.onEntitlementClick} onSubmit={this.onSubmit}/>;
   }
 
   public componentWillMount(): void {
     this.props.model.load().then(
       () => {
-        this.setState({isLoaded: true});
+        this.setState({
+          isLoaded: true,
+          selectedEntitlements: this.props.model.entitlements
+        });
       });
   }
 
@@ -68,6 +75,22 @@ export class EntitlementsController extends React.Component<Properties, State> {
     } else {
       this.state.selectedEntitlements.add(entitlement);
     }
-    this.setState({selectedEntitlements: this.state.selectedEntitlements});
+    this.setState({
+      disabled: false,
+      selectedEntitlements: this.state.selectedEntitlements
+    });
+  }
+
+  private async onSubmit(comment: string) {
+    try {
+      this.setState({
+        disabled: true
+      });
+      await this.props.model.submit(comment, this.state.selectedEntitlements);
+      this.setState({
+        disabled: false
+      });
+    } catch(e) {
+    }
   }
 }

@@ -16,6 +16,9 @@ interface Properties {
   /** The set of entitlements that are checked. */
   checked: Beam.Set<Beam.DirectoryEntry>;
 
+  /** Whether the submit button is disabled. */
+  disabled?: boolean;
+
   /** The database of currencies */
   currencyDatabase: Nexus.CurrencyDatabase;
 
@@ -40,12 +43,9 @@ interface Properties {
 /* Displays a list of entitlements. */
 export class EntitlementsPage extends React.Component<Properties> {
   public static readonly defaultProps = {
+    disabled: false,
     onEntitlementClick: () => {},
     onSubmit: () => {}
-  }
-
-  constructor(props: Properties) {
-    super(props);
   }
 
   public render(): JSX.Element {
@@ -65,7 +65,7 @@ export class EntitlementsPage extends React.Component<Properties> {
       return <div>{rows}</div>;
     })();
     return (
-      <HBoxLayout id='Page' width='100%' style={EntitlementsPage.STYLE.page}>
+      <HBoxLayout width='100%' style={EntitlementsPage.STYLE.page}>
         <Padding/>
         <Padding size={EntitlementsPage.DEFAULT_PADDING}/>
         <VBoxLayout>

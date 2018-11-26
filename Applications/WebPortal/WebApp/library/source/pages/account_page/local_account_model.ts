@@ -34,7 +34,8 @@ export class LocalAccountModel extends AccountModel {
   }
 
   public makeEntitlementsModel(): LocalEntitlementsModel {
-    return new LocalEntitlementsModel(this._account);
+    return new LocalEntitlementsModel(this._account,
+      new Beam.Set<Beam.DirectoryEntry>());
   }
 
   public async load(): Promise<void> {

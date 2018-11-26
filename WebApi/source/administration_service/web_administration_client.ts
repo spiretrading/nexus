@@ -1,7 +1,7 @@
 import * as Beam from 'beam';
 import {RiskParameters} from '..';
-import {AccountModificationRequest, AccountRoles, AdministrationClient, Message,
-  RiskModification} from '.';
+import {AccountModificationRequest, AccountRoles, AdministrationClient,
+  EntitlementModification, Message, RiskModification} from '.';
 
 /** Implements the AdministrationClient using web services. */
 export class WebAdministrationClient extends AdministrationClient {
@@ -20,6 +20,51 @@ export class WebAdministrationClient extends AdministrationClient {
           account: account.toJson()
         });
       return AccountRoles.fromJson(response);
+    } catch(e) {
+      throw new Beam.ServiceError(e.toString());
+    }
+  }
+
+  public async loadAccountEntitlements(account: Beam.DirectoryEntry):
+      Promise<Beam.Set<Beam.DirectoryEntry>> {
+    try {
+      let response = await Beam.post(
+        '/api/administration_service/load_account_entitlements',
+        {
+          account: account.toJson()
+        });
+      return Beam.Set.fromJson(Beam.DirectoryEntry, response);
+    } catch(e) {
+      throw new Beam.ServiceError(e.toString());
+    }
+  }
+
+  public async loadEntitlementModification(id: number):
+      Promise<EntitlementModification> {
+    try {
+      let response = await Beam.post(
+        '/api/administration_service/load_entitlement_modification',
+        {
+          id: id
+        });
+      return EntitlementModification.fromJson(response);
+    } catch(e) {
+      throw new Beam.ServiceError(e.toString());
+    }
+  }
+
+  public async submitEntitlementModificationRequest(
+      account: Beam.DirectoryEntry, modification: EntitlementModification,
+      comment: Message): Promise<AccountModificationRequest> {
+    try {
+      let response = await Beam.post(
+        '/api/administration_service/submit_entitlement_modification_request',
+        {
+          account: account.toJson(),
+          modification: modification.toJson(),
+          comment: comment.toJson()
+        });
+      return AccountModificationRequest.fromJson(response);
     } catch(e) {
       throw new Beam.ServiceError(e.toString());
     }
