@@ -3,8 +3,11 @@ import * as Beam from 'beam';
 /** Enumerates the types of market data. */
 export enum MarketDataType {
 
+  /** Represents no data. */
+  NONE = 0,
+
   /** Represents TimeAndSale data. */
-  TIME_AND_SALE = 0,
+  TIME_AND_SALE,
 
   /** Represents BookQuote data. */
   BOOK_QUOTE,
