@@ -1,3 +1,4 @@
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
@@ -5,6 +6,7 @@ import * as WebPortal from 'web_portal';
 interface State {
   displaySize: WebPortal.DisplaySize;
   lastNameValue: string;
+  someRoles: Nexus.AccountRoles;
 }
 
 /**  Displays a testing application. */
@@ -13,7 +15,8 @@ class TestApp extends React.Component<{}, State> {
     super(props);
     this.state = {
       displaySize: WebPortal.DisplaySize.getDisplaySize(),
-      lastNameValue: 'Grey'
+      lastNameValue: 'Grey',
+      someRoles: new Nexus.AccountRoles()
     };
     this.onScreenResize = this.onScreenResize.bind(this);
     this.onInput = this.onInput.bind(this);
@@ -41,6 +44,14 @@ class TestApp extends React.Component<{}, State> {
             disabled/>
         </WebPortal.FormEntry>
         <WebPortal.Padding size='14px'/>
+        <WebPortal.FormEntry name='Last Name'
+            orientation={orientation}>
+          <WebPortal.TextField
+            displaySize={this.state.displaySize}
+            value={this.state.lastNameValue}
+            onInput={this.onInput}/>
+        </WebPortal.FormEntry>
+        <WebPortal.RolesField roles={this.state.someRoles}/>
         <WebPortal.FormEntry name='Last Name'
             orientation={orientation}>
           <WebPortal.TextField
