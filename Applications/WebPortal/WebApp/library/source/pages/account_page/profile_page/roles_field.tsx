@@ -47,9 +47,10 @@ export class RolesField extends React.Component<Properties, State> {
     return (
       <HBoxLayout width={RolesField.COMPONENT_WIDTH}
           height={RolesField.IMAGE_SIZE}>
-        <div className={css(RolesField.STYLE.imageBox)}>
+        <div className={css(RolesField.STYLE.iconBox)}>
           <img src={`resources/account/trader-${
               getIconColour(Nexus.AccountRoles.Role.TRADER)}.svg`}
+            className={css(RolesField.STYLE.icon)}
             width={RolesField.IMAGE_SIZE}
             height={RolesField.IMAGE_SIZE}
             onClick={() =>
@@ -70,9 +71,10 @@ export class RolesField extends React.Component<Properties, State> {
           </Transition>
         </div>
         <Padding size={RolesField.IMAGE_PADDING}/>
-        <div className={css(RolesField.STYLE.imageBox)}>
+        <div className={css(RolesField.STYLE.iconBox)}>
           <img src={`resources/account/manager-${
               getIconColour(Nexus.AccountRoles.Role.MANAGER)}.svg`}
+            className={css(RolesField.STYLE.icon)}
             width={RolesField.IMAGE_SIZE}
             height={RolesField.IMAGE_SIZE}
             onClick={() =>
@@ -93,9 +95,10 @@ export class RolesField extends React.Component<Properties, State> {
           </Transition>
         </div>
         <Padding size={RolesField.IMAGE_PADDING}/>
-        <div className={css(RolesField.STYLE.imageBox)}>
+        <div className={css(RolesField.STYLE.iconBox)}>
           <img src={`resources/account/admin-${
               getIconColour(Nexus.AccountRoles.Role.ADMINISTRATOR)}.svg`}
+            className={css(RolesField.STYLE.icon)}
             width={RolesField.IMAGE_SIZE}
             height={RolesField.IMAGE_SIZE}
             onClick={() =>
@@ -116,9 +119,10 @@ export class RolesField extends React.Component<Properties, State> {
           </Transition>
         </div>
         <Padding size={RolesField.IMAGE_PADDING}/>
-        <div className={css(RolesField.STYLE.imageBox)}>
+        <div className={css(RolesField.STYLE.iconBox)}>
           <img src={`resources/account/service-${
               getIconColour(Nexus.AccountRoles.Role.SERVICE)}.svg`}
+            className={css(RolesField.STYLE.icon)}
             width={RolesField.IMAGE_SIZE}
             height={RolesField.IMAGE_SIZE}
             onClick={() =>
@@ -187,8 +191,11 @@ export class RolesField extends React.Component<Properties, State> {
     }
   });
   private static STYLE = StyleSheet.create({
-    imageBox: {
+    iconBox: {
       position: 'relative' as 'relative'
+    },
+    icon: {
+      cursor: 'pointer'
     },
     animationBase: {
       opacity: 0,
