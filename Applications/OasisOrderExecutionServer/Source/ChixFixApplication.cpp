@@ -58,20 +58,26 @@ const Order& ChixFixApplication::Submit(const OrderInfo& info) {
       if(anonymousTag.is_initialized()) {
         newOrderSingle->setField(ANONYMOUS_TAG, *anonymousTag);
       }
-      bool hasDestination = false;
-      for(auto& tag : info.m_fields.m_additionalFields) {
-        if(tag.GetKey() == FIX::FIELD::ExDestination) {
-          if(auto value = boost::get<std::string>(&tag.GetValue())) {
-            FIX::ExDestination destination(*value);
-            newOrderSingle->getHeader().setField(destination);
-            if(*value == "SMRTXDARKNR") {
-              newOrderSingle->setField(ANONYMOUS_TAG, "Y");
+      auto hasDestination = false;
+      if(info.m_fields.m_destination == DefaultDestinations::TSX()) {
+        auto destination = FIX::ExDestination("SMRTX");
+        newOrderSingle->getHeader().setField(destination);
+        hasDestination = true;
+      } else {
+        for(auto& tag : info.m_fields.m_additionalFields) {
+          if(tag.GetKey() == FIX::FIELD::ExDestination) {
+            if(auto value = boost::get<std::string>(&tag.GetValue())) {
+              auto destination = FIX::ExDestination(*value);
+              newOrderSingle->getHeader().setField(destination);
+              if(*value == "SMRTXDARKNR") {
+                newOrderSingle->setField(ANONYMOUS_TAG, "Y");
+              }
+              hasDestination = true;
+              break;
+            } else {
+              BOOST_THROW_EXCEPTION(FixOrderRejectedException(
+                "Invalid value for tag 100 (ExDestination)."));
             }
-            hasDestination = true;
-            break;
-          } else {
-            BOOST_THROW_EXCEPTION(FixOrderRejectedException(
-              "Invalid value for tag 100 (ExDestination)."));
           }
         }
       }
@@ -83,28 +89,30 @@ const Order& ChixFixApplication::Submit(const OrderInfo& info) {
       }
       if(!hasDestination) {
         if(info.m_fields.m_type == OrderType::PEGGED) {
-          FIX::TargetSubID route;
-          if(info.m_fields.m_destination == DefaultDestinations::CHIX()) {
-            route = FIX::TargetSubID("CHIX");
-          } else if(info.m_fields.m_destination ==
-              DefaultDestinations::CX2()) {
-            route = FIX::TargetSubID("CX2");
-          } else {
-            BOOST_THROW_EXCEPTION(
-              FixOrderRejectedException("Destination not supported."));
-          }
+          auto route = [&] {
+            if(info.m_fields.m_destination == DefaultDestinations::CHIX()) {
+              return FIX::TargetSubID("CHIX");
+            } else if(info.m_fields.m_destination ==
+                DefaultDestinations::CX2()) {
+              return FIX::TargetSubID("CX2");
+            } else {
+              BOOST_THROW_EXCEPTION(
+                FixOrderRejectedException("Destination not supported."));
+            }
+          }();
           newOrderSingle->getHeader().setField(route);
         } else {
-          FIX::TargetSubID route;
-          if(info.m_fields.m_destination == DefaultDestinations::CHIX()) {
-            route = FIX::TargetSubID("SMRTCHIX");
-          } else if(info.m_fields.m_destination ==
-              DefaultDestinations::CX2()) {
-            route = FIX::TargetSubID("SMRTCX2");
-          } else {
-            BOOST_THROW_EXCEPTION(
-              FixOrderRejectedException("Destination not supported."));
-          }
+          auto route = [&] {
+            if(info.m_fields.m_destination == DefaultDestinations::CHIX()) {
+              return FIX::TargetSubID("SMRTCHIX");
+            } else if(info.m_fields.m_destination ==
+                DefaultDestinations::CX2()) {
+              return FIX::TargetSubID("SMRTCX2");
+            } else {
+              BOOST_THROW_EXCEPTION(
+                FixOrderRejectedException("Destination not supported."));
+            }
+          }();
           newOrderSingle->getHeader().setField(route);
         }
       }
