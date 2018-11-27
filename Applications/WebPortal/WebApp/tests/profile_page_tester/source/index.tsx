@@ -95,7 +95,7 @@ class TestApp extends React.Component<{}, State> {
     } else {
       this.state.someRoles.set(role);
     }
-    this.forceUpdate();
+    this.setState({someRoles: this.state.someRoles});
   }
 }
 
