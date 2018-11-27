@@ -27,8 +27,6 @@ export class RoleIcon extends React.Component<Properties, State> {
     };
     this.showToolTip = this.showToolTip.bind(this);
     this.hideToolTip = this.hideToolTip.bind(this);
-    this.getSource = this.getSource.bind(this);
-    this.getText = this.getText.bind(this);
   }
 
   public render(): JSX.Element {
@@ -38,29 +36,21 @@ export class RoleIcon extends React.Component<Properties, State> {
       }
       return 'grey';
     })();
-    const source = (() => {
-      return this.getSource(this.props.role);
-    })();
-    const tooltipText = (() => {
-      return this.getText(this.props.role);
-    })();
     return (
       <div style={RoleIcon.STYLE.iconBox}>
-        <img src={`${source}${iconColor}.svg`}
+        <img src={`${this.getSource(this.props.role)}${iconColor}.svg`}
           style={RoleIcon.STYLE.icon}
           width={RoleIcon.IMAGE_SIZE}
           height={RoleIcon.IMAGE_SIZE}
           onClick={this.props.onClick}
-          onMouseEnter={() =>
-            this.showToolTip()}
-          onMouseLeave={() =>
-            this.hideToolTip()}/>
+          onMouseEnter={this.showToolTip}
+          onMouseLeave={this.hideToolTip}/>
         <Transition in={this.state.showToolTip} timeout={RoleIcon.TIMEOUT}>
           {(state) => (
             <div style={{...RoleIcon.STYLE.animationBase,
                   ...(RoleIcon.ANIMATION_STYLE as any)[state]}}>
               <div style={RoleIcon.STYLE.imageTooltip}>
-                {tooltipText}
+                {this.getText(this.props.role)}
               </div>
             </div>)}
         </Transition>

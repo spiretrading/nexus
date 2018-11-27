@@ -18,28 +18,21 @@ interface Properties {
 export class RolesField extends React.Component<Properties, {}> {
 
   public render(): JSX.Element {
+    const Icon = (props: any) => {
+      return (<RoleIcon role={props.role}
+        isSet={this.props.roles.test(props.role)}
+        onClick={() => this.props.onClick(props.role)}/>);
+    }
     return (
       <HBoxLayout width={RolesField.COMPONENT_WIDTH}
           height={RolesField.IMAGE_SIZE}>
-        <RoleIcon role={Nexus.AccountRoles.Role.TRADER}
-          isSet={this.props.roles.test(Nexus.AccountRoles.Role.TRADER)}
-          onClick={() =>
-            this.props.onClick(Nexus.AccountRoles.Role.TRADER)}/>
+        <Icon role={Nexus.AccountRoles.Role.TRADER}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
-        <RoleIcon role={Nexus.AccountRoles.Role.MANAGER}
-          isSet={this.props.roles.test(Nexus.AccountRoles.Role.MANAGER)}
-          onClick={() =>
-            this.props.onClick(Nexus.AccountRoles.Role.MANAGER)}/>
+        <Icon role={Nexus.AccountRoles.Role.MANAGER}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
-        <RoleIcon role={Nexus.AccountRoles.Role.ADMINISTRATOR}
-          isSet={this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)}
-          onClick={() =>
-            this.props.onClick(Nexus.AccountRoles.Role.ADMINISTRATOR)}/>
+        <Icon role={Nexus.AccountRoles.Role.ADMINISTRATOR}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
-        <RoleIcon role={Nexus.AccountRoles.Role.SERVICE}
-          isSet={this.props.roles.test(Nexus.AccountRoles.Role.SERVICE)}
-          onClick={() =>
-            this.props.onClick(Nexus.AccountRoles.Role.SERVICE)}/>
+        <Icon role={Nexus.AccountRoles.Role.SERVICE}/>
       </HBoxLayout>);
   }
 
