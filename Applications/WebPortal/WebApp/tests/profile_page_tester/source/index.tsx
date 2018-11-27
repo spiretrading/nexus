@@ -1,3 +1,4 @@
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
@@ -5,6 +6,7 @@ import * as WebPortal from 'web_portal';
 interface State {
   displaySize: WebPortal.DisplaySize;
   lastNameValue: string;
+  someRoles: Nexus.AccountRoles;
 }
 
 /**  Displays a testing application. */
@@ -13,10 +15,12 @@ class TestApp extends React.Component<{}, State> {
     super(props);
     this.state = {
       displaySize: WebPortal.DisplaySize.getDisplaySize(),
-      lastNameValue: 'Grey'
+      lastNameValue: 'Grey',
+      someRoles: new Nexus.AccountRoles()
     };
     this.onScreenResize = this.onScreenResize.bind(this);
-    this.onInput = this.onInput.bind(this);
+    this.onTextInput = this.onTextInput.bind(this);
+    this.onRoleClick = this.onRoleClick.bind(this);
   }
 
   public render(): JSX.Element {
@@ -31,7 +35,7 @@ class TestApp extends React.Component<{}, State> {
     <WebPortal.HBoxLayout>
       <WebPortal.Padding size='12px'/>
       <WebPortal.VBoxLayout>
-        <WebPortal.Padding size='20px'/>
+        <WebPortal.Padding size='30px'/>
         <WebPortal.FormEntry name='First Name'
             readonly
             orientation={orientation}>
@@ -40,13 +44,24 @@ class TestApp extends React.Component<{}, State> {
             displaySize={this.state.displaySize}
             disabled/>
         </WebPortal.FormEntry>
-        <WebPortal.Padding size='14px'/>
+        <WebPortal.Padding size='30px'/>
         <WebPortal.FormEntry name='Last Name'
             orientation={orientation}>
           <WebPortal.TextField
             displaySize={this.state.displaySize}
             value={this.state.lastNameValue}
-            onInput={this.onInput}/>
+            onInput={this.onTextInput}/>
+        </WebPortal.FormEntry>
+        <WebPortal.Padding size='30px'/>
+        <WebPortal.RolesField roles={this.state.someRoles}
+          onClick={this.onRoleClick}/>
+        <WebPortal.Padding size='30px'/>
+        <WebPortal.FormEntry name='Nickname'
+            orientation={orientation}>
+          <WebPortal.TextField
+            displaySize={this.state.displaySize}
+            value='Stormcrow'
+            disabled/>
         </WebPortal.FormEntry>
       </WebPortal.VBoxLayout>
       <WebPortal.Padding/>
@@ -68,10 +83,19 @@ class TestApp extends React.Component<{}, State> {
     }
   }
 
-  private onInput(value: string) {
+  private onTextInput(value: string) {
     this.setState({
       lastNameValue: value
     });
+  }
+
+  private onRoleClick(role: Nexus.AccountRoles.Role) {
+    if(this.state.someRoles.test(role)) {
+      this.state.someRoles.unset(role);
+    } else {
+      this.state.someRoles.set(role);
+    }
+    this.setState({someRoles: this.state.someRoles});
   }
 }
 
