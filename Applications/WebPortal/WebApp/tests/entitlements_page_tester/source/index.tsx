@@ -51,7 +51,7 @@ class TestApp extends React.Component<{}, State> {
           checked={this.state.checkedDB}
           currencyDatabase={this.state.currencyDB}
           onEntitlementClick={this.toggleCheckMark}
-          submissionStatus={this.state.displayedStatus}
+          //submissionStatus={this.state.displayedStatus}
           onSubmit={this.commentsSubmitted}/>
         <div className={css(TestApp.STYLE.testingComponents)}>
           <button tabIndex={-1}
