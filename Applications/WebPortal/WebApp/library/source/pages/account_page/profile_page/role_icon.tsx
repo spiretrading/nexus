@@ -5,7 +5,7 @@ import { Transition } from 'react-transition-group';
 interface Properties {
 
   /** The role the icon respresents */
-  icon: Nexus.AccountRoles.Role;
+  role: Nexus.AccountRoles.Role;
 
   /** Determines if the role is set of not. */
   isSet: boolean;
@@ -19,7 +19,7 @@ interface State {
 }
 
 /** Displays a panel of icons highlighting an account's roles. */
-export class RolesIcon extends React.Component<Properties, State> {
+export class RoleIcon extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
@@ -27,42 +27,45 @@ export class RolesIcon extends React.Component<Properties, State> {
     };
     this.showToolTip = this.showToolTip.bind(this);
     this.hideToolTip = this.hideToolTip.bind(this);
-    this.setSource = this.setSource.bind(this);
-    this.setText = this.setText.bind(this);
-    this.setSource(this.props.icon);
-    this.setText(this.props.icon);
+    this.getSource = this.getSource.bind(this);
+    this.getText = this.getText.bind(this);
   }
 
   public render(): JSX.Element {
-    const getIconColour = () => {
+    const iconColor = (() => {
       if(this.props.isSet) {
         return 'purple';
       }
       return 'grey';
-    };
+    })();
+    const source = (() => {
+      return this.getSource(this.props.role);
+    })();
+    const tooltipText = (() => {
+      return this.getText(this.props.role);
+    })();
     return (
-        <div style={RolesIcon.STYLE.iconBox}>
-          <img src={`${this.source}${getIconColour()}.svg`}
-            style={RolesIcon.STYLE.icon}
-            width={RolesIcon.IMAGE_SIZE}
-            height={RolesIcon.IMAGE_SIZE}
-            onClick={() =>
-              this.props.onClick()}
-            onMouseEnter={() =>
-              this.showToolTip()}
-            onMouseLeave={() =>
-              this.hideToolTip()}/>
-          <Transition in={this.state.showToolTip}
-              timeout={RolesIcon.TIMEOUT}>
-            {(state) => (
-              <div style={{...RolesIcon.STYLE.animationBase,
-                    ...(RolesIcon.ANIMATION_STYLE as any)[state]}}>
-                  <div style={RolesIcon.STYLE.imageTooltip}>
-                    {this.tooltipText}
-                  </div>
-              </div>)}
-          </Transition>
-        </div>);
+      <div style={RoleIcon.STYLE.iconBox}>
+        <img src={`${source}${iconColor}.svg`}
+          style={RoleIcon.STYLE.icon}
+          width={RoleIcon.IMAGE_SIZE}
+          height={RoleIcon.IMAGE_SIZE}
+          onClick={this.props.onClick}
+          onMouseEnter={() =>
+            this.showToolTip()}
+          onMouseLeave={() =>
+            this.hideToolTip()}/>
+        <Transition in={this.state.showToolTip}
+            timeout={RoleIcon.TIMEOUT}>
+          {(state) => (
+            <div style={{...RoleIcon.STYLE.animationBase,
+                  ...(RoleIcon.ANIMATION_STYLE as any)[state]}}>
+                <div style={RoleIcon.STYLE.imageTooltip}>
+                  {tooltipText}
+                </div>
+            </div>)}
+        </Transition>
+      </div>);
   }
 
   private showToolTip() {
@@ -73,37 +76,29 @@ export class RolesIcon extends React.Component<Properties, State> {
     this.setState({ showToolTip: false });
   }
 
-  private setText(role: Nexus.AccountRoles.Role) {
+  private getText(role: Nexus.AccountRoles.Role) {
     switch (role) {
       case Nexus.AccountRoles.Role.TRADER:
-        this.tooltipText = RolesIcon.TRADER_TOOLTIP_TEXT;
-        break;
+        return RoleIcon.TRADER_TOOLTIP_TEXT;
       case Nexus.AccountRoles.Role.MANAGER:
-        this.tooltipText = RolesIcon.MANAGER_TOOLTIP_TEXT;
-        break;
+        return RoleIcon.MANAGER_TOOLTIP_TEXT;
       case Nexus.AccountRoles.Role.ADMINISTRATOR:
-        this.tooltipText = RolesIcon.ADMINISTRATOR_TOOLTIP_TEXT;
-        break;
+        return RoleIcon.ADMINISTRATOR_TOOLTIP_TEXT;
       case Nexus.AccountRoles.Role.SERVICE:
-        this.tooltipText = RolesIcon.SERVICE_TOOLTIP_TEXT;
-        break;
+        return RoleIcon.SERVICE_TOOLTIP_TEXT;
     }
   }
 
-  private setSource(role: Nexus.AccountRoles.Role) {
+  private getSource(role: Nexus.AccountRoles.Role) {
     switch (role) {
       case Nexus.AccountRoles.Role.TRADER:
-        this.source = 'resources/account/trader-';
-        break;
+        return 'resources/account/trader-';
       case Nexus.AccountRoles.Role.MANAGER:
-        this.source = 'resources/account/manager-';
-        break;
+        return 'resources/account/manager-';
       case Nexus.AccountRoles.Role.ADMINISTRATOR:
-        this.source = 'resources/account/admin-';
-        break;
+        return 'resources/account/admin-';
       case Nexus.AccountRoles.Role.SERVICE:
-        this.source = 'resources/account/service-';
-        break;
+        return 'resources/account/service-';
     }
   }
 
@@ -146,12 +141,10 @@ export class RolesIcon extends React.Component<Properties, State> {
       boxShadow: '0px 0px 2px #00000064'
     }
   };
-  private source = '';
-  private tooltipText = '';
   private static readonly IMAGE_SIZE = '20px';
   private static readonly TIMEOUT = 100;
   private static readonly TRADER_TOOLTIP_TEXT = 'Trader';
-  private static readonly MANAGER_TOOLTIP_TEXT  = 'Manager';
-  private static readonly ADMINISTRATOR_TOOLTIP_TEXT  = 'Admin';
+  private static readonly MANAGER_TOOLTIP_TEXT = 'Manager';
+  private static readonly ADMINISTRATOR_TOOLTIP_TEXT = 'Admin';
   private static readonly SERVICE_TOOLTIP_TEXT = 'Service';
 }

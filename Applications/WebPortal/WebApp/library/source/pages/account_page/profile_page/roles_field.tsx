@@ -2,7 +2,7 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
 import { HBoxLayout, Padding } from '../../..';
-import { RolesIcon } from './role_icon';
+import { RoleIcon } from './role_icon';
 
 interface Properties {
 
@@ -17,34 +17,30 @@ interface Properties {
 
 /** Displays a panel of icons highlighting an account's roles. */
 export class RolesField extends React.Component<Properties, {}> {
-  constructor(props: Properties) {
-    super(props);
-  }
 
   public render(): JSX.Element {
     return (
       <HBoxLayout width={RolesField.COMPONENT_WIDTH}
           height={RolesField.IMAGE_SIZE}>
-        <RolesIcon icon = {Nexus.AccountRoles.Role.TRADER}
-          isSet = {this.props.roles.test(Nexus.AccountRoles.Role.TRADER)}
+        <RoleIcon role={Nexus.AccountRoles.Role.TRADER}
+          isSet={this.props.roles.test(Nexus.AccountRoles.Role.TRADER)}
           onClick={() =>
-              this.props.onClick(Nexus.AccountRoles.Role.TRADER)}/>
+            this.props.onClick(Nexus.AccountRoles.Role.TRADER)}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
-        <RolesIcon icon = {Nexus.AccountRoles.Role.MANAGER}
-          isSet = {this.props.roles.test(Nexus.AccountRoles.Role.MANAGER)}
+        <RoleIcon role={Nexus.AccountRoles.Role.MANAGER}
+          isSet={this.props.roles.test(Nexus.AccountRoles.Role.MANAGER)}
           onClick={() =>
-              this.props.onClick(Nexus.AccountRoles.Role.MANAGER)}/>
+            this.props.onClick(Nexus.AccountRoles.Role.MANAGER)}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
-        <RolesIcon icon={Nexus.AccountRoles.Role.ADMINISTRATOR}
-          isSet={
-            this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)}
+        <RoleIcon role={Nexus.AccountRoles.Role.ADMINISTRATOR}
+          isSet={this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)}
           onClick={() =>
-              this.props.onClick(Nexus.AccountRoles.Role.ADMINISTRATOR)}/>
+            this.props.onClick(Nexus.AccountRoles.Role.ADMINISTRATOR)}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
-        <RolesIcon icon = {Nexus.AccountRoles.Role.SERVICE}
-          isSet = {this.props.roles.test(Nexus.AccountRoles.Role.SERVICE)}
+        <RoleIcon role={Nexus.AccountRoles.Role.SERVICE}
+          isSet={this.props.roles.test(Nexus.AccountRoles.Role.SERVICE)}
           onClick={() =>
-              this.props.onClick(Nexus.AccountRoles.Role.SERVICE)}/>
+            this.props.onClick(Nexus.AccountRoles.Role.SERVICE)}/>
       </HBoxLayout>);
   }
 
