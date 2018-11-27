@@ -1,4 +1,4 @@
-import {Currency, CurrencyDatabase} from '.';
+import { Currency, CurrencyDatabase } from '.';
 
 /** Builds a CurrencyDatabase containing a set of common currencies. */
 export function buildDefaultCurrencyDatabase(): CurrencyDatabase {

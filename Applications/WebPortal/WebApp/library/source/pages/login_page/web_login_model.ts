@@ -1,11 +1,11 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
-import {LoginPageModel} from './login_page_model';
+import { LoginModel } from './login_model';
 
-/** Implements the LoginPageModel using Nexus service clients. */
-export class WebLoginPageModel extends LoginPageModel {
+/** Implements the LoginModel using Nexus service clients. */
+export class WebLoginModel extends LoginModel {
 
-  /** Constructs a WebLoginPageModel.
+  /** Constructs a WebLoginModel.
    * @param serviceClients - The service clients to log into.
    */
   constructor(serviceClients: Nexus.ServiceClients) {

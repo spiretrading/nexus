@@ -1,4 +1,4 @@
-import {css, StyleSheet} from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 
@@ -23,7 +23,7 @@ export class SubmitButton extends React.Component<Properties> {
   
   public render(): JSX.Element {
     const buttonText = (() => {
-      if(this.props.roles.isSet(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
+      if(this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
         return 'Save Changes';
       }
       return 'Submit Request';

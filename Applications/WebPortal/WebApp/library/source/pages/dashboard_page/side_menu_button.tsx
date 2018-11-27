@@ -1,6 +1,6 @@
-import {css, StyleSheet} from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
-import {Center, HBoxLayout, Padding, VBoxLayout} from '../..';
+import { Center, HBoxLayout, Padding, VBoxLayout } from '../..';
 
 interface Properties {
 
@@ -10,7 +10,7 @@ interface Properties {
   /** The icon to display. */
   icon: string;
 
-  /** The action to perform. */
+  /** Indicates the buttom was clicked. */
   onClick?: () => void;
 }
 
@@ -18,18 +18,15 @@ interface Properties {
 export class SideMenuButton extends React.Component<Properties> {
   public render(): JSX.Element {
     return (
-      <button onClick={this.props.onClick} className={
-          css(SideMenuButton.STYLE.button)}>
-        <HBoxLayout className={
-            css(SideMenuButton.STYLE.buttonContents)}>
+      <button onClick={this.props.onClick}
+          className={css(SideMenuButton.DYNAMIC_STYLES.button)}>
+        <HBoxLayout style={SideMenuButton.STYLES.buttonContents}>
           <Padding size='18px'/>
           <Center width='20px' height='40px'>
-            <img className={css(SideMenuButton.STYLE.img)}
-              src={this.props.icon}/>
+            <img width='20px' height='20px' src={this.props.icon}/>
           </Center>
           <Padding size='20px'/>
-          <VBoxLayout height='40px'
-              className={css(SideMenuButton.STYLE.buttonText)}>
+          <VBoxLayout height='40px' style={SideMenuButton.STYLES.buttonText}>
             <Padding/>
             {this.props.label}
             <Padding/>
@@ -37,7 +34,21 @@ export class SideMenuButton extends React.Component<Properties> {
         </HBoxLayout>
       </button>);
   }
-  private static STYLE = StyleSheet.create({
+
+  private static readonly STYLES = {
+    buttonContents: {
+      width: '100%',
+      height: '40px',
+      backgroundColor: 'inherit'
+    },
+    buttonText: {
+      color: 'white',
+      font: 'inherit',
+      lineHeight: '20px'
+    }
+  }
+
+  private static readonly DYNAMIC_STYLES = StyleSheet.create({
     button: {
       width: '200px',
       height: '40px',
@@ -52,20 +63,6 @@ export class SideMenuButton extends React.Component<Properties> {
         cursor: 'pointer',
         color: 'blue'
       }
-    },
-    buttonContents: {
-      width: '100%',
-      height: '40px',
-      backgroundColor: 'inherit'
-    },
-    buttonText: {
-      color: 'white',
-      font: 'inherit',
-      lineHeight: '20px'
-    },
-    img: {
-      width: '20px',
-      height: '20px'
     }
   });
 }

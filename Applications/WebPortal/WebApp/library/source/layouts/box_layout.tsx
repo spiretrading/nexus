@@ -82,11 +82,11 @@ export class BoxLayout extends React.Component<Properties> {
       flexDirection: direction,
       flexBasis: 'auto'
     } as any;
-    if(this.props.width !== '') {
-      innerStyle.width = this.props.width;
+    if(outerStyle.width) {
+      innerStyle.width = outerStyle.width;
       if(this.props.orientation === BoxOrientation.HORIZONTAL) {
-        if(typeof(this.props.width) === 'string' &&
-            this.props.width.endsWith('%')) {
+        if(typeof(outerStyle.width) === 'string' &&
+            outerStyle.width.endsWith('%')) {
           innerStyle.flexGrow = 1;
           innerStyle.flexShrink = 1;
         } else {
@@ -101,11 +101,11 @@ export class BoxLayout extends React.Component<Properties> {
         innerStyle.flexShrink = 1;
       }
     }
-    if(this.props.height !== '') {
-      innerStyle.height = this.props.height;
+    if(outerStyle.height) {
+      innerStyle.height = outerStyle.height;
       if(this.props.orientation === BoxOrientation.VERTICAL) {
-        if(typeof(this.props.width) === 'string' &&
-            this.props.width.endsWith('%')) {
+        if(typeof(outerStyle.height) === 'string' &&
+            outerStyle.height.endsWith('%')) {
           innerStyle.flexGrow = 1;
           innerStyle.flexShrink = 1;
         } else {

@@ -1,8 +1,7 @@
 import * as Beam from 'beam';
-import * as Nexus from 'nexus';
 
 /** Provides the connectivity needed by the LoginPage to login a user. */
-export abstract class LoginPageModel {
+export abstract class LoginModel {
 
   /** Returns the account currently logged in. */
   public abstract get account(): Beam.DirectoryEntry;

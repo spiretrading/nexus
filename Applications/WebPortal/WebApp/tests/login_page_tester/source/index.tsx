@@ -1,50 +1,48 @@
-import {css, StyleSheet} from 'aphrodite';
 import * as Beam from 'beam';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
-const model = new WebPortal.LocalLoginPageModel();
-
 /**  Displays a testing application for the login page. */
-class TestApp extends React.Component<{}> {
+class TestApp extends React.Component {
   constructor(props: {}) {
     super(props);
-    this.state = {
-      rejectMessage: ''
-    };
+    this.model = new WebPortal.LocalLoginModel();
     this.onLogin = this.onLogin.bind(this);
   }
 
   public render(): JSX.Element {
     return (
       <WebPortal.VBoxLayout width='100%' height='100%'>
-        <WebPortal.LoginPage model={model} onLogin={this.onLogin}/>
-        <div className={css(TestApp.STYLE.testingComponents)}>
-        <button tabIndex={-1} onClick={() => model.accept()}>
-          Accept
-        </button>
-        <button tabIndex={-1} onClick={
-            () => model.reject('Incorrect username or password')}>
-          Reject: Invalid Username/ Password
-        </button>
-        <button tabIndex={-1} onClick={() => model.reject('Server error')}>
-          Reject - Server error
-        </button>
+        <WebPortal.LoginController model={this.model} onLogin={this.onLogin}/>
+        <div style={TestApp.STYLE}>
+          <button tabIndex={-1} onClick={() => this.model.accept()}>
+            Accept
+          </button>
+          <button tabIndex={-1} onClick={
+              () => this.model.reject('Incorrect username or password')}>
+            Reject: Invalid Username/ Password
+          </button>
+          <button tabIndex={-1}
+              onClick={() => this.model.reject('Server error')}>
+            Reject - Server error
+          </button>
         </div>
       </WebPortal.VBoxLayout>);
   }
-  private static STYLE = StyleSheet.create({
-    testingComponents: {
-      position: 'fixed' as 'fixed',
-      top: 0,
-      left: 0,
-      zIndex: 1
-    }
-  });
 
   private onLogin(account: Beam.DirectoryEntry) {
     console.log('Login with account: ', account)
   }
+
+  private static readonly STYLE = {
+    position: 'fixed' as 'fixed',
+    top: 0,
+    left: 0,
+    zIndex: 1
+  };
+
+  model: WebPortal.LocalLoginModel;
 }
+
 ReactDOM.render(<TestApp/>, document.getElementById('main'));

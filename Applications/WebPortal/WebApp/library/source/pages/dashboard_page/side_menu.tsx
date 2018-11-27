@@ -1,8 +1,7 @@
-import {css, StyleSheet} from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import {Center, HBoxLayout, Padding, VBoxLayout} from '../..';
-import {SideMenuButton} from './side_menu_button';
+import {Padding, VBoxLayout} from '../..';
+import { SideMenuButton } from './side_menu_button';
 
 interface Properties {
 
@@ -11,62 +10,66 @@ interface Properties {
    */
   roles: Nexus.AccountRoles;
 
-  /** Indicates the Profile menu item was clicked. */
-  onProfileClick?: () => void;
-
-  /** Indicates the Accounts menu item was clicked. */
-  onAccountsClick?: () => void;
-
-  /** Indicates the Portfolio menu item was clicked. */
-  onPortfolioClick?: () => void;
-
-  /** Indicates the Request History menu item was clicked. */
-  onRequestHistoryClick?: () => void;
-
-  /** Indicates the Sign Out menu item was clicked. */
-  onSignOutClick?: () => void;
-}
-
-interface MenuButtonProps {
-  iconSrc: string;
-  text: string;
-  onClick: () => void;
+  /** Indicates a menu item was clicked. */
+  onClick?: (item: SideMenu.Item) => void;
 }
 
 /** Display's the dashboard's side menu. */
 export class SideMenu extends React.Component<Properties> {
   public static defaultProps = {
-    onProfileClick: () => {},
-    onAccountsClick: () => {},
-    onPortfolioClick: () => {},
-    onRequestHistoryClick: () => {},
-    onSignOutClick: () => {}
+    onClick: () => {}
   };
 
   public render(): JSX.Element {
     return (
-      <VBoxLayout className={css(SideMenu.STYLE.sideMenu)}>
+      <VBoxLayout style={SideMenu.STYLE}>
         <Padding size='15px'/>
         <SideMenuButton icon='resources/dashboard/menu-icons/my-profile.svg'
-          label='My Profile' onClick={this.props.onProfileClick}/>
+          label='My Profile'
+          onClick={() => this.props.onClick(SideMenu.Item.PROFILE)}/>
         <SideMenuButton icon='resources/dashboard/menu-icons/accounts.svg'
-          label='Accounts' onClick={this.props.onAccountsClick}/>
+          label='Accounts'
+          onClick={() => this.props.onClick(SideMenu.Item.ACCOUNTS)}/>
         <SideMenuButton icon='resources/dashboard/menu-icons/portfolio.svg'
-          label='Portfolio' onClick={this.props.onPortfolioClick}/>
-        <SideMenuButton icon='resources/dashboard/menu-icons/request-history.svg'
-          label='Request History' onClick={this.props.onRequestHistoryClick}/>
+          label='Portfolio'
+          onClick={() => this.props.onClick(SideMenu.Item.PORTFOLIO)}/>
+        <SideMenuButton
+          icon='resources/dashboard/menu-icons/request-history.svg'
+          label='Request History'
+          onClick={() => this.props.onClick(SideMenu.Item.REQUEST_HISTORY)}/>
         <SideMenuButton icon='resources/dashboard/menu-icons/sign-out.svg'
-          label='Sign Out' onClick={this.props.onSignOutClick}/>
+          label='Sign Out'
+          onClick={() => this.props.onClick(SideMenu.Item.SIGN_OUT)}/>
       </VBoxLayout>);
   }
 
-  private static STYLE = StyleSheet.create({
-    sideMenu: {
-      width: '200px',
-      padding: 0,
-      height: '100%',
-      minHeight: '568px',
-      backgroundColor: '#4B23A0'
-    }
-  });
+  private static readonly STYLE = {
+    width: '200px',
+    padding: 0,
+    height: '100%',
+    minHeight: '568px',
+    backgroundColor: '#4B23A0'
+  }
+}
+
+export namespace SideMenu {
+
+  /** The list of side menu items that can be selected. */
+  export enum Item {
+
+    /** The profile item. */
+    PROFILE,
+
+    /** The accounts item. */
+    ACCOUNTS,
+
+    /** The portfolio item. */
+    PORTFOLIO,
+
+    /** The request history item. */
+    REQUEST_HISTORY,
+
+    /** The sign out item. */
+    SIGN_OUT
+  }
 }

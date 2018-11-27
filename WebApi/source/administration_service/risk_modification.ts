@@ -1,4 +1,4 @@
-import {RiskParameters} from '..';
+import { RiskParameters } from '..';
 
 /** Represents a request to modify risk parameters. */
 export class RiskModification {
