@@ -19,22 +19,16 @@ export class WebDefinitionsClient extends DefinitionsClient {
   }
 
   public async open(): Promise<void> {
-    try {
-      const entitlementResponse = await Beam.post(
-        '/api/administration_service/load_entitlements_database', {});
-      this._entitlementDatabase = EntitlementDatabase.fromJson(
-        entitlementResponse);
-      const currencyResponse = await Beam.post(
-        '/api/definitions_service/load_currency_database', {});
-      this._currencyDatabase = CurrencyDatabase.fromJson(
-        currencyResponse);
-      const marketResponse = await Beam.post(
-        '/api/definitions_service/load_market_database', {});
-      this._marketDatabase = MarketDatabase.fromJson(
-        marketResponse);
-    } catch(e) {
-      throw new Beam.ServiceError(e.statusText);
-    }
+    const entitlementResponse = await Beam.post(
+      '/api/administration_service/load_entitlements_database', {});
+    this._entitlementDatabase = EntitlementDatabase.fromJson(
+      entitlementResponse);
+    const currencyResponse = await Beam.post(
+      '/api/definitions_service/load_currency_database', {});
+    this._currencyDatabase = CurrencyDatabase.fromJson(currencyResponse);
+    const marketResponse = await Beam.post(
+      '/api/definitions_service/load_market_database', {});
+    this._marketDatabase = MarketDatabase.fromJson(marketResponse);
   }
 
   public async close(): Promise<void> {

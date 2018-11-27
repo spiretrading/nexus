@@ -16,8 +16,14 @@ interface Properties {
   /** The set of entitlements that are checked. */
   checked: Beam.Set<Beam.DirectoryEntry>;
 
-  /** Whether the submit button is disabled. */
-  disabled?: boolean;
+  /** Whether the submit button is enabled. */
+  isSubmitEnabled?: boolean;
+
+  /** Whether an error occurred. */
+  isError?: boolean;
+
+  /** The status message to display. */
+  status?: string;
 
   /** The database of currencies */
   currencyDatabase: Nexus.CurrencyDatabase;
@@ -27,9 +33,6 @@ interface Properties {
 
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
-
-  /** The message that lets the user know if their submission was successful. */
-  submissionStatus?: string;
 
   /** Indicates an entitlement has been clicked. */
   onEntitlementClick?: (entitlement: Beam.DirectoryEntry) => void;
@@ -43,7 +46,9 @@ interface Properties {
 /* Displays a list of entitlements. */
 export class EntitlementsPage extends React.Component<Properties> {
   public static readonly defaultProps = {
-    disabled: false,
+    isSubmitEnabled: false,
+    isError: false,
+    status: '',
     onEntitlementClick: () => {},
     onSubmit: () => {}
   }
@@ -65,7 +70,7 @@ export class EntitlementsPage extends React.Component<Properties> {
       return <div>{rows}</div>;
     })();
     return (
-      <HBoxLayout width='100%' style={EntitlementsPage.STYLE.page}>
+      <HBoxLayout style={EntitlementsPage.STYLE.page}>
         <Padding/>
         <Padding size={EntitlementsPage.DEFAULT_PADDING}/>
         <VBoxLayout>
@@ -74,10 +79,8 @@ export class EntitlementsPage extends React.Component<Properties> {
           <Padding size={EntitlementsPage.LINE_PADDING}/>
           <HLine color={EntitlementsPage.LINE_COLOR}/>
           <Padding size={EntitlementsPage.LINE_PADDING}/>
-          <SubmissionBox
-            onSubmit={this.props.onSubmit}
-            status={this.props.submissionStatus}
-            roles={this.props.roles}/>
+          <SubmissionBox roles={this.props.roles} isError={this.props.isError}
+            status={this.props.status} onSubmit={this.props.onSubmit}/>
           <Padding size={EntitlementsPage.BOTTOM_PADDING}/>
         </VBoxLayout>
         <Padding size={EntitlementsPage.DEFAULT_PADDING}/>

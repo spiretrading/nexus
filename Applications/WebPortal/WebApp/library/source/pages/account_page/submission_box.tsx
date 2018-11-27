@@ -10,6 +10,9 @@ interface Properties {
   /** Determines how a form gets submitted depending on the account's roles. */
   roles: Nexus.AccountRoles;
 
+  /** Whether an error occurred. */
+  isError?: boolean;
+
   /** The status message to display. */
   status?: string;
 
@@ -26,6 +29,8 @@ interface State {
 /** Displays the components needed to submit an account related form. */
 export class SubmissionBox extends React.Component<Properties, State> {
   public static defaultProps = {
+    isError: false,
+    status: '',
     onSubmit: () => {}
   }
 
@@ -50,15 +55,14 @@ export class SubmissionBox extends React.Component<Properties, State> {
       }
     })();
     const message = (() => {
-      switch(this.props.status) {
-        case '':
-          return <div/>;
-        case 'Saved':
-          return <span className={css([SubmissionBox.MESSAGE_STYLE.base,
-            SubmissionBox.MESSAGE_STYLE.valid])}>Submitted</span>;
-        default:
-          return <span className={css([SubmissionBox.MESSAGE_STYLE.base,
-            SubmissionBox.MESSAGE_STYLE.invalid])}>Server issue</span>;
+      if(this.props.status === '') {
+        return <div/>;
+      } else if(this.props.isError) {
+        return <span style={{...SubmissionBox.STYLES.base,
+          ...SubmissionBox.STYLES.invalid}}>{this.props.status}</span>;
+      } else {
+        return <span style={{...SubmissionBox.STYLES.base,
+          ...SubmissionBox.STYLES.valid}}>{this.props.status}</span>;
       }
     })();
     return (
@@ -67,8 +71,7 @@ export class SubmissionBox extends React.Component<Properties, State> {
         {commentBoxPadding}
         <HBoxLayout width='100%'>
           <Padding size='calc(50% - 123px)'/>
-          <SubmitButton isDisabled={false}
-            roles={this.props.roles}
+          <SubmitButton isDisabled={false} roles={this.props.roles}
             onClick={() => this.props.onSubmit(this.state.comment)}/>
           <Padding size='calc(50% - 123px)'/>
         </HBoxLayout>
@@ -82,17 +85,16 @@ export class SubmissionBox extends React.Component<Properties, State> {
   }
 
   private onInput(value: string) {
-    console.log(value);
     this.setState({
       comment: value
     });
   }
 
-  private static MESSAGE_STYLE = StyleSheet.create({
+  private static readonly STYLES = {
     base: {
       font: '400 14px Roboto',
       width: '100%',
-      textAlign: 'center'
+      textAlign: 'center' as 'center'
     },
     valid: {
       color: '#36BB55'
@@ -100,5 +102,5 @@ export class SubmissionBox extends React.Component<Properties, State> {
     invalid: {
       color: '#E63F44'
     }
-  });
+  };
 }

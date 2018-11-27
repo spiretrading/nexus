@@ -28,7 +28,9 @@ interface Properties {
 
 interface State {
   isLoaded: boolean;
-  disabled: boolean;
+  isSubmitEnabled: boolean;
+  isError: boolean;
+  status: string;
   selectedEntitlements: Beam.Set<Beam.DirectoryEntry>;
 }
 
@@ -38,7 +40,9 @@ export class EntitlementsController extends React.Component<Properties, State> {
     super(props);
     this.state = {
       isLoaded: false,
-      disabled: true,
+      isSubmitEnabled: false,
+      isError: false,
+      status: '',
       selectedEntitlements: new Beam.Set<Beam.DirectoryEntry>()
     };
     this.onEntitlementClick = this.onEntitlementClick.bind(this);
@@ -52,8 +56,8 @@ export class EntitlementsController extends React.Component<Properties, State> {
     return <EntitlementsPage roles={this.props.roles}
       entitlements={this.props.entitlements}
       checked={this.state.selectedEntitlements}
-      disabled={this.state.disabled}
-      currencyDatabase={this.props.currencyDatabase}
+      isSubmitEnabled={this.state.isSubmitEnabled} isError={this.state.isError}
+      status={this.state.status} currencyDatabase={this.props.currencyDatabase}
       marketDatabase={this.props.marketDatabase}
       displaySize={this.props.displaySize}
       onEntitlementClick={this.onEntitlementClick} onSubmit={this.onSubmit}/>;
@@ -76,7 +80,7 @@ export class EntitlementsController extends React.Component<Properties, State> {
       this.state.selectedEntitlements.add(entitlement);
     }
     this.setState({
-      disabled: false,
+      isSubmitEnabled: true,
       selectedEntitlements: this.state.selectedEntitlements
     });
   }
@@ -84,13 +88,21 @@ export class EntitlementsController extends React.Component<Properties, State> {
   private async onSubmit(comment: string) {
     try {
       this.setState({
-        disabled: true
+        isSubmitEnabled: false,
+        isError: false,
+        status: ''
       });
       await this.props.model.submit(comment, this.state.selectedEntitlements);
       this.setState({
-        disabled: false
+        status: 'Saved.'
       });
     } catch(e) {
+      console.log(e);
+      this.setState({
+        isSubmitEnabled: true,
+        isError: true,
+        status: e.toString()
+      });
     }
   }
 }
