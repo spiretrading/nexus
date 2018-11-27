@@ -26,23 +26,23 @@ export class RolesField extends React.Component<Properties, {}> {
       <HBoxLayout width={RolesField.COMPONENT_WIDTH}
           height={RolesField.IMAGE_SIZE}>
         <RolesIcon icon = {Nexus.AccountRoles.Role.TRADER}
-          isActive = {this.props.roles.test(Nexus.AccountRoles.Role.TRADER)}
+          isSet = {this.props.roles.test(Nexus.AccountRoles.Role.TRADER)}
           onClick={() =>
               this.props.onClick(Nexus.AccountRoles.Role.TRADER)}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
         <RolesIcon icon = {Nexus.AccountRoles.Role.MANAGER}
-          isActive = {this.props.roles.test(Nexus.AccountRoles.Role.MANAGER)}
+          isSet = {this.props.roles.test(Nexus.AccountRoles.Role.MANAGER)}
           onClick={() =>
               this.props.onClick(Nexus.AccountRoles.Role.MANAGER)}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
         <RolesIcon icon={Nexus.AccountRoles.Role.ADMINISTRATOR}
-          isActive={
+          isSet={
             this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)}
           onClick={() =>
               this.props.onClick(Nexus.AccountRoles.Role.ADMINISTRATOR)}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
         <RolesIcon icon = {Nexus.AccountRoles.Role.SERVICE}
-          isActive = {this.props.roles.test(Nexus.AccountRoles.Role.SERVICE)}
+          isSet = {this.props.roles.test(Nexus.AccountRoles.Role.SERVICE)}
           onClick={() =>
               this.props.onClick(Nexus.AccountRoles.Role.SERVICE)}/>
       </HBoxLayout>);

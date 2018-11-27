@@ -1,15 +1,16 @@
-import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { HBoxLayout, Padding, VBoxLayout } from '../../..';
 
 interface Properties {
 
+  /** The role the icon respresents */
   icon: Nexus.AccountRoles.Role;
 
-  isActive: boolean;
+  /** Determines if the role is set of not. */
+  isSet: boolean;
 
+  /** Called when icon is clicked on. */
   onClick?: () => void;
 }
 
@@ -33,16 +34,15 @@ export class RolesIcon extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const getIconColour = (role: Nexus.AccountRoles.Role) => {
-      if(this.props.isActive) {
+    const getIconColour = () => {
+      if(this.props.isSet) {
         return 'purple';
       }
       return 'grey';
     };
     return (
         <div style={RolesIcon.STYLE.iconBox}>
-          <img src={`${this.sourceLink}${
-              getIconColour(Nexus.AccountRoles.Role.TRADER)}.svg`}
+          <img src={`${this.source}${getIconColour()}.svg`}
             style={RolesIcon.STYLE.icon}
             width={RolesIcon.IMAGE_SIZE}
             height={RolesIcon.IMAGE_SIZE}
@@ -93,16 +93,16 @@ export class RolesIcon extends React.Component<Properties, State> {
   private setSource(role: Nexus.AccountRoles.Role) {
     switch (role) {
       case Nexus.AccountRoles.Role.TRADER:
-        this.sourceLink = 'resources/account/trader-';
+        this.source = 'resources/account/trader-';
         break;
       case Nexus.AccountRoles.Role.MANAGER:
-        this.sourceLink = 'resources/account/manager-';
+        this.source = 'resources/account/manager-';
         break;
       case Nexus.AccountRoles.Role.ADMINISTRATOR:
-        this.sourceLink = 'resources/account/admin-';
+        this.source = 'resources/account/admin-';
         break;
       case Nexus.AccountRoles.Role.SERVICE:
-        this.sourceLink = 'resources/account/service-';
+        this.source = 'resources/account/service-';
         break;
     }
   }
@@ -146,7 +146,7 @@ export class RolesIcon extends React.Component<Properties, State> {
       boxShadow: '0px 0px 2px #00000064'
     }
   };
-  private sourceLink = '';
+  private source = '';
   private tooltipText = '';
   private static readonly IMAGE_SIZE = '20px';
   private static readonly TIMEOUT = 100;
