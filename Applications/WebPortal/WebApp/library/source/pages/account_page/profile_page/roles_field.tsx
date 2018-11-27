@@ -45,103 +45,100 @@ export class RolesField extends React.Component<Properties, State> {
       return 'grey';
     };
     return (
-        <HBoxLayout width={RolesField.COMPONENT_WIDTH}
-            height={RolesField.IMAGE_SIZE}>
-          <div id='TraderIcon' className={css(RolesField.STYLE.imageBox)}>
-            <img src={`resources/account/trader-${
-                getIconColour(Nexus.AccountRoles.Role.TRADER)}.svg`}
-              width={RolesField.IMAGE_SIZE}
-              height={RolesField.IMAGE_SIZE}
-              onClick={() =>
-                this.props.onClick(Nexus.AccountRoles.Role.TRADER)}
-              onMouseEnter={() =>
-                this.showToolTip(Nexus.AccountRoles.Role.TRADER)}
-              onMouseLeave={() =>
-                this.hideToolTip(Nexus.AccountRoles.Role.TRADER)}/>
-            <Transition in={this.state.showTraderText}
+      <HBoxLayout width={RolesField.COMPONENT_WIDTH}
+          height={RolesField.IMAGE_SIZE}>
+        <div id='TraderIcon' className={css(RolesField.STYLE.imageBox)}>
+          <img src={`resources/account/trader-${
+              getIconColour(Nexus.AccountRoles.Role.TRADER)}.svg`}
+            width={RolesField.IMAGE_SIZE}
+            height={RolesField.IMAGE_SIZE}
+            onClick={() =>
+              this.props.onClick(Nexus.AccountRoles.Role.TRADER)}
+            onMouseEnter={() =>
+              this.showToolTip(Nexus.AccountRoles.Role.TRADER)}
+            onMouseLeave={() =>
+              this.hideToolTip(Nexus.AccountRoles.Role.TRADER)}/>
+          <Transition in={this.state.showTraderText}
               timeout={RolesField.TIMEOUT}>
-              {(state) => (
-                <div className={css(RolesField.STYLE.animationBase,
-                      (RolesField.ANIMATION_STYLE as any)[state])}>
-                    <div className={css(RolesField.STYLE.imageTooltip)}>
-                      {RolesField.TRADER_TOOLTIP_TEXT}
-                    </div>
-                </div>)}
-            </Transition>
-          </div>
-          <Padding size={RolesField.IMAGE_PADDING}/>
-          <div className={css(RolesField.STYLE.imageBox)}>
-            <img src={`resources/account/manager-${
+            {(state) => (
+              <div className={css(RolesField.STYLE.animationBase,
+                    (RolesField.ANIMATION_STYLE as any)[state])}>
+                  <div className={css(RolesField.STYLE.imageTooltip)}>
+                    {RolesField.TRADER_TOOLTIP_TEXT}
+                  </div>
+              </div>)}
+          </Transition>
+        </div>
+        <Padding size={RolesField.IMAGE_PADDING}/>
+        <div className={css(RolesField.STYLE.imageBox)}>
+          <img src={`resources/account/manager-${
               getIconColour(Nexus.AccountRoles.Role.MANAGER)}.svg`}
-              width={RolesField.IMAGE_SIZE}
-              height={RolesField.IMAGE_SIZE}
-              onClick={() =>
-                this.props.onClick(Nexus.AccountRoles.Role.MANAGER)}
-              onMouseEnter={() =>
-                this.showToolTip(Nexus.AccountRoles.Role.MANAGER)}
-              onMouseLeave={() =>
-                this.hideToolTip(Nexus.AccountRoles.Role.MANAGER)}/>
-            <Transition in={this.state.showManagerText}
+            width={RolesField.IMAGE_SIZE}
+            height={RolesField.IMAGE_SIZE}
+            onClick={() =>
+              this.props.onClick(Nexus.AccountRoles.Role.MANAGER)}
+            onMouseEnter={() =>
+              this.showToolTip(Nexus.AccountRoles.Role.MANAGER)}
+            onMouseLeave={() =>
+              this.hideToolTip(Nexus.AccountRoles.Role.MANAGER)}/>
+          <Transition in={this.state.showManagerText}
               timeout={RolesField.TIMEOUT}>
-              {(state) => (
-                <div
-                  className={css(RolesField.STYLE.animationBase,
+            {(state) => (
+              <div className={css(RolesField.STYLE.animationBase,
                   (RolesField.ANIMATION_STYLE as any)[state])}>
-                    <div className={css(RolesField.STYLE.imageTooltip)}>
-                      {RolesField.MANAGER_TOOLTIP_TEXT}
-                    </div>
-                </div>)}
-            </Transition>
-          </div>
-          <Padding size={RolesField.IMAGE_PADDING}/>
-          <div className={css(RolesField.STYLE.imageBox)}>
-            <img src={`resources/account/admin-${
+                <div className={css(RolesField.STYLE.imageTooltip)}>
+                  {RolesField.MANAGER_TOOLTIP_TEXT}
+                </div>
+              </div>)}
+          </Transition>
+        </div>
+        <Padding size={RolesField.IMAGE_PADDING}/>
+        <div className={css(RolesField.STYLE.imageBox)}>
+          <img src={`resources/account/admin-${
               getIconColour(Nexus.AccountRoles.Role.ADMINISTRATOR)}.svg`}
-              width={RolesField.IMAGE_SIZE}
-              height={RolesField.IMAGE_SIZE}
-              onClick={() =>
-                this.props.onClick(Nexus.AccountRoles.Role.ADMINISTRATOR)}
-              onMouseEnter={() =>
-                this.showToolTip(Nexus.AccountRoles.Role.ADMINISTRATOR)}
-              onMouseLeave={() =>
-                this.hideToolTip(Nexus.AccountRoles.Role.ADMINISTRATOR)}/>
-            <Transition in={this.state.showAdminText}
-              timeout={RolesField.TIMEOUT}>
-              {(state) => (
-                <div
-                  className={css(RolesField.STYLE.animationBase,
+            width={RolesField.IMAGE_SIZE}
+            height={RolesField.IMAGE_SIZE}
+            onClick={() =>
+              this.props.onClick(Nexus.AccountRoles.Role.ADMINISTRATOR)}
+            onMouseEnter={() =>
+              this.showToolTip(Nexus.AccountRoles.Role.ADMINISTRATOR)}
+            onMouseLeave={() =>
+              this.hideToolTip(Nexus.AccountRoles.Role.ADMINISTRATOR)}/>
+          <Transition in={this.state.showAdminText}
+            timeout={RolesField.TIMEOUT}>
+            {(state) => (
+              <div className={css(RolesField.STYLE.animationBase,
                   (RolesField.ANIMATION_STYLE as any)[state])}>
-                    <div className={css(RolesField.STYLE.imageTooltip)}>
-                      {RolesField.ADMINISTRATOR_TOOLTIP_TEXT}
-                    </div>
-                </div>)}
-            </Transition>
-          </div>
-          <Padding size={RolesField.IMAGE_PADDING}/>
-          <div className={css(RolesField.STYLE.imageBox)}>
-            <img src={`resources/account/service-${
+                <div className={css(RolesField.STYLE.imageTooltip)}>
+                  {RolesField.ADMINISTRATOR_TOOLTIP_TEXT}
+                </div>
+              </div>)}
+          </Transition>
+        </div>
+        <Padding size={RolesField.IMAGE_PADDING}/>
+        <div className={css(RolesField.STYLE.imageBox)}>
+          <img src={`resources/account/service-${
               getIconColour(Nexus.AccountRoles.Role.SERVICE)}.svg`}
-              width={RolesField.IMAGE_SIZE}
-              height={RolesField.IMAGE_SIZE}
-              onClick={() =>
-                this.props.onClick(Nexus.AccountRoles.Role.SERVICE)}
-              onMouseEnter={() =>
-                this.showToolTip(Nexus.AccountRoles.Role.SERVICE)}
-              onMouseLeave={() =>
-                this.hideToolTip(Nexus.AccountRoles.Role.SERVICE)}/>
-            <Transition in={this.state.showServiceText}
-              timeout={RolesField.TIMEOUT}>
-              {(state) => (
-                <div
-                  className={css(RolesField.STYLE.animationBase,
+            width={RolesField.IMAGE_SIZE}
+            height={RolesField.IMAGE_SIZE}
+            onClick={() =>
+              this.props.onClick(Nexus.AccountRoles.Role.SERVICE)}
+            onMouseEnter={() =>
+              this.showToolTip(Nexus.AccountRoles.Role.SERVICE)}
+            onMouseLeave={() =>
+              this.hideToolTip(Nexus.AccountRoles.Role.SERVICE)}/>
+          <Transition in={this.state.showServiceText}
+            timeout={RolesField.TIMEOUT}>
+            {(state) => (
+              <div className={css(RolesField.STYLE.animationBase,
                   (RolesField.ANIMATION_STYLE as any)[state])}>
-                    <div className={css(RolesField.STYLE.imageTooltip)}>
-                      {RolesField.SERVICE_TOOLTIP_TEXT}
-                    </div>
-                </div>)}
-            </Transition>
-          </div>
-        </HBoxLayout>);
+                <div className={css(RolesField.STYLE.imageTooltip)}>
+                  {RolesField.SERVICE_TOOLTIP_TEXT}
+                </div>
+              </div>)}
+          </Transition>
+        </div>
+      </HBoxLayout>);
   }
 
   private showToolTip(role: Nexus.AccountRoles.Role) {
