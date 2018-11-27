@@ -2,7 +2,7 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { HBoxLayout, Padding} from '../../..';
+import { HBoxLayout, Padding } from '../../..';
 
 interface Properties {
 
@@ -46,10 +46,10 @@ export class RolesField extends React.Component<Properties, State> {
     return (
       <HBoxLayout width={RolesField.COMPONENT_WIDTH}
           height={RolesField.IMAGE_SIZE}>
-        <div className={css(RolesField.STYLE.iconBox)}>
+        <div style={RolesField.STYLE.iconBox}>
           <img src={`resources/account/trader-${
               getIconColour(Nexus.AccountRoles.Role.TRADER)}.svg`}
-            className={css(RolesField.STYLE.icon)}
+            style={RolesField.STYLE.icon}
             width={RolesField.IMAGE_SIZE}
             height={RolesField.IMAGE_SIZE}
             onClick={() =>
@@ -61,19 +61,19 @@ export class RolesField extends React.Component<Properties, State> {
           <Transition in={this.state.showTraderText}
               timeout={RolesField.TIMEOUT}>
             {(state) => (
-              <div className={css(RolesField.STYLE.animationBase,
-                    (RolesField.ANIMATION_STYLE as any)[state])}>
-                  <div className={css(RolesField.STYLE.imageTooltip)}>
+              <div style={{...RolesField.STYLE.animationBase,
+                  ...(RolesField.ANIMATION_STYLE as any)[state]}}>
+                  <div style={RolesField.STYLE.imageTooltip}>
                     {RolesField.TRADER_TOOLTIP_TEXT}
                   </div>
               </div>)}
           </Transition>
         </div>
         <Padding size={RolesField.IMAGE_PADDING}/>
-        <div className={css(RolesField.STYLE.iconBox)}>
+        <div style={RolesField.STYLE.iconBox}>
           <img src={`resources/account/manager-${
               getIconColour(Nexus.AccountRoles.Role.MANAGER)}.svg`}
-            className={css(RolesField.STYLE.icon)}
+            style={RolesField.STYLE.icon}
             width={RolesField.IMAGE_SIZE}
             height={RolesField.IMAGE_SIZE}
             onClick={() =>
@@ -85,19 +85,19 @@ export class RolesField extends React.Component<Properties, State> {
           <Transition in={this.state.showManagerText}
               timeout={RolesField.TIMEOUT}>
             {(state) => (
-              <div className={css(RolesField.STYLE.animationBase,
-                  (RolesField.ANIMATION_STYLE as any)[state])}>
-                <div className={css(RolesField.STYLE.imageTooltip)}>
+              <div style={{...RolesField.STYLE.animationBase,
+                  ...(RolesField.ANIMATION_STYLE as any)[state]}}>
+                <div style={RolesField.STYLE.imageTooltip}>
                   {RolesField.MANAGER_TOOLTIP_TEXT}
                 </div>
               </div>)}
           </Transition>
         </div>
         <Padding size={RolesField.IMAGE_PADDING}/>
-        <div className={css(RolesField.STYLE.iconBox)}>
+        <div style={RolesField.STYLE.iconBox}>
           <img src={`resources/account/admin-${
               getIconColour(Nexus.AccountRoles.Role.ADMINISTRATOR)}.svg`}
-            className={css(RolesField.STYLE.icon)}
+            style={RolesField.STYLE.icon}
             width={RolesField.IMAGE_SIZE}
             height={RolesField.IMAGE_SIZE}
             onClick={() =>
@@ -109,19 +109,19 @@ export class RolesField extends React.Component<Properties, State> {
           <Transition in={this.state.showAdminText}
             timeout={RolesField.TIMEOUT}>
             {(state) => (
-              <div className={css(RolesField.STYLE.animationBase,
-                  (RolesField.ANIMATION_STYLE as any)[state])}>
-                <div className={css(RolesField.STYLE.imageTooltip)}>
+              <div style={{...RolesField.STYLE.animationBase,
+                  ...(RolesField.ANIMATION_STYLE as any)[state]}}>
+                <div style={RolesField.STYLE.imageTooltip}>
                   {RolesField.ADMINISTRATOR_TOOLTIP_TEXT}
                 </div>
               </div>)}
           </Transition>
         </div>
         <Padding size={RolesField.IMAGE_PADDING}/>
-        <div className={css(RolesField.STYLE.iconBox)}>
+        <div style={RolesField.STYLE.iconBox}>
           <img src={`resources/account/service-${
               getIconColour(Nexus.AccountRoles.Role.SERVICE)}.svg`}
-            className={css(RolesField.STYLE.icon)}
+            style={RolesField.STYLE.icon}
             width={RolesField.IMAGE_SIZE}
             height={RolesField.IMAGE_SIZE}
             onClick={() =>
@@ -133,9 +133,9 @@ export class RolesField extends React.Component<Properties, State> {
           <Transition in={this.state.showServiceText}
             timeout={RolesField.TIMEOUT}>
             {(state) => (
-              <div className={css(RolesField.STYLE.animationBase,
-                  (RolesField.ANIMATION_STYLE as any)[state])}>
-                <div className={css(RolesField.STYLE.imageTooltip)}>
+              <div style={{...RolesField.STYLE.animationBase,
+                  ...(RolesField.ANIMATION_STYLE as any)[state]}}>
+                <div style={RolesField.STYLE.imageTooltip}>
                   {RolesField.SERVICE_TOOLTIP_TEXT}
                 </div>
               </div>)}
@@ -178,7 +178,7 @@ export class RolesField extends React.Component<Properties, State> {
     }
   }
 
-  private static ANIMATION_STYLE = StyleSheet.create({
+  private static ANIMATION_STYLE = {
     entering: {
       opacity: 0
     },
@@ -188,13 +188,13 @@ export class RolesField extends React.Component<Properties, State> {
     exited: {
       display: 'none' as 'none'
     }
-  });
-  private static STYLE = StyleSheet.create({
+  };
+  private static STYLE = {
     iconBox: {
       position: 'relative' as 'relative'
     },
     icon: {
-      cursor: 'pointer'
+      cursor: 'pointer' as 'pointer'
     },
     animationBase: {
       opacity: 0,
@@ -208,7 +208,7 @@ export class RolesField extends React.Component<Properties, State> {
       height: '22px',
       backgroundColor: '#4B23A0',
       color: '#FFFFFF',
-      position: 'absolute',
+      position: 'absolute' as 'absolute',
       zIndex: 5,
       top: '28px',
       left: '-2px',
@@ -216,13 +216,13 @@ export class RolesField extends React.Component<Properties, State> {
       borderRadius: '1px',
       boxShadow: '0px 0px 2px #00000064'
     }
-  });
+  };
   private static readonly IMAGE_SIZE = '20px';
   private static readonly IMAGE_PADDING = '14px';
   private static readonly COMPONENT_WIDTH = '68px';
   private static readonly TIMEOUT = 100;
   private static readonly TRADER_TOOLTIP_TEXT = 'Trader';
-  private static readonly MANAGER_TOOLTIP_TEXT  = 'Manager';
-  private static readonly ADMINISTRATOR_TOOLTIP_TEXT  = 'Admin';
+  private static readonly MANAGER_TOOLTIP_TEXT = 'Manager';
+  private static readonly ADMINISTRATOR_TOOLTIP_TEXT = 'Admin';
   private static readonly SERVICE_TOOLTIP_TEXT = 'Service';
 }
