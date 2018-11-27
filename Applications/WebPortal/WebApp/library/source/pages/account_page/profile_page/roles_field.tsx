@@ -39,7 +39,7 @@ export class RolesField extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const getIconColour = (role: Nexus.AccountRoles.Role) => {
-      if (this.props.roles.test(role)) {
+      if(this.props.roles.test(role)) {
         return 'purple';
       }
       return 'grey';
@@ -47,7 +47,7 @@ export class RolesField extends React.Component<Properties, State> {
     return (
       <HBoxLayout width={RolesField.COMPONENT_WIDTH}
           height={RolesField.IMAGE_SIZE}>
-        <div id='TraderIcon' className={css(RolesField.STYLE.imageBox)}>
+        <div className={css(RolesField.STYLE.imageBox)}>
           <img src={`resources/account/trader-${
               getIconColour(Nexus.AccountRoles.Role.TRADER)}.svg`}
             width={RolesField.IMAGE_SIZE}
@@ -189,8 +189,6 @@ export class RolesField extends React.Component<Properties, State> {
   private static STYLE = StyleSheet.create({
     imageBox: {
       position: 'relative' as 'relative'
-    },
-    image:{
     },
     animationBase: {
       opacity: 0,
