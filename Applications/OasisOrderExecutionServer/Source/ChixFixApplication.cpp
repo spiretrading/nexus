@@ -169,16 +169,16 @@ void ChixFixApplication::onMessage(const FIX42::ExecutionReport& message,
       } else if(liquidityFlag == "R") {
         update->m_liquidityFlag = "A";
       } else if(execBroker == "CX2" || execBroker == "CHIX" ||
-          execBroker.getString().empty()) {
+          execBroker == "CXD" || execBroker.getString().empty()) {
         update->m_liquidityFlag = liquidityFlag;
       } else {
-        update->m_liquidityFlag = "R";
+        update->m_liquidityFlag = "A";
       }
       if(execBroker == "AEQN") {
         update->m_lastMarket = DefaultMarkets::NEOE().GetData();
       } else if(execBroker == "AEQL") {
         update->m_lastMarket = DefaultMarkets::NEOE().GetData();
-      } else if(execBroker == "CHIX") {
+      } else if(execBroker == "CHIX" || execBroker == "CXD") {
         update->m_lastMarket = DefaultMarkets::CHIC().GetData();
       } else if(execBroker == "CX2") {
         update->m_lastMarket = DefaultMarkets::XCX2().GetData();
