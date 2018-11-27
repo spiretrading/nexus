@@ -2,7 +2,7 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { HBoxLayout, Padding, VBoxLayout } from '../../..';
+import { HBoxLayout, Padding} from '../../..';
 
 interface Properties {
 
@@ -24,10 +24,6 @@ interface State {
 
 /** Displays a panel of icons highlighting an account's roles. */
 export class RolesField extends React.Component<Properties, State> {
-  public static readonly defaultProps = {
-    onClick: (_: string) => {}
-  }
-
   constructor(props: Properties) {
     super(props);
     this.state = {
