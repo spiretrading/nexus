@@ -55,14 +55,13 @@ export class RoleIcon extends React.Component<Properties, State> {
             this.showToolTip()}
           onMouseLeave={() =>
             this.hideToolTip()}/>
-        <Transition in={this.state.showToolTip}
-            timeout={RoleIcon.TIMEOUT}>
+        <Transition in={this.state.showToolTip} timeout={RoleIcon.TIMEOUT}>
           {(state) => (
             <div style={{...RoleIcon.STYLE.animationBase,
                   ...(RoleIcon.ANIMATION_STYLE as any)[state]}}>
-                <div style={RoleIcon.STYLE.imageTooltip}>
-                  {tooltipText}
-                </div>
+              <div style={RoleIcon.STYLE.imageTooltip}>
+                {tooltipText}
+              </div>
             </div>)}
         </Transition>
       </div>);

@@ -1,6 +1,5 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { Transition } from 'react-transition-group';
 import { HBoxLayout, Padding } from '../../..';
 import { RoleIcon } from './role_icon';
 
