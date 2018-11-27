@@ -9,6 +9,9 @@ interface Properties {
   /** The roles to highlight. */
   roles: Nexus.AccountRoles;
 
+  /** Called when the user clicks on a role
+   * @param value - The role of the icon clicked.
+   */
   onClick?: (role: Nexus.AccountRoles.Role) => void;
 }
 
