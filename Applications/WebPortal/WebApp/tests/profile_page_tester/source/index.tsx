@@ -19,7 +19,7 @@ class TestApp extends React.Component<{}, State> {
       someRoles: new Nexus.AccountRoles()
     };
     this.onScreenResize = this.onScreenResize.bind(this);
-    this.onInput = this.onInput.bind(this);
+    this.onTextInput = this.onTextInput.bind(this);
     this.onRoleClick = this.onRoleClick.bind(this);
   }
 
@@ -50,7 +50,7 @@ class TestApp extends React.Component<{}, State> {
           <WebPortal.TextField
             displaySize={this.state.displaySize}
             value={this.state.lastNameValue}
-            onInput={this.onInput}/>
+            onInput={this.onTextInput}/>
         </WebPortal.FormEntry>
         <WebPortal.Padding size='30px'/>
         <WebPortal.RolesField roles={this.state.someRoles}
@@ -83,7 +83,7 @@ class TestApp extends React.Component<{}, State> {
     }
   }
 
-  private onInput(value: string) {
+  private onTextInput(value: string) {
     this.setState({
       lastNameValue: value
     });
@@ -95,8 +95,6 @@ class TestApp extends React.Component<{}, State> {
     } else {
       this.state.someRoles.set(role);
     }
-    console.log('Some role was changed!' +  role.toString());
-    console.log(this.state.someRoles.toJson());
     this.forceUpdate();
   }
 }

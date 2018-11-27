@@ -13,7 +13,6 @@ interface Properties {
 }
 
 interface State {
-  showToolTip: boolean;
   showTraderText: boolean;
   showManagerText: boolean;
   showAdminText: boolean;
@@ -22,10 +21,13 @@ interface State {
 
 /** Displays a panel of icons highlighting an account's roles. */
 export class RolesField extends React.Component<Properties, State> {
+  public static readonly defaultProps = {
+    onClick: (_: string) => {}
+  }
+
   constructor(props: Properties) {
     super(props);
     this.state = {
-      showToolTip: false,
       showTraderText: false,
       showAdminText: false,
       showServiceText: false,
@@ -42,25 +44,12 @@ export class RolesField extends React.Component<Properties, State> {
       }
       return 'grey';
     };
-    const traderImageSrc = (() => {
-      if (this.props.roles.test(Nexus.AccountRoles.Role.TRADER)) {
-        return 'resources/account/trader-purple.svg';
-      } else {
-        return 'resources/account/trader-grey.svg';
-      }
-    })();
-    const serviceImageSrc = (() => {
-      if (this.props.roles.test(Nexus.AccountRoles.Role.TRADER)) {
-        return 'resources/account/service-purple.svg';
-      } else {
-        return 'resources/account/service-grey.svg';
-      }
-    })();
     return (
-      <VBoxLayout>
-        <HBoxLayout width='68px' height={RolesField.IMAGE_SIZE}>
-          <div className={css(RolesField.STYLE.box)}>
-            <img src={traderImageSrc}
+        <HBoxLayout width={RolesField.COMPONENT_WIDTH}
+            height={RolesField.IMAGE_SIZE}>
+          <div id='TraderIcon' className={css(RolesField.STYLE.imageBox)}>
+            <img src={`resources/account/trader-${
+                getIconColour(Nexus.AccountRoles.Role.TRADER)}.svg`}
               width={RolesField.IMAGE_SIZE}
               height={RolesField.IMAGE_SIZE}
               onClick={() =>
@@ -68,22 +57,20 @@ export class RolesField extends React.Component<Properties, State> {
               onMouseEnter={() =>
                 this.showToolTip(Nexus.AccountRoles.Role.TRADER)}
               onMouseLeave={() =>
-                this.hideToolTip(Nexus.AccountRoles.Role.TRADER)} />
+                this.hideToolTip(Nexus.AccountRoles.Role.TRADER)}/>
             <Transition in={this.state.showTraderText}
-              mountOnEnter={true}
               timeout={RolesField.TIMEOUT}>
               {(state) => (
-                <div 
-                  className={css(RolesField.STYLE.base,
-                    (RolesField.ANIMATION_STYLE as any)[state])}>
+                <div className={css(RolesField.STYLE.animationBase,
+                      (RolesField.ANIMATION_STYLE as any)[state])}>
                     <div className={css(RolesField.STYLE.imageTooltip)}>
-                      TRADER
+                      {RolesField.TRADER_TOOLTIP_TEXT}
                     </div>
                 </div>)}
             </Transition>
           </div>
-          <Padding size={RolesField.IMAGE_PADDING} />
-          <div className={css(RolesField.STYLE.box)}>
+          <Padding size={RolesField.IMAGE_PADDING}/>
+          <div className={css(RolesField.STYLE.imageBox)}>
             <img src={`resources/account/manager-${
               getIconColour(Nexus.AccountRoles.Role.MANAGER)}.svg`}
               width={RolesField.IMAGE_SIZE}
@@ -93,21 +80,21 @@ export class RolesField extends React.Component<Properties, State> {
               onMouseEnter={() =>
                 this.showToolTip(Nexus.AccountRoles.Role.MANAGER)}
               onMouseLeave={() =>
-                this.hideToolTip(Nexus.AccountRoles.Role.MANAGER)} />
+                this.hideToolTip(Nexus.AccountRoles.Role.MANAGER)}/>
             <Transition in={this.state.showManagerText}
               timeout={RolesField.TIMEOUT}>
               {(state) => (
                 <div
-                  className={css(RolesField.STYLE.base,
+                  className={css(RolesField.STYLE.animationBase,
                   (RolesField.ANIMATION_STYLE as any)[state])}>
                     <div className={css(RolesField.STYLE.imageTooltip)}>
-                      Manager
+                      {RolesField.MANAGER_TOOLTIP_TEXT}
                     </div>
                 </div>)}
             </Transition>
           </div>
-          <Padding size={RolesField.IMAGE_PADDING} />
-          <div className={css(RolesField.STYLE.box)}>
+          <Padding size={RolesField.IMAGE_PADDING}/>
+          <div className={css(RolesField.STYLE.imageBox)}>
             <img src={`resources/account/admin-${
               getIconColour(Nexus.AccountRoles.Role.ADMINISTRATOR)}.svg`}
               width={RolesField.IMAGE_SIZE}
@@ -117,22 +104,23 @@ export class RolesField extends React.Component<Properties, State> {
               onMouseEnter={() =>
                 this.showToolTip(Nexus.AccountRoles.Role.ADMINISTRATOR)}
               onMouseLeave={() =>
-                this.hideToolTip(Nexus.AccountRoles.Role.ADMINISTRATOR)} />
+                this.hideToolTip(Nexus.AccountRoles.Role.ADMINISTRATOR)}/>
             <Transition in={this.state.showAdminText}
               timeout={RolesField.TIMEOUT}>
               {(state) => (
                 <div
-                  className={css(RolesField.STYLE.base,
+                  className={css(RolesField.STYLE.animationBase,
                   (RolesField.ANIMATION_STYLE as any)[state])}>
                     <div className={css(RolesField.STYLE.imageTooltip)}>
-                      Admin
+                      {RolesField.ADMINISTRATOR_TOOLTIP_TEXT}
                     </div>
                 </div>)}
             </Transition>
           </div>
-          <Padding size={RolesField.IMAGE_PADDING} />
-          <div className={css(RolesField.STYLE.box)}>
-            <img src={serviceImageSrc}
+          <Padding size={RolesField.IMAGE_PADDING}/>
+          <div className={css(RolesField.STYLE.imageBox)}>
+            <img src={`resources/account/service-${
+              getIconColour(Nexus.AccountRoles.Role.SERVICE)}.svg`}
               width={RolesField.IMAGE_SIZE}
               height={RolesField.IMAGE_SIZE}
               onClick={() =>
@@ -140,21 +128,20 @@ export class RolesField extends React.Component<Properties, State> {
               onMouseEnter={() =>
                 this.showToolTip(Nexus.AccountRoles.Role.SERVICE)}
               onMouseLeave={() =>
-                this.hideToolTip(Nexus.AccountRoles.Role.SERVICE)} />
+                this.hideToolTip(Nexus.AccountRoles.Role.SERVICE)}/>
             <Transition in={this.state.showServiceText}
               timeout={RolesField.TIMEOUT}>
               {(state) => (
                 <div
-                  className={css(RolesField.STYLE.base,
+                  className={css(RolesField.STYLE.animationBase,
                   (RolesField.ANIMATION_STYLE as any)[state])}>
                     <div className={css(RolesField.STYLE.imageTooltip)}>
-                      Service
+                      {RolesField.SERVICE_TOOLTIP_TEXT}
                     </div>
                 </div>)}
             </Transition>
           </div>
-        </HBoxLayout>
-      </VBoxLayout>);
+        </HBoxLayout>);
   }
 
   private showToolTip(role: Nexus.AccountRoles.Role) {
@@ -203,10 +190,12 @@ export class RolesField extends React.Component<Properties, State> {
     }
   });
   private static STYLE = StyleSheet.create({
-    box: {
+    imageBox: {
       position: 'relative' as 'relative'
     },
-    base: {
+    image:{
+    },
+    animationBase: {
       opacity: 0,
       transition: 'opacity 100ms ease-in-out'
     },
@@ -218,8 +207,6 @@ export class RolesField extends React.Component<Properties, State> {
       height: '22px',
       backgroundColor: '#4B23A0',
       color: '#FFFFFF',
-      visibility: 'visible' as 'visible',
-      /* Position the tooltip text - see examples below! */
       position: 'absolute',
       zIndex: 5,
       top: '28px',
@@ -227,13 +214,14 @@ export class RolesField extends React.Component<Properties, State> {
       border: '1px solid #4B23A0',
       borderRadius: '1px',
       boxShadow: '0px 0px 2px #00000064'
-    },
-    hidden: {
-      visibility: 'hidden' as 'hidden',
-      display: 'none' as 'none'
     }
   });
-  private static readonly IMAGE_SIZE = '24px';
-  private static readonly IMAGE_PADDING = '18px';
+  private static readonly IMAGE_SIZE = '20px';
+  private static readonly IMAGE_PADDING = '14px';
+  private static readonly COMPONENT_WIDTH = '68px';
   private static readonly TIMEOUT = 100;
+  private static readonly TRADER_TOOLTIP_TEXT = 'Trader';
+  private static readonly MANAGER_TOOLTIP_TEXT  = 'Manager';
+  private static readonly ADMINISTRATOR_TOOLTIP_TEXT  = 'Admin';
+  private static readonly SERVICE_TOOLTIP_TEXT = 'Service';
 }
