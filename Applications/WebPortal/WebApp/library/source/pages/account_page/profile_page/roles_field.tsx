@@ -226,7 +226,7 @@ export class RolesField extends React.Component<Properties, State> {
       left: '-2px',
       border: '1px solid #4B23A0',
       borderRadius: '1px',
-      boxShadow: '0px 0px 2px #000000CC'
+      boxShadow: '0px 0px 2px #00000064'
     },
     hidden: {
       visibility: 'hidden' as 'hidden',
