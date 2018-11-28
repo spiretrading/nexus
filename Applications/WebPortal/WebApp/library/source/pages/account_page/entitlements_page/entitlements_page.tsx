@@ -59,6 +59,7 @@ export class EntitlementsPage extends React.Component<Properties> {
       for(const entry of this.props.entitlements) {
         rows.push(
           <EntitlementRow
+            key={entry.group.id}
             entitlementEntry={entry}
             currencyEntry=
               {this.props.currencyDatabase.fromCurrency(entry.currency)}

@@ -63,12 +63,13 @@ export class ApplicabilityTable extends React.Component<Properties, {}> {
               'resources/account_page/entitlements_page/icons/dot-grey.svg';
           }
           dots.push(
-            <td>
+            <td key={type.toString()}>
               <img style={ApplicabilityTable.STYLE.circle} src={imageSrc}/>
             </td>);
         }
         data.push(
-          <tr style={ApplicabilityTable.STYLE.row}>
+          <tr key={app[0].source.toString()}
+              style={ApplicabilityTable.STYLE.row}>
             <td>{this.getDisplayName(app[0].source)}</td>{dots}
           </tr>);
       }
