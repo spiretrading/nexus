@@ -15,7 +15,7 @@ interface Properties {
   /** The status message to display. */
   status?: string;
 
-  /** Whether the submit button is enabled. */
+  /** Determines if the submit button is enabled. */
   isEnabled?: boolean;
 
   /** Indicates the form should be submitted.
