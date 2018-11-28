@@ -63,7 +63,7 @@ export class EntitlementsPage extends React.Component<Properties> {
             currencyEntry=
               {this.props.currencyDatabase.fromCurrency(entry.currency)}
             isActive={this.props.checked.test(entry.group)}
-            onClick = {() => this.props.onEntitlementClick(entry.group)}
+            onClick={() => this.props.onEntitlementClick(entry.group)}
             displaySize={this.props.displaySize}
             marketDatabase={this.props.marketDatabase}/>);
       }

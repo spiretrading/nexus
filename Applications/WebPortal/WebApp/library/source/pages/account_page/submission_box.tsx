@@ -1,4 +1,3 @@
-import { css, StyleSheet } from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { HBoxLayout, Padding, VBoxLayout } from '../..';
@@ -76,7 +75,7 @@ export class SubmissionBox extends React.Component<Properties, State> {
         <HBoxLayout width='100%'>
           <Padding size='calc(50% - 123px)'/>
           <SubmitButton isDisabled={!this.props.isEnabled}
-          roles={this.props.roles}
+            roles={this.props.roles}
             onClick={() => this.props.onSubmit(this.state.comment)}/>
           <Padding size='calc(50% - 123px)'/>
         </HBoxLayout>

@@ -1,10 +1,8 @@
-import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'Beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
-
 
 interface State {
   roles: Nexus.AccountRoles;
@@ -25,7 +23,7 @@ class TestApp extends React.Component<{}, State> {
     this.state = {
       roles:  new Nexus.AccountRoles(),
       entitlementDB: new Nexus.EntitlementDatabase(),
-      displaySize: TestApp.getDisplaySize(),
+      displaySize: WebPortal.DisplaySize.getDisplaySize(),
       checkedDB: new Beam.Set<Beam.DirectoryEntry>(),
       currencyDB: Nexus.buildDefaultCurrencyDatabase(),
       marketDB: Nexus.buildDefaultMarketDatabase(),
@@ -57,7 +55,7 @@ class TestApp extends React.Component<{}, State> {
           status={this.state.displayedStatus}
           isSubmitEnabled={this.state.submitEnabled}
           onSubmit={this.commentsSubmitted}/>
-        <div className={css(TestApp.STYLE.testingComponents)}>
+        <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
               onClick={() =>
               this.changeRole(Nexus.AccountRoles.Role.ADMINISTRATOR)}>
@@ -125,6 +123,10 @@ class TestApp extends React.Component<{}, State> {
     this.setState({ displayedStatus: this.state.status.toString()});
   }
 
+  private toggleButtonEnabled() {
+    this.setState({submitEnabled: !this.state.submitEnabled});
+  }
+
   private toggleCheckMark(value: Beam.DirectoryEntry) {
     if(!this.state.checkedDB.test(value)) {
       this.state.checkedDB.add(value);
@@ -134,25 +136,8 @@ class TestApp extends React.Component<{}, State> {
     this.setState({checkedDB: this.state.checkedDB});
   }
 
-  private toggleButtonEnabled() {
-    this.setState({submitEnabled: !this.state.submitEnabled});
-  }
-
-  private static getDisplaySize(): WebPortal.DisplaySize {
-    const screenWidth = window.innerWidth ||
-      document.documentElement.clientWidth ||
-      document.getElementsByTagName('body')[0].clientWidth;
-    if(screenWidth <= 767) {
-      return WebPortal.DisplaySize.SMALL;
-    } else if(screenWidth > 767 && screenWidth <= 1035) {
-      return WebPortal.DisplaySize.MEDIUM;
-    } else {
-      return WebPortal.DisplaySize.LARGE;
-    }
-  }
-
   private onScreenResize() {
-    const newDisplaySize = TestApp.getDisplaySize();
+    const newDisplaySize = WebPortal.DisplaySize.getDisplaySize();
     if(newDisplaySize !== this.state.displaySize) {
       this.setState({ displaySize: newDisplaySize });
     }
@@ -218,14 +203,14 @@ class TestApp extends React.Component<{}, State> {
   private testAdmin = new Nexus.AccountRoles();
   private testTrader = new Nexus.AccountRoles();
   private testManager = new Nexus.AccountRoles();
-  private static STYLE = StyleSheet.create({
+  private static STYLE = {
     testingComponents: {
       position: 'fixed' as 'fixed',
       top: 0,
       left: 0,
       zIndex: 1
     }
-  });
+  };
 }
 
 ReactDOM.render(<TestApp />, document.getElementById('main'));
