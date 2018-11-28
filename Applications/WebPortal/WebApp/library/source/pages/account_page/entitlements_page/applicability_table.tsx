@@ -76,7 +76,7 @@ export class ApplicabilityTable extends React.Component<Properties, {}> {
     })();
     return (
       <table style={{...ApplicabilityTable.STYLE.container,...containerWidth}}>
-        <thead >
+        <thead>
           <tr>
             <th style={{...compactHeader,
                 ...ApplicabilityTable.STYLE.marketWidth}}>
@@ -113,7 +113,6 @@ export class ApplicabilityTable extends React.Component<Properties, {}> {
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       font: '400 14px Roboto',
-
       cellspacing: 0,
       borderSpacing: 0,
       textAlign: 'center' as 'center',
@@ -126,9 +125,6 @@ export class ApplicabilityTable extends React.Component<Properties, {}> {
       notSmall: {
         width: '636px'
       }
-    },
-    background: {
-      backgroundColor: '#F8F8F8'
     },
     headerLabel: {
       height: '40px',
