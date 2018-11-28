@@ -27,6 +27,7 @@ export class CommentBox extends React.Component<Properties> {
       width: '100%',
       height: '150px',
       border: '1px solid #C8C8C8',
+      borderRadius: '1px',
       padding: '10px',
       margin: 0,
       resize: 'none',
