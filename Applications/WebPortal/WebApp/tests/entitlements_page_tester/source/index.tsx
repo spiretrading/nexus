@@ -82,7 +82,7 @@ class TestApp extends React.Component<{}, State> {
             UNSUCCESSFUL SUBMIT
           </button>
           <button tabIndex={-1}
-              onClick={() => this.toggleButtonEnabled()}>
+              onClick={this.toggleButtonEnabled}>
             TOGGLE SUBMIT
           </button>
         </div>
