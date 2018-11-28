@@ -240,6 +240,12 @@ int main(int argc, const char** argv) {
     chixEntry.m_destinations.push_back(DefaultDestinations::CX2());
     chixEntry.m_destinations.push_back(DefaultDestinations::TSX());
     fixApplicationEntries.push_back(chixEntry);
+    FixApplicationEntry tsxEntry;
+    tsxEntry.m_configPath = "tsxsor.cfg";
+    tsxEntry.m_application = std::make_shared<TsxSorFixApplication>(
+      Ref(*timeClient));
+    tsxEntry.m_destinations.push_back(DefaultDestinations::ALPHA());
+    fixApplicationEntries.push_back(tsxEntry);
     FixApplicationEntry matchNowLiquidityProviderEntry;
     matchNowLiquidityProviderEntry.m_configPath = "matnlp.cfg";
     matchNowLiquidityProviderEntry.m_application =

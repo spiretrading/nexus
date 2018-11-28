@@ -62,6 +62,9 @@ const Order& ChixFixApplication::Submit(const OrderInfo& info) {
       if(info.m_fields.m_destination == DefaultDestinations::TSX()) {
         auto destination = FIX::ExDestination("SMRTX");
         newOrderSingle->getHeader().setField(destination);
+        if(info.m_fields.m_type == OrderType::PEGGED) {
+          newOrderSingle->set(FIX::ExecInst("M"));
+        }
         hasDestination = true;
       } else {
         for(auto& tag : info.m_fields.m_additionalFields) {
@@ -78,6 +81,17 @@ const Order& ChixFixApplication::Submit(const OrderInfo& info) {
               BOOST_THROW_EXCEPTION(FixOrderRejectedException(
                 "Invalid value for tag 100 (ExDestination)."));
             }
+          }
+        }
+      }
+      if(info.m_fields.m_timeInForce.GetType() == TimeInForce::Type::MOC) {
+        auto timeInForce = GetTimeInForceType(TimeInForce::Type::DAY);
+        if(timeInForce.is_initialized()) {
+          newOrderSingle->set(*timeInForce);
+          if(info.m_fields.m_type == OrderType::MARKET) {
+            newOrderSingle->set(FIX::OrdType(FIX::OrdType_MARKET_ON_CLOSE));
+          } else if(info.m_fields.m_type == OrderType::LIMIT) {
+            newOrderSingle->set(FIX::OrdType(FIX::OrdType_LIMIT_ON_CLOSE));
           }
         }
       }
