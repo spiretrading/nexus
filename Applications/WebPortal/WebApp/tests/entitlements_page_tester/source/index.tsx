@@ -15,6 +15,7 @@ interface State {
   entitlementDB: Nexus.EntitlementDatabase;
   status: string;
   displayedStatus: string;
+  submitEnabled: boolean;
 }
 
 /**  Displays a testing application. */
@@ -29,7 +30,8 @@ class TestApp extends React.Component<{}, State> {
       currencyDB: Nexus.buildDefaultCurrencyDatabase(),
       marketDB: Nexus.buildDefaultMarketDatabase(),
       status: '',
-      displayedStatus: ''
+      displayedStatus: '',
+      submitEnabled: false
     };
     this.changeRole = this.changeRole.bind(this);
     this.onScreenResize = this.onScreenResize.bind(this);
@@ -38,6 +40,7 @@ class TestApp extends React.Component<{}, State> {
     this.buildEntitlementDB = this.buildEntitlementDB.bind(this);
     this.changeStatus = this.changeStatus.bind(this);
     this.commentsSubmitted = this.commentsSubmitted.bind(this);
+    this.toggleButtonEnabled = this.toggleButtonEnabled.bind(this);
   }
 
   public render(): JSX.Element {
@@ -51,7 +54,8 @@ class TestApp extends React.Component<{}, State> {
           checked={this.state.checkedDB}
           currencyDatabase={this.state.currencyDB}
           onEntitlementClick={this.toggleCheckMark}
-          //submissionStatus={this.state.displayedStatus}
+          status={this.state.displayedStatus}
+          isSubmitEnabled={this.state.submitEnabled}
           onSubmit={this.commentsSubmitted}/>
         <div className={css(TestApp.STYLE.testingComponents)}>
           <button tabIndex={-1}
@@ -78,6 +82,10 @@ class TestApp extends React.Component<{}, State> {
           <button tabIndex={-1}
               onClick={() => this.changeStatus('Server issue')}>
             UNSUCCESSFUL SUBMIT
+          </button>
+          <button tabIndex={-1}
+              onClick={() => this.toggleButtonEnabled()}>
+            TOGGLE SUBMIT
           </button>
         </div>
       </WebPortal.VBoxLayout>);
@@ -123,7 +131,11 @@ class TestApp extends React.Component<{}, State> {
     } else {
       this.state.checkedDB.remove(value);
     }
-    this.forceUpdate();
+    this.setState({checkedDB: this.state.checkedDB});
+  }
+
+  private toggleButtonEnabled() {
+    this.setState({submitEnabled: !this.state.submitEnabled});
   }
 
   private static getDisplaySize(): WebPortal.DisplaySize {

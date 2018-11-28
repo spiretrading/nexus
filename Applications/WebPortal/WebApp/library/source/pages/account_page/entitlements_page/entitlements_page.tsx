@@ -80,7 +80,8 @@ export class EntitlementsPage extends React.Component<Properties> {
           <HLine color={EntitlementsPage.LINE_COLOR}/>
           <Padding size={EntitlementsPage.LINE_PADDING}/>
           <SubmissionBox roles={this.props.roles} isError={this.props.isError}
-            status={this.props.status} onSubmit={this.props.onSubmit}/>
+            status={this.props.status} isEnabled={this.props.isSubmitEnabled}
+            onSubmit={this.props.onSubmit}/>
           <Padding size={EntitlementsPage.BOTTOM_PADDING}/>
         </VBoxLayout>
         <Padding size={EntitlementsPage.DEFAULT_PADDING}/>
