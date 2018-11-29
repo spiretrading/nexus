@@ -3,6 +3,7 @@ SETLOCAL
 CALL %~dp0account_page_tester/build.bat %*
 CALL %~dp0dashboard_page_tester/build.bat %*
 CALL %~dp0entitlements_page_tester/build.bat %*
+CALL %~dp0loading_page_tester/build.bat %*
 CALL %~dp0login_page_tester/build.bat %*
 CALL %~dp0profile_page_tester/build.bat %*
 CALL %~dp0risk_page_tester/build.bat %*
