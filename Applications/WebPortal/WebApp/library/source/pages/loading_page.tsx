@@ -1,21 +1,19 @@
-import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
 import { HBoxLayout, Padding, VBoxLayout } from '..';
 
 interface Properties {
 
-  /** Time in Milliseconds before displaying the loading animation. */
+  /** Ammount of time in milliseconds before
+   * displaying the loading animation. */
   delay?: number;
 }
 
 interface State {
-
-  /** Time in Milliseconds before displaying the loading animation. */
   showAnimation: boolean;
 }
 
-/** Displays the main dashboard. */
+/** Displays a loading page. */
 export class LoadingPage extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     delay: 0
@@ -31,27 +29,26 @@ export class LoadingPage extends React.Component<Properties, State> {
   public render(): JSX.Element {
     return (
       <VBoxLayout width='100%' height='100%'>
-        <Padding size={LoadingPage.TOP_PADDING} />
+        <Padding size={LoadingPage.TOP_PADDING}/>
         <HBoxLayout>
-          <Padding />
-
-          <Transition in={this.state.showAnimation} 
-          timeout={this.props.delay} mountOnEnter={true}>
+          <Padding/>
+          <Transition in={this.state.showAnimation} timeout={this.props.delay}>
             {(state) => (
               <div style={{ ...(LoadingPage.DELAY as any)[state] }}>
                 <img src='resources/loading/pre-loader.gif'
-                  style={LoadingPage.STYLE.containerStyle} />
+                  style={LoadingPage.STYLE.containerStyle}/>
               </div>)}
           </Transition>
-          <Padding />
+          <Padding/>
         </HBoxLayout>
-        <Padding size={LoadingPage.BOTTOM_PADDING} />
+        <Padding size={LoadingPage.BOTTOM_PADDING}/>
       </VBoxLayout>);
   }
 
   public componentDidMount(): void {
     this.setState({showAnimation: true});
   }
+
   private static DELAY = {
     entering: {
       opacity: 0
@@ -60,7 +57,6 @@ export class LoadingPage extends React.Component<Properties, State> {
       opacity: 1
     }
   };
-
   private static readonly STYLE = {
     containerStyle: {
       height: '30px',
