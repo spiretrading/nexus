@@ -5,7 +5,7 @@ import { HBoxLayout, Padding, VBoxLayout } from '..';
 interface Properties {
 
   /** Ammount of time in milliseconds before
-   * displaying the loading animation. */
+  * displaying the loading animation. */
   delay?: number;
 }
 
@@ -16,7 +16,7 @@ interface State {
 /** Displays a loading page. */
 export class LoadingPage extends React.Component<Properties, State> {
   public static readonly defaultProps = {
-    delay: 0
+    delay: 2000
   }
 
   constructor(props: Properties) {
