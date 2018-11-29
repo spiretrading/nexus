@@ -4,7 +4,7 @@ import { HBoxLayout, Padding, VBoxLayout } from '..';
 
 interface Properties {
 
-  /** Ammount of time in milliseconds before
+  /** Amount of time in milliseconds before
   * displaying the loading animation. */
   delay?: number;
 }
