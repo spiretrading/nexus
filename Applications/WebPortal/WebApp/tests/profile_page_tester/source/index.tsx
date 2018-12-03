@@ -3,6 +3,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
+ /** Determines the size to render components at. */
 interface Properties {
   displaySize: WebPortal.DisplaySize;
 }
