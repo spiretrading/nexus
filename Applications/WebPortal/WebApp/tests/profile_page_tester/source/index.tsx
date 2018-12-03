@@ -5,7 +5,6 @@ import * as WebPortal from 'web_portal';
 
 interface Properties {
   displaySize: WebPortal.DisplaySize;
-  value: number;
 }
 
 interface State {
@@ -87,4 +86,4 @@ class TestApp extends React.Component<Properties, State> {
 }
 
 const ResponsivePage = WebPortal.displaySizeRenderer(TestApp);
-ReactDOM.render(<ResponsivePage value={123}/>, document.getElementById('main'));
+ReactDOM.render(<ResponsivePage/>, document.getElementById('main'));
