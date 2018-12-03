@@ -14,8 +14,8 @@ interface State {
 }
 
 /** Returns a component that monitors the resize event.
-* @param BaseComponent - A component that has a DisplaySize that needs
-*  to be updated on a resize.
+ * @param BaseComponent - A component that has a DisplaySize that needs
+ *  to be updated on a resize.
  */
 export function displaySizeRenderer<T extends DisplaySizeProperties>(
     BaseComponent: React.ComponentType<T>) {
@@ -56,7 +56,7 @@ export function displaySizeRenderer<T extends DisplaySizeProperties>(
       } else {
         return DisplaySize.LARGE;
       }
-  }
+    }
 
     public render() {
       return <BaseComponent {...this.props}
