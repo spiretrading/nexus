@@ -44,10 +44,9 @@ connection SecurityWidget::connect_change_security_signal(
 }
 
 bool SecurityWidget::eventFilter(QObject* object, QEvent* event) {
-  if(object == m_widget) {
-    if(event->type() == QEvent::KeyPress) {
-      keyPressEvent(static_cast<QKeyEvent*>(event));
-    }
+  if(object == m_widget && event->type() == QEvent::KeyPress) {
+    keyPressEvent(static_cast<QKeyEvent*>(event));
+    return true;
   }
   return QWidget::eventFilter(object, event);
 }
