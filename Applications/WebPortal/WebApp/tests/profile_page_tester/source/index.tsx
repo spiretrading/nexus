@@ -3,29 +3,31 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
-interface State {
+ /** Determines the size to render components at. */
+interface Properties {
   displaySize: WebPortal.DisplaySize;
+}
+
+interface State {
   lastNameValue: string;
   someRoles: Nexus.AccountRoles;
 }
 
 /**  Displays a testing application. */
-class TestApp extends React.Component<{}, State> {
-  constructor(props: {}) {
+class TestApp extends React.Component<Properties, State> {
+  constructor(props: Properties) {
     super(props);
     this.state = {
-      displaySize: WebPortal.DisplaySize.getDisplaySize(),
       lastNameValue: 'Grey',
       someRoles: new Nexus.AccountRoles()
     };
-    this.onScreenResize = this.onScreenResize.bind(this);
     this.onTextInput = this.onTextInput.bind(this);
     this.onRoleClick = this.onRoleClick.bind(this);
   }
 
   public render(): JSX.Element {
     const orientation = (() => {
-      if(this.state.displaySize === WebPortal.DisplaySize.SMALL) {
+      if(this.props.displaySize === WebPortal.DisplaySize.SMALL) {
         return WebPortal.FormEntry.Orientation.VERTICAL;
       } else {
         return WebPortal.FormEntry.Orientation.HORIZONTAL;
@@ -41,14 +43,14 @@ class TestApp extends React.Component<{}, State> {
             orientation={orientation}>
           <WebPortal.TextField
             value = 'Gandalf'
-            displaySize={this.state.displaySize}
+            displaySize={this.props.displaySize}
             disabled/>
         </WebPortal.FormEntry>
         <WebPortal.Padding size='30px'/>
         <WebPortal.FormEntry name='Last Name'
             orientation={orientation}>
           <WebPortal.TextField
-            displaySize={this.state.displaySize}
+            displaySize={this.props.displaySize}
             value={this.state.lastNameValue}
             onInput={this.onTextInput}/>
         </WebPortal.FormEntry>
@@ -59,28 +61,13 @@ class TestApp extends React.Component<{}, State> {
         <WebPortal.FormEntry name='Nickname'
             orientation={orientation}>
           <WebPortal.TextField
-            displaySize={this.state.displaySize}
+            displaySize={this.props.displaySize}
             value='Stormcrow'
             disabled/>
         </WebPortal.FormEntry>
       </WebPortal.VBoxLayout>
       <WebPortal.Padding/>
     </WebPortal.HBoxLayout>);
-  }
-
-  public componentDidMount(): void {
-    window.addEventListener('resize', this.onScreenResize);
-  }
-
-  public componentWillUnmount(): void {
-    window.removeEventListener('resize', this.onScreenResize);
-  }
-
-  private onScreenResize() {
-    const newDisplaySize = WebPortal.DisplaySize.getDisplaySize();
-    if(newDisplaySize !== this.state.displaySize) {
-      this.setState({ displaySize: newDisplaySize });
-    }
   }
 
   private onTextInput(value: string) {
@@ -99,4 +86,5 @@ class TestApp extends React.Component<{}, State> {
   }
 }
 
-ReactDOM.render(<TestApp/>, document.getElementById('main'));
+const ResponsivePage = WebPortal.displaySizeRenderer(TestApp);
+ReactDOM.render(<ResponsivePage/>, document.getElementById('main'));
