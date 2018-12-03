@@ -81,5 +81,5 @@ class TestApp extends React.Component<WebPortal.DisplaySizeProperties, State> {
   }
 }
 
-const BetterPage = WebPortal.displaySizeRenderer(TestApp);
-ReactDOM.render(<BetterPage/>, document.getElementById('main'));
+const ResponsivePage = WebPortal.displaySizeRenderer(TestApp);
+ReactDOM.render(<ResponsivePage/>, document.getElementById('main'));
