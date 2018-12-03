@@ -45,7 +45,7 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
   body_layout->setSpacing(0);
   m_security_widget = new SecurityWidget(input_model,
     SecurityWidget::Theme::LIGHT, this);
-  m_security_widget->connect_security_change_signal(
+  m_security_widget->connect_change_security_signal(
     [=] (const auto& s) { set_current(s); });
   body_layout->addWidget(m_security_widget);
   m_container_widget = new QWidget(this);
@@ -99,9 +99,6 @@ bool BookViewWindow::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void BookViewWindow::set_current(const Security& s) {
-  if(s == m_current_security) {
-    return;
-  }
   if(m_technicals_panel == nullptr) {
     m_technicals_panel = new TechnicalsPanel(this);
     m_layout->addWidget(m_technicals_panel);
@@ -115,7 +112,6 @@ void BookViewWindow::set_current(const Security& s) {
   }
   m_bbo_quote_panel.reset();
   m_table.reset();
-  m_current_security = s;
   m_change_security_signal(s);
   CustomVariantItemDelegate item_delegate;
   setWindowTitle(item_delegate.displayText(QVariant::fromValue(s), QLocale())

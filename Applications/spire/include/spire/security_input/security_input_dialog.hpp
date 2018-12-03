@@ -51,7 +51,7 @@ namespace Spire {
 
     private:
       Nexus::Security m_security;
-      Beam::Ref<SecurityInputModel> m_model;
+      SecurityInputModel* m_model;
       std::unique_ptr<DropShadow> m_shadow;
       QVBoxLayout* m_layout;
       SecurityInputBox* m_security_input_box;

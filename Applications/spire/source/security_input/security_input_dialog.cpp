@@ -15,12 +15,12 @@ using namespace Spire;
 
 SecurityInputDialog::SecurityInputDialog(Ref<SecurityInputModel> model,
     QWidget* parent, Qt::WindowFlags flags)
-    : SecurityInputDialog(Ref(model), "", parent, flags) {}
+    : SecurityInputDialog(model, "", parent, flags) {}
 
 SecurityInputDialog::SecurityInputDialog(Ref<SecurityInputModel> model,
     const QString& initial_text, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, Qt::FramelessWindowHint | flags),
-      m_model(model),
+      m_model(model.Get()),
       m_initial_text(initial_text),
       m_is_dragging(false) {
   setWindowModality(Qt::WindowModal);
@@ -116,7 +116,7 @@ void SecurityInputDialog::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void SecurityInputDialog::showEvent(QShowEvent* event) {
-  m_security_input_box = new SecurityInputBox(m_model, m_initial_text, this);
+  m_security_input_box = new SecurityInputBox(Ref(*m_model), m_initial_text, this);
   m_security_input_box->connect_commit_signal(
     [=] (const Security& s) { set_security(s); });
   m_layout->addWidget(m_security_input_box);

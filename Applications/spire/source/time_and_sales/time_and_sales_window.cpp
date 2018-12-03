@@ -50,7 +50,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
   m_table->hide();
   m_security_widget = new SecurityWidget(input_model,
     SecurityWidget::Theme::LIGHT, this);
-  m_security_widget->connect_security_change_signal(
+  m_security_widget->connect_change_security_signal(
     [=] (const auto& s) { set_current(s); });
   layout->addWidget(m_security_widget);
   m_volume_label = new QLabel(tr("Volume:"), this);
@@ -92,7 +92,7 @@ void TimeAndSalesWindow::set_properties(
   m_table->set_properties(m_properties);
 }
 
-connection TimeAndSalesWindow::connect_security_change_signal(
+connection TimeAndSalesWindow::connect_change_security_signal(
     const ChangeSecuritySignal::slot_type& slot) const {
   return m_change_security_signal.connect(slot);
 }
@@ -178,7 +178,6 @@ void TimeAndSalesWindow::show_properties_dialog() {
 }
 
 void TimeAndSalesWindow::set_current(const Security& s) {
-  m_current_security = s;
   m_change_security_signal(s);
   m_volume_label->setText(tr("Volume:"));
   setWindowTitle(

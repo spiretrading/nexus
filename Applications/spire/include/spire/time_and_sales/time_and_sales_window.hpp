@@ -47,7 +47,7 @@ namespace Spire {
       void set_properties(const TimeAndSalesProperties& properties);
 
       //! Connects a slot to the change security signal.
-      boost::signals2::connection connect_security_change_signal(
+      boost::signals2::connection connect_change_security_signal(
         const ChangeSecuritySignal::slot_type& slot) const;
 
       //! Connects a slot to the window closed signal.
@@ -63,7 +63,6 @@ namespace Spire {
       mutable ClosedSignal m_closed_signal;
       TimeAndSalesProperties m_properties;
       boost::optional<TimeAndSalesWindowModel> m_model;
-      Nexus::Security m_current_security;
       SecurityWidget* m_security_widget;
       QWidget* m_body;
       TimeAndSalesTableView* m_table;

@@ -12,6 +12,7 @@ SecurityWidget::SecurityWidget(Ref<SecurityInputModel> input_model,
     Theme theme, QWidget* parent)
     : QWidget(parent),
       m_input_model(input_model.Get()) {
+  setFocusPolicy(Qt::StrongFocus);
   if(theme == Theme::DARK) {
     setStyleSheet("background-color: #D0D0D0;");
   } else {
@@ -27,7 +28,6 @@ SecurityWidget::SecurityWidget(Ref<SecurityInputModel> input_model,
     font-size: %1px;
     padding-top: %2px;)").arg(scale_height(12)).arg(scale_height(16)));
   m_layout->addWidget(m_empty_window_label.get());
-  window()->installEventFilter(this);
 }
 
 void SecurityWidget::set_widget(QWidget* widget) {
@@ -38,57 +38,57 @@ void SecurityWidget::set_widget(QWidget* widget) {
   m_widget->installEventFilter(this);
 }
 
-connection SecurityWidget::connect_security_change_signal(
+connection SecurityWidget::connect_change_security_signal(
     const ChangeSecuritySignal::slot_type& slot) const {
-  return m_security_change_signal.connect(slot);
+  return m_change_security_signal.connect(slot);
 }
 
 bool SecurityWidget::eventFilter(QObject* object, QEvent* event) {
-  if(object == window() || object == m_widget) {
+  if(object == m_widget) {
     if(event->type() == QEvent::KeyPress) {
-      auto e = static_cast<QKeyEvent*>(event);
-      if(e->key() == Qt::Key_PageUp) {
-        if(m_current_security != Security()) {
-          auto s = m_securities.push_front(m_current_security);
-          if(s != Security()) {
-            m_current_security = s;
-            m_security_change_signal(s);
-          }
-        }
-        event->accept();
-        return true;
-      } else if(e->key() == Qt::Key_PageDown) {
-        if(m_current_security != Security()) {
-          auto s = m_securities.push_back(m_current_security);
-          if(s != Security()) {
-            m_current_security = s;
-            m_security_change_signal(s);
-          }
-        }
-        event->accept();
-        return true;
-      }
-      auto pressed_key = e->text();
-      if(pressed_key[0].isLetterOrNumber()) {
-        auto dialog = new SecurityInputDialog(Ref(*m_input_model), pressed_key,
-          this);
-        dialog->setWindowModality(Qt::NonModal);
-        dialog->setAttribute(Qt::WA_DeleteOnClose);
-        connect(dialog, &QDialog::accepted, this,
-          [=] { on_security_input_accept(dialog); });
-        connect(dialog, &QDialog::rejected, this,
-          [=] { on_security_input_reject(dialog); });
-        dialog->move(window()->geometry().center().x() -
-          dialog->width() / 2, window()->geometry().center().y() -
-          dialog->height() / 2);
-        show_overlay_widget();
-        dialog->show();
-        event->accept();
-        return true;
-      }
+      keyPressEvent(static_cast<QKeyEvent*>(event));
     }
   }
   return QWidget::eventFilter(object, event);
+}
+
+void SecurityWidget::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_PageUp) {
+    if(m_current_security != Security()) {
+      auto s = m_securities.push_front(m_current_security);
+      if(s != Security()) {
+        m_current_security = s;
+        m_change_security_signal(s);
+      }
+    }
+    event->accept();
+  } else if(event->key() == Qt::Key_PageDown) {
+    if(m_current_security != Security()) {
+      auto s = m_securities.push_back(m_current_security);
+      if(s != Security()) {
+        m_current_security = s;
+        m_change_security_signal(s);
+      }
+    }
+    event->accept();
+  }
+  auto pressed_key = event->text();
+  if(pressed_key[0].isLetterOrNumber()) {
+    auto dialog = new SecurityInputDialog(Ref(*m_input_model), pressed_key,
+      this);
+    dialog->setWindowModality(Qt::NonModal);
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    connect(dialog, &QDialog::accepted, this,
+      [=] { on_security_input_accept(dialog); });
+    connect(dialog, &QDialog::rejected, this,
+      [=] { on_security_input_reject(dialog); });
+    dialog->move(window()->geometry().center().x() -
+      dialog->width() / 2, window()->geometry().center().y() -
+      dialog->height() / 2);
+    show_overlay_widget();
+    dialog->show();
+    event->accept();
+  }
 }
 
 void SecurityWidget::show_overlay_widget() {
@@ -112,7 +112,7 @@ void SecurityWidget::on_security_input_accept(SecurityInputDialog* dialog) {
     m_securities.push(m_current_security);
     m_current_security = s;
     activateWindow();
-    m_security_change_signal(s);
+    m_change_security_signal(s);
   }
   dialog->close();
   m_overlay_widget.reset();

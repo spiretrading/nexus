@@ -53,14 +53,15 @@ namespace Spire {
       void hide_overlay_widget();
 
       //! Connects a slot to the change security signal.
-      boost::signals2::connection connect_security_change_signal(
+      boost::signals2::connection connect_change_security_signal(
         const ChangeSecuritySignal::slot_type& slot) const;
 
     protected:
       bool eventFilter(QObject* object, QEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
 
     private:
-      mutable ChangeSecuritySignal m_security_change_signal;
+      mutable ChangeSecuritySignal m_change_security_signal;
       SecurityInputModel* m_input_model;
       SecurityStack m_securities;
       Nexus::Security m_current_security;

@@ -25,7 +25,7 @@ void TimeAndSalesController::open() {
   }
   m_window = std::make_unique<TimeAndSalesWindow>(TimeAndSalesProperties(),
     Ref(*m_security_input_model));
-  m_window->connect_security_change_signal(
+  m_window->connect_change_security_signal(
     [=] (const auto& security) { on_change_security(security); });
   m_window->connect_closed_signal([=] { on_closed(); });
   m_window->show();

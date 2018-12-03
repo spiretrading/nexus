@@ -66,7 +66,6 @@ namespace Spire {
       BookViewProperties m_properties;
       SecurityInputModel* m_input_model;
       std::shared_ptr<BookViewModel> m_model;
-      Nexus::Security m_current_security;
       SecurityWidget* m_security_widget;
       QWidget* m_body;
       QWidget* m_container_widget;
