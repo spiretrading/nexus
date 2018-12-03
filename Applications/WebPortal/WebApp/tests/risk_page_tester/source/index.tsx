@@ -1,34 +1,27 @@
-import {css, StyleSheet} from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
-interface State {
+ /** Determines the size to render components at. */
+interface Properties {
   displaySize: WebPortal.DisplaySize;
+}
+
+interface State {
   roles: Nexus.AccountRoles;
 }
 
-class TestApp extends React.Component<{}, State> {
-  constructor(props: {}) {
+class TestApp extends React.Component<Properties, State> {
+  constructor(props: Properties) {
     super(props);
-    const roles = new Nexus.AccountRoles(8);
     this.state = {
-      displaySize: TestApp.getDisplaySize(),
-      roles: roles
+      roles: new Nexus.AccountRoles(8)
     };
-    this.onScreenResize = this.onScreenResize.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
     this.onToggleIsAdmin = this.onToggleIsAdmin.bind(this);
-  }
-
-  public componentDidMount(): void {
-    window.addEventListener('resize', this.onScreenResize);
-  }
-
-  public componentWillUnmount(): void {
-    window.removeEventListener('resize', this.onScreenResize);
   }
 
   public render(): JSX.Element {
@@ -39,9 +32,8 @@ class TestApp extends React.Component<{}, State> {
       Nexus.Money.ONE.multiply(1000), 100,
       Beam.Duration.HOUR.multiply(5).add(Beam.Duration.MINUTE.multiply(30)).add(
       Beam.Duration.SECOND.multiply(15)));
-
     const containerClassName = (() => {
-      switch(this.state.displaySize) {
+      switch(this.props.displaySize) {
         case WebPortal.DisplaySize.SMALL:
           return css([TestApp.CONTAINER_STYLE.small,
             TestApp.CONTAINER_STYLE.base]);
@@ -57,7 +49,7 @@ class TestApp extends React.Component<{}, State> {
       }
     })();
     const submissionBoxPadding = (() => {
-      switch(this.state.displaySize) {
+      switch(this.props.displaySize) {
         case WebPortal.DisplaySize.SMALL:
           return <div className={css(TestApp.CONTAINER_STYLE.smallPadding)}/>;
         case WebPortal.DisplaySize.MEDIUM:
@@ -81,7 +73,7 @@ class TestApp extends React.Component<{}, State> {
           css(TestApp.STYLE.outerContainer)}>
           <WebPortal.VBoxLayout className={containerClassName}>
             <WebPortal.RiskParametersView parameters={parameters}
-              displaySize={this.state.displaySize}
+              displaySize={this.props.displaySize}
               currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}/>
             <WebPortal.Padding size='30px'/>
             <WebPortal.HBoxLayout width='100%'>
@@ -95,26 +87,6 @@ class TestApp extends React.Component<{}, State> {
           {toggleAdminButtonText}
         </button>
       </WebPortal.VBoxLayout>);
-  }
-
-  private static getDisplaySize(): WebPortal.DisplaySize {
-    const screenWidth = window.innerWidth ||
-      document.documentElement.clientWidth ||
-      document.getElementsByTagName('body')[0].clientWidth;
-    if(screenWidth <= 767) {
-      return WebPortal.DisplaySize.SMALL;
-    } else if(screenWidth > 767 && screenWidth <= 1035) {
-      return WebPortal.DisplaySize.MEDIUM;
-    } else {
-      return WebPortal.DisplaySize.LARGE;
-    }
-  }
-
-  private onScreenResize(): void {
-    const newDisplaySize = TestApp.getDisplaySize();
-    if(newDisplaySize !== this.state.displaySize) {
-      this.setState({ displaySize: newDisplaySize });
-    }
   }
 
   private onSubmit(comment: string) {
@@ -169,4 +141,5 @@ class TestApp extends React.Component<{}, State> {
   });
 }
 
-ReactDOM.render(<TestApp/>, document.getElementById('main'));
+const ResponsivePage = WebPortal.displaySizeRenderer(TestApp);
+ReactDOM.render(<ResponsivePage/>, document.getElementById('main'));
