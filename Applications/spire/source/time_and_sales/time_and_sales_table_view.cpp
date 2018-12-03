@@ -129,7 +129,6 @@ TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
 
 void TimeAndSalesTableView::set_model(TimeAndSalesWindowModel* model) {
   m_model = model;
-  m_transition_widget.reset();
   m_loading_widget.reset();
   if(m_model->is_loading()) {
     QTimer::singleShot(2000, this, [=] { show_transition_widget(); });
@@ -166,7 +165,8 @@ void TimeAndSalesTableView::set_properties(
 }
 
 void TimeAndSalesTableView::show_transition_widget() {
-  if(m_table->model()->rowCount(QModelIndex()) == 0 && m_model->is_loading()) {
+  if(m_table->model()->rowCount(QModelIndex()) == 0 && m_model->is_loading() &&
+      m_transition_widget == nullptr) {
     m_transition_widget = std::make_unique<TransitionWidget>(this);
   }
 }
