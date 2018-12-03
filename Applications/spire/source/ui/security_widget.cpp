@@ -12,13 +12,10 @@ SecurityWidget::SecurityWidget(Ref<SecurityInputModel> input_model,
     Theme theme, QWidget* parent)
     : QWidget(parent),
       m_input_model(input_model.Get()) {
-  switch(theme) {
-    case Theme::LIGHT:
-      setStyleSheet("background-color: #FFFFFF;");
-      break;
-    case Theme::DARK:
-      setStyleSheet("background-color: #D0D0D0;");
-      break;
+  if(theme == Theme::DARK) {
+    setStyleSheet("background-color: #D0D0D0;");
+  } else {
+    setStyleSheet("background-color: #FFFFFF;");
   }
   m_layout = new QVBoxLayout(this);
   m_layout->setContentsMargins({});
