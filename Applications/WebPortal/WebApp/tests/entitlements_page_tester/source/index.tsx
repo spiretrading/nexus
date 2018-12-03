@@ -4,9 +4,11 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
+interface Properties {
+  displaySize: WebPortal.DisplaySize;
+}
 interface State {
   roles: Nexus.AccountRoles;
-  displaySize: WebPortal.DisplaySize;
   checkedDB: Beam.Set<Beam.DirectoryEntry>;
   currencyDB: Nexus.CurrencyDatabase;
   marketDB: Nexus.MarketDatabase;
@@ -17,13 +19,12 @@ interface State {
 }
 
 /**  Displays a testing application. */
-class TestApp extends React.Component<{}, State> {
-  constructor(props: {}) {
+class TestApp extends React.Component<Properties, State> {
+  constructor(props: Properties) {
     super(props);
     this.state = {
       roles:  new Nexus.AccountRoles(),
       entitlementDB: new Nexus.EntitlementDatabase(),
-      displaySize: WebPortal.DisplaySize.getDisplaySize(),
       checkedDB: new Beam.Set<Beam.DirectoryEntry>(),
       currencyDB: Nexus.buildDefaultCurrencyDatabase(),
       marketDB: Nexus.buildDefaultMarketDatabase(),
@@ -32,7 +33,6 @@ class TestApp extends React.Component<{}, State> {
       submitEnabled: false
     };
     this.changeRole = this.changeRole.bind(this);
-    this.onScreenResize = this.onScreenResize.bind(this);
     this.toggleCheckMark = this.toggleCheckMark.bind(this);
     this.setup = this.setup.bind(this);
     this.buildEntitlementDB = this.buildEntitlementDB.bind(this);
@@ -45,7 +45,7 @@ class TestApp extends React.Component<{}, State> {
     return (
       <WebPortal.VBoxLayout width='100%' height='100%'>
         <WebPortal.EntitlementsPage
-          displaySize={this.state.displaySize}
+          displaySize={this.props.displaySize}
           marketDatabase={this.state.marketDB}
           roles={this.state.roles}
           entitlements={this.state.entitlementDB}
@@ -89,16 +89,6 @@ class TestApp extends React.Component<{}, State> {
       </WebPortal.VBoxLayout>);
   }
 
-  public componentDidMount(): void {
-    window.addEventListener('resize', this.onScreenResize);
-    this.setState({ roles: this.testAdmin });
-    this.setup();
-  }
-
-  public componentWillUnmount(): void {
-    window.removeEventListener('resize', this.onScreenResize);
-  }
-
   private changeRole(newRole: Nexus.AccountRoles.Role): void {
     if(newRole === Nexus.AccountRoles.Role.ADMINISTRATOR) {
       this.setState({ roles: this.testAdmin });
@@ -134,13 +124,6 @@ class TestApp extends React.Component<{}, State> {
       this.state.checkedDB.remove(value);
     }
     this.setState({checkedDB: this.state.checkedDB});
-  }
-
-  private onScreenResize() {
-    const newDisplaySize = WebPortal.DisplaySize.getDisplaySize();
-    if(newDisplaySize !== this.state.displaySize) {
-      this.setState({ displaySize: newDisplaySize });
-    }
   }
 
   private setup() {
@@ -213,4 +196,5 @@ class TestApp extends React.Component<{}, State> {
   };
 }
 
-ReactDOM.render(<TestApp />, document.getElementById('main'));
+const ResponsivePage = WebPortal.displaySizeRenderer(TestApp);
+ReactDOM.render(<ResponsivePage />, document.getElementById('main'));
