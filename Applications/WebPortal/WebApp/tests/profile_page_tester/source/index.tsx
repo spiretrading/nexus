@@ -3,14 +3,19 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
+interface Properties {
+  displaySize: WebPortal.DisplaySize;
+  value: number;
+}
+
 interface State {
   lastNameValue: string;
   someRoles: Nexus.AccountRoles;
 }
 
 /**  Displays a testing application. */
-class TestApp extends React.Component<WebPortal.DisplaySizeProperties, State> {
-  constructor(props: WebPortal.DisplaySizeProperties) {
+class TestApp extends React.Component<Properties, State> {
+  constructor(props: Properties) {
     super(props);
     this.state = {
       lastNameValue: 'Grey',
@@ -82,4 +87,4 @@ class TestApp extends React.Component<WebPortal.DisplaySizeProperties, State> {
 }
 
 const ResponsivePage = WebPortal.displaySizeRenderer(TestApp);
-ReactDOM.render(<ResponsivePage/>, document.getElementById('main'));
+ReactDOM.render(<ResponsivePage value={123}/>, document.getElementById('main'));

@@ -1,18 +1,27 @@
 import * as React from 'react';
 import { DisplaySize } from './display_size';
 
-export interface DisplaySizeProperties {
-  displaySize?: DisplaySize;
+type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
+type Subtract<T, K> = Omit<T, keyof K>;
+
+/** The properties that the BaseComponent needs to have. */
+interface DisplaySizeProperties {
+  displaySize: DisplaySize;
 }
 
 interface State {
   displaySize: DisplaySize;
 }
 
-export function displaySizeRenderer(
-    WrappedComponent: React.ComponentType<DisplaySizeProperties>) {
-  return class extends React.Component<{}, State> {
-    constructor(props: {}) {
+/** Returns a component that monitors the resize event.
+* @param BaseComponent - A component that has a DisplaySize that needs
+*  to be updated on a resize.
+ */
+export function displaySizeRenderer<T extends DisplaySizeProperties>(
+    BaseComponent: React.ComponentType<T>) {
+  return class extends React.Component<Subtract<T, DisplaySizeProperties>,
+      State> {
+    constructor(props: T) {
       super(props);
       this.state = {
         displaySize: this.getDisplaySize()
@@ -48,8 +57,9 @@ export function displaySizeRenderer(
         return DisplaySize.LARGE;
       }
   }
+
     public render() {
-      return <WrappedComponent {...this.props}
+      return <BaseComponent {...this.props}
         displaySize={this.state.displaySize}/>;
     }
   };
