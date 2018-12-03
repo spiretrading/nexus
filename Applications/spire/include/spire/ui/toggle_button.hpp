@@ -58,6 +58,8 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* object, QEvent* event) override;
+      void focusInEvent(QFocusEvent* event) override;
+      void focusOutEvent(QFocusEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
@@ -65,6 +67,7 @@ namespace Spire {
     private:
       IconButton m_icon_button;
       bool m_is_toggled;
+      bool m_is_focused;
       QImage m_icon;
       QImage m_toggle_icon;
       QImage m_hover_icon;

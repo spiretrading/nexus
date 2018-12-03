@@ -1,5 +1,6 @@
 #include "spire/ui/toggle_button.hpp"
 #include <QEvent>
+#include <QFocusEvent>
 #include <QHBoxLayout>
 #include <QMouseEvent>
 #include <QPainter>
@@ -19,13 +20,14 @@ ToggleButton::ToggleButton(QImage icon, QImage toggle_icon, QImage hover_icon,
 ToggleButton::ToggleButton(QImage icon, QImage toggle_icon, QImage hover_icon,
     QImage disable_icon, QWidget* parent)
     : QWidget(parent),
+      m_is_focused(false),
       m_icon_button(icon, hover_icon, icon,
         parent),
       m_icon(icon),
       m_hover_icon(hover_icon),
       m_toggle_icon(std::move(toggle_icon)),
       m_disabled_icon(std::move(disable_icon)) {
-  setFocusPolicy(Qt::TabFocus);
+  setFocusPolicy(Qt::StrongFocus);
   m_icon_button.installEventFilter(this);
   m_icon_button.setFocusPolicy(Qt::NoFocus);
   auto layout = new QHBoxLayout(this);
@@ -56,6 +58,19 @@ bool ToggleButton::eventFilter(QObject* object, QEvent* event) {
   return QWidget::eventFilter(object, event);
 }
 
+void ToggleButton::focusInEvent(QFocusEvent* event) {
+  if(event->reason() == Qt::TabFocusReason ||
+      event->reason() == Qt::BacktabFocusReason) {
+    m_is_focused = true;
+    update();
+  }
+}
+
+void ToggleButton::focusOutEvent(QFocusEvent* event) {
+  m_is_focused = false;
+  update();
+}
+
 void ToggleButton::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return ||
       event->key() == Qt::Key_Space) {
@@ -66,7 +81,7 @@ void ToggleButton::keyPressEvent(QKeyEvent* event) {
 }
 
 void ToggleButton::paintEvent(QPaintEvent* event) {
-  if(hasFocus()) {
+  if(m_is_focused) {
     auto painter = QPainter(this);
     painter.setPen(QColor("#4B23A0"));
     painter.drawLine(scale_width(5), event->rect().height() - 2,
