@@ -45,8 +45,6 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
   body_layout->setSpacing(0);
   m_security_widget = new SecurityWidget(input_model,
     SecurityWidget::Theme::LIGHT, this);
-  m_security_widget->connect_change_security_signal(
-    [=] (const auto& s) { set_current(s); });
   body_layout->addWidget(m_security_widget);
   m_container_widget = new QWidget(this);
   m_layout = new QVBoxLayout(m_container_widget);
@@ -55,10 +53,27 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
 }
 
 void BookViewWindow::set_model(std::shared_ptr<BookViewModel> model) {
-  m_model = std::move(model);
-  m_technicals_panel->reset_model();
+  CustomVariantItemDelegate item_delegate;
+  setWindowTitle(item_delegate.displayText(QVariant::fromValue(
+    model->get_security()), QLocale()) + tr(" - Book View"));
+  if(m_technicals_panel == nullptr) {
+    m_technicals_panel = new TechnicalsPanel(this);
+    m_layout->addWidget(m_technicals_panel);
+    m_quote_widgets_container = new QWidget(this);
+    m_quote_widgets_container_layout = new QVBoxLayout(
+      m_quote_widgets_container);
+    m_quote_widgets_container_layout->setContentsMargins({});
+    m_quote_widgets_container_layout->setSpacing(0);
+    m_layout->addWidget(m_quote_widgets_container);
+    m_security_widget->set_widget(m_container_widget);
+  } else {
+    m_technicals_panel->reset_model();
+  }
+  m_bbo_quote_panel.reset();
+  m_table.reset();
   QTimer::singleShot(2000, this, [=] { show_transition_widget(); });
   m_is_data_loaded = false;
+  m_model = std::move(model);
   m_data_loaded_promise = m_model->load();
   m_data_loaded_promise.then(
     [=] (auto&& value) { on_data_loaded(std::move(value)); });
@@ -77,7 +92,7 @@ void BookViewWindow::set_properties(const BookViewProperties& properties) {
 
 connection BookViewWindow::connect_security_change_signal(
     const ChangeSecuritySignal::slot_type& slot) const {
-  return m_change_security_signal.connect(slot);
+  return m_security_widget->connect_change_security_signal(slot);
 }
 
 connection BookViewWindow::connect_closed_signal(
@@ -96,26 +111,6 @@ bool BookViewWindow::eventFilter(QObject* watched, QEvent* event) {
     }
   }
   return QWidget::eventFilter(watched, event);
-}
-
-void BookViewWindow::set_current(const Security& s) {
-  if(m_technicals_panel == nullptr) {
-    m_technicals_panel = new TechnicalsPanel(this);
-    m_layout->addWidget(m_technicals_panel);
-    m_quote_widgets_container = new QWidget(this);
-    m_quote_widgets_container_layout = new QVBoxLayout(
-      m_quote_widgets_container);
-    m_quote_widgets_container_layout->setContentsMargins({});
-    m_quote_widgets_container_layout->setSpacing(0);
-    m_layout->addWidget(m_quote_widgets_container);
-    m_security_widget->set_widget(m_container_widget);
-  }
-  m_bbo_quote_panel.reset();
-  m_table.reset();
-  m_change_security_signal(s);
-  CustomVariantItemDelegate item_delegate;
-  setWindowTitle(item_delegate.displayText(QVariant::fromValue(s), QLocale())
-    + tr(" - Book View"));
 }
 
 void BookViewWindow::show_context_menu(const QPoint& pos) {

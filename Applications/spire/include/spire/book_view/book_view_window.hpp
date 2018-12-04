@@ -61,7 +61,6 @@ namespace Spire {
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
-      mutable ChangeSecuritySignal m_change_security_signal;
       mutable ClosedSignal m_closed_signal;
       BookViewProperties m_properties;
       SecurityInputModel* m_input_model;
@@ -79,7 +78,6 @@ namespace Spire {
       QtPromise<void> m_data_loaded_promise;
       bool m_is_data_loaded;
 
-      void set_current(const Nexus::Security& s);
       void show_context_menu(const QPoint& pos);
       void show_properties_dialog();
       void show_transition_widget();
