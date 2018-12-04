@@ -2,6 +2,7 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
+import { PhotoField } from 'web_portal';
 
  /** Determines the size to render components at. */
 interface Properties {
@@ -58,13 +59,7 @@ class TestApp extends React.Component<Properties, State> {
         <WebPortal.RolesField roles={this.state.someRoles}
           onClick={this.onRoleClick}/>
         <WebPortal.Padding size='30px'/>
-        <WebPortal.FormEntry name='Nickname'
-            orientation={orientation}>
-          <WebPortal.TextField
-            displaySize={this.props.displaySize}
-            value='Stormcrow'
-            disabled/>
-        </WebPortal.FormEntry>
+        <PhotoField displaySize={this.props.displaySize}/>
       </WebPortal.VBoxLayout>
       <WebPortal.Padding/>
     </WebPortal.HBoxLayout>);
