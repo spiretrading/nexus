@@ -32,7 +32,19 @@ QuotePanel::QuotePanel(const BookViewModel& model, Side side,
     font-size: %1px;
     font-weight: 550;)").arg(scale_height(12)));
   label_layout->addWidget(m_price_label);
+  auto separator = new QLabel("/", this);
+  separator->setAlignment(Qt::AlignRight | Qt::AlignCenter);
+  separator->setFixedWidth(scale_width(12));
+  separator->setIndent(0);
+  separator->setStyleSheet(QString(R"(
+    color: #4B23A0;
+    font-family: Roboto;
+    font-size: %1px;
+    padding-top: %2px;
+    font-weight: 550;)").arg(scale_height(10)).arg(scale_height(1)));
+  label_layout->addWidget(separator);
   m_size_label = new QLabel(this);
+  m_size_label->setIndent(scale_width(3));
   m_size_label->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
   m_size_label->setStyleSheet(QString(R"(
     color: #4B23A0;
@@ -63,7 +75,7 @@ void QuotePanel::set_quote_text(const Money& price, const Quantity& size) {
     m_price_label->setAlignment(Qt::AlignVCenter | Qt::AlignRight);
     m_price_label->setText(
       m_item_delegate->displayText(QVariant::fromValue(price), QLocale()));
-    m_size_label->setText(" / " +  m_item_delegate->displayText(
+    m_size_label->setText(m_item_delegate->displayText(
       QVariant::fromValue(size), QLocale()));
 }
 
