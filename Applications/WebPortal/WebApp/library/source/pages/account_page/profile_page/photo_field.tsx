@@ -21,6 +21,16 @@ export class PhotoField extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
+    const boxStyle = (() => {
+      switch(this.props.displaySize){
+        case DisplaySize.SMALL:
+          return PhotoField.STYLE.boxSmall;
+        case DisplaySize.MEDIUM:
+          return PhotoField.STYLE.boxMedium;
+        case DisplaySize.LARGE:
+          return PhotoField.STYLE.boxLarge;
+      }
+    })();
     const imageStyle = (() => {
       if(!this.props.imageSource) {
         return PhotoField.STYLE.placeholderStyle;
@@ -36,7 +46,7 @@ export class PhotoField extends React.Component<Properties> {
       }
     })();
     return (
-      <div style={PhotoField.STYLE.boxSmall}>
+      <div style={boxStyle}>
         <img src='resources/account_page/profile_page/image-placeholder.svg' 
         style={imageStyle}/>
       </div>
@@ -51,9 +61,9 @@ export class PhotoField extends React.Component<Properties> {
       backgroundColor: '#F8F8F8',
       border: '1px solid #E6E6E6',
       minHeight: '190px',
-      maxHeight: '288px',
-      minWidth: '284px',
-      maxWidth: '424px'
+      //maxHeight: '288px',
+      minWidth: '284px'
+      //maxWidth: '424px'
     },
     boxMedium: {
       display: 'flex' as 'flex',
