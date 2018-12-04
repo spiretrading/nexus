@@ -71,12 +71,17 @@ void BookViewWindow::set_model(std::shared_ptr<BookViewModel> model) {
   }
   m_bbo_quote_panel.reset();
   m_table.reset();
-  QTimer::singleShot(2000, this, [=] { show_transition_widget(); });
+  if(!m_transition_timer.isActive()) {
+    m_transition_timer.start(2000);
+  }
   m_is_data_loaded = false;
   m_model = std::move(model);
   m_data_loaded_promise = m_model->load();
   m_data_loaded_promise.then(
     [=] (auto&& value) { on_data_loaded(std::move(value)); });
+  m_transition_timer.setSingleShot(true);
+  connect(&m_transition_timer, &QTimer::timeout,
+    [=] { show_transition_widget(); });
 }
 
 const BookViewProperties& BookViewWindow::get_properties() const {
@@ -164,6 +169,7 @@ void BookViewWindow::show_transition_widget() {
 }
 
 void BookViewWindow::on_data_loaded(Expect<void> value) {
+  m_transition_timer.stop();
   m_transition_widget.reset();
   m_is_data_loaded = true;
   m_technicals_panel->set_model(m_model);

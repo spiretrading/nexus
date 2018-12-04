@@ -3,6 +3,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/optional.hpp>
 #include <QLabel>
+#include <QTimer>
 #include <QVBoxLayout>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
@@ -72,6 +73,7 @@ namespace Spire {
       TechnicalsPanel* m_technicals_panel;
       std::unique_ptr<BboQuotePanel> m_bbo_quote_panel;
       std::unique_ptr<TransitionWidget> m_transition_widget;
+      QTimer m_transition_timer;
       QWidget* m_quote_widgets_container;
       QVBoxLayout* m_quote_widgets_container_layout;
       std::unique_ptr<BookViewTableWidget> m_table;
