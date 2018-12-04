@@ -59,7 +59,6 @@ namespace Spire {
       void contextMenuEvent(QContextMenuEvent* event) override;
 
     private:
-      mutable ChangeSecuritySignal m_change_security_signal;
       mutable ClosedSignal m_closed_signal;
       TimeAndSalesProperties m_properties;
       boost::optional<TimeAndSalesWindowModel> m_model;
@@ -71,7 +70,6 @@ namespace Spire {
 
       void export_table();
       void show_properties_dialog();
-      void set_current(const Nexus::Security& s);
       void on_volume(const Nexus::Quantity& volume);
   };
 }

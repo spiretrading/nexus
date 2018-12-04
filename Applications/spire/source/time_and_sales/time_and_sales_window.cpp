@@ -50,8 +50,6 @@ TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
   m_table->hide();
   m_security_widget = new SecurityWidget(input_model,
     SecurityWidget::Theme::LIGHT, this);
-  m_security_widget->connect_change_security_signal(
-    [=] (const auto& s) { set_current(s); });
   layout->addWidget(m_security_widget);
   m_volume_label = new QLabel(tr("Volume:"), this);
   m_volume_label->setFocusPolicy(Qt::NoFocus);
@@ -70,7 +68,11 @@ TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
 }
 
 void TimeAndSalesWindow::set_model(std::shared_ptr<TimeAndSalesModel> model) {
+  m_volume_label->setText(tr("Volume:"));
   if(m_model.is_initialized()) {
+    setWindowTitle(
+      m_item_delegate->displayText(QVariant::fromValue(model->get_security()),
+      QLocale()) + tr(" - Time and Sales"));
     m_security_widget->set_widget(m_table);
   }
   model->connect_volume_signal([=] (const Quantity& v) { on_volume(v); });
@@ -94,7 +96,7 @@ void TimeAndSalesWindow::set_properties(
 
 connection TimeAndSalesWindow::connect_change_security_signal(
     const ChangeSecuritySignal::slot_type& slot) const {
-  return m_change_security_signal.connect(slot);
+  return m_security_widget->connect_change_security_signal(slot);
 }
 
 connection TimeAndSalesWindow::connect_closed_signal(
@@ -175,15 +177,6 @@ void TimeAndSalesWindow::show_properties_dialog() {
     set_properties(dialog.get_properties());
   }
   m_security_widget->hide_overlay_widget();
-}
-
-void TimeAndSalesWindow::set_current(const Security& s) {
-  m_change_security_signal(s);
-  m_volume_label->setText(tr("Volume:"));
-  setWindowTitle(
-    m_item_delegate->displayText(QVariant::fromValue(s), QLocale()) +
-    tr(" - Time and Sales"));
-  m_security_widget->set_widget(m_table);
 }
 
 void TimeAndSalesWindow::on_volume(const Quantity& volume) {
