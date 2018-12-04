@@ -205,7 +205,12 @@ void ChixFixApplication::onMessage(const FIX42::ExecutionReport& message,
       } else if(execBroker == "CX2") {
         update->m_lastMarket = DefaultMarkets::XCX2().GetData();
       } else if(execBroker == "TSX") {
-        update->m_lastMarket = DefaultMarkets::TSX().GetData();
+        if(order.GetInfo().m_fields.m_security.GetMarket() ==
+            DefaultMarkets::TSXV()) {
+          update->m_lastMarket = DefaultMarkets::TSXV().GetData();
+        } else {
+          update->m_lastMarket = DefaultMarkets::TSX().GetData();
+        }
       } else if(execBroker == "PURE") {
         if(order.GetInfo().m_fields.m_security.GetMarket() ==
             DefaultMarkets::CSE()) {

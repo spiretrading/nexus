@@ -173,7 +173,12 @@ void OmegaFixApplication::onMessage(const FIX42::ExecutionReport& message,
           update->m_lastMarket = DefaultMarkets::PURE().GetData();
         }
       } else if(lastMkt == "XTSE") {
-        update->m_lastMarket = DefaultMarkets::TSX().GetData();
+        if(order.GetInfo().m_fields.m_security.GetMarket() ==
+            DefaultMarkets::TSXV()) {
+          update->m_lastMarket = DefaultMarkets::TSXV().GetData();
+        } else {
+          update->m_lastMarket = DefaultMarkets::TSX().GetData();
+        }
       }
     });
 }
