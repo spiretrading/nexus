@@ -89,6 +89,11 @@ class TestApp extends React.Component<Properties, State> {
       </WebPortal.VBoxLayout>);
   }
 
+  public componentDidMount(): void {
+    this.setState({ roles: this.testAdmin });
+    this.setup();
+  }
+
   private changeRole(newRole: Nexus.AccountRoles.Role): void {
     if(newRole === Nexus.AccountRoles.Role.ADMINISTRATOR) {
       this.setState({ roles: this.testAdmin });
