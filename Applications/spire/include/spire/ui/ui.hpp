@@ -7,6 +7,9 @@
 
 namespace Spire {
   class CheckBox;
+  class DropdownMenu;
+  class DropdownMenuItem;
+  class DropdownMenuList;
   class DropShadow;
   class FlatButton;
   class IconButton;
@@ -14,6 +17,7 @@ namespace Spire {
   class SecurityStack;
   class SecurityWidget;
   class TitleBar;
+  class ToggleButton;
   class TransitionWidget;
   class Window;
 

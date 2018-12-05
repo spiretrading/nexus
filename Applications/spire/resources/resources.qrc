@@ -79,5 +79,18 @@
         <file>icons/key-bindings-icon-256x256.png</file>
         <file>icons/spire-icon-256x256.png</file>
         <file>icons/time-sales-icon-256x256.png</file>
+        <file>icons/chart-grey.svg</file>
+        <file>icons/arrow-right-black.svg</file>
+        <file>icons/arrow-right-white.svg</file>
+        <file>icons/auto-scale-green.svg</file>
+        <file>icons/auto-scale-grey.svg</file>
+        <file>icons/auto-scale-purple.svg</file>
+        <file>icons/color-check.svg</file>
+        <file>icons/draw-green.svg</file>
+        <file>icons/draw-grey.svg</file>
+        <file>icons/draw-purple.svg</file>
+        <file>icons/lock-grid-green.svg</file>
+        <file>icons/lock-grid-grey.svg</file>
+        <file>icons/lock-grid-purple.svg</file>
     </qresource>
 </RCC>
