@@ -213,6 +213,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
         flexGrow: 1
       },
       smallComponent: {
+        width: '100%',
         maxWidth: '424px'
       },
       mediumComponent: {
