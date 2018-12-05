@@ -130,8 +130,9 @@ bool DropdownMenuList::eventFilter(QObject* object, QEvent* event) {
 void DropdownMenuList::showEvent(QShowEvent* event) {
   m_highlight_index = -1;
   for(auto i = 0; i < m_list_widget->layout()->count(); ++i) {
-    auto widget = m_list_widget->layout()->itemAt(i)->widget();
-    static_cast<DropdownMenuItem*>(widget)->remove_highlight();
+    auto widget = static_cast<DropdownMenuItem*>(
+      m_list_widget->layout()->itemAt(i)->widget());
+    widget->remove_highlight();
     widget->update();
   }
 }
