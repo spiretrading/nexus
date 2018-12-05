@@ -38,7 +38,10 @@ export class PhotoField extends React.Component<Properties> {
         }
         return PhotoField.STYLE.placeholderStyle;
       } else {
-        return PhotoField.STYLE.imageStyle
+        if (this.props.displaySize === DisplaySize.SMALL) {
+          return PhotoField.STYLE.imageStyleSmall;
+        }
+        return PhotoField.STYLE.imageStyle;
       }
     })();
     const imageSrc = (() => {
@@ -49,22 +52,27 @@ export class PhotoField extends React.Component<Properties> {
       }
     })();
     return (
+      <div style={PhotoField.STYLE.smallWrapper}>
         <div id='dumb box' style={boxStyle}>
           <img src={imageSrc}
             style={imageStyle} />
           <img src='resources/account_page/profile_page/camera.svg'
               style={PhotoField.STYLE.cameraIcon}/>
-        </div>);
+        </div>
+      </div>);
   }
   private static STYLE = {
+    smallWrapper: {
+      maxHeight: '288px',
+      maxWidth: '424px'
+    },
     boxSmall: {
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
-      justifyContent: 'center' as 'center',
+      boxSizing: 'border-box' as 'border-box',
       backgroundColor: '#F8F8F8',
-      height: '190px',
-      width: '284px',
+      width: '100%',
+      paddingTop: '68%',
+      maxHeight: '288px',
+      maxWidth: '424px',
       position: 'relative' as 'relative'
     },
     boxMedium: {
@@ -91,18 +99,24 @@ export class PhotoField extends React.Component<Properties> {
     },
     placeholderStyle: {
       position: 'absolute' as 'absolute',
-      height: '100px',
-      width: '100px'
+      height: '24px',
+      width: '30px'
     },
     placeholderStyleSmall: {
-      flexGrow: '100',
       position: 'absolute' as 'absolute',
       height: '24px',
       width: '30px',
-      top: '46%',
-      left: '45%'
+      top: 'calc(50% - 12px)',
+      left: 'calc(50% - 15px)'
     },
     imageStyle: {
+      height: '100%',
+      width: '100%'
+    },
+    imageStyleSmall: {
+      position: 'absolute' as 'absolute',
+      top: '0%',
+      left: '0%',
       height: '100%',
       width: '100%'
     },
