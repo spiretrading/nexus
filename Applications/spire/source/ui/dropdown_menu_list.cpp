@@ -140,7 +140,7 @@ void DropdownMenuList::showEvent(QShowEvent* event) {
 int DropdownMenuList::get_index(const QString& text) {
   auto index = -1;
   for(auto i = 0; i < m_list_widget->layout()->count(); ++i) {
-    auto item_text = static_cast<DropdownMenuItem*>(
+    auto& item_text = static_cast<DropdownMenuItem*>(
       m_list_widget->layout()->itemAt(i)->widget())->text();
     if(item_text == text) {
       index = i;
