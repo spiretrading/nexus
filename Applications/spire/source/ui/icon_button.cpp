@@ -8,19 +8,18 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
-IconButton::IconButton(const QImage& icon, QWidget* parent)
+IconButton::IconButton(QImage icon, QWidget* parent)
     : IconButton(icon, icon, parent) {}
 
-IconButton::IconButton(const QImage& icon, const QImage& hover_icon,
-    QWidget* parent)
+IconButton::IconButton(QImage icon, QImage hover_icon, QWidget* parent)
     : IconButton(icon, hover_icon, icon, parent) {}
 
-IconButton::IconButton(const QImage& icon, const QImage& hover_icon,
-    const QImage& blur_icon, QWidget* parent)
+IconButton::IconButton(QImage icon, QImage hover_icon,
+    QImage blur_icon, QWidget* parent)
     : QAbstractButton(parent),
-      m_icon(icon),
-      m_hover_icon(hover_icon),
-      m_blur_icon(blur_icon) {
+      m_icon(std::move(icon)),
+      m_hover_icon(std::move(hover_icon)),
+      m_blur_icon(std::move(blur_icon)) {
   setFocusPolicy(Qt::StrongFocus);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
@@ -40,19 +39,18 @@ const QImage& IconButton::get_icon() const {
   return m_icon;
 }
 
-void IconButton::set_icon(const QImage& icon) {
+void IconButton::set_icon(QImage icon) {
   set_icon(icon, icon);
 }
 
-void IconButton::set_icon(const QImage& icon, const QImage& hover_icon) {
+void IconButton::set_icon(QImage icon, QImage hover_icon) {
   set_icon(icon, hover_icon, icon);
 }
 
-void IconButton::set_icon(const QImage& icon, const QImage& hover_icon,
-    const QImage& blur_icon) {
-  m_icon = icon;
-  m_hover_icon = hover_icon;
-  m_blur_icon = blur_icon;
+void IconButton::set_icon(QImage icon, QImage hover_icon, QImage blur_icon) {
+  m_icon = std::move(icon);
+  m_hover_icon = std::move(hover_icon);
+  m_blur_icon = std::move(blur_icon);
   setFixedSize(m_icon.size());
   update();
 }

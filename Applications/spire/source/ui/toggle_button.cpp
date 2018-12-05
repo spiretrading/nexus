@@ -23,8 +23,8 @@ ToggleButton::ToggleButton(QImage icon, QImage toggle_icon, QImage hover_icon,
       m_is_focused(false),
       m_icon_button(icon, hover_icon, icon,
         parent),
-      m_icon(icon),
-      m_hover_icon(hover_icon),
+      m_icon(std::move(icon)),
+      m_hover_icon(std::move(hover_icon)),
       m_toggle_icon(std::move(toggle_icon)),
       m_disabled_icon(std::move(disable_icon)) {
   setFocusPolicy(Qt::StrongFocus);
@@ -50,8 +50,8 @@ bool ToggleButton::eventFilter(QObject* object, QEvent* event) {
       event->type() == QEvent::WindowDeactivate) {
     return true;
   } else if(event->type() == QEvent::MouseButtonRelease) {
-    auto e = static_cast<QMouseEvent*>(event);
-    if(e->button() == Qt::LeftButton) {
+    auto mouse_event = static_cast<QMouseEvent*>(event);
+    if(mouse_event->button() == Qt::LeftButton) {
       swap_toggle();
     }
   }
@@ -75,8 +75,6 @@ void ToggleButton::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return ||
       event->key() == Qt::Key_Space) {
     swap_toggle();
-  } else {
-    parent()->event(event);
   }
 }
 

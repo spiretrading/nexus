@@ -9,6 +9,7 @@ namespace Spire {
   class DropdownMenuItem : public QLabel {
     public:
 
+      //! Signals that this item was selected.
       using SelectedSignal = Signal<void (const QString& text)>;
 
       //! Constructs a DropdownMenuItem with displayed text.
@@ -16,7 +17,7 @@ namespace Spire {
         \param text The text to display.
         \param parent The parent to this widget.
       */
-      DropdownMenuItem(const QString& text, QWidget* parent = nullptr);
+      explicit DropdownMenuItem(const QString& text, QWidget* parent = nullptr);
 
       //! Sets the item's highlighted style.
       void set_highlight();

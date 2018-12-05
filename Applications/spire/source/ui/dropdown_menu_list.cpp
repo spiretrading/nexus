@@ -9,8 +9,7 @@ using namespace boost::signals2;
 using namespace Spire;
 
 DropdownMenuList::DropdownMenuList(
-    const std::initializer_list<QString>& items,
-    QWidget* parent)
+    const std::vector<QString>& items, QWidget* parent)
     : QWidget(parent, Qt::Tool | Qt::FramelessWindowHint),
       m_highlight_index(-1) {
   setAttribute(Qt::WA_ShowWithoutActivating);
@@ -60,9 +59,9 @@ DropdownMenuList::DropdownMenuList(
   list_layout->setContentsMargins({});
   list_layout->setSpacing(0);
   for(auto& item : items) {
-    auto i = new DropdownMenuItem(item, m_list_widget);
-    i->connect_selected_signal([=] (auto& t) { on_select(t); });
-    list_layout->addWidget(i);
+    auto menu_item = new DropdownMenuItem(item, m_list_widget);
+    menu_item->connect_selected_signal([=] (auto& t) { on_select(t); });
+    list_layout->addWidget(menu_item);
   }
   m_list_widget->setStyleSheet("background-color: #FFFFFF;");
   m_scroll_area->setWidget(m_list_widget);
@@ -75,9 +74,9 @@ void DropdownMenuList::set_items(const std::vector<QString>& items) {
     delete item;
   }
   for(auto& item : items) {
-    auto i = new DropdownMenuItem(item, m_list_widget);
-    i->connect_selected_signal([=] (auto& t) { on_select(t); });
-    m_list_widget->layout()->addWidget(i);
+    auto menu_item = new DropdownMenuItem(item, m_list_widget);
+    menu_item->connect_selected_signal([=] (auto& t) { on_select(t); });
+    m_list_widget->layout()->addWidget(menu_item);
   }
 }
 
@@ -106,19 +105,21 @@ connection DropdownMenuList::connect_selected_signal(
 bool DropdownMenuList::eventFilter(QObject* object, QEvent* event) {
   if(object == parent()) {
     if(event->type() == QEvent::KeyPress && isVisible()) {
-      auto e = static_cast<QKeyEvent*>(event);
-      if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Down) {
+      auto key_event = static_cast<QKeyEvent*>(event);
+      if(key_event->key() == Qt::Key_Tab || key_event->key() == Qt::Key_Down) {
         focus_next();
         return true;
-      } else if((e->key() & Qt::Key_Tab &&
-          e->modifiers() & Qt::ShiftModifier) || e->key() == Qt::Key_Up) {
+      } else if((key_event->key() & Qt::Key_Tab &&
+          key_event->modifiers() & Qt::ShiftModifier) ||
+          key_event->key() == Qt::Key_Up) {
         focus_previous();
         return true;
-      } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
+      } else if(key_event->key() == Qt::Key_Enter ||
+          key_event->key() == Qt::Key_Return) {
         on_select(static_cast<DropdownMenuItem*>(m_list_widget->layout()->
           itemAt(m_highlight_index)->widget())->text());
         return true;
-      } else if(e->key() == Qt::Key_Escape) {
+      } else if(key_event->key() == Qt::Key_Escape) {
         close();
       }
     }
@@ -129,18 +130,18 @@ bool DropdownMenuList::eventFilter(QObject* object, QEvent* event) {
 void DropdownMenuList::showEvent(QShowEvent* event) {
   m_highlight_index = -1;
   for(auto i = 0; i < m_list_widget->layout()->count(); ++i) {
-    auto w = m_list_widget->layout()->itemAt(i)->widget();
-    static_cast<DropdownMenuItem*>(w)->remove_highlight();
-    w->update();
+    auto widget = m_list_widget->layout()->itemAt(i)->widget();
+    static_cast<DropdownMenuItem*>(widget)->remove_highlight();
+    widget->update();
   }
 }
 
 int DropdownMenuList::get_index(const QString& text) {
   auto index = -1;
   for(auto i = 0; i < m_list_widget->layout()->count(); ++i) {
-    auto t = static_cast<DropdownMenuItem*>(
+    auto item_text = static_cast<DropdownMenuItem*>(
       m_list_widget->layout()->itemAt(i)->widget())->text();
-    if(t == text) {
+    if(item_text == text) {
       index = i;
       break;
     }
@@ -177,8 +178,7 @@ void DropdownMenuList::update_highlights(int old_index, int new_index) {
   auto previous_widget = m_list_widget->layout()->itemAt(old_index)->widget();
   static_cast<DropdownMenuItem*>(previous_widget)->remove_highlight();
   previous_widget->update();
-  auto current_widget = m_list_widget->layout()->
-    itemAt(new_index)->widget();
+  auto current_widget = m_list_widget->layout()->itemAt(new_index)->widget();
   static_cast<DropdownMenuItem*>(current_widget)->set_highlight();
   current_widget->update();
 }

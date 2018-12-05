@@ -10,12 +10,12 @@ namespace Spire {
     public:
 
       //! Constructs a DropdownMenu with specified items. The first item
-      //! in the initializer_list is the default selected item.
+      //! in the vector is the default selected item.
       /*
         \param items The items to display in the menu.
         \param parent The parent widget to the DropdownMenu.
       */
-      DropdownMenu(const std::initializer_list<QString>& items,
+      explicit DropdownMenu(const std::vector<QString>& items,
         QWidget* parent = nullptr);
 
       //! Clears the items from the list and populates it with the specified

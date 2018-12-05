@@ -20,7 +20,7 @@ namespace Spire {
         \param icon The icon to show.
         \param parent The parent QWidget to the IconButton.
       */
-      IconButton(const QImage& icon, QWidget* parent = nullptr);
+      explicit IconButton(QImage icon, QWidget* parent = nullptr);
 
       //! Constructs an IconButton with a default icon and a hover icon.
       /*!
@@ -28,8 +28,7 @@ namespace Spire {
         \param hover_icon The icon shown when the button is hovered.
         \param parent The parent QWidget to the IconButton.
       */
-      IconButton(const QImage& icon, const QImage& hover_icon,
-        QWidget* parent = nullptr);
+      IconButton(QImage icon, QImage hover_icon, QWidget* parent = nullptr);
 
       //! Constructs an IconButton with a default icon, hover icon, and
       //!  blur icon.
@@ -39,8 +38,8 @@ namespace Spire {
         \param blur_icon The icon shown when the window lacks focus.
         \param parent The parent QWidget to the IconButton.
       */
-      IconButton(const QImage& icon, const QImage& hover_icon,
-        const QImage& blur_icon, QWidget* parent = nullptr);
+      IconButton(QImage icon, QImage hover_icon, QImage blur_icon,
+        QWidget* parent = nullptr);
 
       //! Sets the default stylesheet for the button.
       /*!
@@ -58,14 +57,13 @@ namespace Spire {
       const QImage& get_icon() const;
 
       //! Sets the icon to display.
-      void set_icon(const QImage& icon);
+      void set_icon(QImage icon);
 
       //! Sets the icons to display.
-      void set_icon(const QImage& icon, const QImage& hover_icon);
+      void set_icon(QImage icon, QImage hover_icon);
 
       //! Sets the icons to display.
-      void set_icon(const QImage& icon, const QImage& hover_icon,
-        const QImage& blur_icon);
+      void set_icon(QImage icon, QImage hover_icon, QImage blur_icon);
 
       //! Connects a slot to the clicked signal.
       boost::signals2::connection connect_clicked_signal(
