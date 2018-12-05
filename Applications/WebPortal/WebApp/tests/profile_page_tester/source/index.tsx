@@ -2,7 +2,6 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
-import { Padding } from 'web_portal';
 
  /** Determines the size to render components at. */
 interface Properties {
@@ -35,36 +34,38 @@ class TestApp extends React.Component<Properties, State> {
       }
     })();
     return (
-    <WebPortal.HBoxLayout width='100%' height='100%'>
-      <WebPortal.Padding/>
-      <WebPortal.Padding size='18px'/>
-      <WebPortal.VBoxLayout width='100%' height='100%'>
-        <WebPortal.Padding size='30px'/>
-        <WebPortal.FormEntry name='First Name'
-            readonly
-            orientation={orientation}>
-          <WebPortal.TextField
-            value = 'Gandalf'
-            displaySize={this.props.displaySize}
-            disabled/>
-        </WebPortal.FormEntry>
-        <WebPortal.Padding size='30px'/>
-        <WebPortal.FormEntry name='Last Name'
-            orientation={orientation}>
-          <WebPortal.TextField
-            displaySize={this.props.displaySize}
-            value={this.state.lastNameValue}
-            onInput={this.onTextInput}/>
-        </WebPortal.FormEntry>
-        <WebPortal.Padding size='30px'/>
-        <WebPortal.RolesField roles={this.state.someRoles}
-          onClick={this.onRoleClick}/>
-        <WebPortal.Padding size='30px'/>
-        <WebPortal.PhotoField displaySize={this.props.displaySize}/>
-      </WebPortal.VBoxLayout>
-      <WebPortal.Padding size='18px'/>
-      <WebPortal.Padding/>
-    </WebPortal.HBoxLayout>);
+      <WebPortal.HBoxLayout width='100%' height='100%'>
+        <WebPortal.Padding size='18px'/>
+        <WebPortal.VBoxLayout width='100%' height='100%'>
+          <WebPortal.Padding size='30px'/>
+          <WebPortal.FormEntry name='First Name'
+              readonly
+              orientation={orientation}>
+            <WebPortal.TextField
+              value = 'Gandalf'
+              displaySize={this.props.displaySize}
+              disabled/>
+          </WebPortal.FormEntry>
+          <WebPortal.Padding size='30px'/>
+          <WebPortal.FormEntry name='Last Name'
+              orientation={orientation}>
+            <WebPortal.TextField
+              displaySize={this.props.displaySize}
+              value={this.state.lastNameValue}
+              onInput={this.onTextInput}/>
+          </WebPortal.FormEntry>
+          <WebPortal.Padding size='30px'/>
+          <WebPortal.RolesField roles={this.state.someRoles}
+            onClick={this.onRoleClick}/>
+          <WebPortal.Padding size='30px'/>
+          <WebPortal.PhotoField displaySize={this.props.displaySize}/>
+          <WebPortal.Padding size='30px'/>
+          <WebPortal.PhotoField displaySize={this.props.displaySize}
+          imageSource=
+            'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Youngkitten.JPG/1024px-Youngkitten.JPG'/>
+        </WebPortal.VBoxLayout>
+        <WebPortal.Padding size='18px'/>
+      </WebPortal.HBoxLayout>);
   }
 
   private onTextInput(value: string) {

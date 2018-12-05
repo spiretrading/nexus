@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { DisplaySize } from '../../..';
-import { FormEntry } from './form_entry';
-import { VBoxLayout, HBoxLayout } from '../../../layouts';
+import { callbackify } from 'util';
 
 export enum DisplayMode {
   Display,
@@ -39,7 +38,7 @@ export class PhotoField extends React.Component<Properties> {
         }
         return PhotoField.STYLE.placeholderStyle;
       } else {
-        return null;
+        return PhotoField.STYLE.imageStyle
       }
     })();
     const imageSrc = (() => {
@@ -50,30 +49,23 @@ export class PhotoField extends React.Component<Properties> {
       }
     })();
     return (
-      <HBoxLayout width='100%'>
         <div id='dumb box' style={boxStyle}>
-          <img src='resources/account_page/profile_page/image-placeholder.svg'
+          <img src={imageSrc}
             style={imageStyle} />
-        </div>
-      </HBoxLayout>);
+          <img src='resources/account_page/profile_page/camera.svg'
+              style={PhotoField.STYLE.cameraIcon}/>
+        </div>);
   }
   private static STYLE = {
     boxSmall: {
-      boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       alignItems: 'center' as 'center',
       justifyContent: 'center' as 'center',
       backgroundColor: '#F8F8F8',
-      border: '1px solid #E6E6E6',
-      //minWidth: '284px',
-      minHeight: '190px',
-      //maxWidth: '424px',
-      maxHeight: '288px',
-      paddingTop: '49%',
-      width: '55%',
-      position: 'relative' as 'relative',
-      overflow: 'hidden' as 'hidden'
+      height: '190px',
+      width: '284px',
+      position: 'relative' as 'relative'
     },
     boxMedium: {
       display: 'flex' as 'flex',
@@ -83,7 +75,8 @@ export class PhotoField extends React.Component<Properties> {
       backgroundColor: '#F8F8F8',
       border: '1px solid #E6E6E6',
       height: '190px',
-      width: '284px'
+      width: '284px',
+      position: 'relative' as 'relative'
     },
     boxLarge: {
       display: 'flex' as 'flex',
@@ -93,7 +86,8 @@ export class PhotoField extends React.Component<Properties> {
       backgroundColor: '#F8F8F8',
       border: '1px solid #E6E6E6',
       height: '258px',
-      width: '380px'
+      width: '380px',
+      position: 'relative' as 'relative'
     },
     placeholderStyle: {
       position: 'absolute' as 'absolute',
@@ -101,10 +95,23 @@ export class PhotoField extends React.Component<Properties> {
       width: '100px'
     },
     placeholderStyleSmall: {
+      flexGrow: '100',
       position: 'absolute' as 'absolute',
       height: '24px',
       width: '30px',
-      top: '46%'
+      top: '46%',
+      left: '45%'
+    },
+    imageStyle: {
+      height: '100%',
+      width: '100%'
+    },
+    cameraIcon: {
+      position: 'absolute' as 'absolute',
+      height: '24px',
+      width: '24px',
+      top: 'calc(0% + 10px)',
+      left: 'calc(100% - 10px - 24px)'
     }
   };
 }
