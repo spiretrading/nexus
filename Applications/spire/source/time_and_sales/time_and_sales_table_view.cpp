@@ -125,16 +125,13 @@ TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
   connect(&m_v_scroll_bar_timer, &QTimer::timeout, this,
     &TimeAndSalesTableView::fade_out_vertical_scroll_bar);
   setWidget(main_widget);
-  m_transition_timer.setSingleShot(true);
-  connect(&m_transition_timer, &QTimer::timeout,
-    [=] { show_transition_widget(); });
 }
 
 void TimeAndSalesTableView::set_model(TimeAndSalesWindowModel* model) {
   m_model = model;
   m_loading_widget.reset();
-  if(m_model->is_loading() && !m_transition_timer.isActive()) {
-    m_transition_timer.start(2000);
+  if(m_model->is_loading() && m_transition_widget == nullptr) {
+    m_transition_widget = std::make_unique<TransitionWidget>(this);
   }
   m_model->connect_begin_loading_signal([=] { show_loading_widget(); });
   m_model->connect_end_loading_signal([=] { on_end_loading_signal(); });
@@ -164,13 +161,6 @@ void TimeAndSalesTableView::set_properties(
   m_header_padding->setFixedHeight(m_header->height());
   if(m_table->model()->rowCount() > 0) {
     update_table_height(m_table->model()->rowCount());
-  }
-}
-
-void TimeAndSalesTableView::show_transition_widget() {
-  if(m_table->model()->rowCount(QModelIndex()) == 0 && m_model->is_loading() &&
-      m_transition_widget == nullptr) {
-    m_transition_widget = std::make_unique<TransitionWidget>(this);
   }
 }
 
@@ -275,7 +265,6 @@ bool TimeAndSalesTableView::is_within_vertical_scroll_bar(
 }
 
 void TimeAndSalesTableView::on_end_loading_signal() {
-  m_transition_timer.stop();
   m_transition_widget.reset();
   m_loading_widget.reset();
 }
