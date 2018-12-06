@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { DisplaySize } from '../../..';
+import { callbackify } from 'util';
+import { VBoxLayout } from '../../../layouts';
 
 export enum DisplayMode {
   Display,
@@ -14,12 +16,24 @@ interface Properties {
   onUpload?: () => boolean;
 }
 
+interface State {
+  showUploader: boolean;
+}
+
 /** Displays an account's profile page. */
-export class PhotoField extends React.Component<Properties> {
+export class PhotoField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     readonly: false,
     onClick: () => {true;},
     DisplayMode: DisplayMode.Display
+  };
+
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      showUploader: false
+    };
+    this.showUploader = this.showUploader.bind(this);
   }
 
   public render(): JSX.Element {
@@ -62,6 +76,13 @@ export class PhotoField extends React.Component<Properties> {
         return this.props.imageSource;
       }
     })();
+    const uploaderStyle = (() => {
+      if(!this.state.showUploader) {
+        return PhotoField.STYLE.hidden;
+      } else {
+        return null;
+      }
+    })();
     return (
       <div style={PhotoField.STYLE.wrapper}>
         <div style={boxStyle}>
@@ -69,10 +90,17 @@ export class PhotoField extends React.Component<Properties> {
             style={imageStyle}/>
           <img src='resources/account_page/profile_page/camera.svg'
             style={cameraIconStyle}
-            onClick={this.props.onUpload}/>
+            onClick={this.showUploader}/>
         </div>
+        <ChangePictureModal displaySize={this.props.displaySize}/>
       </div>);
   }
+
+  private showUploader() {
+    this.setState({ showUploader: true });
+    this.props.onUpload();
+  }
+
   private static readonly STYLE = {
     wrapper: {
       maxHeight: '288px',
@@ -139,6 +167,78 @@ export class PhotoField extends React.Component<Properties> {
       top: 'calc(0% + 10px)',
       left: 'calc(100% - 10px - 24px)',
       cursor: 'pointer' as 'pointer'
+    },
+    hidden: {
+      visibility: 'hidden' as 'hidden',
+      display: 'none' as 'none'
+    }
+  };
+}
+
+/** Displays an account's profile page. */
+export class ChangePictureModal extends React.Component<Properties> {
+  public render(): JSX.Element {
+    const boxStyle = (() => {
+      switch (this.props.displaySize) {
+        case DisplaySize.SMALL:
+          return ChangePictureModal.STYLE.boxSmall;
+        case DisplaySize.MEDIUM:
+          return ChangePictureModal.STYLE.boxLarge;
+        case DisplaySize.LARGE:
+          return ChangePictureModal.STYLE.boxLarge;
+      }
+    })();
+    return (
+      <div>
+      <div style={ChangePictureModal.STYLE.wrapper}>
+        <VBoxLayout style={boxStyle}>
+          BEEP
+        </VBoxLayout>
+      </div>
+      </div>);
+  }
+  private static readonly STYLE = {
+    wrapper: {
+      top: '0',
+      left: '0',
+      position: 'fixed' as 'fixed',
+      width: '100%',
+      height: '100%',
+      zIndex: 100,
+      backgroundColor: '#FFFFFFF2'
+    },
+    boxSmall: {
+      position: 'absolute' as 'absolute',
+      zIndex: 5,
+      border: '1px solid #FFFFFF',
+      boxShadow: '0px 0px 6px #00000064',
+      backgroundColor: '#FFFFFF',
+      width: '284px',
+      height: '100%',
+      top: '0%',
+      right: '0%',
+      opacity: 1
+    },
+    boxLarge: {
+      position: 'absolute' as 'absolute',
+      backgroundColor: '#FFFFFF',
+      width: '360px',
+      height: '447px',
+      boxShadow: '0px 0px 6px #00000064',
+      top: 'calc(50% - 223.5px)',
+      left: 'calc(50% - 180px)',
+      opacity: 1
+    },
+    closeIcon: {
+      width: '20px',
+      height: '20px'
+    },
+    buttonBoxStyle: {
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'wrap' as 'wrap'
+    }, 
+    buttonStyle: {
     },
     hidden: {
       visibility: 'hidden' as 'hidden',
