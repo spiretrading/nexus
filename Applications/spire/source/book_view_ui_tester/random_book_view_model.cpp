@@ -159,17 +159,13 @@ void RandomBookViewModel::update_bbo() {
   auto current_bbo = m_model.get_bbo();
   auto& bid_price = current_bbo.m_bid.m_price;
   auto& ask_price = current_bbo.m_ask.m_price;
-  if(random_num == 1) {
-    if(bid_price > Money::CENT) {
-      bid_price -= Money::CENT;
-      ask_price -= Money::CENT;
-      m_model.update(current_bbo);
-    }
-  } else if(random_num == 2) {
-    bid_price += Money::CENT;
-    ask_price += Money::CENT;
-    m_model.update(current_bbo);
-  }
+  bid_price = m_random_engine() % 200000 * Money::ONE +
+    m_random_engine() % 100 * Money::CENT;
+  current_bbo.m_bid.m_size = m_random_engine() % 200000;
+  ask_price = (m_random_engine() % 200) * Money::ONE +
+    m_random_engine() % 100 * Money::CENT;
+  current_bbo.m_ask.m_size = m_random_engine() % 100000;
+  m_model.update(current_bbo);
 }
 
 void RandomBookViewModel::update_book_quote() {
