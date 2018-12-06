@@ -1,7 +1,6 @@
 import * as React from 'react';
-import { DisplaySize } from '../../..';
-import { callbackify } from 'util';
-import { VBoxLayout } from '../../../layouts';
+import { DisplaySize , Padding, VBoxLayout, HLine } from '../../..';
+import { HBoxLayout } from '../../../layouts';
 
 export enum DisplayMode {
   Display,
@@ -92,7 +91,9 @@ export class PhotoField extends React.Component<Properties, State> {
             style={cameraIconStyle}
             onClick={this.showUploader}/>
         </div>
-        <ChangePictureModal displaySize={this.props.displaySize}/>
+        <ChangePictureModal displaySize={this.props.displaySize}
+          visibility={this.state.showUploader}
+          closeModal={this.showUploader}/>
       </div>);
   }
 
@@ -175,9 +176,22 @@ export class PhotoField extends React.Component<Properties, State> {
   };
 }
 
+interface ModalProperties {
+  displaySize: DisplaySize;
+  visibility: boolean;
+  closeModal: () => void;
+}
+
 /** Displays an account's profile page. */
-export class ChangePictureModal extends React.Component<Properties> {
+export class ChangePictureModal extends React.Component<ModalProperties> {
   public render(): JSX.Element {
+    const visibility = (() => {
+      if(this.props.visibility) {
+        return ChangePictureModal.STYLE.wrapper;
+      } else {
+        return ChangePictureModal.STYLE.hidden;
+      }
+    })();
     const boxStyle = (() => {
       switch (this.props.displaySize) {
         case DisplaySize.SMALL:
@@ -188,13 +202,44 @@ export class ChangePictureModal extends React.Component<Properties> {
           return ChangePictureModal.STYLE.boxLarge;
       }
     })();
+    const imageStyle = (() => {
+      switch (this.props.displaySize) {
+        case DisplaySize.SMALL:
+          return ChangePictureModal.STYLE.imageSmall;
+        case DisplaySize.MEDIUM:
+          return ChangePictureModal.STYLE.imageLagre;
+        case DisplaySize.LARGE:
+          return ChangePictureModal.STYLE.imageLagre;
+      }
+    })();
     return (
-      <div>
-      <div style={ChangePictureModal.STYLE.wrapper}>
-        <VBoxLayout style={boxStyle}>
-          BEEP
-        </VBoxLayout>
-      </div>
+      <div style={visibility}>
+        <HBoxLayout style={boxStyle}>
+          <Padding size={'18px'}/>
+          <VBoxLayout>
+          <Padding size='30px'/>
+          <div style={ChangePictureModal.STYLE.header}>
+            {ChangePictureModal.HEADER_TEXT}
+            <img src='resources/close.svg'
+              style={ChangePictureModal.STYLE.closeIcon}/>
+          </div>
+          <Padding size='30px'/>
+          <img src={ChangePictureModal.SOME_IMAGE}
+              style={imageStyle}/>
+          <Padding size='30px'/>
+          <HLine color='#E6E6E6'/>
+          <Padding size='30px'/>
+            <div style={ChangePictureModal.STYLE.buttonBox}>
+              <button style={ChangePictureModal.STYLE.buttonStyle}>
+                {ChangePictureModal.BROWSE_BUTTON_TEXT}
+              </button>
+              <button style={ChangePictureModal.STYLE.buttonStyle}>
+                {ChangePictureModal.SUBMIT_BUTTON_TEXT}
+              </button>
+            </div>
+          </VBoxLayout>
+          <Padding size={'18px'}/>
+        </HBoxLayout>
       </div>);
   }
   private static readonly STYLE = {
@@ -229,20 +274,54 @@ export class ChangePictureModal extends React.Component<Properties> {
       left: 'calc(50% - 180px)',
       opacity: 1
     },
+    header: {
+      display: 'flex' as 'flex',
+      justifyContent: 'space-between'  as 'space-between',
+      font: '400 16px Roboto'
+    },
     closeIcon: {
       width: '20px',
       height: '20px'
     },
-    buttonBoxStyle: {
+    buttonBox: {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
-      flexWrap: 'wrap' as 'wrap'
-    }, 
+      flexWrap: 'wrap' as 'wrap',
+      justifyContent: 'space-around' as 'space-around',
+      alignItems: 'center' as 'center',
+      borderRadius: '1px'
+    },
     buttonStyle: {
+      minWidth: '153px',
+      maxWidth: '248px',
+      height: '34px',
+      backgroundColor: '#684BC7',
+      color: '#FFFFFF',
+      font: '400 14px Roboto',
+      border:'1px solid #684BC7',
+      outline: 0
+    },
+    imageSmall: {
+      objectFit: 'cover' as 'cover',
+      height: '166px',
+      width: '248px'
+    },
+    imageLagre: {
+      objectFit: 'cover' as 'cover',
+      height: '216px',
+      width: '324px'
     },
     hidden: {
       visibility: 'hidden' as 'hidden',
       display: 'none' as 'none'
     }
   };
+  private static readonly HEADER_TEXT = 'CHANGE PICTURE';
+  private static readonly BROWSE_BUTTON_TEXT = 'BROWSE';
+  private static readonly SUBMIT_BUTTON_TEXT = 'SUBMIT';
+  private static readonly PADDING_SMALL = '18px';
+  private static readonly PADDING_BIG = '36px';
+  private static readonly SOME_IMAGE = 'https://upload.wikimedia.org/' +
+  'wikipedia/commons/thumb/2/23/Close_up_of_a_black_domestic_cat.jpg/' +
+  '675px-Close_up_of_a_black_domestic_cat.jpg';
 }
