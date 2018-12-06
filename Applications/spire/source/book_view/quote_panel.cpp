@@ -23,10 +23,10 @@ QuotePanel::QuotePanel(const BookViewModel& model, Side side,
   auto label_layout = new QHBoxLayout();
   label_layout->setContentsMargins({});
   label_layout->setSpacing(0);
-  label_layout->addStretch(1);
   m_price_label = new QLabel(this);
-  m_price_label->setFixedWidth(scale_width(52));
-  m_price_label->setAlignment(Qt::AlignCenter);
+  m_price_label->setIndent(0);
+  m_price_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_price_label->setAlignment(Qt::AlignRight);
   m_price_label->setStyleSheet(QString(R"(
     color: #4B23A0;
     font-family: Roboto;
@@ -34,9 +34,8 @@ QuotePanel::QuotePanel(const BookViewModel& model, Side side,
     font-weight: 550;)").arg(scale_height(12)));
   label_layout->addWidget(m_price_label);
   auto separator = new QLabel("/", this);
-  separator->setAlignment(Qt::AlignRight | Qt::AlignCenter);
-  separator->setFixedWidth(scale_width(9));
-  separator->setIndent(0);
+  separator->setAlignment(Qt::AlignCenter);
+  separator->setFixedWidth(scale_width(14));
   separator->setStyleSheet(QString(R"(
     color: #4B23A0;
     font-family: Roboto;
@@ -45,8 +44,8 @@ QuotePanel::QuotePanel(const BookViewModel& model, Side side,
     font-weight: 550;)").arg(scale_height(10)).arg(scale_height(1)));
   label_layout->addWidget(separator);
   m_size_label = new QLabel(this);
-  m_size_label->setFixedWidth(scale_width(52));
-  m_size_label->setIndent(scale_width(3));
+  m_size_label->setIndent(0);
+  m_size_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_size_label->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
   m_size_label->setStyleSheet(QString(R"(
     color: #4B23A0;
@@ -55,7 +54,6 @@ QuotePanel::QuotePanel(const BookViewModel& model, Side side,
     padding-top: %2px;
     font-weight: 550;)").arg(scale_height(10)).arg(scale_height(1)));
   label_layout->addWidget(m_size_label);
-  label_layout->addStretch(1);
   layout->addLayout(label_layout);
   m_item_delegate = new CustomVariantItemDelegate(this);
   set_model(model);
