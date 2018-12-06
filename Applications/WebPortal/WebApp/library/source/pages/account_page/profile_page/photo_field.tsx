@@ -11,13 +11,15 @@ interface Properties {
   displayMode?: DisplayMode;
   imageSource?: string;
   readonly?: boolean;
-  onUpload: () => boolean;
+  onUpload?: () => boolean;
 }
 
 /** Displays an account's profile page. */
 export class PhotoField extends React.Component<Properties> {
-  constructor(props: Properties) {
-    super(props);
+  public static readonly defaultProps = {
+    readonly: false,
+    onClick: () => {true;},
+    DisplayMode: DisplayMode.Display
   }
 
   public render(): JSX.Element {
@@ -31,39 +33,48 @@ export class PhotoField extends React.Component<Properties> {
           return PhotoField.STYLE.boxLarge;
       }
     })();
-    const imageStyle = (() => {
-      if (!this.props.imageSource) {
-        if (this.props.displaySize === DisplaySize.SMALL) {
-          return PhotoField.STYLE.placeholderStyleSmall;
-        }
-        return PhotoField.STYLE.placeholderStyle;
+    const cameraIconStyle = (() => {
+      if(this.props.readonly) {
+        return PhotoField.STYLE.hidden;
       } else {
-        if (this.props.displaySize === DisplaySize.SMALL) {
-          return PhotoField.STYLE.imageStyleSmall;
+        return PhotoField.STYLE.cameraIcon;
+      }
+    })();
+    const imageStyle = (() => {
+      if(!this.props.imageSource) {
+        if(this.props.displaySize === DisplaySize.SMALL) {
+          return PhotoField.STYLE.placeholderStyleSmall;
+        } else {
+          return PhotoField.STYLE.placeholderStyle;
         }
-        return PhotoField.STYLE.imageStyle;
+      } else {
+        if(this.props.displaySize === DisplaySize.SMALL) {
+          return PhotoField.STYLE.imageStyleSmall;
+        } else {
+          return PhotoField.STYLE.imageStyle;
+        }
       }
     })();
     const imageSrc = (() => {
-      if (!this.props.imageSource) {
+      if(!this.props.imageSource) {
         return 'resources/account_page/profile_page/image-placeholder.svg';
       } else {
         return this.props.imageSource;
       }
     })();
     return (
-      <div style={PhotoField.STYLE.smallWrapper}>
-        <div id='dumb box' style={boxStyle}>
+      <div style={PhotoField.STYLE.wrapper}>
+        <div style={boxStyle}>
           <img src={imageSrc}
-            style={imageStyle} />
+            style={imageStyle}/>
           <img src='resources/account_page/profile_page/camera.svg'
-              style={PhotoField.STYLE.cameraIcon}
-              onClick={this.props.onUpload}/>
+            style={cameraIconStyle}
+            onClick={this.props.onUpload}/>
         </div>
       </div>);
   }
-  private static STYLE = {
-    smallWrapper: {
+  private static readonly STYLE = {
+    wrapper: {
       maxHeight: '288px',
       maxWidth: '424px'
     },
@@ -127,9 +138,11 @@ export class PhotoField extends React.Component<Properties> {
       width: '24px',
       top: 'calc(0% + 10px)',
       left: 'calc(100% - 10px - 24px)',
-      cursor: 'pointer' as 'poninter'
+      cursor: 'pointer' as 'pointer'
     },
     hidden: {
+      visibility: 'hidden' as 'hidden',
+      display: 'none' as 'none'
     }
   };
 }
