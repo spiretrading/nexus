@@ -2,7 +2,6 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
-import { PhotoField } from 'web_portal';
 
  /** Determines the size to render components at. */
 interface Properties {
