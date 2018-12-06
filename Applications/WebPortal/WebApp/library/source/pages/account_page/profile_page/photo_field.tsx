@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { DisplaySize } from '../../..';
-import { callbackify } from 'util';
 
 export enum DisplayMode {
   Display,
@@ -12,6 +11,7 @@ interface Properties {
   displayMode?: DisplayMode;
   imageSource?: string;
   readonly?: boolean;
+  onUpload: () => boolean;
 }
 
 /** Displays an account's profile page. */
@@ -57,7 +57,8 @@ export class PhotoField extends React.Component<Properties> {
           <img src={imageSrc}
             style={imageStyle} />
           <img src='resources/account_page/profile_page/camera.svg'
-              style={PhotoField.STYLE.cameraIcon}/>
+              style={PhotoField.STYLE.cameraIcon}
+              onClick={this.props.onUpload}/>
         </div>
       </div>);
   }
@@ -125,7 +126,10 @@ export class PhotoField extends React.Component<Properties> {
       height: '24px',
       width: '24px',
       top: 'calc(0% + 10px)',
-      left: 'calc(100% - 10px - 24px)'
+      left: 'calc(100% - 10px - 24px)',
+      cursor: 'pointer' as 'poninter'
+    },
+    hidden: {
     }
   };
 }

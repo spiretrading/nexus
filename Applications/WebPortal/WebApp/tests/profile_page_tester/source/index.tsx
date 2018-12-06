@@ -61,10 +61,10 @@ class TestApp extends React.Component<Properties, State> {
           <WebPortal.PhotoField displaySize={this.props.displaySize}/>
           <WebPortal.Padding size='30px'/>
           <WebPortal.PhotoField displaySize={this.props.displaySize}
-          imageSource=
-            'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Youngkitten.JPG/1024px-Youngkitten.JPG'/>
+          imageSource = {TestApp.SOME_IMAGE}/>
         </WebPortal.VBoxLayout>
         <WebPortal.Padding size='18px'/>
+
       </WebPortal.HBoxLayout>);
   }
 
@@ -82,6 +82,9 @@ class TestApp extends React.Component<Properties, State> {
     }
     this.setState({someRoles: this.state.someRoles});
   }
+
+  private static readonly SOME_IMAGE = 'https://upload.wikimedia.org/' +
+    'wikipedia/commons/thumb/f/f3/Youngkitten.JPG/1024px-Youngkitten.JPG';
 }
 
 const ResponsivePage = WebPortal.displaySizeRenderer(TestApp);
