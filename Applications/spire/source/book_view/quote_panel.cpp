@@ -24,18 +24,18 @@ QuotePanel::QuotePanel(const BookViewModel& model, Side side,
   label_layout->setContentsMargins({});
   label_layout->setSpacing(0);
   m_price_label = new QLabel(this);
-  m_price_label->setIndent(scale_width(5));
-  m_price_label->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+  m_price_label->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
   m_price_label->setAlignment(Qt::AlignRight);
   m_price_label->setStyleSheet(QString(R"(
     color: #4B23A0;
     font-family: Roboto;
     font-size: %1px;
-    font-weight: 550;)").arg(scale_height(12)));
+    font-weight: 550;
+    padding-right: %2px;)").arg(scale_height(12)).arg(scale_width(2)));
   label_layout->addWidget(m_price_label);
   auto separator = new QLabel("/", this);
   separator->setAlignment(Qt::AlignCenter);
-  separator->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+  separator->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
   separator->setStyleSheet(QString(R"(
     color: #4B23A0;
     font-family: Roboto;
@@ -44,15 +44,16 @@ QuotePanel::QuotePanel(const BookViewModel& model, Side side,
     font-weight: 550;)").arg(scale_height(10)).arg(scale_height(1)));
   label_layout->addWidget(separator);
   m_size_label = new QLabel(this);
-  m_size_label->setIndent(scale_width(5));
-  m_size_label->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+  m_size_label->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
   m_size_label->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
   m_size_label->setStyleSheet(QString(R"(
     color: #4B23A0;
     font-family: Roboto;
     font-size: %1px;
+    padding-left: %3px;
     padding-top: %2px;
-    font-weight: 550;)").arg(scale_height(10)).arg(scale_height(1)));
+    font-weight: 550;)").arg(scale_height(10)).arg(scale_height(1))
+    .arg(scale_width(2)));
   label_layout->addWidget(m_size_label);
   layout->addLayout(label_layout);
   m_item_delegate = new CustomVariantItemDelegate(this);
