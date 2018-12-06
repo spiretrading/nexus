@@ -45,7 +45,7 @@ QuotePanel::QuotePanel(const BookViewModel& model, Side side,
     font-weight: 550;)").arg(scale_height(10)).arg(scale_height(1)));
   label_layout->addWidget(separator);
   m_size_label = new QLabel(this);
-  m_size_label->setFixedWidth(scale_width(40));
+  m_size_label->setFixedWidth(scale_width(60));
   m_size_label->setIndent(scale_width(3));
   m_size_label->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
   m_size_label->setStyleSheet(QString(R"(
