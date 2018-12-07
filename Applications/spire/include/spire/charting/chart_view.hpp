@@ -25,6 +25,13 @@ namespace Spire {
         \param bottom_right The bottom right point to display.
       */
       void set_region(ChartPoint top_left, ChartPoint bottom_right);
+
+    protected:
+      void paintEvent(QPaintEvent* event) override;
+
+    private:
+      ChartPoint m_top_left;
+      ChartPoint m_bottom_right;
   };
 }
 
