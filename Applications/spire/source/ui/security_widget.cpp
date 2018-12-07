@@ -105,13 +105,13 @@ void SecurityWidget::hide_overlay_widget() {
 }
 
 void SecurityWidget::on_security_input_accept(SecurityInputDialog* dialog) {
-  auto s = dialog->get_security();
-  if(s != Security() && s != m_current_security) {
+  auto& security = dialog->get_security();
+  if(security != Security() && security != m_current_security) {
     m_empty_window_label.reset();
     m_securities.push(m_current_security);
-    m_current_security = s;
+    m_current_security = security;
     activateWindow();
-    m_change_security_signal(s);
+    m_change_security_signal(security);
   }
   dialog->close();
   m_overlay_widget.reset();
