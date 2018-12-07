@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { DisplaySize , Padding, VBoxLayout, HLine } from '../../..';
 import { HBoxLayout } from '../../../layouts';
+import { Slider } from '.';
 
 export enum DisplayMode {
   Display,
@@ -156,11 +157,13 @@ export class PhotoField extends React.Component<Properties, State> {
       left: 'calc(50% - 15px)'
     },
     imageStyle: {
+      objectFit: 'cover' as 'cover',
       height: '100%',
       width: '100%'
     },
     imageStyleSmall: {
       position: 'absolute' as 'absolute',
+      objectFit: 'cover' as 'cover',
       top: '0%',
       left: '0%',
       height: '100%',
@@ -182,6 +185,14 @@ export class PhotoField extends React.Component<Properties, State> {
 }
 
 interface ModalProperties {
+  displaySize: DisplaySize;
+  visibility: boolean;
+  closeModal: () => void;
+  onBrowse: () => void;
+  onSubmit: () => void;
+}
+
+interface ModalState {
   displaySize: DisplaySize;
   visibility: boolean;
   closeModal: () => void;
@@ -240,7 +251,7 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
             <img src={ChangePictureModal.SOME_IMAGE}
                 style={imageStyle}/>
             <Padding size={ChangePictureModal.PADDING_ELEMENT}/>
-            <div style={ChangePictureModal.STYLE.tempSlider}/>
+            <Slider/>
             <Padding size={ChangePictureModal.PADDING_ELEMENT}/>
             <HLine color='#E6E6E6'/>
             <Padding size={ChangePictureModal.PADDING_ELEMENT}/>

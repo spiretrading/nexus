@@ -122,7 +122,8 @@ class TestApp extends React.Component<Properties, State> {
     }
   };
   private static readonly SOME_IMAGE = 'https://upload.wikimedia.org/' +
-    'wikipedia/commons/thumb/f/f3/Youngkitten.JPG/1024px-Youngkitten.JPG';
+  'wikipedia/commons/thumb/2/23/Close_up_of_a_black_domestic_cat.jpg/' +
+  '675px-Close_up_of_a_black_domestic_cat.jpg';
 }
 
 const ResponsivePage = WebPortal.displaySizeRenderer(TestApp);
