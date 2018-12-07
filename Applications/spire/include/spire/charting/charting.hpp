@@ -3,6 +3,8 @@
 #include "spire/spire/spire.hpp"
 
 namespace Spire {
+  struct ChartPoint;
+  class ChartView;
   class ChartingWindow;
 }
 
