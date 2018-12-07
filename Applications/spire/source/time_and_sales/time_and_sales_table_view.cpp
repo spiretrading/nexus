@@ -129,12 +129,11 @@ TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
 
 void TimeAndSalesTableView::set_model(TimeAndSalesWindowModel* model) {
   m_model = model;
-  m_transition_widget.reset();
   m_loading_widget.reset();
-  if(m_model->is_loading()) {
-    QTimer::singleShot(2000, this, [=] { show_transition_widget(); });
+  if(m_model->is_loading() && m_transition_widget == nullptr) {
+    m_transition_widget = std::make_unique<TransitionWidget>(this);
   }
-  m_model->connect_begin_loading_signal([=] { show_loading_widget(); });  
+  m_model->connect_begin_loading_signal([=] { show_loading_widget(); });
   m_model->connect_end_loading_signal([=] { on_end_loading_signal(); });
   auto filter = new CustomVariantSortFilterProxyModel(this);
   filter->setSourceModel(m_model);
@@ -162,12 +161,6 @@ void TimeAndSalesTableView::set_properties(
   m_header_padding->setFixedHeight(m_header->height());
   if(m_table->model()->rowCount() > 0) {
     update_table_height(m_table->model()->rowCount());
-  }
-}
-
-void TimeAndSalesTableView::show_transition_widget() {
-  if(m_table->model()->rowCount(QModelIndex()) == 0 && m_model->is_loading()) {
-    m_transition_widget = std::make_unique<TransitionWidget>(this);
   }
 }
 

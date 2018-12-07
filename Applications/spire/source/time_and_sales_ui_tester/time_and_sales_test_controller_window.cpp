@@ -17,7 +17,7 @@ TimeAndSalesTestControllerWindow::TimeAndSalesTestControllerWindow(
     TimeAndSalesWindow* window, TimerThreadPool& timer_thread_pool)
     : m_window(window),
       m_timer_thread_pool(&timer_thread_pool) {
-  m_window->connect_security_change_signal(
+  m_window->connect_change_security_signal(
     [=] (const auto& s) { security_changed(s); });
   m_model = std::make_shared<PeriodicTimeAndSalesModel>(Security(),
     *m_timer_thread_pool);

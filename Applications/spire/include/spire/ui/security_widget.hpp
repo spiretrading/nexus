@@ -1,9 +1,12 @@
 #ifndef SPIRE_SECURITY_WIDGET_HPP
 #define SPIRE_SECURITY_WIDGET_HPP
 #include <Beam/Pointers/Ref.hpp>
+#include <QLabel>
+#include <QVBoxLayout>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/security_input/security_input.hpp"
+#include "spire/ui/security_stack.hpp"
 #include "spire/ui/ui.hpp"
 
 namespace Spire {
@@ -34,7 +37,8 @@ namespace Spire {
       /*!
         \param input_model The SecurityInputModel to use for autocomplete.
         \param theme The widget's theme.
-        \param parent The parent widget.
+        \param parent The parent widget, also the widget that is covered by
+                      the overlay widget.
       */
       explicit SecurityWidget(Beam::Ref<SecurityInputModel> input_model,
         Theme theme, QWidget* parent = nullptr);
@@ -42,9 +46,32 @@ namespace Spire {
       //! Sets the widget to display and indicates that loading has completed.
       void set_widget(QWidget* widget);
 
+      //! Displays the overlay widget that covers the parent widget.
+      void show_overlay_widget();
+
+      //! Hides the overlay widget.
+      void hide_overlay_widget();
+
       //! Connects a slot to the change security signal.
-      boost::signals2::connection connect_security_change_signal(
+      boost::signals2::connection connect_change_security_signal(
         const ChangeSecuritySignal::slot_type& slot) const;
+
+    protected:
+      bool eventFilter(QObject* object, QEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
+
+    private:
+      mutable ChangeSecuritySignal m_change_security_signal;
+      SecurityInputModel* m_input_model;
+      SecurityStack m_securities;
+      Nexus::Security m_current_security;
+      QWidget* m_widget;
+      QVBoxLayout* m_layout;
+      std::unique_ptr<QLabel> m_empty_window_label;
+      std::unique_ptr<QLabel> m_overlay_widget;
+
+      void on_security_input_accept(SecurityInputDialog* dialog);
+      void on_security_input_reject(SecurityInputDialog* dialog);
   };
 }
 
