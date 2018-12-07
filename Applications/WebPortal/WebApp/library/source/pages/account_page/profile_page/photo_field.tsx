@@ -33,6 +33,7 @@ export class PhotoField extends React.Component<Properties, State> {
       showUploader: false
     };
     this.showUploader = this.showUploader.bind(this);
+    this.closeUploader = this.closeUploader.bind(this);
   }
 
   public render(): JSX.Element {
@@ -93,13 +94,17 @@ export class PhotoField extends React.Component<Properties, State> {
         </div>
         <ChangePictureModal displaySize={this.props.displaySize}
           visibility={this.state.showUploader}
-          closeModal={this.showUploader}/>
+          closeModal={this.closeUploader}/>
       </div>);
   }
 
   private showUploader() {
     this.setState({ showUploader: true });
     this.props.onUpload();
+  }
+
+  private closeUploader() {
+    this.setState({ showUploader: false });
   }
 
   private static readonly STYLE = {
@@ -202,6 +207,13 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
           return ChangePictureModal.STYLE.boxLarge;
       }
     })();
+    const buttonBox = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return ChangePictureModal.STYLE.buttonBoxSmall;
+      } else {
+        return ChangePictureModal.STYLE.buttonBoxLarge;
+      }
+    })();
     const imageStyle = (() => {
       switch (this.props.displaySize) {
         case DisplaySize.SMALL:
@@ -215,21 +227,24 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
     return (
       <div style={visibility}>
         <HBoxLayout style={boxStyle}>
-          <Padding size={'18px'}/>
+          <Padding size={ChangePictureModal.PADDING}/>
           <VBoxLayout>
-          <Padding size='30px'/>
-          <div style={ChangePictureModal.STYLE.header}>
-            {ChangePictureModal.HEADER_TEXT}
-            <img src='resources/close.svg'
-              style={ChangePictureModal.STYLE.closeIcon}/>
-          </div>
-          <Padding size='30px'/>
-          <img src={ChangePictureModal.SOME_IMAGE}
-              style={imageStyle}/>
-          <Padding size='30px'/>
-          <HLine color='#E6E6E6'/>
-          <Padding size='30px'/>
-            <div style={ChangePictureModal.STYLE.buttonBox}>
+            <Padding size={ChangePictureModal.PADDING}/>
+            <div style={ChangePictureModal.STYLE.header}>
+              {ChangePictureModal.HEADER_TEXT}
+              <img src='resources/close.svg'
+                style={ChangePictureModal.STYLE.closeIcon}
+                onClick={this.props.closeModal}/>
+            </div>
+            <Padding size={ChangePictureModal.PADDING_ELEMENT}/>
+            <img src={ChangePictureModal.SOME_IMAGE}
+                style={imageStyle}/>
+            <Padding size={ChangePictureModal.PADDING_ELEMENT}/>
+            <div style={ChangePictureModal.STYLE.tempSlider}/>
+            <Padding size={ChangePictureModal.PADDING_ELEMENT}/>
+            <HLine color='#E6E6E6'/>
+            <Padding size={ChangePictureModal.PADDING_ELEMENT}/>
+            <div style={buttonBox}>
               <button style={ChangePictureModal.STYLE.buttonStyle}>
                 {ChangePictureModal.BROWSE_BUTTON_TEXT}
               </button>
@@ -237,13 +252,15 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
                 {ChangePictureModal.SUBMIT_BUTTON_TEXT}
               </button>
             </div>
+            <Padding size={ChangePictureModal.PADDING}/>
           </VBoxLayout>
-          <Padding size={'18px'}/>
+          <Padding size={ChangePictureModal.PADDING}/>
         </HBoxLayout>
       </div>);
   }
   private static readonly STYLE = {
     wrapper: {
+      boxSizing: 'border-box' as 'border-box',
       top: '0',
       left: '0',
       position: 'fixed' as 'fixed',
@@ -281,15 +298,29 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
     },
     closeIcon: {
       width: '20px',
-      height: '20px'
+      height: '20px',
+      cursor: 'pointer' as 'pointer'
     },
-    buttonBox: {
+    tempSlider: {
+      width: '100%',
+      height: '20px',
+      backgroundColor: '#967FE3'
+    },
+    buttonBoxSmall: {
+      boxSizing: 'border-box' as 'border-box',
+      display: 'flex' as 'flex',
+      flexDirection: 'column' as 'column',
+      flexWrap: 'wrap' as 'wrap',
+      alignItems: 'center' as 'center',
+      justifyContent: 'space-between' as 'space-between',
+      height: '86px'
+    },
+    buttonBoxLarge: {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       flexWrap: 'wrap' as 'wrap',
-      justifyContent: 'space-around' as 'space-around',
-      alignItems: 'center' as 'center',
-      borderRadius: '1px'
+      justifyContent: 'space-between' as 'space-between',
+      alignItems: 'center' as 'center'
     },
     buttonStyle: {
       minWidth: '153px',
@@ -299,6 +330,7 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
       color: '#FFFFFF',
       font: '400 14px Roboto',
       border:'1px solid #684BC7',
+      borderRadius: '1px',
       outline: 0
     },
     imageSmall: {
@@ -316,11 +348,11 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
       display: 'none' as 'none'
     }
   };
-  private static readonly HEADER_TEXT = 'CHANGE PICTURE';
+  private static readonly HEADER_TEXT = 'Change Picture';
   private static readonly BROWSE_BUTTON_TEXT = 'BROWSE';
   private static readonly SUBMIT_BUTTON_TEXT = 'SUBMIT';
-  private static readonly PADDING_SMALL = '18px';
-  private static readonly PADDING_BIG = '36px';
+  private static readonly PADDING = '18px';
+  private static readonly PADDING_ELEMENT = '30px';
   private static readonly SOME_IMAGE = 'https://upload.wikimedia.org/' +
   'wikipedia/commons/thumb/2/23/Close_up_of_a_black_domestic_cat.jpg/' +
   '675px-Close_up_of_a_black_domestic_cat.jpg';
