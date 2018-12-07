@@ -27,7 +27,7 @@ namespace Spire {
         MONEY,
 
         //! A ptime value is represented.
-        TIME_STAMP,
+        TIMESTAMP,
 
         //! A time_duration is represented.
         DURATION

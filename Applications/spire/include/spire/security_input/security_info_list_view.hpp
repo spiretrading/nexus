@@ -1,5 +1,5 @@
-#ifndef SPIRE_SECURITY_INFO_LIST_VIEW
-#define SPIRE_SECURITY_INFO_LIST_VIEW
+#ifndef SPIRE_SECURITY_INFO_LIST_VIEW_HPP
+#define SPIRE_SECURITY_INFO_LIST_VIEW_HPP
 #include <vector>
 #include <QScrollArea>
 #include "Nexus/Definitions/SecurityInfo.hpp"

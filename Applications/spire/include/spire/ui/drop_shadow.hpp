@@ -1,5 +1,5 @@
-#ifndef SPIRE_DROP_SHADOW
-#define SPIRE_DROP_SHADOW
+#ifndef SPIRE_DROP_SHADOW_HPP
+#define SPIRE_DROP_SHADOW_HPP
 #include <QWidget>
 #include "spire/ui/ui.hpp"
 

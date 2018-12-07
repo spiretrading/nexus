@@ -1,5 +1,5 @@
-#ifndef SPIRE_SECURITY_INFO_WIDGET
-#define SPIRE_SECURITY_INFO_WIDGET
+#ifndef SPIRE_SECURITY_INFO_WIDGET_HPP
+#define SPIRE_SECURITY_INFO_WIDGET_HPP
 #include <QLabel>
 #include <QWidget>
 #include "Nexus/Definitions/SecurityInfo.hpp"
