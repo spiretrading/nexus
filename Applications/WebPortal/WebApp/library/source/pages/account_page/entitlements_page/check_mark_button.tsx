@@ -7,7 +7,7 @@ interface Properties {
   size: number | string;
 
   /** The onClick event handler. */
-  onClick?(event?: React.MouseEvent<any>): void;
+  onClick?: (event?: React.MouseEvent<any>) => void;
 
   /** Determines if the checkmark is currenly active(green) or inactive(grey) */
   isChecked: boolean;

@@ -23,10 +23,11 @@ interface Properties {
   onMouseEnter?: (event?: React.MouseEvent<any>) => void;
 
   /** The event handler called when the mouse leaves the region,
-      or one of its child components. */
+   *  or one of its child components. 
+   */
   onMouseOut?: (event?: React.MouseEvent<any>) => void;
 
-   /** The event handler called when the mouse leaves the region. */
+  /** The event handler called when the mouse leaves the region. */
   onMouseLeave?: (event?: React.MouseEvent<any>) => void;
 
   /** The event handler called when the layout is clicked. */
@@ -40,7 +41,8 @@ interface Properties {
 }
 
 /** Provides a layout component where its children are positioned
- *  top-to-bottom. */
+ * top-to-bottom.
+ */
 export class VBoxLayout extends React.Component<Properties> {
   public static defaultProps: Properties = {
     width: '',

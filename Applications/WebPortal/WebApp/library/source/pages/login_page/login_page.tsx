@@ -1,32 +1,92 @@
 import { css, StyleSheet } from 'aphrodite';
-import * as Beam from 'beam';
 import * as React from 'react';
 import { Center, HBoxLayout, Padding, VBoxLayout } from '../../';
-import { LoginPageModel } from '.';
 
 interface Properties {
 
-  /** The model used to login. */
-  model: LoginPageModel;
+  /** The state of the login operation. */
+  status: LoginPage.Status;
 
-  /** The event handler called upon a successful login. */
-  onLogin?: (account: Beam.DirectoryEntry) => void;
-}
+  /** The error message to display. */
+  errorMessage?: string;
 
-interface State {
-  errorMessage: string;
+  /** Indicates the user has submitted the login credentials.
+   * @param username - The account's username.
+   * @param password - The account's password.
+   */
+  onSubmit?: (username: string, password: string) => void;
 }
 
 /** Displays the Login Page. */
-export class LoginPage extends React.Component<Properties, State> {
+export class LoginPage extends React.Component<Properties> {
+  public static readonly defaultProps = {
+    errorMessage: '',
+    onSubmit: (_u: string, _p: string) => {}
+  }
+
   constructor(properties: Properties) {
     super(properties);
-    this.state = {
-      errorMessage: null
-    };
-    this.onLogin = this.onLogin.bind(this);
+    this.onSubmit = this.onSubmit.bind(this);
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onUsernameChange = this.onUsernameChange.bind(this);
+  }
+
+  public render(): JSX.Element {
+    const [staticStyle, animatedStyle] = (() => {
+      switch(this.props.status) {
+        case LoginPage.Status.NONE:
+          return [LoginPage.STATIC_STYLES.logoVisible,
+            LoginPage.STATIC_STYLES.logoInvisible];
+        case LoginPage.Status.LOADING:
+          return [LoginPage.STATIC_STYLES.logoInvisible,
+            LoginPage.STATIC_STYLES.logoVisible];
+      }
+    })();
+    const isDisabled = this.props.status === LoginPage.Status.LOADING;
+    return (
+      <Center width='100%' height='100%' style={LoginPage.STATIC_STYLES.page}>
+        <HBoxLayout width='320px' height='462px'>
+          <Padding size='18px'/>
+          <VBoxLayout width='284px' height='462px'>
+            <Padding size='60px'/>
+            <HBoxLayout width='100%' height='50px'>
+              <Padding/>
+              <object data='resources/login_page/logo-static.svg'
+                type='image/svg+xml' style={staticStyle} tabIndex={-1}/>
+              <object data='resources/login_page/logo-animated.svg'
+                type='image/svg+xml' style={animatedStyle} tabIndex={-1}/>
+              <Padding/>
+            </HBoxLayout>
+            <Padding size='60px'/>
+            <input type='text' placeholder='Username' autoComplete='off'
+              className={css(LoginPage.DYNAMIC_STYLES.inputBox)}
+              disabled={isDisabled}
+              onFocus={() => this.usernameInputField.placeholder = ''}
+              onBlur={() => this.usernameInputField.placeholder = 'Username'}
+              onChange={this.onUsernameChange}
+              ref={(ref) => this.usernameInputField = ref}/>
+            <Padding size='20px'/>
+            <input type='password' placeholder='Password' autoComplete='off'
+              className={css(LoginPage.DYNAMIC_STYLES.inputBox)}
+              disabled={isDisabled}
+              onFocus={() => this.passwordInputField.placeholder = ''}
+              onBlur={() => this.passwordInputField.placeholder = 'Password'}
+              ref={(ref) => this.passwordInputField = ref}/>
+            <Padding size='50px'/>
+            <button className={css(LoginPage.DYNAMIC_STYLES.signInButton)}
+                disabled={isDisabled}
+                onClick={this.onSubmit} ref={(ref) => this.submitButton = ref}>
+              Sign In
+            </button>
+            <Padding size='30px'/>
+            <span style={LoginPage.STATIC_STYLES.errorMessage}>
+              {this.props.errorMessage}
+            </span>
+            <Padding size='60px'/>
+          </VBoxLayout>
+          <Padding size='18px'/>
+        </HBoxLayout>
+      </Center>);
   }
 
   public componentDidMount(): void {
@@ -38,85 +98,11 @@ export class LoginPage extends React.Component<Properties, State> {
     window.removeEventListener('keydown', this.onKeyDown);
   }
 
-  public render(): JSX.Element {
-    return (
-      <Center width='100%' height='100%'
-          className={css(LoginPage.STYLE.page)}>
-        <HBoxLayout width='320px' height='462px'>
-          <Padding size='18px'/>
-          <VBoxLayout width='284px' height='462px'>
-            <Padding size='60px'/>
-            <HBoxLayout width='100%' height='50px'>
-              <Padding/>
-              <object data='resources/login_page/logo-static.svg'
-                type='image/svg+xml'
-                className={css(LoginPage.STYLE.logoVisible)}
-                tabIndex={-1} ref={(ref) => this.staticLogo = ref}/>
-              <object data='resources/login_page/logo-animated.svg'
-                type='image/svg+xml'
-                className={css(LoginPage.STYLE.logoInvisible)}
-                tabIndex={-1}
-                ref={(ref) => this.animatedLogo = ref}/>
-              <Padding/>
-            </HBoxLayout>
-            <Padding size='60px'/>
-            <input type='text' placeholder='Username' autoComplete='off'
-              className={css(LoginPage.STYLE.inputBox)}
-              onFocus={() => this.usernameInputField.placeholder = ''}
-              onBlur={() => this.usernameInputField.placeholder = 'Username'}
-              onChange={this.onUsernameChange}
-              ref={(ref) => this.usernameInputField = ref}/>
-            <Padding size='20px'/>
-            <input type='password' placeholder='Password' autoComplete='off'
-              className={css(LoginPage.STYLE.inputBox)}
-              onFocus={() => this.passwordInputField.placeholder = ''}
-              onBlur={() => this.passwordInputField.placeholder = 'Password'}
-              ref={(ref) => this.passwordInputField = ref}/>
-            <Padding size='50px'/>
-            <button className={css(LoginPage.STYLE.signInButton)}
-                onClick={this.onLogin} ref={(ref) => this.submitButton = ref}>
-              Sign In
-            </button>
-            <Padding size='30px'/>
-            <span className={css(LoginPage.STYLE.errorMessage)}>
-              {this.state.errorMessage}
-            </span>
-            <Padding size='60px'/>
-          </VBoxLayout>
-          <Padding size='18px'/>
-        </HBoxLayout>
-      </Center>);
+  private onSubmit() {
+    this.props.onSubmit(this.usernameInputField.value,
+      this.passwordInputField.value);
   }
 
-  private async onLogin() {
-    if(this.state.errorMessage !== null) {
-      this.setState({errorMessage: null});
-    }
-    if(this.usernameInputField.value.trim() !== '') {
-      this.staticLogo.className = css(LoginPage.STYLE.logoInvisible);
-      this.animatedLogo.className = css(LoginPage.STYLE.logoVisible);
-      this.submitButton.disabled = true;
-      try {
-        const account = await this.props.model.login(
-          this.usernameInputField.value, this.passwordInputField.value);
-        this.staticLogo.className = css(LoginPage.STYLE.logoVisible);
-        this.animatedLogo.className = css(LoginPage.STYLE.logoInvisible);
-        this.submitButton.disabled = false;
-        this.setState({
-          errorMessage: null
-        });
-        this.props.onLogin(account);
-      } catch(error) {
-        this.staticLogo.className = css(LoginPage.STYLE.logoVisible);
-        this.animatedLogo.className = css(LoginPage.STYLE.logoInvisible);
-        this.submitButton.disabled = false;
-        this.setState({
-          errorMessage: error.toString()
-        });
-      }
-    }
-  }
-  
   private onKeyDown(event: KeyboardEvent) {
     if(document.activeElement !== this.usernameInputField &&
         document.activeElement !== this.passwordInputField &&
@@ -126,18 +112,16 @@ export class LoginPage extends React.Component<Properties, State> {
     } else if((document.activeElement === this.submitButton ||
         document.activeElement === this.passwordInputField) &&
         event.key.trim() === 'Enter') {
-      this.onLogin();
+      this.onSubmit();
     }
   }
 
   private onUsernameChange() {
-    this.submitButton.disabled = this.usernameInputField.value.trim() === '';
+    this.submitButton.disabled = this.usernameInputField.value.trim() === '' ||
+      this.props.status === LoginPage.Status.LOADING;
   }
 
-  private static defaultProps = {
-    onLogin: (account: LoginPageModel) => {}
-  };
-  private static STYLE = StyleSheet.create({
+  private static readonly STATIC_STYLES = {
     page: {
       backgroundColor: '#4B23A0'
     },
@@ -149,10 +133,16 @@ export class LoginPage extends React.Component<Properties, State> {
       width: '0px',
       height: '0px'
     },
-    logo: {
+    errorMessage: {
       width: '100%',
-      height: '100%'
-    },
+      textAlign: 'center' as 'center',
+      font: '300 14px Roboto',
+      height: '20px',
+      color: '#FAEB96'
+    }
+  }
+
+  private static DYNAMIC_STYLES = StyleSheet.create({
     inputBox: {
       width: '284px',
       padding: 0,
@@ -218,18 +208,22 @@ export class LoginPage extends React.Component<Properties, State> {
           border: '1px solid white'
         }
       }
-    },
-    errorMessage: {
-      width: '100%',
-      textAlign: 'center',
-      font: '300 14px Roboto',
-      height: '20px',
-      color: '#FAEB96',
     }
   });
-  private staticLogo: HTMLObjectElement;
-  private animatedLogo: HTMLObjectElement;
   private usernameInputField: HTMLInputElement;
   private passwordInputField: HTMLInputElement;
   private submitButton: HTMLButtonElement;
+}
+
+export namespace LoginPage {
+
+  /** The state of the login operation. */
+  export enum Status {
+
+    /** No login operation is being performed. */
+    NONE,
+
+    /** The login operation is pending. */
+    LOADING
+  }
 }

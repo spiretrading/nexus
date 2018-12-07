@@ -7,11 +7,8 @@ export namespace AccountRoles {
   /** Enumerates the available account roles. */
   export enum Role {
 
-    /** The account has no roles. */
-    NONE = 0,
-
     /** The account has permission to trade. */
-    TRADER,
+    TRADER = 0,
 
     /** The account has permission to manage traders. */
     MANAGER,
