@@ -1,13 +1,12 @@
 import * as React from 'react';
 import { css, StyleSheet } from 'aphrodite/no-important';
-import { HLine } from '../../../components';
 
 interface Properties {
 
   /** The onClick event handler. */
   onSlide?: () => void;
 
-  getValue?: () => void;
+  onRescale?: (num: number) => void;
 }
 
 interface State {
@@ -28,29 +27,24 @@ export class Slider extends React.Component<Properties, State> {
 
     return (
       <div>
-        <div id='SLIDER' style={Slider.STYLE.containerStyle}>
-          <div style={Slider.STYLE.circle} />
-          <div style={Slider.STYLE.filler} />
-          <HLine height='4px' color='#E6E6E6' />
-          <div style={Slider.STYLE.filler} />
-        </div>
-        <div style={{height: '10px'}}/>
-        <input type='range' min='1' max='100' value={this.state.value}
-          onChange={this.onChange}
+        <input type='range' min='0' max='100' value={this.state.value}
+          onInput={(e) => this.onChange(e)}
           className={css(Slider.SLIDER.slider)} />
       </div>);
   }
 
-  private onChange() {
-    this.setState({ value: this.state.value + 1 });
-  }
-
-  private onSlideLeft() {
-    this.setState({ value: this.state.value });
-  }
-
-  private onSlideRight() {
-    this.setState({ value: this.state.value });
+  private onChange(event: any) {
+    const num = event.target.value;
+    console.log('the value from slider' + num);
+    if (this.state.value < num) {
+      this.setState({ value: this.state.value + 5});
+    } else {
+      this.setState({ value: this.state.value - 5 });
+    }
+    console.log('the value set:' + this.state.value);
+    if(this.props.onRescale) {
+      this.props.onRescale(this.state.value);
+    }
   }
 
   public static readonly STYLE = {
@@ -114,13 +108,19 @@ export class Slider extends React.Component<Properties, State> {
       },
       '::-moz-range-track': {
         backgroundColor: '#E6E6E6',
-        height: '4px'
+        height: '4px',
+        border: 0
       },
       '::-ms-track': {
         backgroundColor: '#E6E6E6',
         height: '4px'
+      },
+      '-webkit-appearance': 'none',
+      '-moz-appearance': 'none',
+      'appearance': 'none',
+      '::-moz-focus-outer': {
+        border: 0
       }
     }
-
   });
 }

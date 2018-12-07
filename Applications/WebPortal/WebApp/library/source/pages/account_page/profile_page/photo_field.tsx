@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { DisplaySize , Padding, VBoxLayout, HLine } from '../../..';
+import { DisplaySize, Padding, VBoxLayout, HLine } from '../../..';
 import { HBoxLayout } from '../../../layouts';
 import { Slider } from '.';
 
@@ -24,7 +24,7 @@ interface State {
 export class PhotoField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     readonly: false,
-    onClick: () => {true;},
+    onClick: () => { true; },
     DisplayMode: DisplayMode.Display
   };
 
@@ -49,21 +49,21 @@ export class PhotoField extends React.Component<Properties, State> {
       }
     })();
     const cameraIconStyle = (() => {
-      if(this.props.readonly) {
+      if (this.props.readonly) {
         return PhotoField.STYLE.hidden;
       } else {
         return PhotoField.STYLE.cameraIcon;
       }
     })();
     const imageStyle = (() => {
-      if(!this.props.imageSource) {
-        if(this.props.displaySize === DisplaySize.SMALL) {
+      if (!this.props.imageSource) {
+        if (this.props.displaySize === DisplaySize.SMALL) {
           return PhotoField.STYLE.placeholderStyleSmall;
         } else {
           return PhotoField.STYLE.placeholderStyle;
         }
       } else {
-        if(this.props.displaySize === DisplaySize.SMALL) {
+        if (this.props.displaySize === DisplaySize.SMALL) {
           return PhotoField.STYLE.imageStyleSmall;
         } else {
           return PhotoField.STYLE.imageStyle;
@@ -71,14 +71,14 @@ export class PhotoField extends React.Component<Properties, State> {
       }
     })();
     const imageSrc = (() => {
-      if(!this.props.imageSource) {
+      if (!this.props.imageSource) {
         return 'resources/account_page/profile_page/image-placeholder.svg';
       } else {
         return this.props.imageSource;
       }
     })();
     const uploaderStyle = (() => {
-      if(!this.state.showUploader) {
+      if (!this.state.showUploader) {
         return PhotoField.STYLE.hidden;
       } else {
         return null;
@@ -88,14 +88,14 @@ export class PhotoField extends React.Component<Properties, State> {
       <div style={PhotoField.STYLE.wrapper}>
         <div style={boxStyle}>
           <img src={imageSrc}
-            style={imageStyle}/>
+            style={imageStyle} />
           <img src='resources/account_page/profile_page/camera.svg'
             style={cameraIconStyle}
-            onClick={this.showUploader}/>
+            onClick={this.showUploader} />
         </div>
         <ChangePictureModal displaySize={this.props.displaySize}
           visibility={this.state.showUploader}
-          closeModal={this.closeUploader}/>
+          closeModal={this.closeUploader} />
       </div>);
   }
 
@@ -197,10 +197,19 @@ interface ModalState {
 }
 
 /** Displays an account's profile page. */
-export class ChangePictureModal extends React.Component<ModalProperties> {
+export class ChangePictureModal extends
+    React.Component<ModalProperties, ModalState> {
+  constructor(properties: ModalProperties) {
+    super(properties);
+    this.state = {
+      imageScalingValue: 0
+    };
+    this.onSliderMovement = this.onSliderMovement.bind(this);
+  }
+
   public render(): JSX.Element {
     const visibility = (() => {
-      if(this.props.visibility) {
+      if (this.props.visibility) {
         return ChangePictureModal.STYLE.wrapper;
       } else {
         return ChangePictureModal.STYLE.hidden;
@@ -217,7 +226,7 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
       }
     })();
     const buttonBox = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
+      if (this.props.displaySize === DisplaySize.SMALL) {
         return ChangePictureModal.STYLE.buttonBoxSmall;
       } else {
         return ChangePictureModal.STYLE.buttonBoxLarge;
@@ -233,25 +242,44 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
           return ChangePictureModal.STYLE.imageLagre;
       }
     })();
+    const imageBoxStyle = (() => {
+      switch (this.props.displaySize) {
+        case DisplaySize.SMALL:
+          return ChangePictureModal.STYLE.imageBoxSmall;
+        case DisplaySize.MEDIUM:
+          return ChangePictureModal.STYLE.imageBoxLagre;
+        case DisplaySize.LARGE:
+          return ChangePictureModal.STYLE.imageBoxLagre;
+      }
+    })();
+    const imageScaling = (() => {
+      console.log('current scale' + this.state.imageScalingValue);
+      return ({
+        transform: `scale(${(100 + this.state.imageScalingValue) / 100})`
+      });
+    })();
     return (
       <div style={visibility}>
         <HBoxLayout style={boxStyle}>
-          <Padding size={ChangePictureModal.PADDING}/>
+          <Padding size={ChangePictureModal.PADDING} />
           <VBoxLayout>
-            <Padding size={ChangePictureModal.PADDING}/>
+            <Padding size={ChangePictureModal.PADDING} />
             <div style={ChangePictureModal.STYLE.header}>
               {ChangePictureModal.HEADER_TEXT}
               <img src='resources/close.svg'
                 style={ChangePictureModal.STYLE.closeIcon}
-                onClick={this.props.closeModal}/>
+                onClick={this.props.closeModal} />
             </div>
-            <img src={ChangePictureModal.SOME_IMAGE}
-                style={imageStyle}/>
-            
-            <Slider/>
-            
-            <HLine color='#E6E6E6'/>
-            <Padding size={ChangePictureModal.PADDING_ELEMENT}/>
+            <Padding size={ChangePictureModal.PADDING_ELEMENT} />
+            <div style={imageBoxStyle}>
+              <img src={ChangePictureModal.SOME_IMAGE}
+                style={{...imageStyle, ...imageScaling}} />
+              </div>
+            <Padding size={ChangePictureModal.PADDING_ELEMENT} />
+            <Slider onRescale={this.onSliderMovement} />
+            <Padding size={ChangePictureModal.PADDING_ELEMENT} />
+            <HLine color='#E6E6E6' />
+            <Padding size={ChangePictureModal.PADDING_ELEMENT} />
             <div style={buttonBox}>
               <button style={ChangePictureModal.STYLE.buttonStyle}>
                 {ChangePictureModal.BROWSE_BUTTON_TEXT}
@@ -260,12 +288,17 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
                 {ChangePictureModal.SUBMIT_BUTTON_TEXT}
               </button>
             </div>
-            <Padding size={ChangePictureModal.PADDING}/>
+            <Padding size={ChangePictureModal.PADDING} />
           </VBoxLayout>
-          <Padding size={ChangePictureModal.PADDING}/>
+          <Padding size={ChangePictureModal.PADDING} />
         </HBoxLayout>
       </div>);
   }
+
+  private onSliderMovement(value: number) {
+    this.setState({ imageScalingValue: value });
+  }
+
   private static readonly STYLE = {
     wrapper: {
       boxSizing: 'border-box' as 'border-box',
@@ -301,7 +334,7 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
     },
     header: {
       display: 'flex' as 'flex',
-      justifyContent: 'space-between'  as 'space-between',
+      justifyContent: 'space-between' as 'space-between',
       font: '400 16px Roboto'
     },
     closeIcon: {
@@ -337,7 +370,7 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
       backgroundColor: '#684BC7',
       color: '#FFFFFF',
       font: '400 14px Roboto',
-      border:'1px solid #684BC7',
+      border: '1px solid #684BC7',
       borderRadius: '1px',
       outline: 0
     },
@@ -351,6 +384,18 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
       height: '216px',
       width: '324px'
     },
+    imageBoxSmall: {
+      objectFit: 'cover' as 'cover',
+      height: '166px',
+      width: '248px',
+      overflow: 'hidden' as 'hidden'
+    },
+    imageBoxLagre: {
+      objectFit: 'cover' as 'cover',
+      height: '216px',
+      width: '324px',
+      overflow: 'hidden' as 'hidden'
+    },
     hidden: {
       visibility: 'hidden' as 'hidden',
       display: 'none' as 'none'
@@ -362,6 +407,6 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
   private static readonly PADDING = '18px';
   private static readonly PADDING_ELEMENT = '30px';
   private static readonly SOME_IMAGE = 'https://upload.wikimedia.org/' +
-  'wikipedia/commons/thumb/2/23/Close_up_of_a_black_domestic_cat.jpg/' +
-  '675px-Close_up_of_a_black_domestic_cat.jpg';
+    'wikipedia/commons/thumb/2/23/Close_up_of_a_black_domestic_cat.jpg/' +
+    '675px-Close_up_of_a_black_domestic_cat.jpg';
 }
