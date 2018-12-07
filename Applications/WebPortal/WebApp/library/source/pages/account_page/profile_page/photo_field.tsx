@@ -188,14 +188,12 @@ interface ModalProperties {
   displaySize: DisplaySize;
   visibility: boolean;
   closeModal: () => void;
-  onBrowse: () => void;
-  onSubmit: () => void;
+  onBrowse?: () => void;
+  onSubmit?: () => void;
 }
 
 interface ModalState {
-  displaySize: DisplaySize;
-  visibility: boolean;
-  closeModal: () => void;
+  imageScalingValue: number;
 }
 
 /** Displays an account's profile page. */
@@ -247,12 +245,11 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
                 style={ChangePictureModal.STYLE.closeIcon}
                 onClick={this.props.closeModal}/>
             </div>
-            <Padding size={ChangePictureModal.PADDING_ELEMENT}/>
             <img src={ChangePictureModal.SOME_IMAGE}
                 style={imageStyle}/>
-            <Padding size={ChangePictureModal.PADDING_ELEMENT}/>
+            
             <Slider/>
-            <Padding size={ChangePictureModal.PADDING_ELEMENT}/>
+            
             <HLine color='#E6E6E6'/>
             <Padding size={ChangePictureModal.PADDING_ELEMENT}/>
             <div style={buttonBox}>
