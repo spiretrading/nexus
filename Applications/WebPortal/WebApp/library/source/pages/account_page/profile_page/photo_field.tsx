@@ -253,7 +253,7 @@ export class ChangePictureModal extends
       }
     })();
     const imageScaling = (() => {
-      console.log('current scale' + this.state.imageScalingValue);
+      //console.log('current scale' + this.state.imageScalingValue);
       return ({
         transform: `scale(${(100 + this.state.imageScalingValue) / 100})`
       });
@@ -276,7 +276,8 @@ export class ChangePictureModal extends
                 style={{...imageStyle, ...imageScaling}} />
               </div>
             <Padding size={ChangePictureModal.PADDING_ELEMENT} />
-            <Slider onRescale={this.onSliderMovement} />
+            <Slider onRescale={this.onSliderMovement}
+              scaleValue={this.state.imageScalingValue} />
             <Padding size={ChangePictureModal.PADDING_ELEMENT} />
             <HLine color='#E6E6E6' />
             <Padding size={ChangePictureModal.PADDING_ELEMENT} />

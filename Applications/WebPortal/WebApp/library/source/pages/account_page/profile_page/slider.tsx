@@ -7,6 +7,8 @@ interface Properties {
   onSlide?: () => void;
 
   onRescale?: (num: number) => void;
+
+  scaleValue: number;
 }
 
 interface State {
@@ -27,24 +29,22 @@ export class Slider extends React.Component<Properties, State> {
 
     return (
       <div>
-        <input type='range' min='0' max='100' value={this.state.value}
-          onInput={(e) => this.onChange(e)}
+        <input type='range' min='0' max='150' value={this.props.scaleValue}
+          onChange={(e) => this.onChange(e)}
           className={css(Slider.SLIDER.slider)} />
       </div>);
   }
 
   private onChange(event: any) {
     const num = event.target.value;
+    const diff = Math.abs(this.props.scaleValue - num);
     console.log('the value from slider' + num);
-    if (this.state.value < num) {
-      this.setState({ value: this.state.value + 5});
+    console.log('the intial value' + this.props.scaleValue);
+    if (this.props.scaleValue < num) {
+      this.props.onRescale(this.props.scaleValue + diff);
     } else {
-      this.setState({ value: this.state.value - 5 });
-    }
-    console.log('the value set:' + this.state.value);
-    if(this.props.onRescale) {
-      this.props.onRescale(this.state.value);
-    }
+      this.props.onRescale(this.props.scaleValue - diff);
+    }  
   }
 
   public static readonly STYLE = {
@@ -82,7 +82,8 @@ export class Slider extends React.Component<Properties, State> {
         width: '20px',
         backgroundColor: '#FFFFFF',
         border: '1px solid #8C8C8C',
-        borderRadius: '20px'
+        borderRadius: '20px',
+        boxShadow:'none'
       },
       '::-moz-range-thumb': {
         boxSizing: 'border-box' as 'border-box',
