@@ -198,7 +198,7 @@ interface ModalState {
 
 /** Displays an account's profile page. */
 export class ChangePictureModal extends
-    React.Component<ModalProperties, ModalState> {
+  React.Component<ModalProperties, ModalState> {
   constructor(properties: ModalProperties) {
     super(properties);
     this.state = {
@@ -237,9 +237,9 @@ export class ChangePictureModal extends
         case DisplaySize.SMALL:
           return ChangePictureModal.STYLE.imageSmall;
         case DisplaySize.MEDIUM:
-          return ChangePictureModal.STYLE.imageLagre;
+          return ChangePictureModal.STYLE.imageLarge;
         case DisplaySize.LARGE:
-          return ChangePictureModal.STYLE.imageLagre;
+          return ChangePictureModal.STYLE.imageLarge;
       }
     })();
     const imageBoxStyle = (() => {
@@ -272,8 +272,8 @@ export class ChangePictureModal extends
             <Padding size={ChangePictureModal.PADDING_ELEMENT} />
             <div style={imageBoxStyle}>
               <img src={ChangePictureModal.SOME_IMAGE}
-                style={{...imageStyle, ...imageScaling}} />
-              </div>
+                style={{ ...imageStyle, ...imageScaling }} />
+            </div>
             <Padding size={ChangePictureModal.PADDING_ELEMENT} />
             <Slider onRescale={this.onSliderMovement}
               scaleValue={this.state.imageScalingValue} />
@@ -376,22 +376,20 @@ export class ChangePictureModal extends
     },
     imageSmall: {
       objectFit: 'cover' as 'cover',
-      height: '166px',
-      width: '248px'
+      height: '100%',
+      width: '100%'
     },
-    imageLagre: {
+    imageLarge: {
       objectFit: 'cover' as 'cover',
-      height: '216px',
-      width: '324px'
+      height: '100%',
+      width: '100%'
     },
     imageBoxSmall: {
-      objectFit: 'cover' as 'cover',
       height: '166px',
       width: '248px',
       overflow: 'hidden' as 'hidden'
     },
     imageBoxLagre: {
-      objectFit: 'cover' as 'cover',
       height: '216px',
       width: '324px',
       overflow: 'hidden' as 'hidden'
@@ -399,6 +397,19 @@ export class ChangePictureModal extends
     hidden: {
       visibility: 'hidden' as 'hidden',
       display: 'none' as 'none'
+    }
+  };
+  private static readonly SPECIAL_STYLE = {
+    buttonStyle: {
+      minWidth: '153px',
+      maxWidth: '248px',
+      height: '34px',
+      backgroundColor: '#684BC7',
+      color: '#FFFFFF',
+      font: '400 14px Roboto',
+      border: '1px solid #684BC7',
+      borderRadius: '1px',
+      outline: 0
     }
   };
   private static readonly HEADER_TEXT = 'Change Picture';
@@ -409,7 +420,6 @@ export class ChangePictureModal extends
   private static readonly SOME_IMAGE = 'https://upload.wikimedia.org/' +
     'wikipedia/commons/thumb/2/23/Close_up_of_a_black_domestic_cat.jpg/' +
     '675px-Close_up_of_a_black_domestic_cat.jpg';
-
 }
 
 interface SliderProperties {
@@ -426,27 +436,22 @@ export class Slider extends React.Component<SliderProperties, {}> {
 
   constructor(properties: SliderProperties) {
     super(properties);
-    this.state = {
-      value: 0
-    };
     this.onChange = this.onChange.bind(this);
   }
 
   public render(): JSX.Element {
 
     return (
-      <div>
         <input type='range' min='0' max='150' value={this.props.scaleValue}
           onChange={(e) => this.onChange(e)}
-          className={css(Slider.SLIDER.slider)} />
-      </div>);
+    className={css(Slider.SLIDER.slider)} /> );
   }
 
   private onChange(event: any) {
     const num = event.target.value;
     const diff = Math.abs(this.props.scaleValue - num);
-    console.log('the value from slider' + num);
-    console.log('the intial value' + this.props.scaleValue);
+    // console.log('the value from slider' + num);
+    // console.log('the intial value' + this.props.scaleValue);
     if (this.props.scaleValue < num) {
       this.props.onRescale(this.props.scaleValue + diff);
     } else {
@@ -483,6 +488,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
       margin: 0,
       outline: 0,
       '::-webkit-slider-thumb': {
+        '-webkit-appearance': 'none',
         boxSizing: 'border-box' as 'border-box',
         cursor: 'pointer' as 'pointer',
         height: '20px',
@@ -490,7 +496,8 @@ export class Slider extends React.Component<SliderProperties, {}> {
         backgroundColor: '#FFFFFF',
         border: '1px solid #8C8C8C',
         borderRadius: '20px',
-        boxShadow:'none'
+        boxShadow: 'none',
+        marginTop: '-8px'
       },
       '::-moz-range-thumb': {
         boxSizing: 'border-box' as 'border-box',
@@ -511,6 +518,8 @@ export class Slider extends React.Component<SliderProperties, {}> {
         borderRadius: '20px'
       },
       '::-webkit-slider-runnable-track': {
+        '-webkit-appearance': 'none',
+        boxShadow: 'none' as 'none',
         backgroundColor: '#E6E6E6',
         height: '4px'
       },
@@ -523,7 +532,6 @@ export class Slider extends React.Component<SliderProperties, {}> {
         backgroundColor: '#E6E6E6',
         height: '4px'
       },
-      '-webkit-appearance': 'none',
       '-moz-appearance': 'none',
       'appearance': 'none',
       '::-moz-focus-outer': {
