@@ -278,13 +278,13 @@ export class ChangePictureModal extends
             <Slider onRescale={this.onSliderMovement}
               scaleValue={this.state.imageScalingValue} />
             <Padding size={ChangePictureModal.PADDING_ELEMENT} />
-            <HLine color='#E6E6E6' />
+            <HLine color='#E6E6E6' height={1} />
             <Padding size={ChangePictureModal.PADDING_ELEMENT} />
             <div style={buttonBox}>
-              <button style={ChangePictureModal.STYLE.buttonStyle}>
+              <button className={css(ChangePictureModal.SPECIAL_STYLE.button)}>
                 {ChangePictureModal.BROWSE_BUTTON_TEXT}
               </button>
-              <button style={ChangePictureModal.STYLE.buttonStyle}>
+              <button className={css(ChangePictureModal.SPECIAL_STYLE.button)}>
                 {ChangePictureModal.SUBMIT_BUTTON_TEXT}
               </button>
             </div>
@@ -308,7 +308,8 @@ export class ChangePictureModal extends
       width: '100%',
       height: '100%',
       zIndex: 100,
-      backgroundColor: '#FFFFFFF2'
+      backgroundColor: '#FFFFFFF2',
+      padding: 0
     },
     boxSmall: {
       position: 'absolute' as 'absolute',
@@ -387,20 +388,24 @@ export class ChangePictureModal extends
     imageBoxSmall: {
       height: '166px',
       width: '248px',
-      overflow: 'hidden' as 'hidden'
+      overflow: 'hidden' as 'hidden',
+      borderRadius: '1px',
+      border: '1px solid #EBEBEB'
     },
     imageBoxLagre: {
       height: '216px',
       width: '324px',
-      overflow: 'hidden' as 'hidden'
+      overflow: 'hidden' as 'hidden',
+      borderRadius: '1px',
+      border: '1px solid #EBEBEB'
     },
     hidden: {
       visibility: 'hidden' as 'hidden',
       display: 'none' as 'none'
     }
   };
-  private static readonly SPECIAL_STYLE = {
-    buttonStyle: {
+  private static readonly SPECIAL_STYLE = StyleSheet.create({
+    button: {
       minWidth: '153px',
       maxWidth: '248px',
       height: '34px',
@@ -409,9 +414,15 @@ export class ChangePictureModal extends
       font: '400 14px Roboto',
       border: '1px solid #684BC7',
       borderRadius: '1px',
-      outline: 0
+      outline: 0,
+      ':active': {
+        backgroundColor: '#4B23A0'
+      },
+      ':hover': {
+        backgroundColor: '#4B23A0'
+      }
     }
-  };
+  });
   private static readonly HEADER_TEXT = 'Change Picture';
   private static readonly BROWSE_BUTTON_TEXT = 'BROWSE';
   private static readonly SUBMIT_BUTTON_TEXT = 'SUBMIT';
