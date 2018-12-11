@@ -4,7 +4,6 @@ import { Transition } from 'react-transition-group';
 import { DisplaySize, Padding, VBoxLayout, HLine } from '../../..';
 import { HBoxLayout } from '../../../layouts';
 
-
 export enum DisplayMode {
   Display,
   Uploading
@@ -611,7 +610,8 @@ export class Slider extends React.Component<SliderProperties, {}> {
         width: '20px',
         backgroundColor: '#FFFFFF',
         border: '1px solid #8C8C8C',
-        borderRadius: '20px'
+        borderRadius: '20px',
+        marginTop: '0px'
       },
       '::-webkit-slider-runnable-track': {
         '-webkit-appearance': 'none',
