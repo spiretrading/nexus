@@ -1,7 +1,9 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
+import { Transition } from 'react-transition-group';
 import { DisplaySize, Padding, VBoxLayout, HLine } from '../../..';
 import { HBoxLayout } from '../../../layouts';
+
 
 export enum DisplayMode {
   Display,
@@ -24,7 +26,7 @@ interface State {
 export class PhotoField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     readonly: false,
-    onClick: () => { true; },
+    onUpload: () => { true; },
     DisplayMode: DisplayMode.Display
   };
 
@@ -93,25 +95,45 @@ export class PhotoField extends React.Component<Properties, State> {
             style={cameraIconStyle}
             onClick={this.showUploader} />
         </div>
-        <ChangePictureModal displaySize={this.props.displaySize}
-          visibility={this.state.showUploader}
-          closeModal={this.closeUploader} />
+        <Transition in={this.state.showUploader} timeout={PhotoField.TIMEOUT}>
+          {(state) => (
+            <div style={{...PhotoField.STYLE.animationBase,
+                ...(PhotoField.ANIMATION_STYLE as any)[state]}}>
+              <ChangePictureModal displaySize={this.props.displaySize}
+                visibility={this.state.showUploader}
+                closeModal={this.closeUploader}
+                onSubmit={this.props.onUpload} />
+            </div>)}
+        </Transition>
       </div>);
   }
 
   private showUploader() {
     this.setState({ showUploader: true });
-    this.props.onUpload();
   }
 
   private closeUploader() {
     this.setState({ showUploader: false });
   }
-
+  private static ANIMATION_STYLE = {
+    entering: {
+      opacity: 0
+    },
+    entered: {
+      opacity: 1
+    },
+    exited: {
+      display: 'none' as 'none'
+    }
+  };
   private static readonly STYLE = {
     wrapper: {
       maxHeight: '288px',
       maxWidth: '424px'
+    },
+    animationBase: {
+      opacity: 0,
+      transition: 'opacity 200ms ease-in-out'
     },
     boxSmall: {
       boxSizing: 'border-box' as 'border-box',
@@ -182,6 +204,7 @@ export class PhotoField extends React.Component<Properties, State> {
       display: 'none' as 'none'
     }
   };
+  private static readonly TIMEOUT = 200;
 }
 
 interface ModalProperties {
@@ -205,16 +228,10 @@ export class ChangePictureModal extends
       imageScalingValue: 0
     };
     this.onSliderMovement = this.onSliderMovement.bind(this);
+    this.submitPicture = this.submitPicture.bind(this);
   }
 
   public render(): JSX.Element {
-    const visibility = (() => {
-      if (this.props.visibility) {
-        return ChangePictureModal.STYLE.wrapper;
-      } else {
-        return ChangePictureModal.STYLE.hidden;
-      }
-    })();
     const boxStyle = (() => {
       switch (this.props.displaySize) {
         case DisplaySize.SMALL:
@@ -258,7 +275,8 @@ export class ChangePictureModal extends
       });
     })();
     return (
-      <div style={visibility}>
+      <div style={ChangePictureModal.STYLE.wrapper}>
+      <div style={ChangePictureModal.STYLE.wrapperEdge}/>
         <HBoxLayout style={boxStyle}>
           <Padding size={ChangePictureModal.PADDING} />
           <VBoxLayout>
@@ -281,10 +299,12 @@ export class ChangePictureModal extends
             <HLine color='#E6E6E6' height={1} />
             <Padding size={ChangePictureModal.PADDING_ELEMENT} />
             <div style={buttonBox}>
-              <button className={css(ChangePictureModal.SPECIAL_STYLE.button)}>
+              <button className={css(ChangePictureModal.SPECIAL_STYLE.button)}
+                >
                 {ChangePictureModal.BROWSE_BUTTON_TEXT}
               </button>
-              <button className={css(ChangePictureModal.SPECIAL_STYLE.button)}>
+              <button className={css(ChangePictureModal.SPECIAL_STYLE.button)}
+                onClick={this.submitPicture}>
                 {ChangePictureModal.SUBMIT_BUTTON_TEXT}
               </button>
             </div>
@@ -299,6 +319,10 @@ export class ChangePictureModal extends
     this.setState({ imageScalingValue: value });
   }
 
+  private submitPicture() {
+    this.props.onSubmit();
+    this.props.closeModal();
+  }
   private static readonly STYLE = {
     wrapper: {
       boxSizing: 'border-box' as 'border-box',
@@ -308,30 +332,41 @@ export class ChangePictureModal extends
       width: '100%',
       height: '100%',
       zIndex: 100,
-      backgroundColor: '#FFFFFFF2',
       padding: 0
     },
+    wrapperEdge: {
+      boxSizing: 'border-box' as 'border-box',
+      top: '0',
+      left: '0',
+      position: 'fixed' as 'fixed',
+      width: '100%',
+      height: '100%',
+      zIndex: 80,
+      backgroundColor: '#FFFFFF',
+      opacity: 0.9
+    },
     boxSmall: {
+      display: 'block',
       position: 'absolute' as 'absolute',
-      zIndex: 5,
+      zIndex: 101,
       border: '1px solid #FFFFFF',
-      boxShadow: '0px 0px 6px #00000064',
+      boxShadow: '0px 0px 6px #707070',
       backgroundColor: '#FFFFFF',
       width: '284px',
       height: '100%',
       top: '0%',
-      right: '0%',
-      opacity: 1
+      right: '0%'
     },
     boxLarge: {
+      zIndex: 101,
+      display: 'block',
       position: 'absolute' as 'absolute',
       backgroundColor: '#FFFFFF',
       width: '360px',
       height: '447px',
-      boxShadow: '0px 0px 6px #00000064',
+      boxShadow: '0px 0px 6px #707070',
       top: 'calc(50% - 223.5px)',
-      left: 'calc(50% - 180px)',
-      opacity: 1
+      left: 'calc(50% - 180px)'
     },
     header: {
       display: 'flex' as 'flex',
@@ -386,6 +421,7 @@ export class ChangePictureModal extends
       width: '100%'
     },
     imageBoxSmall: {
+      boxSizing: 'border-box' as 'border-box',
       height: '166px',
       width: '248px',
       overflow: 'hidden' as 'hidden',
@@ -393,6 +429,7 @@ export class ChangePictureModal extends
       border: '1px solid #EBEBEB'
     },
     imageBoxLagre: {
+      boxSizing: 'border-box' as 'border-box',
       height: '216px',
       width: '324px',
       overflow: 'hidden' as 'hidden',
@@ -461,8 +498,6 @@ export class Slider extends React.Component<SliderProperties, {}> {
   private onChange(event: any) {
     const num = event.target.value;
     const diff = Math.abs(this.props.scaleValue - num);
-    // console.log('the value from slider' + num);
-    // console.log('the intial value' + this.props.scaleValue);
     if (this.props.scaleValue < num) {
       this.props.onRescale(this.props.scaleValue + diff);
     } else {
@@ -543,8 +578,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
         backgroundColor: '#E6E6E6',
         height: '4px'
       },
-      '-moz-appearance': 'none',
-      'appearance': 'none',
+      '-webkit-appearance': 'none',
       '::-moz-focus-outer': {
         border: 0
       }
