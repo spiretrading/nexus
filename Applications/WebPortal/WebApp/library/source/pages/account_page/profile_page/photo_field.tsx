@@ -97,8 +97,10 @@ export class PhotoField extends React.Component<Properties, State> {
         </div>
         <Transition in={this.state.showUploader} timeout={PhotoField.TIMEOUT}>
           {(state) => (
-            <div style={{...PhotoField.STYLE.animationBase,
-                ...(PhotoField.ANIMATION_STYLE as any)[state]}}>
+            <div style={{
+              ...PhotoField.STYLE.animationBase,
+              ...(PhotoField.ANIMATION_STYLE as any)[state]
+            }}>
               <ChangePictureModal displaySize={this.props.displaySize}
                 visibility={this.state.showUploader}
                 closeModal={this.closeUploader}
@@ -133,7 +135,7 @@ export class PhotoField extends React.Component<Properties, State> {
     },
     animationBase: {
       opacity: 0,
-      transition: 'opacity 200ms ease-in-out'
+      transition: 'opacity 200ms ease'
     },
     boxSmall: {
       boxSizing: 'border-box' as 'border-box',
@@ -276,7 +278,7 @@ export class ChangePictureModal extends
     })();
     return (
       <div style={ChangePictureModal.STYLE.wrapper}>
-      <div style={ChangePictureModal.STYLE.wrapperEdge}/>
+        <div style={ChangePictureModal.STYLE.wrapperEdge} />
         <HBoxLayout style={boxStyle}>
           <Padding size={ChangePictureModal.PADDING} />
           <VBoxLayout>
@@ -299,10 +301,12 @@ export class ChangePictureModal extends
             <HLine color='#E6E6E6' height={1} />
             <Padding size={ChangePictureModal.PADDING_ELEMENT} />
             <div style={buttonBox}>
-              <button className={css(ChangePictureModal.SPECIAL_STYLE.button)}
-                >
-                {ChangePictureModal.BROWSE_BUTTON_TEXT}
-              </button>
+              <input type='file' name='file' id='102'
+              style={ChangePictureModal.STYLE.hiddenInput} />
+              <label htmlFor='102'
+                className={css(ChangePictureModal.SPECIAL_STYLE.button)}>
+              {ChangePictureModal.BROWSE_BUTTON_TEXT}
+              </label>
               <button className={css(ChangePictureModal.SPECIAL_STYLE.button)}
                 onClick={this.submitPicture}>
                 {ChangePictureModal.SUBMIT_BUTTON_TEXT}
@@ -439,35 +443,43 @@ export class ChangePictureModal extends
     hidden: {
       visibility: 'hidden' as 'hidden',
       display: 'none' as 'none'
-    }
-  };
+    },
+    hiddenInput: {
+      width: '0.1px',
+      height: '0.1px',
+      opacity: 0,
+      overflow: 'hidden' as 'hidden',
+      position: 'absolute' as 'absolute',
+      zIndex: -1
+  }
+};
   private static readonly SPECIAL_STYLE = StyleSheet.create({
-    button: {
-      minWidth: '153px',
-      maxWidth: '248px',
-      height: '34px',
-      backgroundColor: '#684BC7',
-      color: '#FFFFFF',
-      font: '400 14px Roboto',
-      border: '1px solid #684BC7',
-      borderRadius: '1px',
-      outline: 0,
-      ':active': {
-        backgroundColor: '#4B23A0'
-      },
-      ':hover': {
-        backgroundColor: '#4B23A0'
-      }
+  button: {
+    minWidth: '153px',
+    maxWidth: '248px',
+    height: '34px',
+    backgroundColor: '#684BC7',
+    color: '#FFFFFF',
+    font: '400 14px Roboto',
+    border: '1px solid #684BC7',
+    borderRadius: '1px',
+    outline: 0,
+    ':active': {
+      backgroundColor: '#4B23A0'
+    },
+    ':hover': {
+      backgroundColor: '#4B23A0'
     }
-  });
+  }
+});
   private static readonly HEADER_TEXT = 'Change Picture';
   private static readonly BROWSE_BUTTON_TEXT = 'BROWSE';
   private static readonly SUBMIT_BUTTON_TEXT = 'SUBMIT';
   private static readonly PADDING = '18px';
   private static readonly PADDING_ELEMENT = '30px';
   private static readonly SOME_IMAGE = 'https://upload.wikimedia.org/' +
-    'wikipedia/commons/thumb/2/23/Close_up_of_a_black_domestic_cat.jpg/' +
-    '675px-Close_up_of_a_black_domestic_cat.jpg';
+  'wikipedia/commons/thumb/2/23/Close_up_of_a_black_domestic_cat.jpg/' +
+  '675px-Close_up_of_a_black_domestic_cat.jpg';
 }
 
 interface SliderProperties {
@@ -490,9 +502,9 @@ export class Slider extends React.Component<SliderProperties, {}> {
   public render(): JSX.Element {
 
     return (
-        <input type='range' min='0' max='150' value={this.props.scaleValue}
-          onChange={(e) => this.onChange(e)}
-    className={css(Slider.SLIDER.slider)} /> );
+      <input type='range' min='0' max='150' value={this.props.scaleValue}
+        onChange={(e) => this.onChange(e)}
+        className={css(Slider.SLIDER.slider)} />);
   }
 
   private onChange(event: any) {
