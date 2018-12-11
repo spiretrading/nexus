@@ -353,7 +353,7 @@ export class ChangePictureModal extends
       position: 'absolute' as 'absolute',
       zIndex: 101,
       border: '1px solid #FFFFFF',
-      boxShadow: '0px 0px 6px #707070',
+      boxShadow: '0px 0px 6px #898989',
       backgroundColor: '#FFFFFF',
       width: '284px',
       height: '100%',
@@ -367,7 +367,7 @@ export class ChangePictureModal extends
       backgroundColor: '#FFFFFF',
       width: '360px',
       height: '447px',
-      boxShadow: '0px 0px 6px #707070',
+      boxShadow: '0px 0px 6px #898989',
       top: 'calc(50% - 223.5px)',
       left: 'calc(50% - 180px)'
     },
