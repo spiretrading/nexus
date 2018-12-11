@@ -22,7 +22,7 @@ class TestApp extends React.Component<Properties, State> {
     this.state = {
       lastNameValue: 'Grey',
       someRoles: new Nexus.AccountRoles(),
-      imageSource: null,
+      imageSource: TestApp.SOME_IMAGE,
       isPhotoFieldReadonly: false
     };
     this.onTextInput = this.onTextInput.bind(this);
@@ -75,6 +75,10 @@ class TestApp extends React.Component<Properties, State> {
               onClick={this.toggleReadOnly}>
             TOGGLE PHOTOFIELD READONLY
           </button>
+          <button tabIndex={-1}
+              onClick={this.changeImage}>
+            changeImage
+          </button>
         </div>
       </WebPortal.HBoxLayout>);
   }
@@ -118,7 +122,7 @@ class TestApp extends React.Component<Properties, State> {
       position: 'fixed' as 'fixed',
       top: 0,
       left: 0,
-      zIndex: 1
+      zIndex: 500
     }
   };
   private static readonly SOME_IMAGE = 'https://upload.wikimedia.org/' +

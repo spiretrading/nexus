@@ -78,13 +78,6 @@ export class PhotoField extends React.Component<Properties, State> {
         return this.props.imageSource;
       }
     })();
-    const uploaderStyle = (() => {
-      if (!this.state.showUploader) {
-        return PhotoField.STYLE.hidden;
-      } else {
-        return null;
-      }
-    })();
     return (
       <div style={PhotoField.STYLE.wrapper}>
         <div style={boxStyle}>
@@ -101,6 +94,7 @@ export class PhotoField extends React.Component<Properties, State> {
               ...(PhotoField.ANIMATION_STYLE as any)[state]
             }}>
               <ChangePictureModal displaySize={this.props.displaySize}
+                imageSource={this.props.imageSource}
                 visibility={this.state.showUploader}
                 closeModal={this.closeUploader}
                 onSubmit={this.props.onUpload} />
@@ -209,6 +203,7 @@ export class PhotoField extends React.Component<Properties, State> {
 }
 
 interface ModalProperties {
+  imageSource?: string;
   displaySize: DisplaySize;
   visibility: boolean;
   closeModal: () => void;
@@ -250,7 +245,17 @@ export class ChangePictureModal extends
         return ChangePictureModal.STYLE.buttonBoxLarge;
       }
     })();
+    const imageSrc = (() => {
+      if (!this.props.imageSource) {
+        return 'resources/account_page/profile_page/image-placeholder.svg';
+      } else {
+        return this.props.imageSource;
+      }
+    })();
     const imageStyle = (() => {
+      if (!this.props.imageSource) {
+        return ChangePictureModal.STYLE.placeholderImage;
+      }
       switch (this.props.displaySize) {
         case DisplaySize.SMALL:
           return ChangePictureModal.STYLE.imageSmall;
@@ -270,11 +275,19 @@ export class ChangePictureModal extends
           return ChangePictureModal.STYLE.imageBoxLagre;
       }
     })();
+    const isSliderActive = (() => {
+      if (!this.props.imageSource) {
+        return 'resources/account_page/profile_page/image-placeholder.svg';
+      } else {
+        return this.props.imageSource;
+      }
+    })();
     const imageScaling = (() => {
       return ({
         transform: `scale(${(100 + this.state.imageScalingValue) / 100})`
       });
     })();
+
     return (
       <div style={ChangePictureModal.STYLE.wrapper}>
         <div style={ChangePictureModal.STYLE.wrapperEdge} />
@@ -290,7 +303,7 @@ export class ChangePictureModal extends
             </div>
             <Padding size={ChangePictureModal.PADDING_ELEMENT} />
             <div style={imageBoxStyle}>
-              <img src={ChangePictureModal.SOME_IMAGE}
+              <img src={imageSrc}
                 style={{ ...imageStyle, ...imageScaling }} />
             </div>
             <Padding size={ChangePictureModal.PADDING_ELEMENT} />
@@ -429,6 +442,13 @@ export class ChangePictureModal extends
       borderRadius: '1px',
       outline: 0
     },
+    placeholderImage: {
+      position: 'relative' as 'relative',
+      height: '24px',
+      width: '30px',
+      top: 'calc(50% - 12px)',
+      left: 'calc(50% - 15px)'
+    },
     imageSmall: {
       objectFit: 'cover' as 'cover',
       height: '100%',
@@ -445,7 +465,8 @@ export class ChangePictureModal extends
       width: '248px',
       overflow: 'hidden' as 'hidden',
       borderRadius: '1px',
-      border: '1px solid #EBEBEB'
+      border: '1px solid #EBEBEB',
+      backgroundColor: '#F8F8F8'
     },
     imageBoxLagre: {
       boxSizing: 'border-box' as 'border-box',
@@ -453,7 +474,8 @@ export class ChangePictureModal extends
       width: '324px',
       overflow: 'hidden' as 'hidden',
       borderRadius: '1px',
-      border: '1px solid #EBEBEB'
+      border: '1px solid #EBEBEB',
+      backgroundColor: '#F8F8F8'
     },
     hidden: {
       visibility: 'hidden' as 'hidden',
@@ -507,16 +529,13 @@ export class ChangePictureModal extends
       ':hover': {
         backgroundColor: '#4B23A0'
       }
-    },
+    }
   });
   private static readonly HEADER_TEXT = 'Change Picture';
   private static readonly BROWSE_BUTTON_TEXT = 'BROWSE';
   private static readonly SUBMIT_BUTTON_TEXT = 'SUBMIT';
   private static readonly PADDING = '18px';
   private static readonly PADDING_ELEMENT = '30px';
-  private static readonly SOME_IMAGE = 'https://upload.wikimedia.org/' +
-    'wikipedia/commons/thumb/2/23/Close_up_of_a_black_domestic_cat.jpg/' +
-    '675px-Close_up_of_a_black_domestic_cat.jpg';
 }
 
 interface SliderProperties {
