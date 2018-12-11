@@ -275,17 +275,22 @@ export class ChangePictureModal extends
           return ChangePictureModal.STYLE.imageBoxLagre;
       }
     })();
-    const isSliderActive = (() => {
-      if (!this.props.imageSource) {
-        return 'resources/account_page/profile_page/image-placeholder.svg';
+    const isSliderReadOnly = (() => {
+      if (this.props.imageSource) {
+        return false;
       } else {
-        return this.props.imageSource;
+        return true;
       }
     })();
     const imageScaling = (() => {
-      return ({
-        transform: `scale(${(100 + this.state.imageScalingValue) / 100})`
-      });
+      if(this.props.imageSource) {
+        return ({
+          transform: `scale(${(100 + this.state.imageScalingValue) / 100})`
+        });
+      } else {
+        return ({transform: `scale(1)`});
+      }
+
     })();
 
     return (
@@ -308,7 +313,8 @@ export class ChangePictureModal extends
             </div>
             <Padding size={ChangePictureModal.PADDING_ELEMENT} />
             <Slider onRescale={this.onSliderMovement}
-              scaleValue={this.state.imageScalingValue} />
+              scaleValue={this.state.imageScalingValue}
+              isReadOnly={isSliderReadOnly}/>
             <Padding size={ChangePictureModal.PADDING_ELEMENT} />
             <HLine color='#E6E6E6' height={1} />
             <Padding size={ChangePictureModal.PADDING_ELEMENT} />
@@ -319,10 +325,10 @@ export class ChangePictureModal extends
                 className={css(ChangePictureModal.SPECIAL_STYLE.label)}>
                 {ChangePictureModal.BROWSE_BUTTON_TEXT}
               </label>
-              <button className={css(ChangePictureModal.SPECIAL_STYLE.button)}
+              <div className={css(ChangePictureModal.SPECIAL_STYLE.label)}
                 onClick={this.submitPicture}>
                 {ChangePictureModal.SUBMIT_BUTTON_TEXT}
-              </button>
+              </div>
             </div>
             <Padding size={ChangePictureModal.PADDING} />
           </VBoxLayout>
@@ -339,6 +345,7 @@ export class ChangePictureModal extends
     this.props.onSubmit();
     this.props.closeModal();
   }
+
   private static readonly STYLE = {
     wrapper: {
       boxSizing: 'border-box' as 'border-box',
@@ -491,24 +498,9 @@ export class ChangePictureModal extends
     }
   };
   private static readonly SPECIAL_STYLE = StyleSheet.create({
-    button: {
-      minWidth: '153px',
-      maxWidth: '248px',
-      height: '34px',
-      backgroundColor: '#684BC7',
-      color: '#FFFFFF',
-      font: '400 14px Roboto',
-      border: '1px solid #684BC7',
-      borderRadius: '1px',
-      outline: 0,
-      ':active': {
-        backgroundColor: '#4B23A0'
-      },
-      ':hover': {
-        backgroundColor: '#4B23A0'
-      }
-    },
     label: {
+      boxSizing: 'border-box' as 'border-box',
+      cursor: 'pointer' as 'pointer',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       flexWrap: 'wrap' as 'wrap',
@@ -539,12 +531,8 @@ export class ChangePictureModal extends
 }
 
 interface SliderProperties {
-
-  /** The onClick event handler. */
-  onSlide?: () => void;
-
   onRescale?: (num: number) => void;
-
+  isReadOnly: boolean;
   scaleValue: number;
 }
 
@@ -559,6 +547,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
 
     return (
       <input type='range' min='0' max='150' value={this.props.scaleValue}
+        disabled={this.props.isReadOnly}
         onChange={(e) => this.onChange(e)}
         className={css(Slider.SLIDER.slider)} />);
   }
@@ -579,19 +568,8 @@ export class Slider extends React.Component<SliderProperties, {}> {
       width: '100%',
       height: '20px'
     },
-    filler: {
-      height: '8px'
-    },
-    circle: {
-      boxSizing: 'border-box' as 'border-box',
-      position: 'absolute' as 'absolute',
-      cursor: 'pointer' as 'pointer',
-      zIndex: 1,
-      height: '20px',
-      width: '20px',
-      backgroundColor: '#FFFFFF',
-      border: '1px solid #8C8C8C',
-      borderRadius: '20px'
+    cursor: {
+      cursor: 'pointer' as 'pointer'
     }
   };
 
