@@ -30,8 +30,18 @@ namespace Spire {
       void paintEvent(QPaintEvent* event) override;
 
     private:
+      ChartValue::Type m_x_axis_type;
+      ChartValue::Type m_y_axis_type;
       ChartPoint m_top_left;
       ChartPoint m_bottom_right;
+      ChartValue m_x_axis_range;
+      ChartValue m_y_axis_range;
+      QFont m_label_font;
+
+      std::vector<ChartValue> get_axis_values(const ChartValue::Type& type,
+        const ChartValue& range_start, const ChartValue& range_end);
+      int value_to_pixel(const ChartValue& range_start,
+        const ChartValue& range_end, const ChartValue& value);
   };
 }
 
