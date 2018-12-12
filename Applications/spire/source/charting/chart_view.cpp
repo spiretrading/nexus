@@ -42,11 +42,12 @@ void ChartView::paintEvent(QPaintEvent* event) {
   auto origin_y = height() - scale_height(20);
   painter.drawLine(origin_x, 0, origin_x, origin_y);
   painter.drawLine(0, origin_y, origin_x, origin_y);
-  auto step = value_to_pixel(range_y.front(), range_y.back(), range_y.front(),
-      height() - (height() - origin_y)) + value_to_pixel(range_y.front(),
-        range_y.back(), range_y[1], height() - (height() - origin_y));
+  auto money_step = value_to_pixel(range_y.front(), range_y.back(),
+    range_y.front(), height() - (height() - origin_y)) + value_to_pixel(
+      range_y.front(), range_y.back(), range_y[1],
+      height() - (height() - origin_y));
   for(auto i = 0; i < range_y.size(); ++i) {
-    auto y = origin_y - (step * i) - step;
+    auto y = origin_y - (money_step * i) - money_step;
     painter.drawLine(0, y, origin_x, y);
     painter.drawLine(origin_x, y, origin_x + scale_width(2), y);
     painter.drawText(origin_x + scale_width(3),
@@ -54,12 +55,15 @@ void ChartView::paintEvent(QPaintEvent* event) {
       QString::number(static_cast<double>(static_cast<Quantity>(range_y[i])),
         'f', 2));
   }
+  auto time_step = value_to_pixel(range_x.front(), range_x.back(),
+    range_x.front(), width() - (width() - origin_x)) +
+    value_to_pixel(range_x.front(), range_x.back(), range_x[1],
+      width() - (width() - origin_x));
+  if(range_x.size() * time_step < width()) {
+    time_step += 1;
+  }
   for(auto i = 0; i < range_x.size(); ++i) {
-    auto step = value_to_pixel(range_x.front(), range_x.back(),
-      range_x.front(), width() - (width() - origin_x)) +
-      value_to_pixel(range_x.front(), range_x.back(), range_x[1],
-        width() - (width() - origin_x));
-    auto x = origin_x - (step * i) - step;
+    auto x = origin_x - (time_step * i) - time_step;
     painter.drawLine(x, 0, x, origin_y);
   }
 }
