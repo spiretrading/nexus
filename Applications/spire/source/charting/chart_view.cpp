@@ -13,8 +13,10 @@ ChartView::ChartView(ChartValue::Type x_axis_type,
     ChartValue::Type y_axis_type, QWidget* parent)
     : QWidget(parent),
       m_x_axis_type(x_axis_type),
-      m_y_axis_type(y_axis_type),
-      m_label_font("Roboto", 10) {}
+      m_y_axis_type(y_axis_type) {
+  m_label_font = QFont("Roboto");
+  m_label_font.setPixelSize(scale_height(10));
+}
 
 void ChartView::set_region(ChartPoint top_left, ChartPoint bottom_right) {
   m_top_left = top_left;
@@ -25,12 +27,18 @@ void ChartView::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
   painter.fillRect(event->rect(), "#25212E");
   painter.setPen(Qt::white);
+  painter.setFont(m_label_font);
   auto range_x = get_axis_values(m_x_axis_type,
     m_top_left.m_x, m_bottom_right.m_x);
   auto range_y = get_axis_values(m_y_axis_type,
     m_bottom_right.m_y, m_top_left.m_y);
   auto y_axis_fm = QFontMetrics(m_label_font);
-  auto origin_x = width() - y_axis_fm.width("10.10");
+  auto origin_x = width() -
+    (y_axis_fm.width("M") *
+      QString::number(
+        static_cast<double>(
+          static_cast<Quantity>(range_y.front())), 'f', 2).length()) +
+      scale_width(8);
   auto origin_y = height() - scale_height(20);
   painter.drawLine(origin_x, 0, origin_x, origin_y);
   painter.drawLine(0, origin_y, origin_x, origin_y);
@@ -38,6 +46,11 @@ void ChartView::paintEvent(QPaintEvent* event) {
     auto pixel = value_to_pixel(range_y.front(), range_y.back(), value,
       height());
     painter.drawLine(0, pixel, origin_x, pixel);
+    painter.drawLine(origin_x, pixel, origin_x + scale_width(2), pixel);
+    painter.drawText(origin_x + scale_width(3),
+      pixel + (y_axis_fm.height() / 3),
+      QString::number(static_cast<double>(static_cast<Quantity>(value)),
+        'f', 2));
   }
   for(auto& value : range_x) {
     auto pixel = value_to_pixel(range_x.front(), range_x.back(), value,
