@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
   application->setOrganizationName(QObject::tr("Eidolon Systems Ltd"));
   application->setApplicationName(QObject::tr("Scratch"));
   initialize_resources();
-  auto w = new ChartView(ChartValue::Type::DURATION, ChartValue::Type::MONEY);
+  auto w = new ChartView(ChartValue::Type::TIMESTAMP, ChartValue::Type::MONEY);
   auto current_time = boost::posix_time::second_clock::local_time();
   auto bottom_right = ChartPoint(
     ChartValue(current_time),
