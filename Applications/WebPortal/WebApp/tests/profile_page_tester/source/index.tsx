@@ -67,7 +67,7 @@ class TestApp extends React.Component<Properties, State> {
           <WebPortal.PhotoField displaySize={this.props.displaySize}
           imageSource = {this.state.imageSource}
           readonly={this.state.isPhotoFieldReadonly}
-          onUpload={this.changeImage}/>
+          onUpload={this.updateImage}/>
         </WebPortal.VBoxLayout>
         <WebPortal.Padding size='18px'/>
         <div style={TestApp.STYLE.testingComponents}>
@@ -115,6 +115,12 @@ class TestApp extends React.Component<Properties, State> {
       });
     }
     return true;
+  }
+
+  private updateImage(fileLocation: string) {
+      this.setState({
+        imageSource: fileLocation
+      });
   }
 
   private static STYLE = {

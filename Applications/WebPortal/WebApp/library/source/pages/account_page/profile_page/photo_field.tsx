@@ -14,7 +14,7 @@ interface Properties {
   displayMode?: DisplayMode;
   imageSource?: string;
   readonly?: boolean;
-  onUpload?: () => boolean;
+  onUpload: (newFile: string) => void;
 }
 
 interface State {
@@ -207,12 +207,12 @@ interface ModalProperties {
   displaySize: DisplaySize;
   visibility: boolean;
   closeModal: () => void;
-  onBrowse?: () => void;
-  onSubmit?: () => void;
+  onSubmit?: (fileLocation: string) => void;
 }
 
 interface ModalState {
   imageScalingValue: number;
+  currentImage: string;
 }
 
 /** Displays an account's profile page. */
@@ -221,10 +221,12 @@ export class ChangePictureModal extends
   constructor(properties: ModalProperties) {
     super(properties);
     this.state = {
-      imageScalingValue: 0
+      imageScalingValue: 0,
+      currentImage: this.props.imageSource
     };
     this.onSliderMovement = this.onSliderMovement.bind(this);
     this.submitPicture = this.submitPicture.bind(this);
+    this.onGetImageFile = this.onGetImageFile.bind(this);
   }
 
   public render(): JSX.Element {
@@ -246,14 +248,14 @@ export class ChangePictureModal extends
       }
     })();
     const imageSrc = (() => {
-      if (!this.props.imageSource) {
+      if (!this.state.currentImage) {
         return 'resources/account_page/profile_page/image-placeholder.svg';
       } else {
-        return this.props.imageSource;
+        return this.state.currentImage;
       }
     })();
     const imageStyle = (() => {
-      if (!this.props.imageSource) {
+      if (!this.state.currentImage) {
         return ChangePictureModal.STYLE.placeholderImage;
       }
       switch (this.props.displaySize) {
@@ -319,8 +321,9 @@ export class ChangePictureModal extends
             <HLine color='#E6E6E6' height={1} />
             <Padding size={ChangePictureModal.PADDING_ELEMENT} />
             <div style={buttonBox}>
-              <input type='file' name='file' id='102'
-                style={ChangePictureModal.STYLE.hiddenInput} />
+              <input type='file' id='102'
+                style={ChangePictureModal.STYLE.hiddenInput}
+                onChange={(e) => {this.onGetImageFile(e.target.files);}} />
               <label htmlFor='102'
                 className={css(ChangePictureModal.SPECIAL_STYLE.label)}>
                 {ChangePictureModal.BROWSE_BUTTON_TEXT}
@@ -341,8 +344,15 @@ export class ChangePictureModal extends
     this.setState({ imageScalingValue: value });
   }
 
+  private onGetImageFile(selectorFiles: FileList) {
+    console.log('New File: ' + selectorFiles.item(0));
+    this.setState({ currentImage: selectorFiles[0].name });
+  }
+
   private submitPicture() {
-    this.props.onSubmit();
+    if(this.state.currentImage) {
+     this.props.onSubmit(this.state.currentImage);
+    }
     this.props.closeModal();
   }
 
@@ -548,7 +558,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
     return (
       <input type='range' min='0' max='150' value={this.props.scaleValue}
         disabled={this.props.isReadOnly}
-        onChange={(e) => this.onChange(e)}
+        onChange={this.onChange}
         className={css(Slider.SLIDER.slider)} />);
   }
 
