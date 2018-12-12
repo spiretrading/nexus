@@ -42,14 +42,16 @@ void ChartView::paintEvent(QPaintEvent* event) {
   auto origin_y = height() - scale_height(20);
   painter.drawLine(origin_x, 0, origin_x, origin_y);
   painter.drawLine(0, origin_y, origin_x, origin_y);
-  for(auto& value : range_y) {
-    auto pixel = value_to_pixel(range_y.front(), range_y.back(), value,
-      height());
-    painter.drawLine(0, pixel, origin_x, pixel);
-    painter.drawLine(origin_x, pixel, origin_x + scale_width(2), pixel);
+  auto step =  value_to_pixel(range_y.front(), range_y.back(), range_y.front(),
+      height()) + value_to_pixel(range_y.front(), range_y.back(), range_y[1],
+        height());
+  for(auto i = 0; i < range_y.size(); ++i) {
+    auto y = origin_y - (step * i) - step;
+    painter.drawLine(0, y, origin_x, y);
+    painter.drawLine(origin_x, y, origin_x + scale_width(2), y);
     painter.drawText(origin_x + scale_width(3),
-      pixel + (y_axis_fm.height() / 3),
-      QString::number(static_cast<double>(static_cast<Quantity>(value)),
+      y + (y_axis_fm.height() / 3),
+      QString::number(static_cast<double>(static_cast<Quantity>(range_y[i])),
         'f', 2));
   }
   for(auto& value : range_x) {
@@ -77,8 +79,8 @@ std::vector<ChartValue> ChartView::get_axis_values(
     } else {
       step = Money(1);
     }
-    auto value = money_start;
-    while(value < money_end) {
+    auto value = money_start + step;
+    while(value < money_end - step) {
       values.push_back(ChartValue(value));
       value += step;
     }
