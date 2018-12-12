@@ -321,10 +321,10 @@ export class ChangePictureModal extends
             <HLine color='#E6E6E6' height={1} />
             <Padding size={ChangePictureModal.PADDING_ELEMENT} />
             <div style={buttonBox}>
-              <input type='file' id='102'
+              <input type='file' id='imageInput' accept='image/*'
                 style={ChangePictureModal.STYLE.hiddenInput}
                 onChange={(e) => { this.onGetImageFile(e.target.files); }} />
-              <label htmlFor='102'
+              <label htmlFor='imageInput'
                 className={css(ChangePictureModal.SPECIAL_STYLE.label)}>
                 {ChangePictureModal.BROWSE_BUTTON_TEXT}
               </label>
