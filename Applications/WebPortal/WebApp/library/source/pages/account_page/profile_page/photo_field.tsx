@@ -94,9 +94,8 @@ export class PhotoField extends React.Component<Properties, State> {
             }}>
               <ChangePictureModal displaySize={this.props.displaySize}
                 imageSource={this.props.imageSource}
-                visibility={this.state.showUploader}
-                closeModal={this.closeUploader}
-                onSubmit={this.props.onUpload} />
+                onCloseModal={this.closeUploader}
+                onSubmitImage={this.props.onUpload} />
             </div>)}
         </Transition>
       </div>);
@@ -204,9 +203,8 @@ export class PhotoField extends React.Component<Properties, State> {
 interface ModalProperties {
   imageSource?: string;
   displaySize: DisplaySize;
-  visibility: boolean;
-  closeModal: () => void;
-  onSubmit?: (fileLocation: string) => void;
+  onCloseModal: () => void;
+  onSubmitImage?: (fileLocation: string) => void;
 }
 
 interface ModalState {
@@ -214,7 +212,7 @@ interface ModalState {
   currentImage: string;
 }
 
-/** Displays an account's profile page. */
+/** Displays a modal that allows the user to change their picture. */
 export class ChangePictureModal extends
   React.Component<ModalProperties, ModalState> {
   constructor(properties: ModalProperties) {
@@ -224,7 +222,7 @@ export class ChangePictureModal extends
       currentImage: this.props.imageSource
     };
     this.onSliderMovement = this.onSliderMovement.bind(this);
-    this.submitPicture = this.submitPicture.bind(this);
+    this.onSubmit = this.onSubmit.bind(this);
     this.onGetImageFile = this.onGetImageFile.bind(this);
     this.onClose = this.onClose.bind(this);
   }
@@ -292,9 +290,7 @@ export class ChangePictureModal extends
       } else {
         return ({ transform: `scale(1)` });
       }
-
     })();
-
     return (
       <div style={ChangePictureModal.STYLE.wrapper}>
         <div style={ChangePictureModal.STYLE.wrapperEdge} />
@@ -308,18 +304,18 @@ export class ChangePictureModal extends
                 style={ChangePictureModal.STYLE.closeIcon}
                 onClick={this.onClose} />
             </div>
-            <Padding size={ChangePictureModal.PADDING_ELEMENT} />
+            <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS} />
             <div style={imageBoxStyle}>
               <img src={imageSrc}
                 style={{ ...imageStyle, ...imageScaling }} />
             </div>
-            <Padding size={ChangePictureModal.PADDING_ELEMENT} />
-            <Slider onRescale={this.onSliderMovement}
+            <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS} />
+            <Slider onThumbMove={this.onSliderMovement}
               scaleValue={this.state.imageScalingValue}
               isReadOnly={isSliderReadOnly} />
-            <Padding size={ChangePictureModal.PADDING_ELEMENT} />
+            <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS} />
             <HLine color='#E6E6E6' height={1} />
-            <Padding size={ChangePictureModal.PADDING_ELEMENT} />
+            <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS} />
             <div style={buttonBox}>
               <input type='file' id='imageInput' accept='image/*'
                 style={ChangePictureModal.STYLE.hiddenInput}
@@ -329,7 +325,7 @@ export class ChangePictureModal extends
                 {ChangePictureModal.BROWSE_BUTTON_TEXT}
               </label>
               <div className={css(ChangePictureModal.SPECIAL_STYLE.label)}
-                onClick={this.submitPicture}>
+                onClick={this.onSubmit}>
                 {ChangePictureModal.SUBMIT_BUTTON_TEXT}
               </div>
             </div>
@@ -350,15 +346,15 @@ export class ChangePictureModal extends
   }
 
   private onClose() {
-    this.props.closeModal();
+    this.props.onCloseModal();
     this.setState({ currentImage: this.props.imageSource });
   }
 
-  private submitPicture() {
+  private onSubmit() {
     if (this.state.currentImage) {
-      this.props.onSubmit(this.state.currentImage);
+      this.props.onSubmitImage(this.state.currentImage);
     }
-    this.props.closeModal();
+    this.props.onCloseModal();
   }
 
   private static readonly STYLE = {
@@ -542,16 +538,19 @@ export class ChangePictureModal extends
   private static readonly BROWSE_BUTTON_TEXT = 'BROWSE';
   private static readonly SUBMIT_BUTTON_TEXT = 'SUBMIT';
   private static readonly PADDING = '18px';
-  private static readonly PADDING_ELEMENT = '30px';
+  private static readonly PADDING_BETWEEN_ELEMENTS = '30px';
 }
 
 interface SliderProperties {
-  onRescale?: (num: number) => void;
+  onThumbMove?: (num: number) => void;
   isReadOnly: boolean;
   scaleValue: number;
 }
 
 export class Slider extends React.Component<SliderProperties, {}> {
+  public static readonly defaultProps = {
+    onThumbMove: () => {}
+  }
 
   constructor(properties: SliderProperties) {
     super(properties);
@@ -559,36 +558,24 @@ export class Slider extends React.Component<SliderProperties, {}> {
   }
 
   public render(): JSX.Element {
-
     return (
       <input type='range' min='0' max='150' value={this.props.scaleValue}
         disabled={this.props.isReadOnly}
         onChange={this.onChange}
-        className={css(Slider.SLIDER.slider)} />);
+        className={css(Slider.SLIDER_STYLE.slider)}/>);
   }
 
   private onChange(event: any) {
     const num = event.target.value;
     const diff = Math.abs(this.props.scaleValue - num);
     if (this.props.scaleValue < num) {
-      this.props.onRescale(this.props.scaleValue + diff);
+      this.props.onThumbMove(this.props.scaleValue + diff);
     } else {
-      this.props.onRescale(this.props.scaleValue - diff);
+      this.props.onThumbMove(this.props.scaleValue - diff);
     }
   }
 
-  public static readonly STYLE = {
-    containerStyle: {
-      position: 'relative' as 'relative',
-      width: '100%',
-      height: '20px'
-    },
-    cursor: {
-      cursor: 'pointer' as 'pointer'
-    }
-  };
-
-  public static readonly SLIDER = StyleSheet.create({
+  public static readonly SLIDER_STYLE = StyleSheet.create({
     slider: {
       width: '100%',
       height: '20px',
