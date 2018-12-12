@@ -35,11 +35,13 @@ void ChartView::paintEvent(QPaintEvent* event) {
   painter.drawLine(origin_x, 0, origin_x, origin_y);
   painter.drawLine(0, origin_y, origin_x, origin_y);
   for(auto& value : range_y) {
-    auto pixel = value_to_pixel(range_y.front(), range_y.back(), value);
+    auto pixel = value_to_pixel(range_y.front(), range_y.back(), value,
+      height());
     painter.drawLine(0, pixel, origin_x, pixel);
   }
   for(auto& value : range_x) {
-    auto pixel = value_to_pixel(range_x.front(), range_x.back(), value);
+    auto pixel = value_to_pixel(range_x.front(), range_x.back(), value,
+      width());
     painter.drawLine(pixel, 0, pixel, origin_y);
   }
 }
@@ -53,7 +55,6 @@ std::vector<ChartValue> ChartView::get_axis_values(
     auto money_end = static_cast<Money>(range_end);
     auto range = money_end - money_start;
     auto step = Money();
-    auto value = money_start;
     if(range <= Money(0.01)) {
       step = Money(0.001);
     } else if(range <= Money(0.1)) {
@@ -63,6 +64,7 @@ std::vector<ChartValue> ChartView::get_axis_values(
     } else {
       step = Money(1);
     }
+    auto value = money_start;
     while(value < money_end) {
       values.push_back(ChartValue(value));
       value += step;
@@ -75,10 +77,11 @@ std::vector<ChartValue> ChartView::get_axis_values(
 }
 
 int ChartView::value_to_pixel(const ChartValue& range_start,
-    const ChartValue& range_end, const ChartValue& value) {
+    const ChartValue& range_end, const ChartValue& value,
+    int widget_size) {
   auto start_quantity = static_cast<Quantity>(range_start);
   auto end_quantity = static_cast<Quantity>(range_end);
   auto value_quantity = static_cast<Quantity>(value);
   return static_cast<int>(((value_quantity - start_quantity) *
-    (width() / (end_quantity - start_quantity))));
+    (widget_size / (end_quantity - start_quantity))));
 }

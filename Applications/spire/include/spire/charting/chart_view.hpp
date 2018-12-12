@@ -41,7 +41,8 @@ namespace Spire {
       std::vector<ChartValue> get_axis_values(const ChartValue::Type& type,
         const ChartValue& range_start, const ChartValue& range_end);
       int value_to_pixel(const ChartValue& range_start,
-        const ChartValue& range_end, const ChartValue& value);
+        const ChartValue& range_end, const ChartValue& value,
+        int widget_size);
   };
 }
 
