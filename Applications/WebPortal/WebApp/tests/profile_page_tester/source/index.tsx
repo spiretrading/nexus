@@ -29,6 +29,7 @@ class TestApp extends React.Component<Properties, State> {
     this.onRoleClick = this.onRoleClick.bind(this);
     this.changeImage = this.changeImage.bind(this);
     this.toggleReadOnly = this.toggleReadOnly.bind(this);
+    this.updateImage = this.updateImage.bind(this);
   }
 
   public render(): JSX.Element {

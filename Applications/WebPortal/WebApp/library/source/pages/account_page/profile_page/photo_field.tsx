@@ -1,8 +1,7 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { DisplaySize, Padding, VBoxLayout, HLine } from '../../..';
-import { HBoxLayout } from '../../../layouts';
+import { DisplaySize, HBoxLayout, Padding, VBoxLayout, HLine } from '../../..';
 
 export enum DisplayMode {
   Display,
@@ -227,6 +226,7 @@ export class ChangePictureModal extends
     this.onSliderMovement = this.onSliderMovement.bind(this);
     this.submitPicture = this.submitPicture.bind(this);
     this.onGetImageFile = this.onGetImageFile.bind(this);
+    this.onClose = this.onClose.bind(this);
   }
 
   public render(): JSX.Element {
@@ -285,12 +285,12 @@ export class ChangePictureModal extends
       }
     })();
     const imageScaling = (() => {
-      if(this.props.imageSource) {
+      if (this.props.imageSource) {
         return ({
           transform: `scale(${(100 + this.state.imageScalingValue) / 100})`
         });
       } else {
-        return ({transform: `scale(1)`});
+        return ({ transform: `scale(1)` });
       }
 
     })();
@@ -306,7 +306,7 @@ export class ChangePictureModal extends
               {ChangePictureModal.HEADER_TEXT}
               <img src='resources/close.svg'
                 style={ChangePictureModal.STYLE.closeIcon}
-                onClick={this.props.closeModal} />
+                onClick={this.onClose} />
             </div>
             <Padding size={ChangePictureModal.PADDING_ELEMENT} />
             <div style={imageBoxStyle}>
@@ -316,14 +316,14 @@ export class ChangePictureModal extends
             <Padding size={ChangePictureModal.PADDING_ELEMENT} />
             <Slider onRescale={this.onSliderMovement}
               scaleValue={this.state.imageScalingValue}
-              isReadOnly={isSliderReadOnly}/>
+              isReadOnly={isSliderReadOnly} />
             <Padding size={ChangePictureModal.PADDING_ELEMENT} />
             <HLine color='#E6E6E6' height={1} />
             <Padding size={ChangePictureModal.PADDING_ELEMENT} />
             <div style={buttonBox}>
               <input type='file' id='102'
                 style={ChangePictureModal.STYLE.hiddenInput}
-                onChange={(e) => {this.onGetImageFile(e.target.files);}} />
+                onChange={(e) => { this.onGetImageFile(e.target.files); }} />
               <label htmlFor='102'
                 className={css(ChangePictureModal.SPECIAL_STYLE.label)}>
                 {ChangePictureModal.BROWSE_BUTTON_TEXT}
@@ -346,12 +346,17 @@ export class ChangePictureModal extends
 
   private onGetImageFile(selectorFiles: FileList) {
     console.log('New File: ' + selectorFiles.item(0));
-    this.setState({ currentImage: selectorFiles[0].name });
+    this.setState({ currentImage: 'beep.jpg' });
+  }
+
+  private onClose() {
+    this.props.closeModal();
+    this.setState({ currentImage: this.props.imageSource });
   }
 
   private submitPicture() {
-    if(this.state.currentImage) {
-     this.props.onSubmit(this.state.currentImage);
+    if (this.state.currentImage) {
+      this.props.onSubmit(this.state.currentImage);
     }
     this.props.closeModal();
   }
