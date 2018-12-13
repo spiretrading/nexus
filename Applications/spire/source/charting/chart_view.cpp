@@ -70,8 +70,9 @@ void ChartView::paintEvent(QPaintEvent* event) {
   for(auto i = 0; i < x_values.size(); ++i) {
     auto x = origin_x - (time_step * i) - time_step;
     painter.drawLine(x, 0, x, origin_y + scale_height(2));
-    painter.drawText(x - timestamp_width / 2.5, origin_y + font_metrics.height() +
-      scale_height(2), drawable_timestamp(static_cast<ptime>(x_values[i])));
+    painter.drawText(x - timestamp_width / 2.5,
+      origin_y + font_metrics.height() + scale_height(2),
+      drawable_timestamp(static_cast<ptime>(x_values[i])));
   }
 }
 
