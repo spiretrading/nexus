@@ -39,7 +39,7 @@ export class PhotoField extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const boxStyle = (() => {
-      switch (this.props.displaySize) {
+      switch(this.props.displaySize) {
         case DisplaySize.SMALL:
           return PhotoField.STYLE.boxSmall;
         case DisplaySize.MEDIUM:
@@ -228,7 +228,7 @@ export class ChangePictureModal extends
 
   public render(): JSX.Element {
     const boxStyle = (() => {
-      switch (this.props.displaySize) {
+      switch(this.props.displaySize) {
         case DisplaySize.SMALL:
           return ChangePictureModal.STYLE.boxSmall;
         case DisplaySize.MEDIUM:
@@ -254,18 +254,14 @@ export class ChangePictureModal extends
     const imageStyle = (() => {
       if(!this.state.currentImage) {
         return ChangePictureModal.STYLE.placeholderImage;
-      }
-      switch (this.props.displaySize) {
-        case DisplaySize.SMALL:
-          return ChangePictureModal.STYLE.imageSmall;
-        case DisplaySize.MEDIUM:
-          return ChangePictureModal.STYLE.imageLarge;
-        case DisplaySize.LARGE:
-          return ChangePictureModal.STYLE.imageLarge;
+      } else if (this.props.displaySize === DisplaySize.SMALL) {
+        return ChangePictureModal.STYLE.imageSmall;
+      } else {
+        return ChangePictureModal.STYLE.imageLarge;
       }
     })();
     const imageBoxStyle = (() => {
-      switch (this.props.displaySize) {
+      switch(this.props.displaySize) {
         case DisplaySize.SMALL:
           return ChangePictureModal.STYLE.imageBoxSmall;
         case DisplaySize.MEDIUM:
