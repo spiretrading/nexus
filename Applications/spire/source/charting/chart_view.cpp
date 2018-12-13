@@ -65,12 +65,17 @@ void ChartView::paintEvent(QPaintEvent* event) {
   if(range_x.size() * time_step < width()) {
     time_step += 1;
   }
+  auto x_axis_fm = QFontMetrics(m_label_font);
+  auto timestamp_width = (y_axis_fm.width("M") * QString::number(
+    static_cast<double>(static_cast<Quantity>(range_y.front())), 'f', 2)
+    .length());
   for(auto i = 0; i < range_x.size(); ++i) {
     auto x = origin_x - (time_step * i) - time_step;
     painter.drawLine(x, 0, x, origin_y);
     painter.drawLine(x, origin_y, x, origin_y + scale_height(2));
-    painter.drawText(x, origin_y, drawable_timestamp(
-      static_cast<ptime>(range_x[i])));
+    painter.drawText(x - timestamp_width / 2.5, origin_y + x_axis_fm.height() +
+      scale_height(2),
+      drawable_timestamp(static_cast<ptime>(range_x[i])));
   }
 }
 
