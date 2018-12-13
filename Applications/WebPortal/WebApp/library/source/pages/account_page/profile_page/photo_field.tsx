@@ -33,8 +33,8 @@ export class PhotoField extends React.Component<Properties, State> {
     this.state = {
       showUploader: false
     };
-    this.showUploader = this.showUploader.bind(this);
-    this.closeUploader = this.closeUploader.bind(this);
+    this.showChangePictureModal = this.showChangePictureModal.bind(this);
+    this.hideChangePictureModal = this.hideChangePictureModal.bind(this);
   }
 
   public render(): JSX.Element {
@@ -55,21 +55,6 @@ export class PhotoField extends React.Component<Properties, State> {
         return PhotoField.STYLE.cameraIcon;
       }
     })();
-    const imageStyle = (() => {
-      if (!this.props.imageSource) {
-        if (this.props.displaySize === DisplaySize.SMALL) {
-          return PhotoField.STYLE.placeholderStyleSmall;
-        } else {
-          return PhotoField.STYLE.placeholderStyle;
-        }
-      } else {
-        if (this.props.displaySize === DisplaySize.SMALL) {
-          return PhotoField.STYLE.imageStyleSmall;
-        } else {
-          return PhotoField.STYLE.imageStyle;
-        }
-      }
-    })();
     const imageSrc = (() => {
       if (!this.props.imageSource) {
         return 'resources/account_page/profile_page/image-placeholder.svg';
@@ -77,14 +62,28 @@ export class PhotoField extends React.Component<Properties, State> {
         return this.props.imageSource;
       }
     })();
+    const imageStyle = (() => {
+      if (!this.props.imageSource) {
+        if (this.props.displaySize === DisplaySize.SMALL) {
+          return PhotoField.STYLE.placeholderSmall;
+        } else {
+          return PhotoField.STYLE.placeholder;
+        }
+      } else {
+        if (this.props.displaySize === DisplaySize.SMALL) {
+          return PhotoField.STYLE.imageSmall;
+        } else {
+          return PhotoField.STYLE.image;
+        }
+      }
+    })();
     return (
       <div style={PhotoField.STYLE.wrapper}>
         <div style={boxStyle}>
-          <img src={imageSrc}
-            style={imageStyle} />
+          <img src={imageSrc} style={imageStyle}/>
           <img src='resources/account_page/profile_page/camera.svg'
             style={cameraIconStyle}
-            onClick={this.showUploader} />
+            onClick={this.showChangePictureModal}/>
         </div>
         <Transition in={this.state.showUploader} timeout={PhotoField.TIMEOUT}>
           {(state) => (
@@ -94,18 +93,18 @@ export class PhotoField extends React.Component<Properties, State> {
             }}>
               <ChangePictureModal displaySize={this.props.displaySize}
                 imageSource={this.props.imageSource}
-                onCloseModal={this.closeUploader}
-                onSubmitImage={this.props.onUpload} />
+                onCloseModal={this.hideChangePictureModal}
+                onSubmitImage={this.props.onUpload}/>
             </div>)}
         </Transition>
       </div>);
   }
 
-  private showUploader() {
+  private showChangePictureModal() {
     this.setState({ showUploader: true });
   }
 
-  private closeUploader() {
+  private hideChangePictureModal() {
     this.setState({ showUploader: false });
   }
   private static ANIMATION_STYLE = {
@@ -159,24 +158,24 @@ export class PhotoField extends React.Component<Properties, State> {
       width: '380px',
       position: 'relative' as 'relative'
     },
-    placeholderStyle: {
+    placeholder: {
       position: 'absolute' as 'absolute',
       height: '24px',
       width: '30px'
     },
-    placeholderStyleSmall: {
+    placeholderSmall: {
       position: 'absolute' as 'absolute',
       height: '24px',
       width: '30px',
       top: 'calc(50% - 12px)',
       left: 'calc(50% - 15px)'
     },
-    imageStyle: {
+    image: {
       objectFit: 'cover' as 'cover',
       height: '100%',
       width: '100%'
     },
-    imageStyleSmall: {
+    imageSmall: {
       position: 'absolute' as 'absolute',
       objectFit: 'cover' as 'cover',
       top: '0%',
@@ -204,7 +203,7 @@ interface ModalProperties {
   imageSource?: string;
   displaySize: DisplaySize;
   onCloseModal: () => void;
-  onSubmitImage?: (fileLocation: string) => void;
+  onSubmitImage: (fileLocation: string) => void;
 }
 
 interface ModalState {
@@ -293,33 +292,33 @@ export class ChangePictureModal extends
     })();
     return (
       <div style={ChangePictureModal.STYLE.wrapper}>
-        <div style={ChangePictureModal.STYLE.wrapperEdge} />
+        <div style={ChangePictureModal.STYLE.wrapperEdge}/>
         <HBoxLayout style={boxStyle}>
-          <Padding size={ChangePictureModal.PADDING} />
+          <Padding size={ChangePictureModal.PADDING}/>
           <VBoxLayout>
-            <Padding size={ChangePictureModal.PADDING} />
+            <Padding size={ChangePictureModal.PADDING}/>
             <div style={ChangePictureModal.STYLE.header}>
               {ChangePictureModal.HEADER_TEXT}
               <img src='resources/close.svg'
                 style={ChangePictureModal.STYLE.closeIcon}
-                onClick={this.onClose} />
+                onClick={this.onClose}/>
             </div>
-            <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS} />
+            <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <div style={imageBoxStyle}>
               <img src={imageSrc}
-                style={{ ...imageStyle, ...imageScaling }} />
+                style={{ ...imageStyle, ...imageScaling }}/>
             </div>
-            <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS} />
+            <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <Slider onThumbMove={this.onSliderMovement}
               scaleValue={this.state.imageScalingValue}
-              isReadOnly={isSliderReadOnly} />
-            <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS} />
-            <HLine color='#E6E6E6' height={1} />
-            <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS} />
+              isReadOnly={isSliderReadOnly}/>
+            <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
+            <HLine color='#E6E6E6' height={1}/>
+            <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <div style={buttonBox}>
               <input type='file' id='imageInput' accept='image/*'
                 style={ChangePictureModal.STYLE.hiddenInput}
-                onChange={(e) => { this.onGetImageFile(e.target.files); }} />
+                onChange={(e) => { this.onGetImageFile(e.target.files); }}/>
               <label htmlFor='imageInput'
                 className={css(ChangePictureModal.SPECIAL_STYLE.label)}>
                 {ChangePictureModal.BROWSE_BUTTON_TEXT}
@@ -329,9 +328,9 @@ export class ChangePictureModal extends
                 {ChangePictureModal.SUBMIT_BUTTON_TEXT}
               </div>
             </div>
-            <Padding size={ChangePictureModal.PADDING} />
+            <Padding size={ChangePictureModal.PADDING}/>
           </VBoxLayout>
-          <Padding size={ChangePictureModal.PADDING} />
+          <Padding size={ChangePictureModal.PADDING}/>
         </HBoxLayout>
       </div>);
   }
