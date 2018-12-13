@@ -228,13 +228,17 @@ export class ChangePictureModal extends
 
   public render(): JSX.Element {
     const boxStyle = (() => {
-      switch(this.props.displaySize) {
-        case DisplaySize.SMALL:
-          return ChangePictureModal.STYLE.boxSmall;
-        case DisplaySize.MEDIUM:
-          return ChangePictureModal.STYLE.boxLarge;
-        case DisplaySize.LARGE:
-          return ChangePictureModal.STYLE.boxLarge;
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return ChangePictureModal.STYLE.boxSmall;
+      } else {
+        return ChangePictureModal.STYLE.boxLarge;
+      }
+    })();
+    const boxShadowStyle = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return ChangePictureModal.STYLE.boxShadowSmall;
+      } else {
+        return ChangePictureModal.STYLE.boxShadowLarge;
       }
     })();
     const buttonBox = (() => {
@@ -284,8 +288,9 @@ export class ChangePictureModal extends
       }
     })();
     return (
-      <div style={ChangePictureModal.STYLE.wrapper}>
-        <div style={ChangePictureModal.STYLE.wrapperEdge}/>
+      <div>
+        <div style={ChangePictureModal.STYLE.transparentBackground}/>
+        <div style={boxShadowStyle}/>
         <HBoxLayout style={boxStyle}>
           <Padding size={ChangePictureModal.PADDING}/>
           <VBoxLayout>
@@ -360,7 +365,7 @@ export class ChangePictureModal extends
       zIndex: 100,
       padding: 0
     },
-    wrapperEdge: {
+    transparentBackground: { //???????????????
       boxSizing: 'border-box' as 'border-box',
       top: '0',
       left: '0',
@@ -371,12 +376,36 @@ export class ChangePictureModal extends
       backgroundColor: '#FFFFFF',
       opacity: 0.9
     },
+    boxShadowSmall:{
+      opacity: 0.4,
+      display: 'block',
+      boxShadow: '0px 0px 6px #000000',
+      position: 'absolute' as 'absolute',
+      zIndex: 100,
+      border: '1px solid #FFFFFF',
+      backgroundColor: '#FFFFFF',
+      width: '284px',
+      height: '100%',
+      top: '0%',
+      right: '0%'
+    },
+    boxShadowLarge:{
+      opacity: 0.4,
+      boxShadow: '0px 0px 6px #000000',
+      zIndex: 100,
+      display: 'block',
+      position: 'absolute' as 'absolute',
+      backgroundColor: '#FFFFFF',
+      width: '360px',
+      height: '447px',
+      top: 'calc(50% - 223.5px)',
+      left: 'calc(50% - 180px)'
+    },
     boxSmall: {
       display: 'block',
       position: 'absolute' as 'absolute',
       zIndex: 101,
       border: '1px solid #FFFFFF',
-      boxShadow: '0px 0px 6px #898989',
       backgroundColor: '#FFFFFF',
       width: '284px',
       height: '100%',
@@ -390,7 +419,6 @@ export class ChangePictureModal extends
       backgroundColor: '#FFFFFF',
       width: '360px',
       height: '447px',
-      boxShadow: '0px 0px 6px #898989',
       top: 'calc(50% - 223.5px)',
       left: 'calc(50% - 180px)'
     },
@@ -535,13 +563,15 @@ export class ChangePictureModal extends
 
 interface SliderProperties {
   onThumbMove?: (num: number) => void;
-  isReadOnly: boolean;
-  scaleValue: number;
+  isReadOnly?: boolean;
+  scaleValue?: number;
 }
 
 export class Slider extends React.Component<SliderProperties, {}> {
   public static readonly defaultProps = {
-    onThumbMove: () => {}
+    onThumbMove: () => {},
+    scaleValue: 0,
+    isReadOnly: false
   }
 
   constructor(properties: SliderProperties) {
