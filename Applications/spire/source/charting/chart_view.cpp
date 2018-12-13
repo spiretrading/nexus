@@ -1,5 +1,7 @@
 #include "spire/charting/chart_view.hpp"
-#include <boost/date_time/posix_time/time_formatters_limited.hpp>
+#include <iostream>
+#include <locale>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <QFontMetrics>
 #include <QPainter>
 #include <QPaintEvent>
@@ -67,8 +69,8 @@ void ChartView::paintEvent(QPaintEvent* event) {
     auto x = origin_x - (time_step * i) - time_step;
     painter.drawLine(x, 0, x, origin_y);
     painter.drawLine(x, origin_y, x, origin_y + scale_height(2));
-    painter.drawText(x, origin_y, QString::fromStdString(
-      to_simple_string(static_cast<ptime>(range_x[i]))));
+    painter.drawText(x, origin_y, drawable_timestamp(
+      static_cast<ptime>(range_x[i])));
   }
 }
 
@@ -127,4 +129,12 @@ int ChartView::value_to_pixel(const ChartValue& range_start,
   auto value_quantity = static_cast<Quantity>(value);
   return static_cast<int>(((value_quantity - start_quantity) *
     (widget_size / (end_quantity - start_quantity))));
+}
+
+QString ChartView::drawable_timestamp(const ptime& time) {
+  std::ostringstream ss;
+  ss.imbue(std::locale(std::cout.getloc(),
+    new boost::posix_time::time_facet("%H:%M:%S")));
+  ss << time;
+  return QString::fromStdString(ss.str());
 }

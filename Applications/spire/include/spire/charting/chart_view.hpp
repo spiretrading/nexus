@@ -43,6 +43,7 @@ namespace Spire {
       int value_to_pixel(const ChartValue& range_start,
         const ChartValue& range_end, const ChartValue& value,
         int widget_size);
+      QString drawable_timestamp(const boost::posix_time::ptime& time);
   };
 }
 
