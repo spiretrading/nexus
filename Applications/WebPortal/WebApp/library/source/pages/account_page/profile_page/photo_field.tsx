@@ -49,28 +49,28 @@ export class PhotoField extends React.Component<Properties, State> {
       }
     })();
     const cameraIconStyle = (() => {
-      if (this.props.readonly) {
+      if(this.props.readonly) {
         return PhotoField.STYLE.hidden;
       } else {
         return PhotoField.STYLE.cameraIcon;
       }
     })();
     const imageSrc = (() => {
-      if (!this.props.imageSource) {
+      if(!this.props.imageSource) {
         return 'resources/account_page/profile_page/image-placeholder.svg';
       } else {
         return this.props.imageSource;
       }
     })();
     const imageStyle = (() => {
-      if (!this.props.imageSource) {
-        if (this.props.displaySize === DisplaySize.SMALL) {
+      if(!this.props.imageSource) {
+        if(this.props.displaySize === DisplaySize.SMALL) {
           return PhotoField.STYLE.placeholderSmall;
         } else {
           return PhotoField.STYLE.placeholder;
         }
       } else {
-        if (this.props.displaySize === DisplaySize.SMALL) {
+        if(this.props.displaySize === DisplaySize.SMALL) {
           return PhotoField.STYLE.imageSmall;
         } else {
           return PhotoField.STYLE.image;
@@ -238,21 +238,21 @@ export class ChangePictureModal extends
       }
     })();
     const buttonBox = (() => {
-      if (this.props.displaySize === DisplaySize.SMALL) {
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return ChangePictureModal.STYLE.buttonBoxSmall;
       } else {
         return ChangePictureModal.STYLE.buttonBoxLarge;
       }
     })();
     const imageSrc = (() => {
-      if (!this.state.currentImage) {
+      if(!this.state.currentImage) {
         return 'resources/account_page/profile_page/image-placeholder.svg';
       } else {
         return this.state.currentImage;
       }
     })();
     const imageStyle = (() => {
-      if (!this.state.currentImage) {
+      if(!this.state.currentImage) {
         return ChangePictureModal.STYLE.placeholderImage;
       }
       switch (this.props.displaySize) {
@@ -275,14 +275,14 @@ export class ChangePictureModal extends
       }
     })();
     const isSliderReadOnly = (() => {
-      if (this.props.imageSource) {
+      if(this.props.imageSource) {
         return false;
       } else {
         return true;
       }
     })();
     const imageScaling = (() => {
-      if (this.props.imageSource) {
+      if(this.props.imageSource) {
         return ({
           transform: `scale(${(100 + this.state.imageScalingValue) / 100})`
         });
@@ -350,7 +350,7 @@ export class ChangePictureModal extends
   }
 
   private onSubmit() {
-    if (this.state.currentImage) {
+    if(this.state.currentImage) {
       this.props.onSubmitImage(this.state.currentImage);
     }
     this.props.onCloseModal();
@@ -567,7 +567,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
   private onChange(event: any) {
     const num = event.target.value;
     const diff = Math.abs(this.props.scaleValue - num);
-    if (this.props.scaleValue < num) {
+    if(this.props.scaleValue < num) {
       this.props.onThumbMove(this.props.scaleValue + diff);
     } else {
       this.props.onThumbMove(this.props.scaleValue - diff);
