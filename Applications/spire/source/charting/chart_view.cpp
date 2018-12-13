@@ -1,4 +1,5 @@
 #include "spire/charting/chart_view.hpp"
+#include <boost/date_time/posix_time/time_formatters_limited.hpp>
 #include <QFontMetrics>
 #include <QPainter>
 #include <QPaintEvent>
@@ -65,6 +66,9 @@ void ChartView::paintEvent(QPaintEvent* event) {
   for(auto i = 0; i < range_x.size(); ++i) {
     auto x = origin_x - (time_step * i) - time_step;
     painter.drawLine(x, 0, x, origin_y);
+    painter.drawLine(x, origin_y, x, origin_y + scale_height(2));
+    painter.drawText(x, origin_y, QString::fromStdString(
+      to_simple_string(static_cast<ptime>(range_x[i]))));
   }
 }
 
