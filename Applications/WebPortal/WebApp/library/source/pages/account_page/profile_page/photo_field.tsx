@@ -254,20 +254,17 @@ export class ChangePictureModal extends
     const imageStyle = (() => {
       if(!this.state.currentImage) {
         return ChangePictureModal.STYLE.placeholderImage;
-      } else if (this.props.displaySize === DisplaySize.SMALL) {
+      } else if(this.props.displaySize === DisplaySize.SMALL) {
         return ChangePictureModal.STYLE.imageSmall;
       } else {
         return ChangePictureModal.STYLE.imageLarge;
       }
     })();
     const imageBoxStyle = (() => {
-      switch(this.props.displaySize) {
-        case DisplaySize.SMALL:
-          return ChangePictureModal.STYLE.imageBoxSmall;
-        case DisplaySize.MEDIUM:
-          return ChangePictureModal.STYLE.imageBoxLagre;
-        case DisplaySize.LARGE:
-          return ChangePictureModal.STYLE.imageBoxLagre;
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return ChangePictureModal.STYLE.imageBoxSmall;
+      } else {
+        return ChangePictureModal.STYLE.imageBoxLarge;
       }
     })();
     const isSliderReadOnly = (() => {
@@ -481,7 +478,7 @@ export class ChangePictureModal extends
       border: '1px solid #EBEBEB',
       backgroundColor: '#F8F8F8'
     },
-    imageBoxLagre: {
+    imageBoxLarge: {
       boxSizing: 'border-box' as 'border-box',
       height: '216px',
       width: '324px',
@@ -554,7 +551,10 @@ export class Slider extends React.Component<SliderProperties, {}> {
 
   public render(): JSX.Element {
     return (
-      <input type='range' min='0' max='150' value={this.props.scaleValue}
+      <input type='range'
+        min={Slider.MIN_RANGE_VALUE}
+        max={Slider.MAX_RANGE_VALUE}
+        value={this.props.scaleValue}
         disabled={this.props.isReadOnly}
         onChange={this.onChange}
         className={css(Slider.SLIDER_STYLE.slider)}/>);
@@ -562,6 +562,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
 
   private onChange(event: any) {
     const num = event.target.value;
+    console.log();
     const diff = Math.abs(this.props.scaleValue - num);
     if(this.props.scaleValue < num) {
       this.props.onThumbMove(this.props.scaleValue + diff);
@@ -628,4 +629,6 @@ export class Slider extends React.Component<SliderProperties, {}> {
       }
     }
   });
+  private static readonly MIN_RANGE_VALUE = 0;
+  private static readonly MAX_RANGE_VALUE = 200;
 }
