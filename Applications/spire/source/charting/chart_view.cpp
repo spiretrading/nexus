@@ -83,45 +83,12 @@ std::vector<ChartValue> ChartView::get_axis_values(
     const ChartValue::Type& type, const ChartValue& range_start,
     const ChartValue& range_end) {
   auto values = std::vector<ChartValue>();
-  // how to make this generic?
-  if(type == ChartValue::Type::MONEY) {
-    auto money_start = static_cast<Money>(range_start);
-    auto money_end = static_cast<Money>(range_end);
-    auto range = money_end - money_start;
-    auto step = Money();
-    if(range <= Money(0.01)) {
-      step = Money(0.001);
-    } else if(range <= Money(0.1)) {
-      step = Money(0.01);
-    } else if(range <= Money(1)) {
-      step = Money(0.1);
-    } else {
-      step = Money(1);
-    }
-    auto value = money_start + step;
-    while(value < money_end - step) {
-      values.push_back(ChartValue(value));
-      value += step;
-    }
-  } else if(type == ChartValue::Type::TIMESTAMP) {
-    auto time_start = static_cast<ptime>(range_start);
-    auto time_end = static_cast<ptime>(range_end);
-    auto range = time_end - time_start;
-    auto step = time_duration();
-    if(range <= time_duration(0, 1, 0)) {
-      step = time_duration(0, 0, 1);
-    } else if(range <= time_duration(1, 0, 0)) {
-      step = time_duration(0, 1, 0);
-    } else if(range <= time_duration(24, 0, 0)) {
-      step = time_duration(1, 0, 0);
-    } else {
-      step = time_duration(24, 0, 0);
-    }
-    auto time = time_start + step;
-    while(time < time_end - step) {
-      values.push_back(ChartValue(time));
-      time += step;
-    }
+  auto range = range_end - range_start;
+  auto step = get_step(type, range);
+  auto value = range_start + step;
+  while(value < range_end - step) {
+    values.push_back(ChartValue(value));
+    value += step;
   }
   return values;
 }
@@ -142,4 +109,33 @@ QString ChartView::drawable_timestamp(const ptime& time) {
     new boost::posix_time::time_facet("%H:%M:%S")));
   ss << time;
   return QString::fromStdString(ss.str());
+}
+
+ChartValue ChartView::get_step(const ChartValue::Type& value_type,
+    const ChartValue& range) {
+  auto step = ChartValue();
+  if(value_type == ChartValue::Type::MONEY) {
+    auto money_range = static_cast<Money>(range);
+    if(money_range <= Money(0.01)) {
+      return ChartValue(Money(0.001));
+    } else if(money_range <= Money(0.1)) {
+      return ChartValue(Money(0.01));
+    } else if(money_range <= Money(1)) {
+      return ChartValue(Money(0.1));
+    } else {
+      return ChartValue(Money(1));
+    }
+  } else if(value_type == ChartValue::Type::TIMESTAMP) {
+    auto time_range = static_cast<time_duration>(range);
+    if(time_range <= time_duration(0, 1, 0)) {
+      return ChartValue(time_duration(0, 0, 1));
+    } else if(time_range <= time_duration(1, 0, 0)) {
+      return ChartValue(time_duration(0, 1, 0));
+    } else if(time_range <= time_duration(24, 0, 0)) {
+      return ChartValue(time_duration(1, 0, 0));
+    } else {
+      return ChartValue(time_duration(24, 0, 0));
+    }
+  }
+  return ChartValue();
 }
