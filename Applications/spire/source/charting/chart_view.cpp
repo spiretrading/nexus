@@ -31,51 +31,47 @@ void ChartView::paintEvent(QPaintEvent* event) {
   painter.fillRect(event->rect(), "#25212E");
   painter.setPen(Qt::white);
   painter.setFont(m_label_font);
-  auto range_x = get_axis_values(m_x_axis_type,
-    m_top_left.m_x, m_bottom_right.m_x);
-  auto range_y = get_axis_values(m_y_axis_type,
+  auto y_values = get_axis_values(m_y_axis_type,
     m_bottom_right.m_y, m_top_left.m_y);
-  auto y_axis_fm = QFontMetrics(m_label_font);
+  auto font_metrics = QFontMetrics(m_label_font);
   auto origin_x = width() -
-    (y_axis_fm.width("M") *
+    (font_metrics.width("M") *
       QString::number(
         static_cast<double>(
-          static_cast<Quantity>(range_y.front())), 'f', 2).length()) +
+          static_cast<Quantity>(y_values.front())), 'f', 2).length()) +
       scale_width(8);
   auto origin_y = height() - scale_height(20);
   painter.drawLine(origin_x, 0, origin_x, origin_y);
   painter.drawLine(0, origin_y, origin_x, origin_y);
-  auto money_step = value_to_pixel(range_y.front(), range_y.back(),
-    range_y.front(), height() - (height() - origin_y)) + value_to_pixel(
-      range_y.front(), range_y.back(), range_y[1],
+  auto money_step = value_to_pixel(y_values.front(), y_values.back(),
+    y_values.front(), height() - (height() - origin_y)) + value_to_pixel(
+      y_values.front(), y_values.back(), y_values[1],
       height() - (height() - origin_y));
-  for(auto i = 0; i < range_y.size(); ++i) {
+  for(auto i = 0; i < y_values.size(); ++i) {
     auto y = origin_y - (money_step * i) - money_step;
-    painter.drawLine(0, y, origin_x, y);
-    painter.drawLine(origin_x, y, origin_x + scale_width(2), y);
+    painter.drawLine(0, y, origin_x + scale_width(2), y);
     painter.drawText(origin_x + scale_width(3),
-      y + (y_axis_fm.height() / 3),
-      QString::number(static_cast<double>(static_cast<Quantity>(range_y[i])),
+      y + (font_metrics.height() / 3),
+      QString::number(static_cast<double>(static_cast<Quantity>(y_values[i])),
         'f', 2));
   }
-  auto time_step = value_to_pixel(range_x.front(), range_x.back(),
-    range_x.front(), width() - (width() - origin_x)) +
-    value_to_pixel(range_x.front(), range_x.back(), range_x[1],
+  auto x_values = get_axis_values(m_x_axis_type,
+    m_top_left.m_x, m_bottom_right.m_x);
+  auto time_step = value_to_pixel(x_values.front(), x_values.back(),
+    x_values.front(), width() - (width() - origin_x)) +
+    value_to_pixel(x_values.front(), x_values.back(), x_values[1],
       width() - (width() - origin_x));
-  if(range_x.size() * time_step < width()) {
+  if(x_values.size() * time_step < width()) {
     time_step += 1;
   }
-  auto x_axis_fm = QFontMetrics(m_label_font);
-  auto timestamp_width = (y_axis_fm.width("M") * QString::number(
-    static_cast<double>(static_cast<Quantity>(range_y.front())), 'f', 2)
+  auto timestamp_width = (font_metrics.width("M") * QString::number(
+    static_cast<double>(static_cast<Quantity>(y_values.front())), 'f', 2)
     .length());
-  for(auto i = 0; i < range_x.size(); ++i) {
+  for(auto i = 0; i < x_values.size(); ++i) {
     auto x = origin_x - (time_step * i) - time_step;
-    painter.drawLine(x, 0, x, origin_y);
-    painter.drawLine(x, origin_y, x, origin_y + scale_height(2));
-    painter.drawText(x - timestamp_width / 2.5, origin_y + x_axis_fm.height() +
-      scale_height(2),
-      drawable_timestamp(static_cast<ptime>(range_x[i])));
+    painter.drawLine(x, 0, x, origin_y + scale_height(2));
+    painter.drawText(x - timestamp_width / 2.5, origin_y + font_metrics.height() +
+      scale_height(2), drawable_timestamp(static_cast<ptime>(x_values[i])));
   }
 }
 
