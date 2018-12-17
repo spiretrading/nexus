@@ -56,8 +56,11 @@ void ChartView::paintEvent(QPaintEvent* event) {
   painter.drawLine(0, origin_y, origin_x, origin_y);
   auto money_step = value_to_pixel(y_values.front(), y_values.back(),
     y_values[1], height() - (height() - origin_y));
-  for(auto i = 0; i < y_values.size(); ++i) {
-    auto y = origin_y - (money_step * i) - money_step;
+  if(y_values.size() * money_step < height()) {
+    money_step += 1;
+  }
+  for(auto i = 1; i < y_values.size(); ++i) {
+    auto y = origin_y - (money_step * (i - 1)) - money_step;
     painter.drawLine(0, y, origin_x + scale_width(2), y);
     painter.drawText(origin_x + scale_width(3),
       y + (font_metrics.height() / 3),
@@ -89,7 +92,7 @@ std::vector<ChartValue> ChartView::get_axis_values(
   auto values = std::vector<ChartValue>();
   auto range = range_end - range_start;
   auto step = get_step(type, range);
-  auto value = range_start + step;
+  auto value = range_start;
   while(value <= range_end) {
     values.push_back(ChartValue(value));
     value += step;
