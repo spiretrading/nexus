@@ -94,7 +94,7 @@ std::vector<ChartValue> ChartView::get_axis_values(
   auto range = range_end - range_start;
   auto step = get_step(type, range);
   auto value = range_start + step;
-  while(value < range_end - step) {
+  while(value <= range_end) {
     values.push_back(ChartValue(value));
     value += step;
   }
