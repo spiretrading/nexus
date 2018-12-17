@@ -14,7 +14,7 @@ SecurityWidget::SecurityWidget(Ref<SecurityInputModel> input_model,
       m_input_model(input_model.Get()) {
   setFocusPolicy(Qt::StrongFocus);
   if(theme == Theme::DARK) {
-    setStyleSheet("background-color: #D0D0D0;");
+    setStyleSheet("background-color: #25212E; color: #FFFFFF;");
   } else {
     setStyleSheet("background-color: #FFFFFF;");
   }
