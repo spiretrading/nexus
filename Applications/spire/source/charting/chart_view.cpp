@@ -17,6 +17,7 @@ ChartView::ChartView(ChartValue::Type x_axis_type,
     : QWidget(parent),
       m_x_axis_type(x_axis_type),
       m_y_axis_type(y_axis_type) {
+  setFocusPolicy(Qt::NoFocus);
   m_label_font = QFont("Roboto");
   m_label_font.setPixelSize(scale_height(10));
 }
@@ -28,7 +29,6 @@ void ChartView::set_region(ChartPoint top_left, ChartPoint bottom_right) {
 
 void ChartView::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  painter.fillRect(event->rect(), "#25212E");
   painter.setPen(Qt::white);
   painter.setFont(m_label_font);
   auto y_values = get_axis_values(m_y_axis_type,

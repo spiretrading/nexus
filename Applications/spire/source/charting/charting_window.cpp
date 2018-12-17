@@ -116,6 +116,8 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   setTabOrder(m_period_dropdown, lock_grid_button);
   setTabOrder(lock_grid_button, auto_scale_button);
   setTabOrder(auto_scale_button, draw_line_button);
+  setTabOrder(draw_line_button, m_period_line_edit);
+  m_security_widget->setFocus();
 }
 
 bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
