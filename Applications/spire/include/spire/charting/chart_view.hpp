@@ -37,6 +37,7 @@ namespace Spire {
       ChartValue m_x_axis_range;
       ChartValue m_y_axis_range;
       QFont m_label_font;
+      std::string m_timestamp_format;
 
       std::vector<ChartValue> get_axis_values(const ChartValue::Type& type,
         const ChartValue& range_start, const ChartValue& range_end);

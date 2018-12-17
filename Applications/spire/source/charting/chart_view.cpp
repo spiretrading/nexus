@@ -16,7 +16,8 @@ ChartView::ChartView(ChartValue::Type x_axis_type,
     ChartValue::Type y_axis_type, QWidget* parent)
     : QWidget(parent),
       m_x_axis_type(x_axis_type),
-      m_y_axis_type(y_axis_type) {
+      m_y_axis_type(y_axis_type),
+      m_timestamp_format("%H:%M:%S") {
   setFocusPolicy(Qt::NoFocus);
   m_label_font = QFont("Roboto");
   m_label_font.setPixelSize(scale_height(10));
@@ -113,7 +114,7 @@ int ChartView::value_to_pixel(const ChartValue& range_start,
 QString ChartView::drawable_timestamp(const ptime& time) {
   std::ostringstream ss;
   ss.imbue(std::locale(std::cout.getloc(),
-    new boost::posix_time::time_facet("%H:%M:%S")));
+    new boost::posix_time::time_facet(m_timestamp_format.c_str())));
   ss << time;
   return QString::fromStdString(ss.str());
 }
@@ -135,12 +136,16 @@ ChartValue ChartView::get_step(const ChartValue::Type& value_type,
   } else if(value_type == ChartValue::Type::TIMESTAMP) {
     auto time_range = static_cast<time_duration>(range);
     if(time_range <= time_duration(0, 1, 0)) {
+      m_timestamp_format = "%H:%M:%S";
       return ChartValue(time_duration(0, 0, 1));
     } else if(time_range <= time_duration(1, 0, 0)) {
+      m_timestamp_format = "%H:%M";
       return ChartValue(time_duration(0, 1, 0));
     } else if(time_range <= time_duration(24, 0, 0)) {
+      m_timestamp_format = "%H";
       return ChartValue(time_duration(1, 0, 0));
     } else {
+      m_timestamp_format = "%H";
       return ChartValue(time_duration(24, 0, 0));
     }
   }
