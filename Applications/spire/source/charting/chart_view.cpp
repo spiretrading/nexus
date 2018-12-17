@@ -55,9 +55,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
   painter.drawLine(origin_x, 0, origin_x, origin_y);
   painter.drawLine(0, origin_y, origin_x, origin_y);
   auto money_step = value_to_pixel(y_values.front(), y_values.back(),
-    y_values.front(), height() - (height() - origin_y)) + value_to_pixel(
-      y_values.front(), y_values.back(), y_values[1],
-      height() - (height() - origin_y));
+    y_values[1], height() - (height() - origin_y));
   for(auto i = 0; i < y_values.size(); ++i) {
     auto y = origin_y - (money_step * i) - money_step;
     painter.drawLine(0, y, origin_x + scale_width(2), y);
