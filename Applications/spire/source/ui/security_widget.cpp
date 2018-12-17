@@ -12,7 +12,7 @@ SecurityWidget::SecurityWidget(Ref<SecurityInputModel> input_model,
     Theme theme, QWidget* parent)
     : QWidget(parent),
       m_input_model(input_model.Get()) {
-  setFocusPolicy(Qt::StrongFocus);
+  setFocusPolicy(Qt::ClickFocus);
   auto empty_label_font_color = QColor();
   if(theme == Theme::DARK) {
     setStyleSheet("background-color: #25212E;");
