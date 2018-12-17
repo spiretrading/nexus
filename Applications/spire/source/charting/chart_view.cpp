@@ -20,6 +20,16 @@ ChartView::ChartView(ChartValue::Type x_axis_type,
   setFocusPolicy(Qt::NoFocus);
   m_label_font = QFont("Roboto");
   m_label_font.setPixelSize(scale_height(10));
+  m_x_axis_type = ChartValue::Type::TIMESTAMP;
+  m_y_axis_type = ChartValue::Type::MONEY;
+  auto current_time = boost::posix_time::second_clock::local_time();
+  auto bottom_right = ChartPoint(
+    ChartValue(current_time),
+    ChartValue(Nexus::Money(10)));
+  auto top_left = ChartPoint(
+    ChartValue(current_time - boost::posix_time::hours(1)),
+    ChartValue(Nexus::Money(10.10)));
+  set_region(top_left, bottom_right);
 }
 
 void ChartView::set_region(ChartPoint top_left, ChartPoint bottom_right) {
@@ -113,14 +123,14 @@ ChartValue ChartView::get_step(const ChartValue::Type& value_type,
   auto step = ChartValue();
   if(value_type == ChartValue::Type::MONEY) {
     auto money_range = static_cast<Money>(range);
-    if(money_range <= Money(0.01)) {
-      return ChartValue(Money(0.001));
-    } else if(money_range <= Money(0.1)) {
-      return ChartValue(Money(0.01));
-    } else if(money_range <= Money(1)) {
-      return ChartValue(Money(0.1));
+    if(money_range <= Money::CENT) {
+      return ChartValue(Money::CENT / 10);
+    } else if(money_range <= 10 * Money::CENT) {
+      return ChartValue(Money::CENT);
+    } else if(money_range <= Money::ONE) {
+      return ChartValue(10 * Money::CENT);
     } else {
-      return ChartValue(Money(1));
+      return ChartValue(Money::ONE);
     }
   } else if(value_type == ChartValue::Type::TIMESTAMP) {
     auto time_range = static_cast<time_duration>(range);

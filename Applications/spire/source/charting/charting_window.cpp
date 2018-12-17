@@ -6,6 +6,7 @@
 #include <QKeyEvent>
 #include <QListView>
 #include <QVBoxLayout>
+#include "spire/charting/chart_view.hpp"
 #include "spire/security_input/security_input_dialog.hpp"
 #include "spire/security_input/security_input_model.hpp"
 #include "spire/spire/dimensions.hpp"
@@ -15,6 +16,8 @@
 #include "spire/ui/toggle_button.hpp"
 #include "spire/ui/window.hpp"
 
+using namespace boost;
+using namespace boost::signals2;
 using namespace Beam;
 using namespace Spire;
 
@@ -118,6 +121,16 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   setTabOrder(auto_scale_button, draw_line_button);
   setTabOrder(draw_line_button, m_period_line_edit);
   m_security_widget->setFocus();
+}
+
+connection ChartingWindow::connect_security_change_signal(
+    const ChangeSecuritySignal::slot_type& slot) const {
+  return m_security_widget->connect_change_security_signal(slot);
+}
+
+connection ChartingWindow::connect_closed_signal(
+    const ClosedSignal::slot_type& slot) const {
+  return m_closed_signal.connect(slot);
 }
 
 bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
