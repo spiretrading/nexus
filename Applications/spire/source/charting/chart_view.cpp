@@ -67,9 +67,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
   auto x_values = get_axis_values(m_x_axis_type,
     m_top_left.m_x, m_bottom_right.m_x);
   auto time_step = value_to_pixel(x_values.front(), x_values.back(),
-    x_values.front(), width() - (width() - origin_x)) +
-    value_to_pixel(x_values.front(), x_values.back(), x_values[1],
-      width() - (width() - origin_x));
+    x_values[1], width() - (width() - origin_x));
   if(x_values.size() * time_step < width()) {
     time_step += 1;
   }
