@@ -232,7 +232,7 @@ interface ModalProperties {
 }
 
 interface ModalState {
-  imageScaling: number;
+  scaling: number;
   currentImage: string;
 }
 
@@ -242,7 +242,7 @@ export class ChangePictureModal extends
   constructor(properties: ModalProperties) {
     super(properties);
     this.state = {
-      imageScaling: 1,
+      scaling: 1,
       currentImage: this.props.imageSource
     };
     this.onSliderMovement = this.onSliderMovement.bind(this);
@@ -281,12 +281,14 @@ export class ChangePictureModal extends
       }
     })();
     const imageStyle = (() => {
-      if(!this.state.currentImage) {
-        return ChangePictureModal.STYLE.placeholderImage;
-      } else if(this.props.displaySize === DisplaySize.SMALL) {
-        return ChangePictureModal.STYLE.imageSmall;
+      if(this.state.currentImage) {
+        if(this.props.displaySize === DisplaySize.SMALL) {
+          return ChangePictureModal.STYLE.imageSmall;
+        } else {
+          return ChangePictureModal.STYLE.imageLarge;
+        }
       } else {
-        return ChangePictureModal.STYLE.imageLarge;
+          return ChangePictureModal.STYLE.placeholderImage;
       }
     })();
     const imageBoxStyle = (() => {
@@ -299,7 +301,7 @@ export class ChangePictureModal extends
     const imageScaling = (() => {
       if(this.props.imageSource) {
         return ({
-          transform: `scale(${this.state.imageScaling})`
+          transform: `scale(${this.state.scaling})`
         });
       } else {
         return { transform: 'scale(1)' };
@@ -326,7 +328,7 @@ export class ChangePictureModal extends
             </div>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <Slider onChange={this.onSliderMovement}
-              scaleValue={this.state.imageScaling}
+              scale={this.state.scaling}
               readonly={Boolean(!this.props.imageSource)}/>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <HLine color='#E6E6E6' height={1}/>
@@ -353,7 +355,7 @@ export class ChangePictureModal extends
   }
 
   private onSliderMovement(value: number) {
-    this.setState({ imageScaling: value });
+    this.setState({ scaling: value });
   }
 
   private onGetImageFile(selectorFiles: FileList) {
@@ -361,20 +363,20 @@ export class ChangePictureModal extends
     const someURL = URL.createObjectURL(file);
     this.setState({
       currentImage: someURL,
-      imageScaling: 1
+      scaling: 1
     });
   }
 
   private onClose() {
     this.props.onCloseModal();
-    this.setState({ imageScaling: 1 });
+    this.setState({ scaling: 1 });
     this.setState({ currentImage: this.props.imageSource });
   }
 
   private onSubmit() {
     if(this.state.currentImage) {
       this.props.onSubmitImage(this.state.currentImage,
-        this.state.imageScaling);
+        this.state.scaling);
     }
     this.props.onCloseModal();
   }
@@ -549,7 +551,7 @@ interface SliderProperties {
   readonly?: boolean;
 
   /** The current slider value. */
-  scaleValue?: number;
+  scale?: number;
 }
 
 /** Displays a slider that changes a value. */
@@ -569,7 +571,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
     return (<input type='range'
       min={Slider.MIN_RANGE_VALUE}
       max={Slider.MAX_RANGE_VALUE}
-      value={this.ConvertFromDecimal(this.props.scaleValue)}
+      value={this.ConvertFromDecimal(this.props.scale)}
       disabled={this.props.readonly}
       onChange={this.onValueChange}
       className={css(Slider.SLIDER_STYLE.slider)}/>);
@@ -577,13 +579,13 @@ export class Slider extends React.Component<SliderProperties, {}> {
 
   private onValueChange(event: any) {
     const num = event.target.value;
-    const diff = Math.abs(this.props.scaleValue - num);
-    if(this.props.scaleValue < num) {
+    const diff = Math.abs(this.props.scale - num);
+    if(this.props.scale < num) {
       this.props.onChange(this.ConverttoDecimal(
-          this.props.scaleValue + diff));
+          this.props.scale + diff));
     } else {
       this.props.onChange(this.ConverttoDecimal(
-          this.props.scaleValue - diff));
+          this.props.scale - diff));
     }
   }
 
