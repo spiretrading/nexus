@@ -21,6 +21,7 @@ ChartView::ChartView(ChartValue::Type x_axis_type,
   setFocusPolicy(Qt::NoFocus);
   m_label_font = QFont("Roboto");
   m_label_font.setPixelSize(scale_height(10));
+  m_item_delegate = new CustomVariantItemDelegate(this);
   m_x_axis_type = ChartValue::Type::TIMESTAMP;
   m_y_axis_type = ChartValue::Type::MONEY;
   auto current_time = boost::posix_time::second_clock::local_time();
@@ -62,8 +63,9 @@ void ChartView::paintEvent(QPaintEvent* event) {
     auto y = origin_y - (money_step * (i - 1)) - money_step;
     painter.drawLine(0, y, origin_x + scale_width(2), y);
     painter.drawText(origin_x + scale_width(3),
-      y + (font_metrics.height() / 3), QString::number(static_cast<double>(
-        static_cast<Quantity>(y_values[i])), 'f', 2));
+      y + (font_metrics.height() / 3), 
+        m_item_delegate->displayText(
+          QVariant::fromValue(static_cast<Money>(y_values[i])), QLocale()));
   }
   auto x_values = get_axis_values(m_x_axis_type, m_top_left.m_x,
     m_bottom_right.m_x);

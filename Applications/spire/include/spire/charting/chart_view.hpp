@@ -3,6 +3,7 @@
 #include <QWidget>
 #include "spire/charting/charting.hpp"
 #include "spire/charting/chart_point.hpp"
+#include "spire/ui/custom_qt_variants.hpp"
 
 namespace Spire {
 
@@ -38,6 +39,7 @@ namespace Spire {
       ChartValue m_y_axis_range;
       QFont m_label_font;
       std::string m_timestamp_format;
+      CustomVariantItemDelegate* m_item_delegate;
 
       std::vector<ChartValue> get_axis_values(const ChartValue::Type& type,
         const ChartValue& range_start, const ChartValue& range_end);
