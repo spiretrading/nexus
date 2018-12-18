@@ -26,7 +26,7 @@ class TestApp extends React.Component<Properties, State> {
       someRoles: new Nexus.AccountRoles(),
       imageSource: TestApp.SOME_IMAGE,
       isPhotoFieldReadonly: false,
-      imagingScaling: 0,
+      imagingScaling: 1,
       photoFieldDisplayMode: WebPortal.DisplayMode.DISPLAY
     };
     this.onTextInput = this.onTextInput.bind(this);

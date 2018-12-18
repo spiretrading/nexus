@@ -86,7 +86,7 @@ export class PhotoField extends React.Component<Properties, {}> {
     const imageScaling = (() => {
       if(this.props.imageSource) {
         return ({
-          transform: `scale(${(100 + this.props.scaling) / 100})`
+          transform: `scale(${this.props.scaling})`
         });
       } else {
         return ({transform: `scale(1)`});
@@ -240,7 +240,7 @@ export class ChangePictureModal extends
   constructor(properties: ModalProperties) {
     super(properties);
     this.state = {
-      imageScaling: 0,
+      imageScaling: 1,
       currentImage: this.props.imageSource
     };
     this.onSliderMovement = this.onSliderMovement.bind(this);
@@ -304,7 +304,7 @@ export class ChangePictureModal extends
     const imageScaling = (() => {
       if(this.props.imageSource) {
         return ({
-          transform: `scale(${(100 + this.state.imageScaling) / 100})`
+          transform: `scale(${this.state.imageScaling})`
         });
       } else {
         return { transform: `scale(1)` };
@@ -366,13 +366,13 @@ export class ChangePictureModal extends
     const someURL = URL.createObjectURL(file);
     this.setState({
       currentImage: someURL,
-      imageScaling: 0
+      imageScaling: 1
       });
   }
 
   private onClose() {
     this.props.onCloseModal();
-    this.setState({ imageScaling: 0 });
+    this.setState({ imageScaling: 1 });
     this.setState({ currentImage: this.props.imageSource });
   }
 
@@ -574,7 +574,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
     return (<input type='range'
       min={Slider.MIN_RANGE_VALUE}
       max={Slider.MAX_RANGE_VALUE}
-      value={this.props.scaleValue}
+      value={this.ConvertFromDecimal(this.props.scaleValue)}
       disabled={this.props.isReadOnly}
       onChange={this.onValueChange}
       className={css(Slider.SLIDER_STYLE.slider)}/>);
@@ -584,18 +584,20 @@ export class Slider extends React.Component<SliderProperties, {}> {
     const num = event.target.value;
     const diff = Math.abs(this.props.scaleValue - num);
     if(this.props.scaleValue < num) {
-      this.props.onChangeValue(this.props.scaleValue + diff);
+      this.props.onChangeValue(this.ConverttoDecimal(
+          this.props.scaleValue + diff));
     } else {
-      this.props.onChangeValue(this.props.scaleValue - diff);
+      this.props.onChangeValue(this.ConverttoDecimal(
+          this.props.scaleValue - diff));
     }
   }
 
-  private ConverttoDecimal() {
-    return
+  private ConverttoDecimal(value: number) {
+    return (100 + value) / 100;
   }
 
-  private ConvertFromDecimal() {
-
+  private ConvertFromDecimal(value: number) {
+    return (value * 100) - 100;
   }
 
   public static readonly SLIDER_STYLE = StyleSheet.create({
