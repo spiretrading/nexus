@@ -14,6 +14,7 @@ interface State {
   isPhotoFieldReadonly: boolean;
   imageSource: string;
   imagingScaling: number;
+  photoFieldDisplayMode: WebPortal.DisplayMode;
 }
 
 /**  Displays a testing application. */
@@ -25,13 +26,15 @@ class TestApp extends React.Component<Properties, State> {
       someRoles: new Nexus.AccountRoles(),
       imageSource: TestApp.SOME_IMAGE,
       isPhotoFieldReadonly: false,
-      imagingScaling: 0
+      imagingScaling: 0,
+      photoFieldDisplayMode: WebPortal.DisplayMode.Display
     };
     this.onTextInput = this.onTextInput.bind(this);
     this.onRoleClick = this.onRoleClick.bind(this);
     this.changeImage = this.changeImage.bind(this);
     this.toggleReadOnly = this.toggleReadOnly.bind(this);
     this.updateImage = this.updateImage.bind(this);
+    this.toggleDisplayMode = this.toggleDisplayMode.bind(this);
   }
 
   public render(): JSX.Element {
@@ -67,11 +70,14 @@ class TestApp extends React.Component<Properties, State> {
           <WebPortal.RolesField roles={this.state.someRoles}
             onClick={this.onRoleClick}/>
           <WebPortal.Padding size='30px'/>
-          <WebPortal.PhotoField displaySize={this.props.displaySize}
-          imageSource = {this.state.imageSource}
-          readonly={this.state.isPhotoFieldReadonly}
-          onUpload={this.updateImage}
-          scaling={this.state.imagingScaling}/>
+          <WebPortal.PhotoField
+            displaySize={this.props.displaySize}
+            displayMode={this.state.photoFieldDisplayMode}
+            imageSource = {this.state.imageSource}
+            readonly={this.state.isPhotoFieldReadonly}
+            onUpload={this.updateImage}
+            onToggleUploader={this.toggleDisplayMode}
+            scaling={this.state.imagingScaling}/>
         </WebPortal.VBoxLayout>
         <WebPortal.Padding size='18px'/>
         <div style={TestApp.STYLE.testingComponents}>
@@ -126,6 +132,15 @@ class TestApp extends React.Component<Properties, State> {
         imageSource: fileLocation,
         imagingScaling: newScaling
       });
+  }
+
+  private toggleDisplayMode() {
+    console.log('TOGGLED!!!');
+    if(this.state.photoFieldDisplayMode === WebPortal.DisplayMode.Display) {
+      this.setState({photoFieldDisplayMode: WebPortal.DisplayMode.Uploading});
+    } else {
+      this.setState({photoFieldDisplayMode: WebPortal.DisplayMode.Display});
+    }
   }
 
   private static STYLE = {

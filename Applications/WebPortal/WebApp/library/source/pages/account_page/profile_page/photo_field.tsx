@@ -10,31 +10,24 @@ export enum DisplayMode {
 
 interface Properties {
   displaySize: DisplaySize;
-  displayMode?: DisplayMode;
+  displayMode: DisplayMode;
   imageSource?: string;
   readonly?: boolean;
   scaling?: number;
-  // onToggleUploader: () => void;
+  onToggleUploader: () => void;
   onUpload: (newFileLocation: string, scaling: number) => void;
 }
 
-interface State {
-  showUploader: boolean;
-}
-
-/** Displays an account's profile page. */
-export class PhotoField extends React.Component<Properties, State> {
+/** Displays an account's profile image */
+export class PhotoField extends React.Component<Properties, {}> {
   public static readonly defaultProps = {
     readonly: false,
-    onUpload: () => { true; },
-    DisplayMode: DisplayMode.Display
+    DisplayMode: DisplayMode.Display,
+    scaling: 0
   };
 
   constructor(props: Properties) {
     super(props);
-    this.state = {
-      showUploader: false
-    };
     this.showChangePictureModal = this.showChangePictureModal.bind(this);
     this.hideChangePictureModal = this.hideChangePictureModal.bind(this);
   }
@@ -96,10 +89,11 @@ export class PhotoField extends React.Component<Properties, State> {
           <div style={PhotoField.STYLE.imageBoxSmall}>
             <img src='resources/account_page/profile_page/camera.svg'
               style={cameraIconStyle}
-              onClick={this.showChangePictureModal}/>
+              onClick={this.props.onToggleUploader}/>
           </div>
         </div>
-        <Transition in={this.state.showUploader} timeout={PhotoField.TIMEOUT}>
+        <Transition in={this.props.displayMode === DisplayMode.Uploading}
+            timeout={PhotoField.TIMEOUT}>
           {(state) => (
             <div style={{
               ...PhotoField.STYLE.animationBase,
@@ -107,7 +101,7 @@ export class PhotoField extends React.Component<Properties, State> {
             }}>
               <ChangePictureModal displaySize={this.props.displaySize}
                 imageSource={this.props.imageSource}
-                onCloseModal={this.hideChangePictureModal}
+                onCloseModal={this.props.onToggleUploader}
                 onSubmitImage={this.props.onUpload}/>
             </div>)}
         </Transition>
@@ -387,7 +381,7 @@ export class ChangePictureModal extends
 
   private onSubmit() {
     if(this.state.currentImage) {
-      this.props.onSubmitImage(this.state.currentImage, 
+      this.props.onSubmitImage(this.state.currentImage,
         this.state.imageScaling);
     }
     this.props.onCloseModal();
