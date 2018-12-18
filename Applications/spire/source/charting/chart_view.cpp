@@ -61,7 +61,10 @@ void ChartView::paintEvent(QPaintEvent* event) {
   }
   for(auto i = 1; i < y_values.size() - 1; ++i) {
     auto y = origin_y - (money_step * (i - 1)) - money_step;
-    painter.drawLine(0, y, origin_x + scale_width(2), y);
+    painter.setPen("#3A3348");
+    painter.drawLine(0, y, origin_x, y);
+    painter.setPen(Qt::white);
+    painter.drawLine(origin_x, y, origin_x + scale_width(2), y);
     painter.drawText(origin_x + scale_width(3),
       y + (font_metrics.height() / 3), 
         m_item_delegate->displayText(
@@ -79,7 +82,10 @@ void ChartView::paintEvent(QPaintEvent* event) {
     .length());
   for(auto i = 0; i < x_values.size() - 1; ++i) {
     auto x = origin_x - (time_step * i) - time_step;
-    painter.drawLine(x, 0, x, origin_y + scale_height(2));
+    painter.setPen("#3A3348");
+    painter.drawLine(x, 0, x, origin_y);
+    painter.setPen(Qt::white);
+    painter.drawLine(x, origin_y, x, origin_y + scale_height(2));
     painter.drawText(x - timestamp_width / 2,
       origin_y + font_metrics.height() + scale_height(2),
       drawable_timestamp(static_cast<ptime>(x_values[i])));
