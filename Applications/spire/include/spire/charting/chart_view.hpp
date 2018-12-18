@@ -41,9 +41,6 @@ namespace Spire {
 
       std::vector<ChartValue> get_axis_values(const ChartValue::Type& type,
         const ChartValue& range_start, const ChartValue& range_end);
-      int value_to_pixel(const ChartValue& range_start,
-        const ChartValue& range_end, const ChartValue& value,
-        int widget_size);
       QString drawable_timestamp(const boost::posix_time::ptime& time);
       ChartValue get_step(const ChartValue::Type& value_type,
         const ChartValue& range);

@@ -54,12 +54,11 @@ void ChartView::paintEvent(QPaintEvent* event) {
   auto origin_y = height() - scale_height(20);
   painter.drawLine(origin_x, 0, origin_x, origin_y);
   painter.drawLine(0, origin_y, origin_x, origin_y);
-  auto money_step = value_to_pixel(y_values.front(), y_values.back(),
-    y_values[1], height() - (height() - origin_y));
-  if(y_values.size() * money_step < height()) {
+  auto money_step = (height() - (height() - origin_y)) / (y_values.size() - 1);
+  if((y_values.size() - 1) * money_step < height()) {
     money_step += 1;
   }
-  for(auto i = 1; i < y_values.size(); ++i) {
+  for(auto i = 1; i < y_values.size() - 1; ++i) {
     auto y = origin_y - (money_step * (i - 1)) - money_step;
     painter.drawLine(0, y, origin_x + scale_width(2), y);
     painter.drawText(origin_x + scale_width(3),
@@ -67,17 +66,17 @@ void ChartView::paintEvent(QPaintEvent* event) {
       QString::number(static_cast<double>(static_cast<Quantity>(y_values[i])),
         'f', 2));
   }
-  auto x_values = get_axis_values(m_x_axis_type,
-    m_top_left.m_x, m_bottom_right.m_x);
-  auto time_step = value_to_pixel(x_values.front(), x_values.back(),
-    x_values[1], width() - (width() - origin_x));
-  if(x_values.size() * time_step < width()) {
+  auto x_values = get_axis_values(m_x_axis_type, m_top_left.m_x,
+    m_bottom_right.m_x);
+  std::reverse(x_values.begin(), x_values.end());
+  auto time_step = (width() - (width() - origin_x)) / (x_values.size() - 1);
+  if((x_values.size() - 1) * time_step < width()) {
     time_step += 1;
   }
   auto timestamp_width = (font_metrics.width("M") * QString::number(
     static_cast<double>(static_cast<Quantity>(y_values.front())), 'f', 2)
     .length());
-  for(auto i = 0; i < x_values.size(); ++i) {
+  for(auto i = 0; i < x_values.size() - 1; ++i) {
     auto x = origin_x - (time_step * i) - time_step;
     painter.drawLine(x, 0, x, origin_y + scale_height(2));
     painter.drawText(x - timestamp_width / 2.5,
@@ -98,16 +97,6 @@ std::vector<ChartValue> ChartView::get_axis_values(
     value += step;
   }
   return values;
-}
-
-int ChartView::value_to_pixel(const ChartValue& range_start,
-    const ChartValue& range_end, const ChartValue& value,
-    int widget_size) {
-  auto start_quantity = static_cast<Quantity>(range_start);
-  auto end_quantity = static_cast<Quantity>(range_end);
-  auto value_quantity = static_cast<Quantity>(value);
-  return static_cast<int>(((value_quantity - start_quantity) *
-    (widget_size / (end_quantity - start_quantity))));
 }
 
 QString ChartView::drawable_timestamp(const ptime& time) {
