@@ -62,9 +62,8 @@ void ChartView::paintEvent(QPaintEvent* event) {
     auto y = origin_y - (money_step * (i - 1)) - money_step;
     painter.drawLine(0, y, origin_x + scale_width(2), y);
     painter.drawText(origin_x + scale_width(3),
-      y + (font_metrics.height() / 3),
-      QString::number(static_cast<double>(static_cast<Quantity>(y_values[i])),
-        'f', 2));
+      y + (font_metrics.height() / 3), QString::number(static_cast<double>(
+        static_cast<Quantity>(y_values[i])), 'f', 2));
   }
   auto x_values = get_axis_values(m_x_axis_type, m_top_left.m_x,
     m_bottom_right.m_x);
@@ -73,13 +72,13 @@ void ChartView::paintEvent(QPaintEvent* event) {
   if((x_values.size() - 1) * time_step < width()) {
     time_step += 1;
   }
-  auto timestamp_width = (font_metrics.width("M") * QString::number(
+  auto timestamp_width = (font_metrics.width("x") * QString::number(
     static_cast<double>(static_cast<Quantity>(y_values.front())), 'f', 2)
     .length());
   for(auto i = 0; i < x_values.size() - 1; ++i) {
     auto x = origin_x - (time_step * i) - time_step;
     painter.drawLine(x, 0, x, origin_y + scale_height(2));
-    painter.drawText(x - timestamp_width / 2.5,
+    painter.drawText(x - timestamp_width / 2,
       origin_y + font_metrics.height() + scale_height(2),
       drawable_timestamp(static_cast<ptime>(x_values[i])));
   }
