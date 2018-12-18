@@ -3,14 +3,14 @@ import * as React from 'react';
 import { Transition } from 'react-transition-group';
 import { DisplaySize, HBoxLayout, HLine, Padding, VBoxLayout } from '../../..';
 
-/** Various the mode that the PhotoField can be displayed at. */
+/** The modes that the PhotoField can be displayed at. */
 export enum DisplayMode {
 
   /** Only the photo is visible. */
-  Display,
+  DISPLAY,
 
   /** The uploader is visible. */
-  Uploading
+  UPLOADING
 }
 
 interface Properties {
@@ -27,7 +27,7 @@ interface Properties {
   /** Determines if the image can be changed or not. */
   readonly?: boolean;
 
-  /** A value from 0 to 200 that determines how zoomed in the image will be. */
+  /** A value that determines how zoomed in the image will be. */
   scaling: number;
 
   /** Callback to hide or show the uploader. */
@@ -101,7 +101,7 @@ export class PhotoField extends React.Component<Properties, {}> {
             style={cameraIconStyle}
             onClick={this.props.toggleUploader}/>
         </div>
-        <Transition in={this.props.displayMode === DisplayMode.Uploading}
+        <Transition in={this.props.displayMode === DisplayMode.UPLOADING}
             timeout={PhotoField.TIMEOUT}>
           {(state) => (
             <div style={{ ...PhotoField.STYLE.animationBase,
@@ -307,7 +307,7 @@ export class ChangePictureModal extends
           transform: `scale(${(100 + this.state.imageScaling) / 100})`
         });
       } else {
-        return ({ transform: `scale(1)` });
+        return { transform: `scale(1)` };
       }
     })();
     return (

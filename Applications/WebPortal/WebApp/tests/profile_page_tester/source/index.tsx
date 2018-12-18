@@ -27,7 +27,7 @@ class TestApp extends React.Component<Properties, State> {
       imageSource: TestApp.SOME_IMAGE,
       isPhotoFieldReadonly: false,
       imagingScaling: 0,
-      photoFieldDisplayMode: WebPortal.DisplayMode.Display
+      photoFieldDisplayMode: WebPortal.DisplayMode.DISPLAY
     };
     this.onTextInput = this.onTextInput.bind(this);
     this.onRoleClick = this.onRoleClick.bind(this);
@@ -69,6 +69,15 @@ class TestApp extends React.Component<Properties, State> {
           <WebPortal.Padding size='30px'/>
           <WebPortal.RolesField roles={this.state.someRoles}
             onClick={this.onRoleClick}/>
+          <WebPortal.Padding size='30px'/>
+          <WebPortal.FormEntry name='Nickname'
+              readonly
+              orientation={orientation}>
+            <WebPortal.TextField
+              value = 'Stormcrow'
+              displaySize={this.props.displaySize}
+              disabled/>
+          </WebPortal.FormEntry>
           <WebPortal.Padding size='30px'/>
           <WebPortal.PhotoField
             displaySize={this.props.displaySize}
@@ -124,21 +133,20 @@ class TestApp extends React.Component<Properties, State> {
         imageSource: TestApp.SOME_IMAGE
       });
     }
-    return true;
   }
 
   private updateImage(fileLocation: string, newScaling: number) {
-      this.setState({
-        imageSource: fileLocation,
-        imagingScaling: newScaling
-      });
+    this.setState({
+      imageSource: fileLocation,
+      imagingScaling: newScaling
+    });
   }
 
   private toggleDisplayMode() {
-    if(this.state.photoFieldDisplayMode === WebPortal.DisplayMode.Display) {
-      this.setState({photoFieldDisplayMode: WebPortal.DisplayMode.Uploading});
+    if(this.state.photoFieldDisplayMode === WebPortal.DisplayMode.DISPLAY) {
+      this.setState({photoFieldDisplayMode: WebPortal.DisplayMode.UPLOADING});
     } else {
-      this.setState({photoFieldDisplayMode: WebPortal.DisplayMode.Display});
+      this.setState({photoFieldDisplayMode: WebPortal.DisplayMode.DISPLAY});
     }
   }
 
