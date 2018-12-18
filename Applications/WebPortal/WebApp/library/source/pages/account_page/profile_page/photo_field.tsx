@@ -329,7 +329,7 @@ export class ChangePictureModal extends
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <Slider onChange={this.onSliderMovement}
               scale={this.state.scaling}
-              readonly={Boolean(!this.props.imageSource)}/>
+              readonly={!this.props.imageSource}/>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <HLine color='#E6E6E6' height={1}/>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
@@ -571,7 +571,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
     return (<input type='range'
       min={Slider.MIN_RANGE_VALUE}
       max={Slider.MAX_RANGE_VALUE}
-      value={this.ConvertFromDecimal(this.props.scale)}
+      value={Slider.convertFromDecimal(this.props.scale)}
       disabled={this.props.readonly}
       onChange={this.onValueChange}
       className={css(Slider.SLIDER_STYLE.slider)}/>);
@@ -581,19 +581,19 @@ export class Slider extends React.Component<SliderProperties, {}> {
     const num = event.target.value;
     const diff = Math.abs(this.props.scale - num);
     if(this.props.scale < num) {
-      this.props.onChange(this.ConverttoDecimal(
+      this.props.onChange(Slider.convertToDecimal(
           this.props.scale + diff));
     } else {
-      this.props.onChange(this.ConverttoDecimal(
+      this.props.onChange(Slider.convertToDecimal(
           this.props.scale - diff));
     }
   }
 
-  private ConverttoDecimal(value: number) {
+  private static convertToDecimal(value: number) {
     return (100 + value) / 100;
   }
 
-  private ConvertFromDecimal(value: number) {
+  private static convertFromDecimal(value: number) {
     return (value * 100) - 100;
   }
 
