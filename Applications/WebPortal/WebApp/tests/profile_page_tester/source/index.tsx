@@ -135,7 +135,6 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   private toggleDisplayMode() {
-    console.log('TOGGLED!!!');
     if(this.state.photoFieldDisplayMode === WebPortal.DisplayMode.Display) {
       this.setState({photoFieldDisplayMode: WebPortal.DisplayMode.Uploading});
     } else {

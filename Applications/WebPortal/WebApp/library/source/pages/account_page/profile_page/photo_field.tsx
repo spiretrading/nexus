@@ -13,7 +13,7 @@ interface Properties {
   displayMode: DisplayMode;
   imageSource?: string;
   readonly?: boolean;
-  scaling?: number;
+  scaling: number;
   onToggleUploader: () => void;
   onUpload: (newFileLocation: string, scaling: number) => void;
 }
@@ -21,16 +21,8 @@ interface Properties {
 /** Displays an account's profile image */
 export class PhotoField extends React.Component<Properties, {}> {
   public static readonly defaultProps = {
-    readonly: false,
-    DisplayMode: DisplayMode.Display,
-    scaling: 0
+    readonly: false
   };
-
-  constructor(props: Properties) {
-    super(props);
-    this.showChangePictureModal = this.showChangePictureModal.bind(this);
-    this.hideChangePictureModal = this.hideChangePictureModal.bind(this);
-  }
 
   public render(): JSX.Element {
     const boxStyle = (() => {
@@ -108,13 +100,6 @@ export class PhotoField extends React.Component<Properties, {}> {
       </div>);
   }
 
-  private showChangePictureModal() {
-    this.setState({ showUploader: true });
-  }
-
-  private hideChangePictureModal() {
-    this.setState({ showUploader: false });
-  }
   private static ANIMATION_STYLE = {
     entering: {
       opacity: 0
