@@ -31,10 +31,10 @@ interface Properties {
   scaling: number;
 
   /** Callback to hide or show the uploader. */
-  toggleUploader: () => void;
+  onToggleUploader: () => void;
 
   /** Callback to store the file and the scaling for the file. */
-  onUpload: (newFileLocation: string, scaling: number) => void;
+  onSubmit: (newFileLocation: string, scaling: number) => void;
 }
 
 /** Displays an account's profile image. */
@@ -69,17 +69,17 @@ export class PhotoField extends React.Component<Properties, {}> {
       }
     })();
     const imageStyle = (() => {
-      if(!this.props.imageSource) {
-        if(this.props.displaySize === DisplaySize.SMALL) {
-          return PhotoField.STYLE.placeholderSmall;
-        } else {
-          return PhotoField.STYLE.placeholder;
-        }
-      } else {
+      if(this.props.imageSource) {
         if(this.props.displaySize === DisplaySize.SMALL) {
           return PhotoField.STYLE.imageSmall;
         } else {
           return PhotoField.STYLE.image;
+        }
+      } else {
+        if(this.props.displaySize === DisplaySize.SMALL) {
+          return PhotoField.STYLE.placeholderSmall;
+        } else {
+          return PhotoField.STYLE.placeholder;
         }
       }
     })();
@@ -99,7 +99,7 @@ export class PhotoField extends React.Component<Properties, {}> {
             style={{...imageStyle, ...imageScaling}}/>
           <img src='resources/account_page/profile_page/camera.svg'
             style={cameraIconStyle}
-            onClick={this.props.toggleUploader}/>
+            onClick={this.props.onToggleUploader}/>
         </div>
         <Transition in={this.props.displayMode === DisplayMode.UPLOADING}
             timeout={PhotoField.TIMEOUT}>
@@ -108,8 +108,8 @@ export class PhotoField extends React.Component<Properties, {}> {
                 ...(PhotoField.ANIMATION_STYLE as any)[state]}}>
               <ChangePictureModal displaySize={this.props.displaySize}
                 imageSource={this.props.imageSource}
-                onCloseModal={this.props.toggleUploader}
-                onSubmitImage={this.props.onUpload}/>
+                onCloseModal={this.props.onToggleUploader}
+                onSubmitImage={this.props.onSubmit}/>
             </div>)}
         </Transition>
       </div>);
@@ -222,7 +222,7 @@ interface ModalProperties {
   /** Determines the size at which to display the modal at. */
   displaySize: DisplaySize;
 
-  /** Determines the size at which to display the modal at. */
+  /** Closes the modal. */
   onCloseModal: () => void;
 
   /** Determines what happens when the file is submitted. */
@@ -560,8 +560,8 @@ interface SliderProperties {
 /** Displays a slider that changes a value. */
 export class Slider extends React.Component<SliderProperties, {}> {
   public static readonly defaultProps = {
-    onChangeValue: () => {},
-    scaleValue: 0,
+    onChange: () => {},
+    scale: 0,
     isReadOnly: false
   };
 
@@ -588,6 +588,14 @@ export class Slider extends React.Component<SliderProperties, {}> {
     } else {
       this.props.onChangeValue(this.props.scaleValue - diff);
     }
+  }
+
+  private ConverttoDecimal() {
+    return
+  }
+
+  private ConvertFromDecimal() {
+
   }
 
   public static readonly SLIDER_STYLE = StyleSheet.create({

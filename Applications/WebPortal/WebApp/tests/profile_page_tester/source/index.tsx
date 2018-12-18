@@ -84,8 +84,8 @@ class TestApp extends React.Component<Properties, State> {
             displayMode={this.state.photoFieldDisplayMode}
             imageSource = {this.state.imageSource}
             readonly={this.state.isPhotoFieldReadonly}
-            onUpload={this.updateImage}
-            toggleUploader={this.toggleDisplayMode}
+            onSubmit={this.updateImage}
+            onToggleUploader={this.toggleDisplayMode}
             scaling={this.state.imagingScaling}/>
         </WebPortal.VBoxLayout>
         <WebPortal.Padding size='18px'/>
