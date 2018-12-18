@@ -35,14 +35,12 @@ namespace Spire {
       ChartValue::Type m_y_axis_type;
       ChartPoint m_top_left;
       ChartPoint m_bottom_right;
-      ChartValue m_x_axis_range;
-      ChartValue m_y_axis_range;
       QFont m_label_font;
       std::string m_timestamp_format;
       CustomVariantItemDelegate* m_item_delegate;
 
-      std::vector<ChartValue> get_axis_values(const ChartValue::Type& type,
-        const ChartValue& range_start, const ChartValue& range_end);
+      std::vector<ChartValue> get_axis_values(ChartValue::Type type,
+        ChartValue range_start, ChartValue range_end);
       QString drawable_timestamp(const boost::posix_time::ptime& time);
       ChartValue get_step(const ChartValue::Type& value_type,
         const ChartValue& range);

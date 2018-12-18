@@ -26,7 +26,6 @@ SecurityWidget::SecurityWidget(Ref<SecurityInputModel> input_model,
   m_empty_window_label = std::make_unique<QLabel>(
     tr("Enter a ticker symbol."), this);
   m_empty_window_label->setAlignment(Qt::AlignCenter);
-  auto label_font_color = [=] { return QColor("#FFFFFF"); }();
   m_empty_window_label->setStyleSheet(QString(R"(
     color: %3;
     font-family: Roboto;

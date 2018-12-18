@@ -142,7 +142,7 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
       m_body->setFocus();
     }
   }
-  return false;
+  return QWidget::eventFilter(object, event);
 }
 
 void ChartingWindow::on_period_line_edit_changed() {

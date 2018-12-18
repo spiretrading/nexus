@@ -1,5 +1,4 @@
 #include "spire/charting/chart_view.hpp"
-#include <iostream>
 #include <locale>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <QFontMetrics>
@@ -11,6 +10,13 @@
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
+
+namespace {
+  QVariant chart_value_to_variant(ChartValue::Type type,
+      const ChartValue& value) {
+    return QVariant::fromValue(static_cast<Money>(value));
+  }
+}
 
 ChartView::ChartView(ChartValue::Type x_axis_type,
     ChartValue::Type y_axis_type, QWidget* parent)
@@ -37,6 +43,7 @@ ChartView::ChartView(ChartValue::Type x_axis_type,
 void ChartView::set_region(ChartPoint top_left, ChartPoint bottom_right) {
   m_top_left = top_left;
   m_bottom_right = bottom_right;
+  update();
 }
 
 void ChartView::paintEvent(QPaintEvent* event) {
@@ -45,56 +52,57 @@ void ChartView::paintEvent(QPaintEvent* event) {
   painter.setFont(m_label_font);
   auto y_values = get_axis_values(m_y_axis_type,
     m_bottom_right.m_y, m_top_left.m_y);
+  auto x_values = get_axis_values(m_x_axis_type, m_top_left.m_x,
+    m_bottom_right.m_x);
+  if(y_values.size() == 0 || x_values.size() == 0) {
+    return;
+  }
   auto font_metrics = QFontMetrics(m_label_font);
-  auto origin_x = width() -
+  auto x_origin = width() -
     (font_metrics.width("M") *
       QString::number(
         static_cast<double>(
           static_cast<Quantity>(y_values.front())), 'f', 2).length()) +
       scale_width(8);
-  auto origin_y = height() - scale_height(20);
-  painter.drawLine(origin_x, 0, origin_x, origin_y);
-  painter.drawLine(0, origin_y, origin_x, origin_y);
-  auto money_step = (height() - (height() - origin_y)) / (y_values.size() - 1);
-  if((y_values.size() - 1) * money_step < height()) {
-    money_step += 1;
+  auto y_origin = height() - scale_height(20);
+  painter.drawLine(x_origin, 0, x_origin, y_origin);
+  painter.drawLine(0, y_origin, x_origin, y_origin);
+  auto y_step = y_origin / (y_values.size() - 1);
+  if((y_values.size() - 1) * y_step < height()) {
+    y_step += 1;
   }
   for(auto i = 1; i < y_values.size() - 1; ++i) {
-    auto y = origin_y - (money_step * (i - 1)) - money_step;
+    auto y = y_origin - i * y_step;
     painter.setPen("#3A3348");
-    painter.drawLine(0, y, origin_x, y);
+    painter.drawLine(0, y, x_origin, y);
     painter.setPen(Qt::white);
-    painter.drawLine(origin_x, y, origin_x + scale_width(2), y);
-    painter.drawText(origin_x + scale_width(3),
+    painter.drawLine(x_origin, y, x_origin + scale_width(2), y);
+    painter.drawText(x_origin + scale_width(3),
       y + (font_metrics.height() / 3), 
-        m_item_delegate->displayText(
-          QVariant::fromValue(static_cast<Money>(y_values[i])), QLocale()));
+        m_item_delegate->displayText(chart_value_to_variant(
+          ChartValue::Type::MONEY, y_values[i]), QLocale()));
   }
-  auto x_values = get_axis_values(m_x_axis_type, m_top_left.m_x,
-    m_bottom_right.m_x);
   std::reverse(x_values.begin(), x_values.end());
-  auto time_step = (width() - (width() - origin_x)) / (x_values.size() - 1);
-  if((x_values.size() - 1) * time_step < width()) {
-    time_step += 1;
+  auto x_step = x_origin / (x_values.size() - 1);
+  if((x_values.size() - 1) * x_step < width()) {
+    x_step += 1;
   }
-  auto timestamp_width = (font_metrics.width("x") * QString::number(
-    static_cast<double>(static_cast<Quantity>(y_values.front())), 'f', 2)
-    .length());
-  for(auto i = 0; i < x_values.size() - 1; ++i) {
-    auto x = origin_x - (time_step * i) - time_step;
+  auto x_text_width = font_metrics.width(drawable_timestamp(
+    static_cast<ptime>(x_values.front())));
+  for(auto i = 1; i < x_values.size() - 1; ++i) {
+    auto x = x_origin - i * x_step;
     painter.setPen("#3A3348");
-    painter.drawLine(x, 0, x, origin_y);
+    painter.drawLine(x, 0, x, y_origin);
     painter.setPen(Qt::white);
-    painter.drawLine(x, origin_y, x, origin_y + scale_height(2));
-    painter.drawText(x - timestamp_width / 2,
-      origin_y + font_metrics.height() + scale_height(2),
+    painter.drawLine(x, y_origin, x, y_origin + scale_height(2));
+    painter.drawText(x - x_text_width / 2,
+      y_origin + font_metrics.height() + scale_height(2),
       drawable_timestamp(static_cast<ptime>(x_values[i])));
   }
 }
 
 std::vector<ChartValue> ChartView::get_axis_values(
-    const ChartValue::Type& type, const ChartValue& range_start,
-    const ChartValue& range_end) {
+    ChartValue::Type type, ChartValue range_start, ChartValue range_end) {
   auto values = std::vector<ChartValue>();
   auto range = range_end - range_start;
   auto step = get_step(type, range);
