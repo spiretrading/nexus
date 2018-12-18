@@ -1,7 +1,7 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { DisplaySize, HBoxLayout, Padding, VBoxLayout, HLine } from '../../..';
+import { DisplaySize, HBoxLayout, HLine, Padding, VBoxLayout } from '../../..';
 
 export enum DisplayMode {
   Display,
@@ -13,12 +13,13 @@ interface Properties {
   displayMode: DisplayMode;
   imageSource?: string;
   readonly?: boolean;
+  /* A value from 0 to 200 that determines how zoomed in the image will be. */
   scaling: number;
   onToggleUploader: () => void;
   onUpload: (newFileLocation: string, scaling: number) => void;
 }
 
-/** Displays an account's profile image */
+/** Displays an account's profile image. */
 export class PhotoField extends React.Component<Properties, {}> {
   public static readonly defaultProps = {
     readonly: false
@@ -70,7 +71,7 @@ export class PhotoField extends React.Component<Properties, {}> {
           transform: `scale(${(100 + this.props.scaling) / 100})`
         });
       } else {
-        return ({ transform: `scale(1)` });
+        return ({transform: `scale(1)`});
       }
     })();
     return (
@@ -78,11 +79,9 @@ export class PhotoField extends React.Component<Properties, {}> {
         <div style={boxStyle}>
           <img src={imageSrc}
             style={{...imageStyle, ...imageScaling}}/>
-          <div style={PhotoField.STYLE.imageBoxSmall}>
             <img src='resources/account_page/profile_page/camera.svg'
               style={cameraIconStyle}
               onClick={this.props.onToggleUploader}/>
-          </div>
         </div>
         <Transition in={this.props.displayMode === DisplayMode.Uploading}
             timeout={PhotoField.TIMEOUT}>
@@ -169,18 +168,6 @@ export class PhotoField extends React.Component<Properties, {}> {
       width: '30px',
       top: 'calc(50% - 12px)',
       left: 'calc(50% - 15px)'
-    },
-    imageBoxSmall: {
-      boxSizing: 'border-box' as 'border-box',
-      overflow: 'hidden' as 'hidden'
-    },
-    imageBoxMedium: {
-      boxSizing: 'border-box' as 'border-box',
-      overflow: 'hidden' as 'hidden'
-    },
-    imageBoxLarge: {
-      boxSizing: 'border-box' as 'border-box',
-      overflow: 'hidden' as 'hidden'
     },
     image: {
       objectFit: 'cover' as 'cover',
