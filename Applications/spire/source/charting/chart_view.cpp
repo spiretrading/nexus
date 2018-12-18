@@ -12,9 +12,21 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  QVariant chart_value_to_variant(ChartValue::Type type,
-      const ChartValue& value) {
-    return QVariant::fromValue(static_cast<Money>(value));
+  QVariant to_variant(ChartValue::Type type,
+      ChartValue value) {
+    if(type == ChartValue::Type::DURATION) {
+      return QVariant::fromValue(static_cast<time_duration>(value));
+    }
+    if(type == ChartValue::Type::MONEY) {
+      return QVariant::fromValue(static_cast<Money>(value));
+    }
+    if(type == ChartValue::Type::QUANTITY) {
+      return QVariant::fromValue(static_cast<Quantity>(value));
+    }
+    if(type == ChartValue::Type::TIMESTAMP) {
+      return QVariant::fromValue(static_cast<ptime>(value));
+    }
+    return QVariant();
   }
 }
 
@@ -54,7 +66,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
     m_bottom_right.m_y, m_top_left.m_y);
   auto x_values = get_axis_values(m_x_axis_type, m_top_left.m_x,
     m_bottom_right.m_x);
-  if(y_values.size() == 0 || x_values.size() == 0) {
+  if(y_values.empty() || x_values.empty()) {
     return;
   }
   auto font_metrics = QFontMetrics(m_label_font);
@@ -79,8 +91,8 @@ void ChartView::paintEvent(QPaintEvent* event) {
     painter.drawLine(x_origin, y, x_origin + scale_width(2), y);
     painter.drawText(x_origin + scale_width(3),
       y + (font_metrics.height() / 3), 
-        m_item_delegate->displayText(chart_value_to_variant(
-          ChartValue::Type::MONEY, y_values[i]), QLocale()));
+        m_item_delegate->displayText(to_variant(m_y_axis_type, y_values[i]),
+          QLocale()));
   }
   std::reverse(x_values.begin(), x_values.end());
   auto x_step = x_origin / (x_values.size() - 1);
