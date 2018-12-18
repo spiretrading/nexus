@@ -86,12 +86,9 @@ const Order& TsxSorFixApplication::Submit(const OrderInfo& info) {
       }
       newOrderSingle->setField(TSX_ACCOUNT_TYPE_TAG, "CL");
       newOrderSingle->setField(TSX_USER_ID_TAG, GetTsxUserID());
-      std::string adminField;
       if(info.m_fields.m_destination == DefaultDestinations::ALPHA()) {
-        adminField = "00000A00";
-      }
-      if(!adminField.empty()) {
-        newOrderSingle->setField(TSX_EXCHANGE_ADMIN_TAG, adminField);
+        newOrderSingle->set(FIX::ExDestination("XATS"));
+        newOrderSingle->setField(TSX_EXCHANGE_ADMIN_TAG, "00000A00");
       }
     });
 }
