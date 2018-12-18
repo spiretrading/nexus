@@ -13,6 +13,7 @@ interface State {
   someRoles: Nexus.AccountRoles;
   isPhotoFieldReadonly: boolean;
   imageSource: string;
+  imagingScaling: number;
 }
 
 /**  Displays a testing application. */
@@ -23,7 +24,8 @@ class TestApp extends React.Component<Properties, State> {
       lastNameValue: 'Grey',
       someRoles: new Nexus.AccountRoles(),
       imageSource: TestApp.SOME_IMAGE,
-      isPhotoFieldReadonly: false
+      isPhotoFieldReadonly: false,
+      imagingScaling: 0
     };
     this.onTextInput = this.onTextInput.bind(this);
     this.onRoleClick = this.onRoleClick.bind(this);
@@ -68,7 +70,8 @@ class TestApp extends React.Component<Properties, State> {
           <WebPortal.PhotoField displaySize={this.props.displaySize}
           imageSource = {this.state.imageSource}
           readonly={this.state.isPhotoFieldReadonly}
-          onUpload={this.updateImage}/>
+          onUpload={this.updateImage}
+          scaling={this.state.imagingScaling}/>
         </WebPortal.VBoxLayout>
         <WebPortal.Padding size='18px'/>
         <div style={TestApp.STYLE.testingComponents}>
@@ -78,7 +81,7 @@ class TestApp extends React.Component<Properties, State> {
           </button>
           <button tabIndex={-1}
               onClick={this.changeImage}>
-            changeImage
+            CHANGE IMAGE
           </button>
         </div>
       </WebPortal.HBoxLayout>);
@@ -118,9 +121,10 @@ class TestApp extends React.Component<Properties, State> {
     return true;
   }
 
-  private updateImage(fileLocation: string) {
+  private updateImage(fileLocation: string, newScaling: number) {
       this.setState({
-        imageSource: fileLocation
+        imageSource: fileLocation,
+        imagingScaling: newScaling
       });
   }
 

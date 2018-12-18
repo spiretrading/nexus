@@ -13,7 +13,9 @@ interface Properties {
   displayMode?: DisplayMode;
   imageSource?: string;
   readonly?: boolean;
-  onUpload: (newFile: string) => void;
+  scaling?: number;
+  // onToggleUploader: () => void;
+  onUpload: (newFileLocation: string, scaling: number) => void;
 }
 
 interface State {
@@ -77,13 +79,25 @@ export class PhotoField extends React.Component<Properties, State> {
         }
       }
     })();
+    const imageScaling = (() => {
+      if(this.props.imageSource) {
+        return ({
+          transform: `scale(${(100 + this.props.scaling) / 100})`
+        });
+      } else {
+        return ({ transform: `scale(1)` });
+      }
+    })();
     return (
       <div style={PhotoField.STYLE.wrapper}>
         <div style={boxStyle}>
-          <img src={imageSrc} style={imageStyle}/>
-          <img src='resources/account_page/profile_page/camera.svg'
-            style={cameraIconStyle}
-            onClick={this.showChangePictureModal}/>
+          <img src={imageSrc}
+            style={{...imageStyle, ...imageScaling}}/>
+          <div style={PhotoField.STYLE.imageBoxSmall}>
+            <img src='resources/account_page/profile_page/camera.svg'
+              style={cameraIconStyle}
+              onClick={this.showChangePictureModal}/>
+          </div>
         </div>
         <Transition in={this.state.showUploader} timeout={PhotoField.TIMEOUT}>
           {(state) => (
@@ -134,7 +148,10 @@ export class PhotoField extends React.Component<Properties, State> {
       paddingTop: '68%',
       maxHeight: '288px',
       maxWidth: '424px',
-      position: 'relative' as 'relative'
+      position: 'relative' as 'relative',
+      borderRadius: '1px',
+      border: '1px solid #EBEBEB',
+      overflow: 'hidden' as 'hidden'
     },
     boxMedium: {
       display: 'flex' as 'flex',
@@ -143,9 +160,11 @@ export class PhotoField extends React.Component<Properties, State> {
       justifyContent: 'center' as 'center',
       backgroundColor: '#F8F8F8',
       border: '1px solid #E6E6E6',
+      borderRadius: '1px',
       height: '190px',
       width: '284px',
-      position: 'relative' as 'relative'
+      position: 'relative' as 'relative',
+      overflow: 'hidden' as 'hidden'
     },
     boxLarge: {
       display: 'flex' as 'flex',
@@ -154,9 +173,11 @@ export class PhotoField extends React.Component<Properties, State> {
       justifyContent: 'center' as 'center',
       backgroundColor: '#F8F8F8',
       border: '1px solid #E6E6E6',
+      borderRadius: '1px',
       height: '258px',
       width: '380px',
-      position: 'relative' as 'relative'
+      position: 'relative' as 'relative',
+      overflow: 'hidden' as 'hidden'
     },
     placeholder: {
       position: 'absolute' as 'absolute',
@@ -169,6 +190,18 @@ export class PhotoField extends React.Component<Properties, State> {
       width: '30px',
       top: 'calc(50% - 12px)',
       left: 'calc(50% - 15px)'
+    },
+    imageBoxSmall: {
+      boxSizing: 'border-box' as 'border-box',
+      overflow: 'hidden' as 'hidden'
+    },
+    imageBoxMedium: {
+      boxSizing: 'border-box' as 'border-box',
+      overflow: 'hidden' as 'hidden'
+    },
+    imageBoxLarge: {
+      boxSizing: 'border-box' as 'border-box',
+      overflow: 'hidden' as 'hidden'
     },
     image: {
       objectFit: 'cover' as 'cover',
@@ -203,11 +236,11 @@ interface ModalProperties {
   imageSource?: string;
   displaySize: DisplaySize;
   onCloseModal: () => void;
-  onSubmitImage: (fileLocation: string) => void;
+  onSubmitImage: (newFileLocation: string, scaling: number) => void;
 }
 
 interface ModalState {
-  imageScalingValue: number;
+  imageScaling: number;
   currentImage: string;
 }
 
@@ -217,7 +250,7 @@ export class ChangePictureModal extends
   constructor(properties: ModalProperties) {
     super(properties);
     this.state = {
-      imageScalingValue: 0,
+      imageScaling: 0,
       currentImage: this.props.imageSource
     };
     this.onSliderMovement = this.onSliderMovement.bind(this);
@@ -281,7 +314,7 @@ export class ChangePictureModal extends
     const imageScaling = (() => {
       if(this.props.imageSource) {
         return ({
-          transform: `scale(${(100 + this.state.imageScalingValue) / 100})`
+          transform: `scale(${(100 + this.state.imageScaling) / 100})`
         });
       } else {
         return ({ transform: `scale(1)` });
@@ -307,8 +340,8 @@ export class ChangePictureModal extends
                 style={{ ...imageStyle, ...imageScaling }}/>
             </div>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
-            <Slider onThumbMove={this.onSliderMovement}
-              scaleValue={this.state.imageScalingValue}
+            <Slider onInput={this.onSliderMovement}
+              scaleValue={this.state.imageScaling}
               isReadOnly={isSliderReadOnly}/>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <HLine color='#E6E6E6' height={1}/>
@@ -318,10 +351,10 @@ export class ChangePictureModal extends
                 style={ChangePictureModal.STYLE.hiddenInput}
                 onChange={(e) => { this.onGetImageFile(e.target.files); }}/>
               <label htmlFor='imageInput'
-                className={css(ChangePictureModal.SPECIAL_STYLE.label)}>
+                className={css(ChangePictureModal.SPECIAL_STYLE.button)}>
                 {ChangePictureModal.BROWSE_BUTTON_TEXT}
               </label>
-              <div className={css(ChangePictureModal.SPECIAL_STYLE.label)}
+              <div className={css(ChangePictureModal.SPECIAL_STYLE.button)}
                 onClick={this.onSubmit}>
                 {ChangePictureModal.SUBMIT_BUTTON_TEXT}
               </div>
@@ -334,38 +367,34 @@ export class ChangePictureModal extends
   }
 
   private onSliderMovement(value: number) {
-    this.setState({ imageScalingValue: value });
+    this.setState({ imageScaling: value });
   }
 
   private onGetImageFile(selectorFiles: FileList) {
-    console.log('New File: ' + selectorFiles.item(0));
-    this.setState({ currentImage: 'beep.jpg' });
+    const file = selectorFiles.item(0);
+    const someURL = URL.createObjectURL(file);
+    this.setState({
+      currentImage: someURL,
+      imageScaling: 0
+      });
   }
 
   private onClose() {
     this.props.onCloseModal();
+    this.setState({ imageScaling: 0 });
     this.setState({ currentImage: this.props.imageSource });
   }
 
   private onSubmit() {
     if(this.state.currentImage) {
-      this.props.onSubmitImage(this.state.currentImage);
+      this.props.onSubmitImage(this.state.currentImage, 
+        this.state.imageScaling);
     }
     this.props.onCloseModal();
   }
 
   private static readonly STYLE = {
-    wrapper: {
-      boxSizing: 'border-box' as 'border-box',
-      top: '0',
-      left: '0',
-      position: 'fixed' as 'fixed',
-      width: '100%',
-      height: '100%',
-      zIndex: 100,
-      padding: 0
-    },
-    transparentBackground: { //???????????????
+    transparentBackground: {
       boxSizing: 'border-box' as 'border-box',
       top: '0',
       left: '0',
@@ -432,11 +461,6 @@ export class ChangePictureModal extends
       height: '20px',
       cursor: 'pointer' as 'pointer'
     },
-    tempSlider: {
-      width: '100%',
-      height: '20px',
-      backgroundColor: '#967FE3'
-    },
     buttonBoxSmall: {
       boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
@@ -454,22 +478,6 @@ export class ChangePictureModal extends
       alignItems: 'center' as 'center'
     },
     buttonStyle: {
-      minWidth: '153px',
-      maxWidth: '248px',
-      height: '34px',
-      backgroundColor: '#684BC7',
-      color: '#FFFFFF',
-      font: '400 14px Roboto',
-      border: '1px solid #684BC7',
-      borderRadius: '1px',
-      outline: 0
-    },
-    label: {
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'wrap' as 'wrap',
-      justifyContent: 'center' as 'center',
-      alignItems: 'center' as 'center',
       minWidth: '153px',
       maxWidth: '248px',
       height: '34px',
@@ -515,10 +523,6 @@ export class ChangePictureModal extends
       border: '1px solid #EBEBEB',
       backgroundColor: '#F8F8F8'
     },
-    hidden: {
-      visibility: 'hidden' as 'hidden',
-      display: 'none' as 'none'
-    },
     hiddenInput: {
       width: '0.1px',
       height: '0.1px',
@@ -529,7 +533,7 @@ export class ChangePictureModal extends
     }
   };
   private static readonly SPECIAL_STYLE = StyleSheet.create({
-    label: {
+    button: {
       boxSizing: 'border-box' as 'border-box',
       cursor: 'pointer' as 'pointer',
       display: 'flex' as 'flex',
@@ -562,21 +566,21 @@ export class ChangePictureModal extends
 }
 
 interface SliderProperties {
-  onThumbMove?: (num: number) => void;
+  onInput?: (num: number) => void;
   isReadOnly?: boolean;
   scaleValue?: number;
 }
 
 export class Slider extends React.Component<SliderProperties, {}> {
   public static readonly defaultProps = {
-    onThumbMove: () => {},
+    onSliderMove: () => {},
     scaleValue: 0,
     isReadOnly: false
-  }
+  };
 
   constructor(properties: SliderProperties) {
     super(properties);
-    this.onChange = this.onChange.bind(this);
+    this.onInput = this.onInput.bind(this);
   }
 
   public render(): JSX.Element {
@@ -586,18 +590,17 @@ export class Slider extends React.Component<SliderProperties, {}> {
         max={Slider.MAX_RANGE_VALUE}
         value={this.props.scaleValue}
         disabled={this.props.isReadOnly}
-        onChange={this.onChange}
+        onChange={this.onInput}
         className={css(Slider.SLIDER_STYLE.slider)}/>);
   }
 
-  private onChange(event: any) {
+  private onInput(event: any) {
     const num = event.target.value;
-    console.log();
     const diff = Math.abs(this.props.scaleValue - num);
     if(this.props.scaleValue < num) {
-      this.props.onThumbMove(this.props.scaleValue + diff);
+      this.props.onInput(this.props.scaleValue + diff);
     } else {
-      this.props.onThumbMove(this.props.scaleValue - diff);
+      this.props.onInput(this.props.scaleValue - diff);
     }
   }
 
