@@ -27,7 +27,9 @@ interface Properties {
   /** Determines if the image can be changed or not. */
   readonly?: boolean;
 
-  /** A value that determines how zoomed in the image will be. */
+  /** A value that determines how zoomed in the image will be.
+   * It is a normalized scalar value.
+   */
   scaling: number;
 
   /** Callback to hide or show the uploader. */
@@ -62,10 +64,10 @@ export class PhotoField extends React.Component<Properties, {}> {
       }
     })();
     const imageSrc = (() => {
-      if(!this.props.imageSource) {
-        return 'resources/account_page/profile_page/image-placeholder.svg';
-      } else {
+      if(this.props.imageSource) {
         return this.props.imageSource;
+      } else {
+        return 'resources/account_page/profile_page/image-placeholder.svg';
       }
     })();
     const imageStyle = (() => {
@@ -89,7 +91,7 @@ export class PhotoField extends React.Component<Properties, {}> {
           transform: `scale(${this.props.scaling})`
         });
       } else {
-        return ({transform: `scale(1)`});
+        return ({transform: 'scale(1)'});
       }
     })();
     return (
@@ -236,7 +238,7 @@ interface ModalState {
 
 /** Displays a modal that allows the user to change their picture. */
 export class ChangePictureModal extends
-  React.Component<ModalProperties, ModalState> {
+    React.Component<ModalProperties, ModalState> {
   constructor(properties: ModalProperties) {
     super(properties);
     this.state = {
@@ -272,10 +274,10 @@ export class ChangePictureModal extends
       }
     })();
     const imageSrc = (() => {
-      if(!this.state.currentImage) {
-        return 'resources/account_page/profile_page/image-placeholder.svg';
-      } else {
+      if(this.state.currentImage) {
         return this.state.currentImage;
+      } else {
+        return 'resources/account_page/profile_page/image-placeholder.svg';
       }
     })();
     const imageStyle = (() => {
@@ -294,20 +296,13 @@ export class ChangePictureModal extends
         return ChangePictureModal.STYLE.imageBoxLarge;
       }
     })();
-    const isSliderReadOnly = (() => {
-      if(this.props.imageSource) {
-        return false;
-      } else {
-        return true;
-      }
-    })();
     const imageScaling = (() => {
       if(this.props.imageSource) {
         return ({
           transform: `scale(${this.state.imageScaling})`
         });
       } else {
-        return { transform: `scale(1)` };
+        return { transform: 'scale(1)' };
       }
     })();
     return (
@@ -332,7 +327,7 @@ export class ChangePictureModal extends
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <Slider onChange={this.onSliderMovement}
               scaleValue={this.state.imageScaling}
-              readonly={isSliderReadOnly}/>
+              readonly={Boolean(!this.props.imageSource)}/>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <HLine color='#E6E6E6' height={1}/>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
@@ -367,7 +362,7 @@ export class ChangePictureModal extends
     this.setState({
       currentImage: someURL,
       imageScaling: 1
-      });
+    });
   }
 
   private onClose() {
