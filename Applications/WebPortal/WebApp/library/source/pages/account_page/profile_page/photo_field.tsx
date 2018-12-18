@@ -330,9 +330,9 @@ export class ChangePictureModal extends
                 style={{ ...imageStyle, ...imageScaling }}/>
             </div>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
-            <Slider onChangeValue={this.onSliderMovement}
+            <Slider onChange={this.onSliderMovement}
               scaleValue={this.state.imageScaling}
-              isReadOnly={isSliderReadOnly}/>
+              readonly={isSliderReadOnly}/>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <HLine color='#E6E6E6' height={1}/>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
@@ -387,8 +387,8 @@ export class ChangePictureModal extends
   private static readonly STYLE = {
     transparentBackground: {
       boxSizing: 'border-box' as 'border-box',
-      top: '0',
-      left: '0',
+      top: '0px',
+      left: '0px',
       position: 'fixed' as 'fixed',
       width: '100%',
       height: '100%',
@@ -529,7 +529,7 @@ export class ChangePictureModal extends
       font: '400 14px Roboto',
       border: '1px solid #684BC7',
       borderRadius: '1px',
-      outline: 0,
+      outline: '0px',
       ':active': {
         backgroundColor: '#4B23A0'
       },
@@ -548,10 +548,10 @@ export class ChangePictureModal extends
 interface SliderProperties {
 
   /** Callback that updates the value */
-  onChangeValue?: (num: number) => void;
+  onChange?: (value: number) => void;
 
   /** Determines if the slider can be moved. */
-  isReadOnly?: boolean;
+  readonly?: boolean;
 
   /** The current slider value. */
   scaleValue?: number;
@@ -562,7 +562,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
   public static readonly defaultProps = {
     onChange: () => {},
     scale: 0,
-    isReadOnly: false
+    readonly: false
   };
 
   constructor(properties: SliderProperties) {
@@ -575,7 +575,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
       min={Slider.MIN_RANGE_VALUE}
       max={Slider.MAX_RANGE_VALUE}
       value={this.ConvertFromDecimal(this.props.scaleValue)}
-      disabled={this.props.isReadOnly}
+      disabled={this.props.readonly}
       onChange={this.onValueChange}
       className={css(Slider.SLIDER_STYLE.slider)}/>);
   }
@@ -584,10 +584,10 @@ export class Slider extends React.Component<SliderProperties, {}> {
     const num = event.target.value;
     const diff = Math.abs(this.props.scaleValue - num);
     if(this.props.scaleValue < num) {
-      this.props.onChangeValue(this.ConverttoDecimal(
+      this.props.onChange(this.ConverttoDecimal(
           this.props.scaleValue + diff));
     } else {
-      this.props.onChangeValue(this.ConverttoDecimal(
+      this.props.onChange(this.ConverttoDecimal(
           this.props.scaleValue - diff));
     }
   }
@@ -604,8 +604,8 @@ export class Slider extends React.Component<SliderProperties, {}> {
     slider: {
       width: '100%',
       height: '20px',
-      margin: 0,
-      outline: 0,
+      margin: '0px',
+      outline: '0px',
       '::-webkit-slider-thumb': {
         '-webkit-appearance': 'none',
         boxSizing: 'border-box' as 'border-box',
@@ -646,7 +646,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
       '::-moz-range-track': {
         backgroundColor: '#E6E6E6',
         height: '4px',
-        border: 0
+        border: '0px'
       },
       '::-ms-track': {
         backgroundColor: '#E6E6E6',
@@ -654,7 +654,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
       },
       '-webkit-appearance': 'none',
       '::-moz-focus-outer': {
-        border: 0
+        border: '0px'
       }
     }
   });
