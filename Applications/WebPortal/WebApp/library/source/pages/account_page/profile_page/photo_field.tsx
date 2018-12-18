@@ -3,19 +3,37 @@ import * as React from 'react';
 import { Transition } from 'react-transition-group';
 import { DisplaySize, HBoxLayout, HLine, Padding, VBoxLayout } from '../../..';
 
+/** Various the mode that the PhotoField can be displayed at. */
 export enum DisplayMode {
+
+  /** Only the photo is visible. */
   Display,
+
+  /** The uploader is visible. */
   Uploading
 }
 
 interface Properties {
+
+  /** Determines the size to render the component at. */
   displaySize: DisplaySize;
+
+  /** Determines if the ChangePictureModal is visible or not. */
   displayMode: DisplayMode;
+
+  /** The URL the image is located at. */
   imageSource?: string;
+
+  /** Determines if the image can be changed or not. */
   readonly?: boolean;
-  /* A value from 0 to 200 that determines how zoomed in the image will be. */
+
+  /** A value from 0 to 200 that determines how zoomed in the image will be. */
   scaling: number;
-  onToggleUploader: () => void;
+
+  /** Callback to hide or show the uploader. */
+  toggleUploader: () => void;
+
+  /** Callback to store the file and the scaling for the file. */
   onUpload: (newFileLocation: string, scaling: number) => void;
 }
 
@@ -79,20 +97,18 @@ export class PhotoField extends React.Component<Properties, {}> {
         <div style={boxStyle}>
           <img src={imageSrc}
             style={{...imageStyle, ...imageScaling}}/>
-            <img src='resources/account_page/profile_page/camera.svg'
-              style={cameraIconStyle}
-              onClick={this.props.onToggleUploader}/>
+          <img src='resources/account_page/profile_page/camera.svg'
+            style={cameraIconStyle}
+            onClick={this.props.toggleUploader}/>
         </div>
         <Transition in={this.props.displayMode === DisplayMode.Uploading}
             timeout={PhotoField.TIMEOUT}>
           {(state) => (
-            <div style={{
-              ...PhotoField.STYLE.animationBase,
-              ...(PhotoField.ANIMATION_STYLE as any)[state]
-            }}>
+            <div style={{ ...PhotoField.STYLE.animationBase,
+                ...(PhotoField.ANIMATION_STYLE as any)[state]}}>
               <ChangePictureModal displaySize={this.props.displaySize}
                 imageSource={this.props.imageSource}
-                onCloseModal={this.props.onToggleUploader}
+                onCloseModal={this.props.toggleUploader}
                 onSubmitImage={this.props.onUpload}/>
             </div>)}
         </Transition>
@@ -199,9 +215,17 @@ export class PhotoField extends React.Component<Properties, {}> {
 }
 
 interface ModalProperties {
+
+  /** The image to be displayed. */
   imageSource?: string;
+
+  /** Determines the size at which to display the modal at. */
   displaySize: DisplaySize;
+
+  /** Determines the size at which to display the modal at. */
   onCloseModal: () => void;
+
+  /** Determines what happens when the file is submitted. */
   onSubmitImage: (newFileLocation: string, scaling: number) => void;
 }
 
@@ -220,8 +244,8 @@ export class ChangePictureModal extends
       currentImage: this.props.imageSource
     };
     this.onSliderMovement = this.onSliderMovement.bind(this);
-    this.onSubmit = this.onSubmit.bind(this);
     this.onGetImageFile = this.onGetImageFile.bind(this);
+    this.onSubmit = this.onSubmit.bind(this);
     this.onClose = this.onClose.bind(this);
   }
 
@@ -306,7 +330,7 @@ export class ChangePictureModal extends
                 style={{ ...imageStyle, ...imageScaling }}/>
             </div>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
-            <Slider onInput={this.onSliderMovement}
+            <Slider onChangeValue={this.onSliderMovement}
               scaleValue={this.state.imageScaling}
               isReadOnly={isSliderReadOnly}/>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
@@ -315,7 +339,8 @@ export class ChangePictureModal extends
             <div style={buttonBox}>
               <input type='file' id='imageInput' accept='image/*'
                 style={ChangePictureModal.STYLE.hiddenInput}
-                onChange={(e) => { this.onGetImageFile(e.target.files); }}/>
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                  this.onGetImageFile(event.target.files);}}/>
               <label htmlFor='imageInput'
                 className={css(ChangePictureModal.SPECIAL_STYLE.button)}>
                 {ChangePictureModal.BROWSE_BUTTON_TEXT}
@@ -443,17 +468,6 @@ export class ChangePictureModal extends
       justifyContent: 'space-between' as 'space-between',
       alignItems: 'center' as 'center'
     },
-    buttonStyle: {
-      minWidth: '153px',
-      maxWidth: '248px',
-      height: '34px',
-      backgroundColor: '#684BC7',
-      color: '#FFFFFF',
-      font: '400 14px Roboto',
-      border: '1px solid #684BC7',
-      borderRadius: '1px',
-      outline: 0
-    },
     placeholderImage: {
       position: 'relative' as 'relative',
       height: '24px',
@@ -532,41 +546,47 @@ export class ChangePictureModal extends
 }
 
 interface SliderProperties {
-  onInput?: (num: number) => void;
+
+  /** Callback that updates the value */
+  onChangeValue?: (num: number) => void;
+
+  /** Determines if the slider can be moved. */
   isReadOnly?: boolean;
+
+  /** The current slider value. */
   scaleValue?: number;
 }
 
+/** Displays a slider that changes a value. */
 export class Slider extends React.Component<SliderProperties, {}> {
   public static readonly defaultProps = {
-    onSliderMove: () => {},
+    onChangeValue: () => {},
     scaleValue: 0,
     isReadOnly: false
   };
 
   constructor(properties: SliderProperties) {
     super(properties);
-    this.onInput = this.onInput.bind(this);
+    this.onValueChange = this.onValueChange.bind(this);
   }
 
   public render(): JSX.Element {
-    return (
-      <input type='range'
-        min={Slider.MIN_RANGE_VALUE}
-        max={Slider.MAX_RANGE_VALUE}
-        value={this.props.scaleValue}
-        disabled={this.props.isReadOnly}
-        onChange={this.onInput}
-        className={css(Slider.SLIDER_STYLE.slider)}/>);
+    return (<input type='range'
+      min={Slider.MIN_RANGE_VALUE}
+      max={Slider.MAX_RANGE_VALUE}
+      value={this.props.scaleValue}
+      disabled={this.props.isReadOnly}
+      onChange={this.onValueChange}
+      className={css(Slider.SLIDER_STYLE.slider)}/>);
   }
 
-  private onInput(event: any) {
+  private onValueChange(event: any) {
     const num = event.target.value;
     const diff = Math.abs(this.props.scaleValue - num);
     if(this.props.scaleValue < num) {
-      this.props.onInput(this.props.scaleValue + diff);
+      this.props.onChangeValue(this.props.scaleValue + diff);
     } else {
-      this.props.onInput(this.props.scaleValue - diff);
+      this.props.onChangeValue(this.props.scaleValue - diff);
     }
   }
 
