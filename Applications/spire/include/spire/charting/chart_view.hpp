@@ -39,8 +39,6 @@ namespace Spire {
       std::string m_timestamp_format;
       CustomVariantItemDelegate* m_item_delegate;
 
-      std::vector<ChartValue> get_axis_values(ChartValue::Type type,
-        ChartValue range_start, ChartValue range_end);
       QString drawable_timestamp(const boost::posix_time::ptime& time);
       ChartValue get_step(const ChartValue::Type& value_type,
         const ChartValue& range);
