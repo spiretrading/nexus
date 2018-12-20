@@ -12,11 +12,14 @@ SecurityWidget::SecurityWidget(Ref<SecurityInputModel> input_model,
     Theme theme, QWidget* parent)
     : QWidget(parent),
       m_input_model(input_model.Get()) {
-  setFocusPolicy(Qt::StrongFocus);
+  setFocusPolicy(Qt::ClickFocus);
+  auto empty_label_font_color = QColor();
   if(theme == Theme::DARK) {
-    setStyleSheet("background-color: #D0D0D0;");
+    setStyleSheet("background-color: #25212E;");
+    empty_label_font_color = Qt::white;
   } else {
     setStyleSheet("background-color: #FFFFFF;");
+    empty_label_font_color = Qt::black;
   }
   m_layout = new QVBoxLayout(this);
   m_layout->setContentsMargins({});
@@ -24,9 +27,11 @@ SecurityWidget::SecurityWidget(Ref<SecurityInputModel> input_model,
     tr("Enter a ticker symbol."), this);
   m_empty_window_label->setAlignment(Qt::AlignCenter);
   m_empty_window_label->setStyleSheet(QString(R"(
+    color: %3;
     font-family: Roboto;
     font-size: %1px;
-    padding-top: %2px;)").arg(scale_height(12)).arg(scale_height(16)));
+    padding-top: %2px;)").arg(scale_height(12)).arg(scale_height(16))
+    .arg(empty_label_font_color.name()));
   m_layout->addWidget(m_empty_window_label.get());
 }
 

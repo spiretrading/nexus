@@ -3,6 +3,7 @@
 #include <QWidget>
 #include "spire/charting/charting.hpp"
 #include "spire/charting/chart_point.hpp"
+#include "spire/ui/custom_qt_variants.hpp"
 
 namespace Spire {
 
@@ -25,6 +26,21 @@ namespace Spire {
         \param bottom_right The bottom right point to display.
       */
       void set_region(ChartPoint top_left, ChartPoint bottom_right);
+
+    protected:
+      void paintEvent(QPaintEvent* event) override;
+
+    private:
+      ChartValue::Type m_x_axis_type;
+      ChartValue::Type m_y_axis_type;
+      ChartPoint m_top_left;
+      ChartPoint m_bottom_right;
+      QFont m_label_font;
+      std::string m_timestamp_format;
+      CustomVariantItemDelegate* m_item_delegate;
+
+      ChartValue calculate_step(ChartValue::Type value_type, ChartValue range);
+      QString get_string(ChartValue::Type type, ChartValue value) const;
   };
 }
 
