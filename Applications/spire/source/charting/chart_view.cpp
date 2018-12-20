@@ -31,13 +31,11 @@ ChartView::ChartView(ChartValue::Type x_axis_type,
     : QWidget(parent),
       m_x_axis_type(x_axis_type),
       m_y_axis_type(y_axis_type),
-      m_timestamp_format("%H:%M:%S") {
+      m_timestamp_format("%H:%M:%S"),
+      m_label_font("Roboto"),
+      m_item_delegate(new CustomVariantItemDelegate(this)) {
   setFocusPolicy(Qt::NoFocus);
-  m_label_font = QFont("Roboto");
   m_label_font.setPixelSize(scale_height(10));
-  m_item_delegate = new CustomVariantItemDelegate(this);
-  m_x_axis_type = ChartValue::Type::TIMESTAMP;
-  m_y_axis_type = ChartValue::Type::MONEY;
   auto current_time = boost::posix_time::second_clock::local_time();
   auto bottom_right = ChartPoint(
     ChartValue(current_time),
@@ -59,19 +57,15 @@ void ChartView::paintEvent(QPaintEvent* event) {
   painter.setFont(m_label_font);
   painter.setPen(Qt::white);
   auto font_metrics = QFontMetrics(m_label_font);
-  auto x_origin = width() -
-    (font_metrics.width("M") *
-      QString::number(
-        static_cast<double>(
-          static_cast<Quantity>(ChartValue(m_top_left.m_y))),
-        'f', 2).length()) + scale_width(8);
+  auto x_origin = width() - (font_metrics.width("M") * (get_string(
+    m_y_axis_type, m_top_left.m_y).length() + 1)) + scale_width(8);
   auto y_origin = height() - (font_metrics.height() + scale_height(9));
   painter.drawLine(x_origin, 0, x_origin, y_origin);
   painter.drawLine(0, y_origin, x_origin, y_origin);
   auto x_range = m_bottom_right.m_x - m_top_left.m_x;
-  auto x_step = get_step(m_x_axis_type, x_range);
+  auto x_step = calculate_step(m_x_axis_type, x_range);
   auto y_range = m_top_left.m_y - m_bottom_right.m_y;
-  auto y_step = get_step(m_y_axis_type, y_range);
+  auto y_step = calculate_step(m_y_axis_type, y_range);
   if(x_range <= x_step || y_range <= y_step) {
     return;
   }
@@ -99,8 +93,8 @@ void ChartView::paintEvent(QPaintEvent* event) {
   if((x_step_count - 1) * x_pixel_step < width()) {
     x_pixel_step += 1;
   }
-  auto x_text_width = font_metrics.width(drawable_timestamp(
-    static_cast<ptime>(m_top_left.m_x)));
+  auto x_text_width = font_metrics.width(get_string(m_x_axis_type,
+    m_top_left.m_x));
   auto x_value = m_bottom_right.m_x;
   auto x = x_origin;
   while(x_value >= m_top_left.m_x) {
@@ -112,21 +106,12 @@ void ChartView::paintEvent(QPaintEvent* event) {
     painter.drawLine(x, y_origin, x, y_origin + scale_height(2));
     painter.drawText(x - x_text_width / 2,
       y_origin + font_metrics.height() + scale_height(2),
-      drawable_timestamp(static_cast<ptime>(x_value)));
+      get_string(m_x_axis_type, x_value));
   }
 }
 
-QString ChartView::drawable_timestamp(const ptime& time) {
-  std::ostringstream ss;
-  ss.imbue(std::locale(std::cout.getloc(),
-    new boost::posix_time::time_facet(m_timestamp_format.c_str())));
-  ss << time;
-  return QString::fromStdString(ss.str());
-}
-
-ChartValue ChartView::get_step(const ChartValue::Type& value_type,
-    const ChartValue& range) {
-  auto step = ChartValue();
+ChartValue ChartView::calculate_step(ChartValue::Type value_type,
+    ChartValue range) {
   if(value_type == ChartValue::Type::MONEY) {
     auto money_range = static_cast<Money>(range);
     if(money_range <= Money::CENT) {
@@ -140,19 +125,39 @@ ChartValue ChartView::get_step(const ChartValue::Type& value_type,
     }
   } else if(value_type == ChartValue::Type::TIMESTAMP) {
     auto time_range = static_cast<time_duration>(range);
-    if(time_range <= time_duration(0, 1, 0)) {
+    if(time_range <= minutes(1)) {
       m_timestamp_format = "%H:%M:%S";
-      return ChartValue(time_duration(0, 0, 1));
-    } else if(time_range <= time_duration(1, 0, 0)) {
+      return ChartValue(seconds(1));
+    } else if(time_range <= hours(1)) {
       m_timestamp_format = "%H:%M";
-      return ChartValue(time_duration(0, 1, 0));
-    } else if(time_range <= time_duration(24, 0, 0)) {
+      return ChartValue(minutes(1));
+    } else if(time_range <= hours(24)) {
       m_timestamp_format = "%H";
-      return ChartValue(time_duration(1, 0, 0));
+      return ChartValue(hours(1));
     } else {
       m_timestamp_format = "%H";
-      return ChartValue(time_duration(24, 0, 0));
+      return ChartValue(hours(24));
     }
   }
   return ChartValue();
+}
+
+QString ChartView::get_string(ChartValue::Type type, ChartValue value) const {
+  if(type == ChartValue::Type::DURATION) {
+    std::ostringstream ss;
+    ss << static_cast<time_duration>(value);
+    return QString::fromStdString(ss.str());
+  } else if(type == ChartValue::Type::MONEY) {
+    return QString::number(static_cast<double>(static_cast<Money>(value)));
+  } else if(type == ChartValue::Type::QUANTITY) {
+    return QString::number(static_cast<double>(static_cast<Quantity>(value)));
+  } else if(type == ChartValue::Type::TIMESTAMP) {
+    // TODO: convert from ptime to QTime
+    std::ostringstream ss;
+    ss.imbue(std::locale(std::cout.getloc(),
+      new boost::posix_time::time_facet(m_timestamp_format.c_str())));
+    ss << static_cast<ptime>(value);
+    return QString::fromStdString(ss.str());
+  }
+  return QString();
 }

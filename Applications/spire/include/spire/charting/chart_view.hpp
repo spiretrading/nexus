@@ -39,9 +39,8 @@ namespace Spire {
       std::string m_timestamp_format;
       CustomVariantItemDelegate* m_item_delegate;
 
-      QString drawable_timestamp(const boost::posix_time::ptime& time);
-      ChartValue get_step(const ChartValue::Type& value_type,
-        const ChartValue& range);
+      ChartValue calculate_step(ChartValue::Type value_type, ChartValue range);
+      QString get_string(ChartValue::Type type, ChartValue value) const;
   };
 }
 
