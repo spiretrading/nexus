@@ -1,4 +1,3 @@
-import { css, StyleSheet } from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { HBoxLayout, Padding, VBoxLayout } from '../..';
@@ -16,6 +15,9 @@ interface Properties {
   /** The status message to display. */
   status?: string;
 
+  /** Determines if the submit button is enabled. */
+  isEnabled?: boolean;
+
   /** Indicates the form should be submitted.
    * @param comment - The comment to submit with the form.
    */
@@ -29,6 +31,7 @@ interface State {
 /** Displays the components needed to submit an account related form. */
 export class SubmissionBox extends React.Component<Properties, State> {
   public static defaultProps = {
+    isEnabled: false,
     isError: false,
     status: '',
     onSubmit: () => {}
@@ -71,7 +74,8 @@ export class SubmissionBox extends React.Component<Properties, State> {
         {commentBoxPadding}
         <HBoxLayout width='100%'>
           <Padding size='calc(50% - 123px)'/>
-          <SubmitButton isDisabled={false} roles={this.props.roles}
+          <SubmitButton isDisabled={!this.props.isEnabled}
+            roles={this.props.roles}
             onClick={() => this.props.onSubmit(this.state.comment)}/>
           <Padding size='calc(50% - 123px)'/>
         </HBoxLayout>

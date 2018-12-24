@@ -396,6 +396,14 @@ void Nexus::Python::ExportOrderRecord() {
     .def_readwrite("execution_reports", &OrderRecord::m_executionReports)
     .def(self == self)
     .def(self != self);
+  ExportSequencedValue<OrderRecord>();
+  ExportIndexedValue<OrderRecord, DirectoryEntry>();
+  ExportSequencedValue<AccountOrderRecord>();
+  ExportQueueSuite<OrderRecord>("OrderRecord");
+  ExportQueueSuite<SequencedOrderRecord>("SequencedOrderRecord");
+  ExportSnapshotPublisher<OrderRecord, vector<OrderRecord>>(
+    "OrderRecordSnapshotPublisher");
+  ExportVector<vector<OrderRecord>>("VectorOrderRecord");
 }
 
 void Nexus::Python::ExportPrimitiveOrder() {

@@ -7,7 +7,7 @@ interface Properties {
   /** Determines what the button's label is. */
   roles: Nexus.AccountRoles;
 
-  /** Determines if the button is disabled.*/
+  /** Determines if the button is disabled. */
   isDisabled?: boolean;
 
   /** Indicates the button was clicked. */
@@ -20,7 +20,7 @@ export class SubmitButton extends React.Component<Properties> {
     isDisabled: false,
     onClick: () => {}
   };
-  
+
   public render(): JSX.Element {
     const buttonText = (() => {
       if(this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
