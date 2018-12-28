@@ -15,6 +15,8 @@ interface State {
   imageSource: string;
   imagingScaling: number;
   photoFieldDisplayMode: WebPortal.DisplayMode;
+  countryDatabase: Nexus.CountryDatabase;
+  country: string;
 }
 
 /**  Displays a testing application. */
@@ -27,7 +29,9 @@ class TestApp extends React.Component<Properties, State> {
       imageSource: TestApp.SOME_IMAGE,
       isPhotoFieldReadonly: false,
       imagingScaling: 1,
-      photoFieldDisplayMode: WebPortal.DisplayMode.DISPLAY
+      photoFieldDisplayMode: WebPortal.DisplayMode.DISPLAY,
+      countryDatabase: Nexus.buildDefaultCountryDatabase(),
+      country: ''
     };
     this.onTextInput = this.onTextInput.bind(this);
     this.onRoleClick = this.onRoleClick.bind(this);
@@ -35,6 +39,7 @@ class TestApp extends React.Component<Properties, State> {
     this.toggleReadOnly = this.toggleReadOnly.bind(this);
     this.updateImage = this.updateImage.bind(this);
     this.toggleDisplayMode = this.toggleDisplayMode.bind(this);
+    this.changeCountry = this.changeCountry.bind(this);
   }
 
   public render(): JSX.Element {
@@ -87,6 +92,13 @@ class TestApp extends React.Component<Properties, State> {
             onSubmit={this.updateImage}
             onToggleUploader={this.toggleDisplayMode}
             scaling={this.state.imagingScaling}/>
+          <WebPortal.FormEntry name='Country' orientation={orientation} >
+            <WebPortal.CountrySelectionBox
+              displaySize={this.props.displaySize}
+              value={this.state.country}
+              onChange={this.changeCountry}
+              countryDatabase={this.state.countryDatabase}/>
+          </WebPortal.FormEntry>
         </WebPortal.VBoxLayout>
         <WebPortal.Padding size='18px'/>
         <div style={TestApp.STYLE.testingComponents}>
@@ -139,6 +151,12 @@ class TestApp extends React.Component<Properties, State> {
     this.setState({
       imageSource: fileLocation,
       imagingScaling: newScaling
+    });
+  }
+
+  private changeCountry(newCountry: string) {
+    this.setState({
+      country: newCountry
     });
   }
 
