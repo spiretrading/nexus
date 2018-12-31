@@ -2,6 +2,7 @@ import * as React from 'react';
 import * as Nexus from 'nexus';
 import { DisplaySize } from '../display_size';
 import { NONAME } from 'dns';
+import { url } from 'inspector';
 
 interface Properties {
 
@@ -54,6 +55,8 @@ export class CountrySelectionBox extends React.Component<Properties, State> {
         return CountrySelectionBox.STYLE.selectionBoxStyle;
       }
     })();
+    const dropDownArrowStyle = (() => {
+    })();
     return (
       <select value={this.props.value.code || ''}
           disabled={this.props.readonly}
@@ -91,9 +94,11 @@ export class CountrySelectionBox extends React.Component<Properties, State> {
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       backgroundColor: '#F2F2F2',
-      background: `${CountrySelectionBox.ARROW_IMG_PATH} no-repeat 96% 0`,
-      '-moz-appearance': 'none',
-      '-webkit-appearance': 'none'
+      backgroundImage:
+        'url(resources/account_page/profile_page/arrow-down.svg)',
+      '-moz-appearance': 'none' as 'none',
+      '-webkit-appearance': 'none' as 'none',
+      appearance: 'none' as 'none'
     },
     disabledBoxStyle: {
       boxSizing: 'border-box' as 'border-box',
@@ -103,8 +108,9 @@ export class CountrySelectionBox extends React.Component<Properties, State> {
       backgroundColor: '#FFFFFF',
       border: '1px solid #FFFFFF',
       borderRadius: '1px',
-      '-moz-appearance': 'none',
-      '-webkit-appearance': 'none'
+      '-moz-appearance': 'none' as 'none',
+      '-webkit-appearance': 'none' as 'none',
+      appearance: 'none' as 'none'
     }
   };
   private static readonly ARROW_IMG_PATH =
