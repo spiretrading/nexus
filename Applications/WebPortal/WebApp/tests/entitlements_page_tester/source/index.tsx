@@ -1,4 +1,4 @@
-import * as Beam from 'Beam';
+import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
@@ -7,6 +7,7 @@ import * as WebPortal from 'web_portal';
 interface Properties {
   displaySize: WebPortal.DisplaySize;
 }
+
 interface State {
   roles: Nexus.AccountRoles;
   checkedDB: Beam.Set<Beam.DirectoryEntry>;
