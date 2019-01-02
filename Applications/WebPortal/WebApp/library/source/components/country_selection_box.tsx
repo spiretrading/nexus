@@ -1,8 +1,7 @@
+import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import * as Nexus from 'nexus';
 import { DisplaySize } from '../display_size';
-import { NONAME } from 'dns';
-import { url } from 'inspector';
 
 interface Properties {
 
@@ -58,6 +57,7 @@ export class CountrySelectionBox extends React.Component<Properties, State> {
     return (
       <select value={this.props.value.code || ''}
           disabled={this.props.readonly}
+          className={css(CountrySelectionBox.EXTRA_STYLE.removeFocus)}
           style={{...boxStyle,...selectStyle}}
           onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
             let code;
@@ -76,7 +76,6 @@ export class CountrySelectionBox extends React.Component<Properties, State> {
         </option>);
     }
   }
-
 
   private static STYLE = {
     boxSmall: {
@@ -120,6 +119,23 @@ export class CountrySelectionBox extends React.Component<Properties, State> {
       appearance: 'none' as 'none'
     }
   };
+  public static readonly EXTRA_STYLE = StyleSheet.create({
+    removeFocus: {
+      ':focus': {
+        ouline: 0,
+        outlineColor: 'transparent',
+        outlineStyle: 'none'
+      },
+      '::moz-focus-inner': {
+        border: 0
+      },
+      ':-moz-focusring': {
+        color: 'transparent',
+        textShadow: '0 0 0 #000'
+      }
+    }
+  });
+
   private static readonly ARROW_IMG_PATH =
     'resources/account_page/profile_page/arrow-down.svg';
 }
