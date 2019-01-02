@@ -20,15 +20,15 @@ interface Properties {
   displaySize: DisplaySize;
 }
 
-/** Displays a selection box for countries. */
 interface State {
-  options: any[]; // better type
+  options: any[];
 }
 
-/** Displays an input form for a single item. */
+/** Displays a country seleciton box. */
 export class CountrySelectionBox extends React.Component<Properties, State> {
   public static readonly defaultProps = {
-    readonly: false
+    readonly: false,
+    onChange: () => {}
   }
 
   constructor(props: Properties) {
@@ -40,7 +40,7 @@ export class CountrySelectionBox extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const boxStyle = (() => {
+    const boxSizing = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return CountrySelectionBox.STYLE.boxSmall;
       } else {
@@ -55,15 +55,14 @@ export class CountrySelectionBox extends React.Component<Properties, State> {
       }
     })();
     return (
-      <select value={this.props.value.code || ''}
-          disabled={this.props.readonly}
-          className={css(CountrySelectionBox.EXTRA_STYLE.removeFocus)}
-          style={{...boxStyle,...selectStyle}}
+      <select value={this.props.value.code}
+          className={css(CountrySelectionBox.EXTRA_STYLE.noHighting)}
+          style={{...boxSizing,...selectStyle}}
           onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
             let code;
             code = new Nexus.CountryCode(parseInt(event.target.value, 10));
-            this.props.onChange(code);
-          }}>
+            this.props.onChange(code);}}
+          disabled={this.props.readonly}>
         {this.state.options}
       </select>);
   }
@@ -77,7 +76,7 @@ export class CountrySelectionBox extends React.Component<Properties, State> {
     }
   }
 
-  private static STYLE = {
+  private static readonly STYLE = {
     boxSmall: {
       maxWidth: '424px',
       height: '34px'
@@ -120,7 +119,7 @@ export class CountrySelectionBox extends React.Component<Properties, State> {
     }
   };
   public static readonly EXTRA_STYLE = StyleSheet.create({
-    removeFocus: {
+    noHighting: {
       ':focus': {
         ouline: 0,
         outlineColor: 'transparent',
@@ -135,7 +134,4 @@ export class CountrySelectionBox extends React.Component<Properties, State> {
       }
     }
   });
-
-  private static readonly ARROW_IMG_PATH =
-    'resources/account_page/profile_page/arrow-down.svg';
 }
