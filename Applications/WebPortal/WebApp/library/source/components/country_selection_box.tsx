@@ -96,6 +96,9 @@ export class CountrySelectionBox extends React.Component<Properties, State> {
       backgroundColor: '#F2F2F2',
       backgroundImage:
         'url(resources/account_page/profile_page/arrow-down.svg)',
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'right 10px top 50%',
+      backgroundSize: '8px 6px',
       '-moz-appearance': 'none' as 'none',
       '-webkit-appearance': 'none' as 'none',
       appearance: 'none' as 'none'
