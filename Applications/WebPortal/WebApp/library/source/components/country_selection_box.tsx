@@ -55,14 +55,14 @@ export class CountrySelectionBox extends React.Component<Properties, State> {
         return CountrySelectionBox.STYLE.selectionBoxStyle;
       }
     })();
-    const dropDownArrowStyle = (() => {
-    })();
     return (
       <select value={this.props.value.code || ''}
           disabled={this.props.readonly}
-          style={{...boxStyle,...selectStyle}}>
+          style={{...boxStyle,...selectStyle}}
           onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
-            this.props.onChange(this.props.value);
+            let code;
+            code = new Nexus.CountryCode(parseInt(event.target.value, 10));
+            this.props.onChange(code);
           }}>
         {this.state.options}
       </select>);
@@ -76,6 +76,7 @@ export class CountrySelectionBox extends React.Component<Properties, State> {
         </option>);
     }
   }
+
 
   private static STYLE = {
     boxSmall: {
@@ -101,7 +102,10 @@ export class CountrySelectionBox extends React.Component<Properties, State> {
       backgroundSize: '8px 6px',
       '-moz-appearance': 'none' as 'none',
       '-webkit-appearance': 'none' as 'none',
-      appearance: 'none' as 'none'
+      appearance: 'none' as 'none',
+      ':focus' : {
+        outline: 0
+      }
     },
     disabledBoxStyle: {
       boxSizing: 'border-box' as 'border-box',
