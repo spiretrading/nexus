@@ -240,6 +240,9 @@ void BookViewModel::HighlightQuote(const BookQuote& quote) {
 }
 
 void BookViewModel::AddQuote(const BookQuote& quote, int quoteIndex) {
+  if(quoteIndex >= 100) {
+    return;
+  }
   auto entry = std::make_unique<BookQuoteEntry>(BookQuoteEntry{quote, 0});
   auto i = m_bookQuotes.rbegin() + quoteIndex;
   beginInsertRows(QModelIndex(), quoteIndex, quoteIndex);
