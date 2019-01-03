@@ -52,7 +52,7 @@ export class CountrySelectionBox extends React.Component<Properties> {
       const optionsList = [];
       for(const country of this.props.countryDatabase) {
         optionsList.push(
-          <option value={country.code.code}> key={country.code.code}
+          <option value={country.code.code} key={country.code.code}>
             {country.name}
           </option>);
       }
