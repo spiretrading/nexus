@@ -22,7 +22,7 @@ interface Properties {
 }
 
 /** Displays a country seleciton box. */
-export class CountrySelectionBox extends React.Component<Properties, {}> {
+export class CountrySelectionBox extends React.Component<Properties> {
   public static readonly defaultProps = {
     readonly: false,
     onChange: () => {}
@@ -31,12 +31,6 @@ export class CountrySelectionBox extends React.Component<Properties, {}> {
   constructor(props: Properties) {
     super(props);
     this.onChange = this.onChange.bind(this);
-    for(const country of this.props.countryDatabase) {
-      this.options.push(
-        <option value={country.code.code}>
-          {country.name}
-        </option>);
-    }
   }
 
   public render(): JSX.Element {
@@ -54,13 +48,23 @@ export class CountrySelectionBox extends React.Component<Properties, {}> {
         return CountrySelectionBox.STYLE.selectionBoxStyle;
       }
     })();
+    const options = (() => {
+      const optionsList = [];
+      for(const country of this.props.countryDatabase) {
+        optionsList.push(
+          <option value={country.code.code}> key={country.code.code}
+            {country.name}
+          </option>);
+      }
+      return optionsList;
+    })();
     return (
       <select value={this.props.value.code}
           className={css(CountrySelectionBox.EXTRA_STYLE.noHighting)}
           style={{...boxSizing,...selectStyle}}
           onChange={this.onChange}
           disabled={this.props.readonly}>
-        {this.state.options}
+        {options}
       </select>);
   }
 
@@ -127,5 +131,4 @@ export class CountrySelectionBox extends React.Component<Properties, {}> {
       }
     }
   });
-  private options: any[];
 }
