@@ -17,15 +17,12 @@ interface Properties {
   /** The event handler called when the selection changes. */
   onChange?: (currency: Nexus.CountryCode) => void;
 
+  /** Determines the size of the element. */
   displaySize: DisplaySize;
 }
 
-interface State {
-  options: any[];
-}
-
 /** Displays a country seleciton box. */
-export class CountrySelectionBox extends React.Component<Properties, State> {
+export class CountrySelectionBox extends React.Component<Properties, {}> {
   public static readonly defaultProps = {
     readonly: false,
     onChange: () => {}
@@ -33,10 +30,13 @@ export class CountrySelectionBox extends React.Component<Properties, State> {
 
   constructor(props: Properties) {
     super(props);
-    this.state = {
-      options: []
-    };
-    this.generateList();
+    this.onChange = this.onChange.bind(this);
+    for(const country of this.props.countryDatabase) {
+      this.options.push(
+        <option value={country.code.code}>
+          {country.name}
+        </option>);
+    }
   }
 
   public render(): JSX.Element {
@@ -58,22 +58,15 @@ export class CountrySelectionBox extends React.Component<Properties, State> {
       <select value={this.props.value.code}
           className={css(CountrySelectionBox.EXTRA_STYLE.noHighting)}
           style={{...boxSizing,...selectStyle}}
-          onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
-            let code;
-            code = new Nexus.CountryCode(parseInt(event.target.value, 10));
-            this.props.onChange(code);}}
+          onChange={this.onChange}
           disabled={this.props.readonly}>
         {this.state.options}
       </select>);
   }
 
-  private generateList() {
-    for (const country of this.props.countryDatabase) {
-      this.state.options.push(
-        <option value={country.code.code}>
-          {country.name}
-        </option>);
-    }
+  private onChange(event: React.ChangeEvent<HTMLSelectElement>): void {
+    const code = new Nexus.CountryCode(parseInt(event.target.value, 10));
+    this.props.onChange(code);
   }
 
   private static readonly STYLE = {
@@ -134,4 +127,5 @@ export class CountrySelectionBox extends React.Component<Properties, State> {
       }
     }
   });
+  private options: any[];
 }
