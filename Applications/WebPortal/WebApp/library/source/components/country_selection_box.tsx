@@ -49,14 +49,14 @@ export class CountrySelectionBox extends React.Component<Properties> {
       }
     })();
     const options = (() => {
-      const optionsList = [];
+      const options = [];
       for(const country of this.props.countryDatabase) {
-        optionsList.push(
+        options.push(
           <option value={country.code.code} key={country.code.code}>
             {country.name}
           </option>);
       }
-      return optionsList;
+      return options;
     })();
     return (
       <select value={this.props.value.code}
