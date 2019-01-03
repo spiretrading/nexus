@@ -46,10 +46,10 @@ export class FormEntry extends React.Component<Properties> {
           </HBoxLayout>);
       } else {
         return (
-          <VBoxLayout style={boxStyle}>
+          <VBoxLayout style={boxStyle} width='100%'>
             <div style={FormEntry.STYLE.verticalHeader}>{this.props.name}</div>
             <Padding size={FormEntry.VERTICAL_PADDING}/>
-            <div>{this.props.children}</div>
+            {this.props.children}
           </VBoxLayout>);
       }
     })();
@@ -62,6 +62,9 @@ export class FormEntry extends React.Component<Properties> {
   private static STYLE = {
     box: {
       cursor: 'default'
+    },
+    childBox: {
+      width: '100%'
     },
     horizontalHeader: {
       height: '34px',
@@ -77,7 +80,8 @@ export class FormEntry extends React.Component<Properties> {
       height: '16px',
       font: '400 14px Roboto',
       color: '#000000',
-      paddingLeft: '10px'
+      paddingLeft: '10px',
+      width: '100%'
     }
   };
   private static readonly VERTICAL_PADDING = '12px';
