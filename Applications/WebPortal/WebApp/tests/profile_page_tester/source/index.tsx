@@ -3,7 +3,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
- /** Determines the size to render components at. */
+/** Determines the size to render components at. */
 interface Properties {
   displaySize: WebPortal.DisplaySize;
 }
@@ -44,75 +44,33 @@ class TestApp extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const orientation = (() => {
-      if(this.props.displaySize === WebPortal.DisplaySize.SMALL) {
+      if (this.props.displaySize === WebPortal.DisplaySize.SMALL) {
         return WebPortal.FormEntry.Orientation.VERTICAL;
       } else {
         return WebPortal.FormEntry.Orientation.HORIZONTAL;
       }
     })();
     return (
-      <WebPortal.HBoxLayout width='100%' height='100%'>
-        <WebPortal.Padding size='18px'/>
-        <WebPortal.VBoxLayout width='100%' height='100%'>
-          <WebPortal.Padding size='80px'/>
-          <WebPortal.PhotoField
-            displaySize={this.props.displaySize}
-            displayMode={this.state.photoFieldDisplayMode}
-            imageSource = {this.state.imageSource}
-            readonly={this.state.isPhotoFieldReadonly}
-            onSubmit={this.updateImage}
-            onToggleUploader={this.toggleDisplayMode}
-            scaling={this.state.imagingScaling}/>
-          <WebPortal.Padding size='30px'/>
-          <WebPortal.FormEntry name='First Name'
-              readonly
-              orientation={orientation}>
-            <WebPortal.TextField
-              value = 'Gandalf'
-              displaySize={this.props.displaySize}
-              disabled/>
-          </WebPortal.FormEntry>
-          <WebPortal.Padding size='30px'/>
-          <WebPortal.FormEntry name='Last Name'
-              orientation={orientation}>
-            <WebPortal.TextField
-              displaySize={this.props.displaySize}
-              value={this.state.lastNameValue}
-              onInput={this.onTextInput}/>
-          </WebPortal.FormEntry>
-          <WebPortal.Padding size='30px'/>
-          <WebPortal.RolesField roles={this.state.someRoles}
-            onClick={this.onRoleClick}/>
-          <WebPortal.Padding size='30px'/>
-          <WebPortal.FormEntry name='Country' orientation={orientation} >
-            <WebPortal.CountrySelectionBox
-              displaySize={this.props.displaySize}
-              value={this.state.country}
-              onChange={this.changeCountry}
-              countryDatabase={this.state.countryDatabase}/>
-          </WebPortal.FormEntry>
-          <WebPortal.Padding size='30px'/>
-          <WebPortal.FormEntry name='Country' orientation={orientation} >
-            <WebPortal.CountrySelectionBox
-              readonly
-              displaySize={this.props.displaySize}
-              value={Nexus.DefaultCountries.AU}
-              onChange={this.changeCountry}
-              countryDatabase={this.state.countryDatabase}/>
-          </WebPortal.FormEntry>
-        </WebPortal.VBoxLayout>
-        <WebPortal.Padding size='18px'/>
+      <div>
+        <WebPortal.ProfilePage
+          roles={this.state.someRoles}
+          identity={null}
+          displaySize={this.props.displaySize}
+          isSubmitEnabled={true}
+          submitStatus={''}
+          hasError={false}
+        />
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
-              onClick={this.toggleReadOnly}>
+            onClick={this.toggleReadOnly}>
             TOGGLE PHOTOFIELD READONLY
           </button>
           <button tabIndex={-1}
-              onClick={this.changeImage}>
+            onClick={this.changeImage}>
             CHANGE IMAGE
           </button>
         </div>
-      </WebPortal.HBoxLayout>);
+      </div>);
   }
 
   private onTextInput(value: string) {
@@ -122,12 +80,12 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   private onRoleClick(role: Nexus.AccountRoles.Role) {
-    if(this.state.someRoles.test(role)) {
+    if (this.state.someRoles.test(role)) {
       this.state.someRoles.unset(role);
     } else {
       this.state.someRoles.set(role);
     }
-    this.setState({someRoles: this.state.someRoles});
+    this.setState({ someRoles: this.state.someRoles });
   }
 
   private toggleReadOnly() {
@@ -137,7 +95,7 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   private changeImage() {
-    if(this.state.imageSource) {
+    if (this.state.imageSource) {
       this.setState({
         imageSource: null
       });
@@ -162,10 +120,10 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   private toggleDisplayMode() {
-    if(this.state.photoFieldDisplayMode === WebPortal.DisplayMode.DISPLAY) {
-      this.setState({photoFieldDisplayMode: WebPortal.DisplayMode.UPLOADING});
+    if (this.state.photoFieldDisplayMode === WebPortal.DisplayMode.DISPLAY) {
+      this.setState({ photoFieldDisplayMode: WebPortal.DisplayMode.UPLOADING });
     } else {
-      this.setState({photoFieldDisplayMode: WebPortal.DisplayMode.DISPLAY});
+      this.setState({ photoFieldDisplayMode: WebPortal.DisplayMode.DISPLAY });
     }
   }
 
@@ -180,7 +138,8 @@ class TestApp extends React.Component<Properties, State> {
   private static readonly SOME_IMAGE = 'https://upload.wikimedia.org/' +
     'wikipedia/commons/thumb/2/23/Close_up_of_a_black_domestic_cat.jpg/' +
     '675px-Close_up_of_a_black_domestic_cat.jpg';
+  private static LINE_PADDING = '14px';
 }
 
 const ResponsivePage = WebPortal.displaySizeRenderer(TestApp);
-ReactDOM.render(<ResponsivePage/>, document.getElementById('main'));
+ReactDOM.render(<ResponsivePage />, document.getElementById('main'));
