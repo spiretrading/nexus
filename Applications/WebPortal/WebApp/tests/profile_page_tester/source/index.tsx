@@ -2,6 +2,7 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
+import { VBoxLayout, Padding } from 'web_portal';
 
 /** Determines the size to render components at. */
 interface Properties {
@@ -51,7 +52,8 @@ class TestApp extends React.Component<Properties, State> {
       }
     })();
     return (
-      <div>
+      <WebPortal.VBoxLayout>
+        <WebPortal.Padding size='20px'/>
         <WebPortal.ProfilePage
           roles={this.state.someRoles}
           identity={null}
@@ -70,7 +72,7 @@ class TestApp extends React.Component<Properties, State> {
             CHANGE IMAGE
           </button>
         </div>
-      </div>);
+      </WebPortal.VBoxLayout>);
   }
 
   private onTextInput(value: string) {
@@ -130,6 +132,7 @@ class TestApp extends React.Component<Properties, State> {
   private static STYLE = {
     testingComponents: {
       position: 'fixed' as 'fixed',
+      fontSize: '8px' ,
       top: 0,
       left: 0,
       zIndex: 500

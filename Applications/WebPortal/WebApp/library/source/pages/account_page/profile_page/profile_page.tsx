@@ -68,12 +68,13 @@ export class ProfilePage extends React.Component<Properties> {
       <HBoxLayout width='100%' height='100%'>
         <Padding size={ProfilePage.SIDE_PADDING} />
         <VBoxLayout>
-          <div>Last Login</div>
-          <div>Accound Information</div>
+          <div style={ProfilePage.STYLE.loginInfo}>Last Login</div>
+          <div style={ProfilePage.STYLE.headerStyler}>Accound Information</div>
           <HBoxLayout>
             <div>INSERT PHOTO</div>
              <Padding size={ProfilePage.SIDE_PADDING} />
             <VBoxLayout >
+              <div>INSERT PHOTO</div>
               <FormEntry name='First Name'
                 orientation={orientation}>
                 <TextField
@@ -191,7 +192,7 @@ export class ProfilePage extends React.Component<Properties> {
             </VBoxLayout>
           </HBoxLayout>
           <div>
-            <div> User Notes</div>
+            <div style={ProfilePage.STYLE.headerStyler}> User Notes</div>
             <CommentBox comment='boo' />
           </div>
         </VBoxLayout>
@@ -200,10 +201,12 @@ export class ProfilePage extends React.Component<Properties> {
   }
   private static readonly STYLE = {
     headerStyler: {
-
+      color: '#4B23A0',
+      font: '500 14px Roboto'
     },
     loginInfo: {
-
+      color: '#000000',
+      font: '400 14px Roboto'
     }
   };
   private static readonly LINE_PADDING = '14px';
