@@ -42,7 +42,9 @@ interface Properties {
 /** Displays an account's profile image. */
 export class PhotoField extends React.Component<Properties, {}> {
   public static readonly defaultProps = {
-    readonly: false
+    readonly: false,
+    onToggleUploader: () => {},
+    onSubmit: () => {}
   };
 
   public render(): JSX.Element {

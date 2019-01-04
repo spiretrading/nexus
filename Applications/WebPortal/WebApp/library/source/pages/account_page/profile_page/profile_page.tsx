@@ -1,11 +1,12 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize } from '../../..';
+import { DisplaySize, PhotoField } from '../../..';
 import { FormEntry, TextField } from '.';
 import { RolesField } from './roles_field';
 import { CommentBox } from '../comment_box';
 import { HLine } from '../../../components';
 import { VBoxLayout, Padding, HBoxLayout } from '../../../layouts';
+import { DisplayMode } from './photo_field';
 
 interface Properties {
 
@@ -64,17 +65,61 @@ export class ProfilePage extends React.Component<Properties> {
         return FormEntry.Orientation.HORIZONTAL;
       }
     })();
+    const contentWidth = (() => {
+      switch (this.props.displaySize) {
+        case DisplaySize.SMALL:
+          return null;
+        case DisplaySize.MEDIUM:
+          return '732px';
+        case DisplaySize.LARGE:
+          return '1000px';
+      }
+    })();
+    const sidePanelPhoto = (() => {
+      if (this.props.displaySize === DisplaySize.SMALL) {
+        return null;
+      } else {
+        return (<PhotoField
+          displaySize={this.props.displaySize}
+          displayMode={DisplayMode.DISPLAY}
+          imageSource={this.props.identity.photoId}
+          scaling={1} />);
+      }
+    })();
+    const sidePhotoPadding = (() => {
+      switch (this.props.displaySize) {
+        case DisplaySize.SMALL:
+          return 0;
+        case DisplaySize.MEDIUM:
+          return '30px';
+        case DisplaySize.LARGE:
+          return '100px';
+      }
+    })();
+    const topPanelPhoto = (() => {
+      if (this.props.displaySize === DisplaySize.SMALL) {
+        return (<PhotoField
+          displaySize={this.props.displaySize}
+          displayMode={DisplayMode.DISPLAY}
+          imageSource={this.props.identity.photoId}
+          scaling={1} />);
+      } else {
+        return null;
+      }
+    })();
     return (
-      <HBoxLayout width='100%' height='100%'>
-        <Padding size={ProfilePage.SIDE_PADDING} />
-        <VBoxLayout>
+      <div style={ProfilePage.STYLE.page}>
+        <div style={ProfilePage.STYLE.fixedSizePadding}/>
+        <VBoxLayout width={contentWidth}>
           <div style={ProfilePage.STYLE.loginInfo}>Last Login</div>
+          <Padding size='30px' />
           <div style={ProfilePage.STYLE.headerStyler}>Accound Information</div>
-          <HBoxLayout>
-            <div>INSERT PHOTO</div>
-             <Padding size={ProfilePage.SIDE_PADDING} />
-            <VBoxLayout >
-              <div>INSERT PHOTO</div>
+          <Padding size='30px' />
+          <HBoxLayout width={contentWidth}>
+            {sidePanelPhoto}
+            <Padding size={sidePhotoPadding} />
+            <VBoxLayout width='100%' >
+              {topPanelPhoto}
               <FormEntry name='First Name'
                 orientation={orientation}>
                 <TextField
@@ -191,22 +236,39 @@ export class ProfilePage extends React.Component<Properties> {
               </FormEntry>
             </VBoxLayout>
           </HBoxLayout>
-          <div>
-            <div style={ProfilePage.STYLE.headerStyler}> User Notes</div>
-            <CommentBox comment='boo' />
-          </div>
+
+          <div style={ProfilePage.STYLE.headerStyler}> User Notes</div>
+          <CommentBox comment='boo' />
+
         </VBoxLayout>
-        <Padding size={ProfilePage.SIDE_PADDING} />
-      </HBoxLayout>);
+        <div style={ProfilePage.STYLE.fixedSizePadding}/>
+      </div>);
   }
   private static readonly STYLE = {
+    page: {
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row'
+    },
+    
     headerStyler: {
       color: '#4B23A0',
-      font: '500 14px Roboto'
+      font: '500 14px Roboto',
+      wdith: '100%'
     },
     loginInfo: {
       color: '#000000',
       font: '400 14px Roboto'
+    },
+    hidden: {
+      opacity: 0,
+      visibility: 'hidden' as 'hidden',
+      display: 'none' as 'none'
+    },
+    filler: {
+      flexGrow: 1
+    },
+    fixedSizePadding: {
+      width: '30px'
     }
   };
   private static readonly LINE_PADDING = '14px';

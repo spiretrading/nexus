@@ -18,6 +18,7 @@ interface State {
   photoFieldDisplayMode: WebPortal.DisplayMode;
   countryDatabase: Nexus.CountryDatabase;
   country: Nexus.CountryCode;
+  identity: Nexus.AccountIdentity;
 }
 
 /**  Displays a testing application. */
@@ -32,7 +33,8 @@ class TestApp extends React.Component<Properties, State> {
       imagingScaling: 1,
       photoFieldDisplayMode: WebPortal.DisplayMode.DISPLAY,
       countryDatabase: Nexus.buildDefaultCountryDatabase(),
-      country: Nexus.DefaultCountries.CA
+      country: Nexus.DefaultCountries.CA,
+      identity: new Nexus.AccountIdentity()
     };
     this.onTextInput = this.onTextInput.bind(this);
     this.onRoleClick = this.onRoleClick.bind(this);
@@ -52,17 +54,19 @@ class TestApp extends React.Component<Properties, State> {
       }
     })();
     return (
-      <WebPortal.VBoxLayout>
-        <WebPortal.Padding size='20px'/>
+
         <WebPortal.ProfilePage
           roles={this.state.someRoles}
-          identity={null}
+          identity={this.state.identity}
           displaySize={this.props.displaySize}
           isSubmitEnabled={true}
           submitStatus={''}
           hasError={false}
         />
-        <div style={TestApp.STYLE.testingComponents}>
+        );
+  }
+/** 
+<div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
             onClick={this.toggleReadOnly}>
             TOGGLE PHOTOFIELD READONLY
@@ -72,7 +76,10 @@ class TestApp extends React.Component<Properties, State> {
             CHANGE IMAGE
           </button>
         </div>
-      </WebPortal.VBoxLayout>);
+    </div> */
+
+  public componentDidMount() {
+    this.state.identity.photoId = TestApp.SOME_IMAGE;
   }
 
   private onTextInput(value: string) {
