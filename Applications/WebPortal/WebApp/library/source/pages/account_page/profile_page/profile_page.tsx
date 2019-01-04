@@ -68,11 +68,11 @@ export class ProfilePage extends React.Component<Properties> {
     const contentWidth = (() => {
       switch (this.props.displaySize) {
         case DisplaySize.SMALL:
-          return null;
+          return ProfilePage.STYLE.contentSmall;
         case DisplaySize.MEDIUM:
-          return '732px';
+          return ProfilePage.STYLE.contentMedium;
         case DisplaySize.LARGE:
-          return '1000px';
+          return ProfilePage.STYLE.contentLarge;
       }
     })();
     const sidePanelPhoto = (() => {
@@ -109,141 +109,146 @@ export class ProfilePage extends React.Component<Properties> {
     })();
     return (
       <div style={ProfilePage.STYLE.page}>
-        <div style={ProfilePage.STYLE.fixedSizePadding}/>
-        <div style={ProfilePage.STYLE.filler}>
-        <VBoxLayout width={contentWidth}>
-          <div style={ProfilePage.STYLE.loginInfo}>Last Login</div>
-          <Padding size='30px' />
-          <div style={ProfilePage.STYLE.headerStyler}>Accound Information</div>
-          <Padding size='30px' />
-          <HBoxLayout width={contentWidth}>
-            {sidePanelPhoto}
-            <Padding size={sidePhotoPadding} />
-            <VBoxLayout width='100%' >
-              {topPanelPhoto}
-              <FormEntry name='First Name'
-                orientation={orientation}>
-                <TextField
-                  value='Frodo'
-                  displaySize={this.props.displaySize}
-                  disabled />
-              </FormEntry>
-              <Padding size={ProfilePage.LINE_PADDING} />
-              <HLine color='#E6E6E6' />
-              <Padding size={ProfilePage.LINE_PADDING} />
-              <FormEntry name='Last Name'
-                orientation={orientation}>
-                <TextField
-                  value='Baggins'
-                  displaySize={this.props.displaySize}
-                  disabled />
-              </FormEntry>
-              <Padding size={ProfilePage.LINE_PADDING} />
-              <HLine color='#E6E6E6' />
-              <Padding size={ProfilePage.LINE_PADDING} />
-              <FormEntry name='Username'
-                orientation={orientation}>
-                <TextField
-                  value='frodo_of_the_nine_fingers'
-                  displaySize={this.props.displaySize}
-                  disabled />
-              </FormEntry>
-              <Padding size={ProfilePage.LINE_PADDING} />
-              <HLine color='#E6E6E6' />
-              <Padding size={ProfilePage.LINE_PADDING} />
-              <FormEntry name='Role(s)'
-                orientation={orientation}>
-                <RolesField roles={this.props.roles} />
-              </FormEntry>
-              <Padding size={ProfilePage.LINE_PADDING} />
-              <HLine color='#E6E6E6' />
-              <Padding size={ProfilePage.LINE_PADDING} />
-              <FormEntry name='Groups(s)'
-                orientation={orientation}>
-                <TextField
-                  value='shire_office'
-                  displaySize={this.props.displaySize}
-                  disabled />
-              </FormEntry>
-              <Padding size={ProfilePage.LINE_PADDING} />
-              <HLine color='#E6E6E6' />
-              <Padding size={ProfilePage.LINE_PADDING} />
-              <FormEntry name='Regestration Date'
-                orientation={orientation}>
-                <TextField
-                  value='PUT A GOOD VALUE HERE'
-                  displaySize={this.props.displaySize}
-                  disabled />
-              </FormEntry>
-              <Padding size={ProfilePage.LINE_PADDING} />
-              <HLine color='#E6E6E6' />
-              <Padding size={ProfilePage.LINE_PADDING} />
-              <FormEntry name='ID Number'
-                orientation={orientation}>
-                <TextField
-                  value='SR68'
-                  displaySize={this.props.displaySize}
-                  disabled />
-              </FormEntry>
-              <Padding size={ProfilePage.LINE_PADDING} />
-              <HLine color='#E6E6E6' />
-              <Padding size={ProfilePage.LINE_PADDING} />
-              <FormEntry name='Email'
-                orientation={orientation}>
-                <TextField
-                  value='frodo@bagend.nz'
-                  displaySize={this.props.displaySize}
-                  disabled />
-              </FormEntry>
-              <Padding size={ProfilePage.LINE_PADDING} />
-              <HLine color='#E6E6E6' />
-              <Padding size={ProfilePage.LINE_PADDING} />
-              <FormEntry name='Address'
-                orientation={orientation}>
-                <TextField
-                  value='56 Bag End'
-                  displaySize={this.props.displaySize}
-                  disabled />
-              </FormEntry>
-              <Padding size={ProfilePage.LINE_PADDING} />
-              <HLine color='#E6E6E6' />
-              <Padding size={ProfilePage.LINE_PADDING} />
-              <FormEntry name='City'
-                orientation={orientation}>
-                <TextField
-                  value='Hobbiton'
-                  displaySize={this.props.displaySize}
-                  disabled />
-              </FormEntry>
-              <Padding size={ProfilePage.LINE_PADDING} />
-              <HLine color='#E6E6E6' />
-              <Padding size={ProfilePage.LINE_PADDING} />
-              <FormEntry name='Province/State'
-                orientation={orientation}>
-                <TextField
-                  value='Westfarthing'
-                  displaySize={this.props.displaySize}
-                  disabled />
-              </FormEntry>
-              <Padding size={ProfilePage.LINE_PADDING} />
-              <HLine color='#E6E6E6' />
-              <Padding size={ProfilePage.LINE_PADDING} />
-              <FormEntry name='Country'
-                orientation={orientation}>
-                <TextField
-                  value='Shire'
-                  displaySize={this.props.displaySize}
-                  disabled />
-              </FormEntry>
-            </VBoxLayout>
-          </HBoxLayout>
+        <div style={ProfilePage.STYLE.fixedSizePadding} />
+        <div style={contentWidth}>
+          <VBoxLayout width='100%'>
+            <Padding size='18px'/>
+            <div style={ProfilePage.STYLE.loginInfo}>Last Login</div>
+            <Padding size='30px' />
+            <div style={ProfilePage.STYLE.headerStyler}>
+            Account Information
+            </div>
+            <Padding size='30px' />
+            <HBoxLayout>
+              {sidePanelPhoto}
+              <Padding size={sidePhotoPadding} />
+              <VBoxLayout width='100%' >
+                {topPanelPhoto}
+                <FormEntry name='First Name'
+                  orientation={orientation}>
+                  <TextField
+                    value='Frodo'
+                    displaySize={this.props.displaySize}
+                    disabled />
+                </FormEntry>
+                <Padding size={ProfilePage.LINE_PADDING} />
+                <HLine color='#E6E6E6' />
+                <Padding size={ProfilePage.LINE_PADDING} />
+                <FormEntry name='Last Name'
+                  orientation={orientation}>
+                  <TextField
+                    value='Baggins'
+                    displaySize={this.props.displaySize}
+                    disabled />
+                </FormEntry>
+                <Padding size={ProfilePage.LINE_PADDING} />
+                <HLine color='#E6E6E6' />
+                <Padding size={ProfilePage.LINE_PADDING} />
+                <FormEntry name='Username'
+                  orientation={orientation}>
+                  <TextField
+                    value='frodo_of_the_nine_fingers'
+                    displaySize={this.props.displaySize}
+                    disabled />
+                </FormEntry>
+                <Padding size={ProfilePage.LINE_PADDING} />
+                <HLine color='#E6E6E6' />
+                <Padding size={ProfilePage.LINE_PADDING} />
+                <FormEntry name='Role(s)'
+                  orientation={orientation}>
+                  <div id='WRAPPER' style={ProfilePage.STYLE.rolesWrapper}>
+                    <RolesField roles={this.props.roles} />
+                  </div>
+                </FormEntry>
+                <Padding size={ProfilePage.LINE_PADDING} />
+                <HLine color='#E6E6E6' />
+                <Padding size={ProfilePage.LINE_PADDING} />
+                <FormEntry name='Groups(s)'
+                  orientation={orientation}>
+                  <TextField
+                    value='shire_office'
+                    displaySize={this.props.displaySize}
+                    disabled />
+                </FormEntry>
+                <Padding size={ProfilePage.LINE_PADDING} />
+                <HLine color='#E6E6E6' />
+                <Padding size={ProfilePage.LINE_PADDING} />
+                <FormEntry name='Regestration Date'
+                  orientation={orientation}>
+                  <TextField
+                    value='PUT A GOOD VALUE HERE'
+                    displaySize={this.props.displaySize}
+                    disabled />
+                </FormEntry>
+                <Padding size={ProfilePage.LINE_PADDING} />
+                <HLine color='#E6E6E6' />
+                <Padding size={ProfilePage.LINE_PADDING} />
+                <FormEntry name='ID Number'
+                  orientation={orientation}>
+                  <TextField
+                    value='SR68'
+                    displaySize={this.props.displaySize}
+                    disabled />
+                </FormEntry>
+                <Padding size={ProfilePage.LINE_PADDING} />
+                <HLine color='#E6E6E6' />
+                <Padding size={ProfilePage.LINE_PADDING} />
+                <FormEntry name='Email'
+                  orientation={orientation}>
+                  <TextField
+                    value='frodo@bagend.nz'
+                    displaySize={this.props.displaySize}
+                    disabled />
+                </FormEntry>
+                <Padding size={ProfilePage.LINE_PADDING} />
+                <HLine color='#E6E6E6' />
+                <Padding size={ProfilePage.LINE_PADDING} />
+                <FormEntry name='Address'
+                  orientation={orientation}>
+                  <TextField
+                    value='56 Bag End'
+                    displaySize={this.props.displaySize}
+                    disabled />
+                </FormEntry>
+                <Padding size={ProfilePage.LINE_PADDING} />
+                <HLine color='#E6E6E6' />
+                <Padding size={ProfilePage.LINE_PADDING} />
+                <FormEntry name='City'
+                  orientation={orientation}>
+                  <TextField
+                    value='Hobbiton'
+                    displaySize={this.props.displaySize}
+                    disabled />
+                </FormEntry>
+                <Padding size={ProfilePage.LINE_PADDING} />
+                <HLine color='#E6E6E6' />
+                <Padding size={ProfilePage.LINE_PADDING} />
+                <FormEntry name='Province/State'
+                  orientation={orientation}>
+                  <TextField
+                    value='Westfarthing'
+                    displaySize={this.props.displaySize}
+                    disabled />
+                </FormEntry>
+                <Padding size={ProfilePage.LINE_PADDING} />
+                <HLine color='#E6E6E6' />
+                <Padding size={ProfilePage.LINE_PADDING} />
+                <FormEntry name='Country'
+                  orientation={orientation}>
+                  <TextField
+                    value='Shire'
+                    displaySize={this.props.displaySize}
+                    disabled />
+                </FormEntry>
+              </VBoxLayout>
+            </HBoxLayout>
 
-          <div style={ProfilePage.STYLE.headerStyler}> User Notes</div>
-          <CommentBox comment='boo' />
+            <div style={ProfilePage.STYLE.headerStyler}> User Notes</div>
+            <CommentBox comment='boo' />
 
-        </VBoxLayout>
+          </VBoxLayout>
         </div>
-        <div style={ProfilePage.STYLE.fixedSizePadding}/>
+        <div style={ProfilePage.STYLE.fixedSizePadding} />
       </div>);
   }
   private static readonly STYLE = {
@@ -252,7 +257,6 @@ export class ProfilePage extends React.Component<Properties> {
       flexDirection: 'row' as 'row',
       justifyContent: 'space-between' as 'space-between'
     },
-    
     headerStyler: {
       color: '#4B23A0',
       font: '500 14px Roboto',
@@ -268,11 +272,28 @@ export class ProfilePage extends React.Component<Properties> {
       display: 'none' as 'none'
     },
     filler: {
+      flexGrow: 1
+    },
+    contentSmall: {
       flexGrow: 1,
       maxWidth: '424px'
     },
+    contentMedium: {
+      width: '732px'
+    },
+    contentLarge: {
+      width: '1000px'
+    },
     fixedSizePadding: {
       width: '30px'
+    },
+    rolesWrapper: {
+      marginLeft: '11px',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      height: '100%',
+      justifyContent: 'flex-start',
+      alignItems: 'center'
     }
   };
   private static readonly LINE_PADDING = '14px';
