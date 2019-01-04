@@ -98,11 +98,15 @@ export class ProfilePage extends React.Component<Properties> {
     })();
     const topPanelPhoto = (() => {
       if (this.props.displaySize === DisplaySize.SMALL) {
-        return (<PhotoField
+        return (
+        <VBoxLayout>
+        <PhotoField
           displaySize={this.props.displaySize}
           displayMode={DisplayMode.DISPLAY}
           imageSource={this.props.identity.photoId}
-          scaling={1} />);
+          scaling={1}/>
+          <Padding size='30px' />
+        </VBoxLayout>);
       } else {
         return null;
       }
