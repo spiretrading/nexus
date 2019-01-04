@@ -110,6 +110,7 @@ export class ProfilePage extends React.Component<Properties> {
     return (
       <div style={ProfilePage.STYLE.page}>
         <div style={ProfilePage.STYLE.fixedSizePadding}/>
+        <div style={ProfilePage.STYLE.filler}>
         <VBoxLayout width={contentWidth}>
           <div style={ProfilePage.STYLE.loginInfo}>Last Login</div>
           <Padding size='30px' />
@@ -241,13 +242,15 @@ export class ProfilePage extends React.Component<Properties> {
           <CommentBox comment='boo' />
 
         </VBoxLayout>
+        </div>
         <div style={ProfilePage.STYLE.fixedSizePadding}/>
       </div>);
   }
   private static readonly STYLE = {
     page: {
       display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row'
+      flexDirection: 'row' as 'row',
+      justifyContent: 'space-between' as 'space-between'
     },
     
     headerStyler: {
@@ -265,7 +268,8 @@ export class ProfilePage extends React.Component<Properties> {
       display: 'none' as 'none'
     },
     filler: {
-      flexGrow: 1
+      flexGrow: 1,
+      maxWidth: '424px'
     },
     fixedSizePadding: {
       width: '30px'
