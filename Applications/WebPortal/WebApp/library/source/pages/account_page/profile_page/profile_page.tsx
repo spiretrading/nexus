@@ -249,7 +249,7 @@ export class ProfilePage extends React.Component<Properties> {
 
             <div style={ProfilePage.STYLE.headerStyler}> User Notes</div>
             <CommentBox comment='boo' />
-
+            <Padding size='60px'/>
           </VBoxLayout>
         </div>
         <div style={ProfilePage.STYLE.fixedSizePadding} />
@@ -257,9 +257,12 @@ export class ProfilePage extends React.Component<Properties> {
   }
   private static readonly STYLE = {
     page: {
+      height: '100%',
+      width: '100%',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
-      justifyContent: 'space-between' as 'space-between'
+      justifyContent: 'space-between' as 'space-between',
+      overflowY: 'auto' as 'auto'
     },
     headerStyler: {
       color: '#4B23A0',
