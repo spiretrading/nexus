@@ -356,9 +356,9 @@ export class ProfilePage extends React.Component<Properties, State> {
 
 
             <div style={submitAndStatusBox}>
-
+              <div style={ProfilePage.STYLE.filler} />
               <div style={{ ...submitAndStatusBox, ...statusMessageInline }}>
-                <div style={ProfilePage.STYLE.filler} />
+
                 BEEP
                 <div style={ProfilePage.STYLE.passwordButtonPadding} />
               </div>
@@ -403,12 +403,15 @@ export class ProfilePage extends React.Component<Properties, State> {
               <button className={css(buttonStyle)}>
                 Save Password
               </button>
-              <div style={passwordStatusMessageUnderneath}>
-                <div style={ProfilePage.STYLE.tinyPadding} />
-                BEEP
-            </div>
-            </div>
 
+            </div>
+            <div style={ProfilePage.STYLE.mediumPadding} />
+            <div style={{...passwordStatusMessageUnderneath, 
+              ...newPasswordBox }}>
+              
+              BEEP
+              <div style={ProfilePage.STYLE.filler} />
+            </div>
             <Padding size={ProfilePage.BOTTOM_PADDING} />
           </VBoxLayout>
         </div>
@@ -479,7 +482,7 @@ export class ProfilePage extends React.Component<Properties, State> {
       alignItems: 'center'
     },
     passwordBoxLarge: {
-      width: '100%',
+      //width: '100%',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       flexWrap: 'nowrap' as 'nowrap',
@@ -519,6 +522,8 @@ export class ProfilePage extends React.Component<Properties, State> {
       }
     },
     buttonLarge: {
+      margin: 0,
+      padding: 0,
       boxSizing: 'border-box' as 'border-box',
       width: '200px',
       height: '34px',
