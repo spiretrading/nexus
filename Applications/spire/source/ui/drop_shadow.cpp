@@ -4,7 +4,7 @@
 #include <QLinearGradient>
 #include <QPainter>
 #include <QRadialGradient>
-#include "qt_windows.h"
+#include <qt_windows.h>
 #include "spire/spire/dimensions.hpp"
 
 using namespace Spire;
