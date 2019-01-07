@@ -98,7 +98,7 @@ export class ProfilePage extends React.Component<Properties, State> {
           scaling={1} />);
       }
     })();
-    const sidePhotoPadding = (() => {
+    const sidePanelPhotoPadding = (() => {
       switch (this.props.displaySize) {
         case DisplaySize.SMALL:
           return 0;
@@ -123,6 +123,34 @@ export class ProfilePage extends React.Component<Properties, State> {
         return null;
       }
     })();
+    const formFooter = (() => {
+      if (this.props.displaySize === DisplaySize.SMALL) {
+        return  <HLine color={ProfilePage.LINE_COLOR}/>;
+      } else {
+        return (null);
+      }
+    })();
+    const formFooterPadding = (() => {
+      if (this.props.displaySize === DisplaySize.SMALL) {
+        return  ProfilePage.STD_PADDING;
+      } else {
+        return (null);
+      }
+    })();
+    const newPasswordBox = (() => {
+      if (this.props.displaySize === DisplaySize.SMALL) {
+        return  ProfilePage.STYLE.passwordBoxSmall;
+      } else {
+        return  ProfilePage.STYLE.passwordBoxLarge;
+      }
+    })();
+    const buttonStyle = (() => {
+      if (this.props.displaySize === DisplaySize.SMALL) {
+        return  ProfilePage.DYNAMIC_STYLES.buttonSmall;
+      } else {
+        return  ProfilePage.DYNAMIC_STYLES.buttonLarge;
+      }
+    })();
     return (
       <div style={ProfilePage.STYLE.page}>
         <div style={ProfilePage.STYLE.fixedSizePadding} />
@@ -137,7 +165,7 @@ export class ProfilePage extends React.Component<Properties, State> {
             <Padding size='30px' />
             <HBoxLayout>
               {sidePanelPhoto}
-              <Padding size={sidePhotoPadding} />
+              <Padding size={sidePanelPhotoPadding} />
               <VBoxLayout width='100%' >
                 {topPanelPhoto}
                 <FormEntry name='First Name'
@@ -258,12 +286,48 @@ export class ProfilePage extends React.Component<Properties, State> {
                     onChange={() => {}}
                     countryDatabase={this.state.countryDatabase} />
                 </FormEntry>
+                <Padding size={ProfilePage.STD_PADDING}/>
+                {formFooter}
+                <Padding size={formFooterPadding}/>
               </VBoxLayout>
             </HBoxLayout>
-
-            <div style={ProfilePage.STYLE.headerStyler}> User Notes</div>
-            <CommentBox comment='boo' />
-            <Padding size='60px' />
+            <div style={ProfilePage.STYLE.headerStyler}>User Notes</div>
+            <CommentBox comment='boo'/>
+            <Padding size={ProfilePage.STD_PADDING}/>
+            <button className={css(buttonStyle)}>
+              Save Changes
+            </button>
+            <Padding size={ProfilePage.STD_PADDING} />
+            <HLine color='#E6E6E6'/>
+            <Padding size={ProfilePage.STD_PADDING} />
+            <div style={ProfilePage.STYLE.headerStyler}>Change Password</div>
+            <Padding size={ProfilePage.STD_PADDING} />
+            <div style={newPasswordBox}>
+              <input type='password' placeholder='New Password'
+                autoComplete='off'
+                className={css(ProfilePage.DYNAMIC_STYLES.inputBox)}
+                disabled={false}
+                onFocus={() => this.passwordInputField.placeholder = ''}
+                onBlur={() =>
+                  this.passwordInputField.placeholder = 'New Password'}
+                ref={(ref) => this.passwordInputField = ref}/>
+                <div style={ProfilePage.STYLE.passwordPadding}/>
+              <input type='password' placeholder='Confirm New Password'
+              autoComplete='off'
+                className={css(ProfilePage.DYNAMIC_STYLES.inputBox)}
+                disabled={true}
+                onFocus={() => this.confirmPasswordInputField.placeholder = ''}
+                onBlur={() =>
+                  this.confirmPasswordInputField.placeholder
+                  = 'Confirm New Password'}
+                ref={(ref) => this.confirmPasswordInputField = ref}/>
+                <div style={ProfilePage.STYLE.filler}/>
+                <div style={ProfilePage.STYLE.passwordButtonPadding}/>
+              <button className={css(buttonStyle)}>
+              Save Password
+              </button>
+            </div>
+            <Padding size={ProfilePage.BOTTOM_PADDING}/>
           </VBoxLayout>
         </div>
         <div style={ProfilePage.STYLE.fixedSizePadding} />
@@ -315,11 +379,29 @@ export class ProfilePage extends React.Component<Properties, State> {
       height: '34px',
       justifyContent: 'flex-start',
       alignItems: 'center'
+    },
+    passwordBoxLarge: {
+      width: '100%',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row'
+    },
+    passwordBoxSmall: {
+      display: 'flex' as 'flex',
+      flexDirection: 'column' as 'column'
+    },
+    passwordPadding: {
+      height: '18px',
+      width: '18px'
+    },
+    passwordButtonPadding: {
+      height: '30px',
+      width: '30px'
     }
   };
-  private static EXTRA_STYLE = StyleSheet.create({
-    button: {
-      width: '246px',
+  private static DYNAMIC_STYLES = StyleSheet.create({
+    buttonSmall: {
+      boxSizing: 'border-box' as 'border-box',
+      width: '100%',
       height: '34px',
       backgroundColor: '#684BC7',
       font: '400 14px Roboto',
@@ -333,8 +415,73 @@ export class ProfilePage extends React.Component<Properties, State> {
         backgroundColor: '#F8F8F8',
         color: '#8C8C8C'
       }
+    },
+    buttonLarge: {
+      boxSizing: 'border-box' as 'border-box',
+      width: '200px',
+      height: '34px',
+      backgroundColor: '#684BC7',
+      font: '400 14px Roboto',
+      color: '#FFFFFF',
+      border: 'none',
+      outline: 0,
+      ':active': {
+        backgroundColor: '#4B23A0'
+      },
+      ':disabled': {
+        backgroundColor: '#F8F8F8',
+        color: '#8C8C8C'
+      }
+    },
+    inputBox: {
+      boxSizing: 'border-box' as 'border-box',
+      width: '284px',
+      padding: 0,
+      height: '34px',
+      border: '1px solid #C8C8C8',
+      backgroundColor: '#FFFFFF',
+      color: '#000000',
+      font: '300 16px Roboto',
+      outline: 0,
+      textAlign: 'center',
+      borderRadius: 0,
+      ':active': {
+        border: '1px solid #684BC7'
+      },
+      '::placeholder': {
+        color: '#8C8C8C'
+      },
+      '::-moz-placeholder': {
+        color: '#8C8C8C',
+        opacity: 1
+      },
+      '::-ms-input-placeholder': {
+        color: '#8C8C8C',
+        opacity: 1
+      },
+      '::-ms-clear': {
+        display: 'none'
+      },
+      '::-ms-reveal': {
+        display: 'none'
+      },
+      '::-webkit-autofill': {
+        backgroundColor:  'none'
+      },
+      '::-webkit-credentials-auto-fill-button': {
+        visibility: 'hidden' as 'hidden',
+        display: 'none !important',
+        pointerEvents: 'none',
+        height: 0,
+        width: 0,
+        margin: 0
+      }
     }
   });
   private static readonly LINE_PADDING = '14px';
-  private static readonly SIDE_PADDING = '30px';
+  private static readonly STD_PADDING = '30px';
+  private static readonly BOTTOM_PADDING = '60px';
+  private static readonly LINE_COLOR = '#E6E6E6';
+  private passwordInputField: HTMLInputElement;
+  private confirmPasswordInputField: HTMLInputElement;
 }

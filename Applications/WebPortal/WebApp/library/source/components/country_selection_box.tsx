@@ -76,17 +76,18 @@ export class CountrySelectionBox extends React.Component<Properties> {
   private static readonly STYLE = {
     boxSmall: {
       maxWidth: '424px',
-      height: '34px'
+      height: '34px',
+      font: '400 16px Roboto'
     },
     boxLarge: {
       width: '200px',
-      height: '34px'
+      height: '34px',
+      font: '400 14px Roboto'
     },
     selectionBoxStyle: {
       boxSizing: 'border-box' as 'border-box',
       paddingLeft: '6px',
       color: '#000000',
-      font: '400 16px Roboto',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       backgroundColor: '#F2F2F2',
@@ -106,7 +107,6 @@ export class CountrySelectionBox extends React.Component<Properties> {
       boxSizing: 'border-box' as 'border-box',
       paddingLeft: '6px',
       color: '#000000',
-      font: '400 16px Roboto',
       backgroundColor: '#FFFFFF',
       border: '1px solid #FFFFFF',
       borderRadius: '1px',
