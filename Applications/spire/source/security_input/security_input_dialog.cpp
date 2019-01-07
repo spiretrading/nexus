@@ -18,7 +18,8 @@ SecurityInputDialog::SecurityInputDialog(SecurityInputModel& model,
 
 SecurityInputDialog::SecurityInputDialog(SecurityInputModel& model,
     const QString& initial_text, QWidget* parent, Qt::WindowFlags flags)
-    : QDialog(parent, Qt::FramelessWindowHint | flags),
+    : QDialog(parent, Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint |
+        flags),
       m_is_dragging(false) {
   setWindowModality(Qt::WindowModal);
   m_shadow = std::make_unique<DropShadow>(this);

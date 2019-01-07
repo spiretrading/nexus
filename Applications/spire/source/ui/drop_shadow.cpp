@@ -1,8 +1,10 @@
 #include "spire/ui/drop_shadow.hpp"
+#include <QApplication>
 #include <QEvent>
 #include <QLinearGradient>
 #include <QPainter>
 #include <QRadialGradient>
+#include "qt_windows.h"
 #include "spire/spire/dimensions.hpp"
 
 using namespace Spire;
@@ -41,6 +43,7 @@ DropShadow::DropShadow(bool is_menu_shadow, bool has_top, QWidget* parent)
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_ShowWithoutActivating);
   m_parent->window()->installEventFilter(this);
+  qApp->installNativeEventFilter(this);
 }
 
 bool DropShadow::event(QEvent* event) {
@@ -68,6 +71,16 @@ bool DropShadow::eventFilter(QObject* watched, QEvent* event) {
 
 void DropShadow::hideEvent(QHideEvent* event) {
   m_is_visible = false;
+}
+
+bool DropShadow::nativeEventFilter(const QByteArray& event_type, void* message,
+    long* result) {
+  auto msg = static_cast<MSG*>(message);
+  if(msg->message == WM_WINDOWPOSCHANGING) {
+    auto pos = reinterpret_cast<WINDOWPOS*>(msg->lParam);
+    pos->hwndInsertAfter = reinterpret_cast<HWND>(m_parent->effectiveWinId());
+  }
+  return false;
 }
 
 void DropShadow::paintEvent(QPaintEvent* event) {

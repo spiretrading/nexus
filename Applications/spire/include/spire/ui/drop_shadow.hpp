@@ -1,12 +1,13 @@
 #ifndef SPIRE_DROP_SHADOW
 #define SPIRE_DROP_SHADOW
+#include <QAbstractNativeEventFilter>
 #include <QWidget>
 #include "spire/ui/ui.hpp"
 
 namespace Spire {
 
   //! Paints a drop shadow around its parent widget.
-  class DropShadow : public QWidget {
+  class DropShadow : public QWidget, public QAbstractNativeEventFilter {
     public:
 
       //! Constructs a drop shadow.
@@ -35,6 +36,8 @@ namespace Spire {
       bool event(QEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
       void hideEvent(QHideEvent* event) override;
+      bool nativeEventFilter(const QByteArray& event_type, void* message,
+        long* result) override;
       void paintEvent(QPaintEvent* event) override;
 
     private:
