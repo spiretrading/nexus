@@ -1,8 +1,10 @@
 #include "spire/ui/drop_shadow.hpp"
+#include <QApplication>
 #include <QEvent>
 #include <QLinearGradient>
 #include <QPainter>
 #include <QRadialGradient>
+#include <qt_windows.h>
 #include "spire/spire/dimensions.hpp"
 
 using namespace Spire;
@@ -32,7 +34,8 @@ DropShadow::DropShadow(bool has_top, QWidget* parent)
     : DropShadow(false, has_top, parent) {}
 
 DropShadow::DropShadow(bool is_menu_shadow, bool has_top, QWidget* parent)
-    : QWidget(nullptr, Qt::FramelessWindowHint | Qt::Tool),
+    : QWidget(nullptr, Qt::FramelessWindowHint | Qt::Tool |
+        Qt::WindowStaysOnTopHint),
       m_parent(parent),
       m_has_top(has_top),
       m_is_menu_shadow(is_menu_shadow),
@@ -40,6 +43,7 @@ DropShadow::DropShadow(bool is_menu_shadow, bool has_top, QWidget* parent)
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_ShowWithoutActivating);
   m_parent->window()->installEventFilter(this);
+  qApp->installNativeEventFilter(this);
 }
 
 bool DropShadow::event(QEvent* event) {
@@ -69,53 +73,24 @@ void DropShadow::hideEvent(QHideEvent* event) {
   m_is_visible = false;
 }
 
-#ifdef Q_OS_WIN
-void DropShadow::paintEvent(QPaintEvent* event) {
-  if(!m_is_visible) {
-    follow_parent();
-    m_is_visible = true;
+bool DropShadow::nativeEventFilter(const QByteArray& event_type, void* message,
+    long* result) {
+  auto msg = static_cast<MSG*>(message);
+  auto handle = reinterpret_cast<HWND>(window()->effectiveWinId());
+  if(handle == msg->hwnd && msg->message == WM_WINDOWPOSCHANGING) {
+    auto pos = reinterpret_cast<WINDOWPOS*>(msg->lParam);
+    pos->hwndInsertAfter = reinterpret_cast<HWND>(m_parent->effectiveWinId());
   }
-  QPainter painter(this);
-  auto background_color = QColor(0, 0, 0, 1);
-  auto parent_size = m_parent->frameGeometry().size();
-  auto shadow_size = this->shadow_size();
-  auto right_start = shadow_size.width() + parent_size.width();
-  auto bottom_start = shadow_size.height() + parent_size.height();
-  QRect top_left_rect(QPoint(0, 0), shadow_size);
-  QRect top_rect(QPoint(shadow_size.width(), 0),
-    QSize(parent_size.width(), shadow_size.height()));
-  if(m_has_top) {
-    painter.fillRect(top_left_rect, background_color);
-    painter.fillRect(top_rect, background_color);
-    auto top_right_rect = top_left_rect;
-    top_right_rect.translate(right_start, 0);
-    painter.fillRect(top_right_rect, background_color);
-  }
-  auto bottom_left_rect = top_left_rect;
-  bottom_left_rect.translate(0, bottom_start);
-  painter.fillRect(bottom_left_rect, background_color);
-  auto bottom_rect = top_rect;
-  bottom_rect.translate(0, bottom_start);
-  painter.fillRect(bottom_rect, background_color);
-  auto bottom_right_rect = top_left_rect;
-  bottom_right_rect.translate(right_start, bottom_start);
-  painter.fillRect(bottom_right_rect, background_color);
-  QRect left_rect(QPoint(0, shadow_size.height()),
-    QSize(shadow_size.width(), parent_size.height()));
-  painter.fillRect(left_rect, background_color);
-  auto right_rect = left_rect;
-  right_rect.translate(right_start, 0);
-  painter.fillRect(right_rect, background_color);
-  QWidget::paintEvent(event);
+  return false;
 }
-#else
+
 void DropShadow::paintEvent(QPaintEvent* event) {
   if(!m_is_visible) {
     follow_parent();
     m_is_visible = true;
   }
   QPainter painter(this);
-  auto parent_size = m_parent->frameGeometry().size();
+  auto parent_size = m_parent->size();
   auto shadow_size = this->shadow_size();
   auto right_start = shadow_size.width() + parent_size.width();
   auto bottom_start = shadow_size.height() + parent_size.height();
@@ -167,7 +142,6 @@ void DropShadow::paintEvent(QPaintEvent* event) {
   painter.fillRect(right_rect, right_gradient);
   QWidget::paintEvent(event);
 }
-#endif
 
 void DropShadow::follow_parent() {
   auto top_left = m_parent->window()->frameGeometry().topLeft();

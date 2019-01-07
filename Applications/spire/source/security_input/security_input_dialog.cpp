@@ -19,7 +19,8 @@ SecurityInputDialog::SecurityInputDialog(Ref<SecurityInputModel> model,
 
 SecurityInputDialog::SecurityInputDialog(Ref<SecurityInputModel> model,
     const QString& initial_text, QWidget* parent, Qt::WindowFlags flags)
-    : QDialog(parent, Qt::FramelessWindowHint | flags),
+    : QDialog(parent, Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint |
+        flags),
       m_model(model.Get()),
       m_initial_text(initial_text),
       m_is_dragging(false) {
