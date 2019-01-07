@@ -76,7 +76,8 @@ void DropShadow::hideEvent(QHideEvent* event) {
 bool DropShadow::nativeEventFilter(const QByteArray& event_type, void* message,
     long* result) {
   auto msg = static_cast<MSG*>(message);
-  if(msg->message == WM_WINDOWPOSCHANGING) {
+  auto handle = reinterpret_cast<HWND>(window()->effectiveWinId());
+  if(handle == msg->hwnd && msg->message == WM_WINDOWPOSCHANGING) {
     auto pos = reinterpret_cast<WINDOWPOS*>(msg->lParam);
     pos->hwndInsertAfter = reinterpret_cast<HWND>(m_parent->effectiveWinId());
   }
