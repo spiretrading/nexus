@@ -1,10 +1,11 @@
+import { css, StyleSheet } from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize, PhotoField } from '../../..';
 import { FormEntry, TextField } from '.';
 import { RolesField } from './roles_field';
 import { CommentBox } from '../comment_box';
-import { HLine } from '../../../components';
+import { HLine, CountrySelectionBox } from '../../../components';
 import { VBoxLayout, Padding, HBoxLayout } from '../../../layouts';
 import { DisplayMode } from './photo_field';
 
@@ -44,8 +45,12 @@ interface Properties {
   onSubmitPassword?: (password: string) => void;
 }
 
+interface State {
+  countryDatabase: Nexus.CountryDatabase;
+}
+
 /** Displays an account's profile page. */
-export class ProfilePage extends React.Component<Properties> {
+export class ProfilePage extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     isSubmitEnabled: false,
     submitStatus: '',
@@ -55,6 +60,13 @@ export class ProfilePage extends React.Component<Properties> {
     submitPasswordStatus: '',
     hasPasswordError: false,
     onPasswordSubmit: () => { }
+  }
+
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      countryDatabase: Nexus.buildDefaultCountryDatabase()
+    };
   }
 
   public render(): JSX.Element {
@@ -99,14 +111,14 @@ export class ProfilePage extends React.Component<Properties> {
     const topPanelPhoto = (() => {
       if (this.props.displaySize === DisplaySize.SMALL) {
         return (
-        <VBoxLayout>
-        <PhotoField
-          displaySize={this.props.displaySize}
-          displayMode={DisplayMode.DISPLAY}
-          imageSource={this.props.identity.photoId}
-          scaling={1}/>
-          <Padding size='30px' />
-        </VBoxLayout>);
+          <VBoxLayout>
+            <PhotoField
+              displaySize={this.props.displaySize}
+              displayMode={DisplayMode.DISPLAY}
+              imageSource={this.props.identity.photoId}
+              scaling={1} />
+            <Padding size='30px' />
+          </VBoxLayout>);
       } else {
         return null;
       }
@@ -116,11 +128,11 @@ export class ProfilePage extends React.Component<Properties> {
         <div style={ProfilePage.STYLE.fixedSizePadding} />
         <div style={contentWidth}>
           <VBoxLayout width='100%'>
-            <Padding size='18px'/>
+            <Padding size='18px' />
             <div style={ProfilePage.STYLE.loginInfo}>Last Login</div>
             <Padding size='30px' />
             <div style={ProfilePage.STYLE.headerStyler}>
-            Account Information
+              Account Information
             </div>
             <Padding size='30px' />
             <HBoxLayout>
@@ -239,17 +251,19 @@ export class ProfilePage extends React.Component<Properties> {
                 <Padding size={ProfilePage.LINE_PADDING} />
                 <FormEntry name='Country'
                   orientation={orientation}>
-                  <TextField
-                    value='Shire'
+                  <CountrySelectionBox
+                    readonly
                     displaySize={this.props.displaySize}
-                    disabled />
+                    value={Nexus.DefaultCountries.AU}
+                    onChange={() => {}}
+                    countryDatabase={this.state.countryDatabase} />
                 </FormEntry>
               </VBoxLayout>
             </HBoxLayout>
 
             <div style={ProfilePage.STYLE.headerStyler}> User Notes</div>
             <CommentBox comment='boo' />
-            <Padding size='60px'/>
+            <Padding size='60px' />
           </VBoxLayout>
         </div>
         <div style={ProfilePage.STYLE.fixedSizePadding} />
@@ -298,11 +312,29 @@ export class ProfilePage extends React.Component<Properties> {
       marginLeft: '11px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
-      height: '100%',
+      height: '34px',
       justifyContent: 'flex-start',
       alignItems: 'center'
     }
   };
+  private static EXTRA_STYLE = StyleSheet.create({
+    button: {
+      width: '246px',
+      height: '34px',
+      backgroundColor: '#684BC7',
+      font: '400 14px Roboto',
+      color: '#FFFFFF',
+      border: 'none',
+      outline: 0,
+      ':active': {
+        backgroundColor: '#4B23A0'
+      },
+      ':disabled': {
+        backgroundColor: '#F8F8F8',
+        color: '#8C8C8C'
+      }
+    }
+  });
   private static readonly LINE_PADDING = '14px';
   private static readonly SIDE_PADDING = '30px';
 }
