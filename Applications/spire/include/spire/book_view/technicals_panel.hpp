@@ -15,7 +15,7 @@ namespace Spire {
     public:
 
       //! Constructs a TechnicalsPanel.
-      TechnicalsPanel(QWidget* parent = nullptr);
+      explicit TechnicalsPanel(QWidget* parent = nullptr);
 
       //! Sets the model the panel gets its data from.
       /*

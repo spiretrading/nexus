@@ -1,5 +1,6 @@
 #include "spire/toolbar/toolbar_controller.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include "spire/book_view/book_view_controller.hpp"
 #include "spire/security_input/services_security_input_model.hpp"
 #include "spire/time_and_sales/time_and_sales_controller.hpp"
 #include "spire/toolbar/toolbar_window.hpp"
@@ -38,8 +39,10 @@ struct ToolbarController::Controller final : ToolbarController::BaseController {
   }
 };
 
-ToolbarController::ToolbarController(Ref<VirtualServiceClients> service_clients)
-    : m_service_clients(service_clients.Get()),
+ToolbarController::ToolbarController(Definitions definitions,
+    Ref<VirtualServiceClients> service_clients)
+    : m_definitions(std::move(definitions)),
+      m_service_clients(service_clients.Get()),
       m_security_input_model(std::make_unique<ServicesSecurityInputModel>(
         Ref(m_service_clients->GetMarketDataClient()))) {}
 
@@ -51,7 +54,7 @@ void ToolbarController::open() {
   if(m_toolbar_window != nullptr) {
     return;
   }
-  m_toolbar_window = std::make_unique<ToolbarWindow>(m_model,
+  m_toolbar_window = std::make_unique<ToolbarWindow>(Ref(m_model),
     m_service_clients->GetServiceLocatorClient().GetAccount());
   m_toolbar_window->connect_open_signal(
     [=] (auto window) { on_open_window(window); });
@@ -77,11 +80,13 @@ connection ToolbarController::connect_closed_signal(
 void ToolbarController::on_open_window(RecentlyClosedModel::Type window) {
   auto controller =
     [&] () -> std::unique_ptr<BaseController> {
-      if(window == RecentlyClosedModel::Type::TIME_AND_SALE) {
+      if(window == RecentlyClosedModel::Type::BOOK_VIEW) {
+        return std::make_unique<Controller<BookViewController>>(
+          m_definitions, Ref(*m_security_input_model), Ref(*m_service_clients));
+      } else {
         return std::make_unique<Controller<TimeAndSalesController>>(
-          Ref(*m_security_input_model), Ref(*m_service_clients));
+          m_definitions, Ref(*m_security_input_model), Ref(*m_service_clients));
       }
-      return nullptr;
     }();
   if(controller == nullptr) {
     return;

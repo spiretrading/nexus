@@ -20,6 +20,7 @@ SecurityInfoListView::SecurityInfoListView(QWidget* parent)
       m_active_index(-1) {
   setAttribute(Qt::WA_ShowWithoutActivating);
   setAttribute(Qt::WA_TranslucentBackground);
+  setStyleSheet("border-color: transparent;");
   m_shadow = std::make_unique<DropShadow>(false, this);
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});

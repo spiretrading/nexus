@@ -16,8 +16,8 @@ namespace Spire {
         \param properties The properties to display.
         \param parent The parent widget.
       */
-      BookViewHighlightPropertiesWidget(const BookViewProperties& properties,
-        QWidget* parent = nullptr);
+      explicit BookViewHighlightPropertiesWidget(
+        const BookViewProperties& properties, QWidget* parent = nullptr);
 
       //! Applies the properties represented by this widget to an instance.
       /*!

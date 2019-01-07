@@ -13,7 +13,7 @@ namespace Spire {
         \param text The text to display next to the check box.
         \param parent The parent to this widget.
       */
-      CheckBox(const QString& text, QWidget* parent = nullptr);
+      explicit CheckBox(const QString& text, QWidget* parent = nullptr);
 
       //! Sets the CheckBox's stylesheet. Note that these styles are
       //! wrapped in the appropriate CSS selectors, so only the properties

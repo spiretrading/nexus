@@ -30,14 +30,14 @@ namespace Spire {
       /*!
         \param parent The parent widget to the FlatButton.
       */
-      FlatButton(QWidget* parent = nullptr);
+      explicit FlatButton(QWidget* parent = nullptr);
 
       //! Constructs the FlatButton.
       /*!
         \param label The label text.
         \param parent The parent widget to the FlatButton.
       */
-      FlatButton(const QString& label, QWidget* parent = nullptr);
+      explicit FlatButton(const QString& label, QWidget* parent = nullptr);
 
       //! Sets the FlatButton's text.
       /*!
@@ -82,8 +82,8 @@ namespace Spire {
       void mouseReleaseEvent(QMouseEvent* event) override;
 
     private:
-      QLabel* m_label;
       mutable ClickedSignal m_clicked_signal;
+      QLabel* m_label;
       bool m_clickable;
       Style m_default_style;
       Style m_hover_style;

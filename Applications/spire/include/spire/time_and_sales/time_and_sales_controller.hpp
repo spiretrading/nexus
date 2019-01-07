@@ -5,6 +5,7 @@
 #include <boost/noncopyable.hpp>
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "spire/security_input/security_input.hpp"
+#include "spire/spire/definitions.hpp"
 #include "spire/time_and_sales/time_and_sales.hpp"
 
 namespace Spire {
@@ -18,10 +19,12 @@ namespace Spire {
 
       //! Constructs a time and sales controller.
       /*!
+        \param definitions The set of definitions to use.
         \param security_input_model The model used to autocomplete securities.
         \param service_clients The service clients logged into Spire.
       */
-      TimeAndSalesController(Beam::Ref<SecurityInputModel> security_input_model,
+      TimeAndSalesController(Definitions definitions,
+        Beam::Ref<SecurityInputModel> security_input_model,
         Beam::Ref<Nexus::VirtualServiceClients> service_clients);
 
       ~TimeAndSalesController();
@@ -38,6 +41,7 @@ namespace Spire {
 
     private:
       mutable ClosedSignal m_closed_signal;
+      Definitions m_definitions;
       SecurityInputModel* m_security_input_model;
       Nexus::VirtualServiceClients* m_service_clients;
       std::unique_ptr<TimeAndSalesWindow> m_window;

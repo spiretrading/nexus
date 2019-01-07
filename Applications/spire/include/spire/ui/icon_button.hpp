@@ -20,7 +20,7 @@ namespace Spire {
         \param icon The icon to show.
         \param parent The parent QWidget to the IconButton.
       */
-      IconButton(QImage icon, QWidget* parent = nullptr);
+      explicit IconButton(QImage icon, QWidget* parent = nullptr);
 
       //! Constructs an IconButton with a default icon and a hover icon.
       /*!

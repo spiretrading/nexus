@@ -5,6 +5,7 @@
 #include <boost/noncopyable.hpp>
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "spire/security_input/security_input.hpp"
+#include "spire/spire/qt_promise.hpp"
 
 namespace Spire {
 
@@ -15,7 +16,7 @@ namespace Spire {
 
       //! Autocompletes a partial search string for a security. The search
       //! query can be a company name or ticker symbol.
-      virtual std::vector<Nexus::SecurityInfo> autocomplete(
+      virtual QtPromise<std::vector<Nexus::SecurityInfo>> autocomplete(
         const std::string& query) = 0;
   };
 }

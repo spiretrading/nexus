@@ -5,15 +5,15 @@
 
 namespace Spire {
 
-  //! Implements a time and sales model with no entries and no updates.
+  //! Implements the TimeAndSalesModel with no entries and no updates.
   class EmptyTimeAndSalesModel final : public TimeAndSalesModel {
     public:
 
       //! Constructs an empty model.
       /*!
-        \param s The security to model.
+        \param security The security to model.
       */
-      EmptyTimeAndSalesModel(Nexus::Security s);
+      explicit EmptyTimeAndSalesModel(Nexus::Security security);
 
       const Nexus::Security& get_security() const override;
 

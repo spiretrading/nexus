@@ -7,10 +7,10 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
-EmptyTimeAndSalesModel::EmptyTimeAndSalesModel(Security s)
-    : m_security(std::move(s)) {}
+EmptyTimeAndSalesModel::EmptyTimeAndSalesModel(Security security)
+    : m_security(std::move(security)) {}
 
-const Nexus::Security& EmptyTimeAndSalesModel::get_security() const {
+const Security& EmptyTimeAndSalesModel::get_security() const {
   return m_security;
 }
 

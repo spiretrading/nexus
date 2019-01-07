@@ -1,53 +1,42 @@
-import {css, StyleSheet} from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite';
+import * as Nexus from 'nexus';
 import * as React from 'react';
-import {Transition} from 'react-transition-group';
-import {BurgerButton, HBoxLayout, Padding, VBoxLayout} from '../..';
-import {DashboardModel} from '.';
-import {NotificationButton} from './notification_button';
-import {SideMenu} from './side_menu';
+import { Transition } from 'react-transition-group';
+import { BurgerButton, HBoxLayout, Padding, VBoxLayout } from '../..';
+import { NotificationButton } from './notification_button';
+import { SideMenu } from './side_menu';
 
 interface Properties {
 
-  /** The model to display. */
-  model: DashboardModel;
+  /** The account's roles. */
+  roles: Nexus.AccountRoles;
 
-  /** The action to perform on a sign out. */
-  onSignOut?: () => void;
+  /** Indicates a side menu item was clicked.
+   * @param item - The item that was clicked.
+   */
+  onSideMenuClick?: (item: SideMenu.Item) => void;
 }
 
 interface State {
   isSideMenuOpen: boolean;
-  isLoading: boolean;
 }
 
 /** Displays the main dashboard. */
 export class DashboardPage extends React.Component<Properties, State> {
-  public static defaultProps = {
-    onSignOut: () => {}
+  public static readonly defaultProps = {
+    onSideMenuClick: () => {}
   }
 
   constructor(props: Properties) {
     super(props);
     this.state = {
       isSideMenuOpen: false,
-      isLoading: false
     };
-    this.onToggleMenuIsOpen = this.onToggleMenuIsOpen.bind(this);
-  }
-
-  public componentWillMount(): void {
-    this.props.model.load().then(
-      () => {
-        this.setState({
-          isLoading: false
-      });
-    });
+    this.onSideMenuClick = this.onSideMenuClick.bind(this);
+    this.onToggleSideMenu = this.onToggleSideMenu.bind(this);
   }
 
   public render(): JSX.Element {
-    if(this.state.isLoading) {
-      return <div/>;
-    }
     return (
       <VBoxLayout width='100%' height='100%'>
         <HBoxLayout width='100%' height='60px'
@@ -61,12 +50,12 @@ export class DashboardPage extends React.Component<Properties, State> {
                     css([DashboardPage.HEADER_STYLE.base,
                     DashboardPage.HEADER_STYLE.menuIsOpen,
                     DashboardPage.FADE_TRANSITION_STYLE.base,
-                    DashboardPage.getFadeTransition(status)])}>
+                    DashboardPage.FADE_TRANSITION_STYLE[status]])}>
                   <Padding size='18px'/>
                   <VBoxLayout height='60px'>
                     <Padding size='23px'/>
                     <BurgerButton width='20px' height='14px' color='#E2E0FF'
-                      onClick={this.onToggleMenuIsOpen}/>
+                      onClick={this.onToggleSideMenu}/>
                     <Padding size='23px'/>
                   </VBoxLayout>
                   <Padding size='20px'/>
@@ -85,7 +74,7 @@ export class DashboardPage extends React.Component<Properties, State> {
             <VBoxLayout height='60px'>
               <Padding size='23px'/>
               <BurgerButton width='20px' height='14px' color='#684BC7'
-                onClick={this.onToggleMenuIsOpen}/>
+                onClick={this.onToggleSideMenu}/>
               <Padding size='23px'/>
             </VBoxLayout>
             <Padding size='20px'/>
@@ -114,18 +103,9 @@ export class DashboardPage extends React.Component<Properties, State> {
               <HBoxLayout height='100%' className={css([
                   DashboardPage.STYLE.sideBarWrapper,
                   DashboardPage.FADE_TRANSITION_STYLE.base,
-                  DashboardPage.getFadeTransition(status)])}>
-                <SideMenu roles={this.props.model.roles}
-                  onProfileClick={() => this.onSideMenuButtonClick(
-                    this.onGoToProfile)}
-                  onAccountsClick={() => this.onSideMenuButtonClick(
-                    this.onGoToAccounts)}
-                  onPortfolioClick={() => this.onSideMenuButtonClick(
-                    this.onGoToPortfolio)}
-                  onRequestHistoryClick={() => this.onSideMenuButtonClick(
-                    this.onGoToRequestHistory)}
-                  onSignOutClick={() => this.onSideMenuButtonClick(
-                    this.props.onSignOut)}/>
+                  DashboardPage.FADE_TRANSITION_STYLE[status]])}>
+                <SideMenu roles={this.props.roles}
+                  onClick={this.onSideMenuClick}/>
               </HBoxLayout>);
           }}
         </Transition>
@@ -136,53 +116,26 @@ export class DashboardPage extends React.Component<Properties, State> {
             return (
               <div className={css([DashboardPage.STYLE.dropShaddow,
                 DashboardPage.FADE_TRANSITION_STYLE.base,
-                DashboardPage.getFadeTransition(status)])}/>);
+                DashboardPage.FADE_TRANSITION_STYLE[status]])}/>);
           }}
         </Transition>
+        <div>
+          {this.props.children}
+        </div>
       </VBoxLayout>);
   }
 
-  private static getFadeTransition(status: string) {
-    switch(status) {
-      case 'entering':
-        return DashboardPage.FADE_TRANSITION_STYLE.entering;
-      case 'entered':
-        return DashboardPage.FADE_TRANSITION_STYLE.entered;
-      case 'exiting':
-        return DashboardPage.FADE_TRANSITION_STYLE.exiting;
-      case 'exited':
-        return DashboardPage.FADE_TRANSITION_STYLE.exited;
-    }
+  private onSideMenuClick(item: SideMenu.Item) {
+    this.onToggleSideMenu();
+    this.props.onSideMenuClick(item);
   }
 
-  private onToggleMenuIsOpen() {
-    this.setState({
-      isSideMenuOpen: !this.state.isSideMenuOpen
-    });
+  private onToggleSideMenu() {
+    this.setState({isSideMenuOpen: !this.state.isSideMenuOpen});
   }
 
-  private onSideMenuButtonClick(methodToCall: () => void) {
-    methodToCall();
-    this.onToggleMenuIsOpen();
-  }
-
-  private onGoToProfile(){
-
-  }
-
-  private onGoToAccounts(){
-
-  }
-
-  private onGoToPortfolio(){
-
-  }
-
-  private onGoToRequestHistory(){
-
-  }
-  private static MENU_TRANSITION_LENGTH_MS = 200;
-  private static STYLE = StyleSheet.create({
+  private static readonly MENU_TRANSITION_LENGTH_MS = 200;
+  private static readonly STYLE = StyleSheet.create({
     separator: {
       width: '100%',
       height: '1px',
@@ -219,7 +172,7 @@ export class DashboardPage extends React.Component<Properties, State> {
       left: 'calc(100% - 45px)'
     }
   });
-  private static HEADER_STYLE = StyleSheet.create({
+  private static readonly HEADER_STYLE = StyleSheet.create({
     base: {
       position: 'absolute' as 'absolute',
       top: 0,
@@ -231,15 +184,20 @@ export class DashboardPage extends React.Component<Properties, State> {
       zIndex: 1
     }
   });
-  private static FADE_TRANSITION_STYLE = StyleSheet.create({
+  private static readonly FADE_TRANSITION_STYLE: any = StyleSheet.create({
     base: {
-      opacity:  0,
-      transition: `opacity ${DashboardPage.MENU_TRANSITION_LENGTH_MS}ms `
-        + `ease-out`
+      opacity: 0,
+      transition:
+        `opacity ${DashboardPage.MENU_TRANSITION_LENGTH_MS}ms ease-out`
     },
-    entering: {opacity:  1},
-    entered: {opacity:  1},
-    exiting: {opacity:  0},
-    exited: {opacity: 0}
+    entering: {
+      opacity: 1,
+    },
+    entered: {
+      opacity: 1
+    },
+    exited: {
+      visibility: 'hidden' as 'hidden'
+    }
   });
 }

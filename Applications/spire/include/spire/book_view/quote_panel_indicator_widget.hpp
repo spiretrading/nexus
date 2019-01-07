@@ -12,7 +12,7 @@ namespace Spire {
 
       //! Constructs a QuotePanelIndicatorWidget with a default background
       //! color of black.
-      QuotePanelIndicatorWidget(QWidget* parent = nullptr);
+      explicit QuotePanelIndicatorWidget(QWidget* parent = nullptr);
 
       //! Sets the background color.
       /*

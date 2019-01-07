@@ -16,7 +16,7 @@ namespace Spire {
                animated logo widget.
         \param parent The parent widget.
       */
-      SnapshotLoadingWidget(QScrollArea* scroll_area,
+      explicit SnapshotLoadingWidget(QScrollArea* scroll_area,
         QWidget* parent = nullptr);
 
     protected:

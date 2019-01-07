@@ -11,6 +11,7 @@
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
 #include "spire/ui/drop_shadow.hpp"
+#include "spire/ui/security_widget.hpp"
 #include "spire/ui/transition_widget.hpp"
 #include "spire/ui/window.hpp"
 
@@ -21,10 +22,11 @@ using namespace Nexus;
 using namespace Spire;
 
 BookViewWindow::BookViewWindow(const BookViewProperties& properties,
-    SecurityInputModel& input_model, QWidget* parent)
+    Ref<SecurityInputModel> input_model, QWidget* parent)
     : QWidget(parent),
-      m_input_model(&input_model),
-      m_is_data_loaded(false) {
+      m_input_model(input_model.Get()),
+      m_is_data_loaded(false),
+      m_technicals_panel(nullptr) {
   m_body = new QWidget(this);
   m_body->setMinimumSize(scale(220, 280));
   resize(scale(220, 410));
@@ -35,25 +37,46 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
   setWindowTitle(tr("Book View"));
   window->set_svg_icon(":/icons/bookview-black.svg",
     ":/icons/bookview-grey.svg");
+  setWindowIcon(QIcon(":icons/book-view-icon-256x256.png"));
   window_layout->addWidget(window);
   m_body->installEventFilter(this);
-  m_layout = new QVBoxLayout(m_body);
+  auto body_layout = new QVBoxLayout(m_body);
+  body_layout->setContentsMargins({});
+  body_layout->setSpacing(0);
+  m_security_widget = new SecurityWidget(input_model,
+    SecurityWidget::Theme::LIGHT, this);
+  body_layout->addWidget(m_security_widget);
+  m_container_widget = new QWidget(this);
+  m_layout = new QVBoxLayout(m_container_widget);
   m_layout->setContentsMargins({});
   m_layout->setSpacing(0);
-  m_empty_window_label = std::make_unique<QLabel>(
-    tr("Enter a ticker symbol."), this);
-  m_empty_window_label->setAlignment(Qt::AlignCenter);
-  m_empty_window_label->setStyleSheet(QString(R"(
-    font-family: Roboto;
-    font-size: %1px;)").arg(scale_height(12)));
-  m_layout->addWidget(m_empty_window_label.get());
 }
 
 void BookViewWindow::set_model(std::shared_ptr<BookViewModel> model) {
-  m_model = std::move(model);
-  m_technicals_panel->reset_model();
-  QTimer::singleShot(2000, this, [=] { show_transition_widget(); });
+  CustomVariantItemDelegate item_delegate;
+  setWindowTitle(item_delegate.displayText(QVariant::fromValue(
+    model->get_security()), QLocale()) + tr(" - Book View"));
+  if(m_technicals_panel == nullptr) {
+    m_technicals_panel = new TechnicalsPanel(this);
+    m_layout->addWidget(m_technicals_panel);
+    m_quote_widgets_container = new QWidget(this);
+    m_quote_widgets_container_layout = new QVBoxLayout(
+      m_quote_widgets_container);
+    m_quote_widgets_container_layout->setContentsMargins({});
+    m_quote_widgets_container_layout->setSpacing(0);
+    m_layout->addWidget(m_quote_widgets_container);
+    m_security_widget->set_widget(m_container_widget);
+  } else {
+    m_technicals_panel->reset_model();
+  }
+  m_bbo_quote_panel.reset();
+  m_table.reset();
+  if(m_transition_widget == nullptr) {
+    m_transition_widget = std::make_unique<TransitionWidget>(
+      m_quote_widgets_container);
+  }
   m_is_data_loaded = false;
+  m_model = std::move(model);
   m_data_loaded_promise = m_model->load();
   m_data_loaded_promise.then(
     [=] (auto&& value) { on_data_loaded(std::move(value)); });
@@ -72,7 +95,7 @@ void BookViewWindow::set_properties(const BookViewProperties& properties) {
 
 connection BookViewWindow::connect_security_change_signal(
     const ChangeSecuritySignal::slot_type& slot) const {
-  return m_change_security_signal.connect(slot);
+  return m_security_widget->connect_change_security_signal(slot);
 }
 
 connection BookViewWindow::connect_closed_signal(
@@ -91,64 +114,6 @@ bool BookViewWindow::eventFilter(QObject* watched, QEvent* event) {
     }
   }
   return QWidget::eventFilter(watched, event);
-}
-
-void BookViewWindow::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_PageUp) {
-    if(m_current_security != Security()) {
-      auto s = m_securities.push_front(m_current_security);
-      if(s != Security()) {
-        set_current(s);
-      }
-    }
-    return;
-  } else if(event->key() == Qt::Key_PageDown) {
-    if(m_current_security != Security()) {
-      auto s = m_securities.push_back(m_current_security);
-      if(s != Security()) {
-        set_current(s);
-      }
-    }
-    return;
-  }
-  auto pressed_key = event->text();
-  if(pressed_key[0].isLetterOrNumber()) {
-    auto dialog = new SecurityInputDialog(*m_input_model, pressed_key, this);
-    dialog->setWindowModality(Qt::NonModal);
-    dialog->setAttribute(Qt::WA_DeleteOnClose);
-    connect(dialog, &QDialog::accepted, this,
-      [=] { on_security_input_accept(dialog); });
-    connect(dialog, &QDialog::rejected, this,
-      [=] { on_security_input_reject(dialog); });
-    dialog->move(geometry().center().x() -
-      dialog->width() / 2, geometry().center().y() - dialog->height() / 2);
-    show_overlay_widget();
-    dialog->show();
-  }
-}
-
-void BookViewWindow::set_current(const Security& s) {
-  if(s == m_current_security) {
-    return;
-  }
-  if(m_empty_window_label != nullptr) {
-    m_empty_window_label.reset();
-    m_technicals_panel = new TechnicalsPanel(this);
-    m_layout->addWidget(m_technicals_panel);
-    m_quote_widgets_container = new QWidget(this);
-    m_quote_widgets_container_layout = new QVBoxLayout(
-      m_quote_widgets_container);
-    m_quote_widgets_container_layout->setContentsMargins({});
-    m_quote_widgets_container_layout->setSpacing(0);
-    m_layout->addWidget(m_quote_widgets_container);
-  }
-  m_bbo_quote_panel.reset();
-  m_table.reset();
-  m_current_security = s;
-  m_change_security_signal(s);
-  CustomVariantItemDelegate item_delegate;
-  setWindowTitle(item_delegate.displayText(QVariant::fromValue(s), QLocale())
-    + tr(" - Book View"));
 }
 
 void BookViewWindow::show_context_menu(const QPoint& pos) {
@@ -184,48 +149,14 @@ void BookViewWindow::show_context_menu(const QPoint& pos) {
   context_menu.exec(pos);
 }
 
-void BookViewWindow::show_overlay_widget() {
-  m_overlay_widget = std::make_unique<QWidget>(m_body);
-  m_overlay_widget->setStyleSheet(
-    "background-color: rgba(245, 245, 245, 153);");
-  m_overlay_widget->resize(m_body->size());
-  m_overlay_widget->move(0, 0);
-  m_overlay_widget->show();
-}
-
 void BookViewWindow::show_properties_dialog() {
   BookViewPropertiesDialog dialog(get_properties(), Security(), this);
   dialog.connect_apply_signal([=] (auto p) { set_properties(p); });
-  show_overlay_widget();
+  m_security_widget->show_overlay_widget();
   if(dialog.exec() == QDialog::Accepted) {
     set_properties(dialog.get_properties());
   }
-  m_overlay_widget.reset();
-}
-
-void BookViewWindow::show_transition_widget() {
-  if(!m_is_data_loaded && m_transition_widget == nullptr) {
-    m_transition_widget = std::make_unique<TransitionWidget>(
-      m_quote_widgets_container);
-  }
-}
-
-void BookViewWindow::on_security_input_accept(
-    SecurityInputDialog* dialog) {
-  auto s = dialog->get_security();
-  if(s != Security() && s != m_current_security) {
-    m_securities.push(m_current_security);
-    set_current(s);
-    activateWindow();
-  }
-  dialog->close();
-  m_overlay_widget.reset();
-}
-
-void BookViewWindow::on_security_input_reject(
-    SecurityInputDialog* dialog) {
-  dialog->close();
-  m_overlay_widget.reset();
+  m_security_widget->hide_overlay_widget();
 }
 
 void BookViewWindow::on_data_loaded(Expect<void> value) {
@@ -234,9 +165,6 @@ void BookViewWindow::on_data_loaded(Expect<void> value) {
   m_technicals_panel->set_model(m_model);
   m_bbo_quote_panel = std::make_unique<BboQuotePanel>(*m_model, this);
   m_quote_widgets_container_layout->addWidget(m_bbo_quote_panel.get());
-  m_table = std::make_unique<BookViewTableWidget>(this);
+  m_table = std::make_unique<BookViewTableWidget>(*m_model, m_properties, this);
   m_quote_widgets_container_layout->addWidget(m_table.get());
-  m_bbo_quote_panel->set_model(*m_model);
-  m_table->set_model(m_model);
-  m_table->set_properties(m_properties);
 }

@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
   model.add(SecurityInfo(
     Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
     "Morgan Stanley", "Finance"));
-  auto window = new BookViewWindow(BookViewProperties(), model);
+  auto window = new BookViewWindow(BookViewProperties(), Ref(model));
   window->show();
   auto tester = new BookViewTestControllerWindow(window, timer_thread_pool);
   tester->show();

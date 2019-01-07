@@ -1,5 +1,5 @@
-#ifndef NEXUS_MARKETDATAREGISTRYSERVLET_HPP
-#define NEXUS_MARKETDATAREGISTRYSERVLET_HPP
+#ifndef NEXUS_MARKET_DATA_REGISTRY_SERVLET_HPP
+#define NEXUS_MARKET_DATA_REGISTRY_SERVLET_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -17,11 +17,9 @@
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \class MarketDataRegistryServlet
-      \brief Maintains a registry of all Securities and data subscriptions.
+  /*! Maintains a registry of all Securities and data subscriptions.
       \tparam ContainerType The container instantiating this servlet.
       \tparam MarketDataRegistryType The registry storing all market data
               originating from this servlet.
@@ -166,10 +164,10 @@ namespace MarketDataService {
       AdministrationClientForward&& administrationClient,
       MarketDataRegistryForward&& registry,
       HistoricalDataStoreForward&& dataStore)
-      : m_administrationClient{
-          std::forward<AdministrationClientForward>(administrationClient)},
-        m_registry{std::forward<MarketDataRegistryForward>(registry)},
-        m_dataStore{std::forward<HistoricalDataStoreForward>(dataStore)} {}
+      : m_administrationClient(
+          std::forward<AdministrationClientForward>(administrationClient)),
+        m_registry(std::forward<MarketDataRegistryForward>(registry)),
+        m_dataStore(std::forward<HistoricalDataStoreForward>(dataStore)) {}
 
   template<typename ContainerType, typename MarketDataRegistryType,
     typename HistoricalDataStoreType, typename AdministrationClientType>
@@ -649,7 +647,6 @@ namespace MarketDataService {
       ServiceProtocolClient& client, const std::string& prefix) {
     return m_registry->SearchSecurityInfo(prefix);
   }
-}
 }
 
 #endif

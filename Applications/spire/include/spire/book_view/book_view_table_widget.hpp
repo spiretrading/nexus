@@ -12,26 +12,23 @@ namespace Spire {
     public:
       //! Constructs a BookViewTableWidget.
       /*
+        \param model The model to get the table data from.
+        \param properties The properties the table will be updated to have.
         \param parent The parent to this widget.
       */
-      BookViewTableWidget(QWidget* parent = nullptr);
-
-      //! Sets the model for this table widget.
-      /*
-        \param model The model to get the table data from.
-      */
-      void set_model(std::shared_ptr<BookViewModel> model);
+      explicit BookViewTableWidget(const BookViewModel& model,
+        BookViewProperties properties, QWidget* parent = nullptr);
 
       //! Sets the properties of the table.
       /*
         \param properties The properties the table will be updated to have.
       */
-      void set_properties(const BookViewProperties& properties);
+      void set_properties(BookViewProperties properties);
 
     private:
       QHBoxLayout* m_layout;
-      BookViewSideTableView* m_bid_table_view;
-      BookViewSideTableView* m_ask_table_view;
+      BookQuoteTableView* m_bid_table_view;
+      BookQuoteTableView* m_ask_table_view;
       BookViewProperties m_properties;
   };
 }

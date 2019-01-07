@@ -7,26 +7,29 @@
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/drop_shadow.hpp"
 
+using namespace Beam;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
-SecurityInputDialog::SecurityInputDialog(SecurityInputModel& model,
+SecurityInputDialog::SecurityInputDialog(Ref<SecurityInputModel> model,
     QWidget* parent, Qt::WindowFlags flags)
     : SecurityInputDialog(model, "", parent, flags) {}
 
-SecurityInputDialog::SecurityInputDialog(SecurityInputModel& model,
+SecurityInputDialog::SecurityInputDialog(Ref<SecurityInputModel> model,
     const QString& initial_text, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint |
         flags),
+      m_model(model.Get()),
+      m_initial_text(initial_text),
       m_is_dragging(false) {
   setWindowModality(Qt::WindowModal);
   m_shadow = std::make_unique<DropShadow>(this);
-  auto layout = new QVBoxLayout(this);
-  layout->setContentsMargins(scale_width(8), scale_height(6), scale_width(8),
+  m_layout = new QVBoxLayout(this);
+  m_layout->setContentsMargins(scale_width(8), scale_height(6), scale_width(8),
     scale_height(8));
-  layout->setSpacing(0);
+  m_layout->setSpacing(0);
   setFixedSize(scale(196, 68));
   setObjectName("SecurityInputDialog");
   setStyleSheet(QString(R"(
@@ -37,18 +40,14 @@ SecurityInputDialog::SecurityInputDialog(SecurityInputModel& model,
   )").arg(scale_width(1)));
   auto text_label = new QLabel(tr("Security"), this);
   text_label->setStyleSheet(QString(R"(
+    background-color: #F5F5F5;
     border: none;
     font-family: Roboto;
     font-size: %1px;
   )").arg(scale_height(12)));
-  layout->addWidget(text_label);
-  layout->setStretchFactor(text_label, 14);
-  layout->addStretch(10);
-  m_security_input_box = new SecurityInputBox(model, initial_text, this);
-  m_security_input_box->connect_commit_signal(
-    [=] (const Security& s) { set_security(s); });
-  layout->addWidget(m_security_input_box);
-  layout->setStretchFactor(m_security_input_box, 30);
+  m_layout->addWidget(text_label);
+  m_layout->setStretchFactor(text_label, 14);
+  m_layout->addStretch(10);
 }
 
 SecurityInputDialog::~SecurityInputDialog() = default;
@@ -115,6 +114,14 @@ void SecurityInputDialog::mouseReleaseEvent(QMouseEvent* event) {
     return;
   }
   m_is_dragging = false;
+}
+
+void SecurityInputDialog::showEvent(QShowEvent* event) {
+  m_security_input_box = new SecurityInputBox(Ref(*m_model), m_initial_text, this);
+  m_security_input_box->connect_commit_signal(
+    [=] (const auto& s) { set_security(s); });
+  m_layout->addWidget(m_security_input_box);
+  m_layout->setStretchFactor(m_security_input_box, 30);
 }
 
 void SecurityInputDialog::set_security(const Security& security) {

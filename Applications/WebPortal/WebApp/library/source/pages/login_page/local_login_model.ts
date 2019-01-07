@@ -1,8 +1,8 @@
 import * as Beam from 'beam';
-import {LoginPageModel} from './login_page_model';
+import { LoginModel } from './login_model';
 
-/** Implements the LoginPageModel for testing purposes. */
-export class LocalLoginPageModel extends LoginPageModel {
+/** Implements the LoginModel for testing purposes. */
+export class LocalLoginModel extends LoginModel {
 
   /** Accepts the username and password. */
   public accept(): void {

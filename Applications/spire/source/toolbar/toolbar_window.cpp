@@ -11,10 +11,10 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
-ToolbarWindow::ToolbarWindow(RecentlyClosedModel& model,
+ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
     const DirectoryEntry& account, QWidget* parent)
     : QWidget(parent),
-      m_model(&model) {
+      m_model(model.Get()) {
   setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint |
     Qt::FramelessWindowHint | Qt::WindowCloseButtonHint);
   setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
@@ -26,6 +26,7 @@ ToolbarWindow::ToolbarWindow(RecentlyClosedModel& model,
   m_window = new Window(m_body, this);
   m_window->set_svg_icon(":/icons/spire-icon-black.svg",
     ":/icons/spire-icon-grey.svg");
+  setWindowIcon(QIcon(":icons/spire-icon-256x256.png"));
   window_layout->addWidget(m_window);
   m_body->setStyleSheet("background-color: #F5F5F5;");
   auto layout = new QVBoxLayout(m_body);
@@ -82,6 +83,8 @@ ToolbarWindow::ToolbarWindow(RecentlyClosedModel& model,
     imageFromSvg(":/icons/bookview-light-purple.svg", window_button_size),
     imageFromSvg(":/icons/bookview-purple.svg", window_button_size), m_body);
   m_book_view_button->setToolTip(tr("Book View"));
+  m_book_view_button->connect_clicked_signal(
+    [=] { on_open_window(RecentlyClosedModel::Type::BOOK_VIEW); });
   button_layout->addWidget(m_book_view_button);
   m_time_and_sales_button = new IconButton(
     imageFromSvg(":/icons/time-sale-light-purple.svg", window_button_size),

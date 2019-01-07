@@ -13,7 +13,7 @@ namespace Spire {
     public:
 
       //! Constructs a chroma hash for an empty text.
-      ChromaHashWidget(QWidget* parent = nullptr);
+      explicit ChromaHashWidget(QWidget* parent = nullptr);
 
       //! Sets the text to hash.
       void set_text(const QString& text);

@@ -7,18 +7,20 @@
 #include "spire/ui/custom_qt_variants.hpp"
 #include "spire/ui/ui.hpp"
 
+using namespace Beam;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
-SecurityInputBox::SecurityInputBox(SecurityInputModel& model, QWidget* parent)
-    : SecurityInputBox(model, "", parent) {}
+SecurityInputBox::SecurityInputBox(Ref<SecurityInputModel> model,
+    QWidget* parent)
+    : SecurityInputBox(Ref(model), "", parent) {}
 
-SecurityInputBox::SecurityInputBox(SecurityInputModel& model,
+SecurityInputBox::SecurityInputBox(Ref<SecurityInputModel> model,
     const QString& initial_text, QWidget* parent)
     : QWidget(parent),
-      m_model(&model) {
+      m_model(model.Get()) {
   setObjectName("SecurityInputBox");
   setStyleSheet(QString(R"(
     #SecurityInputBox {
@@ -60,7 +62,6 @@ SecurityInputBox::SecurityInputBox(SecurityInputModel& model,
   m_securities->setVisible(false);
   window()->installEventFilter(this);
   m_security_line_edit->setText(initial_text);
-  on_text_edited();
 }
 
 connection SecurityInputBox::connect_commit_signal(
@@ -116,20 +117,30 @@ void SecurityInputBox::resizeEvent(QResizeEvent* event) {
 }
 
 void SecurityInputBox::showEvent(QShowEvent* event) {
+  on_text_edited();
   m_securities->setFixedWidth(width());
 }
 
 void SecurityInputBox::on_text_edited() {
-  auto recommendations = m_model->autocomplete(
+  m_completions = m_model->autocomplete(
     m_security_line_edit->text().toStdString());
-  m_securities->set_list(recommendations);
-  if(recommendations.empty()) {
-    m_securities->hide();
-  } else {
-    move_line_edit();
-    m_securities->show();
-    m_securities->raise();
-  }
+  m_completions.then([=] (auto result) {
+    auto completions = [&] {
+      try {
+        return result.Get();
+      } catch(const std::exception&) {
+        return std::vector<SecurityInfo>();
+      }
+    }();
+    m_securities->set_list(completions);
+    if(completions.empty()) {
+      m_securities->hide();
+    } else {
+      move_line_edit();
+      m_securities->setVisible(true);
+      m_securities->raise();
+    }
+  });
 }
 
 void SecurityInputBox::move_line_edit() {
@@ -146,8 +157,8 @@ void SecurityInputBox::enter_pressed() {
 }
 
 void SecurityInputBox::on_activated(const Security& security) {
-  auto item_delegate = new CustomVariantItemDelegate(this);
-  m_security_line_edit->setText(item_delegate->displayText(
+  auto item_delegate = CustomVariantItemDelegate();
+  m_security_line_edit->setText(item_delegate.displayText(
     QVariant::fromValue(security), QLocale()));
 }
 

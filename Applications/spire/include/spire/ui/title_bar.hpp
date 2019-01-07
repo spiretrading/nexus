@@ -17,7 +17,7 @@ namespace Spire {
                     when changing the window state.
         \param parent The parent widget.
       */
-      TitleBar(QWidget* body, QWidget* parent = nullptr);
+      explicit TitleBar(QWidget* body, QWidget* parent = nullptr);
 
       //! Constructs a title bar.
       /*!

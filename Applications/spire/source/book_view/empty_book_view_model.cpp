@@ -17,13 +17,15 @@ const BboQuote& EmptyBookViewModel::get_bbo() const {
   return bbo;
 }
 
-const std::vector<BookQuote>& EmptyBookViewModel::get_asks() const {
-  static std::vector<BookQuote> quotes;
+const std::vector<std::unique_ptr<BookViewModel::Quote>>&
+    EmptyBookViewModel::get_asks() const {
+  static auto quotes = std::vector<std::unique_ptr<BookViewModel::Quote>>();
   return quotes;
 }
 
-const std::vector<BookQuote>& EmptyBookViewModel::get_bids() const {
-  static std::vector<BookQuote> quotes;
+const std::vector<std::unique_ptr<BookViewModel::Quote>>&
+    EmptyBookViewModel::get_bids() const {
+  static auto quotes = std::vector<std::unique_ptr<BookViewModel::Quote>>();
   return quotes;
 }
 
@@ -56,8 +58,8 @@ connection EmptyBookViewModel::connect_bbo_slot(
   return {};
 }
 
-connection EmptyBookViewModel::connect_book_quote_slot(
-    const BookQuoteSignal::slot_type& slot) const {
+connection EmptyBookViewModel::connect_quote_slot(
+    const QuoteSignal::slot_type& slot) const {
   return {};
 }
 

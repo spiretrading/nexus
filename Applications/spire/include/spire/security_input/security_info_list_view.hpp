@@ -1,5 +1,5 @@
-#ifndef SPIRE_SECURITY_INFO_LIST_VIEW
-#define SPIRE_SECURITY_INFO_LIST_VIEW
+#ifndef SPIRE_SECURITY_INFO_LIST_VIEW_HPP
+#define SPIRE_SECURITY_INFO_LIST_VIEW_HPP
 #include <vector>
 #include <QScrollArea>
 #include "Nexus/Definitions/SecurityInfo.hpp"
@@ -28,7 +28,7 @@ namespace Spire {
       /*!
         \param parent The parent widget.
       */
-      SecurityInfoListView(QWidget* parent = nullptr);
+      explicit SecurityInfoListView(QWidget* parent = nullptr);
 
       //! Sets the list of securities to display.
       void set_list(const std::vector<Nexus::SecurityInfo>& list);

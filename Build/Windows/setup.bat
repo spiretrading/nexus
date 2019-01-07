@@ -1,6 +1,6 @@
 SETLOCAL
 
-SET beam_commit="340b5967dcddd711c315c0d684da7a1c66c32436"
+SET beam_commit="775ec06fcad9a77fa1e0dab2ecd56f841c4790f6"
 if exist Beam goto end_beam_setup
   git clone https://www.github.com/eidolonsystems/beam.git Beam
   pushd Beam

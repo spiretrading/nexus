@@ -5,6 +5,7 @@
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
 
+using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
 
@@ -43,7 +44,7 @@ void SecurityInputTester::showEvent(QShowEvent* event) {
     [=] {
       auto positioned = false;
       while(true) {
-        m_dialog = new SecurityInputDialog(m_model);
+        m_dialog = new SecurityInputDialog(Ref(m_model));
         if(!positioned) {
           m_dialog->show();
           move(m_dialog->geometry().topRight().x(),

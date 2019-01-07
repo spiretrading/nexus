@@ -18,7 +18,7 @@ namespace Spire {
       /*
         \param parent The parent to this widget.
       */
-      TimeAndSalesTableView(QWidget* parent = nullptr);
+      explicit TimeAndSalesTableView(QWidget* parent = nullptr);
 
       //! Sets the model to get the table data from.
       /*
@@ -51,7 +51,6 @@ namespace Spire {
 
       void fade_out_horizontal_scroll_bar();
       void fade_out_vertical_scroll_bar();
-      void show_transition_widget();
       void show_loading_widget();
       void update_table_height(int num_rows);
       bool is_within_horizontal_scroll_bar(const QPoint& pos);

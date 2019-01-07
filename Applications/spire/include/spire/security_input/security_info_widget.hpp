@@ -1,5 +1,5 @@
-#ifndef SPIRE_SECURITY_INFO_WIDGET
-#define SPIRE_SECURITY_INFO_WIDGET
+#ifndef SPIRE_SECURITY_INFO_WIDGET_HPP
+#define SPIRE_SECURITY_INFO_WIDGET_HPP
 #include <QLabel>
 #include <QWidget>
 #include "Nexus/Definitions/SecurityInfo.hpp"
@@ -25,7 +25,8 @@ namespace Spire {
         \param info SecurityInfo to display.
         \param parent Parent to this widget.
       */
-      SecurityInfoWidget(Nexus::SecurityInfo info, QWidget* parent = nullptr);
+      explicit SecurityInfoWidget(Nexus::SecurityInfo info,
+        QWidget* parent = nullptr);
 
       //! Returns the security info represented.
       const Nexus::SecurityInfo& get_info() const;

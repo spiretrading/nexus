@@ -1,5 +1,5 @@
-#ifndef SPIRE_DROP_SHADOW
-#define SPIRE_DROP_SHADOW
+#ifndef SPIRE_DROP_SHADOW_HPP
+#define SPIRE_DROP_SHADOW_HPP
 #include <QAbstractNativeEventFilter>
 #include <QWidget>
 #include "spire/ui/ui.hpp"
@@ -14,7 +14,7 @@ namespace Spire {
       /*!
         \param parent The parent to add the drop shadow to.
       */
-      DropShadow(QWidget* parent);
+      explicit DropShadow(QWidget* parent);
 
       //! Constructs a drop shadow.
       /*!

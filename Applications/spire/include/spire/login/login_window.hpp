@@ -50,7 +50,8 @@ namespace Spire {
       using CancelSignal = Signal<void ()>;
 
       //! Constructs a login window in the NONE state.
-      LoginWindow(const std::string& version, QWidget* parent = nullptr);
+      explicit LoginWindow(const std::string& version,
+        QWidget* parent = nullptr);
 
       ~LoginWindow();
 

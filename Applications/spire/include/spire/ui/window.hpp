@@ -15,7 +15,7 @@ namespace Spire {
         \param body The widget displayed within the window.
         \param parent The parent widget to the window.
       */
-      Window(QWidget* body, QWidget* parent = nullptr);
+      explicit Window(QWidget* body, QWidget* parent = nullptr);
 
       //! Sets the icon to display.
       /*!
@@ -30,18 +30,16 @@ namespace Spire {
       */
       void set_icon(const QImage& icon, const QImage& unfocused_icon);
 
-      //! Sets the icon to display using an SVG file with default size, and
-      //! sets the task bar icon.
+      //! Sets the icon to display using an SVG file with default size.
       /*
-        \param path Path to the SVG file to display, and the task bar icon.
+        \param path Path to the SVG file to display.
       */
       void set_svg_icon(const QString& icon_path);
 
-      //! Sets the icons to display using an SVG file with default sizes,
-      //! and sets the task bar icon.
+      //! Sets the icons to display using an SVG file with default sizes.
       /*
         \param icon_path Path to the SVG file to display when the window has
-               focus, and the task bar icon.
+               focus.
         \param unfocused_icon_path Path to the SVG file to display when the
                window lacks focus.
       */

@@ -6,6 +6,7 @@
 #include <Beam/Threading/Threading.hpp>
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "spire/login/login_controller.hpp"
+#include "spire/spire/definitions.hpp"
 #include "spire/spire/spire.hpp"
 #include "spire/toolbar/toolbar.hpp"
 
@@ -38,7 +39,7 @@ namespace Spire {
       std::unique_ptr<ToolbarController> m_toolbar_controller;
 
       std::vector<LoginController::ServerEntry> load_server_entries();
-      void on_login();
+      void on_login(const Definitions& definitions);
   };
 }
 

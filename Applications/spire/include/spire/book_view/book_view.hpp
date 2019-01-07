@@ -5,12 +5,13 @@
 namespace Spire {
   class BboQuotePanel;
   class BookQuoteTableModel;
+  class BookQuoteTableView;
+  class BookViewController;
   class BookViewHighlightPropertiesWidget;
   class BookViewLevelPropertiesWidget;
   class BookViewModel;
   class BookViewProperties;
   class BookViewPropertiesDialog;
-  class BookViewSideTableView;
   class BookViewTableWidget;
   class BookViewWindow;
   class EmptyBookViewModel;
@@ -18,6 +19,7 @@ namespace Spire {
   class MarketListItem;
   class QuotePanel;
   class QuotePanelIndicatorWidget;
+  class ServicesBookViewModel;
   class TechnicalsPanel;
 }
 

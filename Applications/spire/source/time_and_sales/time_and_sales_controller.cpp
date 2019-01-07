@@ -1,6 +1,5 @@
 #include "spire/time_and_sales/time_and_sales_controller.hpp"
-#include "spire/security_input/local_security_input_model.hpp"
-#include "spire/time_and_sales/empty_time_and_sales_model.hpp"
+#include "spire/time_and_sales/services_time_and_sales_model.hpp"
 #include "spire/time_and_sales/time_and_sales_window.hpp"
 
 using namespace Beam;
@@ -9,10 +8,11 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
-TimeAndSalesController::TimeAndSalesController(
-    Beam::Ref<SecurityInputModel> security_input_model,
-    Beam::Ref<VirtualServiceClients> service_clients)
-    : m_security_input_model(security_input_model.Get()),
+TimeAndSalesController::TimeAndSalesController(Definitions definitions,
+    Ref<SecurityInputModel> security_input_model,
+    Ref<VirtualServiceClients> service_clients)
+    : m_definitions(std::move(definitions)),
+      m_security_input_model(security_input_model.Get()),
       m_service_clients(service_clients.Get()) {}
 
 TimeAndSalesController::~TimeAndSalesController() {
@@ -24,8 +24,8 @@ void TimeAndSalesController::open() {
     return;
   }
   m_window = std::make_unique<TimeAndSalesWindow>(TimeAndSalesProperties(),
-    *m_security_input_model);
-  m_window->connect_security_change_signal(
+    Ref(*m_security_input_model));
+  m_window->connect_change_security_signal(
     [=] (const auto& security) { on_change_security(security); });
   m_window->connect_closed_signal([=] { on_closed(); });
   m_window->show();
@@ -45,7 +45,8 @@ connection TimeAndSalesController::connect_closed_signal(
 }
 
 void TimeAndSalesController::on_change_security(const Security& security) {
-  auto model = std::make_shared<EmptyTimeAndSalesModel>(security);
+  auto model = std::make_shared<ServicesTimeAndSalesModel>(security,
+    m_definitions, Ref(*m_service_clients));
   m_window->set_model(model);
 }
 

@@ -1,7 +1,7 @@
 import * as React from 'react';
-import {HBoxLayout} from './hbox_layout'
-import {Padding} from './padding'
-import {VBoxLayout} from './vbox_layout'
+import { HBoxLayout } from './hbox_layout'
+import { Padding } from './padding'
+import { VBoxLayout } from './vbox_layout'
 
 interface Properties {
 
@@ -16,6 +16,9 @@ interface Properties {
 
   /** Specifies the CSS class of the Center HTML element. */
   className?: string;
+
+  /** The CSS style to apply. */
+  style?: any;
 
   /** The event handler called when the mouse enters the region. */
   onMouseEnter?: (event?: React.MouseEvent<any>) => void;
@@ -42,7 +45,7 @@ export class Center extends React.Component<Properties> {
     return (
       <HBoxLayout width={this.props.width} height={this.props.height}
           id={this.props.id} className={this.props.className}
-          onMouseEnter={this.props.onMouseEnter}
+          style={this.props.style} onMouseEnter={this.props.onMouseEnter}
           onMouseOut={this.props.onMouseOut} onClick={this.props.onClick}>
         <Padding/>
         <VBoxLayout>

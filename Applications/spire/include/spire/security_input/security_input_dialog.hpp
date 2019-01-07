@@ -1,7 +1,9 @@
 #ifndef SPIRE_SECURITY_INPUT_DIALOG_HPP
 #define SPIRE_SECURITY_INPUT_DIALOG_HPP
+#include <Beam/Pointers/Ref.hpp>
 #include <QDialog>
 #include <QPoint>
+#include <QVBoxLayout>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/security_input/security_input.hpp"
 #include "spire/security_input/security_input_box.hpp"
@@ -19,8 +21,8 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      SecurityInputDialog(SecurityInputModel& model, QWidget* parent = nullptr,
-        Qt::WindowFlags flags = 0);
+      explicit SecurityInputDialog(Beam::Ref<SecurityInputModel> model,
+        QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
 
       //! Constructs a security input dialog with an initial text value.
       /*!
@@ -29,8 +31,9 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      SecurityInputDialog(SecurityInputModel& model, const QString& text,
-        QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
+      SecurityInputDialog(Beam::Ref<SecurityInputModel> model,
+        const QString& text, QWidget* parent = nullptr,
+        Qt::WindowFlags flags = 0);
 
       ~SecurityInputDialog();
 
@@ -44,11 +47,15 @@ namespace Spire {
       void mouseMoveEvent(QMouseEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
       Nexus::Security m_security;
+      SecurityInputModel* m_model;
       std::unique_ptr<DropShadow> m_shadow;
+      QVBoxLayout* m_layout;
       SecurityInputBox* m_security_input_box;
+      QString m_initial_text;
       bool m_is_dragging;
       QPoint m_last_mouse_pos;
 

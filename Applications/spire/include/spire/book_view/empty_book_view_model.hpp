@@ -5,7 +5,7 @@
 
 namespace Spire {
 
-  //! Implements a book view model with no quotes.
+  //! Implements the BookViewModel with no quotes.
   class EmptyBookViewModel final : public BookViewModel {
     public:
 
@@ -13,15 +13,15 @@ namespace Spire {
       /*!
         \param security The security to model.
       */
-      EmptyBookViewModel(Nexus::Security security);
+      explicit EmptyBookViewModel(Nexus::Security security);
 
       const Nexus::Security& get_security() const override;
 
       const Nexus::BboQuote& get_bbo() const override;
 
-      const std::vector<Nexus::BookQuote>& get_asks() const override;
+      const std::vector<std::unique_ptr<Quote>>& get_asks() const override;
 
-      const std::vector<Nexus::BookQuote>& get_bids() const override;
+      const std::vector<std::unique_ptr<Quote>>& get_bids() const override;
 
       boost::optional<Nexus::Money> get_high() const override;
 
@@ -38,8 +38,8 @@ namespace Spire {
       boost::signals2::connection connect_bbo_slot(
         const BboSignal::slot_type& slot) const override;
 
-      boost::signals2::connection connect_book_quote_slot(
-        const BookQuoteSignal::slot_type& slot) const override;
+      boost::signals2::connection connect_quote_slot(
+        const QuoteSignal::slot_type& slot) const override;
 
       boost::signals2::connection connect_high_slot(
         const PriceSignal::slot_type& slot) const override;

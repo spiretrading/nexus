@@ -1,10 +1,12 @@
 #ifndef SPIRE_SECURITY_INPUT_WIDGET_HPP
 #define SPIRE_SECURITY_INPUT_WIDGET_HPP
+#include <Beam/Pointers/Ref.hpp>
 #include <QLabel>
 #include <QLineEdit>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/security_input/security_input.hpp"
+#include "spire/spire/qt_promise.hpp"
 
 namespace Spire {
 
@@ -23,7 +25,8 @@ namespace Spire {
         \param model The model to query for securities.
         \param parent The parent to this widget.
       */
-      SecurityInputBox(SecurityInputModel& model, QWidget* parent = nullptr);
+      explicit SecurityInputBox(Beam::Ref<SecurityInputModel> model,
+        QWidget* parent = nullptr);
 
       //! Constructs a security input box with an initial text value.
       /*!
@@ -31,8 +34,8 @@ namespace Spire {
         \param initial_text The initial text to display in the line edit.
         \param parent The parent to this widget.
       */
-      SecurityInputBox(SecurityInputModel& model, const QString& initial_text,
-        QWidget* parent = nullptr);
+      SecurityInputBox(Beam::Ref<SecurityInputModel> model,
+        const QString& initial_text, QWidget* parent = nullptr);
 
       //! Connects a slot to the commit signal.
       boost::signals2::connection connect_commit_signal(
@@ -50,6 +53,7 @@ namespace Spire {
       QLineEdit* m_security_line_edit;
       QLabel* m_icon_label;
       SecurityInfoListView* m_securities;
+      QtPromise<std::vector<Nexus::SecurityInfo>> m_completions;
 
       void on_text_edited();
       void move_line_edit();

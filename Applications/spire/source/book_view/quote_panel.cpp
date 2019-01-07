@@ -23,25 +23,41 @@ QuotePanel::QuotePanel(const BookViewModel& model, Side side,
   auto label_layout = new QHBoxLayout();
   label_layout->setContentsMargins({});
   label_layout->setSpacing(0);
-  label_layout->addStretch(1);
   m_price_label = new QLabel(this);
-  m_price_label->setAlignment(Qt::AlignCenter);
+  m_price_label->setSizePolicy(QSizePolicy::Ignored,
+    m_price_label->sizePolicy().verticalPolicy());
+  m_price_label->setAlignment(Qt::AlignRight);
   m_price_label->setStyleSheet(QString(R"(
     color: #4B23A0;
     font-family: Roboto;
     font-size: %1px;
-    font-weight: 550;)").arg(scale_height(12)));
+    font-weight: 550;
+    padding-right: %2px;)").arg(scale_height(12)).arg(scale_width(2)));
   label_layout->addWidget(m_price_label);
-  m_size_label = new QLabel(this);
-  m_size_label->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
-  m_size_label->setStyleSheet(QString(R"(
+  auto separator = new QLabel("/", this);
+  separator->setAlignment(Qt::AlignCenter);
+  separator->setSizePolicy(QSizePolicy::Fixed,
+    separator->sizePolicy().verticalPolicy());
+  separator->setStyleSheet(QString(R"(
     color: #4B23A0;
     font-family: Roboto;
     font-size: %1px;
     padding-top: %2px;
     font-weight: 550;)").arg(scale_height(10)).arg(scale_height(1)));
+  label_layout->addWidget(separator);
+  m_size_label = new QLabel(this);
+  m_size_label->setSizePolicy(QSizePolicy::Ignored,
+    m_size_label->sizePolicy().verticalPolicy());
+  m_size_label->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+  m_size_label->setStyleSheet(QString(R"(
+    color: #4B23A0;
+    font-family: Roboto;
+    font-size: %1px;
+    padding-left: %3px;
+    padding-top: %2px;
+    font-weight: 550;)").arg(scale_height(10)).arg(scale_height(1))
+    .arg(scale_width(2)));
   label_layout->addWidget(m_size_label);
-  label_layout->addStretch(1);
   layout->addLayout(label_layout);
   m_item_delegate = new CustomVariantItemDelegate(this);
   set_model(model);
@@ -63,7 +79,7 @@ void QuotePanel::set_quote_text(const Money& price, const Quantity& size) {
     m_price_label->setAlignment(Qt::AlignVCenter | Qt::AlignRight);
     m_price_label->setText(
       m_item_delegate->displayText(QVariant::fromValue(price), QLocale()));
-    m_size_label->setText(" / " +  m_item_delegate->displayText(
+    m_size_label->setText(m_item_delegate->displayText(
       QVariant::fromValue(size), QLocale()));
 }
 
