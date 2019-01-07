@@ -125,30 +125,81 @@ export class ProfilePage extends React.Component<Properties, State> {
     })();
     const formFooter = (() => {
       if (this.props.displaySize === DisplaySize.SMALL) {
-        return  <HLine color={ProfilePage.LINE_COLOR}/>;
+        return <HLine color={ProfilePage.LINE_COLOR} />;
       } else {
         return (null);
       }
     })();
     const formFooterPadding = (() => {
       if (this.props.displaySize === DisplaySize.SMALL) {
-        return  ProfilePage.STD_PADDING;
+        return ProfilePage.STD_PADDING;
       } else {
         return (null);
       }
     })();
     const newPasswordBox = (() => {
       if (this.props.displaySize === DisplaySize.SMALL) {
-        return  ProfilePage.STYLE.passwordBoxSmall;
+        return ProfilePage.STYLE.passwordBoxSmall;
       } else {
-        return  ProfilePage.STYLE.passwordBoxLarge;
+        return ProfilePage.STYLE.passwordBoxLarge;
       }
     })();
     const buttonStyle = (() => {
       if (this.props.displaySize === DisplaySize.SMALL) {
-        return  ProfilePage.DYNAMIC_STYLES.buttonSmall;
+        return ProfilePage.DYNAMIC_STYLES.buttonSmall;
       } else {
-        return  ProfilePage.DYNAMIC_STYLES.buttonLarge;
+        return ProfilePage.DYNAMIC_STYLES.buttonLarge;
+      }
+    })();
+    const inputBoxStyle = (() => {
+      if (this.props.displaySize === DisplaySize.SMALL) {
+        return ProfilePage.DYNAMIC_STYLES.inputBoxSmall;
+      } else {
+        return ProfilePage.DYNAMIC_STYLES.inputBoxLarge;
+      }
+    })();
+    const statusMessageInline = (() => {
+      if (this.props.displaySize === DisplaySize.SMALL) {
+        if (this.props.hasError) {
+          return ProfilePage.STYLE.errorMessage;
+        } else {
+          return ProfilePage.STYLE.statusMessage;
+        }
+      } else {
+        return ProfilePage.STYLE.hidden;
+      }
+    })();
+    const statusMessageUnderneath = (() => {
+      if (this.props.displaySize === DisplaySize.SMALL) {
+        return ProfilePage.STYLE.hidden;
+      } else {
+        if (this.props.hasError) {
+          return ProfilePage.STYLE.errorMessage;
+        } else {
+          return ProfilePage.STYLE.statusMessage;
+        }
+      }
+    })();
+    const passwordStatusMessageInline = (() => {
+      if (this.props.displaySize === DisplaySize.LARGE) {
+        if (this.props.hasError) {
+          return ProfilePage.STYLE.errorMessage;
+        } else {
+          return ProfilePage.STYLE.statusMessage;
+        }
+      } else {
+        return ProfilePage.STYLE.hidden;
+      }
+    })();
+    const passwordStatusMessageUnderneath = (() => {
+      if (this.props.displaySize === DisplaySize.LARGE) {
+        return ProfilePage.STYLE.hidden;
+      } else {
+        if (this.props.hasError) {
+          return ProfilePage.STYLE.errorMessage;
+        } else {
+          return ProfilePage.STYLE.statusMessage;
+        }
       }
     })();
     return (
@@ -283,51 +334,62 @@ export class ProfilePage extends React.Component<Properties, State> {
                     readonly
                     displaySize={this.props.displaySize}
                     value={Nexus.DefaultCountries.AU}
-                    onChange={() => {}}
+                    onChange={() => { }}
                     countryDatabase={this.state.countryDatabase} />
                 </FormEntry>
-                <Padding size={ProfilePage.STD_PADDING}/>
+                <Padding size={ProfilePage.STD_PADDING} />
                 {formFooter}
-                <Padding size={formFooterPadding}/>
+                <Padding size={formFooterPadding} />
               </VBoxLayout>
             </HBoxLayout>
             <div style={ProfilePage.STYLE.headerStyler}>User Notes</div>
-            <CommentBox comment='boo'/>
-            <Padding size={ProfilePage.STD_PADDING}/>
-            <button className={css(buttonStyle)}>
-              Save Changes
-            </button>
             <Padding size={ProfilePage.STD_PADDING} />
-            <HLine color='#E6E6E6'/>
+            <CommentBox comment='boo' />
+            <Padding size={ProfilePage.STD_PADDING} />
+            <div style={newPasswordBox}>
+            <div style={statusMessageInline}>BEEP</div>
+              <button className={css(buttonStyle)}>
+                Save Changes
+            </button>
+            </div>
+            <div style={statusMessageUnderneath}>BEEP</div>
+            <Padding size={ProfilePage.STD_PADDING} />
+            <HLine color='#E6E6E6' />
             <Padding size={ProfilePage.STD_PADDING} />
             <div style={ProfilePage.STYLE.headerStyler}>Change Password</div>
             <Padding size={ProfilePage.STD_PADDING} />
             <div style={newPasswordBox}>
               <input type='password' placeholder='New Password'
                 autoComplete='off'
-                className={css(ProfilePage.DYNAMIC_STYLES.inputBox)}
+                className={css(inputBoxStyle)}
                 disabled={false}
                 onFocus={() => this.passwordInputField.placeholder = ''}
                 onBlur={() =>
                   this.passwordInputField.placeholder = 'New Password'}
-                ref={(ref) => this.passwordInputField = ref}/>
-                <div style={ProfilePage.STYLE.passwordPadding}/>
+                ref={(ref) => this.passwordInputField = ref} />
+              <div style={ProfilePage.STYLE.passwordPadding} />
               <input type='password' placeholder='Confirm New Password'
-              autoComplete='off'
-                className={css(ProfilePage.DYNAMIC_STYLES.inputBox)}
+                autoComplete='off'
+                className={css(inputBoxStyle)}
                 disabled={true}
                 onFocus={() => this.confirmPasswordInputField.placeholder = ''}
                 onBlur={() =>
                   this.confirmPasswordInputField.placeholder
                   = 'Confirm New Password'}
-                ref={(ref) => this.confirmPasswordInputField = ref}/>
-                <div style={ProfilePage.STYLE.filler}/>
-                <div style={ProfilePage.STYLE.passwordButtonPadding}/>
+                ref={(ref) => this.confirmPasswordInputField = ref} />
+              <div style={ProfilePage.STYLE.filler} />
+              <div style={passwordStatusMessageInline}>
+                BEEP
+            </div>
+              <div style={ProfilePage.STYLE.passwordButtonPadding} />
               <button className={css(buttonStyle)}>
-              Save Password
+                Save Password
               </button>
             </div>
-            <Padding size={ProfilePage.BOTTOM_PADDING}/>
+            <div style={passwordStatusMessageUnderneath}>
+              BEEP
+            </div>
+            <Padding size={ProfilePage.BOTTOM_PADDING} />
           </VBoxLayout>
         </div>
         <div style={ProfilePage.STYLE.fixedSizePadding} />
@@ -342,6 +404,11 @@ export class ProfilePage extends React.Component<Properties, State> {
       justifyContent: 'space-between' as 'space-between',
       overflowY: 'auto' as 'auto'
     },
+    hidden: {
+      opacity: 0,
+      visibility: 'hidden' as 'hidden',
+      display: 'none' as 'none'
+    },
     headerStyler: {
       color: '#4B23A0',
       font: '500 14px Roboto',
@@ -351,10 +418,13 @@ export class ProfilePage extends React.Component<Properties, State> {
       color: '#000000',
       font: '400 14px Roboto'
     },
-    hidden: {
-      opacity: 0,
-      visibility: 'hidden' as 'hidden',
-      display: 'none' as 'none'
+    errorMessage: {
+      color: '#E63F44',
+      font: '400 14px Roboto'
+    },
+    statusMessage: {
+      color: '#36BB55',
+      font: '400 14px Roboto'
     },
     filler: {
       flexGrow: 1
@@ -383,11 +453,15 @@ export class ProfilePage extends React.Component<Properties, State> {
     passwordBoxLarge: {
       width: '100%',
       display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row'
+      flexDirection: 'row' as 'row',
+      flexWrap: 'nowrap' as 'nowrap',
+      alignItems: 'center' as 'center'
     },
     passwordBoxSmall: {
       display: 'flex' as 'flex',
-      flexDirection: 'column' as 'column'
+      flexDirection: 'column' as 'column',
+      aignItems: 'center' as 'center',
+      justifyContent: 'center' as 'center'
     },
     passwordPadding: {
       height: '18px',
@@ -433,9 +507,9 @@ export class ProfilePage extends React.Component<Properties, State> {
         color: '#8C8C8C'
       }
     },
-    inputBox: {
+    inputBoxSmall: {
       boxSizing: 'border-box' as 'border-box',
-      width: '284px',
+      width: '100%',
       padding: 0,
       height: '34px',
       border: '1px solid #C8C8C8',
@@ -466,7 +540,51 @@ export class ProfilePage extends React.Component<Properties, State> {
         display: 'none'
       },
       '::-webkit-autofill': {
-        backgroundColor:  'none'
+        backgroundColor: 'none'
+      },
+      '::-webkit-credentials-auto-fill-button': {
+        visibility: 'hidden' as 'hidden',
+        display: 'none !important',
+        pointerEvents: 'none',
+        height: 0,
+        width: 0,
+        margin: 0
+      }
+    },
+    inputBoxLarge: {
+      boxSizing: 'border-box' as 'border-box',
+      width: '240px',
+      padding: 0,
+      height: '34px',
+      border: '1px solid #C8C8C8',
+      backgroundColor: '#FFFFFF',
+      color: '#000000',
+      font: '300 16px Roboto',
+      outline: 0,
+      textAlign: 'center',
+      borderRadius: 0,
+      ':active': {
+        border: '1px solid #684BC7'
+      },
+      '::placeholder': {
+        color: '#8C8C8C'
+      },
+      '::-moz-placeholder': {
+        color: '#8C8C8C',
+        opacity: 1
+      },
+      '::-ms-input-placeholder': {
+        color: '#8C8C8C',
+        opacity: 1
+      },
+      '::-ms-clear': {
+        display: 'none'
+      },
+      '::-ms-reveal': {
+        display: 'none'
+      },
+      '::-webkit-autofill': {
+        backgroundColor: 'none'
       },
       '::-webkit-credentials-auto-fill-button': {
         visibility: 'hidden' as 'hidden',
