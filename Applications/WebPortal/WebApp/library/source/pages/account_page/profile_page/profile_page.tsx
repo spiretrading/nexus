@@ -144,6 +144,13 @@ export class ProfilePage extends React.Component<Properties, State> {
         return ProfilePage.STYLE.passwordBoxLarge;
       }
     })();
+    const submitAndStatusBox = (() => {
+      if (this.props.displaySize === DisplaySize.SMALL) {
+        return ProfilePage.STYLE.passwordBoxSmall;
+      } else {
+        return ProfilePage.STYLE.passwordBoxLarge;
+      }
+    })();
     const buttonStyle = (() => {
       if (this.props.displaySize === DisplaySize.SMALL) {
         return ProfilePage.DYNAMIC_STYLES.buttonSmall;
@@ -160,24 +167,24 @@ export class ProfilePage extends React.Component<Properties, State> {
     })();
     const statusMessageInline = (() => {
       if (this.props.displaySize === DisplaySize.SMALL) {
+        return ProfilePage.STYLE.hidden;
+      } else {
         if (this.props.hasError) {
           return ProfilePage.STYLE.errorMessage;
         } else {
           return ProfilePage.STYLE.statusMessage;
         }
-      } else {
-        return ProfilePage.STYLE.hidden;
       }
     })();
     const statusMessageUnderneath = (() => {
       if (this.props.displaySize === DisplaySize.SMALL) {
-        return ProfilePage.STYLE.hidden;
-      } else {
         if (this.props.hasError) {
           return ProfilePage.STYLE.errorMessage;
         } else {
           return ProfilePage.STYLE.statusMessage;
         }
+      } else {
+        return ProfilePage.STYLE.hidden;
       }
     })();
     const passwordStatusMessageInline = (() => {
@@ -346,13 +353,24 @@ export class ProfilePage extends React.Component<Properties, State> {
             <Padding size={ProfilePage.STD_PADDING} />
             <CommentBox comment='boo' />
             <Padding size={ProfilePage.STD_PADDING} />
-            <div style={newPasswordBox}>
-            <div style={statusMessageInline}>BEEP</div>
+
+
+            <div style={submitAndStatusBox}>
+
+              <div style={{ ...submitAndStatusBox, ...statusMessageInline }}>
+                <div style={ProfilePage.STYLE.filler} />
+                BEEP
+                <div style={ProfilePage.STYLE.passwordButtonPadding} />
+              </div>
+
               <button className={css(buttonStyle)}>
                 Save Changes
-            </button>
+              </button>
+              <div style={statusMessageUnderneath}>
+                <div style={ProfilePage.STYLE.tinyPadding} />
+                BEEP
+              </div>
             </div>
-            <div style={statusMessageUnderneath}>BEEP</div>
             <Padding size={ProfilePage.STD_PADDING} />
             <HLine color='#E6E6E6' />
             <Padding size={ProfilePage.STD_PADDING} />
@@ -385,10 +403,12 @@ export class ProfilePage extends React.Component<Properties, State> {
               <button className={css(buttonStyle)}>
                 Save Password
               </button>
+              <div style={passwordStatusMessageUnderneath}>
+                <div style={ProfilePage.STYLE.tinyPadding} />
+                BEEP
             </div>
-            <div style={passwordStatusMessageUnderneath}>
-              BEEP
             </div>
+
             <Padding size={ProfilePage.BOTTOM_PADDING} />
           </VBoxLayout>
         </div>
@@ -442,6 +462,14 @@ export class ProfilePage extends React.Component<Properties, State> {
     fixedSizePadding: {
       width: '30px'
     },
+    tinyPadding: {
+      width: '100%',
+      height: '18px'
+    },
+    mediumPadding: {
+      width: '100%',
+      height: '30px'
+    },
     rolesWrapper: {
       marginLeft: '11px',
       display: 'flex' as 'flex',
@@ -460,7 +488,7 @@ export class ProfilePage extends React.Component<Properties, State> {
     passwordBoxSmall: {
       display: 'flex' as 'flex',
       flexDirection: 'column' as 'column',
-      aignItems: 'center' as 'center',
+      alignItems: 'center' as 'center',
       justifyContent: 'center' as 'center'
     },
     passwordPadding: {
