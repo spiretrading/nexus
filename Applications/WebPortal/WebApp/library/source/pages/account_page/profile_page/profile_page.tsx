@@ -144,12 +144,12 @@ export class ProfilePage extends React.Component<Properties, State> {
         <div style={contentWidth}>
           <VBoxLayout width='100%'>
             <Padding size='18px' />
-            <div style={ProfilePage.STYLE.loginInfo}>Last Login</div>
-            <Padding size='30px' />
+            <div style={ProfilePage.STYLE.lastLoginBox}>Last Login</div>
+            <Padding size={ProfilePage.STANDARD_PADDING}  />
             <div style={ProfilePage.STYLE.headerStyler}>
               Account Information
             </div>
-            <Padding size='30px' />
+            <Padding size={ProfilePage.STANDARD_PADDING} />
             <HBoxLayout>
               {sidePanelPhoto}
               <Padding size={sidePanelPhotoPadding} />
@@ -163,7 +163,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                     disabled />
                 </FormEntry>
                 <Padding size={ProfilePage.LINE_PADDING} />
-                <HLine color='#E6E6E6' />
+                <HLine color={ProfilePage.LINE_COLOR}  />
                 <Padding size={ProfilePage.LINE_PADDING} />
                 <FormEntry name='Last Name'
                   orientation={orientation}>
@@ -173,7 +173,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                     disabled />
                 </FormEntry>
                 <Padding size={ProfilePage.LINE_PADDING} />
-                <HLine color='#E6E6E6' />
+                <HLine color={ProfilePage.LINE_COLOR}  />
                 <Padding size={ProfilePage.LINE_PADDING} />
                 <FormEntry name='Username'
                   orientation={orientation}>
@@ -183,7 +183,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                     disabled />
                 </FormEntry>
                 <Padding size={ProfilePage.LINE_PADDING} />
-                <HLine color='#E6E6E6' />
+                <HLine color={ProfilePage.LINE_COLOR}  />
                 <Padding size={ProfilePage.LINE_PADDING} />
                 <FormEntry name='Role(s)'
                   orientation={orientation}>
@@ -192,7 +192,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                   </div>
                 </FormEntry>
                 <Padding size={ProfilePage.LINE_PADDING} />
-                <HLine color='#E6E6E6' />
+                <HLine color={ProfilePage.LINE_COLOR} />
                 <Padding size={ProfilePage.LINE_PADDING} />
                 <FormEntry name='Groups(s)'
                   orientation={orientation}>
@@ -202,7 +202,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                     disabled />
                 </FormEntry>
                 <Padding size={ProfilePage.LINE_PADDING} />
-                <HLine color='#E6E6E6' />
+                <HLine color={ProfilePage.LINE_COLOR}  />
                 <Padding size={ProfilePage.LINE_PADDING} />
                 <FormEntry name='Regestration Date'
                   orientation={orientation}>
@@ -212,7 +212,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                     disabled />
                 </FormEntry>
                 <Padding size={ProfilePage.LINE_PADDING} />
-                <HLine color='#E6E6E6' />
+                <HLine color={ProfilePage.LINE_COLOR}  />
                 <Padding size={ProfilePage.LINE_PADDING} />
                 <FormEntry name='ID Number'
                   orientation={orientation}>
@@ -222,7 +222,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                     disabled />
                 </FormEntry>
                 <Padding size={ProfilePage.LINE_PADDING} />
-                <HLine color='#E6E6E6' />
+                <HLine color={ProfilePage.LINE_COLOR}  />
                 <Padding size={ProfilePage.LINE_PADDING} />
                 <FormEntry name='Email'
                   orientation={orientation}>
@@ -232,7 +232,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                     disabled />
                 </FormEntry>
                 <Padding size={ProfilePage.LINE_PADDING} />
-                <HLine color='#E6E6E6' />
+                <HLine color={ProfilePage.LINE_COLOR}  />
                 <Padding size={ProfilePage.LINE_PADDING} />
                 <FormEntry name='Address'
                   orientation={orientation}>
@@ -242,7 +242,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                     disabled />
                 </FormEntry>
                 <Padding size={ProfilePage.LINE_PADDING} />
-                <HLine color='#E6E6E6' />
+                <HLine color={ProfilePage.LINE_COLOR}  />
                 <Padding size={ProfilePage.LINE_PADDING} />
                 <FormEntry name='City'
                   orientation={orientation}>
@@ -252,7 +252,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                     disabled />
                 </FormEntry>
                 <Padding size={ProfilePage.LINE_PADDING} />
-                <HLine color='#E6E6E6' />
+                <HLine color={ProfilePage.LINE_COLOR}  />
                 <Padding size={ProfilePage.LINE_PADDING} />
                 <FormEntry name='Province/State'
                   orientation={orientation}>
@@ -262,7 +262,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                     disabled />
                 </FormEntry>
                 <Padding size={ProfilePage.LINE_PADDING} />
-                <HLine color='#E6E6E6' />
+                <HLine color={ProfilePage.LINE_COLOR}  />
                 <Padding size={ProfilePage.LINE_PADDING} />
                 <FormEntry name='Country'
                   orientation={orientation}>
@@ -283,7 +283,7 @@ export class ProfilePage extends React.Component<Properties, State> {
               submitStatus={this.props.submitStatus}
               onSubmit={() => { }} />
             <Padding size={ProfilePage.STANDARD_PADDING} />
-            <HLine color='#E6E6E6' />
+            <HLine color={ProfilePage.LINE_COLOR} />
             <Padding size={ProfilePage.STANDARD_PADDING} />
             <ChangePasswordBox displaySize={this.props.displaySize}
               hasPasswordError={this.props.hasPasswordError}
@@ -315,12 +315,9 @@ export class ProfilePage extends React.Component<Properties, State> {
       font: '500 14px Roboto',
       wdith: '100%'
     },
-    loginInfo: {
+    lastLoginBox: {
       color: '#000000',
       font: '400 14px Roboto'
-    },
-    filler: {
-      flexGrow: 1
     },
     contentSmall: {
       flexGrow: 1,
@@ -334,14 +331,6 @@ export class ProfilePage extends React.Component<Properties, State> {
     },
     fixedSizePadding: {
       width: '30px'
-    },
-    tinyPadding: {
-      width: '100%',
-      height: '18px'
-    },
-    mediumPadding: {
-      width: '100%',
-      height: '30px'
     },
     rolesWrapper: {
       marginLeft: '11px',
