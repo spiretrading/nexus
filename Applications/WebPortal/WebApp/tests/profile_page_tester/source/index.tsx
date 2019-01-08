@@ -1,3 +1,4 @@
+import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
@@ -51,10 +52,10 @@ class TestApp extends React.Component<Properties, State> {
       }
     })();
     return (
-      <WebPortal.HBoxLayout width='100%' height='100%'>
-        <WebPortal.Padding size='18px'/>
-        <WebPortal.VBoxLayout width='100%' height='100%'>
-          <WebPortal.Padding size='80px'/>
+      <Dali.HBoxLayout width='100%' height='100%'>
+        <Dali.Padding size='18px'/>
+        <Dali.VBoxLayout width='100%' height='100%'>
+          <Dali.Padding size='80px'/>
           <WebPortal.PhotoField
             displaySize={this.props.displaySize}
             displayMode={this.state.photoFieldDisplayMode}
@@ -63,7 +64,7 @@ class TestApp extends React.Component<Properties, State> {
             onSubmit={this.updateImage}
             onToggleUploader={this.toggleDisplayMode}
             scaling={this.state.imagingScaling}/>
-          <WebPortal.Padding size='30px'/>
+          <Dali.Padding size='30px'/>
           <WebPortal.FormEntry name='First Name'
               readonly
               orientation={orientation}>
@@ -72,7 +73,7 @@ class TestApp extends React.Component<Properties, State> {
               displaySize={this.props.displaySize}
               disabled/>
           </WebPortal.FormEntry>
-          <WebPortal.Padding size='30px'/>
+          <Dali.Padding size='30px'/>
           <WebPortal.FormEntry name='Last Name'
               orientation={orientation}>
             <WebPortal.TextField
@@ -80,10 +81,10 @@ class TestApp extends React.Component<Properties, State> {
               value={this.state.lastNameValue}
               onInput={this.onTextInput}/>
           </WebPortal.FormEntry>
-          <WebPortal.Padding size='30px'/>
+          <Dali.Padding size='30px'/>
           <WebPortal.RolesField roles={this.state.someRoles}
             onClick={this.onRoleClick}/>
-          <WebPortal.Padding size='30px'/>
+          <Dali.Padding size='30px'/>
           <WebPortal.FormEntry name='Country' orientation={orientation} >
             <WebPortal.CountrySelectionBox
               displaySize={this.props.displaySize}
@@ -91,7 +92,7 @@ class TestApp extends React.Component<Properties, State> {
               onChange={this.changeCountry}
               countryDatabase={this.state.countryDatabase}/>
           </WebPortal.FormEntry>
-          <WebPortal.Padding size='30px'/>
+          <Dali.Padding size='30px'/>
           <WebPortal.FormEntry name='Country' orientation={orientation} >
             <WebPortal.CountrySelectionBox
               readonly
@@ -100,8 +101,8 @@ class TestApp extends React.Component<Properties, State> {
               onChange={this.changeCountry}
               countryDatabase={this.state.countryDatabase}/>
           </WebPortal.FormEntry>
-        </WebPortal.VBoxLayout>
-        <WebPortal.Padding size='18px'/>
+        </Dali.VBoxLayout>
+        <Dali.Padding size='18px'/>
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
               onClick={this.toggleReadOnly}>
@@ -112,7 +113,7 @@ class TestApp extends React.Component<Properties, State> {
             CHANGE IMAGE
           </button>
         </div>
-      </WebPortal.HBoxLayout>);
+      </Dali.HBoxLayout>);
   }
 
   private onTextInput(value: string) {

@@ -1,7 +1,8 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
+import { HBoxLayout, Padding, VBoxLayout } from 'dali';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { DisplaySize, HBoxLayout, HLine, Padding, VBoxLayout } from '../../..';
+import { DisplaySize, HLine } from '../../..';
 
 /** The modes that the PhotoField can be displayed at. */
 export enum DisplayMode {

@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "aphrodite": "2.2.3",
+    "dali": "file:../../../../../../dali",
     "react": "16.6.0",
     "react-dom": "16.6.0",
     "react-router-dom": "4.3.1",

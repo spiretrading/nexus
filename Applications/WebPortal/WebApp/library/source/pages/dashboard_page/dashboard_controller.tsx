@@ -1,4 +1,3 @@
-import * as Nexus from 'nexus';
 import * as React from 'react';
 import { AccountController, AccountModel } from '../account_page';
 import { DashboardModel } from './dashboard_model';

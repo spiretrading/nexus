@@ -1,5 +1,5 @@
+import { HBoxLayout, VBoxLayout, Padding } from 'dali';
 import * as React from 'react';
-import { HBoxLayout, VBoxLayout, Padding } from '../../../layouts';
 
 interface Properties {
 

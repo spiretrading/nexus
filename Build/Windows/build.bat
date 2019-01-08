@@ -24,5 +24,9 @@ CALL %~dp0../../Applications/TmxIpMarketDataFeedClient/Build/Windows/build.bat %
 CALL %~dp0../../Applications/TmxTl1MarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/UtpMarketDataFeedClient/Build/Windows/build.bat %config%
 CALL %~dp0../../Applications/WebPortal/Build/Windows/build.bat %config%
+PUSHD %~dp0../../WebApi
+npm install
+npm run build
+POPD
 CALL %~dp0../../Applications/WebPortal/WebApp/build.bat %config%
 ENDLOCAL
