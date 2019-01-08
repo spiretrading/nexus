@@ -133,7 +133,7 @@ export class ProfilePage extends React.Component<Properties, State> {
     })();
     const formFooterPaddingSize = (() => {
       if (this.props.displaySize === DisplaySize.SMALL) {
-        return ProfilePage.STD_PADDING;
+        return ProfilePage.STANDARD_PADDING;
       } else {
         return 0;
       }
@@ -273,7 +273,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                     onChange={() => { }}
                     countryDatabase={this.state.countryDatabase} />
                 </FormEntry>
-                <Padding size={ProfilePage.STD_PADDING} />
+                <Padding size={ProfilePage.STANDARD_PADDING} />
                 {formFooter}
                 <Padding size={formFooterPaddingSize} />
               </VBoxLayout>
@@ -282,9 +282,9 @@ export class ProfilePage extends React.Component<Properties, State> {
               hasError={this.props.hasError}
               submitStatus={this.props.submitStatus}
               onSubmit={() => { }} />
-            <Padding size={ProfilePage.STD_PADDING} />
+            <Padding size={ProfilePage.STANDARD_PADDING} />
             <HLine color='#E6E6E6' />
-            <Padding size={ProfilePage.STD_PADDING} />
+            <Padding size={ProfilePage.STANDARD_PADDING} />
             <ChangePasswordBox displaySize={this.props.displaySize}
               hasPasswordError={this.props.hasPasswordError}
               submitPasswordStatus={this.props.submitPasswordStatus}
@@ -353,7 +353,7 @@ export class ProfilePage extends React.Component<Properties, State> {
     }
   };
   private static readonly LINE_PADDING = '14px';
-  private static readonly STD_PADDING = '30px';
+  private static readonly STANDARD_PADDING = '30px';
   private static readonly BOTTOM_PADDING = '60px';
   private static readonly LINE_COLOR = '#E6E6E6';
 }
@@ -408,14 +408,11 @@ class CommentSubmitBox extends React.Component<CommentBoxProp> {
       <VBoxLayout>
         <div style={CommentSubmitBox.STYLE.headerStyler}>User Notes</div>
         <Padding size={CommentSubmitBox.STD_PADDING} />
-        <CommentBox comment='Put text here! Not right now. Will work later' />
+        <CommentBox comment='' />
         <Padding size={CommentSubmitBox.STD_PADDING} />
-
-
-
         <div style={boxStyle}>
           <div style={CommentSubmitBox.STYLE.filler} />
-          <div style={{ ...boxStyle, ...statusMessageInline }}>
+          <div style={{ ...boxStyle, ...statusMessageInline}}>
             {this.props.submitStatus}
             <div style={CommentSubmitBox.STYLE.passwordButtonPadding} />
           </div>
