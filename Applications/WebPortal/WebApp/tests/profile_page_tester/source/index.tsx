@@ -47,6 +47,9 @@ class TestApp extends React.Component<Properties, State> {
     this.toggleReadOnly = this.toggleReadOnly.bind(this);
     this.updateImage = this.updateImage.bind(this);
     this.changeCountry = this.changeCountry.bind(this);
+    this.setStatusToError = this.setStatusToError.bind(this);
+    this.setStatusToNull = this.setStatusToNull.bind(this);
+    this.setStatusToSuccessful = this.setStatusToSuccessful.bind(this);
   }
 
   public render(): JSX.Element {
@@ -66,7 +69,8 @@ class TestApp extends React.Component<Properties, State> {
           isSubmitEnabled={true}
           submitStatus={this.state.statusMessage}
           submitPasswordStatus={this.state.passwordStatusMessage}
-          hasError={this.state.hasError} />
+          hasError={this.state.hasError} 
+          hasPasswordError={this.state.hasError} />
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
             onClick={this.setStatusToNull}>
@@ -146,7 +150,7 @@ class TestApp extends React.Component<Properties, State> {
     this.setState({
       statusMessage: 'Error!',
       passwordStatusMessage: 'Error!',
-      hasError: false
+      hasError: true
     });
   }
 
@@ -154,7 +158,7 @@ class TestApp extends React.Component<Properties, State> {
     this.setState({
       statusMessage: 'Sucess',
       passwordStatusMessage: 'Sucess',
-      hasError: true
+      hasError: false
     });
   }
 
