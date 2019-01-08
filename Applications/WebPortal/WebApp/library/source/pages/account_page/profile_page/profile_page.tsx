@@ -1,13 +1,12 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize, PhotoField } from '../../..';
-import { FormEntry, TextField } from '.';
+import { CountrySelectionBox, DisplaySize, HBoxLayout, HLine, Padding,
+   PhotoField, VBoxLayout } from '../../..';
 import { RolesField } from './roles_field';
 import { CommentBox } from '../comment_box';
-import { HLine, CountrySelectionBox } from '../../../components';
-import { VBoxLayout, Padding, HBoxLayout } from '../../../layouts';
 import { DisplayMode } from './photo_field';
+import { FormEntry, TextField } from '.';
 
 interface Properties {
 
@@ -125,7 +124,7 @@ export class ProfilePage extends React.Component<Properties, State> {
     })();
     const formFooter = (() => {
       if (this.props.displaySize === DisplaySize.SMALL) {
-        return <HLine color={ProfilePage.LINE_COLOR} />;
+        return <HLine color={ProfilePage.LINE_COLOR}/>;
       } else {
         return (null);
       }
@@ -159,7 +158,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                   <TextField
                     value='Frodo'
                     displaySize={this.props.displaySize}
-                    disabled />
+                    disabled/>
                 </FormEntry>
                 <Padding size={ProfilePage.LINE_PADDING} />
                 <HLine color='#E6E6E6' />
@@ -277,13 +276,12 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <Padding size={formFooterPadding} />
               </VBoxLayout>
             </HBoxLayout>
-            <Padding size={ProfilePage.STD_PADDING} />
             <CommentSubmitBox displaySize={this.props.displaySize} />
+            <Padding size={ProfilePage.STD_PADDING} />
             <HLine color='#E6E6E6' />
             <Padding size={ProfilePage.STD_PADDING} />
             <ChangePasswordBox displaySize={this.props.displaySize}
-              onPasswordSubmit={() => { }}
-            />
+              onPasswordSubmit={() => { }}/>
             <Padding size={ProfilePage.BOTTOM_PADDING} />
           </VBoxLayout>
         </div>
@@ -311,14 +309,6 @@ export class ProfilePage extends React.Component<Properties, State> {
     },
     loginInfo: {
       color: '#000000',
-      font: '400 14px Roboto'
-    },
-    errorMessage: {
-      color: '#E63F44',
-      font: '400 14px Roboto'
-    },
-    statusMessage: {
-      color: '#36BB55',
       font: '400 14px Roboto'
     },
     filler: {
@@ -358,8 +348,6 @@ export class ProfilePage extends React.Component<Properties, State> {
   private static readonly STD_PADDING = '30px';
   private static readonly BOTTOM_PADDING = '60px';
   private static readonly LINE_COLOR = '#E6E6E6';
-  private passwordInputField: HTMLInputElement;
-  private confirmPasswordInputField: HTMLInputElement;
 }
 
 interface CommentBoxProp {
@@ -408,25 +396,26 @@ class CommentSubmitBox extends React.Component<CommentBoxProp> {
         return CommentSubmitBox.STYLE.hidden;
       }
     })();
-    return (<VBoxLayout>
-      <div style={CommentSubmitBox.STYLE.headerStyler}>User Notes</div>
-      <Padding size={CommentSubmitBox.STD_PADDING} />
-      <CommentBox comment='boo' />
-      <Padding size={CommentSubmitBox.STD_PADDING} />
-      <div style={boxStyle}>
-        <div style={CommentSubmitBox.STYLE.filler} />
-        <div style={{ ...boxStyle, ...statusMessageInline }}>
-          BEEP
-                <div style={CommentSubmitBox.STYLE.passwordButtonPadding} />
-        </div>
-        <SubmitButton label='Save Password'
-          displaySize={this.props.displaySize} />
-        <div style={statusMessageUnderneath}>
-          <div style={CommentSubmitBox.STYLE.tinyPadding} />
-          BEEP
+    return (
+      <VBoxLayout>
+        <div style={CommentSubmitBox.STYLE.headerStyler}>User Notes</div>
+        <Padding size={CommentSubmitBox.STD_PADDING} />
+        <CommentBox comment='boo' />
+        <Padding size={CommentSubmitBox.STD_PADDING} />
+        <div style={boxStyle}>
+          <div style={CommentSubmitBox.STYLE.filler} />
+          <div style={{ ...boxStyle, ...statusMessageInline }}>
+            BEEP
+            <div style={CommentSubmitBox.STYLE.passwordButtonPadding}/>
           </div>
-      </div>
-    </VBoxLayout>);
+          <SubmitButton label='Save Password'
+            displaySize={this.props.displaySize}/>
+          <div style={statusMessageUnderneath}>
+            <div style={CommentSubmitBox.STYLE.tinyPadding} />
+            BEEP
+          </div>
+        </div>
+      </VBoxLayout>);
   }
   private static readonly STYLE = {
     hidden: {
@@ -542,7 +531,7 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
         }
       }
     })();
-    return (<div>
+    return (<VBoxLayout>
       <div style={ChangePasswordBox.STYLE.headerStyler}>Change Password</div>
       <Padding size={ChangePasswordBox.STD_PADDING} />
       <div style={newPasswordBox}>
@@ -580,7 +569,7 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
         BEEP
       <div style={ChangePasswordBox.STYLE.filler} />
       </div>
-    </div>);
+    </VBoxLayout>);
   }
   private static readonly STYLE = {
     hidden: {

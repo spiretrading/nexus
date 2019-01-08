@@ -2,7 +2,6 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
-import { VBoxLayout, Padding } from 'web_portal';
 
 /** Determines the size to render components at. */
 interface Properties {
@@ -19,6 +18,9 @@ interface State {
   countryDatabase: Nexus.CountryDatabase;
   country: Nexus.CountryCode;
   identity: Nexus.AccountIdentity;
+  statusMessage: string;
+  passwordStatusMessage: string;
+  hasError: boolean;
 }
 
 /**  Displays a testing application. */
@@ -34,14 +36,16 @@ class TestApp extends React.Component<Properties, State> {
       photoFieldDisplayMode: WebPortal.DisplayMode.DISPLAY,
       countryDatabase: Nexus.buildDefaultCountryDatabase(),
       country: Nexus.DefaultCountries.CA,
-      identity: new Nexus.AccountIdentity()
+      identity: new Nexus.AccountIdentity(),
+      statusMessage: '',
+      passwordStatusMessage: '',
+      hasError: false
     };
     this.onTextInput = this.onTextInput.bind(this);
     this.onRoleClick = this.onRoleClick.bind(this);
     this.changeImage = this.changeImage.bind(this);
     this.toggleReadOnly = this.toggleReadOnly.bind(this);
     this.updateImage = this.updateImage.bind(this);
-    this.toggleDisplayMode = this.toggleDisplayMode.bind(this);
     this.changeCountry = this.changeCountry.bind(this);
   }
 
@@ -54,29 +58,31 @@ class TestApp extends React.Component<Properties, State> {
       }
     })();
     return (
-
+      <WebPortal.VBoxLayout width='100%' height='100%'>
         <WebPortal.ProfilePage
           roles={this.state.someRoles}
           identity={this.state.identity}
           displaySize={this.props.displaySize}
           isSubmitEnabled={true}
-          submitStatus={''}
-          hasError={false}
-        />
-        );
-  }
-/** 
-<div style={TestApp.STYLE.testingComponents}>
+          submitStatus={this.state.statusMessage}
+          submitPasswordStatus={this.state.passwordStatusMessage}
+          hasError={this.state.hasError} />
+        <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
-            onClick={this.toggleReadOnly}>
-            TOGGLE PHOTOFIELD READONLY
+            onClick={this.setStatusToNull}>
+            NO STATUS MESSAGES
           </button>
           <button tabIndex={-1}
-            onClick={this.changeImage}>
-            CHANGE IMAGE
+            onClick={this.setStatusToSuccessful}>
+            STATUS MESSAGES
+          </button>
+          <button tabIndex={-1}
+            onClick={this.setStatusToError}>
+            ERROR MESSAGES
           </button>
         </div>
-    </div> */
+      </WebPortal.VBoxLayout>);
+  }
 
   public componentDidMount() {
     this.state.identity.photoId = TestApp.SOME_IMAGE;
@@ -128,18 +134,34 @@ class TestApp extends React.Component<Properties, State> {
     });
   }
 
-  private toggleDisplayMode() {
-    if (this.state.photoFieldDisplayMode === WebPortal.DisplayMode.DISPLAY) {
-      this.setState({ photoFieldDisplayMode: WebPortal.DisplayMode.UPLOADING });
-    } else {
-      this.setState({ photoFieldDisplayMode: WebPortal.DisplayMode.DISPLAY });
-    }
+  private setStatusToNull() {
+    this.setState({
+      statusMessage: '',
+      passwordStatusMessage: '',
+      hasError: false
+    });
+  }
+
+  private setStatusToError() {
+    this.setState({
+      statusMessage: 'Error!',
+      passwordStatusMessage: 'Error!',
+      hasError: false
+    });
+  }
+
+  private setStatusToSuccessful() {
+    this.setState({
+      statusMessage: 'Sucess',
+      passwordStatusMessage: 'Sucess',
+      hasError: true
+    });
   }
 
   private static STYLE = {
     testingComponents: {
       position: 'fixed' as 'fixed',
-      fontSize: '8px' ,
+      fontSize: '8px',
       top: 0,
       left: 0,
       zIndex: 500
