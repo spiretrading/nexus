@@ -131,11 +131,11 @@ export class ProfilePage extends React.Component<Properties, State> {
         return (null);
       }
     })();
-    const formFooterPadding = (() => {
+    const formFooterPaddingSize = (() => {
       if (this.props.displaySize === DisplaySize.SMALL) {
         return ProfilePage.STD_PADDING;
       } else {
-        return (null);
+        return 0;
       }
     })();
     return (
@@ -275,7 +275,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 </FormEntry>
                 <Padding size={ProfilePage.STD_PADDING} />
                 {formFooter}
-                <Padding size={formFooterPadding} />
+                <Padding size={formFooterPaddingSize} />
               </VBoxLayout>
             </HBoxLayout>
             <CommentSubmitBox displaySize={this.props.displaySize}
