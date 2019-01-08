@@ -281,7 +281,7 @@ export class ProfilePage extends React.Component<Properties, State> {
             <CommentSubmitBox displaySize={this.props.displaySize}
               hasError={this.props.hasError}
               submitStatus={this.props.submitStatus}
-              onSubmit={() => {}} />
+              onSubmit={() => { }} />
             <Padding size={ProfilePage.STD_PADDING} />
             <HLine color='#E6E6E6' />
             <Padding size={ProfilePage.STD_PADDING} />
@@ -295,6 +295,7 @@ export class ProfilePage extends React.Component<Properties, State> {
         <div style={ProfilePage.STYLE.fixedSizePadding} />
       </div>);
   }
+
   private static readonly STYLE = {
     page: {
       height: '100%',
@@ -378,7 +379,7 @@ class CommentSubmitBox extends React.Component<CommentBoxProp> {
       if (this.props.displaySize === DisplaySize.SMALL) {
         return CommentSubmitBox.STYLE.stackedStatusBox;
       } else {
-        return CommentSubmitBox.STYLE.inLineStatusBoxed;
+        return CommentSubmitBox.STYLE.inLineStatusBox;
       }
     })();
     const statusMessageInline = (() => {
@@ -407,8 +408,11 @@ class CommentSubmitBox extends React.Component<CommentBoxProp> {
       <VBoxLayout>
         <div style={CommentSubmitBox.STYLE.headerStyler}>User Notes</div>
         <Padding size={CommentSubmitBox.STD_PADDING} />
-        <CommentBox comment='boo' />
+        <CommentBox comment='Put text here! Not right now. Will work later' />
         <Padding size={CommentSubmitBox.STD_PADDING} />
+
+
+
         <div style={boxStyle}>
           <div style={CommentSubmitBox.STYLE.filler} />
           <div style={{ ...boxStyle, ...statusMessageInline }}>
@@ -422,6 +426,8 @@ class CommentSubmitBox extends React.Component<CommentBoxProp> {
             {this.props.submitStatus}
           </div>
         </div>
+
+
       </VBoxLayout>);
   }
   private static readonly STYLE = {
@@ -457,7 +463,7 @@ class CommentSubmitBox extends React.Component<CommentBoxProp> {
       width: '100%',
       height: '30px'
     },
-    inLineStatusBoxed: {
+    inLineStatusBox: {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       flexWrap: 'nowrap' as 'nowrap',
@@ -502,7 +508,7 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
   };
 
   public render(): JSX.Element {
-    const newPasswordBox = (() => {
+    const changePasswordBox = (() => {
       if (this.props.displaySize === DisplaySize.SMALL) {
         return ChangePasswordBox.STYLE.passwordBoxSmall;
       } else {
@@ -523,7 +529,7 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
         return null;
       }
     })();
-    const passwordStatusMessageInline = (() => {
+    const messageInline = (() => {
       if (this.props.displaySize === DisplaySize.LARGE) {
         if (this.props.hasPasswordError) {
           return ChangePasswordBox.STYLE.errorMessage;
@@ -534,21 +540,47 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
         return ChangePasswordBox.STYLE.hidden;
       }
     })();
-    const passwordStatusMessageUnderneath = (() => {
-      if (this.props.displaySize === DisplaySize.LARGE) {
-        return ChangePasswordBox.STYLE.hidden;
-      } else {
-        if (this.props.hasPasswordError) {
-          return ChangePasswordBox.STYLE.errorMessage;
-        } else {
-          return ChangePasswordBox.STYLE.statusMessage;
-        }
+    const inlineStatusBox = (() => {
+      switch (this.props.displaySize) {
+        case DisplaySize.LARGE:
+          return (
+            <div style={{
+              ...messageInline,
+              ...ChangePasswordBox.STYLE.fillerMessage
+            }}>
+              {this.props.submitPasswordStatus}
+            </div>);
+        case DisplaySize.MEDIUM:
+          return <div style={ChangePasswordBox.STYLE.filler} />;
+        case DisplaySize.SMALL:
+          return <div style={ChangePasswordBox.STYLE.filler} />;
+      }
+    })();
+    const messageUnderneath = (() => {
+      switch (this.props.displaySize) {
+        case DisplaySize.LARGE:
+          return ChangePasswordBox.STYLE.hidden;
+        case DisplaySize.MEDIUM:
+          if (this.props.hasPasswordError) {
+            return ChangePasswordBox.STYLE.errorMessage;
+          } else {
+            return ChangePasswordBox.STYLE.statusMessage;
+          }
+        case DisplaySize.SMALL:
+          if (this.props.hasPasswordError) {
+            return {...ChangePasswordBox.STYLE.errorMessage,
+            ...ChangePasswordBox.STYLE.passwordBoxSmall};
+          } else {
+            return {...ChangePasswordBox.STYLE.statusMessage,
+            ...ChangePasswordBox.STYLE.passwordBoxSmall};
+          }
+
       }
     })();
     return (<VBoxLayout>
       <div style={ChangePasswordBox.STYLE.headerStyler}>Change Password</div>
       <Padding size={ChangePasswordBox.STD_PADDING} />
-      <div style={newPasswordBox}>
+      <div style={changePasswordBox}>
         <input type='password' placeholder='New Password'
           autoComplete='off'
           className={css(inputBoxStyle)}
@@ -567,19 +599,14 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
             this.confirmPasswordInputField.placeholder
             = 'Confirm New Password'}
           ref={(ref) => this.confirmPasswordInputField = ref} />
-        <div style={ChangePasswordBox.STYLE.filler} />
-        <div style={{...passwordStatusMessageInline, ...statusBoxStyle}}>
-          {this.props.submitPasswordStatus}
-        </div>
-        <div style={ChangePasswordBox.STYLE.passwordButtonPadding}/>
+        {inlineStatusBox}
         <SubmitButton label='Save Password'
           displaySize={this.props.displaySize} />
       </div>
-      <div style={{
-        ...passwordStatusMessageUnderneath,
-        ...newPasswordBox}}>
+      <div style={messageUnderneath}>
+       <div style={ChangePasswordBox.STYLE.mediumPadding}/>
         {this.props.submitPasswordStatus}
-        <div style={ChangePasswordBox.STYLE.filler}/>
+
       </div>
     </VBoxLayout>);
   }
@@ -592,23 +619,28 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
     headerStyler: {
       color: '#4B23A0',
       font: '500 14px Roboto',
-      wdith: '100%'
+      width: '100%'
     },
     errorMessage: {
       color: '#E63F44',
-      font: '400 14px Roboto',
-      height: '34px'
+      font: '400 14px Roboto'
     },
     statusMessage: {
       color: '#36BB55',
-      font: '400 14px Roboto',
-      height: '34px'
+      font: '400 14px Roboto'
     },
     filler: {
-      flexGrow: 1
+      flexGrow: 1,
+      height: '30px'
     },
-    fixedSizePadding: {
-      width: '30px'
+    fillerMessage: {
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      alignItems: 'center' as 'center',
+      flexGrow: 1,
+      textAlign: 'right' as 'right',
+      marginRight: '30px',
+      justifyContent: 'flex-end' as 'flex-end'
     },
     tinyPadding: {
       width: '100%',
@@ -732,10 +764,7 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
       }
     }
   });
-  private static readonly LINE_PADDING = '14px';
   private static readonly STD_PADDING = '30px';
-  private static readonly BOTTOM_PADDING = '60px';
-  private static readonly LINE_COLOR = '#E6E6E6';
   private passwordInputField: HTMLInputElement;
   private confirmPasswordInputField: HTMLInputElement;
 }
