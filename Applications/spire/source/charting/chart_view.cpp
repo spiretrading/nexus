@@ -26,8 +26,8 @@ namespace {
   }
 }
 
-ChartView::ChartView(ChartValue::Type x_axis_type,
-    ChartValue::Type y_axis_type, QWidget* parent)
+ChartView::ChartView(ChartValue::Type x_axis_type, ChartValue::Type y_axis_type,
+    QWidget* parent)
     : QWidget(parent),
       m_x_axis_type(x_axis_type),
       m_y_axis_type(y_axis_type),
@@ -37,8 +37,7 @@ ChartView::ChartView(ChartValue::Type x_axis_type,
   setFocusPolicy(Qt::NoFocus);
   m_label_font.setPixelSize(scale_height(10));
   auto current_time = boost::posix_time::second_clock::local_time();
-  auto bottom_right = ChartPoint(
-    ChartValue(current_time),
+  auto bottom_right = ChartPoint(ChartValue(current_time),
     ChartValue(Nexus::Money(10)));
   auto top_left = ChartPoint(
     ChartValue(current_time - boost::posix_time::hours(1)),
@@ -46,7 +45,25 @@ ChartView::ChartView(ChartValue::Type x_axis_type,
   set_region(top_left, bottom_right);
 }
 
-void ChartView::set_region(ChartPoint top_left, ChartPoint bottom_right) {
+ChartPoint ChartView::convert_pixels_to_chart(const QPoint& point) const {
+  return {};
+}
+
+QPoint ChartView::convert_chart_to_pixels(const ChartPoint& point) const {
+  return {};
+}
+
+void ChartView::set_crosshair(const ChartPoint& position) {
+}
+
+void ChartView::set_crosshair(const QPoint& position) {
+}
+
+void ChartView::reset_crosshair() {
+}
+
+void ChartView::set_region(const ChartPoint& top_left,
+    const ChartPoint& bottom_right) {
   m_top_left = top_left;
   m_bottom_right = bottom_right;
   update();
@@ -83,10 +100,9 @@ void ChartView::paintEvent(QPaintEvent* event) {
     painter.drawLine(0, y, x_origin, y);
     painter.setPen(Qt::white);
     painter.drawLine(x_origin, y, x_origin + scale_width(2), y);
-    painter.drawText(x_origin + scale_width(3),
-      y + (font_metrics.height() / 3),
-        m_item_delegate->displayText(to_variant(m_y_axis_type, y_value),
-          QLocale()));
+    painter.drawText(x_origin + scale_width(3), y + (font_metrics.height() / 3),
+      m_item_delegate->displayText(to_variant(m_y_axis_type, y_value),
+      QLocale()));
   }
   auto x_step_count = x_range / x_step;
   auto x_pixel_step = x_origin / (x_range / x_step);
@@ -152,6 +168,7 @@ QString ChartView::get_string(ChartValue::Type type, ChartValue value) const {
   } else if(type == ChartValue::Type::QUANTITY) {
     return QString::number(static_cast<double>(static_cast<Quantity>(value)));
   } else if(type == ChartValue::Type::TIMESTAMP) {
+
     // TODO: convert from ptime to QTime
     std::ostringstream ss;
     ss.imbue(std::locale(std::cout.getloc(),

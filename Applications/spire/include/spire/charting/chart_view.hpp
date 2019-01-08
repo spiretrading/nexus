@@ -20,12 +20,42 @@ namespace Spire {
       ChartView(ChartValue::Type x_axis_type, ChartValue::Type y_axis_type,
         QWidget* parent = nullptr);
 
+      //! Converts a point in pixels to a point on the chart.
+      /*!
+        \param point The point in pixels to convert.
+        \return The corresponding point on the chart.
+      */
+      ChartPoint convert_pixels_to_chart(const QPoint& point) const;
+
+      //! Converts a point on the chart to a point in pixels.
+      /*!
+        \param point The point on the chart to convert.
+        \return The corresponding point in pixels.
+      */
+      QPoint convert_chart_to_pixels(const ChartPoint& point) const;
+
+      //! Sets the position of the crosshair.
+      /*!
+        \param position The position to place the crosshair.
+      */
+      void set_crosshair(const ChartPoint& position);
+
+      //! Sets the position of the crosshair.
+      /*!
+        \param position The position to place the crosshair.
+      */
+      void set_crosshair(const QPoint& position);
+
+      //! Removes the crosshair from the chart.
+      void reset_crosshair();
+
       //! Sets the visible region of the chart to display.
       /*!
         \param top_left The top left point to display.
         \param bottom_right The bottom right point to display.
       */
-      void set_region(ChartPoint top_left, ChartPoint bottom_right);
+      void set_region(const ChartPoint& top_left,
+        const ChartPoint& bottom_right);
 
     protected:
       void paintEvent(QPaintEvent* event) override;
