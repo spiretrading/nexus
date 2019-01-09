@@ -45,6 +45,8 @@ ChartView::ChartView(ChartValue::Type x_axis_type, ChartValue::Type y_axis_type,
     ChartValue(current_time - boost::posix_time::hours(1)),
     ChartValue(Nexus::Money(10.10)));
   set_region(top_left, bottom_right);
+  setCursor(Qt::BlankCursor);
+  m_crosshair = imageFromSvg(":/icons/lock-grid-purple.svg", scale(11, 11));
 }
 
 ChartPoint ChartView::convert_pixels_to_chart(const QPoint& point) const {
@@ -60,6 +62,7 @@ void ChartView::set_crosshair(const ChartPoint& position) {
 
 void ChartView::set_crosshair(const QPoint& position) {
   m_crosshair_pos = position;
+  update();
 }
 
 void ChartView::reset_crosshair() {
@@ -129,7 +132,8 @@ void ChartView::paintEvent(QPaintEvent* event) {
       get_string(m_x_axis_type, x_value));
   }
   if(!m_crosshair_pos.isNull()) {
-    painter.fillRect(event->rect(), Qt::red);
+    painter.drawImage(m_crosshair_pos.x() - (m_crosshair.width() / 2),
+      m_crosshair_pos.y() - (m_crosshair.height() / 2), m_crosshair);
   }
 }
 

@@ -69,6 +69,7 @@ namespace Spire {
       std::string m_timestamp_format;
       CustomVariantItemDelegate* m_item_delegate;
       QPoint m_crosshair_pos;
+      QImage m_crosshair;
 
       ChartValue calculate_step(ChartValue::Type value_type, ChartValue range);
       QString get_string(ChartValue::Type type, ChartValue value) const;
