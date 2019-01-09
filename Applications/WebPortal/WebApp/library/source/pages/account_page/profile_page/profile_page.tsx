@@ -137,7 +137,7 @@ export class ProfilePage extends React.Component<Properties, State> {
     })();
     return (
       <div style={ProfilePage.STYLE.page}>
-        <div style={ProfilePage.STYLE.fixedSizePadding}/>
+        <div style={ProfilePage.STYLE.pagePadding}/>
         <div style={contentWidth}>
           <VBoxLayout width='100%'>
             <Padding size='18px'/>
@@ -275,7 +275,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <Padding size={formFooterPaddingSize}/>
               </VBoxLayout>
             </HBoxLayout>
-            <CommentSubmitBox displaySize={this.props.displaySize}
+            <SubmitCommentBox displaySize={this.props.displaySize}
               hasError={this.props.hasError}
               submitStatus={this.props.submitStatus}
               onSubmit={() => { }}/>
@@ -289,7 +289,7 @@ export class ProfilePage extends React.Component<Properties, State> {
             <Padding size={ProfilePage.BOTTOM_PADDING}/>
           </VBoxLayout>
         </div>
-        <div style={ProfilePage.STYLE.fixedSizePadding}/>
+        <div style={ProfilePage.STYLE.pagePadding}/>
       </div>);
   }
 
@@ -326,7 +326,7 @@ export class ProfilePage extends React.Component<Properties, State> {
     contentLarge: {
       width: '1000px'
     },
-    fixedSizePadding: {
+    pagePadding: {
       width: '30px'
     },
     rolesWrapper: {
@@ -344,7 +344,7 @@ export class ProfilePage extends React.Component<Properties, State> {
   private static readonly LINE_COLOR = '#E6E6E6';
 }
 
-interface CommentBoxProp {
+interface SubmitCommentBoxProperties  {
   displaySize: DisplaySize;
   isSubmitEnabled: boolean;
   submitStatus: string;
@@ -352,7 +352,7 @@ interface CommentBoxProp {
   onSubmit: () => void;
 }
 
-class CommentSubmitBox extends React.Component<CommentBoxProp> {
+class SubmitCommentBox extends React.Component<SubmitCommentBoxProperties > {
   public static readonly defaultProps = {
     isSubmitEnabled: false,
     submitStatus: '',
@@ -363,49 +363,49 @@ class CommentSubmitBox extends React.Component<CommentBoxProp> {
   public render(): JSX.Element {
     const boxStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return CommentSubmitBox.STYLE.stackedStatusBox;
+        return SubmitCommentBox.STYLE.stackedStatusBox;
       } else {
-        return CommentSubmitBox.STYLE.inLineStatusBox;
+        return SubmitCommentBox.STYLE.inlineStatusBox;
       }
     })();
     const statusMessageInline = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return CommentSubmitBox.STYLE.hidden;
+        return SubmitCommentBox.STYLE.hidden;
       } else {
         if(this.props.hasError) {
-          return CommentSubmitBox.STYLE.errorMessage;
+          return SubmitCommentBox.STYLE.errorMessage;
         } else {
-          return CommentSubmitBox.STYLE.statusMessage;
+          return SubmitCommentBox.STYLE.statusMessage;
         }
       }
     })();
-    const statusMessageUnderneath = (() => {
+    const statusMessageFooter = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         if(this.props.hasError) {
-          return CommentSubmitBox.STYLE.errorMessage;
+          return SubmitCommentBox.STYLE.errorMessage;
         } else {
-          return CommentSubmitBox.STYLE.statusMessage;
+          return SubmitCommentBox.STYLE.statusMessage;
         }
       } else {
-        return CommentSubmitBox.STYLE.hidden;
+        return SubmitCommentBox.STYLE.hidden;
       }
     })();
     return (
       <VBoxLayout>
-        <div style={CommentSubmitBox.STYLE.headerStyler}>User Notes</div>
-        <Padding size={CommentSubmitBox.STD_PADDING}/>
+        <div style={SubmitCommentBox.STYLE.headerStyler}>User Notes</div>
+        <Padding size={SubmitCommentBox.STANDARD_PADDING}/>
         <CommentBox comment=''/>
-        <Padding size={CommentSubmitBox.STD_PADDING}/>
+        <Padding size={SubmitCommentBox.STANDARD_PADDING}/>
         <div style={boxStyle}>
-          <div style={CommentSubmitBox.STYLE.filler}/>
+          <div style={SubmitCommentBox.STYLE.filler}/>
           <div style={{ ...boxStyle, ...statusMessageInline}}>
             {this.props.submitStatus}
-            <div style={CommentSubmitBox.STYLE.passwordButtonPadding}/>
+            <div style={SubmitCommentBox.STYLE.passwordButtonPadding}/>
           </div>
           <SubmitButton label='Save Password'
             displaySize={this.props.displaySize}/>
-          <div style={statusMessageUnderneath}>
-            <div style={CommentSubmitBox.STYLE.tinyPadding}/>
+          <div style={statusMessageFooter}>
+            <div style={SubmitCommentBox.STYLE.smallPadding}/>
             {this.props.submitStatus}
           </div>
         </div>
@@ -433,10 +433,7 @@ class CommentSubmitBox extends React.Component<CommentBoxProp> {
     filler: {
       flexGrow: 1
     },
-    fixedSizePadding: {
-      width: '30px'
-    },
-    tinyPadding: {
+    smallPadding: {
       width: '100%',
       height: '18px'
     },
@@ -444,7 +441,7 @@ class CommentSubmitBox extends React.Component<CommentBoxProp> {
       width: '100%',
       height: '30px'
     },
-    inLineStatusBox: {
+    inlineStatusBox: {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       flexWrap: 'nowrap' as 'nowrap',
@@ -456,19 +453,12 @@ class CommentSubmitBox extends React.Component<CommentBoxProp> {
       alignItems: 'center' as 'center',
       justifyContent: 'center' as 'center'
     },
-    passwordPadding: {
-      height: '18px',
-      width: '18px'
-    },
     passwordButtonPadding: {
       height: '30px',
       width: '30px'
     }
   };
-  private static readonly LINE_PADDING = '14px';
-  private static readonly STD_PADDING = '30px';
-  private static readonly BOTTOM_PADDING = '60px';
-  private static readonly LINE_COLOR = '#E6E6E6';
+  private static readonly STANDARD_PADDING = '30px';
 }
 
 interface ChangePassBoxProperties {
@@ -498,9 +488,9 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
     })();
     const inputBoxStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return ChangePasswordBox.DYNAMIC_STYLES.inputBoxSmall;
+        return ChangePasswordBox.DYNAMIC_STYLE.inputBoxSmall;
       } else {
-        return ChangePasswordBox.DYNAMIC_STYLES.inputBoxLarge;
+        return ChangePasswordBox.DYNAMIC_STYLE.inputBoxLarge;
       }
     })();
     const messageInline = (() => {
@@ -518,10 +508,8 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
       switch(this.props.displaySize) {
         case DisplaySize.LARGE:
           return (
-            <div style={{
-              ...messageInline,
-              ...ChangePasswordBox.STYLE.fillerMessage
-            }}>
+            <div style={{...messageInline,
+                ...ChangePasswordBox.STYLE.fillerMessage}}>
               {this.props.submitPasswordStatus}
             </div>);
         case DisplaySize.MEDIUM:
@@ -554,7 +542,7 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
     return (
       <VBoxLayout>
         <div style={ChangePasswordBox.STYLE.headerStyler}>Change Password</div>
-        <Padding size={ChangePasswordBox.STD_PADDING}/>
+        <Padding size={ChangePasswordBox.STANDARD_PADDING}/>
         <div style={changePasswordBox}>
           <input type='password' placeholder='New Password'
             autoComplete='off'
@@ -624,9 +612,6 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
       width: '100%',
       height: '30px'
     },
-    statusBox: {
-      marginRight: '30px'
-    },
     passwordBoxLarge: {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
@@ -648,7 +633,7 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
       width: '30px'
     }
   };
-  private static DYNAMIC_STYLES = StyleSheet.create({
+  private static DYNAMIC_STYLE = StyleSheet.create({
     inputBoxSmall: {
       boxSizing: 'border-box' as 'border-box',
       width: '100%',
@@ -738,7 +723,7 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
       }
     }
   });
-  private static readonly STD_PADDING = '30px';
+  private static readonly STANDARD_PADDING = '30px';
   private passwordInputField: HTMLInputElement;
   private confirmPasswordInputField: HTMLInputElement;
 }
@@ -759,9 +744,9 @@ class SubmitButton extends React.Component<ButtonProperties, {}> {
   public render(): JSX.Element {
     const buttonStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return SubmitButton.DYNAMIC_STYLES.buttonSmall;
+        return SubmitButton.DYNAMIC_STYLE.buttonSmall;
       } else {
-        return SubmitButton.DYNAMIC_STYLES.buttonLarge;
+        return SubmitButton.DYNAMIC_STYLE.buttonLarge;
       }
     })();
     return (
@@ -771,7 +756,7 @@ class SubmitButton extends React.Component<ButtonProperties, {}> {
         {this.props.label}
       </button>);
   }
-  private static DYNAMIC_STYLES = StyleSheet.create({
+  private static DYNAMIC_STYLE = StyleSheet.create({
     buttonSmall: {
       boxSizing: 'border-box' as 'border-box',
       width: '100%',
