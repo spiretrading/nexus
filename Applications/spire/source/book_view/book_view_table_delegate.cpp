@@ -32,9 +32,8 @@ void BookViewTableDelegate::paint(QPainter* painter,
     auto text_pos = option.rect.width() - (text_width + scale_width(7));
     painter->translate(QPoint(text_pos, 0));
   }
-  auto options = opt;
-  options.locale.setNumberOptions(QLocale::DefaultNumberOptions);
-  m_item_delegate->paint(painter, options, index);
+  opt.locale.setNumberOptions(QLocale::DefaultNumberOptions);
+  m_item_delegate->paint(painter, opt, index);
   painter->restore();
 }
 
