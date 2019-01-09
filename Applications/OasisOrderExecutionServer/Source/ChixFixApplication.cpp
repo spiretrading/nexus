@@ -60,7 +60,7 @@ const Order& ChixFixApplication::Submit(const OrderInfo& info) {
       }
       auto hasDestination = false;
       if(info.m_fields.m_destination == DefaultDestinations::TSX()) {
-        auto destination = FIX::ExDestination("SMRTXOPG");
+        auto destination = FIX::ExDestination("SMRTXOPG-X");
         newOrderSingle->getHeader().setField(destination);
         if(info.m_fields.m_type == OrderType::PEGGED) {
           newOrderSingle->set(FIX::ExecInst("M"));
