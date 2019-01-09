@@ -4,8 +4,7 @@ import * as React from 'react';
 import { CountrySelectionBox, DisplaySize, HBoxLayout, HLine, Padding,
   PhotoField, VBoxLayout } from '../../..';
 import { CommentBox } from '../comment_box';
-import { DisplayMode } from './photo_field';
-import { FormEntry, TextField, RolesField } from '.';
+import { FormEntry, PhotoFieldDisplayMode, RolesField, TextField } from '.';
 
 interface Properties {
 
@@ -69,7 +68,7 @@ export class ProfilePage extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const orientation = (() => {
-      if (this.props.displaySize === DisplaySize.SMALL) {
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return FormEntry.Orientation.VERTICAL;
       } else {
         return FormEntry.Orientation.HORIZONTAL;
@@ -86,18 +85,19 @@ export class ProfilePage extends React.Component<Properties, State> {
       }
     })();
     const sidePanelPhoto = (() => {
-      if (this.props.displaySize === DisplaySize.SMALL) {
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return null;
       } else {
-        return (<PhotoField
-          displaySize={this.props.displaySize}
-          displayMode={DisplayMode.DISPLAY}
-          imageSource={this.props.identity.photoId}
-          scaling={1} />);
+        return (
+          <PhotoField
+            displaySize={this.props.displaySize}
+            displayMode={PhotoFieldDisplayMode.DISPLAY}
+            imageSource={this.props.identity.photoId}
+            scaling={1}/>);
       }
     })();
     const sidePanelPhotoPadding = (() => {
-      switch (this.props.displaySize) {
+      switch(this.props.displaySize) {
         case DisplaySize.SMALL:
           return 0;
         case DisplaySize.MEDIUM:
@@ -107,29 +107,29 @@ export class ProfilePage extends React.Component<Properties, State> {
       }
     })();
     const topPanelPhoto = (() => {
-      if (this.props.displaySize === DisplaySize.SMALL) {
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return (
           <VBoxLayout>
             <PhotoField
               displaySize={this.props.displaySize}
-              displayMode={DisplayMode.DISPLAY}
+              displayMode={PhotoFieldDisplayMode.DISPLAY}
               imageSource={this.props.identity.photoId}
-              scaling={1} />
-            <Padding size='30px' />
+              scaling={1}/>
+            <Padding size='30px'/>
           </VBoxLayout>);
       } else {
         return null;
       }
     })();
     const formFooter = (() => {
-      if (this.props.displaySize === DisplaySize.SMALL) {
-        return <HLine color={ProfilePage.LINE_COLOR} />;
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return <HLine color={ProfilePage.LINE_COLOR}/>;
       } else {
         return (null);
       }
     })();
     const formFooterPaddingSize = (() => {
-      if (this.props.displaySize === DisplaySize.SMALL) {
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return ProfilePage.STANDARD_PADDING;
       } else {
         return 0;
@@ -137,112 +137,110 @@ export class ProfilePage extends React.Component<Properties, State> {
     })();
     return (
       <div style={ProfilePage.STYLE.page}>
-        <div style={ProfilePage.STYLE.fixedSizePadding} />
+        <div style={ProfilePage.STYLE.fixedSizePadding}/>
         <div style={contentWidth}>
           <VBoxLayout width='100%'>
-            <Padding size='18px' />
+            <Padding size='18px'/>
             <div style={ProfilePage.STYLE.lastLoginBox}>
               Last Login: 12/20/2017, 04:42 PM
             </div>
-            <Padding size={ProfilePage.STANDARD_PADDING}  />
+            <Padding size={ProfilePage.STANDARD_PADDING}/>
             <div style={ProfilePage.STYLE.headerStyler}>
               Account Information
             </div>
-            <Padding size={ProfilePage.STANDARD_PADDING} />
+            <Padding size={ProfilePage.STANDARD_PADDING}/>
             <HBoxLayout>
               {sidePanelPhoto}
-              <Padding size={sidePanelPhotoPadding} />
-              <VBoxLayout width='100%' >
+              <Padding size={sidePanelPhotoPadding}/>
+              <VBoxLayout width='100%'>
                 {topPanelPhoto}
                 <FormEntry name='First Name'
                   orientation={orientation}>
                   <TextField
                     value='Frodo'
                     displaySize={this.props.displaySize}
-                    disabled />
+                    disabled/>
                 </FormEntry>
-                <Padding size={ProfilePage.LINE_PADDING} />
-                <HLine color={ProfilePage.LINE_COLOR}  />
-                <Padding size={ProfilePage.LINE_PADDING} />
+                <Padding size={ProfilePage.LINE_PADDING}/>
+                <HLine color={ProfilePage.LINE_COLOR}/>
+                <Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Last Name'
                   orientation={orientation}>
                   <TextField
                     value='Baggins'
                     displaySize={this.props.displaySize}
-                    disabled />
+                    disabled/>
                 </FormEntry>
-                <Padding size={ProfilePage.LINE_PADDING} />
-                <HLine color={ProfilePage.LINE_COLOR}  />
-                <Padding size={ProfilePage.LINE_PADDING} />
+                <Padding size={ProfilePage.LINE_PADDING}/>
+                <HLine color={ProfilePage.LINE_COLOR}/>
+                <Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Username'
                   orientation={orientation}>
                   <TextField
                     value='frodo_of_the_nine_fingers'
                     displaySize={this.props.displaySize}
-                    disabled />
+                    disabled/>
                 </FormEntry>
-                <Padding size={ProfilePage.LINE_PADDING} />
-                <HLine color={ProfilePage.LINE_COLOR}  />
-                <Padding size={ProfilePage.LINE_PADDING} />
+                <Padding size={ProfilePage.LINE_PADDING}/>
+                <HLine color={ProfilePage.LINE_COLOR}/>
+                <Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Role(s)'
                   orientation={orientation}>
                   <div id='WRAPPER' style={ProfilePage.STYLE.rolesWrapper}>
-                    <RolesField roles={this.props.roles} />
+                    <RolesField roles={this.props.roles}/>
                   </div>
                 </FormEntry>
-                <Padding size={ProfilePage.LINE_PADDING} />
-                <HLine color={ProfilePage.LINE_COLOR} />
-                <Padding size={ProfilePage.LINE_PADDING} />
+                <Padding size={ProfilePage.LINE_PADDING}/>
+                <HLine color={ProfilePage.LINE_COLOR}/>
+                <Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Groups(s)'
                   orientation={orientation}>
-                  <TextField
-                    value='shire_office'
+                  <TextField value='shire_office'
                     displaySize={this.props.displaySize}
-                    disabled />
+                    disabled/>
                 </FormEntry>
-                <Padding size={ProfilePage.LINE_PADDING} />
-                <HLine color={ProfilePage.LINE_COLOR}  />
-                <Padding size={ProfilePage.LINE_PADDING} />
+                <Padding size={ProfilePage.LINE_PADDING}/>
+                <HLine color={ProfilePage.LINE_COLOR}/>
+                <Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Regestration Date'
                   orientation={orientation}>
-                  <TextField
+                  <TextField displaySize={this.props.displaySize}
                     value='04/13/2019'
-                    displaySize={this.props.displaySize}
-                    disabled />
+                    disabled/>
                 </FormEntry>
-                <Padding size={ProfilePage.LINE_PADDING} />
-                <HLine color={ProfilePage.LINE_COLOR}  />
-                <Padding size={ProfilePage.LINE_PADDING} />
+                <Padding size={ProfilePage.LINE_PADDING}/>
+                <HLine color={ProfilePage.LINE_COLOR}/>
+                <Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='ID Number'
                   orientation={orientation}>
                   <TextField
                     value='SR68'
                     displaySize={this.props.displaySize}
-                    disabled />
+                    disabled/>
                 </FormEntry>
-                <Padding size={ProfilePage.LINE_PADDING} />
-                <HLine color={ProfilePage.LINE_COLOR}  />
-                <Padding size={ProfilePage.LINE_PADDING} />
+                <Padding size={ProfilePage.LINE_PADDING}/>
+                <HLine color={ProfilePage.LINE_COLOR}/>
+                <Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Email'
                   orientation={orientation}>
                   <TextField
                     value='frodo@bagend.nz'
                     displaySize={this.props.displaySize}
-                    disabled />
+                    disabled/>
                 </FormEntry>
-                <Padding size={ProfilePage.LINE_PADDING} />
-                <HLine color={ProfilePage.LINE_COLOR}  />
-                <Padding size={ProfilePage.LINE_PADDING} />
+                <Padding size={ProfilePage.LINE_PADDING}/>
+                <HLine color={ProfilePage.LINE_COLOR}/>
+                <Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Address'
                   orientation={orientation}>
                   <TextField
                     value='56 Bag End'
                     displaySize={this.props.displaySize}
-                    disabled />
+                    disabled/>
                 </FormEntry>
-                <Padding size={ProfilePage.LINE_PADDING} />
-                <HLine color={ProfilePage.LINE_COLOR}  />
-                <Padding size={ProfilePage.LINE_PADDING} />
+                <Padding size={ProfilePage.LINE_PADDING}/>
+                <HLine color={ProfilePage.LINE_COLOR}/>
+                <Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='City'
                   orientation={orientation}>
                   <TextField
@@ -250,19 +248,19 @@ export class ProfilePage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}
                     disabled />
                 </FormEntry>
-                <Padding size={ProfilePage.LINE_PADDING} />
-                <HLine color={ProfilePage.LINE_COLOR}  />
-                <Padding size={ProfilePage.LINE_PADDING} />
+                <Padding size={ProfilePage.LINE_PADDING}/>
+                <HLine color={ProfilePage.LINE_COLOR}/>
+                <Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Province/State'
                   orientation={orientation}>
                   <TextField
                     value='Westfarthing'
                     displaySize={this.props.displaySize}
-                    disabled />
+                    disabled/>
                 </FormEntry>
-                <Padding size={ProfilePage.LINE_PADDING} />
-                <HLine color={ProfilePage.LINE_COLOR}  />
-                <Padding size={ProfilePage.LINE_PADDING} />
+                <Padding size={ProfilePage.LINE_PADDING}/>
+                <HLine color={ProfilePage.LINE_COLOR}/>
+                <Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Country'
                   orientation={orientation}>
                   <CountrySelectionBox
@@ -270,28 +268,28 @@ export class ProfilePage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}
                     value={Nexus.DefaultCountries.AU}
                     onChange={() => { }}
-                    countryDatabase={this.state.countryDatabase} />
+                    countryDatabase={this.state.countryDatabase}/>
                 </FormEntry>
-                <Padding size={ProfilePage.STANDARD_PADDING} />
+                <Padding size={ProfilePage.STANDARD_PADDING}/>
                 {formFooter}
-                <Padding size={formFooterPaddingSize} />
+                <Padding size={formFooterPaddingSize}/>
               </VBoxLayout>
             </HBoxLayout>
             <CommentSubmitBox displaySize={this.props.displaySize}
               hasError={this.props.hasError}
               submitStatus={this.props.submitStatus}
-              onSubmit={() => { }} />
-            <Padding size={ProfilePage.STANDARD_PADDING} />
-            <HLine color={ProfilePage.LINE_COLOR} />
-            <Padding size={ProfilePage.STANDARD_PADDING} />
+              onSubmit={() => { }}/>
+            <Padding size={ProfilePage.STANDARD_PADDING}/>
+            <HLine color={ProfilePage.LINE_COLOR}/>
+            <Padding size={ProfilePage.STANDARD_PADDING}/>
             <ChangePasswordBox displaySize={this.props.displaySize}
               hasPasswordError={this.props.hasPasswordError}
               submitPasswordStatus={this.props.submitPasswordStatus}
-              onPasswordSubmit={() => { }} />
-            <Padding size={ProfilePage.BOTTOM_PADDING} />
+              onPasswordSubmit={() => { }}/>
+            <Padding size={ProfilePage.BOTTOM_PADDING}/>
           </VBoxLayout>
         </div>
-        <div style={ProfilePage.STYLE.fixedSizePadding} />
+        <div style={ProfilePage.STYLE.fixedSizePadding}/>
       </div>);
   }
 
@@ -395,24 +393,22 @@ class CommentSubmitBox extends React.Component<CommentBoxProp> {
     return (
       <VBoxLayout>
         <div style={CommentSubmitBox.STYLE.headerStyler}>User Notes</div>
-        <Padding size={CommentSubmitBox.STD_PADDING} />
-        <CommentBox comment='' />
-        <Padding size={CommentSubmitBox.STD_PADDING} />
+        <Padding size={CommentSubmitBox.STD_PADDING}/>
+        <CommentBox comment=''/>
+        <Padding size={CommentSubmitBox.STD_PADDING}/>
         <div style={boxStyle}>
-          <div style={CommentSubmitBox.STYLE.filler} />
+          <div style={CommentSubmitBox.STYLE.filler}/>
           <div style={{ ...boxStyle, ...statusMessageInline}}>
             {this.props.submitStatus}
-            <div style={CommentSubmitBox.STYLE.passwordButtonPadding} />
+            <div style={CommentSubmitBox.STYLE.passwordButtonPadding}/>
           </div>
           <SubmitButton label='Save Password'
-            displaySize={this.props.displaySize} />
+            displaySize={this.props.displaySize}/>
           <div style={statusMessageUnderneath}>
-            <div style={CommentSubmitBox.STYLE.tinyPadding} />
+            <div style={CommentSubmitBox.STYLE.tinyPadding}/>
             {this.props.submitStatus}
           </div>
         </div>
-
-
       </VBoxLayout>);
   }
   private static readonly STYLE = {
@@ -507,13 +503,6 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
         return ChangePasswordBox.DYNAMIC_STYLES.inputBoxLarge;
       }
     })();
-    const statusBoxStyle = (() => {
-      if (this.props.displaySize === DisplaySize.LARGE) {
-        return ChangePasswordBox.STYLE.statusBox;
-      } else {
-        return null;
-      }
-    })();
     const messageInline = (() => {
       if (this.props.displaySize === DisplaySize.LARGE) {
         if (this.props.hasPasswordError) {
@@ -536,9 +525,9 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
               {this.props.submitPasswordStatus}
             </div>);
         case DisplaySize.MEDIUM:
-          return <div style={ChangePasswordBox.STYLE.filler} />;
+          return <div style={ChangePasswordBox.STYLE.filler}/>;
         case DisplaySize.SMALL:
-          return <div style={ChangePasswordBox.STYLE.filler} />;
+          return <div style={ChangePasswordBox.STYLE.filler}/>;
       }
     })();
     const messageUnderneath = (() => {
@@ -554,17 +543,17 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
         case DisplaySize.SMALL:
           if (this.props.hasPasswordError) {
             return {...ChangePasswordBox.STYLE.errorMessage,
-            ...ChangePasswordBox.STYLE.passwordBoxSmall};
+              ...ChangePasswordBox.STYLE.passwordBoxSmall};
           } else {
             return {...ChangePasswordBox.STYLE.statusMessage,
-            ...ChangePasswordBox.STYLE.passwordBoxSmall};
+              ...ChangePasswordBox.STYLE.passwordBoxSmall};
           }
 
       }
     })();
     return (<VBoxLayout>
       <div style={ChangePasswordBox.STYLE.headerStyler}>Change Password</div>
-      <Padding size={ChangePasswordBox.STD_PADDING} />
+      <Padding size={ChangePasswordBox.STD_PADDING}/>
       <div style={changePasswordBox}>
         <input type='password' placeholder='New Password'
           autoComplete='off'
@@ -573,8 +562,8 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
           onFocus={() => this.passwordInputField.placeholder = ''}
           onBlur={() =>
             this.passwordInputField.placeholder = 'New Password'}
-          ref={(ref) => this.passwordInputField = ref} />
-        <div style={ChangePasswordBox.STYLE.passwordPadding} />
+          ref={(ref) => this.passwordInputField = ref}/>
+        <div style={ChangePasswordBox.STYLE.passwordPadding}/>
         <input type='password' placeholder='Confirm New Password'
           autoComplete='off'
           className={css(inputBoxStyle)}
@@ -583,15 +572,14 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
           onBlur={() =>
             this.confirmPasswordInputField.placeholder
             = 'Confirm New Password'}
-          ref={(ref) => this.confirmPasswordInputField = ref} />
+          ref={(ref) => this.confirmPasswordInputField = ref}/>
         {inlineStatusBox}
         <SubmitButton label='Save Password'
-          displaySize={this.props.displaySize} />
+          displaySize={this.props.displaySize}/>
       </div>
       <div style={messageUnderneath}>
-       <div style={ChangePasswordBox.STYLE.tinyPadding}/>
+        <div style={ChangePasswordBox.STYLE.smallPadding}/>
         {this.props.submitPasswordStatus}
-
       </div>
     </VBoxLayout>);
   }
@@ -627,7 +615,7 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
       marginRight: '30px',
       justifyContent: 'flex-end' as 'flex-end'
     },
-    tinyPadding: {
+    smallPadding: {
       width: '100%',
       height: '18px'
     },
@@ -754,7 +742,6 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
   private confirmPasswordInputField: HTMLInputElement;
 }
 
-//BUTTON!!!!!
 interface ButtonProperties {
   onClick?: () => void;
   isSubmitEnabled?: boolean;
