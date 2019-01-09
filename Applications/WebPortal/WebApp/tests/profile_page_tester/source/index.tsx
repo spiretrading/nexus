@@ -9,14 +9,8 @@ interface Properties {
 }
 
 interface State {
-  lastNameValue: string;
   someRoles: Nexus.AccountRoles;
-  isPhotoFieldReadonly: boolean;
   imageSource: string;
-  imagingScaling: number;
-  photoFieldDisplayMode: WebPortal.DisplayMode;
-  countryDatabase: Nexus.CountryDatabase;
-  country: Nexus.CountryCode;
   identity: Nexus.AccountIdentity;
   statusMessage: string;
   passwordStatusMessage: string;
@@ -28,38 +22,19 @@ class TestApp extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      lastNameValue: 'Grey',
       someRoles: new Nexus.AccountRoles(),
       imageSource: TestApp.SOME_IMAGE,
-      isPhotoFieldReadonly: false,
-      imagingScaling: 1,
-      photoFieldDisplayMode: WebPortal.DisplayMode.DISPLAY,
-      countryDatabase: Nexus.buildDefaultCountryDatabase(),
-      country: Nexus.DefaultCountries.CA,
       identity: new Nexus.AccountIdentity(),
       statusMessage: '',
       passwordStatusMessage: '',
       hasError: false
     };
-    this.onTextInput = this.onTextInput.bind(this);
-    this.onRoleClick = this.onRoleClick.bind(this);
-    this.changeImage = this.changeImage.bind(this);
-    this.toggleReadOnly = this.toggleReadOnly.bind(this);
-    this.updateImage = this.updateImage.bind(this);
-    this.changeCountry = this.changeCountry.bind(this);
     this.setStatusToError = this.setStatusToError.bind(this);
     this.setStatusToNull = this.setStatusToNull.bind(this);
     this.setStatusToSuccessful = this.setStatusToSuccessful.bind(this);
   }
 
   public render(): JSX.Element {
-    const orientation = (() => {
-      if (this.props.displaySize === WebPortal.DisplaySize.SMALL) {
-        return WebPortal.FormEntry.Orientation.VERTICAL;
-      } else {
-        return WebPortal.FormEntry.Orientation.HORIZONTAL;
-      }
-    })();
     return (
       <WebPortal.VBoxLayout width='100%' height='100%'>
         <WebPortal.ProfilePage
@@ -69,7 +44,7 @@ class TestApp extends React.Component<Properties, State> {
           isSubmitEnabled={true}
           submitStatus={this.state.statusMessage}
           submitPasswordStatus={this.state.passwordStatusMessage}
-          hasError={this.state.hasError} 
+          hasError={this.state.hasError}
           hasPasswordError={this.state.hasError} />
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
@@ -90,52 +65,7 @@ class TestApp extends React.Component<Properties, State> {
 
   public componentDidMount() {
     this.state.identity.photoId = TestApp.SOME_IMAGE;
-  }
-
-  private onTextInput(value: string) {
-    this.setState({
-      lastNameValue: value
-    });
-  }
-
-  private onRoleClick(role: Nexus.AccountRoles.Role) {
-    if (this.state.someRoles.test(role)) {
-      this.state.someRoles.unset(role);
-    } else {
-      this.state.someRoles.set(role);
-    }
-    this.setState({ someRoles: this.state.someRoles });
-  }
-
-  private toggleReadOnly() {
-    this.setState({
-      isPhotoFieldReadonly: !this.state.isPhotoFieldReadonly
-    });
-  }
-
-  private changeImage() {
-    if (this.state.imageSource) {
-      this.setState({
-        imageSource: null
-      });
-    } else {
-      this.setState({
-        imageSource: TestApp.SOME_IMAGE
-      });
-    }
-  }
-
-  private updateImage(fileLocation: string, newScaling: number) {
-    this.setState({
-      imageSource: fileLocation,
-      imagingScaling: newScaling
-    });
-  }
-
-  private changeCountry(newCountry: Nexus.CountryCode) {
-    this.setState({
-      country: newCountry
-    });
+    this.setState({identity: this.state.identity});
   }
 
   private setStatusToNull() {
@@ -156,8 +86,8 @@ class TestApp extends React.Component<Properties, State> {
 
   private setStatusToSuccessful() {
     this.setState({
-      statusMessage: 'Sucess',
-      passwordStatusMessage: 'Sucess',
+      statusMessage: 'Saved',
+      passwordStatusMessage: 'Saved',
       hasError: false
     });
   }
@@ -174,8 +104,7 @@ class TestApp extends React.Component<Properties, State> {
   private static readonly SOME_IMAGE = 'https://upload.wikimedia.org/' +
     'wikipedia/commons/thumb/2/23/Close_up_of_a_black_domestic_cat.jpg/' +
     '675px-Close_up_of_a_black_domestic_cat.jpg';
-  private static LINE_PADDING = '14px';
 }
 
 const ResponsivePage = WebPortal.displaySizeRenderer(TestApp);
-ReactDOM.render(<ResponsivePage />, document.getElementById('main'));
+ReactDOM.render(<ResponsivePage/>, document.getElementById('main'));

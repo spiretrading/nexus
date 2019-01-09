@@ -1,14 +1,11 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import {
-  CountrySelectionBox, DisplaySize, HBoxLayout, HLine, Padding,
-  PhotoField, VBoxLayout
-} from '../../..';
-import { RolesField } from './roles_field';
+import { CountrySelectionBox, DisplaySize, HBoxLayout, HLine, Padding,
+  PhotoField, VBoxLayout } from '../../..';
 import { CommentBox } from '../comment_box';
 import { DisplayMode } from './photo_field';
-import { FormEntry, TextField } from '.';
+import { FormEntry, TextField, RolesField } from '.';
 
 interface Properties {
 
@@ -144,7 +141,9 @@ export class ProfilePage extends React.Component<Properties, State> {
         <div style={contentWidth}>
           <VBoxLayout width='100%'>
             <Padding size='18px' />
-            <div style={ProfilePage.STYLE.lastLoginBox}>Last Login</div>
+            <div style={ProfilePage.STYLE.lastLoginBox}>
+              Last Login: 12/20/2017, 04:42 PM
+            </div>
             <Padding size={ProfilePage.STANDARD_PADDING}  />
             <div style={ProfilePage.STYLE.headerStyler}>
               Account Information
@@ -207,7 +206,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <FormEntry name='Regestration Date'
                   orientation={orientation}>
                   <TextField
-                    value='PUT A GOOD VALUE HERE'
+                    value='04/13/2019'
                     displaySize={this.props.displaySize}
                     disabled />
                 </FormEntry>
