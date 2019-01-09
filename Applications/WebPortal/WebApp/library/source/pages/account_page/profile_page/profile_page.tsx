@@ -75,7 +75,7 @@ export class ProfilePage extends React.Component<Properties, State> {
       }
     })();
     const contentWidth = (() => {
-      switch (this.props.displaySize) {
+      switch(this.props.displaySize) {
         case DisplaySize.SMALL:
           return ProfilePage.STYLE.contentSmall;
         case DisplaySize.MEDIUM:
@@ -246,7 +246,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                   <TextField
                     value='Hobbiton'
                     displaySize={this.props.displaySize}
-                    disabled />
+                    disabled/>
                 </FormEntry>
                 <Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
@@ -362,17 +362,17 @@ class CommentSubmitBox extends React.Component<CommentBoxProp> {
 
   public render(): JSX.Element {
     const boxStyle = (() => {
-      if (this.props.displaySize === DisplaySize.SMALL) {
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return CommentSubmitBox.STYLE.stackedStatusBox;
       } else {
         return CommentSubmitBox.STYLE.inLineStatusBox;
       }
     })();
     const statusMessageInline = (() => {
-      if (this.props.displaySize === DisplaySize.SMALL) {
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return CommentSubmitBox.STYLE.hidden;
       } else {
-        if (this.props.hasError) {
+        if(this.props.hasError) {
           return CommentSubmitBox.STYLE.errorMessage;
         } else {
           return CommentSubmitBox.STYLE.statusMessage;
@@ -380,8 +380,8 @@ class CommentSubmitBox extends React.Component<CommentBoxProp> {
       }
     })();
     const statusMessageUnderneath = (() => {
-      if (this.props.displaySize === DisplaySize.SMALL) {
-        if (this.props.hasError) {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        if(this.props.hasError) {
           return CommentSubmitBox.STYLE.errorMessage;
         } else {
           return CommentSubmitBox.STYLE.statusMessage;
@@ -490,22 +490,22 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
 
   public render(): JSX.Element {
     const changePasswordBox = (() => {
-      if (this.props.displaySize === DisplaySize.SMALL) {
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return ChangePasswordBox.STYLE.passwordBoxSmall;
       } else {
         return ChangePasswordBox.STYLE.passwordBoxLarge;
       }
     })();
     const inputBoxStyle = (() => {
-      if (this.props.displaySize === DisplaySize.SMALL) {
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return ChangePasswordBox.DYNAMIC_STYLES.inputBoxSmall;
       } else {
         return ChangePasswordBox.DYNAMIC_STYLES.inputBoxLarge;
       }
     })();
     const messageInline = (() => {
-      if (this.props.displaySize === DisplaySize.LARGE) {
-        if (this.props.hasPasswordError) {
+      if(this.props.displaySize === DisplaySize.LARGE) {
+        if(this.props.hasPasswordError) {
           return ChangePasswordBox.STYLE.errorMessage;
         } else {
           return ChangePasswordBox.STYLE.statusMessage;
@@ -515,7 +515,7 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
       }
     })();
     const inlineStatusBox = (() => {
-      switch (this.props.displaySize) {
+      switch(this.props.displaySize) {
         case DisplaySize.LARGE:
           return (
             <div style={{
@@ -531,17 +531,17 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
       }
     })();
     const messageUnderneath = (() => {
-      switch (this.props.displaySize) {
+      switch(this.props.displaySize) {
         case DisplaySize.LARGE:
           return ChangePasswordBox.STYLE.hidden;
         case DisplaySize.MEDIUM:
-          if (this.props.hasPasswordError) {
+          if(this.props.hasPasswordError) {
             return ChangePasswordBox.STYLE.errorMessage;
           } else {
             return ChangePasswordBox.STYLE.statusMessage;
           }
         case DisplaySize.SMALL:
-          if (this.props.hasPasswordError) {
+          if(this.props.hasPasswordError) {
             return {...ChangePasswordBox.STYLE.errorMessage,
               ...ChangePasswordBox.STYLE.passwordBoxSmall};
           } else {
@@ -551,37 +551,38 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
 
       }
     })();
-    return (<VBoxLayout>
-      <div style={ChangePasswordBox.STYLE.headerStyler}>Change Password</div>
-      <Padding size={ChangePasswordBox.STD_PADDING}/>
-      <div style={changePasswordBox}>
-        <input type='password' placeholder='New Password'
-          autoComplete='off'
-          className={css(inputBoxStyle)}
-          disabled={false}
-          onFocus={() => this.passwordInputField.placeholder = ''}
-          onBlur={() =>
-            this.passwordInputField.placeholder = 'New Password'}
-          ref={(ref) => this.passwordInputField = ref}/>
-        <div style={ChangePasswordBox.STYLE.passwordPadding}/>
-        <input type='password' placeholder='Confirm New Password'
-          autoComplete='off'
-          className={css(inputBoxStyle)}
-          disabled={true}
-          onFocus={() => this.confirmPasswordInputField.placeholder = ''}
-          onBlur={() =>
-            this.confirmPasswordInputField.placeholder
-            = 'Confirm New Password'}
-          ref={(ref) => this.confirmPasswordInputField = ref}/>
-        {inlineStatusBox}
-        <SubmitButton label='Save Password'
-          displaySize={this.props.displaySize}/>
-      </div>
-      <div style={messageUnderneath}>
-        <div style={ChangePasswordBox.STYLE.smallPadding}/>
-        {this.props.submitPasswordStatus}
-      </div>
-    </VBoxLayout>);
+    return (
+      <VBoxLayout>
+        <div style={ChangePasswordBox.STYLE.headerStyler}>Change Password</div>
+        <Padding size={ChangePasswordBox.STD_PADDING}/>
+        <div style={changePasswordBox}>
+          <input type='password' placeholder='New Password'
+            autoComplete='off'
+            className={css(inputBoxStyle)}
+            disabled={false}
+            onFocus={() => this.passwordInputField.placeholder = ''}
+            onBlur={() =>
+              this.passwordInputField.placeholder = 'New Password'}
+            ref={(ref) => this.passwordInputField = ref}/>
+          <div style={ChangePasswordBox.STYLE.passwordPadding}/>
+          <input type='password' placeholder='Confirm New Password'
+            autoComplete='off'
+            className={css(inputBoxStyle)}
+            disabled={true}
+            onFocus={() => this.confirmPasswordInputField.placeholder = ''}
+            onBlur={() =>
+              this.confirmPasswordInputField.placeholder
+              = 'Confirm New Password'}
+            ref={(ref) => this.confirmPasswordInputField = ref}/>
+          {inlineStatusBox}
+          <SubmitButton label='Save Password'
+            displaySize={this.props.displaySize}/>
+        </div>
+        <div style={messageUnderneath}>
+          <div style={ChangePasswordBox.STYLE.smallPadding}/>
+          {this.props.submitPasswordStatus}
+        </div>
+      </VBoxLayout>);
   }
   private static readonly STYLE = {
     hidden: {
@@ -757,7 +758,7 @@ class SubmitButton extends React.Component<ButtonProperties, {}> {
 
   public render(): JSX.Element {
     const buttonStyle = (() => {
-      if (this.props.displaySize === DisplaySize.SMALL) {
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return SubmitButton.DYNAMIC_STYLES.buttonSmall;
       } else {
         return SubmitButton.DYNAMIC_STYLES.buttonLarge;
@@ -765,8 +766,8 @@ class SubmitButton extends React.Component<ButtonProperties, {}> {
     })();
     return (
       <button className={css(buttonStyle)}
-        disabled={!this.props.isSubmitEnabled}
-        onClick={this.props.onClick}>
+          disabled={!this.props.isSubmitEnabled}
+          onClick={this.props.onClick}>
         {this.props.label}
       </button>);
   }
