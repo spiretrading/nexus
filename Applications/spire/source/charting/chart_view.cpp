@@ -35,6 +35,8 @@ ChartView::ChartView(ChartValue::Type x_axis_type, ChartValue::Type y_axis_type,
       m_label_font("Roboto"),
       m_item_delegate(new CustomVariantItemDelegate(this)) {
   setFocusPolicy(Qt::NoFocus);
+  setMouseTracking(true);
+  setAttribute(Qt::WA_Hover);
   m_label_font.setPixelSize(scale_height(10));
   auto current_time = boost::posix_time::second_clock::local_time();
   auto bottom_right = ChartPoint(ChartValue(current_time),
@@ -57,9 +59,11 @@ void ChartView::set_crosshair(const ChartPoint& position) {
 }
 
 void ChartView::set_crosshair(const QPoint& position) {
+  m_crosshair_pos = position;
 }
 
 void ChartView::reset_crosshair() {
+  m_crosshair_pos = QPoint();
 }
 
 void ChartView::set_region(const ChartPoint& top_left,
@@ -123,6 +127,9 @@ void ChartView::paintEvent(QPaintEvent* event) {
     painter.drawText(x - x_text_width / 2,
       y_origin + font_metrics.height() + scale_height(2),
       get_string(m_x_axis_type, x_value));
+  }
+  if(!m_crosshair_pos.isNull()) {
+    painter.fillRect(event->rect(), Qt::red);
   }
 }
 
