@@ -589,7 +589,7 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
           displaySize={this.props.displaySize} />
       </div>
       <div style={messageUnderneath}>
-       <div style={ChangePasswordBox.STYLE.mediumPadding}/>
+       <div style={ChangePasswordBox.STYLE.tinyPadding}/>
         {this.props.submitPasswordStatus}
 
       </div>
