@@ -83,7 +83,7 @@ export class TextField extends React.Component<Properties, State> {
           onMouseEnter={this.onMouseEnter}
           onMouseLeave={this.onMouseLeave}>
         <input value={this.props.value}
-          disabled={this.props.disabled}
+          readOnly={this.props.disabled}
           onFocus={this.onInputFocused}
           onBlur={this.onInputBlurred}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {

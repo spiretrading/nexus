@@ -84,7 +84,7 @@ class TestApp extends React.Component<Properties, State> {
       Beam.Duration.HOUR.multiply(5).add(Beam.Duration.MINUTE.multiply(30)).add(
       Beam.Duration.SECOND.multiply(15))
     );
-    this.state.identity.province = 'WestFarting';
+    this.state.identity.province = 'Westfarthing';
     this.state.identity.country = Nexus.DefaultCountries.AU;
     this.state.identity.city = 'Hobbiton';
     this.state.identity.addressLineOne = '56 Bag End';
