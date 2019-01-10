@@ -1,9 +1,9 @@
+import * as Dali from 'dali';
 import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { CountrySelectionBox, DisplaySize, HBoxLayout, HLine, Padding,
-  PhotoField, VBoxLayout } from '../../..';
+import { CountrySelectionBox, DisplaySize, HLine, PhotoField } from '../../..';
 import { CommentBox } from '../comment_box';
 import { FormEntry, PhotoFieldDisplayMode, RolesField, TextField } from '.';
 
@@ -115,14 +115,14 @@ export class ProfilePage extends React.Component<Properties> {
     const topPanelPhoto = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return (
-          <VBoxLayout>
+          <Dali.VBoxLayout>
             <PhotoField
               displaySize={this.props.displaySize}
               displayMode={PhotoFieldDisplayMode.DISPLAY}
               imageSource={this.props.identity.photoId}
               scaling={1}/>
-            <Padding size='30px'/>
-          </VBoxLayout>);
+            <Dali.Padding size='30px'/>
+          </Dali.VBoxLayout>);
       } else {
         return null;
       }
@@ -145,21 +145,20 @@ export class ProfilePage extends React.Component<Properties> {
       <div style={ProfilePage.STYLE.page}>
         <div style={ProfilePage.STYLE.pagePadding}/>
         <div style={contentWidth}>
-          <VBoxLayout width='100%'>
-            <Padding size='18px'/>
+          <Dali.VBoxLayout width='100%'>
+            <Dali.Padding size='18px'/>
             <div style={ProfilePage.STYLE.lastLoginBox}>
-              {this.props.identity.lastLoginTime.
-                toJson().toString().substring(0,8)}
+              {this.props.identity.lastLoginTime.toString()}
             </div>
-            <Padding size={ProfilePage.STANDARD_PADDING}/>
+            <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
             <div style={ProfilePage.STYLE.headerStyler}>
               Account Information
             </div>
-            <Padding size={ProfilePage.STANDARD_PADDING}/>
-            <HBoxLayout>
+            <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
+            <Dali.HBoxLayout>
               {sidePanelPhoto}
-              <Padding size={sidePanelPhotoPadding}/>
-              <VBoxLayout width='100%'>
+              <Dali.Padding size={sidePanelPhotoPadding}/>
+              <Dali.VBoxLayout width='100%'>
                 {topPanelPhoto}
                 <FormEntry name='First Name'
                   orientation={orientation}>
@@ -168,9 +167,9 @@ export class ProfilePage extends React.Component<Properties> {
                     displaySize={this.props.displaySize}
                     disabled/>
                 </FormEntry>
-                <Padding size={ProfilePage.LINE_PADDING}/>
+                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
-                <Padding size={ProfilePage.LINE_PADDING}/>
+                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Last Name'
                   orientation={orientation}>
                   <TextField
@@ -178,9 +177,9 @@ export class ProfilePage extends React.Component<Properties> {
                     displaySize={this.props.displaySize}
                     disabled/>
                 </FormEntry>
-                <Padding size={ProfilePage.LINE_PADDING}/>
+                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
-                <Padding size={ProfilePage.LINE_PADDING}/>
+                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Username'
                   orientation={orientation}>
                   <TextField
@@ -188,27 +187,27 @@ export class ProfilePage extends React.Component<Properties> {
                     displaySize={this.props.displaySize}
                     disabled/>
                 </FormEntry>
-                <Padding size={ProfilePage.LINE_PADDING}/>
+                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
-                <Padding size={ProfilePage.LINE_PADDING}/>
+                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Role(s)'
                   orientation={orientation}>
                   <div style={ProfilePage.STYLE.rolesWrapper}>
                     <RolesField roles={this.props.roles}/>
                   </div>
                 </FormEntry>
-                <Padding size={ProfilePage.LINE_PADDING}/>
+                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
-                <Padding size={ProfilePage.LINE_PADDING}/>
+                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Groups(s)'
                   orientation={orientation}>
                   <TextField value={this.props.group.name.toString()}
                     displaySize={this.props.displaySize}
                     disabled/>
                 </FormEntry>
-                <Padding size={ProfilePage.LINE_PADDING}/>
+                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
-                <Padding size={ProfilePage.LINE_PADDING}/>
+                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Registration Date'
                   orientation={orientation}>
                   <TextField displaySize={this.props.displaySize}
@@ -216,9 +215,9 @@ export class ProfilePage extends React.Component<Properties> {
                       registrationTime.toJson().toString().substring(0,8)}
                     disabled/>
                 </FormEntry>
-                <Padding size={ProfilePage.LINE_PADDING}/>
+                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
-                <Padding size={ProfilePage.LINE_PADDING}/>
+                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='ID Number'
                   orientation={orientation}>
                   <TextField
@@ -226,9 +225,9 @@ export class ProfilePage extends React.Component<Properties> {
                     displaySize={this.props.displaySize}
                     disabled/>
                 </FormEntry>
-                <Padding size={ProfilePage.LINE_PADDING}/>
+                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
-                <Padding size={ProfilePage.LINE_PADDING}/>
+                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Email'
                   orientation={orientation}>
                   <TextField
@@ -236,9 +235,9 @@ export class ProfilePage extends React.Component<Properties> {
                     displaySize={this.props.displaySize}
                     disabled/>
                 </FormEntry>
-                <Padding size={ProfilePage.LINE_PADDING}/>
+                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
-                <Padding size={ProfilePage.LINE_PADDING}/>
+                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Address'
                   orientation={orientation}>
                   <TextField
@@ -246,9 +245,9 @@ export class ProfilePage extends React.Component<Properties> {
                     displaySize={this.props.displaySize}
                     disabled/>
                 </FormEntry>
-                <Padding size={ProfilePage.LINE_PADDING}/>
+                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
-                <Padding size={ProfilePage.LINE_PADDING}/>
+                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='City'
                   orientation={orientation}>
                   <TextField
@@ -256,9 +255,9 @@ export class ProfilePage extends React.Component<Properties> {
                     displaySize={this.props.displaySize}
                     disabled/>
                 </FormEntry>
-                <Padding size={ProfilePage.LINE_PADDING}/>
+                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
-                <Padding size={ProfilePage.LINE_PADDING}/>
+                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Province/State'
                   orientation={orientation}>
                   <TextField
@@ -266,9 +265,9 @@ export class ProfilePage extends React.Component<Properties> {
                     displaySize={this.props.displaySize}
                     disabled/>
                 </FormEntry>
-                <Padding size={ProfilePage.LINE_PADDING}/>
+                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
-                <Padding size={ProfilePage.LINE_PADDING}/>
+                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Country'
                   orientation={orientation}>
                   <CountrySelectionBox
@@ -277,23 +276,23 @@ export class ProfilePage extends React.Component<Properties> {
                     value={this.props.identity.country}
                     countryDatabase={this.props.countryDatabase}/>
                 </FormEntry>
-                <Padding size={ProfilePage.STANDARD_PADDING}/>
+                <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
                 {formFooter}
-                <Padding size={formFooterPaddingSize}/>
-              </VBoxLayout>
-            </HBoxLayout>
+                <Dali.Padding size={formFooterPaddingSize}/>
+              </Dali.VBoxLayout>
+            </Dali.HBoxLayout>
             <SubmitCommentBox displaySize={this.props.displaySize}
               hasError={this.props.hasError}
               submitStatus={this.props.submitStatus}/>
-            <Padding size={ProfilePage.STANDARD_PADDING}/>
+            <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
             <HLine color={ProfilePage.LINE_COLOR}/>
-            <Padding size={ProfilePage.STANDARD_PADDING}/>
+            <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
             <ChangePasswordBox displaySize={this.props.displaySize}
               hasPasswordError={this.props.hasPasswordError}
               submitPasswordStatus={this.props.submitPasswordStatus}
               onPasswordSubmit={() => { }}/>
-            <Padding size={ProfilePage.BOTTOM_PADDING}/>
-          </VBoxLayout>
+            <Dali.Padding size={ProfilePage.BOTTOM_PADDING}/>
+          </Dali.VBoxLayout>
         </div>
         <div style={ProfilePage.STYLE.pagePadding}/>
       </div>);
@@ -397,11 +396,11 @@ class SubmitCommentBox extends React.Component<SubmitCommentBoxProperties > {
       }
     })();
     return (
-      <VBoxLayout>
+      <Dali.VBoxLayout>
         <div style={SubmitCommentBox.STYLE.headerStyler}>User Notes</div>
-        <Padding size={SubmitCommentBox.STANDARD_PADDING}/>
+        <Dali.Padding size={SubmitCommentBox.STANDARD_PADDING}/>
         <CommentBox comment=''/>
-        <Padding size={SubmitCommentBox.STANDARD_PADDING}/>
+        <Dali.Padding size={SubmitCommentBox.STANDARD_PADDING}/>
         <div style={boxStyle}>
           <div style={SubmitCommentBox.STYLE.filler}/>
           <div style={{ ...boxStyle, ...statusMessageInline}}>
@@ -415,7 +414,7 @@ class SubmitCommentBox extends React.Component<SubmitCommentBoxProperties > {
             {this.props.submitStatus}
           </div>
         </div>
-      </VBoxLayout>);
+      </Dali.VBoxLayout>);
   }
   private static readonly STYLE = {
     hidden: {
@@ -546,9 +545,9 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
       }
     })();
     return (
-      <VBoxLayout>
+      <Dali.VBoxLayout>
         <div style={ChangePasswordBox.STYLE.headerStyler}>Change Password</div>
-        <Padding size={ChangePasswordBox.STANDARD_PADDING}/>
+        <Dali.Padding size={ChangePasswordBox.STANDARD_PADDING}/>
         <div style={changePasswordBox}>
           <input type='password' placeholder='New Password'
             autoComplete='off'
@@ -576,7 +575,7 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
           <div style={ChangePasswordBox.STYLE.smallPadding}/>
           {this.props.submitPasswordStatus}
         </div>
-      </VBoxLayout>);
+      </Dali.VBoxLayout>);
   }
   private static readonly STYLE = {
     hidden: {

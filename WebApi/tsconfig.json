@@ -4,7 +4,7 @@
     "experimentalDecorators": true,
     "module": "commonjs",
     "noImplicitAny": true,
-    "outDir": "./library/nexus",
+    "outDir": "./library",
     "preserveConstEnums": true,
     "removeComments": true,
     "sourceMap": true,

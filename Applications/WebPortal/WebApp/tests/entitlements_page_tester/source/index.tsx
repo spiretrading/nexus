@@ -1,4 +1,5 @@
 import * as Beam from 'beam';
+import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
@@ -44,7 +45,7 @@ class TestApp extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     return (
-      <WebPortal.VBoxLayout width='100%' height='100%'>
+      <Dali.VBoxLayout width='100%' height='100%'>
         <WebPortal.EntitlementsPage
           displaySize={this.props.displaySize}
           marketDatabase={this.state.marketDB}
@@ -87,7 +88,7 @@ class TestApp extends React.Component<Properties, State> {
             TOGGLE SUBMIT
           </button>
         </div>
-      </WebPortal.VBoxLayout>);
+      </Dali.VBoxLayout>);
   }
 
   public componentDidMount(): void {

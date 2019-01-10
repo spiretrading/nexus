@@ -1,5 +1,5 @@
-
 import * as Beam from 'beam';
+import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
@@ -44,7 +44,7 @@ class TestApp extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     return (
-      <WebPortal.VBoxLayout width='100%' height='100%'>
+      <Dali.VBoxLayout width='100%' height='100%'>
         <WebPortal.ProfilePage
           roles={this.state.someRoles}
           identity={this.state.identity}
@@ -72,7 +72,7 @@ class TestApp extends React.Component<Properties, State> {
             ERROR MESSAGES
           </button>
         </div>
-      </WebPortal.VBoxLayout>);
+      </Dali.VBoxLayout>);
   }
 
   public componentDidMount() {
@@ -81,7 +81,8 @@ class TestApp extends React.Component<Properties, State> {
     this.state.identity.lastName = 'Baggins';
     this.state.identity.lastLoginTime = new Beam.DateTime(
       new Beam.Date(2018, Beam.Date.Month.DECEMBER, 20),
-      new Beam.Duration(40)
+      Beam.Duration.HOUR.multiply(5).add(Beam.Duration.MINUTE.multiply(30)).add(
+      Beam.Duration.SECOND.multiply(15))
     );
     this.state.identity.province = 'WestFarting';
     this.state.identity.country = Nexus.DefaultCountries.AU;
@@ -89,8 +90,9 @@ class TestApp extends React.Component<Properties, State> {
     this.state.identity.addressLineOne = '56 Bag End';
     this.state.identity.emailAddress = 'frodo@bagend.nz';
     this.state.identity.registrationTime = new Beam.DateTime(
-      new Beam.Date(2017, Beam.Date.Month.NOVEMBER, 13),
-      new Beam.Duration(40)
+      new Beam.Date(2017, Beam.Date.Month.DECEMBER, 21),
+      Beam.Duration.HOUR.multiply(5).add(Beam.Duration.MINUTE.multiply(30)).add(
+      Beam.Duration.SECOND.multiply(15))
     );
     this.setState({identity: this.state.identity});
   }

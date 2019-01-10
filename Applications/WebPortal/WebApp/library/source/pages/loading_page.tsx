@@ -1,6 +1,6 @@
+import { HBoxLayout, Padding, VBoxLayout } from 'dali';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { HBoxLayout, Padding, VBoxLayout } from '..';
 
 interface Properties {
 

@@ -29,6 +29,27 @@ if not exist Beam goto end_beam_pull
   popd
 :end_beam_pull
 
+SET dali_commit="ed6605bf4e8662db09d615733d44d7b65e718184"
+if exist dali goto end_dali_setup
+  git clone https://www.github.com/eidolonsystems/dali
+  pushd dali
+  git checkout %dali_commit%
+  call build.bat
+  popd
+:end_dali_setup
+
+if not exist dali goto end_dali_pull
+  pushd dali
+  for /f "usebackq tokens=*" %%a in (`git log -1 ^| head -1 ^| awk "{ print $2 }"`) do SET commit=%%a
+  if not "%commit%" == %dali_commit% (
+    git checkout master
+    git pull
+    git checkout %dali_commit%
+    call build.bat
+  )
+  popd
+:end_beam_pull
+
 if exist quickfix-v.1.15.1 goto end_quick_fix_setup
   wget https://github.com/quickfix/quickfix/archive/49b3508e48f0bbafbab13b68be72250bdd971ac2.zip -O quickfix-v.1.15.1.zip --no-check-certificate
   if not exist quickfix-v.1.15.1.zip goto end_quick_fix_setup
