@@ -1,3 +1,5 @@
+
+import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
@@ -15,6 +17,10 @@ interface State {
   statusMessage: string;
   passwordStatusMessage: string;
   hasError: boolean;
+  account: Beam.DirectoryEntry;
+  group: Beam.DirectoryEntry;
+  registrationDate: Beam.DateTime;
+
 }
 
 /**  Displays a testing application. */
@@ -27,7 +33,16 @@ class TestApp extends React.Component<Properties, State> {
       identity: new Nexus.AccountIdentity(),
       statusMessage: '',
       passwordStatusMessage: '',
-      hasError: false
+      hasError: false,
+      account: new Beam.DirectoryEntry(
+        Beam.DirectoryEntry.Type.ACCOUNT, 1, 'frodo_of_the_nine_fingers'),
+      group: new Beam.DirectoryEntry(
+        Beam.DirectoryEntry.Type.NONE, 2, 'shire_office'),
+      registrationDate: new Beam.DateTime(
+        new Beam.Date(2018, Beam.Date.Month.DECEMBER, 20),
+        new Beam.Duration(40)
+      )
+
     };
     this.setStatusToError = this.setStatusToError.bind(this);
     this.setStatusToNull = this.setStatusToNull.bind(this);
@@ -45,7 +60,11 @@ class TestApp extends React.Component<Properties, State> {
           submitStatus={this.state.statusMessage}
           submitPasswordStatus={this.state.passwordStatusMessage}
           hasError={this.state.hasError}
-          hasPasswordError={this.state.hasError} />
+          hasPasswordError={this.state.hasError}
+          account={this.state.account}
+          group={this.state.group}
+          registration={this.state.registrationDate}
+          />
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
             onClick={this.setStatusToNull}>
@@ -65,6 +84,16 @@ class TestApp extends React.Component<Properties, State> {
 
   public componentDidMount() {
     this.state.identity.photoId = TestApp.SOME_IMAGE;
+    this.state.identity.firstName = 'Frodo';
+    this.state.identity.lastName = 'Baggins';
+    this.state.identity.lastLoginTime = new Beam.DateTime(
+      new Beam.Date(2018, Beam.Date.Month.DECEMBER, 20),
+      new Beam.Duration(40)
+    );
+    this.state.identity.province = 'WestFarting';
+    this.state.identity.country = Nexus.DefaultCountries.AU;
+    this.state.identity.city = 'Hobbiton';
+    this.state.identity.addressLineOne = '56 Bag End';
     this.setState({identity: this.state.identity});
   }
 

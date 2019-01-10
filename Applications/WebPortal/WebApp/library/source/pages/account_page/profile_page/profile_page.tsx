@@ -1,4 +1,5 @@
 import { css, StyleSheet } from 'aphrodite';
+import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { CountrySelectionBox, DisplaySize, HBoxLayout, HLine, Padding,
@@ -8,11 +9,20 @@ import { FormEntry, PhotoFieldDisplayMode, RolesField, TextField } from '.';
 
 interface Properties {
 
+  /** The account name. */
+  account: Beam.DirectoryEntry;
+
+  /** The date of the regestration. */
+  registration: Beam.DateTime;
+
   /** The account's roles. */
   roles: Nexus.AccountRoles;
 
   /** The account identity to display. */
   identity: Nexus.AccountIdentity;
+
+  /** The name of the group the account belongs to. */
+  group: Beam.DirectoryEntry;
 
   /** Determines the layout used to display the page. */
   displaySize: DisplaySize;
@@ -142,7 +152,7 @@ export class ProfilePage extends React.Component<Properties, State> {
           <VBoxLayout width='100%'>
             <Padding size='18px'/>
             <div style={ProfilePage.STYLE.lastLoginBox}>
-              Last Login: 12/20/2017, 04:42 PM
+              {this.props.identity.lastLoginTime.toJson.toString()}
             </div>
             <Padding size={ProfilePage.STANDARD_PADDING}/>
             <div style={ProfilePage.STYLE.headerStyler}>
@@ -157,7 +167,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <FormEntry name='First Name'
                   orientation={orientation}>
                   <TextField
-                    value='Frodo'
+                    value={this.props.identity.firstName}
                     displaySize={this.props.displaySize}
                     disabled/>
                 </FormEntry>
@@ -167,7 +177,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <FormEntry name='Last Name'
                   orientation={orientation}>
                   <TextField
-                    value='Baggins'
+                    value={this.props.identity.lastName}
                     displaySize={this.props.displaySize}
                     disabled/>
                 </FormEntry>
@@ -177,7 +187,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <FormEntry name='Username'
                   orientation={orientation}>
                   <TextField
-                    value='frodo_of_the_nine_fingers'
+                    value={this.props.account.name.toString()}
                     displaySize={this.props.displaySize}
                     disabled/>
                 </FormEntry>
@@ -195,14 +205,14 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Groups(s)'
                   orientation={orientation}>
-                  <TextField value='shire_office'
+                  <TextField value={this.props.group.name.toString()}
                     displaySize={this.props.displaySize}
                     disabled/>
                 </FormEntry>
                 <Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
                 <Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Regestration Date'
+                <FormEntry name='Registration Date'
                   orientation={orientation}>
                   <TextField displaySize={this.props.displaySize}
                     value='04/13/2019'
@@ -402,7 +412,7 @@ class SubmitCommentBox extends React.Component<SubmitCommentBoxProperties > {
             {this.props.submitStatus}
             <div style={SubmitCommentBox.STYLE.passwordButtonPadding}/>
           </div>
-          <SubmitButton label='Save Password'
+          <SubmitButton label='Save Changes'
             displaySize={this.props.displaySize}/>
           <div style={statusMessageFooter}>
             <div style={SubmitCommentBox.STYLE.smallPadding}/>
