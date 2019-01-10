@@ -2,6 +2,7 @@ import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import * as Nexus from 'nexus';
 import { DisplaySize } from '../display_size';
+import { TextField } from '../pages/account_page/profile_page';
 
 interface Properties {
 
@@ -58,15 +59,23 @@ export class CountrySelectionBox extends React.Component<Properties> {
       }
       return options;
     })();
-    return (
-      <select value={this.props.value.code}
-          className={css(CountrySelectionBox.EXTRA_STYLE.noHighting)}
-          style={{...boxSizing,...selectStyle}}
-          onChange={this.onChange}
-          disabled={this.props.readonly}>
-        {options}
-      </select>);
-  }
+    const content = (() => {
+      if(this.props.readonly) {
+        return (<TextField
+          value={this.props.countryDatabase.fromCode(this.props.value).name}
+            displaySize={this.props.displaySize}
+            disabled/>);
+      } else {
+            return (<select value={this.props.value.code}
+                className={css(CountrySelectionBox.EXTRA_STYLE.noHighting)}
+                style={{...boxSizing,...selectStyle}}
+                onChange={this.onChange}>
+              {options}
+            </select>);
+      }
+    })();
+    return (<div>{content}</div>);
+    }
 
   private onChange(event: React.ChangeEvent<HTMLSelectElement>): void {
     const code = new Nexus.CountryCode(parseInt(event.target.value, 10));
