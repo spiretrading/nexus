@@ -65,13 +65,6 @@ export class ProfilePage extends React.Component<Properties> {
     onPasswordSubmit: () => { }
   };
 
-  constructor(props: Properties) {
-    super(props);
-    this.state = {
-      countryDatabase: Nexus.buildDefaultCountryDatabase()
-    };
-  }
-
   public render(): JSX.Element {
     const orientation = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
@@ -148,7 +141,7 @@ export class ProfilePage extends React.Component<Properties> {
           <Dali.VBoxLayout width='100%'>
             <Dali.Padding size='18px'/>
             <div style={ProfilePage.STYLE.lastLoginBox}>
-              {this.props.identity.lastLoginTime.toString()}
+              {this.props.identity.lastLoginTime.toJson().toString()}
             </div>
             <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
             <div style={ProfilePage.STYLE.headerStyler}>
