@@ -26,10 +26,9 @@ BookQuoteTableView::BookQuoteTableView(
   setModel(m_model.get());
 }
 
-void BookQuoteTableView::set_properties(
-    const BookViewProperties& properties) {
+void BookQuoteTableView::set_properties(const BookViewProperties& properties) {
   m_model->set_properties(properties);
-  QFontMetrics metrics(properties.get_book_quote_font());
+  auto metrics = QFontMetrics(properties.get_book_quote_font());
   auto row_height = metrics.height() + scale_height(2);
   verticalHeader()->setDefaultSectionSize(row_height);
   setShowGrid(properties.get_show_grid());

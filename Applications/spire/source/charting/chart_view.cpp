@@ -83,10 +83,9 @@ void ChartView::paintEvent(QPaintEvent* event) {
     painter.drawLine(0, y, x_origin, y);
     painter.setPen(Qt::white);
     painter.drawLine(x_origin, y, x_origin + scale_width(2), y);
-    painter.drawText(x_origin + scale_width(3),
-      y + (font_metrics.height() / 3),
-        m_item_delegate->displayText(to_variant(m_y_axis_type, y_value),
-          QLocale()));
+    painter.drawText(x_origin + scale_width(3), y + (font_metrics.height() / 3),
+      m_item_delegate->displayText(to_variant(m_y_axis_type, y_value),
+      QLocale()));
   }
   auto x_step_count = x_range / x_step;
   auto x_pixel_step = x_origin / (x_range / x_step);
