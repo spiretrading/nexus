@@ -41,3 +41,9 @@ void BookQuoteTableView::resizeEvent(QResizeEvent* event) {
   setColumnWidth(2, width() / 3);
   QTableView::resizeEvent(event);
 }
+
+QStyleOptionViewItem BookQuoteTableView::viewOptions() const {
+  auto options = QTableView::viewOptions();
+  options.locale.setNumberOptions(QLocale::DefaultNumberOptions);
+  return options;
+}
