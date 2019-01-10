@@ -282,8 +282,7 @@ export class ProfilePage extends React.Component<Properties> {
             <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
             <ChangePasswordBox displaySize={this.props.displaySize}
               hasPasswordError={this.props.hasPasswordError}
-              submitPasswordStatus={this.props.submitPasswordStatus}
-              onPasswordSubmit={() => { }}/>
+              submitPasswordStatus={this.props.submitPasswordStatus}/>
             <Dali.Padding size={ProfilePage.BOTTOM_PADDING}/>
           </Dali.VBoxLayout>
         </div>

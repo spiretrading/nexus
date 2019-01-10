@@ -128,7 +128,11 @@ export class CountrySelectionBox extends React.Component<Properties> {
       ':-moz-focusring': {
         color: 'transparent',
         textShadow: '0 0 0 #000'
-      }
+      },
+      '-webkit-user-select': 'text',
+      '-moz-user-select': 'text',
+      '-ms-user-select': 'text',
+      'user-select': 'text'
     }
   });
 }

@@ -53,15 +53,11 @@ class TestApp extends React.Component<Properties, State> {
           submitStatus={this.state.statusMessage}
           submitPasswordStatus={this.state.passwordStatusMessage}
           hasError={this.state.hasError}
-<<<<<<< HEAD
           hasPasswordError={this.state.hasError}
           account={this.state.account}
           group={this.state.group}
           countryDatabase={Nexus.buildDefaultCountryDatabase()}
           />
-=======
-          hasPasswordError={this.state.hasError} />
->>>>>>> f7231d9adbe909feea4caaa01384101dea8524e7
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
             onClick={this.setStatusToNull}>
