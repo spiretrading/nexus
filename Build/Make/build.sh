@@ -46,10 +46,6 @@ applications+="UtpMarketDataFeedClient "
 applications+="WebPortal "
 parallel -j$jobs --no-notice build_function ::: $applications
 
-pushd $directory/../../WebApi
-npm install
-npm run build
-popd
 pushd $directory/../../Applications/WebPortal/WebApp
 ./build.sh $config
 popd
