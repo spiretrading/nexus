@@ -1,6 +1,6 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
-import { DisplaySize, HBoxLayout } from '../../../';
+import { DisplaySize } from '../../../';
 
 enum Effects {
 

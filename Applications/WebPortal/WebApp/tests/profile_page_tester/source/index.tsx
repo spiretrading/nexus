@@ -1,3 +1,4 @@
+import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
@@ -36,7 +37,7 @@ class TestApp extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     return (
-      <WebPortal.VBoxLayout width='100%' height='100%'>
+      <Dali.VBoxLayout width='100%' height='100%'>
         <WebPortal.ProfilePage
           roles={this.state.someRoles}
           identity={this.state.identity}
@@ -60,7 +61,7 @@ class TestApp extends React.Component<Properties, State> {
             ERROR MESSAGES
           </button>
         </div>
-      </WebPortal.VBoxLayout>);
+      </Dali.VBoxLayout>);
   }
 
   public componentDidMount() {

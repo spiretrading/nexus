@@ -1,6 +1,6 @@
+import { HBoxLayout, Padding } from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { HBoxLayout, Padding } from '../../..';
 import { RoleIcon } from './role_icon';
 
 interface Properties {

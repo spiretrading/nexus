@@ -30,6 +30,26 @@ if [ -d "Beam" ]; then
   popd
 fi
 
+dali_commit="ed6605bf4e8662db09d615733d44d7b65e718184"
+if [ ! -d "dali" ]; then
+  sudo -u $(logname) git clone https://www.github.com/eidolonsystems/dali
+  pushd dali
+  sudo -u $(logname) git checkout "$dali_commit"
+  sudo -u $(logname) ./build.sh
+  popd
+fi
+if [ -d "dali" ]; then
+  pushd dali
+  commit="`git log -1 | head -1 | awk '{ print $2 }'`"
+  if [ "$commit" != "$dali_commit" ]; then
+    sudo -u $(logname) git checkout master
+    sudo -u $(logname) git pull
+    sudo -u $(logname) git checkout "$dali_commit"
+    sudo -u $(logname) ./build.sh
+  fi
+  popd
+fi
+
 if [ ! -d "quickfix-v.1.15.1" ]; then
   sudo -u $(logname) wget https://github.com/quickfix/quickfix/archive/49b3508e48f0bbafbab13b68be72250bdd971ac2.zip -O quickfix-v.1.15.1.zip --no-check-certificate
   if [ -f quickfix-v.1.15.1.zip ]; then
