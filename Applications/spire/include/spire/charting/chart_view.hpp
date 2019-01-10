@@ -65,6 +65,8 @@ namespace Spire {
       ChartValue::Type m_y_axis_type;
       ChartPoint m_top_left;
       ChartPoint m_bottom_right;
+      int m_x_origin;
+      int m_y_origin;
       QFont m_label_font;
       std::string m_timestamp_format;
       CustomVariantItemDelegate* m_item_delegate;
