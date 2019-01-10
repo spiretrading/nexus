@@ -141,7 +141,7 @@ export class ProfilePage extends React.Component<Properties> {
           <Dali.VBoxLayout width='100%'>
             <Dali.Padding size='18px'/>
             <div style={ProfilePage.STYLE.lastLoginBox}>
-              {this.props.identity.lastLoginTime.toJson().toString()}
+              {this.props.identity.lastLoginTime.toString()}
             </div>
             <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
             <div style={ProfilePage.STYLE.headerStyler}>
@@ -205,7 +205,7 @@ export class ProfilePage extends React.Component<Properties> {
                   orientation={orientation}>
                   <TextField displaySize={this.props.displaySize}
                     value={this.props.identity.
-                      registrationTime.toJson().toString().substring(0,8)}
+                      registrationTime.toString()}
                     disabled/>
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
