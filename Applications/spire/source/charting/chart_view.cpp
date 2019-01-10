@@ -76,7 +76,7 @@ ChartView::ChartView(ChartValue::Type x_axis_type, ChartValue::Type y_axis_type,
     ChartValue(Nexus::Money(10.10)));
   set_region(top_left, bottom_right);
   setCursor(Qt::BlankCursor);
-  m_crosshair = imageFromSvg(":/icons/lock-grid-purple.svg", scale(11, 11));
+  m_crosshair = imageFromSvg(":/icons/chart-cursor.svg", scale(11, 11));
 }
 
 ChartPoint ChartView::convert_pixels_to_chart(const QPoint& point) const {

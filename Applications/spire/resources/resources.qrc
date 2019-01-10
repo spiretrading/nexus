@@ -92,5 +92,6 @@
         <file>icons/lock-grid-green.svg</file>
         <file>icons/lock-grid-grey.svg</file>
         <file>icons/lock-grid-purple.svg</file>
+        <file>icons/chart-cursor.svg</file>
     </qresource>
 </RCC>
