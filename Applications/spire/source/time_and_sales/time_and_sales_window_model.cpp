@@ -70,31 +70,27 @@ QVariant TimeAndSalesWindowModel::data(const QModelIndex& index,
   if(!index.isValid()) {
     return QVariant();
   }
-  auto row_index = (m_entries.size() - index.row()) - 1;
+  auto& entry = m_entries[(m_entries.size() - index.row()) - 1];
   if(role == Qt::DisplayRole) {
+    auto& time_and_sale = entry.m_time_and_sale.GetValue();
     switch(static_cast<Columns>(index.column())) {
       case Columns::TIME_COLUMN:
-        return QVariant::fromValue(
-          m_entries[row_index].m_time_and_sale.GetValue().m_timestamp);
+        return QVariant::fromValue(time_and_sale.m_timestamp);
       case Columns::PRICE_COLUMN:
-        return QVariant::fromValue(
-          m_entries[row_index].m_time_and_sale.GetValue().m_price);
+        return QVariant::fromValue(time_and_sale.m_price);
       case Columns::SIZE_COLUMN:
-        return QLocale().toString(static_cast<double>(
-          m_entries[row_index].m_time_and_sale.GetValue().m_size));
+        return QVariant::fromValue(time_and_sale.m_size);
       case Columns::MARKET_COLUMN:
-        return QString::fromStdString(
-          m_entries[row_index].m_time_and_sale.GetValue().m_marketCenter);
+        return QString::fromStdString(time_and_sale.m_marketCenter);
       case Columns::CONDITION_COLUMN:
-        return QString::fromStdString(
-          m_entries[row_index].m_time_and_sale.GetValue().m_condition.m_code);
+        return QString::fromStdString(time_and_sale.m_condition.m_code);
       default:
         return QVariant();
     }
   } else if(role == Qt::BackgroundRole) {
-    return m_properties.get_band_color(m_entries[row_index].m_price_range);
+    return m_properties.get_band_color(entry.m_price_range);
   } else if(role == Qt::ForegroundRole) {
-    return m_properties.get_text_color(m_entries[row_index].m_price_range);
+    return m_properties.get_text_color(entry.m_price_range);
   } else if(role == Qt::FontRole) {
     return m_properties.m_font;
   }
@@ -122,8 +118,7 @@ QVariant TimeAndSalesWindowModel::headerData(int section,
   return QVariant();
 }
 
-void TimeAndSalesWindowModel::update_data(
-    const TimeAndSalesModel::Entry& e) {
+void TimeAndSalesWindowModel::update_data(const TimeAndSalesModel::Entry& e) {
   beginInsertRows(QModelIndex(), 0, 0);
   m_entries.push_back(e);
   endInsertRows();

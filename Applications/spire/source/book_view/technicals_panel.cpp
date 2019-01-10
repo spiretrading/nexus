@@ -35,46 +35,41 @@ TechnicalsPanel::TechnicalsPanel(QWidget* parent)
 void TechnicalsPanel::set_model(std::shared_ptr<BookViewModel> model) {
   m_model = model;
   if(m_model->get_close().is_initialized()) {
-    m_close_label_widget->set_data_text(
-      m_item_delegate->displayText(QVariant::fromValue(*m_model->get_close()),
-        QLocale()));
+    m_close_label_widget->set_data_text(m_item_delegate->displayText(
+      QVariant::fromValue(*m_model->get_close()), QLocale()));
   } else {
     m_close_label_widget->set_data_text(tr("N/A"));
   }
   if(m_model->get_high().is_initialized()) {
-    m_high_label_widget->set_data_text(
-      m_item_delegate->displayText(QVariant::fromValue(*m_model->get_high()),
-        QLocale()));
+    m_high_label_widget->set_data_text(m_item_delegate->displayText(
+      QVariant::fromValue(*m_model->get_high()), QLocale()));
   } else {
     m_high_label_widget->set_data_text(tr("N/A"));
   }
   if(m_model->get_low().is_initialized()) {
-    m_low_label_widget->set_data_text(
-      m_item_delegate->displayText(QVariant::fromValue(*m_model->get_low()),
-        QLocale()));
+    m_low_label_widget->set_data_text(m_item_delegate->displayText(
+      QVariant::fromValue(*m_model->get_low()), QLocale()));
   } else {
     m_low_label_widget->set_data_text(tr("N/A"));
   }
   if(m_model->get_open().is_initialized()) {
-    m_open_label_widget->set_data_text(
-      m_item_delegate->displayText(QVariant::fromValue(*m_model->get_open()),
-        QLocale()));
+    m_open_label_widget->set_data_text(m_item_delegate->displayText(
+      QVariant::fromValue(*m_model->get_open()), QLocale()));
   } else {
     m_open_label_widget->set_data_text(tr("N/A"));
   }
-  m_volume_label_widget->set_data_text(
-    m_item_delegate->displayText(QVariant::fromValue(m_model->get_volume()),
-      QLocale()));
+  m_volume_label_widget->set_data_text(m_item_delegate->displayText(
+    QVariant::fromValue(m_model->get_volume()), QLocale()));
   m_close_connection = m_model->connect_close_slot(
-    [=] (auto& c) { on_close_signal(c); });
+    [=] (const auto& c) { on_close_signal(c); });
   m_high_connection = m_model->connect_high_slot(
-    [=] (auto& h) { on_high_signal(h); });
+    [=] (const auto& h) { on_high_signal(h); });
   m_low_connection = m_model->connect_low_slot(
-    [=] (auto& l) { on_low_signal(l); });
+    [=] (const auto& l) { on_low_signal(l); });
   m_open_connection = m_model->connect_open_slot(
-    [=] (auto& o) { on_open_signal(o); });
+    [=] (const auto& o) { on_open_signal(o); });
   m_volume_connection = m_model->connect_volume_slot(
-    [=] (auto& v) { on_volume_signal(v); });
+    [=] (const auto& v) { on_volume_signal(v); });
 }
 
 void TechnicalsPanel::reset_model() {

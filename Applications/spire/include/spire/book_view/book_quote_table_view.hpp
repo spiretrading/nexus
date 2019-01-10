@@ -25,6 +25,7 @@ namespace Spire {
 
     protected:
       void resizeEvent(QResizeEvent* event) override;
+      QStyleOptionViewItem viewOptions() const override;
 
     private:
       std::unique_ptr<BookQuoteTableModel> m_model;

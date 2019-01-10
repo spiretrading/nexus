@@ -30,9 +30,6 @@ namespace Spire {
     private:
       QStyledItemDelegate* m_item_delegate;
       CustomVariantItemDelegate* m_variant_delegate;
-
-      int get_rendered_text_width(const QFont& font,
-        const QString& text) const;
   };
 }
 

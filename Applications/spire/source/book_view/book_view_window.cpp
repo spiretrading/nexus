@@ -53,7 +53,7 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
 }
 
 void BookViewWindow::set_model(std::shared_ptr<BookViewModel> model) {
-  CustomVariantItemDelegate item_delegate;
+  auto item_delegate = CustomVariantItemDelegate();
   setWindowTitle(item_delegate.displayText(QVariant::fromValue(
     model->get_security()), QLocale()) + tr(" - Book View"));
   if(m_technicals_panel == nullptr) {
