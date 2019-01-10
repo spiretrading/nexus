@@ -12,9 +12,6 @@ interface Properties {
   /** The account name. */
   account: Beam.DirectoryEntry;
 
-  /** The date of the regestration. */
-  registration: Beam.DateTime;
-
   /** The account's roles. */
   roles: Nexus.AccountRoles;
 
@@ -23,6 +20,9 @@ interface Properties {
 
   /** The name of the group the account belongs to. */
   group: Beam.DirectoryEntry;
+
+  /** The database of all available countries. */
+  countryDatabase: Nexus.CountryDatabase;
 
   /** Determines the layout used to display the page. */
   displaySize: DisplaySize;
@@ -52,12 +52,8 @@ interface Properties {
   onSubmitPassword?: (password: string) => void;
 }
 
-interface State {
-  countryDatabase: Nexus.CountryDatabase;
-}
-
 /** Displays an account's profile page. */
-export class ProfilePage extends React.Component<Properties, State> {
+export class ProfilePage extends React.Component<Properties> {
   public static readonly defaultProps = {
     isSubmitEnabled: false,
     submitStatus: '',
@@ -152,7 +148,8 @@ export class ProfilePage extends React.Component<Properties, State> {
           <VBoxLayout width='100%'>
             <Padding size='18px'/>
             <div style={ProfilePage.STYLE.lastLoginBox}>
-              {this.props.identity.lastLoginTime.toJson.toString()}
+              {this.props.identity.lastLoginTime.
+                toJson().toString().substring(0,8)}
             </div>
             <Padding size={ProfilePage.STANDARD_PADDING}/>
             <div style={ProfilePage.STYLE.headerStyler}>
@@ -196,7 +193,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Role(s)'
                   orientation={orientation}>
-                  <div id='WRAPPER' style={ProfilePage.STYLE.rolesWrapper}>
+                  <div style={ProfilePage.STYLE.rolesWrapper}>
                     <RolesField roles={this.props.roles}/>
                   </div>
                 </FormEntry>
@@ -215,7 +212,8 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <FormEntry name='Registration Date'
                   orientation={orientation}>
                   <TextField displaySize={this.props.displaySize}
-                    value='04/13/2019'
+                    value={this.props.identity.
+                      registrationTime.toJson().toString().substring(0,8)}
                     disabled/>
                 </FormEntry>
                 <Padding size={ProfilePage.LINE_PADDING}/>
@@ -224,7 +222,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <FormEntry name='ID Number'
                   orientation={orientation}>
                   <TextField
-                    value='SR68'
+                    value={this.props.account.id.toString()}
                     displaySize={this.props.displaySize}
                     disabled/>
                 </FormEntry>
@@ -234,7 +232,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <FormEntry name='Email'
                   orientation={orientation}>
                   <TextField
-                    value='frodo@bagend.nz'
+                    value={this.props.identity.emailAddress}
                     displaySize={this.props.displaySize}
                     disabled/>
                 </FormEntry>
@@ -244,7 +242,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <FormEntry name='Address'
                   orientation={orientation}>
                   <TextField
-                    value='56 Bag End'
+                    value={this.props.identity.firstName}
                     displaySize={this.props.displaySize}
                     disabled/>
                 </FormEntry>
@@ -254,7 +252,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <FormEntry name='City'
                   orientation={orientation}>
                   <TextField
-                    value='Hobbiton'
+                    value={this.props.identity.city}
                     displaySize={this.props.displaySize}
                     disabled/>
                 </FormEntry>
@@ -264,7 +262,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <FormEntry name='Province/State'
                   orientation={orientation}>
                   <TextField
-                    value='Westfarthing'
+                    value={this.props.identity.province}
                     displaySize={this.props.displaySize}
                     disabled/>
                 </FormEntry>
@@ -276,9 +274,8 @@ export class ProfilePage extends React.Component<Properties, State> {
                   <CountrySelectionBox
                     readonly
                     displaySize={this.props.displaySize}
-                    value={Nexus.DefaultCountries.AU}
-                    onChange={() => { }}
-                    countryDatabase={this.state.countryDatabase}/>
+                    value={this.props.identity.country}
+                    countryDatabase={this.props.countryDatabase}/>
                 </FormEntry>
                 <Padding size={ProfilePage.STANDARD_PADDING}/>
                 {formFooter}
@@ -287,8 +284,7 @@ export class ProfilePage extends React.Component<Properties, State> {
             </HBoxLayout>
             <SubmitCommentBox displaySize={this.props.displaySize}
               hasError={this.props.hasError}
-              submitStatus={this.props.submitStatus}
-              onSubmit={() => { }}/>
+              submitStatus={this.props.submitStatus}/>
             <Padding size={ProfilePage.STANDARD_PADDING}/>
             <HLine color={ProfilePage.LINE_COLOR}/>
             <Padding size={ProfilePage.STANDARD_PADDING}/>
@@ -320,7 +316,7 @@ export class ProfilePage extends React.Component<Properties, State> {
     headerStyler: {
       color: '#4B23A0',
       font: '500 14px Roboto',
-      wdith: '100%'
+      width: '100%'
     },
     lastLoginBox: {
       color: '#000000',
@@ -367,7 +363,7 @@ class SubmitCommentBox extends React.Component<SubmitCommentBoxProperties > {
     isSubmitEnabled: false,
     submitStatus: '',
     hasError: false,
-    onSubmit: () => { }
+    onSubmit: () => {}
   };
 
   public render(): JSX.Element {
@@ -485,7 +481,7 @@ class ChangePasswordBox extends React.Component<ChangePassBoxProperties> {
     isPasswordSubmitEnabled: false,
     submitPasswordStatus: '',
     hasPasswordError: false,
-    onPasswordSubmit: () => { }
+    onPasswordSubmit: () => {}
   };
 
   public render(): JSX.Element {
@@ -748,7 +744,7 @@ interface ButtonProperties {
 class SubmitButton extends React.Component<ButtonProperties, {}> {
   public static readonly defaultProps = {
     disabled: true,
-    onSubmit: () => { }
+    onClick: () => {}
   };
 
   public render(): JSX.Element {

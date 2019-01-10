@@ -19,8 +19,6 @@ interface State {
   hasError: boolean;
   account: Beam.DirectoryEntry;
   group: Beam.DirectoryEntry;
-  registrationDate: Beam.DateTime;
-
 }
 
 /**  Displays a testing application. */
@@ -35,14 +33,9 @@ class TestApp extends React.Component<Properties, State> {
       passwordStatusMessage: '',
       hasError: false,
       account: new Beam.DirectoryEntry(
-        Beam.DirectoryEntry.Type.ACCOUNT, 1, 'frodo_of_the_nine_fingers'),
+        Beam.DirectoryEntry.Type.ACCOUNT, 9123, 'frodo_of_the_nine_fingers'),
       group: new Beam.DirectoryEntry(
-        Beam.DirectoryEntry.Type.NONE, 2, 'shire_office'),
-      registrationDate: new Beam.DateTime(
-        new Beam.Date(2018, Beam.Date.Month.DECEMBER, 20),
-        new Beam.Duration(40)
-      )
-
+        Beam.DirectoryEntry.Type.NONE, 18, 'shire_office')
     };
     this.setStatusToError = this.setStatusToError.bind(this);
     this.setStatusToNull = this.setStatusToNull.bind(this);
@@ -63,7 +56,7 @@ class TestApp extends React.Component<Properties, State> {
           hasPasswordError={this.state.hasError}
           account={this.state.account}
           group={this.state.group}
-          registration={this.state.registrationDate}
+          countryDatabase={Nexus.buildDefaultCountryDatabase()}
           />
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
@@ -94,6 +87,11 @@ class TestApp extends React.Component<Properties, State> {
     this.state.identity.country = Nexus.DefaultCountries.AU;
     this.state.identity.city = 'Hobbiton';
     this.state.identity.addressLineOne = '56 Bag End';
+    this.state.identity.emailAddress = 'frodo@bagend.nz';
+    this.state.identity.registrationTime = new Beam.DateTime(
+      new Beam.Date(2017, Beam.Date.Month.NOVEMBER, 13),
+      new Beam.Duration(40)
+    );
     this.setState({identity: this.state.identity});
   }
 
