@@ -77,8 +77,8 @@ void QuotePanel::set_model(const BookViewModel& model) {
 
 void QuotePanel::set_quote_text(const Money& price, const Quantity& size) {
     m_price_label->setAlignment(Qt::AlignVCenter | Qt::AlignRight);
-    m_price_label->setText(
-      m_item_delegate->displayText(QVariant::fromValue(price), QLocale()));
+    m_price_label->setText(m_item_delegate->displayText(
+      QVariant::fromValue(price), QLocale()));
     m_size_label->setText(m_item_delegate->displayText(
       QVariant::fromValue(size), QLocale()));
 }
