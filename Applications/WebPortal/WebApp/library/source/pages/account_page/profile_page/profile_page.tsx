@@ -1,6 +1,6 @@
-import * as Dali from 'dali';
 import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
+import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { CountrySelectionBox, DisplaySize, HLine, PhotoField } from '../../..';
@@ -58,11 +58,11 @@ export class ProfilePage extends React.Component<Properties> {
     isSubmitEnabled: false,
     submitStatus: '',
     hasError: false,
-    onSubmit: () => { },
+    onSubmit: () => {},
     isPasswordSubmitEnabled: false,
     submitPasswordStatus: '',
     hasPasswordError: false,
-    onPasswordSubmit: () => { }
+    onPasswordSubmit: () => {}
   };
 
   public render(): JSX.Element {
@@ -153,8 +153,7 @@ export class ProfilePage extends React.Component<Properties> {
               <Dali.Padding size={sidePanelPhotoPadding}/>
               <Dali.VBoxLayout width='100%'>
                 {topPanelPhoto}
-                <FormEntry name='First Name'
-                  orientation={orientation}>
+                <FormEntry name='First Name' orientation={orientation}>
                   <TextField
                     value={this.props.identity.firstName}
                     displaySize={this.props.displaySize}
@@ -163,8 +162,7 @@ export class ProfilePage extends React.Component<Properties> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Last Name'
-                  orientation={orientation}>
+                <FormEntry name='Last Name' orientation={orientation}>
                   <TextField
                     value={this.props.identity.lastName}
                     displaySize={this.props.displaySize}
@@ -173,8 +171,7 @@ export class ProfilePage extends React.Component<Properties> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Username'
-                  orientation={orientation}>
+                <FormEntry name='Username' orientation={orientation}>
                   <TextField
                     value={this.props.account.name.toString()}
                     displaySize={this.props.displaySize}
@@ -183,8 +180,7 @@ export class ProfilePage extends React.Component<Properties> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Role(s)'
-                  orientation={orientation}>
+                <FormEntry name='Role(s)' orientation={orientation}>
                   <div style={ProfilePage.STYLE.rolesWrapper}>
                     <RolesField roles={this.props.roles}/>
                   </div>
@@ -192,8 +188,7 @@ export class ProfilePage extends React.Component<Properties> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Groups(s)'
-                  orientation={orientation}>
+                <FormEntry name='Groups(s)' orientation={orientation}>
                   <TextField value={this.props.group.name.toString()}
                     displaySize={this.props.displaySize}
                     disabled/>
@@ -201,8 +196,7 @@ export class ProfilePage extends React.Component<Properties> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Registration Date'
-                  orientation={orientation}>
+                <FormEntry name='Registration Date' orientation={orientation}>
                   <TextField displaySize={this.props.displaySize}
                     value={this.props.identity.
                       registrationTime.toString()}
@@ -211,8 +205,7 @@ export class ProfilePage extends React.Component<Properties> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='ID Number'
-                  orientation={orientation}>
+                <FormEntry name='ID Number' orientation={orientation}>
                   <TextField
                     value={this.props.account.id.toString()}
                     displaySize={this.props.displaySize}
@@ -221,8 +214,7 @@ export class ProfilePage extends React.Component<Properties> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Email'
-                  orientation={orientation}>
+                <FormEntry name='Email' orientation={orientation}>
                   <TextField
                     value={this.props.identity.emailAddress}
                     displaySize={this.props.displaySize}
@@ -231,8 +223,7 @@ export class ProfilePage extends React.Component<Properties> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Address'
-                  orientation={orientation}>
+                <FormEntry name='Address' orientation={orientation}>
                   <TextField
                     value={this.props.identity.firstName}
                     displaySize={this.props.displaySize}
@@ -241,8 +232,7 @@ export class ProfilePage extends React.Component<Properties> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='City'
-                  orientation={orientation}>
+                <FormEntry name='City' orientation={orientation}>
                   <TextField
                     value={this.props.identity.city}
                     displaySize={this.props.displaySize}
@@ -251,8 +241,7 @@ export class ProfilePage extends React.Component<Properties> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Province/State'
-                  orientation={orientation}>
+                <FormEntry name='Province/State' orientation={orientation}>
                   <TextField
                     value={this.props.identity.province}
                     displaySize={this.props.displaySize}
@@ -261,8 +250,7 @@ export class ProfilePage extends React.Component<Properties> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Country'
-                  orientation={orientation}>
+                <FormEntry name='Country' orientation={orientation}>
                   <CountrySelectionBox
                     readonly
                     displaySize={this.props.displaySize}

@@ -19,6 +19,7 @@ interface State {
   hasError: boolean;
   account: Beam.DirectoryEntry;
   group: Beam.DirectoryEntry;
+  countryDatabase: Nexus.CountryDatabase;
 }
 
 /**  Displays a testing application. */
@@ -35,7 +36,8 @@ class TestApp extends React.Component<Properties, State> {
       account: new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 9123, 'frodo_of_the_nine_fingers'),
       group: new Beam.DirectoryEntry(
-        Beam.DirectoryEntry.Type.NONE, 18, 'shire_office')
+        Beam.DirectoryEntry.Type.NONE, 18, 'shire_office'),
+      countryDatabase: Nexus.buildDefaultCountryDatabase()
     };
     this.setStatusToError = this.setStatusToError.bind(this);
     this.setStatusToNull = this.setStatusToNull.bind(this);
@@ -56,8 +58,7 @@ class TestApp extends React.Component<Properties, State> {
           hasPasswordError={this.state.hasError}
           account={this.state.account}
           group={this.state.group}
-          countryDatabase={Nexus.buildDefaultCountryDatabase()}
-          />
+          countryDatabase={this.state.countryDatabase}/>
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
             onClick={this.setStatusToNull}>
@@ -76,6 +77,7 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   public componentDidMount() {
+    const tempIdentity =  new Nexus.AccountIdentity();
     this.state.identity.photoId = TestApp.SOME_IMAGE;
     this.state.identity.firstName = 'Frodo';
     this.state.identity.lastName = 'Baggins';
