@@ -1,5 +1,6 @@
 #ifndef SPIRE_CHART_VIEW_HPP
 #define SPIRE_CHART_VIEW_HPP
+#include <QPen>
 #include <QWidget>
 #include "spire/charting/charting.hpp"
 #include "spire/charting/chart_point.hpp"
@@ -72,6 +73,7 @@ namespace Spire {
       CustomVariantItemDelegate* m_item_delegate;
       QPoint m_crosshair_pos;
       QImage m_crosshair;
+      QPen m_dashed_line_pen;
 
       ChartValue calculate_step(ChartValue::Type value_type, ChartValue range);
       QString get_string(ChartValue::Type type, ChartValue value) const;

@@ -25,34 +25,9 @@ namespace {
     return QVariant();
   }
 
-  double to_double(ChartValue::Type type, ChartValue value) {
-    if(type == ChartValue::Type::DURATION) {
-      return static_cast<time_duration>(value).total_microseconds();
-    } else if(type == ChartValue::Type::MONEY) {
-      return static_cast<double>(static_cast<Money>(value));
-    } else if(type == ChartValue::Type::QUANTITY) {
-      return static_cast<double>((static_cast<Quantity>(value)));
-    } else if(type == ChartValue::Type::TIMESTAMP) {
-      
-    }
-    return 0;
-  }
-
-  ChartValue to_chart_value(ChartValue::Type type, double value) {
-    if(type == ChartValue::Type::DURATION) {
-      return ChartValue(microseconds(static_cast<long>(value)));
-    } else if(type == ChartValue::Type::MONEY) {
-      return ChartValue(Money(value));
-    } else if(type == ChartValue::Type::QUANTITY) {
-      return ChartValue(Quantity(value));
-    } else if(type == ChartValue::Type::TIMESTAMP) {
-
-    }
-    return {};
-  }
-
-  double map_to(double value, double a, double b, double c, double d) {
-    return ((value - a) * ((d - c) / (b - a))) + c;
+  template<typename T, typename U>
+  U map_to(T value, T a, T b, U c, U d) {
+    return ((value - a) / (b - a)) * (d - c) + c;
   }
 }
 
@@ -63,7 +38,8 @@ ChartView::ChartView(ChartValue::Type x_axis_type, ChartValue::Type y_axis_type,
       m_y_axis_type(y_axis_type),
       m_timestamp_format("%H:%M:%S"),
       m_label_font("Roboto"),
-      m_item_delegate(new CustomVariantItemDelegate(this)) {
+      m_item_delegate(new CustomVariantItemDelegate(this)),
+      m_dashed_line_pen(Qt::white, scale_width(1), Qt::CustomDashLine) {
   setFocusPolicy(Qt::NoFocus);
   setMouseTracking(true);
   setAttribute(Qt::WA_Hover);
@@ -77,30 +53,24 @@ ChartView::ChartView(ChartValue::Type x_axis_type, ChartValue::Type y_axis_type,
   set_region(top_left, bottom_right);
   setCursor(Qt::BlankCursor);
   m_crosshair = imageFromSvg(":/icons/chart-cursor.svg", scale(16, 16));
+  m_dashed_line_pen.setDashPattern({static_cast<double>(scale_width(4)),
+    static_cast<double>(scale_width(4))});
 }
 
 ChartPoint ChartView::convert_pixels_to_chart(const QPoint& point) const {
   return ChartPoint(
-    to_chart_value(m_x_axis_type,
-      map_to(point.x(), 0, width() - (width() - m_x_origin),
-        to_double(m_x_axis_type, m_top_left.m_x),
-        to_double(m_x_axis_type, m_bottom_right.m_x))),
-    to_chart_value(m_y_axis_type,
-      map_to(point.y(), 0,height() - (height() - m_y_origin),
-        to_double(m_y_axis_type, m_top_left.m_y),
-        to_double(m_y_axis_type, m_bottom_right.m_y))));
+    map_to(static_cast<double>(point.x()), 0.0,
+      static_cast<double>(m_x_origin), m_top_left.m_x, m_bottom_right.m_x),
+    map_to(static_cast<double>(point.y()), static_cast<double>(m_y_origin),
+      0.0, m_bottom_right.m_y, m_top_left.m_y));
 }
 
 QPoint ChartView::convert_chart_to_pixels(const ChartPoint& point) const {
   return QPoint(
-    map_to(to_double(m_x_axis_type, point.m_x),
-      to_double(m_x_axis_type, m_top_left.m_x),
-      to_double(m_x_axis_type, m_bottom_right.m_x), 0,
-      width() - (width() - m_x_origin)),
-    map_to(to_double(m_y_axis_type, point.m_y),
-      to_double(m_y_axis_type, m_bottom_right.m_y),
-      to_double(m_y_axis_type, m_top_left.m_y),
-      height() - (height() - m_y_origin), 0));
+    map_to(point.m_x, m_top_left.m_x, m_bottom_right.m_y, 0.0,
+      static_cast<double>(m_x_origin)),
+    map_to(point.m_y, m_bottom_right.m_y, m_top_left.m_y,
+      static_cast<double>(m_y_origin), 0.0));
 }
 
 void ChartView::set_crosshair(const ChartPoint& position) {
@@ -178,6 +148,9 @@ void ChartView::paintEvent(QPaintEvent* event) {
       get_string(m_x_axis_type, x_value));
   }
   if(!m_crosshair_pos.isNull()) {
+    painter.setPen(m_dashed_line_pen);
+    painter.drawLine(m_crosshair_pos.x(), 0, m_crosshair_pos.x(), m_y_origin);
+    painter.drawLine(0, m_crosshair_pos.y(), m_x_origin, m_crosshair_pos.y());
     painter.drawImage(m_crosshair_pos.x() - (m_crosshair.width() / 2),
       m_crosshair_pos.y() - (m_crosshair.height() / 2), m_crosshair);
   }

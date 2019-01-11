@@ -191,7 +191,7 @@ namespace Spire {
   */
   template<typename T>
   ChartValue operator *(T lhs, ChartValue rhs) {
-    return ChartValue(lhs * rhs.ToQuantity());
+    return ChartValue(lhs * static_cast<Nexus::Quantity>(rhs));
   }
 
   //! Divides a ChartValue by a scalar quantity.
@@ -202,7 +202,7 @@ namespace Spire {
   */
   template<typename T>
   ChartValue operator /(ChartValue lhs, T rhs) {
-    return ChartValue(lhs.ToQuantity() / rhs);
+    return ChartValue(static_cast<Nexus::Quantity>(lhs) / rhs);
   }
 
   template<typename T>
