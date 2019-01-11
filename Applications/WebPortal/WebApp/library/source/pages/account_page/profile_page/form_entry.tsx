@@ -1,5 +1,7 @@
 import { HBoxLayout, VBoxLayout, Padding } from 'dali';
+import { DisplaySize } from '../../..';
 import * as React from 'react';
+import { ProfilePage } from './profile_page';
 
 interface Properties {
 
@@ -10,7 +12,7 @@ interface Properties {
   readonly?: boolean;
 
   /** Whether the form is rendered vertically or horizontally. */
-  orientation: FormEntry.Orientation;
+  displaySize: DisplaySize;
 
   /** The input field to render. */
   children: JSX.Element;
@@ -34,14 +36,31 @@ export class FormEntry extends React.Component<Properties> {
         return null;
       }
     })();
+    const orientation = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return FormEntry.Orientation.VERTICAL;
+      } else {
+        return FormEntry.Orientation.HORIZONTAL;
+      }
+    })();
+    const paddingSize = (() => {
+      switch(this.props.displaySize) {
+        case DisplaySize.SMALL:
+          return null;
+        case DisplaySize.MEDIUM:
+          return FormEntry.HORIZONTAL_PADDING;
+        case DisplaySize.LARGE:
+          return FormEntry.HORIZONTAL_PADDING_BIG;
+      }
+    })();
     const content = (() => {
-      if(this.props.orientation === FormEntry.Orientation.HORIZONTAL) {
+      if(orientation === FormEntry.Orientation.HORIZONTAL) {
         return (
           <HBoxLayout style={boxStyle}>
             <div style={FormEntry.STYLE.horizontalHeader}>
               {this.props.name}
             </div>
-            <div style={{width: FormEntry.HORIZONTAL_PADDING}}/>
+            <Padding size={paddingSize}/>
             <div>{this.props.children}</div>
           </HBoxLayout>);
       } else {
@@ -61,7 +80,8 @@ export class FormEntry extends React.Component<Properties> {
 
   private static STYLE = {
     box: {
-      cursor: 'default'
+      cursor: 'default',
+      width: '100%'
     },
     childBox: {
       width: '100%'
@@ -74,7 +94,8 @@ export class FormEntry extends React.Component<Properties> {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center'
+      alignItems: 'center' as 'center',
+      flex: '0 0 130px'
     },
     verticalHeader : {
       height: '16px',
@@ -85,7 +106,8 @@ export class FormEntry extends React.Component<Properties> {
     }
   };
   private static readonly VERTICAL_PADDING = '12px';
-  private static readonly HORIZONTAL_PADDING = '40px';
+  private static readonly HORIZONTAL_PADDING = '8px';
+  private static readonly HORIZONTAL_PADDING_BIG = '40px';
 }
 
 export namespace FormEntry {

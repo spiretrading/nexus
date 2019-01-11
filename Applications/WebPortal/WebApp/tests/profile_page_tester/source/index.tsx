@@ -78,25 +78,23 @@ class TestApp extends React.Component<Properties, State> {
 
   public componentDidMount() {
     const tempIdentity =  new Nexus.AccountIdentity();
-    this.state.identity.photoId = TestApp.SOME_IMAGE;
-    this.state.identity.firstName = 'Frodo';
-    this.state.identity.lastName = 'Baggins';
-    this.state.identity.lastLoginTime = new Beam.DateTime(
+    tempIdentity.photoId = TestApp.SOME_IMAGE;
+    tempIdentity.firstName = 'Frodo';
+    tempIdentity.lastName = 'Baggins';
+    tempIdentity.lastLoginTime = new Beam.DateTime(
       new Beam.Date(2018, Beam.Date.Month.DECEMBER, 20),
       Beam.Duration.HOUR.multiply(5).add(Beam.Duration.MINUTE.multiply(30)).add(
-      Beam.Duration.SECOND.multiply(15))
-    );
-    this.state.identity.province = 'Westfarthing';
-    this.state.identity.country = Nexus.DefaultCountries.AU;
-    this.state.identity.city = 'Hobbiton';
-    this.state.identity.addressLineOne = '56 Bag End';
-    this.state.identity.emailAddress = 'frodo@bagend.nz';
-    this.state.identity.registrationTime = new Beam.DateTime(
+      Beam.Duration.SECOND.multiply(15)));
+    tempIdentity.province = 'Westfarthing';
+    tempIdentity.country = Nexus.DefaultCountries.AU;
+    tempIdentity.city = 'Hobbiton';
+    tempIdentity.addressLineOne = '56 Bag End';
+    tempIdentity.emailAddress = 'frodo@bagend.nz';
+    tempIdentity.registrationTime = new Beam.DateTime(
       new Beam.Date(2017, Beam.Date.Month.DECEMBER, 21),
       Beam.Duration.HOUR.multiply(5).add(Beam.Duration.MINUTE.multiply(30)).add(
-      Beam.Duration.SECOND.multiply(15))
-    );
-    this.setState({identity: this.state.identity});
+      Beam.Duration.SECOND.multiply(15)));
+    this.setState({identity: tempIdentity});
   }
 
   private setStatusToNull() {

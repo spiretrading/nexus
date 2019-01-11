@@ -61,17 +61,18 @@ export class CountrySelectionBox extends React.Component<Properties> {
     })();
     const content = (() => {
       if(this.props.readonly) {
-        return (<TextField
-          value={this.props.countryDatabase.fromCode(this.props.value).name}
-            displaySize={this.props.displaySize}
-            disabled/>);
+        return (
+          <TextField disabled
+            value={this.props.countryDatabase.fromCode(this.props.value).name}
+            displaySize={this.props.displaySize}/>);
       } else {
-            return (<select value={this.props.value.code}
-                className={css(CountrySelectionBox.EXTRA_STYLE.noHighting)}
-                style={{...boxSizing,...selectStyle}}
-                onChange={this.onChange}>
-              {options}
-            </select>);
+        return (
+          <select value={this.props.value.code}
+              className={css(CountrySelectionBox.EXTRA_STYLE.noHighting)}
+              style={{...boxSizing,...selectStyle}}
+              onChange={this.onChange}>
+            {options}
+          </select>);
       }
     })();
     return (<div>{content}</div>);
