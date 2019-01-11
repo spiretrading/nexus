@@ -74,6 +74,7 @@ namespace Spire {
       QPoint m_crosshair_pos;
       QImage m_crosshair;
       QPen m_dashed_line_pen;
+      QPen m_label_text_color;
 
       ChartValue calculate_step(ChartValue::Type value_type, ChartValue range);
       QString get_string(ChartValue::Type type, ChartValue value) const;
