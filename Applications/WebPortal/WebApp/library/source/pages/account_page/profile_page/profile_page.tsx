@@ -137,12 +137,10 @@ export class ProfilePage extends React.Component<Properties> {
     const statusMessageInline = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return ProfilePage.STYLE.hidden;
+      } else if(this.props.hasError) {
+        return ProfilePage.STYLE.errorMessage;
       } else {
-        if(this.props.hasError) {
-          return ProfilePage.STYLE.errorMessage;
-        } else {
-          return ProfilePage.STYLE.statusMessage;
-        }
+        return ProfilePage.STYLE.statusMessage;
       }
     })();
     const statusMessageFooter = (() => {
@@ -297,27 +295,29 @@ export class ProfilePage extends React.Component<Properties> {
               </Dali.VBoxLayout>
             </Dali.HBoxLayout>
             <Dali.VBoxLayout>
-                  <div style={ProfilePage.STYLE.headerStyler}>
-                    User Notes
-                  </div>
-                  <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
-                  <CommentBox comment=''/>
-                  <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
-                  <div style={commentBoxStyle}>
-                    <div style={ProfilePage.STYLE.filler}/>
-                    <div style={{ ...commentBoxStyle, ...statusMessageInline}}>
-                      {this.props.submitStatus}
-                      <div style=
-                        {ProfilePage.STYLE.buttonPadding}/>
-                    </div>
-                    <SubmitButton label='Save Changes'
-                      displaySize={this.props.displaySize}/>
-                    <div style={statusMessageFooter}>
-                      <div style={ProfilePage.STYLE.smallPadding}/>
-                      {this.props.submitStatus}
-                    </div>
-                  </div>
-                </Dali.VBoxLayout>
+              <div style={ProfilePage.STYLE.headerStyler}>
+                User Notes
+              </div>
+              <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
+              <CommentBox comment=''/>
+              <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
+              <div style={commentBoxStyle}>
+                <div style={ProfilePage.STYLE.filler}/>
+                <div style={{ ...commentBoxStyle, ...statusMessageInline}}>
+                  {this.props.submitStatus}
+                  <div style=
+                    {ProfilePage.STYLE.buttonPadding}/>
+                </div>
+                <SubmitButton label='Save Changes'
+                  displaySize={this.props.displaySize}
+                  isSubmitEnabled={this.props.isSubmitEnabled}
+                  onClick={this.props.onSubmit}/>
+                <div style={statusMessageFooter}>
+                  <div style={ProfilePage.STYLE.smallPadding}/>
+                  {this.props.submitStatus}
+                </div>
+              </div>
+            </Dali.VBoxLayout>
             <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
             <HLine color={ProfilePage.LINE_COLOR}/>
             <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>

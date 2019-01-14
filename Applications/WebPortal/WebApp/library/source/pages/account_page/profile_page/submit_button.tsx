@@ -19,7 +19,6 @@ interface Properties {
 
 /** Submit button for the profile page. */
 export class SubmitButton extends React.Component<Properties> {
-
   public render(): JSX.Element {
     const buttonStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {

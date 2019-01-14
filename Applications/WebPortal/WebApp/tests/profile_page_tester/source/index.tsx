@@ -77,24 +77,24 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   public componentDidMount() {
-    const tempIdentity = this.state.identity.clone();
-    tempIdentity.photoId = TestApp.SOME_IMAGE;
-    tempIdentity.firstName = 'Frodo';
-    tempIdentity.lastName = 'Baggins';
-    tempIdentity.lastLoginTime = new Beam.DateTime(
+    const testIdentity = this.state.identity.clone();
+    testIdentity.photoId = TestApp.SOME_IMAGE;
+    testIdentity.firstName = 'Frodo';
+    testIdentity.lastName = 'Baggins';
+    testIdentity.lastLoginTime = new Beam.DateTime(
       new Beam.Date(2018, Beam.Date.Month.DECEMBER, 20),
       Beam.Duration.HOUR.multiply(5).add(Beam.Duration.MINUTE.multiply(30)).add(
       Beam.Duration.SECOND.multiply(15)));
-    tempIdentity.province = 'Westfarthing';
-    tempIdentity.country = Nexus.DefaultCountries.AU;
-    tempIdentity.city = 'Hobbiton';
-    tempIdentity.addressLineOne = '56 Bag End';
-    tempIdentity.emailAddress = 'frodo@bagend.nz';
-    tempIdentity.registrationTime = new Beam.DateTime(
+    testIdentity.province = 'Westfarthing';
+    testIdentity.country = Nexus.DefaultCountries.AU;
+    testIdentity.city = 'Hobbiton';
+    testIdentity.addressLineOne = '56 Bag End';
+    testIdentity.emailAddress = 'frodo@bagend.nz';
+    testIdentity.registrationTime = new Beam.DateTime(
       new Beam.Date(2017, Beam.Date.Month.DECEMBER, 21),
       Beam.Duration.HOUR.multiply(5).add(Beam.Duration.MINUTE.multiply(30)).add(
       Beam.Duration.SECOND.multiply(15)));
-    this.setState({identity: tempIdentity});
+    this.setState({identity: testIdentity});
   }
 
   private setStatusToNull() {
