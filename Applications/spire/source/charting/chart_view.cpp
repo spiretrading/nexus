@@ -227,15 +227,9 @@ QString ChartView::get_axis_string(ChartValue::Type type,
 
 QString ChartView::get_label_string(ChartValue::Type type,
     ChartValue value) const {
-  if(type == ChartValue::Type::DURATION) {
-    std::ostringstream ss;
-    ss << static_cast<time_duration>(value);
-    return QString::fromStdString(ss.str());
-  } else if(type == ChartValue::Type::MONEY) {
-    return QString::number(static_cast<double>(static_cast<Quantity>(value)),
-      'f', 3);
-  } else if(type == ChartValue::Type::QUANTITY) {
-    return QString::number(static_cast<double>(static_cast<Quantity>(value)));
+  if(type == ChartValue::Type::DURATION || type == ChartValue::Type::MONEY ||
+      type == ChartValue::Type::QUANTITY) {
+    return m_item_delegate->displayText(to_variant(type, value), QLocale());
   } else if(type == ChartValue::Type::TIMESTAMP) {
     return get_timestamp(value, "%H:%M:%S");
   }
