@@ -5,7 +5,7 @@ import { Transition } from 'react-transition-group';
 import { DisplaySize, HLine } from '../../..';
 
 /** The modes that the PhotoField can be displayed at. */
-export enum DisplayMode {
+export enum PhotoFieldDisplayMode {
 
   /** Only the photo is visible. */
   DISPLAY,
@@ -20,7 +20,7 @@ interface Properties {
   displaySize: DisplaySize;
 
   /** Determines if the ChangePictureModal is visible or not. */
-  displayMode: DisplayMode;
+  displayMode: PhotoFieldDisplayMode;
 
   /** The URL the image is located at. */
   imageSource?: string;
@@ -43,7 +43,9 @@ interface Properties {
 /** Displays an account's profile image. */
 export class PhotoField extends React.Component<Properties, {}> {
   public static readonly defaultProps = {
-    readonly: false
+    readonly: false,
+    onToggleUploader: () => {},
+    onSubmit: () => {}
   };
 
   public render(): JSX.Element {
@@ -104,7 +106,8 @@ export class PhotoField extends React.Component<Properties, {}> {
             style={cameraIconStyle}
             onClick={this.props.onToggleUploader}/>
         </div>
-        <Transition in={this.props.displayMode === DisplayMode.UPLOADING}
+        <Transition
+            in={this.props.displayMode === PhotoFieldDisplayMode.UPLOADING}
             timeout={PhotoField.TIMEOUT}>
           {(state) => (
             <div style={{ ...PhotoField.STYLE.animationBase,

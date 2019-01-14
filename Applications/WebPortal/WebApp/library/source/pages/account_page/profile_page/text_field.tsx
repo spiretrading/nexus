@@ -83,7 +83,7 @@ export class TextField extends React.Component<Properties, State> {
           onMouseEnter={this.onMouseEnter}
           onMouseLeave={this.onMouseLeave}>
         <input value={this.props.value}
-          disabled={this.props.disabled}
+          readOnly={this.props.disabled}
           onFocus={this.onInputFocused}
           onBlur={this.onInputBlurred}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,6 +129,7 @@ export class TextField extends React.Component<Properties, State> {
 
   private static STYLE = StyleSheet.create({
     box: {
+      boxSizing: 'border-box' as 'border-box',
       height: '34px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
@@ -145,6 +146,7 @@ export class TextField extends React.Component<Properties, State> {
       }
     },
     hoveredBox: {
+      boxSizing: 'border-box' as 'border-box',
       height: '34px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
@@ -155,6 +157,7 @@ export class TextField extends React.Component<Properties, State> {
       borderRadius: '1px'
     },
     focusedBox: {
+      boxSizing: 'border-box' as 'border-box',
       height: '34px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',

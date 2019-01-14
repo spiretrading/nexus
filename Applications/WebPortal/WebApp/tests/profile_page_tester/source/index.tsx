@@ -1,23 +1,25 @@
+import * as Beam from 'beam';
 import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
- /** Determines the size to render components at. */
+/** Determines the size to render components at. */
 interface Properties {
   displaySize: WebPortal.DisplaySize;
 }
 
 interface State {
-  lastNameValue: string;
   someRoles: Nexus.AccountRoles;
-  isPhotoFieldReadonly: boolean;
   imageSource: string;
-  imagingScaling: number;
-  photoFieldDisplayMode: WebPortal.DisplayMode;
+  identity: Nexus.AccountIdentity;
+  statusMessage: string;
+  passwordStatusMessage: string;
+  hasError: boolean;
+  account: Beam.DirectoryEntry;
+  group: Beam.DirectoryEntry;
   countryDatabase: Nexus.CountryDatabase;
-  country: Nexus.CountryCode;
 }
 
 /**  Displays a testing application. */
@@ -25,154 +27,104 @@ class TestApp extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      lastNameValue: 'Grey',
       someRoles: new Nexus.AccountRoles(),
       imageSource: TestApp.SOME_IMAGE,
-      isPhotoFieldReadonly: false,
-      imagingScaling: 1,
-      photoFieldDisplayMode: WebPortal.DisplayMode.DISPLAY,
-      countryDatabase: Nexus.buildDefaultCountryDatabase(),
-      country: Nexus.DefaultCountries.CA
+      identity: new Nexus.AccountIdentity(),
+      statusMessage: '',
+      passwordStatusMessage: '',
+      hasError: false,
+      account: new Beam.DirectoryEntry(
+        Beam.DirectoryEntry.Type.ACCOUNT, 9123, 'frodo_of_the_nine_fingers'),
+      group: new Beam.DirectoryEntry(
+        Beam.DirectoryEntry.Type.NONE, 18, 'shire_office'),
+      countryDatabase: Nexus.buildDefaultCountryDatabase()
     };
-    this.onTextInput = this.onTextInput.bind(this);
-    this.onRoleClick = this.onRoleClick.bind(this);
-    this.changeImage = this.changeImage.bind(this);
-    this.toggleReadOnly = this.toggleReadOnly.bind(this);
-    this.updateImage = this.updateImage.bind(this);
-    this.toggleDisplayMode = this.toggleDisplayMode.bind(this);
-    this.changeCountry = this.changeCountry.bind(this);
+    this.setStatusToError = this.setStatusToError.bind(this);
+    this.setStatusToNull = this.setStatusToNull.bind(this);
+    this.setStatusToSuccessful = this.setStatusToSuccessful.bind(this);
   }
 
   public render(): JSX.Element {
-    const orientation = (() => {
-      if(this.props.displaySize === WebPortal.DisplaySize.SMALL) {
-        return WebPortal.FormEntry.Orientation.VERTICAL;
-      } else {
-        return WebPortal.FormEntry.Orientation.HORIZONTAL;
-      }
-    })();
     return (
-      <Dali.HBoxLayout width='100%' height='100%'>
-        <Dali.Padding size='18px'/>
-        <Dali.VBoxLayout width='100%' height='100%'>
-          <Dali.Padding size='80px'/>
-          <WebPortal.PhotoField
-            displaySize={this.props.displaySize}
-            displayMode={this.state.photoFieldDisplayMode}
-            imageSource = {this.state.imageSource}
-            readonly={this.state.isPhotoFieldReadonly}
-            onSubmit={this.updateImage}
-            onToggleUploader={this.toggleDisplayMode}
-            scaling={this.state.imagingScaling}/>
-          <Dali.Padding size='30px'/>
-          <WebPortal.FormEntry name='First Name'
-              readonly
-              orientation={orientation}>
-            <WebPortal.TextField
-              value = 'Gandalf'
-              displaySize={this.props.displaySize}
-              disabled/>
-          </WebPortal.FormEntry>
-          <Dali.Padding size='30px'/>
-          <WebPortal.FormEntry name='Last Name'
-              orientation={orientation}>
-            <WebPortal.TextField
-              displaySize={this.props.displaySize}
-              value={this.state.lastNameValue}
-              onInput={this.onTextInput}/>
-          </WebPortal.FormEntry>
-          <Dali.Padding size='30px'/>
-          <WebPortal.RolesField roles={this.state.someRoles}
-            onClick={this.onRoleClick}/>
-          <Dali.Padding size='30px'/>
-          <WebPortal.FormEntry name='Country' orientation={orientation} >
-            <WebPortal.CountrySelectionBox
-              displaySize={this.props.displaySize}
-              value={this.state.country}
-              onChange={this.changeCountry}
-              countryDatabase={this.state.countryDatabase}/>
-          </WebPortal.FormEntry>
-          <Dali.Padding size='30px'/>
-          <WebPortal.FormEntry name='Country' orientation={orientation} >
-            <WebPortal.CountrySelectionBox
-              readonly
-              displaySize={this.props.displaySize}
-              value={Nexus.DefaultCountries.AU}
-              onChange={this.changeCountry}
-              countryDatabase={this.state.countryDatabase}/>
-          </WebPortal.FormEntry>
-        </Dali.VBoxLayout>
-        <Dali.Padding size='18px'/>
+      <Dali.VBoxLayout width='100%' height='100%'>
+        <WebPortal.ProfilePage
+          roles={this.state.someRoles}
+          identity={this.state.identity}
+          displaySize={this.props.displaySize}
+          isSubmitEnabled={true}
+          submitStatus={this.state.statusMessage}
+          submitPasswordStatus={this.state.passwordStatusMessage}
+          hasError={this.state.hasError}
+          hasPasswordError={this.state.hasError}
+          account={this.state.account}
+          group={this.state.group}
+          countryDatabase={this.state.countryDatabase}/>
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
-              onClick={this.toggleReadOnly}>
-            TOGGLE PHOTOFIELD READONLY
+            onClick={this.setStatusToNull}>
+            NO STATUS MESSAGES
           </button>
           <button tabIndex={-1}
-              onClick={this.changeImage}>
-            CHANGE IMAGE
+            onClick={this.setStatusToSuccessful}>
+            STATUS MESSAGES
+          </button>
+          <button tabIndex={-1}
+            onClick={this.setStatusToError}>
+            ERROR MESSAGES
           </button>
         </div>
-      </Dali.HBoxLayout>);
+      </Dali.VBoxLayout>);
   }
 
-  private onTextInput(value: string) {
+  public componentDidMount() {
+    const testIdentity = this.state.identity.clone();
+    testIdentity.photoId = TestApp.SOME_IMAGE;
+    testIdentity.firstName = 'Frodo';
+    testIdentity.lastName = 'Baggins';
+    testIdentity.lastLoginTime = new Beam.DateTime(
+      new Beam.Date(2018, Beam.Date.Month.DECEMBER, 20),
+      Beam.Duration.HOUR.multiply(5).add(Beam.Duration.MINUTE.multiply(30)).add(
+      Beam.Duration.SECOND.multiply(15)));
+    testIdentity.province = 'Westfarthing';
+    testIdentity.country = Nexus.DefaultCountries.AU;
+    testIdentity.city = 'Hobbiton';
+    testIdentity.addressLineOne = '56 Bag End';
+    testIdentity.emailAddress = 'frodo@bagend.nz';
+    testIdentity.registrationTime = new Beam.DateTime(
+      new Beam.Date(2017, Beam.Date.Month.DECEMBER, 21),
+      Beam.Duration.HOUR.multiply(5).add(Beam.Duration.MINUTE.multiply(30)).add(
+      Beam.Duration.SECOND.multiply(15)));
+    this.setState({identity: testIdentity});
+  }
+
+  private setStatusToNull() {
     this.setState({
-      lastNameValue: value
+      statusMessage: '',
+      passwordStatusMessage: '',
+      hasError: false
     });
   }
 
-  private onRoleClick(role: Nexus.AccountRoles.Role) {
-    if(this.state.someRoles.test(role)) {
-      this.state.someRoles.unset(role);
-    } else {
-      this.state.someRoles.set(role);
-    }
-    this.setState({someRoles: this.state.someRoles});
-  }
-
-  private toggleReadOnly() {
+  private setStatusToError() {
     this.setState({
-      isPhotoFieldReadonly: !this.state.isPhotoFieldReadonly
+      statusMessage: 'Error!',
+      passwordStatusMessage: 'Error!',
+      hasError: true
     });
   }
 
-  private changeImage() {
-    if(this.state.imageSource) {
-      this.setState({
-        imageSource: null
-      });
-    } else {
-      this.setState({
-        imageSource: TestApp.SOME_IMAGE
-      });
-    }
-  }
-
-  private updateImage(fileLocation: string, newScaling: number) {
+  private setStatusToSuccessful() {
     this.setState({
-      imageSource: fileLocation,
-      imagingScaling: newScaling
+      statusMessage: 'Saved',
+      passwordStatusMessage: 'Saved',
+      hasError: false
     });
-  }
-
-  private changeCountry(newCountry: Nexus.CountryCode) {
-    this.setState({
-      country: newCountry
-    });
-  }
-
-  private toggleDisplayMode() {
-    if(this.state.photoFieldDisplayMode === WebPortal.DisplayMode.DISPLAY) {
-      this.setState({photoFieldDisplayMode: WebPortal.DisplayMode.UPLOADING});
-    } else {
-      this.setState({photoFieldDisplayMode: WebPortal.DisplayMode.DISPLAY});
-    }
   }
 
   private static STYLE = {
     testingComponents: {
       position: 'fixed' as 'fixed',
+      fontSize: '8px',
       top: 0,
       left: 0,
       zIndex: 500

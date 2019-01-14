@@ -2,6 +2,7 @@ import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import * as Nexus from 'nexus';
 import { DisplaySize } from '../display_size';
+import { TextField } from '../pages/account_page/profile_page';
 
 interface Properties {
 
@@ -58,15 +59,24 @@ export class CountrySelectionBox extends React.Component<Properties> {
       }
       return options;
     })();
-    return (
-      <select value={this.props.value.code}
-          className={css(CountrySelectionBox.EXTRA_STYLE.noHighting)}
-          style={{...boxSizing,...selectStyle}}
-          onChange={this.onChange}
-          disabled={this.props.readonly}>
-        {options}
-      </select>);
-  }
+    const content = (() => {
+      if(this.props.readonly) {
+        return (
+          <TextField disabled
+            value={this.props.countryDatabase.fromCode(this.props.value).name}
+            displaySize={this.props.displaySize}/>);
+      } else {
+        return (
+          <select value={this.props.value.code}
+              className={css(CountrySelectionBox.EXTRA_STYLE.noHighting)}
+              style={{...boxSizing,...selectStyle}}
+              onChange={this.onChange}>
+            {options}
+          </select>);
+      }
+    })();
+    return (<div>{content}</div>);
+    }
 
   private onChange(event: React.ChangeEvent<HTMLSelectElement>): void {
     const code = new Nexus.CountryCode(parseInt(event.target.value, 10));
@@ -76,17 +86,18 @@ export class CountrySelectionBox extends React.Component<Properties> {
   private static readonly STYLE = {
     boxSmall: {
       maxWidth: '424px',
-      height: '34px'
+      height: '34px',
+      font: '400 16px Roboto'
     },
     boxLarge: {
       width: '200px',
-      height: '34px'
+      height: '34px',
+      font: '400 14px Roboto'
     },
     selectionBoxStyle: {
       boxSizing: 'border-box' as 'border-box',
       paddingLeft: '6px',
       color: '#000000',
-      font: '400 16px Roboto',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       backgroundColor: '#F2F2F2',
@@ -106,7 +117,6 @@ export class CountrySelectionBox extends React.Component<Properties> {
       boxSizing: 'border-box' as 'border-box',
       paddingLeft: '6px',
       color: '#000000',
-      font: '400 16px Roboto',
       backgroundColor: '#FFFFFF',
       border: '1px solid #FFFFFF',
       borderRadius: '1px',
@@ -128,7 +138,11 @@ export class CountrySelectionBox extends React.Component<Properties> {
       ':-moz-focusring': {
         color: 'transparent',
         textShadow: '0 0 0 #000'
-      }
+      },
+      '-webkit-user-select': 'text',
+      '-moz-user-select': 'text',
+      '-ms-user-select': 'text',
+      'user-select': 'text'
     }
   });
 }
