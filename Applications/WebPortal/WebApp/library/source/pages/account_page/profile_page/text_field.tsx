@@ -186,6 +186,12 @@ export class TextField extends React.Component<Properties, State> {
       paddingLeft: '10px',
       border: '1px solid #FFFFFF',
       backgroundColor: '#FFFFFF',
+      ':read-only': {
+        cursor: 'default' as 'default'
+      },
+      ':-moz-read-only' : {
+         cursor: 'default' as 'default'
+      },
       ':focus': {
         ouline: 0,
         outlineColor: 'transparent',
@@ -205,6 +211,12 @@ export class TextField extends React.Component<Properties, State> {
       paddingLeft: '10px',
       border: '1px solid #FFFFFF',
       backgroundColor: '#FFFFFF',
+      ':read-only': {
+        cursor: 'default' as 'default'
+      },
+      ':-moz-read-only' : {
+         cursor: 'default' as 'default'
+      },
       ':focus': {
         ouline: 0,
         outlineColor: 'transparent',
