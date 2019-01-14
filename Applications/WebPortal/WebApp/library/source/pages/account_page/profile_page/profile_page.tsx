@@ -176,6 +176,11 @@ export class ProfilePage extends React.Component<Properties> {
       }
     })();
     const commentBoxButtonStyle = (() => {
+      if(this.props.readonly) {
+        return ProfilePage.STYLE.hidden;
+      } else  {
+        return null;
+      }
     })();
     return (
       <div style={ProfilePage.STYLE.page}>
@@ -324,7 +329,7 @@ export class ProfilePage extends React.Component<Properties> {
               <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
               <CommentBox comment=''/>
               <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
-              <div style={commentBoxStyle}>
+              <div style={{...commentBoxStyle, ...commentBoxButtonStyle}}>
                 <div style={ProfilePage.STYLE.filler}/>
                 <div style={{ ...commentBoxStyle, ...statusMessageInline}}>
                   {this.props.submitStatus}

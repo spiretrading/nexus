@@ -21,6 +21,7 @@ interface State {
   group: Beam.DirectoryEntry;
   countryDatabase: Nexus.CountryDatabase;
   hasPassword: boolean;
+  readOnly: boolean;
 }
 
 /**  Displays a testing application. */
@@ -39,12 +40,14 @@ class TestApp extends React.Component<Properties, State> {
       group: new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.NONE, 18, 'shire_office'),
       countryDatabase: Nexus.buildDefaultCountryDatabase(),
-      hasPassword: false
+      hasPassword: false,
+      readOnly: false
     };
     this.setStatusToError = this.setStatusToError.bind(this);
     this.setStatusToNull = this.setStatusToNull.bind(this);
     this.setStatusToSuccessful = this.setStatusToSuccessful.bind(this);
     this.togglePasswordVisibility = this.togglePasswordVisibility.bind(this);
+    this.toggleReadonlyOfForm = this.toggleReadonlyOfForm.bind(this);
   }
 
   public render(): JSX.Element {
@@ -62,6 +65,7 @@ class TestApp extends React.Component<Properties, State> {
           account={this.state.account}
           group={this.state.group}
           hasPassword={this.state.hasPassword}
+          readonly={this.state.readOnly}
           countryDatabase={this.state.countryDatabase}/>
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
@@ -79,6 +83,10 @@ class TestApp extends React.Component<Properties, State> {
           <button tabIndex={-1}
             onClick={this.togglePasswordVisibility}>
             TOGGLE PASSWORD FIELD
+          </button>
+          <button tabIndex={-1}
+            onClick={this.toggleReadonlyOfForm}>
+            TOGGLE READONLY
           </button>
         </div>
       </Dali.VBoxLayout>);
@@ -131,7 +139,13 @@ class TestApp extends React.Component<Properties, State> {
 
   private togglePasswordVisibility() {
     this.setState({
-      hasPassword: !this.state.hasPassword
+      hasError: !this.state.hasPassword
+    });
+  }
+
+  private toggleReadonlyOfForm() {
+    this.setState({
+      readOnly: !this.state.readOnly
     });
   }
 
