@@ -5,7 +5,7 @@ import * as React from 'react';
 import { CountrySelectionBox, DisplaySize, HLine, PhotoField } from '../../..';
 import { CommentBox } from '../comment_box';
 import { ChangePasswordBox, FormEntry, PhotoFieldDisplayMode, RolesField,
-  TextField, SubmitButton } from '.';
+  SubmitButton, TextField } from '.';
 
 interface Properties {
 
@@ -27,6 +27,9 @@ interface Properties {
   /** Determines the layout used to display the page. */
   displaySize: DisplaySize;
 
+  /** Whether the form can be edited. */
+  readonly?: boolean;
+
   /** Whether the save changes button can be clicked. */
   isSubmitEnabled?: boolean;
 
@@ -38,6 +41,9 @@ interface Properties {
 
   /** Indicates the profile is being submitted. */
   onSubmit?: () => void;
+
+  /** Whether the option to change the password is available. */
+  hasPassword?: boolean;
 
   /** Whether the password button can be clicked. */
   isPasswordSubmitEnabled?: boolean;
@@ -55,10 +61,12 @@ interface Properties {
 /** Displays an account's profile page. */
 export class ProfilePage extends React.Component<Properties> {
   public static readonly defaultProps = {
+    readonly: false,
     isSubmitEnabled: false,
     submitStatus: '',
     hasError: false,
     onSubmit: () => {},
+    hasPassword: false,
     isPasswordSubmitEnabled: false,
     submitPasswordStatus: '',
     hasPasswordError: false,
