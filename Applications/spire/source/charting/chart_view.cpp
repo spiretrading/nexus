@@ -12,6 +12,13 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
+  const auto& CROSSHAIR_IMAGE() {
+    static const auto image = imageFromSvg(":/icons/chart-cursor.svg",
+      scale(16, 16));
+    return image;
+  }
+
+
   QVariant to_variant(ChartValue::Type type, ChartValue value) {
     if(type == ChartValue::Type::DURATION) {
       return QVariant::fromValue(static_cast<time_duration>(value));
@@ -53,7 +60,6 @@ ChartView::ChartView(ChartValue::Type x_axis_type, ChartValue::Type y_axis_type,
     ChartValue(Nexus::Money(10.10)));
   set_region(top_left, bottom_right);
   setCursor(Qt::BlankCursor);
-  m_crosshair = imageFromSvg(":/icons/chart-cursor.svg", scale(16, 16));
   m_dashed_line_pen.setDashPattern({static_cast<double>(scale_width(4)),
     static_cast<double>(scale_width(4))});
 }
@@ -75,6 +81,7 @@ QPoint ChartView::convert_chart_to_pixels(const ChartPoint& point) const {
 }
 
 void ChartView::set_crosshair(const ChartPoint& position) {
+  m_crosshair_pos = convert_chart_to_pixels(position);
 }
 
 void ChartView::set_crosshair(const QPoint& position) {
@@ -83,7 +90,7 @@ void ChartView::set_crosshair(const QPoint& position) {
 }
 
 void ChartView::reset_crosshair() {
-  m_crosshair_pos = QPoint();
+  m_crosshair_pos.reset();
 }
 
 void ChartView::set_region(const ChartPoint& top_left,
@@ -100,7 +107,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
   auto font_metrics = QFontMetrics(m_label_font);
   m_x_origin = width() - (font_metrics.width("M") * (
     m_item_delegate->displayText(to_variant(m_y_axis_type, m_top_left.m_y),
-      QLocale()).length()) - scale_width(4));
+    QLocale()).length()) - scale_width(4));
   m_y_origin = height() - (font_metrics.height() + scale_height(9));
   painter.drawLine(m_x_origin, 0, m_x_origin, m_y_origin);
   painter.drawLine(0, m_y_origin, m_x_origin, m_y_origin);
@@ -128,7 +135,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
     painter.drawText(m_x_origin + scale_width(3),
       y + (font_metrics.height() / 3),
       m_item_delegate->displayText(to_variant(m_y_axis_type, y_value),
-        QLocale()));
+      QLocale()));
   }
   auto x_step_count = x_range / x_step;
   auto x_pixel_step = m_x_origin / (x_range / x_step);
@@ -150,30 +157,34 @@ void ChartView::paintEvent(QPaintEvent* event) {
       m_y_origin + font_metrics.height() + scale_height(2),
       get_string(m_x_axis_type, x_value));
   }
-  if(!m_crosshair_pos.isNull()) {
+  if(m_crosshair_pos) {
     painter.setPen(m_dashed_line_pen);
-    painter.drawLine(m_crosshair_pos.x(), 0, m_crosshair_pos.x(), m_y_origin);
-    painter.drawLine(0, m_crosshair_pos.y(), m_x_origin, m_crosshair_pos.y());
-    painter.drawImage(m_crosshair_pos.x() - (m_crosshair.width() / 2),
-      m_crosshair_pos.y() - (m_crosshair.height() / 2), m_crosshair);
-    painter.fillRect(m_crosshair_pos.x() - (scale_width(48) / 2), m_y_origin,
-      scale_width(48), scale_height(21), Qt::white);
-    painter.fillRect(m_crosshair_pos.x(), m_y_origin, scale_width(1),
+    painter.drawLine(m_crosshair_pos.value().x(), 0,
+      m_crosshair_pos.value().x(), m_y_origin);
+    painter.drawLine(0, m_crosshair_pos.value().y(), m_x_origin,
+      m_crosshair_pos.value().y());
+    painter.drawImage(m_crosshair_pos.value().x() -
+      (CROSSHAIR_IMAGE().width() / 2), m_crosshair_pos.value().y() -
+      (CROSSHAIR_IMAGE().height() / 2), CROSSHAIR_IMAGE());
+    painter.fillRect(m_crosshair_pos.value().x() - (scale_width(48) / 2),
+      m_y_origin, scale_width(48), scale_height(21), Qt::white);
+    painter.fillRect(m_crosshair_pos.value().x(), m_y_origin, scale_width(1),
       scale_height(3), Qt::black);
-    auto crosshair_value = convert_pixels_to_chart(m_crosshair_pos);
+    auto crosshair_value = convert_pixels_to_chart(m_crosshair_pos.value());
     m_timestamp_format = "%H:%M:%S";
     auto x_label = get_string(m_x_axis_type, crosshair_value.m_x);
     auto text_width = font_metrics.width(x_label);
     painter.setPen(m_label_text_color);
-    painter.drawText(m_crosshair_pos.x() - text_width / 2,
+    painter.drawText(m_crosshair_pos.value().x() - text_width / 2,
       m_y_origin + font_metrics.height() + scale_height(2), x_label);
-    painter.fillRect(m_x_origin, m_crosshair_pos.y() - (scale_height(15) / 2),
+    painter.fillRect(m_x_origin,
+      m_crosshair_pos.value().y() - (scale_height(15) / 2),
       width() - m_x_origin, scale_height(15), Qt::white);
-    painter.fillRect(m_x_origin, m_crosshair_pos.y(), scale_width(3),
+    painter.fillRect(m_x_origin, m_crosshair_pos.value().y(), scale_width(3),
       scale_height(1), Qt::black);
     auto y_label = get_string(m_y_axis_type, crosshair_value.m_y);
     painter.setPen(m_label_text_color);
-    painter.drawText(m_x_origin + scale_width(3), m_crosshair_pos.y() +
+    painter.drawText(m_x_origin + scale_width(3), m_crosshair_pos.value().y() +
       (font_metrics.height() / 3), y_label);
   }
 }

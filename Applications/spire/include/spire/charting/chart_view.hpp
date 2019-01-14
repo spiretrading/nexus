@@ -71,8 +71,7 @@ namespace Spire {
       QFont m_label_font;
       std::string m_timestamp_format;
       CustomVariantItemDelegate* m_item_delegate;
-      QPoint m_crosshair_pos;
-      QImage m_crosshair;
+      std::optional<QPoint> m_crosshair_pos;
       QPen m_dashed_line_pen;
       QPen m_label_text_color;
 
