@@ -189,7 +189,7 @@ export class TextField extends React.Component<Properties, State> {
       ':read-only': {
         cursor: 'default' as 'default'
       },
-      ':-moz-read-only' : {
+      ':-moz-read-only': {
          cursor: 'default' as 'default'
       },
       ':focus': {
@@ -214,7 +214,7 @@ export class TextField extends React.Component<Properties, State> {
       ':read-only': {
         cursor: 'default' as 'default'
       },
-      ':-moz-read-only' : {
+      ':-moz-read-only': {
          cursor: 'default' as 'default'
       },
       ':focus': {
