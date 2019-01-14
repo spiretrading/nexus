@@ -3,6 +3,9 @@ import * as React from 'react';
 
 interface Properties {
 
+  /** Whether the comment box can be edited. */
+  readonly?: boolean;
+
   /** The text to display in the comment box. */
   comment: string;
 
@@ -15,6 +18,7 @@ export class CommentBox extends React.Component<Properties> {
   public render(): JSX.Element {
     return <textarea className={css(CommentBox.STYLE.submissionBox)}
       value={this.props.comment}
+      readOnly={this.props.readonly}
       onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
         this.props.onInput(event.target.value);
       }}

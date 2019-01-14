@@ -327,7 +327,7 @@ export class ProfilePage extends React.Component<Properties> {
                 User Notes
               </div>
               <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
-              <CommentBox comment=''/>
+              <CommentBox comment='' readonly={this.props.readonly}/>
               <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
               <div style={{...commentBoxStyle, ...commentBoxButtonStyle}}>
                 <div style={ProfilePage.STYLE.filler}/>
@@ -344,9 +344,9 @@ export class ProfilePage extends React.Component<Properties> {
                   <div style={ProfilePage.STYLE.smallPadding}/>
                   {this.props.submitStatus}
                 </div>
+                <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
               </div>
             </Dali.VBoxLayout>
-            <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
             <HLine color={ProfilePage.LINE_COLOR}/>
             <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
             {changePasswordBox}
