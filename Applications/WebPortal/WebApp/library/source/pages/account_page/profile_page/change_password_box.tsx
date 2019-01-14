@@ -109,7 +109,10 @@ export class ChangePasswordBox extends React.Component<Properties> {
             ref={(ref) => this.confirmPasswordInputField = ref}/>
           {inlineStatusBox}
           <SubmitButton label='Save Password'
-            displaySize={this.props.displaySize}/>
+            displaySize={this.props.displaySize}
+            isSubmitEnabled={this.props.isPasswordSubmitEnabled}
+            onClick={() =>
+              this.props.onSubmitPassword(this.passwordInputField.value)}/>
         </div>
         <div style={messageUnderneath}>
           <div style={ChangePasswordBox.STYLE.smallPadding}/>
