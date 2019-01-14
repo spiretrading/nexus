@@ -83,7 +83,7 @@ QPoint ChartView::convert_chart_to_pixels(const ChartPoint& point) const {
 }
 
 void ChartView::set_crosshair(const ChartPoint& position) {
-  m_crosshair_pos = convert_chart_to_pixels(position);
+  set_crosshair(convert_chart_to_pixels(position));
 }
 
 void ChartView::set_crosshair(const QPoint& position) {
@@ -216,14 +216,9 @@ ChartValue ChartView::calculate_step(ChartValue::Type value_type,
 
 QString ChartView::get_axis_string(ChartValue::Type type,
     ChartValue value) const {
-  if(type == ChartValue::Type::DURATION) {
-    std::ostringstream ss;
-    ss << static_cast<time_duration>(value);
-    return QString::fromStdString(ss.str());
-  } else if(type == ChartValue::Type::MONEY) {
+  if(type == ChartValue::Type::DURATION || type == ChartValue::Type::MONEY ||
+      type == ChartValue::Type::QUANTITY) {
     return m_item_delegate->displayText(to_variant(type, value), QLocale());
-  } else if(type == ChartValue::Type::QUANTITY) {
-    return QString::number(static_cast<double>(static_cast<Quantity>(value)));
   } else if(type == ChartValue::Type::TIMESTAMP) {
     return get_timestamp(value, m_timestamp_format);
   }
