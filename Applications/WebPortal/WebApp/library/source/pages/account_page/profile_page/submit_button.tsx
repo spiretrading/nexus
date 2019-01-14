@@ -3,12 +3,21 @@ import * as React from 'react';
 import { DisplaySize } from '../../..';
 
 interface Properties {
+
+  /** Indicates a submission is happening submitted. */
   onClick?: () => void;
+
+  /** Indicates is the button can be clicked. */
   isSubmitEnabled?: boolean;
+
+  /** The text displayed on the button */
   label: string;
+
+  /** Determines the layout used to display the component. */
   displaySize: DisplaySize;
 }
 
+/** Submit button for the profile page. */
 export class SubmitButton extends React.Component<Properties> {
   public static readonly defaultProps = {
     disabled: true,

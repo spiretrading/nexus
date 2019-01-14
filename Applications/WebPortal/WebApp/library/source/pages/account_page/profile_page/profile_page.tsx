@@ -3,8 +3,9 @@ import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { CountrySelectionBox, DisplaySize, HLine, PhotoField } from '../../..';
+import { CommentBox } from '../comment_box';
 import { ChangePasswordBox, FormEntry, PhotoFieldDisplayMode, RolesField,
-  TextField, SubmitCommentBox, SubmitButton } from '.';
+  TextField, SubmitButton } from '.';
 
 interface Properties {
 
@@ -124,6 +125,35 @@ export class ProfilePage extends React.Component<Properties> {
         return ProfilePage.STANDARD_PADDING;
       } else {
         return 0;
+      }
+    })();
+    const commentBoxStyle = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return ProfilePage.STYLE.stackedStatusBox;
+      } else {
+        return ProfilePage.STYLE.inlineStatusBox;
+      }
+    })();
+    const statusMessageInline = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return ProfilePage.STYLE.hidden;
+      } else {
+        if(this.props.hasError) {
+          return ProfilePage.STYLE.errorMessage;
+        } else {
+          return ProfilePage.STYLE.statusMessage;
+        }
+      }
+    })();
+    const statusMessageFooter = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        if(this.props.hasError) {
+          return ProfilePage.STYLE.errorMessage;
+        } else {
+          return ProfilePage.STYLE.statusMessage;
+        }
+      } else {
+        return ProfilePage.STYLE.hidden;
       }
     })();
     return (
@@ -266,9 +296,28 @@ export class ProfilePage extends React.Component<Properties> {
                 <Dali.Padding size={formFooterPaddingSize}/>
               </Dali.VBoxLayout>
             </Dali.HBoxLayout>
-            <SubmitCommentBox displaySize={this.props.displaySize}
-              hasError={this.props.hasError}
-              submitStatus={this.props.submitStatus}/>
+            <Dali.VBoxLayout>
+                  <div style={ProfilePage.STYLE.headerStyler}>
+                    User Notes
+                  </div>
+                  <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
+                  <CommentBox comment=''/>
+                  <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
+                  <div style={commentBoxStyle}>
+                    <div style={ProfilePage.STYLE.filler}/>
+                    <div style={{ ...commentBoxStyle, ...statusMessageInline}}>
+                      {this.props.submitStatus}
+                      <div style=
+                        {ProfilePage.STYLE.buttonPadding}/>
+                    </div>
+                    <SubmitButton label='Save Changes'
+                      displaySize={this.props.displaySize}/>
+                    <div style={statusMessageFooter}>
+                      <div style={ProfilePage.STYLE.smallPadding}/>
+                      {this.props.submitStatus}
+                    </div>
+                  </div>
+                </Dali.VBoxLayout>
             <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
             <HLine color={ProfilePage.LINE_COLOR}/>
             <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
@@ -325,6 +374,41 @@ export class ProfilePage extends React.Component<Properties> {
       height: '34px',
       justifyContent: 'flex-start',
       alignItems: 'center'
+    },
+    errorMessage: {
+      color: '#E63F44',
+      font: '400 14px Roboto'
+    },
+    statusMessage: {
+      color: '#36BB55',
+      font: '400 14px Roboto'
+    },
+    filler: {
+      flexGrow: 1
+    },
+    smallPadding: {
+      width: '100%',
+      height: '18px'
+    },
+    mediumPadding: {
+      width: '100%',
+      height: '30px'
+    },
+    inlineStatusBox: {
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'nowrap' as 'nowrap',
+      alignItems: 'center' as 'center'
+    },
+    stackedStatusBox: {
+      display: 'flex' as 'flex',
+      flexDirection: 'column' as 'column',
+      alignItems: 'center' as 'center',
+      justifyContent: 'center' as 'center'
+    },
+    buttonPadding: {
+      height: '30px',
+      width: '30px'
     }
   };
   private static readonly LINE_PADDING = '14px';

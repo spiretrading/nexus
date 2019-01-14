@@ -5,14 +5,24 @@ import { DisplaySize } from '../../..';
 import { SubmitButton } from '.';
 
 interface Properties {
+
+  /** Determines the layout used to display the component. */
   displaySize: DisplaySize;
+
+  /** Whether the password button can be clicked. */
   isPasswordSubmitEnabled: boolean;
+
+  /** The status of the password submission. */
   submitPasswordStatus: string;
+
+  /** Whether an error occurred submitting the password. */
   hasPasswordError: boolean;
+
+  /** Indicates the password has been updated. */
   onSubmitPassword?: (password: string) => void;
 }
 
-/** Displays a slider that changes a value. */
+/** Displays a box that allows the user to submit a new password. */
 export class ChangePasswordBox extends React.Component<Properties> {
   public static readonly defaultProps = {
     isPasswordSubmitEnabled: false,
@@ -79,7 +89,6 @@ export class ChangePasswordBox extends React.Component<Properties> {
             return {...ChangePasswordBox.STYLE.statusMessage,
               ...ChangePasswordBox.STYLE.passwordBoxSmall};
           }
-
       }
     })();
     return (
