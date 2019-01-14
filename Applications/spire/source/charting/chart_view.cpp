@@ -97,6 +97,10 @@ void ChartView::set_region(const ChartPoint& top_left,
     const ChartPoint& bottom_right) {
   m_top_left = top_left;
   m_bottom_right = bottom_right;
+  m_x_range = m_bottom_right.m_x - m_top_left.m_x;
+  m_x_axis_step = calculate_step(m_x_axis_type, m_x_range);
+  m_y_range = m_top_left.m_y - m_bottom_right.m_y;
+  m_y_axis_step = calculate_step(m_y_axis_type, m_y_range);
   update();
 }
 
@@ -111,14 +115,10 @@ void ChartView::paintEvent(QPaintEvent* event) {
   m_y_origin = height() - (font_metrics.height() + scale_height(9));
   painter.drawLine(m_x_origin, 0, m_x_origin, m_y_origin);
   painter.drawLine(0, m_y_origin, m_x_origin, m_y_origin);
-  auto x_range = m_bottom_right.m_x - m_top_left.m_x;
-  auto x_step = calculate_step(m_x_axis_type, x_range);
-  auto y_range = m_top_left.m_y - m_bottom_right.m_y;
-  auto y_step = calculate_step(m_y_axis_type, y_range);
-  if(x_range <= x_step || y_range <= y_step) {
+  if(m_x_range <= m_x_axis_step || m_y_range <= m_y_axis_step) {
     return;
   }
-  auto y_step_count = y_range / y_step;
+  auto y_step_count = m_y_range / m_y_axis_step;
   auto y_pixel_step = m_y_origin / y_step_count;
   if((y_step_count - 1) * y_pixel_step < height()) {
     y_pixel_step += 1;
@@ -126,7 +126,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
   auto y_value = m_bottom_right.m_y;
   auto y = m_y_origin;
   while(y_value <= m_top_left.m_y) {
-    y_value += y_step;
+    y_value += m_y_axis_step;
     y -= y_pixel_step;
     painter.setPen("#3A3348");
     painter.drawLine(0, y, m_x_origin, y);
@@ -137,8 +137,8 @@ void ChartView::paintEvent(QPaintEvent* event) {
       m_item_delegate->displayText(to_variant(m_y_axis_type, y_value),
       QLocale()));
   }
-  auto x_step_count = x_range / x_step;
-  auto x_pixel_step = m_x_origin / (x_range / x_step);
+  auto x_step_count = m_x_range / m_x_axis_step;
+  auto x_pixel_step = m_x_origin / (m_x_range / m_x_axis_step);
   if((x_step_count - 1) * x_pixel_step < width()) {
     x_pixel_step += 1;
   }
@@ -147,7 +147,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
   auto x_value = m_bottom_right.m_x;
   auto x = m_x_origin;
   while(x_value >= m_top_left.m_x) {
-    x_value -= x_step;
+    x_value -= m_x_axis_step;
     x -= x_pixel_step;
     painter.setPen("#3A3348");
     painter.drawLine(x, 0, x, m_y_origin);
@@ -171,8 +171,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
     painter.fillRect(m_crosshair_pos.value().x(), m_y_origin, scale_width(1),
       scale_height(3), Qt::black);
     auto crosshair_value = convert_pixels_to_chart(m_crosshair_pos.value());
-    m_timestamp_format = "%H:%M:%S";
-    auto x_label = get_string(m_x_axis_type, crosshair_value.m_x);
+    auto x_label = get_timestamp(crosshair_value.m_x, "%H:%M:%S");
     auto text_width = font_metrics.width(x_label);
     painter.setPen(m_label_text_color);
     painter.drawText(m_crosshair_pos.value().x() - text_width / 2,
@@ -232,13 +231,17 @@ QString ChartView::get_string(ChartValue::Type type, ChartValue value) const {
   } else if(type == ChartValue::Type::QUANTITY) {
     return QString::number(static_cast<double>(static_cast<Quantity>(value)));
   } else if(type == ChartValue::Type::TIMESTAMP) {
-
-    // TODO: convert from ptime to QTime
-    std::ostringstream ss;
-    ss.imbue(std::locale(std::cout.getloc(),
-      new boost::posix_time::time_facet(m_timestamp_format.c_str())));
-    ss << static_cast<ptime>(value);
-    return QString::fromStdString(ss.str());
+    return get_timestamp(value, m_timestamp_format);
   }
   return QString();
+}
+
+QString ChartView::get_timestamp(ChartValue value,
+    const std::string& timestamp_format) const {
+  // TODO: convert from ptime to QTime
+  std::ostringstream ss;
+  ss.imbue(std::locale(std::cout.getloc(),
+    new boost::posix_time::time_facet(timestamp_format.c_str())));
+  ss << static_cast<ptime>(value);
+  return QString::fromStdString(ss.str());
 }

@@ -68,6 +68,10 @@ namespace Spire {
       ChartPoint m_bottom_right;
       int m_x_origin;
       int m_y_origin;
+      ChartValue m_x_axis_step;
+      ChartValue m_x_range;
+      ChartValue m_y_axis_step;
+      ChartValue m_y_range;
       QFont m_label_font;
       std::string m_timestamp_format;
       CustomVariantItemDelegate* m_item_delegate;
@@ -77,6 +81,8 @@ namespace Spire {
 
       ChartValue calculate_step(ChartValue::Type value_type, ChartValue range);
       QString get_string(ChartValue::Type type, ChartValue value) const;
+      QString get_timestamp(ChartValue value,
+        const std::string& timestamp_format) const;
   };
 }
 
