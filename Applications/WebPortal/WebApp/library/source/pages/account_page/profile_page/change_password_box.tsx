@@ -19,18 +19,11 @@ interface Properties {
   hasPasswordError: boolean;
 
   /** Indicates the password has been updated. */
-  onSubmitPassword?: (password: string) => void;
+  onSubmitPassword: (password: string) => void;
 }
 
 /** Displays a box that allows the user to submit a new password. */
 export class ChangePasswordBox extends React.Component<Properties> {
-  public static readonly defaultProps = {
-    isPasswordSubmitEnabled: false,
-    submitPasswordStatus: '',
-    hasPasswordError: false,
-    onPasswordSubmit: () => {}
-  };
-
   public render(): JSX.Element {
     const changePasswordBox = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {

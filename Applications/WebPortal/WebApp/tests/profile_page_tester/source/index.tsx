@@ -77,7 +77,7 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   public componentDidMount() {
-    const tempIdentity =  new Nexus.AccountIdentity();
+    const tempIdentity = this.state.identity.clone();
     tempIdentity.photoId = TestApp.SOME_IMAGE;
     tempIdentity.firstName = 'Frodo';
     tempIdentity.lastName = 'Baggins';

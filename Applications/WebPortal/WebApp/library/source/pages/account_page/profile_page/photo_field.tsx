@@ -106,7 +106,8 @@ export class PhotoField extends React.Component<Properties, {}> {
             style={cameraIconStyle}
             onClick={this.props.onToggleUploader}/>
         </div>
-        <Transition in={this.props.displayMode === PhotoFieldDisplayMode.UPLOADING}
+        <Transition
+            in={this.props.displayMode === PhotoFieldDisplayMode.UPLOADING}
             timeout={PhotoField.TIMEOUT}>
           {(state) => (
             <div style={{ ...PhotoField.STYLE.animationBase,
