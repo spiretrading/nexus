@@ -20,6 +20,7 @@ interface State {
   account: Beam.DirectoryEntry;
   group: Beam.DirectoryEntry;
   countryDatabase: Nexus.CountryDatabase;
+  hasPassword: boolean;
 }
 
 /**  Displays a testing application. */
@@ -37,11 +38,13 @@ class TestApp extends React.Component<Properties, State> {
         Beam.DirectoryEntry.Type.ACCOUNT, 9123, 'frodo_of_the_nine_fingers'),
       group: new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.NONE, 18, 'shire_office'),
-      countryDatabase: Nexus.buildDefaultCountryDatabase()
+      countryDatabase: Nexus.buildDefaultCountryDatabase(),
+      hasPassword: false
     };
     this.setStatusToError = this.setStatusToError.bind(this);
     this.setStatusToNull = this.setStatusToNull.bind(this);
     this.setStatusToSuccessful = this.setStatusToSuccessful.bind(this);
+    this.togglePasswordVisibility = this.togglePasswordVisibility.bind(this);
   }
 
   public render(): JSX.Element {
@@ -58,6 +61,7 @@ class TestApp extends React.Component<Properties, State> {
           hasPasswordError={this.state.hasError}
           account={this.state.account}
           group={this.state.group}
+          hasPassword={this.state.hasPassword}
           countryDatabase={this.state.countryDatabase}/>
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
@@ -71,6 +75,10 @@ class TestApp extends React.Component<Properties, State> {
           <button tabIndex={-1}
             onClick={this.setStatusToError}>
             ERROR MESSAGES
+          </button>
+          <button tabIndex={-1}
+            onClick={this.togglePasswordVisibility}>
+            TOGGLE PASSWORD FIELD
           </button>
         </div>
       </Dali.VBoxLayout>);
@@ -118,6 +126,12 @@ class TestApp extends React.Component<Properties, State> {
       statusMessage: 'Saved',
       passwordStatusMessage: 'Saved',
       hasError: false
+    });
+  }
+
+  private togglePasswordVisibility() {
+    this.setState({
+      hasPassword: !this.state.hasPassword
     });
   }
 
