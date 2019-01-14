@@ -155,12 +155,27 @@ export class ProfilePage extends React.Component<Properties> {
       if(this.props.displaySize === DisplaySize.SMALL) {
         if(this.props.hasError) {
           return ProfilePage.STYLE.errorMessage;
-        } else {
+        } else if (this.props.submitStatus) {
           return ProfilePage.STYLE.statusMessage;
+        } else {
+          return ProfilePage.STYLE.hidden;
         }
       } else {
         return ProfilePage.STYLE.hidden;
       }
+    })();
+    const changePasswordBox = (() => {
+      if(this.props.hasPassword) {
+        return (<ChangePasswordBox displaySize={this.props.displaySize}
+          hasPasswordError={this.props.hasPasswordError}
+          submitPasswordStatus={this.props.submitPasswordStatus}
+          isPasswordSubmitEnabled={this.props.isPasswordSubmitEnabled}
+          onSubmitPassword={this.props.onSubmitPassword}/>);
+      } else {
+        return null;
+      }
+    })();
+    const commentBoxButtonStyle = (() => {
     })();
     return (
       <div style={ProfilePage.STYLE.page}>
@@ -302,7 +317,7 @@ export class ProfilePage extends React.Component<Properties> {
                 <Dali.Padding size={formFooterPaddingSize}/>
               </Dali.VBoxLayout>
             </Dali.HBoxLayout>
-            <Dali.VBoxLayout>
+            <Dali.VBoxLayout style={null}>
               <div style={ProfilePage.STYLE.headerStyler}>
                 User Notes
               </div>
@@ -329,11 +344,7 @@ export class ProfilePage extends React.Component<Properties> {
             <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
             <HLine color={ProfilePage.LINE_COLOR}/>
             <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
-            <ChangePasswordBox displaySize={this.props.displaySize}
-              hasPasswordError={this.props.hasPasswordError}
-              submitPasswordStatus={this.props.submitPasswordStatus}
-              isPasswordSubmitEnabled={this.props.isPasswordSubmitEnabled}
-              onSubmitPassword={this.props.onSubmitPassword}/>
+            {changePasswordBox}
             <Dali.Padding size={ProfilePage.BOTTOM_PADDING}/>
           </Dali.VBoxLayout>
         </div>
