@@ -73,6 +73,7 @@ namespace Spire {
       ChartValue m_y_axis_step;
       ChartValue m_y_range;
       QFont m_label_font;
+      QFontMetrics m_font_metrics;
       std::string m_timestamp_format;
       CustomVariantItemDelegate* m_item_delegate;
       std::optional<QPoint> m_crosshair_pos;
@@ -80,7 +81,8 @@ namespace Spire {
       QPen m_label_text_color;
 
       ChartValue calculate_step(ChartValue::Type value_type, ChartValue range);
-      QString get_string(ChartValue::Type type, ChartValue value) const;
+      QString get_axis_string(ChartValue::Type type, ChartValue value) const;
+      QString get_label_string(ChartValue::Type type, ChartValue value) const;
       QString get_timestamp(ChartValue value,
         const std::string& timestamp_format) const;
   };
