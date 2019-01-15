@@ -91,6 +91,10 @@ export class ProfilePage extends React.Component<Properties, State> {
       passwordError: this.props.hasPasswordError
     };
     this.onCommentChange = this.onCommentChange.bind(this);
+    this.onCheckPasswordFieldChange = 
+      this.onCheckPasswordFieldChange.bind(this);
+    this.onPasswordFieldChange = this.onPasswordFieldChange.bind(this);
+    this.onSubmitPassword = this.onSubmitPassword.bind(this);
   }
 
   public render(): JSX.Element {
@@ -187,10 +191,10 @@ export class ProfilePage extends React.Component<Properties, State> {
     const changePasswordBox = (() => {
       if(this.props.hasPassword) {
         return (<ChangePasswordBox displaySize={this.props.displaySize}
-          hasPasswordError={this.props.hasPasswordError}
-          submitPasswordStatus={this.props.submitPasswordStatus}
+          hasPasswordError={this.state.passwordError}
+          submitPasswordStatus={this.state.passwordStatus}
           isPasswordSubmitEnabled={this.props.isPasswordSubmitEnabled}
-          onSubmitPassword={this.props.onSubmitPassword}
+          onSubmitPassword={this.onSubmitPassword}
           password1={this.state.password1}
           password2={this.state.password2}
           password1OnChange={this.onPasswordFieldChange}
@@ -396,7 +400,12 @@ export class ProfilePage extends React.Component<Properties, State> {
   }
 
   private onSubmitPassword() {
-    if(this.state.password1 === this.state.password2) {
+    if(this.state.password1 === '') {
+        this.setState({
+          passwordError: true,
+          passwordStatus: 'No password entered'
+        });
+    } else if(this.state.password1 === this.state.password2) {
         this.props.onSubmitPassword(this.state.password1);
         this.setState({
           passwordError: this.props.hasError,

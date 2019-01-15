@@ -101,13 +101,15 @@ export class ChangePasswordBox extends React.Component<Properties> {
             onFocus={() => this.passwordInputField.placeholder = ''}
             onBlur={() =>
               this.passwordInputField.placeholder = 'New Password'}
-            
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              this.props.password1OnChange(event.target.value)}
             ref={(ref) => this.passwordInputField = ref}/>
           <div style={ChangePasswordBox.STYLE.passwordPadding}/>
           <input type='password' placeholder='Confirm New Password'
             autoComplete='off'
             className={css(inputBoxStyle)}
-            
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              this.props.password2OnChange(event.target.value)}
             onFocus={() => this.confirmPasswordInputField.placeholder = ''}
             onBlur={() =>
               this.confirmPasswordInputField.placeholder
@@ -118,7 +120,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
             displaySize={this.props.displaySize}
             isSubmitEnabled={this.props.isPasswordSubmitEnabled}
             onClick={() =>
-              this.props.onSubmitPassword(this.passwordInputField.value)}/>
+              this.props.onSubmitPassword()}/>
         </div>
         <div style={messageUnderneath}>
           <div style={ChangePasswordBox.STYLE.smallPadding}/>

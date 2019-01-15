@@ -23,6 +23,7 @@ interface State {
   hasPassword: boolean;
   readOnly: boolean;
   comment: string;
+  isPasswordSubmitEnabled: boolean;
 }
 
 /**  Displays a testing application. */
@@ -43,7 +44,8 @@ class TestApp extends React.Component<Properties, State> {
       countryDatabase: Nexus.buildDefaultCountryDatabase(),
       hasPassword: false,
       readOnly: false,
-      comment: ''
+      comment: '',
+      isPasswordSubmitEnabled: false
     };
     this.setStatusToError = this.setStatusToError.bind(this);
     this.setStatusToNull = this.setStatusToNull.bind(this);
@@ -61,13 +63,14 @@ class TestApp extends React.Component<Properties, State> {
           displaySize={this.props.displaySize}
           isSubmitEnabled={true}
           submitStatus={this.state.statusMessage}
-          submitPasswordStatus={this.state.passwordStatusMessage}
           hasError={this.state.hasError}
-          hasPasswordError={this.state.hasError}
+          isPasswordSubmitEnabled={this.state.isPasswordSubmitEnabled}
           account={this.state.account}
           group={this.state.group}
           countryDatabase={this.state.countryDatabase}
-          hasPassword={this.state.hasPassword}/>
+          hasPassword={this.state.hasPassword}
+          submitPasswordStatus={this.state.passwordStatusMessage}
+          hasPasswordError={this.state.hasError}/>
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
             onClick={this.setStatusToNull}>
@@ -141,7 +144,8 @@ class TestApp extends React.Component<Properties, State> {
 
   private togglePasswordVisibility() {
     this.setState({
-      hasPassword: !this.state.hasPassword
+      hasPassword: !this.state.hasPassword,
+      isPasswordSubmitEnabled: !this.state.isPasswordSubmitEnabled
     });
   }
 
