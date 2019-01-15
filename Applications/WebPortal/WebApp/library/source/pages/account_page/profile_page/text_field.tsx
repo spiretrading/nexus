@@ -196,6 +196,12 @@ export class TextField extends React.Component<Properties, State> {
       },
       '::-ms-clear': {
         display: 'none' as 'none'
+      },
+      ':-moz-read-only': {
+        cursor: 'default' as 'default'
+      },
+      ':read-only': {
+        cursor: 'default' as 'default'
       }
     },
     largerText: {
@@ -215,6 +221,12 @@ export class TextField extends React.Component<Properties, State> {
       },
       '::-ms-clear': {
         display: 'none' as 'none'
+      },
+      ':-moz-read-only': {
+        cursor: 'default' as 'default'
+      },
+      ':read-only': {
+        cursor: 'default' as 'default'
       }
     }
   });
