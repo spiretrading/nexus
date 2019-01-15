@@ -142,7 +142,7 @@ class TestApp extends React.Component<Properties, State> {
 
   private togglePasswordVisibility() {
     this.setState({
-      hasError: !this.state.hasPassword
+      hasPassword: !this.state.hasPassword
     });
   }
 
