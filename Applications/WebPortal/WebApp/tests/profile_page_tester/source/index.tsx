@@ -66,9 +66,8 @@ class TestApp extends React.Component<Properties, State> {
           hasPasswordError={this.state.hasError}
           account={this.state.account}
           group={this.state.group}
-          hasPassword={this.state.hasPassword}
-          readonly={this.state.readOnly}
-          countryDatabase={this.state.countryDatabase}/>
+          countryDatabase={this.state.countryDatabase}
+          hasPassword={this.state.hasPassword}/>
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
             onClick={this.setStatusToNull}>

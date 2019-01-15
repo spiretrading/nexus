@@ -62,6 +62,8 @@ interface State {
   password1: string;
   password2: string;
   newUserNotes: string;
+  passwordStatus: string;
+  passwordError: boolean;
 }
 
 /** Displays an account's profile page. */
@@ -84,7 +86,9 @@ export class ProfilePage extends React.Component<Properties, State> {
     this.state = {
       password1: '',
       password2: '',
-      newUserNotes: this.props.identity.userNotes
+      newUserNotes: this.props.identity.userNotes,
+      passwordStatus: this.props.submitPasswordStatus,
+      passwordError: this.props.hasPasswordError
     };
     this.onCommentChange = this.onCommentChange.bind(this);
   }
@@ -186,7 +190,11 @@ export class ProfilePage extends React.Component<Properties, State> {
           hasPasswordError={this.props.hasPasswordError}
           submitPasswordStatus={this.props.submitPasswordStatus}
           isPasswordSubmitEnabled={this.props.isPasswordSubmitEnabled}
-          onSubmitPassword={this.props.onSubmitPassword}/>);
+          onSubmitPassword={this.props.onSubmitPassword}
+          password1={this.state.password1}
+          password2={this.state.password2}
+          password1OnChange={this.onPasswordFieldChange}
+          password2OnChange={this.onCheckPasswordFieldChange}/>);
       } else {
         return null;
       }
@@ -379,14 +387,28 @@ export class ProfilePage extends React.Component<Properties, State> {
     this.setState({newUserNotes: newComment});
   }
 
-  private onPasswordFieldChange() {
-
+  private onPasswordFieldChange(testPassword: string) {
+    this.setState({password1: testPassword});
   }
 
-  private onCheckPasswordFieldChange() {
-
+  private onCheckPasswordFieldChange(testConfirmPassword: string) {
+    this.setState({password2: testConfirmPassword});
   }
 
+  private onSubmitPassword() {
+    if(this.state.password1 === this.state.password2) {
+        this.props.onSubmitPassword(this.state.password1);
+        this.setState({
+          passwordError: this.props.hasError,
+          passwordStatus: this.props.submitPasswordStatus
+        });
+    } else {
+      this.setState({
+          passwordError: true,
+          passwordStatus: 'Passwords do not match'
+        });
+    }
+  }
 
   private static readonly STYLE = {
     page: {

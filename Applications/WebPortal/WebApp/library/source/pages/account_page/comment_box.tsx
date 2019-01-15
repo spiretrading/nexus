@@ -15,6 +15,7 @@ interface Properties {
 
 /** Displays the comment box. */
 export class CommentBox extends React.Component<Properties> {
+
   public render(): JSX.Element {
     return <textarea className={css(CommentBox.STYLE.submissionBox)}
       value={this.props.comment}
