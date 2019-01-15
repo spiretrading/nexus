@@ -91,7 +91,7 @@ export class ProfilePage extends React.Component<Properties, State> {
       passwordError: this.props.hasPasswordError
     };
     this.onCommentChange = this.onCommentChange.bind(this);
-    this.onCheckPasswordFieldChange = 
+    this.onCheckPasswordFieldChange =
       this.onCheckPasswordFieldChange.bind(this);
     this.onPasswordFieldChange = this.onPasswordFieldChange.bind(this);
     this.onSubmitPassword = this.onSubmitPassword.bind(this);
@@ -164,6 +164,13 @@ export class ProfilePage extends React.Component<Properties, State> {
         return ProfilePage.STYLE.stackedStatusBox;
       } else {
         return ProfilePage.STYLE.inlineStatusBox;
+      }
+    })();
+    const commentFooterPaddingSize = (() => {
+      if(this.props.readonly) {
+        return 0;
+      } else {
+        return ProfilePage.STANDARD_PADDING;
       }
     })();
     const statusMessageInline = (() => {
@@ -358,7 +365,7 @@ export class ProfilePage extends React.Component<Properties, State> {
               <CommentBox comment={this.state.newUserNotes}
                 readonly={this.props.readonly}
                 onInput={this.onCommentChange}/>
-              <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
+              <Dali.Padding size={commentFooterPaddingSize}/>
               <div style={{...commentBoxStyle, ...commentBoxButtonStyle}}>
                 <div style={ProfilePage.STYLE.filler}/>
                 <div style={{ ...commentBoxStyle, ...statusMessageInline}}>

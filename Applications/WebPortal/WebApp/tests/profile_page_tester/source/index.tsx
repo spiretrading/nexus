@@ -58,17 +58,19 @@ class TestApp extends React.Component<Properties, State> {
     return (
       <Dali.VBoxLayout width='100%' height='100%'>
         <WebPortal.ProfilePage
+          account={this.state.account}
           roles={this.state.someRoles}
           identity={this.state.identity}
+          group={this.state.group}
+          countryDatabase={this.state.countryDatabase}
           displaySize={this.props.displaySize}
+          readonly={this.state.readOnly}
           isSubmitEnabled={true}
           submitStatus={this.state.statusMessage}
           hasError={this.state.hasError}
-          isPasswordSubmitEnabled={this.state.isPasswordSubmitEnabled}
-          account={this.state.account}
-          group={this.state.group}
-          countryDatabase={this.state.countryDatabase}
+          onSubmit={null}
           hasPassword={this.state.hasPassword}
+          isPasswordSubmitEnabled={this.state.isPasswordSubmitEnabled}
           submitPasswordStatus={this.state.passwordStatusMessage}
           hasPasswordError={this.state.hasError}/>
         <div style={TestApp.STYLE.testingComponents}>
