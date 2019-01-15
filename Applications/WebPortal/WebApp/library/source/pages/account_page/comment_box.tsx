@@ -37,14 +37,19 @@ export class CommentBox extends React.Component<Properties> {
       margin: 0,
       resize: 'none',
       outline: 0,
+      color: '#000000',
       ':focus': {
         border: '1px solid #684BC7'
       },
       ':-moz-read-only': {
-        border: '1px solid #C8C8C8'
+        border: '1px solid #C8C8C8',
+        color: 'transparent',
+        textShadow: '0 0 0 #000000'
       },
       ':read-only': {
-        border: '1px solid #C8C8C8'
+        border: '1px solid #C8C8C8',
+        color: 'transparent',
+        textShadow: '0 0 0 #000000'
       }
     }
   });
