@@ -58,8 +58,14 @@ interface Properties {
   onSubmitPassword?: (password: string) => void;
 }
 
+interface State {
+  password1: string;
+  password2: string;
+  newUserNotes: string;
+}
+
 /** Displays an account's profile page. */
-export class ProfilePage extends React.Component<Properties> {
+export class ProfilePage extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     readonly: false,
     isSubmitEnabled: false,
@@ -72,6 +78,16 @@ export class ProfilePage extends React.Component<Properties> {
     hasPasswordError: false,
     onPasswordSubmit: () => {}
   };
+
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      password1: '',
+      password2: '',
+      newUserNotes: this.props.identity.userNotes
+    };
+    this.onCommentChange = this.onCommentChange.bind(this);
+  }
 
   public render(): JSX.Element {
     const contentWidth = (() => {
@@ -327,7 +343,9 @@ export class ProfilePage extends React.Component<Properties> {
                 User Notes
               </div>
               <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
-              <CommentBox comment='' readonly={this.props.readonly}/>
+              <CommentBox comment={this.state.newUserNotes}
+                readonly={this.props.readonly}
+                onInput={this.onCommentChange}/>
               <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
               <div style={{...commentBoxStyle, ...commentBoxButtonStyle}}>
                 <div style={ProfilePage.STYLE.filler}/>
@@ -344,8 +362,8 @@ export class ProfilePage extends React.Component<Properties> {
                   <div style={ProfilePage.STYLE.smallPadding}/>
                   {this.props.submitStatus}
                 </div>
-                <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
               </div>
+              <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
             </Dali.VBoxLayout>
             <HLine color={ProfilePage.LINE_COLOR}/>
             <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
@@ -356,6 +374,19 @@ export class ProfilePage extends React.Component<Properties> {
         <div style={ProfilePage.STYLE.pagePadding}/>
       </div>);
   }
+
+  private onCommentChange(newComment: string) {
+    this.setState({newUserNotes: newComment});
+  }
+
+  private onPasswordFieldChange() {
+
+  }
+
+  private onCheckPasswordFieldChange() {
+
+  }
+
 
   private static readonly STYLE = {
     page: {

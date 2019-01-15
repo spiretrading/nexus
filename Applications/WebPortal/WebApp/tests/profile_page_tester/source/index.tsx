@@ -22,6 +22,7 @@ interface State {
   countryDatabase: Nexus.CountryDatabase;
   hasPassword: boolean;
   readOnly: boolean;
+  comment: string;
 }
 
 /**  Displays a testing application. */
@@ -41,7 +42,8 @@ class TestApp extends React.Component<Properties, State> {
         Beam.DirectoryEntry.Type.NONE, 18, 'shire_office'),
       countryDatabase: Nexus.buildDefaultCountryDatabase(),
       hasPassword: false,
-      readOnly: false
+      readOnly: false,
+      comment: ''
     };
     this.setStatusToError = this.setStatusToError.bind(this);
     this.setStatusToNull = this.setStatusToNull.bind(this);
@@ -105,6 +107,7 @@ class TestApp extends React.Component<Properties, State> {
     testIdentity.country = Nexus.DefaultCountries.AU;
     testIdentity.city = 'Hobbiton';
     testIdentity.addressLineOne = '56 Bag End';
+    testIdentity.userNotes = this.state.comment;
     testIdentity.emailAddress = 'frodo@bagend.nz';
     testIdentity.registrationTime = new Beam.DateTime(
       new Beam.Date(2017, Beam.Date.Month.DECEMBER, 21),
@@ -144,6 +147,12 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   private toggleReadonlyOfForm() {
+    this.setState({
+      readOnly: !this.state.readOnly
+    });
+  }
+
+  private updateComment() {
     this.setState({
       readOnly: !this.state.readOnly
     });
