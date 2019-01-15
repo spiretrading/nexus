@@ -197,15 +197,21 @@ export class ProfilePage extends React.Component<Properties, State> {
     })();
     const changePasswordBox = (() => {
       if(this.props.hasPassword) {
-        return (<ChangePasswordBox displaySize={this.props.displaySize}
-          hasPasswordError={this.state.passwordError}
-          submitPasswordStatus={this.state.passwordStatus}
-          isPasswordSubmitEnabled={this.props.isPasswordSubmitEnabled}
-          onSubmitPassword={this.onSubmitPassword}
-          password1={this.state.password1}
-          password2={this.state.password2}
-          password1OnChange={this.onPasswordFieldChange}
-          password2OnChange={this.onCheckPasswordFieldChange}/>);
+        return (
+          <div>
+            <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
+            <HLine color={ProfilePage.LINE_COLOR}/>
+            <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
+            <ChangePasswordBox displaySize={this.props.displaySize}
+              hasPasswordError={this.state.passwordError}
+              submitPasswordStatus={this.state.passwordStatus}
+              isPasswordSubmitEnabled={this.props.isPasswordSubmitEnabled}
+              onSubmitPassword={this.onSubmitPassword}
+              password1={this.state.password1}
+              password2={this.state.password2}
+              password1OnChange={this.onPasswordFieldChange}
+              password2OnChange={this.onCheckPasswordFieldChange}/>
+          </div>);
       } else {
         return null;
       }
@@ -382,10 +388,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                   {this.props.submitStatus}
                 </div>
               </div>
-              <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
             </Dali.VBoxLayout>
-            <HLine color={ProfilePage.LINE_COLOR}/>
-            <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
             {changePasswordBox}
             <Dali.Padding size={ProfilePage.BOTTOM_PADDING}/>
           </Dali.VBoxLayout>
