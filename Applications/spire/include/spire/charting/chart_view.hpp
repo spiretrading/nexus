@@ -82,7 +82,6 @@ namespace Spire {
 
       ChartValue calculate_step(ChartValue::Type value_type, ChartValue range);
       QString get_axis_string(ChartValue::Type type, ChartValue value) const;
-      QString get_label_string(ChartValue::Type type, ChartValue value) const;
       QString get_timestamp(ChartValue value,
         const std::string& timestamp_format) const;
   };
