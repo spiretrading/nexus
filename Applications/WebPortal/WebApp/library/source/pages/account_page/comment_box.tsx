@@ -17,13 +17,20 @@ interface Properties {
 export class CommentBox extends React.Component<Properties> {
 
   public render(): JSX.Element {
+    const placeholderText = (() => {
+      if(this.props.readonly) {
+        return '';
+      } else {
+        return 'Leave comment here…';
+      }
+    })();
     return <textarea className={css(CommentBox.STYLE.submissionBox)}
       value={this.props.comment}
       readOnly={this.props.readonly}
       onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
         this.props.onInput(event.target.value);
       }}
-      placeholder='Leave comment here…'/>;
+      placeholder={placeholderText}/>;
   }
 
   private static STYLE = StyleSheet.create({

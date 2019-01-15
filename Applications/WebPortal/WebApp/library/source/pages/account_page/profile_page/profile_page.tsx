@@ -198,7 +198,7 @@ export class ProfilePage extends React.Component<Properties, State> {
     const changePasswordBox = (() => {
       if(this.props.hasPassword) {
         return (
-          <div>
+          <Dali.VBoxLayout>
             <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
             <HLine color={ProfilePage.LINE_COLOR}/>
             <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
@@ -211,7 +211,7 @@ export class ProfilePage extends React.Component<Properties, State> {
               password2={this.state.password2}
               password1OnChange={this.onPasswordFieldChange}
               password2OnChange={this.onCheckPasswordFieldChange}/>
-          </div>);
+          </Dali.VBoxLayout>);
       } else {
         return null;
       }
