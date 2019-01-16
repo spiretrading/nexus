@@ -61,8 +61,9 @@ interface Properties {
 interface State {
   password1: string;
   password2: string;
-  newUserNotes: string;
   passwordError: boolean;
+  passwordButtonEnabled: boolean;
+  newIdentity: Nexus.AccountIdentity;
   submitButtonEnabled: boolean;
 }
 
@@ -86,8 +87,9 @@ export class ProfilePage extends React.Component<Properties, State> {
     this.state = {
       password1: '',
       password2: '',
-      newUserNotes: this.props.identity.userNotes,
       passwordError: this.props.hasPasswordError,
+      passwordButtonEnabled: false,
+      newIdentity: this.props.identity.clone(),
       submitButtonEnabled: false
     };
     this.onCommentChange = this.onCommentChange.bind(this);
@@ -205,7 +207,7 @@ export class ProfilePage extends React.Component<Properties, State> {
             <ChangePasswordBox displaySize={this.props.displaySize}
               hasPasswordError={this.state.passwordError}
               submitPasswordStatus={this.props.submitPasswordStatus}
-              isPasswordSubmitEnabled={this.state.submitButtonEnabled}
+              isPasswordSubmitEnabled={this.state.passwordButtonEnabled}
               onSubmitPassword={this.onSubmitPassword}
               password1={this.state.password1}
               password2={this.state.password2}
@@ -368,7 +370,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 User Notes
               </div>
               <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
-              <CommentBox comment={this.state.newUserNotes}
+              <CommentBox comment={this.state.newIdentity.userNotes}
                 readonly={this.props.readonly}
                 onInput={this.onCommentChange}/>
               <Dali.Padding size={commentFooterPaddingSize}/>
@@ -381,7 +383,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 </div>
                 <SubmitButton label='Save Changes'
                   displaySize={this.props.displaySize}
-                  isSubmitEnabled={this.props.isSubmitEnabled}
+                  isSubmitEnabled={this.state.submitButtonEnabled}
                   onClick={this.props.onSubmit}/>
                 <div style={statusMessageFooter}>
                   <div style={ProfilePage.STYLE.smallPadding}/>
@@ -398,7 +400,14 @@ export class ProfilePage extends React.Component<Properties, State> {
   }
 
   private onCommentChange(newComment: string) {
-    this.setState({newUserNotes: newComment});
+    const testIdentity = this.state.newIdentity;
+    testIdentity.userNotes = newComment;
+    this.setState({newIdentity: testIdentity});
+    if(this.state.newIdentity.userNotes === this.props.identity.userNotes) {
+      this.setState({submitButtonEnabled: false});
+    } else {
+      this.setState({submitButtonEnabled: true});
+    }
   }
 
   private onPasswordFieldChange(testPassword: string) {
@@ -411,7 +420,7 @@ export class ProfilePage extends React.Component<Properties, State> {
   private onCheckPasswordFieldChange(testConfirmPassword: string) {
     this.setState({password2: testConfirmPassword});
     if(this.props.isSubmitEnabled && this.state.password1 !== '') {
-      this.setState({submitButtonEnabled: true});
+      this.setState({passwordButtonEnabled: true});
     }
   }
 
@@ -436,7 +445,7 @@ export class ProfilePage extends React.Component<Properties, State> {
     this.setState({
       password1: '',
       password2: '',
-      submitButtonEnabled: false
+      passwordButtonEnabled: false
     });
     console.log('Button was submitted');
     console.log('status is: ' + this.props.submitPasswordStatus);

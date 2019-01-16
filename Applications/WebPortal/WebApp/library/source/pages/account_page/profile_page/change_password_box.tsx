@@ -27,18 +27,8 @@ interface Properties {
   password2OnChange?: (newValue: string) => void;
 }
 
-interface State {
-  password2Readonly: boolean;
-}
-
 /** Displays a box that allows the user to submit a new password. */
-export class ChangePasswordBox extends React.Component<Properties, State> {
-  constructor(props: Properties) {
-    super(props);
-    this.state = {
-      password2Readonly: true
-    };
-  }
+export class ChangePasswordBox extends React.Component<Properties> {
 
   public render(): JSX.Element {
     const changePasswordBox = (() => {
