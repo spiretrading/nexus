@@ -67,11 +67,11 @@ class TestApp extends React.Component<Properties, State> {
           group={this.state.group}
           countryDatabase={this.state.countryDatabase}
           displaySize={this.props.displaySize}
-          //readonly={this.state.readOnly}
+          readonly={this.state.readOnly}
           isSubmitEnabled={true}
           submitStatus={this.state.statusMessage}
           hasError={this.state.hasError}
-          //hasPassword={this.state.hasPassword}
+          hasPassword={this.state.hasPassword}
           isPasswordSubmitEnabled={true}
           submitPasswordStatus={this.state.passwordStatusMessage}
           hasPasswordError={this.state.hasPasswordError}

@@ -27,8 +27,19 @@ interface Properties {
   password2OnChange?: (newValue: string) => void;
 }
 
+interface State {
+  password2Readonly: boolean;
+}
+
 /** Displays a box that allows the user to submit a new password. */
-export class ChangePasswordBox extends React.Component<Properties> {
+export class ChangePasswordBox extends React.Component<Properties, State> {
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      password2Readonly: true
+    };
+  }
+
   public render(): JSX.Element {
     const changePasswordBox = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
@@ -44,6 +55,13 @@ export class ChangePasswordBox extends React.Component<Properties> {
         return ChangePasswordBox.DYNAMIC_STYLE.errorBoxState;
       } else {
         return null;
+      }
+    })();
+    const input2Readonly = (() => {
+      if(this.props.password1) {
+        return false;
+      } else {
+        return true;
       }
     })();
     const inputBoxStyle = (() => {
@@ -117,6 +135,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
           <div style={ChangePasswordBox.STYLE.passwordPadding}/>
           <input type='password' placeholder='Confirm New Password'
             value={this.props.password2}
+            disabled={input2Readonly}
             autoComplete='off'
             className={css(inputBoxStyle, errorStyle)}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>

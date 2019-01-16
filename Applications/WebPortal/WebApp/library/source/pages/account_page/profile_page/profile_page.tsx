@@ -63,6 +63,7 @@ interface State {
   password2: string;
   newUserNotes: string;
   passwordError: boolean;
+  submitButtonEnabled: boolean;
 }
 
 /** Displays an account's profile page. */
@@ -73,7 +74,7 @@ export class ProfilePage extends React.Component<Properties, State> {
     submitStatus: '',
     hasError: false,
     onSubmit: () => {},
-    hasPassword: true, //fix
+    hasPassword: false,
     isPasswordSubmitEnabled: false,
     submitPasswordStatus: '',
     hasPasswordError: false,
@@ -86,7 +87,8 @@ export class ProfilePage extends React.Component<Properties, State> {
       password1: '',
       password2: '',
       newUserNotes: this.props.identity.userNotes,
-      passwordError: this.props.hasPasswordError
+      passwordError: this.props.hasPasswordError,
+      submitButtonEnabled: false
     };
     this.onCommentChange = this.onCommentChange.bind(this);
     this.onCheckPasswordFieldChange =
@@ -203,7 +205,7 @@ export class ProfilePage extends React.Component<Properties, State> {
             <ChangePasswordBox displaySize={this.props.displaySize}
               hasPasswordError={this.state.passwordError}
               submitPasswordStatus={this.props.submitPasswordStatus}
-              isPasswordSubmitEnabled={this.props.isPasswordSubmitEnabled}
+              isPasswordSubmitEnabled={this.state.submitButtonEnabled}
               onSubmitPassword={this.onSubmitPassword}
               password1={this.state.password1}
               password2={this.state.password2}
@@ -408,6 +410,9 @@ export class ProfilePage extends React.Component<Properties, State> {
 
   private onCheckPasswordFieldChange(testConfirmPassword: string) {
     this.setState({password2: testConfirmPassword});
+    if(this.props.isSubmitEnabled && this.state.password1 !== '') {
+      this.setState({submitButtonEnabled: true});
+    }
   }
 
   private onSubmitPassword() {
@@ -430,7 +435,8 @@ export class ProfilePage extends React.Component<Properties, State> {
     }
     this.setState({
       password1: '',
-      password2: ''
+      password2: '',
+      submitButtonEnabled: false
     });
     console.log('Button was submitted');
     console.log('status is: ' + this.props.submitPasswordStatus);
