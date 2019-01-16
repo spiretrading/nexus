@@ -221,8 +221,11 @@ export class ChangePasswordBox extends React.Component<Properties> {
       font: '300 16px Roboto',
       outline: 0,
       textAlign: 'center',
-      borderRadius: 0,
+      borderRadius: 1,
       ':active': {
+        border: '1px solid #684BC7'
+      },
+      ':focus':{
         border: '1px solid #684BC7'
       },
       '::placeholder': {
@@ -265,8 +268,11 @@ export class ChangePasswordBox extends React.Component<Properties> {
       font: '300 16px Roboto',
       outline: 0,
       textAlign: 'center',
-      borderRadius: 0,
+      borderRadius: 1,
       ':active': {
+        border: '1px solid #684BC7'
+      },
+      ':focus':{
         border: '1px solid #684BC7'
       },
       '::placeholder': {

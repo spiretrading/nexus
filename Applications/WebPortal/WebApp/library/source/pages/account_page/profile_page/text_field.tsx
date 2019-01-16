@@ -78,11 +78,19 @@ export class TextField extends React.Component<Properties, State> {
         return TextField.STYLE.hidden;
       }
     })();
+    const tabIndexValue = (() => {
+      if(this.props.disabled) {
+        return -1;
+      } else {
+        return 0;
+      }
+    })();
     return (
       <div className={css(boxStyle)}
           onMouseEnter={this.onMouseEnter}
           onMouseLeave={this.onMouseLeave}>
         <input value={this.props.value}
+          tabIndex={tabIndexValue}
           readOnly={this.props.disabled}
           onFocus={this.onInputFocused}
           onBlur={this.onInputBlurred}

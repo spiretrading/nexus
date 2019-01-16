@@ -44,6 +44,7 @@ export class SubmitButton extends React.Component<Properties> {
       color: '#FFFFFF',
       border: 'none',
       outline: 0,
+      borderRadius: 1,
       ':active': {
         backgroundColor: '#4B23A0'
       },
@@ -66,6 +67,7 @@ export class SubmitButton extends React.Component<Properties> {
       color: '#FFFFFF',
       border: 'none',
       outline: 0,
+      borderRadius: 1,
       ':active': {
         backgroundColor: '#4B23A0'
       },
