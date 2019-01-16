@@ -62,7 +62,6 @@ interface State {
   password1: string;
   password2: string;
   newUserNotes: string;
-  passwordStatus: string;
   passwordError: boolean;
 }
 
@@ -74,7 +73,7 @@ export class ProfilePage extends React.Component<Properties, State> {
     submitStatus: '',
     hasError: false,
     onSubmit: () => {},
-    hasPassword: false,
+    hasPassword: true, //fix
     isPasswordSubmitEnabled: false,
     submitPasswordStatus: '',
     hasPasswordError: false,
@@ -87,7 +86,6 @@ export class ProfilePage extends React.Component<Properties, State> {
       password1: '',
       password2: '',
       newUserNotes: this.props.identity.userNotes,
-      passwordStatus: this.props.submitPasswordStatus,
       passwordError: this.props.hasPasswordError
     };
     this.onCommentChange = this.onCommentChange.bind(this);
@@ -204,7 +202,7 @@ export class ProfilePage extends React.Component<Properties, State> {
             <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
             <ChangePasswordBox displaySize={this.props.displaySize}
               hasPasswordError={this.state.passwordError}
-              submitPasswordStatus={this.state.passwordStatus}
+              submitPasswordStatus={this.props.submitPasswordStatus}
               isPasswordSubmitEnabled={this.props.isPasswordSubmitEnabled}
               onSubmitPassword={this.onSubmitPassword}
               password1={this.state.password1}
@@ -411,22 +409,28 @@ export class ProfilePage extends React.Component<Properties, State> {
 
   private onSubmitPassword() {
     if(this.state.password1 === '') {
-        this.setState({
-          passwordError: true,
-          passwordStatus: 'No password entered'
-        });
-    } else if(this.state.password1 === this.state.password2) {
-        this.props.onSubmitPassword(this.state.password1);
-        this.setState({
-          passwordError: this.props.hasError,
-          passwordStatus: this.props.submitPasswordStatus
-        });
-    } else {
+      console.log('No password');
       this.setState({
-          passwordError: true,
-          passwordStatus: 'Passwords do not match'
-        });
+        passwordError: true
+      });
+    } else if(this.state.password1 === this.state.password2) {
+      console.log('Passwords match!');
+      this.props.onSubmitPassword(this.state.password1);
+      this.setState({
+        passwordError: this.props.hasError
+      });
+    } else {
+      console.log('Passwords do not match!');
+      this.setState({
+        passwordError: true
+      });
     }
+    this.setState({
+      password1: '',
+      password2: ''
+    });
+    console.log('Button was submitted');
+    console.log('status is: ' + this.props.submitPasswordStatus);
   }
 
   private static readonly STYLE = {

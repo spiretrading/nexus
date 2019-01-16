@@ -24,6 +24,7 @@ interface State {
   readOnly: boolean;
   comment: string;
   isPasswordSubmitEnabled: boolean;
+  hasPasswordError: boolean;
 }
 
 /**  Displays a testing application. */
@@ -45,13 +46,15 @@ class TestApp extends React.Component<Properties, State> {
       hasPassword: false,
       readOnly: false,
       comment: '',
-      isPasswordSubmitEnabled: false
+      isPasswordSubmitEnabled: false,
+      hasPasswordError: false
     };
     this.setStatusToError = this.setStatusToError.bind(this);
     this.setStatusToNull = this.setStatusToNull.bind(this);
     this.setStatusToSuccessful = this.setStatusToSuccessful.bind(this);
     this.togglePasswordVisibility = this.togglePasswordVisibility.bind(this);
     this.toggleReadonlyOfForm = this.toggleReadonlyOfForm.bind(this);
+    this.onPasswordSubmit = this.onPasswordSubmit.bind(this);
   }
 
   public render(): JSX.Element {
@@ -64,15 +67,15 @@ class TestApp extends React.Component<Properties, State> {
           group={this.state.group}
           countryDatabase={this.state.countryDatabase}
           displaySize={this.props.displaySize}
-          readonly={this.state.readOnly}
+          //readonly={this.state.readOnly}
           isSubmitEnabled={true}
           submitStatus={this.state.statusMessage}
           hasError={this.state.hasError}
-          onSubmit={null}
-          hasPassword={this.state.hasPassword}
-          isPasswordSubmitEnabled={this.state.isPasswordSubmitEnabled}
+          //hasPassword={this.state.hasPassword}
+          isPasswordSubmitEnabled={true}
           submitPasswordStatus={this.state.passwordStatusMessage}
-          hasPasswordError={this.state.hasError}/>
+          hasPasswordError={this.state.hasPasswordError}
+          onSubmitPassword={this.onPasswordSubmit}/>
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
             onClick={this.setStatusToNull}>
@@ -124,7 +127,8 @@ class TestApp extends React.Component<Properties, State> {
     this.setState({
       statusMessage: '',
       passwordStatusMessage: '',
-      hasError: false
+      hasError: false,
+      hasPasswordError: false
     });
   }
 
@@ -157,10 +161,21 @@ class TestApp extends React.Component<Properties, State> {
     });
   }
 
-  private updateComment() {
-    this.setState({
-      readOnly: !this.state.readOnly
-    });
+  private onPasswordSubmit(newPassword: string) {
+    console.log('PASSWORD FAKE SERVER STUFF');
+    if(Math.random() % 2 ) {
+      this.setState({
+        passwordStatusMessage: 'Password now saved',
+        hasPasswordError: true
+      });
+    } else {
+      this.setState({
+        passwordStatusMessage: 'Password Saved',
+        hasPasswordError: true
+      });
+    }
+    console.log('The new password is: ' + newPassword);
+    console.log('status message is' + this.state.passwordStatusMessage);
   }
 
   private static STYLE = {

@@ -95,6 +95,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
         <Dali.Padding size={ChangePasswordBox.STANDARD_PADDING}/>
         <div style={changePasswordBox}>
           <input type='password' placeholder='New Password'
+            value={this.props.password1}
             autoComplete='off'
             className={css(inputBoxStyle)}
             disabled={false}
@@ -106,6 +107,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
             ref={(ref) => this.passwordInputField = ref}/>
           <div style={ChangePasswordBox.STYLE.passwordPadding}/>
           <input type='password' placeholder='Confirm New Password'
+            value={this.props.password2}
             autoComplete='off'
             className={css(inputBoxStyle)}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
@@ -277,6 +279,9 @@ export class ChangePasswordBox extends React.Component<Properties> {
         width: 0,
         margin: 0
       }
+    },
+    errorBoxState: {
+    
     }
   });
   private static readonly STANDARD_PADDING = '30px';
