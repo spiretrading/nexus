@@ -401,6 +401,9 @@ export class ProfilePage extends React.Component<Properties, State> {
 
   private onPasswordFieldChange(testPassword: string) {
     this.setState({password1: testPassword});
+    if(this.state.passwordError && this.state.password2 === '') {
+      this.setState({passwordError: false});
+    }
   }
 
   private onCheckPasswordFieldChange(testConfirmPassword: string) {

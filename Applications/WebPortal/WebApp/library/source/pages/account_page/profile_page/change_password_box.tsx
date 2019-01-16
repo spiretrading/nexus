@@ -37,6 +37,15 @@ export class ChangePasswordBox extends React.Component<Properties> {
         return ChangePasswordBox.STYLE.passwordBoxLarge;
       }
     })();
+    const errorStyle = (() => {
+      if(this.props.hasPasswordError
+          && this.props.submitPasswordStatus === '' ) {
+        console.log('PASSWORD ERROR!!!');
+        return ChangePasswordBox.DYNAMIC_STYLE.errorBoxState;
+      } else {
+        return null;
+      }
+    })();
     const inputBoxStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return ChangePasswordBox.DYNAMIC_STYLE.inputBoxSmall;
@@ -97,7 +106,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
           <input type='password' placeholder='New Password'
             value={this.props.password1}
             autoComplete='off'
-            className={css(inputBoxStyle)}
+            className={css(inputBoxStyle, errorStyle)}
             disabled={false}
             onFocus={() => this.passwordInputField.placeholder = ''}
             onBlur={() =>
@@ -109,7 +118,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
           <input type='password' placeholder='Confirm New Password'
             value={this.props.password2}
             autoComplete='off'
-            className={css(inputBoxStyle)}
+            className={css(inputBoxStyle, errorStyle)}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
               this.props.password2OnChange(event.target.value)}
             onFocus={() => this.confirmPasswordInputField.placeholder = ''}
@@ -281,7 +290,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
       }
     },
     errorBoxState: {
-    
+      borderColor: '#E63F44'
     }
   });
   private static readonly STANDARD_PADDING = '30px';
