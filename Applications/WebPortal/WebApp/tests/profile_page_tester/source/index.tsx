@@ -45,7 +45,7 @@ class TestApp extends React.Component<Properties, State> {
       group: new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.NONE, 18, 'shire_office'),
       countryDatabase: Nexus.buildDefaultCountryDatabase(),
-      hasPassword: false,
+      hasPassword: true,
       readOnly: false,
       comment: '',
       isPasswordSubmitEnabled: false,

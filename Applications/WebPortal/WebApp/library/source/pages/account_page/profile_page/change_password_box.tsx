@@ -40,8 +40,8 @@ export class ChangePasswordBox extends React.Component<Properties> {
     })();
     const errorStyle = (() => {
       if(this.props.hasPasswordError
+          && this.props.password1 === ''
           && this.props.submitPasswordStatus === '' ) {
-        console.log('PASSWORD ERROR!!!');
         return ChangePasswordBox.DYNAMIC_STYLE.errorBoxState;
       } else {
         return null;
@@ -52,6 +52,13 @@ export class ChangePasswordBox extends React.Component<Properties> {
         return false;
       } else {
         return true;
+      }
+    })();
+    const status = (() => {
+      if(true) {
+        return this.props.submitPasswordStatus;
+      } else {
+        return null;
       }
     })();
     const inputBoxStyle = (() => {
@@ -78,7 +85,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
           return (
             <div style={{...messageInline,
                 ...ChangePasswordBox.STYLE.fillerMessage}}>
-              {this.props.submitPasswordStatus}
+              {status}
             </div>);
         case DisplaySize.MEDIUM:
           return <div style={ChangePasswordBox.STYLE.filler}/>;
@@ -144,7 +151,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
         </div>
         <div style={messageUnderneath}>
           <div style={ChangePasswordBox.STYLE.smallPadding}/>
-          {this.props.submitPasswordStatus}
+          {status}
         </div>
       </Dali.VBoxLayout>);
   }

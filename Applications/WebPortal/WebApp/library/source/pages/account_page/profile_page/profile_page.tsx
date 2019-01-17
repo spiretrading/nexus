@@ -61,6 +61,7 @@ interface Properties {
 interface State {
   password1: string;
   password2: string;
+  invalidPasswordError: boolean;
   newIdentity: Nexus.AccountIdentity;
   isProfileChanged: boolean;
 }
@@ -85,6 +86,7 @@ export class ProfilePage extends React.Component<Properties, State> {
     this.state = {
       password1: '',
       password2: '',
+      invalidPasswordError: false,
       newIdentity: this.props.identity.clone(),
       isProfileChanged: false
     };
@@ -210,7 +212,8 @@ export class ProfilePage extends React.Component<Properties, State> {
             <HLine color={ProfilePage.LINE_COLOR}/>
             <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
             <ChangePasswordBox displaySize={this.props.displaySize}
-              hasPasswordError={this.props.hasPasswordError}
+              hasPasswordError=
+                {this.props.hasPasswordError || this.state.invalidPasswordError}
               submitPasswordStatus={this.props.submitPasswordStatus}
               isPasswordSubmitEnabled={passwordButtonEnabled}
               onSubmitPassword={this.onSubmitPassword}
@@ -228,6 +231,13 @@ export class ProfilePage extends React.Component<Properties, State> {
         return ProfilePage.STYLE.hidden;
       } else  {
         return null;
+      }
+    })();
+    const profileSubmitSatus = (() => {
+      if(this.state.isProfileChanged) {
+        return null;
+      } else {
+        return this.props.submitStatus;
       }
     })();
     return (
@@ -382,18 +392,19 @@ export class ProfilePage extends React.Component<Properties, State> {
               <div style={{...commentBoxStyle, ...commentBoxButtonStyle}}>
                 <div style={ProfilePage.STYLE.filler}/>
                 <div style={{ ...commentBoxStyle, ...statusMessageInline}}>
-                  {this.props.submitStatus}
+                  {profileSubmitSatus}
                   <div style=
                     {ProfilePage.STYLE.buttonPadding}/>
                 </div>
                 <SubmitButton label='Save Changes'
                   displaySize={this.props.displaySize}
                   isSubmitEnabled=
-                    {this.props.isSubmitEnabled && this.state.isProfileChanged}
+                    {this.props.isSubmitEnabled &&
+                      (this.state.isProfileChanged || this.props.hasError)}
                   onClick={this.onSubmitProfile}/>
                 <div style={statusMessageFooter}>
                   <div style={ProfilePage.STYLE.smallPadding}/>
-                  {this.props.submitStatus}
+                  {profileSubmitSatus}
                 </div>
               </div>
             </Dali.VBoxLayout>
@@ -431,13 +442,15 @@ export class ProfilePage extends React.Component<Properties, State> {
 
   private onSubmitProfile() {
     this.props.onSubmit();
+    this.setState({isProfileChanged: false});
   }
 
   private onSubmitPassword() {
     if(this.state.password1 === this.state.password2) {
-      console.log('Passwords match!');
       this.props.onSubmitPassword(this.state.password1);
+      this.setState({invalidPasswordError: false});
     } else {
+      this.setState({invalidPasswordError: true});
       console.log('Passwords do not match!');
     }
     this.setState({
