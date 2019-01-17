@@ -184,7 +184,6 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   private profileSubmit() {
-    this.setStatusToNull();
     if(this.state.testProfileError) {
       this.setState({
         statusMessage: 'Profile not saved',

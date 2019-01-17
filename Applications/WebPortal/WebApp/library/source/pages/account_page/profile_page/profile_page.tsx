@@ -61,10 +61,7 @@ interface Properties {
 interface State {
   password1: string;
   password2: string;
-  passwordError: boolean;
-  passwordButtonEnabled: boolean;
   newIdentity: Nexus.AccountIdentity;
-  submitButtonEnabled: boolean;
 }
 
 /** Displays an account's profile page. */
@@ -87,10 +84,7 @@ export class ProfilePage extends React.Component<Properties, State> {
     this.state = {
       password1: '',
       password2: '',
-      passwordError: this.props.hasPasswordError,
-      passwordButtonEnabled: false,
-      newIdentity: this.props.identity.clone(),
-      submitButtonEnabled: false
+      newIdentity: this.props.identity.clone()
     };
     this.onCommentChange = this.onCommentChange.bind(this);
     this.onCheckPasswordFieldChange =
@@ -199,6 +193,14 @@ export class ProfilePage extends React.Component<Properties, State> {
       }
     })();
     const changePasswordBox = (() => {
+      let passwordButtonEnabled;
+      if(this.state.password1 !== ''
+          && this.state.password2 !== ''
+          && this.props.isPasswordSubmitEnabled) {
+        passwordButtonEnabled = true;
+      } else {
+        passwordButtonEnabled = false;
+      }
       if(this.props.hasPassword) {
         return (
           <Dali.VBoxLayout>
@@ -206,9 +208,9 @@ export class ProfilePage extends React.Component<Properties, State> {
             <HLine color={ProfilePage.LINE_COLOR}/>
             <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
             <ChangePasswordBox displaySize={this.props.displaySize}
-              hasPasswordError={this.state.passwordError}
+              hasPasswordError={this.props.hasPasswordError}
               submitPasswordStatus={this.props.submitPasswordStatus}
-              isPasswordSubmitEnabled={this.state.passwordButtonEnabled}
+              isPasswordSubmitEnabled={passwordButtonEnabled}
               onSubmitPassword={this.onSubmitPassword}
               password1={this.state.password1}
               password2={this.state.password2}
@@ -384,7 +386,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 </div>
                 <SubmitButton label='Save Changes'
                   displaySize={this.props.displaySize}
-                  isSubmitEnabled={this.state.submitButtonEnabled}
+                  isSubmitEnabled={this.props.isSubmitEnabled}
                   onClick={this.onSubmitProfile}/>
                 <div style={statusMessageFooter}>
                   <div style={ProfilePage.STYLE.smallPadding}/>
@@ -404,62 +406,32 @@ export class ProfilePage extends React.Component<Properties, State> {
     const testIdentity = this.state.newIdentity;
     testIdentity.userNotes = newComment;
     this.setState({newIdentity: testIdentity});
-    let profileChanged;
-    if(this.state.newIdentity.userNotes === this.props.identity.userNotes) {
-      profileChanged = false;
-    } else {
-      profileChanged = true;
-    }
-    if(this.state.submitButtonEnabled !== profileChanged) {
-      this.setState({submitButtonEnabled: profileChanged});
-    }
   }
 
   private onPasswordFieldChange(testPassword: string) {
     this.setState({password1: testPassword});
-    if(this.state.passwordError && this.state.password2 === '') {
-      this.setState({passwordError: false});
-    }
   }
 
   private onCheckPasswordFieldChange(testConfirmPassword: string) {
     this.setState({password2: testConfirmPassword});
-    if(this.props.isSubmitEnabled && this.state.password1 !== '') {
-      this.setState({passwordButtonEnabled: true});
-    }
   }
 
   private onSubmitProfile() {
     this.props.onSubmit();
-    if(this.props.hasError) {
-      this.setState({submitButtonEnabled: true});
-    } else {
-      this.setState({submitButtonEnabled: false});
-    }
   }
 
   private onSubmitPassword() {
-    if(this.state.password1 === '') {
-      console.log('No password');
-    } else if(this.state.password1 === this.state.password2) {
+    if(this.state.password1 === this.state.password2) {
       console.log('Passwords match!');
       this.props.onSubmitPassword(this.state.password1);
-      this.setState({
-        passwordError: this.props.hasError
-      });
     } else {
       console.log('Passwords do not match!');
-      this.setState({
-        passwordError: true
-      });
     }
     this.setState({
       password1: '',
-      password2: '',
-      passwordButtonEnabled: false
+      password2: ''
     });
-    console.log('Button was submitted');
-    console.log('status is: ' + this.props.submitPasswordStatus);
+    console.log('Passsword was submitted.');
   }
 
   private static readonly STYLE = {
