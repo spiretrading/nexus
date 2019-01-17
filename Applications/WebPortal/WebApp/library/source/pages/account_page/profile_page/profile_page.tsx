@@ -62,6 +62,7 @@ interface State {
   password1: string;
   password2: string;
   invalidPasswordError: boolean;
+  invalidPasswordMessage: string;
   isPasswordChanged: boolean;
   newIdentity: Nexus.AccountIdentity;
   isProfileChanged: boolean;
@@ -88,6 +89,7 @@ export class ProfilePage extends React.Component<Properties, State> {
       password1: '',
       password2: '',
       invalidPasswordError: false,
+      invalidPasswordMessage: '',
       newIdentity: this.props.identity.clone(),
       isProfileChanged: false,
       isPasswordChanged: false
@@ -208,8 +210,10 @@ export class ProfilePage extends React.Component<Properties, State> {
         passwordButtonEnabled = false;
       }
       let status;
-      if(this.state.isPasswordChanged || this.state.invalidPasswordError) {
+      if(this.state.isPasswordChanged) {
         status = '';
+      } else if (this.state.invalidPasswordMessage !== '') {
+        status = this.state.invalidPasswordMessage;
       } else {
         status = this.props.submitPasswordStatus;
       }
@@ -460,19 +464,20 @@ export class ProfilePage extends React.Component<Properties, State> {
   private onSubmitPassword() {
     if(this.state.password1 === this.state.password2) {
       this.props.onSubmitPassword(this.state.password1);
-      this.setState({invalidPasswordError: false});
+      this.setState({
+        invalidPasswordError: false,
+        invalidPasswordMessage: ''});
     } else {
       this.setState({
-        invalidPasswordError: true
-        });
-      console.log('Passwords do not match!');
+        invalidPasswordError: true,
+        invalidPasswordMessage: 'Passwords do not match'
+      });
     }
     this.setState({
       password1: '',
       password2: '',
       isPasswordChanged: false
     });
-    console.log('Passsword was submitted.');
   }
 
   private static readonly STYLE = {

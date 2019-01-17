@@ -39,9 +39,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
       }
     })();
     const errorStyle = (() => {
-      if(this.props.hasPasswordError
-          && this.props.password1 === ''
-          && this.props.submitPasswordStatus === '' ) {
+      if(this.props.hasPasswordError && this.props.password1 === '') {
         return ChangePasswordBox.DYNAMIC_STYLE.errorBoxState;
       } else {
         return null;

@@ -89,7 +89,7 @@ class TestApp extends React.Component<Properties, State> {
           </button>
           <button tabIndex={-1}
             onClick={this.setStatusToSuccessful}>
-            STATUS MESSAGES
+            SAVED FEEDBACK MESSAGES
           </button>
           <button tabIndex={-1}
             onClick={this.setStatusToError}>
@@ -167,7 +167,6 @@ class TestApp extends React.Component<Properties, State> {
 
   private passwordSubmit(newPassword: string) {
     this.setStatusToNull();
-    console.log('PASSWORD FAKE SERVER STUFF');
     if(this.state.testPasswordError) {
       this.setState({
         passwordStatusMessage: 'Password not saved',
@@ -175,12 +174,10 @@ class TestApp extends React.Component<Properties, State> {
       });
     } else {
       this.setState({
-        passwordStatusMessage: 'Password saved',
+        passwordStatusMessage: 'Saved',
         hasPasswordError: false
       });
     }
-    console.log('The new password is: ' + newPassword);
-    console.log('status message is' + this.state.passwordStatusMessage);
   }
 
   private profileSubmit() {
@@ -191,7 +188,7 @@ class TestApp extends React.Component<Properties, State> {
       });
     } else {
       this.setState({
-        statusMessage: 'Profile saved',
+        statusMessage: 'Saved',
         hasError: false
       });
     }
@@ -209,7 +206,6 @@ class TestApp extends React.Component<Properties, State> {
   private static readonly SOME_IMAGE = 'https://upload.wikimedia.org/' +
     'wikipedia/commons/thumb/2/23/Close_up_of_a_black_domestic_cat.jpg/' +
     '675px-Close_up_of_a_black_domestic_cat.jpg';
-  
 }
 
 const ResponsivePage = WebPortal.displaySizeRenderer(TestApp);
