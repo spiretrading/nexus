@@ -43,7 +43,6 @@ ChartView::ChartView(ChartValue::Type x_axis_type, ChartValue::Type y_axis_type,
     : QWidget(parent),
       m_x_axis_type(x_axis_type),
       m_y_axis_type(y_axis_type),
-      m_timestamp_format("%H:%M:%S"),
       m_label_font("Roboto"),
       m_font_metrics(QFont()),
       m_item_delegate(new CustomVariantItemDelegate(this)),
@@ -131,11 +130,12 @@ void ChartView::paintEvent(QPaintEvent* event) {
       painter.drawLine(m_x_origin, y, m_x_origin + scale_width(2), y);
       painter.drawText(m_x_origin + scale_width(3),
         y + (m_font_metrics.height() / 3),
-        get_axis_string(m_y_axis_type, y_value));
+        m_item_delegate->displayText(to_variant(m_y_axis_type, y_value),
+        QLocale()));
     }
   }
-  auto x_text_width = m_font_metrics.width(get_axis_string(m_x_axis_type,
-    m_top_left.m_x));
+  auto x_text_width = m_font_metrics.width(m_item_delegate->displayText(
+    to_variant(m_x_axis_type, m_top_left.m_x), QLocale()));
   auto x_value = m_bottom_right.m_x;
   while(x_value >= m_top_left.m_x) {
     x_value -= m_x_axis_step;
@@ -148,7 +148,8 @@ void ChartView::paintEvent(QPaintEvent* event) {
       painter.drawLine(x, m_y_origin, x, m_y_origin + scale_height(2));
       painter.drawText(x - x_text_width / 2,
         m_y_origin + m_font_metrics.height() + scale_height(2),
-        get_axis_string(m_x_axis_type, x_value));
+        m_item_delegate->displayText(to_variant(m_x_axis_type, x_value),
+        QLocale()));
     }
   }
   if(m_crosshair_pos) {
@@ -160,13 +161,15 @@ void ChartView::paintEvent(QPaintEvent* event) {
     painter.drawImage(m_crosshair_pos.value().x() -
       (CROSSHAIR_IMAGE().width() / 2), m_crosshair_pos.value().y() -
       (CROSSHAIR_IMAGE().height() / 2), CROSSHAIR_IMAGE());
-    painter.fillRect(m_crosshair_pos.value().x() - (scale_width(48) / 2),
-      m_y_origin, scale_width(48), scale_height(21), Qt::white);
-    painter.fillRect(m_crosshair_pos.value().x(), m_y_origin, scale_width(1),
-      scale_height(3), Qt::black);
     auto crosshair_value = convert_pixels_to_chart(m_crosshair_pos.value());
     auto x_label = m_item_delegate->displayText(to_variant(m_x_axis_type,
       crosshair_value.m_x), QLocale());
+    auto x_label_width = m_font_metrics.width(x_label);
+    painter.fillRect(m_crosshair_pos.value().x() - (x_label_width / 2) -
+      scale_width(5), m_y_origin, x_label_width + scale_width(10),
+      scale_height(21), Qt::white);
+    painter.fillRect(m_crosshair_pos.value().x(), m_y_origin, scale_width(1),
+      scale_height(3), Qt::black);
     auto text_width = m_font_metrics.width(x_label);
     painter.setPen(m_label_text_color);
     painter.drawText(m_crosshair_pos.value().x() - text_width / 2,
@@ -200,31 +203,16 @@ ChartValue ChartView::calculate_step(ChartValue::Type value_type,
   } else if(value_type == ChartValue::Type::TIMESTAMP) {
     auto time_range = static_cast<time_duration>(range);
     if(time_range <= minutes(1)) {
-      m_timestamp_format = "%H:%M:%S";
       return ChartValue(seconds(1));
     } else if(time_range <= hours(1)) {
-      m_timestamp_format = "%H:%M";
       return ChartValue(minutes(1));
     } else if(time_range <= hours(24)) {
-      m_timestamp_format = "%H";
       return ChartValue(hours(1));
     } else {
-      m_timestamp_format = "%H";
       return ChartValue(hours(24));
     }
   }
   return ChartValue();
-}
-
-QString ChartView::get_axis_string(ChartValue::Type type,
-    ChartValue value) const {
-  if(type == ChartValue::Type::DURATION || type == ChartValue::Type::MONEY ||
-      type == ChartValue::Type::QUANTITY) {
-    return m_item_delegate->displayText(to_variant(type, value), QLocale());
-  } else if(type == ChartValue::Type::TIMESTAMP) {
-    return get_timestamp(value, m_timestamp_format);
-  }
-  return QString();
 }
 
 QString ChartView::get_timestamp(ChartValue value,
