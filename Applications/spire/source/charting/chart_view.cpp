@@ -18,6 +18,7 @@ namespace {
     return image;
   }
 
+  const auto PAN_MULTIPLIER = 100;
 
   QVariant to_variant(ChartValue::Type type, ChartValue value) {
     if(type == ChartValue::Type::DURATION) {
@@ -47,7 +48,8 @@ ChartView::ChartView(ChartValue::Type x_axis_type, ChartValue::Type y_axis_type,
       m_font_metrics(QFont()),
       m_item_delegate(new CustomVariantItemDelegate(this)),
       m_dashed_line_pen(Qt::white, scale_width(1), Qt::CustomDashLine),
-      m_label_text_color(QColor("#25212E")) {
+      m_label_text_color(QColor("#25212E")),
+      m_is_dragging(false) {
   setFocusPolicy(Qt::NoFocus);
   setMouseTracking(true);
   setAttribute(Qt::WA_Hover);
@@ -87,6 +89,16 @@ void ChartView::set_crosshair(const ChartPoint& position) {
 
 void ChartView::set_crosshair(const QPoint& position) {
   m_crosshair_pos = position;
+  if(m_is_dragging) {
+    auto chart_delta = convert_pixels_to_chart(position);
+    auto last_pos = convert_pixels_to_chart(m_last_mouse_pos);
+    m_top_left.m_x -= PAN_MULTIPLIER * (chart_delta.m_x - last_pos.m_x);
+    m_top_left.m_y -= PAN_MULTIPLIER * (chart_delta.m_y - last_pos.m_y);
+    m_bottom_right.m_x -= PAN_MULTIPLIER * (chart_delta.m_x - last_pos.m_x);
+    m_bottom_right.m_y -= PAN_MULTIPLIER * (chart_delta.m_y - last_pos.m_y);
+    set_region(m_top_left, m_bottom_right);
+    m_last_mouse_pos = position;
+  }
   update();
 }
 
@@ -103,6 +115,20 @@ void ChartView::set_region(const ChartPoint& top_left,
   m_y_range = m_top_left.m_y - m_bottom_right.m_y;
   m_y_axis_step = calculate_step(m_y_axis_type, m_y_range);
   update();
+}
+
+void ChartView::mouse_click(QMouseEvent* event) {
+  if(m_is_dragging || event->button() != Qt::LeftButton) {
+    return;
+  }
+  m_is_dragging = true;
+  m_last_mouse_pos = event->pos();
+}
+
+void ChartView::mouse_release(QMouseEvent* event) {
+  if(event->button() == Qt::LeftButton) {
+    m_is_dragging = false;
+  }
 }
 
 void ChartView::paintEvent(QPaintEvent* event) {
