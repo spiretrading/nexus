@@ -25,6 +25,8 @@ interface State {
   comment: string;
   isPasswordSubmitEnabled: boolean;
   hasPasswordError: boolean;
+  testProfileError: boolean;
+  testPasswordError: boolean;
 }
 
 /**  Displays a testing application. */
@@ -47,14 +49,17 @@ class TestApp extends React.Component<Properties, State> {
       readOnly: false,
       comment: '',
       isPasswordSubmitEnabled: false,
-      hasPasswordError: false
+      hasPasswordError: false,
+      testProfileError: false,
+      testPasswordError: false
     };
     this.setStatusToError = this.setStatusToError.bind(this);
     this.setStatusToNull = this.setStatusToNull.bind(this);
     this.setStatusToSuccessful = this.setStatusToSuccessful.bind(this);
     this.togglePasswordVisibility = this.togglePasswordVisibility.bind(this);
     this.toggleReadonlyOfForm = this.toggleReadonlyOfForm.bind(this);
-    this.onPasswordSubmit = this.onPasswordSubmit.bind(this);
+    this.passwordSubmit = this.passwordSubmit.bind(this);
+    this.profileSubmit = this.profileSubmit.bind(this);
   }
 
   public render(): JSX.Element {
@@ -69,13 +74,14 @@ class TestApp extends React.Component<Properties, State> {
           displaySize={this.props.displaySize}
           readonly={this.state.readOnly}
           isSubmitEnabled={true}
+          onSubmit={this.profileSubmit}
           submitStatus={this.state.statusMessage}
           hasError={this.state.hasError}
           hasPassword={this.state.hasPassword}
           isPasswordSubmitEnabled={true}
           submitPasswordStatus={this.state.passwordStatusMessage}
           hasPasswordError={this.state.hasPasswordError}
-          onSubmitPassword={this.onPasswordSubmit}/>
+          onSubmitPassword={this.passwordSubmit}/>
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
             onClick={this.setStatusToNull}>
@@ -134,17 +140,15 @@ class TestApp extends React.Component<Properties, State> {
 
   private setStatusToError() {
     this.setState({
-      statusMessage: 'Error!',
-      passwordStatusMessage: 'Error!',
-      hasError: true
+      testPasswordError: true,
+      testProfileError: true
     });
   }
 
   private setStatusToSuccessful() {
     this.setState({
-      statusMessage: 'Saved',
-      passwordStatusMessage: 'Saved',
-      hasError: false
+      testPasswordError: false,
+      testProfileError: false
     });
   }
 
@@ -161,21 +165,37 @@ class TestApp extends React.Component<Properties, State> {
     });
   }
 
-  private onPasswordSubmit(newPassword: string) {
+  private passwordSubmit(newPassword: string) {
+    this.setStatusToNull();
     console.log('PASSWORD FAKE SERVER STUFF');
-    if(Math.random() % 2 ) {
+    if(this.state.testPasswordError) {
       this.setState({
-        passwordStatusMessage: 'Password now saved',
+        passwordStatusMessage: 'Password not saved',
         hasPasswordError: true
       });
     } else {
       this.setState({
-        passwordStatusMessage: 'Password Saved',
-        hasPasswordError: true
+        passwordStatusMessage: 'Password saved',
+        hasPasswordError: false
       });
     }
     console.log('The new password is: ' + newPassword);
     console.log('status message is' + this.state.passwordStatusMessage);
+  }
+
+  private profileSubmit() {
+    this.setStatusToNull();
+    if(this.state.testProfileError) {
+      this.setState({
+        statusMessage: 'Profile not saved',
+        hasError: true
+      });
+    } else {
+      this.setState({
+        statusMessage: 'Profile saved',
+        hasError: false
+      });
+    }
   }
 
   private static STYLE = {
@@ -190,6 +210,7 @@ class TestApp extends React.Component<Properties, State> {
   private static readonly SOME_IMAGE = 'https://upload.wikimedia.org/' +
     'wikipedia/commons/thumb/2/23/Close_up_of_a_black_domestic_cat.jpg/' +
     '675px-Close_up_of_a_black_domestic_cat.jpg';
+  
 }
 
 const ResponsivePage = WebPortal.displaySizeRenderer(TestApp);

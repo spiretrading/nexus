@@ -97,6 +97,7 @@ export class ProfilePage extends React.Component<Properties, State> {
       this.onCheckPasswordFieldChange.bind(this);
     this.onPasswordFieldChange = this.onPasswordFieldChange.bind(this);
     this.onSubmitPassword = this.onSubmitPassword.bind(this);
+    this.onSubmitProfile = this.onSubmitProfile.bind(this);
   }
 
   public render(): JSX.Element {
@@ -384,7 +385,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <SubmitButton label='Save Changes'
                   displaySize={this.props.displaySize}
                   isSubmitEnabled={this.state.submitButtonEnabled}
-                  onClick={this.props.onSubmit}/>
+                  onClick={this.onSubmitProfile}/>
                 <div style={statusMessageFooter}>
                   <div style={ProfilePage.STYLE.smallPadding}/>
                   {this.props.submitStatus}
@@ -403,10 +404,14 @@ export class ProfilePage extends React.Component<Properties, State> {
     const testIdentity = this.state.newIdentity;
     testIdentity.userNotes = newComment;
     this.setState({newIdentity: testIdentity});
+    let profileChanged;
     if(this.state.newIdentity.userNotes === this.props.identity.userNotes) {
-      this.setState({submitButtonEnabled: false});
+      profileChanged = false;
     } else {
-      this.setState({submitButtonEnabled: true});
+      profileChanged = true;
+    }
+    if(this.state.submitButtonEnabled !== profileChanged) {
+      this.setState({submitButtonEnabled: profileChanged});
     }
   }
 
@@ -424,12 +429,18 @@ export class ProfilePage extends React.Component<Properties, State> {
     }
   }
 
+  private onSubmitProfile() {
+    this.props.onSubmit();
+    if(this.props.hasError) {
+      this.setState({submitButtonEnabled: true});
+    } else {
+      this.setState({submitButtonEnabled: false});
+    }
+  }
+
   private onSubmitPassword() {
     if(this.state.password1 === '') {
       console.log('No password');
-      this.setState({
-        passwordError: true
-      });
     } else if(this.state.password1 === this.state.password2) {
       console.log('Passwords match!');
       this.props.onSubmitPassword(this.state.password1);
