@@ -62,6 +62,7 @@ interface State {
   password1: string;
   password2: string;
   invalidPasswordError: boolean;
+  isPasswordChanged: boolean;
   newIdentity: Nexus.AccountIdentity;
   isProfileChanged: boolean;
 }
@@ -88,7 +89,8 @@ export class ProfilePage extends React.Component<Properties, State> {
       password2: '',
       invalidPasswordError: false,
       newIdentity: this.props.identity.clone(),
-      isProfileChanged: false
+      isProfileChanged: false,
+      isPasswordChanged: false
     };
     this.onCommentChange = this.onCommentChange.bind(this);
     this.onCheckPasswordFieldChange =
@@ -205,6 +207,12 @@ export class ProfilePage extends React.Component<Properties, State> {
       } else {
         passwordButtonEnabled = false;
       }
+      let status;
+      if(this.state.isPasswordChanged || this.state.invalidPasswordError) {
+        status = '';
+      } else {
+        status = this.props.submitPasswordStatus;
+      }
       if(this.props.hasPassword) {
         return (
           <Dali.VBoxLayout>
@@ -214,7 +222,7 @@ export class ProfilePage extends React.Component<Properties, State> {
             <ChangePasswordBox displaySize={this.props.displaySize}
               hasPasswordError=
                 {this.props.hasPasswordError || this.state.invalidPasswordError}
-              submitPasswordStatus={this.props.submitPasswordStatus}
+              submitPasswordStatus={status}
               isPasswordSubmitEnabled={passwordButtonEnabled}
               onSubmitPassword={this.onSubmitPassword}
               password1={this.state.password1}
@@ -434,7 +442,10 @@ export class ProfilePage extends React.Component<Properties, State> {
   }
 
   private onPasswordFieldChange(testPassword: string) {
-    this.setState({password1: testPassword});
+    this.setState({
+      password1: testPassword,
+      isPasswordChanged: true
+    });
   }
 
   private onCheckPasswordFieldChange(testConfirmPassword: string) {
@@ -451,12 +462,15 @@ export class ProfilePage extends React.Component<Properties, State> {
       this.props.onSubmitPassword(this.state.password1);
       this.setState({invalidPasswordError: false});
     } else {
-      this.setState({invalidPasswordError: true});
+      this.setState({
+        invalidPasswordError: true
+        });
       console.log('Passwords do not match!');
     }
     this.setState({
       password1: '',
-      password2: ''
+      password2: '',
+      isPasswordChanged: false
     });
     console.log('Passsword was submitted.');
   }
