@@ -80,8 +80,6 @@ namespace Spire {
       QPen m_label_text_color;
 
       ChartValue calculate_step(ChartValue::Type value_type, ChartValue range);
-      QString get_timestamp(ChartValue value,
-        const std::string& timestamp_format) const;
   };
 }
 

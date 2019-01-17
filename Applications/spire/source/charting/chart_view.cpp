@@ -214,13 +214,3 @@ ChartValue ChartView::calculate_step(ChartValue::Type value_type,
   }
   return ChartValue();
 }
-
-QString ChartView::get_timestamp(ChartValue value,
-    const std::string& timestamp_format) const {
-  // TODO: convert from ptime to QTime
-  std::ostringstream ss;
-  ss.imbue(std::locale(std::cout.getloc(),
-    new boost::posix_time::time_facet(timestamp_format.c_str())));
-  ss << static_cast<ptime>(value);
-  return QString::fromStdString(ss.str());
-}
