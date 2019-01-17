@@ -62,6 +62,7 @@ interface State {
   password1: string;
   password2: string;
   newIdentity: Nexus.AccountIdentity;
+  isProfileChanged: boolean;
 }
 
 /** Displays an account's profile page. */
@@ -84,7 +85,8 @@ export class ProfilePage extends React.Component<Properties, State> {
     this.state = {
       password1: '',
       password2: '',
-      newIdentity: this.props.identity.clone()
+      newIdentity: this.props.identity.clone(),
+      isProfileChanged: false
     };
     this.onCommentChange = this.onCommentChange.bind(this);
     this.onCheckPasswordFieldChange =
@@ -386,7 +388,8 @@ export class ProfilePage extends React.Component<Properties, State> {
                 </div>
                 <SubmitButton label='Save Changes'
                   displaySize={this.props.displaySize}
-                  isSubmitEnabled={this.props.isSubmitEnabled}
+                  isSubmitEnabled=
+                    {this.props.isSubmitEnabled && this.state.isProfileChanged}
                   onClick={this.onSubmitProfile}/>
                 <div style={statusMessageFooter}>
                   <div style={ProfilePage.STYLE.smallPadding}/>
@@ -405,7 +408,17 @@ export class ProfilePage extends React.Component<Properties, State> {
   private onCommentChange(newComment: string) {
     const testIdentity = this.state.newIdentity;
     testIdentity.userNotes = newComment;
-    this.setState({newIdentity: testIdentity});
+    if(testIdentity.userNotes !== this.props.identity.userNotes) {
+      this.setState({
+        newIdentity: testIdentity,
+        isProfileChanged: true
+      });
+    } else {
+      this.setState({
+        newIdentity: testIdentity,
+        isProfileChanged: false
+      });
+    }
   }
 
   private onPasswordFieldChange(testPassword: string) {
