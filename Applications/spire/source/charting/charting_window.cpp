@@ -148,6 +148,9 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
     } else if(event->type() == QEvent::MouseButtonRelease) {
       auto e = static_cast<QMouseEvent*>(event);
       m_chart->mouse_release(e);
+    } else if(event->type() == QEvent::Wheel) {
+      auto e = static_cast<QWheelEvent*>(event);
+      m_chart->mouse_wheel(e);
     } else if(event->type() == QEvent::HoverLeave) {
       m_chart->reset_crosshair();
     }

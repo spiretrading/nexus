@@ -62,6 +62,12 @@ namespace Spire {
       */
       void mouse_release(QMouseEvent* event);
 
+      //! Passes mouse wheel events to this view.
+      /*
+        \param event The wheel event.
+      */
+      void mouse_wheel(QWheelEvent* event);
+
       //! Sets the visible region of the chart to display.
       /*!
         \param top_left The top left point to display.

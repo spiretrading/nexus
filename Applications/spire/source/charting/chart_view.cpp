@@ -19,6 +19,7 @@ namespace {
   }
 
   const auto PAN_MULTIPLIER = 100;
+  const auto SCROLL_DIVISOR = 100.0;
 
   QVariant to_variant(ChartValue::Type type, ChartValue value) {
     if(type == ChartValue::Type::DURATION) {
@@ -129,6 +130,15 @@ void ChartView::mouse_release(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     m_is_dragging = false;
   }
+}
+
+void ChartView::mouse_wheel(QWheelEvent* event) {
+  auto angle = event->angleDelta().y() / SCROLL_DIVISOR;
+  m_top_left.m_x += angle * (m_bottom_right.m_x - m_top_left.m_x);
+  m_top_left.m_y -= angle * (m_top_left.m_y - m_bottom_right.m_y);
+  m_bottom_right.m_x -= angle * (m_bottom_right.m_x - m_top_left.m_x);
+  m_bottom_right.m_y += angle * (m_top_left.m_y - m_bottom_right.m_y);
+  update();
 }
 
 void ChartView::paintEvent(QPaintEvent* event) {
