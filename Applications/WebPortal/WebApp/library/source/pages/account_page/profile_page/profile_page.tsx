@@ -234,7 +234,8 @@ export class ProfilePage extends React.Component<Properties, State> {
       }
     })();
     const profileSubmitSatus = (() => {
-      if(this.state.isProfileChanged) {
+      if(this.state.isProfileChanged ||
+        (this.props.identity === this.state.newIdentity)) {
         return null;
       } else {
         return this.props.submitStatus;
@@ -417,17 +418,17 @@ export class ProfilePage extends React.Component<Properties, State> {
   }
 
   private onCommentChange(newComment: string) {
-    const testIdentity = this.state.newIdentity;
+    const testIdentity = this.state.newIdentity.clone();
     testIdentity.userNotes = newComment;
-    if(testIdentity.userNotes !== this.props.identity.userNotes) {
+    if(this.props.identity.userNotes === testIdentity.userNotes) {
       this.setState({
-        newIdentity: testIdentity,
-        isProfileChanged: true
-      });
+          newIdentity: this.props.identity,
+          isProfileChanged: false
+        });
     } else {
       this.setState({
         newIdentity: testIdentity,
-        isProfileChanged: false
+        isProfileChanged: true
       });
     }
   }
