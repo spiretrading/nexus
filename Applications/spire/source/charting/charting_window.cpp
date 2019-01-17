@@ -121,9 +121,10 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   setTabOrder(auto_scale_button, draw_line_button);
   setTabOrder(draw_line_button, m_period_line_edit);
   m_security_widget->setFocus();
-  auto chart = new ChartView(ChartValue::Type::TIMESTAMP,
+  m_chart = new ChartView(ChartValue::Type::TIMESTAMP,
     ChartValue::Type::MONEY, this);
-  m_security_widget->set_widget(chart);
+  m_security_widget->set_widget(m_chart);
+  m_chart->installEventFilter(this);
 }
 
 connection ChartingWindow::connect_security_change_signal(
@@ -137,7 +138,14 @@ connection ChartingWindow::connect_closed_signal(
 }
 
 bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
-  if(object == m_body) {
+  if(object == m_chart) {
+    if(event->type() == QEvent::MouseMove) {
+      auto e = static_cast<QMouseEvent*>(event);
+      m_chart->set_crosshair(e->pos());
+    } else if(event->type() == QEvent::HoverLeave) {
+      m_chart->reset_crosshair();
+    }
+  } else if(object == m_body) {
     if(event->type() == QEvent::MouseButtonPress) {
       m_body->setFocus();
     }

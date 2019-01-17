@@ -1,5 +1,6 @@
 #ifndef SPIRE_CHART_VIEW_HPP
 #define SPIRE_CHART_VIEW_HPP
+#include <QPen>
 #include <QWidget>
 #include "spire/charting/charting.hpp"
 #include "spire/charting/chart_point.hpp"
@@ -65,12 +66,20 @@ namespace Spire {
       ChartValue::Type m_y_axis_type;
       ChartPoint m_top_left;
       ChartPoint m_bottom_right;
+      int m_x_origin;
+      int m_y_origin;
+      ChartValue m_x_axis_step;
+      ChartValue m_x_range;
+      ChartValue m_y_axis_step;
+      ChartValue m_y_range;
       QFont m_label_font;
-      std::string m_timestamp_format;
+      QFontMetrics m_font_metrics;
       CustomVariantItemDelegate* m_item_delegate;
+      std::optional<QPoint> m_crosshair_pos;
+      QPen m_dashed_line_pen;
+      QPen m_label_text_color;
 
       ChartValue calculate_step(ChartValue::Type value_type, ChartValue range);
-      QString get_string(ChartValue::Type type, ChartValue value) const;
   };
 }
 
