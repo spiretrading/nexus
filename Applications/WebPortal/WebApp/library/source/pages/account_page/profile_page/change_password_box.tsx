@@ -163,7 +163,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
     },
     headerStyler: {
       color: '#4B23A0',
-      font: '500 14px Roboto',
+      font: '400 14px Roboto',
       width: '100%'
     },
     errorMessage: {
@@ -225,10 +225,11 @@ export class ChangePasswordBox extends React.Component<Properties> {
       border: '1px solid #C8C8C8',
       backgroundColor: '#FFFFFF',
       color: '#000000',
-      font: '300 16px Roboto',
+      font: '400 14px Roboto',
       outline: 0,
-      textAlign: 'center',
       borderRadius: 1,
+      paddingLeft: '10px',
+      textAlign: 'start' as 'start',
       ':active': {
         border: '1px solid #684BC7'
       },
@@ -272,9 +273,10 @@ export class ChangePasswordBox extends React.Component<Properties> {
       border: '1px solid #C8C8C8',
       backgroundColor: '#FFFFFF',
       color: '#000000',
-      font: '300 16px Roboto',
+      font: '400 14px Roboto',
       outline: 0,
-      textAlign: 'center',
+      paddingLeft: '10px',
+      textAlign: 'start' as 'start',
       borderRadius: 1,
       ':active': {
         border: '1px solid #684BC7'

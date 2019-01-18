@@ -45,6 +45,7 @@ export class SubmitButton extends React.Component<Properties> {
       border: 'none',
       outline: 0,
       borderRadius: 1,
+      cursor: 'pointer'  as 'pointer',
       ':active': {
         backgroundColor: '#4B23A0'
       },
@@ -56,7 +57,8 @@ export class SubmitButton extends React.Component<Properties> {
       },
       ':disabled': {
         backgroundColor: '#F8F8F8',
-        color: '#8C8C8C'
+        color: '#8C8C8C',
+        cursor: 'default'  as 'default'
       }
     },
     buttonLarge: {
@@ -71,6 +73,7 @@ export class SubmitButton extends React.Component<Properties> {
       border: 'none',
       outline: 0,
       borderRadius: 1,
+      cursor: 'pointer'  as 'pointer',
       ':active': {
         backgroundColor: '#4B23A0'
       },
@@ -82,7 +85,8 @@ export class SubmitButton extends React.Component<Properties> {
       },
       ':disabled': {
         backgroundColor: '#F8F8F8',
-        color: '#8C8C8C'
+        color: '#8C8C8C',
+        cursor: 'default'  as 'default'
       }
     }
   });
