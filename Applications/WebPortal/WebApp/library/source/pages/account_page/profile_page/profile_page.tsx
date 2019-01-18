@@ -61,8 +61,8 @@ interface Properties {
 interface State {
   password1: string;
   password2: string;
-  invalidPasswordError: boolean;
-  invalidPasswordMessage: string;
+  hasLocalPasswordError: boolean;
+  localPasswordMessage: string;
   isPasswordChanged: boolean;
   newIdentity: Nexus.AccountIdentity;
   isProfileChanged: boolean;
@@ -88,16 +88,16 @@ export class ProfilePage extends React.Component<Properties, State> {
     this.state = {
       password1: '',
       password2: '',
-      invalidPasswordError: false,
-      invalidPasswordMessage: '',
+      isPasswordChanged: false,
+      hasLocalPasswordError: false,
+      localPasswordMessage: '',
       newIdentity: this.props.identity.clone(),
-      isProfileChanged: false,
-      isPasswordChanged: false
+      isProfileChanged: false
     };
     this.onCommentChange = this.onCommentChange.bind(this);
-    this.onCheckPasswordFieldChange =
-      this.onCheckPasswordFieldChange.bind(this);
-    this.onPasswordFieldChange = this.onPasswordFieldChange.bind(this);
+    this.onPassword2Change =
+      this.onPassword2Change.bind(this);
+    this.onPassword1Change = this.onPassword1Change.bind(this);
     this.onSubmitPassword = this.onSubmitPassword.bind(this);
     this.onSubmitProfile = this.onSubmitProfile.bind(this);
   }
@@ -212,8 +212,8 @@ export class ProfilePage extends React.Component<Properties, State> {
       let status;
       if(this.state.isPasswordChanged) {
         status = '';
-      } else if (this.state.invalidPasswordMessage !== '') {
-        status = this.state.invalidPasswordMessage;
+      } else if (this.state.localPasswordMessage !== '') {
+        status = this.state.localPasswordMessage;
       } else {
         status = this.props.submitPasswordStatus;
       }
@@ -224,15 +224,15 @@ export class ProfilePage extends React.Component<Properties, State> {
             <HLine color={ProfilePage.LINE_COLOR}/>
             <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
             <ChangePasswordBox displaySize={this.props.displaySize}
-              hasPasswordError=
-                {this.props.hasPasswordError || this.state.invalidPasswordError}
+              hasPasswordError={this.props.hasPasswordError ||
+                  this.state.hasLocalPasswordError}
               submitPasswordStatus={status}
               isPasswordSubmitEnabled={passwordButtonEnabled}
               onSubmitPassword={this.onSubmitPassword}
               password1={this.state.password1}
               password2={this.state.password2}
-              password1OnChange={this.onPasswordFieldChange}
-              password2OnChange={this.onCheckPasswordFieldChange}/>
+              onPassword1Change={this.onPassword1Change}
+              onPassword2Change={this.onPassword2Change}/>
           </Dali.VBoxLayout>);
       } else {
         return null;
@@ -445,15 +445,15 @@ export class ProfilePage extends React.Component<Properties, State> {
     }
   }
 
-  private onPasswordFieldChange(testPassword: string) {
+  private onPassword1Change(newPassword: string) {
     this.setState({
-      password1: testPassword,
+      password1: newPassword,
       isPasswordChanged: true
     });
   }
 
-  private onCheckPasswordFieldChange(testConfirmPassword: string) {
-    this.setState({password2: testConfirmPassword});
+  private onPassword2Change(newPassword: string) {
+    this.setState({password2: newPassword});
   }
 
   private onSubmitProfile() {
@@ -465,12 +465,12 @@ export class ProfilePage extends React.Component<Properties, State> {
     if(this.state.password1 === this.state.password2) {
       this.props.onSubmitPassword(this.state.password1);
       this.setState({
-        invalidPasswordError: false,
-        invalidPasswordMessage: ''});
+        hasLocalPasswordError: false,
+        localPasswordMessage: ''});
     } else {
       this.setState({
-        invalidPasswordError: true,
-        invalidPasswordMessage: 'Passwords do not match'
+        hasLocalPasswordError: true,
+        localPasswordMessage: 'Passwords do not match'
       });
     }
     this.setState({

@@ -21,10 +21,13 @@ interface Properties {
   /** Indicates the password has been updated. */
   onSubmitPassword: () => void;
 
-  password1?: string;
-  password2?: string;
-  password1OnChange?: (newValue: string) => void;
-  password2OnChange?: (newValue: string) => void;
+  /** */
+  password1: string;
+  password2: string;
+
+  /** */
+  onPassword1Change?: (newValue: string) => void;
+  onPassword2Change?: (newValue: string) => void;
 }
 
 /** Displays a box that allows the user to submit a new password. */
@@ -125,7 +128,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
             onBlur={() =>
               this.passwordInputField.placeholder = 'New Password'}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-              this.props.password1OnChange(event.target.value)}
+              this.props.onPassword1Change(event.target.value)}
             ref={(ref) => this.passwordInputField = ref}/>
           <div style={ChangePasswordBox.STYLE.passwordPadding}/>
           <input type='password' placeholder='Confirm New Password'
@@ -134,7 +137,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
             autoComplete='off'
             className={css(inputBoxStyle, errorStyle)}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-              this.props.password2OnChange(event.target.value)}
+              this.props.onPassword2Change(event.target.value)}
             onFocus={() => this.confirmPasswordInputField.placeholder = ''}
             onBlur={() =>
               this.confirmPasswordInputField.placeholder
