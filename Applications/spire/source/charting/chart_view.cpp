@@ -19,7 +19,7 @@ namespace {
   }
 
   const auto PAN_MULTIPLIER = 100;
-  const auto SCROLL_DIVISOR = 100.0;
+  const auto SCROLL_DIVISOR = 90.0;
 
   QVariant to_variant(ChartValue::Type type, ChartValue value) {
     if(type == ChartValue::Type::DURATION) {
@@ -134,11 +134,15 @@ void ChartView::mouse_release(QMouseEvent* event) {
 
 void ChartView::mouse_wheel(QWheelEvent* event) {
   auto angle = event->angleDelta().y() / SCROLL_DIVISOR;
-  m_top_left.m_x += angle * (m_bottom_right.m_x - m_top_left.m_x);
-  m_top_left.m_y -= angle * (m_top_left.m_y - m_bottom_right.m_y);
-  m_bottom_right.m_x -= angle * (m_bottom_right.m_x - m_top_left.m_x);
-  m_bottom_right.m_y += angle * (m_top_left.m_y - m_bottom_right.m_y);
-  update();
+  // call set_region() instead of updating the values here
+  if(angle < 0) {
+    angle = std::abs(angle);
+    m_top_left.m_y = angle * m_top_left.m_y;
+    m_bottom_right.m_y = angle * m_bottom_right.m_y;
+  } else {
+    m_top_left.m_y = m_top_left.m_y / angle;
+    m_bottom_right.m_y = m_bottom_right.m_y / angle;
+  }
 }
 
 void ChartView::paintEvent(QPaintEvent* event) {
