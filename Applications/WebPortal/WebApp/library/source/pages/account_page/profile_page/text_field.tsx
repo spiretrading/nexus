@@ -213,10 +213,12 @@ export class TextField extends React.Component<Properties, State> {
         display: 'none' as 'none'
       },
       ':-moz-read-only': {
-        cursor: 'default' as 'default'
+        color: 'transparent',
+        textShadow: '0 0 0 #000000'
       },
       ':read-only': {
-        cursor: 'default' as 'default'
+        color: 'transparent',
+        textShadow: '0 0 0 #000000'
       }
     },
     largerText: {
@@ -238,10 +240,12 @@ export class TextField extends React.Component<Properties, State> {
         display: 'none' as 'none'
       },
       ':-moz-read-only': {
-        cursor: 'default' as 'default'
+        color: 'transparent',
+        textShadow: '0 0 0 #000000'
       },
       ':read-only': {
-        cursor: 'default' as 'default'
+        color: 'transparent',
+        textShadow: '0 0 0 #000000'
       }
     }
   });
