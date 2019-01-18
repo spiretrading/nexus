@@ -21,12 +21,16 @@ interface Properties {
   /** Indicates the password has been updated. */
   onSubmitPassword: () => void;
 
-  /** */
+  /** The value of the first password input field. */
   password1: string;
+
+  /** The value of the second password input field. */
   password2: string;
 
-  /** */
+  /** Indicates the first password field has been changed. */
   onPassword1Change?: (newValue: string) => void;
+
+  /** Indicates the second password field has been changed. */
   onPassword2Change?: (newValue: string) => void;
 }
 
