@@ -71,11 +71,12 @@ export class TextField extends React.Component<Properties, State> {
         return TextField.STYLE.text;
       }
     })();
-    const imageStyle = (() => {
-      if(this.state.effects === Effects.HOVER) {
-        return TextField.STYLE.image;
+    const image = (() => {
+      if(this.state.effects === Effects.HOVER && !this.props.disabled) {
+        return <img src={'resources/account_page/edit.svg'}
+          className={css(TextField.STYLE.image)}/>;
       } else {
-        return TextField.STYLE.hidden;
+        return null;
       }
     })();
     const tabIndexValue = (() => {
@@ -98,8 +99,7 @@ export class TextField extends React.Component<Properties, State> {
             this.props.onInput(event.target.value);
           }}
           className={css(textStyle)}/>
-        <img src={'resources/account_page/edit.svg'}
-          className={css(imageStyle)}/>
+          {image}
       </div>);
   }
 
@@ -138,6 +138,7 @@ export class TextField extends React.Component<Properties, State> {
   private static STYLE = StyleSheet.create({
     box: {
       boxSizing: 'border-box' as 'border-box',
+      width: '100%',
       height: '34px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
@@ -155,6 +156,7 @@ export class TextField extends React.Component<Properties, State> {
     },
     hoveredBox: {
       boxSizing: 'border-box' as 'border-box',
+      width: '100%',
       height: '34px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
@@ -166,6 +168,7 @@ export class TextField extends React.Component<Properties, State> {
     },
     focusedBox: {
       boxSizing: 'border-box' as 'border-box',
+      width: '100%',
       height: '34px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
@@ -179,15 +182,19 @@ export class TextField extends React.Component<Properties, State> {
       visibility: 'visible' as 'visible',
       height: '14px',
       width: '14px',
-      paddingRight: '10px'
+      paddingRight: '10px',
+      flex: '0, 0, auto'
     },
     hidden: {
       opacity: 0,
+      visibility: 'hidden' as 'hidden',
+      display: 'none' as 'none',
       height: '14px',
       width: '14px',
       paddingRight: '10px'
     },
     text: {
+      flexGrow: 1,
       font: '400 14px Roboto',
       color: '#000000',
       whiteSpace: 'nowrap',

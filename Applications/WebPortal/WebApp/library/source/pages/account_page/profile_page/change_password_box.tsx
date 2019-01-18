@@ -147,8 +147,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
           <SubmitButton label='Save Password'
             displaySize={this.props.displaySize}
             isSubmitEnabled={this.props.isPasswordSubmitEnabled}
-            onClick={() =>
-              this.props.onSubmitPassword()}/>
+            onClick={() => this.props.onSubmitPassword()}/>
         </div>
         <div style={messageUnderneath}>
           <div style={ChangePasswordBox.STYLE.smallPadding}/>

@@ -51,6 +51,9 @@ export class SubmitButton extends React.Component<Properties> {
       ':focus' : {
         backgroundColor: '#4B23A0'
       },
+      ':hover' : {
+        backgroundColor: '#4B23A0'
+      },
       ':disabled': {
         backgroundColor: '#F8F8F8',
         color: '#8C8C8C'
@@ -72,6 +75,9 @@ export class SubmitButton extends React.Component<Properties> {
         backgroundColor: '#4B23A0'
       },
       ':focus' : {
+        backgroundColor: '#4B23A0'
+      },
+      ':hover' : {
         backgroundColor: '#4B23A0'
       },
       ':disabled': {

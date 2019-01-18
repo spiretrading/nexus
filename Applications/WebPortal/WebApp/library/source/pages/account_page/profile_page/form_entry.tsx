@@ -61,7 +61,7 @@ export class FormEntry extends React.Component<Properties> {
               {this.props.name}
             </div>
             <Padding size={paddingSize}/>
-            <div>{this.props.children}</div>
+            <div style={FormEntry.STYLE.childBox}>{this.props.children}</div>
           </HBoxLayout>);
       } else {
         return (
@@ -84,7 +84,8 @@ export class FormEntry extends React.Component<Properties> {
       width: '100%'
     },
     childBox: {
-      width: '100%'
+      width: '100%',
+      flex: '1 0 auto'
     },
     horizontalHeader: {
       height: '34px',

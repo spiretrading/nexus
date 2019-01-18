@@ -88,18 +88,17 @@ export class ProfilePage extends React.Component<Properties, State> {
     this.state = {
       password1: '',
       password2: '',
-      isPasswordChanged: false,
       hasLocalPasswordError: false,
       localPasswordMessage: '',
+      isPasswordChanged: false,
       newIdentity: this.props.identity.clone(),
       isProfileChanged: false
     };
     this.onCommentChange = this.onCommentChange.bind(this);
-    this.onPassword2Change =
-      this.onPassword2Change.bind(this);
-    this.onPassword1Change = this.onPassword1Change.bind(this);
-    this.onSubmitPassword = this.onSubmitPassword.bind(this);
     this.onSubmitProfile = this.onSubmitProfile.bind(this);
+    this.onPassword1Change = this.onPassword1Change.bind(this);
+    this.onPassword2Change = this.onPassword2Change.bind(this);
+    this.onSubmitPassword = this.onSubmitPassword.bind(this);
   }
 
   public render(): JSX.Element {
@@ -144,7 +143,7 @@ export class ProfilePage extends React.Component<Properties, State> {
               displayMode={PhotoFieldDisplayMode.DISPLAY}
               imageSource={this.props.identity.photoId}
               scaling={1}/>
-            <Dali.Padding size='30px'/>
+            <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
           </Dali.VBoxLayout>);
       } else {
         return null;
@@ -191,7 +190,7 @@ export class ProfilePage extends React.Component<Properties, State> {
       if(this.props.displaySize === DisplaySize.SMALL) {
         if(this.props.hasError) {
           return ProfilePage.STYLE.errorMessage;
-        } else if (this.props.submitStatus) {
+        } else if(this.props.submitStatus) {
           return ProfilePage.STYLE.statusMessage;
         } else {
           return ProfilePage.STYLE.hidden;
@@ -212,7 +211,7 @@ export class ProfilePage extends React.Component<Properties, State> {
       let status;
       if(this.state.isPasswordChanged) {
         status = '';
-      } else if (this.state.localPasswordMessage !== '') {
+      } else if(this.state.localPasswordMessage !== '') {
         status = this.state.localPasswordMessage;
       } else {
         status = this.props.submitPasswordStatus;
@@ -225,7 +224,7 @@ export class ProfilePage extends React.Component<Properties, State> {
             <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
             <ChangePasswordBox displaySize={this.props.displaySize}
               hasPasswordError={this.props.hasPasswordError ||
-                  this.state.hasLocalPasswordError}
+                this.state.hasLocalPasswordError}
               submitPasswordStatus={status}
               isPasswordSubmitEnabled={passwordButtonEnabled}
               onSubmitPassword={this.onSubmitPassword}

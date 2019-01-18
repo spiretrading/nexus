@@ -16,14 +16,13 @@ interface State {
   identity: Nexus.AccountIdentity;
   statusMessage: string;
   passwordStatusMessage: string;
-  hasError: boolean;
   account: Beam.DirectoryEntry;
   group: Beam.DirectoryEntry;
   countryDatabase: Nexus.CountryDatabase;
   hasPassword: boolean;
   readOnly: boolean;
-  comment: string;
   isPasswordSubmitEnabled: boolean;
+  hasError: boolean;
   hasPasswordError: boolean;
   testProfileError: boolean;
   testPasswordError: boolean;
@@ -47,7 +46,6 @@ class TestApp extends React.Component<Properties, State> {
       countryDatabase: Nexus.buildDefaultCountryDatabase(),
       hasPassword: true,
       readOnly: false,
-      comment: '',
       isPasswordSubmitEnabled: false,
       hasPasswordError: false,
       testProfileError: false,
@@ -120,7 +118,7 @@ class TestApp extends React.Component<Properties, State> {
     testIdentity.country = Nexus.DefaultCountries.AU;
     testIdentity.city = 'Hobbiton';
     testIdentity.addressLineOne = '56 Bag End';
-    testIdentity.userNotes = this.state.comment;
+    testIdentity.userNotes = '';
     testIdentity.emailAddress = 'frodo@bagend.nz';
     testIdentity.registrationTime = new Beam.DateTime(
       new Beam.Date(2017, Beam.Date.Month.DECEMBER, 21),
@@ -166,7 +164,6 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   private passwordSubmit(newPassword: string) {
-    this.setStatusToNull();
     if(this.state.testPasswordError) {
       this.setState({
         passwordStatusMessage: 'Password not saved',
