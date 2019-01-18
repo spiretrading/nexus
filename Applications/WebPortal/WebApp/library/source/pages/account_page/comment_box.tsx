@@ -36,7 +36,7 @@ export class CommentBox extends React.Component<Properties> {
   private static STYLE = StyleSheet.create({
     submissionBox: {
       boxSizing: 'border-box',
-      fontFamily: 'Roboto',
+      font: '400 14px Roboto',
       width: '100%',
       height: '150px',
       border: '1px solid #C8C8C8',
