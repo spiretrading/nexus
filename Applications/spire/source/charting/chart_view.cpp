@@ -19,7 +19,7 @@ namespace {
   }
 
   const auto PAN_MULTIPLIER = 100;
-  const auto SCROLL_DIVISOR = 90.0;
+  const auto ZOOM_PERCENT = 1.1;
 
   QVariant to_variant(ChartValue::Type type, ChartValue value) {
     if(type == ChartValue::Type::DURATION) {
@@ -133,16 +133,20 @@ void ChartView::mouse_release(QMouseEvent* event) {
 }
 
 void ChartView::mouse_wheel(QWheelEvent* event) {
-  auto angle = event->angleDelta().y() / SCROLL_DIVISOR;
-  // call set_region() instead of updating the values here
-  if(angle < 0) {
-    angle = std::abs(angle);
-    m_top_left.m_y = angle * m_top_left.m_y;
-    m_bottom_right.m_y = angle * m_bottom_right.m_y;
-  } else {
-    m_top_left.m_y = m_top_left.m_y / angle;
-    m_bottom_right.m_y = m_bottom_right.m_y / angle;
-  }
+  auto old_height = m_top_left.m_y - m_bottom_right.m_y;
+  auto old_width = m_bottom_right.m_x - m_top_left.m_x;
+  auto [new_width, new_height] = [&] {
+    if(event->angleDelta().y() < 0) {
+      return std::make_tuple(ZOOM_PERCENT * old_width,
+        ZOOM_PERCENT * old_height);
+    }
+    return std::make_tuple(old_width / ZOOM_PERCENT,
+      old_height / ZOOM_PERCENT);
+  }();
+  auto width_change = (new_width - old_width) / 2;
+  auto height_change = (new_height - old_height) / 2;
+  set_region({m_top_left.m_x + width_change, m_top_left.m_y + height_change},
+    {m_bottom_right.m_x - width_change, m_bottom_right.m_y - height_change});
 }
 
 void ChartView::paintEvent(QPaintEvent* event) {
