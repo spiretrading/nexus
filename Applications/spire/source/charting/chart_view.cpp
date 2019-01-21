@@ -18,7 +18,6 @@ namespace {
     return image;
   }
 
-  const auto PAN_MULTIPLIER = 100;
   const auto ZOOM_PERCENT = 1.1;
 
   QVariant to_variant(ChartValue::Type type, ChartValue value) {
@@ -93,10 +92,10 @@ void ChartView::set_crosshair(const QPoint& position) {
   if(m_is_dragging) {
     auto chart_delta = convert_pixels_to_chart(position);
     auto last_pos = convert_pixels_to_chart(m_last_mouse_pos);
-    m_top_left.m_x -= PAN_MULTIPLIER * (chart_delta.m_x - last_pos.m_x);
-    m_top_left.m_y -= PAN_MULTIPLIER * (chart_delta.m_y - last_pos.m_y);
-    m_bottom_right.m_x -= PAN_MULTIPLIER * (chart_delta.m_x - last_pos.m_x);
-    m_bottom_right.m_y -= PAN_MULTIPLIER * (chart_delta.m_y - last_pos.m_y);
+    m_top_left.m_x -= chart_delta.m_x - last_pos.m_x;
+    m_top_left.m_y -= chart_delta.m_y - last_pos.m_y;
+    m_bottom_right.m_x -= chart_delta.m_x - last_pos.m_x;
+    m_bottom_right.m_y -= chart_delta.m_y - last_pos.m_y;
     set_region(m_top_left, m_bottom_right);
     m_last_mouse_pos = position;
   }
