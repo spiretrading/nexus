@@ -122,7 +122,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
           <div style={ChangePasswordBox.STYLE.passwordPadding}/>
           <input type='password' placeholder='Confirm New Password'
             value={this.props.password2}
-            disabled={Boolean(this.props.password1 === '')}
+            disabled={this.props.password1 === ''}
             autoComplete='off'
             className={css(inputBoxStyle, errorStyle)}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
