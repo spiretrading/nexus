@@ -200,23 +200,18 @@ export class ProfilePage extends React.Component<Properties, State> {
       }
     })();
     const changePasswordBox = (() => {
-      let passwordButtonEnabled;
-      if(this.state.password1 !== ''
-          && this.state.password2 !== ''
-          && this.props.isPasswordSubmitEnabled) {
-        passwordButtonEnabled = true;
-      } else {
-        passwordButtonEnabled = false;
-      }
-      let status;
-      if(this.state.isPasswordChanged) {
-        status = '';
-      } else if(this.state.localPasswordMessage !== '') {
-        status = this.state.localPasswordMessage;
-      } else {
-        status = this.props.submitPasswordStatus;
-      }
       if(this.props.hasPassword) {
+        const passwordButtonEnabled = Boolean(this.state.password1
+            && this.state.password2
+            && this.props.isPasswordSubmitEnabled);
+        const status = (() => {
+          if(this.state.isPasswordChanged) {
+            return '';
+          } else if(this.state.localPasswordMessage !== '') {
+            return this.state.localPasswordMessage;
+          } else {
+            return this.props.submitPasswordStatus;
+          }})();
         return (
           <Dali.VBoxLayout>
             <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
@@ -244,9 +239,9 @@ export class ProfilePage extends React.Component<Properties, State> {
         return null;
       }
     })();
-    const profileSubmitSatus = (() => {
+    const profileSubmitStatus = (() => {
       if(this.state.isProfileChanged ||
-        (this.props.identity === this.state.newIdentity)) {
+          this.props.identity === this.state.newIdentity) {
         return null;
       } else {
         return this.props.submitStatus;
@@ -404,7 +399,7 @@ export class ProfilePage extends React.Component<Properties, State> {
               <div style={{...commentBoxStyle, ...commentBoxButtonStyle}}>
                 <div style={ProfilePage.STYLE.filler}/>
                 <div style={{ ...commentBoxStyle, ...statusMessageInline}}>
-                  {profileSubmitSatus}
+                  {profileSubmitStatus}
                   <div style=
                     {ProfilePage.STYLE.buttonPadding}/>
                 </div>
@@ -416,7 +411,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                   onClick={this.onSubmitProfile}/>
                 <div style={statusMessageFooter}>
                   <div style={ProfilePage.STYLE.smallPadding}/>
-                  {profileSubmitSatus}
+                  {profileSubmitStatus}
                 </div>
               </div>
             </Dali.VBoxLayout>
@@ -433,9 +428,9 @@ export class ProfilePage extends React.Component<Properties, State> {
     testIdentity.userNotes = newComment;
     if(this.props.identity.userNotes === testIdentity.userNotes) {
       this.setState({
-          newIdentity: this.props.identity,
-          isProfileChanged: false
-        });
+        newIdentity: this.props.identity,
+        isProfileChanged: false
+      });
     } else {
       this.setState({
         newIdentity: testIdentity,

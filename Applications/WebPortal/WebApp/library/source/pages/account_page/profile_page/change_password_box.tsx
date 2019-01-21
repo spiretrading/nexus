@@ -36,7 +36,6 @@ interface Properties {
 
 /** Displays a box that allows the user to submit a new password. */
 export class ChangePasswordBox extends React.Component<Properties> {
-
   public render(): JSX.Element {
     const changePasswordBox = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
@@ -48,20 +47,6 @@ export class ChangePasswordBox extends React.Component<Properties> {
     const errorStyle = (() => {
       if(this.props.hasPasswordError && this.props.password1 === '') {
         return ChangePasswordBox.DYNAMIC_STYLE.errorBoxState;
-      } else {
-        return null;
-      }
-    })();
-    const input2Readonly = (() => {
-      if(this.props.password1) {
-        return false;
-      } else {
-        return true;
-      }
-    })();
-    const status = (() => {
-      if(true) {
-        return this.props.submitPasswordStatus;
       } else {
         return null;
       }
@@ -90,7 +75,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
           return (
             <div style={{...messageInline,
                 ...ChangePasswordBox.STYLE.fillerMessage}}>
-              {status}
+              {this.props.submitPasswordStatus}
             </div>);
         case DisplaySize.MEDIUM:
           return <div style={ChangePasswordBox.STYLE.filler}/>;
@@ -137,7 +122,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
           <div style={ChangePasswordBox.STYLE.passwordPadding}/>
           <input type='password' placeholder='Confirm New Password'
             value={this.props.password2}
-            disabled={input2Readonly}
+            disabled={Boolean(this.props.password1 === '')}
             autoComplete='off'
             className={css(inputBoxStyle, errorStyle)}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
@@ -151,7 +136,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
           <SubmitButton label='Save Password'
             displaySize={this.props.displaySize}
             isSubmitEnabled={this.props.isPasswordSubmitEnabled}
-            onClick={() => this.props.onSubmitPassword()}/>
+            onClick={this.props.onSubmitPassword}/>
         </div>
         <div style={messageUnderneath}>
           <div style={ChangePasswordBox.STYLE.smallPadding}/>
