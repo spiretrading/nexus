@@ -50,23 +50,9 @@ namespace Spire {
       //! Removes the crosshair from the chart.
       void reset_crosshair();
 
-      //! Passes mouse click events to this view.
-      /*
-        \param event The click event.
-      */
-      void mouse_click(QMouseEvent* event);
-
-      //! Passes mouse release events to this view.
-      /*
-        \param event The release event.
-      */
-      void mouse_release(QMouseEvent* event);
-
-      //! Passes mouse wheel events to this view.
-      /*
-        \param event The wheel event.
-      */
-      void mouse_wheel(QWheelEvent* event);
+      //! Returns a pair (top left, bottom right) of ChartPoints
+      //! representing the region of the ChartView.
+      std::pair<ChartPoint, ChartPoint> get_region() const;
 
       //! Sets the visible region of the chart to display.
       /*!
@@ -96,8 +82,6 @@ namespace Spire {
       std::optional<QPoint> m_crosshair_pos;
       QPen m_dashed_line_pen;
       QPen m_label_text_color;
-      bool m_is_dragging;
-      QPoint m_last_mouse_pos;
 
       ChartValue calculate_step(ChartValue::Type value_type, ChartValue range);
   };

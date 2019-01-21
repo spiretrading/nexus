@@ -21,9 +21,14 @@ using namespace boost::signals2;
 using namespace Beam;
 using namespace Spire;
 
+namespace {
+  const auto CHART_ZOOM_PERCENT = 1.1;
+}
+
 ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     QWidget* parent)
-    : QWidget(parent) {
+    : QWidget(parent),
+      m_is_mouse_dragging(false) {
   m_body = new QWidget(this);
   m_body->installEventFilter(this);
   m_body->setMinimumSize(scale(400, 320));
@@ -123,6 +128,9 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   m_security_widget->setFocus();
   m_chart = new ChartView(ChartValue::Type::TIMESTAMP,
     ChartValue::Type::MONEY, this);
+  m_chart->setFocusPolicy(Qt::NoFocus);
+  m_chart->setMouseTracking(true);
+  m_chart->setAttribute(Qt::WA_Hover);
   m_security_widget->set_widget(m_chart);
   m_chart->installEventFilter(this);
 }
@@ -141,16 +149,48 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
   if(object == m_chart) {
     if(event->type() == QEvent::MouseMove) {
       auto e = static_cast<QMouseEvent*>(event);
+      if(m_is_mouse_dragging) {
+        auto chart_delta = m_chart->convert_pixels_to_chart(e->pos());
+        auto last_pos = m_chart->convert_pixels_to_chart(
+          m_last_chart_mouse_pos);
+        auto [top_left, bottom_right] = m_chart->get_region();
+        top_left.m_x -= chart_delta.m_x - last_pos.m_x;
+        top_left.m_y -= chart_delta.m_y - last_pos.m_y;
+        bottom_right.m_x -= chart_delta.m_x - last_pos.m_x;
+        bottom_right.m_y -= chart_delta.m_y - last_pos.m_y;
+        m_chart->set_region(top_left, bottom_right);
+        m_last_chart_mouse_pos = e->pos();
+      }
       m_chart->set_crosshair(e->pos());
     } else if(event->type() == QEvent::MouseButtonPress) {
       auto e = static_cast<QMouseEvent*>(event);
-      m_chart->mouse_click(e);
+      if(!m_is_mouse_dragging && e->button() == Qt::LeftButton) {
+        m_is_mouse_dragging = true;
+        m_last_chart_mouse_pos = e->pos();
+      }
     } else if(event->type() == QEvent::MouseButtonRelease) {
       auto e = static_cast<QMouseEvent*>(event);
-      m_chart->mouse_release(e);
+      if(e->button() == Qt::LeftButton) {
+        m_is_mouse_dragging = false;
+      }
     } else if(event->type() == QEvent::Wheel) {
       auto e = static_cast<QWheelEvent*>(event);
-      m_chart->mouse_wheel(e);
+      auto [top_left, bottom_right] = m_chart->get_region();
+      auto old_height = top_left.m_y - bottom_right.m_y;
+      auto old_width = bottom_right.m_x - top_left.m_x;
+      auto [new_width, new_height] = [&] {
+        if(e->angleDelta().y() < 0) {
+          return std::make_tuple(CHART_ZOOM_PERCENT * old_width,
+            CHART_ZOOM_PERCENT * old_height);
+        }
+        return std::make_tuple(old_width / CHART_ZOOM_PERCENT,
+          old_height / CHART_ZOOM_PERCENT);
+      }();
+      auto width_change = (new_width - old_width) / 2;
+      auto height_change = (new_height - old_height) / 2;
+      m_chart->set_region({top_left.m_x + width_change,
+        top_left.m_y + height_change},
+        {bottom_right.m_x - width_change, bottom_right.m_y - height_change});
     } else if(event->type() == QEvent::HoverLeave) {
       m_chart->reset_crosshair();
     }

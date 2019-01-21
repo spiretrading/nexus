@@ -53,6 +53,8 @@ namespace Spire {
       QLineEdit* m_period_line_edit;
       DropdownMenu* m_period_dropdown;
       ChartView* m_chart;
+      bool m_is_mouse_dragging;
+      QPoint m_last_chart_mouse_pos;
 
       void on_period_line_edit_changed();
   };
