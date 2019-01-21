@@ -201,9 +201,9 @@ export class ProfilePage extends React.Component<Properties, State> {
     })();
     const changePasswordBox = (() => {
       if(this.props.hasPassword) {
-        const passwordButtonEnabled = Boolean(this.state.password1
-            && this.state.password2
-            && this.props.isPasswordSubmitEnabled);
+        const passwordButtonEnabled = this.state.password1
+          && this.state.password2
+          && this.props.isPasswordSubmitEnabled;
         const status = (() => {
           if(this.state.isPasswordChanged) {
             return '';
