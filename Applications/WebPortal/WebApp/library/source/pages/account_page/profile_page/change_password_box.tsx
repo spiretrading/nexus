@@ -19,7 +19,19 @@ interface Properties {
   hasPasswordError: boolean;
 
   /** Indicates the password has been updated. */
-  onSubmitPassword: (password: string) => void;
+  onSubmitPassword: () => void;
+
+  /** The value of the first password input field. */
+  password1: string;
+
+  /** The value of the second password input field. */
+  password2: string;
+
+  /** Indicates the first password field has been changed. */
+  onPassword1Change?: (newValue: string) => void;
+
+  /** Indicates the second password field has been changed. */
+  onPassword2Change?: (newValue: string) => void;
 }
 
 /** Displays a box that allows the user to submit a new password. */
@@ -30,6 +42,13 @@ export class ChangePasswordBox extends React.Component<Properties> {
         return ChangePasswordBox.STYLE.passwordBoxSmall;
       } else {
         return ChangePasswordBox.STYLE.passwordBoxLarge;
+      }
+    })();
+    const errorStyle = (() => {
+      if(this.props.hasPasswordError && this.props.password1 === '') {
+        return ChangePasswordBox.DYNAMIC_STYLE.errorBoxState;
+      } else {
+        return null;
       }
     })();
     const inputBoxStyle = (() => {
@@ -90,18 +109,24 @@ export class ChangePasswordBox extends React.Component<Properties> {
         <Dali.Padding size={ChangePasswordBox.STANDARD_PADDING}/>
         <div style={changePasswordBox}>
           <input type='password' placeholder='New Password'
+            value={this.props.password1}
             autoComplete='off'
-            className={css(inputBoxStyle)}
+            className={css(inputBoxStyle, errorStyle)}
             disabled={false}
             onFocus={() => this.passwordInputField.placeholder = ''}
             onBlur={() =>
               this.passwordInputField.placeholder = 'New Password'}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              this.props.onPassword1Change(event.target.value)}
             ref={(ref) => this.passwordInputField = ref}/>
           <div style={ChangePasswordBox.STYLE.passwordPadding}/>
           <input type='password' placeholder='Confirm New Password'
+            value={this.props.password2}
+            disabled={this.props.password1 === ''}
             autoComplete='off'
-            className={css(inputBoxStyle)}
-            disabled={true}
+            className={css(inputBoxStyle, errorStyle)}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              this.props.onPassword2Change(event.target.value)}
             onFocus={() => this.confirmPasswordInputField.placeholder = ''}
             onBlur={() =>
               this.confirmPasswordInputField.placeholder
@@ -111,12 +136,11 @@ export class ChangePasswordBox extends React.Component<Properties> {
           <SubmitButton label='Save Password'
             displaySize={this.props.displaySize}
             isSubmitEnabled={this.props.isPasswordSubmitEnabled}
-            onClick={() =>
-              this.props.onSubmitPassword(this.passwordInputField.value)}/>
+            onClick={this.props.onSubmitPassword}/>
         </div>
         <div style={messageUnderneath}>
           <div style={ChangePasswordBox.STYLE.smallPadding}/>
-          {this.props.submitPasswordStatus}
+          {status}
         </div>
       </Dali.VBoxLayout>);
   }
@@ -128,7 +152,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
     },
     headerStyler: {
       color: '#4B23A0',
-      font: '500 14px Roboto',
+      font: '400 14px Roboto',
       width: '100%'
     },
     errorMessage: {
@@ -190,11 +214,15 @@ export class ChangePasswordBox extends React.Component<Properties> {
       border: '1px solid #C8C8C8',
       backgroundColor: '#FFFFFF',
       color: '#000000',
-      font: '300 16px Roboto',
+      font: '400 14px Roboto',
       outline: 0,
-      textAlign: 'center',
-      borderRadius: 0,
+      borderRadius: 1,
+      paddingLeft: '10px',
+      textAlign: 'start' as 'start',
       ':active': {
+        border: '1px solid #684BC7'
+      },
+      ':focus':{
         border: '1px solid #684BC7'
       },
       '::placeholder': {
@@ -234,11 +262,15 @@ export class ChangePasswordBox extends React.Component<Properties> {
       border: '1px solid #C8C8C8',
       backgroundColor: '#FFFFFF',
       color: '#000000',
-      font: '300 16px Roboto',
+      font: '400 14px Roboto',
       outline: 0,
-      textAlign: 'center',
-      borderRadius: 0,
+      paddingLeft: '10px',
+      textAlign: 'start' as 'start',
+      borderRadius: 1,
       ':active': {
+        border: '1px solid #684BC7'
+      },
+      ':focus':{
         border: '1px solid #684BC7'
       },
       '::placeholder': {
@@ -269,6 +301,9 @@ export class ChangePasswordBox extends React.Component<Properties> {
         width: 0,
         margin: 0
       }
+    },
+    errorBoxState: {
+      borderColor: '#E63F44'
     }
   });
   private static readonly STANDARD_PADDING = '30px';

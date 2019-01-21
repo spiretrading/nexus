@@ -58,8 +58,18 @@ interface Properties {
   onSubmitPassword?: (password: string) => void;
 }
 
+interface State {
+  password1: string;
+  password2: string;
+  hasLocalPasswordError: boolean;
+  localPasswordMessage: string;
+  isPasswordChanged: boolean;
+  newIdentity: Nexus.AccountIdentity;
+  isProfileChanged: boolean;
+}
+
 /** Displays an account's profile page. */
-export class ProfilePage extends React.Component<Properties> {
+export class ProfilePage extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     readonly: false,
     isSubmitEnabled: false,
@@ -72,6 +82,24 @@ export class ProfilePage extends React.Component<Properties> {
     hasPasswordError: false,
     onPasswordSubmit: () => {}
   };
+
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      password1: '',
+      password2: '',
+      hasLocalPasswordError: false,
+      localPasswordMessage: '',
+      isPasswordChanged: false,
+      newIdentity: this.props.identity.clone(),
+      isProfileChanged: false
+    };
+    this.onCommentChange = this.onCommentChange.bind(this);
+    this.onSubmitProfile = this.onSubmitProfile.bind(this);
+    this.onPassword1Change = this.onPassword1Change.bind(this);
+    this.onPassword2Change = this.onPassword2Change.bind(this);
+    this.onSubmitPassword = this.onSubmitPassword.bind(this);
+  }
 
   public render(): JSX.Element {
     const contentWidth = (() => {
@@ -115,7 +143,7 @@ export class ProfilePage extends React.Component<Properties> {
               displayMode={PhotoFieldDisplayMode.DISPLAY}
               imageSource={this.props.identity.photoId}
               scaling={1}/>
-            <Dali.Padding size='30px'/>
+            <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
           </Dali.VBoxLayout>);
       } else {
         return null;
@@ -142,6 +170,13 @@ export class ProfilePage extends React.Component<Properties> {
         return ProfilePage.STYLE.inlineStatusBox;
       }
     })();
+    const commentFooterPaddingSize = (() => {
+      if(this.props.readonly) {
+        return 0;
+      } else {
+        return ProfilePage.STANDARD_PADDING;
+      }
+    })();
     const statusMessageInline = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return ProfilePage.STYLE.hidden;
@@ -155,11 +190,61 @@ export class ProfilePage extends React.Component<Properties> {
       if(this.props.displaySize === DisplaySize.SMALL) {
         if(this.props.hasError) {
           return ProfilePage.STYLE.errorMessage;
-        } else {
+        } else if(this.props.submitStatus) {
           return ProfilePage.STYLE.statusMessage;
+        } else {
+          return ProfilePage.STYLE.hidden;
         }
       } else {
         return ProfilePage.STYLE.hidden;
+      }
+    })();
+    const changePasswordBox = (() => {
+      if(this.props.hasPassword) {
+        const passwordButtonEnabled = this.state.password1
+          && this.state.password2
+          && this.props.isPasswordSubmitEnabled;
+        const status = (() => {
+          if(this.state.isPasswordChanged) {
+            return '';
+          } else if(this.state.localPasswordMessage !== '') {
+            return this.state.localPasswordMessage;
+          } else {
+            return this.props.submitPasswordStatus;
+          }})();
+        return (
+          <Dali.VBoxLayout>
+            <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
+            <HLine color={ProfilePage.LINE_COLOR}/>
+            <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
+            <ChangePasswordBox displaySize={this.props.displaySize}
+              hasPasswordError={this.props.hasPasswordError ||
+                this.state.hasLocalPasswordError}
+              submitPasswordStatus={status}
+              isPasswordSubmitEnabled={passwordButtonEnabled}
+              onSubmitPassword={this.onSubmitPassword}
+              password1={this.state.password1}
+              password2={this.state.password2}
+              onPassword1Change={this.onPassword1Change}
+              onPassword2Change={this.onPassword2Change}/>
+          </Dali.VBoxLayout>);
+      } else {
+        return null;
+      }
+    })();
+    const commentBoxButtonStyle = (() => {
+      if(this.props.readonly) {
+        return ProfilePage.STYLE.hidden;
+      } else  {
+        return null;
+      }
+    })();
+    const profileSubmitStatus = (() => {
+      if(this.state.isProfileChanged ||
+          this.props.identity === this.state.newIdentity) {
+        return null;
+      } else {
+        return this.props.submitStatus;
       }
     })();
     return (
@@ -302,43 +387,91 @@ export class ProfilePage extends React.Component<Properties> {
                 <Dali.Padding size={formFooterPaddingSize}/>
               </Dali.VBoxLayout>
             </Dali.HBoxLayout>
-            <Dali.VBoxLayout>
+            <Dali.VBoxLayout style={null}>
               <div style={ProfilePage.STYLE.headerStyler}>
                 User Notes
               </div>
               <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
-              <CommentBox comment=''/>
-              <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
-              <div style={commentBoxStyle}>
+              <CommentBox comment={this.state.newIdentity.userNotes}
+                readonly={this.props.readonly}
+                onInput={this.onCommentChange}/>
+              <Dali.Padding size={commentFooterPaddingSize}/>
+              <div style={{...commentBoxStyle, ...commentBoxButtonStyle}}>
                 <div style={ProfilePage.STYLE.filler}/>
                 <div style={{ ...commentBoxStyle, ...statusMessageInline}}>
-                  {this.props.submitStatus}
+                  {profileSubmitStatus}
                   <div style=
                     {ProfilePage.STYLE.buttonPadding}/>
                 </div>
                 <SubmitButton label='Save Changes'
                   displaySize={this.props.displaySize}
-                  isSubmitEnabled={this.props.isSubmitEnabled}
-                  onClick={this.props.onSubmit}/>
+                  isSubmitEnabled=
+                    {this.props.isSubmitEnabled &&
+                      (this.state.isProfileChanged || this.props.hasError)}
+                  onClick={this.onSubmitProfile}/>
                 <div style={statusMessageFooter}>
                   <div style={ProfilePage.STYLE.smallPadding}/>
-                  {this.props.submitStatus}
+                  {profileSubmitStatus}
                 </div>
               </div>
             </Dali.VBoxLayout>
-            <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
-            <HLine color={ProfilePage.LINE_COLOR}/>
-            <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
-            <ChangePasswordBox displaySize={this.props.displaySize}
-              hasPasswordError={this.props.hasPasswordError}
-              submitPasswordStatus={this.props.submitPasswordStatus}
-              isPasswordSubmitEnabled={this.props.isPasswordSubmitEnabled}
-              onSubmitPassword={this.props.onSubmitPassword}/>
+            {changePasswordBox}
             <Dali.Padding size={ProfilePage.BOTTOM_PADDING}/>
           </Dali.VBoxLayout>
         </div>
         <div style={ProfilePage.STYLE.pagePadding}/>
       </div>);
+  }
+
+  private onCommentChange(newComment: string) {
+    const testIdentity = this.state.newIdentity.clone();
+    testIdentity.userNotes = newComment;
+    if(this.props.identity.userNotes === testIdentity.userNotes) {
+      this.setState({
+        newIdentity: this.props.identity,
+        isProfileChanged: false
+      });
+    } else {
+      this.setState({
+        newIdentity: testIdentity,
+        isProfileChanged: true
+      });
+    }
+  }
+
+  private onPassword1Change(newPassword: string) {
+    this.setState({
+      password1: newPassword,
+      isPasswordChanged: true
+    });
+  }
+
+  private onPassword2Change(newPassword: string) {
+    this.setState({password2: newPassword});
+  }
+
+  private onSubmitProfile() {
+    this.props.onSubmit();
+    this.setState({isProfileChanged: false});
+  }
+
+  private onSubmitPassword() {
+    if(this.state.password1 === this.state.password2) {
+      this.props.onSubmitPassword(this.state.password1);
+      this.setState({
+        hasLocalPasswordError: false,
+        localPasswordMessage: ''});
+    } else {
+      this.setState({
+        hasLocalPasswordError: true,
+        localPasswordMessage: 'Passwords do not match'
+      });
+    }
+    this.setState({
+      password1: '',
+      password2: '',
+      isPasswordChanged: false
+    });
   }
 
   private static readonly STYLE = {

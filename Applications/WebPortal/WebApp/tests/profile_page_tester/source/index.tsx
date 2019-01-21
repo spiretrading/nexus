@@ -16,10 +16,16 @@ interface State {
   identity: Nexus.AccountIdentity;
   statusMessage: string;
   passwordStatusMessage: string;
-  hasError: boolean;
   account: Beam.DirectoryEntry;
   group: Beam.DirectoryEntry;
   countryDatabase: Nexus.CountryDatabase;
+  hasPassword: boolean;
+  readOnly: boolean;
+  isPasswordSubmitEnabled: boolean;
+  hasError: boolean;
+  hasPasswordError: boolean;
+  testProfileError: boolean;
+  testPasswordError: boolean;
 }
 
 /**  Displays a testing application. */
@@ -37,28 +43,43 @@ class TestApp extends React.Component<Properties, State> {
         Beam.DirectoryEntry.Type.ACCOUNT, 9123, 'frodo_of_the_nine_fingers'),
       group: new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.NONE, 18, 'shire_office'),
-      countryDatabase: Nexus.buildDefaultCountryDatabase()
+      countryDatabase: Nexus.buildDefaultCountryDatabase(),
+      hasPassword: true,
+      readOnly: false,
+      isPasswordSubmitEnabled: false,
+      hasPasswordError: false,
+      testProfileError: false,
+      testPasswordError: false
     };
     this.setStatusToError = this.setStatusToError.bind(this);
     this.setStatusToNull = this.setStatusToNull.bind(this);
     this.setStatusToSuccessful = this.setStatusToSuccessful.bind(this);
+    this.togglePasswordVisibility = this.togglePasswordVisibility.bind(this);
+    this.toggleReadonlyOfForm = this.toggleReadonlyOfForm.bind(this);
+    this.passwordSubmit = this.passwordSubmit.bind(this);
+    this.profileSubmit = this.profileSubmit.bind(this);
   }
 
   public render(): JSX.Element {
     return (
       <Dali.VBoxLayout width='100%' height='100%'>
         <WebPortal.ProfilePage
+          account={this.state.account}
           roles={this.state.someRoles}
           identity={this.state.identity}
-          displaySize={this.props.displaySize}
-          isSubmitEnabled={true}
-          submitStatus={this.state.statusMessage}
-          submitPasswordStatus={this.state.passwordStatusMessage}
-          hasError={this.state.hasError}
-          hasPasswordError={this.state.hasError}
-          account={this.state.account}
           group={this.state.group}
-          countryDatabase={this.state.countryDatabase}/>
+          countryDatabase={this.state.countryDatabase}
+          displaySize={this.props.displaySize}
+          readonly={this.state.readOnly}
+          isSubmitEnabled={true}
+          onSubmit={this.profileSubmit}
+          submitStatus={this.state.statusMessage}
+          hasError={this.state.hasError}
+          hasPassword={this.state.hasPassword}
+          isPasswordSubmitEnabled={true}
+          submitPasswordStatus={this.state.passwordStatusMessage}
+          hasPasswordError={this.state.hasPasswordError}
+          onSubmitPassword={this.passwordSubmit}/>
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
             onClick={this.setStatusToNull}>
@@ -66,11 +87,19 @@ class TestApp extends React.Component<Properties, State> {
           </button>
           <button tabIndex={-1}
             onClick={this.setStatusToSuccessful}>
-            STATUS MESSAGES
+            SAVED FEEDBACK MESSAGES
           </button>
           <button tabIndex={-1}
             onClick={this.setStatusToError}>
             ERROR MESSAGES
+          </button>
+          <button tabIndex={-1}
+            onClick={this.togglePasswordVisibility}>
+            TOGGLE PASSWORD FIELD
+          </button>
+          <button tabIndex={-1}
+            onClick={this.toggleReadonlyOfForm}>
+            TOGGLE READONLY
           </button>
         </div>
       </Dali.VBoxLayout>);
@@ -89,6 +118,7 @@ class TestApp extends React.Component<Properties, State> {
     testIdentity.country = Nexus.DefaultCountries.AU;
     testIdentity.city = 'Hobbiton';
     testIdentity.addressLineOne = '56 Bag End';
+    testIdentity.userNotes = '';
     testIdentity.emailAddress = 'frodo@bagend.nz';
     testIdentity.registrationTime = new Beam.DateTime(
       new Beam.Date(2017, Beam.Date.Month.DECEMBER, 21),
@@ -101,24 +131,64 @@ class TestApp extends React.Component<Properties, State> {
     this.setState({
       statusMessage: '',
       passwordStatusMessage: '',
-      hasError: false
+      hasError: false,
+      hasPasswordError: false
     });
   }
 
   private setStatusToError() {
     this.setState({
-      statusMessage: 'Error!',
-      passwordStatusMessage: 'Error!',
-      hasError: true
+      testPasswordError: true,
+      testProfileError: true
     });
   }
 
   private setStatusToSuccessful() {
     this.setState({
-      statusMessage: 'Saved',
-      passwordStatusMessage: 'Saved',
-      hasError: false
+      testPasswordError: false,
+      testProfileError: false
     });
+  }
+
+  private togglePasswordVisibility() {
+    this.setState({
+      hasPassword: !this.state.hasPassword,
+      isPasswordSubmitEnabled: !this.state.isPasswordSubmitEnabled
+    });
+  }
+
+  private toggleReadonlyOfForm() {
+    this.setState({
+      readOnly: !this.state.readOnly
+    });
+  }
+
+  private passwordSubmit(newPassword: string) {
+    if(this.state.testPasswordError) {
+      this.setState({
+        passwordStatusMessage: 'Password not saved',
+        hasPasswordError: true
+      });
+    } else {
+      this.setState({
+        passwordStatusMessage: 'Saved',
+        hasPasswordError: false
+      });
+    }
+  }
+
+  private profileSubmit() {
+    if(this.state.testProfileError) {
+      this.setState({
+        statusMessage: 'Profile not saved',
+        hasError: true
+      });
+    } else {
+      this.setState({
+        statusMessage: 'Saved',
+        hasError: false
+      });
+    }
   }
 
   private static STYLE = {
