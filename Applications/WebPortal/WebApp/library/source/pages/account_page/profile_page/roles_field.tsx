@@ -20,8 +20,8 @@ interface Properties {
 /** Displays a panel of icons highlighting an account's roles. */
 export class RolesField extends React.Component<Properties, {}> {
   public static readonly defaultProps = {
-      readonly: false,
-      onClick: () => {}
+    readonly: false,
+    onClick: () => {}
   }
 
   public render(): JSX.Element {

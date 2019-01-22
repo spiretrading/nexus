@@ -24,8 +24,8 @@ interface State {
 /** Displays a panel of icons highlighting an account's roles. */
 export class RoleIcon extends React.Component<Properties, State> {
   public static readonly defaultProps = {
-      readonly: false,
-      onClick: () => {}
+    readonly: false,
+    onClick: () => {}
   }
 
   constructor(props: Properties) {
@@ -122,10 +122,10 @@ export class RoleIcon extends React.Component<Properties, State> {
       position: 'relative' as 'relative'
     },
     clickable: {
-      cursor: 'default'
+      cursor: 'pointer'
     },
     readonly: {
-      cursor: 'pointer'
+      cursor: 'default'
     },
     animationBase: {
       opacity: 0,
