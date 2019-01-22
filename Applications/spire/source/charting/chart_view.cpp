@@ -36,6 +36,34 @@ namespace {
   U map_to(T value, T a, T b, U c, U d) {
     return ((value - a) / (b - a)) * (d - c) + c;
   }
+
+  ChartValue calculate_step(ChartValue::Type value_type,
+      ChartValue range) {
+    if(value_type == ChartValue::Type::MONEY) {
+      auto money_range = static_cast<Money>(range);
+      if(money_range <= Money::CENT) {
+        return ChartValue(Money::CENT / 10);
+      } else if(money_range <= 10 * Money::CENT) {
+        return ChartValue(Money::CENT);
+      } else if(money_range <= Money::ONE) {
+        return ChartValue(10 * Money::CENT);
+      } else {
+        return ChartValue(Money::ONE);
+      }
+    } else if(value_type == ChartValue::Type::TIMESTAMP) {
+      auto time_range = static_cast<time_duration>(range);
+      if(time_range <= minutes(1)) {
+        return ChartValue(seconds(1));
+      } else if(time_range <= hours(1)) {
+        return ChartValue(minutes(1));
+      } else if(time_range <= hours(24)) {
+        return ChartValue(hours(1));
+      } else {
+        return ChartValue(hours(24));
+      }
+    }
+    return ChartValue();
+  }
 }
 
 ChartView::ChartView(ChartModel& model, QWidget* parent)
@@ -48,13 +76,6 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
       m_label_text_color(QColor("#25212E")) {
   m_label_font.setPixelSize(scale_height(10));
   m_font_metrics = QFontMetrics(m_label_font);
-  auto current_time = boost::posix_time::second_clock::local_time();
-  auto bottom_right = ChartPoint(ChartValue(current_time),
-    ChartValue(Nexus::Money(10)));
-  auto top_left = ChartPoint(
-    ChartValue(current_time - boost::posix_time::hours(1)),
-    ChartValue(Nexus::Money(10.10)));
-  set_region(top_left, bottom_right);
   setCursor(Qt::BlankCursor);
   m_dashed_line_pen.setDashPattern({static_cast<double>(scale_width(4)),
     static_cast<double>(scale_width(4))});
@@ -101,6 +122,7 @@ void ChartView::set_region(const ChartPoint& top_left,
   m_x_axis_step = calculate_step(m_model->get_x_axis_type(), m_x_range);
   m_y_range = m_top_left.m_y - m_bottom_right.m_y;
   m_y_axis_step = calculate_step(m_model->get_y_axis_type(), m_y_range);
+  update_origins();
   update();
 }
 
@@ -108,10 +130,6 @@ void ChartView::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
   painter.setFont(m_label_font);
   painter.setPen(Qt::white);
-  m_x_origin = width() - (m_font_metrics.width("M") * (
-    m_item_delegate->displayText(to_variant(m_model->get_y_axis_type(),
-    m_top_left.m_y), QLocale()).length()) - scale_width(4));
-  m_y_origin = height() - (m_font_metrics.height() + scale_height(9));
   painter.drawLine(m_x_origin, 0, m_x_origin, m_y_origin);
   painter.drawLine(0, m_y_origin, m_x_origin, m_y_origin);
   if(m_x_range <= m_x_axis_step || m_y_range <= m_y_axis_step) {
@@ -185,30 +203,29 @@ void ChartView::paintEvent(QPaintEvent* event) {
   }
 }
 
-ChartValue ChartView::calculate_step(ChartValue::Type value_type,
-    ChartValue range) {
-  if(value_type == ChartValue::Type::MONEY) {
-    auto money_range = static_cast<Money>(range);
-    if(money_range <= Money::CENT) {
-      return ChartValue(Money::CENT / 10);
-    } else if(money_range <= 10 * Money::CENT) {
-      return ChartValue(Money::CENT);
-    } else if(money_range <= Money::ONE) {
-      return ChartValue(10 * Money::CENT);
-    } else {
-      return ChartValue(Money::ONE);
-    }
-  } else if(value_type == ChartValue::Type::TIMESTAMP) {
-    auto time_range = static_cast<time_duration>(range);
-    if(time_range <= minutes(1)) {
-      return ChartValue(seconds(1));
-    } else if(time_range <= hours(1)) {
-      return ChartValue(minutes(1));
-    } else if(time_range <= hours(24)) {
-      return ChartValue(hours(1));
-    } else {
-      return ChartValue(hours(24));
-    }
+void ChartView::resizeEvent(QResizeEvent* event) {
+  update_origins();
+  QWidget::resizeEvent(event);
+}
+
+void ChartView::showEvent(QShowEvent* event) {
+  if(m_top_left.m_x == ChartValue() && m_top_left.m_y == ChartValue() &&
+      m_bottom_right.m_x == ChartValue() &&
+      m_bottom_right.m_y == ChartValue()) {
+    auto current_time = boost::posix_time::second_clock::local_time();
+    auto bottom_right = ChartPoint(ChartValue(current_time),
+      ChartValue(Nexus::Money(10)));
+    auto top_left = ChartPoint(
+      ChartValue(current_time - boost::posix_time::hours(1)),
+      ChartValue(Nexus::Money(10.10)));
+    set_region(top_left, bottom_right);
   }
-  return ChartValue();
+  QWidget::showEvent(event);
+}
+
+void ChartView::update_origins() {
+  m_x_origin = width() - (m_font_metrics.width("M") * (
+    m_item_delegate->displayText(to_variant(m_model->get_y_axis_type(),
+    m_top_left.m_y), QLocale()).length()) - scale_width(4));
+  m_y_origin = height() - (m_font_metrics.height() + scale_height(9));
 }

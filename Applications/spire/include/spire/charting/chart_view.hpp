@@ -62,6 +62,8 @@ namespace Spire {
 
     protected:
       void paintEvent(QPaintEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
       ChartModel* m_model;
@@ -80,7 +82,7 @@ namespace Spire {
       QPen m_dashed_line_pen;
       QPen m_label_text_color;
 
-      ChartValue calculate_step(ChartValue::Type value_type, ChartValue range);
+      void update_origins();
   };
 }
 
