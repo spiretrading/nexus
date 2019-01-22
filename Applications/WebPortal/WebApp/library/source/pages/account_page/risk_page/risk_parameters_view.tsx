@@ -1,9 +1,10 @@
 import { css, StyleSheet } from 'aphrodite';
+import { Center, HBoxLayout, Padding, VBoxLayout } from 'dali';
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { Center, CurrencySelectionBox, DisplaySize, HBoxLayout, IntegerInputBox,
-         MoneyInputBox, Padding, VBoxLayout } from '../../..';
+import { CurrencySelectionBox, DisplaySize, IntegerInputBox,
+  MoneyInputBox } from '../../..';
 
 interface Properties {
 

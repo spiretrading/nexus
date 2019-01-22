@@ -1,9 +1,9 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
-import * as Beam from 'beam';
+import { VBoxLayout } from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { DisplaySize, DropDownButton, HLine, VBoxLayout } from '../../..';
+import { DisplaySize, DropDownButton, HLine } from '../../..';
 import { ApplicabilityTable } from './applicability_table';
 import { CheckMarkButton } from './check_mark_button';
 
@@ -213,7 +213,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
         flexGrow: 1
       },
       smallComponent: {
-        minWidth: '284px',
+        width: '100%',
         maxWidth: '424px'
       },
       mediumComponent: {

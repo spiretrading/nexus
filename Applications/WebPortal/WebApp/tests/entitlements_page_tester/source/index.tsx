@@ -1,59 +1,63 @@
-import { css, StyleSheet } from 'aphrodite';
-import * as Beam from 'Beam';
+import * as Beam from 'beam';
+import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
+interface Properties {
+  displaySize: WebPortal.DisplaySize;
+}
 
 interface State {
   roles: Nexus.AccountRoles;
-  displaySize: WebPortal.DisplaySize;
   checkedDB: Beam.Set<Beam.DirectoryEntry>;
   currencyDB: Nexus.CurrencyDatabase;
   marketDB: Nexus.MarketDatabase;
   entitlementDB: Nexus.EntitlementDatabase;
   status: string;
   displayedStatus: string;
+  submitEnabled: boolean;
 }
 
 /**  Displays a testing application. */
-class TestApp extends React.Component<{}, State> {
-  constructor(props: {}) {
+class TestApp extends React.Component<Properties, State> {
+  constructor(props: Properties) {
     super(props);
     this.state = {
       roles:  new Nexus.AccountRoles(),
       entitlementDB: new Nexus.EntitlementDatabase(),
-      displaySize: TestApp.getDisplaySize(),
       checkedDB: new Beam.Set<Beam.DirectoryEntry>(),
       currencyDB: Nexus.buildDefaultCurrencyDatabase(),
       marketDB: Nexus.buildDefaultMarketDatabase(),
       status: '',
-      displayedStatus: ''
+      displayedStatus: '',
+      submitEnabled: false
     };
     this.changeRole = this.changeRole.bind(this);
-    this.onScreenResize = this.onScreenResize.bind(this);
     this.toggleCheckMark = this.toggleCheckMark.bind(this);
     this.setup = this.setup.bind(this);
     this.buildEntitlementDB = this.buildEntitlementDB.bind(this);
     this.changeStatus = this.changeStatus.bind(this);
     this.commentsSubmitted = this.commentsSubmitted.bind(this);
+    this.toggleButtonEnabled = this.toggleButtonEnabled.bind(this);
   }
 
   public render(): JSX.Element {
     return (
-      <WebPortal.VBoxLayout width='100%' height='100%'>
+      <Dali.VBoxLayout width='100%' height='100%'>
         <WebPortal.EntitlementsPage
-          displaySize={this.state.displaySize}
+          displaySize={this.props.displaySize}
           marketDatabase={this.state.marketDB}
           roles={this.state.roles}
           entitlements={this.state.entitlementDB}
           checked={this.state.checkedDB}
           currencyDatabase={this.state.currencyDB}
           onEntitlementClick={this.toggleCheckMark}
-          submissionStatus={this.state.displayedStatus}
+          status={this.state.displayedStatus}
+          isSubmitEnabled={this.state.submitEnabled}
           onSubmit={this.commentsSubmitted}/>
-        <div className={css(TestApp.STYLE.testingComponents)}>
+        <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
               onClick={() =>
               this.changeRole(Nexus.AccountRoles.Role.ADMINISTRATOR)}>
@@ -79,18 +83,17 @@ class TestApp extends React.Component<{}, State> {
               onClick={() => this.changeStatus('Server issue')}>
             UNSUCCESSFUL SUBMIT
           </button>
+          <button tabIndex={-1}
+              onClick={this.toggleButtonEnabled}>
+            TOGGLE SUBMIT
+          </button>
         </div>
-      </WebPortal.VBoxLayout>);
+      </Dali.VBoxLayout>);
   }
 
   public componentDidMount(): void {
-    window.addEventListener('resize', this.onScreenResize);
     this.setState({ roles: this.testAdmin });
     this.setup();
-  }
-
-  public componentWillUnmount(): void {
-    window.removeEventListener('resize', this.onScreenResize);
   }
 
   private changeRole(newRole: Nexus.AccountRoles.Role): void {
@@ -117,33 +120,17 @@ class TestApp extends React.Component<{}, State> {
     this.setState({ displayedStatus: this.state.status.toString()});
   }
 
+  private toggleButtonEnabled() {
+    this.setState({submitEnabled: !this.state.submitEnabled});
+  }
+
   private toggleCheckMark(value: Beam.DirectoryEntry) {
     if(!this.state.checkedDB.test(value)) {
       this.state.checkedDB.add(value);
     } else {
       this.state.checkedDB.remove(value);
     }
-    this.forceUpdate();
-  }
-
-  private static getDisplaySize(): WebPortal.DisplaySize {
-    const screenWidth = window.innerWidth ||
-      document.documentElement.clientWidth ||
-      document.getElementsByTagName('body')[0].clientWidth;
-    if(screenWidth <= 767) {
-      return WebPortal.DisplaySize.SMALL;
-    } else if(screenWidth > 767 && screenWidth <= 1035) {
-      return WebPortal.DisplaySize.MEDIUM;
-    } else {
-      return WebPortal.DisplaySize.LARGE;
-    }
-  }
-
-  private onScreenResize() {
-    const newDisplaySize = TestApp.getDisplaySize();
-    if(newDisplaySize !== this.state.displaySize) {
-      this.setState({ displaySize: newDisplaySize });
-    }
+    this.setState({checkedDB: this.state.checkedDB});
   }
 
   private setup() {
@@ -206,14 +193,15 @@ class TestApp extends React.Component<{}, State> {
   private testAdmin = new Nexus.AccountRoles();
   private testTrader = new Nexus.AccountRoles();
   private testManager = new Nexus.AccountRoles();
-  private static STYLE = StyleSheet.create({
+  private static STYLE = {
     testingComponents: {
       position: 'fixed' as 'fixed',
       top: 0,
       left: 0,
       zIndex: 1
     }
-  });
+  };
 }
 
-ReactDOM.render(<TestApp />, document.getElementById('main'));
+const ResponsivePage = WebPortal.displaySizeRenderer(TestApp);
+ReactDOM.render(<ResponsivePage />, document.getElementById('main'));

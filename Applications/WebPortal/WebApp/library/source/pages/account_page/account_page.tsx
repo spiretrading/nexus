@@ -1,7 +1,8 @@
 import * as Beam from 'beam';
+import { HBoxLayout, Padding, VBoxLayout } from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize, HBoxLayout, HLine, Padding, VBoxLayout } from '../..';
+import { DisplaySize, HLine } from '../..';
 import { MenuBar } from './menu_bar';
 import { RolePanel } from './role_panel';
 import { SubPage } from './sub_page';

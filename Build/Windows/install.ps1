@@ -26,18 +26,18 @@ If((Get-Command "git.exe" -ErrorAction SilentlyContinue) -eq $null) {
   rm .\git_config.inf -Force
 }
 If((Get-Command "cmake.exe" -ErrorAction SilentlyContinue) -eq $null) {
-  Invoke-WebRequest -UseBasicParsing -Uri https://cmake.org/files/v3.8/cmake-3.8.0-win64-x64.msi -OutFile cmake-3.8.0-win64-x64.msi
-  msiexec /quiet /i cmake-3.8.0-win64-x64.msi | Out-Null
+  Invoke-WebRequest -UseBasicParsing -Uri https://github.com/Kitware/CMake/releases/download/v3.13.2/cmake-3.13.2-win64-x64.msi -OutFile cmake-3.13.2-win64-x64.msi
+  msiexec /quiet /i cmake-3.13.2-win64-x64.msi | Out-Null
   $old_path = (Get-ItemProperty -Path "Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment" -Name PATH).path
   $new_path = "$old_path;C:\Program Files\CMake\bin"
   Set-ItemProperty -Path "Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment" -Name PATH –Value $new_path
   $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-  rm .\cmake-3.8.0-win64-x64.msi -Force
+  rm .\cmake-3.13.2-win64-x64.msi -Force
 }
 If((Get-Command "python.exe" -ErrorAction SilentlyContinue) -eq $null) {
-  Invoke-WebRequest -UseBasicParsing -Uri https://www.python.org/ftp/python/3.6.5/python-3.6.5.exe -OutFile python-3.6.5.exe
-  ./python-3.6.5.exe /quiet /passive PrependPath=1 | Out-Null
-  rm python-3.6.5.exe -Force
+  Invoke-WebRequest -UseBasicParsing -Uri https://www.python.org/ftp/python/3.7.1/python-3.7.1.exe -OutFile python-3.7.1.exe
+  ./python-3.7.1.exe /quiet /passive PrependPath=1 | Out-Null
+  rm python-3.7.1.exe -Force
 }
 If((Get-Command "perl.exe" -ErrorAction SilentlyContinue) -eq $null) {
   Invoke-WebRequest -UseBasicParsing -Uri http://www.strawberryperl.com/download/5.24.1.1/strawberry-perl-5.24.1.1-64bit.msi -OutFile strawberry-perl-5.24.1.1-64bit.msi

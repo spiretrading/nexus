@@ -1,16 +1,11 @@
 import * as Beam from 'beam';
-import {RiskParameters} from '..';
-import {AccountModificationRequest, AccountRoles, AdministrationClient,
-  EntitlementModification, Message, RiskModification} from '.';
+import { RiskParameters } from '..';
+import { AccountIdentity, AccountModificationRequest, AccountRoles,
+  AdministrationClient, EntitlementModification, Message,
+  RiskModification } from '.';
 
 /** Implements the AdministrationClient using web services. */
 export class WebAdministrationClient extends AdministrationClient {
-
-  /** Constructs a WebAdministrationClient. */
-  constructor() {
-    super();
-  }
-
   public async loadAccountRoles(account: Beam.DirectoryEntry):
       Promise<AccountRoles> {
     let response = await Beam.post(
@@ -19,6 +14,16 @@ export class WebAdministrationClient extends AdministrationClient {
         account: account.toJson()
       });
     return AccountRoles.fromJson(response);
+  }
+
+  public async loadIdentity(account: Beam.DirectoryEntry):
+      Promise<AccountIdentity> {
+    let response = await Beam.post(
+      '/api/administration_service/load_account_identity',
+      {
+        account: account.toJson()
+      });
+    return AccountIdentity.fromJson(response);
   }
 
   public async loadAccountEntitlements(account: Beam.DirectoryEntry):
