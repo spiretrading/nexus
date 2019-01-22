@@ -4,7 +4,7 @@ import { Transition } from 'react-transition-group';
 
 interface Properties {
 
-  /** The role the icon respresents */
+  /** The role the icon respresents. */
   role: Nexus.AccountRoles.Role;
 
   /** Whether the roles can be changed. */
