@@ -10,22 +10,39 @@
 #include "Nexus/Definitions/Quantity.hpp"
 
 namespace Nexus {
+namespace Details {
+  template<typename T>
+  struct MoneyDefinitions {
+
+    //! Stores a value of 0.
+    static const T ZERO;
+
+    //! Stores a value of 1.
+    static const T ONE;
+
+    //! Stores a value of 0.01.
+    static const T CENT;
+
+    //! Stores a value of 0.0001.
+    static const T BIP;
+  };
+
+  template<typename T>
+  constexpr const T MoneyDefinitions<T>::ZERO(0);
+
+  template<typename T>
+  constexpr const T MoneyDefinitions<T>::ONE(1);
+
+  template<typename T>
+  constexpr const T MoneyDefinitions<T>::CENT(ONE / 100);
+
+  template<typename T>
+  constexpr const T MoneyDefinitions<T>::BIP(CENT / 100);
+}
 
   /** Used to represent money without rounding or floating point issues. */
-  class Money {
+  class Money : private Details::MoneyDefinitions<Money> {
     public:
-
-      //! Represents a value of 0.
-      static const Money ZERO;
-
-      //! Represents a value of 1.00.
-      static const Money ONE;
-
-      //! Represents a value of 0.01.
-      static const Money CENT;
-
-      //! Represents a value of 0.0001.
-      static const Money BIP;
 
       //! Returns a Money value from a string.
       /*!
@@ -159,6 +176,10 @@ namespace Nexus {
       */
       constexpr Money operator -() const;
 
+      using Details::MoneyDefinitions<Money>::ZERO;
+      using Details::MoneyDefinitions<Money>::ONE;
+      using Details::MoneyDefinitions<Money>::CENT;
+      using Details::MoneyDefinitions<Money>::BIP;
     private:
       template<typename T> friend constexpr Money operator *(T lhs, Money rhs);
       template<typename T> friend constexpr Money operator /(Money lhs, T rhs);
@@ -253,14 +274,6 @@ namespace Nexus {
     value = *parsedValue;
     return in;
   }
-
-  constexpr const Money Money::ZERO;
-
-  constexpr const Money Money::ONE(Quantity(1));
-
-  constexpr const Money Money::CENT(Money::ONE / 100);
-
-  constexpr const Money Money::BIP(Money::CENT / 100);
 
   inline boost::optional<Money> Money::FromValue(const std::string& value) {
     auto quantity = Quantity::FromValue(value);
