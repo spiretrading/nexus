@@ -1,7 +1,8 @@
 import * as Beam from 'beam';
+import { HBoxLayout, Padding, VBoxLayout } from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize, HBoxLayout, HLine, Padding, VBoxLayout } from '../../..';
+import { DisplaySize, HLine } from '../../..';
 import { SubmissionBox } from '../submission_box';
 import { EntitlementRow } from './entitlement_row';
 
@@ -59,11 +60,12 @@ export class EntitlementsPage extends React.Component<Properties> {
       for(const entry of this.props.entitlements) {
         rows.push(
           <EntitlementRow
+            key={entry.group.id}
             entitlementEntry={entry}
             currencyEntry=
               {this.props.currencyDatabase.fromCurrency(entry.currency)}
             isActive={this.props.checked.test(entry.group)}
-            onClick = {() => this.props.onEntitlementClick(entry.group)}
+            onClick={() => this.props.onEntitlementClick(entry.group)}
             displaySize={this.props.displaySize}
             marketDatabase={this.props.marketDatabase}/>);
       }
@@ -80,7 +82,8 @@ export class EntitlementsPage extends React.Component<Properties> {
           <HLine color={EntitlementsPage.LINE_COLOR}/>
           <Padding size={EntitlementsPage.LINE_PADDING}/>
           <SubmissionBox roles={this.props.roles} isError={this.props.isError}
-            status={this.props.status} onSubmit={this.props.onSubmit}/>
+            status={this.props.status} isEnabled={this.props.isSubmitEnabled}
+            onSubmit={this.props.onSubmit}/>
           <Padding size={EntitlementsPage.BOTTOM_PADDING}/>
         </VBoxLayout>
         <Padding size={EntitlementsPage.DEFAULT_PADDING}/>

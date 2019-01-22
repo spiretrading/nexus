@@ -1,6 +1,6 @@
 SETLOCAL
 
-SET beam_commit="775ec06fcad9a77fa1e0dab2ecd56f841c4790f6"
+SET beam_commit="79158cf5d4584333c64fc9b79c0be21d21bf6ea5"
 if exist Beam goto end_beam_setup
   git clone https://www.github.com/eidolonsystems/beam.git Beam
   pushd Beam
@@ -24,6 +24,27 @@ if not exist Beam goto end_beam_pull
     call Beam\Build\Make\setup.bat
     pushd Beam\Build\Windows
     call run_cmake.bat
+    call build.bat
+  )
+  popd
+:end_beam_pull
+
+SET dali_commit="ed6605bf4e8662db09d615733d44d7b65e718184"
+if exist dali goto end_dali_setup
+  git clone https://www.github.com/eidolonsystems/dali
+  pushd dali
+  git checkout %dali_commit%
+  call build.bat
+  popd
+:end_dali_setup
+
+if not exist dali goto end_dali_pull
+  pushd dali
+  for /f "usebackq tokens=*" %%a in (`git log -1 ^| head -1 ^| awk "{ print $2 }"`) do SET commit=%%a
+  if not "%commit%" == %dali_commit% (
+    git checkout master
+    git pull
+    git checkout %dali_commit%
     call build.bat
   )
   popd

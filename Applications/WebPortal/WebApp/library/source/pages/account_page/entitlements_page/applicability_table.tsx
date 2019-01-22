@@ -63,12 +63,13 @@ export class ApplicabilityTable extends React.Component<Properties, {}> {
               'resources/account_page/entitlements_page/icons/dot-grey.svg';
           }
           dots.push(
-            <td>
+            <td key={type.toString()}>
               <img style={ApplicabilityTable.STYLE.circle} src={imageSrc}/>
             </td>);
         }
         data.push(
-          <tr style={ApplicabilityTable.STYLE.row}>
+          <tr key={app[0].source.toString()}
+              style={ApplicabilityTable.STYLE.row}>
             <td>{this.getDisplayName(app[0].source)}</td>{dots}
           </tr>);
       }
@@ -111,8 +112,10 @@ export class ApplicabilityTable extends React.Component<Properties, {}> {
   private static readonly STYLE = {
     container: {
       border: '1px solid #C8C8C8',
+      borderRadius: '1px',
       font: '400 14px Roboto',
-      borderCollapse: 'collapse' as 'collapse',
+      cellspacing: 0,
+      borderSpacing: 0,
       textAlign: 'center' as 'center',
       padding: 0,
       small: {
@@ -127,9 +130,11 @@ export class ApplicabilityTable extends React.Component<Properties, {}> {
     headerLabel: {
       height: '40px',
       backgroundColor: '#F8F8F8',
-      borderTop: '1px solid #C8C8C8',
+      borderRadius: '1px',
       fontWeight: 400,
       padding: 0,
+      cellspacing: 0,
+      borderCollapse: 'collapse' as 'collapse',
       marginLeft: '19px',
       marginRight: '19px'
     },

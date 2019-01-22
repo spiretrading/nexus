@@ -26,10 +26,10 @@ namespace Nexus {
     public:
 
       //! The number of decimal places that can be represented accurately.
-      static const unsigned int DECIMAL_PLACES = 6;
+      static constexpr unsigned int DECIMAL_PLACES = 6;
 
       //! The multiplier used.
-      static const std::int64_t MULTIPLIER = 1000000;
+      static constexpr std::int64_t MULTIPLIER = 1000000;
 
       //! Returns a Quantity from a string.
       /*!
@@ -39,74 +39,74 @@ namespace Nexus {
       static boost::optional<Quantity> FromValue(const std::string& value);
 
       //! Constructs a Quantity with a value of 0.
-      Quantity();
+      constexpr Quantity();
 
       //! Constructs a Quantity from an int32.
-      Quantity(std::int32_t value);
+      constexpr Quantity(std::int32_t value);
 
       //! Constructs a Quantity from a uint32.
-      Quantity(std::uint32_t value);
+      constexpr Quantity(std::uint32_t value);
 
       //! Constructs a Quantity from an int64.
-      Quantity(std::int64_t value);
+      constexpr Quantity(std::int64_t value);
 
       //! Constructs a Quantity from a uint64.
-      Quantity(std::uint64_t value);
+      constexpr Quantity(std::uint64_t value);
 
       //! Constructs a Quantity from a double.
-      Quantity(double value);
+      constexpr Quantity(double value);
 
       //! Returns a Quantity from its raw representation.
-      static Quantity FromRepresentation(boost::float64_t value);
+      static constexpr  Quantity FromRepresentation(boost::float64_t value);
 
       //! Converts this Quantity into a float.
-      explicit operator boost::float64_t() const;
+      explicit constexpr operator boost::float64_t() const;
 
       //! Converts this Quantity into an int.
-      explicit operator int() const;
+      explicit constexpr operator int() const;
 
       //! Converts this Quantity into an unsigned int.
-      explicit operator unsigned int() const;
+      explicit constexpr operator unsigned int() const;
 
       //! Converts this Quantity into a long.
-      explicit operator long() const;
+      explicit constexpr operator long() const;
 
       //! Converts this Quantity into an unsigned long.
-      explicit operator unsigned long() const;
+      explicit constexpr operator unsigned long() const;
 
       //! Converts this Quantity into a long long.
-      explicit operator long long() const;
+      explicit constexpr operator long long() const;
 
       //! Converts this Quantity into an unsigned long long.
-      explicit operator unsigned long long() const;
+      explicit constexpr operator unsigned long long() const;
 
       //! Less than test.
       /*!
         \param rhs The right hand side of the operation.
         \return <code>true</code> iff this is less than <i>rhs</i>.
       */
-      bool operator <(Quantity rhs) const;
+      constexpr bool operator <(Quantity rhs) const;
 
       //! Less than or equal test.
       /*!
         \param rhs The right hand side of the operation.
         \return <code>true</code> iff this is less than or equal to <i>rhs</i>.
       */
-      bool operator <=(Quantity rhs) const;
+      constexpr bool operator <=(Quantity rhs) const;
 
       //! Tests for equality.
       /*!
         \param rhs The right hand side of the operation.
         \return <code>true</code> iff this is equal to <i>rhs</i>.
       */
-      bool operator ==(Quantity rhs) const;
+      constexpr bool operator ==(Quantity rhs) const;
 
       //! Tests for inequality.
       /*!
         \param rhs The right hand side of the operation.
         \return <code>true</code> iff this is not equal to <i>rhs</i>.
       */
-      bool operator !=(Quantity rhs) const;
+      constexpr bool operator !=(Quantity rhs) const;
 
       //! Greater than or equal test.
       /*!
@@ -114,91 +114,91 @@ namespace Nexus {
         \return <code>true</code> iff this is greater than or equal to
                 <i>rhs</i>.
       */
-      bool operator >=(Quantity rhs) const;
+      constexpr bool operator >=(Quantity rhs) const;
 
       //! Greater than test.
       /*!
         \param rhs The right hand side of the operation.
         \return <code>true</code> iff this is greater than <i>rhs</i>.
       */
-      bool operator >(Quantity rhs) const;
+      constexpr bool operator >(Quantity rhs) const;
 
       //! Adds two Quantities together.
       /*!
         \param rhs The right hand side of the operation.
         \return <i>this</i> + <i>rhs</i>.
       */
-      Quantity operator +(Quantity rhs) const;
+      constexpr Quantity operator +(Quantity rhs) const;
 
       //! Increases this Quantity.
       /*!
         \param rhs The right hand side of the operation.
         \return <i>this</i>.
       */
-      Quantity& operator +=(Quantity rhs);
+      constexpr Quantity& operator +=(Quantity rhs);
 
       //! Increments this Quantity.
-      Quantity& operator ++();
+      constexpr Quantity& operator ++();
 
       //! Increments this Quantity.
-      Quantity operator ++(int);
+      constexpr Quantity operator ++(int);
 
       //! Subtracts two Quantities together.
       /*!
         \param rhs The right hand side of the operation.
         \return <i>this</i> - <i>rhs</i>.
       */
-      Quantity operator -(Quantity rhs) const;
+      constexpr Quantity operator -(Quantity rhs) const;
 
       //! Decreases this Quantity.
       /*!
         \param rhs The right hand side of the operation.
         \return <i>this</i>.
       */
-      Quantity& operator -=(Quantity rhs);
+      constexpr Quantity& operator -=(Quantity rhs);
 
       //! Decrements this Quantity.
-      Quantity& operator --();
+      constexpr Quantity& operator --();
 
       //! Decrements this Quantity.
-      Quantity operator --(int);
+      constexpr Quantity operator --(int);
 
       //! Multiplies two Quantities together.
       /*!
         \param rhs The right hand side of the operation.
         \return <i>this</i> * <i>rhs</i>.
       */
-      Quantity operator *(Quantity rhs) const;
+      constexpr Quantity operator *(Quantity rhs) const;
 
       //! Multiplies this Quantity.
       /*!
         \param rhs The right hand side of the operation.
         \return <i>this</i>.
       */
-      Quantity& operator *=(Quantity rhs);
+      constexpr Quantity& operator *=(Quantity rhs);
 
       //! Divides two Quantities together.
       /*!
         \param rhs The right hand side of the operation.
         \return <i>this</i> / <i>rhs</i>.
       */
-      Quantity operator /(Quantity rhs) const;
+      constexpr Quantity operator /(Quantity rhs) const;
 
       //! Divides this Quantity.
       /*!
         \param rhs The right hand side of the operation.
         \return <i>this</i>.
       */
-      Quantity& operator /=(Quantity rhs);
+      constexpr Quantity& operator /=(Quantity rhs);
 
       //! Returns the unary negation of this Quantity.
       /*!
         \return -<i>this</i>.
       */
-      Quantity operator -() const;
+      constexpr Quantity operator -() const;
 
       //! Returns the raw representation of this Quantity.
-      boost::float64_t GetRepresentation() const;
+      constexpr boost::float64_t GetRepresentation() const;
 
     private:
       template<typename, typename> friend struct Beam::Serialization::Send;
@@ -236,66 +236,66 @@ namespace Nexus {
   }
 
   template<typename T, typename U>
-  std::enable_if_t<std::is_convertible<T, Quantity>::value &&
+  constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
       std::is_same<U, Quantity>::value, bool> operator <(T lhs, U rhs) {
     return Quantity{lhs} < rhs;
   }
 
   template<typename T, typename U>
-  std::enable_if_t<std::is_convertible<T, Quantity>::value &&
+  constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
       std::is_same<U, Quantity>::value, bool> operator <=(T lhs, U rhs) {
     return Quantity{lhs} <= rhs;
   }
 
   template<typename T, typename U>
-  std::enable_if_t<std::is_convertible<T, Quantity>::value &&
+  constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
       std::is_same<U, Quantity>::value, bool> operator ==(T lhs, U rhs) {
     return Quantity{lhs} == rhs;
   }
 
   template<typename T, typename U>
-  std::enable_if_t<std::is_convertible<T, Quantity>::value &&
+  constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
       std::is_same<U, Quantity>::value, bool> operator !=(T lhs, U rhs) {
     return Quantity{lhs} != rhs;
   }
 
   template<typename T, typename U>
-  std::enable_if_t<std::is_convertible<T, Quantity>::value &&
+  constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
       std::is_same<U, Quantity>::value, bool> operator >(T lhs, U rhs) {
     return Quantity{lhs} > rhs;
   }
 
   template<typename T, typename U>
-  std::enable_if_t<std::is_convertible<T, Quantity>::value &&
+  constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
       std::is_same<U, Quantity>::value, bool> operator >=(T lhs, U rhs) {
     return Quantity{lhs} >= rhs;
   }
 
   template<typename T, typename U>
-  std::enable_if_t<std::is_convertible<T, Quantity>::value &&
+  constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
       std::is_same<U, Quantity>::value, Quantity> operator +(T lhs, U rhs) {
     return Quantity{lhs} + rhs;
   }
 
   template<typename T, typename U>
-  std::enable_if_t<std::is_convertible<T, Quantity>::value &&
+  constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
       std::is_same<U, Quantity>::value, Quantity> operator -(T lhs, U rhs) {
     return Quantity{lhs} - rhs;
   }
 
   template<typename T, typename U>
-  std::enable_if_t<std::is_convertible<T, Quantity>::value &&
+  constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
       std::is_same<U, Quantity>::value, Quantity> operator *(T lhs, U rhs) {
     return Quantity{lhs} * rhs;
   }
 
   template<typename T>
-  Quantity operator *(const boost::rational<T>& lhs, Quantity rhs) {
+  constexpr Quantity operator *(const boost::rational<T>& lhs, Quantity rhs) {
     return (lhs.numerator() * rhs) / lhs.denominator();
   }
 
   template<typename T, typename U>
-  std::enable_if_t<std::is_convertible<T, Quantity>::value &&
+  constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
       std::is_same<U, Quantity>::value, Quantity> operator /(T lhs, U rhs) {
     return Quantity{lhs} / rhs;
   }
@@ -423,145 +423,146 @@ namespace Nexus {
     return Quantity::FromRepresentation(sign * (lhs + rhs));
   }
 
-  inline Quantity::Quantity()
+  inline constexpr Quantity::Quantity()
       : m_value{0} {}
 
-  inline Quantity::Quantity(std::int32_t value)
+  inline constexpr Quantity::Quantity(std::int32_t value)
       : m_value{static_cast<boost::float64_t>(MULTIPLIER * value)} {}
 
-  inline Quantity::Quantity(std::uint32_t value)
+  inline constexpr Quantity::Quantity(std::uint32_t value)
       : m_value{static_cast<boost::float64_t>(MULTIPLIER * value)} {}
 
-  inline Quantity::Quantity(std::int64_t value)
+  inline constexpr Quantity::Quantity(std::int64_t value)
       : m_value{static_cast<boost::float64_t>(MULTIPLIER * value)} {}
 
-  inline Quantity::Quantity(std::uint64_t value)
+  inline constexpr Quantity::Quantity(std::uint64_t value)
       : m_value{static_cast<boost::float64_t>(MULTIPLIER * value)} {}
 
-  inline Quantity::Quantity(double value)
+  inline constexpr Quantity::Quantity(double value)
       : m_value{static_cast<boost::float64_t>(MULTIPLIER * value)} {}
 
-  inline Quantity Quantity::FromRepresentation(boost::float64_t value) {
+  inline constexpr Quantity Quantity::FromRepresentation(
+      boost::float64_t value) {
     Quantity q;
     q.m_value = value;
     return q;
   }
 
-  inline Quantity::operator boost::float64_t() const {
+  inline constexpr Quantity::operator boost::float64_t() const {
     return m_value / MULTIPLIER;
   }
 
-  inline Quantity::operator int() const {
+  inline constexpr Quantity::operator int() const {
     return static_cast<int>(m_value / MULTIPLIER);
   }
 
-  inline Quantity::operator unsigned int() const {
+  inline constexpr Quantity::operator unsigned int() const {
     return static_cast<unsigned int>(m_value / MULTIPLIER);
   }
 
-  inline Quantity::operator long() const {
+  inline constexpr Quantity::operator long() const {
     return static_cast<long>(m_value / MULTIPLIER);
   }
 
-  inline Quantity::operator unsigned long() const {
+  inline constexpr Quantity::operator unsigned long() const {
     return static_cast<unsigned long>(m_value / MULTIPLIER);
   }
 
-  inline Quantity::operator long long() const {
+  inline constexpr Quantity::operator long long() const {
     return static_cast<long long>(m_value / MULTIPLIER);
   }
 
-  inline Quantity::operator unsigned long long() const {
+  inline constexpr Quantity::operator unsigned long long() const {
     return static_cast<unsigned long long>(m_value / MULTIPLIER);
   }
 
-  inline bool Quantity::operator <(Quantity rhs) const {
+  inline constexpr bool Quantity::operator <(Quantity rhs) const {
     return m_value < rhs.m_value;
   }
 
-  inline bool Quantity::operator <=(Quantity rhs) const {
+  inline constexpr bool Quantity::operator <=(Quantity rhs) const {
     return m_value <= rhs.m_value;
   }
 
-  inline bool Quantity::operator ==(Quantity rhs) const {
+  inline constexpr bool Quantity::operator ==(Quantity rhs) const {
     return m_value == rhs.m_value;
   }
 
-  inline bool Quantity::operator !=(Quantity rhs) const {
+  inline constexpr bool Quantity::operator !=(Quantity rhs) const {
     return m_value != rhs.m_value;
   }
 
-  inline bool Quantity::operator >=(Quantity rhs) const {
+  inline constexpr bool Quantity::operator >=(Quantity rhs) const {
     return m_value >= rhs.m_value;
   }
 
-  inline bool Quantity::operator >(Quantity rhs) const {
+  inline constexpr bool Quantity::operator >(Quantity rhs) const {
     return m_value > rhs.m_value;
   }
 
-  inline Quantity Quantity::operator +(Quantity rhs) const {
+  inline constexpr Quantity Quantity::operator +(Quantity rhs) const {
     return FromRepresentation(m_value + rhs.m_value);
   }
 
-  inline Quantity& Quantity::operator +=(Quantity rhs) {
+  inline constexpr Quantity& Quantity::operator +=(Quantity rhs) {
     m_value += rhs.m_value;
     return *this;
   }
 
-  inline Quantity& Quantity::operator ++() {
+  inline constexpr Quantity& Quantity::operator ++() {
     m_value += MULTIPLIER;
     return *this;
   }
 
-  inline Quantity Quantity::operator ++(int) {
+  inline constexpr Quantity Quantity::operator ++(int) {
     Quantity q{*this};
     ++(*this);
     return q;
   }
 
-  inline Quantity Quantity::operator -(Quantity rhs) const {
+  inline constexpr Quantity Quantity::operator -(Quantity rhs) const {
     return FromRepresentation(m_value - rhs.m_value);
   }
 
-  inline Quantity& Quantity::operator -=(Quantity rhs) {
+  inline constexpr Quantity& Quantity::operator -=(Quantity rhs) {
     m_value -= rhs.m_value;
     return *this;
   }
 
-  inline Quantity& Quantity::operator --() {
+  inline constexpr Quantity& Quantity::operator --() {
     m_value -= MULTIPLIER;
     return *this;
   }
 
-  inline Quantity Quantity::operator --(int) {
+  inline constexpr Quantity Quantity::operator --(int) {
     Quantity q{*this};
     --(*this);
     return q;
   }
 
-  inline Quantity Quantity::operator *(Quantity rhs) const {
+  inline constexpr Quantity Quantity::operator *(Quantity rhs) const {
     return FromRepresentation(m_value * (rhs.m_value / MULTIPLIER));
   }
 
-  inline Quantity& Quantity::operator *=(Quantity rhs) {
+  inline constexpr Quantity& Quantity::operator *=(Quantity rhs) {
     m_value *= (rhs.m_value / MULTIPLIER);
     return *this;
   }
 
-  inline Quantity Quantity::operator /(Quantity rhs) const {
+  inline constexpr Quantity Quantity::operator /(Quantity rhs) const {
     return FromRepresentation(MULTIPLIER * (m_value / rhs.m_value));
   }
 
-  inline Quantity& Quantity::operator /=(Quantity rhs) {
+  inline constexpr Quantity& Quantity::operator /=(Quantity rhs) {
     m_value = MULTIPLIER * (m_value / rhs.m_value);
     return *this;
   }
 
-  inline Quantity Quantity::operator -() const {
+  inline constexpr Quantity Quantity::operator -() const {
     return FromRepresentation(-m_value);
   }
 
-  inline boost::float64_t Quantity::GetRepresentation() const {
+  inline constexpr boost::float64_t Quantity::GetRepresentation() const {
     return m_value;
   }
 }
@@ -645,47 +646,47 @@ namespace std {
       static constexpr bool tinyness_before =
         numeric_limits<boost::float64_t>::tinyness_before;
 
-      static Nexus::Quantity min() {
+      static constexpr Nexus::Quantity min() {
         return Nexus::Quantity::FromRepresentation(
           numeric_limits<boost::float64_t>::min());
       }
 
-      static Nexus::Quantity lowest() {
+      static constexpr Nexus::Quantity lowest() {
         return Nexus::Quantity::FromRepresentation(
           numeric_limits<boost::float64_t>::lowest());
       }
 
-      static Nexus::Quantity max() {
+      static constexpr Nexus::Quantity max() {
         return Nexus::Quantity::FromRepresentation(
           numeric_limits<boost::float64_t>::max());
       }
 
-      static Nexus::Quantity epsilon() {
+      static constexpr Nexus::Quantity epsilon() {
         return Nexus::Quantity::FromRepresentation(
           numeric_limits<boost::float64_t>::epsilon());
       }
 
-      static Nexus::Quantity round_error() {
+      static constexpr Nexus::Quantity round_error() {
         return Nexus::Quantity::FromRepresentation(
           numeric_limits<boost::float64_t>::round_error());
       }
 
-      static Nexus::Quantity infinity() {
+      static constexpr Nexus::Quantity infinity() {
         return Nexus::Quantity::FromRepresentation(
           numeric_limits<boost::float64_t>::infinity());
       }
 
-      static Nexus::Quantity quiet_NaN() {
+      static constexpr Nexus::Quantity quiet_NaN() {
         return Nexus::Quantity::FromRepresentation(
           numeric_limits<boost::float64_t>::quiet_NaN());
       }
 
-      static Nexus::Quantity signaling_NaN() {
+      static constexpr Nexus::Quantity signaling_NaN() {
         return Nexus::Quantity::FromRepresentation(
           numeric_limits<boost::float64_t>::signaling_NaN());
       }
 
-      static Nexus::Quantity denorm_min() {
+      static constexpr Nexus::Quantity denorm_min() {
         return Nexus::Quantity::FromRepresentation(
           numeric_limits<boost::float64_t>::denorm_min());
       }

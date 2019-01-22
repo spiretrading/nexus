@@ -2,7 +2,7 @@
 let cores="`grep -c "processor" < /proc/cpuinfo`"
 directory=$(dirname $(readlink -f $0))
 
-beam_commit="775ec06fcad9a77fa1e0dab2ecd56f841c4790f6"
+beam_commit="79158cf5d4584333c64fc9b79c0be21d21bf6ea5"
 if [ ! -d "Beam" ]; then
   sudo -u $(logname) git clone https://www.github.com/eidolonsystems/beam.git Beam
   pushd Beam
@@ -25,6 +25,26 @@ if [ -d "Beam" ]; then
     ./Beam/Build/Make/setup.sh
     pushd ./Beam/Build/Make
     sudo -u $(logname) ./run_cmake.sh
+    sudo -u $(logname) ./build.sh
+  fi
+  popd
+fi
+
+dali_commit="ed6605bf4e8662db09d615733d44d7b65e718184"
+if [ ! -d "dali" ]; then
+  sudo -u $(logname) git clone https://www.github.com/eidolonsystems/dali
+  pushd dali
+  sudo -u $(logname) git checkout "$dali_commit"
+  sudo -u $(logname) ./build.sh
+  popd
+fi
+if [ -d "dali" ]; then
+  pushd dali
+  commit="`git log -1 | head -1 | awk '{ print $2 }'`"
+  if [ "$commit" != "$dali_commit" ]; then
+    sudo -u $(logname) git checkout master
+    sudo -u $(logname) git pull
+    sudo -u $(logname) git checkout "$dali_commit"
     sudo -u $(logname) ./build.sh
   fi
   popd

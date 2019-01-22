@@ -1,22 +1,18 @@
 #ifndef NEXUS_MONEY_HPP
 #define NEXUS_MONEY_HPP
-#include <cstdint>
-#include <cstdlib>
 #include <istream>
 #include <ostream>
 #include <string>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
-#include <Beam/Utilities/Math.hpp>
 #include <boost/optional/optional.hpp>
-#include <boost/rational.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
 
 namespace Nexus {
 namespace Details {
   template<typename T>
-  struct MoneyStaticDefinitions {
+  struct MoneyDefinitions {
 
     //! Stores a value of 0.
     static const T ZERO;
@@ -32,22 +28,20 @@ namespace Details {
   };
 
   template<typename T>
-  const T MoneyStaticDefinitions<T>::ZERO(0);
+  constexpr const T MoneyDefinitions<T>::ZERO(0);
 
   template<typename T>
-  const T MoneyStaticDefinitions<T>::ONE(1);
+  constexpr const T MoneyDefinitions<T>::ONE(1);
 
   template<typename T>
-  const T MoneyStaticDefinitions<T>::CENT(ONE / 100);
+  constexpr const T MoneyDefinitions<T>::CENT(ONE / 100);
 
   template<typename T>
-  const T MoneyStaticDefinitions<T>::BIP(CENT / 100);
+  constexpr const T MoneyDefinitions<T>::BIP(CENT / 100);
 }
 
-  /*! \class Money
-      \brief Used to represent money without rounding or floating point issues.
-   */
-  class Money : private Details::MoneyStaticDefinitions<Money> {
+  /** Used to represent money without rounding or floating point issues. */
+  class Money : private Details::MoneyDefinitions<Money> {
     public:
 
       //! Returns a Money value from a string.
@@ -58,19 +52,19 @@ namespace Details {
       static boost::optional<Money> FromValue(const std::string& value);
 
       //! Constructs a Money value of ZERO.
-      Money() = default;
+      constexpr Money() = default;
 
       //! Constructs a Money value.
       /*!
         \param value The value to represent.
       */
-      explicit Money(Quantity value);
+      explicit constexpr Money(Quantity value);
 
       //! Converts this Money to a float.
-      explicit operator boost::float64_t() const;
+      explicit constexpr operator boost::float64_t() const;
 
       //! Converts this Money to a Quantity.
-      explicit operator Quantity() const;
+      explicit constexpr operator Quantity() const;
 
       //! Returns the string representation of this value.
       std::string ToString() const;
@@ -80,28 +74,28 @@ namespace Details {
         \param rhs The right hand side of the operation.
         \return <code>true</code> iff this is less than <i>rhs</i>.
       */
-      bool operator <(Money rhs) const;
+      constexpr bool operator <(Money rhs) const;
 
       //! Less than or equal test.
       /*!
         \param rhs The right hand side of the operation.
         \return <code>true</code> iff this is less than or equal to <i>rhs</i>.
       */
-      bool operator <=(Money rhs) const;
+      constexpr bool operator <=(Money rhs) const;
 
       //! Tests for equality.
       /*!
         \param rhs The right hand side of the operation.
         \return <code>true</code> iff this is equal to <i>rhs</i>.
       */
-      bool operator ==(Money rhs) const;
+      constexpr bool operator ==(Money rhs) const;
 
       //! Tests for inequality.
       /*!
         \param rhs The right hand side of the operation.
         \return <code>true</code> iff this is not equal to <i>rhs</i>.
       */
-      bool operator !=(Money rhs) const;
+      constexpr bool operator !=(Money rhs) const;
 
       //! Greater than or equal test.
       /*!
@@ -109,56 +103,56 @@ namespace Details {
         \return <code>true</code> iff this is greater than or equal to
                 <i>rhs</i>.
       */
-      bool operator >=(Money rhs) const;
+      constexpr bool operator >=(Money rhs) const;
 
       //! Greater than test.
       /*!
         \param rhs The right hand side of the operation.
         \return <code>true</code> iff this is greater than <i>rhs</i>.
       */
-      bool operator >(Money rhs) const;
+      constexpr bool operator >(Money rhs) const;
 
       //! Assignment operator.
       /*!
         \param rhs The right hand side of the operation.
         \return <i>this</i>.
       */
-      Money& operator =(Money rhs);
+      constexpr Money& operator =(Money rhs);
 
       //! Adds two Money instances together.
       /*!
         \param rhs The right hand side of the operation.
         \return <i>this</i> + <i>rhs</i>.
       */
-      Money operator +(Money rhs) const;
+      constexpr Money operator +(Money rhs) const;
 
       //! Increases this Money instance.
       /*!
         \param rhs The right hand side of the operation.
         \return <i>this</i>.
       */
-      Money& operator +=(Money rhs);
+      constexpr Money& operator +=(Money rhs);
 
       //! Subtracts two Money instances together.
       /*!
         \param rhs The right hand side of the operation.
         \return <i>this</i> - <i>rhs</i>.
       */
-      Money operator -(Money rhs) const;
+      constexpr Money operator -(Money rhs) const;
 
       //! Decreases this Money instance.
       /*!
         \param rhs The right hand side of the operation.
         \return <i>this</i>.
       */
-      Money& operator -=(Money rhs);
+      constexpr Money& operator -=(Money rhs);
 
       //! Divides two Money instances together.
       /*!
         \param rhs The right hand side of the operation.
         \return <i>this</i> / <i>rhs</i>.
       */
-      double operator /(Money rhs) const;
+      constexpr double operator /(Money rhs) const;
 
       //! Multiplies this Money instance.
       /*!
@@ -166,7 +160,7 @@ namespace Details {
         \return <i>this</i>.
       */
       template<typename T>
-      Money& operator *=(T rhs);
+      constexpr Money& operator *=(T rhs);
 
       //! Divides this Money instance.
       /*!
@@ -174,22 +168,21 @@ namespace Details {
         \return <i>this</i>.
       */
       template<typename T>
-      Money& operator /=(T rhs);
+      constexpr Money& operator /=(T rhs);
 
       //! Returns the unary negation of this Money instance.
       /*!
         \return -<i>this</i>.
       */
-      Money operator -() const;
+      constexpr Money operator -() const;
 
-      using Details::MoneyStaticDefinitions<Money>::ZERO;
-      using Details::MoneyStaticDefinitions<Money>::ONE;
-      using Details::MoneyStaticDefinitions<Money>::CENT;
-      using Details::MoneyStaticDefinitions<Money>::BIP;
+      using Details::MoneyDefinitions<Money>::ZERO;
+      using Details::MoneyDefinitions<Money>::ONE;
+      using Details::MoneyDefinitions<Money>::CENT;
+      using Details::MoneyDefinitions<Money>::BIP;
     private:
-      friend struct Details::MoneyStaticDefinitions<Money>;
-      template<typename T> friend Money operator *(T lhs, Money rhs);
-      template<typename T> friend Money operator /(Money lhs, T rhs);
+      template<typename T> friend constexpr Money operator *(T lhs, Money rhs);
+      template<typename T> friend constexpr Money operator /(Money lhs, T rhs);
       friend Money Abs(Money value);
       friend Money Floor(Money value, int decimalPlaces);
       friend Money Ceil(Money value, int decimalPlaces);
@@ -207,7 +200,7 @@ namespace Details {
     \return <i>lhs</i> * <i>rhs</i>.
   */
   template<typename T>
-  Money operator *(T lhs, Money rhs) {
+  constexpr Money operator *(T lhs, Money rhs) {
     return Money{lhs * rhs.m_value};
   }
 
@@ -218,7 +211,7 @@ namespace Details {
     \return <i>lhs</i> / <i>rhs</i>.
   */
   template<typename T>
-  Money operator /(Money lhs, T rhs) {
+  constexpr Money operator /(Money lhs, T rhs) {
     return Money{lhs.m_value / rhs};
   }
 
@@ -290,14 +283,14 @@ namespace Details {
     return Money{*quantity};
   }
 
-  inline Money::Money(Quantity value)
+  inline constexpr Money::Money(Quantity value)
       : m_value{value} {}
 
-  inline Money::operator boost::float64_t() const {
+  inline constexpr Money::operator boost::float64_t() const {
     return static_cast<boost::float64_t>(m_value);
   }
 
-  inline Money::operator Quantity() const {
+  inline constexpr Money::operator Quantity() const {
     return m_value;
   }
 
@@ -323,70 +316,70 @@ namespace Details {
     }
   }
 
-  inline bool Money::operator <(Money rhs) const {
+  inline constexpr bool Money::operator <(Money rhs) const {
     return m_value < rhs.m_value;
   }
 
-  inline bool Money::operator <=(Money rhs) const {
+  inline constexpr bool Money::operator <=(Money rhs) const {
     return m_value <= rhs.m_value;
   }
 
-  inline bool Money::operator ==(Money rhs) const {
+  inline constexpr bool Money::operator ==(Money rhs) const {
     return m_value == rhs.m_value;
   }
 
-  inline bool Money::operator !=(Money rhs) const {
+  inline constexpr bool Money::operator !=(Money rhs) const {
     return m_value != rhs.m_value;
   }
 
-  inline bool Money::operator >=(Money rhs) const {
+  inline constexpr bool Money::operator >=(Money rhs) const {
     return m_value >= rhs.m_value;
   }
 
-  inline bool Money::operator >(Money rhs) const {
+  inline constexpr bool Money::operator >(Money rhs) const {
     return m_value > rhs.m_value;
   }
 
-  inline Money& Money::operator =(Money rhs) {
+  inline constexpr Money& Money::operator =(Money rhs) {
     m_value = rhs.m_value;
     return *this;
   }
 
-  inline Money Money::operator +(Money rhs) const {
+  inline constexpr Money Money::operator +(Money rhs) const {
     return Money(m_value + rhs.m_value);
   }
 
-  inline Money& Money::operator +=(Money rhs) {
+  inline constexpr Money& Money::operator +=(Money rhs) {
     m_value += rhs.m_value;
     return *this;
   }
 
-  inline Money Money::operator -(Money rhs) const {
+  inline constexpr Money Money::operator -(Money rhs) const {
     return Money(m_value - rhs.m_value);
   }
 
-  inline Money& Money::operator -=(Money rhs) {
+  inline constexpr Money& Money::operator -=(Money rhs) {
     m_value -= rhs.m_value;
     return *this;
   }
 
-  inline double Money::operator /(Money rhs) const {
+  inline constexpr double Money::operator /(Money rhs) const {
     return static_cast<double>(m_value / rhs.m_value);
   }
 
   template<typename T>
-  Money& Money::operator *=(T rhs) {
+  constexpr Money& Money::operator *=(T rhs) {
     m_value *= rhs;
     return *this;
   }
 
   template<typename T>
-  Money& Money::operator /=(T rhs) {
+  constexpr Money& Money::operator /=(T rhs) {
     m_value /= rhs;
     return *this;
   }
 
-  inline Money Money::operator -() const {
+  inline constexpr Money Money::operator -() const {
     return Money{-m_value};
   }
 }
@@ -471,39 +464,39 @@ namespace std {
       static constexpr bool tinyness_before =
         numeric_limits<Nexus::Quantity>::tinyness_before;
 
-      static Nexus::Money min() {
+      static constexpr Nexus::Money min() {
         return Nexus::Money{numeric_limits<Nexus::Quantity>::min()};
       }
 
-      static Nexus::Money lowest() {
+      static constexpr Nexus::Money lowest() {
         return Nexus::Money{numeric_limits<Nexus::Quantity>::lowest()};
       }
 
-      static Nexus::Money max() {
+      static constexpr Nexus::Money max() {
         return Nexus::Money{numeric_limits<Nexus::Quantity>::max()};
       }
 
-      static Nexus::Money epsilon() {
+      static constexpr Nexus::Money epsilon() {
         return Nexus::Money{numeric_limits<Nexus::Quantity>::epsilon()};
       }
 
-      static Nexus::Money round_error() {
+      static constexpr Nexus::Money round_error() {
         return Nexus::Money{numeric_limits<Nexus::Quantity>::round_error()};
       }
 
-      static Nexus::Money infinity() {
+      static constexpr Nexus::Money infinity() {
         return Nexus::Money{numeric_limits<Nexus::Quantity>::infinity()};
       }
 
-      static Nexus::Money quiet_NaN() {
+      static constexpr Nexus::Money quiet_NaN() {
         return Nexus::Money{numeric_limits<Nexus::Quantity>::quiet_NaN()};
       }
 
-      static Nexus::Money signaling_NaN() {
+      static constexpr Nexus::Money signaling_NaN() {
         return Nexus::Money{numeric_limits<Nexus::Quantity>::signaling_NaN()};
       }
 
-      static Nexus::Money denorm_min() {
+      static constexpr Nexus::Money denorm_min() {
         return Nexus::Money{numeric_limits<Nexus::Quantity>::denorm_min()};
       }
   };
