@@ -40,6 +40,7 @@ namespace {
   ChartValue calculate_step(ChartValue::Type value_type,
       ChartValue range) {
     if(value_type == ChartValue::Type::MONEY) {
+      return ChartValue(Money::CENT);
       auto money_range = static_cast<Money>(range);
       if(money_range <= 10 * Money::CENT) {
         return ChartValue(Money::CENT);
@@ -50,7 +51,6 @@ namespace {
     } else if(value_type == ChartValue::Type::TIMESTAMP) {
       return ChartValue(minutes(10));
     }
-    qDebug() << "return null";
     return ChartValue();
   }
 }
@@ -125,6 +125,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
     return;
   }
   auto y_value = m_bottom_right.m_y;
+  y_value -= y_value % m_y_axis_step;
   while(y_value <= m_top_left.m_y) {
     y_value += m_y_axis_step;
     auto y = map_to(y_value, m_bottom_right.m_y,
@@ -142,6 +143,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
   auto x_text_width = m_font_metrics.width(m_item_delegate->displayText(
     to_variant(m_model->get_x_axis_type(), m_top_left.m_x), QLocale()));
   auto x_value = m_bottom_right.m_x;
+  x_value -= x_value % m_x_axis_step;
   while(x_value >= m_top_left.m_x) {
     x_value -= m_x_axis_step;
     auto x = map_to(x_value, m_top_left.m_x, m_bottom_right.m_x, 0,
