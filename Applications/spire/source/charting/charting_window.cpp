@@ -7,6 +7,7 @@
 #include <QListView>
 #include <QVBoxLayout>
 #include "spire/charting/chart_view.hpp"
+#include "spire/charting/empty_chart_model.hpp"
 #include "spire/security_input/security_input_dialog.hpp"
 #include "spire/security_input/security_input_model.hpp"
 #include "spire/spire/dimensions.hpp"
@@ -28,6 +29,8 @@ namespace {
 ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     QWidget* parent)
     : QWidget(parent),
+      m_model(std::make_shared<EmptyChartModel>(ChartValue::Type::TIMESTAMP,
+        ChartValue::Type::MONEY)),
       m_is_mouse_dragging(false) {
   m_body = new QWidget(this);
   m_body->installEventFilter(this);
@@ -126,8 +129,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   setTabOrder(auto_scale_button, draw_line_button);
   setTabOrder(draw_line_button, m_period_line_edit);
   m_security_widget->setFocus();
-  m_chart = new ChartView(ChartValue::Type::TIMESTAMP,
-    ChartValue::Type::MONEY, this);
+  m_chart = new ChartView(*m_model, this);
   m_chart->setFocusPolicy(Qt::NoFocus);
   m_chart->setMouseTracking(true);
   m_chart->setAttribute(Qt::WA_Hover);
