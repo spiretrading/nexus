@@ -1,5 +1,6 @@
 #ifndef SPIRE_CHARTING_WINDOW_HPP
 #define SPIRE_CHARTING_WINDOW_HPP
+#include <memory>
 #include <Beam/Pointers/Ref.hpp>
 #include <QComboBox>
 #include <QLabel>
@@ -34,6 +35,9 @@ namespace Spire {
       ChartingWindow(Beam::Ref<SecurityInputModel> input_model,
         QWidget* parent = nullptr);
 
+      //! Sets the model to display.
+      void set_model(std::shared_ptr<ChartModel> model);
+
       //! Connects a slot to the change security signal.
       boost::signals2::connection connect_security_change_signal(
         const ChangeSecuritySignal::slot_type& slot) const;
@@ -47,6 +51,7 @@ namespace Spire {
 
     private:
       mutable ClosedSignal m_closed_signal;
+      std::shared_ptr<ChartModel> m_model;
       SecurityWidget* m_security_widget;
       QWidget* m_body;
       QWidget* m_button_header_widget;

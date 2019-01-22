@@ -3,6 +3,7 @@
 #include <vector>
 #include <boost/noncopyable.hpp>
 #include "spire/charting/charting.hpp"
+#include "spire/charting/chart_value.hpp"
 #include "spire/spire/qt_promise.hpp"
 
 namespace Spire {
@@ -15,6 +16,12 @@ namespace Spire {
       using CandlestickSignal = Signal<void (const Candlestick& candle)>;
 
       virtual ~ChartModel() = default;
+
+      //! Returns the type of the x-axis.
+      virtual ChartValue::Type get_x_axis_type() const = 0;
+
+      //! Returns the type of the y-axis.
+      virtual ChartValue::Type get_y_axis_type() const = 0;
 
       //! Loads a range of candlesticks and makes them available to query.
       /*!

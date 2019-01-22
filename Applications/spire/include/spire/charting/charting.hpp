@@ -4,6 +4,7 @@
 #include "spire/spire/spire.hpp"
 
 namespace Spire {
+  class ChartModel;
   struct ChartPoint;
   class ChartValue;
   class ChartView;

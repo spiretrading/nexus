@@ -5,6 +5,7 @@
 #include <QPainter>
 #include <QPaintEvent>
 #include "Nexus/Definitions/Money.hpp"
+#include "spire/charting/chart_model.hpp"
 #include "spire/spire/dimensions.hpp"
 
 using namespace boost::posix_time;
@@ -38,11 +39,9 @@ namespace {
   }
 }
 
-ChartView::ChartView(ChartValue::Type x_axis_type, ChartValue::Type y_axis_type,
-    QWidget* parent)
+ChartView::ChartView(ChartModel& model, QWidget* parent)
     : QWidget(parent),
-      m_x_axis_type(x_axis_type),
-      m_y_axis_type(y_axis_type),
+      m_model(&model),
       m_label_font("Roboto"),
       m_font_metrics(QFont()),
       m_item_delegate(new CustomVariantItemDelegate(this)),
@@ -99,9 +98,9 @@ void ChartView::set_region(const ChartPoint& top_left,
   m_top_left = top_left;
   m_bottom_right = bottom_right;
   m_x_range = m_bottom_right.m_x - m_top_left.m_x;
-  m_x_axis_step = calculate_step(m_x_axis_type, m_x_range);
+  m_x_axis_step = calculate_step(m_model->get_x_axis_type(), m_x_range);
   m_y_range = m_top_left.m_y - m_bottom_right.m_y;
-  m_y_axis_step = calculate_step(m_y_axis_type, m_y_range);
+  m_y_axis_step = calculate_step(m_model->get_y_axis_type(), m_y_range);
   update();
 }
 
@@ -110,8 +109,8 @@ void ChartView::paintEvent(QPaintEvent* event) {
   painter.setFont(m_label_font);
   painter.setPen(Qt::white);
   m_x_origin = width() - (m_font_metrics.width("M") * (
-    m_item_delegate->displayText(to_variant(m_y_axis_type, m_top_left.m_y),
-    QLocale()).length()) - scale_width(4));
+    m_item_delegate->displayText(to_variant(m_model->get_y_axis_type(),
+    m_top_left.m_y), QLocale()).length()) - scale_width(4));
   m_y_origin = height() - (m_font_metrics.height() + scale_height(9));
   painter.drawLine(m_x_origin, 0, m_x_origin, m_y_origin);
   painter.drawLine(0, m_y_origin, m_x_origin, m_y_origin);
@@ -129,13 +128,12 @@ void ChartView::paintEvent(QPaintEvent* event) {
       painter.setPen(Qt::white);
       painter.drawLine(m_x_origin, y, m_x_origin + scale_width(2), y);
       painter.drawText(m_x_origin + scale_width(3),
-        y + (m_font_metrics.height() / 3),
-        m_item_delegate->displayText(to_variant(m_y_axis_type, y_value),
-        QLocale()));
+        y + (m_font_metrics.height() / 3), m_item_delegate->displayText(
+        to_variant(m_model->get_y_axis_type(), y_value), QLocale()));
     }
   }
   auto x_text_width = m_font_metrics.width(m_item_delegate->displayText(
-    to_variant(m_x_axis_type, m_top_left.m_x), QLocale()));
+    to_variant(m_model->get_x_axis_type(), m_top_left.m_x), QLocale()));
   auto x_value = m_bottom_right.m_x;
   while(x_value >= m_top_left.m_x) {
     x_value -= m_x_axis_step;
@@ -148,8 +146,8 @@ void ChartView::paintEvent(QPaintEvent* event) {
       painter.drawLine(x, m_y_origin, x, m_y_origin + scale_height(2));
       painter.drawText(x - x_text_width / 2,
         m_y_origin + m_font_metrics.height() + scale_height(2),
-        m_item_delegate->displayText(to_variant(m_x_axis_type, x_value),
-        QLocale()));
+        m_item_delegate->displayText(to_variant(m_model->get_x_axis_type(),
+        x_value), QLocale()));
     }
   }
   if(m_crosshair_pos) {
@@ -162,8 +160,8 @@ void ChartView::paintEvent(QPaintEvent* event) {
       (CROSSHAIR_IMAGE().width() / 2), m_crosshair_pos.value().y() -
       (CROSSHAIR_IMAGE().height() / 2), CROSSHAIR_IMAGE());
     auto crosshair_value = convert_pixels_to_chart(m_crosshair_pos.value());
-    auto x_label = m_item_delegate->displayText(to_variant(m_x_axis_type,
-      crosshair_value.m_x), QLocale());
+    auto x_label = m_item_delegate->displayText(to_variant(
+      m_model->get_x_axis_type(), crosshair_value.m_x), QLocale());
     auto x_label_width = m_font_metrics.width(x_label);
     painter.fillRect(m_crosshair_pos.value().x() - (x_label_width / 2) -
       scale_width(5), m_y_origin, x_label_width + scale_width(10),
@@ -179,8 +177,8 @@ void ChartView::paintEvent(QPaintEvent* event) {
       width() - m_x_origin, scale_height(15), Qt::white);
     painter.fillRect(m_x_origin, m_crosshair_pos.value().y(), scale_width(3),
       scale_height(1), Qt::black);
-    auto y_label = m_item_delegate->displayText(to_variant(m_y_axis_type,
-      crosshair_value.m_y), QLocale());
+    auto y_label = m_item_delegate->displayText(to_variant(
+      m_model->get_y_axis_type(), crosshair_value.m_y), QLocale());
     painter.setPen(m_label_text_color);
     painter.drawText(m_x_origin + scale_width(3), m_crosshair_pos.value().y() +
       (m_font_metrics.height() / 3), y_label);

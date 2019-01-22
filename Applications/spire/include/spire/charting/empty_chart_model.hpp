@@ -1,22 +1,21 @@
-#ifndef SPIRE_LOCAL_CHART_MODEL_HPP
-#define SPIRE_LOCAL_CHART_MODEL_HPP
+#ifndef SPIRE_EMPTY_CHART_MODEL_HPP
+#define SPIRE_EMPTY_CHART_MODEL_HPP
 #include "spire/charting/charting.hpp"
 #include "spire/charting/chart_model.hpp"
 
 namespace Spire {
 
-  /** Implements a ChartModel by storing a list of Candlesticks. */
-  class LocalChartModel : public ChartModel {
+  /** Implements an immutable and empty ChartModel containing no data. */
+  class EmptyChartModel : public ChartModel {
     public:
 
-      //! Constructs a LocalChartModel with an initial list of candlesticks.
+      //! Constructs an EmptyChartModel.
       /*!
         \param x_axis_type The type of the x-axis.
         \param y_axis_type The type of the y-axis.
-        \param candlesticks The initial list of candlesticks to store.
       */
-      LocalChartModel(ChartValue::Type x_axis_type,
-        ChartValue::Type y_axis_type, std::vector<Candlestick> candlesticks);
+      EmptyChartModel(ChartValue::Type x_axis_type,
+        ChartValue::Type y_axis_type);
 
       ChartValue::Type get_x_axis_type() const override;
 
@@ -30,9 +29,9 @@ namespace Spire {
 
     private:
       mutable CandlestickSignal m_candlestick_signal;
+      ChartValue m_width;
       ChartValue::Type m_x_axis_type;
       ChartValue::Type m_y_axis_type;
-      std::vector<Candlestick> m_candlesticks;
   };
 }
 

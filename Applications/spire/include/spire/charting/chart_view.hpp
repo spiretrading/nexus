@@ -14,12 +14,10 @@ namespace Spire {
 
       //! Constructs a ChartView.
       /*!
-        \param x_axis_type The type of data represented on the x-axis.
-        \param y_axis_type The type of data represented on the y-axis.
+        \param model The model containing the data to display.
         \param parent Parent to this widget.
       */
-      ChartView(ChartValue::Type x_axis_type, ChartValue::Type y_axis_type,
-        QWidget* parent = nullptr);
+      ChartView(ChartModel& model, QWidget* parent = nullptr);
 
       //! Converts a point in pixels to a point on the chart.
       /*!
@@ -62,8 +60,7 @@ namespace Spire {
       void paintEvent(QPaintEvent* event) override;
 
     private:
-      ChartValue::Type m_x_axis_type;
-      ChartValue::Type m_y_axis_type;
+      ChartModel* m_model;
       ChartPoint m_top_left;
       ChartPoint m_bottom_right;
       int m_x_origin;
