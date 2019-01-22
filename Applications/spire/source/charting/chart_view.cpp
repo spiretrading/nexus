@@ -76,13 +76,6 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
       m_label_text_color(QColor("#25212E")) {
   m_label_font.setPixelSize(scale_height(10));
   m_font_metrics = QFontMetrics(m_label_font);
-  auto current_time = boost::posix_time::second_clock::local_time();
-  auto bottom_right = ChartPoint(ChartValue(current_time),
-    ChartValue(Nexus::Money(10)));
-  auto top_left = ChartPoint(
-    ChartValue(current_time - boost::posix_time::hours(1)),
-    ChartValue(Nexus::Money(10.10)));
-  set_region(top_left, bottom_right);
   setCursor(Qt::BlankCursor);
   m_dashed_line_pen.setDashPattern({static_cast<double>(scale_width(4)),
     static_cast<double>(scale_width(4))});
@@ -127,12 +120,9 @@ void ChartView::set_region(const ChartPoint& top_left,
   m_bottom_right = bottom_right;
   m_x_range = m_bottom_right.m_x - m_top_left.m_x;
   m_x_axis_step = calculate_step(m_model->get_x_axis_type(), m_x_range);
-  m_x_origin = width() - (m_font_metrics.width("M") * (
-    m_item_delegate->displayText(to_variant(m_model->get_y_axis_type(),
-    m_top_left.m_y), QLocale()).length()) - scale_width(4));
   m_y_range = m_top_left.m_y - m_bottom_right.m_y;
   m_y_axis_step = calculate_step(m_model->get_y_axis_type(), m_y_range);
-  m_y_origin = height() - (m_font_metrics.height() + scale_height(9));
+  update_origins();
   update();
 }
 
@@ -211,4 +201,31 @@ void ChartView::paintEvent(QPaintEvent* event) {
     painter.drawText(m_x_origin + scale_width(3), m_crosshair_pos.value().y() +
       (m_font_metrics.height() / 3), y_label);
   }
+}
+
+void ChartView::resizeEvent(QResizeEvent* event) {
+  update_origins();
+  QWidget::resizeEvent(event);
+}
+
+void ChartView::showEvent(QShowEvent* event) {
+  if(m_top_left.m_x == ChartValue() && m_top_left.m_y == ChartValue() &&
+      m_bottom_right.m_x == ChartValue() &&
+      m_bottom_right.m_y == ChartValue()) {
+    auto current_time = boost::posix_time::second_clock::local_time();
+    auto bottom_right = ChartPoint(ChartValue(current_time),
+      ChartValue(Nexus::Money(10)));
+    auto top_left = ChartPoint(
+      ChartValue(current_time - boost::posix_time::hours(1)),
+      ChartValue(Nexus::Money(10.10)));
+    set_region(top_left, bottom_right);
+  }
+  QWidget::showEvent(event);
+}
+
+void ChartView::update_origins() {
+  m_x_origin = width() - (m_font_metrics.width("M") * (
+    m_item_delegate->displayText(to_variant(m_model->get_y_axis_type(),
+    m_top_left.m_y), QLocale()).length()) - scale_width(4));
+  m_y_origin = height() - (m_font_metrics.height() + scale_height(9));
 }
