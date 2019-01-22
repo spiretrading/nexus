@@ -40,14 +40,8 @@ namespace {
   ChartValue calculate_step(ChartValue::Type value_type,
       ChartValue range) {
     if(value_type == ChartValue::Type::MONEY) {
-      return ChartValue(Money::CENT);
-      auto money_range = static_cast<Money>(range);
-      if(money_range <= 10 * Money::CENT) {
-        return ChartValue(Money::CENT);
-      } else if(money_range <= Money::ONE) {
-
-      }
-      return ChartValue(Money::CENT);
+      // TODO: compiler bug workaround
+      return ChartValue(Money::FromValue("0.01").get());
     } else if(value_type == ChartValue::Type::TIMESTAMP) {
       return ChartValue(minutes(10));
     }
