@@ -41,27 +41,14 @@ namespace {
       ChartValue range) {
     if(value_type == ChartValue::Type::MONEY) {
       auto money_range = static_cast<Money>(range);
-      if(money_range <= Money::CENT) {
-        return ChartValue(Money::CENT / 10);
-      } else if(money_range <= 10 * Money::CENT) {
+      if(money_range <= 10 * Money::CENT) {
         return ChartValue(Money::CENT);
-      } else if(money_range <= Money::ONE) {
-        return ChartValue(10 * Money::CENT);
-      } else {
-        return ChartValue(Money::ONE);
       }
+      return ChartValue(Money::CENT);
     } else if(value_type == ChartValue::Type::TIMESTAMP) {
-      auto time_range = static_cast<time_duration>(range);
-      if(time_range <= minutes(1)) {
-        return ChartValue(seconds(1));
-      } else if(time_range <= hours(1)) {
-        return ChartValue(minutes(1));
-      } else if(time_range <= hours(24)) {
-        return ChartValue(hours(1));
-      } else {
-        return ChartValue(hours(24));
-      }
+      return ChartValue(minutes(10));
     }
+    qDebug() << "return null";
     return ChartValue();
   }
 }
