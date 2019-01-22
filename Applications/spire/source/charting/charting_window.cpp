@@ -22,7 +22,7 @@ using namespace Beam;
 using namespace Spire;
 
 namespace {
-  const auto CHART_ZOOM_PERCENT = 1.1;
+  const auto CHART_ZOOM_AMOUNT = 1.1;
 }
 
 ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
@@ -180,11 +180,11 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
       auto old_width = bottom_right.m_x - top_left.m_x;
       auto [new_width, new_height] = [&] {
         if(e->angleDelta().y() < 0) {
-          return std::make_tuple(CHART_ZOOM_PERCENT * old_width,
-            CHART_ZOOM_PERCENT * old_height);
+          return std::make_tuple(CHART_ZOOM_AMOUNT * old_width,
+            CHART_ZOOM_AMOUNT * old_height);
         }
-        return std::make_tuple(old_width / CHART_ZOOM_PERCENT,
-          old_height / CHART_ZOOM_PERCENT);
+        return std::make_tuple(old_width / CHART_ZOOM_AMOUNT,
+          old_height / CHART_ZOOM_AMOUNT);
       }();
       auto width_change = (new_width - old_width) / 2;
       auto height_change = (new_height - old_height) / 2;

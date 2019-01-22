@@ -52,7 +52,7 @@ namespace Spire {
 
       //! Returns a pair (top left, bottom right) of ChartPoints
       //! representing the region of the ChartView.
-      std::pair<ChartPoint, ChartPoint> get_region() const;
+      std::tuple<ChartPoint, ChartPoint> get_region() const;
 
       //! Sets the visible region of the chart to display.
       /*!
