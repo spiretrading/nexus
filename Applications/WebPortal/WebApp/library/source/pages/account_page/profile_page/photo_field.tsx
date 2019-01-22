@@ -321,7 +321,7 @@ export class ChangePictureModal extends
             <Padding size={ChangePictureModal.PADDING}/>
             <div style={ChangePictureModal.STYLE.header}>
               {ChangePictureModal.HEADER_TEXT}
-              <img src='resources/close.svg'
+              <img src='resources/close.svg' tabIndex={0}
                 style={ChangePictureModal.STYLE.closeIcon}
                 onClick={this.onClose}/>
             </div>
@@ -340,14 +340,15 @@ export class ChangePictureModal extends
             <div style={buttonBox}>
               <input type='file' id='imageInput' accept='image/*'
                 style={ChangePictureModal.STYLE.hiddenInput}
+                tabIndex={0}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                   this.onGetImageFile(event.target.files);}}/>
-              <label htmlFor='imageInput'
+              <label htmlFor='imageInput' tabIndex={0}
                 className={css(ChangePictureModal.SPECIAL_STYLE.button)}>
                 {ChangePictureModal.BROWSE_BUTTON_TEXT}
               </label>
               <div className={css(ChangePictureModal.SPECIAL_STYLE.button)}
-                onClick={this.onSubmit}>
+                onClick={this.onSubmit} tabIndex={0}>
                 {ChangePictureModal.SUBMIT_BUTTON_TEXT}
               </div>
             </div>
@@ -393,7 +394,6 @@ export class ChangePictureModal extends
       position: 'fixed' as 'fixed',
       width: '100%',
       height: '100%',
-      zIndex: 80,
       backgroundColor: '#FFFFFF',
       opacity: 0.9
     },
@@ -402,7 +402,6 @@ export class ChangePictureModal extends
       display: 'block',
       boxShadow: '0px 0px 6px #000000',
       position: 'absolute' as 'absolute',
-      zIndex: 100,
       border: '1px solid #FFFFFF',
       backgroundColor: '#FFFFFF',
       width: '284px',
@@ -413,7 +412,6 @@ export class ChangePictureModal extends
     boxShadowLarge:{
       opacity: 0.4,
       boxShadow: '0px 0px 6px #000000',
-      zIndex: 100,
       display: 'block',
       position: 'absolute' as 'absolute',
       backgroundColor: '#FFFFFF',
@@ -425,7 +423,6 @@ export class ChangePictureModal extends
     boxSmall: {
       display: 'block',
       position: 'absolute' as 'absolute',
-      zIndex: 101,
       border: '1px solid #FFFFFF',
       backgroundColor: '#FFFFFF',
       width: '284px',
@@ -434,7 +431,6 @@ export class ChangePictureModal extends
       right: '0%'
     },
     boxLarge: {
-      zIndex: 101,
       display: 'block',
       position: 'absolute' as 'absolute',
       backgroundColor: '#FFFFFF',
@@ -509,8 +505,7 @@ export class ChangePictureModal extends
       height: '0.1px',
       opacity: 0,
       overflow: 'hidden' as 'hidden',
-      position: 'absolute' as 'absolute',
-      zIndex: -1
+      position: 'absolute' as 'absolute'
     }
   };
   private static readonly SPECIAL_STYLE = StyleSheet.create({
@@ -532,6 +527,9 @@ export class ChangePictureModal extends
       borderRadius: '1px',
       outline: '0px',
       ':active': {
+        backgroundColor: '#4B23A0'
+      },
+      ':focus': {
         backgroundColor: '#4B23A0'
       },
       ':hover': {

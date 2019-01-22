@@ -122,7 +122,6 @@ export class RoleIcon extends React.Component<Properties, State> {
       backgroundColor: '#4B23A0',
       color: '#FFFFFF',
       position: 'absolute' as 'absolute',
-      zIndex: 5,
       top: '28px',
       left: '-2px',
       border: '1px solid #4B23A0',
