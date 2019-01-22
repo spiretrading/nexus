@@ -19,7 +19,6 @@ namespace {
     return image;
   }
 
-
   QVariant to_variant(ChartValue::Type type, ChartValue value) {
     if(type == ChartValue::Type::DURATION) {
       return QVariant::fromValue(static_cast<time_duration>(value));
@@ -47,9 +46,6 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
       m_item_delegate(new CustomVariantItemDelegate(this)),
       m_dashed_line_pen(Qt::white, scale_width(1), Qt::CustomDashLine),
       m_label_text_color(QColor("#25212E")) {
-  setFocusPolicy(Qt::NoFocus);
-  setMouseTracking(true);
-  setAttribute(Qt::WA_Hover);
   m_label_font.setPixelSize(scale_height(10));
   m_font_metrics = QFontMetrics(m_label_font);
   auto current_time = boost::posix_time::second_clock::local_time();
@@ -91,6 +87,10 @@ void ChartView::set_crosshair(const QPoint& position) {
 
 void ChartView::reset_crosshair() {
   m_crosshair_pos.reset();
+}
+
+std::tuple<ChartPoint, ChartPoint> ChartView::get_region() const {
+  return {m_top_left, m_bottom_right};
 }
 
 void ChartView::set_region(const ChartPoint& top_left,

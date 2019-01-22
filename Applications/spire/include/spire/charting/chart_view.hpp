@@ -48,6 +48,10 @@ namespace Spire {
       //! Removes the crosshair from the chart.
       void reset_crosshair();
 
+      //! Returns a pair (top left, bottom right) of ChartPoints
+      //! representing the region of the ChartView.
+      std::tuple<ChartPoint, ChartPoint> get_region() const;
+
       //! Sets the visible region of the chart to display.
       /*!
         \param top_left The top left point to display.
