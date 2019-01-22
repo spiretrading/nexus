@@ -79,8 +79,6 @@ namespace Spire {
       std::optional<QPoint> m_crosshair_pos;
       QPen m_dashed_line_pen;
       QPen m_label_text_color;
-
-      ChartValue calculate_step(ChartValue::Type value_type, ChartValue range);
   };
 }
 
