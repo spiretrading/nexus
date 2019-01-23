@@ -8,8 +8,8 @@ export abstract class AccountDirectoryModel {
   public abstract get groups(): Beam.Set<Beam.DirectoryEntry>;
 
   /** Returns the accounts that belong to a particular group. */
-  public abstract async loadAccounts(group: Beam.DirectoryEntry
-    ): Promise<AccountEntry[]>;
+  public abstract async loadAccounts(
+    group: Beam.DirectoryEntry): Promise<AccountEntry[]>;
 
       /** Loads this model. */
   public abstract async load(): Promise<void>;
