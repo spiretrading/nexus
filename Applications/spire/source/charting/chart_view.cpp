@@ -136,13 +136,13 @@ void ChartView::paintEvent(QPaintEvent* event) {
   }
   auto x_text_width = m_font_metrics.width(m_item_delegate->displayText(
     to_variant(m_model->get_x_axis_type(), m_top_left.m_x), QLocale()));
-  auto x_value = m_bottom_right.m_x;
+  auto x_value = m_top_left.m_x;
   x_value -= x_value % m_x_axis_step;
-  while(x_value >= m_top_left.m_x) {
-    x_value -= m_x_axis_step;
+  while(x_value <= m_bottom_right.m_x) {
+    x_value += m_x_axis_step;
     auto x = map_to(x_value, m_top_left.m_x, m_bottom_right.m_x, 0,
       m_x_origin);
-    if(x > 0) {
+    if(x > 0 && x < m_x_origin) {
       painter.setPen("#3A3348");
       painter.drawLine(x, 0, x, m_y_origin);
       painter.setPen(Qt::white);
