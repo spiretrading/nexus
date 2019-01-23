@@ -16,8 +16,8 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
     this._isLoaded = false;
     this._groups = groups.clone();
     this._accounts = new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>();
-    for(const group of groups) {
-      this._accounts.set(group, accounts.get(group));
+    for(const group of this._groups) {
+      this._accounts.set(group, accounts.get(group).slice());
     }
   }
 

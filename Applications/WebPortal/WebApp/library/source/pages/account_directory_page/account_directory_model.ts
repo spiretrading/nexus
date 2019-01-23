@@ -1,7 +1,7 @@
 import * as Beam from 'beam';
 import { AccountEntry } from './account_entry';
 
-/** Interface for a model representing an directory of accounts. */
+/** Interface for a model representing a directory of accounts. */
 export abstract class AccountDirectoryModel {
 
   /** Returns a list of all groups. */
