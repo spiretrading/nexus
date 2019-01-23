@@ -211,7 +211,6 @@ void ChartView::showEvent(QShowEvent* event) {
 void ChartView::update_origins() {
   m_x_origin = width() - (m_font_metrics.width("M") * (
     m_item_delegate->displayText(to_variant(m_model->get_y_axis_type(),
-    m_top_left.m_y - (m_top_left.m_y % m_y_axis_step)), QLocale()).length())
-    - scale_width(4));
+    m_top_left.m_y), QLocale()).length()) - scale_width(4));
   m_y_origin = height() - (m_font_metrics.height() + scale_height(9));
 }
