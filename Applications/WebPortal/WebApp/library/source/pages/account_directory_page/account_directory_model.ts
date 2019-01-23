@@ -11,6 +11,6 @@ export abstract class AccountDirectoryModel {
   public abstract async loadAccounts(
     group: Beam.DirectoryEntry): Promise<AccountEntry[]>;
 
-      /** Loads this model. */
+  /** Loads this model. */
   public abstract async load(): Promise<void>;
 }
