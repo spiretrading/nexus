@@ -1,7 +1,7 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 
-/** A object that represents a account entry and its roles. */
+/** Represents an account entry and its roles. */
 export class AccountEntry {
 
   /** Constructs an AccountEntry
