@@ -179,7 +179,7 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
       auto e = static_cast<QWheelEvent*>(event);
       auto [top_left, bottom_right] = m_chart->get_region();
       auto old_height = top_left.m_y - bottom_right.m_y;
-      auto old_width = bottom_right.m_x - top_left.m_x;
+      auto old_width = top_left.m_x - bottom_right.m_x;
       auto [new_width, new_height] = [&] {
         if(e->angleDelta().y() < 0) {
           return std::make_tuple(ZOOM_FACTOR * old_width,
