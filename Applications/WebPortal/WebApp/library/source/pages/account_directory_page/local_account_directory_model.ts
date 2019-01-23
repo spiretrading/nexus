@@ -2,26 +2,24 @@ import * as Beam from 'beam';
 import { AccountDirectoryModel } from './account_directory_model';
 import { AccountEntry } from './account_entry';
 
-/** Implements an EntitlementsModel in memory. */
+/** Implements an AccountDirectoryModel in menory. */
 export class LocalAccountDirectoryModel extends AccountDirectoryModel {
 
   /** Constructs an new model.
-   * @param groupList - The account to represent.
-   * @param accountLists - The set of entitlements granted to the account.
+   * @param groups - A set of groups.
+   * @param accounts  - A map of all the accounts associated with
+   *  each group.
    */
-  constructor( groupList: Beam.Set<Beam.DirectoryEntry>,
-      accountLists: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>) {
+  constructor(groups: Beam.Set<Beam.DirectoryEntry>,
+      accounts: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>) {
     super();
     this._isLoaded = false;
-    this._groupList = groupList;
-    this._accountLists = accountLists;
+    this._groupList = groups.clone();
+    this._accountLists = accounts;
   }
 
   /** Returns true if this model has been loaded. */
   public isLoaded(): boolean {
-    if(!this.isLoaded) {
-      throw Error('Model not loaded.');
-    }
     return this._isLoaded;
   }
 
@@ -30,13 +28,16 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
   }
 
   public get groups(): Beam.Set<Beam.DirectoryEntry> {
-    return this._groupList;
+    if(!this.isLoaded) {
+      throw Error('Model not loaded.');
+    }
+    return this._groupList.clone();
   }
 
-  public async loadAccounts(group: Beam.DirectoryEntry
-    ): Promise<AccountEntry[]> {
-      return this._accountLists.get(group);
-    }
+  public async loadAccounts(
+      group: Beam.DirectoryEntry): Promise<AccountEntry[]> {
+    return this._accountLists.get(group).slice();
+  }
 
   private _isLoaded: boolean;
   private _groupList: Beam.Set<Beam.DirectoryEntry>;
