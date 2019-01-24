@@ -33,6 +33,16 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
+    const contentWidth = (() => {
+      switch(this.props.displaySize) {
+        case DisplaySize.SMALL:
+          return AccountDirectoryPage.STYLE.contentSmall;
+        case DisplaySize.MEDIUM:
+          return AccountDirectoryPage.STYLE.contentMedium;
+        case DisplaySize.LARGE:
+          return AccountDirectoryPage.STYLE.contentLarge;
+      }
+    })();
     const headerBoxStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return AccountDirectoryPage.STYLE.verticalHeaderBox;
@@ -54,24 +64,29 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
         return AccountDirectoryPage.DYNAMIC_STYLE.button;
       }
     })();
+    const cards = (() => {
+      return <div/>;
+    })();
     return (
-      <div>
-        <div id={'header'} style={headerBoxStyle}>
-          <FilterBar value={this.state.filter} onChange={this.onChange}/>
-          <div style={buttonBoxStyle}>
-            <button className={css(buttonStyle)}
-                onClick={this.props.onNewAccountClick}>
-              New Account
-            </button>
-            <div style={AccountDirectoryPage.STYLE.buttonSpacing}/>
-            <button onClick={this.props.onNewGroupClick}
-                className={css(buttonStyle)}>
-              New Group
-            </button>
+      <div style={AccountDirectoryPage.STYLE.page}>
+        <div style={contentWidth}>
+          <div id={'header'} style={headerBoxStyle}>
+            <FilterBar value={this.state.filter} onChange={this.onChange}/>
+            <div style={buttonBoxStyle}>
+              <button className={css(buttonStyle)}
+                  onClick={this.props.onNewAccountClick}>
+                New Account
+              </button>
+              <div style={AccountDirectoryPage.STYLE.buttonSpacing}/>
+              <button onClick={this.props.onNewGroupClick}
+                  className={css(buttonStyle)}>
+                New Group
+              </button>
+            </div>
           </div>
-        </div>
-        <div id={'group_cards'}>
-
+          <div id={'group_cards'}>
+            {cards}
+          </div>
         </div>
       </div>);
   }
@@ -81,12 +96,35 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
   }
 
   private static readonly STYLE = {
+    page: {
+      boxSizing: 'border-box' as 'border-box',
+      height: '100%',
+      width: '100%',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      overflowY: 'auto' as 'auto',
+      justifyContent: 'center',
+      padding: '18px'
+    },
+    contentSmall: {
+      flexGrow: 1,
+      maxWidth: '424px'
+    },
+    contentMedium: {
+      width: '732px'
+    },
+    contentLarge: {
+      width: '1000px'
+    },
     verticalHeaderBox: {
       display: 'flex' as 'flex',
       flexDirection: 'column-reverse' as 'column-reverse',
-      flexWrap: 'nowrap' as 'nowrap'
+      flexWrap: 'nowrap' as 'nowrap',
+      height: '86px',
+      justifyContent: 'space-between' as 'space-between'
     },
     horizontalHeaderBox: {
+      boxSizing: 'border-box' as 'border-box',
       width: '100%',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
@@ -96,7 +134,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       width: '100%',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap'
+      flexWrap: 'nowrap' as 'nowrap',
     },
     buttonBox: {
       boxSizing: 'border-box' as 'border-box',
