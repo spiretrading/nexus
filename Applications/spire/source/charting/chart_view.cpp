@@ -145,8 +145,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
         QLocale()));
     }
   }
-  if(m_crosshair_pos && m_crosshair_pos.value().x() <= m_x_origin &&
-      m_crosshair_pos.value().y() <= m_y_origin) {
+  if(m_crosshair_pos) {
     painter.setPen(m_dashed_line_pen);
     painter.drawLine(m_crosshair_pos.value().x(), 0,
       m_crosshair_pos.value().x(), m_y_origin);
