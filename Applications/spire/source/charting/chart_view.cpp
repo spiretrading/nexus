@@ -217,13 +217,14 @@ void ChartView::update_origins() {
   }
   auto y_value = m_bottom_right.m_y - (m_bottom_right.m_y % m_y_axis_step);
   m_y_axis_values.clear();
+  m_x_origin = 0;
   while(y_value <= m_top_left.m_y) {
     y_value += m_y_axis_step;
     m_y_axis_values.push_back(y_value);
     auto text_width = width() - (m_font_metrics.width("M") * (
       m_item_delegate->displayText(to_variant(m_model->get_y_axis_type(),
       y_value), QLocale()).length()) - scale_width(4));
-    if(text_width > m_y_axis_text_width) {
+    if(text_width > m_x_origin) {
       m_x_origin = text_width;
     }
   }
