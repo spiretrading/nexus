@@ -85,6 +85,8 @@ namespace Spire {
       int m_x_axis_text_width;
       std::vector<ChartValue> m_y_axis_values;
       int m_y_axis_text_width;
+
+      void update_origins();
   };
 }
 

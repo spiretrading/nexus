@@ -103,34 +103,9 @@ void ChartView::set_region(const ChartPoint& top_left,
   m_bottom_right = bottom_right;
   m_x_range = m_bottom_right.m_x - m_top_left.m_x;
   m_x_axis_step = calculate_step(m_model->get_x_axis_type(), m_x_range);
-  auto x_value = m_top_left.m_x;
-  x_value -= x_value % m_x_axis_step;
-  m_x_axis_values.clear();
-  m_x_axis_text_width = 0;
-  while(x_value <= m_bottom_right.m_x) {
-    x_value += m_x_axis_step;
-    m_x_axis_values.push_back(x_value);
-    auto text_width = m_font_metrics.width(m_item_delegate->displayText(
-      to_variant(m_model->get_x_axis_type(), m_top_left.m_x), QLocale()));
-    if(text_width > m_x_axis_text_width) {
-      m_x_axis_text_width = text_width;
-    }
-  }
   m_y_range = m_top_left.m_y - m_bottom_right.m_y;
   m_y_axis_step = calculate_step(m_model->get_y_axis_type(), m_y_range);
-  auto y_value = m_bottom_right.m_y - (m_bottom_right.m_y % m_y_axis_step);
-  m_y_axis_values.clear();
-  while(y_value <= m_top_left.m_y) {
-    y_value += m_y_axis_step;
-    m_y_axis_values.push_back(y_value);
-    auto text_width = width() - (m_font_metrics.width("M") * (
-      m_item_delegate->displayText(to_variant(m_model->get_y_axis_type(),
-      y_value), QLocale()).length()) - scale_width(4));
-    if(text_width > m_y_axis_text_width) {
-      m_x_origin = text_width;
-    }
-  }
-  m_y_origin = height() - (m_font_metrics.height() + scale_height(9));
+  update_origins();
   update();
 }
 
@@ -206,7 +181,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
 }
 
 void ChartView::resizeEvent(QResizeEvent* event) {
-  // update region
+  update_origins();
   QWidget::resizeEvent(event);
 }
 
@@ -223,4 +198,33 @@ void ChartView::showEvent(QShowEvent* event) {
     set_region(top_left, bottom_right);
   }
   QWidget::showEvent(event);
+}
+
+void ChartView::update_origins() {
+  auto x_value = m_top_left.m_x;
+  x_value -= x_value % m_x_axis_step;
+  m_x_axis_values.clear();
+  m_x_axis_text_width = 0;
+  while(x_value <= m_bottom_right.m_x) {
+    x_value += m_x_axis_step;
+    m_x_axis_values.push_back(x_value);
+    auto text_width = m_font_metrics.width(m_item_delegate->displayText(
+      to_variant(m_model->get_x_axis_type(), x_value), QLocale()));
+    if(text_width > m_x_axis_text_width) {
+      m_x_axis_text_width = text_width;
+    }
+  }
+  auto y_value = m_bottom_right.m_y - (m_bottom_right.m_y % m_y_axis_step);
+  m_y_axis_values.clear();
+  while(y_value <= m_top_left.m_y) {
+    y_value += m_y_axis_step;
+    m_y_axis_values.push_back(y_value);
+    auto text_width = width() - (m_font_metrics.width("M") * (
+      m_item_delegate->displayText(to_variant(m_model->get_y_axis_type(),
+      y_value), QLocale()).length()) - scale_width(4));
+    if(text_width > m_y_axis_text_width) {
+      m_x_origin = text_width;
+    }
+  }
+  m_y_origin = height() - (m_font_metrics.height() + scale_height(9));
 }
