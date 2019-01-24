@@ -2,6 +2,9 @@
 set -o errexit
 set -o pipefail
 arguments="$@"
+pushd account_directory_page_tester
+./build.sh $arguments
+popd
 pushd account_page_tester
 ./build.sh $arguments
 popd

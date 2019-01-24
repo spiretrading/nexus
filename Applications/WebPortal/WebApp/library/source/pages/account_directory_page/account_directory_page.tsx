@@ -8,10 +8,10 @@ interface Properties {
   displaySize: DisplaySize;
 
   /** Called when the user wants to make a new group. */
-  onNewGroupClick: () => {};
+  onNewGroupClick?: () => {};
 
   /** Called when the user wants to make a new account. */
-  onNewAccountClick: () => {};
+  onNewAccountClick?: () => {};
 
   /** Model that contains imformation about the accounts. */
   model: AccountDirectoryModel;
@@ -41,7 +41,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
             <button onClick={this.props.onNewGroupClick}>New Group</button>
           </div>
         </div>
-        <div group_>
+        <div id={'group_cards'}>
 
         </div>
       </div>);
