@@ -12,7 +12,9 @@ export class FilterBar extends React.Component<Properties> {
 
   private static readonly STYLE = {
     test: {
-      backgroundColor: '4B23A0'
+      width: '100%',
+      height: '34px',
+      backgroundColor: '#4B23A0'
     }
   };
 }

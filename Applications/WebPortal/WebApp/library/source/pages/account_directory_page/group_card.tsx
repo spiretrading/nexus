@@ -11,7 +11,15 @@ interface Properties {
 }
 
 export class GroupCard extends React.Component<Properties> {
-    public render(): JSX.Element {
-    return <div/>;
+  public render(): JSX.Element {
+    return <div style={GroupCard.STYLE.test}/>;
   }
+
+  private static readonly STYLE = {
+    test: {
+      width: '100%',
+      height: '40px',
+      backgroundColor: '#F8F8F8'
+      }
+    };
 }
