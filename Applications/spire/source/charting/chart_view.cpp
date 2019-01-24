@@ -115,7 +115,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
   painter.setPen(Qt::white);
   painter.drawLine(m_x_origin, 0, m_x_origin, m_y_origin);
   painter.drawLine(0, m_y_origin, m_x_origin, m_y_origin);
-  if(m_x_range <= m_x_axis_step || m_y_range <= m_y_axis_step) {
+  if(m_x_range < ChartValue(0) || m_y_range < ChartValue(0)) {
     return;
   }
   for(auto y : m_y_axis_values) {
