@@ -1,7 +1,13 @@
 import * as React from 'react';
 
 interface Properties {
+
+  /** The value of the filter. */
   value: string;
+
+  /** Called when the value changes.
+   * @param newValue - The updated value.
+   */
   onChange: (newValue: string) => void;
 }
 
