@@ -197,17 +197,15 @@ void ChartView::showEvent(QShowEvent* event) {
 }
 
 void ChartView::update_origins() {
-  auto x_value = m_top_left.m_x;
-  x_value -= (x_value % m_x_axis_step) + m_x_axis_step;
+  auto x_value = m_top_left.m_x - (m_top_left.m_x % m_x_axis_step) +
+    m_x_axis_step;
   m_x_axis_values.clear();
   m_x_axis_text_width = 0;
   while(x_value <= m_bottom_right.m_x) {
     m_x_axis_values.push_back(x_value);
     auto text_width = m_font_metrics.width(m_item_delegate->displayText(
       to_variant(m_model->get_x_axis_type(), x_value), QLocale()));
-    if(text_width > m_x_axis_text_width) {
-      m_x_axis_text_width = text_width;
-    }
+    m_x_axis_text_width = std::max(m_x_axis_text_width, text_width);
     x_value += m_x_axis_step;
   }
   auto y_value = m_bottom_right.m_y - (m_bottom_right.m_y % m_y_axis_step) +
@@ -220,9 +218,7 @@ void ChartView::update_origins() {
     auto origin = width() - (m_font_metrics.width("M") * (
       m_item_delegate->displayText(to_variant(m_model->get_y_axis_type(),
       y_value), QLocale()).length()) - scale_width(4));
-    if(origin < m_x_origin) {
-      m_x_origin = origin;
-    }
+    m_x_origin = std::min(m_x_origin, origin);
     y_value += m_y_axis_step;
   }
   m_y_origin = height() - (m_font_metrics.height() + scale_height(9));
