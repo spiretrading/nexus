@@ -2,6 +2,7 @@ import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import { DisplaySize } from '../../display_size';
 import { AccountDirectoryModel, FilterBar } from '.';
+import { GroupCard } from './group_card';
 
 interface Properties {
 
@@ -65,25 +66,36 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       }
     })();
     const cards = (() => {
-      return <div/>;
+      const cards = [];
+      for (const group of this.props.model.groups) {
+        cards.push(
+          <GroupCard key={group.id}
+            displaySize={this.props.displaySize}
+            group={group}
+            accounts={[]}
+            filter={this.state.filter}/>);
+      }
+      return cards;
     })();
     return (
       <div style={AccountDirectoryPage.STYLE.page}>
         <div style={contentWidth}>
           <div id={'header'} style={headerBoxStyle}>
             <FilterBar value={this.state.filter} onChange={this.onChange}/>
+            <div style={AccountDirectoryPage.STYLE.spacing}/>
             <div style={buttonBoxStyle}>
               <button className={css(buttonStyle)}
                   onClick={this.props.onNewAccountClick}>
                 New Account
               </button>
-              <div style={AccountDirectoryPage.STYLE.buttonSpacing}/>
+              <div style={AccountDirectoryPage.STYLE.spacing}/>
               <button onClick={this.props.onNewGroupClick}
                   className={css(buttonStyle)}>
                 New Group
               </button>
             </div>
           </div>
+          <div style={AccountDirectoryPage.STYLE.spacing}/>
           <div id={'group_cards'}>
             {cards}
           </div>
@@ -104,7 +116,8 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       flexDirection: 'row' as 'row',
       overflowY: 'auto' as 'auto',
       justifyContent: 'center',
-      padding: '18px'
+      padding: '18px',
+      paddingBottom: '40px'
     },
     contentSmall: {
       flexGrow: 1,
@@ -121,7 +134,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       flexDirection: 'column-reverse' as 'column-reverse',
       flexWrap: 'nowrap' as 'nowrap',
       height: '86px',
-      justifyContent: 'space-between' as 'space-between'
+      justifyContent: 'flex-end' as 'flex-end'
     },
     horizontalHeaderBox: {
       boxSizing: 'border-box' as 'border-box',
@@ -134,11 +147,11 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       width: '100%',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
+      flexWrap: 'nowrap' as 'nowrap'
     },
     buttonBox: {
       boxSizing: 'border-box' as 'border-box',
-      flexBasis: '316px',
+      flexBasis: '298px',
       flexGrow: 0,
       flexShrink: 0,
       display: 'flex' as 'flex',
@@ -146,11 +159,12 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       flexWrap: 'nowrap' as 'nowrap',
       justifyContent: 'flex-end' as 'flex-end'
     },
-    buttonSpacing: {
-      width: '18px'
-    },
-    filler: {
-      flexGrow: 1
+    spacing: {
+      width: '18px',
+      height: '18px',
+      flexBias: '18px',
+      flexGrow: 0,
+      flexShrink: 0
     }
   };
 
@@ -211,5 +225,6 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
         color: '#8C8C8C',
         cursor: 'default' as 'default'
       }
+    }
   });
 }

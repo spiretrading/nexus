@@ -20,7 +20,9 @@ class TestApp extends React.Component<Properties, State> {
     this.state = {
      groups : new Beam.Set<Beam.DirectoryEntry>(),
      accounts: new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>(),
-     model: null
+     model: new WebPortal.LocalAccountDirectoryModel(
+       new Beam.Set<Beam.DirectoryEntry>(),
+       new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>())
     };
   }
 
@@ -35,17 +37,17 @@ class TestApp extends React.Component<Properties, State> {
   }
   public componentDidMount() {
     const group1 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 89, 'Nexus');
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 89, 'Nexus');
     const group2 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 42, 'Spire');
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 42, 'Spire');
     const group3 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 34, 'McOffice');
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 34, 'Office');
     const group4 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 35, 'Shire');
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 35, 'Shire');
     const group5 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 36, 'Mordor');
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 36, 'Mordor');
     const group6 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 37, 'Breeland');
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 37, 'Bree');
     this.state.groups.add(group1);
     this.state.groups.add(group2);
     this.state.groups.add(group3);
@@ -55,6 +57,7 @@ class TestApp extends React.Component<Properties, State> {
 
     const testModel = new WebPortal.LocalAccountDirectoryModel(
       this.state.groups, this.state.accounts);
+    testModel.load();
     this.setState({model: testModel});
   }
 }
