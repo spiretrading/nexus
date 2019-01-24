@@ -40,27 +40,10 @@ namespace {
   ChartValue calculate_step(ChartValue::Type value_type,
       ChartValue range) {
     if(value_type == ChartValue::Type::MONEY) {
-      auto money_range = static_cast<Money>(range);
-      if(money_range <= Money::CENT) {
-        return ChartValue(Money::CENT / 10);
-      } else if(money_range <= 10 * Money::CENT) {
-        return ChartValue(Money::CENT);
-      } else if(money_range <= Money::ONE) {
-        return ChartValue(10 * Money::CENT);
-      } else {
-        return ChartValue(Money::ONE);
-      }
+      // TODO: compiler bug workaround
+      return ChartValue(Money::FromValue("0.01").get());
     } else if(value_type == ChartValue::Type::TIMESTAMP) {
-      auto time_range = static_cast<time_duration>(range);
-      if(time_range <= minutes(1)) {
-        return ChartValue(seconds(1));
-      } else if(time_range <= hours(1)) {
-        return ChartValue(minutes(1));
-      } else if(time_range <= hours(24)) {
-        return ChartValue(hours(1));
-      } else {
-        return ChartValue(hours(24));
-      }
+      return ChartValue(minutes(10));
     }
     return ChartValue();
   }
@@ -135,38 +118,28 @@ void ChartView::paintEvent(QPaintEvent* event) {
   if(m_x_range <= m_x_axis_step || m_y_range <= m_y_axis_step) {
     return;
   }
-  auto y_value = m_bottom_right.m_y;
-  while(y_value <= m_top_left.m_y) {
-    y_value += m_y_axis_step;
-    auto y = map_to(y_value, m_bottom_right.m_y,
-      m_top_left.m_y, m_y_origin, 0);
-    if(y > 0) {
-      painter.setPen("#3A3348");
-      painter.drawLine(0, y, m_x_origin, y);
-      painter.setPen(Qt::white);
-      painter.drawLine(m_x_origin, y, m_x_origin + scale_width(2), y);
-      painter.drawText(m_x_origin + scale_width(3),
-        y + (m_font_metrics.height() / 3), m_item_delegate->displayText(
-        to_variant(m_model->get_y_axis_type(), y_value), QLocale()));
-    }
+  for(auto y : m_y_axis_values) {
+    auto y_pos = map_to(y, m_bottom_right.m_y,
+    m_top_left.m_y, m_y_origin, 0);
+    painter.setPen("#3A3348");
+    painter.drawLine(0, y_pos, m_x_origin, y_pos);
+    painter.setPen(Qt::white);
+    painter.drawLine(m_x_origin, y_pos, m_x_origin + scale_width(2), y_pos);
+    painter.drawText(m_x_origin + scale_width(3),
+      y_pos + (m_font_metrics.height() / 3), m_item_delegate->displayText(
+      to_variant(m_model->get_y_axis_type(), y), QLocale()));
   }
-  auto x_text_width = m_font_metrics.width(m_item_delegate->displayText(
-    to_variant(m_model->get_x_axis_type(), m_top_left.m_x), QLocale()));
-  auto x_value = m_bottom_right.m_x;
-  while(x_value >= m_top_left.m_x) {
-    x_value -= m_x_axis_step;
-    auto x = map_to(x_value, m_top_left.m_x, m_bottom_right.m_x, 0,
+  for(auto x : m_x_axis_values) {
+    auto x_pos = map_to(x, m_top_left.m_x, m_bottom_right.m_x, 0,
       m_x_origin);
-    if(x > 0) {
-      painter.setPen("#3A3348");
-      painter.drawLine(x, 0, x, m_y_origin);
-      painter.setPen(Qt::white);
-      painter.drawLine(x, m_y_origin, x, m_y_origin + scale_height(2));
-      painter.drawText(x - x_text_width / 2,
-        m_y_origin + m_font_metrics.height() + scale_height(2),
-        m_item_delegate->displayText(to_variant(m_model->get_x_axis_type(),
-        x_value), QLocale()));
-    }
+    painter.setPen("#3A3348");
+    painter.drawLine(x_pos, 0, x_pos, m_y_origin);
+    painter.setPen(Qt::white);
+    painter.drawLine(x_pos, m_y_origin, x_pos, m_y_origin + scale_height(2));
+    painter.drawText(x_pos - m_x_axis_text_width / 2,
+      m_y_origin + m_font_metrics.height() + scale_height(2),
+      m_item_delegate->displayText(to_variant(m_model->get_x_axis_type(), x),
+      QLocale()));
   }
   if(m_crosshair_pos) {
     painter.setPen(m_dashed_line_pen);
@@ -224,8 +197,29 @@ void ChartView::showEvent(QShowEvent* event) {
 }
 
 void ChartView::update_origins() {
-  m_x_origin = width() - (m_font_metrics.width("M") * (
-    m_item_delegate->displayText(to_variant(m_model->get_y_axis_type(),
-    m_top_left.m_y), QLocale()).length()) - scale_width(4));
+  auto x_value = m_top_left.m_x - (m_top_left.m_x % m_x_axis_step) +
+    m_x_axis_step;
+  m_x_axis_values.clear();
+  m_x_axis_text_width = 0;
+  while(x_value <= m_bottom_right.m_x) {
+    m_x_axis_values.push_back(x_value);
+    auto text_width = m_font_metrics.width(m_item_delegate->displayText(
+      to_variant(m_model->get_x_axis_type(), x_value), QLocale()));
+    m_x_axis_text_width = std::max(m_x_axis_text_width, text_width);
+    x_value += m_x_axis_step;
+  }
+  auto y_value = m_bottom_right.m_y - (m_bottom_right.m_y % m_y_axis_step) +
+    m_y_axis_step;
+  m_y_axis_values.clear();
+  m_x_origin = INT_MAX;
+  auto top_label = m_top_left.m_y - (m_top_left.m_y % m_y_axis_step);
+  while(y_value <= top_label) {
+    m_y_axis_values.push_back(y_value);
+    auto origin = width() - (m_font_metrics.width("M") * (
+      m_item_delegate->displayText(to_variant(m_model->get_y_axis_type(),
+      y_value), QLocale()).length()) - scale_width(4));
+    m_x_origin = std::min(m_x_origin, origin);
+    y_value += m_y_axis_step;
+  }
   m_y_origin = height() - (m_font_metrics.height() + scale_height(9));
 }
