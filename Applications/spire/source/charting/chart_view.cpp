@@ -52,6 +52,7 @@ namespace {
 ChartView::ChartView(ChartModel& model, QWidget* parent)
     : QWidget(parent),
       m_model(&model),
+      m_x_origin(0),
       m_label_font("Roboto"),
       m_font_metrics(QFont()),
       m_item_delegate(new CustomVariantItemDelegate(this)),
