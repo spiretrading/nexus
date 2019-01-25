@@ -42,7 +42,7 @@ export class FilterBar extends React.Component<Properties> {
       flex: '0, 0, auto'
     }
   };
-  private static DYNAMIC_STYLE = StyleSheet.create({
+  private static readonly DYNAMIC_STYLE = StyleSheet.create({
     box: {
       boxSizing: 'border-box' as 'border-box',
       width: '100%',
