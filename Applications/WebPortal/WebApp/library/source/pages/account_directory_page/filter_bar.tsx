@@ -12,12 +12,8 @@ interface Properties {
   onChange: (value: string) => void;
 }
 
-interface State {
-  isFocused: boolean;
-}
-
 /** Filter bar for the account directory page. */
-export class FilterBar extends React.Component<Properties, State> {
+export class FilterBar extends React.Component<Properties, {}> {
   constructor(props: Properties) {
     super(props);
     this.state = {
@@ -25,23 +21,15 @@ export class FilterBar extends React.Component<Properties, State> {
     };
     this.onBlur = this.onBlur.bind(this);
     this.onFocus = this.onFocus.bind(this);
+    this.onChange = this.onChange.bind(this);
   }
 
   public render(): JSX.Element {
-    const boxStyle = (() => {
-      if(this.state.isFocused) {
-        return FilterBar.STYLE.activeBox;
-      } else {
-        return FilterBar.STYLE.box;
-      }
-    })();
     return (
-      <div style={boxStyle}>
+      <div className={css(FilterBar.DYNAMIC_STYLE.box)}>
         <input value={this.props.value} placeholder='Filter'
           onFocus={this.onFocus} onBlur={this.onBlur}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-            this.props.onChange(event.target.value);
-          }}
+          onChange={this.onChange}
           className={css(FilterBar.DYNAMIC_STYLE.input)}/>
         <img src={'resources/account_directory_page/magnifying-glass.svg'}
           style={FilterBar.STYLE.image}/>
@@ -56,7 +44,20 @@ export class FilterBar extends React.Component<Properties, State> {
     this.setState({isFocused: false});
   }
 
+  private onChange(event: React.ChangeEvent<HTMLInputElement>) {
+    this.props.onChange(event.target.value);
+  }
+
   private static readonly STYLE = {
+    image: {
+      height: '16px',
+      width: '16px',
+      paddingRight: '10px',
+      flex: '0, 0, auto'
+    }
+  };
+
+  private static DYNAMIC_STYLE = StyleSheet.create({
     box: {
       boxSizing: 'border-box' as 'border-box',
       width: '100%',
@@ -67,29 +68,11 @@ export class FilterBar extends React.Component<Properties, State> {
       justifyContent: 'space-between' as 'space-between',
       alignItems: 'center' as 'center',
       borderRadius: '1px',
-      border: '1px solid #C8C8C8'
+      border: '1px solid #C8C8C8',
+      ':focus-within': {
+        border: '1px solid #684BC7'
+      }
     },
-    activeBox: {
-      boxSizing: 'border-box' as 'border-box',
-      width: '100%',
-      height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      justifyContent: 'space-between' as 'space-between',
-      alignItems: 'center' as 'center',
-      borderRadius: '1px',
-      border: '1px solid #684BC7'
-    },
-    image: {
-      height: '16px',
-      width: '16px',
-      paddingRight: '10px',
-      flex: '0, 0, auto'
-    }
-  };
-
-  private static DYNAMIC_STYLE = StyleSheet.create({
     input: {
       boxSizing: 'border-box' as 'border-box',
       font: '400 14px Roboto',
