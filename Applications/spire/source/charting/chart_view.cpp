@@ -144,6 +144,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
   }
   if(m_crosshair_pos && m_crosshair_pos.value().x() <= m_x_origin &&
       m_crosshair_pos.value().y() <= m_y_origin) {
+    setCursor(Qt::BlankCursor);
     painter.setPen(m_dashed_line_pen);
     painter.drawLine(m_crosshair_pos.value().x(), 0,
       m_crosshair_pos.value().x(), m_y_origin);
@@ -175,6 +176,8 @@ void ChartView::paintEvent(QPaintEvent* event) {
     painter.setPen(m_label_text_color);
     painter.drawText(m_x_origin + scale_width(3), m_crosshair_pos.value().y() +
       (m_font_metrics.height() / 3), y_label);
+  } else {
+    setCursor(Qt::ArrowCursor);
   }
 }
 
