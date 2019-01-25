@@ -13,11 +13,9 @@ interface Properties {
 }
 
 /** Filter bar for the account directory page. */
-export class FilterBar extends React.Component<Properties, {}> {
+export class FilterBar extends React.Component<Properties> {
   constructor(props: Properties) {
     super(props);
-    this.onBlur = this.onBlur.bind(this);
-    this.onFocus = this.onFocus.bind(this);
     this.onChange = this.onChange.bind(this);
   }
 
@@ -25,20 +23,11 @@ export class FilterBar extends React.Component<Properties, {}> {
     return (
       <div className={css(FilterBar.DYNAMIC_STYLE.box)}>
         <input value={this.props.value} placeholder='Filter'
-          onFocus={this.onFocus} onBlur={this.onBlur}
           onChange={this.onChange}
           className={css(FilterBar.DYNAMIC_STYLE.input)}/>
         <img src={'resources/account_directory_page/magnifying-glass.svg'}
           style={FilterBar.STYLE.image}/>
       </div>);
-  }
-
-  private onFocus() {
-    this.setState({isFocused: true});
-  }
-
-  private onBlur() {
-    this.setState({isFocused: false});
   }
 
   private onChange(event: React.ChangeEvent<HTMLInputElement>) {
