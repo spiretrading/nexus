@@ -52,6 +52,7 @@ namespace {
 ChartView::ChartView(ChartModel& model, QWidget* parent)
     : QWidget(parent),
       m_model(&model),
+      m_x_origin(INT_MAX),
       m_label_font("Roboto"),
       m_font_metrics(QFont()),
       m_item_delegate(new CustomVariantItemDelegate(this)),
@@ -211,7 +212,6 @@ void ChartView::update_origins() {
   auto y_value = m_bottom_right.m_y - (m_bottom_right.m_y % m_y_axis_step) +
     m_y_axis_step;
   m_y_axis_values.clear();
-  m_x_origin = INT_MAX;
   auto top_label = m_top_left.m_y - (m_top_left.m_y % m_y_axis_step);
   while(y_value <= top_label) {
     m_y_axis_values.push_back(y_value);
