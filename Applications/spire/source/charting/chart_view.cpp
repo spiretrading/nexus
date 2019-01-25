@@ -52,6 +52,7 @@ namespace {
 ChartView::ChartView(ChartModel& model, QWidget* parent)
     : QWidget(parent),
       m_model(&model),
+      m_x_origin(0),
       m_label_font("Roboto"),
       m_font_metrics(QFont()),
       m_item_delegate(new CustomVariantItemDelegate(this)),
@@ -115,7 +116,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
   painter.setPen(Qt::white);
   painter.drawLine(m_x_origin, 0, m_x_origin, m_y_origin);
   painter.drawLine(0, m_y_origin, m_x_origin, m_y_origin);
-  if(m_x_range <= m_x_axis_step || m_y_range <= m_y_axis_step) {
+  if(m_x_range <= ChartValue(0) || m_y_range <= ChartValue(0)) {
     return;
   }
   for(auto y : m_y_axis_values) {
@@ -211,6 +212,7 @@ void ChartView::update_origins() {
   auto y_value = m_bottom_right.m_y - (m_bottom_right.m_y % m_y_axis_step) +
     m_y_axis_step;
   m_y_axis_values.clear();
+  auto old_x_origin = m_x_origin;
   m_x_origin = INT_MAX;
   auto top_label = m_top_left.m_y - (m_top_left.m_y % m_y_axis_step);
   while(y_value <= top_label) {
@@ -220,6 +222,9 @@ void ChartView::update_origins() {
       y_value), QLocale()).length()) - scale_width(4));
     m_x_origin = std::min(m_x_origin, origin);
     y_value += m_y_axis_step;
+  }
+  if(m_x_origin == INT_MAX) {
+    m_x_origin = old_x_origin;
   }
   m_y_origin = height() - (m_font_metrics.height() + scale_height(9));
 }
