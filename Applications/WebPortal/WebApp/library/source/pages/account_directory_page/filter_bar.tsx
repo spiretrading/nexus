@@ -45,7 +45,7 @@ export class FilterBar extends React.Component<Properties, State> {
           className={css(FilterBar.DYNAMIC_STYLE.input)}/>
         <img src={'resources/account_directory_page/magnifying-glass.svg'}
           style={FilterBar.STYLE.image}/>
-    </div>);
+      </div>);
   }
 
   private onFocus() {
