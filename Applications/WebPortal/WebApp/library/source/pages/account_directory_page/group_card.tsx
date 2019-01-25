@@ -38,6 +38,20 @@ export class GroupCard extends React.Component<Properties> {
         return GroupCard.STYLE.text;
       }
     })();
+    const accountsLableStyle = (() => {
+      if(this.props.isOpen) {
+        switch(this.props.displaySize) {
+          case(DisplaySize.SMALL):
+            return GroupCard.STYLE.accountLabelSmall;
+          case(DisplaySize.MEDIUM):
+           return GroupCard.STYLE.accountLabelMedium;
+          case(DisplaySize.LARGE):
+           return GroupCard.STYLE.accountLabelLarge;
+        }
+      } else {
+        return null;
+      }
+    })();
     const accounts = (() => {
       if(this.props.isOpen) {
         const stuff = [];
@@ -48,14 +62,16 @@ export class GroupCard extends React.Component<Properties> {
             stuff.push(
               <div style={GroupCard.STYLE.accountBox}
                   key={this.props.accounts[i].account.id}>
-                <div style={GroupCard.STYLE.text}>
+                <div style={{...accountsLableStyle,
+                  ...GroupCard.STYLE.accountLabelText}}>
                   {this.props.accounts[i].account.name}
                 </div>
                 <RolePanel roles={this.props.accounts[i].roles}/>
               </div>);
           }
         } else {
-          stuff.push(<div>Empty</div>);
+          stuff.push(<div style={{...accountsLableStyle,
+                  ...GroupCard.STYLE.emptyLableText}}>Empty</div>);
         }
         stuff.push(<Padding size='20px'/>);
         return stuff;
@@ -111,21 +127,22 @@ export class GroupCard extends React.Component<Properties> {
       color: '#000000'
     },
     accountLabelSmall: {
+      marginLeft: '10px'
+    },
+    accountLabelMedium: {
+      marginLeft: '34px'
+    },
+    accountLabelLarge: {
+      marginLeft: '34px'
+    },
+    accountLabelText: {
       font: '400 14px Roboto',
       color: '#000000',
       marginRight: '10px'
     },
-    accountLabelMedium: {
+    emptyLableText: {
       font: '400 14px Roboto',
-      color: '#000000',
-      marginRight: '10px',
-      marginLeft: '24px'
-    },
-    accountLabelLarge: {
-      font: '400 14px Roboto',
-      color: '#000000',
-      marginRight: '10px',
-      marginLeft: '38px'
+      color: '#8C8C8C'
     },
     accountBox: {
       boxSizing: 'border-box' as 'border-box',
@@ -135,7 +152,6 @@ export class GroupCard extends React.Component<Properties> {
       flexWrap: 'nowrap' as 'nowrap',
       alignItems: 'center' as 'center',
       justifyContent: 'space-between' as 'space-between',
-      marginLeft: '10px',
       marginRight: '10px'
     }
   };
