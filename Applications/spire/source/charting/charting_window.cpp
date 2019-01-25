@@ -137,6 +137,11 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   m_chart->installEventFilter(this);
 }
 
+void ChartingWindow::set_model(std::shared_ptr<ChartModel> model) {
+  m_model = model;
+  // update region?
+}
+
 connection ChartingWindow::connect_security_change_signal(
     const ChangeSecuritySignal::slot_type& slot) const {
   return m_security_widget->connect_change_security_signal(slot);
