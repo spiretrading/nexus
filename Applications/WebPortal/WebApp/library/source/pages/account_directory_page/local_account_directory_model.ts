@@ -17,9 +17,7 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
     this._groups = groups.clone();
     this._accounts = new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>();
     for(const group of this._groups) {
-      if(accounts.get(group)) {
-        this._accounts.set(group, accounts.get(group).slice());
-      }
+      this._accounts.set(group, accounts.get(group).slice());
     }
   }
 
@@ -44,11 +42,7 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
     if(!this.isLoaded) {
       throw Error('Model not loaded.');
     }
-    if(this._accounts.get(group)){
-      return this._accounts.get(group).slice();
-    } else {
-      return [];
-    }
+    return this._accounts.get(group).slice();
   }
 
   private _isLoaded: boolean;

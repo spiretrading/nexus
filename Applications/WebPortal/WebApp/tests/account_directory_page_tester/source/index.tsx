@@ -54,6 +54,9 @@ class TestApp extends React.Component<Properties, State> {
     this.state.groups.add(group4);
     this.state.groups.add(group5);
     this.state.groups.add(group6);
+    for(const group of this.state.groups) {
+      this.state.accounts.set(group, []);
+    }
     const testModel = new WebPortal.LocalAccountDirectoryModel(
       this.state.groups, this.state.accounts);
     testModel.load();
