@@ -20,7 +20,7 @@ interface Properties {
   /**  Determines if the card is opened. */
   isOpen: boolean;
 
-  /** Called when the card is opened. */
+  /** Called when the card is clicked. */
   onClick: (group: Beam.DirectoryEntry) => void;
 }
 

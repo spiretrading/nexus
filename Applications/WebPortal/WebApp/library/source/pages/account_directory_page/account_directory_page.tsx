@@ -73,12 +73,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
     })();
     const cards = [];
     for (const group of this.props.model.groups) {
-      let accounts: AccountEntry[] = [];
-      if(!this.state.accounts.get(group)) {
-        accounts = [];
-      } else {
-        accounts = this.state.accounts.get(group);
-      }
+      const accounts = this.state.accounts.get(group) || [];
       cards.push(
         <GroupCard key={group.id}
           displaySize={this.props.displaySize}
@@ -115,8 +110,8 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
   }
 
   private onChange(newFilter: string) {
-    this.setState({filter: newFilter});
     this.setState({
+      filter: newFilter,
       openedGroups: new Beam.Set<Beam.DirectoryEntry>()
     });
   }
