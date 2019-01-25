@@ -214,11 +214,6 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       },
       ':hover' : {
         backgroundColor: '#4B23A0'
-      },
-      ':disabled': {
-        backgroundColor: '#F8F8F8',
-        color: '#8C8C8C',
-        cursor: 'default' as 'default'
       }
     },
     buttonSmall: {
@@ -242,11 +237,6 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       },
       ':hover' : {
         backgroundColor: '#4B23A0'
-      },
-      ':disabled': {
-        backgroundColor: '#F8F8F8',
-        color: '#8C8C8C',
-        cursor: 'default' as 'default'
       }
     }
   });

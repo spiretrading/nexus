@@ -1,7 +1,9 @@
 import * as Beam from 'beam';
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
+import { AccountEntry } from 'web_portal';
 
 interface Properties {
   displaySize: WebPortal.DisplaySize;
@@ -37,15 +39,15 @@ class TestApp extends React.Component<Properties, State> {
   }
   public componentDidMount() {
     const group1 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 89, 'Nexus');
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 80, 'Nexus');
     const group2 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 42, 'Spire');
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 41, 'Spire');
     const group3 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 34, 'Office');
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 31, 'Office');
     const group4 =
       new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 35, 'Shire');
     const group5 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 36, 'Mordor');
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 33, 'Mordor');
     const group6 =
       new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 37, 'Bree');
     this.state.groups.add(group1);
@@ -54,8 +56,19 @@ class TestApp extends React.Component<Properties, State> {
     this.state.groups.add(group4);
     this.state.groups.add(group5);
     this.state.groups.add(group6);
+    const accountEntry = new AccountEntry(
+      new Beam.DirectoryEntry(
+        Beam.DirectoryEntry.Type.ACCOUNT, 9123, 'administration_service'),
+      new Nexus.AccountRoles()
+    );
+    const testArray = [];
+    testArray.push(accountEntry);
     for(const group of this.state.groups) {
-      this.state.accounts.set(group, []);
+      if(group.id % 2 === 0) {
+        this.state.accounts.set(group, testArray);
+      } else {
+        this.state.accounts.set(group, []);
+      }
     }
     const testModel = new WebPortal.LocalAccountDirectoryModel(
       this.state.groups, this.state.accounts);
