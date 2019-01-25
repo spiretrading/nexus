@@ -16,9 +16,6 @@ interface Properties {
 export class FilterBar extends React.Component<Properties, {}> {
   constructor(props: Properties) {
     super(props);
-    this.state = {
-      isFocused: false
-    };
     this.onBlur = this.onBlur.bind(this);
     this.onFocus = this.onFocus.bind(this);
     this.onChange = this.onChange.bind(this);
@@ -56,7 +53,6 @@ export class FilterBar extends React.Component<Properties, {}> {
       flex: '0, 0, auto'
     }
   };
-
   private static DYNAMIC_STYLE = StyleSheet.create({
     box: {
       boxSizing: 'border-box' as 'border-box',
