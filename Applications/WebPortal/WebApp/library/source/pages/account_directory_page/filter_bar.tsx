@@ -6,11 +6,12 @@ interface Properties {
   value: string;
 
   /** Called when the value changes.
-   * @param newValue - The updated value.
+   * @param value - The updated value.
    */
-  onChange: (newValue: string) => void;
+  onChange: (value: string) => void;
 }
 
+/** Filter bar for the account directory page. */
 export class FilterBar extends React.Component<Properties> {
   public render(): JSX.Element {
     return (<div style={FilterBar.STYLE.test}/>);

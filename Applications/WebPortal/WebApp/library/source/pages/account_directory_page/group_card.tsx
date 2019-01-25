@@ -16,8 +16,15 @@ interface Properties {
 
   /** The current filter used on the accounts. */
   filter: string;
+
+  /**  Determines if the card is opened. */
+  isOpen: boolean;
+
+  /** Called when the card is opened. */
+  onClick: (group: Beam.DirectoryEntry) => void;
 }
 
+/** A card that displays a group and the accounts associated with it. */
 export class GroupCard extends React.Component<Properties> {
   public render(): JSX.Element {
     return <div style={GroupCard.STYLE.test}>Group</div>;

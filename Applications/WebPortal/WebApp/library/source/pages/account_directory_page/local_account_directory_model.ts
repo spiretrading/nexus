@@ -44,7 +44,11 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
     if(!this.isLoaded) {
       throw Error('Model not loaded.');
     }
-    return this._accounts.get(group).slice();
+    if(this._accounts.get(group)){
+      return this._accounts.get(group).slice();
+    } else {
+      return [];
+    }
   }
 
   private _isLoaded: boolean;
