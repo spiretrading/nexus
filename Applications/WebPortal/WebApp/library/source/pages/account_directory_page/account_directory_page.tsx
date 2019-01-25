@@ -117,11 +117,13 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
   }
 
   private async onCardClick(group: Beam.DirectoryEntry) {
-    if(!this.state.accounts.get(group)) {
+    if(this.state.openedGroups.test(group)) {
+      this.state.openedGroups.remove(group);
+    } else {
       const accounts = await this.props.model.loadAccounts(group);
       this.state.accounts.set(group, accounts);
+      this.state.openedGroups.add(group);
     }
-    this.state.openedGroups.add(group);
     this.setState({
       openedGroups: this.state.openedGroups,
       accounts: this.state.accounts
