@@ -58,6 +58,7 @@ export class FilterBar extends React.Component<Properties, State> {
 
   private static readonly STYLE = {
     box: {
+      boxSizing: 'border-box' as 'border-box',
       width: '100%',
       height: '34px',
       display: 'flex' as 'flex',
@@ -69,6 +70,7 @@ export class FilterBar extends React.Component<Properties, State> {
       border: '1px solid #C8C8C8'
     },
     activeBox: {
+      boxSizing: 'border-box' as 'border-box',
       width: '100%',
       height: '34px',
       display: 'flex' as 'flex',
@@ -89,19 +91,25 @@ export class FilterBar extends React.Component<Properties, State> {
 
   private static DYNAMIC_STYLE = StyleSheet.create({
     input: {
+      boxSizing: 'border-box' as 'border-box',
       font: '400 14px Roboto',
       color: '#000000',
       flexGrow: 1,
       flexShrink: 1,
-      paddingLeft: '10px',
-      ouline: 0,
-      border: 0
+      padding: 0,
+      marginLeft: '10px',
+      outline: 0,
+      outlineOffset: 0,
+      border: 0,
+      '-webkit-appearance': 'none'
     },
     '::placeholder': {
       color: '#8C8C8C'
     },
     ':focus': {
-      ouline: 0,
+      outlineOffset: 0,
+      outline: 0,
+      border: 0,
       outlineColor: 'transparent',
       outlineStyle: 'none'
     },
