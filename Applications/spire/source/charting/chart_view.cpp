@@ -79,7 +79,7 @@ ChartPoint ChartView::convert_pixels_to_chart(const QPoint& point) const {
 
 QPoint ChartView::convert_chart_to_pixels(const ChartPoint& point) const {
   return QPoint(
-    map_to(point.m_x, m_top_left.m_x, m_bottom_right.m_y, 0.0,
+    map_to(point.m_x, m_top_left.m_x, m_bottom_right.m_x, 0.0,
       static_cast<double>(m_x_origin)),
     map_to(point.m_y, m_bottom_right.m_y, m_top_left.m_y,
       static_cast<double>(m_y_origin), 0.0));
@@ -155,7 +155,6 @@ void ChartView::paintEvent(QPaintEvent* event) {
   for(auto& candlestick : m_candlesticks) {
     auto open = convert_chart_to_pixels({candlestick.GetStart(),
       candlestick.GetOpen()});
-    qDebug() << open;
     painter.drawPoint(open);
   }
   if(m_crosshair_pos) {
@@ -207,7 +206,7 @@ void ChartView::showEvent(QShowEvent* event) {
       ChartValue(Nexus::Money(0)));
     auto top_left = ChartPoint(
       ChartValue(current_time - boost::posix_time::hours(1)),
-      ChartValue(Nexus::Money(2)));
+      ChartValue(Nexus::Money(1)));
     set_region(top_left, bottom_right);
   }
   QWidget::showEvent(event);

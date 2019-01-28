@@ -48,10 +48,10 @@ int main(int argc, char** argv) {
   for(auto i = 0; i < 100; ++i) {
     candlesticks.push_back(Candlestick(ChartValue(time),
       ChartValue(time - boost::posix_time::minutes(1)),
-      ChartValue(Money(rand() % 100 * Money::CENT)),
-      ChartValue(Money(rand() % 100 * Money::CENT)),
-      ChartValue(Money(rand() % 100 * Money::CENT)),
-      ChartValue(Money(rand() % 100 * Money::CENT))));
+      ChartValue(Money(rand() % 100 * Money::FromValue("0.01").get())),
+      ChartValue(Money(rand() % 100 * Money::FromValue("0.01").get())),
+      ChartValue(Money(rand() % 100 * Money::FromValue("0.01").get())),
+      ChartValue(Money(rand() % 100 * Money::FromValue("0.01").get()))));
       time -= boost::posix_time::minutes(1);
   }
   auto chart_model = std::make_shared<LocalChartModel>(
