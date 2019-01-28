@@ -41,7 +41,7 @@ namespace {
       ChartValue range) {
     if(value_type == ChartValue::Type::MONEY) {
       // TODO: compiler bug workaround
-      return ChartValue(Money::FromValue("0.01").get());
+      return ChartValue(Money::FromValue("0.1").get());
     } else if(value_type == ChartValue::Type::TIMESTAMP) {
       return ChartValue(minutes(10));
     }
@@ -63,6 +63,10 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
   setCursor(Qt::BlankCursor);
   m_dashed_line_pen.setDashPattern({static_cast<double>(scale_width(4)),
     static_cast<double>(scale_width(4))});
+}
+
+void ChartView::set_model(ChartModel& model) {
+  m_model = &model;
 }
 
 ChartPoint ChartView::convert_pixels_to_chart(const QPoint& point) const {
@@ -107,6 +111,12 @@ void ChartView::set_region(const ChartPoint& top_left,
   m_y_range = m_top_left.m_y - m_bottom_right.m_y;
   m_y_axis_step = calculate_step(m_model->get_y_axis_type(), m_y_range);
   update_origins();
+  auto candlesticks = m_model->load(m_top_left.m_x, m_bottom_right.m_x);
+  candlesticks.then([&] (auto result) {
+    qDebug() << "candlestick";
+    // verify that this doesn't fail
+    m_candlesticks = result.Get();
+  });
   update();
 }
 
@@ -141,6 +151,13 @@ void ChartView::paintEvent(QPaintEvent* event) {
       m_y_origin + m_font_metrics.height() + scale_height(2),
       m_item_delegate->displayText(to_variant(m_model->get_x_axis_type(), x),
       QLocale()));
+  }
+  painter.setPen(Qt::white);
+  for(auto& candlestick : m_candlesticks) {
+    auto open = convert_chart_to_pixels({candlestick.GetStart(),
+      candlestick.GetOpen()});
+    qDebug() << open;
+    painter.drawPoint(open);
   }
   if(m_crosshair_pos) {
     painter.setPen(m_dashed_line_pen);
@@ -188,10 +205,10 @@ void ChartView::showEvent(QShowEvent* event) {
       m_bottom_right.m_y == ChartValue()) {
     auto current_time = boost::posix_time::second_clock::local_time();
     auto bottom_right = ChartPoint(ChartValue(current_time),
-      ChartValue(Nexus::Money(10)));
+      ChartValue(Nexus::Money(0)));
     auto top_left = ChartPoint(
       ChartValue(current_time - boost::posix_time::hours(1)),
-      ChartValue(Nexus::Money(10.10)));
+      ChartValue(Nexus::Money(2)));
     set_region(top_left, bottom_right);
   }
   QWidget::showEvent(event);

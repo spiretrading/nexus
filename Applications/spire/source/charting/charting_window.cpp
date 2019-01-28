@@ -139,6 +139,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
 
 void ChartingWindow::set_model(std::shared_ptr<ChartModel> model) {
   m_model = model;
+  m_chart->set_model(*m_model);
   // update region?
 }
 

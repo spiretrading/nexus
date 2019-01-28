@@ -47,11 +47,12 @@ int main(int argc, char** argv) {
   auto time = boost::posix_time::second_clock::local_time();
   for(auto i = 0; i < 100; ++i) {
     candlesticks.push_back(Candlestick(ChartValue(time),
-      ChartValue(time -= boost::posix_time::minutes(1)),
-      ChartValue(Money()),
-      ChartValue(Money()),
-      ChartValue(Money()),
-      ChartValue(Money())));
+      ChartValue(time - boost::posix_time::minutes(1)),
+      ChartValue(Money(rand() % 100 * Money::CENT)),
+      ChartValue(Money(rand() % 100 * Money::CENT)),
+      ChartValue(Money(rand() % 100 * Money::CENT)),
+      ChartValue(Money(rand() % 100 * Money::CENT))));
+      time -= boost::posix_time::minutes(1);
   }
   auto chart_model = std::make_shared<LocalChartModel>(
     ChartValue::Type::TIMESTAMP, ChartValue::Type::MONEY, candlesticks);

@@ -2,6 +2,7 @@
 #define SPIRE_CHART_VIEW_HPP
 #include <QPen>
 #include <QWidget>
+#include "Nexus/TechnicalAnalysis/Candlestick.hpp"
 #include "spire/charting/charting.hpp"
 #include "spire/charting/chart_point.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
@@ -18,6 +19,12 @@ namespace Spire {
         \param parent Parent to this widget.
       */
       ChartView(ChartModel& model, QWidget* parent = nullptr);
+
+      //! Sets the view's model.
+      /*!
+        \param model The model containing the data to display.
+      */
+      void set_model(ChartModel& model);
 
       //! Converts a point in pixels to a point on the chart.
       /*!
@@ -84,6 +91,7 @@ namespace Spire {
       std::vector<ChartValue> m_x_axis_values;
       int m_x_axis_text_width;
       std::vector<ChartValue> m_y_axis_values;
+      std::vector<Candlestick> m_candlesticks;
 
       void update_origins();
   };
