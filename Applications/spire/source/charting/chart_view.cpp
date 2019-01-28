@@ -155,7 +155,26 @@ void ChartView::paintEvent(QPaintEvent* event) {
   for(auto& candlestick : m_candlesticks) {
     auto open = convert_chart_to_pixels({candlestick.GetStart(),
       candlestick.GetOpen()});
-    painter.drawPoint(open);
+    // use map_to for this instead of convert_
+    auto high = convert_chart_to_pixels({candlestick.GetStart(),
+      candlestick.GetHigh()});
+    auto low = convert_chart_to_pixels({candlestick.GetStart(),
+      candlestick.GetLow()});
+    auto close = convert_chart_to_pixels({candlestick.GetStart(),
+      candlestick.GetClose()});
+    auto end = convert_chart_to_pixels({candlestick.GetEnd(),
+      candlestick.GetClose()});
+    painter.fillRect(open.x() + (end.x() - open.x()) / 2, high.y(),
+      scale_width(1), low.y() - high.y(), QColor("#C8C8C8"));
+    if(open.y() > close.y()) {
+      // border #8AF5C0
+      painter.fillRect(open.x(), close.y(), end.x() - open.x(),
+        open.y() - close.y(), QColor("#1FD37A"));
+    } else {
+      // border #FFA7A0
+      painter.fillRect(open.x(), close.y(), end.x() - open.x(),
+        open.y() - close.y(), QColor("#EF5357"));
+    }
   }
   if(m_crosshair_pos) {
     painter.setPen(m_dashed_line_pen);

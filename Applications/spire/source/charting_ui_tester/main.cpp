@@ -46,13 +46,24 @@ int main(int argc, char** argv) {
   auto rand = std::default_random_engine(std::random_device()());
   auto time = boost::posix_time::second_clock::local_time();
   for(auto i = 0; i < 100; ++i) {
+    auto open = ChartValue(Money((rand() % 40 + 40) *
+      Money::FromValue("0.01").get()));
+    auto close = ChartValue(Money((rand() % 40 + 40) *
+      Money::FromValue("0.01").get()));
+    auto [high, low] = [&] {
+      if(open > close) {
+        return std::make_tuple(ChartValue(Money((rand() % 40) *
+          Money::FromValue("0.01").get())) + open, close - ChartValue(Money(
+          (rand() % 40) * Money::FromValue("0.01").get())));
+      }
+      return std::make_tuple(ChartValue(Money((rand() % 40) *
+        Money::FromValue("0.01").get())) + close, open - ChartValue(Money(
+        (rand() % 40) * Money::FromValue("0.01").get())));
+    }();
     candlesticks.push_back(Candlestick(ChartValue(time),
-      ChartValue(time - boost::posix_time::minutes(1)),
-      ChartValue(Money(rand() % 100 * Money::FromValue("0.01").get())),
-      ChartValue(Money(rand() % 100 * Money::FromValue("0.01").get())),
-      ChartValue(Money(rand() % 100 * Money::FromValue("0.01").get())),
-      ChartValue(Money(rand() % 100 * Money::FromValue("0.01").get()))));
-      time -= boost::posix_time::minutes(1);
+      ChartValue(time - boost::posix_time::minutes(1)), open, close, high,
+        low));
+      time -= boost::posix_time::minutes(2);
   }
   auto chart_model = std::make_shared<LocalChartModel>(
     ChartValue::Type::TIMESTAMP, ChartValue::Type::MONEY, candlesticks);
