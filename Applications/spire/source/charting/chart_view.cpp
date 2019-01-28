@@ -111,9 +111,8 @@ void ChartView::set_region(const ChartPoint& top_left,
   m_y_range = m_top_left.m_y - m_bottom_right.m_y;
   m_y_axis_step = calculate_step(m_model->get_y_axis_type(), m_y_range);
   update_origins();
-  auto candlesticks = m_model->load(m_top_left.m_x, m_bottom_right.m_x);
-  candlesticks.then([&] (auto result) {
-    qDebug() << "candlestick";
+  m_loaded_data = m_model->load(m_top_left.m_x, m_bottom_right.m_x);
+  m_loaded_data.then([&] (auto result) {
     // verify that this doesn't fail
     m_candlesticks = result.Get();
   });
