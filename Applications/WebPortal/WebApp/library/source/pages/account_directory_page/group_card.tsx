@@ -6,7 +6,8 @@ import { Transition } from 'react-transition-group';
 import { DisplaySize, DropDownButton } from '../../..';
 import { AccountEntry } from '.';
 import { RolePanel } from '../account_page/role_panel';
-import { HLine } from '../../components';
+import { HLine, DropDownButton, DropDownButton } from '../../components';
+import { inherits } from 'util';
 
 interface Properties {
 
@@ -40,49 +41,43 @@ export class GroupCard extends React.Component<Properties> {
       }
     })();
     const accountsLableStyle = (() => {
-      if(this.props.isOpen) {
-        switch(this.props.displaySize) {
-          case(DisplaySize.SMALL):
-            return GroupCard.STYLE.accountLabelSmall;
-          case(DisplaySize.MEDIUM):
-           return GroupCard.STYLE.accountLabelMedium;
-          case(DisplaySize.LARGE):
-           return GroupCard.STYLE.accountLabelLarge;
-        }
-      } else {
-        return null;
+      switch(this.props.displaySize) {
+        case(DisplaySize.SMALL):
+          return GroupCard.STYLE.accountLabelSmall;
+        case(DisplaySize.MEDIUM):
+          return GroupCard.STYLE.accountLabelMedium;
+        case(DisplaySize.LARGE):
+          return GroupCard.STYLE.accountLabelLarge;
       }
     })();
     const accounts = (() => {
-      if(this.props.isOpen) {
-        const stuff = [];
-        if(this.props.accounts.length > 0) {
-          for(let i = 0; i < this.props.accounts.length; ++i) {
-            stuff.push(
-              <div style={GroupCard.STYLE.accountBox}
-                  key={this.props.accounts[i].account.id}>
-                <div style={{...accountsLableStyle,
-                  ...GroupCard.STYLE.accountLabelText}}>
-                  {this.props.accounts[i].account.name}
-                </div>
-                <RolePanel roles={this.props.accounts[i].roles}/>
-              </div>);
-          }
-        } else {
-          stuff.push(<div style={{...accountsLableStyle,
-                  ...GroupCard.STYLE.emptyLableText}}>Empty</div>);
+      const stuff = [];
+      if(this.props.accounts.length > 0) {
+        for(let i = 0; i < this.props.accounts.length; ++i) {
+          stuff.push(
+            <div style={GroupCard.STYLE.accountBox}
+                key={this.props.accounts[i].account.id}>
+              <div style={{...accountsLableStyle,
+                ...GroupCard.STYLE.accountLabelText}}>
+                {this.props.accounts[i].account.name}
+              </div>
+              <RolePanel roles={this.props.accounts[i].roles}/>
+            </div>);
         }
-        return stuff;
       } else {
-        return null;
+        stuff.push(<div style={{...accountsLableStyle,
+                ...GroupCard.STYLE.emptyLableText}}>Empty</div>);
       }
+      return stuff;
     })();
     return (
     <VBoxLayout width='100%'>
       <div style={GroupCard.STYLE.header}>
         <DropDownButton size='16px'
+          ref={(dropDownButton: DropDownButton) =>
+            this.dropDown = dropDownButton}
           onClick={(event?: React.MouseEvent<any>) => {
-           this.props.onClick(this.props.group);}
+            this.props.onClick(this.props.group);}
           }/>
         <div style={headerStyle}>{this.props.group.name}</div>
       </div>
@@ -90,18 +85,23 @@ export class GroupCard extends React.Component<Properties> {
         <Transition in={this.props.isOpen}
             timeout={GroupCard.TRANSITION_LENGTH_MS}>
             {(state) => (
-              <div
-                  style={{ ...GroupCard.STYLE.animationBase,
-                  ...(GroupCard.ANIMATION_STYLE as any)[state]}}>
-                <Padding size='20px'/>
+              <VBoxLayout
+                  style={{...(GroupCard.ANIMATION_STYLE as any)[state]}}>
                 <HLine color='#E6E6E6'/>
                 <Padding size='10px'/>
                 {accounts}
                 <Padding size='20px'/>
-              </div>)}
+              </VBoxLayout>)}
           </Transition>
         </VBoxLayout>
     </VBoxLayout>);
+  }
+
+  public componentDidUpdate(prevProps: Properties) {
+    if(this.props.filter !== prevProps.filter &&
+      prevProps.isOpen) {
+      this.dropDown.onClick(this.props.group);
+    }
   }
 
   private static readonly STYLE = {
@@ -165,25 +165,28 @@ export class GroupCard extends React.Component<Properties> {
       alignItems: 'center' as 'center',
       justifyContent: 'space-between' as 'space-between',
       marginRight: '10px'
-    },
-    animationBase: {
-      transform: 'scaleY(0)',
-      transition: 'transform 200ms ease'
     }
   };
   private static readonly ANIMATION_STYLE = {
     entering: {
-      transform: 'scaleY(1)'
+      transform: 'scaleY(1)',
+      height: 'initial' as 'initial',
+      transition: 'transform 100ms, height 100ms'
     },
     entered: {
-      transform: 'scaleY(1)'
+      transform: 'scaleY(1)',
+      height: 'initial' as 'initial'
     },
     exiting: {
-      transform: 'scaleY(1)'
+      transform: 'scaleY(0)',
+      maxHeight: 'initial' as 'initial',
+      transition: 'transform 100ms, maxHeight 100ms'
     },
     exited: {
+      maxHeight: 0,
       transform: 'scaleY(0)'
     }
   };
-  private static readonly TRANSITION_LENGTH_MS = 600;
+  private static readonly TRANSITION_LENGTH_MS = 100;
+  private dropDown: DropDownButton;
 }
