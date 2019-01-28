@@ -8,22 +8,24 @@ interface Properties {
 
   /** The onClick event handler. */
   onClick?(event?: React.MouseEvent<any>): void;
+
+  /** Determines if it's expanded or not. */
+  isExpanded?: boolean;
 }
 
 interface State {
-  isExpanded: boolean;
   isFirstTime: boolean;
 }
 
 export class DropDownButton extends React.Component<Properties, State> {
-  static readonly defaultProps = {
-    onClick: () => {}
+  private static readonly defaultProps = {
+    onClick: () => {},
+    isExpanded: false
   }
 
   constructor(properties: Properties) {
     super(properties);
     this.state = {
-      isExpanded: false,
       isFirstTime: true
     };
     this.onClick = this.onClick.bind(this);
@@ -31,14 +33,14 @@ export class DropDownButton extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const endSource = (() => {
-      if(this.state.isExpanded) {
+      if(this.props.isExpanded) {
         return 'resources/arrow-collapse.svg';
       } else {
         return 'resources/arrow-expand.svg';
       }
     })();
     const startSource = (() => {
-      if(this.state.isExpanded) {
+      if(this.props.isExpanded) {
         return 'resources/arrow-expand.svg';
       } else {
         return 'resources/arrow-collapse.svg';
@@ -47,7 +49,7 @@ export class DropDownButton extends React.Component<Properties, State> {
     const endStyle = (() => {
       if(this.state.isFirstTime) {
         return DropDownButton.ANIMATION.noAnimation;
-      } else if(this.state.isExpanded) {
+      } else if(this.props.isExpanded) {
         return DropDownButton.ANIMATION.spinOpenFadeIn;
       } else {
         return DropDownButton.ANIMATION.spinCloseFadeIn;
@@ -56,7 +58,7 @@ export class DropDownButton extends React.Component<Properties, State> {
     const startStyle = (() => {
       if(this.state.isFirstTime) {
         return DropDownButton.ANIMATION.noAnimationHidden;
-      } else if(this.state.isExpanded) {
+      } else if(this.props.isExpanded) {
         return DropDownButton.ANIMATION.spinOpen;
       } else {
         return DropDownButton.ANIMATION.spinClose;
@@ -82,12 +84,7 @@ export class DropDownButton extends React.Component<Properties, State> {
   private onClick() {
     if(this.state.isFirstTime) {
       this.setState({
-        isFirstTime: false,
-        isExpanded: !this.state.isExpanded
-      });
-    } else {
-      this.setState({
-        isExpanded: !this.state.isExpanded
+        isFirstTime: false
       });
     }
     this.props.onClick();

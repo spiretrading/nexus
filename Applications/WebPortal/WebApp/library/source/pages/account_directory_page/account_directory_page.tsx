@@ -111,7 +111,8 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
 
   private onChange(newFilter: string) {
     this.setState({
-      filter: newFilter
+      filter: newFilter,
+      openedGroups: new Beam.Set<Beam.DirectoryEntry>()
     });
   }
 

@@ -134,6 +134,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
             isChecked={this.props.isActive}/>
           <div style={headerPaddingInternal}/>
           <DropDownButton size={buttonSize}
+            isExpanded={this.state.isExpanded}
             onClick={this.showApplicabilityTable}/>
           <div style={headerPaddingInternal}/>
           <div style={entitlementNameStyle}>

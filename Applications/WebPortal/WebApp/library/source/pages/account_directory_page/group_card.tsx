@@ -74,8 +74,7 @@ export class GroupCard extends React.Component<Properties> {
     <VBoxLayout width='100%'>
       <div style={GroupCard.STYLE.header}>
         <DropDownButton size='16px'
-          ref={(dropDownButton: DropDownButton) =>
-            this.dropDown = dropDownButton}
+          isExpanded={this.props.isOpen}
           onClick={(event?: React.MouseEvent<any>) => {
             this.props.onClick(this.props.group);}
           }/>
@@ -86,7 +85,8 @@ export class GroupCard extends React.Component<Properties> {
             timeout={GroupCard.TRANSITION_LENGTH_MS}>
             {(state) => (
               <VBoxLayout
-                  style={{...(GroupCard.ANIMATION_STYLE as any)[state]}}>
+                  style={{...GroupCard.STYLE.animationBase
+                    ...(GroupCard.ANIMATION_STYLE as any)[state]}}>
                 <HLine color='#E6E6E6'/>
                 <Padding size='10px'/>
                 {accounts}
@@ -95,13 +95,6 @@ export class GroupCard extends React.Component<Properties> {
           </Transition>
         </VBoxLayout>
     </VBoxLayout>);
-  }
-
-  public componentDidUpdate(prevProps: Properties) {
-    if(this.props.filter !== prevProps.filter &&
-      prevProps.isOpen) {
-      this.dropDown.onClick(this.props.group);
-    }
   }
 
   private static readonly STYLE = {
@@ -165,26 +158,26 @@ export class GroupCard extends React.Component<Properties> {
       alignItems: 'center' as 'center',
       justifyContent: 'space-between' as 'space-between',
       marginRight: '10px'
+    },
+    animationBase: {
+      overflow: 'hidden' as 'hidden'
     }
   };
   private static readonly ANIMATION_STYLE = {
     entering: {
-      transform: 'scaleY(1)',
-      height: 'initial' as 'initial',
-      transition: 'transform 100ms, height 100ms'
+     height: '100%',
+     transition: 'height 100ms ease',
+     overflow: 'hidden' as 'hidden'
     },
     entered: {
-      transform: 'scaleY(1)',
-      height: 'initial' as 'initial'
+     height: '100%'
     },
     exiting: {
-      transform: 'scaleY(0)',
-      maxHeight: 'initial' as 'initial',
-      transition: 'transform 100ms, maxHeight 100ms'
+      height: '0',
+      transition: 'height 100ms ease'
     },
     exited: {
-      maxHeight: 0,
-      transform: 'scaleY(0)'
+      height: '0'
     }
   };
   private static readonly TRANSITION_LENGTH_MS = 100;
