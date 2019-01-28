@@ -56,13 +56,37 @@ class TestApp extends React.Component<Properties, State> {
     this.state.groups.add(group4);
     this.state.groups.add(group5);
     this.state.groups.add(group6);
-    const accountEntry = new AccountEntry(
+    const accountEntry1 = new AccountEntry(
       new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 9123, 'administration_service'),
       new Nexus.AccountRoles()
     );
+    const accountEntry2 = new AccountEntry(
+      new Beam.DirectoryEntry(
+        Beam.DirectoryEntry.Type.ACCOUNT, 23, 'charting_service'),
+      new Nexus.AccountRoles()
+    );
+    const accountEntry3 = new AccountEntry(
+      new Beam.DirectoryEntry(
+        Beam.DirectoryEntry.Type.ACCOUNT, 223, 'market_data_relay_service'),
+      new Nexus.AccountRoles()
+    );
+    const accountEntry4 = new AccountEntry(
+      new Beam.DirectoryEntry(
+        Beam.DirectoryEntry.Type.ACCOUNT, 45, 'data_relay_service'),
+      new Nexus.AccountRoles()
+    );
+    const accountEntry5 = new AccountEntry(
+      new Beam.DirectoryEntry(
+        Beam.DirectoryEntry.Type.ACCOUNT, 788, 'order_execution_service'),
+      new Nexus.AccountRoles()
+    );
     const testArray = [];
-    testArray.push(accountEntry);
+    testArray.push(accountEntry1);
+    testArray.push(accountEntry2);
+    testArray.push(accountEntry3);
+    testArray.push(accountEntry4);
+    testArray.push(accountEntry5);
     for(const group of this.state.groups) {
       if(group.id % 2 === 0) {
         this.state.accounts.set(group, testArray);

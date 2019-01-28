@@ -1,3 +1,4 @@
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import { VBoxLayout, Padding } from 'dali';
 import * as React from 'react';
@@ -55,8 +56,6 @@ export class GroupCard extends React.Component<Properties> {
     const accounts = (() => {
       if(this.props.isOpen) {
         const stuff = [];
-        stuff.push(<HLine color='#E6E6E6'/>);
-        stuff.push(<Padding size='10px'/>);
         if(this.props.accounts.length > 0) {
           for(let i = 0; i < this.props.accounts.length; ++i) {
             stuff.push(
@@ -73,7 +72,6 @@ export class GroupCard extends React.Component<Properties> {
           stuff.push(<div style={{...accountsLableStyle,
                   ...GroupCard.STYLE.emptyLableText}}>Empty</div>);
         }
-        stuff.push(<Padding size='20px'/>);
         return stuff;
       } else {
         return null;
@@ -88,7 +86,21 @@ export class GroupCard extends React.Component<Properties> {
           }/>
         <div style={headerStyle}>{this.props.group.name}</div>
       </div>
-      {accounts}
+      <VBoxLayout>
+        <Transition in={this.props.isOpen}
+            timeout={GroupCard.TRANSITION_LENGTH_MS}>
+            {(state) => (
+              <div
+                  style={{ ...GroupCard.STYLE.animationBase,
+                  ...(GroupCard.ANIMATION_STYLE as any)[state]}}>
+                <Padding size='20px'/>
+                <HLine color='#E6E6E6'/>
+                <Padding size='10px'/>
+                {accounts}
+                <Padding size='20px'/>
+              </div>)}
+          </Transition>
+        </VBoxLayout>
     </VBoxLayout>);
   }
 
@@ -153,20 +165,24 @@ export class GroupCard extends React.Component<Properties> {
       alignItems: 'center' as 'center',
       justifyContent: 'space-between' as 'space-between',
       marginRight: '10px'
+    },
+    animationBase: {
+      transform: 'scaleY(0)',
+      transition: 'transform 200ms ease'
     }
   };
   private static readonly ANIMATION_STYLE = {
     entering: {
-
+      transform: 'scaleY(1)'
     },
     entered: {
-   
+      transform: 'scaleY(1)'
     },
     exiting: {
-
+      transform: 'scaleY(1)'
     },
     exited: {
-
+      transform: 'scaleY(0)'
     }
   };
   private static readonly TRANSITION_LENGTH_MS = 600;
