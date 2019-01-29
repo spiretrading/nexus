@@ -52,10 +52,10 @@ class TestApp extends React.Component<Properties, State> {
       new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 37, 'Bree');
     this.state.groups.add(group1);
     this.state.groups.add(group2);
-    this.state.groups.add(group3);
-    this.state.groups.add(group4);
-    this.state.groups.add(group5);
-    this.state.groups.add(group6);
+    //this.state.groups.add(group3);
+    //this.state.groups.add(group4);
+    //this.state.groups.add(group5);
+    //this.state.groups.add(group6);
     const accountEntry1 = new AccountEntry(
       new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 9123, 'administration_service'),

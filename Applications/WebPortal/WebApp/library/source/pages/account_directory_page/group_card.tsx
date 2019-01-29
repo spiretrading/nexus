@@ -3,11 +3,9 @@ import * as Beam from 'beam';
 import { VBoxLayout, Padding } from 'dali';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { DisplaySize, DropDownButton } from '../../..';
-import { AccountEntry } from '.';
+import { DisplaySize, DropDownButton, HLine } from '../..';
 import { RolePanel } from '../account_page/role_panel';
-import { HLine, DropDownButton, DropDownButton } from '../../components';
-import { inherits } from 'util';
+import { AccountEntry } from '.';
 
 interface Properties {
 
@@ -30,8 +28,21 @@ interface Properties {
   onClick: (group: Beam.DirectoryEntry) => void;
 }
 
+interface State {
+  someStyle: any;
+  oldHeight: number;
+}
+
 /** A card that displays a group and the accounts associated with it. */
-export class GroupCard extends React.Component<Properties> {
+export class GroupCard extends React.Component<Properties, State> {
+  constructor(properties: Properties) {
+    super(properties);
+    this.state = {
+      someStyle: StyleSheet.create(this.animationStyleDefinition),
+      oldHeight: 0
+    };
+  }
+
   public render(): JSX.Element {
     const headerStyle = (() => {
       if(this.props.isOpen) {
@@ -51,50 +62,98 @@ export class GroupCard extends React.Component<Properties> {
       }
     })();
     const accounts = (() => {
-      const stuff = [];
+      const accountDetails = [];
       if(this.props.accounts.length > 0) {
         for(let i = 0; i < this.props.accounts.length; ++i) {
-          stuff.push(
+          accountDetails.push(
             <div style={GroupCard.STYLE.accountBox}
                 key={this.props.accounts[i].account.id}>
               <div style={{...accountsLableStyle,
-                ...GroupCard.STYLE.accountLabelText}}>
-                {this.props.accounts[i].account.name}
+                  ...GroupCard.STYLE.accountLabelText}}>
+                {this.props.accounts[i].account.name.toString()}
               </div>
               <RolePanel roles={this.props.accounts[i].roles}/>
             </div>);
         }
       } else {
-        stuff.push(<div style={{...accountsLableStyle,
-                ...GroupCard.STYLE.emptyLableText}}>Empty</div>);
+        accountDetails.push(
+          <div style={{...accountsLableStyle,
+              ...GroupCard.STYLE.emptyLableText}}>
+            Empty
+          </div>);
       }
-      return stuff;
+      return accountDetails;
     })();
     return (
-    <VBoxLayout width='100%'>
-      <div style={GroupCard.STYLE.header}>
-        <DropDownButton size='16px'
-          isExpanded={this.props.isOpen}
-          onClick={(event?: React.MouseEvent<any>) => {
-            this.props.onClick(this.props.group);}
-          }/>
-        <div style={headerStyle}>{this.props.group.name}</div>
-      </div>
-      <VBoxLayout>
+      <VBoxLayout width='100%'>
+        <div style={GroupCard.STYLE.header}>
+          <DropDownButton size='16px'
+            onClick={(event?: React.MouseEvent<any>) => {
+              this.props.onClick(this.props.group);}}
+            isExpanded={this.props.isOpen}/>
+          <div style={headerStyle}>{this.props.group.name}</div>
+        </div>
+        
         <Transition in={this.props.isOpen}
             timeout={GroupCard.TRANSITION_LENGTH_MS}>
-            {(state) => (
-              <VBoxLayout
-                  style={{...GroupCard.STYLE.animationBase
-                    ...(GroupCard.ANIMATION_STYLE as any)[state]}}>
+          {(state) => (
+            <div
+              className={css((this.state.someStyle as any)[state])}
+              ref={(divElement) => this.accountsList = divElement}>
+              <VBoxLayout width='100%'>
                 <HLine color='#E6E6E6'/>
                 <Padding size='10px'/>
                 {accounts}
                 <Padding size='20px'/>
-              </VBoxLayout>)}
-          </Transition>
-        </VBoxLayout>
-    </VBoxLayout>);
+              </VBoxLayout>
+            </div>)}
+        </Transition>
+      
+      </VBoxLayout>);
+  }
+
+  public componentDidMount(): void {
+    console.log('Is open on create? : ' +  this.props.isOpen);
+    console.log(this.accountsList.offsetHeight);
+    this.animationStyleDefinition.entering.maxHeight =
+      `${this.accountsList.offsetHeight}px`;
+    this.animationStyleDefinition.entered.maxHeight =
+      `${this.accountsList.offsetHeight}px`;
+    this.setState({
+      someStyle: StyleSheet.create(this.animationStyleDefinition),
+      oldHeight: this.accountsList.offsetHeight
+    });
+  }
+
+  public componentDidUpdate(prevProps: Properties): void {
+    console.log('Is open on update? ' 
+      + this.props.group.name + ' : ' + this.props.isOpen);
+    console.log(this.props.group.name + ' : ' + 
+      this.accountsList.offsetHeight);
+
+    // works for the first one.....
+    if(this.props.isOpen &&
+      this.state.oldHeight !== this.accountsList.offsetHeight &&
+      (this.state.oldHeight === 0 || this.state.oldHeight === 48)) {
+
+
+        let value;
+        if(this.accountsList.offsetHeight === 0) {
+          value = 48;
+        } else {
+          value = this.accountsList.offsetHeight;
+        }
+        
+        this.animationStyleDefinition.entering.maxHeight =
+          `${value}px`;
+        this.animationStyleDefinition.entered.maxHeight =
+          `${value}px`;
+
+        this.setState({
+        someStyle: StyleSheet.create(this.animationStyleDefinition),
+        oldHeight: this.accountsList.offsetHeight
+      });
+    }
   }
 
   private static readonly STYLE = {
@@ -158,28 +217,38 @@ export class GroupCard extends React.Component<Properties> {
       alignItems: 'center' as 'center',
       justifyContent: 'space-between' as 'space-between',
       marginRight: '10px'
-    },
-    animationBase: {
-      overflow: 'hidden' as 'hidden'
     }
   };
-  private static readonly ANIMATION_STYLE = {
+  private animationStyleDefinition = {
     entering: {
-     height: '100%',
-     transition: 'height 100ms ease',
-     overflow: 'hidden' as 'hidden'
+      maxHeight: '0',
+      transitionProperty: 'max-height, transform',
+      transform: 'scaleY(1)',
+      transitionDuration: `${GroupCard.TRANSITION_LENGTH_MS}ms`,
+      overflow: 'hidden' as 'hidden',
+      transformOrigin: 'top' as 'top'
     },
     entered: {
-     height: '100%'
+      maxHeight: '0',
+      transform: 'scaleY(1)',
+      overflow: 'hidden' as 'hidden',
+      transformOrigin: 'top' as 'top'
     },
     exiting: {
-      height: '0',
-      transition: 'height 100ms ease'
+      maxHeight: '0',
+      transform: 'scaleY(0)',
+      transitionProperty: 'max-height, transform',
+      transitionDuration: `${GroupCard.TRANSITION_LENGTH_MS}ms`,
+      overflow: 'hidden' as 'hidden',
+      transformOrigin: 'top' as 'top'
     },
     exited: {
-      height: '0'
+      maxHeight: '0',
+      transform: 'scaleY(0)',
+      overflow: 'hidden' as 'hidden',
+      transformOrigin: 'top' as 'top'
     }
   };
-  private static readonly TRANSITION_LENGTH_MS = 100;
-  private dropDown: DropDownButton;
+  private static readonly TRANSITION_LENGTH_MS = 500;
+  private accountsList: HTMLDivElement;
 }
