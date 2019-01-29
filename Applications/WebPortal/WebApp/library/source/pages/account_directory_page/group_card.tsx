@@ -29,7 +29,6 @@ interface Properties {
 }
 
 interface State {
-  someStyle: any;
   oldHeight: number;
 }
 
@@ -38,9 +37,9 @@ export class GroupCard extends React.Component<Properties, State> {
   constructor(properties: Properties) {
     super(properties);
     this.state = {
-      someStyle: StyleSheet.create(this.animationStyleDefinition),
       oldHeight: 0
     };
+    this.onClick = this.onClick.bind(this);
   }
 
   public render(): JSX.Element {
@@ -84,21 +83,25 @@ export class GroupCard extends React.Component<Properties, State> {
       }
       return accountDetails;
     })();
+    const maxContainerHeight = (() => {
+      if(this.props.isOpen && this.ANIMATION_STYLE.entered.maxHeight !== `${16 + 32 + (32 * this.props.accounts.length)}px`) {
+        this.ANIMATION_STYLE.entered.maxHeight = `${16 + 32 + (32 * this.props.accounts.length)}px`;
+        this.ANIMATION_STYLE.entering.maxHeight = `${16 + 32 + (32 * this.props.accounts.length)}px`;
+      }
+      return 5;
+    })();
     return (
       <VBoxLayout width='100%'>
         <div style={GroupCard.STYLE.header}>
           <DropDownButton size='16px'
-            onClick={(event?: React.MouseEvent<any>) => {
-              this.props.onClick(this.props.group);}}
+            onClick={this.onClick}
             isExpanded={this.props.isOpen}/>
           <div style={headerStyle}>{this.props.group.name}</div>
         </div>
         <Transition in={this.props.isOpen}
             timeout={GroupCard.TRANSITION_LENGTH_MS}>
           {(state) => (
-            <div
-              className={css((this.state.someStyle as any)[state])}
-              ref={(divElement) => this.accountsList = divElement}>
+            <div style={(this.ANIMATION_STYLE as any)[state]}>
               <VBoxLayout width='100%'>
                 <HLine color='#E6E6E6'/>
                 <Padding size='10px'/>
@@ -112,51 +115,12 @@ export class GroupCard extends React.Component<Properties, State> {
 
   public componentDidMount(): void {
     console.log('Is open on create? : ' +  this.props.isOpen);
-    console.log(this.accountsList.offsetHeight);
-    this.animationStyleDefinition.entering.maxHeight =
-      `${this.accountsList.offsetHeight}px`;
-    this.animationStyleDefinition.entered.maxHeight =
-      `${this.accountsList.offsetHeight}px`;
-    this.setState({
-      someStyle: StyleSheet.create(this.animationStyleDefinition),
-      oldHeight: this.accountsList.offsetHeight
-    });
   }
 
-/** 
-  public componentDidUpdate(prevProps: Properties): void {
-    console.log('Is open on update? ' 
-      + this.props.group.name + ' : ' + this.props.isOpen);
-
-    console.log(this.props.group.name + ' : ' + 
-      this.accountsList.offsetHeight);
-
-    // works for the first one.....
-    if(this.props.isOpen &&
-      this.state.oldHeight !== this.accountsList.offsetHeight &&
-      (this.state.oldHeight === 0 || this.state.oldHeight === 48)) {
-
-
-        let value;
-        if(this.accountsList.offsetHeight === 0) {
-          value = 48;
-        } else {
-          value = this.accountsList.offsetHeight;
-        }
-        
-        this.animationStyleDefinition.entering.maxHeight =
-          `${value}px`;
-        this.animationStyleDefinition.entered.maxHeight =
-          `${value}px`;
-
-        this.setState({
-        someStyle: StyleSheet.create(this.animationStyleDefinition),
-        oldHeight: this.accountsList.offsetHeight
-      });
-    }
+  private onClick(): void {
+    this.props.onClick(this.props.group);
   }
 
-*/
   private static readonly STYLE = {
     box: {
       width: '100%'
@@ -220,7 +184,7 @@ export class GroupCard extends React.Component<Properties, State> {
       marginRight: '10px'
     }
   };
-  private animationStyleDefinition = {
+  private ANIMATION_STYLE = {
     entering: {
       maxHeight: '0',
       transitionProperty: 'max-height, transform',
@@ -230,13 +194,13 @@ export class GroupCard extends React.Component<Properties, State> {
       transformOrigin: 'top' as 'top'
     },
     entered: {
-      maxHeight: '100%',
+      maxHeight: '0',
       transform: 'scaleY(1)',
       overflow: 'hidden' as 'hidden',
       transformOrigin: 'top' as 'top'
     },
     exiting: {
-      maxHeight: '0',
+      maxHeight: 0,
       transform: 'scaleY(0)',
       transitionProperty: 'max-height, transform',
       transitionDuration: `${GroupCard.TRANSITION_LENGTH_MS}ms`,
@@ -244,12 +208,11 @@ export class GroupCard extends React.Component<Properties, State> {
       transformOrigin: 'top' as 'top'
     },
     exited: {
-      maxHeight: '0',
+      maxHeight: 0,
       transform: 'scaleY(0)',
       overflow: 'hidden' as 'hidden',
       transformOrigin: 'top' as 'top'
     }
   };
-  private static readonly TRANSITION_LENGTH_MS = 1000;
-  private accountsList: HTMLDivElement;
+  private static readonly TRANSITION_LENGTH_MS = 200;
 }
