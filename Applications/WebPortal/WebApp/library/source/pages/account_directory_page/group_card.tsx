@@ -83,13 +83,6 @@ export class GroupCard extends React.Component<Properties, State> {
       }
       return accountDetails;
     })();
-    const maxContainerHeight = (() => {
-      if(this.props.isOpen && this.ANIMATION_STYLE.entered.maxHeight !== `${16 + 32 + (32 * this.props.accounts.length)}px`) {
-        this.ANIMATION_STYLE.entered.maxHeight = `${16 + 32 + (32 * this.props.accounts.length)}px`;
-        this.ANIMATION_STYLE.entering.maxHeight = `${16 + 32 + (32 * this.props.accounts.length)}px`;
-      }
-      return 5;
-    })();
     return (
       <VBoxLayout width='100%'>
         <div style={GroupCard.STYLE.header}>
@@ -119,6 +112,13 @@ export class GroupCard extends React.Component<Properties, State> {
 
   private onClick(): void {
     this.props.onClick(this.props.group);
+  }
+
+  public componentDidUpdate(): void {
+    if(this.props.isOpen && this.ANIMATION_STYLE.entered.maxHeight !== `${16 + 32 + (32 * this.props.accounts.length)}px`) {
+      this.ANIMATION_STYLE.entered.maxHeight = `${16 + 32 + (32 * this.props.accounts.length)}px`;
+      this.ANIMATION_STYLE.entering.maxHeight = `${16 + 32 + (32 * this.props.accounts.length)}px`;
+    }
   }
 
   private static readonly STYLE = {
