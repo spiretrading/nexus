@@ -9,18 +9,23 @@ interface Properties {
   /** The onClick event handler. */
   onClick?(event?: React.MouseEvent<any>): void;
 
-  /** Determines if it's expanded or not. */
-  isExpanded?: boolean;
+  isExpanded: boolean;
 }
 
-export class DropDownButton extends React.Component<Properties> {
-  private static readonly defaultProps = {
-    onClick: () => {},
-    isExpanded: false
+interface State {
+  isFirstTime: boolean;
+}
+
+export class DropDownButton extends React.Component<Properties, State> {
+  static readonly defaultProps = {
+    onClick: () => {}
   }
 
   constructor(properties: Properties) {
     super(properties);
+    this.state = {
+      isFirstTime: true
+    };
     this.onClick = this.onClick.bind(this);
   }
 

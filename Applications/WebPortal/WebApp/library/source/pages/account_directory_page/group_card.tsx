@@ -93,7 +93,6 @@ export class GroupCard extends React.Component<Properties, State> {
             isExpanded={this.props.isOpen}/>
           <div style={headerStyle}>{this.props.group.name}</div>
         </div>
-        
         <Transition in={this.props.isOpen}
             timeout={GroupCard.TRANSITION_LENGTH_MS}>
           {(state) => (
@@ -108,7 +107,6 @@ export class GroupCard extends React.Component<Properties, State> {
               </VBoxLayout>
             </div>)}
         </Transition>
-      
       </VBoxLayout>);
   }
 
@@ -125,9 +123,11 @@ export class GroupCard extends React.Component<Properties, State> {
     });
   }
 
+/** 
   public componentDidUpdate(prevProps: Properties): void {
     console.log('Is open on update? ' 
       + this.props.group.name + ' : ' + this.props.isOpen);
+
     console.log(this.props.group.name + ' : ' + 
       this.accountsList.offsetHeight);
 
@@ -156,6 +156,7 @@ export class GroupCard extends React.Component<Properties, State> {
     }
   }
 
+*/
   private static readonly STYLE = {
     box: {
       width: '100%'
@@ -229,7 +230,7 @@ export class GroupCard extends React.Component<Properties, State> {
       transformOrigin: 'top' as 'top'
     },
     entered: {
-      maxHeight: '0',
+      maxHeight: '100%',
       transform: 'scaleY(1)',
       overflow: 'hidden' as 'hidden',
       transformOrigin: 'top' as 'top'
@@ -249,6 +250,6 @@ export class GroupCard extends React.Component<Properties, State> {
       transformOrigin: 'top' as 'top'
     }
   };
-  private static readonly TRANSITION_LENGTH_MS = 500;
+  private static readonly TRANSITION_LENGTH_MS = 1000;
   private accountsList: HTMLDivElement;
 }
