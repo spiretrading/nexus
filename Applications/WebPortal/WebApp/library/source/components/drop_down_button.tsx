@@ -26,7 +26,6 @@ export class DropDownButton extends React.Component<Properties, State> {
     this.state = {
       isFirstTime: true
     };
-    this.onClick = this.onClick.bind(this);
   }
 
   public render(): JSX.Element {
@@ -45,14 +44,18 @@ export class DropDownButton extends React.Component<Properties, State> {
       }
     })();
     const endStyle = (() => {
-      if(this.props.isExpanded) {
+      if(this.state.isFirstTime) {
+        return DropDownButton.ANIMATION.noAnimation;
+      } else if(this.props.isExpanded) {
         return DropDownButton.ANIMATION.spinOpenFadeIn;
       } else {
         return DropDownButton.ANIMATION.spinCloseFadeIn;
       }
     })();
     const startStyle = (() => {
-      if(this.props.isExpanded) {
+      if(this.state.isFirstTime) {
+        return DropDownButton.ANIMATION.noAnimationHidden;
+      } else if(this.props.isExpanded) {
         return DropDownButton.ANIMATION.spinOpen;
       } else {
         return DropDownButton.ANIMATION.spinClose;
@@ -65,18 +68,20 @@ export class DropDownButton extends React.Component<Properties, State> {
             width={this.props.size}
             height={this.props.size}
             className={css(DropDownButton.ANIMATION.base, startStyle)}
-            onClick={this.onClick}/>
+            onClick={this.props.onClick}/>
           <img src={startSource}
             width={this.props.size}
             height={this.props.size}
             className={css(DropDownButton.ANIMATION.base, endStyle)}
-            onClick={this.onClick}/>
+            onClick={this.props.onClick}/>
         </div>
       </div>);
   }
 
-  private onClick() {
-    this.props.onClick();
+  public onComponentDidUpdate() {
+    if(this.state.isFirstTime) {
+      this.setState({isFirstTime: false});
+    }
   }
 
   private static readonly OPEN_AND_FADEOUT = {
@@ -129,7 +134,7 @@ export class DropDownButton extends React.Component<Properties, State> {
     },
     base:{
       position: 'absolute',
-      animationDuration: '200ms',
+      animationDuration: '1000ms',
       animationIterationCount: 1,
       animationFillMode: 'forwards'
     },
@@ -138,7 +143,7 @@ export class DropDownButton extends React.Component<Properties, State> {
     },
     spinClose: {
       animationName: DropDownButton.CLOSE_AND_FADEOUT,
-      animationDuration: '200ms'
+      animationDuration: '1000ms'
     },
     spinOpenFadeIn: {
       position: 'static',
@@ -147,7 +152,7 @@ export class DropDownButton extends React.Component<Properties, State> {
     spinCloseFadeIn:{
       position: 'static',
       animationName: DropDownButton.CLOSE_AND_FADE_IN,
-      animationDuration: '200ms'
+      animationDuration: '1000ms'
     }
   });
   public static readonly STYLE = {
