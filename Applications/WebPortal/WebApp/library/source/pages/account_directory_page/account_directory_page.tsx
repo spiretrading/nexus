@@ -95,17 +95,15 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
             <FilterBar value={this.state.filter} onChange={this.onChange}/>
             <div style={AccountDirectoryPage.STYLE.spacing}/>
             <div style={buttonBoxStyle}>
-              <div className={css(buttonStyle)}
-                  tabIndex={0}
+              <button className={css(buttonStyle)}
                   onClick={this.props.onNewAccountClick}>
-                <div>New Account</div>
-              </div>
+                New Account
+              </button>
               <div style={AccountDirectoryPage.STYLE.spacing}/>
-              <div onClick={this.props.onNewGroupClick}
-                  tabIndex={0}
+              <button  onClick={this.props.onNewGroupClick}
                   className={css(buttonStyle)}>
-                <div>New Group</div>
-              </div>
+                New Group
+              </button>
             </div>
           </div>
           <div style={AccountDirectoryPage.STYLE.spacing}/>
@@ -217,11 +215,14 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       flexDirection: 'row' as 'row',
       alignItems:'center' as 'center',
       justifyContent: 'center' as 'center',
-      ':focus' : {
+      ':active' : {
         backgroundColor: '#4B23A0'
       },
       ':hover' : {
         backgroundColor: '#4B23A0'
+      },
+      '::-moz-focus-inner': {
+        border: 0
       }
     },
     buttonSmall: {
@@ -236,11 +237,14 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       border: 'none',
       outline: 0,
       borderRadius: 1,
-      ':focus' : {
+      ':active' : {
         backgroundColor: '#4B23A0'
       },
       ':hover' : {
         backgroundColor: '#4B23A0'
+      },
+      '::-moz-focus-inner': {
+        border: 0
       }
     }
   });

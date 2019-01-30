@@ -3,17 +3,18 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 
 interface Properties {
 
-  /* Determines the size element. */
+  /* Determines the size of the element. */
   size?: number|string;
 
   /** The onClick event handler. */
   onClick?(event?: React.MouseEvent<any>): void;
 
+  /** Determines if the button is collapsed or expanded. */
   isExpanded: boolean;
 }
 
 interface State {
-  isFirstTime: boolean;
+  isStart: boolean;
 }
 
 export class DropDownButton extends React.Component<Properties, State> {
@@ -25,7 +26,7 @@ export class DropDownButton extends React.Component<Properties, State> {
   constructor(properties: Properties) {
     super(properties);
     this.state = {
-      isFirstTime: true
+      isStart: true
     };
   }
 
@@ -45,7 +46,7 @@ export class DropDownButton extends React.Component<Properties, State> {
       }
     })();
     const endStyle = (() => {
-      if(this.state.isFirstTime) {
+      if(this.state.isStart) {
         return DropDownButton.ANIMATION.noAnimation;
       } else if(this.props.isExpanded) {
         return DropDownButton.ANIMATION.spinOpenFadeIn;
@@ -54,7 +55,7 @@ export class DropDownButton extends React.Component<Properties, State> {
       }
     })();
     const startStyle = (() => {
-      if(this.state.isFirstTime) {
+      if(this.state.isStart) {
         return DropDownButton.ANIMATION.noAnimationHidden;
       } else if(this.props.isExpanded) {
         return DropDownButton.ANIMATION.spinOpen;
@@ -80,8 +81,8 @@ export class DropDownButton extends React.Component<Properties, State> {
   }
 
   public onComponentDidUpdate() {
-    if(this.state.isFirstTime) {
-      this.setState({isFirstTime: false});
+    if(this.state.isStart) {
+      this.setState({isStart: false});
     }
   }
 
