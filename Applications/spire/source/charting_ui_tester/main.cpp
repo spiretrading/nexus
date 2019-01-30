@@ -60,9 +60,9 @@ int main(int argc, char** argv) {
         Money::FromValue("0.01").get())) + close, open - ChartValue(Money(
         (rand() % 40) * Money::FromValue("0.01").get())));
     }();
-    candlesticks.push_back(Candlestick(ChartValue(time),
-      ChartValue(time - boost::posix_time::minutes(1)), open, close, high,
-        low));
+    candlesticks.push_back(Candlestick(
+      ChartValue(time - boost::posix_time::minutes(1)), ChartValue(time),
+      open, close, high, low));
       time -= boost::posix_time::minutes(2);
   }
   auto chart_model = std::make_shared<LocalChartModel>(
