@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
     candlesticks.push_back(Candlestick(
       ChartValue(time - boost::posix_time::minutes(1)), ChartValue(time),
       open, close, high, low));
-      time -= boost::posix_time::minutes(2);
+      time -= boost::posix_time::minutes(1);
   }
   auto chart_model = std::make_shared<LocalChartModel>(
     ChartValue::Type::TIMESTAMP, ChartValue::Type::MONEY, candlesticks);
