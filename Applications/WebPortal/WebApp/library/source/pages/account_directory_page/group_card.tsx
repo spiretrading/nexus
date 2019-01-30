@@ -72,6 +72,13 @@ export class GroupCard extends React.Component<Properties> {
       }
       return accountDetails;
     })();
+    const topAccountPadding = (() => {
+      if(this.props.accounts.length === 0) {
+        return '14px';
+      } else {
+        return '10px';
+      }
+    })();
     return (
       <VBoxLayout width='100%'>
         <div style={GroupCard.STYLE.header}>
@@ -86,7 +93,7 @@ export class GroupCard extends React.Component<Properties> {
             <div style={(this.animationStyle as any)[state]}>
               <VBoxLayout width='100%'>
                 <HLine color='#E6E6E6'/>
-                <Padding size='10px'/>
+                <Padding size={topAccountPadding}/>
                 {accounts}
                 <Padding size='20px'/>
               </VBoxLayout>
@@ -98,11 +105,11 @@ export class GroupCard extends React.Component<Properties> {
   public componentDidUpdate(): void {
     if(this.props.isOpen &&
         this.animationStyle.entered.maxHeight
-        !== `${16 + 32 + (32 * this.props.accounts.length)}px`) {
+        !== `${15 + 32 + (32 * this.props.accounts.length)}px`) {
       this.animationStyle.entered.maxHeight =
-        `${16 + 32 + (32 * this.props.accounts.length)}px`;
+        `${15 + 32 + (32 * this.props.accounts.length)}px`;
       this.animationStyle.entering.maxHeight =
-        `${16 + 32 + (32 * this.props.accounts.length)}px`;
+        `${15 + 32 + (32 * this.props.accounts.length)}px`;
     }
   }
 

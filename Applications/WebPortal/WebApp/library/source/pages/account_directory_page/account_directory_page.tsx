@@ -2,8 +2,7 @@ import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as React from 'react';
 import { DisplaySize } from '../../display_size';
-import { AccountDirectoryModel, AccountEntry, FilterBar } from '.';
-import { GroupCard } from './group_card';
+import { AccountDirectoryModel, AccountEntry, FilterBar, GroupCard } from '.';
 
 interface Properties {
 
@@ -195,7 +194,6 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       flexShrink: 0
     }
   };
-
   private static DYNAMIC_STYLE = StyleSheet.create({
     button: {
       boxSizing: 'border-box' as 'border-box',

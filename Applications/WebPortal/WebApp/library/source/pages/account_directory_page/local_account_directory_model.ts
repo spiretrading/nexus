@@ -43,10 +43,9 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
       throw Error('Model not loaded.');
     }
     return new Promise<AccountEntry[]>((resolve) => {
-            setTimeout(() => {
-                resolve(this._accounts.get(group).slice());
-            }, 100);
-        });
+      setTimeout(() => {
+          resolve(this._accounts.get(group).slice());}, 100);
+      });
   }
 
   private _isLoaded: boolean;
