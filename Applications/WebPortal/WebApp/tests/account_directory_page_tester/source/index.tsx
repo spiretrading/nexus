@@ -3,7 +3,6 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
-import { AccountEntry } from 'web_portal';
 
 interface Properties {
   displaySize: WebPortal.DisplaySize;
@@ -31,8 +30,6 @@ class TestApp extends React.Component<Properties, State> {
   public render(): JSX.Element {
     return (
       <WebPortal.AccountDirectoryPage
-        onNewAccountClick={null}
-        onNewGroupClick={null}
         displaySize={this.props.displaySize}
         model={this.state.model}/>
     );
@@ -56,27 +53,27 @@ class TestApp extends React.Component<Properties, State> {
     this.state.groups.add(group4);
     this.state.groups.add(group5);
     this.state.groups.add(group6);
-    const accountEntry1 = new AccountEntry(
+    const accountEntry1 = new WebPortal.AccountEntry(
       new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 9123, 'administration_service'),
       new Nexus.AccountRoles()
     );
-    const accountEntry2 = new AccountEntry(
+    const accountEntry2 = new WebPortal.AccountEntry(
       new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 23, 'charting_service'),
       new Nexus.AccountRoles()
     );
-    const accountEntry3 = new AccountEntry(
+    const accountEntry3 = new WebPortal.AccountEntry(
       new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 223, 'market_data_relay_service'),
       new Nexus.AccountRoles()
     );
-    const accountEntry4 = new AccountEntry(
+    const accountEntry4 = new WebPortal.AccountEntry(
       new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 45, 'data_relay_service'),
       new Nexus.AccountRoles()
     );
-    const accountEntry5 = new AccountEntry(
+    const accountEntry5 = new WebPortal.AccountEntry(
       new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 788, 'order_execution_service'),
       new Nexus.AccountRoles()

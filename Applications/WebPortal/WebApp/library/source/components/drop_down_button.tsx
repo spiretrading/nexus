@@ -18,7 +18,8 @@ interface State {
 
 export class DropDownButton extends React.Component<Properties, State> {
   static readonly defaultProps = {
-    onClick: () => {}
+    onClick: () => {},
+    size: '16px'
   }
 
   constructor(properties: Properties) {
@@ -134,7 +135,7 @@ export class DropDownButton extends React.Component<Properties, State> {
     },
     base:{
       position: 'absolute',
-      animationDuration: '1000ms',
+      animationDuration: '200ms',
       animationIterationCount: 1,
       animationFillMode: 'forwards'
     },
@@ -143,7 +144,7 @@ export class DropDownButton extends React.Component<Properties, State> {
     },
     spinClose: {
       animationName: DropDownButton.CLOSE_AND_FADEOUT,
-      animationDuration: '1000ms'
+      animationDuration: '200ms'
     },
     spinOpenFadeIn: {
       position: 'static',
@@ -152,7 +153,7 @@ export class DropDownButton extends React.Component<Properties, State> {
     spinCloseFadeIn:{
       position: 'static',
       animationName: DropDownButton.CLOSE_AND_FADE_IN,
-      animationDuration: '1000ms'
+      animationDuration: '200ms'
     }
   });
   public static readonly STYLE = {

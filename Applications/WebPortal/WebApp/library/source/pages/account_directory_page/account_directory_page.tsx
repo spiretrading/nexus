@@ -14,10 +14,10 @@ interface Properties {
   model: AccountDirectoryModel;
 
   /** Called when the user wants to make a new group. */
-  onNewGroupClick?: () => {};
+  onNewGroupClick?: () => void;
 
   /** Called when the user wants to make a new account. */
-  onNewAccountClick?: () => {};
+  onNewAccountClick?: () => void;
 }
 
 interface State {
@@ -28,6 +28,11 @@ interface State {
 
 /** Displays a directory of accounts. */
 export class AccountDirectoryPage extends React.Component<Properties, State> {
+  public static readonly defaultProps = {
+    onNewGroupClick: () => {},
+    onNewAccountClick: () => {}
+  }
+
   constructor(props: Properties) {
     super(props);
     this.state = {
@@ -90,15 +95,17 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
             <FilterBar value={this.state.filter} onChange={this.onChange}/>
             <div style={AccountDirectoryPage.STYLE.spacing}/>
             <div style={buttonBoxStyle}>
-              <button className={css(buttonStyle)}
+              <div className={css(buttonStyle)}
+                  tabIndex={0}
                   onClick={this.props.onNewAccountClick}>
-                New Account
-              </button>
+                <div>New Account</div>
+              </div>
               <div style={AccountDirectoryPage.STYLE.spacing}/>
-              <button onClick={this.props.onNewGroupClick}
+              <div onClick={this.props.onNewGroupClick}
+                  tabIndex={0}
                   className={css(buttonStyle)}>
-                New Group
-              </button>
+                <div>New Group</div>
+              </div>
             </div>
           </div>
           <div style={AccountDirectoryPage.STYLE.spacing}/>
@@ -206,9 +213,10 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       outline: 0,
       borderRadius: 1,
       cursor: 'pointer' as 'pointer',
-      ':active': {
-        backgroundColor: '#4B23A0'
-      },
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      alignItems:'center' as 'center',
+      justifyContent: 'center' as 'center',
       ':focus' : {
         backgroundColor: '#4B23A0'
       },
@@ -228,10 +236,6 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       border: 'none',
       outline: 0,
       borderRadius: 1,
-      cursor: 'pointer' as 'pointer',
-      ':active': {
-        backgroundColor: '#4B23A0'
-      },
       ':focus' : {
         backgroundColor: '#4B23A0'
       },
