@@ -144,16 +144,16 @@ ca_equities:
   # >= $1.0                X    X
   neoe:
     general_table:
-      [[0.0003, -0.0002],
-       [0.0014, -0.0010]]
+      [[0.0004, -0.0002],
+       [0.0012, -0.0008]]
 
     interlisted_table:
-      [[0.0003, -0.0002],
-       [0.0014, -0.0010]]
+      [[0.0025, -0.0021],
+       [0.0025, -0.0021]]
 
     neo_book_table:
-      [[-0.0011, 0.0014],
-       [-0.0015, 0.0018]]
+      [[-0.0003, 0.0005],
+       [-0.0020, 0.0023]]
 
   # NEX fees based on http://www.tsx.com/trading/tsx-venture-exchange/fee-schedule
   nex:
