@@ -4,7 +4,7 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 interface Properties {
 
   /* Determines the size of the element. */
-  size?: number|string;
+  size?: number | string;
 
   /** The onClick event handler. */
   onClick?: (event?: React.MouseEvent<any>) => void;

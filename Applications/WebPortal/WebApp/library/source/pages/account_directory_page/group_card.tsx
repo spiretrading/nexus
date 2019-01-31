@@ -1,10 +1,11 @@
 import * as Beam from 'beam';
-import { VBoxLayout, Padding } from 'dali';
+import { Padding, VBoxLayout } from 'dali';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
 import { DisplaySize, DropDownButton, HLine } from '../..';
 import { RolePanel } from '../account_page/role_panel';
 import { AccountEntry } from '.';
+import { any } from 'prop-types';
 
 interface Properties {
 
@@ -47,31 +48,28 @@ export class GroupCard extends React.Component<Properties> {
           return GroupCard.STYLE.accountLabelLarge;
       }
     })();
-    const accounts = (() => {
-      const accountDetails = [];
-      if(this.props.accounts.length > 0) {
-        for(let i = 0; i < this.props.accounts.length; ++i) {
-          accountDetails.push(
-            <div style={GroupCard.STYLE.accountBox}
-                key={this.props.accounts[i].account.id}>
-              <div style={{...accountsLableStyle,
-                  ...GroupCard.STYLE.accountLabelText}}>
-                {this.props.accounts[i].account.name.toString()}
-              </div>
-              <div style={GroupCard.STYLE.rolesBox}>
-                <RolePanel roles={this.props.accounts[i].roles}/>
-              </div>
-            </div>);
-        }
-      } else {
-        accountDetails.push(
-          <div style={{...accountsLableStyle,
-              ...GroupCard.STYLE.emptyLableText}}>
-            Empty
+    let accounts: any[] = [];
+    if(this.props.accounts.length > 0) {
+      for(const account of this.props.accounts) {
+        accounts.push(
+          <div style={GroupCard.STYLE.accountBox}
+              key={account.account.id}>
+            <div style={{...accountsLableStyle,
+                ...GroupCard.STYLE.accountLabelText}}>
+              {account.account.name.toString()}
+            </div>
+            <div style={GroupCard.STYLE.rolesBox}>
+              <RolePanel roles={account.roles}/>
+            </div>
           </div>);
       }
-      return accountDetails;
-    })();
+    } else {
+      accounts.push(
+        <div key={this.props.group.id} style={{...accountsLableStyle,
+            ...GroupCard.STYLE.emptyLableText}}>
+          Empty
+        </div>);
+    }
     const topAccountPadding = (() => {
       if(this.props.accounts.length === 0) {
         return '14px';
@@ -104,8 +102,8 @@ export class GroupCard extends React.Component<Properties> {
 
   public componentDidUpdate(): void {
     if(this.props.isOpen &&
-        this.animationStyle.entered.maxHeight
-        !== `${15 + 32 + (32 * this.props.accounts.length)}px`) {
+        this.animationStyle.entered.maxHeight !==
+        `${15 + 32 + (32 * this.props.accounts.length)}px`) {
       this.animationStyle.entered.maxHeight =
         `${15 + 32 + (32 * this.props.accounts.length)}px`;
       this.animationStyle.entering.maxHeight =

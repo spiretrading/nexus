@@ -44,7 +44,7 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
     }
     return new Promise<AccountEntry[]>((resolve) => {
       setTimeout(() => {
-          resolve(this._accounts.get(group).slice());}, 100);
+        resolve(this._accounts.get(group).slice());}, 100);
       });
   }
 

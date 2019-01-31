@@ -99,7 +99,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
                 New Account
               </button>
               <div style={AccountDirectoryPage.STYLE.spacing}/>
-              <button  onClick={this.props.onNewGroupClick}
+              <button onClick={this.props.onNewGroupClick}
                   className={css(buttonStyle)}>
                 New Group
               </button>
@@ -211,7 +211,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       cursor: 'pointer' as 'pointer',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
-      alignItems:'center' as 'center',
+      alignItems: 'center' as 'center',
       justifyContent: 'center' as 'center',
       ':active' : {
         backgroundColor: '#4B23A0'
