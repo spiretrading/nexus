@@ -5,7 +5,6 @@ import { Transition } from 'react-transition-group';
 import { DisplaySize, DropDownButton, HLine } from '../..';
 import { RolePanel } from '../account_page/role_panel';
 import { AccountEntry } from '.';
-import { any } from 'prop-types';
 
 interface Properties {
 
@@ -48,7 +47,7 @@ export class GroupCard extends React.Component<Properties> {
           return GroupCard.STYLE.accountLabelLarge;
       }
     })();
-    let accounts: any[] = [];
+    const accounts: JSX.Element[] = [];
     if(this.props.accounts.length > 0) {
       for(const account of this.props.accounts) {
         accounts.push(
