@@ -2,8 +2,7 @@ import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as React from 'react';
 import { DisplaySize } from '../../display_size';
-import { AccountDirectoryModel, AccountEntry, FilterBar } from '.';
-import { GroupCard } from './group_card';
+import { AccountDirectoryModel, AccountEntry, FilterBar, GroupCard } from '.';
 
 interface Properties {
 
@@ -14,10 +13,10 @@ interface Properties {
   model: AccountDirectoryModel;
 
   /** Called when the user wants to make a new group. */
-  onNewGroupClick?: () => {};
+  onNewGroupClick?: () => void;
 
   /** Called when the user wants to make a new account. */
-  onNewAccountClick?: () => {};
+  onNewAccountClick?: () => void;
 }
 
 interface State {
@@ -28,6 +27,11 @@ interface State {
 
 /** Displays a directory of accounts. */
 export class AccountDirectoryPage extends React.Component<Properties, State> {
+  public static readonly defaultProps = {
+    onNewGroupClick: () => {},
+    onNewAccountClick: () => {}
+  }
+
   constructor(props: Properties) {
     super(props);
     this.state = {
@@ -190,7 +194,6 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       flexShrink: 0
     }
   };
-
   private static DYNAMIC_STYLE = StyleSheet.create({
     button: {
       boxSizing: 'border-box' as 'border-box',
@@ -206,19 +209,18 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       outline: 0,
       borderRadius: 1,
       cursor: 'pointer' as 'pointer',
-      ':active': {
-        backgroundColor: '#4B23A0'
-      },
-      ':focus' : {
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      alignItems: 'center' as 'center',
+      justifyContent: 'center' as 'center',
+      ':active' : {
         backgroundColor: '#4B23A0'
       },
       ':hover' : {
         backgroundColor: '#4B23A0'
       },
-      ':disabled': {
-        backgroundColor: '#F8F8F8',
-        color: '#8C8C8C',
-        cursor: 'default' as 'default'
+      '::-moz-focus-inner': {
+        border: 0
       }
     },
     buttonSmall: {
@@ -233,20 +235,14 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       border: 'none',
       outline: 0,
       borderRadius: 1,
-      cursor: 'pointer' as 'pointer',
-      ':active': {
-        backgroundColor: '#4B23A0'
-      },
-      ':focus' : {
+      ':active' : {
         backgroundColor: '#4B23A0'
       },
       ':hover' : {
         backgroundColor: '#4B23A0'
       },
-      ':disabled': {
-        backgroundColor: '#F8F8F8',
-        color: '#8C8C8C',
-        cursor: 'default' as 'default'
+      '::-moz-focus-inner': {
+        border: 0
       }
     }
   });

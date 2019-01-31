@@ -69,7 +69,10 @@ export class FilterBar extends React.Component<Properties> {
       outline: 0,
       outlineOffset: 0,
       border: 0,
-      '-webkit-appearance': 'none'
+      '-webkit-appearance': 'none',
+      '::-ms-clear': {
+        display: 'none' as 'none'
+      }
     },
     '::placeholder': {
       color: '#8C8C8C'
