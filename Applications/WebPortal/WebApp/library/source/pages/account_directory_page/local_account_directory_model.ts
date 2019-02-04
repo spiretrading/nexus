@@ -47,6 +47,29 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
         resolve(this._accounts.get(group).slice());}, 100);
       });
   }
+  public async loadFilteredAccounts(
+      filter: string): Promise<Beam.Map<Beam.DirectoryEntry, AccountEntry[]>> {
+    if(!this.isLoaded) {
+      throw Error('Model not loaded.');
+    }
+    return new Promise<Beam.Map<Beam.DirectoryEntry, AccountEntry[]>>(
+      (resolve) => {
+        setTimeout(() => {
+          const map = new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>();
+          if(filter) {
+            for(const group of this._groups) {
+              const accounts: AccountEntry[] = [];
+              for(const account of this._accounts.get(group)) {
+                if(account.account.name.indexOf(filter) === 0) {
+                  accounts.push(account);
+                }
+              }
+              map.set(group, accounts);
+            }
+          }
+          resolve(map);}, 100);
+      });
+  }
 
   private _isLoaded: boolean;
   private _groups: Beam.Set<Beam.DirectoryEntry>;
