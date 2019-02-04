@@ -1,7 +1,7 @@
 import * as Beam from 'beam';
 import { Padding, VBoxLayout } from 'dali';
 import * as React from 'react';
-import { Transition } from 'react-transition-group';
+import { Transition, TransitionGroup } from 'react-transition-group';
 import { DisplaySize, DropDownButton, HLine } from '../..';
 import { RolePanel } from '../account_page/role_panel';
 import { AccountEntry } from '.';
@@ -50,8 +50,10 @@ export class GroupCard extends React.Component<Properties> {
     const accounts: JSX.Element[] = [];
     if(this.props.accounts.length > 0) {
       for(const account of this.props.accounts) {
-        accounts.push(
-          <div style={GroupCard.STYLE.accountBox}
+        if(account.account.name.indexOf(this.props.filter) === 0
+            && this.props.filter) {
+          accounts.push(
+           <div style={GroupCard.STYLE.accountBox}
               key={account.account.id}>
             <div style={{...accountsLableStyle,
                 ...GroupCard.STYLE.accountLabelText}}>
@@ -60,14 +62,40 @@ export class GroupCard extends React.Component<Properties> {
             <div style={GroupCard.STYLE.rolesBox}>
               <RolePanel roles={account.roles}/>
             </div>
-          </div>);
+          </div>
+          );
+        } else {
+          accounts.push(
+          <Transition in={this.props.isOpen}
+            timeout={GroupCard.TRANSITION_LENGTH_MS}>
+          {(state) => (
+          <div style={{...GroupCard.STYLE.accountBox,
+              ...(this.accountLabelAnimationStyle as any)[state]}}
+              key={account.account.id}>
+            <div style={{...accountsLableStyle,
+                ...GroupCard.STYLE.accountLabelText}}>
+              {account.account.name.toString()}
+            </div>
+            <div style={GroupCard.STYLE.rolesBox}>
+              <RolePanel roles={account.roles}/>
+            </div>
+          </div>
+          )}
+          </Transition>);
+        }
       }
     } else {
       accounts.push(
-        <div key={this.props.group.id} style={{...accountsLableStyle,
-            ...GroupCard.STYLE.emptyLableText}}>
-          Empty
-        </div>);
+         <Transition in={this.props.isOpen}
+            timeout={GroupCard.TRANSITION_LENGTH_MS}>
+          {(state) => (
+          <div key={this.props.group.id} style={{...accountsLableStyle,
+              ...GroupCard.STYLE.emptyLableText,
+              ...(this.accountLabelAnimationStyle as any)[state]}}>
+            Empty
+          </div>
+          )}
+        </Transition>);
     }
     const topAccountPadding = (() => {
       if(this.props.accounts.length === 0) {
@@ -87,13 +115,15 @@ export class GroupCard extends React.Component<Properties> {
         <Transition in={this.props.isOpen}
             timeout={GroupCard.TRANSITION_LENGTH_MS}>
           {(state) => (
-            <div style={(this.animationStyle as any)[state]}>
-              <VBoxLayout width='100%'>
+            <div>
+              <div style={(this.topPaddingAnimationStyle as any)[state]}>
                 <HLine color='#E6E6E6'/>
-                <Padding size={topAccountPadding}/>
+                <div style={{height: topAccountPadding}}/>
+              </div>
                 {accounts}
-                <Padding size='20px'/>
-              </VBoxLayout>
+              <div style={(this.bottomPaddingAnimationStyle as any)[state]}>
+                <div style={{height:'20px'}}/>
+              </div>
             </div>)}
         </Transition>
       </VBoxLayout>);
@@ -172,6 +202,13 @@ export class GroupCard extends React.Component<Properties> {
       justifyContent: 'space-between' as 'space-between',
       marginRight: '10px'
     },
+    accountsContainer: {
+      boxSizing: 'border-box' as 'border-box',
+      height: '34px',
+      display: 'flex' as 'flex',
+      flexDirection: 'column' as 'column',
+      flexWrap: 'nowrap' as 'nowrap'
+    },
     rolesBox: {
       width: '80px',
       flexGrow: 0,
@@ -189,6 +226,96 @@ export class GroupCard extends React.Component<Properties> {
     },
     entered: {
       maxHeight: '0',
+      transform: 'scaleY(1)',
+      overflow: 'hidden' as 'hidden',
+      transformOrigin: 'top' as 'top'
+    },
+    exiting: {
+      maxHeight: 0,
+      transform: 'scaleY(0)',
+      transitionProperty: 'max-height, transform',
+      transitionDuration: `${GroupCard.TRANSITION_LENGTH_MS}ms`,
+      overflow: 'hidden' as 'hidden',
+      transformOrigin: 'top' as 'top'
+    },
+    exited: {
+      maxHeight: 0,
+      transform: 'scaleY(0)',
+      overflow: 'hidden' as 'hidden',
+      transformOrigin: 'top' as 'top'
+    }
+  };
+  private accountLabelAnimationStyle = {
+    entering: {
+      maxHeight: '34px',
+      transitionProperty: 'max-height, transform',
+      transform: 'scaleY(1)',
+      transitionDuration: `${GroupCard.TRANSITION_LENGTH_MS}ms`,
+      overflow: 'hidden' as 'hidden',
+      transformOrigin: 'top' as 'top'
+    },
+    entered: {
+      maxHeight: '34px',
+      transform: 'scaleY(1)',
+      overflow: 'hidden' as 'hidden',
+      transformOrigin: 'top' as 'top'
+    },
+    exiting: {
+      maxHeight: 0,
+      transform: 'scaleY(0)',
+      transitionProperty: 'max-height, transform',
+      transitionDuration: `${GroupCard.TRANSITION_LENGTH_MS}ms`,
+      overflow: 'hidden' as 'hidden',
+      transformOrigin: 'top' as 'top'
+    },
+    exited: {
+      maxHeight: 0,
+      transform: 'scaleY(0)',
+      overflow: 'hidden' as 'hidden',
+      transformOrigin: 'top' as 'top'
+    }
+  };
+  private topPaddingAnimationStyle = {
+    entering: {
+      maxHeight: '15px',
+      transitionProperty: 'max-height, transform',
+      transform: 'scaleY(1)',
+      transitionDuration: `${GroupCard.TRANSITION_LENGTH_MS}ms`,
+      overflow: 'hidden' as 'hidden',
+      transformOrigin: 'top' as 'top'
+    },
+    entered: {
+      maxHeight: '15px',
+      transform: 'scaleY(1)',
+      overflow: 'hidden' as 'hidden',
+      transformOrigin: 'top' as 'top'
+    },
+    exiting: {
+      maxHeight: 0,
+      transform: 'scaleY(0)',
+      transitionProperty: 'max-height, transform',
+      transitionDuration: `${GroupCard.TRANSITION_LENGTH_MS}ms`,
+      overflow: 'hidden' as 'hidden',
+      transformOrigin: 'top' as 'top'
+    },
+    exited: {
+      maxHeight: 0,
+      transform: 'scaleY(0)',
+      overflow: 'hidden' as 'hidden',
+      transformOrigin: 'top' as 'top'
+    }
+  };
+  private bottomPaddingAnimationStyle = {
+    entering: {
+      maxHeight: '20px',
+      transitionProperty: 'max-height, transform',
+      transform: 'scaleY(1)',
+      transitionDuration: `${GroupCard.TRANSITION_LENGTH_MS}ms`,
+      overflow: 'hidden' as 'hidden',
+      transformOrigin: 'top' as 'top'
+    },
+    entered: {
+      maxHeight: '20px',
       transform: 'scaleY(1)',
       overflow: 'hidden' as 'hidden',
       transformOrigin: 'top' as 'top'
