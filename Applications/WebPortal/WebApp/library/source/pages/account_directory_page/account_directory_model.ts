@@ -11,6 +11,10 @@ export abstract class AccountDirectoryModel {
   public abstract async loadAccounts(
     group: Beam.DirectoryEntry): Promise<AccountEntry[]>;
 
+  /** Returns all the accounts that match the filter. */
+  public abstract async loadFilteredAccounts(
+    filter: string): Promise<Beam.Map<Beam.DirectoryEntry, AccountEntry[]>>;
+
   /** Loads this model. */
   public abstract async load(): Promise<void>;
 }
