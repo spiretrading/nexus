@@ -1,5 +1,6 @@
+import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
-import { Padding, VBoxLayout } from 'dali';
+import { VBoxLayout } from 'dali';
 import * as React from 'react';
 import { Transition, TransitionGroup } from 'react-transition-group';
 import { DisplaySize, DropDownButton, HLine } from '../..';
@@ -53,11 +54,14 @@ export class GroupCard extends React.Component<Properties> {
         if(account.account.name.indexOf(this.props.filter) === 0
             && this.props.filter) {
           accounts.push(
-           <div style={GroupCard.STYLE.accountBox}
-              key={account.account.id}>
+           <div className={css(GroupCard.DYNAMIC_STYLE.accountBox)}
+              key={account.account.id} tabIndex={0}>
             <div style={{...accountsLableStyle,
                 ...GroupCard.STYLE.accountLabelText}}>
-              {account.account.name.toString()}
+              <div style={GroupCard.STYLE.highlightedText}>
+                {account.account.name.slice(0, this.props.filter.length)}
+              </div>
+              {account.account.name.slice(this.props.filter.length)}
             </div>
             <div style={GroupCard.STYLE.rolesBox}>
               <RolePanel roles={account.roles}/>
@@ -67,10 +71,11 @@ export class GroupCard extends React.Component<Properties> {
         } else {
           accounts.push(
           <Transition in={this.props.isOpen}
+            tabIndex={0}
             timeout={GroupCard.TRANSITION_LENGTH_MS}>
           {(state) => (
-          <div style={{...GroupCard.STYLE.accountBox,
-              ...(this.accountLabelAnimationStyle as any)[state]}}
+          <div className={css(GroupCard.DYNAMIC_STYLE.accountBox)}
+              style={(this.accountLabelAnimationStyle as any)[state]}
               key={account.account.id}>
             <div style={{...accountsLableStyle,
                 ...GroupCard.STYLE.accountLabelText}}>
@@ -106,7 +111,7 @@ export class GroupCard extends React.Component<Properties> {
     })();
     return (
       <VBoxLayout width='100%'>
-        <div style={GroupCard.STYLE.header}>
+        <div className={css(GroupCard.DYNAMIC_STYLE.header)}>
           <DropDownButton size='16px'
             onClick={() => this.props.onClick(this.props.group)}
             isExpanded={this.props.isOpen}/>
@@ -144,26 +149,6 @@ export class GroupCard extends React.Component<Properties> {
     box: {
       width: '100%'
     },
-    header: {
-      boxSizing: 'border-box' as 'border-box',
-      height: '40px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
-      marginLeft: '10px',
-      marginRight: '10px'
-    },
-    headerSmall: {
-      boxSizing: 'border-box' as 'border-box',
-      height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
-      marginLeft: '10px',
-      marginRight: '10px'
-    },
     textOpen: {
       marginLeft: '18px',
       font: '500 14px Roboto',
@@ -186,12 +171,32 @@ export class GroupCard extends React.Component<Properties> {
     accountLabelText: {
       font: '400 14px Roboto',
       color: '#000000',
-      marginRight: '10px'
+      flexGrow: 0,
+      flexShrink: 0,
+      boxSizing: 'border-box' as 'border-box',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'nowrap' as 'nowrap'
     },
     emptyLableText: {
       font: '400 14px Roboto',
-      color: '#8C8C8C'
+      color: '#8C8C8C',
+      paddingLeft: '10px'
     },
+    highlightedText: {
+      font: '400 14px Roboto',
+      color: '#000000',
+      backgroundColor: '#FFF7C4',
+      flexGrow: 0,
+      flexShrink: 0
+    },
+    rolesBox: {
+      width: '80px',
+      flexGrow: 0,
+      flexShrink: 0
+    }
+  };
+  private static DYNAMIC_STYLE = StyleSheet.create({
     accountBox: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
@@ -200,21 +205,39 @@ export class GroupCard extends React.Component<Properties> {
       flexWrap: 'nowrap' as 'nowrap',
       alignItems: 'center' as 'center',
       justifyContent: 'space-between' as 'space-between',
-      marginRight: '10px'
+      paddingLeft: '10px',
+      paddingRight: '10px',
+      ':hover' : {
+        backgroundColor: '#F8F8F8'
+      }
     },
-    accountsContainer: {
+    header: {
+      boxSizing: 'border-box' as 'border-box',
+      height: '40px',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'nowrap' as 'nowrap',
+      alignItems: 'center' as 'center',
+      paddingLeft: '10px',
+      paddingRight: '10px',
+      ':hover' : {
+        backgroundColor: '#F8F8F8'
+      }
+    },
+    headerSmall: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
       display: 'flex' as 'flex',
-      flexDirection: 'column' as 'column',
-      flexWrap: 'nowrap' as 'nowrap'
-    },
-    rolesBox: {
-      width: '80px',
-      flexGrow: 0,
-      flexShrink: 0
+      flexDirection: 'row' as 'row',
+      flexWrap: 'nowrap' as 'nowrap',
+      alignItems: 'center' as 'center',
+      paddingLeft: '10px',
+      paddingRight: '10px',
+      ':hover' : {
+        backgroundColor: '#F8F8F8'
+      }
     }
-  };
+  });
   private animationStyle = {
     entering: {
       maxHeight: '0',

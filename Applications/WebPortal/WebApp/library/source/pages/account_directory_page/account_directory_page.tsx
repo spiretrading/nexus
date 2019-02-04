@@ -113,10 +113,12 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       </div>);
   }
 
-  private onChange(newFilter: string) {
+  private async onChange(newFilter: string) {
+    const map = await this.props.model.loadFilteredAccounts(newFilter);
     this.setState({
       filter: newFilter,
-      openedGroups: new Beam.Set<Beam.DirectoryEntry>()
+      openedGroups: new Beam.Set<Beam.DirectoryEntry>(),
+      accounts: map
     });
   }
 
