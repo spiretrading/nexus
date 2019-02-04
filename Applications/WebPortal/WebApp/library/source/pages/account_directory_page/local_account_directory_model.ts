@@ -56,14 +56,16 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
       (resolve) => {
         setTimeout(() => {
           const map = new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>();
-          for(const group of this._groups) {
-            const accounts: AccountEntry[] = [];
-            for(const account of this._accounts.get(group)) {
-              if(account.account.name.indexOf(filter) === 0) {
-                accounts.push(account);
+          if(filter) {
+            for(const group of this._groups) {
+              const accounts: AccountEntry[] = [];
+              for(const account of this._accounts.get(group)) {
+                if(account.account.name.indexOf(filter) === 0) {
+                  accounts.push(account);
+                }
               }
+              map.set(group, accounts);
             }
-            map.set(group, accounts);
           }
           resolve(map);}, 100);
       });

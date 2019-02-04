@@ -12,6 +12,7 @@ export abstract class AccountDirectoryModel {
     group: Beam.DirectoryEntry): Promise<AccountEntry[]>;
 
   /** Returns all the accounts where the filter is a prefix to the name.
+   * If the filter is a empty string a empty map is returned.
    * @param filter - The string that is the current filter.
    */
   public abstract async loadFilteredAccounts(
