@@ -60,6 +60,9 @@ namespace Spire {
       void set_region(const ChartPoint& top_left,
         const ChartPoint& bottom_right);
 
+      //! Toggles the grid lock on or off.
+      void toggle_grid_lock();
+
     protected:
       void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
@@ -84,6 +87,9 @@ namespace Spire {
       std::vector<ChartValue> m_x_axis_values;
       int m_x_axis_text_width;
       std::vector<ChartValue> m_y_axis_values;
+      bool m_is_grid_locked;
+      ChartValue m_lock_top;
+      ChartValue m_lock_bottom;
 
       void update_origins();
   };

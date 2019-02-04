@@ -135,6 +135,9 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   m_chart->setAttribute(Qt::WA_Hover);
   m_security_widget->set_widget(m_chart);
   m_chart->installEventFilter(this);
+  lock_grid_button->connect_clicked_signal([=] {
+    m_chart->toggle_lock_grid();
+  });
 }
 
 connection ChartingWindow::connect_security_change_signal(
