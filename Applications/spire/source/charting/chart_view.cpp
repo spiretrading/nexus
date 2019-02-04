@@ -91,6 +91,12 @@ void ChartView::set_crosshair(const ChartPoint& position) {
 
 void ChartView::set_crosshair(const QPoint& position) {
   m_crosshair_pos = position;
+  if(m_crosshair_pos.value().x() <= m_x_origin &&
+      m_crosshair_pos.value().y() <= m_y_origin) {
+    setCursor(Qt::BlankCursor);
+  } else {
+    setCursor(Qt::ArrowCursor);
+  }
   update();
 }
 
@@ -186,7 +192,8 @@ void ChartView::paintEvent(QPaintEvent* event) {
       }
     }
   }
-  if(m_crosshair_pos) {
+  if(m_crosshair_pos && m_crosshair_pos.value().x() <= m_x_origin &&
+      m_crosshair_pos.value().y() <= m_y_origin) {
     painter.setPen(m_dashed_line_pen);
     painter.drawLine(m_crosshair_pos.value().x(), 0,
       m_crosshair_pos.value().x(), m_y_origin);
