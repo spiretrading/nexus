@@ -119,7 +119,6 @@ void ChartView::set_region(const ChartPoint& top_left,
   update_origins();
   m_loaded_data = m_model->load(m_top_left.m_x, m_bottom_right.m_x);
   m_loaded_data.then([&] (auto result) {
-    // verify that this doesn't fail
     m_candlesticks = result.Get();
   });
   update();
