@@ -71,13 +71,6 @@ export class GroupCard extends React.Component<Properties> {
         );
       }
     })();
-    const timeout = (() => {
-      if(this.props.isOpen) {
-        return GroupCard.TRANSITION_LENGTH_MS / 2;
-      } else {
-        return GroupCard.TRANSITION_LENGTH_MS;
-      }
-    })();
     const accounts: JSX.Element[] = [];
     if(this.props.accounts.length > 0) {
       for(const account of this.props.accounts) {
@@ -103,11 +96,10 @@ export class GroupCard extends React.Component<Properties> {
           accounts.push(
           <Transition in={this.props.isOpen}
             appear={true}
-            timeout={timeout}>
+            timeout={GroupCard.TRANSITION_LENGTH_MS}>
           {(state) => (
           <div className={css(GroupCard.DYNAMIC_STYLE.accountBox)}
-              style={{...this.accountLabelAnimationStyle.base,
-                ...(this.accountLabelAnimationStyle as any)[state]}}
+              style={(this.accountLabelAnimationStyle as any)[state]}
               key={account.account.id}
               onClick={() => this.props.onAccountClick(account.account)}>
             <div style={{...accountsLableStyle,
@@ -125,7 +117,7 @@ export class GroupCard extends React.Component<Properties> {
     } else {
       accounts.push(
          <Transition in={this.props.isOpen}
-            timeout={timeout}>
+            timeout={GroupCard.TRANSITION_LENGTH_MS}>
           {(state) => (
           <div key={this.props.group.id} style={{...accountsLableStyle,
               ...GroupCard.STYLE.emptyLableText,
@@ -149,7 +141,7 @@ export class GroupCard extends React.Component<Properties> {
           <div style={headerTextStyle}>{this.props.group.name}</div>
         </div>
         <Transition in={this.props.isOpen}
-            timeout={timeout}>
+            timeout={GroupCard.TRANSITION_LENGTH_MS}>
           {(state) => (
             <div>
               <div style={(this.topPaddingAnimationStyle as any)[state]}>
@@ -166,18 +158,17 @@ export class GroupCard extends React.Component<Properties> {
   }
 
   private static readonly STYLE = {
-    box: {
-      width: '100%'
-    },
     headerTextOpen: {
       marginLeft: '18px',
       font: '500 14px Roboto',
-      color: '#4B23A0'
+      color: '#4B23A0',
+      cursor: 'pointer' as 'pointer'
     },
     headerText: {
       marginLeft: '18px',
       font: '400 14px Roboto',
-      color: '#000000'
+      color: '#000000',
+      cursor: 'pointer' as 'pointer'
     },
     accountLabelSmall: {
       marginLeft: 0
@@ -252,31 +243,21 @@ export class GroupCard extends React.Component<Properties> {
       alignItems: 'center' as 'center',
       paddingLeft: '10px',
       paddingRight: '10px',
-      cursor: 'pointer' as 'pointer',
       ':hover' : {
         backgroundColor: '#F8F8F8'
       }
     }
   });
   private accountLabelAnimationStyle = {
-    base: {
-      transitionProperty: 'max-height, transform',
-      transform: 'scaleY(1)',
-      transitionDuration: `${GroupCard.TRANSITION_LENGTH_MS}ms`,
-      overflow: 'hidden' as 'hidden',
-      transformOrigin: 'top' as 'top'
-    },
     entering: {
       maxHeight: 0,
-      transitionProperty: 'max-height, transform',
-      transform: 'scaleY(1)',
-      transitionDuration: `${GroupCard.TRANSITION_LENGTH_MS}ms`,
-      overflow: 'hidden' as 'hidden',
-      transformOrigin: 'top' as 'top'
+      transform: 'scaleY(0)'
     },
     entered: {
       maxHeight: '34px',
       transform: 'scaleY(1)',
+      transitionProperty: 'max-height, transform',
+      transitionDuration: '200ms',
       overflow: 'hidden' as 'hidden',
       transformOrigin: 'top' as 'top'
     },
