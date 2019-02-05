@@ -26,7 +26,7 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   m_window = new Window(m_body, this);
   m_window->set_svg_icon(":/icons/spire-icon-black.svg",
     ":/icons/spire-icon-grey.svg");
-  setWindowIcon(QIcon(":icons/spire-icon-256x256.png"));
+  setWindowIcon(QIcon(":icons/toolbar-icon-256x256.png"));
   window_layout->addWidget(m_window);
   m_body->setStyleSheet("background-color: #F5F5F5;");
   auto layout = new QVBoxLayout(m_body);
