@@ -26,16 +26,25 @@ interface Properties {
 
   /** Called when the card is clicked. */
   onClick: (group: Beam.DirectoryEntry) => void;
+
+  onAccountClick?: (account: Beam.DirectoryEntry) => void;
 }
 
 /** A card that displays a group and the accounts associated with it. */
 export class GroupCard extends React.Component<Properties> {
   public render(): JSX.Element {
-    const headerStyle = (() => {
+    const headerTextStyle = (() => {
       if(this.props.isOpen) {
-        return GroupCard.STYLE.textOpen;
+        return GroupCard.STYLE.headerTextOpen;
       } else {
-        return GroupCard.STYLE.text;
+        return GroupCard.STYLE.headerText;
+      }
+    })();
+    const headerStyle = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return GroupCard.DYNAMIC_STYLE.header;
+      } else {
+        return GroupCard.DYNAMIC_STYLE.header;
       }
     })();
     const accountsLableStyle = (() => {
@@ -55,7 +64,8 @@ export class GroupCard extends React.Component<Properties> {
             && this.props.filter) {
           accounts.push(
            <div className={css(GroupCard.DYNAMIC_STYLE.accountBox)}
-              key={account.account.id} tabIndex={0}>
+              key={account.account.id}
+              onClick={() => this.props.onAccountClick(account.account)}>
             <div style={{...accountsLableStyle,
                 ...GroupCard.STYLE.accountLabelText}}>
               <div style={GroupCard.STYLE.highlightedText}>
@@ -76,7 +86,8 @@ export class GroupCard extends React.Component<Properties> {
           {(state) => (
           <div className={css(GroupCard.DYNAMIC_STYLE.accountBox)}
               style={(this.accountLabelAnimationStyle as any)[state]}
-              key={account.account.id}>
+              key={account.account.id}
+              onClick={() => this.props.onAccountClick(account.account)}>
             <div style={{...accountsLableStyle,
                 ...GroupCard.STYLE.accountLabelText}}>
               {account.account.name.toString()}
@@ -111,11 +122,11 @@ export class GroupCard extends React.Component<Properties> {
     })();
     return (
       <VBoxLayout width='100%'>
-        <div className={css(GroupCard.DYNAMIC_STYLE.header)}>
+        <div className={css(headerStyle)}
+          onClick={() => this.props.onClick(this.props.group)}>
           <DropDownButton size='16px'
-            onClick={() => this.props.onClick(this.props.group)}
             isExpanded={this.props.isOpen}/>
-          <div style={headerStyle}>{this.props.group.name}</div>
+          <div style={headerTextStyle}>{this.props.group.name}</div>
         </div>
         <Transition in={this.props.isOpen}
             timeout={GroupCard.TRANSITION_LENGTH_MS}>
@@ -149,18 +160,18 @@ export class GroupCard extends React.Component<Properties> {
     box: {
       width: '100%'
     },
-    textOpen: {
+    headerTextOpen: {
       marginLeft: '18px',
       font: '500 14px Roboto',
       color: '#4B23A0'
     },
-    text: {
+    headerText: {
       marginLeft: '18px',
       font: '400 14px Roboto',
       color: '#000000'
     },
     accountLabelSmall: {
-      marginLeft: '10px'
+      marginLeft: 0
     },
     accountLabelMedium: {
       marginLeft: '34px'
@@ -220,19 +231,7 @@ export class GroupCard extends React.Component<Properties> {
       alignItems: 'center' as 'center',
       paddingLeft: '10px',
       paddingRight: '10px',
-      ':hover' : {
-        backgroundColor: '#F8F8F8'
-      }
-    },
-    headerSmall: {
-      boxSizing: 'border-box' as 'border-box',
-      height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
-      paddingLeft: '10px',
-      paddingRight: '10px',
+      cursor: 'pointer' as 'pointer',
       ':hover' : {
         backgroundColor: '#F8F8F8'
       }

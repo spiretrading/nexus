@@ -64,7 +64,7 @@ class TestApp extends React.Component<Properties, State> {
     const accountEntry3 = new WebPortal.AccountEntry(
       new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 223, 'market_data_relay_service'),
-      new Nexus.AccountRoles());
+      new Nexus.AccountRoles(3));
     const accountEntry4 = new WebPortal.AccountEntry(
       new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 45, 'data_relay_service'),
@@ -72,7 +72,7 @@ class TestApp extends React.Component<Properties, State> {
     const accountEntry5 = new WebPortal.AccountEntry(
       new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 788, 'execution_service'),
-      new Nexus.AccountRoles());
+      new Nexus.AccountRoles(5));
     const testArray = [];
     testArray.push(accountEntry1);
     testArray.push(accountEntry2);
