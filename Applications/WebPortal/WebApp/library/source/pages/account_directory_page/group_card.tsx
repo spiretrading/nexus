@@ -2,7 +2,7 @@ import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import { VBoxLayout } from 'dali';
 import * as React from 'react';
-import { Transition, TransitionGroup } from 'react-transition-group';
+import { Transition } from 'react-transition-group';
 import { DisplaySize, DropDownButton, HLine } from '../..';
 import { RolePanel } from '../account_page/role_panel';
 import { AccountEntry } from '.';
@@ -24,9 +24,13 @@ interface Properties {
   /**  Determines if the card is opened. */
   isOpen: boolean;
 
-  /** Called when the card is clicked. */
-  onClick: (group: Beam.DirectoryEntry) => void;
+  /** Called when the dropdown button is clicked. */
+  onDropDownClick: (group: Beam.DirectoryEntry) => void;
 
+  /** Called when the group label is clicked. */
+  onGroupClick?: (group: Beam.DirectoryEntry) => void;
+
+  /** Called when the account label is clicked. */
   onAccountClick?: (account: Beam.DirectoryEntry) => void;
 }
 
@@ -40,21 +44,31 @@ export class GroupCard extends React.Component<Properties> {
         return GroupCard.STYLE.headerText;
       }
     })();
-    const headerStyle = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return GroupCard.DYNAMIC_STYLE.header;
-      } else {
-        return GroupCard.DYNAMIC_STYLE.header;
-      }
-    })();
     const accountsLableStyle = (() => {
       switch(this.props.displaySize) {
         case(DisplaySize.SMALL):
-          return GroupCard.STYLE.accountLabelSmall;
+          return null;
         case(DisplaySize.MEDIUM):
           return GroupCard.STYLE.accountLabelMedium;
         case(DisplaySize.LARGE):
           return GroupCard.STYLE.accountLabelLarge;
+      }
+    })();
+    const dropDownButton = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return (
+          <DropDownButton size='20px'
+            isExpanded={this.props.isOpen}
+            onClick={() => this.props.onDropDownClick(this.props.group)}/>
+        );
+      } else {
+        return (
+          <div style={GroupCard.STYLE.dropDownButtonWrapper}
+              onClick={() => this.props.onDropDownClick(this.props.group)}>
+            <DropDownButton size='16px'
+            isExpanded={this.props.isOpen}/>
+          </div>
+        );
       }
     })();
     const timeout = (() => {
@@ -80,7 +94,7 @@ export class GroupCard extends React.Component<Properties> {
               </div>
               {account.account.name.slice(this.props.filter.length)}
             </div>
-            <div style={GroupCard.STYLE.rolesBox}>
+            <div style={GroupCard.STYLE.rolesWrapper}>
               <RolePanel roles={account.roles}/>
             </div>
           </div>
@@ -100,8 +114,7 @@ export class GroupCard extends React.Component<Properties> {
                 ...GroupCard.STYLE.accountLabelText}}>
               {account.account.name.toString()}
             </div>
-            <div>{state}</div>
-            <div style={GroupCard.STYLE.rolesBox}>
+            <div style={GroupCard.STYLE.rolesWrapper}>
               <RolePanel roles={account.roles}/>
             </div>
           </div>
@@ -131,10 +144,8 @@ export class GroupCard extends React.Component<Properties> {
     })();
     return (
       <VBoxLayout width='100%'>
-        <div className={css(headerStyle)}>
-          <DropDownButton size='16px'
-            isExpanded={this.props.isOpen}
-            onClick={() => this.props.onClick(this.props.group)}/>
+        <div className={css(GroupCard.DYNAMIC_STYLE.header)}>
+          {dropDownButton}
           <div style={headerTextStyle}>{this.props.group.name}</div>
         </div>
         <Transition in={this.props.isOpen}
@@ -199,10 +210,22 @@ export class GroupCard extends React.Component<Properties> {
       flexGrow: 0,
       flexShrink: 0
     },
-    rolesBox: {
+    rolesWrapper: {
       width: '80px',
       flexGrow: 0,
       flexShrink: 0
+    },
+    dropDownButtonWrapper: {
+      width: '20px',
+      height: '20px',
+      flexGrow: 0,
+      flexShrink: 0,
+      boxSizing: 'border-box' as 'border-box',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'nowrap' as 'nowrap',
+      alignItems: 'center' as 'center',
+      justifyContent: 'center' as 'center'
     }
   };
   private static DYNAMIC_STYLE = StyleSheet.create({
