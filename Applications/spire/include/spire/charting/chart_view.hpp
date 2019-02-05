@@ -94,6 +94,7 @@ namespace Spire {
       QtPromise<std::vector<Spire::Candlestick>> m_candlestick_promise;
       std::vector<Candlestick> m_candlesticks;
 
+      void update_auto_scale();
       void update_origins();
   };
 }

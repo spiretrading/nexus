@@ -57,6 +57,7 @@ namespace Spire {
       QWidget* m_button_header_widget;
       QLineEdit* m_period_line_edit;
       DropdownMenu* m_period_dropdown;
+      ToggleButton* m_auto_scale_button;
       ChartView* m_chart;
       bool m_is_mouse_dragging;
       QPoint m_last_chart_mouse_pos;

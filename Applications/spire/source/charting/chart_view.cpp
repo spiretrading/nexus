@@ -122,12 +122,18 @@ void ChartView::set_region(const ChartPoint& top_left,
   m_candlestick_promise.then([&] (auto result) {
     m_candlesticks = std::move(result.Get());
     update();
+    if(m_is_auto_scaled) {
+      update_auto_scale();
+    }
   });
   update();
 }
 
 void ChartView::toggle_auto_scale() {
   m_is_auto_scaled = !m_is_auto_scaled;
+  if(m_is_auto_scaled) {
+    update_auto_scale();
+  }
 }
 
 void ChartView::paintEvent(QPaintEvent* event) {
@@ -251,6 +257,17 @@ void ChartView::showEvent(QShowEvent* event) {
     set_region(top_left, bottom_right);
   }
   QWidget::showEvent(event);
+}
+
+void ChartView::update_auto_scale() {
+  m_auto_scale_top = ChartValue(-INT_MAX);
+  m_auto_scale_bottom = ChartValue(INT_MAX);
+  for(auto candle : m_candlesticks) {
+    m_auto_scale_top = std::max(m_auto_scale_top, candle.GetHigh());
+    m_auto_scale_bottom = std::min(m_auto_scale_bottom, candle.GetLow());
+  }
+  set_region({m_top_left.m_x, m_auto_scale_top},
+    {m_bottom_right.m_x, m_auto_scale_bottom});
 }
 
 void ChartView::update_origins() {
