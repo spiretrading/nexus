@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {css, StyleSheet} from 'aphrodite/no-important';
+import { css, StyleSheet } from 'aphrodite/no-important';
 
 interface Properties {
 
@@ -9,6 +9,7 @@ interface Properties {
   /** The onClick event handler. */
   onClick?(event?: React.MouseEvent<any>): void;
 
+  /** Determines if the button should open or close. */
   isExpanded: boolean;
 }
 
@@ -18,7 +19,8 @@ interface State {
 
 export class DropDownButton extends React.Component<Properties, State> {
   public static readonly defaultProps = {
-    onClick: () => {}
+    onClick: () => {},
+    size: '16px'
   }
 
   constructor(properties: Properties) {
