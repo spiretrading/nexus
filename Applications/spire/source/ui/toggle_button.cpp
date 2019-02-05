@@ -45,6 +45,11 @@ void ToggleButton::setDisabled(bool disabled) {
   QWidget::setDisabled(disabled);
 }
 
+connection ToggleButton::connect_clicked_signal(
+    const ClickedSignal::slot_type& slot) const {
+  return m_icon_button.connect_clicked_signal(slot);
+}
+
 bool ToggleButton::eventFilter(QObject* object, QEvent* event) {
   if(event->type() == QEvent::WindowActivate ||
       event->type() == QEvent::WindowDeactivate) {
