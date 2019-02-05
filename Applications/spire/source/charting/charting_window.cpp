@@ -130,9 +130,14 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   setTabOrder(draw_line_button, m_period_line_edit);
   m_security_widget->setFocus();
   m_chart = new ChartView(*m_model, this);
-  m_chart->setFocusPolicy(Qt::NoFocus);
-  m_chart->setMouseTracking(true);
-  m_chart->setAttribute(Qt::WA_Hover);
+  m_security_widget->set_widget(m_chart);
+  m_chart->installEventFilter(this);
+}
+
+void ChartingWindow::set_model(std::shared_ptr<ChartModel> model) {
+  m_model = model;
+  delete m_chart;
+  m_chart = new ChartView(*m_model, this);
   m_security_widget->set_widget(m_chart);
   m_chart->installEventFilter(this);
 }
