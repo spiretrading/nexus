@@ -152,7 +152,8 @@ export class GroupCard extends React.Component<Properties> {
               <div style={(this.bottomPaddingAnimationStyle as any)[state]}>
                 <div style={{height:'20px'}}/>
               </div>
-            </div>)}
+            </div>
+          )}
         </Transition>
       </VBoxLayout>);
   }
