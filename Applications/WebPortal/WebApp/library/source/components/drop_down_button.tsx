@@ -1,32 +1,30 @@
 import * as React from 'react';
-import { css, StyleSheet } from 'aphrodite/no-important';
+import {css, StyleSheet} from 'aphrodite/no-important';
 
 interface Properties {
 
-  /* Determines the size of the element. */
-  size?: number | string;
+  /* Determines the size element. */
+  size?: number|string;
 
   /** The onClick event handler. */
-  onClick?: (event?: React.MouseEvent<any>) => void;
+  onClick?(event?: React.MouseEvent<any>): void;
 
-  /** Determines if the button is collapsed or expanded. */
   isExpanded: boolean;
 }
 
 interface State {
-  isStart: boolean;
+  isFirstTime: boolean;
 }
 
 export class DropDownButton extends React.Component<Properties, State> {
-  static readonly defaultProps = {
-    onClick: () => {},
-    size: '16px'
+  public static readonly defaultProps = {
+    onClick: () => {}
   }
 
   constructor(properties: Properties) {
     super(properties);
     this.state = {
-      isStart: true
+      isFirstTime: true
     };
   }
 
@@ -46,7 +44,7 @@ export class DropDownButton extends React.Component<Properties, State> {
       }
     })();
     const endStyle = (() => {
-      if(this.state.isStart) {
+      if(this.state.isFirstTime) {
         return DropDownButton.ANIMATION.noAnimation;
       } else if(this.props.isExpanded) {
         return DropDownButton.ANIMATION.spinOpenFadeIn;
@@ -55,7 +53,7 @@ export class DropDownButton extends React.Component<Properties, State> {
       }
     })();
     const startStyle = (() => {
-      if(this.state.isStart) {
+      if(this.state.isFirstTime) {
         return DropDownButton.ANIMATION.noAnimationHidden;
       } else if(this.props.isExpanded) {
         return DropDownButton.ANIMATION.spinOpen;
@@ -80,9 +78,11 @@ export class DropDownButton extends React.Component<Properties, State> {
       </div>);
   }
 
-  public onComponentDidUpdate() {
-    if(this.state.isStart) {
-      this.setState({isStart: false});
+  public componentDidUpdate() {
+    if(this.state.isFirstTime && this.props.isExpanded) {
+      this.setState({
+        isFirstTime: false
+      });
     }
   }
 

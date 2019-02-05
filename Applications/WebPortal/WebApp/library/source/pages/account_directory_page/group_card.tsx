@@ -57,6 +57,13 @@ export class GroupCard extends React.Component<Properties> {
           return GroupCard.STYLE.accountLabelLarge;
       }
     })();
+    const timeout = (() => {
+      if(this.props.isOpen) {
+        return GroupCard.TRANSITION_LENGTH_MS / 2;
+      } else {
+        return GroupCard.TRANSITION_LENGTH_MS;
+      }
+    })();
     const accounts: JSX.Element[] = [];
     if(this.props.accounts.length > 0) {
       for(const account of this.props.accounts) {
@@ -81,17 +88,19 @@ export class GroupCard extends React.Component<Properties> {
         } else {
           accounts.push(
           <Transition in={this.props.isOpen}
-            tabIndex={0}
-            timeout={GroupCard.TRANSITION_LENGTH_MS}>
+            appear={true}
+            timeout={timeout}>
           {(state) => (
           <div className={css(GroupCard.DYNAMIC_STYLE.accountBox)}
-              style={(this.accountLabelAnimationStyle as any)[state]}
+              style={{...this.accountLabelAnimationStyle.base,
+                ...(this.accountLabelAnimationStyle as any)[state]}}
               key={account.account.id}
               onClick={() => this.props.onAccountClick(account.account)}>
             <div style={{...accountsLableStyle,
                 ...GroupCard.STYLE.accountLabelText}}>
               {account.account.name.toString()}
             </div>
+            <div>{state}</div>
             <div style={GroupCard.STYLE.rolesBox}>
               <RolePanel roles={account.roles}/>
             </div>
@@ -103,7 +112,7 @@ export class GroupCard extends React.Component<Properties> {
     } else {
       accounts.push(
          <Transition in={this.props.isOpen}
-            timeout={GroupCard.TRANSITION_LENGTH_MS}>
+            timeout={timeout}>
           {(state) => (
           <div key={this.props.group.id} style={{...accountsLableStyle,
               ...GroupCard.STYLE.emptyLableText,
@@ -122,38 +131,27 @@ export class GroupCard extends React.Component<Properties> {
     })();
     return (
       <VBoxLayout width='100%'>
-        <div className={css(headerStyle)}
-          onClick={() => this.props.onClick(this.props.group)}>
+        <div className={css(headerStyle)}>
           <DropDownButton size='16px'
-            isExpanded={this.props.isOpen}/>
+            isExpanded={this.props.isOpen}
+            onClick={() => this.props.onClick(this.props.group)}/>
           <div style={headerTextStyle}>{this.props.group.name}</div>
         </div>
         <Transition in={this.props.isOpen}
-            timeout={GroupCard.TRANSITION_LENGTH_MS}>
+            timeout={timeout}>
           {(state) => (
             <div>
               <div style={(this.topPaddingAnimationStyle as any)[state]}>
                 <HLine color='#E6E6E6'/>
                 <div style={{height: topAccountPadding}}/>
               </div>
-                {accounts}
+              {accounts}
               <div style={(this.bottomPaddingAnimationStyle as any)[state]}>
                 <div style={{height:'20px'}}/>
               </div>
             </div>)}
         </Transition>
       </VBoxLayout>);
-  }
-
-  public componentDidUpdate(): void {
-    if(this.props.isOpen &&
-        this.animationStyle.entered.maxHeight !==
-        `${15 + 32 + (32 * this.props.accounts.length)}px`) {
-      this.animationStyle.entered.maxHeight =
-        `${15 + 32 + (32 * this.props.accounts.length)}px`;
-      this.animationStyle.entering.maxHeight =
-        `${15 + 32 + (32 * this.props.accounts.length)}px`;
-    }
   }
 
   private static readonly STYLE = {
@@ -174,10 +172,10 @@ export class GroupCard extends React.Component<Properties> {
       marginLeft: 0
     },
     accountLabelMedium: {
-      marginLeft: '34px'
+      marginLeft: '38px'
     },
     accountLabelLarge: {
-      marginLeft: '34px'
+      marginLeft: '38px'
     },
     accountLabelText: {
       font: '400 14px Roboto',
@@ -237,39 +235,16 @@ export class GroupCard extends React.Component<Properties> {
       }
     }
   });
-  private animationStyle = {
-    entering: {
-      maxHeight: '0',
-      transitionProperty: 'max-height, transform',
-      transform: 'scaleY(1)',
-      transitionDuration: `${GroupCard.TRANSITION_LENGTH_MS}ms`,
-      overflow: 'hidden' as 'hidden',
-      transformOrigin: 'top' as 'top'
-    },
-    entered: {
-      maxHeight: '0',
-      transform: 'scaleY(1)',
-      overflow: 'hidden' as 'hidden',
-      transformOrigin: 'top' as 'top'
-    },
-    exiting: {
-      maxHeight: 0,
-      transform: 'scaleY(0)',
-      transitionProperty: 'max-height, transform',
-      transitionDuration: `${GroupCard.TRANSITION_LENGTH_MS}ms`,
-      overflow: 'hidden' as 'hidden',
-      transformOrigin: 'top' as 'top'
-    },
-    exited: {
-      maxHeight: 0,
-      transform: 'scaleY(0)',
-      overflow: 'hidden' as 'hidden',
-      transformOrigin: 'top' as 'top'
-    }
-  };
   private accountLabelAnimationStyle = {
+    base: {
+      transitionProperty: 'max-height, transform',
+      transform: 'scaleY(1)',
+      transitionDuration: `${GroupCard.TRANSITION_LENGTH_MS}ms`,
+      overflow: 'hidden' as 'hidden',
+      transformOrigin: 'top' as 'top'
+    },
     entering: {
-      maxHeight: '34px',
+      maxHeight: 0,
       transitionProperty: 'max-height, transform',
       transform: 'scaleY(1)',
       transitionDuration: `${GroupCard.TRANSITION_LENGTH_MS}ms`,
@@ -299,7 +274,7 @@ export class GroupCard extends React.Component<Properties> {
   };
   private topPaddingAnimationStyle = {
     entering: {
-      maxHeight: '15px',
+      maxHeight: 0,
       transitionProperty: 'max-height, transform',
       transform: 'scaleY(1)',
       transitionDuration: `${GroupCard.TRANSITION_LENGTH_MS}ms`,
@@ -329,7 +304,7 @@ export class GroupCard extends React.Component<Properties> {
   };
   private bottomPaddingAnimationStyle = {
     entering: {
-      maxHeight: '20px',
+      maxHeight: 0,
       transitionProperty: 'max-height, transform',
       transform: 'scaleY(1)',
       transitionDuration: `${GroupCard.TRANSITION_LENGTH_MS}ms`,
