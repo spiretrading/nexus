@@ -85,7 +85,7 @@ namespace Spire {
       std::vector<ChartValue> m_x_axis_values;
       int m_x_axis_text_width;
       std::vector<ChartValue> m_y_axis_values;
-      QtPromise<std::vector<Spire::Candlestick>> m_loaded_candlestick_promise;
+      QtPromise<std::vector<Spire::Candlestick>> m_candlestick_promise;
       std::vector<Candlestick> m_candlesticks;
 
       void update_origins();

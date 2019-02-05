@@ -116,9 +116,9 @@ void ChartView::set_region(const ChartPoint& top_left,
   m_y_range = m_top_left.m_y - m_bottom_right.m_y;
   m_y_axis_step = calculate_step(m_model->get_y_axis_type(), m_y_range);
   update_origins();
-  m_loaded_candlestick_promise = m_model->load(m_top_left.m_x,
+  m_candlestick_promise = m_model->load(m_top_left.m_x,
     m_bottom_right.m_x);
-  m_loaded_candlestick_promise.then([&] (auto result) {
+  m_candlestick_promise.then([&] (auto result) {
     m_candlesticks = std::move(result.Get());
   });
   update();
