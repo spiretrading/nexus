@@ -4,6 +4,7 @@
 #include <QWidget>
 #include "spire/charting/charting.hpp"
 #include "spire/charting/chart_point.hpp"
+#include "spire/spire/qt_promise.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
 
 namespace Spire {
@@ -90,6 +91,8 @@ namespace Spire {
       bool m_is_auto_scaled;
       ChartValue m_auto_scale_top;
       ChartValue m_auto_scale_bottom;
+      QtPromise<std::vector<Spire::Candlestick>> m_candlestick_promise;
+      std::vector<Candlestick> m_candlesticks;
 
       void update_origins();
   };

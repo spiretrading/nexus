@@ -1,7 +1,10 @@
 #include <QApplication>
+#include <random>
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
+#include "Nexus/TechnicalAnalysis/Candlestick.hpp"
+#include "spire/charting/local_chart_model.hpp"
 #include "spire/charting/charting_window.hpp"
 #include "spire/security_input/local_security_input_model.hpp"
 #include "spire/spire/resources.hpp"
@@ -39,6 +42,32 @@ int main(int argc, char** argv) {
     Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
     "Morgan Stanley", "Finance"));
   auto window = new ChartingWindow(Ref(model));
+  auto candlesticks = std::vector<Candlestick>();
+  auto rand = std::default_random_engine(std::random_device()());
+  auto time = boost::posix_time::second_clock::local_time();
+  for(auto i = 0; i < 100; ++i) {
+    auto open = ChartValue(Money((rand() % 40 + 40) *
+      Money::FromValue("0.01").get()));
+    auto close = ChartValue(Money((rand() % 40 + 40) *
+      Money::FromValue("0.01").get()));
+    auto [high, low] = [&] {
+      if(open > close) {
+        return std::make_tuple(ChartValue(Money((rand() % 40) *
+          Money::FromValue("0.01").get())) + open, close - ChartValue(Money(
+          (rand() % 40) * Money::FromValue("0.01").get())));
+      }
+      return std::make_tuple(ChartValue(Money((rand() % 40) *
+        Money::FromValue("0.01").get())) + close, open - ChartValue(Money(
+        (rand() % 40) * Money::FromValue("0.01").get())));
+    }();
+    candlesticks.push_back(Candlestick(
+      ChartValue(time - boost::posix_time::minutes(1)), ChartValue(time),
+      open, close, high, low));
+      time -= boost::posix_time::minutes(1);
+  }
+  auto chart_model = std::make_shared<LocalChartModel>(
+    ChartValue::Type::TIMESTAMP, ChartValue::Type::MONEY, candlesticks);
+  window->set_model(chart_model);
   window->show();
   application->exec();
 }
