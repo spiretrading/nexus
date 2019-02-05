@@ -58,15 +58,14 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
       m_item_delegate(new CustomVariantItemDelegate(this)),
       m_dashed_line_pen(Qt::white, scale_width(1), Qt::CustomDashLine),
       m_label_text_color(QColor("#25212E")) {
+  setFocusPolicy(Qt::NoFocus);
+  setMouseTracking(true);
+  setAttribute(Qt::WA_Hover);
   m_label_font.setPixelSize(scale_height(10));
   m_font_metrics = QFontMetrics(m_label_font);
   setCursor(Qt::BlankCursor);
   m_dashed_line_pen.setDashPattern({static_cast<double>(scale_width(4)),
     static_cast<double>(scale_width(4))});
-}
-
-void ChartView::set_model(ChartModel& model) {
-  m_model = &model;
 }
 
 ChartPoint ChartView::convert_pixels_to_chart(const QPoint& point) const {
@@ -117,9 +116,10 @@ void ChartView::set_region(const ChartPoint& top_left,
   m_y_range = m_top_left.m_y - m_bottom_right.m_y;
   m_y_axis_step = calculate_step(m_model->get_y_axis_type(), m_y_range);
   update_origins();
-  m_loaded_data = m_model->load(m_top_left.m_x, m_bottom_right.m_x);
-  m_loaded_data.then([&] (auto result) {
-    m_candlesticks = result.Get();
+  m_loaded_candlestick_promise = m_model->load(m_top_left.m_x,
+    m_bottom_right.m_x);
+  m_loaded_candlestick_promise.then([&] (auto result) {
+    m_candlesticks = std::move(result.Get());
   });
   update();
 }

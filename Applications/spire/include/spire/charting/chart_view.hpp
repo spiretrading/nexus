@@ -20,12 +20,6 @@ namespace Spire {
       */
       ChartView(ChartModel& model, QWidget* parent = nullptr);
 
-      //! Sets the view's model.
-      /*!
-        \param model The model containing the data to display.
-      */
-      void set_model(ChartModel& model);
-
       //! Converts a point in pixels to a point on the chart.
       /*!
         \param point The point in pixels to convert.
@@ -91,7 +85,7 @@ namespace Spire {
       std::vector<ChartValue> m_x_axis_values;
       int m_x_axis_text_width;
       std::vector<ChartValue> m_y_axis_values;
-      QtPromise<std::vector<Spire::Candlestick>> m_loaded_data;
+      QtPromise<std::vector<Spire::Candlestick>> m_loaded_candlestick_promise;
       std::vector<Candlestick> m_candlesticks;
 
       void update_origins();
