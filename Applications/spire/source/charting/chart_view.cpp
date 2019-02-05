@@ -120,6 +120,7 @@ void ChartView::set_region(const ChartPoint& top_left,
     m_bottom_right.m_x);
   m_candlestick_promise.then([&] (auto result) {
     m_candlesticks = std::move(result.Get());
+    update();
   });
   update();
 }
