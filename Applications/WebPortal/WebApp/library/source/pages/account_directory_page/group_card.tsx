@@ -2,7 +2,7 @@ import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import { VBoxLayout } from 'dali';
 import * as React from 'react';
-import { Transition, CSSTransition } from 'react-transition-group';
+import { Transition } from 'react-transition-group';
 import { DisplaySize, DropDownButton, HLine } from '../..';
 import { RolePanel } from '../account_page/role_panel';
 import { AccountEntry } from '.';
@@ -100,11 +100,11 @@ export class GroupCard extends React.Component<Properties, State> {
       for(const account of this.props.accounts) {
         if(account.account.name.indexOf(this.props.filter) === 0
             && this.props.filter) {
-              if(this.props.filter && !this.props.isOpen && noLine) {
-                accounts.push(
-                  <HLine key={this.props.group.id} color='#E6E6E6'/>);
-                noLine = false;
-              }
+          if(!this.props.isOpen && noLine) {
+            accounts.push(
+              <HLine key={this.props.group.id} color='#E6E6E6'/>);
+            noLine = false;
+          }
           accounts.push(
            <div className={css(GroupCard.DYNAMIC_STYLE.accountBox)}
               key={account.account.id}

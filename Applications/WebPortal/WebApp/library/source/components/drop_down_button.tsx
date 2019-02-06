@@ -82,9 +82,7 @@ export class DropDownButton extends React.Component<Properties, State> {
 
   public componentDidUpdate() {
     if(this.state.isFirstTime && this.props.isExpanded) {
-      this.setState({
-        isFirstTime: false
-      });
+      this.setState({isFirstTime: false});
     }
   }
 
