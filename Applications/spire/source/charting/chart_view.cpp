@@ -110,23 +110,28 @@ std::tuple<ChartPoint, ChartPoint> ChartView::get_region() const {
 
 void ChartView::set_region(const ChartPoint& top_left,
     const ChartPoint& bottom_right) {
-  m_top_left = top_left;
-  m_bottom_right = bottom_right;
-  m_x_range = m_bottom_right.m_x - m_top_left.m_x;
-  m_x_axis_step = calculate_step(m_model->get_x_axis_type(), m_x_range);
-  m_y_range = m_top_left.m_y - m_bottom_right.m_y;
-  m_y_axis_step = calculate_step(m_model->get_y_axis_type(), m_y_range);
-  update_origins();
-  m_candlestick_promise = m_model->load(m_top_left.m_x,
-    m_bottom_right.m_x);
-  m_candlestick_promise.then([&] (auto result) {
-    m_candlesticks = std::move(result.Get());
+  if(std::tie(m_top_left.m_x, m_top_left.m_y) !=
+      std::tie(top_left.m_x, top_left.m_y) ||
+      std::tie(m_bottom_right.m_x, m_bottom_right.m_y) !=
+      std::tie(bottom_right.m_x, bottom_right.m_y)) {
+    m_top_left = top_left;
+    m_bottom_right = bottom_right;
+    m_x_range = m_bottom_right.m_x - m_top_left.m_x;
+    m_x_axis_step = calculate_step(m_model->get_x_axis_type(), m_x_range);
+    m_y_range = m_top_left.m_y - m_bottom_right.m_y;
+    m_y_axis_step = calculate_step(m_model->get_y_axis_type(), m_y_range);
+    update_origins();
+    m_candlestick_promise = m_model->load(m_top_left.m_x,
+      m_bottom_right.m_x);
+    m_candlestick_promise.then([&] (auto result) {
+      m_candlesticks = std::move(result.Get());
+      update();
+      if(m_is_auto_scaled) {
+        update_auto_scale();
+      }
+    });
     update();
-    if(m_is_auto_scaled) {
-      update_auto_scale();
-    }
-  });
-  update();
+  }
 }
 
 void ChartView::toggle_auto_scale() {
