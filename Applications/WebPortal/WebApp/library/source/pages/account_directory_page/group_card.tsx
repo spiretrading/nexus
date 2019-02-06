@@ -34,14 +34,35 @@ interface Properties {
   onAccountClick?: (account: Beam.DirectoryEntry) => void;
 }
 
+interface State {
+  isHeaderHovered: boolean;
+}
+
 /** A card that displays a group and the accounts associated with it. */
-export class GroupCard extends React.Component<Properties> {
+export class GroupCard extends React.Component<Properties, State> {
+
+  constructor(properties: Properties) {
+    super(properties);
+    this.state = {
+      isHeaderHovered: false
+    };
+    this.onGroupMouseLeave = this.onGroupMouseLeave.bind(this);
+    this.onGroupMouseEnter = this.onGroupMouseEnter.bind(this);
+  }
+
   public render(): JSX.Element {
     const headerTextStyle = (() => {
       if(this.props.isOpen) {
         return GroupCard.STYLE.headerTextOpen;
       } else {
         return GroupCard.STYLE.headerText;
+      }
+    })();
+    const headerMouseOverStyle = (() => {
+      if(this.state.isHeaderHovered) {
+        return GroupCard.STYLE.mouseOverStyle;
+      } else {
+        return null;
       }
     })();
     const accountsLableStyle = (() => {
@@ -133,10 +154,12 @@ export class GroupCard extends React.Component<Properties> {
     })();
     return (
       <VBoxLayout width='100%'>
-        <div className={css(GroupCard.DYNAMIC_STYLE.header)}>
+        <div style={{...GroupCard.STYLE.header, ...headerMouseOverStyle}}>
           {dropDownButton}
           <div style={headerTextStyle}
-              onClick={() => this.props.onGroupClick(this.props.group)}>
+              onClick={() => this.props.onGroupClick(this.props.group)}
+              onMouseEnter={this.onGroupMouseEnter}
+              onMouseLeave={this.onGroupMouseLeave}>
             {this.props.group.name}
           </div>
         </div>
@@ -158,20 +181,42 @@ export class GroupCard extends React.Component<Properties> {
       </VBoxLayout>);
   }
 
+  private onGroupMouseEnter() {
+    this.setState({isHeaderHovered: true});
+  }
+
+  private onGroupMouseLeave() {
+    this.setState({isHeaderHovered: false});
+  }
+
   private static readonly STYLE = {
     headerTextOpen: {
       marginLeft: '18px',
       font: '500 14px Roboto',
       color: '#4B23A0',
       cursor: 'pointer' as 'pointer',
-      flexGrow: 1
+      flexGrow: 1,
+      height: '34px',
+      boxSizing: 'border-box' as 'border-box',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'nowrap' as 'nowrap',
+      alignItems: 'center' as 'center',
+      justifyContent: 'flex-start' as 'flex-start'
     },
     headerText: {
       marginLeft: '18px',
       font: '400 14px Roboto',
       color: '#000000',
       cursor: 'pointer' as 'pointer',
-      flexGrow: 1
+      flexGrow: 1,
+      height: '34px',
+      boxSizing: 'border-box' as 'border-box',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'nowrap' as 'nowrap',
+      alignItems: 'center' as 'center',
+      justifyContent: 'flex-start' as 'flex-start'
     },
     accountLabelMedium: {
       marginLeft: '38px'
@@ -218,6 +263,19 @@ export class GroupCard extends React.Component<Properties> {
       flexWrap: 'nowrap' as 'nowrap',
       alignItems: 'center' as 'center',
       justifyContent: 'center' as 'center'
+    },
+    mouseOverStyle: {
+      backgroundColor: '#F8F8F8'
+    },
+    header: {
+      boxSizing: 'border-box' as 'border-box',
+      height: '40px',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'nowrap' as 'nowrap',
+      alignItems: 'center' as 'center',
+      paddingLeft: '10px',
+      paddingRight: '10px'
     }
   };
   private static DYNAMIC_STYLE = StyleSheet.create({
@@ -232,22 +290,6 @@ export class GroupCard extends React.Component<Properties> {
       paddingLeft: '10px',
       paddingRight: '10px',
       cursor: 'pointer' as 'pointer',
-      ':hover' : {
-        backgroundColor: '#F8F8F8'
-      },
-      ':active' : {
-        backgroundColor: '#F8F8F8'
-      }
-    },
-    header: {
-      boxSizing: 'border-box' as 'border-box',
-      height: '40px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
-      paddingLeft: '10px',
-      paddingRight: '10px',
       ':hover' : {
         backgroundColor: '#F8F8F8'
       },
