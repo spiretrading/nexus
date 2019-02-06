@@ -62,7 +62,10 @@ namespace Spire {
         const ChartPoint& bottom_right);
 
       //! Toggles the auto scale on or off.
-      void toggle_auto_scale();
+      /*!
+        \param auto_scale Sets the auto scale on (true) or off (false).
+      */
+      void set_auto_scale(bool auto_scale);
 
     protected:
       void paintEvent(QPaintEvent* event) override;

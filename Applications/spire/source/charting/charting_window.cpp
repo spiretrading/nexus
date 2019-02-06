@@ -31,7 +31,8 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     : QWidget(parent),
       m_model(std::make_shared<EmptyChartModel>(ChartValue::Type::TIMESTAMP,
         ChartValue::Type::MONEY)),
-      m_is_mouse_dragging(false) {
+      m_is_mouse_dragging(false),
+      m_is_chart_auto_scaled(true) {
   m_body = new QWidget(this);
   m_body->installEventFilter(this);
   m_body->setMinimumSize(scale(400, 320));
@@ -141,7 +142,8 @@ void ChartingWindow::set_model(std::shared_ptr<ChartModel> model) {
   m_security_widget->set_widget(m_chart);
   m_chart->installEventFilter(this);
   m_auto_scale_button->connect_clicked_signal([=] {
-    m_chart->toggle_auto_scale();
+    m_is_chart_auto_scaled = !m_is_chart_auto_scaled;
+    m_chart->set_auto_scale(m_is_chart_auto_scaled);
   });
 }
 
