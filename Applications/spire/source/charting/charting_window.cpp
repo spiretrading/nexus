@@ -96,9 +96,9 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   button_header_layout->addWidget(lock_grid_button);
   button_header_layout->addSpacing(scale_width(10));
   m_auto_scale_button = new ToggleButton(
-    imageFromSvg(":/icons/auto-scale-purple.svg", button_image_size),
     imageFromSvg(":/icons/auto-scale-green.svg", button_image_size),
     imageFromSvg(":/icons/auto-scale-purple.svg", button_image_size),
+    imageFromSvg(":/icons/auto-scale-green.svg", button_image_size),
     imageFromSvg(":/icons/auto-scale-grey.svg", button_image_size),
     m_button_header_widget);
   m_auto_scale_button->setFixedSize(scale(26, 26));
