@@ -93,6 +93,13 @@ void IconButton::focusOutEvent(QFocusEvent* event) {
   }
 }
 
+void IconButton::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return ||
+      event->key() == Qt::Key_Space) {
+    m_clicked_signal();
+  }
+}
+
 void IconButton::leaveEvent(QEvent* event) {
   switch(m_state) {
     case State::HOVERED:
