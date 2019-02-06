@@ -101,7 +101,8 @@ export class GroupCard extends React.Component<Properties, State> {
         if(account.account.name.indexOf(this.props.filter) === 0
             && this.props.filter) {
               if(this.props.filter && !this.props.isOpen && noLine) {
-                accounts.push(<HLine color='#E6E6E6'/>);
+                accounts.push(
+                  <HLine key={this.props.group.id} color='#E6E6E6'/>);
                 noLine = false;
               }
           accounts.push(
@@ -123,6 +124,7 @@ export class GroupCard extends React.Component<Properties, State> {
           accounts.push(
             <Transition in={this.props.isOpen}
                 appear={true}
+                key={account.account.id}
                 timeout={GroupCard.TIMEOUTS}>
               {(state) => (
                 <div className={css(GroupCard.DYNAMIC_STYLE.accountBox)}
@@ -144,7 +146,8 @@ export class GroupCard extends React.Component<Properties, State> {
     } else {
       accounts.push(
         <Transition in={this.props.isOpen}
-            timeout={GroupCard.TIMEOUTS}>
+            timeout={GroupCard.TIMEOUTS}
+            key={this.props.group.id}>
           {(state) => (
             <div key={this.props.group.id} style={{...accountsLableStyle,
                 ...GroupCard.STYLE.emptyLableText,

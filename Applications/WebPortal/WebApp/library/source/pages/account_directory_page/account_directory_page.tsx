@@ -41,9 +41,6 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
     };
     this.onChange = this.onChange.bind(this);
     this.onCardClick = this.onCardClick.bind(this);
-    /** REMOVE THE STUFF BELOW */
-    this.onAccountClick = this.onAccountClick.bind(this);
-    this.onGroupClick = this.onGroupClick.bind(this);
   }
 
   public render(): JSX.Element {
@@ -88,8 +85,8 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
           accounts={accounts}
           filter={this.state.filter}
           isOpen={this.state.openedGroups.test(group)}
-          onAccountClick={this.onAccountClick}
-          onGroupClick={this.onGroupClick}
+          onAccountClick={this.props.onNewAccountClick}
+          onGroupClick={this.props.onNewGroupClick}
           onDropDownClick={this.onCardClick}/>);
     }
     return (
@@ -140,17 +137,6 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       accounts: this.state.accounts
     });
   }
-
-  /** REMOVE FROM HERE */
-  private onAccountClick(account: Beam.DirectoryEntry) {
-    console.log('Account was clicked.');
-  }
-
-  private onGroupClick(group: Beam.DirectoryEntry) {
-    console.log('Group was clicked.');
-  }
-
-  /** REMOVE TO HERE */
 
   private static readonly STYLE = {
     page: {
