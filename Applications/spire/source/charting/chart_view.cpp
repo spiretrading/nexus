@@ -266,12 +266,19 @@ void ChartView::showEvent(QShowEvent* event) {
 }
 
 void ChartView::update_auto_scale() {
-  if(m_candlesticks.size() > 0) {
-    auto auto_scale_top = m_candlesticks[0].GetHigh();
-    auto auto_scale_bottom = m_candlesticks[0].GetLow();
-    for(auto& candle : m_candlesticks) {
-      auto_scale_top = std::max(auto_scale_top, candle.GetHigh());
-      auto_scale_bottom = std::min(auto_scale_bottom, candle.GetLow());
+  if(m_candlesticks.size() > 1) {
+    auto auto_scale_top = m_candlesticks[1].GetHigh();
+    auto auto_scale_bottom = m_candlesticks[1].GetLow();
+    for(auto i = 0; i < m_candlesticks.size(); ++i) {
+      if(i == 0 || i == m_candlesticks.size() - 1) {
+        if(m_candlesticks[i].GetStart() < m_top_left.m_x ||
+            m_candlesticks[i].GetEnd() > m_bottom_right.m_x) {
+          continue;
+        }
+      }
+      auto_scale_top = std::max(auto_scale_top, m_candlesticks[i].GetHigh());
+      auto_scale_bottom = std::min(auto_scale_bottom,
+        m_candlesticks[i].GetLow());
     }
     set_region({m_top_left.m_x, auto_scale_top},
       {m_bottom_right.m_x, auto_scale_bottom});
