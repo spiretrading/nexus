@@ -129,6 +129,8 @@ void ChartView::set_region(const ChartPoint& top_left,
     m_candlesticks = std::move(result.Get());
     if(m_is_auto_scaled) {
       update_auto_scale();
+    } else {
+      update();
     }
   });
   update();
