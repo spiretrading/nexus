@@ -41,8 +41,7 @@ interface State {
 export class GroupCard extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     onDropDownClick: () => {},
-    onAccountClick: () => {},
-    onGroupClick: () => {}
+    onDirectoryEntryClick: () => {}
   }
 
   constructor(properties: Properties) {
