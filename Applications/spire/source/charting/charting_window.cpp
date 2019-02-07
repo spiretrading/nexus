@@ -1,5 +1,6 @@
 #include "spire/charting/charting_window.hpp"
 #include <climits>
+#include <QApplication>
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QIntValidator>
@@ -122,6 +123,11 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   layout->addWidget(m_button_header_widget);
   m_security_widget = new SecurityWidget(input_model,
     SecurityWidget::Theme::DARK, this);
+  m_security_widget->connect_change_security_signal(
+    [=] (const auto& security) {
+      setWindowTitle(CustomVariantItemDelegate().displayText(
+        QVariant::fromValue(security), QLocale()) + tr(" - Chart"));
+  });
   layout->addWidget(m_security_widget);
   setTabOrder(m_period_line_edit, m_period_dropdown);
   setTabOrder(m_period_dropdown, lock_grid_button);
@@ -207,6 +213,10 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
     }
   }
   return QWidget::eventFilter(object, event);
+}
+
+void ChartingWindow::keyPressEvent(QKeyEvent* event) {
+  QApplication::sendEvent(m_security_widget, event);
 }
 
 void ChartingWindow::on_period_line_edit_changed() {

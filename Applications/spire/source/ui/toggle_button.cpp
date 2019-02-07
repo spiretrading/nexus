@@ -76,6 +76,7 @@ void ToggleButton::keyPressEvent(QKeyEvent* event) {
       event->key() == Qt::Key_Space) {
     swap_toggle();
   }
+  event->ignore();
 }
 
 void ToggleButton::paintEvent(QPaintEvent* event) {

@@ -74,6 +74,7 @@ void DropdownMenu::keyPressEvent(QKeyEvent* event) {
     m_current_text = m_menu_list->get_previous(m_current_text);
     update();
   }
+  event->ignore();
 }
 
 void DropdownMenu::mousePressEvent(QMouseEvent* event) {
