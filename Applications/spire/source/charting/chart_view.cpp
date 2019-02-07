@@ -125,7 +125,7 @@ void ChartView::set_region(const ChartPoint& top_left,
   update_origins();
   m_candlestick_promise = m_model->load(m_top_left.m_x,
     m_bottom_right.m_x);
-  m_candlestick_promise.then([&] (auto result) {
+  m_candlestick_promise.then([=] (auto result) {
     m_candlesticks = std::move(result.Get());
     if(m_is_auto_scaled) {
       update_auto_scale();
