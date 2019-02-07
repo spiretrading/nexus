@@ -4,12 +4,12 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 interface Properties {
 
   /* Determines the size element. */
-  size?: number|string;
+  size?: number | string;
 
   /** The onClick event handler. */
-  onClick?(event?: React.MouseEvent<any>): void;
+  onClick?: (event?: React.MouseEvent<any>) => void;
 
-  /** Determines if the button should open or close. */
+  /** Determines if the button is collapsed or expanded. */
   isExpanded: boolean;
 }
 
@@ -80,7 +80,7 @@ export class DropDownButton extends React.Component<Properties, State> {
       </div>);
   }
 
-  public componentDidUpdate() {
+  public componentDidUpdate(): void {
     if(this.state.isFirstTime && this.props.isExpanded) {
       this.setState({isFirstTime: false});
     }

@@ -87,7 +87,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
           isOpen={this.state.openedGroups.test(group)}
           onAccountClick={this.props.onNewAccountClick}
           onGroupClick={this.props.onNewGroupClick}
-          onDropDownClick={this.onCardClick}/>);
+          onDropDownClick={() => this.onCardClick(group)}/>);
     }
     return (
       <div style={AccountDirectoryPage.STYLE.page}>
@@ -116,11 +116,11 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
   }
 
   private async onChange(newFilter: string) {
-    const map = await this.props.model.loadFilteredAccounts(newFilter);
+    const newAccounts = await this.props.model.loadFilteredAccounts(newFilter);
     this.setState({
       filter: newFilter,
       openedGroups: new Beam.Set<Beam.DirectoryEntry>(),
-      accounts: map
+      accounts: newAccounts
     });
   }
 

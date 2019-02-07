@@ -25,13 +25,12 @@ interface Properties {
   isOpen: boolean;
 
   /** Called when the dropdown button is clicked. */
-  onDropDownClick: (group: Beam.DirectoryEntry) => void;
+  onDropDownClick?: () => void;
 
-  /** Called when the group label is clicked. */
-  onGroupClick?: (group: Beam.DirectoryEntry) => void;
-
-  /** Called when the account label is clicked. */
-  onAccountClick?: (account: Beam.DirectoryEntry) => void;
+  /** Called when a directory is clicked on.
+   * @param entry - A accounty or directory entry.
+   */
+  onDirectoryEntryClick?: (entry: Beam.DirectoryEntry) => void;
 }
 
 interface State {
@@ -41,6 +40,7 @@ interface State {
 /** A card that displays a group and the accounts associated with it. */
 export class GroupCard extends React.Component<Properties, State> {
   public static readonly defaultProps = {
+    onDropDownClick: () => {},
     onAccountClick: () => {},
     onGroupClick: () => {}
   }
@@ -50,8 +50,8 @@ export class GroupCard extends React.Component<Properties, State> {
     this.state = {
       isHeaderHovered: false
     };
-    this.onGroupMouseLeave = this.onGroupMouseLeave.bind(this);
     this.onGroupMouseEnter = this.onGroupMouseEnter.bind(this);
+    this.onGroupMouseLeave = this.onGroupMouseLeave.bind(this);
   }
 
   public render(): JSX.Element {
@@ -108,7 +108,8 @@ export class GroupCard extends React.Component<Properties, State> {
           accounts.push(
            <div className={css(GroupCard.DYNAMIC_STYLE.accountBox)}
               key={account.account.id}
-              onClick={() => this.props.onAccountClick(account.account)}>
+              onClick={() =>
+                this.props.onDirectoryEntryClick(account.account)}>
             <div style={{...accountsLableStyle,
                 ...GroupCard.STYLE.accountLabelText}}>
               <div style={GroupCard.STYLE.highlightedText}>
@@ -130,7 +131,8 @@ export class GroupCard extends React.Component<Properties, State> {
                 <div className={css(GroupCard.DYNAMIC_STYLE.accountBox)}
                     style={(GroupCard.accountLabelAnimationStyle as any)[state]}
                     key={account.account.id}
-                    onClick={() => this.props.onAccountClick(account.account)}>
+                    onClick={() =>
+                      this.props.onDirectoryEntryClick(account.account)}>
                   <div style={{...accountsLableStyle,
                       ...GroupCard.STYLE.accountLabelText}}>
                     {account.account.name.toString()}
@@ -169,7 +171,8 @@ export class GroupCard extends React.Component<Properties, State> {
         <div style={{...GroupCard.STYLE.header, ...headerMouseOverStyle}}>
           {dropDownButton}
           <div style={headerTextStyle}
-              onClick={() => this.props.onGroupClick(this.props.group)}
+              onClick={() =>
+                this.props.onDirectoryEntryClick(this.props.group)}
               onMouseEnter={this.onGroupMouseEnter}
               onMouseLeave={this.onGroupMouseLeave}>
             {this.props.group.name}
@@ -395,7 +398,7 @@ export class GroupCard extends React.Component<Properties, State> {
       transformOrigin: 'top' as 'top'
     }
   };
-  public static readonly TIMEOUTS = {
+  private static readonly TIMEOUTS = {
     enter: 0,
     entered: 200,
     exit: 200,
