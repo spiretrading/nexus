@@ -114,12 +114,19 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
   }
 
   private async onChange(newFilter: string) {
-    const newAccounts = await this.props.model.loadFilteredAccounts(newFilter);
-    this.setState({
-      filter: newFilter,
-      openedGroups: new Beam.Set<Beam.DirectoryEntry>(),
-      accounts: newAccounts
-    });
+    if(this.timerId) {
+      clearTimeout(this.timerId);
+    }
+    this.setState({filter: newFilter});
+    this.timerId = setTimeout(
+      async () => {
+        const newAccounts =
+          await this.props.model.loadFilteredAccounts(newFilter);
+        this.setState({
+          openedGroups: new Beam.Set<Beam.DirectoryEntry>(),
+          accounts: newAccounts
+        });
+      } , 200);
   }
 
   private async onCardClick(group: Beam.DirectoryEntry) {
@@ -248,4 +255,5 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       }
     }
   });
+  private timerId: NodeJS.Timeout;
 }

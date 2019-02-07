@@ -83,11 +83,11 @@ export class GroupCard extends React.Component<Properties, State> {
         return (
           <DropDownButton size='20px'
             isExpanded={this.props.isOpen}
-            onClick={() => this.props.onDropDownClick(this.props.group)}/>);
+            onClick={this.props.onDropDownClick}/>);
       } else {
         return (
           <div style={GroupCard.STYLE.dropDownButtonWrapper}
-              onClick={() => this.props.onDropDownClick(this.props.group)}>
+              onClick={this.props.onDropDownClick}>
             <DropDownButton size='16px'
               isExpanded={this.props.isOpen}/>
           </div>);

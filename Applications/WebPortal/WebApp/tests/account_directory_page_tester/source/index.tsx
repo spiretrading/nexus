@@ -11,7 +11,7 @@ interface Properties {
 interface State {
   groups: Beam.Set<Beam.DirectoryEntry>;
   accounts: Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>;
-  model: WebPortal.LocalAccountDirectoryModel;
+  model: WebPortal.AccountDirectoryModel;
 }
 
 /**  Displays a testing application. */
@@ -89,7 +89,8 @@ class TestApp extends React.Component<Properties, State> {
     const testModel = new WebPortal.LocalAccountDirectoryModel(
       this.state.groups, this.state.accounts);
     testModel.load();
-    this.setState({model: testModel});
+    const newModel = new WebPortal.CachedAccountDirectoryModel(testModel);
+    this.setState({model: newModel});
   }
 }
 
