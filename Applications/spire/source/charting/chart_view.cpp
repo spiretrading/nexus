@@ -127,7 +127,6 @@ void ChartView::set_region(const ChartPoint& top_left,
     m_bottom_right.m_x);
   m_candlestick_promise.then([&] (auto result) {
     m_candlesticks = std::move(result.Get());
-    update();
     if(m_is_auto_scaled) {
       update_auto_scale();
     }
@@ -266,23 +265,17 @@ void ChartView::showEvent(QShowEvent* event) {
 }
 
 void ChartView::update_auto_scale() {
-  if(m_candlesticks.size() > 1) {
-    auto auto_scale_top = m_candlesticks[1].GetHigh();
-    auto auto_scale_bottom = m_candlesticks[1].GetLow();
-    for(auto i = 0; i < m_candlesticks.size(); ++i) {
-      if(i == 0 || i == m_candlesticks.size() - 1) {
-        if(m_candlesticks[i].GetStart() < m_top_left.m_x ||
-            m_candlesticks[i].GetEnd() > m_bottom_right.m_x) {
-          continue;
-        }
-      }
-      auto_scale_top = std::max(auto_scale_top, m_candlesticks[i].GetHigh());
-      auto_scale_bottom = std::min(auto_scale_bottom,
-        m_candlesticks[i].GetLow());
-    }
-    set_region({m_top_left.m_x, auto_scale_top},
-      {m_bottom_right.m_x, auto_scale_bottom});
+  if(m_candlesticks.empty()) {
+    return;
   }
+  auto auto_scale_top = m_candlesticks[0].GetHigh();
+  auto auto_scale_bottom = m_candlesticks[0].GetLow();
+  for(auto& candle : m_candlesticks) {
+    auto_scale_top = std::max(auto_scale_top, candle.GetHigh());
+    auto_scale_bottom = std::min(auto_scale_bottom, candle.GetLow());
+  }
+  set_region({m_top_left.m_x, auto_scale_top},
+    {m_bottom_right.m_x, auto_scale_bottom});
 }
 
 void ChartView::update_origins() {
