@@ -39,7 +39,7 @@ export class FilterBar extends React.Component<Properties> {
       height: '16px',
       width: '16px',
       paddingRight: '10px',
-      flex: '0, 0, auto'
+      flex: '0 0 auto'
     }
   };
   private static readonly DYNAMIC_STYLE = StyleSheet.create({

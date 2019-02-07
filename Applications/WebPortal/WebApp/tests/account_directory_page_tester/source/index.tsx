@@ -42,7 +42,7 @@ class TestApp extends React.Component<Properties, State> {
     const group3 =
       new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 31, 'Office');
     const group4 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 35, 'Shire');
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 36, 'Shire');
     const group5 =
       new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 33, 'Mordor');
     const group6 =
@@ -59,20 +59,20 @@ class TestApp extends React.Component<Properties, State> {
       new Nexus.AccountRoles());
     const accountEntry2 = new WebPortal.AccountEntry(
       new Beam.DirectoryEntry(
-        Beam.DirectoryEntry.Type.ACCOUNT, 23, 'charting_service'),
+        Beam.DirectoryEntry.Type.ACCOUNT, 23, 'daily_service'),
       new Nexus.AccountRoles());
     const accountEntry3 = new WebPortal.AccountEntry(
       new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 223, 'market_data_relay_service'),
-      new Nexus.AccountRoles());
+      new Nexus.AccountRoles(3));
     const accountEntry4 = new WebPortal.AccountEntry(
       new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 45, 'data_relay_service'),
       new Nexus.AccountRoles());
     const accountEntry5 = new WebPortal.AccountEntry(
       new Beam.DirectoryEntry(
-        Beam.DirectoryEntry.Type.ACCOUNT, 788, 'order_execution_service'),
-      new Nexus.AccountRoles());
+        Beam.DirectoryEntry.Type.ACCOUNT, 788, 'execution_service'),
+      new Nexus.AccountRoles(5));
     const testArray = [];
     testArray.push(accountEntry1);
     testArray.push(accountEntry2);

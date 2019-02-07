@@ -14,11 +14,11 @@ interface Properties {
 }
 
 interface State {
-  isStart: boolean;
+  isFirstTime: boolean;
 }
 
 export class DropDownButton extends React.Component<Properties, State> {
-  static readonly defaultProps = {
+  public static readonly defaultProps = {
     onClick: () => {},
     size: '16px'
   }
@@ -26,7 +26,7 @@ export class DropDownButton extends React.Component<Properties, State> {
   constructor(properties: Properties) {
     super(properties);
     this.state = {
-      isStart: true
+      isFirstTime: true
     };
   }
 
@@ -46,7 +46,7 @@ export class DropDownButton extends React.Component<Properties, State> {
       }
     })();
     const endStyle = (() => {
-      if(this.state.isStart) {
+      if(this.state.isFirstTime) {
         return DropDownButton.ANIMATION.noAnimation;
       } else if(this.props.isExpanded) {
         return DropDownButton.ANIMATION.spinOpenFadeIn;
@@ -55,7 +55,7 @@ export class DropDownButton extends React.Component<Properties, State> {
       }
     })();
     const startStyle = (() => {
-      if(this.state.isStart) {
+      if(this.state.isFirstTime) {
         return DropDownButton.ANIMATION.noAnimationHidden;
       } else if(this.props.isExpanded) {
         return DropDownButton.ANIMATION.spinOpen;
@@ -80,9 +80,9 @@ export class DropDownButton extends React.Component<Properties, State> {
       </div>);
   }
 
-  public onComponentDidUpdate() {
-    if(this.state.isStart) {
-      this.setState({isStart: false});
+  public componentDidUpdate(): void {
+    if(this.state.isFirstTime && this.props.isExpanded) {
+      this.setState({isFirstTime: false});
     }
   }
 
