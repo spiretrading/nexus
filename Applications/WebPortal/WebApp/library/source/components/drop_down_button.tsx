@@ -3,7 +3,7 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 
 interface Properties {
 
-  /* Determines the size element. */
+  /* Determines the size of the element. */
   size?: number | string;
 
   /** The onClick event handler. */

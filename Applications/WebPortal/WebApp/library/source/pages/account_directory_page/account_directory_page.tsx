@@ -85,8 +85,6 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
           accounts={accounts}
           filter={this.state.filter}
           isOpen={this.state.openedGroups.test(group)}
-          onAccountClick={this.props.onNewAccountClick}
-          onGroupClick={this.props.onNewGroupClick}
           onDropDownClick={() => this.onCardClick(group)}/>);
     }
     return (
