@@ -206,6 +206,9 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
         {bottom_right.m_x - width_change, bottom_right.m_y - height_change});
     } else if(event->type() == QEvent::HoverLeave) {
       m_chart->reset_crosshair();
+    } else if(event->type() == QEvent::HoverEnter) {
+      auto e = static_cast<QHoverEvent*>(event);
+      m_chart->set_crosshair(e->pos());
     }
   } else if(object == m_body) {
     if(event->type() == QEvent::MouseButtonPress) {
