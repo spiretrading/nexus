@@ -9,6 +9,7 @@ interface Properties {
 }
 
 interface State {
+  roles: Nexus.AccountRoles;
   groups: Beam.Set<Beam.DirectoryEntry>;
   accounts: Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>;
   model: WebPortal.AccountDirectoryModel;
@@ -19,21 +20,41 @@ class TestApp extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-     groups : new Beam.Set<Beam.DirectoryEntry>(),
-     accounts: new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>(),
-     model: new WebPortal.LocalAccountDirectoryModel(
-       new Beam.Set<Beam.DirectoryEntry>(),
-       new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>())
+      roles: new Nexus.AccountRoles(),
+      groups : new Beam.Set<Beam.DirectoryEntry>(),
+      accounts: new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>(),
+      model: new WebPortal.LocalAccountDirectoryModel(
+        new Beam.Set<Beam.DirectoryEntry>(),
+        new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>())
     };
+    this.changeRole = this.changeRole.bind(this);
   }
 
   public render(): JSX.Element {
     return (
+      <div>
       <WebPortal.AccountDirectoryPage
         displaySize={this.props.displaySize}
         model={this.state.model}/>
+              <div style={TestApp.STYLE.testingComponents}>
+          <button tabIndex={-1}
+              onClick={() =>
+              this.changeRole(Nexus.AccountRoles.Role.ADMINISTRATOR)}>
+            ADMINISTRATOR
+          </button>
+          <button tabIndex={-1}
+              onClick={() => this.changeRole(Nexus.AccountRoles.Role.TRADER)}>
+            TRADER
+          </button>
+          <button tabIndex={-1}
+              onClick={() => this.changeRole(Nexus.AccountRoles.Role.MANAGER)}>
+            MANAGER
+          </button>
+        </div>
+      </div>
     );
   }
+
   public componentDidMount() {
     const group1 =
       new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 80, 'Nexus');
@@ -102,6 +123,30 @@ class TestApp extends React.Component<Properties, State> {
     const newModel = new WebPortal.CachedAccountDirectoryModel(testModel);
     this.setState({model: newModel});
   }
+
+  private changeRole(newRole: Nexus.AccountRoles.Role): void {
+    if(newRole === Nexus.AccountRoles.Role.ADMINISTRATOR) {
+      this.setState({ roles: this.testAdmin });
+    }
+    if(newRole === Nexus.AccountRoles.Role.TRADER) {
+      this.setState({ roles: this.testTrader });
+    }
+    if(newRole === Nexus.AccountRoles.Role.MANAGER) {
+      this.setState({ roles: this.testManager });
+    }
+  }
+  private testAdmin = new Nexus.AccountRoles();
+  private testTrader = new Nexus.AccountRoles();
+  private testManager = new Nexus.AccountRoles();
+  private static STYLE = {
+    testingComponents: {
+      position: 'fixed' as 'fixed',
+      fontSize: '8px',
+      top: 0,
+      left: 0,
+      zIndex: 500
+    }
+  };
 }
 
 const ResponsivePage =
