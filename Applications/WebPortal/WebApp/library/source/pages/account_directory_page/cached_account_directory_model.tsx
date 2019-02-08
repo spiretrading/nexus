@@ -5,6 +5,9 @@ import { AccountEntry } from './account_entry';
 /** Implements an AccountDirectoryModel that caches. */
 export class CachedAccountDirectoryModel extends AccountDirectoryModel {
 
+  /** Constructs an cached model from a existing model
+   * @param model - The model to be used.
+   */
   constructor(model: AccountDirectoryModel) {
     super();
     this._model = model;
@@ -30,9 +33,9 @@ export class CachedAccountDirectoryModel extends AccountDirectoryModel {
     let substringLength = filter.length;
     while(substringLength) {
       const substring = filter.substring(0, substringLength);
-      if(this._prevFiltered.get(substring)) {
+      const superset = this._prevFiltered.get(substring);
+      if(superset) {
         if(filter !== substring) {
-          const superset = this._prevFiltered.get(substring);
           const subset = new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>();
           for(const pair of superset) {
             const accountSubset: AccountEntry[] = [];
@@ -43,12 +46,12 @@ export class CachedAccountDirectoryModel extends AccountDirectoryModel {
             }
             subset.set(pair[0], accountSubset);
           }
-        this._prevFiltered.set(filter, subset);
+          this._prevFiltered.set(filter, subset);
         }
         return this._prevFiltered.get(substring);
-        }
-        --substringLength;
       }
+      --substringLength;
+    }
     const accounts = await this._model.loadFilteredAccounts(filter);
     this._prevFiltered.set(filter, accounts);
     return this._prevFiltered.get(filter);
