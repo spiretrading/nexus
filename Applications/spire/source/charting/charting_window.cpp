@@ -1,5 +1,6 @@
 #include "spire/charting/charting_window.hpp"
 #include <climits>
+#include <random>
 #include <QApplication>
 #include <QHBoxLayout>
 #include <QIcon>
@@ -9,6 +10,7 @@
 #include <QVBoxLayout>
 #include "spire/charting/chart_view.hpp"
 #include "spire/charting/empty_chart_model.hpp"
+#include "spire/charting/local_chart_model.hpp"
 #include "spire/security_input/security_input_dialog.hpp"
 #include "spire/security_input/security_input_model.hpp"
 #include "spire/spire/dimensions.hpp"
@@ -21,6 +23,7 @@
 using namespace boost;
 using namespace boost::signals2;
 using namespace Beam;
+using namespace Nexus;
 using namespace Spire;
 
 namespace {
@@ -33,6 +36,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
       m_model(std::make_shared<EmptyChartModel>(ChartValue::Type::TIMESTAMP,
         ChartValue::Type::MONEY)),
       m_is_mouse_dragging(false),
+      m_chart(nullptr),
       m_is_chart_auto_scaled(true) {
   m_body = new QWidget(this);
   m_body->installEventFilter(this);
@@ -105,6 +109,9 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   m_auto_scale_button->setFixedSize(scale(26, 26));
   m_auto_scale_button->setToolTip(tr("Auto Scale"));
   m_auto_scale_button->set_toggled(true);
+  m_auto_scale_button->connect_clicked_signal([=] {
+    on_auto_scale_button_click();
+  });
   button_header_layout->addWidget(m_auto_scale_button);
   button_header_layout->addSpacing(scale_width(10));
   auto seperator = new QWidget(m_button_header_widget);
@@ -126,9 +133,8 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   m_security_widget = new SecurityWidget(input_model,
     SecurityWidget::Theme::DARK, this);
   m_security_widget->connect_change_security_signal(
-    [=] (const auto& security) {
-      setWindowTitle(CustomVariantItemDelegate().displayText(
-        QVariant::fromValue(security), QLocale()) + tr(" - Chart"));
+      [=] (const auto& security) {
+    on_security_change(security);
   });
   layout->addWidget(m_security_widget);
   setTabOrder(m_period_line_edit, m_period_dropdown);
@@ -137,20 +143,17 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   setTabOrder(m_auto_scale_button, draw_line_button);
   setTabOrder(draw_line_button, m_period_line_edit);
   m_security_widget->setFocus();
-  m_chart = new ChartView(*m_model, this);
-  m_security_widget->set_widget(m_chart);
-  m_chart->installEventFilter(this);
 }
 
 void ChartingWindow::set_model(std::shared_ptr<ChartModel> model) {
   m_model = model;
-  delete m_chart;
+  if(m_chart != nullptr) {
+    delete m_chart;
+  }
   m_chart = new ChartView(*m_model, this);
+  m_chart->set_auto_scale(m_is_chart_auto_scaled);
   m_security_widget->set_widget(m_chart);
   m_chart->installEventFilter(this);
-  m_auto_scale_button->connect_clicked_signal([=] {
-    on_auto_scale_button_click();
-  });
 }
 
 connection ChartingWindow::connect_security_change_signal(
@@ -229,7 +232,9 @@ void ChartingWindow::keyPressEvent(QKeyEvent* event) {
 
 void ChartingWindow::on_auto_scale_button_click() {
   m_is_chart_auto_scaled = !m_is_chart_auto_scaled;
-  m_chart->set_auto_scale(m_is_chart_auto_scaled);
+  if(m_chart != nullptr) {
+    m_chart->set_auto_scale(m_is_chart_auto_scaled);
+  }
 }
 
 void ChartingWindow::on_period_line_edit_changed() {
@@ -238,4 +243,35 @@ void ChartingWindow::on_period_line_edit_changed() {
   } else {
     m_period_dropdown->set_items({tr("seconds"), tr("minutes"), tr("hours")});
   }
+}
+
+void ChartingWindow::on_security_change(const Security& security) {
+  setWindowTitle(CustomVariantItemDelegate().displayText(
+    QVariant::fromValue(security), QLocale()) + tr(" - Chart"));
+    auto candlesticks = std::vector<Candlestick>();
+  auto rand = std::default_random_engine(std::random_device()());
+  auto time = boost::posix_time::second_clock::local_time();
+  for(auto i = 0; i < 100; ++i) {
+    auto open = ChartValue(Money((rand() % 40 + 40) *
+      Money::FromValue("0.01").get()));
+    auto close = ChartValue(Money((rand() % 40 + 40) *
+      Money::FromValue("0.01").get()));
+    auto [high, low] = [&] {
+      if(open > close) {
+        return std::make_tuple(ChartValue(Money((rand() % 40) *
+          Money::FromValue("0.01").get())) + open, close - ChartValue(Money(
+          (rand() % 40) * Money::FromValue("0.01").get())));
+      }
+      return std::make_tuple(ChartValue(Money((rand() % 40) *
+        Money::FromValue("0.01").get())) + close, open - ChartValue(Money(
+        (rand() % 40) * Money::FromValue("0.01").get())));
+    }();
+    candlesticks.push_back(Candlestick(
+      ChartValue(time - boost::posix_time::minutes(1)), ChartValue(time),
+      open, close, high, low));
+      time -= boost::posix_time::minutes(1);
+  }
+  auto chart_model = std::make_shared<LocalChartModel>(
+    ChartValue::Type::TIMESTAMP, ChartValue::Type::MONEY, candlesticks);
+  set_model(chart_model);
 }

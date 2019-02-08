@@ -98,6 +98,7 @@ void IconButton::keyPressEvent(QKeyEvent* event) {
       event->key() == Qt::Key_Space) {
     m_clicked_signal();
   }
+  event->ignore();
 }
 
 void IconButton::leaveEvent(QEvent* event) {
