@@ -1,5 +1,6 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../../display_size';
 import { AccountDirectoryModel, AccountEntry, FilterBar, GroupCard } from '.';
@@ -11,6 +12,9 @@ interface Properties {
 
   /** Model that contains imformation about the accounts. */
   model: AccountDirectoryModel;
+
+  /** The roles of the user looking at  */
+  roles: Nexus.AccountRoles;
 
   /** Called when the user wants to make a new group. */
   onNewGroupClick?: () => void;
@@ -62,10 +66,14 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       }
     })();
     const buttonBoxStyle = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return AccountDirectoryPage.STYLE.buttonBoxSmall;
+      if(this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
+        if(this.props.displaySize === DisplaySize.SMALL) {
+          return AccountDirectoryPage.STYLE.buttonBoxSmall;
+        } else {
+          return AccountDirectoryPage.STYLE.buttonBox;
+        }
       } else {
-        return AccountDirectoryPage.STYLE.buttonBox;
+        return AccountDirectoryPage.STYLE.hidden;
       }
     })();
     const buttonStyle = (() => {
@@ -169,7 +177,6 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       flexDirection: 'column-reverse' as 'column-reverse',
       flexWrap: 'nowrap' as 'nowrap',
-      height: '86px',
       justifyContent: 'flex-end' as 'flex-end'
     },
     horizontalHeaderBox: {
@@ -201,6 +208,11 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       flexBias: '18px',
       flexGrow: 0,
       flexShrink: 0
+    },
+    hidden: {
+      opacity: 0,
+      visibility: 'hidden' as 'hidden',
+      display: 'none' as 'none'
     }
   };
   private static DYNAMIC_STYLE = StyleSheet.create({

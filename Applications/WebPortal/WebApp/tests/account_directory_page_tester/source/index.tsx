@@ -35,11 +35,12 @@ class TestApp extends React.Component<Properties, State> {
       <div>
       <WebPortal.AccountDirectoryPage
         displaySize={this.props.displaySize}
-        model={this.state.model}/>
-              <div style={TestApp.STYLE.testingComponents}>
+        model={this.state.model}
+        roles={this.state.roles}/>
+        <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
               onClick={() =>
-              this.changeRole(Nexus.AccountRoles.Role.ADMINISTRATOR)}>
+                this.changeRole(Nexus.AccountRoles.Role.ADMINISTRATOR)}>
             ADMINISTRATOR
           </button>
           <button tabIndex={-1}
@@ -56,6 +57,9 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   public componentDidMount() {
+    this.testAdmin.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
+    this.testTrader.set(Nexus.AccountRoles.Role.TRADER);
+    this.testManager.set(Nexus.AccountRoles.Role.MANAGER);
     const group1 =
       new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 80, 'Nexus');
     const group2 =
