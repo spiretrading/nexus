@@ -20,6 +20,7 @@ ToggleButton::ToggleButton(QImage icon, QImage toggle_icon, QImage hover_icon,
 ToggleButton::ToggleButton(QImage icon, QImage toggle_icon, QImage hover_icon,
     QImage disable_icon, QWidget* parent)
     : QWidget(parent),
+      m_is_toggled(false),
       m_is_focused(false),
       m_icon_button(icon, hover_icon, icon,
         parent),
