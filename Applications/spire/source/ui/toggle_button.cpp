@@ -20,6 +20,7 @@ ToggleButton::ToggleButton(QImage icon, QImage toggle_icon, QImage hover_icon,
 ToggleButton::ToggleButton(QImage icon, QImage toggle_icon, QImage hover_icon,
     QImage disable_icon, QWidget* parent)
     : QWidget(parent),
+      m_is_toggled(false),
       m_is_focused(false),
       m_icon_button(icon, hover_icon, icon,
         parent),
@@ -27,12 +28,17 @@ ToggleButton::ToggleButton(QImage icon, QImage toggle_icon, QImage hover_icon,
       m_hover_icon(std::move(hover_icon)),
       m_toggle_icon(std::move(toggle_icon)),
       m_disabled_icon(std::move(disable_icon)) {
-  setFocusPolicy(Qt::StrongFocus);
+  setFocusPolicy(Qt::NoFocus);
   m_icon_button.installEventFilter(this);
-  m_icon_button.setFocusPolicy(Qt::NoFocus);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(&m_icon_button);
+}
+
+void ToggleButton::set_toggled(bool toggled) {
+  if(m_is_toggled != toggled) {
+    swap_toggle();
+  }
 }
 
 void ToggleButton::setEnabled(bool enabled) {
@@ -45,6 +51,11 @@ void ToggleButton::setDisabled(bool disabled) {
   QWidget::setDisabled(disabled);
 }
 
+connection ToggleButton::connect_clicked_signal(
+    const ClickedSignal::slot_type& slot) const {
+  return m_icon_button.connect_clicked_signal(slot);
+}
+
 bool ToggleButton::eventFilter(QObject* object, QEvent* event) {
   if(event->type() == QEvent::WindowActivate ||
       event->type() == QEvent::WindowDeactivate) {
@@ -54,16 +65,24 @@ bool ToggleButton::eventFilter(QObject* object, QEvent* event) {
     if(mouse_event->button() == Qt::LeftButton) {
       swap_toggle();
     }
-  }
-  return QWidget::eventFilter(object, event);
-}
-
-void ToggleButton::focusInEvent(QFocusEvent* event) {
-  if(event->reason() == Qt::TabFocusReason ||
-      event->reason() == Qt::BacktabFocusReason) {
-    m_is_focused = true;
+  } else if(event->type() == QEvent::KeyPress) {
+    auto e = static_cast<QKeyEvent*>(event);
+    if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return ||
+        e->key() == Qt::Key_Space) {
+      swap_toggle();
+    }
+  } else if(event->type() == QEvent::FocusIn) {
+    auto e = static_cast<QFocusEvent*>(event);
+    if(e->reason() == Qt::TabFocusReason ||
+        e->reason() == Qt::BacktabFocusReason) {
+      m_is_focused = true;
+      update();
+    }
+  } else if(event->type() == QEvent::FocusOut) {
+    m_is_focused = false;
     update();
   }
+  return QWidget::eventFilter(object, event);
 }
 
 void ToggleButton::focusOutEvent(QFocusEvent* event) {
@@ -109,10 +128,10 @@ void ToggleButton::set_icons(bool enabled) {
 }
 
 void ToggleButton::swap_toggle() {
+  m_is_toggled = !m_is_toggled;
   if(m_is_toggled) {
     m_icon_button.set_icon(m_toggle_icon, m_toggle_icon);
   } else {
     m_icon_button.set_icon(m_icon, m_hover_icon);
   }
-  m_is_toggled = !m_is_toggled;
 }

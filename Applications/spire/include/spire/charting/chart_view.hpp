@@ -61,6 +61,12 @@ namespace Spire {
       void set_region(const ChartPoint& top_left,
         const ChartPoint& bottom_right);
 
+      //! Sets auto scale on or off.
+      /*!
+        \param auto_scale Sets the auto scale on (true) or off (false).
+      */
+      void set_auto_scale(bool auto_scale);
+
     protected:
       void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
@@ -85,9 +91,11 @@ namespace Spire {
       std::vector<ChartValue> m_x_axis_values;
       int m_x_axis_text_width;
       std::vector<ChartValue> m_y_axis_values;
+      bool m_is_auto_scaled;
       QtPromise<std::vector<Spire::Candlestick>> m_candlestick_promise;
       std::vector<Candlestick> m_candlesticks;
 
+      void update_auto_scale();
       void update_origins();
   };
 }
