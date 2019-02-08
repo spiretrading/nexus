@@ -85,6 +85,14 @@ bool ToggleButton::eventFilter(QObject* object, QEvent* event) {
   return QWidget::eventFilter(object, event);
 }
 
+void ToggleButton::focusInEvent(QFocusEvent* event) {
+  if(event->reason() == Qt::TabFocusReason ||
+      event->reason() == Qt::BacktabFocusReason) {
+    m_is_focused = true;
+    update();
+  }
+}
+
 void ToggleButton::focusOutEvent(QFocusEvent* event) {
   m_is_focused = false;
   update();
