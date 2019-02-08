@@ -35,6 +35,12 @@ ToggleButton::ToggleButton(QImage icon, QImage toggle_icon, QImage hover_icon,
   layout->addWidget(&m_icon_button);
 }
 
+void ToggleButton::set_toggled(bool toggled) {
+  if(m_is_toggled != toggled) {
+    swap_toggle();
+  }
+}
+
 void ToggleButton::setEnabled(bool enabled) {
   set_icons(enabled);
   QWidget::setEnabled(enabled);
@@ -109,10 +115,10 @@ void ToggleButton::set_icons(bool enabled) {
 }
 
 void ToggleButton::swap_toggle() {
+  m_is_toggled = !m_is_toggled;
   if(m_is_toggled) {
     m_icon_button.set_icon(m_toggle_icon, m_toggle_icon);
   } else {
     m_icon_button.set_icon(m_icon, m_hover_icon);
   }
-  m_is_toggled = !m_is_toggled;
 }

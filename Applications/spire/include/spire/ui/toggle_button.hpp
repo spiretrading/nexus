@@ -47,6 +47,12 @@ namespace Spire {
       ToggleButton(QImage icon, QImage toggle_icon, QImage hover_icon,
         QImage disabled_icon, QWidget* parent = nullptr);
 
+      //! Sets the toggled state of the button.
+      /*!
+        \param toggled The toggled state of the button.
+      */
+      void set_toggled(bool toggled);
+
       //! Sets the status of the button, and applies the appropriate icons.
       /*
         \param enabled Enables the button if true, disables it otherwise.
