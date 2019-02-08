@@ -118,6 +118,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       clearTimeout(this.timerId);
     }
     this.setState({filter: newFilter});
+    if(newFilter !== '') {
     this.timerId = setTimeout(
       async () => {
         const newAccounts =
@@ -126,7 +127,8 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
           openedGroups: new Beam.Set<Beam.DirectoryEntry>(),
           accounts: newAccounts
         });
-      } , 200);
+      } , 400);
+    }
   }
 
   private async onCardClick(group: Beam.DirectoryEntry) {

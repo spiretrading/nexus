@@ -8,14 +8,17 @@ export class CachedAccountDirectoryModel extends AccountDirectoryModel {
   constructor(model: AccountDirectoryModel) {
     super();
     this._model = model;
-    this._groups = new Beam.Set<Beam.DirectoryEntry>();
+    this._groups = null;
     this._accounts = new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>();
     this._prevFiltered = new
      Map<string,Beam.Map<Beam.DirectoryEntry, AccountEntry[]>>();
   }
 
   public get groups(): Beam.Set<Beam.DirectoryEntry> {
-    return this._model.groups;
+    if(!this._groups) {
+      this._groups = this._model.groups;
+    }
+    return this._groups;
   }
 
   public async loadAccounts(
@@ -31,9 +34,9 @@ export class CachedAccountDirectoryModel extends AccountDirectoryModel {
 
   public async loadFilteredAccounts(filter: string):
     Promise<Beam.Map<Beam.DirectoryEntry, AccountEntry[]>> {
-   let sub = filter.length;
-   while(sub) {
-    const substring = filter.substring(0, sub);
+   let substringLenght = filter.length;
+   while(substringLenght) {
+    const substring = filter.substring(0, substringLenght);
     if(this._prevFiltered.get(substring)) {
       if(filter !== substring) {
         const superset = this._prevFiltered.get(substring);
@@ -54,9 +57,9 @@ export class CachedAccountDirectoryModel extends AccountDirectoryModel {
           setTimeout(() => {
             resolve(this._prevFiltered.get(substring));}, 100);
           });
+      }
+      --substringLenght;
     }
-    --sub;
-   }
     const accounts = await this._model.loadFilteredAccounts(filter);
     this._prevFiltered.set(filter, accounts);
     return new Promise<Beam.Map<Beam.DirectoryEntry, AccountEntry[]>>
