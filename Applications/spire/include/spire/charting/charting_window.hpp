@@ -63,6 +63,7 @@ namespace Spire {
       bool m_is_mouse_dragging;
       QPoint m_last_chart_mouse_pos;
 
+      void on_auto_scale_button_click();
       void on_period_line_edit_changed();
   };
 }

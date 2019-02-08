@@ -143,8 +143,7 @@ void ChartingWindow::set_model(std::shared_ptr<ChartModel> model) {
   m_security_widget->set_widget(m_chart);
   m_chart->installEventFilter(this);
   m_auto_scale_button->connect_clicked_signal([=] {
-    m_is_chart_auto_scaled = !m_is_chart_auto_scaled;
-    m_chart->set_auto_scale(m_is_chart_auto_scaled);
+    on_auto_scale_button_click();
   });
 }
 
@@ -213,6 +212,11 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
     }
   }
   return QWidget::eventFilter(object, event);
+}
+
+void ChartingWindow::on_auto_scale_button_click() {
+  m_is_chart_auto_scaled = !m_is_chart_auto_scaled;
+  m_chart->set_auto_scale(m_is_chart_auto_scaled);
 }
 
 void ChartingWindow::on_period_line_edit_changed() {

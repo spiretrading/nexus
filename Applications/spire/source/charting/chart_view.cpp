@@ -270,8 +270,8 @@ void ChartView::update_auto_scale() {
   if(m_candlesticks.empty()) {
     return;
   }
-  auto auto_scale_top = m_candlesticks[0].GetHigh();
-  auto auto_scale_bottom = m_candlesticks[0].GetLow();
+  auto auto_scale_top = m_candlesticks.front().GetHigh();
+  auto auto_scale_bottom = m_candlesticks.front().GetLow();
   for(auto& candle : m_candlesticks) {
     auto_scale_top = std::max(auto_scale_top, candle.GetHigh());
     auto_scale_bottom = std::min(auto_scale_bottom, candle.GetLow());
