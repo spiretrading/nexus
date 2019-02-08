@@ -31,7 +31,8 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     : QWidget(parent),
       m_model(std::make_shared<EmptyChartModel>(ChartValue::Type::TIMESTAMP,
         ChartValue::Type::MONEY)),
-      m_is_mouse_dragging(false) {
+      m_is_mouse_dragging(false),
+      m_is_chart_auto_scaled(true) {
   m_body = new QWidget(this);
   m_body->installEventFilter(this);
   m_body->setMinimumSize(scale(400, 320));
@@ -94,15 +95,16 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   lock_grid_button->setToolTip(tr("Lock Grid"));
   button_header_layout->addWidget(lock_grid_button);
   button_header_layout->addSpacing(scale_width(10));
-  auto auto_scale_button = new ToggleButton(
+  m_auto_scale_button = new ToggleButton(
     imageFromSvg(":/icons/auto-scale-purple.svg", button_image_size),
     imageFromSvg(":/icons/auto-scale-green.svg", button_image_size),
     imageFromSvg(":/icons/auto-scale-purple.svg", button_image_size),
     imageFromSvg(":/icons/auto-scale-grey.svg", button_image_size),
     m_button_header_widget);
-  auto_scale_button->setFixedSize(scale(26, 26));
-  auto_scale_button->setToolTip(tr("Auto Scale"));
-  button_header_layout->addWidget(auto_scale_button);
+  m_auto_scale_button->setFixedSize(scale(26, 26));
+  m_auto_scale_button->setToolTip(tr("Auto Scale"));
+  m_auto_scale_button->set_toggled(true);
+  button_header_layout->addWidget(m_auto_scale_button);
   button_header_layout->addSpacing(scale_width(10));
   auto seperator = new QWidget(m_button_header_widget);
   seperator->setFixedSize(scale(1, 16));
@@ -125,8 +127,8 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   layout->addWidget(m_security_widget);
   setTabOrder(m_period_line_edit, m_period_dropdown);
   setTabOrder(m_period_dropdown, lock_grid_button);
-  setTabOrder(lock_grid_button, auto_scale_button);
-  setTabOrder(auto_scale_button, draw_line_button);
+  setTabOrder(lock_grid_button, m_auto_scale_button);
+  setTabOrder(m_auto_scale_button, draw_line_button);
   setTabOrder(draw_line_button, m_period_line_edit);
   m_security_widget->setFocus();
   m_chart = new ChartView(*m_model, this);
@@ -140,6 +142,9 @@ void ChartingWindow::set_model(std::shared_ptr<ChartModel> model) {
   m_chart = new ChartView(*m_model, this);
   m_security_widget->set_widget(m_chart);
   m_chart->installEventFilter(this);
+  m_auto_scale_button->connect_clicked_signal([=] {
+    on_auto_scale_button_click();
+  });
 }
 
 connection ChartingWindow::connect_security_change_signal(
@@ -207,6 +212,11 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
     }
   }
   return QWidget::eventFilter(object, event);
+}
+
+void ChartingWindow::on_auto_scale_button_click() {
+  m_is_chart_auto_scaled = !m_is_chart_auto_scaled;
+  m_chart->set_auto_scale(m_is_chart_auto_scaled);
 }
 
 void ChartingWindow::on_period_line_edit_changed() {

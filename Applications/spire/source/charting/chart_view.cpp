@@ -57,7 +57,8 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
       m_font_metrics(QFont()),
       m_item_delegate(new CustomVariantItemDelegate(this)),
       m_dashed_line_pen(QColor("#E5E5E5"), scale_width(1), Qt::CustomDashLine),
-      m_label_text_color(QColor("#25212E")) {
+      m_label_text_color(QColor("#25212E")),
+      m_is_auto_scaled(true) {
   setFocusPolicy(Qt::NoFocus);
   setMouseTracking(true);
   setAttribute(Qt::WA_Hover);
@@ -109,6 +110,12 @@ std::tuple<ChartPoint, ChartPoint> ChartView::get_region() const {
 
 void ChartView::set_region(const ChartPoint& top_left,
     const ChartPoint& bottom_right) {
+  if(std::tie(m_top_left.m_x, m_top_left.m_y) ==
+      std::tie(top_left.m_x, top_left.m_y) &&
+      std::tie(m_bottom_right.m_x, m_bottom_right.m_y) ==
+      std::tie(bottom_right.m_x, bottom_right.m_y)) {
+    return;
+  }
   m_top_left = top_left;
   m_bottom_right = bottom_right;
   m_x_range = m_bottom_right.m_x - m_top_left.m_x;
@@ -118,11 +125,22 @@ void ChartView::set_region(const ChartPoint& top_left,
   update_origins();
   m_candlestick_promise = m_model->load(m_top_left.m_x,
     m_bottom_right.m_x);
-  m_candlestick_promise.then([&] (auto result) {
+  m_candlestick_promise.then([=] (auto result) {
     m_candlesticks = std::move(result.Get());
-    update();
+    if(m_is_auto_scaled) {
+      update_auto_scale();
+    } else {
+      update();
+    }
   });
   update();
+}
+
+void ChartView::set_auto_scale(bool auto_scale) {
+  m_is_auto_scaled = auto_scale;
+  if(m_is_auto_scaled) {
+    update_auto_scale();
+  }
 }
 
 void ChartView::paintEvent(QPaintEvent* event) {
@@ -246,6 +264,20 @@ void ChartView::showEvent(QShowEvent* event) {
     set_region(top_left, bottom_right);
   }
   QWidget::showEvent(event);
+}
+
+void ChartView::update_auto_scale() {
+  if(m_candlesticks.empty()) {
+    return;
+  }
+  auto auto_scale_top = m_candlesticks.front().GetHigh();
+  auto auto_scale_bottom = m_candlesticks.front().GetLow();
+  for(auto& candle : m_candlesticks) {
+    auto_scale_top = std::max(auto_scale_top, candle.GetHigh());
+    auto_scale_bottom = std::min(auto_scale_bottom, candle.GetLow());
+  }
+  set_region({m_top_left.m_x, auto_scale_top},
+    {m_bottom_right.m_x, auto_scale_bottom});
 }
 
 void ChartView::update_origins() {

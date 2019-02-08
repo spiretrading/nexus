@@ -10,6 +10,9 @@ namespace Spire {
   class ToggleButton : public QWidget {
     public:
 
+      //! Signal type for the clicked signal.
+      using ClickedSignal = Signal<void ()>;
+
       //! Constructs a ToggleButton.
       /*
         \param icon The icon shown when the button is in an untoggled state.
@@ -44,6 +47,12 @@ namespace Spire {
       ToggleButton(QImage icon, QImage toggle_icon, QImage hover_icon,
         QImage disabled_icon, QWidget* parent = nullptr);
 
+      //! Sets the toggled state of the button.
+      /*!
+        \param toggled The toggled state of the button.
+      */
+      void set_toggled(bool toggled);
+
       //! Sets the status of the button, and applies the appropriate icons.
       /*
         \param enabled Enables the button if true, disables it otherwise.
@@ -56,11 +65,12 @@ namespace Spire {
       */
       void setDisabled(bool disabled);
 
+      //! Connects a slot to the clicked signal.
+      boost::signals2::connection connect_clicked_signal(
+        const ClickedSignal::slot_type& slot) const;
+
     protected:
       bool eventFilter(QObject* object, QEvent* event) override;
-      void focusInEvent(QFocusEvent* event) override;
-      void focusOutEvent(QFocusEvent* event) override;
-      void keyPressEvent(QKeyEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
