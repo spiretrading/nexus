@@ -113,21 +113,19 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       </div>);
   }
 
-  private async onChange(newFilter: string) {
-    if(this.timerId) {
-      clearTimeout(this.timerId);
-    }
+  private onChange(newFilter: string) {
+    clearTimeout(this.timerId);
     this.setState({filter: newFilter});
     if(newFilter !== '') {
-    this.timerId = setTimeout(
-      async () => {
-        const newAccounts =
-          await this.props.model.loadFilteredAccounts(newFilter);
-        this.setState({
-          openedGroups: new Beam.Set<Beam.DirectoryEntry>(),
-          accounts: newAccounts
-        });
-      } , 400);
+      this.timerId = setTimeout(
+        async () => {
+          const newAccounts =
+            await this.props.model.loadFilteredAccounts(newFilter);
+          this.setState({
+            openedGroups: new Beam.Set<Beam.DirectoryEntry>(),
+            accounts: newAccounts
+          });
+        }, 400);
     }
   }
 
