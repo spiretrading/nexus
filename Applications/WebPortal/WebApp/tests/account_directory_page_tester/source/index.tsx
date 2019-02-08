@@ -11,7 +11,7 @@ interface Properties {
 interface State {
   groups: Beam.Set<Beam.DirectoryEntry>;
   accounts: Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>;
-  model: WebPortal.LocalAccountDirectoryModel;
+  model: WebPortal.AccountDirectoryModel;
 }
 
 /**  Displays a testing application. */
@@ -73,12 +73,22 @@ class TestApp extends React.Component<Properties, State> {
       new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 788, 'execution_service'),
       new Nexus.AccountRoles(5));
+    const accountEntry6 = new WebPortal.AccountEntry(
+      new Beam.DirectoryEntry(
+        Beam.DirectoryEntry.Type.ACCOUNT, 1, 'data_news_service'),
+      new Nexus.AccountRoles());
+    const accountEntry7 = new WebPortal.AccountEntry(
+      new Beam.DirectoryEntry(
+        Beam.DirectoryEntry.Type.ACCOUNT, 5, 'data_relay_news'),
+      new Nexus.AccountRoles());
     const testArray = [];
     testArray.push(accountEntry1);
     testArray.push(accountEntry2);
     testArray.push(accountEntry3);
     testArray.push(accountEntry4);
     testArray.push(accountEntry5);
+    testArray.push(accountEntry6);
+    testArray.push(accountEntry7);
     for(const group of this.state.groups) {
       if(group.id % 2 === 0) {
         this.state.accounts.set(group, testArray);
@@ -89,7 +99,8 @@ class TestApp extends React.Component<Properties, State> {
     const testModel = new WebPortal.LocalAccountDirectoryModel(
       this.state.groups, this.state.accounts);
     testModel.load();
-    this.setState({model: testModel});
+    const newModel = new WebPortal.CachedAccountDirectoryModel(testModel);
+    this.setState({model: newModel});
   }
 }
 
