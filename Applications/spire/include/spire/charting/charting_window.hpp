@@ -48,6 +48,7 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* object, QEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
 
     private:
       mutable ClosedSignal m_closed_signal;
@@ -65,6 +66,7 @@ namespace Spire {
 
       void on_auto_scale_button_click();
       void on_period_line_edit_changed();
+      void on_security_change(const Nexus::Security& security);
   };
 }
 

@@ -85,6 +85,29 @@ bool ToggleButton::eventFilter(QObject* object, QEvent* event) {
   return QWidget::eventFilter(object, event);
 }
 
+void ToggleButton::focusInEvent(QFocusEvent* event) {
+  if(event->reason() == Qt::TabFocusReason ||
+      event->reason() == Qt::BacktabFocusReason) {
+    m_is_focused = true;
+    update();
+  }
+}
+
+void ToggleButton::focusOutEvent(QFocusEvent* event) {
+  m_is_focused = false;
+  update();
+}
+
+void ToggleButton::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return ||
+      event->key() == Qt::Key_Space) {
+    swap_toggle();
+    event->accept();
+    return;
+  }
+  event->ignore();
+}
+
 void ToggleButton::paintEvent(QPaintEvent* event) {
   if(m_is_focused) {
     auto painter = QPainter(this);

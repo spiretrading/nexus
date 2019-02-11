@@ -1,5 +1,6 @@
 #include "spire/charting/charting_window.hpp"
 #include <climits>
+#include <QApplication>
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QIntValidator>
@@ -7,7 +8,6 @@
 #include <QListView>
 #include <QVBoxLayout>
 #include "spire/charting/chart_view.hpp"
-#include "spire/charting/empty_chart_model.hpp"
 #include "spire/security_input/security_input_dialog.hpp"
 #include "spire/security_input/security_input_model.hpp"
 #include "spire/spire/dimensions.hpp"
@@ -20,6 +20,7 @@
 using namespace boost;
 using namespace boost::signals2;
 using namespace Beam;
+using namespace Nexus;
 using namespace Spire;
 
 namespace {
@@ -29,9 +30,8 @@ namespace {
 ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     QWidget* parent)
     : QWidget(parent),
-      m_model(std::make_shared<EmptyChartModel>(ChartValue::Type::TIMESTAMP,
-        ChartValue::Type::MONEY)),
       m_is_mouse_dragging(false),
+      m_chart(nullptr),
       m_is_chart_auto_scaled(true) {
   m_body = new QWidget(this);
   m_body->installEventFilter(this);
@@ -104,6 +104,9 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   m_auto_scale_button->setFixedSize(scale(26, 26));
   m_auto_scale_button->setToolTip(tr("Auto Scale"));
   m_auto_scale_button->set_toggled(true);
+  m_auto_scale_button->connect_clicked_signal([=] {
+    on_auto_scale_button_click();
+  });
   button_header_layout->addWidget(m_auto_scale_button);
   button_header_layout->addSpacing(scale_width(10));
   auto seperator = new QWidget(m_button_header_widget);
@@ -124,6 +127,10 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   layout->addWidget(m_button_header_widget);
   m_security_widget = new SecurityWidget(input_model,
     SecurityWidget::Theme::DARK, this);
+  m_security_widget->connect_change_security_signal(
+      [=] (const auto& security) {
+    on_security_change(security);
+  });
   layout->addWidget(m_security_widget);
   setTabOrder(m_period_line_edit, m_period_dropdown);
   setTabOrder(m_period_dropdown, lock_grid_button);
@@ -131,20 +138,15 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   setTabOrder(m_auto_scale_button, draw_line_button);
   setTabOrder(draw_line_button, m_period_line_edit);
   m_security_widget->setFocus();
-  m_chart = new ChartView(*m_model, this);
-  m_security_widget->set_widget(m_chart);
-  m_chart->installEventFilter(this);
 }
 
 void ChartingWindow::set_model(std::shared_ptr<ChartModel> model) {
   m_model = model;
   delete m_chart;
   m_chart = new ChartView(*m_model, this);
+  m_chart->set_auto_scale(m_is_chart_auto_scaled);
   m_security_widget->set_widget(m_chart);
   m_chart->installEventFilter(this);
-  m_auto_scale_button->connect_clicked_signal([=] {
-    on_auto_scale_button_click();
-  });
 }
 
 connection ChartingWindow::connect_security_change_signal(
@@ -205,6 +207,9 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
         {bottom_right.m_x - width_change, bottom_right.m_y - height_change});
     } else if(event->type() == QEvent::HoverLeave) {
       m_chart->reset_crosshair();
+    } else if(event->type() == QEvent::HoverEnter) {
+      auto e = static_cast<QHoverEvent*>(event);
+      m_chart->set_crosshair(e->pos());
     }
   } else if(object == m_body) {
     if(event->type() == QEvent::MouseButtonPress) {
@@ -214,9 +219,15 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
   return QWidget::eventFilter(object, event);
 }
 
+void ChartingWindow::keyPressEvent(QKeyEvent* event) {
+  QApplication::sendEvent(m_security_widget, event);
+}
+
 void ChartingWindow::on_auto_scale_button_click() {
   m_is_chart_auto_scaled = !m_is_chart_auto_scaled;
-  m_chart->set_auto_scale(m_is_chart_auto_scaled);
+  if(m_chart != nullptr) {
+    m_chart->set_auto_scale(m_is_chart_auto_scaled);
+  }
 }
 
 void ChartingWindow::on_period_line_edit_changed() {
@@ -225,4 +236,9 @@ void ChartingWindow::on_period_line_edit_changed() {
   } else {
     m_period_dropdown->set_items({tr("seconds"), tr("minutes"), tr("hours")});
   }
+}
+
+void ChartingWindow::on_security_change(const Security& security) {
+  setWindowTitle(CustomVariantItemDelegate().displayText(
+    QVariant::fromValue(security), QLocale()) + QObject::tr(" - Chart"));
 }
