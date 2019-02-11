@@ -13,7 +13,7 @@ interface Properties {
   /** Model that contains imformation about the accounts. */
   model: AccountDirectoryModel;
 
-  /** The roles of the user looking at  */
+  /** The roles of the user looking at the directory page. */
   roles: Nexus.AccountRoles;
 
   /** Called when the user wants to make a new group. */
