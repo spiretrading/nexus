@@ -1,6 +1,5 @@
 #include "spire/charting/charting_window.hpp"
 #include <climits>
-#include <random>
 #include <QApplication>
 #include <QHBoxLayout>
 #include <QIcon>
@@ -9,8 +8,6 @@
 #include <QListView>
 #include <QVBoxLayout>
 #include "spire/charting/chart_view.hpp"
-#include "spire/charting/empty_chart_model.hpp"
-#include "spire/charting/local_chart_model.hpp"
 #include "spire/security_input/security_input_dialog.hpp"
 #include "spire/security_input/security_input_model.hpp"
 #include "spire/spire/dimensions.hpp"
@@ -33,8 +30,6 @@ namespace {
 ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     QWidget* parent)
     : QWidget(parent),
-      m_model(std::make_shared<EmptyChartModel>(ChartValue::Type::TIMESTAMP,
-        ChartValue::Type::MONEY)),
       m_is_mouse_dragging(false),
       m_chart(nullptr),
       m_is_chart_auto_scaled(true) {
@@ -147,9 +142,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
 
 void ChartingWindow::set_model(std::shared_ptr<ChartModel> model) {
   m_model = model;
-  if(m_chart != nullptr) {
-    delete m_chart;
-  }
+  delete m_chart;
   m_chart = new ChartView(*m_model, this);
   m_chart->set_auto_scale(m_is_chart_auto_scaled);
   m_security_widget->set_widget(m_chart);
