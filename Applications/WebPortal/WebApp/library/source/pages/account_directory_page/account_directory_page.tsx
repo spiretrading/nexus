@@ -83,6 +83,20 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
         return AccountDirectoryPage.DYNAMIC_STYLE.button;
       }
     })();
+    const horizontalButtonVisibility = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return AccountDirectoryPage.STYLE.hidden;
+      } else {
+        return null;
+      }
+    })();
+    const verticalButtonVisibility = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return null;
+      } else {
+        return AccountDirectoryPage.STYLE.hidden;
+      }
+    })();
     const cards = [];
     for (const group of this.props.model.groups) {
       const accounts = this.state.accounts.get(group) || [];
@@ -99,9 +113,23 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       <div style={AccountDirectoryPage.STYLE.page}>
         <div style={contentWidth}>
           <div id='header' style={headerBoxStyle}>
+            <div style={verticalButtonVisibility}>
+              <div style={buttonBoxStyle}>
+                <button className={css(buttonStyle)}
+                    onClick={this.props.onNewAccountClick}>
+                  New Account
+                </button>
+                <div style={AccountDirectoryPage.STYLE.spacing}/>
+                <button onClick={this.props.onNewGroupClick}
+                    className={css(buttonStyle)}>
+                  New Group
+                </button>
+              </div>
+              <div style={AccountDirectoryPage.STYLE.spacing}/>
+            </div>
             <FilterBar value={this.state.filter} onChange={this.onChange}/>
-            <div style={AccountDirectoryPage.STYLE.spacing}/>
-            <div style={buttonBoxStyle}>
+            <div style={{...buttonBoxStyle, ...horizontalButtonVisibility}}>
+              <div style={AccountDirectoryPage.STYLE.spacing}/>
               <button className={css(buttonStyle)}
                   onClick={this.props.onNewAccountClick}>
                 New Account
@@ -118,7 +146,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
             {cards}
           </div>
         </div>
-      </div>);
+    </div>);
   }
 
   private onChange(newFilter: string) {
@@ -175,7 +203,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
     },
     verticalHeaderBox: {
       display: 'flex' as 'flex',
-      flexDirection: 'column-reverse' as 'column-reverse',
+      flexDirection: 'column' as 'column',
       flexWrap: 'nowrap' as 'nowrap',
       justifyContent: 'flex-end' as 'flex-end'
     },
