@@ -1,5 +1,6 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../../display_size';
 import { AccountDirectoryModel, AccountEntry, FilterBar, GroupCard } from '.';
@@ -11,6 +12,9 @@ interface Properties {
 
   /** Model that contains imformation about the accounts. */
   model: AccountDirectoryModel;
+
+  /** The roles of the user looking at the directory page. */
+  roles: Nexus.AccountRoles;
 
   /** Called when the user wants to make a new group. */
   onNewGroupClick?: () => void;
@@ -62,10 +66,14 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       }
     })();
     const buttonBoxStyle = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return AccountDirectoryPage.STYLE.buttonBoxSmall;
+      if(this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
+        if(this.props.displaySize === DisplaySize.SMALL) {
+          return AccountDirectoryPage.STYLE.buttonBoxSmall;
+        } else {
+          return AccountDirectoryPage.STYLE.buttonBox;
+        }
       } else {
-        return AccountDirectoryPage.STYLE.buttonBox;
+        return AccountDirectoryPage.STYLE.hidden;
       }
     })();
     const buttonStyle = (() => {
@@ -73,6 +81,20 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
         return AccountDirectoryPage.DYNAMIC_STYLE.buttonSmall;
       } else {
         return AccountDirectoryPage.DYNAMIC_STYLE.button;
+      }
+    })();
+    const horizontalButtonVisibility = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return AccountDirectoryPage.STYLE.hidden;
+      } else {
+        return null;
+      }
+    })();
+    const verticalButtonVisibility = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return null;
+      } else {
+        return AccountDirectoryPage.STYLE.hidden;
       }
     })();
     const cards = [];
@@ -91,9 +113,23 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       <div style={AccountDirectoryPage.STYLE.page}>
         <div style={contentWidth}>
           <div id='header' style={headerBoxStyle}>
+            <div style={verticalButtonVisibility}>
+              <div style={buttonBoxStyle}>
+                <button className={css(buttonStyle)}
+                    onClick={this.props.onNewAccountClick}>
+                  New Account
+                </button>
+                <div style={AccountDirectoryPage.STYLE.spacing}/>
+                <button onClick={this.props.onNewGroupClick}
+                    className={css(buttonStyle)}>
+                  New Group
+                </button>
+              </div>
+              <div style={AccountDirectoryPage.STYLE.spacing}/>
+            </div>
             <FilterBar value={this.state.filter} onChange={this.onChange}/>
-            <div style={AccountDirectoryPage.STYLE.spacing}/>
-            <div style={buttonBoxStyle}>
+            <div style={{...buttonBoxStyle, ...horizontalButtonVisibility}}>
+              <div style={AccountDirectoryPage.STYLE.spacing}/>
               <button className={css(buttonStyle)}
                   onClick={this.props.onNewAccountClick}>
                 New Account
@@ -110,7 +146,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
             {cards}
           </div>
         </div>
-      </div>);
+    </div>);
   }
 
   private onChange(newFilter: string) {
@@ -167,9 +203,8 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
     },
     verticalHeaderBox: {
       display: 'flex' as 'flex',
-      flexDirection: 'column-reverse' as 'column-reverse',
+      flexDirection: 'column' as 'column',
       flexWrap: 'nowrap' as 'nowrap',
-      height: '86px',
       justifyContent: 'flex-end' as 'flex-end'
     },
     horizontalHeaderBox: {
@@ -201,6 +236,11 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       flexBias: '18px',
       flexGrow: 0,
       flexShrink: 0
+    },
+    hidden: {
+      opacity: 0,
+      visibility: 'hidden' as 'hidden',
+      display: 'none' as 'none'
     }
   };
   private static DYNAMIC_STYLE = StyleSheet.create({
