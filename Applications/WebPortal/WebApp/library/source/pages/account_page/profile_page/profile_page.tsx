@@ -299,7 +299,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <FormEntry name='Role(s)'
                     displaySize={this.props.displaySize}>
                   <div style={ProfilePage.STYLE.rolesWrapper}>
-                    <RolesField roles={this.props.roles}/>
+                    <RolesField roles={this.props.roles} readonly/>
                   </div>
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>

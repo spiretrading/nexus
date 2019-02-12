@@ -4,8 +4,11 @@ import { Transition } from 'react-transition-group';
 
 interface Properties {
 
-  /** The role the icon respresents */
+  /** The role the icon respresents. */
   role: Nexus.AccountRoles.Role;
+
+  /** Whether the roles can be changed. */
+  readonly?: boolean;
 
   /** Determines if the role is set of not. */
   isSet: boolean;
@@ -20,6 +23,11 @@ interface State {
 
 /** Displays a panel of icons highlighting an account's roles. */
 export class RoleIcon extends React.Component<Properties, State> {
+  public static readonly defaultProps = {
+    readonly: false,
+    onClick: () => {}
+  }
+
   constructor(props: Properties) {
     super(props);
     this.state = {
@@ -36,10 +44,17 @@ export class RoleIcon extends React.Component<Properties, State> {
       }
       return 'grey';
     })();
+    const iconStyle = (() => {
+      if(this.props.readonly) {
+        return RoleIcon.STYLE.readonly;
+      } else {
+        return RoleIcon.STYLE.clickable;
+      }
+    })();
     return (
       <div style={RoleIcon.STYLE.iconBox}>
         <img src={`${this.getSource(this.props.role)}${iconColor}.svg`}
-          style={RoleIcon.STYLE.icon}
+          style={iconStyle}
           width={RoleIcon.IMAGE_SIZE}
           height={RoleIcon.IMAGE_SIZE}
           onClick={this.props.onClick}
@@ -106,8 +121,11 @@ export class RoleIcon extends React.Component<Properties, State> {
     iconBox: {
       position: 'relative' as 'relative'
     },
-    icon: {
+    clickable: {
       cursor: 'pointer'
+    },
+    readonly: {
+      cursor: 'default'
     },
     animationBase: {
       opacity: 0,
