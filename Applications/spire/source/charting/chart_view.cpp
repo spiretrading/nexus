@@ -5,7 +5,7 @@
 #include <QPainter>
 #include <QPaintEvent>
 #include "Nexus/Definitions/Money.hpp"
-#include "spire/charting/chart_model.hpp"
+#include "spire/charting/cached_chart_model.hpp"
 #include "spire/spire/dimensions.hpp"
 
 using namespace boost::posix_time;
@@ -51,7 +51,7 @@ namespace {
 
 ChartView::ChartView(ChartModel& model, QWidget* parent)
     : QWidget(parent),
-      m_model(&model),
+      m_model(std::make_unique<CachedChartModel>(&model)),
       m_x_origin(0),
       m_label_font("Roboto"),
       m_font_metrics(QFont()),

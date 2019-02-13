@@ -8,6 +8,9 @@ namespace Spire {
   class CachedChartModel : public ChartModel {
     public:
 
+      //! Signals an update to a candlestick.
+      using CandlestickSignal = Signal<void (const Candlestick& candle)>;
+
       struct ChartRange {
         ChartValue m_start;
         ChartValue m_end;
@@ -26,13 +29,22 @@ namespace Spire {
       QtPromise<std::vector<Candlestick>> load(ChartValue first,
         ChartValue last) override;
 
+      //! Connects a slot to the candlestick signal.
+      /*!
+        \param slot The slot to connect.
+      */
+      boost::signals2::connection connect_candlestick_slot(
+        const CandlestickSignal::slot_type& slot) const override;
+
     private:
-      // pointer or reference?
+      mutable CandlestickSignal m_candlestick_signal;
       ChartModel* m_chart_model;
       std::vector<ChartRange> m_ranges;
       std::vector<Candlestick> m_loaded_data;
 
-      int get_index(const ChartValue& value);
+      int get_loaded_data_index(const ChartValue& value);
+      QtPromise<std::vector<Candlestick>> load_data(
+        const std::vector<ChartRange>& data);
   };
 }
 
