@@ -347,7 +347,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <FormEntry name='Address'
                     displaySize={this.props.displaySize}>
                   <TextField
-                    value={this.props.identity.firstName}
+                    value={this.props.identity.addressLineOne}
                     displaySize={this.props.displaySize}
                     disabled/>
                 </FormEntry>
@@ -515,6 +515,7 @@ export class ProfilePage extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       height: '34px',
+      width: '122px',
       justifyContent: 'flex-start',
       alignItems: 'center'
     },

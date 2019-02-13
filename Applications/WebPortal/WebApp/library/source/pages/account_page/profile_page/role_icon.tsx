@@ -63,10 +63,9 @@ export class RoleIcon extends React.Component<Properties, State> {
         <Transition in={this.state.showToolTip} timeout={RoleIcon.TIMEOUT}>
           {(state) => (
             <div style={{...RoleIcon.STYLE.animationBase,
+                  ...RoleIcon.STYLE.imageTooltip
                   ...(RoleIcon.ANIMATION_STYLE as any)[state]}}>
-              <div style={RoleIcon.STYLE.imageTooltip}>
                 {this.getText(this.props.role)}
-              </div>
             </div>)}
         </Transition>
       </div>);
@@ -119,19 +118,25 @@ export class RoleIcon extends React.Component<Properties, State> {
   };
   private static STYLE = {
     iconBox: {
-      position: 'relative' as 'relative'
+      position: 'relative' as 'relative',
+      height: '100%',
+      flexGrow: 0,
+      flexShrink: 0,
+      overflow: 'visible'
     },
     clickable: {
       cursor: 'pointer'
     },
     readonly: {
-      cursor: 'default'
+      cursor: 'inherit'
     },
     animationBase: {
       opacity: 0,
-      transition: 'opacity 100ms ease-in-out'
+      transition: 'opacity 100ms ease-in-out',
+      zIndex: 2
     },
     imageTooltip: {
+      display: 'inline-block' as 'inline-block',
       font: '400 12px Roboto',
       paddingLeft: '15px',
       paddingRight: '15px',
@@ -144,7 +149,9 @@ export class RoleIcon extends React.Component<Properties, State> {
       left: '-2px',
       border: '1px solid #4B23A0',
       borderRadius: '1px',
-      boxShadow: '0px 0px 2px #00000064'
+      boxShadow: '0px 0px 2px #00000064',
+      zIndex: 1000
+
     }
   };
   private static readonly IMAGE_SIZE = '20px';

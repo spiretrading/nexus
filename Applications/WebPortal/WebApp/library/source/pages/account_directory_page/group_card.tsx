@@ -5,6 +5,7 @@ import * as React from 'react';
 import { Transition } from 'react-transition-group';
 import { DisplaySize, DropDownButton, HLine } from '../..';
 import { RolePanel } from '../account_page/role_panel';
+import { RolesField } from '../account_page/profile_page';
 import { AccountEntry } from '.';
 
 interface Properties {
@@ -100,7 +101,7 @@ export class GroupCard extends React.Component<Properties, State> {
         if(account.account.name.indexOf(this.props.filter) === 0
             && this.props.filter) {
           if(!this.props.isOpen && noLine) {
-            accounts.push(
+            accounts.unshift(
               <HLine key={this.props.group.id} color='#E6E6E6'/>);
             noLine = false;
           }
@@ -117,7 +118,7 @@ export class GroupCard extends React.Component<Properties, State> {
               {account.account.name.slice(this.props.filter.length)}
             </div>
             <div style={GroupCard.STYLE.rolesWrapper}>
-              <RolePanel roles={account.roles}/>
+              <RolesField roles={account.roles}/>
             </div>
           </div>);
         } else {
@@ -130,14 +131,16 @@ export class GroupCard extends React.Component<Properties, State> {
                 <div className={css(GroupCard.DYNAMIC_STYLE.accountBox)}
                     style={(GroupCard.accountLabelAnimationStyle as any)[state]}
                     key={account.account.id}
+                    z-index={0}
                     onClick={() =>
                       this.props.onDirectoryEntryClick(account.account)}>
-                  <div style={{...accountsLableStyle,
+                  <div z-index={0}
+                      style={{...accountsLableStyle,
                       ...GroupCard.STYLE.accountLabelText}}>
                     {account.account.name.toString()}
                   </div>
-                  <div style={GroupCard.STYLE.rolesWrapper}>
-                    <RolePanel roles={account.roles}/>
+                  <div style={GroupCard.STYLE.rolesWrapper} z-index={0}>
+                    <RolesField roles={account.roles}/>
                   </div>
                 </div>
               )}
@@ -263,7 +266,7 @@ export class GroupCard extends React.Component<Properties, State> {
       flexShrink: 0
     },
     rolesWrapper: {
-      width: '80px',
+      width: '104px',
       flexGrow: 0,
       flexShrink: 0
     },
@@ -323,7 +326,6 @@ export class GroupCard extends React.Component<Properties, State> {
       transform: 'scaleY(1)',
       transitionProperty: 'max-height, transform',
       transitionDuration: '200ms',
-      overflow: 'hidden' as 'hidden',
       transformOrigin: 'top' as 'top'
     },
     exiting: {
@@ -331,13 +333,11 @@ export class GroupCard extends React.Component<Properties, State> {
       transform: 'scaleY(0)',
       transitionProperty: 'max-height, transform',
       transitionDuration: `200ms`,
-      overflow: 'hidden' as 'hidden',
       transformOrigin: 'top' as 'top'
     },
     exited: {
       maxHeight: 0,
       transform: 'scaleY(0)',
-      overflow: 'hidden' as 'hidden',
       transformOrigin: 'top' as 'top'
     }
   };
