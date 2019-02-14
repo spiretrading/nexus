@@ -22,20 +22,20 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load(ChartValue first,
     auto initial_data = ChartRange({first, last});
     return load_data({initial_data});
   }
-  auto get_iterator = [=] (const auto& value) {
+  auto value_loaded = [=] (const auto& value) {
     return std::find_if(m_loaded_data.begin(), m_loaded_data.end(),
-      [=] (const auto& v) { return v.GetEnd() == value; });
+      [=] (const auto& v) { return v.GetEnd() == value; }) ==
+      m_loaded_data.end();
   };
-  auto first_iter = get_iterator(first);
-  auto last_iter = get_iterator(last);
+  auto first_loaded = value_loaded(first);
+  auto last_loaded = value_loaded(last);
   auto gaps = std::vector<ChartRange>();
-  if(first_iter == m_loaded_data.end()) {
+  if(first_loaded) {
     gaps.push_back({first, ChartValue()});
   }
-  if(last_iter == m_loaded_data.end()) {
+  if(last_loaded) {
     if(m_loaded_data.begin()->GetStart() > last ||
-        (first_iter == m_loaded_data.end() &&
-        last_iter == m_loaded_data.end())) {
+        (first_loaded && last_loaded)) {
       gaps.front().m_end = last;
       return load_data(gaps);
     }
