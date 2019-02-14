@@ -38,7 +38,7 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load(ChartValue first,
   }
   // remove this after testing
   first = ChartValue(-2);
-  last = ChartValue(20);
+  last = ChartValue(12);
   // don't actually need the index, just need to know if it's in the loaded data
   auto first_index = get_loaded_data_index(first);
   auto last_index = get_loaded_data_index(last);
@@ -101,41 +101,24 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_data(
   if(m_ranges.empty()) {
     m_ranges.push_back(data.front());
   } else {
-    // combine left and right into one sorted stack
-    auto left = std::stack<ChartRange>();
-    for(auto& range : boost::adaptors::reverse(data)) {
-      left.push(range);
-    }
-    auto right = std::stack<ChartRange>();
-    for(auto& range : boost::adaptors::reverse(m_ranges)) {
-      right.push(range);
-    }
+    auto ranges = m_ranges;
+    ranges.insert(ranges.end(), data.begin(), data.end());
+    std::sort(ranges.begin(), ranges.end(),
+      [] (const auto& lhs, const auto& rhs) {
+        return lhs.m_start < rhs.m_start;
+      });
     m_ranges.clear();
-    while(!left.empty() && !right.empty()) {
-      if(left.empty()) {
-        m_ranges.push_back(right.top());
-        right.pop();
-        continue;
-      }
-      if(right.empty()) {
-        m_ranges.push_back(left.top());
-        left.pop();
-        continue;
-      }
-
-
-      auto high = ChartValue();
-      if(left.top().m_start < right.top().m_start) {
-        high = left.top().m_end;
-        m_ranges.push_back({left.top().m_start, ChartValue()});
-        left.pop();
+    for(auto& range : ranges) {
+      if(m_ranges.empty()) {
+        m_ranges.push_back(range);
       } else {
-        high = right.top().m_end;
-        m_ranges.push_back({right.top().m_start, ChartValue()});
-        right.pop();
-      }
-      while(m_ranges.back().m_end == ChartValue()) {
-        
+        auto lower = m_ranges.back();
+        if(range.m_start <= lower.m_end) {
+          auto upper_bound = std::max(lower.m_end, range.m_end);
+          m_ranges.back() = {lower.m_start, upper_bound};
+        } else {
+          m_ranges.push_back(range);
+        }
       }
     }
   }
