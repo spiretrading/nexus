@@ -65,18 +65,6 @@ connection CachedChartModel::connect_candlestick_slot(
   return m_chart_model->connect_candlestick_slot(slot);
 }
 
-int CachedChartModel::get_loaded_data_index(const ChartValue& value) {
-  if(m_loaded_data.front().GetStart() == value) {
-    return 0;
-  }
-  auto it = std::find_if(m_loaded_data.begin(), m_loaded_data.end(),
-    [&] (const auto& v) { return v.GetEnd() == value; });
-  if(it == m_loaded_data.end()) {
-    return -1;
-  }
-  return it - m_loaded_data.begin();
-}
-
 QtPromise<std::vector<Candlestick>> CachedChartModel::load_data(
     const std::vector<ChartRange>& data) {
   if(m_ranges.empty()) {
