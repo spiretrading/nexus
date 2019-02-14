@@ -93,14 +93,6 @@ int CachedChartModel::get_loaded_data_index(const ChartValue& value) {
 
 QtPromise<std::vector<Candlestick>> CachedChartModel::load_data(
     const std::vector<ChartRange>& data) {
-  //auto data_callback = [=] (auto result) {
-  //  m_returned_server_data.push_back(result);
-  //};
-
-
-  // stitch everything together
-
-
   if(m_ranges.empty()) {
     m_ranges.push_back(data.front());
   } else {
@@ -125,10 +117,6 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_data(
       }
     }
   }
-
-
-
-  // lamba capture: value or reference?
   m_load_data_promises.clear();
   return make_qt_promise([=] {
     for(auto& range : data) {
