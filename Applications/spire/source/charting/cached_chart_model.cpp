@@ -7,19 +7,19 @@ using namespace Spire;
 
 CachedChartModel::CachedChartModel(ChartModel* model)
     : m_chart_model(model) {
-  m_ranges.push_back({ChartValue(1), ChartValue(4)});
-  m_ranges.push_back({ChartValue(7), ChartValue(10)});
-  m_ranges.push_back({ChartValue(14), ChartValue(17)});
-  m_loaded_data = {
-    Candlestick(ChartValue(1), ChartValue(2)),
-    Candlestick(ChartValue(2), ChartValue(3)),
-    Candlestick(ChartValue(3), ChartValue(4)),
-    Candlestick(ChartValue(7), ChartValue(8)),
-    Candlestick(ChartValue(8), ChartValue(9)),
-    Candlestick(ChartValue(9), ChartValue(10)),
-    Candlestick(ChartValue(14), ChartValue(15)),
-    Candlestick(ChartValue(15), ChartValue(16)),
-    Candlestick(ChartValue(16), ChartValue(17))};
+  //m_ranges.push_back({ChartValue(1), ChartValue(4)});
+  //m_ranges.push_back({ChartValue(7), ChartValue(10)});
+  //m_ranges.push_back({ChartValue(14), ChartValue(17)});
+  //m_loaded_data = {
+  //  Candlestick(ChartValue(1), ChartValue(2)),
+  //  Candlestick(ChartValue(2), ChartValue(3)),
+  //  Candlestick(ChartValue(3), ChartValue(4)),
+  //  Candlestick(ChartValue(7), ChartValue(8)),
+  //  Candlestick(ChartValue(8), ChartValue(9)),
+  //  Candlestick(ChartValue(9), ChartValue(10)),
+  //  Candlestick(ChartValue(14), ChartValue(15)),
+  //  Candlestick(ChartValue(15), ChartValue(16)),
+  //  Candlestick(ChartValue(16), ChartValue(17))};
 }
 
 ChartValue::Type CachedChartModel::get_x_axis_type() const {
@@ -37,8 +37,8 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load(ChartValue first,
     return load_data({initial_data});
   }
   // remove this after testing
-  first = ChartValue(-2);
-  last = ChartValue(12);
+  //first = ChartValue(-2);
+  //last = ChartValue(12);
   // don't actually need the index, just need to know if it's in the loaded data
   auto first_index = get_loaded_data_index(first);
   auto last_index = get_loaded_data_index(last);
@@ -51,7 +51,7 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load(ChartValue first,
         last_index == -1)) {
       gaps.front().m_end = last;
       // uncomment this after testing
-      //return load_data(gaps);
+      return load_data(gaps);
     }
   }
   if(gaps.begin() == gaps.end()) {
@@ -93,9 +93,12 @@ int CachedChartModel::get_loaded_data_index(const ChartValue& value) {
 
 QtPromise<std::vector<Candlestick>> CachedChartModel::load_data(
     const std::vector<ChartRange>& data) {
-  // load data
-  // stitch everything together
+  //auto data_callback = [=] (auto result) {
+  //  m_returned_server_data.push_back(result);
+  //};
 
+
+  // stitch everything together
 
 
   if(m_ranges.empty()) {
@@ -125,7 +128,18 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_data(
 
 
 
-
-  // return new promise
-  return QtPromise<std::vector<Candlestick>>();
+  // lamba capture: value or reference?
+  m_load_data_promises.clear();
+  return make_qt_promise([=] {
+    for(auto& range : data) {
+      m_load_data_promises.push_back(m_chart_model->load(
+        range.m_start, range.m_end));
+      m_load_data_promises.back().then([=] (auto result) {
+        // sort this data
+        m_loaded_data.insert(m_loaded_data.end(), result.Get().begin(),
+          result.Get().end());
+      });
+    }
+    return m_loaded_data;
+  });
 }
