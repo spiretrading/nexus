@@ -1,4 +1,4 @@
-import { css, StyleSheet } from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import { VBoxLayout } from 'dali';
 import * as React from 'react';
@@ -128,8 +128,8 @@ export class GroupCard extends React.Component<Properties, State> {
                 key={account.account.id}
                 timeout={GroupCard.TIMEOUTS}>
               {(state) => (
-                <div className={css(GroupCard.DYNAMIC_STYLE.accountBox)}
-                    style={(GroupCard.accountLabelAnimationStyle as any)[state]}
+                <div className={css(GroupCard.DYNAMIC_STYLE.accountBox,
+                  (GroupCard.accountLabelAnimationStyle as any)[state])}
                     key={account.account.id}
                     z-index={0}
                     onClick={() =>
@@ -155,7 +155,7 @@ export class GroupCard extends React.Component<Properties, State> {
           {(state) => (
             <div key={this.props.group.id} style={{...accountsLableStyle,
                 ...GroupCard.STYLE.emptyLableText,
-                ...(GroupCard.accountLabelAnimationStyle as any)[state]}}>
+                ...(GroupCard.emptyLabelAnimationStyle as any)[state]}}>
               Empty
             </div>
           )}
@@ -316,7 +316,32 @@ export class GroupCard extends React.Component<Properties, State> {
       }
     }
   });
-  private static readonly accountLabelAnimationStyle = {
+  private static readonly accountLabelAnimationStyle = StyleSheet.create({
+    entering: {
+      maxHeight: 0,
+      transform: 'scaleY(0)'
+    },
+    entered: {
+      maxHeight: '34px',
+      transform: 'scaleY(1)',
+      transitionProperty: 'max-height, transform',
+      transitionDuration: '200ms',
+      transformOrigin: 'top' as 'top'
+    },
+    exiting: {
+      maxHeight: 0,
+      transform: 'scaleY(0)',
+      transitionProperty: 'max-height, transform',
+      transitionDuration: `200ms`,
+      transformOrigin: 'top' as 'top'
+    },
+    exited: {
+      maxHeight: 0,
+      transform: 'scaleY(0)',
+      transformOrigin: 'top' as 'top'
+    }
+  });
+  private static readonly emptyLabelAnimationStyle = {
     entering: {
       maxHeight: 0,
       transform: 'scaleY(0)'

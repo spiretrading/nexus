@@ -125,15 +125,16 @@ export class RoleIcon extends React.Component<Properties, State> {
       overflow: 'visible'
     },
     clickable: {
-      cursor: 'pointer'
+      cursor: 'pointer',
+      zIndex: -100
     },
     readonly: {
-      cursor: 'inherit'
+      cursor: 'inherit',
+      zIndex: -100
     },
     animationBase: {
       opacity: 0,
       transition: 'opacity 100ms ease-in-out',
-      zIndex: 2
     },
     imageTooltip: {
       display: 'inline-block' as 'inline-block',
@@ -150,8 +151,7 @@ export class RoleIcon extends React.Component<Properties, State> {
       border: '1px solid #4B23A0',
       borderRadius: '1px',
       boxShadow: '0px 0px 2px #00000064',
-      zIndex: 1000
-
+      zIndex: 5000
     }
   };
   private static readonly IMAGE_SIZE = '20px';
