@@ -154,6 +154,7 @@ export class PhotoField extends React.Component<Properties, {}> {
       overflow: 'hidden' as 'hidden'
     },
     boxMedium: {
+      boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       alignItems: 'center' as 'center',
@@ -167,6 +168,7 @@ export class PhotoField extends React.Component<Properties, {}> {
       overflow: 'hidden' as 'hidden'
     },
     boxLarge: {
+      boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       alignItems: 'center' as 'center',
