@@ -6,7 +6,8 @@ using namespace boost::signals2;
 using namespace Spire;
 
 CachedChartModel::CachedChartModel(ChartModel* model)
-    : m_chart_model(model) {}
+    : m_chart_model(model),
+      m_data_promise_counter(0) {}
 
 ChartValue::Type CachedChartModel::get_x_axis_type() const {
   return m_chart_model->get_x_axis_type();
@@ -101,11 +102,19 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_data(
     for(auto& range : data) {
       m_load_data_promises.push_back(m_chart_model->load(
         range.m_start, range.m_end));
+      ++m_data_promise_counter;
       m_load_data_promises.back().then([=] (auto result) {
         // sort this data
         m_loaded_data.insert(m_loaded_data.end(), result.Get().begin(),
           result.Get().end());
+        --m_data_promise_counter;
+        if(m_data_promise_counter == 0) {
+          m_load_data_promises.clear();
+        }
       });
+    }
+    while(m_data_promise_counter != 0) {
+      
     }
     return m_loaded_data;
   });
