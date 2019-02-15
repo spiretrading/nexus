@@ -62,7 +62,7 @@ export class CountrySelectionBox extends React.Component<Properties> {
     const content = (() => {
       if(this.props.readonly) {
         return (
-          <TextField disabled
+          <TextField readonly
             value={this.props.countryDatabase.fromCode(this.props.value).name}
             displaySize={this.props.displaySize}/>);
       } else {
@@ -85,9 +85,9 @@ export class CountrySelectionBox extends React.Component<Properties> {
 
   private static readonly STYLE = {
     boxSmall: {
-      maxWidth: '424px',
       height: '34px',
-      font: '400 16px Roboto'
+      font: '400 16px Roboto',
+      width: '100%'
     },
     boxLarge: {
       width: '200px',
