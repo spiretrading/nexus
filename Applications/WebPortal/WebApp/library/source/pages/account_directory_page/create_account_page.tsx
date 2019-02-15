@@ -7,12 +7,11 @@ import { CountrySelectionBox } from '../../components';
 import { FormEntry, PhotoField, PhotoFieldDisplayMode, RolesField, TextField }
   from '../account_page/profile_page';
 
-
 interface Properties {
-  
+
   /** The size of the element to display. */
   displaySize: DisplaySize;
-  
+
   /** */
   countryDatabase: Nexus.CountryDatabase;
 }
@@ -22,6 +21,7 @@ interface State {
   identity: Nexus.AccountIdentity;
 }
 
+/** The page that is shown when the user wants to create a new account. */
 export class CreateAccountPage extends React.Component<Properties, State> {
   public static readonly defaultProps = {
   };
@@ -181,7 +181,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                   <CountrySelectionBox
                     displaySize={this.props.displaySize}
                     countryDatabase={this.props.countryDatabase}
-                    value={}/>
+                    value={Nexus.DefaultCountries.CA}/>
                 </FormEntry>
 
               </Dali.VBoxLayout>
@@ -209,11 +209,6 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       flexDirection: 'row' as 'row',
       justifyContent: 'space-between' as 'space-between',
       overflowY: 'auto' as 'auto'
-    },
-    hidden: {
-      opacity: 0,
-      visibility: 'hidden' as 'hidden',
-      display: 'none' as 'none'
     },
     headerStyler: {
       color: '#333333',
@@ -245,14 +240,6 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       width: '122px',
       justifyContent: 'flex-start',
       alignItems: 'center'
-    },
-    errorMessage: {
-      color: '#E63F44',
-      font: '400 14px Roboto'
-    },
-    statusMessage: {
-      color: '#36BB55',
-      font: '400 14px Roboto'
     },
     filler: {
       flexGrow: 1
