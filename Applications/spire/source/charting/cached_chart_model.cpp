@@ -18,9 +18,12 @@ ChartValue::Type CachedChartModel::get_y_axis_type() const {
 
 QtPromise<std::vector<Candlestick>> CachedChartModel::load(ChartValue first,
     ChartValue last) {
+
+  // check if range already exists, if so, return it instead of loading
+
+
   if(m_ranges.empty()) {
-    auto initial_data = ChartRange({first, last});
-    return load_data({initial_data});
+    return load_data({ChartRange({first, last})});
   }
   auto value_loaded = [=] (const auto& value) {
     return std::find_if(m_loaded_data.begin(), m_loaded_data.end(),
@@ -33,6 +36,8 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load(ChartValue first,
   if(first_loaded) {
     gaps.push_back({first, ChartValue()});
   }
+  // I don't think this will work, assumes that if both values are found,
+  // then the loaded values are contiguous
   if(last_loaded) {
     if(m_loaded_data.begin()->GetStart() > last ||
         (first_loaded && last_loaded)) {
