@@ -80,7 +80,9 @@ class LargeHeader extends React.Component<HeaderProps> {
               <div style={LargeHeader.STYLES.usernameAndRoleWrapper}>
                 <UsernameLabel name={this.props.name} height='40px'/>
                 <Padding size='10px'/>
-                <RolePanel roles={this.props.roles}/>
+                <div style={LargeHeader.STYLES.roleWrapper}>
+                  <RolePanel roles={this.props.roles}/>
+                </div>
               </div>
             </div>
             <Padding size='18px'/>
@@ -101,6 +103,12 @@ class LargeHeader extends React.Component<HeaderProps> {
       height: '40px',
       display: 'flex',
       flexWrap: 'wrap' as 'wrap'
+    },
+    roleWrapper: {
+      width: '68px',
+      height: '40px',
+      flexGrow: 0,
+      flexShrink: 0
     }
   }
 }
@@ -115,7 +123,9 @@ class MediumHeader extends React.Component<HeaderProps> {
           <HBoxLayout height='40px' width='750px'>
             {this.props.children}
             <div style={MediumHeader.STYLES.innerPadding}/>
-            <RolePanel roles={this.props.roles}/>
+            <div style={MediumHeader.STYLES.roleWrapper}>
+              <RolePanel roles={this.props.roles}/>
+            </div>
           </HBoxLayout>
           <Padding size='18px'/>
           <div style={MediumHeader.STYLES.headerPadding}/>
@@ -143,6 +153,12 @@ class MediumHeader extends React.Component<HeaderProps> {
     innerPadding: {
       width: 'calc(100% - 658px)',
       height: '100%'
+    },
+    roleWrapper: {
+      width: '68px',
+      height: '40px',
+      flexGrow: 0,
+      flexShrink: 0
     }
   }
 }
@@ -157,7 +173,9 @@ class SmallHeader extends React.Component<HeaderProps> {
           <HBoxLayout height='40px' style={SmallHeader.STYLES.accountHeader}>
             {this.props.children}
             <div style={SmallHeader.STYLES.innerPadding}/>
-            <RolePanel roles={this.props.roles}/>
+            <div style={SmallHeader.STYLES.roleWrapper}>
+              <RolePanel roles={this.props.roles}/>
+            </div>
           </HBoxLayout>
           <Padding size='18px'/>
           <div style={SmallHeader.STYLES.headerPadding}/>
@@ -189,6 +207,12 @@ class SmallHeader extends React.Component<HeaderProps> {
     innerPadding: {
       width: 'calc(45% - 68px)',
       height: '100%'
+    },
+    roleWrapper: {
+      width: '68px',
+      height: '40px',
+      flexGrow: 0,
+      flexShrink: 0
     }
   }
 }
