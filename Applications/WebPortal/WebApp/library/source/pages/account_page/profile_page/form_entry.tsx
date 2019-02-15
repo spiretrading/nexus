@@ -56,7 +56,7 @@ export class FormEntry extends React.Component<Properties> {
     const content = (() => {
       if(orientation === FormEntry.Orientation.HORIZONTAL) {
         return (
-          <HBoxLayout width='100%'>
+          <HBoxLayout style={FormEntry.STYLE.box} width='100%'>
             <div style={FormEntry.STYLE.horizontalHeader}>
               {this.props.name}
             </div>
@@ -80,9 +80,7 @@ export class FormEntry extends React.Component<Properties> {
 
   private static STYLE = {
     box: {
-      cursor: 'default',
-      width: '100%',
-      flex: '1 1 auto'
+      boxSizing: 'border-box' as 'border-box'
     },
     childBox: {
       width: '100%',
