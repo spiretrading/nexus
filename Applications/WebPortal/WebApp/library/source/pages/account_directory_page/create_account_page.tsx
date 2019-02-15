@@ -107,7 +107,6 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <TextField
                     value={this.state.identity.firstName}
-                    placeholder='First Name'
                     displaySize={this.props.displaySize}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -115,7 +114,6 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <TextField
                     value={this.state.identity.lastName}
-                    placeholder='Last Name'
                     displaySize={this.props.displaySize}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -123,7 +121,6 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <TextField
                     value=''
-                    placeholder='Username'
                     displaySize={this.props.displaySize}/>
                 </FormEntry>
                  <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -139,7 +136,6 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <TextField
                     value={null}
-                    placeholder='Find Group'
                     displaySize={this.props.displaySize}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -147,7 +143,6 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <TextField
                     value={this.state.identity.emailAddress}
-                    placeholder='Email'
                     displaySize={this.props.displaySize}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -155,7 +150,6 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <TextField
                     value={this.state.identity.addressLineOne}
-                    placeholder='Address'
                     displaySize={this.props.displaySize}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -163,7 +157,6 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <TextField
                     value={this.state.identity.city}
-                    placeholder='City'
                     displaySize={this.props.displaySize}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -171,7 +164,6 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <TextField
                     value={this.state.identity.province}
-                    placeholder='Province/State'
                     displaySize={this.props.displaySize}/>
                 </FormEntry>
               <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
