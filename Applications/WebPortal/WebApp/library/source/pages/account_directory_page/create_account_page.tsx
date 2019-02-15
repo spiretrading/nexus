@@ -30,6 +30,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       identity: new Nexus.AccountIdentity(),
       roles: new Nexus.AccountRoles()
     };
+    this.onRoleClick = this.onRoleClick.bind(this);
   }
 
   public render(): JSX.Element {
@@ -106,7 +107,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <TextField
                     value={this.state.identity.firstName}
-                    placeholder={'First Name'}
+                    placeholder='First Name'
                     displaySize={this.props.displaySize}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -114,7 +115,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <TextField
                     value={this.state.identity.lastName}
-                    placeholder={'Last Name'}
+                    placeholder='Last Name'
                     displaySize={this.props.displaySize}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -122,14 +123,15 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <TextField
                     value=''
-                    placeholder={'Username'}
+                    placeholder='Username'
                     displaySize={this.props.displaySize}/>
                 </FormEntry>
                  <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                  <FormEntry name='Role(s)'
                     displaySize={this.props.displaySize}>
                   <div style={CreateAccountPage.STYLE.rolesWrapper}>
-                    <RolesField roles={this.state.roles}/>
+                    <RolesField roles={this.state.roles}
+                      onClick={this.onRoleClick}/>
                     </div>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -137,7 +139,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <TextField
                     value={null}
-                    placeholder={'Find Group'}
+                    placeholder='Find Group'
                     displaySize={this.props.displaySize}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -145,7 +147,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <TextField
                     value={this.state.identity.emailAddress}
-                    placeholder={'Email'}
+                    placeholder='Email'
                     displaySize={this.props.displaySize}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -153,7 +155,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <TextField
                     value={this.state.identity.addressLineOne}
-                    placeholder={'Address'}
+                    placeholder='Address'
                     displaySize={this.props.displaySize}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -161,7 +163,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <TextField
                     value={this.state.identity.city}
-                    placeholder={'City'}
+                    placeholder='City'
                     displaySize={this.props.displaySize}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -169,7 +171,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <TextField
                     value={this.state.identity.province}
-                    placeholder={'Province/State'}
+                    placeholder='Province/State'
                     displaySize={this.props.displaySize}/>
                 </FormEntry>
               <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -183,7 +185,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
               </Dali.VBoxLayout>
             </Dali.HBoxLayout>
             <Dali.Padding size={CreateAccountPage.STANDARD_PADDING}/>
-            <HLine color={'#E6E6E6'}/>
+            <HLine color='#E6E6E6'/>
             <Dali.Padding size={CreateAccountPage.STANDARD_PADDING}/>
             <div style={CreateAccountPage.STYLE.buttonBox}>
               <button className={css(buttonStyle)}>Create Account</button>
@@ -193,6 +195,15 @@ export class CreateAccountPage extends React.Component<Properties, State> {
         </div>
         <div style={CreateAccountPage.STYLE.pagePadding}/>
       </div>);
+  }
+
+  private onRoleClick(role: Nexus.AccountRoles.Role) {
+    if(this.state.roles.test(role)) {
+      this.state.roles.unset(role);
+    } else {
+      this.state.roles.set(role);
+    }
+    this.setState({roles: this.state.roles});
   }
 
   private static readonly STYLE = {
