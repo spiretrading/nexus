@@ -1,7 +1,7 @@
 {
-  "name": "create_account_page_tester",
+  "name": "login_page_tester",
   "version": "0.1.0",
-  "description": "Tests the create new account page.",
+  "description": "Tests the login page.",
   "license": "GPL-3.0",
   "devDependencies": {
     "@types/react": "16.4.18",

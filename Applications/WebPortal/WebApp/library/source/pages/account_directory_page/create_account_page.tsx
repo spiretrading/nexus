@@ -1,17 +1,19 @@
 import { css, StyleSheet } from 'aphrodite';
-import * as Beam from 'beam';
 import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize, HLine } from '../../';
-import { PhotoField, PhotoFieldDisplayMode } from '../account_page/profile_page';
 import { CountrySelectionBox } from '../../components';
-import { FormEntry,  RolesField, TextField } 
+import { FormEntry, PhotoField, PhotoFieldDisplayMode, RolesField, TextField }
   from '../account_page/profile_page';
 
+
 interface Properties {
+  
+  /** The size of the element to display. */
   displaySize: DisplaySize;
   
+  /** */
   countryDatabase: Nexus.CountryDatabase;
 }
 

@@ -32,25 +32,19 @@ export class RolesField extends React.Component<Properties, {}> {
         onClick={() => this.props.onClick(props.role)}/>);
     };
     return (
-      <div style={RolesField.STYLE.containerStyle}>
+      <HBoxLayout width={RolesField.COMPONENT_WIDTH}
+          height={RolesField.IMAGE_SIZE}>
         <Icon role={Nexus.AccountRoles.Role.TRADER}/>
+        <Padding size={RolesField.IMAGE_PADDING}/>
         <Icon role={Nexus.AccountRoles.Role.MANAGER}/>
+        <Padding size={RolesField.IMAGE_PADDING}/>
         <Icon role={Nexus.AccountRoles.Role.ADMINISTRATOR}/>
+        <Padding size={RolesField.IMAGE_PADDING}/>
         <Icon role={Nexus.AccountRoles.Role.SERVICE}/>
-      </div>);
+      </HBoxLayout>);
   }
 
-  public static readonly STYLE = {
-    containerStyle: {
-      width: '100%',
-      height: '20px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      justifyContent: 'space-between' as 'space-between',
-      alignItems: 'center' as 'center',
-      flexGrow: 0,
-      flexShrink: 0
-    }
-  };
+  private static readonly IMAGE_SIZE = '20px';
+  private static readonly IMAGE_PADDING = '14px';
+  private static readonly COMPONENT_WIDTH = '68px';
 }

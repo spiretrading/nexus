@@ -85,7 +85,6 @@ export class CountrySelectionBox extends React.Component<Properties> {
 
   private static readonly STYLE = {
     boxSmall: {
-      //maxWidth: '424px',
       height: '34px',
       font: '400 16px Roboto',
       width: '100%'
