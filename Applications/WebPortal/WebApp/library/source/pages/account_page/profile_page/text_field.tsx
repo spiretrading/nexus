@@ -22,6 +22,7 @@ interface Properties {
   /** The value to display in the field. */
   value?: string;
 
+  /** Text to show if the value is empty. */
   placeholder?: string;
 
   /** The size to display the component at. */
@@ -42,6 +43,7 @@ export class TextField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     readonly: false,
     value: '',
+    placeholder: '',
     onInput: (_: string) => {}
   }
 
@@ -141,7 +143,6 @@ export class TextField extends React.Component<Properties, State> {
   private static STYLE = StyleSheet.create({
     box: {
       boxSizing: 'border-box' as 'border-box',
-      //width: '100%',
       height: '34px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
@@ -165,7 +166,6 @@ export class TextField extends React.Component<Properties, State> {
     },
     hoveredBox: {
       boxSizing: 'border-box' as 'border-box',
-      //width: '100%',
       height: '34px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',

@@ -2,7 +2,7 @@ import { css, StyleSheet } from 'aphrodite';
 import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize, HLine } from '../../';
+import { DisplaySize, HLine } from '../..';
 import { CountrySelectionBox } from '../../components';
 import { FormEntry, PhotoField, PhotoFieldDisplayMode, RolesField, TextField }
   from '../account_page/profile_page';
@@ -12,7 +12,7 @@ interface Properties {
   /** The size of the element to display. */
   displaySize: DisplaySize;
 
-  /** */
+  /** The database of available countries. */
   countryDatabase: Nexus.CountryDatabase;
 }
 
@@ -23,8 +23,6 @@ interface State {
 
 /** The page that is shown when the user wants to create a new account. */
 export class CreateAccountPage extends React.Component<Properties, State> {
-  public static readonly defaultProps = {
-  };
 
   constructor(props: Properties) {
     super(props);
@@ -84,7 +82,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     })();
     const buttonStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-          return CreateAccountPage.DYNAMIC_STYLE.buttonSmall;
+        return CreateAccountPage.DYNAMIC_STYLE.buttonSmall;
       } else {
         return CreateAccountPage.DYNAMIC_STYLE.buttonLarge;
       }
@@ -123,7 +121,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                 <FormEntry name='Username'
                     displaySize={this.props.displaySize}>
                   <TextField
-                    value={''}
+                    value=''
                     placeholder={'Username'}
                     displaySize={this.props.displaySize}/>
                 </FormEntry>
@@ -131,8 +129,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                  <FormEntry name='Role(s)'
                     displaySize={this.props.displaySize}>
                   <div style={CreateAccountPage.STYLE.rolesWrapper}>
-                    <RolesField
-                      roles={this.state.roles}/>
+                    <RolesField roles={this.state.roles}/>
                     </div>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -183,18 +180,15 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     countryDatabase={this.props.countryDatabase}
                     value={Nexus.DefaultCountries.CA}/>
                 </FormEntry>
-
               </Dali.VBoxLayout>
             </Dali.HBoxLayout>
-                <Dali.Padding size={CreateAccountPage.STANDARD_PADDING}/>
-                <HLine color={'#E6E6E6'}/>
-                <Dali.Padding size={CreateAccountPage.STANDARD_PADDING}/>
-                <div style={CreateAccountPage.STYLE.buttonBox}>
-                  <button className={css(buttonStyle)}>
-                      Create Account
-                  </button>
-                </div>
-                <Dali.Padding size={CreateAccountPage.BOTTOM_PADDING}/>
+            <Dali.Padding size={CreateAccountPage.STANDARD_PADDING}/>
+            <HLine color={'#E6E6E6'}/>
+            <Dali.Padding size={CreateAccountPage.STANDARD_PADDING}/>
+            <div style={CreateAccountPage.STYLE.buttonBox}>
+              <button className={css(buttonStyle)}>Create Account</button>
+            </div>
+            <Dali.Padding size={CreateAccountPage.BOTTOM_PADDING}/>
           </Dali.VBoxLayout>
         </div>
         <div style={CreateAccountPage.STYLE.pagePadding}/>
@@ -317,5 +311,4 @@ export class CreateAccountPage extends React.Component<Properties, State> {
   private static readonly SMALL_PADDING = '18px';
   private static readonly STANDARD_PADDING = '30px';
   private static readonly BOTTOM_PADDING = '60px';
-
 }
