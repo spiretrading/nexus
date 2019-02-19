@@ -185,7 +185,7 @@ export class GroupCard extends React.Component<Properties, State> {
                 <HLine color='#E6E6E6'/>
                 <div style={{height: topAccountPadding}}/>
               </div>
-              <div style={GroupCard.STYLE.entryContainerBox}>
+              <div style={GroupCard.STYLE.entryListWrapper}>
                 {accounts}
               </div>
               <div style={
@@ -257,7 +257,7 @@ export class GroupCard extends React.Component<Properties, State> {
       paddingLeft: '10px',
       cursor: 'default' as 'default'
     },
-    entryContainerBox: {
+    entryListWrapper: {
       boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
       flexDirection: 'column-reverse' as 'column-reverse'
