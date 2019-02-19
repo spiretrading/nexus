@@ -6,6 +6,7 @@ import { Transition } from 'react-transition-group';
 import { DisplaySize, DropDownButton, HLine } from '../..';
 import { RolePanel } from '../account_page/role_panel';
 import { AccountEntry } from '.';
+import { RolesField } from '../account_page';
 
 interface Properties {
 
@@ -117,7 +118,7 @@ export class GroupCard extends React.Component<Properties, State> {
               {account.account.name.slice(this.props.filter.length)}
             </div>
             <div style={GroupCard.STYLE.rolesWrapper}>
-              <RolePanel roles={account.roles}/>
+              <RolesField roles={account.roles}/>
             </div>
           </div>);
         } else {
@@ -137,7 +138,7 @@ export class GroupCard extends React.Component<Properties, State> {
                     {account.account.name.toString()}
                   </div>
                   <div style={GroupCard.STYLE.rolesWrapper}>
-                    <RolePanel roles={account.roles}/>
+                    <RolesField roles={account.roles}/>
                   </div>
                 </div>
               )}
@@ -314,23 +315,25 @@ export class GroupCard extends React.Component<Properties, State> {
     }
   });
   private static readonly accountLabelAnimationStyle = StyleSheet.create({
+    base: {
+      transitionProperty: 'max-height, transform',
+      transitionDuration: '200ms',
+      transformOrigin: 'top' as 'top'
+    },
     entering: {
       maxHeight: 0,
       transform: 'scaleY(0)'
     },
     entered: {
       maxHeight: '34px',
-      transform: 'scaleY(1)',
-      transitionProperty: 'max-height, transform',
-      transitionDuration: '200ms',
-      transformOrigin: 'top' as 'top'
+      transform: 'scaleY(1)'
     },
     exiting: {
       maxHeight: 0,
       transform: 'scaleY(0)',
-      transitionProperty: 'max-height, transform',
-      transitionDuration: `200ms`,
-      transformOrigin: 'top' as 'top'
+      //transitionProperty: 'max-height, transform',
+      //transitionDuration: `200ms`,
+      //transformOrigin: 'top' as 'top'
     },
     exited: {
       maxHeight: 0,

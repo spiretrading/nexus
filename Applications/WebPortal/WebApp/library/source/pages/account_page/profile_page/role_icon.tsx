@@ -62,11 +62,11 @@ export class RoleIcon extends React.Component<Properties, State> {
           onMouseLeave={this.hideToolTip}/>
         <Transition in={this.state.showToolTip} timeout={RoleIcon.TIMEOUT}>
           {(state) => (
-            <div style={{...RoleIcon.STYLE.animationBase,
+              <div 
+                style={{...RoleIcon.STYLE.animationBase,
+                  ...RoleIcon.STYLE.imageTooltip,
                   ...(RoleIcon.ANIMATION_STYLE as any)[state]}}>
-              <div style={RoleIcon.STYLE.imageTooltip}>
                 {this.getText(this.props.role)}
-              </div>
             </div>)}
         </Transition>
       </div>);
@@ -126,20 +126,12 @@ export class RoleIcon extends React.Component<Properties, State> {
       zIndex: -100
     },
     readonly: {
-<<<<<<< HEAD
       cursor: 'inherit',
       zIndex: -100
     },
     animationBase: {
       opacity: 0,
-      transition: 'opacity 100ms ease-in-out',
-=======
-      cursor: 'default'
-    },
-    animationBase: {
-      opacity: 0,
-      transition: 'opacity 100ms ease-in-out'
->>>>>>> 35cf6b76deac619b431ff60cb8565e92d450492b
+      transition: 'opacity 200ms ease-in-out'
     },
     imageTooltip: {
       font: '400 12px Roboto',
