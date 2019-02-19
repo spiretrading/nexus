@@ -1,13 +1,12 @@
 #include <catch.hpp>
 #include <QApplication>
+#include <QTimer>
 #include "spire/charting/cached_chart_model.hpp"
 #include "spire/charting/chart_value.hpp"
 #include "spire/charting/local_chart_model.hpp"
 
 using namespace Nexus;
 using namespace Spire;
-
-
 
 namespace {
   auto create_model() {
@@ -26,24 +25,20 @@ namespace {
 }
 
 TEST_CASE("test_right_no_overlap", "[CachedChartModel]") {
-  auto model = create_model();
-  auto first = ChartValue(10 * Money::ONE);
-  auto last = ChartValue(20 * Money::ONE);
-  auto model_promise = model->load(first, last);
-  auto model_sticks = std::vector<Candlestick>();
-  model_promise.then([&] (auto result) {
-    model_sticks = result.Get();
+  auto argc = 0;
+  auto app = QCoreApplication(argc, nullptr);
+  QTimer::singleShot(0,
+    [&] {
+      auto model = create_model();
+      auto first = ChartValue(10 * Money::ONE);
+      auto last = ChartValue(20 * Money::ONE);
+      auto model_sticks = wait(model->load(first, last));
+      auto cache = CachedChartModel(*model);
+      auto cached_sticks = wait(cache.load(first, last));
+      REQUIRE(model_sticks == cached_sticks);
+      app.exit();
   });
-  QApplication::processEvents();
-  auto cache = CachedChartModel(*model);
-  auto cached_promise = cache.load(first, last);
-  auto cached_sticks = std::vector<Candlestick>();
-  cached_promise.then([&] (auto result) {
-    cached_sticks = result.Get();
-  });
-  QApplication::processEvents();
-  REQUIRE(model_sticks == cached_sticks);
-
+  app.exec();
 }
 
 TEST_CASE("test_left_no_overlap", "[CachedChartModel]") {
