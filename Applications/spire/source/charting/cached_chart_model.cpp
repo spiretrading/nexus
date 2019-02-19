@@ -5,8 +5,8 @@
 using namespace boost::signals2;
 using namespace Spire;
 
-CachedChartModel::CachedChartModel(ChartModel* model)
-    : m_chart_model(model),
+CachedChartModel::CachedChartModel(ChartModel& model)
+    : m_chart_model(&model),
       m_data_promise_counter(0) {}
 
 ChartValue::Type CachedChartModel::get_x_axis_type() const {

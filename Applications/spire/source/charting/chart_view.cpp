@@ -51,7 +51,7 @@ namespace {
 
 ChartView::ChartView(ChartModel& model, QWidget* parent)
     : QWidget(parent),
-      m_model(std::make_unique<CachedChartModel>(&model)),
+      m_model(std::make_unique<CachedChartModel>(model)),
       m_x_origin(0),
       m_label_font("Roboto"),
       m_font_metrics(QFont()),

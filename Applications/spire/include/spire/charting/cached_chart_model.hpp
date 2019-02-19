@@ -20,7 +20,7 @@ namespace Spire {
       /*!
         \param model The model that supplies the data.
       */
-      CachedChartModel(ChartModel* model);
+      CachedChartModel(ChartModel& model);
 
       ChartValue::Type get_x_axis_type() const override;
 
