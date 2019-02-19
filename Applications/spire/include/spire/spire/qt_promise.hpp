@@ -4,6 +4,7 @@
 #include <type_traits>
 #include <utility>
 #include <boost/noncopyable.hpp>
+#include <QApplication>
 #include "spire/spire/qt_promise_imp.hpp"
 #include "spire/spire/spire.hpp"
 
@@ -60,6 +61,34 @@ namespace Spire {
   auto make_qt_promise(Executor&& executor) {
     return QtPromise<std::result_of_t<Executor()>>(
       std::forward<Executor>(executor));
+  }
+
+  //! Waits for a promise to complete and returns its result.
+  /*!
+    \param promise The promise to wait for.
+    \return The result of the promise's execution.
+  */
+  template<typename T>
+  T wait(QtPromise<T>& promise) {
+    auto future = std::optional<Beam::Expect<T>>();
+    promise.then(
+      [&] (auto result) {
+        future.emplace(std::move(result));
+      });
+    while(!future.has_value()) {
+      QApplication::processEvents(QEventLoop::WaitForMoreEvents);
+    }
+    return std::move(future->Get());
+  }
+
+  //! Waits for a promise to complete and returns its result.
+  /*!
+    \param promise The promise to wait for.
+    \return The result of the promise's execution.
+  */
+  template<typename T>
+  T wait(QtPromise<T> promise) {
+    return static_cast<T (*)(QtPromise<T>&)>(wait)(promise);
   }
 
   template<typename T>
