@@ -4,7 +4,7 @@ import { VBoxLayout } from 'dali';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
 import { DisplaySize, DropDownButton, HLine } from '../..';
-import { RolePanel } from '../account_page/role_panel';
+import { RolesField } from '../account_page';
 import { AccountEntry } from '.';
 
 interface Properties {
@@ -105,7 +105,7 @@ export class GroupCard extends React.Component<Properties, State> {
             noLine = false;
           }
           accounts.push(
-           <div className={css(GroupCard.DYNAMIC_STYLE.accountBox)}
+            <div className={css(GroupCard.DYNAMIC_STYLE.accountBox)}
               key={account.account.id}
               onClick={() =>
                 this.props.onDirectoryEntryClick(account.account)}>
@@ -117,7 +117,7 @@ export class GroupCard extends React.Component<Properties, State> {
               {account.account.name.slice(this.props.filter.length)}
             </div>
             <div style={GroupCard.STYLE.rolesWrapper}>
-              <RolePanel roles={account.roles}/>
+              <RolesField roles={account.roles}/>
             </div>
           </div>);
         } else {
@@ -127,9 +127,9 @@ export class GroupCard extends React.Component<Properties, State> {
                 key={account.account.id}
                 timeout={GroupCard.TIMEOUTS}>
               {(state) => (
-                <div className={css(GroupCard.DYNAMIC_STYLE.accountBox)}
-                    style={(GroupCard.accountLabelAnimationStyle as any)[state]}
-                    key={account.account.id}
+                <div key={account.account.id}
+                    className={css(GroupCard.DYNAMIC_STYLE.accountBox,
+                      (GroupCard.accountLabelAnimationStyle as any)[state])}
                     onClick={() =>
                       this.props.onDirectoryEntryClick(account.account)}>
                   <div style={{...accountsLableStyle,
@@ -137,7 +137,7 @@ export class GroupCard extends React.Component<Properties, State> {
                     {account.account.name.toString()}
                   </div>
                   <div style={GroupCard.STYLE.rolesWrapper}>
-                    <RolePanel roles={account.roles}/>
+                    <RolesField roles={account.roles}/>
                   </div>
                 </div>
               )}
@@ -152,7 +152,7 @@ export class GroupCard extends React.Component<Properties, State> {
           {(state) => (
             <div key={this.props.group.id} style={{...accountsLableStyle,
                 ...GroupCard.STYLE.emptyLableText,
-                ...(GroupCard.accountLabelAnimationStyle as any)[state]}}>
+                ...(GroupCard.emptyLabelAnimationStyle as any)[state]}}>
               Empty
             </div>
           )}
@@ -185,7 +185,9 @@ export class GroupCard extends React.Component<Properties, State> {
                 <HLine color='#E6E6E6'/>
                 <div style={{height: topAccountPadding}}/>
               </div>
-              {accounts}
+              <div style={GroupCard.STYLE.entryListWrapper}>
+                {accounts}
+              </div>
               <div style={
                     (GroupCard.bottomPaddingAnimationStyle as any)[state]}>
                 <div style={{height:'20px'}}/>
@@ -255,6 +257,11 @@ export class GroupCard extends React.Component<Properties, State> {
       paddingLeft: '10px',
       cursor: 'default' as 'default'
     },
+    entryListWrapper: {
+      boxSizing: 'border-box' as 'border-box',
+      display: 'flex' as 'flex',
+      flexDirection: 'column-reverse' as 'column-reverse'
+    },
     highlightedText: {
       font: '400 14px Roboto',
       color: '#000000',
@@ -263,7 +270,7 @@ export class GroupCard extends React.Component<Properties, State> {
       flexShrink: 0
     },
     rolesWrapper: {
-      width: '80px',
+      width: '122px',
       flexGrow: 0,
       flexShrink: 0
     },
@@ -313,7 +320,32 @@ export class GroupCard extends React.Component<Properties, State> {
       }
     }
   });
-  private static readonly accountLabelAnimationStyle = {
+  private static readonly accountLabelAnimationStyle = StyleSheet.create({
+    entering: {
+      maxHeight: 0,
+      transform: 'scaleY(0)'
+    },
+    entered: {
+      maxHeight: '34px',
+      transform: 'scaleY(1)',
+      transitionProperty: 'max-height, transform',
+      transitionDuration: '200ms',
+      transformOrigin: 'top' as 'top'
+    },
+    exiting: {
+      maxHeight: 0,
+      transform: 'scaleY(0)',
+      transitionProperty: 'max-height, transform',
+      transitionDuration: `200ms`,
+      transformOrigin: 'top' as 'top'
+    },
+    exited: {
+      maxHeight: 0,
+      transform: 'scaleY(0)',
+      transformOrigin: 'top' as 'top'
+    }
+  });
+  private static readonly emptyLabelAnimationStyle = {
     entering: {
       maxHeight: 0,
       transform: 'scaleY(0)'
@@ -398,7 +430,7 @@ export class GroupCard extends React.Component<Properties, State> {
     }
   };
   private static readonly TIMEOUTS = {
-    enter: 0,
+    enter: 1,
     entered: 200,
     exit: 200,
     exited:  200
