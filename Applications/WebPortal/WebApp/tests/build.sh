@@ -8,6 +8,9 @@ popd
 pushd account_page_tester
 ./build.sh $arguments
 popd
+pushd create_account_page_tester
+./build.sh $arguments
+popd
 pushd dashboard_page_tester
 ./build.sh $arguments
 popd

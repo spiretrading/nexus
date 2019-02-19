@@ -154,6 +154,7 @@ export class PhotoField extends React.Component<Properties, {}> {
       overflow: 'hidden' as 'hidden'
     },
     boxMedium: {
+      boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       alignItems: 'center' as 'center',
@@ -162,11 +163,12 @@ export class PhotoField extends React.Component<Properties, {}> {
       border: '1px solid #E6E6E6',
       borderRadius: '1px',
       height: '190px',
-      width: '284px',
+      width: '280px',
       position: 'relative' as 'relative',
       overflow: 'hidden' as 'hidden'
     },
     boxLarge: {
+      boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       alignItems: 'center' as 'center',
