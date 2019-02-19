@@ -1,12 +1,11 @@
-import { css, StyleSheet } from 'aphrodite/no-important';
+import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import { VBoxLayout } from 'dali';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
 import { DisplaySize, DropDownButton, HLine } from '../..';
-import { RolePanel } from '../account_page/role_panel';
-import { AccountEntry } from '.';
 import { RolesField } from '../account_page';
+import { AccountEntry } from '.';
 
 interface Properties {
 
@@ -186,7 +185,9 @@ export class GroupCard extends React.Component<Properties, State> {
                 <HLine color='#E6E6E6'/>
                 <div style={{height: topAccountPadding}}/>
               </div>
-              {accounts}
+              <div style={GroupCard.STYLE.entryContainerBox}>
+                {accounts}
+              </div>
               <div style={
                     (GroupCard.bottomPaddingAnimationStyle as any)[state]}>
                 <div style={{height:'20px'}}/>
@@ -256,6 +257,11 @@ export class GroupCard extends React.Component<Properties, State> {
       paddingLeft: '10px',
       cursor: 'default' as 'default'
     },
+    entryContainerBox: {
+      boxSizing: 'border-box' as 'border-box',
+      display: 'flex' as 'flex',
+      flexDirection: 'column-reverse' as 'column-reverse'
+    },
     highlightedText: {
       font: '400 14px Roboto',
       color: '#000000',
@@ -264,7 +270,7 @@ export class GroupCard extends React.Component<Properties, State> {
       flexShrink: 0
     },
     rolesWrapper: {
-      width: '80px',
+      width: '122px',
       flexGrow: 0,
       flexShrink: 0
     },
@@ -315,25 +321,23 @@ export class GroupCard extends React.Component<Properties, State> {
     }
   });
   private static readonly accountLabelAnimationStyle = StyleSheet.create({
-    base: {
-      transitionProperty: 'max-height, transform',
-      transitionDuration: '200ms',
-      transformOrigin: 'top' as 'top'
-    },
     entering: {
       maxHeight: 0,
       transform: 'scaleY(0)'
     },
     entered: {
       maxHeight: '34px',
-      transform: 'scaleY(1)'
+      transform: 'scaleY(1)',
+      transitionProperty: 'max-height, transform',
+      transitionDuration: '200ms',
+      transformOrigin: 'top' as 'top'
     },
     exiting: {
       maxHeight: 0,
       transform: 'scaleY(0)',
-      //transitionProperty: 'max-height, transform',
-      //transitionDuration: `200ms`,
-      //transformOrigin: 'top' as 'top'
+      transitionProperty: 'max-height, transform',
+      transitionDuration: `200ms`,
+      transformOrigin: 'top' as 'top'
     },
     exited: {
       maxHeight: 0,
@@ -426,7 +430,7 @@ export class GroupCard extends React.Component<Properties, State> {
     }
   };
   private static readonly TIMEOUTS = {
-    enter: 0,
+    enter: 1,
     entered: 200,
     exit: 200,
     exited:  200

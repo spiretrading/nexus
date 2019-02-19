@@ -122,16 +122,14 @@ export class RoleIcon extends React.Component<Properties, State> {
       position: 'relative' as 'relative'
     },
     clickable: {
-      cursor: 'pointer',
-      zIndex: -100
+      cursor: 'pointer'
     },
     readonly: {
-      cursor: 'inherit',
-      zIndex: -100
+      cursor: 'inherit'
     },
     animationBase: {
       opacity: 0,
-      transition: 'opacity 200ms ease-in-out'
+      transition: 'opacity 100ms ease-in-out'
     },
     imageTooltip: {
       font: '400 12px Roboto',
@@ -146,8 +144,7 @@ export class RoleIcon extends React.Component<Properties, State> {
       left: '-2px',
       border: '1px solid #4B23A0',
       borderRadius: '1px',
-      boxShadow: '0px 0px 2px #00000064',
-      zIndex: 5000
+      boxShadow: '0px 0px 2px #00000064'
     }
   };
   private static readonly IMAGE_SIZE = '20px';
