@@ -41,8 +41,6 @@ namespace Spire {
       ChartModel* m_chart_model;
       std::vector<ChartRange> m_ranges;
       std::vector<Candlestick> m_loaded_data;
-      std::vector<QtPromise<std::vector<Candlestick>>> m_load_data_promises;
-      int m_data_promise_counter;
 
       QtPromise<std::vector<Candlestick>> load_data(
         const std::vector<ChartRange>& data);
