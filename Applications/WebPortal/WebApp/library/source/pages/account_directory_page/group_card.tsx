@@ -105,7 +105,7 @@ export class GroupCard extends React.Component<Properties, State> {
             noLine = false;
           }
           accounts.push(
-           <div className={css(GroupCard.DYNAMIC_STYLE.accountBox)}
+            <div className={css(GroupCard.DYNAMIC_STYLE.accountBox)}
               key={account.account.id}
               onClick={() =>
                 this.props.onDirectoryEntryClick(account.account)}>
@@ -127,9 +127,9 @@ export class GroupCard extends React.Component<Properties, State> {
                 key={account.account.id}
                 timeout={GroupCard.TIMEOUTS}>
               {(state) => (
-                <div className={css(GroupCard.DYNAMIC_STYLE.accountBox,
-                  (GroupCard.accountLabelAnimationStyle as any)[state])}
-                    key={account.account.id}
+                <div key={account.account.id}
+                    className={css(GroupCard.DYNAMIC_STYLE.accountBox,
+                      (GroupCard.accountLabelAnimationStyle as any)[state])}
                     onClick={() =>
                       this.props.onDirectoryEntryClick(account.account)}>
                   <div style={{...accountsLableStyle,
