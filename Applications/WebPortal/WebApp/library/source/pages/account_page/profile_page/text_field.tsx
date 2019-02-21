@@ -32,6 +32,9 @@ interface Properties {
    * @param value - The updated value.
    */
   onInput?: (value: string) => void;
+
+  /** Indicates if there is a error with the value. */
+  isError?: boolean;
 }
 
 interface State {
@@ -60,7 +63,9 @@ export class TextField extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const boxStyle = (() => {
-      if(this.state.effects === Effects.HOVER) {
+      if(this.props.isError) {
+        return TextField.STYLE.errorBox;
+      } else if(this.state.effects === Effects.HOVER) {
         return TextField.STYLE.hoveredBox;
       } else if(this.state.effects === Effects.FOCUSED) {
         return TextField.STYLE.focusedBox;
@@ -185,6 +190,18 @@ export class TextField extends React.Component<Properties, State> {
       alignItems: 'center' as 'center',
       justifyContent: 'space-between',
       border: '1px solid #684BC7',
+      borderRadius: '1px'
+    },
+    errorBox: {
+      boxSizing: 'border-box' as 'border-box',
+      width: '100%',
+      height: '34px',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'nowrap' as 'nowrap',
+      alignItems: 'center' as 'center',
+      justifyContent: 'space-between',
+      border: '1px solid #E63F44',
       borderRadius: '1px'
     },
     image: {

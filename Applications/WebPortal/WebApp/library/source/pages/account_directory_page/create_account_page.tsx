@@ -1,4 +1,5 @@
 import { css, StyleSheet } from 'aphrodite';
+import * as Beam from 'beam';
 import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
@@ -14,11 +15,26 @@ interface Properties {
 
   /** The database of available countries. */
   countryDatabase: Nexus.CountryDatabase;
+
+  /** The call to submit the profile page. */
+  onSubmit: (username: string, groups: Beam.DirectoryEntry[],
+    identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles) => void;
+
+  /** The status given back from the server on callback. */
+  submitStatus?: string;
 }
 
 interface State {
   roles: Nexus.AccountRoles;
+  username: string;
   identity: Nexus.AccountIdentity;
+  isSubmitButtonDisabled: boolean;
+  errorStatus: string;
+  roleError: string;
+  firstNameError: boolean;
+  lastNameError: boolean;
+  userNameError: boolean;
+  emailError: boolean;
 }
 
 /** The page that is shown when the user wants to create a new account. */
@@ -27,10 +43,28 @@ export class CreateAccountPage extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
+      roles: new Nexus.AccountRoles(),
+      username: '',
       identity: new Nexus.AccountIdentity(),
-      roles: new Nexus.AccountRoles()
+      isSubmitButtonDisabled: true,
+      errorStatus: '',
+      roleError: '',
+      firstNameError: false,
+      lastNameError: false,
+      userNameError: false,
+      emailError: false
     };
     this.onRoleClick = this.onRoleClick.bind(this);
+    this.onFirstNameChange = this.onFirstNameChange.bind(this);
+    this.onLastNameChange = this.onLastNameChange.bind(this);
+    this.onUsernameChange = this.onUsernameChange.bind(this);
+    this.onEmailChange = this.onEmailChange.bind(this);
+    this.onAddressChange = this.onAddressChange.bind(this);
+    this.onCityChange = this.onCityChange.bind(this);
+    this.onProvinceChange = this.onProvinceChange.bind(this);
+    this.onCountryChange = this.onCountryChange.bind(this);
+    this.checkInputs = this.checkInputs.bind(this);
+    this.onSubmit = this.onSubmit.bind(this);
   }
 
   public render(): JSX.Element {
@@ -88,6 +122,27 @@ export class CreateAccountPage extends React.Component<Properties, State> {
         return CreateAccountPage.DYNAMIC_STYLE.buttonLarge;
       }
     })();
+    const errorStatus = (() => {
+      if(this.props.submitStatus) {
+        return (
+          <Dali.VBoxLayout>
+            <Dali.Padding size='18px'/>
+            <div style={CreateAccountPage.STYLE.errorStatus}>
+              {this.props.submitStatus}
+            </div>
+          </Dali.VBoxLayout>);
+      } else if (this.state.errorStatus) {
+        return (
+          <Dali.VBoxLayout>
+            <Dali.Padding size='18px'/>
+            <div style={CreateAccountPage.STYLE.errorStatus}>
+              {this.state.errorStatus}
+            </div>
+          </Dali.VBoxLayout>);
+      } else {
+        return null;
+      }
+    })();
     return (
       <div style={CreateAccountPage.STYLE.page}>
         <div style={CreateAccountPage.STYLE.pagePadding}/>
@@ -107,21 +162,27 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <TextField
                     value={this.state.identity.firstName}
-                    displaySize={this.props.displaySize}/>
+                    displaySize={this.props.displaySize}
+                    isError={this.state.firstNameError}
+                    onInput={this.onFirstNameChange}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='Last Name'
                     displaySize={this.props.displaySize}>
                   <TextField
                     value={this.state.identity.lastName}
-                    displaySize={this.props.displaySize}/>
+                    displaySize={this.props.displaySize}
+                    isError={this.state.lastNameError}
+                    onInput={this.onLastNameChange}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='Username'
                     displaySize={this.props.displaySize}>
                   <TextField
-                    value=''
-                    displaySize={this.props.displaySize}/>
+                    value={this.state.username}
+                    displaySize={this.props.displaySize}
+                    isError={this.state.userNameError}
+                    onInput={this.onUsernameChange}/>
                 </FormEntry>
                  <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                  <FormEntry name='Role(s)'
@@ -129,6 +190,10 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                   <div style={CreateAccountPage.STYLE.rolesWrapper}>
                     <RolesField roles={this.state.roles}
                       onClick={this.onRoleClick}/>
+                      <div style={CreateAccountPage.STYLE.filler}/>
+                      <div style={CreateAccountPage.STYLE.rolesWrapper}>
+                        {this.state.roleError}
+                      </div>
                     </div>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -136,35 +201,40 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <TextField
                     value={null}
-                    displaySize={this.props.displaySize}/>
+                    displaySize={this.props.displaySize}
+                    readonly/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='Email'
                     displaySize={this.props.displaySize}>
                   <TextField
                     value={this.state.identity.emailAddress}
-                    displaySize={this.props.displaySize}/>
+                    displaySize={this.props.displaySize}
+                    onInput={this.onEmailChange}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='Address'
                     displaySize={this.props.displaySize}>
                   <TextField
                     value={this.state.identity.addressLineOne}
-                    displaySize={this.props.displaySize}/>
+                    displaySize={this.props.displaySize}
+                    onInput={this.onAddressChange}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='City'
                     displaySize={this.props.displaySize}>
                   <TextField
                     value={this.state.identity.city}
-                    displaySize={this.props.displaySize}/>
+                    displaySize={this.props.displaySize}
+                    onInput={this.onCityChange}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='Province/State'
                     displaySize={this.props.displaySize}>
                   <TextField
                     value={this.state.identity.province}
-                    displaySize={this.props.displaySize}/>
+                    displaySize={this.props.displaySize}
+                    onInput={this.onProvinceChange}/>
                 </FormEntry>
               <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='Country'
@@ -172,7 +242,8 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                   <CountrySelectionBox
                     displaySize={this.props.displaySize}
                     countryDatabase={this.props.countryDatabase}
-                    value={Nexus.DefaultCountries.CA}/>
+                    value={this.state.identity.country}
+                    onChange={this.onCountryChange}/>
                 </FormEntry>
               </Dali.VBoxLayout>
             </Dali.HBoxLayout>
@@ -180,8 +251,13 @@ export class CreateAccountPage extends React.Component<Properties, State> {
             <HLine color='#E6E6E6'/>
             <Dali.Padding size={CreateAccountPage.STANDARD_PADDING}/>
             <div style={CreateAccountPage.STYLE.buttonBox}>
-              <button className={css(buttonStyle)}>Create Account</button>
+              <button className={css(buttonStyle)}
+              disabled={this.state.isSubmitButtonDisabled}
+              onClick={this.onSubmit}>
+                Create Account
+              </button>
             </div>
+            {errorStatus}
             <Dali.Padding size={CreateAccountPage.BOTTOM_PADDING}/>
           </Dali.VBoxLayout>
         </div>
@@ -196,6 +272,150 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       this.state.roles.set(role);
     }
     this.setState({roles: this.state.roles});
+  }
+
+  private onFirstNameChange(newValue: string) {
+    this.state.identity.firstName = newValue;
+    this.setState({ identity: this.state.identity });
+    this.shouldButtonBeEnabled();
+  }
+
+  private onLastNameChange(newValue: string) {
+    this.state.identity.lastName = newValue;
+    this.setState({ identity: this.state.identity });
+    this.shouldButtonBeEnabled();
+  }
+
+  private onUsernameChange(newValue: string) {
+    this.setState({ username: newValue});
+    this.shouldButtonBeEnabled();
+  }
+
+  private onEmailChange(newValue: string) {
+    this.state.identity.emailAddress = newValue;
+    this.setState({identity: this.state.identity});
+    this.shouldButtonBeEnabled();
+  }
+
+  private onAddressChange(newValue: string) {
+    this.state.identity.addressLineOne = newValue;
+    this.setState({identity: this.state.identity});
+    this.shouldButtonBeEnabled();
+  }
+
+  private onCityChange(newValue: string) {
+    this.state.identity.city = newValue;
+    this.setState({identity: this.state.identity});
+    this.shouldButtonBeEnabled();
+  }
+
+  private onProvinceChange(newValue: string) {
+    this.state.identity.province = newValue;
+    this.setState({identity: this.state.identity});
+    this.shouldButtonBeEnabled();
+  }
+
+  private onCountryChange(newValue: Nexus.CountryCode) {
+    this.state.identity.country = newValue;
+    this.setState({identity: this.state.identity});
+    this.shouldButtonBeEnabled();
+  }
+
+  private shouldButtonBeEnabled() {
+    if(this.state.identity.firstName) {
+      this.enableButton();
+      return;
+    }
+    if(this.state.identity.lastName) {
+      this.enableButton();
+      return;
+    }
+    if(this.state.username) {
+      this.enableButton();
+      return;
+    }
+    if(this.state.identity.addressLineOne) {
+      this.enableButton();
+      return;
+    }
+    if(this.state.identity.city) {
+      this.enableButton();
+      return;
+    }
+    if(this.state.identity.province) {
+      this.enableButton();
+      return;
+    }
+    if(this.state.identity.emailAddress) {
+      this.enableButton();
+      return;
+    }
+    this.setState({isSubmitButtonDisabled: false});
+  } //end of shouldButtonBeEnabled
+
+  private enableButton() {
+    this.setState({isSubmitButtonDisabled: false});
+  }
+
+  private onSubmit() {
+    this.checkInputs();
+  }
+
+  private checkInputs() {
+    console.log('Checking the inputs.');
+    const errorFirstName = (() => {
+      if(this.state.identity.firstName === '') {
+        return true;
+      } else {
+        return false;
+      }
+    })();
+    const errorLastName = (() => {
+      if(this.state.identity.lastName === '') {
+        return true;
+      } else {
+        return false;
+      }
+    })();
+    const errorUsername = (() => {
+      if(this.state.username === '') {
+        return true;
+      } else {
+        return false;
+      }
+    })();
+    const errorEmail = (() => {
+      if(this.state.identity.emailAddress === '') {
+        return true;
+      } else {
+        return false;
+      }
+    })();
+    const errorRoles = (() => {
+      if(this.state.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)
+          || this.state.roles.test(Nexus.AccountRoles.Role.MANAGER)
+          || this.state.roles.test(Nexus.AccountRoles.Role.TRADER)
+          || this.state.roles.test(Nexus.AccountRoles.Role.SERVICE)) {
+        return '';
+      } else {
+        return 'Select role(s)';
+      }
+    })();
+    if(errorFirstName || errorLastName || errorEmail || errorUsername ||
+        errorRoles) {
+          console.log('ERRORS AND STUFF');
+      this.setState({
+        errorStatus: 'Invalid inputs',
+        firstNameError: errorFirstName,
+        lastNameError: errorLastName,
+        emailError: errorEmail,
+        userNameError: errorUsername,
+        roleError: errorRoles
+      });
+      return false;
+
+    }
+    return true;
   }
 
   private static readonly STYLE = {
@@ -227,14 +447,13 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       width: '1000px'
     },
     pagePadding: {
-      width: '30px'
+      width: '18px'
     },
     rolesWrapper: {
       marginLeft: '11px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       height: '34px',
-      width: '122px',
       justifyContent: 'flex-start',
       alignItems: 'center'
     },
@@ -253,6 +472,17 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       justifyContent: 'center' as 'center',
       textAlign: 'center' as 'center'
+    },
+    errorStatus: {
+      display: 'flex' as 'flex',
+      justifyContent: 'center' as 'center',
+      textAlign: 'center' as 'center',
+      color: '#E63F44',
+      font: '400 14px Roboto'
+    },
+    roleErrorStatus: {
+      color: '#E63F44',
+      font: '400 16px Roboto'
     }
   };
   private static DYNAMIC_STYLE = StyleSheet.create({
@@ -311,7 +541,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       }
     }
   });
-  private static readonly SMALL_PADDING = '18px';
+  private static readonly SMALL_PADDING = '20px';
   private static readonly STANDARD_PADDING = '30px';
   private static readonly BOTTOM_PADDING = '60px';
 }

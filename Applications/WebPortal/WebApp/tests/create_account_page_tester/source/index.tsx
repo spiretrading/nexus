@@ -4,16 +4,15 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
-const account = Beam.DirectoryEntry.makeAccount(124,
-  'username_can_be_very_long');
-const roles = new Nexus.AccountRoles();
-roles.set(Nexus.AccountRoles.Role.TRADER);
-roles.set(Nexus.AccountRoles.Role.MANAGER);
-roles.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
-
 const someDB = Nexus.buildDefaultCountryDatabase();
+const thing = (username: string, groups: Beam.DirectoryEntry[],
+    identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles) => {
+     return 'boo';
+    };
+
 const ResponsivePage =
   WebPortal.displaySizeRenderer(WebPortal.CreateAccountPage);
 ReactDOM.render(<ResponsivePage
+  onSubmit={thing}
   countryDatabase={someDB}/>,
   document.getElementById('main'));

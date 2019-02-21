@@ -62,7 +62,7 @@ export class RoleIcon extends React.Component<Properties, State> {
           onMouseLeave={this.hideToolTip}/>
         <Transition in={this.state.showToolTip} timeout={RoleIcon.TIMEOUT}>
           {(state) => (
-              <div 
+              <div
                 style={{...RoleIcon.STYLE.animationBase,
                   ...RoleIcon.STYLE.imageTooltip,
                   ...(RoleIcon.ANIMATION_STYLE as any)[state]}}>
@@ -147,8 +147,13 @@ export class RoleIcon extends React.Component<Properties, State> {
       boxShadow: '0px 0px 2px #00000064'
     }
   };
+  private static readonly TIMEOUT = {
+    enter: 1,
+    entered: 100,
+    exit: 100,
+    exited:  100
+  };
   private static readonly IMAGE_SIZE = '20px';
-  private static readonly TIMEOUT = 100;
   private static readonly TRADER_TOOLTIP_TEXT = 'Trader';
   private static readonly MANAGER_TOOLTIP_TEXT = 'Manager';
   private static readonly ADMINISTRATOR_TOOLTIP_TEXT = 'Admin';
