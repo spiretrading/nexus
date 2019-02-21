@@ -78,6 +78,13 @@ export class CreateAccountPage extends React.Component<Properties, State> {
           return CreateAccountPage.STYLE.contentLarge;
       }
     })();
+    const topPadding = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+       return <Dali.Padding size='30px'/>;
+      } else {
+        return <Dali.Padding size='60px'/>;
+      }
+    })();
     const sidePanelPhoto = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return null;
@@ -152,7 +159,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
             <div style={CreateAccountPage.STYLE.headerStyler}>
               Create Account
             </div>
-            <Dali.Padding size='60px'/>
+            {topPadding}
             <Dali.HBoxLayout>
               {sidePanelPhoto}
               <Dali.Padding size={sidePanelPhotoPadding}/>
@@ -191,7 +198,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     <RolesField roles={this.state.roles}
                       onClick={this.onRoleClick}/>
                       <div style={CreateAccountPage.STYLE.filler}/>
-                      <div style={CreateAccountPage.STYLE.rolesWrapper}>
+                      <div style={CreateAccountPage.STYLE.roleErrorStatus}>
                         {this.state.roleError}
                       </div>
                     </div>
@@ -210,6 +217,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                   <TextField
                     value={this.state.identity.emailAddress}
                     displaySize={this.props.displaySize}
+                    isError={this.state.emailError}
                     onInput={this.onEmailChange}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -387,6 +395,9 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     const errorEmail = (() => {
       if(this.state.identity.emailAddress === '') {
         return true;
+      } else if(!this.state.identity.emailAddress.includes('@')
+          && !this.state.identity.emailAddress.includes('.')) {
+        return true;
       } else {
         return false;
       }
@@ -437,6 +448,8 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       alignItems: 'center' as 'center'
     },
     contentSmall: {
+      minWidth: '284px',
+      flexShrink: 1,
       flexGrow: 1,
       maxWidth: '424px'
     },
@@ -482,7 +495,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     },
     roleErrorStatus: {
       color: '#E63F44',
-      font: '400 16px Roboto'
+      font: '400 14px Roboto'
     }
   };
   private static DYNAMIC_STYLE = StyleSheet.create({
