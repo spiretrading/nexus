@@ -106,8 +106,8 @@ export class CountrySelectionBox extends React.Component<Properties> {
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',
-      '-moz-appearance': 'none' as 'none',
-      '-webkit-appearance': 'none' as 'none',
+      MozAppearance: 'none' as 'none',
+      WebkitAppearance: 'none' as 'none',
       appearance: 'none' as 'none',
       ':focus' : {
         outline: 0
@@ -120,8 +120,8 @@ export class CountrySelectionBox extends React.Component<Properties> {
       backgroundColor: '#FFFFFF',
       border: '1px solid #FFFFFF',
       borderRadius: '1px',
-      '-moz-appearance': 'none' as 'none',
-      '-webkit-appearance': 'none' as 'none',
+      MozAppearance: 'none' as 'none',
+      WebkitAppearance: 'none' as 'none',
       appearance: 'none' as 'none'
     }
   };

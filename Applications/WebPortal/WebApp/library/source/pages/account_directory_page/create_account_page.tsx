@@ -21,7 +21,7 @@ interface Properties {
     identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles) => void;
 
   /** The status given back from the server on callback. */
-  submitStatus?: string;
+  errorStatus?: string;
 }
 
 interface State {
@@ -40,6 +40,9 @@ interface State {
 
 /** The page that is shown when the user wants to create a new account. */
 export class CreateAccountPage extends React.Component<Properties, State> {
+  public static readonly defaultProps = {
+    errorStatus: ''
+  }
 
   constructor(props: Properties) {
     super(props);
@@ -140,12 +143,12 @@ export class CreateAccountPage extends React.Component<Properties, State> {
               {this.state.errorStatus}
             </div>
           </Dali.VBoxLayout>);
-      } else if (this.props.submitStatus) {
+      } else if (this.props.errorStatus) {
         return (
           <Dali.VBoxLayout>
             <Dali.Padding size='18px'/>
             <div style={CreateAccountPage.STYLE.errorStatus}>
-              {this.props.submitStatus}
+              {this.props.errorStatus}
             </div>
           </Dali.VBoxLayout>);
       } else {
@@ -209,7 +212,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                 <FormEntry name='Groups(s)'
                     displaySize={this.props.displaySize}>
                   <TextField
-                    value={null}
+                    value={''}
                     displaySize={this.props.displaySize}
                     readonly/>
                 </FormEntry>
@@ -407,10 +410,10 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       }
     })();
     const errorRoles = (() => {
-      if(this.state.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)
-          || this.state.roles.test(Nexus.AccountRoles.Role.MANAGER)
-          || this.state.roles.test(Nexus.AccountRoles.Role.TRADER)
-          || this.state.roles.test(Nexus.AccountRoles.Role.SERVICE)) {
+      if(this.state.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR) ||
+          this.state.roles.test(Nexus.AccountRoles.Role.MANAGER) ||
+          this.state.roles.test(Nexus.AccountRoles.Role.TRADER) ||
+          this.state.roles.test(Nexus.AccountRoles.Role.SERVICE)) {
         return '';
       } else {
         return 'Select role(s)';
@@ -418,7 +421,6 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     })();
     if(errorFirstName || errorLastName || errorEmail || errorUsername ||
         errorRoles) {
-          console.log('ERRORS AND STUFF');
       this.setState({
         errorStatus: 'Invalid inputs',
         firstNameError: errorFirstName,

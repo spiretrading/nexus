@@ -11,7 +11,7 @@ interface Properties {
 
 interface State {
   errorStatus: string;
-  currentStatus: string;
+  displayStatus: string;
 }
 
 class TestApp extends React.Component<Properties, State> {
@@ -19,7 +19,7 @@ class TestApp extends React.Component<Properties, State> {
     super(props);
     this.state = {
       errorStatus: '',
-      currentStatus: ''
+      displayStatus: ''
     };
     this.setErrorMessage = this.setErrorMessage.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
@@ -32,7 +32,7 @@ class TestApp extends React.Component<Properties, State> {
         onSubmit={this.onSubmit}
         countryDatabase={this.someDB}
         displaySize={this.props.displaySize}
-        submitStatus={this.state.currentStatus}
+        errorStatus={this.state.displayStatus}
       />
       <div style={TestApp.STYLE.testingComponents}>
         <button tabIndex={-1}
@@ -48,10 +48,8 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   private onSubmit(username: string, groups: Beam.DirectoryEntry[],
-    identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles) {
-      console.log('status thing');
-    this.setState({currentStatus: this.state.errorStatus});
-    console.log('status thing');
+      identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles) {
+    this.setState({displayStatus: this.state.errorStatus});
   }
 
   private setErrorMessage(newValue: string) {
