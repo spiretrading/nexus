@@ -28,13 +28,13 @@ interface Properties {
   /** The size to display the component at. */
   displaySize: DisplaySize;
 
+  /** Indicates if there is a error with the value. */
+  isError?: boolean;
+
   /** Called when the value changes.
    * @param value - The updated value.
    */
   onInput?: (value: string) => void;
-
-  /** Indicates if there is a error with the value. */
-  isError?: boolean;
 }
 
 interface State {
@@ -47,6 +47,7 @@ export class TextField extends React.Component<Properties, State> {
     readonly: false,
     value: '',
     placeholder: '',
+    isError: false,
     onInput: (_: string) => {}
   }
 
@@ -82,10 +83,10 @@ export class TextField extends React.Component<Properties, State> {
     })();
     const image = (() => {
       if(this.state.effects === Effects.HOVER && !this.props.readonly) {
-        return <img src={'resources/account_page/edit.svg'}
+        return <img src='resources/account_page/edit.svg'
           className={css(TextField.STYLE.image)}/>;
       } else {
-        return <img src={'resources/account_page/edit.svg'}
+        return <img src='resources/account_page/edit.svg'
           className={css(TextField.STYLE.hidden)}/>;
       }
     })();
@@ -217,8 +218,6 @@ export class TextField extends React.Component<Properties, State> {
     },
     hidden: {
       opacity: 0,
-      //visibility: 'hidden' as 'hidden',
-      //display: 'none' as 'none',
       height: '14px',
       width: '14px',
       paddingRight: '10px'

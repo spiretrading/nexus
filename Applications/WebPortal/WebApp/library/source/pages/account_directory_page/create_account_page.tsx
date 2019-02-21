@@ -16,12 +16,17 @@ interface Properties {
   /** The database of available countries. */
   countryDatabase: Nexus.CountryDatabase;
 
-  /** The call to submit the profile page. */
-  onSubmit: (username: string, groups: Beam.DirectoryEntry[],
-    identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles) => void;
-
   /** The status given back from the server on callback. */
   errorStatus?: string;
+
+  /** The call to submit the profile page.
+   * @param username - The username for the account.
+   * @param groups - The groups the account belongs to.
+   * @param identity - Contains extra details about the account.
+   * @param roles - The roles associated with the account.
+   */
+  onSubmit?: (username: string, groups: Beam.DirectoryEntry[],
+    identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles) => void;
 }
 
 interface State {
@@ -143,7 +148,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
               {this.state.errorStatus}
             </div>
           </Dali.VBoxLayout>);
-      } else if (this.props.errorStatus) {
+      } else if(this.props.errorStatus) {
         return (
           <Dali.VBoxLayout>
             <Dali.Padding size='18px'/>
@@ -212,7 +217,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                 <FormEntry name='Groups(s)'
                     displaySize={this.props.displaySize}>
                   <TextField
-                    value={''}
+                    value=''
                     displaySize={this.props.displaySize}
                     readonly/>
                 </FormEntry>
@@ -265,8 +270,8 @@ export class CreateAccountPage extends React.Component<Properties, State> {
             <Dali.Padding size={CreateAccountPage.STANDARD_PADDING}/>
             <div style={CreateAccountPage.STYLE.buttonBox}>
               <button className={css(buttonStyle)}
-              disabled={this.state.isSubmitButtonDisabled}
-              onClick={this.onSubmit}>
+                  disabled={this.state.isSubmitButtonDisabled}
+                  onClick={this.onSubmit}>
                 Create Account
               </button>
             </div>
@@ -290,76 +295,55 @@ export class CreateAccountPage extends React.Component<Properties, State> {
   private onFirstNameChange(newValue: string) {
     this.state.identity.firstName = newValue;
     this.setState({ identity: this.state.identity });
-    this.shouldButtonBeEnabled();
+    this.enableSubmit();
   }
 
   private onLastNameChange(newValue: string) {
     this.state.identity.lastName = newValue;
     this.setState({ identity: this.state.identity });
-    this.shouldButtonBeEnabled();
+    this.enableSubmit();
   }
 
   private onUsernameChange(newValue: string) {
     this.setState({ username: newValue });
-    this.shouldButtonBeEnabled();
+    this.enableSubmit();
   }
 
   private onEmailChange(newValue: string) {
     this.state.identity.emailAddress = newValue;
     this.setState({ identity: this.state.identity });
-    this.shouldButtonBeEnabled();
+    this.enableSubmit();
   }
 
   private onAddressChange(newValue: string) {
     this.state.identity.addressLineOne = newValue;
     this.setState({ identity: this.state.identity });
-    this.shouldButtonBeEnabled();
+    this.enableSubmit();
   }
 
   private onCityChange(newValue: string) {
     this.state.identity.city = newValue;
     this.setState({ identity: this.state.identity });
-    this.shouldButtonBeEnabled();
+    this.enableSubmit();
   }
 
   private onProvinceChange(newValue: string) {
     this.state.identity.province = newValue;
     this.setState({identity: this.state.identity});
-    this.shouldButtonBeEnabled();
+    this.enableSubmit();
   }
 
   private onCountryChange(newValue: Nexus.CountryCode) {
     this.state.identity.country = newValue;
     this.setState({identity: this.state.identity});
-    this.shouldButtonBeEnabled();
+    this.enableSubmit();
   }
 
-  private shouldButtonBeEnabled() {
-    if(this.state.identity.firstName) {
-      this.enableButton();
-      return;
-    }
-    if(this.state.identity.lastName) {
-      this.enableButton();
-      return;
-    }
-    if(this.state.username) {
-      this.enableButton();
-      return;
-    }
-    if(this.state.identity.addressLineOne) {
-      this.enableButton();
-      return;
-    }
-    if(this.state.identity.city) {
-      this.enableButton();
-      return;
-    }
-    if(this.state.identity.province) {
-      this.enableButton();
-      return;
-    }
-    if(this.state.identity.emailAddress) {
+  private enableSubmit() {
+    if(this.state.identity.firstName || this.state.identity.lastName ||
+        this.state.username || this.state.identity.addressLineOne ||
+        this.state.identity.city || this.state.identity.province ||
+        this.state.identity.emailAddress) {
       this.enableButton();
       return;
     }
@@ -372,43 +356,18 @@ export class CreateAccountPage extends React.Component<Properties, State> {
 
   private onSubmit() {
     if(this.checkInputs()) {
-     this.props.onSubmit(this.state.username,
-      this.state.groups, this.state.identity, this.state.roles);
+      this.props.onSubmit(this.state.username, this.state.groups,
+        this.state.identity, this.state.roles);
     }
   }
 
   private checkInputs(): boolean {
-    const errorFirstName = (() => {
-      if(this.state.identity.firstName === '') {
-        return true;
-      } else {
-        return false;
-      }
-    })();
-    const errorLastName = (() => {
-      if(this.state.identity.lastName === '') {
-        return true;
-      } else {
-        return false;
-      }
-    })();
-    const errorUsername = (() => {
-      if(this.state.username === '') {
-        return true;
-      } else {
-        return false;
-      }
-    })();
-    const errorEmail = (() => {
-      if(this.state.identity.emailAddress === '') {
-        return true;
-      } else if(!this.state.identity.emailAddress.includes('@')
-          && !this.state.identity.emailAddress.includes('.')) {
-        return true;
-      } else {
-        return false;
-      }
-    })();
+    const errorFirstName = this.state.identity.firstName === '';
+    const errorLastName = this.state.identity.lastName === '';
+    const errorUsername = this.state.username === '';
+    const errorEmail = this.state.identity.emailAddress === '' ||
+      (!this.state.identity.emailAddress.includes('@') &&
+        !this.state.identity.emailAddress.includes('.'));
     const errorRoles = (() => {
       if(this.state.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR) ||
           this.state.roles.test(Nexus.AccountRoles.Role.MANAGER) ||
@@ -431,13 +390,13 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       });
       return false;
     } else {
-        this.setState({
-          errorStatus: '',
-          firstNameError: errorFirstName,
-          lastNameError: errorLastName,
-          emailError: errorEmail,
-          userNameError: errorUsername,
-          roleError: errorRoles
+      this.setState({
+        errorStatus: '',
+        firstNameError: errorFirstName,
+        lastNameError: errorLastName,
+        emailError: errorEmail,
+        userNameError: errorUsername,
+        roleError: errorRoles
       });
        return true;
     }
