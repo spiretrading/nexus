@@ -300,25 +300,25 @@ export class CreateAccountPage extends React.Component<Properties, State> {
   }
 
   private onUsernameChange(newValue: string) {
-    this.setState({ username: newValue});
+    this.setState({ username: newValue });
     this.shouldButtonBeEnabled();
   }
 
   private onEmailChange(newValue: string) {
     this.state.identity.emailAddress = newValue;
-    this.setState({identity: this.state.identity});
+    this.setState({ identity: this.state.identity });
     this.shouldButtonBeEnabled();
   }
 
   private onAddressChange(newValue: string) {
     this.state.identity.addressLineOne = newValue;
-    this.setState({identity: this.state.identity});
+    this.setState({ identity: this.state.identity });
     this.shouldButtonBeEnabled();
   }
 
   private onCityChange(newValue: string) {
     this.state.identity.city = newValue;
-    this.setState({identity: this.state.identity});
+    this.setState({ identity: this.state.identity });
     this.shouldButtonBeEnabled();
   }
 

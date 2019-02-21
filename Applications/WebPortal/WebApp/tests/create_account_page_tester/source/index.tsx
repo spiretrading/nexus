@@ -32,8 +32,7 @@ class TestApp extends React.Component<Properties, State> {
         onSubmit={this.onSubmit}
         countryDatabase={this.someDB}
         displaySize={this.props.displaySize}
-        errorStatus={this.state.displayStatus}
-      />
+        errorStatus={this.state.displayStatus}/>
       <div style={TestApp.STYLE.testingComponents}>
         <button tabIndex={-1}
             onClick={() => this.setErrorMessage('Server issue')}>
