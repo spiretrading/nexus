@@ -18,12 +18,15 @@ ChartValue::Type CachedChartModel::get_y_axis_type() const {
 
 QtPromise<std::vector<Candlestick>> CachedChartModel::load(ChartValue first,
     ChartValue last) {
+  auto value_compare = [=] (const auto& value, const auto& search_value) {
+    return value.GetStart() < search_value;
+  };
   for(auto& range : m_ranges) {
     if(range.m_start >= first && range.m_end <= last) {
       auto first_iterator = std::lower_bound(m_loaded_data.begin(),
-        m_loaded_data.end(), first);
+        m_loaded_data.end(), first, value_compare);
       auto last_iterator = std::lower_bound(m_loaded_data.begin(),
-        m_loaded_data.end(), last);
+        m_loaded_data.end(), last, value_compare);
       return make_qt_promise([=] {
         return std::vector<Candlestick>(first_iterator, last_iterator);
       });
