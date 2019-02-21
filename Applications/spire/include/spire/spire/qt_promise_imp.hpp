@@ -9,10 +9,22 @@
 #include <QApplication>
 #include <QEvent>
 #include <QObject>
+#include <QTimer>
 #include "spire/spire/spire.hpp"
 #include "spire/spire/qt_promise_event.hpp"
 
 namespace Spire {
+
+  /** Specifies how a QtPromise's executor should be invoked. */
+  enum class LaunchPolicy {
+
+    /** The executor should be invoked within Qt's event loop. */
+    DEFERRED,
+
+    /** The executor should be invoked in a Routine. */
+    ROUTINE
+  };
+
 namespace details {
   template<typename T>
   class BaseQtPromiseImp : public QObject, private boost::noncopyable {
@@ -49,7 +61,8 @@ namespace details {
       using ContinuationType = typename Super::ContinuationType;
 
       template<typename ExecutorForward>
-      explicit qt_promise_imp(ExecutorForward&& executor);
+      explicit qt_promise_imp(ExecutorForward&& executor,
+        LaunchPolicy launch_policy);
 
       ~qt_promise_imp() override;
 
@@ -65,6 +78,7 @@ namespace details {
     private:
       bool m_is_disconnected;
       Executor m_executor;
+      LaunchPolicy m_launch_policy;
       boost::optional<Beam::Expect<Type>> m_value;
       boost::optional<ContinuationType> m_continuation;
       std::shared_ptr<void> m_self;
@@ -73,9 +87,11 @@ namespace details {
 
   template<typename Executor>
   template<typename ExecutorForward>
-  qt_promise_imp<Executor>::qt_promise_imp(ExecutorForward&& executor)
+  qt_promise_imp<Executor>::qt_promise_imp(ExecutorForward&& executor,
+      LaunchPolicy launch_policy)
       : m_is_disconnected(false),
-        m_executor(std::forward<ExecutorForward>(executor)) {}
+        m_executor(std::forward<ExecutorForward>(executor)),
+        m_launch_policy(launch_policy) {}
 
   template<typename Executor>
   qt_promise_imp<Executor>::~qt_promise_imp() {
@@ -85,11 +101,19 @@ namespace details {
   template<typename Executor>
   void qt_promise_imp<Executor>::bind(std::shared_ptr<void> self) {
     m_self = std::move(self);
-    m_routine = Beam::Routines::Spawn(
-      [=] {
-        QApplication::instance()->postEvent(this,
-          make_qt_promise_event(Beam::Try(m_executor)));
-      });
+    if(m_launch_policy == LaunchPolicy::DEFERRED) {
+      QTimer::singleShot(0,
+        [=] {
+          QApplication::instance()->postEvent(this,
+            make_qt_promise_event(Beam::Try(m_executor)));
+        });
+    } else if(m_launch_policy == LaunchPolicy::ROUTINE) {
+      m_routine = Beam::Routines::Spawn(
+        [=] {
+          QApplication::instance()->postEvent(this,
+            make_qt_promise_event(Beam::Try(m_executor)));
+        });
+    }
   }
 
   template<typename Executor>
