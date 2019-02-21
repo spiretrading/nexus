@@ -47,12 +47,10 @@ connection CachedChartModel::connect_candlestick_slot(
 
 QtPromise<std::vector<Candlestick>> CachedChartModel::load_data(
     const ChartRange& data) {
-  return make_qt_promise([=] {
-    auto data_promise = m_chart_model->load(data.m_start, data.m_end);
-    data_promise.then([=] {
-      // add data to loaded data
-      // update range(s)
-    });
-    return data_promise;
+  auto data_promise = m_chart_model->load(data.m_start, data.m_end);
+  data_promise.then([=] (auto result) {
+    // add data to loaded data
+    // update range(s)
   });
+  return data_promise;
 }
