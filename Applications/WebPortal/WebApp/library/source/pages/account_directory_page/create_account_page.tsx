@@ -432,15 +432,15 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       return false;
     } else {
         this.setState({
-        errorStatus: '',
-        firstNameError: errorFirstName,
-        lastNameError: errorLastName,
-        emailError: errorEmail,
-        userNameError: errorUsername,
-        roleError: errorRoles
+          errorStatus: '',
+          firstNameError: errorFirstName,
+          lastNameError: errorLastName,
+          emailError: errorEmail,
+          userNameError: errorUsername,
+          roleError: errorRoles
       });
+       return true;
     }
-    return true;
   }
 
   private static readonly STYLE = {
