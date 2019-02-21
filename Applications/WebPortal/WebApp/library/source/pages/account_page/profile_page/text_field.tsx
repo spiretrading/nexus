@@ -85,7 +85,8 @@ export class TextField extends React.Component<Properties, State> {
         return <img src={'resources/account_page/edit.svg'}
           className={css(TextField.STYLE.image)}/>;
       } else {
-        return null;
+        return <img src={'resources/account_page/edit.svg'}
+          className={css(TextField.STYLE.hidden)}/>;
       }
     })();
     const tabIndexValue = (() => {
@@ -204,6 +205,9 @@ export class TextField extends React.Component<Properties, State> {
       border: '1px solid #E63F44',
       borderRadius: '1px'
     },
+    inputStyle: {
+      flexGrow: 1
+    },
     image: {
       visibility: 'visible' as 'visible',
       height: '14px',
@@ -213,8 +217,8 @@ export class TextField extends React.Component<Properties, State> {
     },
     hidden: {
       opacity: 0,
-      visibility: 'hidden' as 'hidden',
-      display: 'none' as 'none',
+      //visibility: 'hidden' as 'hidden',
+      //display: 'none' as 'none',
       height: '14px',
       width: '14px',
       paddingRight: '10px'
@@ -226,6 +230,7 @@ export class TextField extends React.Component<Properties, State> {
       paddingLeft: '10px',
       border: '1px solid #FFFFFF',
       backgroundColor: '#FFFFFF',
+      flexGrow: 1,
       ':focus': {
         ouline: 0,
         outlineColor: 'transparent',
@@ -253,6 +258,7 @@ export class TextField extends React.Component<Properties, State> {
       paddingLeft: '10px',
       border: '1px solid #FFFFFF',
       backgroundColor: '#FFFFFF',
+      flexGrow: 1,
       ':focus': {
         ouline: 0,
         outlineColor: 'transparent',

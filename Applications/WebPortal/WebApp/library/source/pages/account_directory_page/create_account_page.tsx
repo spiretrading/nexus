@@ -28,6 +28,7 @@ interface State {
   roles: Nexus.AccountRoles;
   username: string;
   identity: Nexus.AccountIdentity;
+  groups: Beam.DirectoryEntry[];
   isSubmitButtonDisabled: boolean;
   errorStatus: string;
   roleError: string;
@@ -46,6 +47,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       roles: new Nexus.AccountRoles(),
       username: '',
       identity: new Nexus.AccountIdentity(),
+      groups: [],
       isSubmitButtonDisabled: true,
       errorStatus: '',
       roleError: '',
@@ -130,20 +132,20 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       }
     })();
     const errorStatus = (() => {
-      if(this.props.submitStatus) {
-        return (
-          <Dali.VBoxLayout>
-            <Dali.Padding size='18px'/>
-            <div style={CreateAccountPage.STYLE.errorStatus}>
-              {this.props.submitStatus}
-            </div>
-          </Dali.VBoxLayout>);
-      } else if (this.state.errorStatus) {
+      if(this.state.errorStatus) {
         return (
           <Dali.VBoxLayout>
             <Dali.Padding size='18px'/>
             <div style={CreateAccountPage.STYLE.errorStatus}>
               {this.state.errorStatus}
+            </div>
+          </Dali.VBoxLayout>);
+      } else if (this.props.submitStatus) {
+        return (
+          <Dali.VBoxLayout>
+            <Dali.Padding size='18px'/>
+            <div style={CreateAccountPage.STYLE.errorStatus}>
+              {this.props.submitStatus}
             </div>
           </Dali.VBoxLayout>);
       } else {
@@ -359,18 +361,20 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       return;
     }
     this.setState({isSubmitButtonDisabled: false});
-  } //end of shouldButtonBeEnabled
+  }
 
   private enableButton() {
     this.setState({isSubmitButtonDisabled: false});
   }
 
   private onSubmit() {
-    this.checkInputs();
+    if(this.checkInputs()) {
+     this.props.onSubmit(this.state.username,
+      this.state.groups, this.state.identity, this.state.roles);
+    }
   }
 
-  private checkInputs() {
-    console.log('Checking the inputs.');
+  private checkInputs(): boolean {
     const errorFirstName = (() => {
       if(this.state.identity.firstName === '') {
         return true;
@@ -424,7 +428,15 @@ export class CreateAccountPage extends React.Component<Properties, State> {
         roleError: errorRoles
       });
       return false;
-
+    } else {
+        this.setState({
+        errorStatus: '',
+        firstNameError: errorFirstName,
+        lastNameError: errorLastName,
+        emailError: errorEmail,
+        userNameError: errorUsername,
+        roleError: errorRoles
+      });
     }
     return true;
   }
