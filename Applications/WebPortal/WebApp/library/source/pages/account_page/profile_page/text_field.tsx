@@ -28,7 +28,7 @@ interface Properties {
   /** The size to display the component at. */
   displaySize: DisplaySize;
 
-  /** Indicates if there is a error with the value. */
+  /** Indicates if there is an error with the value. */
   isError?: boolean;
 
   /** Called when the value changes.

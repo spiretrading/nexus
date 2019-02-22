@@ -108,10 +108,7 @@ export class CountrySelectionBox extends React.Component<Properties> {
       backgroundSize: '8px 6px',
       MozAppearance: 'none' as 'none',
       WebkitAppearance: 'none' as 'none',
-      appearance: 'none' as 'none',
-      ':focus' : {
-        outline: 0
-      }
+      appearance: 'none' as 'none'
     },
     disabledBoxStyle: {
       boxSizing: 'border-box' as 'border-box',

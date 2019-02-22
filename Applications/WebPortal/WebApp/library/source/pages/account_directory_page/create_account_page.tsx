@@ -398,7 +398,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
         userNameError: errorUsername,
         roleError: errorRoles
       });
-       return true;
+      return true;
     }
   }
 
