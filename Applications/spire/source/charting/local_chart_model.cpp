@@ -25,7 +25,7 @@ ChartValue::Type LocalChartModel::get_y_axis_type() const {
 
 QtPromise<std::vector<Candlestick>> LocalChartModel::load(ChartValue first,
     ChartValue last) {
-  return make_qt_promise([=, candlesticks = m_candlesticks] {
+  return QtPromise([=, candlesticks = m_candlesticks] {
     auto start = std::lower_bound(candlesticks.begin(), candlesticks.end(),
       first, [] (const auto& lhs, const auto& rhs) {
         return lhs.GetEnd() < rhs;

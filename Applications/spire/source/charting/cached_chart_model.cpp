@@ -27,7 +27,7 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load(ChartValue first,
         m_loaded_data.end(), first, value_compare);
       auto last_iterator = std::lower_bound(m_loaded_data.begin(),
         m_loaded_data.end(), last, value_compare);
-      return make_qt_promise([=] {
+      return QtPromise([=] {
         return std::vector<Candlestick>(first_iterator, last_iterator);
       });
     }

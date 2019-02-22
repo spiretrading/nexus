@@ -42,8 +42,7 @@ Quantity ServicesTimeAndSalesModel::get_volume() const {
 QtPromise<std::vector<TimeAndSalesModel::Entry>>
     ServicesTimeAndSalesModel::load_snapshot(Beam::Queries::Sequence last,
     int count) {
-  return make_qt_promise([last, count, security = m_security,
-      clients = m_clients] {
+  return QtPromise([last, count, security = m_security, clients = m_clients] {
     auto query = SecurityMarketDataQuery();
     query.SetIndex(security);
     query.SetRange(Beam::Queries::Sequence::First(), last);

@@ -50,7 +50,7 @@ Quantity EmptyBookViewModel::get_volume() const {
 }
 
 QtPromise<void> EmptyBookViewModel::load() {
-  return make_qt_promise([] {});
+  return QtPromise();
 }
 
 connection EmptyBookViewModel::connect_bbo_slot(

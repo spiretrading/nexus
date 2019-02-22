@@ -19,7 +19,7 @@ ChartValue::Type EmptyChartModel::get_y_axis_type() const {
 
 QtPromise<std::vector<Candlestick>> EmptyChartModel::load(ChartValue first,
     ChartValue last) {
-  return make_qt_promise([] {
+  return QtPromise([] {
     return std::vector<Candlestick>();
   });
 }

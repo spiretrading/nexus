@@ -63,17 +63,18 @@ namespace Spire {
 
     private:
       std::shared_ptr<details::BaseQtPromiseImp<Type>> m_imp;
+
+      template<typename U, typename F>
+      QtPromise(QtPromise<U> promise, F&& continuation);
   };
 
-  //! Makes a Qt promise.
-  /*!
-    \param executor The callable performing the computation.
-  */
   template<typename Executor>
-  auto make_qt_promise(Executor&& executor) {
-    return QtPromise<std::invoke_result_t<Executor>>(
-      std::forward<Executor>(executor));
-  }
+  QtPromise(Executor&&) -> QtPromise<promise_executor_result_t<Executor>>;
+
+  template<typename U, typename F>
+  QtPromise(QtPromise<U>, F&&) -> QtPromise<promise_executor_result_t<F>>;
+
+  QtPromise() -> QtPromise<void>;
 
   //! Waits for a promise to complete and returns its result.
   /*!
@@ -133,11 +134,7 @@ namespace Spire {
   std::enable_if_t<!std::is_same_v<std::invoke_result_t<F, Beam::Expect<T>>,
       void>, QtPromise<std::invoke_result_t<F, Beam::Expect<T>>>>
       QtPromise<T>::then(F&& continuation) {
-    return make_qt_promise(
-      [continuation = std::forward<F>(continuation),
-          promise = std::move(*this)] {
-        return std::move(promise);
-      });
+    return QtPromise(std::move(*this), std::forward<F>(continuation));
   }
 
   template<typename T>
@@ -154,6 +151,15 @@ namespace Spire {
     disconnect();
     m_imp = std::move(other.m_imp);
     return *this;
+  }
+
+  template<typename T>
+  template<typename U, typename F>
+  QtPromise<T>::QtPromise(QtPromise<U> promise, F&& continuation) {
+    auto imp = std::make_shared<details::ChainedQtPromise<QtPromise<U>,
+      std::decay_t<F>>>(std::move(promise), std::forward<F>(continuation));
+    imp->bind(imp);
+    m_imp = std::move(imp);
   }
 }
 
