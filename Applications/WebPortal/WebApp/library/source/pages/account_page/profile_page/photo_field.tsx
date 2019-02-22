@@ -216,12 +216,8 @@ export class PhotoField extends React.Component<Properties, {}> {
       width: '100%'
     },
     cameraIcon: {
-      //position: 'absolute' as 'absolute',
       height: '20px',
       width: '20px'
-      //top: 'calc(0% + 10px)',
-      //left: 'calc(100% - 10px - 24px)',
-      //cursor: 'pointer' as 'pointer'
     },
     cameraIconWrapper: {
       height: '24px',
@@ -355,7 +351,7 @@ export class ChangePictureModal extends
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <Slider onChange={this.onSliderMovement}
               scale={this.state.scaling}
-              readonly={!this.props.imageSource}/>
+              readonly={!this.state.currentImage}/>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <HLine color='#E6E6E6' height={1}/>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>

@@ -68,6 +68,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       photoUploaderMode: PhotoFieldDisplayMode.DISPLAY
     };
     this.onPhotoFieldClick = this.onPhotoFieldClick.bind(this);
+    this.onPhotoSubmit = this.onPhotoSubmit.bind(this);
     this.onRoleClick = this.onRoleClick.bind(this);
     this.onFirstNameChange = this.onFirstNameChange.bind(this);
     this.onLastNameChange = this.onLastNameChange.bind(this);
@@ -109,6 +110,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
             displayMode={this.state.photoUploaderMode}
             imageSource={this.state.identity.photoId}
             onToggleUploader={this.onPhotoFieldClick}
+            onSubmit={this.onPhotoSubmit}
             scaling={1}/>);
       }
     })();
@@ -131,6 +133,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
               displayMode={this.state.photoUploaderMode}
               imageSource={this.state.identity.photoId}
               onToggleUploader={this.onPhotoFieldClick}
+              onSubmit={this.onPhotoSubmit}
               scaling={1}/>
             <Dali.Padding size={CreateAccountPage.STANDARD_PADDING}/>
           </Dali.VBoxLayout>);
@@ -295,6 +298,11 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     } else {
       this.setState({photoUploaderMode: PhotoFieldDisplayMode.DISPLAY});
     }
+  }
+
+  private onPhotoSubmit(newFileLocation: string, scaling: number) {
+    this.state.identity.photoId = newFileLocation;
+    this.setState({identity: this.state.identity});
   }
 
   private onRoleClick(role: Nexus.AccountRoles.Role) {
