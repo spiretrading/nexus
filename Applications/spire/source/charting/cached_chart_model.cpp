@@ -49,11 +49,16 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_data(
         m_loaded_data.insert(m_loaded_data.end(), result.Get().begin(),
           result.Get().end());
       } else {
-        auto first = std::find_if(m_loaded_data.begin(), m_loaded_data.end(),
-          [=] (const auto& value) { return value.GetStart() < data.m_start; });
-        auto last = std::find_if(m_loaded_data.begin(), m_loaded_data.end(),
-          [=] (const auto& value) { return value.GetStart() < data.m_end; });
-        
+        auto first = std::lower_bound(m_loaded_data.begin(),
+          m_loaded_data.end(), data.m_start, [=] (const auto& lhs, const auto& rhs) {
+            return lhs.GetStart() < rhs;
+          });
+        auto last = std::lower_bound(m_loaded_data.begin(),
+          m_loaded_data.end(), data.m_end, [=] (const auto& lhs, const auto& rhs) {
+            return lhs.GetStart() < rhs;
+          });
+        auto pos = m_loaded_data.erase(first, last);
+        m_loaded_data.insert(pos, result.Get().begin(), result.Get().end());
       }
       if(m_ranges.empty()) {
         m_ranges.push_back(data);
