@@ -73,7 +73,7 @@ namespace Spire {
       void showEvent(QShowEvent* event) override;
 
     private:
-      std::unique_ptr<ChartModel> m_model;
+      ChartModel* m_model;
       ChartPoint m_top_left;
       ChartPoint m_bottom_right;
       int m_x_origin;

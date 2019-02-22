@@ -11,6 +11,7 @@ namespace Spire {
       //! Signals an update to a candlestick.
       using CandlestickSignal = Signal<void (const Candlestick& candle)>;
 
+      //! Represents a range of ChartValues.
       struct ChartRange {
         ChartValue m_start;
         ChartValue m_end;
@@ -29,10 +30,6 @@ namespace Spire {
       QtPromise<std::vector<Candlestick>> load(ChartValue first,
         ChartValue last) override;
 
-      //! Connects a slot to the candlestick signal.
-      /*!
-        \param slot The slot to connect.
-      */
       boost::signals2::connection connect_candlestick_slot(
         const CandlestickSignal::slot_type& slot) const override;
 
