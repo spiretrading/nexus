@@ -5,6 +5,7 @@
 #include <utility>
 #include <boost/noncopyable.hpp>
 #include <QApplication>
+#include "spire/spire/chained_qt_promise.hpp"
 #include "spire/spire/qt_promise_imp.hpp"
 #include "spire/spire/spire.hpp"
 
@@ -156,10 +157,10 @@ namespace Spire {
   template<typename T>
   template<typename U, typename F>
   QtPromise<T>::QtPromise(QtPromise<U> promise, F&& continuation) {
-    auto imp = std::make_shared<details::ChainedQtPromise<QtPromise<U>,
-      std::decay_t<F>>>(std::move(promise), std::forward<F>(continuation));
-    imp->bind(imp);
-    m_imp = std::move(imp);
+    auto chain = make_chained_qt_promise(std::move(promise),
+      std::forward<F>(continuation));
+    chain->bind(chain);
+    m_imp = std::move(chain);
   }
 }
 

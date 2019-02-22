@@ -120,27 +120,6 @@ namespace details {
       void execute();
   };
 
-  template<typename P, typename E>
-  class ChainedQtPromise final : public BaseQtPromiseImp<
-      promise_executor_result_t<E, Beam::Expect<typename P::Type>>> {
-    public:
-      using Promise = P;
-      using Executor = E;
-      using Super = BaseQtPromiseImp<promise_executor_result_t<Executor,
-        Beam::Expect<typename Promise::Type>>>;
-      using Type = typename Super::Type;
-      using ContinuationType = typename Super::ContinuationType;
-
-      template<typename ExecutorForward>
-      ChainedQtPromise(Promise promise, ExecutorForward&& executor);
-
-      void bind(std::shared_ptr<void> self);
-
-      void then(ContinuationType continuation) override;
-
-      void disconnect() override;
-  };
-
   template<typename Executor>
   template<typename ExecutorForward>
   qt_promise_imp<Executor>::qt_promise_imp(ExecutorForward&& executor,
