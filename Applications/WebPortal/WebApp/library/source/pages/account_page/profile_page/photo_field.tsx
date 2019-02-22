@@ -66,6 +66,13 @@ export class PhotoField extends React.Component<Properties, {}> {
         return PhotoField.STYLE.cameraIcon;
       }
     })();
+    const cameraIconWrapper = (() => {
+      if(this.props.readonly) {
+        return PhotoField.STYLE.hidden;
+      } else {
+        return PhotoField.STYLE.cameraIconWrapper;
+      }
+    })();
     const imageSrc = (() => {
       if(this.props.imageSource) {
         return this.props.imageSource;
@@ -102,9 +109,11 @@ export class PhotoField extends React.Component<Properties, {}> {
         <div style={boxStyle}>
           <img src={imageSrc}
             style={{...imageStyle, ...imageScaling}}/>
-          <img src='resources/account_page/profile_page/camera.svg'
-            style={cameraIconStyle}
-            onClick={this.props.onToggleUploader}/>
+          <div style={cameraIconWrapper}
+              onClick={this.props.onToggleUploader}>
+            <img src='resources/account_page/profile_page/camera.svg'
+              style={cameraIconStyle}/>
+          </div>
         </div>
         <Transition
             in={this.props.displayMode === PhotoFieldDisplayMode.UPLOADING}
@@ -207,9 +216,20 @@ export class PhotoField extends React.Component<Properties, {}> {
       width: '100%'
     },
     cameraIcon: {
-      position: 'absolute' as 'absolute',
+      //position: 'absolute' as 'absolute',
+      height: '20px',
+      width: '20px'
+      //top: 'calc(0% + 10px)',
+      //left: 'calc(100% - 10px - 24px)',
+      //cursor: 'pointer' as 'pointer'
+    },
+    cameraIconWrapper: {
       height: '24px',
       width: '24px',
+      display: 'flex' as 'flex',
+      justifyContent: 'center' as 'center',
+      alignItems: 'center' as 'center',
+      position: 'absolute' as 'absolute',
       top: 'calc(0% + 10px)',
       left: 'calc(100% - 10px - 24px)',
       cursor: 'pointer' as 'pointer'
