@@ -76,7 +76,7 @@ export class CountrySelectionBox extends React.Component<Properties> {
       }
     })();
     return (<div>{content}</div>);
-    }
+  }
 
   private onChange(event: React.ChangeEvent<HTMLSelectElement>): void {
     const code = new Nexus.CountryCode(parseInt(event.target.value, 10));

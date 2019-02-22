@@ -46,7 +46,8 @@ interface State {
 /** The page that is shown when the user wants to create a new account. */
 export class CreateAccountPage extends React.Component<Properties, State> {
   public static readonly defaultProps = {
-    errorStatus: ''
+    errorStatus: '',
+    onSubmit: () => {}
   }
 
   constructor(props: Properties) {
@@ -345,9 +346,9 @@ export class CreateAccountPage extends React.Component<Properties, State> {
         this.state.identity.city || this.state.identity.province ||
         this.state.identity.emailAddress) {
       this.enableButton();
-      return;
+    } else {
+      this.setState({isSubmitButtonDisabled: false});
     }
-    this.setState({isSubmitButtonDisabled: false});
   }
 
   private enableButton() {
