@@ -366,10 +366,10 @@ export class ChangePictureModal extends
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                   this.onGetImageFile(event.target.files);}}/>
               <label htmlFor='imageInput' tabIndex={0}
-                className={css(ChangePictureModal.SPECIAL_STYLE.button)}>
+                className={css(ChangePictureModal.DYNAMIC_STYLE.button)}>
                 {ChangePictureModal.BROWSE_BUTTON_TEXT}
               </label>
-              <div className={css(ChangePictureModal.SPECIAL_STYLE.button)}
+              <div className={css(ChangePictureModal.DYNAMIC_STYLE.button)}
                 onClick={this.onSubmit} tabIndex={0}>
                 {ChangePictureModal.SUBMIT_BUTTON_TEXT}
               </div>
@@ -530,7 +530,7 @@ export class ChangePictureModal extends
       position: 'absolute' as 'absolute'
     }
   };
-  private static readonly SPECIAL_STYLE = StyleSheet.create({
+  private static readonly DYNAMIC_STYLE = StyleSheet.create({
     button: {
       boxSizing: 'border-box' as 'border-box',
       cursor: 'pointer' as 'pointer',
@@ -627,6 +627,9 @@ export class Slider extends React.Component<SliderProperties, {}> {
       height: '20px',
       margin: '0px',
       outline: '0px',
+      ':disabled' : {
+        backgroundColor: '#FFFFFF'
+      },
       '::-webkit-slider-thumb': {
         '-webkit-appearance': 'none',
         boxSizing: 'border-box' as 'border-box',

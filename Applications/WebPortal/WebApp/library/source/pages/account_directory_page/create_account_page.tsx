@@ -41,6 +41,7 @@ interface State {
   lastNameError: boolean;
   userNameError: boolean;
   emailError: boolean;
+  photoUploaderMode: PhotoFieldDisplayMode;
 }
 
 /** The page that is shown when the user wants to create a new account. */
@@ -63,8 +64,10 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       firstNameError: false,
       lastNameError: false,
       userNameError: false,
-      emailError: false
+      emailError: false,
+      photoUploaderMode: PhotoFieldDisplayMode.DISPLAY
     };
+    this.onPhotoFieldClick = this.onPhotoFieldClick.bind(this);
     this.onRoleClick = this.onRoleClick.bind(this);
     this.onFirstNameChange = this.onFirstNameChange.bind(this);
     this.onLastNameChange = this.onLastNameChange.bind(this);
@@ -103,8 +106,9 @@ export class CreateAccountPage extends React.Component<Properties, State> {
         return (
           <PhotoField
             displaySize={this.props.displaySize}
-            displayMode={PhotoFieldDisplayMode.DISPLAY}
+            displayMode={this.state.photoUploaderMode}
             imageSource={this.state.identity.photoId}
+            onToggleUploader={this.onPhotoFieldClick}
             scaling={1}/>);
       }
     })();
@@ -124,8 +128,9 @@ export class CreateAccountPage extends React.Component<Properties, State> {
           <Dali.VBoxLayout>
             <PhotoField
               displaySize={this.props.displaySize}
-              displayMode={PhotoFieldDisplayMode.DISPLAY}
+              displayMode={this.state.photoUploaderMode}
               imageSource={this.state.identity.photoId}
+              onToggleUploader={this.onPhotoFieldClick}
               scaling={1}/>
             <Dali.Padding size={CreateAccountPage.STANDARD_PADDING}/>
           </Dali.VBoxLayout>);
@@ -282,6 +287,14 @@ export class CreateAccountPage extends React.Component<Properties, State> {
         </div>
         <div style={CreateAccountPage.STYLE.pagePadding}/>
       </div>);
+  }
+
+  private onPhotoFieldClick() {
+    if(this.state.photoUploaderMode === PhotoFieldDisplayMode.DISPLAY) {
+      this.setState({photoUploaderMode: PhotoFieldDisplayMode.UPLOADING});
+    } else {
+      this.setState({photoUploaderMode: PhotoFieldDisplayMode.DISPLAY});
+    }
   }
 
   private onRoleClick(role: Nexus.AccountRoles.Role) {
