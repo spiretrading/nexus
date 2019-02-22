@@ -6,10 +6,9 @@
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/optional.hpp>
-#include <QApplication>
+#include <QCoreApplication>
 #include <QEvent>
 #include <QObject>
-#include <QTimer>
 #include "spire/spire/spire.hpp"
 #include "spire/spire/qt_promise_event.hpp"
 
@@ -54,9 +53,9 @@ namespace details {
 
   template<typename Executor>
   class qt_promise_imp final :
-      public BaseQtPromiseImp<std::result_of_t<Executor()>> {
+      public BaseQtPromiseImp<std::invoke_result_t<Executor>> {
     public:
-      using Super = BaseQtPromiseImp<std::result_of_t<Executor()>>;
+      using Super = BaseQtPromiseImp<std::invoke_result_t<Executor>>;
       using Type = typename Super::Type;
       using ContinuationType = typename Super::ContinuationType;
 
@@ -102,15 +101,11 @@ namespace details {
   void qt_promise_imp<Executor>::bind(std::shared_ptr<void> self) {
     m_self = std::move(self);
     if(m_launch_policy == LaunchPolicy::DEFERRED) {
-      QTimer::singleShot(0,
-        [=] {
-          QApplication::instance()->postEvent(this,
-            make_qt_promise_event(Beam::Try(m_executor)));
-        });
+      QCoreApplication::postEvent(this, new QtDeferredExecutionEvent());
     } else if(m_launch_policy == LaunchPolicy::ROUTINE) {
       m_routine = Beam::Routines::Spawn(
         [=] {
-          QApplication::instance()->postEvent(this,
+          QCoreApplication::postEvent(this,
             make_qt_promise_event(Beam::Try(m_executor)));
         });
     }
@@ -120,8 +115,8 @@ namespace details {
   void qt_promise_imp<Executor>::then(ContinuationType continuation) {
     m_continuation.emplace(std::move(continuation));
     if(m_value.is_initialized()) {
-      QApplication::instance()->postEvent(this,
-        details::make_qt_promise_event(std::move(*m_value)));
+      QCoreApplication::postEvent(this,
+        make_qt_promise_event(std::move(*m_value)));
       m_value = boost::none;
     }
   }
@@ -133,22 +128,27 @@ namespace details {
 
   template<typename Executor>
   bool qt_promise_imp<Executor>::event(QEvent* event) {
-    if(event->type() != QtBasePromiseEvent::EVENT_TYPE) {
+    if(event->type() == QtDeferredExecutionEvent::EVENT_TYPE) {
+      QCoreApplication::postEvent(this,
+        make_qt_promise_event(Beam::Try(m_executor)));
+      return true;
+    } else if(event->type() == QtBasePromiseEvent::EVENT_TYPE) {
+      if(m_is_disconnected) {
+        m_self = nullptr;
+        return true;
+      }
+      auto& promise_event = *static_cast<QtPromiseEvent<Type>*>(event);
+      if(m_continuation.is_initialized()) {
+        (*m_continuation)(std::move(promise_event.get_result()));
+        disconnect();
+        m_self = nullptr;
+      } else {
+        m_value = std::move(promise_event.get_result());
+      }
+      return true;
+    } else {
       return QObject::event(event);
     }
-    if(m_is_disconnected) {
-      m_self = nullptr;
-      return true;
-    }
-    auto& promise_event = *static_cast<QtPromiseEvent<Type>*>(event);
-    if(m_continuation.is_initialized()) {
-      (*m_continuation)(std::move(promise_event.get_result()));
-      disconnect();
-      m_self = nullptr;
-    } else {
-      m_value = std::move(promise_event.get_result());
-    }
-    return true;
   }
 }
 }

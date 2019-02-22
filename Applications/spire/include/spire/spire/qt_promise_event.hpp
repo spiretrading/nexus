@@ -6,6 +6,13 @@
 
 namespace Spire {
 namespace details {
+  class QtDeferredExecutionEvent : public QEvent {
+    public:
+      const static QEvent::Type EVENT_TYPE;
+
+      QtDeferredExecutionEvent();
+  };
+
   class QtBasePromiseEvent : public QEvent {
     public:
       const static QEvent::Type EVENT_TYPE;

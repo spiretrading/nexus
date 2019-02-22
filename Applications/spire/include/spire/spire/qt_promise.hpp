@@ -71,7 +71,7 @@ namespace Spire {
   */
   template<typename Executor>
   auto make_qt_promise(Executor&& executor) {
-    return QtPromise<std::result_of_t<Executor()>>(
+    return QtPromise<std::invoke_result_t<Executor>>(
       std::forward<Executor>(executor));
   }
 
@@ -133,20 +133,11 @@ namespace Spire {
   std::enable_if_t<!std::is_same_v<std::invoke_result_t<F, Beam::Expect<T>>,
       void>, QtPromise<std::invoke_result_t<F, Beam::Expect<T>>>>
       QtPromise<T>::then(F&& continuation) {
-    auto chain = make_qt_promise(
+    return make_qt_promise(
       [continuation = std::forward<F>(continuation),
-          promise = std::move(*this)] () mutable {
-        auto future = std::optional<Beam::Expect<T>>();
-        promise.then(
-          [&] (auto result) {
-            future.emplace(std::move(result));
-          });
-        while(!future.has_value()) {
-          QApplication::processEvents(QEventLoop::WaitForMoreEvents);
-        }
-        return continuation(std::move(*future));
+          promise = std::move(*this)] {
+        return std::move(promise);
       });
-    return chain;
   }
 
   template<typename T>
