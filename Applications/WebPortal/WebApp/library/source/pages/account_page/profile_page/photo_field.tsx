@@ -38,6 +38,11 @@ interface Properties {
 
   /** Callback to store the file and the scaling for the file. */
   onSubmit: (newFileLocation: string, scaling: number) => void;
+
+  newImageSource: string;
+  newScaling: number;
+  onPhotoChange: (photo: string) => void;
+  onScalingChange: (scale: number) => void;
 }
 
 /** Displays an account's profile image. */
@@ -47,6 +52,10 @@ export class PhotoField extends React.Component<Properties, {}> {
     onToggleUploader: () => {},
     onSubmit: () => {}
   };
+
+  constructor(properties: Properties) {
+    super(properties);
+  }
 
   public render(): JSX.Element {
     const boxStyle = (() => {
@@ -122,9 +131,12 @@ export class PhotoField extends React.Component<Properties, {}> {
             <div style={{ ...PhotoField.STYLE.animationBase,
                 ...(PhotoField.ANIMATION_STYLE as any)[state]}}>
               <ChangePictureModal displaySize={this.props.displaySize}
-                imageSource={this.props.imageSource}
+                imageSource={this.props.newImageSource}
+                scaling={this.props.newScaling}
                 onCloseModal={this.props.onToggleUploader}
-                onSubmitImage={this.props.onSubmit}/>
+                onSubmitImage={this.props.onSubmit}
+                onPhotoChange={this.props.onPhotoChange}
+                onScalingChange={this.props.onScalingChange}/>
             </div>)}
         </Transition>
       </div>);
@@ -243,6 +255,9 @@ interface ModalProperties {
   /** The image to be displayed. */
   imageSource?: string;
 
+  /** */
+  scaling: number;
+
   /** Determines the size at which to display the modal at. */
   displaySize: DisplaySize;
 
@@ -251,22 +266,19 @@ interface ModalProperties {
 
   /** Determines what happens when the file is submitted. */
   onSubmitImage: (newFileLocation: string, scaling: number) => void;
-}
 
-interface ModalState {
-  scaling: number;
-  currentImage: string;
+  /** Called when the preview photo changes. */
+  onPhotoChange: (photo: string) => void;
+
+  /** Called to change the slider when the slider moves. */
+  onScalingChange: (scale: number) => void;
 }
 
 /** Displays a modal that allows the user to change their picture. */
 export class ChangePictureModal extends
-    React.Component<ModalProperties, ModalState> {
+    React.Component<ModalProperties> {
   constructor(properties: ModalProperties) {
     super(properties);
-    this.state = {
-      scaling: 1,
-      currentImage: this.props.imageSource
-    };
     this.onSliderMovement = this.onSliderMovement.bind(this);
     this.onGetImageFile = this.onGetImageFile.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
@@ -296,14 +308,14 @@ export class ChangePictureModal extends
       }
     })();
     const imageSrc = (() => {
-      if(this.state.currentImage) {
-        return this.state.currentImage;
+      if(this.props.imageSource) {
+        return this.props.imageSource;
       } else {
         return 'resources/account_page/profile_page/image-placeholder.svg';
       }
     })();
     const imageStyle = (() => {
-      if(this.state.currentImage) {
+      if(this.props.imageSource) {
         if(this.props.displaySize === DisplaySize.SMALL) {
           return ChangePictureModal.STYLE.imageSmall;
         } else {
@@ -323,7 +335,7 @@ export class ChangePictureModal extends
     const imageScaling = (() => {
       if(this.props.imageSource) {
         return ({
-          transform: `scale(${this.state.scaling})`
+          transform: `scale(${this.props.scaling})`
         });
       } else {
         return { transform: 'scale(1)' };
@@ -350,8 +362,8 @@ export class ChangePictureModal extends
             </div>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <Slider onChange={this.onSliderMovement}
-              scale={this.state.scaling}
-              readonly={!this.state.currentImage}/>
+              scale={this.props.scaling}
+              readonly={!this.props.imageSource}/>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <HLine color='#E6E6E6' height={1}/>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
@@ -378,28 +390,25 @@ export class ChangePictureModal extends
   }
 
   private onSliderMovement(value: number) {
-    this.setState({ scaling: value });
+    this.props.onScalingChange(value);
   }
 
   private onGetImageFile(selectorFiles: FileList) {
     const file = selectorFiles.item(0);
     const someURL = URL.createObjectURL(file);
-    this.setState({
-      currentImage: someURL,
-      scaling: 1
-    });
+    this.props.onPhotoChange(someURL);
+    this.setState({});
   }
 
   private onClose() {
     this.props.onCloseModal();
     this.setState({ scaling: 1 });
-    this.setState({ currentImage: this.props.imageSource });
   }
 
   private onSubmit() {
-    if(this.state.currentImage) {
-      this.props.onSubmitImage(this.state.currentImage,
-        this.state.scaling);
+    if(this.props.imageSource) {
+      this.props.onSubmitImage(this.props.imageSource,
+        this.props.scaling);
     }
     this.props.onCloseModal();
   }
@@ -545,9 +554,6 @@ export class ChangePictureModal extends
       borderRadius: '1px',
       outline: '0px',
       ':active': {
-        backgroundColor: '#4B23A0'
-      },
-      ':focus': {
         backgroundColor: '#4B23A0'
       },
       ':hover': {

@@ -42,6 +42,8 @@ interface State {
   userNameError: boolean;
   emailError: boolean;
   photoUploaderMode: PhotoFieldDisplayMode;
+  newPhoto: string;
+  newScaling: number;
 }
 
 /** The page that is shown when the user wants to create a new account. */
@@ -65,7 +67,9 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       lastNameError: false,
       userNameError: false,
       emailError: false,
-      photoUploaderMode: PhotoFieldDisplayMode.DISPLAY
+      photoUploaderMode: PhotoFieldDisplayMode.DISPLAY,
+      newPhoto: '',
+      newScaling: 1
     };
     this.onPhotoFieldClick = this.onPhotoFieldClick.bind(this);
     this.onPhotoSubmit = this.onPhotoSubmit.bind(this);
@@ -80,6 +84,8 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     this.onCountryChange = this.onCountryChange.bind(this);
     this.checkInputs = this.checkInputs.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
+    this.onPhotoChange = this.onPhotoChange.bind(this);
+    this.onScaleChange = this.onScaleChange.bind(this);
   }
 
   public render(): JSX.Element {
@@ -100,18 +106,24 @@ export class CreateAccountPage extends React.Component<Properties, State> {
         return <Dali.Padding size='60px'/>;
       }
     })();
+    const photo = (() => {
+      return (<PhotoField
+        displaySize={this.props.displaySize}
+        displayMode={this.state.photoUploaderMode}
+        imageSource={this.state.identity.photoId}
+        onToggleUploader={this.onPhotoFieldClick}
+        onSubmit={this.onPhotoSubmit}
+        onPhotoChange={this.onPhotoChange}
+        onScalingChange={this.onScaleChange}
+        newImageSource={this.state.newPhoto}
+        newScaling={this.state.newScaling}
+        scaling={1}/>);
+    })();
     const sidePanelPhoto = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return null;
       } else {
-        return (
-          <PhotoField
-            displaySize={this.props.displaySize}
-            displayMode={this.state.photoUploaderMode}
-            imageSource={this.state.identity.photoId}
-            onToggleUploader={this.onPhotoFieldClick}
-            onSubmit={this.onPhotoSubmit}
-            scaling={1}/>);
+        return photo;
       }
     })();
     const sidePanelPhotoPadding = (() => {
@@ -128,13 +140,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return (
           <Dali.VBoxLayout>
-            <PhotoField
-              displaySize={this.props.displaySize}
-              displayMode={this.state.photoUploaderMode}
-              imageSource={this.state.identity.photoId}
-              onToggleUploader={this.onPhotoFieldClick}
-              onSubmit={this.onPhotoSubmit}
-              scaling={1}/>
+            {photo}
             <Dali.Padding size={CreateAccountPage.STANDARD_PADDING}/>
           </Dali.VBoxLayout>);
       } else {
@@ -294,10 +300,25 @@ export class CreateAccountPage extends React.Component<Properties, State> {
 
   private onPhotoFieldClick() {
     if(this.state.photoUploaderMode === PhotoFieldDisplayMode.DISPLAY) {
-      this.setState({photoUploaderMode: PhotoFieldDisplayMode.UPLOADING});
+      this.setState({
+        photoUploaderMode: PhotoFieldDisplayMode.UPLOADING,
+        newPhoto: this.state.identity.photoId,
+        newScaling: 1
+      });
     } else {
-      this.setState({photoUploaderMode: PhotoFieldDisplayMode.DISPLAY});
+      this.setState({
+        photoUploaderMode: PhotoFieldDisplayMode.DISPLAY,
+        newPhoto: this.state.identity.photoId
+      });
     }
+  }
+
+  private onPhotoChange(photo: string) {
+    this.setState({newPhoto: photo});
+  }
+
+  private onScaleChange(scaling: number) {
+    this.setState({newScaling: scaling});
   }
 
   private onPhotoSubmit(newFileLocation: string, scaling: number) {
