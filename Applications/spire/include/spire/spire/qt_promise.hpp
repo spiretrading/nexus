@@ -72,6 +72,10 @@ namespace Spire {
   template<typename Executor>
   QtPromise(Executor&&) -> QtPromise<promise_executor_result_t<Executor>>;
 
+  template<typename Executor>
+  QtPromise(Executor&&, LaunchPolicy) ->
+    QtPromise<promise_executor_result_t<Executor>>;
+
   template<typename U, typename F>
   QtPromise(QtPromise<U>, F&&) -> QtPromise<promise_executor_result_t<F>>;
 
