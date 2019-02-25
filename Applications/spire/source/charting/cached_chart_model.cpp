@@ -62,28 +62,22 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_data(
         });
       auto pos = m_loaded_data.erase(first, last);
       m_loaded_data.insert(pos, result.Get().begin(), result.Get().end());
-      if(m_ranges.empty()) {
-        m_ranges.push_back(data);
-      } else {
-        auto ranges = m_ranges;
-        ranges.push_back(data);
-        std::sort(ranges.begin(), ranges.end(),
-          [] (const auto& lhs, const auto& rhs) {
-            return lhs.m_start < rhs.m_start;
-          });
-        m_ranges.clear();
-        for(auto& range : ranges) {
-          if(m_ranges.empty()) {
-            m_ranges.push_back(range);
-          } else {
-            auto top = m_ranges.back();
-            if(range.m_start <= top.m_end) {
-              auto upper_bound = std::max(top.m_end, range.m_end);
-              m_ranges.back() = {top.m_start, upper_bound};
-            } else {
-              m_ranges.push_back(range);
-            }
-          }
+      auto range_first = std::lower_bound(m_ranges.begin(), m_ranges.end(),
+        data, [=] (const auto& lhs, const auto& rhs) {
+          return lhs.m_start < rhs.m_start;
+        });
+      auto range_last = std::lower_bound(m_ranges.begin(), m_ranges.end(),
+        data, [=] (const auto& lhs, const auto& rhs) {
+          return lhs.m_end < rhs.m_end;
+        });
+      auto range_pos = m_ranges.erase(range_first, range_last);
+      m_ranges.insert(range_pos, data);
+      for(auto iter = m_ranges.begin(); iter != m_ranges.end() - 1;) {
+        if((*iter).m_end > (*(iter + 1)).m_start) {
+          (*(iter + 1)).m_start = (*iter).m_start;
+          iter = m_ranges.erase(iter);
+        } else {
+          ++iter;
         }
       }
       return result.Get();
