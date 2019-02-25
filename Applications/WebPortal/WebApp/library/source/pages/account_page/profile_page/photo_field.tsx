@@ -33,7 +33,7 @@ interface Properties {
    */
   scaling: number;
 
-  /** The image displayed in the modal. A temporary image untill the submit
+  /** The image displayed in the modal. A temporary image until the submit
    * button is clicked.
    */
   newImageSource: string;
@@ -44,16 +44,16 @@ interface Properties {
   newScaling: number;
 
   /** Callback to hide or show the uploader. */
-  onToggleUploader: () => void;
+  onToggleUploader?: () => void;
 
   /** Callback to store the file and the scaling for the file. */
-  onSubmit: (newFileLocation: string, scaling: number) => void;
+  onSubmit?: (newFileLocation: string, scaling: number) => void;
 
   /** Called to update the photo in the modal. */
-  onNewPhotoChange: (photo: string) => void;
+  onNewPhotoChange?: (photo: string) => void;
 
   /** Called to update the scaling of the photo in the modal. */
-  onNewScalingChange: (scale: number) => void;
+  onNewScalingChange?: (scale: number) => void;
 }
 
 /** Displays an account's profile image. */
@@ -61,12 +61,10 @@ export class PhotoField extends React.Component<Properties, {}> {
   public static readonly defaultProps = {
     readonly: false,
     onToggleUploader: () => {},
-    onSubmit: () => {}
+    onSubmit: () => {},
+    onNewPhotoChange: () => {},
+    onNewScalingChange: () => {}
   };
-
-  constructor(properties: Properties) {
-    super(properties);
-  }
 
   public render(): JSX.Element {
     const boxStyle = (() => {
@@ -266,28 +264,36 @@ interface ModalProperties {
   /** The image to be displayed. */
   imageSource?: string;
 
-  /** */
+  /** A value that determines how zoomed in the image will be.
+   * It is a normalized scalar value.
+   */
   scaling: number;
 
   /** Determines the size at which to display the modal at. */
   displaySize: DisplaySize;
 
   /** Closes the modal. */
-  onCloseModal: () => void;
+  onCloseModal?: () => void;
 
   /** Determines what happens when the file is submitted. */
-  onSubmitImage: (newFileLocation: string, scaling: number) => void;
+  onSubmitImage?: (newFileLocation: string, scaling: number) => void;
 
   /** Called when the preview photo changes. */
-  onPhotoChange: (photo: string) => void;
+  onPhotoChange?: (photo: string) => void;
 
   /** Called to change the slider when the slider moves. */
-  onScalingChange: (scale: number) => void;
+  onScalingChange?: (scale: number) => void;
 }
 
 /** Displays a modal that allows the user to change their picture. */
-export class ChangePictureModal extends
-    React.Component<ModalProperties> {
+export class ChangePictureModal extends React.Component<ModalProperties> {
+  public static readonly defaultProps = {
+    onCloseModal: () => {},
+    onSubmitImage: () => {},
+    onPhotoChange: () => {},
+    onScalingChange: () => {}
+  }
+
   constructor(properties: ModalProperties) {
     super(properties);
     this.onSliderMovement = this.onSliderMovement.bind(this);
