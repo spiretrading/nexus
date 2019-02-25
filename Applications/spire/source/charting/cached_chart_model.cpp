@@ -19,7 +19,8 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load(ChartValue first,
   auto range = ChartRange{first, last};
   auto range_iterator = std::lower_bound(m_ranges.begin(), m_ranges.end(),
     range, [] (const auto& value, const auto& search_value) {
-      return search_value.m_start < value.m_start;
+      return value.m_start < search_value.m_start &&
+        search_value.m_end < value.m_end;
     });
   if(range_iterator != m_ranges.end() && (*range_iterator).m_start <= first &&
       (*range_iterator).m_end >= last) {
