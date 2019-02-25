@@ -72,6 +72,8 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       newScaling: 1
     };
     this.onPhotoFieldClick = this.onPhotoFieldClick.bind(this);
+    this.onPhotoChange = this.onPhotoChange.bind(this);
+    this.onScaleChange = this.onScaleChange.bind(this);
     this.onPhotoSubmit = this.onPhotoSubmit.bind(this);
     this.onRoleClick = this.onRoleClick.bind(this);
     this.onFirstNameChange = this.onFirstNameChange.bind(this);
@@ -84,8 +86,6 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     this.onCountryChange = this.onCountryChange.bind(this);
     this.checkInputs = this.checkInputs.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
-    this.onPhotoChange = this.onPhotoChange.bind(this);
-    this.onScaleChange = this.onScaleChange.bind(this);
   }
 
   public render(): JSX.Element {
@@ -107,17 +107,18 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       }
     })();
     const photo = (() => {
-      return (<PhotoField
-        displaySize={this.props.displaySize}
-        displayMode={this.state.photoUploaderMode}
-        imageSource={this.state.identity.photoId}
-        onToggleUploader={this.onPhotoFieldClick}
-        onSubmit={this.onPhotoSubmit}
-        onPhotoChange={this.onPhotoChange}
-        onScalingChange={this.onScaleChange}
-        newImageSource={this.state.newPhoto}
-        newScaling={this.state.newScaling}
-        scaling={1}/>);
+      return (
+        <PhotoField
+          displaySize={this.props.displaySize}
+          displayMode={this.state.photoUploaderMode}
+          imageSource={this.state.identity.photoId}
+          onToggleUploader={this.onPhotoFieldClick}
+          onSubmit={this.onPhotoSubmit}
+          onNewPhotoChange={this.onPhotoChange}
+          onNewScalingChange={this.onScaleChange}
+          newImageSource={this.state.newPhoto}
+          newScaling={this.state.newScaling}
+          scaling={1}/>);
     })();
     const sidePanelPhoto = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {

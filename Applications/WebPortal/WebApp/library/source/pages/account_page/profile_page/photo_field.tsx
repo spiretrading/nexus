@@ -33,16 +33,27 @@ interface Properties {
    */
   scaling: number;
 
+  /** The image displayed in the modal. A temporary image untill the submit
+   * button is clicked.
+   */
+  newImageSource: string;
+
+  /** A value that determines how zoomed in the new image will be.
+   * It is a normalized scalar value.
+   */
+  newScaling: number;
+
   /** Callback to hide or show the uploader. */
   onToggleUploader: () => void;
 
   /** Callback to store the file and the scaling for the file. */
   onSubmit: (newFileLocation: string, scaling: number) => void;
 
-  newImageSource: string;
-  newScaling: number;
-  onPhotoChange: (photo: string) => void;
-  onScalingChange: (scale: number) => void;
+  /** Called to update the photo in the modal. */
+  onNewPhotoChange: (photo: string) => void;
+
+  /** Called to update the scaling of the photo in the modal. */
+  onNewScalingChange: (scale: number) => void;
 }
 
 /** Displays an account's profile image. */
@@ -135,8 +146,8 @@ export class PhotoField extends React.Component<Properties, {}> {
                 scaling={this.props.newScaling}
                 onCloseModal={this.props.onToggleUploader}
                 onSubmitImage={this.props.onSubmit}
-                onPhotoChange={this.props.onPhotoChange}
-                onScalingChange={this.props.onScalingChange}/>
+                onPhotoChange={this.props.onNewPhotoChange}
+                onScalingChange={this.props.onNewScalingChange}/>
             </div>)}
         </Transition>
       </div>);
