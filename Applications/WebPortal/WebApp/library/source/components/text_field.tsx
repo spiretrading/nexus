@@ -75,16 +75,17 @@ export class TextField extends React.Component<Properties> {
       paddingLeft: '10px',
       ':focus': {
         ouline: 0,
-        borderColor: '#684BC7'
+        borderColor: '#684BC7',
+        boxShadow: 'none',
+        webkitBoxShadow: 'none',
+        outlineColor: 'transparent',
+        outlineStyle: 'none'
       },
       ':active' : {
         borderColor: '#684BC7'
       },
       '::moz-focus-inner': {
         border: 0
-      },
-      'read-only': {
-        border: '1px solid #FFFFFF'
       },
       '::placeholder': {
         color: '#8C8C8C'
@@ -106,7 +107,11 @@ export class TextField extends React.Component<Properties> {
       paddingLeft: '10px',
       ':focus': {
         ouline: 0,
-        borderColor: '#684BC7'
+        borderColor: '#684BC7',
+        boxShadow: 'none',
+        webkitBoxShadow: 'none',
+        outlineColor: 'transparent',
+        outlineStyle: 'none'
       },
       ':active' : {
         borderColor: '#684BC7'
@@ -131,16 +136,17 @@ export class TextField extends React.Component<Properties> {
       paddingLeft: '10px',
       ':focus': {
         ouline: 0,
-        borderColor: '#684BC7'
+        borderColor: '#684BC7',
+        boxShadow: 'none',
+        webkitBoxShadow: 'none',
+        outlineColor: 'transparent',
+        outlineStyle: 'none'
       },
       ':active' : {
         borderColor: '#684BC7'
       },
       '::moz-focus-inner': {
         border: 0
-      },
-      'read-only': {
-        border: '1px solid #FFFFFF'
       },
       '::placeholder': {
         color: '#8C8C8C'
