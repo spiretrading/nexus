@@ -102,7 +102,7 @@ export class FormEntry extends React.Component<Properties> {
       font: '400 14px Roboto',
       color: '#333333',
       paddingLeft: '10px',
-      width: '100%'
+      flexGrow: 1
     }
   };
   private static readonly VERTICAL_PADDING = '12px';
