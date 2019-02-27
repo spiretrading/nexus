@@ -1,12 +1,19 @@
 import { css, StyleSheet } from 'aphrodite';
+import * as Beam from 'beam';
 import * as React from 'react';
 import { DisplaySize } from '../../display_size';
+import { GroupSuggestionModel } from '.';
 
 interface Properties {
   displaySize: DisplaySize;
   error?: boolean;
-  //some sort of groups
-  //some sort of model
+  value?: string;
+  selectedGroups?: Beam.DirectoryEntry[];
+  suggestions?: Beam.DirectoryEntry[];
+
+  onValueChange?: (newValue: string) => void;
+  addGroup?: (group: Beam.DirectoryEntry) => void;
+  removeGroup?: (group: Beam.DirectoryEntry) => void;
 }
 
 export class GroupSelectionBox extends React.Component<Properties> {
@@ -14,11 +21,11 @@ export class GroupSelectionBox extends React.Component<Properties> {
   public render(): JSX.Element {
     const boxStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return GroupSelectionBox.DYNAMIC_STYLE.boxSmall;
+        return GroupSelectionBox.DYNAMIC_STYLE.inputSmall;
       } else if(this.props.displaySize === DisplaySize.MEDIUM) {
-        return GroupSelectionBox.DYNAMIC_STYLE.boxMedium;
+        return GroupSelectionBox.DYNAMIC_STYLE.inputMedium;
       } else {
-        return GroupSelectionBox.DYNAMIC_STYLE.boxLarge;
+        return GroupSelectionBox.DYNAMIC_STYLE.inputLarge;
       }
     })();
     const errorBoxStyle = (() => {
@@ -28,16 +35,32 @@ export class GroupSelectionBox extends React.Component<Properties> {
         return null;
       }
     })();
+    const selectedGroups = [];
+    for(const group of this.props.selectedGroups) {
+      selectedGroups.push(
+      <div className={css(GroupSelectionBox.DYNAMIC_STYLE.groupEntry)}>
+        <div>{group.name}</div>
+        <img src = 'res'/>
+      </div>);
+    }
     return (
       <div id='GROUP BOX'>
         <input type='text'
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+            this.props.onValueChange(event.target.value);
+          }}
           className={css(boxStyle, errorBoxStyle,
           GroupSelectionBox.DYNAMIC_STYLE.text)}/>
+        <div id='SELECTED GROUPS'>
+          {selectedGroups}
+        </div>
       </div>);
   }
 
   private static DYNAMIC_STYLE = StyleSheet.create({
-    boxSmall: {
+    box : {
+    },
+    inputSmall: {
       boxSizing: 'border-box' as 'border-box',
       paddingLeft: '10px',
       height: '34px',
@@ -60,7 +83,7 @@ export class GroupSelectionBox extends React.Component<Properties> {
         border: 0
       }
     },
-    boxMedium: {
+    inputMedium: {
       boxSizing: 'border-box' as 'border-box',
       paddingLeft: '10px',
       height: '34px',
@@ -83,7 +106,7 @@ export class GroupSelectionBox extends React.Component<Properties> {
         border: 0
       }
     },
-    boxLarge: {
+    inputLarge: {
       boxSizing: 'border-box' as 'border-box',
       paddingLeft: '10px',
       height: '34px',
@@ -106,6 +129,23 @@ export class GroupSelectionBox extends React.Component<Properties> {
         border: 0
       }
     },
+    groupEntry : {
+      paddingLeft: '10px',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      justifyContent: 'space-between',
+      height: '34px'
+    },
+    imageWrapper: {
+      paddingLeft:'10px',
+      paddingRight: '5px',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      justifyContent: 'space-between',
+      height: '34px'
+    },
     text: {
       font: '400 14px Roboto',
       color: '#000000'
@@ -116,4 +156,3 @@ export class GroupSelectionBox extends React.Component<Properties> {
   });
 }
 
-// Suggestion Window

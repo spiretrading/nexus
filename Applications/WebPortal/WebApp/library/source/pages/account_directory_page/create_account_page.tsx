@@ -34,6 +34,7 @@ interface State {
   roles: Nexus.AccountRoles;
   username: string;
   identity: Nexus.AccountIdentity;
+  groupsValue: string;
   groups: Beam.DirectoryEntry[];
   isSubmitButtonDisabled: boolean;
   errorStatus: string;
@@ -60,6 +61,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       roles: new Nexus.AccountRoles(),
       username: '',
       identity: new Nexus.AccountIdentity(),
+      groupsValue: '',
       groups: [],
       isSubmitButtonDisabled: true,
       errorStatus: '',
@@ -80,6 +82,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     this.onFirstNameChange = this.onFirstNameChange.bind(this);
     this.onLastNameChange = this.onLastNameChange.bind(this);
     this.onUsernameChange = this.onUsernameChange.bind(this);
+    this.onGroupsValueChange = this.onGroupsValueChange.bind(this);
     this.onEmailChange = this.onEmailChange.bind(this);
     this.onAddressChange = this.onAddressChange.bind(this);
     this.onCityChange = this.onCityChange.bind(this);
@@ -234,6 +237,8 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                 <FormEntry name='Groups(s)'
                     displaySize={this.props.displaySize}>
                   <GroupSelectionBox
+                    value={this.state.groupsValue}
+                    onValueChange={this.onGroupsValueChange}
                     displaySize={this.props.displaySize}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -350,6 +355,10 @@ export class CreateAccountPage extends React.Component<Properties, State> {
   private onUsernameChange(newValue: string) {
     this.setState({ username: newValue });
     this.enableSubmit();
+  }
+
+  private onGroupsValueChange(newValue: string) {
+    this.setState({ groupsValue: newValue });
   }
 
   private onEmailChange(newValue: string) {

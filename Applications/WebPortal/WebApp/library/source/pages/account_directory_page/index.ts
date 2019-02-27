@@ -5,5 +5,7 @@ export * from './cached_account_directory_model';
 export * from './create_account_page';
 export * from './filter_bar';
 export * from './group_card';
-export * from './group_selection_box';
 export * from './local_account_directory_model';
+export * from './local_account_directory_model';
+export * from './group_selection_box';
+export * from './group_suggestion_model';
