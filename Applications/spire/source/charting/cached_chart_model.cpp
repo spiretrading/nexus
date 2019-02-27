@@ -99,21 +99,23 @@ std::tuple<std::vector<CachedChartModel::ChartRange>::iterator,
       return {last.value(), last.value()};
     }
   }
-  for(auto iter = m_ranges.begin(); iter != m_ranges.end(); ++iter) {
-    if((*iter).m_start <= range.m_start &&
-        (*iter).m_end >= range.m_start) {
-      first = iter;
+  for(auto loaded_range = m_ranges.begin(); loaded_range != m_ranges.end();
+      ++loaded_range) {
+    if((*loaded_range).m_start <= range.m_start &&
+        (*loaded_range).m_end >= range.m_start) {
+      first = loaded_range;
     }
-    if((*iter).m_start <= range.m_end && (*iter).m_end >= range.m_end) {
-      last = iter + 1;
+    if((*loaded_range).m_start <= range.m_end &&
+        (*loaded_range).m_end >= range.m_end) {
+      last = loaded_range + 1;
     }
-    if(!first.has_value() && range.m_start > (*iter).m_end &&
-        range.m_start < (*(iter + 1)).m_start) {
-      first = iter + 1;
+    if(!first.has_value() && range.m_start > (*loaded_range).m_end &&
+        range.m_start < (*(loaded_range + 1)).m_start) {
+      first = loaded_range + 1;
     }
-    if(!last.has_value() && range.m_end > (*iter).m_end &&
-        range.m_end < (*(iter + 1)).m_start) {
-      last = iter + 1;
+    if(!last.has_value() && range.m_end > (*loaded_range).m_end &&
+        range.m_end < (*(loaded_range + 1)).m_start) {
+      last = loaded_range + 1;
     }
     if(first.has_value() && last.has_value()) {
       break;
