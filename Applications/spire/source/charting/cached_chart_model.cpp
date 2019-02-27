@@ -16,26 +16,25 @@ ChartValue::Type CachedChartModel::get_y_axis_type() const {
 
 QtPromise<std::vector<Candlestick>> CachedChartModel::load(ChartValue first,
     ChartValue last) {
-  auto range = ChartRange{first, last};
-  auto range_iterator = std::lower_bound(m_ranges.begin(), m_ranges.end(),
-    range, [] (const auto& index, const auto& value) {
-      return value.m_start < index.m_start;
-    });
-  if(range_iterator != m_ranges.end() && (*range_iterator).m_start <= first &&
-      (*range_iterator).m_end >= last) {
-    return QtPromise([=] {
-      auto first_iterator = std::lower_bound(m_loaded_data.begin(),
-        m_loaded_data.end(), first,
-        [] (const auto& index, const auto& value) {
-          return index.GetStart() < value;
+  for(auto range = m_ranges.begin(); range != m_ranges.end(); ++range) {
+    if((*range).m_start <= first && (*range).m_end >= last) {
+      return QtPromise([=] {
+        auto first_iterator = std::lower_bound(m_loaded_data.begin(),
+          m_loaded_data.end(), first,
+          [] (const auto& index, const auto& value) {
+            return index.GetStart() < value;
+        });
+        auto last_iterator = std::lower_bound(m_loaded_data.begin(),
+          m_loaded_data.end(), last,
+          [] (const auto& index, const auto& value) {
+            return index.GetEnd() < value;
+        });
+        if(last_iterator != m_loaded_data.end()) {
+          ++last_iterator;
+        }
+        return std::vector<Candlestick>(first_iterator, last_iterator);
       });
-      auto last_iterator = std::upper_bound(m_loaded_data.begin(),
-        m_loaded_data.end(), last,
-        [] (const auto& value, const auto& index) {
-          return index.GetEnd() > value;
-      });
-      return std::vector<Candlestick>(first_iterator, last_iterator);
-    });
+    }
   }
   return load_data({first, last});
 }
@@ -67,21 +66,15 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_data(
       }
       m_loaded_data.insert(pos, result.Get().begin(), result.Get().end());
       auto [range_first, range_last] = range_search(data);
-      auto new_range = ChartRange{
-        [&, range_first = range_first] {
-          if(range_first == m_ranges.end()) {
-            return data.m_start;
-          }
-          return std::min((*range_first).m_start, data.m_start);
-        }(),
-        [&, range_last = range_last] {
-          if(range_last == m_ranges.end()) {
-            return data.m_end;
-          }
-          return std::max((*range_last).m_end, data.m_end);
-        }()};
+      auto new_range = data;
+      if(range_first != m_ranges.end()) {
+        new_range.m_start = std::min((*range_first).m_start, new_range.m_start);
+      }
+      if(range_last != m_ranges.end()) {
+        new_range.m_end = std::max((*range_last).m_end, new_range.m_end);
+      }
       auto range_pos = m_ranges.erase(range_first, range_last);
-      m_ranges.insert(range_pos, data);
+      m_ranges.insert(range_pos, new_range);
       return result.Get();
   });
 }
