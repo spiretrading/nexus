@@ -47,7 +47,6 @@ connection CachedChartModel::connect_candlestick_slot(
 
 QtPromise<std::vector<Candlestick>> CachedChartModel::load_data(
     const ChartRange& data) {
-  m_ranges;
   return m_chart_model->load(data.m_start, data.m_end).then(
     [=] (auto result) {
       auto first = std::lower_bound(m_loaded_data.begin(),
