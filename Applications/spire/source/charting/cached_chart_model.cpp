@@ -51,14 +51,14 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_data(
   return m_chart_model->load(data.m_start, data.m_end).then(
     [=] (auto result) {
       auto first = std::lower_bound(m_loaded_data.begin(),
-        m_loaded_data.end(), data.m_start, [] (const auto& lhs,
-            const auto& rhs) {
-          return lhs.GetStart() < rhs;
+        m_loaded_data.end(), data.m_start, [] (const auto& index,
+            const auto& value) {
+          return index.GetStart() < value;
         });
       auto last = std::lower_bound(m_loaded_data.begin(),
-        m_loaded_data.end(), data.m_end, [] (const auto& lhs,
-            const auto& rhs) {
-          return lhs.GetStart() < rhs;
+        m_loaded_data.end(), data.m_end, [] (const auto& index,
+            const auto& value) {
+          return index.GetStart() < value;
         });
       auto pos = m_loaded_data.end();
       if(last != m_loaded_data.end()) {
