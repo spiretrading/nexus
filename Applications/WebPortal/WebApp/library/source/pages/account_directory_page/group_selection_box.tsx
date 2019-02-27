@@ -4,9 +4,9 @@ import { DisplaySize } from '../../display_size';
 
 interface Properties {
   displaySize: DisplaySize;
-  //selected groups
-  //groups model
   error?: boolean;
+  //some sort of groups
+  //some sort of model
 }
 
 export class GroupSelectionBox extends React.Component<Properties> {
@@ -29,10 +29,10 @@ export class GroupSelectionBox extends React.Component<Properties> {
       }
     })();
     return (
-      <div>
-      <input type='text'
-      className={css(boxStyle, errorBoxStyle,
-      GroupSelectionBox.DYNAMIC_STYLE.text)} />
+      <div id='GROUP BOX'>
+        <input type='text'
+          className={css(boxStyle, errorBoxStyle,
+          GroupSelectionBox.DYNAMIC_STYLE.text)}/>
       </div>);
   }
 
@@ -115,3 +115,5 @@ export class GroupSelectionBox extends React.Component<Properties> {
     }
   });
 }
+
+// Suggestion Window

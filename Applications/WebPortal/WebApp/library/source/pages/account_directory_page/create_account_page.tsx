@@ -7,6 +7,7 @@ import { DisplaySize, HLine } from '../..';
 import { CountrySelectionBox } from '../../components';
 import { FormEntry, PhotoField, PhotoFieldDisplayMode, RolesField, TextField }
   from '../account_page/profile_page';
+import { GroupSelectionBox } from './group_selection_box';
 
 interface Properties {
 
@@ -232,10 +233,8 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='Groups(s)'
                     displaySize={this.props.displaySize}>
-                  <TextField
-                    value=''
-                    displaySize={this.props.displaySize}
-                    readonly/>
+                  <GroupSelectionBox
+                    displaySize={this.props.displaySize}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='Email'
