@@ -64,7 +64,9 @@ export class TextField extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const boxStyle = (() => {
-      if(this.props.isError) {
+      if(this.props.readonly) {
+        return TextField.STYLE.readonlyBox;
+      } else if(this.props.isError) {
         return TextField.STYLE.errorBox;
       } else if(this.state.effects === Effects.HOVER) {
         return TextField.STYLE.hoveredBox;
@@ -164,9 +166,6 @@ export class TextField extends React.Component<Properties, State> {
       '::moz-focus-inner': {
         border: 0
       },
-      'read-only': {
-        border: '1px solid #FFFFFF'
-      },
       '::placeholder': {
         color: '#8C8C8C'
       }
@@ -204,6 +203,18 @@ export class TextField extends React.Component<Properties, State> {
       alignItems: 'center' as 'center',
       justifyContent: 'space-between',
       border: '1px solid #E63F44',
+      borderRadius: '1px'
+    },
+    readonlyBox: {
+      boxSizing: 'border-box' as 'border-box',
+      width: '100%',
+      height: '34px',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'nowrap' as 'nowrap',
+      alignItems: 'center' as 'center',
+      justifyContent: 'space-between',
+      border: '1px solid #FFFFFF',
       borderRadius: '1px'
     },
     inputStyle: {
