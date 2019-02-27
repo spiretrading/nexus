@@ -28,12 +28,15 @@ QtPromise<std::vector<Candlestick>> LocalChartModel::load(ChartValue first,
   return QtPromise([=, candlesticks = m_candlesticks] {
     auto start = std::lower_bound(candlesticks.begin(), candlesticks.end(),
       first, [] (const auto& lhs, const auto& rhs) {
-        return lhs.GetStart() < rhs;
+        return lhs.GetEnd() < rhs;
       });
     auto end = std::lower_bound(start, candlesticks.end(),
       last, [] (const auto& lhs, const auto& rhs) {
-        return lhs.GetEnd() <= rhs;
+        return lhs.GetStart() < rhs;
       });
+    if(end != candlesticks.end()) {
+      ++end;
+    }
     return std::vector<Candlestick>(start, end);
   });
 }

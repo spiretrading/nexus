@@ -22,12 +22,12 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load(ChartValue first,
         auto first_iterator = std::lower_bound(m_loaded_data.begin(),
           m_loaded_data.end(), first,
           [] (const auto& index, const auto& value) {
-            return index.GetStart() < value;
+            return index.GetEnd() < value;
         });
         auto last_iterator = std::lower_bound(m_loaded_data.begin(),
           m_loaded_data.end(), last,
           [] (const auto& index, const auto& value) {
-            return index.GetEnd() < value;
+            return index.GetStart() < value;
         });
         if(last_iterator != m_loaded_data.end()) {
           ++last_iterator;
