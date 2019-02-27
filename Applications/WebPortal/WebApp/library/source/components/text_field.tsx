@@ -157,7 +157,6 @@ export class TextField extends React.Component<Properties> {
     },
     inputStyle: {
       flexGrow: 1
-    },
-  
+    }
   });
 }
