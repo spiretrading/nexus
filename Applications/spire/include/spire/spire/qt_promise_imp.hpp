@@ -164,7 +164,18 @@ namespace details {
   template<typename Executor>
   bool qt_promise_imp<Executor>::event(QEvent* event) {
     if(event->type() == QtDeferredExecutionEvent::EVENT_TYPE) {
-      execute();
+      auto result = Beam::Try(m_executor);
+      if(m_is_disconnected) {
+        m_self = nullptr;
+        return true;
+      }
+      if(m_continuation.is_initialized()) {
+        (*m_continuation)(std::move(result));
+        disconnect();
+        m_self = nullptr;
+      } else {
+        m_value = std::move(result);
+      }
       return true;
     } else if(event->type() == QtBasePromiseEvent::EVENT_TYPE) {
       if(m_is_disconnected) {
