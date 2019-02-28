@@ -56,7 +56,7 @@ export class FormEntry extends React.Component<Properties> {
     const content = (() => {
       if(orientation === FormEntry.Orientation.HORIZONTAL) {
         return (
-          <HBoxLayout style={boxStyle}>
+          <HBoxLayout style={FormEntry.STYLE.box} width='100%'>
             <div style={FormEntry.STYLE.horizontalHeader}>
               {this.props.name}
             </div>
@@ -65,7 +65,7 @@ export class FormEntry extends React.Component<Properties> {
           </HBoxLayout>);
       } else {
         return (
-          <VBoxLayout style={boxStyle} width='100%'>
+          <VBoxLayout width='100%'>
             <div style={FormEntry.STYLE.verticalHeader}>{this.props.name}</div>
             <Padding size={FormEntry.VERTICAL_PADDING}/>
             {this.props.children}
@@ -80,18 +80,17 @@ export class FormEntry extends React.Component<Properties> {
 
   private static STYLE = {
     box: {
-      cursor: 'default',
-      width: '100%'
+      boxSizing: 'border-box' as 'border-box'
     },
     childBox: {
       width: '100%',
-      flex: '1 0 auto'
+      flex: '1 1 auto'
     },
     horizontalHeader: {
       height: '34px',
       width: '130px',
       font: '400 14px Roboto',
-      color: '#000000',
+      color: '#333333',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       flexWrap: 'nowrap' as 'nowrap',
@@ -101,9 +100,9 @@ export class FormEntry extends React.Component<Properties> {
     verticalHeader : {
       height: '16px',
       font: '400 14px Roboto',
-      color: '#000000',
+      color: '#333333',
       paddingLeft: '10px',
-      width: '100%'
+      flexGrow: 1
     }
   };
   private static readonly VERTICAL_PADDING = '12px';

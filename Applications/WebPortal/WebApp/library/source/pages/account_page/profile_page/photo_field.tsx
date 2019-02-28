@@ -33,11 +33,27 @@ interface Properties {
    */
   scaling: number;
 
+  /** The image displayed in the modal. A temporary image until the submit
+   * button is clicked.
+   */
+  newImageSource: string;
+
+  /** A value that determines how zoomed in the new image will be.
+   * It is a normalized scalar value.
+   */
+  newScaling: number;
+
   /** Callback to hide or show the uploader. */
-  onToggleUploader: () => void;
+  onToggleUploader?: () => void;
 
   /** Callback to store the file and the scaling for the file. */
-  onSubmit: (newFileLocation: string, scaling: number) => void;
+  onSubmit?: (newFileLocation: string, scaling: number) => void;
+
+  /** Called to update the photo in the modal. */
+  onNewPhotoChange?: (photo: string) => void;
+
+  /** Called to update the scaling of the photo in the modal. */
+  onNewScalingChange?: (scale: number) => void;
 }
 
 /** Displays an account's profile image. */
@@ -45,7 +61,9 @@ export class PhotoField extends React.Component<Properties, {}> {
   public static readonly defaultProps = {
     readonly: false,
     onToggleUploader: () => {},
-    onSubmit: () => {}
+    onSubmit: () => {},
+    onNewPhotoChange: () => {},
+    onNewScalingChange: () => {}
   };
 
   public render(): JSX.Element {
@@ -64,6 +82,13 @@ export class PhotoField extends React.Component<Properties, {}> {
         return PhotoField.STYLE.hidden;
       } else {
         return PhotoField.STYLE.cameraIcon;
+      }
+    })();
+    const cameraIconWrapper = (() => {
+      if(this.props.readonly) {
+        return PhotoField.STYLE.hidden;
+      } else {
+        return PhotoField.STYLE.cameraIconWrapper;
       }
     })();
     const imageSrc = (() => {
@@ -102,9 +127,11 @@ export class PhotoField extends React.Component<Properties, {}> {
         <div style={boxStyle}>
           <img src={imageSrc}
             style={{...imageStyle, ...imageScaling}}/>
-          <img src='resources/account_page/profile_page/camera.svg'
-            style={cameraIconStyle}
-            onClick={this.props.onToggleUploader}/>
+          <div style={cameraIconWrapper}
+              onClick={this.props.onToggleUploader}>
+            <img src='resources/account_page/profile_page/camera.svg'
+              style={cameraIconStyle}/>
+          </div>
         </div>
         <Transition
             in={this.props.displayMode === PhotoFieldDisplayMode.UPLOADING}
@@ -113,9 +140,12 @@ export class PhotoField extends React.Component<Properties, {}> {
             <div style={{ ...PhotoField.STYLE.animationBase,
                 ...(PhotoField.ANIMATION_STYLE as any)[state]}}>
               <ChangePictureModal displaySize={this.props.displaySize}
-                imageSource={this.props.imageSource}
+                imageSource={this.props.newImageSource}
+                scaling={this.props.newScaling}
                 onCloseModal={this.props.onToggleUploader}
-                onSubmitImage={this.props.onSubmit}/>
+                onSubmitImage={this.props.onSubmit}
+                onPhotoChange={this.props.onNewPhotoChange}
+                onScalingChange={this.props.onNewScalingChange}/>
             </div>)}
         </Transition>
       </div>);
@@ -154,6 +184,7 @@ export class PhotoField extends React.Component<Properties, {}> {
       overflow: 'hidden' as 'hidden'
     },
     boxMedium: {
+      boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       alignItems: 'center' as 'center',
@@ -162,11 +193,12 @@ export class PhotoField extends React.Component<Properties, {}> {
       border: '1px solid #E6E6E6',
       borderRadius: '1px',
       height: '190px',
-      width: '284px',
+      width: '280px',
       position: 'relative' as 'relative',
       overflow: 'hidden' as 'hidden'
     },
     boxLarge: {
+      boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       alignItems: 'center' as 'center',
@@ -205,9 +237,16 @@ export class PhotoField extends React.Component<Properties, {}> {
       width: '100%'
     },
     cameraIcon: {
-      position: 'absolute' as 'absolute',
+      height: '20px',
+      width: '20px'
+    },
+    cameraIconWrapper: {
       height: '24px',
       width: '24px',
+      display: 'flex' as 'flex',
+      justifyContent: 'center' as 'center',
+      alignItems: 'center' as 'center',
+      position: 'absolute' as 'absolute',
       top: 'calc(0% + 10px)',
       left: 'calc(100% - 10px - 24px)',
       cursor: 'pointer' as 'pointer'
@@ -225,30 +264,38 @@ interface ModalProperties {
   /** The image to be displayed. */
   imageSource?: string;
 
+  /** A value that determines how zoomed in the image will be.
+   * It is a normalized scalar value.
+   */
+  scaling: number;
+
   /** Determines the size at which to display the modal at. */
   displaySize: DisplaySize;
 
   /** Closes the modal. */
-  onCloseModal: () => void;
+  onCloseModal?: () => void;
 
   /** Determines what happens when the file is submitted. */
-  onSubmitImage: (newFileLocation: string, scaling: number) => void;
-}
+  onSubmitImage?: (newFileLocation: string, scaling: number) => void;
 
-interface ModalState {
-  scaling: number;
-  currentImage: string;
+  /** Called when the preview photo changes. */
+  onPhotoChange?: (photo: string) => void;
+
+  /** Called to change the slider when the slider moves. */
+  onScalingChange?: (scale: number) => void;
 }
 
 /** Displays a modal that allows the user to change their picture. */
-export class ChangePictureModal extends
-    React.Component<ModalProperties, ModalState> {
+export class ChangePictureModal extends React.Component<ModalProperties> {
+  public static readonly defaultProps = {
+    onCloseModal: () => {},
+    onSubmitImage: () => {},
+    onPhotoChange: () => {},
+    onScalingChange: () => {}
+  }
+
   constructor(properties: ModalProperties) {
     super(properties);
-    this.state = {
-      scaling: 1,
-      currentImage: this.props.imageSource
-    };
     this.onSliderMovement = this.onSliderMovement.bind(this);
     this.onGetImageFile = this.onGetImageFile.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
@@ -278,14 +325,14 @@ export class ChangePictureModal extends
       }
     })();
     const imageSrc = (() => {
-      if(this.state.currentImage) {
-        return this.state.currentImage;
+      if(this.props.imageSource) {
+        return this.props.imageSource;
       } else {
         return 'resources/account_page/profile_page/image-placeholder.svg';
       }
     })();
     const imageStyle = (() => {
-      if(this.state.currentImage) {
+      if(this.props.imageSource) {
         if(this.props.displaySize === DisplaySize.SMALL) {
           return ChangePictureModal.STYLE.imageSmall;
         } else {
@@ -305,7 +352,7 @@ export class ChangePictureModal extends
     const imageScaling = (() => {
       if(this.props.imageSource) {
         return ({
-          transform: `scale(${this.state.scaling})`
+          transform: `scale(${this.props.scaling})`
         });
       } else {
         return { transform: 'scale(1)' };
@@ -332,7 +379,7 @@ export class ChangePictureModal extends
             </div>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <Slider onChange={this.onSliderMovement}
-              scale={this.state.scaling}
+              scale={this.props.scaling}
               readonly={!this.props.imageSource}/>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <HLine color='#E6E6E6' height={1}/>
@@ -344,10 +391,10 @@ export class ChangePictureModal extends
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                   this.onGetImageFile(event.target.files);}}/>
               <label htmlFor='imageInput' tabIndex={0}
-                className={css(ChangePictureModal.SPECIAL_STYLE.button)}>
+                className={css(ChangePictureModal.DYNAMIC_STYLE.button)}>
                 {ChangePictureModal.BROWSE_BUTTON_TEXT}
               </label>
-              <div className={css(ChangePictureModal.SPECIAL_STYLE.button)}
+              <div className={css(ChangePictureModal.DYNAMIC_STYLE.button)}
                 onClick={this.onSubmit} tabIndex={0}>
                 {ChangePictureModal.SUBMIT_BUTTON_TEXT}
               </div>
@@ -360,28 +407,25 @@ export class ChangePictureModal extends
   }
 
   private onSliderMovement(value: number) {
-    this.setState({ scaling: value });
+    this.props.onScalingChange(value);
   }
 
   private onGetImageFile(selectorFiles: FileList) {
     const file = selectorFiles.item(0);
     const someURL = URL.createObjectURL(file);
-    this.setState({
-      currentImage: someURL,
-      scaling: 1
-    });
+    this.props.onPhotoChange(someURL);
+    this.setState({});
   }
 
   private onClose() {
     this.props.onCloseModal();
     this.setState({ scaling: 1 });
-    this.setState({ currentImage: this.props.imageSource });
   }
 
   private onSubmit() {
-    if(this.state.currentImage) {
-      this.props.onSubmitImage(this.state.currentImage,
-        this.state.scaling);
+    if(this.props.imageSource) {
+      this.props.onSubmitImage(this.props.imageSource,
+        this.props.scaling);
     }
     this.props.onCloseModal();
   }
@@ -508,7 +552,7 @@ export class ChangePictureModal extends
       position: 'absolute' as 'absolute'
     }
   };
-  private static readonly SPECIAL_STYLE = StyleSheet.create({
+  private static readonly DYNAMIC_STYLE = StyleSheet.create({
     button: {
       boxSizing: 'border-box' as 'border-box',
       cursor: 'pointer' as 'pointer',
@@ -527,9 +571,6 @@ export class ChangePictureModal extends
       borderRadius: '1px',
       outline: '0px',
       ':active': {
-        backgroundColor: '#4B23A0'
-      },
-      ':focus': {
         backgroundColor: '#4B23A0'
       },
       ':hover': {
@@ -605,6 +646,9 @@ export class Slider extends React.Component<SliderProperties, {}> {
       height: '20px',
       margin: '0px',
       outline: '0px',
+      ':disabled' : {
+        backgroundColor: '#FFFFFF'
+      },
       '::-webkit-slider-thumb': {
         '-webkit-appearance': 'none',
         boxSizing: 'border-box' as 'border-box',

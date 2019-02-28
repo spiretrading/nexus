@@ -62,7 +62,7 @@ export class CountrySelectionBox extends React.Component<Properties> {
     const content = (() => {
       if(this.props.readonly) {
         return (
-          <TextField disabled
+          <TextField readonly
             value={this.props.countryDatabase.fromCode(this.props.value).name}
             displaySize={this.props.displaySize}/>);
       } else {
@@ -76,7 +76,7 @@ export class CountrySelectionBox extends React.Component<Properties> {
       }
     })();
     return (<div>{content}</div>);
-    }
+  }
 
   private onChange(event: React.ChangeEvent<HTMLSelectElement>): void {
     const code = new Nexus.CountryCode(parseInt(event.target.value, 10));
@@ -85,9 +85,9 @@ export class CountrySelectionBox extends React.Component<Properties> {
 
   private static readonly STYLE = {
     boxSmall: {
-      maxWidth: '424px',
       height: '34px',
-      font: '400 16px Roboto'
+      font: '400 16px Roboto',
+      width: '100%'
     },
     boxLarge: {
       width: '200px',
@@ -106,12 +106,9 @@ export class CountrySelectionBox extends React.Component<Properties> {
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',
-      '-moz-appearance': 'none' as 'none',
-      '-webkit-appearance': 'none' as 'none',
-      appearance: 'none' as 'none',
-      ':focus' : {
-        outline: 0
-      }
+      MozAppearance: 'none' as 'none',
+      WebkitAppearance: 'none' as 'none',
+      appearance: 'none' as 'none'
     },
     disabledBoxStyle: {
       boxSizing: 'border-box' as 'border-box',
@@ -120,8 +117,8 @@ export class CountrySelectionBox extends React.Component<Properties> {
       backgroundColor: '#FFFFFF',
       border: '1px solid #FFFFFF',
       borderRadius: '1px',
-      '-moz-appearance': 'none' as 'none',
-      '-webkit-appearance': 'none' as 'none',
+      MozAppearance: 'none' as 'none',
+      WebkitAppearance: 'none' as 'none',
       appearance: 'none' as 'none'
     }
   };

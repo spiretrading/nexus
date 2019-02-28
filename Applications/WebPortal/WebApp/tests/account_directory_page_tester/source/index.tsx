@@ -9,9 +9,10 @@ interface Properties {
 }
 
 interface State {
+  roles: Nexus.AccountRoles;
   groups: Beam.Set<Beam.DirectoryEntry>;
   accounts: Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>;
-  model: WebPortal.LocalAccountDirectoryModel;
+  model: WebPortal.AccountDirectoryModel;
 }
 
 /**  Displays a testing application. */
@@ -19,22 +20,46 @@ class TestApp extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-     groups : new Beam.Set<Beam.DirectoryEntry>(),
-     accounts: new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>(),
-     model: new WebPortal.LocalAccountDirectoryModel(
-       new Beam.Set<Beam.DirectoryEntry>(),
-       new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>())
+      roles: new Nexus.AccountRoles(),
+      groups : new Beam.Set<Beam.DirectoryEntry>(),
+      accounts: new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>(),
+      model: new WebPortal.LocalAccountDirectoryModel(
+        new Beam.Set<Beam.DirectoryEntry>(),
+        new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>())
     };
+    this.changeRole = this.changeRole.bind(this);
   }
 
   public render(): JSX.Element {
     return (
+      <div>
       <WebPortal.AccountDirectoryPage
         displaySize={this.props.displaySize}
-        model={this.state.model}/>
+        model={this.state.model}
+        roles={this.state.roles}/>
+        <div style={TestApp.STYLE.testingComponents}>
+          <button tabIndex={-1}
+              onClick={() =>
+                this.changeRole(Nexus.AccountRoles.Role.ADMINISTRATOR)}>
+            ADMINISTRATOR
+          </button>
+          <button tabIndex={-1}
+              onClick={() => this.changeRole(Nexus.AccountRoles.Role.TRADER)}>
+            TRADER
+          </button>
+          <button tabIndex={-1}
+              onClick={() => this.changeRole(Nexus.AccountRoles.Role.MANAGER)}>
+            MANAGER
+          </button>
+        </div>
+      </div>
     );
   }
+
   public componentDidMount() {
+    this.testAdmin.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
+    this.testTrader.set(Nexus.AccountRoles.Role.TRADER);
+    this.testManager.set(Nexus.AccountRoles.Role.MANAGER);
     const group1 =
       new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 80, 'Nexus');
     const group2 =
@@ -42,7 +67,7 @@ class TestApp extends React.Component<Properties, State> {
     const group3 =
       new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 31, 'Office');
     const group4 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 35, 'Shire');
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 36, 'Shire');
     const group5 =
       new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 33, 'Mordor');
     const group6 =
@@ -59,19 +84,27 @@ class TestApp extends React.Component<Properties, State> {
       new Nexus.AccountRoles());
     const accountEntry2 = new WebPortal.AccountEntry(
       new Beam.DirectoryEntry(
-        Beam.DirectoryEntry.Type.ACCOUNT, 23, 'charting_service'),
+        Beam.DirectoryEntry.Type.ACCOUNT, 23, 'daily_service'),
       new Nexus.AccountRoles());
     const accountEntry3 = new WebPortal.AccountEntry(
       new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 223, 'market_data_relay_service'),
-      new Nexus.AccountRoles());
+      new Nexus.AccountRoles(3));
     const accountEntry4 = new WebPortal.AccountEntry(
       new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 45, 'data_relay_service'),
       new Nexus.AccountRoles());
     const accountEntry5 = new WebPortal.AccountEntry(
       new Beam.DirectoryEntry(
-        Beam.DirectoryEntry.Type.ACCOUNT, 788, 'order_execution_service'),
+        Beam.DirectoryEntry.Type.ACCOUNT, 788, 'execution_service'),
+      new Nexus.AccountRoles(5));
+    const accountEntry6 = new WebPortal.AccountEntry(
+      new Beam.DirectoryEntry(
+        Beam.DirectoryEntry.Type.ACCOUNT, 1, 'data_news_service'),
+      new Nexus.AccountRoles());
+    const accountEntry7 = new WebPortal.AccountEntry(
+      new Beam.DirectoryEntry(
+        Beam.DirectoryEntry.Type.ACCOUNT, 5, 'data_relay_news'),
       new Nexus.AccountRoles());
     const testArray = [];
     testArray.push(accountEntry1);
@@ -79,6 +112,8 @@ class TestApp extends React.Component<Properties, State> {
     testArray.push(accountEntry3);
     testArray.push(accountEntry4);
     testArray.push(accountEntry5);
+    testArray.push(accountEntry6);
+    testArray.push(accountEntry7);
     for(const group of this.state.groups) {
       if(group.id % 2 === 0) {
         this.state.accounts.set(group, testArray);
@@ -89,8 +124,33 @@ class TestApp extends React.Component<Properties, State> {
     const testModel = new WebPortal.LocalAccountDirectoryModel(
       this.state.groups, this.state.accounts);
     testModel.load();
-    this.setState({model: testModel});
+    const newModel = new WebPortal.CachedAccountDirectoryModel(testModel);
+    this.setState({model: newModel});
   }
+
+  private changeRole(newRole: Nexus.AccountRoles.Role): void {
+    if(newRole === Nexus.AccountRoles.Role.ADMINISTRATOR) {
+      this.setState({ roles: this.testAdmin });
+    }
+    if(newRole === Nexus.AccountRoles.Role.TRADER) {
+      this.setState({ roles: this.testTrader });
+    }
+    if(newRole === Nexus.AccountRoles.Role.MANAGER) {
+      this.setState({ roles: this.testManager });
+    }
+  }
+  private testAdmin = new Nexus.AccountRoles();
+  private testTrader = new Nexus.AccountRoles();
+  private testManager = new Nexus.AccountRoles();
+  private static STYLE = {
+    testingComponents: {
+      position: 'fixed' as 'fixed',
+      fontSize: '8px',
+      top: 0,
+      left: 0,
+      zIndex: 500
+    }
+  };
 }
 
 const ResponsivePage =

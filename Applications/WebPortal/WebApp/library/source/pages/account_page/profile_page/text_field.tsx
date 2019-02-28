@@ -17,13 +17,19 @@ enum Effects {
 interface Properties {
 
   /** Indicates the input field can not be interacted with. */
-  disabled?: boolean;
+  readonly?: boolean;
 
   /** The value to display in the field. */
   value?: string;
 
+  /** Text to show if the value is empty. */
+  placeholder?: string;
+
   /** The size to display the component at. */
   displaySize: DisplaySize;
+
+  /** Indicates if there is an error with the value. */
+  isError?: boolean;
 
   /** Called when the value changes.
    * @param value - The updated value.
@@ -38,8 +44,10 @@ interface State {
 /** Displays a single text input field. */
 export class TextField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
-    disabled: false,
+    readonly: false,
     value: '',
+    placeholder: '',
+    isError: false,
     onInput: (_: string) => {}
   }
 
@@ -56,7 +64,11 @@ export class TextField extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const boxStyle = (() => {
-      if(this.state.effects === Effects.HOVER) {
+      if(this.props.readonly) {
+        return TextField.STYLE.readonlyBox;
+      } else if(this.props.isError) {
+        return TextField.STYLE.errorBox;
+      } else if(this.state.effects === Effects.HOVER) {
         return TextField.STYLE.hoveredBox;
       } else if(this.state.effects === Effects.FOCUSED) {
         return TextField.STYLE.focusedBox;
@@ -72,15 +84,16 @@ export class TextField extends React.Component<Properties, State> {
       }
     })();
     const image = (() => {
-      if(this.state.effects === Effects.HOVER && !this.props.disabled) {
-        return <img src={'resources/account_page/edit.svg'}
+      if(this.state.effects === Effects.HOVER && !this.props.readonly) {
+        return <img src='resources/account_page/edit.svg'
           className={css(TextField.STYLE.image)}/>;
       } else {
-        return null;
+        return <img src='resources/account_page/edit.svg'
+          className={css(TextField.STYLE.hidden)}/>;
       }
     })();
     const tabIndexValue = (() => {
-      if(this.props.disabled) {
+      if(this.props.readonly) {
         return -1;
       } else {
         return 0;
@@ -91,8 +104,9 @@ export class TextField extends React.Component<Properties, State> {
           onMouseEnter={this.onMouseEnter}
           onMouseLeave={this.onMouseLeave}>
         <input value={this.props.value}
+          placeholder={this.props.placeholder}
           tabIndex={tabIndexValue}
-          readOnly={this.props.disabled}
+          readOnly={this.props.readonly}
           onFocus={this.onInputFocused}
           onBlur={this.onInputBlurred}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,7 +118,7 @@ export class TextField extends React.Component<Properties, State> {
   }
 
   private onInputFocused() {
-    if(!this.props.disabled) {
+    if(!this.props.readonly) {
       this.setState({
         effects: Effects.FOCUSED
       });
@@ -112,7 +126,7 @@ export class TextField extends React.Component<Properties, State> {
   }
 
   private onInputBlurred() {
-    if(!this.props.disabled) {
+    if(!this.props.readonly) {
       this.setState({
         effects: Effects.NONE
       });
@@ -120,7 +134,7 @@ export class TextField extends React.Component<Properties, State> {
   }
 
   private onMouseEnter() {
-    if(!this.props.disabled && this.state.effects !== Effects.FOCUSED) {
+    if(!this.props.readonly && this.state.effects !== Effects.FOCUSED) {
       this.setState({
         effects: Effects.HOVER
       });
@@ -128,7 +142,7 @@ export class TextField extends React.Component<Properties, State> {
   }
 
   private onMouseLeave() {
-    if(!this.props.disabled && this.state.effects !== Effects.FOCUSED) {
+    if(!this.props.readonly && this.state.effects !== Effects.FOCUSED) {
       this.setState({
         effects: Effects.NONE
       });
@@ -138,25 +152,26 @@ export class TextField extends React.Component<Properties, State> {
   private static STYLE = StyleSheet.create({
     box: {
       boxSizing: 'border-box' as 'border-box',
-      width: '100%',
       height: '34px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       flexWrap: 'nowrap' as 'nowrap',
       alignItems: 'center' as 'center',
       justifyContent: 'space-between',
-      border: '1px solid #FFFFFF',
+      border: '1px solid #C8C8C8',
       borderRadius: '1px',
       ':focus': {
         ouline: 0
       },
       '::moz-focus-inner': {
         border: 0
+      },
+      '::placeholder': {
+        color: '#8C8C8C'
       }
     },
     hoveredBox: {
       boxSizing: 'border-box' as 'border-box',
-      width: '100%',
       height: '34px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
@@ -178,6 +193,33 @@ export class TextField extends React.Component<Properties, State> {
       border: '1px solid #684BC7',
       borderRadius: '1px'
     },
+    errorBox: {
+      boxSizing: 'border-box' as 'border-box',
+      width: '100%',
+      height: '34px',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'nowrap' as 'nowrap',
+      alignItems: 'center' as 'center',
+      justifyContent: 'space-between',
+      border: '1px solid #E63F44',
+      borderRadius: '1px'
+    },
+    readonlyBox: {
+      boxSizing: 'border-box' as 'border-box',
+      width: '100%',
+      height: '34px',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'nowrap' as 'nowrap',
+      alignItems: 'center' as 'center',
+      justifyContent: 'space-between',
+      border: '1px solid #FFFFFF',
+      borderRadius: '1px'
+    },
+    inputStyle: {
+      flexGrow: 1
+    },
     image: {
       visibility: 'visible' as 'visible',
       height: '14px',
@@ -187,20 +229,18 @@ export class TextField extends React.Component<Properties, State> {
     },
     hidden: {
       opacity: 0,
-      visibility: 'hidden' as 'hidden',
-      display: 'none' as 'none',
       height: '14px',
       width: '14px',
       paddingRight: '10px'
     },
     text: {
-      flexGrow: 1,
       font: '400 14px Roboto',
       color: '#000000',
       whiteSpace: 'nowrap',
       paddingLeft: '10px',
       border: '1px solid #FFFFFF',
       backgroundColor: '#FFFFFF',
+      flexGrow: 1,
       ':focus': {
         ouline: 0,
         outlineColor: 'transparent',
@@ -228,6 +268,7 @@ export class TextField extends React.Component<Properties, State> {
       paddingLeft: '10px',
       border: '1px solid #FFFFFF',
       backgroundColor: '#FFFFFF',
+      flexGrow: 1,
       ':focus': {
         ouline: 0,
         outlineColor: 'transparent',

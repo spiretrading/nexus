@@ -271,7 +271,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                   <TextField
                     value={this.props.identity.firstName}
                     displaySize={this.props.displaySize}
-                    disabled/>
+                    readonly={this.props.readonly}/>
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
@@ -281,7 +281,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                   <TextField
                     value={this.props.identity.lastName}
                     displaySize={this.props.displaySize}
-                    disabled/>
+                    readonly={this.props.readonly}/>
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
@@ -291,7 +291,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                   <TextField
                     value={this.props.account.name.toString()}
                     displaySize={this.props.displaySize}
-                    disabled/>
+                    readonly={this.props.readonly}/>
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
@@ -299,7 +299,8 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <FormEntry name='Role(s)'
                     displaySize={this.props.displaySize}>
                   <div style={ProfilePage.STYLE.rolesWrapper}>
-                    <RolesField roles={this.props.roles} readonly/>
+                    <RolesField roles={this.props.roles}
+                      readonly={this.props.readonly}/>
                   </div>
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
@@ -309,7 +310,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <TextField value={this.props.group.name.toString()}
                     displaySize={this.props.displaySize}
-                    disabled/>
+                    readonly={this.props.readonly}/>
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
@@ -319,7 +320,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                   <TextField displaySize={this.props.displaySize}
                     value={this.props.identity.
                       registrationTime.toString()}
-                    disabled/>
+                    readonly/>
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
@@ -329,7 +330,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                   <TextField
                     value={this.props.account.id.toString()}
                     displaySize={this.props.displaySize}
-                    disabled/>
+                    readonly={this.props.readonly}/>
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
@@ -339,7 +340,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                   <TextField
                     value={this.props.identity.emailAddress}
                     displaySize={this.props.displaySize}
-                    disabled/>
+                    readonly={this.props.readonly}/>
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
@@ -347,9 +348,9 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <FormEntry name='Address'
                     displaySize={this.props.displaySize}>
                   <TextField
-                    value={this.props.identity.firstName}
+                    value={this.props.identity.addressLineOne}
                     displaySize={this.props.displaySize}
-                    disabled/>
+                    readonly={this.props.readonly}/>
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
@@ -359,7 +360,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                   <TextField
                     value={this.props.identity.city}
                     displaySize={this.props.displaySize}
-                    disabled/>
+                    readonly={this.props.readonly}/>
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
@@ -369,7 +370,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                   <TextField
                     value={this.props.identity.province}
                     displaySize={this.props.displaySize}
-                    disabled/>
+                    readonly={this.props.readonly}/>
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
@@ -377,7 +378,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <FormEntry name='Country'
                     displaySize={this.props.displaySize}>
                   <CountrySelectionBox
-                    readonly
+                    readonly={this.props.readonly}
                     displaySize={this.props.displaySize}
                     value={this.props.identity.country}
                     countryDatabase={this.props.countryDatabase}/>
@@ -515,6 +516,7 @@ export class ProfilePage extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       height: '34px',
+      width: '122px',
       justifyContent: 'flex-start',
       alignItems: 'center'
     },
