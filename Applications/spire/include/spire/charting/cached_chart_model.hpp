@@ -11,9 +11,13 @@ namespace Spire {
       //! Signals an update to a candlestick.
       using CandlestickSignal = Signal<void (const Candlestick& candle)>;
 
-      //! Represents a range of ChartValues.
+      //! Represents an inclusive range of ChartValues.
       struct ChartRange {
+
+        /** The start value of the range. */
         ChartValue m_start;
+
+        /** The end value of the range. */
         ChartValue m_end;
       };
 
