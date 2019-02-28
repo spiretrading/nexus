@@ -7,11 +7,38 @@ export class LocalGroupSuggestionModel extends GroupSuggestionModel {
   /** Constructs an new model.
    * @param groups - A set of groups.
    */
-  
-  // Loads this model.
-  public abstract async load(): Promise<void>;
+  constructor(groups: Beam.Set<Beam.DirectoryEntry>) {
+    super();
+    this._groups = groups.clone();
+  }
 
-  // Returns all(?) the accounts with the given prefix.
-  public abstract async loadSuggestions(prefix: string):
-    Promise<Beam.DirectoryEntry[]>;
-}
+  public isLoaded(): boolean {
+    return this._isLoaded;
+  }
+  // Loads this model.
+  public async load(): Promise<void> {
+    this._isLoaded = true;
+  }
+
+  // Returns all the accounts with the given prefix.
+  public async loadSuggestions(
+      prefix: string): Promise<Beam.Set<Beam.DirectoryEntry>> {
+    if(!this.isLoaded) {
+      throw Error('Model not loaded.');
+    }
+    return new Promise<Beam.Set<Beam.DirectoryEntry>> ((resolve) => {
+      setTimeout(() => {
+        const set = new Beam.Set<Beam.DirectoryEntry>();
+        if(prefix) {
+          for(const group of this._groups) {
+            if(group.name.indexOf(prefix) === 0) {
+              set.add(group);
+            }
+          }
+        }
+        resolve(set);}, 100);
+      });
+  }
+
+  private _isLoaded: boolean;
+  private _groups: Beam.Set<Beam.DirectoryEntry>;

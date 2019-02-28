@@ -203,8 +203,8 @@ export class GroupSelectionBox extends React.Component<Properties> {
       border: '1px solid #E63F44'
     },
     filler: {
+      width: '100%',
       height: '5px'
     }
   });
 }
-
