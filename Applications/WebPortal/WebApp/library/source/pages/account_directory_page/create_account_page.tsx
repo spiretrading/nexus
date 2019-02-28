@@ -28,6 +28,8 @@ interface Properties {
    */
   onSubmit?: (username: string, groups: Beam.DirectoryEntry[],
     identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles) => void;
+
+    tempGroups?: Beam.DirectoryEntry[];
 }
 
 interface State {
@@ -239,7 +241,8 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                   <GroupSelectionBox
                     value={this.state.groupsValue}
                     onValueChange={this.onGroupsValueChange}
-                    displaySize={this.props.displaySize}/>
+                    displaySize={this.props.displaySize}
+                    selectedGroups={this.props.tempGroups}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='Email'

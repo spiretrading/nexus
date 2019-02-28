@@ -17,9 +17,21 @@ interface Properties {
 }
 
 export class GroupSelectionBox extends React.Component<Properties> {
+  public static readonly defaultProps = {
+    selectedGroups: [] as Beam.DirectoryEntry[]
+  };
 
   public render(): JSX.Element {
     const boxStyle = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return GroupSelectionBox.DYNAMIC_STYLE.boxSmall;
+      } else if(this.props.displaySize === DisplaySize.MEDIUM) {
+        return GroupSelectionBox.DYNAMIC_STYLE.boxMedium;
+      } else {
+        return GroupSelectionBox.DYNAMIC_STYLE.boxLarge;
+      }
+    })();
+    const inputStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return GroupSelectionBox.DYNAMIC_STYLE.inputSmall;
       } else if(this.props.displaySize === DisplaySize.MEDIUM) {
@@ -39,33 +51,59 @@ export class GroupSelectionBox extends React.Component<Properties> {
     for(const group of this.props.selectedGroups) {
       selectedGroups.push(
       <div className={css(GroupSelectionBox.DYNAMIC_STYLE.groupEntry)}>
-        <div>{group.name}</div>
-        <img src = 'res'/>
+        <div className={css(GroupSelectionBox.DYNAMIC_STYLE.text)}>
+          {group.name}
+        </div>
+        <div className={css(GroupSelectionBox.DYNAMIC_STYLE.imageWrapper)}>
+          <img className={css(GroupSelectionBox.DYNAMIC_STYLE.image)}
+            onClick={ () => this.props.removeGroup(group) }
+            src={'resources/remove.svg'}/>
+        </div>
       </div>);
     }
     return (
-      <div id='GROUP BOX'>
+      <div id='GROUP BOX' className={css(boxStyle)}>
         <input type='text'
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
             this.props.onValueChange(event.target.value);
           }}
-          className={css(boxStyle, errorBoxStyle,
+          className={css(inputStyle, errorBoxStyle,
           GroupSelectionBox.DYNAMIC_STYLE.text)}/>
-        <div id='SELECTED GROUPS'>
+        
           {selectedGroups}
-        </div>
+        
       </div>);
   }
 
   private static DYNAMIC_STYLE = StyleSheet.create({
-    box : {
+    boxSmall : {
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      width: '100%'
+    },
+    boxMedium : {
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      width: '100%'
+    },
+    boxLarge : {
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      width: '100%'
     },
     inputSmall: {
       boxSizing: 'border-box' as 'border-box',
       paddingLeft: '10px',
       height: '34px',
-      flexGrow: 1,
-      minWidth: '284px',
+      flexGrow: 0,
+      flexShrink: 0,
+      width: '100%',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       ':focus': {
@@ -87,8 +125,9 @@ export class GroupSelectionBox extends React.Component<Properties> {
       boxSizing: 'border-box' as 'border-box',
       paddingLeft: '10px',
       height: '34px',
-      flexGrow: 1,
-      minWidth: '284px',
+      flexGrow: 0,
+      flexShrink: 0,
+      width: '284px',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       ':focus': {
@@ -110,8 +149,9 @@ export class GroupSelectionBox extends React.Component<Properties> {
       boxSizing: 'border-box' as 'border-box',
       paddingLeft: '10px',
       height: '34px',
-      flexGrow: 1,
-      minWidth: '350px',
+      width: '350px',
+      flexGrow: 0,
+      flexShrink: 0,
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       ':focus': {
@@ -130,12 +170,15 @@ export class GroupSelectionBox extends React.Component<Properties> {
       }
     },
     groupEntry : {
+      boxSizing: 'border-box' as 'border-box',
       paddingLeft: '10px',
       display: 'flex',
       flexDirection: 'row',
       flexWrap: 'nowrap',
       justifyContent: 'space-between',
-      height: '34px'
+      alignItems: 'center',
+      height: '34px',
+      width: '100%'
     },
     imageWrapper: {
       paddingLeft:'10px',
@@ -143,8 +186,14 @@ export class GroupSelectionBox extends React.Component<Properties> {
       display: 'flex',
       flexDirection: 'row',
       flexWrap: 'nowrap',
-      justifyContent: 'space-between',
-      height: '34px'
+      justifyContent: 'center',
+      height: '34px',
+      alignItems: 'center'
+    },
+    image: {
+      width: '12px',
+      height: '12px',
+      padding: '6px'
     },
     text: {
       font: '400 14px Roboto',

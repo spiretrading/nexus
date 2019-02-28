@@ -132,7 +132,7 @@ export class TextField extends React.Component<Properties> {
       borderRadius: '1px',
       font: '400 16px Roboto',
       color: '#000000',
-      minWidth: '284px',
+      minWidth: '350px',
       paddingLeft: '10px',
       ':focus': {
         ouline: 0,

@@ -12,14 +12,17 @@ interface Properties {
 interface State {
   errorStatus: string;
   displayStatus: string;
+  groups: Beam.DirectoryEntry[];
 }
 
+/**  Displays displays and tests the CreateAccountPage. */
 class TestApp extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
       errorStatus: '',
-      displayStatus: ''
+      displayStatus: '',
+      groups: []
     };
     this.setErrorMessage = this.setErrorMessage.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
@@ -32,7 +35,8 @@ class TestApp extends React.Component<Properties, State> {
         onSubmit={this.onSubmit}
         countryDatabase={this.someDB}
         displaySize={this.props.displaySize}
-        errorStatus={this.state.displayStatus}/>
+        errorStatus={this.state.displayStatus}
+        tempGroups={this.state.groups}/>
       <div style={TestApp.STYLE.testingComponents}>
         <button tabIndex={-1}
             onClick={() => this.setErrorMessage('Server issue')}>
@@ -44,6 +48,27 @@ class TestApp extends React.Component<Properties, State> {
         </button>
       </div>
       </Dali.VBoxLayout>);
+  }
+
+  public componentDidMount() {
+    const group1 =
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 80, 'Nexus');
+    const group2 =
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 41, 'Spire');
+    const group3 =
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 31, 'Office');
+    const group4 =
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 36, 'Shire');
+    const group5 =
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 33, 'Mordor');
+    const group6 =
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 37, 'Bree');
+    this.state.groups.push(group1);
+    this.state.groups.push(group2);
+    this.state.groups.push(group3);
+    this.state.groups.push(group4);
+    this.state.groups.push(group5);
+    this.state.groups.push(group6);
   }
 
   private onSubmit(username: string, groups: Beam.DirectoryEntry[],
