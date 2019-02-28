@@ -69,7 +69,7 @@ export class GroupSelectionBox extends React.Component<Properties> {
           }}
           className={css(inputStyle, errorBoxStyle,
           GroupSelectionBox.DYNAMIC_STYLE.text)}/>
-        
+          <div className={css(GroupSelectionBox.DYNAMIC_STYLE.filler)}/>
           {selectedGroups}
         
       </div>);
@@ -201,6 +201,9 @@ export class GroupSelectionBox extends React.Component<Properties> {
     },
     error: {
       border: '1px solid #E63F44'
+    },
+    filler: {
+      height: '5px'
     }
   });
 }
