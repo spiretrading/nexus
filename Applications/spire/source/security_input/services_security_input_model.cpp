@@ -11,7 +11,7 @@ ServicesSecurityInputModel::ServicesSecurityInputModel(
 
 QtPromise<std::vector<SecurityInfo>> ServicesSecurityInputModel::autocomplete(
     const std::string& query) {
-  return make_qt_promise(
+  return QtPromise(
     [=, client = m_client] {
       try {
         return client->LoadSecurityInfoFromPrefix(query);

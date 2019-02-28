@@ -4,6 +4,8 @@
 #include <type_traits>
 #include <utility>
 #include <boost/noncopyable.hpp>
+#include <QApplication>
+#include "spire/spire/chained_qt_promise.hpp"
 #include "spire/spire/qt_promise_imp.hpp"
 #include "spire/spire/spire.hpp"
 
@@ -26,9 +28,11 @@ namespace Spire {
       //! Constructs a Qt promise.
       /*!
         \param executor The callable performing the computation.
+        \param launch_policy Specifies how the executor should be invoked.
       */
       template<typename Executor>
-      explicit QtPromise(Executor&& executor);
+      explicit QtPromise(Executor&& executor, LaunchPolicy launch_policy =
+        LaunchPolicy::DEFERRED);
 
       QtPromise(QtPromise&& other);
 
@@ -39,7 +43,17 @@ namespace Spire {
         \param continuation The function to call when the computation completes.
       */
       template<typename F>
-      void then(F&& continuation);
+      std::enable_if_t<std::is_same_v<std::invoke_result_t<F, Beam::Expect<T>>,
+        void>> then(F&& continuation);
+
+      //! Assigns a function to be called when the computation completes.
+      /*!
+        \param continuation The function to call when the computation completes.
+      */
+      template<typename F>
+      std::enable_if_t<!std::is_same_v<std::invoke_result_t<F, Beam::Expect<T>>,
+        void>, QtPromise<std::invoke_result_t<F, Beam::Expect<T>>>> then(
+        F&& continuation);
 
       //! Disconnects from this promise, upon disconnection the callback
       //! will not be called when the executor completes its computation.
@@ -50,23 +64,56 @@ namespace Spire {
 
     private:
       std::shared_ptr<details::BaseQtPromiseImp<Type>> m_imp;
+
+      template<typename U, typename F>
+      QtPromise(QtPromise<U> promise, F&& continuation);
   };
 
-  //! Makes a Qt promise.
-  /*!
-    \param executor The callable performing the computation.
-  */
   template<typename Executor>
-  auto make_qt_promise(Executor&& executor) {
-    return QtPromise<std::result_of_t<Executor()>>(
-      std::forward<Executor>(executor));
+  QtPromise(Executor&&) -> QtPromise<promise_executor_result_t<Executor>>;
+
+  template<typename Executor>
+  QtPromise(Executor&&, LaunchPolicy) ->
+    QtPromise<promise_executor_result_t<Executor>>;
+
+  template<typename U, typename F>
+  QtPromise(QtPromise<U>, F&&) -> QtPromise<promise_executor_result_t<F>>;
+
+  QtPromise() -> QtPromise<void>;
+
+  //! Waits for a promise to complete and returns its result.
+  /*!
+    \param promise The promise to wait for.
+    \return The result of the promise's execution.
+  */
+  template<typename T>
+  T wait(QtPromise<T>& promise) {
+    auto future = std::optional<Beam::Expect<T>>();
+    promise.then(
+      [&] (auto result) {
+        future.emplace(std::move(result));
+      });
+    while(!future.has_value()) {
+      QApplication::processEvents(QEventLoop::WaitForMoreEvents);
+    }
+    return std::move(future->Get());
+  }
+
+  //! Waits for a promise to complete and returns its result.
+  /*!
+    \param promise The promise to wait for.
+    \return The result of the promise's execution.
+  */
+  template<typename T>
+  T wait(QtPromise<T> promise) {
+    return static_cast<T (*)(QtPromise<T>&)>(wait)(promise);
   }
 
   template<typename T>
   template<typename Executor>
-  QtPromise<T>::QtPromise(Executor&& executor) {
+  QtPromise<T>::QtPromise(Executor&& executor, LaunchPolicy launch_policy) {
     auto imp = std::make_shared<details::qt_promise_imp<Executor>>(
-      std::forward<Executor>(executor));
+      std::forward<Executor>(executor), launch_policy);
     imp->bind(imp);
     m_imp = std::move(imp);
   }
@@ -82,8 +129,17 @@ namespace Spire {
 
   template<typename T>
   template<typename F>
-  void QtPromise<T>::then(F&& continuation) {
+  std::enable_if_t<std::is_same_v<std::invoke_result_t<F, Beam::Expect<T>>,
+      void>> QtPromise<T>::then(F&& continuation) {
     m_imp->then(std::forward<F>(continuation));
+  }
+
+  template<typename T>
+  template<typename F>
+  std::enable_if_t<!std::is_same_v<std::invoke_result_t<F, Beam::Expect<T>>,
+      void>, QtPromise<std::invoke_result_t<F, Beam::Expect<T>>>>
+      QtPromise<T>::then(F&& continuation) {
+    return QtPromise(std::move(*this), std::forward<F>(continuation));
   }
 
   template<typename T>
@@ -100,6 +156,15 @@ namespace Spire {
     disconnect();
     m_imp = std::move(other.m_imp);
     return *this;
+  }
+
+  template<typename T>
+  template<typename U, typename F>
+  QtPromise<T>::QtPromise(QtPromise<U> promise, F&& continuation) {
+    auto chain = make_chained_qt_promise(std::move(promise),
+      std::forward<F>(continuation));
+    chain->bind(chain);
+    m_imp = std::move(chain);
   }
 }
 

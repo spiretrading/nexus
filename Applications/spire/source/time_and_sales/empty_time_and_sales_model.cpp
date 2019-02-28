@@ -21,7 +21,7 @@ Quantity EmptyTimeAndSalesModel::get_volume() const {
 QtPromise<std::vector<TimeAndSalesModel::Entry>>
     EmptyTimeAndSalesModel::load_snapshot(Beam::Queries::Sequence last,
     int count) {
-  return make_qt_promise([] {
+  return QtPromise([] {
     return std::vector<TimeAndSalesModel::Entry>();
   });
 }
