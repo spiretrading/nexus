@@ -85,21 +85,24 @@ export class GroupSelectionBox extends React.Component<Properties> {
       flexDirection: 'column',
       justifyContent: 'flex-start',
       alignItems: 'center',
-      width: '100%'
+      width: '100%',
+      position: 'relative' as 'relative'
     },
     boxMedium : {
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'flex-start',
       alignItems: 'center',
-      width: '100%'
+      width: '100%',
+      position: 'relative' as 'relative'
     },
     boxLarge : {
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'flex-start',
       alignItems: 'center',
-      width: '100%'
+      width: '100%',
+      position: 'relative' as 'relative'
     },
     inputSmall: {
       boxSizing: 'border-box' as 'border-box',
@@ -241,7 +244,7 @@ public render(): JSX.Element {
       </div>);
     }
     return (
-      <div style={boxStyle}>
+      <div className={css(SuggestionBox.DYNAMIC_STYLE.box)}>
         {selectedGroups}
       </div>
     );
@@ -287,8 +290,16 @@ public render(): JSX.Element {
         color: '#FFFFFF',
         backgroundColor: '#684BC7'
       }
+    },
+    box: {
+      maxHeight: '136px',
+      overflow: 'auto' as 'auto',
+      backgroundColor: '#FFFFFF',
+      boxShadow: '2px 0px 6px #C8C8C8',
+      width: '100%',
+      position: 'absolute' as 'absolute',
+      top: '39px'
     }
-
  });
 
 }
