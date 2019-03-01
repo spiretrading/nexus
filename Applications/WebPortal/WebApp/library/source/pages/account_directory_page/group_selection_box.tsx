@@ -8,7 +8,7 @@ interface Properties {
   displaySize: DisplaySize;
   error?: boolean;
   value?: string;
-  selectedGroups?: Beam.DirectoryEntry[];
+  selectedGroups?: Beam.Set<Beam.DirectoryEntry>;
   suggestions?: Beam.Set<Beam.DirectoryEntry>;
 
   onValueChange?: (newValue: string) => void;
@@ -18,7 +18,10 @@ interface Properties {
 
 export class GroupSelectionBox extends React.Component<Properties> {
   public static readonly defaultProps = {
-    selectedGroups: [] as Beam.DirectoryEntry[]
+    selectedGroups:  new Beam.Set<Beam.DirectoryEntry>(),
+    suggestions:  new Beam.Set<Beam.DirectoryEntry>(),
+    addGroup: () => {},
+    removeGroup: () => {}
   };
 
   public render(): JSX.Element {
@@ -71,11 +74,14 @@ export class GroupSelectionBox extends React.Component<Properties> {
           className={css(inputStyle, errorBoxStyle,
           GroupSelectionBox.DYNAMIC_STYLE.text)}/>
           <div className={css(GroupSelectionBox.DYNAMIC_STYLE.filler)}/>
+                    <div
+            className={css(GroupSelectionBox.DYNAMIC_STYLE.suggestionWrapper)}>
+            <SuggestionBox
+              suggestedGroups={this.props.suggestions}
+              displaySize={this.props.displaySize}
+              addGroup={this.props.addGroup}/>
+          </div>
           {selectedGroups}
-         <SuggestionBox
-          id='SUGGESTYIONS!!!!!'
-         suggestedGroups={this.props.suggestions}
-          displaySize={this.props.displaySize}/>
       </div>);
   }
 
@@ -85,24 +91,21 @@ export class GroupSelectionBox extends React.Component<Properties> {
       flexDirection: 'column',
       justifyContent: 'flex-start',
       alignItems: 'center',
-      width: '100%',
-      position: 'relative' as 'relative'
+      width: '100%'
     },
     boxMedium : {
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'flex-start',
       alignItems: 'center',
-      width: '100%',
-      position: 'relative' as 'relative'
+      width: '100%'
     },
     boxLarge : {
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'flex-start',
       alignItems: 'center',
-      width: '100%',
-      position: 'relative' as 'relative'
+      width: '100%'
     },
     inputSmall: {
       boxSizing: 'border-box' as 'border-box',
@@ -212,6 +215,11 @@ export class GroupSelectionBox extends React.Component<Properties> {
     filler: {
       width: '100%',
       height: '5px'
+    },
+    suggestionWrapper: {
+      position: 'relative' as 'relative',
+      height: '1px',
+        width: '100%'
     }
   });
 }
@@ -219,26 +227,27 @@ export class GroupSelectionBox extends React.Component<Properties> {
 interface SuggestionBoxProps {
   suggestedGroups?: Beam.Set<Beam.DirectoryEntry>;
   displaySize: DisplaySize;
- //addGroup?: (group: Beam.DirectoryEntry) => void;
+  addGroup?: (group: Beam.DirectoryEntry) => void;
 }
 
 class SuggestionBox extends React.Component<SuggestionBoxProps> {
+  public static readonly defaultProps = {
+    addGroup: () => {}
+  }
 
 public render(): JSX.Element {
-    const boxStyle = (() => {
+    const textStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return SuggestionBox.STYLE.boxSmall;
-      } else if(this.props.displaySize === DisplaySize.MEDIUM) {
-        return SuggestionBox.STYLE.boxMedium;
-      } else {
-        return SuggestionBox.STYLE.boxLarge;
+        return SuggestionBox.DYNAMIC_STYLE.textSmall;
+      }  else {
+        return SuggestionBox.DYNAMIC_STYLE.textLarge;
       }
     })();
     const selectedGroups = [];
     for(const group of this.props.suggestedGroups) {
       selectedGroups.push(
-      <div className={css(SuggestionBox.DYNAMIC_STYLE.entry)}
-          onClick = { () => {} }
+      <div className={css(SuggestionBox.DYNAMIC_STYLE.entry, textStyle)}
+          onClick = { () => this.props.addGroup(group)}
           key={group.id}>
         {group.name}
       </div>);
@@ -275,6 +284,7 @@ public render(): JSX.Element {
 
   private static DYNAMIC_STYLE = StyleSheet.create({
     entry: {
+      zIndex: 1,
       height: '34px',
       paddingLeft: '10px',
       font: '400 14px Roboto',
@@ -291,14 +301,22 @@ public render(): JSX.Element {
         backgroundColor: '#684BC7'
       }
     },
+    textSmall: {
+      font: '400 16px Roboto',
+      color: '#000000'
+    },
+    textLarge: {
+      font: '400 14px Roboto',
+      color: '#000000'
+    },
     box: {
+      zIndex: 1,
       maxHeight: '136px',
       overflow: 'auto' as 'auto',
       backgroundColor: '#FFFFFF',
       boxShadow: '0px 2px 6px #C8C8C8',
       width: '100%',
-      position: 'absolute' as 'absolute',
-      top: '39px'
+      position: 'absolute' as 'absolute'
     }
  });
 

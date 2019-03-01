@@ -39,7 +39,7 @@ interface State {
   identity: Nexus.AccountIdentity;
   groupsValue: string;
   suggestedGroups: Beam.Set<Beam.DirectoryEntry>;
-  selectedGroups: Beam.DirectoryEntry[];
+  selectedGroups: Beam.Set<Beam.DirectoryEntry>;
   isSubmitButtonDisabled: boolean;
   errorStatus: string;
   roleError: string;
@@ -67,7 +67,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       identity: new Nexus.AccountIdentity(),
       groupsValue: '',
       suggestedGroups: new Beam.Set<Beam.DirectoryEntry>(),
-      selectedGroups: [],
+      selectedGroups: new Beam.Set<Beam.DirectoryEntry>(),
       isSubmitButtonDisabled: true,
       errorStatus: '',
       roleError: '',
@@ -88,6 +88,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     this.onLastNameChange = this.onLastNameChange.bind(this);
     this.onUsernameChange = this.onUsernameChange.bind(this);
     this.onGroupsValueChange = this.onGroupsValueChange.bind(this);
+    this.addGroup = this.addGroup.bind(this);
     this.onEmailChange = this.onEmailChange.bind(this);
     this.onAddressChange = this.onAddressChange.bind(this);
     this.onCityChange = this.onCityChange.bind(this);
@@ -246,7 +247,8 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     onValueChange={this.onGroupsValueChange}
                     displaySize={this.props.displaySize}
                     selectedGroups={this.state.selectedGroups}
-                    suggestions={this.state.suggestedGroups}/>
+                    suggestions={this.state.suggestedGroups}
+                    addGroup={this.addGroup}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='Email'
@@ -374,7 +376,9 @@ export class CreateAccountPage extends React.Component<Properties, State> {
   }
 
   private addGroup(group: Beam.DirectoryEntry) {
-    this.state.selectedGroups.push(group);
+    this.state.selectedGroups.add(group);
+    this.setState({selectedGroups: this.state.selectedGroups});
+    console.log('GROUP HAS BEEN ADDED!!!!!!');
   }
 
   private removeGroup(group: Beam.DirectoryEntry) {
@@ -429,7 +433,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
 
   private onSubmit() {
     if(this.checkInputs()) {
-      this.props.onSubmit(this.state.username, this.state.selectedGroups,
+      this.props.onSubmit(this.state.username, null,
         this.state.identity, this.state.roles);
     }
   }
