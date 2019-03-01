@@ -12,7 +12,8 @@ interface Properties {
 interface State {
   errorStatus: string;
   displayStatus: string;
-  groups: Beam.DirectoryEntry[];
+  groups: Beam.Set<Beam.DirectoryEntry>;
+  model: WebPortal.GroupSuggestionModel;
 }
 
 /**  Displays displays and tests the CreateAccountPage. */
@@ -22,7 +23,9 @@ class TestApp extends React.Component<Properties, State> {
     this.state = {
       errorStatus: '',
       displayStatus: '',
-      groups: []
+      groups: new Beam.Set<Beam.DirectoryEntry>(),
+      model: new WebPortal.LocalGroupSuggestionModel(
+          new Beam.Set<Beam.DirectoryEntry>())
     };
     this.setErrorMessage = this.setErrorMessage.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
@@ -36,7 +39,7 @@ class TestApp extends React.Component<Properties, State> {
         countryDatabase={this.someDB}
         displaySize={this.props.displaySize}
         errorStatus={this.state.displayStatus}
-        tempGroups={this.state.groups}/>
+        suggestedGroups={this.state.model}/>
       <div style={TestApp.STYLE.testingComponents}>
         <button tabIndex={-1}
             onClick={() => this.setErrorMessage('Server issue')}>
@@ -51,25 +54,61 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   public componentDidMount() {
+    const type = Beam.DirectoryEntry.Type.DIRECTORY;
     const group1 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 80, 'Nexus');
+      new Beam.DirectoryEntry(type, 80, 'Lonely Mountain');
     const group2 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 41, 'Spire');
+      new Beam.DirectoryEntry(type, 41, 'Hobbits of Buckland');
     const group3 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 31, 'Office');
+      new Beam.DirectoryEntry(type, 42, 'Mountains of Mirkwood');
     const group4 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 36, 'Shire');
+      new Beam.DirectoryEntry(type, 43, 'Hobbits of Shire');
     const group5 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 33, 'Mordor');
+      new Beam.DirectoryEntry(type, 45, 'Mountains of Angmar');
     const group6 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 37, 'Bree');
-    this.state.groups.push(group1);
-    this.state.groups.push(group2);
-    this.state.groups.push(group3);
-    this.state.groups.push(group4);
-    this.state.groups.push(group5);
-    this.state.groups.push(group6);
-  }
+      new Beam.DirectoryEntry(type, 46, 'Hobbits of Bree');
+    const group7 =
+      new Beam.DirectoryEntry(type, 30, 'Spire Ontario');
+    const group8 =
+      new Beam.DirectoryEntry(type, 31, 'Spire United Kingdom');
+    const group9 =
+      new Beam.DirectoryEntry(type, 32, 'Spire China');
+    const group10 =
+      new Beam.DirectoryEntry(type, 33, 'Spire Japan');
+    const group11 =
+      new Beam.DirectoryEntry(type, 34, 'Spire Spain');
+    const group12 =
+      new Beam.DirectoryEntry(type, 35, 'Spire Singapore');
+    const group13 =
+      new Beam.DirectoryEntry(type, 36, 'Spire Quebec');
+    const group14 =
+      new Beam.DirectoryEntry(type, 37, 'Spire France');
+    const group15 =
+      new Beam.DirectoryEntry(type, 38, 'Spire Fiji');
+    const group16 =
+      new Beam.DirectoryEntry(type, 39, 'Spire Sweden');
+    this.state.groups.add(group1);
+    this.state.groups.add(group2);
+    this.state.groups.add(group3);
+    this.state.groups.add(group4);
+    this.state.groups.add(group5);
+    this.state.groups.add(group6);
+    this.state.groups.add(group7);
+    this.state.groups.add(group8);
+    this.state.groups.add(group9);
+    this.state.groups.add(group10);
+    this.state.groups.add(group11);
+    this.state.groups.add(group12);
+    this.state.groups.add(group13);
+    this.state.groups.add(group14);
+    this.state.groups.add(group15);
+    this.state.groups.add(group16);
+    const newModel = new WebPortal.LocalGroupSuggestionModel(this.state.groups);
+    newModel.load();
+    this.setState({
+        model: newModel
+      });
+    }
 
   private onSubmit(username: string, groups: Beam.DirectoryEntry[],
       identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles) {

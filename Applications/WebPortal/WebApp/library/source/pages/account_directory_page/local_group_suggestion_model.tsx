@@ -1,5 +1,5 @@
 import * as Beam from 'beam';
-import GroupSuggestionModel from './group_suggestion_model';
+import {GroupSuggestionModel} from './group_suggestion_model';
 
 /** Interface for model  */
 export class LocalGroupSuggestionModel extends GroupSuggestionModel {
@@ -7,7 +7,8 @@ export class LocalGroupSuggestionModel extends GroupSuggestionModel {
   /** Constructs an new model.
    * @param groups - A set of groups.
    */
-  constructor(groups: Beam.Set<Beam.DirectoryEntry>) {
+  public constructor(groups: Beam.Set<Beam.DirectoryEntry>) {
+    console.log('Made a model');
     super();
     this._groups = groups.clone();
   }
@@ -26,6 +27,7 @@ export class LocalGroupSuggestionModel extends GroupSuggestionModel {
     if(!this.isLoaded) {
       throw Error('Model not loaded.');
     }
+    console.log('Loading a thing');
     return new Promise<Beam.Set<Beam.DirectoryEntry>> ((resolve) => {
       setTimeout(() => {
         const set = new Beam.Set<Beam.DirectoryEntry>();
@@ -42,3 +44,4 @@ export class LocalGroupSuggestionModel extends GroupSuggestionModel {
 
   private _isLoaded: boolean;
   private _groups: Beam.Set<Beam.DirectoryEntry>;
+}

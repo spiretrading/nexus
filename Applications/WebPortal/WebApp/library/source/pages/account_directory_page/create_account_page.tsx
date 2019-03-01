@@ -8,6 +8,7 @@ import { CountrySelectionBox, TextField } from '../../components';
 import { FormEntry, PhotoField, PhotoFieldDisplayMode, RolesField }
   from '../account_page/profile_page';
 import { GroupSelectionBox } from './group_selection_box';
+import { GroupSuggestionModel } from './group_suggestion_model';
 
 interface Properties {
 
@@ -29,7 +30,7 @@ interface Properties {
   onSubmit?: (username: string, groups: Beam.DirectoryEntry[],
     identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles) => void;
 
-    tempGroups?: Beam.DirectoryEntry[];
+  suggestedGroups?: GroupSuggestionModel;
 }
 
 interface State {
@@ -37,7 +38,8 @@ interface State {
   username: string;
   identity: Nexus.AccountIdentity;
   groupsValue: string;
-  groups: Beam.DirectoryEntry[];
+  suggestedGroups: Beam.Set<Beam.DirectoryEntry>;
+  selectedGroups: Beam.DirectoryEntry[];
   isSubmitButtonDisabled: boolean;
   errorStatus: string;
   roleError: string;
@@ -64,7 +66,8 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       username: '',
       identity: new Nexus.AccountIdentity(),
       groupsValue: '',
-      groups: [],
+      suggestedGroups: new Beam.Set<Beam.DirectoryEntry>(),
+      selectedGroups: [],
       isSubmitButtonDisabled: true,
       errorStatus: '',
       roleError: '',
@@ -242,7 +245,8 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     value={this.state.groupsValue}
                     onValueChange={this.onGroupsValueChange}
                     displaySize={this.props.displaySize}
-                    selectedGroups={this.props.tempGroups}/>
+                    selectedGroups={this.state.selectedGroups}
+                    suggestions={this.state.suggestedGroups}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='Email'
@@ -360,9 +364,23 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     this.enableSubmit();
   }
 
-  private onGroupsValueChange(newValue: string) {
-    this.setState({ groupsValue: newValue });
+  private async onGroupsValueChange(newValue: string) {
+    const newSuggestions =
+      await this.props.suggestedGroups.loadSuggestions(newValue);
+    this.setState({
+      groupsValue: newValue,
+      suggestedGroups: newSuggestions
+    });
   }
+
+  private addGroup(group: Beam.DirectoryEntry) {
+    this.state.selectedGroups.push(group);
+  }
+
+  private removeGroup(group: Beam.DirectoryEntry) {
+
+  }
+
 
   private onEmailChange(newValue: string) {
     this.state.identity.emailAddress = newValue;
@@ -411,7 +429,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
 
   private onSubmit() {
     if(this.checkInputs()) {
-      this.props.onSubmit(this.state.username, this.state.groups,
+      this.props.onSubmit(this.state.username, this.state.selectedGroups,
         this.state.identity, this.state.roles);
     }
   }

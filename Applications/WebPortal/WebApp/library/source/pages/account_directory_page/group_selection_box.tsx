@@ -9,7 +9,7 @@ interface Properties {
   error?: boolean;
   value?: string;
   selectedGroups?: Beam.DirectoryEntry[];
-  suggestions?: Beam.DirectoryEntry[];
+  suggestions?: Beam.Set<Beam.DirectoryEntry>;
 
   onValueChange?: (newValue: string) => void;
   addGroup?: (group: Beam.DirectoryEntry) => void;
@@ -50,7 +50,8 @@ export class GroupSelectionBox extends React.Component<Properties> {
     const selectedGroups = [];
     for(const group of this.props.selectedGroups) {
       selectedGroups.push(
-      <div className={css(GroupSelectionBox.DYNAMIC_STYLE.groupEntry)}>
+      <div className={css(GroupSelectionBox.DYNAMIC_STYLE.groupEntry)}
+        key={group.id}>
         <div className={css(GroupSelectionBox.DYNAMIC_STYLE.text)}>
           {group.name}
         </div>
@@ -71,7 +72,10 @@ export class GroupSelectionBox extends React.Component<Properties> {
           GroupSelectionBox.DYNAMIC_STYLE.text)}/>
           <div className={css(GroupSelectionBox.DYNAMIC_STYLE.filler)}/>
           {selectedGroups}
-        
+         <SuggestionBox
+          id='SUGGESTYIONS!!!!!'
+         suggestedGroups={this.props.suggestions}
+          displaySize={this.props.displaySize}/>
       </div>);
   }
 
@@ -208,3 +212,85 @@ export class GroupSelectionBox extends React.Component<Properties> {
     }
   });
 }
+
+interface SuggestionBoxProps {
+  suggestedGroups?: Beam.Set<Beam.DirectoryEntry>;
+  displaySize: DisplaySize;
+ //addGroup?: (group: Beam.DirectoryEntry) => void;
+}
+
+class SuggestionBox extends React.Component<SuggestionBoxProps> {
+
+public render(): JSX.Element {
+    const boxStyle = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return SuggestionBox.STYLE.boxSmall;
+      } else if(this.props.displaySize === DisplaySize.MEDIUM) {
+        return SuggestionBox.STYLE.boxMedium;
+      } else {
+        return SuggestionBox.STYLE.boxLarge;
+      }
+    })();
+    const selectedGroups = [];
+    for(const group of this.props.suggestedGroups) {
+      selectedGroups.push(
+      <div className={css(SuggestionBox.DYNAMIC_STYLE.entry)}
+          onClick = { () => {} }
+          key={group.id}>
+        {group.name}
+      </div>);
+    }
+    return (
+      <div style={boxStyle}>
+        {selectedGroups}
+      </div>
+    );
+ }
+
+  private static STYLE = {
+    boxSmall: {
+      maxHeight: '136px',
+      overflow: 'auto' as 'auto',
+      backroundColor: '#FFFFFF',
+      boxShadow: '2px 0px 6px #C8C8C8',
+      width: '100%'
+    },
+    boxMedium: {
+      maxHeight: '136px',
+      overflow: 'auto' as 'auto',
+      backroundColor: '#FFFFFF',
+      width: '100%'
+    },
+    boxLarge: {
+      maxHeight: '136px',
+      overflow: 'auto' as 'auto',
+      backroundColor: '#FFFFFF',
+      width: '100%'
+    }
+    //SCROLL BAR STYLES
+  };
+
+  private static DYNAMIC_STYLE = StyleSheet.create({
+    entry: {
+      height: '34px',
+      paddingLeft: '10px',
+      font: '400 14px Roboto',
+      color: '#000000',
+      display: 'flex',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      ':hover': {
+        color: '#FFFFFF',
+        backgroundColor: '#684BC7'
+      },
+      ':active': {
+        color: '#FFFFFF',
+        backgroundColor: '#684BC7'
+      }
+    }
+
+ });
+
+}
+
+
