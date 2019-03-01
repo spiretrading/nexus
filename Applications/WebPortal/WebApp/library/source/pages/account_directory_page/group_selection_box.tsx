@@ -295,7 +295,7 @@ public render(): JSX.Element {
       maxHeight: '136px',
       overflow: 'auto' as 'auto',
       backgroundColor: '#FFFFFF',
-      boxShadow: '2px 0px 6px #C8C8C8',
+      boxShadow: '0px 2px 6px #C8C8C8',
       width: '100%',
       position: 'absolute' as 'absolute',
       top: '39px'
