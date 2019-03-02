@@ -50,12 +50,19 @@ export class GroupSelectionBox extends React.Component<Properties> {
         return null;
       }
     })();
+    const textStyle = (() => {
+      if (this.props.displaySize === DisplaySize.SMALL) {
+        return GroupSelectionBox.DYNAMIC_STYLE.textSmall;
+      } else {
+        return GroupSelectionBox.DYNAMIC_STYLE.textLarge;
+      }
+    })();
     const selectedGroups = [];
     for(const group of this.props.selectedGroups) {
       selectedGroups.push(
       <div className={css(GroupSelectionBox.DYNAMIC_STYLE.groupEntry)}
         key={group.id}>
-        <div className={css(GroupSelectionBox.DYNAMIC_STYLE.text)}>
+        <div className={css(GroupSelectionBox.DYNAMIC_STYLE.textLarge)}>
           {group.name}
         </div>
         <div className={css(GroupSelectionBox.DYNAMIC_STYLE.imageWrapper)}>
@@ -71,8 +78,7 @@ export class GroupSelectionBox extends React.Component<Properties> {
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
             this.props.onValueChange(event.target.value);
           }}
-          className={css(inputStyle, errorBoxStyle,
-          GroupSelectionBox.DYNAMIC_STYLE.text)}/>
+          className={css(inputStyle, errorBoxStyle, textStyle)}/>
           <div className={css(GroupSelectionBox.DYNAMIC_STYLE.filler)}/>
                     <div
             className={css(GroupSelectionBox.DYNAMIC_STYLE.suggestionWrapper)}>
@@ -205,8 +211,12 @@ export class GroupSelectionBox extends React.Component<Properties> {
       height: '12px',
       padding: '6px'
     },
-    text: {
+    textLarge: {
       font: '400 14px Roboto',
+      color: '#000000'
+    },
+    textSmall: {
+      font: '400 16px Roboto',
       color: '#000000'
     },
     error: {

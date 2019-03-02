@@ -375,10 +375,17 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     });
   }
 
-  private addGroup(group: Beam.DirectoryEntry) {
+  private async addGroup(group: Beam.DirectoryEntry) {
     this.state.selectedGroups.add(group);
-    this.setState({selectedGroups: this.state.selectedGroups});
+    const newSuggestions =
+      await this.props.suggestedGroups.loadSuggestions('');
+    this.setState({
+      selectedGroups: this.state.selectedGroups,
+      groupsValue: '',
+      suggestedGroups: newSuggestions
+    });
     console.log('GROUP HAS BEEN ADDED!!!!!!');
+    
   }
 
   private removeGroup(group: Beam.DirectoryEntry) {
