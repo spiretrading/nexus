@@ -75,7 +75,8 @@ export class GroupSelectionBox extends React.Component<Properties> {
     return (
       <div id='GROUP BOX' className={css(boxStyle)}>
         <input type='text'
-          onInput={(event: React.ChangeEvent<HTMLInputElement>) => {
+          value={this.props.value}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
             this.props.onValueChange(event.target.value);
           }}
           className={css(inputStyle, errorBoxStyle, textStyle)}/>

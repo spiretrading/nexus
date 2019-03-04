@@ -372,10 +372,13 @@ export class CreateAccountPage extends React.Component<Properties, State> {
   }
 
   private async onGroupsValueChange(newValue: string) {
+
+    this.setState({
+      groupsValue: newValue
+    });
     const newSuggestions =
       await this.props.suggestedGroups.loadSuggestions(newValue);
     this.setState({
-      groupsValue: newValue,
       suggestedGroups: newSuggestions
     });
   }
@@ -386,7 +389,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       await this.props.suggestedGroups.loadSuggestions('');
     this.setState({
       selectedGroups: this.state.selectedGroups,
-      groupsValue: 'DOES NOT WORK',
+      groupsValue: '',
       suggestedGroups: newSuggestions
     });
   }
