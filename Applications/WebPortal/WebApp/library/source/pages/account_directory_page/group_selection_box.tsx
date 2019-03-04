@@ -2,7 +2,6 @@ import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as React from 'react';
 import { DisplaySize } from '../../display_size';
-import { GroupSuggestionModel } from '.';
 
 interface Properties {
   displaySize: DisplaySize;
@@ -257,41 +256,18 @@ public render(): JSX.Element {
     const selectedGroups = [];
     for(const group of this.props.suggestedGroups) {
       selectedGroups.push(
-      <div className={css(SuggestionBox.DYNAMIC_STYLE.entry, textStyle)}
+      <li className={css(SuggestionBox.DYNAMIC_STYLE.entry, textStyle)}
           onClick = { () => this.props.addGroup(group)}
           key={group.id}>
         {group.name}
-      </div>);
+      </li>);
     }
     return (
-      <div className={css(SuggestionBox.DYNAMIC_STYLE.box)}>
-        {selectedGroups}
-      </div>
+        <ul className={css(SuggestionBox.DYNAMIC_STYLE.box)}>
+         {selectedGroups}
+        </ul>
     );
  }
-
-  private static STYLE = {
-    boxSmall: {
-      maxHeight: '136px',
-      overflow: 'auto' as 'auto',
-      backroundColor: '#FFFFFF',
-      boxShadow: '2px 0px 6px #C8C8C8',
-      width: '100%'
-    },
-    boxMedium: {
-      maxHeight: '136px',
-      overflow: 'auto' as 'auto',
-      backroundColor: '#FFFFFF',
-      width: '100%'
-    },
-    boxLarge: {
-      maxHeight: '136px',
-      overflow: 'auto' as 'auto',
-      backroundColor: '#FFFFFF',
-      width: '100%'
-    }
-    //SCROLL BAR STYLES
-  };
 
   private static DYNAMIC_STYLE = StyleSheet.create({
     entry: {
@@ -321,13 +297,16 @@ public render(): JSX.Element {
       color: '#000000'
     },
     box: {
+      boxSizing: 'border-box' as 'border-box',
       zIndex: 1,
       maxHeight: '136px',
       overflow: 'auto' as 'auto',
       backgroundColor: '#FFFFFF',
       boxShadow: '0px 2px 6px #C8C8C8',
       width: '100%',
-      position: 'absolute' as 'absolute'
+      position: 'absolute' as 'absolute',
+      padding: '0px',
+      margin: '0px'
     }
  });
 

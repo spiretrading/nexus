@@ -372,7 +372,6 @@ export class CreateAccountPage extends React.Component<Properties, State> {
   }
 
   private async onGroupsValueChange(newValue: string) {
-
     this.setState({
       groupsValue: newValue
     });
