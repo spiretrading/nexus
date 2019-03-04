@@ -42,10 +42,11 @@ interface State {
   selectedGroups: Beam.Set<Beam.DirectoryEntry>;
   isSubmitButtonDisabled: boolean;
   errorStatus: string;
-  roleError: string;
   firstNameError: boolean;
   lastNameError: boolean;
   userNameError: boolean;
+  roleError: string;
+  groupError: boolean;
   emailError: boolean;
   photoUploaderMode: PhotoFieldDisplayMode;
   newPhoto: string;
@@ -74,6 +75,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       firstNameError: false,
       lastNameError: false,
       userNameError: false,
+      groupError: false,
       emailError: false,
       photoUploaderMode: PhotoFieldDisplayMode.DISPLAY,
       newPhoto: '',
@@ -89,6 +91,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     this.onUsernameChange = this.onUsernameChange.bind(this);
     this.onGroupsValueChange = this.onGroupsValueChange.bind(this);
     this.addGroup = this.addGroup.bind(this);
+    this.removeGroup = this.removeGroup.bind(this);
     this.onEmailChange = this.onEmailChange.bind(this);
     this.onAddressChange = this.onAddressChange.bind(this);
     this.onCityChange = this.onCityChange.bind(this);
@@ -248,7 +251,9 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}
                     selectedGroups={this.state.selectedGroups}
                     suggestions={this.state.suggestedGroups}
-                    addGroup={this.addGroup}/>
+                    addGroup={this.addGroup}
+                    removeGroup={this.removeGroup}
+                    isError={this.state.groupError}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='Email'
@@ -381,17 +386,17 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       await this.props.suggestedGroups.loadSuggestions('');
     this.setState({
       selectedGroups: this.state.selectedGroups,
-      groupsValue: '',
+      groupsValue: 'DOES NOT WORK',
       suggestedGroups: newSuggestions
     });
-    console.log('GROUP HAS BEEN ADDED!!!!!!');
-    
   }
 
   private removeGroup(group: Beam.DirectoryEntry) {
-
+    this.state.selectedGroups.remove(group);
+    this.setState({
+      selectedGroups: this.state.selectedGroups
+    });
   }
-
 
   private onEmailChange(newValue: string) {
     this.state.identity.emailAddress = newValue;
@@ -462,14 +467,22 @@ export class CreateAccountPage extends React.Component<Properties, State> {
         return 'Select role(s)';
       }
     })();
+    let errorGroups = true;
+    for (const group of this.state.selectedGroups) {
+      if(group.id) {
+        errorGroups = false;
+      }
+      break;
+    }
     if(errorFirstName || errorLastName || errorEmail || errorUsername ||
-        errorRoles) {
+        errorRoles || errorGroups) {
       this.setState({
         errorStatus: 'Invalid inputs',
         firstNameError: errorFirstName,
         lastNameError: errorLastName,
         emailError: errorEmail,
         userNameError: errorUsername,
+        groupError: errorGroups,
         roleError: errorRoles
       });
       return false;

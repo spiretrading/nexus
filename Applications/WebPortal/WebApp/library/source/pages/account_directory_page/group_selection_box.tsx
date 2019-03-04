@@ -6,11 +6,10 @@ import { GroupSuggestionModel } from '.';
 
 interface Properties {
   displaySize: DisplaySize;
-  error?: boolean;
   value?: string;
   selectedGroups?: Beam.Set<Beam.DirectoryEntry>;
   suggestions?: Beam.Set<Beam.DirectoryEntry>;
-
+  isError?: boolean;
   onValueChange?: (newValue: string) => void;
   addGroup?: (group: Beam.DirectoryEntry) => void;
   removeGroup?: (group: Beam.DirectoryEntry) => void;
@@ -20,6 +19,7 @@ export class GroupSelectionBox extends React.Component<Properties> {
   public static readonly defaultProps = {
     selectedGroups:  new Beam.Set<Beam.DirectoryEntry>(),
     suggestions:  new Beam.Set<Beam.DirectoryEntry>(),
+    isError: false,
     addGroup: () => {},
     removeGroup: () => {}
   };
@@ -44,7 +44,7 @@ export class GroupSelectionBox extends React.Component<Properties> {
       }
     })();
     const errorBoxStyle = (() => {
-      if(this.props.error) {
+      if(this.props.isError) {
         return GroupSelectionBox.DYNAMIC_STYLE.error;
       } else {
         return null;
@@ -75,7 +75,7 @@ export class GroupSelectionBox extends React.Component<Properties> {
     return (
       <div id='GROUP BOX' className={css(boxStyle)}>
         <input type='text'
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+          onInput={(event: React.ChangeEvent<HTMLInputElement>) => {
             this.props.onValueChange(event.target.value);
           }}
           className={css(inputStyle, errorBoxStyle, textStyle)}/>
