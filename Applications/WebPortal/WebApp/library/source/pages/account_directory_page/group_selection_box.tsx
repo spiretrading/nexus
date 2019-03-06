@@ -87,7 +87,7 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
         return null;
       }
     })();
-    const selectedGroups = [];
+    const selectedGroups = []; //probablamatic?????
     for(const group of this.props.selectedGroups) {
       selectedGroups.push(
       <div className={css(GroupSelectionBox.DYNAMIC_STYLE.groupEntry)}
@@ -122,8 +122,12 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
       </div>);
   }
   private addGroup() {
-    console.log('group added!!!!');
-    this.props.addGroup(this.props.suggestions[this.state.currentIndex]);
+    if (this.props.suggestions && this.state.currentIndex >= 0) {
+      const thing =  this.props.suggestions[this.state.currentIndex];
+      if(thing){
+        this.props.addGroup(thing);
+      }
+    }
   }
 
   private onKeyPress(event: React.KeyboardEvent<HTMLInputElement>) {
@@ -136,6 +140,9 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
       if(this.state.currentIndex < this.props.suggestions.length - 1) {
         this.setState({ currentIndex: this.state.currentIndex + 1 });
       }
+    } else if (event.keyCode === 13 && this.props.suggestions
+      && this.state.currentIndex >= 0) {
+      this.addGroup();
     }
   }
 
@@ -143,6 +150,14 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
     this.setState({ currentIndex: newCurrent });
   }
 
+  public componentDidUpdate(prevProps: Properties) {
+    if(!this.props.suggestions) {
+      this.setState({ currentIndex: -1 });
+    } else if(this.props.suggestions !== prevProps.suggestions) {
+      this.setState({ currentIndex: 0 });
+    }
+
+  }
   private static DYNAMIC_STYLE = StyleSheet.create({
     boxSmall : {
       display: 'flex',
