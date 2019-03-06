@@ -38,8 +38,8 @@ interface State {
   username: string;
   identity: Nexus.AccountIdentity;
   groupsValue: string;
-  suggestedGroups: Beam.Set<Beam.DirectoryEntry>;
-  selectedGroups: Beam.Set<Beam.DirectoryEntry>;
+  suggestedGroups: Beam.DirectoryEntry[];
+  selectedGroups: Beam.DirectoryEntry[];
   isSubmitButtonDisabled: boolean;
   errorStatus: string;
   firstNameError: boolean;
@@ -58,7 +58,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     errorStatus: '',
     onSubmit: () => {}
-  }
+  };
 
   constructor(props: Properties) {
     super(props);
@@ -67,8 +67,8 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       username: '',
       identity: new Nexus.AccountIdentity(),
       groupsValue: '',
-      suggestedGroups: new Beam.Set<Beam.DirectoryEntry>(),
-      selectedGroups: new Beam.Set<Beam.DirectoryEntry>(),
+      suggestedGroups: new Array<Beam.DirectoryEntry>(),
+      selectedGroups: new Array<Beam.DirectoryEntry>(),
       isSubmitButtonDisabled: true,
       errorStatus: '',
       roleError: '',
@@ -375,6 +375,9 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     this.setState({
       groupsValue: newValue
     });
+    const thing = [];
+    thing.push('brrp');
+
     const newSuggestions =
       await this.props.suggestedGroups.loadSuggestions(newValue);
     this.setState({
@@ -383,18 +386,21 @@ export class CreateAccountPage extends React.Component<Properties, State> {
   }
 
   private async addGroup(group: Beam.DirectoryEntry) {
-    this.state.selectedGroups.add(group);
-    const newSuggestions =
-      await this.props.suggestedGroups.loadSuggestions('');
-    this.setState({
-      selectedGroups: this.state.selectedGroups,
-      groupsValue: '',
-      suggestedGroups: newSuggestions
-    });
+    if(this.state.selectedGroups.indexOf(group) < 0) {
+      this.state.selectedGroups.push(group);
+      const newSuggestions =
+        await this.props.suggestedGroups.loadSuggestions('');
+      this.setState({
+        selectedGroups: this.state.selectedGroups,
+        groupsValue: '',
+        suggestedGroups: newSuggestions
+      });
+    }
   }
 
   private removeGroup(group: Beam.DirectoryEntry) {
-    this.state.selectedGroups.remove(group);
+    this.state.selectedGroups.
+      splice(this.state.selectedGroups.indexOf(group), 1);
     this.setState({
       selectedGroups: this.state.selectedGroups
     });

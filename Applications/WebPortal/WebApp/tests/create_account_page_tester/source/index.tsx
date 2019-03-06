@@ -12,7 +12,7 @@ interface Properties {
 interface State {
   errorStatus: string;
   displayStatus: string;
-  groups: Beam.Set<Beam.DirectoryEntry>;
+  groups: Beam.DirectoryEntry[];
   model: WebPortal.GroupSuggestionModel;
 }
 
@@ -23,9 +23,9 @@ class TestApp extends React.Component<Properties, State> {
     this.state = {
       errorStatus: '',
       displayStatus: '',
-      groups: new Beam.Set<Beam.DirectoryEntry>(),
+      groups: new Array<Beam.DirectoryEntry>(),
       model: new WebPortal.LocalGroupSuggestionModel(
-          new Beam.Set<Beam.DirectoryEntry>())
+          new Array<Beam.DirectoryEntry>())
     };
     this.setErrorMessage = this.setErrorMessage.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
@@ -87,22 +87,22 @@ class TestApp extends React.Component<Properties, State> {
       new Beam.DirectoryEntry(type, 38, 'Spire Fiji');
     const group16 =
       new Beam.DirectoryEntry(type, 39, 'Spire Sweden');
-    this.state.groups.add(group1);
-    this.state.groups.add(group2);
-    this.state.groups.add(group3);
-    this.state.groups.add(group4);
-    this.state.groups.add(group5);
-    this.state.groups.add(group6);
-    this.state.groups.add(group7);
-    this.state.groups.add(group8);
-    this.state.groups.add(group9);
-    this.state.groups.add(group10);
-    this.state.groups.add(group11);
-    this.state.groups.add(group12);
-    this.state.groups.add(group13);
-    this.state.groups.add(group14);
-    this.state.groups.add(group15);
-    this.state.groups.add(group16);
+    this.state.groups.push(group1);
+    this.state.groups.push(group2);
+    this.state.groups.push(group3);
+    this.state.groups.push(group4);
+    this.state.groups.push(group5);
+    this.state.groups.push(group6);
+    this.state.groups.push(group7);
+    this.state.groups.push(group8);
+    this.state.groups.push(group9);
+    this.state.groups.push(group10);
+    this.state.groups.push(group11);
+    this.state.groups.push(group12);
+    this.state.groups.push(group13);
+    this.state.groups.push(group14);
+    this.state.groups.push(group15);
+    this.state.groups.push(group16);
     const newModel = new WebPortal.LocalGroupSuggestionModel(this.state.groups);
     newModel.load();
     this.setState({

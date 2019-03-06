@@ -11,5 +11,5 @@ export abstract class GroupSuggestionModel {
    * @param prefix - The string that is the current prefix.
    */
   public abstract async loadSuggestions(prefix: string):
-    Promise<Beam.Set<Beam.DirectoryEntry>>;
+    Promise<Beam.DirectoryEntry[]>;
 }

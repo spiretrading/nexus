@@ -6,22 +6,35 @@ import { DisplaySize } from '../../display_size';
 interface Properties {
   displaySize: DisplaySize;
   value?: string;
-  selectedGroups?: Beam.Set<Beam.DirectoryEntry>;
-  suggestions?: Beam.Set<Beam.DirectoryEntry>;
+  selectedGroups?: Beam.DirectoryEntry[];
+  suggestions?: Beam.DirectoryEntry[];
   isError?: boolean;
   onValueChange?: (newValue: string) => void;
   addGroup?: (group: Beam.DirectoryEntry) => void;
   removeGroup?: (group: Beam.DirectoryEntry) => void;
 }
 
-export class GroupSelectionBox extends React.Component<Properties> {
+interface State {
+  currentIndex: number;
+}
+
+export class GroupSelectionBox extends React.Component<Properties, State> {
   public static readonly defaultProps = {
-    selectedGroups:  new Beam.Set<Beam.DirectoryEntry>(),
-    suggestions:  new Beam.Set<Beam.DirectoryEntry>(),
+    selectedGroups:  new Array<Beam.DirectoryEntry>(),
+    suggestions: new Array<Beam.DirectoryEntry>(),
     isError: false,
     addGroup: () => {},
     removeGroup: () => {}
   };
+
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      currentIndex : 0
+    };
+    this.changeIndex = this.changeIndex.bind(this);
+    this.addGroup = this.addGroup.bind(this);
+  }
 
   public render(): JSX.Element {
     const boxStyle = (() => {
@@ -83,12 +96,32 @@ export class GroupSelectionBox extends React.Component<Properties> {
                     <div
             className={css(GroupSelectionBox.DYNAMIC_STYLE.suggestionWrapper)}>
             <SuggestionBox
+              currentIndex={this.state.currentIndex}
               suggestedGroups={this.props.suggestions}
               displaySize={this.props.displaySize}
-              addGroup={this.props.addGroup}/>
+              addGroup={this.addGroup}
+              changeIndex={this.changeIndex}/>
           </div>
           {selectedGroups}
       </div>);
+  }
+
+/**
+  public componentDidUpdate(prevProps: Properties) {
+    if(!this.props.suggestions) {
+      this.setState({currentIndex: -1});
+    } else if (prevProps.suggestions === this.props.suggestions) {
+        this.setState({currentIndex: 0});
+    }
+  }
+ */
+  private addGroup() {
+    console.log('group added!!!!');
+    this.props.addGroup(this.props.suggestions[this.state.currentIndex]);
+  }
+
+  private changeIndex(newCurrent: number) {
+    this.setState({ currentIndex: newCurrent });
   }
 
   private static DYNAMIC_STYLE = StyleSheet.create({
@@ -235,15 +268,24 @@ export class GroupSelectionBox extends React.Component<Properties> {
 }
 
 interface SuggestionBoxProps {
-  suggestedGroups?: Beam.Set<Beam.DirectoryEntry>;
   displaySize: DisplaySize;
-  addGroup?: (group: Beam.DirectoryEntry) => void;
+  suggestedGroups?: Beam.DirectoryEntry[];
+  currentIndex: number;
+  changeIndex?: (newIndex: number) => void;
+  addGroup?: () => void;
+}
+
+interface SuggestionBoxState {
+  currentIndex?: number;
 }
 
 class SuggestionBox extends React.Component<SuggestionBoxProps> {
   public static readonly defaultProps = {
+    changeIndex: () => {},
     addGroup: () => {}
-  }
+  };
+
+
 
 public render(): JSX.Element {
     const textStyle = (() => {
@@ -254,10 +296,24 @@ public render(): JSX.Element {
       }
     })();
     const selectedGroups = [];
-    for(const group of this.props.suggestedGroups) {
+    for(let index = 0; index < this.props.suggestedGroups.length; ++index) {
+      const group = this.props.suggestedGroups[index];
+      const selectedStyle = (() => {
+        if(this.props.currentIndex === index) {
+          return SuggestionBox.DYNAMIC_STYLE.selected;
+        } else {
+          return null;
+        }
+      })();
+
+
+
+
       selectedGroups.push(
-      <li className={css(SuggestionBox.DYNAMIC_STYLE.entry, textStyle)}
-          onClick = { () => this.props.addGroup(group)}
+      <li className={css(SuggestionBox.DYNAMIC_STYLE.entry, 
+            textStyle, selectedStyle)}
+          onMouseEnter={() => this.props.changeIndex(index)}
+          onClick = { () => this.props.addGroup()}
           key={group.id}>
         {group.name}
       </li>);
@@ -279,6 +335,7 @@ public render(): JSX.Element {
       display: 'flex',
       justifyContent: 'flex-start',
       alignItems: 'center',
+      /** 
       ':hover': {
         color: '#FFFFFF',
         backgroundColor: '#684BC7'
@@ -287,6 +344,7 @@ public render(): JSX.Element {
         color: '#FFFFFF',
         backgroundColor: '#684BC7'
       }
+      */
     },
     textSmall: {
       font: '400 16px Roboto',
@@ -295,6 +353,10 @@ public render(): JSX.Element {
     textLarge: {
       font: '400 14px Roboto',
       color: '#000000'
+    },
+    selected: {
+      color: '#FFFFFF',
+      backgroundColor: '#684BC7'
     },
     box: {
       boxSizing: 'border-box' as 'border-box',
@@ -309,7 +371,4 @@ public render(): JSX.Element {
       margin: '0px'
     }
  });
-
-}
-
-
+ }
