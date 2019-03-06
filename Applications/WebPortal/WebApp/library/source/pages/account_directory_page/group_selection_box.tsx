@@ -16,6 +16,7 @@ interface Properties {
 
 interface State {
   currentIndex: number;
+  showSuggestions: boolean;
 }
 
 export class GroupSelectionBox extends React.Component<Properties, State> {
@@ -25,15 +26,19 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
     isError: false,
     addGroup: () => {},
     removeGroup: () => {}
+    
   };
 
   constructor(props: Properties) {
     super(props);
     this.state = {
-      currentIndex : 0
+      currentIndex : 0,
+      showSuggestions: false
     };
     this.changeIndex = this.changeIndex.bind(this);
     this.addGroup = this.addGroup.bind(this);
+    this.onKeyPress = this.onKeyPress.bind(this);
+    this.inputRef = null;
   }
 
   public render(): JSX.Element {
@@ -69,6 +74,19 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
         return GroupSelectionBox.DYNAMIC_STYLE.textLarge;
       }
     })();
+    const suggestionBox = (() => {
+      if(document.activeElement === this.inputRef) {
+        return (
+        <SuggestionBox
+              currentIndex={this.state.currentIndex}
+              suggestedGroups={this.props.suggestions}
+              displaySize={this.props.displaySize}
+              addGroup={this.addGroup}
+              changeIndex={this.changeIndex}/>);
+      } else {
+        return null;
+      }
+    })();
     const selectedGroups = [];
     for(const group of this.props.selectedGroups) {
       selectedGroups.push(
@@ -88,6 +106,9 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
       <div id='GROUP BOX' className={css(boxStyle)}>
         <input type='text'
           value={this.props.value}
+          onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) =>
+            this.onKeyPress(event)}
+          ref={ (e) => {this.inputRef = e;} }
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
             this.props.onValueChange(event.target.value);
           }}
@@ -95,32 +116,30 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
           <div className={css(GroupSelectionBox.DYNAMIC_STYLE.filler)}/>
                     <div
             className={css(GroupSelectionBox.DYNAMIC_STYLE.suggestionWrapper)}>
-            <SuggestionBox
-              currentIndex={this.state.currentIndex}
-              suggestedGroups={this.props.suggestions}
-              displaySize={this.props.displaySize}
-              addGroup={this.addGroup}
-              changeIndex={this.changeIndex}/>
+            {suggestionBox}
           </div>
           {selectedGroups}
       </div>);
   }
-
-/**
-  public componentDidUpdate(prevProps: Properties) {
-    if(!this.props.suggestions) {
-      this.setState({currentIndex: -1});
-    } else if (prevProps.suggestions === this.props.suggestions) {
-        this.setState({currentIndex: 0});
-    }
-  }
- */
   private addGroup() {
     console.log('group added!!!!');
     this.props.addGroup(this.props.suggestions[this.state.currentIndex]);
   }
 
-  private changeIndex(newCurrent: number) {
+  private onKeyPress(event: React.KeyboardEvent<HTMLInputElement>) {
+    console.log('current keycodeeeee: ' + event.keyCode );
+    if(event.keyCode === 38) {
+      if(this.state.currentIndex > 0) {
+        this.setState({ currentIndex: this.state.currentIndex - 1 });
+      }
+    } else if (event.keyCode === 40) {
+      if(this.state.currentIndex < this.props.suggestions.length - 1) {
+        this.setState({ currentIndex: this.state.currentIndex + 1 });
+      }
+    }
+  }
+
+  private changeIndex(newCurrent?: number) {
     this.setState({ currentIndex: newCurrent });
   }
 
@@ -265,6 +284,8 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
         width: '100%'
     }
   });
+
+  private inputRef: HTMLInputElement;
 }
 
 interface SuggestionBoxProps {
@@ -305,16 +326,13 @@ public render(): JSX.Element {
           return null;
         }
       })();
-
-
-
-
       selectedGroups.push(
       <li className={css(SuggestionBox.DYNAMIC_STYLE.entry, 
             textStyle, selectedStyle)}
           onMouseEnter={() => this.props.changeIndex(index)}
           onClick = { () => this.props.addGroup()}
-          key={group.id}>
+          key={index}
+          id={index.toString()}>
         {group.name}
       </li>);
     }
