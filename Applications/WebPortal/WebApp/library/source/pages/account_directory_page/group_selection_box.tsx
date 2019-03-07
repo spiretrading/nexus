@@ -25,8 +25,8 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
     suggestions: new Array<Beam.DirectoryEntry>(),
     isError: false,
     addGroup: () => {},
-    removeGroup: () => {}
-    
+    removeGroup: () => {},
+    onValue: () => {}
   };
 
   constructor(props: Properties) {
@@ -78,29 +78,29 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
       if(document.activeElement === this.inputRef) {
         return (
         <SuggestionBox
-              currentIndex={this.state.currentIndex}
-              suggestedGroups={this.props.suggestions}
-              displaySize={this.props.displaySize}
-              addGroup={this.addGroup}
-              changeIndex={this.changeIndex}/>);
+          currentIndex={this.state.currentIndex}
+          suggestedGroups={this.props.suggestions}
+          displaySize={this.props.displaySize}
+          addGroup={this.addGroup}
+          changeIndex={this.changeIndex}/>);
       } else {
         return null;
       }
     })();
-    const selectedGroups = []; //probablamatic?????
+    const selectedGroups = [];
     for(const group of this.props.selectedGroups) {
       selectedGroups.push(
-      <div className={css(GroupSelectionBox.DYNAMIC_STYLE.groupEntry)}
-        key={group.id}>
-        <div className={css(GroupSelectionBox.DYNAMIC_STYLE.textLarge)}>
-          {group.name}
-        </div>
-        <div className={css(GroupSelectionBox.DYNAMIC_STYLE.imageWrapper)}>
-          <img className={css(GroupSelectionBox.DYNAMIC_STYLE.image)}
-            onClick={ () => this.props.removeGroup(group) }
-            src={'resources/remove.svg'}/>
-        </div>
-      </div>);
+        <div className={css(GroupSelectionBox.DYNAMIC_STYLE.groupEntry)}
+            key={group.id}>
+          <div className={css(GroupSelectionBox.DYNAMIC_STYLE.textLarge)}>
+            {group.name}
+          </div>
+          <div className={css(GroupSelectionBox.DYNAMIC_STYLE.imageWrapper)}>
+            <img className={css(GroupSelectionBox.DYNAMIC_STYLE.image)}
+              onClick={ () => this.props.removeGroup(group) }
+              src={'resources/remove.svg'}/>
+          </div>
+        </div>);
     }
     return (
       <div id='GROUP BOX' className={css(boxStyle)}>
@@ -110,12 +110,11 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
             this.onKeyPress(event)}
           ref={ (e) => {this.inputRef = e;} }
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-            this.props.onValueChange(event.target.value);
-          }}
+            this.props.onValueChange(event.target.value);}}
           className={css(inputStyle, errorBoxStyle, textStyle)}/>
           <div className={css(GroupSelectionBox.DYNAMIC_STYLE.filler)}/>
-                    <div
-            className={css(GroupSelectionBox.DYNAMIC_STYLE.suggestionWrapper)}>
+            <div
+             className={css(GroupSelectionBox.DYNAMIC_STYLE.suggestionWrapper)}>
             {suggestionBox}
           </div>
           {selectedGroups}
@@ -296,10 +295,9 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
     suggestionWrapper: {
       position: 'relative' as 'relative',
       height: '1px',
-        width: '100%'
+      width: '100%'
     }
   });
-
   private inputRef: HTMLInputElement;
 }
 
@@ -320,8 +318,6 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
     changeIndex: () => {},
     addGroup: () => {}
   };
-
-
 
 public render(): JSX.Element {
     const textStyle = (() => {
@@ -367,17 +363,7 @@ public render(): JSX.Element {
       color: '#000000',
       display: 'flex',
       justifyContent: 'flex-start',
-      alignItems: 'center',
-      /** 
-      ':hover': {
-        color: '#FFFFFF',
-        backgroundColor: '#684BC7'
-      },
-      ':active': {
-        color: '#FFFFFF',
-        backgroundColor: '#684BC7'
-      }
-      */
+      alignItems: 'center'
     },
     textSmall: {
       font: '400 16px Roboto',
@@ -403,5 +389,5 @@ public render(): JSX.Element {
       padding: '0px',
       margin: '0px'
     }
- });
- }
+  });
+}

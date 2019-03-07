@@ -30,7 +30,8 @@ interface Properties {
   onSubmit?: (username: string, groups: Beam.DirectoryEntry[],
     identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles) => void;
 
-  suggestedGroups?: GroupSuggestionModel;
+  /** The model that provides the group suggestions. */
+  groupSuggestionModel?: GroupSuggestionModel;
 }
 
 interface State {
@@ -379,7 +380,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     thing.push('brrp');
 
     const newSuggestions =
-      await this.props.suggestedGroups.loadSuggestions(newValue);
+      await this.props.groupSuggestionModel.loadSuggestions(newValue);
     this.setState({
       suggestedGroups: newSuggestions
     });
@@ -389,7 +390,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     if(this.state.selectedGroups.indexOf(group) < 0) {
       this.state.selectedGroups.push(group);
       const newSuggestions =
-        await this.props.suggestedGroups.loadSuggestions('');
+        await this.props.groupSuggestionModel.loadSuggestions('');
       this.setState({
         selectedGroups: this.state.selectedGroups,
         groupsValue: '',
