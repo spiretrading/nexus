@@ -40,6 +40,7 @@ interface State {
   identity: Nexus.AccountIdentity;
   groupsValue: string;
   suggestedGroups: Beam.DirectoryEntry[];
+  filteredSuggestedGroups: Beam.DirectoryEntry[];
   selectedGroups: Beam.DirectoryEntry[];
   isSubmitButtonDisabled: boolean;
   errorStatus: string;
@@ -376,8 +377,6 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     this.setState({
       groupsValue: newValue
     });
-    const thing = [];
-    thing.push('brrp');
 
     const newSuggestions =
       await this.props.groupSuggestionModel.loadSuggestions(newValue);

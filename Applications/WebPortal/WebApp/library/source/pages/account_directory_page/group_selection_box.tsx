@@ -315,9 +315,6 @@ interface SuggestionBoxProps {
   addGroup?: () => void;
 }
 
-interface SuggestionBoxState {
-  currentIndex?: number;
-}
 
 class SuggestionBox extends React.Component<SuggestionBoxProps> {
   public static readonly defaultProps = {
@@ -376,21 +373,18 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
  }
 
   public componentDidUpdate() {
-    if(this.props.suggestedGroups !== null && this.props.suggestedGroups !== []) {
       if(this.currentEntryRef.current !== null) {
         const child = this.currentEntryRef.current;
           const childBound =
             child.getBoundingClientRect();
-            console.log('wut');
           const boundPar =
-            child.getBoundingClientRect();
+            child.parentElement.getBoundingClientRect();
           if( childBound.top < boundPar.top) {
             this.currentEntryRef.current.scrollIntoView();
           } else if( childBound.bottom > boundPar.bottom) {
             this.currentEntryRef.current.scrollIntoView(false);
           }
       }
-    }
   }
 
   private static DYNAMIC_STYLE = StyleSheet.create({
