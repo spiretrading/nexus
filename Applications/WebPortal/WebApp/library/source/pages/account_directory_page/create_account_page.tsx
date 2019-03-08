@@ -389,12 +389,10 @@ export class CreateAccountPage extends React.Component<Properties, State> {
   private async addGroup(group: Beam.DirectoryEntry) {
     if(this.state.selectedGroups.indexOf(group) < 0) {
       this.state.selectedGroups.push(group);
-      const newSuggestions =
-        await this.props.groupSuggestionModel.loadSuggestions('');
       this.setState({
         selectedGroups: this.state.selectedGroups,
         groupsValue: '',
-        suggestedGroups: newSuggestions
+        suggestedGroups: null
       });
     }
   }

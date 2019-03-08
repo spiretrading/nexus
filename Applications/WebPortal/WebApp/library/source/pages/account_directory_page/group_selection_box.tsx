@@ -76,7 +76,8 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
       }
     })();
     const suggestionBox = (() => {
-      if(document.activeElement === this.inputRef) {
+      if(document.activeElement === this.inputRef
+        && this.props.selectedGroups) {
         return (
         <SuggestionBox
           currentIndex={this.state.currentIndex}
@@ -89,20 +90,20 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
       }
     })();
     const selectedGroups = [];
-    for(const group of this.props.selectedGroups) {
-      selectedGroups.push(
-        <div className={css(GroupSelectionBox.DYNAMIC_STYLE.groupEntry)}
-            key={group.id}>
-          <div className={css(GroupSelectionBox.DYNAMIC_STYLE.textLarge)}>
-            {group.name}
-          </div>
-          <div className={css(GroupSelectionBox.DYNAMIC_STYLE.imageWrapper)}>
-            <img className={css(GroupSelectionBox.DYNAMIC_STYLE.image)}
-              onClick={ () => this.props.removeGroup(group) }
-              src={'resources/remove.svg'}/>
-          </div>
-        </div>);
-    }
+      for(const group of this.props.selectedGroups) {
+        selectedGroups.push(
+          <div className={css(GroupSelectionBox.DYNAMIC_STYLE.groupEntry)}
+              key={group.id}>
+            <div className={css(GroupSelectionBox.DYNAMIC_STYLE.textLarge)}>
+              {group.name}
+            </div>
+            <div className={css(GroupSelectionBox.DYNAMIC_STYLE.imageWrapper)}>
+              <img className={css(GroupSelectionBox.DYNAMIC_STYLE.image)}
+                onClick={ () => this.props.removeGroup(group) }
+                src={'resources/remove.svg'}/>
+            </div>
+          </div>);
+  }
     return (
       <div id='GROUP BOX' className={css(boxStyle)}>
         <input type='text'
@@ -122,10 +123,13 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
       </div>);
   }
   private addGroup() {
-    if (this.props.suggestions && this.state.currentIndex >= 0) {
-      const thing =  this.props.suggestions[this.state.currentIndex];
-      if(thing) {
-        this.props.addGroup(thing);
+    if (this.props.suggestions) {
+      if(this.props.suggestions.length > this.state.currentIndex &&
+          this.state.currentIndex >= 0) {
+        const thing =  this.props.suggestions[this.state.currentIndex];
+        if(thing) {
+          this.props.addGroup(thing);
+        }
       }
     }
   }
@@ -151,7 +155,7 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
   }
 
   public componentDidUpdate(prevProps: Properties) {
-    if(!this.props.suggestions) {
+    if(this.props.suggestions === null && this.state.currentIndex !== -1) {
       this.setState({ currentIndex: -1 });
     } else if(this.props.suggestions !== prevProps.suggestions) {
       this.setState({ currentIndex: 0 });
@@ -296,7 +300,8 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
     suggestionWrapper: {
       position: 'relative' as 'relative',
       height: '1px',
-      width: '100%'
+      width: '100%',
+      tabIndex: -1
     }
   });
   private inputRef: HTMLInputElement;
@@ -335,32 +340,35 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
       }
     })();
     const selectedGroups = [];
-    for(let index = 0; index < this.props.suggestedGroups.length; ++index) {
-      const group = this.props.suggestedGroups[index];
-        if(this.props.currentIndex === index) {
-          selectedGroups.push(
-      <li className={css(SuggestionBox.DYNAMIC_STYLE.entry,
-            textStyle, SuggestionBox.DYNAMIC_STYLE.selected)}
-          onMouseEnter={() => this.props.changeIndex(index)}
-          onClick = { () => this.props.addGroup()}
-          key={index}
-          ref={this.currentEntryRef}
-          id={index.toString()}>
-        {group.name}
-      </li>);
-        } else {
-          selectedGroups.push(
-      <li className={css(SuggestionBox.DYNAMIC_STYLE.entry, textStyle)}
-          onMouseEnter={() => this.props.changeIndex(index)}
-          onClick = { () => this.props.addGroup()}
-          key={index}
-          id={index.toString()}>
-        {group.name}
-      </li>);
-        }
+    if(this.props.suggestedGroups !== null) {
+      for(let index = 0; index < this.props.suggestedGroups.length; ++index) {
+        const group = this.props.suggestedGroups[index];
+          if(this.props.currentIndex === index) {
+            selectedGroups.push(
+        <li className={css(SuggestionBox.DYNAMIC_STYLE.entry,
+              textStyle, SuggestionBox.DYNAMIC_STYLE.selected)}
+            onMouseEnter={() => this.props.changeIndex(index)}
+            onClick = { () => this.props.addGroup()}
+            key={index}
+            ref={this.currentEntryRef}
+            id={index.toString()}>
+          {group.name}
+        </li>);
+          } else {
+            selectedGroups.push(
+        <li className={css(SuggestionBox.DYNAMIC_STYLE.entry, textStyle)}
+            onMouseEnter={() => this.props.changeIndex(index)}
+            onClick = { () => this.props.addGroup()}
+            key={index}
+            id={index.toString()}>
+          {group.name}
+        </li>);
+          }
+      }
     }
     return (
         <ul className={css(SuggestionBox.DYNAMIC_STYLE.box)}
+          tabIndex={-1}
           ref={this.unorderedListRef}>
          {selectedGroups}
         </ul>
@@ -368,20 +376,20 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
  }
 
   public componentDidUpdate() {
-    console.log('ref issss: ' + this.currentEntryRef);
-    if(this.currentEntryRef && this.props.currentIndex > 0) {
+    if(this.props.suggestedGroups !== null && this.props.suggestedGroups !== []) {
+      if(this.currentEntryRef.current !== null) {
         const child = this.currentEntryRef.current;
-        const par = this.unorderedListRef.current;
-        const boundin = child.getBoundingClientRect();
-        const boundPar = par.getBoundingClientRect();
-        console.log(this.unorderedListRef);
-     //  this.currentEntryRef.current.scrollIntoView({behavior: 'smooth'});
-        if( boundin.top < boundPar.top) {
-          this.currentEntryRef.current.scrollIntoView();
-        } else if( boundin.bottom > boundPar.bottom) {
-          this.currentEntryRef.current.scrollIntoView(false);
-          
-        }
+          const childBound =
+            child.getBoundingClientRect();
+            console.log('wut');
+          const boundPar =
+            child.getBoundingClientRect();
+          if( childBound.top < boundPar.top) {
+            this.currentEntryRef.current.scrollIntoView();
+          } else if( childBound.bottom > boundPar.bottom) {
+            this.currentEntryRef.current.scrollIntoView(false);
+          }
+      }
     }
   }
 
@@ -394,7 +402,8 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
       color: '#000000',
       display: 'flex',
       justifyContent: 'flex-start',
-      alignItems: 'center'
+      alignItems: 'center',
+      cursor: 'pointer as pointer'
     },
     textSmall: {
       font: '400 16px Roboto',
@@ -418,10 +427,10 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
       width: '100%',
       position: 'absolute' as 'absolute',
       padding: '0px',
-      margin: '0px'
+      margin: '0px',
+      tabFocus: -1
     }
   });
-
   private currentEntryRef: React.RefObject<HTMLLIElement>;
   private unorderedListRef: React.RefObject<HTMLUListElement>;
 }
