@@ -40,7 +40,6 @@ interface State {
   identity: Nexus.AccountIdentity;
   groupsValue: string;
   suggestedGroups: Beam.DirectoryEntry[];
-  filteredSuggestedGroups: Beam.DirectoryEntry[];
   selectedGroups: Beam.DirectoryEntry[];
   isSubmitButtonDisabled: boolean;
   errorStatus: string;
@@ -92,6 +91,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     this.onLastNameChange = this.onLastNameChange.bind(this);
     this.onUsernameChange = this.onUsernameChange.bind(this);
     this.onGroupsValueChange = this.onGroupsValueChange.bind(this);
+    this.filterGroups = this.filterGroups.bind(this);
     this.addGroup = this.addGroup.bind(this);
     this.removeGroup = this.removeGroup.bind(this);
     this.onEmailChange = this.onEmailChange.bind(this);
@@ -377,11 +377,19 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     this.setState({
       groupsValue: newValue
     });
-
+    this.filterGroups(newValue);
+  }
+  private async filterGroups(newValue: string) {
     const newSuggestions =
       await this.props.groupSuggestionModel.loadSuggestions(newValue);
+    const filteredSuggestins = [];
+    for (const group of newSuggestions) {
+      if(this.state.selectedGroups.indexOf(group) < 0) {
+        filteredSuggestins.push(group);
+      }
+    }
     this.setState({
-      suggestedGroups: newSuggestions
+      suggestedGroups: filteredSuggestins
     });
   }
 
