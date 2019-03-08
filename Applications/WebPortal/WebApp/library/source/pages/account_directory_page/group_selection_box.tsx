@@ -2,6 +2,7 @@ import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as React from 'react';
 import { DisplaySize } from '../../display_size';
+import { element } from 'prop-types';
 
 interface Properties {
   displaySize: DisplaySize;
@@ -123,7 +124,7 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
   private addGroup() {
     if (this.props.suggestions && this.state.currentIndex >= 0) {
       const thing =  this.props.suggestions[this.state.currentIndex];
-      if(thing){
+      if(thing) {
         this.props.addGroup(thing);
       }
     }
@@ -319,7 +320,13 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
     addGroup: () => {}
   };
 
-public render(): JSX.Element {
+  constructor(props: SuggestionBoxProps) {
+    super(props);
+    this.currentEntryRef = React.createRef();
+    this.unorderedListRef = React.createRef();
+  }
+
+  public render(): JSX.Element {
     const textStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return SuggestionBox.DYNAMIC_STYLE.textSmall;
@@ -330,29 +337,52 @@ public render(): JSX.Element {
     const selectedGroups = [];
     for(let index = 0; index < this.props.suggestedGroups.length; ++index) {
       const group = this.props.suggestedGroups[index];
-      const selectedStyle = (() => {
         if(this.props.currentIndex === index) {
-          return SuggestionBox.DYNAMIC_STYLE.selected;
+          selectedGroups.push(
+      <li className={css(SuggestionBox.DYNAMIC_STYLE.entry,
+            textStyle, SuggestionBox.DYNAMIC_STYLE.selected)}
+          onMouseEnter={() => this.props.changeIndex(index)}
+          onClick = { () => this.props.addGroup()}
+          key={index}
+          ref={this.currentEntryRef}
+          id={index.toString()}>
+        {group.name}
+      </li>);
         } else {
-          return null;
-        }
-      })();
-      selectedGroups.push(
-      <li className={css(SuggestionBox.DYNAMIC_STYLE.entry, 
-            textStyle, selectedStyle)}
+          selectedGroups.push(
+      <li className={css(SuggestionBox.DYNAMIC_STYLE.entry, textStyle)}
           onMouseEnter={() => this.props.changeIndex(index)}
           onClick = { () => this.props.addGroup()}
           key={index}
           id={index.toString()}>
         {group.name}
       </li>);
+        }
     }
     return (
-        <ul className={css(SuggestionBox.DYNAMIC_STYLE.box)}>
+        <ul className={css(SuggestionBox.DYNAMIC_STYLE.box)}
+          ref={this.unorderedListRef}>
          {selectedGroups}
         </ul>
     );
  }
+
+  public componentDidUpdate() {
+    console.log('ref issss: ' + this.currentEntryRef);
+    if(this.currentEntryRef && this.props.currentIndex > 0) {
+        const child = this.currentEntryRef.current;
+        const par = this.unorderedListRef.current;
+        const boundin = child.getBoundingClientRect();
+        const boundPar = par.getBoundingClientRect();
+        console.log(this.unorderedListRef);
+     //  this.currentEntryRef.current.scrollIntoView({behavior: 'smooth'});
+        if( boundin.top < boundPar.top) {
+          this.currentEntryRef.current.scrollIntoView();
+        } else if( boundin.bottom > boundPar.bottom) {
+          this.currentEntryRef.current.scrollIntoView();
+        }
+    }
+  }
 
   private static DYNAMIC_STYLE = StyleSheet.create({
     entry: {
@@ -390,4 +420,7 @@ public render(): JSX.Element {
       margin: '0px'
     }
   });
+
+  private currentEntryRef: React.RefObject<HTMLLIElement>;
+  private unorderedListRef: React.RefObject<HTMLUListElement>;
 }
