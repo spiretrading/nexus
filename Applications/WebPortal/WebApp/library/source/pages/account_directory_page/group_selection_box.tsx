@@ -379,7 +379,8 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
         if( boundin.top < boundPar.top) {
           this.currentEntryRef.current.scrollIntoView();
         } else if( boundin.bottom > boundPar.bottom) {
-          this.currentEntryRef.current.scrollIntoView();
+          this.currentEntryRef.current.scrollIntoView(false);
+          
         }
     }
   }
