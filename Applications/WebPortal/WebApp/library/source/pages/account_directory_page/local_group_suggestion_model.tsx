@@ -8,7 +8,6 @@ export class LocalGroupSuggestionModel extends GroupSuggestionModel {
    * @param groups - A set of groups.
    */
   public constructor(groups: Beam.DirectoryEntry[]) {
-    console.log('Made a model');
     super();
     this._groups = groups.slice();
   }
@@ -27,7 +26,6 @@ export class LocalGroupSuggestionModel extends GroupSuggestionModel {
     if(!this.isLoaded) {
       throw Error('Model not loaded.');
     }
-    console.log('Loading a thing');
     return new Promise<Beam.DirectoryEntry[]> ((resolve) => {
       setTimeout(() => {
         const set: Beam.DirectoryEntry[] = [];

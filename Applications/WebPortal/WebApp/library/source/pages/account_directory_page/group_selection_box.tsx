@@ -59,6 +59,7 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
       currentIndex : 0,
       showSuggestions: false
     };
+    this.boxRef = React.createRef();
     this.inputRef = React.createRef();
     this.addGroup = this.addGroup.bind(this);
     this.changeIndex = this.changeIndex.bind(this);
@@ -66,15 +67,6 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const boxStyle = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return GroupSelectionBox.DYNAMIC_STYLE.boxSmall;
-      } else if(this.props.displaySize === DisplaySize.MEDIUM) {
-        return GroupSelectionBox.DYNAMIC_STYLE.boxMedium;
-      } else {
-        return GroupSelectionBox.DYNAMIC_STYLE.boxLarge;
-      }
-    })();
     const inputStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return GroupSelectionBox.DYNAMIC_STYLE.inputSmall;
@@ -99,18 +91,10 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
       }
     })();
     const suggestionBox = (() => {
-      if(this.state.showSuggestions && this.props.suggestions !== null) {
-        return (
-        <div className={css(GroupSelectionBox.DYNAMIC_STYLE.suggestionWrapper)}>
-          <SuggestionBox
-            currentIndex={this.state.currentIndex}
-            suggestedGroups={this.props.suggestions}
-            displaySize={this.props.displaySize}
-            addGroup={this.addGroup}
-            changeIndex={this.changeIndex}/>
-            </div>);
+      if(this.state.showSuggestions) {
+        return GroupSelectionBox.STYLE.suggestionWrapper;
       } else {
-        return null;
+        return GroupSelectionBox.STYLE.hidden;
       }
     })();
     const selectedGroups = [];
@@ -121,18 +105,20 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
           <div className={css(GroupSelectionBox.DYNAMIC_STYLE.textLarge)}>
             {group.name}
           </div>
-          <div className={css(GroupSelectionBox.DYNAMIC_STYLE.imageWrapper)}>
-            <img className={css(GroupSelectionBox.DYNAMIC_STYLE.image)}
+          <div style={GroupSelectionBox.STYLE.imageWrapper}>
+            <img style={GroupSelectionBox.STYLE.image}
               onClick={ () => this.props.removeGroup(group) }
               src={'resources/remove.svg'}/>
           </div>
         </div>);
   }
   return (
-    <div id='GROUP BOX' className={css(boxStyle)}
-        onFocus={() => this.setState({showSuggestions: true })}
-        onBlur={() => this.setState({showSuggestions: false })}
-        >
+    <div id='GROUP BOX' style={GroupSelectionBox.STYLE.box}
+        ref={this.boxRef}
+        onBlur={() => {
+          /// UGHDFGHKLDHKFGDHSLKGSDGHKDFGHKDFGHSHKLHKLHKLDFGHS
+        }}
+        onFocus={() => this.setState({showSuggestions: true})}>
       <input type='text'
         ref={this.inputRef}
         value={this.props.value}
@@ -141,8 +127,15 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
           this.props.onValueChange(event.target.value);}}
         className={css(inputStyle, errorBoxStyle, textStyle)}/>
-      <div className={css(GroupSelectionBox.DYNAMIC_STYLE.filler)}/>
-      {suggestionBox}
+      <div style={GroupSelectionBox.STYLE.filler}/>
+      <div style={suggestionBox}>
+        <SuggestionBox
+          currentIndex={this.state.currentIndex}
+          suggestedGroups={this.props.suggestions}
+          displaySize={this.props.displaySize}
+          addGroup={this.addGroup}
+          changeIndex={this.changeIndex}/>
+      </div>
       {selectedGroups}
     </div>);
   }
@@ -160,14 +153,13 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
   }
 
   private addGroup() {
-    console.log('add the thing!');
     if (this.props.suggestions !== null && this.state.currentIndex >= 0) {
         const thing =  this.props.suggestions[this.state.currentIndex];
         if(thing) {
           this.props.addGroup(thing);
         }
-        this.inputRef.current.focus();
       }
+    this.inputRef.current.focus();
   }
 
   private changeIndex(newCurrent?: number) {
@@ -175,7 +167,6 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
   }
 
   private onKeyPress(event: React.KeyboardEvent<HTMLInputElement>) {
-    console.log('current keycodeeeee: ' + event.keyCode );
     if(event.keyCode === 38) {
       if(this.state.currentIndex > 0) {
         this.setState({ currentIndex: this.state.currentIndex - 1 });
@@ -190,28 +181,58 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
     }
   }
 
+  private static STYLE = {
+    box : {
+      display: 'flex' as 'flex',
+      flexDirection: 'column' as 'column',
+      justifyContent: 'flex-start' as 'flex-start',
+      alignItems: 'center' as 'center',
+      width: '100%'
+    },
+    imageWrapper: {
+      paddingLeft:'10px',
+      paddingRight: '5px',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'nowrap' as 'nowrap',
+      justifyContent: 'center' as 'center',
+      height: '34px',
+      alignItems: 'center' as 'center',
+      cursor: 'pointer' as 'pointer'
+    },
+    image: {
+      width: '12px',
+      height: '12px',
+      padding: '6px'
+    },
+    textLarge: {
+      font: '400 14px Roboto',
+      color: '#000000'
+    },
+    textSmall: {
+      font: '400 16px Roboto',
+      color: '#000000'
+    },
+    error: {
+      border: '1px solid #E63F44'
+    },
+    filler: {
+      width: '100%',
+      height: '4px'
+    },
+    suggestionWrapper: {
+      position: 'relative' as 'relative',
+      height: '1px',
+      width: '100%',
+      tabIndex: -1
+    },
+    hidden :{
+      height: '1px',
+      visibility: 'hidden' as 'hidden'
+    }
+  };
+
   private static DYNAMIC_STYLE = StyleSheet.create({
-    boxSmall : {
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-      width: '100%'
-    },
-    boxMedium : {
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-      width: '100%'
-    },
-    boxLarge : {
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-      width: '100%'
-    },
     inputSmall: {
       boxSizing: 'border-box' as 'border-box',
       paddingLeft: '10px',
@@ -301,22 +322,6 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
         backgroundColor: '#F8F8F8'
       }
     },
-    imageWrapper: {
-      paddingLeft:'10px',
-      paddingRight: '5px',
-      display: 'flex',
-      flexDirection: 'row',
-      flexWrap: 'nowrap',
-      justifyContent: 'center',
-      height: '34px',
-      alignItems: 'center',
-      cursor: 'pointer' as 'pointer'
-    },
-    image: {
-      width: '12px',
-      height: '12px',
-      padding: '6px'
-    },
     textLarge: {
       font: '400 14px Roboto',
       color: '#000000'
@@ -327,26 +332,29 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
     },
     error: {
       border: '1px solid #E63F44'
-    },
-    filler: {
-      width: '100%',
-      height: '5px'
-    },
-    suggestionWrapper: {
-      position: 'relative' as 'relative',
-      height: '1px',
-      width: '100%',
-      tabIndex: -1
     }
   });
   private inputRef: React.RefObject<HTMLInputElement>;
+  private boxRef: React.RefObject<HTMLDivElement>;
 }
 
 interface SuggestionBoxProps {
+
+  /** The size the element is displayed at. */
   displaySize: DisplaySize;
+
+  /** The index of the current selected suggestion. */
   currentIndex: number;
+
+  /** The list of suggested groups. */
   suggestedGroups?: Beam.DirectoryEntry[];
+
+  /** Changes the currentIndex.
+   * @param newIndex - The value the index should be changed to.
+   */
   changeIndex?: (newIndex: number) => void;
+
+  /** Add a group to the selected groups. */
   addGroup?: () => void;
 }
 
