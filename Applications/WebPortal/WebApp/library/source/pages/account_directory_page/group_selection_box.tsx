@@ -2,7 +2,6 @@ import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as React from 'react';
 import { DisplaySize } from '../../display_size';
-import { element } from 'prop-types';
 
 interface Properties {
   displaySize: DisplaySize;
@@ -39,7 +38,6 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
     this.changeIndex = this.changeIndex.bind(this);
     this.addGroup = this.addGroup.bind(this);
     this.onKeyPress = this.onKeyPress.bind(this);
-    this.inputRef = null;
   }
 
   public render(): JSX.Element {
@@ -76,7 +74,7 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
       }
     })();
     const suggestionBox = (() => {
-      if(document.activeElement === this.inputRef
+      if(this.state.showSuggestions
         && this.props.selectedGroups) {
         return (
         <SuggestionBox
@@ -110,7 +108,8 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
           value={this.props.value}
           onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) =>
             this.onKeyPress(event)}
-          ref={ (e) => {this.inputRef = e;} }
+          onFocus={ () => this.setState({showSuggestions: true })}
+          onBlur={ () => this.setState({showSuggestions: false }) }
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
             this.props.onValueChange(event.target.value);}}
           className={css(inputStyle, errorBoxStyle, textStyle)}/>
@@ -156,11 +155,14 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
 
   public componentDidUpdate(prevProps: Properties) {
     if(this.props.suggestions === null && this.state.currentIndex !== -1) {
-      this.setState({ currentIndex: -1 });
+      this.setState({
+        currentIndex: -1
+      });
     } else if(this.props.suggestions !== prevProps.suggestions) {
-      this.setState({ currentIndex: 0 });
+      this.setState({
+        currentIndex: 0
+      });
     }
-
   }
   private static DYNAMIC_STYLE = StyleSheet.create({
     boxSmall : {
@@ -265,7 +267,13 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
       justifyContent: 'space-between',
       alignItems: 'center',
       height: '34px',
-      width: '100%'
+      width: '100%',
+      ':hover' : {
+        backgroundColor: '#F8F8F8'
+      },
+      ':active' : {
+        backgroundColor: '#F8F8F8'
+      }
     },
     imageWrapper: {
       paddingLeft:'10px',
@@ -275,7 +283,8 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
       flexWrap: 'nowrap',
       justifyContent: 'center',
       height: '34px',
-      alignItems: 'center'
+      alignItems: 'center',
+      cursor: 'pointer' as 'pointer'
     },
     image: {
       width: '12px',
@@ -304,17 +313,15 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
       tabIndex: -1
     }
   });
-  private inputRef: HTMLInputElement;
 }
 
 interface SuggestionBoxProps {
   displaySize: DisplaySize;
-  suggestedGroups?: Beam.DirectoryEntry[];
   currentIndex: number;
+  suggestedGroups?: Beam.DirectoryEntry[];
   changeIndex?: (newIndex: number) => void;
   addGroup?: () => void;
 }
-
 
 class SuggestionBox extends React.Component<SuggestionBoxProps> {
   public static readonly defaultProps = {
@@ -325,7 +332,6 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
   constructor(props: SuggestionBoxProps) {
     super(props);
     this.currentEntryRef = React.createRef();
-    this.unorderedListRef = React.createRef();
   }
 
   public render(): JSX.Element {
@@ -344,7 +350,6 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
             selectedGroups.push(
         <li className={css(SuggestionBox.DYNAMIC_STYLE.entry,
               textStyle, SuggestionBox.DYNAMIC_STYLE.selected)}
-            onMouseEnter={() => this.props.changeIndex(index)}
             onClick = { () => this.props.addGroup()}
             key={index}
             ref={this.currentEntryRef}
@@ -354,7 +359,7 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
           } else {
             selectedGroups.push(
         <li className={css(SuggestionBox.DYNAMIC_STYLE.entry, textStyle)}
-            onMouseEnter={() => this.props.changeIndex(index)}
+            onMouseMove={() => this.props.changeIndex(index)}
             onClick = { () => this.props.addGroup()}
             key={index}
             id={index.toString()}>
@@ -364,11 +369,10 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
       }
     }
     return (
-        <ul className={css(SuggestionBox.DYNAMIC_STYLE.box)}
-          tabIndex={-1}
-          ref={this.unorderedListRef}>
-         {selectedGroups}
-        </ul>
+      <ul className={css(SuggestionBox.DYNAMIC_STYLE.box)}
+          tabIndex={-1}>
+        {selectedGroups}
+      </ul>
     );
  }
 
@@ -397,15 +401,17 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
       display: 'flex',
       justifyContent: 'flex-start',
       alignItems: 'center',
-      cursor: 'pointer as pointer'
+      cursor: 'default'
     },
     textSmall: {
       font: '400 16px Roboto',
-      color: '#000000'
+      color: '#000000',
+      cursor: 'default'
     },
     textLarge: {
       font: '400 14px Roboto',
-      color: '#000000'
+      color: '#000000',
+      cursor: 'default'
     },
     selected: {
       color: '#FFFFFF',
@@ -426,5 +432,4 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
     }
   });
   private currentEntryRef: React.RefObject<HTMLLIElement>;
-  private unorderedListRef: React.RefObject<HTMLUListElement>;
 }
